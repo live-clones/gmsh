@@ -14,20 +14,18 @@ INC = ${DASH}I../Common ${DASH}I../Geo ${DASH}I../Mesh\
 
 CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
-SRC = Context.cpp\
-      Octree.cpp OctreeInternals.cpp\
-      Options.cpp\
-      CommandLine.cpp\
-      Gmsh.cpp\
+SRC = Gmsh.cpp\
       GmshMessage.cpp\
       GmshDaemon.cpp\
+      Options.cpp\
+      CommandLine.cpp\
       OS.cpp\
       OpenFile.cpp\
       CreateFile.cpp\
       Visibility.cpp\
-      Trackball.cpp\
       VertexArray.cpp\
       SmoothData.cpp\
+      Octree.cpp OctreeInternals.cpp\
       StringUtils.cpp\
       ListUtils.cpp\
       TreeUtils.cpp avl.cpp\
@@ -59,41 +57,6 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-Context${OBJEXT}: Context.cpp ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
-  Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h Trackball.h
-Octree${OBJEXT}: Octree.cpp Octree.h OctreeInternals.h
-OctreeInternals${OBJEXT}: OctreeInternals.cpp GmshMessage.h OctreeInternals.h
-Options${OBJEXT}: Options.cpp GmshUI.h GmshDefines.h ../Geo/GModel.h \
-  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
-  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
-  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h GmshMessage.h ../Graphics/Draw.h \
-  ../Mesh/Generator.h Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h Options.h ../Post/ColorTable.h \
-  DefaultOptions.h ../Mesh/Field.h ../Post/PView.h \
-  ../Mesh/BackgroundMesh.h ../Post/PViewOptions.h ../Post/ColorTable.h \
-  ../Post/PViewData.h ../Post/adaptiveData.h ../Common/ListUtils.h \
-  ../Numeric/GmshMatrix.h ../Common/GmshMessage.h \
-  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Options.h \
-  ../Post/PViewDataList.h ../Post/PViewData.h ../Fltk/Solvers.h \
-  ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h \
-  ../Common/GmshUI.h ../Fltk/Popup_Button.h \
-  ../Fltk/SpherePosition_Widget.h
-CommandLine${OBJEXT}: CommandLine.cpp GmshUI.h GmshDefines.h GmshVersion.h \
-  GmshMessage.h OpenFile.h CommandLine.h Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h Options.h ../Post/ColorTable.h \
-  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h \
-  ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h \
-  ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h \
-  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h CreateFile.h OS.h ../Post/PView.h
 Gmsh${OBJEXT}: Gmsh.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
@@ -111,10 +74,42 @@ Gmsh${OBJEXT}: Gmsh.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
 GmshMessage${OBJEXT}: GmshMessage.cpp GmshMessage.h Gmsh.h Options.h \
   ../Post/ColorTable.h Context.h ../Geo/CGNSOptions.h \
   ../Mesh/PartitionOptions.h OS.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
+  ../Graphics/drawContext.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Fltk/Colorbar_Window.h ../Common/GmshUI.h ../Fltk/Popup_Button.h \
   ../Fltk/SpherePosition_Widget.h ../Mesh/Field.h ../Post/PView.h \
-  ../Geo/SPoint3.h ../Fltk/GUI_Extras.h
+  ../Fltk/GUI_Extras.h
 GmshDaemon${OBJEXT}: GmshDaemon.cpp GmshMessage.h OS.h GmshSocket.h
+Options${OBJEXT}: Options.cpp GmshUI.h GmshDefines.h ../Geo/GModel.h \
+  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
+  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
+  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
+  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
+  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
+  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h GmshMessage.h ../Fltk/Draw.h \
+  ../Mesh/Generator.h Context.h ../Geo/CGNSOptions.h \
+  ../Mesh/PartitionOptions.h Options.h ../Post/ColorTable.h \
+  DefaultOptions.h ../Mesh/Field.h ../Post/PView.h \
+  ../Mesh/BackgroundMesh.h ../Post/PViewOptions.h ../Post/ColorTable.h \
+  ../Post/PViewData.h ../Post/adaptiveData.h ../Common/ListUtils.h \
+  ../Numeric/GmshMatrix.h ../Common/GmshMessage.h \
+  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Options.h \
+  ../Post/PViewDataList.h ../Post/PViewData.h ../Fltk/Solvers.h \
+  ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Graphics/drawContext.h \
+  ../Fltk/Colorbar_Window.h ../Common/GmshUI.h ../Fltk/Popup_Button.h \
+  ../Fltk/SpherePosition_Widget.h
+CommandLine${OBJEXT}: CommandLine.cpp GmshUI.h GmshDefines.h GmshVersion.h \
+  GmshMessage.h OpenFile.h CommandLine.h Context.h ../Geo/CGNSOptions.h \
+  ../Mesh/PartitionOptions.h Options.h ../Post/ColorTable.h \
+  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
+  ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h \
+  ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h \
+  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h \
+  ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h CreateFile.h OS.h ../Post/PView.h
 OS${OBJEXT}: OS.cpp GmshMessage.h
 OpenFile${OBJEXT}: OpenFile.cpp GmshMessage.h ../Geo/Geo.h \
   ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
@@ -133,9 +128,9 @@ OpenFile${OBJEXT}: OpenFile.cpp GmshMessage.h ../Geo/Geo.h \
   ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h OpenFile.h \
   CommandLine.h ../Graphics/ReadImg.h OS.h StringUtils.h \
   ../Parser/Parser.h ../Post/PView.h ../Post/PViewData.h GmshUI.h \
-  ../Graphics/Draw.h ../Graphics/SelectBuffer.h ../Fltk/GUI.h \
-  ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h ../Common/GmshUI.h \
-  ../Post/ColorTable.h ../Fltk/Popup_Button.h \
+  ../Fltk/Draw.h ../Graphics/SelectBuffer.h ../Graphics/drawContext.h \
+  ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h \
+  ../Common/GmshUI.h ../Post/ColorTable.h ../Fltk/Popup_Button.h \
   ../Fltk/SpherePosition_Widget.h ../Mesh/Field.h
 CreateFile${OBJEXT}: CreateFile.cpp GmshMessage.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
@@ -149,7 +144,7 @@ CreateFile${OBJEXT}: CreateFile.cpp GmshMessage.h ../Geo/GModel.h \
   ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h Options.h \
   ../Post/ColorTable.h GmshUI.h ../Graphics/gl2ps.h ../Graphics/gl2gif.h \
   ../Graphics/PixelBuffer.h ../Common/GmshUI.h ../Common/GmshMessage.h \
-  ../Common/MallocUtils.h ../Graphics/Draw.h ../Graphics/gl2jpeg.h \
+  ../Fltk/Draw.h ../Common/MallocUtils.h ../Graphics/gl2jpeg.h \
   ../Graphics/PixelBuffer.h ../Graphics/gl2png.h \
   ../Graphics/PixelBuffer.h ../Graphics/gl2ppm.h \
   ../Graphics/PixelBuffer.h ../Graphics/gl2yuv.h \
@@ -168,13 +163,14 @@ Visibility${OBJEXT}: Visibility.cpp Visibility.h GmshDefines.h ../Geo/GVertex.h 
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Numeric/GmshMatrix.h ../Parser/Parser.h
-Trackball${OBJEXT}: Trackball.cpp Trackball.h
 VertexArray${OBJEXT}: VertexArray.cpp VertexArray.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h Context.h ../Geo/CGNSOptions.h \
   ../Mesh/PartitionOptions.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h
 SmoothData${OBJEXT}: SmoothData.cpp SmoothData.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h
+Octree${OBJEXT}: Octree.cpp Octree.h OctreeInternals.h
+OctreeInternals${OBJEXT}: OctreeInternals.cpp GmshMessage.h OctreeInternals.h
 StringUtils${OBJEXT}: StringUtils.cpp StringUtils.h
 ListUtils${OBJEXT}: ListUtils.cpp MallocUtils.h ListUtils.h TreeUtils.h avl.h \
   GmshMessage.h

@@ -110,7 +110,7 @@ void buildVertexToElement(std::vector<T*> &eles, v2t_cont &adj)
 {
   for (unsigned int i = 0; i < eles.size(); i++){
     T *t = eles[i];
-    for (unsigned int j = 0; j < t->getNumVertices(); j++){
+    for (int j = 0; j < t->getNumVertices(); j++){
       MVertex *v = t->getVertex(j);
       v2t_cont :: iterator it = adj.find(v);
       if (it == adj.end()){
@@ -136,7 +136,7 @@ void buildEdgeToElement(std::vector<T*> &triangles, e2t_cont &adj)
 {
   for (unsigned int i = 0; i < triangles.size(); i++){
     T *t = triangles[i];
-    for (unsigned int j = 0; j < t->getNumEdges(); j++){
+    for (int j = 0; j < t->getNumEdges(); j++){
       MEdge e = t->getEdge(j);
       e2t_cont::iterator it = adj.find(e);
       if (it == adj.end()){
@@ -158,14 +158,15 @@ void buildEdgeToElement(GFace *gf, e2t_cont &adj)
   buildEdgeToElement(gf->quadrangles, adj);
 }
 
-void buildEdgeToTriangle(std::vector<MTriangle*> &tris, e2t_cont &adj){
+void buildEdgeToTriangle(std::vector<MTriangle*> &tris, e2t_cont &adj)
+{
   adj.clear();
   buildEdgeToElement(tris, adj);
 }
 
 void parametricCoordinates(MElement *t, GFace *gf, double u[4], double v[4])
 {
-  for (unsigned int j = 0; j < t->getNumVertices(); j++){
+  for (int j = 0; j < t->getNumVertices(); j++){
     MVertex *ver = t->getVertex(j);
     SPoint2 param;
     reparamMeshVertexOnFace(ver, gf, param);
@@ -818,7 +819,7 @@ static void _gmshRecombineIntoQuads(GFace *gf)
 				      it->second.first,
 				      it->second.second));
   }
-  bool rec = false;    
+
   std::set<recombine_triangle>::iterator itp = pairs.begin();
   while(itp != pairs.end()){
     // recombine if difference between max quad angle and right
@@ -853,7 +854,7 @@ static void _gmshRecombineIntoQuads(GFace *gf)
   }
 
   std::vector<MTriangle*> triangles2;
-  for (int i = 0; i < gf->triangles.size(); i++){
+  for (unsigned int i = 0; i < gf->triangles.size(); i++){
     if (touched.find(gf->triangles[i]) == touched.end()){
       triangles2.push_back(gf->triangles[i]);
     }

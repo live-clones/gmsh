@@ -7,6 +7,8 @@
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "Draw.h"
+#include "drawContext.h"
+#include "Trackball.h"
 #include "Context.h"
 #include "Numeric.h"
 #include "GModel.h"
@@ -15,7 +17,117 @@
 
 extern Context_T CTX;
 
-int NeedPolygonOffset()
+drawContext::drawContext(drawTransform *transform) 
+  : _transform(transform)
+{
+  // initialize from temp values in global context
+  for(int i = 0; i < 3; i++){
+    r[i] = CTX.tmp_r[i];
+    t[i] = CTX.tmp_t[i];
+    s[i] = CTX.tmp_s[i];
+  }
+  for(int i = 0; i < 4; i++){
+    quaternion[i] = CTX.tmp_quaternion[i];
+  }
+  viewport[0] = viewport[1] = 0;
+  viewport[2] = CTX.tmp_viewport[2];
+  viewport[3] = CTX.tmp_viewport[3];
+
+  vxmin = vymin = vxmax = vymax = 0.;
+  pixel_equiv_x = pixel_equiv_y = 0.;
+}
+
+void drawContext::buildRotationMatrix()
+{
+  if(CTX.useTrackball) {
+    build_rotmatrix(rot, quaternion);
+    setEulerAnglesFromRotationMatrix();
+  }
+  else {
+    double x = r[0] * M_PI / 180.;
+    double y = r[1] * M_PI / 180.;
+    double z = r[2] * M_PI / 180.;
+    double A = cos(x);
+    double B = sin(x);
+    double C = cos(y);
+    double D = sin(y);
+    double E = cos(z);
+    double F = sin(z);
+    double AD = A * D;
+    double BD = B * D;
+    rot[0] = C*E; rot[1] = BD*E+A*F; rot[2] =-AD*E+B*F; rot[3] = 0.;
+    rot[4] =-C*F; rot[5] =-BD*F+A*E; rot[6] = AD*F+B*E; rot[7] = 0.;
+    rot[8] = D;   rot[9] =-B*C;      rot[10] = A*C;     rot[11] = 0.;
+    rot[12] = 0.; rot[13] = 0.;      rot[14] = 0.;      rot[15] = 1.;
+    setQuaternionFromEulerAngles();
+  }
+}
+
+void drawContext::addQuaternion(double p1x, double p1y, double p2x, double p2y)
+{
+  double quat[4];
+  trackball(quat, p1x, p1y, p2x, p2y);
+  add_quats(quat, quaternion, quaternion);
+}
+
+void drawContext::addQuaternionFromAxisAndAngle(double axis[3], double angle)
+{
+  double a = angle * M_PI / 180.;
+  double quat[4];
+  axis_to_quat(axis, a, quat);
+  add_quats(quat, quaternion, quaternion);  
+}
+
+void drawContext::setQuaternion(double q0, double q1, double q2, double q3)
+{
+  quaternion[0] = q0;
+  quaternion[1] = q1;
+  quaternion[2] = q2;
+  quaternion[3] = q3;
+}
+
+void drawContext::setQuaternionFromEulerAngles()
+{
+  double x = r[0] * M_PI / 180.;
+  double y = r[1] * M_PI / 180.;
+  double z = r[2] * M_PI / 180.;
+  double xx[3] = {1.,0.,0.};
+  double yy[3] = {0.,1.,0.};
+  double zz[3] = {0.,0.,1.};
+  double q1[4], q2[4], q3[4], tmp[4];
+  axis_to_quat(xx, -x, q1);
+  axis_to_quat(yy, -y, q2);
+  axis_to_quat(zz, -z, q3);
+  add_quats(q1, q2, tmp);
+  add_quats(tmp, q3, quaternion);
+}
+
+void drawContext::setEulerAnglesFromRotationMatrix()
+{
+  r[1] = asin(rot[8]); // Calculate Y-axis angle
+  double C =  cos(r[1]);
+  r[1] *=  180. / M_PI;
+  if(fabs(C) > 0.005){ // Gimball lock?
+    double tmpx =  rot[10] / C; // No, so get X-axis angle
+    double tmpy = -rot[9] / C;
+    r[0] = atan2(tmpy, tmpx) * 180. / M_PI;
+    tmpx =  rot[0] / C; // Get Z-axis angle
+    tmpy = -rot[4] / C;
+    r[2] = atan2(tmpy, tmpx) * 180. / M_PI;
+  }
+  else{ // Gimball lock has occurred
+    r[0] = 0.; // Set X-axis angle to zero
+    double tmpx = rot[5]; // And calculate Z-axis angle
+    double tmpy = rot[1];
+    r[2] = atan2(tmpy, tmpx) * 180. / M_PI;
+  }
+  // return only positive angles in [0,360]
+  if(r[0] < 0.) r[0] += 360.;
+  if(r[1] < 0.) r[1] += 360.;
+  if(r[2] < 0.) r[2] += 360.;
+}
+
+static int needPolygonOffset()
 {
   GModel *m = GModel::current();
   if(m->getMeshStatus() == 2 &&
@@ -31,7 +143,7 @@ int NeedPolygonOffset()
   return 0;
 }
 
-void Draw3d()
+void drawContext::draw3d()
 {
   // We should only enable the polygon offset when there is a mix of
   // lines and polygons to be drawn; enabling it all the time can lead
@@ -45,23 +157,23 @@ void Draw3d()
   // produce a resolvable offset for a given implementation.
   glPolygonOffset(CTX.polygon_offset_factor, CTX.polygon_offset_units);
   if(CTX.polygon_offset_factor || CTX.polygon_offset_units)
-    CTX.polygon_offset = CTX.polygon_offset_always ? 1 : NeedPolygonOffset();
+    CTX.polygon_offset = CTX.polygon_offset_always ? 1 : needPolygonOffset();
   else
     CTX.polygon_offset = 0;
 
   glDepthFunc(GL_LESS);
   glEnable(GL_DEPTH_TEST);
 
-  InitProjection();
-  InitRenderModel();
-  InitPosition();
-  Draw_Axes();
-  Draw_Geom();
-  Draw_Mesh();
-  Draw_Post();
+  initProjection();
+  initRenderModel();
+  initPosition();
+  drawAxes();
+  drawGeom();
+  drawMesh();
+  drawPost();
 }
 
-void Draw2d()
+void drawContext::draw2d()
 {
   glDisable(GL_DEPTH_TEST);
   for(int i = 0; i < 6; i++)
@@ -69,79 +181,53 @@ void Draw2d()
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glOrtho((double)CTX.viewport[0], (double)CTX.viewport[2],
-          (double)CTX.viewport[1], (double)CTX.viewport[3], -1., 1.);
+  glOrtho((double)viewport[0], (double)viewport[2],
+          (double)viewport[1], (double)viewport[3], -1., 1.);
   // hack to make the 2D primitives appear "in front" in GL2PS
-  glTranslated(0., 0., CTX.clip_factor > 1. ? 1./CTX.clip_factor : CTX.clip_factor);
+  glTranslated(0., 0., CTX.clip_factor > 1. ? 1. / CTX.clip_factor : CTX.clip_factor);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  Draw_Graph2D();
-  Draw_Text2D();
+  drawGraph2d();
+  drawText2d();
   Draw_OnScreenMessages();
-  if(CTX.post.draw) Draw_Scales();
-
+  if(CTX.post.draw) 
+    drawScales();
   if(CTX.small_axes)
-    Draw_SmallAxes();
+    drawSmallAxes();
 }
 
-void DrawPlugin(void (*draw)())
-{
-  CTX.post.plugin_draw_function = draw;
-  int old = CTX.draw_bbox;
-  CTX.draw_bbox = 1;
-  if(CTX.fast_redraw){
-    CTX.post.draw = 0;
-    CTX.mesh.draw = 0;
-  }
-  if(!CTX.batch) 
-    Draw();
-  // this is reset in each plugin run/cancel callback:
-  // CTX.post.plugin_draw_function = NULL;
-  CTX.draw_bbox = old;
-  CTX.post.draw = 1;
-  CTX.mesh.draw = 1;
-}
-
-void ClearOpengl()
-{
-  glClearColor(CTX.UNPACK_RED(CTX.color.bg) / 255.,
-               CTX.UNPACK_GREEN(CTX.color.bg) / 255.,
-               CTX.UNPACK_BLUE(CTX.color.bg) / 255., 0.);
-  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-}
-
-void InitProjection(int xpick, int ypick, int wpick, int hpick)
+void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
 {
   double Va = 
-    (GLdouble) (CTX.viewport[3] - CTX.viewport[1]) /
-    (GLdouble) (CTX.viewport[2] - CTX.viewport[0]);
+    (GLdouble) (viewport[3] - viewport[1]) /
+    (GLdouble) (viewport[2] - viewport[0]);
   double Wa = (CTX.max[1] - CTX.min[1]) / (CTX.max[0] - CTX.min[0]);
 
   // compute the viewport in World coordinates (with margins)
   if(Va > Wa) {
-    CTX.vxmin = CTX.min[0];
-    CTX.vxmax = CTX.max[0];
-    CTX.vymin = 0.5 * (CTX.min[1] + CTX.max[1] - Va * (CTX.max[0] - CTX.min[0]));
-    CTX.vymax = 0.5 * (CTX.min[1] + CTX.max[1] + Va * (CTX.max[0] - CTX.min[0]));
+    vxmin = CTX.min[0];
+    vxmax = CTX.max[0];
+    vymin = 0.5 * (CTX.min[1] + CTX.max[1] - Va * (CTX.max[0] - CTX.min[0]));
+    vymax = 0.5 * (CTX.min[1] + CTX.max[1] + Va * (CTX.max[0] - CTX.min[0]));
   }
   else {
-    CTX.vxmin = 0.5 * (CTX.min[0] + CTX.max[0] - (CTX.max[1] - CTX.min[1]) / Va);
-    CTX.vxmax = 0.5 * (CTX.min[0] + CTX.max[0] + (CTX.max[1] - CTX.min[1]) / Va);
-    CTX.vymin = CTX.min[1];
-    CTX.vymax = CTX.max[1];
+    vxmin = 0.5 * (CTX.min[0] + CTX.max[0] - (CTX.max[1] - CTX.min[1]) / Va);
+    vxmax = 0.5 * (CTX.min[0] + CTX.max[0] + (CTX.max[1] - CTX.min[1]) / Va);
+    vymin = CTX.min[1];
+    vymax = CTX.max[1];
   }
-  CTX.vxmin -= (CTX.vxmax - CTX.vxmin) / 3.;
-  CTX.vxmax += 0.25 * (CTX.vxmax - CTX.vxmin);
-  CTX.vymin -= (CTX.vymax - CTX.vymin) / 3.;
-  CTX.vymax += 0.25 * (CTX.vymax - CTX.vymin);
+  vxmin -= (vxmax - vxmin) / 3.;
+  vxmax += 0.25 * (vxmax - vxmin);
+  vymin -= (vymax - vymin) / 3.;
+  vymax += 0.25 * (vymax - vymin);
 
   // store what one pixel represents in world coordinates
-  CTX.pixel_equiv_x = (CTX.vxmax - CTX.vxmin) / (CTX.viewport[2] - CTX.viewport[0]);
-  CTX.pixel_equiv_y = (CTX.vymax - CTX.vymin) / (CTX.viewport[3] - CTX.viewport[1]);
+  pixel_equiv_x = (vxmax - vxmin) / (viewport[2] - viewport[0]);
+  pixel_equiv_y = (vymax - vymin) / (viewport[3] - viewport[1]);
 
   // no initial translation of the model
-  CTX.t_init[0] = CTX.t_init[1] = CTX.t_init[2] = 0.;
+  t_init[0] = t_init[1] = t_init[2] = 0.;
 
   // setup ortho or perspective projection matrix
   glMatrixMode(GL_PROJECTION);
@@ -149,8 +235,8 @@ void InitProjection(int xpick, int ypick, int wpick, int hpick)
 
   // restrict picking to a rectangular region around xpick,ypick in SELECT mode
   if(CTX.render_mode == GMSH_SELECT)
-    gluPickMatrix((GLdouble)xpick, (GLdouble)(CTX.viewport[3] - ypick),
-                  (GLdouble)wpick, (GLdouble)hpick, (GLint *)CTX.viewport);
+    gluPickMatrix((GLdouble)xpick, (GLdouble)(viewport[3] - ypick),
+                  (GLdouble)wpick, (GLdouble)hpick, (GLint *)viewport);
 
   double grad_z, grad_xy;
   double zmax = std::max(fabs(CTX.min[2]), fabs(CTX.max[2]));
@@ -161,8 +247,8 @@ void InitProjection(int xpick, int ypick, int wpick, int hpick)
     // large enough to manipulate the model and zoom, but not too big
     // (the z-buffer resolution, e.g., on software Mesa can become
     // insufficient)
-    double clip = zmax * CTX.s[2] * CTX.clip_factor;
-    glOrtho(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, -clip, clip);
+    double clip = zmax * s[2] * CTX.clip_factor;
+    glOrtho(vxmin, vxmax, vymin, vymax, -clip, clip);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     grad_z = 0.99 * clip;
@@ -175,16 +261,16 @@ void InitProjection(int xpick, int ypick, int wpick, int hpick)
     // recenter the model such that the perspective is always at the
     // center of gravity (we should maybe add an option to choose
     // this, as we do for the rotation center)
-    CTX.t_init[0] = CTX.cg[0];
-    CTX.t_init[1] = CTX.cg[1];
-    CTX.vxmin -= CTX.t_init[0];
-    CTX.vxmax -= CTX.t_init[0];
-    CTX.vymin -= CTX.t_init[1];
-    CTX.vymax -= CTX.t_init[1];
-    glFrustum(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, clip_near, clip_far);
+    t_init[0] = CTX.cg[0];
+    t_init[1] = CTX.cg[1];
+    vxmin -= t_init[0];
+    vxmax -= t_init[0];
+    vymin -= t_init[1];
+    vymax -= t_init[1];
+    glFrustum(vxmin, vxmax, vymin, vymax, clip_near, clip_far);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslated(-coef * CTX.t_init[0], -coef * CTX.t_init[1], -coef * clip_near);
+    glTranslated(-coef * t_init[0], -coef * t_init[1], -coef * clip_near);
     glScaled(coef, coef, coef);
     grad_z = 0.99 * clip_far;
     grad_xy = clip_far / clip_near;
@@ -198,27 +284,27 @@ void InitProjection(int xpick, int ypick, int wpick, int hpick)
     if(CTX.bg_gradient == 1){ // vertical
       glBegin(GL_QUADS);
       glColor4ubv((GLubyte *) & CTX.color.bg);
-      glVertex3d(grad_xy * CTX.vxmin, grad_xy * CTX.vymin, 0.);
-      glVertex3d(grad_xy * CTX.vxmax, grad_xy * CTX.vymin, 0.);
+      glVertex3d(grad_xy * vxmin, grad_xy * vymin, 0.);
+      glVertex3d(grad_xy * vxmax, grad_xy * vymin, 0.);
       glColor4ubv((GLubyte *) & CTX.color.bg_grad);
-      glVertex3d(grad_xy * CTX.vxmax, grad_xy * CTX.vymax, 0.);
-      glVertex3d(grad_xy * CTX.vxmin, grad_xy * CTX.vymax, 0.);
+      glVertex3d(grad_xy * vxmax, grad_xy * vymax, 0.);
+      glVertex3d(grad_xy * vxmin, grad_xy * vymax, 0.);
       glEnd();
     }
     else if(CTX.bg_gradient == 2){ // horizontal
       glBegin(GL_QUADS);
       glColor4ubv((GLubyte *) & CTX.color.bg);
-      glVertex3d(grad_xy * CTX.vxmax, grad_xy * CTX.vymin, 0.);
-      glVertex3d(grad_xy * CTX.vxmax, grad_xy * CTX.vymax, 0.);
+      glVertex3d(grad_xy * vxmax, grad_xy * vymin, 0.);
+      glVertex3d(grad_xy * vxmax, grad_xy * vymax, 0.);
       glColor4ubv((GLubyte *) & CTX.color.bg_grad);
-      glVertex3d(grad_xy * CTX.vxmin, grad_xy * CTX.vymax, 0.);
-      glVertex3d(grad_xy * CTX.vxmin, grad_xy * CTX.vymin, 0.);
+      glVertex3d(grad_xy * vxmin, grad_xy * vymax, 0.);
+      glVertex3d(grad_xy * vxmin, grad_xy * vymin, 0.);
       glEnd();
     }
     else{ // radial
-      double cx = grad_xy * (CTX.vxmin + CTX.vxmax) / 2.;
-      double cy = grad_xy * (CTX.vymin + CTX.vymax) / 2.;
-      double r = grad_xy * std::max(CTX.vxmax - CTX.vxmin, CTX.vymax - CTX.vymin) / 2.;
+      double cx = grad_xy * (vxmin + vxmax) / 2.;
+      double cy = grad_xy * (vymin + vymax) / 2.;
+      double r = grad_xy * std::max(vxmax - vxmin, vymax - vymin) / 2.;
       glBegin(GL_TRIANGLE_FAN);
       glColor4ubv((GLubyte *) & CTX.color.bg_grad);
       glVertex3d(cx, cy, 0.);
@@ -235,14 +321,12 @@ void InitProjection(int xpick, int ypick, int wpick, int hpick)
   }
 }
 
-void InitRenderModel()
+void drawContext::initRenderModel()
 {
-  GLfloat r, g, b;
-
   glPushMatrix();
   glLoadIdentity();
-  glScaled(CTX.s[0], CTX.s[1], CTX.s[2]);
-  glTranslated(CTX.t[0], CTX.t[1], CTX.t[2]);
+  glScaled(s[0], s[1], s[2]);
+  glTranslated(t[0], t[1], t[2]);
   
   for(int i = 0; i < 6; i++) {
     if(CTX.light[i]) {
@@ -252,9 +336,9 @@ void InitRenderModel()
                              (GLfloat)CTX.light_position[i][3]};
       glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, position);
 
-      r = CTX.UNPACK_RED(CTX.color.ambient_light[i])/255.;
-      g = CTX.UNPACK_GREEN(CTX.color.ambient_light[i])/255.;
-      b = CTX.UNPACK_BLUE(CTX.color.ambient_light[i])/255.;
+      GLfloat r = CTX.UNPACK_RED(CTX.color.ambient_light[i])/255.;
+      GLfloat g = CTX.UNPACK_GREEN(CTX.color.ambient_light[i])/255.;
+      GLfloat b = CTX.UNPACK_BLUE(CTX.color.ambient_light[i])/255.;
       GLfloat ambient[4] = {r, g, b, 1.0};
       glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, ambient);
 
@@ -303,10 +387,10 @@ void InitRenderModel()
   glDisable(GL_LIGHTING);
 }
 
-void InitPosition()
+void drawContext::initPosition()
 {
-  glScaled(CTX.s[0], CTX.s[1], CTX.s[2]);
-  glTranslated(CTX.t[0], CTX.t[1], CTX.t[2]);
+  glScaled(s[0], s[1], s[2]);
+  glTranslated(t[0], t[1], t[2]);
 
   if(CTX.rotation_center_cg)
     glTranslated(CTX.cg[0], CTX.cg[1], CTX.cg[2]);
@@ -315,8 +399,8 @@ void InitPosition()
                  CTX.rotation_center[1],
                  CTX.rotation_center[2]);
   
-  CTX.buildRotationMatrix();
-  glMultMatrixd(CTX.rot);
+  buildRotationMatrix();
+  glMultMatrixd(rot);
 
   if(CTX.rotation_center_cg)
     glTranslated(-CTX.cg[0], -CTX.cg[1], -CTX.cg[2]);
@@ -328,8 +412,8 @@ void InitPosition()
   // store the projection and modelview matrices at this precise
   // moment (so that we can use them at any later time, even if the
   // context has changed, i.e., even if we are out of Draw())
-  glGetDoublev(GL_PROJECTION_MATRIX, CTX.proj);
-  glGetDoublev(GL_MODELVIEW_MATRIX, CTX.model);
+  glGetDoublev(GL_PROJECTION_MATRIX, proj);
+  glGetDoublev(GL_MODELVIEW_MATRIX, model);
 
   for(int i = 0; i < 6; i++)
     glClipPlane((GLenum)(GL_CLIP_PLANE0 + i), CTX.clip_plane[i]);
@@ -338,22 +422,21 @@ void InitPosition()
 // Takes a cursor position in window coordinates and returns the line
 // (given by a point and a unit direction vector), in real space, that
 // corresponds to that cursor position
-
-void Unproject(double x, double y, double p[3], double d[3])
+void drawContext::unproject(double x, double y, double p[3], double d[3])
 {
-  GLint viewport[4];
-  glGetIntegerv(GL_VIEWPORT, viewport);
+  GLint vp[4];
+  glGetIntegerv(GL_VIEWPORT, vp);
 
-  y = viewport[3]-y;
+  y = vp[3] - y;
 
   GLdouble x0, y0, z0, x1, y1, z1;
 
-  // we use CTX.model and CTX.proj instead of directly getGetDouble'ing
-  // the matrices since unproject can be called in or after Draw2D
-  
-  if(!gluUnProject(x, y, 0.0, CTX.model, CTX.proj, viewport, &x0, &y0, &z0))
+  // we use the stored model and proj matrices instead of directly
+  // getGetDouble'ing the matrices since unproject can be called in or
+  // after draw2d
+  if(!gluUnProject(x, y, 0.0, model, proj, vp, &x0, &y0, &z0))
     Msg::Warning("unproject1 failed");
-  if(!gluUnProject(x, y, 1.0, CTX.model, CTX.proj, viewport, &x1, &y1, &z1))
+  if(!gluUnProject(x, y, 1.0, model, proj, vp, &x1, &y1, &z1))
     Msg::Warning("unproject2 failed");
   
   p[0] = x0;
@@ -366,24 +449,4 @@ void Unproject(double x, double y, double p[3], double d[3])
   d[0] /= len;
   d[1] /= len;
   d[2] /= len;
-}
-
-void Viewport2World(double win[3], double xyz[3])
-{
-  GLint viewport[4];
-  GLdouble model[16], proj[16];
-  glGetIntegerv(GL_VIEWPORT, viewport);
-  glGetDoublev(GL_PROJECTION_MATRIX, proj);
-  glGetDoublev(GL_MODELVIEW_MATRIX, model);
-  gluUnProject(win[0], win[1], win[2], model, proj, viewport, &xyz[0], &xyz[1], &xyz[2]);
-}
-
-void World2Viewport(double xyz[3], double win[3])
-{
-  GLint viewport[4];
-  GLdouble model[16], proj[16];
-  glGetIntegerv(GL_VIEWPORT, viewport);
-  glGetDoublev(GL_PROJECTION_MATRIX, proj);
-  glGetDoublev(GL_MODELVIEW_MATRIX, model);
-  gluProject(xyz[0], xyz[1], xyz[2], model, proj, viewport, &win[0], &win[1], &win[2]);
 }

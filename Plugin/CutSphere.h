@@ -33,7 +33,7 @@ public:
   static double callbackR(int, int, double);
   static double callbackVol(int, int, double);
   static double callbackRecur(int, int, double);
-  static void draw();
+  static void draw(void *context);
 };
 
 #endif

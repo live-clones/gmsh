@@ -8,6 +8,7 @@
 
 #if defined(HAVE_FLTK)
 #include "GmshUI.h"
+#include "drawContext.h"
 #include "Draw.h"
 #endif
 
@@ -34,21 +35,22 @@ extern "C"
   }
 }
 
-void GMSH_CutPlanePlugin::draw()
+void GMSH_CutPlanePlugin::draw(void *context)
 {
 #if defined(HAVE_FLTK)
   int num = (int)CutPlaneOptions_Number[7].def;
+  drawContext *ctx = (drawContext*)context;
   if(num < 0) num = iview;
   if(num >= 0 && num < (int)PView::list.size()){
     glColor4ubv((GLubyte *) & CTX.color.fg);
     glLineWidth(CTX.line_width);
     SBoundingBox3d bb = PView::list[num]->getData()->getBoundingBox();
-    Draw_PlaneInBoundingBox(bb.min().x(), bb.min().y(), bb.min().z(), 
-                            bb.max().x(), bb.max().y(), bb.max().z(), 
-                            CutPlaneOptions_Number[0].def,
-                            CutPlaneOptions_Number[1].def,
-                            CutPlaneOptions_Number[2].def,
-                            CutPlaneOptions_Number[3].def);
+    ctx->drawPlaneInBoundingBox(bb.min().x(), bb.min().y(), bb.min().z(), 
+                                bb.max().x(), bb.max().y(), bb.max().z(), 
+                                CutPlaneOptions_Number[0].def,
+                                CutPlaneOptions_Number[1].def,
+                                CutPlaneOptions_Number[2].def,
+                                CutPlaneOptions_Number[3].def);
   }
 #endif
 }

@@ -70,12 +70,7 @@ class Context_T {
   int initial_context; // 0=automatic; 1=geom; 2=mesh; 3=solver; 4=post 
   int nopopup; // never popup dialogs in scripts (use default values instead)
   int non_modal_windows; // make all windows "non modal"
-  double rot[16]; // current rotation matrix 
-  double r[3]; // current Euler angles (in degrees!) 
-  double t[3], s[3]; // current translation and scale 
-  double t_init[3]; // initial translation before applying modelview transform
   double clip_factor; // clipping plane distance factor
-  double quaternion[4]; // current quaternion used for "trackball" rotation
   int useTrackball; // do or do not use the trackball for rotations 
   double rotation_center[3]; // point around which to rotate the scene
   int rotation_center_cg; // rotate around the center of mass instead of rotation_center[]
@@ -101,25 +96,21 @@ class Context_T {
   int gl_font_enum; // font for opengl graphics (fltk enum value)
   int gl_fontsize; // font size for opengl graphics
   double point_size, line_width; // point/line widths
-  int viewport[4]; // current viewport 
-  double vxmin, vxmax, vymin, vymax; // current viewport in real coordinates 
   int light[6]; // status of lights
   double light_position[6][4]; // light sources positions 
   double shine, shine_exponent; // material specular reflection parameters
   int render_mode; // GMSH_RENDER, GMSH_SELECT, GMSH_FEEDBACK 
   double clip_plane[6][4]; // clipping planes 
-  int clip_whole_elements, clip_only_draw_intersecting_volume, clip_only_volume; // clip options
+  int clip_whole_elements, clip_only_draw_intersecting_volume; // clipping options
+  int clip_only_volume;
   int polygon_offset, polygon_offset_always; // polygon offset control
   double polygon_offset_factor, polygon_offset_units; // params for glPolygonOffset
-  double pixel_equiv_x, pixel_equiv_y; // approx equiv model length of a pixel 
   int color_scheme; // general color scheme
   int quadric_subdivisions; // nb of subdivisions for gluQuadrics (spheres/cylinders)
   int vector_type; // default vector display type (for normals, etc.)
   double arrow_rel_head_radius; // relative radius of arrow head
   double arrow_rel_stem_radius; // relative radius of arrow stem
   double arrow_rel_stem_length; // relative length of arrow stem
-  double model[16], proj[16]; // the modelview and projection matrix as they were
-                              // at the time of the last InitPosition() call
   double mesh_timer[3]; // records cpu times for 1-D, 2-D and 3-D mesh generation
   int forced_bbox; // dynamic variable tracking if the bbox is currently imposed
   int mouse_selection; // enable selection using the mouse
@@ -129,6 +120,12 @@ class Context_T {
   int printing; // dynamic: equal to 1 while gmsh is printing
   int hide_unselected; // hide all unselected entities
   int draw_all_models;
+
+  // these are used as temp vars until the GUI is ready
+  double tmp_r[3]; // current Euler angles (in degrees!) 
+  double tmp_t[3], tmp_s[3]; // current translation and scale 
+  double tmp_quaternion[4]; // current quaternion used for "trackball" rotation
+  int tmp_viewport[4]; // current viewport 
 
   // geometry options 
   struct{
@@ -162,7 +159,8 @@ class Context_T {
     int optimize, optimize_netgen, refine_steps;
     int quality_type, label_type;
     double quality_inf, quality_sup, radius_inf, radius_sup;
-    double scaling_factor, lc_factor, rand_factor, lc_integration_precision, lc_min, lc_max, tolerance_edge_length;
+    double scaling_factor, lc_factor, rand_factor, lc_integration_precision;
+    double lc_min, lc_max, tolerance_edge_length;
     int lc_from_points, lc_from_curvature, lc_extend_from_boundary;
     int dual, voronoi, draw_skin_only;
     int light, light_two_side, light_lines;
@@ -189,7 +187,7 @@ class Context_T {
     int smooth, anim_cycle, combine_time, combine_remove_orig ;
     int file_format, plugins;
     double anim_delay ;
-    void (*plugin_draw_function)(void) ;
+    void (*plugin_draw_function)(void *context) ;
   }post;
 
   // solver options 
@@ -228,14 +226,6 @@ class Context_T {
     } mesh;
   } color;
   
-  // trackball functions 
-  void buildRotationMatrix(void);
-  void setQuaternion(double p1x, double p1y, double p2x, double p2y);
-  void addQuaternion(double p1x, double p1y, double p2x, double p2y);
-  void addQuaternionFromAxisAndAngle(double axis[3], double angle);
-  void setQuaternionFromEulerAngles(void);
-  void setEulerAnglesFromRotationMatrix(void);
-
   int big_endian; // is the machine big-endian?
 
   // how RGBA values are packed and unpacked into/from an unsigned

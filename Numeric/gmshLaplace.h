@@ -14,8 +14,9 @@
 #include "GmshMatrix.h"
 
 class gmshLaplaceTerm : public gmshNodalFemTerm {
+ private:
+  const gmshFunction *_diffusivity;
   const int _iField ;
-  const gmshFunction * _diffusivity;
  protected:
   virtual int sizeOfR(MElement *e) const { return e->getNumVertices(); }
   virtual int sizeOfC(MElement *e) const { return e->getNumVertices(); }
@@ -27,7 +28,7 @@ class gmshLaplaceTerm : public gmshNodalFemTerm {
   }
  public:
   gmshLaplaceTerm(GModel *gm, gmshFunction *diffusivity, int iField = 0) : 
-    gmshNodalFemTerm(gm),_diffusivity(diffusivity), _iField(iField){}
+    gmshNodalFemTerm(gm), _diffusivity(diffusivity), _iField(iField){}
   virtual void elementMatrix(MElement *e, Double_Matrix &m) const;
 };
 

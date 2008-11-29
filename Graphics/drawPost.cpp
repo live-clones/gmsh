@@ -5,6 +5,7 @@
 
 #include <math.h>
 #include <algorithm>
+#include "drawContext.h"
 #include "GmshMessage.h"
 #include "GmshUI.h"
 #include "Numeric.h"
@@ -990,7 +991,8 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
   }
 }
 
-static void drawArrays(PView *p, VertexArray *va, GLint type, bool useNormalArray)
+static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type, 
+                       bool useNormalArray)
 {
   if(!va || !va->getNumVertices()) return;
 
@@ -1019,7 +1021,7 @@ static void drawArrays(PView *p, VertexArray *va, GLint type, bool useNormalArra
 	}
       }
       else
-	Draw_Sphere(opt->PointSize * f, p[0], p[1], p[2], opt->Light);
+	ctx->drawSphere(opt->PointSize * f, p[0], p[1], p[2], opt->Light);
     }
   }
   else if(type == GL_LINES && opt->LineType > 0){
@@ -1032,10 +1034,10 @@ static void drawArrays(PView *p, VertexArray *va, GLint type, bool useNormalArra
         char *n0 = va->getNormalArray(3 * i);
         char *n1 = va->getNormalArray(3 * (i + 1));
         double v0 = char2float(*n0), v1 = char2float(*n1);
-        Draw_TapCylinder(opt->LineWidth, v0, v1, 0., 1., x, y, z, opt->Light);
+        ctx->drawTaperedCylinder(opt->LineWidth, v0, v1, 0., 1., x, y, z, opt->Light);
       }
       else
-        Draw_Cylinder(opt->LineWidth, x, y, z, opt->Light);
+        ctx->drawCylinder(opt->LineWidth, x, y, z, opt->Light);
     }
   }
   else{
@@ -1060,7 +1062,7 @@ static void drawArrays(PView *p, VertexArray *va, GLint type, bool useNormalArra
   glDisable(GL_LIGHTING);
 }
 
-static void drawVectorArray(PView *p, VertexArray *va)
+static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
 {
   if(!va || va->getNumVerticesPerElement() != 2) return;
 
@@ -1085,7 +1087,7 @@ static void drawVectorArray(PView *p, VertexArray *va)
       // only draw vectors larger than 1 pixel on screen, except when
       // drawing "comet" glyphs
       if(opt->VectorType == 6 || fabs(px) > 1. || fabs(py) > 1. || fabs(pz) > 1.){
-        double d = CTX.pixel_equiv_x / CTX.s[0];
+        double d = ctx->pixel_equiv_x / ctx->s[0];
         double dx = px * d, dy = py * d, dz = pz * d;
         double x = s[0], y = s[1], z = s[2];
         if(opt->CenterGlyphs){
@@ -1093,9 +1095,9 @@ static void drawVectorArray(PView *p, VertexArray *va)
           y -= 0.5 * dy;
           z -= 0.5 * dz;
         }
-        Draw_Vector(opt->VectorType, opt->IntervalsType != PViewOptions::Iso,
-                    opt->ArrowRelHeadRadius, opt->ArrowRelStemLength,
-                    opt->ArrowRelStemRadius, x, y, z, dx, dy, dz, opt->Light);
+        ctx->drawVector(opt->VectorType, opt->IntervalsType != PViewOptions::Iso,
+                        opt->ArrowRelHeadRadius, opt->ArrowRelStemLength,
+                        opt->ArrowRelStemRadius, x, y, z, dx, dy, dz, opt->Light);
       }
     }
   }
@@ -1161,8 +1163,8 @@ static void drawNumberGlyphs(PView *p, int numNodes, int numComp,
   }
 }
 
-static void drawNormalVectorGlyphs(PView *p, int numNodes, double xyz[NMAX][3],
-				   double val[NMAX][9])
+static void drawNormalVectorGlyphs(drawContext *ctx, PView *p, int numNodes, 
+                                   double xyz[NMAX][3], double val[NMAX][9])
 {
   PViewOptions *opt = p->getOptions();
 
@@ -1174,15 +1176,15 @@ static void drawNormalVectorGlyphs(PView *p, int numNodes, double xyz[NMAX][3],
   SVector3 n = normal3(xyz);
   n.normalize();
   for(int i = 0; i < 3; i++)
-    n[i] *= opt->Normals * CTX.pixel_equiv_x / CTX.s[i];
+    n[i] *= opt->Normals * ctx->pixel_equiv_x / ctx->s[i];
   glColor4ubv((GLubyte *) & opt->color.normals);
-  Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
-              CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
-              pc[0], pc[1], pc[2], n[0], n[1], n[2], opt->Light);
+  ctx->drawVector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
+                  CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
+                  pc[0], pc[1], pc[2], n[0], n[1], n[2], opt->Light);
 }
 
-static void drawTangentVectorGlyphs(PView *p, int numNodes, double xyz[NMAX][3],
-				    double val[NMAX][9])
+static void drawTangentVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
+                                    double xyz[NMAX][3], double val[NMAX][9])
 {
   PViewOptions *opt = p->getOptions();
 
@@ -1192,14 +1194,14 @@ static void drawTangentVectorGlyphs(PView *p, int numNodes, double xyz[NMAX][3],
   SVector3 t(p0, p1);
   t.normalize();
   for(int i = 0; i < 3; i++)
-    t[i] *= opt->Tangents * CTX.pixel_equiv_x / CTX.s[i];
+    t[i] *= opt->Tangents * ctx->pixel_equiv_x / ctx->s[i];
   glColor4ubv((GLubyte *) & opt->color.tangents);
-  Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
-              CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
-              pc[0], pc[1], pc[2], t[0], t[1], t[2], opt->Light);
+  ctx->drawVector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
+                  CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
+                  pc[0], pc[1], pc[2], t[0], t[1], t[2], opt->Light);
 }
 
-static void drawGlyphs(PView *p)
+static void drawGlyphs(drawContext *ctx, PView *p)
 {
   // use adaptive data if available
   PViewData *data = p->getData(true);
@@ -1229,9 +1231,9 @@ static void drawGlyphs(PView *p)
       if(opt->IntervalsType == PViewOptions::Numeric)
         drawNumberGlyphs(p, numNodes, numComp, xyz, val);
       if(dim == 2 && opt->Normals)
-        drawNormalVectorGlyphs(p, numNodes, xyz, val);
+        drawNormalVectorGlyphs(ctx, p, numNodes, xyz, val);
       else if(dim == 1 && opt->Tangents)
-        drawTangentVectorGlyphs(p, numNodes, xyz, val);  
+        drawTangentVectorGlyphs(ctx, p, numNodes, xyz, val);  
     }
   }
 }
@@ -1348,10 +1350,10 @@ class initPView {
   }
 };
 
-static bool eyeChanged(PView *p)
+static bool eyeChanged(drawContext *ctx, PView *p)
 {
   double zeye = 100 * CTX.lc;
-  SPoint3 tmp(CTX.rot[2] * zeye, CTX.rot[6] * zeye, CTX.rot[10] * zeye);
+  SPoint3 tmp(ctx->rot[2] * zeye, ctx->rot[6] * zeye, ctx->rot[10] * zeye);
   if(tmp.distance(p->getEye()) > 1.e-3){
     p->setEye(tmp);
     return true;
@@ -1360,7 +1362,10 @@ static bool eyeChanged(PView *p)
 }
 
 class drawPView {
+ private:
+  drawContext *_ctx;
  public:
+  drawPView(drawContext *ctx) : _ctx(ctx) {}
   void operator () (PView *p)
   {
     // use adaptive data if available
@@ -1403,7 +1408,7 @@ class drawPView {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         // glBlendEquation(GL_FUNC_ADD);
         glEnable(GL_BLEND);
-        if(eyeChanged(p)){
+        if(eyeChanged(_ctx, p)){
           Msg::Debug("Sorting View[%d] for transparency", p->getIndex());
           p->va_triangles->sort(p->getEye().x(), p->getEye().y(), p->getEye().z());
         }
@@ -1426,16 +1431,16 @@ class drawPView {
     }
 
     // draw all the vertex arrays
-    drawArrays(p, p->va_points, GL_POINTS, false);
-    drawArrays(p, p->va_lines, GL_LINES, opt->Light && opt->LightLines);
-    drawArrays(p, p->va_triangles, GL_TRIANGLES, opt->Light);
+    drawArrays(_ctx, p, p->va_points, GL_POINTS, false);
+    drawArrays(_ctx, p, p->va_lines, GL_LINES, opt->Light && opt->LightLines);
+    drawArrays(_ctx, p, p->va_triangles, GL_TRIANGLES, opt->Light);
 
     // draw the "pseudo" vertex arrays for vectors
-    drawVectorArray(p, p->va_vectors);
+    drawVectorArray(_ctx, p, p->va_vectors);
 
     // to avoid looping over elements we should also store these
     // glyphs in "pseudo" vertex arrays
-    drawGlyphs(p);
+    drawGlyphs(_ctx, p);
 
     // draw the 3D strings
     if(opt->DrawStrings){
@@ -1462,18 +1467,21 @@ class drawPView {
       glLineWidth(CTX.line_width);
       gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
       if(!opt->AxesAutoPosition)
-        Draw_Axes(opt->Axes, opt->AxesTics, opt->AxesFormat, opt->AxesLabel,
-                  opt->AxesPosition,opt->AxesMikado);
+        _ctx->drawAxes(opt->Axes, opt->AxesTics, opt->AxesFormat, opt->AxesLabel,
+                       opt->AxesPosition, opt->AxesMikado);
       else if(!opt->TmpBBox.empty())
-        Draw_Axes(opt->Axes, opt->AxesTics, opt->AxesFormat, opt->AxesLabel,
-                  opt->TmpBBox,opt->AxesMikado);
+        _ctx->drawAxes(opt->Axes, opt->AxesTics, opt->AxesFormat, opt->AxesLabel,
+                       opt->TmpBBox, opt->AxesMikado);
     }
     
   }
 };
 
 class drawPViewBoundingBox {
- public :
+ private:
+  drawContext *_ctx;
+ public:
+  drawPViewBoundingBox(drawContext *ctx) : _ctx(ctx) {}
   void operator () (PView *p)
   {
     PViewData *data = p->getData();
@@ -1488,27 +1496,27 @@ class drawPViewBoundingBox {
     glLineWidth(CTX.line_width);
     gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
 
-    Draw_Box(bb.min().x(), bb.min().y(), bb.min().z(),
-             bb.max().x(), bb.max().y(), bb.max().z());
+    _ctx->drawBox(bb.min().x(), bb.min().y(), bb.min().z(),
+                  bb.max().x(), bb.max().y(), bb.max().z());
     glColor3d(1., 0., 0.);
     for(int i = 0; i < 6; i++)
       if(opt->Clip & (1 << i))
-        Draw_PlaneInBoundingBox(bb.min().x(), bb.min().y(), bb.min().z(),
-                                bb.max().x(), bb.max().y(), bb.max().z(),
-                                CTX.clip_plane[i][0], CTX.clip_plane[i][1], 
-                                CTX.clip_plane[i][2], CTX.clip_plane[i][3]);
+        _ctx->drawPlaneInBoundingBox(bb.min().x(), bb.min().y(), bb.min().z(),
+                                     bb.max().x(), bb.max().y(), bb.max().z(),
+                                     CTX.clip_plane[i][0], CTX.clip_plane[i][1], 
+                                     CTX.clip_plane[i][2], CTX.clip_plane[i][3]);
   }
 };
 
-void Draw_Post()
+void drawContext::drawPost()
 {
   // draw any plugin-specific stuff
-  if(CTX.post.plugin_draw_function) (*CTX.post.plugin_draw_function)();
+  if(CTX.post.plugin_draw_function) (*CTX.post.plugin_draw_function)(this);
 
   if(PView::list.empty()) return;
 
   if(CTX.draw_bbox || !CTX.post.draw)
-    std::for_each(PView::list.begin(), PView::list.end(), drawPViewBoundingBox());
+    std::for_each(PView::list.begin(), PView::list.end(), drawPViewBoundingBox(this));
 
   if(!CTX.post.draw) return;
 
@@ -1516,7 +1524,7 @@ void Draw_Post()
   if(!busy){
     busy = true;
     std::for_each(PView::list.begin(), PView::list.end(), initPView());
-    std::for_each(PView::list.begin(), PView::list.end(), drawPView());
+    std::for_each(PView::list.begin(), PView::list.end(), drawPView(this));
     busy = false;
   }
 }

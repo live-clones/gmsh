@@ -3,20 +3,16 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include "GUI.h"
 #include "GmshUI.h"
 #include "GmshDefines.h"
-#include "Numeric.h"
-#include "Context.h"
 #include "Draw.h"
-#include "SelectBuffer.h"
 #include "StringUtils.h"
-#include "GUI.h"
 #include "gl2ps.h"
+#include "Context.h"
 
-extern GUI *WID;
 extern Context_T CTX;
-
-// Draw specialization
+extern GUI *WID;
 
 void SetOpenglContext()
 {
@@ -24,10 +20,43 @@ void SetOpenglContext()
   WID->make_opengl_current();
 }
 
+void ClearOpengl()
+{
+  glClearColor(CTX.UNPACK_RED(CTX.color.bg) / 255.,
+               CTX.UNPACK_GREEN(CTX.color.bg) / 255.,
+               CTX.UNPACK_BLUE(CTX.color.bg) / 255., 0.);
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+}
+
 void Draw()
 {
   if(!WID) return;
   WID->redraw_opengl();
+}
+
+void Draw2d3d()
+{
+  if(!WID) return;
+  WID->g_opengl_window->getDrawContext()->draw3d();
+  WID->g_opengl_window->getDrawContext()->draw2d();
+}
+
+void DrawPlugin(void (*draw)(void *context))
+{
+  CTX.post.plugin_draw_function = draw;
+  int old = CTX.draw_bbox;
+  CTX.draw_bbox = 1;
+  if(CTX.fast_redraw){
+    CTX.post.draw = 0;
+    CTX.mesh.draw = 0;
+  }
+  if(!CTX.batch) 
+    Draw();
+  // this is reset in each plugin run/cancel callback:
+  // CTX.post.plugin_draw_function = NULL;
+  CTX.draw_bbox = old;
+  CTX.post.draw = 1;
+  CTX.mesh.draw = 1;
 }
 
 void Draw_String(std::string s, const char *font_name, int font_enum, 
@@ -137,89 +166,45 @@ void Draw_OnScreenMessages()
   gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
   double h = gl_height();
   
+  drawContext *ctx = WID->g_opengl_window->getDrawContext();
+  
   if(strlen(WID->onscreen_buffer[0])){
     double w = gl_width(WID->onscreen_buffer[0]);
-    glRasterPos2d(CTX.viewport[2]/2.-w/2., CTX.viewport[3] - 1.2*h);
+    glRasterPos2d(ctx->viewport[2] / 2. - w / 2., 
+                  ctx->viewport[3] - 1.2 * h);
     gl_draw(WID->onscreen_buffer[0]);
   }
   if(strlen(WID->onscreen_buffer[1])){
     double w = gl_width(WID->onscreen_buffer[1]);
-    glRasterPos2d(CTX.viewport[2]/2.-w/2., CTX.viewport[3] - 2.4*h);
+    glRasterPos2d(ctx->viewport[2] / 2. - w / 2.,
+                  ctx->viewport[3] - 2.4 * h);
     gl_draw(WID->onscreen_buffer[1]);
   }
 }
 
-// Select entity routine
-
-char SelectEntity(int type, 
-                  std::vector<GVertex*> &vertices,
-                  std::vector<GEdge*> &edges,
-                  std::vector<GFace*> &faces,
-                  std::vector<GRegion*> &regions,
-                  std::vector<MElement*> &elements)
+void GetStoredViewport(int viewport[4])
 {
-  if(!WID) return 'q';
+  if(!WID) return;
+  for(int i = 0; i < 4; i++)
+    viewport[i] = WID->g_opengl_window->getDrawContext()->viewport[i];
+}
 
-  WID->g_opengl_window->take_focus(); // force keyboard focus in GL window 
-  WID->g_opengl_window->SelectionMode = true; // enable lasso selection
+void Viewport2World(double win[3], double xyz[3])
+{
+  GLint viewport[4];
+  GLdouble model[16], proj[16];
+  glGetIntegerv(GL_VIEWPORT, viewport);
+  glGetDoublev(GL_PROJECTION_MATRIX, proj);
+  glGetDoublev(GL_MODELVIEW_MATRIX, model);
+  gluUnProject(win[0], win[1], win[2], model, proj, viewport, &xyz[0], &xyz[1], &xyz[2]);
+}
 
-  WID->selection = type;
-  WID->try_selection = 0;
-  WID->quit_selection = 0;
-  WID->end_selection = 0;
-  WID->undo_selection = 0;
-  WID->invert_selection = 0;
-
-  while(1) {
-    vertices.clear();
-    edges.clear();
-    faces.clear();
-    regions.clear();
-    elements.clear();
-    WID->wait();
-    if(WID->quit_selection) {
-      WID->selection = ENT_NONE;
-      WID->g_opengl_window->SelectionMode = false;
-      WID->g_opengl_window->LassoMode = false;
-      WID->g_opengl_window->AddPointMode = false;
-      WID->g_opengl_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
-      return 'q';
-    }
-    if(WID->end_selection) {
-      WID->end_selection = 0;
-      WID->selection = ENT_NONE;
-      return 'e';
-    }
-    if(WID->undo_selection) {
-      WID->undo_selection = 0;
-      return 'u';
-    }
-    if(WID->invert_selection) {
-      WID->invert_selection = 0;
-      return 'i';
-    }
-    if(WID->try_selection) {
-      bool add = (WID->try_selection > 0) ? true : false;
-      bool multi = (abs(WID->try_selection) > 1) ? true : false;
-      WID->try_selection = 0;
-      if(WID->selection == ENT_NONE){ // just report the mouse click
-        WID->g_opengl_window->SelectionMode = false;
-        return 'c';
-      }
-      else if(ProcessSelectionBuffer(WID->selection, multi, true,
-                                     WID->try_selection_xywh[0],
-                                     WID->try_selection_xywh[1], 
-                                     WID->try_selection_xywh[2],
-                                     WID->try_selection_xywh[3], 
-                                     vertices, edges, faces, regions,
-                                     elements)){
-        WID->selection = ENT_NONE;
-        WID->g_opengl_window->SelectionMode = false;
-        if(add)
-          return 'l';
-        else
-          return 'r';
-      }
-    }
-  }
+void World2Viewport(double xyz[3], double win[3])
+{
+  GLint viewport[4];
+  GLdouble model[16], proj[16];
+  glGetIntegerv(GL_VIEWPORT, viewport);
+  glGetDoublev(GL_PROJECTION_MATRIX, proj);
+  glGetDoublev(GL_MODELVIEW_MATRIX, model);
+  gluProject(xyz[0], xyz[1], xyz[2], model, proj, viewport, &win[0], &win[1], &win[2]);
 }

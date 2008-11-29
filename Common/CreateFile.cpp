@@ -117,8 +117,10 @@ void CreateOutputFile(const char *filename, int format)
   CTX.printing = 1;
 
 #if defined(HAVE_FLTK)
+  int vp[4];
+  GetStoredViewport(vp);
   GLint viewport[4];
-  for(int i = 0; i < 4; i++) viewport[i] = CTX.viewport[i];
+  for(int i = 0; i < 4; i++) viewport[i] = vp[i];
   GLint width = viewport[2] - viewport[0];
   GLint height = viewport[3] - viewport[1];
 #endif
@@ -139,7 +141,8 @@ void CreateOutputFile(const char *filename, int format)
 
   case FORMAT_MSH:
     GModel::current()->writeMSH(name, CTX.mesh.msh_file_version, CTX.mesh.binary, 
-                                CTX.mesh.save_all, CTX.mesh.save_parametric,CTX.mesh.scaling_factor);
+                                CTX.mesh.save_all, CTX.mesh.save_parametric,
+                                CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_STL:
@@ -192,7 +195,8 @@ void CreateOutputFile(const char *filename, int format)
   case FORMAT_POS:
     GModel::current()->writePOS(name, CTX.print.pos_elementary, CTX.print.pos_element, 
                                 CTX.print.pos_gamma, CTX.print.pos_eta, CTX.print.pos_rho, 
-				CTX.print.pos_disto,CTX.mesh.save_all, CTX.mesh.scaling_factor);
+				CTX.print.pos_disto, CTX.mesh.save_all, 
+                                CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_GEO:
@@ -306,8 +310,8 @@ void CreateOutputFile(const char *filename, int format)
           glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
           glMatrixMode(GL_PROJECTION);
           glLoadIdentity();
-          glOrtho((double)CTX.viewport[0], (double)CTX.viewport[2],
-                  (double)CTX.viewport[1], (double)CTX.viewport[3], -1., 1.);
+          glOrtho((double)viewport[0], (double)viewport[2],
+                  (double)viewport[1], (double)viewport[3], -1., 1.);
           glMatrixMode(GL_MODELVIEW);
           glLoadIdentity();
           glRasterPos2d(0, 0);

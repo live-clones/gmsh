@@ -30,7 +30,7 @@ public:
   static double callbackX(int, int, double);
   static double callbackY(int, int, double);
   static double callbackZ(int, int, double);
-  static void draw();
+  static void draw(void *context);
 };
 
 #endif

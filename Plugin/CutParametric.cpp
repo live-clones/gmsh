@@ -10,6 +10,7 @@
 
 #if defined(HAVE_FLTK)
 #include "GmshUI.h"
+#include "drawContext.h"
 #include "Draw.h"
 #endif
 
@@ -101,7 +102,7 @@ int GMSH_CutParametricPlugin::fillXYZ()
 #endif
 }
 
-void GMSH_CutParametricPlugin::draw()
+void GMSH_CutParametricPlugin::draw(void *context)
 {
 #if defined(HAVE_FLTK)
   if(recompute){
@@ -118,8 +119,9 @@ void GMSH_CutParametricPlugin::draw()
     glEnd();
   }
   else{
+    drawContext *ctx = (drawContext*)context;
     for(unsigned int i = 0; i < x.size(); ++i)
-      Draw_Sphere(CTX.point_size, x[i], y[i], z[i], 1);
+      ctx->drawSphere(CTX.point_size, x[i], y[i], z[i], 1);
   }
 #endif
 }

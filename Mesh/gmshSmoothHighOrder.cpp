@@ -117,7 +117,7 @@ void gmshHighOrderSmoother::smooth ( std::vector<MElement*>  & all)
   }
 
   // 3 -> .4
-  printf("%d elements after adding %d layers\n", v.size(), nbLayers);
+  printf("%d elements after adding %d layers\n", (int)v.size(), nbLayers);
 
   addOneLayer(all, v, layer);
 

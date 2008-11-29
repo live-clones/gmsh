@@ -510,8 +510,6 @@ int GetFontSize()
 
 // Definition of global shortcuts
 
-#include "GmshSocket.h"
-
 int GUI::global_shortcuts(int event)
 {
   // we only handle shortcuts here
@@ -521,15 +519,6 @@ int GUI::global_shortcuts(int event)
   if(Fl::test_shortcut('0')) {
     geometry_reload_cb(0, 0);
     mod_geometry_cb(0, 0);
-    return 1;
-  }
-  // FIXME TESTING ONLY -- TO REMOVE LATER
-  else if(Fl::test_shortcut(FL_CTRL + 'p')) {
-    Msg::Info("TEST DAEMON!");
-    if(SINFO[2].server){
-      Msg::Info("SENDING COMMAND!");
-      SINFO[2].server->SendString(GmshSocket::CLIENT_INFO, "HEY YOU!");
-    }
     return 1;
   }
   else if(Fl::test_shortcut('1') || Fl::test_shortcut(FL_F + 1)) {
@@ -1444,8 +1433,8 @@ void GUI::create_graphic_window()
 
   int sh = 2 * fontsize - 4;    // status bar height
   int sw = fontsize + 3;        // status button width
-  int width = CTX.viewport[2] - CTX.viewport[0];
-  int glheight = CTX.viewport[3] - CTX.viewport[1];
+  int width = CTX.tmp_viewport[2] - CTX.tmp_viewport[0];
+  int glheight = CTX.tmp_viewport[3] - CTX.tmp_viewport[1];
   int height = glheight + sh;
 
   // the graphic window is the main window: it should be a normal
@@ -2441,8 +2430,6 @@ void GUI::create_option_window()
       mesh_choice[5]->menu(menu_recombine_algo);
       mesh_choice[5]->align(FL_ALIGN_RIGHT);
       mesh_choice[5]->callback(mesh_options_ok_cb);
-      // not reimplemented yet
-      //      ((Fl_Menu_Item*)mesh_choice[5]->menu())[1].deactivate();
 
       mesh_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Smoothing steps");
       mesh_value[0]->minimum(0);
@@ -4682,17 +4669,17 @@ void GUI::update_manip_window(int force)
   if(force || manip_window->shown()){
     double val1 = CTX.lc;
     for(int i = 0; i < 3; i++){
-      manip_value[i]->value(CTX.r[i]);
+      manip_value[i]->value(g_opengl_window->getDrawContext()->r[i]);
       manip_value[i]->minimum(-360.);
       manip_value[i]->maximum(360.);
       manip_value[i]->step(1.);
 
-      manip_value[i+3]->value(CTX.t[i]);
+      manip_value[i+3]->value(g_opengl_window->getDrawContext()->t[i]);
       manip_value[i+3]->minimum(-val1);
       manip_value[i+3]->maximum(val1);
       manip_value[i+3]->step(val1/200.);
 
-      manip_value[i+6]->value(CTX.s[i]);
+      manip_value[i+6]->value(g_opengl_window->getDrawContext()->s[i]);
       manip_value[i+6]->minimum(0.01);
       manip_value[i+6]->maximum(100.);
       manip_value[i+6]->step(0.01);

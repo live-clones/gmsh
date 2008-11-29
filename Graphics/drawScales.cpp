@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include "drawContext.h"
 #include "GmshUI.h"
 #include "Draw.h"
 #include "PView.h"
@@ -213,7 +214,7 @@ static void drawScale(PView *p, double xmin, double ymin, double width,
   drawScaleLabel(p, xmin, ymin, width, height, tic, horizontal);
 }
 
-void Draw_Scales()
+void drawContext::drawScales()
 {
   std::vector<PView*> scales;
   for(unsigned int i = 0; i < PView::list.size(); i++){
@@ -245,26 +246,26 @@ void Draw_Scales()
     if(!opt->AutoPosition) {
       double w = opt->Size[0], h = opt->Size[1];
       double x = opt->Position[0], y = opt->Position[1] - h;
-      int c = Fix2DCoordinates(&x, &y);
+      int c = fix2dCoordinates(&x, &y);
       if(c & 1) x -= w / 2.;
       if(c & 2) y += h / 2.;
       drawScale(p, x, y, w, h, tic, CTX.post.horizontal_scales);
     }
     else if(CTX.post.horizontal_scales){
       double ysep = 20.;
-      double xc = (CTX.viewport[2] - CTX.viewport[0]) / 2.;
+      double xc = (viewport[2] - viewport[0]) / 2.;
       if(scales.size() == 1){
-        double w = (CTX.viewport[2] - CTX.viewport[0]) / 2., h = bar_size;
-        double x = xc - w / 2., y = CTX.viewport[1] + ysep;
+        double w = (viewport[2] - viewport[0]) / 2., h = bar_size;
+        double x = xc - w / 2., y = viewport[1] + ysep;
         drawScale(p, x, y, w, h, tic, 1);
       }
       else{
-        double xsep = maxw / 4. + (CTX.viewport[2] - CTX.viewport[0]) / 10.;
-        double w = (CTX.viewport[2] - CTX.viewport[0] - 4 * xsep) / 2.;
+        double xsep = maxw / 4. + (viewport[2] - viewport[0]) / 10.;
+        double w = (viewport[2] - viewport[0] - 4 * xsep) / 2.;
         if(w < 20.) w = 20.;
         double h = bar_size;
         double x = xc - (i % 2 ? -xsep / 1.5 : w + xsep / 1.5);
-        double y = CTX.viewport[1] + ysep + 
+        double y = viewport[1] + ysep + 
           (i / 2) * (bar_size + tic + 2 * gl_height() + ysep);
         drawScale(p, x, y, w, h, tic, 1);
       }
@@ -273,17 +274,17 @@ void Draw_Scales()
       double xsep = 20.;
       double dy = 2. * gl_height();
       if(scales.size() == 1){
-        double ysep = (CTX.viewport[3] - CTX.viewport[1]) / 6.;
-        double w = bar_size, h = CTX.viewport[3] - CTX.viewport[1] - 2 * ysep - dy;
-        double x = CTX.viewport[0] + xsep, y = CTX.viewport[1] + ysep + dy;
+        double ysep = (viewport[3] - viewport[1]) / 6.;
+        double w = bar_size, h = viewport[3] - viewport[1] - 2 * ysep - dy;
+        double x = viewport[0] + xsep, y = viewport[1] + ysep + dy;
         drawScale(p, x, y, w, h, tic, 0);
       }
       else{
-        double ysep = (CTX.viewport[3] - CTX.viewport[1]) / 15.;
+        double ysep = (viewport[3] - viewport[1]) / 15.;
         double w = bar_size;
-        double h = (CTX.viewport[3] - CTX.viewport[1] - 3 * ysep - 2.5 * dy) / 2.;
-        double x = CTX.viewport[0] + xsep + width_total + (i / 2) * xsep;
-        double y = CTX.viewport[1] + ysep + dy + (1 - i % 2) * (h + 1.5 * dy + ysep);
+        double h = (viewport[3] - viewport[1] - 3 * ysep - 2.5 * dy) / 2.;
+        double x = viewport[0] + xsep + width_total + (i / 2) * xsep;
+        double y = viewport[1] + ysep + dy + (1 - i % 2) * (h + 1.5 * dy + ysep);
         drawScale(p, x, y, w, h, tic, 0);
       }
       // compute width

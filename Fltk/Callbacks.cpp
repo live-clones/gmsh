@@ -374,68 +374,70 @@ void status_xyz1p_cb(CALLBACK_ARGS)
 {
   const char *str = (const char*)data;
 
+  drawContext *ctx = WID->g_opengl_window->getDrawContext();
+
   if(!strcmp(str, "r")){ // rotate 90 degress around axis perp to the screen
     double axis[3] = {0., 0., 1.};
     if(!Fl::event_state(FL_SHIFT))
-      CTX.addQuaternionFromAxisAndAngle(axis, -90.);
+      ctx->addQuaternionFromAxisAndAngle(axis, -90.);
     else
-      CTX.addQuaternionFromAxisAndAngle(axis, 90.);
+      ctx->addQuaternionFromAxisAndAngle(axis, 90.);
     Draw();
   }
   else if(!strcmp(str, "x")){ // X pointing out or into the screen
     if(!Fl::event_state(FL_SHIFT)){
-      CTX.r[0] = -90.;
-      CTX.r[1] = 0.;
-      CTX.r[2] = -90.;
+      ctx->r[0] = -90.;
+      ctx->r[1] = 0.;
+      ctx->r[2] = -90.;
     }
     else{
-      CTX.r[0] = -90.;
-      CTX.r[1] = 0.;
-      CTX.r[2] = 90.;
+      ctx->r[0] = -90.;
+      ctx->r[1] = 0.;
+      ctx->r[2] = 90.;
     }
-    CTX.setQuaternionFromEulerAngles();
+    ctx->setQuaternionFromEulerAngles();
     Draw();
   }
   else if(!strcmp(str, "y")){ // Y pointing out or into the screen
     if(!Fl::event_state(FL_SHIFT)){
-      CTX.r[0] = -90.;
-      CTX.r[1] = 0.;
-      CTX.r[2] = 180.;
+      ctx->r[0] = -90.;
+      ctx->r[1] = 0.;
+      ctx->r[2] = 180.;
     }
     else{
-      CTX.r[0] = -90.;
-      CTX.r[1] = 0.;
-      CTX.r[2] = 0.;
+      ctx->r[0] = -90.;
+      ctx->r[1] = 0.;
+      ctx->r[2] = 0.;
     }
-    CTX.setQuaternionFromEulerAngles();
+    ctx->setQuaternionFromEulerAngles();
     Draw();
   }
   else if(!strcmp(str, "z")){ // Z pointing out or into the screen
     if(!Fl::event_state(FL_SHIFT)){
-      CTX.r[0] = 0.;
-      CTX.r[1] = 0.;
-      CTX.r[2] = 0.;
+      ctx->r[0] = 0.;
+      ctx->r[1] = 0.;
+      ctx->r[2] = 0.;
     }
     else{
-      CTX.r[0] = 0.;
-      CTX.r[1] = 180.;
-      CTX.r[2] = 0.;
+      ctx->r[0] = 0.;
+      ctx->r[1] = 180.;
+      ctx->r[2] = 0.;
     }
-    CTX.setQuaternionFromEulerAngles();
+    ctx->setQuaternionFromEulerAngles();
     Draw();
   }
   else if(!strcmp(str, "1:1")){ // reset translation and scaling
-    CTX.t[0] = CTX.t[1] = CTX.t[2] = 0.;
-    CTX.s[0] = CTX.s[1] = CTX.s[2] = 1.;
+    ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
+    ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
     Draw();
   }
   else if(!strcmp(str, "reset")){ // reset everything
-    CTX.t[0] = CTX.t[1] = CTX.t[2] = 0.;
-    CTX.s[0] = CTX.s[1] = CTX.s[2] = 1.;
-    CTX.r[0] = 0.;
-    CTX.r[1] = 0.;
-    CTX.r[2] = 0.;
-    CTX.setQuaternionFromEulerAngles();
+    ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
+    ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
+    ctx->r[0] = 0.;
+    ctx->r[1] = 0.;
+    ctx->r[2] = 0.;
+    ctx->setQuaternionFromEulerAngles();
     Draw();
   }
   else if(!strcmp(str, "p")){ // toggle projection mode
@@ -2459,16 +2461,17 @@ void manip_cb(CALLBACK_ARGS)
 
 void manip_update_cb(CALLBACK_ARGS)
 {
-  CTX.r[0] = WID->manip_value[0]->value();
-  CTX.r[1] = WID->manip_value[1]->value();
-  CTX.r[2] = WID->manip_value[2]->value();
-  CTX.t[0] = WID->manip_value[3]->value();
-  CTX.t[1] = WID->manip_value[4]->value();
-  CTX.t[2] = WID->manip_value[5]->value();
-  CTX.s[0] = WID->manip_value[6]->value();
-  CTX.s[1] = WID->manip_value[7]->value();
-  CTX.s[2] = WID->manip_value[8]->value();
-  CTX.setQuaternionFromEulerAngles();
+  drawContext *ctx = WID->g_opengl_window->getDrawContext();
+  ctx->r[0] = WID->manip_value[0]->value();
+  ctx->r[1] = WID->manip_value[1]->value();
+  ctx->r[2] = WID->manip_value[2]->value();
+  ctx->t[0] = WID->manip_value[3]->value();
+  ctx->t[1] = WID->manip_value[4]->value();
+  ctx->t[2] = WID->manip_value[5]->value();
+  ctx->s[0] = WID->manip_value[6]->value();
+  ctx->s[1] = WID->manip_value[7]->value();
+  ctx->s[2] = WID->manip_value[8]->value();
+  ctx->setQuaternionFromEulerAngles();
   Draw();
 }
 

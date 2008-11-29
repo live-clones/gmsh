@@ -33,7 +33,8 @@ extern GUI *WID;
 extern void activate_cb(Fl_Widget* w, void* data);
 #endif
 
-extern Context_T CTX;
+// the single static option context
+Context_T CTX;
 
 // General routines for string options
 
@@ -104,7 +105,7 @@ static void Print_StringOptions(int num, int level, int diff, int help,
           fprintf(file, "%s\n", tmp);
         else{
           // remove \n, \t, \r
-          for(int i = 0; i < strlen(tmp); i++)
+          for(unsigned int i = 0; i < strlen(tmp); i++)
             if(tmp[i] == '\n' || tmp[i] == '\t' || tmp[i] == '\r') tmp[i] = ' ';
           // Warning: must call Msg::Direct(level, ...) here, because
           // we cannot use tmp as a format string (it can contain %s!)
@@ -116,7 +117,8 @@ static void Print_StringOptions(int num, int level, int diff, int help,
   }
 }
 
-static const char *Get_OptionSaveLevel(int level){
+static const char *Get_OptionSaveLevel(int level)
+{
   if(level & GMSH_SESSIONRC){
     return "General.SessionFileName";
   }
@@ -463,13 +465,11 @@ void Init_Options(int num)
   CTX.output_filename = NULL;
   CTX.bgm_filename = NULL;
   CTX.lc = 1.0;
-  CTX.viewport[0] = CTX.viewport[1] = 0;
+  CTX.tmp_viewport[0] = CTX.tmp_viewport[1] = 0;
   CTX.min[0] = CTX.min[1] = CTX.min[2] = 0.0;
   CTX.max[0] = CTX.max[1] = CTX.max[2] = 1.0;
   CTX.cg[0] = CTX.cg[1] = CTX.cg[2] = 0.0;
-  CTX.vxmin = CTX.vymin = CTX.vxmax = CTX.vymax = 0.;
   CTX.render_mode = GMSH_RENDER;
-  CTX.pixel_equiv_x = CTX.pixel_equiv_y = 0.;
   CTX.polygon_offset = 0;
   CTX.printing = 0;
   CTX.mesh_timer[0] = CTX.mesh_timer[1] = CTX.mesh_timer[2] = 0.;
@@ -600,7 +600,8 @@ static void Print_ColorTable(int num, int diff, const char *prefix, FILE *file)
 }
 
 //used in field options, sorry if it's already implemented somewhere else...
-static void Sanitize_String_Texi(std::string &s){
+static void Sanitize_String_Texi(std::string &s)
+{
   int i=-1;
   while ((i=s.find('\n',i+1))>=0){
     s.insert(i,"@*");
@@ -2405,15 +2406,29 @@ double opt_general_graphics_fontsize(OPT_ARGS_NUM)
 double opt_general_viewport2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.viewport[2] = (int)val;
-  return CTX.viewport[2];
+    CTX.tmp_viewport[2] = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID){
+    if(action & GMSH_SET)
+      WID->g_opengl_window->getDrawContext()->viewport[2] = val;
+    return WID->g_opengl_window->getDrawContext()->viewport[2];
+  }
+#endif
+  return CTX.tmp_viewport[2];
 }
 
 double opt_general_viewport3(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.viewport[3] = (int)val;
-  return CTX.viewport[3];
+    CTX.tmp_viewport[3] = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID){
+    if(action & GMSH_SET)
+      WID->g_opengl_window->getDrawContext()->viewport[3] = val;
+    return WID->g_opengl_window->getDrawContext()->viewport[3];
+  }
+#endif
+  return CTX.tmp_viewport[3];
 }
 
 double opt_general_polygon_offset_always(OPT_ARGS_NUM)
@@ -2727,22 +2742,43 @@ double opt_general_confirm_overwrite(OPT_ARGS_NUM)
 double opt_general_rotation0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.r[0] = val;
-  return CTX.r[0];
+    CTX.tmp_r[0] = val;
+#if defined(HAVE_FLTK)
+  if(WID){
+    if(action & GMSH_SET)
+      WID->g_opengl_window->getDrawContext()->r[0] = val;
+    return WID->g_opengl_window->getDrawContext()->r[0];
+  }
+#endif
+  return CTX.tmp_r[0];
 }
 
 double opt_general_rotation1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.r[1] = val;
-  return CTX.r[1];
+    CTX.tmp_r[1] = val;
+#if defined(HAVE_FLTK)
+  if(WID){
+    if(action & GMSH_SET)
+      WID->g_opengl_window->getDrawContext()->r[1] = val;
+    return WID->g_opengl_window->getDrawContext()->r[1];
+  }
+#endif
+  return CTX.tmp_r[1];
 }
 
 double opt_general_rotation2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.r[2] = val;
-  return CTX.r[2];
+    CTX.tmp_r[2] = val;
+#if defined(HAVE_FLTK)
+  if(WID){
+    if(action & GMSH_SET)
+      WID->g_opengl_window->getDrawContext()->r[2] = val;
+    return WID->g_opengl_window->getDrawContext()->r[2];
+  }
+#endif
+  return CTX.tmp_r[2];
 }
 
 double opt_general_rotation_center0(OPT_ARGS_NUM)
@@ -2781,111 +2817,161 @@ double opt_general_rotation_center2(OPT_ARGS_NUM)
 double opt_general_quaternion0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.quaternion[0] = val;
+    CTX.tmp_quaternion[0] = val;
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->update_manip_window();
+  if(WID){
+    if(action & GMSH_SET)
+      WID->g_opengl_window->getDrawContext()->quaternion[0] = val;
+    if(action & GMSH_GUI)
+      WID->update_manip_window();
+    return WID->g_opengl_window->getDrawContext()->quaternion[0];
+  }
 #endif
-  return CTX.quaternion[0];
+  return CTX.tmp_quaternion[0];
 }
 
 double opt_general_quaternion1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.quaternion[1] = val;
+    CTX.tmp_quaternion[1] = val;
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->update_manip_window();
+  if(WID){
+    if(action & GMSH_SET)
+      WID->g_opengl_window->getDrawContext()->quaternion[1] = val;
+    if(action & GMSH_GUI)
+      WID->update_manip_window();
+    return WID->g_opengl_window->getDrawContext()->quaternion[1];
+  }
 #endif
-  return CTX.quaternion[1];
+  return CTX.tmp_quaternion[1];
 }
 
 double opt_general_quaternion2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.quaternion[2] = val;
+    CTX.tmp_quaternion[2] = val;
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->update_manip_window();
+  if(WID){
+    if(action & GMSH_SET)
+      WID->g_opengl_window->getDrawContext()->quaternion[2] = val;
+    if(action & GMSH_GUI)
+      WID->update_manip_window();
+    return WID->g_opengl_window->getDrawContext()->quaternion[2];
+  }
 #endif
-  return CTX.quaternion[2];
+  return CTX.tmp_quaternion[2];
 }
 
 double opt_general_quaternion3(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.quaternion[3] = val;
+    CTX.tmp_quaternion[3] = val;
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->update_manip_window();
+  if(WID){
+    if(action & GMSH_SET)
+      WID->g_opengl_window->getDrawContext()->quaternion[3] = val;
+    if(action & GMSH_GUI)
+      WID->update_manip_window();
+    return WID->g_opengl_window->getDrawContext()->quaternion[3];
+  }
 #endif
-  return CTX.quaternion[3];
+  return CTX.tmp_quaternion[3];
 }
 
 double opt_general_translation0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.t[0] = val;
+    CTX.tmp_t[0] = val;
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->update_manip_window();
+  if(WID){
+    if(action & GMSH_SET)
+      WID->g_opengl_window->getDrawContext()->t[0] = val;
+    if(action & GMSH_GUI)
+      WID->update_manip_window();
+    return WID->g_opengl_window->getDrawContext()->t[0];
+  }
 #endif
-  return CTX.t[0];
+  return CTX.tmp_t[0];
 }
 
 double opt_general_translation1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.t[1] = val;
+    CTX.tmp_t[1] = val;
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->update_manip_window();
+  if(WID){
+    if(action & GMSH_SET)
+      WID->g_opengl_window->getDrawContext()->t[1] = val;
+    if(action & GMSH_GUI)
+      WID->update_manip_window();
+    return WID->g_opengl_window->getDrawContext()->t[1];
+  }
 #endif
-  return CTX.t[1];
+  return CTX.tmp_t[1];
 }
 
 double opt_general_translation2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.t[2] = val;
+    CTX.tmp_t[2] = val;
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->update_manip_window();
+  if(WID){
+    if(action & GMSH_SET)
+      WID->g_opengl_window->getDrawContext()->t[2] = val;
+    if(action & GMSH_GUI)
+      WID->update_manip_window();
+    return WID->g_opengl_window->getDrawContext()->t[2];
+  }
 #endif
-  return CTX.t[2];
+  return CTX.tmp_t[2];
 }
 
 double opt_general_scale0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.s[0] = val ? val : 1.0;
+    CTX.tmp_s[0] = val ? val : 1.0;
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->update_manip_window();
+  if(WID){
+    if(action & GMSH_SET)
+      WID->g_opengl_window->getDrawContext()->s[0] = val ? val : 1.0;
+    if(action & GMSH_GUI)
+      WID->update_manip_window();
+    return WID->g_opengl_window->getDrawContext()->s[0];
+  }
 #endif
-  return CTX.s[0];
+  return CTX.tmp_s[0];
 }
 
 double opt_general_scale1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.s[1] = val ? val : 1.0;
+    CTX.tmp_s[1] = val ? val : 1.0;
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->update_manip_window();
+  if(WID){
+    if(action & GMSH_SET)
+      WID->g_opengl_window->getDrawContext()->s[1] = val ? val : 1.0;
+    if(action & GMSH_GUI)
+      WID->update_manip_window();
+    return WID->g_opengl_window->getDrawContext()->s[1];
+  }
 #endif
-  return CTX.s[1];
+  return CTX.tmp_s[1];
 }
 
 double opt_general_scale2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.s[2] = val ? val : 1.0;
+    CTX.tmp_s[2] = val ? val : 1.0;
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->update_manip_window();
+  if(WID){
+    if(action & GMSH_SET)
+      WID->g_opengl_window->getDrawContext()->s[2] = val ? val : 1.0;
+    if(action & GMSH_GUI)
+      WID->update_manip_window();
+    return WID->g_opengl_window->getDrawContext()->s[2];
+  }
 #endif
-  return CTX.s[2];
+  return CTX.tmp_s[2];
 }
 
 double opt_general_clip_factor(OPT_ARGS_NUM)
@@ -3130,7 +3216,8 @@ double opt_general_axes(OPT_ARGS_NUM)
   return CTX.axes;
 }
 
-double opt_general_axes_mikado(OPT_ARGS_NUM){
+double opt_general_axes_mikado(OPT_ARGS_NUM)
+{
   if(action & GMSH_SET) {
     CTX.axes_mikado = (int)val;
   }

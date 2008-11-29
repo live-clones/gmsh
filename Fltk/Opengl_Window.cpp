@@ -6,9 +6,9 @@
 #include "GmshUI.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
+#include "Draw.h"
 #include "Numeric.h"
 #include "Context.h"
-#include "Draw.h"
 #include "SelectBuffer.h"
 #include "GUI.h"
 #include "Opengl_Window.h"
@@ -17,11 +17,11 @@
 extern GUI *WID;
 extern Context_T CTX;
 
-void MousePosition::set()
+void MousePosition::set(drawContext *ctx)
 {
   for(int i = 0; i < 3; i++){
-    s[i] = CTX.s[i];
-    t[i] = CTX.t[i];
+    s[i] = ctx->s[i];
+    t[i] = ctx->t[i];
   }
 
   win[0] = (double)Fl::event_x();
@@ -29,40 +29,53 @@ void MousePosition::set()
   win[2] = 0.;
 
   wnr[0] = 
-    (CTX.vxmin + win[0] / (double)CTX.viewport[2] * (CTX.vxmax - CTX.vxmin)) 
-    / CTX.s[0] - CTX.t[0] + CTX.t_init[0] / CTX.s[0];
+    (ctx->vxmin + win[0] / (double)ctx->viewport[2] * (ctx->vxmax - ctx->vxmin)) 
+    / ctx->s[0] - ctx->t[0] + ctx->t_init[0] / ctx->s[0];
   wnr[1] = 
-    (CTX.vymax - win[1] / (double)CTX.viewport[3] * (CTX.vymax - CTX.vymin))
-    / CTX.s[1] - CTX.t[1] + CTX.t_init[1] / CTX.s[1];
+    (ctx->vymax - win[1] / (double)ctx->viewport[3] * (ctx->vymax - ctx->vymin))
+    / ctx->s[1] - ctx->t[1] + ctx->t_init[1] / ctx->s[1];
   wnr[2] = 0.;
 }
 
-void MousePosition::recenter()
+void MousePosition::recenter(drawContext *ctx)
 {
   // compute the equivalent translation to apply *after* the scaling
   // so that the scaling is done around the point which was clicked:
-  CTX.t[0] = t[0] * (s[0] / CTX.s[0]) - wnr[0] * (1. - (s[0] / CTX.s[0]));
-  CTX.t[1] = t[1] * (s[1] / CTX.s[1]) - wnr[1] * (1. - (s[1] / CTX.s[1]));
+  ctx->t[0] = t[0] * (s[0] / ctx->s[0]) - wnr[0] * (1. - (s[0] / ctx->s[0]));
+  ctx->t[1] = t[1] * (s[1] / ctx->s[1]) - wnr[1] * (1. - (s[1] / ctx->s[1]));
 }
   
-void lasso_zoom(MousePosition &click1, MousePosition &click2)
+static void lassoZoom(drawContext *ctx, MousePosition &click1, MousePosition &click2)
 {
   if(click1.win[0] == click2.win[0] || click1.win[1] == click2.win[1])
     return;
 
-  CTX.s[0] *= (double)CTX.viewport[2] / (click2.win[0] - click1.win[0]);
-  CTX.s[1] *= (double)CTX.viewport[3] / (click2.win[1] - click1.win[1]);
-  CTX.s[2] = std::min(CTX.s[0], CTX.s[1]); // bof...
+  ctx->s[0] *= (double)ctx->viewport[2] / (click2.win[0] - click1.win[0]);
+  ctx->s[1] *= (double)ctx->viewport[3] / (click2.win[1] - click1.win[1]);
+  ctx->s[2] = std::min(ctx->s[0], ctx->s[1]); // bof...
   
   // recenter around the center of the lasso rectangle
   MousePosition tmp(click1);
   tmp.wnr[0] = 0.5 * (click1.wnr[0] + click2.wnr[0]);
   tmp.wnr[1] = 0.5 * (click1.wnr[1] + click2.wnr[1]);
-  tmp.recenter();
+  tmp.recenter(ctx);
 
-  InitPosition();
+  ctx->initPosition();
   Draw();
   WID->update_manip_window();
+}
+
+Opengl_Window::Opengl_Window(int x, int y, int w, int h, const char *l)
+  : Fl_Gl_Window(x, y, w, h, l)
+{
+  AddPointMode = LassoMode = SelectionMode = false;
+  _point[0] = _point[1] = _point[2] = 0.;
+  _ctx = new drawContext();
+}
+
+Opengl_Window::~Opengl_Window()
+{ 
+  delete _ctx; 
 }
 
 void Opengl_Window::draw()
@@ -77,20 +90,20 @@ void Opengl_Window::draw()
 
   if(!valid()) {
     valid(1);
-    CTX.viewport[0] = 0;
-    CTX.viewport[1] = 0;
-    CTX.viewport[2] = w();
-    CTX.viewport[3] = h();
-    glViewport(CTX.viewport[0], CTX.viewport[1],
-               CTX.viewport[2], CTX.viewport[3]);
+    _ctx->viewport[0] = 0;
+    _ctx->viewport[1] = 0;
+    _ctx->viewport[2] = w();
+    _ctx->viewport[3] = h();
+    glViewport(_ctx->viewport[0], _ctx->viewport[1],
+               _ctx->viewport[2], _ctx->viewport[3]);
   }
   else {
-    if((w() != CTX.viewport[2] - CTX.viewport[0]) ||
-       (h() != CTX.viewport[3] - CTX.viewport[1])) {
-      WID->set_size(CTX.viewport[2] - CTX.viewport[0],
-                    CTX.viewport[3] - CTX.viewport[1]);
-      glViewport(CTX.viewport[0], CTX.viewport[1],
-                 CTX.viewport[2], CTX.viewport[3]);
+    if((w() != _ctx->viewport[2] - _ctx->viewport[0]) ||
+       (h() != _ctx->viewport[3] - _ctx->viewport[1])) {
+      WID->set_size(_ctx->viewport[2] - _ctx->viewport[0],
+                    _ctx->viewport[3] - _ctx->viewport[1]);
+      glViewport(_ctx->viewport[0], _ctx->viewport[1],
+                 _ctx->viewport[2], _ctx->viewport[3]);
     }
   }
 
@@ -99,8 +112,8 @@ void Opengl_Window::draw()
     // (without using overlays!)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho((double)CTX.viewport[0], (double)CTX.viewport[2],
-            (double)CTX.viewport[1], (double)CTX.viewport[3], -1., 1.);
+    glOrtho((double)_ctx->viewport[0], (double)_ctx->viewport[2],
+            (double)_ctx->viewport[1], (double)_ctx->viewport[3], -1., 1.);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glColor3d(1., 1., 1.);
@@ -115,13 +128,13 @@ void Opengl_Window::draw()
     glLineWidth(0.2);
     for(int i = 0; i < 2; i++){
       glBegin(GL_LINE_STRIP);
-      glVertex2d(click.win[0], CTX.viewport[3] - click.win[1]);
-      glVertex2d(lasso.win[0], CTX.viewport[3] - click.win[1]);
-      glVertex2d(lasso.win[0], CTX.viewport[3] - lasso.win[1]);
-      glVertex2d(click.win[0], CTX.viewport[3] - lasso.win[1]);
-      glVertex2d(click.win[0], CTX.viewport[3] - click.win[1]);
+      glVertex2d(_click.win[0], _ctx->viewport[3] - _click.win[1]);
+      glVertex2d(_lasso.win[0], _ctx->viewport[3] - _click.win[1]);
+      glVertex2d(_lasso.win[0], _ctx->viewport[3] - _lasso.win[1]);
+      glVertex2d(_click.win[0], _ctx->viewport[3] - _lasso.win[1]);
+      glVertex2d(_click.win[0], _ctx->viewport[3] - _click.win[1]);
       glEnd();
-      if(!i) lasso.set();
+      if(!i) _lasso.set(_ctx);
     }
     glDisable(GL_BLEND);
     if(SelectionMode && CTX.mouse_selection)
@@ -135,21 +148,21 @@ void Opengl_Window::draw()
       CTX.post.draw = 0;
     }
     ClearOpengl();
-    Draw3d();
+    _ctx->draw3d();
     glColor4ubv((GLubyte *) & CTX.color.fg);
     glPointSize(CTX.geom.point_size);
     glBegin(GL_POINTS);
-    glVertex3d(point[0], point[1], point[2]);
+    glVertex3d(_point[0], _point[1], _point[2]);
     glEnd();
-    Draw2d();
+    _ctx->draw2d();
     CTX.mesh.draw = 1;
     CTX.post.draw = 1;
   }
   else{
     // draw the whole scene
     ClearOpengl();
-    Draw3d();
-    Draw2d();
+    _ctx->draw3d();
+    _ctx->draw2d();
   }
 
   locked = 0;
@@ -178,30 +191,30 @@ int Opengl_Window::handle(int event)
     
   case FL_PUSH:
     take_focus(); // force keyboard focus when we click in the window
-    curr.set();
+    _curr.set(_ctx);
     if(Fl::event_button() == 1 && 
        !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
       if(!LassoMode && Fl::event_state(FL_CTRL)) {
         LassoMode = true;
-        lasso.set();
+        _lasso.set(_ctx);
       }
       else if(LassoMode) {
         LassoMode = false;
         if(SelectionMode && CTX.mouse_selection){
           WID->try_selection = 2; // will try to select multiple entities
-          WID->try_selection_xywh[0] = (int)(click.win[0] + curr.win[0])/2;
-          WID->try_selection_xywh[1] = (int)(click.win[1] + curr.win[1])/2;
-          WID->try_selection_xywh[2] = (int)fabs(click.win[0] - curr.win[0]);
-          WID->try_selection_xywh[3] = (int)fabs(click.win[1] - curr.win[1]);
+          WID->try_selection_xywh[0] = (int)(_click.win[0] + _curr.win[0])/2;
+          WID->try_selection_xywh[1] = (int)(_click.win[1] + _curr.win[1])/2;
+          WID->try_selection_xywh[2] = (int)fabs(_click.win[0] - _curr.win[0]);
+          WID->try_selection_xywh[3] = (int)fabs(_click.win[1] - _curr.win[1]);
         }
         else{
-          lasso_zoom(click, curr);
+          lassoZoom(_ctx, _click, _curr);
         }
       }
       else if(CTX.mouse_selection){
         WID->try_selection = 1; // will try to select clicked entity
-        WID->try_selection_xywh[0] = (int)curr.win[0];
-        WID->try_selection_xywh[1] = (int)curr.win[1];
+        WID->try_selection_xywh[0] = (int)_curr.win[0];
+        WID->try_selection_xywh[1] = (int)_curr.win[1];
         WID->try_selection_xywh[2] = 5;
         WID->try_selection_xywh[3] = 5;
       }
@@ -210,27 +223,27 @@ int Opengl_Window::handle(int event)
             (Fl::event_button() == 1 && Fl::event_state(FL_SHIFT))) {
       if(!LassoMode && Fl::event_state(FL_CTRL)) {
         // make zoom isotropic
-        CTX.s[1] = CTX.s[0];
-        CTX.s[2] = CTX.s[0];
+        _ctx->s[1] = _ctx->s[0];
+        _ctx->s[2] = _ctx->s[0];
         redraw();
       }
       else if(LassoMode) {
         LassoMode = false;
         if(SelectionMode && CTX.mouse_selection){
           WID->try_selection = -2; // will try to unselect multiple entities
-          WID->try_selection_xywh[0] = (int)(click.win[0] + curr.win[0])/2;
-          WID->try_selection_xywh[1] = (int)(click.win[1] + curr.win[1])/2;
-          WID->try_selection_xywh[2] = (int)fabs(click.win[0] - curr.win[0]);
-          WID->try_selection_xywh[3] = (int)fabs(click.win[1] - curr.win[1]);
+          WID->try_selection_xywh[0] = (int)(_click.win[0] + _curr.win[0])/2;
+          WID->try_selection_xywh[1] = (int)(_click.win[1] + _curr.win[1])/2;
+          WID->try_selection_xywh[2] = (int)fabs(_click.win[0] - _curr.win[0]);
+          WID->try_selection_xywh[3] = (int)fabs(_click.win[1] - _curr.win[1]);
         }
         else{
-          lasso_zoom(click, curr);
+          lassoZoom(_ctx, _click, _curr);
         }
       }
       else if(CTX.mouse_selection){
         WID->try_selection = -1; // will try to unselect clicked entity
-        WID->try_selection_xywh[0] = (int)curr.win[0];
-        WID->try_selection_xywh[1] = (int)curr.win[1];
+        WID->try_selection_xywh[0] = (int)_curr.win[0];
+        WID->try_selection_xywh[1] = (int)_curr.win[1];
         WID->try_selection_xywh[2] = 5;
         WID->try_selection_xywh[3] = 5;
       }
@@ -238,51 +251,51 @@ int Opengl_Window::handle(int event)
     else {
       if(Fl::event_state(FL_CTRL) && !LassoMode) {
         if(CTX.useTrackball)
-          CTX.setQuaternion(0., 0., 0., 1.);
+          _ctx->setQuaternion(0., 0., 0., 1.);
         else
-          CTX.r[0] = CTX.r[1] = CTX.r[2] = 0.;
-        CTX.t[0] = CTX.t[1] = CTX.t[2] = 0.;
-        CTX.s[0] = CTX.s[1] = CTX.s[2] = 1.;
+          _ctx->r[0] = _ctx->r[1] = _ctx->r[2] = 0.;
+        _ctx->t[0] = _ctx->t[1] = _ctx->t[2] = 0.;
+        _ctx->s[0] = _ctx->s[1] = _ctx->s[2] = 1.;
         redraw();
       }
       else {
         LassoMode = false;
       }
     }
-    click.set();
-    prev.set();
+    _click.set(_ctx);
+    _prev.set(_ctx);
     WID->update_manip_window();
     return 1;
 
   case FL_RELEASE:
-    curr.set();
+    _curr.set(_ctx);
     CTX.draw_rotation_center = 0;
     if(!LassoMode) {
       CTX.mesh.draw = 1;
       CTX.post.draw = 1;
       redraw();
     }
-    prev.set();
+    _prev.set(_ctx);
     return 1;
 
   case FL_MOUSEWHEEL:
     {
       double dy = Fl::event_dy();
       double fact = (5. * CTX.zoom_factor * fabs(dy) + h()) / (double)h();
-      CTX.s[0] *= ((dy > 0) ? fact : 1./fact);
-      CTX.s[1] = CTX.s[0];
-      CTX.s[2] = CTX.s[0];
-      prev.recenter();
+      _ctx->s[0] *= ((dy > 0) ? fact : 1./fact);
+      _ctx->s[1] = _ctx->s[0];
+      _ctx->s[2] = _ctx->s[0];
+      _prev.recenter(_ctx);
       redraw();
     }
     WID->update_manip_window();
     return 1;
 
   case FL_DRAG:
-    curr.set();
+    _curr.set(_ctx);
     {
-      double dx = curr.win[0] - prev.win[0];
-      double dy = curr.win[1] - prev.win[1];
+      double dx = _curr.win[0] - _prev.win[0];
+      double dy = _curr.win[1] - _prev.win[1];
       if(LassoMode) {
         redraw();
       }
@@ -290,39 +303,39 @@ int Opengl_Window::handle(int event)
         if(Fl::event_state(FL_META)) {
           // will try to select or unselect entities on the fly
           WID->try_selection = Fl::event_state(FL_SHIFT) ? -1 : 1; 
-          WID->try_selection_xywh[0] = (int)curr.win[0];
-          WID->try_selection_xywh[1] = (int)curr.win[1];
+          WID->try_selection_xywh[0] = (int)_curr.win[0];
+          WID->try_selection_xywh[1] = (int)_curr.win[1];
           WID->try_selection_xywh[2] = 5;
           WID->try_selection_xywh[3] = 5;
         }
         else if(Fl::event_button() == 1 && 
                 !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
           if(CTX.useTrackball)
-            CTX.addQuaternion((2. * prev.win[0] - w()) / w(),
-                              (h() - 2. * prev.win[1]) / h(),
-                              (2. * curr.win[0] - w()) / w(),
-                              (h() - 2. * curr.win[1]) / h());
+            _ctx->addQuaternion((2. * _prev.win[0] - w()) / w(),
+                              (h() - 2. * _prev.win[1]) / h(),
+                              (2. * _curr.win[0] - w()) / w(),
+                              (h() - 2. * _curr.win[1]) / h());
           else {
-            CTX.r[1] += ((fabs(dx) > fabs(dy)) ? 180. * dx / (double)w() : 0.);
-            CTX.r[0] += ((fabs(dx) > fabs(dy)) ? 0. : 180. * dy / (double)h());
+            _ctx->r[1] += ((fabs(dx) > fabs(dy)) ? 180. * dx / (double)w() : 0.);
+            _ctx->r[0] += ((fabs(dx) > fabs(dy)) ? 0. : 180. * dy / (double)h());
           }
         }
         else if(Fl::event_button() == 2 ||
                 (Fl::event_button() == 1 && Fl::event_state(FL_SHIFT))) {
           if(fabs(dy) > fabs(dx)) {
             double fact = (CTX.zoom_factor * fabs(dy) + h()) / (double)h();
-            CTX.s[0] *= ((dy > 0) ? fact : 1./fact);
-            CTX.s[1] = CTX.s[0];
-            CTX.s[2] = CTX.s[0];
-            click.recenter();
+            _ctx->s[0] *= ((dy > 0) ? fact : 1./fact);
+            _ctx->s[1] = _ctx->s[0];
+            _ctx->s[2] = _ctx->s[0];
+            _click.recenter(_ctx);
           }
           else if(!CTX.useTrackball)
-            CTX.r[2] += -180. * dx / (double)w();
+            _ctx->r[2] += -180. * dx / (double)w();
         }
         else {
-          CTX.t[0] += (curr.wnr[0] - click.wnr[0]);
-          CTX.t[1] += (curr.wnr[1] - click.wnr[1]);
-          CTX.t[2] = 0.;
+          _ctx->t[0] += (_curr.wnr[0] - _click.wnr[0]);
+          _ctx->t[1] += (_curr.wnr[1] - _click.wnr[1]);
+          _ctx->t[2] = 0.;
         }
         CTX.draw_rotation_center = 1;
         if(CTX.fast_redraw) {
@@ -332,12 +345,12 @@ int Opengl_Window::handle(int event)
         redraw();
       }
     }
-    prev.set();
+    _prev.set(_ctx);
     WID->update_manip_window();
     return 1;
 
   case FL_MOVE:
-    curr.set();
+    _curr.set(_ctx);
     if(LassoMode) {
       redraw();
     }
@@ -345,37 +358,37 @@ int Opengl_Window::handle(int event)
       WID->g_opengl_window->cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
       // find line in real space corresponding to current cursor position
       double p[3],d[3];
-      Unproject(curr.win[0], curr.win[1], p, d);
+      _ctx->unproject(_curr.win[0], _curr.win[1], p, d);
       // fin closest point to the center of gravity
       double r[3] = {CTX.cg[0] - p[0], CTX.cg[1] - p[1], CTX.cg[2] - p[2]}, t;
       prosca(r, d, &t);
       for(int i = 0; i < 3; i++){
-        point[i] = p[i] + t * d[i];
+        _point[i] = p[i] + t * d[i];
         if(CTX.geom.snap[i]){
-          double d = point[i]/CTX.geom.snap[i];
+          double d = _point[i] / CTX.geom.snap[i];
           double f = floor(d);
           double c = ceil(d);
           double n = (d - f < c - d) ? f : c;
-          point[i] = n * CTX.geom.snap[i];
+          _point[i] = n * CTX.geom.snap[i];
         }
       }
       char str[32];
-      sprintf(str, "%g", point[0]); WID->context_geometry_input[2]->value(str);
-      sprintf(str, "%g", point[1]); WID->context_geometry_input[3]->value(str);
-      sprintf(str, "%g", point[2]); WID->context_geometry_input[4]->value(str);
+      sprintf(str, "%g", _point[0]); WID->context_geometry_input[2]->value(str);
+      sprintf(str, "%g", _point[1]); WID->context_geometry_input[3]->value(str);
+      sprintf(str, "%g", _point[2]); WID->context_geometry_input[4]->value(str);
       redraw();
     }
     else{ // hover mode
-      if(curr.win[0] != prev.win[0] || curr.win[1] != prev.win[1]){
+      if(_curr.win[0] != _prev.win[0] || _curr.win[1] != _prev.win[1]){
         WID->make_opengl_current();
         std::vector<GVertex*> vertices;
         std::vector<GEdge*> edges;
         std::vector<GFace*> faces;
         std::vector<GRegion*> regions;
         std::vector<MElement*> elements;
-        bool res = ProcessSelectionBuffer(WID->selection, false, 
+        bool res = ProcessSelectionBuffer(_ctx, WID->selection, false, 
                                           CTX.mouse_hover_meshes, 
-                                          (int)curr.win[0], (int)curr.win[1], 5, 5, 
+                                          (int)_curr.win[0], (int)_curr.win[1], 5, 5, 
                                           vertices, edges, faces, regions,
                                           elements);
         if((WID->selection == ENT_ALL && res) ||
@@ -397,10 +410,87 @@ int Opengl_Window::handle(int event)
 		    me ? me->getInfoString().c_str() : "");
       }
     }
-    prev.set();
+    _prev.set(_ctx);
     return 1;
 
   default:
     return Fl_Gl_Window::handle(event);
+  }
+}
+
+
+// Select entity routine
+
+char SelectEntity(int type, 
+                  std::vector<GVertex*> &vertices,
+                  std::vector<GEdge*> &edges,
+                  std::vector<GFace*> &faces,
+                  std::vector<GRegion*> &regions,
+                  std::vector<MElement*> &elements)
+{
+  if(!WID) return 'q';
+
+  WID->g_opengl_window->take_focus(); // force keyboard focus in GL window 
+  WID->g_opengl_window->SelectionMode = true; // enable lasso selection
+
+  WID->selection = type;
+  WID->try_selection = 0;
+  WID->quit_selection = 0;
+  WID->end_selection = 0;
+  WID->undo_selection = 0;
+  WID->invert_selection = 0;
+
+  while(1) {
+    vertices.clear();
+    edges.clear();
+    faces.clear();
+    regions.clear();
+    elements.clear();
+    WID->wait();
+    if(WID->quit_selection) {
+      WID->selection = ENT_NONE;
+      WID->g_opengl_window->SelectionMode = false;
+      WID->g_opengl_window->LassoMode = false;
+      WID->g_opengl_window->AddPointMode = false;
+      WID->g_opengl_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
+      return 'q';
+    }
+    if(WID->end_selection) {
+      WID->end_selection = 0;
+      WID->selection = ENT_NONE;
+      return 'e';
+    }
+    if(WID->undo_selection) {
+      WID->undo_selection = 0;
+      return 'u';
+    }
+    if(WID->invert_selection) {
+      WID->invert_selection = 0;
+      return 'i';
+    }
+    if(WID->try_selection) {
+      bool add = (WID->try_selection > 0) ? true : false;
+      bool multi = (abs(WID->try_selection) > 1) ? true : false;
+      WID->try_selection = 0;
+      if(WID->selection == ENT_NONE){ // just report the mouse click
+        WID->g_opengl_window->SelectionMode = false;
+        return 'c';
+      }
+      else if(ProcessSelectionBuffer(WID->g_opengl_window->getDrawContext(),
+                                     WID->selection, multi, true,
+                                     WID->try_selection_xywh[0],
+                                     WID->try_selection_xywh[1], 
+                                     WID->try_selection_xywh[2],
+                                     WID->try_selection_xywh[3], 
+                                     vertices, edges, faces, regions,
+                                     elements)){
+        WID->selection = ENT_NONE;
+        WID->g_opengl_window->SelectionMode = false;
+        if(add)
+          return 'l';
+        else
+          return 'r';
+      }
+    }
   }
 }

@@ -81,7 +81,7 @@ static void Subdivide(GFace *gf, bool splitTrianglesIntoQuads)
     }
     delete q;
   }
-  if (splitTrianglesIntoQuads){
+  if(splitTrianglesIntoQuads){
     for(unsigned int i = 0; i < gf->triangles.size(); i++){
       MTriangle *t = gf->triangles[i];
       if(t->getNumVertices() == 6){

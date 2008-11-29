@@ -8,8 +8,8 @@
 
 #include "GmshUI.h"
 #include "GmshMessage.h"
-#include "MallocUtils.h"
 #include "Draw.h"
+#include "MallocUtils.h"
 
 #if defined(HAVE_OSMESA)
 #include <GL/osmesa.h>
@@ -65,8 +65,7 @@ class PixelBuffer{
     if(!offscreen){
       SetOpenglContext();
       ClearOpengl();
-      Draw3d();
-      Draw2d();
+      Draw2d3d();
       glFinish();
       glPixelStorei(GL_PACK_ALIGNMENT, 1);
       glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -87,8 +86,7 @@ class PixelBuffer{
 	Msg::Error("OSMesaMakeCurrent failed");
       }
       ClearOpengl();
-      Draw3d();
-      Draw2d();
+      Draw2d3d();
       glFinish();
       OSMesaDestroyContext(ctx);
 #else

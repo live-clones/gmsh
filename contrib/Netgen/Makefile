@@ -52,4 +52,3 @@ depend:
 	true
 
 # DO NOT DELETE THIS LINE
-nglib_addon${OBJEXT}: ../../Common/GmshMessage.h

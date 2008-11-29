@@ -137,7 +137,7 @@ static bool orderVertices (const std::list<GEdge*> &e ,
   double tot_length = 0;
   for ( ; it != e.end() ; ++it ){
     //    printf("GLine %d\n",(*it)->tag());
-    for ( int i = 0 ; i < (*it)->lines.size(); i++ ){	
+    for (unsigned int i = 0 ; i < (*it)->lines.size(); i++ ){	
       temp.push_back((*it)->lines[i]);  
       MVertex *v0 = (*it)->lines[i]->getVertex(0);
       MVertex *v1 = (*it)->lines[i]->getVertex(1);    
@@ -217,16 +217,16 @@ void GFaceCompound::parametrize (bool _isU, int ITER) const
     // maps the boundary onto a circle
     std::vector<MVertex*> ordered;
     std::vector<double> coords;  
-    //    Msg::Info("%d edges on the contour", l_edges.size()); 
-    //    for (std::list<GEdge*>::const_iterator it = l_edges.begin();
+    // Msg::Info("%d edges on the contour", l_edges.size()); 
+    // for (std::list<GEdge*>::const_iterator it = l_edges.begin();
     //	 it !=l_edges.end();++it)printf("%d ",(*it)->tag());
-    //    printf("\n");
+    // printf("\n");
     bool success = orderVertices (l_edges, ordered, coords);
     if (!success)throw;
-    for (int i=0; i<ordered.size();i++){
+    for (unsigned int i = 0; i < ordered.size(); i++){
       MVertex *v = ordered[i];
-      const double theta = 2*M_PI*coords[i];
-      //      printf("fixing %d to %g\n",v->getIndex(),theta);
+      const double theta = 2 * M_PI * coords[i];
+      // printf("fixing %d to %g\n",v->getIndex(),theta);
       if (_isU) myAssembler.fixVertex(v, 0, 1, cos(theta));
       else myAssembler.fixVertex(v, 0, 1, sin(theta));
     }
@@ -311,14 +311,14 @@ void GFaceCompound::computeNormals () const
   for ( ; it != _compound.end() ; ++it){
     for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *t = (*it)->triangles[i];
-      double det = t->getJacobian(0,0,0,J);
+      t->getJacobian(0, 0, 0, J);
       //      SVector3 n (J[2][0],J[2][1],J[2][2]);
       SVector3 d1(J[0][0], J[0][1], J[0][2]);
       SVector3 d2(J[1][0], J[1][1], J[1][2]);
       SVector3 n = crossprod(d1, d2);
       n.normalize();
-      for (int j=0;j<3;j++){
-	std::map<MVertex*,SVector3>::iterator itn = _normals.find(t->getVertex(j));
+      for (int j = 0; j < 3; j++){
+	std::map<MVertex*, SVector3>::iterator itn = _normals.find(t->getVertex(j));
 	if (itn == _normals.end())_normals[t->getVertex(j)] = n;
 	else itn->second += n;
       }

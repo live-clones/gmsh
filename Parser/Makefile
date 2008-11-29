@@ -69,7 +69,7 @@ Gmsh.tab${OBJEXT}: Gmsh.tab.cpp ../Common/GmshMessage.h ../Common/MallocUtils.h 
   ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Common/SmoothData.h \
   ../Geo/GeoInterpolation.h ../Geo/Geo.h ../Mesh/Generator.h \
-  ../Graphics/Draw.h ../Common/Options.h ../Post/ColorTable.h \
+  ../Fltk/Draw.h ../Common/Options.h ../Post/ColorTable.h \
   ../Common/Colors.h ../Common/Options.h Parser.h ../Common/OpenFile.h \
   ../Common/CommandLine.h FunctionManager.h ../Common/OS.h \
   ../Common/CreateFile.h ../Mesh/Field.h ../Post/PView.h \

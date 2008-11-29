@@ -60,7 +60,7 @@ public :
   }
   virtual void zeroRightHandSide () 
   {
-    for (unsigned int i = 0; i < _b->size(); i++) (*_b)(i) = 0;
+    for (int i = 0; i < _b->size(); i++) (*_b)(i) = 0;
   }
   virtual int systemSolve () 
   {

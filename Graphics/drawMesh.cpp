@@ -4,8 +4,10 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <math.h>
+#include "drawContext.h"
 #include "GmshMessage.h"
 #include "GmshUI.h"
+#include "GmshDefines.h"
 #include "GModel.h"
 #include "MElement.h"
 #include "Draw.h"
@@ -198,7 +200,7 @@ static void drawElementLabels(GEntity *e, std::vector<T*> &elements,
 }
 
 template<class T>
-static void drawNormals(std::vector<T*> &elements)
+static void drawNormals(drawContext *ctx, std::vector<T*> &elements)
 {
   glColor4ubv((GLubyte *) & CTX.color.mesh.normals);
   for(unsigned int i = 0; i < elements.size(); i++){
@@ -206,16 +208,16 @@ static void drawNormals(std::vector<T*> &elements)
     if(!isElementVisible(ele)) continue;
     SVector3 n = ele->getFace(0).normal();
     for(int j = 0; j < 3; j++)
-      n[j] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[j];
+      n[j] *= CTX.mesh.normals * ctx->pixel_equiv_x / ctx->s[j];
     SPoint3 pc = ele->barycenter();
-    Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
-                CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
-                pc.x(), pc.y(), pc.z(), n[0], n[1], n[2], CTX.mesh.light);
+    ctx->drawVector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
+                    CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
+                    pc.x(), pc.y(), pc.z(), n[0], n[1], n[2], CTX.mesh.light);
   }
 }
 
 template<class T>
-static void drawTangents(std::vector<T*> &elements)
+static void drawTangents(drawContext *ctx, std::vector<T*> &elements)
 {
   glColor4ubv((GLubyte *) & CTX.color.mesh.tangents);
   for(unsigned int i = 0; i < elements.size(); i++){
@@ -223,11 +225,11 @@ static void drawTangents(std::vector<T*> &elements)
     if(!isElementVisible(ele)) continue;
     SVector3 t = ele->getEdge(0).tangent();
     for(int j = 0; j < 3; j++)
-      t[j] *= CTX.mesh.tangents * CTX.pixel_equiv_x / CTX.s[j];
+      t[j] *= CTX.mesh.tangents * ctx->pixel_equiv_x / ctx->s[j];
     SPoint3 pc = ele->barycenter();
-    Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
-                CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
-                pc.x(), pc.y(), pc.z(), t[0], t[1], t[2], CTX.mesh.light);
+    ctx->drawVector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
+                    CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
+                    pc.x(), pc.y(), pc.z(), t[0], t[1], t[2], CTX.mesh.light);
   }
 }
 
@@ -261,7 +263,7 @@ static void drawVertexLabel(GEntity *e, MVertex *v, int partition=-1)
   Draw_String(str);
 }
 
-static void drawVerticesPerEntity(GEntity *e)
+static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
 {
   if(CTX.mesh.points) {
     if(CTX.mesh.point_type) {
@@ -272,7 +274,7 @@ static void drawVerticesPerEntity(GEntity *e)
           glColor4ubv((GLubyte *) & CTX.color.mesh.vertex_sup);
         else
           glColor4ubv((GLubyte *) & CTX.color.mesh.vertex);     
-        Draw_Sphere(CTX.mesh.point_size, v->x(), v->y(), v->z(), CTX.mesh.light);
+        ctx->drawSphere(CTX.mesh.point_size, v->x(), v->y(), v->z(), CTX.mesh.light);
       }
     }
     else{
@@ -297,7 +299,8 @@ static void drawVerticesPerEntity(GEntity *e)
 }
 
 template<class T>
-static void drawVerticesPerElement(GEntity *e, std::vector<T*> &elements)
+static void drawVerticesPerElement(drawContext *ctx, GEntity *e, 
+                                   std::vector<T*> &elements)
 {
   for(unsigned int i = 0; i < elements.size(); i++){
     MElement *ele = elements[i];
@@ -310,7 +313,7 @@ static void drawVerticesPerElement(GEntity *e, std::vector<T*> &elements)
           else
             glColor4ubv((GLubyte *) & CTX.color.mesh.vertex);   
           if(CTX.mesh.point_type)
-            Draw_Sphere(CTX.mesh.point_size, v->x(), v->y(), v->z(), CTX.mesh.light);
+            ctx->drawSphere(CTX.mesh.point_size, v->x(), v->y(), v->z(), CTX.mesh.light);
           else{
             glBegin(GL_POINTS);
             glVertex3d(v->x(), v->y(), v->z());
@@ -568,7 +571,10 @@ static void drawArrays(GEntity *e, VertexArray *va, GLint type, bool useNormalAr
 // GVertex drawing routines
 
 class drawMeshGVertex {
+ private:
+  drawContext *_ctx;
  public:
+  drawMeshGVertex(drawContext *ctx) : _ctx(ctx){}
   void operator () (GVertex *v)
   {  
     if(!v->getVisibility()) return;
@@ -580,7 +586,7 @@ class drawMeshGVertex {
     }
 
     if(CTX.mesh.points || CTX.mesh.points_num)
-      drawVerticesPerEntity(v);
+      drawVerticesPerEntity(_ctx, v);
 
     if(select) {
       glPopName();
@@ -619,7 +625,10 @@ class initMeshGEdge {
 };
 
 class drawMeshGEdge {
+ private:
+  drawContext *_ctx;
  public:
+  drawMeshGEdge(drawContext *ctx) : _ctx(ctx){}
   void operator () (GEdge *e)
   {  
     if(!e->getVisibility()) return;
@@ -638,13 +647,13 @@ class drawMeshGEdge {
 
     if(CTX.mesh.points || CTX.mesh.points_num){
       if(e->getAllElementsVisible())
-        drawVerticesPerEntity(e);
+        drawVerticesPerEntity(_ctx, e);
       else
-        drawVerticesPerElement(e, e->lines);
+        drawVerticesPerElement(_ctx, e, e->lines);
     }
 
     if(CTX.mesh.tangents)
-      drawTangents(e->lines);
+      drawTangents(_ctx, e->lines);
 
     if(select) {
       glPopName();
@@ -712,7 +721,10 @@ class initMeshGFace {
 };
 
 class drawMeshGFace {
+ private:
+  drawContext *_ctx;
  public:
+  drawMeshGFace(drawContext *ctx) : _ctx(ctx){}
   void operator () (GFace *f)
   {  
     if(!f->getVisibility()) return;
@@ -736,16 +748,16 @@ class drawMeshGFace {
 
     if(CTX.mesh.points || CTX.mesh.points_num){
       if(f->getAllElementsVisible())
-        drawVerticesPerEntity(f);
+        drawVerticesPerEntity(_ctx, f);
       else{
-        if(CTX.mesh.triangles) drawVerticesPerElement(f, f->triangles);
-        if(CTX.mesh.quadrangles) drawVerticesPerElement(f, f->quadrangles);
+        if(CTX.mesh.triangles) drawVerticesPerElement(_ctx, f, f->triangles);
+        if(CTX.mesh.quadrangles) drawVerticesPerElement(_ctx, f, f->quadrangles);
       }
     }
 
     if(CTX.mesh.normals) {
-      if(CTX.mesh.triangles) drawNormals(f->triangles);
-      if(CTX.mesh.quadrangles) drawNormals(f->quadrangles);
+      if(CTX.mesh.triangles) drawNormals(_ctx, f->triangles);
+      if(CTX.mesh.quadrangles) drawNormals(_ctx, f->quadrangles);
     }
 
     if(CTX.mesh.dual) {
@@ -835,7 +847,10 @@ class initMeshGRegion {
 };
 
 class drawMeshGRegion {
+ private:
+  drawContext *_ctx;
  public:
+  drawMeshGRegion(drawContext *ctx) : _ctx(ctx){}
   void operator () (GRegion *r)
   {  
     if(!r->getVisibility()) return;
@@ -867,12 +882,12 @@ class drawMeshGRegion {
 
     if(CTX.mesh.points || CTX.mesh.points_num){
       if(r->getAllElementsVisible())
-        drawVerticesPerEntity(r);
+        drawVerticesPerEntity(_ctx, r);
       else{
-        if(CTX.mesh.tetrahedra) drawVerticesPerElement(r, r->tetrahedra);
-        if(CTX.mesh.hexahedra) drawVerticesPerElement(r, r->hexahedra);
-        if(CTX.mesh.prisms) drawVerticesPerElement(r, r->prisms);
-        if(CTX.mesh.pyramids) drawVerticesPerElement(r, r->pyramids);
+        if(CTX.mesh.tetrahedra) drawVerticesPerElement(_ctx, r, r->tetrahedra);
+        if(CTX.mesh.hexahedra) drawVerticesPerElement(_ctx, r, r->hexahedra);
+        if(CTX.mesh.prisms) drawVerticesPerElement(_ctx, r, r->prisms);
+        if(CTX.mesh.pyramids) drawVerticesPerElement(_ctx, r, r->pyramids);
       }
     }
 
@@ -893,7 +908,7 @@ class drawMeshGRegion {
 
 // Main drawing routine
 
-void Draw_Mesh()
+void drawContext::drawMesh()
 {
   if(!CTX.mesh.draw) return;
 
@@ -949,13 +964,13 @@ void Draw_Mesh()
             std::for_each(m->firstRegion(), m->lastRegion(), initMeshGRegion());
         }
         if(status >= 0)
-          std::for_each(m->firstVertex(), m->lastVertex(), drawMeshGVertex());
+          std::for_each(m->firstVertex(), m->lastVertex(), drawMeshGVertex(this));
         if(status >= 1)
-          std::for_each(m->firstEdge(), m->lastEdge(), drawMeshGEdge());
+          std::for_each(m->firstEdge(), m->lastEdge(), drawMeshGEdge(this));
         if(status >= 2)
-          std::for_each(m->firstFace(), m->lastFace(), drawMeshGFace());
+          std::for_each(m->firstFace(), m->lastFace(), drawMeshGFace(this));
         if(status >= 3)
-          std::for_each(m->firstRegion(), m->lastRegion(), drawMeshGRegion());
+          std::for_each(m->firstRegion(), m->lastRegion(), drawMeshGRegion(this));
       }
     }
 

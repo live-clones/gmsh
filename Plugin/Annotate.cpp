@@ -48,20 +48,21 @@ static double getStyle()
   return (double)((align<<16)|(font<<8)|(fontsize));
 }
 
-void GMSH_AnnotatePlugin::draw()
+void GMSH_AnnotatePlugin::draw(void *context)
 {
 #if defined(HAVE_FLTK)
   double X = AnnotateOptions_Number[0].def;
   double Y = AnnotateOptions_Number[1].def;
   double Z = AnnotateOptions_Number[2].def;
   double style = getStyle();
+  drawContext *ctx = (drawContext*)context;
 
   glColor4ubv((GLubyte *) & CTX.color.fg);
   if(AnnotateOptions_Number[3].def){ // 3D
     glRasterPos3d(X, Y, Z);
     Draw_String(AnnotateOptions_String[0].def, style);
     // draw 10-pixel marker
-    double d = 10 * CTX.pixel_equiv_x / CTX.s[0];
+    double d = 10 * ctx->pixel_equiv_x / ctx->s[0];
     glBegin(GL_LINES);
     glVertex3d(X-d,Y,Z); glVertex3d(X+d,Y,Z);
     glVertex3d(X,Y-d,Z); glVertex3d(X,Y+d,Z);
@@ -75,11 +76,11 @@ void GMSH_AnnotatePlugin::draw()
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho((double)CTX.viewport[0], (double)CTX.viewport[2],
-            (double)CTX.viewport[1], (double)CTX.viewport[3], -1., 1.);
+    glOrtho((double)ctx->viewport[0], (double)ctx->viewport[2],
+            (double)ctx->viewport[1], (double)ctx->viewport[3], -1., 1.);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    Fix2DCoordinates(&X, &Y);
+    ctx->fix2dCoordinates(&X, &Y);
     glRasterPos2d(X, Y);
     Draw_String(AnnotateOptions_String[0].def, style);
     // draw 10-pixel marker

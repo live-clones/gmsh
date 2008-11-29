@@ -48,7 +48,7 @@ public:
   static double callbackU(int, int, double);
   static double callbackV(int, int, double);
   static double callbackConnect(int, int, double);
-  static void draw();
+  static void draw(void *context);
 };
 
 #endif

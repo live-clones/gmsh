@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include "drawContext.h"
 #include "GmshUI.h"
 #include "Draw.h"
 #include "PView.h"
@@ -14,25 +15,25 @@
 
 extern Context_T CTX;
 
-int Fix2DCoordinates(double *x, double *y)
+int drawContext::fix2dCoordinates(double *x, double *y)
 {
   int ret = (*x > 99999 && *y > 99999) ? 3 : (*y > 99999) ? 2 : (*x > 99999) ? 1 : 0;
 
   if(*x < 0) // measure from right border
-    *x = CTX.viewport[2] + *x;
+    *x = viewport[2] + *x;
   else if(*x > 99999) // by convention, x-centered
-    *x = CTX.viewport[2] / 2;
+    *x = viewport[2] / 2;
 
   if(*y < 0) // measure from bottom border
     *y = -(*y);
   else if(*y > 99999) // by convention, y-centered
-    *y = CTX.viewport[3] / 2.;
+    *y = viewport[3] / 2.;
   else
-    *y = CTX.viewport[3] - *y;
+    *y = viewport[3] - *y;
   return ret;
 }
 
-void Draw_Text2D()
+void drawContext::drawText2d()
 {
   for(unsigned int i = 0; i < PView::list.size(); i++){
     PViewData *data = PView::list[i]->getData();
@@ -43,7 +44,7 @@ void Draw_Text2D()
         double x, y, style;
         std::string str;
         data->getString2D(j, opt->TimeStep, str, x, y, style);
-        Fix2DCoordinates(&x, &y);
+        fix2dCoordinates(&x, &y);
         glRasterPos2d(x, y);
         Draw_String(str.c_str(), style);
       }
@@ -400,7 +401,7 @@ static void drawGraph(PView *p, double xleft, double ytop, double width, double 
   drawGraphCurves(p, xleft, ytop, width, height, x, xmin, xmax, y);
 }
 
-void Draw_Graph2D()
+void drawContext::drawGraph2d()
 {
   std::vector<PView*> graphs;
   for(unsigned int i = 0; i < PView::list.size(); i++){
@@ -425,40 +426,40 @@ void Draw_Graph2D()
     PViewOptions *opt = graphs[i]->getOptions();
     if(!opt->AutoPosition){
       double x = opt->Position[0], y = opt->Position[1];
-      int center = Fix2DCoordinates(&x, &y);
+      int center = fix2dCoordinates(&x, &y);
       drawGraph(p, x - (center & 1 ? opt->Size[0] / 2. : 0), 
                 y + (center & 2 ? opt->Size[1] / 2. : 0), 
                 opt->Size[0], opt->Size[1]);
     }
     else{
-      double winw = CTX.viewport[2] - CTX.viewport[0];
-      double winh = CTX.viewport[3] - CTX.viewport[1];
+      double winw = viewport[2] - viewport[0];
+      double winh = viewport[3] - viewport[1];
       if(graphs.size() == 1){
         double fracw = 0.75, frach = 0.75;
         double w = fracw * winw - xsep;
         double h = frach * winh - ysep;
-        double x = CTX.viewport[0] + (1 - fracw) / 2. * winw;
-        double y = CTX.viewport[1] + (1 - frach) / 2. * winh;
-        drawGraph(p, x + 0.95 * xsep, CTX.viewport[3] - (y + 0.4 * ysep), w, h);
+        double x = viewport[0] + (1 - fracw) / 2. * winw;
+        double y = viewport[1] + (1 - frach) / 2. * winh;
+        drawGraph(p, x + 0.95 * xsep, viewport[3] - (y + 0.4 * ysep), w, h);
       }
       else if(graphs.size() == 2){
         double fracw = 0.75, frach = 0.85;
         double w = fracw * winw - xsep;
         double h = frach * winh / 2. - ysep;
-        double x = CTX.viewport[0] + (1 - fracw) / 2. * winw;
-        double y = CTX.viewport[1] + (1 - frach) / 3. * winh;
+        double x = viewport[0] + (1 - fracw) / 2. * winw;
+        double y = viewport[1] + (1 - frach) / 3. * winh;
         if(i == 1) y += (h + ysep + (1 - frach) / 3. * winh);
-        drawGraph(p, x + 0.95 * xsep, CTX.viewport[3] - (y + 0.4 * ysep), w, h);
+        drawGraph(p, x + 0.95 * xsep, viewport[3] - (y + 0.4 * ysep), w, h);
       }
       else{
         double fracw = 0.85, frach = 0.85;
         double w = fracw * winw / 2. - xsep;
         double h = frach * winh / 2. - ysep;
-        double x = CTX.viewport[0] + (1 - fracw) / 3. * winw;
+        double x = viewport[0] + (1 - fracw) / 3. * winw;
         if(i == 1 || i == 3) x += (w + xsep + (1-fracw)/3. * winw);
-        double y = CTX.viewport[1] + (1 - frach) / 3. * winh;
+        double y = viewport[1] + (1 - frach) / 3. * winh;
         if(i == 2 || i == 3) y += (h + ysep + (1 - frach) / 3. * winh);
-        drawGraph(p, x + 0.95 * xsep, CTX.viewport[3] - (y + 0.4 * ysep), w, h);
+        drawGraph(p, x + 0.95 * xsep, viewport[3] - (y + 0.4 * ysep), w, h);
       }
     }
   }

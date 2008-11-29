@@ -32,7 +32,7 @@ extern "C"
   }
 }
 
-void GMSH_CutSpherePlugin::draw()
+void GMSH_CutSpherePlugin::draw(void *context)
 {
 #if defined(HAVE_FLTK)
   static GLUquadricObj *qua;

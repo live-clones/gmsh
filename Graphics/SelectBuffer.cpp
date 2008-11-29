@@ -3,12 +3,11 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include "GmshMessage.h"
 #include "GmshUI.h"
 #include "GmshDefines.h"
+#include "GmshMessage.h"
 #include "GModel.h"
 #include "MElement.h"
-#include "Draw.h"
 #include "Context.h"
 #include "SelectBuffer.h"
 #include "VertexArray.h"
@@ -47,7 +46,7 @@ static MElement *getElement(GEntity *e, int va_type, int index)
   return 0;
 }
 
-bool ProcessSelectionBuffer(int entityType,
+bool ProcessSelectionBuffer(drawContext *ctx, int entityType,
                             bool multipleSelection, bool meshSelection,
                             int x, int y, int w, int h,
                             std::vector<GVertex*> &vertices,
@@ -77,10 +76,10 @@ bool ProcessSelectionBuffer(int entityType,
 
   glInitNames();
   glPushMatrix();
-  InitProjection(x, y, w, h);
-  InitPosition();
-  Draw_Geom();
-  if(meshSelection) Draw_Mesh();
+  ctx->initProjection(x, y, w, h);
+  ctx->initPosition();
+  ctx->drawGeom();
+  if(meshSelection) ctx->drawMesh();
   glPopMatrix();
 
   GLint numhits = glRenderMode(GL_RENDER);

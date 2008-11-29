@@ -7,6 +7,7 @@
 #define _SELECT_BUFFER_H_
 
 #include <vector>
+#include "drawContext.h"
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
@@ -14,7 +15,7 @@
 
 class MElement;
 
-bool ProcessSelectionBuffer(int entityType, 
+bool ProcessSelectionBuffer(drawContext *ctx, int entityType, 
                             bool multipleSelection, bool meshSelection,
                             int x, int y, int w, int h, 
                             std::vector<GVertex*> &vertices,

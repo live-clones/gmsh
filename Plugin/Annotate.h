@@ -38,7 +38,7 @@ public:
   static const char *callbackText(int, int, const char *);
   static const char *callbackFont(int, int, const char *);
   static const char *callbackAlign(int, int, const char *);
-  static void draw();
+  static void draw(void *context);
 };
 
 #endif

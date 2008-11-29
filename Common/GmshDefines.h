@@ -101,4 +101,9 @@
 #define MESH_TRANSFINITE  1
 #define MESH_UNSTRUCTURED 2
 
+// Render mode
+#define GMSH_RENDER    1
+#define GMSH_SELECT    2
+#define GMSH_FEEDBACK  3
+
 #endif

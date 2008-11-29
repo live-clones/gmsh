@@ -42,7 +42,7 @@ public:
   static const char *callbackX(int, int, const char *);
   static const char *callbackY(int, int, const char *);
   static const char *callbackZ(int, int, const char *);
-  static void draw();
+  static void draw(void *context);
 };
 
 #endif
