@@ -103,6 +103,9 @@ static void Print_StringOptions(int num, int level, int diff, int help,
         if(file)
           fprintf(file, "%s\n", tmp);
         else{
+          // remove \n, \t, \r
+          for(int i = 0; i < strlen(tmp); i++)
+            if(tmp[i] == '\n' || tmp[i] == '\t' || tmp[i] == '\r') tmp[i] = ' ';
           // Warning: must call Msg::Direct(level, ...) here, because
           // we cannot use tmp as a format string (it can contain %s!)
           Msg::Direct(3, "%s", tmp);

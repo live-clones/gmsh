@@ -4285,11 +4285,7 @@ void GUI::create_message_window(bool redraw_only)
 
 void GUI::add_message(const char *msg)
 {
-  // remove \n, \t, \r
-  std::string str(msg);
-  for(unsigned int i = 0; i < str.size(); i++)
-    if(str[i] == '\n' || str[i] == '\t' || str[i] == '\r') str[i] = ' ';
-  msg_browser->add(str.c_str(), 0);
+  msg_browser->add(msg, 0);
   if(CTX.msg_auto_scroll)
     msg_browser->bottomline(msg_browser->size());
 }
