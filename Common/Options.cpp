@@ -2410,7 +2410,7 @@ double opt_general_viewport2(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(WID){
     if(action & GMSH_SET)
-      WID->g_opengl_window->getDrawContext()->viewport[2] = val;
+      WID->g_opengl_window->getDrawContext()->viewport[2] = (int)val;
     return WID->g_opengl_window->getDrawContext()->viewport[2];
   }
 #endif
@@ -2424,7 +2424,7 @@ double opt_general_viewport3(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(WID){
     if(action & GMSH_SET)
-      WID->g_opengl_window->getDrawContext()->viewport[3] = val;
+      WID->g_opengl_window->getDrawContext()->viewport[3] = (int)val;
     return WID->g_opengl_window->getDrawContext()->viewport[3];
   }
 #endif
