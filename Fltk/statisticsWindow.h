@@ -26,4 +26,6 @@ class statisticsWindow{
   void show();
 };
 
+void statistics_cb(Fl_Widget *w, void *data);
+
 #endif

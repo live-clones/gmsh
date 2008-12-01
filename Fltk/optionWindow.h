@@ -90,6 +90,16 @@ class optionWindow{
   void resetBrowser();
   void resetExternalViewList();
   void updateViewGroup(int index);
+  void activate(const char *what);
 };
+
+void options_cb(Fl_Widget *w, void *data);
+void options_save_cb(Fl_Widget *w, void *data);
+void general_options_cb(Fl_Widget *w, void *data);
+void geometry_options_cb(Fl_Widget *w, void *data);
+void mesh_options_cb(Fl_Widget *w, void *data);
+void solver_options_cb(Fl_Widget *w, void *data);
+void post_options_cb(Fl_Widget *w, void *data);
+void view_options_cb(Fl_Widget *w, void *data);
 
 #endif

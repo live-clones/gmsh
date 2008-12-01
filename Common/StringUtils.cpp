@@ -8,6 +8,7 @@
 #endif
 
 #include "StringUtils.h"
+#include "GmshMessage.h"
 
 void SwapBytes(char *array, int size, int n)
 {
@@ -100,4 +101,31 @@ std::vector<std::string> SplitWhiteSpace(std::string in, unsigned int len)
       out.resize(out.size() + 1);
   }
   return out;
+}
+
+void ReplaceMultiFormat(const char *in, const char *val, char *out)
+{
+  unsigned int i = 0, j = 0;
+
+  out[0] = '\0';
+  while(i < strlen(in)){
+    if(in[i] == '%' && i != strlen(in) - 1){
+      if(in[i + 1] == 's'){
+        strcat(out, val);
+        i += 2;
+        j += strlen(val);
+      }
+      else{
+        Msg::Warning("Skipping unknown format '%%%c' in '%s'", in[i + 1], in);
+        i += 2;
+      }
+    }
+    else{
+      out[j] = in[i];
+      out[j + 1] = '\0';
+      i++;
+      j++;
+    }
+  }
+  out[j] = '\0';
 }

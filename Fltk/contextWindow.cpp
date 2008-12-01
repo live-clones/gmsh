@@ -6,12 +6,42 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Return_Button.H>
 #include "GUI.h"
+#include "Draw.h"
 #include "contextWindow.h"
 #include "shortcutWindow.h"
-#include "Callbacks.h"
+#include "GeoStringInterface.h"
+#include "OpenFile.h"
+#include "SelectBuffer.h"
 #include "Context.h"
 
 extern Context_T CTX;
+
+static void con_geometry_define_parameter_cb(Fl_Widget *w, void *data)
+{
+  add_param(GUI::instance()->geoContext->input[0]->value(),
+            GUI::instance()->geoContext->input[1]->value(), CTX.filename);
+  GUI::instance()->resetVisibility();
+}
+
+static void con_geometry_define_point_cb(Fl_Widget *w, void *data)
+{
+  add_point(CTX.filename,
+            GUI::instance()->geoContext->input[2]->value(),
+            GUI::instance()->geoContext->input[3]->value(),
+            GUI::instance()->geoContext->input[4]->value(),
+            GUI::instance()->geoContext->input[5]->value());
+  GUI::instance()->resetVisibility();
+  ZeroHighlight();
+  SetBoundingBox();
+  Draw();
+}
+
+static void con_geometry_snap_cb(Fl_Widget *w, void *data)
+{
+  CTX.geom.snap[0] = GUI::instance()->geoContext->value[0]->value();
+  CTX.geom.snap[1] = GUI::instance()->geoContext->value[1]->value();
+  CTX.geom.snap[2] = GUI::instance()->geoContext->value[2]->value();
+}
 
 geometryContextWindow::geometryContextWindow(int fontsize)
   : _fontsize(fontsize)
@@ -161,7 +191,7 @@ geometryContextWindow::geometryContextWindow(int fontsize)
   {
     Fl_Button *o = new Fl_Button
       (width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-    o->callback(cancel_cb, (void *)win);
+    o->callback(hide_cb, (void *)win);
   }
 
   win->position(CTX.ctx_position[0], CTX.ctx_position[1]);
@@ -243,7 +273,7 @@ meshContextWindow::meshContextWindow(int fontsize)
   {
     Fl_Button *o = new Fl_Button
       (width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-    o->callback(cancel_cb, (void *)win);
+    o->callback(hide_cb, (void *)win);
   }
 
   win->position(CTX.ctx_position[0], CTX.ctx_position[1]);

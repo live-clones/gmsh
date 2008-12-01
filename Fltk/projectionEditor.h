@@ -81,27 +81,8 @@ class projectionEditor {
   double getThreshold(){ return _slider->value(); }
 };
 
-void select_cb(Fl_Widget *w, void *data);
-void filter_cb(Fl_Widget *w, void *data);
-void browse_cb(Fl_Widget *w, void *data);
-void set_position_cb(Fl_Widget *w, void *data);
-void invert_normal_cb(Fl_Widget *w, void *data);
-void translate_p0_cb(Fl_Widget *w, void *data);
-void translate_p1_cb(Fl_Widget *w, void *data);
-void translate_p2_cb(Fl_Widget *w, void *data);
-void translate_m0_cb(Fl_Widget *w, void *data);
-void translate_m1_cb(Fl_Widget *w, void *data);
-void translate_m2_cb(Fl_Widget *w, void *data);
-void update_cb(Fl_Widget *w, void *data);
-void close_cb(Fl_Widget *w, void *data);
-void hide_cb(Fl_Widget *w, void *data);
-void save_selection_cb(Fl_Widget *w, void *data);
-void load_projection_cb(Fl_Widget *w, void *data);
-void save_projection_cb(Fl_Widget *w, void *data);
-void blend_cb(Fl_Widget *w, void *data);
-void compute_cb(Fl_Widget *w, void *data);
-void action_cb(Fl_Widget *w, void *data);
-
 #endif
+
+void mesh_parameterize_cb(Fl_Widget* w, void* data);
 
 #endif

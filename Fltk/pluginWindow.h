@@ -38,4 +38,6 @@ class pluginWindow{
   void resetViewBrowser();
 };
 
+void plugin_cb(Fl_Widget *w, void *data);
+
 #endif

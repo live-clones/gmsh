@@ -7,15 +7,24 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Scroll.H>
+#include <FL/Fl_Color_Chooser.H>
 #include "GUI.h"
 #include "optionWindow.h"
 #include "shortcutWindow.h"
+#include "menuWindow.h"
+#include "extraDialogs.h"
+#include "Draw.h"
+#include "SelectBuffer.h"
+#include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "Options.h"
-#include "Callbacks.h"
+#include "Solvers.h"
+#include "GModel.h"
+#include "MElement.h"
 #include "PView.h"
 #include "PViewData.h"
 #include "PViewOptions.h"
+#include "OS.h"
 #include "Context.h"
 
 extern Context_T CTX;
@@ -90,6 +99,1051 @@ Fl_Menu_Item menu_font_names[] = {
   {0}
 };
 
+static void color_cb(Fl_Widget *w, void *data)
+{
+  unsigned int (*fct) (int, int, unsigned int);
+  fct = (unsigned int (*)(int, int, unsigned int))data;
+  uchar r = CTX.UNPACK_RED(fct(0, GMSH_GET, 0));
+  uchar g = CTX.UNPACK_GREEN(fct(0, GMSH_GET, 0));
+  uchar b = CTX.UNPACK_BLUE(fct(0, GMSH_GET, 0));
+  if(fl_color_chooser("Color Chooser", r, g, b))
+    fct(0, GMSH_SET | GMSH_GUI, CTX.PACK_COLOR(r, g, b, 255));
+  Draw();
+}
+
+static void view_color_cb(Fl_Widget *w, void *data)
+{
+  unsigned int (*fct) (int, int, unsigned int);
+  fct = (unsigned int (*)(int, int, unsigned int))data;
+  uchar r = CTX.UNPACK_RED(fct(GUI::instance()->options->view.index, GMSH_GET, 0));
+  uchar g = CTX.UNPACK_GREEN(fct(GUI::instance()->options->view.index, GMSH_GET, 0));
+  uchar b = CTX.UNPACK_BLUE(fct(GUI::instance()->options->view.index, GMSH_GET, 0));
+  if(fl_color_chooser("Color Chooser", r, g, b))
+    fct(GUI::instance()->options->view.index, 
+        GMSH_SET | GMSH_GUI, CTX.PACK_COLOR(r, g, b, 255));
+  Draw();
+}
+
+void options_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->options->win->show();
+}
+
+static void options_browser_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->options->showGroup(GUI::instance()->options->browser->value());
+}
+
+void options_save_cb(Fl_Widget *w, void *data)
+{
+  Msg::StatusBar(2, true, "Writing '%s'", CTX.options_filename_fullpath);
+  Print_Options(0, GMSH_OPTIONSRC, 1, 1, CTX.options_filename_fullpath);
+  Msg::StatusBar(2, true, "Wrote '%s'", CTX.options_filename_fullpath);
+}
+
+static void options_restore_defaults_cb(Fl_Widget *w, void *data)
+{
+  // not sure if we have to remove the file...
+  UnlinkFile(CTX.session_filename_fullpath);
+  UnlinkFile(CTX.options_filename_fullpath);
+  ReInit_Options(0);
+  Init_Options_GUI(0);
+  if(GUI::instance()->menu->module->value() == 3) // hack to refresh the buttons
+    GUI::instance()->menu->setContext(menu_post, 0);
+  Draw();
+}
+
+void general_options_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->options->showGroup(1);
+}
+
+static void general_options_color_scheme_cb(Fl_Widget *w, void *data)
+{
+  opt_general_color_scheme
+    (0, GMSH_SET, GUI::instance()->options->general.choice[3]->value());
+  Draw();
+}
+
+static void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
+{
+  std::vector<GVertex*> vertices;
+  std::vector<GEdge*> edges;
+  std::vector<GFace*> faces;
+  std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
+
+  Msg::StatusBar(3, false, "Select entity\n[Press 'q' to abort]");
+  char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions, elements);
+  if(ib == 'l') {
+    SPoint3 pc(0., 0., 0.);
+    if(vertices.size())
+      pc.setPosition(vertices[0]->x(), vertices[0]->y(), vertices[0]->z());
+    else if(edges.size())
+      pc = edges[0]->bounds().center();
+    else if(faces.size())
+      pc = faces[0]->bounds().center();
+    else if(regions.size())
+      pc = regions[0]->bounds().center();
+    else if(elements.size())
+      pc = elements[0]->barycenter();
+    opt_general_rotation_center_cg
+      (0, GMSH_SET, GUI::instance()->options->general.butt[15]->value());
+    opt_general_rotation_center0(0, GMSH_SET|GMSH_GUI, pc.x());
+    opt_general_rotation_center1(0, GMSH_SET|GMSH_GUI, pc.y());
+    opt_general_rotation_center2(0, GMSH_SET|GMSH_GUI, pc.z());
+  }
+  ZeroHighlight();
+  Draw();
+  Msg::StatusBar(3, false, "");
+}
+
+static void general_options_ok_cb(Fl_Widget *w, void *data)
+{
+  optionWindow *o = GUI::instance()->options;
+  o->activate((const char*)data);
+
+  static double lc = 0.;
+  if(lc != CTX.lc){
+    lc = CTX.lc;
+    for(int i = 2; i < 5; i++){
+      o->general.value[i]->minimum(-5 * CTX.lc);
+      o->general.value[i]->maximum(5 * CTX.lc);
+    }
+  }
+  if(data){
+    const char *name = (const char*)data;
+    if(!strcmp(name, "rotation_center_coord")){
+      CTX.draw_rotation_center = 1;
+    }
+    else if(!strcmp(name, "light_value")){
+      double x, y, z;
+      x = o->general.value[2]->value();
+      y = o->general.value[3]->value();
+      z = o->general.value[4]->value();
+      o->general.sphere->setValue(x, y, z);    
+    }
+    else if(!strcmp(name, "light_sphere")){
+      double x, y, z;
+      o->general.sphere->getValue(x, y, z);
+      o->general.value[2]->value(x);
+      o->general.value[3]->value(y);
+      o->general.value[4]->value(z);
+    }
+  }
+
+  opt_general_axes_auto_position(0, GMSH_SET, o->general.butt[0]->value());
+  opt_general_small_axes(0, GMSH_SET, o->general.butt[1]->value());
+  opt_general_fast_redraw(0, GMSH_SET, o->general.butt[2]->value());
+  opt_general_mouse_hover_meshes(0, GMSH_SET, o->general.butt[11]->value());
+  if(opt_general_double_buffer(0, GMSH_GET, 0) != o->general.butt[3]->value())
+    opt_general_double_buffer(0, GMSH_SET, o->general.butt[3]->value());
+  if(opt_general_antialiasing(0, GMSH_GET, 0) != o->general.butt[12]->value())
+    opt_general_antialiasing(0, GMSH_SET, o->general.butt[12]->value());
+  opt_general_trackball(0, GMSH_SET, o->general.butt[5]->value());
+  opt_general_terminal(0, GMSH_SET, o->general.butt[7]->value());
+  double sessionrc = opt_general_session_save(0, GMSH_GET, 0);
+  opt_general_session_save(0, GMSH_SET, o->general.butt[8]->value());
+  if(sessionrc && !opt_general_session_save(0, GMSH_GET, 0))
+    Print_Options(0, GMSH_SESSIONRC, 1, 1, CTX.session_filename_fullpath);
+  opt_general_options_save(0, GMSH_SET, o->general.butt[9]->value());
+  opt_general_expert_mode(0, GMSH_SET, o->general.butt[10]->value());
+  opt_general_tooltips(0, GMSH_SET, o->general.butt[13]->value());
+  opt_general_confirm_overwrite(0, GMSH_SET, o->general.butt[14]->value());
+  opt_general_rotation_center_cg(0, GMSH_SET, o->general.butt[15]->value());
+  opt_general_draw_bounding_box(0, GMSH_SET, o->general.butt[6]->value());
+  opt_general_polygon_offset_always(0, GMSH_SET, o->general.butt[4]->value());
+  opt_general_axes_mikado(0, GMSH_SET, o->general.butt[16]->value());
+
+  opt_general_shine_exponent(0, GMSH_SET, o->general.value[0]->value());  
+  opt_general_shine(0, GMSH_SET, o->general.value[1]->value());
+  opt_general_light00(0, GMSH_SET, o->general.value[2]->value());
+  opt_general_light01(0, GMSH_SET, o->general.value[3]->value());
+  opt_general_light02(0, GMSH_SET, o->general.value[4]->value());
+  opt_general_light03(0, GMSH_SET, o->general.value[13]->value());
+  opt_general_verbosity(0, GMSH_SET, o->general.value[5]->value());
+  opt_general_point_size(0, GMSH_SET, o->general.value[6]->value());
+  opt_general_line_width(0, GMSH_SET, o->general.value[7]->value());
+  opt_general_rotation_center0(0, GMSH_SET, o->general.value[8]->value());
+  opt_general_rotation_center1(0, GMSH_SET, o->general.value[9]->value());
+  opt_general_rotation_center2(0, GMSH_SET, o->general.value[10]->value());
+  opt_general_quadric_subdivisions(0, GMSH_SET, o->general.value[11]->value());
+  opt_general_graphics_fontsize(0, GMSH_SET, o->general.value[12]->value());
+  opt_general_clip_factor(0, GMSH_SET, o->general.value[14]->value());
+  opt_general_polygon_offset_factor(0, GMSH_SET, o->general.value[15]->value());
+  opt_general_polygon_offset_units(0, GMSH_SET, o->general.value[16]->value());
+  opt_general_axes_tics0(0, GMSH_SET, o->general.value[17]->value());
+  opt_general_axes_tics1(0, GMSH_SET, o->general.value[18]->value());
+  opt_general_axes_tics2(0, GMSH_SET, o->general.value[19]->value());
+  opt_general_axes_xmin(0, GMSH_SET, o->general.value[20]->value());
+  opt_general_axes_ymin(0, GMSH_SET, o->general.value[21]->value());
+  opt_general_axes_zmin(0, GMSH_SET, o->general.value[22]->value());
+  opt_general_axes_xmax(0, GMSH_SET, o->general.value[23]->value());
+  opt_general_axes_ymax(0, GMSH_SET, o->general.value[24]->value());
+  opt_general_axes_zmax(0, GMSH_SET, o->general.value[25]->value());
+  opt_general_small_axes_position0(0, GMSH_SET, o->general.value[26]->value());
+  opt_general_small_axes_position1(0, GMSH_SET, o->general.value[27]->value());
+
+  opt_general_default_filename(0, GMSH_SET, o->general.input[0]->value());
+  opt_general_editor(0, GMSH_SET, o->general.input[1]->value());
+  opt_general_web_browser(0, GMSH_SET, o->general.input[2]->value());
+  opt_general_axes_format0(0, GMSH_SET, o->general.input[3]->value());
+  opt_general_axes_format1(0, GMSH_SET, o->general.input[4]->value());
+  opt_general_axes_format2(0, GMSH_SET, o->general.input[5]->value());
+  opt_general_axes_label0(0, GMSH_SET, o->general.input[6]->value());
+  opt_general_axes_label1(0, GMSH_SET, o->general.input[7]->value());
+  opt_general_axes_label2(0, GMSH_SET, o->general.input[8]->value());
+
+  opt_general_vector_type(0, GMSH_SET, o->general.choice[0]->value() + 1);
+  opt_general_graphics_font(0, GMSH_SET, o->general.choice[1]->text());
+  opt_general_orthographic(0, GMSH_SET, !o->general.choice[2]->value());
+  opt_general_axes(0, GMSH_SET, o->general.choice[4]->value());
+  opt_general_background_gradient(0, GMSH_SET, o->general.choice[5]->value());
+
+  if(CTX.fast_redraw)
+    CTX.post.draw = CTX.mesh.draw = 0;
+  Draw();
+  CTX.post.draw = CTX.mesh.draw = 1;
+  CTX.draw_rotation_center = 0;
+}
+
+static void general_arrow_param_cb(Fl_Widget *w, void *data)
+{
+  double a = opt_general_arrow_head_radius(0, GMSH_GET, 0);
+  double b = opt_general_arrow_stem_length(0, GMSH_GET, 0);
+  double c = opt_general_arrow_stem_radius(0, GMSH_GET, 0);
+  while(arrow_editor("Arrow Editor", a, b, c)){
+    opt_general_arrow_head_radius(0, GMSH_SET, a);
+    opt_general_arrow_stem_length(0, GMSH_SET, b);
+    opt_general_arrow_stem_radius(0, GMSH_SET, c);
+    Draw();
+  }
+}
+
+void geometry_options_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->options->showGroup(2);
+}
+
+static void geometry_options_ok_cb(Fl_Widget *w, void *data)
+{
+  optionWindow *o = GUI::instance()->options;
+  o->activate((const char*)data);
+
+  opt_geometry_points(0, GMSH_SET, o->geo.butt[0]->value());
+  opt_geometry_lines(0, GMSH_SET, o->geo.butt[1]->value());
+  opt_geometry_surfaces(0, GMSH_SET, o->geo.butt[2]->value());
+  opt_geometry_volumes(0, GMSH_SET, o->geo.butt[3]->value());
+  opt_geometry_points_num(0, GMSH_SET, o->geo.butt[4]->value());
+  opt_geometry_lines_num(0, GMSH_SET, o->geo.butt[5]->value());
+  opt_geometry_surfaces_num(0, GMSH_SET, o->geo.butt[6]->value());
+  opt_geometry_volumes_num(0, GMSH_SET, o->geo.butt[7]->value());
+  opt_geometry_auto_coherence(0, GMSH_SET, o->geo.butt[8]->value());
+  opt_geometry_light(0, GMSH_SET, o->geo.butt[9]->value());
+  opt_geometry_highlight_orphans(0, GMSH_SET, o->geo.butt[10]->value());
+  opt_geometry_occ_fix_small_edges(0, GMSH_SET, o->geo.butt[11]->value());
+  opt_geometry_occ_fix_small_faces(0, GMSH_SET, o->geo.butt[12]->value());
+  opt_geometry_occ_sew_faces(0, GMSH_SET, o->geo.butt[13]->value());
+  opt_geometry_light_two_side(0, GMSH_SET, o->geo.butt[14]->value());
+
+  opt_geometry_normals(0, GMSH_SET, o->geo.value[0]->value());
+  opt_geometry_tangents(0, GMSH_SET, o->geo.value[1]->value());
+  opt_geometry_tolerance(0, GMSH_SET, o->geo.value[2]->value());
+  opt_geometry_point_size(0, GMSH_SET, o->geo.value[3]->value());
+  opt_geometry_line_width(0, GMSH_SET, o->geo.value[4]->value());
+  opt_geometry_point_sel_size(0, GMSH_SET, o->geo.value[5]->value());
+  opt_geometry_line_sel_width(0, GMSH_SET, o->geo.value[6]->value());
+
+  opt_geometry_point_type(0, GMSH_SET, o->geo.choice[0]->value());
+  opt_geometry_line_type(0, GMSH_SET, o->geo.choice[1]->value());
+  opt_geometry_surface_type(0, GMSH_SET, o->geo.choice[2]->value());
+
+  if(CTX.fast_redraw)
+    CTX.post.draw = CTX.mesh.draw = 0;
+  Draw();
+  CTX.post.draw = CTX.mesh.draw = 1;
+}
+
+void mesh_options_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->options->showGroup(3);
+}
+
+static void mesh_options_ok_cb(Fl_Widget *w, void *data)
+{
+  optionWindow *o = GUI::instance()->options;
+  o->activate((const char*)data);
+
+  opt_mesh_reverse_all_normals(0, GMSH_SET, o->mesh.butt[0]->value());
+  opt_mesh_lc_from_curvature(0, GMSH_SET, o->mesh.butt[1]->value());
+  opt_mesh_lc_from_points(0, GMSH_SET, o->mesh.butt[5]->value());
+  opt_mesh_lc_extend_from_boundary(0, GMSH_SET, o->mesh.butt[16]->value());
+  opt_mesh_optimize(0, GMSH_SET, o->mesh.butt[2]->value());
+  opt_mesh_optimize_netgen(0, GMSH_SET, o->mesh.butt[24]->value());
+  opt_mesh_order(0, GMSH_SET, o->mesh.value[3]->value());
+  opt_mesh_smooth_internal_edges(0, GMSH_SET, o->mesh.butt[3]->value());
+  opt_mesh_second_order_incomplete(0, GMSH_SET, o->mesh.butt[4]->value());
+  opt_mesh_c1(0, GMSH_SET, o->mesh.butt[21]->value());
+  opt_mesh_points(0, GMSH_SET, o->mesh.butt[6]->value());
+  opt_mesh_lines(0, GMSH_SET, o->mesh.butt[7]->value());
+  opt_mesh_triangles(0, GMSH_SET, o->mesh.menu->menu()[0].value() ? 1 : 0);
+  opt_mesh_quadrangles(0, GMSH_SET, o->mesh.menu->menu()[1].value() ? 1 : 0);
+  opt_mesh_tetrahedra(0, GMSH_SET, o->mesh.menu->menu()[2].value() ? 1 : 0);
+  opt_mesh_hexahedra(0, GMSH_SET, o->mesh.menu->menu()[3].value() ? 1 : 0);
+  opt_mesh_prisms(0, GMSH_SET, o->mesh.menu->menu()[4].value() ? 1 : 0);
+  opt_mesh_pyramids(0, GMSH_SET, o->mesh.menu->menu()[5].value() ? 1 : 0);
+  opt_mesh_surfaces_edges(0, GMSH_SET, o->mesh.butt[8]->value());
+  opt_mesh_surfaces_faces(0, GMSH_SET, o->mesh.butt[9]->value());
+  opt_mesh_volumes_edges(0, GMSH_SET, o->mesh.butt[10]->value());
+  opt_mesh_volumes_faces(0, GMSH_SET, o->mesh.butt[11]->value());
+  opt_mesh_points_num(0, GMSH_SET, o->mesh.butt[12]->value());
+  opt_mesh_lines_num(0, GMSH_SET, o->mesh.butt[13]->value());
+  opt_mesh_surfaces_num(0, GMSH_SET, o->mesh.butt[14]->value());
+  opt_mesh_volumes_num(0, GMSH_SET, o->mesh.butt[15]->value());
+  opt_mesh_light(0, GMSH_SET, o->mesh.butt[17]->value());
+  opt_mesh_light_two_side(0, GMSH_SET, o->mesh.butt[18]->value());
+  opt_mesh_smooth_normals(0, GMSH_SET, o->mesh.butt[19]->value());
+  opt_mesh_light_lines(0, GMSH_SET, o->mesh.butt[20]->value());
+  opt_mesh_nb_smoothing(0, GMSH_SET, o->mesh.value[0]->value());
+  opt_mesh_lc_factor(0, GMSH_SET, o->mesh.value[2]->value());
+  opt_mesh_lc_min(0, GMSH_SET, o->mesh.value[25]->value());
+  opt_mesh_lc_max(0, GMSH_SET, o->mesh.value[26]->value());
+  opt_mesh_quality_inf(0, GMSH_SET, o->mesh.value[4]->value());
+  opt_mesh_quality_sup(0, GMSH_SET, o->mesh.value[5]->value());
+  opt_mesh_radius_inf(0, GMSH_SET, o->mesh.value[6]->value());
+  opt_mesh_radius_sup(0, GMSH_SET, o->mesh.value[7]->value());
+  opt_mesh_normals(0, GMSH_SET, o->mesh.value[8]->value());
+  opt_mesh_explode(0, GMSH_SET, o->mesh.value[9]->value());
+  opt_mesh_tangents(0, GMSH_SET, o->mesh.value[13]->value());
+  opt_mesh_point_size(0, GMSH_SET, o->mesh.value[10]->value());
+  opt_mesh_line_width(0, GMSH_SET, o->mesh.value[11]->value());
+  opt_mesh_label_frequency(0, GMSH_SET, o->mesh.value[12]->value());
+  opt_mesh_angle_smooth_normals(0, GMSH_SET, o->mesh.value[18]->value());
+
+  opt_mesh_point_type(0, GMSH_SET, o->mesh.choice[0]->value());
+  opt_mesh_algo2d(0, GMSH_SET,
+                  (o->mesh.choice[2]->value() == 0) ? ALGO_2D_FRONTAL : 
+                  (o->mesh.choice[2]->value() == 1) ? ALGO_2D_DELAUNAY :
+                  ALGO_2D_MESHADAPT_DELAUNAY);
+  opt_mesh_algo3d(0, GMSH_SET,
+                  (o->mesh.choice[3]->value() == 0) ? ALGO_3D_TETGEN_DELAUNAY : 
+                  ALGO_3D_NETGEN);
+  opt_mesh_recombine_algo(0, GMSH_SET,
+                  (o->mesh.choice[5]->value() == 0) ? 1 : 2);
+  opt_mesh_color_carousel(0, GMSH_SET, o->mesh.choice[4]->value());
+  opt_mesh_quality_type(0, GMSH_SET, o->mesh.choice[6]->value());
+  opt_mesh_label_type(0, GMSH_SET, o->mesh.choice[7]->value());
+
+  if(CTX.fast_redraw)
+    CTX.post.draw = CTX.mesh.draw = 0;
+  Draw();
+  CTX.post.draw = CTX.mesh.draw = 1;
+}
+
+void solver_options_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->options->showGroup(4);
+}
+
+static void solver_options_ok_cb(Fl_Widget *w, void *data)
+{
+  optionWindow *o = GUI::instance()->options;
+  o->activate((const char*)data);
+
+  int old_listen = (int)opt_solver_listen(0, GMSH_GET, o->solver.butt[0]->value());
+  opt_solver_listen(0, GMSH_SET, o->solver.butt[0]->value());
+  if(!old_listen && o->solver.butt[0]->value())
+    Solver(-1, NULL);
+
+  opt_solver_max_delay(0, GMSH_SET, o->solver.value[0]->value());
+
+  opt_solver_socket_name(0, GMSH_SET, o->solver.input[0]->value());
+
+  if(CTX.fast_redraw)
+    CTX.post.draw = CTX.mesh.draw = 0;
+  Draw();
+  CTX.post.draw = CTX.mesh.draw = 1;
+}
+
+void post_options_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->options->showGroup(5);
+}
+
+static void post_options_ok_cb(Fl_Widget *w, void *data)
+{
+  optionWindow *o = GUI::instance()->options;
+  o->activate((const char*)data);
+
+  opt_post_anim_cycle(0, GMSH_SET, o->post.butt[0]->value());
+  opt_post_combine_remove_orig(0, GMSH_SET, o->post.butt[1]->value());
+  opt_post_horizontal_scales(0, GMSH_SET, o->post.butt[2]->value());
+
+  opt_post_anim_delay(0, GMSH_SET, o->post.value[0]->value());
+
+  opt_post_link(0, GMSH_SET, o->post.choice[0]->value());
+
+  if(CTX.fast_redraw)
+    CTX.post.draw = CTX.mesh.draw = 0;
+  Draw();
+  CTX.post.draw = CTX.mesh.draw = 1;
+}
+
+void view_options_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->options->showGroup((int)(long)data + 6);
+}
+
+static void view_options_timestep_cb(Fl_Widget *w, void *data)
+{
+  int links = (int)opt_post_link(0, GMSH_GET, 0);
+  for(int i = 0; i < (int)PView::list.size(); i++) {
+    if((links == 2 || links == 4) ||
+       ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
+       (links == 0 && i == GUI::instance()->options->view.index)) {
+      opt_view_timestep(i, GMSH_SET, ((Fl_Value_Input *) w)->value());
+    }
+  }
+  Draw();
+}
+
+static void view_options_timestep_decr_cb(Fl_Widget *w, void *data)
+{
+  int links = (int)opt_post_link(0, GMSH_GET, 0);
+  for(int i = 0; i < (int)PView::list.size(); i++) {
+    if((links == 2 || links == 4) ||
+       ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
+       (links == 0 && i == GUI::instance()->options->view.index)) {
+      opt_view_timestep(i, GMSH_SET | GMSH_GUI,
+                        opt_view_timestep(i, GMSH_GET, 0) - 1);
+    }
+  }
+  Draw();
+}
+
+static void view_options_timestep_incr_cb(Fl_Widget *w, void *data)
+{
+  int links = (int)opt_post_link(0, GMSH_GET, 0);
+  for(int i = 0; i < (int)PView::list.size(); i++) {
+    if((links == 2 || links == 4) ||
+       ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
+       (links == 0 && i == GUI::instance()->options->view.index)) {
+      opt_view_timestep(i, GMSH_SET | GMSH_GUI,
+                        opt_view_timestep(i, GMSH_GET, 0) + 1);
+    }
+  }
+  Draw();
+}
+
+static void view_arrow_param_cb(Fl_Widget *w, void *data)
+{
+  double a = opt_view_arrow_head_radius
+    (GUI::instance()->options->view.index, GMSH_GET, 0);
+  double b = opt_view_arrow_stem_length
+    (GUI::instance()->options->view.index, GMSH_GET, 0);
+  double c = opt_view_arrow_stem_radius
+    (GUI::instance()->options->view.index, GMSH_GET, 0);
+  while(arrow_editor("Arrow Editor", a, b, c)){
+    opt_view_arrow_head_radius
+      (GUI::instance()->options->view.index, GMSH_SET, a);
+    opt_view_arrow_stem_length
+      (GUI::instance()->options->view.index, GMSH_SET, b);
+    opt_view_arrow_stem_radius
+      (GUI::instance()->options->view.index, GMSH_SET, c);
+    Draw();
+  }
+}
+
+static void view_options_ok_cb(Fl_Widget *w, void *data)
+{
+  int current = GUI::instance()->options->view.index;
+
+  if(current < 0) return;
+
+  optionWindow *o = GUI::instance()->options;
+  o->activate((const char*)data);
+
+  if(data){
+    const char *str = (const char*)data;
+    if(!strcmp(str, "range_min")){
+      o->view.value[31]->value(opt_view_min(o->view.index, GMSH_GET, 0));
+    }
+    else if(!strcmp(str, "range_max")){
+      o->view.value[32]->value(opt_view_max(o->view.index, GMSH_GET, 0));
+    }
+  }
+  
+  int force = 0, links = (int)opt_post_link(0, GMSH_GET, 0);
+
+  // get the old values for the current view
+  double scale_type = opt_view_scale_type(current, GMSH_GET, 0);
+  double intervals_type = opt_view_intervals_type(current, GMSH_GET, 0);
+  double point_type = opt_view_point_type(current, GMSH_GET, 0);
+  double line_type = opt_view_line_type(current, GMSH_GET, 0);
+  double vector_type = opt_view_vector_type(current, GMSH_GET, 0);
+  double glyph_location = opt_view_glyph_location(current, GMSH_GET, 0);
+  double tensor_type = opt_view_tensor_type(current, GMSH_GET, 0);
+  double range_type = opt_view_range_type(current, GMSH_GET, 0);
+  double axes = opt_view_axes(current, GMSH_GET, 0);
+  double mikado = opt_view_axes_mikado(current, GMSH_GET, 0);
+  double boundary = opt_view_boundary(current, GMSH_GET, 0);
+  double external_view = opt_view_external_view(current, GMSH_GET, 0);
+  double gen_raise_view = opt_view_gen_raise_view(current, GMSH_GET, 0);
+  double show_time = opt_view_show_time(current, GMSH_GET, 0);
+
+  double type = opt_view_type(current, GMSH_GET, 0);
+  double saturate_values = opt_view_saturate_values(current, GMSH_GET, 0);
+  double max_recursion_level = opt_view_max_recursion_level(current, GMSH_GET, 0);
+  double target_error = opt_view_target_error(current, GMSH_GET, 0);
+  double show_element = opt_view_show_element(current, GMSH_GET, 0);
+  double draw_skin_only = opt_view_draw_skin_only(current, GMSH_GET, 0);
+  double show_scale = opt_view_show_scale(current, GMSH_GET, 0);
+  double auto_position = opt_view_auto_position(current, GMSH_GET, 0);
+  double axes_auto_position = opt_view_axes_auto_position(current, GMSH_GET, 0);
+  double draw_strings = opt_view_draw_strings(current, GMSH_GET, 0);
+  double light = opt_view_light(current, GMSH_GET, 0);
+  double light_two_side = opt_view_light_two_side(current, GMSH_GET, 0);
+  double light_lines = opt_view_light_lines(current, GMSH_GET, 0);
+  double smooth_normals = opt_view_smooth_normals(current, GMSH_GET, 0);
+  double draw_points = opt_view_draw_points(current, GMSH_GET, 0);
+  double draw_lines = opt_view_draw_lines(current, GMSH_GET, 0);
+  double draw_triangles = opt_view_draw_triangles(current, GMSH_GET, 0);
+  double draw_quadrangles = opt_view_draw_quadrangles(current, GMSH_GET, 0);
+  double draw_tetrahedra = opt_view_draw_tetrahedra(current, GMSH_GET, 0);
+  double draw_hexahedra = opt_view_draw_hexahedra(current, GMSH_GET, 0);
+  double draw_prisms = opt_view_draw_prisms(current, GMSH_GET, 0);
+  double draw_pyramids = opt_view_draw_pyramids(current, GMSH_GET, 0);
+  double draw_scalars = opt_view_draw_scalars(current, GMSH_GET, 0);
+  double draw_vectors = opt_view_draw_vectors(current, GMSH_GET, 0);
+  double draw_tensors = opt_view_draw_tensors(current, GMSH_GET, 0);
+  double use_gen_raise = opt_view_use_gen_raise(current, GMSH_GET, 0);
+  double fake_transparency = opt_view_fake_transparency(current, GMSH_GET, 0);
+  double use_stipple = opt_view_use_stipple(current, GMSH_GET, 0);
+  double center_glyphs = opt_view_center_glyphs(current, GMSH_GET, 0);
+
+  double normals = opt_view_normals(current, GMSH_GET, 0);
+  double tangents = opt_view_tangents(current, GMSH_GET, 0);
+  double custom_min = opt_view_custom_min(current, GMSH_GET, 0);
+  double custom_max = opt_view_custom_max(current, GMSH_GET, 0);
+  double nb_iso = opt_view_nb_iso(current, GMSH_GET, 0);
+  double offset0 = opt_view_offset0(current, GMSH_GET, 0);
+  double offset1 = opt_view_offset1(current, GMSH_GET, 0);
+  double offset2 = opt_view_offset2(current, GMSH_GET, 0);
+  double transform00 = opt_view_transform00(current, GMSH_GET, 0);
+  double transform01 = opt_view_transform01(current, GMSH_GET, 0);
+  double transform02 = opt_view_transform02(current, GMSH_GET, 0);
+  double transform10 = opt_view_transform10(current, GMSH_GET, 0);
+  double transform11 = opt_view_transform11(current, GMSH_GET, 0);
+  double transform12 = opt_view_transform12(current, GMSH_GET, 0);
+  double transform20 = opt_view_transform20(current, GMSH_GET, 0);
+  double transform21 = opt_view_transform21(current, GMSH_GET, 0);
+  double transform22 = opt_view_transform22(current, GMSH_GET, 0);
+  double raise0 = opt_view_raise0(current, GMSH_GET, 0);
+  double raise1 = opt_view_raise1(current, GMSH_GET, 0);
+  double raise2 = opt_view_raise2(current, GMSH_GET, 0);
+  double normal_raise = opt_view_normal_raise(current, GMSH_GET, 0);
+  double timestep = opt_view_timestep(current, GMSH_GET, 0);
+  double arrow_size = opt_view_arrow_size(current, GMSH_GET, 0);
+  double arrow_size_proportional = opt_view_arrow_size_proportional(current, GMSH_GET, 0);
+  double displacement_factor = opt_view_displacement_factor(current, GMSH_GET, 0);
+  double point_size = opt_view_point_size(current, GMSH_GET, 0);
+  double line_width = opt_view_line_width(current, GMSH_GET, 0);
+  double explode = opt_view_explode(current, GMSH_GET, 0);
+  double angle_smooth_normals = opt_view_angle_smooth_normals(current, GMSH_GET, 0);
+  double position0 = opt_view_position0(current, GMSH_GET, 0);
+  double position1 = opt_view_position1(current, GMSH_GET, 0);
+  double size0 = opt_view_size0(current, GMSH_GET, 0);
+  double size1 = opt_view_size1(current, GMSH_GET, 0);
+  double axes_tics0 = opt_view_axes_tics0(current, GMSH_GET, 0);
+  double axes_tics1 = opt_view_axes_tics1(current, GMSH_GET, 0);
+  double axes_tics2 = opt_view_axes_tics2(current, GMSH_GET, 0);
+  double axes_xmin = opt_view_axes_xmin(current, GMSH_GET, 0);
+  double axes_ymin = opt_view_axes_ymin(current, GMSH_GET, 0);
+  double axes_zmin = opt_view_axes_zmin(current, GMSH_GET, 0);
+  double axes_xmax = opt_view_axes_xmax(current, GMSH_GET, 0);
+  double axes_ymax = opt_view_axes_ymax(current, GMSH_GET, 0);
+  double axes_zmax = opt_view_axes_zmax(current, GMSH_GET, 0);
+  double gen_raise_factor = opt_view_gen_raise_factor(current, GMSH_GET, 0);
+
+  char name[256]; 
+  strcpy(name, opt_view_name(current, GMSH_GET, NULL));
+  char format[256];
+  strcpy(format, opt_view_format(current, GMSH_GET, NULL));
+  char axes_label0[256];
+  strcpy(axes_label0, opt_view_axes_label0(current, GMSH_GET, NULL));
+  char axes_label1[256];
+  strcpy(axes_label1, opt_view_axes_label1(current, GMSH_GET, NULL));
+  char axes_label2[256];
+  strcpy(axes_label2, opt_view_axes_label2(current, GMSH_GET, NULL));
+  char axes_format0[256];
+  strcpy(axes_format0, opt_view_axes_format0(current, GMSH_GET, NULL));
+  char axes_format1[256];
+  strcpy(axes_format1, opt_view_axes_format1(current, GMSH_GET, NULL));
+  char axes_format2[256];
+  strcpy(axes_format2, opt_view_axes_format2(current, GMSH_GET, NULL));
+  char gen_raise0[256];
+  strcpy(gen_raise0, opt_view_gen_raise0(current, GMSH_GET, NULL));
+  char gen_raise1[256];
+  strcpy(gen_raise1, opt_view_gen_raise1(current, GMSH_GET, NULL));
+  char gen_raise2[256];
+  strcpy(gen_raise2, opt_view_gen_raise2(current, GMSH_GET, NULL));
+
+  // modify only the views that need to be updated
+  for(int i = 0; i < (int)PView::list.size(); i++) {
+    if((links == 2 || links == 4) ||
+       ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
+       (links == 0 && i == current)) {
+
+      if(links == 3 || links == 4)
+        force = 1;
+
+      double val;
+
+      // view_choice
+
+      val = o->view.choice[1]->value() + 1;
+      if(force || (val != scale_type))
+        opt_view_scale_type(i, GMSH_SET, val);
+
+      val = o->view.choice[0]->value() + 1;
+      if(force || (val != intervals_type))
+        opt_view_intervals_type(i, GMSH_SET, val);
+      
+      val = o->view.choice[5]->value();
+      if(force || (val != point_type))
+        opt_view_point_type(i, GMSH_SET, val);
+      
+      val = o->view.choice[6]->value();
+      if(force || (val != line_type))
+        opt_view_line_type(i, GMSH_SET, val);
+
+      val = o->view.choice[2]->value() + 1;
+      if(force || (val != vector_type))
+        opt_view_vector_type(i, GMSH_SET, val);
+
+      val = o->view.choice[3]->value() + 1;
+      if(force || (val != glyph_location))
+        opt_view_glyph_location(i, GMSH_SET, val);
+
+      val = o->view.choice[4]->value() + 1;
+      if(force || (val != tensor_type))
+        opt_view_tensor_type(i, GMSH_SET, val);
+      
+      val = o->view.choice[7]->value() + 1;
+      if(force || (val != range_type))
+        opt_view_range_type(i, GMSH_SET, val);
+
+      val = o->view.choice[8]->value();
+      if(force || (val != axes))
+        opt_view_axes(i, GMSH_SET, val);
+
+      val = o->view.choice[9]->value();
+      if(force || (val != boundary))
+        opt_view_boundary(i, GMSH_SET, val);
+
+      val = o->view.choice[10]->value() - 1;
+      if(force || (val != external_view))
+        opt_view_external_view(i, GMSH_SET, val);
+
+      val = o->view.choice[11]->value() - 1;
+      if(force || (val != gen_raise_view))
+        opt_view_gen_raise_view(i, GMSH_SET, val);
+
+      val = o->view.choice[12]->value();
+      if(force || (val != show_time))
+        opt_view_show_time(i, GMSH_SET, val);
+      
+      val = o->view.choice[13]->value() + 1;
+      if(force || (val != type))
+        opt_view_type(i, GMSH_SET, val);
+
+      // view_butts
+
+      val = o->view.butt[0]->value();
+      if(force || (val != arrow_size_proportional))
+        opt_view_arrow_size_proportional(i, GMSH_SET, val);
+
+      val = o->view.butt[38]->value();
+      if(force || (val != saturate_values))
+        opt_view_saturate_values(i, GMSH_SET, val);
+
+      val = o->view.butt[10]->value();
+      if(force || (val != show_element))
+        opt_view_show_element(i, GMSH_SET, val);
+
+      val = o->view.butt[2]->value();
+      if(force || (val != draw_skin_only))
+        opt_view_draw_skin_only(i, GMSH_SET, val);
+
+      val = o->view.butt[4]->value();
+      if(force || (val != show_scale))
+        opt_view_show_scale(i, GMSH_SET, val);
+
+      val = o->view.butt[3]->value();
+      if(force || (val != mikado))
+        opt_view_axes_mikado(i, GMSH_SET, val);
+
+      val = o->view.butt[7]->value();
+      if(force || (val != auto_position))
+        opt_view_auto_position(i, GMSH_SET, val);
+
+      val = o->view.butt[25]->value();
+      if(force || (val != axes_auto_position))
+        opt_view_axes_auto_position(i, GMSH_SET, val);
+
+      val = o->view.butt[5]->value();
+      if(force || (val != draw_strings))
+        opt_view_draw_strings(i, GMSH_SET, val);
+
+      val = o->view.butt[11]->value();
+      if(force || (val != light))
+        opt_view_light(i, GMSH_SET, val);
+
+      val = o->view.butt[8]->value();
+      if(force || (val != light_lines))
+        opt_view_light_lines(i, GMSH_SET, val);
+
+      val = o->view.butt[9]->value();
+      if(force || (val != light_two_side))
+        opt_view_light_two_side(i, GMSH_SET, val);
+
+      val = o->view.butt[12]->value();
+      if(force || (val != smooth_normals))
+        opt_view_smooth_normals(i, GMSH_SET, val);
+
+      val = o->view.menu[0]->menu()[0].value() ? 1 : 0;
+      if(force || (val != draw_scalars))
+        opt_view_draw_scalars(i, GMSH_SET, val);
+
+      val = o->view.menu[0]->menu()[1].value() ? 1 : 0;
+      if(force || (val != draw_vectors))
+        opt_view_draw_vectors(i, GMSH_SET, val);
+
+      val = o->view.menu[0]->menu()[2].value() ? 1 : 0;
+      if(force || (val != draw_tensors))
+        opt_view_draw_tensors(i, GMSH_SET, val);
+
+      val = o->view.menu[1]->menu()[0].value() ? 1 : 0;
+      if(force || (val != draw_points))
+        opt_view_draw_points(i, GMSH_SET, val);
+
+      val = o->view.menu[1]->menu()[1].value() ? 1 : 0;
+      if(force || (val != draw_lines))
+        opt_view_draw_lines(i, GMSH_SET, val);
+
+      val = o->view.menu[1]->menu()[2].value() ? 1 : 0;
+      if(force || (val != draw_triangles))
+        opt_view_draw_triangles(i, GMSH_SET, val);
+
+      val = o->view.menu[1]->menu()[3].value() ? 1 : 0;
+      if(force || (val != draw_quadrangles))
+        opt_view_draw_quadrangles(i, GMSH_SET, val);
+
+      val = o->view.menu[1]->menu()[4].value() ? 1 : 0;
+      if(force || (val != draw_tetrahedra))
+        opt_view_draw_tetrahedra(i, GMSH_SET, val);
+
+      val = o->view.menu[1]->menu()[5].value() ? 1 : 0;
+      if(force || (val != draw_hexahedra))
+        opt_view_draw_hexahedra(i, GMSH_SET, val);
+
+      val = o->view.menu[1]->menu()[6].value() ? 1 : 0;
+      if(force || (val != draw_prisms))
+        opt_view_draw_prisms(i, GMSH_SET, val);
+
+      val = o->view.menu[1]->menu()[7].value() ? 1 : 0;
+      if(force || (val != draw_pyramids))
+        opt_view_draw_pyramids(i, GMSH_SET, val);
+
+      val = o->view.butt[6]->value();
+      if(force || (val != use_gen_raise))
+        opt_view_use_gen_raise(i, GMSH_SET, val);
+
+      val = o->view.butt[24]->value();
+      if(force || (val != fake_transparency))
+        opt_view_fake_transparency(i, GMSH_SET, val);
+
+      val = o->view.butt[26]->value();
+      if(force || (val != use_stipple))
+        opt_view_use_stipple(i, GMSH_SET, val);
+
+      val = o->view.butt[1]->value();
+      if(force || (val != center_glyphs))
+        opt_view_center_glyphs(i, GMSH_SET, val);
+
+      // view_values
+      
+      val = o->view.value[0]->value();
+      if(force || (val != normals))
+        opt_view_normals(i, GMSH_SET, val);
+
+      val = o->view.value[1]->value();
+      if(force || (val != tangents))
+        opt_view_tangents(i, GMSH_SET, val);
+
+      val = o->view.value[31]->value();
+      if(force || (val != custom_min))
+        opt_view_custom_min(i, GMSH_SET, val);
+
+      val = o->view.value[32]->value();
+      if(force || (val != custom_max))
+        opt_view_custom_max(i, GMSH_SET, val);
+
+      val = o->view.value[33]->value();
+      if(force || (val != max_recursion_level))
+        opt_view_max_recursion_level(i, GMSH_SET, val);
+
+      val = o->view.value[34]->value();
+      if(force || (val != target_error))
+        opt_view_target_error(i, GMSH_SET, val);
+
+      val = o->view.value[30]->value();
+      if(force || (val != nb_iso))
+        opt_view_nb_iso(i, GMSH_SET, val);
+
+      val = o->view.value[40]->value();
+      if(force || (val != offset0))
+        opt_view_offset0(i, GMSH_SET, val);
+
+      val = o->view.value[41]->value();
+      if(force || (val != offset1))
+        opt_view_offset1(i, GMSH_SET, val);
+
+      val = o->view.value[42]->value();
+      if(force || (val != offset2))
+        opt_view_offset2(i, GMSH_SET, val);
+
+      val = o->view.value[51]->value();
+      if(force || (val != transform00))
+        opt_view_transform00(i, GMSH_SET, val);
+
+      val = o->view.value[52]->value();
+      if(force || (val != transform01))
+        opt_view_transform01(i, GMSH_SET, val);
+
+      val = o->view.value[53]->value();
+      if(force || (val != transform02))
+        opt_view_transform02(i, GMSH_SET, val);
+
+      val = o->view.value[54]->value();
+      if(force || (val != transform10))
+        opt_view_transform10(i, GMSH_SET, val);
+
+      val = o->view.value[55]->value();
+      if(force || (val != transform11))
+        opt_view_transform11(i, GMSH_SET, val);
+
+      val = o->view.value[56]->value();
+      if(force || (val != transform12))
+        opt_view_transform12(i, GMSH_SET, val);
+
+      val = o->view.value[57]->value();
+      if(force || (val != transform20))
+        opt_view_transform20(i, GMSH_SET, val);
+
+      val = o->view.value[58]->value();
+      if(force || (val != transform21))
+        opt_view_transform21(i, GMSH_SET, val);
+
+      val = o->view.value[59]->value();
+      if(force || (val != transform22))
+        opt_view_transform22(i, GMSH_SET, val);
+
+      val = o->view.value[43]->value();
+      if(force || (val != raise0))
+        opt_view_raise0(i, GMSH_SET, val);
+
+      val = o->view.value[44]->value();
+      if(force || (val != raise1))
+        opt_view_raise1(i, GMSH_SET, val);
+
+      val = o->view.value[45]->value();
+      if(force || (val != raise2))
+        opt_view_raise2(i, GMSH_SET, val);
+
+      val = o->view.value[46]->value();
+      if(force || (val != normal_raise))
+        opt_view_normal_raise(i, GMSH_SET, val);
+
+      val = o->view.value[50]->value();
+      if(force || (val != timestep))
+        opt_view_timestep(i, GMSH_SET, val);
+
+      val = o->view.value[60]->value();
+      if(force || (val != arrow_size))
+        opt_view_arrow_size(i, GMSH_SET, val);
+
+      val = o->view.value[63]->value();
+      if(force || (val != displacement_factor))
+        opt_view_displacement_factor(i, GMSH_SET, val);
+
+      val = o->view.value[61]->value();
+      if(force || (val != point_size))
+        opt_view_point_size(i, GMSH_SET, val);
+
+      val = o->view.value[62]->value();
+      if(force || (val != line_width))
+        opt_view_line_width(i, GMSH_SET, val);
+
+      val = o->view.value[12]->value();
+      if(force || (val != explode))
+        opt_view_explode(i, GMSH_SET, val);
+
+      val = o->view.value[10]->value();
+      if(force || (val != angle_smooth_normals))
+        opt_view_angle_smooth_normals(i, GMSH_SET, val);
+
+      val = o->view.value[20]->value();
+      if(force || (val != position0))
+        opt_view_position0(i, GMSH_SET, val);
+
+      val = o->view.value[21]->value();
+      if(force || (val != position1))
+        opt_view_position1(i, GMSH_SET, val);
+
+      val = o->view.value[22]->value();
+      if(force || (val != size0))
+        opt_view_size0(i, GMSH_SET, val);
+      
+      val = o->view.value[23]->value();
+      if(force || (val != size1))
+        opt_view_size1(i, GMSH_SET, val);
+
+      val = o->view.value[13]->value();
+      if(force || (val != axes_xmin))
+        opt_view_axes_xmin(i, GMSH_SET, val);
+
+      val = o->view.value[14]->value();
+      if(force || (val != axes_ymin))
+        opt_view_axes_ymin(i, GMSH_SET, val);
+
+      val = o->view.value[15]->value();
+      if(force || (val != axes_zmin))
+        opt_view_axes_zmin(i, GMSH_SET, val);
+
+      val = o->view.value[16]->value();
+      if(force || (val != axes_xmax))
+        opt_view_axes_xmax(i, GMSH_SET, val);
+
+      val = o->view.value[17]->value();
+      if(force || (val != axes_ymax))
+        opt_view_axes_ymax(i, GMSH_SET, val);
+
+      val = o->view.value[18]->value();
+      if(force || (val != axes_zmax))
+        opt_view_axes_zmax(i, GMSH_SET, val);
+
+      val = o->view.value[2]->value();
+      if(force || (val != gen_raise_factor))
+        opt_view_gen_raise_factor(i, GMSH_SET, val);
+
+      val = o->view.value[3]->value();
+      if(force || (val != axes_tics0))
+        opt_view_axes_tics0(i, GMSH_SET, val);
+
+      val = o->view.value[4]->value();
+      if(force || (val != axes_tics1))
+        opt_view_axes_tics1(i, GMSH_SET, val);
+
+      val = o->view.value[5]->value();
+      if(force || (val != axes_tics2))
+        opt_view_axes_tics2(i, GMSH_SET, val);
+
+      // view_inputs
+
+      const char *str;
+
+      str = o->view.input[0]->value();
+      if(force || strcmp(str, name))
+        opt_view_name(i, GMSH_SET, str);
+
+      str = o->view.input[1]->value();
+      if(force || strcmp(str, format))
+        opt_view_format(i, GMSH_SET, str);
+
+      str = o->view.input[10]->value();
+      if(force || strcmp(str, axes_label0))
+        opt_view_axes_label0(i, GMSH_SET, str);
+
+      str = o->view.input[11]->value();
+      if(force || strcmp(str, axes_label1))
+        opt_view_axes_label1(i, GMSH_SET, str);
+
+      str = o->view.input[12]->value();
+      if(force || strcmp(str, axes_label2))
+        opt_view_axes_label2(i, GMSH_SET, str);
+
+      str = o->view.input[7]->value();
+      if(force || strcmp(str, axes_format0))
+        opt_view_axes_format0(i, GMSH_SET, str);
+
+      str = o->view.input[8]->value();
+      if(force || strcmp(str, axes_format1))
+        opt_view_axes_format1(i, GMSH_SET, str);
+
+      str = o->view.input[9]->value();
+      if(force || strcmp(str, axes_format2))
+        opt_view_axes_format2(i, GMSH_SET, str);
+
+      str = o->view.input[4]->value();
+      if(force || strcmp(str, gen_raise0))
+        opt_view_gen_raise0(i, GMSH_SET, str);
+
+      str = o->view.input[5]->value();
+      if(force || strcmp(str, gen_raise1))
+        opt_view_gen_raise1(i, GMSH_SET, str);
+
+      str = o->view.input[6]->value();
+      if(force || strcmp(str, gen_raise2))
+        opt_view_gen_raise2(i, GMSH_SET, str);
+
+      // colors (since the color buttons modify the values directly
+      // through callbacks, we can use the opt_XXX routines directly)
+      if(force || (i != current)){
+        opt_view_color_points
+          (i, GMSH_SET, opt_view_color_points(current, GMSH_GET, 0));
+        opt_view_color_lines
+          (i, GMSH_SET, opt_view_color_lines(current, GMSH_GET, 0));
+        opt_view_color_triangles
+          (i, GMSH_SET, opt_view_color_triangles(current, GMSH_GET, 0));
+        opt_view_color_quadrangles
+          (i, GMSH_SET, opt_view_color_quadrangles(current, GMSH_GET, 0));
+        opt_view_color_tetrahedra
+          (i, GMSH_SET, opt_view_color_tetrahedra(current, GMSH_GET, 0));
+        opt_view_color_hexahedra
+          (i, GMSH_SET, opt_view_color_hexahedra(current, GMSH_GET, 0));
+        opt_view_color_prisms
+          (i, GMSH_SET, opt_view_color_prisms(current, GMSH_GET, 0));
+        opt_view_color_pyramids
+          (i, GMSH_SET, opt_view_color_pyramids(current, GMSH_GET, 0));
+        opt_view_color_tangents
+          (i, GMSH_SET, opt_view_color_tangents(current, GMSH_GET, 0));
+        opt_view_color_normals
+          (i, GMSH_SET, opt_view_color_normals(current, GMSH_GET, 0));
+        opt_view_color_text2d
+          (i, GMSH_SET, opt_view_color_text2d(current, GMSH_GET, 0));
+        opt_view_color_text3d
+          (i, GMSH_SET, opt_view_color_text3d(current, GMSH_GET, 0));
+        opt_view_color_axes
+          (i, GMSH_SET, opt_view_color_axes(current, GMSH_GET, 0));
+      }
+
+      // colorbar window
+
+      if(force || (i != current)) {
+        ColorTable_Copy(&PView::list[current]->getOptions()->CT);
+        ColorTable_Paste(&PView::list[i]->getOptions()->CT);
+        PView::list[i]->setChanged(true);
+      }
+    }
+  }
+
+  if(CTX.fast_redraw)
+    CTX.post.draw = CTX.mesh.draw = 0;
+  Draw();
+  CTX.post.draw = CTX.mesh.draw = 1;
+}
+
 optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
 {
   int width = 34 * _fontsize + WB;
@@ -104,7 +1158,7 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
   {
     Fl_Button *o = new Fl_Button
       (width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-    o->callback(cancel_cb, (void *)win);
+    o->callback(hide_cb, (void *)win);
   }
   {
     Fl_Button *o = new Fl_Button
@@ -2220,4 +3274,200 @@ void optionWindow::updateViewGroup(int index)
 
   view.colorbar->update(data->getName().c_str(), data->getMin(), 
                         data->getMax(), &opt->CT, &v->getChanged());
+}
+
+void optionWindow::activate(const char *what)
+{
+  if(!what) return;
+
+  // activate/deactivate parts of the option window depending on the
+  // user's choices (or the option settings)
+  if(!strcmp(what, "fast_redraw")){
+    if(general.butt[2]->value())
+      redraw->show();
+    else
+      redraw->hide();
+  }
+  else if(!strcmp(what, "rotation_center")){
+    if(general.butt[15]->value()) {
+      general.push[0]->deactivate();
+      general.value[8]->deactivate();
+      general.value[9]->deactivate();
+      general.value[10]->deactivate();
+    }
+    else {
+      general.push[0]->activate();
+      general.value[8]->activate();
+      general.value[9]->activate();
+      general.value[10]->activate();
+    }
+  }
+  else if(!strcmp(what, "general_axes")){
+    if(general.choice[4]->value()){
+      general.value[17]->activate();
+      general.value[18]->activate();
+      general.value[19]->activate();
+      general.input[3]->activate();
+      general.input[4]->activate();
+      general.input[5]->activate();
+      general.input[6]->activate();
+      general.input[7]->activate();
+      general.input[8]->activate();
+    }
+    else{
+      general.value[17]->deactivate();
+      general.value[18]->deactivate();
+      general.value[19]->deactivate();
+      general.input[3]->deactivate();
+      general.input[4]->deactivate();
+      general.input[5]->deactivate();
+      general.input[6]->deactivate();
+      general.input[7]->deactivate();
+      general.input[8]->deactivate();
+    }
+  }
+  else if(!strcmp(what, "general_axes_auto")){
+    if(general.butt[0]->value()){
+      general.value[20]->deactivate();
+      general.value[21]->deactivate();
+      general.value[22]->deactivate();
+      general.value[23]->deactivate();
+      general.value[24]->deactivate();
+      general.value[25]->deactivate();
+    }
+    else{
+      general.value[20]->activate();
+      general.value[21]->activate();
+      general.value[22]->activate();
+      general.value[23]->activate();
+      general.value[24]->activate();
+      general.value[25]->activate();
+    }
+  }
+  else if(!strcmp(what, "general_small_axes")){
+    if(general.butt[1]->value()){
+      general.value[26]->activate();
+      general.value[27]->activate();
+    }
+    else{
+      general.value[26]->deactivate();
+      general.value[27]->deactivate();
+    }
+  }
+  else if(!strcmp(what, "custom_range")){
+    if(view.choice[7]->value() == 1){
+      view.value[31]->activate();
+      view.value[32]->activate();
+      view.push[1]->activate();
+      view.push[2]->activate();
+    }
+    else {
+      view.value[31]->deactivate();
+      view.value[32]->deactivate();
+      view.push[1]->deactivate();
+      view.push[2]->deactivate();
+    }
+  }
+  else if(!strcmp(what, "general_transform")){
+    if(view.butt[6]->value()){
+      view.choice[11]->activate();
+      view.value[2]->activate();
+      view.input[4]->activate();
+      view.input[5]->activate();
+      view.input[6]->activate();
+    }
+    else{
+      view.choice[11]->deactivate();
+      view.value[2]->deactivate();
+      view.input[4]->deactivate();
+      view.input[5]->deactivate();
+      view.input[6]->deactivate();
+    }
+  }
+  else if(!strcmp(what, "mesh_light")){
+    if(mesh.butt[17]->value()){
+      mesh.butt[18]->activate();
+      mesh.butt[19]->activate();
+      mesh.butt[20]->activate();
+      mesh.butt[0]->activate();
+      mesh.value[18]->activate();
+    }
+    else{
+      mesh.butt[18]->deactivate();
+      mesh.butt[19]->deactivate();
+      mesh.butt[20]->deactivate();
+      mesh.butt[0]->deactivate();
+      mesh.value[18]->deactivate();
+    }
+  }
+  else if(!strcmp(what, "view_light")){
+    if(view.butt[11]->value()){
+      view.butt[8]->activate();
+      view.butt[9]->activate();
+      view.butt[12]->activate();
+      view.value[10]->activate();
+    }
+    else{
+      view.butt[8]->deactivate();
+      view.butt[9]->deactivate();
+      view.butt[12]->deactivate();
+      view.value[10]->deactivate();
+    }
+  }
+  else if(!strcmp(what, "view_axes")){
+    if(view.choice[8]->value()){
+      view.value[3]->activate();
+      view.value[4]->activate();
+      view.value[5]->activate();
+      view.input[7]->activate();
+      view.input[8]->activate();
+      view.input[9]->activate();
+      view.input[10]->activate();
+      view.input[11]->activate();
+      view.input[12]->activate();
+    }
+    else{
+      view.value[3]->deactivate();
+      view.value[4]->deactivate();
+      view.value[5]->deactivate();
+      view.input[7]->deactivate();
+      view.input[8]->deactivate();
+      view.input[9]->deactivate();
+      view.input[10]->deactivate();
+      view.input[11]->deactivate();
+      view.input[12]->deactivate();
+    }
+  }
+  else if(!strcmp(what, "view_axes_auto_3d")){
+    if(view.butt[25]->value()){
+      view.value[13]->deactivate();
+      view.value[14]->deactivate();
+      view.value[15]->deactivate();
+      view.value[16]->deactivate();
+      view.value[17]->deactivate();
+      view.value[18]->deactivate();
+    }
+    else{
+      view.value[13]->activate();
+      view.value[14]->activate();
+      view.value[15]->activate();
+      view.value[16]->activate();
+      view.value[17]->activate();
+      view.value[18]->activate();
+    }
+  }
+  else if(!strcmp(what, "view_axes_auto_2d")){
+    if(view.butt[7]->value()){
+      view.value[20]->deactivate();
+      view.value[21]->deactivate();
+      view.value[22]->deactivate();
+      view.value[23]->deactivate();
+    }
+    else{
+      view.value[20]->activate();
+      view.value[21]->activate();
+      view.value[22]->activate();
+      view.value[23]->activate();
+    }
+  }
 }

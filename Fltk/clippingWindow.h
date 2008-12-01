@@ -29,4 +29,6 @@ class clippingWindow{
   void show();
 };
 
+void clip_cb(Fl_Widget *w, void *data);
+
 #endif

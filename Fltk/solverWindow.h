@@ -25,4 +25,6 @@ class solverWindow{
   solverWindow(int solverIndex, int fontsize);
 };
 
+void solver_cb(Fl_Widget *w, void *data);
+
 #endif

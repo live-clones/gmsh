@@ -30,4 +30,6 @@ class visibilityWindow{
   void show(bool redrawOnly);
 };
 
+void visibility_cb(Fl_Widget *w, void *data);
+
 #endif

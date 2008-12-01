@@ -25,6 +25,7 @@
 #include "colorbarWindow.h"
 #include "popupButton.h"
 #include "fileDialogs.h"
+#include "Draw.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -33,7 +34,6 @@
 #include "Field.h"
 #include "Plugin.h"
 #include "PluginManager.h"
-#include "Callbacks.h"
 #include "OpenFile.h"
 #include "Options.h"
 #include "Context.h"
@@ -474,9 +474,7 @@ int GUI::testGlobalShortcuts(int event)
   }
   
   if(status == 2){
-    graph[0]->gl->make_current();
-    graph[0]->gl->redraw();
-    check();
+    Draw();
     return 1;
   }
   else if(status == 1)
@@ -488,19 +486,19 @@ int GUI::testGlobalShortcuts(int event)
 int GUI::testArrowShortcuts()
 {
   if(Fl::test_shortcut(FL_Left)) {
-    ManualPlay(1, -1);
+    status_play_manual(1, -1);
     return 1;
   }
   else if(Fl::test_shortcut(FL_Right)) {
-    ManualPlay(1, 1);
+    status_play_manual(1, 1);
     return 1;
   }
   else if(Fl::test_shortcut(FL_Up)) {
-    ManualPlay(0, -1);
+    status_play_manual(0, -1);
     return 1;
   }
   else if(Fl::test_shortcut(FL_Down)) {
-    ManualPlay(0, 1);
+    status_play_manual(0, 1);
     return 1;
   }
   return 0;
@@ -561,9 +559,7 @@ void GUI::setStatus(const char *msg, int num)
     else
       onscreen_buffer[1][0] = '\0';
     onscreen_buffer[0][i-1] = '\0';
-    graph[0]->gl->make_current();
-    graph[0]->gl->redraw();
-    check();
+    Draw();
   }
 }
 
@@ -607,6 +603,82 @@ void GUI::callForSolverPlugin(int dim)
 { 
   GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();   
   if(sp) sp->popupPropertiesForPhysicalEntity(dim);
+}
+
+// Callbacks
+
+void hide_cb(Fl_Widget *w, void *data)
+{
+  if(data) ((Fl_Widget *)data)->hide();
+}
+
+void redraw_cb(Fl_Widget *w, void *data)
+{
+  Draw();
+}
+
+void window_cb(Fl_Widget *w, void *data)
+{
+  static int oldx = 0, oldy = 0, oldw = 0, oldh = 0, zoom = 1;
+  const char *str = (const char*)data;
+
+  if(!strcmp(str, "minimize")){
+    GUI::instance()->graph[0]->win->iconize();
+    GUI::instance()->options->win->iconize();
+    GUI::instance()->plugins->win->iconize();
+    GUI::instance()->fields->win->iconize();
+    GUI::instance()->visibility->win->iconize();
+    GUI::instance()->clipping->win->iconize();
+    GUI::instance()->manip->win->iconize();
+    GUI::instance()->stats->win->iconize();
+    GUI::instance()->messages->win->iconize();
+    GUI::instance()->menu->win->iconize();
+  }
+  else if(!strcmp(str, "zoom")){
+    if(zoom){
+      oldx = GUI::instance()->graph[0]->win->x();
+      oldy = GUI::instance()->graph[0]->win->y();
+      oldw = GUI::instance()->graph[0]->win->w();
+      oldh = GUI::instance()->graph[0]->win->h();
+      GUI::instance()->graph[0]->win->resize(Fl::x(), Fl::y(), Fl::w(), Fl::h());
+      zoom = 0;
+    }
+    else{
+      GUI::instance()->graph[0]->win->resize(oldx, oldy, oldw, oldh);
+      zoom = 1;
+    }
+    GUI::instance()->graph[0]->win->show();
+    GUI::instance()->menu->win->show();
+  }
+  else if(!strcmp(str, "front")){
+    // the order is important!
+    GUI::instance()->graph[0]->win->show();
+    if(GUI::instance()->options->win->shown()) 
+      GUI::instance()->options->win->show();
+    if(GUI::instance()->plugins->win->shown())
+      GUI::instance()->plugins->win->show();
+    if(GUI::instance()->fields->win->shown())
+      GUI::instance()->fields->win->show();
+    if(GUI::instance()->geoContext->win->shown())
+      GUI::instance()->geoContext->win->show();
+    if(GUI::instance()->meshContext->win->shown())
+      GUI::instance()->meshContext->win->show();
+    for(unsigned int i = 0; i < GUI::instance()->solver.size(); i++) {
+      if(GUI::instance()->solver[i]->win->shown())
+        GUI::instance()->solver[i]->win->show();
+    }
+    if(GUI::instance()->visibility->win->shown())
+      GUI::instance()->visibility->win->show();
+    if(GUI::instance()->clipping->win->shown())
+      GUI::instance()->clipping->win->show();
+    if(GUI::instance()->manip->win->shown())
+      GUI::instance()->manip->win->show();
+    if(GUI::instance()->stats->win->shown())
+      GUI::instance()->stats->win->show();
+    if(GUI::instance()->messages->win->shown())
+      GUI::instance()->messages->win->show();
+    GUI::instance()->menu->win->show();
+  }
 }
 
 // Utility routines

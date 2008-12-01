@@ -23,4 +23,7 @@ class graphicWindow{
   void checkAnimButtons();
 };
 
+void status_xyz1p_cb(Fl_Widget *w, void *data);
+void status_play_manual(int time, int step);
+
 #endif

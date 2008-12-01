@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <string.h>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
@@ -10,11 +11,179 @@
 #include "GUI.h"
 #include "solverWindow.h"
 #include "shortcutWindow.h"
+#include "optionWindow.h"
+#include "messageWindow.h"
+#include "fileDialogs.h"
+#include "GmshMessage.h"
 #include "Solvers.h"
-#include "Callbacks.h"
+#include "StringUtils.h"
+#include "Options.h"
+#include "OS.h"
 #include "Context.h"
 
 extern Context_T CTX;
+
+void solver_cb(Fl_Widget *w, void *data)
+{
+  static int init = 0, first[MAX_NUM_SOLVERS];
+  int num = (int)(long)data;
+
+  if(!init) {
+    for(int i = 0; i < MAX_NUM_SOLVERS; i++)
+      first[i] = 1;
+    init = 1;
+  }
+
+  if(first[num]) {
+    char file[256];
+    first[num] = 0;
+    strcpy(file, CTX.no_ext_filename);
+    strcat(file, SINFO[num].extension);
+    GUI::instance()->solver[num]->input[0]->value(file);
+  }
+  if(SINFO[num].nboptions) {
+    std::string file = FixWindowsPath
+      (GUI::instance()->solver[num]->input[0]->value());
+    char tmp[256], tmp2[256];
+    sprintf(tmp, "\"%s\"", file.c_str());
+    sprintf(tmp2, SINFO[num].name_command, tmp);
+    sprintf(tmp, "%s %s", SINFO[num].option_command, tmp2);
+    Solver(num, tmp);
+  }
+  GUI::instance()->solver[num]->win->show();
+}
+
+static void solver_file_open_cb(Fl_Widget *w, void *data)
+{
+  char tmp[256], tmp2[256];
+  int num = (int)(long)data;
+  sprintf(tmp, "*%s", SINFO[num].extension);
+
+  // We allow to create the .pro file... Or should we add a "New file"
+  // button?
+  if(file_chooser(0, 0, "Choose", tmp)) {
+    GUI::instance()->solver[num]->input[0]->value(file_chooser_get_name(1).c_str());
+    if(SINFO[num].nboptions) {
+      std::string file = FixWindowsPath(file_chooser_get_name(1).c_str());
+      sprintf(tmp, "\"%s\"", file.c_str());
+      sprintf(tmp2, SINFO[num].name_command, tmp);
+      sprintf(tmp, "%s %s", SINFO[num].option_command, tmp2);
+      Solver(num, tmp);
+    }
+  }
+}
+
+static void solver_file_edit_cb(Fl_Widget *w, void *data)
+{
+  int num = (int)(long)data;
+  std::string prog = FixWindowsPath(CTX.editor);
+  std::string file = FixWindowsPath(GUI::instance()->solver[num]->input[0]->value());
+  char cmd[1024];
+  ReplaceMultiFormat(prog.c_str(), file.c_str(), cmd);
+  SystemCall(cmd);
+}
+
+static void solver_choose_mesh_cb(Fl_Widget *w, void *data)
+{
+  int num = (int)(long)data;
+  if(file_chooser(0, 0, "Choose", "*"))
+    GUI::instance()->solver[num]->input[1]->value(file_chooser_get_name(1).c_str());
+}
+
+static int nbs(char *str)
+{
+  int i, nb = 0;
+  for(i = 0; i < (int)strlen(str) - 1; i++) {
+    if(str[i] == '%' && str[i + 1] == 's') {
+      nb++;
+      i++;
+    }
+  }
+  return nb;
+}
+
+static void solver_command_cb(Fl_Widget *w, void *data)
+{
+  char tmp[256], mesh[256], arg[512], command[256];
+  int num = ((int *)data)[0];
+  int idx = ((int *)data)[1];
+  int i, usedopts = 0;
+
+  if(SINFO[num].popup_messages)
+    GUI::instance()->messages->show(true);
+
+  if(strlen(GUI::instance()->solver[num]->input[1]->value())) {
+    std::string m = FixWindowsPath(GUI::instance()->solver[num]->input[1]->value());
+    sprintf(tmp, "\"%s\"", m.c_str());
+    sprintf(mesh, SINFO[num].mesh_command, tmp);
+  }
+  else {
+    strcpy(mesh, "");
+  }
+
+  if(nbs(SINFO[num].button_command[idx])) {
+    for(i = 0; i < idx; i++)
+      usedopts += nbs(SINFO[num].button_command[i]);
+    if(usedopts > SINFO[num].nboptions) {
+      Msg::Error("Missing options to execute command");
+      return;
+    }
+    sprintf(command, SINFO[num].button_command[idx], SINFO[num].option
+            [usedopts][GUI::instance()->solver[num]->choice[usedopts]->value()]);
+  }
+  else {
+    strcpy(command, SINFO[num].button_command[idx]);
+  }
+
+  std::string c = FixWindowsPath(GUI::instance()->solver[num]->input[0]->value());
+  sprintf(arg, "\"%s\"", c.c_str());
+  sprintf(tmp, SINFO[num].name_command, arg);
+  sprintf(arg, "%s %s %s", tmp, mesh, command);
+  Solver(num, arg);
+}
+
+static void solver_kill_cb(Fl_Widget *w, void *data)
+{
+  int num = (int)(long)data;
+  if(SINFO[num].pid > 0) {
+    if(KillProcess(SINFO[num].pid))
+      Msg::Info("Killed %s pid %d", SINFO[num].name, SINFO[num].pid);
+  }
+  SINFO[num].pid = -1;
+}
+
+static void solver_ok_cb(Fl_Widget *w, void *data)
+{
+  int retry = 0, num = (int)(long)data;
+  opt_solver_popup_messages
+    (num, GMSH_SET, GUI::instance()->solver[num]->butt[0]->value());
+  opt_solver_merge_views
+    (num, GMSH_SET, GUI::instance()->solver[num]->butt[1]->value());
+  opt_solver_client_server
+    (num, GMSH_SET, GUI::instance()->solver[num]->butt[2]->value());
+  if(strcmp(opt_solver_executable(num, GMSH_GET, NULL), 
+            GUI::instance()->solver[num]->input[2]->value()))
+    retry = 1;
+  opt_solver_executable
+    (num, GMSH_SET, GUI::instance()->solver[num]->input[2]->value());
+  if(retry)
+    solver_cb(NULL, data);
+}
+
+static void solver_choose_executable_cb(Fl_Widget *w, void *data)
+{
+  int num = (int)(long)data;
+  if(file_chooser(0, 0, "Choose",
+#if defined(WIN32)
+                  "*.exe"
+#else
+                  "*"
+#endif
+                  )){
+    GUI::instance()->solver[num]->input[2]->value(file_chooser_get_name(1).c_str());
+    solver_ok_cb(w, data);
+  }
+}
 
 solverWindow::solverWindow(int solverIndex, int fontsize)
   : _fontsize(fontsize)
@@ -125,7 +294,7 @@ solverWindow::solverWindow(int solverIndex, int fontsize)
     b1->callback(solver_kill_cb, (void *)solverIndex);
     Fl_Button *b2 = new Fl_Button
       (width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-    b2->callback(cancel_cb, (void*)win);
+    b2->callback(hide_cb, (void*)win);
   }
 
   win->position(CTX.solver_position[0], CTX.solver_position[1]);

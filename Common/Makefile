@@ -167,7 +167,7 @@ SmoothData${OBJEXT}: SmoothData.cpp SmoothData.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h
 Octree${OBJEXT}: Octree.cpp Octree.h OctreeInternals.h
 OctreeInternals${OBJEXT}: OctreeInternals.cpp GmshMessage.h OctreeInternals.h
-StringUtils${OBJEXT}: StringUtils.cpp StringUtils.h
+StringUtils${OBJEXT}: StringUtils.cpp StringUtils.h GmshMessage.h
 ListUtils${OBJEXT}: ListUtils.cpp MallocUtils.h ListUtils.h TreeUtils.h avl.h \
   GmshMessage.h
 TreeUtils${OBJEXT}: TreeUtils.cpp MallocUtils.h TreeUtils.h avl.h ListUtils.h

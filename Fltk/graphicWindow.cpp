@@ -4,11 +4,18 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <FL/fl_draw.H>
+#include "GUI.h"
 #include "graphicWindow.h"
 #include "shortcutWindow.h"
+#include "menuWindow.h"
+#include "messageWindow.h"
+#include "manipWindow.h"
+#include "extraDialogs.h"
+#include "Draw.h"
 #include "PView.h"
 #include "PViewData.h"
-#include "Callbacks.h"
+#include "OS.h"
+#include "Options.h"
 #include "Context.h"
 
 extern Context_T CTX;
@@ -92,6 +99,172 @@ static void gmsh_models(Fl_Color c)
 #undef vv
 #undef bl
 #undef el
+
+void status_xyz1p_cb(Fl_Widget *w, void *data)
+{
+  const char *str = (const char*)data;
+
+  drawContext *ctx = GUI::instance()->graph[0]->gl->getDrawContext();
+
+  if(!strcmp(str, "r")){ // rotate 90 degress around axis perp to the screen
+    double axis[3] = {0., 0., 1.};
+    if(!Fl::event_state(FL_SHIFT))
+      ctx->addQuaternionFromAxisAndAngle(axis, -90.);
+    else
+      ctx->addQuaternionFromAxisAndAngle(axis, 90.);
+    Draw();
+  }
+  else if(!strcmp(str, "x")){ // X pointing out or into the screen
+    if(!Fl::event_state(FL_SHIFT)){
+      ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = -90.;
+    }
+    else{
+      ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = 90.;
+    }
+    ctx->setQuaternionFromEulerAngles();
+    Draw();
+  }
+  else if(!strcmp(str, "y")){ // Y pointing out or into the screen
+    if(!Fl::event_state(FL_SHIFT)){
+      ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = 180.;
+    }
+    else{
+      ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = 0.;
+    }
+    ctx->setQuaternionFromEulerAngles();
+    Draw();
+  }
+  else if(!strcmp(str, "z")){ // Z pointing out or into the screen
+    if(!Fl::event_state(FL_SHIFT)){
+      ctx->r[0] = 0.; ctx->r[1] = 0.; ctx->r[2] = 0.;
+    }
+    else{
+      ctx->r[0] = 0.; ctx->r[1] = 180.; ctx->r[2] = 0.;
+    }
+    ctx->setQuaternionFromEulerAngles();
+    Draw();
+  }
+  else if(!strcmp(str, "1:1")){ // reset translation and scaling
+    ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
+    ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
+    Draw();
+  }
+  else if(!strcmp(str, "reset")){ // reset everything
+    ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
+    ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
+    ctx->r[0] = ctx->r[1] = ctx->r[2] = 0.;
+    ctx->setQuaternionFromEulerAngles();
+    Draw();
+  }
+  else if(!strcmp(str, "p")){ // toggle projection mode
+    if(!Fl::event_state(FL_SHIFT)){
+      opt_general_orthographic(0, GMSH_SET | GMSH_GUI, 
+                               !opt_general_orthographic(0, GMSH_GET, 0));
+    }
+    else{
+      perspective_editor();
+    }
+    Draw();
+  }
+  else if(!strcmp(str, "model")){ // toggle projection mode
+    model_chooser();
+  }
+  else if(!strcmp(str, "?")){ // display options
+    Print_Options(0, GMSH_FULLRC, 0, 1, NULL);
+    GUI::instance()->messages->show();
+  }
+  else if(!strcmp(str, "S")){ // mouse selection
+    if(CTX.mouse_selection){
+      opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 0);
+      GUI::instance()->graph[0]->gl->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
+    }
+    else
+      opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  GUI::instance()->manip->update();
+}
+
+static int stop_anim, view_in_cycle = -1;
+
+void status_play_manual(int time, int step)
+{
+  // avoid firing this routine recursively (can happen e.g when
+  // keeping the finger down on the arrow key: if the system generates
+  // too many events, we can overflow the stack--that happened on my
+  // powerbook with the new, optimzed FLTK event handler)
+  static bool busy = false;
+  if(busy) return;
+  busy = true;
+  if(time) {
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_timestep(i, GMSH_SET | GMSH_GUI,
+                          opt_view_timestep(i, GMSH_GET, 0) + step);
+  }
+  else { // hide all views except view_in_cycle
+    if(step > 0) {
+      if((view_in_cycle += step) >= (int)PView::list.size())
+        view_in_cycle = 0;
+      for(int i = 0; i < (int)PView::list.size(); i += step)
+        opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
+    }
+    else {
+      if((view_in_cycle += step) < 0)
+        view_in_cycle = PView::list.size() - 1;
+      for(int i = PView::list.size() - 1; i >= 0; i += step)
+        opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
+    }
+  }
+  Draw();
+  busy = false;
+}
+
+static void status_play_cb(Fl_Widget *w, void *data)
+{
+  static double anim_time;
+  GUI::instance()->graph[0]->setAnimButtons(0);
+  stop_anim = 0;
+  anim_time = GetTimeInSeconds();
+  while(1) {
+    if(stop_anim)
+      break;
+    if(GetTimeInSeconds() - anim_time > CTX.post.anim_delay) {
+      anim_time = GetTimeInSeconds();
+      status_play_manual(!CTX.post.anim_cycle, 1);
+    }
+    GUI::instance()->check();
+  }
+}
+
+static void status_pause_cb(Fl_Widget *w, void *data)
+{
+  stop_anim = 1;
+  GUI::instance()->graph[0]->setAnimButtons(1);
+}
+
+static void status_rewind_cb(Fl_Widget *w, void *data)
+{
+  if(!CTX.post.anim_cycle) {
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      opt_view_timestep(i, GMSH_SET | GMSH_GUI, 0);
+  }
+  else {
+    view_in_cycle = 0;
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      opt_view_visible(i, GMSH_SET | GMSH_GUI, !i);
+  }
+  Draw();
+}
+
+static void status_stepbackward_cb(Fl_Widget *w, void *data)
+{
+  status_play_manual(!CTX.post.anim_cycle, -1);
+}
+
+static void status_stepforward_cb(Fl_Widget *w, void *data)
+{
+  status_play_manual(!CTX.post.anim_cycle, 1);
+}
 
 graphicWindow::graphicWindow(int fontsize)
 {

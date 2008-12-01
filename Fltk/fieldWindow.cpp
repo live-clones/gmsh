@@ -9,17 +9,121 @@
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Value_Input.H>
 #include "GUI.h"
+#include "Draw.h"
 #include "fieldWindow.h"
 #include "shortcutWindow.h"
+#include "fileDialogs.h"
+#include "GmshDefines.h"
 #include "GModel.h"
 #include "PView.h"
-#include "Callbacks.h"
 #include "GmshMessage.h"
 #include "Field.h"
 #include "GeoStringInterface.h"
+#include "SelectBuffer.h"
+#include "Options.h"
 #include "Context.h"
 
 extern Context_T CTX;
+
+void field_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->fields->win->show();
+  GUI::instance()->fields->editField(NULL);
+}
+
+static void field_delete_cb(Fl_Widget *w, void *data)
+{
+  Field *f = (Field*)GUI::instance()->fields->editor_group->user_data();
+  delete_field(f->id, CTX.filename);
+  GUI::instance()->fields->editField(NULL);
+}
+
+static void field_new_cb(Fl_Widget *w, void *data)
+{
+  Fl_Menu_Button* mb = ((Fl_Menu_Button*)w);
+  FieldManager *fields = GModel::current()->getFields();
+  int id = fields->new_id();
+  add_field(id, mb->text(), CTX.filename);
+  GUI::instance()->fields->editField((*fields)[id]);
+}
+
+static void field_apply_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->fields->saveFieldOptions();
+}
+
+static void field_revert_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->fields->loadFieldOptions();
+}
+
+static void field_browser_cb(Fl_Widget *w, void *data)
+{
+  int selected = GUI::instance()->fields->browser->value();
+  if(!selected){
+    GUI::instance()->fields->editField(NULL);
+  }
+  Field *f = (Field*)GUI::instance()->fields->browser->data(selected);
+  GUI::instance()->fields->editField(f);
+}
+
+static void field_put_on_view_cb(Fl_Widget *w, void *data)
+{
+  Fl_Menu_Button* mb = ((Fl_Menu_Button*)w);
+  Field *field = (Field*)GUI::instance()->fields->editor_group->user_data();
+  int iView;
+  if(sscanf(mb->text(), "View [%i]", &iView)){
+    if(iView < (int)PView::list.size()){
+      field->put_on_view(PView::list[iView]);
+    }
+  }
+  else{
+    field->put_on_new_view();
+    GUI::instance()->updateViews();
+  }
+  Draw();
+}
+
+static void field_select_file_cb(Fl_Widget *w, void *data)
+{
+  Fl_Input *input = (Fl_Input*)data;
+  int ret = file_chooser(0, 0, "File selection", "", input->value());
+  if(ret){
+    input->value(file_chooser_get_name(0).c_str());
+    input->set_changed();
+  }
+}
+
+static void field_select_node_cb(Fl_Widget *w, void *data)
+{
+  const char *mode = "select";
+  const char *help = "vertices";
+  CTX.pick_elements = 1;
+  Draw();  
+  std::vector<GVertex*> vertices, vertices_old;
+  std::vector<GEdge*> edges, edges_old;
+  std::vector<GFace*> faces, faces_old;
+  std::vector<GRegion*> regions, regions_old;
+  std::vector<MElement*> elements, elements_old;
+  opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
+  while(1) {
+    Msg::StatusBar(3, false, "Select %s\n[Press %s'q' to abort]", 
+        help, mode ? "" : "'u' to undo or ");
+    
+    char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
+    printf("char = %c\n", ib);
+    if(ib == 'q'){
+      for(std::vector<GVertex*>::iterator it = vertices.begin(); it != vertices.end(); it++){
+	printf("%p\n", *it);
+      }
+      break;
+    }
+  }
+  CTX.mesh.changed = ENT_ALL;
+  CTX.pick_elements = 0;
+  Msg::StatusBar(3, false, "");
+  Draw();  
+}
 
 fieldWindow::fieldWindow(int fontsize) : _fontsize(fontsize)
 {
@@ -39,19 +143,19 @@ fieldWindow::fieldWindow(int fontsize) : _fontsize(fontsize)
   std::map<std::string, FieldFactory*>::iterator it;
   for(it = fields.map_type_name.begin(); it != fields.map_type_name.end(); it++)
     new_btn->add(it->first.c_str());
-  new_btn->callback(view_field_new_cb);
+  new_btn->callback(field_new_cb);
 
   y += BH;
   browser = new Fl_Hold_Browser(x, y + WB, w, h - 2 * WB);
-  browser->callback(view_field_browser_cb);
+  browser->callback(field_browser_cb);
 
   y += h; 
   delete_btn = new Fl_Button(x, y, w, BH, "Delete");
-  delete_btn->callback(view_field_delete_cb, this);
+  delete_btn->callback(field_delete_cb, this);
 
   y += BH;
   put_on_view_btn = new Fl_Menu_Button(x, y, w, BH, "Put on view");
-  put_on_view_btn->callback(view_field_put_on_view_cb, this);
+  put_on_view_btn->callback(field_put_on_view_cb, this);
 
   x += w + WB;
   y = WB;
@@ -78,11 +182,11 @@ fieldWindow::fieldWindow(int fontsize) : _fontsize(fontsize)
   
   Fl_Button *apply_btn = new Fl_Return_Button
     (x + w - BB, y + h - BH - WB, BB, BH, "Apply");
-  apply_btn->callback(view_field_apply_cb, this);
+  apply_btn->callback(field_apply_cb, this);
   
   Fl_Button *revert_btn = new Fl_Button
     (x + w - 2 * BB - WB, y + h - BH - WB, BB, BH, "Revert");
-  revert_btn->callback(view_field_revert_cb, this);
+  revert_btn->callback(field_revert_cb, this);
   
   background_btn = new Fl_Check_Button
     (x, y + h - BH - WB, (int)(1.5 * BB), BH, "Background mesh size");
@@ -286,7 +390,7 @@ void fieldWindow::editField(Field *f)
       {
         Fl_Button *b = new Fl_Button(x, yy, BH, BH, "S");
         input = new Fl_Input(x + WB + BH, yy, IW - WB - BH, BH, it->first.c_str());
-        b->callback(view_field_select_file_cb, input);
+        b->callback(field_select_file_cb, input);
       }
       break;
     case FIELD_OPTION_STRING:

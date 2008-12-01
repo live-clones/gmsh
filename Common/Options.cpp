@@ -37,7 +37,6 @@
 #include "messageWindow.h"
 #include "contextWindow.h"
 #include "clippingWindow.h"
-extern void activate_cb(Fl_Widget* w, void* data);
 #endif
 
 // the single static option context
@@ -3156,7 +3155,7 @@ double opt_general_fast_redraw(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(GUI::available() && (action & GMSH_GUI)){
     GUI::instance()->options->general.butt[2]->value(CTX.fast_redraw);
-    activate_cb(NULL, (void*)"fast_redraw");
+    GUI::instance()->options->activate("fast_redraw");
   }
 #endif
   return CTX.fast_redraw;
@@ -3220,7 +3219,7 @@ double opt_general_axes(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(GUI::available() && (action & GMSH_GUI)){
     GUI::instance()->options->general.choice[4]->value(CTX.axes);
-    activate_cb(NULL, (void*)"general_axes");
+    GUI::instance()->options->activate("general_axes");
   }
 #endif
   return CTX.axes;
@@ -3245,7 +3244,7 @@ double opt_general_axes_auto_position(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(GUI::available() && (action & GMSH_GUI)){
     GUI::instance()->options->general.butt[0]->value(CTX.axes_auto_position);
-    activate_cb(NULL, (void*)"general_axes_auto");
+    GUI::instance()->options->activate("general_axes_auto");
   }
 #endif
   return CTX.axes_auto_position;
@@ -3357,7 +3356,7 @@ double opt_general_small_axes(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(GUI::available() && (action & GMSH_GUI)){
     GUI::instance()->options->general.butt[1]->value(CTX.small_axes);
-    activate_cb(NULL, (void*)"general_small_axes");
+    GUI::instance()->options->activate("general_small_axes");
   }
 #endif
   return CTX.small_axes;
@@ -3568,7 +3567,7 @@ double opt_general_rotation_center_cg(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(GUI::available() && (action & GMSH_GUI)){
     GUI::instance()->options->general.butt[15]->value(CTX.rotation_center_cg);
-    activate_cb(NULL, (void*)"rotation_center");
+    GUI::instance()->options->activate("rotation_center");
   }
 #endif
   return CTX.rotation_center_cg;
@@ -3863,7 +3862,7 @@ double opt_general_clip_whole_elements(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(GUI::available() && (action & GMSH_GUI)){
     GUI::instance()->clipping->butt[0]->value(CTX.clip_whole_elements);
-    activate_cb(NULL, (void*)"clip_whole_elements");
+    GUI::instance()->options->activate("clip_whole_elements");
   }
 #endif
   return CTX.clip_whole_elements;
@@ -5097,7 +5096,7 @@ double opt_mesh_light(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(GUI::available() && (action & GMSH_GUI)){
     GUI::instance()->options->mesh.butt[17]->value(CTX.mesh.light);
-    activate_cb(NULL, (void*)"mesh_light");
+    GUI::instance()->options->activate("mesh_light");
   }
 #endif
   return CTX.mesh.light;
@@ -6675,7 +6674,7 @@ double opt_view_auto_position(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
     GUI::instance()->options->view.butt[7]->value(opt->AutoPosition);
-    activate_cb(NULL, (void*)"view_axes_auto_2d");
+    GUI::instance()->options->activate("view_axes_auto_2d");
   }
 #endif
   return opt->AutoPosition;
@@ -6764,7 +6763,7 @@ double opt_view_axes(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
     GUI::instance()->options->view.choice[8]->value(opt->Axes);
-    activate_cb(NULL, (void*)"view_axes");
+    GUI::instance()->options->activate("view_axes");
   }
 #endif
   return opt->Axes;
@@ -6800,7 +6799,7 @@ double opt_view_axes_auto_position(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
     GUI::instance()->options->view.butt[25]->value(opt->AxesAutoPosition);
-    activate_cb(NULL, (void*)"view_axes_auto_3d");
+    GUI::instance()->options->activate("view_axes_auto_3d");
   }
 #endif
   return opt->AxesAutoPosition;
@@ -7021,7 +7020,7 @@ double opt_view_light(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
     GUI::instance()->options->view.butt[11]->value(opt->Light);
-    activate_cb(NULL, (void*)"view_light");
+    GUI::instance()->options->activate("view_light");
   }
 #endif
   return opt->Light;
@@ -7465,7 +7464,7 @@ double opt_view_range_type(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
     GUI::instance()->options->view.choice[7]->value(opt->RangeType - 1);
-    activate_cb(NULL, (void*)"custom_range");
+    GUI::instance()->options->activate("custom_range");
   }
 #endif
   return opt->RangeType;
@@ -7889,7 +7888,7 @@ double opt_view_use_gen_raise(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
     GUI::instance()->options->view.butt[6]->value(opt->UseGenRaise);
-    activate_cb(NULL, (void*)"general_transform");
+    GUI::instance()->options->activate("general_transform");
   }
 #endif
   return opt->UseGenRaise;

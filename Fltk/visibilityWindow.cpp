@@ -7,12 +7,399 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
 #include "GUI.h"
+#include "Draw.h"
 #include "visibilityWindow.h"
 #include "shortcutWindow.h"
-#include "Callbacks.h"
+#include "contextWindow.h"
+#include "GmshDefines.h"
+#include "GmshMessage.h"
+#include "GModel.h"'
+#include "MElement.h"
+#include "Visibility.h"
+#include "SelectBuffer.h"
+#include "GeoStringInterface.h"
+#include "Options.h"
 #include "Context.h"
 
 extern Context_T CTX;
+
+// Visibility Menu
+
+void visibility_cb(Fl_Widget *w, void *data)
+{
+  // get the visibility info from the model, and update the browser
+  // accordingly
+  const char *str = (const char*)data;
+  if(str && !strcmp(str, "redraw_only"))
+    GUI::instance()->visibility->show(true);
+  else
+    GUI::instance()->visibility->show(false);
+
+  GUI::instance()->visibility->browser->clear();
+
+  int type = GUI::instance()->visibility->type->value();
+
+  VisibilityManager::instance()->update(type);
+  for(int i = 0; i < VisibilityManager::instance()->getNumEntities(); i++){
+    GUI::instance()->visibility->browser->add
+      (VisibilityManager::instance()->getBrowserLine(i).c_str());
+    if(VisibilityManager::instance()->getVisibility(i))
+      GUI::instance()->visibility->browser->select(i + 1);
+  }
+  
+  // activate the delete button for physicals only!
+  if(type == 1)
+    GUI::instance()->visibility->push[0]->activate();
+  else
+    GUI::instance()->visibility->push[0]->deactivate();
+
+  // disable numeric and interactive selection for partitions
+  if(type == 2){
+    GUI::instance()->visibility->group[1]->deactivate();
+    GUI::instance()->visibility->group[2]->deactivate();
+  }
+  else{
+    GUI::instance()->visibility->group[1]->activate();
+    GUI::instance()->visibility->group[2]->activate();
+  }
+}
+
+static void visibility_ok_cb(Fl_Widget *w, void *data)
+{
+  // if the browser is not empty, get the selections made in the
+  // browser and apply them into the model
+  if(VisibilityManager::instance()->getNumEntities()){
+    CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+    bool recursive = GUI::instance()->visibility->butt[0]->value() ? true : false;
+    int type = GUI::instance()->visibility->type->value();
+    VisibilityManager::instance()->setAllInvisible(type);
+    for(int i = 0; i < VisibilityManager::instance()->getNumEntities(); i++)
+      if(GUI::instance()->visibility->browser->selected(i + 1))
+        VisibilityManager::instance()->setVisibility(i, 1, recursive);
+    // then refresh the browser to account for recursive selections
+    for(int i = 0; i < VisibilityManager::instance()->getNumEntities(); i++)
+      if(VisibilityManager::instance()->getVisibility(i))
+        GUI::instance()->visibility->browser->select(i + 1);
+    Draw();
+  }
+}
+
+static void visibility_save_cb(Fl_Widget *w, void *data)
+{
+  std::string str = VisibilityManager::instance()->getStringForGEO();
+  add_infile(str.c_str(), CTX.filename);
+}
+
+static void visibility_delete_cb(Fl_Widget *w, void *data)
+{
+  int type = GUI::instance()->visibility->type->value();
+  if(type != 1) return; // delete only available for physicals
+
+  bool all = true;
+  for(int i = 0; i < VisibilityManager::instance()->getNumEntities(); i++){
+    if(!GUI::instance()->visibility->browser->selected(i + 1)){
+      all = false;
+      break;
+    }
+  }
+  if(all){
+    GModel::current()->deletePhysicalGroups();
+  }
+  else{
+    for(int i = 0; i < VisibilityManager::instance()->getNumEntities(); i++){
+      if(GUI::instance()->visibility->browser->selected(i + 1)){
+        Vis *v = VisibilityManager::instance()->getEntity(i);
+        GModel::current()->deletePhysicalGroup(v->getDim(), v->getTag());
+      }
+    }
+  }
+
+  visibility_cb(NULL, (void*)"redraw_only");
+}
+
+static void visibility_sort_cb(Fl_Widget *w, void *data)
+{
+  const char *str = (const char*)data;
+  int val;
+  if(!strcmp(str, "type"))
+    val = 1;
+  else if(!strcmp(str, "number"))
+    val = 2;
+  else if(!strcmp(str, "name"))
+    val = 3;
+  else if(!strcmp(str, "-"))
+    val = -1;
+  else if(!strcmp(str, "+"))
+    val = -2;
+  else
+    val = 0;
+
+  if(val == 0) { // select or deselect everything
+    int selectall = 0;
+    for(int i = 0; i < GUI::instance()->visibility->browser->size(); i++)
+      if(!GUI::instance()->visibility->browser->selected(i + 1)) {
+        selectall = 1;
+        break;
+      }
+    if(selectall)
+      for(int i = 0; i < GUI::instance()->visibility->browser->size(); i++)
+        GUI::instance()->visibility->browser->select(i + 1);
+    else
+      GUI::instance()->visibility->browser->deselect();
+  }
+  else if(val == -1){ // invert the selection
+    int *state = new int[GUI::instance()->visibility->browser->size()];
+    for(int i = 0; i < GUI::instance()->visibility->browser->size(); i++)
+      state[i] = GUI::instance()->visibility->browser->selected(i + 1);
+    GUI::instance()->visibility->browser->deselect();
+    for(int i = 0; i < GUI::instance()->visibility->browser->size(); i++)
+      if(!state[i]) GUI::instance()->visibility->browser->select(i + 1);
+    delete [] state;
+  }
+  else if(val == -2){ // create new parameter name for selection
+    for(int i = 0; i < GUI::instance()->visibility->browser->size(); i++){
+      if(GUI::instance()->visibility->browser->selected(i + 1)){
+        static char tmpstr[256];
+        sprintf(tmpstr, "%d", VisibilityManager::instance()->getTag(i));
+        GUI::instance()->geoContext->input[1]->value(tmpstr);
+        break;
+      }
+    }
+    GUI::instance()->geoContext->input[0]->value("NewName");
+    GUI::instance()->geoContext->show(0);
+  }
+  else { // set new sorting mode
+    VisibilityManager::instance()->setSortMode(val);
+    visibility_cb(NULL, (void*)"redraw_only");
+  }
+}
+
+static void visibility_number_cb(Fl_Widget *w, void *data)
+{
+  CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+
+  // type = 0 for elementary, 1 for physical and 2 for partitions
+  int type = GUI::instance()->visibility->type->value();
+  if(type != 0 && type != 1) return;
+
+  // what = 0 for nodes, 1 for elements, 2 for points, 3 for lines, 4
+  // for surfaces, 5 for volumes, 6 for physical points, 7 for
+  // physical lines, 8 for physical surfaces and 9 for physical
+  // volumes
+  int what = (int)(long)data;
+  char val;
+  if(what >= 100){ // show
+    val = 1;
+    what -= 100;
+  }
+  else{ // hide
+    val = 0;
+  }
+  const char *str = GUI::instance()->visibility->input[what]->value();
+  if(type == 1 && what >= 2 && what <= 5) what += 4;
+
+  int num = (!strcmp(str, "all") || !strcmp(str, "*")) ? -1 : atoi(str);
+  bool recursive = GUI::instance()->visibility->butt[0]->value() ? true : false;
+  
+  VisibilityManager::instance()->setVisibilityByNumber(what, num, val, recursive);
+
+  int pos = GUI::instance()->visibility->browser->position();
+  visibility_cb(NULL, (void*)"redraw_only");
+  GUI::instance()->visibility->browser->position(pos);
+  Draw();
+}
+
+static void _apply_visibility(char mode,
+                              std::vector<GVertex*> &vertices,
+                              std::vector<GEdge*> &edges,
+                              std::vector<GFace*> &faces,
+                              std::vector<GRegion*> &regions,
+                              std::vector<MElement*> &elements)
+{
+  // type = 0 for elementary, 1 for physical and 2 for partitions
+  int type = GUI::instance()->visibility->type->value();
+  if(type != 0 && type != 1) return;
+  bool recursive = GUI::instance()->visibility->butt[0]->value() ? true : false;
+
+  if(mode == 1){ // when showing a single entity, first hide everything
+    if(CTX.pick_elements)
+      VisibilityManager::instance()->setVisibilityByNumber(1, -1, 0, false);
+    else
+      for(int i = 2; i <= 5; i++)
+        VisibilityManager::instance()->setVisibilityByNumber(i, -1, 0, false);
+  }
+
+  if(mode == 2) mode = 1;
+  
+  if(CTX.pick_elements){
+    for(unsigned int i = 0; i < elements.size(); i++)
+      elements[i]->setVisibility(mode);
+  }
+  else{
+    for(unsigned int i = 0; i < vertices.size(); i++){
+      if(type == 0)
+        vertices[i]->setVisibility(mode, recursive);
+      else
+        for(unsigned int j = 0; j < vertices[i]->physicals.size(); j++)
+          VisibilityManager::instance()->setVisibilityByNumber
+            (6, vertices[i]->physicals[j], mode, recursive);
+    }
+    for(unsigned int i = 0; i < edges.size(); i++){
+      if(type == 0)
+        edges[i]->setVisibility(mode, recursive);
+      else
+        for(unsigned int j = 0; j < edges[i]->physicals.size(); j++)
+          VisibilityManager::instance()->setVisibilityByNumber
+            (7, edges[i]->physicals[j], mode, recursive);
+    }
+    for(unsigned int i = 0; i < faces.size(); i++){
+      if(type == 0)
+        faces[i]->setVisibility(mode, recursive);
+      else
+        for(unsigned int j = 0; j < faces[i]->physicals.size(); j++)
+          VisibilityManager::instance()->setVisibilityByNumber
+            (8, faces[i]->physicals[j], mode, recursive);
+    }
+    for(unsigned int i = 0; i < regions.size(); i++){
+      if(type == 0)
+        regions[i]->setVisibility(mode, recursive);
+      else
+        for(unsigned int j = 0; j < regions[i]->physicals.size(); j++)
+          VisibilityManager::instance()->setVisibilityByNumber
+            (9, regions[i]->physicals[j], mode, recursive);
+    }
+  }
+  int pos = GUI::instance()->visibility->browser->position();
+  visibility_cb(NULL, (void*)"redraw_only");
+  GUI::instance()->visibility->browser->position(pos);
+}
+
+static void visibility_interactive_cb(Fl_Widget *w, void *data)
+{
+  const char *str = (const char*)data;
+  const char *help;
+  int what;
+  char mode;
+
+  if(!strcmp(str, "hide_elements")){
+    CTX.pick_elements = 1;
+    what = ENT_ALL;
+    mode = 0;
+    help = "elements to hide";
+  }
+  else if(!strcmp(str, "hide_points")){
+    CTX.pick_elements = 0;
+    what = ENT_POINT;
+    mode = 0;
+    help = "points to hide";
+    opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  else if(!strcmp(str, "hide_lines")){
+    CTX.pick_elements = 0;
+    what = ENT_LINE;
+    mode = 0;
+    help = "lines to hide";
+    opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  else if(!strcmp(str, "hide_surfaces")){
+    CTX.pick_elements = 0;
+    what = ENT_SURFACE;
+    mode = 0;
+    help = "surfaces to hide";
+    if(GModel::current()->getMeshStatus() < 2)
+      opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  else if(!strcmp(str, "hide_volumes")){
+    CTX.pick_elements = 0;
+    what = ENT_VOLUME;
+    mode = 0;
+    help = "volumes to hide";
+    if(GModel::current()->getMeshStatus() < 3)
+      opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  else if(!strcmp(str, "show_elements")){
+    CTX.pick_elements = 1;
+    what = ENT_ALL;
+    mode = 1;
+    help = "elements to show";
+  }
+  else if(!strcmp(str, "show_points")){
+    CTX.pick_elements = 0;
+    what = ENT_POINT;
+    mode = 1;
+    help = "points to show";
+    opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  else if(!strcmp(str, "show_lines")){
+    CTX.pick_elements = 0;
+    what = ENT_LINE;
+    mode = 1;
+    help = "lines to show";
+    opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  else if(!strcmp(str, "show_surfaces")){
+    CTX.pick_elements = 0;
+    what = ENT_SURFACE;
+    mode = 1;
+    help = "surfaces to show";
+    if(GModel::current()->getMeshStatus() < 2)
+      opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  else if(!strcmp(str, "show_volumes")){
+    CTX.pick_elements = 0;
+    what = ENT_VOLUME;
+    mode = 1;
+    help = "volumes to show";
+    if(GModel::current()->getMeshStatus() < 3)
+      opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  else if(!strcmp(str, "show_all")){
+    for(int i = 1; i <= 5; i++) // elements, points, lines, surfaces, volumes
+      VisibilityManager::instance()->setVisibilityByNumber(i, -1, 1, false);
+    CTX.mesh.changed = ENT_ALL;
+    Draw();  
+    return;
+  }
+  else
+    return;
+
+  std::vector<GVertex*> vertices, vertices_old;
+  std::vector<GEdge*> edges, edges_old;
+  std::vector<GFace*> faces, faces_old;
+  std::vector<GRegion*> regions, regions_old;
+  std::vector<MElement*> elements, elements_old;
+
+  while(1) {
+    if(what == ENT_ALL) 
+      CTX.mesh.changed = ENT_ALL;
+    Draw();
+    Msg::StatusBar(3, false, "Select %s\n[Press %s'q' to abort]", 
+                   help, mode ? "" : "'u' to undo or ");
+
+    char ib = SelectEntity(what, vertices, edges, faces, regions, elements);
+    if(ib == 'l') {
+      _apply_visibility(mode, vertices, edges, faces, regions, elements);
+      // store for possible undo later
+      vertices_old = vertices;
+      edges_old = edges;
+      faces_old = faces;
+      regions_old = regions;
+      elements_old = elements;
+    }
+    if(ib == 'u' && !mode){ // undo only in hide mode
+      _apply_visibility(2, vertices_old, edges_old, faces_old, 
+                        regions_old, elements_old);
+    }
+    if(ib == 'q'){
+      break;
+    }
+  }
+
+  CTX.mesh.changed = ENT_ALL;
+  CTX.pick_elements = 0;
+  Draw();  
+  Msg::StatusBar(3, false, "");
+}
 
 // derive our own browser, that reacts differently to the Enter key
 class visBrowser : public Fl_Browser{
@@ -222,7 +609,7 @@ visibilityWindow::visibilityWindow(int fontsize)
 
     Fl_Button *o2 = new Fl_Button
       (width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-    o2->callback(cancel_cb, (void *)win);
+    o2->callback(hide_cb, (void *)win);
   }
 
   win->position(CTX.vis_position[0], CTX.vis_position[1]);

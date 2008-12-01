@@ -76,4 +76,16 @@ class menuWindow{
   void setContext(contextItem *menu_asked, int flag);
 };
 
+void file_quit_cb(Fl_Widget *w, void *data);
+void mod_geometry_cb(Fl_Widget *w, void *data);
+void mod_mesh_cb(Fl_Widget *w, void *data);
+void mod_solver_cb(Fl_Widget *w, void *data);
+void mod_post_cb(Fl_Widget *w, void *data);
+void mod_back_cb(Fl_Widget *w, void *data);
+void mod_forward_cb(Fl_Widget *w, void *data);
+void geometry_reload_cb(Fl_Widget *w, void *data);
+void mesh_1d_cb(Fl_Widget *w, void *data);
+void mesh_2d_cb(Fl_Widget *w, void *data);
+void mesh_3d_cb(Fl_Widget *w, void *data);
+
 #endif

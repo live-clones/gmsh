@@ -57,14 +57,6 @@ class classificationEditor {
   Fl_Group *edge_detec, *face_color, *reverse_eng;
 };
 
-void class_select_cb(Fl_Widget *w, void *data);
-void class_hide_cb(Fl_Widget *w, void *data);
-void class_selectgface_cb(Fl_Widget *w, void *data);
-void class_save_cb(Fl_Widget *w, void *data);
-void class_clear_cb(Fl_Widget *w, void *data);
-void class_deleteedge_cb(Fl_Widget *w, void *data);
-void class_color_cb(Fl_Widget *w, void *data);
-void class_ok_cb(Fl_Widget *w, void *data);
-void class_okcolor_cb(Fl_Widget *w, void *data);
+void mesh_classify_cb(Fl_Widget* w, void* data);
 
 #endif

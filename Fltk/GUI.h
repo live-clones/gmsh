@@ -95,6 +95,11 @@ class GUI{
   void callForSolverPlugin(int dim);
 };
 
+// callbacks
+void hide_cb(Fl_Widget *w, void *data);
+void redraw_cb(Fl_Widget *w, void *data);
+void window_cb(Fl_Widget *w, void *data);
+
 // utility functions
 int GetFontIndex(const char *fontname);
 int GetFontEnum(int index);

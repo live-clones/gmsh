@@ -5,14 +5,70 @@
 
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
+#include <FL/fl_ask.H>
 #include "GUI.h"
 #include "messageWindow.h"
 #include "shortcutWindow.h"
-#include "Callbacks.h"
+#include "fileDialogs.h"
 #include "GmshMessage.h"
+#include "OS.h"
 #include "Context.h"
 
 extern Context_T CTX;
+
+void message_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->messages->show();
+}
+
+static void message_auto_scroll_cb(Fl_Widget *w, void *data)
+{
+  CTX.msg_auto_scroll = GUI::instance()->messages->butt->value();
+}
+
+static void message_copy_cb(Fl_Widget *w, void *data)
+{
+#define BUFFL 50000
+  static char buff[BUFFL];
+  strcpy(buff, "");
+  for(int i = 1; i <= GUI::instance()->messages->browser->size(); i++) {
+    if(GUI::instance()->messages->browser->selected(i)) {
+      const char *c = GUI::instance()->messages->browser->text(i);
+      if(strlen(buff) + strlen(c) > BUFFL - 2) {
+        Msg::Error("Text selection too large to copy");
+        break;
+      }
+      if(c[0] == '@')
+        strcat(buff, &c[5]);
+      else
+        strcat(buff, c);
+      strcat(buff, "\n");
+    }
+  }
+  // bof bof bof
+  Fl::copy(buff, strlen(buff), 0);
+  Fl::copy(buff, strlen(buff), 1);
+}
+
+static void message_clear_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->messages->browser->clear();
+}
+
+static void message_save_cb(Fl_Widget *w, void *data)
+{
+ test:
+  if(file_chooser(0, 1, "Save", "*")) {
+    std::string name = file_chooser_get_name(1);
+    if(CTX.confirm_overwrite) {
+      if(!StatFile(name.c_str()))
+        if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
+                      "Cancel", "Replace", NULL, name.c_str()))
+          goto test;
+    }
+    GUI::instance()->messages->save(name.c_str());
+  }
+}
 
 messageWindow::messageWindow(int fontsize)
   : _fontsize(fontsize)
@@ -50,7 +106,7 @@ messageWindow::messageWindow(int fontsize)
   {
     Fl_Button *o = new Fl_Button
       (width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-    o->callback(cancel_cb, (void *)win);
+    o->callback(hide_cb, (void *)win);
   }
 
   win->resizable(new Fl_Box(1, 1, 4, 4));

@@ -44,4 +44,6 @@ class fieldWindow{
   void editField(Field *f);
 };
 
+void field_cb(Fl_Widget *w, void *data);
+
 #endif

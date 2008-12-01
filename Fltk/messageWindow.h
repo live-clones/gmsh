@@ -24,4 +24,6 @@ class messageWindow{
   void save(const char *filename);
 };
 
+void message_cb(Fl_Widget *w, void *data);
+
 #endif

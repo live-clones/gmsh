@@ -141,7 +141,7 @@ int perspective_editor()
 
 // Model chooser
 
-static void model_switch(Fl_Widget* w, void *data)
+static void model_switch_cb(Fl_Widget* w, void *data)
 {
   Fl_Select_Browser *b = (Fl_Select_Browser *)w;
   if(b->value()) GModel::current(b->value() - 1);
@@ -151,7 +151,7 @@ static void model_switch(Fl_Widget* w, void *data)
   Draw();
 }
 
-static void model_draw_all(Fl_Widget* w, void *data)
+static void model_draw_all_cb(Fl_Widget* w, void *data)
 {
   Fl_Check_Button *b = (Fl_Check_Button*)w;
   opt_general_draw_all_models(0, GMSH_SET | GMSH_GUI, (int)b->value());
@@ -178,10 +178,10 @@ int model_chooser()
     Fl_Box *l = new Fl_Box(0, 0, WW, BH, "Choose current model:");
     l->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
     menu->browser = new Fl_Hold_Browser(0, BH, WW, 4 * BH);
-    menu->browser->callback(model_switch);
+    menu->browser->callback(model_switch_cb);
     menu->browser->when(FL_WHEN_RELEASE_ALWAYS);
     menu->butt = new Fl_Check_Button(0, 5 * BH, WW, BH, "Draw all models");
-    menu->butt->callback(model_draw_all);
+    menu->butt->callback(model_draw_all_cb);
     menu->window->end();
   }
 

@@ -6,13 +6,35 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
 #include "GUI.h"
+#include "Draw.h"
 #include "manipWindow.h"
 #include "shortcutWindow.h"
-#include "Callbacks.h"
+#include "graphicWindow.h"
 #include "Options.h"
 #include "Context.h"
 
 extern Context_T CTX;
+
+void manip_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->manip->show();
+}
+
+static void manip_update_cb(Fl_Widget *w, void *data)
+{
+  drawContext *ctx = GUI::instance()->graph[0]->gl->getDrawContext();
+  ctx->r[0] = GUI::instance()->manip->value[0]->value();
+  ctx->r[1] = GUI::instance()->manip->value[1]->value();
+  ctx->r[2] = GUI::instance()->manip->value[2]->value();
+  ctx->t[0] = GUI::instance()->manip->value[3]->value();
+  ctx->t[1] = GUI::instance()->manip->value[4]->value();
+  ctx->t[2] = GUI::instance()->manip->value[5]->value();
+  ctx->s[0] = GUI::instance()->manip->value[6]->value();
+  ctx->s[1] = GUI::instance()->manip->value[7]->value();
+  ctx->s[2] = GUI::instance()->manip->value[8]->value();
+  ctx->setQuaternionFromEulerAngles();
+  Draw();
+}
 
 manipWindow::manipWindow(int fontsize)
   : _fontsize(fontsize)
@@ -69,7 +91,7 @@ manipWindow::manipWindow(int fontsize)
   {
     Fl_Button *o = new Fl_Button
       (width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-    o->callback(cancel_cb, (void *)win);
+    o->callback(hide_cb, (void *)win);
   }
 
   win->position(CTX.manip_position[0], CTX.manip_position[1]);

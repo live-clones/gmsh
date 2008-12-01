@@ -8,15 +8,149 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Scroll.H>
 #include "GUI.h"
+#include "Draw.h"
 #include "pluginWindow.h"
 #include "shortcutWindow.h"
 #include "PView.h"
 #include "PluginManager.h"
 #include "Plugin.h"
-#include "Callbacks.h"
 #include "Context.h"
 
 extern Context_T CTX;
+
+void plugin_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->plugins->show((int)(long)data);
+}
+
+static void plugin_input_value_cb(Fl_Widget *w, void *data)
+{
+  double (*f)(int, int, double) = (double (*)(int, int, double)) data;
+  Fl_Value_Input *input = (Fl_Value_Input*) w;
+  f(-1, 0, input->value());
+}
+
+static void plugin_input_cb(Fl_Widget *w, void *data)
+{
+  const char* (*f)(int, int, const char*) = (const char* (*)(int, int, const char*)) data;
+  Fl_Input *input = (Fl_Input*) w;
+  f(-1, 0, input->value());
+}
+
+static void plugin_browser_cb(Fl_Widget *w, void *data)
+{
+  // get selected plugin
+  GMSH_Plugin *p = 0;
+  for(int i = 1; i <= GUI::instance()->plugins->browser->size(); i++) {
+    if(GUI::instance()->plugins->browser->selected(i)) {
+      p = (GMSH_Plugin*)GUI::instance()->plugins->browser->data(i);
+      break;
+    }
+  }
+  if(!p) return;
+
+  // get first first selected view
+  int iView = -1;
+  for(int i = 1; i <= GUI::instance()->plugins->view_browser->size(); i++) {
+    if(GUI::instance()->plugins->view_browser->selected(i)) {
+      iView = i - 1;
+      break;
+    }
+  }
+
+  // set the Fl_Value_Input callbacks and configure the input value
+  // fields (we get step, min and max by calling the option function
+  // with action==1, 2 and 3, respectively)
+  int n = p->getNbOptions();
+  if(n > MAX_PLUGIN_OPTIONS) n = MAX_PLUGIN_OPTIONS;
+  for(int i = 0; i < n; i++) {
+    StringXNumber *sxn = p->getOption(i);
+    if(sxn->function){
+      p->dialogBox->value[i]->callback(plugin_input_value_cb, (void*)sxn->function);
+      if(iView >= 0){
+        p->dialogBox->value[i]->step(sxn->function(iView, 1, 0.));
+        p->dialogBox->value[i]->minimum(sxn->function(iView, 2, 0.));
+        p->dialogBox->value[i]->maximum(sxn->function(iView, 3, 0.));
+      }
+    }
+  }
+
+  // set the Fl_Input callbacks
+  int m = p->getNbOptionsStr();
+  if(m > MAX_PLUGIN_OPTIONS) m = MAX_PLUGIN_OPTIONS;
+  for(int i = 0; i < m; i++) {
+    StringXString *sxs = p->getOptionStr(i);
+    if(sxs->function){
+      p->dialogBox->input[i]->callback(plugin_input_cb, (void*)sxs->function);
+    }
+  }
+
+  // hide all plugin groups except the selected one
+  for(int i = 1; i <= GUI::instance()->plugins->browser->size(); i++)
+    ((GMSH_Plugin*)GUI::instance()->plugins->browser->data(i))->dialogBox->group->hide();
+  p->dialogBox->group->show();
+}
+
+static void plugin_run_cb(Fl_Widget *w, void *data)
+{
+  // get selected plugin
+  GMSH_Post_Plugin *p = 0;
+  for(int i = 1; i <= GUI::instance()->plugins->browser->size(); i++) {
+    if(GUI::instance()->plugins->browser->selected(i)) {
+      p = (GMSH_Post_Plugin*)GUI::instance()->plugins->browser->data(i);
+      break;
+    }
+  }
+  if(!p) return;
+
+  if(p->dialogBox) { // get the values from the GUI
+    int m = p->getNbOptionsStr();
+    int n = p->getNbOptions();
+    if(m > MAX_PLUGIN_OPTIONS) m = MAX_PLUGIN_OPTIONS;
+    if(n > MAX_PLUGIN_OPTIONS) n = MAX_PLUGIN_OPTIONS;
+    for(int i = 0; i < m; i++) {
+      StringXString *sxs = p->getOptionStr(i);
+      sxs->def = p->dialogBox->input[i]->value();
+    }
+    for(int i = 0; i < n; i++) {
+      StringXNumber *sxn = p->getOption(i);
+      sxn->def = p->dialogBox->value[i]->value();
+    }
+  }
+
+  // run on all selected views
+  bool no_view_selected = true;
+  for(int i = 1; i <= GUI::instance()->plugins->view_browser->size(); i++) {
+    if(GUI::instance()->plugins->view_browser->selected(i)) {
+      no_view_selected = false;
+      try{
+        if(i - 1 >= 0 && i - 1 < (int)PView::list.size())
+          p->execute(PView::list[i - 1]);
+        else
+          p->execute(0);
+      }
+      catch(GMSH_Plugin * err) {
+        char tmp[256];
+        p->catchErrorMessage(tmp);
+        Msg::Warning("%s", tmp);
+      }
+    }
+  }
+  if(no_view_selected){
+    p->execute(0);
+  }
+
+  GUI::instance()->updateViews();
+  CTX.post.plugin_draw_function = NULL;
+  Draw();
+}
+
+static void plugin_cancel_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->plugins->win->hide();
+  CTX.post.plugin_draw_function = NULL;
+  Draw();
+}
 
 pluginWindow::pluginWindow(int fontsize) : _fontsize(fontsize)
 {
@@ -32,21 +166,21 @@ pluginWindow::pluginWindow(int fontsize) : _fontsize(fontsize)
   {
     Fl_Button *o = new Fl_Button
       (width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-    o->callback(view_plugin_cancel_cb);
+    o->callback(plugin_cancel_cb);
   }
   {
     run = new Fl_Return_Button
       (width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Run");
-    run->callback(view_plugin_run_cb);
+    run->callback(plugin_run_cb);
   }
   
   int L1 = (int)(0.3 * width), L2 = (int)(0.6 * L1);
   browser = new Fl_Hold_Browser(WB, WB, L1, height - 3 * WB - BH);
-  browser->callback(view_plugin_browser_cb);
+  browser->callback(plugin_browser_cb);
 
   view_browser = new Fl_Multi_Browser(WB + L1, WB, L2, height - 3 * WB - BH);
   view_browser->has_scrollbar(Fl_Browser_::VERTICAL);
-  view_browser->callback(view_plugin_browser_cb);
+  view_browser->callback(plugin_browser_cb);
 
   for(GMSH_PluginManager::iter it = GMSH_PluginManager::instance()->begin();
       it != GMSH_PluginManager::instance()->end(); ++it) {
@@ -79,7 +213,7 @@ void pluginWindow::show(int viewIndex)
   if(viewIndex >= 0 && viewIndex < (int)PView::list.size()){
     view_browser->deselect();
     view_browser->select(viewIndex + 1);
-    view_plugin_browser_cb(NULL, NULL);
+    plugin_browser_cb(NULL, NULL);
   }
   win->show();
 }
@@ -183,5 +317,5 @@ void pluginWindow::resetViewBrowser()
     view_browser->deactivate();
   }
 
-  view_plugin_browser_cb(NULL, NULL);
+  plugin_browser_cb(NULL, NULL);
 }

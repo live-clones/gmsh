@@ -3994,11 +3994,7 @@ default value for this option;
 create the handling routine @code{opt_XXX} in @file{Common/Options.cpp} (and
 add the prototype in @file{Common/Options.h});
 @item
-optional: create the associated widget in @file{Fltk/GUI.cpp};
-@item
-optional: if no special callback is to be associated with the widget, add the
-handling routine @code{opt_XXX} to the OK callback for the corresponding
-option panel (in @file{Fltk/Callbacks.cpp}).
+optional: create the associated widget in @file{Fltk/optionWindow.cpp};
 @end enumerate
 
 @c todo:

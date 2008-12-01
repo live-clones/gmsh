@@ -11,10 +11,26 @@
 #include "shortcutWindow.h"
 #include "CommandLine.h"
 #include "StringUtils.h"
-#include "Callbacks.h"
+#include "OS.h"
 #include "Context.h"
 
 extern Context_T CTX;
+
+static void help_license_cb(Fl_Widget *w, void *data)
+{
+  std::string prog = FixWindowsPath(CTX.web_browser);
+  char cmd[1024];
+  ReplaceMultiFormat(prog.c_str(), "http://geuz.org/gmsh/doc/LICENSE.txt", cmd);
+  SystemCall(cmd);
+}
+
+static void help_credits_cb(Fl_Widget *w, void *data)
+{
+  std::string prog = FixWindowsPath(CTX.web_browser);
+  char cmd[1024];
+  ReplaceMultiFormat(prog.c_str(), "http://geuz.org/gmsh/doc/CREDITS.txt", cmd);
+  SystemCall(cmd);
+}
 
 aboutWindow::aboutWindow(int fontsize)
   : _fontsize(fontsize)
@@ -71,7 +87,7 @@ aboutWindow::aboutWindow(int fontsize)
     o->add(" ");
     o->add("@c@.Visit http://www.geuz.org/gmsh/ for more information");
     o->add(" ");
-    o->callback(cancel_cb, (void *)win);
+    o->callback(hide_cb, (void *)win);
   }
 
   {

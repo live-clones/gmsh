@@ -4,20 +4,2130 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string.h>
+#include <stdio.h>
+#include <time.h>
 #include <FL/Fl_Box.H>
+#include <FL/fl_ask.H>
 #include "GUI.h"
+#include "Draw.h"
 #include "menuWindow.h"
 #include "shortcutWindow.h"
-#include "Callbacks.h"
+#include "graphicWindow.h"
+#include "optionWindow.h"
+#include "statisticsWindow.h"
+#include "messageWindow.h"
+#include "contextWindow.h"
+#include "visibilityWindow.h"
+#include "clippingWindow.h"
+#include "manipWindow.h"
+#include "fieldWindow.h"
+#include "pluginWindow.h"
+#include "solverWindow.h"
+#include "aboutWindow.h"
+#include "fileDialogs.h"
+#include "partitionDialog.h"
+#include "projectionEditor.h"
+#include "classificationEditor.h"
 #include "Options.h"
 #include "Solvers.h"
 #include "GmshMessage.h"
+#include "CommandLine.h"
+#include "Generator.h"
+#include "HighOrder.h"
+#include "GModel.h"
 #include "PView.h"
 #include "PViewData.h"
 #include "PViewOptions.h"
+#include "Field.h"
+#include "OS.h"
+#include "StringUtils.h"
+#include "SelectBuffer.h"
+#include "OpenFile.h"
+#include "CreateFile.h"
+#include "findLinks.h"
+#include "GeoStringInterface.h"
+#include "Options.h"
 #include "Context.h"
 
 extern Context_T CTX;
+
+static void file_new_cb(Fl_Widget *w, void *data)
+{
+ test:
+  if(file_chooser(0, 1, "New", "*")) {
+    std::string name = file_chooser_get_name(1);
+    if(!StatFile(name.c_str())){
+      if(fl_choice("File '%s' already exists.\n\nDo you want to erase it?",
+                   "Cancel", "Erase", NULL, name.c_str()))
+        UnlinkFile(name.c_str());
+      else
+        goto test;
+    }
+    FILE *fp = fopen(name.c_str(), "w");
+    if(!fp){
+      Msg::Error("Unable to open file '%s'", name.c_str());
+      return;
+    }
+    time_t now;
+    time(&now);
+    fprintf(fp, "// Gmsh project created on %s", ctime(&now));
+    fclose(fp);
+    OpenProject(name.c_str());
+    Draw();
+  }
+}
+
+#if defined(HAVE_NATIVE_FILE_CHOOSER)
+#  define TT "\t"
+#  define NN "\n"
+#else
+#  define TT " ("
+#  define NN ")\t"
+#endif
+
+static const char *input_formats =
+  "All files" TT "*" NN
+  "Gmsh geometry" TT "*.geo" NN
+  "Gmsh mesh" TT "*.msh" NN
+  "Gmsh post-processing view" TT "*.pos" NN
+#if defined(HAVE_OCC)
+  "STEP model" TT "*.{stp,step}" NN
+  "IGES model" TT "*.{igs,iges}" NN
+  "BRep model" TT "*.brep" NN
+#endif
+  "I-deas universal mesh" TT "*.unv" NN
+  "Diffpack 3D mesh" TT "*.diff" NN
+  "VTK mesh" TT "*.vtk" NN
+#if defined(HAVE_MED)
+  "MED file" TT "*.{med,mmed,rmed}" NN
+#endif
+  "Medit mesh" TT "*.mesh" NN
+  "Nastran bulk data file" TT "*.{bdf,nas}" NN
+  "Plot3D structured mesh" TT "*.p3d" NN
+  "STL surface mesh" TT "*.stl" NN
+  "VRML surface mesh" TT "*.{wrl,vrml}" NN
+#if defined(HAVE_LIBJPEG)
+  "JPEG" TT "*.{jpg,jpeg}" NN
+#endif
+#if defined(HAVE_LIBPNG)
+  "PNG" TT "*.png" NN
+#endif
+  "BMP" TT "*.bmp" NN
+  "PPM" TT "*.ppm" NN
+  "PGM" TT "*.pgm" NN
+  "PBM" TT "*.pbm" NN
+  "PNM" TT "*.pnm" NN;
+
+#undef TT
+#undef NN
+
+static void file_open_cb(Fl_Widget *w, void *data)
+{
+  int n = PView::list.size();
+  if(file_chooser(0, 0, "Open", input_formats)) {
+    OpenProject(file_chooser_get_name(1).c_str());
+    Draw();
+  }
+  if(n != (int)PView::list.size())
+    GUI::instance()->menu->setContext(menu_post, 0);
+}
+
+static void file_merge_cb(Fl_Widget *w, void *data)
+{
+  int n = PView::list.size();
+  int f = file_chooser(1, 0, "Merge", input_formats);
+  if(f) {
+    for(int i = 1; i <= f; i++)
+      MergeFile(file_chooser_get_name(i).c_str());
+    Draw();
+  }
+  if(n != (int)PView::list.size())
+    GUI::instance()->menu->setContext(menu_post, 0);
+}
+
+static int _save_msh(const char *name){ return msh_dialog(name); }
+static int _save_pos(const char *name){ return pos_dialog(name); }
+static int _save_options(const char *name){ return options_dialog(name); }
+static int _save_geo(const char *name){ return geo_dialog(name); }
+static int _save_cgns(const char *name){ return cgns_write_dialog(name); }
+static int _save_unv(const char *name){ return unv_dialog(name); }
+static int _save_vtk(const char *name){ return generic_mesh_dialog
+    (name, "VTK Options", FORMAT_VTK, true); }
+static int _save_diff(const char *name){ return generic_mesh_dialog
+    (name, "Diffpack Options", FORMAT_DIFF, true); }
+static int _save_med(const char *name){ return generic_mesh_dialog
+    (name, "MED Options", FORMAT_MED, false); }
+static int _save_mesh(const char *name){ return generic_mesh_dialog
+    (name, "MESH Options", FORMAT_MESH, false); }
+static int _save_bdf(const char *name){ return bdf_dialog(name); }
+static int _save_p3d(const char *name){ return generic_mesh_dialog
+    (name, "P3D Options", FORMAT_P3D, false); }
+static int _save_stl(const char *name){ return generic_mesh_dialog
+    (name, "STL Options", FORMAT_STL, true); }
+static int _save_vrml(const char *name){ return generic_mesh_dialog
+    (name, "VRML Options", FORMAT_VRML, false); }
+static int _save_eps(const char *name){ return gl2ps_dialog
+    (name, "EPS Options", FORMAT_EPS); }
+static int _save_gif(const char *name){ return gif_dialog(name); }
+static int _save_jpeg(const char *name){ return jpeg_dialog(name); }
+static int _save_tex(const char *name){ return latex_dialog(name); }
+static int _save_pdf(const char *name){ return gl2ps_dialog
+    (name, "PDF Options", FORMAT_PDF); }
+static int _save_png(const char *name){ return generic_bitmap_dialog
+    (name, "PNG Options", FORMAT_PNG); }
+static int _save_ps(const char *name){ return gl2ps_dialog
+    (name, "PS Options", FORMAT_PS); }
+static int _save_ppm(const char *name){ return generic_bitmap_dialog
+    (name, "PPM Options", FORMAT_PPM); }
+static int _save_svg(const char *name){ return gl2ps_dialog
+    (name, "SVG Options", FORMAT_SVG); }
+static int _save_yuv(const char *name){ return generic_bitmap_dialog
+    (name, "YUV Options", FORMAT_YUV); }
+
+static int _save_auto(const char *name)
+{
+  switch(GuessFileFormatFromFileName(name)){
+  case FORMAT_MSH  : return _save_msh(name);
+  case FORMAT_POS  : return _save_pos(name);
+  case FORMAT_OPT  : return _save_options(name);
+  case FORMAT_GEO  : return _save_geo(name);
+  case FORMAT_CGNS : return _save_cgns(name);
+  case FORMAT_UNV  : return _save_unv(name);
+  case FORMAT_VTK  : return _save_vtk(name);
+  case FORMAT_MED  : return _save_med(name);
+  case FORMAT_MESH : return _save_mesh(name);
+  case FORMAT_BDF  : return _save_bdf(name);
+  case FORMAT_DIFF : return _save_diff(name);
+  case FORMAT_P3D  : return _save_p3d(name);
+  case FORMAT_STL  : return _save_stl(name);
+  case FORMAT_VRML : return _save_vrml(name);
+  case FORMAT_EPS  : return _save_eps(name);
+  case FORMAT_GIF  : return _save_gif(name);
+  case FORMAT_JPEG : return _save_jpeg(name);
+  case FORMAT_TEX  : return _save_tex(name);
+  case FORMAT_PDF  : return _save_pdf(name);
+  case FORMAT_PNG  : return _save_png(name);
+  case FORMAT_PS   : return _save_ps(name);
+  case FORMAT_PPM  : return _save_ppm(name);
+  case FORMAT_SVG  : return _save_svg(name);
+  case FORMAT_YUV  : return _save_yuv(name);
+  default :
+    CreateOutputFile(name, FORMAT_AUTO); 
+    return 1;
+  }
+}
+
+typedef struct{
+  const char *pat;
+  int (*func) (const char *name);
+} patXfunc;
+
+static void file_save_as_cb(Fl_Widget *w, void *data)
+{
+#if defined(HAVE_NATIVE_FILE_CHOOSER)
+#  define TT "\t"
+#  define NN "\n"
+#else
+#  define TT " ("
+#  define NN ")\t"
+#endif
+  static patXfunc formats[] = {
+    {"Guess from extension" TT "*.*", _save_auto},
+    {"Gmsh mesh" TT "*.msh", _save_msh},
+    {"Gmsh mesh statistics" TT "*.pos", _save_pos},
+    {"Gmsh options" TT "*.opt", _save_options},
+    {"Gmsh unrolled geometry" TT "*.geo", _save_geo},
+#if defined(HAVE_LIBCGNS)
+    {"CGNS" TT "*.cgns", _save_cgns},
+#endif
+    {"I-deas universal mesh" TT "*.unv", _save_unv},
+    {"Diffpack 3D mesh" TT "*.diff", _save_diff},
+    {"VTK mesh" TT "*.vtk", _save_vtk},
+#if defined(HAVE_MED)
+    {"MED file" TT "*.med", _save_med},
+#endif
+    {"Medit mesh" TT "*.mesh", _save_mesh},
+    {"Nastran bulk data file" TT "*.bdf", _save_bdf},
+    {"Plot3D structured mesh" TT "*.p3d", _save_p3d},
+    {"STL surface mesh" TT "*.stl", _save_stl},
+    {"VRML surface mesh" TT "*.wrl", _save_vrml},
+    {"Encapsulated PostScript" TT "*.eps", _save_eps},
+    {"GIF" TT "*.gif", _save_gif},
+#if defined(HAVE_LIBJPEG)
+    {"JPEG" TT "*.jpg", _save_jpeg},
+#endif
+    {"LaTeX" TT "*.tex", _save_tex},
+    {"PDF" TT "*.pdf", _save_pdf},
+#if defined(HAVE_LIBPNG)
+    {"PNG" TT "*.png", _save_png},
+#endif
+    {"PostScript" TT "*.ps", _save_ps},
+    {"PPM" TT "*.ppm", _save_ppm},
+    {"SVG" TT "*.svg", _save_svg},
+    {"YUV" TT "*.yuv", _save_yuv},
+  };
+  int nbformats = sizeof(formats) / sizeof(formats[0]);
+  static char *pat = 0;
+  if(!pat) {
+    pat = new char[nbformats * 256];
+    strcpy(pat, formats[0].pat);
+    for(int i = 1; i < nbformats; i++) {
+      strcat(pat, NN);
+      strcat(pat, formats[i].pat);
+    }
+  }
+#undef TT
+#undef NN
+
+ test:
+  if(file_chooser(0, 1, "Save As", pat)) {
+    std::string name = file_chooser_get_name(1);
+    if(CTX.confirm_overwrite) {
+      if(!StatFile(name.c_str()))
+        if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
+                      "Cancel", "Replace", NULL, name.c_str()))
+          goto test;
+    }
+    int i = file_chooser_get_filter();
+    if(i >= 0 && i < nbformats){
+      if(!formats[i].func(name.c_str())) goto test;
+    }
+    else{ // handle any additional automatic fltk filter
+      if(!_save_auto(name.c_str())) goto test;
+    }
+  }
+}
+
+static void file_rename_cb(Fl_Widget *w, void *data)
+{
+ test:
+  if(file_chooser(0, 1, "Rename", "*", CTX.filename)) {
+    std::string name = file_chooser_get_name(1);
+    if(CTX.confirm_overwrite) {
+      if(!StatFile(name.c_str()))
+        if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
+                      "Cancel", "Replace", NULL, name.c_str()))
+          goto test;
+    }
+    rename(CTX.filename, name.c_str());
+    OpenProject(name.c_str());
+    Draw();
+  }
+}
+
+void file_quit_cb(Fl_Widget *w, void *data)
+{
+  Msg::Exit(0);
+}
+
+#if defined(__APPLE__)
+#  define CC(str) "Cmd+" str " "
+#else
+#  define CC(str) "Ctrl+" str
+#endif
+
+static void help_short_cb(Fl_Widget *w, void *data)
+{
+  Msg::Direct(" ");
+  Msg::Direct("Keyboard shortcuts:");
+  Msg::Direct(" ");
+  Msg::Direct("  Left arrow    Go to previous time step"); 
+  Msg::Direct("  Right arrow   Go to next time step"); 
+  Msg::Direct("  Up arrow      Make previous view visible"); 
+  Msg::Direct("  Down arrow    Make next view visible"); 
+  Msg::Direct(" ");
+  Msg::Direct("  <             Go back to previous context");
+  Msg::Direct("  >             Go forward to next context");
+  Msg::Direct("  0             Reload project file");
+  Msg::Direct("  1 or F1       Mesh lines");
+  Msg::Direct("  2 or F2       Mesh surfaces");
+  Msg::Direct("  3 or F3       Mesh volumes");
+  Msg::Direct("  Escape        Cancel lasso zoom/selection, toggle mouse selection ON/OFF");
+  Msg::Direct(" ");
+  Msg::Direct("  g             Go to geometry module");
+  Msg::Direct("  m             Go to mesh module");
+  Msg::Direct("  p             Go to post-processing module");
+  Msg::Direct("  s             Go to solver module");
+  Msg::Direct(" ");
+  Msg::Direct("  Shift+a       Bring all windows to front");
+  Msg::Direct("  Shift+g       Show geometry options");
+  Msg::Direct("  Shift+m       Show mesh options");
+  Msg::Direct("  Shift+o       Show general options"); 
+  Msg::Direct("  Shift+p       Show post-processing options");
+  Msg::Direct("  Shift+s       Show solver options"); 
+  Msg::Direct("  Shift+u       Show post-processing view plugins");
+  Msg::Direct("  Shift+w       Show post-processing view options");
+  Msg::Direct("  Shift+Escape  Enable full mouse selection");
+  Msg::Direct(" ");
+  Msg::Direct("  " CC("i") "        Show statistics window"); 
+  Msg::Direct("  " CC("l") "        Show message console");
+#if defined(__APPLE__)
+  Msg::Direct("  " CC("m") "        Minimize window"); 
+#endif
+  Msg::Direct("  " CC("n") "        Create new project file"); 
+  Msg::Direct("  " CC("o") "        Open project file"); 
+  Msg::Direct("  " CC("q") "        Quit");
+  Msg::Direct("  " CC("r") "        Rename project file");
+  Msg::Direct("  " CC("s") "        Save file as");
+  Msg::Direct(" ");
+  Msg::Direct("  Shift+" CC("c") "  Show clipping plane window");
+  Msg::Direct("  Shift+" CC("m") "  Show manipulator window"); 
+  Msg::Direct("  Shift+" CC("n") "  Show option window"); 
+  Msg::Direct("  Shift+" CC("o") "  Merge file(s)"); 
+  Msg::Direct("  Shift+" CC("s") "  Save mesh in default format");
+  Msg::Direct("  Shift+" CC("u") "  Show plugin window");
+  Msg::Direct("  Shift+" CC("v") "  Show visibility window");
+  Msg::Direct(" ");
+  Msg::Direct("  Alt+a         Loop through axes modes"); 
+  Msg::Direct("  Alt+b         Hide/show bounding boxes");
+  Msg::Direct("  Alt+c         Loop through predefined color schemes");
+  Msg::Direct("  Alt+e         Hide/Show element outlines for visible post-pro views");
+  Msg::Direct("  Alt+f         Change redraw mode (fast/full)"); 
+  Msg::Direct("  Alt+h         Hide/show all post-processing views"); 
+  Msg::Direct("  Alt+i         Hide/show all post-processing view scales");
+  Msg::Direct("  Alt+l         Hide/show geometry lines");
+  Msg::Direct("  Alt+m         Toggle visibility of all mesh entities");
+  Msg::Direct("  Alt+n         Hide/show all post-processing view annotations");
+  Msg::Direct("  Alt+o         Change projection mode (orthographic/perspective)");
+  Msg::Direct("  Alt+p         Hide/show geometry points");
+  Msg::Direct("  Alt+r         Loop through range modes for visible post-pro views"); 
+  Msg::Direct("  Alt+s         Hide/show geometry surfaces");
+  Msg::Direct("  Alt+t         Loop through interval modes for visible post-pro views"); 
+  Msg::Direct("  Alt+v         Hide/show geometry volumes");
+  Msg::Direct("  Alt+w         Enable/disable all lighting");
+  Msg::Direct("  Alt+x         Set X view"); 
+  Msg::Direct("  Alt+y         Set Y view"); 
+  Msg::Direct("  Alt+z         Set Z view"); 
+  Msg::Direct(" ");
+  Msg::Direct("  Alt+Shift+a   Hide/show small axes"); 
+  Msg::Direct("  Alt+Shift+b   Hide/show mesh volume faces");
+  Msg::Direct("  Alt+Shift+d   Hide/show mesh surface faces");
+  Msg::Direct("  Alt+Shift+l   Hide/show mesh lines");
+  Msg::Direct("  Alt+Shift+o   Adjust projection parameters");
+  Msg::Direct("  Alt+Shift+p   Hide/show mesh points");
+  Msg::Direct("  Alt+Shift+s   Hide/show mesh surface edges");
+  Msg::Direct("  Alt+Shift+v   Hide/show mesh volume edges");
+  Msg::Direct("  Alt+Shift+w   Reverse all mesh normals");
+  Msg::Direct("  Alt+Shift+x   Set -X view"); 
+  Msg::Direct("  Alt+Shift+y   Set -Y view"); 
+  Msg::Direct("  Alt+Shift+z   Set -Z view"); 
+  Msg::Direct(" ");
+  GUI::instance()->messages->show();
+}
+
+static void help_mouse_cb(Fl_Widget *w, void *data)
+{
+  Msg::Direct(" ");
+  Msg::Direct("Mouse actions:");
+  Msg::Direct(" ");
+  Msg::Direct("  Move                - Highlight the entity under the mouse pointer");
+  Msg::Direct("                        and display its properties in the status bar");
+  Msg::Direct("                      - Resize a lasso zoom or a lasso (un)selection");
+  Msg::Direct("  Left button         - Rotate");
+  Msg::Direct("                      - Select an entity");
+  Msg::Direct("                      - Accept a lasso zoom or a lasso selection"); 
+  Msg::Direct("  Ctrl+Left button    Start a lasso zoom or a lasso (un)selection"); 
+  Msg::Direct("  Middle button       - Zoom");
+  Msg::Direct("                      - Unselect an entity");
+  Msg::Direct("                      - Accept a lasso zoom or a lasso unselection");
+  Msg::Direct("  Ctrl+Middle button  Orthogonalize display"); 
+  Msg::Direct("  Right button        - Pan");
+  Msg::Direct("                      - Cancel a lasso zoom or a lasso (un)selection");
+  Msg::Direct("                      - Pop-up menu on post-processing view button");
+  Msg::Direct("  Ctrl+Right button   Reset to default viewpoint");   
+  Msg::Direct(" ");   
+  Msg::Direct("  For a 2 button mouse, Middle button = Shift+Left button");
+  Msg::Direct("  For a 1 button mouse, Middle button = Shift+Left button, "
+              "Right button = Alt+Left button");
+  Msg::Direct(" ");
+  GUI::instance()->messages->show();
+}
+
+static void help_command_line_cb(Fl_Widget *w, void *data)
+{
+  Msg::Direct(" ");
+  Print_Usage("gmsh");
+  GUI::instance()->messages->show();
+}
+
+static void help_online_cb(Fl_Widget *w, void *data)
+{
+  std::string prog = FixWindowsPath(CTX.web_browser);
+  char cmd[1024];
+  ReplaceMultiFormat(prog.c_str(), "http://geuz.org/gmsh/doc/texinfo/", cmd);
+  SystemCall(cmd);
+}
+
+static void help_about_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->about->win->show();
+}
+
+void mod_geometry_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->menu->setContext(menu_geometry, 0);
+}
+
+void mod_mesh_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->menu->setContext(menu_mesh, 0);
+}
+
+void mod_solver_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->menu->setContext(menu_solver, 0);
+}
+
+void mod_post_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->menu->setContext(menu_post, 0);
+}
+
+void mod_back_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->menu->setContext(NULL, -1);
+}
+
+void mod_forward_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->menu->setContext(NULL, 1);
+}
+
+static void geometry_elementary_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->menu->setContext(menu_geometry_elementary, 0);
+}
+
+static void geometry_physical_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->menu->setContext(menu_geometry_physical, 0);
+}
+
+static void geometry_edit_cb(Fl_Widget *w, void *data)
+{
+  std::string prog = FixWindowsPath(CTX.editor);
+  std::string file = FixWindowsPath(CTX.filename);
+  char cmd[1024];
+  ReplaceMultiFormat(prog.c_str(), file.c_str(), cmd);
+  SystemCall(cmd);
+}
+
+void geometry_reload_cb(Fl_Widget *w, void *data)
+{
+  OpenProject(CTX.filename);
+  Draw();
+}
+
+static void geometry_elementary_add_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->menu->setContext(menu_geometry_elementary_add, 0);
+}
+
+static void add_new_point()
+{
+  opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
+  Draw();
+
+  GUI::instance()->geoContext->show(1);
+
+  while(1) {
+    GUI::instance()->graph[0]->gl->addPointMode = true;
+    Msg::StatusBar(3, false, "Move mouse and/or enter coordinates\n"
+        "[Press 'Shift' to hold position, 'e' to add point or 'q' to abort]");
+    std::vector<GVertex*> vertices;
+    std::vector<GEdge*> edges;
+    std::vector<GFace*> faces;
+    std::vector<GRegion*> regions;
+    std::vector<MElement*> elements;
+    char ib = SelectEntity(ENT_NONE, vertices, edges, faces, regions, elements);
+    if(ib == 'e'){
+      add_point(CTX.filename,
+                GUI::instance()->geoContext->input[2]->value(),
+                GUI::instance()->geoContext->input[3]->value(),
+                GUI::instance()->geoContext->input[4]->value(),
+                GUI::instance()->geoContext->input[5]->value());
+      GUI::instance()->resetVisibility();
+      Draw();
+    }
+    if(ib == 'q'){
+      GUI::instance()->graph[0]->gl->addPointMode = false;
+      break;
+    }
+  }
+
+  Msg::StatusBar(3, false, "");
+}
+
+static void add_new_multiline(std::string type)
+{
+  std::vector<GVertex*> vertices;
+  std::vector<GEdge*> edges;
+  std::vector<GFace*> faces;
+  std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
+  std::vector<int> p;
+
+  opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
+  opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+  Draw();
+
+  while(1) {
+    if(p.empty())
+      Msg::StatusBar(3, false, "Select control points\n"
+          "[Press 'e' to end selection or 'q' to abort]");
+    else
+      Msg::StatusBar(3, false, "Select control points\n"
+          "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
+    char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
+    if(ib == 'l') {
+      for(unsigned int i = 0; i < vertices.size(); i++){
+        HighlightEntity(vertices[i]);
+        p.push_back(vertices[i]->tag());
+      }
+      Draw();
+    }
+    if(ib == 'r') {
+      Msg::Warning("Entity de-selection not supported yet during multi-line creation");
+    }
+    if(ib == 'e') {
+      if(p.size() >= 2)
+	add_multline(type, p, CTX.filename);
+      GUI::instance()->resetVisibility();
+      ZeroHighlight();
+      Draw();
+      p.clear();
+    }
+    if(ib == 'u') {
+      if(p.size()){
+        ZeroHighlightEntityNum(p.back(), 0, 0, 0);
+        Draw();
+        p.pop_back();
+      }
+    }
+    if(ib == 'q') {
+      ZeroHighlight();
+      Draw();
+      break;
+    }
+  }
+
+  Msg::StatusBar(3, false, "");
+}
+
+static void add_new_line()
+{
+  std::vector<GVertex*> vertices;
+  std::vector<GEdge*> edges;
+  std::vector<GFace*> faces;
+  std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
+  std::vector<int> p;
+
+  opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
+  opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+  Draw();
+
+  while(1) {
+    if(p.empty())
+      Msg::StatusBar(3, false, "Select start point\n"
+          "[Press 'q' to abort]");
+    if(p.size() == 1)
+      Msg::StatusBar(3, false, "Select end point\n"
+          "[Press 'u' to undo last selection or 'q' to abort]");
+    char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
+    if(ib == 'l') {
+      HighlightEntity(vertices[0]);
+      Draw();
+      p.push_back(vertices[0]->tag());
+    }
+    if(ib == 'r') {
+      Msg::Warning("Entity de-selection not supported yet during line creation");
+    }
+    if(ib == 'u') {
+      if(p.size()){
+        ZeroHighlightEntityNum(p.back(), 0, 0, 0);
+        Draw();
+        p.pop_back();
+      }
+    }
+    if(ib == 'q') {
+      ZeroHighlight();
+      Draw();
+      break;
+    }
+    if(p.size() == 2) {
+      add_multline("Line", p, CTX.filename);
+      GUI::instance()->resetVisibility();
+      ZeroHighlight();
+      Draw();
+      p.clear();
+    }
+  }
+
+  Msg::StatusBar(3, false, "");
+}
+
+static void add_new_circle()
+{
+  std::vector<GVertex*> vertices;
+  std::vector<GEdge*> edges;
+  std::vector<GFace*> faces;
+  std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
+  std::vector<int> p;
+
+  opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
+  opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+  Draw();
+
+  while(1) {
+    if(p.empty())
+      Msg::StatusBar(3, false, "Select start point\n"
+          "[Press 'q' to abort]");
+    if(p.size() == 1)
+      Msg::StatusBar(3, false, "Select center point\n"
+          "[Press 'u' to undo last selection or 'q' to abort]");
+    if(p.size() == 2)
+      Msg::StatusBar(3, false, "Select end point\n"
+          "[Press 'u' to undo last selection or 'q' to abort]");
+    char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
+    if(ib == 'l') {
+      HighlightEntity(vertices[0]);
+      Draw();
+      p.push_back(vertices[0]->tag());
+    }
+    if(ib == 'r') {
+      Msg::Warning("Entity de-selection not supported yet during circle creation");
+    }
+    if(ib == 'u') {
+      if(p.size()){
+        ZeroHighlightEntityNum(p.back(), 0, 0, 0);
+        Draw();
+        p.pop_back();
+      }
+    }
+    if(ib == 'q') {
+      ZeroHighlight();
+      Draw();
+      break;
+    }
+    if(p.size() == 3) {
+      add_circ(p[0], p[1], p[2], CTX.filename); // begin, center, end
+      GUI::instance()->resetVisibility();
+      ZeroHighlight();
+      Draw();
+      p.clear();
+    }
+  }
+
+  Msg::StatusBar(3, false, "");
+}
+
+static void add_new_ellipse()
+{
+  std::vector<GVertex*> vertices;
+  std::vector<GEdge*> edges;
+  std::vector<GFace*> faces;
+  std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
+  std::vector<int> p;
+
+  opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
+  opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+  Draw();
+
+  while(1) {
+    if(p.empty())
+      Msg::StatusBar(3, false, "Select start point\n"
+          "[Press 'q' to abort]");
+    if(p.size() == 1)
+      Msg::StatusBar(3, false, "Select center point\n"
+          "[Press 'u' to undo last selection or 'q' to abort]");
+    if(p.size() == 2)
+      Msg::StatusBar(3, false, "Select major axis point\n"
+          "[Press 'u' to undo last selection or 'q' to abort]");
+    if(p.size() == 3)
+      Msg::StatusBar(3, false, "Select end point\n"
+          "[Press 'u' to undo last selection or 'q' to abort]");
+    char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
+    if(ib == 'l') {
+      HighlightEntity(vertices[0]);
+      Draw();
+      p.push_back(vertices[0]->tag());
+    }
+    if(ib == 'r') {
+      Msg::Warning("Entity de-selection not supported yet during ellipse creation");
+    }
+    if(ib == 'u') {
+      if(p.size()){
+        ZeroHighlightEntityNum(p.back(), 0, 0, 0);
+        Draw();
+        p.pop_back();
+      }
+    }
+    if(ib == 'q') {
+      ZeroHighlight();
+      Draw();
+      break;
+    }
+    if(p.size() == 4) {
+      add_ell(p[0], p[1], p[2], p[3], CTX.filename);
+      GUI::instance()->resetVisibility();
+      ZeroHighlight();
+      Draw();
+      p.clear();
+    }
+  }
+
+  Msg::StatusBar(3, false, "");
+}
+
+static int select_contour(int type, int num, List_T * List)
+{
+  int k = 0, ip;
+
+  switch (type) {
+  case ENT_LINE:
+    k = allEdgesLinked(num, List);
+    for(int i = 0; i < List_Nbr(List); i++) {
+      List_Read(List, i, &ip);
+      HighlightEntityNum(0, abs(ip), 0, 0);
+    }
+    break;
+  case ENT_SURFACE:
+    k = allFacesLinked(num, List);
+    for(int i = 0; i < List_Nbr(List); i++) {
+      List_Read(List, i, &ip);
+      HighlightEntityNum(0, 0, abs(ip), 0);
+    }
+    break;
+  }
+
+  Draw();
+  return k;
+}
+
+static void add_new_surface_volume(int mode)
+{
+  std::vector<GVertex*> vertices;
+  std::vector<GEdge*> edges;
+  std::vector<GFace*> faces;
+  std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
+  int type, num;
+
+  List_T *List1 = List_Create(10, 10, sizeof(int));
+  List_T *List2 = List_Create(10, 10, sizeof(int));
+
+  if(mode == 2) {
+    type = ENT_SURFACE;
+    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
+    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  else {
+    type = ENT_LINE;
+    opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  Draw();
+
+  while(1) {
+    List_Reset(List1);
+    List_Reset(List2);
+
+    while(1) {
+      if(type == ENT_LINE){
+        if(!List_Nbr(List1))
+          Msg::StatusBar(3, false, "Select surface boundary\n"
+              "[Press 'q' to abort]");
+        else
+          Msg::StatusBar(3, false, "Select surface boundary\n"
+              "[Press 'u' to undo last selection or 'q' to abort]");
+      }
+      else{
+        if(!List_Nbr(List1))
+          Msg::StatusBar(3, false, "Select volume boundary\n"
+              "[Press 'q' to abort]");
+        else
+          Msg::StatusBar(3, false, "Select volume boundary\n"
+              "[Press 'u' to undo last selection or 'q' to abort]");
+      }
+
+      char ib = SelectEntity(type, vertices, edges, faces, regions, elements);
+      if(ib == 'q') {
+        ZeroHighlight();
+        Draw();
+        goto stopall;
+      }
+      if(ib == 'u') {
+        if(List_Nbr(List1) > 0){
+          List_Read(List1, List_Nbr(List1)-1, &num);
+          ZeroHighlightEntityNum(0,
+                                 (type == ENT_LINE) ? abs(num) : 0, 
+                                 (type != ENT_LINE) ? abs(num) : 0,
+                                 0);
+          List_Pop(List1);
+          Draw();
+        }
+      }
+      if(ib == 'r') {
+        Msg::Warning("Entity de-selection not supported yet during "
+                     "surface/volume creation");
+      }
+      if(ib == 'l') {
+        int num = (type == ENT_LINE) ? edges[0]->tag() : faces[0]->tag();
+        if(select_contour(type, num, List1)) {
+          if(type == ENT_LINE)
+            add_lineloop(List1, CTX.filename, &num);
+          else
+            add_surfloop(List1, CTX.filename, &num);
+          List_Reset(List1);
+          List_Add(List2, &num);
+          while(1) {
+            if(!List_Nbr(List1))
+              Msg::StatusBar
+                (3, false, "Select hole boundaries (if none, press 'e')\n"
+                 "[Press 'e' to end selection or 'q' to abort]");
+            else
+              Msg::StatusBar
+                (3, false, "Select hole boundaries\n"
+                 "[Press 'e' to end selection, 'u' to undo last selection "
+                 "or 'q' to abort]");
+            ib = SelectEntity(type, vertices, edges, faces, regions, elements);
+            if(ib == 'q') {
+              ZeroHighlight();
+              Draw();
+              goto stopall;
+            }
+            if(ib == 'e') {
+              ZeroHighlight();
+              Draw();
+              List_Reset(List1);
+              break;
+            }
+            if(ib == 'u') {
+              if(List_Nbr(List1) > 0){
+                List_Read(List1, List_Nbr(List1)-1, &num);
+                ZeroHighlightEntityNum(0,
+                                       (type == ENT_LINE) ? abs(num) : 0, 
+                                       (type != ENT_LINE) ? abs(num) : 0,
+                                       0);
+                List_Pop(List1);
+                Draw();
+              }
+            }
+            if(ib == 'l') {
+              num = (type == ENT_LINE) ? edges[0]->tag() : faces[0]->tag();
+              if(select_contour(type, num, List1)) {
+                if(type == ENT_LINE)
+                  add_lineloop(List1, CTX.filename, &num);
+                else
+                  add_surfloop(List1, CTX.filename, &num);
+                List_Reset(List1);
+                List_Add(List2, &num);
+              }
+            }
+            if(ib == 'r') {
+              Msg::Warning("Entity de-selection not supported yet during "
+                           "surface/volume creation");
+            }
+          }
+          if(List_Nbr(List2)) {
+            switch (mode) {
+            case 0: add_surf("Plane Surface", List2, CTX.filename); break;
+            case 1: add_surf("Ruled Surface", List2, CTX.filename); break;
+            case 2: add_vol(List2, CTX.filename); break;
+            }
+            GUI::instance()->resetVisibility();
+            ZeroHighlight();
+            Draw();
+            break;
+          }
+        } // if select_contour
+      }
+    }
+  }
+
+ stopall:
+  List_Delete(List1);
+  List_Delete(List2);
+
+  Msg::StatusBar(3, false, "");
+}
+
+static void geometry_elementary_add_new_cb(Fl_Widget *w, void *data)
+{
+  if(!data){
+    GUI::instance()->menu->setContext(menu_geometry_elementary_add_new, 0);
+    return;
+  }
+
+  std::string str((const char*)data);
+  if(str == "Parameter")
+    GUI::instance()->geoContext->show(0);
+  else if(str == "Point")
+    add_new_point();
+  else if(str == "Line")
+    add_new_line();
+  else if(str == "Spline")
+    add_new_multiline(str);
+  else if(str == "BSpline")
+    add_new_multiline(str);
+  else if(str == "Circle")
+    add_new_circle();
+  else if(str == "Ellipse")
+    add_new_ellipse();
+  else if(str == "Plane Surface")
+    add_new_surface_volume(0);
+  else if(str == "Ruled Surface")
+    add_new_surface_volume(1);
+  else if(str == "Volume")
+    add_new_surface_volume(2);
+  else
+    Msg::Error("Unknown entity to create: %s", str.c_str());
+}
+
+static void split_selection()
+{
+  opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+  Draw();
+  Msg::StatusBar(3, false, "Select a line to split\n"
+          "[Press 'q' to abort]");
+  std::vector<GVertex*> vertices;
+  std::vector<GEdge*> edges;
+  std::vector<GFace*> faces;
+  std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
+  GEdge* edge_to_split = NULL;
+  while(1){
+    char ib = SelectEntity(2, vertices, edges, faces, regions, elements);
+    if(ib == 'q')
+      break;
+    if(!edges.empty()){
+      edge_to_split = edges[0];
+      HighlightEntity(edges[0]);
+      break;
+    }
+  }
+  Msg::StatusBar(3, false, "");
+  if(edges.empty())
+    return;
+  List_T *List1 = List_Create(5, 5, sizeof(int));
+  Msg::StatusBar(3, false, "Select break points\n"
+                 "[Press 'e' to end selection or 'q' to abort]");
+  opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
+  Draw();
+  while(1){
+    char ib = SelectEntity(1, vertices, edges, faces, regions, elements);
+    if(ib == 'q')
+      break;
+    if(ib == 'e'){
+      split_edge(edge_to_split->tag(), List1, CTX.filename);
+      break;
+    }
+    if(!vertices.empty()){
+      for(unsigned int i = 0; i < vertices.size(); i++){
+        int tag = vertices[i]->tag();
+        int index = List_ISearchSeq(List1, &tag, fcmp_int); 
+        if(index < 0) List_Add(List1, &tag);
+        HighlightEntity(vertices[i]);
+      }
+    }
+  }
+  Msg::StatusBar(3, false, "");
+  GUI::instance()->resetVisibility();
+  ZeroHighlight();
+  Draw();
+}
+
+static void action_point_line_surface_volume(int action, int mode, const char *what)
+{
+  std::vector<GVertex*> vertices;
+  std::vector<GEdge*> edges;
+  std::vector<GFace*> faces;
+  std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
+  int type;
+  const char *str;
+
+  if(!strcmp(what, "Point")) {
+    type = ENT_POINT;
+    str = "points";
+    opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  else if(!strcmp(what, "Line")) {
+    type = ENT_LINE;
+    str = "lines";
+    opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  else if(!strcmp(what, "Surface")) {
+    type = ENT_SURFACE;
+    str = "surfaces";
+    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  else if(!strcmp(what, "Volume")) {
+    type = ENT_VOLUME;
+    str = "volumes";
+    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  else{
+    Msg::Error("Unknown entity to select");
+    return;
+  }
+
+  if(action == 8){
+    GUI::instance()->meshContext->show(0);
+  }
+
+  Draw();
+    
+  List_T *List1 = List_Create(5, 5, sizeof(int));
+  while(1) {
+    if(!List_Nbr(List1))
+      Msg::StatusBar(3, false, "Select %s\n"
+          "[Press 'e' to end selection or 'q' to abort]", str);
+    else
+      Msg::StatusBar(3, false, "Select %s\n"
+          "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]", str);
+
+    char ib = SelectEntity(type, vertices, edges, faces, regions, elements);
+    if(ib == 'l') {
+      // we don't use List_Insert in order to keep the original
+      // ordering (this is slower, but this way undo works as
+      // expected)
+      int tag;
+      switch (type) {
+      case ENT_POINT: 
+        for(unsigned int i = 0; i < vertices.size(); i++){
+          HighlightEntity(vertices[i]);
+          tag = vertices[i]->tag();
+          if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
+            List_Add(List1, &tag);
+        }
+        break;
+      case ENT_LINE:
+        for(unsigned int i = 0; i < edges.size(); i++){
+          HighlightEntity(edges[i]);
+          tag = edges[i]->tag();
+          if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
+            List_Add(List1, &tag);
+        }
+        break;
+      case ENT_SURFACE:
+        for(unsigned int i = 0; i < faces.size(); i++){
+          HighlightEntity(faces[i]);
+          tag = faces[i]->tag();
+          if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
+            List_Add(List1, &tag);
+        }
+        break;
+      case ENT_VOLUME:
+        for(unsigned int i = 0; i < regions.size(); i++){
+          HighlightEntity(regions[i]);
+          tag = regions[i]->tag();
+          if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
+            List_Add(List1, &tag);
+        }
+        break;
+      }
+      Draw();
+    }
+    if(ib == 'r') {
+      // we don't use List_Suppress in order to keep the original
+      // ordering (this is slower, but this way undo works as
+      // expected)
+      int index, tag;
+      switch (type) {
+      case ENT_POINT:
+        for(unsigned int i = 0; i < vertices.size(); i++){
+          tag = vertices[i]->tag();
+          index = List_ISearchSeq(List1, &tag, fcmp_int); 
+          if(index >= 0) List_PSuppress(List1, index);
+          ZeroHighlightEntityNum(tag, 0, 0, 0);
+        }
+        break;
+      case ENT_LINE:
+        for(unsigned int i = 0; i < edges.size(); i++){
+          tag = edges[i]->tag();
+          index = List_ISearchSeq(List1, &tag, fcmp_int); 
+          if(index >= 0) List_PSuppress(List1, index);
+          ZeroHighlightEntityNum(0, tag, 0, 0);
+        }
+        break;
+      case ENT_SURFACE:
+        for(unsigned int i = 0; i < faces.size(); i++){
+          tag = faces[i]->tag();
+          index = List_ISearchSeq(List1, &tag, fcmp_int); 
+          if(index >= 0) List_PSuppress(List1, index);
+          ZeroHighlightEntityNum(0, 0, tag, 0);
+        }
+        break;
+      case ENT_VOLUME:
+        for(unsigned int i = 0; i < regions.size(); i++){
+          tag = regions[i]->tag();
+          index = List_ISearchSeq(List1, &tag, fcmp_int); 
+          if(index >= 0) List_PSuppress(List1, index);
+          ZeroHighlightEntityNum(0, 0, 0, tag);
+        }
+        break;
+      }
+      Draw();
+    }
+    if(ib == 'u') {
+      if(List_Nbr(List1)) {
+        int num;
+        List_Read(List1, List_Nbr(List1) - 1, &num);
+        ZeroHighlightEntityNum((type == ENT_POINT) ? num : 0,
+                               (type == ENT_LINE) ? num : 0,
+                               (type == ENT_SURFACE) ? num : 0,
+                               (type == ENT_VOLUME) ? num : 0);
+        Draw();
+        List_Pop(List1);
+      }
+    }
+    if(ib == 'i') {
+      Msg::Error("Inverting selection!");
+    }
+    if(ib == 'e') {
+      if(List_Nbr(List1)){
+        switch (action) {
+        case 0:
+          translate(mode, List1, CTX.filename, what,
+                    GUI::instance()->geoContext->input[6]->value(),
+                    GUI::instance()->geoContext->input[7]->value(),
+                    GUI::instance()->geoContext->input[8]->value());
+          break;
+        case 1:
+          rotate(mode, List1, CTX.filename, what,
+                 GUI::instance()->geoContext->input[12]->value(),
+                 GUI::instance()->geoContext->input[13]->value(),
+                 GUI::instance()->geoContext->input[14]->value(),
+                 GUI::instance()->geoContext->input[9]->value(),
+                 GUI::instance()->geoContext->input[10]->value(),
+                 GUI::instance()->geoContext->input[11]->value(),
+                 GUI::instance()->geoContext->input[15]->value());
+          break;
+        case 2:
+          dilate(mode, List1, CTX.filename, what,
+                 GUI::instance()->geoContext->input[16]->value(),
+                 GUI::instance()->geoContext->input[17]->value(),
+                 GUI::instance()->geoContext->input[18]->value(),
+                 GUI::instance()->geoContext->input[19]->value());
+          break;
+        case 3:
+          symmetry(mode, List1, CTX.filename, what,
+                   GUI::instance()->geoContext->input[20]->value(),
+                   GUI::instance()->geoContext->input[21]->value(),
+                   GUI::instance()->geoContext->input[22]->value(),
+                   GUI::instance()->geoContext->input[23]->value());
+          break;
+        case 4:
+          extrude(List1, CTX.filename, what,
+                  GUI::instance()->geoContext->input[6]->value(),
+                  GUI::instance()->geoContext->input[7]->value(),
+                  GUI::instance()->geoContext->input[8]->value());
+          break;
+        case 5:
+          protude(List1, CTX.filename, what,
+                  GUI::instance()->geoContext->input[12]->value(),
+                  GUI::instance()->geoContext->input[13]->value(),
+                  GUI::instance()->geoContext->input[14]->value(),
+                  GUI::instance()->geoContext->input[9]->value(),
+                  GUI::instance()->geoContext->input[10]->value(),
+                  GUI::instance()->geoContext->input[11]->value(),
+                  GUI::instance()->geoContext->input[15]->value());
+          break;
+        case 6:
+          delet(List1, CTX.filename, what);
+          break;
+        case 7:
+          add_physical(what, List1, CTX.filename);
+          break;
+        case 8:
+          add_charlength(List1, CTX.filename, GUI::instance()->meshContext->input[0]->value());
+          break;
+        case 9:
+          add_recosurf(List1, CTX.filename);
+          break;
+
+        default:
+          Msg::Error("Unknown action on selected entities");
+          break;
+        }
+        List_Reset(List1);
+        GUI::instance()->resetVisibility();
+        ZeroHighlight();
+        if(action <= 6) SetBoundingBox();
+        Draw();
+      }
+    }
+    if(ib == 'q') {
+      ZeroHighlight();
+      Draw();
+      break;
+    }
+  }
+  List_Delete(List1);
+
+  Msg::StatusBar(3, false, "");
+}
+  
+static void geometry_elementary_add_translate_cb(Fl_Widget *w, void *data)
+{
+  if(!data){
+    GUI::instance()->menu->setContext(menu_geometry_elementary_add_translate, 0);
+    return;
+  }
+  GUI::instance()->geoContext->show(2);
+  action_point_line_surface_volume(0, 1, (const char*)data);
+}
+
+static void geometry_elementary_add_rotate_cb(Fl_Widget *w, void *data)
+{
+  if(!data){
+    GUI::instance()->menu->setContext(menu_geometry_elementary_add_rotate, 0);
+    return;
+  }
+  GUI::instance()->geoContext->show(3);
+  action_point_line_surface_volume(1, 1, (const char*)data);
+}
+
+static void geometry_elementary_add_scale_cb(Fl_Widget *w, void *data)
+{
+  if(!data){
+    GUI::instance()->menu->setContext(menu_geometry_elementary_add_scale, 0);
+    return;
+  }
+  GUI::instance()->geoContext->show(4);
+  action_point_line_surface_volume(2, 1, (const char*)data);
+}
+
+static void geometry_elementary_add_symmetry_cb(Fl_Widget *w, void *data)
+{
+  if(!data){
+    GUI::instance()->menu->setContext(menu_geometry_elementary_add_symmetry, 0);
+    return;
+  }
+  GUI::instance()->geoContext->show(5);
+  action_point_line_surface_volume(3, 1, (const char*)data);
+}
+
+static void geometry_elementary_translate_cb(Fl_Widget *w, void *data)
+{
+  if(!data){
+    GUI::instance()->menu->setContext(menu_geometry_elementary_translate, 0);
+    return;
+  }
+  GUI::instance()->geoContext->show(2);
+  action_point_line_surface_volume(0, 0, (const char*)data);
+}
+
+static void geometry_elementary_rotate_cb(Fl_Widget *w, void *data)
+{
+  if(!data){
+    GUI::instance()->menu->setContext(menu_geometry_elementary_rotate, 0);
+    return;
+  }
+  GUI::instance()->geoContext->show(3);
+  action_point_line_surface_volume(1, 0, (const char*)data);
+}
+
+static void geometry_elementary_scale_cb(Fl_Widget *w, void *data)
+{
+  if(!data){
+    GUI::instance()->menu->setContext(menu_geometry_elementary_scale, 0);
+    return;
+  }
+  GUI::instance()->geoContext->show(4);
+  action_point_line_surface_volume(2, 0, (const char*)data);
+}
+
+static void geometry_elementary_symmetry_cb(Fl_Widget *w, void *data)
+{
+  if(!data){
+    GUI::instance()->menu->setContext(menu_geometry_elementary_symmetry, 0);
+    return;
+  }
+  GUI::instance()->geoContext->show(5);
+  action_point_line_surface_volume(3, 0, (const char*)data);
+}
+
+static void geometry_elementary_extrude_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->menu->setContext(menu_geometry_elementary_extrude, 0);
+}
+
+static void geometry_elementary_extrude_translate_cb(Fl_Widget *w, void *data)
+{
+  if(!data){
+    GUI::instance()->menu->setContext(menu_geometry_elementary_extrude_translate, 0);
+    return;
+  }
+  GUI::instance()->geoContext->show(2);
+  action_point_line_surface_volume(4, 0, (const char*)data);
+}
+
+static void geometry_elementary_extrude_rotate_cb(Fl_Widget *w, void *data)
+{
+  if(!data){
+    GUI::instance()->menu->setContext(menu_geometry_elementary_extrude_rotate, 0);
+    return;
+  }
+  GUI::instance()->geoContext->show(3);
+  action_point_line_surface_volume(5, 0, (const char*)data);
+}
+
+static void geometry_elementary_delete_cb(Fl_Widget *w, void *data)
+{
+  if(!data){
+    GUI::instance()->menu->setContext(menu_geometry_elementary_delete, 0);
+    return;
+  }
+  action_point_line_surface_volume(6, 0, (const char*)data);
+}
+
+static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
+{
+  if(!data){
+    GUI::instance()->menu->setContext(menu_geometry_elementary_split, 0);
+    return;
+  }
+  split_selection();
+}
+
+static void geometry_elementary_coherence_cb(Fl_Widget *w, void *data)
+{
+  coherence(CTX.filename);
+}
+
+static void geometry_physical_add_cb(Fl_Widget *w, void *data)
+{
+  if(!data){
+    GUI::instance()->menu->setContext(menu_geometry_physical_add, 0);
+    return;
+  }
+  std::string str((const char*)data);
+  if(str == "Point")
+    GUI::instance()->callForSolverPlugin(0);
+  else if(str == "Line")
+    GUI::instance()->callForSolverPlugin(1);
+
+  action_point_line_surface_volume(7, 0, str.c_str());
+}
+
+static void mesh_save_cb(Fl_Widget *w, void *data)
+{
+  char name[256];
+  if(CTX.output_filename)
+    strcpy(name, CTX.output_filename);
+  else
+    GetDefaultFileName(CTX.mesh.format, name);
+  if(CTX.confirm_overwrite) {
+    if(!StatFile(name))
+      if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
+                    "Cancel", "Replace", NULL, name))
+        return;
+  }
+  CreateOutputFile(name, CTX.mesh.format);
+}
+
+static void mesh_define_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->menu->setContext(menu_mesh_define, 0);
+}
+
+void mesh_1d_cb(Fl_Widget *w, void *data)
+{
+  GModel::current()->mesh(1);
+  Draw();
+  Msg::StatusBar(2, false, " ");
+}
+
+void mesh_2d_cb(Fl_Widget *w, void *data)
+{
+  GModel::current()->mesh(2);
+  Draw();
+  Msg::StatusBar(2, false, " ");
+}
+
+void mesh_3d_cb(Fl_Widget *w, void *data)
+{
+  GModel::current()->mesh(3);
+  Draw();
+  Msg::StatusBar(2, false, " ");
+}
+
+static void mesh_delete_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->menu->setContext(menu_mesh_delete, 0);
+}
+
+static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
+{
+  const char *str = (const char*)data;
+  int what;
+
+  if(!strcmp(str, "elements")){
+    CTX.pick_elements = 1;
+    what = ENT_ALL;
+  }
+  else if(!strcmp(str, "lines")){
+    CTX.pick_elements = 0;
+    what = ENT_LINE;
+  }
+  else if(!strcmp(str, "surfaces")){
+    CTX.pick_elements = 0;
+    what = ENT_SURFACE;
+  }
+  else if(!strcmp(str, "volumes")){
+    CTX.pick_elements = 0;
+    what = ENT_VOLUME;
+  }
+  else
+    return;
+
+  std::vector<GVertex*> vertices;
+  std::vector<GEdge*> edges;
+  std::vector<GFace*> faces;
+  std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
+
+  std::vector<MElement*> ele;
+  std::vector<GEntity*> ent;
+
+  while(1) {
+    CTX.mesh.changed = ENT_ALL;
+    Draw();
+
+    if(ele.size() || ent.size())
+      Msg::StatusBar(3, false, "Select %s\n"
+                     "[Press 'e' to end selection, 'u' to undo last selection or "
+                     "'q' to abort]", str);
+    else
+      Msg::StatusBar(3, false, "Select %s\n"
+          "[Press 'e' to end selection or 'q' to abort]", str);
+
+    char ib = SelectEntity(what, vertices, edges, faces, regions, elements);
+    if(ib == 'l') {
+      if(CTX.pick_elements){
+        for(unsigned int i = 0; i < elements.size(); i++){
+          if(elements[i]->getVisibility() != 2){
+            elements[i]->setVisibility(2); ele.push_back(elements[i]);
+          }
+        }
+      }
+      else{
+        for(unsigned int i = 0; i < edges.size(); i++){
+          if(edges[i]->getSelection() != 1){
+            edges[i]->setSelection(1); ent.push_back(edges[i]);
+          }
+        }
+        for(unsigned int i = 0; i < faces.size(); i++){
+          if(faces[i]->getSelection() != 1){
+            faces[i]->setSelection(1); ent.push_back(faces[i]);
+          }
+        }
+        for(unsigned int i = 0; i < regions.size(); i++){
+          if(regions[i]->getSelection() != 1){
+            regions[i]->setSelection(1); ent.push_back(regions[i]);
+          }
+        }
+      }
+    }
+    if(ib == 'r') {
+      if(CTX.pick_elements){
+        for(unsigned int i = 0; i < elements.size(); i++)
+          elements[i]->setVisibility(1);
+      }
+      else{
+        for(unsigned int i = 0; i < edges.size(); i++)
+          edges[i]->setSelection(0);
+        for(unsigned int i = 0; i < faces.size(); i++)
+          faces[i]->setSelection(0);
+        for(unsigned int i = 0; i < regions.size(); i++)
+          regions[i]->setSelection(0);
+      }
+    }
+    if(ib == 'u') {
+      if(CTX.pick_elements){
+        if(ele.size()){
+          ele[ele.size() - 1]->setVisibility(1);
+          ele.pop_back();
+        }
+      }
+      else{
+        if(ent.size()){
+          ent[ent.size() - 1]->setSelection(0);
+          ent.pop_back();
+        }
+      }
+    }
+    if(ib == 'e') {
+      if(CTX.pick_elements){
+        for(unsigned int i = 0; i < ele.size(); i++)
+          if(ele[i]->getVisibility() == 2) ele[i]->setVisibility(0);
+      }
+      else{
+        for(unsigned int i = 0; i < ent.size(); i++)
+          if(ent[i]->getSelection() == 1) ent[i]->setVisibility(0);
+      }
+      GModel::current()->removeInvisibleElements();
+      ele.clear();
+      ent.clear();
+    }
+    if(ib == 'q') {
+      ZeroHighlight();
+      break;
+    }
+  }
+
+  CTX.mesh.changed = ENT_ALL;
+  CTX.pick_elements = 0;
+  Draw();  
+  Msg::StatusBar(3, false, "");
+}
+
+static void mesh_update_edges_cb(Fl_Widget *w, void *data)
+{
+  Msg::Error("Update edges not implemented yet");
+}
+
+static void mesh_remesh_cb(Fl_Widget *w, void *data)
+{
+  Msg::Error("Remesh not implemented yet");
+}
+
+static void mesh_inspect_cb(Fl_Widget *w, void *data)
+{
+  std::vector<GVertex*> vertices;
+  std::vector<GEdge*> edges;
+  std::vector<GFace*> faces;
+  std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
+
+  CTX.pick_elements = 1;
+  CTX.mesh.changed = ENT_ALL;
+  Draw();
+
+  while(1) {
+    Msg::StatusBar(3, false, "Select element\n[Press 'q' to abort]");
+    char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions, elements);
+    if(ib == 'l') {
+      if(elements.size()){
+        ZeroHighlight();
+        elements[0]->setVisibility(2);
+        Msg::Direct("Element %d:", elements[0]->getNum());
+	int type = elements[0]->getTypeForMSH();
+	const char *name;
+	MElement::getInfoMSH(type, &name);
+        Msg::Direct("  Type: %d ('%s')", type, name); 
+        Msg::Direct("  Dimension: %d", elements[0]->getDim());
+        Msg::Direct("  Order: %d", elements[0]->getPolynomialOrder()); 
+        Msg::Direct("  Partition: %d", elements[0]->getPartition()); 
+        char tmp1[32], tmp2[512];
+        sprintf(tmp2, "  Vertices:");
+        for(int i = 0; i < elements[0]->getNumVertices(); i++){
+          sprintf(tmp1, " %d", elements[0]->getVertex(i)->getNum());
+          strcat(tmp2, tmp1);
+        }
+        Msg::Direct(tmp2);
+        SPoint3 pt = elements[0]->barycenter();
+        Msg::Direct("  Barycenter: (%g,%g,%g)", pt[0], pt[1], pt[2]);
+        Msg::Direct("  Rho: %g", elements[0]->rhoShapeMeasure());
+        Msg::Direct("  Gamma: %g", elements[0]->gammaShapeMeasure());
+        Msg::Direct("  Eta: %g", elements[0]->etaShapeMeasure());
+        Msg::Direct("  Disto: %g", elements[0]->distoShapeMeasure());
+        CTX.mesh.changed = ENT_ALL;
+        Draw();
+        GUI::instance()->messages->show();
+      }
+    }
+    if(ib == 'q') {
+      ZeroHighlight();
+      break;
+    }
+  }
+
+  CTX.pick_elements = 0;
+  CTX.mesh.changed = ENT_ALL;
+  Draw();
+  Msg::StatusBar(3, false, "");
+}
+
+static void mesh_degree_cb(Fl_Widget *w, void *data)
+{
+  if((long)data == 2)
+    SetOrderN(GModel::current(), 2, CTX.mesh.second_order_linear, 
+              CTX.mesh.second_order_incomplete);
+  else
+    SetOrder1(GModel::current());
+  CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+  Draw();
+  Msg::StatusBar(2, false, " ");
+}
+
+static void mesh_optimize_cb(Fl_Widget *w, void *data)
+{
+  if(CTX.threads_lock) {
+    Msg::Info("I'm busy! Ask me that later...");
+    return;
+  }
+  CTX.threads_lock = 1;
+  OptimizeMesh(GModel::current());
+  CTX.threads_lock = 0;
+  CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+  Draw();
+  Msg::StatusBar(2, false, " ");
+}
+
+static void mesh_refine_cb(Fl_Widget *w, void *data)
+{
+  RefineMesh(GModel::current(), CTX.mesh.second_order_linear);
+  CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+  Draw();
+  Msg::StatusBar(2, false, " ");
+}
+
+static void mesh_optimize_netgen_cb(Fl_Widget *w, void *data)
+{
+  if(CTX.threads_lock) {
+    Msg::Info("I'm busy! Ask me that later...");
+    return;
+  }
+  CTX.threads_lock = 1;
+  OptimizeMeshNetgen(GModel::current());
+  CTX.threads_lock = 0;
+  CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+  Draw();
+  Msg::StatusBar(2, false, " ");
+}
+
+static void mesh_partition_cb(Fl_Widget *w, void *data)
+{
+  partition_dialog();
+}
+
+static void mesh_define_length_cb(Fl_Widget *w, void *data)
+{
+  action_point_line_surface_volume(8, 0, "Point");
+}
+
+static void mesh_define_recombine_cb(Fl_Widget *w, void *data)
+{
+  action_point_line_surface_volume(9, 0, "Surface");
+}
+
+static void mesh_define_transfinite_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->menu->setContext(menu_mesh_define_transfinite, 0);
+}
+
+static void add_transfinite(int dim)
+{
+  std::vector<GVertex*> vertices;
+  std::vector<GEdge*> edges;
+  std::vector<GFace*> faces;
+  std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
+  std::vector<int> p;
+  char ib;
+
+  opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
+  switch (dim) {
+  case 1: opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1); break;
+  case 2: opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1); break;
+  case 3: opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1); break;
+  }
+  Draw();
+
+  while(1) {
+    switch (dim) {
+    case 1:
+      if(p.empty())
+        Msg::StatusBar(3, false, "Select lines\n"
+            "[Press 'e' to end selection or 'q' to abort]");
+      else
+        Msg::StatusBar(3, false, "Select lines\n"
+            "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
+      ib = SelectEntity(ENT_LINE, vertices, edges, faces, regions, elements);
+      break;
+    case 2:
+      Msg::StatusBar(3, false, "Select surface\n[Press 'q' to abort]");
+      ib = SelectEntity(ENT_SURFACE, vertices, edges, faces, regions, elements);
+      break;
+    case 3:
+      Msg::StatusBar(3, false, "Select volume\n[Press 'q' to abort]");
+      ib = SelectEntity(ENT_VOLUME, vertices, edges, faces, regions, elements);
+      break;
+    default:
+      ib = 'l';
+      break;
+    }
+
+    if(ib == 'e') {
+      if(dim == 1) {
+        if(p.size())
+          add_trsfline(p, CTX.filename,
+                       GUI::instance()->meshContext->choice[0]->text(),
+                       GUI::instance()->meshContext->input[2]->value(),
+                       GUI::instance()->meshContext->input[1]->value());
+      }
+      ZeroHighlight();
+      Draw();
+      p.clear();
+    }
+    if(ib == 'u') {
+      if(dim == 1) {
+        if(p.size()){
+          ZeroHighlightEntityNum(0, p.back(), 0, 0);
+          Draw();
+          p.pop_back();
+        }
+      }
+    }
+    if(ib == 'q') {
+      ZeroHighlight();
+      Draw();
+      break;
+    }
+    if(ib == 'r') {
+      Msg::Warning("Entity de-selection not supported yet during "
+                   "transfinite definition");
+    }
+    if(ib == 'l') {
+      switch (dim) {
+      case 1:
+        for(unsigned int i = 0; i < edges.size(); i++){
+          HighlightEntity(edges[i]);
+          p.push_back(edges[i]->tag());
+        }
+        Draw();
+        break;
+      case 2:
+      case 3:
+        if(dim == 2){
+          HighlightEntity(faces[0]);
+          Draw();
+          p.push_back(faces[0]->tag());
+        }
+        else{
+          HighlightEntity(regions[0]);
+          Draw();
+          p.push_back(regions[0]->tag());
+        }
+        while(1) {
+          if(p.size() == 1)
+            Msg::StatusBar(3, false, "Select (ordered) boundary points\n"
+                           "[Press 'e' to end selection or 'q' to abort]");
+          else
+            Msg::StatusBar(3, false, "Select (ordered) boundary points\n"
+                           "[Press 'e' to end selection, 'u' to undo last selection "
+                           "or 'q' to abort]");
+          ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
+          if(ib == 'l') {
+            HighlightEntity(vertices[0]);
+            Draw();
+            p.push_back(vertices[0]->tag());
+          }
+          if(ib == 'u') {
+            if(p.size() > 1){
+              ZeroHighlightEntityNum(p.back(), 0, 0, 0);
+              Draw();
+              p.pop_back();
+            }
+          }
+          if(ib == 'r') {
+            Msg::Warning("Entity de-selection not supported yet during "
+                         "transfinite definition");
+          }
+          if(ib == 'e') {
+            switch (dim) {
+            case 2:
+              if(p.size() == 0 + 1 || p.size() == 3 + 1 || p.size() == 4 + 1)
+                add_trsfsurf(p, CTX.filename,
+                             GUI::instance()->meshContext->choice[1]->text());
+              else
+                Msg::Error("Wrong number of points for transfinite surface");
+              break;
+            case 3:
+              if(p.size() == 6 + 1 || p.size() == 8 + 1)
+                add_trsfvol(p, CTX.filename);
+              else
+                Msg::Error("Wrong number of points for transfinite volume");
+              break;
+            }
+            ZeroHighlight();
+            Draw();
+            p.clear();
+            break;
+          }
+          if(ib == 'q') {
+            ZeroHighlight();
+            Draw();
+            goto stopall;
+          }
+        }
+        break;
+      }
+    }
+  }
+
+ stopall:
+  Msg::StatusBar(3, false, "");
+}
+
+static void mesh_define_transfinite_line_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->meshContext->show(1);
+  add_transfinite(1);
+}
+
+static void mesh_define_transfinite_surface_cb(Fl_Widget *w, void *data)
+{
+  GUI::instance()->meshContext->show(2);
+  add_transfinite(2);
+}
+
+static void mesh_define_transfinite_volume_cb(Fl_Widget *w, void *data)
+{
+  add_transfinite(3);
+}
+
+static void view_toggle_cb(Fl_Widget *w, void *data)
+{
+  int num = (int)(long)data;
+  opt_view_visible(num, GMSH_SET,
+                   GUI::instance()->menu->toggle[num]->value());
+  Draw();
+}
+
+static void view_reload(int index)
+{
+  if(index >= 0 && index < (int)PView::list.size()){
+    PView *p = PView::list[index];
+
+    if(StatFile(p->getData()->getFileName().c_str())){
+      Msg::Error("File '%s' does not exist", p->getData()->getFileName().c_str());
+      return;
+    }
+
+    int n = PView::list.size();
+
+    // FIXME: use fileIndex
+    MergeFile(p->getData()->getFileName().c_str());
+
+    if((int)PView::list.size() > n){ // we loaded a new view
+      // delete old data and replace with new
+      delete p->getData();
+      p->setData(PView::list.back()->getData());
+      PView::list.back()->setData(0);
+      // delete new view
+      delete PView::list.back();
+      // in case the reloaded view has a different number of time steps
+      if(p->getOptions()->TimeStep > p->getData()->getNumTimeSteps() - 1)
+        p->getOptions()->TimeStep = 0;
+      p->setChanged(true);
+      GUI::instance()->updateViews();
+    }
+  }
+}
+
+static void view_reload_cb(Fl_Widget *w, void *data)
+{
+  view_reload((int)(long)data);
+  Draw();
+}
+
+static void view_reload_all_cb(Fl_Widget *w, void *data)
+{
+  for(unsigned int i = 0; i < PView::list.size(); i++)
+    view_reload(i);
+  Draw();
+}
+
+static void view_reload_visible_cb(Fl_Widget *w, void *data)
+{
+  for(unsigned int i = 0; i < PView::list.size(); i++)
+    if(opt_view_visible(i, GMSH_GET, 0))
+      view_reload(i);
+  Draw();
+}
+
+static void view_remove_other_cb(Fl_Widget *w, void *data)
+{
+  if(PView::list.empty()) return;
+  for(int i = PView::list.size() - 1; i >= 0; i--)
+    if(i != (long)data) delete PView::list[i];
+  GUI::instance()->updateViews();
+  Draw();
+}
+
+static void view_remove_all_cb(Fl_Widget *w, void *data)
+{
+  if(PView::list.empty()) return;
+  while(PView::list.size()) delete PView::list[0];
+  GUI::instance()->updateViews();
+  Draw();
+}
+
+static void view_remove_visible_cb(Fl_Widget *w, void *data)
+{
+  if(PView::list.empty()) return;
+  for(int i = PView::list.size() - 1; i >= 0; i--)
+    if(opt_view_visible(i, GMSH_GET, 0)) delete PView::list[i];
+  GUI::instance()->updateViews();
+  Draw();
+}
+
+static void view_remove_invisible_cb(Fl_Widget *w, void *data)
+{
+  if(PView::list.empty()) return;
+  for(int i = PView::list.size() - 1; i >= 0; i--)
+    if(!opt_view_visible(i, GMSH_GET, 0)) delete PView::list[i];
+  GUI::instance()->updateViews();
+  Draw();
+}
+
+static void view_remove_empty_cb(Fl_Widget *w, void *data)
+{
+  if(PView::list.empty()) return;
+  for(int i = PView::list.size() - 1; i >= 0; i--)
+    if(PView::list[i]->getData()->empty()) delete PView::list[i];
+  GUI::instance()->updateViews();
+  Draw();
+}
+
+static void view_remove_cb(Fl_Widget *w, void *data)
+{
+  delete PView::list[(int)(long)data];
+  GUI::instance()->updateViews();
+  Draw();
+}
+
+static void view_save_as(int index, const char *title, int format)
+{
+  PView *view = PView::list[index];
+  
+ test:
+  if(file_chooser(0, 1, title, "*", view->getData()->getFileName().c_str())){
+    std::string name = file_chooser_get_name(1);
+    if(CTX.confirm_overwrite) {
+      if(!StatFile(name.c_str()))
+        if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
+                      "Cancel", "Replace", NULL, name.c_str()))
+          goto test;
+    }
+    view->write(name.c_str(), format);
+  }
+}
+
+static void view_save_ascii_cb(Fl_Widget *w, void *data)
+{
+  view_save_as((int)(long)data, "Save As ASCII View", 0);
+}
+
+static void view_save_binary_cb(Fl_Widget *w, void *data)
+{
+  view_save_as((int)(long)data, "Save As Binary View", 1);
+}
+
+static void view_save_parsed_cb(Fl_Widget *w, void *data)
+{
+  view_save_as((int)(long)data, "Save As Parsed View", 2);
+}
+
+static void view_save_stl_cb(Fl_Widget *w, void *data)
+{
+  view_save_as((int)(long)data, "Save As STL Triangulation", 3);
+}
+
+static void view_save_txt_cb(Fl_Widget *w, void *data)
+{
+  view_save_as((int)(long)data, "Save As Raw Text", 4);
+}
+
+static void view_save_msh_cb(Fl_Widget *w, void *data)
+{
+  view_save_as((int)(long)data, "Save As Gmsh Mesh", 5);
+}
+
+static void view_save_med_cb(Fl_Widget *w, void *data)
+{
+  view_save_as((int)(long)data, "Save As MED file", 6);
+}
+
+static void view_alias_cb(Fl_Widget *w, void *data)
+{
+  new PView(PView::list[(int)(long)data], false);
+  GUI::instance()->updateViews();
+  Draw();
+}
+
+static void view_alias_with_options_cb(Fl_Widget *w, void *data)
+{
+  new PView(PView::list[(int)(long)data], true);
+  GUI::instance()->updateViews();
+  Draw();
+}
+
+static void view_combine_space_all_cb(Fl_Widget *w, void *data)
+{
+  PView::combine(false, 1, CTX.post.combine_remove_orig);
+  GUI::instance()->updateViews();
+  Draw();
+}
+
+static void view_combine_space_visible_cb(Fl_Widget *w, void *data)
+{
+  PView::combine(false, 0, CTX.post.combine_remove_orig);
+  GUI::instance()->updateViews();
+  Draw();
+}
+
+static void view_combine_space_by_name_cb(Fl_Widget *w, void *data)
+{
+  PView::combine(false, 2, CTX.post.combine_remove_orig);
+  GUI::instance()->updateViews();
+  Draw();
+}
+
+static void view_combine_time_all_cb(Fl_Widget *w, void *data)
+{
+  PView::combine(true, 1, CTX.post.combine_remove_orig);
+  GUI::instance()->updateViews();
+  Draw();
+}
+
+static void view_combine_time_visible_cb(Fl_Widget *w, void *data)
+{
+  PView::combine(true, 0, CTX.post.combine_remove_orig);
+  GUI::instance()->updateViews();
+  Draw();
+}
+
+static void view_combine_time_by_name_cb(Fl_Widget *w, void *data)
+{
+  PView::combine(true, 2, CTX.post.combine_remove_orig);
+  GUI::instance()->updateViews();
+  Draw();
+}
+
+static void view_all_visible_cb(Fl_Widget *w, void *data)
+{
+  for(unsigned int i = 0; i < PView::list.size(); i++)
+    opt_view_visible(i, GMSH_SET | GMSH_GUI, 
+                     (long)data < 0 ? !opt_view_visible(i, GMSH_GET, 0) :
+                     (long)data > 0 ? 1 : 0);
+  Draw();
+}
+
+static void view_applybgmesh_cb(Fl_Widget *w, void *data)
+{
+  int index =  (int)(long)data;
+  if(index >= 0 && index < (int)PView::list.size()){
+    GModel::current()->getFields()->set_background_mesh(index);
+  }
+}
 
 // The static menus (we cannot use the 'g', 'm' 's' and 'p' mnemonics
 // since they are already defined as global shortcuts)
@@ -33,7 +2143,7 @@ static Fl_Menu_Item bar_table[] = {
     {0},
   {"&Tools", 0, 0, 0, FL_SUBMENU},
     {"&Options...",      FL_CTRL+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
-    {"Pl&ugins...",      FL_CTRL+FL_SHIFT+'u', (Fl_Callback *)view_plugin_cb, (void*)(-1)},
+    {"Pl&ugins...",      FL_CTRL+FL_SHIFT+'u', (Fl_Callback *)plugin_cb, (void*)(-1)},
     {"&Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
     {"&Clipping",        FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
     {"&Manipulator",     FL_CTRL+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0, FL_MENU_DIVIDER},
@@ -72,7 +2182,7 @@ static Fl_Menu_Item sysbar_table[] = {
     {0},
   {"Tools", 0, 0, 0, FL_SUBMENU},
     {"Options...",      FL_META+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
-    {"Plugins...",      FL_META+FL_SHIFT+'u', (Fl_Callback *)view_plugin_cb, (void*)(-1)},
+    {"Plugins...",      FL_META+FL_SHIFT+'u', (Fl_Callback *)plugin_cb, (void*)(-1)},
     {"Visibility",      FL_META+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
     {"Clipping",        FL_META+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
     {"Manipulator",     FL_META+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0, FL_MENU_DIVIDER},
@@ -288,7 +2398,7 @@ contextItem menu_mesh[] = {
 };  
   contextItem menu_mesh_define[] = {
     {"1Mesh>Define", NULL} ,
-    {"Fields",      (Fl_Callback *)view_field_cb},
+    {"Fields",      (Fl_Callback *)field_cb},
     {"Characteristic length", (Fl_Callback *)mesh_define_length_cb  } ,
     {"Recombine",   (Fl_Callback *)mesh_define_recombine_cb  } ,
     {"Transfinite", (Fl_Callback *)mesh_define_transfinite_cb  } , 
@@ -601,7 +2711,7 @@ void menuWindow::setContext(contextItem *menu_asked, int flag)
         p[j]->add("Options...", 'o', 
                   (Fl_Callback *) view_options_cb, (void *)nb, 0);
         p[j]->add("Plugins...", 'p', 
-                  (Fl_Callback *) view_plugin_cb, (void *)nb, 0);
+                  (Fl_Callback *) plugin_cb, (void *)nb, 0);
       }
 
       toggle.push_back(b1);
