@@ -218,7 +218,8 @@ void pluginWindow::show(int viewIndex)
   win->show();
 }
 
-void pluginWindow::createDialogBox(GMSH_Plugin *p, int x, int y, int width, int height)
+void pluginWindow::createDialogBox(GMSH_Plugin *p, int x, int y,
+                                   int width, int height)
 {
   p->dialogBox = new PluginDialogBox;
   p->dialogBox->group = new Fl_Group(x, y, width, height);

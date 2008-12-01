@@ -131,6 +131,10 @@ GUI::GUI(int argc, char **argv)
   // e.g. directly loop through time steps with the keyboard)
   graph[0]->gl->take_focus();
 
+  // test: create another graphic window
+  //graph.push_back(new graphicWindow(_fontsize));
+  //graph[1]->win->show();
+
   // create all the permanent windows
   options = new optionWindow(_fontsize);
   fields = new fieldWindow(_fontsize);
