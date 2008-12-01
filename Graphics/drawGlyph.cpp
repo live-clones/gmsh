@@ -5,7 +5,15 @@
 
 #include <string.h>
 #include <FL/gl.h>
-#include <FL/glu.h>
+
+//FIXME: workaround faulty fltk installs
+//#include <FL/glu.h>
+#ifdef __APPLE__
+#  include <OpenGL/glu.h>
+#else
+#  include <GL/glu.h>
+#endif
+
 #include "drawContext.h"
 #include "Numeric.h"
 #include "Draw.h"
