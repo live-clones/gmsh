@@ -9,11 +9,6 @@ Should all duplicate entities be automatically removed?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.CirclePoints
-Number of points used to draw a circle/ellipse@*
-Default value: @code{20}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Geometry.Clip
 Enable clipping planes? (Plane[i]=2^i, i=0,...,5)@*
 Default value: @code{0}@*
@@ -72,6 +67,11 @@ Saved in: @code{General.OptionsFileName}
 @item Geometry.Normals
 Display size of normal vectors (in pixels)@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.NumSubEdges
+Number of edge subdivisions between control points when displaying curves@*
+Default value: @code{20}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCFixSmallEdges
