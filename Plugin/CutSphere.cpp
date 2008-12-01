@@ -8,7 +8,8 @@
 #include "Context.h"
 
 #if defined(HAVE_FLTK)
-#include "GmshUI.h"
+#include <FL/gl.h>
+#include <FL/glu.h>
 #include "Draw.h"
 #endif
 

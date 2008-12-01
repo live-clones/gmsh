@@ -25,11 +25,10 @@
 #endif
 
 #if defined(HAVE_FLTK)
-#include "GmshUI.h"
+#include <FL/fl_ask.H>
+#include "GUI.h"
 #include "Draw.h"
 #include "SelectBuffer.h"
-#include "GUI.h"
-extern GUI *WID;
 #endif
 
 extern Context_T CTX;
@@ -196,8 +195,8 @@ int ParseFile(const char *f, int close, int warn_if_missing)
   gmsh_yyviewindex = yyviewindex_old;
 
 #if defined(HAVE_FLTK) && !defined(HAVE_NO_POST)
-  if(!CTX.batch && numViewsBefore != (int)PView::list.size())
-    WID->update_views();
+  if(GUI::available() && numViewsBefore != (int)PView::list.size())
+    GUI::instance()->updateViews();
 #endif
 
   return 1;
@@ -230,7 +229,8 @@ void SetProjectName(const char *name)
   GModel::current()->setName(base);
     
 #if defined(HAVE_FLTK)
-  if(!CTX.batch) WID->set_title(CTX.filename);
+  if(GUI::available())
+    GUI::instance()->setGraphicTitle(CTX.filename);
 #endif
 }
 
@@ -261,7 +261,7 @@ int MergeFile(const char *name, int warn_if_missing)
   SplitFileName(name, no_ext, ext, base);
 
 #if defined(HAVE_FLTK)
-  if(!CTX.batch) {
+  if(GUI::available()) {
     if(!strcmp(ext, ".gz")) {
       // the real solution would be to rewrite all our I/O functions in
       // terms of gzFile, but until then, this is better than nothing
@@ -382,8 +382,8 @@ int MergeFile(const char *name, int warn_if_missing)
   CTX.mesh.changed = ENT_ALL;
 
 #if defined(HAVE_FLTK) && !defined(HAVE_NO_POST)
-  if(!CTX.batch && numViewsBefore != (int)PView::list.size())
-    WID->update_views();
+  if(GUI::available() && numViewsBefore != (int)PView::list.size())
+    GUI::instance()->updateViews();
 #endif
 
   if(!status) Msg::Error("Error loading '%s'", name);
@@ -425,19 +425,19 @@ void OpenProject(const char *name)
   CTX.threads_lock = 0;
 
 #if defined(HAVE_FLTK)
-  if(!CTX.batch){
-    WID->reset_visibility();
-    WID->update_views();
-    WID->update_fields();
+  if(GUI::available()){
+    GUI::instance()->resetVisibility();
+    GUI::instance()->updateViews();
+    GUI::instance()->updateFields();
+    ZeroHighlight();
   }
-  ZeroHighlight();
 #endif
 }
 
 void OpenProjectMacFinder(const char *filename)
 {
   static int first = 1;
-  if(first || CTX.batch){
+  if(first || !GUI::available()){
     // just copy the filename: it will be opened when the GUI is ready
     // in main()
     strncpy(CTX.filename, filename, 255);

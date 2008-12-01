@@ -73,14 +73,11 @@ Gmsh${OBJEXT}: Gmsh.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Plugin/PluginManager.h
 GmshMessage${OBJEXT}: GmshMessage.cpp GmshMessage.h Gmsh.h Options.h \
   ../Post/ColorTable.h Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h OS.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
-  ../Graphics/drawContext.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Fltk/Colorbar_Window.h ../Common/GmshUI.h ../Fltk/Popup_Button.h \
-  ../Fltk/SpherePosition_Widget.h ../Mesh/Field.h ../Post/PView.h \
-  ../Fltk/GUI_Extras.h
+  ../Mesh/PartitionOptions.h OS.h ../Fltk/GUI.h ../Fltk/messageWindow.h \
+  ../Fltk/extraDialogs.h
 GmshDaemon${OBJEXT}: GmshDaemon.cpp GmshMessage.h OS.h GmshSocket.h
-Options${OBJEXT}: Options.cpp GmshUI.h GmshDefines.h ../Geo/GModel.h \
-  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+Options${OBJEXT}: Options.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
   ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
@@ -95,12 +92,15 @@ Options${OBJEXT}: Options.cpp GmshUI.h GmshDefines.h ../Geo/GModel.h \
   ../Post/PViewData.h ../Post/adaptiveData.h ../Common/ListUtils.h \
   ../Numeric/GmshMatrix.h ../Common/GmshMessage.h \
   ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Options.h \
-  ../Post/PViewDataList.h ../Post/PViewData.h ../Fltk/Solvers.h \
-  ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Graphics/drawContext.h \
-  ../Fltk/Colorbar_Window.h ../Common/GmshUI.h ../Fltk/Popup_Button.h \
-  ../Fltk/SpherePosition_Widget.h
-CommandLine${OBJEXT}: CommandLine.cpp GmshUI.h GmshDefines.h GmshVersion.h \
-  GmshMessage.h OpenFile.h CommandLine.h Context.h ../Geo/CGNSOptions.h \
+  ../Post/PViewDataList.h ../Post/PViewData.h ../Fltk/GUI.h \
+  ../Fltk/Solvers.h ../Fltk/menuWindow.h ../Fltk/popupButton.h \
+  ../Fltk/graphicWindow.h ../Fltk/openglWindow.h \
+  ../Graphics/drawContext.h ../Fltk/optionWindow.h \
+  ../Fltk/spherePositionWidget.h ../Fltk/colorbarWindow.h \
+  ../Fltk/solverWindow.h ../Fltk/manipWindow.h ../Fltk/messageWindow.h \
+  ../Fltk/contextWindow.h ../Fltk/clippingWindow.h
+CommandLine${OBJEXT}: CommandLine.cpp GmshDefines.h GmshVersion.h GmshMessage.h \
+  OpenFile.h CommandLine.h Context.h ../Geo/CGNSOptions.h \
   ../Mesh/PartitionOptions.h Options.h ../Post/ColorTable.h \
   ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
@@ -127,11 +127,8 @@ OpenFile${OBJEXT}: OpenFile.cpp GmshMessage.h ../Geo/Geo.h \
   ../Geo/GEntity.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h Context.h \
   ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h OpenFile.h \
   CommandLine.h ../Graphics/ReadImg.h OS.h StringUtils.h \
-  ../Parser/Parser.h ../Post/PView.h ../Post/PViewData.h GmshUI.h \
-  ../Fltk/Draw.h ../Graphics/SelectBuffer.h ../Graphics/drawContext.h \
-  ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h \
-  ../Common/GmshUI.h ../Post/ColorTable.h ../Fltk/Popup_Button.h \
-  ../Fltk/SpherePosition_Widget.h ../Mesh/Field.h
+  ../Parser/Parser.h ../Post/PView.h ../Post/PViewData.h ../Fltk/GUI.h \
+  ../Fltk/Draw.h ../Graphics/SelectBuffer.h ../Graphics/drawContext.h
 CreateFile${OBJEXT}: CreateFile.cpp GmshMessage.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
@@ -142,11 +139,10 @@ CreateFile${OBJEXT}: CreateFile.cpp GmshMessage.h ../Geo/GModel.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h GmshDefines.h StringUtils.h Context.h \
   ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h Options.h \
-  ../Post/ColorTable.h GmshUI.h ../Graphics/gl2ps.h ../Graphics/gl2gif.h \
-  ../Graphics/PixelBuffer.h ../Common/GmshUI.h ../Common/GmshMessage.h \
-  ../Fltk/Draw.h ../Common/MallocUtils.h ../Graphics/gl2jpeg.h \
-  ../Graphics/PixelBuffer.h ../Graphics/gl2png.h \
-  ../Graphics/PixelBuffer.h ../Graphics/gl2ppm.h \
+  ../Post/ColorTable.h ../Graphics/gl2ps.h ../Graphics/gl2gif.h \
+  ../Graphics/PixelBuffer.h ../Common/GmshMessage.h ../Fltk/Draw.h \
+  ../Common/MallocUtils.h ../Graphics/gl2jpeg.h ../Graphics/PixelBuffer.h \
+  ../Graphics/gl2png.h ../Graphics/PixelBuffer.h ../Graphics/gl2ppm.h \
   ../Graphics/PixelBuffer.h ../Graphics/gl2yuv.h \
   ../Graphics/PixelBuffer.h
 Visibility${OBJEXT}: Visibility.cpp Visibility.h GmshDefines.h ../Geo/GVertex.h \

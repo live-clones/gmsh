@@ -3,8 +3,10 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <FL/gl.h>
+#include <FL/glu.h>
 #include "GUI.h"
-#include "GmshUI.h"
+#include "graphicWindow.h"
 #include "GmshDefines.h"
 #include "Draw.h"
 #include "StringUtils.h"
@@ -12,12 +14,11 @@
 #include "Context.h"
 
 extern Context_T CTX;
-extern GUI *WID;
 
 void SetOpenglContext()
 {
-  if(!WID) return;
-  WID->make_opengl_current();
+  if(!GUI::available()) return;
+  GUI::instance()->graph[0]->gl->make_current();
 }
 
 void ClearOpengl()
@@ -30,15 +31,17 @@ void ClearOpengl()
 
 void Draw()
 {
-  if(!WID) return;
-  WID->redraw_opengl();
+  if(!GUI::available()) return;
+  GUI::instance()->graph[0]->gl->make_current();
+  GUI::instance()->graph[0]->gl->redraw();
+  GUI::instance()->check();
 }
 
 void Draw2d3d()
 {
-  if(!WID) return;
-  WID->g_opengl_window->getDrawContext()->draw3d();
-  WID->g_opengl_window->getDrawContext()->draw2d();
+  if(!GUI::available()) return;
+  GUI::instance()->graph[0]->gl->getDrawContext()->draw3d();
+  GUI::instance()->graph[0]->gl->getDrawContext()->draw2d();
 }
 
 void DrawPlugin(void (*draw)(void *context))
@@ -50,8 +53,7 @@ void DrawPlugin(void (*draw)(void *context))
     CTX.post.draw = 0;
     CTX.mesh.draw = 0;
   }
-  if(!CTX.batch) 
-    Draw();
+  Draw();
   // this is reset in each plugin run/cancel callback:
   // CTX.post.plugin_draw_function = NULL;
   CTX.draw_bbox = old;
@@ -160,33 +162,33 @@ void Draw_String(std::string s, double style)
 
 void Draw_OnScreenMessages()
 {
-  if(!WID) return;
+  if(!GUI::available()) return;
 
   glColor4ubv((GLubyte *) & CTX.color.text);
   gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
   double h = gl_height();
   
-  drawContext *ctx = WID->g_opengl_window->getDrawContext();
+  drawContext *ctx = GUI::instance()->graph[0]->gl->getDrawContext();
   
-  if(strlen(WID->onscreen_buffer[0])){
-    double w = gl_width(WID->onscreen_buffer[0]);
+  if(strlen(GUI::instance()->onscreen_buffer[0])){
+    double w = gl_width(GUI::instance()->onscreen_buffer[0]);
     glRasterPos2d(ctx->viewport[2] / 2. - w / 2., 
                   ctx->viewport[3] - 1.2 * h);
-    gl_draw(WID->onscreen_buffer[0]);
+    gl_draw(GUI::instance()->onscreen_buffer[0]);
   }
-  if(strlen(WID->onscreen_buffer[1])){
-    double w = gl_width(WID->onscreen_buffer[1]);
+  if(strlen(GUI::instance()->onscreen_buffer[1])){
+    double w = gl_width(GUI::instance()->onscreen_buffer[1]);
     glRasterPos2d(ctx->viewport[2] / 2. - w / 2.,
                   ctx->viewport[3] - 2.4 * h);
-    gl_draw(WID->onscreen_buffer[1]);
+    gl_draw(GUI::instance()->onscreen_buffer[1]);
   }
 }
 
 void GetStoredViewport(int viewport[4])
 {
-  if(!WID) return;
+  if(!GUI::available()) return;
   for(int i = 0; i < 4; i++)
-    viewport[i] = WID->g_opengl_window->getDrawContext()->viewport[i];
+    viewport[i] = GUI::instance()->graph[0]->gl->getDrawContext()->viewport[i];
 }
 
 void Viewport2World(double win[3], double xyz[3])

@@ -6,7 +6,7 @@
 #ifndef _PIXEL_BUFFER_H_
 #define _PIXEL_BUFFER_H_
 
-#include "GmshUI.h"
+#include <FL/gl.h>
 #include "GmshMessage.h"
 #include "Draw.h"
 #include "MallocUtils.h"

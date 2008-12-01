@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include "GmshUI.h"
-#include "GmshDefines.h"
+#include <FL/gl.h>
+#include <FL/glu.h>
 #include "GmshMessage.h"
 #include "Draw.h"
 #include "drawContext.h"
@@ -33,6 +33,7 @@ drawContext::drawContext(drawTransform *transform)
   viewport[2] = CTX.tmp_viewport[2];
   viewport[3] = CTX.tmp_viewport[3];
 
+  render_mode = GMSH_RENDER;
   vxmin = vymin = vxmax = vymax = 0.;
   pixel_equiv_x = pixel_equiv_y = 0.;
 }
@@ -234,7 +235,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
   glLoadIdentity();
 
   // restrict picking to a rectangular region around xpick,ypick in SELECT mode
-  if(CTX.render_mode == GMSH_SELECT)
+  if(render_mode == GMSH_SELECT)
     gluPickMatrix((GLdouble)xpick, (GLdouble)(viewport[3] - ypick),
                   (GLdouble)wpick, (GLdouble)hpick, (GLint *)viewport);
 
@@ -277,7 +278,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
   }
 
   // draw background gradient
-  if(CTX.render_mode != GMSH_SELECT && CTX.bg_gradient){
+  if(render_mode != GMSH_SELECT && CTX.bg_gradient){
     glPushMatrix();
     glLoadIdentity();
     glTranslated(0., 0., -grad_z);

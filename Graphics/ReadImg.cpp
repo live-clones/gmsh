@@ -4,16 +4,14 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string.h>
-#include "ReadImg.h"
-#include "GmshMessage.h"
-#include "GmshUI.h"
-#include "PView.h"
-#include "PViewDataList.h"
-  
 #include <FL/Fl_JPEG_Image.H>
 #include <FL/Fl_PNM_Image.H>
 #include <FL/Fl_PNG_Image.H>
 #include <FL/Fl_BMP_Image.H>
+#include "ReadImg.h"
+#include "GmshMessage.h"
+#include "PView.h"
+#include "PViewDataList.h"
 
 // from an image, we create a post-procession view
 

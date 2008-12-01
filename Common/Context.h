@@ -99,7 +99,6 @@ class Context_T {
   int light[6]; // status of lights
   double light_position[6][4]; // light sources positions 
   double shine, shine_exponent; // material specular reflection parameters
-  int render_mode; // GMSH_RENDER, GMSH_SELECT, GMSH_FEEDBACK 
   double clip_plane[6][4]; // clipping planes 
   int clip_whole_elements, clip_only_draw_intersecting_volume; // clipping options
   int clip_only_volume;
@@ -134,7 +133,7 @@ class Context_T {
     double point_size, line_width, point_sel_size, line_sel_width;
     int point_type, line_type, surface_type;
     int draw, light, light_two_side;
-    int old_circle, circle_points;
+    int old_circle, num_sub_edges;
     int extrude_spline_points, extrude_return_lateral, old_newreg;
     double normals, tangents;
     double scaling_factor;

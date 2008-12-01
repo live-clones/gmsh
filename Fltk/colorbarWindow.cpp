@@ -7,22 +7,22 @@
 // program for visualizing five dimensional gridded data sets
 // Copyright (C) 1990 - 1995 Bill Hibbard, Brian Paul, Dave Santek,
 // and Andre Battaiola.
-   
-#include "GmshUI.h"
-#include "GUI.h"
+
+#include <FL/fl_draw.H>
+#include "colorbarWindow.h"   
 #include "ColorTable.h"
-#include "Colorbar_Window.h"
+#include "GUI.h" // FIXME for GetFontSize
 #include "Context.h"
 
 extern Context_T CTX;
 
 #define EPS 1.e-10
 
-// This file defines the Colorbar_Window class (subclass of Fl_Window)
+// This file defines the colorbarWindow class (subclass of Fl_Window)
 
 // The constructor
 
-Colorbar_Window::Colorbar_Window(int x, int y, int w, int h, const char *l)
+colorbarWindow::colorbarWindow(int x, int y, int w, int h, const char *l)
   : Fl_Window(x, y, w, h, l)
 {
   ct = NULL;
@@ -37,7 +37,7 @@ Colorbar_Window::Colorbar_Window(int x, int y, int w, int h, const char *l)
 
 // Convert window X coordinate to color table index
 
-int Colorbar_Window::x_to_index(int x)
+int colorbarWindow::x_to_index(int x)
 {
   int index;
   index = (int)(x * (double)ct->size / (double)w());
@@ -50,7 +50,7 @@ int Colorbar_Window::x_to_index(int x)
 
 // Convert color table index to window X coordinate
 
-int Colorbar_Window::index_to_x(int index)
+int colorbarWindow::index_to_x(int index)
 {
   int x;
   x = (int)(index * (double)w() / (double)(ct->size - 1));
@@ -61,7 +61,7 @@ int Colorbar_Window::index_to_x(int index)
 
 // Convert a color intensity to a window Y coordinate
 
-int Colorbar_Window::intensity_to_y(int intensity)
+int colorbarWindow::intensity_to_y(int intensity)
 {
   int y;
   y = (int)(wedge_y - intensity * (double)wedge_y / 255.);
@@ -74,7 +74,7 @@ int Colorbar_Window::intensity_to_y(int intensity)
 
 // Convert a window Y coordinate to a color intensity
 
-int Colorbar_Window::y_to_intensity(int y)
+int colorbarWindow::y_to_intensity(int y)
 {
   int intensity;
   intensity = (int)((wedge_y - y) * 255. / (double)wedge_y);
@@ -85,9 +85,9 @@ int Colorbar_Window::y_to_intensity(int y)
   return intensity;
 }
 
-// Redraw part of the Colorbar_Window (between a and b)
+// Redraw part of the colorbarWindow (between a and b)
 
-void Colorbar_Window::redraw_range(int a, int b)
+void colorbarWindow::redraw_range(int a, int b)
 {
   int i;
   int x, y, px = 0, py = 0;
@@ -264,7 +264,7 @@ void Colorbar_Window::redraw_range(int a, int b)
 
 // Redraw the marker and the text
 
-void Colorbar_Window::redraw_marker()
+void colorbarWindow::redraw_marker()
 {
   int x, y0, y1;
   char str[50];
@@ -295,7 +295,7 @@ void Colorbar_Window::redraw_marker()
 
 // Draw everything
 
-void Colorbar_Window::draw()
+void colorbarWindow::draw()
 {
   if(!ct) return;
 
@@ -311,7 +311,7 @@ void Colorbar_Window::draw()
 
 // Update
 
-void Colorbar_Window::update(const char *name, double min, double max,
+void colorbarWindow::update(const char *name, double min, double max,
                              GmshColorTable *table, bool *changed)
 {
   label = name;
@@ -324,7 +324,7 @@ void Colorbar_Window::update(const char *name, double min, double max,
 
 // Handle
 
-int Colorbar_Window::handle(int event)
+int colorbarWindow::handle(int event)
 {
   if(!ct) return Fl_Window::handle(event);
 

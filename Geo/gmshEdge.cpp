@@ -109,10 +109,8 @@ int gmshEdge::minimumDrawSegments () const
 
   if(geomType() == Line && !c->geometry)
     return n;
-  else if(geomType() == Circle || geomType() == Ellipse)
-    return CTX.geom.circle_points;
   else
-    return 10 * n;
+    return CTX.geom.num_sub_edges * n;
 }
 
 SPoint2 gmshEdge::reparamOnFace(GFace *face, double epar,int dir) const

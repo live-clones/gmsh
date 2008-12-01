@@ -6,7 +6,14 @@
 #include <string>
 #include <string.h>
 #include <stdlib.h>
-#include "GmshUI.h"
+
+#if defined(HAVE_FLTK)
+#include <FL/Fl.H>
+#if (FL_MAJOR_VERSION != 1) || (FL_MINOR_VERSION != 1) || (FL_PATCH_VERSION < 7)
+#error "Gmsh requires FLTK 1.1.7 or above"
+#endif
+#endif
+
 #include "GmshDefines.h"
 #include "GmshVersion.h"
 #include "GmshMessage.h"

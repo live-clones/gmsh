@@ -8,38 +8,35 @@
 //
 
 #include <limits>
-#include "GmshUI.h"
-#include "GmshDefines.h"
-#include "CreateFile.h"
-#include "Options.h"
-#include "Context.h"
-#include "Draw.h"
-#include "GUI.h"
-#include "Shortcut_Window.h"
-#include "GModel.h"
-#include "Partition.h"
-
+#include <errno.h>
+#include <FL/Fl_Check_Button.H>
+#include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Value_Slider.H>
 #include <FL/Fl_Menu_Window.H>
 #include <FL/Fl_Select_Browser.H>
 #include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Round_Button.H>
-#include <errno.h>
+#include <FL/Fl_Choice.H>
+#include "GUI.h"
+#include "shortcutWindow.h"
+#include "GmshDefines.h"
+#include "CreateFile.h"
+#include "Options.h"
+#include "Draw.h"
+#include "GModel.h"
+#include "Context.h"
 
-// FIXME we shoud use copy_label everywhere, but it's broken for
-// Fl_Windows in fltk 1.1.7
+extern Context_T CTX;
+
+// File chooser
 
 #if defined(HAVE_NATIVE_FILE_CHOOSER)
 #include <FL/Fl_Native_File_Chooser.H>
 static Fl_Native_File_Chooser *fc = 0;
 #else
-#include "File_Picker.h"
-static File_Picker *fc = 0;
+#include "fileChooser.h"
+static fileChooser *fc = 0;
 #endif
-
-extern Context_T CTX;
-
-// File chooser
 
 int file_chooser(int multi, int create, const char *message,
                  const char *filter, const char *fname)
@@ -80,7 +77,7 @@ int file_chooser(int multi, int create, const char *message,
   Fl_File_Chooser::show_label = "Format:";
   Fl_File_Chooser::all_files_label = "All files (*)";
   if(!fc) {
-    fc = new File_Picker(getenv("PWD") ? "." : CTX.home_dir, thefilter, 
+    fc = new fileChooser(getenv("PWD") ? "." : CTX.home_dir, thefilter, 
                          Fl_File_Chooser::SINGLE, message);
     fc->position(CTX.file_chooser_position[0], CTX.file_chooser_position[1]);
   }
@@ -129,181 +126,6 @@ void file_chooser_get_position(int *x, int *y)
 #endif
 }
 
-// Arrow editor
-
-int arrow_editor(const char *title, double &a, double &b, double &c)
-{
-  struct _editor{
-    Fl_Window *window;
-    Fl_Value_Slider *sa, *sb, *sc;
-    Fl_Button *apply, *cancel;
-  };
-  static _editor *editor = NULL;
-
-  const int BH = 2 * GetFontSize() + 1;
-  const int BB = 7 * GetFontSize() + 9;
-  const int WB = 7;
-
-  if(!editor){
-    editor = new _editor;
-    editor->window = new Dialog_Window(2 * BB + 3 * WB, 4 * BH + 3 * WB, CTX.non_modal_windows);
-    editor->sa = new Fl_Value_Slider(WB, WB, BB, BH, "Head radius");
-    editor->sa->type(FL_HOR_SLIDER);
-    editor->sa->align(FL_ALIGN_RIGHT);
-    editor->sb = new Fl_Value_Slider(WB, WB + BH, BB, BH, "Stem length");
-    editor->sb->type(FL_HOR_SLIDER);
-    editor->sb->align(FL_ALIGN_RIGHT);
-    editor->sc = new Fl_Value_Slider(WB, WB + 2 * BH, BB, BH, "Stem radius");
-    editor->sc->type(FL_HOR_SLIDER);
-    editor->sc->align(FL_ALIGN_RIGHT);
-    editor->apply = new Fl_Return_Button(WB, 2 * WB + 3 * BH, BB, BH, "Apply");
-    editor->cancel = new Fl_Button(2 * WB + BB, 2 * WB + 3 * BH, BB, BH, "Cancel");
-    editor->window->end();
-    editor->window->hotspot(editor->window);
-  }
-  
-  editor->window->label(title);
-  editor->sa->value(a);
-  editor->sb->value(b);
-  editor->sc->value(c);
-  editor->window->show();
-
-  while(editor->window->shown()){
-    Fl::wait();
-    for (;;) {
-      Fl_Widget* o = Fl::readqueue();
-      if (!o) break;
-      if (o == editor->apply) {
-        a = editor->sa->value();
-        b = editor->sb->value();
-        c = editor->sc->value();
-        return 1;
-      }
-      if (o == editor->window || o == editor->cancel){
-        editor->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
-}
-
-// Perspective editor (aka z-clipping planes factor slider)
-
-static void persp_change_factor(Fl_Widget* w, void* data)
-{
-  opt_general_clip_factor(0, GMSH_SET|GMSH_GUI, ((Fl_Slider*)w)->value());
-  Draw();
-}
-
-class Release_Slider : public Fl_Slider {
-  int handle(int event){ 
-    switch (event) {
-    case FL_RELEASE: 
-      if(window())
-        window()->hide();
-      return 1;
-    default:
-      return Fl_Slider::handle(event);
-    }
-  };
-public:
-  Release_Slider(int x,int y,int w,int h,const char *l=0)
-    : Fl_Slider(x, y, w, h, l) {}
-};
-
-int perspective_editor()
-{
-  struct _editor{
-    Fl_Menu_Window *window;
-    Release_Slider *sa;
-  };
-  static _editor *editor = NULL;
-
-  if(!editor){
-    editor = new _editor;
-    editor->window = new Fl_Menu_Window(20, 100);
-    if(CTX.non_modal_windows) editor->window->set_non_modal();
-    editor->sa = new Release_Slider(0, 0, 20, 100);
-    editor->sa->type(FL_VERT_NICE_SLIDER);
-    editor->sa->minimum(12);
-    editor->sa->maximum(0.75);
-    editor->sa->callback(persp_change_factor);
-    editor->window->border(0);
-    editor->window->end();
-  }
-
-  editor->window->hotspot(editor->window);
-  editor->sa->value(CTX.clip_factor);
-
-  if(editor->window->non_modal() && !editor->window->shown())
-    editor->window->show(); // fix ordering
-  editor->window->show();
-  return 0;
-}
-
-// Model chooser
-
-static void model_switch(Fl_Widget* w, void *data)
-{
-  Fl_Select_Browser *b = (Fl_Select_Browser *)w;
-  if(b->value()) GModel::current(b->value() - 1);
-  if(w->window()) w->window()->hide();
-  CTX.mesh.changed = ENT_ALL;
-  // FIXME: need to call WID->reset_visibility();
-  Draw();
-}
-
-static void model_draw_all(Fl_Widget* w, void *data)
-{
-  Fl_Check_Button *b = (Fl_Check_Button*)w;
-  opt_general_draw_all_models(0, GMSH_SET | GMSH_GUI, (int)b->value());
-  Draw();
-}
-
-int model_chooser()
-{
-  struct _menu{
-    Fl_Menu_Window *window;
-    Fl_Hold_Browser *browser;
-    Fl_Check_Button *butt;
-  };
-  static _menu *menu = NULL;
-
-  const int BH = 2 * GetFontSize() + 1;
-  const int WW = 200;
-
-  if(!menu){
-    menu = new _menu;
-    menu->window = new Fl_Menu_Window(WW, 6 * BH);
-    if(CTX.non_modal_windows) menu->window->set_non_modal();
-    menu->window->border(0);
-    Fl_Box *l = new Fl_Box(0, 0, WW, BH, "Choose current model:");
-    l->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-    menu->browser = new Fl_Hold_Browser(0, BH, WW, 4 * BH);
-    menu->browser->callback(model_switch);
-    menu->browser->when(FL_WHEN_RELEASE_ALWAYS);
-    menu->butt = new Fl_Check_Button(0, 5 * BH, WW, BH, "Draw all models");
-    menu->butt->callback(model_draw_all);
-    menu->window->end();
-  }
-
-  menu->window->hotspot(menu->window);
-  menu->browser->clear();
-  for(unsigned int i = 0; i < GModel::list.size(); i++){
-    char tmp[256];
-    sprintf(tmp, "Model %d <<%s>>", i, GModel::list[i]->getName().c_str());
-    menu->browser->add(tmp);
-    if(GModel::list[i] == GModel::current()) menu->browser->value(i + 1);
-  }
-  menu->butt->value(CTX.draw_all_models);
-
-  if(menu->window->non_modal() && !menu->window->shown())
-    menu->window->show(); // fix ordering
-  menu->window->show();
-  return 0;
-}
-
 // Generic save bitmap dialog
 
 int generic_bitmap_dialog(const char *name, const char *title, int format)
@@ -314,18 +136,16 @@ int generic_bitmap_dialog(const char *name, const char *title, int format)
     Fl_Button *ok, *cancel;
   };
   static _generic_bitmap_dialog *dialog = NULL;
-
-  const int BH = 2 * GetFontSize() + 1;
-  const int BB = 7 * GetFontSize() + 9;
-  const int WB = 7;
+  int _fontsize = GetFontSize();
 
   if(!dialog){
     dialog = new _generic_bitmap_dialog;
     int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "Dialog_Window" since it is modal 
+    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
+    dialog->b = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
@@ -368,18 +188,17 @@ int latex_dialog(const char *name)
     Fl_Button *ok, *cancel;
   };
   static _latex_dialog *dialog = NULL;
-
-  const int BH = 2 * GetFontSize() + 1;
-  const int BB = 7 * GetFontSize() + 9;
-  const int WB = 7;
+  
+  int _fontsize = GetFontSize();
 
   if(!dialog){
     dialog = new _latex_dialog;
     int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "Dialog_Window" since it is modal 
+    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "LaTeX Options");
     dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print strings as equations"); y += BH;
+    dialog->b = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Print strings as equations"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
@@ -423,14 +242,12 @@ int jpeg_dialog(const char *name)
   };
   static _jpeg_dialog *dialog = NULL;
 
-  const int BH = 2 * GetFontSize() + 1;
-  const int BB = 7 * GetFontSize() + 9;
-  const int WB = 7;
+  int _fontsize = GetFontSize();
 
   if(!dialog){
     dialog = new _jpeg_dialog;
     int h = 3 * WB + 4 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "Dialog_Window" since it is modal 
+    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "JPEG Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->s[0] = new Fl_Value_Slider(WB, y, BB, BH, "Quality"); y += BH;
@@ -445,7 +262,8 @@ int jpeg_dialog(const char *name)
     dialog->s[1]->minimum(0);
     dialog->s[1]->maximum(100);
     dialog->s[1]->step(1);
-    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
+    dialog->b = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
@@ -492,21 +310,24 @@ int gif_dialog(const char *name)
   };
   static _gif_dialog *dialog = NULL;
 
-  const int BH = 2 * GetFontSize() + 1;
-  const int BB = 7 * GetFontSize() + 9;
-  const int WB = 7;
+  int _fontsize = GetFontSize();
 
   if(!dialog){
     dialog = new _gif_dialog;
     int h = 3 * WB + 6 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "Dialog_Window" since it is modal 
+    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "GIF Options");
     dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->b[0] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Dither"); y += BH;
-    dialog->b[1] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Interlace"); y += BH;
-    dialog->b[2] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Sort colormap"); y += BH;
-    dialog->b[3] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Transparent background"); y += BH;
-    dialog->b[4] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
+    dialog->b[0] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Dither"); y += BH;
+    dialog->b[1] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Interlace"); y += BH;
+    dialog->b[2] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Sort colormap"); y += BH;
+    dialog->b[3] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Transparent background"); y += BH;
+    dialog->b[4] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
     for(int i = 0; i < 5; i++){
       dialog->b[i]->type(FL_TOGGLE_BUTTON);
     }
@@ -604,25 +425,29 @@ int gl2ps_dialog(const char *name, const char *title, int format)
     {0}
   };
 
-  const int BH = 2 * GetFontSize() + 1;
-  const int BB = 7 * GetFontSize() + 9;
-  const int WB = 7;
+  int _fontsize = GetFontSize();
 
   if(!dialog){
     dialog = new _gl2ps_dialog;
     int h = 3 * WB + 8 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "Dialog_Window" since it is modal 
+    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->c = new Fl_Choice(WB, y, BB + WB + BB / 2, BH, "Type"); y += BH;
     dialog->c->menu(sortmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
-    dialog->b[0] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Compress"); y += BH;
-    dialog->b[1] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print background"); y += BH;
-    dialog->b[2] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Remove hidden primitives"); y += BH;
-    dialog->b[3] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Optimize BSP tree"); y += BH;
-    dialog->b[4] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Use level 3 shading"); y += BH;
-    dialog->b[5] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
+    dialog->b[0] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Compress"); y += BH;
+    dialog->b[1] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Print background"); y += BH;
+    dialog->b[2] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Remove hidden primitives"); y += BH;
+    dialog->b[3] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Optimize BSP tree"); y += BH;
+    dialog->b[4] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Use level 3 shading"); y += BH;
+    dialog->b[5] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
     for(int i = 0; i < 6; i++){
       dialog->b[i]->type(FL_TOGGLE_BUTTON);
     }
@@ -687,20 +512,20 @@ int options_dialog(const char *name)
   };
   static _options_dialog *dialog = NULL;
 
-  const int BH = 2 * GetFontSize() + 1;
-  const int BB = 7 * GetFontSize() + 9;
-  const int WB = 7;
+  int _fontsize = GetFontSize();
 
   if(!dialog){
     dialog = new _options_dialog;
     int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "Dialog_Window" since it is modal 
+    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "Options");
     dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->b[0] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save only modified options"); y += BH;
+    dialog->b[0] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Save only modified options"); y += BH;
     dialog->b[0]->value(1);
     dialog->b[0]->type(FL_TOGGLE_BUTTON);
-    dialog->b[1] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print help strings"); y += BH;
+    dialog->b[1] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Print help strings"); y += BH;
     dialog->b[1]->value(0);
     dialog->b[1]->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
@@ -742,17 +567,16 @@ int geo_dialog(const char *name)
   };
   static _geo_dialog *dialog = NULL;
 
-  const int BH = 2 * GetFontSize() + 1;
-  const int BB = 7 * GetFontSize() + 9;
-  const int WB = 7;
+  int _fontsize = GetFontSize();
 
   if(!dialog){
     dialog = new _geo_dialog;
     int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "Dialog_Window" since it is modal 
+    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "GEO Options");
     dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save physical group labels"); y += BH;
+    dialog->b = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Save physical group labels"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
@@ -793,23 +617,28 @@ int pos_dialog(const char *name)
   };
   static _pos_dialog *dialog = NULL;
 
-  const int BH = 2 * GetFontSize() + 1;
-  const int BB = 7 * GetFontSize() + 9;
-  const int WB = 7;
+  int _fontsize = GetFontSize();
 
   if(!dialog){
     dialog = new _pos_dialog;
     int h = 3 * WB + 8 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "Dialog_Window" since it is modal 
+    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "POS Options");
     dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->b[0] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
-    dialog->b[1] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print elementary tags"); y += BH;
-    dialog->b[2] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print element numbers"); y += BH;
-    dialog->b[3] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print Gamma quality measure"); y += BH;
-    dialog->b[4] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print Eta quality measure"); y += BH;
-    dialog->b[5] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print Rho quality measure"); y += BH;
-    dialog->b[6] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print Disto quality measure"); y += BH;
+    dialog->b[0] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
+    dialog->b[1] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Print elementary tags"); y += BH;
+    dialog->b[2] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Print element numbers"); y += BH;
+    dialog->b[3] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Print Gamma quality measure"); y += BH;
+    dialog->b[4] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Print Eta quality measure"); y += BH;
+    dialog->b[5] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Print Rho quality measure"); y += BH;
+    dialog->b[6] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Print Disto quality measure"); y += BH;
     for(int i = 0; i < 6; i++)
       dialog->b[i]->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
@@ -873,22 +702,22 @@ int msh_dialog(const char *name)
     {0}
   };
 
-  const int BH = 2 * GetFontSize() + 1;
-  const int BB = 7 * GetFontSize() + 9;
-  const int WB = 7;
+  int _fontsize = GetFontSize();
 
   if(!dialog){
     dialog = new _msh_dialog;
     int h = 3 * WB + 4 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "Dialog_Window" since it is modal 
+    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "MSH Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->c = new Fl_Choice(WB, y, BB + BB / 2, BH, "Format"); y += BH;
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
-    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
+    dialog->b = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
-    dialog->p = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save Parametric Coordinates"); y += BH;
+    dialog->p = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Save Parametric Coordinates"); y += BH;
     dialog->p->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
@@ -909,7 +738,8 @@ int msh_dialog(const char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-        opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI, (dialog->c->value() == 0) ? 1.0 : 2.0);
+        opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI, 
+                                  (dialog->c->value() == 0) ? 1.0 : 2.0);
         opt_mesh_binary(0, GMSH_SET | GMSH_GUI, (dialog->c->value() == 2) ? 1 : 0);
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
         opt_mesh_save_parametric(0, GMSH_SET | GMSH_GUI, dialog->p->value() ? 1 : 0);
@@ -937,19 +767,19 @@ int unv_dialog(const char *name)
   };
   static _unv_dialog *dialog = NULL;
 
-  const int BH = 2 * GetFontSize() + 1;
-  const int BB = 7 * GetFontSize() + 9;
-  const int WB = 7;
+  int _fontsize = GetFontSize();
 
   if(!dialog){
     dialog = new _unv_dialog;
     int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "Dialog_Window" since it is modal 
+    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "UNV Options");
     dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->b[0] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
+    dialog->b[0] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
     dialog->b[0]->type(FL_TOGGLE_BUTTON);
-    dialog->b[1] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save groups of nodes"); y += BH;
+    dialog->b[1] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Save groups of nodes"); y += BH;
     dialog->b[1]->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
@@ -969,7 +799,8 @@ int unv_dialog(const char *name)
       if (!o) break;
       if (o == dialog->ok) {
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
-        opt_mesh_save_groups_of_nodes(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value() ? 1 : 0);
+        opt_mesh_save_groups_of_nodes(0, GMSH_SET | GMSH_GUI, 
+                                      dialog->b[1]->value() ? 1 : 0);
         CreateOutputFile(name, FORMAT_UNV);
         dialog->window->hide();
         return 1;
@@ -1002,20 +833,19 @@ int bdf_dialog(const char *name)
     {0}
   };
 
-  const int BH = 2 * GetFontSize() + 1;
-  const int BB = 7 * GetFontSize() + 9;
-  const int WB = 7;
+  int _fontsize = GetFontSize();
 
   if(!dialog){
     dialog = new _bdf_dialog;
     int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "Dialog_Window" since it is modal 
+    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "BDF Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->c = new Fl_Choice(WB, y, BB + BB / 2, BH, "Format"); y += BH;
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
-    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
+    dialog->b = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
@@ -1068,20 +898,19 @@ int generic_mesh_dialog(const char *name, const char *title, int format,
     {0}
   };
 
-  const int BH = 2 * GetFontSize() + 1;
-  const int BB = 7 * GetFontSize() + 9;
-  const int WB = 7;
+  int _fontsize = GetFontSize();
 
   if(!dialog){
     dialog = new _generic_mesh_dialog;
     int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "Dialog_Window" since it is modal 
+    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->c = new Fl_Choice(WB, y, BB + BB / 2, BH, "Format"); y += BH;
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
-    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
+    dialog->b = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
@@ -1121,7 +950,6 @@ int generic_mesh_dialog(const char *name, const char *title, int format,
 }
 
 
-// CGNS write dialog - widget pointers, callbacks, and dialog routine
 #if defined(HAVE_LIBCGNS)
 
 // Forward declarations of some callbacks
@@ -1321,13 +1149,9 @@ int cgns_write_dialog(const char *filename)
     {0}
   };
 
-  const int BH = 2*GetFontSize() + 1;   // button height
-  const int RBH = 3*GetFontSize()/2;    // radio button height
-  const int IW = 10*GetFontSize();      // Input field width
-  const int BB = 7*GetFontSize() + 9;   // Width of a button with an internal
-                                        // label
-  const int WB = 7;                     // Window border
+  int _fontsize = GetFontSize();
 
+  const int RBH = 3*GetFontSize()/2;    // radio button height
   const int col1 = WB;                  // Start of left column
   const int col2 = 2*WB + 2*BB;         // Start of right column
   const int hcol1 = 5*WB + 2*RBH + 3*BH;
@@ -1340,7 +1164,7 @@ int cgns_write_dialog(const char *filename)
   const int w = 3*WB + 4*BB;            // Window width
   int y = WB;
 
-  dlg.window = new Dialog_Window(w, h, true, "CGNS Options");
+  dlg.window = new dialogWindow(w, h, true, "CGNS Options");
   dlg.window->box(GMSH_WINDOW_BOX);
   dlg.window->callback((Fl_Callback *)cgnsw_cancel_cb, &dlg);
 
@@ -1550,763 +1374,3 @@ int cgns_write_dialog(const char *filename)
 }
 
 #endif  // compiling CGNS write dialog
-
-
-// Partition dialog - widget pointers, callbacks and dialog routine
-#if defined(HAVE_CHACO) || defined(HAVE_METIS)
-
-// Forward declarations of some callbacks
-void partition_opt_chaco_globalalg_cb(Fl_Widget *widget, void *data);
-void partition_opt_architecture_cb(Fl_Widget *widget, void *data);
-void partition_opt_num_partitions_cb(Fl_Widget *widget, void *data);
-void partition_opt_spectralcheck_cb(Fl_Widget *widget, void *data);
-void partition_select_groups_cb(Fl_Widget *widget, void *data);
-
-// Pointers to required widgets
-struct PartitionDialog
-{
-  Fl_Window *window;
-  // Group 0
-  Fl_Choice *choicePartitioner;
-  Fl_Value_Input *inputNumPartition;
-  // Group 1
-  Fl_Choice *choiceChacoAlg;
-  Fl_Toggle_Button *toggleButtonAdvChaco;
-  // Group 2
-  Fl_Choice *choiceArchitecture;
-  Fl_Value_Input *inputNumPartition1;
-  Fl_Value_Input *inputNumPartition2;
-  Fl_Value_Input *inputNumPartition3;
-  Fl_Choice *choiceDivisions;
-  Fl_Value_Input *inputVMax;
-  Fl_Choice *choiceEigensolver;
-  Fl_Value_Input *inputEigtol;
-  Fl_Choice *choiceLocalAlgorithm;
-  Fl_Value_Input *inputSeed;
-  Fl_Check_Button *checkButtonRefPart;
-  Fl_Check_Button *checkButtonIntVert;
-  Fl_Check_Button *checkButtonRefMap;
-  Fl_Check_Button *checkButtonTermProp;
-  // Group 3
-  Fl_Choice *choiceMetisAlg;
-  Fl_Toggle_Button *toggleButtonAdvMetis;
-  // Group 4
-  Fl_Choice *choiceEdgeMatch;
-  Fl_Choice *choiceRefineAlg;
-  void write_all_options()
-  {
-    // Group 0
-    CTX.mesh.partition_options.partitioner = choicePartitioner->value() + 1;
-    CTX.mesh.partition_options.num_partitions =
-      static_cast<int>(inputNumPartition->value());
-
-    // Group 1
-    CTX.mesh.partition_options.global_method = choiceChacoAlg->value() + 1;
-
-    // Group 2
-    CTX.mesh.partition_options.architecture = choiceArchitecture->value();
-    switch(CTX.mesh.partition_options.architecture) {
-    case 0:
-      CTX.mesh.partition_options.ndims_tot =
-        static_cast<int>(inputNumPartition1->value());
-      break;
-    case 3:
-      CTX.mesh.partition_options.mesh_dims[2] =
-        static_cast<int>(inputNumPartition3->value());
-    case 2:
-      CTX.mesh.partition_options.mesh_dims[1] =
-        static_cast<int>(inputNumPartition2->value());
-    case 1:
-      CTX.mesh.partition_options.mesh_dims[0] =
-        static_cast<int>(inputNumPartition1->value());
-      break;
-    }
-    CTX.mesh.partition_options.ndims = choiceDivisions->value() + 1;
-    CTX.mesh.partition_options.vmax = static_cast<int>(inputVMax->value());
-    CTX.mesh.partition_options.rqi_flag = choiceEigensolver->value();
-    CTX.mesh.partition_options.eigtol = inputEigtol->value();
-    CTX.mesh.partition_options.local_method = choiceLocalAlgorithm->value() + 1;
-    CTX.mesh.partition_options.seed = static_cast<long>(inputSeed->value());
-    CTX.mesh.partition_options.refine_partition = checkButtonRefPart->value();
-    CTX.mesh.partition_options.internal_vertices = checkButtonIntVert->value();
-    CTX.mesh.partition_options.refine_map = checkButtonRefMap->value();
-    CTX.mesh.partition_options.terminal_propogation =
-      checkButtonTermProp->value();
-  
-    // Group 3
-    CTX.mesh.partition_options.algorithm = choiceMetisAlg->value() + 1;
-
-    // Group 4
-    CTX.mesh.partition_options.edge_matching = choiceEdgeMatch->value() + 1;
-    CTX.mesh.partition_options.refine_algorithm = choiceRefineAlg->value() + 1;
-  }
-  void read_all_options()
-  {
-    // Group 0
-    choicePartitioner->value(CTX.mesh.partition_options.partitioner - 1);
-    inputNumPartition->value(CTX.mesh.partition_options.num_partitions);
-
-    // Group 1
-    choiceChacoAlg->value(CTX.mesh.partition_options.global_method - 1);
-
-    // Group 2
-    choiceArchitecture->value(CTX.mesh.partition_options.architecture);
-    switch(CTX.mesh.partition_options.architecture) {
-    case 0:
-      inputNumPartition1->value(CTX.mesh.partition_options.ndims_tot);
-      break;
-    case 1:
-      inputNumPartition1->value(CTX.mesh.partition_options.mesh_dims[0]);
-      break;
-    }
-    inputNumPartition2->value(CTX.mesh.partition_options.mesh_dims[1]);
-    inputNumPartition3->value(CTX.mesh.partition_options.mesh_dims[2]);
-    choiceDivisions->value(CTX.mesh.partition_options.ndims - 1);
-    inputVMax->value(CTX.mesh.partition_options.vmax);
-    choiceEigensolver->value(CTX.mesh.partition_options.rqi_flag);
-    inputEigtol->value(CTX.mesh.partition_options.eigtol);
-    choiceLocalAlgorithm->value(CTX.mesh.partition_options.local_method - 1);
-    inputSeed->value(CTX.mesh.partition_options.seed);
-    checkButtonRefPart->value(CTX.mesh.partition_options.refine_partition);
-    checkButtonIntVert->value(CTX.mesh.partition_options.internal_vertices);
-    checkButtonRefMap->value(CTX.mesh.partition_options.refine_map);
-    checkButtonTermProp->value(CTX.mesh.partition_options.terminal_propogation);
-  
-    // Group 3
-    choiceMetisAlg->value(CTX.mesh.partition_options.algorithm - 1);
-
-    // Group 4
-    choiceEdgeMatch->value(CTX.mesh.partition_options.edge_matching - 1);
-    choiceRefineAlg->value(CTX.mesh.partition_options.refine_algorithm - 1);
-
-    // Call all callbacks to ensure consistent options
-    partition_opt_chaco_globalalg_cb(choiceChacoAlg, this);
-    partition_opt_architecture_cb(choiceArchitecture, this);
-    partition_opt_num_partitions_cb(inputNumPartition, this);
-    partition_opt_spectralcheck_cb(choiceDivisions, this);
-  }
-};
-
-// Chaco option considerations based on the global algorithm
-void partition_opt_chaco_globalalg_cb(Fl_Widget *widget, void *data)
-{
-  PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
-  unsigned opt = dlg->choiceChacoAlg->value();
-  if(opt == 0) {
-    dlg->choiceLocalAlgorithm->value(0);
-    dlg->choiceLocalAlgorithm->deactivate();
-  }
-  else {
-    dlg->choiceLocalAlgorithm->activate();
-  }
-  if(opt == 1) {
-    dlg->choiceEigensolver->value(1);
-    dlg->choiceEigensolver->activate();
-    if(dlg->choiceDivisions->value() != 0 &&
-       dlg->checkButtonTermProp->value())
-      dlg->choiceDivisions->value(0);
-  }
-  else {
-    dlg->choiceEigensolver->deactivate();
-  }
-}
-
-// Chaco option considerations based on the architecture
-void partition_opt_architecture_cb(Fl_Widget *widget, void *data)
-{
-  PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
-  switch(static_cast<int>(dlg->choiceArchitecture->value())) {
-  case 0:
-    dlg->inputNumPartition1->maximum(31);
-    dlg->inputNumPartition2->deactivate();
-    dlg->inputNumPartition3->deactivate();
-    break;
-  case 1:
-    dlg->inputNumPartition1->maximum(std::numeric_limits<int>::max());
-    dlg->inputNumPartition2->deactivate();
-    dlg->inputNumPartition3->deactivate();
-    break;
-  case 2:
-    dlg->inputNumPartition1->maximum(std::numeric_limits<int>::max());
-    dlg->inputNumPartition2->activate();
-    dlg->inputNumPartition3->deactivate();
-    break;
-  case 3:
-    dlg->inputNumPartition1->maximum(std::numeric_limits<int>::max());
-    dlg->inputNumPartition2->activate();
-    dlg->inputNumPartition3->activate();
-    break;
-  }
-  // Set topology dimensions from main number of partitions
-  partition_opt_num_partitions_cb(dlg->inputNumPartition, data);
-}
-
-// Match several locations that provide a partition number
-void partition_opt_num_partitions_cb(Fl_Widget *widget, void *data)
-{
-  PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
-  unsigned val = 0;
-  if(widget == dlg->inputNumPartition) {
-    val = static_cast<unsigned>(dlg->inputNumPartition->value());
-    switch(static_cast<int>(dlg->choiceArchitecture->value())) {
-    case 0:
-      {
-        unsigned y = 0;
-        unsigned x = val;
-        while(x >>= 1) ++y;
-        dlg->inputNumPartition1->value(y);
-      }
-      break;
-    case 1:
-    case 2:
-    case 3:
-      dlg->inputNumPartition1->value(val);
-      dlg->inputNumPartition2->value(1);
-      dlg->inputNumPartition3->value(1);
-      break;
-    }
-  }
-  else {
-    switch(static_cast<int>(dlg->choiceArchitecture->value())) {
-    case 0:
-      {
-        unsigned x = static_cast<unsigned>(dlg->inputNumPartition1->value());
-        val = 1 << x;
-      }
-      break;
-    case 1:
-      val = static_cast<unsigned>(dlg->inputNumPartition1->value());
-      break;
-    case 2:
-      val = static_cast<unsigned>
-        (dlg->inputNumPartition1->value()*dlg->inputNumPartition2->value());
-      break;
-    case 3:
-      val = static_cast<unsigned>
-        (dlg->inputNumPartition1->value()*dlg->inputNumPartition2->value()*
-         dlg->inputNumPartition3->value());
-      break;
-    }
-    dlg->inputNumPartition->value(val);
-  }
-  switch(dlg->choicePartitioner->value()) {
-  case 0:
-    if(val <= 3) {
-      dlg->choiceDivisions->value(0);
-      dlg->choiceDivisions->mode(1, FL_MENU_INACTIVE);
-      dlg->choiceDivisions->mode(2, FL_MENU_INACTIVE);
-    }
-    else if(val <= 7) {
-      if(dlg->choiceDivisions->value() > 1) dlg->choiceDivisions->value(1);
-      dlg->choiceDivisions->mode(1, 0);
-      dlg->choiceDivisions->mode(2, FL_MENU_INACTIVE);
-    }
-    else {
-      dlg->choiceDivisions->mode(1, 0);
-      dlg->choiceDivisions->mode(2, 0);
-    }
-    break;
-  case 1:
-    dlg->choiceMetisAlg->value((val <= 8) ? 0: 1);
-    break;
-  }
-}
-
-// Option considerations for the Chaco spectral algorithm
-void partition_opt_spectralcheck_cb(Fl_Widget *widget, void *data)
-{
-  PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
-  if(dlg->choiceChacoAlg->value() == 1) {
-    if(widget == dlg->choiceDivisions && dlg->choiceDivisions->value() != 0)
-      dlg->checkButtonTermProp->value(0);
-    else if(widget == dlg->checkButtonTermProp)
-      dlg->choiceDivisions->value(0);
-  }
-}
-
-void partition_defaults_cb(Fl_Widget *widget, void *data)
-{
-  PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
-  CTX.mesh.partition_options.setDefaults();
-  dlg->read_all_options();
-  partition_select_groups_cb(dlg->choicePartitioner, data);
-}
-
-void partition_partition_cb(Fl_Widget *widget, void *data)
-{
-  PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
-
-  // Write all options
-  dlg->write_all_options();
-
-  // Partition the mesh
-  int ier = PartitionMesh(GModel::current(), CTX.mesh.partition_options);
-
-  // Update the screen
-  if(!ier) {
-    opt_mesh_zone_definition(0, GMSH_SET, 1.);  // Define zone by partition
-    opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 3.);
-    CTX.mesh.changed = ENT_ALL;
-    Draw();
-  }
-}
-
-void partition_cancel_cb(Fl_Widget *widget, void *data)
-{
-  PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
-  dlg->window->hide();
-  Fl::delete_widget(dlg->window);
-}
-
-// Select groups to display
-void partition_select_groups_cb(Fl_Widget *widget, void *data)
-{
-  PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
-  // If this callback was made by the "Advanced" toggle buttons, set the label
-  if(dlg->toggleButtonAdvChaco == widget) {
-    dlg->toggleButtonAdvChaco->label((dlg->toggleButtonAdvChaco->value()) ?
-                                     "Advanced @-28->" : "Advanced @-22->");
-  }
-  else if(dlg->toggleButtonAdvMetis == widget) {
-    dlg->toggleButtonAdvMetis->label((dlg->toggleButtonAdvMetis->value()) ?
-                                     "Advanced @-28->" : "Advanced @-22->");
-  }
-  const int WB = 7;                     // Window border
-  // Get the groups
-  Fl_Widget *const *g = dlg->window->array();
-  int y = g[0]->h();
-  switch(dlg->choicePartitioner->value()) {
-  case 0:
-    g[1]->show();
-    y += g[1]->h();
-    if(dlg->toggleButtonAdvChaco->value()) {
-      g[2]->show();
-      y += g[2]->h();
-    }
-    else g[2]->hide();
-    g[3]->hide();
-    g[4]->hide();
-    break;
-  case 1:
-    g[3]->show();
-    y += g[3]->h();
-    if(dlg->toggleButtonAdvMetis->value()) {
-      g[4]->show();
-      y += g[4]->h();
-    }
-    else g[4]->hide();
-    g[1]->hide();
-    g[2]->hide();
-    break;
-  }
-  // Reset the vertical position of all widgets in group 6
-  {
-    int yG = y;
-    g[5]->position(g[5]->x(), yG);
-    Fl_Widget *o = static_cast<Fl_Group*>(g[5])->child(0);
-    o->position(o->x(), yG);
-    yG += WB + o->h();
-    o = static_cast<Fl_Group*>(g[5])->child(1);
-    o->position(o->x(), yG);
-    o = static_cast<Fl_Group*>(g[5])->child(2);
-    o->position(o->x(), yG);
-    o = static_cast<Fl_Group*>(g[5])->child(3);
-    o->position(o->x(), yG);
-    yG += WB + o->h();
-  }
-  y += g[5]->h();
-  // Resize and redraw the window
-  dlg->window->size(dlg->window->w(), y);
-  dlg->window->redraw();
-}
-
-void partition_dialog()
-{
-  static PartitionDialog dlg;
-
-  static Fl_Menu_Item partitionTypeMenu[] = {
-    {"Chaco", 0, 0, 0},
-    {"Metis", 0, 0, 0},
-    {0}
-  };
-
-  static Fl_Menu_Item chacoAlgMenu[] = {
-    {"Multilevel-KL", 0, 0, 0},
-    {"Spectral", 0, 0, 0},
-    {"Inertial", 0, 0, 0, FL_MENU_INACTIVE},
-    {"Linear", 0, 0, 0},
-    {"Random", 0, 0, 0},
-    {"Scattered", 0, 0, 0},
-    {0}
-  };
-
-  static Fl_Menu_Item metisAlgMenu[] = {
-    {"Recursive", 0, 0, 0},
-    {"K-way", 0, 0, 0},
-    {0}
-  };
-
-  static Fl_Menu_Item chachoArchitectureMenu[] = {
-    {"Hypercube", 0, 0, 0},
-    {"1-D Mesh", 0, 0, 0},
-    {"2-D Mesh", 0, 0, 0},
-    {"3-D Mesh", 0, 0, 0},
-    {0}
-  };
-
-  static Fl_Menu_Item chachoLocalMethodMenu[] = {
-    {"Kernighan-Lin", 0, 0, 0},
-    {"None", 0, 0, 0},
-    {0}
-  };
-
-  static Fl_Menu_Item chachoEigSolMenu[] = {
-    {"Lanczos", 0, 0, 0},
-    {"Multilevel RQI/Symmlq", 0, 0, 0},
-    {0}
-  };
-
-  static Fl_Menu_Item chachoDivisionsMenu[] = {
-    {"Bisection", 0, 0, 0},
-    {"Quadrisection", 0, 0, 0},
-    {"Octasection", 0, 0, 0},
-    {0}
-  };
-
-  static Fl_Menu_Item metisEdgeMatchingMenu[] = {
-    {"Random", 0, 0, 0},
-    {"Heavy-edge", 0, 0, 0},
-    {"Sorted heavy-edge", 0, 0, 0},
-    {0}
-  };
-
-  static Fl_Menu_Item metisRefineAlgMenu[] = {
-    {"Random", 0, 0, 0},
-    {"Greedy", 0, 0, 0},
-    {"Random (Min. Conn.)", 0, 0, 0},
-    {0}
-  };
-
-  const int IW = 10*GetFontSize();      // Input field width
-  const int BH = 2*GetFontSize() + 1;   // button height
-  const int BB = 7*GetFontSize() + 9;   // Width of a button with an internal
-                                        // label
-  const int WB = 7;                     // Window border
-
-  const int h = 6 * WB + 3 * BH + 4;    // This will be resized based on groups
-                                        // that are displayed
-  const int w = 3 * BB + IW + 3 * WB;   // Window width
-  int y = 0;
-
-  dlg.window = new Dialog_Window(w, h, CTX.non_modal_windows,
-                                 "Partitioner Options");
-  dlg.window->box(GMSH_WINDOW_BOX);
-  dlg.window->callback((Fl_Callback *)partition_cancel_cb, &dlg);
-
-  // Main options group [0]
-  {
-    const int GH = BH + 2 + 3*WB;
-    y += WB;
-    Fl_Group *g = new Fl_Group(0, y, w, GH);
-    // Partitioner
-    {
-      Fl_Choice *const o = new Fl_Choice(WB, y, BB, BH, "Partitioner");
-      dlg.choicePartitioner = o;
-      o->menu(partitionTypeMenu);
-      o->callback((Fl_Callback *)partition_select_groups_cb, &dlg);
-#if !defined(HAVE_CHACO)
-      o->mode(0, FL_MENU_INACTIVE);
-#endif
-#if !defined(HAVE_METIS)
-      o->mode(1, FL_MENU_INACTIVE);
-#endif
-      o->align(FL_ALIGN_RIGHT);
-    }
-    // Number of partitions
-    {
-      Fl_Value_Input *const o = new Fl_Value_Input
-        (2*WB + 2*BB, y, IW, BH, "Number of\nPartitions");
-      dlg.inputNumPartition = o;
-      o->minimum(1);
-      o->maximum(std::numeric_limits<int>::max());
-      o->callback((Fl_Callback *)partition_opt_num_partitions_cb, &dlg);
-      o->step(1);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    y += BH + WB;
-    // Box (line)
-    { Fl_Box* o = new Fl_Box(WB, y, w - 2*WB, 2);
-      o->box(FL_ENGRAVED_FRAME);
-      o->labeltype(FL_NO_LABEL);
-    }
-    y += 2 + WB;
-    g->end();
-    g->show();
-  }
-  const int yMain = y;
-
-  // Chaco options group [1]
-  {
-    const int GH = BH + WB;
-    Fl_Group *g = new Fl_Group(0, y, w, GH);
-    // Algorithm
-    {
-      Fl_Choice *const o = new Fl_Choice(WB, y, IW, BH, "Global Algorithm");
-      dlg.choiceChacoAlg = o;
-      o->menu(chacoAlgMenu);
-      o->callback((Fl_Callback *)partition_opt_chaco_globalalg_cb, &dlg);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    // Advanced Button
-    {
-      Fl_Toggle_Button *const o = new Fl_Toggle_Button
-        (w - (WB + BB), y, BB, BH, "Advanced @-22->");
-      dlg.toggleButtonAdvChaco = o;
-      o->callback((Fl_Callback *)partition_select_groups_cb, &dlg);
-    }
-    y += BH + WB;
-    g->end();
-    g->hide();
-  }
-
-  // Chaco advanced options group [2]
-  {
-    const int GH = 2 + WB + 5*(BH + WB) + BH + 6;
-    Fl_Group *g = new Fl_Group(0, y, w, GH);
-    // Box (line)
-    {
-      Fl_Box *const o = new Fl_Box(WB, y, w - 2*WB, 2);
-      o->box(FL_ENGRAVED_FRAME);
-      o->labeltype(FL_NO_LABEL);
-    }
-    y += 2 + WB + 1;  // +1 for multiline label
-    // Architecture
-    {
-      Fl_Choice *const o = new Fl_Choice(WB, y, BB, BH, "Architecture");
-      dlg.choiceArchitecture = o;
-      o->menu(chachoArchitectureMenu);
-      o->callback((Fl_Callback *)partition_opt_architecture_cb, &dlg);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    // Mesh_dim1
-    {
-      Fl_Value_Input *const o = new Fl_Value_Input
-        (2*WB + 2*BB, y, IW/3, BH);
-      dlg.inputNumPartition1 = o;
-      o->minimum(1);
-      o->maximum(std::numeric_limits<int>::max());
-      o->callback((Fl_Callback *)partition_opt_num_partitions_cb, &dlg);
-      o->step(1);
-    }
-    // Mesh_dim2
-    {
-      Fl_Value_Input *const o = new Fl_Value_Input
-        (2*WB + 2*BB + IW/3, y, IW/3, BH);
-      dlg.inputNumPartition2 = o;
-      o->minimum(1);
-      o->maximum(std::numeric_limits<int>::max());
-      o->callback((Fl_Callback *)partition_opt_num_partitions_cb, &dlg);
-      o->step(1);
-    }
-    // Mesh_dim3
-    {
-      Fl_Value_Input *const o = new Fl_Value_Input
-        (2*WB + 2*BB + 2*IW/3, y, IW/3, BH);
-      dlg.inputNumPartition3 = o;
-      o->minimum(1);
-      o->maximum(std::numeric_limits<int>::max());
-      o->callback((Fl_Callback *)partition_opt_num_partitions_cb, &dlg);
-      o->step(1);
-    }
-    // Label
-    {
-      Fl_Box *const o = new Fl_Box(2*WB + 2*BB + IW, y, 0, BH,
-                                   "Topology\ndimensions");
-      o->align(FL_ALIGN_RIGHT);
-    }
-    y += BH + WB + 2;  // +2 for multiline labels
-    // Divisions
-    {
-      Fl_Choice *const o = new Fl_Choice(WB, y, BB, BH, "Divisions");
-      dlg.choiceDivisions = o;
-      o->copy(chachoDivisionsMenu);
-      o->callback((Fl_Callback *)partition_opt_spectralcheck_cb, &dlg);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    // Vmax
-    {
-      Fl_Value_Input *const o = new Fl_Value_Input
-        (2*WB + 2*BB, y, IW, BH, "Max. vertices in\ncoarse graph");
-      dlg.inputVMax = o;
-      o->minimum(2);
-      o->maximum(std::numeric_limits<double>::max());
-      o->step(1);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    y += BH + WB + 2;  // +2 for multiline labels
-    // Eigensolver
-    {
-      Fl_Choice *const o = new Fl_Choice(WB, y, BB, BH, "Eigensolver");
-      dlg.choiceEigensolver = o;
-      o->menu(chachoEigSolMenu);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    // Eigtol
-    {
-      Fl_Value_Input *const o = new Fl_Value_Input
-        (2*WB + 2*BB, y, IW, BH, "Eigensolver\ntolerance");
-      dlg.inputEigtol = o;
-      o->minimum(std::numeric_limits<double>::min());
-      o->maximum(std::numeric_limits<double>::max());
-      o->step(5.E-3);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    y += BH + WB + 1;  // +1 for multiline label
-    // Local method
-    {
-      Fl_Choice *const o = new Fl_Choice(WB, y, BB, BH, "Local algorithm");
-      dlg.choiceLocalAlgorithm = o;
-      o->menu(chachoLocalMethodMenu);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    // Seed
-    {
-      Fl_Value_Input *const o = new Fl_Value_Input
-        (2*WB + 2*BB, y, IW, BH, "Seed");
-      dlg.inputSeed = o;
-      o->minimum(1);
-      o->maximum(std::numeric_limits<int>::max());
-      o->step(1);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    y += BH + WB;
-    // Parameters
-    {
-      Fl_Check_Button *const o = new Fl_Check_Button(WB, y, 2*WB, BH,
-                                                     "Refine partition");
-      dlg.checkButtonRefPart = o;
-      o->align(FL_ALIGN_RIGHT);
-    }
-    {
-      Fl_Check_Button *const o = new Fl_Check_Button(2*WB + 2*BB, y, 2*WB, BH,
-                                                     "Internal vertices");
-      dlg.checkButtonIntVert = o;
-      o->align(FL_ALIGN_RIGHT);
-    }
-    y += BH;
-    {
-      Fl_Check_Button *const o = new Fl_Check_Button(WB, y, 2*WB, BH,
-                                                     "Refine map");
-      dlg.checkButtonRefMap = o;
-      o->align(FL_ALIGN_RIGHT);
-    }
-    {
-      Fl_Check_Button *const o = new Fl_Check_Button(2*WB + 2*BB, y, 2*WB, BH,
-                                                     "Terminal propogation");
-      dlg.checkButtonTermProp = o;
-      o->callback((Fl_Callback *)partition_opt_spectralcheck_cb, &dlg);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    y += BH + WB;
-    g->end();
-    g->hide();
-  }
-
-  // Metis options group [3]
-  y = yMain;
-  {
-    const int GH = BH + WB;
-    Fl_Group *g = new Fl_Group(0, y, w, GH);
-    // Algorithm
-    {
-      Fl_Choice *const o = new Fl_Choice(WB, y, BB, BH, "Algorithm");
-      dlg.choiceMetisAlg = o;
-      o->menu(metisAlgMenu);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    // Advanced Button
-    {
-      Fl_Toggle_Button *const o = new Fl_Toggle_Button
-        (w - (WB + BB), y, BB, BH, "Advanced @-22->");
-      dlg.toggleButtonAdvMetis = o;
-      o->callback((Fl_Callback *)partition_select_groups_cb, &dlg);
-    }
-    y += BH + WB;
-    g->end();
-    g->hide();
-  }
-
-  // Metis advanced option group [4]
-  {
-    const int GH = 2 + WB + (BH + WB) + 2;
-    Fl_Group *g = new Fl_Group(0, y, w, GH);
-    // Box (line)
-    {
-      Fl_Box *const o = new Fl_Box(WB, y, w - 2*WB, 2);
-      o->box(FL_ENGRAVED_FRAME);
-      o->labeltype(FL_NO_LABEL);
-    }
-    y += 2 + WB + 1;  // +1 for multiline label
-    // Edge matching algorithm
-    {
-      Fl_Choice *const o = new Fl_Choice(WB, y, BB, BH, "Edge matching");
-      dlg.choiceEdgeMatch = o;
-      o->menu(metisEdgeMatchingMenu);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    // Refinement algorithm
-    {
-      Fl_Choice *const o = new Fl_Choice(2*WB + 2*BB, y, BB, BH,
-                                         "Refinement\nalgorithm");
-      dlg.choiceRefineAlg = o;
-      o->menu(metisRefineAlgMenu);
-      o->align(FL_ALIGN_RIGHT);
-    }
-    y += BH + WB + 1;  // +1 for multiline label
-    g->end();
-    g->hide();
-  }
-  
-  // Dialog termination group [5]
-  {
-    const int GH = 2 + BH + 2*WB;
-    Fl_Group *g = new Fl_Group(0, y, w, GH);
-    // Box (line) [0]
-    {
-      Fl_Box *const o = new Fl_Box(WB, y, w - 2*WB, 2);
-      o->box(FL_ENGRAVED_FRAME);
-      o->labeltype(FL_NO_LABEL);
-    }
-    y += 2 + WB;
-    // Defaults Button [1]
-    {
-      Fl_Button *const o = new Fl_Button
-         (WB, y, BB, BH, "Defaults");
-      o->callback((Fl_Callback *)partition_defaults_cb, &dlg);
-    }
-    // Partition Button [2]
-    {
-      Fl_Return_Button *const o = new Fl_Return_Button
-        (w - 2*(WB + BB), y, BB, BH, "Partition");
-      o->callback((Fl_Callback *)partition_partition_cb, &dlg);
-    }
-    // Cancel Button [3]
-    {
-      Fl_Button *const o = new Fl_Button(w - (WB + BB), y, BB, BH, "Cancel");
-      o->callback((Fl_Callback *)partition_cancel_cb, &dlg);
-    }
-    y += BH + WB;
-    g->end();
-    g->show();
-  }
-
-  dlg.window->end();
-  dlg.window->hotspot(dlg.window);
-
-  dlg.read_all_options();
-  // Set the groups to be initally displayed
-  partition_select_groups_cb(dlg.window, &dlg);
-  dlg.window->show();
-}
-
-#endif  // compiling partition dialog

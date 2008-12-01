@@ -11,7 +11,6 @@
 #define CALLBACK_ARGS   Fl_Widget* w, void* data
 
 void ManualPlay(int time, int step);
-int SetGlobalShortcut(int event);
 
 // Common callbacks
 

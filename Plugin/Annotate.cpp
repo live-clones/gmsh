@@ -8,9 +8,10 @@
 #include "Context.h"
 
 #if defined(HAVE_FLTK)
-#include "GmshUI.h"
-#include "GUI.h"
+#include <FL/gl.h>
+#include "drawContext.h"
 #include "Draw.h"
+#include "GUI.h" // FIXME for GetFontSize
 #endif
 
 extern Context_T CTX;

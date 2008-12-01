@@ -89,15 +89,14 @@ CutPlane${OBJEXT}: CutPlane.cpp CutPlane.h Levelset.h Plugin.h \
   ../Post/PView.h ../Geo/SPoint3.h ../Post/PViewDataList.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Common/ListUtils.h ../Numeric/GmshMatrix.h ../Common/Context.h \
-  ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h ../Common/GmshUI.h \
+  ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h \
   ../Graphics/drawContext.h ../Fltk/Draw.h
 CutSphere${OBJEXT}: CutSphere.cpp CutSphere.h Levelset.h Plugin.h \
   ../Common/Options.h ../Post/ColorTable.h ../Common/GmshMessage.h \
   ../Post/PView.h ../Geo/SPoint3.h ../Post/PViewDataList.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Common/ListUtils.h ../Numeric/GmshMatrix.h ../Common/Context.h \
-  ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h ../Common/GmshUI.h \
-  ../Fltk/Draw.h
+  ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h ../Fltk/Draw.h
 CutMap${OBJEXT}: CutMap.cpp CutMap.h Levelset.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/GmshMessage.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
@@ -115,7 +114,7 @@ CutParametric${OBJEXT}: CutParametric.cpp ../Post/OctreePost.h \
   ../Post/PView.h ../Geo/SPoint3.h ../Post/PViewDataList.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Common/ListUtils.h ../Numeric/GmshMatrix.h ../Common/Context.h \
-  ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h ../Common/GmshUI.h \
+  ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h \
   ../Graphics/drawContext.h ../Fltk/Draw.h
 Lambda2${OBJEXT}: Lambda2.cpp Lambda2.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/GmshMessage.h ../Post/PView.h \
@@ -142,15 +141,14 @@ StreamLines${OBJEXT}: StreamLines.cpp StreamLines.h Plugin.h ../Common/Options.h
   ../Numeric/GmshMatrix.h ../Post/OctreePost.h ../Common/Octree.h \
   ../Common/OctreeInternals.h ../Common/Context.h ../Geo/CGNSOptions.h \
   ../Mesh/PartitionOptions.h ../Post/PViewOptions.h ../Post/ColorTable.h \
-  ../Common/GmshUI.h ../Graphics/drawContext.h ../Fltk/Draw.h
+  ../Graphics/drawContext.h ../Fltk/Draw.h
 CutGrid${OBJEXT}: CutGrid.cpp ../Post/OctreePost.h ../Common/Octree.h \
   ../Common/OctreeInternals.h CutGrid.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/GmshMessage.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/ListUtils.h \
   ../Numeric/GmshMatrix.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h ../Common/GmshUI.h ../Graphics/drawContext.h \
-  ../Fltk/Draw.h
+  ../Mesh/PartitionOptions.h ../Graphics/drawContext.h ../Fltk/Draw.h
 Transform${OBJEXT}: Transform.cpp Transform.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/GmshMessage.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
@@ -282,10 +280,8 @@ Annotate${OBJEXT}: Annotate.cpp Annotate.h Plugin.h ../Common/Options.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/ListUtils.h \
   ../Numeric/GmshMatrix.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h ../Common/GmshUI.h ../Fltk/GUI.h \
-  ../Fltk/Opengl_Window.h ../Graphics/drawContext.h \
-  ../Fltk/Colorbar_Window.h ../Fltk/Popup_Button.h \
-  ../Fltk/SpherePosition_Widget.h ../Mesh/Field.h ../Fltk/Draw.h
+  ../Mesh/PartitionOptions.h ../Graphics/drawContext.h ../Fltk/Draw.h \
+  ../Fltk/GUI.h
 Remove${OBJEXT}: Remove.cpp Remove.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/GmshMessage.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
@@ -297,8 +293,7 @@ Probe${OBJEXT}: Probe.cpp Probe.h Plugin.h ../Common/Options.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/ListUtils.h \
   ../Numeric/GmshMatrix.h ../Common/Context.h ../Geo/CGNSOptions.h \
   ../Mesh/PartitionOptions.h ../Post/OctreePost.h ../Common/Octree.h \
-  ../Common/OctreeInternals.h ../Common/GmshUI.h \
-  ../Graphics/drawContext.h ../Fltk/Draw.h
+  ../Common/OctreeInternals.h ../Graphics/drawContext.h ../Fltk/Draw.h
 HarmonicToTime${OBJEXT}: HarmonicToTime.cpp HarmonicToTime.h Plugin.h \
   ../Common/Options.h ../Post/ColorTable.h ../Common/GmshMessage.h \
   ../Post/PView.h ../Geo/SPoint3.h ../Post/PViewDataList.h \

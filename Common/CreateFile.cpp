@@ -12,7 +12,7 @@
 #include "Options.h"
 
 #if defined(HAVE_FLTK)
-#include "GmshUI.h"
+#include <FL/gl.h>
 #include "gl2ps.h"
 #include "gl2gif.h"
 #include "gl2jpeg.h"

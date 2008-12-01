@@ -2,17 +2,23 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
+
+#include <FL/fl_draw.H>
+#include <FL/Fl_Box.H>
+#include <FL/Fl_Scroll.H>
+#include <FL/Fl_Repeat_Button.H>
+#include "GUI.h"
+#include "projectionEditor.h"
+#include "fileDialogs.h"
 #include "GModelIO_Fourier.h"
 #include "MElement.h"
 #include "Draw.h"
 #include "Options.h"
-#include "Context.h"
 #include "StringUtils.h"
 #include "SelectBuffer.h"
-#include "GUI_Projection.h"
-#include "GUI_Extras.h"
 #include "fourierFace.h"
 #include "GmshMessage.h"
+#include "Context.h"
 
 extern Context_T CTX;
 
@@ -138,20 +144,20 @@ void uvPlot::draw()
 }
 
 projection::projection(fourierProjectionFace *f, int x, int y, int w, int h, 
-                       int BB, int BH, projectionEditor *e) 
+                       int bb, int bh, projectionEditor *e) 
   : face(f)
 {
   group = new Fl_Scroll(x, y, w, h);
   SBoundingBox3d bounds = GModel::current()->bounds();
   FM::ProjectionSurface *ps = (FM::ProjectionSurface*)f->getNativePtr();
   
-  Fl_Toggle_Button *b = new Fl_Toggle_Button(x, y, BB, BH, "Set position");
+  Fl_Toggle_Button *b = new Fl_Toggle_Button(x, y, bb, bh, "Set position");
   b->callback(set_position_cb, e);
   
   { // origin is stored in parameters[0,1,2]
     SPoint3 pc = bounds.center();
     for(int i = 0; i < 3; i++){
-      Fl_Value_Input *v = new Fl_Value_Input(x, y + (1 + i) * BH, BB, BH);
+      Fl_Value_Input *v = new Fl_Value_Input(x, y + (1 + i) * bh, bb, bh);
       parameters.push_back(v);
       v->maximum(bounds.max()[i] + 10. * CTX.lc);
       v->minimum(bounds.min()[i] - 10. * CTX.lc);
@@ -162,12 +168,12 @@ projection::projection(fourierProjectionFace *f, int x, int y, int w, int h,
     ps->SetOrigin(pc[0], pc[1], pc[2]);
     Fl_Repeat_Button *bm[3], *bp[3];
     for(int i = 0; i < 3; i++){
-      new Fl_Box(x + w - BB / 3 - BB / 6, y + (1 + i) * BH, BB / 8, BH, 
+      new Fl_Box(x + w - bb / 3 - bb / 6, y + (1 + i) * bh, bb / 8, bh, 
                  (i == 0) ? "E0" : (i == 1) ? "E1" : "E2");
-      bp[i] = new Fl_Repeat_Button(x + w - BB / 3, y + (1 + i) * BH, 
-                                   BB / 8, BH / 2, "+");
-      bm[i] = new Fl_Repeat_Button(x + w - BB / 3, y + (1 + i) * BH + BH / 2,
-                                   BB / 8, BH / 2, "-");
+      bp[i] = new Fl_Repeat_Button(x + w - bb / 3, y + (1 + i) * bh, 
+                                   bb / 8, bh / 2, "+");
+      bm[i] = new Fl_Repeat_Button(x + w - bb / 3, y + (1 + i) * bh + bh / 2,
+                                   bb / 8, bh / 2, "-");
     }
     bp[0]->callback(translate_p0_cb, e);
     bp[1]->callback(translate_p1_cb, e);
@@ -177,22 +183,22 @@ projection::projection(fourierProjectionFace *f, int x, int y, int w, int h,
     bm[2]->callback(translate_m2_cb, e);
   }
   { // normal is stored in parameters[3,4,5]
-    Fl_Value_Input *v1 = new Fl_Value_Input(x, y + 4 * BH, BB / 3, BH);
+    Fl_Value_Input *v1 = new Fl_Value_Input(x, y + 4 * bh, bb / 3, bh);
     parameters.push_back(v1);
     v1->maximum(1.); v1->minimum(-1.); v1->step(0.01); v1->value(0.);
-    Fl_Value_Input *v2 = new Fl_Value_Input(x + BB / 3, y + 4 * BH, BB / 3, BH);
+    Fl_Value_Input *v2 = new Fl_Value_Input(x + bb / 3, y + 4 * bh, bb / 3, bh);
     parameters.push_back(v2);
     v2->maximum(1.); v2->minimum(-1.); v2->step(0.01); v2->value(0.);
-    Fl_Value_Input *v3 = new Fl_Value_Input(x + 2 * BB / 3, y + 4 * BH, BB - 2 * BB / 3, BH);
+    Fl_Value_Input *v3 = new Fl_Value_Input(x + 2 * bb / 3, y + 4 * bh, bb - 2 * bb / 3, bh);
     parameters.push_back(v3);
     v3->maximum(1.); v3->minimum(-1.); v3->step(0.01); v3->value(1.);
     v3->label("Normal");
-    Fl_Button *b = new Fl_Button(x + w - BB / 3, y + 4 * BH + BH / 4, BB / 8, BH / 2, "-");
+    Fl_Button *b = new Fl_Button(x + w - bb / 3, y + 4 * bh + bh / 4, bb / 8, bh / 2, "-");
     b->callback(invert_normal_cb, e);
     b->tooltip("Invert normal");
   }
   { // rotation is stored in parameters[6]
-    Fl_Value_Input *v = new Fl_Value_Input(x, y + 5 * BH, BB, BH, "Rotation");
+    Fl_Value_Input *v = new Fl_Value_Input(x, y + 5 * bh, bb, bh, "Rotation");
     v->maximum(-180.);
     v->minimum(180.);
     v->step(0.1);
@@ -201,7 +207,7 @@ projection::projection(fourierProjectionFace *f, int x, int y, int w, int h,
   }
   { // scale is stored in parameters[7,8,9]
     for(int i = 0; i < 3; i++){
-      Fl_Value_Input *v = new Fl_Value_Input(x, y + (6 + i) * BH, BB, BH);
+      Fl_Value_Input *v = new Fl_Value_Input(x, y + (6 + i) * bh, bb, bh);
       parameters.push_back(v);
       v->maximum(CTX.lc * 10.);
       v->minimum(CTX.lc / 100.);
@@ -213,7 +219,7 @@ projection::projection(fourierProjectionFace *f, int x, int y, int w, int h,
 
   // other parameters are stored in parameters[10,...]
   for(int i = 0; i < ps->GetNumParameters(); i++){
-    Fl_Value_Input *v = new Fl_Value_Input(x, y + (9 + i) * BH, BB, BH);
+    Fl_Value_Input *v = new Fl_Value_Input(x, y + (9 + i) * bh, bb, bh);
     v->maximum(10. * CTX.lc);
     v->minimum(-10. * CTX.lc);
     v->step(CTX.lc / 100.);
@@ -241,11 +247,11 @@ projectionEditor::projectionEditor()
   printf("currentSize = %d\n",m->getFMInternals()->current()->GetNumGroups());
 
   // construct GUI in terms of standard sizes
-  const int BH = 2 * GetFontSize() + 1, BB = 7 * GetFontSize(), WB = 7;
+  int _fontsize = GetFontSize();
   const int width = (int)(3.75 * BB), height = 25 * BH;
   
   // create all widgets (we construct this once, we never deallocate!)
-  _window = new Dialog_Window(width, height, CTX.non_modal_windows, "Reparameterize");
+  _window = new dialogWindow(width, height, CTX.non_modal_windows, "Reparameterize");
   
   new Fl_Box(WB, WB + BH / 2, BB / 2, BH, "Select:");
   
@@ -415,6 +421,12 @@ void projectionEditor::load(fourierProjectionFace *face, std::string tag)
                                   _paramWin[3], _paramWin[4], _paramWin[5], this);
   _projections.push_back(p);
   _window->add(p->group);
+}
+
+void projectionEditor::show()
+{ 
+  _window->show(); 
+  select_cb(0, this); 
 }
 
 int projectionEditor::getSelectionMode() 

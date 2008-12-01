@@ -16,17 +16,19 @@
 // we need to use a cheap hack to get to it. Even worse is the hack
 // used to get the focus on the file input widget. Sigh...
 
-class File_Picker : public Fl_File_Chooser {
-private:
+class fileChooser : public Fl_File_Chooser {
+ private:
   Fl_Window *_win;
   Fl_File_Input *_in;
-public:
-  File_Picker(const char *d, const char *p, int t, const char *title)
-    : Fl_File_Chooser(d, p, t, title) { 
+ public:
+  fileChooser(const char *d, const char *p, int t, const char *title)
+    : Fl_File_Chooser(d, p, t, title) 
+  { 
     _win = dynamic_cast<Fl_Window*>(newButton->parent()->parent()); 
     _in = dynamic_cast<Fl_File_Input *>(previewButton->parent()->parent()->resizable());
   }
-  void show(){
+  void show()
+  {
     if(_win){
       _win->show();
       rescan(); // necessary since fltk 1.1.7

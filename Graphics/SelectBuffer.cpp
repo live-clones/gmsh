@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include "GmshUI.h"
+#include <FL/gl.h>
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -15,7 +15,7 @@
 extern Context_T CTX;
 
 class hit{
-public:
+ public:
   GLuint type, ient, depth, type2, ient2;
   hit(GLuint t, GLuint i, GLuint d, GLuint t2=0, GLuint i2=0) 
     : type(t), ient(i), depth(d), type2(t2), ient2(i2) {}
@@ -72,7 +72,7 @@ bool ProcessSelectionBuffer(drawContext *ctx, int entityType,
   glSelectBuffer(size, selectionBuffer);
 
   glRenderMode(GL_SELECT);
-  CTX.render_mode = GMSH_SELECT;
+  ctx->render_mode = drawContext::GMSH_SELECT;
 
   glInitNames();
   glPushMatrix();
@@ -83,7 +83,7 @@ bool ProcessSelectionBuffer(drawContext *ctx, int entityType,
   glPopMatrix();
 
   GLint numhits = glRenderMode(GL_RENDER);
-  CTX.render_mode = GMSH_RENDER;
+  ctx->render_mode = drawContext::GMSH_RENDER;
 
   if(!numhits){ // no hits
     delete [] selectionBuffer;

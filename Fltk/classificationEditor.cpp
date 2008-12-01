@@ -3,14 +3,15 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include "GUI_Classifier.h"
+#include <Fl/Fl_Tabs.H>
+#include <Fl/Fl_Value_Input.H>
+#include "GUI.h"
+#include "classificationEditor.h"
 #include "Numeric.h"
 #include "Draw.h"
 #include "Options.h"
 #include "Context.h"
 #include "SelectBuffer.h"
-#include "GUI_Projection.h"
-#include "GUI_Extras.h"
 #include "GmshMessage.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "meshGFaceOptimize.h"
@@ -19,7 +20,8 @@
 
 extern Context_T CTX;
 
-void buildListOfEdgeAngle ( e2t_cont adj,std::vector<edge_angle> &edges_detected,std::vector<edge_angle> &edges_lonly);
+void buildListOfEdgeAngle(e2t_cont adj,std::vector<edge_angle> &edges_detected,
+                          std::vector<edge_angle> &edges_lonly);
 
 void NoElementsSelectedMode (classificationEditor *e)
 {
@@ -32,12 +34,10 @@ void NoElementsSelectedMode (classificationEditor *e)
 
   e->_buttons[CLASSBUTTON_SELECT]->activate(); 
   e->_togbuttons[CLASSTOGBUTTON_HIDE]->activate(); 
-
 }
 
-void ElementsSelectedMode (classificationEditor *e)
+void ElementsSelectedMode(classificationEditor *e)
 {
-
   e->_buttons[CLASSBUTTON_DEL]->activate();
   e->_buttons[CLASSBUTTON_ADD]->activate();
   e->_buttons[CLASSBUTTON_CLEAR]->activate();
@@ -49,9 +49,7 @@ void ElementsSelectedMode (classificationEditor *e)
   e->_togbuttons[CLASSTOGBUTTON_HIDE]->deactivate(); 
 }
 
-
-
-int maxEdgeNum ()
+int maxEdgeNum()
 {
   GModel::eiter it =  GModel::current()->firstEdge();
   GModel::eiter ite = GModel::current()->lastEdge();
@@ -64,7 +62,7 @@ int maxEdgeNum ()
   return MAXX;
 }
 
-int maxFaceNum ()
+int maxFaceNum()
 {
   GModel::fiter it =  GModel::current()->firstFace();
   GModel::fiter ite = GModel::current()->lastFace();
@@ -77,7 +75,6 @@ int maxFaceNum ()
   return MAXX;
 }
 
-
 struct compareMLinePtr 
 {
   bool operator () ( MLine *l1 , MLine *l2) const
@@ -87,36 +84,29 @@ struct compareMLinePtr
   }
 };
 
- 
-void recurClassify ( MTri3 *t , 
-                     GFace *gf,
-                     std::map<MLine*, GEdge*, compareMLinePtr> &lines,
-                     std::map<MTriangle*, GFace*> &reverse)
+void recurClassify(MTri3 *t, GFace *gf,
+                   std::map<MLine*, GEdge*, compareMLinePtr> &lines,
+                   std::map<MTriangle*, GFace*> &reverse)
 {
-  if (!t->isDeleted())
-    {
-      gf->triangles.push_back(t->tri());
-      reverse[t->tri()] = gf;
-
-      t->setDeleted ( true );
-      
-      for (int i=0;i<3;i++)
-        {
-          MTri3 *tn = t->getNeigh(i);
-          if (tn)
-            {
-              edgeXface exf ( t, i);
-              MLine ml (exf.v[0],exf.v[1]);       
-              std::map<MLine*, GEdge*, compareMLinePtr>::iterator it = lines.find(&ml);
-              if (it==lines.end())
-                recurClassify (tn, gf,lines, reverse);
-            }
-        }  
-    }
+  if (!t->isDeleted()){
+    gf->triangles.push_back(t->tri());
+    reverse[t->tri()] = gf;
+    t->setDeleted(true);
+    for(int i = 0; i < 3; i++){
+      MTri3 *tn = t->getNeigh(i);
+      if(tn){
+        edgeXface exf(t, i);
+        MLine ml(exf.v[0], exf.v[1]);       
+        std::map<MLine*, GEdge*, compareMLinePtr>::iterator it = lines.find(&ml);
+        if (it == lines.end())
+          recurClassify(tn, gf, lines, reverse);
+      }
+    }  
+  }
 }
 
-
-GEdge * getNewModelEdge (GFace *gf1, GFace *gf2, std::map< std::pair <int, int> , GEdge* > &newEdges)
+GEdge *getNewModelEdge(GFace *gf1, GFace *gf2, 
+                       std::map<std::pair<int, int>, GEdge* > &newEdges)
 {
   int t1 = gf1 ? gf1->tag() : -1;
   int t2 = gf2 ? gf2->tag() : -1;
@@ -125,57 +115,47 @@ GEdge * getNewModelEdge (GFace *gf1, GFace *gf2, std::map< std::pair <int, int> 
 
   if (i1 == i2) return 0;
 
-  std::map< std::pair <int, int> , GEdge* >::iterator it = newEdges.find(std::make_pair<int,int>(i1,i2));
-  if (it == newEdges.end())
-    {
-      discreteEdge *temporary = new discreteEdge(GModel::current(), maxEdgeNum() + 1);
-      GModel::current()->add (temporary);
-      newEdges[std::make_pair<int,int>(i1,i2)] = temporary;
-      
-      return temporary;
-    }
+  std::map<std::pair<int, int>, GEdge*>::iterator it = 
+    newEdges.find(std::make_pair<int, int>(i1, i2));
+  if(it == newEdges.end()){
+    discreteEdge *temporary = new discreteEdge(GModel::current(), maxEdgeNum() + 1);
+    GModel::current()->add (temporary);
+    newEdges[std::make_pair<int, int>(i1, i2)] = temporary;
+    return temporary;
+  }
   else
     return it->second;  
 }
 
-
-void recurClassifyEdges ( MTri3 *t , 
-                          std::map<MTriangle*, GFace*> &reverse,
-                          std::map<MLine*, GEdge*, compareMLinePtr> &lines,
-                          std::set<MLine*> &touched,
-                          std::map< std::pair <int, int> , GEdge* > &newEdges)
+void recurClassifyEdges(MTri3 *t , 
+                        std::map<MTriangle*, GFace*> &reverse,
+                        std::map<MLine*, GEdge*, compareMLinePtr> &lines,
+                        std::set<MLine*> &touched,
+                        std::map<std::pair<int, int>, GEdge*> &newEdges)
 {
-  if (!t->isDeleted())
-    {
-      t->setDeleted ( true );
-      
-      GFace *gf1 = reverse[t->tri()];
-      for (int i=0;i<3;i++)
-        {
-          GFace *gf2 = 0;
-          MTri3 *tn = t->getNeigh(i);
-          if (tn)
-            gf2 = reverse[tn->tri()];
-
-          edgeXface exf ( t, i);
-          MLine ml (exf.v[0],exf.v[1]);   
-          std::map<MLine*, GEdge*, compareMLinePtr>::iterator it = lines.find(&ml);
-          if (it != lines.end())
-            {
-              if (touched.find(it->first) == touched.end())
-                {
-                  GEdge *ge =  getNewModelEdge (gf1, gf2, newEdges);
-                  if (ge) ge->lines.push_back(it->first);
-                  touched.insert(it->first);
-                }
-            }
-          if (tn)
-            recurClassifyEdges (tn, reverse,lines, touched,newEdges);
-        }  
+  if (!t->isDeleted()){
+    t->setDeleted(true);
+    GFace *gf1 = reverse[t->tri()];
+    for (int i = 0; i < 3; i++){
+      GFace *gf2 = 0;
+      MTri3 *tn = t->getNeigh(i);
+      if (tn)
+        gf2 = reverse[tn->tri()];
+      edgeXface exf(t, i);
+      MLine ml(exf.v[0], exf.v[1]);
+      std::map<MLine*, GEdge*, compareMLinePtr>::iterator it = lines.find(&ml);
+      if (it != lines.end()){
+        if (touched.find(it->first) == touched.end()){
+          GEdge *ge =  getNewModelEdge (gf1, gf2, newEdges);
+          if (ge) ge->lines.push_back(it->first);
+          touched.insert(it->first);
+        }
+      }
+      if (tn)
+        recurClassifyEdges(tn, reverse, lines, touched, newEdges);
     }
+  }
 }
-
-
 
 void class_color_cb(Fl_Widget* w, void* data)
 {
@@ -184,207 +164,192 @@ void class_color_cb(Fl_Widget* w, void* data)
   {
     GModel::eiter it =  GModel::current()->firstEdge();
     GModel::eiter ite = GModel::current()->lastEdge();
-    for( ;it!=ite;++it)
-      {
-        for (unsigned int i=0;i<(*it)->lines.size();i++)lines[(*it)->lines[i] ] = *it;
-      }
+    for( ;it!=ite;++it){
+      for (unsigned int i = 0; i < (*it)->lines.size();i++) 
+        lines[(*it)->lines[i]] = *it;
+    }
   }
-
 
   std::list<MTri3*> tris;
   {
     std::set<GFace*>::iterator it = e->_faces.begin();
-    while (it != e->_faces.end())
-      {
-        GFace *gf = *it;
-        for (unsigned int i=0;i<gf->triangles.size();i++)
-          {
-            tris.push_back (new MTri3 ( gf->triangles [i] , 0 ) );
-          }
-        gf->triangles.clear();
-        ++it;
+    while (it != e->_faces.end()){
+      GFace *gf = *it;
+      for (unsigned int i = 0; i < gf->triangles.size(); i++){
+            tris.push_back(new MTri3(gf->triangles [i], 0));
       }
+      gf->triangles.clear();
+      ++it;
+    }
   }
 
-
-  connectTriangles (tris);
+  connectTriangles(tris);
 
   {
     std::map<MTriangle*,GFace*> reverse;
 
     // color all triangles
     std::list<MTri3*> ::iterator it = tris.begin();
-    while (it != tris.end())
-      {
-        if (!(*it)->isDeleted())
-          {
-            discreteFace *temporary = new discreteFace(GModel::current(), maxFaceNum() + 1);
-            recurClassify(*it, temporary, lines, reverse);
-            GModel::current()->add(temporary);
-          }
-        ++it;
+    while (it != tris.end()){
+      if (!(*it)->isDeleted()){
+        discreteFace *temporary = new discreteFace(GModel::current(), maxFaceNum() + 1);
+        recurClassify(*it, temporary, lines, reverse);
+        GModel::current()->add(temporary);
       }
-
+      ++it;
+    }
+    
     // color some lines
     it = tris.begin();
-    while (it != tris.end())
-      {
-        (*it)->setDeleted(false);
-        ++it;
-      }
-
+    while (it != tris.end()){
+      (*it)->setDeleted(false);
+      ++it;
+    }
+    
     it = tris.begin();
-
-    std::map< std::pair <int, int> , GEdge* > newEdges;
-    std::set< MLine* > touched;
-    recurClassifyEdges ( *it , reverse , lines, touched,newEdges);
+    
+    std::map<std::pair<int, int>, GEdge*> newEdges;
+    std::set<MLine*> touched;
+    recurClassifyEdges(*it, reverse, lines, touched, newEdges);
     GModel::current()->remove(e->saved);
 
-    while (it != tris.end())
-      {
-        delete *it;
-        ++it;
-      }
+    while (it != tris.end()){
+      delete *it;
+      ++it;
+    }
   }
-
+  
   CTX.mesh.changed = ENT_ALL;
   Draw();  
   Msg::StatusBar(3, false, "");
-
 }
 
 void updateedges_cb(Fl_Widget* w, void* data)
 {
   classificationEditor *e = (classificationEditor*)data;
  
-  //  printf("%d edges detected\n",e->edges_detected.size());
+  // printf("%d edges detected\n", e->edges_detected.size());
 
-  for (unsigned int i=0;i<e->temporary->lines.size();i++)
-    {
-      delete e->temporary->lines[i];
-    }
+  for(unsigned int i = 0; i < e->temporary->lines.size(); i++){
+    delete e->temporary->lines[i];
+  }
   e->temporary->lines.clear();
 
-  for (unsigned int i=0 ; i<e->edges_detected.size();i++)
-    {
-      edge_angle ea =  e->edges_detected[i];
-      //      printf("angle = %g\n",ea.angle);
-      if ( ea.angle  <= e -> _inputs[CLASSVALUE_ANGLE] ->value() / 180 * M_PI) 
-        break;
-      e->temporary->lines.push_back(new MLine(ea.v1, ea.v2));            
+  for (unsigned int i = 0; i < e->edges_detected.size(); i++){
+    edge_angle ea =  e->edges_detected[i];
+    // printf("angle = %g\n",ea.angle);
+    if(ea.angle <= e->_inputs[CLASSVALUE_ANGLE]->value() / 180 * M_PI)
+      break;
+    e->temporary->lines.push_back(new MLine(ea.v1, ea.v2));
+  } 
+
+  if (e->_togbuttons[CLASSTOGBUTTON_CLOS]->value()){
+    for (unsigned int i = 0 ; i < e->edges_lonly.size(); i++){
+      edge_angle ea = e->edges_lonly[i];
+      e->temporary->lines.push_back(new MLine(ea.v1, ea.v2));
     } 
-
-  if (e->_togbuttons[CLASSTOGBUTTON_CLOS]->value())
-    {
-      for (unsigned int i=0 ; i<e->edges_lonly.size();i++)
-        {
-          edge_angle ea =  e->edges_lonly[i];
-          e->temporary->lines.push_back(new MLine(ea.v1, ea.v2));            
-        } 
-    }
+  }
   
-
   CTX.mesh.changed = ENT_ALL;
   Draw();   
 }
 
-edge_angle::  edge_angle ( MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2)
+edge_angle::edge_angle(MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2)
   : v1(_v1), v2(_v2)
 {
   if (!t2) angle = 0;
-  else
+  else{
+    double c1[3];
+    double c2[3];
+    double c3[3];
     {
-      double c1[3];
-      double c2[3];
-      double c3[3];
-      {
-        MVertex *p1 = t1->getVertex(0);
-        MVertex *p2 = t1->getVertex(1);
-        MVertex *p3 = t1->getVertex(2);
-        double a[3] = { p1->x() - p2->x(), p1->y() - p2->y(), p1->z() - p2->z() };
-        double b[3] = { p1->x() - p3->x(), p1->y() - p3->y(), p1->z() - p3->z() };
-        c1[2] = a[0] * b[1] - a[1] * b[0];
-        c1[1] = -a[0] * b[2] + a[2] * b[0];
-        c1[0] = a[1] * b[2] - a[2] * b[1];
-      }
-      {
-        MVertex *p1 = t2->getVertex(0);
-        MVertex *p2 = t2->getVertex(1);
-        MVertex *p3 = t2->getVertex(2);
-        double a[3] = { p1->x() - p2->x(), p1->y() - p2->y(), p1->z() - p2->z() };
-        double b[3] = { p1->x() - p3->x(), p1->y() - p3->y(), p1->z() - p3->z() };
-        c2[2] = a[0] * b[1] - a[1] * b[0];
-        c2[1] = -a[0] * b[2] + a[2] * b[0];
-        c2[0] = a[1] * b[2] - a[2] * b[1];
-      }
-      norme(c1);
-      norme(c2);
-      prodve(c1,c2,c3);
-      double cosa ; prosca(c1,c2,&cosa);
-      double sina = norme (c3);
-      angle = atan2(sina,cosa);
+      MVertex *p1 = t1->getVertex(0);
+      MVertex *p2 = t1->getVertex(1);
+      MVertex *p3 = t1->getVertex(2);
+      double a[3] = {p1->x() - p2->x(), p1->y() - p2->y(), p1->z() - p2->z()};
+      double b[3] = {p1->x() - p3->x(), p1->y() - p3->y(), p1->z() - p3->z()};
+      c1[2] = a[0] * b[1] - a[1] * b[0];
+      c1[1] = -a[0] * b[2] + a[2] * b[0];
+      c1[0] = a[1] * b[2] - a[2] * b[1];
     }
-  
+    {
+      MVertex *p1 = t2->getVertex(0);
+      MVertex *p2 = t2->getVertex(1);
+      MVertex *p3 = t2->getVertex(2);
+      double a[3] = {p1->x() - p2->x(), p1->y() - p2->y(), p1->z() - p2->z()};
+      double b[3] = {p1->x() - p3->x(), p1->y() - p3->y(), p1->z() - p3->z()};
+      c2[2] = a[0] * b[1] - a[1] * b[0];
+      c2[1] = -a[0] * b[2] + a[2] * b[0];
+      c2[0] = a[1] * b[2] - a[2] * b[1];
+    }
+    norme(c1);
+    norme(c2);
+    prodve(c1,c2,c3);
+    double cosa ; prosca(c1,c2,&cosa);
+    double sina = norme (c3);
+    angle = atan2(sina,cosa);
+  }
 }
-void buildListOfEdgeAngle ( e2t_cont adj,std::vector<edge_angle> &edges_detected,std::vector<edge_angle> &edges_lonly)
+
+void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
+                          std::vector<edge_angle> &edges_lonly)
 {
   e2t_cont::iterator it = adj.begin();
-  for ( ; it!=adj.end();++it )
-    {
-      if ( it->second.second ) edges_detected.push_back ( edge_angle ( it->first.getVertex (0) ,it->first.getVertex (1) , 
-                                                                       it->second.first,it->second.second) );
-      else edges_lonly.push_back ( edge_angle ( it->first.getVertex (0) ,it->first.getVertex (1) , 
-                                                it->second.first,it->second.second) );  
-    }
-  std::sort ( edges_detected .begin() ,  edges_detected .end() );
+  for( ; it != adj.end(); ++it){
+    if(it->second.second)
+      edges_detected.push_back(edge_angle(it->first.getVertex(0), 
+                                          it->first.getVertex(1), 
+                                          it->second.first, it->second.second));
+    else 
+      edges_lonly.push_back(edge_angle(it->first.getVertex(0),
+                                       it->first.getVertex(1), 
+                                       it->second.first, it->second.second));
+  }
+  std::sort(edges_detected.begin(), edges_detected.end());
 }
 
-
-classificationEditor::classificationEditor() 
+classificationEditor::classificationEditor()
 {
-
-  op[0]=opt_mesh_lines(0, GMSH_GET, 0.);
-  op[1]=opt_mesh_surfaces_edges(0, GMSH_GET, 0.);
-  op[2]=opt_mesh_surfaces_faces(0, GMSH_GET, 0.);
-  op[3]=opt_mesh_line_width(0, GMSH_SET | GMSH_GET,0.);
+  op[0] = opt_mesh_lines(0, GMSH_GET, 0.);
+  op[1] = opt_mesh_surfaces_edges(0, GMSH_GET, 0.);
+  op[2] = opt_mesh_surfaces_faces(0, GMSH_GET, 0.);
+  op[3] = opt_mesh_line_width(0, GMSH_SET | GMSH_GET,0.);
 
   opt_mesh_lines(0, GMSH_SET | GMSH_GUI, 1);
   opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI, 0);
   opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI, 1);
   opt_mesh_line_width(0, GMSH_SET | GMSH_GUI, 1.5);
 
-
   // construct GUI in terms of standard sizes
-  const int BH = 2 * GetFontSize() + 1, BB = 12 * GetFontSize(), WB = 7;
+  int _fontsize = GetFontSize();
   const int width = (int)(3.5 * BB), height = 10 * BH;
 
-  _window = new Dialog_Window(width, height, CTX.non_modal_windows, "Classify");
+  _window = new dialogWindow(width, height, CTX.non_modal_windows, "Classify");
   
   new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
   {
-    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Edge Detection");
+    Fl_Group *o = new Fl_Group
+      (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Edge Detection");
     edge_detec = o;
-    //    o->hide();
-    // create all widgets (we construct this once, we never deallocate!)
     
-    _buttons[CLASSBUTTON_OK] = 
-      new Fl_Button       (4*WB+2*BB, 7*WB+6*BH, BB, BH, "OK");
+    _buttons[CLASSBUTTON_OK] = new Fl_Button 
+      (4*WB+2*BB, 7*WB+6*BH, BB, BH, "OK");
     _buttons[CLASSBUTTON_OK]->callback(class_ok_cb, this);
     
-    _buttons[CLASSBUTTON_SELECT] = 
-      new Fl_Button       (2*WB, 2*WB+1*BH, BB, BH, "Select Elements");
+    _buttons[CLASSBUTTON_SELECT] = new Fl_Button 
+      (2*WB, 2*WB+1*BH, BB, BH, "Select Elements");
     _buttons[CLASSBUTTON_SELECT]->callback(class_select_cb, this);
     
-    _togbuttons[CLASSTOGBUTTON_HIDE] = 
-      new Fl_Toggle_Button(3*WB+BB, 2*WB+1*BH, BB, BH, "Hide Unselected");
+    _togbuttons[CLASSTOGBUTTON_HIDE] = new Fl_Toggle_Button
+      (3*WB+BB, 2*WB+1*BH, BB, BH, "Hide Unselected");
     _togbuttons[CLASSTOGBUTTON_HIDE]->callback(class_hide_cb,this);
 
-    _togbuttons[CLASSTOGBUTTON_CLOS] = 
-      new Fl_Toggle_Button(2*WB, 4*WB+3*BH, BB, BH, "Include Closure");
+    _togbuttons[CLASSTOGBUTTON_CLOS] = new Fl_Toggle_Button
+      (2*WB, 4*WB+3*BH, BB, BH, "Include Closure");
     _togbuttons[CLASSTOGBUTTON_CLOS]->callback(updateedges_cb,this);
     
-    _inputs[CLASSVALUE_ANGLE] = 
-      new Fl_Value_Input(3*WB+BB, 4*WB+3*BH, BB, BH, "Treshold Angle");
+    _inputs[CLASSVALUE_ANGLE] = new Fl_Value_Input
+      (3*WB+BB, 4*WB+3*BH, BB, BH, "Treshold Angle");
     _inputs[CLASSVALUE_ANGLE]->value(40);
     _inputs [CLASSVALUE_ANGLE]->maximum(90);
     _inputs[CLASSVALUE_ANGLE]->minimum(0);
@@ -393,37 +358,39 @@ classificationEditor::classificationEditor()
     _inputs[CLASSVALUE_ANGLE]->when(FL_WHEN_RELEASE);  
     _inputs[CLASSVALUE_ANGLE]->callback(updateedges_cb,this);
 
-    _buttons[CLASSBUTTON_DEL] = 
-      new Fl_Button       (2*WB, 5*WB+4*BH, BB, BH, "Delete Edge");
+    _buttons[CLASSBUTTON_DEL] = new Fl_Button 
+      (2*WB, 5*WB+4*BH, BB, BH, "Delete Edge");
     _buttons[CLASSBUTTON_DEL]->callback(class_deleteedge_cb, this);    
     _buttons[CLASSBUTTON_DEL]->deactivate();
 
-    _buttons[CLASSBUTTON_ADD] = 
-      new Fl_Button       (2*WB, 6*WB+5*BH, BB, BH, "Save Selection");
+    _buttons[CLASSBUTTON_ADD] = new Fl_Button
+      (2*WB, 6*WB+5*BH, BB, BH, "Save Selection");
     _buttons[CLASSBUTTON_ADD]->callback(class_save_cb, this);    
     _buttons[CLASSBUTTON_ADD]->deactivate();
 
-    _buttons[CLASSBUTTON_CLEAR] = 
-      new Fl_Button       (2*WB, 7*WB+6*BH, BB, BH, "Clear Selection");
+    _buttons[CLASSBUTTON_CLEAR] = new Fl_Button 
+      (2*WB, 7*WB+6*BH, BB, BH, "Clear Selection");
     _buttons[CLASSBUTTON_CLEAR]->callback(class_clear_cb, this);    
     _buttons[CLASSBUTTON_CLEAR]->deactivate();
     o->end();
   }
   {
-    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Face Colouring");
+    Fl_Group *o = new Fl_Group
+      (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Face Colouring");
     face_color = o;
     o->deactivate();
     o->hide();
-    _buttons[CLASSBUTTON_SELFAC] = 
-      new Fl_Button       (2*WB, 2*WB+1*BH, BB, BH, "Select Model Face");
+    _buttons[CLASSBUTTON_SELFAC] = new Fl_Button
+      (2*WB, 2*WB+1*BH, BB, BH, "Select Model Face");
     _buttons[CLASSBUTTON_SELFAC]->callback(class_selectgface_cb, this);
-    _buttons[CLASSBUTTON_COLOR] = 
-      new Fl_Button       (2*WB, 3*WB+2*BH, BB, BH, "Classify Mesh Faces");
+    _buttons[CLASSBUTTON_COLOR] = new Fl_Button 
+      (2*WB, 3*WB+2*BH, BB, BH, "Classify Mesh Faces");
     _buttons[CLASSBUTTON_COLOR]->callback(class_color_cb, this);
     o->end();
   }
   {
-    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Reparametrize Surfaces");
+    Fl_Group *o = new Fl_Group
+      (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Reparametrize Surfaces");
     reverse_eng = o;
     o->hide();
     o->deactivate();
@@ -445,7 +412,6 @@ classificationEditor::classificationEditor()
   _window->hotspot(_window);
   _window->size_range(width, (int)(0.85 * height));    
 }
-
 
 void class_hide_cb(Fl_Widget *w, void *data)
 {
@@ -512,7 +478,6 @@ void class_select_cb(Fl_Widget *w, void *data)
   Msg::StatusBar(3, false, "");
 }
 
-
 void class_selectgface_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor*)data;
@@ -557,7 +522,6 @@ void class_selectgface_cb(Fl_Widget *w, void *data)
   Draw();  
   Msg::StatusBar(3, false, "");
 }
-
 
 void class_deleteedge_cb(Fl_Widget *w, void *data)
 {
@@ -605,7 +569,6 @@ void class_deleteedge_cb(Fl_Widget *w, void *data)
     }
   }
 
-
   std::sort (ele.begin(),ele.end());
   //  look in all temporary edges if a deleted one is present and delete it !
   std::vector<MLine*> temp = e->temporary->lines;
@@ -627,12 +590,12 @@ void class_deleteedge_cb(Fl_Widget *w, void *data)
   Msg::StatusBar(3, false, "");
 }
 
-
 void class_save_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor*)data;
 
-  e->saved->lines.insert (e->saved->lines.end(), e->temporary->lines.begin(), e->temporary->lines.end());
+  e->saved->lines.insert(e->saved->lines.end(), e->temporary->lines.begin(),
+                         e->temporary->lines.end());
   e->temporary->lines.clear();
   e->_elements.clear();
   e->edges_detected.clear();
@@ -648,10 +611,9 @@ void class_clear_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor*)data;
 
-  for (unsigned int i=0;i<e->temporary->lines.size();i++)
-    {      
-      delete e->temporary->lines[i];
-    }
+  for(unsigned int i = 0; i < e->temporary->lines.size(); i++){      
+    delete e->temporary->lines[i];
+  }
   e->temporary->lines.clear();
 
   CTX.mesh.changed = ENT_ALL;
@@ -688,8 +650,6 @@ void class_okcolor_cb(Fl_Widget *w, void *data)
   Msg::StatusBar(3, false, "");
 }
 
-
-
 void mesh_classify_cb(Fl_Widget* w, void* data)
 {
   // create the (static) editor
@@ -699,5 +659,3 @@ void mesh_classify_cb(Fl_Widget* w, void* data)
   }
   editor->show();
 }
-
-

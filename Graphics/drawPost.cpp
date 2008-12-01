@@ -5,9 +5,9 @@
 
 #include <math.h>
 #include <algorithm>
+#include <FL/gl.h>
 #include "drawContext.h"
 #include "GmshMessage.h"
-#include "GmshUI.h"
 #include "Numeric.h"
 #include "Draw.h"
 #include "Iso.h"

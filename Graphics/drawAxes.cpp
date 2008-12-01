@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <FL/gl.h>
 #include "drawContext.h"
-#include "GmshUI.h"
 #include "Draw.h"
 #include "GModel.h"
 #include "Context.h"

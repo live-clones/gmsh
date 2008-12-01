@@ -4,8 +4,9 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string.h>
+#include <FL/gl.h>
+#include <FL/glu.h>
 #include "drawContext.h"
-#include "GmshUI.h"
 #include "Numeric.h"
 #include "Draw.h"
 #include "Context.h"

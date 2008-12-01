@@ -3,9 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <FL/gl.h>
 #include "drawContext.h"
-#include "GmshUI.h"
-#include "GmshDefines.h"
 #include "Draw.h"
 #include "Context.h"
 #include "gl2ps.h"
@@ -25,7 +24,8 @@ class drawGVertex {
     if(!v->getVisibility()) return;
     if(v->geomType() == GEntity::BoundaryLayerPoint) return;
 
-    bool select = (CTX.render_mode == GMSH_SELECT && v->model() == GModel::current());
+    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 
+                   v->model() == GModel::current());
     if(select) {
       glPushName(0);
       glPushName(v->tag());
@@ -96,7 +96,8 @@ class drawGEdge {
     if(e->geomType() == GEntity::DiscreteCurve) return;
     if(e->geomType() == GEntity::BoundaryLayerCurve) return;
     
-    bool select = (CTX.render_mode == GMSH_SELECT && e->model() == GModel::current());
+    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 
+                   e->model() == GModel::current());
     if(select) {
       glPushName(1);
       glPushName(e->tag());
@@ -379,7 +380,8 @@ class drawGFace {
     if(f->geomType() == GEntity::DiscreteSurface) return;
     if(f->geomType() == GEntity::BoundaryLayerSurface) return;
 
-    bool select = (CTX.render_mode == GMSH_SELECT && f->model() == GModel::current());
+    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 
+                   f->model() == GModel::current());
     if(select) {
       glPushName(2);
       glPushName(f->tag());
@@ -419,7 +421,8 @@ class drawGRegion {
     if(!r->getVisibility()) return;
     if(r->geomType() == GEntity::DiscreteVolume) return;
     
-    bool select = (CTX.render_mode == GMSH_SELECT && r->model() == GModel::current());
+    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 
+                   r->model() == GModel::current());
     if(select) {
       glPushName(3);
       glPushName(r->tag());

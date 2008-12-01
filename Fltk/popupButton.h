@@ -6,18 +6,15 @@
 #ifndef _POPUP_BUTTON_H
 #define _POPUP_BUTTON_H
 
-#include "GmshUI.h"
+#include <FL/Fl.H>
 #include <FL/Fl_Menu_Button.H>
 
-// We need to define our own popup button to fix a bug in FLTK 1.1.7
-// (popup() in 1.1.7 calls redraw() after picked(), which can cause a
-// crash if the button was deleted by the callback)
-
-// Update Sat Apr 29 21:39:00 2006: this bug is now fixed in FLTK.
-
-class Popup_Button : public Fl_Menu_Button {
+// This is needed for FLTK < 1.1.8 (popup() in 1.1.7 calls redraw()
+// after picked(), which can cause a crash if the button was deleted
+// by the callback)
+class popupButton : public Fl_Menu_Button {
  public:
-  Popup_Button(int x, int y, int w, int h, char *label=0) 
+  popupButton(int x, int y, int w, int h, char *label=0) 
     : Fl_Menu_Button(x, y, w, h, label) {}
   void draw(){ Fl_Menu_Button::draw(); }
   int handle(int e)

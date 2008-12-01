@@ -3,28 +3,16 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _GUI_CLASSIFIER_H_
-#define _GUI_CLASSIFIER_H_
+#ifndef _CLASSIFICATION_EDITOR_H_
+#define _CLASSIFICATION_EDITOR_H_
 
-#include "GmshUI.h"
-#include "GModel.h"
-#include "MElement.h"
-#include "GUI.h"
-#include "Shortcut_Window.h"
-#include "ColorTable.h"
+#include <vector>
 #include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Round_Button.H>
-#include <vector>
-
-void class_select_cb(Fl_Widget *w, void *data);
-void class_hide_cb(Fl_Widget *w, void *data);
-void class_selectgface_cb(Fl_Widget *w, void *data);
-void class_save_cb(Fl_Widget *w, void *data);
-void class_clear_cb(Fl_Widget *w, void *data);
-void class_deleteedge_cb(Fl_Widget *w, void *data);
-void class_color_cb(Fl_Widget *w, void *data);
-void class_ok_cb(Fl_Widget *w, void *data);
-void class_okcolor_cb(Fl_Widget *w, void *data);
+#include "shortcutWindow.h"
+#include "GModel.h"
+#include "MElement.h"
+#include "ColorTable.h"
 
 #define CLASSBUTTON_SELECT   0
 #define CLASSBUTTON_DEL      1
@@ -66,6 +54,17 @@ class classificationEditor {
   classificationEditor();
   void show(){ _window->show();}
   std::vector<MTriangle*> &getElements() { return _elements; }
-  Fl_Group *edge_detec,*face_color,*reverse_eng;
+  Fl_Group *edge_detec, *face_color, *reverse_eng;
 };
+
+void class_select_cb(Fl_Widget *w, void *data);
+void class_hide_cb(Fl_Widget *w, void *data);
+void class_selectgface_cb(Fl_Widget *w, void *data);
+void class_save_cb(Fl_Widget *w, void *data);
+void class_clear_cb(Fl_Widget *w, void *data);
+void class_deleteedge_cb(Fl_Widget *w, void *data);
+void class_color_cb(Fl_Widget *w, void *data);
+void class_ok_cb(Fl_Widget *w, void *data);
+void class_okcolor_cb(Fl_Widget *w, void *data);
+
 #endif

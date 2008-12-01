@@ -4,9 +4,9 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <math.h>
+#include <FL/gl.h>
 #include "drawContext.h"
 #include "GmshMessage.h"
-#include "GmshUI.h"
 #include "GmshDefines.h"
 #include "GModel.h"
 #include "MElement.h"
@@ -503,15 +503,15 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
   }
 }
 
-static void drawArrays(GEntity *e, VertexArray *va, GLint type, bool useNormalArray, 
-                       int forceColor=0, unsigned int color=0)
+static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va, GLint type, 
+                       bool useNormalArray, int forceColor=0, unsigned int color=0)
 {
   if(!va || !va->getNumVertices()) return;
 
   // If we want to be enable picking of individual elements we need to
   // draw each one separately
-  bool select = (CTX.render_mode == GMSH_SELECT && CTX.pick_elements && 
-                 e->model() == GModel::current());
+  bool select = (ctx->render_mode == drawContext::GMSH_SELECT && 
+                 CTX.pick_elements && e->model() == GModel::current());
   if(select) {
     if(va->getNumElementPointers() == va->getNumVertices()){
       for(int i = 0; i < va->getNumVertices(); i += va->getNumVerticesPerElement()){
@@ -579,7 +579,8 @@ class drawMeshGVertex {
   {  
     if(!v->getVisibility()) return;
     
-    bool select = (CTX.render_mode == GMSH_SELECT && v->model() == GModel::current());
+    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 
+                   v->model() == GModel::current());
     if(select) {
       glPushName(0);
       glPushName(v->tag());
@@ -633,14 +634,15 @@ class drawMeshGEdge {
   {  
     if(!e->getVisibility()) return;
 
-    bool select = (CTX.render_mode == GMSH_SELECT && e->model() == GModel::current());    
+    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 
+                   e->model() == GModel::current());    
     if(select) {
       glPushName(1);
       glPushName(e->tag());
     }
 
     if(CTX.mesh.lines)
-      drawArrays(e, e->va_lines, GL_LINES, false);
+      drawArrays(_ctx, e, e->va_lines, GL_LINES, false);
 
     if(CTX.mesh.lines_num)
       drawElementLabels(e, e->lines);
@@ -729,15 +731,16 @@ class drawMeshGFace {
   {  
     if(!f->getVisibility()) return;
 
-    bool select = (CTX.render_mode == GMSH_SELECT && f->model() == GModel::current());
+    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
+                   f->model() == GModel::current());
     if(select) {
       glPushName(2);
       glPushName(f->tag());
     }
 
-    drawArrays(f, f->va_lines, GL_LINES, CTX.mesh.light && CTX.mesh.light_lines, 
+    drawArrays(_ctx, f, f->va_lines, GL_LINES, CTX.mesh.light && CTX.mesh.light_lines, 
                CTX.mesh.surfaces_faces, CTX.color.mesh.line);
-    drawArrays(f, f->va_triangles, GL_TRIANGLES, CTX.mesh.light);
+    drawArrays(_ctx, f, f->va_triangles, GL_TRIANGLES, CTX.mesh.light);
 
     if(CTX.mesh.surfaces_num) {
       if(CTX.mesh.triangles)
@@ -855,15 +858,16 @@ class drawMeshGRegion {
   {  
     if(!r->getVisibility()) return;
 
-    bool select = (CTX.render_mode == GMSH_SELECT && r->model() == GModel::current());
+    bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 
+                   r->model() == GModel::current());
     if(select) {
       glPushName(3);
       glPushName(r->tag());
     }
 
-    drawArrays(r, r->va_lines, GL_LINES, CTX.mesh.light && CTX.mesh.light_lines, 
+    drawArrays(_ctx, r, r->va_lines, GL_LINES, CTX.mesh.light && CTX.mesh.light_lines, 
                CTX.mesh.volumes_faces, CTX.color.mesh.line);
-    drawArrays(r, r->va_triangles, GL_TRIANGLES, CTX.mesh.light);
+    drawArrays(_ctx, r, r->va_triangles, GL_TRIANGLES, CTX.mesh.light);
     
     if(CTX.mesh.volumes_num) {
       if(CTX.mesh.tetrahedra) 

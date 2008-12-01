@@ -3,7 +3,11 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include "GmshUI.h"
+#include <FL/gl.h>
+#include "openglWindow.h"
+#include "graphicWindow.h"
+#include "manipWindow.h"
+#include "contextWindow.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "Draw.h"
@@ -11,13 +15,11 @@
 #include "Context.h"
 #include "SelectBuffer.h"
 #include "GUI.h"
-#include "Opengl_Window.h"
 #include "MElement.h"
 
-extern GUI *WID;
 extern Context_T CTX;
 
-void MousePosition::set(drawContext *ctx)
+void mousePosition::set(drawContext *ctx)
 {
   for(int i = 0; i < 3; i++){
     s[i] = ctx->s[i];
@@ -37,7 +39,7 @@ void MousePosition::set(drawContext *ctx)
   wnr[2] = 0.;
 }
 
-void MousePosition::recenter(drawContext *ctx)
+void mousePosition::recenter(drawContext *ctx)
 {
   // compute the equivalent translation to apply *after* the scaling
   // so that the scaling is done around the point which was clicked:
@@ -45,7 +47,7 @@ void MousePosition::recenter(drawContext *ctx)
   ctx->t[1] = t[1] * (s[1] / ctx->s[1]) - wnr[1] * (1. - (s[1] / ctx->s[1]));
 }
   
-static void lassoZoom(drawContext *ctx, MousePosition &click1, MousePosition &click2)
+static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &click2)
 {
   if(click1.win[0] == click2.win[0] || click1.win[1] == click2.win[1])
     return;
@@ -55,30 +57,32 @@ static void lassoZoom(drawContext *ctx, MousePosition &click1, MousePosition &cl
   ctx->s[2] = std::min(ctx->s[0], ctx->s[1]); // bof...
   
   // recenter around the center of the lasso rectangle
-  MousePosition tmp(click1);
+  mousePosition tmp(click1);
   tmp.wnr[0] = 0.5 * (click1.wnr[0] + click2.wnr[0]);
   tmp.wnr[1] = 0.5 * (click1.wnr[1] + click2.wnr[1]);
   tmp.recenter(ctx);
 
   ctx->initPosition();
   Draw();
-  WID->update_manip_window();
+  GUI::instance()->manip->update();
 }
 
-Opengl_Window::Opengl_Window(int x, int y, int w, int h, const char *l)
+openglWindow::openglWindow(int x, int y, int w, int h, const char *l)
   : Fl_Gl_Window(x, y, w, h, l)
 {
-  AddPointMode = LassoMode = SelectionMode = false;
+  addPointMode = lassoMode = selectionMode = false;
   _point[0] = _point[1] = _point[2] = 0.;
+  //double mat[3][3]={{1,0,0}, {0,1,0}, {0,0,10}};
+  //_ctx = new drawContext(new drawTransformScaled(mat));
   _ctx = new drawContext();
 }
 
-Opengl_Window::~Opengl_Window()
+openglWindow::~openglWindow()
 { 
   delete _ctx; 
 }
 
-void Opengl_Window::draw()
+void openglWindow::draw()
 {
   static int locked = 0;
   if(locked)
@@ -86,7 +90,7 @@ void Opengl_Window::draw()
   else
     locked = 1;
 
-  Msg::Debug("Opengl_Window->draw()");
+  Msg::Debug("openglWindow->draw()");
 
   if(!valid()) {
     valid(1);
@@ -100,14 +104,14 @@ void Opengl_Window::draw()
   else {
     if((w() != _ctx->viewport[2] - _ctx->viewport[0]) ||
        (h() != _ctx->viewport[3] - _ctx->viewport[1])) {
-      WID->set_size(_ctx->viewport[2] - _ctx->viewport[0],
-                    _ctx->viewport[3] - _ctx->viewport[1]);
+      GUI::instance()->setGraphicSize(_ctx->viewport[2] - _ctx->viewport[0],
+                          _ctx->viewport[3] - _ctx->viewport[1]);
       glViewport(_ctx->viewport[0], _ctx->viewport[1],
                  _ctx->viewport[2], _ctx->viewport[3]);
     }
   }
 
-  if(LassoMode) { 
+  if(lassoMode) { 
     // draw the zoom or selection lasso on top of the current scene
     // (without using overlays!)
     glMatrixMode(GL_PROJECTION);
@@ -118,7 +122,7 @@ void Opengl_Window::draw()
     glLoadIdentity();
     glColor3d(1., 1., 1.);
     glDisable(GL_DEPTH_TEST);
-    if(SelectionMode && CTX.mouse_selection){
+    if(selectionMode && CTX.mouse_selection){
       glEnable(GL_LINE_STIPPLE);
       glLineStipple(1, 0x0F0F);
     }
@@ -137,11 +141,11 @@ void Opengl_Window::draw()
       if(!i) _lasso.set(_ctx);
     }
     glDisable(GL_BLEND);
-    if(SelectionMode && CTX.mouse_selection)
+    if(selectionMode && CTX.mouse_selection)
       glDisable(GL_LINE_STIPPLE);
     glEnable(GL_DEPTH_TEST);
   }
-  else if(AddPointMode) { 
+  else if(addPointMode) { 
     // draw the whole scene and the point to add
     if(CTX.fast_redraw) {
       CTX.mesh.draw = 0;
@@ -174,7 +178,7 @@ void Opengl_Window::draw()
 // as treated, and is suppressed. If the handle returns 0, the event
 // is passed to the parent.
 
-int Opengl_Window::handle(int event)
+int openglWindow::handle(int event)
 {
   switch (event) {
 
@@ -185,7 +189,7 @@ int Opengl_Window::handle(int event)
   case FL_SHORTCUT:
   case FL_KEYBOARD:
     // override the default widget arrow-key-navigation
-    if(WID->arrow_shortcuts())
+    if(GUI::instance()->testArrowShortcuts())
       return 1;
     return Fl_Gl_Window::handle(event);
     
@@ -194,62 +198,74 @@ int Opengl_Window::handle(int event)
     _curr.set(_ctx);
     if(Fl::event_button() == 1 && 
        !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
-      if(!LassoMode && Fl::event_state(FL_CTRL)) {
-        LassoMode = true;
+      if(!lassoMode && Fl::event_state(FL_CTRL)) {
+        lassoMode = true;
         _lasso.set(_ctx);
       }
-      else if(LassoMode) {
-        LassoMode = false;
-        if(SelectionMode && CTX.mouse_selection){
-          WID->try_selection = 2; // will try to select multiple entities
-          WID->try_selection_xywh[0] = (int)(_click.win[0] + _curr.win[0])/2;
-          WID->try_selection_xywh[1] = (int)(_click.win[1] + _curr.win[1])/2;
-          WID->try_selection_xywh[2] = (int)fabs(_click.win[0] - _curr.win[0]);
-          WID->try_selection_xywh[3] = (int)fabs(_click.win[1] - _curr.win[1]);
+      else if(lassoMode) {
+        lassoMode = false;
+        if(selectionMode && CTX.mouse_selection){
+          // will try to select multiple entities
+          GUI::instance()->try_selection = 2;
+          GUI::instance()->try_selection_xywh[0] = 
+            (int)(_click.win[0] + _curr.win[0]) / 2;
+          GUI::instance()->try_selection_xywh[1] = 
+            (int)(_click.win[1] + _curr.win[1]) / 2;
+          GUI::instance()->try_selection_xywh[2] = 
+            (int)fabs(_click.win[0] - _curr.win[0]);
+          GUI::instance()->try_selection_xywh[3] = 
+            (int)fabs(_click.win[1] - _curr.win[1]);
         }
         else{
           lassoZoom(_ctx, _click, _curr);
         }
       }
       else if(CTX.mouse_selection){
-        WID->try_selection = 1; // will try to select clicked entity
-        WID->try_selection_xywh[0] = (int)_curr.win[0];
-        WID->try_selection_xywh[1] = (int)_curr.win[1];
-        WID->try_selection_xywh[2] = 5;
-        WID->try_selection_xywh[3] = 5;
+        // will try to select clicked entity
+        GUI::instance()->try_selection = 1;
+        GUI::instance()->try_selection_xywh[0] = (int)_curr.win[0];
+        GUI::instance()->try_selection_xywh[1] = (int)_curr.win[1];
+        GUI::instance()->try_selection_xywh[2] = 5;
+        GUI::instance()->try_selection_xywh[3] = 5;
       }
     }
     else if(Fl::event_button() == 2 || 
             (Fl::event_button() == 1 && Fl::event_state(FL_SHIFT))) {
-      if(!LassoMode && Fl::event_state(FL_CTRL)) {
+      if(!lassoMode && Fl::event_state(FL_CTRL)) {
         // make zoom isotropic
         _ctx->s[1] = _ctx->s[0];
         _ctx->s[2] = _ctx->s[0];
         redraw();
       }
-      else if(LassoMode) {
-        LassoMode = false;
-        if(SelectionMode && CTX.mouse_selection){
-          WID->try_selection = -2; // will try to unselect multiple entities
-          WID->try_selection_xywh[0] = (int)(_click.win[0] + _curr.win[0])/2;
-          WID->try_selection_xywh[1] = (int)(_click.win[1] + _curr.win[1])/2;
-          WID->try_selection_xywh[2] = (int)fabs(_click.win[0] - _curr.win[0]);
-          WID->try_selection_xywh[3] = (int)fabs(_click.win[1] - _curr.win[1]);
+      else if(lassoMode) {
+        lassoMode = false;
+        if(selectionMode && CTX.mouse_selection){
+          // will try to unselect multiple entities
+          GUI::instance()->try_selection = -2;
+          GUI::instance()->try_selection_xywh[0] = 
+            (int)(_click.win[0] + _curr.win[0]) / 2;
+          GUI::instance()->try_selection_xywh[1] =
+            (int)(_click.win[1] + _curr.win[1]) / 2;
+          GUI::instance()->try_selection_xywh[2] =
+            (int)fabs(_click.win[0] - _curr.win[0]);
+          GUI::instance()->try_selection_xywh[3] =
+            (int)fabs(_click.win[1] - _curr.win[1]);
         }
         else{
           lassoZoom(_ctx, _click, _curr);
         }
       }
       else if(CTX.mouse_selection){
-        WID->try_selection = -1; // will try to unselect clicked entity
-        WID->try_selection_xywh[0] = (int)_curr.win[0];
-        WID->try_selection_xywh[1] = (int)_curr.win[1];
-        WID->try_selection_xywh[2] = 5;
-        WID->try_selection_xywh[3] = 5;
+        // will try to unselect clicked entity
+        GUI::instance()->try_selection = -1;
+        GUI::instance()->try_selection_xywh[0] = (int)_curr.win[0];
+        GUI::instance()->try_selection_xywh[1] = (int)_curr.win[1];
+        GUI::instance()->try_selection_xywh[2] = 5;
+        GUI::instance()->try_selection_xywh[3] = 5;
       }
     }
     else {
-      if(Fl::event_state(FL_CTRL) && !LassoMode) {
+      if(Fl::event_state(FL_CTRL) && !lassoMode) {
         if(CTX.useTrackball)
           _ctx->setQuaternion(0., 0., 0., 1.);
         else
@@ -259,18 +275,18 @@ int Opengl_Window::handle(int event)
         redraw();
       }
       else {
-        LassoMode = false;
+        lassoMode = false;
       }
     }
     _click.set(_ctx);
     _prev.set(_ctx);
-    WID->update_manip_window();
+    GUI::instance()->manip->update();
     return 1;
 
   case FL_RELEASE:
     _curr.set(_ctx);
     CTX.draw_rotation_center = 0;
-    if(!LassoMode) {
+    if(!lassoMode) {
       CTX.mesh.draw = 1;
       CTX.post.draw = 1;
       redraw();
@@ -288,7 +304,7 @@ int Opengl_Window::handle(int event)
       _prev.recenter(_ctx);
       redraw();
     }
-    WID->update_manip_window();
+    GUI::instance()->manip->update();
     return 1;
 
   case FL_DRAG:
@@ -296,17 +312,17 @@ int Opengl_Window::handle(int event)
     {
       double dx = _curr.win[0] - _prev.win[0];
       double dy = _curr.win[1] - _prev.win[1];
-      if(LassoMode) {
+      if(lassoMode) {
         redraw();
       }
       else {
         if(Fl::event_state(FL_META)) {
           // will try to select or unselect entities on the fly
-          WID->try_selection = Fl::event_state(FL_SHIFT) ? -1 : 1; 
-          WID->try_selection_xywh[0] = (int)_curr.win[0];
-          WID->try_selection_xywh[1] = (int)_curr.win[1];
-          WID->try_selection_xywh[2] = 5;
-          WID->try_selection_xywh[3] = 5;
+          GUI::instance()->try_selection = Fl::event_state(FL_SHIFT) ? -1 : 1; 
+          GUI::instance()->try_selection_xywh[0] = (int)_curr.win[0];
+          GUI::instance()->try_selection_xywh[1] = (int)_curr.win[1];
+          GUI::instance()->try_selection_xywh[2] = 5;
+          GUI::instance()->try_selection_xywh[3] = 5;
         }
         else if(Fl::event_button() == 1 && 
                 !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
@@ -346,16 +362,16 @@ int Opengl_Window::handle(int event)
       }
     }
     _prev.set(_ctx);
-    WID->update_manip_window();
+    GUI::instance()->manip->update();
     return 1;
 
   case FL_MOVE:
     _curr.set(_ctx);
-    if(LassoMode) {
+    if(lassoMode) {
       redraw();
     }
-    else if(AddPointMode && !Fl::event_state(FL_SHIFT)){
-      WID->g_opengl_window->cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
+    else if(addPointMode && !Fl::event_state(FL_SHIFT)){
+      cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
       // find line in real space corresponding to current cursor position
       double p[3],d[3];
       _ctx->unproject(_curr.win[0], _curr.win[1], p, d);
@@ -373,32 +389,34 @@ int Opengl_Window::handle(int event)
         }
       }
       char str[32];
-      sprintf(str, "%g", _point[0]); WID->context_geometry_input[2]->value(str);
-      sprintf(str, "%g", _point[1]); WID->context_geometry_input[3]->value(str);
-      sprintf(str, "%g", _point[2]); WID->context_geometry_input[4]->value(str);
+      sprintf(str, "%g", _point[0]); 
+      GUI::instance()->geoContext->input[2]->value(str);
+      sprintf(str, "%g", _point[1]); 
+      GUI::instance()->geoContext->input[3]->value(str);
+      sprintf(str, "%g", _point[2]); 
+      GUI::instance()->geoContext->input[4]->value(str);
       redraw();
     }
     else{ // hover mode
       if(_curr.win[0] != _prev.win[0] || _curr.win[1] != _prev.win[1]){
-        WID->make_opengl_current();
+        GUI::instance()->graph[0]->gl->make_current();
         std::vector<GVertex*> vertices;
         std::vector<GEdge*> edges;
         std::vector<GFace*> faces;
         std::vector<GRegion*> regions;
         std::vector<MElement*> elements;
-        bool res = ProcessSelectionBuffer(_ctx, WID->selection, false, 
-                                          CTX.mouse_hover_meshes, 
-                                          (int)_curr.win[0], (int)_curr.win[1], 5, 5, 
-                                          vertices, edges, faces, regions,
-                                          elements);
-        if((WID->selection == ENT_ALL && res) ||
-           (WID->selection == ENT_POINT && vertices.size()) ||
-           (WID->selection == ENT_LINE && edges.size()) || 
-           (WID->selection == ENT_SURFACE && faces.size()) ||
-           (WID->selection == ENT_VOLUME && regions.size()))
-          WID->g_window->cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
+        bool res = ProcessSelectionBuffer
+          (_ctx, GUI::instance()->selection, false, CTX.mouse_hover_meshes, 
+           (int)_curr.win[0], (int)_curr.win[1], 5, 5, vertices, edges, 
+           faces, regions, elements);
+        if((GUI::instance()->selection == ENT_ALL && res) ||
+           (GUI::instance()->selection == ENT_POINT && vertices.size()) ||
+           (GUI::instance()->selection == ENT_LINE && edges.size()) || 
+           (GUI::instance()->selection == ENT_SURFACE && faces.size()) ||
+           (GUI::instance()->selection == ENT_VOLUME && regions.size()))
+          cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
         else
-          WID->g_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
+          cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
         GEntity *ge = 0;
         if(vertices.size()) ge = vertices[0];
         else if(edges.size()) ge = edges[0];
@@ -418,9 +436,6 @@ int Opengl_Window::handle(int event)
   }
 }
 
-
-// Select entity routine
-
 char SelectEntity(int type, 
                   std::vector<GVertex*> &vertices,
                   std::vector<GEdge*> &edges,
@@ -428,17 +443,19 @@ char SelectEntity(int type,
                   std::vector<GRegion*> &regions,
                   std::vector<MElement*> &elements)
 {
-  if(!WID) return 'q';
+  if(!GUI::instance()) return 'q';
 
-  WID->g_opengl_window->take_focus(); // force keyboard focus in GL window 
-  WID->g_opengl_window->SelectionMode = true; // enable lasso selection
+  // force keyboard focus in GL window 
+  GUI::instance()->graph[0]->gl->take_focus();
+  // enable lasso selection
+  GUI::instance()->graph[0]->gl->selectionMode = true;
 
-  WID->selection = type;
-  WID->try_selection = 0;
-  WID->quit_selection = 0;
-  WID->end_selection = 0;
-  WID->undo_selection = 0;
-  WID->invert_selection = 0;
+  GUI::instance()->selection = type;
+  GUI::instance()->try_selection = 0;
+  GUI::instance()->quit_selection = 0;
+  GUI::instance()->end_selection = 0;
+  GUI::instance()->undo_selection = 0;
+  GUI::instance()->invert_selection = 0;
 
   while(1) {
     vertices.clear();
@@ -446,46 +463,46 @@ char SelectEntity(int type,
     faces.clear();
     regions.clear();
     elements.clear();
-    WID->wait();
-    if(WID->quit_selection) {
-      WID->selection = ENT_NONE;
-      WID->g_opengl_window->SelectionMode = false;
-      WID->g_opengl_window->LassoMode = false;
-      WID->g_opengl_window->AddPointMode = false;
-      WID->g_opengl_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
+    GUI::instance()->wait();
+    if(GUI::instance()->quit_selection) {
+      GUI::instance()->selection = ENT_NONE;
+      GUI::instance()->graph[0]->gl->selectionMode = false;
+      GUI::instance()->graph[0]->gl->lassoMode = false;
+      GUI::instance()->graph[0]->gl->addPointMode = false;
+      GUI::instance()->graph[0]->gl->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
       return 'q';
     }
-    if(WID->end_selection) {
-      WID->end_selection = 0;
-      WID->selection = ENT_NONE;
+    if(GUI::instance()->end_selection) {
+      GUI::instance()->end_selection = 0;
+      GUI::instance()->selection = ENT_NONE;
       return 'e';
     }
-    if(WID->undo_selection) {
-      WID->undo_selection = 0;
+    if(GUI::instance()->undo_selection) {
+      GUI::instance()->undo_selection = 0;
       return 'u';
     }
-    if(WID->invert_selection) {
-      WID->invert_selection = 0;
+    if(GUI::instance()->invert_selection) {
+      GUI::instance()->invert_selection = 0;
       return 'i';
     }
-    if(WID->try_selection) {
-      bool add = (WID->try_selection > 0) ? true : false;
-      bool multi = (abs(WID->try_selection) > 1) ? true : false;
-      WID->try_selection = 0;
-      if(WID->selection == ENT_NONE){ // just report the mouse click
-        WID->g_opengl_window->SelectionMode = false;
+    if(GUI::instance()->try_selection) {
+      bool add = (GUI::instance()->try_selection > 0) ? true : false;
+      bool multi = (abs(GUI::instance()->try_selection) > 1) ? true : false;
+      GUI::instance()->try_selection = 0;
+      if(GUI::instance()->selection == ENT_NONE){ // just report the mouse click
+        GUI::instance()->graph[0]->gl->selectionMode = false;
         return 'c';
       }
-      else if(ProcessSelectionBuffer(WID->g_opengl_window->getDrawContext(),
-                                     WID->selection, multi, true,
-                                     WID->try_selection_xywh[0],
-                                     WID->try_selection_xywh[1], 
-                                     WID->try_selection_xywh[2],
-                                     WID->try_selection_xywh[3], 
-                                     vertices, edges, faces, regions,
-                                     elements)){
-        WID->selection = ENT_NONE;
-        WID->g_opengl_window->SelectionMode = false;
+      else if(ProcessSelectionBuffer
+              (GUI::instance()->graph[0]->gl->getDrawContext(),
+               GUI::instance()->selection, multi, true,
+               GUI::instance()->try_selection_xywh[0],
+               GUI::instance()->try_selection_xywh[1], 
+               GUI::instance()->try_selection_xywh[2],
+               GUI::instance()->try_selection_xywh[3], 
+               vertices, edges, faces, regions, elements)){
+        GUI::instance()->selection = ENT_NONE;
+        GUI::instance()->graph[0]->gl->selectionMode = false;
         if(add)
           return 'l';
         else

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _GUI_EXTRAS_H_
-#define _GUI_EXTRAS_H_
+#ifndef _FILE_DIALOGS_H_
+#define _FILE_DIALOGS_H_
 
 #include <string>
 
@@ -13,10 +13,6 @@ int file_chooser(int multi, int create, const char *message,
 std::string file_chooser_get_name(int num);
 int file_chooser_get_filter();
 void file_chooser_get_position(int *x, int *y);
-
-int arrow_editor(const char *title, double &a, double &b, double &c);
-int perspective_editor();
-int model_chooser();
 
 int jpeg_dialog(const char *filename);
 int gif_dialog(const char *filename);
@@ -32,7 +28,5 @@ int unv_dialog(const char *filename);
 int bdf_dialog(const char *filename);
 int latex_dialog(const char *filename);
 int cgns_write_dialog(const char *filename);
-void partition_dialog();
 
 #endif
-

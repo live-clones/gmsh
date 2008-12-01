@@ -10,18 +10,18 @@
 #include <FL/Fl_Box.H>
 #include "drawContext.h"
 
-class MousePosition {
+class mousePosition {
  public:
   double win[3]; // window coordinates
   double wnr[3]; // world coordinates BEFORE rotation
   double s[3]; // scaling state when the event was recorded
   double t[3]; // translation state when the event was recorded
-  MousePosition()
+  mousePosition()
   {
     for(int i = 0; i < 3; i++)
       win[i] = wnr[i] = s[i] = t[i] = 0.;
   }
-  MousePosition(const MousePosition &instance)
+  mousePosition(const mousePosition &instance)
   {
     for(int i = 0; i < 3; i++){
       win[i] = instance.win[i];
@@ -34,29 +34,18 @@ class MousePosition {
   void recenter(drawContext *ctx);
 };
 
-class Opengl_Window : public Fl_Gl_Window {
+class openglWindow : public Fl_Gl_Window {
  private:
-  MousePosition _click, _curr, _prev, _lasso;
-  double _point[3];
+  mousePosition _click, _curr, _prev, _lasso;
   drawContext *_ctx;
+  double _point[3];
   void draw();
   int handle(int);
  public:
-  bool AddPointMode, LassoMode, SelectionMode;
-  Opengl_Window(int x, int y, int w, int h, const char *l=0);
-  ~Opengl_Window();
+  bool addPointMode, lassoMode, selectionMode;
+  openglWindow(int x, int y, int w, int h, const char *l=0);
+  ~openglWindow();
   drawContext *getDrawContext(){ return _ctx; }
-};
-
-// This dummy box class permits to define a box widget that will not
-// eat the FL_ENTER/FL_LEAVE events (the new Box widget in fltk >1.1
-// does that, so that our Opengl_Window->handle() was not called each
-// time the mouse moved)
-class Dummy_Box : public Fl_Box {
- private:
-  int handle(int){ return 0; } // always!
- public:
-  Dummy_Box(int x,int y,int w,int h,const char *l=0) : Fl_Box(x, y, w, h, l) {}
 };
 
 #endif

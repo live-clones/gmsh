@@ -8,10 +8,11 @@
 
 #include <math.h>
 #include <FL/Fl_Widget.H>
+#include <FL/fl_draw.H>
 
 // A small 2D widget to set the coordinates of a point on the unit
 // sphere.
-class SpherePosition_Widget : public Fl_Widget {
+class spherePositionWidget : public Fl_Widget {
  private:
   double _x, _y, _z;
   void draw()
@@ -58,9 +59,8 @@ class SpherePosition_Widget : public Fl_Widget {
       return 0;
     }
   }
-
-public:
-  SpherePosition_Widget(int x,int y,int w, const char *l=0)
+ public:
+  spherePositionWidget(int x, int y, int w, const char *l=0)
     : Fl_Widget(x, y, w, w, l), _x(0.), _y(0.), _z(0.)
   {
     box(FL_FLAT_BOX);

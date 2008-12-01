@@ -222,10 +222,8 @@ int OCCEdge::minimumDrawSegments() const
 {
   if(geomType() == Line)
     return GEdge::minimumDrawSegments();
-  else if(geomType() == Circle || geomType() == Ellipse)
-    return CTX.geom.circle_points;
   else
-    return 20 * GEdge::minimumDrawSegments();
+    return CTX.geom.num_sub_edges * GEdge::minimumDrawSegments();
 }
 
 double OCCEdge::curvature(double par) const 

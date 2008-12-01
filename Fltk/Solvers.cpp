@@ -5,22 +5,22 @@
 
 #include <string.h>
 #include <string>
+#include "GUI.h"
+#include "solverWindow.h"
+#include "menuWindow.h"
 #include "GmshMessage.h"
 #include "StringUtils.h"
 #include "Solvers.h"
 #include "GmshSocket.h"
 #include "OpenFile.h"
-#include "GmshUI.h"
-#include "GUI.h"
 #include "PView.h"
 #include "Draw.h"
 #include "Context.h"
 #include "OS.h"
 
 extern Context_T CTX;
-extern GUI *WID;
 
-SolverInfo SINFO[MAXSOLVERS];
+SolverInfo SINFO[MAX_NUM_SOLVERS];
 
 class myGmshServer : public GmshServer{
  public:
@@ -48,7 +48,7 @@ class myGmshServer : public GmshServer{
       if(ret == 0){ 
         // nothing available: wait at most waitint seconds, and in the
         // meantime respond to FLTK events
-        WID->wait(waitint);
+        GUI::instance()->wait(waitint);
       }
       else if(ret > 0){ 
         // data is there
@@ -124,7 +124,8 @@ int Solver(int num, const char *args)
 #endif
   }
 
-  int sock = server->StartClient(command.c_str(), sockname.c_str(), CTX.solver.max_delay);
+  int sock = server->StartClient(command.c_str(), sockname.c_str(),
+                                 CTX.solver.max_delay);
 
   if(sock < 0) {
     switch (sock) {
@@ -158,7 +159,7 @@ int Solver(int num, const char *args)
     }
     if(num >= 0){
       for(int i = 0; i < SINFO[num].nboptions; i++)
-        WID->solver[num].choice[i]->clear();
+        GUI::instance()->solver[num]->choice[i]->clear();
     }
     return 0;
   }
@@ -235,7 +236,7 @@ int Solver(int num, const char *args)
             MergeFile(message);
             Draw();
             if(n != (int)PView::list.size()) 
-              WID->set_context(menu_post, 0);
+              GUI::instance()->menu->setContext(menu_post, 0);
           }
           break;
         case GmshServer::CLIENT_PARSE_STRING:
@@ -243,25 +244,29 @@ int Solver(int num, const char *args)
           Draw();
           break;
         case GmshServer::CLIENT_INFO:
-          Msg::Direct("%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", message);
+          Msg::Direct("%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client",
+                      message);
           break;
         case GmshServer::CLIENT_WARNING:
-          Msg::Direct(2, "%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", message);
+          Msg::Direct(2, "%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client",
+                      message);
           break;
         case GmshServer::CLIENT_ERROR:
-          Msg::Direct(1, "%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", message);
+          Msg::Direct(1, "%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client",
+                      message);
           break;
         case GmshServer::CLIENT_SPEED_TEST:
-          Msg::Info("got %d Mb message in %g seconds", strlen(message) / 1024 / 1024,
-                    GetTimeInSeconds() - timer);
+          Msg::Info("got %d Mb message in %g seconds", 
+                    strlen(message) / 1024 / 1024, GetTimeInSeconds() - timer);
           break;
         default:
           Msg::Warning("Unknown type of message received from %s",
               num >= 0 ? SINFO[num].name : "client");
-	  Msg::Direct("%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", message);
+	  Msg::Direct("%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", 
+                      message);
           break;
         }
-        WID->check();
+        GUI::instance()->check();
       }
       else{
         Msg::Warning("Failed to receive message body on socket: aborting");
@@ -278,10 +283,10 @@ int Solver(int num, const char *args)
   if(num >= 0){
     for(int i = 0; i < SINFO[num].nboptions; i++) {
       if(SINFO[num].nbval[i]) {
-        WID->solver[num].choice[i]->clear();
+        GUI::instance()->solver[num]->choice[i]->clear();
         for(int j = 0; j < SINFO[num].nbval[i]; j++)
-          WID->solver[num].choice[i]->add(SINFO[num].option[i][j]);
-        WID->solver[num].choice[i]->value(0);
+          GUI::instance()->solver[num]->choice[i]->add(SINFO[num].option[i][j]);
+        GUI::instance()->solver[num]->choice[i]->value(0);
       }
     }
   }

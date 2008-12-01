@@ -3,45 +3,24 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _GUI_PROJECTION_H_
-#define _GUI_PROJECTION_H_
+#ifndef _PROJECTION_EDITOR_H_
+#define _PROJECTION_EDITOR_H_
 
-#include "GmshUI.h"
-#include "GModel.h"
-#include "fourierProjectionFace.h"
-#include "GUI.h"
-#include "Shortcut_Window.h"
-#include "ColorTable.h"
-#include <FL/Fl_Toggle_Button.H>
-#include <FL/Fl_Round_Button.H>
 #include <vector>
 #include <complex>
+#include <FL/Fl_Toggle_Button.H>
+#include <FL/Fl_Round_Button.H>
+#include <FL/Fl_Value_Input.H>
+#include <FL/Fl_Hold_Browser.H>
+#include "shortcutWindow.h"
+#include "fourierProjectionFace.h"
+#include "GModel.h"
+#include "ColorTable.h"
 
 #if defined(HAVE_FOURIER_MODEL)
 
 #include "FM_FPatch.h"
 #include "FM_WFPatch.h"
-
-void select_cb(Fl_Widget *w, void *data);
-void filter_cb(Fl_Widget *w, void *data);
-void browse_cb(Fl_Widget *w, void *data);
-void set_position_cb(Fl_Widget *w, void *data);
-void invert_normal_cb(Fl_Widget *w, void *data);
-void translate_p0_cb(Fl_Widget *w, void *data);
-void translate_p1_cb(Fl_Widget *w, void *data);
-void translate_p2_cb(Fl_Widget *w, void *data);
-void translate_m0_cb(Fl_Widget *w, void *data);
-void translate_m1_cb(Fl_Widget *w, void *data);
-void translate_m2_cb(Fl_Widget *w, void *data);
-void update_cb(Fl_Widget *w, void *data);
-void close_cb(Fl_Widget *w, void *data);
-void hide_cb(Fl_Widget *w, void *data);
-void save_selection_cb(Fl_Widget *w, void *data);
-void load_projection_cb(Fl_Widget *w, void *data);
-void save_projection_cb(Fl_Widget *w, void *data);
-void blend_cb(Fl_Widget *w, void *data);
-void compute_cb(Fl_Widget *w, void *data);
-void action_cb(Fl_Widget *w, void *data);
 
 class uvPlot : public Fl_Window {
  private:
@@ -67,8 +46,8 @@ class projection {
   fourierProjectionFace *face;
   Fl_Group *group;
   std::vector<Fl_Value_Input*> parameters;
-  projection(fourierProjectionFace *f, int x, int y, int w, int h, int BB, int BH,
-             projectionEditor *e);
+  projection(fourierProjectionFace *f, int x, int y, int w, int h, 
+             int bb, int bh, projectionEditor *e);
 };
 
 class projectionEditor {
@@ -87,7 +66,7 @@ class projectionEditor {
  public:
   projectionEditor();
   void load(fourierProjectionFace *face, std::string tag="");
-  void show(){ _window->show(); select_cb(0, this); }
+  void show();
   uvPlot *uv() { return _uvPlot; }
   std::vector<MElement*> &getElements() { return _elements; }
   std::vector<GEntity*> &getEntities() { return _entities; }
@@ -101,6 +80,27 @@ class projectionEditor {
   int getOrientation(){ return (int)_orientation->value(); }
   double getThreshold(){ return _slider->value(); }
 };
+
+void select_cb(Fl_Widget *w, void *data);
+void filter_cb(Fl_Widget *w, void *data);
+void browse_cb(Fl_Widget *w, void *data);
+void set_position_cb(Fl_Widget *w, void *data);
+void invert_normal_cb(Fl_Widget *w, void *data);
+void translate_p0_cb(Fl_Widget *w, void *data);
+void translate_p1_cb(Fl_Widget *w, void *data);
+void translate_p2_cb(Fl_Widget *w, void *data);
+void translate_m0_cb(Fl_Widget *w, void *data);
+void translate_m1_cb(Fl_Widget *w, void *data);
+void translate_m2_cb(Fl_Widget *w, void *data);
+void update_cb(Fl_Widget *w, void *data);
+void close_cb(Fl_Widget *w, void *data);
+void hide_cb(Fl_Widget *w, void *data);
+void save_selection_cb(Fl_Widget *w, void *data);
+void load_projection_cb(Fl_Widget *w, void *data);
+void save_projection_cb(Fl_Widget *w, void *data);
+void blend_cb(Fl_Widget *w, void *data);
+void compute_cb(Fl_Widget *w, void *data);
+void action_cb(Fl_Widget *w, void *data);
 
 #endif
 

@@ -55,10 +55,8 @@ int fourierEdge::minimumDrawSegments() const
 
   if(geomType() == Line)
     return n;
-  else if(geomType() == Circle || geomType() == Ellipse)
-    return CTX.geom.circle_points;
   else
-    return 20 * n;
+    return CTX.geom.num_sub_edges * n;
 }
 
 #endif

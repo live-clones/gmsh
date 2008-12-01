@@ -647,7 +647,7 @@ StringXNumber GeneralOptions_Number[] = {
     "Horizontal position (in pixels) of the upper left corner of the menu window" }, 
   { F|S, "MenuPositionY" , opt_general_menu_position1 , 50. ,
     "Vertical position (in pixels) of the upper left corner of the menu window" }, 
-  { F|S, "MessageAutoScroll" , opt_general_message_auto_scroll , 1. , 
+  { F|O, "MessageAutoScroll" , opt_general_message_auto_scroll , 1. , 
     "Automatically scroll message window" }, 
   { F|S, "MessagePositionX" , opt_general_message_position0 , 650. , 
     "Horizontal position (in pixels) of the upper left corner of the message window" }, 
@@ -793,8 +793,6 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "AutoCoherence" , opt_geometry_auto_coherence , 1. , 
     "Should all duplicate entities be automatically removed?" }, 
 
-  { F|O, "CirclePoints" , opt_geometry_circle_points, 20. ,
-    "Number of points used to draw a circle/ellipse" },
   { F,   "Clip" , opt_geometry_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
 
@@ -823,6 +821,8 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F|O, "Normals" , opt_geometry_normals , 0. , 
     "Display size of normal vectors (in pixels)" }, 
+  { F|O, "NumSubEdges" , opt_geometry_num_sub_edges , 20. ,
+    "Number of edge subdivisions between control points when displaying curves" }, 
 
   { F|O, "OCCFixSmallEdges" , opt_geometry_occ_fix_small_edges , 1. , 
     "Fix small edges in STEP, IGES and BRep models" },

@@ -1,8 +1,8 @@
-$Id: VERSIONS.txt,v 1.20 2008-11-28 18:49:10 geuzaine Exp $
+$Id: VERSIONS.txt,v 1.21 2008-12-01 20:08:27 geuzaine Exp $
 
 2.2.7 (?): restored full-quad recombine algorithm; fixed clipping
 planes when more than 32 views are present (replaced General.Clip with
-{Geometry,Mesh,View}.Clip).
+{Geometry,Mesh,View}.Clip); major graphics and gui code refactoring.
 
 2.2.6 (Nov 21, 2008): better transfinite smoothing and automatic
 corner selection; fixed high order meshing crashes on Windows and

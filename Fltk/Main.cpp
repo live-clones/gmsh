@@ -6,8 +6,8 @@
 #include <string>
 #include <time.h>
 #include "GUI.h"
+#include "menuWindow.h"
 #include "Gmsh.h"
-#include "GmshUI.h"
 #include "GmshMessage.h"
 #include "Draw.h"
 #include "Context.h"
@@ -23,8 +23,6 @@
 #include "PView.h"
 
 extern Context_T CTX;
-
-GUI *WID = 0;
 
 int main(int argc, char *argv[])
 {
@@ -67,17 +65,11 @@ int main(int argc, char *argv[])
     Msg::Exit(0);
   }
 
-  // Interactive Gmsh
-  CTX.batch = -1; // The GUI is not ready yet for interactivity
-
   // Create the GUI
-  WID = new GUI(argc, argv);
+  GUI::instance(argc, argv);
 
   // Set all previously defined options in the GUI
   Init_Options_GUI(0);
-
-  // The GUI is ready
-  CTX.batch = 0;
 
   // Say welcome!
   Msg::StatusBar(1, false, "Geometry");
@@ -97,7 +89,7 @@ int main(int argc, char *argv[])
   Msg::Info("-------------------------------------------------------");
 
   // Display the GUI immediately to have a quick "a la Windows" launch time
-  WID->check();
+  GUI::instance()->check();
 
   // Open project file and merge all other input files
   OpenProject(CTX.filename);
@@ -110,20 +102,20 @@ int main(int argc, char *argv[])
   
   if(CTX.post.combine_time){
     PView::combine(true, 2, CTX.post.combine_remove_orig);
-    WID->update_views();
+    GUI::instance()->updateViews();
   }
 
   // Init first context
   switch (CTX.initial_context) {
-  case 1: WID->set_context(menu_geometry, 0); break;
-  case 2: WID->set_context(menu_mesh, 0); break;
-  case 3: WID->set_context(menu_solver, 0); break;
-  case 4: WID->set_context(menu_post, 0); break;
+  case 1: GUI::instance()->menu->setContext(menu_geometry, 0); break;
+  case 2: GUI::instance()->menu->setContext(menu_mesh, 0); break;
+  case 3: GUI::instance()->menu->setContext(menu_solver, 0); break;
+  case 4: GUI::instance()->menu->setContext(menu_post, 0); break;
   default: // automatic
     if(PView::list.size())
-      WID->set_context(menu_post, 0);
+      GUI::instance()->menu->setContext(menu_post, 0);
     else
-      WID->set_context(menu_geometry, 0);
+      GUI::instance()->menu->setContext(menu_geometry, 0);
     break;
   }
 
@@ -143,5 +135,5 @@ int main(int argc, char *argv[])
   if(CTX.solver.listen) Solver(-1, NULL);
 
   // loop
-  return WID->run();
+  return GUI::instance()->run();
 }

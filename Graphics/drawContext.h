@@ -48,20 +48,22 @@ class drawTransformScaled : public drawTransform {
 class drawContext {
  private:
   drawTransform *_transform;
- public:
 
+ public:
   double r[3]; // current Euler angles (in degrees!) 
   double t[3], s[3]; // current translation and scale 
   double quaternion[4]; // current quaternion used for "trackball" rotation
   int viewport[4]; // current viewport 
-
   double rot[16]; // current rotation matrix 
   double t_init[3]; // initial translation before applying modelview transform
   double vxmin, vxmax, vymin, vymax; // current viewport in real coordinates 
   double pixel_equiv_x, pixel_equiv_y; // approx equiv model length of a pixel 
   double model[16], proj[16]; // the modelview and projection matrix as they were
                               // at the time of the last InitPosition() call
+  enum RenderMode {GMSH_RENDER=1, GMSH_SELECT=2, GMSH_FEEDBACK=3};
+  int render_mode; // current rendering mode
 
+ public:
   drawContext(drawTransform *transform=0);
   virtual ~drawContext(){}
   void setTransform(drawTransform *transform){ _transform = transform; }
@@ -70,31 +72,24 @@ class drawContext {
   {
     if(_transform) _transform->transform(x, y, z); 
   }
-
-  // trackball functions 
   void buildRotationMatrix();
   void setQuaternion(double p1x, double p1y, double p2x, double p2y);
   void addQuaternion(double p1x, double p1y, double p2x, double p2y);
   void addQuaternionFromAxisAndAngle(double axis[3], double angle);
   void setQuaternionFromEulerAngles();
   void setEulerAnglesFromRotationMatrix();
-
   void initProjection(int xpick=0, int ypick=0, int wpick=0, int hpick=0);
   void initRenderModel();
   void initPosition();
   void unproject(double x, double y, double p[3], double d[3]);
   int fix2dCoordinates(double *x, double *y);
-
   void draw3d();
   void draw2d();
-
   void drawGeom();
   void drawMesh();
   void drawPost();
-
   void drawText2d();
   void drawGraph2d();
-
   void drawAxis(double xmin, double ymin, double zmin,
                 double xmax, double ymax, double zmax, 
                 int nticks, int mikado);
@@ -104,9 +99,7 @@ class drawContext {
                 char label[3][256], SBoundingBox3d &bb, int mikado);
   void drawAxes();
   void drawSmallAxes();
-
   void drawScales();
-
   void drawSphere(double size, double x, double y, double z, int light);
   void drawCylinder(double width, double *x, double *y, double *z, int light);
   void drawTaperedCylinder(double width, double val1, double val2, 
