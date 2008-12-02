@@ -3124,14 +3124,17 @@ double opt_general_mouse_selection(OPT_ARGS_NUM)
     if(CTX.mouse_selection){
       if(GUI::available())
         Msg::StatusBar(2, false, "Mouse selection ON");
-      GUI::instance()->graph[0]->butt[9]->color(FL_BACKGROUND_COLOR);
+      for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++)
+        GUI::instance()->graph[i]->butt[9]->color(FL_BACKGROUND_COLOR);
     }
     else{
       if(GUI::available())
         Msg::StatusBar(2, false, "Mouse selection OFF");
-      GUI::instance()->graph[0]->butt[9]->color(FL_RED);
+      for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++)
+        GUI::instance()->graph[i]->butt[9]->color(FL_RED);
     }
-    GUI::instance()->graph[0]->butt[9]->redraw();
+    for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++)
+      GUI::instance()->graph[i]->butt[9]->redraw();
   }
 #endif
   return CTX.mouse_selection;
@@ -3410,7 +3413,8 @@ double opt_general_double_buffer(OPT_ARGS_NUM)
     if(GUI::available()) {
       int mode = FL_RGB | FL_DEPTH | (CTX.db ? FL_DOUBLE : FL_SINGLE);
       if(CTX.antialiasing) mode |= FL_MULTISAMPLE;
-      GUI::instance()->graph[0]->gl->mode(mode);
+      for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++)
+        GUI::instance()->graph[i]->gl->mode(mode);
     }
 #endif
   }
@@ -3429,7 +3433,8 @@ double opt_general_antialiasing(OPT_ARGS_NUM)
     if(GUI::available()) {
       int mode = FL_RGB | FL_DEPTH | (CTX.db ? FL_DOUBLE : FL_SINGLE);
       if(CTX.antialiasing) mode |= FL_MULTISAMPLE;
-      GUI::instance()->graph[0]->gl->mode(mode);
+      for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++)
+        GUI::instance()->graph[i]->gl->mode(mode);
     }
 #endif
   }
@@ -5873,7 +5878,8 @@ double opt_post_anim_cycle(OPT_ARGS_NUM)
   if(GUI::available() && (action & GMSH_GUI))
     GUI::instance()->options->post.butt[0]->value(CTX.post.anim_cycle);
   if(GUI::available())
-    GUI::instance()->graph[0]->checkAnimButtons();
+    for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++)
+      GUI::instance()->graph[i]->checkAnimButtons();
 #endif
   return CTX.post.anim_cycle;
 }
@@ -5921,7 +5927,8 @@ double opt_view_nb_timestep(OPT_ARGS_NUM)
   if(_gui_action_valid(action, num))
     GUI::instance()->options->view.value[50]->maximum(data->getNumTimeSteps() - 1);
   if(GUI::available())
-    GUI::instance()->graph[0]->checkAnimButtons();
+    for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++)
+      GUI::instance()->graph[i]->checkAnimButtons();
 #endif
   return data->getNumTimeSteps();
 #else
