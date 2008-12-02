@@ -68,9 +68,8 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &cl
   GUI::instance()->manip->update();
 }
 
-openglWindow::openglWindow(int x, int y, int w, int h, const char *l,
-                           drawContext *ctx)
-  : _ctx(ctx), Fl_Gl_Window(x, y, w, h, l)
+openglWindow::openglWindow(int x, int y, int w, int h, const char *l)
+  : Fl_Gl_Window(x, y, w, h, l)
 {
   addPointMode = lassoMode = selectionMode = false;
   selection = ENT_NONE;
@@ -78,8 +77,7 @@ openglWindow::openglWindow(int x, int y, int w, int h, const char *l,
   undoSelection = invertSelection = 0;
   for(int i = 0; i < 4; i++) trySelectionXYWH[i] = 0;
   _point[0] = _point[1] = _point[2] = 0.;
-  // create default draw context if none given
-  if(!_ctx) _ctx = new drawContext();
+  _ctx = new drawContext();
 }
 
 openglWindow::~openglWindow()

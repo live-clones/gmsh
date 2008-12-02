@@ -60,8 +60,7 @@ class openglWindow : public Fl_Gl_Window {
  public:
   bool addPointMode, lassoMode, selectionMode;
   int endSelection, undoSelection, invertSelection, quitSelection;
-  openglWindow(int x, int y, int w, int h, const char *l=0,
-               drawContext *ctx=0);
+  openglWindow(int x, int y, int w, int h, const char *l=0);
   ~openglWindow();
   drawContext *getDrawContext(){ return _ctx; }
   char selectEntity(int type, 

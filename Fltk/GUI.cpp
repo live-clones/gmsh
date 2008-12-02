@@ -128,11 +128,12 @@ GUI::GUI(int argc, char **argv)
   // e.g. directly loop through time steps with the keyboard)
   graph[0]->gl->take_focus();
 
-  // test: create another graphic window
-  double mat[3][3]={{3,0,0}, {0,1,0}, {0,0,1}};
-  drawContext *ctx = new drawContext(new drawTransformScaled(mat));
-  graph.push_back(new graphicWindow(_fontsize, ctx));
-  graph.back()->win->show();
+  // test: create another graphic window, with a coordinate
+  // transformation
+  //graph.push_back(new graphicWindow(_fontsize));
+  //drawTransform *tr = new drawTransformScaled(2,1,0, 0,1,0, 0,0,1);
+  //graph.back()->gl->getDrawContext()->setTransform(tr);
+  //graph.back()->win->show();
 
   options = new optionWindow(_fontsize);
   fields = new fieldWindow(_fontsize);

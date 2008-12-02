@@ -278,7 +278,7 @@ static void status_stepforward_cb(Fl_Widget *w, void *data)
   status_play_manual(!CTX.post.anim_cycle, 1);
 }
 
-graphicWindow::graphicWindow(int fontsize, drawContext *ctx)
+graphicWindow::graphicWindow(int fontsize)
 {
   static bool first = true;
   if(first){
@@ -397,7 +397,7 @@ graphicWindow::graphicWindow(int fontsize, drawContext *ctx)
   win->resizable(resbox);
   
   // opengl window
-  gl = new openglWindow(0, 0, width, glheight, 0, ctx);
+  gl = new openglWindow(0, 0, width, glheight);
   int mode = FL_RGB | FL_DEPTH | (CTX.db ? FL_DOUBLE : FL_SINGLE);
   if(CTX.antialiasing) mode |= FL_MULTISAMPLE;
   gl->mode(mode);

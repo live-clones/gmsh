@@ -17,24 +17,19 @@ class drawTransform {
 
 class drawTransformScaled : public drawTransform {
  private:
-  bool _identityTransform;
   double _mat[3][3];
  public:
-  drawTransformScaled(double mat[3][3]) : drawTransform()
+  drawTransformScaled(double a11, double a12, double a13,
+                      double a21, double a22, double a23,
+                      double a31, double a32, double a33)
+    : drawTransform()
   {
-    if(mat[0][0] != 1. || mat[0][1] != 0. || mat[0][2] != 0. ||
-       mat[1][0] != 0. || mat[1][1] != 1. || mat[1][2] != 0. ||
-       mat[2][0] != 0. || mat[2][1] != 0. || mat[2][2] != 1.)
-      _identityTransform = false;
-    else
-      _identityTransform = true;
-    for(int i = 0; i < 3; i++)
-      for(int j = 0; j < 3; j++)
-        _mat[i][j] = mat[i][j];
+    _mat[0][0] = a11; _mat[0][1] = a12; _mat[0][2] = a13;
+    _mat[1][0] = a21; _mat[1][1] = a22; _mat[1][2] = a23;
+    _mat[2][0] = a31; _mat[2][1] = a32; _mat[2][2] = a33;
   }
   virtual void transform(double &x, double &y, double &z)
   {
-    if(_identityTransform) return;
     double xyz[3] = {x, y, z};
     x = y = z = 0.;
     for(int k = 0; k < 3; k++){
