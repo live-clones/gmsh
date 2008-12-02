@@ -23,10 +23,14 @@
 
 extern Context_T CTX;
 
-void SetOpenglContext()
+void Draw()
 {
   if(!GUI::available()) return;
-  GUI::instance()->graph[0]->gl->make_current();
+  for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++){
+    GUI::instance()->graph[i]->gl->make_current();
+    GUI::instance()->graph[i]->gl->redraw();
+  }
+  GUI::instance()->check();
 }
 
 void ClearOpengl()
@@ -37,19 +41,20 @@ void ClearOpengl()
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
 
-void Draw()
+void SetOpenglContext(int index)
 {
   if(!GUI::available()) return;
-  GUI::instance()->graph[0]->gl->make_current();
-  GUI::instance()->graph[0]->gl->redraw();
-  GUI::instance()->check();
+  if(index >= 0 && index < GUI::instance()->graph.size())
+    GUI::instance()->graph[index]->gl->make_current();
 }
 
-void Draw2d3d()
+void Draw2d3d(int index)
 {
   if(!GUI::available()) return;
-  GUI::instance()->graph[0]->gl->getDrawContext()->draw3d();
-  GUI::instance()->graph[0]->gl->getDrawContext()->draw2d();
+  if(index >= 0 && index < GUI::instance()->graph.size()){
+    GUI::instance()->graph[index]->gl->getDrawContext()->draw3d();
+    GUI::instance()->graph[index]->gl->getDrawContext()->draw2d();
+  }
 }
 
 void DrawPlugin(void (*draw)(void *context))
@@ -168,35 +173,39 @@ void Draw_String(std::string s, double style)
   }
 }
 
-void Draw_OnScreenMessages()
+void Draw_OnScreenMessages(int index)
 {
   if(!GUI::available()) return;
 
   glColor4ubv((GLubyte *) & CTX.color.text);
   gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
   double h = gl_height();
+
+  if(index >= 0 && index < GUI::instance()->graph.size()){
+    drawContext *ctx = GUI::instance()->graph[index]->gl->getDrawContext();
   
-  drawContext *ctx = GUI::instance()->graph[0]->gl->getDrawContext();
-  
-  if(strlen(GUI::instance()->onscreen_buffer[0])){
-    double w = gl_width(GUI::instance()->onscreen_buffer[0]);
-    glRasterPos2d(ctx->viewport[2] / 2. - w / 2., 
-                  ctx->viewport[3] - 1.2 * h);
-    gl_draw(GUI::instance()->onscreen_buffer[0]);
-  }
-  if(strlen(GUI::instance()->onscreen_buffer[1])){
-    double w = gl_width(GUI::instance()->onscreen_buffer[1]);
-    glRasterPos2d(ctx->viewport[2] / 2. - w / 2.,
-                  ctx->viewport[3] - 2.4 * h);
-    gl_draw(GUI::instance()->onscreen_buffer[1]);
+    if(strlen(GUI::instance()->onscreen_buffer[0])){
+      double w = gl_width(GUI::instance()->onscreen_buffer[0]);
+      glRasterPos2d(ctx->viewport[2] / 2. - w / 2., 
+                    ctx->viewport[3] - 1.2 * h);
+      gl_draw(GUI::instance()->onscreen_buffer[0]);
+    }
+    if(strlen(GUI::instance()->onscreen_buffer[1])){
+      double w = gl_width(GUI::instance()->onscreen_buffer[1]);
+      glRasterPos2d(ctx->viewport[2] / 2. - w / 2.,
+                    ctx->viewport[3] - 2.4 * h);
+      gl_draw(GUI::instance()->onscreen_buffer[1]);
+    }
   }
 }
 
-void GetStoredViewport(int viewport[4])
+void GetStoredViewport(int viewport[4], int index)
 {
   if(!GUI::available()) return;
-  for(int i = 0; i < 4; i++)
-    viewport[i] = GUI::instance()->graph[0]->gl->getDrawContext()->viewport[i];
+  if(index >= 0 && index < GUI::instance()->graph.size()){
+    for(int i = 0; i < 4; i++)
+      viewport[i] = GUI::instance()->graph[index]->gl->getDrawContext()->viewport[i];
+  }
 }
 
 void Viewport2World(double win[3], double xyz[3])

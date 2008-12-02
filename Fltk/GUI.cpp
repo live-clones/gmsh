@@ -115,7 +115,7 @@ GUI::GUI(int argc, char **argv)
     0x20, 0x00, 0xff, 0x07, 0x10, 0x00, 0xff, 0x0f, 0x10, 0x00, 0xff, 0x0f,
     0x08, 0x00, 0xff, 0x1f, 0x08, 0x00, 0xff, 0x1f, 0x04, 0x40, 0xfd, 0x3f,
     0x04, 0xa8, 0xea, 0x3f, 0x02, 0x55, 0x55, 0x7f, 0xa2, 0xaa, 0xaa, 0x7a,
-    0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00 };
+    0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00};
   graph[0]->win->icon
     ((const char*)XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
                                         gmsh32x32, 32, 32));
@@ -134,8 +134,10 @@ GUI::GUI(int argc, char **argv)
   graph[0]->gl->take_focus();
 
   // test: create another graphic window
-  //graph.push_back(new graphicWindow(_fontsize));
-  //graph[1]->win->show();
+  //double mat[3][3]={{3,0,0}, {0,1,0}, {0,0,1}};
+  //drawContext *ctx = new drawContext(new drawTransformScaled(mat));
+  //graph.push_back(new graphicWindow(_fontsize, ctx));
+  //graph.back()->win->show();
 
   options = new optionWindow(_fontsize);
   fields = new fieldWindow(_fontsize);
@@ -155,7 +157,8 @@ GUI::GUI(int argc, char **argv)
   callForSolverPlugin(-1);
 
   // draw the scene
-  graph[0]->gl->redraw();
+  for(unsigned int i = 0; i < graph.size(); i++)
+    graph[i]->gl->redraw();
 }
 
 GUI *GUI::_instance = 0;
@@ -518,12 +521,14 @@ void GUI::setGraphicTitle(const char *str)
 {
   // FIXME should use copy_label, but it is broken for Fl_Windows in
   // fltk 1.1.7
-  graph[0]->win->label(str);
+  for(unsigned int i = 0; i < graph.size(); i++)
+    graph[i]->win->label(str);
 }
 
 void GUI::updateViews()
 {
-  graph[0]->checkAnimButtons();
+  for(unsigned int i = 0; i < graph.size(); i++)
+    graph[i]->checkAnimButtons();
   if(menu->module->value() == 3)
     menu->setContext(menu_post, 0);
   options->resetBrowser();
@@ -551,8 +556,10 @@ void GUI::setStatus(const char *msg, int num)
     static char buff[2][1024];
     strncpy(buff[num], msg, sizeof(buff[num]) - 1);
     buff[num][sizeof(buff[num]) - 1] = '\0';
-    graph[0]->label[num]->label(buff[num]);
-    graph[0]->label[num]->redraw();
+    for(unsigned int i = 0; i < graph.size(); i++){
+      graph[i]->label[num]->label(buff[num]);
+      graph[i]->label[num]->redraw();
+    }
   }
   else if(num == 2){
     int n = strlen(msg);
@@ -628,7 +635,8 @@ void window_cb(Fl_Widget *w, void *data)
   const char *str = (const char*)data;
 
   if(!strcmp(str, "minimize")){
-    GUI::instance()->graph[0]->win->iconize();
+    for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++)
+      GUI::instance()->graph[i]->win->iconize();
     GUI::instance()->options->win->iconize();
     GUI::instance()->plugins->win->iconize();
     GUI::instance()->fields->win->iconize();
@@ -657,7 +665,8 @@ void window_cb(Fl_Widget *w, void *data)
   }
   else if(!strcmp(str, "front")){
     // the order is important!
-    GUI::instance()->graph[0]->win->show();
+    for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++)
+      GUI::instance()->graph[i]->win->show();
     if(GUI::instance()->options->win->shown()) 
       GUI::instance()->options->win->show();
     if(GUI::instance()->plugins->win->shown())

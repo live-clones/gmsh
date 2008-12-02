@@ -43,7 +43,8 @@ class openglWindow : public Fl_Gl_Window {
   int handle(int);
  public:
   bool addPointMode, lassoMode, selectionMode;
-  openglWindow(int x, int y, int w, int h, const char *l=0);
+  openglWindow(int x, int y, int w, int h, const char *l=0,
+               drawContext *ctx=0);
   ~openglWindow();
   drawContext *getDrawContext(){ return _ctx; }
 };

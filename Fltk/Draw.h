@@ -8,20 +8,20 @@
 
 #include <string>
 
-void SetOpenglContext();
+void SetOpenglContext(int index=0);
 void ClearOpengl();
 
 void Draw();
-void Draw2d3d();
+void Draw2d3d(int index=0);
 void DrawPlugin(void (*draw)(void *context));
 
 void Draw_String(std::string);
 void Draw_String(std::string, double style);
 void Draw_String_Center(std::string);
 void Draw_String_Right(std::string);
-void Draw_OnScreenMessages();
+void Draw_OnScreenMessages(int index=0);
 
-void GetStoredViewport(int viewport[4]);
+void GetStoredViewport(int viewport[4], int index=0);
 void Viewport2World(double win[3], double xyz[3]);
 void World2Viewport(double xyz[3], double win[3]);
 

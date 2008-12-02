@@ -101,11 +101,21 @@ static void gmsh_models(Fl_Color c)
 #undef bl
 #undef el
 
+static int findGraphIndex(Fl_Widget *w)
+{
+  if(!w || !w->parent()) return 0;
+  for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++)
+    if(GUI::instance()->graph[i]->win == w->parent())
+      return i;
+  return 0;
+}
+
 void status_xyz1p_cb(Fl_Widget *w, void *data)
 {
   const char *str = (const char*)data;
 
-  drawContext *ctx = GUI::instance()->graph[0]->gl->getDrawContext();
+  int index = findGraphIndex(w);
+  drawContext *ctx = GUI::instance()->graph[index]->gl->getDrawContext();
 
   if(!strcmp(str, "r")){ // rotate 90 degress around axis perp to the screen
     double axis[3] = {0., 0., 1.};
@@ -177,7 +187,8 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
   else if(!strcmp(str, "S")){ // mouse selection
     if(CTX.mouse_selection){
       opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 0);
-      GUI::instance()->graph[0]->gl->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
+      GUI::instance()->graph[index]->gl->cursor
+        (FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
     }
     else
       opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
@@ -223,7 +234,7 @@ void status_play_manual(int time, int step)
 static void status_play_cb(Fl_Widget *w, void *data)
 {
   static double anim_time;
-  GUI::instance()->graph[0]->setAnimButtons(0);
+  GUI::instance()->graph[findGraphIndex(w)]->setAnimButtons(0);
   stop_anim = 0;
   anim_time = GetTimeInSeconds();
   while(1) {
@@ -240,7 +251,7 @@ static void status_play_cb(Fl_Widget *w, void *data)
 static void status_pause_cb(Fl_Widget *w, void *data)
 {
   stop_anim = 1;
-  GUI::instance()->graph[0]->setAnimButtons(1);
+  GUI::instance()->graph[findGraphIndex(w)]->setAnimButtons(1);
 }
 
 static void status_rewind_cb(Fl_Widget *w, void *data)
@@ -267,7 +278,7 @@ static void status_stepforward_cb(Fl_Widget *w, void *data)
   status_play_manual(!CTX.post.anim_cycle, 1);
 }
 
-graphicWindow::graphicWindow(int fontsize)
+graphicWindow::graphicWindow(int fontsize, drawContext *ctx)
 {
   static bool first = true;
   if(first){
@@ -386,7 +397,7 @@ graphicWindow::graphicWindow(int fontsize)
   win->resizable(resbox);
   
   // opengl window
-  gl = new openglWindow(0, 0, width, glheight);
+  gl = new openglWindow(0, 0, width, glheight, 0, ctx);
   int mode = FL_RGB | FL_DEPTH | (CTX.db ? FL_DOUBLE : FL_SINGLE);
   if(CTX.antialiasing) mode |= FL_MULTISAMPLE;
   gl->mode(mode);

@@ -67,19 +67,18 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &cl
   GUI::instance()->manip->update();
 }
 
-openglWindow::openglWindow(int x, int y, int w, int h, const char *l)
-  : Fl_Gl_Window(x, y, w, h, l)
+openglWindow::openglWindow(int x, int y, int w, int h, const char *l,
+                           drawContext *ctx)
+  : _ctx(ctx), Fl_Gl_Window(x, y, w, h, l)
 {
   addPointMode = lassoMode = selectionMode = false;
   _point[0] = _point[1] = _point[2] = 0.;
-  //double mat[3][3]={{1,0,0}, {0,1,0}, {0,0,10}};
-  //_ctx = new drawContext(new drawTransformScaled(mat));
-  _ctx = new drawContext();
+  if(!_ctx) _ctx = new drawContext();
 }
 
 openglWindow::~openglWindow()
 { 
-  delete _ctx; 
+  delete _ctx;
 }
 
 void openglWindow::draw()
@@ -105,7 +104,7 @@ void openglWindow::draw()
     if((w() != _ctx->viewport[2] - _ctx->viewport[0]) ||
        (h() != _ctx->viewport[3] - _ctx->viewport[1])) {
       GUI::instance()->setGraphicSize(_ctx->viewport[2] - _ctx->viewport[0],
-                          _ctx->viewport[3] - _ctx->viewport[1]);
+                                      _ctx->viewport[3] - _ctx->viewport[1]);
       glViewport(_ctx->viewport[0], _ctx->viewport[1],
                  _ctx->viewport[2], _ctx->viewport[3]);
     }
@@ -399,7 +398,7 @@ int openglWindow::handle(int event)
     }
     else{ // hover mode
       if(_curr.win[0] != _prev.win[0] || _curr.win[1] != _prev.win[1]){
-        GUI::instance()->graph[0]->gl->make_current();
+        make_current();
         std::vector<GVertex*> vertices;
         std::vector<GEdge*> edges;
         std::vector<GFace*> faces;

@@ -18,7 +18,7 @@ class graphicWindow{
   Fl_Button *butt[12];
   Fl_Box *label[2];
  public:
-  graphicWindow(int fontsize);
+  graphicWindow(int fontsize, drawContext *ctx=0);
   void setAnimButtons(int mode);
   void checkAnimButtons();
 };
