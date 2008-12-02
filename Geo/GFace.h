@@ -63,6 +63,9 @@ class GFace : public GEntity
   void addRegion(GRegion *r){ r1 ? r2 = r : r1 = r; }
   void delRegion(GRegion *r){ if(r1 == r) r1 = r2; r2 = 0; }
 
+  // get number of regions
+  int numRegions() const { int num=0; if(r1) num++; if(r2) num++; return num; }
+
   // add embedded vertices/edges
   void addEmbeddedVertex(GVertex *v){ embedded_vertices.push_back(v); }
   void addEmbeddedEdge(GEdge *e){ embedded_edges.push_back(e); }
