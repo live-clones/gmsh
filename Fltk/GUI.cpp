@@ -42,6 +42,7 @@ extern Context_T CTX;
 
 static int globalShortcut(int event)
 {
+  if(!GUI::available()) return 0;
   return GUI::instance()->testGlobalShortcuts(event);
 }
 
