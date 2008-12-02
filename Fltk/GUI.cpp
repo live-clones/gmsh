@@ -35,6 +35,7 @@
 #include "Plugin.h"
 #include "PluginManager.h"
 #include "OpenFile.h"
+#include "Win32Icon.h"
 #include "Options.h"
 #include "Context.h"
 
