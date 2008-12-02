@@ -62,7 +62,7 @@ class GUI{
   // return the single static instance of the GUI
   static GUI *instance(int argc=0, char **argv=0);
   // check if the GUI is available
-  static bool GUI::available(){ return (_instance != 0); }
+  static bool available(){ return (_instance != 0); }
   // run the GUI until there's no window left
   int run(){ return Fl::run(); }
   // check (now!) if there are any pending events, and process them

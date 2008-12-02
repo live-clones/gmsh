@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <string.h>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
@@ -13,7 +14,7 @@
 #include "contextWindow.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
-#include "GModel.h"'
+#include "GModel.h"
 #include "MElement.h"
 #include "Visibility.h"
 #include "SelectBuffer.h"
@@ -209,12 +210,12 @@ static void visibility_number_cb(Fl_Widget *w, void *data)
   Draw();
 }
 
-static void _apply_visibility(char mode,
-                              std::vector<GVertex*> &vertices,
-                              std::vector<GEdge*> &edges,
-                              std::vector<GFace*> &faces,
-                              std::vector<GRegion*> &regions,
-                              std::vector<MElement*> &elements)
+static void apply_visibility(char mode,
+                             std::vector<GVertex*> &vertices,
+                             std::vector<GEdge*> &edges,
+                             std::vector<GFace*> &faces,
+                             std::vector<GRegion*> &regions,
+                             std::vector<MElement*> &elements)
 {
   // type = 0 for elementary, 1 for physical and 2 for partitions
   int type = GUI::instance()->visibility->type->value();
@@ -378,7 +379,7 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
 
     char ib = SelectEntity(what, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
-      _apply_visibility(mode, vertices, edges, faces, regions, elements);
+      apply_visibility(mode, vertices, edges, faces, regions, elements);
       // store for possible undo later
       vertices_old = vertices;
       edges_old = edges;
@@ -387,8 +388,8 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
       elements_old = elements;
     }
     if(ib == 'u' && !mode){ // undo only in hide mode
-      _apply_visibility(2, vertices_old, edges_old, faces_old, 
-                        regions_old, elements_old);
+      apply_visibility(2, vertices_old, edges_old, faces_old, 
+                       regions_old, elements_old);
     }
     if(ib == 'q'){
       break;
