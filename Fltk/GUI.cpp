@@ -23,7 +23,6 @@
 #include "solverWindow.h"
 #include "aboutWindow.h"
 #include "colorbarWindow.h"
-#include "popupButton.h"
 #include "fileDialogs.h"
 #include "Draw.h"
 #include "GmshDefines.h"
@@ -41,7 +40,7 @@
 
 extern Context_T CTX;
 
-static int SetGlobalShortcut(int event)
+static int globalShortcut(int event)
 {
   return GUI::instance()->testGlobalShortcuts(event);
 }
@@ -63,7 +62,7 @@ GUI::GUI(int argc, char **argv)
     Fl::display(CTX.display);
 
   // add global shortcuts
-  Fl::add_handler(SetGlobalShortcut);
+  Fl::add_handler(globalShortcut);
 
   // store fontsize now: we don't want any subsequent change
   // (e.g. when doing a 'restore options') to be taken into account
@@ -90,9 +89,9 @@ GUI::GUI(int argc, char **argv)
   fl_open_callback(OpenProjectMacFinder);
 #endif
 
-  // All static windows are contructed (even if some are not
-  // displayed) since the shortcuts should be valid even for hidden
-  // windows, and we don't want to test for widget existence every time
+  // all the windows are contructed (even if some are not displayed)
+  // since the shortcuts should be valid even for hidden windows, and
+  // we don't want to test for widget existence every time
   menu = new menuWindow(_fontsize);
   graph.push_back(new graphicWindow(_fontsize));
 
@@ -101,7 +100,7 @@ GUI::GUI(int argc, char **argv)
     ((const char*)LoadImage(fl_display, MAKEINTRESOURCE(IDI_ICON),
                             IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR));
 #elif defined(__APPLE__)
-  // Nothing to do here
+  // nothing to do here
 #else
   fl_open_display();
   static char gmsh32x32[] = {
@@ -124,7 +123,8 @@ GUI::GUI(int argc, char **argv)
                                         gmsh32x32, 32, 32));
 #endif
 
-  // open graphics window first for correct non-modal behaviour on windows
+  // open graphic window first for correct non-modal behaviour on
+  // Win32
   graph[0]->win->show(1, argv);
   menu->win->show();
 
@@ -136,7 +136,6 @@ GUI::GUI(int argc, char **argv)
   //graph.push_back(new graphicWindow(_fontsize));
   //graph[1]->win->show();
 
-  // create all the permanent windows
   options = new optionWindow(_fontsize);
   fields = new fieldWindow(_fontsize);
   plugins = new pluginWindow(_fontsize);
@@ -154,7 +153,7 @@ GUI::GUI(int argc, char **argv)
   // init solver plugin stuff
   callForSolverPlugin(-1);
 
-  // Draw the scene
+  // draw the scene
   graph[0]->gl->redraw();
 }
 
@@ -614,7 +613,7 @@ void GUI::callForSolverPlugin(int dim)
 
 void hide_cb(Fl_Widget *w, void *data)
 {
-  if(data) ((Fl_Widget *)data)->hide();
+  if(data) ((Fl_Window*)data)->hide();
 }
 
 void redraw_cb(Fl_Widget *w, void *data)
