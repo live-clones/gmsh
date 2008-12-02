@@ -233,26 +233,20 @@ static void set_position_cb(Fl_Widget *w, void *data)
   projectionEditor *e = (projectionEditor*)data;
   projection *p = e->getCurrentProjection();
   if(p){
-    std::vector<GVertex*> vertices;
-    std::vector<GEdge*> edges;
-    std::vector<GFace*> faces;
-    std::vector<GRegion*> regions;
-    std::vector<MElement*> elements;
-    char ib = GUI::instance()->selectEntity
-      (ENT_ALL, vertices, edges, faces, regions, elements);
+    char ib = GUI::instance()->selectEntity(ENT_ALL);
     if(ib == 'l'){
-      if(vertices.size()){
-        p->parameters[0]->value(vertices[0]->x());
-        p->parameters[1]->value(vertices[0]->y());
-        p->parameters[2]->value(vertices[0]->z());
+      if(GUI::instance()->selectedVertices.size()){
+        p->parameters[0]->value(GUI::instance()->selectedVertices[0]->x());
+        p->parameters[1]->value(GUI::instance()->selectedVertices[0]->y());
+        p->parameters[2]->value(GUI::instance()->selectedVertices[0]->z());
       }
-      else if(elements.size()){
-        SPoint3 pc = elements[0]->barycenter();
+      else if(GUI::instance()->selectedElements.size()){
+        SPoint3 pc = GUI::instance()->selectedElements[0]->barycenter();
         p->parameters[0]->value(pc.x());
         p->parameters[1]->value(pc.y());
         p->parameters[2]->value(pc.z());
-        if(elements[0]->getNumFaces()){
-          MFace f = elements[0]->getFace(0);
+        if(GUI::instance()->selectedElements[0]->getNumFaces()){
+          MFace f = GUI::instance()->selectedElements[0]->getFace(0);
           SVector3 n = f.normal();
           p->parameters[3]->value(n[0]);
           p->parameters[4]->value(n[1]);
@@ -279,12 +273,6 @@ static void select_cb(Fl_Widget *w, void *data)
   default: return;
   }
 
-  std::vector<GVertex*> vertices;
-  std::vector<GEdge*> edges;
-  std::vector<GFace*> faces;
-  std::vector<GRegion*> regions;
-  std::vector<MElement*> elements;
-
   std::vector<MElement*> &ele(e->getElements());
   std::vector<GEntity*> &ent(e->getEntities());
 
@@ -299,39 +287,41 @@ static void select_cb(Fl_Widget *w, void *data)
       Msg::StatusBar(3, false, "Select %s\n"
 		  "[Press 'e' to end selection or 'q' to abort]", str);
 
-    char ib = GUI::instance()->selectEntity
-      (what, vertices, edges, faces, regions, elements);
+    char ib = GUI::instance()->selectEntity(what);
     if(ib == 'l') {
       if(CTX.pick_elements){
-        for(unsigned int i = 0; i < elements.size(); i++){
-          if(elements[i]->getVisibility() != 2){
-            elements[i]->setVisibility(2); ele.push_back(elements[i]);
+        for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++){
+          if(GUI::instance()->selectedElements[i]->getVisibility() != 2){
+            GUI::instance()->selectedElements[i]->setVisibility(2); 
+            ele.push_back(GUI::instance()->selectedElements[i]);
           }
         }
       }
       else{
-        for(unsigned int i = 0; i < vertices.size(); i++){
-          if(vertices[i]->getSelection() != 1){
-            vertices[i]->setSelection(1); ent.push_back(vertices[i]);
+        for(unsigned int i = 0; i < GUI::instance()->selectedVertices.size(); i++){
+          if(GUI::instance()->selectedVertices[i]->getSelection() != 1){
+            GUI::instance()->selectedVertices[i]->setSelection(1);
+            ent.push_back(GUI::instance()->selectedVertices[i]);
           }
         }
-        for(unsigned int i = 0; i < faces.size(); i++){
-          if(faces[i]->getSelection() != 1){
-            faces[i]->setSelection(1); ent.push_back(faces[i]);
+        for(unsigned int i = 0; i < GUI::instance()->selectedFaces.size(); i++){
+          if(GUI::instance()->selectedFaces[i]->getSelection() != 1){
+            GUI::instance()->selectedFaces[i]->setSelection(1);
+            ent.push_back(GUI::instance()->selectedFaces[i]);
           }
         }
       }
     }
     if(ib == 'r') {
       if(CTX.pick_elements){
-        for(unsigned int i = 0; i < elements.size(); i++)
-          elements[i]->setVisibility(1);
+        for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++)
+          GUI::instance()->selectedElements[i]->setVisibility(1);
       }
       else{
-        for(unsigned int i = 0; i < vertices.size(); i++)
-          vertices[i]->setSelection(0);
-        for(unsigned int i = 0; i < faces.size(); i++)
-          faces[i]->setSelection(0);
+        for(unsigned int i = 0; i < GUI::instance()->selectedVertices.size(); i++)
+          GUI::instance()->selectedVertices[i]->setSelection(0);
+        for(unsigned int i = 0; i < GUI::instance()->selectedFaces.size(); i++)
+          GUI::instance()->selectedFaces[i]->setSelection(0);
       }
     }
     if(ib == 'u') {
@@ -692,14 +682,10 @@ static void action_cb(Fl_Widget *w, void *data)
   }
   else if(what == "delete_select" || what == "save_select"){
     Msg::StatusBar(3, false, "Select Surface\n[Press 'e' to end selection 'q' to abort]");
-    std::vector<GVertex*> vertices;
-    std::vector<GEdge*> edges;
-    std::vector<GFace*> faces;
-    std::vector<GRegion*> regions;
-    std::vector<MElement*> elements;
-    char ib = GUI::instance()->selectEntity
-      (ENT_SURFACE, vertices, edges, faces, regions, elements);
-    if(ib == 'l') faces.insert(faces.end(), faces.begin(), faces.end());
+    char ib = GUI::instance()->selectEntity(ENT_SURFACE);
+    if(ib == 'l') faces.insert(faces.end(), 
+                               GUI::instance()->selectedFaces.begin(), 
+                               GUI::instance()->selectedFaces.end());
     Msg::StatusBar(3, false, "");
   }
 

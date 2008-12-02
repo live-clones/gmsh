@@ -535,13 +535,7 @@ static void add_new_point()
     Msg::StatusBar(3, false, "Move mouse and/or enter coordinates\n"
                    "[Press 'Shift' to hold position, 'e' to add point "
                    "or 'q' to abort]");
-    std::vector<GVertex*> vertices;
-    std::vector<GEdge*> edges;
-    std::vector<GFace*> faces;
-    std::vector<GRegion*> regions;
-    std::vector<MElement*> elements;
-    char ib = GUI::instance()->selectEntity
-      (ENT_NONE, vertices, edges, faces, regions, elements);
+    char ib = GUI::instance()->selectEntity(ENT_NONE);
     if(ib == 'e'){
       add_point(CTX.filename,
                 GUI::instance()->geoContext->input[2]->value(),
@@ -563,13 +557,7 @@ static void add_new_point()
 
 static void add_new_multiline(std::string type)
 {
-  std::vector<GVertex*> vertices;
-  std::vector<GEdge*> edges;
-  std::vector<GFace*> faces;
-  std::vector<GRegion*> regions;
-  std::vector<MElement*> elements;
   std::vector<int> p;
-
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   Draw();
@@ -582,12 +570,11 @@ static void add_new_multiline(std::string type)
       Msg::StatusBar(3, false, "Select control points\n"
                      "[Press 'e' to end selection, 'u' to undo last selection "
                      "or 'q' to abort]");
-    char ib = GUI::instance()->selectEntity
-      (ENT_POINT, vertices, edges, faces, regions, elements);
+    char ib = GUI::instance()->selectEntity(ENT_POINT);
     if(ib == 'l') {
-      for(unsigned int i = 0; i < vertices.size(); i++){
-        vertices[i]->setSelection(1);
-        p.push_back(vertices[i]->tag());
+      for(unsigned int i = 0; i < GUI::instance()->selectedVertices.size(); i++){
+        GUI::instance()->selectedVertices[i]->setSelection(1);
+        p.push_back(GUI::instance()->selectedVertices[i]->tag());
       }
       Draw();
     }
@@ -622,13 +609,7 @@ static void add_new_multiline(std::string type)
 
 static void add_new_line()
 {
-  std::vector<GVertex*> vertices;
-  std::vector<GEdge*> edges;
-  std::vector<GFace*> faces;
-  std::vector<GRegion*> regions;
-  std::vector<MElement*> elements;
   std::vector<int> p;
-
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   Draw();
@@ -640,12 +621,11 @@ static void add_new_line()
     if(p.size() == 1)
       Msg::StatusBar(3, false, "Select end point\n"
                      "[Press 'u' to undo last selection or 'q' to abort]");
-    char ib = GUI::instance()->selectEntity
-      (ENT_POINT, vertices, edges, faces, regions, elements);
+    char ib = GUI::instance()->selectEntity(ENT_POINT);
     if(ib == 'l') {
-      vertices[0]->setSelection(1);
+      GUI::instance()->selectedVertices[0]->setSelection(1);
       Draw();
-      p.push_back(vertices[0]->tag());
+      p.push_back(GUI::instance()->selectedVertices[0]->tag());
     }
     if(ib == 'r') {
       Msg::Warning("Entity de-selection not supported yet during line creation");
@@ -677,13 +657,7 @@ static void add_new_line()
 
 static void add_new_circle()
 {
-  std::vector<GVertex*> vertices;
-  std::vector<GEdge*> edges;
-  std::vector<GFace*> faces;
-  std::vector<GRegion*> regions;
-  std::vector<MElement*> elements;
   std::vector<int> p;
-
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   Draw();
@@ -698,12 +672,11 @@ static void add_new_circle()
     if(p.size() == 2)
       Msg::StatusBar(3, false, "Select end point\n"
                      "[Press 'u' to undo last selection or 'q' to abort]");
-    char ib = GUI::instance()->selectEntity
-      (ENT_POINT, vertices, edges, faces, regions, elements);
+    char ib = GUI::instance()->selectEntity(ENT_POINT);
     if(ib == 'l') {
-      vertices[0]->setSelection(1);
+      GUI::instance()->selectedVertices[0]->setSelection(1);
       Draw();
-      p.push_back(vertices[0]->tag());
+      p.push_back(GUI::instance()->selectedVertices[0]->tag());
     }
     if(ib == 'r') {
       Msg::Warning("Entity de-selection not supported yet during circle creation");
@@ -735,13 +708,7 @@ static void add_new_circle()
 
 static void add_new_ellipse()
 {
-  std::vector<GVertex*> vertices;
-  std::vector<GEdge*> edges;
-  std::vector<GFace*> faces;
-  std::vector<GRegion*> regions;
-  std::vector<MElement*> elements;
   std::vector<int> p;
-
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   Draw();
@@ -759,12 +726,11 @@ static void add_new_ellipse()
     if(p.size() == 3)
       Msg::StatusBar(3, false, "Select end point\n"
                      "[Press 'u' to undo last selection or 'q' to abort]");
-    char ib = GUI::instance()->selectEntity
-      (ENT_POINT, vertices, edges, faces, regions, elements);
+    char ib = GUI::instance()->selectEntity(ENT_POINT);
     if(ib == 'l') {
-      vertices[0]->setSelection(1);
+      GUI::instance()->selectedVertices[0]->setSelection(1);
       Draw();
-      p.push_back(vertices[0]->tag());
+      p.push_back(GUI::instance()->selectedVertices[0]->tag());
     }
     if(ib == 'r') {
       Msg::Warning("Entity de-selection not supported yet during ellipse creation");
@@ -823,13 +789,7 @@ static int select_contour(int type, int num, List_T * List)
 
 static void add_new_surface_volume(int mode)
 {
-  std::vector<GVertex*> vertices;
-  std::vector<GEdge*> edges;
-  std::vector<GFace*> faces;
-  std::vector<GRegion*> regions;
-  std::vector<MElement*> elements;
   int type, num;
-
   List_T *List1 = List_Create(10, 10, sizeof(int));
   List_T *List2 = List_Create(10, 10, sizeof(int));
 
@@ -867,8 +827,7 @@ static void add_new_surface_volume(int mode)
                          "[Press 'u' to undo last selection or 'q' to abort]");
       }
       
-      char ib = GUI::instance()->selectEntity
-        (type, vertices, edges, faces, regions, elements);
+      char ib = GUI::instance()->selectEntity(type);
       if(ib == 'q') {
         GModel::current()->setSelection(0);
         Draw();
@@ -894,7 +853,9 @@ static void add_new_surface_volume(int mode)
                      "surface/volume creation");
       }
       if(ib == 'l') {
-        int num = (type == ENT_LINE) ? edges[0]->tag() : faces[0]->tag();
+        int num = (type == ENT_LINE) ?
+          GUI::instance()->selectedEdges[0]->tag() :
+          GUI::instance()->selectedFaces[0]->tag();
         if(select_contour(type, num, List1)) {
           if(type == ENT_LINE)
             add_lineloop(List1, CTX.filename, &num);
@@ -912,8 +873,7 @@ static void add_new_surface_volume(int mode)
                 (3, false, "Select hole boundaries\n"
                  "[Press 'e' to end selection, 'u' to undo last selection "
                  "or 'q' to abort]");
-            ib = GUI::instance()->selectEntity
-              (type, vertices, edges, faces, regions, elements);
+            ib = GUI::instance()->selectEntity(type);
             if(ib == 'q') {
               GModel::current()->setSelection(0);
               Draw();
@@ -941,7 +901,9 @@ static void add_new_surface_volume(int mode)
               }
             }
             if(ib == 'l') {
-              num = (type == ENT_LINE) ? edges[0]->tag() : faces[0]->tag();
+              num = (type == ENT_LINE) ? 
+                GUI::instance()->selectedEdges[0]->tag() :
+                GUI::instance()->selectedFaces[0]->tag();
               if(select_contour(type, num, List1)) {
                 if(type == ENT_LINE)
                   add_lineloop(List1, CTX.filename, &num);
@@ -1017,47 +979,37 @@ static void split_selection()
   Draw();
   Msg::StatusBar(3, false, "Select a line to split\n"
                  "[Press 'q' to abort]");
-  std::vector<GVertex*> vertices;
-  std::vector<GEdge*> edges;
-  std::vector<GFace*> faces;
-  std::vector<GRegion*> regions;
-  std::vector<MElement*> elements;
-  GEdge* edge_to_split = NULL;
+  GEdge* edge_to_split = 0;
   while(1){
-    char ib = GUI::instance()->selectEntity
-      (ENT_LINE, vertices, edges, faces, regions, elements);
+    char ib = GUI::instance()->selectEntity(ENT_LINE);
     if(ib == 'q')
       break;
-    if(!edges.empty()){
-      edge_to_split = edges[0];
-      edges[0]->setSelection(1);
+    if(!GUI::instance()->selectedEdges.empty()){
+      edge_to_split = GUI::instance()->selectedEdges[0];
+      edge_to_split->setSelection(1);
       break;
     }
   }
   Msg::StatusBar(3, false, "");
-  if(edges.empty())
-    return;
+  if(GUI::instance()->selectedEdges.empty()) return;
   List_T *List1 = List_Create(5, 5, sizeof(int));
   Msg::StatusBar(3, false, "Select break points\n"
                  "[Press 'e' to end selection or 'q' to abort]");
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   Draw();
   while(1){
-    char ib = GUI::instance()->selectEntity
-      (ENT_POINT, vertices, edges, faces, regions, elements);
+    char ib = GUI::instance()->selectEntity(ENT_POINT);
     if(ib == 'q')
       break;
     if(ib == 'e'){
       split_edge(edge_to_split->tag(), List1, CTX.filename);
       break;
     }
-    if(!vertices.empty()){
-      for(unsigned int i = 0; i < vertices.size(); i++){
-        int tag = vertices[i]->tag();
-        int index = List_ISearchSeq(List1, &tag, fcmp_int); 
-        if(index < 0) List_Add(List1, &tag);
-        vertices[i]->setSelection(1);
-      }
+    for(unsigned int i = 0; i < GUI::instance()->selectedVertices.size(); i++){
+      int tag = GUI::instance()->selectedVertices[i]->tag();
+      int index = List_ISearchSeq(List1, &tag, fcmp_int); 
+      if(index < 0) List_Add(List1, &tag);
+      GUI::instance()->selectedVertices[i]->setSelection(1);
     }
   }
   Msg::StatusBar(3, false, "");
@@ -1068,11 +1020,6 @@ static void split_selection()
 
 static void action_point_line_surface_volume(int action, int mode, const char *what)
 {
-  std::vector<GVertex*> vertices;
-  std::vector<GEdge*> edges;
-  std::vector<GFace*> faces;
-  std::vector<GRegion*> regions;
-  std::vector<MElement*> elements;
   int type;
   const char *str;
 
@@ -1117,8 +1064,7 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
                      "[Press 'e' to end selection, 'u' to undo last selection "
                      "or 'q' to abort]", str);
     
-    char ib = GUI::instance()->selectEntity
-      (type, vertices, edges, faces, regions, elements);
+    char ib = GUI::instance()->selectEntity(type);
     if(ib == 'l') {
       // we don't use List_Insert in order to keep the original
       // ordering (this is slower, but this way undo works as
@@ -1126,33 +1072,33 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
       int tag;
       switch (type) {
       case ENT_POINT: 
-        for(unsigned int i = 0; i < vertices.size(); i++){
-          vertices[i]->setSelection(1);
-          tag = vertices[i]->tag();
+        for(unsigned int i = 0; i < GUI::instance()->selectedVertices.size(); i++){
+          GUI::instance()->selectedVertices[i]->setSelection(1);
+          tag = GUI::instance()->selectedVertices[i]->tag();
           if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
             List_Add(List1, &tag);
         }
         break;
       case ENT_LINE:
-        for(unsigned int i = 0; i < edges.size(); i++){
-          edges[i]->setSelection(1);
-          tag = edges[i]->tag();
+        for(unsigned int i = 0; i < GUI::instance()->selectedEdges.size(); i++){
+          GUI::instance()->selectedEdges[i]->setSelection(1);
+          tag = GUI::instance()->selectedEdges[i]->tag();
           if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
             List_Add(List1, &tag);
         }
         break;
       case ENT_SURFACE:
-        for(unsigned int i = 0; i < faces.size(); i++){
-          faces[i]->setSelection(1);
-          tag = faces[i]->tag();
+        for(unsigned int i = 0; i < GUI::instance()->selectedFaces.size(); i++){
+          GUI::instance()->selectedFaces[i]->setSelection(1);
+          tag = GUI::instance()->selectedFaces[i]->tag();
           if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
             List_Add(List1, &tag);
         }
         break;
       case ENT_VOLUME:
-        for(unsigned int i = 0; i < regions.size(); i++){
-          regions[i]->setSelection(1);
-          tag = regions[i]->tag();
+        for(unsigned int i = 0; i < GUI::instance()->selectedRegions.size(); i++){
+          GUI::instance()->selectedRegions[i]->setSelection(1);
+          tag = GUI::instance()->selectedRegions[i]->tag();
           if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
             List_Add(List1, &tag);
         }
@@ -1167,35 +1113,35 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
       int index, tag;
       switch (type) {
       case ENT_POINT:
-        for(unsigned int i = 0; i < vertices.size(); i++){
-          tag = vertices[i]->tag();
+        for(unsigned int i = 0; i < GUI::instance()->selectedVertices.size(); i++){
+          tag = GUI::instance()->selectedVertices[i]->tag();
           index = List_ISearchSeq(List1, &tag, fcmp_int); 
           if(index >= 0) List_PSuppress(List1, index);
-          vertices[i]->setSelection(0);
+          GUI::instance()->selectedVertices[i]->setSelection(0);
         }
         break;
       case ENT_LINE:
-        for(unsigned int i = 0; i < edges.size(); i++){
-          tag = edges[i]->tag();
+        for(unsigned int i = 0; i < GUI::instance()->selectedEdges.size(); i++){
+          tag = GUI::instance()->selectedEdges[i]->tag();
           index = List_ISearchSeq(List1, &tag, fcmp_int); 
           if(index >= 0) List_PSuppress(List1, index);
-          edges[i]->setSelection(0);
+          GUI::instance()->selectedEdges[i]->setSelection(0);
         }
         break;
       case ENT_SURFACE:
-        for(unsigned int i = 0; i < faces.size(); i++){
-          tag = faces[i]->tag();
+        for(unsigned int i = 0; i < GUI::instance()->selectedFaces.size(); i++){
+          tag = GUI::instance()->selectedFaces[i]->tag();
           index = List_ISearchSeq(List1, &tag, fcmp_int); 
           if(index >= 0) List_PSuppress(List1, index);
-          faces[i]->setSelection(0);
+          GUI::instance()->selectedFaces[i]->setSelection(0);
         }
         break;
       case ENT_VOLUME:
-        for(unsigned int i = 0; i < regions.size(); i++){
-          tag = regions[i]->tag();
+        for(unsigned int i = 0; i < GUI::instance()->selectedRegions.size(); i++){
+          tag = GUI::instance()->selectedRegions[i]->tag();
           index = List_ISearchSeq(List1, &tag, fcmp_int); 
           if(index >= 0) List_PSuppress(List1, index);
-          regions[i]->setSelection(0);
+          GUI::instance()->selectedRegions[i]->setSelection(0);
         }
         break;
       }
@@ -1526,12 +1472,6 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
   else
     return;
 
-  std::vector<GVertex*> vertices;
-  std::vector<GEdge*> edges;
-  std::vector<GFace*> faces;
-  std::vector<GRegion*> regions;
-  std::vector<MElement*> elements;
-
   std::vector<MElement*> ele;
   std::vector<GEntity*> ent;
 
@@ -1547,46 +1487,49 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
       Msg::StatusBar(3, false, "Select %s\n"
                      "[Press 'e' to end selection or 'q' to abort]", str);
 
-    char ib = GUI::instance()->selectEntity
-      (what, vertices, edges, faces, regions, elements);
+    char ib = GUI::instance()->selectEntity(what);
     if(ib == 'l') {
       if(CTX.pick_elements){
-        for(unsigned int i = 0; i < elements.size(); i++){
-          if(elements[i]->getVisibility() != 2){
-            elements[i]->setVisibility(2); ele.push_back(elements[i]);
+        for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++){
+          if(GUI::instance()->selectedElements[i]->getVisibility() != 2){
+            GUI::instance()->selectedElements[i]->setVisibility(2); 
+            ele.push_back(GUI::instance()->selectedElements[i]);
           }
         }
       }
       else{
-        for(unsigned int i = 0; i < edges.size(); i++){
-          if(edges[i]->getSelection() != 1){
-            edges[i]->setSelection(1); ent.push_back(edges[i]);
+        for(unsigned int i = 0; i < GUI::instance()->selectedEdges.size(); i++){
+          if(GUI::instance()->selectedEdges[i]->getSelection() != 1){
+            GUI::instance()->selectedEdges[i]->setSelection(1); 
+            ent.push_back(GUI::instance()->selectedEdges[i]);
           }
         }
-        for(unsigned int i = 0; i < faces.size(); i++){
-          if(faces[i]->getSelection() != 1){
-            faces[i]->setSelection(1); ent.push_back(faces[i]);
+        for(unsigned int i = 0; i < GUI::instance()->selectedFaces.size(); i++){
+          if(GUI::instance()->selectedFaces[i]->getSelection() != 1){
+            GUI::instance()->selectedFaces[i]->setSelection(1); 
+            ent.push_back(GUI::instance()->selectedFaces[i]);
           }
         }
-        for(unsigned int i = 0; i < regions.size(); i++){
-          if(regions[i]->getSelection() != 1){
-            regions[i]->setSelection(1); ent.push_back(regions[i]);
+        for(unsigned int i = 0; i < GUI::instance()->selectedRegions.size(); i++){
+          if(GUI::instance()->selectedRegions[i]->getSelection() != 1){
+            GUI::instance()->selectedRegions[i]->setSelection(1);
+            ent.push_back(GUI::instance()->selectedRegions[i]);
           }
         }
       }
     }
     if(ib == 'r') {
       if(CTX.pick_elements){
-        for(unsigned int i = 0; i < elements.size(); i++)
-          elements[i]->setVisibility(1);
+        for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++)
+          GUI::instance()->selectedElements[i]->setVisibility(1);
       }
       else{
-        for(unsigned int i = 0; i < edges.size(); i++)
-          edges[i]->setSelection(0);
-        for(unsigned int i = 0; i < faces.size(); i++)
-          faces[i]->setSelection(0);
-        for(unsigned int i = 0; i < regions.size(); i++)
-          regions[i]->setSelection(0);
+        for(unsigned int i = 0; i < GUI::instance()->selectedEdges.size(); i++)
+          GUI::instance()->selectedEdges[i]->setSelection(0);
+        for(unsigned int i = 0; i < GUI::instance()->selectedFaces.size(); i++)
+          GUI::instance()->selectedFaces[i]->setSelection(0);
+        for(unsigned int i = 0; i < GUI::instance()->selectedRegions.size(); i++)
+          GUI::instance()->selectedRegions[i]->setSelection(0);
       }
     }
     if(ib == 'u') {
@@ -1640,45 +1583,39 @@ static void mesh_remesh_cb(Fl_Widget *w, void *data)
 
 static void mesh_inspect_cb(Fl_Widget *w, void *data)
 {
-  std::vector<GVertex*> vertices;
-  std::vector<GEdge*> edges;
-  std::vector<GFace*> faces;
-  std::vector<GRegion*> regions;
-  std::vector<MElement*> elements;
-
   CTX.pick_elements = 1;
   CTX.mesh.changed = ENT_ALL;
   Draw();
 
   while(1) {
     Msg::StatusBar(3, false, "Select element\n[Press 'q' to abort]");
-    char ib = GUI::instance()->selectEntity
-      (ENT_ALL, vertices, edges, faces, regions, elements);
+    char ib = GUI::instance()->selectEntity(ENT_ALL);
     if(ib == 'l') {
-      if(elements.size()){
+      if(GUI::instance()->selectedElements.size()){
+        MElement *ele = GUI::instance()->selectedElements[0];
         GModel::current()->setSelection(0);
-        elements[0]->setVisibility(2);
-        Msg::Direct("Element %d:", elements[0]->getNum());
-	int type = elements[0]->getTypeForMSH();
+        ele->setVisibility(2);
+        Msg::Direct("Element %d:", ele->getNum());
+	int type = ele->getTypeForMSH();
 	const char *name;
 	MElement::getInfoMSH(type, &name);
         Msg::Direct("  Type: %d ('%s')", type, name); 
-        Msg::Direct("  Dimension: %d", elements[0]->getDim());
-        Msg::Direct("  Order: %d", elements[0]->getPolynomialOrder()); 
-        Msg::Direct("  Partition: %d", elements[0]->getPartition()); 
+        Msg::Direct("  Dimension: %d", ele->getDim());
+        Msg::Direct("  Order: %d", ele->getPolynomialOrder()); 
+        Msg::Direct("  Partition: %d", ele->getPartition()); 
         char tmp1[32], tmp2[512];
         sprintf(tmp2, "  Vertices:");
-        for(int i = 0; i < elements[0]->getNumVertices(); i++){
-          sprintf(tmp1, " %d", elements[0]->getVertex(i)->getNum());
+        for(int i = 0; i < ele->getNumVertices(); i++){
+          sprintf(tmp1, " %d", ele->getVertex(i)->getNum());
           strcat(tmp2, tmp1);
         }
         Msg::Direct(tmp2);
-        SPoint3 pt = elements[0]->barycenter();
+        SPoint3 pt = ele->barycenter();
         Msg::Direct("  Barycenter: (%g,%g,%g)", pt[0], pt[1], pt[2]);
-        Msg::Direct("  Rho: %g", elements[0]->rhoShapeMeasure());
-        Msg::Direct("  Gamma: %g", elements[0]->gammaShapeMeasure());
-        Msg::Direct("  Eta: %g", elements[0]->etaShapeMeasure());
-        Msg::Direct("  Disto: %g", elements[0]->distoShapeMeasure());
+        Msg::Direct("  Rho: %g", ele->rhoShapeMeasure());
+        Msg::Direct("  Gamma: %g", ele->gammaShapeMeasure());
+        Msg::Direct("  Eta: %g", ele->etaShapeMeasure());
+        Msg::Direct("  Disto: %g", ele->distoShapeMeasure());
         CTX.mesh.changed = ENT_ALL;
         Draw();
         GUI::instance()->messages->show();
@@ -1766,11 +1703,6 @@ static void mesh_define_transfinite_cb(Fl_Widget *w, void *data)
 
 static void add_transfinite(int dim)
 {
-  std::vector<GVertex*> vertices;
-  std::vector<GEdge*> edges;
-  std::vector<GFace*> faces;
-  std::vector<GRegion*> regions;
-  std::vector<MElement*> elements;
   std::vector<int> p;
   char ib;
 
@@ -1792,18 +1724,15 @@ static void add_transfinite(int dim)
         Msg::StatusBar(3, false, "Select lines\n"
                        "[Press 'e' to end selection, 'u' to undo last selection "
                        "or 'q' to abort]");
-      ib = GUI::instance()->selectEntity
-        (ENT_LINE, vertices, edges, faces, regions, elements);
+      ib = GUI::instance()->selectEntity(ENT_LINE);
       break;
     case 2:
       Msg::StatusBar(3, false, "Select surface\n[Press 'q' to abort]");
-      ib = GUI::instance()->selectEntity
-        (ENT_SURFACE, vertices, edges, faces, regions, elements);
+      ib = GUI::instance()->selectEntity(ENT_SURFACE);
       break;
     case 3:
       Msg::StatusBar(3, false, "Select volume\n[Press 'q' to abort]");
-      ib = GUI::instance()->selectEntity
-        (ENT_VOLUME, vertices, edges, faces, regions, elements);
+      ib = GUI::instance()->selectEntity(ENT_VOLUME);
       break;
     default:
       ib = 'l';
@@ -1844,23 +1773,23 @@ static void add_transfinite(int dim)
     if(ib == 'l') {
       switch (dim) {
       case 1:
-        for(unsigned int i = 0; i < edges.size(); i++){
-          edges[i]->setSelection(1);
-          p.push_back(edges[i]->tag());
+        for(unsigned int i = 0; i < GUI::instance()->selectedEdges.size(); i++){
+          GUI::instance()->selectedEdges[i]->setSelection(1);
+          p.push_back(GUI::instance()->selectedEdges[i]->tag());
         }
         Draw();
         break;
       case 2:
       case 3:
         if(dim == 2){
-          faces[0]->setSelection(1);
+          GUI::instance()->selectedFaces[0]->setSelection(1);
           Draw();
-          p.push_back(faces[0]->tag());
+          p.push_back(GUI::instance()->selectedFaces[0]->tag());
         }
         else{
-          regions[0]->setSelection(1);
+          GUI::instance()->selectedRegions[0]->setSelection(1);
           Draw();
-          p.push_back(regions[0]->tag());
+          p.push_back(GUI::instance()->selectedRegions[0]->tag());
         }
         while(1) {
           if(p.size() == 1)
@@ -1870,12 +1799,11 @@ static void add_transfinite(int dim)
             Msg::StatusBar(3, false, "Select (ordered) boundary points\n"
                            "[Press 'e' to end selection, 'u' to undo last selection "
                            "or 'q' to abort]");
-          ib = GUI::instance()->selectEntity
-            (ENT_POINT, vertices, edges, faces, regions, elements);
+          ib = GUI::instance()->selectEntity(ENT_POINT);
           if(ib == 'l') {
-            vertices[0]->setSelection(1);
+            GUI::instance()->selectedVertices[0]->setSelection(1);
             Draw();
-            p.push_back(vertices[0]->tag());
+            p.push_back(GUI::instance()->selectedVertices[0]->tag());
           }
           if(ib == 'u') {
             if(p.size() > 1){

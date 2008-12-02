@@ -166,27 +166,22 @@ static void general_options_color_scheme_cb(Fl_Widget *w, void *data)
 
 static void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
 {
-  std::vector<GVertex*> vertices;
-  std::vector<GEdge*> edges;
-  std::vector<GFace*> faces;
-  std::vector<GRegion*> regions;
-  std::vector<MElement*> elements;
-
   Msg::StatusBar(3, false, "Select entity\n[Press 'q' to abort]");
-  char ib = GUI::instance()->selectEntity
-    (ENT_ALL, vertices, edges, faces, regions, elements);
+  char ib = GUI::instance()->selectEntity(ENT_ALL);
   if(ib == 'l') {
     SPoint3 pc(0., 0., 0.);
-    if(vertices.size())
-      pc.setPosition(vertices[0]->x(), vertices[0]->y(), vertices[0]->z());
-    else if(edges.size())
-      pc = edges[0]->bounds().center();
-    else if(faces.size())
-      pc = faces[0]->bounds().center();
-    else if(regions.size())
-      pc = regions[0]->bounds().center();
-    else if(elements.size())
-      pc = elements[0]->barycenter();
+    if(GUI::instance()->selectedVertices.size())
+      pc.setPosition(GUI::instance()->selectedVertices[0]->x(),
+                     GUI::instance()->selectedVertices[0]->y(),
+                     GUI::instance()->selectedVertices[0]->z());
+    else if(GUI::instance()->selectedEdges.size())
+      pc = GUI::instance()->selectedEdges[0]->bounds().center();
+    else if(GUI::instance()->selectedFaces.size())
+      pc = GUI::instance()->selectedFaces[0]->bounds().center();
+    else if(GUI::instance()->selectedRegions.size())
+      pc = GUI::instance()->selectedRegions[0]->bounds().center();
+    else if(GUI::instance()->selectedElements.size())
+      pc = GUI::instance()->selectedElements[0]->barycenter();
     opt_general_rotation_center_cg
       (0, GMSH_SET, GUI::instance()->options->general.butt[15]->value());
     opt_general_rotation_center0(0, GMSH_SET|GMSH_GUI, pc.x());

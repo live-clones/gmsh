@@ -99,21 +99,15 @@ static void field_select_node_cb(Fl_Widget *w, void *data)
   const char *help = "vertices";
   CTX.pick_elements = 1;
   Draw();  
-  std::vector<GVertex*> vertices, vertices_old;
-  std::vector<GEdge*> edges, edges_old;
-  std::vector<GFace*> faces, faces_old;
-  std::vector<GRegion*> regions, regions_old;
-  std::vector<MElement*> elements, elements_old;
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   while(1) {
     Msg::StatusBar(3, false, "Select %s\n[Press %s'q' to abort]", 
-        help, mode ? "" : "'u' to undo or ");
-    
-    char ib = GUI::instance()->selectEntity
-      (ENT_POINT, vertices, edges, faces, regions, elements);
+                   help, mode ? "" : "'u' to undo or ");
+    char ib = GUI::instance()->selectEntity(ENT_POINT);
     printf("char = %c\n", ib);
     if(ib == 'q'){
-      for(std::vector<GVertex*>::iterator it = vertices.begin(); it != vertices.end(); it++){
+      for(std::vector<GVertex*>::iterator it = GUI::instance()->selectedVertices.begin();
+          it != GUI::instance()->selectedVertices.end(); it++){
 	printf("%p\n", *it);
       }
       break;

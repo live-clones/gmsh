@@ -363,11 +363,11 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
   else
     return;
 
-  std::vector<GVertex*> vertices, vertices_old;
-  std::vector<GEdge*> edges, edges_old;
-  std::vector<GFace*> faces, faces_old;
-  std::vector<GRegion*> regions, regions_old;
-  std::vector<MElement*> elements, elements_old;
+  std::vector<GVertex*> vertices;
+  std::vector<GEdge*> edges;
+  std::vector<GFace*> faces;
+  std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
 
   while(1) {
     if(what == ENT_ALL) 
@@ -376,20 +376,18 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
     Msg::StatusBar(3, false, "Select %s\n[Press %s'q' to abort]", 
                    help, mode ? "" : "'u' to undo or ");
 
-    char ib = GUI::instance()->selectEntity
-      (what, vertices, edges, faces, regions, elements);
+    char ib = GUI::instance()->selectEntity(what);
     if(ib == 'l') {
-      apply_visibility(mode, vertices, edges, faces, regions, elements);
       // store for possible undo later
-      vertices_old = vertices;
-      edges_old = edges;
-      faces_old = faces;
-      regions_old = regions;
-      elements_old = elements;
+      vertices = GUI::instance()->selectedVertices;
+      edges = GUI::instance()->selectedEdges;
+      faces = GUI::instance()->selectedFaces;
+      regions = GUI::instance()->selectedRegions;
+      elements = GUI::instance()->selectedElements;
+      apply_visibility(mode, vertices, edges, faces, regions, elements);
     }
     if(ib == 'u' && !mode){ // undo only in hide mode
-      apply_visibility(2, vertices_old, edges_old, faces_old, 
-                       regions_old, elements_old);
+      apply_visibility(2, vertices, edges, faces, regions, elements);
     }
     if(ib == 'q'){
       break;

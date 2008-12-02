@@ -451,10 +451,10 @@ void drawContext::unproject(double x, double y, double p[3], double d[3])
   p[0] = x0;
   p[1] = y0;
   p[2] = z0;
-  d[0] = x1-x0;
-  d[1] = y1-y0;
-  d[2] = z1-z0;
-  double len = sqrt(d[0]*d[0] + d[1]*d[1] + d[2]*d[2]);
+  d[0] = x1 - x0;
+  d[1] = y1 - y0;
+  d[2] = z1 - z0;
+  double len = sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
   d[0] /= len;
   d[1] /= len;
   d[2] /= len;

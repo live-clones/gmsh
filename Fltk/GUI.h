@@ -44,6 +44,11 @@ class GUI{
   static GUI *_instance;
  public:
   char onscreen_buffer[2][256];
+  std::vector<GVertex*> selectedVertices;
+  std::vector<GEdge*> selectedEdges;
+  std::vector<GFace*> selectedFaces;
+  std::vector<GRegion*> selectedRegions;
+  std::vector<MElement*> selectedElements;
  public:
   std::vector<graphicWindow*> graph;
   menuWindow *menu;
@@ -97,10 +102,7 @@ class GUI{
   // create the window for physical context dependant definitions
   void callForSolverPlugin(int dim);
   // select an entity in the most recent graphic window
-  char selectEntity(int type, 
-                    std::vector<GVertex*> &vertices, std::vector<GEdge*> &edges,
-                    std::vector<GFace*> &faces, std::vector<GRegion*> &regions, 
-                    std::vector<MElement*> &elements);
+  char selectEntity(int type);
 };
 
 // callbacks

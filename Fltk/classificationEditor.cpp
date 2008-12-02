@@ -48,12 +48,7 @@ static void ElementsSelectedMode(classificationEditor *e)
 static void class_selectgface_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor*)data;
-  std::vector<GVertex*> vertices;
-  std::vector<GEdge*> edges;
-  std::vector<GFace*> faces;
   std::vector<GFace*> temp;
-  std::vector<GRegion*> regions;
-  std::vector<MElement*> elements;
 
   opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
 
@@ -64,12 +59,11 @@ static void class_selectgface_cb(Fl_Widget *w, void *data)
     Msg::StatusBar(3, false, "Select Model Face\n"
         "[Press 'e' to end selection or 'q' to abort]");
     
-    char ib = GUI::instance()->selectEntity
-      (ENT_SURFACE, vertices, edges, faces, regions, elements);
+    char ib = GUI::instance()->selectEntity(ENT_SURFACE);
     if(ib == 'l') {
-      for(unsigned int i = 0; i < faces.size(); i++){
-        faces[i]->setSelection(1);
-        temp.push_back(faces[i]);
+      for(unsigned int i = 0; i < GUI::instance()->selectedFaces.size(); i++){
+        GUI::instance()->selectedFaces[i]->setSelection(1);
+        temp.push_back(GUI::instance()->selectedFaces[i]);
       }
     }
     // ok store the list of gfaces !
@@ -94,11 +88,6 @@ static void class_selectgface_cb(Fl_Widget *w, void *data)
 static void class_deleteedge_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor*)data;
-  std::vector<GVertex*> vertices;
-  std::vector<GEdge*> edges;
-  std::vector<GFace*> faces;
-  std::vector<GRegion*> regions;
-  std::vector<MElement*> elements;
   std::vector<MLine*> ele;
   
   CTX.pick_elements = 1;
@@ -110,20 +99,20 @@ static void class_deleteedge_cb(Fl_Widget *w, void *data)
     Msg::StatusBar(3, false, "Select Elements\n"
         "[Press 'e' to end selection or 'q' to abort]");
     
-    char ib = GUI::instance()->selectEntity
-      (ENT_ALL, vertices, edges, faces, regions, elements);
+    char ib = GUI::instance()->selectEntity(ENT_ALL);
     if(ib == 'l') {
       if(CTX.pick_elements){
-        for(unsigned int i = 0; i < elements.size(); i++){
-          if(elements[i]->getNumEdges() == 1 && elements[i]->getVisibility() != 2){
-            elements[i]->setVisibility(2); ele.push_back((MLine*)elements[i]);
+        for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++){
+          MElement *me = GUI::instance()->selectedElements[i];
+          if(me->getNumEdges() == 1 && me->getVisibility() != 2){
+            me->setVisibility(2); ele.push_back((MLine*)me);
           }
         }
       }
     }
     if(ib == 'r') {
-      for(unsigned int i = 0; i < elements.size(); i++)
-        elements[i]->setVisibility(1);
+      for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++)
+        GUI::instance()->selectedElements[i]->setVisibility(1);
     }
     // ok, we compute edges !
     if(ib == 'e') {
@@ -143,15 +132,13 @@ static void class_deleteedge_cb(Fl_Widget *w, void *data)
   std::vector<MLine*> temp = e->temporary->lines;
   e->temporary->lines.clear();
        
-  for(unsigned int i=0;i<temp.size();i++)
-    {      
-      std::vector<MLine*>::iterator it = std::find(ele.begin(),ele.end(),temp[i]);
-      if(it != ele.end())
-        {
-          delete temp[i];
-        }
-      else e->temporary->lines.push_back(temp[i]);
+  for(unsigned int i = 0; i < temp.size(); i++){      
+    std::vector<MLine*>::iterator it = std::find(ele.begin(), ele.end(), temp[i]);
+    if(it != ele.end()){
+      delete temp[i];
     }
+    else e->temporary->lines.push_back(temp[i]);
+  }
   
   CTX.mesh.changed = ENT_ALL;
   CTX.pick_elements = 0;
@@ -449,11 +436,6 @@ static void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_de
 static void class_select_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor*)data;
-  std::vector<GVertex*> vertices;
-  std::vector<GEdge*> edges;
-  std::vector<GFace*> faces;
-  std::vector<GRegion*> regions;
-  std::vector<MElement*> elements;
   std::vector<MTriangle*> &ele(e->getElements());
 
   CTX.pick_elements = 1;
@@ -465,20 +447,20 @@ static void class_select_cb(Fl_Widget *w, void *data)
     Msg::StatusBar(3, false, "Select Elements\n"
         "[Press 'e' to end selection or 'q' to abort]");
     
-    char ib = GUI::instance()->selectEntity
-      (ENT_ALL, vertices, edges, faces, regions, elements);
+    char ib = GUI::instance()->selectEntity(ENT_ALL);
     if(ib == 'l') {
       if(CTX.pick_elements){
-        for(unsigned int i = 0; i < elements.size(); i++){
-          if(elements[i]->getNumEdges() == 3 && elements[i]->getVisibility() != 2){
-            elements[i]->setVisibility(2); ele.push_back((MTriangle*)elements[i]);
+        for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++){
+          MElement *me = GUI::instance()->selectedElements[i];
+          if(me->getNumEdges() == 3 && me->getVisibility() != 2){
+            me->setVisibility(2); ele.push_back((MTriangle*)me);
           }
         }
       }
     }
     if(ib == 'r') {
-      for(unsigned int i = 0; i < elements.size(); i++)
-        elements[i]->setVisibility(1);
+      for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++)
+        GUI::instance()->selectedElements[i]->setVisibility(1);
     }
     // ok, we compute edges !
     if(ib == 'e') {

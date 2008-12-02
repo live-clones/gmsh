@@ -621,10 +621,7 @@ void GUI::callForSolverPlugin(int dim)
   if(sp) sp->popupPropertiesForPhysicalEntity(dim);
 }
 
-char GUI::selectEntity(int type, 
-                       std::vector<GVertex*> &vertices, std::vector<GEdge*> &edges,
-                       std::vector<GFace*> &faces, std::vector<GRegion*> &regions,
-                       std::vector<MElement*> &elements)
+char GUI::selectEntity(int type)
 {
   unsigned int index = 0;
   if(graph.size() > 1)
@@ -634,7 +631,8 @@ char GUI::selectEntity(int type,
           goto done;
  done:
   return graph[index]->gl->selectEntity
-    (type, vertices, edges, faces, regions, elements);
+    (type, selectedVertices, selectedEdges, selectedFaces, selectedRegions,
+     selectedElements);
 }
 
 // Callbacks
