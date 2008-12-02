@@ -28,7 +28,6 @@
 #include <FL/fl_ask.H>
 #include "GUI.h"
 #include "Draw.h"
-#include "SelectBuffer.h"
 #endif
 
 extern Context_T CTX;
@@ -429,7 +428,7 @@ void OpenProject(const char *name)
     GUI::instance()->resetVisibility();
     GUI::instance()->updateViews();
     GUI::instance()->updateFields();
-    ZeroHighlight();
+    GModel::current()->setSelection(0);
   }
 #endif
 }

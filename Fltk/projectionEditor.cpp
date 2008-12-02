@@ -15,7 +15,6 @@
 #include "Draw.h"
 #include "Options.h"
 #include "StringUtils.h"
-#include "SelectBuffer.h"
 #include "fourierFace.h"
 #include "GmshMessage.h"
 #include "Context.h"
@@ -239,7 +238,8 @@ static void set_position_cb(Fl_Widget *w, void *data)
     std::vector<GFace*> faces;
     std::vector<GRegion*> regions;
     std::vector<MElement*> elements;
-    char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions, elements);
+    char ib = GUI::instance()->selectEntity
+      (ENT_ALL, vertices, edges, faces, regions, elements);
     if(ib == 'l'){
       if(vertices.size()){
         p->parameters[0]->value(vertices[0]->x());
@@ -299,7 +299,8 @@ static void select_cb(Fl_Widget *w, void *data)
       Msg::StatusBar(3, false, "Select %s\n"
 		  "[Press 'e' to end selection or 'q' to abort]", str);
 
-    char ib = SelectEntity(what, vertices, edges, faces, regions, elements);
+    char ib = GUI::instance()->selectEntity
+      (what, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
       if(CTX.pick_elements){
         for(unsigned int i = 0; i < elements.size(); i++){
@@ -346,12 +347,12 @@ static void select_cb(Fl_Widget *w, void *data)
       }
     }
     if(ib == 'e') {
-      ZeroHighlight();
+      GModel::current()->setSelection(0);
       ele.clear();
       ent.clear();
     }
     if(ib == 'q') {
-      ZeroHighlight();
+      GModel::current()->setSelection(0);
       ele.clear();
       ent.clear();
       break;
@@ -696,7 +697,8 @@ static void action_cb(Fl_Widget *w, void *data)
     std::vector<GFace*> faces;
     std::vector<GRegion*> regions;
     std::vector<MElement*> elements;
-    char ib = SelectEntity(ENT_SURFACE, vertices, edges, faces, regions, elements);
+    char ib = GUI::instance()->selectEntity
+      (ENT_SURFACE, vertices, edges, faces, regions, elements);
     if(ib == 'l') faces.insert(faces.end(), faces.begin(), faces.end());
     Msg::StatusBar(3, false, "");
   }

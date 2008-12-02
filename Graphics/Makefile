@@ -15,7 +15,6 @@ INC = ${DASH}I../Common ${DASH}I../Geo ${DASH}I../Mesh\
 CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
 SRC = Trackball.cpp \
-      SelectBuffer.cpp \
       Iso.cpp \
       ReadImg.cpp \
       drawContext.cpp \
@@ -60,21 +59,6 @@ depend:
 
 # DO NOT DELETE THIS LINE
 Trackball${OBJEXT}: Trackball.cpp Trackball.h
-SelectBuffer${OBJEXT}: SelectBuffer.cpp ../Common/GmshDefines.h \
-  ../Common/GmshMessage.h ../Geo/GModel.h ../Geo/GVertex.h \
-  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
-  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
-  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Geo/MVertex.h \
-  ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Common/Context.h \
-  ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h SelectBuffer.h \
-  drawContext.h ../Common/VertexArray.h
 Iso${OBJEXT}: Iso.cpp ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h
 ReadImg${OBJEXT}: ReadImg.cpp ReadImg.h ../Common/GmshMessage.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \

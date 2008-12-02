@@ -14,7 +14,6 @@
 #include "menuWindow.h"
 #include "extraDialogs.h"
 #include "Draw.h"
-#include "SelectBuffer.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "Options.h"
@@ -174,7 +173,8 @@ static void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
   std::vector<MElement*> elements;
 
   Msg::StatusBar(3, false, "Select entity\n[Press 'q' to abort]");
-  char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions, elements);
+  char ib = GUI::instance()->selectEntity
+    (ENT_ALL, vertices, edges, faces, regions, elements);
   if(ib == 'l') {
     SPoint3 pc(0., 0., 0.);
     if(vertices.size())
@@ -193,7 +193,7 @@ static void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
     opt_general_rotation_center1(0, GMSH_SET|GMSH_GUI, pc.y());
     opt_general_rotation_center2(0, GMSH_SET|GMSH_GUI, pc.z());
   }
-  ZeroHighlight();
+  GModel::current()->setSelection(0);
   Draw();
   Msg::StatusBar(3, false, "");
 }

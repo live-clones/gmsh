@@ -32,15 +32,18 @@ class meshContextWindow;
 class aboutWindow;
 class solverWindow;
 
+class GVertex;
+class GEdge;
+class GFace;
+class GRegion;
+class MElement;
+
 class GUI{
  private:
   int _fontsize;
   static GUI *_instance;
  public:
   char onscreen_buffer[2][256];
-  int selection, try_selection, quit_selection, end_selection;
-  int undo_selection, invert_selection;
-  int try_selection_xywh[4];
  public:
   std::vector<graphicWindow*> graph;
   menuWindow *menu;
@@ -93,6 +96,11 @@ class GUI{
   void setStatus(const char *msg, int num);
   // create the window for physical context dependant definitions
   void callForSolverPlugin(int dim);
+  // select an entity in the most recent graphic window
+  char selectEntity(int type, 
+                    std::vector<GVertex*> &vertices, std::vector<GEdge*> &edges,
+                    std::vector<GFace*> &faces, std::vector<GRegion*> &regions, 
+                    std::vector<MElement*> &elements);
 };
 
 // callbacks

@@ -6,9 +6,16 @@
 #ifndef _OPENGL_WINDOW_H_
 #define _OPENGL_WINDOW_H_
 
+#include <vector>
 #include <FL/Fl_Gl_Window.H>
 #include <FL/Fl_Box.H>
 #include "drawContext.h"
+
+class GVertex;
+class GEdge;
+class GFace;
+class GRegion;
+class MElement;
 
 class mousePosition {
  public:
@@ -39,14 +46,28 @@ class openglWindow : public Fl_Gl_Window {
   mousePosition _click, _curr, _prev, _lasso;
   drawContext *_ctx;
   double _point[3];
+  int selection, trySelection, trySelectionXYWH[4];
   void draw();
   int handle(int);
+  bool processSelectionBuffer(int type, 
+                              bool multipleSelection, bool meshSelection,
+                              int x, int y, int w, int h,
+                              std::vector<GVertex*> &vertices,
+                              std::vector<GEdge*> &edges,
+                              std::vector<GFace*> &faces,
+                              std::vector<GRegion*> &regions,
+                              std::vector<MElement*> &elements);
  public:
   bool addPointMode, lassoMode, selectionMode;
+  int endSelection, undoSelection, invertSelection, quitSelection;
   openglWindow(int x, int y, int w, int h, const char *l=0,
                drawContext *ctx=0);
   ~openglWindow();
   drawContext *getDrawContext(){ return _ctx; }
+  char selectEntity(int type, 
+                    std::vector<GVertex*> &vertices, std::vector<GEdge*> &edges,
+                    std::vector<GFace*> &faces, std::vector<GRegion*> &regions,
+                    std::vector<MElement*> &elements);
 };
 
 #endif

@@ -128,7 +128,7 @@ OpenFile${OBJEXT}: OpenFile.cpp GmshMessage.h ../Geo/Geo.h \
   ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h OpenFile.h \
   CommandLine.h ../Graphics/ReadImg.h OS.h StringUtils.h \
   ../Parser/Parser.h ../Post/PView.h ../Post/PViewData.h ../Fltk/GUI.h \
-  ../Fltk/Draw.h ../Graphics/SelectBuffer.h ../Graphics/drawContext.h
+  ../Fltk/Draw.h
 CreateFile${OBJEXT}: CreateFile.cpp GmshMessage.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \

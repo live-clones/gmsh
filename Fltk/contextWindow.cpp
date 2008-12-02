@@ -9,9 +9,9 @@
 #include "Draw.h"
 #include "contextWindow.h"
 #include "shortcutWindow.h"
+#include "GModel.h"
 #include "GeoStringInterface.h"
 #include "OpenFile.h"
-#include "SelectBuffer.h"
 #include "Context.h"
 
 extern Context_T CTX;
@@ -31,7 +31,7 @@ static void con_geometry_define_point_cb(Fl_Widget *w, void *data)
             GUI::instance()->geoContext->input[4]->value(),
             GUI::instance()->geoContext->input[5]->value());
   GUI::instance()->resetVisibility();
-  ZeroHighlight();
+  GModel::current()->setSelection(0);
   SetBoundingBox();
   Draw();
 }

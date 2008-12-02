@@ -899,3 +899,20 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
     
   return diff;
 }
+
+void GModel::setSelection(int val)
+{
+  std::vector<GEntity*> entities;
+  getEntities(entities);
+
+  for(unsigned int i = 0; i < entities.size(); i++){
+    entities[i]->setSelection(val);
+    // reset selection in elements (stored in the visibility flag to
+    // save space)
+    if(val == 0){
+      for(int j = 0; j < entities[i]->getNumMeshElements(); j++)
+        if(entities[i]->getMeshElement(j)->getVisibility() == 2)
+          entities[i]->getMeshElement(j)->setVisibility(1);
+    }
+  }  
+}

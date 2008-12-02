@@ -192,6 +192,9 @@ class GModel
   // get the name (if any) of a given physical group
   std::string getPhysicalName(int number);
 
+  // set the selection flag on all entities
+  void setSelection(int val);
+
   // the bounding box
   SBoundingBox3d bounds();
 

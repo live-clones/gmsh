@@ -19,7 +19,6 @@
 #include "GmshMessage.h"
 #include "Field.h"
 #include "GeoStringInterface.h"
-#include "SelectBuffer.h"
 #include "Options.h"
 #include "Context.h"
 
@@ -110,7 +109,8 @@ static void field_select_node_cb(Fl_Widget *w, void *data)
     Msg::StatusBar(3, false, "Select %s\n[Press %s'q' to abort]", 
         help, mode ? "" : "'u' to undo or ");
     
-    char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
+    char ib = GUI::instance()->selectEntity
+      (ENT_POINT, vertices, edges, faces, regions, elements);
     printf("char = %c\n", ib);
     if(ib == 'q'){
       for(std::vector<GVertex*>::iterator it = vertices.begin(); it != vertices.end(); it++){

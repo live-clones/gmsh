@@ -10,12 +10,13 @@
 #include "contextWindow.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
+#include "GModel.h"
+#include "MElement.h"
 #include "Draw.h"
 #include "Numeric.h"
-#include "Context.h"
-#include "SelectBuffer.h"
 #include "GUI.h"
-#include "MElement.h"
+#include "VertexArray.h"
+#include "Context.h"
 
 extern Context_T CTX;
 
@@ -72,7 +73,12 @@ openglWindow::openglWindow(int x, int y, int w, int h, const char *l,
   : _ctx(ctx), Fl_Gl_Window(x, y, w, h, l)
 {
   addPointMode = lassoMode = selectionMode = false;
+  selection = ENT_NONE;
+  trySelection = quitSelection = endSelection = 0;
+  undoSelection = invertSelection = 0;
+  for(int i = 0; i < 4; i++) trySelectionXYWH[i] = 0;
   _point[0] = _point[1] = _point[2] = 0.;
+  // create default draw context if none given
   if(!_ctx) _ctx = new drawContext();
 }
 
@@ -205,15 +211,11 @@ int openglWindow::handle(int event)
         lassoMode = false;
         if(selectionMode && CTX.mouse_selection){
           // will try to select multiple entities
-          GUI::instance()->try_selection = 2;
-          GUI::instance()->try_selection_xywh[0] = 
-            (int)(_click.win[0] + _curr.win[0]) / 2;
-          GUI::instance()->try_selection_xywh[1] = 
-            (int)(_click.win[1] + _curr.win[1]) / 2;
-          GUI::instance()->try_selection_xywh[2] = 
-            (int)fabs(_click.win[0] - _curr.win[0]);
-          GUI::instance()->try_selection_xywh[3] = 
-            (int)fabs(_click.win[1] - _curr.win[1]);
+          trySelection = 2;
+          trySelectionXYWH[0] = (int)(_click.win[0] + _curr.win[0]) / 2;
+          trySelectionXYWH[1] = (int)(_click.win[1] + _curr.win[1]) / 2;
+          trySelectionXYWH[2] = (int)fabs(_click.win[0] - _curr.win[0]);
+          trySelectionXYWH[3] = (int)fabs(_click.win[1] - _curr.win[1]);
         }
         else{
           lassoZoom(_ctx, _click, _curr);
@@ -221,11 +223,11 @@ int openglWindow::handle(int event)
       }
       else if(CTX.mouse_selection){
         // will try to select clicked entity
-        GUI::instance()->try_selection = 1;
-        GUI::instance()->try_selection_xywh[0] = (int)_curr.win[0];
-        GUI::instance()->try_selection_xywh[1] = (int)_curr.win[1];
-        GUI::instance()->try_selection_xywh[2] = 5;
-        GUI::instance()->try_selection_xywh[3] = 5;
+        trySelection = 1;
+        trySelectionXYWH[0] = (int)_curr.win[0];
+        trySelectionXYWH[1] = (int)_curr.win[1];
+        trySelectionXYWH[2] = 5;
+        trySelectionXYWH[3] = 5;
       }
     }
     else if(Fl::event_button() == 2 || 
@@ -240,15 +242,11 @@ int openglWindow::handle(int event)
         lassoMode = false;
         if(selectionMode && CTX.mouse_selection){
           // will try to unselect multiple entities
-          GUI::instance()->try_selection = -2;
-          GUI::instance()->try_selection_xywh[0] = 
-            (int)(_click.win[0] + _curr.win[0]) / 2;
-          GUI::instance()->try_selection_xywh[1] =
-            (int)(_click.win[1] + _curr.win[1]) / 2;
-          GUI::instance()->try_selection_xywh[2] =
-            (int)fabs(_click.win[0] - _curr.win[0]);
-          GUI::instance()->try_selection_xywh[3] =
-            (int)fabs(_click.win[1] - _curr.win[1]);
+          trySelection = -2;
+          trySelectionXYWH[0] = (int)(_click.win[0] + _curr.win[0]) / 2;
+          trySelectionXYWH[1] = (int)(_click.win[1] + _curr.win[1]) / 2;
+          trySelectionXYWH[2] = (int)fabs(_click.win[0] - _curr.win[0]);
+          trySelectionXYWH[3] = (int)fabs(_click.win[1] - _curr.win[1]);
         }
         else{
           lassoZoom(_ctx, _click, _curr);
@@ -256,11 +254,11 @@ int openglWindow::handle(int event)
       }
       else if(CTX.mouse_selection){
         // will try to unselect clicked entity
-        GUI::instance()->try_selection = -1;
-        GUI::instance()->try_selection_xywh[0] = (int)_curr.win[0];
-        GUI::instance()->try_selection_xywh[1] = (int)_curr.win[1];
-        GUI::instance()->try_selection_xywh[2] = 5;
-        GUI::instance()->try_selection_xywh[3] = 5;
+        trySelection = -1;
+        trySelectionXYWH[0] = (int)_curr.win[0];
+        trySelectionXYWH[1] = (int)_curr.win[1];
+        trySelectionXYWH[2] = 5;
+        trySelectionXYWH[3] = 5;
       }
     }
     else {
@@ -317,19 +315,19 @@ int openglWindow::handle(int event)
       else {
         if(Fl::event_state(FL_META)) {
           // will try to select or unselect entities on the fly
-          GUI::instance()->try_selection = Fl::event_state(FL_SHIFT) ? -1 : 1; 
-          GUI::instance()->try_selection_xywh[0] = (int)_curr.win[0];
-          GUI::instance()->try_selection_xywh[1] = (int)_curr.win[1];
-          GUI::instance()->try_selection_xywh[2] = 5;
-          GUI::instance()->try_selection_xywh[3] = 5;
+          trySelection = Fl::event_state(FL_SHIFT) ? -1 : 1; 
+          trySelectionXYWH[0] = (int)_curr.win[0];
+          trySelectionXYWH[1] = (int)_curr.win[1];
+          trySelectionXYWH[2] = 5;
+          trySelectionXYWH[3] = 5;
         }
         else if(Fl::event_button() == 1 && 
                 !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
           if(CTX.useTrackball)
             _ctx->addQuaternion((2. * _prev.win[0] - w()) / w(),
-                              (h() - 2. * _prev.win[1]) / h(),
-                              (2. * _curr.win[0] - w()) / w(),
-                              (h() - 2. * _curr.win[1]) / h());
+                                (h() - 2. * _prev.win[1]) / h(),
+                                (2. * _curr.win[0] - w()) / w(),
+                                (h() - 2. * _curr.win[1]) / h());
           else {
             _ctx->r[1] += ((fabs(dx) > fabs(dy)) ? 180. * dx / (double)w() : 0.);
             _ctx->r[0] += ((fabs(dx) > fabs(dy)) ? 0. : 180. * dy / (double)h());
@@ -398,21 +396,19 @@ int openglWindow::handle(int event)
     }
     else{ // hover mode
       if(_curr.win[0] != _prev.win[0] || _curr.win[1] != _prev.win[1]){
-        make_current();
         std::vector<GVertex*> vertices;
         std::vector<GEdge*> edges;
         std::vector<GFace*> faces;
         std::vector<GRegion*> regions;
         std::vector<MElement*> elements;
-        bool res = ProcessSelectionBuffer
-          (_ctx, GUI::instance()->selection, false, CTX.mouse_hover_meshes, 
-           (int)_curr.win[0], (int)_curr.win[1], 5, 5, vertices, edges, 
-           faces, regions, elements);
-        if((GUI::instance()->selection == ENT_ALL && res) ||
-           (GUI::instance()->selection == ENT_POINT && vertices.size()) ||
-           (GUI::instance()->selection == ENT_LINE && edges.size()) || 
-           (GUI::instance()->selection == ENT_SURFACE && faces.size()) ||
-           (GUI::instance()->selection == ENT_VOLUME && regions.size()))
+        bool res = processSelectionBuffer(selection, false, CTX.mouse_hover_meshes, 
+                                          (int)_curr.win[0], (int)_curr.win[1], 5, 5,
+                                          vertices, edges, faces, regions, elements);
+        if((selection == ENT_ALL && res) ||
+           (selection == ENT_POINT && vertices.size()) ||
+           (selection == ENT_LINE && edges.size()) || 
+           (selection == ENT_SURFACE && faces.size()) ||
+           (selection == ENT_VOLUME && regions.size()))
           cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
         else
           cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
@@ -423,8 +419,8 @@ int openglWindow::handle(int event)
         else if(regions.size()) ge = regions[0];
         MElement *me = elements.size() ? elements[0] : 0;
         Msg::StatusBar(2, false, "%s %s",
-		    ge ? ge->getInfoString().c_str() : "", 
-		    me ? me->getInfoString().c_str() : "");
+                       ge ? ge->getInfoString().c_str() : "", 
+                       me ? me->getInfoString().c_str() : "");
       }
     }
     _prev.set(_ctx);
@@ -435,26 +431,226 @@ int openglWindow::handle(int event)
   }
 }
 
-char SelectEntity(int type, 
-                  std::vector<GVertex*> &vertices,
-                  std::vector<GEdge*> &edges,
-                  std::vector<GFace*> &faces,
-                  std::vector<GRegion*> &regions,
-                  std::vector<MElement*> &elements)
+class hit{
+ public:
+  GLuint type, ient, depth, type2, ient2;
+  hit(GLuint t, GLuint i, GLuint d, GLuint t2=0, GLuint i2=0) 
+    : type(t), ient(i), depth(d), type2(t2), ient2(i2) {}
+};
+
+class hitDepthLessThan{
+ public:
+  bool operator()(const hit &h1, const hit &h2) const
+  {
+    return h1.depth < h2.depth;
+  }
+};
+
+// returns the element at a given position in a vertex array (element
+// pointers are not always stored: returning 0 is not an error)
+static MElement *getElement(GEntity *e, int va_type, int index)
 {
-  if(!GUI::instance()) return 'q';
+  switch(va_type){
+  case 2: 
+    if(e->va_lines && index < e->va_lines->getNumElementPointers())
+      return *e->va_lines->getElementPointerArray(index);
+    break;
+  case 3:
+    if(e->va_triangles && index < e->va_triangles->getNumElementPointers())
+      return *e->va_triangles->getElementPointerArray(index);
+    break;
+  }
+  return 0;
+}
 
+bool openglWindow::processSelectionBuffer(int type, bool multipleSelection,
+                                          bool meshSelection, int x, int y, int w, int h,
+                                          std::vector<GVertex*> &vertices,
+                                          std::vector<GEdge*> &edges,
+                                          std::vector<GFace*> &faces,
+                                          std::vector<GRegion*> &regions,
+                                          std::vector<MElement*> &elements)
+{
+  vertices.clear();
+  edges.clear();
+  faces.clear();
+  regions.clear();
+  elements.clear();
+
+  // In our case the selection buffer size is equal to between 5 and 7
+  // times the maximum number of possible hits
+  GModel *m = GModel::current();
+  int eles = (meshSelection && CTX.pick_elements) ? 4 * m->getNumMeshElements() : 0;
+  int size = 7 * (m->getNumVertices() + m->getNumEdges() + m->getNumFaces() + 
+                  m->getNumRegions() + eles) + 1000 ;
+
+  make_current();
+  GLuint *selectionBuffer = new GLuint[size];
+  glSelectBuffer(size, selectionBuffer);
+
+  glRenderMode(GL_SELECT);
+  _ctx->render_mode = drawContext::GMSH_SELECT;
+
+  glInitNames();
+  glPushMatrix();
+  _ctx->initProjection(x, y, w, h);
+  _ctx->initPosition();
+  _ctx->drawGeom();
+  if(meshSelection) _ctx->drawMesh();
+  glPopMatrix();
+
+  GLint numhits = glRenderMode(GL_RENDER);
+  _ctx->render_mode = drawContext::GMSH_RENDER;
+
+  if(!numhits){ // no hits
+    delete [] selectionBuffer;
+    return false;
+  }
+  else if(numhits < 0){ // overflow
+    delete [] selectionBuffer;
+    Msg::Warning("Too many entities selected");
+    return false;
+  }
+
+  std::vector<hit> hits;
+  GLuint *ptr = selectionBuffer;
+  for(int i = 0; i < numhits; i++) {
+    // in Gmsh 'names' should always be 0, 2 or 4:
+    // * names == 0 means that there is nothing on the stack
+    // * if names == 2, the first name is the type of the entity 
+    //   (0 for point, 1 for edge, 2 for face or 3 for volume) and
+    //   the second is the entity number;
+    // * if names == 4, the first name is the type of the entity,
+    //   the second is the entity number, the third is the type
+    //   of vertex array (2 for line, 3 for triangle, 4 for quad)
+    //   and the fourth is the index of the element in the vertex
+    //   array
+    GLuint names = *ptr++; 
+    *ptr++; // mindepth
+    GLuint maxdepth = *ptr++;
+    if(names == 2){
+      GLuint depth = maxdepth;
+      GLuint type = *ptr++; 
+      GLuint ient = *ptr++;
+      hits.push_back(hit(type, ient, depth));
+    }
+    else if(names == 4){
+      GLuint depth = maxdepth;
+      GLuint type = *ptr++; 
+      GLuint ient = *ptr++;
+      GLuint type2 = *ptr++; 
+      GLuint ient2 = *ptr++;
+      hits.push_back(hit(type, ient, depth, type2, ient2));
+    }
+  }
+
+  delete [] selectionBuffer;
+  
+  if(!hits.size()){ // no entities
+    return false;
+  }
+
+  // sort hits to get closest entities first
+  std::sort(hits.begin(), hits.end(), hitDepthLessThan());
+
+  // filter result: if type == ENT_NONE, return the closest entity of
+  // "lowest dimension" (point < line < surface < volume). Otherwise,
+  // return the closest entity of type "type"
+  GLuint typmin = 10;
+  for(unsigned int i = 0; i < hits.size(); i++)
+    typmin = std::min(typmin, hits[i].type);
+
+  for(unsigned int i = 0; i < hits.size(); i++) {
+    if((type == ENT_ALL) ||
+       (type == ENT_NONE && hits[i].type == typmin) ||
+       (type == ENT_POINT && hits[i].type == 0) ||
+       (type == ENT_LINE && hits[i].type == 1) ||
+       (type == ENT_SURFACE && hits[i].type == 2) ||
+       (type == ENT_VOLUME && hits[i].type == 3)){
+      switch (hits[i].type) {
+      case 0:
+        {
+          GVertex *v = m->getVertexByTag(hits[i].ient);
+          if(!v){
+            Msg::Error("Problem in point selection processing");
+            return false;
+          }
+          vertices.push_back(v);
+          if(!multipleSelection) return true;
+        }
+        break;
+      case 1:
+        {
+          GEdge *e = m->getEdgeByTag(hits[i].ient);
+          if(!e){
+            Msg::Error("Problem in line selection processing");
+            return false;
+          }
+          if(hits[i].type2){
+            MElement *ele = getElement(e, hits[i].type2, hits[i].ient2);
+            if(ele) elements.push_back(ele);
+          }
+          edges.push_back(e);
+          if(!multipleSelection) return true;
+        }
+        break;
+      case 2:
+        {
+          GFace *f = m->getFaceByTag(hits[i].ient);
+          if(!f){
+            Msg::Error("Problem in surface selection processing");
+            return false;
+          }
+          if(hits[i].type2){
+            MElement *ele = getElement(f, hits[i].type2, hits[i].ient2);
+            if(ele) elements.push_back(ele);
+          }
+          faces.push_back(f);
+          if(!multipleSelection) return true;
+        }
+        break;
+      case 3:
+        {
+          GRegion *r = m->getRegionByTag(hits[i].ient);
+          if(!r){
+            Msg::Error("Problem in volume selection processing");
+            return false;
+          }
+          if(hits[i].type2){
+            MElement *ele = getElement(r, hits[i].type2, hits[i].ient2);
+            if(ele) elements.push_back(ele);
+          }
+          regions.push_back(r);
+          if(!multipleSelection) return true;
+        }
+        break;
+      }
+    }
+  }
+
+  if(vertices.size() || edges.size() || faces.size() || 
+     regions.size() || elements.size()) 
+    return true;
+  return false;
+}
+
+char openglWindow::selectEntity(int type, 
+                                std::vector<GVertex*> &vertices,
+                                std::vector<GEdge*> &edges,
+                                std::vector<GFace*> &faces,
+                                std::vector<GRegion*> &regions,
+                                std::vector<MElement*> &elements)
+{
   // force keyboard focus in GL window 
-  GUI::instance()->graph[0]->gl->take_focus();
-  // enable lasso selection
-  GUI::instance()->graph[0]->gl->selectionMode = true;
+  take_focus();
 
-  GUI::instance()->selection = type;
-  GUI::instance()->try_selection = 0;
-  GUI::instance()->quit_selection = 0;
-  GUI::instance()->end_selection = 0;
-  GUI::instance()->undo_selection = 0;
-  GUI::instance()->invert_selection = 0;
+  selectionMode = true;
+  selection = type;
+  trySelection = 0;
+  quitSelection = 0;
+  endSelection = 0;
+  undoSelection = 0;
+  invertSelection = 0;
 
   while(1) {
     vertices.clear();
@@ -463,45 +659,41 @@ char SelectEntity(int type,
     regions.clear();
     elements.clear();
     GUI::instance()->wait();
-    if(GUI::instance()->quit_selection) {
-      GUI::instance()->selection = ENT_NONE;
-      GUI::instance()->graph[0]->gl->selectionMode = false;
-      GUI::instance()->graph[0]->gl->lassoMode = false;
-      GUI::instance()->graph[0]->gl->addPointMode = false;
-      GUI::instance()->graph[0]->gl->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
+    if(quitSelection) {
+      selection = ENT_NONE;
+      selectionMode = false;
+      lassoMode = false;
+      addPointMode = false;
+      cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
       return 'q';
     }
-    if(GUI::instance()->end_selection) {
-      GUI::instance()->end_selection = 0;
-      GUI::instance()->selection = ENT_NONE;
+    if(endSelection) {
+      selection = ENT_NONE;
+      endSelection = 0;
       return 'e';
     }
-    if(GUI::instance()->undo_selection) {
-      GUI::instance()->undo_selection = 0;
+    if(undoSelection) {
+      undoSelection = 0;
       return 'u';
     }
-    if(GUI::instance()->invert_selection) {
-      GUI::instance()->invert_selection = 0;
+    if(invertSelection) {
+      invertSelection = 0;
       return 'i';
     }
-    if(GUI::instance()->try_selection) {
-      bool add = (GUI::instance()->try_selection > 0) ? true : false;
-      bool multi = (abs(GUI::instance()->try_selection) > 1) ? true : false;
-      GUI::instance()->try_selection = 0;
-      if(GUI::instance()->selection == ENT_NONE){ // just report the mouse click
-        GUI::instance()->graph[0]->gl->selectionMode = false;
+    if(trySelection) {
+      bool add = (trySelection > 0) ? true : false;
+      bool multi = (abs(trySelection) > 1) ? true : false;
+      trySelection = 0;
+      if(selection == ENT_NONE){ // just report the mouse click
+        selectionMode = false;
         return 'c';
       }
-      else if(ProcessSelectionBuffer
-              (GUI::instance()->graph[0]->gl->getDrawContext(),
-               GUI::instance()->selection, multi, true,
-               GUI::instance()->try_selection_xywh[0],
-               GUI::instance()->try_selection_xywh[1], 
-               GUI::instance()->try_selection_xywh[2],
-               GUI::instance()->try_selection_xywh[3], 
-               vertices, edges, faces, regions, elements)){
-        GUI::instance()->selection = ENT_NONE;
-        GUI::instance()->graph[0]->gl->selectionMode = false;
+      else if(processSelectionBuffer(selection, multi, true, trySelectionXYWH[0],
+                                     trySelectionXYWH[1], trySelectionXYWH[2],
+                                     trySelectionXYWH[3], vertices, edges, faces, 
+                                     regions, elements)){
+        selection = ENT_NONE;
+        selectionMode = false;
         if(add)
           return 'l';
         else

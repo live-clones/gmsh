@@ -28,6 +28,7 @@
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "GModel.h"
+#include "MElement.h"
 #include "PView.h"
 #include "Solvers.h"
 #include "Field.h"
@@ -51,12 +52,6 @@ GUI::GUI(int argc, char **argv)
   // initialize on-screen message buffer
   onscreen_buffer[0][0] = '\0';
   onscreen_buffer[1][0] = '\0';
-
-  // initialize selection bits
-  selection = ENT_NONE;
-  try_selection = quit_selection = end_selection = 0;
-  undo_selection = invert_selection = 0;
-  for(int i = 0; i < 4; i++) try_selection_xywh[i] = 0;
 
   // set X display
   if(strlen(CTX.display))
@@ -134,10 +129,10 @@ GUI::GUI(int argc, char **argv)
   graph[0]->gl->take_focus();
 
   // test: create another graphic window
-  //double mat[3][3]={{3,0,0}, {0,1,0}, {0,0,1}};
-  //drawContext *ctx = new drawContext(new drawTransformScaled(mat));
-  //graph.push_back(new graphicWindow(_fontsize, ctx));
-  //graph.back()->win->show();
+  double mat[3][3]={{3,0,0}, {0,1,0}, {0,0,1}};
+  drawContext *ctx = new drawContext(new drawTransformScaled(mat));
+  graph.push_back(new graphicWindow(_fontsize, ctx));
+  graph.back()->win->show();
 
   options = new optionWindow(_fontsize);
   fields = new fieldWindow(_fontsize);
@@ -227,23 +222,28 @@ int GUI::testGlobalShortcuts(int event)
     status = 1;
   }
   else if(Fl::test_shortcut('e')) {
-    end_selection = 1;
+    for(unsigned int i = 0; i < graph.size(); i++)
+      graph[i]->gl->endSelection = 1;
     status = 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut('u')) {
-    undo_selection = 1;
+    for(unsigned int i = 0; i < graph.size(); i++)
+      graph[i]->gl->undoSelection = 1;
     status = 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut('i')) {
-    invert_selection = 1;
+    for(unsigned int i = 0; i < graph.size(); i++)
+      graph[i]->gl->invertSelection = 1;
     status = 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut('q')) {
-    quit_selection = 1;
+    for(unsigned int i = 0; i < graph.size(); i++)
+      graph[i]->gl->quitSelection = 1;
     status = 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut('-')) {
-    invert_selection = 1;
+    for(unsigned int i = 0; i < graph.size(); i++)
+      graph[i]->gl->invertSelection = 1;
     status = 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut(FL_Escape) ||
@@ -251,8 +251,12 @@ int GUI::testGlobalShortcuts(int event)
           Fl::test_shortcut(FL_SHIFT + FL_Escape) ||
           Fl::test_shortcut(FL_CTRL + FL_Escape) ||
           Fl::test_shortcut(FL_ALT + FL_Escape)) {
-    if(graph[0]->gl->lassoMode){
-      graph[0]->gl->lassoMode = false;
+    bool lasso = false;
+    for(unsigned int i = 0; i < graph.size(); i++)
+      if(graph[i]->gl->lassoMode) lasso = true;
+    if(lasso){
+      for(unsigned int i = 0; i < graph.size(); i++)
+        graph[i]->gl->lassoMode = false;
       status = 2;
     }
     else{
@@ -615,6 +619,22 @@ void GUI::callForSolverPlugin(int dim)
 { 
   GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();   
   if(sp) sp->popupPropertiesForPhysicalEntity(dim);
+}
+
+char GUI::selectEntity(int type, 
+                       std::vector<GVertex*> &vertices, std::vector<GEdge*> &edges,
+                       std::vector<GFace*> &faces, std::vector<GRegion*> &regions,
+                       std::vector<MElement*> &elements)
+{
+  unsigned int index = 0;
+  if(graph.size() > 1)
+    for(Fl_Window *w = Fl::first_window(); w; w = Fl::next_window(w))
+      for(index = 0; index < GUI::instance()->graph.size(); index++)
+        if(w == graph[index]->win || w == graph[index]->gl)
+          goto done;
+ done:
+  return graph[index]->gl->selectEntity
+    (type, vertices, edges, faces, regions, elements);
 }
 
 // Callbacks
