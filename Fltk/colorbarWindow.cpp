@@ -11,7 +11,7 @@
 #include <FL/fl_draw.H>
 #include "colorbarWindow.h"   
 #include "ColorTable.h"
-#include "GUI.h" // FIXME for GetFontSize
+#include "Draw.h"
 #include "Context.h"
 
 extern Context_T CTX;

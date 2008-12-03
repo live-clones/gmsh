@@ -117,7 +117,8 @@ static void clip_update_cb(Fl_Widget *w, void *data)
 static void clip_invert_cb(Fl_Widget *w, void *data)
 {
   for(int i = 0; i < 4; i++)
-    GUI::instance()->clipping->value[i]->value(-GUI::instance()->clipping->value[i]->value());
+    GUI::instance()->clipping->value[i]->value
+      (-GUI::instance()->clipping->value[i]->value());
   clip_update_cb(NULL, NULL);
 }
 

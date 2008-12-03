@@ -106,17 +106,9 @@ class GUI{
   void callForSolverPlugin(int dim);
 };
 
-// callbacks
 void hide_cb(Fl_Widget *w, void *data);
 void redraw_cb(Fl_Widget *w, void *data);
 void window_cb(Fl_Widget *w, void *data);
-
-// utility functions
-int GetFontIndex(const char *fontname);
-int GetFontEnum(int index);
-const char *GetFontName(int index);
-int GetFontAlign(const char *alignstr);
-int GetFontSize();
 
 class Fl_Browser;
 void add_multiline_in_browser(Fl_Browser *o, const char *prefix, 

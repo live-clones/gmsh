@@ -6,7 +6,6 @@
 #include <string.h>
 #include <FL/gl.h>
 #include "drawContext.h"
-#include "Draw.h"
 #include "GModel.h"
 #include "Context.h"
 #include "Numeric.h"
@@ -14,7 +13,7 @@
 
 extern Context_T CTX;
 
-static int drawTics(int comp, int n, char *format, char *label,
+static int drawTics(drawContext *ctx, int comp, int n, char *format, char *label,
                     double p1[3], double p2[3], double perp[3], int mikado,
                     double pixelfact)
 {
@@ -28,7 +27,7 @@ static int drawTics(int comp, int n, char *format, char *label,
   glRasterPos3d(p2[0] + t[0] * w * 1.4,
                 p2[1] + t[1] * w * 1.4,
                 p2[2] + t[2] * w * 1.4);
-  Draw_String(label);
+  ctx->drawString(label);
 
   if(n < 2) return 0;
 
@@ -87,8 +86,8 @@ static int drawTics(int comp, int n, char *format, char *label,
     else // display the coordinate
       sprintf(str, format, p[comp]);
     double winp[3], winr[3];
-    World2Viewport(p, winp);
-    World2Viewport(r, winr);
+    ctx->world2Viewport(p, winp);
+    ctx->world2Viewport(r, winr);
     gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
     if(fabs(winr[0] - winp[0]) < 2.) // center align
       winr[0] -= gl_width(str) / 2.;
@@ -98,9 +97,9 @@ static int drawTics(int comp, int n, char *format, char *label,
       winr[1] -= gl_height() / 3.;
     else if(winr[1] < winp[1]) // top align
       winr[1] -= gl_height();
-    Viewport2World(winr, r);
+    ctx->viewport2World(winr, r);
     glRasterPos3d(r[0], r[1], r[2]);
-    Draw_String(str);
+    ctx->drawString(str);
   }
 
   return n;
@@ -203,7 +202,7 @@ void drawContext::drawAxes(int mode, int tics[3], char format[3][256],
     else{
       perp[0] = 0.; perp[1] = dir[2]; perp[2] = -dir[1];
     }
-    drawTics(-1, tics[0], format[0], label[0], orig, end, perp, mikado, pixelfact);
+    drawTics(this, -1, tics[0], format[0], label[0], orig, end, perp, mikado, pixelfact);
     drawAxis(xmin, ymin, zmin, xmax, ymax, zmax, tics[0], mikado);
     return;
   }
@@ -215,11 +214,11 @@ void drawContext::drawAxes(int mode, int tics[3], char format[3][256],
   double dzm[3] = {(xmin != xmax) ? -1. : 0., (ymin != ymax) ? -1. : 0., 0.};
   
   int nx = (xmin != xmax) ? 
-    drawTics(0, tics[0], format[0], label[0], orig, xx, dxm, mikado, pixelfact) : 0;
+    drawTics(this, 0, tics[0], format[0], label[0], orig, xx, dxm, mikado, pixelfact) : 0;
   int ny = (ymin != ymax) ? 
-    drawTics(1, tics[1], format[1], label[1], orig, yy, dym, mikado, pixelfact) : 0;
+    drawTics(this, 1, tics[1], format[1], label[1], orig, yy, dym, mikado, pixelfact) : 0;
   int nz = (zmin != zmax) ? 
-    drawTics(2, tics[2], format[2], label[2], orig, zz, dzm, mikado, pixelfact) : 0;
+    drawTics(this, 2, tics[2], format[2], label[2], orig, zz, dzm, mikado, pixelfact) : 0;
 
   drawAxis(xmin, ymin, zmin, xmax, ymin, zmin, nx, mikado);
   drawAxis(xmin, ymin, zmin, xmin, ymax, zmin, ny, mikado);
@@ -349,9 +348,9 @@ void drawContext::drawSmallAxes()
   glVertex2d(cx + zx, cy + zy);
   glEnd();
   glRasterPos2d(cx + xx + o, cy + xy + o);
-  Draw_String("X");
+  drawString("X");
   glRasterPos2d(cx + yx + o, cy + yy + o);
-  Draw_String("Y");
+  drawString("Y");
   glRasterPos2d(cx + zx + o, cy + zy + o);
-  Draw_String("Z");
+  drawString("Z");
 }

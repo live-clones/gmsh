@@ -15,12 +15,113 @@
 #endif
 
 #include "drawContext.h"
-#include "Numeric.h"
 #include "Draw.h"
+#include "GmshDefines.h"
+#include "Numeric.h"
+#include "StringUtils.h"
 #include "Context.h"
 #include "gl2ps.h"
 
 extern Context_T CTX;
+
+void drawContext::drawString(std::string s, const char *font_name, int font_enum, 
+                             int font_size, int align)
+{
+  if(CTX.printing && !CTX.print.text) return;
+
+  // change the raster position only if not creating TeX files
+  if(align > 0 && (!CTX.printing || CTX.print.format != FORMAT_TEX)){
+    GLboolean valid;
+    glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
+    if(valid == GL_TRUE){
+      GLdouble pos[4];
+      glGetDoublev(GL_CURRENT_RASTER_POSITION, pos);
+      double x[3], w[3] = {pos[0], pos[1], pos[2]};
+      gl_font(font_enum, font_size);
+      float width = gl_width(s.c_str());
+      float height = gl_height();
+      switch(align){
+      case 1: w[0] -= width/2.;                     break; // bottom center
+      case 2: w[0] -= width;                        break; // bottom right
+      case 3:                    w[1] -= height;    break; // top left
+      case 4: w[0] -= width/2.;  w[1] -= height;    break; // top center
+      case 5: w[0] -= width;     w[1] -= height;    break; // top right
+      case 6:                    w[1] -= height/2.; break; // center left
+      case 7: w[0] -= width/2.;  w[1] -= height/2.; break; // center center
+      case 8: w[0] -= width;     w[1] -= height/2.; break; // center right
+      default: break;
+      }
+      viewport2World(w, x);
+      glRasterPos3d(x[0], x[1], x[2]);
+    }
+  }
+  
+  if(!CTX.printing){
+    gl_font(font_enum, font_size);
+    gl_draw(s.c_str());
+  }
+  else{
+    if(CTX.print.format == FORMAT_TEX){
+      std::string tmp = SanitizeTeXString(s.c_str(), CTX.print.tex_as_equation);
+      int opt;
+      switch(align){
+      case 1: opt = GL2PS_TEXT_B;   break; // bottom center
+      case 2: opt = GL2PS_TEXT_BR;  break; // bottom right
+      case 3: opt = GL2PS_TEXT_TL;  break; // top left
+      case 4: opt = GL2PS_TEXT_T;   break; // top center
+      case 5: opt = GL2PS_TEXT_TR;  break; // top right
+      case 6: opt = GL2PS_TEXT_CL;  break; // center left
+      case 7: opt = GL2PS_TEXT_C;   break; // center center
+      case 8: opt = GL2PS_TEXT_CR;  break; // center right
+      default: opt = GL2PS_TEXT_BL; break; // bottom left
+      }
+      gl2psTextOpt(tmp.c_str(), font_name, font_size, opt, 0.);
+    }
+    else if(CTX.print.eps_quality && (CTX.print.format == FORMAT_PS ||
+                                      CTX.print.format == FORMAT_EPS ||
+                                      CTX.print.format == FORMAT_PDF ||
+                                      CTX.print.format == FORMAT_SVG)){
+      gl2psText(s.c_str(), font_name, font_size);
+    }
+    else{
+      gl_font(font_enum, font_size);
+      gl_draw(s.c_str());
+    }
+  }
+}
+
+void drawContext::drawString(std::string s)
+{
+  drawString(s, CTX.gl_font, CTX.gl_font_enum, CTX.gl_fontsize, 0);
+}
+
+void drawContext::drawStringCenter(std::string s)
+{
+  drawString(s, CTX.gl_font, CTX.gl_font_enum, CTX.gl_fontsize, 1);
+}
+
+void drawContext::drawStringRight(std::string s)
+{
+  drawString(s, CTX.gl_font, CTX.gl_font_enum, CTX.gl_fontsize, 2);
+}
+
+void drawContext::drawString(std::string s, double style)
+{
+  unsigned int bits = (unsigned int)style;
+
+  if(!bits){ // use defaults
+    drawString(s);
+  }
+  else{
+    int size = (bits & 0xff);
+    int font = (bits>>8 & 0xff);
+    int align = (bits>>16 & 0xff);
+    int font_enum = GetFontEnum(font);
+    const char *font_name = GetFontName(font);
+    if(!size) size = CTX.gl_fontsize;
+    drawString(s, font_name, font_enum, size, align);
+  }
+}
 
 void drawContext::drawSphere(double size, double x, double y, double z, int light)
 {
@@ -464,12 +565,12 @@ void drawContext::drawBox(double xmin, double ymin, double zmin,
                   ymin + offset / s[1], 
                   zmin + offset / s[2]);
     sprintf(label, "(%g,%g,%g)", xmin, ymin, zmin);
-    Draw_String(label);
+    drawString(label);
     glRasterPos3d(xmax + offset / s[0], 
                   ymax + offset / s[1], 
                   zmax + offset / s[2]);
     sprintf(label, "(%g,%g,%g)", xmax, ymax, zmax);
-    Draw_String(label);
+    drawString(label);
   }
 }
 

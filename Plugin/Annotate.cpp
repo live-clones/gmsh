@@ -11,7 +11,7 @@
 #include <FL/gl.h>
 #include "drawContext.h"
 #include "Draw.h"
-#include "GUI.h" // FIXME for GetFontSize
+#include "GUI.h"
 #endif
 
 extern Context_T CTX;
@@ -61,7 +61,7 @@ void GMSH_AnnotatePlugin::draw(void *context)
   glColor4ubv((GLubyte *) & CTX.color.fg);
   if(AnnotateOptions_Number[3].def){ // 3D
     glRasterPos3d(X, Y, Z);
-    Draw_String(AnnotateOptions_String[0].def, style);
+    ctx->drawString(AnnotateOptions_String[0].def, style);
     // draw 10-pixel marker
     double d = 10 * ctx->pixel_equiv_x / ctx->s[0];
     glBegin(GL_LINES);
@@ -83,7 +83,7 @@ void GMSH_AnnotatePlugin::draw(void *context)
     glLoadIdentity();
     ctx->fix2dCoordinates(&X, &Y);
     glRasterPos2d(X, Y);
-    Draw_String(AnnotateOptions_String[0].def, style);
+    ctx->drawString(AnnotateOptions_String[0].def, style);
     // draw 10-pixel marker
     glBegin(GL_LINES);
     glVertex2d(X-10,Y); glVertex2d(X+10,Y);

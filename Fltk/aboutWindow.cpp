@@ -91,16 +91,18 @@ aboutWindow::aboutWindow(int fontsize)
   }
 
   {
-    Fl_Button *o = new Fl_Button(width/2 - BB - WB/2, height - BH - WB, BB, BH, "License");
+    Fl_Button *o = new Fl_Button
+      (width/2 - BB - WB/2, height - BH - WB, BB, BH, "License");
     o->callback(help_license_cb);
   }
 
   {
-    Fl_Button *o = new Fl_Button(width/2 + WB/2, height - BH - WB, BB, BH, "Credits");
+    Fl_Button *o = new Fl_Button
+      (width/2 + WB/2, height - BH - WB, BB, BH, "Credits");
     o->callback(help_credits_cb);
   }
 
   win->position(Fl::x() + Fl::w()/2 - width / 2,
-                         Fl::y() + Fl::h()/2 - height / 2);
+                Fl::y() + Fl::h()/2 - height / 2);
   win->end();
 }

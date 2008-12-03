@@ -17,7 +17,6 @@
 #else
 #  include <GL/glu.h>
 #endif
-
 #include "Draw.h"
 #endif
 

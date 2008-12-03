@@ -5,7 +5,6 @@
 
 #include <FL/gl.h>
 #include "drawContext.h"
-#include "Draw.h"
 #include "PView.h"
 #include "PViewOptions.h"
 #include "PViewData.h"
@@ -46,7 +45,7 @@ void drawContext::drawText2d()
         data->getString2D(j, opt->TimeStep, str, x, y, style);
         fix2dCoordinates(&x, &y);
         glRasterPos2d(x, y);
-        Draw_String(str.c_str(), style);
+        drawString(str.c_str(), style);
       }
     }
   }
@@ -144,8 +143,8 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
   return true;
 }
 
-static void drawGraphAxes(PView *p, double xleft, double ytop, double width,
-                          double height, double xmin, double xmax)
+static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop, 
+                          double width, double height, double xmin, double xmax)
 {
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
@@ -194,12 +193,12 @@ static void drawGraphAxes(PView *p, double xleft, double ytop, double width,
   else
     sprintf(label, "%s", data->getName().c_str());
   glRasterPos2d(xleft, ytop + font_h + tic);
-  Draw_String_Center(label);
+  ctx->drawStringCenter(label);
   
   // x label
   sprintf(label, "%s", opt->AxesLabel[0]);
   glRasterPos2d(xleft + width / 2, ytop - height - 2 * font_h - 2 * tic);
-  Draw_String_Center(label);
+  ctx->drawStringCenter(label);
 
   // y tics and horizontal grid
   if(opt->NbIso > 0){
@@ -235,7 +234,7 @@ static void drawGraphAxes(PView *p, double xleft, double ytop, double width,
       if(opt->ShowScale){
         sprintf(label, opt->Format, (i == nb) ? opt->TmpMin : (opt->TmpMax - i * dv));
         glRasterPos2d(xleft - 2 * tic, ytop - i * dy - font_a / 3.);
-        Draw_String_Right(label);
+        ctx->drawStringRight(label);
       }
     }
   }
@@ -283,16 +282,17 @@ static void drawGraphAxes(PView *p, double xleft, double ytop, double width,
           sprintf(label, opt->AxesFormat[0],
                   xmin + i * (xmax - xmin) / (double)(nb - 1));
         glRasterPos2d(xleft + i * dx, ybot - font_h - tic);
-        Draw_String_Center(label);
+        ctx->drawStringCenter(label);
       }
     }
   }
   
 }
 
-static void addGraphPoint(PView *p, double xleft, double ytop, double width, 
-                          double height, double x, double y, double xmin, 
-                          double xmax, double ymin, double ymax, bool numeric)
+static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop, 
+                          double width, double height, double x, double y, 
+                          double xmin, double xmax, double ymin, double ymax, 
+                          bool numeric)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -317,16 +317,17 @@ static void addGraphPoint(PView *p, double xleft, double ytop, double width,
       glRasterPos2d(px + 3, py + 3);
       char label[256];
       sprintf(label, opt->Format, y);
-      Draw_String(label);
+      ctx->drawString(label);
     }
     else
       glVertex2d(px, py);
   }
 }
 
-static void drawGraphCurves(PView *p, double xleft, double ytop, double width,
-                            double height, std::vector<double> &x, double xmin,
-                            double xmax, std::vector<std::vector<double> > &y)
+static void drawGraphCurves(drawContext *ctx, PView *p, double xleft, double ytop,
+                            double width, double height, std::vector<double> &x,
+                            double xmin, double xmax, 
+                            std::vector<std::vector<double> > &y)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -339,7 +340,7 @@ static void drawGraphCurves(PView *p, double xleft, double ytop, double width,
   if(opt->IntervalsType == PViewOptions::Numeric){
     for(unsigned int i = 0; i < y.size(); i++)
       for(unsigned int j = 0; j < x.size(); j++)
-        addGraphPoint(p, xleft, ytop, width, height, x[j], y[i][j], 
+        addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j], 
                       xmin, xmax, opt->TmpMin, opt->TmpMax, true);
   }
 
@@ -349,7 +350,7 @@ static void drawGraphCurves(PView *p, double xleft, double ytop, double width,
     glBegin(GL_POINTS);
     for(unsigned int i = 0; i < y.size(); i++)
       for(unsigned int j = 0; j < x.size(); j++)
-        addGraphPoint(p, xleft, ytop, width, height, x[j], y[i][j], 
+        addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j], 
                       xmin, xmax, opt->TmpMin, opt->TmpMax, false);
     glEnd();    
   }
@@ -364,7 +365,7 @@ static void drawGraphCurves(PView *p, double xleft, double ytop, double width,
       }
       glBegin(GL_LINE_STRIP);
       for(unsigned int j = 0; j < x.size(); j++)
-        addGraphPoint(p, xleft, ytop, width, height, x[j], y[i][j], 
+        addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j], 
                       xmin, xmax, opt->TmpMin, opt->TmpMax, false);
       glEnd();
       if(opt->UseStipple){
@@ -375,7 +376,8 @@ static void drawGraphCurves(PView *p, double xleft, double ytop, double width,
   }
 }
 
-static void drawGraph(PView *p, double xleft, double ytop, double width, double height)
+static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
+                      double width, double height)
 {
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
@@ -397,8 +399,8 @@ static void drawGraph(PView *p, double xleft, double ytop, double width, double 
   std::vector<std::vector<double> > y;
   double xmin, xmax;
   if(!getGraphData(p, x, xmin, xmax, y)) return;
-  drawGraphAxes(p, xleft, ytop, width, height, xmin, xmax);
-  drawGraphCurves(p, xleft, ytop, width, height, x, xmin, xmax, y);
+  drawGraphAxes(ctx, p, xleft, ytop, width, height, xmin, xmax);
+  drawGraphCurves(ctx, p, xleft, ytop, width, height, x, xmin, xmax, y);
 }
 
 void drawContext::drawGraph2d()
@@ -427,7 +429,7 @@ void drawContext::drawGraph2d()
     if(!opt->AutoPosition){
       double x = opt->Position[0], y = opt->Position[1];
       int center = fix2dCoordinates(&x, &y);
-      drawGraph(p, x - (center & 1 ? opt->Size[0] / 2. : 0), 
+      drawGraph(this, p, x - (center & 1 ? opt->Size[0] / 2. : 0), 
                 y + (center & 2 ? opt->Size[1] / 2. : 0), 
                 opt->Size[0], opt->Size[1]);
     }
@@ -440,7 +442,7 @@ void drawContext::drawGraph2d()
         double h = frach * winh - ysep;
         double x = viewport[0] + (1 - fracw) / 2. * winw;
         double y = viewport[1] + (1 - frach) / 2. * winh;
-        drawGraph(p, x + 0.95 * xsep, viewport[3] - (y + 0.4 * ysep), w, h);
+        drawGraph(this, p, x + 0.95 * xsep, viewport[3] - (y + 0.4 * ysep), w, h);
       }
       else if(graphs.size() == 2){
         double fracw = 0.75, frach = 0.85;
@@ -449,7 +451,7 @@ void drawContext::drawGraph2d()
         double x = viewport[0] + (1 - fracw) / 2. * winw;
         double y = viewport[1] + (1 - frach) / 3. * winh;
         if(i == 1) y += (h + ysep + (1 - frach) / 3. * winh);
-        drawGraph(p, x + 0.95 * xsep, viewport[3] - (y + 0.4 * ysep), w, h);
+        drawGraph(this, p, x + 0.95 * xsep, viewport[3] - (y + 0.4 * ysep), w, h);
       }
       else{
         double fracw = 0.85, frach = 0.85;
@@ -459,7 +461,7 @@ void drawContext::drawGraph2d()
         if(i == 1 || i == 3) x += (w + xsep + (1-fracw)/3. * winw);
         double y = viewport[1] + (1 - frach) / 3. * winh;
         if(i == 2 || i == 3) y += (h + ysep + (1 - frach) / 3. * winh);
-        drawGraph(p, x + 0.95 * xsep, viewport[3] - (y + 0.4 * ysep), w, h);
+        drawGraph(this, p, x + 0.95 * xsep, viewport[3] - (y + 0.4 * ysep), w, h);
       }
     }
   }

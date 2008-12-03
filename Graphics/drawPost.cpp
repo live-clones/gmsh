@@ -9,7 +9,6 @@
 #include "drawContext.h"
 #include "GmshMessage.h"
 #include "Numeric.h"
-#include "Draw.h"
 #include "Iso.h"
 #include "PView.h"
 #include "PViewOptions.h"
@@ -1120,7 +1119,7 @@ static std::string stringValue(int numComp, double d[9], double norm, char *form
   return std::string(label);
 }
 
-static void drawNumberGlyphs(PView *p, int numNodes, int numComp, 
+static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes, int numComp, 
 			     double xyz[NMAX][3], double val[NMAX][9])
 {
   PViewOptions *opt = p->getOptions();
@@ -1142,9 +1141,9 @@ static void drawNumberGlyphs(PView *p, int numNodes, int numComp,
       glColor4ubv((GLubyte *) & col);
       glRasterPos3d(pc.x(), pc.y(), pc.z());
       if(opt->CenterGlyphs)
-        Draw_String_Center(stringValue(numComp, d, v, opt->Format));
+        ctx->drawStringCenter(stringValue(numComp, d, v, opt->Format));
       else
-        Draw_String(stringValue(numComp, d, v, opt->Format));
+        ctx->drawString(stringValue(numComp, d, v, opt->Format));
     }
   }
   else if(opt->GlyphLocation == PViewOptions::Vertex){
@@ -1155,9 +1154,9 @@ static void drawNumberGlyphs(PView *p, int numNodes, int numComp,
         glColor4ubv((GLubyte *) & col);
         glRasterPos3d(xyz[i][0], xyz[i][1], xyz[i][2]);
         if(opt->CenterGlyphs)
-          Draw_String_Center(stringValue(numComp, val[i], v, opt->Format));
+          ctx->drawStringCenter(stringValue(numComp, val[i], v, opt->Format));
         else
-          Draw_String(stringValue(numComp, val[i], v, opt->Format));
+          ctx->drawString(stringValue(numComp, val[i], v, opt->Format));
       }
     }
   }
@@ -1229,7 +1228,7 @@ static void drawGlyphs(drawContext *ctx, PView *p)
       }
       changeCoordinates(p, ent, i, numNodes, numEdges, numComp, xyz, val);
       if(opt->IntervalsType == PViewOptions::Numeric)
-        drawNumberGlyphs(p, numNodes, numComp, xyz, val);
+        drawNumberGlyphs(ctx, p, numNodes, numComp, xyz, val);
       if(dim == 2 && opt->Normals)
         drawNormalVectorGlyphs(ctx, p, numNodes, xyz, val);
       else if(dim == 1 && opt->Tangents)
@@ -1450,7 +1449,7 @@ class drawPView {
         std::string str;
         data->getString3D(i, opt->TimeStep, str, x, y, z, style);
         glRasterPos3d(x, y, z);
-        Draw_String(str, style);
+        _ctx->drawString(str, style);
       }
     }
     

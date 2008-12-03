@@ -5,7 +5,6 @@
 
 #include <FL/gl.h>
 #include "drawContext.h"
-#include "Draw.h"
 #include "PView.h"
 #include "PViewOptions.h"
 #include "PViewData.h"
@@ -84,8 +83,8 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
   }
 }
 
-static void drawScaleValues(PView *p, double xmin, double ymin, double width, 
-                            double height, double tic, int horizontal)
+static void drawScaleValues(drawContext *ctx, PView *p, double xmin, double ymin,
+                            double width, double height, double tic, int horizontal)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -124,11 +123,11 @@ static void drawScaleValues(PView *p, double xmin, double ymin, double width,
       sprintf(label, opt->Format, v);
       if(horizontal){
         glRasterPos2d(xmin + i * vbox, ymin + height + tic);
-        Draw_String_Center(label);
+        ctx->drawStringCenter(label);
       }
       else{
         glRasterPos2d(xmin + width + tic, ymin + i * vbox - font_a / 3.);
-        Draw_String(label);
+        ctx->drawString(label);
       }
     }
   }
@@ -142,18 +141,18 @@ static void drawScaleValues(PView *p, double xmin, double ymin, double width,
       sprintf(label, opt->Format, v);
       if(horizontal){
         glRasterPos2d(xmin + box / 2. + i * vbox, ymin + height + tic);
-        Draw_String_Center(label);
+        ctx->drawStringCenter(label);
       }
       else{
         glRasterPos2d(xmin + width + tic, ymin + box / 2. + i * vbox - font_a / 3.);
-        Draw_String(label);
+        ctx->drawString(label);
       }
     }
   }
 }
 
-static void drawScaleLabel(PView *p, double xmin, double ymin, double width, 
-                           double height, double tic, int horizontal)
+static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin, 
+                           double width, double height, double tic, int horizontal)
 {
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
@@ -177,16 +176,16 @@ static void drawScaleLabel(PView *p, double xmin, double ymin, double width,
  
   if(horizontal){
     glRasterPos2d(xmin + width / 2., ymin + height + tic + 1.4 * font_h);
-    Draw_String_Center(label);
+    ctx->drawStringCenter(label);
   }
   else{
     glRasterPos2d(xmin, ymin - 2 * font_h);
-    Draw_String(label);
+    ctx->drawString(label);
   }
 }
 
-static void drawScale(PView *p, double xmin, double ymin, double width, 
-                      double height, double tic, int horizontal)
+static void drawScale(drawContext *ctx, PView *p, double xmin, double ymin,
+                      double width, double height, double tic, int horizontal)
 {
   // use adaptive data if available
   PViewData *data = p->getData(true);
@@ -210,8 +209,8 @@ static void drawScale(PView *p, double xmin, double ymin, double width,
   }
 
   drawScaleBar(p, xmin, ymin, width, height, tic, horizontal);
-  drawScaleValues(p, xmin, ymin, width, height, tic, horizontal);
-  drawScaleLabel(p, xmin, ymin, width, height, tic, horizontal);
+  drawScaleValues(ctx, p, xmin, ymin, width, height, tic, horizontal);
+  drawScaleLabel(ctx, p, xmin, ymin, width, height, tic, horizontal);
 }
 
 void drawContext::drawScales()
@@ -249,7 +248,7 @@ void drawContext::drawScales()
       int c = fix2dCoordinates(&x, &y);
       if(c & 1) x -= w / 2.;
       if(c & 2) y += h / 2.;
-      drawScale(p, x, y, w, h, tic, CTX.post.horizontal_scales);
+      drawScale(this, p, x, y, w, h, tic, CTX.post.horizontal_scales);
     }
     else if(CTX.post.horizontal_scales){
       double ysep = 20.;
@@ -257,7 +256,7 @@ void drawContext::drawScales()
       if(scales.size() == 1){
         double w = (viewport[2] - viewport[0]) / 2., h = bar_size;
         double x = xc - w / 2., y = viewport[1] + ysep;
-        drawScale(p, x, y, w, h, tic, 1);
+        drawScale(this, p, x, y, w, h, tic, 1);
       }
       else{
         double xsep = maxw / 4. + (viewport[2] - viewport[0]) / 10.;
@@ -267,7 +266,7 @@ void drawContext::drawScales()
         double x = xc - (i % 2 ? -xsep / 1.5 : w + xsep / 1.5);
         double y = viewport[1] + ysep + 
           (i / 2) * (bar_size + tic + 2 * gl_height() + ysep);
-        drawScale(p, x, y, w, h, tic, 1);
+        drawScale(this, p, x, y, w, h, tic, 1);
       }
     }
     else{
@@ -277,7 +276,7 @@ void drawContext::drawScales()
         double ysep = (viewport[3] - viewport[1]) / 6.;
         double w = bar_size, h = viewport[3] - viewport[1] - 2 * ysep - dy;
         double x = viewport[0] + xsep, y = viewport[1] + ysep + dy;
-        drawScale(p, x, y, w, h, tic, 0);
+        drawScale(this, p, x, y, w, h, tic, 0);
       }
       else{
         double ysep = (viewport[3] - viewport[1]) / 15.;
@@ -285,7 +284,7 @@ void drawContext::drawScales()
         double h = (viewport[3] - viewport[1] - 3 * ysep - 2.5 * dy) / 2.;
         double x = viewport[0] + xsep + width_total + (i / 2) * xsep;
         double y = viewport[1] + ysep + dy + (1 - i % 2) * (h + 1.5 * dy + ysep);
-        drawScale(p, x, y, w, h, tic, 0);
+        drawScale(this, p, x, y, w, h, tic, 0);
       }
       // compute width
       width_prev = width;

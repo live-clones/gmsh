@@ -5,7 +5,6 @@
 
 #include <FL/gl.h>
 #include "drawContext.h"
-#include "Draw.h"
 #include "Context.h"
 #include "gl2ps.h"
 #include "VertexArray.h"
@@ -75,7 +74,7 @@ class drawGVertex {
       glRasterPos3d(x + offset / _ctx->s[0],
                     y + offset / _ctx->s[1],
                     z + offset / _ctx->s[2]);
-      Draw_String(Num);
+      _ctx->drawString(Num);
     }
     
     if(select) {
@@ -167,7 +166,7 @@ class drawGEdge {
       glRasterPos3d(x + offset / _ctx->s[0],
                     y + offset / _ctx->s[1],
                     z + offset / _ctx->s[2]);
-      Draw_String(Num);
+      _ctx->drawString(Num);
     }
     
     if(CTX.geom.tangents) {
@@ -284,7 +283,7 @@ class drawGFace {
       glRasterPos3d(x + offset / _ctx->s[0],
                     y + offset / _ctx->s[1],
                     z + offset / _ctx->s[2]);
-      Draw_String(Num);
+      _ctx->drawString(Num);
     }
     
     if(CTX.geom.normals) {
@@ -351,7 +350,7 @@ class drawGFace {
       glRasterPos3d(x + offset / _ctx->s[0],
                     y + offset / _ctx->s[0],
                     z + offset / _ctx->s[0]);
-      Draw_String(Num);
+      _ctx->drawString(Num);
     }
 
     if(CTX.geom.normals) {
@@ -449,7 +448,7 @@ class drawGRegion {
       glRasterPos3d(x + offset / _ctx->s[0],
                     y + offset / _ctx->s[1],
                     z + offset / _ctx->s[2]);
-      Draw_String(Num);
+      _ctx->drawString(Num);
     }
 
     if(select) {

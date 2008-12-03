@@ -6,7 +6,10 @@
 #ifndef _DRAW_CONTEXT_H_
 #define _DRAW_CONTEXT_H_
 
+#include <string>
 #include "SBoundingBox3d.h"
+
+class PView;
 
 class drawTransform {
  public:
@@ -77,6 +80,8 @@ class drawContext {
   void initRenderModel();
   void initPosition();
   void unproject(double x, double y, double p[3], double d[3]);
+  void viewport2World(double win[3], double xyz[3]);
+  void world2Viewport(double xyz[3], double win[3]);
   int fix2dCoordinates(double *x, double *y);
   void draw3d();
   void draw2d();
@@ -95,6 +100,12 @@ class drawContext {
   void drawAxes();
   void drawSmallAxes();
   void drawScales();
+  void drawString(std::string s, const char *font_name, int font_enum, 
+                  int font_size, int align);
+  void drawString(std::string s);
+  void drawStringCenter(std::string s);
+  void drawStringRight(std::string s);
+  void drawString(std::string s, double style);
   void drawSphere(double size, double x, double y, double z, int light);
   void drawCylinder(double width, double *x, double *y, double *z, int light);
   void drawTaperedCylinder(double width, double val1, double val2, 

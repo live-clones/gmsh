@@ -10,7 +10,6 @@
 #include "GmshDefines.h"
 #include "GModel.h"
 #include "MElement.h"
-#include "Draw.h"
 #include "Context.h"
 #include "OS.h"
 #include "gl2ps.h"
@@ -166,8 +165,9 @@ static int getLabelStep(int total)
 }
 
 template<class T>
-static void drawElementLabels(GEntity *e, std::vector<T*> &elements,
-                              int forceColor=0, unsigned int color=0)
+static void drawElementLabels(drawContext *ctx, GEntity *e,
+                              std::vector<T*> &elements, int forceColor=0,
+                              unsigned int color=0)
 {
   unsigned col = forceColor ? color : getColorByEntity(e);
   glColor4ubv((GLubyte *) & col);
@@ -194,7 +194,7 @@ static void drawElementLabels(GEntity *e, std::vector<T*> &elements,
       else
         sprintf(str, "%d", ele->getNum());
       glRasterPos3d(pc.x(), pc.y(), pc.z());
-      Draw_String(str);
+      ctx->drawString(str);
     }
   }
 }
@@ -233,7 +233,8 @@ static void drawTangents(drawContext *ctx, std::vector<T*> &elements)
   }
 }
 
-static void drawVertexLabel(GEntity *e, MVertex *v, int partition=-1)
+static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v, 
+                            int partition=-1)
 {
   if(!v->getVisibility()) return;
 
@@ -260,7 +261,7 @@ static void drawVertexLabel(GEntity *e, MVertex *v, int partition=-1)
   else
     glColor4ubv((GLubyte *) & CTX.color.mesh.vertex);   
   glRasterPos3d(v->x(), v->y(), v->z());
-  Draw_String(str);
+  ctx->drawString(str);
 }
 
 static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
@@ -294,7 +295,7 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
   if(CTX.mesh.points_num) {
     int labelStep = getLabelStep(e->mesh_vertices.size());
     for(unsigned int i = 0; i < e->mesh_vertices.size(); i++)
-      if(i % labelStep == 0) drawVertexLabel(e, e->mesh_vertices[i]);
+      if(i % labelStep == 0) drawVertexLabel(ctx, e, e->mesh_vertices[i]);
   }
 }
 
@@ -321,7 +322,7 @@ static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
           }
         }
         if(CTX.mesh.points_num)
-          drawVertexLabel(e, v);
+          drawVertexLabel(ctx, e, v);
       }
     }
   }
@@ -645,7 +646,7 @@ class drawMeshGEdge {
       drawArrays(_ctx, e, e->va_lines, GL_LINES, false);
 
     if(CTX.mesh.lines_num)
-      drawElementLabels(e, e->lines);
+      drawElementLabels(_ctx, e, e->lines);
 
     if(CTX.mesh.points || CTX.mesh.points_num){
       if(e->getAllElementsVisible())
@@ -744,9 +745,11 @@ class drawMeshGFace {
 
     if(CTX.mesh.surfaces_num) {
       if(CTX.mesh.triangles)
-        drawElementLabels(f, f->triangles, CTX.mesh.surfaces_faces, CTX.color.mesh.line);
+        drawElementLabels(_ctx, f, f->triangles, CTX.mesh.surfaces_faces, 
+                          CTX.color.mesh.line);
       if(CTX.mesh.quadrangles)
-        drawElementLabels(f, f->quadrangles, CTX.mesh.surfaces_faces, CTX.color.mesh.line);
+        drawElementLabels(_ctx, f, f->quadrangles, CTX.mesh.surfaces_faces, 
+                          CTX.color.mesh.line);
     }
 
     if(CTX.mesh.points || CTX.mesh.points_num){
@@ -871,16 +874,16 @@ class drawMeshGRegion {
     
     if(CTX.mesh.volumes_num) {
       if(CTX.mesh.tetrahedra) 
-        drawElementLabels(r, r->tetrahedra, CTX.mesh.volumes_faces || 
+        drawElementLabels(_ctx, r, r->tetrahedra, CTX.mesh.volumes_faces || 
                           CTX.mesh.surfaces_faces, CTX.color.mesh.line);
       if(CTX.mesh.hexahedra) 
-        drawElementLabels(r, r->hexahedra, CTX.mesh.volumes_faces || 
+        drawElementLabels(_ctx, r, r->hexahedra, CTX.mesh.volumes_faces || 
                           CTX.mesh.surfaces_faces, CTX.color.mesh.line);
       if(CTX.mesh.prisms) 
-        drawElementLabels(r, r->prisms, CTX.mesh.volumes_faces || 
+        drawElementLabels(_ctx, r, r->prisms, CTX.mesh.volumes_faces || 
                           CTX.mesh.surfaces_faces, CTX.color.mesh.line);
       if(CTX.mesh.pyramids) 
-        drawElementLabels(r, r->pyramids, CTX.mesh.volumes_faces ||
+        drawElementLabels(_ctx, r, r->pyramids, CTX.mesh.volumes_faces ||
                           CTX.mesh.surfaces_faces, CTX.color.mesh.line);
     }
 

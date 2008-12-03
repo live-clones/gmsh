@@ -14,7 +14,6 @@
 #endif
 
 #include "GmshMessage.h"
-#include "Draw.h"
 #include "drawContext.h"
 #include "Trackball.h"
 #include "Context.h"
@@ -419,7 +418,7 @@ void drawContext::initPosition()
 
   // store the projection and modelview matrices at this precise
   // moment (so that we can use them at any later time, even if the
-  // context has changed, i.e., even if we are out of Draw())
+  // context has changed, i.e., even if we are out of draw())
   glGetDoublev(GL_PROJECTION_MATRIX, proj);
   glGetDoublev(GL_MODELVIEW_MATRIX, model);
 
@@ -457,4 +456,24 @@ void drawContext::unproject(double x, double y, double p[3], double d[3])
   d[0] /= len;
   d[1] /= len;
   d[2] /= len;
+}
+
+void drawContext::viewport2World(double win[3], double xyz[3])
+{
+  GLint viewport[4];
+  GLdouble model[16], proj[16];
+  glGetIntegerv(GL_VIEWPORT, viewport);
+  glGetDoublev(GL_PROJECTION_MATRIX, proj);
+  glGetDoublev(GL_MODELVIEW_MATRIX, model);
+  gluUnProject(win[0], win[1], win[2], model, proj, viewport, &xyz[0], &xyz[1], &xyz[2]);
+}
+
+void drawContext::world2Viewport(double xyz[3], double win[3])
+{
+  GLint viewport[4];
+  GLdouble model[16], proj[16];
+  glGetIntegerv(GL_VIEWPORT, viewport);
+  glGetDoublev(GL_PROJECTION_MATRIX, proj);
+  glGetDoublev(GL_MODELVIEW_MATRIX, model);
+  gluProject(xyz[0], xyz[1], xyz[2], model, proj, viewport, &win[0], &win[1], &win[2]);
 }

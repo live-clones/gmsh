@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <string.h>
 #include <FL/gl.h>
 
 //FIXME: workaround faulty fltk installs
@@ -15,7 +16,9 @@
 
 #include "GUI.h"
 #include "graphicWindow.h"
+#include "optionWindow.h"
 #include "GmshDefines.h"
+#include "GmshMessage.h"
 #include "Draw.h"
 #include "StringUtils.h"
 #include "gl2ps.h"
@@ -74,105 +77,6 @@ void DrawPlugin(void (*draw)(void *context))
   CTX.mesh.draw = 1;
 }
 
-void Draw_String(std::string s, const char *font_name, int font_enum, 
-                 int font_size, int align)
-{
-  if(CTX.printing && !CTX.print.text) return;
-
-  // change the raster position only if not creating TeX files
-  if(align > 0 && (!CTX.printing || CTX.print.format != FORMAT_TEX)){
-    GLboolean valid;
-    glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
-    if(valid == GL_TRUE){
-      GLdouble pos[4];
-      glGetDoublev(GL_CURRENT_RASTER_POSITION, pos);
-      double x[3], w[3] = {pos[0], pos[1], pos[2]};
-      gl_font(font_enum, font_size);
-      float width = gl_width(s.c_str());
-      float height = gl_height();
-      switch(align){
-      case 1: w[0] -= width/2.;                     break; // bottom center
-      case 2: w[0] -= width;                        break; // bottom right
-      case 3:                    w[1] -= height;    break; // top left
-      case 4: w[0] -= width/2.;  w[1] -= height;    break; // top center
-      case 5: w[0] -= width;     w[1] -= height;    break; // top right
-      case 6:                    w[1] -= height/2.; break; // center left
-      case 7: w[0] -= width/2.;  w[1] -= height/2.; break; // center center
-      case 8: w[0] -= width;     w[1] -= height/2.; break; // center right
-      default: break;
-      }
-      Viewport2World(w, x);
-      glRasterPos3d(x[0], x[1], x[2]);
-    }
-  }
-  
-  if(!CTX.printing){
-    gl_font(font_enum, font_size);
-    gl_draw(s.c_str());
-  }
-  else{
-    if(CTX.print.format == FORMAT_TEX){
-      std::string tmp = SanitizeTeXString(s.c_str(), CTX.print.tex_as_equation);
-      int opt;
-      switch(align){
-      case 1: opt = GL2PS_TEXT_B;   break; // bottom center
-      case 2: opt = GL2PS_TEXT_BR;  break; // bottom right
-      case 3: opt = GL2PS_TEXT_TL;  break; // top left
-      case 4: opt = GL2PS_TEXT_T;   break; // top center
-      case 5: opt = GL2PS_TEXT_TR;  break; // top right
-      case 6: opt = GL2PS_TEXT_CL;  break; // center left
-      case 7: opt = GL2PS_TEXT_C;   break; // center center
-      case 8: opt = GL2PS_TEXT_CR;  break; // center right
-      default: opt = GL2PS_TEXT_BL; break; // bottom left
-      }
-      gl2psTextOpt(tmp.c_str(), font_name, font_size, opt, 0.);
-    }
-    else if(CTX.print.eps_quality && (CTX.print.format == FORMAT_PS ||
-                                      CTX.print.format == FORMAT_EPS ||
-                                      CTX.print.format == FORMAT_PDF ||
-                                      CTX.print.format == FORMAT_SVG)){
-      gl2psText(s.c_str(), font_name, font_size);
-    }
-    else{
-      gl_font(font_enum, font_size);
-      gl_draw(s.c_str());
-    }
-  }
-}
-
-void Draw_String(std::string s)
-{
-  Draw_String(s, CTX.gl_font, CTX.gl_font_enum, CTX.gl_fontsize, 0);
-}
-
-void Draw_String_Center(std::string s)
-{
-  Draw_String(s, CTX.gl_font, CTX.gl_font_enum, CTX.gl_fontsize, 1);
-}
-
-void Draw_String_Right(std::string s)
-{
-  Draw_String(s, CTX.gl_font, CTX.gl_font_enum, CTX.gl_fontsize, 2);
-}
-
-void Draw_String(std::string s, double style)
-{
-  unsigned int bits = (unsigned int)style;
-
-  if(!bits){ // use defaults
-    Draw_String(s);
-  }
-  else{
-    int size = (bits & 0xff);
-    int font = (bits>>8 & 0xff);
-    int align = (bits>>16 & 0xff);
-    int font_enum = GetFontEnum(font);
-    const char *font_name = GetFontName(font);
-    if(!size) size = CTX.gl_fontsize;
-    Draw_String(s, font_name, font_enum, size, align);
-  }
-}
-
 void GetStoredViewport(int viewport[4], int index)
 {
   if(!GUI::available()) return;
@@ -182,22 +86,84 @@ void GetStoredViewport(int viewport[4], int index)
   }
 }
 
-void Viewport2World(double win[3], double xyz[3])
+int GetFontIndex(const char *fontname)
 {
-  GLint viewport[4];
-  GLdouble model[16], proj[16];
-  glGetIntegerv(GL_VIEWPORT, viewport);
-  glGetDoublev(GL_PROJECTION_MATRIX, proj);
-  glGetDoublev(GL_MODELVIEW_MATRIX, model);
-  gluUnProject(win[0], win[1], win[2], model, proj, viewport, &xyz[0], &xyz[1], &xyz[2]);
+  if(fontname){
+    for(int i = 0; i < NUM_FONTS; i++)
+      if(!strcmp(menu_font_names[i].label(), fontname))
+        return i;
+  }
+  Msg::Error("Unknown font \"%s\" (using \"Helvetica\" instead)", fontname);
+  Msg::Info("Available fonts:");
+  for(int i = 0; i < NUM_FONTS; i++)
+    Msg::Info("  \"%s\"", menu_font_names[i].label());
+  return 4;
 }
 
-void World2Viewport(double xyz[3], double win[3])
+int GetFontEnum(int index)
 {
-  GLint viewport[4];
-  GLdouble model[16], proj[16];
-  glGetIntegerv(GL_VIEWPORT, viewport);
-  glGetDoublev(GL_PROJECTION_MATRIX, proj);
-  glGetDoublev(GL_MODELVIEW_MATRIX, model);
-  gluProject(xyz[0], xyz[1], xyz[2], model, proj, viewport, &win[0], &win[1], &win[2]);
+  if(index >= 0 && index < NUM_FONTS)
+    return (long)menu_font_names[index].user_data();
+  return FL_HELVETICA;
+}
+
+const char *GetFontName(int index)
+{
+  if(index >= 0 && index < NUM_FONTS)
+    return menu_font_names[index].label();
+  return "Helvetica";
+}
+
+int GetFontAlign(const char *alignstr)
+{
+  if(alignstr){
+    if(!strcmp(alignstr, "BottomLeft") || !strcmp(alignstr, "Left") ||
+       !strcmp(alignstr, "left"))
+      return 0;
+    else if(!strcmp(alignstr, "BottomCenter") || !strcmp(alignstr, "Center") ||
+            !strcmp(alignstr, "center"))
+      return 1;
+    else if(!strcmp(alignstr, "BottomRight") || !strcmp(alignstr, "Right") ||
+            !strcmp(alignstr, "right"))
+      return 2;
+    else if(!strcmp(alignstr, "TopLeft"))
+      return 3;
+    else if(!strcmp(alignstr, "TopCenter"))
+      return 4;
+    else if(!strcmp(alignstr, "TopRight"))
+      return 5;
+    else if(!strcmp(alignstr, "CenterLeft"))
+      return 6;
+    else if(!strcmp(alignstr, "CenterCenter"))
+      return 7;
+    else if(!strcmp(alignstr, "CenterRight"))
+      return 8;
+  }
+  Msg::Error("Unknown font alignment \"%s\" (using \"Left\" instead)", alignstr);
+  Msg::Info("Available font alignments:");
+  Msg::Info("  \"Left\" (or \"BottomLeft\")");
+  Msg::Info("  \"Center\" (or \"BottomCenter\")");
+  Msg::Info("  \"Right\" (or \"BottomRight\")");
+  Msg::Info("  \"TopLeft\"");
+  Msg::Info("  \"TopCenter\"");
+  Msg::Info("  \"TopRight\"");
+  Msg::Info("  \"CenterLeft\"");
+  Msg::Info("  \"CenterCenter\"");
+  Msg::Info("  \"CenterRight\"");
+  return 0;
+}
+
+int GetFontSize()
+{
+  if(CTX.fontsize > 0){
+    return CTX.fontsize;
+  }
+  else{
+    int w = Fl::w();
+    if(w <= 1024)      return 11;
+    else if(w <= 1280) return 12;
+    else if(w <= 1680) return 13;
+    else if(w <= 1920) return 14;
+    else               return 15;
+  }
 }

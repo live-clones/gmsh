@@ -173,7 +173,7 @@ optionWindow${OBJEXT}: optionWindow.cpp GUI.h optionWindow.h \
   ../Post/ColorTable.h ../Common/OS.h ../Common/Context.h \
   ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h
 colorbarWindow${OBJEXT}: colorbarWindow.cpp colorbarWindow.h \
-  ../Post/ColorTable.h GUI.h ../Common/Context.h ../Geo/CGNSOptions.h \
+  ../Post/ColorTable.h Draw.h ../Common/Context.h ../Geo/CGNSOptions.h \
   ../Mesh/PartitionOptions.h
 fieldWindow${OBJEXT}: fieldWindow.cpp GUI.h Draw.h fieldWindow.h \
   shortcutWindow.h fileDialogs.h ../Common/GmshDefines.h ../Geo/GModel.h \
@@ -340,9 +340,10 @@ partitionDialog${OBJEXT}: partitionDialog.cpp GUI.h shortcutWindow.h \
   ../Mesh/PartitionOptions.h
 Draw${OBJEXT}: Draw.cpp GUI.h graphicWindow.h openglWindow.h \
   ../Graphics/drawContext.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Common/GmshDefines.h Draw.h ../Common/StringUtils.h \
-  ../Graphics/gl2ps.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h
+  optionWindow.h spherePositionWidget.h colorbarWindow.h \
+  ../Post/ColorTable.h ../Common/GmshDefines.h ../Common/GmshMessage.h \
+  Draw.h ../Common/StringUtils.h ../Graphics/gl2ps.h ../Common/Context.h \
+  ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h
 Solvers${OBJEXT}: Solvers.cpp GUI.h solverWindow.h menuWindow.h popupButton.h \
   ../Common/GmshMessage.h ../Common/StringUtils.h Solvers.h \
   ../Common/GmshSocket.h ../Common/OpenFile.h ../Post/PView.h \

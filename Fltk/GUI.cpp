@@ -128,6 +128,7 @@ GUI::GUI(int argc, char **argv)
   //graph.push_back(new graphicWindow(_fontsize));
   //drawTransform *tr = new drawTransformScaled(2,0,0, 0,1,0, 0,0,1);
   //graph.back()->gl->getDrawContext()->setTransform(tr);
+  //graph.back()->win->size(300, 300);
   //graph.back()->win->show();
 
   options = new optionWindow(_fontsize);
@@ -712,90 +713,6 @@ void window_cb(Fl_Widget *w, void *data)
     if(GUI::instance()->messages->win->shown())
       GUI::instance()->messages->win->show();
     GUI::instance()->menu->win->show();
-  }
-}
-
-// Utility routines
-
-int GetFontIndex(const char *fontname)
-{
-  if(fontname){
-    for(int i = 0; i < NUM_FONTS; i++)
-      if(!strcmp(menu_font_names[i].label(), fontname))
-        return i;
-  }
-  Msg::Error("Unknown font \"%s\" (using \"Helvetica\" instead)", fontname);
-  Msg::Info("Available fonts:");
-  for(int i = 0; i < NUM_FONTS; i++)
-    Msg::Info("  \"%s\"", menu_font_names[i].label());
-  return 4;
-}
-
-int GetFontEnum(int index)
-{
-  if(index >= 0 && index < NUM_FONTS)
-    return (long)menu_font_names[index].user_data();
-  return FL_HELVETICA;
-}
-
-const char *GetFontName(int index)
-{
-  if(index >= 0 && index < NUM_FONTS)
-    return menu_font_names[index].label();
-  return "Helvetica";
-}
-
-int GetFontAlign(const char *alignstr)
-{
-  if(alignstr){
-    if(!strcmp(alignstr, "BottomLeft") || !strcmp(alignstr, "Left") ||
-       !strcmp(alignstr, "left"))
-      return 0;
-    else if(!strcmp(alignstr, "BottomCenter") || !strcmp(alignstr, "Center") ||
-            !strcmp(alignstr, "center"))
-      return 1;
-    else if(!strcmp(alignstr, "BottomRight") || !strcmp(alignstr, "Right") ||
-            !strcmp(alignstr, "right"))
-      return 2;
-    else if(!strcmp(alignstr, "TopLeft"))
-      return 3;
-    else if(!strcmp(alignstr, "TopCenter"))
-      return 4;
-    else if(!strcmp(alignstr, "TopRight"))
-      return 5;
-    else if(!strcmp(alignstr, "CenterLeft"))
-      return 6;
-    else if(!strcmp(alignstr, "CenterCenter"))
-      return 7;
-    else if(!strcmp(alignstr, "CenterRight"))
-      return 8;
-  }
-  Msg::Error("Unknown font alignment \"%s\" (using \"Left\" instead)", alignstr);
-  Msg::Info("Available font alignments:");
-  Msg::Info("  \"Left\" (or \"BottomLeft\")");
-  Msg::Info("  \"Center\" (or \"BottomCenter\")");
-  Msg::Info("  \"Right\" (or \"BottomRight\")");
-  Msg::Info("  \"TopLeft\"");
-  Msg::Info("  \"TopCenter\"");
-  Msg::Info("  \"TopRight\"");
-  Msg::Info("  \"CenterLeft\"");
-  Msg::Info("  \"CenterCenter\"");
-  Msg::Info("  \"CenterRight\"");
-  return 0;
-}
-
-int GetFontSize()
-{
-  if(CTX.fontsize > 0){
-    return CTX.fontsize;
-  }
-  else{
-    int w = Fl::w();
-    if(w <= 1024)      return 11;
-    else if(w <= 1280) return 12;
-    else if(w <= 1680) return 13;
-    else if(w <= 1920) return 14;
-    else               return 15;
   }
 }
 
