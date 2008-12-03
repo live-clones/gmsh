@@ -1230,7 +1230,8 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
           add_physical(what, List1, CTX.filename);
           break;
         case 8:
-          add_charlength(List1, CTX.filename, GUI::instance()->meshContext->input[0]->value());
+          add_charlength(List1, CTX.filename, 
+                         GUI::instance()->meshContext->input[0]->value());
           break;
         case 9:
           add_recosurf(List1, CTX.filename);

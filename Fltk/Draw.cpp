@@ -173,32 +173,6 @@ void Draw_String(std::string s, double style)
   }
 }
 
-void Draw_OnScreenMessages(int index)
-{
-  if(!GUI::available()) return;
-
-  glColor4ubv((GLubyte *) & CTX.color.text);
-  gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
-  double h = gl_height();
-
-  if(index >= 0 && index < GUI::instance()->graph.size()){
-    drawContext *ctx = GUI::instance()->graph[index]->gl->getDrawContext();
-  
-    if(strlen(GUI::instance()->onscreen_buffer[0])){
-      double w = gl_width(GUI::instance()->onscreen_buffer[0]);
-      glRasterPos2d(ctx->viewport[2] / 2. - w / 2., 
-                    ctx->viewport[3] - 1.2 * h);
-      gl_draw(GUI::instance()->onscreen_buffer[0]);
-    }
-    if(strlen(GUI::instance()->onscreen_buffer[1])){
-      double w = gl_width(GUI::instance()->onscreen_buffer[1]);
-      glRasterPos2d(ctx->viewport[2] / 2. - w / 2.,
-                    ctx->viewport[3] - 2.4 * h);
-      gl_draw(GUI::instance()->onscreen_buffer[1]);
-    }
-  }
-}
-
 void GetStoredViewport(int viewport[4], int index)
 {
   if(!GUI::available()) return;

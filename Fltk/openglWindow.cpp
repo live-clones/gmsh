@@ -86,6 +86,31 @@ openglWindow::~openglWindow()
   delete _ctx; 
 }
 
+void openglWindow::drawScreenMessage()
+{
+  if(screenMessage[0].empty() && screenMessage[1].empty()) 
+    return;
+
+  glColor4ubv((GLubyte *) & CTX.color.text);
+  gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
+  double h = gl_height();
+  
+  if(screenMessage[0].size()){
+    const char *txt = screenMessage[0].c_str();
+    double w = gl_width(txt);
+    glRasterPos2d(_ctx->viewport[2] / 2. - w / 2., 
+                  _ctx->viewport[3] - 1.2 * h);
+    gl_draw(txt);
+  }
+  if(screenMessage[1].size()){
+    const char *txt = screenMessage[1].c_str();
+    double w = gl_width(txt);
+    glRasterPos2d(_ctx->viewport[2] / 2. - w / 2.,
+                  _ctx->viewport[3] - 2.4 * h);
+    gl_draw(txt);
+  }
+}
+
 void openglWindow::draw()
 {
   static int locked = 0;
@@ -163,6 +188,7 @@ void openglWindow::draw()
     glVertex3d(_point[0], _point[1], _point[2]);
     glEnd();
     _ctx->draw2d();
+    drawScreenMessage();
     CTX.mesh.draw = 1;
     CTX.post.draw = 1;
   }
@@ -171,6 +197,7 @@ void openglWindow::draw()
     ClearOpengl();
     _ctx->draw3d();
     _ctx->draw2d();
+    drawScreenMessage();
   }
 
   locked = 0;

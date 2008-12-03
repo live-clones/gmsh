@@ -49,10 +49,6 @@ static int globalShortcut(int event)
 
 GUI::GUI(int argc, char **argv)
 {
-  // initialize on-screen message buffer
-  onscreen_buffer[0][0] = '\0';
-  onscreen_buffer[1][0] = '\0';
-
   // set X display
   if(strlen(CTX.display))
     Fl::display(CTX.display);
@@ -554,6 +550,24 @@ void GUI::resetVisibility()
     visibility_cb(NULL, NULL);
 }
 
+int GUI::getLastGraphIndex()
+{
+  unsigned int index = 0;
+  if(graph.size() > 1)
+    for(Fl_Window *w = Fl::first_window(); w; w = Fl::next_window(w))
+      for(index = 0; index < GUI::instance()->graph.size(); index++)
+        if(w == graph[index]->win || w == graph[index]->gl)
+          return index;
+  return 0;
+}
+
+char GUI::selectEntity(int type)
+{
+  return graph[getLastGraphIndex()]->gl->selectEntity
+    (type, selectedVertices, selectedEdges, selectedFaces, selectedRegions,
+     selectedElements);
+}
+
 void GUI::setStatus(const char *msg, int num)
 {
   if(num == 0 || num == 1){
@@ -566,15 +580,17 @@ void GUI::setStatus(const char *msg, int num)
     }
   }
   else if(num == 2){
+    int index = getLastGraphIndex();
     int n = strlen(msg);
     int i = 0;
     while(i < n) if(msg[i++] == '\n') break;
-    strncpy(onscreen_buffer[0], msg, sizeof(onscreen_buffer[0]) - 1);
+    graph[index]->gl->screenMessage[0] = std::string(msg);
+    if(i)
+      graph[index]->gl->screenMessage[0].resize(i - 1);
     if(i < n) 
-      strncpy(onscreen_buffer[1], &msg[i], sizeof(onscreen_buffer[1]) - 1);
+      graph[index]->gl->screenMessage[1] = std::string(&msg[i]);
     else
-      onscreen_buffer[1][0] = '\0';
-    onscreen_buffer[0][i-1] = '\0';
+      graph[index]->gl->screenMessage[1].clear();
     Draw();
   }
 }
@@ -619,20 +635,6 @@ void GUI::callForSolverPlugin(int dim)
 { 
   GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();   
   if(sp) sp->popupPropertiesForPhysicalEntity(dim);
-}
-
-char GUI::selectEntity(int type)
-{
-  unsigned int index = 0;
-  if(graph.size() > 1)
-    for(Fl_Window *w = Fl::first_window(); w; w = Fl::next_window(w))
-      for(index = 0; index < GUI::instance()->graph.size(); index++)
-        if(w == graph[index]->win || w == graph[index]->gl)
-          goto done;
- done:
-  return graph[index]->gl->selectEntity
-    (type, selectedVertices, selectedEdges, selectedFaces, selectedRegions,
-     selectedElements);
 }
 
 // Callbacks

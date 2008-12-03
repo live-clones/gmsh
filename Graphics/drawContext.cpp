@@ -199,7 +199,6 @@ void drawContext::draw2d()
 
   drawGraph2d();
   drawText2d();
-  Draw_OnScreenMessages();
   if(CTX.post.draw) 
     drawScales();
   if(CTX.small_axes)

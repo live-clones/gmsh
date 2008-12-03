@@ -7,6 +7,7 @@
 #define _OPENGL_WINDOW_H_
 
 #include <vector>
+#include <string>
 #include <FL/Fl_Gl_Window.H>
 #include <FL/Fl_Box.H>
 #include "drawContext.h"
@@ -47,8 +48,7 @@ class openglWindow : public Fl_Gl_Window {
   drawContext *_ctx;
   double _point[3];
   int _selection, _trySelection, _trySelectionXYWH[4];
-  void draw();
-  int handle(int);
+  void drawScreenMessage();
   bool processSelectionBuffer(int type, 
                               bool multipleSelection, bool meshSelection,
                               int x, int y, int w, int h,
@@ -57,9 +57,12 @@ class openglWindow : public Fl_Gl_Window {
                               std::vector<GFace*> &faces,
                               std::vector<GRegion*> &regions,
                               std::vector<MElement*> &elements);
+  void draw();
+  int handle(int);
  public:
   bool addPointMode, lassoMode, selectionMode;
   int endSelection, undoSelection, invertSelection, quitSelection;
+  std::string screenMessage[2];
   openglWindow(int x, int y, int w, int h, const char *l=0);
   ~openglWindow();
   drawContext *getDrawContext(){ return _ctx; }

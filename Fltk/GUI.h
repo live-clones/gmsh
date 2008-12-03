@@ -43,7 +43,6 @@ class GUI{
   int _fontsize;
   static GUI *_instance;
  public:
-  char onscreen_buffer[2][256];
   std::vector<GVertex*> selectedVertices;
   std::vector<GEdge*> selectedEdges;
   std::vector<GFace*> selectedFaces;
@@ -97,12 +96,14 @@ class GUI{
   void resetVisibility();
   // store current window positions and sizes in CTX
   void storeCurrentWindowsInfo();
+  // get the index of the last graphic window that received an event
+  int getLastGraphIndex();
+  // select an entity in the most recent graphic window
+  char selectEntity(int type);
   // display status message
   void setStatus(const char *msg, int num);
   // create the window for physical context dependant definitions
   void callForSolverPlugin(int dim);
-  // select an entity in the most recent graphic window
-  char selectEntity(int type);
 };
 
 // callbacks
