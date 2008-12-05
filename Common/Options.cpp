@@ -6413,23 +6413,6 @@ double opt_view_arrow_size_max(OPT_ARGS_NUM)
 #endif
 }
 
-double opt_view_arrow_size_proportional(OPT_ARGS_NUM)
-{
-#if !defined(HAVE_NO_POST)
-  GET_VIEW(0.);
-  if(action & GMSH_SET) {
-    opt->ArrowSizeProportional = (int)val;
-  }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
-    GUI::instance()->options->view.butt[0]->value(opt->ArrowSizeProportional);
-#endif
-  return opt->ArrowSizeProportional;
-#else
-  return 0.;
-#endif
-}
-
 double opt_view_arrow_head_radius(OPT_ARGS_NUM)
 {
 #if !defined(HAVE_NO_POST)

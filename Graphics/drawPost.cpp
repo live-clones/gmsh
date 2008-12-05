@@ -1072,13 +1072,12 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
     float *v = va->getVertexArray(3 * (i + 1));
     glColor4ubv((GLubyte *)va->getColorArray(4 * i));
     double l = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-    double lmax = opt->ArrowSizeProportional ? opt->TmpMax : l;
+    double lmax = opt->TmpMax;
     if((l || opt->VectorType == 6) && lmax){
       double scale = (opt->ArrowSizeMax - opt->ArrowSizeMin) / lmax;
       // log scaling
       if(opt->ScaleType == PViewOptions::Logarithmic && 
-	 opt->ArrowSizeProportional && opt->TmpMin > 0 &&
-	 opt->TmpMax > opt->TmpMin && l != opt->TmpMin){
+	 opt->TmpMin > 0 && opt->TmpMax > opt->TmpMin && l != opt->TmpMin){
 	scale = (opt->ArrowSizeMax - opt->ArrowSizeMin) / l * 
 	  log10(l / opt->TmpMin) / log10(opt->TmpMax / opt->TmpMin);
       }

@@ -640,7 +640,6 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double timestep = opt_view_timestep(current, GMSH_GET, 0);
   double arrow_size_min = opt_view_arrow_size_min(current, GMSH_GET, 0);
   double arrow_size_max = opt_view_arrow_size_max(current, GMSH_GET, 0);
-  double arrow_size_proportional = opt_view_arrow_size_proportional(current, GMSH_GET, 0);
   double displacement_factor = opt_view_displacement_factor(current, GMSH_GET, 0);
   double point_size = opt_view_point_size(current, GMSH_GET, 0);
   double line_width = opt_view_line_width(current, GMSH_GET, 0);
@@ -754,10 +753,6 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
         opt_view_type(i, GMSH_SET, val);
 
       // view_butts
-
-      val = o->view.butt[0]->value();
-      if(force || (val != arrow_size_proportional))
-        opt_view_arrow_size_proportional(i, GMSH_SET, val);
 
       val = o->view.butt[38]->value();
       if(force || (val != saturate_values))
@@ -2889,12 +2884,6 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
         view.value[60]->align(FL_ALIGN_RIGHT);
         view.value[60]->callback(view_options_ok_cb);
 
-        view.butt[0] = new Fl_Check_Button
-          (L + width - (int)(1.15*BB) - 2 * WB, 2 * WB + 7 * BH, (int)(1.15*BB), BH,
-           "Proportional");
-        view.butt[0]->type(FL_TOGGLE_BUTTON);
-        view.butt[0]->callback(view_options_ok_cb);
-
         view.value[63] = new Fl_Value_Input
           (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Displacement factor");
         view.value[63]->minimum(0.);
@@ -3252,7 +3241,6 @@ void optionWindow::updateViewGroup(int index)
   opt_view_vector_type(index, GMSH_GUI, 0);
   opt_view_arrow_size_min(index, GMSH_GUI, 0);
   opt_view_arrow_size_max(index, GMSH_GUI, 0);
-  opt_view_arrow_size_proportional(index, GMSH_GUI, 0);
 
   opt_view_displacement_factor(index, GMSH_GUI, 0);
   double val3 = 2. * CTX.lc / maxval;

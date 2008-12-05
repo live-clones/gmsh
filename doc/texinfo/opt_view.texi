@@ -134,11 +134,6 @@ Minimum display size of arrows (in pixels)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item View.ArrowSizeProportional
-Scale the arrows according to the norm of the vector@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
 @item View.ArrowStemLength
 Relative length of arrow stem@*
 Default value: @code{0.56}@*

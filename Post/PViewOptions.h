@@ -62,7 +62,7 @@ class PViewOptions {
   double ArrowSizeMin, ArrowSizeMax;
   double ArrowRelHeadRadius, ArrowRelStemRadius, ArrowRelStemLength;
   double Normals, Tangents;
-  int Visible, IntervalsType, NbIso, ArrowSizeProportional;
+  int Visible, IntervalsType, NbIso;
   int Light, LightTwoSide, LightLines, SmoothNormals;
   double AngleSmoothNormals;
   int SaturateValues, FakeTransparency;

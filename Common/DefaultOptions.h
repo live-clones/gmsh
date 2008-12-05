@@ -1199,8 +1199,6 @@ StringXNumber ViewOptions_Number[] = {
     "Maximum display size of arrows (in pixels)" },
   { F|O, "ArrowSizeMin" , opt_view_arrow_size_min , 0. ,
     "Minimum display size of arrows (in pixels)" },
-  { F|O, "ArrowSizeProportional" , opt_view_arrow_size_proportional , 1. ,
-    "Scale the arrows according to the norm of the vector" },
   { F|O, "ArrowStemLength" , opt_view_arrow_stem_length , 0.56 ,
     "Relative length of arrow stem" },
   { F|O, "ArrowStemRadius" , opt_view_arrow_stem_radius , 0.02 ,

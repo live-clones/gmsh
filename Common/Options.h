@@ -581,7 +581,6 @@ double opt_view_transform21(OPT_ARGS_NUM);
 double opt_view_transform22(OPT_ARGS_NUM);
 double opt_view_arrow_size_min(OPT_ARGS_NUM);
 double opt_view_arrow_size_max(OPT_ARGS_NUM);
-double opt_view_arrow_size_proportional(OPT_ARGS_NUM);
 double opt_view_arrow_head_radius(OPT_ARGS_NUM);
 double opt_view_arrow_stem_length(OPT_ARGS_NUM);
 double opt_view_arrow_stem_radius(OPT_ARGS_NUM);
