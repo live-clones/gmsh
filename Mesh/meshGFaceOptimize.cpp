@@ -65,7 +65,7 @@ void buidMeshGenerationDataStructures(GFace *gf, std::set<MTri3*, compareTri3Ptr
     std::list<GVertex*>::iterator itvx = emb_vertx.begin();
     while(itvx != emb_vertx.end()){
       MVertex *v = *((*itvx)->mesh_vertices.begin());
-      vSizesMap[v] = std::min(vSizesMap[v],(*itvx)->prescribedMeshSizeAtVertex());      
+      vSizesMap[v] = std::min(vSizesMap[v], (*itvx)->prescribedMeshSizeAtVertex());      
       ++itvx;
     }
   }
@@ -132,10 +132,10 @@ void buildVertexToTriangle(std::vector<MTriangle*> &eles, v2t_cont &adj)
 }
 
 template <class T>
-void buildEdgeToElement(std::vector<T*> &triangles, e2t_cont &adj)
+void buildEdgeToElement(std::vector<T*> &elements, e2t_cont &adj)
 {
-  for (unsigned int i = 0; i < triangles.size(); i++){
-    T *t = triangles[i];
+  for (unsigned int i = 0; i < elements.size(); i++){
+    T *t = elements[i];
     for (int j = 0; j < t->getNumEdges(); j++){
       MEdge e = t->getEdge(j);
       e2t_cont::iterator it = adj.find(e);
@@ -143,10 +143,9 @@ void buildEdgeToElement(std::vector<T*> &triangles, e2t_cont &adj)
         std::pair<MElement*, MElement*> one = std::make_pair(t, (MElement*)0);
         adj[e] = one;
       }
-      else
-        {
-          it->second.second = t;
-        }
+      else{
+        it->second.second = t;
+      }
     }
   }
 }
@@ -807,19 +806,39 @@ struct recombine_triangle
 
 static void _gmshRecombineIntoQuads(GFace *gf)
 {
+  std::set<MVertex*> emb_edgeverts;
+  {
+    std::list<GEdge*> emb_edges = gf->embeddedEdges();
+    std::list<GEdge*>::iterator ite = emb_edges.begin();
+    while(ite != emb_edges.end()){
+      if(!(*ite)->isMeshDegenerated()){
+        emb_edgeverts.insert((*ite)->mesh_vertices.begin(),
+                             (*ite)->mesh_vertices.end() );
+        emb_edgeverts.insert((*ite)->getBeginVertex()->mesh_vertices.begin(),
+                             (*ite)->getBeginVertex()->mesh_vertices.end());
+        emb_edgeverts.insert((*ite)->getEndVertex()->mesh_vertices.begin(),
+                             (*ite)->getEndVertex()->mesh_vertices.end());
+      }
+      ++ite;
+    }
+  }
+
   e2t_cont adj;
-  std::set<MElement*> touched;
-  std::set<recombine_triangle> pairs;
   buildEdgeToElement(gf->triangles, adj);
-  e2t_cont::iterator it = adj.begin();
-  for ( ; it!= adj.end(); ++it){
-    if (it->second.second && it->second.first->getNumVertices() == 3 &&  
-	it->second.second->getNumVertices() == 3)
+
+  std::set<recombine_triangle> pairs;
+  for (e2t_cont::iterator it = adj.begin(); it!= adj.end(); ++it){
+    if (it->second.second && 
+        it->second.first->getNumVertices() == 3 &&  
+	it->second.second->getNumVertices() == 3 &&
+        (emb_edgeverts.find(it->first.getVertex(0)) == emb_edgeverts.end() ||
+         emb_edgeverts.find(it->first.getVertex(1)) == emb_edgeverts.end()))
       pairs.insert(recombine_triangle(it->first,
 				      it->second.first,
 				      it->second.second));
   }
 
+  std::set<MElement*> touched;
   std::set<recombine_triangle>::iterator itp = pairs.begin();
   while(itp != pairs.end()){
     // recombine if difference between max quad angle and right
@@ -868,9 +887,9 @@ static void _gmshRecombineIntoQuads(GFace *gf)
 void gmshRecombineIntoQuads(GFace *gf)
 {
   _gmshRecombineIntoQuads(gf);
-  laplaceSmoothing(gf);  
+  laplaceSmoothing(gf);
   _gmshRecombineIntoQuads(gf);
-  laplaceSmoothing(gf);  
+  laplaceSmoothing(gf);
   _gmshRecombineIntoQuads(gf);
-  laplaceSmoothing(gf);  
+  laplaceSmoothing(gf);
 }
