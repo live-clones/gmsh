@@ -1081,7 +1081,7 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
 	scale = (opt->ArrowSizeMax - opt->ArrowSizeMin) / l * 
 	  log10(l / opt->TmpMin) / log10(opt->TmpMax / opt->TmpMin);
       }
-      scale += opt->ArrowSizeMin / l;
+      if(opt->ArrowSizeMin && l) scale += opt->ArrowSizeMin / l;
       double px = scale * v[0];
       double py = scale * v[1];
       double pz = scale * v[2];
