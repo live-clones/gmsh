@@ -124,9 +124,14 @@ Relative radius of arrow head@*
 Default value: @code{0.12}@*
 Saved in: @code{General.OptionsFileName}
 
-@item View.ArrowSize
-Display size of arrows (in pixels)@*
+@item View.ArrowSizeMax
+Maximum display size of arrows (in pixels)@*
 Default value: @code{60}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ArrowSizeMin
+Minimum display size of arrows (in pixels)@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ArrowSizeProportional
