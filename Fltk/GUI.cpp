@@ -556,7 +556,7 @@ int GUI::getLastGraphIndex()
   unsigned int index = 0;
   if(graph.size() > 1)
     for(Fl_Window *w = Fl::first_window(); w; w = Fl::next_window(w))
-      for(index = 0; index < GUI::instance()->graph.size(); index++)
+      for(index = 0; index < graph.size(); index++)
         if(w == graph[index]->win || w == graph[index]->gl)
           return index;
   return 0;

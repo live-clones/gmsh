@@ -351,8 +351,6 @@ void partition_select_groups_cb(Fl_Widget *widget, void *data)
                                      "Advanced @-28->" : "Advanced @-22->");
   }
 
-  int _fontsize = GetFontSize();
-
   // Get the groups
   Fl_Widget *const *g = dlg->window->array();
   int y = g[0]->h();

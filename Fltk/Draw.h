@@ -20,5 +20,4 @@ const char *GetFontName(int index);
 int GetFontAlign(const char *alignstr);
 int GetFontSize();
 
-
 #endif

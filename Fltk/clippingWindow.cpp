@@ -40,7 +40,7 @@ static void clip_update_cb(Fl_Widget *w, void *data)
           CTX.geom.clip |= (1 << idx);
         else if(i == 1)
           CTX.mesh.clip |= (1 << idx);
-        else if(i - 2 < PView::list.size())
+        else if(i - 2 < (int)PView::list.size())
           PView::list[i - 2]->getOptions()->Clip |= (1 << idx);
       }
     }
@@ -59,7 +59,7 @@ static void clip_update_cb(Fl_Widget *w, void *data)
             CTX.geom.clip |= (1 << idx);
           else if(i == 1)
             CTX.mesh.clip |= (1 << idx);
-          else if(i - 2 < PView::list.size())
+          else if(i - 2 < (int)PView::list.size())
             PView::list[i - 2]->getOptions()->Clip |= (1 << idx);
         }
       }
@@ -271,7 +271,7 @@ void clippingWindow::resetBrowser()
   for(int i = 0; i < browser->size(); i++){
     if((i == 0 && CTX.geom.clip & (1 << idx)) ||
        (i == 1 && CTX.mesh.clip & (1 << idx)) ||
-       (i - 2 < PView::list.size() && 
+       (i > 1 && i - 2 < (int)PView::list.size() && 
         PView::list[i - 2]->getOptions()->Clip & (1 << idx)))
       browser->select(i + 1);
   }

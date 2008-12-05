@@ -117,9 +117,6 @@ static const char *input_formats =
   "PBM" TT "*.pbm" NN
   "PNM" TT "*.pnm" NN;
 
-#undef TT
-#undef NN
-
 static void file_open_cb(Fl_Widget *w, void *data)
 {
   int n = PView::list.size();
@@ -223,13 +220,6 @@ typedef struct{
 
 static void file_save_as_cb(Fl_Widget *w, void *data)
 {
-#if defined(HAVE_NATIVE_FILE_CHOOSER)
-#  define TT "\t"
-#  define NN "\n"
-#else
-#  define TT " ("
-#  define NN ")\t"
-#endif
   static patXfunc formats[] = {
     {"Guess from extension" TT "*.*", _save_auto},
     {"Gmsh mesh" TT "*.msh", _save_msh},
@@ -275,8 +265,6 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
       strcat(pat, formats[i].pat);
     }
   }
-#undef TT
-#undef NN
 
  test:
   if(file_chooser(0, 1, "Save As", pat)) {
@@ -296,6 +284,9 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
     }
   }
 }
+
+#undef TT
+#undef NN
 
 static void file_rename_cb(Fl_Widget *w, void *data)
 {
@@ -413,6 +404,8 @@ static void help_short_cb(Fl_Widget *w, void *data)
   Msg::Direct(" ");
   GUI::instance()->messages->show();
 }
+
+#undef CC
 
 static void help_mouse_cb(Fl_Widget *w, void *data)
 {
@@ -557,11 +550,11 @@ static void add_new_point()
 
 static void add_new_multiline(std::string type)
 {
-  std::vector<int> p;
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   Draw();
 
+  std::vector<int> p;
   while(1) {
     if(p.empty())
       Msg::StatusBar(3, false, "Select control points\n"
@@ -609,11 +602,11 @@ static void add_new_multiline(std::string type)
 
 static void add_new_line()
 {
-  std::vector<int> p;
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   Draw();
 
+  std::vector<int> p;
   while(1) {
     if(p.empty())
       Msg::StatusBar(3, false, "Select start point\n"
@@ -657,11 +650,11 @@ static void add_new_line()
 
 static void add_new_circle()
 {
-  std::vector<int> p;
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   Draw();
 
+  std::vector<int> p;
   while(1) {
     if(p.empty())
       Msg::StatusBar(3, false, "Select start point\n"
@@ -708,11 +701,11 @@ static void add_new_circle()
 
 static void add_new_ellipse()
 {
-  std::vector<int> p;
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   Draw();
 
+  std::vector<int> p;
   while(1) {
     if(p.empty())
       Msg::StatusBar(3, false, "Select start point\n"
@@ -762,12 +755,13 @@ static void add_new_ellipse()
 
 static int select_contour(int type, int num, List_T * List)
 {
-  int k = 0, ip;
+  int k = 0;
 
   switch (type) {
   case ENT_LINE:
     k = allEdgesLinked(num, List);
     for(int i = 0; i < List_Nbr(List); i++) {
+      int ip;
       List_Read(List, i, &ip);
       GEdge *ge = GModel::current()->getEdgeByTag(abs(ip));
       if(ge) ge->setSelection(1);
@@ -776,6 +770,7 @@ static int select_contour(int type, int num, List_T * List)
   case ENT_SURFACE:
     k = allFacesLinked(num, List);
     for(int i = 0; i < List_Nbr(List); i++) {
+      int ip;
       List_Read(List, i, &ip);
       GFace *gf = GModel::current()->getFaceByTag(abs(ip));
       if(gf) gf->setSelection(1);
@@ -789,10 +784,9 @@ static int select_contour(int type, int num, List_T * List)
 
 static void add_new_surface_volume(int mode)
 {
-  int type, num;
   List_T *List1 = List_Create(10, 10, sizeof(int));
   List_T *List2 = List_Create(10, 10, sizeof(int));
-
+  int type;
   if(mode == 2) {
     type = ENT_SURFACE;
     opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
@@ -835,6 +829,7 @@ static void add_new_surface_volume(int mode)
       }
       if(ib == 'u') {
         if(List_Nbr(List1) > 0){
+          int num;
           List_Read(List1, List_Nbr(List1)-1, &num);
           if(type == ENT_LINE){
             GEdge *ge = GModel::current()->getEdgeByTag(abs(num));
@@ -887,6 +882,7 @@ static void add_new_surface_volume(int mode)
             }
             if(ib == 'u') {
               if(List_Nbr(List1) > 0){
+                int num;
                 List_Read(List1, List_Nbr(List1)-1, &num);
                 if(type == ENT_LINE){
                   GEdge *ge = GModel::current()->getEdgeByTag(abs(num));
@@ -901,7 +897,7 @@ static void add_new_surface_volume(int mode)
               }
             }
             if(ib == 'l') {
-              num = (type == ENT_LINE) ? 
+              int num = (type == ENT_LINE) ? 
                 GUI::instance()->selectedEdges[0]->tag() :
                 GUI::instance()->selectedFaces[0]->tag();
               if(select_contour(type, num, List1)) {
@@ -1572,16 +1568,6 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
   Msg::StatusBar(3, false, "");
 }
 
-static void mesh_update_edges_cb(Fl_Widget *w, void *data)
-{
-  Msg::Error("Update edges not implemented yet");
-}
-
-static void mesh_remesh_cb(Fl_Widget *w, void *data)
-{
-  Msg::Error("Remesh not implemented yet");
-}
-
 static void mesh_inspect_cb(Fl_Widget *w, void *data)
 {
   CTX.pick_elements = 1;
@@ -1704,9 +1690,6 @@ static void mesh_define_transfinite_cb(Fl_Widget *w, void *data)
 
 static void add_transfinite(int dim)
 {
-  std::vector<int> p;
-  char ib;
-
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   switch (dim) {
   case 1: opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1); break;
@@ -1715,6 +1698,8 @@ static void add_transfinite(int dim)
   }
   Draw();
 
+  std::vector<int> p;
+  char ib;
   while(1) {
     switch (dim) {
     case 1:
@@ -2370,7 +2355,7 @@ contextItem menu_mesh[] = {
 #if defined(HAVE_FOURIER_MODEL)
   {"Reparameterize",   (Fl_Callback *)mesh_parameterize_cb} , 
 #endif
-  //{"Reclassify",   (Fl_Callback *)mesh_classify_cb} , 
+  {"Reclassify",   (Fl_Callback *)mesh_classify_cb} , 
   {"Save",         (Fl_Callback *)mesh_save_cb} ,
   {0} 
 };  

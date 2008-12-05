@@ -29,26 +29,20 @@ static void message_auto_scroll_cb(Fl_Widget *w, void *data)
 
 static void message_copy_cb(Fl_Widget *w, void *data)
 {
-#define BUFFL 50000
-  static char buff[BUFFL];
-  strcpy(buff, "");
+  std::string buff;
   for(int i = 1; i <= GUI::instance()->messages->browser->size(); i++) {
     if(GUI::instance()->messages->browser->selected(i)) {
       const char *c = GUI::instance()->messages->browser->text(i);
-      if(strlen(buff) + strlen(c) > BUFFL - 2) {
-        Msg::Error("Text selection too large to copy");
-        break;
-      }
       if(c[0] == '@')
-        strcat(buff, &c[5]);
+        buff += std::string(&c[5]);
       else
-        strcat(buff, c);
-      strcat(buff, "\n");
+        buff += std::string(c);
+      buff += "\n";
     }
   }
   // bof bof bof
-  Fl::copy(buff, strlen(buff), 0);
-  Fl::copy(buff, strlen(buff), 1);
+  Fl::copy(buff.c_str(), buff.size(), 0);
+  Fl::copy(buff.c_str(), buff.size(), 1);
 }
 
 static void message_clear_cb(Fl_Widget *w, void *data)

@@ -6379,18 +6379,35 @@ double opt_view_transform22(OPT_ARGS_NUM)
 #endif
 }
 
-double opt_view_arrow_size(OPT_ARGS_NUM)
+double opt_view_arrow_size_min(OPT_ARGS_NUM)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    opt->ArrowSize = val;
+    opt->ArrowSizeMin = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    GUI::instance()->options->view.value[60]->value(opt->ArrowSize);
+    GUI::instance()->options->view.value[64]->value(opt->ArrowSizeMin);
 #endif
-  return opt->ArrowSize;
+  return opt->ArrowSizeMin;
+#else
+  return 0.;
+#endif
+}
+
+double opt_view_arrow_size_max(OPT_ARGS_NUM)
+{
+#if !defined(HAVE_NO_POST)
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    opt->ArrowSizeMax = val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    GUI::instance()->options->view.value[60]->value(opt->ArrowSizeMax);
+#endif
+  return opt->ArrowSizeMax;
 #else
   return 0.;
 #endif

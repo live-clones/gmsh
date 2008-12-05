@@ -638,7 +638,8 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double raise2 = opt_view_raise2(current, GMSH_GET, 0);
   double normal_raise = opt_view_normal_raise(current, GMSH_GET, 0);
   double timestep = opt_view_timestep(current, GMSH_GET, 0);
-  double arrow_size = opt_view_arrow_size(current, GMSH_GET, 0);
+  double arrow_size_min = opt_view_arrow_size_min(current, GMSH_GET, 0);
+  double arrow_size_max = opt_view_arrow_size_max(current, GMSH_GET, 0);
   double arrow_size_proportional = opt_view_arrow_size_proportional(current, GMSH_GET, 0);
   double displacement_factor = opt_view_displacement_factor(current, GMSH_GET, 0);
   double point_size = opt_view_point_size(current, GMSH_GET, 0);
@@ -964,9 +965,13 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       if(force || (val != timestep))
         opt_view_timestep(i, GMSH_SET, val);
 
+      val = o->view.value[64]->value();
+      if(force || (val != arrow_size_min))
+        opt_view_arrow_size_min(i, GMSH_SET, val);
+
       val = o->view.value[60]->value();
-      if(force || (val != arrow_size))
-        opt_view_arrow_size(i, GMSH_SET, val);
+      if(force || (val != arrow_size_max))
+        opt_view_arrow_size_max(i, GMSH_SET, val);
 
       val = o->view.value[63]->value();
       if(force || (val != displacement_factor))
@@ -2869,8 +2874,15 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
            "Edit arrow");
         view.push[0]->callback(view_arrow_param_cb);
 
+        view.value[64] = new Fl_Value_Input
+          (L + 2 * WB, 2 * WB + 7 * BH, IW / 2, BH);
+        view.value[64]->minimum(0);
+        view.value[64]->maximum(500);
+        view.value[64]->step(1);
+        view.value[64]->align(FL_ALIGN_RIGHT);
+        view.value[64]->callback(view_options_ok_cb);
         view.value[60] = new Fl_Value_Input
-          (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Arrow size");
+          (L + 2 * WB + IW / 2, 2 * WB + 7 * BH, IW / 2, BH, "Arrow size");
         view.value[60]->minimum(0);
         view.value[60]->maximum(500);
         view.value[60]->step(1);
@@ -3238,7 +3250,8 @@ void optionWindow::updateViewGroup(int index)
   opt_view_line_width(index, GMSH_GUI, 0);
   opt_view_line_type(index, GMSH_GUI, 0);
   opt_view_vector_type(index, GMSH_GUI, 0);
-  opt_view_arrow_size(index, GMSH_GUI, 0);
+  opt_view_arrow_size_min(index, GMSH_GUI, 0);
+  opt_view_arrow_size_max(index, GMSH_GUI, 0);
   opt_view_arrow_size_proportional(index, GMSH_GUI, 0);
 
   opt_view_displacement_factor(index, GMSH_GUI, 0);

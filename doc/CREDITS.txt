@@ -87,8 +87,8 @@ subdirectory) copyright (C) 1994-2004, Joachim Sch"oberl: check the
 configuration options.
 
 This version of Gmsh may contain code (in the contrib/Tetgen
-subdirectory) copyright (C) 2002, 2004, 2005, 2006 Hang Si: check the
-configuration options.
+subdirectory) copyright (C) 2002-2007 Hang Si: check the configuration
+options.
 
 This version of Gmsh may contain code (in the contrib/gmm
 subdirectory) copyright (C) 2002-2008 Yves Renard: check the
