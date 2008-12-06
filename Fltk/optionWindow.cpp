@@ -2690,7 +2690,7 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
       view.value[34] = new Fl_Value_Input
         (L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Target error");
       view.value[34]->align(FL_ALIGN_RIGHT);
-      view.value[34]->minimum(0.);
+      view.value[34]->minimum(-1e-3);
       view.value[34]->maximum(1.);
       view.value[34]->step(1.e-3);
       view.value[34]->when(FL_WHEN_RELEASE);

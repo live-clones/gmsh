@@ -162,9 +162,9 @@ void drawContext::drawTaperedCylinder(double width, double val1, double val2,
   double dy = y[1] - y[0];
   double dz = z[1] - z[0];
   double length = sqrt(dx * dx + dy * dy + dz * dz);
-  double fact = (ValMax - ValMin) * pixel_equiv_x / s[0];
-  double radius1 = width * (val1 - ValMin) / fact;
-  double radius2 = width * (val2 - ValMin) / fact;
+  double fact = width * pixel_equiv_x / s[0] / (ValMax - ValMin);
+  double radius1 = (val1 - ValMin) * fact;
+  double radius2 = (val2 - ValMin) * fact;
   double zdir[3] = {0., 0., 1.};
   double vdir[3] = {dx / length, dy / length, dz / length};
   double axis[3], cosphi, phi;

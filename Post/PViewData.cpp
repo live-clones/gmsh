@@ -17,10 +17,19 @@ PViewData::PViewData()
 PViewData::~PViewData()
 {
   if(_adaptive) delete _adaptive;
+  for(std::map<int, std::vector<Double_Matrix*> >::iterator it = _interpolation.begin();
+      it != _interpolation.end(); it++)
+    for(unsigned int i = 0; i < it->second.size(); i++)
+      delete it->second[i];
 }
 
 bool PViewData::finalize()
 { 
+  // FIXME: change this:
+  //  1) only create adaptive data on demand (Options->AdaptVisu)
+  //  2) create interpolation vectors automatically for known elements
+
+  //if(useAdaptative) ....
   if(!_adaptive && _interpolation.size()){
     Msg::Info("Initializing adaptive data %p interp size=%d",
 	this, _interpolation.size());
@@ -60,18 +69,19 @@ void PViewData::setValue(int step, int ent, int ele, int nod, int comp, double v
   Msg::Error("Cannot change field value in this view");
 }
 
-void PViewData::setInterpolationScheme(int type, List_T *coef, List_T *pol, 
-				       List_T *coefGeo, List_T *polGeo)
+void PViewData::setInterpolationMatrices(int type, 
+                                         Double_Matrix *coeffs, Double_Matrix *eexps,
+                                         Double_Matrix *coeffsGeo, Double_Matrix *eexpsGeo)
 {
-  Msg::Debug("Storing interpolation scheme %d in view %p", type, this);
   if(!type || !_interpolation[type].empty()) return;
-  if(coef) _interpolation[type].push_back(coef);
-  if(pol) _interpolation[type].push_back(pol);
-  if(coefGeo) _interpolation[type].push_back(coefGeo);
-  if(polGeo) _interpolation[type].push_back(polGeo);
+  Msg::Debug("Storing interpolation scheme %d in view %p", type, this);
+  if(coeffs) _interpolation[type].push_back(coeffs);
+  if(eexps) _interpolation[type].push_back(eexps);
+  if(coeffsGeo) _interpolation[type].push_back(coeffsGeo);
+  if(eexpsGeo) _interpolation[type].push_back(eexpsGeo);
 }
 
-int PViewData::getInterpolationScheme(int type, std::vector<List_T*> &p)
+int PViewData::getInterpolationMatrices(int type, std::vector<Double_Matrix*> &p)
 {
   if(_interpolation.count(type)){
     p = _interpolation[type];

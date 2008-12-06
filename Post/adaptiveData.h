@@ -269,8 +269,8 @@ class adaptiveElements {
   double _tolerance, _minVal, _maxVal;
   List_T *_listEle;
   int *_numEle;
-  Double_Matrix *_coefs, *_eexps;
-  Double_Matrix *_coefsGeom, *_eexpsGeom;
+  Double_Matrix *_coeffs, *_eexps;
+  Double_Matrix *_coeffsGeom, *_eexpsGeom;
   Double_Matrix *_posX, *_posY, *_posZ;
   Double_Matrix *_val, *_valX, *_valY, *_valZ;
   Double_Matrix *_interpolate, *_geometry;
@@ -278,13 +278,17 @@ class adaptiveElements {
   int _zoomElement(int ielem, int level, GMSH_Post_Plugin *plug);
  public:
   adaptiveElements(List_T *listEle, int *numEle,
-		   List_T *coeffs, List_T *eexps, 
-		   List_T *coeffsGeom=0, List_T *eexpsGeom=0);
+		   Double_Matrix *coeffs, Double_Matrix *eexps, 
+		   Double_Matrix *coeffsGeom=0, Double_Matrix *eexpsGeom=0)
+    : _resolutionLevel(-1), _tolerance(1.e-3), _minVal(0.), _maxVal(0.),
+      _listEle(listEle), _numEle(numEle), _coeffs(coeffs), _eexps(eexps),
+      _coeffsGeom(coeffsGeom), _eexpsGeom(eexpsGeom), _posX(0), _posY(0), _posZ(0),
+      _val(0), _valX(0), _valY(0), _valZ(0), _interpolate(0), _geometry(0){}
   ~adaptiveElements();
   void initWithLowResolution(PViewData *data, int step);
   void changeResolution(int level, double tol, GMSH_Post_Plugin *plug=0);
   // The number of nodes is supposed to be fixed in an adaptive view
-  inline int getNumNodes () const {return _coefsGeom ? _coefsGeom->size1() : T::numNodes;}
+  inline int getNumNodes () const { return _coeffsGeom ? _coeffsGeom->size1() : T::numNodes; }
 };
 
 class adaptiveData {

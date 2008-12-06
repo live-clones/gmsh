@@ -6,6 +6,7 @@
 #ifndef _GMSH_MATRIX_H_
 #define _GMSH_MATRIX_H_
 
+#include <math.h>
 #include "GmshMessage.h"
 
 template <class SCALAR>
@@ -138,7 +139,7 @@ class Gmsh_Matrix
   inline int size2() const { return c; }
   SCALAR *data;
   ~Gmsh_Matrix() { delete [] data; }
-  Gmsh_Matrix(int R,int C) : r(R), c(C)
+  Gmsh_Matrix(int R, int C) : r(R), c(C)
   {
     data = new SCALAR[r * c];
     scale(0);

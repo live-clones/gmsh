@@ -196,18 +196,13 @@ void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod, int nb
   // compute statistics for element lists
   if(!nbelm) return;  
 
-  if(haveInterpolationScheme()){
-    std::vector<List_T *> is;
-    if(getInterpolationScheme(nbedg, is) == 4)
-      nbnod = List_Nbr(is[2]);
-  }
-
   int nbval = nbcomp * nbnod;
 
-  if(_interpolation.count(nbedg)){
-    nbval = nbcomp * List_Nbr(_interpolation[nbedg][0]);
-    if(nbval != nbcomp * nbnod)
-      Msg::Info("Adaptive view with %d values per element", nbval);
+  if(haveInterpolationMatrices()){
+    std::vector<Double_Matrix*> im;
+    if(getInterpolationMatrices(nbedg, im) == 4)
+      nbnod = im[2]->size1();
+    nbval = nbcomp * im[0]->size1();
   }
   
   int nb = List_Nbr(list) / nbelm;
@@ -254,10 +249,10 @@ void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod, int nb
 void PViewDataList::_setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg,
                              List_T *list, int nblist)
 {
-  if(haveInterpolationScheme()){
-    std::vector<List_T *> is;
-    if(getInterpolationScheme(nbedg, is) == 4)
-      nbnod = List_Nbr(is[2]);
+  if(haveInterpolationMatrices()){
+    std::vector<Double_Matrix*> im;
+    if(getInterpolationMatrices(nbedg, im) == 4)
+      nbnod = im[2]->size1();
   }
 
   _lastDimension = dim;
@@ -587,10 +582,10 @@ void PViewDataList::_splitCurvedElements()
 }
 
 static void generateConnectivities(List_T *list, int nbList, int nbTimeStep, 
-                                   int nbVert, smooth_data &data)
+                                   int nbVert, int nbComp, smooth_data &data)
 {
   if(!nbList) return;
-  double *vals = new double[nbTimeStep];
+  double *vals = new double[nbTimeStep * nbComp];
   int nb = List_Nbr(list) / nbList;
   for(int i = 0; i < List_Nbr(list); i += nb) {
     double *x = (double *)List_Pointer_Fast(list, i);
@@ -598,19 +593,20 @@ static void generateConnectivities(List_T *list, int nbList, int nbTimeStep,
     double *z = (double *)List_Pointer_Fast(list, i + 2 * nbVert);
     double *v = (double *)List_Pointer_Fast(list, i + 3 * nbVert);
     for(int j = 0; j < nbVert; j++) {
-      for(int k = 0; k < nbTimeStep; k++)
-        vals[k] = v[j + k * nbVert];
-      data.add(x[j], y[j], z[j], nbTimeStep, vals);
+      for(int ts = 0; ts < nbTimeStep; ts++)
+        for(int k = 0; k < nbComp; k++)
+          vals[nbComp * ts + k] = v[nbVert * nbComp * ts + nbComp * j + k];
+      data.add(x[j], y[j], z[j], nbTimeStep * nbComp, vals);
     }
   }
   delete [] vals;
 }
 
 static void smoothList(List_T *list, int nbList, int nbTimeStep,
-                       int nbVert, smooth_data &data)
+                       int nbVert, int nbComp, smooth_data &data)
 {
   if(!nbList) return;
-  double *vals = new double[nbTimeStep];
+  double *vals = new double[nbTimeStep * nbComp];
   int nb = List_Nbr(list)/nbList;
   for(int i = 0; i < List_Nbr(list); i += nb) {
     double *x = (double *)List_Pointer_Fast(list, i);
@@ -618,9 +614,10 @@ static void smoothList(List_T *list, int nbList, int nbTimeStep,
     double *z = (double *)List_Pointer_Fast(list, i + 2 * nbVert);
     double *v = (double *)List_Pointer_Fast(list, i + 3 * nbVert);
     for(int j = 0; j < nbVert; j++) {
-      if(data.get(x[j], y[j], z[j], nbTimeStep, vals)){
-        for(int k = 0; k < nbTimeStep; k++) 
-          v[j + k * nbVert] = vals[k];
+      if(data.get(x[j], y[j], z[j], nbTimeStep * nbComp, vals)){
+        for(int ts = 0; ts < nbTimeStep; ts++) 
+          for(int k = 0; k < nbComp; k++) 
+            v[nbVert * nbComp * ts + nbComp * j + k] = vals[nbComp * ts + k];
       }
     }
   }
@@ -632,20 +629,19 @@ void PViewDataList::smooth()
   double old_eps = xyzv::eps;
   xyzv::eps = CTX.lc * 1.e-8;
   smooth_data data;
-  generateConnectivities(SL, NbSL, NbTimeStep, 2, data);
-  generateConnectivities(ST, NbST, NbTimeStep, 3, data);
-  generateConnectivities(SQ, NbSQ, NbTimeStep, 4, data);
-  generateConnectivities(SS, NbSS, NbTimeStep, 4, data);
-  generateConnectivities(SH, NbSH, NbTimeStep, 8, data);
-  generateConnectivities(SI, NbSI, NbTimeStep, 6, data);
-  generateConnectivities(SY, NbSY, NbTimeStep, 5, data);
-  smoothList(SL, NbSL, NbTimeStep, 2, data);
-  smoothList(ST, NbST, NbTimeStep, 3, data);
-  smoothList(SQ, NbSQ, NbTimeStep, 4, data);
-  smoothList(SS, NbSS, NbTimeStep, 4, data);
-  smoothList(SH, NbSH, NbTimeStep, 8, data);
-  smoothList(SI, NbSI, NbTimeStep, 6, data);
-  smoothList(SY, NbSY, NbTimeStep, 5, data);
+
+  List_T *list = 0;
+  int *nbe = 0, nbc, nbn;
+  for(int i = 0; i < 24; i++){
+    getRawData(i, &list, &nbe, &nbc, &nbn);
+    if(nbn > 1)
+      generateConnectivities(list, *nbe, NbTimeStep, nbn, nbc, data);
+  }
+  for(int i = 0; i < 24; i++){
+    getRawData(i, &list, &nbe, &nbc, &nbn);
+    if(nbn > 1)
+      smoothList(list, *nbe, NbTimeStep, nbn, nbc, data);
+  }
   xyzv::eps = old_eps;
   finalize();
 }

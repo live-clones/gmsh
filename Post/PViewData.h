@@ -10,10 +10,10 @@
 #include <vector>
 #include <map>
 #include "SBoundingBox3d.h"
+#include "GmshMatrix.h"
 
 #define VAL_INF 1.e200
 
-class List_T;
 class adaptiveData;
 class GModel;
 class nameData;
@@ -35,7 +35,7 @@ class PViewData {
   adaptiveData *_adaptive;
   // interpolation matrices, indexed by the number of edges per
   // element (1 for lines, 3 for triangles, etc.)
-  std::map<int, std::vector<List_T*> > _interpolation;
+  std::map<int, std::vector<Double_Matrix*> > _interpolation;
 
  public:
   PViewData();
@@ -174,10 +174,10 @@ class PViewData {
 
   // set/get the interpolation matrices for elements with "type"
   // number of edges
-  void setInterpolationScheme(int type, List_T *coef, List_T *pol, 
-			      List_T *coefGeo=0, List_T *polGeo=0);
-  int getInterpolationScheme(int type, std::vector<List_T*> &p);
-  inline bool haveInterpolationScheme(){ return !_interpolation.empty(); }
+  void setInterpolationMatrices(int type, Double_Matrix *coeffs, Double_Matrix *eexps,
+                                Double_Matrix *coeffsGeo=0, Double_Matrix *eexpsGeo=0);
+  int getInterpolationMatrices(int type, std::vector<Double_Matrix*> &p);
+  inline bool haveInterpolationMatrices(){ return !_interpolation.empty(); }
 
   // smooth the data in the view (makes it C0)
   virtual void smooth();

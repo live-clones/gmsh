@@ -8,6 +8,7 @@
 #include <stdarg.h>
 #include <time.h>
 #include "GmshMessage.h"
+#include "GmshMatrix.h"
 #include "MallocUtils.h"
 #include "ListUtils.h"
 #include "TreeUtils.h"
@@ -65,6 +66,7 @@ void yyerror(char *s);
 void yymsg(int level, const char *fmt, ...);
 void skip_until(const char *skip, const char *until);
 int PrintListOfDouble(char *format, List_T *list, char *buffer);
+Double_Matrix *ListOfListOfDouble2Matrix(List_T *list);
 void FixRelativePath(const char *in, char *out);
 %}
 
@@ -553,7 +555,13 @@ InterpolationMatrix :
 	(ViewData->NbSI || ViewData->NbVI) ? 9 : 
       	(ViewData->NbSH || ViewData->NbVH) ? 12 : 
 	0;
-      ViewData->setInterpolationScheme(type, $3, $6);
+      ViewData->setInterpolationMatrices(type, ListOfListOfDouble2Matrix($3), 
+                                         ListOfListOfDouble2Matrix($6));
+      for(int i = 0; i < List_Nbr($3); i++)
+        List_Delete(*(List_T**)List_Pointer($3, i));
+      for(int i = 0; i < List_Nbr($6); i++)
+        List_Delete(*(List_T**)List_Pointer($6, i));
+      List_Delete($3); List_Delete($6);
 #endif
     }
  |  tInterpolationScheme '{' RecursiveListOfListOfDouble '}' 
@@ -569,7 +577,19 @@ InterpolationMatrix :
 	(ViewData->NbSS || ViewData->NbVS) ? 6 : 
       	(ViewData->NbSH || ViewData->NbVH) ? 12 : 
 	0;
-      ViewData->setInterpolationScheme(type, $3, $6, $9, $12);
+      ViewData->setInterpolationMatrices(type, ListOfListOfDouble2Matrix($3), 
+                                         ListOfListOfDouble2Matrix($6),
+                                         ListOfListOfDouble2Matrix($9), 
+                                         ListOfListOfDouble2Matrix($12));
+      for(int i = 0; i < List_Nbr($3); i++) 
+        List_Delete(*(List_T**)List_Pointer($3, i));
+      for(int i = 0; i < List_Nbr($6); i++) 
+        List_Delete(*(List_T**)List_Pointer($6, i));
+      for(int i = 0; i < List_Nbr($9); i++) 
+        List_Delete(*(List_T**)List_Pointer($9, i));
+      for(int i = 0; i < List_Nbr($12); i++) 
+        List_Delete(*(List_T**)List_Pointer($12, i));
+      List_Delete($3); List_Delete($6); List_Delete($9); List_Delete($12);
 #endif
     }
 ;
@@ -1452,7 +1472,6 @@ Shape :
       $$.Type = MSH_PHYSICAL_SURFACE;
       $$.Num = num;
     }
-
   | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tSTRING '{' RecursiveListOfListOfDouble '}' tEND
     {
       int num = (int)$4;
@@ -1461,21 +1480,21 @@ Shape :
       }
       else{
 	List_T *temp = ListOfDouble2ListOfInt($7);
-	List_T *S[4] = {0,0,0,0};
-	for (int i=0;i<List_Nbr($10);i++){
+	List_T *S[4] = {0, 0, 0, 0};
+	for (int i = 0; i < List_Nbr($10); i++){
 	  List_T *ll;
-	  List_Read($10,i,&ll);
+	  List_Read($10, i, &ll);
 	  S[i] = ListOfDouble2ListOfInt(ll);
+          List_Delete(ll);
 	}
-	
 	PhysicalGroup *p = Create_PhysicalGroup(num, MSH_PHYSICAL_SURFACE, temp, S);
 	List_Delete(temp);
-	for (int i=0;i<List_Nbr($10);i++)
+	for (int i = 0; i < List_Nbr($10); i++)
 	  List_Delete(S[i]);
-	
-	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
+        List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
       }
       List_Delete($7);
+      List_Delete($10);
       Free($8);
       $$.Type = MSH_PHYSICAL_SURFACE;
       $$.Num = num;
@@ -1589,9 +1608,9 @@ Transform :
   | tSplit tLine '(' FExpr ')' '{' RecursiveListOfDouble '}' tEND
     {
       $$ = List_Create(2, 1, sizeof(Shape*));
-      List_T *tmp=ListOfDouble2ListOfInt($7);
+      List_T *tmp = ListOfDouble2ListOfInt($7);
       List_Delete($7);
-      SplitCurve((int)$4,tmp,$$);
+      SplitCurve((int)$4, tmp, $$);
       List_Delete(tmp);
     }
 ;
@@ -3381,6 +3400,28 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer)
   if(j != (int)strlen(format))
     return -1;
   return 0;
+}
+
+Double_Matrix *ListOfListOfDouble2Matrix(List_T *list)
+{
+  int M = List_Nbr(list);
+  if(!M) return 0;
+  int N = 0;
+  for(int i = 0; i < M; i++){
+    List_T *line = *(List_T**)List_Pointer_Fast(list, i);
+    N = std::max(N, List_Nbr(line));
+  }
+  if(!N) return 0;
+  Double_Matrix *mat = new Double_Matrix(M, N);
+  for(int i = 0; i < M; i++){
+    List_T *line = *(List_T**)List_Pointer_Fast(list, i);
+    for(int j = 0; j < List_Nbr(line); j++){
+      double val;
+      List_Read(line, j, &val);
+      (*mat)(i, j) = val;
+    }
+  }
+  return mat;
 }
 
 void FixRelativePath(const char *in, char *out)

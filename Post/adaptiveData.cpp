@@ -883,61 +883,8 @@ void adaptiveHexahedron::recurError(adaptiveHexahedron *h, double AVG, double to
 }
 
 template <class T>
-adaptiveElements<T>::adaptiveElements(List_T *listEle, int *numEle,
-				      List_T *coef, List_T *pol,
-				      List_T *coefGeom, List_T *polGeom)
-  : _resolutionLevel(-1), _tolerance(1.e-3), _minVal(0.), _maxVal(0.), 
-    _listEle(listEle), _numEle(numEle), _coefsGeom(0), _eexpsGeom(0), 
-    _posX(0), _posY(0), _posZ(0), _val(0), _valX(0), _valY(0), _valZ(0),
-    _interpolate(0), _geometry(0)
-{
-  _coefs = new Double_Matrix(List_Nbr(coef), List_Nbr(coef));
-  _eexps = new Double_Matrix(List_Nbr(coef), 3);
-
-  for(int i = 0; i < List_Nbr(coef); ++i) {
-    List_T **line = (List_T**)List_Pointer_Fast(coef, i);
-    List_T **eexp = (List_T**)List_Pointer_Fast(pol, i);
-    double dpowu, dpowv, dpoww;
-    List_Read(*eexp, 0, &dpowu);
-    List_Read(*eexp, 1, &dpowv);
-    List_Read(*eexp, 2, &dpoww);
-    (*_eexps)(i, 0) = dpowu;
-    (*_eexps)(i, 1) = dpowv;
-    (*_eexps)(i, 2) = dpoww;
-    for(int j = 0; j < List_Nbr(*line); ++j) {
-      double val;
-      List_Read(*line, j, &val);
-      (*_coefs)(i, j) = val;
-    }
-  }
-
-  if(coefGeom && polGeom){
-    _coefsGeom = new Double_Matrix(List_Nbr(coefGeom), List_Nbr(coefGeom));
-    _eexpsGeom = new Double_Matrix(List_Nbr(coefGeom), 3);
-    for(int i = 0; i < List_Nbr(coefGeom); ++i) {
-      List_T **line = (List_T**)List_Pointer_Fast(coefGeom, i);
-      List_T **eexp = (List_T**)List_Pointer_Fast(polGeom, i);
-      double dpowu, dpowv, dpoww;
-      List_Read(*eexp, 0, &dpowu);
-      List_Read(*eexp, 1, &dpowv);
-      List_Read(*eexp, 2, &dpoww);
-      (*_eexpsGeom)(i, 0) = dpowu;
-      (*_eexpsGeom)(i, 1) = dpowv;
-      (*_eexpsGeom)(i, 2) = dpoww;
-      for(int j = 0; j < List_Nbr(*line); ++j) {
-        double val;
-        List_Read(*line, j, &val);
-        (*_coefsGeom)(i, j) = val;
-      }
-    }      
-  }
-}
-
-template <class T>
 adaptiveElements<T>::~adaptiveElements()
 {
-  delete _coefs;
-  delete _eexps;
   if(_posX) delete _posX;
   if(_posY) delete _posY;
   if(_posZ) delete _posZ;
@@ -945,8 +892,6 @@ adaptiveElements<T>::~adaptiveElements()
   if(_valX) delete _valX;
   if(_valY) delete _valY;
   if(_valZ) delete _valZ;
-  if(_coefsGeom) delete _coefsGeom;
-  if(_eexpsGeom) delete _eexpsGeom;
   if(_interpolate) delete _interpolate;
   if(_geometry) delete _geometry;
   cleanElement<T>();
@@ -970,7 +915,7 @@ void adaptiveElements<T>::initWithLowResolution(PViewData *data, int step)
   if(!numEle) return;
 
   int numNodes = getNumNodes();
-  int numVal = _coefs->size1() * numComp;
+  int numVal = _coeffs->size1() * numComp;
 
   _minVal = VAL_INF;
   _maxVal = -VAL_INF;
@@ -1073,11 +1018,11 @@ void adaptiveElements<T>::changeResolution(int level, double tol, GMSH_Post_Plug
 template <class T> 
 void adaptiveElements<T>::_changeResolution(int level, GMSH_Post_Plugin *plug, int *done)
 {
-  const int N = _coefs->size1();
+  const int N = _coeffs->size1();
   const int nbelm = _posX->size1();
 
   double sf[100];
-  T::create(level, _coefs, _eexps);
+  T::create(level, _coeffs, _eexps);
 
   if(_interpolate) delete _interpolate;
   _interpolate = new Double_Matrix(adaptivePoint::all.size(), N);
@@ -1091,8 +1036,8 @@ void adaptiveElements<T>::_changeResolution(int level, GMSH_Post_Plugin *plug, i
     adaptivePoint *p = (adaptivePoint*)&(*it);
     for(int k = 0; k < N; ++k)
       (*_interpolate)(kk, k) = p->shapeFunctions[k];
-    if(_coefsGeom)
-      computeShapeFunctions(_coefsGeom, _eexpsGeom, p->x, p->y, p->z, sf);
+    if(_coeffsGeom)
+      computeShapeFunctions(_coeffsGeom, _eexpsGeom, p->x, p->y, p->z, sf);
     else
       T::GSF(p->x, p->y, p->z, sf);
     for(int k = 0; k < _posX->size2(); k++)
@@ -1107,7 +1052,7 @@ void adaptiveElements<T>::_changeResolution(int level, GMSH_Post_Plugin *plug, i
 template <class T>
 int adaptiveElements<T>::_zoomElement(int ielem, int level, GMSH_Post_Plugin *plug)
 {
-  const int N = _coefs->size1();
+  const int N = _coeffs->size1();
   
   Double_Vector val(N),  res(adaptivePoint::all.size());
   Double_Vector valx(N), resx(adaptivePoint::all.size());
@@ -1213,38 +1158,38 @@ adaptiveData::adaptiveData(PViewData *data)
   _outData = new PViewDataList(true);
 
   int numComp = _inData->getNumComponents(0, 0, 0);
-  std::vector<List_T*> p;
-  if(_inData->getNumLines() && _inData->getInterpolationScheme(1, p) >= 2){
+  std::vector<Double_Matrix*> p;
+  if(_inData->getNumLines() && _inData->getInterpolationMatrices(1, p) >= 2){
     _lines = new adaptiveElements<adaptiveLine>
       ((numComp == 1) ? _outData->SL : _outData->VL,
        (numComp == 1) ? &_outData->NbSL : &_outData->NbVL,
        p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
   }
-  if(_inData->getNumTriangles() && _inData->getInterpolationScheme(3, p) >= 2){
+  if(_inData->getNumTriangles() && _inData->getInterpolationMatrices(3, p) >= 2){
     _triangles = new adaptiveElements<adaptiveTriangle>
       ((numComp == 1) ? _outData->ST : _outData->VT,
        (numComp == 1) ? &_outData->NbST : &_outData->NbVT,
        p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
   }
-  if(_inData->getNumQuadrangles() && _inData->getInterpolationScheme(4, p) >= 2){
+  if(_inData->getNumQuadrangles() && _inData->getInterpolationMatrices(4, p) >= 2){
     _quadrangles = new adaptiveElements<adaptiveQuadrangle>
       ((numComp == 1) ? _outData->SQ : _outData->VQ,
        (numComp == 1) ? &_outData->NbSQ : &_outData->NbVQ,
        p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
   }
-  if(_inData->getNumTetrahedra() && _inData->getInterpolationScheme(6, p) >= 2){
+  if(_inData->getNumTetrahedra() && _inData->getInterpolationMatrices(6, p) >= 2){
     _tetrahedra = new adaptiveElements<adaptiveTetrahedron>
       ((numComp == 1) ? _outData->SS : _outData->VS,
        (numComp == 1) ? &_outData->NbSS : &_outData->NbVS,
        p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
   }
-  if(_inData->getNumPrisms() && _inData->getInterpolationScheme(9, p) >= 2){
+  if(_inData->getNumPrisms() && _inData->getInterpolationMatrices(9, p) >= 2){
     _prisms = new adaptiveElements<adaptivePrism>
       ((numComp == 1) ? _outData->SI : _outData->VI,
        (numComp == 1) ? &_outData->NbSI : &_outData->NbVI, 
        p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
   }
-  if(_inData->getNumHexahedra() && _inData->getInterpolationScheme(12, p) >= 2){
+  if(_inData->getNumHexahedra() && _inData->getInterpolationMatrices(12, p) >= 2){
     _hexahedra = new adaptiveElements<adaptiveHexahedron>
       ((numComp == 1) ? _outData->SH : _outData->VH,
        (numComp == 1) ? &_outData->NbSH : &_outData->NbVH, 
