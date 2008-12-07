@@ -14,9 +14,9 @@ class gmshLinearSystem;
 class gmshFunction;
 
 #include <math.h>
-#include <GmshMatrix.h>
 #include <map>
 #include <vector>
+#include "GmshMatrix.h"
 
 class gmshAssembler;
 

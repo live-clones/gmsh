@@ -841,7 +841,6 @@ template <class T>
 int adaptiveElements<T>::_zoomElement(int ielem, int level, GMSH_Post_Plugin *plug)
 {
   const int N = _coeffs->size1();
-  
   Double_Vector val(N),  res(adaptivePoint::all.size());
   Double_Vector valx(N), resx(adaptivePoint::all.size());
   Double_Vector valy(N), resy(adaptivePoint::all.size());
@@ -934,18 +933,18 @@ int adaptiveElements<T>::_zoomElement(int ielem, int level, GMSH_Post_Plugin *pl
 template <class T> 
 void adaptiveElements<T>::_changeResolution(int level, GMSH_Post_Plugin *plug, int *done)
 {
-  const int N = _coeffs->size1();
-  const int nbelm = _posX->size1();
-
-  double sf[100];
   T::create(level, _coeffs, _eexps);
 
+  if(!adaptivePoint::all.size()) return;
+
+  const int N = _coeffs->size1();
   if(_interpolate) delete _interpolate;
   _interpolate = new Double_Matrix(adaptivePoint::all.size(), N);
 
   if(_geometry) delete _geometry;
   _geometry = new Double_Matrix(adaptivePoint::all.size(), _posX->size2());
 
+  double sf[100];
   int kk = 0;
   for(std::set<adaptivePoint>::iterator it = adaptivePoint::all.begin(); 
       it != adaptivePoint::all.end(); ++it) {
@@ -961,6 +960,7 @@ void adaptiveElements<T>::_changeResolution(int level, GMSH_Post_Plugin *plug, i
     kk++;
   }
 
+  const int nbelm = _posX->size1();
   for(int i = 0; i < nbelm; ++i)
     done[i] = _zoomElement(i, level, plug);
 }
@@ -999,6 +999,7 @@ void adaptiveElements<T>::initData(PViewData *data, int step)
 
   int numNodes = getNumNodes();
   int numVal = _coeffs->size1() * numComp;
+  if(!numNodes || !numVal) return;
 
   _minVal = VAL_INF;
   _maxVal = -VAL_INF;
@@ -1083,8 +1084,6 @@ void adaptiveElements<T>::changeResolution(int level, double tol, GMSH_Post_Plug
   List_Reset(_listEle);
   *_numEle = 0;
   
-  if(!_posX->size1()) return;
-
   std::vector<int> done(_posX->size1(), 0);
 
   // We first do the adaptive stuff at level 2 and will only process

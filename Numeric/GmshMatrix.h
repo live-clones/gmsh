@@ -21,7 +21,7 @@ class Gmsh_Vector
   Gmsh_Vector(int R) : r(R)
   {
     data = new SCALAR[r];
-    scale(0);
+    scale(0.);
   }
   Gmsh_Vector(const Gmsh_Vector<SCALAR> &other) : r(other.r)
   {
@@ -52,7 +52,10 @@ class Gmsh_Vector
   }
   inline void scale(const SCALAR s)
   {
-    for (int i = 0; i < r; ++i) data[i] *= s;
+    if (s == 0.) 
+      for (int i = 0; i < r; ++i) data[i] = 0.;
+    else 
+      for (int i = 0; i < r; ++i) data[i] *= s;
   }
 };
 
@@ -142,7 +145,7 @@ class Gmsh_Matrix
   Gmsh_Matrix(int R, int C) : r(R), c(C)
   {
     data = new SCALAR[r * c];
-    scale(0);
+    scale(0.);
   }
   Gmsh_Matrix(const Gmsh_Matrix<SCALAR> &other) : r(other.r), c(other.c)
   {
@@ -172,20 +175,22 @@ class Gmsh_Matrix
   {
     return data[i + r * j];
   }
-  inline void mult(const Gmsh_Matrix<SCALAR> &x, const Gmsh_Matrix<SCALAR> &b)
+  inline void mult(const Gmsh_Matrix<SCALAR> &x, Gmsh_Matrix<SCALAR> &b)
   {
-    for(int i = 0; i < b.size1(); i++)
-      for(int j = 0; j < b.size2(); j++)
-	for(int k = 0; k < size2(); k++)
-	  b.data[i + r *j] += (*this)(i, k) * x(k, j);
+    b.scale(0.);
+    for(int i = 0; i < r; i++)
+      for(int j = 0; j < x.size2(); j++)
+	for(int k = 0; k < c; k++)
+	  b.data[i + r * j] += (*this)(i, k) * x(k, j);
   }
   inline void mult(const Gmsh_Vector<SCALAR> &x, Gmsh_Vector<SCALAR> &b)
   {
-    for(int i = 0; i < b.size(); i++)
-      for(int j = 0; j < b.size(); j++)
+    b.scale(0.);
+    for(int i = 0; i < r; i++)
+      for(int j = 0; j < c; j++)
 	b.data[i] += (*this)(i, j) * x(j);
   }
-  inline void blas_dgemm(const Gmsh_Matrix<SCALAR> & x, const Gmsh_Matrix<SCALAR> & b, 
+  inline void blas_dgemm(const Gmsh_Matrix<SCALAR> &x, Gmsh_Matrix<SCALAR> &b, 
 			 const SCALAR c_a = 1.0, const SCALAR c_b = 1.0)
   {
     Gmsh_Matrix<SCALAR> temp (x.size1(), b.size2());
@@ -256,7 +261,10 @@ class Gmsh_Matrix
   }  
   inline void scale(const double s)
   {
-    for (int i = 0; i < r * c; ++i) data[i] *= s;
+    if(s == 0.)
+      for (int i = 0; i < r * c; ++i) data[i] = 0.;
+    else
+      for (int i = 0; i < r * c; ++i) data[i] *= s;
   }
   inline void add(const double &a) 
   {
@@ -308,7 +316,7 @@ class GSL_Vector
   }
   inline void scale(const double &y)
   {
-    if (y == 0.0) gsl_vector_set_zero(data);
+    if (y == 0.) gsl_vector_set_zero(data);
     else gsl_vector_scale(data, y);
   }
 };
@@ -352,7 +360,7 @@ class GSL_Matrix
   {
     return *gsl_matrix_ptr(data, i, j);
   }
-  inline void mult(const GSL_Matrix &x, const GSL_Matrix &b)
+  inline void mult(const GSL_Matrix &x, GSL_Matrix &b)
   {
     gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, data, x.data, 1.0, b.data);
   }
@@ -426,10 +434,10 @@ class GSL_Matrix
   {
     gsl_blas_dgemv(CblasNoTrans, 1.0, data, x.data, 1.0, b.data);
   }
-  inline void blas_dgemm(const GSL_Matrix & x, const GSL_Matrix& b, 
+  inline void blas_dgemm(const GSL_Matrix &x, GSL_Matrix &b, 
 			 const double c_a = 1.0, const double c_b = 1.0)
   {      
-    gsl_blas_dgemm(CblasNoTrans,CblasNoTrans, c_a, x.data, b.data, c_b, data);
+    gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, c_a, x.data, b.data, c_b, data);
   }
   inline gsl_matrix_view touchSubmatrix(int i0, int ni, int j0, int nj) 
   {
@@ -441,7 +449,7 @@ class GSL_Matrix
   }
   inline void scale(const double &m) 
   {
-    if (m == 0.0) gsl_matrix_set_zero(data);
+    if (m == 0.) gsl_matrix_set_zero(data);
     else gsl_matrix_scale(data, m);
   }
   inline void add(const double &a) 
