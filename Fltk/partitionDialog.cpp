@@ -595,8 +595,8 @@ void partition_dialog()
     }
     // Label
     {
-      Fl_Box *const o = new Fl_Box(2*WB + 2*BB + IW, y, 0, BH,
-                                   "Topology\ndimensions");
+      Fl_Box *const o = new Fl_Box
+        (2*WB + 2*BB + IW, y, 0, BH, "Topology\ndimensions");
       o->align(FL_ALIGN_RIGHT);
     }
     y += BH + WB + 2;  // +2 for multiline labels
@@ -657,27 +657,27 @@ void partition_dialog()
     y += BH + WB;
     // Parameters
     {
-      Fl_Check_Button *const o = new Fl_Check_Button(WB, y, 2*WB, BH,
-                                                     "Refine partition");
+      Fl_Check_Button *const o = new Fl_Check_Button
+        (WB, y, 2*WB, BH, "Refine partition");
       dlg.checkButtonRefPart = o;
       o->align(FL_ALIGN_RIGHT);
     }
     {
-      Fl_Check_Button *const o = new Fl_Check_Button(2*WB + 2*BB, y, 2*WB, BH,
-                                                     "Internal vertices");
+      Fl_Check_Button *const o = new Fl_Check_Button
+        (2*WB + 2*BB, y, 2*WB, BH, "Internal vertices");
       dlg.checkButtonIntVert = o;
       o->align(FL_ALIGN_RIGHT);
     }
     y += BH;
     {
-      Fl_Check_Button *const o = new Fl_Check_Button(WB, y, 2*WB, BH,
-                                                     "Refine map");
+      Fl_Check_Button *const o = new Fl_Check_Button
+        (WB, y, 2*WB, BH, "Refine map");
       dlg.checkButtonRefMap = o;
       o->align(FL_ALIGN_RIGHT);
     }
     {
-      Fl_Check_Button *const o = new Fl_Check_Button(2*WB + 2*BB, y, 2*WB, BH,
-                                                     "Terminal propogation");
+      Fl_Check_Button *const o = new Fl_Check_Button
+        (2*WB + 2*BB, y, 2*WB, BH, "Terminal propogation");
       dlg.checkButtonTermProp = o;
       o->callback((Fl_Callback *)partition_opt_spectralcheck_cb, &dlg);
       o->align(FL_ALIGN_RIGHT);
@@ -731,8 +731,8 @@ void partition_dialog()
     }
     // Refinement algorithm
     {
-      Fl_Choice *const o = new Fl_Choice(2*WB + 2*BB, y, BB, BH,
-                                         "Refinement\nalgorithm");
+      Fl_Choice *const o = new Fl_Choice
+        (2*WB + 2*BB, y, BB, BH, "Refinement\nalgorithm");
       dlg.choiceRefineAlg = o;
       o->menu(metisRefineAlgMenu);
       o->align(FL_ALIGN_RIGHT);

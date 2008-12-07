@@ -4,12 +4,8 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string.h>
-#include "CutSphere.h"
-#include "Context.h"
-
 #if defined(HAVE_FLTK)
 #include <FL/gl.h>
-
 //FIXME: workaround faulty fltk installs
 //#include <FL/glu.h>
 #ifdef __APPLE__
@@ -19,6 +15,8 @@
 #endif
 #include "Draw.h"
 #endif
+#include "CutSphere.h"
+#include "Context.h"
 
 extern Context_T CTX;
 

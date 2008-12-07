@@ -4,19 +4,17 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <math.h>
-#include "OctreePost.h"
-#include "CutParametric.h"
-#include "Context.h"
-
 #if defined(HAVE_FLTK)
 #include <FL/gl.h>
 #include "drawContext.h"
 #include "Draw.h"
 #endif
-
 #if defined(HAVE_MATH_EVAL)
 #include "matheval.h"
 #endif
+#include "OctreePost.h"
+#include "CutParametric.h"
+#include "Context.h"
 
 extern Context_T CTX;
 

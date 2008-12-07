@@ -3,15 +3,14 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include "Probe.h"
-#include "Context.h"
-#include "OctreePost.h"
-
 #if defined(HAVE_FLTK)
 #include <FL/gl.h>
 #include "drawContext.h"
 #include "Draw.h"
 #endif
+#include "Probe.h"
+#include "Context.h"
+#include "OctreePost.h"
 
 extern Context_T CTX;
 

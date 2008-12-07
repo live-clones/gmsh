@@ -111,7 +111,8 @@ Field${OBJEXT}: Field.cpp ../Common/Context.h ../Geo/CGNSOptions.h \
   ../Geo/GEntity.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
   ../Common/GmshMessage.h ../Post/OctreePost.h ../Common/Octree.h \
   ../Common/OctreeInternals.h ../Post/PViewDataList.h ../Post/PViewData.h \
-  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h
+  ../Numeric/GmshMatrix.h ../Geo/MVertex.h ../Geo/SPoint2.h \
+  ../Geo/SPoint3.h
 gmshSmoothHighOrder${OBJEXT}: gmshSmoothHighOrder.cpp HighOrder.h \
   ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \

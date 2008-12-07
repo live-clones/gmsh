@@ -108,8 +108,9 @@ graphicWindow${OBJEXT}: graphicWindow.cpp GUI.h graphicWindow.h openglWindow.h \
   ../Graphics/drawContext.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   shortcutWindow.h menuWindow.h popupButton.h messageWindow.h \
   manipWindow.h extraDialogs.h Draw.h ../Post/PView.h ../Post/PViewData.h \
-  ../Common/OS.h ../Common/Options.h ../Post/ColorTable.h \
-  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h
+  ../Numeric/GmshMatrix.h ../Common/GmshMessage.h ../Common/OS.h \
+  ../Common/Options.h ../Post/ColorTable.h ../Common/Context.h \
+  ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h
 openglWindow${OBJEXT}: openglWindow.cpp openglWindow.h ../Graphics/drawContext.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h graphicWindow.h manipWindow.h \
   contextWindow.h ../Common/GmshDefines.h ../Common/GmshMessage.h \
@@ -193,7 +194,7 @@ pluginWindow${OBJEXT}: pluginWindow.cpp GUI.h Draw.h pluginWindow.h \
   ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/GmshMessage.h ../Post/PViewDataList.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Common/ListUtils.h ../Numeric/GmshMatrix.h ../Common/Context.h \
+  ../Numeric/GmshMatrix.h ../Common/ListUtils.h ../Common/Context.h \
   ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h
 statisticsWindow${OBJEXT}: statisticsWindow.cpp GUI.h Draw.h statisticsWindow.h \
   shortcutWindow.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \

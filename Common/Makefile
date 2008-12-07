@@ -89,13 +89,12 @@ Options${OBJEXT}: Options.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Mesh/PartitionOptions.h Options.h ../Post/ColorTable.h \
   DefaultOptions.h ../Mesh/Field.h ../Post/PView.h \
   ../Mesh/BackgroundMesh.h ../Post/PViewOptions.h ../Post/ColorTable.h \
-  ../Post/PViewData.h ../Post/adaptiveData.h ../Common/ListUtils.h \
-  ../Numeric/GmshMatrix.h ../Common/GmshMessage.h \
-  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Options.h \
-  ../Post/PViewDataList.h ../Post/PViewData.h ../Fltk/GUI.h \
-  ../Fltk/Solvers.h ../Fltk/menuWindow.h ../Fltk/popupButton.h \
-  ../Fltk/graphicWindow.h ../Fltk/openglWindow.h \
-  ../Graphics/drawContext.h ../Fltk/optionWindow.h \
+  ../Post/PViewData.h ../Numeric/GmshMatrix.h ../Common/GmshMessage.h \
+  ../Post/adaptiveData.h ../Common/ListUtils.h ../Plugin/PluginManager.h \
+  ../Plugin/Plugin.h ../Common/Options.h ../Post/PViewDataList.h \
+  ../Post/PViewData.h ../Fltk/GUI.h ../Fltk/Solvers.h \
+  ../Fltk/menuWindow.h ../Fltk/popupButton.h ../Fltk/graphicWindow.h \
+  ../Fltk/openglWindow.h ../Graphics/drawContext.h ../Fltk/optionWindow.h \
   ../Fltk/spherePositionWidget.h ../Fltk/colorbarWindow.h \
   ../Fltk/solverWindow.h ../Fltk/manipWindow.h ../Fltk/messageWindow.h \
   ../Fltk/contextWindow.h ../Fltk/clippingWindow.h
@@ -127,7 +126,8 @@ OpenFile${OBJEXT}: OpenFile.cpp GmshMessage.h ../Geo/Geo.h \
   ../Geo/GEntity.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h Context.h \
   ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h OpenFile.h \
   CommandLine.h ../Graphics/ReadImg.h OS.h StringUtils.h \
-  ../Parser/Parser.h ../Post/PView.h ../Post/PViewData.h ../Fltk/GUI.h \
+  ../Parser/Parser.h ../Post/PView.h ../Post/PViewData.h \
+  ../Numeric/GmshMatrix.h ../Common/GmshMessage.h ../Fltk/GUI.h \
   ../Fltk/Draw.h
 CreateFile${OBJEXT}: CreateFile.cpp GmshMessage.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
