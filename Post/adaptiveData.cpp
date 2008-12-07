@@ -1082,6 +1082,9 @@ void adaptiveElements<T>::changeResolution(int level, double tol, GMSH_Post_Plug
 
   List_Reset(_listEle);
   *_numEle = 0;
+  
+  if(!_posX->size1()) return;
+
   std::vector<int> done(_posX->size1(), 0);
 
   // We first do the adaptive stuff at level 2 and will only process
