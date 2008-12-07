@@ -594,6 +594,7 @@ double opt_view_visible(OPT_ARGS_NUM);
 double opt_view_intervals_type(OPT_ARGS_NUM);
 double opt_view_saturate_values(OPT_ARGS_NUM);
 double opt_view_max_recursion_level(OPT_ARGS_NUM);
+double opt_view_adapt_visualization_grid(OPT_ARGS_NUM);
 double opt_view_target_error(OPT_ARGS_NUM);
 double opt_view_colormap_alpha(OPT_ARGS_NUM);
 double opt_view_colormap_alpha_power(OPT_ARGS_NUM);

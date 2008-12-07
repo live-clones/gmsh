@@ -17,6 +17,7 @@
 #include <FL/Fl_Choice.H>
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Value_Input.H>
+#include <FL/Fl_Box.H>
 #include "spherePositionWidget.h"
 #include "colorbarWindow.h"
 
@@ -75,10 +76,10 @@ class optionWindow{
     Fl_Check_Button *butt[100];
     Fl_Value_Input *value[100];
     Fl_Input *input[100];
-    Fl_Repeat_Button *butt_rep[100];
     Fl_Button *push[100];
     Fl_Choice *choice[100];
     Fl_Button *color[50];
+    Fl_Box *label[5];
     colorbarWindow *colorbar;
     Fl_Return_Button *ok;
     Fl_Menu_Button *menu[2];

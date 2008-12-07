@@ -10,8 +10,6 @@
 #include <map>
 #include "GmshMatrix.h"
 
-#define MAX_FUNCTIONSPACESIZE 56
-
 struct gmshFunctionSpace 
 {
   Double_Matrix points;

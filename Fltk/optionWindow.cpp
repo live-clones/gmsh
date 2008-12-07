@@ -5,7 +5,6 @@
 
 #include <string.h>
 #include <FL/Fl_Tabs.H>
-#include <FL/Fl_Box.H>
 #include <FL/Fl_Scroll.H>
 #include <FL/Fl_Color_Chooser.H>
 #include "GUI.h"
@@ -491,40 +490,20 @@ void view_options_cb(Fl_Widget *w, void *data)
 
 static void view_options_timestep_cb(Fl_Widget *w, void *data)
 {
+  std::string str((const char*)data);
   int links = (int)opt_post_link(0, GMSH_GET, 0);
   for(int i = 0; i < (int)PView::list.size(); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
        (links == 0 && i == GUI::instance()->options->view.index)) {
-      opt_view_timestep(i, GMSH_SET, ((Fl_Value_Input *) w)->value());
-    }
-  }
-  Draw();
-}
-
-static void view_options_timestep_decr_cb(Fl_Widget *w, void *data)
-{
-  int links = (int)opt_post_link(0, GMSH_GET, 0);
-  for(int i = 0; i < (int)PView::list.size(); i++) {
-    if((links == 2 || links == 4) ||
-       ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
-       (links == 0 && i == GUI::instance()->options->view.index)) {
-      opt_view_timestep(i, GMSH_SET | GMSH_GUI,
-                        opt_view_timestep(i, GMSH_GET, 0) - 1);
-    }
-  }
-  Draw();
-}
-
-static void view_options_timestep_incr_cb(Fl_Widget *w, void *data)
-{
-  int links = (int)opt_post_link(0, GMSH_GET, 0);
-  for(int i = 0; i < (int)PView::list.size(); i++) {
-    if((links == 2 || links == 4) ||
-       ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
-       (links == 0 && i == GUI::instance()->options->view.index)) {
-      opt_view_timestep(i, GMSH_SET | GMSH_GUI,
-                        opt_view_timestep(i, GMSH_GET, 0) + 1);
+      if(str == "=")
+        opt_view_timestep(i, GMSH_SET, ((Fl_Value_Input *) w)->value());
+      else if(str == "-")
+        opt_view_timestep(i, GMSH_SET | GMSH_GUI,
+                          opt_view_timestep(i, GMSH_GET, 0) - 1);
+      else if(str == "+")
+        opt_view_timestep(i, GMSH_SET | GMSH_GUI,
+                          opt_view_timestep(i, GMSH_GET, 0) + 1);
     }
   }
   Draw();
@@ -589,6 +568,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double type = opt_view_type(current, GMSH_GET, 0);
   double saturate_values = opt_view_saturate_values(current, GMSH_GET, 0);
   double max_recursion_level = opt_view_max_recursion_level(current, GMSH_GET, 0);
+  double adapt_vis_grid = opt_view_adapt_visualization_grid(current, GMSH_GET, 0);
   double target_error = opt_view_target_error(current, GMSH_GET, 0);
   double show_element = opt_view_show_element(current, GMSH_GET, 0);
   double draw_skin_only = opt_view_draw_skin_only(current, GMSH_GET, 0);
@@ -753,6 +733,10 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
         opt_view_type(i, GMSH_SET, val);
 
       // view_butts
+
+      val = o->view.butt[0]->value();
+      if(force || (val != adapt_vis_grid))
+        opt_view_adapt_visualization_grid(i, GMSH_SET, val);
 
       val = o->view.butt[38]->value();
       if(force || (val != saturate_values))
@@ -1137,6 +1121,17 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
     CTX.post.draw = CTX.mesh.draw = 0;
   Draw();
   CTX.post.draw = CTX.mesh.draw = 1;
+}
+
+static void view_options_max_recursion_cb(Fl_Widget *w, void *data)
+{
+  std::string str((const char*)data);
+  int val = GUI::instance()->options->view.value[33]->value();
+  if(str == "-" && val > 0)
+    GUI::instance()->options->view.value[33]->value(val - 1);
+  else if(str == "+")
+    GUI::instance()->options->view.value[33]->value(val + 1);
+  view_options_ok_cb(0, 0);
 }
 
 optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
@@ -2352,23 +2347,23 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
       view.input[0]->callback(view_options_ok_cb);
 
       int sw = (int)(1.5 * _fontsize);
-      view.butt_rep[0] = new Fl_Repeat_Button
+      view.push[3] = new Fl_Repeat_Button
         (L + 2 * WB, 2 * WB + 3 * BH, sw, BH, "-");
-      view.butt_rep[0]->callback(view_options_timestep_decr_cb);
-      view.butt_rep[1] = new Fl_Repeat_Button
+      view.push[3]->callback(view_options_timestep_cb, (void*)"-");
+      view.push[4] = new Fl_Repeat_Button
         (L + 2 * WB + IW - sw, 2 * WB + 3 * BH, sw, BH, "+");
-      view.butt_rep[1]->callback(view_options_timestep_incr_cb);
+      view.push[4]->callback(view_options_timestep_cb, (void*)"+");
       view.value[50] = new Fl_Value_Input
         (L + 2 * WB + sw, 2 * WB + 3 * BH, IW - 2 * sw, BH);
-      view.value[50]->callback(view_options_timestep_cb);
+      view.value[50]->callback(view_options_timestep_cb, (void*)"=");
       view.value[50]->align(FL_ALIGN_RIGHT);
       view.value[50]->minimum(0);
       view.value[50]->maximum(0);
       view.value[50]->step(1);
-      Fl_Box *a = new Fl_Box
-        (L + 2 * WB + IW, 2 * WB + 3 * BH, IW / 2, BH, "Time step");
-      a->box(FL_NO_BOX);
-      a->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+      view.label[0] = new Fl_Box
+        (L + 2 * WB + IW, 2 * WB + 3 * BH, width / 2, BH, "Time step");
+      view.label[0]->box(FL_NO_BOX);
+      view.label[0]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
       view.range = new Fl_Group
         (L + 2 * WB, 2 * WB + 4 * BH, width - 4 * WB, 8 * BH);
@@ -2381,6 +2376,12 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
       view.value[30]->step(1);
       view.value[30]->when(FL_WHEN_RELEASE);
       view.value[30]->callback(view_options_ok_cb);
+
+      view.input[1] = new Fl_Input
+        (L + width - (int)(0.85*IW) - 2 * WB, 2 * WB + 4 * BH, (int)(0.5*0.85*IW), BH,
+         "Format");
+      view.input[1]->align(FL_ALIGN_RIGHT);
+      view.input[1]->callback(view_options_ok_cb);
       
       static Fl_Menu_Item menu_iso[] = {
         {"Iso-values", 0, 0, 0},
@@ -2396,6 +2397,18 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
       view.choice[0]->tooltip("(Alt+t)");
       view.choice[0]->callback(view_options_ok_cb);
 
+      static Fl_Menu_Item menu_scale[] = {
+        {"Linear", 0, 0, 0},
+        {"Logarithmic", 0, 0, 0},
+        {"Double logarithmic", 0, 0, 0},
+        {0}
+      };
+      view.choice[1] = new Fl_Choice
+        (L + width - (int)(0.85*IW) - 2 * WB, 2 * WB + 5 * BH, (int)(0.85*IW), BH);
+      view.choice[1]->menu(menu_scale);
+      view.choice[1]->align(FL_ALIGN_RIGHT);
+      view.choice[1]->callback(view_options_ok_cb);
+
       static Fl_Menu_Item menu_range[] = {
         {"Default", 0, 0, 0},
         {"Custom", 0, 0, 0},
@@ -2409,12 +2422,18 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
       view.choice[7]->tooltip("(Alt+r)");
       view.choice[7]->callback(view_options_ok_cb, (void*)"custom_range");
 
+      view.butt[38] = new Fl_Check_Button
+        (L + width - (int)(0.85*IW) - 2 * WB, 2 * WB + 6 * BH, (int)(0.85*IW), BH,
+         "Saturate");
+      view.butt[38]->type(FL_TOGGLE_BUTTON);
+      view.butt[38]->callback(view_options_ok_cb);
+
       int sw2 = (int)(2.5 * _fontsize);
       view.push[1] = new Fl_Button
         (L + 2 * WB, 2 * WB + 7 * BH, sw2, BH, "Min");
       view.push[1]->callback(view_options_ok_cb, (void*)"range_min");
       view.value[31] = new Fl_Value_Input
-        (L + 2 * WB + sw2, 2 * WB + 7 * BH, IW - sw2, BH, "Custom minimum");
+        (L + 2 * WB + sw2, 2 * WB + 7 * BH, IW - sw2, BH, "Custom min");
       view.value[31]->align(FL_ALIGN_RIGHT);
       view.value[31]->when(FL_WHEN_RELEASE);
       view.value[31]->callback(view_options_ok_cb);
@@ -2423,32 +2442,43 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
         (L + 2 * WB, 2 * WB + 8 * BH, sw2, BH, "Max");
       view.push[2]->callback(view_options_ok_cb, (void*)"range_max");
       view.value[32] = new Fl_Value_Input
-        (L + 2 * WB + sw2, 2 * WB + 8 * BH, IW - sw2, BH, "Custom maximum");
+        (L + 2 * WB + sw2, 2 * WB + 8 * BH, IW - sw2, BH, "Custom max");
       view.value[32]->align(FL_ALIGN_RIGHT);
       view.value[32]->when(FL_WHEN_RELEASE);
       view.value[32]->callback(view_options_ok_cb);
 
-      view.butt[38] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Saturate out-of-range values");
-      view.butt[38]->type(FL_TOGGLE_BUTTON);
-      view.butt[38]->callback(view_options_ok_cb);
+      view.butt[0] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Adapt visualization grid");
+      view.butt[0]->type(FL_TOGGLE_BUTTON);
+      view.butt[0]->callback(view_options_ok_cb, (void*)"adapt_vis");
 
-      static Fl_Menu_Item menu_scale[] = {
-        {"Linear", 0, 0, 0},
-        {"Logarithmic", 0, 0, 0},
-        {"Double logarithmic", 0, 0, 0},
-        {0}
-      };
-      view.choice[1] = new Fl_Choice
-        (L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Value scale mode");
-      view.choice[1]->menu(menu_scale);
-      view.choice[1]->align(FL_ALIGN_RIGHT);
-      view.choice[1]->callback(view_options_ok_cb);
+      view.push[5] = new Fl_Button
+        (L + 2 * WB, 2 * WB + 10 * BH, sw, BH, "-");
+      view.push[5]->callback(view_options_max_recursion_cb, (void*)"-");
+      view.push[6] = new Fl_Button
+        (L + 2 * WB + IW - sw, 2 * WB + 10 * BH, sw, BH, "+");
+      view.push[6]->callback(view_options_max_recursion_cb, (void*)"+");
+      view.value[33] = new Fl_Value_Input
+        (L + 2 * WB + sw, 2 * WB + 10 * BH, IW - 2 * sw, BH);
+      view.value[33]->align(FL_ALIGN_RIGHT);
+      view.value[33]->minimum(0);
+      view.value[33]->maximum(6);
+      view.value[33]->step(1);
+      view.value[33]->when(FL_WHEN_RELEASE);
+      view.value[33]->callback(view_options_ok_cb);
+      view.label[1] = new Fl_Box
+        (L + 2 * WB + IW, 2 * WB + 10 * BH, width / 2, BH, "Maximum recursion level");
+      view.label[1]->box(FL_NO_BOX);
+      view.label[1]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
-      view.input[1] = new Fl_Input
-        (L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Number display format");
-      view.input[1]->align(FL_ALIGN_RIGHT);
-      view.input[1]->callback(view_options_ok_cb);
+      view.value[34] = new Fl_Value_Input
+        (L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Target visualization error");
+      view.value[34]->align(FL_ALIGN_RIGHT);
+      view.value[34]->minimum(-1.e-4);
+      view.value[34]->maximum(0.1);
+      view.value[34]->step(1.e-4);
+      view.value[34]->when(FL_WHEN_RELEASE);
+      view.value[34]->callback(view_options_ok_cb);
 
       view.range->end();
 
@@ -2677,24 +2707,6 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
         (L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Fields");
       view.menu[0]->menu(menu_view_field_types);
       view.menu[0]->callback(view_options_ok_cb);
-
-      view.value[33] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Maximum recursion level");
-      view.value[33]->align(FL_ALIGN_RIGHT);
-      view.value[33]->minimum(0);
-      view.value[33]->maximum(8);
-      view.value[33]->step(1);
-      view.value[33]->when(FL_WHEN_RELEASE);
-      view.value[33]->callback(view_options_ok_cb);
-
-      view.value[34] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Target error");
-      view.value[34]->align(FL_ALIGN_RIGHT);
-      view.value[34]->minimum(-1e-3);
-      view.value[34]->maximum(1.);
-      view.value[34]->step(1.e-3);
-      view.value[34]->when(FL_WHEN_RELEASE);
-      view.value[34]->callback(view_options_ok_cb);
 
       o->end();
     }
@@ -3090,15 +3102,22 @@ void optionWindow::updateViewGroup(int index)
   opt_view_show_scale(index, GMSH_GUI, 0);
   opt_view_draw_strings(index, GMSH_GUI, 0);
 
+  opt_view_adapt_visualization_grid(index, GMSH_GUI, 0);
   opt_view_max_recursion_level(index, GMSH_GUI, 0);
   opt_view_target_error(index, GMSH_GUI, 0);
   if(data->isAdaptive()){
+    view.push[5]->activate();
+    view.push[6]->activate();
     view.value[33]->activate();
     view.value[34]->activate();
+    view.label[1]->activate();
   }
   else{
+    view.push[5]->deactivate();
+    view.push[6]->deactivate();
     view.value[33]->deactivate();
     view.value[34]->deactivate();
+    view.label[1]->deactivate();
   }
 
   if(data->getNumPoints() || data->getNumLines()){
@@ -3217,13 +3236,15 @@ void optionWindow::updateViewGroup(int index)
 
   if(data->getNumTimeSteps() == 1) {
     view.value[50]->deactivate();
-    view.butt_rep[0]->deactivate();
-    view.butt_rep[1]->deactivate();
+    view.push[3]->deactivate();
+    view.push[4]->deactivate();
+    view.label[0]->deactivate();
   }
   else {
     view.value[50]->activate();
-    view.butt_rep[0]->activate();
-    view.butt_rep[1]->activate();
+    view.push[3]->activate();
+    view.push[4]->activate();
+    view.label[0]->activate();
   }
   view.value[50]->maximum(data->getNumTimeSteps() - 1);
   opt_view_timestep(index, GMSH_GUI, 0);
@@ -3356,12 +3377,30 @@ void optionWindow::activate(const char *what)
       view.value[32]->activate();
       view.push[1]->activate();
       view.push[2]->activate();
+      view.butt[38]->activate();
     }
     else {
       view.value[31]->deactivate();
       view.value[32]->deactivate();
       view.push[1]->deactivate();
       view.push[2]->deactivate();
+      view.butt[38]->deactivate();
+    }
+  }
+  else if(!strcmp(what, "adapt_vis")){
+    if(view.butt[0]->value()){
+      view.push[5]->activate();
+      view.push[6]->activate();
+      view.value[33]->activate();
+      view.value[34]->activate();
+      view.label[1]->activate();
+    }
+    else{
+      view.push[5]->deactivate();
+      view.push[6]->deactivate();
+      view.value[33]->deactivate();
+      view.value[34]->deactivate();
+      view.label[1]->deactivate();
     }
   }
   else if(!strcmp(what, "general_transform")){

@@ -34,6 +34,9 @@ PView::PView(bool allocate)
   _init();
   _data = new PViewDataList(allocate);
   _options = new PViewOptions(PViewOptions::reference);
+  if(_options->AdaptVisualizationGrid)
+    _data->initAdaptiveData(_options->TimeStep, _options->MaxRecursionLevel,
+                            _options->TargetError);
 }
 
 PView::PView(PViewData *data)
@@ -41,6 +44,9 @@ PView::PView(PViewData *data)
   _init();
   _data = data;
   _options = new PViewOptions(PViewOptions::reference);
+  if(_options->AdaptVisualizationGrid)
+    _data->initAdaptiveData(_options->TimeStep, _options->MaxRecursionLevel,
+                            _options->TargetError);
 }
 
 PView::PView(PView *ref, bool copyOptions)
@@ -52,6 +58,9 @@ PView::PView(PView *ref, bool copyOptions)
     _options = new PViewOptions(*ref->getOptions());
   else
     _options = new PViewOptions(PViewOptions::reference);
+  if(_options->AdaptVisualizationGrid)
+    _data->initAdaptiveData(_options->TimeStep, _options->MaxRecursionLevel,
+                            _options->TargetError);
 }
 
 PView::PView(std::string xname, std::string yname,
@@ -96,6 +105,9 @@ PView::PView(std::string name, std::string type,
   d->setFileName(name + ".msh");
   _data = d;
   _options = new PViewOptions(PViewOptions::reference);
+  if(_options->AdaptVisualizationGrid)
+    _data->initAdaptiveData(_options->TimeStep, _options->MaxRecursionLevel,
+                            _options->TargetError);
 }
 
 void PView::addStep(GModel *model, std::map<int, std::vector<double> > &data, 
@@ -152,9 +164,10 @@ void PView::setOptions(PViewOptions *val)
 
 PViewData *PView::getData(bool useAdaptiveIfAvailable)
 { 
-  if(useAdaptiveIfAvailable && _data->isAdaptive()) 
+  if(useAdaptiveIfAvailable && _data->isAdaptive())
     return _data->getAdaptiveData()->getData();
-  return _data;
+  else
+    return _data;
 }
 
 void PView::setChanged(bool val)

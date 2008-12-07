@@ -169,6 +169,10 @@ class PViewData {
   // check if the view is adaptive
   bool isAdaptive(){ return _adaptive ? true : false; }
 
+  // initialize/destroy adaptive data
+  void initAdaptiveData(int step, int level, double tol);
+  void destroyAdaptiveData();
+
   // return the adaptive data
   adaptiveData *getAdaptiveData(){ return _adaptive; }
 

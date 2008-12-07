@@ -162,11 +162,7 @@ class MElement
   virtual std::string getInfoString();
 
   // get the function space for the element
-  virtual const gmshFunctionSpace* getFunctionSpace(int order=-1) const
-  {
-    Msg::Error("Function space not implemented for this type of element");
-    return 0;
-  }
+  virtual const gmshFunctionSpace* getFunctionSpace(int order=-1) const { return 0; }
   
   // return the interpolating nodal shape functions evaluated at point
   // (u,v,w) in parametric coordinates (if order == -1, use the

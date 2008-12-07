@@ -5947,11 +5947,9 @@ double opt_view_timestep(OPT_ARGS_NUM)
       opt->TimeStep = 0;
     else if(opt->TimeStep < 0)
       opt->TimeStep = data->getNumTimeSteps() - 1;
-    if(data->isAdaptive()){
-      data->getAdaptiveData()->initWithLowResolution(opt->TimeStep);
-      data->getAdaptiveData()->changeResolution(opt->MaxRecursionLevel, 
-						opt->TargetError);
-    }
+    if(data->isAdaptive())
+      data->getAdaptiveData()->changeResolution
+        (opt->TimeStep, opt->MaxRecursionLevel, opt->TargetError);
     if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
@@ -6604,6 +6602,32 @@ double opt_view_saturate_values(OPT_ARGS_NUM)
 #endif
 }
 
+double opt_view_adapt_visualization_grid(OPT_ARGS_NUM)
+{
+#if !defined(HAVE_NO_POST)
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    opt->AdaptVisualizationGrid = (int)val;
+    if(data){
+      if(opt->AdaptVisualizationGrid)
+        data->initAdaptiveData
+          (opt->TimeStep, opt->MaxRecursionLevel, opt->TargetError);
+      else
+        data->destroyAdaptiveData();
+      view->setChanged(true);
+    }
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    GUI::instance()->options->view.butt[0]->value(opt->AdaptVisualizationGrid);
+  }
+#endif
+  return opt->AdaptVisualizationGrid;
+#else
+  return 0.;
+#endif
+}
+
 double opt_view_max_recursion_level(OPT_ARGS_NUM)
 {
 #if !defined(HAVE_NO_POST)
@@ -6611,8 +6635,8 @@ double opt_view_max_recursion_level(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     opt->MaxRecursionLevel = (int)val;
     if(data && data->isAdaptive()){
-      data->getAdaptiveData()->changeResolution(opt->MaxRecursionLevel, 
-						opt->TargetError);
+      data->getAdaptiveData()->changeResolution
+        (opt->TimeStep, opt->MaxRecursionLevel, opt->TargetError);
       view->setChanged(true);
     }
   }
@@ -6634,8 +6658,8 @@ double opt_view_target_error(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     opt->TargetError = val;
     if(data && data->isAdaptive()){
-      data->getAdaptiveData()->changeResolution(opt->MaxRecursionLevel, 
-						opt->TargetError);
+      data->getAdaptiveData()->changeResolution
+        (opt->TimeStep, opt->MaxRecursionLevel, opt->TargetError);
       view->setChanged(true);
     }
   }

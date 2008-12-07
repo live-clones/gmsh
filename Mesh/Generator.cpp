@@ -253,7 +253,7 @@ void GetStatistics(double stat[50], double quality[4][100])
 #if !defined(HAVE_NO_POST)
   stat[26] = PView::list.size();
   for(unsigned int i = 0; i < PView::list.size(); i++) {
-    PViewData *data = PView::list[i]->getData();
+    PViewData *data = PView::list[i]->getData(true);
     stat[27] += data->getNumPoints();
     stat[28] += data->getNumLines();
     stat[29] += data->getNumTriangles();

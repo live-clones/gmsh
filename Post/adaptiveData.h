@@ -265,8 +265,8 @@ class adaptiveHexahedron {
 template <class T>
 class adaptiveElements {
  private:
-  int _resolutionLevel;
-  double _tolerance, _minVal, _maxVal;
+  int _level;
+  double _tol, _minVal, _maxVal;
   List_T *_listEle;
   int *_numEle;
   Double_Matrix *_coeffs, *_eexps;
@@ -280,12 +280,18 @@ class adaptiveElements {
   adaptiveElements(List_T *listEle, int *numEle,
 		   Double_Matrix *coeffs, Double_Matrix *eexps, 
 		   Double_Matrix *coeffsGeom=0, Double_Matrix *eexpsGeom=0)
-    : _resolutionLevel(-1), _tolerance(1.e-3), _minVal(0.), _maxVal(0.),
+    : _level(-1), _tol(-1.), _minVal(0.), _maxVal(0.),
       _listEle(listEle), _numEle(numEle), _coeffs(coeffs), _eexps(eexps),
       _coeffsGeom(coeffsGeom), _eexpsGeom(eexpsGeom), _posX(0), _posY(0), _posZ(0),
       _val(0), _valX(0), _valY(0), _valZ(0), _interpolate(0), _geometry(0){}
   ~adaptiveElements();
-  void initWithLowResolution(PViewData *data, int step);
+  // store data's step-th timestep data into _val and _pos arrays
+  // (This makes adaptive views even more memory hungry than what they
+  // already are due to their discontinous nature. We should evaluate
+  // the performance hit incurred if we loop directly in data in
+  // _zoomElement instead)
+  void initData(PViewData *data, int step);
+  // compute the adaptive representation and store it in _listEle
   void changeResolution(int level, double tol, GMSH_Post_Plugin *plug=0);
   // The number of nodes is supposed to be fixed in an adaptive view
   inline int getNumNodes () const { return _coeffsGeom ? _coeffsGeom->size1() : T::numNodes; }
@@ -293,6 +299,8 @@ class adaptiveElements {
 
 class adaptiveData {
  private:
+  int _step, _level;
+  double _tol;
   PViewData *_inData;
   PViewDataList *_outData;
   adaptiveElements<adaptiveLine> *_lines;
@@ -305,8 +313,7 @@ class adaptiveData {
   adaptiveData(PViewData *data);
   ~adaptiveData();
   PViewData *getData(){ return (PViewData*)_outData; }
-  void initWithLowResolution(int step);
-  void changeResolution(int level, double tol, GMSH_Post_Plugin *plug=0);
+  void changeResolution(int step, int level, double tol, GMSH_Post_Plugin *plug=0);
 };
 
 #endif

@@ -123,6 +123,8 @@ class PViewDataGModel : public PViewData {
   DataType _type;
   // cache last element to speed up loops
   MElement *_getElement(int step, int ent, int ele);
+  // helper function to populate the interpolation matrix list
+  void _addInterpolationMatricesForElement(MElement *e);
  public:
   PViewDataGModel(DataType type=NodeData);
   ~PViewDataGModel();

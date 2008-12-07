@@ -55,7 +55,63 @@ bool PViewDataGModel::finalize()
     _max = std::max(_max, _steps[step]->getMax());
   }
 
+  // add interpolation data for known element types (this might be
+  // overidden later)
+  for(int step = 0; step < getNumTimeSteps(); step++){
+    GModel *m = _steps[step]->getModel();
+    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
+      if((*it)->lines.size()) 
+        _addInterpolationMatricesForElement((*it)->lines[0]);
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
+      if((*it)->triangles.size()) 
+        _addInterpolationMatricesForElement((*it)->triangles[0]);
+      else if((*it)->quadrangles.size()) 
+        _addInterpolationMatricesForElement((*it)->quadrangles[0]);
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
+      if((*it)->tetrahedra.size()) 
+        _addInterpolationMatricesForElement((*it)->tetrahedra[0]);
+      else if((*it)->hexahedra.size()) 
+        _addInterpolationMatricesForElement((*it)->hexahedra[0]);
+      else if((*it)->prisms.size()) 
+        _addInterpolationMatricesForElement((*it)->prisms[0]);
+      else if((*it)->pyramids.size()) 
+        _addInterpolationMatricesForElement((*it)->pyramids[0]);
+  }
+
   return PViewData::finalize();
+}
+
+void PViewDataGModel::_addInterpolationMatricesForElement(MElement *e)
+{
+  int edg = e->getNumEdges();
+  if(_interpolation.count(edg)) return;
+  const gmshFunctionSpace *fs = e->getFunctionSpace();
+  if(fs){
+    _interpolation[edg].push_back(new Double_Matrix(fs->coefficients));
+    _interpolation[edg].push_back(new Double_Matrix(fs->monomials));
+    if(e->getPolynomialOrder() > 1){
+      _interpolation[edg].push_back(new Double_Matrix(fs->coefficients));
+      _interpolation[edg].push_back(new Double_Matrix(fs->monomials));
+    }
+  }
+  else if(edg == 4 && e->getPolynomialOrder() == 1){
+    // quad4
+    Double_Matrix *c = new Double_Matrix(4, 4);
+    (*c)(0, 0) = .25; (*c)(0, 1) = -.25; (*c)(0, 2) = .25; (*c)(0, 3) = -.25;
+    (*c)(1, 0) = .25; (*c)(1, 1) = .25; (*c)(1, 2) = -.25; (*c)(1, 3) = -.25;
+    (*c)(2, 0) = .25; (*c)(2, 1) = .25; (*c)(2, 2) = .25; (*c)(2, 3) = .25;
+    (*c)(3, 0) = .25; (*c)(3, 1) = -.25; (*c)(3, 2) = -.25; (*c)(3, 3) = .25;
+    Double_Matrix *m = new Double_Matrix(4, 2);
+    (*m)(0, 0) = 0; (*m)(0, 1) = 0;
+    (*m)(1, 0) = 1; (*m)(1, 1) = 0;
+    (*m)(2, 0) = 1; (*m)(2, 1) = 1;
+    (*m)(3, 0) = 0; (*m)(3, 1) = 1;
+    _interpolation[edg].push_back(c);
+    _interpolation[edg].push_back(m);
+  }
+  else{
+    Msg::Error("need to add interpol matrices for ele type %d", e->getTypeForMSH());
+  }
 }
 
 MElement *PViewDataGModel::_getElement(int step, int ent, int ele)
@@ -235,8 +291,10 @@ int PViewDataGModel::getNumNodes(int step, int ent, int ele)
     return _steps[step]->getGaussPoints(e->getTypeForMSH()).size() / 3;
   }
   else{
-    //return e->getNumVertices();
-    return e->getNumPrimaryVertices();
+    if(isAdaptive())
+      return e->getNumVertices();
+    else
+      return e->getNumPrimaryVertices();
   }
 }
 
@@ -296,7 +354,7 @@ int PViewDataGModel::getNumComponents(int step, int ent, int ele)
 
 int PViewDataGModel::getNumValues(int step, int ent, int ele)
 {
-  if(_type == ElementNodeData){
+  if(_type == ElementNodeData || _type == NodeData){
     return getNumNodes(step, ent, ele) * getNumComponents(step, ent, ele);
   }
   else{
@@ -307,9 +365,15 @@ int PViewDataGModel::getNumValues(int step, int ent, int ele)
 
 void PViewDataGModel::getValue(int step, int ent, int ele, int idx, double &val)
 {
+  MElement *e = _getElement(step, ent, ele);
   if(_type == ElementNodeData){
-    MElement *e = _getElement(step, ent, ele);
     val = _steps[step]->getData(e->getNum())[idx];
+  }
+  else if(_type == NodeData){
+    int numcomp = _steps[step]->getNumComponents();
+    int nod = idx / numcomp;
+    int comp = idx % numcomp;
+    val = _steps[step]->getData(e->getVertex(nod)->getNum())[comp];
   }
   else{
     Msg::Error("getValue(index) should not be used on this type of view");

@@ -52,7 +52,7 @@ class PViewOptions {
   int Type;
   int Position[2], Size[2], AutoPosition;
   char Format[256];
-  int Axes, AxesAutoPosition,AxesMikado, AxesTics[3];
+  int Axes, AxesAutoPosition, AxesMikado, AxesTics[3];
   char AxesFormat[3][256], AxesLabel[3][256];
   double AxesPosition[6];
   double CustomMin, CustomMax, TmpMin, TmpMax, ExternalMin, ExternalMax;
@@ -84,8 +84,8 @@ class PViewOptions {
   double GenRaiseFactor;
   char GenRaiseX[256], GenRaiseY[256], GenRaiseZ[256];
   void *GenRaise_f[3];
+  int AdaptVisualizationGrid, MaxRecursionLevel;
   double TargetError;
-  int MaxRecursionLevel;
   int Clip; // status of clip planes (bit array)
   struct{
     unsigned int point, line, triangle, quadrangle;

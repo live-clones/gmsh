@@ -1191,6 +1191,8 @@ StringXNumber PostProcessingOptions_Number[] = {
 } ;
 
 StringXNumber ViewOptions_Number[] = {
+  { F|O, "AdaptVisualizationGrid" , opt_view_adapt_visualization_grid , 0. ,
+    "Use adaptive visualization grid (for high-order elements)?" }, 
   { F|O, "AngleSmoothNormals" , opt_view_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" },
   { F|O, "ArrowHeadRadius" , opt_view_arrow_head_radius , 0.12 ,

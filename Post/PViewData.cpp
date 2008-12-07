@@ -25,19 +25,23 @@ PViewData::~PViewData()
 
 bool PViewData::finalize()
 { 
-  // FIXME: change this:
-  //  1) only create adaptive data on demand (Options->AdaptVisu)
-  //  2) create interpolation vectors automatically for known elements
-
-  //if(useAdaptative) ....
-  if(!_adaptive && _interpolation.size()){
-    Msg::Info("Initializing adaptive data %p interp size=%d",
-	this, _interpolation.size());
-    _adaptive = new adaptiveData(this);
-  }
-  if(_adaptive) _adaptive->initWithLowResolution(0);
   _dirty = false;
   return true;
+}
+
+void PViewData::initAdaptiveData(int step, int level, double tol)
+{
+  if(!_adaptive && _interpolation.size()){
+    Msg::Info("Initializing adaptive data %p interp size=%d", this, _interpolation.size());
+    _adaptive = new adaptiveData(this);
+    _adaptive->changeResolution(step, level, tol);
+  }
+}
+
+void PViewData::destroyAdaptiveData()
+{
+  if(_adaptive) delete _adaptive;
+  _adaptive = 0;
 }
 
 bool PViewData::empty()
