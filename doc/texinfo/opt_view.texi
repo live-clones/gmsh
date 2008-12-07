@@ -114,6 +114,11 @@ Tenth stippling pattern@*
 Default value: @code{"1*0xFFFF"}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.AdaptVisualizationGrid
+Use adaptive visualization grid (for high-order elements)?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.AngleSmoothNormals
 Threshold angle below which normals are not smoothed@*
 Default value: @code{30}@*

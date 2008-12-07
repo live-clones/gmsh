@@ -25,7 +25,7 @@ else
 endif
 
 # Change the following to select which version to build:
-ENABLE_GSL=0
+ENABLE_GSL=1
 ENABLE_GUI=0
 ENABLE_PARSER=1
 ENABLE_POSTPRO=1
