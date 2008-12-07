@@ -25,8 +25,7 @@
 #define CLASSTOGBUTTON_CLOS  1
 #define CLASSVALUE_ANGLE     0
 
-class edge_angle
-{
+class edge_angle {
  public :
   MVertex *v1, *v2;
   double angle;

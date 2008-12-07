@@ -666,8 +666,13 @@ bool PViewDataList::combineSpace(nameData &nd)
     }
 
     // copy interpolation from first merged dataset, if any
-    if(!i) _interpolation = l->_interpolation;
-
+    if(!i){
+      for(std::map<int, std::vector<Double_Matrix*> >::iterator it = 
+            l->_interpolation.begin(); it != l->_interpolation.end(); it++)
+        for(unsigned int i = 0; i < it->second.size(); i++)
+          _interpolation[it->first].push_back(new Double_Matrix(*it->second[i]));
+    }
+    
     // merge elememts
     List_Merge(l->SP, SP); NbSP += l->NbSP; List_Merge(l->VP, VP); NbVP += l->NbVP;
     List_Merge(l->TP, TP); NbTP += l->NbTP; List_Merge(l->SL, SL); NbSL += l->NbSL;
@@ -790,8 +795,11 @@ bool PViewDataList::combineTime(nameData &nd)
   }
   NbT2 = data[0]->NbT2;
   NbT3 = data[0]->NbT3;
-  _interpolation = data[0]->_interpolation;
-
+  for(std::map<int, std::vector<Double_Matrix*> >::iterator it = 
+        data[0]->_interpolation.begin(); it != data[0]->_interpolation.end(); it++)
+    for(unsigned int i = 0; i < it->second.size(); i++)
+      _interpolation[it->first].push_back(new Double_Matrix(*it->second[i]));
+  
   // merge values for all element types
   for(int i = 0; i < 24; i++){
     getRawData(i, &list, &nbe, &nbc, &nbn);
@@ -807,7 +815,7 @@ bool PViewDataList::combineTime(nameData &nd)
               List_Add(list, List_Pointer(list2, j * nb2 + l));
           }
           // copy values of elm j
-          for(int l = 0; l < data[k]->getNumTimeSteps() * nbc2 * nbn2; l++)
+          for(int l = 0; l < nb2 - 3 * nbn2; l++)
             List_Add(list, List_Pointer(list2, j * nb2 + 3 * nbn2 + l));
         }
       }
