@@ -47,7 +47,8 @@ class GFaceCompound : public GFace {
   void parametrize() const ;
   void computeNormals () const;
   void getBoundingEdges();
-  void getTriangle(double u, double v, GFaceCompoundTriangle **lt, double &_u, double &_v) const;
+  void getTriangle(double u, double v, GFaceCompoundTriangle **lt, 
+                   double &_u, double &_v) const;
   virtual double curvature(MTriangle *t) const;
 public:
   GFaceCompound(GModel *m, int tag, 
@@ -66,7 +67,6 @@ public:
   SPoint2 getCoordinates(MVertex *v) const { parametrize() ; return coordinates[v]; }
   virtual bool buildRepresentationCross(){ return false; }
   virtual double curvature(const SPoint2 &param) const;
-  
 };
 
 #endif
