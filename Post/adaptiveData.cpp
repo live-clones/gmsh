@@ -956,7 +956,7 @@ void adaptiveElements<T>::_changeResolution(int level, GMSH_Post_Plugin *plug, i
     else
       T::GSF(p->x, p->y, p->z, sf);
     for(int k = 0; k < _posX->size2(); k++)
-      (*_geometry) (kk, k) = sf[k];
+      (*_geometry)(kk, k) = sf[k];
     kk++;
   }
 

@@ -618,31 +618,32 @@ int pos_dialog(const char *name)
   static _pos_dialog *dialog = NULL;
 
   int _fontsize = GetFontSize();
+  int BBB = BB + 9; // labels too long
 
   if(!dialog){
     dialog = new _pos_dialog;
-    int h = 3 * WB + 8 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 8 * BH, w = 2 * BBB + 3 * WB, y = WB;
     // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "POS Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->b[0] = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
+      (WB, y, 2 * BBB + WB, BH, "Save all (ignore physical groups)"); y += BH;
     dialog->b[1] = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Print elementary tags"); y += BH;
+      (WB, y, 2 * BBB + WB, BH, "Print elementary tags"); y += BH;
     dialog->b[2] = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Print element numbers"); y += BH;
+      (WB, y, 2 * BBB + WB, BH, "Print element numbers"); y += BH;
     dialog->b[3] = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Print Gamma quality measure"); y += BH;
+      (WB, y, 2 * BBB + WB, BH, "Print Gamma quality measure"); y += BH;
     dialog->b[4] = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Print Eta quality measure"); y += BH;
+      (WB, y, 2 * BBB + WB, BH, "Print Eta quality measure"); y += BH;
     dialog->b[5] = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Print Rho quality measure"); y += BH;
+      (WB, y, 2 * BBB + WB, BH, "Print Rho quality measure"); y += BH;
     dialog->b[6] = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Print Disto quality measure"); y += BH;
+      (WB, y, 2 * BBB + WB, BH, "Print Disto quality measure"); y += BH;
     for(int i = 0; i < 6; i++)
       dialog->b[i]->type(FL_TOGGLE_BUTTON);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
     dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
@@ -703,24 +704,25 @@ int msh_dialog(const char *name)
   };
 
   int _fontsize = GetFontSize();
+  int BBB = BB + 9; // labels too long
 
   if(!dialog){
     dialog = new _msh_dialog;
-    int h = 3 * WB + 4 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 4 * BH, w = 2 * BBB + 3 * WB, y = WB;
     // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "MSH Options");
     dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->c = new Fl_Choice(WB, y, BB + BB / 2, BH, "Format"); y += BH;
+    dialog->c = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "Format"); y += BH;
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
     dialog->b = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
+      (WB, y, 2 * BBB + WB, BH, "Save all (ignore physical groups)"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->p = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Save Parametric Coordinates"); y += BH;
+      (WB, y, 2 * BBB + WB, BH, "Save Parametric Coordinates"); y += BH;
     dialog->p->type(FL_TOGGLE_BUTTON);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
     dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
@@ -768,21 +770,22 @@ int unv_dialog(const char *name)
   static _unv_dialog *dialog = NULL;
 
   int _fontsize = GetFontSize();
+  int BBB = BB + 9; // labels too long
 
   if(!dialog){
     dialog = new _unv_dialog;
-    int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 3 * BH, w = 2 * BBB + 3 * WB, y = WB;
     // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "UNV Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->b[0] = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
+      (WB, y, 2 * BBB + WB, BH, "Save all (ignore physical groups)"); y += BH;
     dialog->b[0]->type(FL_TOGGLE_BUTTON);
     dialog->b[1] = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Save groups of nodes"); y += BH;
+      (WB, y, 2 * BBB + WB, BH, "Save groups of nodes"); y += BH;
     dialog->b[1]->type(FL_TOGGLE_BUTTON);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
     dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
@@ -834,21 +837,22 @@ int bdf_dialog(const char *name)
   };
 
   int _fontsize = GetFontSize();
+  int BBB = BB + 9; // labels too long
 
   if(!dialog){
     dialog = new _bdf_dialog;
-    int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 3 * BH, w = 2 * BBB + 3 * WB, y = WB;
     // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "BDF Options");
     dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->c = new Fl_Choice(WB, y, BB + BB / 2, BH, "Format"); y += BH;
+    dialog->c = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "Format"); y += BH;
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
     dialog->b = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
+      (WB, y, 2 * BBB + WB, BH, "Save all (ignore physical groups)"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
     dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
@@ -899,21 +903,22 @@ int generic_mesh_dialog(const char *name, const char *title, int format,
   };
 
   int _fontsize = GetFontSize();
+  int BBB = BB + 9; // labels too long
 
   if(!dialog){
     dialog = new _generic_mesh_dialog;
-    int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 3 * BH, w = 2 * BBB + 3 * WB, y = WB;
     // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->c = new Fl_Choice(WB, y, BB + BB / 2, BH, "Format"); y += BH;
+    dialog->c = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "Format"); y += BH;
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
     dialog->b = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
+      (WB, y, 2 * BBB + WB, BH, "Save all (ignore physical groups)"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
     dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);

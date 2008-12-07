@@ -2353,7 +2353,7 @@ contextItem menu_mesh[] = {
   {"Partition", (Fl_Callback *)mesh_partition_cb} ,
 #endif
 #if defined(HAVE_FOURIER_MODEL)
-  {"Reparameterize",   (Fl_Callback *)mesh_parameterize_cb} , 
+  //{"Reparameterize",   (Fl_Callback *)mesh_parameterize_cb} , 
 #endif
   {"Reclassify",   (Fl_Callback *)mesh_classify_cb} , 
   {"Save",         (Fl_Callback *)mesh_save_cb} ,
