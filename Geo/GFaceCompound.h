@@ -51,12 +51,9 @@ class GFaceCompound : public GFace {
                    double &_u, double &_v) const;
   virtual double curvature(MTriangle *t) const;
 public:
-  GFaceCompound(GModel *m, int tag, 
-		std::list<GFace*> &compound,
-		std::list<GEdge*> &U0,
-		std::list<GEdge*> &U1,
-		std::list<GEdge*> &V0,
-		std::list<GEdge*> &V1);
+  GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
+		std::list<GEdge*> &U0, std::list<GEdge*> &U1,
+		std::list<GEdge*> &V0, std::list<GEdge*> &V1);
   virtual ~GFaceCompound();
   Range<double> parBounds(int i) const { return Range<double>(0, 1); } 
   virtual GPoint point(double par1, double par2) const; 
