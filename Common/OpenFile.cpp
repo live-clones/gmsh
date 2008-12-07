@@ -435,6 +435,7 @@ void OpenProject(const char *name)
 
 void OpenProjectMacFinder(const char *filename)
 {
+#if defined(HAVE_FLTK)
   static int first = 1;
   if(first || !GUI::available()){
     // just copy the filename: it will be opened when the GUI is ready
@@ -444,8 +445,7 @@ void OpenProjectMacFinder(const char *filename)
   }
   else{
     OpenProject(filename);
-#if defined(HAVE_FLTK)
     Draw();
-#endif
   }
+#endif
 }
