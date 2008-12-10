@@ -494,6 +494,7 @@ void Init_Options(int num)
 #endif
   CTX.forced_bbox = 0;
   CTX.hide_unselected = 0;
+  CTX.num_windows = 1;
 }
 
 void ReInit_Options(int num)
@@ -3910,8 +3911,8 @@ double opt_general_light00(OPT_ARGS_NUM)
   if(GUI::available() && (action & GMSH_GUI)){
     GUI::instance()->options->general.value[2]->value(CTX.light_position[0][0]);
     GUI::instance()->options->general.sphere->setValue(CTX.light_position[0][0],
-                              CTX.light_position[0][1],
-                              CTX.light_position[0][2]);
+                                                       CTX.light_position[0][1],
+                                                       CTX.light_position[0][2]);
   }
 #endif
   return CTX.light_position[0][0];
@@ -3925,8 +3926,8 @@ double opt_general_light01(OPT_ARGS_NUM)
   if(GUI::available() && (action & GMSH_GUI)){
     GUI::instance()->options->general.value[3]->value(CTX.light_position[0][1]);
     GUI::instance()->options->general.sphere->setValue(CTX.light_position[0][0],
-                              CTX.light_position[0][1],
-                              CTX.light_position[0][2]);
+                                                       CTX.light_position[0][1],
+                                                       CTX.light_position[0][2]);
   }
 #endif
   return CTX.light_position[0][1];
@@ -3940,8 +3941,8 @@ double opt_general_light02(OPT_ARGS_NUM)
   if(GUI::available() && (action & GMSH_GUI)){
     GUI::instance()->options->general.value[4]->value(CTX.light_position[0][2]);
     GUI::instance()->options->general.sphere->setValue(CTX.light_position[0][0],
-                              CTX.light_position[0][1],
-                              CTX.light_position[0][2]);
+                                                       CTX.light_position[0][1],
+                                                       CTX.light_position[0][2]);
   }
 #endif
   return CTX.light_position[0][2];
@@ -4131,6 +4132,127 @@ double opt_general_light53(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.light_position[5][3] = val;
   return CTX.light_position[5][3];
+}
+
+double opt_general_transform(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX.use_transform = (int)val;
+    if(CTX.use_transform < 0 || CTX.use_transform > 1) CTX.use_transform = 0;
+  }
+#if defined(HAVE_FLTK)
+  if(GUI::available()){
+    if(action & GMSH_GUI)
+      GUI::instance()->options->general.choice[6]->value(CTX.use_transform);
+    if(action & GMSH_SET){
+      if(CTX.use_transform == 1){
+        drawTransform *tr = new drawTransformScaled(CTX.transform, CTX.offset);
+        GUI::instance()->graph[0]->gl->getDrawContext()->setTransform(tr);
+      }
+      else{
+        drawTransform *tr = GUI::instance()->graph[0]->gl->getDrawContext()->getTransform();
+        GUI::instance()->graph[0]->gl->getDrawContext()->setTransform(0);
+        if(tr) delete tr;
+      }
+    }
+    GUI::instance()->options->activate("general_transform");
+  }
+#endif
+  return CTX.use_transform;
+}
+
+static double _opt_general_transform(OPT_ARGS_NUM, int ii, int jj, int nn)
+{
+  if(action & GMSH_SET)
+    CTX.transform[ii][jj] = val;
+#if defined(HAVE_FLTK)
+  if(GUI::available()){
+    if(action & GMSH_GUI)
+      GUI::instance()->options->general.value[nn]->value(CTX.transform[ii][jj]);
+    if(action & GMSH_SET){
+      drawTransform *tr = GUI::instance()->graph[0]->gl->getDrawContext()->getTransform();
+      if(tr) tr->setMatrix(CTX.transform, CTX.offset);
+    }
+  }
+#endif
+  return CTX.transform[ii][jj];
+}
+
+double opt_general_transform00(OPT_ARGS_NUM)
+{
+  return _opt_general_transform(num, action, val, 0, 0, 28);
+}
+
+double opt_general_transform01(OPT_ARGS_NUM)
+{
+  return _opt_general_transform(num, action, val, 0, 1, 29);
+}
+
+double opt_general_transform02(OPT_ARGS_NUM)
+{
+  return _opt_general_transform(num, action, val, 0, 2, 30);
+}
+
+double opt_general_transform10(OPT_ARGS_NUM)
+{
+  return _opt_general_transform(num, action, val, 1, 0, 32);
+}
+
+double opt_general_transform11(OPT_ARGS_NUM)
+{
+  return _opt_general_transform(num, action, val, 1, 1, 33);
+}
+
+double opt_general_transform12(OPT_ARGS_NUM)
+{
+  return _opt_general_transform(num, action, val, 1, 2, 34);
+}
+
+double opt_general_transform20(OPT_ARGS_NUM)
+{
+  return _opt_general_transform(num, action, val, 2, 0, 36);
+}
+
+double opt_general_transform21(OPT_ARGS_NUM)
+{
+  return _opt_general_transform(num, action, val, 2, 1, 37);
+}
+
+double opt_general_transform22(OPT_ARGS_NUM)
+{
+  return _opt_general_transform(num, action, val, 2, 2, 38);
+}
+
+static double _opt_general_offset(OPT_ARGS_NUM, int ii, int nn)
+{
+  if(action & GMSH_SET)
+    CTX.offset[ii] = val;
+#if defined(HAVE_FLTK)
+  if(GUI::available()){
+    if(action & GMSH_GUI)
+      GUI::instance()->options->general.value[nn]->value(CTX.offset[ii]);
+    if(action & GMSH_SET){
+      drawTransform *tr = GUI::instance()->graph[0]->gl->getDrawContext()->getTransform();
+      if(tr) tr->setMatrix(CTX.transform, CTX.offset);
+    }
+  }
+#endif
+  return CTX.offset[ii];
+}
+
+double opt_general_offset0(OPT_ARGS_NUM)
+{
+  return _opt_general_offset(num, action, val, 0, 31);
+}
+
+double opt_general_offset1(OPT_ARGS_NUM)
+{
+  return _opt_general_offset(num, action, val, 1, 35);
+}
+
+double opt_general_offset2(OPT_ARGS_NUM)
+{
+  return _opt_general_offset(num, action, val, 2, 39);
 }
 
 double opt_geometry_auto_coherence(OPT_ARGS_NUM)
@@ -6620,6 +6742,7 @@ double opt_view_adapt_visualization_grid(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
     GUI::instance()->options->view.butt[0]->value(opt->AdaptVisualizationGrid);
+    GUI::instance()->options->activate("view_adaptive");
   }
 #endif
   return opt->AdaptVisualizationGrid;
@@ -7919,7 +8042,7 @@ double opt_view_use_gen_raise(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
     GUI::instance()->options->view.butt[6]->value(opt->UseGenRaise);
-    GUI::instance()->options->activate("general_transform");
+    GUI::instance()->options->activate("view_general_transform");
   }
 #endif
   return opt->UseGenRaise;

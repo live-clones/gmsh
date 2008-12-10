@@ -293,6 +293,13 @@ void Get_Options(int argc, char *argv[])
 	else
 	  Msg::Fatal("Missing file name");
       }
+      else if(!strcmp(argv[i] + 1, "nw")) {
+        i++;
+        if(argv[i] != NULL)
+          CTX.num_windows = atoi(argv[i++]);
+        else
+	  Msg::Fatal("Missing number");
+      }
       else if(!strcmp(argv[i] + 1, "convert")) {
         i++;
         CTX.batch = 1;

@@ -110,7 +110,7 @@ void PViewDataGModel::_addInterpolationMatricesForElement(MElement *e)
     _interpolation[edg].push_back(m);
   }
   else{
-    Msg::Error("need to add interpol matrices for ele type %d", e->getTypeForMSH());
+    Msg::Warning("need to add interpol matrices for ele type %d", e->getTypeForMSH());
   }
 }
 

@@ -277,6 +277,18 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_axes_zmax(0, GMSH_SET, o->general.value[25]->value());
   opt_general_small_axes_position0(0, GMSH_SET, o->general.value[26]->value());
   opt_general_small_axes_position1(0, GMSH_SET, o->general.value[27]->value());
+  opt_general_offset0(0, GMSH_SET, o->general.value[31]->value());
+  opt_general_offset1(0, GMSH_SET, o->general.value[35]->value());
+  opt_general_offset2(0, GMSH_SET, o->general.value[39]->value());
+  opt_general_transform00(0, GMSH_SET, o->general.value[28]->value());
+  opt_general_transform01(0, GMSH_SET, o->general.value[29]->value());
+  opt_general_transform02(0, GMSH_SET, o->general.value[30]->value());
+  opt_general_transform10(0, GMSH_SET, o->general.value[32]->value());
+  opt_general_transform11(0, GMSH_SET, o->general.value[33]->value());
+  opt_general_transform12(0, GMSH_SET, o->general.value[34]->value());
+  opt_general_transform20(0, GMSH_SET, o->general.value[36]->value());
+  opt_general_transform21(0, GMSH_SET, o->general.value[37]->value());
+  opt_general_transform22(0, GMSH_SET, o->general.value[38]->value());
 
   opt_general_default_filename(0, GMSH_SET, o->general.input[0]->value());
   opt_general_editor(0, GMSH_SET, o->general.input[1]->value());
@@ -293,6 +305,7 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_orthographic(0, GMSH_SET, !o->general.choice[2]->value());
   opt_general_axes(0, GMSH_SET, o->general.choice[4]->value());
   opt_general_background_gradient(0, GMSH_SET, o->general.choice[5]->value());
+  opt_general_transform(0, GMSH_SET, o->general.choice[6]->value());
 
   if(CTX.fast_redraw)
     CTX.post.draw = CTX.mesh.draw = 0;
@@ -1362,49 +1375,6 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
     {
       Fl_Group *o = new Fl_Group
         (L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Output");
-      general.butt[7] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Print messages on terminal");
-      general.butt[7]->type(FL_TOGGLE_BUTTON);
-      general.butt[7]->callback(general_options_ok_cb);
-
-      general.butt[8] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Save session information on exit");
-      general.butt[8]->type(FL_TOGGLE_BUTTON);
-      general.butt[8]->callback(general_options_ok_cb);
-
-      general.butt[9] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 3 * BH, BW/2-WB, BH, "Save options on exit");
-      general.butt[9]->type(FL_TOGGLE_BUTTON);
-      general.butt[9]->callback(general_options_ok_cb);
-
-      Fl_Button *b0 = new Fl_Button
-        (L + width / 2, 2 * WB + 3 * BH, (int)(1.75*BB), BH, "Restore default options");
-      b0->callback(options_restore_defaults_cb);
-
-      general.butt[14] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
-         "Ask confirmation before overwriting files");
-      general.butt[14]->type(FL_TOGGLE_BUTTON);
-      general.butt[14]->callback(general_options_ok_cb);
-
-      general.value[5] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Message verbosity");
-      general.value[5]->minimum(0);
-      general.value[5]->maximum(10);
-      general.value[5]->step(1);
-      general.value[5]->align(FL_ALIGN_RIGHT);
-      general.value[5]->callback(general_options_ok_cb);
-
-      general.input[0] = new Fl_Input
-        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Default file name");
-      general.input[0]->align(FL_ALIGN_RIGHT);
-      general.input[0]->callback(general_options_ok_cb);
-
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group
-        (L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Helpers");
 
       general.input[1] = new Fl_Input
         (L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Text editor command");
@@ -1415,6 +1385,99 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
         (L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Web browser command");
       general.input[2]->align(FL_ALIGN_RIGHT);
       general.input[2]->callback(general_options_ok_cb);
+
+      general.butt[7] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Print messages on terminal");
+      general.butt[7]->type(FL_TOGGLE_BUTTON);
+      general.butt[7]->callback(general_options_ok_cb);
+
+      general.butt[8] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Save session information on exit");
+      general.butt[8]->type(FL_TOGGLE_BUTTON);
+      general.butt[8]->callback(general_options_ok_cb);
+
+      general.butt[9] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 5 * BH, BW/2-WB, BH, "Save options on exit");
+      general.butt[9]->type(FL_TOGGLE_BUTTON);
+      general.butt[9]->callback(general_options_ok_cb);
+
+      Fl_Button *b0 = new Fl_Button
+        (L + width / 2, 2 * WB + 5 * BH, (int)(1.75*BB), BH, "Restore default options");
+      b0->callback(options_restore_defaults_cb);
+
+      general.butt[14] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
+         "Ask confirmation before overwriting files");
+      general.butt[14]->type(FL_TOGGLE_BUTTON);
+      general.butt[14]->callback(general_options_ok_cb);
+
+      general.value[5] = new Fl_Value_Input
+        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Message verbosity");
+      general.value[5]->minimum(0);
+      general.value[5]->maximum(10);
+      general.value[5]->step(1);
+      general.value[5]->align(FL_ALIGN_RIGHT);
+      general.value[5]->callback(general_options_ok_cb);
+
+      general.input[0] = new Fl_Input
+        (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Default file name");
+      general.input[0]->align(FL_ALIGN_RIGHT);
+      general.input[0]->callback(general_options_ok_cb);
+
+      o->end();
+    }
+    {
+      Fl_Group *o = new Fl_Group
+        (L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Transfo");
+      o->hide();
+      
+      static Fl_Menu_Item menu_transform[] = {
+        {"None", 0, 0, 0},
+        {"Scaling", 0, 0, 0},
+        {0}
+      };
+      general.choice[6] = new Fl_Choice
+        (L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Model coordinate transform");
+      general.choice[6]->menu(menu_transform);
+      general.choice[6]->align(FL_ALIGN_RIGHT);
+      general.choice[6]->callback(general_options_ok_cb, (void*)"general_transform");
+
+      int ss = 2 * IW / 3 / 3 + 4;
+      general.value[28] = new Fl_Value_Input
+        (L + 2 * WB       , 2 * WB + 2 * BH, ss, BH);
+      general.value[29] = new Fl_Value_Input
+        (L + 2 * WB + ss  , 2 * WB + 2 * BH, ss, BH);
+      general.value[30] = new Fl_Value_Input
+        (L + 2 * WB + 2*ss, 2 * WB + 2 * BH, ss, BH, " X");
+      general.value[31] = new Fl_Value_Input
+        (L + 2 * WB + IW  , 2 * WB + 2 * BH, 7*IW/10, BH);
+
+      general.value[32] = new Fl_Value_Input
+        (L + 2 * WB       , 2 * WB + 3 * BH, ss, BH);
+      general.value[33] = new Fl_Value_Input
+        (L + 2 * WB + ss  , 2 * WB + 3 * BH, ss, BH);
+      general.value[34] = new Fl_Value_Input
+        (L + 2 * WB + 2*ss, 2 * WB + 3 * BH, ss, BH, " Y +");
+      general.value[35] = new Fl_Value_Input
+        (L + 2 * WB + IW  , 2 * WB + 3 * BH, 7*IW/10, BH);
+
+      general.value[36] = new Fl_Value_Input
+        (L + 2 * WB       , 2 * WB + 4 * BH, ss, BH);
+      general.value[37] = new Fl_Value_Input
+        (L + 2 * WB + ss  , 2 * WB + 4 * BH, ss, BH);
+      general.value[38] = new Fl_Value_Input
+        (L + 2 * WB + 2*ss, 2 * WB + 4 * BH, ss, BH, " Z");
+      general.value[39] = new Fl_Value_Input
+        (L + 2 * WB + IW  , 2 * WB + 4 * BH, 7*IW/10, BH);
+
+      for(int i = 28; i <= 39; i++){
+        general.value[i]->minimum(-1.);
+        general.value[i]->maximum(1.);
+        general.value[i]->step(0.1);
+        general.value[i]->align(FL_ALIGN_RIGHT);
+        general.value[i]->when(FL_WHEN_RELEASE);
+        general.value[i]->callback(general_options_ok_cb);
+      }
 
       o->end();
     }
@@ -2450,7 +2513,7 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
       view.butt[0] = new Fl_Check_Button
         (L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Adapt visualization grid");
       view.butt[0]->type(FL_TOGGLE_BUTTON);
-      view.butt[0]->callback(view_options_ok_cb, (void*)"adapt_vis");
+      view.butt[0]->callback(view_options_ok_cb, (void*)"view_adaptive");
 
       view.push[5] = new Fl_Button
         (L + 2 * WB, 2 * WB + 10 * BH, sw, BH, "-");
@@ -2712,14 +2775,14 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
     }
     {
       Fl_Group *o = new Fl_Group
-        (L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Offset");
+        (L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Transfo");
       o->hide();
 
       Fl_Box *b = new Fl_Box
         (FL_NO_BOX, L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Coordinate transformation:");
       b->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
 
-      int ss = 2*IW/3/3+4;
+      int ss = 2 * IW / 3 / 3 + 4;
       view.value[51] = new Fl_Value_Input
         (L + 2 * WB       , 2 * WB + 2 * BH, ss, BH);
       view.value[52] = new Fl_Value_Input
@@ -2778,7 +2841,7 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
       view.butt[6] = new Fl_Check_Button
         (L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Use general transformation expressions");
       view.butt[6]->type(FL_TOGGLE_BUTTON);
-      view.butt[6]->callback(view_options_ok_cb, (void*)"general_transform");
+      view.butt[6]->callback(view_options_ok_cb, (void*)"view_general_transform");
 
       view.choice[11] = new Fl_Choice
         (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Data source");
@@ -3105,20 +3168,6 @@ void optionWindow::updateViewGroup(int index)
   opt_view_adapt_visualization_grid(index, GMSH_GUI, 0);
   opt_view_max_recursion_level(index, GMSH_GUI, 0);
   opt_view_target_error(index, GMSH_GUI, 0);
-  if(data->isAdaptive()){
-    view.push[5]->activate();
-    view.push[6]->activate();
-    view.value[33]->activate();
-    view.value[34]->activate();
-    view.label[1]->activate();
-  }
-  else{
-    view.push[5]->deactivate();
-    view.push[6]->deactivate();
-    view.value[33]->deactivate();
-    view.value[34]->deactivate();
-    view.label[1]->deactivate();
-  }
 
   if(data->getNumPoints() || data->getNumLines()){
     ((Fl_Menu_Item*)view.choice[13]->menu())[1].activate();
@@ -3371,6 +3420,16 @@ void optionWindow::activate(const char *what)
       general.value[27]->deactivate();
     }
   }
+  else if(!strcmp(what, "general_transform")){
+    if(general.choice[6]->value() == 1){
+      for(int i = 28; i <= 39; i++)
+        general.value[i]->activate();
+    }
+    else{
+      for(int i = 28; i <= 39; i++)
+        general.value[i]->deactivate();
+    }
+  }
   else if(!strcmp(what, "custom_range")){
     if(view.choice[7]->value() == 1){
       view.value[31]->activate();
@@ -3387,7 +3446,7 @@ void optionWindow::activate(const char *what)
       view.butt[38]->deactivate();
     }
   }
-  else if(!strcmp(what, "adapt_vis")){
+  else if(!strcmp(what, "view_adaptive")){
     if(view.butt[0]->value()){
       view.push[5]->activate();
       view.push[6]->activate();
@@ -3403,7 +3462,7 @@ void optionWindow::activate(const char *what)
       view.label[1]->deactivate();
     }
   }
-  else if(!strcmp(what, "general_transform")){
+  else if(!strcmp(what, "view_general_transform")){
     if(view.butt[6]->value()){
       view.choice[11]->activate();
       view.value[2]->activate();

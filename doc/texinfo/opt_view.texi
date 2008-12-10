@@ -594,47 +594,47 @@ Current time step displayed@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
-@item View.Transform11
+@item View.TransformXX
 Element (1,1) of the 3x3 coordinate transformation matrix@*
 Default value: @code{1}@*
 Saved in: @code{-}
 
-@item View.Transform12
+@item View.TransformXY
 Element (1,2) of the 3x3 coordinate transformation matrix@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
-@item View.Transform13
+@item View.TransformXZ
 Element (1,3) of the 3x3 coordinate transformation matrix@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
-@item View.Transform21
+@item View.TransformYX
 Element (2,1) of the 3x3 coordinate transformation matrix@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
-@item View.Transform22
+@item View.TransformYY
 Element (2,2) of the 3x3 coordinate transformation matrix@*
 Default value: @code{1}@*
 Saved in: @code{-}
 
-@item View.Transform23
+@item View.TransformYZ
 Element (2,3) of the 3x3 coordinate transformation matrix@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
-@item View.Transform31
+@item View.TransformZX
 Element (3,1) of the 3x3 coordinate transformation matrix@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
-@item View.Transform32
+@item View.TransformZY
 Element (3,2) of the 3x3 coordinate transformation matrix@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
-@item View.Transform33
+@item View.TransformZZ
 Element (3,3) of the 3x3 coordinate transformation matrix@*
 Default value: @code{1}@*
 Saved in: @code{-}

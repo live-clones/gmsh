@@ -16,20 +16,27 @@ class drawTransform {
   drawTransform(){}
   virtual ~drawTransform(){}
   virtual void transform(double &x, double &y, double &z){}
+  virtual void setMatrix(double mat[3][3], double tra[3]){}
 };
 
 class drawTransformScaled : public drawTransform {
  private:
   double _mat[3][3];
+  double _tra[3];
  public:
-  drawTransformScaled(double a11, double a12, double a13,
-                      double a21, double a22, double a23,
-                      double a31, double a32, double a33)
+  drawTransformScaled(double mat[3][3], double tra[3]=0)
     : drawTransform()
   {
-    _mat[0][0] = a11; _mat[0][1] = a12; _mat[0][2] = a13;
-    _mat[1][0] = a21; _mat[1][1] = a22; _mat[1][2] = a23;
-    _mat[2][0] = a31; _mat[2][1] = a32; _mat[2][2] = a33;
+    setMatrix(mat, tra);
+  }
+  virtual void setMatrix(double mat[3][3], double tra[3]=0)
+  {
+    for(int i = 0; i < 3; i++){
+      for(int j = 0; j < 3; j++)
+        _mat[i][j] = mat[i][j];
+      if(tra) _tra[i] = tra[i];
+      else _tra[i] = 0.;
+    }
   }
   virtual void transform(double &x, double &y, double &z)
   {
@@ -40,6 +47,9 @@ class drawTransformScaled : public drawTransform {
       y += _mat[1][k] * xyz[k];
       z += _mat[2][k] * xyz[k];
     }
+    x += _tra[0];
+    y += _tra[1];
+    z += _tra[2];
   }
 };
 

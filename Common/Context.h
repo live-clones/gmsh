@@ -40,7 +40,8 @@ class Context_T {
   int session_save, options_save; // save session/option file on exit
   int confirm_overwrite; // confirm overwrite when file->save as
   const char *display; // forced display host:0.0 under X11 
-  int  terminal; // show we print to the terminal console?
+  int terminal; // show we print to the terminal console?
+  int num_windows; // number of graphical windows to create
   const char *editor; // text editor command (with included '%s')
   const char *web_browser; // web browser command (with included '%s')
   char home_dir[256]; // the home directory
@@ -119,6 +120,8 @@ class Context_T {
   int printing; // dynamic: equal to 1 while gmsh is printing
   int hide_unselected; // hide all unselected entities
   int draw_all_models;
+  int use_transform; // transform display coordinates? (0=no, 1=scale, 2=...)
+  double transform[3][3], offset[3]; // transformation matrix for geo/mesh drawing
 
   // these are used as temp vars until the GUI is ready
   double tmp_r[3]; // current Euler angles (in degrees!) 
