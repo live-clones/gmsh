@@ -8,8 +8,15 @@
 #include <set>
 #include "Plugin.h"
 #include "adaptiveData.h"
+#include "OS.h"
 
-std::set<adaptivePoint> adaptivePoint::all;
+std::set<adaptivePoint> adaptiveLine::allPoints;
+std::set<adaptivePoint> adaptiveTriangle::allPoints;
+std::set<adaptivePoint> adaptiveQuadrangle::allPoints;
+std::set<adaptivePoint> adaptiveTetrahedron::allPoints;
+std::set<adaptivePoint> adaptiveHexahedron::allPoints;
+std::set<adaptivePoint> adaptivePrism::allPoints;
+
 std::list<adaptiveLine*> adaptiveLine::all;
 std::list<adaptiveTriangle*> adaptiveTriangle::all;
 std::list<adaptiveQuadrangle*> adaptiveQuadrangle::all;
@@ -37,7 +44,7 @@ static void cleanElement()
   for(typename std::list<T*>::iterator it = T::all.begin(); it != T::all.end(); ++it)
     delete *it;
   T::all.clear();
-  adaptivePoint::all.clear();
+  T::allPoints.clear();
 }
 
 static void computeShapeFunctions(Double_Matrix *coeffs, Double_Matrix *eexps,
@@ -57,34 +64,31 @@ static void computeShapeFunctions(Double_Matrix *coeffs, Double_Matrix *eexps,
   }
 }
 
-adaptivePoint *adaptivePoint::create(double x, double y, double z,
-				     Double_Matrix *coeffs, Double_Matrix *eexps)
+adaptivePoint *adaptivePoint::add(double x, double y, double z,
+                                  std::set<adaptivePoint> &allPoints)
 {
   adaptivePoint p;
   p.x = x;
   p.y = y;
   p.z = z;
-  std::set<adaptivePoint>::iterator it = all.find(p);
-  if(it == all.end()) {
-    all.insert(p);
-    it = all.find(p);
-    computeShapeFunctions(coeffs, eexps, x, y, z, (double*)it->shapeFunctions);
+  std::set<adaptivePoint>::iterator it = allPoints.find(p);
+  if(it == allPoints.end()){
+    allPoints.insert(p);
+    it = allPoints.find(p);
   }
   return (adaptivePoint*)&(*it);
 }
 
-void adaptiveLine::create(int maxlevel, 
-			  Double_Matrix *coeffs, Double_Matrix *eexps)
+void adaptiveLine::create(int maxlevel)
 {
   cleanElement<adaptiveLine>();
-  adaptivePoint *p1 = adaptivePoint::create(-1, 0, 0, coeffs, eexps);
-  adaptivePoint *p2 = adaptivePoint::create(1, 0, 0, coeffs, eexps);
+  adaptivePoint *p1 = adaptivePoint::add(-1, 0, 0, allPoints);
+  adaptivePoint *p2 = adaptivePoint::add(1, 0, 0, allPoints);
   adaptiveLine *t = new adaptiveLine(p1, p2);
-  recurCreate(t, maxlevel, 0, coeffs, eexps);
+  recurCreate(t, maxlevel, 0);
 }
 
-void adaptiveLine::recurCreate(adaptiveLine *e, int maxlevel, int level,
-			       Double_Matrix *coeffs, Double_Matrix *eexps)
+void adaptiveLine::recurCreate(adaptiveLine *e, int maxlevel, int level)
 {
   all.push_back(e);
   if(level++ >= maxlevel) return;
@@ -92,13 +96,13 @@ void adaptiveLine::recurCreate(adaptiveLine *e, int maxlevel, int level,
   // p1    p12    p2
   adaptivePoint *p1 = e->p[0];
   adaptivePoint *p2 = e->p[1];
-  adaptivePoint *p12 = adaptivePoint::create
+  adaptivePoint *p12 = adaptivePoint::add
     ((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5, (p1->z + p2->z) * 0.5, 
-     coeffs, eexps);
+     allPoints);
   adaptiveLine *e1 = new adaptiveLine(p1, p12);
-  recurCreate(e1, maxlevel, level, coeffs, eexps);
+  recurCreate(e1, maxlevel, level);
   adaptiveLine *e2 = new adaptiveLine(p12, p2);
-  recurCreate(e2, maxlevel, level, coeffs, eexps);
+  recurCreate(e2, maxlevel, level);
   e->e[0] = e1;
   e->e[1] = e2;
 }
@@ -149,19 +153,17 @@ void adaptiveLine::recurError(adaptiveLine *e, double AVG, double tol)
   }
 }
 
-void adaptiveTriangle::create(int maxlevel, 
-			      Double_Matrix *coeffs, Double_Matrix *eexps)
+void adaptiveTriangle::create(int maxlevel)
 {
   cleanElement<adaptiveTriangle>();
-  adaptivePoint *p1 = adaptivePoint::create(0, 0, 0, coeffs, eexps);
-  adaptivePoint *p2 = adaptivePoint::create(0, 1, 0, coeffs, eexps);
-  adaptivePoint *p3 = adaptivePoint::create(1, 0, 0, coeffs, eexps);
+  adaptivePoint *p1 = adaptivePoint::add(0, 0, 0, allPoints);
+  adaptivePoint *p2 = adaptivePoint::add(0, 1, 0, allPoints);
+  adaptivePoint *p3 = adaptivePoint::add(1, 0, 0, allPoints);
   adaptiveTriangle *t = new adaptiveTriangle(p1, p2, p3);
-  recurCreate(t, maxlevel, 0, coeffs, eexps);
+  recurCreate(t, maxlevel, 0);
 }
 
-void adaptiveTriangle::recurCreate(adaptiveTriangle *t, int maxlevel, int level,
-				   Double_Matrix *coeffs, Double_Matrix *eexps)
+void adaptiveTriangle::recurCreate(adaptiveTriangle *t, int maxlevel, int level)
 {
   all.push_back(t);
   if(level++ >= maxlevel) return;
@@ -172,23 +174,23 @@ void adaptiveTriangle::recurCreate(adaptiveTriangle *t, int maxlevel, int level,
   adaptivePoint *p1 = t->p[0];
   adaptivePoint *p2 = t->p[1];
   adaptivePoint *p3 = t->p[2];
-  adaptivePoint *p12 = adaptivePoint::create
+  adaptivePoint *p12 = adaptivePoint::add
     ((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5, (p1->z + p2->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *p13 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p13 = adaptivePoint::add
     ((p1->x + p3->x) * 0.5, (p1->y + p3->y) * 0.5, (p1->z + p3->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *p23 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p23 = adaptivePoint::add
     ((p3->x + p2->x) * 0.5, (p3->y + p2->y) * 0.5, (p3->z + p2->z) * 0.5, 
-     coeffs, eexps);
+     allPoints);
   adaptiveTriangle *t1 = new adaptiveTriangle(p1, p12, p13);
-  recurCreate(t1, maxlevel, level, coeffs, eexps);
+  recurCreate(t1, maxlevel, level);
   adaptiveTriangle *t2 = new adaptiveTriangle(p2, p23, p12);
-  recurCreate(t2, maxlevel, level, coeffs, eexps);
+  recurCreate(t2, maxlevel, level);
   adaptiveTriangle *t3 = new adaptiveTriangle(p3, p13, p23);
-  recurCreate(t3, maxlevel, level, coeffs, eexps);
+  recurCreate(t3, maxlevel, level);
   adaptiveTriangle *t4 = new adaptiveTriangle(p12, p23, p13);
-  recurCreate(t4, maxlevel, level, coeffs, eexps);
+  recurCreate(t4, maxlevel, level);
   t->e[0] = t1;
   t->e[1] = t2;
   t->e[2] = t3;
@@ -263,20 +265,18 @@ void adaptiveTriangle::recurError(adaptiveTriangle *t, double AVG, double tol)
   }
 }
 
-void adaptiveQuadrangle::create(int maxlevel, 
-				Double_Matrix *coeffs, Double_Matrix *eexps)
+void adaptiveQuadrangle::create(int maxlevel)
 {
   cleanElement<adaptiveQuadrangle>();
-  adaptivePoint *p1 = adaptivePoint::create(-1, -1, 0, coeffs, eexps);
-  adaptivePoint *p2 = adaptivePoint::create(1, -1, 0, coeffs, eexps);
-  adaptivePoint *p3 = adaptivePoint::create(1, 1, 0, coeffs, eexps);
-  adaptivePoint *p4 = adaptivePoint::create(-1, 1, 0, coeffs, eexps);
+  adaptivePoint *p1 = adaptivePoint::add(-1, -1, 0, allPoints);
+  adaptivePoint *p2 = adaptivePoint::add(1, -1, 0, allPoints);
+  adaptivePoint *p3 = adaptivePoint::add(1, 1, 0, allPoints);
+  adaptivePoint *p4 = adaptivePoint::add(-1, 1, 0, allPoints);
   adaptiveQuadrangle *q = new adaptiveQuadrangle(p1, p2, p3, p4);
-  recurCreate(q, maxlevel, 0, coeffs, eexps);
+  recurCreate(q, maxlevel, 0);
 }
 
-void adaptiveQuadrangle::recurCreate(adaptiveQuadrangle *q, int maxlevel, int level,
-				     Double_Matrix *coeffs, Double_Matrix *eexps)
+void adaptiveQuadrangle::recurCreate(adaptiveQuadrangle *q, int maxlevel, int level)
 {
   all.push_back(q);
   if(level++ >= maxlevel) return;
@@ -288,29 +288,29 @@ void adaptiveQuadrangle::recurCreate(adaptiveQuadrangle *q, int maxlevel, int le
   adaptivePoint *p2 = q->p[1];
   adaptivePoint *p3 = q->p[2];
   adaptivePoint *p4 = q->p[3];
-  adaptivePoint *p12 = adaptivePoint::create
+  adaptivePoint *p12 = adaptivePoint::add
     ((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5, (p1->z + p2->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *p23 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p23 = adaptivePoint::add
     ((p2->x + p3->x) * 0.5, (p2->y + p3->y) * 0.5, (p2->z + p3->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *p34 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p34 = adaptivePoint::add
     ((p3->x + p4->x) * 0.5, (p3->y + p4->y) * 0.5, (p3->z + p4->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *p14 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p14 = adaptivePoint::add
     ((p1->x + p4->x) * 0.5, (p1->y + p4->y) * 0.5, (p1->z + p4->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *pc = adaptivePoint::create
+     allPoints);
+  adaptivePoint *pc = adaptivePoint::add
     ((p1->x + p2->x + p3->x + p4->x) * 0.25, (p1->y + p2->y + p3->y + p4->y) * 0.25, 
-     (p1->z + p2->z + p3->z + p4->z) * 0.25, coeffs, eexps);
+     (p1->z + p2->z + p3->z + p4->z) * 0.25, allPoints);
   adaptiveQuadrangle *q1 = new adaptiveQuadrangle(p1, p12, pc, p14);
-  recurCreate(q1, maxlevel, level, coeffs, eexps);
+  recurCreate(q1, maxlevel, level);
   adaptiveQuadrangle *q2 = new adaptiveQuadrangle(p2, p23, pc, p12);
-  recurCreate(q2, maxlevel, level, coeffs, eexps);
+  recurCreate(q2, maxlevel, level);
   adaptiveQuadrangle *q3 = new adaptiveQuadrangle(p3, p34, pc, p23);
-  recurCreate(q3, maxlevel, level, coeffs, eexps);
+  recurCreate(q3, maxlevel, level);
   adaptiveQuadrangle *q4 = new adaptiveQuadrangle(p4, p14, pc, p34);
-  recurCreate(q4, maxlevel, level, coeffs, eexps);
+  recurCreate(q4, maxlevel, level);
   q->e[0] = q1;
   q->e[1] = q2;
   q->e[2] = q3;
@@ -385,170 +385,18 @@ void adaptiveQuadrangle::recurError(adaptiveQuadrangle *q, double AVG, double to
   }
 }
 
-void adaptivePrism::create(int maxlevel, 
-				Double_Matrix *coeffs, Double_Matrix *eexps)
-{
-  cleanElement<adaptivePrism>();
-  adaptivePoint *p1 = adaptivePoint::create(0, 0, -1, coeffs, eexps);
-  adaptivePoint *p2 = adaptivePoint::create(1, 0, -1, coeffs, eexps);
-  adaptivePoint *p3 = adaptivePoint::create(0, 1, -1, coeffs, eexps);
-  adaptivePoint *p4 = adaptivePoint::create(0, 0, 1, coeffs, eexps);
-  adaptivePoint *p5 = adaptivePoint::create(1, 0, 1, coeffs, eexps);
-  adaptivePoint *p6 = adaptivePoint::create(0, 1, 1, coeffs, eexps);
-  adaptivePrism *p = new adaptivePrism(p1, p2, p3, p4, p5, p6);
-  recurCreate(p, maxlevel, 0, coeffs, eexps);
-}
-
-void adaptivePrism::recurCreate(adaptivePrism *p, int maxlevel, int level,
-				     Double_Matrix *coeffs, Double_Matrix *eexps)
-{
-  all.push_back(p);
-  if(level++ >= maxlevel) return;
-
-  // p4   p34    p3
-  // p14  pc     p23
-  // p1   p12    p2
-  adaptivePoint *p1 = p->p[0];
-  adaptivePoint *p2 = p->p[1];
-  adaptivePoint *p3 = p->p[2];
-  adaptivePoint *p4 = p->p[3];
-  adaptivePoint *p5 = p->p[4];
-  adaptivePoint *p6 = p->p[5];
-  adaptivePoint *p14 = adaptivePoint::create
-    ((p1->x + p4->x) * 0.5, (p1->y + p4->y) * 0.5, (p1->z + p4->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *p25 = adaptivePoint::create
-    ((p2->x + p5->x) * 0.5, (p2->y + p5->y) * 0.5, (p2->z + p5->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *p36 = adaptivePoint::create
-    ((p3->x + p6->x) * 0.5, (p3->y + p6->y) * 0.5, (p3->z + p6->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *p12 = adaptivePoint::create
-    ((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5, (p1->z + p2->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *p23 = adaptivePoint::create
-    ((p2->x + p3->x) * 0.5, (p2->y + p3->y) * 0.5, (p2->z + p3->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *p31 = adaptivePoint::create
-    ((p3->x + p1->x) * 0.5, (p3->y + p1->y) * 0.5, (p3->z + p1->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *p1425 = adaptivePoint::create
-    ((p14->x + p25->x) * 0.5, (p14->y + p25->y) * 0.5, (p14->z + p25->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *p2536 = adaptivePoint::create
-    ((p25->x + p36->x) * 0.5, (p25->y + p36->y) * 0.5, (p25->z + p36->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *p3614 = adaptivePoint::create
-    ((p36->x + p14->x) * 0.5, (p36->y + p14->y) * 0.5, (p36->z + p14->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *p45 = adaptivePoint::create
-    ((p4->x + p5->x) * 0.5, (p4->y + p5->y) * 0.5, (p4->z + p5->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *p56 = adaptivePoint::create
-    ((p5->x + p6->x) * 0.5, (p5->y + p6->y) * 0.5, (p5->z + p6->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *p64 = adaptivePoint::create
-    ((p6->x + p4->x) * 0.5, (p6->y + p4->y) * 0.5, (p6->z + p4->z) * 0.5, 
-     coeffs, eexps);
-  p->e[0] = new adaptivePrism(p1, p12, p31, p14, p1425, p3614);
-  recurCreate(p->e[0], maxlevel, level, coeffs, eexps);
-  p->e[1] = new adaptivePrism(p2, p23, p12, p25, p2536, p1425);
-  recurCreate(p->e[1], maxlevel, level, coeffs, eexps);
-  p->e[2] = new adaptivePrism(p3, p31, p23, p36, p3614, p2536);
-  recurCreate(p->e[2], maxlevel, level, coeffs, eexps);
-  p->e[3] = new adaptivePrism(p12, p23, p31, p1425, p2536, p3614);
-  recurCreate(p->e[3], maxlevel, level, coeffs, eexps);
-  p->e[4] = new adaptivePrism(p14, p1425, p3614, p4, p45, p64);
-  recurCreate(p->e[4], maxlevel, level, coeffs, eexps);
-  p->e[5] = new adaptivePrism(p25, p2536, p1425, p5, p56, p45);
-  recurCreate(p->e[5], maxlevel, level, coeffs, eexps);
-  p->e[6] = new adaptivePrism(p36, p3614, p2536, p6, p64, p56);
-  recurCreate(p->e[6], maxlevel, level, coeffs, eexps);
-  p->e[7] = new adaptivePrism(p1425, p2536, p3614, p45, p56, p64);
-  recurCreate(p->e[7], maxlevel, level, coeffs, eexps);
-}
-
-void adaptivePrism::error(double AVG, double tol)
-{
-  adaptivePrism *p = *all.begin();
-  recurError(p, AVG, tol);
-}
-
-void adaptivePrism::recurError(adaptivePrism *p, double AVG, double tol)
-{
-  if(!p->e[0])
-    p->visible = true;
-  else {
-    double vr;
-    if(!p->e[0]->e[0]) {
-      double v1 = p->e[0]->V();
-      double v2 = p->e[1]->V();
-      double v3 = p->e[2]->V();
-      double v4 = p->e[3]->V();
-      double v5 = p->e[4]->V();
-      double v6 = p->e[5]->V();
-      double v7 = p->e[6]->V();
-      double v8 = p->e[7]->V();
-      vr = (v1 + v2 + v3 + v4/2 +v5 +v6 +v7 +v8/2) / 7;
-      double v = p->V();
-      if(fabs(v - vr) > AVG * tol){
-        p->visible = false;
-        recurError(p->e[0], AVG, tol);
-        recurError(p->e[1], AVG, tol);
-        recurError(p->e[2], AVG, tol);
-        recurError(p->e[3], AVG, tol);
-        recurError(p->e[4], AVG, tol);
-        recurError(p->e[5], AVG, tol);
-        recurError(p->e[6], AVG, tol);
-        recurError(p->e[7], AVG, tol);
-      }
-      else
-        p->visible = true;
-    }
-    else {
-      bool err=false;
-      double ve[8];
-      for(int i=0; i<8; i++){
-        double v1 = p->e[i]->e[0]->V();
-        double v2 = p->e[i]->e[1]->V();
-        double v3 = p->e[i]->e[2]->V();
-        double v4 = p->e[i]->e[3]->V();
-        double v5 = p->e[i]->e[4]->V();
-        double v6 = p->e[i]->e[5]->V();
-        double v7 = p->e[i]->e[6]->V();
-        double v8 = p->e[i]->e[7]->V();
-        double vr = (v1 + v2 + v3 + v4/2 +v5 +v6 +v7 +v8/2) / 7;
-        ve[i] = p->e[i]->V();
-        err |= (fabs((ve[i] - vr)) > AVG*tol);
-      }
-      double vr = (ve[0] + ve[1] + ve[2] + ve[3] / 2 + 
-                   ve[4] + ve[5] + ve[6] + ve[7] / 2) / 7;
-      err |= (fabs((p->V() - vr))>AVG*tol);
-      if(err) {
-        p->visible = false;
-        for(int i=0;i<8;i++)
-          recurError(p->e[i], AVG, tol);
-      }
-      else
-        p->visible = true;
-    }
-  }
-}
-
-void adaptiveTetrahedron::create(int maxlevel,
-				 Double_Matrix *coeffs, Double_Matrix *eexps)
+void adaptiveTetrahedron::create(int maxlevel)
 {
   cleanElement<adaptiveTetrahedron>();
-  adaptivePoint *p1 = adaptivePoint::create(0, 0, 0, coeffs, eexps);
-  adaptivePoint *p2 = adaptivePoint::create(0, 1, 0, coeffs, eexps);
-  adaptivePoint *p3 = adaptivePoint::create(1, 0, 0, coeffs, eexps);
-  adaptivePoint *p4 = adaptivePoint::create(0, 0, 1, coeffs, eexps);
+  adaptivePoint *p1 = adaptivePoint::add(0, 0, 0, allPoints);
+  adaptivePoint *p2 = adaptivePoint::add(0, 1, 0, allPoints);
+  adaptivePoint *p3 = adaptivePoint::add(1, 0, 0, allPoints);
+  adaptivePoint *p4 = adaptivePoint::add(0, 0, 1, allPoints);
   adaptiveTetrahedron *t = new adaptiveTetrahedron(p1, p2, p3, p4);
-  recurCreate(t, maxlevel, 0, coeffs, eexps);
+  recurCreate(t, maxlevel, 0);
 }
 
-void adaptiveTetrahedron::recurCreate(adaptiveTetrahedron *t, int maxlevel, int level,
-			              Double_Matrix *coeffs, Double_Matrix *eexps)
+void adaptiveTetrahedron::recurCreate(adaptiveTetrahedron *t, int maxlevel, int level)
 {
   all.push_back(t);
   if(level++ >= maxlevel) return;
@@ -557,40 +405,40 @@ void adaptiveTetrahedron::recurCreate(adaptiveTetrahedron *t, int maxlevel, int 
   adaptivePoint *p1 = t->p[1];
   adaptivePoint *p2 = t->p[2];
   adaptivePoint *p3 = t->p[3];
-  adaptivePoint *pe0 = adaptivePoint::create
+  adaptivePoint *pe0 = adaptivePoint::add
     ((p0->x + p1->x) * 0.5, (p0->y + p1->y) * 0.5, (p0->z + p1->z) * 0.5,
-     coeffs, eexps);
-  adaptivePoint *pe1 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *pe1 = adaptivePoint::add
     ((p0->x + p2->x) * 0.5, (p0->y + p2->y) * 0.5, (p0->z + p2->z) * 0.5,
-     coeffs, eexps);
-  adaptivePoint *pe2 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *pe2 = adaptivePoint::add
     ((p0->x + p3->x) * 0.5, (p0->y + p3->y) * 0.5, (p0->z + p3->z) * 0.5,
-     coeffs, eexps);
-  adaptivePoint *pe3 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *pe3 = adaptivePoint::add
     ((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5, (p1->z + p2->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *pe4 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *pe4 = adaptivePoint::add
     ((p1->x + p3->x) * 0.5, (p1->y + p3->y) * 0.5, (p1->z + p3->z) * 0.5,
-     coeffs, eexps);
-  adaptivePoint *pe5 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *pe5 = adaptivePoint::add
     ((p2->x + p3->x) * 0.5, (p2->y + p3->y) * 0.5, (p2->z + p3->z) * 0.5,
-     coeffs, eexps);
+     allPoints);
   adaptiveTetrahedron *t1 = new adaptiveTetrahedron(p0, pe0, pe2, pe1);
-  recurCreate(t1, maxlevel, level, coeffs, eexps);
+  recurCreate(t1, maxlevel, level);
   adaptiveTetrahedron *t2 = new adaptiveTetrahedron(p1, pe0, pe3, pe4);
-  recurCreate(t2, maxlevel, level, coeffs, eexps);
+  recurCreate(t2, maxlevel, level);
   adaptiveTetrahedron *t3 = new adaptiveTetrahedron(p2, pe3, pe1, pe5);
-  recurCreate(t3, maxlevel, level, coeffs, eexps);
+  recurCreate(t3, maxlevel, level);
   adaptiveTetrahedron *t4 = new adaptiveTetrahedron(p3, pe2, pe4, pe5);
-  recurCreate(t4, maxlevel, level, coeffs, eexps);
+  recurCreate(t4, maxlevel, level);
   adaptiveTetrahedron *t5 = new adaptiveTetrahedron(pe3, pe5, pe2, pe4);
-  recurCreate(t5, maxlevel, level, coeffs, eexps);
+  recurCreate(t5, maxlevel, level);
   adaptiveTetrahedron *t6 = new adaptiveTetrahedron(pe3, pe2, pe0, pe4);
-  recurCreate(t6, maxlevel, level, coeffs, eexps);
+  recurCreate(t6, maxlevel, level);
   adaptiveTetrahedron *t7 = new adaptiveTetrahedron(pe2, pe5, pe3, pe1);
-  recurCreate(t7, maxlevel, level, coeffs, eexps);
+  recurCreate(t7, maxlevel, level);
   adaptiveTetrahedron *t8 = new adaptiveTetrahedron(pe0, pe2, pe3, pe1);
-  recurCreate(t8, maxlevel, level, coeffs, eexps);
+  recurCreate(t8, maxlevel, level);
   t->e[0] = t1;
   t->e[1] = t2;
   t->e[2] = t3;
@@ -675,24 +523,22 @@ void adaptiveTetrahedron::recurError(adaptiveTetrahedron *t, double AVG, double 
   }
 }
 
-void adaptiveHexahedron::create(int maxlevel, 
-				Double_Matrix *coeffs, Double_Matrix *eexps)
+void adaptiveHexahedron::create(int maxlevel)
 {
   cleanElement<adaptiveHexahedron>();
-  adaptivePoint *p1 = adaptivePoint::create(-1, -1, -1, coeffs, eexps);
-  adaptivePoint *p2 = adaptivePoint::create(-1, 1, -1, coeffs, eexps);
-  adaptivePoint *p3 = adaptivePoint::create(1, 1, -1, coeffs, eexps);
-  adaptivePoint *p4 = adaptivePoint::create(1, -1, -1, coeffs, eexps);
-  adaptivePoint *p11 = adaptivePoint::create(-1, -1, 1, coeffs, eexps);
-  adaptivePoint *p21 = adaptivePoint::create(-1, 1, 1, coeffs, eexps);
-  adaptivePoint *p31 = adaptivePoint::create(1, 1, 1, coeffs, eexps);
-  adaptivePoint *p41 = adaptivePoint::create(1, -1, 1, coeffs, eexps);
+  adaptivePoint *p1 = adaptivePoint::add(-1, -1, -1, allPoints);
+  adaptivePoint *p2 = adaptivePoint::add(-1, 1, -1, allPoints);
+  adaptivePoint *p3 = adaptivePoint::add(1, 1, -1, allPoints);
+  adaptivePoint *p4 = adaptivePoint::add(1, -1, -1, allPoints);
+  adaptivePoint *p11 = adaptivePoint::add(-1, -1, 1, allPoints);
+  adaptivePoint *p21 = adaptivePoint::add(-1, 1, 1, allPoints);
+  adaptivePoint *p31 = adaptivePoint::add(1, 1, 1, allPoints);
+  adaptivePoint *p41 = adaptivePoint::add(1, -1, 1, allPoints);
   adaptiveHexahedron *h = new adaptiveHexahedron(p1, p2, p3, p4, p11, p21, p31, p41);
-  recurCreate(h, maxlevel, 0, coeffs, eexps);
+  recurCreate(h, maxlevel, 0);
 }
 
-void adaptiveHexahedron::recurCreate(adaptiveHexahedron *h, int maxlevel, int level,
-				     Double_Matrix *coeffs, Double_Matrix *eexps)
+void adaptiveHexahedron::recurCreate(adaptiveHexahedron *h, int maxlevel, int level)
 {
   all.push_back(h);
   if(level++ >= maxlevel) return;
@@ -705,90 +551,90 @@ void adaptiveHexahedron::recurCreate(adaptiveHexahedron *h, int maxlevel, int le
   adaptivePoint *p5 = h->p[5];
   adaptivePoint *p6 = h->p[6];
   adaptivePoint *p7 = h->p[7];
-  adaptivePoint *p01 = adaptivePoint::create
+  adaptivePoint *p01 = adaptivePoint::add
     ((p0->x + p1->x) * 0.5, (p0->y + p1->y) * 0.5, (p0->z + p1->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *p12 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p12 = adaptivePoint::add
     ((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5, (p1->z + p2->z) * 0.5,
-     coeffs, eexps);
-  adaptivePoint *p23 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p23 = adaptivePoint::add
     ((p2->x + p3->x) * 0.5, (p2->y + p3->y) * 0.5, (p2->z + p3->z) * 0.5,
-     coeffs, eexps);
-  adaptivePoint *p03 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p03 = adaptivePoint::add
     ((p3->x + p0->x) * 0.5, (p3->y + p0->y) * 0.5, (p3->z + p0->z) * 0.5,
-     coeffs, eexps);
-  adaptivePoint *p45 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p45 = adaptivePoint::add
     ((p4->x + p5->x) * 0.5, (p4->y + p5->y) * 0.5, (p4->z + p5->z) * 0.5,
-     coeffs, eexps);
-  adaptivePoint *p56 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p56 = adaptivePoint::add
     ((p5->x + p6->x) * 0.5, (p5->y + p6->y) * 0.5, (p5->z + p6->z) * 0.5,
-     coeffs, eexps);
-  adaptivePoint *p67 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p67 = adaptivePoint::add
     ((p6->x + p7->x) * 0.5, (p6->y + p7->y) * 0.5, (p6->z + p7->z) * 0.5,
-     coeffs, eexps);
-  adaptivePoint *p47 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p47 = adaptivePoint::add
     ((p7->x + p4->x) * 0.5, (p7->y + p4->y) * 0.5, (p7->z + p4->z) * 0.5,
-     coeffs, eexps);
-  adaptivePoint *p04 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p04 = adaptivePoint::add
     ((p4->x + p0->x) * 0.5, (p4->y + p0->y) * 0.5, (p4->z + p0->z) * 0.5,
-     coeffs, eexps);
-  adaptivePoint *p15 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p15 = adaptivePoint::add
     ((p5->x + p1->x) * 0.5, (p5->y + p1->y) * 0.5, (p5->z + p1->z) * 0.5,
-     coeffs, eexps);
-  adaptivePoint *p26 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p26 = adaptivePoint::add
     ((p6->x + p2->x) * 0.5, (p6->y + p2->y) * 0.5, (p6->z + p2->z) * 0.5,
-     coeffs, eexps);
-  adaptivePoint *p37 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p37 = adaptivePoint::add
     ((p7->x + p3->x) * 0.5, (p7->y + p3->y) * 0.5, (p7->z + p3->z) * 0.5,
-     coeffs, eexps);
-  adaptivePoint *p0145 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p0145 = adaptivePoint::add
     ((p45->x + p01->x) * 0.5, (p45->y + p01->y) * 0.5,(p45->z + p01->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *p1256 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p1256 = adaptivePoint::add
     ((p12->x + p56->x) * 0.5, (p12->y + p56->y) * 0.5, (p12->z + p56->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *p2367 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p2367 = adaptivePoint::add
     ((p23->x + p67->x) * 0.5, (p23->y + p67->y) * 0.5, (p23->z + p67->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *p0347 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p0347 = adaptivePoint::add
     ((p03->x + p47->x) * 0.5, (p03->y + p47->y) * 0.5, (p03->z + p47->z) * 0.5,
-     coeffs, eexps);
-  adaptivePoint *p4756 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p4756 = adaptivePoint::add
     ((p47->x + p56->x) * 0.5, (p47->y + p56->y) * 0.5, (p47->z + p56->z) * 0.5, 
-     coeffs, eexps);
-  adaptivePoint *p0312 = adaptivePoint::create
+     allPoints);
+  adaptivePoint *p0312 = adaptivePoint::add
     ((p03->x + p12->x) * 0.5, (p03->y + p12->y) * 0.5, (p03->z + p12->z) * 0.5,
-     coeffs, eexps);
-  adaptivePoint *pc = adaptivePoint::create
+     allPoints);
+  adaptivePoint *pc = adaptivePoint::add
     ((p0->x + p1->x + p2->x + p3->x + p4->x + p5->x + p6->x + p7->x) * 0.125,
      (p0->y + p1->y + p2->y + p3->y + p4->y + p5->y + p6->y + p7->y) * 0.125,
      (p0->z + p1->z + p2->z + p3->z + p4->z + p5->z + p6->z + p7->z) * 0.125,
-     coeffs, eexps);
+     allPoints);
 
   adaptiveHexahedron *h1 = new adaptiveHexahedron
     (p0, p01, p0312, p03, p04, p0145, pc, p0347); // p0
-  recurCreate(h1, maxlevel, level, coeffs, eexps);
+  recurCreate(h1, maxlevel, level);
   adaptiveHexahedron *h2 = new adaptiveHexahedron
     (p01, p0145, p15, p1, p0312, pc, p1256, p12); // p1
-  recurCreate(h2, maxlevel, level, coeffs, eexps);
+  recurCreate(h2, maxlevel, level);
   adaptiveHexahedron *h3 = new adaptiveHexahedron
     (p04, p4, p45, p0145, p0347, p47, p4756, pc); // p4
-  recurCreate(h3, maxlevel, level, coeffs, eexps);
+  recurCreate(h3, maxlevel, level);
   adaptiveHexahedron *h4 = new adaptiveHexahedron
     (p0145, p45, p5, p15, pc, p4756, p56, p1256); // p5
-  recurCreate(h4, maxlevel, level, coeffs, eexps);
+  recurCreate(h4, maxlevel, level);
   adaptiveHexahedron *h5 = new adaptiveHexahedron
     (p0347, p47, p4756, pc, p37, p7, p67, p2367); // p7
-  recurCreate(h5, maxlevel, level, coeffs, eexps);
+  recurCreate(h5, maxlevel, level);
   adaptiveHexahedron *h6 = new adaptiveHexahedron
     (pc, p4756, p56, p1256, p2367, p67, p6, p26); // p6
-  recurCreate(h6, maxlevel, level, coeffs, eexps);
+  recurCreate(h6, maxlevel, level);
   adaptiveHexahedron *h7 = new adaptiveHexahedron
     (p03, p0347, pc, p0312, p3, p37, p2367, p23); // p3
-  recurCreate(h7, maxlevel, level, coeffs, eexps);
+  recurCreate(h7, maxlevel, level);
   adaptiveHexahedron *h8 = new adaptiveHexahedron
     (p0312, pc, p1256, p12, p23, p2367, p26, p2); //p2
-  recurCreate(h8, maxlevel, level, coeffs, eexps);
+  recurCreate(h8, maxlevel, level);
   h->e[0] = h1;
   h->e[1] = h2;
   h->e[2] = h3;
@@ -837,16 +683,164 @@ void adaptiveHexahedron::recurError(adaptiveHexahedron *h, double AVG, double to
   }
 }
 
+void adaptivePrism::create(int maxlevel)
+{
+  cleanElement<adaptivePrism>();
+  adaptivePoint *p1 = adaptivePoint::add(0, 0, -1, allPoints);
+  adaptivePoint *p2 = adaptivePoint::add(1, 0, -1, allPoints);
+  adaptivePoint *p3 = adaptivePoint::add(0, 1, -1, allPoints);
+  adaptivePoint *p4 = adaptivePoint::add(0, 0, 1, allPoints);
+  adaptivePoint *p5 = adaptivePoint::add(1, 0, 1, allPoints);
+  adaptivePoint *p6 = adaptivePoint::add(0, 1, 1, allPoints);
+  adaptivePrism *p = new adaptivePrism(p1, p2, p3, p4, p5, p6);
+  recurCreate(p, maxlevel, 0);
+}
+
+void adaptivePrism::recurCreate(adaptivePrism *p, int maxlevel, int level)
+{
+  all.push_back(p);
+  if(level++ >= maxlevel) return;
+
+  // p4   p34    p3
+  // p14  pc     p23
+  // p1   p12    p2
+  adaptivePoint *p1 = p->p[0];
+  adaptivePoint *p2 = p->p[1];
+  adaptivePoint *p3 = p->p[2];
+  adaptivePoint *p4 = p->p[3];
+  adaptivePoint *p5 = p->p[4];
+  adaptivePoint *p6 = p->p[5];
+  adaptivePoint *p14 = adaptivePoint::add
+    ((p1->x + p4->x) * 0.5, (p1->y + p4->y) * 0.5, (p1->z + p4->z) * 0.5, 
+     allPoints);
+  adaptivePoint *p25 = adaptivePoint::add
+    ((p2->x + p5->x) * 0.5, (p2->y + p5->y) * 0.5, (p2->z + p5->z) * 0.5, 
+     allPoints);
+  adaptivePoint *p36 = adaptivePoint::add
+    ((p3->x + p6->x) * 0.5, (p3->y + p6->y) * 0.5, (p3->z + p6->z) * 0.5, 
+     allPoints);
+  adaptivePoint *p12 = adaptivePoint::add
+    ((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5, (p1->z + p2->z) * 0.5, 
+     allPoints);
+  adaptivePoint *p23 = adaptivePoint::add
+    ((p2->x + p3->x) * 0.5, (p2->y + p3->y) * 0.5, (p2->z + p3->z) * 0.5, 
+     allPoints);
+  adaptivePoint *p31 = adaptivePoint::add
+    ((p3->x + p1->x) * 0.5, (p3->y + p1->y) * 0.5, (p3->z + p1->z) * 0.5, 
+     allPoints);
+  adaptivePoint *p1425 = adaptivePoint::add
+    ((p14->x + p25->x) * 0.5, (p14->y + p25->y) * 0.5, (p14->z + p25->z) * 0.5, 
+     allPoints);
+  adaptivePoint *p2536 = adaptivePoint::add
+    ((p25->x + p36->x) * 0.5, (p25->y + p36->y) * 0.5, (p25->z + p36->z) * 0.5, 
+     allPoints);
+  adaptivePoint *p3614 = adaptivePoint::add
+    ((p36->x + p14->x) * 0.5, (p36->y + p14->y) * 0.5, (p36->z + p14->z) * 0.5, 
+     allPoints);
+  adaptivePoint *p45 = adaptivePoint::add
+    ((p4->x + p5->x) * 0.5, (p4->y + p5->y) * 0.5, (p4->z + p5->z) * 0.5, 
+     allPoints);
+  adaptivePoint *p56 = adaptivePoint::add
+    ((p5->x + p6->x) * 0.5, (p5->y + p6->y) * 0.5, (p5->z + p6->z) * 0.5, 
+     allPoints);
+  adaptivePoint *p64 = adaptivePoint::add
+    ((p6->x + p4->x) * 0.5, (p6->y + p4->y) * 0.5, (p6->z + p4->z) * 0.5, 
+     allPoints);
+  p->e[0] = new adaptivePrism(p1, p12, p31, p14, p1425, p3614);
+  recurCreate(p->e[0], maxlevel, level);
+  p->e[1] = new adaptivePrism(p2, p23, p12, p25, p2536, p1425);
+  recurCreate(p->e[1], maxlevel, level);
+  p->e[2] = new adaptivePrism(p3, p31, p23, p36, p3614, p2536);
+  recurCreate(p->e[2], maxlevel, level);
+  p->e[3] = new adaptivePrism(p12, p23, p31, p1425, p2536, p3614);
+  recurCreate(p->e[3], maxlevel, level);
+  p->e[4] = new adaptivePrism(p14, p1425, p3614, p4, p45, p64);
+  recurCreate(p->e[4], maxlevel, level);
+  p->e[5] = new adaptivePrism(p25, p2536, p1425, p5, p56, p45);
+  recurCreate(p->e[5], maxlevel, level);
+  p->e[6] = new adaptivePrism(p36, p3614, p2536, p6, p64, p56);
+  recurCreate(p->e[6], maxlevel, level);
+  p->e[7] = new adaptivePrism(p1425, p2536, p3614, p45, p56, p64);
+  recurCreate(p->e[7], maxlevel, level);
+}
+
+void adaptivePrism::error(double AVG, double tol)
+{
+  adaptivePrism *p = *all.begin();
+  recurError(p, AVG, tol);
+}
+
+void adaptivePrism::recurError(adaptivePrism *p, double AVG, double tol)
+{
+  if(!p->e[0])
+    p->visible = true;
+  else {
+    double vr;
+    if(!p->e[0]->e[0]) {
+      double v1 = p->e[0]->V();
+      double v2 = p->e[1]->V();
+      double v3 = p->e[2]->V();
+      double v4 = p->e[3]->V();
+      double v5 = p->e[4]->V();
+      double v6 = p->e[5]->V();
+      double v7 = p->e[6]->V();
+      double v8 = p->e[7]->V();
+      vr = (v1 + v2 + v3 + v4/2 +v5 +v6 +v7 +v8/2) / 7;
+      double v = p->V();
+      if(fabs(v - vr) > AVG * tol){
+        p->visible = false;
+        recurError(p->e[0], AVG, tol);
+        recurError(p->e[1], AVG, tol);
+        recurError(p->e[2], AVG, tol);
+        recurError(p->e[3], AVG, tol);
+        recurError(p->e[4], AVG, tol);
+        recurError(p->e[5], AVG, tol);
+        recurError(p->e[6], AVG, tol);
+        recurError(p->e[7], AVG, tol);
+      }
+      else
+        p->visible = true;
+    }
+    else {
+      bool err=false;
+      double ve[8];
+      for(int i=0; i<8; i++){
+        double v1 = p->e[i]->e[0]->V();
+        double v2 = p->e[i]->e[1]->V();
+        double v3 = p->e[i]->e[2]->V();
+        double v4 = p->e[i]->e[3]->V();
+        double v5 = p->e[i]->e[4]->V();
+        double v6 = p->e[i]->e[5]->V();
+        double v7 = p->e[i]->e[6]->V();
+        double v8 = p->e[i]->e[7]->V();
+        double vr = (v1 + v2 + v3 + v4/2 +v5 +v6 +v7 +v8/2) / 7;
+        ve[i] = p->e[i]->V();
+        err |= (fabs((ve[i] - vr)) > AVG*tol);
+      }
+      double vr = (ve[0] + ve[1] + ve[2] + ve[3] / 2 + 
+                   ve[4] + ve[5] + ve[6] + ve[7] / 2) / 7;
+      err |= (fabs((p->V() - vr))>AVG*tol);
+      if(err) {
+        p->visible = false;
+        for(int i=0;i<8;i++)
+          recurError(p->e[i], AVG, tol);
+      }
+      else
+        p->visible = true;
+    }
+  }
+}
+
 template <class T>
 int adaptiveElements<T>::_zoomElement(int ielem, int level, GMSH_Post_Plugin *plug)
 {
   const int N = _coeffs->size1();
-  Double_Vector val(N),  res(adaptivePoint::all.size());
-  Double_Vector valx(N), resx(adaptivePoint::all.size());
-  Double_Vector valy(N), resy(adaptivePoint::all.size());
-  Double_Vector valz(N), resz(adaptivePoint::all.size());
+  Double_Vector val(N),  res(T::allPoints.size());
+  Double_Vector valx(N), resx(T::allPoints.size());
+  Double_Vector valy(N), resy(T::allPoints.size());
+  Double_Vector valz(N), resz(T::allPoints.size());
   Double_Matrix xyz(_posX->size2(), 3);
-  Double_Matrix XYZ(adaptivePoint::all.size(), 3);
+  Double_Matrix XYZ(T::allPoints.size(), 3);
 
   for(int k = 0; k < _posX->size2(); ++k){
     xyz(k, 0) = (*_posX)(ielem, k);
@@ -873,8 +867,8 @@ int adaptiveElements<T>::_zoomElement(int ielem, int level, GMSH_Post_Plugin *pl
   _geometry->mult(xyz, XYZ);
 
   int k = 0;
-  for(std::set<adaptivePoint>::iterator it = adaptivePoint::all.begin();
-      it != adaptivePoint::all.end(); ++it){
+  for(std::set<adaptivePoint>::iterator it = T::allPoints.begin();
+      it != T::allPoints.end(); ++it){
     adaptivePoint *p = (adaptivePoint*)&(*it);
     p->val = res(k);
     if(_valX){
@@ -933,30 +927,34 @@ int adaptiveElements<T>::_zoomElement(int ielem, int level, GMSH_Post_Plugin *pl
 template <class T> 
 void adaptiveElements<T>::_changeResolution(int level, GMSH_Post_Plugin *plug, int *done)
 {
-  T::create(level, _coeffs, _eexps);
+  T::create(level);
 
-  if(!adaptivePoint::all.size()) return;
+  if(!T::allPoints.size()) return;
 
   const int N = _coeffs->size1();
   if(_interpolate) delete _interpolate;
-  _interpolate = new Double_Matrix(adaptivePoint::all.size(), N);
+  _interpolate = new Double_Matrix(T::allPoints.size(), N);
 
   if(_geometry) delete _geometry;
-  _geometry = new Double_Matrix(adaptivePoint::all.size(), _posX->size2());
+  _geometry = new Double_Matrix(T::allPoints.size(), _posX->size2());
 
   double sf[100];
   int kk = 0;
-  for(std::set<adaptivePoint>::iterator it = adaptivePoint::all.begin(); 
-      it != adaptivePoint::all.end(); ++it) {
+  for(std::set<adaptivePoint>::iterator it = T::allPoints.begin(); 
+      it != T::allPoints.end(); ++it) {
     adaptivePoint *p = (adaptivePoint*)&(*it);
+
+    computeShapeFunctions(_coeffs, _eexps, p->x, p->y, p->z, sf);
     for(int k = 0; k < N; ++k)
-      (*_interpolate)(kk, k) = p->shapeFunctions[k];
+      (*_interpolate)(kk, k) = sf[k];
+
     if(_coeffsGeom)
       computeShapeFunctions(_coeffsGeom, _eexpsGeom, p->x, p->y, p->z, sf);
     else
       T::GSF(p->x, p->y, p->z, sf);
     for(int k = 0; k < _posX->size2(); k++)
       (*_geometry)(kk, k) = sf[k];
+
     kk++;
   }
 
@@ -997,7 +995,7 @@ void adaptiveElements<T>::initData(PViewData *data, int step)
   }
   if(!numEle) return;
 
-  int numNodes = getNumNodes();
+  int numNodes = _coeffsGeom ? _coeffsGeom->size1() : T::numNodes;
   int numVal = _coeffs->size1() * numComp;
   if(!numNodes || !numVal) return;
 
@@ -1083,9 +1081,8 @@ void adaptiveElements<T>::changeResolution(int level, double tol, GMSH_Post_Plug
 
   List_Reset(_listEle);
   *_numEle = 0;
-  
-  std::vector<int> done(_posX->size1(), 0);
 
+  std::vector<int> done(_posX->size1(), 0);
   // We first do the adaptive stuff at level 2 and will only process
   // elements that have reached the maximal recursion level
   int level_act = (level > 2) ? 2 : level;
@@ -1097,6 +1094,7 @@ void adaptiveElements<T>::changeResolution(int level, double tol, GMSH_Post_Plug
     if(level_act >= level) break;
     level_act++;
   }
+  //_changeResolution(level, plug, &done[0]);
 }
 
 adaptiveData::adaptiveData(PViewData *data)
@@ -1188,3 +1186,4 @@ void adaptiveData::changeResolution(int step, int level, double tol, GMSH_Post_P
   _level = level;
   _tol = tol;
 }
+

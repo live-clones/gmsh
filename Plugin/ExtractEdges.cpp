@@ -95,7 +95,6 @@ PView *GMSH_ExtractEdgesPlugin::execute(PView *v)
     ++it;
   }
 
-
   data2->setName(data1->getName() + "_ExtractEdges");
   data2->setFileName(data1->getName() + "_ExtractEdges.pos");
   data2->finalize();

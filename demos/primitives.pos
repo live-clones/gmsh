@@ -67,7 +67,6 @@ View "Primitives"{
 };
 
 Alias View[0];
-View[1].Name = "Primitives (dupl. 1)" ;
 View[1].OffsetX = 3 ;
 View[1].IntervalsType = 2 ;
 View[1].ShowElement = 1 ;
@@ -75,7 +74,6 @@ View[1].GlyphLocation = 2 ;
 View[1].ColorTable = {Red,Green,Magenta,Cyan,Brown,Pink} ;
 
 Alias View[0];
-View[2].Name = "Primitives (dupl. 2)" ;
 View[2].OffsetX = 6 ;
 View[2].IntervalsType = 4 ;
 View[2].ShowElement = 1 ;

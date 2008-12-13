@@ -30,8 +30,6 @@
 
 extern Context_T CTX;
 
-#define GMSH_WINDOW_BOX FL_FLAT_BOX
-
 #if defined(HAVE_CHACO) || defined(HAVE_METIS)
 
 // Forward declarations of some callbacks

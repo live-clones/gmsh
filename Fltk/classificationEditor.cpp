@@ -331,7 +331,7 @@ static void class_color_cb(Fl_Widget* w, void* data)
     while(it != e->_faces.end()){
       GFace *gf = *it;
       for(unsigned int i = 0; i < gf->triangles.size(); i++){
-            tris.push_back(new MTri3(gf->triangles [i], 0));
+        tris.push_back(new MTri3(gf->triangles[i], 0));
       }
       gf->triangles.clear();
       ++it;

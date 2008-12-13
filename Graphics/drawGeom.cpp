@@ -179,7 +179,7 @@ class drawGEdge {
       glColor4ubv((GLubyte *) & CTX.color.geom.tangents);
       double x = p.x(), y = p.y(), z = p.z();
       _ctx->transform(x, y, z);
-      // FIXME: transform the tangent
+      _ctx->transformOneForm(der[0], der[1], der[2]);
       _ctx->drawVector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
                        CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
                        x, y, z, der[0], der[1], der[2], CTX.geom.light);
@@ -294,7 +294,7 @@ class drawGFace {
       glColor4ubv((GLubyte *) & CTX.color.geom.normals);
       double x = p.x(), y = p.y(), z = p.z();
       _ctx->transform(x, y, z);
-      // FIXME: transform the normal
+      _ctx->transformTwoForm(n[0], n[1], n[2]);
       _ctx->drawVector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
                        CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
                        x, y, z, n[0], n[1], n[2], CTX.geom.light);
@@ -364,7 +364,7 @@ class drawGFace {
       glColor4ubv((GLubyte *) & CTX.color.geom.normals);
       double x = p.x(), y = p.y(), z = p.z();
       _ctx->transform(x, y, z);
-      // FIXME: transform the normal
+      _ctx->transformTwoForm(n[0], n[1], n[2]);
       _ctx->drawVector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
                        CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
                        x, y, z, n[0], n[1], n[2], CTX.geom.light);

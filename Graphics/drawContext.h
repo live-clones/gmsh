@@ -16,6 +16,8 @@ class drawTransform {
   drawTransform(){}
   virtual ~drawTransform(){}
   virtual void transform(double &x, double &y, double &z){}
+  virtual void transformOneForm(double &x, double &y, double &z){}
+  virtual void transformTwoForm(double &x, double &y, double &z){}
   virtual void setMatrix(double mat[3][3], double tra[3]){}
 };
 
@@ -77,8 +79,16 @@ class drawContext {
   void setTransform(drawTransform *transform){ _transform = transform; }
   drawTransform *getTransform(){ return _transform; }
   void transform(double &x, double &y, double &z)
-  {
+  { 
     if(_transform) _transform->transform(x, y, z); 
+  }
+  void transformOneForm(double &x, double &y, double &z)
+  {
+    if(_transform) _transform->transformOneForm(x, y, z); 
+  }
+  void transformTwoForm(double &x, double &y, double &z)
+  {
+    if(_transform) _transform->transformTwoForm(x, y, z); 
   }
   void buildRotationMatrix();
   void setQuaternion(double p1x, double p1y, double p2x, double p2y);

@@ -17,8 +17,6 @@
 #include <functional>
 #include <list>
 #include <math.h>
-#include "GFace.h"
-#include "PView.h"
 #include "GmshMessage.h"
 
 class BDS_Edge;
@@ -100,9 +98,9 @@ public:
   }
   BDS_Vector& operator /= (const double &v)
   {
-    x/=v;
-    y/=v;
-    z/=v;
+    x /= v;
+    y /= v;
+    z /= v;
     return *this;
   }
   BDS_Vector operator / (const double &v)
@@ -135,11 +133,8 @@ public:
     return (x * v.x + y * v.y + z * v.z);
   }
   BDS_Vector(const BDS_Point &p2, const BDS_Point &p1);
-  
   BDS_Vector(const double X=0., const double Y=0., const double Z=0.)
-    : x(X), y(Y), z(Z)
-  {
-  }
+    : x(X), y(Y), z(Z) {}
   static double t;
 };
 
@@ -149,7 +144,7 @@ class BDS_Point
   // second one is dictated by charecteristic lengths at points and is
   // propagated
   double _lcBGM, _lcPTS;
-public:
+ public:
   double X, Y, Z;
   double u, v;
   bool config_modified;
@@ -178,16 +173,14 @@ public:
   void getTriangles(std::list<BDS_Face *> &t) const;
   BDS_Point(int id, double x=0, double y=0, double z=0)
     : _lcBGM(1.e22), _lcPTS(1.e22), X(x), Y(y), Z(z), u(0), v(0),
-      config_modified(true), iD(id), g(0)
-  {         
-  }
+      config_modified(true), iD(id), g(0) {}
 };
 
 class BDS_Edge
 {
   double _length;
   std::vector<BDS_Face*> _faces;
-public:
+ public:
   bool deleted;
   BDS_Point *p1, *p2;
   BDS_GeomEntity *g;
@@ -270,7 +263,7 @@ public:
 
 class BDS_Face
 {
-public:
+ public:
   bool deleted;
   BDS_Edge *e1, *e2, *e3, *e4;
   BDS_GeomEntity *g;
@@ -328,7 +321,7 @@ public:
 
 class GeomLessThan
 {
-public:
+ public:
   bool operator()(const BDS_GeomEntity *ent1, const BDS_GeomEntity *ent2) const
   {
     return *ent1 < *ent2;
@@ -337,7 +330,7 @@ public:
 
 class PointLessThan
 {
-public:
+ public:
   bool operator()(const BDS_Point *ent1, const BDS_Point *ent2) const
   {
     return *ent1 < *ent2;
@@ -346,7 +339,7 @@ public:
 
 class PointLessThanLexicographic
 {
-public:
+ public:
   static double t;
   bool operator()(const BDS_Point *ent1, const BDS_Point *ent2) const
   {
@@ -361,7 +354,7 @@ public:
 
 class EdgeLessThan
 {
-public:
+ public:
   bool operator()(const BDS_Edge *ent1, const BDS_Edge *ent2) const
   {
     return *ent1 < *ent2;
@@ -420,7 +413,7 @@ struct EdgeToRecover
 
 class BDS_Mesh 
 {    
-public:
+ public:
   int MAXPOINTNUMBER, SNAP_SUCCESS, SNAP_FAILURE;
   double Min[3], Max[3], LC;
   double scalingU, scalingV;

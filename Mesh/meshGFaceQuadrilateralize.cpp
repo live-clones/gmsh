@@ -6,6 +6,7 @@
 #include "meshGFaceQuadrilateralize.h"
 #include "GmshMessage.h"
 #include "Numeric.h"
+#include "GFace.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "meshGFaceOptimize.h"
 #include "meshGFaceBDS.h"
