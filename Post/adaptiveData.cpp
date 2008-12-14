@@ -1041,7 +1041,6 @@ void adaptiveElements<T>::addInView(double tol, int step,
   List_Reset(outList);
   *outNb = 0;
   
-  int k = 0;
   for(int ent = 0; ent < in->getNumEntities(step); ent++){
     for(int ele = 0; ele < in->getNumElements(step, ent); ele++){
       if(in->skipElement(step, ent, ele) ||

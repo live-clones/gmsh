@@ -293,11 +293,18 @@ class adaptiveElements {
     : _coeffsVal(coeffsVal), _eexpsVal(eexpsVal), _interpolVal(0),
       _coeffsGeom(coeffsGeom), _eexpsGeom(eexpsGeom), _interpolGeom(0) {}
   ~adaptiveElements();
+  // create the _interpolVal and _interpolGeom matrices at the given
+  // refinement level
   void init(int level);
+  // process the element data in coords/values and return the refined
+  // elements in coords/values
   void adapt(double tol, int numComp,
              std::vector<PCoords> &coords, std::vector<PValues> &values,
              double &minVal, double &maxVal, GMSH_Post_Plugin *plug=0,
              bool onlyComputeMinMax=false);
+  // adapt all the T-type elements in the input view and add the
+  // refined elements in the output view (we will remove this when we
+  // switch to true on-the-fly local refinement in drawPost())
   void addInView(double tol, int step, PViewData *in, PViewDataList *out, 
                  GMSH_Post_Plugin *plug=0);
 };
