@@ -260,39 +260,46 @@ class adaptiveHexahedron {
   static void recurError(adaptiveHexahedron *h, double AVG, double tol);
 };
 
+class PCoords { 
+ public:
+  double c[3];
+  PCoords(double x, double y, double z)
+  {
+    c[0] = x; c[1] = y; c[2] = z;
+  }
+};
+
+class PValues{
+ public:
+  double v[3];
+  PValues(double vx)
+  {
+    v[0] = vx;
+  }
+  PValues(double vx, double vy, double vz)
+  {
+    v[0] = vx; v[1] = vy; v[2] = vz;
+  }
+};
+
 template <class T>
 class adaptiveElements {
  private:
-  int _level;
-  double _tol, _minVal, _maxVal;
-  List_T *_listEle;
-  int *_numEle;
-  Double_Matrix *_coeffs, *_eexps;
-  Double_Matrix *_coeffsGeom, *_eexpsGeom;
-  Double_Matrix *_posX, *_posY, *_posZ;
-  Double_Matrix *_val, *_valX, *_valY, *_valZ;
-  Double_Matrix *_interpolate, *_geometry;
-  void _changeResolution(int level, GMSH_Post_Plugin *plug, int *done);
-  int _zoomElement(int ielem, int level, GMSH_Post_Plugin *plug);
+  Double_Matrix *_coeffsVal, *_eexpsVal, *_interpolVal;
+  Double_Matrix *_coeffsGeom, *_eexpsGeom, *_interpolGeom;
  public:
-  adaptiveElements(List_T *listEle, int *numEle,
-		   Double_Matrix *coeffs, Double_Matrix *eexps, 
-		   Double_Matrix *coeffsGeom=0, Double_Matrix *eexpsGeom=0)
-    : _level(-1), _tol(-1.), _minVal(0.), _maxVal(0.),
-      _listEle(listEle), _numEle(numEle), _coeffs(coeffs), _eexps(eexps),
-      _coeffsGeom(coeffsGeom), _eexpsGeom(eexpsGeom), _posX(0), _posY(0), _posZ(0),
-      _val(0), _valX(0), _valY(0), _valZ(0), _interpolate(0), _geometry(0){}
+  adaptiveElements(Double_Matrix *coeffsVal, Double_Matrix *eexpsVal, 
+                   Double_Matrix *coeffsGeom=0, Double_Matrix *eexpsGeom=0)
+    : _coeffsVal(coeffsVal), _eexpsVal(eexpsVal), _interpolVal(0),
+      _coeffsGeom(coeffsGeom), _eexpsGeom(eexpsGeom), _interpolGeom(0) {}
   ~adaptiveElements();
-  // store data's step-th timestep data into _val and _pos arrays
-  // (This makes adaptive views even more memory hungry than what they
-  // already are due to their discontinous nature. We should evaluate
-  // the performance hit incurred if we loop directly in data in
-  // _zoomElement instead)
-  void initData(PViewData *data, int step);
-  // compute the adaptive representation and store it in _listEle
-  void changeResolution(int level, double tol, GMSH_Post_Plugin *plug=0);
-  // The number of nodes is supposed to be fixed in an adaptive view
-  inline int getNumNodes () const { return _coeffsGeom ? _coeffsGeom->size1() : T::numNodes; }
+  void init(int level);
+  void adapt(double tol, int numComp,
+             std::vector<PCoords> &coords, std::vector<PValues> &values,
+             double &minVal, double &maxVal, GMSH_Post_Plugin *plug=0,
+             bool onlyComputeMinMax=false);
+  void addInView(double tol, int step, PViewData *in, PViewDataList *out, 
+                 GMSH_Post_Plugin *plug=0);
 };
 
 class adaptiveData {

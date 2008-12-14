@@ -8,7 +8,6 @@
 #include <set>
 #include "Plugin.h"
 #include "adaptiveData.h"
-#include "OS.h"
 
 std::set<adaptivePoint> adaptiveLine::allPoints;
 std::set<adaptivePoint> adaptiveTriangle::allPoints;
@@ -832,269 +831,261 @@ void adaptivePrism::recurError(adaptivePrism *p, double AVG, double tol)
 }
 
 template <class T>
-int adaptiveElements<T>::_zoomElement(int ielem, int level, GMSH_Post_Plugin *plug)
+adaptiveElements<T>::~adaptiveElements()
 {
-  const int N = _coeffs->size1();
-  Double_Vector val(N),  res(T::allPoints.size());
-  Double_Vector valx(N), resx(T::allPoints.size());
-  Double_Vector valy(N), resy(T::allPoints.size());
-  Double_Vector valz(N), resz(T::allPoints.size());
-  Double_Matrix xyz(_posX->size2(), 3);
-  Double_Matrix XYZ(T::allPoints.size(), 3);
-
-  for(int k = 0; k < _posX->size2(); ++k){
-    xyz(k, 0) = (*_posX)(ielem, k);
-    xyz(k, 1) = (*_posY)(ielem, k);
-    xyz(k, 2) = (*_posZ)(ielem, k);
-  }
-
-  for(int k = 0; k < N; ++k)
-    val(k) = (*_val)(ielem, k);
-
-  _interpolate->mult(val, res);
-
-  if(_valX){
-    for(int k = 0; k < N; ++k){
-      valx(k) = (*_valX)(ielem, k);
-      valy(k) = (*_valY)(ielem, k);
-      valz(k) = (*_valZ)(ielem, k);
-    }           
-    _interpolate->mult(valx, resx);
-    _interpolate->mult(valy, resy);
-    _interpolate->mult(valz, resz);
-  }
-
-  _geometry->mult(xyz, XYZ);
-
-  int k = 0;
-  for(std::set<adaptivePoint>::iterator it = T::allPoints.begin();
-      it != T::allPoints.end(); ++it){
-    adaptivePoint *p = (adaptivePoint*)&(*it);
-    p->val = res(k);
-    if(_valX){
-      p->valx = resx(k);
-      p->valy = resy(k);
-      p->valz = resz(k);
-    }
-    p->X = XYZ(k, 0);
-    p->Y = XYZ(k, 1);
-    p->Z = XYZ(k, 2);
-    if(_minVal > p->val) _minVal = p->val;
-    if(_maxVal < p->val) _maxVal = p->val;
-    k++;
-  }
-
-  for(typename std::list<T*>::iterator it = T::all.begin(); 
-      it != T::all.end(); it++) 
-    (*it)->visible = false;
-
-  if(!plug || _tol != 0.)
-    T::error(_maxVal - _minVal, _tol);
-
-  if(plug)
-    plug->assignSpecificVisibility();
-
-  for(typename std::list<T*>::iterator it = T::all.begin(); 
-      it != T::all.end(); it++){
-    if((*it)->visible && !(*it)->e[0] && level != _level)
-      return 0;
-  }
-  
-  for(typename std::list<T*>::iterator it = T::all.begin(); 
-      it != T::all.end(); it++){
-    if((*it)->visible){
-      adaptivePoint **p = (*it)->p;
-      for(int k = 0; k < T::numNodes; ++k) List_Add(_listEle, &p[k]->X);
-      for(int k = 0; k < T::numNodes; ++k) List_Add(_listEle, &p[k]->Y);
-      for(int k = 0; k < T::numNodes; ++k) List_Add(_listEle, &p[k]->Z);
-      if(_valX){
-        for(int k = 0; k < T::numNodes; ++k){
-          List_Add(_listEle, &p[k]->valx);
-          List_Add(_listEle, &p[k]->valy);
-          List_Add(_listEle, &p[k]->valz);
-        }
-      }
-      else{
-        for (int k = 0; k < T::numNodes; ++k) 
-	  List_Add(_listEle, &p[k]->val);
-      }
-      (*_numEle)++;
-    }
-  }
-  return 1;
+  if(_interpolVal) delete _interpolVal;
+  if(_interpolGeom) delete _interpolGeom;
+  cleanElement<T>();
 }
 
-template <class T> 
-void adaptiveElements<T>::_changeResolution(int level, GMSH_Post_Plugin *plug, int *done)
+template <class T>
+void adaptiveElements<T>::init(int level)
 {
   T::create(level);
-
-  if(!T::allPoints.size()) return;
-
-  const int N = _coeffs->size1();
-  if(_interpolate) delete _interpolate;
-  _interpolate = new Double_Matrix(T::allPoints.size(), N);
-
-  if(_geometry) delete _geometry;
-  _geometry = new Double_Matrix(T::allPoints.size(), _posX->size2());
-
+  int numVals = _coeffsVal->size1();
+  int numNodes = _coeffsGeom ? _coeffsGeom->size1() : T::numNodes;
+  
+  if(_interpolVal) delete _interpolVal;
+  _interpolVal = new Double_Matrix(T::allPoints.size(), numVals);
+  
+  if(_interpolGeom) delete _interpolGeom;
+  _interpolGeom = new Double_Matrix(T::allPoints.size(), numNodes);
+  
   double sf[100];
   int kk = 0;
   for(std::set<adaptivePoint>::iterator it = T::allPoints.begin(); 
       it != T::allPoints.end(); ++it) {
     adaptivePoint *p = (adaptivePoint*)&(*it);
-
-    computeShapeFunctions(_coeffs, _eexps, p->x, p->y, p->z, sf);
-    for(int k = 0; k < N; ++k)
-      (*_interpolate)(kk, k) = sf[k];
-
+    
+    computeShapeFunctions(_coeffsVal, _eexpsVal, p->x, p->y, p->z, sf);
+    for(int k = 0; k < numVals; k++)
+      (*_interpolVal)(kk, k) = sf[k];
+    
     if(_coeffsGeom)
       computeShapeFunctions(_coeffsGeom, _eexpsGeom, p->x, p->y, p->z, sf);
     else
       T::GSF(p->x, p->y, p->z, sf);
-    for(int k = 0; k < _posX->size2(); k++)
-      (*_geometry)(kk, k) = sf[k];
-
+    for(int k = 0; k < numNodes; k++)
+      (*_interpolGeom)(kk, k) = sf[k];
+    
     kk++;
   }
-
-  const int nbelm = _posX->size1();
-  for(int i = 0; i < nbelm; ++i)
-    done[i] = _zoomElement(i, level, plug);
 }
 
 template <class T>
-adaptiveElements<T>::~adaptiveElements()
+void adaptiveElements<T>::adapt(double tol, int numComp, 
+                                std::vector<PCoords> &coords,
+                                std::vector<PValues> &values, 
+                                double &minVal, double &maxVal, 
+                                GMSH_Post_Plugin *plug,
+                                bool onlyComputeMinMax)
 {
-  if(_posX) delete _posX;
-  if(_posY) delete _posY;
-  if(_posZ) delete _posZ;
-  if(_val) delete _val;
-  if(_valX) delete _valX;
-  if(_valY) delete _valY;
-  if(_valZ) delete _valZ;
-  if(_interpolate) delete _interpolate;
-  if(_geometry) delete _geometry;
-  cleanElement<T>();
-}
-
-template <class T>
-void adaptiveElements<T>::initData(PViewData *data, int step)
-{
-  int numComp = data->getNumComponents(0, 0, 0);
-  if(numComp != 1 && numComp != 3) return;
-
-  int numEle = 0;
-  switch(T::numEdges){
-  case 1: numEle = data->getNumLines(); break;
-  case 3: numEle = data->getNumTriangles(); break;
-  case 4: numEle = data->getNumQuadrangles(); break;
-  case 6: numEle = data->getNumTetrahedra(); break;
-  case 9: numEle = data->getNumPrisms(); break;
-  case 12: numEle = data->getNumHexahedra(); break;
+  if(numComp != 1 && numComp != 3){
+    Msg::Error("Can only adapt scalar or vector data");
+    return;
   }
-  if(!numEle) return;
-
-  int numNodes = _coeffsGeom ? _coeffsGeom->size1() : T::numNodes;
-  int numVal = _coeffs->size1() * numComp;
-  if(!numNodes || !numVal) return;
-
-  _minVal = VAL_INF;
-  _maxVal = -VAL_INF;
-
-  if(_posX) delete _posX;
-  if(_posY) delete _posY;
-  if(_posZ) delete _posZ;
-  if(_val) delete _val;
-  if(_valX) delete _valX;
-  if(_valY) delete _valY;
-  if(_valZ) delete _valZ;
-  _posX = new Double_Matrix(numEle, numNodes);
-  _posY = new Double_Matrix(numEle, numNodes);
-  _posZ = new Double_Matrix(numEle, numNodes);
-  _val = new Double_Matrix(numEle, numVal);
+  
+  int numPoints = T::allPoints.size();
+  if(!numPoints){
+    Msg::Error("No adapted points to interpolate");
+    return;
+  }
+  
+  int numVals = _coeffsVal->size1();
+  if(numVals != values.size()){
+    Msg::Error("Wrong number of values in adaptation %d != %i", 
+               numVals, values.size());
+    return;
+  }
+  
+  Double_Vector val(numVals), res(numPoints);
+  if(numComp == 1){
+    for(int k = 0; k < numVals; ++k)
+      val(k) = values[k].v[0];
+  }
+  else{
+    for(int k = 0; k < numVals; ++k)
+      val(k) = values[k].v[0] * values[k].v[0] + values[k].v[1] * values[k].v[1] +
+        values[k].v[2] * values[k].v[2];
+  }
+  _interpolVal->mult(val, res);
+  
+  for(int i = 0; i < numPoints; i++){
+    minVal = std::min(minVal, res(i));
+    maxVal = std::max(maxVal, res(i));
+  }
+  if(onlyComputeMinMax) return;
+  
+  Double_Vector *resx = 0, *resy = 0, *resz = 0;
   if(numComp == 3){
-    _valX = new Double_Matrix(numEle, numVal);
-    _valY = new Double_Matrix(numEle, numVal);
-    _valZ = new Double_Matrix(numEle, numVal);
+    Double_Vector valx(numVals), valy(numVals), valz(numVals);
+    resx = new Double_Vector(numPoints);
+    resy = new Double_Vector(numPoints);
+    resz = new Double_Vector(numPoints);
+    for(int k = 0; k < numVals; ++k){
+      valx(k) = values[k].v[0];
+      valy(k) = values[k].v[1];
+      valz(k) = values[k].v[2];
+    }
+    _interpolVal->mult(valx, *resx);
+    _interpolVal->mult(valy, *resy);
+    _interpolVal->mult(valz, *resz);
   }
-
-  // store non-interpolated data
+  
+  int numNodes = _coeffsGeom ? _coeffsGeom->size1() : T::numNodes;
+  if(numNodes != coords.size()){
+    Msg::Error("Wrong number of nodes in adaptation %d != %i", 
+               numNodes, coords.size());
+    return;
+  }
+  
+  Double_Matrix xyz(numNodes, 3), XYZ(numPoints, 3);
+  for(int k = 0; k < numNodes; ++k){
+    xyz(k, 0) = coords[k].c[0];
+    xyz(k, 1) = coords[k].c[1];
+    xyz(k, 2) = coords[k].c[2];
+  }
+  _interpolGeom->mult(xyz, XYZ);
+  
   int k = 0;
-  for(int ent = 0; ent < data->getNumEntities(step); ent++){    
-    for(int ele = 0; ele < data->getNumElements(step, ent); ele++){    
-      if(data->skipElement(step, ent, ele) ||
-	 data->getNumEdges(step, ent, ele) != T::numEdges) continue;
-      if(numVal != data->getNumValues(step, ent, ele)){
-	Msg::Error("Wrong number of values (%d) in element %d (expecting %d)",
-		   numVal, ele, data->getNumValues(step, ent, ele));
-	continue;
+  for(std::set<adaptivePoint>::iterator it = T::allPoints.begin();
+      it != T::allPoints.end(); ++it){
+    adaptivePoint *p = (adaptivePoint*)&(*it);
+    p->val = res(k);
+    if(resx){
+      p->valx = (*resx)(k);
+      p->valy = (*resy)(k);
+      p->valz = (*resz)(k);
+    }
+    p->X = XYZ(k, 0);
+    p->Y = XYZ(k, 1);
+    p->Z = XYZ(k, 2);
+    k++;
+  }
+  
+  if(resx){
+    delete resx; delete resy; delete resz;
+  }
+  
+  for(typename std::list<T*>::iterator it = T::all.begin(); 
+      it != T::all.end(); it++)
+    (*it)->visible = false;
+  
+  if(!plug || tol != 0.)
+    T::error(maxVal - minVal, tol);
+  
+  if(plug)
+    plug->assignSpecificVisibility();
+  
+  coords.clear();
+  values.clear();
+  for(typename std::list<T*>::iterator it = T::all.begin();
+      it != T::all.end(); it++){
+    if((*it)->visible){
+      adaptivePoint **p = (*it)->p;
+      for(int k = 0; k < T::numNodes; ++k) {
+        coords.push_back(PCoords(p[k]->X, p[k]->Y, p[k]->Z));
+        if(numComp == 1)
+          values.push_back(PValues(p[k]->val));
+        else
+          values.push_back(PValues(p[k]->valx, p[k]->valy, p[k]->valz));
       }
-      if(numNodes != data->getNumNodes(step, ent, ele)){
-	Msg::Error("Wrong number of nodes (%d) in element %d (expecting %d)",
-		   numNodes, ele, data->getNumNodes(step, ent, ele));
-	continue;
-      }
-      for(int nod = 0; nod < numNodes; nod++){
-	double x, y, z;
-	data->getNode(step, ent, ele, nod, x, y, z);
-	(*_posX)(k, nod) = x; 
-	(*_posY)(k, nod) = y; 
-	(*_posZ)(k, nod) = z; 
-      }
-      if(numComp == 1){
-	for(int i = 0; i < numVal; i++){
-	  double val;
-	  data->getValue(step, ent, ele, i, val);
-	  (*_val)(k, i) = val;
-	}
-      }
-      else if(numComp == 3){
-	for(int i = 0; i < numVal / 3; i++){
-	  double val[3];
-	  // adaptation of the visualization mesh is based on the norm
-	  // squared of the vector
- 	  data->getValue(step, ent, ele, 3 * i, val[0]); 
- 	  data->getValue(step, ent, ele, 3 * i + 1, val[1]); 
- 	  data->getValue(step, ent, ele, 3 * i + 2, val[2]); 
-	  (*_val)(k, i) = (val[0] * val[0] + val[1] * val[1] + val[2] * val[2]);
-	  (*_valX)(k, i) = val[0];
-	  (*_valY)(k, i) = val[1];
-	  (*_valZ)(k, i) = val[2];
-	}
-      }
-      k++;
     }
   }
 }
 
 template <class T>
-void adaptiveElements<T>::changeResolution(int level, double tol, GMSH_Post_Plugin *plug)
+void adaptiveElements<T>::addInView(double tol, int step, 
+                                    PViewData *in, PViewDataList *out, 
+                                    GMSH_Post_Plugin *plug)
 {
-  if(!_val){
-    Msg::Error("No data available to change adaptive resolution");
-    return;
-  }
+  int numComp = in->getNumComponents(0, 0, 0);
+  if(numComp != 1 && numComp != 3) return;
   
-  _level = level;
-  _tol = tol;
-
-  List_Reset(_listEle);
-  *_numEle = 0;
-
-  std::vector<int> done(_posX->size1(), 0);
-  // We first do the adaptive stuff at level 2 and will only process
-  // elements that have reached the maximal recursion level
-  int level_act = (level > 2) ? 2 : level;
-  while(1){
-    _changeResolution(level_act, plug, &done[0]);
-    int numDone = 0;
-    for(int i = 0; i < _posX->size1(); ++i) numDone += done[i];
-    if(numDone == _posX->size1()) break;
-    if(level_act >= level) break;
-    level_act++;
+  int numEle = 0, *outNb = 0;
+  List_T *outList = 0;
+  switch(T::numEdges){
+  case 1: 
+    numEle = in->getNumLines(); 
+    outNb = (numComp == 1) ? &out->NbSL : &out->NbVL;
+    outList = (numComp == 1) ? out->SL : out->VL;
+    break;
+  case 3:
+    numEle = in->getNumTriangles();
+    outNb = (numComp == 1) ? &out->NbST : &out->NbVT;
+    outList = (numComp == 1) ? out->ST : out->VT;
+    break;
+  case 4:
+    numEle = in->getNumQuadrangles();
+    outNb = (numComp == 1) ? &out->NbSQ : &out->NbVQ;
+    outList = (numComp == 1) ? out->SQ : out->VQ;
+    break;
+  case 6:
+    numEle = in->getNumTetrahedra();
+    outNb = (numComp == 1) ? &out->NbSS : &out->NbVS;
+    outList = (numComp == 1) ? out->SS : out->VS;
+    break;
+  case 9: 
+    numEle = in->getNumPrisms();
+    outNb = (numComp == 1) ? &out->NbSI : &out->NbVI;
+    outList = (numComp == 1) ? out->SI : out->VI;
+    break;
+  case 12: 
+    numEle = in->getNumHexahedra();
+    outNb = (numComp == 1) ? &out->NbSH : &out->NbVH;
+    outList = (numComp == 1) ? out->SH : out->VH;
+    break;
   }
-  //_changeResolution(level, plug, &done[0]);
+  if(!numEle) return;
+  
+  List_Reset(outList);
+  *outNb = 0;
+  
+  int k = 0;
+  for(int ent = 0; ent < in->getNumEntities(step); ent++){
+    for(int ele = 0; ele < in->getNumElements(step, ent); ele++){
+      if(in->skipElement(step, ent, ele) ||
+         in->getNumEdges(step, ent, ele) != T::numEdges) continue;
+      int numNodes = in->getNumNodes(step, ent, ele);
+      std::vector<PCoords> coords;
+      for(int i = 0; i < numNodes; i++){
+        double x, y, z;
+        in->getNode(step, ent, ele, i, x, y, z);
+        coords.push_back(PCoords(x, y, z));
+      }
+      int numVal = in->getNumValues(step, ent, ele);
+      std::vector<PValues> values;
+      if(numComp == 1){
+        for(int i = 0; i < numVal; i++){
+          double val;
+          in->getValue(step, ent, ele, i, val);
+          values.push_back(PValues(val));
+        }
+      }
+      else if(numComp == 3){
+        for(int i = 0; i < numVal / 3; i++){
+          double vx, vy, vz;
+          in->getValue(step, ent, ele, 3 * i, vx); 
+          in->getValue(step, ent, ele, 3 * i + 1, vy); 
+          in->getValue(step, ent, ele, 3 * i + 2, vz); 
+          values.push_back(PValues(vx, vy, vz));
+        }
+      }
+      adapt(tol, numComp, coords, values, out->Min, out->Max, plug);
+      *outNb += coords.size() / T::numNodes;
+      for(unsigned int i = 0; i < coords.size() / T::numNodes; i++){
+        for(int k = 0; k < T::numNodes; ++k) 
+          List_Add(outList, &coords[T::numNodes * i + k].c[0]);
+        for(int k = 0; k < T::numNodes; ++k) 
+          List_Add(outList, &coords[T::numNodes * i + k].c[1]);
+        for(int k = 0; k < T::numNodes; ++k) 
+          List_Add(outList, &coords[T::numNodes * i + k].c[2]);
+        for(int k = 0; k < T::numNodes; ++k)
+          for(int l = 0; l < numComp; ++l)
+            List_Add(outList, &values[T::numNodes * i + k].v[l]);
+      }
+    }
+  }
 }
 
 adaptiveData::adaptiveData(PViewData *data)
@@ -1102,53 +1093,26 @@ adaptiveData::adaptiveData(PViewData *data)
     _lines(0), _triangles(0), _quadrangles(0), 
     _tetrahedra(0), _hexahedra(0), _prisms(0)
 {
-  // We could do this, but it's a bit tricky (need to set a flag in
-  // the view to say "don't use the adaptive stuff anymore!")
-  /*
-  if(dynamic_cast<PViewDataList*>(_inData) && _inData->getNumTimeSteps() == 1)
-    _outData = (PViewDataList*)_inData;
-  else
-  */
   _outData = new PViewDataList(true);
-
-  int numComp = _inData->getNumComponents(0, 0, 0);
   std::vector<Double_Matrix*> p;
-  if(_inData->getNumLines() && _inData->getInterpolationMatrices(1, p) >= 2){
+  if(_inData->getNumLines() && _inData->getInterpolationMatrices(1, p) >= 2)
     _lines = new adaptiveElements<adaptiveLine>
-      ((numComp == 1) ? _outData->SL : _outData->VL,
-       (numComp == 1) ? &_outData->NbSL : &_outData->NbVL,
-       p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
-  }
-  if(_inData->getNumTriangles() && _inData->getInterpolationMatrices(3, p) >= 2){
+      (p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
+  if(_inData->getNumTriangles() && _inData->getInterpolationMatrices(3, p) >= 2)
     _triangles = new adaptiveElements<adaptiveTriangle>
-      ((numComp == 1) ? _outData->ST : _outData->VT,
-       (numComp == 1) ? &_outData->NbST : &_outData->NbVT,
-       p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
-  }
-  if(_inData->getNumQuadrangles() && _inData->getInterpolationMatrices(4, p) >= 2){
+      (p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
+  if(_inData->getNumQuadrangles() && _inData->getInterpolationMatrices(4, p) >= 2)
     _quadrangles = new adaptiveElements<adaptiveQuadrangle>
-      ((numComp == 1) ? _outData->SQ : _outData->VQ,
-       (numComp == 1) ? &_outData->NbSQ : &_outData->NbVQ,
-       p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
-  }
-  if(_inData->getNumTetrahedra() && _inData->getInterpolationMatrices(6, p) >= 2){
+      (p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
+  if(_inData->getNumTetrahedra() && _inData->getInterpolationMatrices(6, p) >= 2)
     _tetrahedra = new adaptiveElements<adaptiveTetrahedron>
-      ((numComp == 1) ? _outData->SS : _outData->VS,
-       (numComp == 1) ? &_outData->NbSS : &_outData->NbVS,
-       p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
-  }
-  if(_inData->getNumPrisms() && _inData->getInterpolationMatrices(9, p) >= 2){
+      (p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
+  if(_inData->getNumPrisms() && _inData->getInterpolationMatrices(9, p) >= 2)
     _prisms = new adaptiveElements<adaptivePrism>
-      ((numComp == 1) ? _outData->SI : _outData->VI,
-       (numComp == 1) ? &_outData->NbSI : &_outData->NbVI, 
-       p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
-  }
-  if(_inData->getNumHexahedra() && _inData->getInterpolationMatrices(12, p) >= 2){
+      (p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
+  if(_inData->getNumHexahedra() && _inData->getInterpolationMatrices(12, p) >= 2)
     _hexahedra = new adaptiveElements<adaptiveHexahedron>
-      ((numComp == 1) ? _outData->SH : _outData->VH,
-       (numComp == 1) ? &_outData->NbSH : &_outData->NbVH, 
-       p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
-  }
+      (p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
 }
 
 adaptiveData::~adaptiveData()
@@ -1159,31 +1123,30 @@ adaptiveData::~adaptiveData()
   if(_tetrahedra) delete _tetrahedra;
   if(_prisms) delete _prisms;
   if(_hexahedra) delete _hexahedra;
-  if(_inData != _outData) delete _outData;
+  delete _outData;
 }
 
 void adaptiveData::changeResolution(int step, int level, double tol, GMSH_Post_Plugin *plug)
 {
-  if(_step != step){
-    if(_lines) _lines->initData(_inData, step);
-    if(_triangles) _triangles->initData(_inData, step);
-    if(_quadrangles) _quadrangles->initData(_inData, step);
-    if(_tetrahedra) _tetrahedra->initData(_inData, step);
-    if(_prisms) _prisms->initData(_inData, step);
-    if(_hexahedra) _hexahedra->initData(_inData, step);
+  if(_level != level){
+    if(_lines) _lines->init(level);
+    if(_triangles) _triangles->init(level);
+    if(_quadrangles) _quadrangles->init(level);
+    if(_tetrahedra) _tetrahedra->init(level);
+    if(_prisms) _prisms->init(level);
+    if(_hexahedra) _hexahedra->init(level);
   }
   if(plug || _step != step || _level != level || _tol != tol){
     _outData->setDirty(true);
-    if(_lines) _lines->changeResolution(level, tol, plug);
-    if(_triangles) _triangles->changeResolution(level, tol, plug);
-    if(_quadrangles) _quadrangles->changeResolution(level, tol, plug);
-    if(_tetrahedra) _tetrahedra->changeResolution(level, tol, plug);
-    if(_prisms) _prisms->changeResolution(level, tol, plug);
-    if(_hexahedra) _hexahedra->changeResolution(level, tol, plug);
+    if(_lines) _lines->addInView(tol, step, _inData, _outData, plug);
+    if(_triangles) _triangles->addInView(tol, step, _inData, _outData, plug);
+    if(_quadrangles) _quadrangles->addInView(tol, step, _inData, _outData, plug);
+    if(_tetrahedra) _tetrahedra->addInView(tol, step, _inData, _outData, plug);
+    if(_prisms) _prisms->addInView(tol, step, _inData, _outData, plug);
+    if(_hexahedra) _hexahedra->addInView(tol, step, _inData, _outData, plug);
     _outData->finalize();
   }
   _step = step;
   _level = level;
   _tol = tol;
 }
-

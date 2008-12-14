@@ -216,13 +216,7 @@ ExtractEdges${OBJEXT}: ExtractEdges.cpp ExtractEdges.h Plugin.h \
   ../Common/Options.h ../Post/ColorTable.h ../Common/GmshMessage.h \
   ../Post/PView.h ../Geo/SPoint3.h ../Post/PViewDataList.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Numeric/GmshMatrix.h ../Common/ListUtils.h ../Mesh/BDS.h \
-  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
-  ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/GEntity.h \
-  ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/Pair.h
+  ../Numeric/GmshMatrix.h ../Common/ListUtils.h ../Mesh/BDS.h
 MakeSimplex${OBJEXT}: MakeSimplex.cpp MakeSimplex.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/GmshMessage.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
