@@ -4,6 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string>
+#include <time.h>
 #include "GmshDefines.h"
 #include "GModel.h"
 #include "GmshMessage.h"
@@ -83,6 +84,9 @@ int GmshBatch()
 {
   if(!GModel::current()) return 0;
 
+  Msg::Info("Running '%s'", Msg::GetCommandLine().c_str());
+  Msg::Info("Started on %s", Msg::GetLaunchDate().c_str());
+
   OpenProject(CTX.filename);
   for(unsigned int i = 1; i < CTX.files.size(); i++){
     if(CTX.files[i] == "-new")
@@ -123,6 +127,12 @@ int GmshBatch()
 #endif
     CreateOutputFile(CTX.output_filename, CTX.mesh.format);
   }
+
+  time_t now;
+  time(&now);
+  std::string currtime = ctime(&now);
+  currtime.resize(currtime.size() - 1);
+  Msg::Info("Stopped on %s", currtime.c_str());
 
   return 1;
 }

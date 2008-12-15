@@ -33,6 +33,8 @@ class Msg {
   static int _warningCount, _errorCount;
   // callback
   static GmshMessage *_callback;
+  // command-line and startup time
+  static std::string _commandLine, _launchDate;
  public:
   Msg() {}
   static void Init(int argc, char **argv);
@@ -48,6 +50,8 @@ class Msg {
   static int GetThreadNum();
   static void SetVerbosity(int val){ _verbosity = val; }
   static int GetVerbosity(){ return _verbosity; }
+  static std::string GetLaunchDate(){ return _launchDate; }
+  static std::string GetCommandLine(){ return _commandLine; }
   static void Fatal(const char *fmt, ...);
   static void Error(const char *fmt, ...);
   static void Warning(const char *fmt, ...);

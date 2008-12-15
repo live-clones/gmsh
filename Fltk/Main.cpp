@@ -4,7 +4,6 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string>
-#include <time.h>
 #include "GUI.h"
 #include "menuWindow.h"
 #include "Gmsh.h"
@@ -26,17 +25,6 @@ extern Context_T CTX;
 
 int main(int argc, char *argv[])
 {
-  // Log some info
-  time_t now;
-  time(&now);
-  std::string currtime(ctime(&now));
-  currtime[currtime.size() - 1] = '\0';
-  std::string cmdline;
-  for(int i = 0; i < argc; i++){
-    if(i) cmdline += " ";
-    cmdline += argv[i];
-  }
-
   // Hack to generate automatic documentation (before getting
   // user-defined options)
   if(argc == 2 && std::string(argv[1]) == "-doc"){
@@ -59,14 +47,8 @@ int main(int argc, char *argv[])
 
   // Non-interactive Gmsh
   if(CTX.batch) {
-    Msg::Info("Running '%s'", cmdline.c_str());
-    Msg::Info("Started on %s", currtime.c_str());
     GmshBatch();
     GmshFinalize();
-    time(&now);
-    currtime = ctime(&now);
-    currtime[currtime.size() - 1] = '\0';
-    Msg::Info("Stopped on %s", currtime.c_str());
     Msg::Exit(0);
   }
 
@@ -89,8 +71,8 @@ int main(int argc, char *argv[])
   Msg::Info("Build host     : %s", Get_GmshBuildHost());
   Msg::Info("Packager       : %s", Get_GmshPackager());
   Msg::Info("Home directory : %s", CTX.home_dir);
-  Msg::Info("Launch date    : %s", currtime.c_str());
-  Msg::Info("Command line   : %s", cmdline.c_str());
+  Msg::Info("Launch date    : %s", Msg::GetLaunchDate().c_str());
+  Msg::Info("Command line   : %s", Msg::GetCommandLine().c_str());
   Msg::Info("-------------------------------------------------------");
 
   // Display the GUI immediately to have a quick "a la Windows" launch time

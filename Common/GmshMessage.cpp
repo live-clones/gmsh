@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include "GmshMessage.h"
 #include "Gmsh.h"
 #include "Options.h"
@@ -34,6 +35,8 @@ std::map<std::string, double> Msg::_timers;
 int Msg::_warningCount = 0;
 int Msg::_errorCount = 0;
 GmshMessage *Msg::_callback = 0;
+std::string Msg::_commandLine;
+std::string Msg::_launchDate;
 
 #if defined(HAVE_NO_VSNPRINTF)
 static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
@@ -59,6 +62,15 @@ void Msg::Init(int argc, char **argv)
   MPI_Comm_size(MPI_COMM_WORLD, &_commSize);
   MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
 #endif
+  time_t now;
+  time(&now);
+  _launchDate = ctime(&now);
+  _launchDate.resize(_launchDate.size() - 1);
+  _commandLine.clear();
+  for(int i = 0; i < argc; i++){
+    if(i) _commandLine += " ";
+    _commandLine += argv[i];
+  }
 }
 
 void Msg::Exit(int level)
