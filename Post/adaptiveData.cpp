@@ -905,6 +905,7 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
   }
   
   int numPoints = T::allPoints.size();
+
   if(!numPoints){
     Msg::Error("No adapted points to interpolate");
     return;
@@ -985,9 +986,9 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
     i++;
   }
   
-  if(resx){
-    delete resx; delete resy; delete resz;
-  }
+  if(resx) delete resx;
+  if(resy) delete resy;
+  if(resz) delete resz;
   
   for(typename std::list<T*>::iterator it = T::all.begin(); 
       it != T::all.end(); it++)

@@ -682,12 +682,12 @@ const gmshFunctionSpace &gmshFunctionSpaces::find(int tag)
   return fs[tag];
 }
 
-std::map<std::pair<int,int>, Double_Matrix> gmshFunctionSpaces::injector;
+std::map<std::pair<int, int>, Double_Matrix> gmshFunctionSpaces::injector;
 
-const Double_Matrix &gmshFunctionSpaces::findInjector(int tag1,int tag2)
+const Double_Matrix &gmshFunctionSpaces::findInjector(int tag1, int tag2)
 {
   std::pair<int,int> key(tag1,tag2);
-  std::map<std::pair<int,int>,Double_Matrix>::const_iterator it = injector.find(key);
+  std::map<std::pair<int, int>, Double_Matrix>::const_iterator it = injector.find(key);
   if (it != injector.end()) return it->second;
 
   const gmshFunctionSpace& fs1 = find(tag1);
@@ -697,11 +697,11 @@ const Double_Matrix &gmshFunctionSpaces::findInjector(int tag1,int tag2)
   
   double sf[256];
   
-  for (int i=0;i<fs1.points.size1();i++) {
-    fs2.f(fs1.points(i,0),fs1.points(i,1),fs1.points(i,2),sf);
-    for (int j=0;j<fs2.points.size1();j++) inj(i,j) = sf[j];
+  for (int i = 0; i < fs1.points.size1(); i++) {
+    fs2.f(fs1.points(i, 0), fs1.points(i, 1), fs1.points(i, 2), sf);
+    for (int j = 0; j < fs2.points.size1(); j++) inj(i, j) = sf[j];
   }
 
-  injector.insert(std::make_pair(key,inj));
+  injector.insert(std::make_pair(key, inj));
   return injector[key];
 }
