@@ -47,20 +47,15 @@ static void cleanElement()
 }
 
 static void computeShapeFunctions(Double_Matrix *coeffs, Double_Matrix *eexps,
-				  double u, double v, double w, double *sf)
+				  double u, double v, double w, Double_Vector *sf,
+                                  Double_Vector *tmp)
 {
-  static double powsuvw[256];
-  for(int j = 0; j < eexps->size1(); ++j) {
-    powsuvw[j] = pow(u, (*eexps)(j, 0));
-    if(eexps->size2() > 1) powsuvw[j] *= pow(v, (*eexps)(j, 1));
-    if(eexps->size2() > 2) powsuvw[j] *= pow(w, (*eexps)(j, 2));
+  for(int i = 0; i < eexps->size1(); i++) {
+    (*tmp)(i) = pow(u, (*eexps)(i, 0));
+    if(eexps->size2() > 1) (*tmp)(i) *= pow(v, (*eexps)(i, 1));
+    if(eexps->size2() > 2) (*tmp)(i) *= pow(w, (*eexps)(i, 2));
   }
-  for(int i = 0; i < coeffs->size1(); ++i) {
-    sf[i] = 0.;
-    for(int j = 0; j < coeffs->size2(); ++j) {
-      sf[i] += (*coeffs)(i, j) * powsuvw[j];
-    }
-  }
+  coeffs->mult(*tmp, *sf);
 }
 
 adaptivePoint *adaptivePoint::add(double x, double y, double z,
@@ -801,9 +796,9 @@ void adaptivePrism::recurError(adaptivePrism *p, double AVG, double tol)
         p->visible = true;
     }
     else {
-      bool err=false;
+      bool err = false;
       double ve[8];
-      for(int i=0; i<8; i++){
+      for(int i = 0; i < 8; i++){
         double v1 = p->e[i]->e[0]->V();
         double v2 = p->e[i]->e[1]->V();
         double v3 = p->e[i]->e[2]->V();
@@ -821,12 +816,27 @@ void adaptivePrism::recurError(adaptivePrism *p, double AVG, double tol)
       err |= (fabs((p->V() - vr))>AVG*tol);
       if(err) {
         p->visible = false;
-        for(int i=0;i<8;i++)
+        for(int i = 0; i < 8; i++)
           recurError(p->e[i], AVG, tol);
       }
       else
         p->visible = true;
     }
+  }
+}
+
+template <class T>
+adaptiveElements<T>::adaptiveElements(std::vector<Double_Matrix*> &p)
+  : _coeffsVal(0), _eexpsVal(0), _interpolVal(0),
+    _coeffsGeom(0), _eexpsGeom(0), _interpolGeom(0)
+{
+  if(p.size() >= 2){
+    _coeffsVal = p[0];
+    _eexpsVal = p[1];
+  }
+  if(p.size() == 4){
+    _coeffsGeom = p[2];
+    _eexpsGeom = p[3];
   }
 }
 
@@ -842,7 +852,7 @@ template <class T>
 void adaptiveElements<T>::init(int level)
 {
   T::create(level);
-  int numVals = _coeffsVal->size1();
+  int numVals = _coeffsVal ? _coeffsVal->size1() : T::numNodes;
   int numNodes = _coeffsGeom ? _coeffsGeom->size1() : T::numNodes;
   
   if(_interpolVal) delete _interpolVal;
@@ -851,25 +861,34 @@ void adaptiveElements<T>::init(int level)
   if(_interpolGeom) delete _interpolGeom;
   _interpolGeom = new Double_Matrix(T::allPoints.size(), numNodes);
   
-  double sf[100];
-  int kk = 0;
+  Double_Vector sfv(numVals), *tmpv = 0;
+  Double_Vector sfg(numNodes), *tmpg = 0;
+  if(_eexpsVal) tmpv = new Double_Vector(_eexpsVal->size1());
+  if(_eexpsGeom) tmpg = new Double_Vector(_eexpsGeom->size1());
+
+  int i = 0;
   for(std::set<adaptivePoint>::iterator it = T::allPoints.begin(); 
       it != T::allPoints.end(); ++it) {
-    adaptivePoint *p = (adaptivePoint*)&(*it);
-    
-    computeShapeFunctions(_coeffsVal, _eexpsVal, p->x, p->y, p->z, sf);
-    for(int k = 0; k < numVals; k++)
-      (*_interpolVal)(kk, k) = sf[k];
-    
-    if(_coeffsGeom)
-      computeShapeFunctions(_coeffsGeom, _eexpsGeom, p->x, p->y, p->z, sf);
+
+    if(_coeffsVal && _eexpsVal)
+      computeShapeFunctions(_coeffsVal, _eexpsVal, it->x, it->y, it->z, &sfv, tmpv);
     else
-      T::GSF(p->x, p->y, p->z, sf);
-    for(int k = 0; k < numNodes; k++)
-      (*_interpolGeom)(kk, k) = sf[k];
-    
-    kk++;
+      T::GSF(it->x, it->y, it->z, sfv);
+    for(int j = 0; j < numVals; j++)
+      (*_interpolVal)(i, j) = sfv(j);
+
+    if(_coeffsGeom && _eexpsGeom)
+      computeShapeFunctions(_coeffsGeom, _eexpsGeom, it->x, it->y, it->z, &sfg, tmpg);
+    else
+      T::GSF(it->x, it->y, it->z, sfg);
+    for(int j = 0; j < numNodes; j++)
+      (*_interpolGeom)(i, j) = sfg(j);
+
+    i++;
   }
+
+  if(tmpv) delete tmpv;
+  if(tmpg) delete tmpg;
 }
 
 template <class T>
@@ -891,7 +910,7 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
     return;
   }
   
-  int numVals = _coeffsVal->size1();
+  int numVals = _coeffsVal ? _coeffsVal->size1() : T::numNodes;
   if(numVals != values.size()){
     Msg::Error("Wrong number of values in adaptation %d != %i", 
                numVals, values.size());
@@ -900,16 +919,18 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
   
   Double_Vector val(numVals), res(numPoints);
   if(numComp == 1){
-    for(int k = 0; k < numVals; ++k)
-      val(k) = values[k].v[0];
+    for(int i = 0; i < numVals; i++)
+      val(i) = values[i].v[0];
   }
   else{
-    for(int k = 0; k < numVals; ++k)
-      val(k) = values[k].v[0] * values[k].v[0] + values[k].v[1] * values[k].v[1] +
-        values[k].v[2] * values[k].v[2];
+    for(int i = 0; i < numVals; i++)
+      val(i) = values[i].v[0] * values[i].v[0] + values[i].v[1] * values[i].v[1] +
+        values[i].v[2] * values[i].v[2];
   }
   _interpolVal->mult(val, res);
-  
+
+  //minVal = VAL_INF;  
+  //maxVal = -VAL_INF;  
   for(int i = 0; i < numPoints; i++){
     minVal = std::min(minVal, res(i));
     maxVal = std::max(maxVal, res(i));
@@ -922,10 +943,10 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
     resx = new Double_Vector(numPoints);
     resy = new Double_Vector(numPoints);
     resz = new Double_Vector(numPoints);
-    for(int k = 0; k < numVals; ++k){
-      valx(k) = values[k].v[0];
-      valy(k) = values[k].v[1];
-      valz(k) = values[k].v[2];
+    for(int i = 0; i < numVals; i++){
+      valx(i) = values[i].v[0];
+      valy(i) = values[i].v[1];
+      valz(i) = values[i].v[2];
     }
     _interpolVal->mult(valx, *resx);
     _interpolVal->mult(valy, *resy);
@@ -940,27 +961,28 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
   }
   
   Double_Matrix xyz(numNodes, 3), XYZ(numPoints, 3);
-  for(int k = 0; k < numNodes; ++k){
-    xyz(k, 0) = coords[k].c[0];
-    xyz(k, 1) = coords[k].c[1];
-    xyz(k, 2) = coords[k].c[2];
+  for(int i = 0; i < numNodes; i++){
+    xyz(i, 0) = coords[i].c[0];
+    xyz(i, 1) = coords[i].c[1];
+    xyz(i, 2) = coords[i].c[2];
   }
   _interpolGeom->mult(xyz, XYZ);
   
-  int k = 0;
+  int i = 0;
   for(std::set<adaptivePoint>::iterator it = T::allPoints.begin();
       it != T::allPoints.end(); ++it){
+    // ok because we know this will not change the set ordering
     adaptivePoint *p = (adaptivePoint*)&(*it);
-    p->val = res(k);
+    p->val = res(i);
     if(resx){
-      p->valx = (*resx)(k);
-      p->valy = (*resy)(k);
-      p->valz = (*resz)(k);
+      p->valx = (*resx)(i);
+      p->valy = (*resy)(i);
+      p->valz = (*resz)(i);
     }
-    p->X = XYZ(k, 0);
-    p->Y = XYZ(k, 1);
-    p->Z = XYZ(k, 2);
-    k++;
+    p->X = XYZ(i, 0);
+    p->Y = XYZ(i, 1);
+    p->Z = XYZ(i, 2);
+    i++;
   }
   
   if(resx){
@@ -972,7 +994,7 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
     (*it)->visible = false;
   
   if(!plug || tol != 0.)
-    T::error(maxVal - minVal, tol);
+    T::error(fabs(maxVal - minVal), tol);
   
   if(plug)
     plug->assignSpecificVisibility();
@@ -983,12 +1005,12 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
       it != T::all.end(); it++){
     if((*it)->visible){
       adaptivePoint **p = (*it)->p;
-      for(int k = 0; k < T::numNodes; ++k) {
-        coords.push_back(PCoords(p[k]->X, p[k]->Y, p[k]->Z));
+      for(int i = 0; i < T::numNodes; i++) {
+        coords.push_back(PCoords(p[i]->X, p[i]->Y, p[i]->Z));
         if(numComp == 1)
-          values.push_back(PValues(p[k]->val));
+          values.push_back(PValues(p[i]->val));
         else
-          values.push_back(PValues(p[k]->valx, p[k]->valy, p[k]->valz));
+          values.push_back(PValues(p[i]->valx, p[i]->valy, p[i]->valz));
       }
     }
   }
@@ -1094,24 +1116,30 @@ adaptiveData::adaptiveData(PViewData *data)
 {
   _outData = new PViewDataList(true);
   std::vector<Double_Matrix*> p;
-  if(_inData->getNumLines() && _inData->getInterpolationMatrices(1, p) >= 2)
-    _lines = new adaptiveElements<adaptiveLine>
-      (p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
-  if(_inData->getNumTriangles() && _inData->getInterpolationMatrices(3, p) >= 2)
-    _triangles = new adaptiveElements<adaptiveTriangle>
-      (p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
-  if(_inData->getNumQuadrangles() && _inData->getInterpolationMatrices(4, p) >= 2)
-    _quadrangles = new adaptiveElements<adaptiveQuadrangle>
-      (p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
-  if(_inData->getNumTetrahedra() && _inData->getInterpolationMatrices(6, p) >= 2)
-    _tetrahedra = new adaptiveElements<adaptiveTetrahedron>
-      (p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
-  if(_inData->getNumPrisms() && _inData->getInterpolationMatrices(9, p) >= 2)
-    _prisms = new adaptiveElements<adaptivePrism>
-      (p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
-  if(_inData->getNumHexahedra() && _inData->getInterpolationMatrices(12, p) >= 2)
-    _hexahedra = new adaptiveElements<adaptiveHexahedron>
-      (p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
+  if(_inData->getNumLines()){
+    _inData->getInterpolationMatrices(1, p);
+    _lines = new adaptiveElements<adaptiveLine>(p);
+  }
+  if(_inData->getNumTriangles()){
+    _inData->getInterpolationMatrices(3, p);
+    _triangles = new adaptiveElements<adaptiveTriangle>(p);
+  }
+  if(_inData->getNumQuadrangles()){
+    _inData->getInterpolationMatrices(4, p);
+    _quadrangles = new adaptiveElements<adaptiveQuadrangle>(p);
+  }
+  if(_inData->getNumTetrahedra()){
+    _inData->getInterpolationMatrices(6, p);
+    _tetrahedra = new adaptiveElements<adaptiveTetrahedron>(p);
+  }
+  if(_inData->getNumPrisms()){
+    _inData->getInterpolationMatrices(9, p);
+    _prisms = new adaptiveElements<adaptivePrism>(p);
+  }
+  if(_inData->getNumHexahedra()){
+    _inData->getInterpolationMatrices(12, p);
+    _hexahedra = new adaptiveElements<adaptiveHexahedron>(p);
+  }
 }
 
 adaptiveData::~adaptiveData()

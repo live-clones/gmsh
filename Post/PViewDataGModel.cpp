@@ -94,23 +94,9 @@ void PViewDataGModel::_addInterpolationMatricesForElement(MElement *e)
       _interpolation[edg].push_back(new Double_Matrix(fs->monomials));
     }
   }
-  else if(edg == 4 && e->getPolynomialOrder() == 1){
-    // quad4
-    Double_Matrix *c = new Double_Matrix(4, 4);
-    (*c)(0, 0) = .25; (*c)(0, 1) = -.25; (*c)(0, 2) = .25; (*c)(0, 3) = -.25;
-    (*c)(1, 0) = .25; (*c)(1, 1) = .25; (*c)(1, 2) = -.25; (*c)(1, 3) = -.25;
-    (*c)(2, 0) = .25; (*c)(2, 1) = .25; (*c)(2, 2) = .25; (*c)(2, 3) = .25;
-    (*c)(3, 0) = .25; (*c)(3, 1) = -.25; (*c)(3, 2) = -.25; (*c)(3, 3) = .25;
-    Double_Matrix *m = new Double_Matrix(4, 2);
-    (*m)(0, 0) = 0; (*m)(0, 1) = 0;
-    (*m)(1, 0) = 1; (*m)(1, 1) = 0;
-    (*m)(2, 0) = 1; (*m)(2, 1) = 1;
-    (*m)(3, 0) = 0; (*m)(3, 1) = 1;
-    _interpolation[edg].push_back(c);
-    _interpolation[edg].push_back(m);
-  }
   else{
-    Msg::Warning("need to add interpol matrices for ele type %d", e->getTypeForMSH());
+    Msg::Info("No interpolation matrix for element type %d: using first order", 
+              e->getTypeForMSH());
   }
 }
 

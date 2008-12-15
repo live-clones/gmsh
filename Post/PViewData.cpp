@@ -31,7 +31,7 @@ bool PViewData::finalize()
 
 void PViewData::initAdaptiveData(int step, int level, double tol)
 {
-  if(!_adaptive && _interpolation.size()){
+  if(!_adaptive){
     Msg::Info("Initializing adaptive data %p interp size=%d", this, _interpolation.size());
     _adaptive = new adaptiveData(this);
     _adaptive->changeResolution(step, level, tol);

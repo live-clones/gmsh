@@ -53,10 +53,10 @@ class adaptiveLine {
   {
     return (p[0]->val + p[1]->val) / 2.;
   }
-  inline static void GSF(double u, double v, double w, double sf[])
+  inline static void GSF(double u, double v, double w, Double_Vector &sf)
   {
-    sf[0] = (1 - u) / 2.;
-    sf[1] = (1 + u) / 2.;
+    sf(0) = (1 - u) / 2.;
+    sf(1) = (1 + u) / 2.;
   }
   static void create(int maxlevel);
   static void recurCreate(adaptiveLine *e, int maxlevel, int level);
@@ -85,11 +85,11 @@ class adaptiveTriangle {
   {
     return (p[0]->val + p[1]->val + p[2]->val) / 3.;
   }
-  inline static void GSF(double u, double v, double w, double sf[])
+  inline static void GSF(double u, double v, double w, Double_Vector &sf)
   {
-    sf[0] = 1. - u - v;
-    sf[1] = u;
-    sf[2] = v;
+    sf(0) = 1. - u - v;
+    sf(1) = u;
+    sf(2) = v;
   }
   static void create(int maxlevel);
   static void recurCreate(adaptiveTriangle *t, int maxlevel, int level);
@@ -120,12 +120,12 @@ class adaptiveQuadrangle {
   {
     return (p[0]->val + p[1]->val + p[2]->val + p[3]->val) / 4.;
   }
-  inline static void GSF(double u, double v, double w, double sf[])
+  inline static void GSF(double u, double v, double w, Double_Vector &sf)
   {
-    sf[0] = 0.25 * (1. - u) * (1. - v);
-    sf[1] = 0.25 * (1. + u) * (1. - v);
-    sf[2] = 0.25 * (1. + u) * (1. + v);
-    sf[3] = 0.25 * (1. - u) * (1. + v);
+    sf(0) = 0.25 * (1. - u) * (1. - v);
+    sf(1) = 0.25 * (1. + u) * (1. - v);
+    sf(2) = 0.25 * (1. + u) * (1. + v);
+    sf(3) = 0.25 * (1. - u) * (1. + v);
   }
   static void create(int maxlevel);
   static void recurCreate(adaptiveQuadrangle *q, int maxlevel, int level);
@@ -161,14 +161,14 @@ class adaptivePrism {
   {
     return (p[0]->val + p[1]->val + p[2]->val + p[3]->val + p[4]->val + p[5]->val) / 6.;
   }
-  inline static void GSF(double u, double v, double w, double sf[])
+  inline static void GSF(double u, double v, double w, Double_Vector &sf)
   {
-    sf[0] = (1. - u - v) * (1 - w) / 2;
-    sf[1] = u * (1-w)/2;
-    sf[2] = v*(1-w)/2;
-    sf[3] = (1. - u - v)*(1+w)/2;
-    sf[4] = u*(1+w)/2;
-    sf[5] = v*(1+w)/2;
+    sf(0) = (1. - u - v) * (1 - w) / 2;
+    sf(1) = u * (1-w)/2;
+    sf(2) = v*(1-w)/2;
+    sf(3) = (1. - u - v)*(1+w)/2;
+    sf(4) = u*(1+w)/2;
+    sf(5) = v*(1+w)/2;
   }
   static void create(int maxlevel);
   static void recurCreate(adaptivePrism *p, int maxlevel, int level);
@@ -200,12 +200,12 @@ class adaptiveTetrahedron {
   {
     return (p[0]->val + p[1]->val + p[2]->val + p[3]->val) / 4.;
   }
-  inline static void GSF(double u, double v, double w, double sf[])
+  inline static void GSF(double u, double v, double w, Double_Vector &sf)
   {
-    sf[0] = 1. - u - v - w;
-    sf[1] = u;
-    sf[2] = v;
-    sf[3] = w;
+    sf(0) = 1. - u - v - w;
+    sf(1) = u;
+    sf(2) = v;
+    sf(3) = w;
   }
   static void create(int maxlevel);
   static void recurCreate(adaptiveTetrahedron *t, int maxlevel, int level);
@@ -243,16 +243,16 @@ class adaptiveHexahedron {
     return (p[0]->val + p[1]->val + p[2]->val+ p[3]->val +
             p[4]->val + p[5]->val + p[6]->val+ p[7]->val) / 8.;
   }
-  inline static void GSF(double u, double v, double w, double sf[])
+  inline static void GSF(double u, double v, double w, Double_Vector &sf)
   {
-    sf[0] = 0.125 * (1 - u) * (1 - v) * (1 - w);
-    sf[1] = 0.125 * (1 + u) * (1 - v) * (1 - w);
-    sf[2] = 0.125 * (1 + u) * (1 + v) * (1 - w);
-    sf[3] = 0.125 * (1 - u) * (1 + v) * (1 - w);
-    sf[4] = 0.125 * (1 - u) * (1 - v) * (1 + w);
-    sf[5] = 0.125 * (1 + u) * (1 - v) * (1 + w);
-    sf[6] = 0.125 * (1 + u) * (1 + v) * (1 + w);
-    sf[7] = 0.125 * (1 - u) * (1 + v) * (1 + w);
+    sf(0) = 0.125 * (1 - u) * (1 - v) * (1 - w);
+    sf(1) = 0.125 * (1 + u) * (1 - v) * (1 - w);
+    sf(2) = 0.125 * (1 + u) * (1 + v) * (1 - w);
+    sf(3) = 0.125 * (1 - u) * (1 + v) * (1 - w);
+    sf(4) = 0.125 * (1 - u) * (1 - v) * (1 + w);
+    sf(5) = 0.125 * (1 + u) * (1 - v) * (1 + w);
+    sf(6) = 0.125 * (1 + u) * (1 + v) * (1 + w);
+    sf(7) = 0.125 * (1 - u) * (1 + v) * (1 + w);
   }
   static void create(int maxlevel);
   static void recurCreate(adaptiveHexahedron *h, int maxlevel, int level);
@@ -288,10 +288,7 @@ class adaptiveElements {
   Double_Matrix *_coeffsVal, *_eexpsVal, *_interpolVal;
   Double_Matrix *_coeffsGeom, *_eexpsGeom, *_interpolGeom;
  public:
-  adaptiveElements(Double_Matrix *coeffsVal, Double_Matrix *eexpsVal, 
-                   Double_Matrix *coeffsGeom=0, Double_Matrix *eexpsGeom=0)
-    : _coeffsVal(coeffsVal), _eexpsVal(eexpsVal), _interpolVal(0),
-      _coeffsGeom(coeffsGeom), _eexpsGeom(eexpsGeom), _interpolGeom(0) {}
+  adaptiveElements(std::vector<Double_Matrix*> &interpolationMatrices);
   ~adaptiveElements();
   // create the _interpolVal and _interpolGeom matrices at the given
   // refinement level
