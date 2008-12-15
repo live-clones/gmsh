@@ -362,7 +362,7 @@ class GSL_Matrix
   }
   inline void mult(const GSL_Matrix &x, GSL_Matrix &b)
   {
-    gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, data, x.data, 1.0, b.data);
+    gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1., data, x.data, 0., b.data);
   }
   inline void set_all(const double &m) 
   {
@@ -432,7 +432,7 @@ class GSL_Matrix
   }
   inline void mult(const GSL_Vector &x, GSL_Vector &b)
   {
-    gsl_blas_dgemv(CblasNoTrans, 1.0, data, x.data, 1.0, b.data);
+    gsl_blas_dgemv(CblasNoTrans, 1., data, x.data, 0., b.data);
   }
   inline void blas_dgemm(const GSL_Matrix &x, GSL_Matrix &b, 
 			 const double c_a = 1.0, const double c_b = 1.0)
