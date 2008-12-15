@@ -59,9 +59,14 @@ int main(int argc, char *argv[])
 
   // Non-interactive Gmsh
   if(CTX.batch) {
-    Msg::Info("'%s' started on %s", cmdline.c_str(), currtime.c_str());
+    Msg::Info("Running '%s'", cmdline.c_str());
+    Msg::Info("Started on %s", currtime.c_str());
     GmshBatch();
     GmshFinalize();
+    time(&now);
+    currtime = ctime(&now);
+    currtime[currtime.size() - 1] = '\0';
+    Msg::Info("Stopped on %s", currtime.c_str());
     Msg::Exit(0);
   }
 
