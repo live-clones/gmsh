@@ -35,6 +35,14 @@ extern StringXColor PostProcessingOptions_Color[] ;
 extern StringXColor ViewOptions_Color[] ;
 extern StringXColor PrintOptions_Color[] ;
 
+class engineeringValueInput : public Fl_Value_Input
+{
+ public:
+  engineeringValueInput(int x, int y, int w, int h, const char *l=0) :
+    Fl_Value_Input(x, y, w, h, l) {}
+  virtual int format(char *buffer){ return snprintf(buffer, 128, "%g", value()); }
+};
+
 static Fl_Menu_Item menu_point_display[] = {
   {"Color dot",   0, 0, 0},
   {"3D sphere",   0, 0, 0},
@@ -1962,8 +1970,6 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
       mesh.value[3] = new Fl_Value_Input
         (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Element order");
       mesh.value[3]->minimum(1);
-      // FIXME: this makes it possible to set > 2 by hand, but not by
-      // dragging (>2 is too buggy for general use)
       mesh.value[3]->maximum(2);
       mesh.value[3]->step(1);
       mesh.value[3]->align(FL_ALIGN_RIGHT);
@@ -2789,7 +2795,7 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
         (L + 2 * WB + ss  , 2 * WB + 2 * BH, ss, BH);
       view.value[53] = new Fl_Value_Input
         (L + 2 * WB + 2*ss, 2 * WB + 2 * BH, ss, BH, " X");
-      view.value[40] = new Fl_Value_Input
+      view.value[40] = new engineeringValueInput
         (L + 2 * WB + IW  , 2 * WB + 2 * BH, 7*IW/10, BH);
 
       view.value[54] = new Fl_Value_Input
@@ -2798,7 +2804,7 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
         (L + 2 * WB + ss  , 2 * WB + 3 * BH, ss, BH);
       view.value[56] = new Fl_Value_Input
         (L + 2 * WB + 2*ss, 2 * WB + 3 * BH, ss, BH, " Y +");
-      view.value[41] = new Fl_Value_Input
+      view.value[41] = new engineeringValueInput
         (L + 2 * WB + IW  , 2 * WB + 3 * BH, 7*IW/10, BH);
 
       view.value[57] = new Fl_Value_Input
@@ -2807,21 +2813,21 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
         (L + 2 * WB + ss  , 2 * WB + 4 * BH, ss, BH);
       view.value[59] = new Fl_Value_Input
         (L + 2 * WB + 2*ss, 2 * WB + 4 * BH, ss, BH, " Z");
-      view.value[42] = new Fl_Value_Input
+      view.value[42] = new engineeringValueInput
         (L + 2 * WB + IW  , 2 * WB + 4 * BH, 7*IW/10, BH);
 
       Fl_Box *b2 = new Fl_Box
         (FL_NO_BOX, L + 2 * WB + 2 * IW-3*WB, 2 * WB + 1 * BH, 7*IW/10, BH, "Raise:");
       b2->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
 
-      view.value[43] = new Fl_Value_Input
+      view.value[43] = new engineeringValueInput
         (L + 2 * WB + 2 * IW-3*WB, 2 * WB + 2 * BH, 7*IW/10, BH);
-      view.value[44] = new Fl_Value_Input
+      view.value[44] = new engineeringValueInput
         (L + 2 * WB + 2 * IW-3*WB, 2 * WB + 3 * BH, 7*IW/10, BH);
-      view.value[45] = new Fl_Value_Input
+      view.value[45] = new engineeringValueInput
         (L + 2 * WB + 2 * IW-3*WB, 2 * WB + 4 * BH, 7*IW/10, BH);
 
-      view.value[46] = new Fl_Value_Input
+      view.value[46] = new engineeringValueInput
         (L + 2 * WB, 2 * WB + 5 * BH, 3*ss, BH, "Normal raise");
 
       for(int i = 40; i <= 46; i++){
@@ -2849,7 +2855,7 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
       view.choice[11]->add("Self");
       view.choice[11]->callback(view_options_ok_cb);
 
-      view.value[2] = new Fl_Value_Input
+      view.value[2] = new engineeringValueInput
         (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Factor");
       view.value[2]->align(FL_ALIGN_RIGHT);
       view.value[2]->when(FL_WHEN_RELEASE);
@@ -2959,7 +2965,7 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
         view.value[60]->align(FL_ALIGN_RIGHT);
         view.value[60]->callback(view_options_ok_cb);
 
-        view.value[63] = new Fl_Value_Input
+        view.value[63] = new engineeringValueInput
           (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Displacement factor");
         view.value[63]->minimum(0.);
         view.value[63]->maximum(1.);
@@ -3251,7 +3257,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_offset1(index, GMSH_GUI, 0);
   opt_view_offset2(index, GMSH_GUI, 0);
   for(int i = 40; i <= 42; i++) {
-    view.value[i]->step(val1/100.);
+    view.value[i]->step(val1 / 100.);
     view.value[i]->minimum(-val1);
     view.value[i]->maximum(val1);
   }
@@ -3269,7 +3275,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_raise2(index, GMSH_GUI, 0);
   opt_view_normal_raise(index, GMSH_GUI, 0);
   for(int i = 43; i <= 46; i++) {
-    view.value[i]->step(val2/100.);
+    view.value[i]->step(val2 / 100.);
     view.value[i]->minimum(-val2);
     view.value[i]->maximum(val2);
   }
@@ -3279,7 +3285,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_gen_raise0(index, GMSH_GUI, 0);
   opt_view_gen_raise1(index, GMSH_GUI, 0);
   opt_view_gen_raise2(index, GMSH_GUI, 0);
-  view.value[2]->step(val2/100.);
+  view.value[2]->step(val2 / 100.);
   view.value[2]->minimum(-val2);
   view.value[2]->maximum(val2);
 
@@ -3314,7 +3320,7 @@ void optionWindow::updateViewGroup(int index)
 
   opt_view_displacement_factor(index, GMSH_GUI, 0);
   double val3 = 2. * CTX.lc / maxval;
-  view.value[63]->step(val3/100.);
+  view.value[63]->step(val3 / 100.);
   view.value[63]->maximum(val3);
 
   opt_view_external_view(index, GMSH_GUI, 0);
