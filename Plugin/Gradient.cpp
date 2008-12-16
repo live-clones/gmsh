@@ -95,7 +95,7 @@ PView *GMSH_GradientPlugin::execute(PView *v)
     return v;
   }
 
-  PView *v2 = new PView(true);
+  PView *v2 = new PView(true, data1->getNumElements());
   PViewDataList *data2 = getDataList(v2);
 
   for(int ent = 0; ent < data1->getNumEntities(0); ent++){

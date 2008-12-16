@@ -56,7 +56,7 @@ class PViewDataList : public PViewData {
                   double &x, double &y, double &z, double &style);
   void _splitCurvedElements();
  public:
-  PViewDataList(bool allocate=true);
+  PViewDataList(bool allocate=true, int numalloc=1000);
   ~PViewDataList();
   bool finalize();
   int getNumTimeSteps(){ return NbTimeStep; }

@@ -11,7 +11,7 @@
 
 extern Context_T CTX;
 
-PViewDataList::PViewDataList(bool allocate)
+PViewDataList::PViewDataList(bool allocate, int numalloc)
   : PViewData(), DataSize(sizeof(double)), NbTimeStep(0), 
     Min(VAL_INF), Max(-VAL_INF), Time(0),
     NbSP(0), NbVP(0), NbTP(0), SP(0), VP(0), TP(0),
@@ -37,7 +37,7 @@ PViewDataList::PViewDataList(bool allocate)
   for(int i = 0; i < 24; i++) _index[i] = 0;
 
   if(allocate){
-#define LCD List_Create(1, 1000, sizeof(double))
+#define LCD List_Create(1, numalloc, sizeof(double))
     Time = LCD;
     SP = LCD; VP = LCD; TP = LCD;
     SL = LCD; VL = LCD; TL = LCD; SL2 = LCD; VL2 = LCD; TL2 = LCD; 

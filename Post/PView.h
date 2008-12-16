@@ -41,7 +41,7 @@ class PView{
 
  public:
   // create a new view with list-based data, allocated or not
-  PView(bool allocate=true);
+  PView(bool allocate=true, int numalloc=1000);
   // construct a new view using the given data
   PView(PViewData *data);
   // construct a new view, alias of the view "ref"

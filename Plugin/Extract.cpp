@@ -221,7 +221,7 @@ PView *GMSH_ExtractPlugin::execute(PView *v)
   PViewDataList *data1 = getDataList(v1);
   if(!data1) return v;
 
-  PView *v2 = new PView(true);
+  PView *v2 = new PView(true, data1->getNumElements());
 
   PViewDataList *data2 = getDataList(v2);
   if(!data2) return v;

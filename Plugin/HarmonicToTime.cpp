@@ -115,7 +115,7 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView * v)
     return v1;
   }
 
-  PView *v2 = new PView(true);
+  PView *v2 = new PView(true, data1->getNumElements() * nSteps);
 
   PViewDataList *data2 = getDataList(v2);
   if(!data2) return v;

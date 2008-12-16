@@ -29,10 +29,10 @@ void PView::_init()
   for(unsigned int i = 0; i < list.size(); i++) list[i]->setIndex(i);
 }
 
-PView::PView(bool allocate)
+PView::PView(bool allocate, int numalloc)
 {
   _init();
-  _data = new PViewDataList(allocate);
+  _data = new PViewDataList(allocate, numalloc);
   _options = new PViewOptions(PViewOptions::reference);
   if(_options->AdaptVisualizationGrid)
     _data->initAdaptiveData(_options->TimeStep, _options->MaxRecursionLevel,
