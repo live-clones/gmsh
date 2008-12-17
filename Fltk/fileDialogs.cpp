@@ -954,117 +954,14 @@ int generic_mesh_dialog(const char *name, const char *title, int format,
   return 0;
 }
 
-
 #if defined(HAVE_LIBCGNS)
 
-struct CGNSWriteDialog;
-
-static void cgnsw_gc_location_cb(Fl_Widget *widget, void *data)
-{
-  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
-  if(widget == dlg->roundButton0GCatVertex) {
-    dlg->roundButton0GCatVertex->set();
-    dlg->roundButton1GCatFace->clear();
-  }
-  else {
-    dlg->roundButton0GCatVertex->clear();
-    dlg->roundButton1GCatFace->set();
-  }
-}
-
-static void cgnsw_write_dummy_bc_cb(Fl_Widget *widget, void *data)
-{
-  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
-  if(dlg->checkButtonWriteBC->value()) {
-    dlg->roundButton0BCatVertex->activate();
-    // dlg->roundButton1BCatFace->activate();  //**Tmp
-    dlg->checkButtonWriteNormals->activate();
-    if(dlg->checkButtonWriteNormals->value()) {
-      if(dlg->roundButton0BCatVertex->value())
-        dlg->roundButton0NormalGeo->activate();
-      dlg->roundButton1NormalElem->activate();
-    }
-  }
-  else {
-    dlg->roundButton0BCatVertex->deactivate();
-    dlg->roundButton1BCatFace->deactivate();
-    dlg->checkButtonWriteNormals->deactivate();
-    dlg->roundButton0NormalGeo->deactivate();
-    dlg->roundButton1NormalElem->deactivate();
-  } 
-}
-
-static void cgnsw_bc_location_cb(Fl_Widget *widget, void *data)
-{
-  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
-  if(widget == dlg->roundButton0BCatVertex) {
-    dlg->roundButton0BCatVertex->set();
-    dlg->roundButton1BCatFace->clear();
-    if(dlg->checkButtonWriteNormals->value())
-      dlg->roundButton0NormalGeo->activate();
-  }
-  else {
-    dlg->roundButton0BCatVertex->clear();
-    dlg->roundButton1BCatFace->set();
-    dlg->roundButton0NormalGeo->clear();
-    dlg->roundButton0NormalGeo->deactivate();
-    dlg->roundButton1NormalElem->set();
-  }
-}
-
-static void cgnsw_write_normals_cb(Fl_Widget *widget, void *data)
-{
-  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
-  if(dlg->checkButtonWriteNormals->value()) {
-    if(dlg->roundButton0BCatVertex->value())
-      dlg->roundButton0NormalGeo->activate();
-    dlg->roundButton1NormalElem->activate();
-  }
-  else {
-    dlg->roundButton0NormalGeo->deactivate();
-    dlg->roundButton1NormalElem->deactivate();
-  } 
-}
-
-static void cgnsw_normal_source_cb(Fl_Widget *widget, void *data)
-{
-  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
-  if(widget == dlg->roundButton0NormalGeo) {
-    dlg->roundButton0NormalGeo->set();
-    dlg->roundButton1NormalElem->clear();
-  }
-  else {
-    dlg->roundButton0NormalGeo->clear();
-    dlg->roundButton1NormalElem->set();
-  }
-}
-
-static void cgnsw_defaults_cb(Fl_Widget *widget, void *data)
-{
-  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
-  CTX.mesh.cgns_options.setDefaults();
-  dlg->read_all_options();
-}
-
-static void cgnsw_write_cb(Fl_Widget *widget, void *data)
-{
-  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
-
-  // Write all options
-  dlg->write_all_options();
-  dlg->window->hide();
-
-  // Write the data
-  CreateOutputFile(dlg->filename, FORMAT_CGNS);
-  dlg->status = 1;
-}
-
-static void cgnsw_cancel_cb(Fl_Widget *widget, void *data)
-{
-  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
-  dlg->window->hide();
-  dlg->status = 0;
-}
+// Forward declarations of some callbacks
+void cgnsw_gc_location_cb(Fl_Widget *widget, void *data);
+void cgnsw_write_dummy_bc_cb(Fl_Widget *widget, void *data);
+void cgnsw_bc_location_cb(Fl_Widget *widget, void *data);
+void cgnsw_write_normals_cb(Fl_Widget *widget, void *data);
+void cgnsw_normal_source_cb(Fl_Widget *widget, void *data);
 
 // Pointers to required widgets
 struct CGNSWriteDialog
@@ -1130,6 +1027,113 @@ struct CGNSWriteDialog
     cgnsw_write_dummy_bc_cb(checkButtonWriteBC, this);
   }
 };
+
+void cgnsw_gc_location_cb(Fl_Widget *widget, void *data)
+{
+  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
+  if(widget == dlg->roundButton0GCatVertex) {
+    dlg->roundButton0GCatVertex->set();
+    dlg->roundButton1GCatFace->clear();
+  }
+  else {
+    dlg->roundButton0GCatVertex->clear();
+    dlg->roundButton1GCatFace->set();
+  }
+}
+
+void cgnsw_write_dummy_bc_cb(Fl_Widget *widget, void *data)
+{
+  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
+  if(dlg->checkButtonWriteBC->value()) {
+    dlg->roundButton0BCatVertex->activate();
+    // dlg->roundButton1BCatFace->activate();  //**Tmp
+    dlg->checkButtonWriteNormals->activate();
+    if(dlg->checkButtonWriteNormals->value()) {
+      if(dlg->roundButton0BCatVertex->value())
+        dlg->roundButton0NormalGeo->activate();
+      dlg->roundButton1NormalElem->activate();
+    }
+  }
+  else {
+    dlg->roundButton0BCatVertex->deactivate();
+    dlg->roundButton1BCatFace->deactivate();
+    dlg->checkButtonWriteNormals->deactivate();
+    dlg->roundButton0NormalGeo->deactivate();
+    dlg->roundButton1NormalElem->deactivate();
+  } 
+}
+
+void cgnsw_bc_location_cb(Fl_Widget *widget, void *data)
+{
+  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
+  if(widget == dlg->roundButton0BCatVertex) {
+    dlg->roundButton0BCatVertex->set();
+    dlg->roundButton1BCatFace->clear();
+    if(dlg->checkButtonWriteNormals->value())
+      dlg->roundButton0NormalGeo->activate();
+  }
+  else {
+    dlg->roundButton0BCatVertex->clear();
+    dlg->roundButton1BCatFace->set();
+    dlg->roundButton0NormalGeo->clear();
+    dlg->roundButton0NormalGeo->deactivate();
+    dlg->roundButton1NormalElem->set();
+  }
+}
+
+void cgnsw_write_normals_cb(Fl_Widget *widget, void *data)
+{
+  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
+  if(dlg->checkButtonWriteNormals->value()) {
+    if(dlg->roundButton0BCatVertex->value())
+      dlg->roundButton0NormalGeo->activate();
+    dlg->roundButton1NormalElem->activate();
+  }
+  else {
+    dlg->roundButton0NormalGeo->deactivate();
+    dlg->roundButton1NormalElem->deactivate();
+  } 
+}
+
+void cgnsw_normal_source_cb(Fl_Widget *widget, void *data)
+{
+  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
+  if(widget == dlg->roundButton0NormalGeo) {
+    dlg->roundButton0NormalGeo->set();
+    dlg->roundButton1NormalElem->clear();
+  }
+  else {
+    dlg->roundButton0NormalGeo->clear();
+    dlg->roundButton1NormalElem->set();
+  }
+}
+
+void cgnsw_defaults_cb(Fl_Widget *widget, void *data)
+{
+  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
+  CTX.mesh.cgns_options.setDefaults();
+  dlg->read_all_options();
+}
+
+void cgnsw_write_cb(Fl_Widget *widget, void *data)
+{
+  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
+
+  // Write all options
+  dlg->write_all_options();
+  dlg->window->hide();
+
+  // Write the data
+  CreateOutputFile(dlg->filename, FORMAT_CGNS);
+  dlg->status = 1;
+}
+
+void cgnsw_cancel_cb(Fl_Widget *widget, void *data)
+{
+  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
+  dlg->window->hide();
+  dlg->status = 0;
+}
 
 int cgns_write_dialog(const char *filename)
 {
