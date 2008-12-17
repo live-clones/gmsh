@@ -50,7 +50,7 @@ void Print_Usage(const char *name)
   Msg::Direct("Mesh options:");
   Msg::Direct("  -1, -2, -3            Perform 1D, 2D or 3D mesh generation, then exit");
   Msg::Direct("  -refine               Perform uniform mesh refinement, then exit");
-  Msg::Direct("  -part                 Partition after batch mesh generation");
+  Msg::Direct("  -part int             Partition after batch mesh generation");
   Msg::Direct("  -saveall              Save all elements (discard physical group definitions)");
   Msg::Direct("  -o file               Specify mesh output file name");
   Msg::Direct("  -format string        Set output mesh format (msh, msh1, msh2, unv, vrml, stl, mesh,");
@@ -217,8 +217,13 @@ void Get_Options(int argc, char *argv[])
         i++;
       }
       else if(!strcmp(argv[i] + 1, "part")) {
-        CTX.batch_after_mesh = 1;
         i++;
+        if(argv[i] != NULL){
+          CTX.batch_after_mesh = 1;
+          opt_mesh_partition_num(0, GMSH_SET, atoi(argv[i++]));
+        }
+        else
+	  Msg::Fatal("Missing number");
       }
       else if(!strcmp(argv[i] + 1, "new")) {
         CTX.files.push_back("-new");

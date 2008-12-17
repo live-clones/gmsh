@@ -1,4 +1,4 @@
-.\" $Id: gmsh.1,v 1.83 2008-04-17 21:05:52 geuzaine Exp $
+.\" $Id: gmsh.1,v 1.84 2008-12-17 21:14:48 geuzaine Exp $
 .TH Gmsh 1 "23 February 2008" "Gmsh 2.2" "Gmsh Manual Pages"
 .UC 4
 .\" ********************************************************************
@@ -41,6 +41,9 @@ the geometry.
 .B \-3
 perform the three-dimensional mesh, i.e., discretize all the volumes in
 the geometry.
+.TP 4
+.B \-part int
+partition the mesh after batch mesh generation.
 .TP 4
 .B \-saveall
 save all elements (and discard all physical group definitions).
