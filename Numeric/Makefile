@@ -84,7 +84,8 @@ gmshLaplace${OBJEXT}: gmshLaplace.cpp gmshLaplace.h gmshTermOfFormulation.h \
   ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Common/GmshDefines.h \
   ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h
+  ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
+  Numeric.h NumericEmbedded.h
 gmshElasticity${OBJEXT}: gmshElasticity.cpp gmshElasticity.h \
   gmshTermOfFormulation.h GmshMatrix.h ../Common/GmshMessage.h \
   ../Common/Gmsh.h ../Common/GmshMessage.h ../Geo/GModel.h \
@@ -98,7 +99,8 @@ gmshElasticity${OBJEXT}: gmshElasticity.cpp gmshElasticity.h \
   ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Common/GmshDefines.h \
   ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h
+  ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
+  Numeric.h NumericEmbedded.h
 EigSolve${OBJEXT}: EigSolve.cpp
 FunctionSpace${OBJEXT}: FunctionSpace.cpp FunctionSpace.h GmshMatrix.h \
   ../Common/GmshMessage.h ../Common/GmshDefines.h

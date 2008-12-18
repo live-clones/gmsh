@@ -32,5 +32,4 @@ class gmshLaplaceTerm : public gmshNodalFemTerm {
   virtual void elementMatrix(MElement *e, Double_Matrix &m) const;
 };
 
-
 #endif
