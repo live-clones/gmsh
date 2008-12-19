@@ -3,8 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include "MElement.h"
-#include "GaussLegendreSimplex.h"
+#include "Gauss.h"
 #include "GaussLegendre1D.h"
 
 IntPt GQQ1[1] = {

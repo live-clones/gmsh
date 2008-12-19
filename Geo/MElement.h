@@ -15,11 +15,7 @@
 #include "MFace.h"
 #include "GmshMessage.h"
 #include "FunctionSpace.h"
-
-struct IntPt{
-  double pt[3];
-  double weight;
-};
+#include "Gauss.h"
 
 class GFace;
 

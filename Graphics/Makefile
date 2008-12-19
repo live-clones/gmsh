@@ -88,7 +88,8 @@ drawMesh${OBJEXT}: drawMesh.cpp drawContext.h ../Geo/SBoundingBox3d.h \
   ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Geo/MVertex.h \
   ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Common/Context.h \
+  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../Common/Context.h \
   ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h ../Common/OS.h gl2ps.h \
   ../Common/VertexArray.h ../Common/SmoothData.h ../Post/PView.h \
   ../Post/PViewData.h

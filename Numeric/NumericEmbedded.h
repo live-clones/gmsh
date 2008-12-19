@@ -11,6 +11,11 @@
 #define myhypot(a,b) (sqrt((a)*(a)+(b)*(b)))
 #define sign(x)      (((x)>=0)?1:-1)
 
+struct IntPt{
+  double pt[3];
+  double weight;
+};
+
 double myatan2(double a, double b);
 double myasin(double a);
 double myacos(double a);

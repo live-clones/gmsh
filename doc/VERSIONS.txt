@@ -1,10 +1,10 @@
-$Id: VERSIONS.txt,v 1.23 2008-12-06 16:13:56 geuzaine Exp $
+$Id: VERSIONS.txt,v 1.24 2008-12-19 09:45:32 geuzaine Exp $
 
-2.2.7 (?): restored full-quad recombine algorithm; fixed clipping
+2.3.0 (?): restored full-quad recombine algorithm; fixed clipping
 planes when more than 32 views are present ({Geometry,Mesh,View}.Clip
-replaces General.Clip); modified arrow size options
-(View.ArrowSize{Min,Max} replaces View.ArrowSize); major graphics and
-GUI code refactoring.
+replaces General.Clip); modified arrow size (View.ArrowSize{Min,Max}
+replaces View.ArrowSize) and Transform options; major graphics and GUI
+code refactoring.
 
 2.2.6 (Nov 21, 2008): better transfinite smoothing and automatic
 corner selection; fixed high order meshing crashes on Windows and

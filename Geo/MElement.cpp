@@ -15,6 +15,7 @@
 #include "GmshEmbedded.h"
 #else
 #include "Numeric.h"
+#include "Gauss.h"
 #include "GaussLegendre1D.h"
 #include "Context.h"
 #include "qualityMeasures.h"
@@ -941,8 +942,6 @@ void MTriangle6::getFaceRep(int num, double *x, double *y, double *z, SVector3 *
 void MTriangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
 {
 #if !defined(HAVE_GMSH_EMBEDDED)
-  extern int getNGQTPts(int order);
-  extern IntPt *getGQTPts (int order);
   *npts = getNGQTPts(pOrder);
   *pts = getGQTPts(pOrder);
 #endif
@@ -951,8 +950,6 @@ void MTriangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
 void MQuadrangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
 {
 #if !defined(HAVE_GMSH_EMBEDDED)
-  extern int getNGQQPts(int order);
-  extern IntPt *getGQQPts(int order);
   *npts = getNGQQPts(pOrder);
   *pts = getGQQPts(pOrder);
 #endif
@@ -1197,8 +1194,6 @@ void MTetrahedron10::getFaceRep(int num, double *x, double *y, double *z, SVecto
 void MTetrahedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
 {
 #if !defined(HAVE_GMSH_EMBEDDED)
-  extern int getNGQTetPts(int order);
-  extern IntPt *getGQTetPts(int order);
   *npts = getNGQTetPts(pOrder);
   *pts = getGQTetPts(pOrder);
 #endif
@@ -1222,8 +1217,6 @@ int MHexahedron::getVolumeSign()
 void MHexahedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
 {
 #if !defined(HAVE_GMSH_EMBEDDED)
-  extern int getNGQHPts(int order);
-  extern IntPt *getGQHPts(int order);
   *npts = getNGQHPts(pOrder);
   *pts = getGQHPts(pOrder);
 #endif

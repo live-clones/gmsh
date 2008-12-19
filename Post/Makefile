@@ -102,8 +102,8 @@ PViewDataGModel${OBJEXT}: PViewDataGModel.cpp PViewDataGModel.h PViewData.h \
   ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h
+  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h
 PViewDataGModelIO${OBJEXT}: PViewDataGModelIO.cpp ../Common/GmshMessage.h \
   PViewDataGModel.h PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Numeric/GmshMatrix.h ../Geo/GModel.h ../Geo/GVertex.h \
@@ -118,7 +118,7 @@ PViewDataGModelIO${OBJEXT}: PViewDataGModelIO.cpp ../Common/GmshMessage.h \
   ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/MEdge.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
-  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
+  ../Numeric/Gauss.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
   ../Common/StringUtils.h
 PViewOptions${OBJEXT}: PViewOptions.cpp PViewOptions.h ColorTable.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshMessage.h
@@ -143,7 +143,8 @@ OctreePost${OBJEXT}: OctreePost.cpp ../Common/Octree.h \
   ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h
+  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
+  ../Numeric/Numeric.h
 ColorTable${OBJEXT}: ColorTable.cpp ../Common/GmshMessage.h ColorTable.h \
   ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h

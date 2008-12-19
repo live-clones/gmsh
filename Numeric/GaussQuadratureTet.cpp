@@ -2,9 +2,9 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
-#include "MElement.h"
-#include "GaussLegendreSimplex.h"
-//#include "Global.h"
+
+#include "Gauss.h"
+#include "GaussLegendre1D.h"
 
 /* constants for 4-point rule */
 #define  a4  0.5854101966249685  
