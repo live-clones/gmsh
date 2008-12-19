@@ -122,11 +122,11 @@ PViewDataGModelIO${OBJEXT}: PViewDataGModelIO.cpp ../Common/GmshMessage.h \
   ../Common/StringUtils.h
 PViewOptions${OBJEXT}: PViewOptions.cpp PViewOptions.h ColorTable.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshMessage.h
-adaptiveData${OBJEXT}: adaptiveData.cpp ../Plugin/Plugin.h ../Common/Options.h \
-  ../Post/ColorTable.h ../Common/GmshMessage.h ../Post/PView.h \
-  ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Numeric/GmshMatrix.h \
-  ../Common/ListUtils.h adaptiveData.h
+adaptiveData${OBJEXT}: adaptiveData.cpp adaptiveData.h ../Numeric/GmshMatrix.h \
+  ../Common/GmshMessage.h ../Plugin/Plugin.h ../Common/Options.h \
+  ../Post/ColorTable.h ../Post/PView.h ../Geo/SPoint3.h \
+  ../Post/PViewDataList.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
+  ../Geo/SPoint3.h ../Common/ListUtils.h
 OctreePost${OBJEXT}: OctreePost.cpp ../Common/Octree.h \
   ../Common/OctreeInternals.h OctreePost.h ../Common/ListUtils.h PView.h \
   ../Geo/SPoint3.h PViewDataList.h PViewData.h ../Geo/SBoundingBox3d.h \

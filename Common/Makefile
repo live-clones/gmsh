@@ -90,9 +90,9 @@ Options${OBJEXT}: Options.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   DefaultOptions.h ../Mesh/Field.h ../Post/PView.h \
   ../Mesh/BackgroundMesh.h ../Post/PViewOptions.h ../Post/ColorTable.h \
   ../Post/PViewData.h ../Numeric/GmshMatrix.h ../Common/GmshMessage.h \
-  ../Post/adaptiveData.h ../Common/ListUtils.h ../Plugin/PluginManager.h \
-  ../Plugin/Plugin.h ../Common/Options.h ../Post/PViewDataList.h \
-  ../Post/PViewData.h ../Fltk/GUI.h ../Fltk/Solvers.h \
+  ../Post/adaptiveData.h ../Plugin/PluginManager.h ../Plugin/Plugin.h \
+  ../Common/Options.h ../Post/PViewDataList.h ../Post/PViewData.h \
+  ../Common/ListUtils.h ../Fltk/GUI.h ../Fltk/Solvers.h \
   ../Fltk/menuWindow.h ../Fltk/popupButton.h ../Fltk/graphicWindow.h \
   ../Fltk/openglWindow.h ../Graphics/drawContext.h ../Fltk/optionWindow.h \
   ../Fltk/spherePositionWidget.h ../Fltk/colorbarWindow.h \

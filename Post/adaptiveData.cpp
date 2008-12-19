@@ -872,14 +872,16 @@ void adaptiveElements<T>::init(int level)
       it != T::allPoints.end(); ++it) {
 
     if(_coeffsVal && _eexpsVal)
-      computeShapeFunctions(_coeffsVal, _eexpsVal, it->x, it->y, it->z, &sfv, tmpv);
+      computeShapeFunctions(_coeffsVal, _eexpsVal, 
+                            it->x, it->y, it->z, &sfv, tmpv);
     else
       T::GSF(it->x, it->y, it->z, sfv);
     for(int j = 0; j < numVals; j++)
       (*_interpolVal)(i, j) = sfv(j);
 
     if(_coeffsGeom && _eexpsGeom)
-      computeShapeFunctions(_coeffsGeom, _eexpsGeom, it->x, it->y, it->z, &sfg, tmpg);
+      computeShapeFunctions(_coeffsGeom, _eexpsGeom, 
+                            it->x, it->y, it->z, &sfg, tmpg);
     else
       T::GSF(it->x, it->y, it->z, sfg);
     for(int j = 0; j < numNodes; j++)
@@ -1155,7 +1157,8 @@ adaptiveData::~adaptiveData()
   delete _outData;
 }
 
-void adaptiveData::changeResolution(int step, int level, double tol, GMSH_Post_Plugin *plug)
+void adaptiveData::changeResolution(int step, int level, double tol, 
+                                    GMSH_Post_Plugin *plug)
 {
   if(_level != level){
     if(_lines) _lines->init(level);

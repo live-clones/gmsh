@@ -8,7 +8,7 @@
 
 #include <list>
 #include <set>
-#include "ListUtils.h"
+#include <vector>
 #include "GmshMatrix.h"
 
 class PViewData;
