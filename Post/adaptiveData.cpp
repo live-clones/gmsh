@@ -6,8 +6,9 @@
 #include <math.h>
 #include <list>
 #include <set>
-#include "Plugin.h"
 #include "adaptiveData.h"
+#include "Plugin.h"
+#include "ListUtils.h"
 
 std::set<adaptivePoint> adaptiveLine::allPoints;
 std::set<adaptivePoint> adaptiveTriangle::allPoints;
