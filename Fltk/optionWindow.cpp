@@ -40,7 +40,7 @@ class engineeringValueInput : public Fl_Value_Input
  public:
   engineeringValueInput(int x, int y, int w, int h, const char *l=0) :
     Fl_Value_Input(x, y, w, h, l) {}
-  virtual int format(char *buffer){ return snprintf(buffer, 128, "%g", value()); }
+  virtual int format(char *buffer){ return sprintf(buffer, "%g", value()); }
 };
 
 static Fl_Menu_Item menu_point_display[] = {

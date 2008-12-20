@@ -374,10 +374,10 @@ void PViewDataGModel::getValue(int step, int ent, int ele, int nod, int comp, do
     val = _steps[step]->getData(e->getVertex(nod)->getNum())[comp];
     break;
   case ElementNodeData:
-  case GaussPointData: 
+  case GaussPointData:
     val = _steps[step]->getData(e->getNum())[_steps[step]->getNumComponents() * nod + comp];
     break;
-  case ElementData: 
+  case ElementData:
   default: 
     val = _steps[step]->getData(e->getNum())[comp];
     break;
