@@ -1147,7 +1147,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
 static void view_options_max_recursion_cb(Fl_Widget *w, void *data)
 {
   std::string str((const char*)data);
-  int val = GUI::instance()->options->view.value[33]->value();
+  int val = (int)GUI::instance()->options->view.value[33]->value();
   if(str == "-" && val > 0)
     GUI::instance()->options->view.value[33]->value(val - 1);
   else if(str == "+")

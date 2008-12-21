@@ -9,6 +9,9 @@
 #include "adaptiveData.h"
 #include "Plugin.h"
 #include "ListUtils.h"
+#include "OS.h"
+
+//#define TIMER
 
 std::set<adaptivePoint> adaptiveLine::allPoints;
 std::set<adaptivePoint> adaptiveTriangle::allPoints;
@@ -852,6 +855,10 @@ adaptiveElements<T>::~adaptiveElements()
 template <class T>
 void adaptiveElements<T>::init(int level)
 {
+#ifdef TIMER
+  double t1 = GetTimeInSeconds();
+#endif
+
   T::create(level);
   int numVals = _coeffsVal ? _coeffsVal->size1() : T::numNodes;
   int numNodes = _coeffsGeom ? _coeffsGeom->size1() : T::numNodes;
@@ -892,6 +899,11 @@ void adaptiveElements<T>::init(int level)
 
   if(tmpv) delete tmpv;
   if(tmpg) delete tmpg;
+
+#ifdef TIMER
+  adaptiveData::timerInit += GetTimeInSeconds() - t1;
+  return;
+#endif
 }
 
 template <class T>
@@ -920,6 +932,10 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
                numVals, values.size());
     return;
   }
+
+#ifdef TIMER
+  double t1 = GetTimeInSeconds();
+#endif
   
   Double_Vector val(numVals), res(numPoints);
   if(numComp == 1){
@@ -941,20 +957,16 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
   }
   if(onlyComputeMinMax) return;
   
-  Double_Vector *resx = 0, *resy = 0, *resz = 0;
+  Double_Matrix *resxyz = 0;
   if(numComp == 3){
-    Double_Vector valx(numVals), valy(numVals), valz(numVals);
-    resx = new Double_Vector(numPoints);
-    resy = new Double_Vector(numPoints);
-    resz = new Double_Vector(numPoints);
+    Double_Matrix valxyz(numVals, 3);
+    resxyz = new Double_Matrix(numPoints, 3);
     for(int i = 0; i < numVals; i++){
-      valx(i) = values[i].v[0];
-      valy(i) = values[i].v[1];
-      valz(i) = values[i].v[2];
+      valxyz(i, 0) = values[i].v[0];
+      valxyz(i, 1) = values[i].v[1];
+      valxyz(i, 2) = values[i].v[2];
     }
-    _interpolVal->mult(valx, *resx);
-    _interpolVal->mult(valy, *resy);
-    _interpolVal->mult(valz, *resz);
+    _interpolVal->mult(valxyz, *resxyz);
   }
   
   int numNodes = _coeffsGeom ? _coeffsGeom->size1() : T::numNodes;
@@ -971,17 +983,22 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
     xyz(i, 2) = coords[i].c[2];
   }
   _interpolGeom->mult(xyz, XYZ);
-  
+
+#ifdef TIMER
+  adaptiveData::timerAdapt += GetTimeInSeconds() - t1;
+  return;
+#endif
+
   int i = 0;
   for(std::set<adaptivePoint>::iterator it = T::allPoints.begin();
       it != T::allPoints.end(); ++it){
     // ok because we know this will not change the set ordering
     adaptivePoint *p = (adaptivePoint*)&(*it);
     p->val = res(i);
-    if(resx){
-      p->valx = (*resx)(i);
-      p->valy = (*resy)(i);
-      p->valz = (*resz)(i);
+    if(resxyz){
+      p->valx = (*resxyz)(i, 0);
+      p->valy = (*resxyz)(i, 1);
+      p->valz = (*resxyz)(i, 2);
     }
     p->X = XYZ(i, 0);
     p->Y = XYZ(i, 1);
@@ -989,9 +1006,7 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
     i++;
   }
   
-  if(resx) delete resx;
-  if(resy) delete resy;
-  if(resz) delete resz;
+  if(resxyz) delete resxyz;
   
   for(typename std::list<T*>::iterator it = T::all.begin(); 
       it != T::all.end(); it++)
@@ -1157,9 +1172,14 @@ adaptiveData::~adaptiveData()
   delete _outData;
 }
 
+double adaptiveData::timerInit = 0.;
+double adaptiveData::timerAdapt = 0.;
+
 void adaptiveData::changeResolution(int step, int level, double tol, 
                                     GMSH_Post_Plugin *plug)
 {
+  timerInit = timerAdapt = 0.;
+
   if(_level != level){
     if(_lines) _lines->init(level);
     if(_triangles) _triangles->init(level);
@@ -1181,4 +1201,9 @@ void adaptiveData::changeResolution(int step, int level, double tol,
   _step = step;
   _level = level;
   _tol = tol;
+  
+#ifdef TIMER
+  printf("init time = %g\n", timerInit);
+  printf("adapt time = %g\n", timerAdapt);
+#endif
 }

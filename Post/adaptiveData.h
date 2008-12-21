@@ -319,6 +319,7 @@ class adaptiveData {
   adaptiveElements<adaptiveHexahedron> *_hexahedra;
   adaptiveElements<adaptivePrism> *_prisms;
  public:
+  static double timerInit, timerAdapt;
   adaptiveData(PViewData *data);
   ~adaptiveData();
   PViewData *getData(){ return (PViewData*)_outData; }
