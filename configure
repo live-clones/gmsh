@@ -1316,8 +1316,7 @@ Optional Packages:
   --with-mpi-prefix=PFX   prefix where MPI is installed
   --with-fftw3-prefix=PFX prefix where FFTW3 is installed
   --with-fm-prefix=PFX    prefix where FourierModel is installed
-  --with-blas-lapack-prefix=PFX
-                          prefix where BLAS and LAPACK are installed
+  --with-blas-prefix=PFX  prefix where BLAS (and LAPACK) are installed
 
 Some influential environment variables:
   CC          C compiler command
@@ -1842,9 +1841,9 @@ if test "${with_fm_prefix+set}" = set; then
 fi
 
 
-# Check whether --with-blas-lapack-prefix was given.
-if test "${with_blas_lapack_prefix+set}" = set; then
-  withval=$with_blas_lapack_prefix; BLAS_LAPACK_PREFIX=$withval
+# Check whether --with-blas-prefix was given.
+if test "${with_blas_prefix+set}" = set; then
+  withval=$with_blas_prefix; BLAS_PREFIX=$withval
 fi
 
 
@@ -3740,7 +3739,6 @@ done
 done
 IFS=$as_save_IFS
 
-  test -z "$ac_cv_path_FLTKCONFIG" && ac_cv_path_FLTKCONFIG=""""
   ;;
 esac
 fi
@@ -3866,8 +3864,6 @@ fi
 echo "${ECHO_T}$ac_cv_lib_OSMesa_main" >&6; }
 if test $ac_cv_lib_OSMesa_main = yes; then
   OSMESA="yes"
-else
-  OSMESA="no"
 fi
 
   fi
@@ -3891,8 +3887,6 @@ fi
 echo "${ECHO_T}$ac_cv_file___contrib_NativeFileChooser_Fl_Native_File_Chooser_cxx" >&6; }
 if test $ac_cv_file___contrib_NativeFileChooser_Fl_Native_File_Chooser_cxx = yes; then
   NATIVE="yes"
-else
-  NATIVE="no"
 fi
 
   if test "x${NATIVE}" = "xyes"; then
@@ -3925,11 +3919,8 @@ fi
     fi
   fi
 
-  FL_JPEG=""
   expr "x${GMSH_LIBS}" : 'x.*fltk_jpeg.*' >/dev/null && FL_JPEG="yes"
-  FL_PNG=""
   expr "x${GMSH_LIBS}" : 'x.*fltk_png.*' >/dev/null && FL_PNG="yes"
-  FL_ZLIB=""
   expr "x${GMSH_LIBS}" : 'x.*fltk_z.*' >/dev/null && FL_ZLIB="yes"
 
     if test "x$enable_jpeg" != "xno"; then
@@ -3996,8 +3987,6 @@ fi
 echo "${ECHO_T}$ac_cv_lib_jpeg_main" >&6; }
 if test $ac_cv_lib_jpeg_main = yes; then
   JPEG="yes"
-else
-  JPEG="no"
 fi
 
       if test "x${JPEG}" = "xyes"; then
@@ -4012,8 +4001,7 @@ fi
     fi
   fi
 
-    ZLIB=""
-  if test "x$enable_zlib" != "xno"; then
+    if test "x$enable_zlib" != "xno"; then
         if test "x${FL_ZLIB}" = "xyes"; then
       ZLIB="yes"
     else
@@ -4077,8 +4065,6 @@ fi
 echo "${ECHO_T}$ac_cv_lib_z_main" >&6; }
 if test $ac_cv_lib_z_main = yes; then
   ZLIB="yes"
-else
-  ZLIB="no"
 fi
 
     fi
@@ -4148,8 +4134,6 @@ fi
 echo "${ECHO_T}$ac_cv_lib_png_main" >&6; }
 if test $ac_cv_lib_png_main = yes; then
   PNG="yes"
-else
-  PNG="no"
 fi
 
       if test "x${PNG}" = "xyes"; then
@@ -4186,8 +4170,7 @@ else
     GMSH_DIRS="${GMSH_DIRS} Numeric"
   GMSH_LIBS="${GMSH_LIBS} -lGmshCommon -lGmshNumeric"
 
-    ZLIB=""
-  if test "x$enable_zlib" != "xno"; then
+    if test "x$enable_zlib" != "xno"; then
     if test "x${ZLIB_PREFIX}" != "x"; then
       LDFLAGS="-L${ZLIB_PREFIX} -L${ZLIB_PREFIX}/lib ${LDFLAGS}"
     fi
@@ -4248,8 +4231,6 @@ fi
 echo "${ECHO_T}$ac_cv_lib_z_main" >&6; }
 if test $ac_cv_lib_z_main = yes; then
   ZLIB="yes"
-else
-  ZLIB="no"
 fi
 
   fi
@@ -4475,8 +4456,6 @@ fi
 echo "${ECHO_T}$ac_cv_file___contrib_ANN_include_ANN_ANN_h" >&6; }
 if test $ac_cv_file___contrib_ANN_include_ANN_ANN_h = yes; then
   ANN="yes"
-else
-  ANN="no"
 fi
 
     if test "x${ANN}" = "xyes"; then
@@ -4513,8 +4492,6 @@ fi
 echo "${ECHO_T}$ac_cv_file___contrib_gmm_gmm_h" >&6; }
 if test $ac_cv_file___contrib_gmm_gmm_h = yes; then
   GMM="yes"
-else
-  GMM="no"
 fi
 
     if test "x${GMM}" = "xyes"; then
@@ -4548,8 +4525,6 @@ fi
 echo "${ECHO_T}$ac_cv_file___contrib_Chaco_main_interface_c" >&6; }
 if test $ac_cv_file___contrib_Chaco_main_interface_c = yes; then
   CHACO="yes"
-else
-  CHACO="no"
 fi
 
     if test "x${CHACO}" = "xyes"; then
@@ -4585,8 +4560,6 @@ fi
 echo "${ECHO_T}$ac_cv_file___contrib_Metis_metis_h" >&6; }
 if test $ac_cv_file___contrib_Metis_metis_h = yes; then
   METIS="yes"
-else
-  METIS="no"
 fi
 
     if test "x${METIS}" = "xyes"; then
@@ -4624,8 +4597,6 @@ fi
 echo "${ECHO_T}$ac_cv_file___contrib_Netgen_libsrc_meshing_meshclass_cpp" >&6; }
 if test $ac_cv_file___contrib_Netgen_libsrc_meshing_meshclass_cpp = yes; then
   NETGEN="yes"
-else
-  NETGEN="no"
 fi
 
     if test "x${NETGEN}" = "xyes"; then
@@ -4661,8 +4632,6 @@ fi
 echo "${ECHO_T}$ac_cv_file___contrib_Tetgen_tetgen_h" >&6; }
 if test $ac_cv_file___contrib_Tetgen_tetgen_h = yes; then
   TETGEN="yes"
-else
-  TETGEN="no"
 fi
 
     if test "x${TETGEN}" = "xyes"; then
@@ -4700,8 +4669,6 @@ fi
 echo "${ECHO_T}$ac_cv_file___contrib_MathEval_matheval_cpp" >&6; }
 if test $ac_cv_file___contrib_MathEval_matheval_cpp = yes; then
   MATHEVAL="yes"
-else
-  MATHEVAL="no"
 fi
 
     if test "x${MATHEVAL}" = "xyes"; then
@@ -4785,8 +4752,6 @@ fi
 echo "${ECHO_T}$ac_cv_lib_TKernel_main" >&6; }
 if test $ac_cv_lib_TKernel_main = yes; then
   OCC="yes"
-else
-  OCC="no"
 fi
 
   if test "x${OCC}" = "xyes"; then
@@ -4832,8 +4797,6 @@ ac_res=`eval echo '${'$as_ac_File'}'`
 echo "${ECHO_T}$ac_res" >&6; }
 if test `eval echo '${'$as_ac_File'}'` = yes; then
   OMC="yes"
-else
-  OMC="no"
 fi
 
     if test "x${OMC}" = "xyes"; then
@@ -4909,8 +4872,6 @@ fi
 echo "${ECHO_T}$ac_cv_lib_hdf5_main" >&6; }
 if test $ac_cv_lib_hdf5_main = yes; then
   HDF5="yes"
-else
-  HDF5="no"
 fi
 
   if test "x${HDF5}" = "xyes"; then
@@ -4982,8 +4943,6 @@ fi
 echo "${ECHO_T}$ac_cv_lib_cgns_main" >&6; }
 if test $ac_cv_lib_cgns_main = yes; then
   CGNS="yes"
-else
-  CGNS="no"
 fi
 
   if test "x${CGNS}" = "xyes"; then
@@ -5059,8 +5018,6 @@ fi
 echo "${ECHO_T}$ac_cv_lib_med_main" >&6; }
 if test $ac_cv_lib_med_main = yes; then
   MED="yes"
-else
-  MED="no"
 fi
 
     if test "x${MED}" = "xyes"; then
@@ -5159,8 +5116,6 @@ fi
 echo "${ECHO_T}$ac_cv_lib_gsl_main" >&6; }
 if test $ac_cv_lib_gsl_main = yes; then
   GSL="yes"
-else
-  GSL="no"
 fi
 
   if test "x${GSL}" = "xyes"; then
@@ -5193,8 +5148,6 @@ fi
 echo "${ECHO_T}$ac_cv_file___contrib_NR_dsvdcmp_cpp" >&6; }
 if test $ac_cv_file___contrib_NR_dsvdcmp_cpp = yes; then
   NR="yes"
-else
-  NR="no"
 fi
 
   if test "x${NR}" = "xyes"; then
@@ -5274,8 +5227,6 @@ fi
 echo "${ECHO_T}$ac_cv_lib_FourierModel_main" >&6; }
 if test $ac_cv_lib_FourierModel_main = yes; then
   FM="yes"
-else
-  FM="no"
 fi
 
   if test "x${FM}" = "xyes"; then
@@ -5365,10 +5316,8 @@ echo "$as_me: WARNING: Could not find FFTW3: disabling FourierModel." >&2;}
   fi
 fi
 
-BLAS_LIBS=""
-BLAS_PATH=""
-if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
-  LDFLAGS="-L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib ${LDFLAGS}"
+if test "x${BLAS_PREFIX}" != "x"; then
+  LDFLAGS="-L${BLAS_PREFIX} -L${BLAS_PREFIX}/lib ${LDFLAGS}"
 fi
 { echo "$as_me:$LINENO: checking for cblas_dgemm in -lcblas" >&5
 echo $ECHO_N "checking for cblas_dgemm in -lcblas... $ECHO_C" >&6; }
@@ -5432,20 +5381,17 @@ fi
 { echo "$as_me:$LINENO: result: $ac_cv_lib_cblas_cblas_dgemm" >&5
 echo "${ECHO_T}$ac_cv_lib_cblas_cblas_dgemm" >&6; }
 if test $ac_cv_lib_cblas_cblas_dgemm = yes; then
-  CBLAS="yes"
-else
-  CBLAS="no"
+  CBLAS="yes" BLAS_LIBS="-lcblas"
 fi
 
-if test "x$CBLAS" = "xyes"; then
-  BLAS_LIBS="-lcblas"
-    { echo "$as_me:$LINENO: checking for main in -latlas" >&5
-echo $ECHO_N "checking for main in -latlas... $ECHO_C" >&6; }
-if test "${ac_cv_lib_atlas_main+set}" = set; then
+if test "x${CBLAS}" != "xyes"; then
+  { echo "$as_me:$LINENO: checking for cblas_dgemm in -lcblas" >&5
+echo $ECHO_N "checking for cblas_dgemm in -lcblas... $ECHO_C" >&6; }
+if test "${ac_cv_lib_cblas_cblas_dgemm+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-latlas  $LIBS"
+LIBS="-lcblas -latlas $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -5453,11 +5399,17 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char cblas_dgemm ();
 int
 main ()
 {
-return main ();
+return cblas_dgemm ();
   ;
   return 0;
 }
@@ -5480,30 +5432,34 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
 	 test ! -s conftest.err
        } && test -s conftest$ac_exeext &&
        $as_test_x conftest$ac_exeext; then
-  ac_cv_lib_atlas_main=yes
+  ac_cv_lib_cblas_cblas_dgemm=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_lib_atlas_main=no
+	ac_cv_lib_cblas_cblas_dgemm=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_atlas_main" >&5
-echo "${ECHO_T}$ac_cv_lib_atlas_main" >&6; }
-if test $ac_cv_lib_atlas_main = yes; then
-  BLAS_LIBS="${BLAS_LIBS} -latlas"
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_cblas_cblas_dgemm" >&5
+echo "${ECHO_T}$ac_cv_lib_cblas_cblas_dgemm" >&6; }
+if test $ac_cv_lib_cblas_cblas_dgemm = yes; then
+  CBLAS="yes" BLAS_LIBS="-lcblas -latlas"
 fi
 
-  if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
-    BLAS_PATH="-L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib"
+fi
+if test "x${CBLAS}" = "xyes"; then
+  if test "x${BLAS_PREFIX}" != "x"; then
+    BLAS_PATH="-L${BLAS_PREFIX} -L${BLAS_PREFIX}/lib"
   fi
+  FLAGS="${FLAGS} -DHAVE_CBLAS"
 else
-  if test "x$GSL" = "xyes"; then
+  if test "x${GSL}" = "xyes"; then
         BLAS_LIBS="-lgslcblas"
+    FLAGS="${FLAGS} -DHAVE_CBLAS"
   fi
 fi
 
@@ -5768,7 +5724,6 @@ ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
-  F77LIB=""
   case "${F77}" in
     *gfortran*)
       F77LIB="-lgfortran"
@@ -5776,15 +5731,18 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
     *g77*)
       F77LIB="-lg2c"
       ;;
+    *)
+      F77LIB=""
+      ;;
   esac
   LDFLAGS="${LDFLAGS} ${F77LIB}"
-  { echo "$as_me:$LINENO: checking for dgemm in -lblas" >&5
-echo $ECHO_N "checking for dgemm in -lblas... $ECHO_C" >&6; }
-if test "${ac_cv_lib_blas_dgemm+set}" = set; then
+  { echo "$as_me:$LINENO: checking for ATL_xerbla in -latlas" >&5
+echo $ECHO_N "checking for ATL_xerbla in -latlas... $ECHO_C" >&6; }
+if test "${ac_cv_lib_atlas_ATL_xerbla+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lblas  $LIBS"
+LIBS="-latlas  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -5798,11 +5756,11 @@ cat >>conftest.$ac_ext <<_ACEOF
 #ifdef __cplusplus
 extern "C"
 #endif
-char dgemm ();
+char ATL_xerbla ();
 int
 main ()
 {
-return dgemm ();
+return ATL_xerbla ();
   ;
   return 0;
 }
@@ -5825,27 +5783,89 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
 	 test ! -s conftest.err
        } && test -s conftest$ac_exeext &&
        $as_test_x conftest$ac_exeext; then
-  ac_cv_lib_blas_dgemm=yes
+  ac_cv_lib_atlas_ATL_xerbla=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_lib_blas_dgemm=no
+	ac_cv_lib_atlas_ATL_xerbla=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_blas_dgemm" >&5
-echo "${ECHO_T}$ac_cv_lib_blas_dgemm" >&6; }
-if test $ac_cv_lib_blas_dgemm = yes; then
-  BLAS="yes"
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_atlas_ATL_xerbla" >&5
+echo "${ECHO_T}$ac_cv_lib_atlas_ATL_xerbla" >&6; }
+if test $ac_cv_lib_atlas_ATL_xerbla = yes; then
+  { echo "$as_me:$LINENO: checking for dgemm_ in -lf77blas" >&5
+echo $ECHO_N "checking for dgemm_ in -lf77blas... $ECHO_C" >&6; }
+if test "${ac_cv_lib_f77blas_dgemm_+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  BLAS="no"
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lf77blas -latlas $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char dgemm_ ();
+int
+main ()
+{
+return dgemm_ ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_cxx_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_f77blas_dgemm_=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_f77blas_dgemm_=no
 fi
 
-  if test "x$BLAS" != "xyes"; then
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_f77blas_dgemm_" >&5
+echo "${ECHO_T}$ac_cv_lib_f77blas_dgemm_" >&6; }
+if test $ac_cv_lib_f77blas_dgemm_ = yes; then
+  BLAS="yes" BLAS_LIBS="${BLAS_LIBS} -lf77blas -latlas"
+fi
+
+fi
+
+  if test "x${BLAS}" != "xyes"; then
     { echo "$as_me:$LINENO: checking for dgemm_ in -lblas" >&5
 echo $ECHO_N "checking for dgemm_ in -lblas... $ECHO_C" >&6; }
 if test "${ac_cv_lib_blas_dgemm_+set}" = set; then
@@ -5908,87 +5928,19 @@ fi
 { echo "$as_me:$LINENO: result: $ac_cv_lib_blas_dgemm_" >&5
 echo "${ECHO_T}$ac_cv_lib_blas_dgemm_" >&6; }
 if test $ac_cv_lib_blas_dgemm_ = yes; then
-  BLAS="yes"
-else
-  BLAS="no"
+  BLAS="yes" BLAS_LIBS="${BLAS_LIBS} -lblas"
 fi
 
   fi
-  { echo "$as_me:$LINENO: checking for dbdsqr in -llapack" >&5
-echo $ECHO_N "checking for dbdsqr in -llapack... $ECHO_C" >&6; }
-if test "${ac_cv_lib_lapack_dbdsqr+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-llapack -lblas $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char dbdsqr ();
-int
-main ()
-{
-return dbdsqr ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_cxx_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext &&
-       $as_test_x conftest$ac_exeext; then
-  ac_cv_lib_lapack_dbdsqr=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_lapack_dbdsqr=no
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_lapack_dbdsqr" >&5
-echo "${ECHO_T}$ac_cv_lib_lapack_dbdsqr" >&6; }
-if test $ac_cv_lib_lapack_dbdsqr = yes; then
-  LAPACK="yes"
-else
-  LAPACK="no"
-fi
-
-  if test "x$LAPACK" != "xyes"; then
+  if test "x${BLAS}" = "xyes"; then
+    FLAGS="${FLAGS} -DHAVE_BLAS"
     { echo "$as_me:$LINENO: checking for dbdsqr_ in -llapack" >&5
 echo $ECHO_N "checking for dbdsqr_ in -llapack... $ECHO_C" >&6; }
 if test "${ac_cv_lib_lapack_dbdsqr_+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-llapack -lblas $LIBS"
+LIBS="-llapack ${BLAS_LIBS} $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -6044,14 +5996,12 @@ fi
 { echo "$as_me:$LINENO: result: $ac_cv_lib_lapack_dbdsqr_" >&5
 echo "${ECHO_T}$ac_cv_lib_lapack_dbdsqr_" >&6; }
 if test $ac_cv_lib_lapack_dbdsqr_ = yes; then
-  LAPACK="yes"
-else
-  LAPACK="no"
+  LAPACK="yes" BLAS_LIBS="-llapack ${BLAS_LIBS}"
 fi
 
-  fi
-  if test "x$LAPACK" = "xyes" -a "x$BLAS" = "xyes"; then
-    BLAS_LIBS="-llapack ${BLAS_LIBS} -lblas ${F77LIB}"
+    if test "x${LAPACK}" = "xyes"; then
+      FLAGS="${FLAGS} -DHAVE_LAPACK"
+    fi
   fi
 fi
 
@@ -6120,8 +6070,6 @@ fi
 echo "${ECHO_T}$ac_cv_lib_mpi_cxx_main" >&6; }
 if test $ac_cv_lib_mpi_cxx_main = yes; then
   MPI="yes"
-else
-  MPI="no"
 fi
 
   if test "x${MPI}" = "xyes"; then

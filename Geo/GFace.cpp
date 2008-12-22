@@ -421,9 +421,9 @@ end:
         meanPlane.c * v->z() - meanPlane.d;
       if(fabs(d) > lc * 1.e-3) {
         Msg::Error("Plane surface %d (%gx+%gy+%gz+%g=0) is not plane!",
-            tag(), meanPlane.a, meanPlane.b, meanPlane.c, meanPlane.d);
+                   tag(), meanPlane.a, meanPlane.b, meanPlane.c, meanPlane.d);
         Msg::Error("Control point %d = (%g,%g,%g), val=%g",
-            v->tag(), v->x(), v->y(), v->z(), d);
+                   v->tag(), v->x(), v->y(), v->z(), d);
         return;
       }
     }

@@ -131,7 +131,7 @@ Double_Matrix generatePascalSerendipityTetrahedron(int order)
   Double_Matrix monomialsMaxOrder = generateMonomialSubspace(3, order);
   int nbMaxOrder = monomialsMaxOrder.size1();
     
-  Double_Matrix(monomials.touchSubmatrix(index, nbMaxOrder, 0, 3)).memcpy(monomialsMaxOrder);
+  monomials.submatrix(index, nbMaxOrder, 0, 3).memcpy(monomialsMaxOrder);
   return monomials;
 }
 
@@ -147,7 +147,7 @@ Double_Matrix generatePascalTetrahedron(int order)
   for (int p = 0; p <= order; p++) {
     Double_Matrix monOrder = generateMonomialSubspace(3, p);
     int nb = monOrder.size1();
-    Double_Matrix(monomials.touchSubmatrix(index, nb, 0, 3)).memcpy(monOrder);
+    monomials.submatrix(index, nb, 0, 3).memcpy(monOrder);
     index += nb;
   }
 
@@ -511,7 +511,7 @@ Double_Matrix gmshGeneratePointsTriangle(int order, bool serendip)
         Double_Matrix inner = gmshGeneratePointsTriangle(order - 3, serendip);
         inner.scale(1. - 3. * dd);
         inner.add(dd);
-        Double_Matrix(point.touchSubmatrix(index, nbPoints - index, 0, 2)).memcpy(inner);
+        point.submatrix(index, nbPoints - index, 0, 2).memcpy(inner);
       }
     }
   }
@@ -527,10 +527,9 @@ Double_Matrix generateLagrangeMonomialCoefficients(const Double_Matrix& monomial
   }
   
   int ndofs = monomial.size1();
-  int dim   = monomial.size2();
+  int dim = monomial.size2();
   
   Double_Matrix Vandermonde(ndofs, ndofs);
-  
   for (int i = 0; i < ndofs; i++) {
     for (int j = 0; j < ndofs; j++) {
       double dd = 1.;
@@ -538,40 +537,19 @@ Double_Matrix generateLagrangeMonomialCoefficients(const Double_Matrix& monomial
       Vandermonde(i, j) = dd;
     }
   }
-  
-  // check for independence
-
 
   double det = Vandermonde.determinant();
 
-  //  printf("coucou2 %g\n",det);
-
-  if (det == 0.0){
+  if (det == 0.){
     Msg::Fatal("Vandermonde matrix has zero determinant!?");
     return Double_Matrix(1, 1);
   }
-
   Double_Matrix coefficient(ndofs, ndofs);
-  
   for (int i = 0; i < ndofs; i++) {
     for (int j = 0; j < ndofs; j++) {
       int f = (i + j) % 2 == 0 ? 1 : -1;
       Double_Matrix cofactor = Vandermonde.cofactor(i, j);
       coefficient(i, j) = f * cofactor.determinant() / det;
-    }
-  }
-  //  printf("coucou3 %g\n",det);
-
-
-  Vandermonde.set_all(0.);
-  
-  for (int i = 0; i < ndofs; i++) {
-    for (int j = 0; j < ndofs; j++) {
-      double dd = 1.;
-      for (int k = 0; k < dim; k++) dd *= pow(point(i, k), monomial(j, k));
-      for (int k = 0; k < ndofs; k++) {
-        Vandermonde(i, k) += coefficient(k, j) * dd;
-      }
     }
   }
   return coefficient;

@@ -79,23 +79,24 @@ class Gmsh_Matrix
       b[i] = sum / (*this)(i, i);
     }
   }
-  bool _lu_decomposition(int *indx , SCALAR &determinant)
+  bool _lu_decomposition(int *indx, SCALAR &determinant)
   {
     if(_r != _c) 
-      Msg::Fatal("Cannot compute lu factorization of non-square matrix");
+      Msg::Fatal("Cannot LU factorize non-square matrix");
     int i, imax, j, k;
     SCALAR big, dum, sum, temp;
     SCALAR *vv = new SCALAR[_c];    
-    determinant = 1.0;
+    determinant = 1.;
     for(i = 0; i < _c; i++){
       big = 0.;
       for(j = 0; j < _c; j++)
 	if((temp = fabs((*this)(i, j))) > big) big = temp;
       if(big == 0.) {
+        delete [] vv;
+        Msg::Error("Zero pivot in LU factorization");
 	return false;
-	big = 1.e-12;
       }      
-      vv[i] = 1.0 / big;
+      vv[i] = 1. / big;
     }
     for(j = 0; j < _c; j++){
       for(i = 0; i < j; i++){
@@ -126,7 +127,7 @@ class Gmsh_Matrix
       indx[j] = imax;
       if((*this)(j, j) == 0.) (*this)(j, j) = 1.e-20;
       if(j != _c){
-	dum = 1.0 / ((*this)(j, j));
+	dum = 1. / ((*this)(j, j));
 	for(i = j + 1; i < _c; i++) (*this)(i, j) *= dum;
       }
     }
@@ -179,7 +180,7 @@ class Gmsh_Matrix
 	  c._data[i + _r * j] += (*this)(i, k) * b(k, j);
   }
   inline void blas_dgemm(const Gmsh_Matrix<SCALAR> &b, Gmsh_Matrix<SCALAR> &c, 
-			 const SCALAR alpha=1.0, const SCALAR beta=1.0)
+			 const SCALAR alpha=1., const SCALAR beta=1.)
   {
     Gmsh_Matrix<SCALAR> temp(b.size1(), c.size2());
     temp.mult(b, c);
@@ -191,15 +192,40 @@ class Gmsh_Matrix
   {
     for(int i = 0; i < _r * _c; i++) _data[i] = m;
   }
-  inline void lu_solve(const Gmsh_Vector<SCALAR> &rhs, Gmsh_Vector<SCALAR> &result)
+  inline bool lu_solve(const Gmsh_Vector<SCALAR> &rhs, Gmsh_Vector<SCALAR> &result)
   {
     int *indx = new int[_c];
     SCALAR d;
-    if(!_lu_decomposition(indx, d))
-      Msg::Fatal("LU fatorization failed (singular matrix)");
+    if(!_lu_decomposition(indx, d)){
+      delete [] indx;
+      return false;
+    }
     for(int i = 0; i < _c; i++) result(i) = rhs(i);
     _back_substitution(indx, result._data);
     delete [] indx; 
+    return true;
+  }
+  inline bool invert()
+  {
+    Gmsh_Matrix y(_r, _c);
+    SCALAR *col = new SCALAR[_c];
+    int *indx = new int[_c];
+    SCALAR d;
+    if (!_lu_decomposition(indx, d)){
+      delete [] col;
+      delete [] indx;
+      return false;
+    }
+    for(int j = 0; j < _c; j++){
+      for(int i = 0; i < _c; i++) col[i] = 0.0;
+      col[j] = 1.0;
+      _back_substitution(indx, col);
+      for(int i = 0; i < _c; i++) y(i, j) = col[i];
+    }
+    (*this) = y;
+    delete [] col;
+    delete [] indx;
+    return true;
   }
   Gmsh_Matrix<SCALAR> cofactor(int i, int j) const 
   {
@@ -221,10 +247,10 @@ class Gmsh_Matrix
       for(int j = 0; j < _c; j++)
 	y._data[i] += (*this)(i, j) * x(j);
   }
-  SCALAR determinant() const 
+  SCALAR determinant() const
   {
     Gmsh_Matrix<SCALAR> copy = *this;
-    SCALAR factor = 1.0;
+    SCALAR factor = 1.;
     int *indx = new int[_c];
     if(!copy._lu_decomposition(indx, factor)) return 0.;
     SCALAR det = factor;
@@ -232,9 +258,9 @@ class Gmsh_Matrix
     delete [] indx;
     return det;
   }
-  inline Gmsh_Matrix<SCALAR> touchSubmatrix(int i0, int ni, int j0, int nj) 
+  inline Gmsh_Matrix<SCALAR> submatrix(int i0, int ni, int j0, int nj)  const
   {
-    Msg::Fatal("Gmsh_Matrix::touchSubmatrix is not implemented");
+    Msg::Fatal("submatrix not implemented yet for Gmsh_Matrix");
     Gmsh_Matrix<SCALAR> subm(ni, nj);
     return subm;
   }  
@@ -308,12 +334,7 @@ class GSL_Matrix
  private:
   gsl_matrix_view _view;
   gsl_matrix *_data;
-  inline const gsl_matrix_view _see_submatrix(int i0, int ni, int j0, int nj) const
-  {
-    return gsl_matrix_submatrix(_data, i0, j0, ni, nj);
-  }
  public:
-  GSL_Matrix(gsl_matrix_view view) : _view(view), _data(&_view.matrix) {}
   GSL_Matrix(int r, int  c) { _data = gsl_matrix_calloc(r, c); }
   GSL_Matrix(const GSL_Matrix &other) : _data(0)
   {
@@ -321,6 +342,7 @@ class GSL_Matrix
     _data = gsl_matrix_calloc(other._data->size1, other._data->size2);
     gsl_matrix_memcpy(_data, other._data);
   }
+  GSL_Matrix(gsl_matrix_view view) : _view(view), _data(&_view.matrix) {}
   GSL_Matrix() : _data(0) {}
   ~GSL_Matrix() { if(_data && _data->owner == 1) gsl_matrix_free(_data); }
   inline int size1() const { return _data->size1; }
@@ -351,7 +373,7 @@ class GSL_Matrix
     gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1., _data, b._data, 0., c._data);
   }
   inline void blas_dgemm(const GSL_Matrix &x, GSL_Matrix &b, 
-			 const double alpha = 1.0, const double beta = 1.0)
+			 const double alpha=1., const double beta=1.)
   {      
     gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, alpha, x._data, b._data, beta, _data);
   }
@@ -359,13 +381,26 @@ class GSL_Matrix
   {
     gsl_matrix_set_all(_data, m);
   }
-  inline void lu_solve(const GSL_Vector &rhs, GSL_Vector &result)
+  inline bool lu_solve(const GSL_Vector &rhs, GSL_Vector &result)
   {
     int s;
     gsl_permutation * p = gsl_permutation_alloc(size1());
     gsl_linalg_LU_decomp(_data, p, &s);
     gsl_linalg_LU_solve(_data, p, rhs._data, result._data);
     gsl_permutation_free(p);
+    return true;
+  }
+  inline bool invert()
+  {
+    int s;
+    gsl_permutation *p = gsl_permutation_alloc(size1());
+    gsl_linalg_LU_decomp(_data, p, &s);
+    gsl_matrix *inv = gsl_matrix_calloc(size1(), size2());
+    gsl_linalg_LU_invert(_data, p, inv) ;
+    gsl_matrix_memcpy(_data, inv);
+    gsl_matrix_free(inv);
+    gsl_permutation_free(p);
+    return true;
   }
   GSL_Matrix cofactor(int i, int j) const 
   {
@@ -374,19 +409,19 @@ class GSL_Matrix
     GSL_Matrix cof(ni - 1, nj - 1);
     if(i > 0) {
       if(j > 0)
-        GSL_Matrix(cof.touchSubmatrix(0, i , 0, j)).
-          memcpy(GSL_Matrix(_see_submatrix(0, i, 0, j)));
+        cof.submatrix(0, i, 0, j).
+          memcpy(submatrix(0, i, 0, j));
       if(j < nj - 1)
-        GSL_Matrix(cof.touchSubmatrix(0, i, j, nj - j - 1)).
-          memcpy(GSL_Matrix(_see_submatrix(0, i, j + 1,nj - j - 1)));
+        cof.submatrix(0, i, j, nj - j - 1).
+          memcpy(submatrix(0, i, j + 1, nj - j - 1));
     }
     if(i < ni - 1) {  
       if(j < nj - 1)
-        GSL_Matrix(cof.touchSubmatrix(i, ni - i - 1, j, nj - j - 1)).
-          memcpy(GSL_Matrix(_see_submatrix(i + 1, ni - i - 1, j + 1, nj - j - 1)));
+        cof.submatrix(i, ni - i - 1, j, nj - j - 1).
+          memcpy(submatrix(i + 1, ni - i - 1, j + 1, nj - j - 1));
       if(j > 0)
-        GSL_Matrix(cof.touchSubmatrix(i, ni - i - 1, 0, j)).
-          memcpy(GSL_Matrix(_see_submatrix(i + 1, ni - i - 1, 0, j)));
+        cof.submatrix(i, ni - i - 1, 0, j).
+          memcpy(submatrix(i + 1, ni - i - 1, 0, j));
     }
     return cof;
   }
@@ -403,9 +438,9 @@ class GSL_Matrix
     gsl_permutation_free(p);
     return gsl_linalg_LU_det(copy._data, s);
   } 
-  inline gsl_matrix_view touchSubmatrix(int i0, int ni, int j0, int nj) 
+  inline GSL_Matrix submatrix(int i0, int ni, int j0, int nj) const
   {
-    return gsl_matrix_submatrix(_data, i0, j0, ni, nj);
+    return GSL_Matrix(gsl_matrix_submatrix(_data, i0, j0, ni, nj));
   }  
   inline void scale(const double s) 
   {
