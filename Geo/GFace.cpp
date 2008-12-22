@@ -10,6 +10,7 @@
 #include "MElement.h"
 #include "GmshMessage.h"
 #include "VertexArray.h"
+#include "GmshMatrix.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
 #include "GmshEmbedded.h"
@@ -17,14 +18,6 @@
 #include "Numeric.h"
 #include "GaussLegendre1D.h"
 #include "Context.h"
-#if defined(HAVE_GSL)
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_linalg.h>
-#else
-#define NRANSI
-#include "nrutil.h"
-void dsvdcmp(double **a, int m, int n, double w[], double **v);
-#endif
 #endif
 
 extern Context_T CTX;
@@ -241,7 +234,6 @@ void GFace::computeMeanPlane(const std::vector<MVertex*> &points)
 
 void GFace::computeMeanPlane(const std::vector<SPoint3> &points)
 {
-#if !defined(HAVE_GMSH_EMBEDDED)
   // The concept of a mean plane computed in the sense of least
   // squares is fine for plane surfaces(!), but not really the best
   // one for non-plane surfaces. Indeed, imagine a quarter of a circle
@@ -263,63 +255,29 @@ void GFace::computeMeanPlane(const std::vector<SPoint3> &points)
   ym /= (double)ndata;
   zm /= (double)ndata;
 
-  int min;
-  double res[4], svd[3];
-#if defined(HAVE_GSL)
-  gsl_matrix *U = gsl_matrix_alloc(ndata, na);
-  gsl_matrix *V = gsl_matrix_alloc(na, na);
-  gsl_vector *W = gsl_vector_alloc(na);
-  gsl_vector *TMPVEC = gsl_vector_alloc(na);
+  Double_Matrix U(ndata, na), V(na, na);
+  Double_Vector sigma(na);
   for(int i = 0; i < ndata; i++) {
-    gsl_matrix_set(U, i, 0, points[i].x() - xm);
-    gsl_matrix_set(U, i, 1, points[i].y() - ym);
-    gsl_matrix_set(U, i, 2, points[i].z() - zm);
+    U(i, 0) = points[i].x() - xm;
+    U(i, 1) = points[i].y() - ym;
+    U(i, 2) = points[i].z() - zm;
   }
-  gsl_linalg_SV_decomp(U, V, W, TMPVEC);
-  svd[0] = gsl_vector_get(W, 0);
-  svd[1] = gsl_vector_get(W, 1);
-  svd[2] = gsl_vector_get(W, 2);
+  U.svd(V, sigma);
+  double res[4], svd[3];
+  svd[0] = sigma(0);
+  svd[1] = sigma(1);
+  svd[2] = sigma(2);
+  int min;
   if(fabs(svd[0]) < fabs(svd[1]) && fabs(svd[0]) < fabs(svd[2]))
     min = 0;
   else if(fabs(svd[1]) < fabs(svd[0]) && fabs(svd[1]) < fabs(svd[2]))
     min = 1;
   else
     min = 2;
-  res[0] = gsl_matrix_get(V, 0, min);
-  res[1] = gsl_matrix_get(V, 1, min);
-  res[2] = gsl_matrix_get(V, 2, min);
+  res[0] = V(0, min);
+  res[1] = V(1, min);
+  res[2] = V(2, min);
   norme(res);
-  gsl_matrix_free(U);
-  gsl_matrix_free(V);
-  gsl_vector_free(W);
-  gsl_vector_free(TMPVEC);
-#else
-  double **U = dmatrix(1, ndata, 1, na);
-  double **V = dmatrix(1, na, 1, na);
-  double *W = dvector(1, na);
-  for(int i = 0; i < ndata; i++) {
-    U[i + 1][1] = points[i].x() - xm;
-    U[i + 1][2] = points[i].y() - ym;
-    U[i + 1][3] = points[i].z() - zm;
-  }
-  dsvdcmp(U, ndata, na, W, V);
-  if(fabs(W[1]) < fabs(W[2]) && fabs(W[1]) < fabs(W[3]))
-    min = 1;
-  else if(fabs(W[2]) < fabs(W[1]) && fabs(W[2]) < fabs(W[3]))
-    min = 2;
-  else
-    min = 3;
-  svd[0] = W[1];
-  svd[1] = W[2];
-  svd[2] = W[3];
-  res[0] = V[1][min];
-  res[1] = V[2][min];
-  res[2] = V[3][min];
-  norme(res);
-  free_dmatrix(U, 1, ndata, 1, na);
-  free_dmatrix(V, 1, na, 1, na);
-  free_dvector(W, 1, na);
-#endif
 
   double ex[3], t1[3], t2[3];
 
@@ -428,7 +386,6 @@ end:
       }
     }
   }
-#endif
 }
 
 void GFace::getMeanPlaneData(double VX[3], double VY[3],
@@ -481,17 +438,11 @@ double GFace::curvature(const SPoint2 &param) const
   SVector3 dndu = 500 * (n2 - n1);
   SVector3 dndv = 500 * (n4 - n3);
 
-  // double c = fabs(dot(dndu, du) +  dot(dndv, dv)) / detJ;
-
-
   double ddu = dot(dndu,du);
   double ddv = dot(dndv,dv);
   
   double c = std::max(fabs(ddu),fabs(ddv))/detJ;
-  
-  
   // Msg::Info("c = %g detJ %g", c, detJ);
-
   return c;
 }
 
@@ -505,7 +456,6 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
                     double &U, double &V, const double relax,
                     const bool onSurface) const
 {
-#if !defined(HAVE_GMSH_EMBEDDED)
   const double Precision = 1.e-8;
   const int MaxIter = 25;
   const int NumInitGuess = 11;
@@ -584,7 +534,6 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
     Msg::Info("point %g %g %g : Relaxation factor = %g", X, Y, Z, 0.75 * relax);
     XYZtoUV(X, Y, Z, U, V, 0.75 * relax);
   }
-#endif
 }
 
 SPoint2 GFace::parFromPoint(const SPoint3 &p) const

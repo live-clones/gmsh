@@ -1316,7 +1316,8 @@ Optional Packages:
   --with-mpi-prefix=PFX   prefix where MPI is installed
   --with-fftw3-prefix=PFX prefix where FFTW3 is installed
   --with-fm-prefix=PFX    prefix where FourierModel is installed
-  --with-blas-prefix=PFX  prefix where BLAS (and LAPACK) are installed
+  --with-blas-lapack-prefix=PFX
+                          prefix where BLAS and LAPACK are installed
 
 Some influential environment variables:
   CC          C compiler command
@@ -1841,9 +1842,9 @@ if test "${with_fm_prefix+set}" = set; then
 fi
 
 
-# Check whether --with-blas-prefix was given.
-if test "${with_blas_prefix+set}" = set; then
-  withval=$with_blas_prefix; BLAS_PREFIX=$withval
+# Check whether --with-blas-lapack-prefix was given.
+if test "${with_blas_lapack_prefix+set}" = set; then
+  withval=$with_blas_lapack_prefix; BLAS_LAPACK_PREFIX=$withval
 fi
 
 
@@ -5128,43 +5129,6 @@ fi
     fi
   fi
 fi
-if test "x${GSL}" != "xyes"; then
-    { echo "$as_me:$LINENO: checking for ./contrib/NR/dsvdcmp.cpp" >&5
-echo $ECHO_N "checking for ./contrib/NR/dsvdcmp.cpp... $ECHO_C" >&6; }
-if test "${ac_cv_file___contrib_NR_dsvdcmp_cpp+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  test "$cross_compiling" = yes &&
-  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "./contrib/NR/dsvdcmp.cpp"; then
-  ac_cv_file___contrib_NR_dsvdcmp_cpp=yes
-else
-  ac_cv_file___contrib_NR_dsvdcmp_cpp=no
-fi
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_file___contrib_NR_dsvdcmp_cpp" >&5
-echo "${ECHO_T}$ac_cv_file___contrib_NR_dsvdcmp_cpp" >&6; }
-if test $ac_cv_file___contrib_NR_dsvdcmp_cpp = yes; then
-  NR="yes"
-fi
-
-  if test "x${NR}" = "xyes"; then
-    GMSH_DIRS="${GMSH_DIRS} contrib/NR"
-    GMSH_LIBS="${GMSH_LIBS} -lGmshNR"
-    echo "********************************************************************"
-    echo "  You are building a non-free version of Gmsh, using code copyright"
-    echo "  (C) 1986-92 Numerical Recipes Software."
-    echo "  To use the GSL instead, run configure again with the --enable-gsl"
-    echo "  option."
-    echo "********************************************************************"
-  else
-    { { echo "$as_me:$LINENO: error: Could not find GSL, aborting." >&5
-echo "$as_me: error: Could not find GSL, aborting." >&2;}
-   { (exit 1); exit 1; }; }
-  fi
-fi
 
 if test "x$enable_fm" != "xno"; then
   if test "x${FM_PREFIX}" != "x"; then
@@ -5316,8 +5280,8 @@ echo "$as_me: WARNING: Could not find FFTW3: disabling FourierModel." >&2;}
   fi
 fi
 
-if test "x${BLAS_PREFIX}" != "x"; then
-  LDFLAGS="-L${BLAS_PREFIX} -L${BLAS_PREFIX}/lib ${LDFLAGS}"
+if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
+  LDFLAGS="-L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib ${LDFLAGS}"
 fi
 { echo "$as_me:$LINENO: checking for cblas_dgemm in -lcblas" >&5
 echo $ECHO_N "checking for cblas_dgemm in -lcblas... $ECHO_C" >&6; }
@@ -5452,8 +5416,8 @@ fi
 
 fi
 if test "x${CBLAS}" = "xyes"; then
-  if test "x${BLAS_PREFIX}" != "x"; then
-    BLAS_PATH="-L${BLAS_PREFIX} -L${BLAS_PREFIX}/lib"
+  if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
+    BLAS_PATH="-L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib"
   fi
   FLAGS="${FLAGS} -DHAVE_CBLAS"
 else
@@ -5463,7 +5427,7 @@ else
   fi
 fi
 
-if test "x${FM}" = "xyes"; then
+if test "x${FM}" = "xyes" -o "x${GSL}" != "xyes"; then
   ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'

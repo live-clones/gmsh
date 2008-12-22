@@ -8,6 +8,7 @@
 // Msg)
 
 #include "NumericEmbedded.h"
+#include "GmshMatrix.h"
 #include "GmshMessage.h"
 
 #define SQU(a)      ((a)*(a))
@@ -446,6 +447,43 @@ void  eigsort(double d[3])
     if (k != i) {
       d[k]=d[i];
       d[i]=p;
+    }
+  }
+}
+
+void invert_singular_matrix3x3(double MM[3][3], double II[3][3])
+{
+  int i, j, k, n = 3;
+  double TT[3][3];
+
+  for(i = 1; i <= n; i++) {
+    for(j = 1; j <= n; j++) {
+      II[i - 1][j - 1] = 0.0;
+      TT[i - 1][j - 1] = 0.0;
+    }
+  }
+
+  Double_Matrix M(3, 3), V(3, 3);
+  Double_Vector W(3);
+  for(i = 1; i <= n; i++){
+    for(j = 1; j <= n; j++){
+      M(i - 1, j - 1) = MM[i - 1][j - 1];
+    }
+  }
+  M.svd(V, W);
+  for(i = 1; i <= n; i++) {
+    for(j = 1; j <= n; j++) {
+      double ww = W(i - 1);
+      if(fabs(ww) > 1.e-16) { // singular value precision
+        TT[i - 1][j - 1] += M(j - 1, i - 1) / ww;
+      }
+    }
+  }
+  for(i = 1; i <= n; i++) {
+    for(j = 1; j <= n; j++) {
+      for(k = 1; k <= n; k++) {
+        II[i - 1][j - 1] += V(i - 1, k - 1) * TT[k - 1][j - 1];
+      }
     }
   }
 }

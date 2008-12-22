@@ -2886,9 +2886,9 @@ static Vertex *VERTEX;
 
 static double min1d(double (*funct) (double), double *xmin)
 {
-  // 0. for tolerance allows for maximum as code in gsl_brent
-  return (brent(CURVE->ubeg, 0.5*(CURVE->ubeg + CURVE->uend), CURVE->uend,
-                funct, 0., xmin));
+  // tolerance==0. allows for maximum as code in gsl_brent
+  return brent(CURVE->ubeg, 0.5 * (CURVE->ubeg + CURVE->uend), CURVE->uend,
+               funct, 0., xmin);
 }
 
 static void projectPS(int N, double x[], double res[])
@@ -2943,8 +2943,8 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double u[2])
   int check;
   SURFACE = s;
   VERTEX = &p;
-
   newt(x, 2, &check, projectPS);
+
   Vertex vv = InterpolateSurface(s, x[1], x[2], 0, 0);
   double res[3];
   projectPS(2, x, res);
@@ -3091,6 +3091,7 @@ static bool IntersectCurveSurface(Curve *c, Surface *s, double x[4])
   SURFACE = s;
   CURVE = c;
   newt(x, 3, &check, intersectCS);
+
   if(check) return false;
   return true;
 }

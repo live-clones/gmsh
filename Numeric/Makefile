@@ -24,10 +24,7 @@ SRC = Numeric.cpp\
       GaussQuadratureTet.cpp\
       GaussQuadratureHex.cpp\
       GaussLegendreSimplex.cpp\
-      gmsh_predicates.cpp\
-      gsl_newt.cpp\
-      gsl_min.cpp\
-      gsl_brent.cpp
+      GmshPredicates.cpp\
 
 OBJ = ${SRC:.cpp=${OBJEXT}}
 
@@ -56,8 +53,8 @@ depend:
 
 # DO NOT DELETE THIS LINE
 Numeric${OBJEXT}: Numeric.cpp ../Common/GmshMessage.h Numeric.h \
-  NumericEmbedded.h
-NumericEmbedded${OBJEXT}: NumericEmbedded.cpp NumericEmbedded.h \
+  NumericEmbedded.h GmshMatrix.h
+NumericEmbedded${OBJEXT}: NumericEmbedded.cpp NumericEmbedded.h GmshMatrix.h \
   ../Common/GmshMessage.h
 gmshAssembler${OBJEXT}: gmshAssembler.cpp ../Geo/MVertex.h ../Geo/SPoint2.h \
   ../Geo/SPoint3.h gmshAssembler.h gmshLinearSystem.h
@@ -122,10 +119,4 @@ GaussQuadratureHex${OBJEXT}: GaussQuadratureHex.cpp Gauss.h Numeric.h \
   NumericEmbedded.h GaussLegendre1D.h
 GaussLegendreSimplex${OBJEXT}: GaussLegendreSimplex.cpp Gauss.h Numeric.h \
   NumericEmbedded.h GaussLegendre1D.h
-gmsh_predicates${OBJEXT}: gmsh_predicates.cpp
-gsl_newt${OBJEXT}: gsl_newt.cpp ../Common/GmshMessage.h Numeric.h \
-  NumericEmbedded.h
-gsl_min${OBJEXT}: gsl_min.cpp ../Common/GmshMessage.h Numeric.h \
-  NumericEmbedded.h
-gsl_brent${OBJEXT}: gsl_brent.cpp ../Common/GmshMessage.h Numeric.h \
-  NumericEmbedded.h
+GmshPredicates${OBJEXT}: GmshPredicates.cpp

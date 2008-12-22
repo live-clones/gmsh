@@ -7,7 +7,33 @@
 #define _GMSH_MATRIX_H_
 
 #include <math.h>
+#include <algorithm>
 #include "GmshMessage.h"
+
+#if defined(HAVE_BLAS)
+extern "C" {
+  void dgemm_(const char *transa, const char *transb,
+              int *l, int *n, int *m, double *alpha, 
+              const void *a, int *lda, void *b, int *ldb, 
+              double *beta, void *c, int *ldc);
+  void dgemv_(const char *trans, int *m, int *n, double *alpha,
+              void *a, int *lda, void *x, int *incx,
+              double *beta, void *y, int *incy);
+}
+#endif
+
+#if defined(HAVE_LAPACK)
+extern "C" {
+  void dgesv_(const int *N, const int *nrhs, double *A, const int *lda, 
+              int *ipiv, double *b, const int *ldb, int *info);
+  void dgetrf_(const int *M, const int *N, double *A, const int *lda, 
+               int *ipiv, int *info);
+  void dgesvd_(const char* jobu, const char *jobvt, const int *M, const int *N,
+               double *A, const int *lda, double *S, double* U, const int *ldu,
+               double *VT, const int *ldvt, double *work, const int *lwork, 
+               const int *info);
+}
+#endif
 
 template <class SCALAR> class Gmsh_Matrix;
 
@@ -60,79 +86,6 @@ class Gmsh_Matrix
  private:
   int _r, _c;
   SCALAR *_data;
-  void _back_substitution(int *indx, SCALAR *b)
-  {
-    int i, ii = -1, ip, j;
-    SCALAR sum;
-    for(i = 0; i < _c; i++){
-      ip = indx[i];
-      sum = b[ip];
-      b[ip] = b[i];
-      if(ii != -1)
-	for(j = ii; j <= i - 1; j++) sum -= (*this)(i, j) * b[j];
-      else if(sum) ii = i;
-      b[i] = sum;
-    }
-    for(i = _c - 1; i >= 0; i--){
-      sum = b[i];
-      for(j = i + 1; j < _c; j++) sum -= (*this)(i, j) * b[j];
-      b[i] = sum / (*this)(i, i);
-    }
-  }
-  bool _lu_decomposition(int *indx, SCALAR &determinant)
-  {
-    if(_r != _c) 
-      Msg::Fatal("Cannot LU factorize non-square matrix");
-    int i, imax, j, k;
-    SCALAR big, dum, sum, temp;
-    SCALAR *vv = new SCALAR[_c];    
-    determinant = 1.;
-    for(i = 0; i < _c; i++){
-      big = 0.;
-      for(j = 0; j < _c; j++)
-	if((temp = fabs((*this)(i, j))) > big) big = temp;
-      if(big == 0.) {
-        delete [] vv;
-	return false;
-      }      
-      vv[i] = 1. / big;
-    }
-    for(j = 0; j < _c; j++){
-      for(i = 0; i < j; i++){
-	sum = (*this)(i, j);
-	for(k = 0; k < i; k++) sum -= (*this)(i, k)*(*this)(k, j);
-	(*this)(i, j) = sum;
-      }
-      big = 0.;
-      for(i = j; i < _c; i++){
-	sum = (*this)(i, j);
-	for(k = 0; k < j; k++)
-	  sum -= (*this)(i, k) * (*this)(k, j);
-	(*this)(i, j) = sum;
-	if((dum = vv[i] * fabs(sum)) >= big){
-	  big = dum;
-	  imax = i;
-	}
-      }
-      if(j != imax){
-	for(k = 0; k < _c; k++){
-	  dum = (*this)(imax, k);
-	  (*this)(imax, k) = (*this)(j, k);
-	  (*this)(j, k) = dum;
-	}
-	determinant = -(determinant);
-	vv[imax] = vv[j];
-      }
-      indx[j] = imax;
-      if((*this)(j, j) == 0.) (*this)(j, j) = 1.e-20;
-      if(j != _c){
-	dum = 1. / ((*this)(j, j));
-	for(i = j + 1; i < _c; i++) (*this)(i, j) *= dum;
-      }
-    }
-    delete [] vv;
-    return true;
-  }
  public:
   Gmsh_Matrix(int r, int c) : _r(r), _c(c)
   {
@@ -179,20 +132,34 @@ class Gmsh_Matrix
   }
   inline void mult(const Gmsh_Matrix<SCALAR> &b, Gmsh_Matrix<SCALAR> &c)
   {
+#if 0 // defined(HAVE_BLAS)
+    void dgemm_(const char *transa, const char *transb,
+                int *l, int *n, int *m, double *alpha, 
+                const void *a, int *lda, void *b, int *ldb, 
+                double *beta, void *c, int *ldc);
+#else
     c.scale(0.);
     for(int i = 0; i < _r; i++)
       for(int j = 0; j < b.size2(); j++)
 	for(int k = 0; k < _c; k++)
 	  c._data[i + _r * j] += (*this)(i, k) * b(k, j);
+#endif
   }
   inline void blas_dgemm(const Gmsh_Matrix<SCALAR> &b, Gmsh_Matrix<SCALAR> &c, 
 			 const SCALAR alpha=1., const SCALAR beta=1.)
   {
+#if 0 // defined(HAVE_BLAS)
+    void dgemm_(const char *transa, const char *transb,
+                int *l, int *n, int *m, double *alpha, 
+                const void *a, int *lda, void *b, int *ldb, 
+                double *beta, void *c, int *ldc);
+#else
     Gmsh_Matrix<SCALAR> temp(b.size1(), c.size2());
     temp.mult(b, c);
     scale(beta);
     temp.scale(alpha);
     add(temp);
+#endif
   }
   inline void set_all(const SCALAR &m) 
   {
@@ -217,45 +184,39 @@ class Gmsh_Matrix
   }
   inline void mult(const Gmsh_Vector<SCALAR> &x, Gmsh_Vector<SCALAR> &y)
   {
+#if 0 //defined(HAVE_BLAS)
+  void dgemv_(const char *trans, int *m, int *n, double *alpha,
+              void *a, int *lda, void *x, int *incx,
+              double *beta, void *y, int *incy);
+#else
     y.scale(0.);
     for(int i = 0; i < _r; i++)
       for(int j = 0; j < _c; j++)
 	y._data[i] += (*this)(i, j) * x(j);
+#endif
+  }
+  inline Gmsh_Matrix<SCALAR> transpose()
+  {
+    Gmsh_Matrix<SCALAR> T(size2(), size1());
+    for(int i = 0; i < size1(); i++)
+      for(int j = 0; j < size2(); j++)
+        T(j, i) = (*this)(i, j);
+    return T;
   }
   inline bool lu_solve(const Gmsh_Vector<SCALAR> &rhs, Gmsh_Vector<SCALAR> &result)
   {
-    int *indx = new int[_c];
-    SCALAR d;
-    if(!_lu_decomposition(indx, d)){
-      delete [] indx;
-      return false;
-    }
-    for(int i = 0; i < _c; i++) result(i) = rhs(i);
-    _back_substitution(indx, result._data);
-    delete [] indx; 
-    return true;
-  }
-  inline bool invert()
-  {
-    Gmsh_Matrix y(_r, _c);
-    SCALAR *col = new SCALAR[_c];
-    int *indx = new int[_c];
-    SCALAR d;
-    if (!_lu_decomposition(indx, d)){
-      delete [] col;
-      delete [] indx;
-      return false;
-    }
-    for(int j = 0; j < _c; j++){
-      for(int i = 0; i < _c; i++) col[i] = 0.0;
-      col[j] = 1.0;
-      _back_substitution(indx, col);
-      for(int i = 0; i < _c; i++) y(i, j) = col[i];
-    }
-    (*this) = y;
-    delete [] col;
-    delete [] indx;
-    return true;
+#if defined(HAVE_LAPACK)
+    int N = size1(), nrhs = 1, lda = N, ldb = N, info;
+    int *ipiv = new int[N];
+    for(int i = 0; i < N; i++) result(i) = rhs(i);
+    dgesv_(&N, &nrhs, _data, &lda, ipiv, result._data, &ldb, &info);
+    delete [] ipiv;
+    if(info == 0) return true;
+    Msg::Error("Problem in LAPACK LU (info=%d)", info);
+#else
+    Msg::Error("LU factorization requires LAPACK");
+#endif
+    return false;
   }
   Gmsh_Matrix<SCALAR> cofactor(int i, int j) const 
   {
@@ -272,14 +233,38 @@ class Gmsh_Matrix
   }
   SCALAR determinant() const
   {
-    Gmsh_Matrix<SCALAR> tmp = *this;
-    SCALAR factor = 1.;
-    int *indx = new int[_c];
-    if(!tmp._lu_decomposition(indx, factor)) return 0.;
-    SCALAR det = factor;
-    for(int i = 0; i < _c; i++) det *= tmp(i, i);
-    delete [] indx;
+    Gmsh_Matrix<SCALAR> tmp(*this);
+#if defined(HAVE_LAPACK)
+    int M = size1(), N = size2(), lda = size1(), info;
+    int *ipiv = new int[std::min(M, N)];
+    dgetrf_(&M, &N, tmp._data, &lda, ipiv, &info);
+    SCALAR det = 1.;
+    for(int i = 0; i < size1(); i++){
+      det *= tmp(i, i);
+      if(ipiv[i] != i + 1) det = -det;
+    }
     return det;
+#else
+    Msg::Error("Determinant computation requires LAPACK");
+    return 0.;
+#endif
+  }
+  bool svd(Gmsh_Matrix<SCALAR> &V, Gmsh_Vector<SCALAR> &S)
+  {
+#if defined(HAVE_LAPACK)
+    Gmsh_Matrix<SCALAR> VT(V.size2(), V.size1());
+    int M = size1(), N = size2(), LDA = size1(), LDVT = VT.size1(), info;
+    int LWORK = std::max(3 * std::min(M, N) + std::max(M, N), 5 * std::min(M, N));
+    Gmsh_Vector<SCALAR> WORK(LWORK);
+    dgesvd_("O", "A", &M, &N, _data, &LDA, S._data, _data, &LDA,
+            VT._data, &LDVT, WORK._data, &LWORK, &info);
+    V = VT.transpose();
+    if(info == 0) return true;
+    Msg::Error("Problem in LAPACK SVD (info=%d)", info);
+#else
+    Msg::Error("Singular value decomposition requires LAPACK");
+#endif
+    return false;
   }
 };
 
@@ -403,24 +388,20 @@ class GSL_Matrix
   {
     gsl_blas_dgemv(CblasNoTrans, 1., _data, x._data, 0., b._data);
   }
-  inline bool lu_solve(const GSL_Vector &rhs, GSL_Vector &result)
+  inline GSL_Matrix transpose()
   {
-    int s;
-    gsl_permutation * p = gsl_permutation_alloc(size1());
-    gsl_linalg_LU_decomp(_data, p, &s);
-    gsl_linalg_LU_solve(_data, p, rhs._data, result._data);
-    gsl_permutation_free(p);
-    return true;
+    GSL_Matrix T(size2(), size1());
+    for(int i = 0; i < size1(); i++)
+      for(int j = 0; j < size2(); j++)
+        T(j, i) = (*this)(i, j);
+    return T;
   }
-  inline bool invert()
+  inline bool lu_solve(const GSL_Vector &rhs, GSL_Vector &result)
   {
     int s;
     gsl_permutation *p = gsl_permutation_alloc(size1());
     gsl_linalg_LU_decomp(_data, p, &s);
-    gsl_matrix *inv = gsl_matrix_calloc(size1(), size2());
-    gsl_linalg_LU_invert(_data, p, inv) ;
-    gsl_matrix_memcpy(_data, inv);
-    gsl_matrix_free(inv);
+    gsl_linalg_LU_solve(_data, p, rhs._data, result._data);
     gsl_permutation_free(p);
     return true;
   }
@@ -446,6 +427,12 @@ class GSL_Matrix
     gsl_permutation_free(p);
     return gsl_linalg_LU_det(tmp._data, s);
   } 
+  bool svd(GSL_Matrix &V, GSL_Vector &S)
+  {
+    GSL_Vector tmp(S.size());
+    gsl_linalg_SV_decomp(_data, V._data, S._data, tmp._data);
+    return false;
+  }
 };
 
 typedef GSL_Matrix Double_Matrix;

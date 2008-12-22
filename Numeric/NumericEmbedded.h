@@ -73,5 +73,6 @@ double InterpolateIso(double *X, double *Y, double *Z,
 void gradSimplex(double *x, double *y, double *z, double *v, double *grad);
 double ComputeVonMises(double *val);
 double ComputeScalarRep(int numComp, double *val);
+void invert_singular_matrix3x3(double MM[3][3], double II[3][3]);
 
 #endif
