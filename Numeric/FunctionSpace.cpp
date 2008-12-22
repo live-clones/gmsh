@@ -130,8 +130,7 @@ Double_Matrix generatePascalSerendipityTetrahedron(int order)
   }
   Double_Matrix monomialsMaxOrder = generateMonomialSubspace(3, order);
   int nbMaxOrder = monomialsMaxOrder.size1();
-    
-  monomials.submatrix(index, nbMaxOrder, 0, 3).memcpy(monomialsMaxOrder);
+  monomials.copy(monomialsMaxOrder, 0, nbMaxOrder, 0, 3, index, 0);
   return monomials;
 }
 
@@ -147,7 +146,7 @@ Double_Matrix generatePascalTetrahedron(int order)
   for (int p = 0; p <= order; p++) {
     Double_Matrix monOrder = generateMonomialSubspace(3, p);
     int nb = monOrder.size1();
-    monomials.submatrix(index, nb, 0, 3).memcpy(monOrder);
+    monomials.copy(monOrder, 0, nb, 0, 3, index, 0);
     index += nb;
   }
 
@@ -511,7 +510,7 @@ Double_Matrix gmshGeneratePointsTriangle(int order, bool serendip)
         Double_Matrix inner = gmshGeneratePointsTriangle(order - 3, serendip);
         inner.scale(1. - 3. * dd);
         inner.add(dd);
-        point.submatrix(index, nbPoints - index, 0, 2).memcpy(inner);
+        point.copy(inner, 0, nbPoints - index, 0, 2, index, 0);
       }
     }
   }

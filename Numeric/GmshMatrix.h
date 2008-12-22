@@ -93,7 +93,6 @@ class Gmsh_Matrix
 	if((temp = fabs((*this)(i, j))) > big) big = temp;
       if(big == 0.) {
         delete [] vv;
-        Msg::Error("Zero pivot in LU factorization");
 	return false;
       }      
       vv[i] = 1. / big;
@@ -149,7 +148,7 @@ class Gmsh_Matrix
   ~Gmsh_Matrix() { if(_data) delete [] _data; }
   inline int size1() const { return _r; }
   inline int size2() const { return _c; }
-  Gmsh_Matrix<SCALAR> & operator=(const Gmsh_Matrix<SCALAR> &other)
+  Gmsh_Matrix<SCALAR> & operator = (const Gmsh_Matrix<SCALAR> &other)
   {
     if(this != &other){
       _r = other._r; 
@@ -171,6 +170,13 @@ class Gmsh_Matrix
   {
     return _data[i + _r * j];
   }
+  void copy(const Gmsh_Matrix<SCALAR> &a, int i0, int ni, int j0, int nj, 
+            int desti0, int destj0)
+  {
+    for(int i = i0, desti = desti0; i < i0 + ni; i++, desti++)
+      for(int j = j0, destj = destj0; j < j0 + nj; j++, destj++)
+        (*this)(desti, destj) = a(i, j);
+  }
   inline void mult(const Gmsh_Matrix<SCALAR> &b, Gmsh_Matrix<SCALAR> &c)
   {
     c.scale(0.);
@@ -191,6 +197,30 @@ class Gmsh_Matrix
   inline void set_all(const SCALAR &m) 
   {
     for(int i = 0; i < _r * _c; i++) _data[i] = m;
+  }
+  inline void scale(const double s)
+  {
+    if(s == 0.)
+      for(int i = 0; i < _r * _c; ++i) _data[i] = 0.;
+    else
+      for(int i = 0; i < _r * _c; ++i) _data[i] *= s;
+  }
+  inline void add(const double &a) 
+  {
+    for(int i = 0; i < _r * _c; ++i) _data[i] += a;
+  }
+  inline void add(const Gmsh_Matrix<SCALAR> &m) 
+  {
+    for(int i = 0; i < size1(); i++)
+      for(int j = 0; j < size2(); j++)
+	(*this)(i, j) += m(i, j);
+  }
+  inline void mult(const Gmsh_Vector<SCALAR> &x, Gmsh_Vector<SCALAR> &y)
+  {
+    y.scale(0.);
+    for(int i = 0; i < _r; i++)
+      for(int j = 0; j < _c; j++)
+	y._data[i] += (*this)(i, j) * x(j);
   }
   inline bool lu_solve(const Gmsh_Vector<SCALAR> &rhs, Gmsh_Vector<SCALAR> &result)
   {
@@ -240,46 +270,16 @@ class Gmsh_Matrix
     }
     return cof;
   }
-  inline void mult(const Gmsh_Vector<SCALAR> &x, Gmsh_Vector<SCALAR> &y)
-  {
-    y.scale(0.);
-    for(int i = 0; i < _r; i++)
-      for(int j = 0; j < _c; j++)
-	y._data[i] += (*this)(i, j) * x(j);
-  }
   SCALAR determinant() const
   {
-    Gmsh_Matrix<SCALAR> copy = *this;
+    Gmsh_Matrix<SCALAR> tmp = *this;
     SCALAR factor = 1.;
     int *indx = new int[_c];
-    if(!copy._lu_decomposition(indx, factor)) return 0.;
+    if(!tmp._lu_decomposition(indx, factor)) return 0.;
     SCALAR det = factor;
-    for(int i = 0; i < _c; i++) det *= copy(i, i);
+    for(int i = 0; i < _c; i++) det *= tmp(i, i);
     delete [] indx;
     return det;
-  }
-  inline Gmsh_Matrix<SCALAR> submatrix(int i0, int ni, int j0, int nj)  const
-  {
-    Msg::Fatal("submatrix not implemented yet for Gmsh_Matrix");
-    Gmsh_Matrix<SCALAR> subm(ni, nj);
-    return subm;
-  }  
-  inline void scale(const double s)
-  {
-    if(s == 0.)
-      for(int i = 0; i < _r * _c; ++i) _data[i] = 0.;
-    else
-      for(int i = 0; i < _r * _c; ++i) _data[i] *= s;
-  }
-  inline void add(const double &a) 
-  {
-    for(int i = 0; i < _r * _c; ++i) _data[i] += a;
-  }
-  inline void add(const Gmsh_Matrix<SCALAR> &m) 
-  {
-    for(int i = 0; i < size1(); i++)
-      for(int j = 0; j < size2(); j++)
-	(*this)(i, j) += m(i, j);
   }
 };
 
@@ -332,7 +332,6 @@ class GSL_Vector
 class GSL_Matrix
 {
  private:
-  gsl_matrix_view _view;
   gsl_matrix *_data;
  public:
   GSL_Matrix(int r, int  c) { _data = gsl_matrix_calloc(r, c); }
@@ -342,12 +341,11 @@ class GSL_Matrix
     _data = gsl_matrix_calloc(other._data->size1, other._data->size2);
     gsl_matrix_memcpy(_data, other._data);
   }
-  GSL_Matrix(gsl_matrix_view view) : _view(view), _data(&_view.matrix) {}
   GSL_Matrix() : _data(0) {}
   ~GSL_Matrix() { if(_data && _data->owner == 1) gsl_matrix_free(_data); }
   inline int size1() const { return _data->size1; }
   inline int size2() const { return _data->size2; }
-  GSL_Matrix & operator = (const GSL_Matrix&other)
+  GSL_Matrix & operator = (const GSL_Matrix &other)
   {
     if(&other != this){
       if(_data) gsl_matrix_free(_data);
@@ -368,6 +366,13 @@ class GSL_Matrix
   {
     return *gsl_matrix_ptr(_data, i, j);
   }
+  void copy(const GSL_Matrix &a, int i0, int ni, int j0, int nj, 
+            int desti0, int destj0)
+  {
+    for(int i = i0, desti = desti0; i < i0 + ni; i++, desti++)
+      for(int j = j0, destj = destj0; j < j0 + nj; j++, destj++)
+        (*this)(desti, destj) = a(i, j);
+  }
   inline void mult(const GSL_Matrix &b, GSL_Matrix &c)
   {
     gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1., _data, b._data, 0., c._data);
@@ -380,6 +385,23 @@ class GSL_Matrix
   inline void set_all(const double &m) 
   {
     gsl_matrix_set_all(_data, m);
+  }
+  inline void scale(const double s) 
+  {
+    if(s == 0.) gsl_matrix_set_zero(_data);
+    else gsl_matrix_scale(_data, s);
+  }
+  inline void add(const double &a) 
+  {
+    gsl_matrix_add_constant(_data, a);
+  }
+  inline void add(const GSL_Matrix &m) 
+  {
+    gsl_matrix_add(_data, m._data);
+  }
+  inline void mult(const GSL_Vector &x, GSL_Vector &b)
+  {
+    gsl_blas_dgemv(CblasNoTrans, 1., _data, x._data, 0., b._data);
   }
   inline bool lu_solve(const GSL_Vector &rhs, GSL_Vector &result)
   {
@@ -407,54 +429,23 @@ class GSL_Matrix
     int ni = size1();
     int nj = size2();
     GSL_Matrix cof(ni - 1, nj - 1);
-    if(i > 0) {
-      if(j > 0)
-        cof.submatrix(0, i, 0, j).
-          memcpy(submatrix(0, i, 0, j));
-      if(j < nj - 1)
-        cof.submatrix(0, i, j, nj - j - 1).
-          memcpy(submatrix(0, i, j + 1, nj - j - 1));
-    }
-    if(i < ni - 1) {  
-      if(j < nj - 1)
-        cof.submatrix(i, ni - i - 1, j, nj - j - 1).
-          memcpy(submatrix(i + 1, ni - i - 1, j + 1, nj - j - 1));
-      if(j > 0)
-        cof.submatrix(i, ni - i - 1, 0, j).
-          memcpy(submatrix(i + 1, ni - i - 1, 0, j));
+    for(int I = 0; I < ni; I++){
+      for(int J = 0; J < nj; J++){
+	if(J != j && I != i)
+	  cof(I < i ? I : I - 1, J < j ? J : J - 1) = (*this)(I, J);
+      }
     }
     return cof;
   }
-  inline void mult(const GSL_Vector &x, GSL_Vector &b)
-  {
-    gsl_blas_dgemv(CblasNoTrans, 1., _data, x._data, 0., b._data);
-  }
   double determinant() const 
   {
-    GSL_Matrix copy = *this;
+    GSL_Matrix tmp = *this;
     gsl_permutation *p = gsl_permutation_alloc(size1());
     int s;
-    gsl_linalg_LU_decomp(copy._data, p, &s);
+    gsl_linalg_LU_decomp(tmp._data, p, &s);
     gsl_permutation_free(p);
-    return gsl_linalg_LU_det(copy._data, s);
+    return gsl_linalg_LU_det(tmp._data, s);
   } 
-  inline GSL_Matrix submatrix(int i0, int ni, int j0, int nj) const
-  {
-    return GSL_Matrix(gsl_matrix_submatrix(_data, i0, j0, ni, nj));
-  }  
-  inline void scale(const double s) 
-  {
-    if(s == 0.) gsl_matrix_set_zero(_data);
-    else gsl_matrix_scale(_data, s);
-  }
-  inline void add(const double &a) 
-  {
-    gsl_matrix_add_constant(_data, a);
-  }
-  inline void add(const GSL_Matrix &m) 
-  {
-    gsl_matrix_add(_data, m._data);
-  }
 };
 
 typedef GSL_Matrix Double_Matrix;
