@@ -26,11 +26,15 @@ The compound can therefore be re-meshed using any surface mesh
 generator of gmsh!
 */
 
-typedef struct {
+class  GFaceCompoundTriangle {
+public:
   SPoint2 p1, p2, p3;
+  SPoint2 gfp1, gfp2, gfp3;
   SPoint3 v1, v2, v3;
-  MTriangle *t;
-} GFaceCompoundTriangle;
+  GFace *gf;
+  GFaceCompoundTriangle () : gf(0)
+  {}
+} ;
 
 class Octree;
 
@@ -51,9 +55,13 @@ class GFaceCompound : public GFace {
                    double &_u, double &_v) const;
   virtual double curvature(MTriangle *t) const;
 public:
-  GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
-		std::list<GEdge*> &U0, std::list<GEdge*> &U1,
-		std::list<GEdge*> &V0, std::list<GEdge*> &V1);
+  typedef enum {UNITCIRCLE, CYLINDER, BIFURCATION, SQUARE} typeOfIsomorphism;
+  GFaceCompound(GModel *m, int tag, 
+		std::list<GFace*> &compound,
+		std::list<GEdge*> &U0,
+		std::list<GEdge*> &U1,
+		std::list<GEdge*> &V0,
+		std::list<GEdge*> &V1);
   virtual ~GFaceCompound();
   Range<double> parBounds(int i) const { return Range<double>(0, 1); } 
   virtual GPoint point(double par1, double par2) const; 
@@ -64,6 +72,8 @@ public:
   SPoint2 getCoordinates(MVertex *v) const { parametrize() ; return coordinates[v]; }
   virtual bool buildRepresentationCross(){ return false; }
   virtual double curvature(const SPoint2 &param) const;
+private:
+  typeOfIsomorphism _type;
 };
 
 #endif

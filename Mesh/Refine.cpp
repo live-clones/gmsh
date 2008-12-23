@@ -86,13 +86,21 @@ static void Subdivide(GFace *gf, bool splitTrianglesIntoQuads)
       MTriangle *t = gf->triangles[i];
       if(t->getNumVertices() == 6){
 	SPoint2 pt, temp;
-	for(int k = 0; k < 6; k++){
-	  reparamMeshVertexOnFace(t->getVertex(k), gf, temp);
-	  pt[0] += temp[0] / 6.;
-	  pt[1] += temp[1] / 6.;
+	SPoint3 ptx; t->pnt(0.5,0.5,0,ptx);
+	bool reparamOK = true;
+	for(int k = 0; k<6; k++){
+	  reparamOK &= reparamMeshVertexOnFace(t->getVertex(k), gf, temp);
+	  pt[0] += temp[0]/6.;
+	  pt[1] += temp[1]/6.;
 	}
-	GPoint gp = gf->point(pt);	
-	MFaceVertex *newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, pt[0], pt[1]);
+	MVertex *newv;
+	if (reparamOK){
+	  GPoint gp = gf->point(pt);		
+	  newv = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,pt[0],pt[1]);
+	}
+	else {
+	  newv = new MVertex (ptx.x(),ptx.y(),ptx.z(),gf);
+	}
 	gf->mesh_vertices.push_back(newv);
 	quadrangles2.push_back
 	  (new MQuadrangle(t->getVertex(0), t->getVertex(3), newv, t->getVertex(5)));

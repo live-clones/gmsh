@@ -66,9 +66,19 @@ void GFaceCompound::parametrize() const
 
 void GFaceCompound::getBoundingEdges()
 {
-  if (_U0.size() && !_U1.size()){
+  if (_U0.size() && !_V1.size()){
     std::list<GEdge*> :: const_iterator it = _U0.begin();
     for ( ; it != _U0.end() ; ++it){
+      l_edges.push_back(*it);
+      (*it)->addFace(this);
+    }
+    it = _U1.begin();
+    for ( ; it != _U1.end() ; ++it){
+      l_edges.push_back(*it);
+      (*it)->addFace(this);
+    }
+    it = _V0.begin();
+    for ( ; it != _V0.end() ; ++it){
       l_edges.push_back(*it);
       (*it)->addFace(this);
     }
@@ -88,11 +98,11 @@ void GFaceCompound::getBoundingEdges()
   it = _compound.begin();
   for ( ; it != _compound.end(); ++it){
     std::list<GEdge*> ed = (*it)->edges();
-    std::list<GEdge*>::iterator ite = ed.begin();
-    for ( ; ite != ed.end(); ++ite){
-      if (!(*ite)->degenerate(0) && _touched.count(*ite) == 1) _unique.insert(*ite);
-    }
-  }
+    std::list<GEdge*> :: iterator ite = ed.begin();
+    for ( ; ite != ed.end() ; ++ite){
+      if (!(*ite)->degenerate(0) && _touched.count(*ite) == 1)_unique.insert(*ite);
+    }    
+  }    
 
   std::set<GEdge*>::iterator itf = _unique.begin();
   for ( ; itf != _unique.end(); ++itf){
@@ -107,6 +117,11 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   : GFace(m, tag), _compound(compound), _U0(U0), _U1(U1), _V0(V0), _V1(V1), oct(0)
 {
   getBoundingEdges();
+  if (!_U0.size()) _type = UNITCIRCLE;
+  else if (!_V0.size()) _type = UNITCIRCLE;
+  else if (!_U1.size()) _type = CYLINDER;
+  else if (!_V1.size()) _type = BIFURCATION;
+  else _type = SQUARE;
 }
 
 GFaceCompound::~GFaceCompound()
@@ -193,7 +208,7 @@ void GFaceCompound::parametrize(bool _isU, int ITER) const
   gmshGradientBasedDiffusivity diffusivity(coordinates);
   if (ITER > 0) diffusivity.setComponent(_isU);
   
-  if (!_U1.size()){
+  if (_type == UNITCIRCLE){
     // maps the boundary onto a circle
     std::vector<MVertex*> ordered;
     std::vector<double> coords;  
@@ -202,6 +217,19 @@ void GFaceCompound::parametrize(bool _isU, int ITER) const
       Msg::Error("Could not order vertices on boundary");
       return;
     }
+    for (unsigned int i = 0; i < ordered.size(); i++){
+      MVertex *v = ordered[i];
+      const double theta = 2 * M_PI * coords[i];
+      if (_isU) myAssembler.fixVertex(v, 0, 1, cos(theta));
+      else myAssembler.fixVertex(v, 0, 1, sin(theta));
+    }
+  }
+  else if (_type == CYLINDER){
+    // maps the boundary onto an annulus
+    std::vector<MVertex*> ordered;
+    std::vector<double> coords;  
+    bool success = orderVertices (_U0, ordered, coords);
+    if (!success)throw;
     for (unsigned int i = 0; i < ordered.size(); i++){
       MVertex *v = ordered[i];
       const double theta = 2 * M_PI * coords[i];
@@ -258,28 +286,29 @@ void GFaceCompound::parametrize(bool _isU, int ITER) const
   Msg::Debug("Assembly done");
   lsys.systemSolve();
   Msg::Debug("System solved");
-  
   it = _compound.begin();
-  for ( ; it != _compound.end(); ++it){
+  std::set<MVertex *>allNodes;
+  for ( ; it != _compound.end() ; ++it){
     for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *t = (*it)->triangles[i];
-      double uu[3], vv[3];
       for (int j = 0; j < 3; j++){
-	MVertex *v = t->getVertex(j);
-	double value = myAssembler.getDofValue(v,0,1);
-	std::map<MVertex*,SPoint2>::iterator itf = coordinates.find(v);
-	if (itf == coordinates.end()){
-	  SPoint2 p (_isU ? value : 0.0, _isU ? 0.0 : value);
-	  coordinates[v] = p;
-	}
-	else{
-	  if(_isU) itf->second[0]= value;
-	  else itf->second[1]= value;
-	  uu[j] = itf->second[0];
-	  vv[j] = itf->second[1];
-	}
-      }      
-    }   
+	allNodes.insert(t->getVertex(j));
+      }
+    }
+  }
+  
+  for (std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+    MVertex *v = *itv;
+    double value = myAssembler.getDofValue(v,0,1);
+    std::map<MVertex*,SPoint2>::iterator itf = coordinates.find(v);
+    if (itf == coordinates.end()){
+      SPoint2 p (_isU ? value:0.0,_isU ? 0.0:value);
+      coordinates[v] = p;
+    }
+    else{
+      if(_isU) itf->second[0]= value;
+      else itf->second[1]= value;	  
+    }      
   }
 }
 
@@ -317,7 +346,19 @@ double GFaceCompound::curvature(const SPoint2 &param) const
   if (!lt){
     return  0.0;
   }
-  return curvature(lt->t);
+
+//   if (lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface){
+//     SPoint2 pv1, pv2, pv3;
+//     bool ok = reparamMeshVertexOnFace(lt->t->getVertex(0), lt->gf, pv1); 
+//     ok |= reparamMeshVertexOnFace(lt->t->getVertex(1), lt->gf, pv2); 
+//     ok |= reparamMeshVertexOnFace(lt->t->getVertex(2), lt->gf, pv3); 
+//     if (ok){
+//       SPoint2 pv = pv1*(1.-U-V) + pv2*U + pv3*V;
+//       return lt->gf->curvature(pv));
+//     }
+//   }
+
+//  return curvature(lt->t);
 }
 
 double GFaceCompound::curvature(MTriangle *t) const
@@ -328,7 +369,7 @@ double GFaceCompound::curvature(MTriangle *t) const
   double val[9] = {n1.x(),n2.x(),n3.x(),
 		   n1.y(),n2.y(),n3.y(),
 		   n1.z(),n2.z(),n3.z()};
-  return fabs(t->interpolateDiv (val,0,0,0.));
+  //  return fabs(t->interpolateDiv (val,0.,0.,0.));
 }
 
 GPoint GFaceCompound::point(double par1, double par2) const
@@ -339,13 +380,18 @@ GPoint GFaceCompound::point(double par1, double par2) const
   getTriangle (par1, par2, &lt, U,V);  
   SPoint3 p(0, 0, 0); 
   if (!lt){
-    Msg::Warning("Re-Parametrized face %d --> point (%g %g) lies outside the domain",
-                 tag(), par1,par2); 
-    return GPoint(p.x(), p.y(), p.z(), this);
+    Msg::Warning("Re-Parametrized face %d --> point (%g %g) lies outside the domain", tag(), par1,par2); 
+  
+    return  GPoint(p.x(),p.y(),p.z(),this);
   }
-  p = lt->v1 * (1. - U - V) + lt->v2 * U + lt->v3 * V;
-  double par[2] = {par1, par2};
-  return GPoint(p.x(), p.y(), p.z(), this, par);
+  if (0 && lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface){
+    SPoint2 pv = lt->gfp1*(1.-U-V) + lt->gfp2*U + lt->gfp3*V;
+    return lt->gf->point(pv.x(),pv.y());
+  }
+  
+  p = lt->v1*(1.-U-V) + lt->v2*U + lt->v3*V;
+  double par[2] = {par1,par2};
+  return GPoint(p.x(),p.y(),p.z(),this,par);
 }
 
 Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
@@ -353,12 +399,7 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
   parametrize();
   double U,V,UDU,UDV,VDU,VDV;
   GFaceCompoundTriangle *lt;
-  // GFaceCompoundTriangle *ltdu;
-  // GFaceCompoundTriangle *ltdv;
-  getTriangle(param.x(), param.y(), &lt, U,V);
-  // getTriangle (param.x()+1.e-4, param.y(), &ltdu, UDU,VDU);
-  // getTriangle (param.x(), param.y()+1.e-4, &ltdv, UDV,VDV);
-
+  getTriangle (param.x(), param.y(), &lt, U,V);
   if (!lt)
     return Pair<SVector3, SVector3>(SVector3(1, 0, 0), SVector3(0, 1, 0));
 
@@ -367,29 +408,11 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
   double inv[2][2];
   inv2x2(mat,inv);
  
-  // MVertex *v0 = lt->t->getVertex(0);
-  // MVertex *v1 = lt->t->getVertex(1);
-  // MVertex *v2 = lt->t->getVertex(2);
-
-  // SPoint3 p(0,0,0); 
-  // SPoint3 pdu(0,0,0); 
-  // SPoint3 pdv(0,0,0); 
-
-  // lt->t->pnt(U,V,0,p);
-  // ltdu->t->pnt(UDU,VDU,0,pdu);
-  // ltdv->t->pnt(UDV,VDV,0,pdv);
- 
   SVector3 dXdxi   (lt->v2 - lt->v1);
   SVector3 dXdeta  (lt->v3 - lt->v1);
 
-  // return Pair<SVector3, SVector3>(dXdxi * inv[0][0] + dXdeta * inv[1][0],
-  //				     dXdxi * inv[0][1] + dXdeta * inv[1][1]);
-
-  SVector3 dXdu (dXdxi * inv[0][0] + dXdeta * inv[1][0]);
-  SVector3 dXdv (dXdxi * inv[0][1] + dXdeta * inv[1][1]);
-  
-  // SVector3 dXduFD(SVector3(pdu - p) * 1.e4);
-  // SVector3 dXdvFD(SVector3(pdv - p) * 1.e4);
+  SVector3 dXdu (dXdxi*inv[0][0]+dXdeta*inv[1][0]);
+  SVector3 dXdv (dXdxi*inv[0][1]+dXdeta*inv[1][1]);
 
   return Pair<SVector3, SVector3>(dXdu,dXdv);
 } 
@@ -520,13 +543,15 @@ void GFaceCompound::buildOct() const
       _gfct[count].p1 = it0->second;
       _gfct[count].p2 = it1->second;
       _gfct[count].p3 = it2->second;
-      _gfct[count].t = t;      
-      _gfct[count].v1 = SPoint3
-        (t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z());      
-      _gfct[count].v2 = SPoint3
-        (t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z());      
-      _gfct[count].v3 = SPoint3
-        (t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z());      
+      if ((*it)->geomType() != GEntity::DiscreteSurface){
+	reparamMeshVertexOnFace(t->getVertex(0), *it, _gfct[count].gfp1); 
+	reparamMeshVertexOnFace(t->getVertex(1), *it, _gfct[count].gfp2); 
+	reparamMeshVertexOnFace(t->getVertex(2), *it, _gfct[count].gfp3); 
+      }
+      _gfct[count].v1 = SPoint3(t->getVertex(0)->x(),t->getVertex(0)->y(),t->getVertex(0)->z());      
+      _gfct[count].v2 = SPoint3(t->getVertex(1)->x(),t->getVertex(1)->y(),t->getVertex(1)->z());      
+      _gfct[count].v3 = SPoint3(t->getVertex(2)->x(),t->getVertex(2)->y(),t->getVertex(2)->z());      
+      _gfct[count].gf = *it;      
       fprintf(xyzu,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 	      t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
 	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),

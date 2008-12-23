@@ -208,6 +208,14 @@ MVertex::linearSearch(std::set<MVertex*, MVertexLessThanLexicographic> &pos)
 static void getAllParameters(MVertex *v, GFace *gf, std::vector<SPoint2> &params)
 {
   params.clear();
+
+  if (gf->geomType() == GEntity::CompoundSurface &&
+      v->onWhat()->dim() < 2){
+    GFaceCompound *gfc = (GFaceCompound*) gf;
+    params.push_back(gfc->getCoordinates(v));
+    return;
+  }
+
   if(v->onWhat()->dim() == 0){
     GVertex *gv = (GVertex*)v->onWhat();
     std::list<GEdge*> ed = gv->edges();
@@ -250,6 +258,7 @@ static void getAllParameters(MVertex *v, GFace *gf, std::vector<SPoint2> &params
 bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, 
                            SPoint2 &param1, SPoint2 &param2)
 {
+
   std::vector<SPoint2> p1, p2;
   getAllParameters(v1, gf, p1);
   getAllParameters(v2, gf, p2);
