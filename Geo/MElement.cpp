@@ -15,7 +15,6 @@
 #include "GmshEmbedded.h"
 #else
 #include "Numeric.h"
-#include "Gauss.h"
 #include "GaussLegendre1D.h"
 #include "Context.h"
 #include "qualityMeasures.h"

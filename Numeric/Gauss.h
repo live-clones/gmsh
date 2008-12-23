@@ -6,7 +6,10 @@
 #ifndef _GAUSS_H_
 #define _GAUSS_H_
 
-#include "Numeric.h"
+struct IntPt{
+  double pt[3];
+  double weight;
+};
 
 int GaussLegendreTri(int n1, int n2, IntPt *pts);
 int GaussLegendreTet(int n1, int n2, int n3, IntPt *pts); 
