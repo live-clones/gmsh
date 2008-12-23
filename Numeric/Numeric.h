@@ -9,8 +9,6 @@
 #include "NumericEmbedded.h"
 
 int Init_Numeric();
-void newt(double x[], int n, int *check,
-          void (*func) (int, double[], double[]));
 void minimize_N(int N, double (*f) (double*, void *data), 
                 void (*df) (double*, double*, double &, void *data),
                 void *data,int niter,

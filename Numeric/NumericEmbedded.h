@@ -7,6 +7,7 @@
 #define _NUMERIC_EMBEDDED_H_
 
 #include <math.h>
+#include "GmshMatrix.h"
 
 #define myhypot(a,b) (sqrt((a)*(a)+(b)*(b)))
 #define sign(x)      (((x)>=0)?1:-1)
@@ -69,5 +70,7 @@ void gradSimplex(double *x, double *y, double *z, double *v, double *grad);
 double ComputeVonMises(double *val);
 double ComputeScalarRep(int numComp, double *val);
 void invert_singular_matrix3x3(double MM[3][3], double II[3][3]);
-
+bool newton_fd(void (*func)(Double_Vector &, Double_Vector &, void *),
+               Double_Vector &x, void *data, double relax);
+  
 #endif

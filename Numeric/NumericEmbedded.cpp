@@ -8,7 +8,6 @@
 // Msg)
 
 #include "NumericEmbedded.h"
-#include "GmshMatrix.h"
 #include "GmshMessage.h"
 
 #define SQU(a)      ((a)*(a))
@@ -435,7 +434,7 @@ void FindCubicRoots(const double coef[4], double real[3], double imag[3])
   real[2] = -term1 + r13*cos((dum1 + 4.0*M_PI)/3.0);
 }
 
-void  eigsort(double d[3])
+void eigsort(double d[3])
 {
   int k, j, i;
   double p;
@@ -486,4 +485,43 @@ void invert_singular_matrix3x3(double MM[3][3], double II[3][3])
       }
     }
   }
+}
+
+bool newton_fd(void (*func)(Double_Vector &, Double_Vector &, void *),
+               Double_Vector &x, void *data, double relax)
+{
+  const double PRECISION = 1.e-6;
+  const int MAXIT = 10;
+  const double EPS = 1.e-4;
+  const int N = x.size();
+  
+  Double_Matrix J(N, N);
+  Double_Vector r(N), rp(N), dx(N);
+  
+  int iter = 1;
+  while (iter < MAXIT){
+    iter++;
+    func(x, r, data);
+
+    for (int j = 0; j < N; j++){
+      double h = EPS * fabs(x(j));
+      if(h == 0.) h = EPS;
+      x(j) += h;
+      func(x, rp, data);
+      for (int i = 0; i < N; i++)
+        J(i, j) = (rp(i) - r(i)) / h;
+      x(j) -= h;
+    }
+    
+    if (N == 1)
+      dx(0) = r(0) / J(0, 0);
+    else
+      J.lu_solve(r, dx);
+    
+    for (int i = 0; i < N; i++)
+      x(i) -= relax * dx(i);
+
+    if(dx.norm() < PRECISION) return true; 
+  }
+  return false;
 }

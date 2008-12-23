@@ -2877,51 +2877,40 @@ void ReplaceAllDuplicates()
   ReplaceDuplicateSurfaces();
 }
 
-
 // Projection of a point on a surface
 
-static Vertex *VERTEX;
-static Curve *CURVE;
-static Surface *SURFACE;
+struct PointSurface{
+  Vertex *p;
+  Surface *s;
+};
 
-static void projectPS(int N, double x[], double res[])
+static void projectPS(Double_Vector &x, Double_Vector &res, void *data)
 {
-  //x[1] = u x[2] = v
-  Vertex du, dv, c;
-  c = InterpolateSurface(SURFACE, x[1], x[2], 0, 0);
-  du = InterpolateSurface(SURFACE, x[1], x[2], 1, 1);
-  dv = InterpolateSurface(SURFACE, x[1], x[2], 1, 2);
-  res[1] =
-    (c.Pos.X - VERTEX->Pos.X) * du.Pos.X +
-    (c.Pos.Y - VERTEX->Pos.Y) * du.Pos.Y +
-    (c.Pos.Z - VERTEX->Pos.Z) * du.Pos.Z;
-  res[2] =
-    (c.Pos.X - VERTEX->Pos.X) * dv.Pos.X +
-    (c.Pos.Y - VERTEX->Pos.Y) * dv.Pos.Y +
-    (c.Pos.Z - VERTEX->Pos.Z) * dv.Pos.Z;
+  PointSurface *ps = (PointSurface*)data;
+  Vertex c = InterpolateSurface(ps->s, x(0), x(1), 0, 0);
+  Vertex du = InterpolateSurface(ps->s, x(0), x(1), 1, 1);
+  Vertex dv = InterpolateSurface(ps->s, x(0), x(1), 1, 2);
+  res(0) =
+    (c.Pos.X - ps->p->Pos.X) * du.Pos.X +
+    (c.Pos.Y - ps->p->Pos.Y) * du.Pos.Y +
+    (c.Pos.Z - ps->p->Pos.Z) * du.Pos.Z;
+  res(1) =
+    (c.Pos.X - ps->p->Pos.X) * dv.Pos.X +
+    (c.Pos.Y - ps->p->Pos.Y) * dv.Pos.Y +
+    (c.Pos.Z - ps->p->Pos.Z) * dv.Pos.Z;
 }
 
-bool ProjectPointOnSurface(Surface *s, Vertex &p, double u[2])
+bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2])
 {
-  double x[3] = { 0.5, u[0], u[1] };
-  int check;
-  SURFACE = s;
-  VERTEX = &p;
-  newt(x, 2, &check, projectPS);
-
-  Vertex vv = InterpolateSurface(s, x[1], x[2], 0, 0);
-  double res[3];
-  projectPS(2, x, res);
-  double resid = sqrt(res[1] * res[1] + res[2] * res[2]);
-
-  p.Pos.X = vv.Pos.X;
-  p.Pos.Y = vv.Pos.Y;
-  p.Pos.Z = vv.Pos.Z;
-  u[0] = x[1];
-  u[1] = x[2];
-  if(resid > 1.e-6)
-    return false;  
-  return true;
+  Double_Vector x(2);
+  x(0) = uv[0];
+  x(1) = uv[1];
+  PointSurface ps = {&p, s};
+  if(newton_fd(projectPS, x, &ps, 1.)){
+    p = InterpolateSurface(s, x(0), x(1), 0, 0);
+    return true;
+  }
+  return false;
 }
 
 // Split line
@@ -3039,25 +3028,19 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes)
 
 // Intersect a curve with a surface
 
-static void intersectCS(int N, double x[], double res[])
-{
-  // (x[1], x[2]) = surface params, x[3] = curve param
-  Vertex s = InterpolateSurface(SURFACE, x[1], x[2], 0, 0);
-  Vertex c = InterpolateCurve(CURVE, x[3], 0);
-  res[1] = s.Pos.X - c.Pos.X;
-  res[2] = s.Pos.Y - c.Pos.Y;
-  res[3] = s.Pos.Z - c.Pos.Z;
-}
+struct CurveSurface{
+  Curve *c;
+  Surface *s;
+};
 
-static bool IntersectCurveSurface(Curve *c, Surface *s, double x[4])
+static void intersectCS(Double_Vector &uvt, Double_Vector &res, void *data)
 {
-  int check;
-  SURFACE = s;
-  CURVE = c;
-  newt(x, 3, &check, intersectCS);
-
-  if(check) return false;
-  return true;
+  CurveSurface *cs = (CurveSurface*)data;
+  Vertex vs = InterpolateSurface(cs->s, uvt(0), uvt(1), 0, 0);
+  Vertex vc = InterpolateCurve(cs->c, uvt(2), 0);
+  res(0) = vs.Pos.X - vc.Pos.X;
+  res(1) = vs.Pos.Y - vc.Pos.Y;
+  res(2) = vs.Pos.Z - vc.Pos.Z;
 }
 
 bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shapes)
@@ -3072,15 +3055,19 @@ bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shape
     List_Read(curve_ids, i, &curve_id);
     Curve *c = FindCurve((int)curve_id);
     if(c){
-      double x[4] = {0., 0.5, 0.5, 0.5};
-      if(IntersectCurveSurface(c, s, x)){
-        Vertex p = InterpolateCurve(c, x[3], 0);
+      CurveSurface cs = {c, s};
+      Double_Vector uvt(3);
+      uvt(0) = 0.5;
+      uvt(1) = 0.5;
+      uvt(2) = 0.5;
+      if(newton_fd(intersectCS, uvt, &cs, 1.)){
+        Vertex p = InterpolateCurve(c, uvt(2), 0);
         Vertex *v = Create_Vertex(NEWPOINT(), p.Pos.X, p.Pos.Y, p.Pos.Z, p.lc, p.u);
         Tree_Insert(GModel::current()->getGEOInternals()->Points, &v);
-        Shape s;
-        s.Type = MSH_POINT;
-        s.Num = v->Num;
-        List_Add(shapes, &s);
+        Shape sh;
+        sh.Type = MSH_POINT;
+        sh.Num = v->Num;
+        List_Add(shapes, &sh);
       }
     }
     else{
