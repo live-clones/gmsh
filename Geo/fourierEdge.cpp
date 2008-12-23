@@ -27,13 +27,6 @@ GPoint fourierEdge::point(double p) const
   return GPoint(x,y,z);
 }
 
-double fourierEdge::parFromPoint(const SPoint3 &pt) const
-{
-  double p;
-  edge->Inverse(pt.x(),pt.y(),pt.z(),p);
-  return p;
-}
-
 SVector3 fourierEdge::firstDer(double par) const
 {
   double x,y,z;

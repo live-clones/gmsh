@@ -31,8 +31,3 @@ SVector3 discreteEdge::firstDer(double par) const
   return SVector3();
 }
 
-double discreteEdge::parFromPoint(const SPoint3 &pt) const 
-{
-  Msg::Error("Cannot compute parametric coordinate on discrete edge");
-  return 0.;
-}

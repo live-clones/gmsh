@@ -26,7 +26,6 @@ class fourierEdge : public GEdge {
   virtual GeomType geomType() const { return ParametricCurve; }
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
-  virtual double parFromPoint(const SPoint3 &pt) const;
   virtual int minimumMeshSegments () const;
   virtual int minimumDrawSegments () const;
   ModelType getNativeType() const { return FourierModel; }

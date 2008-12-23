@@ -119,12 +119,6 @@ std::string GEdge::getAdditionalInfoString()
   return sstream.str();
 }
 
-GPoint GEdge::closestPoint(const SPoint3 & queryPoint) const
-{
-  Msg::Error("Closet point not implemented for this type of edge");
-  return GPoint(0, 0, 0);
-}
-
 bool GEdge::containsParam(double pt) const
 {
   Range<double> rg = parBounds(0);

@@ -19,11 +19,9 @@ class gmshEdge : public GEdge {
   virtual Range<double> parBounds(int i) const;
   virtual GeomType geomType() const;
   virtual GPoint point(double p) const;
-  virtual GPoint closestPoint(const SPoint3 & queryPoint) const;
   virtual SVector3 firstDer(double par) const;
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return c; }
-  virtual double parFromPoint(const SPoint3 &pt) const;
   virtual int minimumMeshSegments() const;
   virtual int minimumDrawSegments() const;
   virtual void resetMeshAttributes();

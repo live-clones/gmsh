@@ -40,34 +40,10 @@ GPoint gmshEdge::point(double par) const
   return GPoint(a.Pos.X, a.Pos.Y, a.Pos.Z, this, par);
 }
 
-GPoint gmshEdge::closestPoint(const SPoint3 &qp) const
-{
-  Vertex v;
-  Vertex a;
-  Vertex der;
-  v.Pos.X = qp.x();
-  v.Pos.Y = qp.y();
-  v.Pos.Z = qp.z();
-  ProjectPointOnCurve(c, &v, &a, &der);
-  return GPoint(a.Pos.X, a.Pos.Y, a.Pos.Z, this, a.u);
-}
-
 SVector3 gmshEdge::firstDer(double par) const
 {
   Vertex a = InterpolateCurve(c, par, 1);
   return SVector3(a.Pos.X, a.Pos.Y, a.Pos.Z);
-}
-
-double gmshEdge::parFromPoint(const SPoint3 &pt) const
-{
-  Vertex v;
-  Vertex a;
-  Vertex der;
-  v.Pos.X = pt.x();
-  v.Pos.Y = pt.y();
-  v.Pos.Z = pt.z();
-  ProjectPointOnCurve(c, &v, &a, &der);
-  return a.u;
 }
 
 GEntity::GeomType gmshEdge::geomType() const

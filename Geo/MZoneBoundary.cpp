@@ -205,7 +205,7 @@ void updateBoVec
  *   onlyFace           - (I) If >= 0, only use this face to determine the
  *                            interior vertex and normal to the mesh plane.
  *   returns            - (O) 0 - success
- *                            1 - parFromPoint() failed
+ *                            1 - no parameter found on edge for vertex
  *
  *============================================================================*/
 
@@ -215,8 +215,8 @@ int edge_normal
  &faces, SVector3 &boNormal, const int onlyFace = -1)
 {
 
-  const double par = gEdge->parFromPoint(vertex->point());
-  if(par == std::numeric_limits<double>::max()) return 1;
+  double par;
+  if(!reparamMeshVertexOnEdge(vertex, gEdge, par)) return 1;
 
   const SVector3 tangent(gEdge->firstDer(par));
                                         // Tangent to the boundary face
@@ -639,8 +639,9 @@ void updateBoVec<3, MFace>
 
         for(std::list<const GFace*>::const_iterator gFIt = useGFace.begin();
             gFIt != useGFace.end(); ++gFIt) {
-          const SPoint2 par = (*gFIt)->parFromPoint(vertex->point());
-          if(par.x() == std::numeric_limits<double>::max())  //**?
+
+          SPoint2 par;
+          if(!reparamMeshVertexOnFace(vertex, (*gFIt), par))
             goto getNormalFromElements;  // :P  After all that!
 
           SVector3 boNormal = (*gFIt)->normal(par);
@@ -673,8 +674,8 @@ void updateBoVec<3, MFace>
 
       {
         const GFace *const gFace = static_cast<const GFace*>(ent);
-        const SPoint2 par = gFace->parFromPoint(vertex->point());
-        if(par.x() == std::numeric_limits<double>::max())
+        SPoint2 par;
+        if(!reparamMeshVertexOnFace(vertex, gFace, par))
           goto getNormalFromElements;
 
         SVector3 boNormal = static_cast<const GFace*>(ent)->normal(par);

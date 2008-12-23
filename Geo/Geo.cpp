@@ -2878,18 +2878,11 @@ void ReplaceAllDuplicates()
 }
 
 
-// Projection of a point on a curve or a surface
+// Projection of a point on a surface
 
+static Vertex *VERTEX;
 static Curve *CURVE;
 static Surface *SURFACE;
-static Vertex *VERTEX;
-
-static double min1d(double (*funct) (double), double *xmin)
-{
-  // tolerance==0. allows for maximum as code in gsl_brent
-  return brent(CURVE->ubeg, 0.5 * (CURVE->ubeg + CURVE->uend), CURVE->uend,
-               funct, 0., xmin);
-}
 
 static void projectPS(int N, double x[], double res[])
 {
@@ -2906,35 +2899,6 @@ static void projectPS(int N, double x[], double res[])
     (c.Pos.X - VERTEX->Pos.X) * dv.Pos.X +
     (c.Pos.Y - VERTEX->Pos.Y) * dv.Pos.Y +
     (c.Pos.Z - VERTEX->Pos.Z) * dv.Pos.Z;
-}
-
-static double projectPC(double u)
-{
-  Vertex c = InterpolateCurve(CURVE, u, 0);
-  return sqrt(SQU(c.Pos.X - VERTEX->Pos.X) +
-              SQU(c.Pos.Y - VERTEX->Pos.Y) + 
-              SQU(c.Pos.Z - VERTEX->Pos.Z));
-}
-
-bool ProjectPointOnCurve(Curve *c, Vertex *v, Vertex *RES, Vertex *DER)
-{
-  double xmin;
-  CURVE = c;
-  VERTEX = v;
-  min1d(projectPC, &xmin);
-  *RES = InterpolateCurve(CURVE, xmin, 0);
-  *DER = InterpolateCurve(CURVE, xmin, 1);
-  if(xmin > c->uend) {
-    xmin = c->uend;
-    *RES = InterpolateCurve(CURVE, c->uend, 0);
-    *DER = InterpolateCurve(CURVE, c->uend, 1);
-  }
-  else if(xmin < c->ubeg) {
-    xmin = c->ubeg;
-    *RES = InterpolateCurve(CURVE, c->ubeg, 0);
-    *DER = InterpolateCurve(CURVE, c->ubeg, 1);
-  }  
-  return true;
 }
 
 bool ProjectPointOnSurface(Surface *s, Vertex &p, double u[2])

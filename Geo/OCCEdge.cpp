@@ -146,12 +146,6 @@ SVector3 OCCEdge::firstDer(double par) const
   return SVector3(d1.X(), d1.Y(), d1.Z());
 }
 
-double OCCEdge::parFromPoint(const SPoint3 &pt) const
-{
-  Msg::Error("parFromPoint not implemented for OCCEdge");
-  return std::numeric_limits<double>::max();
-}
-
 GEntity::GeomType OCCEdge::geomType() const
 {
   if(curve.IsNull()){
