@@ -8,20 +8,11 @@
 
 #include "NumericEmbedded.h"
 
-int check_gsl();
+int Init_Numeric();
 double brent(double ax, double bx, double cx,
              double (*f) (double), double tol, double *xmin);
 void newt(double x[], int n, int *check,
           void (*func) (int, double[], double[]));
-void minimize_2(double (*f) (double, double, void *data), 
-                void (*df) (double, double, double &, double &, double &, void *data),
-                void *data,int niter,
-                double &U, double &V, double &res);
-void minimize_3(double (*f) (double, double, double, void *data), 
-                void (*df) (double, double, double , double &, double &, 
-                            double &, double &, void *data),
-                void *data,int niter,
-                double &U, double &V, double &W, double &res);
 void minimize_N(int N, double (*f) (double*, void *data), 
                 void (*df) (double*, double*, double &, void *data),
                 void *data,int niter,

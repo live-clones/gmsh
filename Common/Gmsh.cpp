@@ -45,8 +45,8 @@ int GmshInitialize(int argc, char **argv)
   GMSH_PluginManager::instance()->registerDefaultPlugins();
 #endif
 
-  // Check for buggy obsolete GSL versions
-  check_gsl();
+  // Initialize numeric library (gsl, robust predicates)
+  Init_Numeric();
   return 1;
 }
 

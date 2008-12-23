@@ -142,7 +142,6 @@ void BuildSwapPattern4(SwapPattern *sc)
   sc->trianguls = trgul ;
 }
 
-
 void BuildSwapPattern5(SwapPattern *sc)
 {
   static int trgl[][3] = 
@@ -202,10 +201,10 @@ void BuildSwapPattern7(SwapPattern *sc)
   sc->trianguls = trgul ;
 }
 
-bool gmshEdgeSwap (std::vector<MTet4 *> &newTets,
-                   MTet4 *tet, 
-                   int iLocalEdge,
-                   const gmshQualityMeasure4Tet &cr)
+bool gmshEdgeSwap(std::vector<MTet4 *> &newTets,
+                  MTet4 *tet, 
+                  int iLocalEdge,
+                  const gmshQualityMeasure4Tet &cr)
 {
   std::vector<MTet4*> cavity;
   std::vector<MTet4*> outside;
@@ -753,28 +752,29 @@ double smoothing_objective_function_3D(double X, double Y, double Z,
   return -qMin;  
 }
 
-void deriv_smoothing_objective_function_3D(double X, double Y, double Z, 
-                                           double &F, 
-                                           double &dFdX, double &dFdY, double &dFdZ,
-                                           void *data)
+void deriv_smoothing_objective_function_3D(double *XYZ, double *dF,
+                                           double &F, void *data)
 {
   smoothVertexData3D *svd = (smoothVertexData3D*)data;
   MVertex *v = svd->v;
-  const double LARGE = svd->LC*1.e5;
-  const double SMALL = 1./LARGE;
-  F = smoothing_objective_function_3D(X, Y, Z, v, svd->ts);
-  double F_X = smoothing_objective_function_3D(X + SMALL, Y, Z, v, svd->ts);
-  double F_Y = smoothing_objective_function_3D(X, Y + SMALL, Z, v, svd->ts);
-  double F_Z = smoothing_objective_function_3D(X, Y, Z + SMALL, v, svd->ts);
-  dFdX = (F_X - F) * LARGE;
-  dFdY = (F_Y - F) * LARGE;
-  dFdZ = (F_Z - F) * LARGE;
+  const double LARGE = svd->LC * 1.e5;
+  const double SMALL = 1. / LARGE;
+  F = smoothing_objective_function_3D(XYZ[0], XYZ[1], XYZ[2], v, svd->ts);
+  double F_X = smoothing_objective_function_3D
+    (XYZ[0] + SMALL, XYZ[1], XYZ[2], v, svd->ts);
+  double F_Y = smoothing_objective_function_3D
+    (XYZ[0], XYZ[1] + SMALL, XYZ[2], v, svd->ts);
+  double F_Z = smoothing_objective_function_3D
+    (XYZ[0], XYZ[1], XYZ[2] + SMALL, v, svd->ts);
+  dF[0] = (F_X - F) * LARGE;
+  dF[1] = (F_Y - F) * LARGE;
+  dF[2] = (F_Z - F) * LARGE;
 }
 
-double smooth_obj_3D(double X, double Y, double Z, void *data)
+double smooth_obj_3D(double *XYZ, void *data)
 {
   smoothVertexData3D *svd = (smoothVertexData3D*)data;
-  return smoothing_objective_function_3D(X, Y, Z, svd->v, svd->ts); 
+  return smoothing_objective_function_3D(XYZ[0], XYZ[1], XYZ[2], svd->v, svd->ts); 
 }
 
 bool gmshSmoothVertexOptimize(MTet4 *t, 
@@ -789,13 +789,11 @@ bool gmshSmoothVertexOptimize(MTet4 *t,
   vd.LC = 1.0; // WRONG
   gmshBuildVertexCavity_recur(t, t->tet()->getVertex(iVertex), vd.ts);
 
-  double xopti = vd.v->x();
-  double yopti = vd.v->y();
-  double zopti = vd.v->z();
+  double xyzopti[3] = {vd.v->x(), vd.v->y(), vd.v->z()};
 
   double val;
-  minimize_3(smooth_obj_3D, deriv_smoothing_objective_function_3D, &vd, 4,
-             xopti, yopti, zopti, val);
+  minimize_N(3, smooth_obj_3D, deriv_smoothing_objective_function_3D, &vd, 4,
+             xyzopti, val);
 
   double vTot = 0;
 
@@ -810,9 +808,9 @@ bool gmshSmoothVertexOptimize(MTet4 *t,
   double y = t->tet()->getVertex(iVertex)->y();
   double z = t->tet()->getVertex(iVertex)->z();
 
-  t->tet()->getVertex(iVertex)->x() = xopti;
-  t->tet()->getVertex(iVertex)->y() = yopti;
-  t->tet()->getVertex(iVertex)->z() = zopti;
+  t->tet()->getVertex(iVertex)->x() = xyzopti[0];
+  t->tet()->getVertex(iVertex)->y() = xyzopti[1];
+  t->tet()->getVertex(iVertex)->z() = xyzopti[2];
 
   double newQuals[2000];
   if(vd.ts.size() >= 2000){

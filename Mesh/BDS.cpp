@@ -12,9 +12,6 @@
 #include "meshGFaceDelaunayInsertion.h"
 #include "qualityMeasures.h"
 
-bool test_move_point_parametric_triangle(BDS_Point *p, double u, double v, BDS_Face *t);
-bool test_move_point_parametric_quad(BDS_Point *p, double u, double v, BDS_Face *t);
-
 void outputScalarField(std::list<BDS_Face*> t, const char *iii, int param, GFace *gf)
 {
   FILE *f = fopen(iii, "w");
@@ -85,8 +82,8 @@ BDS_Vector::BDS_Vector(const BDS_Point &p2, const BDS_Point &p1)
 {
 }
 
-void vector_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3,
-                     double c[3])
+static void vector_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3,
+                            double c[3])
 {
   double a[3] = {p1->X - p2->X, p1->Y - p2->Y, p1->Z - p2->Z};
   double b[3] = {p1->X - p3->X, p1->Y - p3->Y, p1->Z - p3->Z};
@@ -95,8 +92,8 @@ void vector_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3,
   c[0] = a[1] * b[2] - a[2] * b[1];
 }
 
-void vector_triangle_parametric(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3,
-                                double &c)
+static void vector_triangle_parametric(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3,
+                                       double &c)
 {
   double a[2] = {p1->u - p2->u, p1->v - p2->v};
   double b[2] = {p1->u - p3->u, p1->v - p3->v};
@@ -110,14 +107,14 @@ void normal_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3,
   norme(c);
 }
 
-double surface_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3)
+static double surface_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3)
 {
   double c[3];
   vector_triangle(p1, p2, p3, c);
   return 0.5 * sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
 }
 
-double surface_triangle_param(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3)
+static double surface_triangle_param(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3)
 {
   double c;
   vector_triangle_parametric(p1, p2, p3, c);
@@ -967,6 +964,91 @@ int BDS_Edge::numTriangles() const
   return NT;
 }
 
+// use robust predicates for not allowing to revert a triangle by
+// moving one of its vertices
+
+static bool test_move_point_parametric_quad(BDS_Point *p, double u, double v, BDS_Face *t)
+{       
+  BDS_Point *pts[4];
+  t->getNodes(pts);
+
+  double pa[2] = {pts[0]->u, pts[0]->v};
+  double pb[2] = {pts[1]->u, pts[1]->v};
+  double pc[2] = {pts[2]->u, pts[2]->v};
+  double pd[2] = {pts[3]->u, pts[3]->v};
+
+  double ori_init1 = gmsh::orient2d(pa, pb, pc);
+  double ori_init2 = gmsh::orient2d(pc, pd, pa);
+
+  if(p == pts[0]){ 
+    pa[0] = u; 
+    pa[1] = v; 
+  }
+  else if(p == pts[1]){
+    pb[0] = u;
+    pb[1] = v;
+  }
+  else if(p == pts[2]){
+    pc[0] = u;
+    pc[1] = v;
+  }
+  else if(p == pts[3]){
+    pd[0] = u;
+    pd[1] = v;
+  }
+  else{
+    Msg::Error("Something wrong in move_point_parametric_quad");
+    return false;
+  }
+  
+  double ori_final1 = gmsh::orient2d(pa, pb, pc);
+  double ori_final2 = gmsh::orient2d(pc, pd, pa);
+  // allow to move a point when a triangle was flat
+  return ori_init1*ori_final1 > 0 && ori_init2*ori_final2 > 0 ;
+}
+
+static bool test_move_point_parametric_triangle(BDS_Point *p, double u, double v, BDS_Face *t)
+{       
+  if (t->e4)
+    return test_move_point_parametric_quad(p,u,v,t);
+  BDS_Point *pts[4];
+  t->getNodes(pts);
+
+  double pa[2] = {pts[0]->u, pts[0]->v};
+  double pb[2] = {pts[1]->u, pts[1]->v};
+  double pc[2] = {pts[2]->u, pts[2]->v};
+
+  double a[2] = {pb[0] - pa[0], pb[1] - pa[1]};
+  double b[2] = {pc[0] - pa[0], pc[1] - pa[1]};
+
+  double area_init = fabs(a[0] * b[1] - a[1] * b[0]);
+
+  if(area_init == 0.0) return true;
+
+  double ori_init = gmsh::orient2d(pa, pb, pc);
+
+  if(p == pts[0]){ 
+    pa[0] = u; 
+    pa[1] = v; 
+  }
+  else if(p == pts[1]){
+    pb[0] = u;
+    pb[1] = v;
+  }
+  else if(p == pts[2]){
+    pc[0] = u;
+    pc[1] = v;
+  }
+  else
+    return false;
+  
+  double area_final = fabs(a[0] * b[1] - a[1] * b[0]);
+  if(area_final < 0.1 * area_init) return false;
+  double ori_final = gmsh::orient2d(pa, pb, pc);
+  // allow to move a point when a triangle was flat
+  return ori_init*ori_final > 0;
+}
+
 bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p)
 {
   if(e->numfaces() != 2)
@@ -1067,186 +1149,6 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p)
   }
 
   return true;
-}
-
-// use robust predicates for not allowing to revert a triangle by
-// moving one of its vertices
-
-bool test_move_point_parametric_triangle(BDS_Point *p, double u, double v, BDS_Face *t)
-{       
-  if (t->e4)
-    return test_move_point_parametric_quad(p,u,v,t);
-  BDS_Point *pts[4];
-  t->getNodes(pts);
-
-  double pa[2] = {pts[0]->u, pts[0]->v};
-  double pb[2] = {pts[1]->u, pts[1]->v};
-  double pc[2] = {pts[2]->u, pts[2]->v};
-
-  double a[2] = {pb[0] - pa[0], pb[1] - pa[1]};
-  double b[2] = {pc[0] - pa[0], pc[1] - pa[1]};
-
-  double area_init = fabs(a[0] * b[1] - a[1] * b[0]);
-
-  if(area_init == 0.0) return true;
-
-  double ori_init = gmsh::orient2d(pa, pb, pc);
-
-  if(p == pts[0]){ 
-    pa[0] = u; 
-    pa[1] = v; 
-  }
-  else if(p == pts[1]){
-    pb[0] = u;
-    pb[1] = v;
-  }
-  else if(p == pts[2]){
-    pc[0] = u;
-    pc[1] = v;
-  }
-  else
-    return false;
-  
-  double area_final = fabs(a[0] * b[1] - a[1] * b[0]);
-  if(area_final < 0.1 * area_init) return false;
-  double ori_final = gmsh::orient2d(pa, pb, pc);
-  // allow to move a point when a triangle was flat
-  return ori_init*ori_final > 0;
-}
-
-bool test_move_point_parametric_quad(BDS_Point *p, double u, double v, BDS_Face *t)
-{       
-  BDS_Point *pts[4];
-  t->getNodes(pts);
-
-  double pa[2] = {pts[0]->u, pts[0]->v};
-  double pb[2] = {pts[1]->u, pts[1]->v};
-  double pc[2] = {pts[2]->u, pts[2]->v};
-  double pd[2] = {pts[3]->u, pts[3]->v};
-
-  double ori_init1 = gmsh::orient2d(pa, pb, pc);
-  double ori_init2 = gmsh::orient2d(pc, pd, pa);
-
-  if(p == pts[0]){ 
-    pa[0] = u; 
-    pa[1] = v; 
-  }
-  else if(p == pts[1]){
-    pb[0] = u;
-    pb[1] = v;
-  }
-  else if(p == pts[2]){
-    pc[0] = u;
-    pc[1] = v;
-  }
-  else if(p == pts[3]){
-    pd[0] = u;
-    pd[1] = v;
-  }
-  else{
-    Msg::Error("Something wrong in move_point_parametric_quad");
-    return false;
-  }
-  
-  double ori_final1 = gmsh::orient2d(pa, pb, pc);
-  double ori_final2 = gmsh::orient2d(pc, pd, pa);
-  // allow to move a point when a triangle was flat
-  return ori_init1*ori_final1 > 0 && ori_init2*ori_final2 > 0 ;
-}
-
-// d^2_i = (x^2_i - x)^T M (x_i - x)  
-//       = M11 (x_i - x)^2 + 2 M21 (x_i-x)(y_i-y) + M22 (y_i-y)^2        
-
-struct smoothVertexData{
-  BDS_Point *p;
-  GFace *gf;
-  double scalu, scalv;
-  std::list<BDS_Face*> ts;
-}; 
-
-double smoothing_objective_function(double U, double V, BDS_Point *v, 
-                                    std::list<BDS_Face*> &ts, double su, double sv,
-                                    GFace *gf)
-{
-  GPoint gp = gf->point(U * su, V * sv);
-
-  const double oldX = v->X;
-  const double oldY = v->Y;
-  const double oldZ = v->Z;
-  v->X = gp.x();
-  v->Y = gp.y();
-  v->Z = gp.z();
-
-  std::list<BDS_Face*>::iterator it = ts.begin();
-  std::list<BDS_Face*>::iterator ite = ts.end();
-  double qMin = 1.;
-  while(it != ite) {
-    BDS_Face *t = *it;
-    qMin = std::min(qmTriangle(*it, QMTRI_RHO), qMin);
-    ++it;
-  }
-  v->X = oldX;
-  v->Y = oldY;
-  v->Z = oldZ;
-  return -qMin;  
-}
-
-void deriv_smoothing_objective_function(double U, double V, 
-                                        double &F, double &dFdU, double &dFdV,
-                                        void *data)
-{
-  smoothVertexData *svd = (smoothVertexData*)data;
-  BDS_Point *v = svd->p;
-  const double LARGE = 1.e5;
-  const double SMALL = 1./LARGE;
-  F = smoothing_objective_function(U, V, v, svd->ts, 
-                                   svd->scalu, svd->scalv, svd->gf);
-  double F_U = smoothing_objective_function(U + SMALL, V, v, svd->ts, 
-                                            svd->scalu, svd->scalv, svd->gf);
-  double F_V = smoothing_objective_function(U, V + SMALL, v, svd->ts,
-                                            svd->scalu, svd->scalv, svd->gf);
-  dFdU = (F_U - F) * LARGE;
-  dFdV = (F_V - F) * LARGE;
-}
-
-double smooth_obj(double U, double V, void *data)
-{
-  smoothVertexData *svd = (smoothVertexData*)data;
-  return smoothing_objective_function(U, V, svd->p, svd->ts,
-                                      svd->scalu, svd->scalv, svd->gf); 
-}
-
-void optimize_vertex_position(GFace *GF, BDS_Point *data, double su, double sv)
-{
-  if(data->g && data->g->classif_degree <= 1) return;
-  smoothVertexData vd;
-  vd.p = data;
-  vd.scalu = su;
-  vd.scalv = sv;
-  vd.gf = GF;
-  data->getTriangles(vd.ts);
-  double U = data->u, V = data->v, val;
-
-  val = smooth_obj(U, V, &vd);
-  if(val < -.90) return;
-
-  minimize_2(smooth_obj, deriv_smoothing_objective_function, &vd, 5, U,V,val);
-  std::list<BDS_Face*>::iterator it = vd.ts.begin();
-  std::list<BDS_Face*>::iterator ite = vd.ts.end();
-  while(it != ite) {
-    BDS_Face *t = *it;
-    if(!test_move_point_parametric_triangle(data, U, V, t)){
-      return;          
-    }
-    ++it;
-  }
-  
-  data->u = U;
-  data->v = V;
-  GPoint gp = GF->point(U * su, V * sv);
-  data->X = gp.x();
-  data->Y = gp.y();
-  data->Z = gp.z();  
 }
 
 bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)

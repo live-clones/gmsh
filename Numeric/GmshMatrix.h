@@ -12,26 +12,22 @@
 
 #if defined(HAVE_BLAS)
 extern "C" {
-  void dgemm_(const char *transa, const char *transb,
-              int *l, int *n, int *m, double *alpha, 
-              const void *a, int *lda, void *b, int *ldb, 
-              double *beta, void *c, int *ldc);
-  void dgemv_(const char *trans, int *m, int *n, double *alpha,
-              void *a, int *lda, void *x, int *incx,
-              double *beta, void *y, int *incy);
+  void dgemm_(const char *transa, const char *transb, int *m, int *n, int *k, 
+              double *alpha, double *a, int *lda, double *b, int *ldb, 
+              double *beta, double *c, int *ldc);
+  void dgemv_(const char *trans, int *m, int *n, double *alpha, double *a, 
+              int *lda, double *x, int *incx, double *beta, double *y, int *incy);
 }
 #endif
 
 #if defined(HAVE_LAPACK)
 extern "C" {
-  void dgesv_(const int *N, const int *nrhs, double *A, const int *lda, 
-              int *ipiv, double *b, const int *ldb, int *info);
-  void dgetrf_(const int *M, const int *N, double *A, const int *lda, 
-               int *ipiv, int *info);
-  void dgesvd_(const char* jobu, const char *jobvt, const int *M, const int *N,
-               double *A, const int *lda, double *S, double* U, const int *ldu,
-               double *VT, const int *ldvt, double *work, const int *lwork, 
-               const int *info);
+  void dgesv_(int *N, int *nrhs, double *A, int *lda, int *ipiv, 
+              double *b, int *ldb, int *info);
+  void dgetrf_(int *M, int *N, double *A, int *lda, int *ipiv, int *info);
+  void dgesvd_(const char* jobu, const char *jobvt, int *M, int *N,
+               double *A, int *lda, double *S, double* U, int *ldu,
+               double *VT, int *ldvt, double *work, int *lwork, int *info);
 }
 #endif
 
@@ -132,11 +128,12 @@ class Gmsh_Matrix
   }
   inline void mult(const Gmsh_Matrix<SCALAR> &b, Gmsh_Matrix<SCALAR> &c)
   {
-#if 0 // defined(HAVE_BLAS)
-    void dgemm_(const char *transa, const char *transb,
-                int *l, int *n, int *m, double *alpha, 
-                const void *a, int *lda, void *b, int *ldb, 
-                double *beta, void *c, int *ldc);
+#if defined(HAVE_BLAS)
+    int M = c.size1(), N = c.size2(), K = _c;
+    int LDA = _r, LDB = b.size1(), LDC = c.size1();
+    double alpha = 1., beta = 0.;
+    dgemm_("N", "N", &M, &N, &K, &alpha, _data, &LDA, b._data, &LDB, 
+           &beta, c._data, &LDC);
 #else
     c.scale(0.);
     for(int i = 0; i < _r; i++)
@@ -145,19 +142,19 @@ class Gmsh_Matrix
 	  c._data[i + _r * j] += (*this)(i, k) * b(k, j);
 #endif
   }
-  inline void blas_dgemm(const Gmsh_Matrix<SCALAR> &b, Gmsh_Matrix<SCALAR> &c, 
-			 const SCALAR alpha=1., const SCALAR beta=1.)
+  inline void blas_dgemm(Gmsh_Matrix<SCALAR> &a, Gmsh_Matrix<SCALAR> &b, 
+			 SCALAR alpha=1., SCALAR beta=1.)
   {
-#if 0 // defined(HAVE_BLAS)
-    void dgemm_(const char *transa, const char *transb,
-                int *l, int *n, int *m, double *alpha, 
-                const void *a, int *lda, void *b, int *ldb, 
-                double *beta, void *c, int *ldc);
+#if defined(HAVE_BLAS)
+    int M = size1(), N = size2(), K = a.size2();
+    int LDA = a.size1(), LDB = b.size1(), LDC = size1();
+    dgemm_("N", "N", &M, &N, &K, &alpha, a._data, &LDA, b._data, &LDB, 
+           &beta, _data, &LDC);
 #else
-    Gmsh_Matrix<SCALAR> temp(b.size1(), c.size2());
-    temp.mult(b, c);
-    scale(beta);
+    Gmsh_Matrix<SCALAR> temp(a.size1(), b.size2());
+    a.mult(b, temp);
     temp.scale(alpha);
+    scale(beta);
     add(temp);
 #endif
   }
@@ -184,10 +181,11 @@ class Gmsh_Matrix
   }
   inline void mult(const Gmsh_Vector<SCALAR> &x, Gmsh_Vector<SCALAR> &y)
   {
-#if 0 //defined(HAVE_BLAS)
-  void dgemv_(const char *trans, int *m, int *n, double *alpha,
-              void *a, int *lda, void *x, int *incx,
-              double *beta, void *y, int *incy);
+#if defined(HAVE_BLAS)
+    int M = _r, N = _c, LDA = _r, INCX = 1, INCY = 1;
+    double alpha = 1., beta = 0.;
+    dgemv_("N", &M, &N, &alpha, _data, &LDA, x._data, &INCX,
+           &beta, y._data, &INCY);
 #else
     y.scale(0.);
     for(int i = 0; i < _r; i++)
@@ -362,10 +360,10 @@ class GSL_Matrix
   {
     gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1., _data, b._data, 0., c._data);
   }
-  inline void blas_dgemm(const GSL_Matrix &x, GSL_Matrix &b, 
-			 const double alpha=1., const double beta=1.)
+  inline void blas_dgemm(GSL_Matrix &a, GSL_Matrix &b, 
+			 double alpha=1., double beta=1.)
   {      
-    gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, alpha, x._data, b._data, beta, _data);
+    gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, alpha, a._data, b._data, beta, _data);
   }
   inline void set_all(const double &m) 
   {
@@ -384,9 +382,9 @@ class GSL_Matrix
   {
     gsl_matrix_add(_data, m._data);
   }
-  inline void mult(const GSL_Vector &x, GSL_Vector &b)
+  inline void mult(const GSL_Vector &x, GSL_Vector &y)
   {
-    gsl_blas_dgemv(CblasNoTrans, 1., _data, x._data, 0., b._data);
+    gsl_blas_dgemv(CblasNoTrans, 1., _data, x._data, 0., y._data);
   }
   inline GSL_Matrix transpose()
   {

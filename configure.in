@@ -5,12 +5,8 @@ dnl bugs and problems to <gmsh@geuz.org>.
 
 dnl Process this file with autoconf to produce the configure script.
 
-dnl Note: each CHECK_LIB adds the found library to LIBS, which serves
-dnl implicitly when checking for the next one. So one should check
-dnl in reverse order! (start with -lm, ...)
-
 dnl Check that this is the gmsh source tree
-AC_INIT(Parser/Gmsh.y)
+AC_INIT(Geo/GModel.h)
 
 dnl Parse '--with' command-line options
 AC_ARG_WITH(fltk-prefix,
@@ -679,7 +675,7 @@ if test "x$enable_fm" != "xno"; then
     if test "x${FFTW3_PREFIX}" != "x"; then
       LDFLAGS="-L${FFTW3_PREFIX}/lib ${LDFLAGS}"
     fi
-    AC_CHECK_LIB(fftw3,main,FFTW3="yes",FFTW3="no")
+    AC_CHECK_LIB(fftw3,main,FFTW3="yes")
     if test "x${FFTW3}" != "xyes"; then
       FM=no
       AC_MSG_WARN([Could not find FFTW3: disabling FourierModel.])

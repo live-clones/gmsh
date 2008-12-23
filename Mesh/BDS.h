@@ -28,17 +28,6 @@ class GFace;
 class GEdge;
 class GVertex;
 
-void vector_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]); 
-void normal_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]); 
-double surface_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3); 
-double surface_triangle_param(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3); 
-void optimize_vertex_position(GFace *GF, BDS_Point *data, double su, double sv);
-void swap_config(BDS_Edge *e, 
-                 BDS_Point **p11, BDS_Point **p12, BDS_Point **p13,
-                 BDS_Point **p21, BDS_Point **p22, BDS_Point **p23,
-                 BDS_Point **p31, BDS_Point **p32, BDS_Point **p33,
-                 BDS_Point **p41, BDS_Point **p42, BDS_Point **p43);
-
 class BDS_GeomEntity
 {
 public:
@@ -468,6 +457,12 @@ class BDS_Mesh
   void cleanup();
 };
 
+void normal_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]); 
+void swap_config(BDS_Edge *e, 
+                 BDS_Point **p11, BDS_Point **p12, BDS_Point **p13,
+                 BDS_Point **p21, BDS_Point **p22, BDS_Point **p23,
+                 BDS_Point **p31, BDS_Point **p32, BDS_Point **p33,
+                 BDS_Point **p41, BDS_Point **p42, BDS_Point **p43);
 void outputScalarField(std::list<BDS_Face*> t, const char *fn, int param, GFace *gf=0);
 void recur_tag(BDS_Face *t, BDS_GeomEntity *g);
 int Intersect_Edges_2d(double x1, double y1, double x2, double y2,

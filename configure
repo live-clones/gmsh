@@ -576,7 +576,7 @@ PACKAGE_VERSION=
 PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
-ac_unique_file="Parser/Gmsh.y"
+ac_unique_file="Geo/GModel.h"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
@@ -5254,8 +5254,6 @@ fi
 echo "${ECHO_T}$ac_cv_lib_fftw3_main" >&6; }
 if test $ac_cv_lib_fftw3_main = yes; then
   FFTW3="yes"
-else
-  FFTW3="no"
 fi
 
     if test "x${FFTW3}" != "xyes"; then
