@@ -549,8 +549,8 @@ preceding rule.
 @findex /*, */
 @findex //
 
-All parsed input files (@file{.geo}, @file{.pos}) support both C and C++
-style comments:
+All parsed input files (@file{.geo}) support both C and C++ style
+comments:
 
 @enumerate
 @item
@@ -563,9 +563,10 @@ These commands won't have the described effects inside double quotes or
 inside keywords. Also note that `white space' (spaces, tabs, new line
 characters) is ignored inside all expressions.
 
-You can add comments in a mesh file (@file{.msh}) by creating a section
-with an unrecognized label (e.g. @code{$Comments}/@code{$EndComments}):
-see @ref{MSH ASCII file format}.
+You can add comments in a mesh file (@file{.msh}) by adding a section
+with an unrecognized label (e.g., @code{$Comments}/@code{$EndComments})
+after the @code{$MeshFormat}/@code{$EndMeshFormat} section: see @ref{MSH
+ASCII file format}.
 
 @c =========================================================================
 @c General tools
@@ -2992,7 +2993,8 @@ information about the file (@code{$MeshFormat}), followed by several
 optional sections defining the nodes (@code{$Nodes}), elements
 (@code{$Elements}), region names (@code{$PhysicalName}) and
 post-processing datasets (@code{$NodeData}, @code{$ElementData},
-@code{$ElementNodeData}). Sections can be repeated in the same file, and
+@code{$ElementNodeData}). Any section with an unrecognized header is
+simply ignored. Sections can be repeated in the same file, and
 post-processing sections can be put into separate files (e.g. one file
 per time step).
 

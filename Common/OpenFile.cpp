@@ -360,7 +360,7 @@ int MergeFile(const char *name, int warn_if_missing)
     CTX.geom.draw = 1;
     if(!strncmp(header, "$PTS", 4) || !strncmp(header, "$NO", 3) || 
        !strncmp(header, "$PARA", 5) || !strncmp(header, "$ELM", 4) ||
-       !strncmp(header, "$MeshFormat", 11)) {
+       !strncmp(header, "$MeshFormat", 11) || !strncmp(header, "$Comments", 9)) {
       status = model->readMSH(name);
 #if !defined(HAVE_NO_POST)
       if(status > 1) status = PView::readMSH(name);
