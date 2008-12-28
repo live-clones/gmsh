@@ -74,20 +74,6 @@ Line Loop(108) = {9,104,-33,-100};  Plane Surface(108) = {108};
 Line Loop(109) = {10,105,-34,-101}; Plane Surface(109) = {109};
 Line Loop(110) = {11,106,-35,-102}; Plane Surface(110) = {110};
 Line Loop(111) = {12,107,-36,-103}; Plane Surface(111) = {111};
-Transfinite Line{100:107} = n_layer;
-Transfinite Surface{100} = {2,3,11,10};
-Transfinite Surface{101} = {3,4,12,11};
-Transfinite Surface{102} = {4,5,13,12};
-Transfinite Surface{103} = {5,2,10,13};
-Transfinite Surface{104} = {6,7,15,14};
-Transfinite Surface{105} = {7,8,16,15};
-Transfinite Surface{106} = {8,9,17,16};
-Transfinite Surface{107} = {9,6,14,17};
-Transfinite Surface{108} = {2,6,14,10};
-Transfinite Surface{109} = {3,7,15,11};
-Transfinite Surface{110} = {4,8,16,12};
-Transfinite Surface{111} = {5,9,17,13};
-Recombine Surface{100:111};
 
 Surface Loop(1) = {19,-100,-101,-102,-103,-43}; Volume(1) = {1};
 Surface Loop(2) = {20,-104,-105,-106,-107,-44}; Volume(2) = {2};
@@ -96,12 +82,10 @@ Surface Loop(4) = {46,101,-22,110,-105,-109}; Volume(4) = {4};
 Surface Loop(5) = {23,-102,-111,106,-47,110}; Volume(5) = {5};
 Surface Loop(6) = {24,-103,-108,107,-48,111}; Volume(6) = {6};
 
-Transfinite Volume{1} = {2,3,4,5,10,11,12,13};
-Transfinite Volume{2} = {6,7,8,9,14,15,16,17};
-Transfinite Volume{3} = {2,3,7,6,10,11,15,14};
-Transfinite Volume{4} = {3,7,8,4,11,15,16,12};
-Transfinite Volume{5} = {8,9,5,4,16,17,13,12};
-Transfinite Volume{6} = {9,5,2,6,17,13,10,14};
+Transfinite Line{100:107} = n_layer;
+Transfinite Surface "*";
+Recombine Surface "*";
+Transfinite Volume "*";
 
 Physical Volume(1) = {1:6};
 Physical Surface(2) = {19:24}; // inner

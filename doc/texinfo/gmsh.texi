@@ -2085,7 +2085,7 @@ above.
 @item Extrude @{ Surface @{ @var{expression-list} @}; @var{layers} @}
 Extrudes a boundary layer along the normals of the specified surfaces.
 
-@item Transfinite Line @{ @var{expression-list} @} = @var{expression} < Using Progression | Bump @var{expression} >;
+@item Transfinite Line @{ @var{expression-list} @} | "*" = @var{expression} < Using Progression | Bump @var{expression} >;
 Selects the lines in @var{expression-list} to be meshed with the 1D
 transfinite algorithm. The @var{expression} on the right hand side gives the
 number of nodes that will be created on the line (this overrides any

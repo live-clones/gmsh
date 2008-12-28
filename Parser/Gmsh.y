@@ -2519,34 +2519,59 @@ RecombineAngle :
 ;
 
 Transfinite : 
-    tTransfinite tLine ListOfDouble tAFFECT FExpr TransfiniteType tEND
+    tTransfinite tLine ListOfDoubleOrAll tAFFECT FExpr TransfiniteType tEND
     {
       int type = (int)$6[0];
       double coef = fabs($6[1]);
-      for(int i = 0; i < List_Nbr($3); i++){
-	double d;
-	List_Read($3, i, &d);
-	int j = (int)fabs(d);
-        Curve *c = FindCurve(j);
-	if(c){
-	  c->Method = MESH_TRANSFINITE;
-	  c->nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
-	  c->typeTransfinite = type * sign(d);
-	  c->coeffTransfinite = coef;
-	}
-        else{
-	  GEdge *ge = GModel::current()->getEdgeByTag(j);
-          if(ge){
-            ge->meshAttributes.Method = MESH_TRANSFINITE;
-            ge->meshAttributes.nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
-            ge->meshAttributes.typeTransfinite = type * sign(d);
-            ge->meshAttributes.coeffTransfinite = coef;
+      if(!$3){
+        List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Curves);
+        if(List_Nbr(tmp)){
+          for(int i = 0; i < List_Nbr(tmp); i++){
+            Curve *c;
+            List_Read(tmp, i, &c);
+            c->Method = MESH_TRANSFINITE;
+            c->nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
+            c->typeTransfinite = type;
+            c->coeffTransfinite = coef;
           }
-          else
-	    yymsg(0, "Unknown line %d", j);
         }
+        else{
+          for(GModel::eiter it = GModel::current()->firstEdge(); 
+              it != GModel::current()->lastEdge(); it++){
+            (*it)->meshAttributes.Method = MESH_TRANSFINITE;
+            (*it)->meshAttributes.nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
+            (*it)->meshAttributes.typeTransfinite = type;
+            (*it)->meshAttributes.coeffTransfinite = coef;
+          }
+        }
+        List_Delete(tmp);
       }
-      List_Delete($3);
+      else{
+        for(int i = 0; i < List_Nbr($3); i++){
+          double d;
+          List_Read($3, i, &d);
+          int j = (int)fabs(d);
+          Curve *c = FindCurve(j);
+          if(c){
+            c->Method = MESH_TRANSFINITE;
+            c->nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
+            c->typeTransfinite = type * sign(d);
+            c->coeffTransfinite = coef;
+          }
+          else{
+            GEdge *ge = GModel::current()->getEdgeByTag(j);
+            if(ge){
+              ge->meshAttributes.Method = MESH_TRANSFINITE;
+              ge->meshAttributes.nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
+              ge->meshAttributes.typeTransfinite = type * sign(d);
+              ge->meshAttributes.coeffTransfinite = coef;
+            }
+            else
+              yymsg(0, "Unknown line %d", j);
+          }
+        }
+        List_Delete($3);
+      }
     }
   | tTransfinite tSurface ListOfDoubleOrAll TransfiniteCorners TransfiniteArrangement tEND
     {
