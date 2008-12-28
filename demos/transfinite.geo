@@ -1,13 +1,4 @@
-/********************************************************************* 
- *
- *  Gmsh tutorial 6
- * 
- *  Transfinite meshes
- *
- *********************************************************************/
-
-// We start by defining a more complex geometry, using the same
-// commands as in the previous examples:
+// Here's an example using Transfinite meshes
 
 r_int  = 0.05 ;
 r_ext  = 0.051 ;
@@ -132,9 +123,6 @@ Volume(143) = {142}; // inf b
 Surface Loop(144) = {89,-119,71,103,115};
 Volume(145) = {144}; // inf h
 
-// Once the geometry is defined, we then add transfinite mesh commands
-// in order to explicitly define a structured mesh.
-
 // 1. Transfinite line commands specify the number of points on the
 // curves and their distribution (`Progression 2' means that each line
 // element in the series will be twice as long as the preceding one):
@@ -147,111 +135,13 @@ Transfinite Line{32,27,49,45,43} = nbpt_shell ;
 Transfinite Line{33,28,46,50,52} = nbpt_far Using Progression 1.2 ;
 Transfinite Line{34,29,51,47,53} = nbpt_inf Using Progression 1.05;
 
-// 2. Transfinite surfaces are defined by an ordered list of the
-// points on their boundary (the ordering of these points defines the
-// ordering of the mesh elements). Note that a transfinite surface can
-// only have 3 or 4 sides:
+// 2. Transfinite surfaces are normally defined by the ordered list of
+// their 3 or 4 transfinite interpolation corners, but when the
+// surfaces have only 3 or 4 sides they can be defined automatically:
+Transfinite Surface "*";
+Recombine Surface "*";
 
-Transfinite Surface{55} = {1,14,16,18};
-Transfinite Surface{57} = {14,2,19,16};
-Transfinite Surface{59} = {2,3,21,19};
-Transfinite Surface{61} = {3,4,23,21};
-Transfinite Surface{63} = {4,5,25,23};
-Transfinite Surface{73} = {1,15,17,18};
-Transfinite Surface{75} = {15,10,20,17};
-Transfinite Surface{77} = {10,11,22,20};
-Transfinite Surface{79} = {11,12,24,22};
-Transfinite Surface{81} = {12,13,26,24};
-Transfinite Surface{65} = {18,16,19,6};
-Transfinite Surface{67} = {6,19,21,7};
-Transfinite Surface{69} = {7,21,23,8};
-Transfinite Surface{71} = {8,23,25,9};
-Transfinite Surface{83} = {17,18,6,20};
-Transfinite Surface{85} = {20,6,7,22};
-Transfinite Surface{87} = {22,7,8,24};
-Transfinite Surface{89} = {24,8,9,26};
-Transfinite Surface{91} = {1,14,15};
-Transfinite Surface{95} = {15,14,16,17};
-Transfinite Surface{93} = {18,16,17};
-Transfinite Surface{121} = {15,14,2,10};
-Transfinite Surface{97} = {17,16,19,20};
-Transfinite Surface{123} = {10,2,3,11};
-Transfinite Surface{99} = {20,19,21,22};
-Transfinite Surface{107} = {10,2,19,20};
-Transfinite Surface{105} = {6,20,19};
-Transfinite Surface{109} = {7,22,21};
-Transfinite Surface{111} = {11,3,21,22};
-Transfinite Surface{101} = {22,21,23,24};
-Transfinite Surface{125} = {11,3,4,12};
-Transfinite Surface{115} = {8,24,23};
-Transfinite Surface{113} = {24,12,4,23};
-Transfinite Surface{127} = {12,13,5,4};
-Transfinite Surface{103} = {24,23,25,26};
-Transfinite Surface{119} = {9,26,25};
-Transfinite Surface{117} = {13,5,25,26};
-
-// 3. Transfinite volumes are also defined by an ordered list of the
-// points on their boundary (the ordering defines the ordering of the
-// mesh elements).  A transfinite volume can only have 6 or 8 faces:
-
-Transfinite Volume{129} = {1,14,15,18,16,17};
-Transfinite Volume{131} = {17,16,14,15,20,19,2,10};
-Transfinite Volume{133} = {18,17,16,6,20,19};
-Transfinite Volume{135} = {10,2,19,20,11,3,21,22};
-Transfinite Volume{137} = {6,20,19,7,22,21};
-Transfinite Volume{139} = {11,3,4,12,22,21,23,24};
-Transfinite Volume{141} = {7,22,21,8,24,23};
-Transfinite Volume{143} = {12,4,5,13,24,23,25,26};
-Transfinite Volume{145} = {8,24,23,9,26,25};
-
-// As with Extruded meshes, the `Recombine' command tells Gmsh to
-// recombine the simplices into quadrangles, prisms or hexahedra when
-// possible:
-
-Recombine Surface {55:127};
-
-// We finish by defing some physical entities:
-
-VolInt           = 1000 ;
-SurfIntPhi0      = 1001 ;  SurfIntPhi1      = 1002 ;
-SurfIntZ0        = 1003 ;
-
-VolShell         = 2000 ;
-SurfShellInt     = 2001 ;  SurfShellExt     = 2002 ;
-SurfShellPhi0    = 2003 ;  SurfShellPhi1    = 2004 ;
-SurfShellZ0      = 2005 ;
-LineShellIntPhi0 = 2006 ;
-LineShellIntPhi1 = 2007 ;  LineShellIntZ0   = 2008 ;
-PointShellInt    = 2009 ;
-
-VolExt           = 3000 ;
-VolInf           = 3001 ;
-SurfInf          = 3002 ;
-SurfExtInfPhi0   = 3003 ;  SurfExtInfPhi1   = 3004 ;
-SurfExtInfZ0     = 3005 ;
-SurfInfRight     = 3006 ;
-SurfInfTop       = 3007 ;
-
-Physical Volume  (VolInt)           = {129,131,133} ;
-Physical Surface (SurfIntPhi0)      = {55,57,65} ;
-Physical Surface (SurfIntPhi1)      = {73,75,83} ;
-Physical Surface (SurfIntZ0)        = {91,121} ;
-
-Physical Volume  (VolShell)         = {135,137} ;
-Physical Surface (SurfShellInt)     = {105,107} ;
-Physical Surface (SurfShellExt)     = {109,111} ;
-Physical Surface (SurfShellPhi0)    = {59,67} ;
-Physical Surface (SurfShellPhi1)    = {77,85} ;
-Physical Surface (SurfShellZ0)      = {123} ;
-Physical Line    (LineShellIntPhi0) = {1,2} ;
-Physical Line    (LineShellIntPhi1) = {9,10} ;
-Physical Line    (LineShellIntZ0)   = 21 ;
-//Physical Point   (PointShellInt)    = 6 ;
-
-Physical Volume  (VolExt)           = {139,141} ;
-Physical Volume  (VolInf)           = {143,145} ;
-Physical Surface (SurfExtInfPhi0)   = {61,63,69,71} ;
-Physical Surface (SurfExtInfPhi1)   = {79,87,81,89} ;
-Physical Surface (SurfExtInfZ0)     = {125,127} ;
-Physical Surface (SurfInfRight)     = {117} ;
-Physical Surface (SurfInfTop)       = {119} ;
+// 3. Transfinite volumes are also normally defined by an ordered list
+// of the transfinite interpolation corners, but when they have only 5
+// or 6 sides they can be defined automatically:
+Transfinite Volume "*";

@@ -156,7 +156,7 @@ public:
     : _gf(0), _LL(0), _HH(0), _permutation(-1), _index(-1)
   {
   }
-  GOrientedTransfiniteFace(GFace *gf, std::vector<GVertex*> &corners) 
+  GOrientedTransfiniteFace(GFace *gf, std::vector<MVertex*> &corners)
     : _gf(gf), _LL(0), _HH(0), _permutation(-1), _index(-1)
   { 
     _LL = gf->transfinite_vertices.size() - 1;
@@ -169,17 +169,11 @@ public:
     std::vector<MVertex*> s(8);
     if(corners.size() == 8){
       for(int i = 0; i < 8; i++)
-        s[i] = corners[i]->mesh_vertices[0];
+        s[i] = corners[i];
     }
     else if(corners.size() == 6){
-      s[0] = corners[0]->mesh_vertices[0];
-      s[1] = corners[1]->mesh_vertices[0];
-      s[2] = corners[2]->mesh_vertices[0];
-      s[3] = corners[0]->mesh_vertices[0];
-      s[4] = corners[3]->mesh_vertices[0];
-      s[5] = corners[4]->mesh_vertices[0];
-      s[6] = corners[5]->mesh_vertices[0];
-      s[7] = corners[3]->mesh_vertices[0];
+      s[0] = corners[0]; s[1] = corners[1]; s[2] = corners[2]; s[3] = corners[0];
+      s[4] = corners[3]; s[5] = corners[4]; s[6] = corners[5]; s[7] = corners[3];
     }
     else
       return;
@@ -262,6 +256,53 @@ public:
   }
 };
 
+void findTransfiniteCorners(GRegion *gr, std::vector<MVertex*> &corners)
+{
+  if(gr->meshAttributes.corners.size()){
+    // corners have been specified explicitly
+    for(unsigned int i = 0; i < gr->meshAttributes.corners.size(); i++)
+      corners.push_back(gr->meshAttributes.corners[i]->mesh_vertices[0]);
+  }
+  else{
+    // try to find the corners automatically
+    GFace *gf = 0;
+    std::list<GFace*> faces = gr->faces();
+    if(faces.size() == 6){
+      // any face will do as a starting face
+      gf = faces.front();
+    }
+    else if(faces.size() == 5){
+      // we need to start with a triangular face
+      for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
+        if((*it)->edges().size() == 3 || (*it)->meshAttributes.corners.size() == 3){
+          gf = *it;
+          break;
+        }
+      }
+    }
+    if(gf){
+      std::list<GEdge*> fedges = gf->edges();
+      std::list<GEdge*> redges = gr->edges();
+      for(std::list<GEdge*>::iterator it = fedges.begin(); it != fedges.end(); it++)
+        redges.erase(std::find(redges.begin(), redges.end(), *it));
+      findTransfiniteCorners(gf, corners);
+      int N = corners.size();
+      for(unsigned int i = 0; i < N; i++){
+        for(std::list<GEdge*>::iterator it = redges.begin(); it != redges.end(); it++){
+          if((*it)->getBeginVertex()->mesh_vertices[0] == corners[i]){
+            corners.push_back((*it)->getEndVertex()->mesh_vertices[0]);
+            break;
+          }
+          else if((*it)->getEndVertex()->mesh_vertices[0] == corners[i]){
+            corners.push_back((*it)->getBeginVertex()->mesh_vertices[0]);
+            break;
+          }
+        }
+      }
+    }
+  }
+}
+
 int MeshTransfiniteVolume(GRegion *gr)
 {
   if(gr->meshAttributes.Method != MESH_TRANSFINITE) return 0;
@@ -274,9 +315,17 @@ int MeshTransfiniteVolume(GRegion *gr)
     return 0;
   }
 
+  std::vector<MVertex*> corners;
+  findTransfiniteCorners(gr, corners);
+  if(corners.size() != 6 && corners.size() != 8){
+    Msg::Error("Volume %d is transfinite but has %d corners",
+	       gr->tag(), corners.size());
+    return 0;
+  }
+  
   std::vector<GOrientedTransfiniteFace> orientedFaces(6);
   for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); ++it){
-    GOrientedTransfiniteFace f(*it, gr->meshAttributes.corners);
+    GOrientedTransfiniteFace f(*it, corners);
     if(f.index() < 0){
       Msg::Error("Incompatible surface %d in transfinite volume %d", 
 		 (*it)->tag(), gr->tag());
@@ -365,7 +414,7 @@ int MeshTransfiniteVolume(GRegion *gr)
         MVertex *f1 = orientedFaces[1].getVertex(j, k);
         MVertex *f2 = orientedFaces[2].getVertex(i, k);
         MVertex *f3;
-        if(gr->meshAttributes.corners.size() == 8)
+        if(corners.size() == 8)
           f3 = orientedFaces[3].getVertex(j, k);
         else
           f3 = c8;

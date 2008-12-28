@@ -37,14 +37,8 @@ extern Context_T CTX;
 // f(u,v) = u c2 (v) + (1-v) c1(u) + v c3(u) - u(1-v) s2 - uv s3
 #define TRAN_TRI(c1,c2,c3,s1,s2,s3,u,v) u*c2+(1.-v)*c1+v*c3-(u*(1.-v)*s2+u*v*s3)
 
-int MeshTransfiniteSurface(GFace *gf)
+void findTransfiniteCorners(GFace *gf, std::vector<MVertex*> &corners)
 {
-  if(gf->meshAttributes.Method != MESH_TRANSFINITE) return 0;
-
-  Msg::StatusBar(2, true, "Meshing surface %d (transfinite)", gf->tag());
-
-  std::vector<MVertex*> corners;
-
   if(gf->meshAttributes.corners.size()){
     // corners have been specified explicitly
     for(unsigned int i = 0; i < gf->meshAttributes.corners.size(); i++)
@@ -52,11 +46,49 @@ int MeshTransfiniteSurface(GFace *gf)
   }
   else{
     // try to find the corners automatically
-    GEdgeLoop el(gf->edges());
+    std::list<GEdge*> fedges = gf->edges();
+    GEdgeLoop el(fedges);
     for(GEdgeLoop::iter it = el.begin(); it != el.end(); it++)
       corners.push_back(it->getBeginVertex()->mesh_vertices[0]);
+    
+    // try reaaally hard for 3-sided faces
+    if(corners.size() == 3){
+      GEdge *first = 0, *last = 0;
+      for(std::list<GEdge*>::iterator it = fedges.begin(); it != fedges.end(); it++){
+        if(((*it)->getBeginVertex()->mesh_vertices[0] == corners[0] &&
+            (*it)->getEndVertex()->mesh_vertices[0] == corners[1]) ||
+           ((*it)->getBeginVertex()->mesh_vertices[0] == corners[1] &&
+            (*it)->getEndVertex()->mesh_vertices[0] == corners[0])){
+          first = *it;
+        }
+        if(((*it)->getBeginVertex()->mesh_vertices[0] == corners[2] &&
+            (*it)->getEndVertex()->mesh_vertices[0] == corners[0]) ||
+           ((*it)->getBeginVertex()->mesh_vertices[0] == corners[0] &&
+            (*it)->getEndVertex()->mesh_vertices[0] == corners[2])){
+          last = *it;
+        }
+      }
+      if(first && last){
+        if(first->mesh_vertices.size() != last->mesh_vertices.size()){
+          std::vector<MVertex*> corners2(3);
+          corners2[0] = corners[1];
+          corners2[1] = corners[2];
+          corners2[2] = corners[0];
+          corners = corners2;
+        }
+      }
+    }
   }
+}
 
+int MeshTransfiniteSurface(GFace *gf)
+{
+  if(gf->meshAttributes.Method != MESH_TRANSFINITE) return 0;
+
+  Msg::StatusBar(2, true, "Meshing surface %d (transfinite)", gf->tag());
+
+  std::vector<MVertex*> corners;
+  findTransfiniteCorners(gf, corners);
   if(corners.size () != 3 && corners.size () != 4){
     Msg::Error("Surface %d is transfinite but has %d corners",
 	       gf->tag(), corners.size());

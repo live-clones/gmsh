@@ -2100,20 +2100,22 @@ line.
 
 (A deprecated synonym for @code{Progression} is @code{Power}.)
 
-@item Transfinite Surface @{ @var{expression} @} | "*" < = @{ @var{expression-list} @} > < Left | Right | Alternate > ;
-Selects the surface @var{expression} to be meshed with the 2D
-transfinite algorithm. The @var{expression-list} should contain the
+@item Transfinite Surface @{ @var{expression-list} @} | "*" < = @{ @var{expression-list} @} > < Left | Right | Alternate > ;
+Selects surfaces to be meshed with the 2D transfinite algorithm. The
+@var{expression-list} on the right-hand-side should contain the
 identification numbers of three or four points on the boundary of the
-surface, defining the corners of the transfinite interpolation. If no
+surface that define the corners of the transfinite interpolation. If no
 identfication numbers are given, the transfinite algorithm will try to
 find the corners automatically. The optional argument specifies the way
 the triangles are oriented when the mesh is not recombined.
 
-@item Transfinite Volume @{ @var{expression} @} = @{ @var{expression-list} @};
-Selects a five- or six-face volume @var{expression} to be meshed with
-the 3D transfinite algorithm.  The @var{expression-list} should contain
-the identification numbers of the six or eight points on the boundary of
-the volume that define the corners of the transfinite interpolation.
+@item Transfinite Volume @{ @var{expression-list} @} | "*" < = @{ @var{expression-list} @} > ;
+Selects five- or six-face volumes to be meshed with the 3D transfinite
+algorithm.  The @var{expression-list} on the right-hand-side should
+contain the identification numbers of the six or eight points on the
+boundary of the volume that define the corners of the transfinite
+interpolation. If no identfication numbers are given, the transfinite
+algorithm will try to find the corners automatically.
 
 @end ftable
 

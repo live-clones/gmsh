@@ -2613,8 +2613,8 @@ Transfinite :
                 yymsg(0, "Unknown surface %d", (int)d);
             }
           }
+          List_Delete($3);
         }
-        List_Delete($3);
       }
       List_Delete($4);
     }
@@ -2623,47 +2623,72 @@ Transfinite :
       yymsg(1, "Elliptic Surface is deprecated: use Transfinite instead (with smoothing)");
       List_Delete($7);
     }
-  | tTransfinite tVolume '{' FExpr '}' tAFFECT ListOfDouble tEND
+  | tTransfinite tVolume ListOfDoubleOrAll TransfiniteCorners tEND
     {
-      int k = List_Nbr($7);
-      if(k != 6 && k != 8){
-        yymsg(0, "Wrong definition of Transfinite Volume %d: "
-              "%d points instead of 6 or 8" , (int)$4, k);
+      int k = List_Nbr($4);
+      if(k != 0 && k != 6 && k != 8){
+        yymsg(0, "Wrong definition of Transfinite Volume: "
+              "%d points instead of 6 or 8", k);
       }
       else{
-        Volume *v = FindVolume((int)$4);
-        if(v){
-          v->Method = MESH_TRANSFINITE;
-	  List_Reset(v->TrsfPoints);
-	  for(int i = 0; i < k; i++){
-	    double d;
-	    List_Read($7, i, &d);
-	    Vertex *vert = FindPoint((int)fabs(d));
-	    if(vert)
-	      List_Add(v->TrsfPoints, &vert);
-	    else
-	      yymsg(0, "Unknown point %d", (int)fabs(d));
-	  }
-	}
-        else{
-	  GRegion *gr = GModel::current()->getRegionByTag((int)$4);
-          if(gr){
-            gr->meshAttributes.Method = MESH_TRANSFINITE;
-            for(int i = 0; i < k; i++){
-              double d;
-              List_Read($7, i, &d);
-              GVertex *gv = GModel::current()->getVertexByTag((int)fabs(d));
-              if(gv)
-                gr->meshAttributes.corners.push_back(gv);
-              else
-                yymsg(0, "Unknown point %d", (int)fabs(d));
+        if(!$3){
+          List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Volumes);
+          if(List_Nbr(tmp)){
+            for(int i = 0; i < List_Nbr(tmp); i++){
+              Volume *v;
+              List_Read(tmp, i, &v);
+              v->Method = MESH_TRANSFINITE;
+              List_Reset(v->TrsfPoints);
             }
           }
-          else
-            yymsg(0, "Unknown volume %d", (int)$4);
+          else{
+            for(GModel::riter it = GModel::current()->firstRegion(); 
+                it != GModel::current()->lastRegion(); it++){
+              (*it)->meshAttributes.Method = MESH_TRANSFINITE;
+            }
+          }
+          List_Delete(tmp);
+        }
+        else{
+          for(int i = 0; i < List_Nbr($3); i++){
+            double d;
+            List_Read($3, i, &d);
+            Volume *v = FindVolume((int)d);
+            if(v){
+              v->Method = MESH_TRANSFINITE;
+              List_Reset(v->TrsfPoints);
+              for(int i = 0; i < k; i++){
+                double p;
+                List_Read($4, i, &p);
+                Vertex *vert = FindPoint((int)fabs(p));
+                if(vert)
+                  List_Add(v->TrsfPoints, &vert);
+                else
+                  yymsg(0, "Unknown point %d", (int)fabs(p));
+              }
+            }
+            else{
+              GRegion *gr = GModel::current()->getRegionByTag((int)d);
+              if(gr){
+                gr->meshAttributes.Method = MESH_TRANSFINITE;
+                for(int i = 0; i < k; i++){
+                  double p;
+                  List_Read($4, i, &p);
+                  GVertex *gv = GModel::current()->getVertexByTag((int)fabs(p));
+                  if(gv)
+                    gr->meshAttributes.corners.push_back(gv);
+                  else
+                    yymsg(0, "Unknown point %d", (int)fabs(p));
+                }
+              }
+              else
+                yymsg(0, "Unknown volume %d", (int)d);
+            }
+          }
+          List_Delete($3);
         }
       }
-      List_Delete($7);
+      List_Delete($4);
     }
   | tRecombine tSurface ListOfDoubleOrAll RecombineAngle tEND
     {
