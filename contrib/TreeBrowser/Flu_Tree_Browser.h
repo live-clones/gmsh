@@ -327,7 +327,7 @@ class Flu_Tree_Browser : public Fl_Group
     { return rdata.insertionMode; }
 
   //! \return whether the point \c (x,y) is inside the entry area (not on the scrollbars)
-  bool Flu_Tree_Browser :: inside_entry_area( int x, int y );
+  bool inside_entry_area( int x, int y );
 
   //! Set the title of the Tree (also the label for the root entry)
   inline void label( const char *l )
