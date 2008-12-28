@@ -39,13 +39,6 @@ s4 = news; Ruled Surface(s4) = {l4};
 s5 = news; Ruled Surface(s5) = {l5};
 s6 = news; Ruled Surface(s6) = {l6};
 Transfinite Line{c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12} = n_patch;
-Transfinite Surface{s1} = {p1,p2,p3,p4};
-Transfinite Surface{s2} = {p5,p6,p7,p8};
-Transfinite Surface{s3} = {p1,p2,p6,p5};
-Transfinite Surface{s4} = {p2,p3,p7,p6};
-Transfinite Surface{s5} = {p3,p4,p8,p7};
-Transfinite Surface{s6} = {p4,p1,p5,p8};
-Recombine Surface{s1,s2,s3,s4,s5,s6};
 Return
 
 p0 = newp; Point(p0) = {0,0,0,lc};
