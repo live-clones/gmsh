@@ -186,7 +186,8 @@ public:
     
     // get the corners of the transfinite surface mesh
     std::vector<MVertex*> c(4);
-    if(_gf->meshAttributes.corners.size() == 4){
+    if(_gf->meshAttributes.corners.empty() || 
+       _gf->meshAttributes.corners.size() == 4){
       c[0] = _gf->transfinite_vertices[0][0];
       c[1] = _gf->transfinite_vertices[_LL][0];
       c[2] = _gf->transfinite_vertices[_LL][_HH];
