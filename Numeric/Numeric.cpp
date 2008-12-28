@@ -5,11 +5,6 @@
 
 #include "GmshMessage.h"
 #include "Numeric.h"
-#include "GmshMatrix.h"
-
-// This file contains the routines that depend on the GSL, some of
-// which need to be reimplemented (e.g. in terms of Gmsh_Matrix)
-// before we can get rid of the GSL completely.
 
 #if defined(HAVE_GSL)
 

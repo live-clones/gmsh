@@ -71,6 +71,6 @@ double ComputeVonMises(double *val);
 double ComputeScalarRep(int numComp, double *val);
 void invert_singular_matrix3x3(double MM[3][3], double II[3][3]);
 bool newton_fd(void (*func)(Double_Vector &, Double_Vector &, void *),
-               Double_Vector &x, void *data, double relax);
+               Double_Vector &x, void *data, double relax=1., double tolx=1.e-6);
   
 #endif

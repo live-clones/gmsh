@@ -119,7 +119,6 @@ class Context_T {
   int expert_mode; // to disable some warnings for beginners
   int printing; // dynamic: equal to 1 while gmsh is printing
   int hide_unselected; // hide all unselected entities
-  int draw_all_models;
   int use_transform; // transform display coordinates? (0=no, 1=scale, 2=...)
   double transform[3][3], offset[3]; // transformation matrix for geo/mesh drawing
 

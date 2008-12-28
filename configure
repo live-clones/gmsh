@@ -1290,6 +1290,7 @@ Optional Features:
   --enable-native-file-chooser
                           enable native file chooser (default=yes, except on
                           Linux)
+  --enable-tree-browser   enable tree browser (default=yes)
   --enable-mpi            enable MPI support (default=no)
   --enable-minimal        build minimal standalone version (default=no)
 
@@ -1966,6 +1967,11 @@ fi
 # Check whether --enable-native-file-chooser was given.
 if test "${enable_native_file_chooser+set}" = set; then
   enableval=$enable_native_file_chooser;
+fi
+
+# Check whether --enable-tree-browser was given.
+if test "${enable_tree_browser+set}" = set; then
+  enableval=$enable_tree_browser;
 fi
 
 # Check whether --enable-mpi was given.
@@ -3899,6 +3905,35 @@ fi
     fi
   fi
 
+    if test "x$enable_tree_browser" != "xno"; then
+    { echo "$as_me:$LINENO: checking for ./contrib/TreeBrowser/Flu_Tree_Browser.cpp" >&5
+echo $ECHO_N "checking for ./contrib/TreeBrowser/Flu_Tree_Browser.cpp... $ECHO_C" >&6; }
+if test "${ac_cv_file___contrib_TreeBrowser_Flu_Tree_Browser_cpp+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "./contrib/TreeBrowser/Flu_Tree_Browser.cpp"; then
+  ac_cv_file___contrib_TreeBrowser_Flu_Tree_Browser_cpp=yes
+else
+  ac_cv_file___contrib_TreeBrowser_Flu_Tree_Browser_cpp=no
+fi
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_file___contrib_TreeBrowser_Flu_Tree_Browser_cpp" >&5
+echo "${ECHO_T}$ac_cv_file___contrib_TreeBrowser_Flu_Tree_Browser_cpp" >&6; }
+if test $ac_cv_file___contrib_TreeBrowser_Flu_Tree_Browser_cpp = yes; then
+  TREEBROWSER="yes"
+fi
+
+    if test "x${TREEBROWSER}" = "xyes"; then
+      GMSH_DIRS="${GMSH_DIRS} contrib/TreeBrowser"
+      GMSH_LIBS="${GMSH_LIBS} -lGmshTreeBrowser"
+      FLAGS="-DHAVE_TREE_BROWSER ${FLAGS}"
+    fi
+  fi
+
   if test "x${OSMESA}" = "xyes"; then
     GMSH_LIBS="${GMSH_LIBS} `$FLTKCONFIG --use-images --ldflags` -lfltk_gl"
     FLAGS="${FLAGS} -DHAVE_OSMESA `$FLTKCONFIG --use-images --cxxflags`"
@@ -5414,9 +5449,6 @@ fi
 
 fi
 if test "x${CBLAS}" = "xyes"; then
-  if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
-    BLAS_PATH="-L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib"
-  fi
   FLAGS="${FLAGS} -DHAVE_CBLAS"
 else
   if test "x${GSL}" = "xyes"; then
@@ -5968,7 +6000,11 @@ fi
 fi
 
 if test "x${BLAS_LIBS}" != "x"; then
-  GMSH_LIBS="${GMSH_LIBS} ${BLAS_PATH} ${BLAS_LIBS}"
+  if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
+    GMSH_LIBS="${GMSH_LIBS} -L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib ${BLAS_LIBS}"
+  else
+    GMSH_LIBS="${GMSH_LIBS} ${BLAS_LIBS}"
+  fi
 fi
 
 if test "x$enable_mpi" = "xyes"; then

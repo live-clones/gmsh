@@ -83,7 +83,8 @@ Levelset${OBJEXT}: Levelset.cpp Levelset.h Plugin.h ../Common/Options.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Numeric/GmshMatrix.h \
   ../Common/ListUtils.h MakeSimplex.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../Post/adaptiveData.h
+  ../Numeric/NumericEmbedded.h ../Numeric/GmshMatrix.h \
+  ../Post/adaptiveData.h
 CutPlane${OBJEXT}: CutPlane.cpp ../Graphics/drawContext.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Fltk/Draw.h CutPlane.h \
   Levelset.h Plugin.h ../Common/Options.h ../Post/ColorTable.h \
@@ -118,18 +119,21 @@ Lambda2${OBJEXT}: Lambda2.cpp Lambda2.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/GmshMessage.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Numeric/GmshMatrix.h \
-  ../Common/ListUtils.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h
+  ../Common/ListUtils.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
+  ../Numeric/GmshMatrix.h
 Eigenvectors${OBJEXT}: Eigenvectors.cpp Eigenvectors.h Plugin.h \
   ../Common/Options.h ../Post/ColorTable.h ../Common/GmshMessage.h \
   ../Post/PView.h ../Geo/SPoint3.h ../Post/PViewDataList.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Numeric/GmshMatrix.h ../Common/ListUtils.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../Numeric/EigSolve.h
+  ../Numeric/NumericEmbedded.h ../Numeric/GmshMatrix.h \
+  ../Numeric/EigSolve.h
 Eigenvalues${OBJEXT}: Eigenvalues.cpp Eigenvalues.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/GmshMessage.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Numeric/GmshMatrix.h \
-  ../Common/ListUtils.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h
+  ../Common/ListUtils.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
+  ../Numeric/GmshMatrix.h
 StreamLines${OBJEXT}: StreamLines.cpp ../Graphics/drawContext.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Fltk/Draw.h StreamLines.h \
   Plugin.h ../Common/Options.h ../Post/ColorTable.h \
@@ -175,13 +179,13 @@ Warp${OBJEXT}: Warp.cpp Warp.h Plugin.h ../Common/Options.h ../Post/ColorTable.h
   ../Post/PViewDataList.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Numeric/GmshMatrix.h ../Common/ListUtils.h \
   ../Common/SmoothData.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h
+  ../Numeric/NumericEmbedded.h ../Numeric/GmshMatrix.h
 SphericalRaise${OBJEXT}: SphericalRaise.cpp SphericalRaise.h Plugin.h \
   ../Common/Options.h ../Post/ColorTable.h ../Common/GmshMessage.h \
   ../Post/PView.h ../Geo/SPoint3.h ../Post/PViewDataList.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Numeric/GmshMatrix.h ../Common/ListUtils.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h
+  ../Numeric/NumericEmbedded.h ../Numeric/GmshMatrix.h
 Skin${OBJEXT}: Skin.cpp Skin.h Plugin.h ../Common/Options.h ../Post/ColorTable.h \
   ../Common/GmshMessage.h ../Post/PView.h ../Geo/SPoint3.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
@@ -211,7 +215,7 @@ ExtractElements${OBJEXT}: ExtractElements.cpp ExtractElements.h Plugin.h \
   ../Post/PView.h ../Geo/SPoint3.h ../Post/PViewDataList.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Numeric/GmshMatrix.h ../Common/ListUtils.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h
+  ../Numeric/NumericEmbedded.h ../Numeric/GmshMatrix.h
 ExtractEdges${OBJEXT}: ExtractEdges.cpp ExtractEdges.h Plugin.h \
   ../Common/Options.h ../Post/ColorTable.h ../Common/GmshMessage.h \
   ../Post/PView.h ../Geo/SPoint3.h ../Post/PViewDataList.h \
@@ -245,26 +249,26 @@ Integrate${OBJEXT}: Integrate.cpp Integrate.h Plugin.h ../Common/Options.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Numeric/GmshMatrix.h \
   ../Common/ListUtils.h ../Post/shapeFunctions.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h
+  ../Numeric/NumericEmbedded.h ../Numeric/GmshMatrix.h \
+  ../Post/PViewOptions.h ../Post/ColorTable.h
 Gradient${OBJEXT}: Gradient.cpp Gradient.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/GmshMessage.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Numeric/GmshMatrix.h \
   ../Common/ListUtils.h ../Post/shapeFunctions.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h
+  ../Numeric/NumericEmbedded.h ../Numeric/GmshMatrix.h
 Curl${OBJEXT}: Curl.cpp Curl.h Plugin.h ../Common/Options.h ../Post/ColorTable.h \
   ../Common/GmshMessage.h ../Post/PView.h ../Geo/SPoint3.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Numeric/GmshMatrix.h ../Common/ListUtils.h \
   ../Post/shapeFunctions.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h
+  ../Numeric/NumericEmbedded.h ../Numeric/GmshMatrix.h
 Divergence${OBJEXT}: Divergence.cpp Divergence.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/GmshMessage.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Numeric/GmshMatrix.h \
   ../Common/ListUtils.h ../Post/shapeFunctions.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h
+  ../Numeric/NumericEmbedded.h ../Numeric/GmshMatrix.h
 Annotate${OBJEXT}: Annotate.cpp ../Graphics/drawContext.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Fltk/Draw.h ../Fltk/GUI.h \
   Annotate.h Plugin.h ../Common/Options.h ../Post/ColorTable.h \

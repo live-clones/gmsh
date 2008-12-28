@@ -954,7 +954,7 @@ void drawContext::drawMesh()
 
     for(unsigned int i = 0; i < GModel::list.size(); i++){
       GModel *m = GModel::list[i];
-      if(CTX.draw_all_models || m == GModel::current()){
+      if(m->getVisibility()){
         int status = m->getMeshStatus();
         if(CTX.mesh.changed) {
           Msg::Debug("Mesh has changed: reinitializing drawing data", CTX.mesh.changed);

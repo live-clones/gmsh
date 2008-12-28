@@ -108,7 +108,7 @@ void FixRelativePath(const char *in, char *out);
 %type <i> TransfiniteArrangement RecombineAngle
 %type <u> ColorExpr
 %type <c> StringExpr StringExprVar SendToFile
-%type <l> FExpr_Multi ListOfDouble RecursiveListOfDouble
+%type <l> FExpr_Multi ListOfDouble ListOfDoubleOrAll RecursiveListOfDouble
 %type <l> RecursiveListOfListOfDouble 
 %type <l> ListOfColor RecursiveListOfColor 
 %type <l> ListOfShapes Transform Extrude MultipleShape 
@@ -1806,13 +1806,13 @@ Colorify :
 //  V I S I B I L I T Y
 
 Visibility :
-    tShow StringExprVar tEND
+    tShow tBIGSTR tEND
     {
       for(int i = 0; i < 4; i++)
 	VisibilityShape($2, i, 1);
       Free($2);
     }
-  | tHide StringExprVar tEND
+  | tHide tBIGSTR tEND
     {
       for(int i = 0; i < 4; i++)
 	VisibilityShape($2, i, 0);
@@ -2548,52 +2548,74 @@ Transfinite :
       }
       List_Delete($3);
     }
-  | tTransfinite tSurface ListOfDouble TransfiniteCorners TransfiniteArrangement tEND
+  | tTransfinite tSurface ListOfDoubleOrAll TransfiniteCorners TransfiniteArrangement tEND
     {
       int k = List_Nbr($4);
       if(k != 0 && k != 3 && k != 4){
         yymsg(0, "Wrong definition of Transfinite Surface: 0, 3 or 4 points needed");
       }
       else{
-        for(int i = 0; i < List_Nbr($3); i++){
-          double d;
-          List_Read($3, i, &d);
-          Surface *s = FindSurface((int)d);
-          if(s){
-            s->Method = MESH_TRANSFINITE;
-            s->Recombine_Dir = $5;
-            List_Reset(s->TrsfPoints);
-            for(int j = 0; j < k; j++){
-              double p;
-              List_Read($4, j, &p);
-              Vertex *v = FindPoint((int)fabs(p));
-              if(v)
-                List_Add(s->TrsfPoints, &v);
-              else
-                yymsg(0, "Unknown point %d", (int)fabs(p));
+        if(!$3){
+          List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
+          if(List_Nbr(tmp)){
+            for(int i = 0; i < List_Nbr(tmp); i++){
+              Surface *s;
+              List_Read(tmp, i, &s);
+              s->Method = MESH_TRANSFINITE;
+              s->Recombine_Dir = $5;
+              List_Reset(s->TrsfPoints);
             }
           }
           else{
-            GFace *gf = GModel::current()->getFaceByTag((int)d);
-            if(gf){
-              gf->meshAttributes.Method = MESH_TRANSFINITE;
-              gf->meshAttributes.transfiniteArrangement = $5;
+            for(GModel::fiter it = GModel::current()->firstFace(); 
+                it != GModel::current()->lastFace(); it++){
+              (*it)->meshAttributes.Method = MESH_TRANSFINITE;
+              (*it)->meshAttributes.transfiniteArrangement = $5;
+            }
+          }
+          List_Delete(tmp);
+        }
+        else{
+          for(int i = 0; i < List_Nbr($3); i++){
+            double d;
+            List_Read($3, i, &d);
+            Surface *s = FindSurface((int)d);
+            if(s){
+              s->Method = MESH_TRANSFINITE;
+              s->Recombine_Dir = $5;
+              List_Reset(s->TrsfPoints);
               for(int j = 0; j < k; j++){
                 double p;
                 List_Read($4, j, &p);
-                GVertex *gv = GModel::current()->getVertexByTag((int)fabs(p));
-                if(gv)
-                  gf->meshAttributes.corners.push_back(gv);
+                Vertex *v = FindPoint((int)fabs(p));
+                if(v)
+                  List_Add(s->TrsfPoints, &v);
                 else
                   yymsg(0, "Unknown point %d", (int)fabs(p));
               }
             }
-            else
-              yymsg(0, "Unknown surface %d", (int)d);
+            else{
+              GFace *gf = GModel::current()->getFaceByTag((int)d);
+              if(gf){
+                gf->meshAttributes.Method = MESH_TRANSFINITE;
+                gf->meshAttributes.transfiniteArrangement = $5;
+                for(int j = 0; j < k; j++){
+                  double p;
+                  List_Read($4, j, &p);
+                  GVertex *gv = GModel::current()->getVertexByTag((int)fabs(p));
+                  if(gv)
+                    gf->meshAttributes.corners.push_back(gv);
+                  else
+                    yymsg(0, "Unknown point %d", (int)fabs(p));
+                }
+              }
+              else
+                yymsg(0, "Unknown surface %d", (int)d);
+            }
           }
         }
+        List_Delete($3);
       }
-      List_Delete($3);
       List_Delete($4);
     }
   | tElliptic tSurface '{' FExpr '}' tAFFECT ListOfDouble tEND
@@ -2643,27 +2665,48 @@ Transfinite :
       }
       List_Delete($7);
     }
-  | tRecombine tSurface ListOfDouble RecombineAngle tEND
+  | tRecombine tSurface ListOfDoubleOrAll RecombineAngle tEND
     {
-      for(int i = 0; i < List_Nbr($3); i++){
-	double d;
-	List_Read($3, i, &d);
-        Surface *s = FindSurface((int)d);
-	if(s){
-	  s->Recombine = 1;
-	  s->RecombineAngle = $4;
+      if(!$3){
+	List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
+        if(List_Nbr(tmp)){
+          for(int i = 0; i < List_Nbr(tmp); i++){
+            Surface *s;
+            List_Read(tmp, i, &s);
+            s->Recombine = 1;
+            s->RecombineAngle = $4;
+          }
         }
         else{
-	  GFace *gf = GModel::current()->getFaceByTag((int)d);
-	  if(gf){
-            gf->meshAttributes.recombine = 1;
-            gf->meshAttributes.recombineAngle = $4;
+          for(GModel::fiter it = GModel::current()->firstFace(); 
+              it != GModel::current()->lastFace(); it++){
+            (*it)->meshAttributes.recombine = 1;
+            (*it)->meshAttributes.recombineAngle = $4;
           }
-          else
-	    yymsg(1, "Unknown surface %d", (int)d);
         }
+        List_Delete(tmp);
       }
-      List_Delete($3);
+      else{
+        for(int i = 0; i < List_Nbr($3); i++){
+          double d;
+          List_Read($3, i, &d);
+          Surface *s = FindSurface((int)d);
+          if(s){
+            s->Recombine = 1;
+            s->RecombineAngle = $4;
+          }
+          else{
+            GFace *gf = GModel::current()->getFaceByTag((int)d);
+            if(gf){
+              gf->meshAttributes.recombine = 1;
+              gf->meshAttributes.recombineAngle = $4;
+            }
+            else
+              yymsg(1, "Unknown surface %d", (int)d);
+          }
+        }
+        List_Delete($3);
+      }
     }
   | tSmoother tSurface ListOfDouble tAFFECT FExpr tEND
     {
@@ -3058,6 +3101,22 @@ ListOfDouble :
       for(int i = 0; i < List_Nbr($$); i++){
 	double *pd = (double*)List_Pointer($$, i);
 	(*pd) *= $1;
+      }
+    }
+;
+
+ListOfDoubleOrAll :
+    ListOfDouble 
+    { 
+      $$ = $1; 
+    }
+  | tBIGSTR
+    {
+      if(!strcmp($1, "*") || !strcmp($1, "all"))
+        $$ = 0;
+      else{
+        yyerror("Unknown special string for list replacement");
+        $$ = List_Create(2, 1, sizeof(double));
       }
     }
 ;

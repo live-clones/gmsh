@@ -75,20 +75,24 @@ Free Software Foundation, Inc: check the configuration options.
 
 This version of Gmsh may contain code (in the contrib/Metis
 subdirectory) written by George Karypis (karypis at cs.umn.edu),
-copyright (C) 1998, Regents of the University of Minnesota: check the
+copyright (C) 1998 Regents of the University of Minnesota: check the
 configuration options.
 
 This version of Gmsh may contain code (in the
-contrib/NativeFileChooser subdirectory), copyright (C) 2004 by Greg
+contrib/NativeFileChooser subdirectory), copyright (C) 2004 Greg
 Ercolano: check the configuration options.
 
 This version of Gmsh may contain code (in the contrib/Netgen
-subdirectory) copyright (C) 1994-2004, Joachim Sch"oberl: check the
+subdirectory) copyright (C) 1994-2004 Joachim Sch"oberl: check the
 configuration options.
 
 This version of Gmsh may contain code (in the contrib/Tetgen
 subdirectory) copyright (C) 2002-2007 Hang Si: check the configuration
 options.
+
+This version of Gmsh may contain code (in the contrib/TreeBrowser
+subdirectory), copyright (C) 2002 Jason Bryan, Ohio Supercomputer
+Center, Ohio State University: check the configuration options.
 
 This version of Gmsh may contain code (in the contrib/gmm
 subdirectory) copyright (C) 2002-2008 Yves Renard: check the

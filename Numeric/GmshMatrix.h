@@ -231,8 +231,8 @@ class Gmsh_Matrix
   }
   SCALAR determinant() const
   {
-    Gmsh_Matrix<SCALAR> tmp(*this);
 #if defined(HAVE_LAPACK)
+    Gmsh_Matrix<SCALAR> tmp(*this);
     int M = size1(), N = size2(), lda = size1(), info;
     int *ipiv = new int[std::min(M, N)];
     dgetrf_(&M, &N, tmp._data, &lda, ipiv, &info);
@@ -429,7 +429,7 @@ class GSL_Matrix
   {
     GSL_Vector tmp(S.size());
     gsl_linalg_SV_decomp(_data, V._data, S._data, tmp._data);
-    return false;
+    return true;
   }
 };
 

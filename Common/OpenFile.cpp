@@ -241,6 +241,9 @@ int MergeFile(const char *name, int warn_if_missing)
     return 0;
   }
 
+  if(model->getName() == "")
+    SetProjectName(name);
+
   // added 'b' for pure Windows programs, since some of these files
   // contain binary data
   FILE *fp = fopen(name, "rb");
@@ -270,8 +273,7 @@ int MergeFile(const char *name, int warn_if_missing)
         sprintf(tmp, "gunzip -c %s > %s", name, no_ext);
         if(SystemCall(tmp))
           Msg::Error("Failed to uncompress `%s': check directory permissions", name);
-        if(!strcmp(CTX.filename, name)) // this is the project file
-          SetProjectName(no_ext);
+        SetProjectName(no_ext);
         return MergeFile(no_ext);
       }
     }
@@ -418,7 +420,6 @@ void OpenProject(const char *name)
   // parsing
   ResetTemporaryBoundingBox();
 
-  SetProjectName(name);
   MergeFile(name);
 
   CTX.threads_lock = 0;

@@ -151,13 +151,6 @@ static void model_switch_cb(Fl_Widget* w, void *data)
   Draw();
 }
 
-static void model_draw_all_cb(Fl_Widget* w, void *data)
-{
-  Fl_Check_Button *b = (Fl_Check_Button*)w;
-  opt_general_draw_all_models(0, GMSH_SET | GMSH_GUI, (int)b->value());
-  Draw();
-}
-
 int model_chooser()
 {
   struct _menu{
@@ -175,13 +168,11 @@ int model_chooser()
     menu->window = new Fl_Menu_Window(WW, 6 * BH);
     if(CTX.non_modal_windows) menu->window->set_non_modal();
     menu->window->border(0);
-    Fl_Box *l = new Fl_Box(0, 0, WW, BH, "Choose current model:");
+    Fl_Box *l = new Fl_Box(0, 0, WW, BH, "Select active model:");
     l->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-    menu->browser = new Fl_Hold_Browser(0, BH, WW, 4 * BH);
+    menu->browser = new Fl_Hold_Browser(0, BH, WW, 5 * BH);
     menu->browser->callback(model_switch_cb);
     menu->browser->when(FL_WHEN_RELEASE_ALWAYS);
-    menu->butt = new Fl_Check_Button(0, 5 * BH, WW, BH, "Draw all models");
-    menu->butt->callback(model_draw_all_cb);
     menu->window->end();
   }
 
@@ -193,7 +184,6 @@ int model_chooser()
     menu->browser->add(tmp);
     if(GModel::list[i] == GModel::current()) menu->browser->value(i + 1);
   }
-  menu->butt->value(CTX.draw_all_models);
 
   if(menu->window->non_modal() && !menu->window->shown())
     menu->window->show(); // fix ordering

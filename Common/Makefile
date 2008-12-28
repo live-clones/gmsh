@@ -22,7 +22,6 @@ SRC = Gmsh.cpp\
       OS.cpp\
       OpenFile.cpp\
       CreateFile.cpp\
-      Visibility.cpp\
       VertexArray.cpp\
       SmoothData.cpp\
       Octree.cpp OctreeInternals.cpp\
@@ -67,7 +66,8 @@ Gmsh${OBJEXT}: Gmsh.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h GmshMessage.h OpenFile.h CreateFile.h Options.h \
   ../Post/ColorTable.h CommandLine.h OS.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../Mesh/Generator.h ../Mesh/Field.h \
+  ../Numeric/NumericEmbedded.h ../Numeric/GmshMatrix.h \
+  ../Common/GmshMessage.h ../Mesh/Generator.h ../Mesh/Field.h \
   ../Post/PView.h Context.h ../Geo/CGNSOptions.h \
   ../Mesh/PartitionOptions.h ../Mesh/Partition.h GmshDaemon.h \
   ../Plugin/PluginManager.h
@@ -114,7 +114,8 @@ OpenFile${OBJEXT}: OpenFile.cpp GmshMessage.h ../Geo/Geo.h \
   ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
   ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../Common/ListUtils.h \
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
+  ../Numeric/GmshMatrix.h ../Common/GmshMessage.h ../Common/ListUtils.h \
   ../Common/TreeUtils.h ../Common/avl.h ../Common/ListUtils.h \
   ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Common/SmoothData.h \
   ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
@@ -126,8 +127,7 @@ OpenFile${OBJEXT}: OpenFile.cpp GmshMessage.h ../Geo/Geo.h \
   ../Geo/GEntity.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h Context.h \
   ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h OpenFile.h \
   CommandLine.h ../Graphics/ReadImg.h OS.h StringUtils.h \
-  ../Parser/Parser.h ../Post/PView.h ../Post/PViewData.h \
-  ../Numeric/GmshMatrix.h ../Common/GmshMessage.h ../Fltk/GUI.h \
+  ../Parser/Parser.h ../Post/PView.h ../Post/PViewData.h ../Fltk/GUI.h \
   ../Fltk/Draw.h
 CreateFile${OBJEXT}: CreateFile.cpp GmshMessage.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
@@ -145,26 +145,14 @@ CreateFile${OBJEXT}: CreateFile.cpp GmshMessage.h ../Geo/GModel.h \
   ../Graphics/gl2png.h ../Graphics/PixelBuffer.h ../Graphics/gl2ppm.h \
   ../Graphics/PixelBuffer.h ../Graphics/gl2yuv.h \
   ../Graphics/PixelBuffer.h
-Visibility${OBJEXT}: Visibility.cpp Visibility.h GmshDefines.h ../Geo/GVertex.h \
-  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
-  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
-  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/GModel.h ../Geo/GVertex.h \
-  ../Geo/GEdge.h ../Geo/GFace.h ../Geo/GRegion.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Common/GmshDefines.h \
-  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
-  ../Numeric/GmshMatrix.h ../Numeric/Gauss.h ../Parser/Parser.h
 VertexArray${OBJEXT}: VertexArray.cpp VertexArray.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h Context.h ../Geo/CGNSOptions.h \
   ../Mesh/PartitionOptions.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h
+  ../Numeric/NumericEmbedded.h ../Numeric/GmshMatrix.h \
+  ../Common/GmshMessage.h
 SmoothData${OBJEXT}: SmoothData.cpp SmoothData.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h
+  ../Numeric/NumericEmbedded.h ../Numeric/GmshMatrix.h \
+  ../Common/GmshMessage.h
 Octree${OBJEXT}: Octree.cpp Octree.h OctreeInternals.h
 OctreeInternals${OBJEXT}: OctreeInternals.cpp GmshMessage.h OctreeInternals.h
 StringUtils${OBJEXT}: StringUtils.cpp StringUtils.h GmshMessage.h

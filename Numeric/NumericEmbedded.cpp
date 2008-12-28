@@ -488,40 +488,37 @@ void invert_singular_matrix3x3(double MM[3][3], double II[3][3])
 }
 
 bool newton_fd(void (*func)(Double_Vector &, Double_Vector &, void *),
-               Double_Vector &x, void *data, double relax)
+               Double_Vector &x, void *data, double relax, double tolx)
 {
-  const double PRECISION = 1.e-6;
-  const int MAXIT = 10;
+  const int MAXIT = 50;
   const double EPS = 1.e-4;
   const int N = x.size();
   
   Double_Matrix J(N, N);
-  Double_Vector r(N), rp(N), dx(N);
+  Double_Vector f(N), feps(N), dx(N);
   
-  int iter = 1;
-  while (iter < MAXIT){
-    iter++;
-    func(x, r, data);
+  for (int iter = 0; iter < MAXIT; iter++){
+    func(x, f, data);
 
     for (int j = 0; j < N; j++){
       double h = EPS * fabs(x(j));
       if(h == 0.) h = EPS;
       x(j) += h;
-      func(x, rp, data);
+      func(x, feps, data);
       for (int i = 0; i < N; i++)
-        J(i, j) = (rp(i) - r(i)) / h;
+        J(i, j) = (feps(i) - f(i)) / h;
       x(j) -= h;
     }
     
     if (N == 1)
-      dx(0) = r(0) / J(0, 0);
+      dx(0) = f(0) / J(0, 0);
     else
-      J.lu_solve(r, dx);
+      J.lu_solve(f, dx);
     
     for (int i = 0; i < N; i++)
       x(i) -= relax * dx(i);
 
-    if(dx.norm() < PRECISION) return true; 
+    if(dx.norm() < tolx) return true; 
   }
   return false;
 }

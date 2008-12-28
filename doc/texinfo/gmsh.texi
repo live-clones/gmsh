@@ -549,7 +549,8 @@ preceding rule.
 @findex /*, */
 @findex //
 
-All Gmsh ASCII text input files support both C and C++ style comments:
+All parsed input files (@file{.geo}, @file{.pos}) support both C and C++
+style comments:
 
 @enumerate
 @item
@@ -561,6 +562,10 @@ the rest of a line after a double slash @code{//} is ignored.
 These commands won't have the described effects inside double quotes or
 inside keywords. Also note that `white space' (spaces, tabs, new line
 characters) is ignored inside all expressions.
+
+You can add comments in a mesh file (@file{.msh}) by creating a section
+with an unrecognized label (e.g. @code{$Comments}/@code{$EndComments}):
+see @ref{MSH ASCII file format}.
 
 @c =========================================================================
 @c General tools
@@ -2094,7 +2099,7 @@ line.
 
 (A deprecated synonym for @code{Progression} is @code{Power}.)
 
-@item Transfinite Surface @{ @var{expression} @} < = @{ @var{expression-list} @} > < Left | Right | Alternate > ;
+@item Transfinite Surface @{ @var{expression} @} | "*" < = @{ @var{expression-list} @} > < Left | Right | Alternate > ;
 Selects the surface @var{expression} to be meshed with the 2D
 transfinite algorithm. The @var{expression-list} should contain the
 identification numbers of three or four points on the boundary of the
@@ -2136,7 +2141,7 @@ Hides the mesh of the entity @var{char-expression}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{2}
 (@var{char-expression} can for example be @code{"*"}).
 
-@item Recombine Surface @{ @var{expression-list} @} < = @var{expression} >;
+@item Recombine Surface @{ @var{expression-list} @} | "*" < = @var{expression} >;
 Recombines the triangular meshes of the surfaces listed in
 @var{expression-list} into mixed triangular/quadrangular meshes. The
 optional @var{expression} on the right hand side specifies the maximum

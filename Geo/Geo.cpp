@@ -2906,7 +2906,7 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2])
   x(0) = uv[0];
   x(1) = uv[1];
   PointSurface ps = {&p, s};
-  if(newton_fd(projectPS, x, &ps, 1.)){
+  if(newton_fd(projectPS, x, &ps)){
     p = InterpolateSurface(s, x(0), x(1), 0, 0);
     return true;
   }
@@ -3060,7 +3060,7 @@ bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shape
       uvt(0) = 0.5;
       uvt(1) = 0.5;
       uvt(2) = 0.5;
-      if(newton_fd(intersectCS, uvt, &cs, 1.)){
+      if(newton_fd(intersectCS, uvt, &cs)){
         Vertex p = InterpolateCurve(c, uvt(2), 0);
         Vertex *v = Create_Vertex(NEWPOINT(), p.Pos.X, p.Pos.Y, p.Pos.Z, p.lc, p.u);
         Tree_Insert(GModel::current()->getGEOInternals()->Points, &v);

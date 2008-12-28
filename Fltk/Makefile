@@ -10,7 +10,8 @@ LIB = ../lib/libGmshFltk${LIBEXT}
 INC = ${DASH}I../Common ${DASH}I../Graphics\
       ${DASH}I../Geo ${DASH}I../Mesh ${DASH}I../Post ${DASH}I../Numeric\
       ${DASH}I../Parser ${DASH}I../Fltk ${DASH}I../Plugin ${DASH}I../utils/solvers\
-      ${DASH}I../contrib/ANN/include ${DASH}I../contrib/NativeFileChooser
+      ${DASH}I../contrib/ANN/include ${DASH}I../contrib/NativeFileChooser\
+      ${DASH}I../contrib/TreeBrowser
 
 CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
@@ -126,9 +127,9 @@ openglWindow${OBJEXT}: openglWindow.cpp openglWindow.h ../Graphics/drawContext.h
   ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
-  Draw.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h GUI.h \
-  ../Common/VertexArray.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h
+  Draw.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
+  ../Numeric/GmshMatrix.h GUI.h ../Common/VertexArray.h \
+  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h
 menuWindow${OBJEXT}: menuWindow.cpp GUI.h Draw.h menuWindow.h popupButton.h \
   shortcutWindow.h graphicWindow.h openglWindow.h \
   ../Graphics/drawContext.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
@@ -228,10 +229,9 @@ visibilityWindow${OBJEXT}: visibilityWindow.cpp GUI.h Draw.h visibilityWindow.h 
   ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
-  ../Common/Visibility.h ../Common/GmshDefines.h \
   ../Geo/GeoStringInterface.h ../Common/ListUtils.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h
+  ../Mesh/PartitionOptions.h ../Parser/Parser.h
 clippingWindow${OBJEXT}: clippingWindow.cpp GUI.h Draw.h clippingWindow.h \
   shortcutWindow.h ../Common/GmshDefines.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewOptions.h ../Post/ColorTable.h \
@@ -324,12 +324,13 @@ classificationEditor${OBJEXT}: classificationEditor.cpp GUI.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Numeric/GmshMatrix.h ../Numeric/Gauss.h ../Post/ColorTable.h \
-  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h Draw.h \
-  ../Common/Options.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h ../Mesh/meshGFaceDelaunayInsertion.h \
-  ../Mesh/meshGFaceOptimize.h ../Mesh/meshGFaceDelaunayInsertion.h \
-  ../Geo/discreteEdge.h ../Geo/GModel.h ../Geo/GEdge.h \
-  ../Geo/discreteFace.h ../Geo/GModel.h ../Geo/GFace.h
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
+  ../Numeric/GmshMatrix.h Draw.h ../Common/Options.h ../Common/Context.h \
+  ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h \
+  ../Mesh/meshGFaceDelaunayInsertion.h ../Mesh/meshGFaceOptimize.h \
+  ../Mesh/meshGFaceDelaunayInsertion.h ../Geo/discreteEdge.h \
+  ../Geo/GModel.h ../Geo/GEdge.h ../Geo/discreteFace.h ../Geo/GModel.h \
+  ../Geo/GFace.h
 partitionDialog${OBJEXT}: partitionDialog.cpp GUI.h shortcutWindow.h \
   ../Common/GmshDefines.h ../Common/GmshMessage.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \

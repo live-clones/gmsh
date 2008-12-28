@@ -14,14 +14,21 @@
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Input.H>
 
+#if defined(HAVE_TREE_BROWSER)
+#include "Flu_Tree_Browser.h"
+#endif
+
 class visibilityWindow{
  private:
   int _fontsize;
  public:
   Fl_Window *win;
-  Fl_Group *group[5];
-  Fl_Choice *type;
+  Fl_Choice *browser_type;
   Fl_Browser *browser;
+#if defined(HAVE_TREE_BROWSER)
+  Flu_Tree_Browser *tree;
+  Fl_Button *tree_create;
+#endif
   Fl_Check_Button *butt[2];
   Fl_Button *push[2];
   Fl_Input *input[10];

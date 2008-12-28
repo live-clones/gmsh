@@ -314,7 +314,7 @@ graphicWindow::graphicWindow(int fontsize)
   butt[5] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_models");
   x += sw;
   butt[5]->callback(status_xyz1p_cb, (void *)"model");
-  butt[5]->tooltip("Change current model");
+  butt[5]->tooltip("Select active model");
   
   butt[0] = new Fl_Button(x, glheight + 2, sw, sht, "X");
   x += sw;

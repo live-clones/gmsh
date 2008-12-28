@@ -28,6 +28,12 @@ class CGNSOptions;
 class GModel
 {
  private:
+  // the name of the model
+  std::string _name;
+
+  // the visibility flag
+  char _visible;
+
   // vertex cache to speed-up direct access by vertex number (used for
   // post-processing I/O)
   std::vector<MVertex*> _vertexVectorCache;
@@ -75,7 +81,6 @@ class GModel
   static int _current;
 
  protected:
-  std::string modelName;
   std::set<GRegion*, GEntityLessThan> regions;
   std::set<GFace*, GEntityLessThan> faces;
   std::set<GEdge*, GEntityLessThan> edges;
@@ -114,8 +119,12 @@ class GModel
   FieldManager *getFields(){ return _fields; }
 
   // get/set the model name
-  void setName(std::string name){ modelName = name; }
-  std::string getName(){ return modelName; }
+  void setName(std::string name){ _name = name; }
+  std::string getName(){ return _name; }
+
+  // get/set the visibility flag
+  char getVisibility(){ return _visible; }
+  void setVisibility(char val){ _visible = val; }
 
   // get the number of entities in this model
   int getNumRegions() const { return regions.size(); }
