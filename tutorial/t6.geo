@@ -41,8 +41,10 @@ Transfinite Line{-1,3} = 30 Using Progression 1.2;
 Transfinite Surface{1} = {1,2,3,4};
 
 // (Note that the list on the right hand side refers to points, not
-// curves. The way triangles are generated can be controlled by
-// appending "Left", "Right" or "Alternate" after the list.)
+// curves. When the surface has only 3 or 4 points on its boundary the
+// list can be omitted. The way triangles are generated can be
+// controlled by appending "Left", "Right" or "Alternate" after the
+// list.)
 
 // Recombine the triangles into quads
 Recombine Surface{1};
