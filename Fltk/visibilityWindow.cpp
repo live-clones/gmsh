@@ -315,6 +315,112 @@ static void _rebuild_list_browser()
     GUI::instance()->visibility->push[0]->deactivate();
 }
 
+static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
+{
+  // if the browser is not empty, get the selections made in the
+  // browser and apply them into the model
+  if(VisibilityList::instance()->getNumEntities()){
+    CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+    bool recursive = GUI::instance()->visibility->butt[0]->value() ? true : false;
+    VisibilityList::VisibilityType type;
+    switch(GUI::instance()->visibility->browser_type->value()){
+    case 0: type = VisibilityList::Models; break;
+    case 2: type = VisibilityList::PhysicalEntities; break;
+    case 3: type = VisibilityList::MeshPartitions; break;
+    case 1: default: type = VisibilityList::ElementaryEntities; break;
+    }
+    VisibilityList::instance()->setAllInvisible(type);
+    for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++)
+      if(GUI::instance()->visibility->browser->selected(i + 1))
+        VisibilityList::instance()->setVisibility(i, 1, recursive);
+    // then refresh the browser to account for recursive selections
+    for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++)
+      if(VisibilityList::instance()->getVisibility(i))
+        GUI::instance()->visibility->browser->select(i + 1);
+    Draw();
+  }
+}
+
+static void visibility_delete_cb(Fl_Widget *w, void *data)
+{
+  bool all = true;
+  for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++){
+    if(!GUI::instance()->visibility->browser->selected(i + 1)){
+      all = false;
+      break;
+    }
+  }
+  if(all){
+    GModel::current()->deletePhysicalGroups();
+  }
+  else{
+    for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++){
+      if(GUI::instance()->visibility->browser->selected(i + 1)){
+        Vis *v = VisibilityList::instance()->getEntity(i);
+        GModel::current()->deletePhysicalGroup(v->getDim(), v->getTag());
+      }
+    }
+  }
+  visibility_cb(NULL, (void*)"redraw_only");
+}
+
+static void visibility_sort_cb(Fl_Widget *w, void *data)
+{
+  const char *str = (const char*)data;
+  int val;
+  if(!strcmp(str, "type"))
+    val = 1;
+  else if(!strcmp(str, "number"))
+    val = 2;
+  else if(!strcmp(str, "name"))
+    val = 3;
+  else if(!strcmp(str, "-"))
+    val = -1;
+  else if(!strcmp(str, "+"))
+    val = -2;
+  else
+    val = 0;
+
+  if(val == 0) { // select or deselect everything
+    int selectall = 0;
+    for(int i = 0; i < GUI::instance()->visibility->browser->size(); i++)
+      if(!GUI::instance()->visibility->browser->selected(i + 1)) {
+        selectall = 1;
+        break;
+      }
+    if(selectall)
+      for(int i = 0; i < GUI::instance()->visibility->browser->size(); i++)
+        GUI::instance()->visibility->browser->select(i + 1);
+    else
+      GUI::instance()->visibility->browser->deselect();
+  }
+  else if(val == -1){ // invert the selection
+    int *state = new int[GUI::instance()->visibility->browser->size()];
+    for(int i = 0; i < GUI::instance()->visibility->browser->size(); i++)
+      state[i] = GUI::instance()->visibility->browser->selected(i + 1);
+    GUI::instance()->visibility->browser->deselect();
+    for(int i = 0; i < GUI::instance()->visibility->browser->size(); i++)
+      if(!state[i]) GUI::instance()->visibility->browser->select(i + 1);
+    delete [] state;
+  }
+  else if(val == -2){ // create new parameter name for selection
+    for(int i = 0; i < GUI::instance()->visibility->browser->size(); i++){
+      if(GUI::instance()->visibility->browser->selected(i + 1)){
+        static char tmpstr[256];
+        sprintf(tmpstr, "%d", VisibilityList::instance()->getTag(i));
+        GUI::instance()->geoContext->input[1]->value(tmpstr);
+        break;
+      }
+    }
+    GUI::instance()->geoContext->input[0]->value("NewName");
+    GUI::instance()->geoContext->show(0);
+  }
+  else { // set new sorting mode
+    VisibilityList::instance()->setSortMode(val);
+    visibility_cb(NULL, (void*)"redraw_only");
+  }
+}
+
 #if defined(HAVE_TREE_BROWSER)
 
 static void _add_vertex(GVertex *gv, Flu_Tree_Browser::Node *n)
@@ -545,32 +651,6 @@ void visibility_cb(Fl_Widget *w, void *data)
 #endif
 }
 
-static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
-{
-  // if the browser is not empty, get the selections made in the
-  // browser and apply them into the model
-  if(VisibilityList::instance()->getNumEntities()){
-    CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
-    bool recursive = GUI::instance()->visibility->butt[0]->value() ? true : false;
-    VisibilityList::VisibilityType type;
-    switch(GUI::instance()->visibility->browser_type->value()){
-    case 0: type = VisibilityList::Models; break;
-    case 2: type = VisibilityList::PhysicalEntities; break;
-    case 3: type = VisibilityList::MeshPartitions; break;
-    case 1: default: type = VisibilityList::ElementaryEntities; break;
-    }
-    VisibilityList::instance()->setAllInvisible(type);
-    for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++)
-      if(GUI::instance()->visibility->browser->selected(i + 1))
-        VisibilityList::instance()->setVisibility(i, 1, recursive);
-    // then refresh the browser to account for recursive selections
-    for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++)
-      if(VisibilityList::instance()->getVisibility(i))
-        GUI::instance()->visibility->browser->select(i + 1);
-    Draw();
-  }
-}
-
 static void visibility_save_cb(Fl_Widget *w, void *data)
 {
   // get the whole visibility information in geo format
@@ -623,86 +703,6 @@ static void visibility_save_cb(Fl_Widget *w, void *data)
   }
   str += "}\n";
   add_infile(str.c_str(), CTX.filename);
-}
-
-static void visibility_delete_cb(Fl_Widget *w, void *data)
-{
-  bool all = true;
-  for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++){
-    if(!GUI::instance()->visibility->browser->selected(i + 1)){
-      all = false;
-      break;
-    }
-  }
-  if(all){
-    GModel::current()->deletePhysicalGroups();
-  }
-  else{
-    for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++){
-      if(GUI::instance()->visibility->browser->selected(i + 1)){
-        Vis *v = VisibilityList::instance()->getEntity(i);
-        GModel::current()->deletePhysicalGroup(v->getDim(), v->getTag());
-      }
-    }
-  }
-  visibility_cb(NULL, (void*)"redraw_only");
-}
-
-static void visibility_sort_cb(Fl_Widget *w, void *data)
-{
-  const char *str = (const char*)data;
-  int val;
-  if(!strcmp(str, "type"))
-    val = 1;
-  else if(!strcmp(str, "number"))
-    val = 2;
-  else if(!strcmp(str, "name"))
-    val = 3;
-  else if(!strcmp(str, "-"))
-    val = -1;
-  else if(!strcmp(str, "+"))
-    val = -2;
-  else
-    val = 0;
-
-  if(val == 0) { // select or deselect everything
-    int selectall = 0;
-    for(int i = 0; i < GUI::instance()->visibility->browser->size(); i++)
-      if(!GUI::instance()->visibility->browser->selected(i + 1)) {
-        selectall = 1;
-        break;
-      }
-    if(selectall)
-      for(int i = 0; i < GUI::instance()->visibility->browser->size(); i++)
-        GUI::instance()->visibility->browser->select(i + 1);
-    else
-      GUI::instance()->visibility->browser->deselect();
-  }
-  else if(val == -1){ // invert the selection
-    int *state = new int[GUI::instance()->visibility->browser->size()];
-    for(int i = 0; i < GUI::instance()->visibility->browser->size(); i++)
-      state[i] = GUI::instance()->visibility->browser->selected(i + 1);
-    GUI::instance()->visibility->browser->deselect();
-    for(int i = 0; i < GUI::instance()->visibility->browser->size(); i++)
-      if(!state[i]) GUI::instance()->visibility->browser->select(i + 1);
-    delete [] state;
-  }
-  else if(val == -2){ // create new parameter name for selection
-    for(int i = 0; i < GUI::instance()->visibility->browser->size(); i++){
-      if(GUI::instance()->visibility->browser->selected(i + 1)){
-        static char tmpstr[256];
-        sprintf(tmpstr, "%d", VisibilityList::instance()->getTag(i));
-        GUI::instance()->geoContext->input[1]->value(tmpstr);
-        break;
-      }
-    }
-    GUI::instance()->geoContext->input[0]->value("NewName");
-    GUI::instance()->geoContext->show(0);
-  }
-  else { // set new sorting mode
-    VisibilityList::instance()->setSortMode(val);
-    visibility_cb(NULL, (void*)"redraw_only");
-  }
 }
 
 static void _set_visibility_by_number(int what, int num, char val, bool recursive)
@@ -1002,8 +1002,8 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
   Msg::StatusBar(3, false, "");
 }
 
-// derive our own browser, that reacts differently to the Enter key
-class visBrowser : public Fl_Browser{
+// derive our own browsers, that react differently to the Enter key
+class listBrowser : public Fl_Browser{
   int handle(int event)
   {
     switch(event){
@@ -1023,8 +1023,27 @@ class visBrowser : public Fl_Browser{
     return Fl_Browser::handle(event);
   }
  public:
-  visBrowser(int x, int y, int w , int h, const char* c = 0)
+  listBrowser(int x, int y, int w , int h, const char* c = 0)
     : Fl_Browser(x, y, w, h, c){}
+};
+
+class treeBrowser : public Flu_Tree_Browser{
+  int handle(int event)
+  {
+    switch(event){
+    case FL_SHORTCUT:
+    case FL_KEYBOARD:
+      if(Fl::test_shortcut(FL_Enter) || 
+         Fl::test_shortcut(FL_KP_Enter)){
+        visibility_tree_apply_cb(NULL, NULL);
+        return 1;
+      }
+    }
+    return Flu_Tree_Browser::handle(event);
+  }
+ public:
+  treeBrowser(int x, int y, int w , int h, const char* c = 0)
+    : Flu_Tree_Browser(x, y, w, h, c){}
 };
 
 visibilityWindow::visibilityWindow(int fontsize) 
@@ -1083,7 +1102,7 @@ visibilityWindow::visibilityWindow(int fontsize)
       Fl_Group *gg = new Fl_Group
         (2 * WB, 2 * WB + 2 * BH, brw, height - 6 * WB - 4 * BH);
       
-      browser = new visBrowser
+      browser = new listBrowser
         (2 * WB, 2 * WB + 2 * BH, brw, height - 6 * WB - 4 * BH);
       browser->type(FL_MULTI_BROWSER);
       browser->column_widths(cols);
@@ -1120,7 +1139,7 @@ visibilityWindow::visibilityWindow(int fontsize)
     Fl_Group *g = new Fl_Group
       (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Tree browser");
 
-    tree = new Flu_Tree_Browser
+    tree = new treeBrowser
       (2 * WB, 2 * WB + BH, brw, height - 6 * WB - 3 * BH);
     tree->show_root(false);
     tree->box(FL_DOWN_BOX);
