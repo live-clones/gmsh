@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -74,15 +74,25 @@ void PViewData::setValue(int step, int ent, int ele, int nod, int comp, double v
 }
 
 void PViewData::setInterpolationMatrices(int type, 
-                                         Double_Matrix *coeffs, Double_Matrix *eexps,
-                                         Double_Matrix *coeffsGeo, Double_Matrix *eexpsGeo)
+                                         const Double_Matrix &coefVal,
+                                         const Double_Matrix &expVal)
 {
-  if(!type || !_interpolation[type].empty()) return;
-  Msg::Debug("Storing interpolation scheme %d in view %p", type, this);
-  if(coeffs) _interpolation[type].push_back(coeffs);
-  if(eexps) _interpolation[type].push_back(eexps);
-  if(coeffsGeo) _interpolation[type].push_back(coeffsGeo);
-  if(eexpsGeo) _interpolation[type].push_back(eexpsGeo);
+  if(!type || _interpolation[type].size()) return;
+  _interpolation[type].push_back(new Double_Matrix(coefVal));
+  _interpolation[type].push_back(new Double_Matrix(expVal));
+}
+
+void PViewData::setInterpolationMatrices(int type, 
+                                         const Double_Matrix &coefVal,
+                                         const Double_Matrix &expVal, 
+                                         const Double_Matrix &coefGeo,
+                                         const Double_Matrix &expGeo)
+{
+  if(!type || _interpolation[type].size()) return;
+  _interpolation[type].push_back(new Double_Matrix(coefVal));
+  _interpolation[type].push_back(new Double_Matrix(expVal));
+  _interpolation[type].push_back(new Double_Matrix(coefGeo));
+  _interpolation[type].push_back(new Double_Matrix(expGeo));
 }
 
 int PViewData::getInterpolationMatrices(int type, std::vector<Double_Matrix*> &p)

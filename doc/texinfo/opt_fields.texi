@@ -150,7 +150,7 @@ default value: @code{@{@}}
 @end table
 
 @item MaxEigenHessian
-Compute the maximum eigen value of the Hessian matrix of Field[IField]. Gradients are evaluated by finite differences, eigenvalues are computed using the GSL library.F = max ( eigenvalues ( grad ( grad ( Field[IField] ) ) ) ) @*
+Compute the maximum eigenvalue of the Hessian matrix of Field[IField], with the gradients evaluated by finite differences.F = max ( eigenvalues ( grad ( grad ( Field[IField] ) ) ) ) @*
 Options:@*
 @table @code
 @item Delta

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -396,7 +396,7 @@ int openglWindow::handle(int event)
     else if(addPointMode && !Fl::event_state(FL_SHIFT)){
       cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
       // find line in real space corresponding to current cursor position
-      double p[3],d[3];
+      double p[3], d[3];
       _ctx->unproject(_curr.win[0], _curr.win[1], p, d);
       // fin closest point to the center of gravity
       double r[3] = {CTX.cg[0] - p[0], CTX.cg[1] - p[1], CTX.cg[2] - p[2]}, t;

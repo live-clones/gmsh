@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -75,9 +75,8 @@ class Context_T {
   int useTrackball; // do or do not use the trackball for rotations 
   double rotation_center[3]; // point around which to rotate the scene
   int rotation_center_cg; // rotate around the center of mass instead of rotation_center[]
-  double min[3]; // x, y and z min for the current geometry 
-  double max[3]; // x, y and z max for the current geometry 
-  double cg[3]; // "center of mass" of the current geometry
+  double min[3], max[3]; // "overall" x, y and z min used for drawing and lc computation
+  double cg[3]; // "center of mass" of the current geometry, used for graphics only
   double lc; // characteristic length for the whole problem (never
              // used in mesh generation ->only for geo/post)
   int db, antialiasing; // double buffer? antialiasing?

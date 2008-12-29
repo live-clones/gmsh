@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+@c Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
 @c
 @c See the LICENSE.txt file for license information. Please report all
 @c bugs and problems to <gmsh@geuz.org>.
@@ -22,7 +22,7 @@
 @c %**start of header
 @setfilename        gmsh.info
 @set GMSH-VERSION   2.3
-@set COPYRIGHT      @copyright{} 1997-2008 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@set COPYRIGHT      @copyright{} 1997-2009 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @c
 @settitle Gmsh @value{GMSH-VERSION}
 @footnotestyle separate

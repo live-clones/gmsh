@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -51,7 +51,7 @@ aboutWindow::aboutWindow(int fontsize)
     o->add("@c@.A three-dimensional finite element mesh generator");
     o->add("@c@.with built-in pre- and post-processing facilities");
     o->add(" ");
-    o->add("@c@.Copyright (C) 1997-2008");
+    o->add("@c@.Copyright (C) 1997-2009");
 #if defined(__APPLE__)
     o->add("@c@.Christophe Geuzaine and Jean-Francois Remacle");
 #else

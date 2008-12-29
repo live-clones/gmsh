@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -282,7 +282,7 @@ class GmshServer : public GmshSocket{
   int _portno;
  public:
   GmshServer() : GmshSocket(), _portno(-1) {}
-  ~GmshServer(){}
+  virtual ~GmshServer(){}
   virtual int SystemCall(const char *str) = 0;
   virtual int NonBlockingWait(int socket, int num, double waitint) = 0;
   int StartClient(const char *command, const char *sockname=0, int maxdelay=4)

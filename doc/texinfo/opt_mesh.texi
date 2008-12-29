@@ -204,6 +204,11 @@ Type of element label (0=element number, 1=elementary entity number, 2=physical 
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.LcIntegrationPrecision
+Accuracy of evaluation of the LC field for 1D mesh generation@*
+Default value: @code{1e-09}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Light
 Enable lighting for the mesh@*
 Default value: @code{1}@*
@@ -447,11 +452,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.SecondOrderLinear
 Should second order vertices simply be created by linear interpolation?@*
 Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.LcIntegrationPrecision
-Accuracy of evaluation of the LC field for 1D mesh generation@*
-Default value: @code{1e-09}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Smoothing

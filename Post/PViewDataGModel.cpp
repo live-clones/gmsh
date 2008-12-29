@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -59,23 +59,26 @@ bool PViewDataGModel::finalize()
   // overidden later)
   for(int step = 0; step < getNumTimeSteps(); step++){
     GModel *m = _steps[step]->getModel();
-    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
+    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
       if((*it)->lines.size()) 
         _addInterpolationMatricesForElement((*it)->lines[0]);
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
+    }
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
       if((*it)->triangles.size()) 
         _addInterpolationMatricesForElement((*it)->triangles[0]);
-      else if((*it)->quadrangles.size()) 
+      if((*it)->quadrangles.size()) 
         _addInterpolationMatricesForElement((*it)->quadrangles[0]);
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
+    }
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
       if((*it)->tetrahedra.size()) 
         _addInterpolationMatricesForElement((*it)->tetrahedra[0]);
-      else if((*it)->hexahedra.size()) 
+      if((*it)->hexahedra.size()) 
         _addInterpolationMatricesForElement((*it)->hexahedra[0]);
-      else if((*it)->prisms.size()) 
+      if((*it)->prisms.size()) 
         _addInterpolationMatricesForElement((*it)->prisms[0]);
-      else if((*it)->pyramids.size()) 
+      if((*it)->pyramids.size()) 
         _addInterpolationMatricesForElement((*it)->pyramids[0]);
+    }
   }
 
   return PViewData::finalize();
@@ -84,20 +87,14 @@ bool PViewDataGModel::finalize()
 void PViewDataGModel::_addInterpolationMatricesForElement(MElement *e)
 {
   int edg = e->getNumEdges();
-  if(_interpolation.count(edg)) return;
   const gmshFunctionSpace *fs = e->getFunctionSpace();
   if(fs){
-    _interpolation[edg].push_back(new Double_Matrix(fs->coefficients));
-    _interpolation[edg].push_back(new Double_Matrix(fs->monomials));
-    if(e->getPolynomialOrder() > 1){
-      _interpolation[edg].push_back(new Double_Matrix(fs->coefficients));
-      _interpolation[edg].push_back(new Double_Matrix(fs->monomials));
-    }
-  }
-  else{
-    Msg::Info("No interpolation matrix for element type %d: using first order", 
-              e->getTypeForMSH());
-  }
+    if(e->getPolynomialOrder() > 1)
+      setInterpolationMatrices(edg, fs->coefficients, fs->monomials,
+                               fs->coefficients, fs->monomials);
+    else
+      setInterpolationMatrices(edg, fs->coefficients, fs->monomials);
+  }                               
 }
 
 MElement *PViewDataGModel::_getElement(int step, int ent, int ele)

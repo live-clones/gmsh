@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -545,6 +545,8 @@ static void add_new_point()
     }
   }
 
+  // at the end, not during creation to avoid having things jumping around
+  SetBoundingBox();
   Msg::StatusBar(3, false, "");
 }
 

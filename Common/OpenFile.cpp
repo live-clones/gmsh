@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -37,48 +37,34 @@ extern Context_T CTX;
 static void FinishUpBoundingBox()
 {
   double range[3];
-
-  for(int i = 0; i < 3; i++){
-    CTX.cg[i] = 0.5 * (CTX.min[i] + CTX.max[i]);
-    range[i] = CTX.max[i] - CTX.min[i];
-  }
+  for(int i = 0; i < 3; i++) range[i] = CTX.max[i] - CTX.min[i];
 
   if(range[0] < CTX.geom.tolerance && 
      range[1] < CTX.geom.tolerance && 
      range[2] < CTX.geom.tolerance) {
     CTX.min[0] -= 1.; CTX.min[1] -= 1.;
     CTX.max[0] += 1.; CTX.max[1] += 1.;
-    CTX.lc = 1.;
   }
   else if(range[0] < CTX.geom.tolerance && 
           range[1] < CTX.geom.tolerance) {
-    CTX.lc = range[2];
-    CTX.min[0] -= CTX.lc; CTX.min[1] -= CTX.lc;
-    CTX.max[0] += CTX.lc; CTX.max[1] += CTX.lc;
+    CTX.min[0] -= range[2]; CTX.min[1] -= range[2];
+    CTX.max[0] += range[2]; CTX.max[1] += range[2];
   }
   else if(range[0] < CTX.geom.tolerance && 
           range[2] < CTX.geom.tolerance) {
-    CTX.lc = range[1];
-    CTX.min[0] -= CTX.lc; CTX.max[0] += CTX.lc;
+    CTX.min[0] -= range[1]; CTX.max[0] += range[1];
   }
   else if(range[1] < CTX.geom.tolerance && 
           range[2] < CTX.geom.tolerance) {
-    CTX.lc = range[0];
-    CTX.min[1] -= CTX.lc; CTX.max[1] += CTX.lc;
+    CTX.min[1] -= range[0]; CTX.max[1] += range[0];
   }
   else if(range[0] < CTX.geom.tolerance) {
-    CTX.lc = sqrt(SQU(range[1]) + SQU(range[2]));
-    CTX.min[0] -= CTX.lc; CTX.max[0] += CTX.lc;
+    double l = sqrt(SQU(range[1]) + SQU(range[2]));
+    CTX.min[0] -= l; CTX.max[0] += l;
   }
   else if(range[1] < CTX.geom.tolerance) {
-    CTX.lc = sqrt(SQU(range[0]) + SQU(range[2]));
-    CTX.min[1] -= CTX.lc; CTX.max[1] += CTX.lc;
-  }
-  else if(range[2] < CTX.geom.tolerance) {
-    CTX.lc = sqrt(SQU(range[0]) + SQU(range[1]));
-  }
-  else {
-    CTX.lc = sqrt(SQU(range[0]) + SQU(range[1]) + SQU(range[2]));
+    double l = sqrt(SQU(range[0]) + SQU(range[2]));
+    CTX.min[1] -= l; CTX.max[1] += l;
   }
 }
 
@@ -90,6 +76,10 @@ void SetBoundingBox(double xmin, double xmax,
   CTX.min[1] = ymin; CTX.max[1] = ymax;
   CTX.min[2] = zmin; CTX.max[2] = zmax;
   FinishUpBoundingBox();
+  CTX.lc = sqrt(SQU(CTX.max[0] - CTX.min[0]) +
+                SQU(CTX.max[1] - CTX.min[1]) + 
+                SQU(CTX.max[2] - CTX.min[2]));
+  for(int i = 0; i < 3; i++) CTX.cg[i] = 0.5 * (CTX.min[i] + CTX.max[i]);
 }
 
 void SetBoundingBox()
@@ -115,6 +105,10 @@ void SetBoundingBox()
   CTX.min[1] = bb.min().y(); CTX.max[1] = bb.max().y();
   CTX.min[2] = bb.min().z(); CTX.max[2] = bb.max().z();
   FinishUpBoundingBox();
+  CTX.lc = sqrt(SQU(CTX.max[0] - CTX.min[0]) +
+                SQU(CTX.max[1] - CTX.min[1]) + 
+                SQU(CTX.max[2] - CTX.min[2]));
+  for(int i = 0; i < 3; i++) CTX.cg[i] = 0.5 * (CTX.min[i] + CTX.max[i]);
 }
 
 // FIXME: this is necessary for now to have an approximate CTX.lc
@@ -132,10 +126,13 @@ void ResetTemporaryBoundingBox()
 void AddToTemporaryBoundingBox(double x, double y, double z)
 {
   temp_bb += SPoint3(x, y, z);
-  CTX.min[0] = temp_bb.min().x(); CTX.max[0] = temp_bb.max().x();
-  CTX.min[1] = temp_bb.min().y(); CTX.max[1] = temp_bb.max().y();
-  CTX.min[2] = temp_bb.min().z(); CTX.max[2] = temp_bb.max().z();
-  FinishUpBoundingBox();
+  if(temp_bb.empty()) return;
+  CTX.lc = sqrt(SQU(temp_bb.max().x() - temp_bb.min().x()) +
+                SQU(temp_bb.max().y() - temp_bb.min().y()) + 
+                SQU(temp_bb.max().z() - temp_bb.min().z()));
+  if(CTX.lc == 0) CTX.lc = 1.;
+  // to get correct cg during interctive point creation
+  for(int i = 0; i < 3; i++) CTX.cg[i] = temp_bb.center()[i];
 }
 
 int ParseFile(const char *f, int close, int warn_if_missing)

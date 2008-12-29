@@ -354,11 +354,6 @@ Use a double buffered graphic window (on Unix, should be set to 0 when working o
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item General.DrawAllModels
-Draw all loaded models (instead of drawing only the current one)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item General.DrawBoundingBoxes
 Draw bounding boxes@*
 Default value: @code{0}@*
@@ -606,17 +601,17 @@ Saved in: @code{General.SessionFileName}
 
 @item General.MaxX
 Maximum model coordinate along the X-axis (read-only)@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.MaxY
 Maximum model coordinate along the Y-axis (read-only)@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.MaxZ
 Maximum model coordinate along the Z-axis (read-only)@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.MenuPositionX

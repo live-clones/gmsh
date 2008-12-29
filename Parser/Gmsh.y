@@ -1,5 +1,5 @@
 %{
-// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -66,7 +66,7 @@ void yyerror(char *s);
 void yymsg(int level, const char *fmt, ...);
 void skip_until(const char *skip, const char *until);
 int PrintListOfDouble(char *format, List_T *list, char *buffer);
-Double_Matrix *ListOfListOfDouble2Matrix(List_T *list);
+Double_Matrix ListOfListOfDouble2Matrix(List_T *list);
 void FixRelativePath(const char *in, char *out);
 %}
 
@@ -557,11 +557,6 @@ InterpolationMatrix :
 	0;
       ViewData->setInterpolationMatrices(type, ListOfListOfDouble2Matrix($3), 
                                          ListOfListOfDouble2Matrix($6));
-      for(int i = 0; i < List_Nbr($3); i++)
-        List_Delete(*(List_T**)List_Pointer($3, i));
-      for(int i = 0; i < List_Nbr($6); i++)
-        List_Delete(*(List_T**)List_Pointer($6, i));
-      List_Delete($3); List_Delete($6);
 #endif
     }
  |  tInterpolationScheme '{' RecursiveListOfListOfDouble '}' 
@@ -581,15 +576,6 @@ InterpolationMatrix :
                                          ListOfListOfDouble2Matrix($6),
                                          ListOfListOfDouble2Matrix($9), 
                                          ListOfListOfDouble2Matrix($12));
-      for(int i = 0; i < List_Nbr($3); i++) 
-        List_Delete(*(List_T**)List_Pointer($3, i));
-      for(int i = 0; i < List_Nbr($6); i++) 
-        List_Delete(*(List_T**)List_Pointer($6, i));
-      for(int i = 0; i < List_Nbr($9); i++) 
-        List_Delete(*(List_T**)List_Pointer($9, i));
-      for(int i = 0; i < List_Nbr($12); i++) 
-        List_Delete(*(List_T**)List_Pointer($12, i));
-      List_Delete($3); List_Delete($6); List_Delete($9); List_Delete($12);
 #endif
     }
 ;
@@ -3511,25 +3497,26 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer)
   return 0;
 }
 
-Double_Matrix *ListOfListOfDouble2Matrix(List_T *list)
+Double_Matrix ListOfListOfDouble2Matrix(List_T *list)
 {
   int M = List_Nbr(list);
-  if(!M) return 0;
   int N = 0;
   for(int i = 0; i < M; i++){
     List_T *line = *(List_T**)List_Pointer_Fast(list, i);
     N = std::max(N, List_Nbr(line));
   }
-  if(!N) return 0;
-  Double_Matrix *mat = new Double_Matrix(M, N);
+  Double_Matrix mat(M, N);
   for(int i = 0; i < M; i++){
     List_T *line = *(List_T**)List_Pointer_Fast(list, i);
     for(int j = 0; j < List_Nbr(line); j++){
       double val;
       List_Read(line, j, &val);
-      (*mat)(i, j) = val;
+      mat(i, j) = val;
     }
   }
+  for(int i = 0; i < List_Nbr(list); i++)
+    List_Delete(*(List_T**)List_Pointer(list, i));
+  List_Delete(list);
   return mat;
 }
 

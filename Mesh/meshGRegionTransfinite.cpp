@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -265,8 +265,8 @@ void findTransfiniteCorners(GRegion *gr, std::vector<MVertex*> &corners)
   }
   else{
     // try to find the corners automatically
-    GFace *gf = 0;
     std::list<GFace*> faces = gr->faces();
+    GFace *gf = 0;
     if(faces.size() == 6){
       // any face will do as a starting face
       gf = faces.front();
@@ -286,7 +286,7 @@ void findTransfiniteCorners(GRegion *gr, std::vector<MVertex*> &corners)
       for(std::list<GEdge*>::iterator it = fedges.begin(); it != fedges.end(); it++)
         redges.erase(std::find(redges.begin(), redges.end(), *it));
       findTransfiniteCorners(gf, corners);
-      int N = corners.size();
+      unsigned int N = corners.size();
       for(unsigned int i = 0; i < N; i++){
         for(std::list<GEdge*>::iterator it = redges.begin(); it != redges.end(); it++){
           if((*it)->getBeginVertex()->mesh_vertices[0] == corners[i]){

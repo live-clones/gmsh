@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -3178,32 +3178,44 @@ double opt_general_draw_bounding_box(OPT_ARGS_NUM)
 
 double opt_general_xmin(OPT_ARGS_NUM)
 {
-  return CTX.min[0];
+  if(!GModel::current()) return 0.;
+  SBoundingBox3d bb = GModel::current()->bounds();
+  return bb.empty() ? 0. : bb.min().x();
 }
 
 double opt_general_xmax(OPT_ARGS_NUM)
 {
-  return CTX.max[0];
+  if(!GModel::current()) return 0.;
+  SBoundingBox3d bb = GModel::current()->bounds();
+  return bb.empty() ? 0. : bb.max().x();
 }
 
 double opt_general_ymin(OPT_ARGS_NUM)
 {
-  return CTX.min[1];
+  if(!GModel::current()) return 0.;
+  SBoundingBox3d bb = GModel::current()->bounds();
+  return bb.empty() ? 0. : bb.min().y();
 }
 
 double opt_general_ymax(OPT_ARGS_NUM)
 {
-  return CTX.max[1];
+  if(!GModel::current()) return 0.;
+  SBoundingBox3d bb = GModel::current()->bounds();
+  return bb.empty() ? 0. : bb.max().y();
 }
 
 double opt_general_zmin(OPT_ARGS_NUM)
 {
-  return CTX.min[2];
+  if(!GModel::current()) return 0.;
+  SBoundingBox3d bb = GModel::current()->bounds();
+  return bb.empty() ? 0. : bb.min().z();
 }
 
 double opt_general_zmax(OPT_ARGS_NUM)
 {
-  return CTX.max[2];
+  if(!GModel::current()) return 0.;
+  SBoundingBox3d bb = GModel::current()->bounds();
+  return bb.empty() ? 0. : bb.max().z();
 }
 
 double opt_general_axes(OPT_ARGS_NUM)

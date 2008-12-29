@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -178,8 +178,14 @@ class PViewData {
 
   // set/get the interpolation matrices for elements with "type"
   // number of edges
-  void setInterpolationMatrices(int type, Double_Matrix *coeffs, Double_Matrix *eexps,
-                                Double_Matrix *coeffsGeo=0, Double_Matrix *eexpsGeo=0);
+  void setInterpolationMatrices(int type, 
+                                const Double_Matrix &coefVal,
+                                const Double_Matrix &expVal);
+  void setInterpolationMatrices(int type, 
+                                const Double_Matrix &coefVal,
+                                const Double_Matrix &expVal,
+                                const Double_Matrix &coefGeo, 
+                                const Double_Matrix &expGeo);
   int getInterpolationMatrices(int type, std::vector<Double_Matrix*> &p);
   inline bool haveInterpolationMatrices(){ return !_interpolation.empty(); }
 

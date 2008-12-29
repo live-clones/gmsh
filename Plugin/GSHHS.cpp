@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -284,7 +284,7 @@ class GeoEarthImport
   }
 };
 
-/*	$Id: GSHHS.cpp,v 1.17 2008-11-06 14:02:06 remacle Exp $
+/*	$Id: GSHHS.cpp,v 1.18 2008-12-29 09:43:39 geuzaine Exp $
  *
  * Include file defining structures used in gshhs.c
  *
