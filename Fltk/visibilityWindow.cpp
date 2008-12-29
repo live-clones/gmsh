@@ -421,6 +421,30 @@ static void visibility_sort_cb(Fl_Widget *w, void *data)
   }
 }
 
+class listBrowser : public Fl_Browser{
+  int handle(int event)
+  {
+    switch(event){
+    case FL_SHORTCUT:
+    case FL_KEYBOARD:
+      if(Fl::test_shortcut(FL_CTRL+'a')){
+        for(int i = 0; i < size(); i++)
+          select(i + 1);
+        return 1;
+      }
+      else if(Fl::test_shortcut(FL_Enter) || 
+              Fl::test_shortcut(FL_KP_Enter)){
+        visibility_browser_apply_cb(NULL, NULL);
+        return 1;
+      }
+    }
+    return Fl_Browser::handle(event);
+  }
+ public:
+  listBrowser(int x, int y, int w , int h, const char* c = 0)
+    : Fl_Browser(x, y, w, h, c){}
+};
+
 #if defined(HAVE_TREE_BROWSER)
 
 static void _add_vertex(GVertex *gv, Flu_Tree_Browser::Node *n)
@@ -632,6 +656,25 @@ static void visibility_tree_apply_cb(Fl_Widget *w, void *data)
   }
   Draw();
 }
+
+class treeBrowser : public Flu_Tree_Browser{
+  int handle(int event)
+  {
+    switch(event){
+    case FL_SHORTCUT:
+    case FL_KEYBOARD:
+      if(Fl::test_shortcut(FL_Enter) || 
+         Fl::test_shortcut(FL_KP_Enter)){
+        visibility_tree_apply_cb(NULL, NULL);
+        return 1;
+      }
+    }
+    return Flu_Tree_Browser::handle(event);
+  }
+ public:
+  treeBrowser(int x, int y, int w , int h, const char* c = 0)
+    : Flu_Tree_Browser(x, y, w, h, c){}
+};
 
 #endif
 
@@ -1001,50 +1044,6 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
   Draw();  
   Msg::StatusBar(3, false, "");
 }
-
-// derive our own browsers, that react differently to the Enter key
-class listBrowser : public Fl_Browser{
-  int handle(int event)
-  {
-    switch(event){
-    case FL_SHORTCUT:
-    case FL_KEYBOARD:
-      if(Fl::test_shortcut(FL_CTRL+'a')){
-        for(int i = 0; i < size(); i++)
-          select(i + 1);
-        return 1;
-      }
-      else if(Fl::test_shortcut(FL_Enter) || 
-              Fl::test_shortcut(FL_KP_Enter)){
-        visibility_browser_apply_cb(NULL, NULL);
-        return 1;
-      }
-    }
-    return Fl_Browser::handle(event);
-  }
- public:
-  listBrowser(int x, int y, int w , int h, const char* c = 0)
-    : Fl_Browser(x, y, w, h, c){}
-};
-
-class treeBrowser : public Flu_Tree_Browser{
-  int handle(int event)
-  {
-    switch(event){
-    case FL_SHORTCUT:
-    case FL_KEYBOARD:
-      if(Fl::test_shortcut(FL_Enter) || 
-         Fl::test_shortcut(FL_KP_Enter)){
-        visibility_tree_apply_cb(NULL, NULL);
-        return 1;
-      }
-    }
-    return Flu_Tree_Browser::handle(event);
-  }
- public:
-  treeBrowser(int x, int y, int w , int h, const char* c = 0)
-    : Flu_Tree_Browser(x, y, w, h, c){}
-};
 
 visibilityWindow::visibilityWindow(int fontsize) 
   : _fontsize(fontsize)

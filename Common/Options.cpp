@@ -470,11 +470,12 @@ void Init_Options(int num)
   CTX.batch = CTX.batch_after_mesh = 0;
   CTX.output_filename = NULL;
   CTX.bgm_filename = NULL;
-  CTX.lc = 1.0;
+  CTX.lc = 1.;
   CTX.tmp_viewport[0] = CTX.tmp_viewport[1] = 0;
-  CTX.min[0] = CTX.min[1] = CTX.min[2] = 0.0;
-  CTX.max[0] = CTX.max[1] = CTX.max[2] = 1.0;
-  CTX.cg[0] = CTX.cg[1] = CTX.cg[2] = 0.0;
+  // nice 2-D defaults for when adding points in a brand new model
+  CTX.min[0] = CTX.min[1] = CTX.min[2] = CTX.max[2] = 0.;
+  CTX.max[0] = CTX.max[1] = 1.;
+  CTX.cg[0] = CTX.cg[1] = CTX.cg[2] = 0.;
   CTX.polygon_offset = 0;
   CTX.printing = 0;
   CTX.mesh_timer[0] = CTX.mesh_timer[1] = CTX.mesh_timer[2] = 0.;
