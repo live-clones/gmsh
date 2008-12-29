@@ -76,11 +76,10 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
   Draw();
 }
 
-statisticsWindow::statisticsWindow(int fontsize)
-  : _fontsize(fontsize)
+statisticsWindow::statisticsWindow()
 {
   int i, num = 0;
-  int width = 26 * _fontsize;
+  int width = 26 * FL_NORMAL_SIZE;
   int height = 5 * WB + 18 * BH;
 
   win = new dialogWindow(width, height, CTX.non_modal_windows, "Statistics");
@@ -124,7 +123,7 @@ statisticsWindow::statisticsWindow(int fontsize)
       value[num]->tooltip("~ min (J0/J, J/J0)"); num++;
 
       for(int i = 0; i < 4; i++){
-        int ww = 3 * _fontsize;
+        int ww = 3 * FL_NORMAL_SIZE;
         new Fl_Box
           (FL_NO_BOX, width - 3 * ww - 2 * WB, 2 * WB + (13 + i) * BH, ww, BH, "Plot:");
         butt[2 * i] = new Fl_Button

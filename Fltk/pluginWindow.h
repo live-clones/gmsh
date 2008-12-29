@@ -24,15 +24,13 @@ struct PluginDialogBox{
 };
 
 class pluginWindow{
- private:
-  int _fontsize;
  public:
   Fl_Window *win;
   Fl_Hold_Browser *browser;
   Fl_Multi_Browser *view_browser;
   Fl_Return_Button *run;
  public:
-  pluginWindow(int fontsize);
+  pluginWindow();
   void show(int viewIndex);
   void createDialogBox(GMSH_Plugin *p, int x, int y, int width, int height);
   void resetViewBrowser();

@@ -10,13 +10,11 @@
 #include <FL/Fl_Value_Input.H>
 
 class manipWindow{
- private:
-  int _fontsize;
  public:
   Fl_Window *win;
   Fl_Value_Input *value[9];
  public:
-  manipWindow(int fontsize);
+  manipWindow();
   void update(bool force=false);
   void show();
 };

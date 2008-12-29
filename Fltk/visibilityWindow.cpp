@@ -1045,8 +1045,7 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
   Msg::StatusBar(3, false, "");
 }
 
-visibilityWindow::visibilityWindow(int fontsize) 
-  : _fontsize(fontsize)
+visibilityWindow::visibilityWindow()
 {
   static int cols[5] = {15, 95, 95, 180, 0};
   int width = cols[0] + cols[1] + cols[2] + cols[3] + 6 * WB;

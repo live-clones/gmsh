@@ -56,18 +56,13 @@ GUI::GUI(int argc, char **argv)
   // add global shortcuts
   Fl::add_handler(globalShortcut);
 
-  // store fontsize now: we don't want any subsequent change
-  // (e.g. when doing a 'restore options') to be taken into account
-  // in the dynamic GUI features
-  _fontsize = GetFontSize();
-
   // set default font size
-  FL_NORMAL_SIZE = _fontsize;
+  FL_NORMAL_SIZE = GetFontSize();
 
   // handle themes and tooltip font size
   if(strlen(CTX.gui_theme))
     Fl::scheme(CTX.gui_theme);
-  Fl_Tooltip::size(_fontsize);
+  Fl_Tooltip::size(FL_NORMAL_SIZE);
 
   // register image formats not in core fltk library (jpeg/png)
   fl_register_images();
@@ -84,8 +79,8 @@ GUI::GUI(int argc, char **argv)
   // all the windows are contructed (even if some are not displayed)
   // since the shortcuts should be valid even for hidden windows, and
   // we don't want to test for widget existence every time
-  menu = new menuWindow(_fontsize);
-  graph.push_back(new graphicWindow(_fontsize));
+  menu = new menuWindow();
+  graph.push_back(new graphicWindow());
 
 #if defined(WIN32)
   graph[0]->win->icon
@@ -126,7 +121,7 @@ GUI::GUI(int argc, char **argv)
 
   // create additional graphic windows
   for(int i = 1; i < CTX.num_windows; i++){
-    graph.push_back(new graphicWindow(_fontsize));
+    graph.push_back(new graphicWindow());
     //double mat[3][3] = {10,0,0,0,1,0,0,0,1};
     //drawTransform *tr = new drawTransformScaled(mat);
     //graph.back()->gl->getDrawContext()->setTransform(tr);
@@ -134,19 +129,19 @@ GUI::GUI(int argc, char **argv)
     graph.back()->win->show();
   }
 
-  options = new optionWindow(_fontsize);
-  fields = new fieldWindow(_fontsize);
-  plugins = new pluginWindow(_fontsize);
-  stats = new statisticsWindow(_fontsize);
-  visibility = new visibilityWindow(_fontsize);
-  clipping = new clippingWindow(_fontsize);
-  messages = new messageWindow(_fontsize);
-  manip = new manipWindow(_fontsize);
-  geoContext = new geometryContextWindow(_fontsize);
-  meshContext = new meshContextWindow(_fontsize);
-  about = new aboutWindow(_fontsize);
+  options = new optionWindow();
+  fields = new fieldWindow();
+  plugins = new pluginWindow();
+  stats = new statisticsWindow();
+  visibility = new visibilityWindow();
+  clipping = new clippingWindow();
+  messages = new messageWindow();
+  manip = new manipWindow();
+  geoContext = new geometryContextWindow();
+  meshContext = new meshContextWindow();
+  about = new aboutWindow();
   for(int i = 0; i < MAX_NUM_SOLVERS; i++)
-    solver.push_back(new solverWindow(i, _fontsize));
+    solver.push_back(new solverWindow(i));
 
   // init solver plugin stuff
   callForSolverPlugin(-1);

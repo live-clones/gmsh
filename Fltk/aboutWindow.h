@@ -12,12 +12,10 @@
 #include <FL/Fl_Group.H>
 
 class aboutWindow{
- private:
-  int _fontsize;
  public:
   Fl_Window *win;
  public:
-  aboutWindow(int fontsize);
+  aboutWindow();
 };
 
 #endif

@@ -19,8 +19,6 @@
 #endif
 
 class visibilityWindow{
- private:
-  int _fontsize;
  public:
   Fl_Window *win;
   Fl_Choice *browser_type;
@@ -33,7 +31,7 @@ class visibilityWindow{
   Fl_Button *push[2];
   Fl_Input *input[10];
  public:
-  visibilityWindow(int fontsize);
+  visibilityWindow();
   void show(bool redrawOnly);
 };
 

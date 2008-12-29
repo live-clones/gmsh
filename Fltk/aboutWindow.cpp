@@ -32,11 +32,10 @@ static void help_credits_cb(Fl_Widget *w, void *data)
   SystemCall(cmd);
 }
 
-aboutWindow::aboutWindow(int fontsize)
-  : _fontsize(fontsize)
+aboutWindow::aboutWindow()
 {
   char buffer[1024];
-  int width = 28 * _fontsize;
+  int width = 28 * FL_NORMAL_SIZE;
   int height = 15 * BH + BH/2;
 
   win = new dialogWindow(width, height, CTX.non_modal_windows, "About Gmsh");

@@ -537,7 +537,6 @@ classificationEditor::classificationEditor()
   opt_mesh_line_width(0, GMSH_SET | GMSH_GUI, 1.5);
 
   // construct GUI in terms of standard sizes
-  int _fontsize = GetFontSize();
   const int width = (int)(3.5 * BB), height = 10 * BH;
 
   _window = new dialogWindow(width, height, CTX.non_modal_windows, "Classify");

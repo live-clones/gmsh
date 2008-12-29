@@ -43,10 +43,9 @@ static void con_geometry_snap_cb(Fl_Widget *w, void *data)
   CTX.geom.snap[2] = GUI::instance()->geoContext->value[2]->value();
 }
 
-geometryContextWindow::geometryContextWindow(int fontsize)
-  : _fontsize(fontsize)
+geometryContextWindow::geometryContextWindow()
 {
-  int width = 31 * _fontsize;
+  int width = 31 * FL_NORMAL_SIZE;
   int height = 5 * WB + 9 * BH;
 
   win = new dialogWindow
@@ -206,8 +205,7 @@ void geometryContextWindow::show(int pane)
   win->show();
 }
 
-meshContextWindow::meshContextWindow(int fontsize)
-  : _fontsize(fontsize)
+meshContextWindow::meshContextWindow()
 {
   static Fl_Menu menu_transfinite_dir[] = {
     {"Left", 0, 0, 0},
@@ -216,7 +214,7 @@ meshContextWindow::meshContextWindow(int fontsize)
     {0}
   };
 
-  int width = 29 * _fontsize;
+  int width = 29 * FL_NORMAL_SIZE;
   int height = 5 * WB + 5 * BH;
 
   win = new dialogWindow

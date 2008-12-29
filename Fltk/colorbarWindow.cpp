@@ -28,7 +28,7 @@ colorbarWindow::colorbarWindow(int x, int y, int w, int h, const char *l)
   ct = NULL;
   label = NULL;
   help_flag = 1;
-  font_height = GetFontSize() - 1; // use slightly smaller font
+  font_height = FL_NORMAL_SIZE - 1; // use slightly smaller font
   marker_height = font_height;
   wedge_height = marker_height;
   marker_pos = 0;

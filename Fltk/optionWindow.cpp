@@ -1155,11 +1155,16 @@ static void view_options_max_recursion_cb(Fl_Widget *w, void *data)
   view_options_ok_cb(0, 0);
 }
 
-optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
+optionWindow::optionWindow()
 {
-  int width = 34 * _fontsize + WB;
+  // we should maybe use deltaFontSize==2 on all "palette" windows to
+  // make them smaller
+  int deltaFontSize = 0;
+  FL_NORMAL_SIZE -= deltaFontSize;
+
+  int width = 34 * FL_NORMAL_SIZE + WB;
   int height = 13 * BH + 5 * WB;
-  int L = 7 * _fontsize;
+  int L = 7 * FL_NORMAL_SIZE;
 
   win = new dialogWindow(width, height, CTX.non_modal_windows);
   win->box(GMSH_WINDOW_BOX);
@@ -2415,7 +2420,7 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
       view.input[0]->align(FL_ALIGN_RIGHT);
       view.input[0]->callback(view_options_ok_cb);
 
-      int sw = (int)(1.5 * _fontsize);
+      int sw = (int)(1.5 * FL_NORMAL_SIZE);
       view.push[3] = new Fl_Repeat_Button
         (L + 2 * WB, 2 * WB + 3 * BH, sw, BH, "-");
       view.push[3]->callback(view_options_timestep_cb, (void*)"-");
@@ -2497,7 +2502,7 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
       view.butt[38]->type(FL_TOGGLE_BUTTON);
       view.butt[38]->callback(view_options_ok_cb);
 
-      int sw2 = (int)(2.5 * _fontsize);
+      int sw2 = (int)(2.5 * FL_NORMAL_SIZE);
       view.push[1] = new Fl_Button
         (L + 2 * WB, 2 * WB + 7 * BH, sw2, BH, "Min");
       view.push[1]->callback(view_options_ok_cb, (void*)"range_min");
@@ -3083,6 +3088,8 @@ optionWindow::optionWindow(int fontsize) : _fontsize(fontsize)
 
   win->position(CTX.opt_position[0], CTX.opt_position[1]);
   win->end();
+
+  FL_NORMAL_SIZE += deltaFontSize;
 }
 
 void optionWindow::showGroup(int num, bool showWindow)

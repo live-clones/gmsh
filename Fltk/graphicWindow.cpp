@@ -278,7 +278,7 @@ static void status_stepforward_cb(Fl_Widget *w, void *data)
   status_play_manual(!CTX.post.anim_cycle, 1);
 }
 
-graphicWindow::graphicWindow(int fontsize)
+graphicWindow::graphicWindow()
 {
   static bool first = true;
   if(first){
@@ -293,8 +293,8 @@ graphicWindow::graphicWindow(int fontsize)
     first = false;
   }
   
-  int sh = 2 * fontsize - 4; // status bar height
-  int sw = fontsize + 3; // status button width
+  int sh = 2 * FL_NORMAL_SIZE - 4; // status bar height
+  int sw = FL_NORMAL_SIZE + 3; // status button width
   int width = CTX.tmp_viewport[2] - CTX.tmp_viewport[0];
   int glheight = CTX.tmp_viewport[3] - CTX.tmp_viewport[1];
   int height = glheight + sh;
@@ -336,8 +336,8 @@ graphicWindow::graphicWindow(int fontsize)
   butt[4]->callback(status_xyz1p_cb, (void *)"r");
   butt[4]->tooltip("Rotate +90 or -90 degrees");
   
-  butt[3] = new Fl_Button(x, glheight + 2, 2 * fontsize, sht, "1:1");
-  x += 2 * fontsize;
+  butt[3] = new Fl_Button(x, glheight + 2, 2 * FL_NORMAL_SIZE, sht, "1:1");
+  x += 2 * FL_NORMAL_SIZE;
   butt[3]->callback(status_xyz1p_cb, (void *)"1:1");
   butt[3]->tooltip("Set unit scale");
   

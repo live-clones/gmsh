@@ -25,8 +25,6 @@
 extern Fl_Menu_Item menu_font_names[];
 
 class optionWindow{
- private:
-  int _fontsize;
  public:
   Fl_Window *win;
   Fl_Hold_Browser *browser;
@@ -86,7 +84,7 @@ class optionWindow{
   } view;
 
  public:
-  optionWindow(int fontsize);
+  optionWindow();
   void showGroup(int num, bool showWindow=true);
   void resetBrowser();
   void resetExternalViewList();

@@ -464,8 +464,6 @@ void partition_dialog()
     {0}
   };
 
-  int _fontsize = GetFontSize();
-
   const int h = 6 * WB + 3 * BH + 4;    // This will be resized based on groups
                                         // that are displayed
   const int w = 3 * BB + IW + 3 * WB;   // Window width

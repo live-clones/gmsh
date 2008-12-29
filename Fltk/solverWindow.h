@@ -13,8 +13,6 @@
 #include <FL/Fl_Button.H>
 
 class solverWindow{
- private:
-  int _fontsize;
  public:
   Fl_Window *win;
   Fl_Input *input[50];
@@ -22,7 +20,7 @@ class solverWindow{
   Fl_Check_Button *butt[10];
   Fl_Button *command[10];
  public:
-  solverWindow(int solverIndex, int fontsize);
+  solverWindow(int solverIndex);
 };
 
 void solver_cb(Fl_Widget *w, void *data);

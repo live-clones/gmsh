@@ -65,8 +65,7 @@ static void message_save_cb(Fl_Widget *w, void *data)
   }
 }
 
-messageWindow::messageWindow(int fontsize)
-  : _fontsize(fontsize)
+messageWindow::messageWindow()
 {
   int width = CTX.msg_size[0];
   int height = CTX.msg_size[1];
@@ -78,7 +77,7 @@ messageWindow::messageWindow(int fontsize)
   browser = new Fl_Browser(0, 0, width, height - 2 * WB - BH);
   browser->box(FL_FLAT_BOX);
   browser->textfont(FL_COURIER);
-  browser->textsize(_fontsize - 1);
+  browser->textsize(FL_NORMAL_SIZE - 1);
   browser->type(FL_MULTI_BROWSER);
   browser->callback(message_copy_cb);
 

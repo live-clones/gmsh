@@ -119,9 +119,9 @@ static void field_select_node_cb(Fl_Widget *w, void *data)
   Draw();  
 }
 
-fieldWindow::fieldWindow(int fontsize) : _fontsize(fontsize)
+fieldWindow::fieldWindow()
 {
-  int width0 = 34 * _fontsize + WB;
+  int width0 = 34 * FL_NORMAL_SIZE + WB;
   int height0 = 13 * BH + 5 * WB;
   int width = (CTX.field_size[0] < width0) ? width0 : CTX.field_size[0];
   int height = (CTX.field_size[1] < height0) ? height0 : CTX.field_size[1];

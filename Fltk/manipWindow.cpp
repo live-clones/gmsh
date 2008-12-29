@@ -36,8 +36,7 @@ static void manip_update_cb(Fl_Widget *w, void *data)
   Draw();
 }
 
-manipWindow::manipWindow(int fontsize)
-  : _fontsize(fontsize)
+manipWindow::manipWindow()
 {
 
   int width = 4 * BB + 2 * WB;

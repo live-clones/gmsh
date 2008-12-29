@@ -152,9 +152,9 @@ static void plugin_cancel_cb(Fl_Widget *w, void *data)
   Draw();
 }
 
-pluginWindow::pluginWindow(int fontsize) : _fontsize(fontsize)
+pluginWindow::pluginWindow()
 {
-  int width0 = 34 * _fontsize + WB;
+  int width0 = 34 * FL_NORMAL_SIZE + WB;
   int height0 = 13 * BH + 5 * WB;
 
   int width = (CTX.plugin_size[0] < width0) ? width0 : CTX.plugin_size[0];

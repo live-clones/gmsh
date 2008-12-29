@@ -2400,9 +2400,9 @@ contextItem menu_post[] = {
   {0} 
 };
 
-menuWindow::menuWindow(int fontsize) : _fontsize(fontsize)
+menuWindow::menuWindow()
 {
-  int width = 14 * fontsize;
+  int width = 14 * FL_NORMAL_SIZE;
 
   // this is the initial height: no dynamic button is shown
 #if defined(__APPLE__)
@@ -2585,7 +2585,7 @@ void menuWindow::setContext(contextItem *menu_asked, int flag)
   label.clear();
 
   int width = win->w();
-  int popw = 4 * _fontsize + 3;
+  int popw = 4 * FL_NORMAL_SIZE + 3;
 
   // construct the dynamic menu
   int nb = 0;

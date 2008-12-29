@@ -38,8 +38,6 @@ int arrow_editor(const char *title, double &a, double &b, double &c)
   };
   static _editor *editor = NULL;
 
-  int _fontsize = GetFontSize();
-
   if(!editor){
     editor = new _editor;
     editor->window = new dialogWindow
@@ -160,7 +158,6 @@ int model_chooser()
   };
   static _menu *menu = NULL;
 
-  int _fontsize = GetFontSize();
   const int WW = 200;
 
   if(!menu){

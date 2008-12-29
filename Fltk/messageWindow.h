@@ -11,14 +11,12 @@
 #include <FL/Fl_Check_Button.H>
 
 class messageWindow{
- private:
-  int _fontsize;
  public:
   Fl_Window *win;
   Fl_Browser *browser;
   Fl_Check_Button *butt;
  public:
-  messageWindow(int fontsize);
+  messageWindow();
   void show(bool redrawOnly=false);
   void add(const char *msg);
   void save(const char *filename);

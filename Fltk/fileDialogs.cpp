@@ -136,7 +136,6 @@ int generic_bitmap_dialog(const char *name, const char *title, int format)
     Fl_Button *ok, *cancel;
   };
   static _generic_bitmap_dialog *dialog = NULL;
-  int _fontsize = GetFontSize();
 
   if(!dialog){
     dialog = new _generic_bitmap_dialog;
@@ -189,8 +188,6 @@ int latex_dialog(const char *name)
   };
   static _latex_dialog *dialog = NULL;
   
-  int _fontsize = GetFontSize();
-
   if(!dialog){
     dialog = new _latex_dialog;
     int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
@@ -241,8 +238,6 @@ int jpeg_dialog(const char *name)
     Fl_Button *ok, *cancel;
   };
   static _jpeg_dialog *dialog = NULL;
-
-  int _fontsize = GetFontSize();
 
   if(!dialog){
     dialog = new _jpeg_dialog;
@@ -309,8 +304,6 @@ int gif_dialog(const char *name)
     Fl_Button *ok, *cancel;
   };
   static _gif_dialog *dialog = NULL;
-
-  int _fontsize = GetFontSize();
 
   if(!dialog){
     dialog = new _gif_dialog;
@@ -425,8 +418,6 @@ int gl2ps_dialog(const char *name, const char *title, int format)
     {0}
   };
 
-  int _fontsize = GetFontSize();
-
   if(!dialog){
     dialog = new _gl2ps_dialog;
     int h = 3 * WB + 8 * BH, w = 2 * BB + 3 * WB, y = WB;
@@ -512,8 +503,6 @@ int options_dialog(const char *name)
   };
   static _options_dialog *dialog = NULL;
 
-  int _fontsize = GetFontSize();
-
   if(!dialog){
     dialog = new _options_dialog;
     int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
@@ -567,8 +556,6 @@ int geo_dialog(const char *name)
   };
   static _geo_dialog *dialog = NULL;
 
-  int _fontsize = GetFontSize();
-
   if(!dialog){
     dialog = new _geo_dialog;
     int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
@@ -617,7 +604,6 @@ int pos_dialog(const char *name)
   };
   static _pos_dialog *dialog = NULL;
 
-  int _fontsize = GetFontSize();
   int BBB = BB + 9; // labels too long
 
   if(!dialog){
@@ -703,7 +689,6 @@ int msh_dialog(const char *name)
     {0}
   };
 
-  int _fontsize = GetFontSize();
   int BBB = BB + 9; // labels too long
 
   if(!dialog){
@@ -769,7 +754,6 @@ int unv_dialog(const char *name)
   };
   static _unv_dialog *dialog = NULL;
 
-  int _fontsize = GetFontSize();
   int BBB = BB + 9; // labels too long
 
   if(!dialog){
@@ -836,7 +820,6 @@ int bdf_dialog(const char *name)
     {0}
   };
 
-  int _fontsize = GetFontSize();
   int BBB = BB + 9; // labels too long
 
   if(!dialog){
@@ -902,7 +885,6 @@ int generic_mesh_dialog(const char *name, const char *title, int format,
     {0}
   };
 
-  int _fontsize = GetFontSize();
   int BBB = BB + 9; // labels too long
 
   if(!dialog){
@@ -1153,9 +1135,7 @@ int cgns_write_dialog(const char *filename)
     {0}
   };
 
-  int _fontsize = GetFontSize();
-
-  const int RBH = 3*GetFontSize()/2;    // radio button height
+  const int RBH = 3 * FL_NORMAL_SIZE/2; // radio button height
   const int col1 = WB;                  // Start of left column
   const int col2 = 2*WB + 2*BB;         // Start of right column
   const int hcol1 = 5*WB + 2*RBH + 3*BH;

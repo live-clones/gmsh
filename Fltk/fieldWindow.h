@@ -21,8 +21,6 @@
 class Field;
 
 class fieldWindow{
- private:
-  int _fontsize;
  public:
   Fl_Window *win;
   Fl_Hold_Browser *browser;
@@ -36,7 +34,7 @@ class fieldWindow{
   Fl_Button *delete_btn;
   int selected_id;
  public:
-  fieldWindow(int fontsize);
+  fieldWindow();
   void loadFieldViewList();
   void loadFieldList();
   void saveFieldOptions();

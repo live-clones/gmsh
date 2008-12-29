@@ -762,7 +762,7 @@ void uvPlot::draw()
   // draw points in u,v space, colored by their distance to the
   // projection surface
   int pw = w();
-  int ph = h() - (2 * GetFontSize() + 5);
+  int ph = h() - (2 * FL_NORMAL_SIZE + 5);
   for(unsigned int i = 0; i < _u.size(); i++){
     int x = (int)(_u[i] * pw);
     int y = (int)(_v[i] * ph);
@@ -783,7 +783,7 @@ void uvPlot::draw()
 
   // draw labels
   fl_color(FL_BLACK);
-  fl_font(FL_HELVETICA, GetFontSize());
+  fl_font(FL_HELVETICA, FL_NORMAL_SIZE);
   static char min[256], max[256], pts[256];
   sprintf(min, "%g", _dmin);
   sprintf(max, "%g", _dmax);
@@ -897,7 +897,6 @@ projectionEditor::projectionEditor()
   printf("currentSize = %d\n",m->getFMInternals()->current()->GetNumGroups());
 
   // construct GUI in terms of standard sizes
-  int _fontsize = GetFontSize();
   const int width = (int)(3.75 * BB), height = 25 * BH;
   
   // create all widgets (we construct this once, we never deallocate!)

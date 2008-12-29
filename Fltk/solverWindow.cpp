@@ -185,8 +185,7 @@ static void solver_choose_executable_cb(Fl_Widget *w, void *data)
   }
 }
 
-solverWindow::solverWindow(int solverIndex, int fontsize)
-  : _fontsize(fontsize)
+solverWindow::solverWindow(int solverIndex)
 {
   for(int i = 0; i < MAX_NUM_SOLVER_OPTIONS; i++)
     if(strlen(SINFO[solverIndex].option_name[i]))

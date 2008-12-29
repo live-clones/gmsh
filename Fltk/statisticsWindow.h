@@ -12,8 +12,6 @@
 #include <FL/Fl_Group.H>
 
 class statisticsWindow{
- private:
-  int _fontsize;
  public:
   Fl_Window *win;
   Fl_Output *value[50];
@@ -21,7 +19,7 @@ class statisticsWindow{
   Fl_Group *group[3];
   double quality[4][100];
  public:
-  statisticsWindow(int fontsize);
+  statisticsWindow();
   void compute(bool elementQuality);
   void show();
 };

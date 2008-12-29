@@ -14,8 +14,6 @@
 #include <FL/Fl_Group.H>
 
 class clippingWindow{
- private:
-  int _fontsize;
  public:
   Fl_Window *win;
   Fl_Choice *choice;
@@ -24,7 +22,7 @@ class clippingWindow{
   Fl_Check_Button *butt[3];
   Fl_Group *group[2];
  public:
-  clippingWindow(int fontsize);
+  clippingWindow();
   void resetBrowser();
   void show();
 };

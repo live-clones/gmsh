@@ -145,8 +145,7 @@ static void clip_reset_cb(Fl_Widget *w, void *data)
   Draw();
 }
 
-clippingWindow::clippingWindow(int fontsize) 
-  : _fontsize(fontsize)
+clippingWindow::clippingWindow()
 {
   static Fl_Menu_Item plane_number[] = {
     {"Plane 0", 0, 0},
@@ -158,9 +157,9 @@ clippingWindow::clippingWindow(int fontsize)
     {0}
   };
 
-  int width = 26 * _fontsize;
+  int width = 26 * FL_NORMAL_SIZE;
   int height = 10 * BH + 5 * WB;
-  int L = 7 * _fontsize;
+  int L = 7 * FL_NORMAL_SIZE;
 
   win = new dialogWindow(width, height, CTX.non_modal_windows, "Clipping");
   win->box(GMSH_WINDOW_BOX);
@@ -174,25 +173,25 @@ clippingWindow::clippingWindow(int fontsize)
     group[0] = new Fl_Group
       (L + WB, WB + BH, width - L - 2 * WB, height - 3 * WB - 5 * BH, "Planes");
 
-    int BW = width - L - 4 * WB - 4 * _fontsize;
+    int BW = width - L - 4 * WB - 4 * FL_NORMAL_SIZE;
 
     choice = new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, BW, BH);
     choice->menu(plane_number);
     choice->callback(clip_num_cb);
 
     Fl_Button *invert = new Fl_Button
-      (L + 2 * WB, 2 * WB + 2 * BH, _fontsize, 4 * BH, "-");
+      (L + 2 * WB, 2 * WB + 2 * BH, FL_NORMAL_SIZE, 4 * BH, "-");
     invert->callback(clip_invert_cb);
     invert->tooltip("Invert orientation");
     
     value[0] = new Fl_Value_Input
-      (L + 2 * WB + _fontsize, 2 * WB + 2 * BH, BW - _fontsize, BH, "A");
+      (L + 2 * WB + FL_NORMAL_SIZE, 2 * WB + 2 * BH, BW - FL_NORMAL_SIZE, BH, "A");
     value[1] = new Fl_Value_Input
-      (L + 2 * WB + _fontsize, 2 * WB + 3 * BH, BW - _fontsize, BH, "B");
+      (L + 2 * WB + FL_NORMAL_SIZE, 2 * WB + 3 * BH, BW - FL_NORMAL_SIZE, BH, "B");
     value[2] = new Fl_Value_Input
-      (L + 2 * WB + _fontsize, 2 * WB + 4 * BH, BW - _fontsize, BH, "C");
+      (L + 2 * WB + FL_NORMAL_SIZE, 2 * WB + 4 * BH, BW - FL_NORMAL_SIZE, BH, "C");
     value[3] = new Fl_Value_Input
-      (L + 2 * WB + _fontsize, 2 * WB + 5 * BH, BW - _fontsize, BH, "D");
+      (L + 2 * WB + FL_NORMAL_SIZE, 2 * WB + 5 * BH, BW - FL_NORMAL_SIZE, BH, "D");
     for(int i = 0; i < 4; i++){
       value[i]->align(FL_ALIGN_RIGHT);
       value[i]->callback(clip_update_cb);
@@ -206,7 +205,7 @@ clippingWindow::clippingWindow(int fontsize)
     group[1]->hide();
 
     int w2 = (width - L - 4 * WB) / 2;
-    int BW = w2 - 2 * _fontsize;
+    int BW = w2 - 2 * FL_NORMAL_SIZE;
     value[4] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Cx");
     value[5] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Cy");
     value[6] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Cz");

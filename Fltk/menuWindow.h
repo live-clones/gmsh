@@ -55,7 +55,6 @@ extern contextItem menu_post[];
 class menuWindow{
  private:
   int _MH;
-  int _fontsize;
  public:
   Fl_Window *win;
 #if defined(__APPLE__)
@@ -72,7 +71,7 @@ class menuWindow{
   std::vector<popupButton*> popup2;
   std::vector<char*> label;
  public:
-  menuWindow(int fontsize);
+  menuWindow();
   void setContext(contextItem *menu_asked, int flag);
 };
 
