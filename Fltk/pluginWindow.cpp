@@ -152,74 +152,8 @@ static void plugin_cancel_cb(Fl_Widget *w, void *data)
   Draw();
 }
 
-pluginWindow::pluginWindow()
-{
-  int width0 = 34 * FL_NORMAL_SIZE + WB;
-  int height0 = 13 * BH + 5 * WB;
-
-  int width = (CTX.plugin_size[0] < width0) ? width0 : CTX.plugin_size[0];
-  int height = (CTX.plugin_size[1] < height0) ? height0 : CTX.plugin_size[1];
-
-  win = new dialogWindow(width, height, CTX.non_modal_windows, "Plugins");
-  win->box(GMSH_WINDOW_BOX);
-
-  {
-    Fl_Button *o = new Fl_Button
-      (width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-    o->callback(plugin_cancel_cb);
-  }
-  {
-    run = new Fl_Return_Button
-      (width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Run");
-    run->callback(plugin_run_cb);
-  }
-  
-  int L1 = (int)(0.3 * width), L2 = (int)(0.6 * L1);
-  browser = new Fl_Hold_Browser(WB, WB, L1, height - 3 * WB - BH);
-  browser->callback(plugin_browser_cb);
-
-  view_browser = new Fl_Multi_Browser(WB + L1, WB, L2, height - 3 * WB - BH);
-  view_browser->has_scrollbar(Fl_Browser_::VERTICAL);
-  view_browser->callback(plugin_browser_cb);
-
-  for(GMSH_PluginManager::iter it = GMSH_PluginManager::instance()->begin();
-      it != GMSH_PluginManager::instance()->end(); ++it) {
-    GMSH_Plugin *p = (*it).second;
-    if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN) {
-      char name[256];
-      p->getName(name);
-      browser->add(name, p);
-      createDialogBox(p, 2 * WB + L1 + L2, WB, width - L1 - L2 - 3 * WB, 
-                      height - 3 * WB - BH);
-      // select first plugin by default
-      if(it == GMSH_PluginManager::instance()->begin()){
-        browser->select(1);
-        p->dialogBox->group->show();
-      }
-    }
-  }
-  
-  Fl_Box *resize_box = new Fl_Box(3*WB + L1+L2, WB, WB, height - 3 * WB - BH);
-  win->resizable(resize_box);
-  win->size_range(width0, height0);
-
-  win->position(CTX.plugin_position[0], CTX.plugin_position[1]);
-  win->end();
-}
-
-void pluginWindow::show(int viewIndex)
-{
-  resetViewBrowser();
-  if(viewIndex >= 0 && viewIndex < (int)PView::list.size()){
-    view_browser->deselect();
-    view_browser->select(viewIndex + 1);
-    plugin_browser_cb(NULL, NULL);
-  }
-  win->show();
-}
-
-void pluginWindow::createDialogBox(GMSH_Plugin *p, int x, int y,
-                                   int width, int height)
+void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,
+                                    int width, int height)
 {
   p->dialogBox = new PluginDialogBox;
   p->dialogBox->group = new Fl_Group(x, y, width, height);
@@ -286,6 +220,72 @@ void pluginWindow::createDialogBox(GMSH_Plugin *p, int x, int y,
 
   p->dialogBox->group->end();
   p->dialogBox->group->hide();
+}
+
+pluginWindow::pluginWindow()
+{
+  int width0 = 34 * FL_NORMAL_SIZE + WB;
+  int height0 = 13 * BH + 5 * WB;
+
+  int width = (CTX.plugin_size[0] < width0) ? width0 : CTX.plugin_size[0];
+  int height = (CTX.plugin_size[1] < height0) ? height0 : CTX.plugin_size[1];
+
+  win = new dialogWindow(width, height, CTX.non_modal_windows, "Plugins");
+  win->box(GMSH_WINDOW_BOX);
+
+  {
+    Fl_Button *o = new Fl_Button
+      (width - BB - WB, height - BH - WB, BB, BH, "Cancel");
+    o->callback(plugin_cancel_cb);
+  }
+  {
+    run = new Fl_Return_Button
+      (width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Run");
+    run->callback(plugin_run_cb);
+  }
+  
+  int L1 = (int)(0.3 * width), L2 = (int)(0.6 * L1);
+  browser = new Fl_Hold_Browser(WB, WB, L1, height - 3 * WB - BH);
+  browser->callback(plugin_browser_cb);
+
+  view_browser = new Fl_Multi_Browser(WB + L1, WB, L2, height - 3 * WB - BH);
+  view_browser->has_scrollbar(Fl_Browser_::VERTICAL);
+  view_browser->callback(plugin_browser_cb);
+
+  for(GMSH_PluginManager::iter it = GMSH_PluginManager::instance()->begin();
+      it != GMSH_PluginManager::instance()->end(); ++it) {
+    GMSH_Plugin *p = (*it).second;
+    if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN) {
+      char name[256];
+      p->getName(name);
+      browser->add(name, p);
+      _createDialogBox(p, 2 * WB + L1 + L2, WB, width - L1 - L2 - 3 * WB, 
+                       height - 3 * WB - BH);
+      // select first plugin by default
+      if(it == GMSH_PluginManager::instance()->begin()){
+        browser->select(1);
+        p->dialogBox->group->show();
+      }
+    }
+  }
+  
+  Fl_Box *resize_box = new Fl_Box(3*WB + L1+L2, WB, WB, height - 3 * WB - BH);
+  win->resizable(resize_box);
+  win->size_range(width0, height0);
+
+  win->position(CTX.plugin_position[0], CTX.plugin_position[1]);
+  win->end();
+}
+
+void pluginWindow::show(int viewIndex)
+{
+  resetViewBrowser();
+  if(viewIndex >= 0 && viewIndex < (int)PView::list.size()){
+    view_browser->deselect();
+    view_browser->select(viewIndex + 1);
+    plugin_browser_cb(NULL, NULL);
+  }
+  win->show();
 }
 
 void pluginWindow::resetViewBrowser()

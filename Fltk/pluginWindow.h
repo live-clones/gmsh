@@ -29,10 +29,10 @@ class pluginWindow{
   Fl_Hold_Browser *browser;
   Fl_Multi_Browser *view_browser;
   Fl_Return_Button *run;
+  void _createDialogBox(GMSH_Plugin *p, int x, int y, int width, int height);
  public:
   pluginWindow();
   void show(int viewIndex);
-  void createDialogBox(GMSH_Plugin *p, int x, int y, int width, int height);
   void resetViewBrowser();
 };
 
