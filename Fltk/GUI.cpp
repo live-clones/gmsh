@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <sstream>
 #include <FL/Fl.H>
 #include <FL/Fl_Tooltip.H>
 #include <FL/Fl_Shared_Image.H>
@@ -518,10 +519,16 @@ int GUI::testArrowShortcuts()
 
 void GUI::setGraphicTitle(const char *str)
 {
-  // FIXME should use copy_label, but it is broken for Fl_Windows in
-  // fltk 1.1.7
-  for(unsigned int i = 0; i < graph.size(); i++)
-    graph[i]->win->label(str);
+  for(unsigned int i = 0; i < graph.size(); i++){
+    if(!i){
+      graph[i]->setTitle(str);
+    }
+    else{
+      std::ostringstream sstream;
+      sstream << str << " [" << i << "]";
+      graph[i]->setTitle(sstream.str());
+    }
+  }
 }
 
 void GUI::updateViews()

@@ -475,6 +475,12 @@ graphicWindow::~graphicWindow()
   Fl::delete_widget(win);
 }
 
+void graphicWindow::setTitle(std::string str)
+{
+  _title = str;
+  win->label(_title.c_str());
+}
+
 void graphicWindow::split(openglWindow *g, char how)
 {
   if(tile->find(g) == tile->children()) return;

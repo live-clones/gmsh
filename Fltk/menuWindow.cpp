@@ -155,7 +155,7 @@ static void file_window_cb(Fl_Widget *w, void *data)
     graphicWindow *g1 = GUI::instance()->graph.back();
     graphicWindow *g2 = new graphicWindow(false, CTX.num_tiles);
     GUI::instance()->graph.push_back(g2);
-    g2->win->label(g1->win->label());
+    GUI::instance()->setGraphicTitle(CTX.filename);
     g2->win->resize(g1->win->x() + 10, g1->win->y() + 10,
                     g1->win->w(), g1->win->h());
     g2->win->show();

@@ -6,6 +6,7 @@
 #ifndef _GRAPHIC_WINDOW_H_
 #define _GRAPHIC_WINDOW_H_
 
+#include <string>
 #include <vector>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Button.H>
@@ -14,6 +15,8 @@
 #include "openglWindow.h"
 
 class graphicWindow{
+ private:
+  std::string _title;
  public:
   Fl_Window *win;
   Fl_Tile *tile;
@@ -24,6 +27,7 @@ class graphicWindow{
  public:
   graphicWindow(bool main=true, int numTiles=1);
   ~graphicWindow();
+  void setTitle(std::string str);
   void split(openglWindow *g, char how);
   void setAnimButtons(int mode);
   void checkAnimButtons();
