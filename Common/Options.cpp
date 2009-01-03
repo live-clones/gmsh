@@ -39,6 +39,11 @@
 #include "clippingWindow.h"
 #endif
 
+#if defined(WIN32)
+#undef min
+#undef max
+#endif
+
 // the single static option context
 Context_T CTX;
 

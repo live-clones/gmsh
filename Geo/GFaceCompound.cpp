@@ -359,6 +359,7 @@ double GFaceCompound::curvature(const SPoint2 &param) const
 //   }
 
 //  return curvature(lt->t);
+  return 0.;
 }
 
 double GFaceCompound::curvature(MTriangle *t) const
@@ -370,6 +371,7 @@ double GFaceCompound::curvature(MTriangle *t) const
 		   n1.y(),n2.y(),n3.y(),
 		   n1.z(),n2.z(),n3.z()};
   //  return fabs(t->interpolateDiv (val,0.,0.,0.));
+  return 0.;
 }
 
 GPoint GFaceCompound::point(double par1, double par2) const
