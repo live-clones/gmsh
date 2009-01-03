@@ -8,6 +8,8 @@
 #include <FL/fl_ask.H>
 #include "GUI.h"
 #include "graphicWindow.h"
+#include "dialogWindow.h"
+#include "mainWindow.h"
 #include "menuWindow.h"
 #include "messageWindow.h"
 #include "manipWindow.h"
@@ -277,11 +279,6 @@ static void status_stepforward_cb(Fl_Widget *w, void *data)
 
 static void remove_graphic_window_cb(Fl_Widget *w, void *data)
 {
-  if(GUI::instance()->graph.size() == 1){
-    file_quit_cb(0, 0);
-    return;
-  }
-
   std::vector<graphicWindow*> graph2;
   graphicWindow *deleteMe = 0;
   for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++){
@@ -297,39 +294,6 @@ static void remove_graphic_window_cb(Fl_Widget *w, void *data)
   }
 }
 
-// We derive the window from Fl_Window instead of Fl_Double_Window: it
-// shows up faster this way (and the opengl subwindow is
-// double-buffered on its own anyway)
-class normalWindow : public Fl_Window {
- private:
-  int handle(int event)
-  {
-    switch (event) {
-    case FL_SHORTCUT:
-    case FL_KEYBOARD:
-#if defined(__APPLE__)
-      if(Fl::test_shortcut(FL_META+'w')){
-#elif defined(WIN32)
-      if(Fl::test_shortcut(FL_ALT+FL_F+4)){
-#else
-      if(Fl::test_shortcut(FL_CTRL+'w')){
-#endif
-        if(GUI::instance()->graph.size() == 1){
-          if(fl_choice("Do you really want to quit?", "Cancel", "Quit", 0))
-            do_callback();
-        }
-        else
-          do_callback();
-        return 1;
-      }
-      break;
-    }
-    return Fl_Window::handle(event);
-  }
- public:
-  normalWindow(int w, int h, const char *l=0) : Fl_Window(w, h, l) {}
-};
-
 // This dummy box class permits to define a box widget that will not
 // eat the FL_ENTER/FL_LEAVE events (the new Box widget in fltk > 1.1
 // does that, so that gl->handle() was not called when the mouse
@@ -341,7 +305,7 @@ class dummyBox : public Fl_Box {
   dummyBox(int x, int y, int w, int h, const char *l=0) : Fl_Box(x, y, w, h, l) {}
 };
 
-graphicWindow::graphicWindow(int numTiles)
+graphicWindow::graphicWindow(bool main, int numTiles)
 {
   static bool first = true;
   if(first){
@@ -364,8 +328,14 @@ graphicWindow::graphicWindow(int numTiles)
   
   // the graphic window should be a "normal" window (neither modal nor
   // non-modal)
-  win = new normalWindow(width, height);
-  win->callback(remove_graphic_window_cb);
+  if(main){
+    win = new mainWindow(width, height, false);
+    win->callback(file_quit_cb);
+  }
+  else{
+    win = new dialogWindow(width, height, false);
+    win->callback(remove_graphic_window_cb);
+  }
 
   // bottom button bar
   bottom = new Fl_Box(0, glheight, width, sh);

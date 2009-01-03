@@ -80,7 +80,7 @@ GUI::GUI(int argc, char **argv)
   // since the shortcuts should be valid even for hidden windows, and
   // we don't want to test for widget existence every time
   menu = new menuWindow();
-  graph.push_back(new graphicWindow(CTX.num_tiles));
+  graph.push_back(new graphicWindow(true, CTX.num_tiles));
 
 #if defined(WIN32)
   graph[0]->win->icon
@@ -121,7 +121,7 @@ GUI::GUI(int argc, char **argv)
 
   // create additional graphic windows
   for(int i = 1; i < CTX.num_windows; i++){
-    graph.push_back(new graphicWindow(CTX.num_tiles));
+    graph.push_back(new graphicWindow(false, CTX.num_tiles));
     graph.back()->win->size(400, 400);
     graph.back()->win->show();
   }

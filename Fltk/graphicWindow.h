@@ -22,7 +22,7 @@ class graphicWindow{
   Fl_Button *butt[12];
   Fl_Box *label[2];
  public:
-  graphicWindow(int numTiles=1);
+  graphicWindow(bool main=true, int numTiles=1);
   ~graphicWindow();
   void split(openglWindow *g, char how);
   void setAnimButtons(int mode);

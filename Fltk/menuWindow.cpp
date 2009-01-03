@@ -11,7 +11,7 @@
 #include "GUI.h"
 #include "Draw.h"
 #include "menuWindow.h"
-#include "dialogWindow.h"
+#include "mainWindow.h"
 #include "graphicWindow.h"
 #include "optionWindow.h"
 #include "statisticsWindow.h"
@@ -153,7 +153,7 @@ static void file_window_cb(Fl_Widget *w, void *data)
   std::string str((const char*)data);
   if(str == "new"){
     graphicWindow *g1 = GUI::instance()->graph.back();
-    graphicWindow *g2 = new graphicWindow(CTX.num_tiles);
+    graphicWindow *g2 = new graphicWindow(false, CTX.num_tiles);
     GUI::instance()->graph.push_back(g2);
     g2->win->label(g1->win->label());
     g2->win->resize(g1->win->x() + 10, g1->win->y() + 10,
@@ -2439,42 +2439,6 @@ contextItem menu_solver[] = {
 contextItem menu_post[] = {
   {"3Post-processing", NULL} ,
   {0} 
-};
-
-// Derive the main window from Fl_Window (it shows up faster that way)
-class mainWindow : public Fl_Window {
- private:
-  int handle(int event)
-  {
-    switch (event) {
-    case FL_SHORTCUT:
-    case FL_KEYBOARD:
-#if defined(__APPLE__)
-      if(Fl::test_shortcut(FL_META+'w')){
-#elif defined(WIN32)
-      if(Fl::test_shortcut(FL_ALT+FL_F+4)){
-#else
-      if(Fl::test_shortcut(FL_CTRL+'w')){
-#endif
-        if(fl_choice("Do you really want to quit?", "Cancel", "Quit", 0))
-          do_callback();
-        return 1;
-      }
-      break;
-    }
-    return Fl_Window::handle(event);
-  }
- public:
-  mainWindow(int w, int h, bool nonmodal=false, const char *l=0) 
-    : Fl_Window(w, h, l) 
-  {
-    if(nonmodal) set_non_modal();
-  }
-  void show()
-  {
-    if(non_modal() && !shown()) Fl_Window::show(); // fix ordering
-    Fl_Window::show();
-  }
 };
 
 menuWindow::menuWindow()
