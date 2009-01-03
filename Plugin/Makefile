@@ -91,12 +91,12 @@ CutPlane${OBJEXT}: CutPlane.cpp ../Graphics/drawContext.h \
   ../Common/GmshMessage.h ../Post/PView.h ../Post/PViewDataList.h \
   ../Post/PViewData.h ../Numeric/GmshMatrix.h ../Common/ListUtils.h \
   ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h
-CutSphere${OBJEXT}: CutSphere.cpp ../Fltk/Draw.h CutSphere.h Levelset.h Plugin.h \
-  ../Common/Options.h ../Post/ColorTable.h ../Common/GmshMessage.h \
-  ../Post/PView.h ../Geo/SPoint3.h ../Post/PViewDataList.h \
-  ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Numeric/GmshMatrix.h ../Common/ListUtils.h ../Common/Context.h \
-  ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h
+CutSphere${OBJEXT}: CutSphere.cpp ../Graphics/drawContext.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Fltk/Draw.h CutSphere.h \
+  Levelset.h Plugin.h ../Common/Options.h ../Post/ColorTable.h \
+  ../Common/GmshMessage.h ../Post/PView.h ../Post/PViewDataList.h \
+  ../Post/PViewData.h ../Numeric/GmshMatrix.h ../Common/ListUtils.h \
+  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h
 CutMap${OBJEXT}: CutMap.cpp CutMap.h Levelset.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/GmshMessage.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \

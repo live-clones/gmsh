@@ -19,7 +19,7 @@ class geometryContextWindow{
   Fl_Value_Input *value[10];
   Fl_Group *group[10];
  public:
-  geometryContextWindow();
+  geometryContextWindow(int deltaFontSize=0);
   void show(int pane);
 };
 
@@ -30,7 +30,7 @@ class meshContextWindow{
   Fl_Choice *choice[20];
   Fl_Group *group[10];
  public:
-  meshContextWindow();
+  meshContextWindow(int deltaFontSize=0);
   void show(int pane);
 };
 

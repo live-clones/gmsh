@@ -80,7 +80,7 @@ GUI::GUI(int argc, char **argv)
   // since the shortcuts should be valid even for hidden windows, and
   // we don't want to test for widget existence every time
   menu = new menuWindow();
-  graph.push_back(new graphicWindow());
+  graph.push_back(new graphicWindow(CTX.num_tiles));
 
 #if defined(WIN32)
   graph[0]->win->icon
@@ -117,38 +117,36 @@ GUI::GUI(int argc, char **argv)
 
   // graphic window should have the initial focus (so we can
   // e.g. directly loop through time steps with the keyboard)
-  graph[0]->gl->take_focus();
+  graph[0]->gl[0]->take_focus();
 
   // create additional graphic windows
   for(int i = 1; i < CTX.num_windows; i++){
-    graph.push_back(new graphicWindow());
-    //double mat[3][3] = {10,0,0,0,1,0,0,0,1};
-    //drawTransform *tr = new drawTransformScaled(mat);
-    //graph.back()->gl->getDrawContext()->setTransform(tr);
+    graph.push_back(new graphicWindow(CTX.num_tiles));
     graph.back()->win->size(400, 400);
     graph.back()->win->show();
   }
 
-  options = new optionWindow();
-  fields = new fieldWindow();
-  plugins = new pluginWindow();
-  stats = new statisticsWindow();
-  visibility = new visibilityWindow();
-  clipping = new clippingWindow();
-  messages = new messageWindow();
-  manip = new manipWindow();
-  geoContext = new geometryContextWindow();
-  meshContext = new meshContextWindow();
+  options = new optionWindow(CTX.deltafontsize);
+  fields = new fieldWindow(CTX.deltafontsize);
+  plugins = new pluginWindow(CTX.deltafontsize);
+  stats = new statisticsWindow(CTX.deltafontsize);
+  visibility = new visibilityWindow(CTX.deltafontsize);
+  clipping = new clippingWindow(CTX.deltafontsize);
+  messages = new messageWindow(CTX.deltafontsize);
+  manip = new manipWindow(CTX.deltafontsize);
+  geoContext = new geometryContextWindow(CTX.deltafontsize);
+  meshContext = new meshContextWindow(CTX.deltafontsize);
   about = new aboutWindow();
   for(int i = 0; i < MAX_NUM_SOLVERS; i++)
-    solver.push_back(new solverWindow(i));
+    solver.push_back(new solverWindow(i, CTX.deltafontsize));
 
   // init solver plugin stuff
   callForSolverPlugin(-1);
 
   // draw the scene
   for(unsigned int i = 0; i < graph.size(); i++)
-    graph[i]->gl->redraw();
+    for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
+      graph[i]->gl[j]->redraw();
 }
 
 GUI *GUI::_instance = 0;
@@ -218,27 +216,32 @@ int GUI::testGlobalShortcuts(int event)
   }
   else if(Fl::test_shortcut('e')) {
     for(unsigned int i = 0; i < graph.size(); i++)
-      graph[i]->gl->endSelection = 1;
+      for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
+        graph[i]->gl[j]->endSelection = 1;
     status = 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut('u')) {
     for(unsigned int i = 0; i < graph.size(); i++)
-      graph[i]->gl->undoSelection = 1;
+      for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
+        graph[i]->gl[j]->undoSelection = 1;
     status = 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut('i')) {
     for(unsigned int i = 0; i < graph.size(); i++)
-      graph[i]->gl->invertSelection = 1;
+      for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
+        graph[i]->gl[j]->invertSelection = 1;
     status = 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut('q')) {
     for(unsigned int i = 0; i < graph.size(); i++)
-      graph[i]->gl->quitSelection = 1;
+      for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
+        graph[i]->gl[j]->quitSelection = 1;
     status = 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut('-')) {
     for(unsigned int i = 0; i < graph.size(); i++)
-      graph[i]->gl->invertSelection = 1;
+      for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
+        graph[i]->gl[j]->invertSelection = 1;
     status = 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut(FL_Escape) ||
@@ -248,14 +251,16 @@ int GUI::testGlobalShortcuts(int event)
           Fl::test_shortcut(FL_ALT + FL_Escape)) {
     bool lasso = false;
     for(unsigned int i = 0; i < graph.size(); i++)
-      if(graph[i]->gl->lassoMode) lasso = true;
+      for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
+        if(graph[i]->gl[j]->lassoMode) lasso = true;
     if(lasso){
       for(unsigned int i = 0; i < graph.size(); i++)
-        graph[i]->gl->lassoMode = false;
+        for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
+          graph[i]->gl[j]->lassoMode = false;
       status = 2;
     }
     else{
-      status_xyz1p_cb(0, (void *)"S");
+      status_options_cb(0, (void *)"S");
       status = 1;
     }
   }
@@ -356,7 +361,7 @@ int GUI::testGlobalShortcuts(int event)
   }
   else if(Fl::test_shortcut(FL_ALT + 'o') ||
           Fl::test_shortcut(FL_ALT + FL_SHIFT + 'o')) {
-    status_xyz1p_cb(0, (void *)"p");
+    status_options_cb(0, (void *)"p");
     status = 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'a')) {
@@ -511,11 +516,6 @@ int GUI::testArrowShortcuts()
   return 0;
 }
 
-void GUI::setGraphicSize(int w, int h)
-{
-  graph[0]->win->size(w, h + graph[0]->win->h() - graph[0]->gl->h());
-}
-
 void GUI::setGraphicTitle(const char *str)
 {
   // FIXME should use copy_label, but it is broken for Fl_Windows in
@@ -549,20 +549,28 @@ void GUI::resetVisibility()
     visibility_cb(NULL, NULL);
 }
 
-int GUI::getLastGraphIndex()
+openglWindow *GUI::getCurrentOpenglWindow()
 {
-  unsigned int index = 0;
-  if(graph.size() > 1)
-    for(Fl_Window *w = Fl::first_window(); w; w = Fl::next_window(w))
-      for(index = 0; index < graph.size(); index++)
-        if(w == graph[index]->win || w == graph[index]->gl)
-          return index;
-  return 0;
+  if(openglWindow::getLastHandled())
+    return openglWindow::getLastHandled();
+  else
+    return graph[0]->gl[0];
+}
+
+void GUI::splitCurrentOpenglWindow(char how)
+{
+  openglWindow *g = getCurrentOpenglWindow();
+  for(unsigned int i = 0; i < graph.size(); i++){
+    if(graph[i]->tile->find(g) != graph[i]->tile->children()){
+      graph[i]->split(g, how);
+      break;
+    }
+  }
 }
 
 char GUI::selectEntity(int type)
 {
-  return graph[getLastGraphIndex()]->gl->selectEntity
+  return getCurrentOpenglWindow()->selectEntity
     (type, selectedVertices, selectedEdges, selectedFaces, selectedRegions,
      selectedElements);
 }
@@ -579,17 +587,17 @@ void GUI::setStatus(const char *msg, int num)
     }
   }
   else if(num == 2){
-    int index = getLastGraphIndex();
+    openglWindow *gl = getCurrentOpenglWindow();
     int n = strlen(msg);
     int i = 0;
     while(i < n) if(msg[i++] == '\n') break;
-    graph[index]->gl->screenMessage[0] = std::string(msg);
+    gl->screenMessage[0] = std::string(msg);
     if(i)
-      graph[index]->gl->screenMessage[0].resize(i - 1);
+      gl->screenMessage[0].resize(i - 1);
     if(i < n) 
-      graph[index]->gl->screenMessage[1] = std::string(&msg[i]);
+      gl->screenMessage[1] = std::string(&msg[i]);
     else
-      graph[index]->gl->screenMessage[1].clear();
+      gl->screenMessage[1].clear();
     Draw();
   }
 }
@@ -600,6 +608,8 @@ void GUI::storeCurrentWindowsInfo()
   CTX.position[1] = menu->win->y();
   CTX.gl_position[0] = graph[0]->win->x();
   CTX.gl_position[1] = graph[0]->win->y();
+  CTX.gl_size[0] = graph[0]->win->w();
+  CTX.gl_size[1] = (graph[0]->win->h() - graph[0]->bottom->h());
   CTX.msg_position[0] = messages->win->x();
   CTX.msg_position[1] = messages->win->y();
   CTX.msg_size[0] = messages->win->w();

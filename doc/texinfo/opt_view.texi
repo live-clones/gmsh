@@ -124,11 +124,6 @@ Threshold angle below which normals are not smoothed@*
 Default value: @code{30}@*
 Saved in: @code{General.OptionsFileName}
 
-@item View.ArrowHeadRadius
-Relative radius of arrow head@*
-Default value: @code{0.12}@*
-Saved in: @code{General.OptionsFileName}
-
 @item View.ArrowSizeMax
 Maximum display size of arrows (in pixels)@*
 Default value: @code{60}@*
@@ -137,16 +132,6 @@ Saved in: @code{General.OptionsFileName}
 @item View.ArrowSizeMin
 Minimum display size of arrows (in pixels)@*
 Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item View.ArrowStemLength
-Relative length of arrow stem@*
-Default value: @code{0.56}@*
-Saved in: @code{General.OptionsFileName}
-
-@item View.ArrowStemRadius
-Relative radius of arrow stem@*
-Default value: @code{0.02}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AutoPosition

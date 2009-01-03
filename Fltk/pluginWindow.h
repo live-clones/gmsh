@@ -31,7 +31,7 @@ class pluginWindow{
   Fl_Return_Button *run;
   void _createDialogBox(GMSH_Plugin *p, int x, int y, int width, int height);
  public:
-  pluginWindow();
+  pluginWindow(int deltaFontSize=0);
   void show(int viewIndex);
   void resetViewBrowser();
 };

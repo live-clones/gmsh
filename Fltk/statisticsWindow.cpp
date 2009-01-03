@@ -9,7 +9,7 @@
 #include "GUI.h"
 #include "Draw.h"
 #include "statisticsWindow.h"
-#include "shortcutWindow.h"
+#include "dialogWindow.h"
 #include "GModel.h"
 #include "MElement.h"
 #include "PView.h"
@@ -76,9 +76,11 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
   Draw();
 }
 
-statisticsWindow::statisticsWindow()
+statisticsWindow::statisticsWindow(int deltaFontSize)
 {
-  int i, num = 0;
+  FL_NORMAL_SIZE -= deltaFontSize;
+
+  int num = 0;
   int width = 26 * FL_NORMAL_SIZE;
   int height = 5 * WB + 18 * BH;
 
@@ -160,7 +162,7 @@ statisticsWindow::statisticsWindow()
     o->end();
   }
 
-  for(i = 0; i < num; i++) {
+  for(int i = 0; i < num; i++) {
     value[i]->align(FL_ALIGN_RIGHT);
     value[i]->value(0);
   }
@@ -177,6 +179,8 @@ statisticsWindow::statisticsWindow()
   
   win->position(CTX.stat_position[0], CTX.stat_position[1]);
   win->end();
+
+  FL_NORMAL_SIZE += deltaFontSize;
 }
 
 void statisticsWindow::compute(bool elementQuality)

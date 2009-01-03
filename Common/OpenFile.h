@@ -11,6 +11,7 @@ void ParseString(const char *str);
 void OpenProject(const char *filename);
 void OpenProjectMacFinder(const char *filename);
 int MergeFile(const char *filename, int warn_if_missing=0);
+void ClearProject();
 void SetBoundingBox(double xmin, double xmax,
                     double ymin, double ymax, 
                     double zmin, double zmax);

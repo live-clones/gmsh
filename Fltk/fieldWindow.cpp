@@ -11,7 +11,7 @@
 #include "GUI.h"
 #include "Draw.h"
 #include "fieldWindow.h"
-#include "shortcutWindow.h"
+#include "dialogWindow.h"
 #include "fileDialogs.h"
 #include "GmshDefines.h"
 #include "GModel.h"
@@ -119,8 +119,10 @@ static void field_select_node_cb(Fl_Widget *w, void *data)
   Draw();  
 }
 
-fieldWindow::fieldWindow()
+fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
 {
+  FL_NORMAL_SIZE -= deltaFontSize;
+
   int width0 = 34 * FL_NORMAL_SIZE + WB;
   int height0 = 13 * BH + 5 * WB;
   int width = (CTX.field_size[0] < width0) ? width0 : CTX.field_size[0];
@@ -205,6 +207,8 @@ fieldWindow::fieldWindow()
   win->size_range(width0, height0);
   win->position(CTX.field_position[0], CTX.field_position[1]);
   win->end();
+
+  FL_NORMAL_SIZE += deltaFontSize;
 
   loadFieldViewList();
   editField(NULL);
@@ -352,6 +356,9 @@ void fieldWindow::editField(Field *f)
     loadFieldList();
     return;
   }
+
+  FL_NORMAL_SIZE -= _deltaFontSize;
+
   selected_id = f->id;
   editor_group->show();
   editor_group->user_data(f);
@@ -400,6 +407,9 @@ void fieldWindow::editField(Field *f)
     yy += WB + BH;
   }
   options_scroll->end();
+
+  FL_NORMAL_SIZE += _deltaFontSize;
+
   loadFieldOptions();
   options_scroll->damage(1);
   put_on_view_btn->activate();

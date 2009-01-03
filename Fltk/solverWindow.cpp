@@ -10,7 +10,7 @@
 #include <FL/Fl_Browser.H>
 #include "GUI.h"
 #include "solverWindow.h"
-#include "shortcutWindow.h"
+#include "dialogWindow.h"
 #include "optionWindow.h"
 #include "messageWindow.h"
 #include "fileDialogs.h"
@@ -185,8 +185,10 @@ static void solver_choose_executable_cb(Fl_Widget *w, void *data)
   }
 }
 
-solverWindow::solverWindow(int solverIndex)
+solverWindow::solverWindow(int solverIndex, int deltaFontSize)
 {
+  FL_NORMAL_SIZE -= deltaFontSize;
+
   for(int i = 0; i < MAX_NUM_SOLVER_OPTIONS; i++)
     if(strlen(SINFO[solverIndex].option_name[i]))
       SINFO[solverIndex].nboptions = i + 1;
@@ -298,4 +300,6 @@ solverWindow::solverWindow(int solverIndex)
 
   win->position(CTX.solver_position[0], CTX.solver_position[1]);
   win->end();
+
+  FL_NORMAL_SIZE += deltaFontSize;
 }

@@ -19,7 +19,7 @@
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Box.H>
 #include "GUI.h"
-#include "shortcutWindow.h"
+#include "dialogWindow.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "GModel.h"

@@ -14,7 +14,7 @@ class manipWindow{
   Fl_Window *win;
   Fl_Value_Input *value[9];
  public:
-  manipWindow();
+  manipWindow(int deltaFontSize);
   void update(bool force=false);
   void show();
 };

@@ -41,7 +41,7 @@ class Context_T {
   int confirm_overwrite; // confirm overwrite when file->save as
   const char *display; // forced display host:0.0 under X11 
   int terminal; // show we print to the terminal console?
-  int num_windows; // number of graphical windows to create
+  int num_windows, num_tiles; // number of graphical windows/tiles to create
   const char *editor; // text editor command (with included '%s')
   const char *web_browser; // web browser command (with included '%s')
   char home_dir[256]; // the home directory
@@ -49,6 +49,7 @@ class Context_T {
   int tooltips; // show tootips in GUI?
   int position[2]; // position of the menu window on the screen
   int gl_position[2]; // position of the graphic window on the screen
+  int gl_size[2]; // size of the graphic window on the screen
   int msg_position[2]; // position of the message window on the screen
   int msg_size[2]; // size of the message window on the screen
   int msg_auto_scroll; // scroll automatically to last message
@@ -91,7 +92,7 @@ class Context_T {
   int alpha; // enable alpha blending 
   double zoom_factor; // mouse2 zoom coefficient
   int bg_gradient; // draw background gradient?
-  int fontsize; // font size for fltk UI
+  int fontsize, deltafontsize; // fltk font size (and delta for palettes)
   const char *gl_font; // font for opengl graphics
   int gl_font_enum; // font for opengl graphics (fltk enum value)
   int gl_fontsize; // font size for opengl graphics
@@ -125,7 +126,6 @@ class Context_T {
   double tmp_r[3]; // current Euler angles (in degrees!) 
   double tmp_t[3], tmp_s[3]; // current translation and scale 
   double tmp_quaternion[4]; // current quaternion used for "trackball" rotation
-  int tmp_viewport[4]; // current viewport 
 
   // geometry options 
   struct{

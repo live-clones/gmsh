@@ -31,7 +31,7 @@ class visibilityWindow{
   Fl_Button *push[2];
   Fl_Input *input[10];
  public:
-  visibilityWindow();
+  visibilityWindow(int deltaFontSize=0);
   void show(bool redrawOnly);
 };
 

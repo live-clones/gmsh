@@ -84,7 +84,7 @@ class optionWindow{
   } view;
 
  public:
-  optionWindow();
+  optionWindow(int deltaFontSize=0);
   void showGroup(int num, bool showWindow=true);
   void resetBrowser();
   void resetExternalViewList();

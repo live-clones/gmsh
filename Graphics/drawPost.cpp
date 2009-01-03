@@ -1097,8 +1097,7 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
           z -= 0.5 * dz;
         }
         ctx->drawVector(opt->VectorType, opt->IntervalsType != PViewOptions::Iso,
-                        opt->ArrowRelHeadRadius, opt->ArrowRelStemLength,
-                        opt->ArrowRelStemRadius, x, y, z, dx, dy, dz, opt->Light);
+                        x, y, z, dx, dy, dz, opt->Light);
       }
     }
   }
@@ -1179,9 +1178,8 @@ static void drawNormalVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
   for(int i = 0; i < 3; i++)
     n[i] *= opt->Normals * ctx->pixel_equiv_x / ctx->s[i];
   glColor4ubv((GLubyte *) & opt->color.normals);
-  ctx->drawVector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
-                  CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
-                  pc[0], pc[1], pc[2], n[0], n[1], n[2], opt->Light);
+  ctx->drawVector(CTX.vector_type, 0, pc[0], pc[1], pc[2], n[0], n[1], n[2],
+                  opt->Light);
 }
 
 static void drawTangentVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
@@ -1197,9 +1195,8 @@ static void drawTangentVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
   for(int i = 0; i < 3; i++)
     t[i] *= opt->Tangents * ctx->pixel_equiv_x / ctx->s[i];
   glColor4ubv((GLubyte *) & opt->color.tangents);
-  ctx->drawVector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
-                  CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
-                  pc[0], pc[1], pc[2], t[0], t[1], t[2], opt->Light);
+  ctx->drawVector(CTX.vector_type, 0, pc[0], pc[1], pc[2], t[0], t[1], t[2], 
+                  opt->Light);
 }
 
 static void drawGlyphs(drawContext *ctx, PView *p)

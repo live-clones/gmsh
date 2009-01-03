@@ -8,7 +8,7 @@
 #include "GUI.h"
 #include "Draw.h"
 #include "contextWindow.h"
-#include "shortcutWindow.h"
+#include "dialogWindow.h"
 #include "GModel.h"
 #include "GeoStringInterface.h"
 #include "OpenFile.h"
@@ -43,8 +43,10 @@ static void con_geometry_snap_cb(Fl_Widget *w, void *data)
   CTX.geom.snap[2] = GUI::instance()->geoContext->value[2]->value();
 }
 
-geometryContextWindow::geometryContextWindow()
+geometryContextWindow::geometryContextWindow(int deltaFontSize)
 {
+  FL_NORMAL_SIZE -= deltaFontSize;
+
   int width = 31 * FL_NORMAL_SIZE;
   int height = 5 * WB + 9 * BH;
 
@@ -195,6 +197,8 @@ geometryContextWindow::geometryContextWindow()
 
   win->position(CTX.ctx_position[0], CTX.ctx_position[1]);
   win->end();
+
+  FL_NORMAL_SIZE += deltaFontSize;
 }
 
 void geometryContextWindow::show(int pane)
@@ -205,8 +209,10 @@ void geometryContextWindow::show(int pane)
   win->show();
 }
 
-meshContextWindow::meshContextWindow()
+meshContextWindow::meshContextWindow(int deltaFontSize)
 {
+  FL_NORMAL_SIZE -= deltaFontSize;
+
   static Fl_Menu menu_transfinite_dir[] = {
     {"Left", 0, 0, 0},
     {"Right", 0, 0, 0},
@@ -276,6 +282,8 @@ meshContextWindow::meshContextWindow()
 
   win->position(CTX.ctx_position[0], CTX.ctx_position[1]);
   win->end();
+
+  FL_NORMAL_SIZE += deltaFontSize;
 }
 
 void meshContextWindow::show(int pane)

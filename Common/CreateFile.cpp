@@ -118,7 +118,7 @@ void CreateOutputFile(const char *filename, int format)
 
 #if defined(HAVE_FLTK)
   int vp[4];
-  GetStoredViewport(vp);
+  GetCurrentOpenglWindowViewport(vp);
   GLint viewport[4];
   for(int i = 0; i < 4; i++) viewport[i] = vp[i];
   GLint width = viewport[2] - viewport[0];

@@ -5,9 +5,9 @@
 
 #include <string.h>
 #include <FL/fl_draw.H>
+#include <FL/fl_ask.H>
 #include "GUI.h"
 #include "graphicWindow.h"
-#include "shortcutWindow.h"
 #include "menuWindow.h"
 #include "messageWindow.h"
 #include "manipWindow.h"
@@ -20,17 +20,6 @@
 #include "Context.h"
 
 extern Context_T CTX;
-
-// This dummy box class permits to define a box widget that will not
-// eat the FL_ENTER/FL_LEAVE events (the new Box widget in fltk > 1.1
-// does that, so that gl->handle() was not called when the mouse
-// moved)
-class dummyBox : public Fl_Box {
- private:
-  int handle(int){ return 0; } // always!
- public:
-  dummyBox(int x, int y, int w, int h, const char *l=0) : Fl_Box(x, y, w, h, l) {}
-};
 
 // Icons for the satus bar
 #define vv(x,y) fl_vertex(x,y)
@@ -101,71 +90,85 @@ static void gmsh_models(Fl_Color c)
 #undef bl
 #undef el
 
-static int findGraphIndex(Fl_Widget *w)
+static graphicWindow *getGraphicWindow(Fl_Widget *w)
 {
-  if(!w || !w->parent()) return 0;
+  if(!w || !w->parent()) return GUI::instance()->graph[0];
   for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++)
     if(GUI::instance()->graph[i]->win == w->parent())
-      return i;
-  return 0;
+      return GUI::instance()->graph[i];
+  return GUI::instance()->graph[0];
 }
 
 void status_xyz1p_cb(Fl_Widget *w, void *data)
 {
   const char *str = (const char*)data;
 
-  int index = findGraphIndex(w);
-  drawContext *ctx = GUI::instance()->graph[index]->gl->getDrawContext();
+  std::vector<openglWindow*> gls;
+  if(w)
+    gls = getGraphicWindow(w)->gl;
+  else
+    gls.push_back(GUI::instance()->getCurrentOpenglWindow());
 
-  if(!strcmp(str, "r")){ // rotate 90 degress around axis perp to the screen
-    double axis[3] = {0., 0., 1.};
-    if(!Fl::event_state(FL_SHIFT))
-      ctx->addQuaternionFromAxisAndAngle(axis, -90.);
-    else
-      ctx->addQuaternionFromAxisAndAngle(axis, 90.);
-    Draw();
+  for(unsigned int i = 0; i < gls.size(); i++){
+    drawContext *ctx = gls[i]->getDrawContext();
+    if(!strcmp(str, "r")){ // rotate 90 degress around axis perp to the screen
+      double axis[3] = {0., 0., 1.};
+      if(!Fl::event_state(FL_SHIFT))
+        ctx->addQuaternionFromAxisAndAngle(axis, -90.);
+      else
+        ctx->addQuaternionFromAxisAndAngle(axis, 90.);
+    }
+    else if(!strcmp(str, "x")){ // X pointing out or into the screen
+      if(!Fl::event_state(FL_SHIFT)){
+        ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = -90.;
+      }
+      else{
+        ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = 90.;
+      }
+      ctx->setQuaternionFromEulerAngles();
+    }
+    else if(!strcmp(str, "y")){ // Y pointing out or into the screen
+      if(!Fl::event_state(FL_SHIFT)){
+        ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = 180.;
+      }
+      else{
+        ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = 0.;
+      }
+      ctx->setQuaternionFromEulerAngles();
+    }
+    else if(!strcmp(str, "z")){ // Z pointing out or into the screen
+      if(!Fl::event_state(FL_SHIFT)){
+        ctx->r[0] = 0.; ctx->r[1] = 0.; ctx->r[2] = 0.;
+      }
+      else{
+        ctx->r[0] = 0.; ctx->r[1] = 180.; ctx->r[2] = 0.;
+      }
+      ctx->setQuaternionFromEulerAngles();
+    }
+    else if(!strcmp(str, "1:1")){ // reset translation and scaling
+      ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
+      ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
+    }
+    else if(!strcmp(str, "reset")){ // reset everything
+      ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
+      ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
+      ctx->r[0] = ctx->r[1] = ctx->r[2] = 0.;
+      ctx->setQuaternionFromEulerAngles();
+    }
   }
-  else if(!strcmp(str, "x")){ // X pointing out or into the screen
-    if(!Fl::event_state(FL_SHIFT)){
-      ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = -90.;
-    }
-    else{
-      ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = 90.;
-    }
-    ctx->setQuaternionFromEulerAngles();
-    Draw();
+  Draw();
+  GUI::instance()->manip->update();
+}
+
+void status_options_cb(Fl_Widget *w, void *data)
+{
+  const char *str = (const char*)data;
+  if(!strcmp(str, "model")){ // model selection
+    model_chooser();
   }
-  else if(!strcmp(str, "y")){ // Y pointing out or into the screen
-    if(!Fl::event_state(FL_SHIFT)){
-      ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = 180.;
-    }
-    else{
-      ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = 0.;
-    }
-    ctx->setQuaternionFromEulerAngles();
-    Draw();
-  }
-  else if(!strcmp(str, "z")){ // Z pointing out or into the screen
-    if(!Fl::event_state(FL_SHIFT)){
-      ctx->r[0] = 0.; ctx->r[1] = 0.; ctx->r[2] = 0.;
-    }
-    else{
-      ctx->r[0] = 0.; ctx->r[1] = 180.; ctx->r[2] = 0.;
-    }
-    ctx->setQuaternionFromEulerAngles();
-    Draw();
-  }
-  else if(!strcmp(str, "1:1")){ // reset translation and scaling
-    ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
-    ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
-    Draw();
-  }
-  else if(!strcmp(str, "reset")){ // reset everything
-    ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
-    ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
-    ctx->r[0] = ctx->r[1] = ctx->r[2] = 0.;
-    ctx->setQuaternionFromEulerAngles();
-    Draw();
+  else if(!strcmp(str, "?")){ // display options
+    Print_Options(0, GMSH_FULLRC, 0, 1, NULL);
+    GUI::instance()->messages->show();
   }
   else if(!strcmp(str, "p")){ // toggle projection mode
     if(!Fl::event_state(FL_SHIFT)){
@@ -177,23 +180,17 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
     }
     Draw();
   }
-  else if(!strcmp(str, "model")){ // toggle projection mode
-    model_chooser();
-  }
-  else if(!strcmp(str, "?")){ // display options
-    Print_Options(0, GMSH_FULLRC, 0, 1, NULL);
-    GUI::instance()->messages->show();
-  }
   else if(!strcmp(str, "S")){ // mouse selection
     if(CTX.mouse_selection){
       opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 0);
-      GUI::instance()->graph[index]->gl->cursor
-        (FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
+      for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++)
+        for(unsigned int j = 0; j < GUI::instance()->graph[i]->gl.size(); j++)
+          GUI::instance()->graph[i]->gl[j]->cursor
+            (FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
     }
     else
       opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
   }
-  GUI::instance()->manip->update();
 }
 
 static int stop_anim, view_in_cycle = -1;
@@ -234,7 +231,7 @@ void status_play_manual(int time, int step)
 static void status_play_cb(Fl_Widget *w, void *data)
 {
   static double anim_time;
-  GUI::instance()->graph[findGraphIndex(w)]->setAnimButtons(0);
+  getGraphicWindow(w)->setAnimButtons(0);
   stop_anim = 0;
   anim_time = GetTimeInSeconds();
   while(1) {
@@ -251,7 +248,7 @@ static void status_play_cb(Fl_Widget *w, void *data)
 static void status_pause_cb(Fl_Widget *w, void *data)
 {
   stop_anim = 1;
-  GUI::instance()->graph[findGraphIndex(w)]->setAnimButtons(1);
+  getGraphicWindow(w)->setAnimButtons(1);
 }
 
 static void status_rewind_cb(Fl_Widget *w, void *data)
@@ -278,7 +275,73 @@ static void status_stepforward_cb(Fl_Widget *w, void *data)
   status_play_manual(!CTX.post.anim_cycle, 1);
 }
 
-graphicWindow::graphicWindow()
+static void remove_graphic_window_cb(Fl_Widget *w, void *data)
+{
+  if(GUI::instance()->graph.size() == 1){
+    file_quit_cb(0, 0);
+    return;
+  }
+
+  std::vector<graphicWindow*> graph2;
+  graphicWindow *deleteMe = 0;
+  for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++){
+    if(GUI::instance()->graph[i]->win == w)
+      deleteMe = GUI::instance()->graph[i];
+    else
+      graph2.push_back(GUI::instance()->graph[i]);
+  }
+  if(deleteMe){  
+    openglWindow::setLastHandled(0);
+    GUI::instance()->graph = graph2;
+    delete deleteMe;
+  }
+}
+
+// We derive the window from Fl_Window instead of Fl_Double_Window: it
+// shows up faster this way (and the opengl subwindow is
+// double-buffered on its own anyway)
+class normalWindow : public Fl_Window {
+ private:
+  int handle(int event)
+  {
+    switch (event) {
+    case FL_SHORTCUT:
+    case FL_KEYBOARD:
+#if defined(__APPLE__)
+      if(Fl::test_shortcut(FL_META+'w')){
+#elif defined(WIN32)
+      if(Fl::test_shortcut(FL_ALT+FL_F+4)){
+#else
+      if(Fl::test_shortcut(FL_CTRL+'w')){
+#endif
+        if(GUI::instance()->graph.size() == 1){
+          if(fl_choice("Do you really want to quit?", "Cancel", "Quit", 0))
+            do_callback();
+        }
+        else
+          do_callback();
+        return 1;
+      }
+      break;
+    }
+    return Fl_Window::handle(event);
+  }
+ public:
+  normalWindow(int w, int h, const char *l=0) : Fl_Window(w, h, l) {}
+};
+
+// This dummy box class permits to define a box widget that will not
+// eat the FL_ENTER/FL_LEAVE events (the new Box widget in fltk > 1.1
+// does that, so that gl->handle() was not called when the mouse
+// moved)
+class dummyBox : public Fl_Box {
+ private:
+  int handle(int){ return 0; } // always!
+ public:
+  dummyBox(int x, int y, int w, int h, const char *l=0) : Fl_Box(x, y, w, h, l) {}
+};
+
+graphicWindow::graphicWindow(int numTiles)
 {
   static bool first = true;
   if(first){
@@ -295,17 +358,17 @@ graphicWindow::graphicWindow()
   
   int sh = 2 * FL_NORMAL_SIZE - 4; // status bar height
   int sw = FL_NORMAL_SIZE + 3; // status button width
-  int width = CTX.tmp_viewport[2] - CTX.tmp_viewport[0];
-  int glheight = CTX.tmp_viewport[3] - CTX.tmp_viewport[1];
+  int width = CTX.gl_size[0];
+  int glheight = CTX.gl_size[1];
   int height = glheight + sh;
   
-  // the graphic window is a "main" window: it should be a normal
-  // window (neither modal nor non-modal)
-  win = new mainWindow(width, height, false);
-  win->callback(file_quit_cb);
-  
+  // the graphic window should be a "normal" window (neither modal nor
+  // non-modal)
+  win = new normalWindow(width, height);
+  win->callback(remove_graphic_window_cb);
+
   // bottom button bar
-  Fl_Box *bottom = new Fl_Box(0, glheight, width, sh);
+  bottom = new Fl_Box(0, glheight, width, sh);
   bottom->box(FL_FLAT_BOX);
   
   int x = 2;
@@ -313,7 +376,7 @@ graphicWindow::graphicWindow()
   
   butt[5] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_models");
   x += sw;
-  butt[5]->callback(status_xyz1p_cb, (void *)"model");
+  butt[5]->callback(status_options_cb, (void *)"model");
   butt[5]->tooltip("Select active model");
   
   butt[0] = new Fl_Button(x, glheight + 2, sw, sht, "X");
@@ -343,12 +406,12 @@ graphicWindow::graphicWindow()
   
   butt[8] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_ortho");
   x += sw;
-  butt[8]->callback(status_xyz1p_cb, (void *)"p");
+  butt[8]->callback(status_options_cb, (void *)"p");
   butt[8]->tooltip("Toggle projection mode (Alt+o or Alt+Shift+o)");
   
   butt[9] = new Fl_Button(x, glheight + 2, sw, sht, "S");
   x += sw;
-  butt[9]->callback(status_xyz1p_cb, (void *)"S");
+  butt[9]->callback(status_options_cb, (void *)"S");
   butt[9]->tooltip("Toggle mouse selection ON/OFF (Escape)");
   
   butt[6] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_rewind");
@@ -395,16 +458,93 @@ graphicWindow::graphicWindow()
   // dummy resizable box
   dummyBox *resbox = new dummyBox(x, 0, width - x, glheight);
   win->resizable(resbox);
-  
-  // opengl window
-  gl = new openglWindow(0, 0, width, glheight);
+
+  // opengl window(s)
   int mode = FL_RGB | FL_DEPTH | (CTX.db ? FL_DOUBLE : FL_SINGLE);
   if(CTX.antialiasing) mode |= FL_MULTISAMPLE;
-  gl->mode(mode);
-  gl->end();
   
+  tile = new Fl_Tile(0, 0, width, glheight);
+
+  int w2 = width / 2, h2 = glheight / 2;
+  if(numTiles == 2){
+    gl.push_back(new openglWindow(0, 0, w2, glheight));
+    gl.back()->mode(mode);
+    gl.back()->end();
+    gl.push_back(new openglWindow(w2, 0, width - w2, glheight));
+    gl.back()->mode(mode);
+    gl.back()->end();
+  }
+  else if(numTiles == 3){
+    gl.push_back(new openglWindow(0, 0, w2, glheight));
+    gl.back()->mode(mode);
+    gl.back()->end();
+    gl.push_back(new openglWindow(w2, 0, width - w2, h2));
+    gl.back()->mode(mode);
+    gl.back()->end();
+    gl.push_back(new openglWindow(w2, h2, width - w2, glheight - h2));
+    gl.back()->mode(mode);
+    gl.back()->end();
+  }
+  else{
+    gl.push_back(new openglWindow(0, 0, width, glheight));
+    gl.back()->mode(mode);
+    gl.back()->end();
+  }
+
+  tile->end();
+
   win->position(CTX.gl_position[0], CTX.gl_position[1]);
   win->end();
+}
+
+graphicWindow::~graphicWindow()
+{
+  openglWindow::setLastHandled(0);
+  tile->clear();
+  win->clear();
+  Fl::delete_widget(win);
+}
+
+void graphicWindow::split(openglWindow *g, char how)
+{
+  if(tile->find(g) == tile->children()) return;
+
+  if(how == 'u'){
+    // after many tries I cannot figure out how to do this cleanly, so
+    // let's be brutal :-)
+    int mode = g->mode();
+    openglWindow::setLastHandled(0);
+    tile->clear();
+    gl.clear();
+    openglWindow *g2 = new openglWindow(0, 0, tile->w(), tile->h());
+    g2->mode(mode);
+    g2->end();
+    gl.push_back(g2);
+    tile->add(g2);
+    g2->show();
+    return;
+  }
+
+  int x1 = g->x();
+  int y1 = g->y();
+  int w1 = (how == 'h') ? g->w() / 2 : g->w();
+  int h1 = (how == 'h') ? g->h() : g->h() / 2;
+
+  int x2 = (how == 'h') ? (g->x() + w1) : g->x();
+  int y2 = (how == 'h') ? g->y() : (g->y() + h1);
+  int w2 = (how == 'h') ? (g->w() - w1) : g->w();
+  int h2 = (how == 'h') ? g->h() : (g->h() - h1);
+
+  openglWindow *g2 = new openglWindow(0, 0, w2, h2);
+  g2->mode(g->mode());
+  g2->end();
+
+  gl.push_back(g2);
+  tile->add(g2);
+  g2->show();
+
+  g->resize(x1, y1, w1, h1);
+  g2->resize(x2, y2, w2, h2);
 }
 
 void graphicWindow::setAnimButtons(int mode)

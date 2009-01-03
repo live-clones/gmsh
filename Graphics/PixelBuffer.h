@@ -63,9 +63,7 @@ class PixelBuffer{
   void Fill(int offscreen)
   {
     if(!offscreen){
-      SetOpenglContext();
-      ClearOpengl();
-      Draw2d3d();
+      DrawCurrentOpenglWindow(true);
       glFinish();
       glPixelStorei(GL_PACK_ALIGNMENT, 1);
       glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -85,8 +83,7 @@ class PixelBuffer{
       if(!OSMesaMakeCurrent(ctx, _pixels, GL_UNSIGNED_BYTE, _width, _height)){
 	Msg::Error("OSMesaMakeCurrent failed");
       }
-      ClearOpengl();
-      Draw2d3d();
+      DrawCurrentOpenglWindow(false);
       glFinish();
       OSMesaDestroyContext(ctx);
 #else

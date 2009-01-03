@@ -44,11 +44,13 @@ class mousePosition {
 
 class openglWindow : public Fl_Gl_Window {
  private:
-  mousePosition _click, _curr, _prev, _lasso;
+  static openglWindow *_lastHandled;
+  mousePosition _click, _curr, _prev;
   drawContext *_ctx;
   double _point[3];
-  int _selection, _trySelection, _trySelectionXYWH[4];
+  int _selection, _trySelection, _trySelectionXYWH[4], _lassoXY[2];
   void drawScreenMessage();
+  void drawBorder();
   bool processSelectionBuffer(int type, 
                               bool multipleSelection, bool meshSelection,
                               int x, int y, int w, int h,
@@ -70,6 +72,8 @@ class openglWindow : public Fl_Gl_Window {
                     std::vector<GVertex*> &vertices, std::vector<GEdge*> &edges,
                     std::vector<GFace*> &faces, std::vector<GRegion*> &regions,
                     std::vector<MElement*> &elements);
+  static openglWindow *getLastHandled(){ return _lastHandled; }
+  static void setLastHandled(openglWindow *w){ _lastHandled = w; }
 };
 
 #endif

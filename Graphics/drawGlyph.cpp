@@ -5,15 +5,6 @@
 
 #include <string.h>
 #include <FL/gl.h>
-
-//FIXME: workaround faulty fltk installs
-//#include <FL/glu.h>
-#ifdef __APPLE__
-#  include <OpenGL/glu.h>
-#else
-#  include <GL/glu.h>
-#endif
-
 #include "drawContext.h"
 #include "Draw.h"
 #include "GmshDefines.h"
@@ -123,23 +114,26 @@ void drawContext::drawString(std::string s, double style)
   }
 }
 
-void drawContext::drawSphere(double size, double x, double y, double z, int light)
+void drawContext::drawSphere(double R, double x, double y, double z,
+                             int n1, int n2, int light)
 {
   if(light) glEnable(GL_LIGHTING);
-
-  static int first = 1;
-  static GLUquadricObj *qua;
-
-  if(first){
-    first = 0;
-    qua = gluNewQuadric();
-  }
-
   glPushMatrix();
   glTranslated(x, y, z);
+  gluSphere(_quadric, R, n1, n2);
+  glPopMatrix();
+  glDisable(GL_LIGHTING);
+}
+
+void drawContext::drawSphere(double size, double x, double y, double z, int light)
+{
   double ss = size * pixel_equiv_x / s[0]; // size is in pixels
+
+  if(light) glEnable(GL_LIGHTING);
+  glPushMatrix();
+  glTranslated(x, y, z);
   glScaled(ss, ss, ss);
-  gluSphere(qua, 1, CTX.quadric_subdivisions, CTX.quadric_subdivisions);
+  glCallList(_displayLists + 0);
   glPopMatrix();
   glDisable(GL_LIGHTING);
 }
@@ -149,14 +143,6 @@ void drawContext::drawTaperedCylinder(double width, double val1, double val2,
                                       double *x, double *y, double *z, int light)
 {
   if(light) glEnable(GL_LIGHTING);
-
-  static int first = 1;
-  static GLUquadricObj *qua;
-
-  if(first){
-    first = 0;
-    qua = gluNewQuadric();
-  }
 
   double dx = x[1] - x[0];
   double dy = y[1] - y[0];
@@ -180,7 +166,7 @@ void drawContext::drawTaperedCylinder(double width, double val1, double val2,
   glPushMatrix();
   glTranslated(x[0], y[0], z[0]);
   glRotated(phi, axis[0], axis[1], axis[2]);
-  gluCylinder(qua, radius1, radius2, length, CTX.quadric_subdivisions, 1);
+  gluCylinder(_quadric, radius1, radius2, length, CTX.quadric_subdivisions, 1);
   glPopMatrix();
 
   glDisable(GL_LIGHTING);
@@ -189,14 +175,6 @@ void drawContext::drawTaperedCylinder(double width, double val1, double val2,
 void drawContext::drawCylinder(double width, double *x, double *y, double *z, int light)
 {
   if(light) glEnable(GL_LIGHTING);
-
-  static int first = 1;
-  static GLUquadricObj *qua;
-
-  if(first){
-    first = 0;
-    qua = gluNewQuadric();
-  }
 
   double dx = x[1] - x[0];
   double dy = y[1] - y[0];
@@ -218,15 +196,13 @@ void drawContext::drawCylinder(double width, double *x, double *y, double *z, in
   glPushMatrix();
   glTranslated(x[0], y[0], z[0]);
   glRotated(phi, axis[0], axis[1], axis[2]);
-  gluCylinder(qua, radius, radius, length, CTX.quadric_subdivisions, 1);
+  gluCylinder(_quadric, radius, radius, length, CTX.quadric_subdivisions, 1);
   glPopMatrix();
 
   glDisable(GL_LIGHTING);
 }
 
 static void drawSimpleVector(int arrow, int fill,
-                             double relHeadRadius, double relStemLength, 
-                             double relStemRadius,
                              double x, double y, double z,
                              double dx, double dy, double dz, 
                              double d, int light)
@@ -263,11 +239,11 @@ static void drawSimpleVector(int arrow, int fill,
   u[1] /= l;
   u[2] /= l;
 
-  double b = relHeadRadius * d;
+  double b = CTX.arrow_rel_head_radius * d;
 
   if(arrow){
-    double f1 = relStemLength;
-    double f2 = (1-2.*relStemRadius) * f1; // hack :-)
+    double f1 = CTX.arrow_rel_stem_length;
+    double f2 = (1 - 2. * CTX.arrow_rel_stem_radius) * f1; // hack :-)
 
     if(fill) {
       glBegin(GL_LINES);
@@ -395,29 +371,13 @@ static void drawSimpleVector(int arrow, int fill,
 
 }
 
-static void drawArrow3d(double relHeadRadius, double relStemLength, double relStemRadius,
-                        double x, double y, double z, double dx, double dy, double dz,
-                        double length, int light)
+void drawContext::drawArrow3d(double x, double y, double z, 
+                              double dx, double dy, double dz, 
+                              double length, int light)
 {
-  if(light) glEnable(GL_LIGHTING);
-
-  int subdiv = CTX.quadric_subdivisions;
-  double head_r = relHeadRadius * length;
-  double head_l = (1. - relStemLength) * length;
-  double stem_r = relStemRadius * length;
-  double stem_l = relStemLength * length;
-
-  static int first = 1;
-  static GLUquadricObj *qua;
-
-  if(first){
-    first = 0;
-    qua = gluNewQuadric();
-  }
-
   double zdir[3] = {0., 0., 1.};
-  double vdir[3] = {dx/length, dy/length, dz/length};
-  double axis[3], cosphi, phi;
+  double vdir[3] = {dx / length, dy / length, dz / length};
+  double axis[3], cosphi;
   prodve(zdir, vdir, axis);
   prosca(zdir, vdir, &cosphi);
   if(!norme(axis)){
@@ -425,31 +385,19 @@ static void drawArrow3d(double relHeadRadius, double relStemLength, double relSt
     axis[1] = 1.;
     axis[2] = 0.;
   }
-  phi = 180. * myacos(cosphi) / M_PI; 
+  double phi = 180. * myacos(cosphi) / M_PI; 
 
+  if(light) glEnable(GL_LIGHTING);
   glPushMatrix();
   glTranslated(x, y, z);
+  glScaled(length, length, length);
   glRotated(phi, axis[0], axis[1], axis[2]);
-  glTranslated(0., 0., stem_l);
-  if(head_l && head_r)
-    gluCylinder(qua, head_r, 0., head_l, subdiv, 1);
-  if(head_r > stem_r)
-    gluDisk(qua, stem_r, head_r, subdiv, 1);
-  else
-    gluDisk(qua, head_r, stem_r, subdiv, 1);      
-  glTranslated(0., 0., -stem_l);
-  if(stem_l && stem_r){
-    gluCylinder(qua, stem_r, stem_r, stem_l, subdiv, 1);
-    gluDisk(qua, 0, stem_r, subdiv, 1);
-  }
+  glCallList(_displayLists + 1);
   glPopMatrix();
-
   glDisable(GL_LIGHTING);
 }
 
-void drawContext::drawVector(int Type, int Fill,
-                             double relHeadRadius, double relStemLength,
-                             double relStemRadius, double x, double y, double z,
+void drawContext::drawVector(int Type, int Fill, double x, double y, double z,
                              double dx, double dy, double dz, int light)
 {
   double length = sqrt(dx * dx + dy * dy + dz * dz);
@@ -464,7 +412,7 @@ void drawContext::drawVector(int Type, int Fill,
     glEnd();
     break;
   case 6:
-    if(relHeadRadius){
+    if(CTX.arrow_rel_head_radius){
       glBegin(GL_POINTS);
       glVertex3d(x + dx, y + dy, z + dz);
       glEnd();
@@ -477,17 +425,14 @@ void drawContext::drawVector(int Type, int Fill,
     glEnd();
     break;
   case 2:
-    drawSimpleVector(1, Fill, relHeadRadius, relStemLength, relStemRadius,
-                     x, y, z, dx, dy, dz, length, light);
+    drawSimpleVector(1, Fill, x, y, z, dx, dy, dz, length, light);
     break;
   case 3:
-    drawSimpleVector(0, Fill, relHeadRadius, relStemLength, relStemRadius,
-                     x, y, z, dx, dy, dz, length, light);
+    drawSimpleVector(0, Fill, x, y, z, dx, dy, dz, length, light);
     break;
   case 4:
   default:
-    drawArrow3d(relHeadRadius, relStemLength, relStemRadius,
-                x, y, z, dx, dy, dz, length, light);
+    drawArrow3d(x, y, z, dx, dy, dz, length, light);
     break;
   }
 }
@@ -635,9 +580,7 @@ void drawContext::drawPlaneInBoundingBox(double xmin, double ymin, double zmin,
         drawCylinder(CTX.line_width, xx, yy, zz, 1);
       }
       for(int j = 0; j < nb; j++){
-        drawArrow3d(CTX.arrow_rel_head_radius, 
-                    CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
-                    p[j].x, p[j].y, p[j].z, n[0], n[1], n[2], length, 1);
+        drawArrow3d(p[j].x, p[j].y, p[j].z, n[0], n[1], n[2], length, 1);
         if(shade){
           p_shade[n_shade].x = p[j].x;
           p_shade[n_shade].y = p[j].y;

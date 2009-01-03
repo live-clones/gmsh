@@ -756,7 +756,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.QuadricSubdivisions
 Number of subdivisions used to draw points or lines as spheres or cylinders@*
-Default value: @code{8}@*
+Default value: @code{6}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.RotationX

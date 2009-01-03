@@ -19,7 +19,7 @@ class statisticsWindow{
   Fl_Group *group[3];
   double quality[4][100];
  public:
-  statisticsWindow();
+  statisticsWindow(int deltaFontSize);
   void compute(bool elementQuality);
   void show();
 };

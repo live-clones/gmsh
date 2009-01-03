@@ -9,7 +9,7 @@
 #include <vector>
 #include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Round_Button.H>
-#include "shortcutWindow.h"
+#include "dialogWindow.h"
 #include "GModel.h"
 #include "MElement.h"
 #include "ColorTable.h"
@@ -51,7 +51,7 @@ class classificationEditor {
   std::vector<edge_angle> edges_detected;
   std::vector<edge_angle> edges_lonly;
   classificationEditor();
-  void show(){ _window->show();}
+  void show(){ _window->show(); }
   std::vector<MTriangle*> &getElements() { return _elements; }
   Fl_Group *edge_detec, *face_color, *reverse_eng;
 };

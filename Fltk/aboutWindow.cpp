@@ -8,7 +8,7 @@
 #include <FL/Fl_Button.H>
 #include "GUI.h"
 #include "aboutWindow.h"
-#include "shortcutWindow.h"
+#include "dialogWindow.h"
 #include "CommandLine.h"
 #include "StringUtils.h"
 #include "OS.h"
@@ -51,11 +51,7 @@ aboutWindow::aboutWindow()
     o->add("@c@.with built-in pre- and post-processing facilities");
     o->add(" ");
     o->add("@c@.Copyright (C) 1997-2009");
-#if defined(__APPLE__)
     o->add("@c@.Christophe Geuzaine and Jean-Francois Remacle");
-#else
-    o->add("@c@.Christophe Geuzaine and Jean-François Remacle");
-#endif
     o->add(" ");
     o->add("@c@.Please send all questions and bug reports to");
     o->add("@c@b@.gmsh@geuz.org");

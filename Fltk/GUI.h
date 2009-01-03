@@ -18,6 +18,7 @@
 #define WB (7)                      // window border
 
 class graphicWindow;
+class openglWindow;
 class menuWindow;
 class optionWindow;
 class fieldWindow;
@@ -84,8 +85,6 @@ class GUI{
   // navigation). This is necessary since FLTK 1.1.
   int testArrowShortcuts();
   // set the size of the graphic window
-  void setGraphicSize(int w, int h);
-  // set the title of the graphic window
   void setGraphicTitle(const char *str);
   // update the GUI when views get added or deleted
   void updateViews();
@@ -95,8 +94,10 @@ class GUI{
   void resetVisibility();
   // store current window positions and sizes in CTX
   void storeCurrentWindowsInfo();
-  // get the index of the last graphic window that received an event
-  int getLastGraphIndex();
+  // get the last opengl window that received an event
+  openglWindow *getCurrentOpenglWindow();
+  // split the current opengl window
+  void splitCurrentOpenglWindow(char how);
   // select an entity in the most recent graphic window
   char selectEntity(int type);
   // display status message

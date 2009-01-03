@@ -180,9 +180,8 @@ class drawGEdge {
       double x = p.x(), y = p.y(), z = p.z();
       _ctx->transform(x, y, z);
       _ctx->transformOneForm(der[0], der[1], der[2]);
-      _ctx->drawVector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
-                       CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
-                       x, y, z, der[0], der[1], der[2], CTX.geom.light);
+      _ctx->drawVector(CTX.vector_type, 0, x, y, z, der[0], der[1], der[2],
+                       CTX.geom.light);
     }
 
     if(select) {
@@ -295,9 +294,8 @@ class drawGFace {
       double x = p.x(), y = p.y(), z = p.z();
       _ctx->transform(x, y, z);
       _ctx->transformTwoForm(n[0], n[1], n[2]);
-      _ctx->drawVector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
-                       CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
-                       x, y, z, n[0], n[1], n[2], CTX.geom.light);
+      _ctx->drawVector(CTX.vector_type, 0, x, y, z, n[0], n[1], n[2],
+                       CTX.geom.light);
     }
   }
   void _drawPlaneGFace(GFace *f)
@@ -365,9 +363,8 @@ class drawGFace {
       double x = p.x(), y = p.y(), z = p.z();
       _ctx->transform(x, y, z);
       _ctx->transformTwoForm(n[0], n[1], n[2]);
-      _ctx->drawVector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
-                       CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
-                       x, y, z, n[0], n[1], n[2], CTX.geom.light);
+      _ctx->drawVector(CTX.vector_type, 0, x, y, z, n[0], n[1], n[2],
+                       CTX.geom.light);
     }
   }
  

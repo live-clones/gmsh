@@ -9,8 +9,12 @@
 
 #if defined(HAVE_FLTK)
 #include <FL/Fl.H>
-#if (FL_MAJOR_VERSION != 1) || (FL_MINOR_VERSION != 1) || (FL_PATCH_VERSION < 7)
-#error "Gmsh requires FLTK 1.1.7 or above"
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1) && (FL_PATCH_VERSION > 6)
+// OK
+#elif (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
+// also OK
+#else
+#error "Gmsh requires FLTK >= 1.1.7 or FLTK 1.3.x"
 #endif
 #endif
 
@@ -302,6 +306,13 @@ void Get_Options(int argc, char *argv[])
         i++;
         if(argv[i] != NULL)
           CTX.num_windows = atoi(argv[i++]);
+        else
+	  Msg::Fatal("Missing number");
+      }
+      else if(!strcmp(argv[i] + 1, "nt")) {
+        i++;
+        if(argv[i] != NULL)
+          CTX.num_tiles = atoi(argv[i++]);
         else
 	  Msg::Fatal("Missing number");
       }
@@ -615,6 +626,13 @@ void Get_Options(int argc, char *argv[])
         i++;
         if(argv[i] != NULL)
           CTX.fontsize = atoi(argv[i++]);
+        else
+	  Msg::Fatal("Missing number");
+      }
+      else if(!strcmp(argv[i] + 1, "deltafontsize")) {
+        i++;
+        if(argv[i] != NULL)
+          CTX.deltafontsize = atoi(argv[i++]);
         else
 	  Msg::Fatal("Missing number");
       }

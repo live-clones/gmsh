@@ -18,7 +18,7 @@ Saved in: @code{General.OptionsFileName}
 Help string for solver 0@*
 Default value: @code{"A General environment for the treatment of
 Discrete Problems.
-Copyright (C) 1997-2008
+Copyright (C) 1997-2009
 Patrick Dular and Christophe Geuzaine.
 Visit http://www.geuz.org/getdp/ for more info"}@*
 Saved in: @code{General.OptionsFileName}

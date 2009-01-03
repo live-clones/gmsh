@@ -8,7 +8,7 @@
 #include "GUI.h"
 #include "Draw.h"
 #include "manipWindow.h"
-#include "shortcutWindow.h"
+#include "dialogWindow.h"
 #include "graphicWindow.h"
 #include "Options.h"
 #include "Context.h"
@@ -22,7 +22,7 @@ void manip_cb(Fl_Widget *w, void *data)
 
 static void manip_update_cb(Fl_Widget *w, void *data)
 {
-  drawContext *ctx = GUI::instance()->graph[0]->gl->getDrawContext();
+  drawContext *ctx = GUI::instance()->getCurrentOpenglWindow()->getDrawContext();
   ctx->r[0] = GUI::instance()->manip->value[0]->value();
   ctx->r[1] = GUI::instance()->manip->value[1]->value();
   ctx->r[2] = GUI::instance()->manip->value[2]->value();
@@ -36,8 +36,9 @@ static void manip_update_cb(Fl_Widget *w, void *data)
   Draw();
 }
 
-manipWindow::manipWindow()
+manipWindow::manipWindow(int deltaFontSize)
 {
+  FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 4 * BB + 2 * WB;
   int height = 5 * BH + 3 * WB;
@@ -95,6 +96,8 @@ manipWindow::manipWindow()
 
   win->position(CTX.manip_position[0], CTX.manip_position[1]);
   win->end();
+
+  FL_NORMAL_SIZE += deltaFontSize;
 }
 
 void manipWindow::update(bool force)

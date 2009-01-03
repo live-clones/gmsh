@@ -389,6 +389,30 @@ int MergeFile(const char *name, int warn_if_missing)
   return status;
 }
 
+void ClearProject()
+{
+#if !defined(HAVE_NO_POST)
+  for(int i = PView::list.size() - 1; i >= 0; i--)
+    delete PView::list[i];
+#endif
+#if !defined(HAVE_NO_PARSER)
+  gmsh_yysymbols.clear();
+#endif
+  for(int i = GModel::list.size() - 1; i >= 1; i--)
+    delete GModel::list[i];
+  GModel::current(0);
+  GModel::current()->destroy();
+  GModel::current()->getGEOInternals()->destroy();
+#if defined(HAVE_FLTK)
+  if(GUI::available()){
+    GUI::instance()->resetVisibility();
+    GUI::instance()->updateViews();
+    GUI::instance()->updateFields();
+    GModel::current()->setSelection(0);
+  }
+#endif
+}
+
 void OpenProject(const char *name)
 {
   if(CTX.threads_lock) {

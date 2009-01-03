@@ -9,7 +9,7 @@
 #include <FL/fl_ask.H>
 #include "GUI.h"
 #include "messageWindow.h"
-#include "shortcutWindow.h"
+#include "dialogWindow.h"
 #include "fileDialogs.h"
 #include "GmshMessage.h"
 #include "OS.h"
@@ -65,8 +65,10 @@ static void message_save_cb(Fl_Widget *w, void *data)
   }
 }
 
-messageWindow::messageWindow()
+messageWindow::messageWindow(int deltaFontSize)
 {
+  FL_NORMAL_SIZE -= deltaFontSize;
+
   int width = CTX.msg_size[0];
   int height = CTX.msg_size[1];
 
@@ -108,6 +110,8 @@ messageWindow::messageWindow()
 
   win->position(CTX.msg_position[0], CTX.msg_position[1]);
   win->end();
+
+  FL_NORMAL_SIZE += deltaFontSize;
 }
 
 void messageWindow::add(const char *msg)

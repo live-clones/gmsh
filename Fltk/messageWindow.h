@@ -16,7 +16,7 @@ class messageWindow{
   Fl_Browser *browser;
   Fl_Check_Button *butt;
  public:
-  messageWindow();
+  messageWindow(int deltaFontSize);
   void show(bool redrawOnly=false);
   void add(const char *msg);
   void save(const char *filename);

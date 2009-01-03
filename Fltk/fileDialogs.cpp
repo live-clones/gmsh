@@ -18,7 +18,7 @@
 #include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Choice.H>
 #include "GUI.h"
-#include "shortcutWindow.h"
+#include "dialogWindow.h"
 #include "GmshDefines.h"
 #include "CreateFile.h"
 #include "Options.h"

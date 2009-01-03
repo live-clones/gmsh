@@ -9,7 +9,7 @@
 #include <FL/Fl_Color_Chooser.H>
 #include "GUI.h"
 #include "optionWindow.h"
-#include "shortcutWindow.h"
+#include "dialogWindow.h"
 #include "menuWindow.h"
 #include "extraDialogs.h"
 #include "Draw.h"
@@ -528,25 +528,6 @@ static void view_options_timestep_cb(Fl_Widget *w, void *data)
     }
   }
   Draw();
-}
-
-static void view_arrow_param_cb(Fl_Widget *w, void *data)
-{
-  double a = opt_view_arrow_head_radius
-    (GUI::instance()->options->view.index, GMSH_GET, 0);
-  double b = opt_view_arrow_stem_length
-    (GUI::instance()->options->view.index, GMSH_GET, 0);
-  double c = opt_view_arrow_stem_radius
-    (GUI::instance()->options->view.index, GMSH_GET, 0);
-  while(arrow_editor("Arrow Editor", a, b, c)){
-    opt_view_arrow_head_radius
-      (GUI::instance()->options->view.index, GMSH_SET, a);
-    opt_view_arrow_stem_length
-      (GUI::instance()->options->view.index, GMSH_SET, b);
-    opt_view_arrow_stem_radius
-      (GUI::instance()->options->view.index, GMSH_SET, c);
-    Draw();
-  }
 }
 
 static void view_options_ok_cb(Fl_Widget *w, void *data)
@@ -1155,11 +1136,8 @@ static void view_options_max_recursion_cb(Fl_Widget *w, void *data)
   view_options_ok_cb(0, 0);
 }
 
-optionWindow::optionWindow()
+optionWindow::optionWindow(int deltaFontSize)
 {
-  // we should maybe use deltaFontSize==2 on all "palette" windows to
-  // make them smaller
-  int deltaFontSize = 0;
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 34 * FL_NORMAL_SIZE + WB;
@@ -2949,11 +2927,6 @@ optionWindow::optionWindow()
         view.choice[2]->menu(menu_vectype);
         view.choice[2]->align(FL_ALIGN_RIGHT);
         view.choice[2]->callback(view_options_ok_cb);
-
-        view.push[0] = new Fl_Button
-          (L + width - (int)(1.15*BB) - 2 * WB, 2 * WB + 6 * BH, (int)(1.15*BB), BH,
-           "Edit arrow");
-        view.push[0]->callback(view_arrow_param_cb);
 
         view.value[64] = new Fl_Value_Input
           (L + 2 * WB, 2 * WB + 7 * BH, IW / 2, BH);

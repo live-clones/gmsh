@@ -4,16 +4,6 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string.h>
-#include <FL/gl.h>
-
-//FIXME: workaround faulty fltk installs
-//#include <FL/glu.h>
-#ifdef __APPLE__
-#  include <OpenGL/glu.h>
-#else
-#  include <GL/glu.h>
-#endif
-
 #include "GUI.h"
 #include "graphicWindow.h"
 #include "optionWindow.h"
@@ -30,34 +20,12 @@ void Draw()
 {
   if(!GUI::available()) return;
   for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++){
-    GUI::instance()->graph[i]->gl->make_current();
-    GUI::instance()->graph[i]->gl->redraw();
+    for(unsigned int j = 0; j < GUI::instance()->graph[i]->gl.size(); j++){
+      GUI::instance()->graph[i]->gl[j]->make_current();
+      GUI::instance()->graph[i]->gl[j]->redraw();
+    }
   }
   GUI::instance()->check();
-}
-
-void ClearOpengl()
-{
-  glClearColor(CTX.UNPACK_RED(CTX.color.bg) / 255.,
-               CTX.UNPACK_GREEN(CTX.color.bg) / 255.,
-               CTX.UNPACK_BLUE(CTX.color.bg) / 255., 0.);
-  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-}
-
-void SetOpenglContext(int index)
-{
-  if(!GUI::available()) return;
-  if(index >= 0 && index < GUI::instance()->graph.size())
-    GUI::instance()->graph[index]->gl->make_current();
-}
-
-void Draw2d3d(int index)
-{
-  if(!GUI::available()) return;
-  if(index >= 0 && index < GUI::instance()->graph.size()){
-    GUI::instance()->graph[index]->gl->getDrawContext()->draw3d();
-    GUI::instance()->graph[index]->gl->getDrawContext()->draw2d();
-  }
 }
 
 void DrawPlugin(void (*draw)(void *context))
@@ -77,13 +45,25 @@ void DrawPlugin(void (*draw)(void *context))
   CTX.mesh.draw = 1;
 }
 
-void GetStoredViewport(int viewport[4], int index)
+void DrawCurrentOpenglWindow(bool make_current)
 {
   if(!GUI::available()) return;
-  if(index >= 0 && index < GUI::instance()->graph.size()){
-    for(int i = 0; i < 4; i++)
-      viewport[i] = GUI::instance()->graph[index]->gl->getDrawContext()->viewport[i];
-  }
+  openglWindow *gl = GUI::instance()->getCurrentOpenglWindow();
+  if(make_current) gl->make_current();
+  glClearColor(CTX.UNPACK_RED(CTX.color.bg) / 255.,
+               CTX.UNPACK_GREEN(CTX.color.bg) / 255.,
+               CTX.UNPACK_BLUE(CTX.color.bg) / 255., 0.);
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+  gl->getDrawContext()->draw3d();
+  gl->getDrawContext()->draw2d();
+}
+
+void GetCurrentOpenglWindowViewport(int viewport[4])
+{
+  if(!GUI::available()) return;
+  openglWindow *gl = GUI::instance()->getCurrentOpenglWindow();
+  for(int i = 0; i < 4; i++)
+    viewport[i] = gl->getDrawContext()->viewport[i];
 }
 
 int GetFontIndex(const char *fontname)

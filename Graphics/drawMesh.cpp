@@ -210,9 +210,8 @@ static void drawNormals(drawContext *ctx, std::vector<T*> &elements)
     for(int j = 0; j < 3; j++)
       n[j] *= CTX.mesh.normals * ctx->pixel_equiv_x / ctx->s[j];
     SPoint3 pc = ele->barycenter();
-    ctx->drawVector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
-                    CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
-                    pc.x(), pc.y(), pc.z(), n[0], n[1], n[2], CTX.mesh.light);
+    ctx->drawVector(CTX.vector_type, 0, pc.x(), pc.y(), pc.z(), n[0], n[1], n[2],
+                    CTX.mesh.light);
   }
 }
 
@@ -227,9 +226,8 @@ static void drawTangents(drawContext *ctx, std::vector<T*> &elements)
     for(int j = 0; j < 3; j++)
       t[j] *= CTX.mesh.tangents * ctx->pixel_equiv_x / ctx->s[j];
     SPoint3 pc = ele->barycenter();
-    ctx->drawVector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
-                    CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
-                    pc.x(), pc.y(), pc.z(), t[0], t[1], t[2], CTX.mesh.light);
+    ctx->drawVector(CTX.vector_type, 0, pc.x(), pc.y(), pc.z(), t[0], t[1], t[2],
+                    CTX.mesh.light);
   }
 }
 

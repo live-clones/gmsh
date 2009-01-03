@@ -13,7 +13,7 @@
 #include "GUI.h"
 #include "Draw.h"
 #include "visibilityWindow.h"
-#include "shortcutWindow.h"
+#include "dialogWindow.h"
 #include "contextWindow.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
@@ -1045,8 +1045,10 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
   Msg::StatusBar(3, false, "");
 }
 
-visibilityWindow::visibilityWindow()
+visibilityWindow::visibilityWindow(int deltaFontSize)
 {
+  FL_NORMAL_SIZE -= deltaFontSize;
+
   static int cols[5] = {15, 95, 95, 180, 0};
   int width = cols[0] + cols[1] + cols[2] + cols[3] + 6 * WB;
   int height = 18 * BH;
@@ -1143,6 +1145,8 @@ visibilityWindow::visibilityWindow()
     tree->box(FL_DOWN_BOX);
     tree->insertion_mode(FLU_INSERT_BACK);
     tree->branch_icons(0, 0);
+    tree->branch_text(FL_BLACK, FL_HELVETICA_BOLD, FL_NORMAL_SIZE - 1);
+    tree->leaf_text(FL_BLACK, FL_HELVETICA, FL_NORMAL_SIZE - 1);
     Fl_Group::current()->resizable(tree);
     tree->hide();
 
@@ -1320,6 +1324,8 @@ visibilityWindow::visibilityWindow()
 
   win->position(CTX.vis_position[0], CTX.vis_position[1]);
   win->end();
+
+  FL_NORMAL_SIZE += deltaFontSize;
 }
 
 void visibilityWindow::show(bool redrawOnly)

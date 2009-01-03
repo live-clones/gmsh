@@ -11,7 +11,7 @@
 #include "GUI.h"
 #include "Draw.h"
 #include "menuWindow.h"
-#include "shortcutWindow.h"
+#include "dialogWindow.h"
 #include "graphicWindow.h"
 #include "optionWindow.h"
 #include "statisticsWindow.h"
@@ -71,7 +71,8 @@ static void file_new_cb(Fl_Widget *w, void *data)
     time(&now);
     fprintf(fp, "// Gmsh project created on %s", ctime(&now));
     fclose(fp);
-    OpenProject(name.c_str());
+    new GModel();
+    MergeFile(name.c_str());
     Draw();
   }
 }
@@ -139,6 +140,35 @@ static void file_merge_cb(Fl_Widget *w, void *data)
   }
   if(n != (int)PView::list.size())
     GUI::instance()->menu->setContext(menu_post, 0);
+}
+
+static void file_clear_cb(Fl_Widget *w, void *data)
+{
+  ClearProject();
+  Draw();
+}
+
+static void file_window_cb(Fl_Widget *w, void *data)
+{
+  std::string str((const char*)data);
+  if(str == "new"){
+    graphicWindow *g1 = GUI::instance()->graph.back();
+    graphicWindow *g2 = new graphicWindow(CTX.num_tiles);
+    GUI::instance()->graph.push_back(g2);
+    g2->win->label(g1->win->label());
+    g2->win->resize(g1->win->x() + 10, g1->win->y() + 10,
+                    g1->win->w(), g1->win->h());
+    g2->win->show();
+  }
+  else if(str == "split_h"){
+    GUI::instance()->splitCurrentOpenglWindow('h');
+  }
+  else if(str == "split_v"){
+    GUI::instance()->splitCurrentOpenglWindow('v');
+  }
+  else if(str == "split_u"){
+    GUI::instance()->splitCurrentOpenglWindow('u');
+  }
 }
 
 static int _save_msh(const char *name){ return msh_dialog(name); }
@@ -524,7 +554,8 @@ static void add_new_point()
 
   while(1) {
     for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++)
-      GUI::instance()->graph[i]->gl->addPointMode = true;
+      for(unsigned int j = 0; j < GUI::instance()->graph[i]->gl.size(); j++)
+        GUI::instance()->graph[i]->gl[j]->addPointMode = true;
     Msg::StatusBar(3, false, "Move mouse and/or enter coordinates\n"
                    "[Press 'Shift' to hold position, 'e' to add point "
                    "or 'q' to abort]");
@@ -540,7 +571,8 @@ static void add_new_point()
     }
     if(ib == 'q'){
       for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++)
-        GUI::instance()->graph[i]->gl->addPointMode = false;
+        for(unsigned int j = 0; j < GUI::instance()->graph[i]->gl.size(); j++)
+          GUI::instance()->graph[i]->gl[j]->addPointMode = false;
       break;
     }
   }
@@ -2100,7 +2132,14 @@ static Fl_Menu_Item bar_table[] = {
   {"&File", 0, 0, 0, FL_SUBMENU},
     {"&New...",     FL_CTRL+'n', (Fl_Callback *)file_new_cb, 0},
     {"&Open...",    FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
-    {"M&erge...",   FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
+    {"M&erge...",   FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)file_merge_cb, 0},
+    {"&Clear",      0, (Fl_Callback *)file_clear_cb, 0, FL_MENU_DIVIDER},
+    {"New Window", 0, (Fl_Callback *)file_window_cb, (void*)"new"},
+    {"Split Window", 0, 0, 0, FL_MENU_DIVIDER | FL_SUBMENU},
+      {"Horizontally", 0, (Fl_Callback *)file_window_cb, (void*)"split_h"},
+      {"Vertically",   0, (Fl_Callback *)file_window_cb, (void*)"split_v"},
+      {"Clear",        0, (Fl_Callback *)file_window_cb, (void*)"split_u"},
+      {0},
     {"&Rename...",  FL_CTRL+'r', (Fl_Callback *)file_rename_cb, 0},
     {"Save &As...", FL_CTRL+'s', (Fl_Callback *)file_save_as_cb, 0},
     {"Sa&ve Mesh",  FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0, FL_MENU_DIVIDER},
@@ -2120,18 +2159,13 @@ static Fl_Menu_Item bar_table[] = {
     {"M&ouse Actions",        0, (Fl_Callback *)help_mouse_cb, 0},
     {"&Keyboard Shortcuts",   0, (Fl_Callback *)help_short_cb, 0},
     {"C&ommand Line Options", 0, (Fl_Callback *)help_command_line_cb, 0},
-    {"&Current Options",      0, (Fl_Callback *)status_xyz1p_cb, (void*)"?", FL_MENU_DIVIDER},
+    {"&Current Options",      0, (Fl_Callback *)status_options_cb, (void*)"?", FL_MENU_DIVIDER},
     {"&About Gmsh...",        0, (Fl_Callback *)help_about_cb, 0},
     {0},
   {0}
 };
 
 #if defined(__APPLE__)
-
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1) && (FL_PATCH_VERSION <= 6)
-#undef FL_META
-#define FL_META FL_CTRL
-#endif
 
 // Alternative items for the MacOS system menu bar (removed '&'
 // shortcuts: they would cause spurious menu items to appear on the
@@ -2140,7 +2174,14 @@ static Fl_Menu_Item sysbar_table[] = {
   {"File", 0, 0, 0, FL_SUBMENU},
     {"New...",     FL_META+'n', (Fl_Callback *)file_new_cb, 0},
     {"Open...",    FL_META+'o', (Fl_Callback *)file_open_cb, 0},
-    {"Merge...",   FL_META+FL_SHIFT+'o', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
+    {"Merge...",   FL_META+FL_SHIFT+'o', (Fl_Callback *)file_merge_cb, 0},
+    {"Clear",      0, (Fl_Callback *)file_clear_cb, 0, FL_MENU_DIVIDER},
+    {"New Window", 0, (Fl_Callback *)file_window_cb, (void*)"new"},
+    {"Split Window", 0, 0, 0, FL_MENU_DIVIDER | FL_SUBMENU},
+      {"Horizontally", 0, (Fl_Callback *)file_window_cb, (void*)"split_h"},
+      {"Vertically",   0, (Fl_Callback *)file_window_cb, (void*)"split_v"},
+      {"Clear",        0, (Fl_Callback *)file_window_cb, (void*)"split_u"},
+      {0},
     {"Rename...",  FL_META+'r', (Fl_Callback *)file_rename_cb, 0},
     {"Save As...", FL_META+'s', (Fl_Callback *)file_save_as_cb, 0},
     {"Save Mesh",  FL_META+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0},
@@ -2164,7 +2205,7 @@ static Fl_Menu_Item sysbar_table[] = {
     {"Mouse Actions",        0, (Fl_Callback *)help_mouse_cb, 0},
     {"Keyboard Shortcuts",   0, (Fl_Callback *)help_short_cb, 0},
     {"Command Line Options", 0, (Fl_Callback *)help_command_line_cb, 0},
-    {"Current Options",      0, (Fl_Callback *)status_xyz1p_cb, (void*)"?", FL_MENU_DIVIDER},
+    {"Current Options",      0, (Fl_Callback *)status_options_cb, (void*)"?", FL_MENU_DIVIDER},
     {"About Gmsh...",        0, (Fl_Callback *)help_about_cb, 0},
     {0},
   {0}
@@ -2398,6 +2439,42 @@ contextItem menu_solver[] = {
 contextItem menu_post[] = {
   {"3Post-processing", NULL} ,
   {0} 
+};
+
+// Derive the main window from Fl_Window (it shows up faster that way)
+class mainWindow : public Fl_Window {
+ private:
+  int handle(int event)
+  {
+    switch (event) {
+    case FL_SHORTCUT:
+    case FL_KEYBOARD:
+#if defined(__APPLE__)
+      if(Fl::test_shortcut(FL_META+'w')){
+#elif defined(WIN32)
+      if(Fl::test_shortcut(FL_ALT+FL_F+4)){
+#else
+      if(Fl::test_shortcut(FL_CTRL+'w')){
+#endif
+        if(fl_choice("Do you really want to quit?", "Cancel", "Quit", 0))
+          do_callback();
+        return 1;
+      }
+      break;
+    }
+    return Fl_Window::handle(event);
+  }
+ public:
+  mainWindow(int w, int h, bool nonmodal=false, const char *l=0) 
+    : Fl_Window(w, h, l) 
+  {
+    if(nonmodal) set_non_modal();
+  }
+  void show()
+  {
+    if(non_modal() && !shown()) Fl_Window::show(); // fix ordering
+    Fl_Window::show();
+  }
 };
 
 menuWindow::menuWindow()

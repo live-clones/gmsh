@@ -22,7 +22,7 @@ class clippingWindow{
   Fl_Check_Button *butt[3];
   Fl_Group *group[2];
  public:
-  clippingWindow();
+  clippingWindow(int deltaFontSize=0);
   void resetBrowser();
   void show();
 };

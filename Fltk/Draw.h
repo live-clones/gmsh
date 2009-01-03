@@ -8,12 +8,10 @@
 
 #include <string>
 
-void SetOpenglContext(int index=0);
-void ClearOpengl();
 void Draw();
-void Draw2d3d(int index=0);
 void DrawPlugin(void (*draw)(void *context));
-void GetStoredViewport(int viewport[4], int index=0);
+void DrawCurrentOpenglWindow(bool make_current);
+void GetCurrentOpenglWindowViewport(int viewport[4]);
 int GetFontIndex(const char *fontname);
 int GetFontEnum(int index);
 const char *GetFontName(int index);

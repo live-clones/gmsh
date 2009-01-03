@@ -4,15 +4,6 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <FL/gl.h>
-
-//FIXME: workaround faulty fltk installs
-//#include <FL/glu.h>
-#ifdef __APPLE__
-#  include <OpenGL/glu.h>
-#else
-#  include <GL/glu.h>
-#endif
-
 #include "GmshMessage.h"
 #include "drawContext.h"
 #include "Trackball.h"
@@ -37,12 +28,61 @@ drawContext::drawContext(drawTransform *transform)
     quaternion[i] = CTX.tmp_quaternion[i];
   }
   viewport[0] = viewport[1] = 0;
-  viewport[2] = CTX.tmp_viewport[2];
-  viewport[3] = CTX.tmp_viewport[3];
+  viewport[2] = CTX.gl_size[0];
+  viewport[3] = CTX.gl_size[1];
 
   render_mode = GMSH_RENDER;
   vxmin = vymin = vxmax = vymax = 0.;
   pixel_equiv_x = pixel_equiv_y = 0.;
+
+  _quadric = 0; // cannot create it here: needs valid opengl context
+  _displayLists = 0;
+}
+
+drawContext::~drawContext()
+{
+  if(_quadric) gluDeleteQuadric(_quadric);
+  if(_displayLists) glDeleteLists(_displayLists, 2);
+}
+
+void drawContext::createQuadricsAndDisplayLists()
+{
+  if(!_quadric) _quadric = gluNewQuadric();
+  if(!_quadric){
+    Msg::Error("Could not create quadric");
+    return;
+  }
+
+  if(!_displayLists) _displayLists = glGenLists(2);
+  if(!_displayLists){
+    Msg::Error("Could not generate display lists");
+    return;
+  }
+
+  // display list 0 (sphere)
+  glNewList(_displayLists + 0, GL_COMPILE);
+  gluSphere(_quadric, 1., CTX.quadric_subdivisions, CTX.quadric_subdivisions);
+  glEndList();
+
+  // display list 1 (arrow)
+  glNewList(_displayLists + 1, GL_COMPILE);
+  glTranslated(0., 0., CTX.arrow_rel_stem_length);
+  if(CTX.arrow_rel_head_radius > 0 && CTX.arrow_rel_stem_length < 1)
+    gluCylinder(_quadric, CTX.arrow_rel_head_radius, 0., 
+                (1. - CTX.arrow_rel_stem_length), CTX.quadric_subdivisions, 1);
+  if(CTX.arrow_rel_head_radius > CTX.arrow_rel_stem_radius)
+    gluDisk(_quadric, CTX.arrow_rel_stem_radius, CTX.arrow_rel_head_radius,
+            CTX.quadric_subdivisions, 1);
+  else
+    gluDisk(_quadric, CTX.arrow_rel_head_radius, CTX.arrow_rel_stem_radius,
+            CTX.quadric_subdivisions, 1);
+  glTranslated(0., 0., -CTX.arrow_rel_stem_length);
+  if(CTX.arrow_rel_stem_radius > 0 && CTX.arrow_rel_stem_length > 0){
+    gluCylinder(_quadric, CTX.arrow_rel_stem_radius, CTX.arrow_rel_stem_radius,
+                CTX.arrow_rel_stem_length, CTX.quadric_subdivisions, 1);
+    gluDisk(_quadric, 0, CTX.arrow_rel_stem_radius, CTX.quadric_subdivisions, 1);
+  }
+  glEndList();
 }
 
 void drawContext::buildRotationMatrix()
@@ -153,6 +193,12 @@ static int needPolygonOffset()
 
 void drawContext::draw3d()
 {
+  // We can only create this when a valid opengl context exists. (It's
+  // cheap to create so we just do it at each redraw: this makes it
+  // much simpler to deal with option changes, e.g. arrow shape
+  // changes)
+  createQuadricsAndDisplayLists();
+
   // We should only enable the polygon offset when there is a mix of
   // lines and polygons to be drawn; enabling it all the time can lead
   // to very small but annoying artifacts in the picture. Since there
@@ -171,7 +217,6 @@ void drawContext::draw3d()
 
   glDepthFunc(GL_LESS);
   glEnable(GL_DEPTH_TEST);
-
   initProjection();
   initRenderModel();
   initPosition();
@@ -207,8 +252,8 @@ void drawContext::draw2d()
 void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
 {
   double Va = 
-    (GLdouble) (viewport[3] - viewport[1]) /
-    (GLdouble) (viewport[2] - viewport[0]);
+    (double) (viewport[3] - viewport[1]) /
+    (double) (viewport[2] - viewport[0]);
   double Wa = (CTX.max[1] - CTX.min[1]) / (CTX.max[0] - CTX.min[0]);
 
   // compute the viewport in World coordinates (with margins)

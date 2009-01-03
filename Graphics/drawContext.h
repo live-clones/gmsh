@@ -7,6 +7,16 @@
 #define _DRAW_CONTEXT_H_
 
 #include <string>
+#include <FL/gl.h>
+
+//FIXME: workaround faulty fltk installs
+//#include <FL/glu.h>
+#ifdef __APPLE__
+#  include <OpenGL/glu.h>
+#else
+#  include <GL/glu.h>
+#endif
+
 #include "SBoundingBox3d.h"
 
 class PView;
@@ -58,6 +68,8 @@ class drawTransformScaled : public drawTransform {
 class drawContext {
  private:
   drawTransform *_transform;
+  GLUquadricObj *_quadric;
+  GLuint _displayLists;
 
  public:
   double r[3]; // current Euler angles (in degrees!) 
@@ -75,7 +87,7 @@ class drawContext {
 
  public:
   drawContext(drawTransform *transform=0);
-  virtual ~drawContext(){}
+  ~drawContext();
   void setTransform(drawTransform *transform){ _transform = transform; }
   drawTransform *getTransform(){ return _transform; }
   void transform(double &x, double &y, double &z)
@@ -90,6 +102,7 @@ class drawContext {
   {
     if(_transform) _transform->transformTwoForm(x, y, z); 
   }
+  void createQuadricsAndDisplayLists();
   void buildRotationMatrix();
   void setQuaternion(double p1x, double p1y, double p2x, double p2y);
   void addQuaternion(double p1x, double p1y, double p2x, double p2y);
@@ -126,14 +139,15 @@ class drawContext {
   void drawStringCenter(std::string s);
   void drawStringRight(std::string s);
   void drawString(std::string s, double style);
+  void drawSphere(double R, double x, double y, double z, int n1, int n2, int light);
   void drawSphere(double size, double x, double y, double z, int light);
   void drawCylinder(double width, double *x, double *y, double *z, int light);
   void drawTaperedCylinder(double width, double val1, double val2, 
                            double ValMin, double ValMax, 
                            double *x, double *y, double *z, int light);
-  void drawVector(int Type, int Fill,
-                  double relHeadRadius, double relStemLength,
-                  double relStemRadius, double x, double y, double z,
+  void drawArrow3d(double x, double y, double z, double dx, double dy, double dz, 
+                   double length, int light);
+  void drawVector(int Type, int Fill, double x, double y, double z,
                   double dx, double dy, double dz, int light);
   void drawBox(double xmin, double ymin, double zmin,
                double xmax, double ymax, double zmax,

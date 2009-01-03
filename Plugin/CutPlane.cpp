@@ -4,7 +4,6 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #if defined(HAVE_FLTK)
-#include <FL/gl.h>
 #include "drawContext.h"
 #include "Draw.h"
 #endif

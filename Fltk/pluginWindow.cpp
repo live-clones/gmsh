@@ -10,7 +10,7 @@
 #include "GUI.h"
 #include "Draw.h"
 #include "pluginWindow.h"
-#include "shortcutWindow.h"
+#include "dialogWindow.h"
 #include "PView.h"
 #include "PluginManager.h"
 #include "Plugin.h"
@@ -222,8 +222,10 @@ void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,
   p->dialogBox->group->hide();
 }
 
-pluginWindow::pluginWindow()
+pluginWindow::pluginWindow(int deltaFontSize)
 {
+  FL_NORMAL_SIZE -= deltaFontSize;
+
   int width0 = 34 * FL_NORMAL_SIZE + WB;
   int height0 = 13 * BH + 5 * WB;
 
@@ -275,6 +277,8 @@ pluginWindow::pluginWindow()
 
   win->position(CTX.plugin_position[0], CTX.plugin_position[1]);
   win->end();
+
+  FL_NORMAL_SIZE += deltaFontSize;
 }
 
 void pluginWindow::show(int viewIndex)

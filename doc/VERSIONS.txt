@@ -1,8 +1,8 @@
-$Id: VERSIONS.txt,v 1.28 2008-12-28 17:23:39 geuzaine Exp $
+$Id: VERSIONS.txt,v 1.29 2009-01-03 08:56:45 geuzaine Exp $
 
 2.3.0 (?): restored full-quad recombine algorithm; fixed clipping
 planes when more than 32 views are present ({Geometry,Mesh,View}.Clip
-replaces General.Clip); modified arrow size and Transform options;
+replaces General.Clip); modified arrow size and transform options;
 improved visibility browser; major graphics and GUI code refactoring;
 improved automatic transfinite corner selection (now also for
 volumes); many small improvements and small bug fixes.

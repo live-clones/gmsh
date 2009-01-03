@@ -76,7 +76,8 @@ openglWindow::openglWindow(int x, int y, int w, int h, const char *l)
   _selection = ENT_NONE;
   _trySelection = 0;
   for(int i = 0; i < 4; i++) _trySelectionXYWH[i] = 0;
-  
+  _lassoXY[0] = _lassoXY[1] = 0;
+
   addPointMode = lassoMode = selectionMode = false;
   endSelection = undoSelection = invertSelection = quitSelection = 0;
 }
@@ -111,6 +112,30 @@ void openglWindow::drawScreenMessage()
   }
 }
 
+void openglWindow::drawBorder()
+{
+  // draw thin border if the parent group has several children
+  if(parent()->children() > 1){
+    unsigned char r, g, b;
+    Fl::get_color(color(), r, g, b);
+    /* would need to redraw all gl's when _lastHandled is changed
+    if(_lastHandled == this)
+      Fl::get_color(FL_SELECTION_COLOR, r, g, b);
+    else
+      Fl::get_color(FL_BACKGROUND_COLOR, r, g, b);
+    */
+    glColor3ub(r, g, b);
+    int ww = 1;
+    glLineWidth(ww);
+    glBegin(GL_LINE_LOOP);
+    glVertex2d(_ctx->viewport[0], _ctx->viewport[1]);
+    glVertex2d(_ctx->viewport[2] - ww, _ctx->viewport[1]);
+    glVertex2d(_ctx->viewport[2] - ww, _ctx->viewport[3] - ww);
+    glVertex2d(_ctx->viewport[0], _ctx->viewport[3] - ww);
+    glEnd();
+  }
+}
+
 void openglWindow::draw()
 {
   static int locked = 0;
@@ -121,24 +146,12 @@ void openglWindow::draw()
 
   Msg::Debug("openglWindow->draw()");
 
-  if(!valid()) {
-    valid(1);
-    _ctx->viewport[0] = 0;
-    _ctx->viewport[1] = 0;
-    _ctx->viewport[2] = w();
-    _ctx->viewport[3] = h();
-    glViewport(_ctx->viewport[0], _ctx->viewport[1],
-               _ctx->viewport[2], _ctx->viewport[3]);
-  }
-  else {
-    if((w() != _ctx->viewport[2] - _ctx->viewport[0]) ||
-       (h() != _ctx->viewport[3] - _ctx->viewport[1])) {
-      GUI::instance()->setGraphicSize(_ctx->viewport[2] - _ctx->viewport[0],
-                                      _ctx->viewport[3] - _ctx->viewport[1]);
-      glViewport(_ctx->viewport[0], _ctx->viewport[1],
-                 _ctx->viewport[2], _ctx->viewport[3]);
-    }
-  }
+  _ctx->viewport[0] = 0;
+  _ctx->viewport[1] = 0;
+  _ctx->viewport[2] = w();
+  _ctx->viewport[3] = h();
+  glViewport(_ctx->viewport[0], _ctx->viewport[1],
+             _ctx->viewport[2], _ctx->viewport[3]);
 
   if(lassoMode) { 
     // draw the zoom or selection lasso on top of the current scene
@@ -159,19 +172,22 @@ void openglWindow::draw()
     glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
     glEnable(GL_BLEND);
     glLineWidth(0.2);
-    for(int i = 0; i < 2; i++){
-      glBegin(GL_LINE_STRIP);
-      glVertex2d(_click.win[0], _ctx->viewport[3] - _click.win[1]);
-      glVertex2d(_lasso.win[0], _ctx->viewport[3] - _click.win[1]);
-      glVertex2d(_lasso.win[0], _ctx->viewport[3] - _lasso.win[1]);
-      glVertex2d(_click.win[0], _ctx->viewport[3] - _lasso.win[1]);
-      glVertex2d(_click.win[0], _ctx->viewport[3] - _click.win[1]);
-      glEnd();
-      if(!i) _lasso.set(_ctx);
-    }
+    glBegin(GL_LINE_LOOP);
+    glVertex2d(_click.win[0], _ctx->viewport[3] - _click.win[1]);
+    glVertex2d(_lassoXY[0], _ctx->viewport[3] - _click.win[1]);
+    glVertex2d(_lassoXY[0], _ctx->viewport[3] - _lassoXY[1]);
+    glVertex2d(_click.win[0], _ctx->viewport[3] - _lassoXY[1]);
+    glEnd();
+    glBegin(GL_LINE_LOOP);
+    glVertex2d(_click.win[0], _ctx->viewport[3] - _click.win[1]);
+    glVertex2d(_curr.win[0], _ctx->viewport[3] - _click.win[1]);
+    glVertex2d(_curr.win[0], _ctx->viewport[3] - _curr.win[1]);
+    glVertex2d(_click.win[0], _ctx->viewport[3] - _curr.win[1]);
+    glEnd();
+    _lassoXY[0] = _curr.win[0];
+    _lassoXY[1] = _curr.win[1];
     glDisable(GL_BLEND);
-    if(selectionMode && CTX.mouse_selection)
-      glDisable(GL_LINE_STIPPLE);
+    glDisable(GL_LINE_STIPPLE);
     glEnable(GL_DEPTH_TEST);
   }
   else if(addPointMode) { 
@@ -180,7 +196,10 @@ void openglWindow::draw()
       CTX.mesh.draw = 0;
       CTX.post.draw = 0;
     }
-    ClearOpengl();
+    glClearColor(CTX.UNPACK_RED(CTX.color.bg) / 255.,
+                 CTX.UNPACK_GREEN(CTX.color.bg) / 255.,
+                 CTX.UNPACK_BLUE(CTX.color.bg) / 255., 0.);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     _ctx->draw3d();
     glColor4ubv((GLubyte *) & CTX.color.fg);
     glPointSize(CTX.geom.point_size);
@@ -189,15 +208,20 @@ void openglWindow::draw()
     glEnd();
     _ctx->draw2d();
     drawScreenMessage();
+    drawBorder();
     CTX.mesh.draw = 1;
     CTX.post.draw = 1;
   }
   else{
     // draw the whole scene
-    ClearOpengl();
+    glClearColor(CTX.UNPACK_RED(CTX.color.bg) / 255.,
+                 CTX.UNPACK_GREEN(CTX.color.bg) / 255.,
+                 CTX.UNPACK_BLUE(CTX.color.bg) / 255., 0.);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     _ctx->draw3d();
     _ctx->draw2d();
     drawScreenMessage();
+    drawBorder();
   }
 
   locked = 0;
@@ -208,6 +232,8 @@ void openglWindow::draw()
 // the focus. If this handle returns 1, then the event is considered
 // as treated, and is suppressed. If the handle returns 0, the event
 // is passed to the parent.
+
+openglWindow *openglWindow::_lastHandled = 0;
 
 int openglWindow::handle(int event)
 {
@@ -225,13 +251,15 @@ int openglWindow::handle(int event)
     return Fl_Gl_Window::handle(event);
     
   case FL_PUSH:
+    _lastHandled = this;
     take_focus(); // force keyboard focus when we click in the window
     _curr.set(_ctx);
     if(Fl::event_button() == 1 && 
        !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
       if(!lassoMode && Fl::event_state(FL_CTRL)) {
         lassoMode = true;
-        _lasso.set(_ctx);
+        _lassoXY[0] = _curr.win[0];
+        _lassoXY[1] = _curr.win[1];
       }
       else if(lassoMode) {
         lassoMode = false;
@@ -307,6 +335,7 @@ int openglWindow::handle(int event)
     return 1;
 
   case FL_RELEASE:
+    _lastHandled = this;
     _curr.set(_ctx);
     CTX.draw_rotation_center = 0;
     if(!lassoMode) {
@@ -331,6 +360,7 @@ int openglWindow::handle(int event)
     return 1;
 
   case FL_DRAG:
+    _lastHandled = this;
     _curr.set(_ctx);
     {
       double dx = _curr.win[0] - _prev.win[0];
@@ -390,7 +420,7 @@ int openglWindow::handle(int event)
 
   case FL_MOVE:
     _curr.set(_ctx);
-    if(lassoMode) {
+    if(lassoMode){
       redraw();
     }
     else if(addPointMode && !Fl::event_state(FL_SHIFT)){

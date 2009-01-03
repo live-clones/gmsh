@@ -12,7 +12,7 @@
 #include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Hold_Browser.H>
-#include "shortcutWindow.h"
+#include "dialogWindow.h"
 #include "fourierProjectionFace.h"
 #include "GModel.h"
 #include "ColorTable.h"

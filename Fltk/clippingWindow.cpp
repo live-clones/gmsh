@@ -8,7 +8,7 @@
 #include "GUI.h"
 #include "Draw.h"
 #include "clippingWindow.h"
-#include "shortcutWindow.h"
+#include "dialogWindow.h"
 #include "GmshDefines.h"
 #include "PView.h"
 #include "PViewOptions.h"
@@ -145,8 +145,10 @@ static void clip_reset_cb(Fl_Widget *w, void *data)
   Draw();
 }
 
-clippingWindow::clippingWindow()
+clippingWindow::clippingWindow(int deltaFontSize)
 {
+  FL_NORMAL_SIZE -= deltaFontSize;
+
   static Fl_Menu_Item plane_number[] = {
     {"Plane 0", 0, 0},
     {"Plane 1", 0, 0},
@@ -253,6 +255,8 @@ clippingWindow::clippingWindow()
 
   win->position(CTX.clip_position[0], CTX.clip_position[1]);
   win->end();
+
+  FL_NORMAL_SIZE += deltaFontSize;
 }
 
 void clippingWindow::resetBrowser()

@@ -17,7 +17,7 @@
 #include <FL/Fl_Hold_Browser.H>
 #include <FL/Fl_Box.H>
 #include "GUI.h"
-#include "shortcutWindow.h"
+#include "dialogWindow.h"
 #include "GmshDefines.h"
 #include "CreateFile.h"
 #include "Options.h"
