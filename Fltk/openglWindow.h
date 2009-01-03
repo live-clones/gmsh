@@ -48,7 +48,8 @@ class openglWindow : public Fl_Gl_Window {
   mousePosition _click, _curr, _prev;
   drawContext *_ctx;
   double _point[3];
-  int _selection, _trySelection, _trySelectionXYWH[4], _lassoXY[2];
+  int _selection, _trySelection, _trySelectionXYWH[4];
+  double _lassoXY[2];
   void drawScreenMessage();
   void drawBorder();
   bool processSelectionBuffer(int type, 
