@@ -143,7 +143,7 @@ static void file_merge_cb(Fl_Widget *w, void *data)
 
 static void file_clear_cb(Fl_Widget *w, void *data)
 {
-  ClearProject();
+  ClearProject(CTX.default_filename);
   Draw();
 }
 
@@ -329,7 +329,7 @@ static void file_rename_cb(Fl_Widget *w, void *data)
           goto test;
     }
     rename(CTX.filename, name.c_str());
-    ClearProject();
+    ClearProject(name.c_str());
     OpenProject(name.c_str());
     Draw();
   }
@@ -536,7 +536,7 @@ static void geometry_edit_cb(Fl_Widget *w, void *data)
 
 void geometry_reload_cb(Fl_Widget *w, void *data)
 {
-  ClearProject();
+  ClearProject(CTX.filename);
   OpenProject(CTX.filename);
   Draw();
 }

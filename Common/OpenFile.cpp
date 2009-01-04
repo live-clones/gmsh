@@ -212,7 +212,7 @@ void ParseString(const char *str)
   }
 }
 
-void SetProjectName(const char *name)
+static void SetProjectName(const char *name)
 {
   char no_ext[256], ext[256], base[256];
   SplitFileName(name, no_ext, ext, base);
@@ -389,7 +389,7 @@ int MergeFile(const char *name, int warn_if_missing)
   return status;
 }
 
-void ClearProject()
+void ClearProject(const char *filename)
 {
 #if !defined(HAVE_NO_POST)
   for(int i = PView::list.size() - 1; i >= 0; i--)
@@ -401,6 +401,7 @@ void ClearProject()
   for(int i = GModel::list.size() - 1; i >= 0; i--)
     delete GModel::list[i];
   new GModel();
+  SetProjectName(filename);
 #if defined(HAVE_FLTK)
   if(GUI::available()){
     GUI::instance()->resetVisibility();
