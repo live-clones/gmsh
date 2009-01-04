@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
   if(argc == 2 && std::string(argv[1]) == "-doc"){
     Init_Options(0);
     GMSH_PluginManager::instance()->registerDefaultPlugins();
-    GModel *dummy = new GModel;
+    GModel *dummy = new GModel();
     Print_OptionsDoc();
     delete dummy;
     exit(0);
@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
   if(CTX.batch) CTX.terminal = 1;
 
   // Create a new model
-  new GModel;
+  new GModel();
 
   // Non-interactive Gmsh
   if(CTX.batch) {
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
   OpenProject(CTX.filename);
   for(unsigned int i = 1; i < CTX.files.size(); i++){
     if(CTX.files[i] == "-new")
-      new GModel;
+      new GModel();
     else
       MergeFile(CTX.files[i].c_str());
   }

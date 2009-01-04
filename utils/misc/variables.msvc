@@ -93,7 +93,7 @@ SYSINCLUDE=/I"${INCLUDE}"
 OPTIM=/O2
 
 # Gmsh subdirectories
-GMSH_DIRS=Common Geo Mesh Numeric contrib/ANN contrib/MathEval contrib/NR
+GMSH_DIRS=Common Geo Mesh Numeric contrib/ANN contrib/MathEval
 
 # Optional stuff
 ifeq (${ENABLE_GSL},1)

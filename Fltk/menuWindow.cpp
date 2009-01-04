@@ -71,8 +71,7 @@ static void file_new_cb(Fl_Widget *w, void *data)
     time(&now);
     fprintf(fp, "// Gmsh project created on %s", ctime(&now));
     fclose(fp);
-    new GModel();
-    MergeFile(name.c_str());
+    OpenProject(name.c_str());
     Draw();
   }
 }
@@ -330,6 +329,7 @@ static void file_rename_cb(Fl_Widget *w, void *data)
           goto test;
     }
     rename(CTX.filename, name.c_str());
+    ClearProject();
     OpenProject(name.c_str());
     Draw();
   }
@@ -536,6 +536,7 @@ static void geometry_edit_cb(Fl_Widget *w, void *data)
 
 void geometry_reload_cb(Fl_Widget *w, void *data)
 {
+  ClearProject();
   OpenProject(CTX.filename);
   Draw();
 }

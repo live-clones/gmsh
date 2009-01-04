@@ -398,11 +398,9 @@ void ClearProject()
 #if !defined(HAVE_NO_PARSER)
   gmsh_yysymbols.clear();
 #endif
-  for(int i = GModel::list.size() - 1; i >= 1; i--)
+  for(int i = GModel::list.size() - 1; i >= 0; i--)
     delete GModel::list[i];
-  GModel::current(0);
-  GModel::current()->destroy();
-  GModel::current()->getGEOInternals()->destroy();
+  new GModel();
 #if defined(HAVE_FLTK)
   if(GUI::available()){
     GUI::instance()->resetVisibility();
@@ -421,26 +419,33 @@ void OpenProject(const char *name)
   }
   CTX.threads_lock = 1;
 
-  // FIXME: this will change once we clarify Open/Merge/Clear
-#if !defined(HAVE_NO_POST)
-  for(int i = PView::list.size() - 1; i >= 0; i--)
-    if(PView::list[i]->getData()->hasModel(GModel::current()))
-      delete PView::list[i];
-#endif
+  if(!GModel::current()){
+    // if there's no model, add a new one and make it the current
+    new GModel();
+    GModel::current(GModel::list.size() - 1);
+  }
+  else if(GModel::current()->empty()){
+    // if the current model is empty, make sure it's reaaally
+    // cleaned-up, and reuse it
+    GModel::current()->destroy();
+    GModel::current()->getGEOInternals()->destroy();
+  }
+  else{
+    // if the current model is not empty make it invisible, clear the
+    // parser variables (if it's empty it probably means we just
+    // launched gmsh, and we don't want to delete variables set
+    // e.g. using the -string command line option) and add a new model
+    GModel::current()->setVisibility(0);
 #if !defined(HAVE_NO_PARSER)
-  // reinitialize the variables defined in the parser (only if the
-  // current model is not empty: if it's empty it probably means we
-  // just launched gmsh, and we don't want to delete variables set
-  // e.g. using the -string command line option)
-  if(GModel::current()->getNumVertices()) gmsh_yysymbols.clear();
+    gmsh_yysymbols.clear();
 #endif
-  GModel::current()->destroy();
-  GModel::current()->getGEOInternals()->destroy();
+    new GModel();
+    GModel::current(GModel::list.size() - 1);
+  }
 
   // temporary hack until we fill the current GModel on the fly during
   // parsing
   ResetTemporaryBoundingBox();
-
   MergeFile(name);
 
   CTX.threads_lock = 0;

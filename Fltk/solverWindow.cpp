@@ -199,7 +199,7 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
   int BBS = (width - 8 * WB) / 5;
   
   win = new dialogWindow
-    (width, height, CTX.non_modal_windows);
+    (width, height, CTX.non_modal_windows, "Solver");
   win->box(GMSH_WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs
