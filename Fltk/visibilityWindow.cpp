@@ -34,7 +34,7 @@ class Vis {
   Vis(){}
   virtual ~Vis(){}
   virtual int getTag() const = 0;
-  virtual int getDim() const = 0;
+  virtual int getDim() const { return -1; }
   virtual std::string getName() const = 0;
   virtual char getVisibility() const = 0;
   virtual void setVisibility(char val, bool recursive=false) = 0;
@@ -42,21 +42,15 @@ class Vis {
 
 class VisModel : public Vis {
  private:
+  GModel *_model;
   int _tag;
-  char _visible;
  public:
-  VisModel(int tag) : _tag(tag), _visible(1) {}
+  VisModel(GModel *model, int tag) : _model(model), _tag(tag) {}
   ~VisModel(){}
   int getTag() const { return _tag; }
-  int getDim() const { return -1; }
   std::string getName() const { return "Model"; }
-  char getVisibility() const { return _visible; }
-  void setVisibility(char val, bool recursive=false)
-  {
-    _visible = val;
-    if(_tag >= 0 && _tag < GModel::list.size())
-      GModel::list[_tag]->setVisibility(val);
-  }
+  char getVisibility() const { return _model->getVisibility(); }
+  void setVisibility(char val, bool recursive=false){ _model->setVisibility(val); }
 };
 
 class VisElementary : public Vis {
@@ -120,7 +114,6 @@ class VisPartition : public Vis {
   VisPartition(int tag) : _tag(tag), _visible(1) {}
   ~VisPartition(){}
   int getTag() const { return _tag; }
-  int getDim() const { return -1; }
   std::string getName() const { return "Partition"; }
   char getVisibility() const { return _visible; }
   void setVisibility(char val, bool recursive=false)
@@ -191,7 +184,7 @@ class VisibilityList { // singleton
 #endif
     if(type == Models){
       for(unsigned int i = 0; i < GModel::list.size(); i++){
-        _entities.push_back(new VisModel(i));
+        _entities.push_back(new VisModel(GModel::list[i], i));
         std::string name = GModel::list[i]->getName();
         if(GModel::list[i] == GModel::current()) name += " (Active)";
         setLabel(i, name);
