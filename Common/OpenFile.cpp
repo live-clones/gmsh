@@ -232,13 +232,12 @@ static void SetProjectName(const char *name)
 
 int MergeFile(const char *name, int warn_if_missing)
 {
-  GModel *model = GModel::current();
-  if(!model){
+  if(!GModel::current()){
     Msg::Error("No models exists in which to merge data");
     return 0;
   }
 
-  if(model->getName() == "")
+  if(GModel::current()->getName() == "")
     SetProjectName(name);
 
   // added 'b' for pure Windows programs, since some of these files
@@ -285,33 +284,33 @@ int MergeFile(const char *name, int warn_if_missing)
 
   int status = 0;
   if(!strcmp(ext, ".stl") || !strcmp(ext, ".STL")){
-    status = model->readSTL(name, CTX.geom.tolerance);
+    status = GModel::current()->readSTL(name, CTX.geom.tolerance);
   }
   else if(!strcmp(ext, ".brep") || !strcmp(ext, ".rle") ||
           !strcmp(ext, ".brp") || !strcmp(ext, ".BRP")){
-    status = model->readOCCBREP(std::string(name));
+    status = GModel::current()->readOCCBREP(std::string(name));
   }
   else if(!strcmp(ext, ".iges") || !strcmp(ext, ".IGES") ||
           !strcmp(ext, ".igs") || !strcmp(ext, ".IGS")){
-    status = model->readOCCIGES(std::string(name));
+    status = GModel::current()->readOCCIGES(std::string(name));
   }
   else if(!strcmp(ext, ".step") || !strcmp(ext, ".STEP") ||
           !strcmp(ext, ".stp") || !strcmp(ext, ".STP")){
-    status = model->readOCCSTEP(std::string(name));
+    status = GModel::current()->readOCCSTEP(std::string(name));
   }
   else if(!strcmp(ext, ".unv") || !strcmp(ext, ".UNV")){
-    status = model->readUNV(name);
+    status = GModel::current()->readUNV(name);
   }
   else if(!strcmp(ext, ".vtk") || !strcmp(ext, ".VTK")){
-    status = model->readVTK(name, CTX.big_endian);
+    status = GModel::current()->readVTK(name, CTX.big_endian);
   }
   else if(!strcmp(ext, ".wrl") || !strcmp(ext, ".WRL") || 
           !strcmp(ext, ".vrml") || !strcmp(ext, ".VRML") ||
           !strcmp(ext, ".iv") || !strcmp(ext, ".IV")){
-    status = model->readVRML(name);
+    status = GModel::current()->readVRML(name);
   }
   else if(!strcmp(ext, ".mesh") || !strcmp(ext, ".MESH")){
-    status = model->readMESH(name);
+    status = GModel::current()->readMESH(name);
   }
   else if(!strcmp(ext, ".med") || !strcmp(ext, ".MED") ||
 	  !strcmp(ext, ".mmed") || !strcmp(ext, ".MMED") ||
@@ -323,13 +322,13 @@ int MergeFile(const char *name, int warn_if_missing)
   }
   else if(!strcmp(ext, ".bdf") || !strcmp(ext, ".BDF") ||
           !strcmp(ext, ".nas") || !strcmp(ext, ".NAS")){
-    status = model->readBDF(name);
+    status = GModel::current()->readBDF(name);
   }
   else if(!strcmp(ext, ".p3d") || !strcmp(ext, ".P3D")){
-    status = model->readP3D(name);
+    status = GModel::current()->readP3D(name);
   }
   else if(!strcmp(ext, ".fm") || !strcmp(ext, ".FM")) {
-    status = model->readFourier(name);
+    status = GModel::current()->readFourier(name);
   }
 #if defined(HAVE_FLTK)
   else if(!strcmp(ext, ".pnm") || !strcmp(ext, ".PNM") ||
@@ -358,7 +357,7 @@ int MergeFile(const char *name, int warn_if_missing)
     if(!strncmp(header, "$PTS", 4) || !strncmp(header, "$NO", 3) || 
        !strncmp(header, "$PARA", 5) || !strncmp(header, "$ELM", 4) ||
        !strncmp(header, "$MeshFormat", 11) || !strncmp(header, "$Comments", 9)) {
-      status = model->readMSH(name);
+      status = GModel::current()->readMSH(name);
 #if !defined(HAVE_NO_POST)
       if(status > 1) status = PView::readMSH(name);
 #endif
@@ -370,7 +369,7 @@ int MergeFile(const char *name, int warn_if_missing)
     }
 #endif
     else {
-      status = model->readGEO(name);
+      status = GModel::current()->readGEO(name);
     }
   }
 
