@@ -9,6 +9,6 @@
 
 int GuessFileFormatFromFileName(std::string fileName);
 std::string GetDefaultFileName(int format);
-void CreateOutputFile(const char *name, int format);
+void CreateOutputFile(std::string fileName, int format);
 
 #endif

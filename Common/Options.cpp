@@ -473,8 +473,8 @@ void Init_Options(int num)
 
   // The following defaults cannot be set by the user 
   CTX.batch = CTX.batch_after_mesh = 0;
-  CTX.output_filename = NULL;
-  CTX.bgm_filename = NULL;
+  CTX.output_filename = "";
+  CTX.bgm_filename = "";
   CTX.lc = 1.;
   // nice 2-D defaults for when adding points in a brand new model
   CTX.min[0] = CTX.min[1] = CTX.min[2] = CTX.max[2] = 0.;

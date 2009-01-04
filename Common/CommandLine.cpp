@@ -316,8 +316,7 @@ void Get_Options(int argc, char *argv[])
         i++;
         CTX.batch = 1;
         while(i < argc) {
-          char filename[256];
-          sprintf(filename, "%s_new", argv[i]);
+          std::string fileName = std::string(argv[i]) + "_new";
 #if !defined(HAVE_NO_POST)
           unsigned int n = PView::list.size();
 #endif
@@ -325,13 +324,13 @@ void Get_Options(int argc, char *argv[])
 #if !defined(HAVE_NO_POST)
           // convert post-processing views to latest binary format
           for(unsigned int j = n; j < PView::list.size(); j++)
-            PView::list[j]->write(filename, 1, (j == n) ? false : true);
+            PView::list[j]->write(fileName, 1, (j == n) ? false : true);
 #endif
           // convert mesh to latest binary format
           if(GModel::current()->getMeshStatus() > 0){
             CTX.mesh.msh_file_version = 2.0;
             CTX.mesh.binary = 1;
-            CreateOutputFile(filename, FORMAT_MSH);
+            CreateOutputFile(fileName, FORMAT_MSH);
           }
           i++;
         }

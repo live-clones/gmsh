@@ -1438,18 +1438,15 @@ static void geometry_physical_add_cb(Fl_Widget *w, void *data)
 
 static void mesh_save_cb(Fl_Widget *w, void *data)
 {
-  std::string name;
-  if(CTX.output_filename)
-    name = CTX.output_filename;
-  else
-    name = GetDefaultFileName(CTX.mesh.format);
+  std::string name = CTX.output_filename;
+  if(name.empty()) name = GetDefaultFileName(CTX.mesh.format);
   if(CTX.confirm_overwrite) {
     if(!StatFile(name.c_str()))
       if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
                     "Cancel", "Replace", NULL, name.c_str()))
         return;
   }
-  CreateOutputFile(name.c_str(), CTX.mesh.format);
+  CreateOutputFile(name, CTX.mesh.format);
 }
 
 static void mesh_define_cb(Fl_Widget *w, void *data)

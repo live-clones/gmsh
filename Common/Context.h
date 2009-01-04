@@ -18,8 +18,8 @@ class Context_T {
  public :
   // general options
   std::vector<std::string> files; // all the files on the command line
-  const char *bgm_filename; // background mesh
-  const char *output_filename; // output file specified with command line option '-o'
+  std::string bgm_filename; // background mesh
+  std::string output_filename; // output file specified with command line option '-o'
   const char *default_filename;
   const char *tmp_filename;
   const char *session_filename;

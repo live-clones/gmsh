@@ -100,7 +100,7 @@ int GmshBatch()
   }
 
 #if !defined(HAVE_NO_POST)
-  if(CTX.bgm_filename) {
+  if(!CTX.bgm_filename.empty()) {
     MergeFile(CTX.bgm_filename);
     if(PView::list.size())
       GModel::current()->getFields()->set_background_mesh(PView::list.size() - 1);

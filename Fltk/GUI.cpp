@@ -71,8 +71,7 @@ GUI::GUI(int argc, char **argv)
   // load default system icons (for file browser)
   Fl_File_Icon::load_system_icons();
   
-  // add callback to respond to the Mac Finder (when you click on a
-  // document)
+  // add callback to respond to Mac Finder
 #if defined(__APPLE__)
   fl_open_callback(OpenProjectMacFinder);
 #endif
@@ -122,9 +121,11 @@ GUI::GUI(int argc, char **argv)
 
   // create additional graphic windows
   for(int i = 1; i < CTX.num_windows; i++){
-    graph.push_back(new graphicWindow(false, CTX.num_tiles));
-    graph.back()->win->size(400, 400);
-    graph.back()->win->show();
+    graphicWindow *g = new graphicWindow(false, CTX.num_tiles);
+    g->win->resize(graph.back()->win->x() + 10, graph.back()->win->y() + 10,
+                   graph.back()->win->w(), graph.back()->win->h());
+    g->win->show();
+    graph.push_back(g);
   }
 
   options = new optionWindow(CTX.deltafontsize);
@@ -144,7 +145,7 @@ GUI::GUI(int argc, char **argv)
   // init solver plugin stuff
   callForSolverPlugin(-1);
 
-  // draw the scene
+  // draw
   for(unsigned int i = 0; i < graph.size(); i++)
     for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
       graph[i]->gl[j]->redraw();

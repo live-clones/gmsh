@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
   }
 
   // Read background mesh on disk
-  if(CTX.bgm_filename) {
+  if(!CTX.bgm_filename.empty()) {
     MergeFile(CTX.bgm_filename);
     if(PView::list.size())
       GModel::current()->getFields()->set_background_mesh(PView::list.size() - 1);

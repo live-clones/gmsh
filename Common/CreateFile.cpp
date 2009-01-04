@@ -102,16 +102,13 @@ std::string GetDefaultFileName(int format)
   return name;
 }
 
-void CreateOutputFile(const char *filename, int format)
+void CreateOutputFile(std::string fileName, int format)
 {
-  std::string name;
-  if(!filename || !strlen(filename))
-    name = GetDefaultFileName(format);
-  else
-    name = filename;
+  if(fileName.empty())
+    fileName = GetDefaultFileName(format);
 
   char no_ext[256], ext[256], base[256];
-  SplitFileName(name.c_str(), no_ext, ext, base);
+  SplitFileName(fileName.c_str(), no_ext, ext, base);
 
   int oldformat = CTX.print.format;
   CTX.print.format = format;
@@ -128,81 +125,88 @@ void CreateOutputFile(const char *filename, int format)
 
   bool printEndMessage = true;
   if(format != FORMAT_AUTO) 
-    Msg::StatusBar(2, true, "Writing '%s'", name.c_str());
+    Msg::StatusBar(2, true, "Writing '%s'", fileName.c_str());
 
   switch (format) {
 
   case FORMAT_AUTO:
-    CreateOutputFile(name.c_str(), GuessFileFormatFromFileName(name));
+    CreateOutputFile(fileName, GuessFileFormatFromFileName(fileName));
     printEndMessage = false;
     break;
     
   case FORMAT_OPT:
-    Print_Options(0, GMSH_FULLRC, 1, 1, name.c_str());
+    Print_Options(0, GMSH_FULLRC, 1, 1, fileName.c_str());
     break;
 
   case FORMAT_MSH:
-    GModel::current()->writeMSH(name, CTX.mesh.msh_file_version, CTX.mesh.binary, 
-                                CTX.mesh.save_all, CTX.mesh.save_parametric,
-                                CTX.mesh.scaling_factor);
+    GModel::current()->writeMSH
+      (fileName, CTX.mesh.msh_file_version, CTX.mesh.binary, CTX.mesh.save_all,
+       CTX.mesh.save_parametric, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_STL:
-    GModel::current()->writeSTL(name, CTX.mesh.binary,
-                                CTX.mesh.save_all, CTX.mesh.scaling_factor);
+    GModel::current()->writeSTL
+      (fileName, CTX.mesh.binary, CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_VRML:
-    GModel::current()->writeVRML(name, CTX.mesh.save_all, CTX.mesh.scaling_factor);
+    GModel::current()->writeVRML
+      (fileName, CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_UNV:
-    GModel::current()->writeUNV(name, CTX.mesh.save_all, CTX.mesh.save_groups_of_nodes,
-                                CTX.mesh.scaling_factor);
+    GModel::current()->writeUNV
+      (fileName, CTX.mesh.save_all, CTX.mesh.save_groups_of_nodes,
+       CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_VTK:
-    GModel::current()->writeVTK(name, CTX.mesh.binary, CTX.mesh.save_all,
-                                CTX.mesh.scaling_factor, CTX.big_endian);
+    GModel::current()->writeVTK
+      (fileName, CTX.mesh.binary, CTX.mesh.save_all, CTX.mesh.scaling_factor,
+       CTX.big_endian);
     break;
 
   case FORMAT_MESH:
-    GModel::current()->writeMESH(name, CTX.mesh.save_all, CTX.mesh.scaling_factor);
+    GModel::current()->writeMESH
+      (fileName, CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_BDF:
-    GModel::current()->writeBDF(name, CTX.mesh.bdf_field_format, 
-				CTX.mesh.save_all, CTX.mesh.scaling_factor);
+    GModel::current()->writeBDF
+      (fileName, CTX.mesh.bdf_field_format, CTX.mesh.save_all,
+       CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_DIFF:
-    GModel::current()->writeDIFF(name, CTX.mesh.binary, CTX.mesh.save_all,
-                                 CTX.mesh.scaling_factor);
+    GModel::current()->writeDIFF
+      (fileName, CTX.mesh.binary, CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_P3D:
-    GModel::current()->writeP3D(name, CTX.mesh.save_all, CTX.mesh.scaling_factor);
+    GModel::current()->writeP3D
+      (fileName, CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_CGNS:
-    GModel::current()->writeCGNS(name, CTX.mesh.zone_definition,
-                                 CTX.mesh.cgns_options,
-                                 CTX.mesh.scaling_factor);
+    GModel::current()->writeCGNS
+      (fileName, CTX.mesh.zone_definition, CTX.mesh.cgns_options, 
+       CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_MED:
-    GModel::current()->writeMED(name, CTX.mesh.save_all, CTX.mesh.scaling_factor);
+    GModel::current()->writeMED
+      (fileName, CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_POS:
-    GModel::current()->writePOS(name, CTX.print.pos_elementary, CTX.print.pos_element, 
-                                CTX.print.pos_gamma, CTX.print.pos_eta, CTX.print.pos_rho, 
-				CTX.print.pos_disto, CTX.mesh.save_all, 
-                                CTX.mesh.scaling_factor);
+    GModel::current()->writePOS
+      (fileName, CTX.print.pos_elementary, CTX.print.pos_element, 
+       CTX.print.pos_gamma, CTX.print.pos_eta, CTX.print.pos_rho, 
+       CTX.print.pos_disto, CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_GEO:
-    GModel::current()->writeGEO(name, CTX.print.geo_labels);
+    GModel::current()->writeGEO(fileName, CTX.print.geo_labels);
     break;
 
 #if defined(HAVE_FLTK)
@@ -213,8 +217,8 @@ void CreateOutputFile(const char *filename, int format)
   case FORMAT_PNG:
     {
       FILE *fp;
-      if(!(fp = fopen(name.c_str(), "wb"))) {
-        Msg::Error("Unable to open file '%s'", name.c_str());
+      if(!(fp = fopen(fileName.c_str(), "wb"))) {
+        Msg::Error("Unable to open file '%s'", fileName.c_str());
         break;
       }
 
@@ -258,8 +262,8 @@ void CreateOutputFile(const char *filename, int format)
   case FORMAT_SVG:
     {
       FILE *fp;
-      if(!(fp = fopen(name.c_str(), "wb"))) {
-        Msg::Error("Unable to open file '%s'", name.c_str());
+      if(!(fp = fopen(fileName.c_str(), "wb"))) {
+        Msg::Error("Unable to open file '%s'", fileName.c_str());
         break;
       }
       
@@ -337,8 +341,8 @@ void CreateOutputFile(const char *filename, int format)
   case FORMAT_TEX:
     {
       FILE *fp;
-      if(!(fp = fopen(name.c_str(), "w"))) {
-        Msg::Error("Unable to open file '%s'", name.c_str());
+      if(!(fp = fopen(fileName.c_str(), "w"))) {
+        Msg::Error("Unable to open file '%s'", fileName.c_str());
         break;
       }
       GLint buffsize = 0;
@@ -366,7 +370,7 @@ void CreateOutputFile(const char *filename, int format)
     break;
   }
 
-  if(printEndMessage) Msg::StatusBar(2, true, "Wrote '%s'", name.c_str());
+  if(printEndMessage) Msg::StatusBar(2, true, "Wrote '%s'", fileName.c_str());
 
   CTX.print.format = oldformat;
   CTX.printing = 0;
