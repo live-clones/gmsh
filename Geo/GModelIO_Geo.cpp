@@ -34,7 +34,7 @@ void GModel::_deleteGEOInternals()
 
 int GModel::readGEO(const std::string &name)
 {
-  ParseFile(name.c_str(), 1);
+  ParseFile(name.c_str(), true);
   return importGEOInternals();
 }
 

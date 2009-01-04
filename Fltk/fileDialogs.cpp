@@ -77,7 +77,7 @@ int file_chooser(int multi, int create, const char *message,
   Fl_File_Chooser::show_label = "Format:";
   Fl_File_Chooser::all_files_label = "All files (*)";
   if(!fc) {
-    fc = new fileChooser(getenv("PWD") ? "." : CTX.home_dir, thefilter, 
+    fc = new fileChooser(getenv("PWD") ? "." : CTX.home_dir.c_str(), thefilter, 
                          Fl_File_Chooser::SINGLE, message);
     fc->position(CTX.file_chooser_position[0], CTX.file_chooser_position[1]);
   }

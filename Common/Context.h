@@ -21,15 +21,10 @@ class Context_T {
   const char *bgm_filename; // background mesh
   const char *output_filename; // output file specified with command line option '-o'
   const char *default_filename;
-  char default_filename_fullpath[256]; // the name of the default file
   const char *tmp_filename;
-  char tmp_filename_fullpath[256]; // the name of the temp file
   const char *session_filename;
-  char session_filename_fullpath[256]; // the name of the session configuration file
   const char *options_filename;
-  char options_filename_fullpath[256]; // the name of the option configuration file
   const char *error_filename;
-  char error_filename_fullpath[256]; // the name of the error file
   char statreport[256]; // mesh stat output file
   int create_append_statreport; // do nothing 0 create 1 append 2 
   int session_save, options_save; // save session/option file on exit
@@ -39,7 +34,7 @@ class Context_T {
   int num_windows, num_tiles; // number of graphical windows/tiles to create
   const char *editor; // text editor command (with included '%s')
   const char *web_browser; // web browser command (with included '%s')
-  char home_dir[256]; // the home directory
+  std::string home_dir; // the home directory
   const char *gui_theme; // FLTK GUI theme
   int tooltips; // show tootips in GUI?
   int position[2]; // position of the menu window on the screen

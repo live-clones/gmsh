@@ -27,15 +27,16 @@ double evaluate_scalarfunction(std::string var, double val, std::string funct)
   return 0.;
 #else
   FILE *tempf = gmsh_yyin;
-  if(!(gmsh_yyin = fopen(CTX.tmp_filename_fullpath, "w"))) {
-    Msg::Error("Unable to open temporary file '%s'", CTX.tmp_filename_fullpath);
+  if(!(gmsh_yyin = fopen((CTX.home_dir + CTX.tmp_filename).c_str(), "w"))) {
+    Msg::Error("Unable to open temporary file '%s'", 
+               (CTX.home_dir + CTX.tmp_filename).c_str());
     return 0.;
   }
   // pose "variable = function" and evaluate function
   fprintf(gmsh_yyin, "%s = %.16g ;\n", var.c_str(), val);
   fprintf(gmsh_yyin, "ValeurTemporaire__ = %s ;\n", funct.c_str());
   fclose(gmsh_yyin);
-  gmsh_yyin = fopen(CTX.tmp_filename_fullpath, "r");
+  gmsh_yyin = fopen((CTX.home_dir + CTX.tmp_filename).c_str(), "r");
   while(!feof(gmsh_yyin)) {
     gmsh_yyparse();
   }
@@ -53,15 +54,16 @@ void add_infile(std::string text, std::string filename, bool deleted_something)
 #if defined(HAVE_NO_PARSER)
   Msg::Error("GEO file creation not available without Gmsh parser");
 #else
-  if(!(gmsh_yyin = fopen(CTX.tmp_filename_fullpath, "w"))) {
-    Msg::Error("Unable to open temporary file '%s'", CTX.tmp_filename_fullpath);
+  if(!(gmsh_yyin = fopen((CTX.home_dir + CTX.tmp_filename).c_str(), "w"))) {
+    Msg::Error("Unable to open temporary file '%s'", 
+               (CTX.home_dir + CTX.tmp_filename).c_str());
     return;
   }
 
   fprintf(gmsh_yyin, "%s\n", text.c_str());
   Msg::StatusBar(2, true, "%s", text.c_str());
   fclose(gmsh_yyin);
-  gmsh_yyin = fopen(CTX.tmp_filename_fullpath, "r");
+  gmsh_yyin = fopen((CTX.home_dir + CTX.tmp_filename).c_str(), "r");
   while(!feof(gmsh_yyin)) {
     gmsh_yyparse();
   }

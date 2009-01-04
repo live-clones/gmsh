@@ -196,11 +196,11 @@ void ParseString(std::string str)
 {
   if(str.empty()) return;
   FILE *fp;
-  if((fp = fopen(CTX.tmp_filename_fullpath, "w"))) {
+  if((fp = fopen((CTX.home_dir + CTX.tmp_filename).c_str(), "w"))) {
     fprintf(fp, str.c_str());
     fprintf(fp, "\n");
     fclose(fp);
-    ParseFile(CTX.tmp_filename_fullpath, 1);
+    ParseFile((CTX.home_dir + CTX.tmp_filename).c_str(), true);
     GModel::current()->importGEOInternals();
   }
 }

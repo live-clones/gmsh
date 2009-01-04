@@ -7,7 +7,7 @@
 
 #include <string>
 
-int GuessFileFormatFromFileName(const char *name);
+int GuessFileFormatFromFileName(std::string fileName);
 std::string GetDefaultFileName(int format);
 void CreateOutputFile(const char *name, int format);
 

@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
   Msg::Info("Build date     : %s", Get_GmshBuildDate());
   Msg::Info("Build host     : %s", Get_GmshBuildHost());
   Msg::Info("Packager       : %s", Get_GmshPackager());
-  Msg::Info("Home directory : %s", CTX.home_dir);
+  Msg::Info("Home directory : %s", CTX.home_dir.c_str());
   Msg::Info("Launch date    : %s", Msg::GetLaunchDate().c_str());
   Msg::Info("Command line   : %s", Msg::GetCommandLine().c_str());
   Msg::Info("-------------------------------------------------------");

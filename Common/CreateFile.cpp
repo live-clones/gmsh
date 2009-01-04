@@ -23,11 +23,11 @@
 
 extern Context_T CTX;
 
-int GuessFileFormatFromFileName(const char *name)
+int GuessFileFormatFromFileName(std::string fileName)
 {
   int len;
   char ext[256];
-
+  const char *name = fileName.c_str();
   for(len = strlen(name) - 1; len >= 0; len--) {
     if(name[len] == '.') {
       strcpy(ext, &name[len]);
@@ -133,7 +133,7 @@ void CreateOutputFile(const char *filename, int format)
   switch (format) {
 
   case FORMAT_AUTO:
-    CreateOutputFile(name.c_str(), GuessFileFormatFromFileName(name.c_str()));
+    CreateOutputFile(name.c_str(), GuessFileFormatFromFileName(name));
     printEndMessage = false;
     break;
     

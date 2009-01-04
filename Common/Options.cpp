@@ -452,22 +452,22 @@ void Init_Options(int num)
   // Home directory
   const char *tmp;
   if((tmp = gmsh_getenv("GMSH_HOME")))
-    strcpy(CTX.home_dir, tmp);
+    CTX.home_dir = tmp;
   else if((tmp = gmsh_getenv("HOME")))
-    strcpy(CTX.home_dir, tmp);
+    CTX.home_dir = tmp;
   else if((tmp = gmsh_getenv("TMP")))
-    strcpy(CTX.home_dir, tmp);
+    CTX.home_dir = tmp;
   else if((tmp = gmsh_getenv("TEMP")))
-    strcpy(CTX.home_dir, tmp);
+    CTX.home_dir = tmp;
   else
-    strcpy(CTX.home_dir, "");
+    CTX.home_dir = "";
   
   // By defaults, no stat report
   CTX.create_append_statreport = 0;
 
-  int len = strlen(CTX.home_dir);
-  if(len && CTX.home_dir[len-1] != '/')
-    strcat(CTX.home_dir, "/");
+  int len = CTX.home_dir.size();
+  if(len && CTX.home_dir[len - 1] != '/')
+    CTX.home_dir += "/";
 
   Init_Options_Safe(num);
 
@@ -1010,11 +1010,8 @@ const char *opt_general_filename(OPT_ARGS_STR)
 
 const char *opt_general_default_filename(OPT_ARGS_STR)
 {
-  if(action & GMSH_SET){
+  if(action & GMSH_SET)
     CTX.default_filename = val;
-    strcpy(CTX.default_filename_fullpath, getenv("PWD") ? "" : CTX.home_dir);
-    strcat(CTX.default_filename_fullpath, CTX.default_filename);
-  }
 #if defined(HAVE_FLTK)
   if(GUI::available() && (action & GMSH_GUI))
     GUI::instance()->options->general.input[0]->value(CTX.default_filename);
@@ -1024,41 +1021,29 @@ const char *opt_general_default_filename(OPT_ARGS_STR)
 
 const char *opt_general_tmp_filename(OPT_ARGS_STR)
 {
-  if(action & GMSH_SET){
+  if(action & GMSH_SET)
     CTX.tmp_filename = val;
-    strcpy(CTX.tmp_filename_fullpath, CTX.home_dir);
-    strcat(CTX.tmp_filename_fullpath, CTX.tmp_filename);
-  }
   return CTX.tmp_filename;
 }
 
 const char *opt_general_error_filename(OPT_ARGS_STR)
 {
-  if(action & GMSH_SET){
+  if(action & GMSH_SET)
     CTX.error_filename = val;
-    strcpy(CTX.error_filename_fullpath, CTX.home_dir);
-    strcat(CTX.error_filename_fullpath, CTX.error_filename);
-  }
   return CTX.error_filename;
 }
 
 const char *opt_general_session_filename(OPT_ARGS_STR)
 {
-  if(action & GMSH_SET) {
+  if(action & GMSH_SET)
     CTX.session_filename = val;
-    strcpy(CTX.session_filename_fullpath, CTX.home_dir);
-    strcat(CTX.session_filename_fullpath, CTX.session_filename);
-  }
   return CTX.session_filename;
 }
 
 const char *opt_general_options_filename(OPT_ARGS_STR)
 {
-  if(action & GMSH_SET) {
+  if(action & GMSH_SET)
     CTX.options_filename = val;
-    strcpy(CTX.options_filename_fullpath, CTX.home_dir);
-    strcat(CTX.options_filename_fullpath, CTX.options_filename);
-  }
   return CTX.options_filename;
 }
 

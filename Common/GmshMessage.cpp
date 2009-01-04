@@ -76,7 +76,7 @@ void Msg::Init(int argc, char **argv)
 void Msg::Exit(int level)
 {
   // delete the temp file
-  if(!_commRank) UnlinkFile(CTX.tmp_filename_fullpath);
+  if(!_commRank) UnlinkFile((CTX.home_dir + CTX.tmp_filename).c_str());
 
   // exit directly on abnormal program termination (level != 0). We
   // used to call abort() to flush open streams, but on modern OSes
@@ -95,10 +95,12 @@ void Msg::Exit(int level)
   if(GUI::available() && !_commRank) {
     if(CTX.session_save) {
       GUI::instance()->storeCurrentWindowsInfo();
-      Print_Options(0, GMSH_SESSIONRC, 0, 0, CTX.session_filename_fullpath);
+      Print_Options(0, GMSH_SESSIONRC, 0, 0, 
+                    (CTX.home_dir + CTX.session_filename).c_str());
     }
     if(CTX.options_save)
-      Print_Options(0, GMSH_OPTIONSRC, 1, 0, CTX.options_filename_fullpath);
+      Print_Options(0, GMSH_OPTIONSRC, 1, 0, 
+                    (CTX.home_dir + CTX.options_filename).c_str());
   }
 #endif
 
@@ -126,10 +128,10 @@ void Msg::Fatal(const char *fmt, ...)
     std::string tmp = std::string("@C1@.") + "Fatal   : " + str;
     GUI::instance()->messages->add(tmp.c_str());
     GUI::instance()->messages->show();
-    GUI::instance()->messages->save(CTX.error_filename_fullpath);
+    GUI::instance()->messages->save((CTX.home_dir + CTX.error_filename).c_str());
     fl_alert("A fatal error has occurred which will force Gmsh to abort.\n"
              "The error messages have been saved in the following file:\n\n%s",
-             CTX.error_filename_fullpath);
+             (CTX.home_dir + CTX.error_filename).c_str());
   }
 #endif
 

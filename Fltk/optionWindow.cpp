@@ -142,16 +142,19 @@ static void options_browser_cb(Fl_Widget *w, void *data)
 
 void options_save_cb(Fl_Widget *w, void *data)
 {
-  Msg::StatusBar(2, true, "Writing '%s'", CTX.options_filename_fullpath);
-  Print_Options(0, GMSH_OPTIONSRC, 1, 1, CTX.options_filename_fullpath);
-  Msg::StatusBar(2, true, "Wrote '%s'", CTX.options_filename_fullpath);
+  Msg::StatusBar(2, true, "Writing '%s'",
+                 (CTX.home_dir + CTX.options_filename).c_str());
+  Print_Options(0, GMSH_OPTIONSRC, 1, 1, 
+                (CTX.home_dir + CTX.options_filename).c_str());
+  Msg::StatusBar(2, true, "Wrote '%s'",
+                 (CTX.home_dir + CTX.options_filename).c_str());
 }
 
 static void options_restore_defaults_cb(Fl_Widget *w, void *data)
 {
   // not sure if we have to remove the file...
-  UnlinkFile(CTX.session_filename_fullpath);
-  UnlinkFile(CTX.options_filename_fullpath);
+  UnlinkFile((CTX.home_dir + CTX.session_filename).c_str());
+  UnlinkFile((CTX.home_dir + CTX.options_filename).c_str());
   ReInit_Options(0);
   Init_Options_GUI(0);
   if(GUI::instance()->menu->module->value() == 3) // hack to refresh the buttons
@@ -247,7 +250,8 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   double sessionrc = opt_general_session_save(0, GMSH_GET, 0);
   opt_general_session_save(0, GMSH_SET, o->general.butt[8]->value());
   if(sessionrc && !opt_general_session_save(0, GMSH_GET, 0))
-    Print_Options(0, GMSH_SESSIONRC, 1, 1, CTX.session_filename_fullpath);
+    Print_Options(0, GMSH_SESSIONRC, 1, 1, 
+                  (CTX.home_dir + CTX.session_filename).c_str());
   opt_general_options_save(0, GMSH_SET, o->general.butt[9]->value());
   opt_general_expert_mode(0, GMSH_SET, o->general.butt[10]->value());
   opt_general_tooltips(0, GMSH_SET, o->general.butt[13]->value());

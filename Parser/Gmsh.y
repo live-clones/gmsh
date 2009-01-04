@@ -1846,7 +1846,7 @@ Command :
 	// to modify FunctionManager to reopen the files instead of
 	// using the FILE pointer, but hey, I'm lazy...
 	Msg::StatusBar(2, true, "Reading '%s'", tmpstring);
-	ParseFile(tmpstring, 0, 1);
+	ParseFile(tmpstring, false, true);
 	SetBoundingBox();
 	Msg::StatusBar(2, true, "Read '%s'", tmpstring);
       }

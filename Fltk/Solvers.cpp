@@ -101,9 +101,9 @@ int Solver(int num, const char *args)
     // Unix socket
     char tmp[1024];
     if(num >= 0)
-      sprintf(tmp, "%s%s-%d", CTX.home_dir, CTX.solver.socket_name, num);
+      sprintf(tmp, "%s%s-%d", CTX.home_dir.c_str(), CTX.solver.socket_name, num);
     else
-      sprintf(tmp, "%s%s", CTX.home_dir, CTX.solver.socket_name);
+      sprintf(tmp, "%s%s", CTX.home_dir.c_str(), CTX.solver.socket_name);
     sockname = FixWindowsPath(tmp);
   }
   else{

@@ -170,8 +170,8 @@ void Get_Options(int argc, char *argv[])
 
 #if !defined(HAVE_NO_PARSER)
   // Parse session and option files
-  ParseFile(CTX.session_filename_fullpath, 1);
-  ParseFile(CTX.options_filename_fullpath, 1);
+  ParseFile((CTX.home_dir + CTX.session_filename).c_str(), true);
+  ParseFile((CTX.home_dir + CTX.options_filename).c_str(), true);
 #endif
 
   // Get command line options
@@ -280,7 +280,7 @@ void Get_Options(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "option")) {
         i++;
         if(argv[i] != NULL)
-          ParseFile(argv[i++], 1);
+          ParseFile(argv[i++], true);
         else
 	  Msg::Fatal("Missing file name");
       }
@@ -668,8 +668,10 @@ void Get_Options(int argc, char *argv[])
 
   }
 
-  if(CTX.files.empty())
-    GModel::current()->setFileName(CTX.default_filename_fullpath);
+  if(CTX.files.empty()){
+    std::string base = (getenv("PWD") ? "" : CTX.home_dir);
+    GModel::current()->setFileName((base + CTX.default_filename).c_str());
+  }
   else
     GModel::current()->setFileName(CTX.files[0]);
 
