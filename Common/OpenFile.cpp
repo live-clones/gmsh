@@ -146,7 +146,8 @@ int ParseFile(std::string fileName, bool close, bool warnIfMissing)
   // fsetpos/fgetpos (used e.g. for user-defined functions)
   FILE *fp;
   if(!(fp = fopen(fileName.c_str(), "rb"))){
-    if(warnIfMissing) Msg::Warning("Unable to open file '%s'", fileName.c_str());
+    if(warnIfMissing)
+      Msg::Warning("Unable to open file '%s'", fileName.c_str());
     return 0;
   }
 
