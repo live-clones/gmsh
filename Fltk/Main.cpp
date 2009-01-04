@@ -81,8 +81,10 @@ int main(int argc, char *argv[])
   // Open project file and merge all other input files
   OpenProject(CTX.filename);
   for(unsigned int i = 1; i < CTX.files.size(); i++){
-    if(CTX.files[i] == "-new")
+    if(CTX.files[i] == "-new"){
+      GModel::current()->setVisibility(0);
       new GModel();
+    }
     else
       MergeFile(CTX.files[i].c_str());
   }

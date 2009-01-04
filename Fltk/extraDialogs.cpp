@@ -142,7 +142,11 @@ int perspective_editor()
 static void model_switch_cb(Fl_Widget* w, void *data)
 {
   Fl_Select_Browser *b = (Fl_Select_Browser *)w;
-  if(b->value()) GModel::current(b->value() - 1);
+  if(b->value()){
+    GModel::current()->setVisibility(0);
+    GModel::current(b->value() - 1);
+    GModel::current()->setVisibility(1);
+  }
   if(w->window()) w->window()->hide();
   CTX.mesh.changed = ENT_ALL;
   GUI::instance()->resetVisibility();
