@@ -12,6 +12,3 @@ Plane Surface(6) = {5};
 Extrude {0,0.0,1} {
   Surface{6};
 }
-
-// try netgen:
-// Mesh.Algorithm3D = 4;
