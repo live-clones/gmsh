@@ -168,10 +168,6 @@ void Get_Options(int argc, char *argv[])
   int terminal = CTX.terminal;
   CTX.terminal = 1;
 
-  // Create a dummy model during option processing so we cannot crash
-  // the parser, and so we can load files for -convert
-  GModel *dummy = new GModel();
-
 #if !defined(HAVE_NO_PARSER)
   // Parse session and option files
   ParseFile(CTX.session_filename_fullpath, 1);
@@ -673,11 +669,9 @@ void Get_Options(int argc, char *argv[])
   }
 
   if(CTX.files.empty())
-    strncpy(CTX.filename, CTX.default_filename_fullpath, 255);
+    GModel::current()->setFileName(CTX.default_filename_fullpath);
   else
-    strncpy(CTX.filename, CTX.files[0].c_str(), 255);
-
-  delete dummy;
+    GModel::current()->setFileName(CTX.files[0]);
 
   CTX.terminal = terminal;
 }

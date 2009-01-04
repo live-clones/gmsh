@@ -714,13 +714,13 @@ static void visibility_save_cb(Fl_Widget *w, void *data)
     off += state[i][0].size();
   }
   if(on > off){
-    add_infile("Show \"*\";", CTX.filename);
+    add_infile("Show \"*\";", GModel::current()->getFileName());
     if(!off) return;
     str += "Hide {\n";
     mode = 0;
   }
   else{
-    add_infile("Hide \"*\";", CTX.filename);
+    add_infile("Hide \"*\";", GModel::current()->getFileName());
     if(!on) return;
     str += "Show {\n";
     mode = 1;
@@ -738,7 +738,7 @@ static void visibility_save_cb(Fl_Widget *w, void *data)
     }
   }
   str += "}\n";
-  add_infile(str.c_str(), CTX.filename);
+  add_infile(str.c_str(), GModel::current()->getFileName());
 }
 
 static void _set_visibility_by_number(int what, int num, char val, bool recursive)

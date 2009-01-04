@@ -135,20 +135,18 @@ void AddToTemporaryBoundingBox(double x, double y, double z)
   for(int i = 0; i < 3; i++) CTX.cg[i] = temp_bb.center()[i];
 }
 
-int ParseFile(const char *f, int close, int warn_if_missing)
+int ParseFile(std::string fileName, bool close, bool warnIfMissing)
 {
 #if defined(HAVE_NO_PARSER)
   Msg::Error("Gmsh parser is not compiled in this version");
   return 0;
 #else
-  char yyname_old[256], tmp[256];
-  FILE *yyin_old, *fp;
-  int yylineno_old, yyerrorstate_old, yyviewindex_old;
 
   // add 'b' for pure Windows programs: opening in text mode messes up
   // fsetpos/fgetpos (used e.g. for user-defined functions)
-  if(!(fp = fopen(f, "rb"))){
-    if(warn_if_missing) Msg::Warning("Unable to open file '%s'", f);
+  FILE *fp;
+  if(!(fp = fopen(fileName.c_str(), "rb"))){
+    if(warnIfMissing) Msg::Warning("Unable to open file '%s'", fileName.c_str());
     return 0;
   }
 
@@ -156,22 +154,17 @@ int ParseFile(const char *f, int close, int warn_if_missing)
   int numViewsBefore = PView::list.size();
 #endif
 
-  strncpy(yyname_old, gmsh_yyname, 255);
-  yyin_old = gmsh_yyin;
-  yyerrorstate_old = gmsh_yyerrorstate;
-  yylineno_old = gmsh_yylineno;
-  yyviewindex_old = gmsh_yyviewindex;
+  std::string old_yyname = gmsh_yyname;
+  FILE *old_yyin = gmsh_yyin;
+  int old_yyerrorstate = gmsh_yyerrorstate;
+  int old_yylineno = gmsh_yylineno;
+  int old_yyviewindex = gmsh_yyviewindex;
 
-  strncpy(gmsh_yyname, f, 255);
+  gmsh_yyname = fileName;
   gmsh_yyin = fp;
   gmsh_yyerrorstate = 0;
   gmsh_yylineno = 1;
   gmsh_yyviewindex = 0;
-
-  fpos_t position;
-  fgetpos(gmsh_yyin, &position);
-  fgets(tmp, sizeof(tmp), gmsh_yyin);
-  fsetpos(gmsh_yyin, &position);
 
   while(!feof(gmsh_yyin)){
     gmsh_yyparse();
@@ -184,11 +177,11 @@ int ParseFile(const char *f, int close, int warn_if_missing)
 
   if(close) fclose(gmsh_yyin);
 
-  strncpy(gmsh_yyname, yyname_old, 255);
-  gmsh_yyin = yyin_old;
-  gmsh_yyerrorstate = yyerrorstate_old;
-  gmsh_yylineno = yylineno_old;
-  gmsh_yyviewindex = yyviewindex_old;
+  gmsh_yyname = old_yyname;
+  gmsh_yyin = old_yyin;
+  gmsh_yyerrorstate = old_yyerrorstate;
+  gmsh_yylineno = old_yylineno;
+  gmsh_yyviewindex = old_yyviewindex;
 
 #if defined(HAVE_FLTK) && !defined(HAVE_NO_POST)
   if(GUI::available() && numViewsBefore != (int)PView::list.size())
@@ -199,12 +192,12 @@ int ParseFile(const char *f, int close, int warn_if_missing)
 #endif
 }
 
-void ParseString(const char *str)
+void ParseString(std::string str)
 {
-  if(!str) return;
+  if(str.empty()) return;
   FILE *fp;
   if((fp = fopen(CTX.tmp_filename_fullpath, "w"))) {
-    fprintf(fp, str);
+    fprintf(fp, str.c_str());
     fprintf(fp, "\n");
     fclose(fp);
     ParseFile(CTX.tmp_filename_fullpath, 1);
@@ -212,40 +205,30 @@ void ParseString(const char *str)
   }
 }
 
-static void SetProjectName(const char *name)
+static void SetProjectName(std::string fileName)
 {
   char no_ext[256], ext[256], base[256];
-  SplitFileName(name, no_ext, ext, base);
-
-  if(CTX.filename != name) // yes, we mean to compare the pointers
-    strncpy(CTX.filename, name, 255);
-  strncpy(CTX.no_ext_filename, no_ext, 255);
-  strncpy(CTX.base_filename, base, 255);
-
+  SplitFileName(fileName.c_str(), no_ext, ext, base);
+  GModel::current()->setFileName(fileName);
   GModel::current()->setName(base);
-    
-#if defined(HAVE_FLTK)
-  if(GUI::available())
-    GUI::instance()->setGraphicTitle(CTX.filename);
-#endif
 }
 
-int MergeFile(const char *name, int warn_if_missing)
+int MergeFile(std::string fileName, bool warnIfMissing)
 {
-  if(!GModel::current()){
-    Msg::Error("No models exists in which to merge data");
-    return 0;
-  }
-
   if(GModel::current()->getName() == "")
-    SetProjectName(name);
+    SetProjectName(fileName);
+
+#if defined(HAVE_FLTK)
+  if(GUI::available())
+    GUI::instance()->setGraphicTitle(GModel::current()->getFileName());
+#endif
 
   // added 'b' for pure Windows programs, since some of these files
   // contain binary data
-  FILE *fp = fopen(name, "rb");
+  FILE *fp = fopen(fileName.c_str(), "rb");
   if(!fp){
-    if(warn_if_missing) 
-      Msg::Warning("Unable to open file '%s'", name);
+    if(warnIfMissing) 
+      Msg::Warning("Unable to open file '%s'", fileName.c_str());
     return 0;
   }
 
@@ -253,10 +236,10 @@ int MergeFile(const char *name, int warn_if_missing)
   fgets(header, sizeof(header), fp);
   fclose(fp);
 
-  Msg::StatusBar(2, true, "Reading '%s'", name);
+  Msg::StatusBar(2, true, "Reading '%s'", fileName.c_str());
 
   char no_ext[256], ext[256], base[256];
-  SplitFileName(name, no_ext, ext, base);
+  SplitFileName(fileName.c_str(), no_ext, ext, base);
 
 #if defined(HAVE_FLTK)
   if(GUI::available()) {
@@ -264,11 +247,12 @@ int MergeFile(const char *name, int warn_if_missing)
       // the real solution would be to rewrite all our I/O functions in
       // terms of gzFile, but until then, this is better than nothing
       if(fl_choice("File '%s' is in gzip format.\n\nDo you want to uncompress it?", 
-                   "Cancel", "Uncompress", NULL, name)){
+                   "Cancel", "Uncompress", NULL, fileName.c_str())){
         char tmp[256];
-        sprintf(tmp, "gunzip -c %s > %s", name, no_ext);
+        sprintf(tmp, "gunzip -c %s > %s", fileName.c_str(), no_ext);
         if(SystemCall(tmp))
-          Msg::Error("Failed to uncompress `%s': check directory permissions", name);
+          Msg::Error("Failed to uncompress `%s': check directory permissions", 
+                     fileName.c_str());
         SetProjectName(no_ext);
         return MergeFile(no_ext);
       }
@@ -284,71 +268,71 @@ int MergeFile(const char *name, int warn_if_missing)
 
   int status = 0;
   if(!strcmp(ext, ".stl") || !strcmp(ext, ".STL")){
-    status = GModel::current()->readSTL(name, CTX.geom.tolerance);
+    status = GModel::current()->readSTL(fileName, CTX.geom.tolerance);
   }
   else if(!strcmp(ext, ".brep") || !strcmp(ext, ".rle") ||
           !strcmp(ext, ".brp") || !strcmp(ext, ".BRP")){
-    status = GModel::current()->readOCCBREP(std::string(name));
+    status = GModel::current()->readOCCBREP(fileName);
   }
   else if(!strcmp(ext, ".iges") || !strcmp(ext, ".IGES") ||
           !strcmp(ext, ".igs") || !strcmp(ext, ".IGS")){
-    status = GModel::current()->readOCCIGES(std::string(name));
+    status = GModel::current()->readOCCIGES(fileName);
   }
   else if(!strcmp(ext, ".step") || !strcmp(ext, ".STEP") ||
           !strcmp(ext, ".stp") || !strcmp(ext, ".STP")){
-    status = GModel::current()->readOCCSTEP(std::string(name));
+    status = GModel::current()->readOCCSTEP(fileName);
   }
   else if(!strcmp(ext, ".unv") || !strcmp(ext, ".UNV")){
-    status = GModel::current()->readUNV(name);
+    status = GModel::current()->readUNV(fileName);
   }
   else if(!strcmp(ext, ".vtk") || !strcmp(ext, ".VTK")){
-    status = GModel::current()->readVTK(name, CTX.big_endian);
+    status = GModel::current()->readVTK(fileName, CTX.big_endian);
   }
   else if(!strcmp(ext, ".wrl") || !strcmp(ext, ".WRL") || 
           !strcmp(ext, ".vrml") || !strcmp(ext, ".VRML") ||
           !strcmp(ext, ".iv") || !strcmp(ext, ".IV")){
-    status = GModel::current()->readVRML(name);
+    status = GModel::current()->readVRML(fileName);
   }
   else if(!strcmp(ext, ".mesh") || !strcmp(ext, ".MESH")){
-    status = GModel::current()->readMESH(name);
+    status = GModel::current()->readMESH(fileName);
   }
   else if(!strcmp(ext, ".med") || !strcmp(ext, ".MED") ||
 	  !strcmp(ext, ".mmed") || !strcmp(ext, ".MMED") ||
 	  !strcmp(ext, ".rmed") || !strcmp(ext, ".RMED")){
-    status = GModel::readMED(name);
+    status = GModel::readMED(fileName);
 #if !defined(HAVE_NO_POST)
-    if(status > 1) status = PView::readMED(name);
+    if(status > 1) status = PView::readMED(fileName);
 #endif
   }
   else if(!strcmp(ext, ".bdf") || !strcmp(ext, ".BDF") ||
           !strcmp(ext, ".nas") || !strcmp(ext, ".NAS")){
-    status = GModel::current()->readBDF(name);
+    status = GModel::current()->readBDF(fileName);
   }
   else if(!strcmp(ext, ".p3d") || !strcmp(ext, ".P3D")){
-    status = GModel::current()->readP3D(name);
+    status = GModel::current()->readP3D(fileName);
   }
   else if(!strcmp(ext, ".fm") || !strcmp(ext, ".FM")) {
-    status = GModel::current()->readFourier(name);
+    status = GModel::current()->readFourier(fileName);
   }
 #if defined(HAVE_FLTK)
   else if(!strcmp(ext, ".pnm") || !strcmp(ext, ".PNM") ||
           !strcmp(ext, ".pbm") || !strcmp(ext, ".PBM") ||
           !strcmp(ext, ".pgm") || !strcmp(ext, ".PGM") ||
           !strcmp(ext, ".ppm") || !strcmp(ext, ".PPM")) {
-    status = read_pnm(name);
+    status = read_pnm(fileName);
   }
   else if(!strcmp(ext, ".bmp") || !strcmp(ext, ".BMP")) {
-    status = read_bmp(name);
+    status = read_bmp(fileName);
   }
 #if defined(HAVE_LIBJPEG)
   else if(!strcmp(ext, ".jpg") || !strcmp(ext, ".JPG") ||
           !strcmp(ext, ".jpeg") || !strcmp(ext, ".JPEG")) {
-    status = read_jpeg(name);
+    status = read_jpeg(fileName);
   }
 #endif
 #if defined(HAVE_LIBPNG)
   else if(!strcmp(ext, ".png") || !strcmp(ext, ".PNG")) {
-    status = read_png(name);
+    status = read_png(fileName);
   }
 #endif
 #endif
@@ -357,19 +341,19 @@ int MergeFile(const char *name, int warn_if_missing)
     if(!strncmp(header, "$PTS", 4) || !strncmp(header, "$NO", 3) || 
        !strncmp(header, "$PARA", 5) || !strncmp(header, "$ELM", 4) ||
        !strncmp(header, "$MeshFormat", 11) || !strncmp(header, "$Comments", 9)) {
-      status = GModel::current()->readMSH(name);
+      status = GModel::current()->readMSH(fileName);
 #if !defined(HAVE_NO_POST)
-      if(status > 1) status = PView::readMSH(name);
+      if(status > 1) status = PView::readMSH(fileName);
 #endif
     }
 #if !defined(HAVE_NO_POST)
     else if(!strncmp(header, "$PostFormat", 11) || 
             !strncmp(header, "$View", 5)) {
-      status = PView::readPOS(name);
+      status = PView::readPOS(fileName);
     }
 #endif
     else {
-      status = GModel::current()->readGEO(name);
+      status = GModel::current()->readGEO(fileName);
     }
   }
 
@@ -383,12 +367,12 @@ int MergeFile(const char *name, int warn_if_missing)
     GUI::instance()->updateViews();
 #endif
 
-  if(!status) Msg::Error("Error loading '%s'", name);
-  Msg::StatusBar(2, true, "Read '%s'", name);
+  if(!status) Msg::Error("Error loading '%s'", fileName.c_str());
+  Msg::StatusBar(2, true, "Read '%s'", fileName.c_str());
   return status;
 }
 
-void ClearProject(const char *filename)
+void ClearProject()
 {
 #if !defined(HAVE_NO_POST)
   for(int i = PView::list.size() - 1; i >= 0; i--)
@@ -400,9 +384,10 @@ void ClearProject(const char *filename)
   for(int i = GModel::list.size() - 1; i >= 0; i--)
     delete GModel::list[i];
   new GModel();
-  SetProjectName(filename);
+  SetProjectName(CTX.default_filename);
 #if defined(HAVE_FLTK)
   if(GUI::available()){
+    GUI::instance()->setGraphicTitle(GModel::current()->getFileName());
     GUI::instance()->resetVisibility();
     GUI::instance()->updateViews();
     GUI::instance()->updateFields();
@@ -411,7 +396,7 @@ void ClearProject(const char *filename)
 #endif
 }
 
-void OpenProject(const char *name)
+void OpenProject(std::string fileName)
 {
   if(CTX.threads_lock) {
     Msg::Info("I'm busy! Ask me that later...");
@@ -419,12 +404,7 @@ void OpenProject(const char *name)
   }
   CTX.threads_lock = 1;
 
-  if(!GModel::current()){
-    // if there's no model, add a new one and make it the current
-    new GModel();
-    GModel::current(GModel::list.size() - 1);
-  }
-  else if(GModel::current()->empty()){
+  if(GModel::current()->empty()){
     // if the current model is empty, make sure it's reaaally
     // cleaned-up, and reuse it
     GModel::current()->destroy();
@@ -446,7 +426,7 @@ void OpenProject(const char *name)
   // temporary hack until we fill the current GModel on the fly during
   // parsing
   ResetTemporaryBoundingBox();
-  MergeFile(name);
+  MergeFile(fileName);
 
   CTX.threads_lock = 0;
 
@@ -460,18 +440,18 @@ void OpenProject(const char *name)
 #endif
 }
 
-void OpenProjectMacFinder(const char *filename)
+void OpenProjectMacFinder(const char *fileName)
 {
 #if defined(HAVE_FLTK)
   static int first = 1;
   if(first || !GUI::available()){
     // just copy the filename: it will be opened when the GUI is ready
     // in main()
-    strncpy(CTX.filename, filename, 255);
+    GModel::current()->setFileName(fileName);
     first = 0;
   }
   else{
-    OpenProject(filename);
+    OpenProject(fileName);
     Draw();
   }
 #endif

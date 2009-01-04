@@ -19,13 +19,14 @@ extern Context_T CTX;
 static void con_geometry_define_parameter_cb(Fl_Widget *w, void *data)
 {
   add_param(GUI::instance()->geoContext->input[0]->value(),
-            GUI::instance()->geoContext->input[1]->value(), CTX.filename);
+            GUI::instance()->geoContext->input[1]->value(),
+            GModel::current()->getFileName());
   GUI::instance()->resetVisibility();
 }
 
 static void con_geometry_define_point_cb(Fl_Widget *w, void *data)
 {
-  add_point(CTX.filename,
+  add_point(GModel::current()->getFileName(),
             GUI::instance()->geoContext->input[2]->value(),
             GUI::instance()->geoContext->input[3]->value(),
             GUI::instance()->geoContext->input[4]->value(),

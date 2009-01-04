@@ -108,26 +108,26 @@ static int EndPos(const char *name, PViewData *d)
   }
 }
 
-int read_pnm(const char *name) 
+int read_pnm(std::string fileName) 
 {
-  Fl_PNM_Image img(name);
-  return EndPos(name, Img2Data(img));
+  Fl_PNM_Image img(fileName.c_str());
+  return EndPos(fileName.c_str(), Img2Data(img));
 }
 
-int read_jpeg(const char *name) 
+int read_jpeg(std::string fileName) 
 {
-  Fl_JPEG_Image img(name);
-  return EndPos(name, Img2Data(img));
+  Fl_JPEG_Image img(fileName.c_str());
+  return EndPos(fileName.c_str(), Img2Data(img));
 }
 
-int read_png(const char *name) 
+int read_png(std::string fileName) 
 {
-  Fl_PNG_Image img(name);
-  return EndPos(name, Img2Data(img));
+  Fl_PNG_Image img(fileName.c_str());
+  return EndPos(fileName.c_str(), Img2Data(img));
 }
 
-int read_bmp(const char *name) 
+int read_bmp(std::string fileName) 
 {
-  Fl_BMP_Image img(name);
-  return EndPos(name, Img2Data(img));
+  Fl_BMP_Image img(fileName.c_str());
+  return EndPos(fileName.c_str(), Img2Data(img));
 }

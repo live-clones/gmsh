@@ -19,7 +19,7 @@ extern FILE *gmsh_yyin;
 extern int gmsh_yylineno;
 extern char *gmsh_yytext;
 extern int gmsh_yyviewindex;
-extern char gmsh_yyname[256];
+extern std::string gmsh_yyname;
 extern int gmsh_yyerrorstate;
 extern std::map<std::string, std::vector<double> > gmsh_yysymbols;
 

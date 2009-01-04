@@ -5,9 +5,10 @@
 #ifndef _CREATE_FILE_H_
 #define _CREATE_FILE_H_
 
+#include <string>
 
 int GuessFileFormatFromFileName(const char *name);
-void GetDefaultFileName(int format, char *name);
+std::string GetDefaultFileName(int format);
 void CreateOutputFile(const char *name, int format);
 
 #endif

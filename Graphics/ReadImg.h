@@ -6,9 +6,11 @@
 #ifndef _READ_IMG_
 #define _READ_IMG_
 
-int read_pnm(const char *name);
-int read_jpeg(const char *name);
-int read_png(const char *name);
-int read_bmp(const char *name);
+#include <string>
+
+int read_pnm(std::string fileName);
+int read_jpeg(std::string fileName);
+int read_png(std::string fileName);
+int read_bmp(std::string fileName);
 
 #endif

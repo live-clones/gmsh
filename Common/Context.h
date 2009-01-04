@@ -12,18 +12,13 @@
 #include "CGNSOptions.h"
 #include "PartitionOptions.h"
 
-// Interface-independent context 
+// The interface-independent context.
 
 class Context_T {
  public :
-
   // general options
-
-  char filename[256]; // the name of the currently opened file
-  char no_ext_filename[256]; // the same without the extension
-  char base_filename[256]; // the base filename (no path, no extension)
-  const char *bgm_filename; // background mesh
   std::vector<std::string> files; // all the files on the command line
+  const char *bgm_filename; // background mesh
   const char *output_filename; // output file specified with command line option '-o'
   const char *default_filename;
   char default_filename_fullpath[256]; // the name of the default file

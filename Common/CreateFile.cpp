@@ -67,50 +67,51 @@ int GuessFileFormatFromFileName(const char *name)
   else                           return -1;
 }
 
-void GetDefaultFileName(int format, char *name)
+std::string GetDefaultFileName(int format)
 {
-  char ext[32] = "";
-  strcpy(name, CTX.no_ext_filename);
+  char no_ext[256], ext[256], base[256];
+  SplitFileName(GModel::current()->getFileName().c_str(), no_ext, ext, base);
+  std::string name(no_ext);
   switch(format){
-  case FORMAT_GEO:  strcpy(ext, ".geo_unrolled"); break;
-  case FORMAT_MSH:  strcpy(ext, ".msh"); break;
-  case FORMAT_POS:  strcpy(ext, ".pos"); break;
-  case FORMAT_OPT:  strcpy(ext, ".opt"); break;
-  case FORMAT_UNV:  strcpy(ext, ".unv"); break;
-  case FORMAT_VTK:  strcpy(ext, ".vtk"); break;
-  case FORMAT_STL:  strcpy(ext, ".stl"); break;
-  case FORMAT_CGNS: strcpy(ext, ".cgns"); break;
-  case FORMAT_MED:  strcpy(ext, ".med"); break;
-  case FORMAT_MESH: strcpy(ext, ".mesh"); break;
-  case FORMAT_BDF:  strcpy(ext, ".bdf"); break;
-  case FORMAT_DIFF: strcpy(ext, ".diff"); break;
-  case FORMAT_P3D:  strcpy(ext, ".p3d"); break;
-  case FORMAT_VRML: strcpy(ext, ".wrl"); break;
-  case FORMAT_GIF:  strcpy(ext, ".gif"); break;
-  case FORMAT_JPEG: strcpy(ext, ".jpg"); break;
-  case FORMAT_PNG:  strcpy(ext, ".png"); break;
-  case FORMAT_PS:   strcpy(ext, ".ps"); break;
-  case FORMAT_EPS:  strcpy(ext, ".eps"); break;
-  case FORMAT_PDF:  strcpy(ext, ".pdf"); break;
-  case FORMAT_TEX:  strcpy(ext, ".tex"); break;
-  case FORMAT_SVG:  strcpy(ext, ".svg"); break;
-  case FORMAT_PPM:  strcpy(ext, ".ppm"); break;
-  case FORMAT_YUV:  strcpy(ext, ".yuv"); break;
+  case FORMAT_GEO:  name += ".geo_unrolled"; break;
+  case FORMAT_MSH:  name += ".msh"; break;
+  case FORMAT_POS:  name += ".pos"; break;
+  case FORMAT_OPT:  name += ".opt"; break;
+  case FORMAT_UNV:  name += ".unv"; break;
+  case FORMAT_VTK:  name += ".vtk"; break;
+  case FORMAT_STL:  name += ".stl"; break;
+  case FORMAT_CGNS: name += ".cgns"; break;
+  case FORMAT_MED:  name += ".med"; break;
+  case FORMAT_MESH: name += ".mesh"; break;
+  case FORMAT_BDF:  name += ".bdf"; break;
+  case FORMAT_DIFF: name += ".diff"; break;
+  case FORMAT_P3D:  name += ".p3d"; break;
+  case FORMAT_VRML: name += ".wrl"; break;
+  case FORMAT_GIF:  name += ".gif"; break;
+  case FORMAT_JPEG: name += ".jpg"; break;
+  case FORMAT_PNG:  name += ".png"; break;
+  case FORMAT_PS:   name += ".ps"; break;
+  case FORMAT_EPS:  name += ".eps"; break;
+  case FORMAT_PDF:  name += ".pdf"; break;
+  case FORMAT_TEX:  name += ".tex"; break;
+  case FORMAT_SVG:  name += ".svg"; break;
+  case FORMAT_PPM:  name += ".ppm"; break;
+  case FORMAT_YUV:  name += ".yuv"; break;
   default: break;
   }
-  strcat(name, ext);
+  return name;
 }
 
 void CreateOutputFile(const char *filename, int format)
 {
-  char name[256], no_ext[256], ext[256], base[256];
-
+  std::string name;
   if(!filename || !strlen(filename))
-    GetDefaultFileName(format, name);
+    name = GetDefaultFileName(format);
   else
-    strcpy(name, filename);
+    name = filename;
 
-  SplitFileName(name, no_ext, ext, base);
+  char no_ext[256], ext[256], base[256];
+  SplitFileName(name.c_str(), no_ext, ext, base);
 
   int oldformat = CTX.print.format;
   CTX.print.format = format;
@@ -126,17 +127,18 @@ void CreateOutputFile(const char *filename, int format)
 #endif
 
   bool printEndMessage = true;
-  if(format != FORMAT_AUTO) Msg::StatusBar(2, true, "Writing '%s'", name);
+  if(format != FORMAT_AUTO) 
+    Msg::StatusBar(2, true, "Writing '%s'", name.c_str());
 
   switch (format) {
 
   case FORMAT_AUTO:
-    CreateOutputFile(name, GuessFileFormatFromFileName(name));
+    CreateOutputFile(name.c_str(), GuessFileFormatFromFileName(name.c_str()));
     printEndMessage = false;
     break;
     
   case FORMAT_OPT:
-    Print_Options(0, GMSH_FULLRC, 1, 1, name);
+    Print_Options(0, GMSH_FULLRC, 1, 1, name.c_str());
     break;
 
   case FORMAT_MSH:
@@ -211,8 +213,8 @@ void CreateOutputFile(const char *filename, int format)
   case FORMAT_PNG:
     {
       FILE *fp;
-      if(!(fp = fopen(name, "wb"))) {
-        Msg::Error("Unable to open file '%s'", name);
+      if(!(fp = fopen(name.c_str(), "wb"))) {
+        Msg::Error("Unable to open file '%s'", name.c_str());
         break;
       }
 
@@ -256,8 +258,8 @@ void CreateOutputFile(const char *filename, int format)
   case FORMAT_SVG:
     {
       FILE *fp;
-      if(!(fp = fopen(name, "wb"))) {
-        Msg::Error("Unable to open file '%s'", name);
+      if(!(fp = fopen(name.c_str(), "wb"))) {
+        Msg::Error("Unable to open file '%s'", name.c_str());
         break;
       }
       
@@ -301,7 +303,7 @@ void CreateOutputFile(const char *filename, int format)
       int res = GL2PS_OVERFLOW;
       while(res == GL2PS_OVERFLOW) {
         buffsize += 2048 * 2048;
-        gl2psBeginPage(CTX.base_filename, "Gmsh", viewport, 
+        gl2psBeginPage(base, "Gmsh", viewport, 
                        psformat, pssort, psoptions, GL_RGBA, 0, NULL, 
                        15, 20, 10, buffsize, fp, base);
         if(CTX.print.eps_quality == 0){
@@ -335,15 +337,15 @@ void CreateOutputFile(const char *filename, int format)
   case FORMAT_TEX:
     {
       FILE *fp;
-      if(!(fp = fopen(name, "w"))) {
-        Msg::Error("Unable to open file '%s'", name);
+      if(!(fp = fopen(name.c_str(), "w"))) {
+        Msg::Error("Unable to open file '%s'", name.c_str());
         break;
       }
       GLint buffsize = 0;
       int res = GL2PS_OVERFLOW;
       while(res == GL2PS_OVERFLOW) {
         buffsize += 2048 * 2048;
-        gl2psBeginPage(CTX.base_filename, "Gmsh", viewport,
+        gl2psBeginPage(base, "Gmsh", viewport,
                        GL2PS_TEX, GL2PS_NO_SORT, GL2PS_NONE, GL_RGBA, 0, NULL, 
                        0, 0, 0, buffsize, fp, base);
         PixelBuffer buffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
@@ -364,7 +366,7 @@ void CreateOutputFile(const char *filename, int format)
     break;
   }
 
-  if(printEndMessage) Msg::StatusBar(2, true, "Wrote '%s'", name);
+  if(printEndMessage) Msg::StatusBar(2, true, "Wrote '%s'", name.c_str());
 
   CTX.print.format = oldformat;
   CTX.printing = 0;

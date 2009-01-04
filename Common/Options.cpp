@@ -1005,7 +1005,7 @@ const char *opt_general_display(OPT_ARGS_STR)
 
 const char *opt_general_filename(OPT_ARGS_STR)
 {
-  return CTX.filename;
+  return GModel::current()->getFileName().c_str();
 }
 
 const char *opt_general_default_filename(OPT_ARGS_STR)
@@ -3184,42 +3184,36 @@ double opt_general_draw_bounding_box(OPT_ARGS_NUM)
 
 double opt_general_xmin(OPT_ARGS_NUM)
 {
-  if(!GModel::current()) return 0.;
   SBoundingBox3d bb = GModel::current()->bounds();
   return bb.empty() ? 0. : bb.min().x();
 }
 
 double opt_general_xmax(OPT_ARGS_NUM)
 {
-  if(!GModel::current()) return 0.;
   SBoundingBox3d bb = GModel::current()->bounds();
   return bb.empty() ? 0. : bb.max().x();
 }
 
 double opt_general_ymin(OPT_ARGS_NUM)
 {
-  if(!GModel::current()) return 0.;
   SBoundingBox3d bb = GModel::current()->bounds();
   return bb.empty() ? 0. : bb.min().y();
 }
 
 double opt_general_ymax(OPT_ARGS_NUM)
 {
-  if(!GModel::current()) return 0.;
   SBoundingBox3d bb = GModel::current()->bounds();
   return bb.empty() ? 0. : bb.max().y();
 }
 
 double opt_general_zmin(OPT_ARGS_NUM)
 {
-  if(!GModel::current()) return 0.;
   SBoundingBox3d bb = GModel::current()->bounds();
   return bb.empty() ? 0. : bb.min().z();
 }
 
 double opt_general_zmax(OPT_ARGS_NUM)
 {
-  if(!GModel::current()) return 0.;
   SBoundingBox3d bb = GModel::current()->bounds();
   return bb.empty() ? 0. : bb.max().z();
 }

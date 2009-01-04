@@ -33,7 +33,7 @@ void field_cb(Fl_Widget *w, void *data)
 static void field_delete_cb(Fl_Widget *w, void *data)
 {
   Field *f = (Field*)GUI::instance()->fields->editor_group->user_data();
-  delete_field(f->id, CTX.filename);
+  delete_field(f->id, GModel::current()->getFileName());
   GUI::instance()->fields->editField(NULL);
 }
 
@@ -42,7 +42,7 @@ static void field_new_cb(Fl_Widget *w, void *data)
   Fl_Menu_Button* mb = ((Fl_Menu_Button*)w);
   FieldManager *fields = GModel::current()->getFields();
   int id = fields->new_id();
-  add_field(id, mb->text(), CTX.filename);
+  add_field(id, mb->text(), GModel::current()->getFileName());
   GUI::instance()->fields->editField((*fields)[id]);
 }
 
@@ -290,7 +290,7 @@ void fieldWindow::saveFieldOptions()
     }
     if((*input)->changed()){
       add_field_option(f->id, it->first.c_str(), sstream.str().c_str(), 
-                       CTX.filename);
+                       GModel::current()->getFileName());
       (*input)->clear_changed();
     }
     input++;
@@ -298,11 +298,11 @@ void fieldWindow::saveFieldOptions()
   int is_bg_field = background_btn->value();
   FieldManager &fields = *GModel::current()->getFields();
   if(is_bg_field && fields.background_field != f->id){
-    set_background_field(f->id, CTX.filename);
+    set_background_field(f->id, GModel::current()->getFileName());
     loadFieldList();
   }
   if(!is_bg_field && fields.background_field == f->id){
-    set_background_field(-1, CTX.filename);
+    set_background_field(-1, GModel::current()->getFileName());
     loadFieldList();
   }
 }

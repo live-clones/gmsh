@@ -71,7 +71,7 @@ static void file_new_cb(Fl_Widget *w, void *data)
     time(&now);
     fprintf(fp, "// Gmsh project created on %s", ctime(&now));
     fclose(fp);
-    OpenProject(name.c_str());
+    OpenProject(name);
     Draw();
   }
 }
@@ -121,7 +121,7 @@ static void file_open_cb(Fl_Widget *w, void *data)
 {
   int n = PView::list.size();
   if(file_chooser(0, 0, "Open", input_formats)) {
-    OpenProject(file_chooser_get_name(1).c_str());
+    OpenProject(file_chooser_get_name(1));
     Draw();
   }
   if(n != (int)PView::list.size())
@@ -134,7 +134,7 @@ static void file_merge_cb(Fl_Widget *w, void *data)
   int f = file_chooser(1, 0, "Merge", input_formats);
   if(f) {
     for(int i = 1; i <= f; i++)
-      MergeFile(file_chooser_get_name(i).c_str());
+      MergeFile(file_chooser_get_name(i));
     Draw();
   }
   if(n != (int)PView::list.size())
@@ -143,7 +143,7 @@ static void file_merge_cb(Fl_Widget *w, void *data)
 
 static void file_clear_cb(Fl_Widget *w, void *data)
 {
-  ClearProject(CTX.default_filename);
+  ClearProject();
   Draw();
 }
 
@@ -154,7 +154,7 @@ static void file_window_cb(Fl_Widget *w, void *data)
     graphicWindow *g1 = GUI::instance()->graph.back();
     graphicWindow *g2 = new graphicWindow(false, CTX.num_tiles);
     GUI::instance()->graph.push_back(g2);
-    GUI::instance()->setGraphicTitle(CTX.filename);
+    GUI::instance()->setGraphicTitle(GModel::current()->getFileName());
     g2->win->resize(g1->win->x() + 10, g1->win->y() + 10,
                     g1->win->w(), g1->win->h());
     g2->win->show();
@@ -320,7 +320,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
 static void file_rename_cb(Fl_Widget *w, void *data)
 {
  test:
-  if(file_chooser(0, 1, "Rename", "*", CTX.filename)) {
+  if(file_chooser(0, 1, "Rename", "*", GModel::current()->getFileName().c_str())) {
     std::string name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       if(!StatFile(name.c_str()))
@@ -328,9 +328,9 @@ static void file_rename_cb(Fl_Widget *w, void *data)
                       "Cancel", "Replace", NULL, name.c_str()))
           goto test;
     }
-    rename(CTX.filename, name.c_str());
-    ClearProject(name.c_str());
-    OpenProject(name.c_str());
+    rename(GModel::current()->getFileName().c_str(), name.c_str());
+    ClearProject();
+    OpenProject(name);
     Draw();
   }
 }
@@ -528,7 +528,7 @@ static void geometry_physical_cb(Fl_Widget *w, void *data)
 static void geometry_edit_cb(Fl_Widget *w, void *data)
 {
   std::string prog = FixWindowsPath(CTX.editor);
-  std::string file = FixWindowsPath(CTX.filename);
+  std::string file = FixWindowsPath(GModel::current()->getFileName().c_str());
   char cmd[1024];
   ReplaceMultiFormat(prog.c_str(), file.c_str(), cmd);
   SystemCall(cmd);
@@ -536,8 +536,9 @@ static void geometry_edit_cb(Fl_Widget *w, void *data)
 
 void geometry_reload_cb(Fl_Widget *w, void *data)
 {
-  ClearProject(CTX.filename);
-  OpenProject(CTX.filename);
+  std::string fileName = GModel::current()->getFileName();
+  ClearProject();
+  OpenProject(fileName);
   Draw();
 }
 
@@ -562,7 +563,7 @@ static void add_new_point()
                    "or 'q' to abort]");
     char ib = GUI::instance()->selectEntity(ENT_NONE);
     if(ib == 'e'){
-      add_point(CTX.filename,
+      add_point(GModel::current()->getFileName(),
                 GUI::instance()->geoContext->input[2]->value(),
                 GUI::instance()->geoContext->input[3]->value(),
                 GUI::instance()->geoContext->input[4]->value(),
@@ -611,7 +612,7 @@ static void add_new_multiline(std::string type)
     }
     if(ib == 'e') {
       if(p.size() >= 2)
-	add_multline(type, p, CTX.filename);
+	add_multline(type, p, GModel::current()->getFileName());
       GUI::instance()->resetVisibility();
       GModel::current()->setSelection(0);
       Draw();
@@ -672,7 +673,7 @@ static void add_new_line()
       break;
     }
     if(p.size() == 2) {
-      add_multline("Line", p, CTX.filename);
+      add_multline("Line", p, GModel::current()->getFileName());
       GUI::instance()->resetVisibility();
       GModel::current()->setSelection(0);
       Draw();
@@ -723,7 +724,7 @@ static void add_new_circle()
       break;
     }
     if(p.size() == 3) {
-      add_circ(p[0], p[1], p[2], CTX.filename); // begin, center, end
+      add_circ(p[0], p[1], p[2], GModel::current()->getFileName()); // begin, center, end
       GUI::instance()->resetVisibility();
       GModel::current()->setSelection(0);
       Draw();
@@ -777,7 +778,7 @@ static void add_new_ellipse()
       break;
     }
     if(p.size() == 4) {
-      add_ell(p[0], p[1], p[2], p[3], CTX.filename);
+      add_ell(p[0], p[1], p[2], p[3], GModel::current()->getFileName());
       GUI::instance()->resetVisibility();
       GModel::current()->setSelection(0);
       Draw();
@@ -888,9 +889,9 @@ static void add_new_surface_volume(int mode)
           GUI::instance()->selectedFaces[0]->tag();
         if(select_contour(type, num, List1)) {
           if(type == ENT_LINE)
-            add_lineloop(List1, CTX.filename, &num);
+            add_lineloop(List1, GModel::current()->getFileName(), &num);
           else
-            add_surfloop(List1, CTX.filename, &num);
+            add_surfloop(List1, GModel::current()->getFileName(), &num);
           List_Reset(List1);
           List_Add(List2, &num);
           while(1) {
@@ -937,9 +938,9 @@ static void add_new_surface_volume(int mode)
                 GUI::instance()->selectedFaces[0]->tag();
               if(select_contour(type, num, List1)) {
                 if(type == ENT_LINE)
-                  add_lineloop(List1, CTX.filename, &num);
+                  add_lineloop(List1, GModel::current()->getFileName(), &num);
                 else
-                  add_surfloop(List1, CTX.filename, &num);
+                  add_surfloop(List1, GModel::current()->getFileName(), &num);
                 List_Reset(List1);
                 List_Add(List2, &num);
               }
@@ -951,9 +952,11 @@ static void add_new_surface_volume(int mode)
           }
           if(List_Nbr(List2)) {
             switch (mode) {
-            case 0: add_surf("Plane Surface", List2, CTX.filename); break;
-            case 1: add_surf("Ruled Surface", List2, CTX.filename); break;
-            case 2: add_vol(List2, CTX.filename); break;
+            case 0: add_surf("Plane Surface", List2, 
+                             GModel::current()->getFileName()); break;
+            case 1: add_surf("Ruled Surface", List2, 
+                             GModel::current()->getFileName()); break;
+            case 2: add_vol(List2, GModel::current()->getFileName()); break;
             }
             GUI::instance()->resetVisibility();
             GModel::current()->setSelection(0);
@@ -1033,7 +1036,7 @@ static void split_selection()
     if(ib == 'q')
       break;
     if(ib == 'e'){
-      split_edge(edge_to_split->tag(), List1, CTX.filename);
+      split_edge(edge_to_split->tag(), List1, GModel::current()->getFileName());
       break;
     }
     for(unsigned int i = 0; i < GUI::instance()->selectedVertices.size(); i++){
@@ -1209,13 +1212,13 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
       if(List_Nbr(List1)){
         switch (action) {
         case 0:
-          translate(mode, List1, CTX.filename, what,
+          translate(mode, List1, GModel::current()->getFileName(), what,
                     GUI::instance()->geoContext->input[6]->value(),
                     GUI::instance()->geoContext->input[7]->value(),
                     GUI::instance()->geoContext->input[8]->value());
           break;
         case 1:
-          rotate(mode, List1, CTX.filename, what,
+          rotate(mode, List1, GModel::current()->getFileName(), what,
                  GUI::instance()->geoContext->input[12]->value(),
                  GUI::instance()->geoContext->input[13]->value(),
                  GUI::instance()->geoContext->input[14]->value(),
@@ -1225,27 +1228,27 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
                  GUI::instance()->geoContext->input[15]->value());
           break;
         case 2:
-          dilate(mode, List1, CTX.filename, what,
+          dilate(mode, List1, GModel::current()->getFileName(), what,
                  GUI::instance()->geoContext->input[16]->value(),
                  GUI::instance()->geoContext->input[17]->value(),
                  GUI::instance()->geoContext->input[18]->value(),
                  GUI::instance()->geoContext->input[19]->value());
           break;
         case 3:
-          symmetry(mode, List1, CTX.filename, what,
+          symmetry(mode, List1, GModel::current()->getFileName(), what,
                    GUI::instance()->geoContext->input[20]->value(),
                    GUI::instance()->geoContext->input[21]->value(),
                    GUI::instance()->geoContext->input[22]->value(),
                    GUI::instance()->geoContext->input[23]->value());
           break;
         case 4:
-          extrude(List1, CTX.filename, what,
+          extrude(List1, GModel::current()->getFileName(), what,
                   GUI::instance()->geoContext->input[6]->value(),
                   GUI::instance()->geoContext->input[7]->value(),
                   GUI::instance()->geoContext->input[8]->value());
           break;
         case 5:
-          protude(List1, CTX.filename, what,
+          protude(List1, GModel::current()->getFileName(), what,
                   GUI::instance()->geoContext->input[12]->value(),
                   GUI::instance()->geoContext->input[13]->value(),
                   GUI::instance()->geoContext->input[14]->value(),
@@ -1255,17 +1258,17 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
                   GUI::instance()->geoContext->input[15]->value());
           break;
         case 6:
-          delet(List1, CTX.filename, what);
+          delet(List1, GModel::current()->getFileName(), what);
           break;
         case 7:
-          add_physical(what, List1, CTX.filename);
+          add_physical(what, List1, GModel::current()->getFileName());
           break;
         case 8:
-          add_charlength(List1, CTX.filename, 
+          add_charlength(List1, GModel::current()->getFileName(), 
                          GUI::instance()->meshContext->input[0]->value());
           break;
         case 9:
-          add_recosurf(List1, CTX.filename);
+          add_recosurf(List1, GModel::current()->getFileName());
           break;
 
         default:
@@ -1415,7 +1418,7 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
 
 static void geometry_elementary_coherence_cb(Fl_Widget *w, void *data)
 {
-  coherence(CTX.filename);
+  coherence(GModel::current()->getFileName());
 }
 
 static void geometry_physical_add_cb(Fl_Widget *w, void *data)
@@ -1435,18 +1438,18 @@ static void geometry_physical_add_cb(Fl_Widget *w, void *data)
 
 static void mesh_save_cb(Fl_Widget *w, void *data)
 {
-  char name[256];
+  std::string name;
   if(CTX.output_filename)
-    strcpy(name, CTX.output_filename);
+    name = CTX.output_filename;
   else
-    GetDefaultFileName(CTX.mesh.format, name);
+    name = GetDefaultFileName(CTX.mesh.format);
   if(CTX.confirm_overwrite) {
-    if(!StatFile(name))
+    if(!StatFile(name.c_str()))
       if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
-                    "Cancel", "Replace", NULL, name))
+                    "Cancel", "Replace", NULL, name.c_str()))
         return;
   }
-  CreateOutputFile(name, CTX.mesh.format);
+  CreateOutputFile(name.c_str(), CTX.mesh.format);
 }
 
 static void mesh_define_cb(Fl_Widget *w, void *data)
@@ -1763,7 +1766,7 @@ static void add_transfinite(int dim)
     if(ib == 'e') {
       if(dim == 1) {
         if(p.size())
-          add_trsfline(p, CTX.filename,
+          add_trsfline(p, GModel::current()->getFileName(),
                        GUI::instance()->meshContext->choice[0]->text(),
                        GUI::instance()->meshContext->input[2]->value(),
                        GUI::instance()->meshContext->input[1]->value());
@@ -1842,14 +1845,14 @@ static void add_transfinite(int dim)
             switch (dim) {
             case 2:
               if(p.size() == 0 + 1 || p.size() == 3 + 1 || p.size() == 4 + 1)
-                add_trsfsurf(p, CTX.filename,
+                add_trsfsurf(p, GModel::current()->getFileName(),
                              GUI::instance()->meshContext->choice[1]->text());
               else
                 Msg::Error("Wrong number of points for transfinite surface");
               break;
             case 3:
               if(p.size() == 6 + 1 || p.size() == 8 + 1)
-                add_trsfvol(p, CTX.filename);
+                add_trsfvol(p, GModel::current()->getFileName());
               else
                 Msg::Error("Wrong number of points for transfinite volume");
               break;
@@ -1912,7 +1915,7 @@ static void view_reload(int index)
     int n = PView::list.size();
 
     // FIXME: use fileIndex
-    MergeFile(p->getData()->getFileName().c_str());
+    MergeFile(p->getData()->getFileName());
 
     if((int)PView::list.size() > n){ // we loaded a new view
       // delete old data and replace with new
@@ -2015,7 +2018,7 @@ static void view_save_as(int index, const char *title, int format)
                       "Cancel", "Replace", NULL, name.c_str()))
           goto test;
     }
-    view->write(name.c_str(), format);
+    view->write(name, format);
   }
 }
 

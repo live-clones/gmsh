@@ -20,13 +20,11 @@ int main(int argc, char *argv[])
     exit(0);
   }
 
+  new GModel();
   GmshInitialize(argc, argv);
-
   // force these even if the options say it ain't so
   CTX.nopopup = 1;
   CTX.terminal = 1; 
-
-  new GModel;
   GmshBatch();
   GmshFinalize();
 

@@ -143,12 +143,14 @@ static void model_switch_cb(Fl_Widget* w, void *data)
 {
   Fl_Select_Browser *b = (Fl_Select_Browser *)w;
   if(b->value()){
-    GModel::current()->setVisibility(0);
     GModel::current(b->value() - 1);
+    for(unsigned int i = 0; i < GModel::list.size(); i++)
+      GModel::list[i]->setVisibility(0);
     GModel::current()->setVisibility(1);
   }
   if(w->window()) w->window()->hide();
   CTX.mesh.changed = ENT_ALL;
+  GUI::instance()->setGraphicTitle(GModel::current()->getFileName());
   GUI::instance()->resetVisibility();
   Draw();
 }

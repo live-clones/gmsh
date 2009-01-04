@@ -1318,7 +1318,7 @@ void Field::put_on_new_view()
   }
   std::ostringstream oss;
   oss << "Field " << id;
-  PView *view= new PView(oss.str().c_str(), "NodeData", GModel::current(), d);
+  PView *view = new PView(oss.str(), "NodeData", GModel::current(), d);
   view->setChanged(true);
 }
 

@@ -8,6 +8,7 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Browser.H>
+#include "GModel.h"
 #include "GUI.h"
 #include "solverWindow.h"
 #include "dialogWindow.h"
@@ -35,9 +36,10 @@ void solver_cb(Fl_Widget *w, void *data)
   }
 
   if(first[num]) {
-    char file[256];
     first[num] = 0;
-    strcpy(file, CTX.no_ext_filename);
+    char file[256], no_ext[256], ext[256], base[256];
+    SplitFileName(GModel::current()->getFileName().c_str(), no_ext, ext, base);
+    strcpy(file, no_ext);
     strcat(file, SINFO[num].extension);
     GUI::instance()->solver[num]->input[0]->value(file);
   }

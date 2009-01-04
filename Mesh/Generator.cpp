@@ -357,7 +357,7 @@ static void PrintMesh2dStatistics(GModel *m)
             "#e\t\ttau\t\t#Egood\t\t#Egood/#e\tCPU\n");
   }
 
-  fprintf(statreport,"\t%16s\t%d\t\t%d\t\t", CTX.base_filename, numFaces, nUnmeshed);
+  fprintf(statreport,"\t%16s\t%d\t\t%d\t\t", m->getName().c_str(), numFaces, nUnmeshed);
   fprintf(statreport,"%d\t\t%8.7f\t%8.7f\t%8.7f\t%d\t\t%8.7f\t",
           nTotT, avg / (double)nTotT, best, worst, nTotGoodQuality,
           (double)nTotGoodQuality / nTotT);

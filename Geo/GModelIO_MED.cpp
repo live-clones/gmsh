@@ -162,12 +162,15 @@ int GModel::readMED(const std::string &name)
   }
 
   int ret = 1;
-  // FIXME change this once we clarify Open/Merge/Clear behaviour
   MVertex::resetGlobalNumber();
   MElement::resetGlobalNumber();
   for(unsigned int i = 0; i < meshNames.size(); i++){
     GModel *m = findByName(meshNames[i]);
-    if(!m) m = new GModel(meshNames[i]);
+    if(!m){
+      for(unsigned int j = 0; j < GModel::list.size(); j++)
+        GModel::list[j]->setVisibility(0);
+      m = new GModel(meshNames[i]);
+    }
     ret = m->readMED(name, i);
     if(!ret) return 0;
   }

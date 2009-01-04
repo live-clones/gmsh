@@ -40,9 +40,9 @@
 extern Context_T CTX;
 
 // Global parser variables
-char gmsh_yyname[256] = "";
-int  gmsh_yyerrorstate = 0;
-int  gmsh_yyviewindex = 0;
+std::string gmsh_yyname;
+int gmsh_yyerrorstate = 0;
+int gmsh_yyviewindex = 0;
 std::map<std::string, std::vector<double> > gmsh_yysymbols;
 
 // Static parser variables (accessible only in this file)
@@ -1873,7 +1873,7 @@ Command :
 	// MergeWithBoundingBox is deprecated
 	char tmpstring[1024];
 	FixRelativePath($2, tmpstring);
-	MergeFile(tmpstring, 1);
+	MergeFile(tmpstring, true);
       }
       else if(!strcmp($1, "System"))
 	SystemCall($2);
@@ -2097,22 +2097,22 @@ Loop :
     }
   | tFunction tSTRING
     {
-      if(!FunctionManager::Instance()->createFunction($2, gmsh_yyin, gmsh_yyname,
-						      gmsh_yylineno))
+      if(!FunctionManager::Instance()->createFunction
+         ($2, gmsh_yyin, gmsh_yyname, gmsh_yylineno))
 	yymsg(0, "Redefinition of function %s", $2);
       skip_until(NULL, "Return");
       //FIXME: wee leak $2
     }
   | tReturn
     {
-      if(!FunctionManager::Instance()->leaveFunction(&gmsh_yyin, gmsh_yyname,
-						     gmsh_yylineno))
+      if(!FunctionManager::Instance()->leaveFunction
+         (&gmsh_yyin, gmsh_yyname, gmsh_yylineno))
 	yymsg(0, "Error while exiting function");
     } 
   | tCall tSTRING tEND
     {
-      if(!FunctionManager::Instance()->enterFunction($2, &gmsh_yyin, gmsh_yyname,
-						     gmsh_yylineno))
+      if(!FunctionManager::Instance()->enterFunction
+         ($2, &gmsh_yyin, gmsh_yyname, gmsh_yylineno))
 	yymsg(0, "Unknown function %s", $2);
       //FIXME: wee leak $2
     } 
@@ -3534,9 +3534,10 @@ void FixRelativePath(const char *in, char *out)
   }
   else{
     // append 'in' to the path of the parent file
-    strcpy(out, gmsh_yyname);
+    strcpy(out, gmsh_yyname.c_str());
     int i = strlen(out) - 1 ;
-    while(i >= 0 && gmsh_yyname[i] != '/' && gmsh_yyname[i] != '\\') i-- ;
+    while(i >= 0 && gmsh_yyname.c_str()[i] != '/' && 
+          gmsh_yyname.c_str()[i] != '\\') i-- ;
     out[i+1] = '\0';
     strcat(out, in);
   }
@@ -3544,7 +3545,8 @@ void FixRelativePath(const char *in, char *out)
 
 void yyerror(char *s)
 {
-  Msg::Error("'%s', line %d : %s (%s)", gmsh_yyname, gmsh_yylineno - 1, s, gmsh_yytext);
+  Msg::Error("'%s', line %d : %s (%s)", gmsh_yyname.c_str(), gmsh_yylineno - 1,
+             s, gmsh_yytext);
   gmsh_yyerrorstate++;
 }
 
@@ -3558,9 +3560,9 @@ void yymsg(int level, const char *fmt, ...)
   va_end(args);
 
   if(level == 0){
-    Msg::Error("'%s', line %d : %s", gmsh_yyname, gmsh_yylineno - 1, tmp);
+    Msg::Error("'%s', line %d : %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
     gmsh_yyerrorstate++;
   }
   else
-    Msg::Warning("'%s', line %d : %s", gmsh_yyname, gmsh_yylineno - 1, tmp);
+    Msg::Warning("'%s', line %d : %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
 }

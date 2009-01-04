@@ -31,6 +31,9 @@ class GModel
   // the name of the model
   std::string _name;
 
+  // the name of the file the model was read from
+  std::string _fileName;
+
   // the visibility flag
   char _visible;
 
@@ -121,6 +124,10 @@ class GModel
   // get/set the model name
   void setName(std::string name){ _name = name; }
   std::string getName(){ return _name; }
+
+  // get/set the model file name
+  void setFileName(std::string fileName){ _fileName = fileName; }
+  std::string getFileName(){ return _fileName; }
 
   // get/set the visibility flag
   char getVisibility(){ return _visible; }

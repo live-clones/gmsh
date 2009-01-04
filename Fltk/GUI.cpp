@@ -517,15 +517,15 @@ int GUI::testArrowShortcuts()
   return 0;
 }
 
-void GUI::setGraphicTitle(const char *str)
+void GUI::setGraphicTitle(std::string title)
 {
   for(unsigned int i = 0; i < graph.size(); i++){
     if(!i){
-      graph[i]->setTitle(str);
+      graph[i]->setTitle(title);
     }
     else{
       std::ostringstream sstream;
-      sstream << str << " [" << i << "]";
+      sstream << title << " [" << i << "]";
       graph[i]->setTitle(sstream.str());
     }
   }

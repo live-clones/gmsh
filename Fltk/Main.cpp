@@ -25,14 +25,15 @@ extern Context_T CTX;
 
 int main(int argc, char *argv[])
 {
+  // Create a new model
+  new GModel();
+
   // Hack to generate automatic documentation (before getting
   // user-defined options)
   if(argc == 2 && std::string(argv[1]) == "-doc"){
     Init_Options(0);
     GMSH_PluginManager::instance()->registerDefaultPlugins();
-    GModel *dummy = new GModel();
     Print_OptionsDoc();
-    delete dummy;
     exit(0);
   }
 
@@ -41,9 +42,6 @@ int main(int argc, char *argv[])
 
   // Always print info on terminal for non-interactive execution
   if(CTX.batch) CTX.terminal = 1;
-
-  // Create a new model
-  new GModel();
 
   // Non-interactive Gmsh
   if(CTX.batch) {
@@ -79,14 +77,14 @@ int main(int argc, char *argv[])
   GUI::instance()->check();
 
   // Open project file and merge all other input files
-  OpenProject(CTX.filename);
+  OpenProject(GModel::current()->getFileName());
   for(unsigned int i = 1; i < CTX.files.size(); i++){
     if(CTX.files[i] == "-new"){
       GModel::current()->setVisibility(0);
       new GModel();
     }
     else
-      MergeFile(CTX.files[i].c_str());
+      MergeFile(CTX.files[i]);
   }
   
   if(CTX.post.combine_time){

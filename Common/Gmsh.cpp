@@ -28,6 +28,10 @@ extern Context_T CTX;
 
 int GmshInitialize(int argc, char **argv)
 {
+  // we need at least one model during option parsing
+  GModel *dummy = 0;
+  if(GModel::list.empty()) dummy = new GModel();
+
   // Initialize messages (parallel stuff, etc.)
   Msg::Init(argc, argv);
 
@@ -47,6 +51,8 @@ int GmshInitialize(int argc, char **argv)
 
   // Initialize numeric library (gsl, robust predicates)
   Init_Numeric();
+
+  if(dummy) delete dummy;
   return 1;
 }
 
@@ -72,7 +78,7 @@ int GmshSetOption(std::string category, std::string name, double value, int inde
 
 int GmshMergeFile(std::string fileName)
 {
-  return MergeFile(fileName.c_str(), 1);
+  return MergeFile(fileName, true);
 }
 
 int GmshFinalize()
@@ -82,17 +88,15 @@ int GmshFinalize()
 
 int GmshBatch()
 {
-  if(!GModel::current()) return 0;
-
   Msg::Info("Running '%s'", Msg::GetCommandLine().c_str());
   Msg::Info("Started on %s", Msg::GetLaunchDate().c_str());
 
-  OpenProject(CTX.filename);
+  OpenProject(GModel::current()->getFileName());
   for(unsigned int i = 1; i < CTX.files.size(); i++){
     if(CTX.files[i] == "-new")
-      new GModel;
+      new GModel();
     else
-      MergeFile(CTX.files[i].c_str());
+      MergeFile(CTX.files[i]);
   }
 
 #if !defined(HAVE_NO_POST)

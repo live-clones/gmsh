@@ -6,6 +6,7 @@
 #ifndef _GUI_H_
 #define _GUI_H_
 
+#include <string>
 #include <vector>
 #include <FL/Fl.H>
 
@@ -85,7 +86,7 @@ class GUI{
   // navigation). This is necessary since FLTK 1.1.
   int testArrowShortcuts();
   // set the size of the graphic window
-  void setGraphicTitle(const char *str);
+  void setGraphicTitle(std::string title);
   // update the GUI when views get added or deleted
   void updateViews();
   // update the GUI when fields change
