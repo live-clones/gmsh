@@ -117,10 +117,12 @@ for Gmsh @value{GMSH-VERSION} (@today{}).
 * Tutorial::                    A step-by-step tutorial.
 * Running Gmsh::                How to run Gmsh on your operating system.
 * File formats::                Input and output file formats.
-* Programming notes::           Random notes for developers.
-* Bugs and versions::           Contact information and ChangeLog
-* Tips and tricks::             Some tips to make your life easier with Gmsh.
+* Options::                     List of all available options
+* Programming notes::           Notes for developers
+* Random tips and tricks::      Tips and tricks to make your life easier
 * Frequently asked questions::  The Gmsh FAQ
+* Version history::             Changelog
+* Copyright and credits::       Copyright information and list of contributors
 * License::                     Complete copy of the license.
 * Concept index::               Index of concepts.
 * Syntax index::                Index of reserved keywords in the Gmsh language.
@@ -136,6 +138,7 @@ Overview
 * Post-processing::             
 * What Gmsh is pretty good at::  
 * and what Gmsh is not so good at::  
+* Bug reports::                 
 
 How to read this reference manual?
 
@@ -229,17 +232,19 @@ Legacy formats
 * POS ASCII file format::       
 * POS binary file format::      
 
+Options
+
+* General options list::        
+* Geometry options list::       
+* Mesh options list::           
+* Solver options list::         
+* Post-processing options list::  
+
 Programming notes
 
 * Main code structure::         
 * Coding style::                
 * Option handling::             
-
-Bugs, versions and credits
-
-* Bugs::                        
-* Versions::                    
-* Credits::                     
 
 @end detailmenu
 @end menu
@@ -287,6 +292,7 @@ description of the four modules is given hereafter.
 * Post-processing::             
 * What Gmsh is pretty good at::  
 * and what Gmsh is not so good at::  
+* Bug reports::                 
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -445,7 +451,7 @@ scalar, vector and tensor datasets, and can perform various operations on
 the resulting post-processing views (@pxref{Post-processing module});
 @item
 export plots in many different formats: vector PostScript or encapsulated
-PostScript, LaTeX, PNG, JPEG, @dots{} (@pxref{General options});
+PostScript, LaTeX, PNG, JPEG, @dots{} (@pxref{General options list});
 @item
 generate complex animations (see @ref{General tools}, and @ref{t8.geo});
 @item
@@ -454,12 +460,11 @@ interface. Gmsh can be compiled with or without the GUI, and all
 versions can be used either interactively or directly from the command
 line (@pxref{Running Gmsh});
 @item
-configure your preferred options. Gmsh has a large number of configuration
-options that can be set interactively using the GUI, scattered inside
-command files, changed on the fly in scripts, set in per-user configuration
-files, or specified on the command-line (see @ref{General options},
-@ref{Geometry options}, @ref{Mesh options}, @ref{Post-processing options},
-and @ref{Running Gmsh});
+configure your preferred options. Gmsh has a large number of
+configuration options that can be set interactively using the GUI,
+scattered inside command files, changed on the fly in scripts, set in
+per-user configuration files, or specified on the command-line (see
+@ref{Running Gmsh} and @ref{Options});
 @item
 and do all the above on various platforms (Windows, Mac and Unix), for
 free (@pxref{Copying conditions}), using simple script files and/or a
@@ -470,7 +475,7 @@ small but powerful GUI.
 @c ... and what Gmsh is not so good at
 @c -------------------------------------------------------------------------
 
-@node and what Gmsh is not so good at,  , What Gmsh is pretty good at, Overview
+@node and what Gmsh is not so good at, Bug reports, What Gmsh is pretty good at, Overview
 @section @dots{} and what Gmsh is not so good at
 
 Due to its historical background and limited developer manpower, Gmsh has
@@ -501,9 +506,34 @@ thousands of geometric primitives, or millions of mesh/post-processing
 elements).
 @end itemize
 
-If you have the skills and some free time, feel free to join the project! We
-gladly accept any code contributions (@pxref{Programming notes}) to remedy
-the aforementioned (and all other) shortcomings...
+If you have the skills and some free time, feel free to join the
+project! We gladly accept any code contributions (@pxref{Programming
+notes}) to remedy the aforementioned (and all other) shortcomings...
+
+@c -------------------------------------------------------------------------
+@c Bug reports
+@c -------------------------------------------------------------------------
+
+@node Bug reports,  , and what Gmsh is not so good at, Overview
+@section Bug reports
+
+@cindex Bugs, reporting
+@cindex Reporting bugs
+@cindex Contact information
+@cindex Mailing list
+@cindex Authors, e-mail
+@cindex E-mail, authors
+
+If you think you have found a bug in Gmsh, you can report it by
+electronic mail to the Gmsh mailing list at @email{gmsh@@geuz.org}.
+Please send as precise a description of the problem as you can,
+including sample input files that produce the bug. Don't forget to
+mention both the version of Gmsh and the version of your operation
+system (@pxref{Command-line options} to see how to get this
+information).
+
+See @ref{Frequently asked questions}, and the @file{TODO.txt} file in
+the distribution to see which problems we already know about.
 
 @c =========================================================================
 @c How to read this manual?
@@ -610,13 +640,6 @@ modules''. Commands peculiar to these modules will be introduced in
 @ref{Geometry module}, @ref{Mesh module}, @ref{Solver module}, and
 @ref{Post-processing module}, respectively.
 
-Note that, if you are just beginning to use Gmsh, or just want to see
-what Gmsh is all about, you really don't need to read this chapter and
-the four next ones. Just have a quick look at @ref{Running Gmsh}, and go
-play with the GUI, running the tutorials and demonstration files bundled
-in the distribution (@pxref{Tutorial}). Screencasts that show how to use
-the GUI are available here: @uref{http://www.geuz.org/gmsh/screencasts/}.
-
 @menu
 * Comments::                    
 * Expressions::                 
@@ -715,15 +738,14 @@ respectively. The operators @var{operator-unary-left},
 @var{operator-ternary-left} and @var{operator-ternary-right} are defined
 in @ref{Operators}. For the definition of @w{@var{built-in-function}s},
 see @ref{Built-in functions}. The various @w{@var{real-option}s} are
-listed in @ref{General options}, @ref{Geometry options}, @ref{Mesh
-options}, @ref{Solver options}, and @ref{Post-processing options}.
+listed in @ref{Options}.
 
 The last case in the definition allows to ask the user for a value
 interactively. For example, inserting @code{GetValue("Value of parameter
 alpha?", 5.76)} in an input file will query the user for the value of a
-certain parameter alpha, assuming the default value is 5.76. If the option
-@code{General.NoPopup} is set (@pxref{General options}), no question is
-asked and the default value is automatically used.
+certain parameter alpha, assuming the default value is 5.76. If the
+option @code{General.NoPopup} is set (@pxref{General options list}), no
+question is asked and the default value is automatically used.
 
 @cindex Expressions, lists
 
@@ -804,9 +826,7 @@ and seventh are equivalent to the @code{sprintf} C function (where
 @var{char-expression} is a format string that can contain floating point
 formatting characters: @code{%e}, @code{%g}, etc.). The last case permits to
 use the value of a @var{char-option} as a @var{char-expression}.  The
-various @w{@var{char-option}s} are listed in @ref{General options},
-@ref{Geometry options}, @ref{Mesh options}, @ref{Solver options}, and
-@ref{Post-processing options}.
+various @w{@var{char-option}s} are listed in @ref{Options}.
 
 Character expressions are mostly used to specify non-numeric options and
 input/output file names. See @ref{t8.geo}, for an interesting usage of
@@ -835,15 +855,14 @@ Colors expressions are hybrids between fixed-length braced
 
 @noindent The first case permits to use the X Windows names to refer to colors,
 e.g., @code{Red}, @code{SpringGreen}, @code{LavenderBlush3}, @dots{}
-(see @file{Common/Colors.h} in Gmsh's source tree for a complete list). The
-second case permits to define colors by using three expressions to specify
-their red, green and blue components (with values comprised between 0 and
-255). The third case permits to define colors by using their red, green and
-blue color components as well as their alpha channel. The last case permits
-to use the value of a @var{color-option} as a @var{color-expression}. The
-various @w{@var{color-option}s} are listed in @ref{General options},
-@ref{Geometry options}, @ref{Mesh options}, @ref{Solver options}, and
-@ref{Post-processing options}.
+(see @file{Common/Colors.h} in Gmsh's source tree for a complete
+list). The second case permits to define colors by using three
+expressions to specify their red, green and blue components (with values
+comprised between 0 and 255). The third case permits to define colors by
+using their red, green and blue color components as well as their alpha
+channel. The last case permits to use the value of a @var{color-option}
+as a @var{color-expression}. The various @w{@var{color-option}s} are
+listed in @ref{Options}.
 
 See @ref{t3.geo}, for an example of the use of color expressions.
 
@@ -1217,11 +1236,12 @@ Returns the next available line loop number.
 Returns the next available surface loop number.
 
 @item newreg
-Returns the next available region number. That is, @code{newreg} returns the
-maximum of @code{newp}, @code{newl}, @code{news}, @code{newv} and all
-physical entity numbers@footnote{For compatibility purposes, the behavior
-of @code{newl}, @code{news}, @code{newv} and @code{newreg} can be modified
-with the @code{Geometry.OldNewReg} option (@pxref{Geometry options}).}.
+Returns the next available region number. That is, @code{newreg} returns
+the maximum of @code{newp}, @code{newl}, @code{news}, @code{newv} and
+all physical entity numbers@footnote{For compatibility purposes, the
+behavior of @code{newl}, @code{news}, @code{newv} and @code{newreg} can
+be modified with the @code{Geometry.OldNewReg} option (@pxref{Geometry
+options list}).}.
 @end ftable
 
 @item @var{string} [ ] = @{ @};
@@ -1355,10 +1375,10 @@ Deletes the expression @var{string}.
 Generate @var{expression}-D mesh.
 
 @item Print @var{char-expression};
-Prints the graphic window in a file named @var{char-expression}, using the
-current @code{Print.Format} (@pxref{General options}). If the path in
-@var{char-expression} is not absolute, @var{char-expression} is appended to
-the path of the current file.
+Prints the graphic window in a file named @var{char-expression}, using
+the current @code{Print.Format} (@pxref{General options list}). If the
+path in @var{char-expression} is not absolute, @var{char-expression} is
+appended to the path of the current file.
 
 @item Sleep @var{expression};
 Suspends the execution of Gmsh during @var{expression} seconds.
@@ -1380,28 +1400,15 @@ appended to the path of the current file.
 @node General options,  , General commands, General tools
 @section General options
 
-Here is the list of the general @w{@var{char-option}s},
+The list of all the general @w{@var{char-option}s},
 @w{@var{real-option}s} and @w{@var{color-option}s} (in that
-order---check the default values to see the actual types). Most of these
-options are accessible in the GUI, but not all of them. When running
-Gmsh interactively, changing an option in the script file will modify
-the option in the GUI in real time. This permits for example to resize
-the graphical window in a script, or to interact with animations in the
-script and in the GUI at the same time.
-
-Gmsh's default behavior is to save some of these options in a per-user
-``session resource'' file (@code{General.SessionFileName}) every time Gmsh
-is shut down. This permits for example to automatically remember the size
-and location of the windows or which fonts to use. Other options can be
-saved in a per-user ``option'' file (@code{General.OptionsFileName}),
-automatically loaded by Gmsh every time it starts up, by using the
-`Tools->Options->Save as defaults' menu.
-
-@c All the opt_XXX.texi files are generated automatically with `gmsh -doc'
-
-@include opt_general.texi
-
-@include opt_print.texi
+order---check the default values to see the actual types) is given in
+@ref{General options list}. Most of these options are accessible in the
+GUI, but not all of them. When running Gmsh interactively, changing an
+option in the script file will modify the option in the GUI in real
+time. This permits for example to resize the graphical window in a
+script, or to interact with animations in the script and in the GUI at
+the same time.
 
 @c =========================================================================
 @c Geometry module
@@ -1490,14 +1497,15 @@ previously defined entity, it is enclosed between braces.''
 @cindex Points, physical
 
 @ftable @code
-@item Point ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression}, @var{expression} @};
-Creates an elementary point. The @var{expression} inside the parentheses is
-the point's identification number; the three first @w{@var{expression}s}
-inside the braces on the right hand side give the three X, Y and Z
-coordinates of the point in the three-dimensional Euclidean space; the last
-@var{expression} sets the characteristic mesh length at that point. See
-@ref{Characteristic lengths}, for more information about how this
-characteristic length information is used in the meshing process.
+@item Point ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} <, @var{expression} > @};
+Creates an elementary point. The @var{expression} inside the parentheses
+is the point's identification number; the three first
+@w{@var{expression}s} inside the braces on the right hand side give the
+three X, Y and Z coordinates of the point in the three-dimensional
+Euclidean space; the optional last @var{expression} sets the
+characteristic mesh length at that point. See @ref{Characteristic
+lengths}, for more information about how this characteristic length
+information is used in the meshing process.
 
 @item Physical Point ( @var{expression} | @var{char-expression} ) = @{ @var{expression-list} @};
 Creates a physical point. The @var{expression} inside the parentheses is
@@ -1557,8 +1565,6 @@ number of the center of the ellipse; the third @var{expression} gives the
 identification number of any point located on the major axis of the ellipse;
 the last @var{expression} gives the identification number of the end point
 of the arc.
-
-(A deprecated synonym for @code{Ellipse} is @code{Ellipsis}.)
 
 @item Line ( @var{expression} ) = @{ @var{expression}, @var{expression} @};
 Creates a straight line segment. The @var{expression} inside the parentheses
@@ -1686,8 +1692,6 @@ should be defined separately). Likewise, a surface loop defining a hole
 should not have any surfaces in common with another surface loop defining a
 hole in the same volume (in which case the two surface loops should be
 combined).
-
-(A deprecated synonym for @code{Volume} is @code{Complex Volume}.)
 
 @item Physical Volume ( @var{expression} | @var{char-expression} ) = @{ @var{expression-list} @};
 Creates a physical volume. The @var{expression} inside the parentheses
@@ -1824,10 +1828,11 @@ Here is a list of all other geometry commands currently available:
 
 @ftable @code
 @item Coherence;
-Removes all duplicate elementary geometrical entities (e.g., points having
-identical coordinates). Note that Gmsh executes the @code{Coherence} command
-automatically after each geometrical transformation, unless
-@code{Geometry.AutoCoherence} is set to zero (@pxref{Geometry options}).
+Removes all duplicate elementary geometrical entities (e.g., points
+having identical coordinates). Note that Gmsh executes the
+@code{Coherence} command automatically after each geometrical
+transformation, unless @code{Geometry.AutoCoherence} is set to zero
+(@pxref{Geometry options list}).
 
 @item Delete @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
 Deletes all elementary entities whose identification numbers are given
@@ -1862,12 +1867,9 @@ set to @code{0} or @code{1} (@var{char-expression} can for example be
 @cindex Options, geometry
 @cindex Geometry, options
 
-Geometry options control the behavior of geometry commands, as well as
-the way geometrical entities are handled in the GUI. For the
-signification of the `Saved in:' field in the following list, see
-@ref{General options}.
-
-@include opt_geometry.texi
+The list of all the options that control the behavior of geometry
+commands, as well as the way geometrical entities are handled in the
+GUI, is give in  @ref{Geometry options list}.
 
 @c =========================================================================
 @c Mesh module
@@ -1912,9 +1914,9 @@ type of the surface meshes they are based on.
 @section Elementary vs. physical entities
 
 If only elementary geometrical entities are defined (or if the
-@code{Mesh.SaveAll} option is set; see @ref{Mesh options}), the grid
-produced by the mesh module will be saved ``as is''. That is, all the
-elements in the grid will be saved to disk using the identification
+@code{Mesh.SaveAll} option is set; see @ref{Mesh options list}), the
+grid produced by the mesh module will be saved ``as is''. That is, all
+the elements in the grid will be saved to disk using the identification
 number of the elementary entities they discretize as their elementary
 region number (and 0 as their physical region number@footnote{This
 behaviour was introduced in Gmsh 2.0. In older versions, both the
@@ -2050,8 +2052,8 @@ case the smallest element size is selected at any given point.
 
 All element sizes are further constrained by the
 @code{Mesh.CharacteristicLengthMin}, @code{Mesh.CharacteristicLengthMax}
-and @code{Mesh.CharacteristicLengthFactor} options (@pxref{Mesh
-options})
+and @code{Mesh.CharacteristicLengthFactor} options (@pxref{Mesh options
+list})
 
 Here are the mesh commands that are related to the specification of
 characteristic lengths:
@@ -2151,8 +2153,6 @@ argument `@code{Using Bump @var{expression}}' instructs the transfinite
 algorithm to distribute the nodes with a refinement at both ends of the
 line.
 
-(A deprecated synonym for @code{Progression} is @code{Power}.)
-
 @item Transfinite Surface @{ @var{expression-list} @} | "*" < = @{ @var{expression-list} @} > < Left | Right | Alternate > ;
 Selects surfaces to be meshed with the 2D transfinite algorithm. The
 @var{expression-list} on the right-hand-side should contain the
@@ -2208,9 +2208,9 @@ default value is 45).
 
 @item Save @var{char-expression};
 Saves the mesh in a file named @var{char-expression}, using the current
-@code{Mesh.Format} (@pxref{Mesh options}). If the path in
-@var{char-expression} is not absolute, @var{char-expression} is appended to
-the path of the current file.
+@code{Mesh.Format} (@pxref{Mesh options list}). If the path in
+@var{char-expression} is not absolute, @var{char-expression} is appended
+to the path of the current file.
 
 @item Show @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
 Shows the mesh of the entities in @var{expression-list}, if
@@ -2237,11 +2237,9 @@ the moment).
 @cindex Options, mesh
 @cindex Mesh, options
 
-Mesh options control the behavior of mesh commands, as well as the way
-meshes are displayed in the GUI. For the signification of the `Saved
-in:' field in the following list, see @ref{General options}.
-
-@include opt_mesh.texi
+The list of all the options that control the behavior of mesh commands,
+as well as the way meshes are displayed in the GUI, is given in
+@ref{Mesh options list}.
 
 @c =========================================================================
 @c Solver module
@@ -2255,12 +2253,12 @@ in:' field in the following list, see @ref{General options}.
 
 Five external solvers can be interfaced simultaneously with Gmsh.
 
-If you just want to start a solver from the solver module, with no further
-interactions between the solver and Gmsh, just edit the options relative to
-one of the five available solvers (e.g., @code{Solver.Name0},
-@code{Solver.Executable0}, @dots{}; see @ref{Solver options}), and set the
-corresponding ``client-server'' option to zero
-(e.g., @code{Solver.ClientServer0 = 0}). This doesn't require any
+If you just want to start a solver from the solver module, with no
+further interactions between the solver and Gmsh, just edit the options
+relative to one of the five available solvers (e.g.,
+@code{Solver.Name0}, @code{Solver.Executable0}, @dots{}; see @ref{Solver
+options list}), and set the corresponding ``client-server'' option to
+zero (e.g., @code{Solver.ClientServer0 = 0}). This doesn't require any
 modification to be made to the solver.
 
 If you want the solver to interact with Gmsh (for error messages, option
@@ -2288,7 +2286,7 @@ are available in the source distribution.
 @cindex Solver commands
 @cindex Options, geometry
 
-@include opt_solver.texi
+The list of all the solver options is given in @ref{Solver options list}.
 
 @c -------------------------------------------------------------------------
 @c Solver example
@@ -2355,7 +2353,7 @@ In Gmsh's jargon, each dataset is called a ``view''. Each view is given
 a name, and can be manipulated either individually (each view has its
 own button in the GUI and can be referred to by its index in a script)
 or globally (see the @code{PostProcessing.Link} option in
-@ref{Post-processing options}).
+@ref{Post-processing options list}).
 
 By default, Gmsh treats all post-processing views as three-dimensional
 plots, i.e., draws the scalar, vector and tensor primitives (points, lines,
@@ -2634,11 +2632,11 @@ value of the time (or any other variable) for which an evolution was saved.
 
 Post-processing plugins permit to extend the functionality of Gmsh's
 post-processing module. The difference between regular post-processing
-options (@pxref{Post-processing options}) and post-processing plugins is
-that regular post-processing options only change the way the data is
-displayed, while post-processing plugins either create new post-processing
-views, or modify the data stored in a view (in a destructive, non-reversible
-way).
+options (@pxref{Post-processing options list}) and post-processing
+plugins is that regular post-processing options only change the way the
+data is displayed, while post-processing plugins either create new
+post-processing views, or modify the data stored in a view (in a
+destructive, non-reversible way).
 
 Plugins are available in the GUI by right-clicking on a view button (or
 by clicking on the black arrow next to the view button) and then
@@ -2660,7 +2658,7 @@ Here is the list of the plugins that are shipped by default with Gmsh:
 
 General post-processing option names have the form
 `@code{PostProcessing.@var{string}}'. Options peculiar to post-processing
-views take two forms:
+views take two forms.
 
 @enumerate
 @item options that should apply to all views can be set through
@@ -2670,15 +2668,9 @@ view take the form `@code{View[@var{n}].@var{string}}' (@var{n} = 0, 1, 2,
 @dots{}), @emph{after the @var{n}-th view is loaded}.
 @end enumerate
 
-See @ref{t8.geo}, and @ref{t9.geo}, for some examples.
-
-@include opt_post.texi
-
-@include opt_view.texi
-
-@c todo:
-@c @sp 1
-@c The @code{ColorTable} is defined as a list...
+The list of all post-processing and view options is given in
+@ref{Post-processing options list}.  See @ref{t8.geo}, and @ref{t9.geo},
+for some examples.
 
 @c =========================================================================
 @c Tutorial
@@ -3018,7 +3010,7 @@ below.)
 @c File Formats
 @c =========================================================================
 
-@node File formats, Programming notes, Running Gmsh, Top
+@node File formats, Options, Running Gmsh, Top
 @chapter File formats
 
 @cindex File formats
@@ -3031,7 +3023,7 @@ two flavors: ASCII and binary. The format has a version number
 (Remember that for small post-processing datasets you can also use
 human-readable ``parsed'' post-processing views, as described in
 @ref{Post-processing commands}. Such ``parsed'' views do not require an
-underlying mesh, and can therefore be easier easier to use in some
+underlying mesh, and can therefore be easier to use in some
 cases.)
 
 @menu
@@ -3632,7 +3624,7 @@ you do not use them in new aplications.
 @end menu
 
 @node MSH file format version 1.0, POS ASCII file format, Legacy formats, Legacy formats
-@subsection MSH file format version 1.0
+@subsection MSH file format version 1.0 (Legacy)
 
 The MSH file format version 1.0 is Gmsh's old native mesh file format,
 now superseded by the format described in @ref{MSH ASCII file
@@ -3755,7 +3747,7 @@ element. The ordering of the nodes is given in @ref{Node ordering}.
 @c .........................................................................
 
 @node POS ASCII file format, POS binary file format, MSH file format version 1.0, Legacy formats
-@subsection POS ASCII file format
+@subsection POS ASCII file format (Legacy)
 
 The POS ASCII file is Gmsh's old native post-processing format, now
 superseded by the format described in @ref{MSH ASCII file format}. It is
@@ -3922,7 +3914,7 @@ null `@code{\0}' character.
 @c .........................................................................
 
 @node POS binary file format,  , POS ASCII file format, Legacy formats
-@subsection POS binary file format
+@subsection POS binary file format (Legacy)
 
 The POS binary file format is the same as the POS ASCII file format
 described in @ref{POS ASCII file format}, except that:
@@ -3985,11 +3977,90 @@ after each other in order to form a long array of doubles. The principle is
 the same for all other kinds of values.
 
 @c =========================================================================
+@c Options
+@c =========================================================================
+
+@node Options, Programming notes, File formats, Top
+@appendix Options
+
+This appendix lists all the available options. Gmsh's default behavior
+is to save some of these options in a per-user ``session resource'' file
+(@code{General.SessionFileName}) every time Gmsh is shut down. This
+permits for example to automatically remember the size and location of
+the windows or which fonts to use. Other options can be saved in a
+per-user ``option'' file (@code{General.OptionsFileName}), automatically
+loaded by Gmsh every time it starts up, by using the
+`Tools->Options->Save as defaults' menu.
+
+@c All the included files are generated automatically with `gmsh -doc'
+
+@menu
+* General options list::        
+* Geometry options list::       
+* Mesh options list::           
+* Solver options list::         
+* Post-processing options list::  
+@end menu
+
+@c -------------------------------------------------------------------------
+@c General options list
+@c -------------------------------------------------------------------------
+
+@node General options list, Geometry options list, Options, Options
+@section General options list
+
+@include opt_general.texi
+
+@include opt_print.texi
+
+@c -------------------------------------------------------------------------
+@c Geometry options list
+@c -------------------------------------------------------------------------
+
+@node Geometry options list, Mesh options list, General options list, Options
+@section Geometry options list
+
+@include opt_geometry.texi
+
+@c -------------------------------------------------------------------------
+@c Mesh options list
+@c -------------------------------------------------------------------------
+
+@node Mesh options list, Solver options list, Geometry options list, Options
+@section Mesh options list
+
+@include opt_mesh.texi
+
+@c -------------------------------------------------------------------------
+@c Solver options list
+@c -------------------------------------------------------------------------
+
+@node Solver options list, Post-processing options list, Mesh options list, Options
+@section Solver options list
+
+@include opt_solver.texi
+
+@c -------------------------------------------------------------------------
+@c Post-processing options list
+@c -------------------------------------------------------------------------
+
+@node Post-processing options list,  , Solver options list, Options
+@section Post-processing options list
+
+@include opt_post.texi
+
+@include opt_view.texi
+
+@c todo:
+@c @sp 1
+@c The @code{ColorTable} is defined as a list...
+
+@c =========================================================================
 @c Programming notes
 @c =========================================================================
 
-@node Programming notes, Bugs and versions, File formats, Top
-@chapter Programming notes
+@node Programming notes, Random tips and tricks, Options, Top
+@appendix Programming notes
 
 @cindex Programming, notes
 
@@ -3999,6 +4070,7 @@ graphics and FLTK (@uref{http://www.fltk.org}) for the widget
 set. Gmsh's build system is based on autoconf. Practical notes on how to
 compile Gmsh's source code are included in the distribution. See
 @ref{Frequently asked questions}, for more information.
+
 
 @menu
 * Main code structure::         
@@ -4084,74 +4156,11 @@ optional: create the associated widget in @file{Fltk/optionWindow.cpp};
 @c * memprof
 
 @c =========================================================================
-@c Bugs, versions and credits
+@c Random tips and tricks
 @c =========================================================================
 
-@node Bugs and versions, Tips and tricks, Programming notes, Top
-@chapter Bugs, versions and credits
-
-@menu
-* Bugs::                        
-* Versions::                    
-* Credits::                     
-@end menu
-
-@c -------------------------------------------------------------------------
-@c Bugs
-@c -------------------------------------------------------------------------
-
-@node Bugs, Versions, Bugs and versions, Bugs and versions
-@section Bugs
-
-@cindex Bugs, reporting
-@cindex Reporting bugs
-@cindex Contact information
-@cindex Mailing list
-@cindex Authors, e-mail
-@cindex E-mail, authors
-
-If you think you have found a bug in Gmsh, you can report it by electronic
-mail to the Gmsh mailing list at @email{gmsh@@geuz.org}.  Please send as
-precise a description of the problem as you can, including sample input
-files that produce the bug. Don't forget to mention both the version of Gmsh
-and the version of your operation system (@pxref{Command-line options} to
-see how to get this information).
-
-See @ref{Frequently asked questions}, and the @file{TODO.txt} file in
-the distribution to see which problems we already know about.
-
-@c -------------------------------------------------------------------------
-@c Versions
-@c -------------------------------------------------------------------------
-
-@node Versions, Credits, Bugs, Bugs and versions
-@section Versions
-
-@cindex Versions
-@cindex History, versions
-@cindex Changelog
-
-@verbatiminclude ../VERSIONS.txt
-
-@c -------------------------------------------------------------------------
-@c Credits
-@c -------------------------------------------------------------------------
-
-@node Credits,  , Versions, Bugs and versions
-@section Credits
-
-@cindex Acknowledgments
-@cindex Contributors, list
-@cindex Credits 
-
-@verbatiminclude ../CREDITS.txt
-
-@c =========================================================================
-@c Tips ans Tricks
-@c =========================================================================
-
-@node Tips and tricks, Frequently asked questions, Bugs and versions, Top
-@appendix Tips and tricks
+@node Random tips and tricks, Frequently asked questions, Programming notes, Top
+@appendix Random tips and tricks
 
 @cindex Tips
 @cindex Tricks
@@ -4209,7 +4218,7 @@ Read @ref{Frequently asked questions}...
 @c Frequently asked questions
 @c =========================================================================
 
-@node Frequently asked questions, License, Tips and tricks, Top
+@node Frequently asked questions, Version history, Random tips and tricks, Top
 @appendix Frequently asked questions
 
 @cindex Frequently asked questions
@@ -4219,10 +4228,37 @@ Read @ref{Frequently asked questions}...
 @verbatiminclude ../FAQ.txt
 
 @c =========================================================================
+@c Version history
+@c =========================================================================
+
+@node Version history, Copyright and credits, Frequently asked questions, Top
+@appendix Version history
+
+@cindex Versions
+@cindex History, versions
+@cindex Changelog
+
+@verbatiminclude ../VERSIONS.txt
+
+@c =========================================================================
+@c Copyright and credits
+@c =========================================================================
+
+@node Copyright and credits, License, Version history, Top
+@appendix Copyright and credits
+
+@cindex Copyright
+@cindex Acknowledgments
+@cindex Contributors, list
+@cindex Credits 
+
+@verbatiminclude ../CREDITS.txt
+
+@c =========================================================================
 @c License
 @c =========================================================================
 
-@node License, Concept index, Frequently asked questions, Top
+@node License, Concept index, Copyright and credits, Top
 @appendix License
 
 @cindex License

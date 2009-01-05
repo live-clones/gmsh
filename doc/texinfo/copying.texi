@@ -31,7 +31,7 @@ The precise conditions of the license for Gmsh are found in the General
 Public License that accompanies the source code (@pxref{License}). Further
 information about this license is available from the GNU Project webpage
 @uref{http://www.gnu.org/copyleft/gpl-faq.html}.  Detailed copyright
-information can be found in @ref{Credits}.
+information can be found in @ref{Copyright and credits}.
 
 The source code and various pre-compiled versions of Gmsh (for Unix, Windows
 and Mac OS) can be downloaded from the webpage @uref{http://geuz.org/gmsh/}.
