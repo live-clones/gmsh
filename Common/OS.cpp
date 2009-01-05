@@ -76,7 +76,8 @@ void GetResources(double *s, long *mem)
 #endif
 }
 
-void CheckResources(){
+void CheckResources()
+{
 #if !defined (WIN32) || defined(__CYGWIN__)
   static struct rlimit r;
 

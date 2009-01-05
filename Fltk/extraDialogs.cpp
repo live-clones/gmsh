@@ -19,6 +19,7 @@
 #include "GUI.h"
 #include "dialogWindow.h"
 #include "GmshDefines.h"
+#include "OpenFile.h"
 #include "CreateFile.h"
 #include "Options.h"
 #include "Draw.h"
@@ -144,6 +145,7 @@ static void model_switch_cb(Fl_Widget* w, void *data)
   Fl_Select_Browser *b = (Fl_Select_Browser *)w;
   if(b->value()){
     GModel::current(b->value() - 1);
+    SetBoundingBox();
     for(unsigned int i = 0; i < GModel::list.size(); i++)
       GModel::list[i]->setVisibility(0);
     GModel::current()->setVisibility(1);
