@@ -1340,6 +1340,9 @@ void Field::put_on_view(PView *view, int comp)
       }
     }
   }
+  std::ostringstream oss;
+  oss << "Field " << id;
+  data->setName(oss.str());
   data->finalize();
   view->setChanged(true);
 }

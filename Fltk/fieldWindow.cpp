@@ -66,16 +66,11 @@ static void field_put_on_view_cb(Fl_Widget *w, void *data)
 {
   Fl_Menu_Button* mb = ((Fl_Menu_Button*)w);
   Field *field = (Field*)GUI::instance()->fields->editor_group->user_data();
-  int iView;
-  if(sscanf(mb->text(), "View [%i]", &iView)){
-    if(iView < (int)PView::list.size()){
-      field->put_on_view(PView::list[iView]);
-    }
-  }
-  else{
+  if(mb->value() == 0)
     field->put_on_new_view();
-    GUI::instance()->updateViews();
-  }
+  else if(mb->value() - 1 < PView::list.size())
+    field->put_on_view(PView::list[mb->value() - 1]);
+  GUI::instance()->updateViews();
   Draw();
 }
 
@@ -120,7 +115,7 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
   delete_btn->callback(field_delete_cb, this);
 
   y += BH;
-  put_on_view_btn = new Fl_Menu_Button(x, y, w, BH, "Put on view");
+  put_on_view_btn = new Fl_Menu_Button(x, y, w, BH, "Visualize");
   put_on_view_btn->callback(field_put_on_view_cb, this);
 
   x += w + WB;
@@ -183,11 +178,11 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
 void fieldWindow::loadFieldViewList()
 {
   put_on_view_btn->clear();
-  put_on_view_btn->add("New view");
+  put_on_view_btn->add("Create new View");
   put_on_view_btn->activate();
   for(unsigned int i = 0; i < PView::list.size(); i++) {
     std::ostringstream s;
-    s << "View [" << i << "]";
+    s << "Put on View [" << i << "]";
     put_on_view_btn->add(s.str().c_str());
   }
 }
