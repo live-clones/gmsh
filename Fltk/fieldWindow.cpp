@@ -122,11 +122,15 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
   y = WB;
   w = width - x - WB;
   h = height - y - WB;
+  empty_message = new Fl_Box(x, y, w, h, "Create a new field\n\n"
+                             "- or -\n\nSelect a field in the browser");
+  empty_message->align(FL_ALIGN_CENTER);
+
   editor_group = new Fl_Group(x, y, w, h);
-    
+
   title = new Fl_Box(x, y, w, BH, "field_name");
   title->labelfont(FL_BOLD);
-  title->labelsize(18);
+  title->labelsize(FL_NORMAL_SIZE + 3);
   
   y += BH + WB;
   h -= BH + WB;
@@ -178,7 +182,7 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
 void fieldWindow::loadFieldViewList()
 {
   put_on_view_btn->clear();
-  put_on_view_btn->add("Create new View");
+  put_on_view_btn->add("Create new view");
   put_on_view_btn->activate();
   for(unsigned int i = 0; i < PView::list.size(); i++) {
     std::ostringstream s;
@@ -314,6 +318,7 @@ void fieldWindow::editField(Field *f)
   if(f == NULL){
     selected_id = -1;
     editor_group->hide();
+    empty_message->show();
     loadFieldList();
     return;
   }
@@ -321,6 +326,7 @@ void fieldWindow::editField(Field *f)
   FL_NORMAL_SIZE -= _deltaFontSize;
 
   selected_id = f->id;
+  empty_message->hide();
   editor_group->show();
   editor_group->user_data(f);
   title->label(f->get_name());

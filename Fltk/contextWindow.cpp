@@ -49,17 +49,17 @@ geometryContextWindow::geometryContextWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 31 * FL_NORMAL_SIZE;
-  int height = 5 * WB + 9 * BH;
+  int height = 4 * WB + 8 * BH;
 
   win = new dialogWindow
     (width, height, CTX.non_modal_windows, "Contextual Geometry Definitions");
   win->box(GMSH_WINDOW_BOX);
   {
-    Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+    Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
     // 0: Parameter
     {
       group[0] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Parameter");
+        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Parameter");
       input[0] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Name");
       input[0]->value("lc");
       input[1] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Value");
@@ -77,7 +77,7 @@ geometryContextWindow::geometryContextWindow(int deltaFontSize)
     // 1: Point
     {
       group[1] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Point");
+        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Point");
       input[2] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X coordinate");
       input[2]->value("0");
       input[3] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y coordinate");
@@ -107,7 +107,7 @@ geometryContextWindow::geometryContextWindow(int deltaFontSize)
     // 2: Translation
     {
       group[2] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Translation");
+        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Translation");
       input[6] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X component");
       input[6]->value("0");
       input[7] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y component");
@@ -122,7 +122,7 @@ geometryContextWindow::geometryContextWindow(int deltaFontSize)
     // 3: Rotation
     {
       group[3] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Rotation");
+        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Rotation");
       input[9] = new Fl_Input
         (2 * WB, 2 * WB + 1 * BH, IW, BH, "X coordinate of an axis point");
       input[9]->value("0");
@@ -152,7 +152,7 @@ geometryContextWindow::geometryContextWindow(int deltaFontSize)
     // 4: Scale
     {
       group[4] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Scale");
+        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Scale");
       input[16] = new Fl_Input
         (2 * WB, 2 * WB + 1 * BH, IW, BH, "X component of direction");
       input[16]->value("0");
@@ -173,7 +173,7 @@ geometryContextWindow::geometryContextWindow(int deltaFontSize)
     // 5: Symmetry
     {
       group[5] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Symmetry");
+        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Symmetry");
       input[20] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "A");
       input[20]->value("1");
       input[21] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "B");
@@ -188,12 +188,6 @@ geometryContextWindow::geometryContextWindow(int deltaFontSize)
       group[5]->end();
     }
     o->end();
-  }
-
-  {
-    Fl_Button *o = new Fl_Button
-      (width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-    o->callback(hide_cb, (void *)win);
   }
 
   win->position(CTX.ctx_position[0], CTX.ctx_position[1]);
@@ -222,17 +216,17 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
   };
 
   int width = 29 * FL_NORMAL_SIZE;
-  int height = 5 * WB + 5 * BH;
+  int height = 4 * WB + 4 * BH;
 
   win = new dialogWindow
     (width, height, CTX.non_modal_windows, "Contextual Mesh Definitions");
   win->box(GMSH_WINDOW_BOX);
   {
-    Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+    Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
     // 0: Characteristic length
     {
       group[0] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Characteristic Length");
+        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Characteristic Length");
       input[0] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Value");
       input[0]->value("0.1");
       input[0]->align(FL_ALIGN_RIGHT);
@@ -241,7 +235,7 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
     // 1: Transfinite line
     {
       group[1] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Transfinite Line");
+        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Transfinite Line");
       input[1] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Number of points");
       input[1]->value("10");
       input[2] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Parameter");
@@ -263,7 +257,7 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
     // 2: Transfinite surface
     {
       group[2] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Transfinite Surface");
+        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Transfinite Surface");
 
       choice[1] = new Fl_Choice
         (2 * WB, 2 * WB + 1 * BH, IW, BH, "Transfinite Arrangement");
@@ -273,12 +267,6 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
       group[2]->end();
     }
     o->end();
-  }
-
-  {
-    Fl_Button *o = new Fl_Button
-      (width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-    o->callback(hide_cb, (void *)win);
   }
 
   win->position(CTX.ctx_position[0], CTX.ctx_position[1]);

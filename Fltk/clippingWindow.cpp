@@ -239,18 +239,13 @@ clippingWindow::clippingWindow(int deltaFontSize)
 
   {
     Fl_Return_Button *o = new Fl_Return_Button
-      (width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Redraw");
+      (width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Redraw");
     o->callback(redraw_cb);
   }
   {
     Fl_Button *o = new Fl_Button
-      (width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Reset");
+      (width - BB - WB, height - BH - WB, BB, BH, "Reset");
     o->callback(clip_reset_cb);
-  }
-  {
-    Fl_Button *o = new Fl_Button
-      (width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-    o->callback(hide_cb, (void *)win);
   }
 
   win->position(CTX.clip_position[0], CTX.clip_position[1]);

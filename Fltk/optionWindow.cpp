@@ -1145,33 +1145,15 @@ optionWindow::optionWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 34 * FL_NORMAL_SIZE + WB;
-  int height = 13 * BH + 5 * WB;
+  int height = 12 * BH + 4 * WB;
   int L = 7 * FL_NORMAL_SIZE;
 
   win = new dialogWindow(width, height, CTX.non_modal_windows);
   win->box(GMSH_WINDOW_BOX);
   win->label("Options - General");
 
-  // Buttons
-  {
-    Fl_Button *o = new Fl_Button
-      (width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-    o->callback(hide_cb, (void *)win);
-  }
-  {
-    Fl_Button *o = new Fl_Button
-      ((int)(width - 2.5 * BB - 2 * WB), height - BH - WB, (int)(1.5 * BB), BH, 
-       "Save as defaults");
-    o->callback(options_save_cb);
-  }
-  {
-    redraw = new Fl_Return_Button
-      ((int)(width - 3.5 * BB - 3 * WB), height - BH - WB, BB, BH, "Redraw");
-    redraw->callback(redraw_cb);
-  }
-
   // Selection browser
-  browser = new Fl_Hold_Browser(WB, WB, L - WB, height - 3 * WB - BH);
+  browser = new Fl_Hold_Browser(WB, WB, L - WB, height - 2 * WB);
   browser->has_scrollbar(Fl_Browser_::VERTICAL);
   browser->add("General");
   browser->add("Geometry");
@@ -1181,9 +1163,12 @@ optionWindow::optionWindow(int deltaFontSize)
   browser->callback(options_browser_cb);
   browser->value(1);
 
+  redraw = new Fl_Return_Button
+    (WB, height - BH - WB, L - WB, BH, "Redraw");
+  redraw->callback(redraw_cb);
+
   width -= L;
   int BW = width - 4 * WB;
-  height -= WB + BH;
 
   // General options
   general.group = new Fl_Group(L, 0, width, height, "General Options");
@@ -3339,10 +3324,18 @@ void optionWindow::activate(const char *what)
   // activate/deactivate parts of the option window depending on the
   // user's choices (or the option settings)
   if(!strcmp(what, "fast_redraw")){
-    if(general.butt[2]->value())
+    if(general.butt[2]->value()){
+      browser->resize(browser->x(), browser->y(), browser->w(),
+                      win->h() - 3 * WB - BH);
       redraw->show();
-    else
+      win->redraw();
+    }
+    else{
+      browser->resize(browser->x(), browser->y(), browser->w(),
+                      win->h() - 2 * WB);
       redraw->hide();
+      win->redraw();
+    }
   }
   else if(!strcmp(what, "rotation_center")){
     if(general.butt[15]->value()) {

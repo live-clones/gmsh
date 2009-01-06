@@ -29,7 +29,7 @@ class fieldWindow{
   std::list<Fl_Widget*> options_widget;
   Fl_Scroll *options_scroll;
   Fl_Group *editor_group;
-  Fl_Box *title;
+  Fl_Box *title, *empty_message;
   Fl_Check_Button *background_btn;
   Fl_Menu_Button *put_on_view_btn;
   Fl_Browser *help_display;

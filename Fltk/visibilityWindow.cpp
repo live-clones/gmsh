@@ -1042,7 +1042,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  static int cols[5] = {15, 95, 95, 180, 0};
+  static int cols[5] = {2 * WB, BB, BB, 2 * BB, 0};
   int width = cols[0] + cols[1] + cols[2] + cols[3] + 6 * WB;
   int height = 18 * BH;
   int brw = width - 4 * WB;
@@ -1301,18 +1301,15 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
   win->size_range(width, 15 * BH + 5 * WB, width);
 
   {
+    int ww = (width - 3 * WB) / 2;
     butt[0] = new Fl_Check_Button
-      (WB, height - BH - WB, (width - 3 * WB) / 2, BH, "Set visibility recursively");
+      (WB, height - BH - WB, ww, BH, "Set visibility recursively");
     butt[0]->type(FL_TOGGLE_BUTTON);
     butt[0]->value(1);
 
     Fl_Button *o1 = new Fl_Button
-      (width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Save");
+      (width - ww - WB, height - BH - WB, ww, BH, "Save current visibility");
     o1->callback(visibility_save_cb);
-
-    Fl_Button *o2 = new Fl_Button
-      (width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-    o2->callback(hide_cb, (void *)win);
   }
 
   win->position(CTX.vis_position[0], CTX.vis_position[1]);

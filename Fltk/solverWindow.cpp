@@ -197,7 +197,7 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
 
   int LL = 2 * IW;
   int width = LL + BB + BB / 3 + 4 * WB;
-  int height = (8 + SINFO[solverIndex].nboptions) * BH + 6 * WB;
+  int height = (7 + SINFO[solverIndex].nboptions) * BH + 5 * WB;
   int BBS = (width - 8 * WB) / 5;
   
   win = new dialogWindow
@@ -205,21 +205,21 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
   win->box(GMSH_WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs
-      (WB, WB, width - 2 * WB, height - 3 * WB - 1 * BH);
+      (WB, WB, width - 2 * WB, height - 2 * WB);
     {
       Fl_Group *g = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Controls");
+        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Controls");
 
+      Fl_Button *b2 = new Fl_Button
+        (2 * WB, 2 * WB + 1 * BH, BB / 2, BH, "Save");
+      b2->callback(options_save_cb);
       input[2] = new Fl_Input
-        (2 * WB, 2 * WB + 1 * BH, LL, BH, "Solver");
+        (2 * WB + BB / 2, 2 * WB + 1 * BH, LL - BB / 2, BH, "Solver");
       input[2]->callback(solver_ok_cb, (void *)solverIndex);
 
       Fl_Button *b1 = new Fl_Button
         (width - 2 * WB - BBS, 2 * WB + 1 * BH, BBS, BH, "Choose");
       b1->callback(solver_choose_executable_cb, (void *)solverIndex);
-      Fl_Button *b2 = new Fl_Button
-        (width - 2 * WB - BBS, 2 * WB + 2 * BH, BBS, BH, "Save");
-      b2->callback(options_save_cb);
 
       int ww = (LL - WB) / 2;
       butt[2] = new Fl_Check_Button
@@ -234,15 +234,14 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
         butt[i]->callback(solver_ok_cb, (void *)solverIndex);
       }
 
+      Fl_Button *b4 = new Fl_Button
+        (2 * WB, 2 * WB + 4 * BH, BB / 2, BH, "Edit");
+      b4->callback(solver_file_edit_cb, (void *)solverIndex);
       input[0] = new Fl_Input
         (2 * WB + BB / 2, 2 * WB + 4 * BH, LL - BB / 2, BH, "Input");
       Fl_Button *b3 = new Fl_Button
         (width - 2 * WB - BBS, 2 * WB + 4 * BH, BBS, BH, "Choose");
       b3->callback(solver_file_open_cb, (void *)solverIndex);
-
-      Fl_Button *b4 = new Fl_Button
-        (2 * WB, 2 * WB + 4 * BH, BB / 2, BH, "Edit");
-      b4->callback(solver_file_edit_cb, (void *)solverIndex);
 
       input[1] = new Fl_Input
         (2 * WB, 2 * WB + 5 * BH, LL, BH, "Mesh");
@@ -261,7 +260,7 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
       }
 
       static int arg[MAX_NUM_SOLVERS][5][2];
-      for(int i = 0; i < 5; i++) {
+      for(int i = 0; i < 4; i++) {
         if(strlen(SINFO[solverIndex].button_name[i])) {
           arg[solverIndex][i][0] = solverIndex;
           arg[solverIndex][i][1] = i;
@@ -272,15 +271,22 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
             (solver_command_cb, (void *)arg[solverIndex][i]);
         }
       }
-      
+
+      {
+        Fl_Button *b = new Fl_Button
+          (width - 2 * WB - BBS, 3 * WB + (6 + SINFO[solverIndex].nboptions) * BH,
+           BBS, BH, "Kill");
+        b->callback(solver_kill_cb, (void *)solverIndex);
+      }
+     
       g->end();
     }
     {
       Fl_Group *g = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "About");
+        (WB, WB + BH, width - 2 * WB, height - 2 * WB, "About");
 
       Fl_Browser *o = new Fl_Browser
-        (2 * WB, 2 * WB + 1 * BH, width - 4 * WB, height - 5 * WB - 2 * BH);
+        (2 * WB, 2 * WB + 1 * BH, width - 4 * WB, height - 4 * WB - BH);
       o->add(" ");
       add_multiline_in_browser(o, "@c@b@.", SINFO[solverIndex].name, false);
       o->add(" ");
@@ -289,15 +295,6 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
       g->end();
     }
     o->end();
-  }
-
-  {
-    Fl_Button *b1 = new Fl_Button
-      (width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Kill solver");
-    b1->callback(solver_kill_cb, (void *)solverIndex);
-    Fl_Button *b2 = new Fl_Button
-      (width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-    b2->callback(hide_cb, (void*)win);
   }
 
   win->position(CTX.solver_position[0], CTX.solver_position[1]);

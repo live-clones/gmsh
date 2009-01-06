@@ -169,12 +169,8 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
 
   {
     Fl_Return_Button *o = new Fl_Return_Button
-      (width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Update");
+      (width - BB - WB, height - BH - WB, BB, BH, "Update");
     o->callback(statistics_update_cb);
-  }
-  {
-    Fl_Button *o = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-    o->callback(hide_cb, (void *)win);
   }
   
   win->position(CTX.stat_position[0], CTX.stat_position[1]);

@@ -4,6 +4,10 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <vector>
+#include <FL/Fl_Return_Button.H>
+#include <FL/Fl_Group.H>
+#include <FL/Fl_Value_Input.H>
+#include <FL/Fl_Input.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Scroll.H>
@@ -17,6 +21,13 @@
 #include "Context.h"
 
 extern Context_T CTX;
+
+#define MAX_PLUGIN_OPTIONS 50
+struct PluginDialogBox{
+  Fl_Group *group;
+  Fl_Value_Input *value[MAX_PLUGIN_OPTIONS];
+  Fl_Input *input[MAX_PLUGIN_OPTIONS];
+};
 
 void plugin_cb(Fl_Widget *w, void *data)
 {
@@ -93,29 +104,20 @@ static void plugin_browser_cb(Fl_Widget *w, void *data)
 
 static void plugin_run_cb(Fl_Widget *w, void *data)
 {
-  // get selected plugin
-  GMSH_Post_Plugin *p = 0;
-  for(int i = 1; i <= GUI::instance()->plugins->browser->size(); i++) {
-    if(GUI::instance()->plugins->browser->selected(i)) {
-      p = (GMSH_Post_Plugin*)GUI::instance()->plugins->browser->data(i);
-      break;
-    }
-  }
-  if(!p) return;
+  GMSH_Post_Plugin *p = (GMSH_Post_Plugin*)data;
 
-  if(p->dialogBox) { // get the values from the GUI
-    int m = p->getNbOptionsStr();
-    int n = p->getNbOptions();
-    if(m > MAX_PLUGIN_OPTIONS) m = MAX_PLUGIN_OPTIONS;
-    if(n > MAX_PLUGIN_OPTIONS) n = MAX_PLUGIN_OPTIONS;
-    for(int i = 0; i < m; i++) {
-      StringXString *sxs = p->getOptionStr(i);
-      sxs->def = p->dialogBox->input[i]->value();
-    }
-    for(int i = 0; i < n; i++) {
-      StringXNumber *sxn = p->getOption(i);
-      sxn->def = p->dialogBox->value[i]->value();
-    }
+  // get the values from the GUI
+  int m = p->getNbOptionsStr();
+  int n = p->getNbOptions();
+  if(m > MAX_PLUGIN_OPTIONS) m = MAX_PLUGIN_OPTIONS;
+  if(n > MAX_PLUGIN_OPTIONS) n = MAX_PLUGIN_OPTIONS;
+  for(int i = 0; i < m; i++) {
+    StringXString *sxs = p->getOptionStr(i);
+    sxs->def = p->dialogBox->input[i]->value();
+  }
+  for(int i = 0; i < n; i++) {
+    StringXNumber *sxn = p->getOption(i);
+    sxn->def = p->dialogBox->value[i]->value();
   }
 
   // run on all selected views
@@ -136,9 +138,7 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
       }
     }
   }
-  if(no_view_selected){
-    p->execute(0);
-  }
+  if(no_view_selected) p->execute(0);
 
   GUI::instance()->updateViews();
   CTX.post.plugin_draw_function = NULL;
@@ -161,10 +161,10 @@ void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,
   {
     Fl_Tabs *o = new Fl_Tabs(x, y, width, height);
     {
-      Fl_Group *g = new Fl_Group
-        (x, y + BH, width, height - BH, "Options");
+      Fl_Group *g = new Fl_Group(x, y + BH, width, height - BH, "Options");
+
       Fl_Scroll *s = new Fl_Scroll
-        (x + WB, y + WB + BH, width - 2 * WB, height - BH - 2 * WB);
+        (x + WB, y + WB + BH, width - 2 * WB, height - 2 * BH - 3 * WB);
 
       int m = p->getNbOptionsStr();
       if(m > MAX_PLUGIN_OPTIONS) m = MAX_PLUGIN_OPTIONS;
@@ -191,11 +191,18 @@ void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,
       }
 
       s->end();
+
+      Fl_Return_Button *run = new Fl_Return_Button
+        (x + width - BB - WB, y + height - BH - WB, BB, BH, "Run");
+      run->callback(plugin_run_cb, (void*)p);
+
+      g->resizable(new Fl_Box(x + WB, y + 2 * BH, WB, WB));
       g->end();
-      o->resizable(g); // to avoid ugly resizing of tab labels
+
+      o->resizable(g);
     }
     {
-      Fl_Group *g = new Fl_Group(x, y + BH, width, height - BH, "About");
+      Fl_Group *g = new Fl_Group(x, y + BH, width, height - BH, "Help");
 
       Fl_Browser *o = new Fl_Browser
         (x + WB, y + WB + BH, width - 2 * WB, height - 2 * WB - BH);
@@ -227,7 +234,7 @@ pluginWindow::pluginWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width0 = 34 * FL_NORMAL_SIZE + WB;
-  int height0 = 13 * BH + 5 * WB;
+  int height0 = 12 * BH + 4 * WB;
 
   int width = (CTX.plugin_size[0] < width0) ? width0 : CTX.plugin_size[0];
   int height = (CTX.plugin_size[1] < height0) ? height0 : CTX.plugin_size[1];
@@ -235,22 +242,11 @@ pluginWindow::pluginWindow(int deltaFontSize)
   win = new dialogWindow(width, height, CTX.non_modal_windows, "Plugins");
   win->box(GMSH_WINDOW_BOX);
 
-  {
-    Fl_Button *o = new Fl_Button
-      (width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-    o->callback(plugin_cancel_cb);
-  }
-  {
-    run = new Fl_Return_Button
-      (width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Run");
-    run->callback(plugin_run_cb);
-  }
-  
   int L1 = (int)(0.3 * width), L2 = (int)(0.6 * L1);
-  browser = new Fl_Hold_Browser(WB, WB, L1, height - 3 * WB - BH);
+  browser = new Fl_Hold_Browser(WB, WB, L1, height - 2 * WB);
   browser->callback(plugin_browser_cb);
 
-  view_browser = new Fl_Multi_Browser(WB + L1, WB, L2, height - 3 * WB - BH);
+  view_browser = new Fl_Multi_Browser(WB + L1, WB, L2, height - 2 * WB);
   view_browser->has_scrollbar(Fl_Browser_::VERTICAL);
   view_browser->callback(plugin_browser_cb);
 
@@ -262,7 +258,7 @@ pluginWindow::pluginWindow(int deltaFontSize)
       p->getName(name);
       browser->add(name, p);
       _createDialogBox(p, 2 * WB + L1 + L2, WB, width - L1 - L2 - 3 * WB, 
-                       height - 3 * WB - BH);
+                       height - 2 * WB);
       // select first plugin by default
       if(it == GMSH_PluginManager::instance()->begin()){
         browser->select(1);
@@ -271,7 +267,7 @@ pluginWindow::pluginWindow(int deltaFontSize)
     }
   }
   
-  Fl_Box *resize_box = new Fl_Box(3*WB + L1+L2, WB, WB, height - 3 * WB - BH);
+  Fl_Box *resize_box = new Fl_Box(3*WB + L1+L2, WB, WB, height - 2 * WB);
   win->resizable(resize_box);
   win->size_range(width0, height0);
 

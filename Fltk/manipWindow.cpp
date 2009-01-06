@@ -85,13 +85,8 @@ manipWindow::manipWindow(int deltaFontSize)
 
   {
     Fl_Return_Button *o = new Fl_Return_Button
-      (width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Reset");
+      (width - BB - WB, height - BH - WB, BB, BH, "Reset");
     o->callback(status_xyz1p_cb, (void *)"reset");
-  }
-  {
-    Fl_Button *o = new Fl_Button
-      (width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-    o->callback(hide_cb, (void *)win);
   }
 
   win->position(CTX.manip_position[0], CTX.manip_position[1]);

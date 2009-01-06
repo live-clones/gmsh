@@ -85,28 +85,23 @@ messageWindow::messageWindow(int deltaFontSize)
 
   {
     butt = new Fl_Check_Button
-      (width - 4 * BB - 4 * WB, height - BH - WB, BB, BH, "Auto scroll");
+      (width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Auto scroll");
     butt->type(FL_TOGGLE_BUTTON);
     butt->callback(message_auto_scroll_cb);
   }
   {
     Fl_Return_Button *o = new Fl_Return_Button
-      (width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Clear");
+      (width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Clear");
     o->callback(message_clear_cb);
   }
   {
     Fl_Button *o = new Fl_Button
-      (width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Save");
+      (width - BB - WB, height - BH - WB, BB, BH, "Save");
     o->callback(message_save_cb);
-  }
-  {
-    Fl_Button *o = new Fl_Button
-      (width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-    o->callback(hide_cb, (void *)win);
   }
 
   win->resizable(new Fl_Box(1, 1, 4, 4));
-  win->size_range(WB + 100 + 3 * BB + 4 * WB, 100);
+  win->size_range(WB + 100 + 2 * BB + 3 * WB, 100);
 
   win->position(CTX.msg_position[0], CTX.msg_position[1]);
   win->end();

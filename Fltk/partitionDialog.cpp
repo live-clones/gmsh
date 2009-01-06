@@ -387,8 +387,6 @@ void partition_select_groups_cb(Fl_Widget *widget, void *data)
     o->position(o->x(), yG);
     o = static_cast<Fl_Group*>(g[5])->child(2);
     o->position(o->x(), yG);
-    o = static_cast<Fl_Group*>(g[5])->child(3);
-    o->position(o->x(), yG);
     yG += WB + o->h();
   }
   y += g[5]->h();
@@ -758,13 +756,8 @@ void partition_dialog()
     // Partition Button [2]
     {
       Fl_Return_Button *const o = new Fl_Return_Button
-        (w - 2*(WB + BB), y, BB, BH, "Partition");
+        (w - (WB + BB), y, BB, BH, "Partition");
       o->callback((Fl_Callback *)partition_partition_cb, &dlg);
-    }
-    // Cancel Button [3]
-    {
-      Fl_Button *const o = new Fl_Button(w - (WB + BB), y, BB, BH, "Cancel");
-      o->callback((Fl_Callback *)partition_cancel_cb, &dlg);
     }
     y += BH + WB;
     g->end();

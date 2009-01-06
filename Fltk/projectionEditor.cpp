@@ -407,11 +407,6 @@ static void filter_cb(Fl_Widget *w, void *data)
   update_cb(0, data);
 }
 
-static void close_cb(Fl_Widget *w, void *data)
-{
-  if(data) ((Fl_Window *) data)->hide();
-}
-
 static void proj_hide_cb(Fl_Widget *w, void *data)
 {
   CTX.hide_unselected = !CTX.hide_unselected;
@@ -897,7 +892,7 @@ projectionEditor::projectionEditor()
   printf("currentSize = %d\n",m->getFMInternals()->current()->GetNumGroups());
 
   // construct GUI in terms of standard sizes
-  const int width = (int)(3.75 * BB), height = 25 * BH;
+  const int width = (int)(3.75 * BB), height = 24 * BH;
   
   // create all widgets (we construct this once, we never deallocate!)
   _window = new dialogWindow(width, height, CTX.non_modal_windows, "Reparameterize");
@@ -947,7 +942,7 @@ projectionEditor::projectionEditor()
 
   int hard = 8;
   int uvw = width - 2 * WB - 2 * hard - 3 * WB;
-  int uvh = height - 8 * WB - 15 * BH - 2 * hard;
+  int uvh = height - 7 * WB - 14 * BH - 2 * hard;
 
   _hardEdges[0] = new Fl_Toggle_Button(WB, 3 * WB + 9 * BH + hard, 
                                        hard, uvh);
@@ -955,7 +950,7 @@ projectionEditor::projectionEditor()
                                        hard, uvh);
   _hardEdges[2] = new Fl_Toggle_Button(WB + hard, 3 * WB + 9 * BH, 
                                        uvw, hard);
-  _hardEdges[3] = new Fl_Toggle_Button(WB + hard, height - 5 * WB - 6 * BH - hard, 
+  _hardEdges[3] = new Fl_Toggle_Button(WB + hard, height - 4 * WB - 5 * BH - hard, 
                                        uvw, hard);
   for(int i = 0; i < 4; i++)
     _hardEdges[i]->tooltip("Push to mark edge as `hard'");
@@ -970,17 +965,17 @@ projectionEditor::projectionEditor()
   _slider->callback(filter_cb, this);
   _slider->tooltip("Filter selection by distance to projection surface");
 
-  _orientation = new Fl_Toggle_Button(width - 3 * WB, height - 5 * WB - 6 * BH - hard, 
+  _orientation = new Fl_Toggle_Button(width - 3 * WB, height - 4 * WB - 5 * BH - hard, 
                                       2 * WB, hard);
   _orientation->callback(filter_cb, this);
   _orientation->tooltip("Filter elements using orientation");
 
-  new Fl_Box(WB, height - 4 * WB - 6 * BH, BB, BH, "Patch Type:");
-  Fl_Group *oo = new Fl_Group( WB, height - 4 * WB - 6 * BH, 3 * BB, BH);
-  _pselect[0] = new Fl_Round_Button(2 * WB + BB, height - 4 * WB - 6 * BH,
-                                   BB, BH, "Continuation");
-  _pselect[1] = new Fl_Round_Button(3 * WB + 2 * BB, height - 4 * WB - 
-                                   6 * BH, BB, BH, "Windowing");
+  new Fl_Box(WB, height - 3 * WB - 5 * BH, BB, BH, "Patch Type:");
+  Fl_Group *oo = new Fl_Group(WB, height - 3 * WB - 5 * BH, 3 * BB, BH);
+  _pselect[0] = new Fl_Round_Button
+    (2 * WB + BB, height - 3 * WB - 5 * BH, BB, BH, "Continuation");
+  _pselect[1] = new Fl_Round_Button
+    (3 * WB + 2 * BB, height - 3 * WB - 5 * BH, BB, BH, "Windowing");
 
   for(int i = 0; i < 2; i++)
     _pselect[i]->type(FL_RADIO_BUTTON);
@@ -989,14 +984,14 @@ projectionEditor::projectionEditor()
 
   oo->end();
 
-  _modes[0] = new Fl_Value_Input(WB, height - 4 * WB - 5 * BH, BB  / 2, BH);
+  _modes[0] = new Fl_Value_Input(WB, height - 3 * WB - 4 * BH, BB  / 2, BH);
   _modes[0]->tooltip("Number of Fourier modes along u");
-  _modes[1] = new Fl_Value_Input(WB + BB / 2, height - 4 * WB - 5 * BH, BB  / 2, BH, 
+  _modes[1] = new Fl_Value_Input(WB + BB / 2, height - 3 * WB - 4 * BH, BB  / 2, BH, 
                                  "Fourier modes");
   _modes[1]->tooltip("Number of Fourier modes along v");
-  _modes[2] = new Fl_Value_Input(WB, height - 4 * WB - 4 * BH, BB  / 2, BH);
+  _modes[2] = new Fl_Value_Input(WB, height - 3 * WB - 3 * BH, BB  / 2, BH);
   _modes[2]->tooltip("Number of Chebyshev modes along u");
-  _modes[3] = new Fl_Value_Input(WB + BB / 2, height - 4 * WB - 4 * BH, BB  / 2, BH, 
+  _modes[3] = new Fl_Value_Input(WB + BB / 2, height - 3 * WB - 3 * BH, BB  / 2, BH, 
                                  "Chebyshev modes");
   _modes[3]->tooltip("Number of Chebyshev modes along v");
   for(int i = 0; i < 4; i++){
@@ -1008,21 +1003,21 @@ projectionEditor::projectionEditor()
   }    
 
   {
-    Fl_Button *b = new Fl_Button(width - WB - BB, height - 4 * WB - 5 * BH, 
+    Fl_Button *b = new Fl_Button(width - WB - BB, height - 3 * WB - 4 * BH, 
                                   BB, 2 * BH, "Generate\nPatch");
     b->callback(compute_cb, this);
   }
 
   {
     int bb = (int)(0.37 * BB);
-    new Fl_Box(WB, height - 3 * WB - 3 * BH, BB / 2, BH, "Delete:");
-    Fl_Button *b1 = new Fl_Button(WB + BB / 2, height - 3 * WB - 3 * BH, 
+    new Fl_Box(WB, height - 2 * WB - 2 * BH, BB / 2, BH, "Delete:");
+    Fl_Button *b1 = new Fl_Button(WB + BB / 2, height - 2 * WB - 2 * BH, 
                                   bb, BH, "last");
     b1->callback(action_cb, (void*)"delete_last");
-    Fl_Button *b2 = new Fl_Button(WB + BB / 2 + bb, height - 3 * WB - 3 * BH,
+    Fl_Button *b2 = new Fl_Button(WB + BB / 2 + bb, height - 2 * WB - 2 * BH,
                                   bb, BH, "all");
     b2->callback(action_cb, (void*)"delete_all");
-    Fl_Button *b3 = new Fl_Button(WB + BB / 2 + 2 * bb, height - 3 * WB - 3 * BH,
+    Fl_Button *b3 = new Fl_Button(WB + BB / 2 + 2 * bb, height - 2 * WB - 2 * BH,
                                   bb, BH, "sel.");
     b3->callback(action_cb, (void*)"delete_select");
   }
@@ -1030,36 +1025,31 @@ projectionEditor::projectionEditor()
   {
     int bb = (int)(0.37 * BB);
     int s = width - WB - BB / 2 - 3 * bb;
-    new Fl_Box(s, height - 3 * WB - 3 * BH, BB / 2, BH, "Save:");
-    Fl_Button *b1 = new Fl_Button(s + BB / 2, height - 3 * WB - 3 * BH,
+    new Fl_Box(s, height - 2 * WB - 2 * BH, BB / 2, BH, "Save:");
+    Fl_Button *b1 = new Fl_Button(s + BB / 2, height - 2 * WB - 2 * BH,
                                   bb, BH, "last");
     b1->callback(action_cb, (void*)"save_last");
-    Fl_Button *b2 = new Fl_Button(s + BB / 2 + bb, height - 3 * WB - 3 * BH,
+    Fl_Button *b2 = new Fl_Button(s + BB / 2 + bb, height - 2 * WB - 2 * BH,
                                   bb, BH, "all");
     b2->callback(action_cb, (void*)"save_all");
-    Fl_Button *b3 = new Fl_Button(s + BB / 2 + 2 * bb, height - 3 * WB - 3 * BH,
+    Fl_Button *b3 = new Fl_Button(s + BB / 2 + 2 * bb, height - 2 * WB - 2 * BH,
                                   bb, BH, "sel.");
     b3->callback(action_cb, (void*)"save_select");
   }
 
   {
-    Fl_Button *b1 = new Fl_Button(WB, height - 2 * WB - 2 * BH, BB, BH, 
+    Fl_Button *b1 = new Fl_Button(WB, height - WB - BH, BB, BH, 
                                   "Blend");
     b1->callback(blend_cb, this);
     
-    Fl_Button *b2 = new Fl_Button(2 * WB + BB, height - 2 * WB - 2 * BH, BB, 
+    Fl_Button *b2 = new Fl_Button(2 * WB + BB, height - WB - BH, BB, 
                                   BH, "Intersect");
   }
 
-  Fl_Button *b = new Fl_Button(width - WB - BB, height - WB - BH, BB, BH, "Cancel");
-  b->callback(close_cb, _window);
-  
   _window->end();
   _window->hotspot(_window);
   _window->resizable(_uvPlot);
   _window->size_range(width, (int)(0.85 * height));
-
-  // create
 }
 
 void projectionEditor::load(fourierProjectionFace *face, std::string tag)

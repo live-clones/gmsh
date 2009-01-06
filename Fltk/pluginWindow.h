@@ -9,26 +9,14 @@
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Hold_Browser.H>
 #include <FL/Fl_Multi_Browser.H>
-#include <FL/Fl_Return_Button.H>
-#include <FL/Fl_Group.H>
-#include <FL/Fl_Value_Input.H>
-#include <FL/Fl_Input.H>
 
 class GMSH_Plugin;
-
-#define MAX_PLUGIN_OPTIONS 50
-struct PluginDialogBox{
-  Fl_Group *group;
-  Fl_Value_Input *value[MAX_PLUGIN_OPTIONS];
-  Fl_Input *input[MAX_PLUGIN_OPTIONS];
-};
 
 class pluginWindow{
  public:
   Fl_Window *win;
   Fl_Hold_Browser *browser;
   Fl_Multi_Browser *view_browser;
-  Fl_Return_Button *run;
   void _createDialogBox(GMSH_Plugin *p, int x, int y, int width, int height);
  public:
   pluginWindow(int deltaFontSize=0);
