@@ -106,26 +106,26 @@ for Gmsh @value{GMSH-VERSION} (@today{}).
 @c =========================================================================
 
 @menu
-* Copying conditions::          Terms and conditions of use.
+* Copying conditions::          Terms and conditions of use
 * Overview::                    What is Gmsh?
 * How to read this manual?::    Which parts of this manual should you read (if any)?
-* General tools::               Description of general commands and options.
-* Geometry module::             Description of all Geometry commands.
-* Mesh module::                 Description of all Mesh commands.
-* Solver module::               Description of all Solver commands.
-* Post-processing module::      Description of all Post-Processing commands.
-* Tutorial::                    A step-by-step tutorial.
-* Running Gmsh::                How to run Gmsh on your operating system.
-* File formats::                Input and output file formats.
+* Running Gmsh on your system:: How can you run Gmsh on your machine?
+* General tools::               Description of general commands and options
+* Geometry module::             Description of all Geometry commands
+* Mesh module::                 Description of all Mesh commands
+* Solver module::               Description of all Solver commands
+* Post-processing module::      Description of all Post-Processing commands
+* File formats::                Input and output file formats
+* Tutorial::                    A step-by-step tutorial
 * Options::                     List of all available options
 * Programming notes::           Notes for developers
 * Random tips and tricks::      Tips and tricks to make your life easier
 * Frequently asked questions::  The Gmsh FAQ
 * Version history::             Changelog
 * Copyright and credits::       Copyright information and list of contributors
-* License::                     Complete copy of the license.
-* Concept index::               Index of concepts.
-* Syntax index::                Index of reserved keywords in the Gmsh language.
+* License::                     Complete copy of the license
+* Concept index::               Index of concepts
+* Syntax index::                Index of reserved keywords in the Gmsh language
 
 @detailmenu
  --- The Detailed Node Listing ---
@@ -143,6 +143,14 @@ Overview
 How to read this reference manual?
 
 * Syntactic rules::             
+
+Running Gmsh on your system
+
+* Interactive mode::            
+* Non-interactive mode::        
+* Command-line options::        
+* Mouse actions::               
+* Keyboard shortcuts::          
 
 General tools
 
@@ -199,26 +207,6 @@ Post-processing module
 * Post-processing plugins::     
 * Post-processing options::     
 
-Tutorial
-
-* t1.geo::                      
-* t2.geo::                      
-* t3.geo::                      
-* t4.geo::                      
-* t5.geo::                      
-* t6.geo::                      
-* t7.geo::                      
-* t8.geo::                      
-* t9.geo::                      
-
-Running Gmsh
-
-* Interactive mode::            
-* Non-interactive mode::        
-* Command-line options::        
-* Mouse actions::               
-* Keyboard shortcuts::          
-
 File formats
 
 * MSH ASCII file format::       
@@ -231,6 +219,18 @@ Legacy formats
 * MSH file format version 1.0::  
 * POS ASCII file format::       
 * POS binary file format::      
+
+Tutorial
+
+* t1.geo::                      
+* t2.geo::                      
+* t3.geo::                      
+* t4.geo::                      
+* t5.geo::                      
+* t6.geo::                      
+* t7.geo::                      
+* t8.geo::                      
+* t9.geo::                      
 
 Options
 
@@ -458,13 +458,13 @@ generate complex animations (see @ref{General tools}, and @ref{t8.geo});
 run on low end machines and/or machines with no graphical
 interface. Gmsh can be compiled with or without the GUI, and all
 versions can be used either interactively or directly from the command
-line (@pxref{Running Gmsh});
+line (@pxref{Running Gmsh on your system});
 @item
 configure your preferred options. Gmsh has a large number of
 configuration options that can be set interactively using the GUI,
 scattered inside command files, changed on the fly in scripts, set in
 per-user configuration files, or specified on the command-line (see
-@ref{Running Gmsh} and @ref{Options});
+@ref{Running Gmsh on your system} and @ref{Options});
 @item
 and do all the above on various platforms (Windows, Mac and Unix), for
 free (@pxref{Copying conditions}), using simple script files and/or a
@@ -539,7 +539,7 @@ the distribution to see which problems we already know about.
 @c How to read this manual?
 @c =========================================================================
 
-@node How to read this manual?, General tools, Overview, Top
+@node How to read this manual?, Running Gmsh on your system, Overview, Top
 @chapter How to read this reference manual?
 
 Gmsh can be used at three levels:
@@ -554,12 +554,13 @@ as a stand-alone script-driven program;
 as a library.
 @end enumerate
 
-You don't need to read the rest of this reference manual in order to use
-Gmsh at the first level (i.e., interactively with the GUI). Just skip
-the next chapters and have a quick look at @ref{Running Gmsh}, then go
-play with the GUI and run the tutorials files (@pxref{Tutorial}) bundled
-in the distribution.  Screencasts that show how to use the GUI are
-available here: @uref{http://www.geuz.org/gmsh/screencasts/}.
+You can skip most of this reference manual if you only want to use Gmsh
+at the first level (i.e., interactively with the GUI). Just read the
+next chapter (@pxref{Running Gmsh on your system}) to learn how to
+launch Gmsh on your system, then go play with the GUI and run the
+tutorials files (@pxref{Tutorial}) bundled in the distribution.
+Screencasts that show how to use the GUI are available here:
+@uref{http://www.geuz.org/gmsh/screencasts/}.
 
 The aim of the reference manual is to explain everything you need to use
 Gmsh at the second level, i.e., using the built-in scripting language.
@@ -627,10 +628,230 @@ preceding rule.
 @end enumerate
 
 @c =========================================================================
+@c Running Gmsh on your system
+@c =========================================================================
+
+@node Running Gmsh on your system, General tools, How to read this manual?, Top
+@chapter Running Gmsh on your system
+
+@cindex Operating system
+@cindex Running Gmsh
+
+@menu
+* Interactive mode::            
+* Non-interactive mode::        
+* Command-line options::        
+* Mouse actions::               
+* Keyboard shortcuts::          
+@end menu
+
+@c -------------------------------------------------------------------------
+@c Interactive mode
+@c -------------------------------------------------------------------------
+
+@node Interactive mode, Non-interactive mode, Running Gmsh on your system, Running Gmsh on your system
+@section Interactive mode
+
+@cindex Interactive mode
+
+To launch Gmsh in interactive mode, just double-click on the Gmsh icon,
+or type
+
+@example
+> gmsh
+@end example
+
+@noindent at your shell prompt in a terminal. This will open
+two windows: the graphic window (with a status bar at the bottom) and
+the menu window (with a menu bar and some context-dependent buttons).
+
+To open the first tutorial file (@pxref{Tutorial}), select the
+`File->Open' menu, and choose @file{t1.geo} in the input field. When
+using a terminal, you can specify the file name directly on the command
+line, i.e.:
+
+@example
+> gmsh t1.geo
+@end example
+
+To perform the mesh generation, go to the mesh module (by selecting
+`Mesh' in the module menu) and choose the dimension in the
+context-dependent buttons (`1D' will mesh all the lines; `2D' will mesh
+all the surfaces---as well as all the lines if `1D' was not called
+before; `3D' will mesh all the volumes---and all the surfaces if `2D'
+was not called before). To save the resulting mesh in the current mesh
+format click on the `Save' button, or select the appropriate format and
+file name with the `File->Save As' menu. The default mesh file name is
+based on the name of the current active model, with an appended
+extension depending on the mesh format@footnote{Nearly all the
+interactive commands have shortcuts: see @ref{Keyboard shortcuts}, or
+select `Help->Keyboard Shortcuts' in the menu. For example, to quickly
+save a mesh, you can press @kbd{Ctrl+Shift+s}.}.
+
+To create a new geometry or to modify an existing geometry, select
+'Geometry' in the module menu, and follow the context-dependent buttons.
+For example, to create a spline, select `Elementary', `Add', `New' and
+`Spline'. You will then be asked to select a list of points, and to type
+@kbd{e} to finish the selection (or @kbd{q} to abort it). Once the
+interactive command is completed, a text string is automatically added
+at the end of the current script file. You can edit the script file by
+hand at any time by pressing the `Edit' button in the `Geometry' menu
+and then reloading the model by pressing `Reload'. For example, it is
+often faster to define variables and points directly in the script file,
+and then use the GUI to define the lines, the surfaces and the volumes
+interactively.
+
+Several files can be loaded simultaneously in Gmsh. The first one
+defines the active model and the others are `merged' into this
+model. You can merge such files with the `File->Merge' menu, or by
+directly specifying the names of the files on the command line. For
+example, to merge the post-processing views contained in the files
+@file{view1.pos} and @file{view5.msh} together with the geometry of the
+first tutorial @file{t1.geo}, you can type the following command:
+
+@example
+> gmsh t1.geo view1.pos view5.msh
+@end example
+
+In the Post-Processing module (select `Post-Processing' in the module
+menu), three buttons will appear, respectively labeled `A scalar map',
+`Nodal scalar map' and `Element 1 vector'. In this example the views
+contain several time steps: you can loop through them with the small
+``remote-control'' icons at the bottom of the graphic window. A mouse
+click on the view name will toggle the visibility of the selected view,
+while a click on the arrow button on the right will provide access to
+the view's options.
+
+Note that all the options specified interactively can also be directly
+specified in the script files. All available options, with their current
+values, can be saved into a file by selecting `File->Save As->Gmsh
+options', or simply viewed by pressing the `?' button in the status
+bar. To save the current options as your default preferences for all
+future Gmsh sessions, use the `File->Save Default Options' menu.
+
+@c -------------------------------------------------------------------------
+@c Non-interactive mode
+@c -------------------------------------------------------------------------
+
+@node Non-interactive mode, Command-line options, Interactive mode, Running Gmsh on your system
+@section Non-interactive mode
+
+@cindex Non-interactive mode
+
+You can also run Gmsh non-interactively, in `batch' mode. There is no
+GUI in batch mode and all operations are performed without user
+interaction@footnote{If you compile Gmsh without the GUI, i.e., with
+@code{./configure --disable-gui}, this is the only mode you have access
+to.}. For example, to mesh the first tutorial in non-interactive mode,
+just type:
+
+@example
+> gmsh t1.geo -2
+@end example
+
+To mesh the same example, but with the background mesh available in the file
+@file{bgmesh.pos}, type:
+
+@example
+> gmsh t1.geo -2 -bgm bgmesh.pos
+@end example
+
+For the list of all command-line options, see @ref{Command-line options}.
+
+@c -------------------------------------------------------------------------
+@c Command-line options
+@c -------------------------------------------------------------------------
+
+@node Command-line options, Mouse actions, Non-interactive mode, Running Gmsh on your system
+@section Command-line options
+
+@cindex Command-line options
+@cindex Options, command-line
+
+@include command_line.texi
+
+@c -------------------------------------------------------------------------
+@c Mouse actions
+@c -------------------------------------------------------------------------
+
+@node Mouse actions, Keyboard shortcuts, Command-line options, Running Gmsh on your system
+@section Mouse actions
+
+@cindex Mouse, actions
+@cindex Bindings, mouse
+
+In the following, for a 2 button mouse, @kbd{Middle button} =
+@kbd{Shift+Left button}. For a 1 button mouse, @kbd{Middle button} =
+@kbd{Shift+Left button} and @kbd{Right button} = @kbd{Alt+Left button}.
+
+@kbd{Move the mouse}:
+@itemize @bullet
+@item
+Highlight the entity under the mouse pointer and display its properties
+in the status bar
+@item
+Resize a lasso zoom or a lasso selection/unselection started with
+@kbd{Ctrl+Left button}
+@end itemize
+
+@kbd{Left button}:
+@itemize @bullet
+@item
+Rotate
+@item
+Select an entity
+@item
+Accept a lasso zoom or a lasso selection started with @kbd{Ctrl+Left
+button}
+@end itemize
+
+@kbd{Ctrl+Left button}: Start a lasso zoom or a lasso selection/unselection
+
+@kbd{Middle button}:
+@itemize @bullet
+@item
+Zoom
+@item
+Unselect an entity
+@item
+Accept a lasso zoom or a lasso unselection
+@end itemize
+
+@kbd{Ctrl+Middle button}: Orthogonalize display
+
+@kbd{Right button}:
+@itemize @bullet
+@item
+Pan
+@item
+Cancel a lasso zoom or a lasso selection/unselection
+@item
+Pop-up menu on post-processing view button
+@end itemize
+
+@kbd{Ctrl+Right button}: Reset to default viewpoint
+
+@c -------------------------------------------------------------------------
+@c Keyboard shortcuts
+@c -------------------------------------------------------------------------
+
+@node Keyboard shortcuts,  , Mouse actions, Running Gmsh on your system
+@section Keyboard shortcuts
+
+@cindex Keyboard, shortcuts
+@cindex Shortcuts, keyboard
+@cindex Bindings, keyboard
+
+(On Mac Ctrl is replaced by Cmd (the `Apple key') in the shortcuts
+below.)
+
+@include shortcuts.texi
+
+@c =========================================================================
 @c General tools
 @c =========================================================================
 
-@node General tools, Geometry module, How to read this manual?, Top
+@node General tools, Geometry module, Running Gmsh on your system, Top
 @chapter General tools
 
 This chapter describes the general commands and options that can be used
@@ -1965,8 +2186,8 @@ The mesh module commands mostly permit to modify the characteristic
 lengths and specify structured grid parameters. The actual mesh
 ``actions'' (i.e., ``mesh the lines'', ``mesh the surfaces'' and ``mesh
 the volumes'') cannot be specified in the script files. They have to be
-given either in the GUI or on the command line (see @ref{Running Gmsh},
-and @ref{Command-line options}).
+given either in the GUI or on the command line (see @ref{Running Gmsh on
+your system}, and @ref{Command-line options}).
 
 @menu
 * Characteristic lengths::      
@@ -2322,7 +2543,7 @@ options}):
 @c Post-processing module
 @c =========================================================================
 
-@node Post-processing module, Tutorial, Solver module, Top
+@node Post-processing module, File formats, Solver module, Top
 @chapter Post-processing module
 
 @cindex Post-processing, module
@@ -2673,344 +2894,10 @@ The list of all post-processing and view options is given in
 for some examples.
 
 @c =========================================================================
-@c Tutorial
-@c =========================================================================
-
-@node Tutorial, Running Gmsh, Post-processing module, Top
-@chapter Tutorial
-
-@cindex Examples
-@cindex Tutorial
-
-The nine following examples introduce new features gradually, starting with
-@file{t1.geo}. The files corresponding to these examples are available in
-the @file{tutorial} directory of the Gmsh distribution.
-
-To learn how to run Gmsh on your computer, see @ref{Running
-Gmsh}. Screencasts that show how to use the GUI are available on
-@uref{http://www.geuz.org/gmsh/screencasts/}.
-
-@menu
-* t1.geo::                      
-* t2.geo::                      
-* t3.geo::                      
-* t4.geo::                      
-* t5.geo::                      
-* t6.geo::                      
-* t7.geo::                      
-* t8.geo::                      
-* t9.geo::                      
-@end menu
-
-@c -------------------------------------------------------------------------
-@c t1.geo
-@c -------------------------------------------------------------------------
-
-@node t1.geo, t2.geo, Tutorial, Tutorial
-@section @file{t1.geo}
-
-@verbatiminclude ../../tutorial/t1.geo
-
-@c -------------------------------------------------------------------------
-@c t2.geo
-@c -------------------------------------------------------------------------
-
-@node t2.geo, t3.geo, t1.geo, Tutorial
-@section @file{t2.geo}
-
-@verbatiminclude ../../tutorial/t2.geo
-
-@c -------------------------------------------------------------------------
-@c t3.geo
-@c -------------------------------------------------------------------------
-
-@node t3.geo, t4.geo, t2.geo, Tutorial
-@section @file{t3.geo}
-
-@verbatiminclude ../../tutorial/t3.geo
-
-@c -------------------------------------------------------------------------
-@c t4.geo
-@c -------------------------------------------------------------------------
-
-@node t4.geo, t5.geo, t3.geo, Tutorial
-@section @file{t4.geo}
-
-@verbatiminclude ../../tutorial/t4.geo
-
-@c -------------------------------------------------------------------------
-@c t5.geo
-@c -------------------------------------------------------------------------
-
-@node t5.geo, t6.geo, t4.geo, Tutorial
-@section @file{t5.geo}
-
-@verbatiminclude ../../tutorial/t5.geo
-
-@c -------------------------------------------------------------------------
-@c t6.geo
-@c -------------------------------------------------------------------------
-
-@node t6.geo, t7.geo, t5.geo, Tutorial
-@section @file{t6.geo}
-
-@verbatiminclude ../../tutorial/t6.geo
-
-@c -------------------------------------------------------------------------
-@c t7.geo
-@c -------------------------------------------------------------------------
-
-@node t7.geo, t8.geo, t6.geo, Tutorial
-@section @file{t7.geo}
-
-@verbatiminclude ../../tutorial/t7.geo
-
-@c -------------------------------------------------------------------------
-@c t8.geo
-@c -------------------------------------------------------------------------
-
-@node t8.geo, t9.geo, t7.geo, Tutorial
-@section @file{t8.geo}
-
-@verbatiminclude ../../tutorial/t8.geo
-
-@c -------------------------------------------------------------------------
-@c t9.geo
-@c -------------------------------------------------------------------------
-
-@node t9.geo,  , t8.geo, Tutorial
-@section @file{t9.geo}
-
-@verbatiminclude ../../tutorial/t9.geo
-
-@c =========================================================================
-@c Running Gmsh
-@c =========================================================================
-
-@node Running Gmsh, File formats, Tutorial, Top
-@chapter Running Gmsh
-
-@cindex Operating system
-@cindex Running Gmsh
-
-@menu
-* Interactive mode::            
-* Non-interactive mode::        
-* Command-line options::        
-* Mouse actions::               
-* Keyboard shortcuts::          
-@end menu
-
-@c -------------------------------------------------------------------------
-@c Interactive mode
-@c -------------------------------------------------------------------------
-
-@node Interactive mode, Non-interactive mode, Running Gmsh, Running Gmsh
-@section Interactive mode
-
-@cindex Interactive mode
-
-Gmsh's first operating mode is the `interactive graphical mode'. To launch
-Gmsh in interactive mode, just click or double-click on the Gmsh icon
-(Windows and Mac), or type
-
-@example
-> gmsh
-@end example
-
-@noindent at your shell prompt in a terminal (Unix). This will open
-two windows: the graphic window (with a status bar at the bottom) and the
-menu window (with a menu bar and some context-dependent buttons). 
-
-To open the first tutorial file (@pxref{Tutorial}), select the `File->Open'
-menu, and choose @file{t1.geo} in the input field. When using a terminal,
-you can also specify the file name directly on the command line, i.e.:
-
-@example
-> gmsh t1.geo
-@end example
-
-To perform the mesh generation, go to the mesh module (by selecting `Mesh'
-in the module menu) and choose the required dimension in the
-context-dependent buttons (`1D' will mesh all the lines; `2D' will mesh all
-the surfaces---as well as all the lines if `1D' was not called before; `3D'
-will mesh all the volumes---and all the surfaces if `2D' was not called
-before). To save the resulting mesh in the current mesh format, choose
-`Save' in the context-dependent buttons, or select the appropriate format
-with the `File->Save As' menu. The default mesh file name is based on the
-name of the first input file on the command line (or @file{untitled} if
-there wasn't any input file given), with an appended extension depending on
-the mesh format@footnote{Nearly all the interactive commands have shortcuts:
-see @ref{Keyboard shortcuts}, or select `Help->Keyboard Shortcuts' in the
-menu.}.
-
-To create a new geometry or to modify an existing geometry, select
-'Geometry' in the module menu, and follow the context-dependent buttons.
-For example, to create a spline, select `Elementary', `Add', `New' and
-`Spline'. You will then be asked to select a list of points, and to type
-@kbd{e} to finish the selection (or @kbd{q} to abort it). Once the
-interactive command is completed, a text string is automatically added
-at the end of the current project file. You can edit this project file
-by hand at any time by pressing the `Edit' button in the `Geometry' menu
-and then reloading the project by pressing `Reload'. For example, it is
-often faster to define variables and points directly in the project
-file, and then use the GUI to define the lines, the surfaces and the
-volumes interactively.
-
-Several files can be loaded simultaneously in Gmsh. The first one
-defines the project, while the others are appended (`merged') to this
-project. You can merge such files with the `File->Merge' menu, or by
-directly specifying the names of the files on the command line. For
-example, to merge the post-processing views contained in the files
-@file{view1.pos} and @file{view5.msh} together with the geometry of the
-first tutorial @file{t1.geo}, you can type the following command:
-
-@example
-> gmsh t1.geo view1.pos view5.msh
-@end example
-
-In the Post-Processing module (select `Post-Processing' in the module
-menu), three view buttons will appear, respectively labeled `A scalar
-map', `Nodal scalar map' and `Element 1 vector'. These views contain
-several time steps: you can loop through them with the small
-``remote-control'' icons at the bottom of the graphic window. A mouse
-click on the name will toggle the visibility of the selected view, while
-a click on the arrow button on the right will provide access to the
-view's options. If you want the modifications made to one view to affect
-also all the other views, select the `Apply next changes to all views'
-or `Force same options for all views' option in the
-`Tools->Options->Post-processing' menu.
-
-Note that all the options specified interactively can also be directly
-specified in the script files. All available options, with their current
-values, can be saved into a file by selecting `File->Save As->Gmsh
-options', or simply viewed by pressing the `?' button in the status
-bar. To save the current options as your default preferences for all
-future Gmsh sessions, use the `Tools->Options->Save as defaults' button.
-
-@c -------------------------------------------------------------------------
-@c Non-interactive mode
-@c -------------------------------------------------------------------------
-
-@node Non-interactive mode, Command-line options, Interactive mode, Running Gmsh
-@section Non-interactive mode
-
-@cindex Non-interactive mode
-
-Gmsh's second operating mode is the non-interactive (or `batch')
-mode. In this mode, there is no GUI, and all operations are performed
-without any user interaction@footnote{If you compile Gmsh without the
-GUI, i.e., with @code{./configure --disable-gui}, this is the only mode
-you have access to.}. For example, to mesh the first tutorial in
-non-interactive mode, just type:
-
-@example
-> gmsh t1.geo -2
-@end example
-
-To mesh the same example, but with the background mesh available in the file
-@file{bgmesh.pos}, type:
-
-@example
-> gmsh t1.geo -2 -bgm bgmesh.pos
-@end example
-
-For the list of all command-line options, see @ref{Command-line options}.
-
-@c -------------------------------------------------------------------------
-@c Command-line options
-@c -------------------------------------------------------------------------
-
-@node Command-line options, Mouse actions, Non-interactive mode, Running Gmsh
-@section Command-line options
-
-@cindex Command-line options
-@cindex Options, command-line
-
-@include command_line.texi
-
-@c -------------------------------------------------------------------------
-@c Mouse actions
-@c -------------------------------------------------------------------------
-
-@node Mouse actions, Keyboard shortcuts, Command-line options, Running Gmsh
-@section Mouse actions
-
-@cindex Mouse, actions
-@cindex Bindings, mouse
-
-In the following, for a 2 button mouse, @kbd{Middle button} =
-@kbd{Shift+Left button}. For a 1 button mouse, @kbd{Middle button} =
-@kbd{Shift+Left button} and @kbd{Right button} = @kbd{Alt+Left button}.
-
-@kbd{Move the mouse}:
-@itemize @bullet
-@item
-Highlight the entity under the mouse pointer and display its properties
-in the status bar
-@item
-Resize a lasso zoom or a lasso selection/unselection started with
-@kbd{Ctrl+Left button}
-@end itemize
-
-@kbd{Left button}:
-@itemize @bullet
-@item
-Rotate
-@item
-Select an entity
-@item
-Accept a lasso zoom or a lasso selection started with @kbd{Ctrl+Left
-button}
-@end itemize
-
-@kbd{Ctrl+Left button}: Start a lasso zoom or a lasso selection/unselection
-
-@kbd{Middle button}:
-@itemize @bullet
-@item
-Zoom
-@item
-Unselect an entity
-@item
-Accept a lasso zoom or a lasso unselection
-@end itemize
-
-@kbd{Ctrl+Middle button}: Orthogonalize display
-
-@kbd{Right button}:
-@itemize @bullet
-@item
-Pan
-@item
-Cancel a lasso zoom or a lasso selection/unselection
-@item
-Pop-up menu on post-processing view button
-@end itemize
-
-@kbd{Ctrl+Right button}: Reset to default viewpoint
-
-@c -------------------------------------------------------------------------
-@c Keyboard shortcuts
-@c -------------------------------------------------------------------------
-
-@node Keyboard shortcuts,  , Mouse actions, Running Gmsh
-@section Keyboard shortcuts
-
-@cindex Keyboard, shortcuts
-@cindex Shortcuts, keyboard
-@cindex Bindings, keyboard
-
-(On Mac Ctrl is replaced by Cmd (the `Apple key') in the shortcuts
-below.)
-
-@include shortcuts.texi
-
-@c =========================================================================
 @c File Formats
 @c =========================================================================
 
-@node File formats, Options, Running Gmsh, Top
+@node File formats, Tutorial, Post-processing module, Top
 @chapter File formats
 
 @cindex File formats
@@ -3977,10 +3864,121 @@ after each other in order to form a long array of doubles. The principle is
 the same for all other kinds of values.
 
 @c =========================================================================
+@c Tutorial
+@c =========================================================================
+
+@node Tutorial, Options, File formats, Top
+@appendix Tutorial
+
+@cindex Examples
+@cindex Tutorial
+
+The nine following examples introduce new features gradually, starting with
+@file{t1.geo}. The files corresponding to these examples are available in
+the @file{tutorial} directory of the Gmsh distribution.
+
+To learn how to run Gmsh on your computer, see @ref{Running Gmsh on your
+system}. Screencasts that show how to use the GUI are available on
+@uref{http://www.geuz.org/gmsh/screencasts/}.
+
+@menu
+* t1.geo::                      
+* t2.geo::                      
+* t3.geo::                      
+* t4.geo::                      
+* t5.geo::                      
+* t6.geo::                      
+* t7.geo::                      
+* t8.geo::                      
+* t9.geo::                      
+@end menu
+
+@c -------------------------------------------------------------------------
+@c t1.geo
+@c -------------------------------------------------------------------------
+
+@node t1.geo, t2.geo, Tutorial, Tutorial
+@section @file{t1.geo}
+
+@verbatiminclude ../../tutorial/t1.geo
+
+@c -------------------------------------------------------------------------
+@c t2.geo
+@c -------------------------------------------------------------------------
+
+@node t2.geo, t3.geo, t1.geo, Tutorial
+@section @file{t2.geo}
+
+@verbatiminclude ../../tutorial/t2.geo
+
+@c -------------------------------------------------------------------------
+@c t3.geo
+@c -------------------------------------------------------------------------
+
+@node t3.geo, t4.geo, t2.geo, Tutorial
+@section @file{t3.geo}
+
+@verbatiminclude ../../tutorial/t3.geo
+
+@c -------------------------------------------------------------------------
+@c t4.geo
+@c -------------------------------------------------------------------------
+
+@node t4.geo, t5.geo, t3.geo, Tutorial
+@section @file{t4.geo}
+
+@verbatiminclude ../../tutorial/t4.geo
+
+@c -------------------------------------------------------------------------
+@c t5.geo
+@c -------------------------------------------------------------------------
+
+@node t5.geo, t6.geo, t4.geo, Tutorial
+@section @file{t5.geo}
+
+@verbatiminclude ../../tutorial/t5.geo
+
+@c -------------------------------------------------------------------------
+@c t6.geo
+@c -------------------------------------------------------------------------
+
+@node t6.geo, t7.geo, t5.geo, Tutorial
+@section @file{t6.geo}
+
+@verbatiminclude ../../tutorial/t6.geo
+
+@c -------------------------------------------------------------------------
+@c t7.geo
+@c -------------------------------------------------------------------------
+
+@node t7.geo, t8.geo, t6.geo, Tutorial
+@section @file{t7.geo}
+
+@verbatiminclude ../../tutorial/t7.geo
+
+@c -------------------------------------------------------------------------
+@c t8.geo
+@c -------------------------------------------------------------------------
+
+@node t8.geo, t9.geo, t7.geo, Tutorial
+@section @file{t8.geo}
+
+@verbatiminclude ../../tutorial/t8.geo
+
+@c -------------------------------------------------------------------------
+@c t9.geo
+@c -------------------------------------------------------------------------
+
+@node t9.geo,  , t8.geo, Tutorial
+@section @file{t9.geo}
+
+@verbatiminclude ../../tutorial/t9.geo
+
+@c =========================================================================
 @c Options
 @c =========================================================================
 
-@node Options, Programming notes, File formats, Top
+@node Options, Programming notes, Tutorial, Top
 @appendix Options
 
 This appendix lists all the available options. Gmsh's default behavior
@@ -3989,8 +3987,8 @@ is to save some of these options in a per-user ``session resource'' file
 permits for example to automatically remember the size and location of
 the windows or which fonts to use. Other options can be saved in a
 per-user ``option'' file (@code{General.OptionsFileName}), automatically
-loaded by Gmsh every time it starts up, by using the
-`Tools->Options->Save as defaults' menu.
+loaded by Gmsh every time it starts up, by using the `File->Save Default
+Options' menu.
 
 @c All the included files are generated automatically with `gmsh -doc'
 
@@ -4199,10 +4197,10 @@ your @code{.emacs} file: @code{(setq auto-mode-alist (append '(("\\.geo$"
 Define common geometrical objects and options in separate files, reusable in
 all your problem definition structures.
 @item
-Save your preferred options with `Tools->Options->Save as defaults'. To
-reset the default options, erase the @code{General.OptionsFileName}
-(usually @file{.gmsh-options} in your home directory) or use the
-`Restore default options' button in `Tools->Options->General->Output'.
+Save your preferred options with `File->Save Default Options'. To reset
+the default options, erase the @code{General.OptionsFileName} (usually
+@file{.gmsh-options} in your home directory) or use the `Restore default
+options' button in `Tools->Options->General->Output'.
 @item
 In the GUI:
 
