@@ -9,7 +9,7 @@
 #include <FL/Fl_Color_Chooser.H>
 #include "GUI.h"
 #include "optionWindow.h"
-#include "dialogWindow.h"
+#include "paletteWindow.h"
 #include "menuWindow.h"
 #include "extraDialogs.h"
 #include "Draw.h"
@@ -1148,7 +1148,7 @@ optionWindow::optionWindow(int deltaFontSize)
   int height = 12 * BH + 4 * WB;
   int L = 7 * FL_NORMAL_SIZE;
 
-  win = new dialogWindow(width, height, CTX.non_modal_windows);
+  win = new paletteWindow(width, height, CTX.non_modal_windows);
   win->box(GMSH_WINDOW_BOX);
   win->label("Options - General");
 

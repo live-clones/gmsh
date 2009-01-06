@@ -9,6 +9,7 @@
 #include <FL/Fl_Repeat_Button.H>
 #include "GUI.h"
 #include "projectionEditor.h"
+#include "paletteWindow.h"
 #include "fileDialogs.h"
 #include "GModelIO_Fourier.h"
 #include "MElement.h"
@@ -895,7 +896,7 @@ projectionEditor::projectionEditor()
   const int width = (int)(3.75 * BB), height = 24 * BH;
   
   // create all widgets (we construct this once, we never deallocate!)
-  _window = new dialogWindow(width, height, CTX.non_modal_windows, "Reparameterize");
+  _window = new paletteWindow(width, height, CTX.non_modal_windows, "Reparameterize");
   
   new Fl_Box(WB, WB + BH / 2, BB / 2, BH, "Select:");
   

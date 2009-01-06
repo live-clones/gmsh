@@ -11,7 +11,7 @@
 #include "GModel.h"
 #include "GUI.h"
 #include "solverWindow.h"
-#include "dialogWindow.h"
+#include "paletteWindow.h"
 #include "optionWindow.h"
 #include "messageWindow.h"
 #include "fileDialogs.h"
@@ -200,7 +200,7 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
   int height = (7 + SINFO[solverIndex].nboptions) * BH + 5 * WB;
   int BBS = (width - 8 * WB) / 5;
   
-  win = new dialogWindow
+  win = new paletteWindow
     (width, height, CTX.non_modal_windows, "Solver");
   win->box(GMSH_WINDOW_BOX);
   {

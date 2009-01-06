@@ -8,7 +8,7 @@
 #include <FL/fl_ask.H>
 #include "GUI.h"
 #include "graphicWindow.h"
-#include "dialogWindow.h"
+#include "paletteWindow.h"
 #include "mainWindow.h"
 #include "menuWindow.h"
 #include "messageWindow.h"
@@ -333,7 +333,7 @@ graphicWindow::graphicWindow(bool main, int numTiles)
     win->callback(file_quit_cb);
   }
   else{
-    win = new dialogWindow(width, height, false);
+    win = new paletteWindow(width, height, false);
     win->callback(remove_graphic_window_cb);
   }
 

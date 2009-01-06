@@ -3,15 +3,15 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _DIALOG_WINDOW_H
-#define _DIALOG_WINDOW_H
+#ifndef _PALETTE_WINDOW_H
+#define _PALETTE_WINDOW_H
 
 #include <FL/Fl.H>
 #include <FL/Fl_Double_Window.H>
 
 // Derive special windows from Fl_Double_Window to correctly process
 // the OS-specific shorcuts (Esc & Cmd-w on Mac, Alt+F4 on Windows)
-class dialogWindow : public Fl_Double_Window {
+class paletteWindow : public Fl_Double_Window {
  private:
   int handle(int event)
   {
@@ -33,7 +33,7 @@ class dialogWindow : public Fl_Double_Window {
     return Fl_Double_Window::handle(event);
   }
  public:
-  dialogWindow(int w, int h, int nonmodal=false, const char *l=0)
+  paletteWindow(int w, int h, int nonmodal=false, const char *l=0)
     : Fl_Double_Window(w, h, l) 
   {
     if(nonmodal) set_non_modal();

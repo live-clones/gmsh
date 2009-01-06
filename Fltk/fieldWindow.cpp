@@ -2,6 +2,10 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
+//
+// Contributor(s):
+//   Jonathan Lambrechts
+//
 
 #include <sstream>
 #include <FL/Fl_Input.H>
@@ -12,7 +16,7 @@
 #include "GUI.h"
 #include "Draw.h"
 #include "fieldWindow.h"
-#include "dialogWindow.h"
+#include "paletteWindow.h"
 #include "fileDialogs.h"
 #include "GmshDefines.h"
 #include "GModel.h"
@@ -93,7 +97,7 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
   int width = (CTX.field_size[0] < width0) ? width0 : CTX.field_size[0];
   int height = (CTX.field_size[1] < height0) ? height0 : CTX.field_size[1];
 
-  win = new dialogWindow(width, height, CTX.non_modal_windows, "Fields");
+  win = new paletteWindow(width, height, CTX.non_modal_windows, "Fields");
   win->box(GMSH_WINDOW_BOX);
 
   int x = WB, y = WB, w = (int)(1.5 * BB), h = height - 2 * WB - 3 * BH;

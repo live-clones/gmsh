@@ -9,7 +9,7 @@
 #include "GUI.h"
 #include "Draw.h"
 #include "statisticsWindow.h"
-#include "dialogWindow.h"
+#include "paletteWindow.h"
 #include "GModel.h"
 #include "MElement.h"
 #include "PView.h"
@@ -84,7 +84,7 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
   int width = 26 * FL_NORMAL_SIZE;
   int height = 5 * WB + 18 * BH;
 
-  win = new dialogWindow(width, height, CTX.non_modal_windows, "Statistics");
+  win = new paletteWindow(width, height, CTX.non_modal_windows, "Statistics");
   win->box(GMSH_WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);

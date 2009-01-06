@@ -14,7 +14,7 @@
 #include "GUI.h"
 #include "Draw.h"
 #include "pluginWindow.h"
-#include "dialogWindow.h"
+#include "paletteWindow.h"
 #include "PView.h"
 #include "PluginManager.h"
 #include "Plugin.h"
@@ -239,7 +239,7 @@ pluginWindow::pluginWindow(int deltaFontSize)
   int width = (CTX.plugin_size[0] < width0) ? width0 : CTX.plugin_size[0];
   int height = (CTX.plugin_size[1] < height0) ? height0 : CTX.plugin_size[1];
 
-  win = new dialogWindow(width, height, CTX.non_modal_windows, "Plugins");
+  win = new paletteWindow(width, height, CTX.non_modal_windows, "Plugins");
   win->box(GMSH_WINDOW_BOX);
 
   int L1 = (int)(0.3 * width), L2 = (int)(0.6 * L1);

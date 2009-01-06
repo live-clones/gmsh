@@ -8,7 +8,7 @@
 #include "GUI.h"
 #include "Draw.h"
 #include "contextWindow.h"
-#include "dialogWindow.h"
+#include "paletteWindow.h"
 #include "GModel.h"
 #include "GeoStringInterface.h"
 #include "OpenFile.h"
@@ -51,7 +51,7 @@ geometryContextWindow::geometryContextWindow(int deltaFontSize)
   int width = 31 * FL_NORMAL_SIZE;
   int height = 4 * WB + 8 * BH;
 
-  win = new dialogWindow
+  win = new paletteWindow
     (width, height, CTX.non_modal_windows, "Contextual Geometry Definitions");
   win->box(GMSH_WINDOW_BOX);
   {
@@ -218,7 +218,7 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
   int width = 29 * FL_NORMAL_SIZE;
   int height = 4 * WB + 4 * BH;
 
-  win = new dialogWindow
+  win = new paletteWindow
     (width, height, CTX.non_modal_windows, "Contextual Mesh Definitions");
   win->box(GMSH_WINDOW_BOX);
   {

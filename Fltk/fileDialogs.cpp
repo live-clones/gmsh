@@ -9,6 +9,7 @@
 
 #include <limits>
 #include <errno.h>
+#include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Value_Slider.H>
@@ -18,7 +19,6 @@
 #include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Choice.H>
 #include "GUI.h"
-#include "dialogWindow.h"
 #include "GmshDefines.h"
 #include "CreateFile.h"
 #include "Options.h"
@@ -140,15 +140,14 @@ int generic_bitmap_dialog(const char *name, const char *title, int format)
   if(!dialog){
     dialog = new _generic_bitmap_dialog;
     int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
     dialog->b = new Fl_Check_Button
       (WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
-    dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
@@ -191,15 +190,14 @@ int latex_dialog(const char *name)
   if(!dialog){
     dialog = new _latex_dialog;
     int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "LaTeX Options");
     dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
     dialog->b = new Fl_Check_Button
       (WB, y, 2 * BB + WB, BH, "Print strings as equations"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
-    dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
@@ -242,9 +240,9 @@ int jpeg_dialog(const char *name)
   if(!dialog){
     dialog = new _jpeg_dialog;
     int h = 3 * WB + 4 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "JPEG Options");
     dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
     dialog->s[0] = new Fl_Value_Slider(WB, y, BB, BH, "Quality"); y += BH;
     dialog->s[0]->type(FL_HOR_SLIDER);
     dialog->s[0]->align(FL_ALIGN_RIGHT);
@@ -262,7 +260,6 @@ int jpeg_dialog(const char *name)
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
-    dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
@@ -308,9 +305,9 @@ int gif_dialog(const char *name)
   if(!dialog){
     dialog = new _gif_dialog;
     int h = 3 * WB + 6 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "GIF Options");
     dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
     dialog->b[0] = new Fl_Check_Button
       (WB, y, 2 * BB + WB, BH, "Dither"); y += BH;
     dialog->b[1] = new Fl_Check_Button
@@ -326,7 +323,6 @@ int gif_dialog(const char *name)
     }
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
-    dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
@@ -421,9 +417,9 @@ int gl2ps_dialog(const char *name, const char *title, int format)
   if(!dialog){
     dialog = new _gl2ps_dialog;
     int h = 3 * WB + 8 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
     dialog->c = new Fl_Choice(WB, y, BB + WB + BB / 2, BH, "Type"); y += BH;
     dialog->c->menu(sortmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
@@ -444,7 +440,6 @@ int gl2ps_dialog(const char *name, const char *title, int format)
     }
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
-    dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
@@ -506,9 +501,9 @@ int options_dialog(const char *name)
   if(!dialog){
     dialog = new _options_dialog;
     int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "Options");
     dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
     dialog->b[0] = new Fl_Check_Button
       (WB, y, 2 * BB + WB, BH, "Save only modified options"); y += BH;
     dialog->b[0]->value(1);
@@ -519,7 +514,6 @@ int options_dialog(const char *name)
     dialog->b[1]->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
-    dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
@@ -559,15 +553,14 @@ int geo_dialog(const char *name)
   if(!dialog){
     dialog = new _geo_dialog;
     int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "GEO Options");
     dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
     dialog->b = new Fl_Check_Button
       (WB, y, 2 * BB + WB, BH, "Save physical group labels"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
-    dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
@@ -609,9 +602,9 @@ int pos_dialog(const char *name)
   if(!dialog){
     dialog = new _pos_dialog;
     int h = 3 * WB + 8 * BH, w = 2 * BBB + 3 * WB, y = WB;
-    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "POS Options");
     dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
     dialog->b[0] = new Fl_Check_Button
       (WB, y, 2 * BBB + WB, BH, "Save all (ignore physical groups)"); y += BH;
     dialog->b[1] = new Fl_Check_Button
@@ -630,7 +623,6 @@ int pos_dialog(const char *name)
       dialog->b[i]->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
-    dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
@@ -694,9 +686,9 @@ int msh_dialog(const char *name)
   if(!dialog){
     dialog = new _msh_dialog;
     int h = 3 * WB + 4 * BH, w = 2 * BBB + 3 * WB, y = WB;
-    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "MSH Options");
     dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
     dialog->c = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "Format"); y += BH;
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
@@ -708,7 +700,6 @@ int msh_dialog(const char *name)
     dialog->p->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
-    dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
@@ -759,9 +750,9 @@ int unv_dialog(const char *name)
   if(!dialog){
     dialog = new _unv_dialog;
     int h = 3 * WB + 3 * BH, w = 2 * BBB + 3 * WB, y = WB;
-    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "UNV Options");
     dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
     dialog->b[0] = new Fl_Check_Button
       (WB, y, 2 * BBB + WB, BH, "Save all (ignore physical groups)"); y += BH;
     dialog->b[0]->type(FL_TOGGLE_BUTTON);
@@ -770,7 +761,6 @@ int unv_dialog(const char *name)
     dialog->b[1]->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
-    dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
@@ -825,9 +815,9 @@ int bdf_dialog(const char *name)
   if(!dialog){
     dialog = new _bdf_dialog;
     int h = 3 * WB + 3 * BH, w = 2 * BBB + 3 * WB, y = WB;
-    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "BDF Options");
     dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
     dialog->c = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "Format"); y += BH;
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
@@ -836,7 +826,6 @@ int bdf_dialog(const char *name)
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
-    dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
@@ -890,9 +879,9 @@ int generic_mesh_dialog(const char *name, const char *title, int format,
   if(!dialog){
     dialog = new _generic_mesh_dialog;
     int h = 3 * WB + 3 * BH, w = 2 * BBB + 3 * WB, y = WB;
-    // not a "dialogWindow" since it is modal 
     dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
     dialog->c = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "Format"); y += BH;
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
@@ -901,7 +890,6 @@ int generic_mesh_dialog(const char *name, const char *title, int format,
     dialog->b->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
-    dialog->window->set_modal();
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
@@ -1148,8 +1136,9 @@ int cgns_write_dialog(const char *filename)
   const int w = 3*WB + 4*BB;            // Window width
   int y = WB;
 
-  dlg.window = new dialogWindow(w, h, true, "CGNS Options");
+  dlg.window = new Fl_Double_Window(w, h, "CGNS Options");
   dlg.window->box(GMSH_WINDOW_BOX);
+  dlg.window->set_modal();
   dlg.window->callback((Fl_Callback *)cgnsw_cancel_cb, &dlg);
 
   // Zone definition

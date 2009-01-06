@@ -8,7 +8,7 @@
 #include "GUI.h"
 #include "Draw.h"
 #include "clippingWindow.h"
-#include "dialogWindow.h"
+#include "paletteWindow.h"
 #include "GmshDefines.h"
 #include "PView.h"
 #include "PViewOptions.h"
@@ -163,7 +163,7 @@ clippingWindow::clippingWindow(int deltaFontSize)
   int height = 10 * BH + 5 * WB;
   int L = 7 * FL_NORMAL_SIZE;
 
-  win = new dialogWindow(width, height, CTX.non_modal_windows, "Clipping");
+  win = new paletteWindow(width, height, CTX.non_modal_windows, "Clipping");
   win->box(GMSH_WINDOW_BOX);
 
   browser = new Fl_Multi_Browser(WB, WB, L - WB, height - BH - 3 * WB);

@@ -17,7 +17,7 @@
 #include <FL/Fl_Hold_Browser.H>
 #include <FL/Fl_Box.H>
 #include "GUI.h"
-#include "dialogWindow.h"
+#include "paletteWindow.h"
 #include "GmshDefines.h"
 #include "OpenFile.h"
 #include "CreateFile.h"
@@ -41,7 +41,7 @@ int arrow_editor(const char *title, double &a, double &b, double &c)
 
   if(!editor){
     editor = new _editor;
-    editor->window = new dialogWindow
+    editor->window = new paletteWindow
       (2 * BB + 3 * WB, 4 * BH + 3 * WB, CTX.non_modal_windows);
     editor->sa = new Fl_Value_Slider(WB, WB, BB, BH, "Head radius");
     editor->sa->type(FL_HOR_SLIDER);

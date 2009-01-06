@@ -9,7 +9,7 @@
 #include <FL/fl_ask.H>
 #include "GUI.h"
 #include "messageWindow.h"
-#include "dialogWindow.h"
+#include "paletteWindow.h"
 #include "fileDialogs.h"
 #include "GmshMessage.h"
 #include "OS.h"
@@ -72,7 +72,7 @@ messageWindow::messageWindow(int deltaFontSize)
   int width = CTX.msg_size[0];
   int height = CTX.msg_size[1];
 
-  win = new dialogWindow
+  win = new paletteWindow
     (width, height, CTX.non_modal_windows, "Message Console");
   win->box(GMSH_WINDOW_BOX);
 

@@ -8,11 +8,11 @@
 
 #include <vector>
 #include <complex>
+#include <FL/Fl_Window.H>
 #include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Hold_Browser.H>
-#include "dialogWindow.h"
 #include "fourierProjectionFace.h"
 #include "GModel.h"
 #include "ColorTable.h"

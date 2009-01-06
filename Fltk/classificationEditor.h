@@ -9,7 +9,7 @@
 #include <vector>
 #include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Round_Button.H>
-#include "dialogWindow.h"
+#include <FL/Fl_Window.H>
 #include "GModel.h"
 #include "MElement.h"
 #include "ColorTable.h"

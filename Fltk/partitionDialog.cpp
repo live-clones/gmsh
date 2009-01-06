@@ -19,7 +19,7 @@
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Box.H>
 #include "GUI.h"
-#include "dialogWindow.h"
+#include "paletteWindow.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -467,8 +467,8 @@ void partition_dialog()
   const int w = 3 * BB + IW + 3 * WB;   // Window width
   int y = 0;
 
-  dlg.window = new dialogWindow(w, h, CTX.non_modal_windows,
-                                 "Partitioner Options");
+  dlg.window = new paletteWindow
+    (w, h, CTX.non_modal_windows, "Partitioner Options");
   dlg.window->box(GMSH_WINDOW_BOX);
   dlg.window->callback((Fl_Callback *)partition_cancel_cb, &dlg);
 

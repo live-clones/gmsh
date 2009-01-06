@@ -13,7 +13,7 @@
 #include "GUI.h"
 #include "Draw.h"
 #include "visibilityWindow.h"
-#include "dialogWindow.h"
+#include "paletteWindow.h"
 #include "contextWindow.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
@@ -1047,7 +1047,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
   int height = 18 * BH;
   int brw = width - 4 * WB;
 
-  win = new dialogWindow
+  win = new paletteWindow
     (width, height, CTX.non_modal_windows, "Visibility");
   win->box(GMSH_WINDOW_BOX);
 

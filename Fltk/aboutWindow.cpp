@@ -8,7 +8,7 @@
 #include <FL/Fl_Button.H>
 #include "GUI.h"
 #include "aboutWindow.h"
-#include "dialogWindow.h"
+#include "paletteWindow.h"
 #include "CommandLine.h"
 #include "StringUtils.h"
 #include "OS.h"
@@ -38,7 +38,7 @@ aboutWindow::aboutWindow()
   int width = 28 * FL_NORMAL_SIZE;
   int height = 15 * BH + BH/2;
 
-  win = new dialogWindow(width, height, CTX.non_modal_windows, "About Gmsh");
+  win = new paletteWindow(width, height, CTX.non_modal_windows, "About Gmsh");
   win->box(GMSH_WINDOW_BOX);
 
   {
