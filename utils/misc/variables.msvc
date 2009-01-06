@@ -81,9 +81,8 @@ endif
 LINKER=cl /F16777216
 
 # All compiler flags except optimization flags
-FLAGS=/DWIN32 /D_USE_MATH_DEFINES /DHAVE_NO_DLL /DHAVE_NO_SOCKLEN_T
+FLAGS=/DWIN32 /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_DEPRECATE /DHAVE_NO_DLL
 FLAGS+=/DHAVE_ANN /DHAVE_MATH_EVAL
-FLAGS+=/D_CRT_SECURE_NO_DEPRECATE
 
 # Additional system includes ($INCLUDE is automatically defined by MSVC when
 # you launch the MSVC command prompt)
