@@ -25,6 +25,9 @@ GMSH_API = Geo/GModel.h Geo/GEntity.h Geo/GPoint.h\
            Geo/SPoint2.h Geo/SPoint3.h Geo/SVector3.h Geo/SBoundingBox3d.h\
            Geo/Pair.h Geo/Range.h\
            Numeric/Gauss.h Numeric/FunctionSpace.h Numeric/GmshMatrix.h\
+           Numeric/gmshAssembler.h Numeric/gmshTermOfFormulation.h Numeric/gmshLaplace.h\
+           Numeric/gmshElasticity.h Numeric/gmshLinearSystem.h Numeric/gmshLinearSystemGmm.h\
+           Numeric/gmshLinearSystemFull.h Numeric/gmshFunction.h\
            Post/PView.h Post/PViewData.h Plugin/PluginManager.h\
            Common/VertexArray.h Common/GmshMessage.h\
            Common/Gmsh.h Common/GmshDefines.h Common/GmshVersion.h 

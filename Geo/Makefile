@@ -21,15 +21,15 @@ SRC = GEntity.cpp\
       discreteEdge.cpp discreteFace.cpp discreteRegion.cpp\
       fourierEdge.cpp fourierFace.cpp fourierProjectionFace.cpp\
       GModel.cpp\
-        GModelIO_Geo.cpp\
-        GModelIO_Mesh.cpp\
-        GModelIO_OCC.cpp\
-        GModelIO_Fourier.cpp\
-        GModelIO_CGNS.cpp\
-        GModelIO_MED.cpp\
+      GModelIO_Geo.cpp\
+      GModelIO_Mesh.cpp\
+      GModelIO_OCC.cpp\
+      GModelIO_Fourier.cpp\
+      GModelIO_CGNS.cpp\
+      GModelIO_MED.cpp\
       ExtrudeParams.cpp \
       Geo.cpp \
-	GeoStringInterface.cpp GeoInterpolation.cpp\
+      GeoStringInterface.cpp GeoInterpolation.cpp\
       findLinks.cpp\
       MVertex.cpp\
       MFace.cpp\

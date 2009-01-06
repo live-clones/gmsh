@@ -44,7 +44,7 @@ SRC = Generator.cpp \
         BDS.cpp \
         HighOrder.cpp \
 	Partition.cpp \
-        Refine.cpp
+        meshRefine.cpp
 
 OBJ = ${SRC:.cpp=${OBJEXT}}
 
