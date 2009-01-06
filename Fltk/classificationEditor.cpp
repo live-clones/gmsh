@@ -537,7 +537,8 @@ classificationEditor::classificationEditor()
   opt_mesh_line_width(0, GMSH_SET | GMSH_GUI, 1.5);
 
   // construct GUI in terms of standard sizes
-  const int width = (int)(3.5 * BB), height = 10 * BH;
+  int BBB = (int)(1.4 * BB); // labels too long
+  const int width = (int)(3.5 * BBB), height = 10 * BH;
 
   _window = new dialogWindow(width, height, CTX.non_modal_windows, "Classify");
   
@@ -548,23 +549,23 @@ classificationEditor::classificationEditor()
     edge_detec = o;
     
     _buttons[CLASSBUTTON_OK] = new Fl_Button 
-      (4*WB+2*BB, 7*WB+6*BH, BB, BH, "OK");
+      (4*WB+2*BBB, 7*WB+6*BH, BBB, BH, "OK");
     _buttons[CLASSBUTTON_OK]->callback(class_ok_cb, this);
     
     _buttons[CLASSBUTTON_SELECT] = new Fl_Button 
-      (2*WB, 2*WB+1*BH, BB, BH, "Select Elements");
+      (2*WB, 2*WB+1*BH, BBB, BH, "Select Elements");
     _buttons[CLASSBUTTON_SELECT]->callback(class_select_cb, this);
     
     _togbuttons[CLASSTOGBUTTON_HIDE] = new Fl_Toggle_Button
-      (3*WB+BB, 2*WB+1*BH, BB, BH, "Hide Unselected");
+      (3*WB+BBB, 2*WB+1*BH, BBB, BH, "Hide Unselected");
     _togbuttons[CLASSTOGBUTTON_HIDE]->callback(class_hide_cb,this);
 
     _togbuttons[CLASSTOGBUTTON_CLOS] = new Fl_Toggle_Button
-      (2*WB, 4*WB+3*BH, BB, BH, "Include Closure");
+      (2*WB, 4*WB+3*BH, BBB, BH, "Include Closure");
     _togbuttons[CLASSTOGBUTTON_CLOS]->callback(updateedges_cb,this);
     
     _inputs[CLASSVALUE_ANGLE] = new Fl_Value_Input
-      (3*WB+BB, 4*WB+3*BH, BB, BH, "Treshold Angle");
+      (3*WB+BBB, 4*WB+3*BH, BBB, BH, "Treshold Angle");
     _inputs[CLASSVALUE_ANGLE]->value(40);
     _inputs [CLASSVALUE_ANGLE]->maximum(90);
     _inputs[CLASSVALUE_ANGLE]->minimum(0);
@@ -574,17 +575,17 @@ classificationEditor::classificationEditor()
     _inputs[CLASSVALUE_ANGLE]->callback(updateedges_cb,this);
 
     _buttons[CLASSBUTTON_DEL] = new Fl_Button 
-      (2*WB, 5*WB+4*BH, BB, BH, "Delete Edge");
+      (2*WB, 5*WB+4*BH, BBB, BH, "Delete Edge");
     _buttons[CLASSBUTTON_DEL]->callback(class_deleteedge_cb, this);    
     _buttons[CLASSBUTTON_DEL]->deactivate();
 
     _buttons[CLASSBUTTON_ADD] = new Fl_Button
-      (2*WB, 6*WB+5*BH, BB, BH, "Save Selection");
+      (2*WB, 6*WB+5*BH, BBB, BH, "Save Selection");
     _buttons[CLASSBUTTON_ADD]->callback(class_save_cb, this);    
     _buttons[CLASSBUTTON_ADD]->deactivate();
 
     _buttons[CLASSBUTTON_CLEAR] = new Fl_Button 
-      (2*WB, 7*WB+6*BH, BB, BH, "Clear Selection");
+      (2*WB, 7*WB+6*BH, BBB, BH, "Clear Selection");
     _buttons[CLASSBUTTON_CLEAR]->callback(class_clear_cb, this);    
     _buttons[CLASSBUTTON_CLEAR]->deactivate();
     o->end();
@@ -596,10 +597,10 @@ classificationEditor::classificationEditor()
     o->deactivate();
     o->hide();
     _buttons[CLASSBUTTON_SELFAC] = new Fl_Button
-      (2*WB, 2*WB+1*BH, BB, BH, "Select Model Face");
+      (2*WB, 2*WB+1*BH, BBB, BH, "Select Model Face");
     _buttons[CLASSBUTTON_SELFAC]->callback(class_selectgface_cb, this);
     _buttons[CLASSBUTTON_COLOR] = new Fl_Button 
-      (2*WB, 3*WB+2*BH, BB, BH, "Classify Mesh Faces");
+      (2*WB, 3*WB+2*BH, BBB, BH, "Classify Mesh Faces");
     _buttons[CLASSBUTTON_COLOR]->callback(class_color_cb, this);
     o->end();
   }
