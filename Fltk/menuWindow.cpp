@@ -2148,8 +2148,8 @@ static Fl_Menu_Item bar_table[] = {
     {"&Quit",       FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
     {0},
   {"&Tools", 0, 0, 0, FL_SUBMENU},
-    {"&Options...",      FL_CTRL+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
-    {"Pl&ugins...",      FL_CTRL+FL_SHIFT+'u', (Fl_Callback *)plugin_cb, (void*)(-1)},
+    {"&Options",         FL_CTRL+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
+    {"Pl&ugins",         FL_CTRL+FL_SHIFT+'u', (Fl_Callback *)plugin_cb, (void*)(-1)},
     {"&Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
     {"&Clipping",        FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
     {"&Manipulator",     FL_CTRL+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0, FL_MENU_DIVIDER},
@@ -2162,7 +2162,7 @@ static Fl_Menu_Item bar_table[] = {
     {"&Keyboard Shortcuts",   0, (Fl_Callback *)help_short_cb, 0},
     {"C&ommand Line Options", 0, (Fl_Callback *)help_command_line_cb, 0},
     {"&Current Options",      0, (Fl_Callback *)status_options_cb, (void*)"?", FL_MENU_DIVIDER},
-    {"&About Gmsh...",        0, (Fl_Callback *)help_about_cb, 0},
+    {"&About Gmsh",           0, (Fl_Callback *)help_about_cb, 0},
     {0},
   {0}
 };
@@ -2190,8 +2190,8 @@ static Fl_Menu_Item sysbar_table[] = {
     {"Save Default Options", 0, (Fl_Callback *)options_save_cb, 0},
     {0},
   {"Tools", 0, 0, 0, FL_SUBMENU},
-    {"Options...",      FL_META+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
-    {"Plugins...",      FL_META+FL_SHIFT+'u', (Fl_Callback *)plugin_cb, (void*)(-1)},
+    {"Options",         FL_META+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
+    {"Plugins",         FL_META+FL_SHIFT+'u', (Fl_Callback *)plugin_cb, (void*)(-1)},
     {"Visibility",      FL_META+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
     {"Clipping",        FL_META+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
     {"Manipulator",     FL_META+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0, FL_MENU_DIVIDER},
@@ -2209,7 +2209,7 @@ static Fl_Menu_Item sysbar_table[] = {
     {"Keyboard Shortcuts",   0, (Fl_Callback *)help_short_cb, 0},
     {"Command Line Options", 0, (Fl_Callback *)help_command_line_cb, 0},
     {"Current Options",      0, (Fl_Callback *)status_options_cb, (void*)"?", FL_MENU_DIVIDER},
-    {"About Gmsh...",        0, (Fl_Callback *)help_about_cb, 0},
+    {"About Gmsh",           0, (Fl_Callback *)help_about_cb, 0},
     {0},
   {0}
 };
@@ -2717,9 +2717,9 @@ void menuWindow::setContext(contextItem *menu_asked, int flag)
 #endif
         p[j]->add("Apply As Background Mesh", 0, 
                   (Fl_Callback *) view_applybgmesh_cb, (void *)nb, FL_MENU_DIVIDER);
-        p[j]->add("Options...", 'o', 
+        p[j]->add("Options", 'o', 
                   (Fl_Callback *) view_options_cb, (void *)nb, 0);
-        p[j]->add("Plugins...", 'p', 
+        p[j]->add("Plugins", 'p', 
                   (Fl_Callback *) plugin_cb, (void *)nb, 0);
       }
 
