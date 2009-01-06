@@ -89,7 +89,7 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width0 = 34 * FL_NORMAL_SIZE + WB;
-  int height0 = 13 * BH + 5 * WB;
+  int height0 = 12 * BH + 4 * WB;
   int width = (CTX.field_size[0] < width0) ? width0 : CTX.field_size[0];
   int height = (CTX.field_size[1] < height0) ? height0 : CTX.field_size[1];
 
