@@ -32,6 +32,11 @@ static void help_credits_cb(Fl_Widget *w, void *data)
   SystemCall(cmd);
 }
 
+static void help_hide_cb(Fl_Widget *w, void *data)
+{
+  ((Fl_Window*)data)->hide();
+}
+
 aboutWindow::aboutWindow()
 {
   char buffer[1024];
@@ -82,7 +87,7 @@ aboutWindow::aboutWindow()
     o->add(" ");
     o->add("@c@.Visit http://www.geuz.org/gmsh/ for more information");
     o->add(" ");
-    o->callback(hide_cb, (void *)win);
+    o->callback(help_hide_cb, (void*)win);
   }
 
   {

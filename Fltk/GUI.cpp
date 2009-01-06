@@ -656,11 +656,6 @@ void GUI::callForSolverPlugin(int dim)
 
 // Callbacks
 
-void hide_cb(Fl_Widget *w, void *data)
-{
-  if(data) ((Fl_Window*)data)->hide();
-}
-
 void redraw_cb(Fl_Widget *w, void *data)
 {
   Draw();

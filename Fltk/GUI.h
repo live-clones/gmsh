@@ -107,7 +107,6 @@ class GUI{
   void callForSolverPlugin(int dim);
 };
 
-void hide_cb(Fl_Widget *w, void *data);
 void redraw_cb(Fl_Widget *w, void *data);
 void window_cb(Fl_Widget *w, void *data);
 
