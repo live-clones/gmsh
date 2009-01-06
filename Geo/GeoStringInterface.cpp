@@ -135,7 +135,7 @@ void add_charlength(List_T *list, std::string filename, std::string lc)
 {
   std::ostringstream sstream;
   sstream << "Characteristic Length {" << list2string(list) << "} = " << lc << ";";
-  add_infile(sstream.str().c_str(), filename);
+  add_infile(sstream.str(), filename);
 }
 
 void add_recosurf(List_T *list, std::string filename)

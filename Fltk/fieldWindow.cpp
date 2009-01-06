@@ -258,8 +258,8 @@ void fieldWindow::saveFieldOptions()
       break;
     }
     if((*input)->changed()){
-      add_field_option(f->id, it->first.c_str(), sstream.str().c_str(), 
-                       GModel::current()->getFileName());
+      add_field_option
+        (f->id, it->first, sstream.str(), GModel::current()->getFileName());
       (*input)->clear_changed();
     }
     input++;

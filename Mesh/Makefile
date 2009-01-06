@@ -446,7 +446,7 @@ Partition${OBJEXT}: Partition.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Numeric/GmshMatrix.h ../Numeric/Gauss.h PartitionOptions.h
-Refine${OBJEXT}: Refine.cpp HighOrder.h ../Geo/GModel.h ../Geo/GVertex.h \
+meshRefine${OBJEXT}: meshRefine.cpp HighOrder.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
   ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \

@@ -45,7 +45,7 @@ void drawContext::drawText2d()
         data->getString2D(j, opt->TimeStep, str, x, y, style);
         fix2dCoordinates(&x, &y);
         glRasterPos2d(x, y);
-        drawString(str.c_str(), style);
+        drawString(str, style);
       }
     }
   }

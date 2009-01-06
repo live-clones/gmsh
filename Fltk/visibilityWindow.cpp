@@ -738,7 +738,7 @@ static void visibility_save_cb(Fl_Widget *w, void *data)
     }
   }
   str += "}\n";
-  add_infile(str.c_str(), GModel::current()->getFileName());
+  add_infile(str, GModel::current()->getFileName());
 }
 
 static void _set_visibility_by_number(int what, int num, char val, bool recursive)
