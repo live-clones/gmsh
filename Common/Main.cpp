@@ -22,9 +22,7 @@ int main(int argc, char *argv[])
 
   new GModel();
   GmshInitialize(argc, argv);
-  // force these even if the options say it ain't so
-  CTX.nopopup = 1;
-  CTX.terminal = 1; 
+  CTX.terminal = CTX.nopopup = 1;
   GmshBatch();
   GmshFinalize();
 

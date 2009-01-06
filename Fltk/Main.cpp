@@ -40,11 +40,9 @@ int main(int argc, char *argv[])
   // Initialize static stuff (parser symbols, options)
   GmshInitialize(argc, argv);
 
-  // Always print info on terminal for non-interactive execution
-  if(CTX.batch) CTX.terminal = 1;
-
   // Non-interactive Gmsh
   if(CTX.batch) {
+    CTX.terminal = 1;
     GmshBatch();
     GmshFinalize();
     Msg::Exit(0);
@@ -106,7 +104,7 @@ int main(int argc, char *argv[])
     break;
   }
 
-  // Read background mesh on disk
+  // Read background mesh if any
   if(!CTX.bgm_filename.empty()) {
     MergeFile(CTX.bgm_filename);
     if(PView::list.size())
