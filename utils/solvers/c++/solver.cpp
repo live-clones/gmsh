@@ -1,34 +1,6 @@
-// $Id: solver.cpp,v 1.11 2008-10-21 18:47:41 geuzaine Exp $
-//
-// Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
-//
-// Permission is hereby granted, free of charge, to any person
-// obtaining a copy of this software and associated documentation
-// files (the "Software"), to deal in the Software without
-// restriction, including without limitation the rights to use, copy,
-// modify, merge, publish, distribute, and/or sell copies of the
-// Software, and to permit persons to whom the Software is furnished
-// to do so, provided that the above copyright notice(s) and this
-// permission notice appear in all copies of the Software and that
-// both the above copyright notice(s) and this permission notice
-// appear in supporting documentation.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-// NONINFRINGEMENT OF THIRD PARTY RIGHTS. IN NO EVENT SHALL THE
-// COPYRIGHT HOLDER OR HOLDERS INCLUDED IN THIS NOTICE BE LIABLE FOR
-// ANY CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY
-// DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
-// WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
-// ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
-// OF THIS SOFTWARE.
-// 
-// Please report all bugs and problems to <gmsh@geuz.org>.
-
-// This file contains a dummy client solver for Gmsh. It does not
-// solve anything, but shows how to program your own solver to interact
-// with the Gmsh solver module.
+// This is a dummy C++ client solver for Gmsh: it does not solve
+// anything, but shows how to program your own solver to interact with
+// the Gmsh solver module.
 //
 // To compile this solver, type something like:
 //
@@ -50,10 +22,9 @@ typedef enum { send_options, run_code } action;
 int main(int argc, char *argv[])
 {
   action what_to_do = run_code;
-  char *name = NULL, *option = NULL, *socket = NULL;
+  char *name = 0, *option = 0, *socket = 0;
 
   // parse command line
-
   int i = 0;
   while(i < argc) {
     if(argv[i][0] == '-') {
@@ -81,13 +52,11 @@ int main(int argc, char *argv[])
   }
 
   // connect to Gmsh
-
   GmshClient client;
   if(client.Connect(socket) < 0){
     printf("Unable to connect to Gmsh\n");
     exit(1);
   }
-
   client.Start();
 
   if(what_to_do == send_options) {

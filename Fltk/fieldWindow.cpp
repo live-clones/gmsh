@@ -8,6 +8,7 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Value_Input.H>
+#include <FL/fl_draw.H>
 #include "GUI.h"
 #include "Draw.h"
 #include "fieldWindow.h"
@@ -51,11 +52,6 @@ static void field_apply_cb(Fl_Widget *w, void *data)
   GUI::instance()->fields->saveFieldOptions();
 }
 
-static void field_revert_cb(Fl_Widget *w, void *data)
-{
-  GUI::instance()->fields->loadFieldOptions();
-}
-
 static void field_browser_cb(Fl_Widget *w, void *data)
 {
   int selected = GUI::instance()->fields->browser->value();
@@ -91,32 +87,6 @@ static void field_select_file_cb(Fl_Widget *w, void *data)
     input->value(file_chooser_get_name(0).c_str());
     input->set_changed();
   }
-}
-
-static void field_select_node_cb(Fl_Widget *w, void *data)
-{
-  const char *mode = "select";
-  const char *help = "vertices";
-  CTX.pick_elements = 1;
-  Draw();  
-  opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  while(1) {
-    Msg::StatusBar(3, false, "Select %s\n[Press %s'q' to abort]", 
-                   help, mode ? "" : "'u' to undo or ");
-    char ib = GUI::instance()->selectEntity(ENT_POINT);
-    printf("char = %c\n", ib);
-    if(ib == 'q'){
-      for(std::vector<GVertex*>::iterator it = GUI::instance()->selectedVertices.begin();
-          it != GUI::instance()->selectedVertices.end(); it++){
-	printf("%p\n", *it);
-      }
-      break;
-    }
-  }
-  CTX.mesh.changed = ENT_ALL;
-  CTX.pick_elements = 0;
-  Msg::StatusBar(3, false, "");
-  Draw();  
 }
 
 fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
@@ -173,19 +143,15 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
 
   Fl_Group *options_tab = new Fl_Group(x, y, w, h, "Options");
   
-  options_scroll = new Fl_Scroll(x, y, w, h - BH - 2 * WB);
+  options_scroll = new Fl_Scroll(x, y + WB, w, h - BH - 3 * WB);
   options_scroll->end();
   
   Fl_Button *apply_btn = new Fl_Return_Button
     (x + w - BB, y + h - BH - WB, BB, BH, "Apply");
   apply_btn->callback(field_apply_cb, this);
   
-  Fl_Button *revert_btn = new Fl_Button
-    (x + w - 2 * BB - WB, y + h - BH - WB, BB, BH, "Revert");
-  revert_btn->callback(field_revert_cb, this);
-  
   background_btn = new Fl_Check_Button
-    (x, y + h - BH - WB, (int)(1.5 * BB), BH, "Background mesh size");
+    (x, y + h - BH - WB, w - BB - WB, BH, "Set as background field");
   options_tab->end();
 
   Fl_Group *help_tab = new Fl_Group(x, y, w, h, "Help");
@@ -366,15 +332,17 @@ void fieldWindow::editField(Field *f)
   options_scroll->clear();
   options_widget.clear();
   options_scroll->begin();
-  int x = options_scroll->x();
-  int yy = options_scroll->y() + WB;
+  int xx = options_scroll->x();
+  int yy = options_scroll->y();
   help_display->clear();
+  help_display->add("\n");
   add_multiline_in_browser(help_display, "", f->get_description().c_str(), 100);
   help_display->add("\n");
   help_display->add("@b@cOptions");
   for(std::map<std::string, FieldOption*>::iterator it = f->options.begin(); 
       it != f->options.end(); it++){
     Fl_Widget *input;
+    help_display->add("\n");
     help_display->add(("@b" + it->first).c_str());
     help_display->add(("@i" + it->second->get_type_name()).c_str());
     add_multiline_in_browser
@@ -382,29 +350,34 @@ void fieldWindow::editField(Field *f)
     switch(it->second->get_type()){
     case FIELD_OPTION_INT:
     case FIELD_OPTION_DOUBLE:
-      input = new Fl_Value_Input(x, yy, IW, BH, it->first.c_str());
+      input = new Fl_Value_Input(xx, yy, IW, BH, it->first.c_str());
+      input->align(FL_ALIGN_RIGHT);
       break;
     case FIELD_OPTION_BOOL:
-      input = new Fl_Check_Button(x, yy, BH, BH, it->first.c_str());
+      input = new Fl_Check_Button(xx, yy, 2 * BB, BH, it->first.c_str());
+      input->type(FL_TOGGLE_BUTTON);
       break;
     case FIELD_OPTION_PATH:
       {
-        Fl_Button *b = new Fl_Button(x, yy, BH, BH, "S");
-        input = new Fl_Input(x + WB + BH, yy, IW - WB - BH, BH, it->first.c_str());
+        input = new Fl_Input(xx, yy, IW, BH, it->first.c_str());
+        input->align(FL_ALIGN_RIGHT);
+        int tw = (int)fl_width(it->first.c_str());
+        Fl_Button *b = new Fl_Button(xx + IW + tw + 2 * WB, yy, BB, BH, "Choose");
         b->callback(field_select_file_cb, input);
       }
       break;
     case FIELD_OPTION_STRING:
-      input = new Fl_Input(x, yy, IW, BH, it->first.c_str());
+      input = new Fl_Input(xx, yy, IW, BH, it->first.c_str());
+      input->align(FL_ALIGN_RIGHT);
       break;
     case FIELD_OPTION_LIST:
     default:
-      input = new Fl_Input(x, yy, IW, BH, it->first.c_str());
+      input = new Fl_Input(xx, yy, IW, BH, it->first.c_str());
+      input->align(FL_ALIGN_RIGHT);
       break;
     }
-    input->align(FL_ALIGN_RIGHT);
     options_widget.push_back(input);
-    yy += WB + BH;
+    yy += BH;
   }
   options_scroll->end();
 

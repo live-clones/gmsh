@@ -589,7 +589,7 @@ structure. Then have a look e.g. at @file{utils/misc/driver.cpp} in the
 source code.
 
 @c -------------------------------------------------------------------------
-@c Syntactic rules used in the reference manual
+@c Syntactic rules used in the manual
 @c -------------------------------------------------------------------------
 
 @menu
@@ -4086,15 +4086,21 @@ compile Gmsh's source code are included in the distribution. See
 @section Main code structure
 
 Gmsh's code is structured in several libraries, roughly separated
-between the three main core modules (Geo, Mesh, Post) and associated
-utility libraries (Common, Numeric) on one hand, and graphics (Graphics)
-and interface (Fltk, Parser) libraries on the other.
+between the three main core modules (@file{Geo}, @file{Mesh},
+@file{Post}) and associated utility libraries (@file{Common},
+@file{Numeric}) on one hand, and graphics (@file{Graphics}) and
+interface (@file{Fltk}, @file{Parser}) libraries on the other.
 
 The geometry and mesh modules are based on an object-oriented model
-class (Geo/GModel.h), built upon abstract geometrical entity classes
-(Geo/GVertex.h, Geo/Gedge.h, Geo/GFace.h and Geo/GRegion.h). The
-post-processing module is based on the concept of views (Post/PView.h)
-and abstract data containers (derived from Post/PViewData.h).
+class (@file{Geo/GModel.h}), built upon abstract geometrical entity
+classes (@file{Geo/GVertex.h}, @file{Geo/GEdge.h}, @file{Geo/GFace.h}
+and @file{Geo/GRegion.h}). Concrete implementation of the geometrical
+entity classes are provided for each supported CAD kernel
+(e.g. @file{Geo/gmshVertex.h} for geometry points in Gmsh's native CAD
+format, or @file{Geo/OCCVertex.h} for geometry points from
+OpenCascade). The post-processing module is based on the concept of
+views (@file{Post/PView.h}) and abstract data containers (derived from
+@file{Post/PViewData.h}).
 
 @c -------------------------------------------------------------------------
 @c Coding style
@@ -4113,7 +4119,7 @@ please enable full warnings for your compiler (e.g., add @code{-Wall} to
 @item
 always use the @code{Msg::} class to print information, errors, @dots{};
 @item 
-indent your files using @file{utils/misc/indent.sh};
+indent your files (2 spaces)
 @item 
 convert all tabs to spaces.
 @end enumerate

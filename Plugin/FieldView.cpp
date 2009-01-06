@@ -62,6 +62,6 @@ PView *GMSH_FieldViewPlugin::execute(PView *v)
   }
   PView *v1 = getView(iView, v);
   if(!v1) return v;
-        field->put_on_view(v1);
+  field->put_on_view(v1);
   return v1;
 }

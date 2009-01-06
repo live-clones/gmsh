@@ -214,33 +214,31 @@ class StructuredField : public Field
  public:
   StructuredField()
   {
-    options["FileName"] = new FieldOptionPath(file_name, "Name of the input file", 
-					      &update_needed);
+    options["FileName"] = new FieldOptionPath
+      (file_name, "Name of the input file", &update_needed);
     text_format = false;
-    options["TextFormat"] = new FieldOptionBool(text_format, "True for ASCII input "
-						"files, false for binary files\n"
-						"(4 bite signed integers for n, "
-						"double precision floating points "
-						"for v, D and O)",
-						&update_needed);
+    options["TextFormat"] = new FieldOptionBool
+      (text_format, "True for ASCII input files, false for binary files (4 bite\n"
+       "signed integers for n, double precision floating points for v, D and O)", 
+       &update_needed);
     data = 0;
   }
   std::string get_description()
   {
-    return "Linearly interpolate between data provided on a 3D rectangular structured grid. "
-      "The format of the input file is : \n"
-      "Ox Oy Oz \n"
-      "Dx Dy Dz \n"
-      "nx ny nz \n"
-      "v(0,0,0) v(0,0,1) v(0,0,2) ... \n"
-      "v(0,1,0) v(0,1,1) v(0,1,2) ... \n"
-      "v(0,2,0) v(0,2,1) v(0,2,2) ... \n"
-      "...      ...      ... \n"
-      "v(1,0,0) ...      ... \n"
-      "where O are the coordinates of the first node, "
-      "D are the distances between nodes in each direction, "
-      "n are the numbers of nodes in each directions, "
-      "and v are the values on each nodes.";
+    return "Linearly interpolate between data provided on a 3D rectangular\n"
+      "structured grid.\n\n"
+      "The format of the input file is:\n\n"
+      "  Ox Oy Oz \n"
+      "  Dx Dy Dz \n"
+      "  nx ny nz \n"
+      "  v(0,0,0) v(0,0,1) v(0,0,2) ... \n"
+      "  v(0,1,0) v(0,1,1) v(0,1,2) ... \n"
+      "  v(0,2,0) v(0,2,1) v(0,2,2) ... \n"
+      "  ...      ...      ... \n"
+      "  v(1,0,0) ...      ... \n\n"
+      "where O are the coordinates of the first node, D are the distances\n"
+      "between nodes in each direction, n are the numbers of nodes in each\n"
+      "direction, and v are the values on each node.";
   }
   const char *get_name()
   {
@@ -328,19 +326,21 @@ class UTMField : public Field
  public:
   std::string get_description()
   {
-    return "Evaluate Field[IField] in Universal Transverse Mercator coordinates. "
-      "The formulas for the coordinates transformation are taken from "
-      "http://www.uwgb.edu/dutchs/UsefulData/UTMFormulas.HTM\n";
+    return "Evaluate Field[IField] in Universal Transverse Mercator coordinates.\n"
+      "The formulas for the coordinates transformation are taken from:\n\n"
+      "  http://www.uwgb.edu/dutchs/UsefulData/UTMFormulas.HTM";
   }
   UTMField()
   {
     field_id = 1;
     zone = 0;
-    options["IField"] = new FieldOptionInt(field_id, "Index of the field to evaluate");
-    options["Zone"] = new FieldOptionInt(zone, "Zone of the UTM projection");
-    a = 6378137;                /* Equatorial Radius */
-    b = 6356752.3142;           /* Rayon Polar Radius */
-    /* see http://www.uwgb.edu/dutchs/UsefulData/UTMFormulas.HTM */
+    options["IField"] = new FieldOptionInt
+      (field_id, "Index of the field to evaluate");
+    options["Zone"] = new FieldOptionInt
+      (zone, "Zone of the UTM projection");
+    a = 6378137; // Equatorial Radius
+    b = 6356752.3142; // Rayon Polar Radius
+    // see http://www.uwgb.edu/dutchs/UsefulData/UTMFormulas.HTM
     n = (a - b) / (a + b);
     n2 = n * n;
     n3 = n * n * n;
@@ -412,13 +412,14 @@ class LonLatField : public Field
  public:
   std::string get_description()
   {
-    return "Evaluate Field[IField] in geographic coordinates (longitude,latitude). \n"
-      "F = Field[IField](arctan(y/x),arcsin(z/sqrt(x^2+y^2+z^2))";
+    return "Evaluate Field[IField] in geographic coordinates (longitude, latitude):\n\n"
+      "  F = Field[IField](atan(y/x), asin(z/sqrt(x^2+y^2+z^2))";
   }
   LonLatField()
   {
     field_id = 1;
-    options["IField"] = new FieldOptionInt(field_id, "Index of the field to evaluate.");
+    options["IField"] = new FieldOptionInt
+      (field_id, "Index of the field to evaluate.");
   }
   const char *get_name()
   {
@@ -438,20 +439,31 @@ class BoxField : public Field
  public:
   std::string get_description()
   {
-    return "The value of this field is VIn inside the box, VOut outside the box. \n"
-      "The box is given by Xmin<=x<=XMax && YMin<=y<=YMax && ZMin<=z<=ZMax";
+    return "The value of this field is VIn inside the box, VOut outside the box.\n"
+      "The box is given by\n\n"
+      "  Xmin <= x <= XMax &&\n"
+      "  YMin <= y <= YMax &&\n"
+      "  ZMin <= z <= ZMax";
   }
   BoxField()
   {
     v_in = v_out = x_min = x_max = y_min = y_max = z_min = z_max = 0;
-    options["VIn"] = new FieldOptionDouble(v_in, "Value inside the box");
-    options["VOut"] = new FieldOptionDouble(v_out, "Value outside the box");
-    options["XMin"] = new FieldOptionDouble(x_min, "Minimum X coordinate of the box");
-    options["XMax"] = new FieldOptionDouble(x_max, "Maximum X coordinate of the box");
-    options["YMin"] = new FieldOptionDouble(y_min, "Minimum Y coordinate of the box");
-    options["YMax"] = new FieldOptionDouble(y_max, "Maximum Y coordinate of the box");
-    options["ZMin"] = new FieldOptionDouble(z_min, "Minimum Z coordinate of the box");
-    options["ZMax"] = new FieldOptionDouble(z_max, "Maximum Z coordinate of the box");
+    options["VIn"] = new FieldOptionDouble
+      (v_in, "Value inside the box");
+    options["VOut"] = new FieldOptionDouble
+      (v_out, "Value outside the box");
+    options["XMin"] = new FieldOptionDouble
+      (x_min, "Minimum X coordinate of the box");
+    options["XMax"] = new FieldOptionDouble
+      (x_max, "Maximum X coordinate of the box");
+    options["YMin"] = new FieldOptionDouble
+      (y_min, "Minimum Y coordinate of the box");
+    options["YMax"] = new FieldOptionDouble
+      (y_max, "Maximum Y coordinate of the box");
+    options["ZMin"] = new FieldOptionDouble
+      (z_min, "Minimum Z coordinate of the box");
+    options["ZMax"] = new FieldOptionDouble
+      (z_max, "Maximum Z coordinate of the box");
   }
   const char *get_name()
   {
@@ -476,9 +488,9 @@ class ThresholdField : public Field
   }
   std::string get_description()
   {
-    return "F = LCMin if Field[IField] <= DistMin\n"
-      "F = LCMax if Field[IField] >= DistMax\n"
-      "F = Interpolation between LcMin and LcMax if DistMin<Field[IField]<DistMax";
+    return "F = LCMin if Field[IField] <= DistMin,\n"
+      "F = LCMax if Field[IField] >= DistMax,\n"
+      "F = interpolation between LcMin and LcMax if DistMin < Field[IField] < DistMax";
   }
   ThresholdField()
   {
@@ -489,20 +501,22 @@ class ThresholdField : public Field
     lcmax = 1;
     sigmoid = false;
     stopAtDistMax = false;
-    options["IField"] = new FieldOptionInt(iField, "Index of the field to evaluate");
-    options["DistMin"] = new FieldOptionDouble(dmin, "Distance from entity up to which "
-					       "element size will be LcMin");
-    options["DistMax"] = new FieldOptionDouble(dmax, "Distance from entity after which"
-					       "element size will be LcMax");
-    options["LcMin"] = new FieldOptionDouble(lcmin, "Element size inside DistMin");
-    options["LcMax"] = new FieldOptionDouble(lcmax, "Element size outside DistMax");
-    options["Sigmoid"] = new FieldOptionBool(sigmoid, "True to interpolate between LcMin "
-					     "and LcMax using a sigmoid, false to "
-					     "interpolate linearly");
-    options["StopAtDistMax"] = new FieldOptionBool(stopAtDistMax, "True to not impose "
-						   "element size outside DistMax (i.e. "
-						   "F = a very big value if "
-						   "Field[IField]>DistMax)");
+    options["IField"] = new FieldOptionInt
+      (iField, "Index of the field to evaluate");
+    options["DistMin"] = new FieldOptionDouble
+      (dmin, "Distance from entity up to which element size will be LcMin");
+    options["DistMax"] = new FieldOptionDouble
+      (dmax, "Distance from entity after which element size will be LcMax");
+    options["LcMin"] = new FieldOptionDouble
+      (lcmin, "Element size inside DistMin");
+    options["LcMax"] = new FieldOptionDouble
+      (lcmax, "Element size outside DistMax");
+    options["Sigmoid"] = new FieldOptionBool
+      (sigmoid, "True to interpolate between LcMin and LcMax using a sigmoid,\n"
+       "false to interpolate linearly");
+    options["StopAtDistMax"] = new FieldOptionBool
+      (stopAtDistMax, "True to not impose element size outside DistMax (i.e.,\n"
+       "F = a very big value if Field[IField] > DistMax)");
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
@@ -536,18 +550,22 @@ class GradientField : public Field
   }
   std::string get_description()
   {
-    return "Compute the finite difference gradient of Field[IField].\n "
-      "F = (Field[IField](X + Delta/2) - Field[IField](X - Delta/2))/Delta";
+    return "Compute the finite difference gradient of Field[IField]:\n\n"
+      "  F = (Field[IField](X + Delta/2) -\n"
+      "       Field[IField](X - Delta/2)) / Delta";
   }
   GradientField() : iField(0), kind(3), delta(CTX.lc / 1e4)
   {
     iField = 1;
     kind = 0;
     delta = 0.;
-    options["IField"] = new FieldOptionInt(iField, "Field index");
-    options["Kind"] = new FieldOptionInt(kind, "Component of the gradient to evaluate :"
-					 " 0 for X, 1 for Y, 2 for Z, 3 for the norm");
-    options["Delta"] = new FieldOptionDouble(delta, "Finite difference step");
+    options["IField"] = new FieldOptionInt
+      (iField, "Field index");
+    options["Kind"] = new FieldOptionInt
+      (kind, "Component of the gradient to evaluate: 0 for X, 1 for Y, 2 for Z,\n"
+       "3 for the norm");
+    options["Delta"] = new FieldOptionDouble
+      (delta, "Finite difference step");
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
@@ -594,17 +612,19 @@ class CurvatureField : public Field
   }
   std::string get_description()
   {
-    return "Compute the curvature of Field[IField]. \n"
-      "F = divergence( || grad( Field[IField] ) || )";
+    return "Compute the curvature of Field[IField]:\n\n"
+      "  F = div(norm(grad(Field[IField])))";
   }
   CurvatureField() : iField(0), delta(CTX.lc / 1e4)
   {
     iField = 1;
     delta = 0.;
-    options["IField"] = new FieldOptionInt(iField, "Field index");
-    options["Delta"] = new FieldOptionDouble(delta, "Step of the finite differences");
+    options["IField"] = new FieldOptionInt
+      (iField, "Field index");
+    options["Delta"] = new FieldOptionDouble
+      (delta, "Step of the finite differences");
   }
-  void grad_norm(Field &f,double x,double y,double z, double *g)
+  void grad_norm(Field &f, double x, double y, double z, double *g)
   {
     g[0] = f(x + delta / 2, y, z) - f(x - delta / 2, y, z);
     g[1] = f(x, y + delta / 2, z) - f(x, y - delta / 2, z);
@@ -641,16 +661,18 @@ class MaxEigenHessianField : public Field
   }
   std::string get_description()
   {
-    return "Compute the maximum eigenvalue of the Hessian matrix of Field[IField], "
-      "with the gradients evaluated by finite differences."
-      "F = max ( eigenvalues ( grad ( grad ( Field[IField] ) ) ) ) ";
+    return "Compute the maximum eigenvalue of the Hessian matrix of\n"
+      "Field[IField], with the gradients evaluated by finite differences:\n\n"
+      "  F = max(eig(grad(grad(Field[IField]))))";
   }
   MaxEigenHessianField() : iField(0), delta(CTX.lc / 1e4)
   {
     iField = 1;
     delta = 0.;
-    options["IField"] = new FieldOptionInt(iField, "Field index");
-    options["Delta"] = new FieldOptionDouble(delta, "Step used for the finite differences");
+    options["IField"] = new FieldOptionInt
+      (iField, "Field index");
+    options["Delta"] = new FieldOptionDouble
+      (delta, "Step used for the finite differences");
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
@@ -689,18 +711,20 @@ class LaplacianField : public Field
   }
   std::string get_description()
   {
-    return "Compute finite difference the Laplacian of Field[IField].\n"
-      "F = divergence(gradient(Field[IField])) \n"
-      "F = G(x+d,y,z)+G(x-d,y,z)+G(x,y+d,z)+G(x,y-d,z)+ "
-      "+G(x,y,z+d)+G(x,y,z-d)-6*G(x,y,z) "
-      "where G=Field[IField] and d=delta\n";
+    return "Compute finite difference the Laplacian of Field[IField]:\n\n"
+      "  F = G(x+d,y,z) + G(x-d,y,z) +\n"
+      "      G(x,y+d,z) + G(x,y-d,z) +\n"
+      "      G(x,y,z+d) + G(x,y,z-d) - 6 * G(x,y,z),\n\n"
+      "where G=Field[IField] and d=Delta";
   }
   LaplacianField() : iField(0), delta(CTX.lc / 1e4)
   {
     iField = 1;
     delta = 0.1;
-    options["IField"] = new FieldOptionInt(iField, "Field index");
-    options["Delta"] = new FieldOptionDouble(delta, "Finite difference step");
+    options["IField"] = new FieldOptionInt
+      (iField, "Field index");
+    options["Delta"] = new FieldOptionDouble
+      (delta, "Finite difference step");
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
@@ -724,17 +748,19 @@ class MeanField : public Field
   }
   std::string get_description()
   {
-    return "Very simple smoother.\n"
-      "F = (G(x+delta,y,z)+G(x-delta,y,z) "
-      "+G(x,y+delta,z)+G(x,y-delta,z) "
-      "+G(x,y,z+delta)+G(x,y,z-delta) "
-      "+G(x,y,z))/7 "
+    return "Simple smoother:\n\n"
+      "  F = (G(x+delta,y,z) + G(x-delta,y,z) +\n"
+      "       G(x,y+delta,z) + G(x,y-delta,z) +\n"
+      "       G(x,y,z+delta) + G(x,y,z-delta) +\n"
+      "       G(x,y,z)) / 7,\n\n"
       "where G=Field[IField]";
   }
   MeanField() : iField(0), delta(CTX.lc / 1e4)
   {
-    options["IField"] = new FieldOptionInt(iField, "Field index");
-    options["Delta"] = new FieldOptionDouble(delta, "Distance used to compute the mean value");
+    options["IField"] = new FieldOptionInt
+      (iField, "Field index");
+    options["Delta"] = new FieldOptionDouble
+      (delta, "Distance used to compute the mean value");
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
@@ -846,15 +872,15 @@ class MathEvalField : public Field
  public:
   MathEvalField()
   {
-    options["F"] = new FieldOptionString(f, "Mathematical function to evaluate.", 
-					 &update_needed);
+    options["F"] = new FieldOptionString
+      (f, "Mathematical function to evaluate.", &update_needed);
     f = "F2 + Sin(z)";
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     if(update_needed) {
       if(!expr.set_function(f))
-        Msg::Error("Field %i : Invalid matheval expression \"%s\"",
+        Msg::Error("Field %i: Invalid matheval expression \"%s\"",
 		   this->id, f.c_str());
       update_needed = false;
     }
@@ -866,11 +892,9 @@ class MathEvalField : public Field
   }
   std::string get_description()
   {
-    return "Evaluate a mathematical expression. "
-      "The expression can contains x, y, z for spatial coordinates, "
-      "F0, F1, ... for field values, and mathematical functions. "
-      "This evaluator is based on a modified version of the GNU libmatheval library. \n"
-      "Example : F2 + Sin(z)";
+    return "Evaluate a mathematical expression. The expression can contain\n"
+      "x, y, z for spatial coordinates, F0, F1, ... for field values, and\n"
+      "and mathematical functions.";
   }
 };
 
@@ -883,19 +907,21 @@ class ParametricField : public Field
   ParametricField()
   {
     ifield = 1;
-    options["IField"] = new FieldOptionInt(ifield, "Field index");
-    options["FX"] = new FieldOptionString(f[0], "X component of parametric function",
-					  &update_needed);
-    options["FY"] = new FieldOptionString(f[1], "Y component of parametric function",
-					  &update_needed);
-    options["FZ"] = new FieldOptionString(f[2], "Z component of parametric function",
-					  &update_needed);
+    options["IField"] = new FieldOptionInt
+      (ifield, "Field index");
+    options["FX"] = new FieldOptionString
+      (f[0], "X component of parametric function", &update_needed);
+    options["FY"] = new FieldOptionString
+      (f[1], "Y component of parametric function", &update_needed);
+    options["FZ"] = new FieldOptionString
+      (f[2], "Z component of parametric function", &update_needed);
   }
   std::string get_description()
   {
-    return "Evaluate Field IField in parametric coordinate. "
-      "See MathEval Field help to get a description of valid FX, FY and FZ expressions.\n"
-      "F = Field[IField](FX,FY,FZ) ";
+    return "Evaluate Field IField in parametric coordinates:\n\n"
+      "  F = Field[IField](FX,FY,FZ)\n\n"
+      "See the MathEval Field help to get a description of valid FX, FY\n"
+      "and FZ expressions.";
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
@@ -977,16 +1003,13 @@ class PostViewField : public Field
   {
     octree = 0;
     view_index = 0;
-    options["IView"] = new FieldOptionInt(view_index, "Post-processing view index",
-					  &update_needed);
+    options["IView"] = new FieldOptionInt
+      (view_index, "Post-processing view index", &update_needed);
     crop_negative_values = true;
-    options["CropNegativeValues"] = new FieldOptionBool(crop_negative_values, 
-							"return LC_MAX instead of a "
-							"negative value (this option "
-							"is needed for backward "
-							"compatibility with the "
-							"BackgroundMesh option",
-							&update_needed);
+    options["CropNegativeValues"] = new FieldOptionBool
+      (crop_negative_values, "return LC_MAX instead of a negative value (this\n"
+       "option is needed for backward compatibility with the BackgroundMesh option",
+       &update_needed);
   }
   ~PostViewField()
   {
@@ -1001,12 +1024,12 @@ class MinField : public Field
  public:
   MinField()
   {
-    options["FieldsList"] = new FieldOptionList(idlist, "Field indices",
-						&update_needed);
+    options["FieldsList"] = new FieldOptionList
+      (idlist, "Field indices",	&update_needed);
   }
   std::string get_description()
   {
-    return "Take the minimum value of a list of fields. ";
+    return "Take the minimum value of a list of fields.";
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
@@ -1029,8 +1052,8 @@ class MaxField : public Field
  public:
   MaxField()
   {
-    options["FieldsList"] = new FieldOptionList(idlist, "Field indices", 
-						&update_needed);
+    options["FieldsList"] = new FieldOptionList
+      (idlist, "Field indices", &update_needed);
   }
   std::string get_description()
   {
@@ -1066,8 +1089,8 @@ class RestrictField : public Field
   }
   std::string get_description()
   {
-    return "Restrict the application of a field to a given list of geometrical "
-      "curves, surfaces or volumes. ";
+    return "Restrict the application of a field to a given list of geometrical\n"
+      "curves, surfaces or volumes.";
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
@@ -1075,9 +1098,12 @@ class RestrictField : public Field
     if(!f) return MAX_LC;
     if(!ge) return (*f) (x, y, z);
     if((ge->dim() == 0) ||
-       (ge->dim() == 1 && std::find(edges.begin(), edges.end(), ge->tag()) != edges.end()) ||
-       (ge->dim() == 2 && std::find(faces.begin(), faces.end(), ge->tag()) != faces.end()) ||
-       (ge->dim() == 3 && std::find(regions.begin(), regions.end(), ge->tag()) != regions.end()))
+       (ge->dim() == 1 && std::find
+        (edges.begin(), edges.end(), ge->tag()) != edges.end()) ||
+       (ge->dim() == 2 && std::find
+        (faces.begin(), faces.end(), ge->tag()) != faces.end()) ||
+       (ge->dim() == 3 && std::find
+        (regions.begin(), regions.end(), ge->tag()) != regions.end()))
       return (*f) (x, y, z);
     return MAX_LC;
   }
@@ -1102,20 +1128,16 @@ class AttractorField : public Field
     index = new ANNidx[1];
     dist = new ANNdist[1];
     n_nodes_by_edge = 20;
-    options["NodesList"] = new FieldOptionList(nodes_id, "Indices of "
-					       "nodes in the geomtric model",
-					       &update_needed);
-    options["EdgesList"] = new FieldOptionList(edges_id, "Indices of "
-					       "curves in the geometric model",
-					       &update_needed);
-    options["NNodesByEdge"] = new FieldOptionInt(n_nodes_by_edge, "Number of nodes "
-						 "used to discetized each curve", 
-						 &update_needed);
-    options["FacesList"] = new FieldOptionList(faces_id, "Indices of "
-					       "surfaces in the geometric model "
-					       "(Warning: might give strange "
-					       "results for complex surfaces)",
-					       &update_needed);
+    options["NodesList"] = new FieldOptionList
+      (nodes_id, "Indices of nodes in the geomtric model", &update_needed);
+    options["EdgesList"] = new FieldOptionList
+      (edges_id, "Indices of curves in the geometric model", &update_needed);
+    options["NNodesByEdge"] = new FieldOptionInt
+      (n_nodes_by_edge, "Number of nodes used to discetized each curve",
+       &update_needed);
+    options["FacesList"] = new FieldOptionList
+      (faces_id, "Indices of surfaces in the geometric model (Warning: might\n"
+       "give strange results for complex surfaces)", &update_needed);
   }
   ~AttractorField()
   {
@@ -1130,12 +1152,10 @@ class AttractorField : public Field
   }
   std::string get_description()
   {
-    return "Compute the distance from the nearest node in a list. "
-      "It can also be used to compute distance from curves, in this case each "
-      "curve is replaced by NNodesByEdge equidistant nodes and the distance "
-      "from those nodes is computed. \n"
-      "The ANN library is used to find the nearest node: "
-      "http://www.cs.umd.edu/~mount/ANN/ ";
+    return "Compute the distance from the nearest node in a list. It can also\n"
+      "be used to compute the distance from curves, in which case each curve\n"
+      "is replaced by NNodesByEdge equidistant nodes and the distance from those\n"
+      "nodes is computed.";
   }
   virtual double operator() (double X, double Y, double Z, GEntity *ge=0)
   {
@@ -1279,27 +1299,6 @@ FieldManager::FieldManager()
   background_field = -1;
 }
 
-static void evaluate(Field * field, List_T * list1, int nbElm1, int nbNod,
-                     int nbComp, int comp)
-{
-  if(!nbElm1)
-    return;
-  int nb = List_Nbr(list1) / nbElm1;
-  for(int i = 0; i < List_Nbr(list1); i += nb) {
-    double *x = (double *)List_Pointer_Fast(list1, i);
-    double *y = (double *)List_Pointer_Fast(list1, i + nbNod);
-    double *z = (double *)List_Pointer_Fast(list1, i + 2 * nbNod);
-    for(int j = 0; j < nbNod; j++) {
-      // store data from the main view into v
-      double *val1 = (double *)List_Pointer_Fast(list1,
-                                                 i + 3 * nbNod +
-                                                 nbNod * nbComp * 0 +
-                                                 nbComp * j);
-      val1[comp] = (*field) (x[j], y[j], z[j]);
-    }
-  }
-}
-
 Field::Field()
 {
 }
@@ -1307,6 +1306,10 @@ Field::Field()
 #if !defined(HAVE_NO_POST)
 void Field::put_on_new_view()
 {
+  if(GModel::current()->getMeshStatus() < 1){
+    Msg::Error("No mesh available to create the view: please mesh your model!");
+    return;
+  }
   std::map<int, std::vector<double> > d;
   std::vector<GEntity*> entities;
   GModel::current()->getEntities(entities);
@@ -1322,41 +1325,19 @@ void Field::put_on_new_view()
   view->setChanged(true);
 }
 
-void Field::put_on_view(PView * view, int comp)
+void Field::put_on_view(PView *view, int comp)
 {
-  PViewDataList *data = dynamic_cast<PViewDataList*>(view->getData());
-  if(!data)
-    return;
-  evaluate(this, data->SP, data->NbSP, 1, 1, 0);
-  evaluate(this, data->SL, data->NbSL, 2, 1, 0);
-  evaluate(this, data->ST, data->NbST, 3, 1, 0);
-  evaluate(this, data->SQ, data->NbSQ, 4, 1, 0);
-  evaluate(this, data->SS, data->NbSS, 4, 1, 0);
-  evaluate(this, data->SH, data->NbSH, 8, 1, 0);
-  evaluate(this, data->SI, data->NbSI, 6, 1, 0);
-  evaluate(this, data->SY, data->NbSY, 5, 1, 0);
-  for(int cc = 0; cc < 3; cc++) {
-    if(comp < 0 || comp == cc) {
-      evaluate(this, data->VP, data->NbVP, 1, 3, cc);
-      evaluate(this, data->VL, data->NbVL, 2, 3, cc);
-      evaluate(this, data->VT, data->NbVT, 3, 3, cc);
-      evaluate(this, data->VQ, data->NbVQ, 4, 3, cc);
-      evaluate(this, data->VS, data->NbVS, 4, 3, cc);
-      evaluate(this, data->VH, data->NbVH, 8, 3, cc);
-      evaluate(this, data->VI, data->NbVI, 6, 3, cc);
-      evaluate(this, data->VY, data->NbVY, 5, 3, cc);
-    }
-  }
-  for(int cc = 0; cc < 9; cc++) {
-    if(comp < 0 || comp == cc) {
-      evaluate(this, data->TP, data->NbTP, 1, 9, cc);
-      evaluate(this, data->TL, data->NbTL, 2, 9, cc);
-      evaluate(this, data->TT, data->NbTT, 3, 9, cc);
-      evaluate(this, data->TQ, data->NbTQ, 4, 9, cc);
-      evaluate(this, data->TS, data->NbTS, 4, 9, cc);
-      evaluate(this, data->TH, data->NbTH, 8, 9, cc);
-      evaluate(this, data->TI, data->NbTI, 6, 9, cc);
-      evaluate(this, data->TY, data->NbTY, 5, 9, cc);
+  PViewData *data = view->getData();
+  for(int ent = 0; ent < data->getNumEntities(0); ent++){
+    for(int ele = 0; ele < data->getNumElements(0, ent); ele++){
+      if(data->skipElement(0, ent, ele)) continue;
+      for(int nod = 0; nod < data->getNumNodes(0, ent, ele); nod++){
+	double x, y, z;
+	data->getNode(0, ent, ele, nod, x, y, z);
+        double val = (*this)(x, y, z);
+	for(int comp = 0; comp < data->getNumComponents(0, ent, ele); comp++)
+	  data->setValue(0, ent, ele, nod, comp, val);
+      }
     }
   }
   data->finalize();
