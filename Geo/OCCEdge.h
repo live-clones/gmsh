@@ -32,14 +32,14 @@ class OCCEdge : public GEdge {
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
   virtual double curvature (double par) const;
-  virtual SPoint2 reparamOnFace(GFace * face, double epar, int dir) const ;
+  virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
   ModelType getNativeType() const { return OpenCascadeModel; }
   void * getNativePtr() const { return (void*)&c; }
   virtual int minimumMeshSegments () const;
   virtual int minimumDrawSegments () const;
   bool is3D() const { return !curve.IsNull(); }
   void setTrimmed(OCCFace *);
-  bool isSeam(GFace *) const;
+  bool isSeam(const GFace *) const;
 };
 
 #endif

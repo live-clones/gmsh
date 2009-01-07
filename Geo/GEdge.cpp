@@ -134,7 +134,7 @@ SVector3 GEdge::secondDer(double par) const
   return 500 * (x2 - x1);
 }
 
-SPoint2 GEdge::reparamOnFace(GFace *face, double epar,int dir) const
+SPoint2 GEdge::reparamOnFace(const GFace *face, double epar,int dir) const
 {
   // reparmaterize the point onto the given face.
   const GPoint p3 = point(epar);

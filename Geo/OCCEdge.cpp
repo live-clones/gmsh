@@ -64,7 +64,7 @@ void OCCEdge::setTrimmed (OCCFace *f)
   }
 }
 
-SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar, int dir) const
+SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
 {
   const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();
   double t0, t1;
@@ -107,7 +107,7 @@ SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar, int dir) const
 }
 
 // True if the edge is a seam for the given face
-bool OCCEdge::isSeam(GFace *face) const
+bool OCCEdge::isSeam(const GFace *face) const
 {
   if (face->geomType() == GEntity::CompoundSurface)return false; 
   const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();

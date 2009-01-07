@@ -216,6 +216,7 @@ int edge_normal
 {
 
   double par;
+  // Note: const_cast used to match MVertex.cpp interface
   if(!reparamMeshVertexOnEdge(vertex, gEdge, par)) return 1;
 
   const SVector3 tangent(gEdge->firstDer(par));
@@ -641,7 +642,7 @@ void updateBoVec<3, MFace>
             gFIt != useGFace.end(); ++gFIt) {
 
           SPoint2 par;
-          if(!reparamMeshVertexOnFace(vertex, (*gFIt), par))
+          if(!reparamMeshVertexOnFace(vertex, *gFIt, par))
             goto getNormalFromElements;  // :P  After all that!
 
           SVector3 boNormal = (*gFIt)->normal(par);

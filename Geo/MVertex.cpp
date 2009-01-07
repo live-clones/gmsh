@@ -303,12 +303,12 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
   }
 }
 
-bool reparamMeshVertexOnFace(MVertex *v, GFace *gf, SPoint2 &param)
+bool reparamMeshVertexOnFace(const MVertex *v, const GFace *gf, SPoint2 &param)
 {
   if (gf->geomType() == GEntity::CompoundSurface &&
       v->onWhat()->dim() < 2){
     GFaceCompound *gfc = (GFaceCompound*) gf;
-    param = gfc->getCoordinates(v);
+    param = gfc->getCoordinates(const_cast<MVertex*>(v));
     return true;
   }
 
@@ -350,7 +350,7 @@ bool reparamMeshVertexOnFace(MVertex *v, GFace *gf, SPoint2 &param)
   return true;
 }
 
-bool reparamMeshVertexOnEdge(MVertex *v, GEdge *ge, double &param)
+bool reparamMeshVertexOnEdge(const MVertex *v, const GEdge *ge, double &param)
 {
   param = 1.e6;
   Range<double> bounds = ge->parBounds(0);

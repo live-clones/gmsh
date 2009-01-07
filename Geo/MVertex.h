@@ -156,7 +156,7 @@ class MFaceVertex : public MVertex{
 
 bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, 
                            SPoint2 &param1, SPoint2 &param2);
-bool reparamMeshVertexOnFace(MVertex *v, GFace *gf, SPoint2 &param);
-bool reparamMeshVertexOnEdge(MVertex *v, GEdge *ge, double &param);
+bool reparamMeshVertexOnFace(const MVertex *v, const GFace *gf, SPoint2 &param);
+bool reparamMeshVertexOnEdge(const MVertex *v, const GEdge *ge, double &param);
 
 #endif

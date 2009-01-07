@@ -32,7 +32,7 @@ class gmshVertex : public GVertex {
     meshSize = l;
     v->lc = meshSize;
   }
-  virtual SPoint2 reparamOnFace(GFace *gf, int) const;
+  virtual SPoint2 reparamOnFace(const GFace *gf, int) const;
 };
 
 #endif

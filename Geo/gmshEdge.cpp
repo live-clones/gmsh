@@ -89,7 +89,7 @@ int gmshEdge::minimumDrawSegments () const
     return CTX.geom.num_sub_edges * n;
 }
 
-SPoint2 gmshEdge::reparamOnFace(GFace *face, double epar,int dir) const
+SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar,int dir) const
 {
   Surface *s = (Surface*) face->getNativePtr();
 

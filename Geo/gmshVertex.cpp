@@ -39,7 +39,7 @@ GEntity::GeomType gmshVertex::geomType() const
     return Point;
 }
 
-SPoint2 gmshVertex::reparamOnFace(GFace *face, int dir) const
+SPoint2 gmshVertex::reparamOnFace(const GFace *face, int dir) const
 {
   Surface *s = (Surface*)face->getNativePtr();
 

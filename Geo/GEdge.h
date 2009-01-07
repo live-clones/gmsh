@@ -48,7 +48,7 @@ class GEdge : public GEntity {
   virtual void setVisibility(char val, bool recursive=false);
 
   // true if the edge is a seam for the given face.
-  virtual bool isSeam(GFace *face) const { return false; }
+  virtual bool isSeam(const GFace *face) const { return false; }
 
   // get the bounding box
   virtual SBoundingBox3d bounds() const;
@@ -73,7 +73,7 @@ class GEdge : public GEntity {
   virtual double curvature(double par) const;
 
   // reparmaterize the point onto the given face
-  virtual SPoint2 reparamOnFace(GFace *face, double epar, int dir) const;
+  virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
 
   // return the minimum number of segments used for meshing the edge
   virtual int minimumMeshSegments() const { return 1; }

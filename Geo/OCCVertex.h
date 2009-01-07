@@ -28,7 +28,7 @@ class OCCVertex : public GVertex {
   virtual void setPosition(GPoint &p);
   ModelType getNativeType() const { return OpenCascadeModel; }
   void * getNativePtr() const { return (void*)&v; }
-  virtual SPoint2 reparamOnFace(GFace *gf, int) const;
+  virtual SPoint2 reparamOnFace(const GFace *gf, int) const;
 };
 
 #endif

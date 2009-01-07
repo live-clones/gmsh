@@ -65,7 +65,7 @@ double OCCVertex::max_curvature_of_surfaces() const
   return max_curvature;
 }
 
-SPoint2 OCCVertex::reparamOnFace(GFace *gf, int dir) const
+SPoint2 OCCVertex::reparamOnFace(const GFace *gf, int dir) const
 {
   std::list<GEdge*>::const_iterator it = l_edges.begin();
   while(it != l_edges.end()){

@@ -42,7 +42,7 @@ void GVertex::delEdge(GEdge *e)
   l_edges.erase(std::find(l_edges.begin(), l_edges.end(), e));
 }
 
-SPoint2 GVertex::reparamOnFace(GFace *gf, int) const
+SPoint2 GVertex::reparamOnFace(const GFace *gf, int) const
 {
   return gf->parFromPoint(SPoint3(x(), y(), z()));
 }
