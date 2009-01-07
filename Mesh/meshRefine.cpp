@@ -197,6 +197,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas, faceContainer &faceVerti
           else{
             SPoint3 pc = face.barycenter();
             newv.push_back(new MVertex(pc.x(), pc.y(), pc.z(), gr));
+            faceVertices[face].push_back(newv.back());
             gr->mesh_vertices.push_back(newv.back());
           }
         }
@@ -233,6 +234,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas, faceContainer &faceVerti
           else{
             SPoint3 pc = face.barycenter();
             newv.push_back(new MVertex(pc.x(), pc.y(), pc.z(), gr));
+            faceVertices[face].push_back(newv.back());
             gr->mesh_vertices.push_back(newv.back());
           }
         }
