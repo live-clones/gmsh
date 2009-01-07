@@ -56,7 +56,7 @@ static void message_save_cb(Fl_Widget *w, void *data)
   if(file_chooser(0, 1, "Save", "*")) {
     std::string name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
-      if(!StatFile(name.c_str()))
+      if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
                       "Cancel", "Replace", NULL, name.c_str()))
           goto test;

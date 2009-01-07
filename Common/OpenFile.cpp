@@ -249,9 +249,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
       // terms of gzFile, but until then, this is better than nothing
       if(fl_choice("File '%s' is in gzip format.\n\nDo you want to uncompress it?", 
                    "Cancel", "Uncompress", NULL, fileName.c_str())){
-        char tmp[256];
-        sprintf(tmp, "gunzip -c %s > %s", fileName.c_str(), no_ext);
-        if(SystemCall(tmp))
+        if(SystemCall(std::string("gunzip -c ") + fileName + " > " + no_ext))
           Msg::Error("Failed to uncompress `%s': check directory permissions", 
                      fileName.c_str());
         SetProjectName(no_ext);

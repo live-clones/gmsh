@@ -76,7 +76,7 @@ void Msg::Init(int argc, char **argv)
 void Msg::Exit(int level)
 {
   // delete the temp file
-  if(!_commRank) UnlinkFile((CTX.home_dir + CTX.tmp_filename).c_str());
+  if(!_commRank) UnlinkFile(CTX.home_dir + CTX.tmp_filename);
 
   // exit directly on abnormal program termination (level != 0). We
   // used to call abort() to flush open streams, but on modern OSes

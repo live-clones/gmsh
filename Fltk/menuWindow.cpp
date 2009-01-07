@@ -55,10 +55,10 @@ static void file_new_cb(Fl_Widget *w, void *data)
  test:
   if(file_chooser(0, 1, "New", "*")) {
     std::string name = file_chooser_get_name(1);
-    if(!StatFile(name.c_str())){
+    if(!StatFile(name)){
       if(fl_choice("File '%s' already exists.\n\nDo you want to erase it?",
                    "Cancel", "Erase", NULL, name.c_str()))
-        UnlinkFile(name.c_str());
+        UnlinkFile(name);
       else
         goto test;
     }
@@ -299,7 +299,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
   if(file_chooser(0, 1, "Save As", pat)) {
     std::string name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
-      if(!StatFile(name.c_str()))
+      if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
                       "Cancel", "Replace", NULL, name.c_str()))
           goto test;
@@ -323,7 +323,7 @@ static void file_rename_cb(Fl_Widget *w, void *data)
   if(file_chooser(0, 1, "Rename", "*", GModel::current()->getFileName().c_str())) {
     std::string name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
-      if(!StatFile(name.c_str()))
+      if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
                       "Cancel", "Replace", NULL, name.c_str()))
           goto test;
@@ -1441,7 +1441,7 @@ static void mesh_save_cb(Fl_Widget *w, void *data)
   std::string name = CTX.output_filename;
   if(name.empty()) name = GetDefaultFileName(CTX.mesh.format);
   if(CTX.confirm_overwrite) {
-    if(!StatFile(name.c_str()))
+    if(!StatFile(name))
       if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
                     "Cancel", "Replace", NULL, name.c_str()))
         return;
@@ -1904,7 +1904,7 @@ static void view_reload(int index)
   if(index >= 0 && index < (int)PView::list.size()){
     PView *p = PView::list[index];
 
-    if(StatFile(p->getData()->getFileName().c_str())){
+    if(StatFile(p->getData()->getFileName())){
       Msg::Error("File '%s' does not exist", p->getData()->getFileName().c_str());
       return;
     }
@@ -2010,7 +2010,7 @@ static void view_save_as(int index, const char *title, int format)
   if(file_chooser(0, 1, title, "*", view->getData()->getFileName().c_str())){
     std::string name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
-      if(!StatFile(name.c_str()))
+      if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
                       "Cancel", "Replace", NULL, name.c_str()))
           goto test;

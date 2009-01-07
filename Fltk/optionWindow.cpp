@@ -153,8 +153,8 @@ void options_save_cb(Fl_Widget *w, void *data)
 static void options_restore_defaults_cb(Fl_Widget *w, void *data)
 {
   // not sure if we have to remove the file...
-  UnlinkFile((CTX.home_dir + CTX.session_filename).c_str());
-  UnlinkFile((CTX.home_dir + CTX.options_filename).c_str());
+  UnlinkFile(CTX.home_dir + CTX.session_filename);
+  UnlinkFile(CTX.home_dir + CTX.options_filename);
   ReInit_Options(0);
   Init_Options_GUI(0);
   if(GUI::instance()->menu->module->value() == 3) // hack to refresh the buttons

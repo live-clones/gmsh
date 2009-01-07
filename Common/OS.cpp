@@ -59,7 +59,7 @@ void SleepInSeconds(double s)
 #endif
 }
 
-void GetResources(double *s, long *mem)
+static void GetResources(double *s, long *mem)
 {
 #if !defined(WIN32) || defined(__CYGWIN__)
   static struct rusage r;
@@ -118,23 +118,23 @@ std::string GetHostName()
   return std::string(host);
 }
 
-int UnlinkFile(const char *filename)
+int UnlinkFile(std::string fileName)
 {
 #if !defined(WIN32) || defined(__CYGWIN__)
-  return unlink(filename);
+  return unlink(fileName.c_str());
 #else
-  return _unlink(filename);
+  return _unlink(fileName.c_str());
 #endif
 }
 
-int StatFile(const char *filename)
+int StatFile(std::string fileName)
 {
 #if !defined(WIN32) || defined(__CYGWIN__)
   struct stat buf;
-  return stat(filename, &buf);
+  return stat(fileName.c_str(), &buf);
 #else
   struct _stat buf;
-  return _stat(filename, &buf);
+  return _stat(fileName.c_str(), &buf);
 #endif
 }
 
@@ -153,15 +153,15 @@ int KillProcess(int pid)
   return 1;
 }
 
-int SystemCall(const char *command)
+int SystemCall(std::string command)
 {
 #if defined(WIN32)
   STARTUPINFO suInfo;
   PROCESS_INFORMATION prInfo;
   memset(&suInfo, 0, sizeof(suInfo));
   suInfo.cb = sizeof(suInfo);
-  Msg::Info("Calling '%s'", command);
-  CreateProcess(NULL, (char*)command, NULL, NULL, FALSE,
+  Msg::Info("Calling '%s'", command.c_str());
+  CreateProcess(NULL, (char*)command.c_str(), NULL, NULL, FALSE,
                 NORMAL_PRIORITY_CLASS, NULL, NULL, &suInfo, &prInfo);
   return 0;
 #else
@@ -169,8 +169,8 @@ int SystemCall(const char *command)
     Msg::Error("Could not find /bin/sh: aborting system call");
     return 1;
   }
-  Msg::Info("Calling '%s'", command);
-  return system(command);
+  Msg::Info("Calling '%s'", command.c_str());
+  return system(command.c_str());
 #endif
 }
 

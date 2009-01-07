@@ -10,14 +10,13 @@
 
 double GetTimeInSeconds();
 void SleepInSeconds(double s);
-void GetResources(double *s, long *mem);
 void CheckResources();
 double Cpu();
 int GetProcessId();
 std::string GetHostName();
-int UnlinkFile(const char *name);
-int StatFile(const char *filename);
+int UnlinkFile(std::string fileName);
+int StatFile(std::string fileName);
 int KillProcess(int pid);
-int SystemCall(const char *command);
+int SystemCall(std::string command);
 
 #endif
