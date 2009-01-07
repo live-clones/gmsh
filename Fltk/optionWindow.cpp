@@ -447,8 +447,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_algo3d(0, GMSH_SET,
                   (o->mesh.choice[3]->value() == 0) ? ALGO_3D_TETGEN_DELAUNAY : 
                   ALGO_3D_NETGEN);
-  opt_mesh_recombine_algo(0, GMSH_SET,
-                  (o->mesh.choice[5]->value() == 0) ? 1 : 2);
+  opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
   opt_mesh_color_carousel(0, GMSH_SET, o->mesh.choice[4]->value());
   opt_mesh_quality_type(0, GMSH_SET, o->mesh.choice[6]->value());
   opt_mesh_label_type(0, GMSH_SET, o->mesh.choice[7]->value());
@@ -1889,9 +1888,10 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Netgen", 0, 0, 0},
         {0}
       };
-      static Fl_Menu_Item menu_recombine_algo[] = {
-        {"Mixed Tri-Quads", 0, 0, 0},
+      static Fl_Menu_Item menu_subdivision_algo[] = {
+        {"None", 0, 0, 0},
         {"All Quads", 0, 0, 0},
+        {"All Hexas", 0, 0, 0},
         {0}
       };
 
@@ -1908,8 +1908,8 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.choice[3]->callback(mesh_options_ok_cb);
 
       mesh.choice[5] = new Fl_Choice
-        (L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Recombine algorithm");
-      mesh.choice[5]->menu(menu_recombine_algo);
+        (L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Subdivision algorithm");
+      mesh.choice[5]->menu(menu_subdivision_algo);
       mesh.choice[5]->align(FL_ALIGN_RIGHT);
       mesh.choice[5]->callback(mesh_options_ok_cb);
 

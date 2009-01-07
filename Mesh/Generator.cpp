@@ -408,13 +408,8 @@ static void Mesh2D(GModel *m)
     }
   }
   
-  // look if there are model faces for which the "full quad" algo is
-  // set ON
-  bool fullQuad = false;
-  for(GModel::fiter it = m->firstFace() ; it!=m->lastFace(); ++it)
-    if(CTX.mesh.algo_recombine == 2 && (*it)->quadrangles.size())
-      fullQuad = true;
-  if(fullQuad) RefineMesh(m, false, true);
+  // use "full quad" subdivision
+  if(CTX.mesh.algo_subdivide == 1) RefineMesh(m, false, true);
 
   // gmshCollapseSmallEdges (*m);
 
@@ -460,6 +455,9 @@ static void Mesh3D(GModel *m)
   FindConnectedRegions(delaunay, connected);
   for(unsigned int i = 0; i < connected.size(); i++)
     MeshDelaunayVolume(connected[i]);
+
+  // Use "full hexa" subdivision?
+  if(CTX.mesh.algo_subdivide == 2) RefineMesh(m, false, false, true);
 
   double t2 = Cpu();
   CTX.mesh_timer[2] = t2 - t1;

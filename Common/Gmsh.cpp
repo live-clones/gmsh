@@ -124,7 +124,7 @@ int GmshBatch()
     else if(CTX.batch == 4)
       AdaptMesh(GModel::current());
     else if(CTX.batch == 5)
-      RefineMesh(GModel::current());
+      RefineMesh(GModel::current(), CTX.mesh.second_order_linear);
 #if defined(HAVE_CHACO) || defined(HAVE_METIS)
     if(CTX.batch_after_mesh == 1)
       PartitionMesh(GModel::current(), CTX.mesh.partition_options);

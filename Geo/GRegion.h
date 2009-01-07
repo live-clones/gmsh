@@ -67,6 +67,7 @@ class GRegion : public GEntity {
   virtual void resetMeshAttributes();
 
   struct {
+    // is this surface meshed using a transfinite interpolation
     char Method;
     // the extrusion parameters (if any)
     ExtrudeParams *extrude;

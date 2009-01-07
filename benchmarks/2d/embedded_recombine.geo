@@ -1,5 +1,5 @@
 // Options
-Mesh.RecombineAlgo = 2 ;
+Mesh.SubdivisionAlgorithm = 1;
 Mesh.MshFileVersion = 1;
 
 // Variables

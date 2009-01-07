@@ -5313,19 +5313,19 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
   return CTX.mesh.algo2d;
 }
 
-double opt_mesh_recombine_algo(OPT_ARGS_NUM)
+double opt_mesh_algo_subdivide(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
-    CTX.mesh.algo_recombine = (int)val;
-    if(CTX.mesh.algo_recombine < 1 && CTX.mesh.algo_recombine > 2)
-      CTX.mesh.algo_recombine = 1;
+    CTX.mesh.algo_subdivide = (int)val;
+    if(CTX.mesh.algo_subdivide < 0 && CTX.mesh.algo_subdivide > 2)
+      CTX.mesh.algo_subdivide = 0;
   }
 #if defined(HAVE_FLTK)
   if(GUI::available() && (action & GMSH_GUI)) {
-    GUI::instance()->options->mesh.choice[5]->value(CTX.mesh.algo_recombine - 1);
+    GUI::instance()->options->mesh.choice[5]->value(CTX.mesh.algo_subdivide);
   }
 #endif
-  return CTX.mesh.algo_recombine;
+  return CTX.mesh.algo_subdivide;
 }
 
 double opt_mesh_algo3d(OPT_ARGS_NUM)

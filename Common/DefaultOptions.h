@@ -1079,8 +1079,6 @@ StringXNumber MeshOptions_Number[] = {
     "Random factor used in 2D and 3D meshing algorithm (test other values when the algorithm fails)" },
   { F|O, "RefineSteps" , opt_mesh_refine_steps , 10 ,
     "Number of refinement steps in the MeshAdapt-based 2D algorithms" }, 
-  { F|O, "RecombineAlgo" , opt_mesh_recombine_algo , 1 ,
-    "Recombine algorithm (1=mixed triangles-quadrangles, 2=all quadrangles)" }, 
   { F|O, "ReverseAllNormals" , opt_mesh_reverse_all_normals , 0. , 
     "Reverse all the mesh normals (for display)" },
 
@@ -1104,6 +1102,8 @@ StringXNumber MeshOptions_Number[] = {
     "Number of smoothing steps of internal edges for high order meshes" },
   { F|O, "SmoothNormals" , opt_mesh_smooth_normals , 0. , 
     "Smooth the mesh normals?" },
+  { F|O, "SubdivisionAlgorithm" , opt_mesh_algo_subdivide , 0 ,
+    "Mesh subdivision algorithm (0=none, 1=all quadrangles, 2=all hexahedra)" }, 
   { F|O, "SurfaceEdges" , opt_mesh_surfaces_edges , 1. , 
     "Display edges of surface mesh?" },
   { F|O, "SurfaceFaces" , opt_mesh_surfaces_faces , 0. , 

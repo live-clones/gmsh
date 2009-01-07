@@ -44,10 +44,11 @@ static void Subdivide(GEdge *ge)
   ge->deleteVertexArrays();
 }
 
-static void Subdivide(GFace *gf, bool splitTrianglesIntoQuads)
+static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
+                      faceContainer &faceVertices)
 {
 
-  if(!splitTrianglesIntoQuads){
+  if(!splitIntoQuads && !splitIntoHexas){
     std::vector<MTriangle*> triangles2;
     for(unsigned int i = 0; i < gf->triangles.size(); i++){
       MTriangle *t = gf->triangles[i];
@@ -81,27 +82,29 @@ static void Subdivide(GFace *gf, bool splitTrianglesIntoQuads)
     }
     delete q;
   }
-  if(splitTrianglesIntoQuads){
+  if(splitIntoQuads || splitIntoHexas){
     for(unsigned int i = 0; i < gf->triangles.size(); i++){
       MTriangle *t = gf->triangles[i];
       if(t->getNumVertices() == 6){
-	SPoint2 pt, temp;
-	SPoint3 ptx; t->pnt(0.5,0.5,0,ptx);
+	SPoint2 pt;
+	SPoint3 ptx; t->pnt(0.5, 0.5, 0, ptx);
 	bool reparamOK = true;
-	for(int k = 0; k<6; k++){
+	for(int k = 0; k < 6; k++){
+          SPoint2 temp;
 	  reparamOK &= reparamMeshVertexOnFace(t->getVertex(k), gf, temp);
-	  pt[0] += temp[0]/6.;
-	  pt[1] += temp[1]/6.;
+	  pt[0] += temp[0] / 6.;
+	  pt[1] += temp[1] / 6.;
 	}
 	MVertex *newv;
 	if (reparamOK){
 	  GPoint gp = gf->point(pt);		
-	  newv = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,pt[0],pt[1]);
+	  newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, pt[0], pt[1]);
 	}
 	else {
-	  newv = new MVertex (ptx.x(),ptx.y(),ptx.z(),gf);
+	  newv = new MVertex(ptx.x(), ptx.y(), ptx.z(), gf);
 	}
 	gf->mesh_vertices.push_back(newv);
+        if(splitIntoHexas) faceVertices[t->getFace(0)].push_back(newv);
 	quadrangles2.push_back
 	  (new MQuadrangle(t->getVertex(0), t->getVertex(3), newv, t->getVertex(5)));
 	quadrangles2.push_back
@@ -120,32 +123,34 @@ static void Subdivide(GFace *gf, bool splitTrianglesIntoQuads)
   gf->deleteVertexArrays();
 }
 
-static void Subdivide(GRegion *gr)
+static void Subdivide(GRegion *gr, bool splitIntoHexas, faceContainer &faceVertices)
 {
-  std::vector<MTetrahedron*> tetrahedra2;
-  for(unsigned int i = 0; i < gr->tetrahedra.size(); i++){
-    MTetrahedron *t = gr->tetrahedra[i];
-    if(t->getNumVertices() == 10){
-      tetrahedra2.push_back
-        (new MTetrahedron(t->getVertex(0), t->getVertex(4), t->getVertex(7), t->getVertex(6)));
-      tetrahedra2.push_back
-        (new MTetrahedron(t->getVertex(1), t->getVertex(4), t->getVertex(5), t->getVertex(9)));
-      tetrahedra2.push_back
-        (new MTetrahedron(t->getVertex(2), t->getVertex(5), t->getVertex(6), t->getVertex(8)));
-      tetrahedra2.push_back
-        (new MTetrahedron(t->getVertex(3), t->getVertex(7), t->getVertex(9), t->getVertex(8)));
-      tetrahedra2.push_back
-        (new MTetrahedron(t->getVertex(5), t->getVertex(8), t->getVertex(7), t->getVertex(9)));
-      tetrahedra2.push_back
-        (new MTetrahedron(t->getVertex(5), t->getVertex(7), t->getVertex(4), t->getVertex(9)));
-      tetrahedra2.push_back
-        (new MTetrahedron(t->getVertex(7), t->getVertex(8), t->getVertex(5), t->getVertex(6)));
-      tetrahedra2.push_back
-        (new MTetrahedron(t->getVertex(4), t->getVertex(7), t->getVertex(5), t->getVertex(6)));
+  if(!splitIntoHexas){
+    std::vector<MTetrahedron*> tetrahedra2;
+    for(unsigned int i = 0; i < gr->tetrahedra.size(); i++){
+      MTetrahedron *t = gr->tetrahedra[i];
+      if(t->getNumVertices() == 10){
+        tetrahedra2.push_back
+          (new MTetrahedron(t->getVertex(0), t->getVertex(4), t->getVertex(7), t->getVertex(6)));
+        tetrahedra2.push_back
+          (new MTetrahedron(t->getVertex(1), t->getVertex(4), t->getVertex(5), t->getVertex(9)));
+        tetrahedra2.push_back
+          (new MTetrahedron(t->getVertex(2), t->getVertex(5), t->getVertex(6), t->getVertex(8)));
+        tetrahedra2.push_back
+          (new MTetrahedron(t->getVertex(3), t->getVertex(7), t->getVertex(9), t->getVertex(8)));
+        tetrahedra2.push_back
+          (new MTetrahedron(t->getVertex(5), t->getVertex(8), t->getVertex(7), t->getVertex(9)));
+        tetrahedra2.push_back
+          (new MTetrahedron(t->getVertex(5), t->getVertex(7), t->getVertex(4), t->getVertex(9)));
+        tetrahedra2.push_back
+          (new MTetrahedron(t->getVertex(7), t->getVertex(8), t->getVertex(5), t->getVertex(6)));
+        tetrahedra2.push_back
+          (new MTetrahedron(t->getVertex(4), t->getVertex(7), t->getVertex(5), t->getVertex(6)));
+      }
+      delete t;
     }
-    delete t;
+    gr->tetrahedra = tetrahedra2;
   }
-  gr->tetrahedra = tetrahedra2;
   
   std::vector<MHexahedron*> hexahedra2;
   for(unsigned int i = 0; i < gr->hexahedra.size(); i++){
@@ -177,6 +182,85 @@ static void Subdivide(GRegion *gr)
                          h->getVertex(25), h->getVertex(18), h->getVertex(6), h->getVertex(19)));
     }
     delete h;
+  }
+  if(splitIntoHexas){
+    for(unsigned int i = 0; i < gr->tetrahedra.size(); i++){
+      MTetrahedron *t = gr->tetrahedra[i];
+      if(t->getNumVertices() == 10){
+        std::vector<MVertex*> newv;
+        for(int j = 0; j < t->getNumFaces(); j++){
+          MFace face = t->getFace(j);
+          faceContainer::iterator fIter = faceVertices.find(face);
+          if (fIter != faceVertices.end()){
+            newv.push_back(fIter->second[0]);
+          }
+          else{
+            SPoint3 pc = face.barycenter();
+            newv.push_back(new MVertex(pc.x(), pc.y(), pc.z(), gr));
+            gr->mesh_vertices.push_back(newv.back());
+          }
+        }
+        SPoint3 pc = t->barycenter();
+        newv.push_back(new MVertex(pc.x(), pc.y(), pc.z(), gr));
+        gr->mesh_vertices.push_back(newv.back());
+	hexahedra2.push_back
+	  (new MHexahedron(t->getVertex(0), t->getVertex(4), newv[0], t->getVertex(6),
+                           t->getVertex(7), newv[1], newv[4], newv[2]));
+	hexahedra2.push_back
+	  (new MHexahedron(t->getVertex(4), t->getVertex(1), t->getVertex(5), newv[0],
+                           newv[1], t->getVertex(9), newv[3], newv[4]));
+	hexahedra2.push_back
+	  (new MHexahedron(t->getVertex(6),  newv[0], t->getVertex(5), t->getVertex(2),
+                           newv[2], newv[4], newv[3], t->getVertex(8)));
+	hexahedra2.push_back
+	  (new MHexahedron(t->getVertex(3),  t->getVertex(9), newv[1], t->getVertex(7),
+                           t->getVertex(8), newv[3], newv[4], newv[2]));
+	delete t;
+      }
+    }
+    gr->tetrahedra.clear();
+
+    for(unsigned int i = 0; i < gr->prisms.size(); i++){
+      MPrism *p = gr->prisms[i];
+      if(p->getNumVertices() == 18){
+        std::vector<MVertex*> newv;
+        for(int j = 0; j < 2; j++){
+          MFace face = p->getFace(j);
+          faceContainer::iterator fIter = faceVertices.find(face);
+          if (fIter != faceVertices.end()){
+            newv.push_back(fIter->second[0]);
+          }
+          else{
+            SPoint3 pc = face.barycenter();
+            newv.push_back(new MVertex(pc.x(), pc.y(), pc.z(), gr));
+            gr->mesh_vertices.push_back(newv.back());
+          }
+        }
+        SPoint3 pc = p->barycenter();
+        newv.push_back(new MVertex(pc.x(), pc.y(), pc.z(), gr));
+        gr->mesh_vertices.push_back(newv.back());
+	hexahedra2.push_back
+	  (new MHexahedron(p->getVertex(0), p->getVertex(6), newv[0], p->getVertex(7),
+                           p->getVertex(8), p->getVertex(15), newv[2], p->getVertex(16)));
+	hexahedra2.push_back
+	  (new MHexahedron(p->getVertex(1), p->getVertex(9), newv[0], p->getVertex(6),
+                           p->getVertex(10), p->getVertex(17), newv[2], p->getVertex(15)));
+	hexahedra2.push_back
+	  (new MHexahedron(p->getVertex(2), p->getVertex(7), newv[0], p->getVertex(9),
+                           p->getVertex(11), p->getVertex(16), newv[2], p->getVertex(17)));
+	hexahedra2.push_back
+	  (new MHexahedron(p->getVertex(8), p->getVertex(15), newv[2], p->getVertex(16),
+                           p->getVertex(3), p->getVertex(12), newv[1], p->getVertex(13)));
+	hexahedra2.push_back
+	  (new MHexahedron(p->getVertex(10), p->getVertex(17), newv[2], p->getVertex(15),
+                           p->getVertex(4), p->getVertex(14), newv[1], p->getVertex(12)));
+	hexahedra2.push_back
+	  (new MHexahedron(p->getVertex(11), p->getVertex(16), newv[2], p->getVertex(17),
+                           p->getVertex(5), p->getVertex(13), newv[1], p->getVertex(14)));
+      }
+    }
+    gr->prisms.clear();
+
   }
   gr->hexahedra = hexahedra2;
   
@@ -215,9 +299,13 @@ static void Subdivide(GRegion *gr)
   
   std::vector<MPyramid*> pyramids2;
   for(unsigned int i = 0; i < gr->pyramids.size(); i++){
+    if(splitIntoHexas){
+      Msg::Error("Full hexahedron subdivision is not implemented for pyramids");
+      return;
+    }
     MPyramid *p = gr->pyramids[i];
     if(p->getNumVertices() == 14){
-      // BASE
+      // Base
       pyramids2.push_back
         (new MPyramid(p->getVertex(0), p->getVertex(5), p->getVertex(13), 
                       p->getVertex(6), p->getVertex(7)));
@@ -263,7 +351,7 @@ static void Subdivide(GRegion *gr)
   gr->deleteVertexArrays();
 }
 
-void RefineMesh(GModel *m, bool linear, bool splitTrianglesIntoQuads)
+void RefineMesh(GModel *m, bool linear, bool splitIntoQuads, bool splitIntoHexas)
 {
   Msg::StatusBar(1, true, "Refining mesh...");
   double t1 = Cpu();
@@ -271,15 +359,18 @@ void RefineMesh(GModel *m, bool linear, bool splitTrianglesIntoQuads)
   // Create 2nd order mesh (using "2nd order complete" elements) to
   // generate vertex positions
   SetOrderN(m, 2, linear, false);
-	
+
+  // only used when splitting tets into hexes
+  faceContainer faceVertices;
+
   // Subdivide the second order elements to create the refined linear
   // mesh
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
     Subdivide(*it);
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
-    Subdivide(*it,splitTrianglesIntoQuads);
+    Subdivide(*it, splitIntoQuads, splitIntoHexas, faceVertices);
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
-    Subdivide(*it);
+    Subdivide(*it, splitIntoHexas, faceVertices);
 
   double t2 = Cpu();
   Msg::Info("Mesh refinement complete (%g s)", t2 - t1);
