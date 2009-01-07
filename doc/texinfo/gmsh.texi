@@ -491,12 +491,6 @@ surfaces in Gmsh's scripting language (however you can import STEP or
 IGES models with such features when Gmsh is built with OpenCascade
 support);
 @item
-Gmsh is not primarily a structured mesh generator: no automatic
-quadrilateral or hexahedral meshing algorithm is provided. If you want
-quadrangles, you have to use transfinite or extruded meshes or recombine
-unstructured triangular meshes. For hexahedra, your only choice is
-transfinite or extruded meshes;
-@item
 Gmsh is not a multi-bloc generator: all meshes produced by Gmsh are
 conforming in the sense of finite element meshes;
 @item
@@ -2102,20 +2096,30 @@ GUI, is give in  @ref{Geometry options list}.
 @cindex Mesh, module
 @cindex Module, Mesh
 
-Gmsh's mesh module regroups several 1D, 2D and 3D mesh algorithms, all
-producing grids conforming in the sense of finite elements (@pxref{Mesh}).
+Gmsh's mesh module regroups several 1D, 2D and 3D meshing algorithms,
+all producing grids conforming in the sense of finite elements
+(@pxref{Mesh}):
 
-The 2D @emph{unstructured} algorithms generate triangles or both triangles
-and quadrangles (when @code{Recombine Surface} is used: see
-@ref{Miscellaneous mesh commands}). The 3D unstructured algorithms only
-generate tetrahedra.
-
+@itemize @bullet
+@item
+The 2D @emph{unstructured} algorithms generate triangles or both
+triangles and quadrangles (when @code{Recombine Surface} is used: see
+@ref{Miscellaneous mesh commands}). The 3D @emph{unstructured}
+algorithms generate tetrahedra.
+@item
 The 2D @emph{structured} algorithms (transfinite and extrusion) generate
 triangles by default, but quadrangles can be obtained by using the
 @code{Recombine} commands (see @ref{Structured grids}, and
-@ref{Miscellaneous mesh commands}). The 3D structured algorithms
+@ref{Miscellaneous mesh commands}). The 3D @emph{structured} algorithms
 generate tetrahedra, hexahedra, prisms and pyramids, depending on the
 type of the surface meshes they are based on.
+@end itemize
+
+All meshes can be subdivided to generate fully quadrangular or fully
+hexahedral meshes with the @code{Mesh.SubdivisionAlgorihm} option
+(@pxref{Mesh options list}). However, beware that the quality of
+subdivided elements initially generated with an @emph{unstructured}
+algorithm can be quite poor.
 
 @c todo: explain what happens if we have a degenerate geometry (incorrect
 @c holes with surfaces in contact with the exterior shell, intersecting

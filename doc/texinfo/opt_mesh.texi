@@ -409,11 +409,6 @@ Number of refinement steps in the MeshAdapt-based 2D algorithms@*
 Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.RecombineAlgo
-Recombine algorithm (1=mixed triangles-quadrangles, 2=all quadrangles)@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.ReverseAllNormals
 Reverse all the mesh normals (for display)@*
 Default value: @code{0}@*
@@ -466,6 +461,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SmoothNormals
 Smooth the mesh normals?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.SubdivisionAlgorithm
+Mesh subdivision algorithm (0=none, 1=all quadrangles, 2=all hexahedra)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
