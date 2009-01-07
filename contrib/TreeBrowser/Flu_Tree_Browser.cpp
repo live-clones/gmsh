@@ -2679,7 +2679,7 @@ Flu_Tree_Browser::Node* Flu_Tree_Browser :: add_leaf( const char* path, const ch
 
 unsigned int Flu_Tree_Browser :: remove( const char *fullpath )
 {
-  return( (unsigned int)root.modify( fullpath, Node::REMOVE, rdata ) );
+  return( (unsigned long)root.modify( fullpath, Node::REMOVE, rdata ) );
 }
 
 unsigned int Flu_Tree_Browser :: remove( const char *path, const char *text )
