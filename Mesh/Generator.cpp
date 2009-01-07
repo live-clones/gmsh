@@ -408,9 +408,6 @@ static void Mesh2D(GModel *m)
     }
   }
   
-  // use "full quad" subdivision
-  if(CTX.mesh.algo_subdivide == 1) RefineMesh(m, false, true);
-
   // gmshCollapseSmallEdges (*m);
 
   double t2 = Cpu();
@@ -455,9 +452,6 @@ static void Mesh3D(GModel *m)
   FindConnectedRegions(delaunay, connected);
   for(unsigned int i = 0; i < connected.size(); i++)
     MeshDelaunayVolume(connected[i]);
-
-  // Use "full hexa" subdivision?
-  if(CTX.mesh.algo_subdivide == 2) RefineMesh(m, false, false, true);
 
   double t2 = Cpu();
   CTX.mesh_timer[2] = t2 - t1;
@@ -564,6 +558,12 @@ void GenerateMesh(GModel *m, int ask)
       if(CTX.mesh.optimize_netgen > i) OptimizeMeshNetgen(m);
     }
   }
+
+  // Subdivide into quads or hexas
+  if(m->getMeshStatus() == 2 && CTX.mesh.algo_subdivide == 1) 
+    RefineMesh(m, false, true);
+  else if(m->getMeshStatus() == 3 && CTX.mesh.algo_subdivide == 2) 
+    RefineMesh(m, false, false, true);
   
   // Create high order elements
   if(m->getMeshStatus() && CTX.mesh.order > 1) 
