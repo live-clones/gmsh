@@ -29,8 +29,8 @@ gmsh-update:
 gmsh-windows-nightly: gmsh-update
 	cd ${GMSH} && make distrib-win-nightly >> ${LOG} 2>&1
 	echo "BUILD END: `date`" >> ${LOG}
-	scp ${GMSH}/gmsh-*cvs*.zip ${WEB_BIN}/Windows/gmsh-nightly-Windows.zip
-	scp ${LOG} ${WEB_BIN}/Windows/
+	scp -C ${GMSH}/gmsh-*cvs*.zip ${WEB_BIN}/Windows/gmsh-nightly-Windows.zip
+	scp -C ${LOG} ${WEB_BIN}/Windows/
 
 gmsh-linux-nightly: gmsh-update
 	cd ${GMSH} && make distrib-unix-nightly >> ${LOG} 2>&1
