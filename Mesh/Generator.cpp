@@ -561,9 +561,9 @@ void GenerateMesh(GModel *m, int ask)
 
   // Subdivide into quads or hexas
   if(m->getMeshStatus() == 2 && CTX.mesh.algo_subdivide == 1) 
-    RefineMesh(m, false, true);
+    RefineMesh(m, CTX.mesh.second_order_linear, true);
   else if(m->getMeshStatus() == 3 && CTX.mesh.algo_subdivide == 2) 
-    RefineMesh(m, false, false, true);
+    RefineMesh(m, CTX.mesh.second_order_linear, false, true);
   
   // Create high order elements
   if(m->getMeshStatus() && CTX.mesh.order > 1) 
