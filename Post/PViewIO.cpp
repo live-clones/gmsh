@@ -3,11 +3,12 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include "GmshConfig.h"
+#include "GmshMessage.h"
 #include "PView.h"
 #include "PViewDataList.h"
 #include "PViewDataGModel.h"
 #include "StringUtils.h"
-#include "GmshMessage.h"
 
 bool PView::readPOS(std::string fileName, int fileIndex)
 {

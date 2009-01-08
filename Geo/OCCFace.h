@@ -6,6 +6,7 @@
 #ifndef _OCC_FACE_H_
 #define _OCC_FACE_H_
 
+#include "GmshConfig.h"
 #include "GFace.h"
 #include "GModel.h"
 #include "OCCVertex.h"

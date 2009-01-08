@@ -6,6 +6,17 @@
 #include <string>
 #include <string.h>
 #include <stdlib.h>
+#include "GmshConfig.h"
+#include "GmshDefines.h"
+#include "GmshVersion.h"
+#include "GmshMessage.h"
+#include "OpenFile.h"
+#include "CommandLine.h"
+#include "Context.h"
+#include "Options.h"
+#include "GModel.h"
+#include "CreateFile.h"
+#include "OS.h"
 
 #if defined(HAVE_FLTK)
 #include <FL/Fl.H>
@@ -17,17 +28,6 @@
 #error "Gmsh requires FLTK >= 1.1.7 or FLTK 1.3.x"
 #endif
 #endif
-
-#include "GmshDefines.h"
-#include "GmshVersion.h"
-#include "GmshMessage.h"
-#include "OpenFile.h"
-#include "CommandLine.h"
-#include "Context.h"
-#include "Options.h"
-#include "GModel.h"
-#include "CreateFile.h"
-#include "OS.h"
 
 #if !defined(HAVE_NO_POST)
 #include "PView.h"

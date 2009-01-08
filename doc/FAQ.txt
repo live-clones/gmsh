@@ -1,4 +1,4 @@
-$Id: FAQ.txt,v 1.1 2008-07-11 15:55:52 geuzaine Exp $
+$Id: FAQ.txt,v 1.2 2009-01-08 23:58:20 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -59,10 +59,8 @@ with OpenGL support; freely available from http://www.fltk.org).
 
 * 2.4 How do I compile Gmsh?
 
-Just type './configure; make; make install'. If you change some
-configuration options (type './configure --help' to get the list of
-all available choices), don't forget to do 'make clean' before
-rebuilding Gmsh.
+Just type './configure; make; make install'. (Type './configure
+--help' to get the list of all configuration options.)
 
 ********************************************************************
 

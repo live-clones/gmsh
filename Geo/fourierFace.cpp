@@ -2,10 +2,12 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
+
 #include <list>
+#include "GmshConfig.h"
+#include "GmshMessage.h"
 #include "fourierVertex.h"
 #include "fourierFace.h"
-#include "GmshMessage.h"
 
 #if defined(HAVE_FOURIER_MODEL)
 

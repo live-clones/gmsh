@@ -6,6 +6,8 @@
 #ifndef _OCC_INCLUDES_
 #define _OCC_INCLUDES_
 
+#include "GmshConfig.h"
+
 #if defined(HAVE_OCC)
 
 #include <iostream>

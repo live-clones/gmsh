@@ -7,14 +7,15 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Scroll.H>
 #include <FL/Fl_Color_Chooser.H>
+#include "GmshConfig.h"
+#include "GmshDefines.h"
+#include "GmshMessage.h"
 #include "GUI.h"
 #include "optionWindow.h"
 #include "paletteWindow.h"
 #include "menuWindow.h"
 #include "extraDialogs.h"
 #include "Draw.h"
-#include "GmshDefines.h"
-#include "GmshMessage.h"
 #include "Options.h"
 #include "Solvers.h"
 #include "GModel.h"

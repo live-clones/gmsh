@@ -13,11 +13,12 @@
 #include <string>
 #include <string.h>
 #include <sstream>
+#include "GmshConfig.h"
 
-#ifdef HAVE_MATH_EVAL
+#if defined(HAVE_MATH_EVAL)
 #include "matheval.h"
 #endif
-#ifdef HAVE_ANN
+#if defined(HAVE_ANN)
 #include "ANN/ANN.h"
 #endif
 
@@ -1113,7 +1114,7 @@ class RestrictField : public Field
   }
 };
 
-#ifdef HAVE_ANN
+#if defined(HAVE_ANN)
 class AttractorField : public Field
 {
   ANNkd_tree *kdtree;

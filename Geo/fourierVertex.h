@@ -6,6 +6,7 @@
 #ifndef _FOURIER_VERTEX_H_
 #define _FOURIER_VERTEX_H_
 
+#include "GmshConfig.h"
 #include "GModel.h"
 #include "GVertex.h"
 #include "MVertex.h"

@@ -4,14 +4,16 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <vector>
+#include "GmshConfig.h"
+#include "Annotate.h"
+#include "Context.h"
+
 #if defined(HAVE_FLTK)
 #include <FL/gl.h>
 #include "drawContext.h"
 #include "Draw.h"
 #include "GUI.h"
 #endif
-#include "Annotate.h"
-#include "Context.h"
 
 extern Context_T CTX;
 

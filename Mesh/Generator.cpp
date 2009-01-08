@@ -4,6 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <stdlib.h>
+#include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "Numeric.h"
 #include "Context.h"

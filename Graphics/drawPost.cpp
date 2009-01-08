@@ -6,8 +6,9 @@
 #include <math.h>
 #include <algorithm>
 #include <FL/gl.h>
-#include "drawContext.h"
+#include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "drawContext.h"
 #include "Numeric.h"
 #include "Iso.h"
 #include "PView.h"

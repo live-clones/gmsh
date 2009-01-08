@@ -4,8 +4,9 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string.h>
-#include "PViewOptions.h"
+#include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "PViewOptions.h"
 
 #if defined(HAVE_MATH_EVAL)
 #include "matheval.h"

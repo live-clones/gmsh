@@ -4,13 +4,14 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <sstream>
+#include "GmshConfig.h"
+#include "GmshMessage.h"
 #include "GModel.h"
 #include "MElement.h"
 #include "discreteRegion.h"
 #include "discreteFace.h"
 #include "discreteEdge.h"
 #include "discreteVertex.h"
-#include "GmshMessage.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
 #include "GmshEmbedded.h"

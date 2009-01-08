@@ -4,8 +4,9 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string>
-#include "GModel.h"
+#include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "GModel.h"
 
 #if defined(HAVE_MED)
 

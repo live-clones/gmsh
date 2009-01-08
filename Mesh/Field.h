@@ -9,6 +9,7 @@
 #include <string>
 #include <map>
 #include <list>
+#include "GmshConfig.h"
 
 #if !defined(HAVE_NO_POST)
 #include "PView.h"

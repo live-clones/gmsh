@@ -4,9 +4,10 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <set>
+#include "GmshConfig.h"
+#include "GmshMessage.h"
 #include "GModel.h"
 #include "MElement.h"
-#include "GmshMessage.h"
 
 #if !defined(HAVE_ANN)
 

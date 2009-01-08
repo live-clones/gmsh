@@ -5,6 +5,7 @@
 
 #include <string.h>
 #include <sstream>
+#include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "Numeric.h"
 #include "StringUtils.h"

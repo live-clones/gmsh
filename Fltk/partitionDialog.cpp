@@ -18,10 +18,11 @@
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Box.H>
-#include "GUI.h"
-#include "paletteWindow.h"
+#include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
+#include "GUI.h"
+#include "paletteWindow.h"
 #include "GModel.h"
 #include "Draw.h"
 #include "Options.h"

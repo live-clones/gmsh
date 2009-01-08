@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "Gmsh.h"
 #include "Options.h"

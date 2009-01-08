@@ -4,12 +4,14 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string.h>
+#include "GmshConfig.h"
+#include "CutSphere.h"
+#include "Context.h"
+
 #if defined(HAVE_FLTK)
 #include "drawContext.h"
 #include "Draw.h"
 #endif
-#include "CutSphere.h"
-#include "Context.h"
 
 extern Context_T CTX;
 

@@ -6,6 +6,7 @@
 #ifndef _OCC_VERTEX_H_
 #define _OCC_VERTEX_H_
 
+#include "GmshConfig.h"
 #include "GModel.h"
 #include "GVertex.h"
 #include "OCCIncludes.h"

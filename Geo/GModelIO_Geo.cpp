@@ -4,12 +4,13 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <stdlib.h>
+#include "GmshConfig.h"
+#include "GmshMessage.h"
 #include "GModel.h"
 #include "Geo.h"
 #include "OpenFile.h"
 #include "Numeric.h"
 #include "ListUtils.h"
-#include "GmshMessage.h"
 #include "gmshVertex.h"
 #include "gmshFace.h"
 #include "GFaceCompound.h"

@@ -7,6 +7,7 @@
 #define _PIXEL_BUFFER_H_
 
 #include <FL/gl.h>
+#include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "Draw.h"
 #include "MallocUtils.h"

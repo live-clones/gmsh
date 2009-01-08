@@ -5,6 +5,8 @@
 //
 // MZoneBoundary.cpp - Copyright (C) 2008 S. Guzik, C. Geuzaine, J.-F. Remacle
 
+#include "GmshConfig.h"
+
 #if defined(HAVE_LIBCGNS)
 
 #include <iostream> // DBG

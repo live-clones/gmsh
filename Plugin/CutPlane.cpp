@@ -3,12 +3,14 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include "GmshConfig.h"
+#include "CutPlane.h"
+#include "Context.h"
+
 #if defined(HAVE_FLTK)
 #include "drawContext.h"
 #include "Draw.h"
 #endif
-#include "CutPlane.h"
-#include "Context.h"
 
 extern Context_T CTX;
 

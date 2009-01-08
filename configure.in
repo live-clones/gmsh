@@ -240,7 +240,7 @@ if test "x$enable_gui" != "xno"; then
   GMSH_DIRS="Common Geo Mesh Post Plugin Numeric Parser Graphics Fltk"
   GMSH_LIBS="-Llib -lGmshFltk -lGmshCommon -lGmshMesh -lGmshGeo -lGmshPost -lGmshPlugin"
   GMSH_LIBS="${GMSH_LIBS} -lGmshCommon -lGmshGraphics -lGmshParser -lGmshNumeric"
-  FLAGS="-DHAVE_FLTK ${FLAGS}"
+  AC_DEFINE(HAVE_FLTK)
 
   if test "x${FLTK_PREFIX}" != "x" ; then
     AC_PATH_PROG(FLTKCONFIG,fltk-config,[],[${FLTK_PREFIX}:${FLTK_PREFIX}/bin:$PATH])
@@ -269,7 +269,7 @@ if test "x$enable_gui" != "xno"; then
         test "x${UNAME}" != "xLinux" -a "x$enable_native_file_chooser" != "xno"); then
        GMSH_DIRS="${GMSH_DIRS} contrib/NativeFileChooser"
        GMSH_LIBS="${GMSH_LIBS} -lGmshNativeFileChooser"
-       FLAGS="-DHAVE_NATIVE_FILE_CHOOSER ${FLAGS}"
+       AC_DEFINE(HAVE_NATIVE_FILE_CHOOSER)
     fi
   fi
 
@@ -279,13 +279,14 @@ if test "x$enable_gui" != "xno"; then
     if test "x${TREEBROWSER}" = "xyes"; then
       GMSH_DIRS="${GMSH_DIRS} contrib/TreeBrowser"
       GMSH_LIBS="${GMSH_LIBS} -lGmshTreeBrowser"
-      FLAGS="-DHAVE_TREE_BROWSER ${FLAGS}"
+      AC_DEFINE(HAVE_TREE_BROWSER)
     fi
   fi
 
   if test "x${OSMESA}" = "xyes"; then
     GMSH_LIBS="${GMSH_LIBS} `$FLTKCONFIG --use-images --ldflags` -lfltk_gl"
-    FLAGS="${FLAGS} -DHAVE_OSMESA `$FLTKCONFIG --use-images --cxxflags`"
+    FLAGS="${FLAGS} `$FLTKCONFIG --use-images --cxxflags`"
+    AC_DEFINE(HAVE_OSMESA)
     if test "x${OSMESA_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lOSMesa -lGL -lGLU"
     else
@@ -313,14 +314,14 @@ if test "x$enable_gui" != "xno"; then
   if test "x$enable_jpeg" != "xno"; then
     dnl If provided by FLTK, use that one; otherwise, look for it
     if test "x${FL_JPEG}" = "xyes"; then
-      FLAGS="-DHAVE_LIBJPEG ${FLAGS}"
+      AC_DEFINE(HAVE_LIBJPEG)
     else      
       if test "x${JPEG_PREFIX}" != "x"; then
         LDFLAGS="-L${JPEG_PREFIX} -L${JPEG_PREFIX}/lib ${LDFLAGS}"
       fi
       AC_CHECK_LIB(jpeg,main,JPEG="yes")
       if test "x${JPEG}" = "xyes"; then
-        FLAGS="-DHAVE_LIBJPEG ${FLAGS}"
+        AC_DEFINE(HAVE_LIBJPEG)
         if test "x${JPEG_PREFIX}" = "x"; then
           GMSH_LIBS="${GMSH_LIBS} -ljpeg"
         else
@@ -349,14 +350,14 @@ if test "x$enable_gui" != "xno"; then
   if test "x$enable_png" != "xno" -a "x${ZLIB}" = "xyes"; then
     dnl If provided by FLTK, use that one; otherwise, look for it
     if test "x${FL_PNG}" = "xyes"; then
-      FLAGS="-DHAVE_LIBPNG ${FLAGS}"
+      AC_DEFINE(HAVE_LIBPNG)
     else
       if test "x${PNG_PREFIX}" != "x"; then
         LDFLAGS="-L${PNG_PREFIX} -L${PNG_PREFIX}/lib ${LDFLAGS}"
       fi
       AC_CHECK_LIB(png,main,PNG="yes")
       if test "x${PNG}" = "xyes"; then
-        FLAGS="-DHAVE_LIBPNG ${FLAGS}"
+        AC_DEFINE(HAVE_LIBPNG)
         if test "x${PNG_PREFIX}" = "x"; then
           GMSH_LIBS="${GMSH_LIBS} -lpng"
         else
@@ -377,14 +378,14 @@ else
     GMSH_DIRS="${GMSH_DIRS} Post Plugin"
     GMSH_LIBS="${GMSH_LIBS} -lGmshPost -lGmshPlugin"
   else
-    FLAGS="-DHAVE_NO_POST ${FLAGS}"
+    AC_DEFINE(HAVE_NO_POST)
   fi
 
   if test "x$enable_parser" != "xno"; then
     GMSH_DIRS="${GMSH_DIRS} Parser"
     GMSH_LIBS="${GMSH_LIBS} -lGmshParser"
   else
-    FLAGS="-DHAVE_NO_PARSER ${FLAGS}"
+    AC_DEFINE(HAVE_NO_PARSER)
   fi
 
   dnl re-add Common to work around linker shortcomings on some archs
@@ -406,13 +407,13 @@ dnl added to $LIBS, used for further checks)
 AC_CHECK_LIB(m,main)
 
 dnl Check for various functions
-AC_CHECK_FUNC(vsnprintf,[],FLAGS="-DHAVE_NO_VSNPRINTF ${FLAGS}")
+AC_CHECK_FUNC(vsnprintf,[],AC_DEFINE(HAVE_NO_VSNPRINTF))
 
 dnl Check if Unix98 socklen_t type is available
 AC_TRY_COMPILE(
   [#include <sys/types.h>
    #include <sys/socket.h>],
-  [socklen_t len = 42; return 0;],,FLAGS="-DHAVE_NO_SOCKLEN_T ${FLAGS}")
+  [socklen_t len = 42; return 0;],,AC_DEFINE(HAVE_NO_SOCKLEN_T))
 
 dnl Check if we should consider the packages in contrib
 if test "x$enable_contrib" != "xno"; then
@@ -423,7 +424,7 @@ if test "x$enable_contrib" != "xno"; then
     if test "x${ANN}" = "xyes"; then
       GMSH_DIRS="${GMSH_DIRS} contrib/ANN"
       GMSH_LIBS="${GMSH_LIBS} -lGmshANN"
-      FLAGS="-DHAVE_ANN ${FLAGS}"
+      AC_DEFINE(HAVE_ANN)
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains ANN, the"
       echo "  Approximate Nearest Neighbor library. ANN is available under"
@@ -438,7 +439,7 @@ if test "x$enable_contrib" != "xno"; then
   if test "x$enable_gmm" != "xno"; then
     AC_CHECK_FILE(./contrib/gmm/gmm.h,GMM="yes")
     if test "x${GMM}" = "xyes"; then
-      FLAGS="${FLAGS} -DHAVE_GMM"
+      AC_DEFINE(HAVE_GMM)
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains the gmm++ mesh"
       echo "  partitioner. Gmm++ is available under the GNU LGPL."
@@ -454,7 +455,7 @@ if test "x$enable_contrib" != "xno"; then
     if test "x${CHACO}" = "xyes"; then
       GMSH_DIRS="${GMSH_DIRS} contrib/Chaco"
       GMSH_LIBS="${GMSH_LIBS} -lGmshChaco"
-      FLAGS="${FLAGS} -DHAVE_CHACO"
+      AC_DEFINE(HAVE_CHACO)
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains the Chaco mesh"
       echo "  partitioner. Chaco is available under the GNU LGPL."
@@ -470,7 +471,7 @@ if test "x$enable_contrib" != "xno"; then
     if test "x${METIS}" = "xyes"; then
       GMSH_DIRS="${GMSH_DIRS} contrib/Metis"
       GMSH_LIBS="${GMSH_LIBS} -lGmshMetis"
-      FLAGS="${FLAGS} -DHAVE_METIS"
+      AC_DEFINE(HAVE_METIS)
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains the METIS mesh"
       echo "  partitioner."
@@ -488,7 +489,7 @@ if test "x$enable_contrib" != "xno"; then
     if test "x${NETGEN}" = "xyes"; then
       GMSH_DIRS="${GMSH_DIRS} contrib/Netgen"
       GMSH_LIBS="${GMSH_LIBS} -lGmshNetgen"
-      FLAGS="-DHAVE_NETGEN ${FLAGS}"
+      AC_DEFINE(HAVE_NETGEN)
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains the Netgen 3D"
       echo "  mesh generator. Netgen is available under the GNU LGPL."
@@ -504,7 +505,7 @@ if test "x$enable_contrib" != "xno"; then
     if test "x${TETGEN}" = "xyes"; then
       GMSH_DIRS="${GMSH_DIRS} contrib/Tetgen"
       GMSH_LIBS="${GMSH_LIBS} -lGmshTetgen"
-      FLAGS="-DHAVE_TETGEN ${FLAGS}"
+      AC_DEFINE(HAVE_TETGEN)
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains the Tetgen 3D"
       echo "  mesh generator."
@@ -522,7 +523,7 @@ if test "x$enable_contrib" != "xno"; then
     if test "x${MATHEVAL}" = "xyes"; then
       GMSH_DIRS="${GMSH_DIRS} contrib/MathEval"
       GMSH_LIBS="${GMSH_LIBS} -lGmshMathEval"
-      FLAGS="-DHAVE_MATH_EVAL ${FLAGS}"
+      AC_DEFINE(HAVE_MATH_EVAL)
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains GNU MathEval."
       echo "  MathEval is available under the GNU GPL."
@@ -555,12 +556,12 @@ if test "x$enable_occ" = "xyes"; then
     OCC_LIBS="${OCC_LIBS} -lTKBRep -lTKGeomBase -lTKG3d -lTKG2d"
     # FoundationClasses
     OCC_LIBS="${OCC_LIBS} -lTKAdvTools -lTKMath -lTKernel"
+    AC_DEFINE(HAVE_OCC)
     if test "x${OCC_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} ${OCC_LIBS}"
-      FLAGS="${FLAGS} -DHAVE_OCC"
     else
       GMSH_LIBS="${GMSH_LIBS} -L${OCC_PREFIX}/lib ${OCC_LIBS}"
-      FLAGS="${FLAGS} -DHAVE_OCC -I${OCC_PREFIX}/inc"
+      FLAGS="${FLAGS} -I${OCC_PREFIX}/inc"
     fi
   fi
 fi
@@ -570,7 +571,8 @@ if test "x${OCC}" = "xyes"; then
   if test "x${OCC_MESH_CONTRAINTS_PREFIX}" != "x"; then
     AC_CHECK_FILE(${OCC_MESH_CONTRAINTS_PREFIX}/MeshGmsh_Constrain.hxx,OMC="yes")
     if test "x${OMC}" = "xyes"; then
-      FLAGS="${FLAGS} -DHAVE_OCC_MESH_CONSTRAINTS -I${OCC_MESH_CONTRAINTS_PREFIX}"
+      AC_DEFINE(HAVE_OCC_MESH_CONSTRAINTS)
+      FLAGS="${FLAGS} -I${OCC_MESH_CONTRAINTS_PREFIX}"
     fi
   fi
 fi
@@ -602,12 +604,12 @@ if test "x$enable_cgns" = "xyes"; then
   fi
   AC_CHECK_LIB(cgns,main,CGNS="yes")
   if test "x${CGNS}" = "xyes"; then
+    AC_DEFINE(HAVE_LIBCGNS)
     if test "x${CGNS_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lcgns"
-      FLAGS="${FLAGS} -DHAVE_LIBCGNS"
     else
       GMSH_LIBS="${GMSH_LIBS} -L${CGNS_PREFIX}/lib -lcgns"
-      FLAGS="${FLAGS} -DHAVE_LIBCGNS -I${CGNS_PREFIX}/include"
+      FLAGS="${FLAGS} -I${CGNS_PREFIX}/include"
     fi
   fi
 fi
@@ -620,12 +622,12 @@ if test "x${HDF5}" = "xyes"; then
     fi
     AC_CHECK_LIB(med,main,MED="yes")
     if test "x${MED}" = "xyes"; then
+      AC_DEFINE(HAVE_MED)
       if test "x${MED_PREFIX}" = "x"; then
         GMSH_LIBS="${GMSH_LIBS} -lmed"
-        FLAGS="${FLAGS} -DHAVE_MED"
       else
         GMSH_LIBS="${GMSH_LIBS} -L${MED_PREFIX}/lib -lmed"
-        FLAGS="${FLAGS} -DHAVE_MED -I${MED_PREFIX}/include"
+        FLAGS="${FLAGS} -I${MED_PREFIX}/include"
       fi
     fi
   fi
@@ -646,7 +648,7 @@ dnl libhdf5)
 if test "x${ZLIB}" = "xyes"; then
   dnl If provided by FLTK, use that one; otherwise, look for it
   if test "x${FL_ZLIB}" = "xyes"; then
-    FLAGS="-DHAVE_LIBZ ${FLAGS}"
+    AC_DEFINE(HAVE_LIBZ)
   else
     FLAGS="-DHAVE_LIBZ ${FLAGS}"
     if test "x${ZLIB_PREFIX}" = "x"; then
@@ -667,7 +669,7 @@ if test "x$enable_gsl" != "xno"; then
   fi
   AC_CHECK_LIB(gsl,main,GSL="yes",[],-lgslcblas)
   if test "x${GSL}" = "xyes"; then
-    FLAGS="-DHAVE_GSL ${FLAGS}"
+    AC_DEFINE(HAVE_GSL)
     if test "x${GSL_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lgsl"
     else
@@ -693,12 +695,12 @@ if test "x$enable_fm" != "xno"; then
       FM=no
       AC_MSG_WARN([Could not find FFTW3: disabling FourierModel.])
     else
+      AC_DEFINE(HAVE_FOURIER_MODEL)
       if test "x${FM_PREFIX}" = "x"; then
         GMSH_LIBS="${GMSH_LIBS} -lFourierModel"
-        FLAGS="-DHAVE_FOURIER_MODEL ${FLAGS}"
       else
         GMSH_LIBS="${GMSH_LIBS} -L${FM_PREFIX}/lib -lFourierModel"
-        FLAGS="-DHAVE_FOURIER_MODEL -I${FM_PREFIX} ${FLAGS}"
+        FLAGS="-I${FM_PREFIX} ${FLAGS}"
       fi
       if test "x${FFTW3_PREFIX}" = "x"; then
         GMSH_LIBS="${GMSH_LIBS} -lfftw3"
@@ -719,12 +721,12 @@ if test "x${CBLAS}" != "xyes"; then
   AC_CHECK_LIB(cblas,cblas_dgemm,CBLAS="yes" BLAS_LIBS="-lcblas -latlas",[],-latlas)
 fi
 if test "x${CBLAS}" = "xyes"; then
-  FLAGS="${FLAGS} -DHAVE_CBLAS"
+  AC_DEFINE(HAVE_CBLAS)
 else 
   if test "x${GSL}" = "xyes"; then
     dnl use unoptimized gsl version
     BLAS_LIBS="-lgslcblas"
-    FLAGS="${FLAGS} -DHAVE_CBLAS"
+    AC_DEFINE(HAVE_CBLAS)
   fi
 fi
 
@@ -751,11 +753,11 @@ if test "x${FM}" = "xyes" -o "x${GSL}" != "xyes"; then
     AC_CHECK_LIB(blas,dgemm_,[BLAS="yes" BLAS_LIBS="${BLAS_LIBS} -lblas"])
   fi
   if test "x${BLAS}" = "xyes"; then
-    FLAGS="${FLAGS} -DHAVE_BLAS"
+    AC_DEFINE(HAVE_BLAS)
     AC_CHECK_LIB(lapack,dbdsqr_,
       [LAPACK="yes" BLAS_LIBS="-llapack ${BLAS_LIBS}"],[],${BLAS_LIBS})
     if test "x${LAPACK}" = "xyes"; then
-      FLAGS="${FLAGS} -DHAVE_LAPACK"
+      AC_DEFINE(HAVE_LAPACK)
     fi
   fi
 fi
@@ -775,12 +777,12 @@ if test "x$enable_mpi" = "xyes"; then
   fi
   AC_CHECK_LIB(mpi_cxx,main,MPI="yes")
   if test "x${MPI}" = "xyes"; then
+    AC_DEFINE(HAVE_MPI)
     if test "x${MPI_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lmpi_cxx -lmpi"
-      FLAGS="${FLAGS} -DHAVE_MPI"
     else
       GMSH_LIBS="${GMSH_LIBS} -L${MPI_PREFIX}/lib -lmpi_cxx -lmpi"
-      FLAGS="${FLAGS} -DHAVE_MPI -I${MPI_PREFIX}/include"
+      FLAGS="${FLAGS} -I${MPI_PREFIX}/include"
     fi
   fi
 fi
@@ -796,7 +798,7 @@ case "$UNAME" in
     dnl recursive tet classification for large 3D Delaunay grids
     LINKER="${LINKER} -mwindows -Wl,--stack,16777216"
     if test "x$enable_cygwin" != "xyes"; then
-      FLAGS="${FLAGS} -DHAVE_NO_DLL"
+      AC_DEFINE(HAVE_NO_DLL)
     fi
     if test "x${OCC}" = "xyes"; then
       GMSH_LIBS="${GMSH_LIBS} -lwinspool -lws2_32"
@@ -807,7 +809,7 @@ case "$UNAME" in
     ;;
 
   Darwin*)
-    FLAGS="-DHAVE_NO_DLL ${FLAGS}"
+    AC_DEFINE(HAVE_NO_DLL)
     if test "x$enable_universal" = "xyes"; then
       FLAGS="-arch ppc -arch i386 ${FLAGS}"
     fi
@@ -817,7 +819,8 @@ case "$UNAME" in
     ;;
 
   AIX*)
-    FLAGS="-D_BSD -DHAVE_NO_DLL ${FLAGS}"
+    AC_DEFINE(HAVE_NO_DLL)
+    FLAGS="-D_BSD ${FLAGS}"
     ;;
 
   IRIX*)
@@ -834,7 +837,7 @@ case "$UNAME" in
     ;;
 
   OSF1*)
-    FLAGS="-DHAVE_NO_SOCKLEN_T ${FLAGS}"
+    AC_DEFINE(HAVE_NO_SOCKLEN_T)
     dnl options for native DEC compiler
     case "${CXX}" in
       *cxx*)
@@ -844,12 +847,12 @@ case "$UNAME" in
     ;;
 
   SunOS*)
-    FLAGS="-DHAVE_NO_DLL ${FLAGS}"
+    AC_DEFINE(HAVE_NO_DLL)
     GMSH_LIBS="${GMSH_LIBS} -lsocket -lnsl -ldl"
     ;;
 
   HP-UX*)
-    FLAGS="-DHAVE_NO_DLL ${FLAGS}"
+    AC_DEFINE(HAVE_NO_DLL)
     ;;
 
 esac
@@ -860,12 +863,14 @@ if test $ac_cv_sizeof_size_t != 4; then
   if test $ac_cv_sizeof_size_t != 8; then
     AC_MSG_WARN([Unsupported size of size_t - this may affect FNV hashing.])
   else
-    FLAGS="${FLAGS} -DHAVE_64BIT_SIZE_T"
+    AC_DEFINE(HAVE_64BIT_SIZE_T)
     if test "x${OCC}" = "xyes"; then
       FLAGS="${FLAGS} -D_OCC64"
     fi
   fi
 fi
+
+AC_CONFIG_HEADER(Common/GmshConfig.h:Common/GmshConfig.h.in)
 
 dnl Write output
 AC_SUBST(UNAME)
@@ -887,7 +892,6 @@ echo "  - C compiler   : $CC"
 echo "  - C++ compiler : $CXX"
 echo "  - Linker       : $LINKER"
 echo "  - Optimization : $OPTIM"
-echo "  - Options      : $FLAGS"
 echo "********************************************************************"
-echo "To fine-tune the configuration, edit the 'variables' file"
+echo "Edit 'variables' and 'Common/GmshConfig.h' to fine-tune the config"
 echo "********************************************************************"

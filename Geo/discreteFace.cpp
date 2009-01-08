@@ -3,8 +3,9 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include "discreteFace.h"
+#include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "discreteFace.h"
 
 #if !defined(HAVE_GMSH_EMBEDDED)
 #include "Geo.h"

@@ -6,6 +6,7 @@
 #ifndef _OCC_REGION_H_
 #define _OCC_REGION_H_
 
+#include "GmshConfig.h"
 #include "GRegion.h"
 
 #if defined(HAVE_OCC)

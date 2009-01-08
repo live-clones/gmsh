@@ -3,17 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#if !defined(HAVE_NO_DLL)
-#include <dlfcn.h>
-#endif
-
 #include <map>
-
-#if defined(HAVE_FLTK)
-#include <FL/Fl.H>
-#include <FL/filename.H>
-#endif
-
+#include "GmshConfig.h"
 #include "Plugin.h"
 #include "PluginManager.h"
 #include "CutMap.h"
@@ -49,6 +40,15 @@
 #include "FieldView.h"
 #include "GSHHS.h"
 #include "Context.h"
+
+#if !defined(HAVE_NO_DLL)
+#include <dlfcn.h>
+#endif
+
+#if defined(HAVE_FLTK)
+#include <FL/Fl.H>
+#include <FL/filename.H>
+#endif
 
 extern Context_T CTX;
 

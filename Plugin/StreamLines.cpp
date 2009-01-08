@@ -4,15 +4,17 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <math.h>
+#include "GmshConfig.h"
+#include "StreamLines.h"
+#include "OctreePost.h"
+#include "Context.h"
+#include "PViewOptions.h"
+
 #if defined(HAVE_FLTK)
 #include <FL/gl.h>
 #include "drawContext.h"
 #include "Draw.h"
 #endif
-#include "StreamLines.h"
-#include "OctreePost.h"
-#include "Context.h"
-#include "PViewOptions.h"
 
 extern Context_T CTX;
 

@@ -6,6 +6,8 @@
 #ifndef _MESH_PARTITION_OPTIONS_H_
 #define _MESH_PARTITION_OPTIONS_H_
 
+#include "GmshConfig.h"
+
 struct meshPartitionOptions
 {
 

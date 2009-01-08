@@ -3715,7 +3715,10 @@ if test "x$enable_gui" != "xno"; then
   GMSH_DIRS="Common Geo Mesh Post Plugin Numeric Parser Graphics Fltk"
   GMSH_LIBS="-Llib -lGmshFltk -lGmshCommon -lGmshMesh -lGmshGeo -lGmshPost -lGmshPlugin"
   GMSH_LIBS="${GMSH_LIBS} -lGmshCommon -lGmshGraphics -lGmshParser -lGmshNumeric"
-  FLAGS="-DHAVE_FLTK ${FLAGS}"
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_FLTK 1
+_ACEOF
+
 
   if test "x${FLTK_PREFIX}" != "x" ; then
     # Extract the first word of "fltk-config", so it can be a program name with args.
@@ -3901,7 +3904,10 @@ fi
         test "x${UNAME}" != "xLinux" -a "x$enable_native_file_chooser" != "xno"); then
        GMSH_DIRS="${GMSH_DIRS} contrib/NativeFileChooser"
        GMSH_LIBS="${GMSH_LIBS} -lGmshNativeFileChooser"
-       FLAGS="-DHAVE_NATIVE_FILE_CHOOSER ${FLAGS}"
+       cat >>confdefs.h <<\_ACEOF
+#define HAVE_NATIVE_FILE_CHOOSER 1
+_ACEOF
+
     fi
   fi
 
@@ -3930,13 +3936,20 @@ fi
     if test "x${TREEBROWSER}" = "xyes"; then
       GMSH_DIRS="${GMSH_DIRS} contrib/TreeBrowser"
       GMSH_LIBS="${GMSH_LIBS} -lGmshTreeBrowser"
-      FLAGS="-DHAVE_TREE_BROWSER ${FLAGS}"
+      cat >>confdefs.h <<\_ACEOF
+#define HAVE_TREE_BROWSER 1
+_ACEOF
+
     fi
   fi
 
   if test "x${OSMESA}" = "xyes"; then
     GMSH_LIBS="${GMSH_LIBS} `$FLTKCONFIG --use-images --ldflags` -lfltk_gl"
-    FLAGS="${FLAGS} -DHAVE_OSMESA `$FLTKCONFIG --use-images --cxxflags`"
+    FLAGS="${FLAGS} `$FLTKCONFIG --use-images --cxxflags`"
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_OSMESA 1
+_ACEOF
+
     if test "x${OSMESA_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lOSMesa -lGL -lGLU"
     else
@@ -3961,7 +3974,10 @@ fi
 
     if test "x$enable_jpeg" != "xno"; then
         if test "x${FL_JPEG}" = "xyes"; then
-      FLAGS="-DHAVE_LIBJPEG ${FLAGS}"
+      cat >>confdefs.h <<\_ACEOF
+#define HAVE_LIBJPEG 1
+_ACEOF
+
     else
       if test "x${JPEG_PREFIX}" != "x"; then
         LDFLAGS="-L${JPEG_PREFIX} -L${JPEG_PREFIX}/lib ${LDFLAGS}"
@@ -4026,7 +4042,10 @@ if test $ac_cv_lib_jpeg_main = yes; then
 fi
 
       if test "x${JPEG}" = "xyes"; then
-        FLAGS="-DHAVE_LIBJPEG ${FLAGS}"
+        cat >>confdefs.h <<\_ACEOF
+#define HAVE_LIBJPEG 1
+_ACEOF
+
         if test "x${JPEG_PREFIX}" = "x"; then
           GMSH_LIBS="${GMSH_LIBS} -ljpeg"
         else
@@ -4108,7 +4127,10 @@ fi
 
     if test "x$enable_png" != "xno" -a "x${ZLIB}" = "xyes"; then
         if test "x${FL_PNG}" = "xyes"; then
-      FLAGS="-DHAVE_LIBPNG ${FLAGS}"
+      cat >>confdefs.h <<\_ACEOF
+#define HAVE_LIBPNG 1
+_ACEOF
+
     else
       if test "x${PNG_PREFIX}" != "x"; then
         LDFLAGS="-L${PNG_PREFIX} -L${PNG_PREFIX}/lib ${LDFLAGS}"
@@ -4173,7 +4195,10 @@ if test $ac_cv_lib_png_main = yes; then
 fi
 
       if test "x${PNG}" = "xyes"; then
-        FLAGS="-DHAVE_LIBPNG ${FLAGS}"
+        cat >>confdefs.h <<\_ACEOF
+#define HAVE_LIBPNG 1
+_ACEOF
+
         if test "x${PNG_PREFIX}" = "x"; then
           GMSH_LIBS="${GMSH_LIBS} -lpng"
         else
@@ -4193,14 +4218,20 @@ else
     GMSH_DIRS="${GMSH_DIRS} Post Plugin"
     GMSH_LIBS="${GMSH_LIBS} -lGmshPost -lGmshPlugin"
   else
-    FLAGS="-DHAVE_NO_POST ${FLAGS}"
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_NO_POST 1
+_ACEOF
+
   fi
 
   if test "x$enable_parser" != "xno"; then
     GMSH_DIRS="${GMSH_DIRS} Parser"
     GMSH_LIBS="${GMSH_LIBS} -lGmshParser"
   else
-    FLAGS="-DHAVE_NO_PARSER ${FLAGS}"
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_NO_PARSER 1
+_ACEOF
+
   fi
 
     GMSH_DIRS="${GMSH_DIRS} Numeric"
@@ -4423,7 +4454,10 @@ echo "${ECHO_T}$ac_cv_func_vsnprintf" >&6; }
 if test $ac_cv_func_vsnprintf = yes; then
   :
 else
-  FLAGS="-DHAVE_NO_VSNPRINTF ${FLAGS}"
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_NO_VSNPRINTF 1
+_ACEOF
+
 fi
 
 
@@ -4465,7 +4499,10 @@ else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	FLAGS="-DHAVE_NO_SOCKLEN_T ${FLAGS}"
+	cat >>confdefs.h <<\_ACEOF
+#define HAVE_NO_SOCKLEN_T 1
+_ACEOF
+
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
@@ -4497,7 +4534,10 @@ fi
     if test "x${ANN}" = "xyes"; then
       GMSH_DIRS="${GMSH_DIRS} contrib/ANN"
       GMSH_LIBS="${GMSH_LIBS} -lGmshANN"
-      FLAGS="-DHAVE_ANN ${FLAGS}"
+      cat >>confdefs.h <<\_ACEOF
+#define HAVE_ANN 1
+_ACEOF
+
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains ANN, the"
       echo "  Approximate Nearest Neighbor library. ANN is available under"
@@ -4531,7 +4571,10 @@ if test $ac_cv_file___contrib_gmm_gmm_h = yes; then
 fi
 
     if test "x${GMM}" = "xyes"; then
-      FLAGS="${FLAGS} -DHAVE_GMM"
+      cat >>confdefs.h <<\_ACEOF
+#define HAVE_GMM 1
+_ACEOF
+
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains the gmm++ mesh"
       echo "  partitioner. Gmm++ is available under the GNU LGPL."
@@ -4566,7 +4609,10 @@ fi
     if test "x${CHACO}" = "xyes"; then
       GMSH_DIRS="${GMSH_DIRS} contrib/Chaco"
       GMSH_LIBS="${GMSH_LIBS} -lGmshChaco"
-      FLAGS="${FLAGS} -DHAVE_CHACO"
+      cat >>confdefs.h <<\_ACEOF
+#define HAVE_CHACO 1
+_ACEOF
+
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains the Chaco mesh"
       echo "  partitioner. Chaco is available under the GNU LGPL."
@@ -4601,7 +4647,10 @@ fi
     if test "x${METIS}" = "xyes"; then
       GMSH_DIRS="${GMSH_DIRS} contrib/Metis"
       GMSH_LIBS="${GMSH_LIBS} -lGmshMetis"
-      FLAGS="${FLAGS} -DHAVE_METIS"
+      cat >>confdefs.h <<\_ACEOF
+#define HAVE_METIS 1
+_ACEOF
+
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains the METIS mesh"
       echo "  partitioner."
@@ -4638,7 +4687,10 @@ fi
     if test "x${NETGEN}" = "xyes"; then
       GMSH_DIRS="${GMSH_DIRS} contrib/Netgen"
       GMSH_LIBS="${GMSH_LIBS} -lGmshNetgen"
-      FLAGS="-DHAVE_NETGEN ${FLAGS}"
+      cat >>confdefs.h <<\_ACEOF
+#define HAVE_NETGEN 1
+_ACEOF
+
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains the Netgen 3D"
       echo "  mesh generator. Netgen is available under the GNU LGPL."
@@ -4673,7 +4725,10 @@ fi
     if test "x${TETGEN}" = "xyes"; then
       GMSH_DIRS="${GMSH_DIRS} contrib/Tetgen"
       GMSH_LIBS="${GMSH_LIBS} -lGmshTetgen"
-      FLAGS="-DHAVE_TETGEN ${FLAGS}"
+      cat >>confdefs.h <<\_ACEOF
+#define HAVE_TETGEN 1
+_ACEOF
+
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains the Tetgen 3D"
       echo "  mesh generator."
@@ -4710,7 +4765,10 @@ fi
     if test "x${MATHEVAL}" = "xyes"; then
       GMSH_DIRS="${GMSH_DIRS} contrib/MathEval"
       GMSH_LIBS="${GMSH_LIBS} -lGmshMathEval"
-      FLAGS="-DHAVE_MATH_EVAL ${FLAGS}"
+      cat >>confdefs.h <<\_ACEOF
+#define HAVE_MATH_EVAL 1
+_ACEOF
+
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains GNU MathEval."
       echo "  MathEval is available under the GNU GPL."
@@ -4800,12 +4858,15 @@ fi
     OCC_LIBS="${OCC_LIBS} -lTKBRep -lTKGeomBase -lTKG3d -lTKG2d"
     # FoundationClasses
     OCC_LIBS="${OCC_LIBS} -lTKAdvTools -lTKMath -lTKernel"
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_OCC 1
+_ACEOF
+
     if test "x${OCC_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} ${OCC_LIBS}"
-      FLAGS="${FLAGS} -DHAVE_OCC"
     else
       GMSH_LIBS="${GMSH_LIBS} -L${OCC_PREFIX}/lib ${OCC_LIBS}"
-      FLAGS="${FLAGS} -DHAVE_OCC -I${OCC_PREFIX}/inc"
+      FLAGS="${FLAGS} -I${OCC_PREFIX}/inc"
     fi
   fi
 fi
@@ -4836,7 +4897,11 @@ if test `eval echo '${'$as_ac_File'}'` = yes; then
 fi
 
     if test "x${OMC}" = "xyes"; then
-      FLAGS="${FLAGS} -DHAVE_OCC_MESH_CONSTRAINTS -I${OCC_MESH_CONTRAINTS_PREFIX}"
+      cat >>confdefs.h <<\_ACEOF
+#define HAVE_OCC_MESH_CONSTRAINTS 1
+_ACEOF
+
+      FLAGS="${FLAGS} -I${OCC_MESH_CONTRAINTS_PREFIX}"
     fi
   fi
 fi
@@ -4982,12 +5047,15 @@ if test $ac_cv_lib_cgns_main = yes; then
 fi
 
   if test "x${CGNS}" = "xyes"; then
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_LIBCGNS 1
+_ACEOF
+
     if test "x${CGNS_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lcgns"
-      FLAGS="${FLAGS} -DHAVE_LIBCGNS"
     else
       GMSH_LIBS="${GMSH_LIBS} -L${CGNS_PREFIX}/lib -lcgns"
-      FLAGS="${FLAGS} -DHAVE_LIBCGNS -I${CGNS_PREFIX}/include"
+      FLAGS="${FLAGS} -I${CGNS_PREFIX}/include"
     fi
   fi
 fi
@@ -5057,12 +5125,15 @@ if test $ac_cv_lib_med_main = yes; then
 fi
 
     if test "x${MED}" = "xyes"; then
+      cat >>confdefs.h <<\_ACEOF
+#define HAVE_MED 1
+_ACEOF
+
       if test "x${MED_PREFIX}" = "x"; then
         GMSH_LIBS="${GMSH_LIBS} -lmed"
-        FLAGS="${FLAGS} -DHAVE_MED"
       else
         GMSH_LIBS="${GMSH_LIBS} -L${MED_PREFIX}/lib -lmed"
-        FLAGS="${FLAGS} -DHAVE_MED -I${MED_PREFIX}/include"
+        FLAGS="${FLAGS} -I${MED_PREFIX}/include"
       fi
     fi
   fi
@@ -5079,7 +5150,10 @@ fi
 
 if test "x${ZLIB}" = "xyes"; then
     if test "x${FL_ZLIB}" = "xyes"; then
-    FLAGS="-DHAVE_LIBZ ${FLAGS}"
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_LIBZ 1
+_ACEOF
+
   else
     FLAGS="-DHAVE_LIBZ ${FLAGS}"
     if test "x${ZLIB_PREFIX}" = "x"; then
@@ -5155,7 +5229,10 @@ if test $ac_cv_lib_gsl_main = yes; then
 fi
 
   if test "x${GSL}" = "xyes"; then
-    FLAGS="-DHAVE_GSL ${FLAGS}"
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_GSL 1
+_ACEOF
+
     if test "x${GSL_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lgsl"
     else
@@ -5296,12 +5373,15 @@ fi
       { echo "$as_me:$LINENO: WARNING: Could not find FFTW3: disabling FourierModel." >&5
 echo "$as_me: WARNING: Could not find FFTW3: disabling FourierModel." >&2;}
     else
+      cat >>confdefs.h <<\_ACEOF
+#define HAVE_FOURIER_MODEL 1
+_ACEOF
+
       if test "x${FM_PREFIX}" = "x"; then
         GMSH_LIBS="${GMSH_LIBS} -lFourierModel"
-        FLAGS="-DHAVE_FOURIER_MODEL ${FLAGS}"
       else
         GMSH_LIBS="${GMSH_LIBS} -L${FM_PREFIX}/lib -lFourierModel"
-        FLAGS="-DHAVE_FOURIER_MODEL -I${FM_PREFIX} ${FLAGS}"
+        FLAGS="-I${FM_PREFIX} ${FLAGS}"
       fi
       if test "x${FFTW3_PREFIX}" = "x"; then
         GMSH_LIBS="${GMSH_LIBS} -lfftw3"
@@ -5449,11 +5529,17 @@ fi
 
 fi
 if test "x${CBLAS}" = "xyes"; then
-  FLAGS="${FLAGS} -DHAVE_CBLAS"
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_CBLAS 1
+_ACEOF
+
 else
   if test "x${GSL}" = "xyes"; then
         BLAS_LIBS="-lgslcblas"
-    FLAGS="${FLAGS} -DHAVE_CBLAS"
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_CBLAS 1
+_ACEOF
+
   fi
 fi
 
@@ -5927,7 +6013,10 @@ fi
 
   fi
   if test "x${BLAS}" = "xyes"; then
-    FLAGS="${FLAGS} -DHAVE_BLAS"
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_BLAS 1
+_ACEOF
+
     { echo "$as_me:$LINENO: checking for dbdsqr_ in -llapack" >&5
 echo $ECHO_N "checking for dbdsqr_ in -llapack... $ECHO_C" >&6; }
 if test "${ac_cv_lib_lapack_dbdsqr_+set}" = set; then
@@ -5994,7 +6083,10 @@ if test $ac_cv_lib_lapack_dbdsqr_ = yes; then
 fi
 
     if test "x${LAPACK}" = "xyes"; then
-      FLAGS="${FLAGS} -DHAVE_LAPACK"
+      cat >>confdefs.h <<\_ACEOF
+#define HAVE_LAPACK 1
+_ACEOF
+
     fi
   fi
 fi
@@ -6071,12 +6163,15 @@ if test $ac_cv_lib_mpi_cxx_main = yes; then
 fi
 
   if test "x${MPI}" = "xyes"; then
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_MPI 1
+_ACEOF
+
     if test "x${MPI_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lmpi_cxx -lmpi"
-      FLAGS="${FLAGS} -DHAVE_MPI"
     else
       GMSH_LIBS="${GMSH_LIBS} -L${MPI_PREFIX}/lib -lmpi_cxx -lmpi"
-      FLAGS="${FLAGS} -DHAVE_MPI -I${MPI_PREFIX}/include"
+      FLAGS="${FLAGS} -I${MPI_PREFIX}/include"
     fi
   fi
 fi
@@ -6088,7 +6183,10 @@ case "$UNAME" in
   CYGWIN* | MINGW*)
             LINKER="${LINKER} -mwindows -Wl,--stack,16777216"
     if test "x$enable_cygwin" != "xyes"; then
-      FLAGS="${FLAGS} -DHAVE_NO_DLL"
+      cat >>confdefs.h <<\_ACEOF
+#define HAVE_NO_DLL 1
+_ACEOF
+
     fi
     if test "x${OCC}" = "xyes"; then
       GMSH_LIBS="${GMSH_LIBS} -lwinspool -lws2_32"
@@ -6099,7 +6197,10 @@ case "$UNAME" in
     ;;
 
   Darwin*)
-    FLAGS="-DHAVE_NO_DLL ${FLAGS}"
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_NO_DLL 1
+_ACEOF
+
     if test "x$enable_universal" = "xyes"; then
       FLAGS="-arch ppc -arch i386 ${FLAGS}"
     fi
@@ -6109,7 +6210,11 @@ case "$UNAME" in
     ;;
 
   AIX*)
-    FLAGS="-D_BSD -DHAVE_NO_DLL ${FLAGS}"
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_NO_DLL 1
+_ACEOF
+
+    FLAGS="-D_BSD ${FLAGS}"
     ;;
 
   IRIX*)
@@ -6123,7 +6228,10 @@ case "$UNAME" in
     ;;
 
   OSF1*)
-    FLAGS="-DHAVE_NO_SOCKLEN_T ${FLAGS}"
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_NO_SOCKLEN_T 1
+_ACEOF
+
         case "${CXX}" in
       *cxx*)
         FLAGS="-D__USE_STD_IOSTREAM ${FLAGS}"
@@ -6132,12 +6240,18 @@ case "$UNAME" in
     ;;
 
   SunOS*)
-    FLAGS="-DHAVE_NO_DLL ${FLAGS}"
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_NO_DLL 1
+_ACEOF
+
     GMSH_LIBS="${GMSH_LIBS} -lsocket -lnsl -ldl"
     ;;
 
   HP-UX*)
-    FLAGS="-DHAVE_NO_DLL ${FLAGS}"
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_NO_DLL 1
+_ACEOF
+
     ;;
 
 esac
@@ -7184,12 +7298,18 @@ if test $ac_cv_sizeof_size_t != 4; then
     { echo "$as_me:$LINENO: WARNING: Unsupported size of size_t - this may affect FNV hashing." >&5
 echo "$as_me: WARNING: Unsupported size of size_t - this may affect FNV hashing." >&2;}
   else
-    FLAGS="${FLAGS} -DHAVE_64BIT_SIZE_T"
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_64BIT_SIZE_T 1
+_ACEOF
+
     if test "x${OCC}" = "xyes"; then
       FLAGS="${FLAGS} -D_OCC64"
     fi
   fi
 fi
+
+ac_config_headers="$ac_config_headers Common/GmshConfig.h:Common/GmshConfig.h.in"
+
 
 
 
@@ -7279,37 +7399,7 @@ test "x$prefix" = xNONE && prefix=$ac_default_prefix
 # Let make expand exec_prefix.
 test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
 
-# Transform confdefs.h into DEFS.
-# Protect against shell expansion while executing Makefile rules.
-# Protect against Makefile macro expansion.
-#
-# If the first sed substitution is executed (which looks for macros that
-# take arguments), then branch to the quote section.  Otherwise,
-# look for a macro that doesn't take arguments.
-ac_script='
-t clear
-:clear
-s/^[	 ]*#[	 ]*define[	 ][	 ]*\([^	 (][^	 (]*([^)]*)\)[	 ]*\(.*\)/-D\1=\2/g
-t quote
-s/^[	 ]*#[	 ]*define[	 ][	 ]*\([^	 ][^	 ]*\)[	 ]*\(.*\)/-D\1=\2/g
-t quote
-b any
-:quote
-s/[	 `~#$^&*(){}\\|;'\''"<>?]/\\&/g
-s/\[/\\&/g
-s/\]/\\&/g
-s/\$/$$/g
-H
-:any
-${
-	g
-	s/^\n//
-	s/\n/ /g
-	p
-}
-'
-DEFS=`sed -n "$ac_script" confdefs.h`
-
+DEFS=-DHAVE_CONFIG_H
 
 ac_libobjs=
 ac_ltlibobjs=
@@ -7644,6 +7734,7 @@ _ACEOF
 cat >>$CONFIG_STATUS <<_ACEOF
 # Files that config.status was made for.
 config_files="$ac_config_files"
+config_headers="$ac_config_headers"
 
 _ACEOF
 
@@ -7661,9 +7752,14 @@ Usage: $0 [OPTIONS] [FILE]...
       --recheck    update $as_me by reconfiguring in the same conditions
   --file=FILE[:TEMPLATE]
 		   instantiate the configuration file FILE
+  --header=FILE[:TEMPLATE]
+		   instantiate the configuration header FILE
 
 Configuration files:
 $config_files
+
+Configuration headers:
+$config_headers
 
 Report bugs to <bug-autoconf@gnu.org>."
 
@@ -7713,7 +7809,16 @@ do
     $ac_shift
     CONFIG_FILES="$CONFIG_FILES $ac_optarg"
     ac_need_defaults=false;;
-  --he | --h |  --help | --hel | -h )
+  --header | --heade | --head | --hea )
+    $ac_shift
+    CONFIG_HEADERS="$CONFIG_HEADERS $ac_optarg"
+    ac_need_defaults=false;;
+  --he | --h)
+    # Conflict between --help and --header
+    { echo "$as_me: error: ambiguous option: $1
+Try \`$0 --help' for more information." >&2
+   { (exit 1); exit 1; }; };;
+  --help | --hel | -h )
     echo "$ac_cs_usage"; exit ;;
   -q | -quiet | --quiet | --quie | --qui | --qu | --q \
   | -silent | --silent | --silen | --sile | --sil | --si | --s)
@@ -7768,6 +7873,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF
 for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
+    "Common/GmshConfig.h") CONFIG_HEADERS="$CONFIG_HEADERS Common/GmshConfig.h:Common/GmshConfig.h.in" ;;
     "variables") CONFIG_FILES="$CONFIG_FILES variables" ;;
 
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
@@ -7783,6 +7889,7 @@ done
 # bizarre bug on SunOS 4.1.3.
 if $ac_need_defaults; then
   test "${CONFIG_FILES+set}" = set || CONFIG_FILES=$config_files
+  test "${CONFIG_HEADERS+set}" = set || CONFIG_HEADERS=$config_headers
 fi
 
 # Have a temporary directory for convenience.  Make it in the build tree
@@ -7954,7 +8061,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF
 fi # test -n "$CONFIG_FILES"
 
 
-for ac_tag in  :F $CONFIG_FILES
+for ac_tag in  :F $CONFIG_FILES  :H $CONFIG_HEADERS
 do
   case $ac_tag in
   :[FHLC]) ac_mode=$ac_tag; continue;;
@@ -8189,7 +8296,104 @@ which seems to be undefined.  Please make sure it is defined." >&2;}
   *) rm -f "$ac_file"; mv "$tmp/out" $ac_file;;
   esac
  ;;
+  :H)
+  #
+  # CONFIG_HEADER
+  #
+_ACEOF
 
+# Transform confdefs.h into a sed script `conftest.defines', that
+# substitutes the proper values into config.h.in to produce config.h.
+rm -f conftest.defines conftest.tail
+# First, append a space to every undef/define line, to ease matching.
+echo 's/$/ /' >conftest.defines
+# Then, protect against being on the right side of a sed subst, or in
+# an unquoted here document, in config.status.  If some macros were
+# called several times there might be several #defines for the same
+# symbol, which is useless.  But do not sort them, since the last
+# AC_DEFINE must be honored.
+ac_word_re=[_$as_cr_Letters][_$as_cr_alnum]*
+# These sed commands are passed to sed as "A NAME B PARAMS C VALUE D", where
+# NAME is the cpp macro being defined, VALUE is the value it is being given.
+# PARAMS is the parameter list in the macro definition--in most cases, it's
+# just an empty string.
+ac_dA='s,^\\([	 #]*\\)[^	 ]*\\([	 ]*'
+ac_dB='\\)[	 (].*,\\1define\\2'
+ac_dC=' '
+ac_dD=' ,'
+
+uniq confdefs.h |
+  sed -n '
+	t rset
+	:rset
+	s/^[	 ]*#[	 ]*define[	 ][	 ]*//
+	t ok
+	d
+	:ok
+	s/[\\&,]/\\&/g
+	s/^\('"$ac_word_re"'\)\(([^()]*)\)[	 ]*\(.*\)/ '"$ac_dA"'\1'"$ac_dB"'\2'"${ac_dC}"'\3'"$ac_dD"'/p
+	s/^\('"$ac_word_re"'\)[	 ]*\(.*\)/'"$ac_dA"'\1'"$ac_dB$ac_dC"'\2'"$ac_dD"'/p
+  ' >>conftest.defines
+
+# Remove the space that was appended to ease matching.
+# Then replace #undef with comments.  This is necessary, for
+# example, in the case of _POSIX_SOURCE, which is predefined and required
+# on some systems where configure will not decide to define it.
+# (The regexp can be short, since the line contains either #define or #undef.)
+echo 's/ $//
+s,^[	 #]*u.*,/* & */,' >>conftest.defines
+
+# Break up conftest.defines:
+ac_max_sed_lines=50
+
+# First sed command is:	 sed -f defines.sed $ac_file_inputs >"$tmp/out1"
+# Second one is:	 sed -f defines.sed "$tmp/out1" >"$tmp/out2"
+# Third one will be:	 sed -f defines.sed "$tmp/out2" >"$tmp/out1"
+# et cetera.
+ac_in='$ac_file_inputs'
+ac_out='"$tmp/out1"'
+ac_nxt='"$tmp/out2"'
+
+while :
+do
+  # Write a here document:
+    cat >>$CONFIG_STATUS <<_ACEOF
+    # First, check the format of the line:
+    cat >"\$tmp/defines.sed" <<\\CEOF
+/^[	 ]*#[	 ]*undef[	 ][	 ]*$ac_word_re[	 ]*\$/b def
+/^[	 ]*#[	 ]*define[	 ][	 ]*$ac_word_re[(	 ]/b def
+b
+:def
+_ACEOF
+  sed ${ac_max_sed_lines}q conftest.defines >>$CONFIG_STATUS
+  echo 'CEOF
+    sed -f "$tmp/defines.sed"' "$ac_in >$ac_out" >>$CONFIG_STATUS
+  ac_in=$ac_out; ac_out=$ac_nxt; ac_nxt=$ac_in
+  sed 1,${ac_max_sed_lines}d conftest.defines >conftest.tail
+  grep . conftest.tail >/dev/null || break
+  rm -f conftest.defines
+  mv conftest.tail conftest.defines
+done
+rm -f conftest.defines conftest.tail
+
+echo "ac_result=$ac_in" >>$CONFIG_STATUS
+cat >>$CONFIG_STATUS <<\_ACEOF
+  if test x"$ac_file" != x-; then
+    echo "/* $configure_input  */" >"$tmp/config.h"
+    cat "$ac_result" >>"$tmp/config.h"
+    if diff $ac_file "$tmp/config.h" >/dev/null 2>&1; then
+      { echo "$as_me:$LINENO: $ac_file is unchanged" >&5
+echo "$as_me: $ac_file is unchanged" >&6;}
+    else
+      rm -f $ac_file
+      mv "$tmp/config.h" $ac_file
+    fi
+  else
+    echo "/* $configure_input  */"
+    cat "$ac_result"
+  fi
+  rm -f "$tmp/out12"
+ ;;
 
 
   esac
@@ -8232,7 +8436,6 @@ echo "  - C compiler   : $CC"
 echo "  - C++ compiler : $CXX"
 echo "  - Linker       : $LINKER"
 echo "  - Optimization : $OPTIM"
-echo "  - Options      : $FLAGS"
 echo "********************************************************************"
-echo "To fine-tune the configuration, edit the 'variables' file"
+echo "Edit 'variables' and 'Common/GmshConfig.h' to fine-tune the config"
 echo "********************************************************************"

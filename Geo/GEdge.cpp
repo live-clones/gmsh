@@ -5,12 +5,13 @@
 
 #include <sstream>
 #include <algorithm>
+#include "GmshConfig.h"
+#include "GmshDefines.h"
+#include "GmshMessage.h"
 #include "GModel.h"
 #include "GEdge.h"
 #include "GFace.h"
 #include "MElement.h"
-#include "GmshDefines.h"
-#include "GmshMessage.h"
 
 #if !defined(HAVE_GMSH_EMBEDDED)
 #include "GaussLegendre1D.h"

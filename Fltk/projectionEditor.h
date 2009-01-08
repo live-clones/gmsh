@@ -13,6 +13,7 @@
 #include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Hold_Browser.H>
+#include "GmshConfig.h"
 #include "fourierProjectionFace.h"
 #include "GModel.h"
 #include "ColorTable.h"

@@ -206,16 +206,15 @@ else
 	erase Common\GmshVersion.h
 endif
 
-clean-most:
-	for i in doc lib ${GMSH_DIRS:contrib/Netgen=}; do (cd $$i && ${MAKE} clean); done
-	rm -f ${GMSH_VERSION_FILE}
-
 clean-fm:
 	rm -f Geo/fourier*.o Geo/GModelIO_Fourier.o Fltk/GUI_Projection.o 
 
 depend: initialtag
+	mv -f Common/GmshConfig.h .
+	cp -f utils/misc/GmshConfig.depend Common/GmshConfig.h
 	for i in ${GMSH_DIRS};\
-        do (cd $$i && ${MAKE} depend "FLAGS=-DHAVE_GSL -DHAVE_FLTK -DHAVE_METIS"); done
+        do (cd $$i && ${MAKE} depend); done
+	mv -f GmshConfig.h Common/
 
 nodepend:
 	for i in ${GMSH_DIRS} ; do \

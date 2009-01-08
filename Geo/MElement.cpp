@@ -5,10 +5,11 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include "GmshConfig.h"
+#include "GmshMessage.h"
 #include "MElement.h"
 #include "GEntity.h"
 #include "GFace.h"
-#include "GmshMessage.h"
 #include "StringUtils.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)

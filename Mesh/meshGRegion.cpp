@@ -5,6 +5,8 @@
 
 #include <stdlib.h>
 #include <vector>
+#include "GmshConfig.h"
+#include "GmshMessage.h"
 #include "meshGRegion.h"
 #include "meshGRegionDelaunayInsertion.h"
 #include "GModel.h"
@@ -13,7 +15,6 @@
 #include "GEdge.h"
 #include "gmshRegion.h"
 #include "BDS.h"
-#include "GmshMessage.h"
 #include "Context.h"
 
 extern Context_T CTX;

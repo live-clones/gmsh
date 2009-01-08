@@ -8,6 +8,7 @@
 
 #include <math.h>
 #include <algorithm>
+#include "GmshConfig.h"
 #include "GmshMessage.h"
 
 #if defined(HAVE_BLAS)

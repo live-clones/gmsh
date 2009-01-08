@@ -5,6 +5,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "GModel.h"
 #include "GmshMessage.h"

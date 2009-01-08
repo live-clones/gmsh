@@ -6,6 +6,7 @@
 #ifndef _GMSH_SOCKET_H_
 #define _GMSH_SOCKET_H_
 
+#include "GmshConfig.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

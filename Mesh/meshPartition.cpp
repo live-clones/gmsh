@@ -5,6 +5,8 @@
 //
 // Partition.cpp - Copyright (C) 2008 S. Guzik, C. Geuzaine, J.-F. Remacle
 
+#include "GmshConfig.h"
+
 #if defined(HAVE_CHACO) || defined(HAVE_METIS)
 
 #include "GModel.h"

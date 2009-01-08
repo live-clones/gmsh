@@ -8,6 +8,8 @@
 #include <time.h>
 #include <FL/Fl_Box.H>
 #include <FL/fl_ask.H>
+#include "GmshConfig.h"
+#include "GmshMessage.h"
 #include "GUI.h"
 #include "Draw.h"
 #include "menuWindow.h"
@@ -30,7 +32,6 @@
 #include "classificationEditor.h"
 #include "Options.h"
 #include "Solvers.h"
-#include "GmshMessage.h"
 #include "CommandLine.h"
 #include "Generator.h"
 #include "HighOrder.h"

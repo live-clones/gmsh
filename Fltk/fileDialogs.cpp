@@ -18,8 +18,9 @@
 #include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Choice.H>
-#include "GUI.h"
+#include "GmshConfig.h"
 #include "GmshDefines.h"
+#include "GUI.h"
 #include "CreateFile.h"
 #include "Options.h"
 #include "Draw.h"

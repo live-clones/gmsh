@@ -6,6 +6,7 @@
 #ifndef _DEFAULT_OPTIONS_H_
 #define _DEFAULT_OPTIONS_H_
 
+#include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "Options.h"
 

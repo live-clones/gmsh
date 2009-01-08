@@ -6,6 +6,7 @@
 #ifndef _FOURIER_EDGE_H_
 #define _FOURIER_EDGE_H_
 
+#include "GmshConfig.h"
 #include "GEdge.h"
 #include "GModel.h"
 #include "fourierVertex.h"

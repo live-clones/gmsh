@@ -6,6 +6,7 @@
 #ifndef _GMODELIO_OCC_H_
 #define _GMODELIO_OCC_H_
 
+#include "GmshConfig.h"
 #include "GModel.h"
 #include "OCCIncludes.h"
 

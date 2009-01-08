@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include "GmshConfig.h"
 #include "GFaceCompound.h"
 #include "gmshAssembler.h"
 #include "gmshLaplace.h"

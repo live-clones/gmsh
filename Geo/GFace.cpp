@@ -4,11 +4,12 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <sstream>
+#include "GmshConfig.h"
+#include "GmshMessage.h"
 #include "GModel.h"
 #include "GFace.h"
 #include "GEdge.h"
 #include "MElement.h"
-#include "GmshMessage.h"
 #include "VertexArray.h"
 #include "GmshMatrix.h"
 

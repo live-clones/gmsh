@@ -13,6 +13,7 @@
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Input.H>
+#include "GmshConfig.h"
 
 #if defined(HAVE_TREE_BROWSER)
 #include "Flu_Tree_Browser.h"

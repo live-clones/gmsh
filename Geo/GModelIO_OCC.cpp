@@ -3,8 +3,9 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include "GModelIO_OCC.h"
+#include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "GModelIO_OCC.h"
 #include "Context.h"
 #include "OCCVertex.h"
 #include "OCCEdge.h"

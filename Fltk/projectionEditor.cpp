@@ -7,6 +7,7 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Scroll.H>
 #include <FL/Fl_Repeat_Button.H>
+#include "GmshConfig.h"
 #include "GUI.h"
 #include "projectionEditor.h"
 #include "paletteWindow.h"

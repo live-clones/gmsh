@@ -3,8 +3,10 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include "gmshSurface.h"
+#include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "gmshSurface.h"
+
 #if defined(HAVE_MATH_EVAL)
 #include "matheval.h"
 #endif

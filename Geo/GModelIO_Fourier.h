@@ -7,6 +7,7 @@
 #define _GMODEL_IO_FOURIER_H_
 
 #include <vector>
+#include "GmshConfig.h"
 #include "GModel.h"
 
 #if defined(HAVE_FOURIER_MODEL)

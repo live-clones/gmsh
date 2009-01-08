@@ -8,6 +8,7 @@
 
 // Interface to GMM++
 
+#include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "gmshLinearSystem.h"
 

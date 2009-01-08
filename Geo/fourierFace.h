@@ -6,6 +6,7 @@
 #ifndef _FOURIER_FACE_H_
 #define _FOURIER_FACE_H_
 
+#include "GmshConfig.h"
 #include "GFace.h"
 #include "GModel.h"
 #include "Range.h"

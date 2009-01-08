@@ -10,6 +10,7 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
+#include "GmshConfig.h"
 #include "GUI.h"
 #include "Draw.h"
 #include "visibilityWindow.h"

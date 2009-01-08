@@ -4,11 +4,13 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <limits>
-#include "GModel.h"
+#include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "GModel.h"
 #include "OCCEdge.h"
 #include "OCCFace.h"
 #include "Context.h"
+
 extern Context_T CTX;
 
 #if defined(HAVE_OCC)

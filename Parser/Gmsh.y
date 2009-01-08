@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <time.h>
+#include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GmshMatrix.h"
 #include "MallocUtils.h"
