@@ -99,6 +99,9 @@ ${LIB}: ${OBJ} ${OBJX}
 	${AR} ${ARFLAGS}${LIB} ${OBJ} ${OBJX} 
 	${RANLIB} ${LIB}
 
+cpobj: ${OBJ} ${OBJX} 
+	cp -f ${OBJ} ${OBJX} ../../lib/
+
 .c${OBJEXT}:
 	${CC} ${CFLAGS} ${DASH}c $< ${DASH}o ${<:.c=${OBJEXT}}
 
