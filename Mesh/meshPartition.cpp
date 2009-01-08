@@ -8,9 +8,9 @@
 #if defined(HAVE_CHACO) || defined(HAVE_METIS)
 
 #include "GModel.h"
-#include "Partition.h"
-#include "PartitionObjects.h"
-#include "PartitionOptions.h"
+#include "meshPartition.h"
+#include "meshPartitionObjects.h"
+#include "meshPartitionOptions.h"
 
 //--Prototype for Chaco interface
 
@@ -84,7 +84,7 @@ void MakeGraphDIM(const EntIter begin, const EntIter end,
  *
  ******************************************************************************/
 
-int PartitionMesh(GModel *const model, PartitionOptions &options)
+int PartitionMesh(GModel *const model, meshPartitionOptions &options)
 {
 
   Graph graph;
@@ -139,7 +139,7 @@ int PartitionMesh(GModel *const model, PartitionOptions &options)
  *
  ******************************************************************************/
 
-int PartitionGraph(Graph &graph, PartitionOptions &options)
+int PartitionGraph(Graph &graph, meshPartitionOptions &options)
 {
 
   int ier = 0;

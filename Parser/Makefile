@@ -57,7 +57,7 @@ Gmsh.tab${OBJEXT}: Gmsh.tab.cpp ../Common/GmshMessage.h ../Numeric/GmshMatrix.h 
   ../Common/MallocUtils.h ../Common/ListUtils.h ../Common/TreeUtils.h \
   ../Common/avl.h ../Common/ListUtils.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../Numeric/GmshMatrix.h \
-  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h \
+  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \
   ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h \

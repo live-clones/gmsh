@@ -85,12 +85,12 @@ PViewDataList${OBJEXT}: PViewDataList.cpp PViewDataList.h PViewData.h \
   ../Common/GmshMessage.h ../Common/ListUtils.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../Numeric/GmshMatrix.h \
   ../Common/SmoothData.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h
+  ../Mesh/meshPartitionOptions.h
 PViewDataListIO${OBJEXT}: PViewDataListIO.cpp PViewDataList.h PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Numeric/GmshMatrix.h \
   ../Common/GmshMessage.h ../Common/ListUtils.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../Numeric/GmshMatrix.h \
-  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h \
+  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \
   adaptiveData.h
 PViewDataGModel${OBJEXT}: PViewDataGModel.cpp PViewDataGModel.h PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Numeric/GmshMatrix.h \
@@ -149,6 +149,6 @@ OctreePost${OBJEXT}: OctreePost.cpp ../Common/Octree.h \
   ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h
 ColorTable${OBJEXT}: ColorTable.cpp ../Common/GmshMessage.h ColorTable.h \
-  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h \
+  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
   ../Numeric/GmshMatrix.h

@@ -8,7 +8,7 @@
 
 #include <vector>
 
-struct PartitionOptions;
+struct meshPartitionOptions;
 struct BoElemGr;
 class GModel;
 class Graph;
@@ -23,7 +23,7 @@ typedef std::vector<BoElemGr> BoElemGrVec;
 
 int MakeGraph(GModel *const model, Graph &graph,
               BoElemGrVec *const boElemGrVec = 0);
-int PartitionGraph(Graph &graph, PartitionOptions &options);
-int PartitionMesh(GModel *const model, PartitionOptions &options);
+int PartitionGraph(Graph &graph, meshPartitionOptions &options);
+int PartitionMesh(GModel *const model, meshPartitionOptions &options);
 
 #endif

@@ -25,7 +25,7 @@
 #include "GModel.h"
 #include "Draw.h"
 #include "Options.h"
-#include "Partition.h"
+#include "meshPartition.h"
 #include "Context.h"
 
 extern Context_T CTX;

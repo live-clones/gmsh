@@ -69,12 +69,12 @@ Gmsh${OBJEXT}: Gmsh.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Numeric/NumericEmbedded.h ../Numeric/GmshMatrix.h \
   ../Common/GmshMessage.h ../Mesh/Generator.h ../Mesh/Field.h \
   ../Post/PView.h Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h ../Mesh/Partition.h GmshDaemon.h \
+  ../Mesh/meshPartitionOptions.h ../Mesh/meshPartition.h GmshDaemon.h \
   ../Plugin/PluginManager.h
 GmshMessage${OBJEXT}: GmshMessage.cpp GmshMessage.h Gmsh.h Options.h \
   ../Post/ColorTable.h Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h OS.h ../Fltk/GUI.h ../Fltk/messageWindow.h \
-  ../Fltk/extraDialogs.h
+  ../Mesh/meshPartitionOptions.h OS.h ../Fltk/GUI.h \
+  ../Fltk/messageWindow.h ../Fltk/extraDialogs.h
 GmshDaemon${OBJEXT}: GmshDaemon.cpp GmshMessage.h OS.h GmshSocket.h
 Options${OBJEXT}: Options.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
@@ -86,7 +86,7 @@ Options${OBJEXT}: Options.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h GmshMessage.h ../Fltk/Draw.h \
   ../Mesh/Generator.h Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h Options.h ../Post/ColorTable.h \
+  ../Mesh/meshPartitionOptions.h Options.h ../Post/ColorTable.h \
   DefaultOptions.h ../Mesh/Field.h ../Post/PView.h \
   ../Mesh/BackgroundMesh.h ../Post/PViewOptions.h ../Post/ColorTable.h \
   ../Post/PViewData.h ../Numeric/GmshMatrix.h ../Common/GmshMessage.h \
@@ -100,7 +100,7 @@ Options${OBJEXT}: Options.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Fltk/contextWindow.h ../Fltk/clippingWindow.h
 CommandLine${OBJEXT}: CommandLine.cpp GmshDefines.h GmshVersion.h GmshMessage.h \
   OpenFile.h CommandLine.h Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h Options.h ../Post/ColorTable.h \
+  ../Mesh/meshPartitionOptions.h Options.h ../Post/ColorTable.h \
   ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h \
@@ -125,7 +125,7 @@ OpenFile${OBJEXT}: OpenFile.cpp GmshMessage.h ../Geo/Geo.h \
   ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h \
   ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h \
   ../Geo/GEntity.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h Context.h \
-  ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h OpenFile.h \
+  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h OpenFile.h \
   CommandLine.h ../Graphics/ReadImg.h OS.h StringUtils.h \
   ../Parser/Parser.h ../Post/PView.h ../Post/PViewData.h ../Fltk/GUI.h \
   ../Fltk/Draw.h
@@ -138,7 +138,7 @@ CreateFile${OBJEXT}: CreateFile.cpp GmshMessage.h ../Geo/GModel.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h GmshDefines.h StringUtils.h Context.h \
-  ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h Options.h \
+  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h Options.h \
   ../Post/ColorTable.h ../Graphics/gl2ps.h ../Graphics/gl2gif.h \
   ../Graphics/PixelBuffer.h ../Common/GmshMessage.h ../Fltk/Draw.h \
   ../Common/MallocUtils.h ../Graphics/gl2jpeg.h ../Graphics/PixelBuffer.h \
@@ -147,7 +147,7 @@ CreateFile${OBJEXT}: CreateFile.cpp GmshMessage.h ../Geo/GModel.h \
   ../Graphics/PixelBuffer.h
 VertexArray${OBJEXT}: VertexArray.cpp VertexArray.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h ../Numeric/Numeric.h \
+  ../Mesh/meshPartitionOptions.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../Numeric/GmshMatrix.h \
   ../Common/GmshMessage.h
 SmoothData${OBJEXT}: SmoothData.cpp SmoothData.h ../Numeric/Numeric.h \

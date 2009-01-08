@@ -10,7 +10,7 @@
 #include <string>
 
 #include "CGNSOptions.h"
-#include "PartitionOptions.h"
+#include "meshPartitionOptions.h"
 
 // The interface-independent context.
 
@@ -166,7 +166,7 @@ class Context_T {
     double angle_smooth_normals;
     double allow_swap_edge_angle;
     int zone_definition;
-    PartitionOptions partition_options;
+    meshPartitionOptions partition_options;
     CGNSOptions cgns_options;
     int clip; // status of clip planes (bit array)
   } mesh;

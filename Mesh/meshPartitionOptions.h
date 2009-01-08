@@ -2,10 +2,11 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
-#ifndef _PARTITIONOPTIONS_H_
-#define _PARTITIONOPTIONS_H_
 
-struct PartitionOptions
+#ifndef _MESH_PARTITION_OPTIONS_H_
+#define _MESH_PARTITION_OPTIONS_H_
+
+struct meshPartitionOptions
 {
 
 //--General
@@ -65,7 +66,7 @@ struct PartitionOptions
 
 //--Constructor
 
-   PartitionOptions()
+  meshPartitionOptions()
      :
      goal(0)
   { }

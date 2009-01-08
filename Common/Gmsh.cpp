@@ -17,7 +17,7 @@
 #include "Generator.h"
 #include "Field.h"
 #include "Context.h"
-#include "Partition.h"
+#include "meshPartition.h"
 #include "GmshDaemon.h"
 
 #if !defined(HAVE_NO_POST)

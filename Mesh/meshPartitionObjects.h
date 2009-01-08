@@ -2,8 +2,9 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
-#ifndef _PARTITIONOBJECT_H_
-#define _PARTITIONOBJECT_H_
+
+#ifndef _MESH_PARTITION_OBJECTS_H_
+#define _MESH_PARTITION_OBJECTS_H_
 
 #include <map>
 #include <vector>
