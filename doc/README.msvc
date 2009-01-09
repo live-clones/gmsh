@@ -5,7 +5,8 @@ To compile Gmsh with Microsoft Visual C++
 2) go to the Gmsh source directory
 
 4) rename "utils\misc\variables.msvc" into "variables" (in the root 
-   of the Gmsh source directory)
+   of the Gmsh source directory) and rename "utils\misc\GmshConfig.msvc"
+   into "Common\GmshConfig.h"
 
 5) edit "variables" to match your local installation of Gmsh and
    Visual C++ (and to configure which optional Gmsh features to build)
