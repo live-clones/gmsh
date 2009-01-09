@@ -250,7 +250,7 @@ class Flu_Tree_Browser : public Fl_Group
 
   //! Find the entry identified by unique id \b id
   /*! \return a pointer to the Node of the found entry, or NULL if no matching entry was found */
-  Node* find( unsigned int id );
+  Node* find( size_t id );
 
   //! Search for Node \b n in the tree
   /*! \return a pointer to \b n if it is found, or NULL if it is not in the tree */
@@ -277,7 +277,7 @@ class Flu_Tree_Browser : public Fl_Group
 
   //! \return the full path of the entry identified by unique id \b id, or the empty string if no matching entry was found
   /*! \note the returned value is only valid until the next time find_path() is called */
-  const char* find_path( unsigned int id );
+  const char* find_path( size_t id );
 
   //! \return the full path of the entry containing the widget \b w, or the empty string if no matching entry was found
   /*! \note the returned value is only valid until the next time find_path() is called */
@@ -417,23 +417,23 @@ class Flu_Tree_Browser : public Fl_Group
 
   //! Remove the entry identified by path \b fullpath from the tree
   /*! \return the unique id of the removed entry, or \c 0 if no matching entry was found */
-  unsigned int remove( const char *fullpath );
+  size_t remove( const char *fullpath );
 
   //! Remove entry \b name in path \b path from the tree
   /*! \return the unique id of the removed entry, or \c 0 if no matching entry was found */
-  unsigned int remove( const char *path, const char *name );
+  size_t remove( const char *path, const char *name );
 
   //! Remove the entry identified by unique id \b id from the tree
   /*! \return the unique id of the removed entry, or \c 0 if no matching entry was found */
-  unsigned int remove( unsigned int id );
+  size_t remove( size_t id );
 
   //! Remove the entry containing the widget \b w from the tree. Note that the widget is automatically destroyed
   /*! \return the unique id of the removed entry, or \c 0 if no matching entry was found */
-  unsigned int remove( Fl_Widget *w );
+  size_t remove( Fl_Widget *w );
 
   //! Remove Node \b n from the tree
   /*! \return the id of \b n on successful removal, or \c 0 if \b n is not in the tree */
-  inline unsigned int remove( Node* n )
+  inline size_t remove( Node* n )
     { if( !n ) return 0; else return remove( n->id() ); }
 
   //! Override of Fl_Widget::resize
@@ -579,11 +579,11 @@ class Flu_Tree_Browser : public Fl_Group
   //! Override of Fl_Widget::when. Currently only FL_WHEN_NEVER, FL_WHEN_CHANGED, and FL_WHEN_NOT_CHANGED are supported. Default value is FL_WHEN_CHANGED
   /*! When the callback occurs, you can use callback_reason() to determine exactly what cause the callback and callback_node()
     to get the node that was affected. */
-  //inline void when( unsigned int w )
+  //inline void when( size_t w )
   //{ rdata.when = w; }
 
   //! Override of Fl_Widget::when
-  //inline unsigned int when() const
+  //inline size_t when() const
   //{ return rdata.when; }
 
   //! Set the gap between the widget and the icon that precedes it. Default is 2
@@ -643,7 +643,7 @@ class Flu_Tree_Browser : public Fl_Group
     int delta, shadedIndex, counter, searchIndex, branchIconW, dragPos, dragWhere;
     Fl_Color lineColor, bgColor, selectionColor;
     bool forceResize;  // force the browser to resize on the next draw (which forces a recalculation of the tree layout)
-    unsigned int nextId;  // monotonically increasing id of each entry
+    size_t nextId;  // monotonically increasing id of each entry
     std::string path;  // used to construct the full path during a findPath() operation
     std::vector<int> branchConnectors;
 
@@ -664,7 +664,7 @@ class Flu_Tree_Browser : public Fl_Group
     int browserX, browserY, browserW, browserH;
     Node *root;
     Flu_Tree_Browser *tree;
-    unsigned int cbReason;
+    size_t cbReason;
     Node *cbNode, *lastOpenBranch;
   };
 
@@ -819,7 +819,7 @@ class Flu_Tree_Browser : public Fl_Group
 
       //! Find the entry identified by unique id \b id
       /*! \return a pointer to the Node of the found entry, or NULL if no matching entry was found */
-      Node* find( unsigned int id );
+      Node* find( size_t id );
 
       //! Find the entry containing the widget \b w
       /*! \return a pointer to the Node of the found entry, or NULL if no matching entry was found */
@@ -865,7 +865,7 @@ class Flu_Tree_Browser : public Fl_Group
 	{ return CHECK(ICON_AT_END); }
 
       //! Get the unique ID of this node
-      inline unsigned int id() const
+      inline size_t id() const
 	{ return _id; }
 
       //! Get the index this node is (as a child) in its parent's list
@@ -1018,20 +1018,20 @@ class Flu_Tree_Browser : public Fl_Group
 
       //! Remove the entry identified by path \b fullpath from this node
       /*! \return the unique id of the removed entry, or \c 0 if no matching entry was found */
-      inline unsigned int remove( const char *fullpath )
-	{ return( (unsigned long)modify( fullpath, REMOVE, tree->rdata ) ); }
+      inline size_t remove( const char *fullpath )
+	{ return( (size_t)modify( fullpath, REMOVE, tree->rdata ) ); }
 
       //! Remove the entry identified by unique id \b id from this node
       /*! \return the unique id of the removed entry, or \c 0 if no matching entry was found */
-      unsigned int remove( unsigned int id );
+      size_t remove( size_t id );
 
       //! Remove the node containing the widget \b w from this node. Note that the widget is automatically destroyed
       /*! \return the unique id of the removed entry, or \c 0 if no matching entry was found */
-      unsigned int remove( Fl_Widget *w );
+      size_t remove( Fl_Widget *w );
 
       //! Remove Node \b n
       /*! \return the id of \b n on successful removal, or \c 0 if \b n is present */
-      inline unsigned int remove( Node* n )
+      inline size_t remove( Node* n )
 	{ if( !n ) return 0; else return remove( n->id() ); }
 
       //! Select this entry and all child entries
@@ -1109,7 +1109,7 @@ class Flu_Tree_Browser : public Fl_Group
       void draw( RData &rdata, bool measure );
 
       // recursively finding the full path of the node identified by id
-      bool findPath( unsigned int id, RData &rdata );
+      bool findPath( size_t id, RData &rdata );
 
       // recursively finding the full path of the node containing w
       bool findPath( Fl_Widget *w, RData &rdata );
@@ -1123,7 +1123,7 @@ class Flu_Tree_Browser : public Fl_Group
 	  void *CBData;
 	};
 
-      unsigned int _id; // the unique id of this node
+      size_t _id; // the unique id of this node
       unsigned short flags;
       NodeList _children;
       Node *_parent;

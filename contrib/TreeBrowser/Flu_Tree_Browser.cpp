@@ -2677,12 +2677,12 @@ Flu_Tree_Browser::Node* Flu_Tree_Browser :: add_leaf( const char* path, const ch
   return add( path, p.c_str(), w, showLabel );
 }
 
-unsigned int Flu_Tree_Browser :: remove( const char *fullpath )
+size_t Flu_Tree_Browser :: remove( const char *fullpath )
 {
-  return( (unsigned long)root.modify( fullpath, Node::REMOVE, rdata ) );
+  return( (size_t)root.modify( fullpath, Node::REMOVE, rdata ) );
 }
 
-unsigned int Flu_Tree_Browser :: remove( const char *path, const char *text )
+size_t Flu_Tree_Browser :: remove( const char *path, const char *text )
 {
   // if the path does not end in '/', add it
   std::string s = path;
@@ -2692,12 +2692,12 @@ unsigned int Flu_Tree_Browser :: remove( const char *path, const char *text )
   return remove( s.c_str() );
 }
 
-unsigned int Flu_Tree_Browser :: remove( unsigned int id )
+size_t Flu_Tree_Browser :: remove( size_t id )
 {
   return root.remove( id );
 }
 
-unsigned int Flu_Tree_Browser :: Node :: remove( unsigned int id )
+size_t Flu_Tree_Browser :: Node :: remove( size_t id )
 {
   if( id == 0 )
     return 0;
@@ -2724,12 +2724,12 @@ unsigned int Flu_Tree_Browser :: Node :: remove( unsigned int id )
   return 0;
 }
 
-unsigned int Flu_Tree_Browser :: remove( Fl_Widget *w )
+size_t Flu_Tree_Browser :: remove( Fl_Widget *w )
 {
   return root.remove( w );
 }
 
-unsigned int Flu_Tree_Browser :: Node :: remove( Fl_Widget *w )
+size_t Flu_Tree_Browser :: Node :: remove( Fl_Widget *w )
 {
   if( !w )
     return 0;
@@ -2807,12 +2807,12 @@ Flu_Tree_Browser::Node* Flu_Tree_Browser :: find( const char *path, const char *
   return find( s.c_str() );
 }
 
-Flu_Tree_Browser::Node* Flu_Tree_Browser :: find( unsigned int id )
+Flu_Tree_Browser::Node* Flu_Tree_Browser :: find( size_t id )
 {
   return root.find( id );
 }
 
-Flu_Tree_Browser::Node* Flu_Tree_Browser :: Node :: find( unsigned int id )
+Flu_Tree_Browser::Node* Flu_Tree_Browser :: Node :: find( size_t id )
 {
   if( id == 0 )
     return NULL;
@@ -2852,7 +2852,7 @@ Flu_Tree_Browser::Node* Flu_Tree_Browser :: Node :: find( Fl_Widget *w )
 }
 
 
-bool Flu_Tree_Browser :: Node :: findPath( unsigned int id, RData &rdata )
+bool Flu_Tree_Browser :: Node :: findPath( size_t id, RData &rdata )
 {
   if( _id == id )
     {
@@ -2926,7 +2926,7 @@ bool Flu_Tree_Browser :: Node :: findPath( Fl_Widget *w, RData &rdata )
   return false;
 }
 
-const char* Flu_Tree_Browser :: find_path( unsigned int id )
+const char* Flu_Tree_Browser :: find_path( size_t id )
 {
   // degenerate case: the root is always id==0
   if( id == 0 )
