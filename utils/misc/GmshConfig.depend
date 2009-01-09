@@ -1,0 +1,11 @@
+#ifndef _GMSH_CONFIG_H_
+#define _GMSH_CONFIG_H_
+
+#define HAVE_ANN
+#define HAVE_BLAS
+#define HAVE_CHACO
+#define HAVE_FLTK
+#define HAVE_LAPACK
+#define HAVE_METIS
+
+#endif
