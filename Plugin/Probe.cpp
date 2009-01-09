@@ -14,6 +14,11 @@
 #include "Draw.h"
 #endif
 
+#if defined(WIN32)
+#undef min
+#undef max
+#endif
+
 extern Context_T CTX;
 
 int GMSH_ProbePlugin::iview = 0;
