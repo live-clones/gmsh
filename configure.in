@@ -646,11 +646,8 @@ fi
 dnl Complete zlib link line (zlib must be linked in after libpng and
 dnl libhdf5)
 if test "x${ZLIB}" = "xyes"; then
-  dnl If provided by FLTK, use that one; otherwise, look for it
-  if test "x${FL_ZLIB}" = "xyes"; then
-    AC_DEFINE(HAVE_LIBZ)
-  else
-    FLAGS="-DHAVE_LIBZ ${FLAGS}"
+  AC_DEFINE(HAVE_LIBZ)
+  if test "x${FL_ZLIB}" != "xyes"; then
     if test "x${ZLIB_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lz"
     else

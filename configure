@@ -5149,13 +5149,11 @@ if test "x${HDF5}" = "xyes"; then
 fi
 
 if test "x${ZLIB}" = "xyes"; then
-    if test "x${FL_ZLIB}" = "xyes"; then
-    cat >>confdefs.h <<\_ACEOF
+  cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBZ 1
 _ACEOF
 
-  else
-    FLAGS="-DHAVE_LIBZ ${FLAGS}"
+  if test "x${FL_ZLIB}" != "xyes"; then
     if test "x${ZLIB_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lz"
     else
