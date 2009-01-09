@@ -1,0 +1,13 @@
+/* Common/GmshConfig.h.  Generated from GmshConfig.h.in by configure.  */
+// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+
+#ifndef _GMSH_CONFIG_H_
+#define _GMSH_CONFIG_H_
+
+// empty on purpose: with MSVC we define everything on the command
+// line
+
+#endif
