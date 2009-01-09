@@ -30,7 +30,7 @@ GMSH_API = Geo/GModel.h Geo/GEntity.h Geo/GPoint.h\
            Numeric/gmshLinearSystemFull.h Numeric/gmshFunction.h\
            Post/PView.h Post/PViewData.h Plugin/PluginManager.h\
            Common/VertexArray.h Common/GmshMessage.h\
-           Common/Gmsh.h Common/GmshDefines.h Common/GmshVersion.h 
+           Common/Gmsh.h Common/GmshConfig.h Common/GmshDefines.h Common/GmshVersion.h 
 
 GMSH_EMBEDDED = ${GMSH_API} Geo/discrete*.cpp\
                 Geo/GModel.cpp Geo/GModelIO_Mesh.cpp\

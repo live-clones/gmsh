@@ -3719,6 +3719,7 @@ if test "x$enable_gui" != "xno"; then
 #define HAVE_FLTK 1
 _ACEOF
 
+  BO="${BO} Fltk"
 
   if test "x${FLTK_PREFIX}" != "x" ; then
     # Extract the first word of "fltk-config", so it can be a program name with args.
@@ -3908,6 +3909,7 @@ fi
 #define HAVE_NATIVE_FILE_CHOOSER 1
 _ACEOF
 
+       BO="${BO} NativeFileChooser"
     fi
   fi
 
@@ -3940,6 +3942,7 @@ fi
 #define HAVE_TREE_BROWSER 1
 _ACEOF
 
+       BO="${BO} TreeBrowser"
     fi
   fi
 
@@ -3950,6 +3953,7 @@ _ACEOF
 #define HAVE_OSMESA 1
 _ACEOF
 
+    BO="${BO} OsMesa"
     if test "x${OSMESA_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lOSMesa -lGL -lGLU"
     else
@@ -3978,6 +3982,7 @@ _ACEOF
 #define HAVE_LIBJPEG 1
 _ACEOF
 
+      BO="${BO} Jpeg"
     else
       if test "x${JPEG_PREFIX}" != "x"; then
         LDFLAGS="-L${JPEG_PREFIX} -L${JPEG_PREFIX}/lib ${LDFLAGS}"
@@ -4046,6 +4051,7 @@ fi
 #define HAVE_LIBJPEG 1
 _ACEOF
 
+        BO="${BO} Jpeg"
         if test "x${JPEG_PREFIX}" = "x"; then
           GMSH_LIBS="${GMSH_LIBS} -ljpeg"
         else
@@ -4131,6 +4137,7 @@ fi
 #define HAVE_LIBPNG 1
 _ACEOF
 
+       BO="${BO} Png"
     else
       if test "x${PNG_PREFIX}" != "x"; then
         LDFLAGS="-L${PNG_PREFIX} -L${PNG_PREFIX}/lib ${LDFLAGS}"
@@ -4199,6 +4206,7 @@ fi
 #define HAVE_LIBPNG 1
 _ACEOF
 
+        BO="${BO} Png"
         if test "x${PNG_PREFIX}" = "x"; then
           GMSH_LIBS="${GMSH_LIBS} -lpng"
         else
@@ -4222,6 +4230,7 @@ else
 #define HAVE_NO_POST 1
 _ACEOF
 
+    BO="${BO} NoPost"
   fi
 
   if test "x$enable_parser" != "xno"; then
@@ -4232,6 +4241,7 @@ _ACEOF
 #define HAVE_NO_PARSER 1
 _ACEOF
 
+    BO="${BO} NoParser"
   fi
 
     GMSH_DIRS="${GMSH_DIRS} Numeric"
@@ -4457,7 +4467,7 @@ else
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_NO_VSNPRINTF 1
 _ACEOF
-
+ BO="${BO} NoVsnprintf"
 fi
 
 
@@ -4502,7 +4512,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	cat >>confdefs.h <<\_ACEOF
 #define HAVE_NO_SOCKLEN_T 1
 _ACEOF
-
+ BO="${BO} NoSocklenT"
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
@@ -4538,6 +4548,7 @@ fi
 #define HAVE_ANN 1
 _ACEOF
 
+      BO="${BO} Ann"
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains ANN, the"
       echo "  Approximate Nearest Neighbor library. ANN is available under"
@@ -4575,6 +4586,7 @@ fi
 #define HAVE_GMM 1
 _ACEOF
 
+      BO="${BO} Gmm"
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains the gmm++ mesh"
       echo "  partitioner. Gmm++ is available under the GNU LGPL."
@@ -4613,6 +4625,7 @@ fi
 #define HAVE_CHACO 1
 _ACEOF
 
+      BO="${BO} Chaco"
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains the Chaco mesh"
       echo "  partitioner. Chaco is available under the GNU LGPL."
@@ -4651,6 +4664,7 @@ fi
 #define HAVE_METIS 1
 _ACEOF
 
+      BO="${BO} Metis"
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains the METIS mesh"
       echo "  partitioner."
@@ -4691,6 +4705,7 @@ fi
 #define HAVE_NETGEN 1
 _ACEOF
 
+      BO="${BO} Netgen"
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains the Netgen 3D"
       echo "  mesh generator. Netgen is available under the GNU LGPL."
@@ -4729,6 +4744,7 @@ fi
 #define HAVE_TETGEN 1
 _ACEOF
 
+      BO="${BO} Tetgen"
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains the Tetgen 3D"
       echo "  mesh generator."
@@ -4769,6 +4785,7 @@ fi
 #define HAVE_MATH_EVAL 1
 _ACEOF
 
+      BO="${BO} MathEval"
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains GNU MathEval."
       echo "  MathEval is available under the GNU GPL."
@@ -4862,6 +4879,7 @@ fi
 #define HAVE_OCC 1
 _ACEOF
 
+    BO="${BO} Occ"
     if test "x${OCC_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} ${OCC_LIBS}"
     else
@@ -4901,6 +4919,7 @@ fi
 #define HAVE_OCC_MESH_CONSTRAINTS 1
 _ACEOF
 
+      BO="${BO} OccMeshConstraints"
       FLAGS="${FLAGS} -I${OCC_MESH_CONTRAINTS_PREFIX}"
     fi
   fi
@@ -5051,6 +5070,7 @@ fi
 #define HAVE_LIBCGNS 1
 _ACEOF
 
+    BO="${BO} Cgns"
     if test "x${CGNS_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lcgns"
     else
@@ -5129,6 +5149,7 @@ fi
 #define HAVE_MED 1
 _ACEOF
 
+      BO="${BO} Med"
       if test "x${MED_PREFIX}" = "x"; then
         GMSH_LIBS="${GMSH_LIBS} -lmed"
       else
@@ -5153,6 +5174,7 @@ if test "x${ZLIB}" = "xyes"; then
 #define HAVE_LIBZ 1
 _ACEOF
 
+  BO="${BO} Libz"
   if test "x${FL_ZLIB}" != "xyes"; then
     if test "x${ZLIB_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lz"
@@ -5231,6 +5253,7 @@ fi
 #define HAVE_GSL 1
 _ACEOF
 
+    BO="${BO} Gsl"
     if test "x${GSL_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lgsl"
     else
@@ -5375,6 +5398,7 @@ echo "$as_me: WARNING: Could not find FFTW3: disabling FourierModel." >&2;}
 #define HAVE_FOURIER_MODEL 1
 _ACEOF
 
+      BO="${BO} FourierModel"
       if test "x${FM_PREFIX}" = "x"; then
         GMSH_LIBS="${GMSH_LIBS} -lFourierModel"
       else
@@ -5531,6 +5555,7 @@ if test "x${CBLAS}" = "xyes"; then
 #define HAVE_CBLAS 1
 _ACEOF
 
+  BO="${BO} Cblas"
 else
   if test "x${GSL}" = "xyes"; then
         BLAS_LIBS="-lgslcblas"
@@ -5538,6 +5563,7 @@ else
 #define HAVE_CBLAS 1
 _ACEOF
 
+    BO="${BO} Cblas"
   fi
 fi
 
@@ -6015,6 +6041,7 @@ fi
 #define HAVE_BLAS 1
 _ACEOF
 
+    BO="${BO} Blas"
     { echo "$as_me:$LINENO: checking for dbdsqr_ in -llapack" >&5
 echo $ECHO_N "checking for dbdsqr_ in -llapack... $ECHO_C" >&6; }
 if test "${ac_cv_lib_lapack_dbdsqr_+set}" = set; then
@@ -6085,6 +6112,7 @@ fi
 #define HAVE_LAPACK 1
 _ACEOF
 
+      BO="${BO} Lapack"
     fi
   fi
 fi
@@ -6165,6 +6193,7 @@ fi
 #define HAVE_MPI 1
 _ACEOF
 
+    BO="${BO} Mpi"
     if test "x${MPI_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lmpi_cxx -lmpi"
     else
@@ -6185,6 +6214,7 @@ case "$UNAME" in
 #define HAVE_NO_DLL 1
 _ACEOF
 
+      BO="${BO} NoDll"
     fi
     if test "x${OCC}" = "xyes"; then
       GMSH_LIBS="${GMSH_LIBS} -lwinspool -lws2_32"
@@ -6199,6 +6229,7 @@ _ACEOF
 #define HAVE_NO_DLL 1
 _ACEOF
 
+    BO="${BO} NoDll"
     if test "x$enable_universal" = "xyes"; then
       FLAGS="-arch ppc -arch i386 ${FLAGS}"
     fi
@@ -6212,6 +6243,7 @@ _ACEOF
 #define HAVE_NO_DLL 1
 _ACEOF
 
+    BO="${BO} NoDll"
     FLAGS="-D_BSD ${FLAGS}"
     ;;
 
@@ -6230,6 +6262,7 @@ _ACEOF
 #define HAVE_NO_SOCKLEN_T 1
 _ACEOF
 
+    BO="${BO} NoSocklenT"
         case "${CXX}" in
       *cxx*)
         FLAGS="-D__USE_STD_IOSTREAM ${FLAGS}"
@@ -6242,6 +6275,7 @@ _ACEOF
 #define HAVE_NO_DLL 1
 _ACEOF
 
+    BO="${BO} NoDll"
     GMSH_LIBS="${GMSH_LIBS} -lsocket -lnsl -ldl"
     ;;
 
@@ -6250,6 +6284,7 @@ _ACEOF
 #define HAVE_NO_DLL 1
 _ACEOF
 
+    BO="${BO} NoDll"
     ;;
 
 esac
@@ -7300,6 +7335,7 @@ echo "$as_me: WARNING: Unsupported size of size_t - this may affect FNV hashing.
 #define HAVE_64BIT_SIZE_T 1
 _ACEOF
 
+    BO="${BO} Have64BitSizeT"
     if test "x${OCC}" = "xyes"; then
       FLAGS="${FLAGS} -D_OCC64"
     fi
@@ -8429,11 +8465,12 @@ fi
 
 echo "********************************************************************"
 echo "Gmsh is configured for"
-echo "  - OS           : $UNAME on $HOSTNAME"
-echo "  - C compiler   : $CC"
-echo "  - C++ compiler : $CXX"
-echo "  - Linker       : $LINKER"
-echo "  - Optimization : $OPTIM"
+echo "  - OS           : ${UNAME} on ${HOSTNAME}"
+echo "  - C compiler   : ${CC}"
+echo "  - C++ compiler : ${CXX}"
+echo "  - Linker       : ${LINKER}"
+echo "  - Optimization : ${OPTIM}"
+echo "  - Build options:${BO}"
 echo "********************************************************************"
 echo "Edit 'variables' and 'Common/GmshConfig.h' to fine-tune the config"
 echo "********************************************************************"
