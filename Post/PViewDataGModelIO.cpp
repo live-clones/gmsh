@@ -15,8 +15,12 @@ bool PViewDataGModel::addData(GModel *model, std::map<int, std::vector<double> >
                               int step, double time, int partition)
 {
   if(data.empty()) return false;
-  
-  int numComp = data.begin()->second.size();
+
+  int numComp = 9;
+  for(std::map<int, std::vector<double> >::iterator it = data.begin(); 
+      it != data.end(); it++)
+    numComp = std::min(numComp, (int)it->second.size());
+
   while(step >= (int)_steps.size())
     _steps.push_back(new stepData<double>(model, numComp));
   
