@@ -19,6 +19,7 @@
 #include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Choice.H>
 #include "GmshConfig.h"
+#include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "GUI.h"
 #include "CreateFile.h"
@@ -527,7 +528,9 @@ int options_dialog(const char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
+        Msg::StatusBar(2, true, "Writing '%s'", name);
         Print_Options(0, GMSH_FULLRC, dialog->b[0]->value(), dialog->b[1]->value(), name);
+        Msg::StatusBar(2, true, "Wrote '%s'", name);
         dialog->window->hide();
         return 1;
       }

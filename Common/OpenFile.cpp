@@ -406,15 +406,16 @@ void OpenProject(std::string fileName)
 
   if(GModel::current()->empty()){
     // if the current model is empty, make sure it's reaaally
-    // cleaned-up, and reuse it
+    // cleaned-up, and reuse it (don't clear the parser variables: if
+    // the model is empty we probably just launched gmsh, and we don't
+    // want to delete variables set e.g. using the -string command
+    // line option)
     GModel::current()->destroy();
     GModel::current()->getGEOInternals()->destroy();
   }
   else{
     // if the current model is not empty make it invisible, clear the
-    // parser variables (if it's empty it probably means we just
-    // launched gmsh, and we don't want to delete variables set
-    // e.g. using the -string command line option) and add a new model
+    // parser variables and add a new model
     GModel::current()->setVisibility(0);
 #if !defined(HAVE_NO_PARSER)
     gmsh_yysymbols.clear();
@@ -426,7 +427,13 @@ void OpenProject(std::string fileName)
   // temporary hack until we fill the current GModel on the fly during
   // parsing
   ResetTemporaryBoundingBox();
+
+  // merge the file
   MergeFile(fileName);
+
+  // merge the associated option file if there is one
+  if(!StatFile(fileName + ".opt"))
+    MergeFile(fileName + ".opt");
 
   CTX.threads_lock = 0;
 

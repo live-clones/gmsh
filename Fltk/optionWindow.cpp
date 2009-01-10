@@ -143,12 +143,10 @@ static void options_browser_cb(Fl_Widget *w, void *data)
 
 void options_save_cb(Fl_Widget *w, void *data)
 {
-  Msg::StatusBar(2, true, "Writing '%s'",
-                 (CTX.home_dir + CTX.options_filename).c_str());
-  Print_Options(0, GMSH_OPTIONSRC, 1, 1, 
-                (CTX.home_dir + CTX.options_filename).c_str());
-  Msg::StatusBar(2, true, "Wrote '%s'",
-                 (CTX.home_dir + CTX.options_filename).c_str());
+  std::string fileName = CTX.home_dir + CTX.options_filename;
+  Msg::StatusBar(2, true, "Writing '%s'", fileName.c_str());
+  Print_Options(0, GMSH_OPTIONSRC, 1, 1, fileName.c_str());
+  Msg::StatusBar(2, true, "Wrote '%s'", fileName.c_str());
 }
 
 static void options_restore_defaults_cb(Fl_Widget *w, void *data)

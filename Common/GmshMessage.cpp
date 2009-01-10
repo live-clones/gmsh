@@ -94,11 +94,9 @@ void Msg::Exit(int level)
   // if we exit cleanly (level==0) and we are in full GUI mode, save
   // the persistent info to disk
   if(GUI::available() && !_commRank) {
-    if(CTX.session_save) {
-      GUI::instance()->storeCurrentWindowsInfo();
+    if(CTX.session_save)
       Print_Options(0, GMSH_SESSIONRC, 0, 0, 
                     (CTX.home_dir + CTX.session_filename).c_str());
-    }
     if(CTX.options_save)
       Print_Options(0, GMSH_OPTIONSRC, 1, 0, 
                     (CTX.home_dir + CTX.options_filename).c_str());

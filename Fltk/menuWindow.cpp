@@ -318,6 +318,14 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
 #undef TT
 #undef NN
 
+static void file_options_save_cb(Fl_Widget *w, void *data)
+{
+  std::string fileName = GModel::current()->getFileName() + ".opt";
+  Msg::StatusBar(2, true, "Writing '%s'", fileName.c_str());
+  Print_Options(0, GMSH_FULLRC, 1, 0, fileName.c_str());
+  Msg::StatusBar(2, true, "Wrote '%s'", fileName.c_str());
+}
+
 static void file_rename_cb(Fl_Widget *w, void *data)
 {
  test:
@@ -2145,6 +2153,7 @@ static Fl_Menu_Item bar_table[] = {
     {"&Rename...",  FL_CTRL+'r', (Fl_Callback *)file_rename_cb, 0},
     {"Save &As...", FL_CTRL+'s', (Fl_Callback *)file_save_as_cb, 0},
     {"Sa&ve Mesh",  FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0},
+    {"Save Options", 0, (Fl_Callback *)file_options_save_cb, 0},
     {"Save Default Options", 0, (Fl_Callback *)options_save_cb, 0, FL_MENU_DIVIDER},
     {"&Quit",       FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
     {0},
@@ -2188,6 +2197,7 @@ static Fl_Menu_Item sysbar_table[] = {
     {"Rename...",  FL_META+'r', (Fl_Callback *)file_rename_cb, 0},
     {"Save As...", FL_META+'s', (Fl_Callback *)file_save_as_cb, 0},
     {"Save Mesh",  FL_META+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0},
+    {"Save Options", 0, (Fl_Callback *)file_options_save_cb, 0},
     {"Save Default Options", 0, (Fl_Callback *)options_save_cb, 0},
     {0},
   {"Tools", 0, 0, 0, FL_SUBMENU},

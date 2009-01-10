@@ -615,18 +615,23 @@ static void Print_ColorTable(int num, int diff, const char *prefix, FILE *file)
 //used in field options, sorry if it's already implemented somewhere else...
 static void Sanitize_String_Texi(std::string &s)
 {
-  int i=-1;
-  while ((i=s.find('\n',i+1))>=0){
-    s.insert(i,"@*");
-    i+=2;
+  int i = -1;
+  while ((i = s.find('\n', i + 1)) >= 0){
+    s.insert(i, "@*");
+    i += 2;
   }
-  i=-1;
-  while ((i=s.find_first_of("{}",i+1))>=0)
-    s.insert(i++,"@");
+  i = -1;
+  while ((i = s.find_first_of("{}", i + 1)) >= 0)
+    s.insert(i++, "@");
 }
 
 void Print_Options(int num, int level, int diff, int help, const char *filename)
 {
+#if defined(HAVE_FLTK)
+  if(GUI::available())
+    GUI::instance()->storeCurrentWindowsInfo();
+#endif
+
   FILE *file;
 
   if(filename) {
@@ -656,7 +661,7 @@ void Print_Options(int num, int level, int diff, int help, const char *filename)
     fprintf(file, "// This file contains configuration options (preferences) that\n");
     fprintf(file, "// are loaded each time Gmsh is launched. You can create this\n");
     fprintf(file, "// file by hand, or let Gmsh generate it for you (with\n");
-    fprintf(file, "// 'Tools->Options->Save as defaults'). This file can also be\n");
+    fprintf(file, "// 'File->Save Default Options'). This file can also be\n");
     fprintf(file, "// automatically saved every time you quit Gmsh if the option\n");
     fprintf(file, "// 'General.SaveOptions' is set.\n");
     fprintf(file, "//\n");
@@ -738,14 +743,13 @@ void Print_Options(int num, int level, int diff, int help, const char *filename)
 
 void Print_OptionsDoc()
 {
-  FILE *file;
   const char *warn =
     "@c\n"
     "@c This file is generated automatically by running \"gmsh -doc\".\n"
     "@c Do not edit by hand!\n"
     "@c\n\n";
   
-  file = fopen("opt_general.texi", "w");
+  FILE *file = fopen("opt_general.texi", "w");
   if(!file) {
     Msg::Error("Unable to open file 'opt_general.texi'");
     return;
