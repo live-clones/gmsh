@@ -74,3 +74,8 @@ void gmshElasticityTerm::elementMatrix(MElement *e, Double_Matrix & m) const
     m.blas_dgemm(BTH, B, weight * detJ, 1.);
   } 
 }
+
+
+
+
+

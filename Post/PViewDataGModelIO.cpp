@@ -112,10 +112,10 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary)
     return false;
   }
 
-  if(_type != NodeData){
-    Msg::Error("Can only export node-based datasets for now");
-    return false;
-  }
+  //  if(_type != NodeData){
+  //    Msg::Error("Can only export node-based datasets for now");
+  //    return false;
+  //  }
 
   GModel *model = _steps[0]->getModel();
 
@@ -135,32 +135,56 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary)
     for(int i = 0; i < _steps[step]->getNumData(); i++)
       if(_steps[step]->getData(i)) numNodes++;
     if(numNodes){
-      fprintf(fp, "$NodeData\n");
-      fprintf(fp, "1\n\"%s\"\n", getName().c_str());
-      fprintf(fp, "1\n%.16g\n", _steps[step]->getTime());
-      fprintf(fp, "3\n%d\n%d\n%d\n", step, numComp, numNodes);
-      for(int i = 0; i < _steps[step]->getNumData(); i++){
-        if(_steps[step]->getData(i)){
-          MVertex *v = _steps[step]->getModel()->getMeshVertexByTag(i);
-          if(!v){
-            Msg::Error("Unknown vertex %d in data", i);
-            return false;
-          }
-          int num = v->getIndex();
-          if(binary){
-            fwrite(&num, sizeof(int), 1, fp);
-            fwrite(_steps[step]->getData(i), sizeof(double), numComp, fp);
-          }
-          else{
-            fprintf(fp, "%d", num);
-            for(int k = 0; k < numComp; k++)
-              fprintf(fp, " %.16g", _steps[step]->getData(i)[k]);
-            fprintf(fp, "\n");
-          }
-        }
+      if (_type == NodeData){
+	fprintf(fp, "$NodeData\n");
+	fprintf(fp, "1\n\"%s\"\n", getName().c_str());
+	fprintf(fp, "1\n%.16g\n", _steps[step]->getTime());
+	fprintf(fp, "3\n%d\n%d\n%d\n", step, numComp, numNodes);
+	for(int i = 0; i < _steps[step]->getNumData(); i++){
+	  if(_steps[step]->getData(i)){
+	    MVertex *v = _steps[step]->getModel()->getMeshVertexByTag(i);
+	    if(!v){
+	      Msg::Error("Unknown vertex %d in data", i);
+	      return false;
+	    }
+	    int num = v->getIndex();
+	    if(binary){
+	      fwrite(&num, sizeof(int), 1, fp);
+	      fwrite(_steps[step]->getData(i), sizeof(double), numComp, fp);
+	    }
+	    else{
+	      fprintf(fp, "%d", num);
+	      for(int k = 0; k < numComp; k++)
+		fprintf(fp, " %.16g", _steps[step]->getData(i)[k]);
+	      fprintf(fp, "\n");
+	    }
+	  }
+	}
+	if(binary) fprintf(fp, "\n");
+	fprintf(fp, "$EndNodeData\n");
       }
-      if(binary) fprintf(fp, "\n");
-      fprintf(fp, "$EndNodeData\n");
+      else{
+    	fprintf(fp, "$ElementData\n");
+	fprintf(fp, "1\n\"%s\"\n", getName().c_str());
+	fprintf(fp, "1\n%.16g\n", _steps[step]->getTime());
+	fprintf(fp, "3\n%d\n%d\n%d\n", step, numComp, numNodes);
+	for(int i = 0; i < _steps[step]->getNumData(); i++){
+	  if(_steps[step]->getData(i)){
+	    if(binary){
+	      fwrite(&i, sizeof(int), 1, fp);
+	      fwrite(_steps[step]->getData(i), sizeof(double), numComp, fp);
+	    }
+	    else{
+	      fprintf(fp, "%d", i);
+	      for(int k = 0; k < numComp; k++)
+		fprintf(fp, " %.16g", _steps[step]->getData(i)[k]);
+	      fprintf(fp, "\n");
+	    }
+	  }
+	}
+	if(binary) fprintf(fp, "\n");
+	fprintf(fp, "$EndElementData\n");
+      }
     }
   }
     
