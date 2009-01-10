@@ -281,15 +281,15 @@ aboutWindow${OBJEXT}: aboutWindow.cpp GUI.h aboutWindow.h paletteWindow.h \
   ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \
   ../Common/GmshConfig.h
 fileDialogs${OBJEXT}: fileDialogs.cpp ../Common/GmshConfig.h \
-  ../Common/GmshDefines.h GUI.h ../Common/CreateFile.h \
-  ../Common/Options.h ../Post/ColorTable.h Draw.h ../Geo/GModel.h \
-  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
-  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
-  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
+  ../Common/GmshMessage.h ../Common/GmshDefines.h GUI.h \
+  ../Common/CreateFile.h ../Common/Options.h ../Post/ColorTable.h Draw.h \
+  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
+  ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h \
+  ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h \
+  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h \
+  ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Common/Context.h ../Geo/CGNSOptions.h \
   ../Mesh/meshPartitionOptions.h fileChooser.h
 extraDialogs${OBJEXT}: extraDialogs.cpp GUI.h paletteWindow.h \

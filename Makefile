@@ -212,8 +212,7 @@ clean-fm:
 depend: initialtag
 	mv -f Common/GmshConfig.h .
 	cp -f utils/misc/GmshConfig.depend Common/GmshConfig.h
-	for i in ${GMSH_DIRS};\
-        do (cd $$i && ${MAKE} depend); done
+	for i in ${GMSH_DIRS}; do (cd $$i && ${MAKE} depend); done
 	mv -f GmshConfig.h Common/
 
 nodepend:

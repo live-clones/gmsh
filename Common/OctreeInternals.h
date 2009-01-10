@@ -68,14 +68,14 @@ int subdivideOctantBucket(octantBucket *bucket, globalInfo *globalPara);
 int initializeOctantBuckets(double *orig, double *size, int maxElem,
                             octantBucket **buckets, globalInfo **globalPara);
 int checkElementInBucket(octantBucket *bucket, void * element); 
-octantBucket* findElementBucket(octantBucket *buckets, double *pt);
-void * searchElement(octantBucket *buckets, double *pt, 
-                     globalInfo *globalPara, BBFunction BBElement, 
-                     InEleFunction xyzInElement);
+octantBucket *findElementBucket(octantBucket *buckets, double *pt);
+void *searchElement(octantBucket *buckets, double *pt, 
+                    globalInfo *globalPara, BBFunction BBElement, 
+                    InEleFunction xyzInElement);
 int xyzInElementBB(double *xyz, void *region, BBFunction BBElement);
 void insertOneBB(void *, double *, double *, octantBucket *);
-void * searchAllElements(octantBucket *_buckets_head, double *_pt, globalInfo *_globalPara,
-                         BBFunction BBElement, InEleFunction xyzInElement, 
-                         std::list<void *> *_elements);
+void *searchAllElements(octantBucket *_buckets_head, double *_pt, globalInfo *_globalPara,
+                        BBFunction BBElement, InEleFunction xyzInElement, 
+                        std::list<void *> *_elements);
 
 #endif

@@ -668,16 +668,26 @@ void window_cb(Fl_Widget *w, void *data)
 
   if(!strcmp(str, "minimize")){
     for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++)
-      GUI::instance()->graph[i]->win->iconize();
-    GUI::instance()->options->win->iconize();
-    GUI::instance()->plugins->win->iconize();
-    GUI::instance()->fields->win->iconize();
-    GUI::instance()->visibility->win->iconize();
-    GUI::instance()->clipping->win->iconize();
-    GUI::instance()->manip->win->iconize();
-    GUI::instance()->stats->win->iconize();
-    GUI::instance()->messages->win->iconize();
-    GUI::instance()->menu->win->iconize();
+      if(GUI::instance()->graph[i]->win->shown())
+        GUI::instance()->graph[i]->win->iconize();
+    if(GUI::instance()->options->win->shown())
+      GUI::instance()->options->win->iconize();
+    if(GUI::instance()->plugins->win->shown())
+      GUI::instance()->plugins->win->iconize();
+    if(GUI::instance()->fields->win->shown())
+      GUI::instance()->fields->win->iconize();
+    if(GUI::instance()->visibility->win->shown())
+      GUI::instance()->visibility->win->iconize();
+    if(GUI::instance()->clipping->win->shown())
+      GUI::instance()->clipping->win->iconize();
+    if(GUI::instance()->manip->win->shown())
+      GUI::instance()->manip->win->iconize();
+    if(GUI::instance()->stats->win->shown())
+      GUI::instance()->stats->win->iconize();
+    if(GUI::instance()->messages->win->shown())
+      GUI::instance()->messages->win->iconize();
+    if(GUI::instance()->menu->win->shown())
+      GUI::instance()->menu->win->iconize();
   }
   else if(!strcmp(str, "zoom")){
     if(zoom){

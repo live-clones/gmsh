@@ -2,21 +2,13 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
-//
-// Contributor(s): 
-//   We lost track of the origin of this octree code. If you happen to
-//   know the author of the original routines, please send us an email.
 
-#include <iostream>
+#include <list>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <list>
-
 #include "GmshMessage.h"
 #include "OctreeInternals.h"
-
-using std::list;
 
 int initializeOctantBuckets(double *_orig, double *_size, int _maxElem,
                             octantBucket **buckets_head, globalInfo **globalPara)
@@ -285,13 +277,13 @@ int subdivideOctantBucket(octantBucket *_bucket, globalInfo *_globalPara)
   return 1;
 }
 
-void * searchElement(octantBucket *_buckets_head, double *_pt, globalInfo *_globalPara,
-                     BBFunction BBElement, InEleFunction xyzInElement) 
+void *searchElement(octantBucket *_buckets_head, double *_pt, globalInfo *_globalPara,
+                    BBFunction BBElement, InEleFunction xyzInElement) 
 {
   int flag;
   octantBucket *ptrBucket;
   ELink ptr1;  
-  list<void *>::iterator iter;
+  std::list<void*>::iterator iter;
   void * ptrToEle = _globalPara->ptrToPrevElement;
 
   if (ptrToEle) {
@@ -385,12 +377,13 @@ void insertOneBB(void* _region, double *_minPt, double *_maxPt, octantBucket *_b
   return;
 }
 
-void * searchAllElements(octantBucket *_buckets_head, double *_pt, globalInfo *_globalPara,
-                         BBFunction BBElement, InEleFunction xyzInElement, list<void *> *_elements)
+void *searchAllElements(octantBucket *_buckets_head, double *_pt, globalInfo *_globalPara,
+                        BBFunction BBElement, InEleFunction xyzInElement, 
+                        std::list<void*> *_elements)
 {
   int flag, flag1;
   octantBucket *ptrBucket;
-  list<void *>::iterator iter;
+  std::list<void*>::iterator iter;
 
   ptrBucket = findElementBucket(_buckets_head, _pt);
   if (ptrBucket == NULL) {
@@ -411,7 +404,6 @@ void * searchAllElements(octantBucket *_buckets_head, double *_pt, globalInfo *_
   flag1 = 0;
   for (iter = (ptrBucket->listBB).begin(); 
        iter != (ptrBucket->listBB).end(); iter++){
-    // printf("Enter 1 \n");    
     flag = xyzInElementBB(_pt, *iter, BBElement);
     if (flag == 1)
       flag = xyzInElement(*iter, _pt);
