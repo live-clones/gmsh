@@ -217,13 +217,13 @@ void GMSH_PluginManager::registerDefaultPlugins()
                       ("FieldView", GMSH_RegisterFieldViewPlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
                       ("Triangulate", GMSH_RegisterTriangulatePlugin()));
+    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+                      ("GSHHS", GMSH_RegisterGSHHSPlugin()));
 #if defined(HAVE_MATH_EVAL)
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
                       ("Evaluate", GMSH_RegisterEvaluatePlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
                       ("CutParametric", GMSH_RegisterCutParametricPlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-                      ("GSHHS", GMSH_RegisterGSHHSPlugin()));
 #endif
   }
 

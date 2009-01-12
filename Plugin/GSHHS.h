@@ -13,17 +13,5 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterGSHHSPlugin();
 }
 
-class GMSH_GSHHSPlugin:public GMSH_Post_Plugin
-{
-public:
-  void getName(char *name) const;
-  void getInfos(char *author, char *copyright, char *help_text) const;
-  void catchErrorMessage(char *errorMessage) const;
-  int getNbOptions() const;
-  int getNbOptionsStr() const;
-  StringXNumber *getOption(int iopt);
-  StringXString *getOptionStr(int iopt);
-  PView *execute(PView *);
-};
 
 #endif
