@@ -51,7 +51,7 @@ class GMSH_GSHHSPlugin:public GMSH_Post_Plugin
       }
     };
     class reader_gshhs:public reader{
-      /*	$Id: GSHHS.cpp,v 1.19 2009-01-12 11:59:39 remacle Exp $
+      /*	$Id: GSHHS.cpp,v 1.20 2009-01-12 16:17:37 remacle Exp $
        *
        * Include file defining structures used in gshhs.c
        *
@@ -738,10 +738,8 @@ class GMSH_GSHHSPlugin:public GMSH_Post_Plugin
         loop_buff.str("");
         first_point_in_loop = ip;
       }
-      coordinate_lonlat cll;
       public:
-      GeoEarthImport(const std::string _filename, bool  write_polar_sphere,double radius):
-        cll(radius)
+      GeoEarthImport(const std::string _filename, bool  write_polar_sphere,double radius)
       {
         filename = _filename;
         file=new std::ofstream(filename.c_str());
@@ -769,8 +767,7 @@ class GMSH_GSHHSPlugin:public GMSH_Post_Plugin
       }
       void add_point(SPoint3 point){
         SPoint3 pll;
-        cll.from_cartesian(point,pll);
-        SPoint2 stereo(-pll.x() / (1 + pll.z()), -pll.y() / (1 + pll.z()));
+        SPoint2 stereo(-point.x() / (1 + point.z()), -point.y() / (1 + point.z()));
         loop_buff << "Point ( IP + " << ip++ << " ) = {" << stereo.
           x() << ", " << stereo.y() << ", " << 0 << " };\n";
       }
