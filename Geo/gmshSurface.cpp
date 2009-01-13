@@ -89,8 +89,8 @@ SPoint3 gmshPolarSphere::point(double parA, double parB) const
   //at the center of the sphere 
   //parA=2rx/(r+z) parB=2ry/(r+z)
   double rp2 = parA * parA + parB * parB;
-  SPoint3 p(2*parA/(1+rp2),2*parB/(1+rp2),(rp2-1)/(rp2+1));
-  p *= -r;
+  double z=r*(4*r*r-rp2)/(4*r*r+rp2);
+  SPoint3 p(parA*(r+z)/(2*r),parB*(r+z)/(2*r),z);
   p += o;
   return p;
 }
@@ -135,7 +135,7 @@ SPoint3 gmshParametricSurface::point(double par1, double par2) const
   Msg::Error("MathEval is not compiled in this version of Gmsh");
   return SPoint3(0.,0.,0.);
 #else
-  char *names[2] = {"u", "v"};
+  char *names[2] = {(char*)"u", (char*)"v"};
   double values [2] = {par1, par2};
   const double x = evaluator_evaluate(evalX, 2, names, values);
   const double y = evaluator_evaluate(evalY, 2, names, values);
