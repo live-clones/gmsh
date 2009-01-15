@@ -51,7 +51,7 @@ class GMSH_GSHHSPlugin:public GMSH_Post_Plugin
       }
     };
     class reader_gshhs:public reader{
-      /*	$Id: GSHHS.cpp,v 1.22 2009-01-15 00:43:04 geuzaine Exp $
+      /*	$Id: GSHHS.cpp,v 1.23 2009-01-15 13:28:30 remacle Exp $
        *
        * Include file defining structures used in gshhs.c
        *
@@ -337,10 +337,10 @@ class GMSH_GSHHSPlugin:public GMSH_Post_Plugin
         box *b;
         double min_dist;
         loop *l;
-        point(double _x,double _y,double _z,Field *f,double straits_factor){
+        point(double _x,double _y,double _z,Field *f){
           v[0]=_x; v[1]=_y; v[2]=_z;
           if(f)
-            min_dist=(*f)(v[0],v[1],v[2])*straits_factor;
+            min_dist=(*f)(v[0],v[1],v[2]);
         }
         point(double _x,double _y,double _z,double _min_dist){
           v[0]=_x; v[1]=_y; v[2]=_z;
@@ -972,7 +972,7 @@ PView *GMSH_GSHHSPlugin::execute(PView * v)
     while(read->next_point(p)){
       if(c_syst)
         c_syst->to_cartesian(p,p);
-      point newp(p[0],p[1],p[2],field,straits_factor);
+      point newp(p[0],p[1],p[2],field);
       if(newp.min_dist<0){
         while(!l.empty() && l.back().dist(l.front())<l.back().min_dist)
           l.pop_back();
@@ -992,6 +992,9 @@ PView *GMSH_GSHHSPlugin::execute(PView * v)
   }
   delete read;
   if(straits_factor>0 && iField !=0){
+    for(loops::iterator il=ll.begin();il!=ll.end();il++)
+      for(loop::iterator ip=il->begin();ip!=il->end();ip++)
+        ip->min_dist*=straits_factor;
     box *b=new box(point(-radius,-radius,-radius,0.),point(radius,radius,radius,0.));
     for(loops::iterator il=ll.begin();il!=ll.end();il++)
       loop_fill_box(&*il,*b);
