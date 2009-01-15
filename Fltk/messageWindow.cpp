@@ -73,7 +73,7 @@ messageWindow::messageWindow(int deltaFontSize)
   int height = CTX.msg_size[1];
 
   win = new paletteWindow
-    (width, height, CTX.non_modal_windows, "Message Console");
+    (width, height, CTX.non_modal_windows ? true : false, "Message Console");
   win->box(GMSH_WINDOW_BOX);
 
   browser = new Fl_Browser(0, 0, width, height - 2 * WB - BH);

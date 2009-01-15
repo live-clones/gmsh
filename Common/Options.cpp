@@ -4133,19 +4133,19 @@ double opt_general_light53(OPT_ARGS_NUM)
   return CTX.light_position[5][3];
 }
 
-double opt_general_transform(OPT_ARGS_NUM)
+double opt_geometry_transform(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
-    CTX.use_transform = (int)val;
-    if(CTX.use_transform < 0 || CTX.use_transform > 1) CTX.use_transform = 0;
+    CTX.geom.use_transform = (int)val;
+    if(CTX.geom.use_transform < 0 || CTX.geom.use_transform > 1) CTX.geom.use_transform = 0;
   }
 #if defined(HAVE_FLTK)
   if(GUI::available()){
     if(action & GMSH_GUI)
-      GUI::instance()->options->general.choice[6]->value(CTX.use_transform);
+      GUI::instance()->options->geo.choice[3]->value(CTX.geom.use_transform);
     if(action & GMSH_SET){
-      if(CTX.use_transform == 1){
-        drawTransform *tr = new drawTransformScaled(CTX.transform, CTX.offset);
+      if(CTX.geom.use_transform == 1){
+        drawTransform *tr = new drawTransformScaled(CTX.geom.transform, CTX.geom.offset);
         GUI::instance()->graph[0]->gl[0]->getDrawContext()->setTransform(tr);
       }
       else{
@@ -4154,104 +4154,104 @@ double opt_general_transform(OPT_ARGS_NUM)
         if(tr) delete tr;
       }
     }
-    GUI::instance()->options->activate("general_transform");
+    GUI::instance()->options->activate("geo_transform");
   }
 #endif
-  return CTX.use_transform;
+  return CTX.geom.use_transform;
 }
 
-static double _opt_general_transform(OPT_ARGS_NUM, int ii, int jj, int nn)
+static double _opt_geometry_transform(OPT_ARGS_NUM, int ii, int jj, int nn)
 {
   if(action & GMSH_SET)
-    CTX.transform[ii][jj] = val;
+    CTX.geom.transform[ii][jj] = val;
 #if defined(HAVE_FLTK)
   if(GUI::available()){
     if(action & GMSH_GUI)
-      GUI::instance()->options->general.value[nn]->value(CTX.transform[ii][jj]);
+      GUI::instance()->options->geo.value[nn]->value(CTX.geom.transform[ii][jj]);
     if(action & GMSH_SET){
       drawTransform *tr = GUI::instance()->graph[0]->gl[0]->getDrawContext()->getTransform();
-      if(tr) tr->setMatrix(CTX.transform, CTX.offset);
+      if(tr) tr->setMatrix(CTX.geom.transform, CTX.geom.offset);
     }
   }
 #endif
-  return CTX.transform[ii][jj];
+  return CTX.geom.transform[ii][jj];
 }
 
-double opt_general_transform00(OPT_ARGS_NUM)
+double opt_geometry_transform00(OPT_ARGS_NUM)
 {
-  return _opt_general_transform(num, action, val, 0, 0, 28);
+  return _opt_geometry_transform(num, action, val, 0, 0, 7);
 }
 
-double opt_general_transform01(OPT_ARGS_NUM)
+double opt_geometry_transform01(OPT_ARGS_NUM)
 {
-  return _opt_general_transform(num, action, val, 0, 1, 29);
+  return _opt_geometry_transform(num, action, val, 0, 1, 8);
 }
 
-double opt_general_transform02(OPT_ARGS_NUM)
+double opt_geometry_transform02(OPT_ARGS_NUM)
 {
-  return _opt_general_transform(num, action, val, 0, 2, 30);
+  return _opt_geometry_transform(num, action, val, 0, 2, 9);
 }
 
-double opt_general_transform10(OPT_ARGS_NUM)
+double opt_geometry_transform10(OPT_ARGS_NUM)
 {
-  return _opt_general_transform(num, action, val, 1, 0, 32);
+  return _opt_geometry_transform(num, action, val, 1, 0, 11);
 }
 
-double opt_general_transform11(OPT_ARGS_NUM)
+double opt_geometry_transform11(OPT_ARGS_NUM)
 {
-  return _opt_general_transform(num, action, val, 1, 1, 33);
+  return _opt_geometry_transform(num, action, val, 1, 1, 12);
 }
 
-double opt_general_transform12(OPT_ARGS_NUM)
+double opt_geometry_transform12(OPT_ARGS_NUM)
 {
-  return _opt_general_transform(num, action, val, 1, 2, 34);
+  return _opt_geometry_transform(num, action, val, 1, 2, 13);
 }
 
-double opt_general_transform20(OPT_ARGS_NUM)
+double opt_geometry_transform20(OPT_ARGS_NUM)
 {
-  return _opt_general_transform(num, action, val, 2, 0, 36);
+  return _opt_geometry_transform(num, action, val, 2, 0, 15);
 }
 
-double opt_general_transform21(OPT_ARGS_NUM)
+double opt_geometry_transform21(OPT_ARGS_NUM)
 {
-  return _opt_general_transform(num, action, val, 2, 1, 37);
+  return _opt_geometry_transform(num, action, val, 2, 1, 16);
 }
 
-double opt_general_transform22(OPT_ARGS_NUM)
+double opt_geometry_transform22(OPT_ARGS_NUM)
 {
-  return _opt_general_transform(num, action, val, 2, 2, 38);
+  return _opt_geometry_transform(num, action, val, 2, 2, 17);
 }
 
-static double _opt_general_offset(OPT_ARGS_NUM, int ii, int nn)
+static double _opt_geometry_offset(OPT_ARGS_NUM, int ii, int nn)
 {
   if(action & GMSH_SET)
-    CTX.offset[ii] = val;
+    CTX.geom.offset[ii] = val;
 #if defined(HAVE_FLTK)
   if(GUI::available()){
     if(action & GMSH_GUI)
-      GUI::instance()->options->general.value[nn]->value(CTX.offset[ii]);
+      GUI::instance()->options->geo.value[nn]->value(CTX.geom.offset[ii]);
     if(action & GMSH_SET){
       drawTransform *tr = GUI::instance()->graph[0]->gl[0]->getDrawContext()->getTransform();
-      if(tr) tr->setMatrix(CTX.transform, CTX.offset);
+      if(tr) tr->setMatrix(CTX.geom.transform, CTX.geom.offset);
     }
   }
 #endif
-  return CTX.offset[ii];
+  return CTX.geom.offset[ii];
 }
 
-double opt_general_offset0(OPT_ARGS_NUM)
+double opt_geometry_offset0(OPT_ARGS_NUM)
 {
-  return _opt_general_offset(num, action, val, 0, 31);
+  return _opt_geometry_offset(num, action, val, 0, 10);
 }
 
-double opt_general_offset1(OPT_ARGS_NUM)
+double opt_geometry_offset1(OPT_ARGS_NUM)
 {
-  return _opt_general_offset(num, action, val, 1, 35);
+  return _opt_geometry_offset(num, action, val, 1, 14);
 }
 
-double opt_general_offset2(OPT_ARGS_NUM)
+double opt_geometry_offset2(OPT_ARGS_NUM)
 {
-  return _opt_general_offset(num, action, val, 2, 39);
+  return _opt_geometry_offset(num, action, val, 2, 18);
 }
 
 double opt_geometry_auto_coherence(OPT_ARGS_NUM)

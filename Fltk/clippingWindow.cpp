@@ -163,7 +163,8 @@ clippingWindow::clippingWindow(int deltaFontSize)
   int height = 10 * BH + 5 * WB;
   int L = 7 * FL_NORMAL_SIZE;
 
-  win = new paletteWindow(width, height, CTX.non_modal_windows, "Clipping");
+  win = new paletteWindow
+    (width, height, CTX.non_modal_windows ? true : false, "Clipping");
   win->box(GMSH_WINDOW_BOX);
 
   browser = new Fl_Multi_Browser(WB, WB, L - WB, height - BH - 3 * WB);

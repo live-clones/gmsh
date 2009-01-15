@@ -1049,7 +1049,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
   int brw = width - 4 * WB;
 
   win = new paletteWindow
-    (width, height, CTX.non_modal_windows, "Visibility");
+    (width, height, CTX.non_modal_windows ? true : false, "Visibility");
   win->box(GMSH_WINDOW_BOX);
 
   Fl_Tabs *o = new Fl_Tabs

@@ -302,7 +302,7 @@ description of the four modules is given hereafter.
 @node Geometry, Mesh, Overview, Overview
 @section Geometry: geometrical entity definition
 
-Gmsh uses a boundary representation (``b-rep'') to describe geometries.
+Gmsh uses a boundary representation (``BRep'') to describe geometries.
 Models are created in a bottom-up flow by successively defining points,
 oriented lines (line segments, circles, ellipses, splines, @dots{}),
 oriented surfaces (plane surfaces, ruled surfaces, triangulated
@@ -483,7 +483,7 @@ also some (a lot of?) weaknesses:
 
 @itemize @bullet
 @item
-the b-rep approach for describing geometries can become inconvenient for
+the BRep approach for describing geometries can become inconvenient for
 complex models;
 @item
 there is no support for Nurbs and only very limited support for trimmed

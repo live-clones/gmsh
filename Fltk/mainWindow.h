@@ -34,10 +34,10 @@ class mainWindow : public Fl_Window {
     return Fl_Window::handle(event);
   }
  public:
-  mainWindow(int w, int h, bool nonmodal=false, const char *l=0) 
+  mainWindow(int w, int h, bool nonModal, const char *l=0) 
     : Fl_Window(w, h, l) 
   {
-    if(nonmodal) set_non_modal();
+    if(nonModal) set_non_modal();
   }
   void show()
   {

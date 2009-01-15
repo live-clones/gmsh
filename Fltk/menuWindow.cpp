@@ -2471,7 +2471,8 @@ menuWindow::menuWindow()
   }
 #endif
 
-  win = new mainWindow(width, _MH + NB_BUTT_SCROLL * BH, CTX.non_modal_windows, "Gmsh");
+  win = new mainWindow
+    (width, _MH + NB_BUTT_SCROLL * BH, CTX.non_modal_windows ? true : false, "Gmsh");
   win->box(GMSH_WINDOW_BOX);
   win->callback(file_quit_cb);
 

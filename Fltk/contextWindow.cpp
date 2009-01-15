@@ -51,8 +51,8 @@ geometryContextWindow::geometryContextWindow(int deltaFontSize)
   int width = 31 * FL_NORMAL_SIZE;
   int height = 4 * WB + 8 * BH;
 
-  win = new paletteWindow
-    (width, height, CTX.non_modal_windows, "Contextual Geometry Definitions");
+  win = new paletteWindow(width, height, CTX.non_modal_windows ? true : false, 
+                          "Contextual Geometry Definitions");
   win->box(GMSH_WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);

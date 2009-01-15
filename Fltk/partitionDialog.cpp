@@ -469,7 +469,7 @@ void partition_dialog()
   int y = 0;
 
   dlg.window = new paletteWindow
-    (w, h, CTX.non_modal_windows, "Partitioner Options");
+    (w, h, CTX.non_modal_windows ? true : false, "Partitioner Options");
   dlg.window->box(GMSH_WINDOW_BOX);
   dlg.window->callback((Fl_Callback *)partition_cancel_cb, &dlg);
 

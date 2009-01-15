@@ -8,7 +8,6 @@
 
 #include <vector>
 #include <string>
-
 #include "CGNSOptions.h"
 #include "meshPartitionOptions.h"
 
@@ -109,8 +108,6 @@ class Context_T {
   int expert_mode; // to disable some warnings for beginners
   int printing; // dynamic: equal to 1 while gmsh is printing
   int hide_unselected; // hide all unselected entities
-  int use_transform; // transform display coordinates? (0=no, 1=scale, 2=...)
-  double transform[3][3], offset[3]; // transformation matrix for geo/mesh drawing
 
   // these are used as temp vars until the GUI is ready
   double tmp_r[3]; // current Euler angles (in degrees!) 
@@ -133,6 +130,8 @@ class Context_T {
     double snap[3];
     int occ_fix_small_edges, occ_fix_small_faces, occ_sew_faces;
     int clip; // status of clip planes (bit array)
+    int use_transform; // transform display coordinates? (0=no, 1=scale, 2=...)
+    double transform[3][3], offset[3]; // transformation matrix for geo/mesh drawing
   } geom;
 
   // mesh options 

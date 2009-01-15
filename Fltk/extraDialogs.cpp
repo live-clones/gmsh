@@ -42,7 +42,7 @@ int arrow_editor(const char *title, double &a, double &b, double &c)
   if(!editor){
     editor = new _editor;
     editor->window = new paletteWindow
-      (2 * BB + 3 * WB, 4 * BH + 3 * WB, CTX.non_modal_windows);
+      (2 * BB + 3 * WB, 4 * BH + 3 * WB, CTX.non_modal_windows ? true : false);
     editor->sa = new Fl_Value_Slider(WB, WB, BB, BH, "Head radius");
     editor->sa->type(FL_HOR_SLIDER);
     editor->sa->align(FL_ALIGN_RIGHT);

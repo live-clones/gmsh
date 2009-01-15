@@ -84,7 +84,8 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
   int width = 26 * FL_NORMAL_SIZE;
   int height = 5 * WB + 18 * BH;
 
-  win = new paletteWindow(width, height, CTX.non_modal_windows, "Statistics");
+  win = new paletteWindow
+    (width, height, CTX.non_modal_windows ? true : false, "Statistics");
   win->box(GMSH_WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);

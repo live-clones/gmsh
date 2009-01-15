@@ -181,9 +181,9 @@ static void applyGeneralRaise(PView *p, int numNodes, int numComp,
   }
 }
 
-static void changeCoordinates(PView *p, int ient, int iele, int numNodes, 
-			      int numEdges, int numComp, double xyz[NMAX][3], 
-			      double val[NMAX][9])
+static void changeCoordinates(PView *p, int ient, int iele,
+                              int numNodes, int numEdges, int numComp, 
+                              double xyz[NMAX][3], double val[NMAX][9])
 {
   PViewOptions *opt = p->getOptions();
 
@@ -1297,7 +1297,7 @@ class initPView {
     heuristic = _estimateIfClipped(p, heuristic);
     return heuristic + 1000;
   }
- public :
+ public:
   void operator () (PView *p)
   {
     // use adaptive data if available

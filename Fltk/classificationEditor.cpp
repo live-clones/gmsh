@@ -541,7 +541,8 @@ classificationEditor::classificationEditor()
   int BBB = (int)(1.4 * BB); // labels too long
   const int width = (int)(3.5 * BBB), height = 10 * BH;
 
-  _window = new paletteWindow(width, height, CTX.non_modal_windows, "Classify");
+  _window = new paletteWindow
+    (width, height, CTX.non_modal_windows ? true : false, "Classify");
   
   new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
   {

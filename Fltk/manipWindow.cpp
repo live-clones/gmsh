@@ -43,7 +43,8 @@ manipWindow::manipWindow(int deltaFontSize)
   int width = 4 * BB + 2 * WB;
   int height = 5 * BH + 3 * WB;
 
-  win = new paletteWindow(width, height, CTX.non_modal_windows, "Manipulator");
+  win = new paletteWindow
+    (width, height, CTX.non_modal_windows ? true : false, "Manipulator");
   win->box(GMSH_WINDOW_BOX);
 
   Fl_Box *top[3], *left[3];

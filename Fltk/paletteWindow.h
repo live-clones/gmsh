@@ -33,10 +33,10 @@ class paletteWindow : public Fl_Double_Window {
     return Fl_Double_Window::handle(event);
   }
  public:
-  paletteWindow(int w, int h, int nonmodal=false, const char *l=0)
+  paletteWindow(int w, int h, bool nonModal, const char *l=0)
     : Fl_Double_Window(w, h, l) 
   {
-    if(nonmodal) set_non_modal();
+    if(nonModal) set_non_modal();
   }
   void show()
   {

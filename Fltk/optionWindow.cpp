@@ -288,18 +288,6 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_axes_zmax(0, GMSH_SET, o->general.value[25]->value());
   opt_general_small_axes_position0(0, GMSH_SET, o->general.value[26]->value());
   opt_general_small_axes_position1(0, GMSH_SET, o->general.value[27]->value());
-  opt_general_offset0(0, GMSH_SET, o->general.value[31]->value());
-  opt_general_offset1(0, GMSH_SET, o->general.value[35]->value());
-  opt_general_offset2(0, GMSH_SET, o->general.value[39]->value());
-  opt_general_transform00(0, GMSH_SET, o->general.value[28]->value());
-  opt_general_transform01(0, GMSH_SET, o->general.value[29]->value());
-  opt_general_transform02(0, GMSH_SET, o->general.value[30]->value());
-  opt_general_transform10(0, GMSH_SET, o->general.value[32]->value());
-  opt_general_transform11(0, GMSH_SET, o->general.value[33]->value());
-  opt_general_transform12(0, GMSH_SET, o->general.value[34]->value());
-  opt_general_transform20(0, GMSH_SET, o->general.value[36]->value());
-  opt_general_transform21(0, GMSH_SET, o->general.value[37]->value());
-  opt_general_transform22(0, GMSH_SET, o->general.value[38]->value());
 
   opt_general_default_filename(0, GMSH_SET, o->general.input[0]->value());
   opt_general_editor(0, GMSH_SET, o->general.input[1]->value());
@@ -316,7 +304,6 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_orthographic(0, GMSH_SET, !o->general.choice[2]->value());
   opt_general_axes(0, GMSH_SET, o->general.choice[4]->value());
   opt_general_background_gradient(0, GMSH_SET, o->general.choice[5]->value());
-  opt_general_transform(0, GMSH_SET, o->general.choice[6]->value());
 
   if(CTX.fast_redraw)
     CTX.post.draw = CTX.mesh.draw = 0;
@@ -371,11 +358,24 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_line_width(0, GMSH_SET, o->geo.value[4]->value());
   opt_geometry_point_sel_size(0, GMSH_SET, o->geo.value[5]->value());
   opt_geometry_line_sel_width(0, GMSH_SET, o->geo.value[6]->value());
+  opt_geometry_transform00(0, GMSH_SET, o->geo.value[7]->value());
+  opt_geometry_transform01(0, GMSH_SET, o->geo.value[8]->value());
+  opt_geometry_transform02(0, GMSH_SET, o->geo.value[9]->value());
+  opt_geometry_transform10(0, GMSH_SET, o->geo.value[11]->value());
+  opt_geometry_transform11(0, GMSH_SET, o->geo.value[12]->value());
+  opt_geometry_transform12(0, GMSH_SET, o->geo.value[13]->value());
+  opt_geometry_transform20(0, GMSH_SET, o->geo.value[15]->value());
+  opt_geometry_transform21(0, GMSH_SET, o->geo.value[16]->value());
+  opt_geometry_transform22(0, GMSH_SET, o->geo.value[17]->value());
+  opt_geometry_offset0(0, GMSH_SET, o->geo.value[10]->value());
+  opt_geometry_offset1(0, GMSH_SET, o->geo.value[14]->value());
+  opt_geometry_offset2(0, GMSH_SET, o->geo.value[18]->value());
 
   opt_geometry_point_type(0, GMSH_SET, o->geo.choice[0]->value());
   opt_geometry_line_type(0, GMSH_SET, o->geo.choice[1]->value());
   opt_geometry_surface_type(0, GMSH_SET, o->geo.choice[2]->value());
-
+  opt_geometry_transform(0, GMSH_SET, o->geo.choice[3]->value());
+  
   if(CTX.fast_redraw)
     CTX.post.draw = CTX.mesh.draw = 0;
   Draw();
@@ -1146,7 +1146,8 @@ optionWindow::optionWindow(int deltaFontSize)
   int height = 12 * BH + 4 * WB;
   int L = 7 * FL_NORMAL_SIZE;
 
-  win = new paletteWindow(width, height, CTX.non_modal_windows);
+  win = new paletteWindow
+    (width, height, CTX.non_modal_windows ? true : false);
   win->box(GMSH_WINDOW_BOX);
   win->label("Options - General");
 
@@ -1401,61 +1402,6 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Default file name");
       general.input[0]->align(FL_ALIGN_RIGHT);
       general.input[0]->callback(general_options_ok_cb);
-
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group
-        (L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Transfo");
-      o->hide();
-      
-      static Fl_Menu_Item menu_transform[] = {
-        {"None", 0, 0, 0},
-        {"Scaling", 0, 0, 0},
-        {0}
-      };
-      general.choice[6] = new Fl_Choice
-        (L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Model coordinate transform");
-      general.choice[6]->menu(menu_transform);
-      general.choice[6]->align(FL_ALIGN_RIGHT);
-      general.choice[6]->callback(general_options_ok_cb, (void*)"general_transform");
-
-      int ss = 2 * IW / 3 / 3 + 4;
-      general.value[28] = new Fl_Value_Input
-        (L + 2 * WB       , 2 * WB + 2 * BH, ss, BH);
-      general.value[29] = new Fl_Value_Input
-        (L + 2 * WB + ss  , 2 * WB + 2 * BH, ss, BH);
-      general.value[30] = new Fl_Value_Input
-        (L + 2 * WB + 2*ss, 2 * WB + 2 * BH, ss, BH, " X");
-      general.value[31] = new Fl_Value_Input
-        (L + 2 * WB + IW  , 2 * WB + 2 * BH, 7*IW/10, BH);
-
-      general.value[32] = new Fl_Value_Input
-        (L + 2 * WB       , 2 * WB + 3 * BH, ss, BH);
-      general.value[33] = new Fl_Value_Input
-        (L + 2 * WB + ss  , 2 * WB + 3 * BH, ss, BH);
-      general.value[34] = new Fl_Value_Input
-        (L + 2 * WB + 2*ss, 2 * WB + 3 * BH, ss, BH, " Y +");
-      general.value[35] = new Fl_Value_Input
-        (L + 2 * WB + IW  , 2 * WB + 3 * BH, 7*IW/10, BH);
-
-      general.value[36] = new Fl_Value_Input
-        (L + 2 * WB       , 2 * WB + 4 * BH, ss, BH);
-      general.value[37] = new Fl_Value_Input
-        (L + 2 * WB + ss  , 2 * WB + 4 * BH, ss, BH);
-      general.value[38] = new Fl_Value_Input
-        (L + 2 * WB + 2*ss, 2 * WB + 4 * BH, ss, BH, " Z");
-      general.value[39] = new Fl_Value_Input
-        (L + 2 * WB + IW  , 2 * WB + 4 * BH, 7*IW/10, BH);
-
-      for(int i = 28; i <= 39; i++){
-        general.value[i]->minimum(-1.);
-        general.value[i]->maximum(1.);
-        general.value[i]->step(0.1);
-        general.value[i]->align(FL_ALIGN_RIGHT);
-        general.value[i]->when(FL_WHEN_RELEASE);
-        general.value[i]->callback(general_options_ok_cb);
-      }
 
       o->end();
     }
@@ -1767,6 +1713,61 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.value[1]->align(FL_ALIGN_RIGHT);
       geo.value[1]->when(FL_WHEN_RELEASE);
       geo.value[1]->callback(geometry_options_ok_cb);
+
+      o->end();
+    }
+    {
+      Fl_Group *o = new Fl_Group
+        (L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Transfo");
+      o->hide();
+      
+      static Fl_Menu_Item menu_transform[] = {
+        {"None", 0, 0, 0},
+        {"Scaling", 0, 0, 0},
+        {0}
+      };
+      geo.choice[3] = new Fl_Choice
+        (L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Main window transform");
+      geo.choice[3]->menu(menu_transform);
+      geo.choice[3]->align(FL_ALIGN_RIGHT);
+      geo.choice[3]->callback(geometry_options_ok_cb, (void*)"geo_transform");
+
+      int ss = 2 * IW / 3 / 3 + 4;
+      geo.value[7] = new Fl_Value_Input
+        (L + 2 * WB       , 2 * WB + 2 * BH, ss, BH);
+      geo.value[8] = new Fl_Value_Input
+        (L + 2 * WB + ss  , 2 * WB + 2 * BH, ss, BH);
+      geo.value[9] = new Fl_Value_Input
+        (L + 2 * WB + 2*ss, 2 * WB + 2 * BH, ss, BH, " X");
+      geo.value[10] = new Fl_Value_Input
+        (L + 2 * WB + IW  , 2 * WB + 2 * BH, 7*IW/10, BH);
+
+      geo.value[11] = new Fl_Value_Input
+        (L + 2 * WB       , 2 * WB + 3 * BH, ss, BH);
+      geo.value[12] = new Fl_Value_Input
+        (L + 2 * WB + ss  , 2 * WB + 3 * BH, ss, BH);
+      geo.value[13] = new Fl_Value_Input
+        (L + 2 * WB + 2*ss, 2 * WB + 3 * BH, ss, BH, " Y +");
+      geo.value[14] = new Fl_Value_Input
+        (L + 2 * WB + IW  , 2 * WB + 3 * BH, 7*IW/10, BH);
+
+      geo.value[15] = new Fl_Value_Input
+        (L + 2 * WB       , 2 * WB + 4 * BH, ss, BH);
+      geo.value[16] = new Fl_Value_Input
+        (L + 2 * WB + ss  , 2 * WB + 4 * BH, ss, BH);
+      geo.value[17] = new Fl_Value_Input
+        (L + 2 * WB + 2*ss, 2 * WB + 4 * BH, ss, BH, " Z");
+      geo.value[18] = new Fl_Value_Input
+        (L + 2 * WB + IW  , 2 * WB + 4 * BH, 7*IW/10, BH);
+
+      for(int i = 7; i <= 18; i++){
+        geo.value[i]->minimum(-1.);
+        geo.value[i]->maximum(1.);
+        geo.value[i]->step(0.1);
+        geo.value[i]->align(FL_ALIGN_RIGHT);
+        geo.value[i]->when(FL_WHEN_RELEASE);
+        geo.value[i]->callback(geometry_options_ok_cb);
+      }
 
       o->end();
     }
@@ -3402,14 +3403,14 @@ void optionWindow::activate(const char *what)
       general.value[27]->deactivate();
     }
   }
-  else if(!strcmp(what, "general_transform")){
-    if(general.choice[6]->value() == 1){
-      for(int i = 28; i <= 39; i++)
-        general.value[i]->activate();
+  else if(!strcmp(what, "geo_transform")){
+    if(geo.choice[3]->value() == 1){
+      for(int i = 7; i <= 18; i++)
+        geo.value[i]->activate();
     }
     else{
-      for(int i = 28; i <= 39; i++)
-        general.value[i]->deactivate();
+      for(int i = 7; i <= 18; i++)
+        geo.value[i]->deactivate();
     }
   }
   else if(!strcmp(what, "custom_range")){

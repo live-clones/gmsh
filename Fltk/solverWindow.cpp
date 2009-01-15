@@ -201,7 +201,7 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
   int BBS = (width - 8 * WB) / 5;
   
   win = new paletteWindow
-    (width, height, CTX.non_modal_windows, "Solver");
+    (width, height, CTX.non_modal_windows ? true : false, "Solver");
   win->box(GMSH_WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs

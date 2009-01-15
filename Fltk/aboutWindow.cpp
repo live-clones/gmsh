@@ -43,7 +43,8 @@ aboutWindow::aboutWindow()
   int width = 28 * FL_NORMAL_SIZE;
   int height = 15 * BH + BH/2;
 
-  win = new paletteWindow(width, height, CTX.non_modal_windows, "About Gmsh");
+  win = new paletteWindow
+    (width, height, CTX.non_modal_windows ? true : false, "About Gmsh");
   win->box(GMSH_WINDOW_BOX);
 
   {
