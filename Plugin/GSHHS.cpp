@@ -51,7 +51,7 @@ class GMSH_GSHHSPlugin:public GMSH_Post_Plugin
       }
     };
     class reader_gshhs:public reader{
-      /*	$Id: GSHHS.cpp,v 1.21 2009-01-13 11:11:39 remacle Exp $
+      /*	$Id: GSHHS.cpp,v 1.22 2009-01-15 00:43:04 geuzaine Exp $
        *
        * Include file defining structures used in gshhs.c
        *
@@ -81,9 +81,9 @@ class GMSH_GSHHSPlugin:public GMSH_Post_Plugin
        *			  For use with version 1.6 of GSHHS which now has WDBII
        *			  borders and rivers.
        */
-      static const int GSHHS_DATA_VERSION=6;	// For v1.5 data set 
+#define GSHHS_DATA_VERSION 6	// For v1.5 data set 
       //define GSHHS_PROG_VERSION "1.9"
-      static const double GSHHS_SCL=1.0e-6;	// COnvert micro-degrees to degrees 
+#define GSHHS_SCL 1.0e-6	// COnvert micro-degrees to degrees 
       inline unsigned int swabi4(unsigned int i4){ // For byte swapping on little-endian systems (GSHHS is defined to be bigendian) 
         return (((i4) >> 24) + (((i4) >> 8) & 65280) + (((i4) & 65280) << 8) + (((i4) & 255) << 24));
       }
