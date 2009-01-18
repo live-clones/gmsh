@@ -2967,7 +2967,7 @@ $Elements
 $EndElements
 $PhysicalNames
 @var{number-of-names}
-@var{phyical-number} "@var{physical-name}"
+@var{physical-number} "@var{physical-name}"
 @dots{}
 $EndPhysicalNames
 $NodeData
