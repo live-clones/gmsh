@@ -1004,13 +1004,13 @@ static bool test_move_point_parametric_quad(BDS_Point *p, double u, double v, BD
   double ori_final1 = gmsh::orient2d(pa, pb, pc);
   double ori_final2 = gmsh::orient2d(pc, pd, pa);
   // allow to move a point when a triangle was flat
-  return ori_init1*ori_final1 > 0 && ori_init2*ori_final2 > 0 ;
+  return (ori_init1 * ori_final1 > 0) && (ori_init2 * ori_final2 > 0);
 }
 
 static bool test_move_point_parametric_triangle(BDS_Point *p, double u, double v, BDS_Face *t)
 {       
   if (t->e4)
-    return test_move_point_parametric_quad(p,u,v,t);
+    return test_move_point_parametric_quad(p, u, v, t);
   BDS_Point *pts[4];
   t->getNodes(pts);
 
@@ -1041,12 +1041,15 @@ static bool test_move_point_parametric_triangle(BDS_Point *p, double u, double v
   }
   else
     return false;
+
+  a[0] = pb[0] - pa[0]; a[1] = pb[1] - pa[1];
+  b[0] = pc[0] - pa[0]; b[1] = pc[1] - pa[1];
   
   double area_final = fabs(a[0] * b[1] - a[1] * b[0]);
   if(area_final < 0.1 * area_init) return false;
   double ori_final = gmsh::orient2d(pa, pb, pc);
   // allow to move a point when a triangle was flat
-  return ori_init*ori_final > 0;
+  return ori_init * ori_final > 0;
 }
 
 bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p)
