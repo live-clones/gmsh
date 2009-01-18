@@ -1,5 +1,4 @@
-.\" $Id: gmsh.1,v 1.84 2008-12-17 21:14:48 geuzaine Exp $
-.TH Gmsh 1 "23 February 2008" "Gmsh 2.2" "Gmsh Manual Pages"
+.TH Gmsh 1 "18 january 2009" "Gmsh 2.3" "Gmsh Manual Pages"
 .UC 4
 .\" ********************************************************************
 .SH NAME
@@ -58,7 +57,7 @@ set output mesh format (msh, msh1, msh2, unv, vrml, stl, mesh, bdf, p3d, cgns, m
 use binary format when available.
 .TP 4
 .B \-algo string
-select mesh algorithm (iso, netgen, tetgen).
+select mesh algorithm (iso, frontal, del2d, del3d, netgen).
 .TP 4
 .B \-smooth int
 set number of mesh smoothing steps.
@@ -86,10 +85,6 @@ set random perturbation factor.
 .TP 4
 .B \-bgm file
 load the post-processing view in file as the current background mesh.
-.TP 4
-.B \-constrain
-constrain the background mesh with the characteristic lengths of the
-model.
 .\" ********************************************************************
 .SH POST-PROCESSING OPTIONS
 .TP 4

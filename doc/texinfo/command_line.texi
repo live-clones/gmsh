@@ -25,7 +25,7 @@ Set output mesh format (msh, msh1, msh2, unv, vrml, stl, mesh, bdf, p3d, cgns, m
 @item -bin
 Use binary format when available
 @item -algo string
-Select mesh algorithm (iso, netgen, tetgen)
+Select mesh algorithm (iso, frontal, del2d, del3d, netgen)
 @item -smooth int
 Set number of mesh smoothing steps
 @item -optimize[_netgen]
@@ -44,8 +44,6 @@ Compute characteristic lengths from curvatures
 Set random perturbation factor
 @item -bgm file
 Load background mesh from file
-@item -constrain
-Constrain background mesh with characteristic lengths
 @end ftable
 
 @sp 1 

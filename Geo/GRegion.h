@@ -36,7 +36,8 @@ class GRegion : public GEntity {
 
   // get/set faces that bound the region
   virtual std::list<GFace*> faces() const{ return l_faces; }
-  void set(std::list<GFace*> &f) { l_faces= f; }
+  virtual std::list<int> faceOrientations() const{ return l_dirs; }
+  void set(std::list<GFace*> &f) { l_faces = f; }
 
   // edges that bound the region
   virtual std::list<GEdge*> edges() const;

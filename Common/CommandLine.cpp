@@ -62,7 +62,7 @@ void Print_Usage(const char *name)
   Msg::Direct("  -bin                  Use binary format when available");  
   Msg::Direct("  -parametric           Save vertices with their parametric coordinates");  
   Msg::Direct("  -numsubedges          Set the number of subdivisions when displaying high order elements");  
-  Msg::Direct("  -algo string          Select mesh algorithm (de, del2d, frontal, iso, netgen, tetgen)");
+  Msg::Direct("  -algo string          Select mesh algorithm (iso, frontal, del2d, del3d, netgen)");
   Msg::Direct("  -smooth int           Set number of mesh smoothing steps");
   Msg::Direct("  -optimize[_netgen]    Optimize quality of tetrahedral elements");
   Msg::Direct("  -order int            Set mesh order (1, ..., 5)");
