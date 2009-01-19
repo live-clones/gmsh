@@ -84,7 +84,11 @@ class MVertex{
 
   // get/set the number
   inline int getNum() const { return _num; }
-  inline void setNum(int num) { _num = num; }
+  inline void setNum(int num) 
+  { 
+    _num = num; 
+    _globalNum = std::max(_globalNum, _num);
+  }
 
   // get/set the index
   inline int getIndex() const { return _index; }
