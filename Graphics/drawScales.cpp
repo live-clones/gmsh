@@ -21,7 +21,8 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
   double box = (horizontal ? width : height) / (opt->NbIso ? opt->NbIso : 1);
 
   for(int i = 0; i < opt->NbIso; i++) {
-    if(opt->IntervalsType == PViewOptions::Discrete){
+    if(opt->IntervalsType == PViewOptions::Discrete ||
+       opt->IntervalsType == PViewOptions::Numeric){
       unsigned int col = opt->getColor(i, opt->NbIso);
       glColor4ubv((GLubyte *) &col);
       glBegin(GL_QUADS);
@@ -100,6 +101,7 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin, double ymin
 
   int nbv = opt->NbIso;
   double f = (opt->IntervalsType == PViewOptions::Discrete ||
+              opt->IntervalsType == PViewOptions::Numeric ||
               opt->IntervalsType == PViewOptions::Continuous) ? 2 : 2.5;
 
   if(horizontal && width < nbv * maxw){
@@ -117,6 +119,7 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin, double ymin
   glColor4ubv((GLubyte *) & CTX.color.text);
 
   if(opt->IntervalsType == PViewOptions::Discrete ||
+     opt->IntervalsType == PViewOptions::Numeric ||
      opt->IntervalsType == PViewOptions::Continuous){
     for(int i = 0; i < nbv + 1; i++) {
       double v = opt->getScaleValue(i, nbv + 1, opt->TmpMin, opt->TmpMax);

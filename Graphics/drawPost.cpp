@@ -1139,7 +1139,7 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes, int numCo
     for(int j = 0; j < numComp; j++) d[j] /= (double)numNodes;
     double v = ComputeScalarRep(numComp, d);
     if(v >= vmin && v <= vmax){
-      unsigned int col = opt->getColor(v, vmin, vmax);
+      unsigned int col = opt->getColor(v, vmin, vmax, false, opt->NbIso);
       glColor4ubv((GLubyte *) & col);
       glRasterPos3d(pc.x(), pc.y(), pc.z());
       if(opt->CenterGlyphs)
@@ -1152,7 +1152,7 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes, int numCo
     for(int i = 0; i < numNodes; i++){
       double v = ComputeScalarRep(numComp, val[i]);
       if(v >= vmin && v <= vmax){
-        unsigned int col = opt->getColor(v, vmin, vmax);
+        unsigned int col = opt->getColor(v, vmin, vmax, false, opt->NbIso);
         glColor4ubv((GLubyte *) & col);
         glRasterPos3d(xyz[i][0], xyz[i][1], xyz[i][2]);
         if(opt->CenterGlyphs)
