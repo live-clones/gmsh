@@ -51,7 +51,7 @@ class GMSH_GSHHSPlugin:public GMSH_Post_Plugin
       }
     };
     class reader_gshhs:public reader{
-      /*	$Id: GSHHS.cpp,v 1.23 2009-01-15 13:28:30 remacle Exp $
+      /*	$Id: GSHHS.cpp,v 1.24 2009-01-19 11:57:29 remacle Exp $
        *
        * Include file defining structures used in gshhs.c
        *
@@ -767,7 +767,7 @@ class GMSH_GSHHSPlugin:public GMSH_Post_Plugin
       }
       void add_point(SPoint3 point){
         double r=sqrt(point.x()*point.x()+point.y()*point.y()+point.z()*point.z());
-        SPoint2 stereo(2*r*point.x() / (r + point.z()), 2*r*point.y() / (r + point.z()));
+        SPoint2 stereo(-point.x() / (r + point.z()), -point.y() / (r + point.z()));
         loop_buff << "Point ( IP + " << ip++ << " ) = {" << stereo.
           x() << ", " << stereo.y() << ", " << 0 << " };\n";
       }

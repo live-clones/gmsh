@@ -83,14 +83,13 @@ gmshSurface *gmshPolarSphere::NewPolarSphere(int iSphere, double x, double y, do
 
 gmshPolarSphere::gmshPolarSphere(double x, double y, double z, double _r) : r(_r), o(x,y,z) {
 }
-SPoint3 gmshPolarSphere::point(double parA, double parB) const
+SPoint3 gmshPolarSphere::point(double u, double v) const
 {
   //stereographic projection from the south pole, origin of the axis
   //at the center of the sphere 
-  //parA=2rx/(r+z) parB=2ry/(r+z)
-  double rp2 = parA * parA + parB * parB;
-  double z=r*(4*r*r-rp2)/(4*r*r+rp2);
-  SPoint3 p(parA*(r+z)/(2*r),parB*(r+z)/(2*r),z);
+  //u=-x/(r+z) v=-y/(r+z)
+  double rp2 = u*u+v*v;
+  SPoint3 p(-2*r*u/(1+rp2),-2*r*v/(1+rp2),r*(1-rp2)/(1+rp2));
   p += o;
   return p;
 }
