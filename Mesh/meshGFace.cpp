@@ -432,6 +432,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
     reparamMeshVertexOnFace(here, gf, param);
     U_[count] = param[0];
     V_[count] = param[1];
+    //    printf("coucou : %g %g -> %g %g\n",here->x(),here->y(),param.x(),param.y());
     (*itv)->setIndex(count);
     numbered_vertices[(*itv)->getIndex()] = *itv;
     bbox += SPoint3(param.x(), param.y(), 0);
@@ -1368,6 +1369,7 @@ void meshGFace::operator() (GFace *gf)
 
   Msg::Debug("Generating the mesh");
   if(noseam(gf) || gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){
+    //gmsh2DMeshGeneratorPeriodic(gf, debugSurface >= 0 || debugSurface == -100);
     gmsh2DMeshGenerator(gf, 0, debugSurface >= 0 || debugSurface == -100);
   }
   else{

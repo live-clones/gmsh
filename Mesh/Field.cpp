@@ -968,26 +968,27 @@ class PostViewField : public Field
     if(!octree->searchScalar(x, y, z, &l, 0)) {
       // try really hard to find an element around the point
       /*
-	double fact[4] = {1.e-6, 1.e-5, 1.e-4, 1.e-3};
-	for(int i = 0; i < 4; i++){
-	  double eps = CTX.lc * fact[i];
-	  printf("approx search witg eps=%g\n", eps);
-	  if(octree->searchScalar(x + eps, y, z, &l, 0)) break;
-	  if(octree->searchScalar(x - eps, y, z, &l, 0)) break;
-	  if(octree->searchScalar(x, y + eps, z, &l, 0)) break;
-	  if(octree->searchScalar(x, y - eps, z, &l, 0)) break;
-	  if(octree->searchScalar(x, y, z + eps, &l, 0)) break;
-	  if(octree->searchScalar(x, y, z - eps, &l, 0)) break;
-	  if(octree->searchScalar(x + eps, y - eps, z - eps, &l, 0)) break;
-	  if(octree->searchScalar(x + eps, y + eps, z - eps, &l, 0)) break;
-	  if(octree->searchScalar(x - eps, y - eps, z - eps, &l, 0)) break;
-	  if(octree->searchScalar(x - eps, y + eps, z - eps, &l, 0)) break;
-	  if(octree->searchScalar(x + eps, y - eps, z + eps, &l, 0)) break;
-	  if(octree->searchScalar(x + eps, y + eps, z + eps, &l, 0)) break;
-	  if(octree->searchScalar(x - eps, y - eps, z + eps, &l, 0)) break;
-	  if(octree->searchScalar(x - eps, y + eps, z + eps, &l, 0)) break;
-	}
-      */
+      double fact[4] = {1.e-6, 1.e-5, 1.e-4, 1.e-2};
+      for(int i = 0; i < 4; i++){
+	double eps = CTX.lc * fact[i];
+	//	printf("approx search witg eps=%g\n", eps);
+	if(octree->searchScalar(x + eps, y, z, &l, 0)) break;
+	if(octree->searchScalar(x - eps, y, z, &l, 0)) break;
+	if(octree->searchScalar(x, y + eps, z, &l, 0)) break;
+	if(octree->searchScalar(x, y - eps, z, &l, 0)) break;
+	if(octree->searchScalar(x, y, z + eps, &l, 0)) break;
+	if(octree->searchScalar(x, y, z - eps, &l, 0)) break;
+	if(octree->searchScalar(x + eps, y - eps, z - eps, &l, 0)) break;
+	if(octree->searchScalar(x + eps, y + eps, z - eps, &l, 0)) break;
+	if(octree->searchScalar(x - eps, y - eps, z - eps, &l, 0)) break;
+	if(octree->searchScalar(x - eps, y + eps, z - eps, &l, 0)) break;
+	if(octree->searchScalar(x + eps, y - eps, z + eps, &l, 0)) break;
+	if(octree->searchScalar(x + eps, y + eps, z + eps, &l, 0)) break;
+	if(octree->searchScalar(x - eps, y - eps, z + eps, &l, 0)) break;
+	if(octree->searchScalar(x - eps, y + eps, z + eps, &l, 0)) break;
+      } 
+      */     
+      //      printf("oops\n");
     }
     if(l <= 0 && crop_negative_values) return MAX_LC;
     return l;

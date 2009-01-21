@@ -292,10 +292,10 @@ void *searchElement(octantBucket *_buckets_head, double *_pt, globalInfo *_globa
       flag = xyzInElement(ptrToEle, _pt);
     if (flag == 1) return ptrToEle;
   }
-        
+     
   ptrBucket = findElementBucket(_buckets_head, _pt);
   if (ptrBucket == NULL) {
-    // printf("Error! the point is not in the domain.\n");
+    printf("Error! the point is not in the domain.\n");
     return NULL;
   }     
 

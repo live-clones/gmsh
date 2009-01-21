@@ -9,15 +9,21 @@
 #include "Numeric.h"
 #include "GmshMessage.h"
 
-#define ONE     (1. + 1.e-6)
-#define ZERO    (-1.e-6)
 #define SQU(a)  ((a)*(a))
 
 class element{
 protected:
   double *_x, *_y, *_z;
+  static double ONE, ZERO;
 public:
   element(double *x, double *y, double *z) : _x(x), _y(y), _z(z) {}
+  static void setTolerance (const double tol){
+    ONE = 1.+tol;
+    ZERO = -tol;
+  }
+  static double getTolerance () {
+    return -ZERO;
+  }
   virtual ~element(){}
   virtual int getDimension() = 0;
   virtual int getNumNodes() = 0;

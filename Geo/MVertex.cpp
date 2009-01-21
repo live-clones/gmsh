@@ -320,8 +320,11 @@ bool reparamMeshVertexOnFace(const MVertex *v, const GFace *gf, SPoint2 &param)
 
   if(v->onWhat()->dim() == 0){
     GVertex *gv = (GVertex*)v->onWhat();
-    param = gv->reparamOnFace(gf, 1);
-
+    // hack for bug in periodic curves
+    if (gv->getNativeType() == GEntity::GmshModel && gf->geomType() == GEntity::Plane)
+      param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
+    else
+      param = gv->reparamOnFace(gf, 1);
     // shout, we could be on a seam
     std::list<GEdge*> ed = gv->edges();
     for(std::list<GEdge*>::iterator it = ed.begin(); it != ed.end(); it++)

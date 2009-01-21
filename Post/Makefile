@@ -19,7 +19,7 @@ SRC = PView.cpp PViewIO.cpp\
           PViewDataList.cpp PViewDataListIO.cpp\
           PViewDataGModel.cpp PViewDataGModelIO.cpp\
         PViewOptions.cpp\
-      adaptiveData.cpp\
+      adaptiveData.cpp shapeFunctions.cpp\
       OctreePost.cpp\
       ColorTable.cpp
 
