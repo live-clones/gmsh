@@ -241,7 +241,7 @@ int subdivideOctantBucket(octantBucket *_bucket, globalInfo *_globalPara)
   // _bucket->next  = (octantBucket *) calloc(numBuck,sizeof(octantBucket));
 
   if (!_bucket->next) {
-    fprintf(stderr,"Error, subdivideOctantBucket could not allocate enough space\n");
+    Msg::Error("subdivideOctantBucket could not allocate enough space");
     return 0;
   }
 
@@ -295,7 +295,7 @@ void *searchElement(octantBucket *_buckets_head, double *_pt, globalInfo *_globa
      
   ptrBucket = findElementBucket(_buckets_head, _pt);
   if (ptrBucket == NULL) {
-    printf("Error! the point is not in the domain.\n");
+    Msg::Error("The point is not in the domain");
     return NULL;
   }     
 
