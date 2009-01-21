@@ -17,13 +17,8 @@ protected:
   static double ONE, ZERO;
 public:
   element(double *x, double *y, double *z) : _x(x), _y(y), _z(z) {}
-  static void setTolerance (const double tol){
-    ONE = 1.+tol;
-    ZERO = -tol;
-  }
-  static double getTolerance () {
-    return -ZERO;
-  }
+  static void setTolerance (const double tol){ ONE = 1. + tol; ZERO = -tol; }
+  static double getTolerance () { return -ZERO; }
   virtual ~element(){}
   virtual int getDimension() = 0;
   virtual int getNumNodes() = 0;

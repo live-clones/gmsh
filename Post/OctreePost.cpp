@@ -393,22 +393,8 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
   return true;
 } 
 
-bool OctreePost::searchScalar(double x, double y, double z, double *values, 
-                              int step, double *size)
-{
-  bool a =  searchScalar_(x,y,z,values,step,size);
-  if (!a){
-    element::setTolerance(10.);
-    a =  searchScalar_(x,y,z,values,step,size);
-    element::setTolerance(1.e-3);
-  }    
-  if (!a)printf("cannot find %g %g %g\n",x,y,z);
-  return a;
-}
-
-
-bool OctreePost::searchScalar_(double x, double y, double z, double *values, 
-                              int step, double *size)
+bool OctreePost::_searchScalar(double x, double y, double z, double *values, 
+                               int step, double *size)
 {
   double P[3] = {x, y, z};
 
@@ -436,6 +422,20 @@ bool OctreePost::searchScalar_(double x, double y, double z, double *values,
   }
   
   return false;
+}
+
+bool OctreePost::searchScalar(double x, double y, double z, double *values, 
+                              int step, double *size)
+{
+  bool a = _searchScalar(x, y, z, values, step, size);
+  if (!a){
+    double oldeps = element::getTolerance();
+    element::setTolerance(10.);
+    a = _searchScalar(x, y, z, values, step, size);
+    element::setTolerance(oldeps);
+  }    
+  if (!a) Msg::Debug("No element found containing point (%g,%g,%g)", x, y, z);
+  return a;
 }
 
 bool OctreePost::searchVector(double x, double y, double z, double *values, 

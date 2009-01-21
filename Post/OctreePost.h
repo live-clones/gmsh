@@ -30,8 +30,8 @@ class OctreePost
                  double *elementSize);
   bool _getValue(void *in, int nbComp, double P[3], int step, 
                  double *values, double *elementSize);
-  bool searchScalar_(double x, double y, double z, double *values, 
-                    int step = -1, double *size = 0);
+  bool _searchScalar(double x, double y, double z, double *values, 
+                     int step = -1, double *size = 0);
  public :
   OctreePost(PView *);
   ~OctreePost();
