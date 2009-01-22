@@ -340,16 +340,19 @@ int PViewDataGModel::getNumValues(int step, int ent, int ele)
   if(_type == ElementNodeData || _type == NodeData){
     return getNumNodes(step, ent, ele) * getNumComponents(step, ent, ele);
   }
+  else if(_type == ElementData){
+    return getNumComponents(step, ent, ele);
+  }
   else{
-    Msg::Error("getNumValues should not be used on this type of view");
-    return 0;
+    Msg::Error("getNumValue() should not be used on this type of view");
+    return getNumComponents(step, ent, ele);
   }
 }
 
 void PViewDataGModel::getValue(int step, int ent, int ele, int idx, double &val)
 {
   MElement *e = _getElement(step, ent, ele);
-  if(_type == ElementNodeData){
+  if(_type == ElementNodeData || _type == ElementData){
     val = _steps[step]->getData(e->getNum())[idx];
   }
   else if(_type == NodeData){
