@@ -417,11 +417,14 @@ bool OctreePost::searchScalar(double x, double y, double z, double *values,
                               int step, double *size)
 {
   bool a = _searchScalar(x, y, z, values, step, size);
-  if (!a){
-    double oldeps = element::getTolerance();
+  if(!a){
+    double oldeps1 = element::getTolerance();
+    double oldeps2 = MElement::getTolerance();
     element::setTolerance(10.);
+    MElement::setTolerance(10.);
     a = _searchScalar(x, y, z, values, step, size);
-    element::setTolerance(oldeps);
+    element::setTolerance(oldeps1);
+    MElement::setTolerance(oldeps2);
   }    
   if (!a) Msg::Debug("No element found containing point (%g,%g,%g)", x, y, z);
   return a;

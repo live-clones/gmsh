@@ -33,6 +33,9 @@ class MElement
   // a visibility flag
   char _visible;
  protected:
+  // the tolerance used to determine if a point is inside an element,
+  // in parametric coordinates
+  static double _isInsideTolerance;
   void _getEdgeRep(MVertex *v0, MVertex *v1, 
                    double *x, double *y, double *z, SVector3 *n,
                    int faceIndex=-1);
@@ -54,6 +57,10 @@ class MElement
 
   // reset the global node number
   static void resetGlobalNumber(){ _globalNum = 0; }
+
+  // set/get the tolerance for isInside() test
+  static void setTolerance (const double tol){ _isInsideTolerance = tol; }
+  static double getTolerance () { return _isInsideTolerance; }
 
   // return the tag of the element
   virtual int getNum(){ return _num; }
@@ -187,7 +194,7 @@ class MElement
 
   // test if a point, given in parametric coordinates, belongs to the
   // element
-  virtual bool isInside(double u, double v, double w, double tol=1.e-8) = 0;
+  virtual bool isInside(double u, double v, double w) = 0;
 
   // interpolate the given nodal data (resp. its gradient, curl and
   // divergence) at point (u,v,w) in parametric coordinates
@@ -296,7 +303,7 @@ class MPoint : public MElement {
   {
     s[0][0] = s[0][1] = s[0][2] = 0.;
   }
-  virtual bool isInside(double u, double v, double w, double tol=1.e-8)
+  virtual bool isInside(double u, double v, double w)
   {
     return true;
   }
@@ -357,8 +364,9 @@ class MLine : public MElement {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
   }
   virtual const gmshFunctionSpace* getFunctionSpace(int o=-1) const;
-  virtual bool isInside(double u, double v, double w, double tol=1.e-8)
+  virtual bool isInside(double u, double v, double w)
   {
+    double tol = _isInsideTolerance;
     if(u < -(1. + tol) || u > (1. + tol))
       return false;
     return true;
@@ -569,8 +577,9 @@ class MTriangle : public MElement {
     MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
   }
   virtual const gmshFunctionSpace* getFunctionSpace(int o=-1) const;
-  virtual bool isInside(double u, double v, double w, double tol=1.e-8)
+  virtual bool isInside(double u, double v, double w)
   {
+    double tol = _isInsideTolerance;
     if(u < (-tol) || v < (-tol) || u > ((1. + tol) - v))
       return false; 
     return true;
@@ -862,8 +871,9 @@ class MQuadrangle : public MElement {
     s[2][0] =  0.25 * (1. + v); s[2][1] =  0.25 * (1. + u); s[2][2] = 0.;
     s[3][0] = -0.25 * (1. + v); s[3][1] =  0.25 * (1. - u); s[3][2] = 0.;
   }
-  virtual bool isInside(double u, double v, double w, double tol=1.e-8)
+  virtual bool isInside(double u, double v, double w)
   {
+    double tol = _isInsideTolerance;
     if(u < -(1. + tol) || v < -(1. + tol) || u > (1. + tol) || v > (1. + tol))
       return false;
     return true;
@@ -1190,8 +1200,9 @@ class MTetrahedron : public MElement {
   virtual double etaShapeMeasure();
   void xyz2uvw(double xyz[3], double uvw[3]);
   virtual const gmshFunctionSpace* getFunctionSpace(int o=-1) const;
-  virtual bool isInside(double u, double v, double w, double tol=1.e-8)
+  virtual bool isInside(double u, double v, double w)
   {
+    double tol = _isInsideTolerance;
     if(u < (-tol) || v < (-tol) || w < (-tol) || u > ((1. + tol) - v - w))
       return false;
     return true;
@@ -1657,8 +1668,9 @@ class MHexahedron : public MElement {
     s[7][1] =  0.125 * (1. - u) * (1. + w);
     s[7][2] =  0.125 * (1. - u) * (1. + v);
   }
-  virtual bool isInside(double u, double v, double w, double tol=1.e-8)
+  virtual bool isInside(double u, double v, double w)
   {
+    double tol = _isInsideTolerance;
     if(u < -(1. + tol) || v < -(1. + tol) || w < -(1. + tol) || 
        u > (1. + tol) || v > (1. + tol) || w > (1. + tol))
       return false;
@@ -2131,8 +2143,9 @@ class MPrism : public MElement {
     s[5][1] =  0.5 * (1. + w)    ;
     s[5][2] =  0.5 * v           ;
   }
-  virtual bool isInside(double u, double v, double w, double tol=1.e-8)
+  virtual bool isInside(double u, double v, double w)
   {
+    double tol = _isInsideTolerance;
     if(w > (1. + tol) || w < -(1. + tol) || u < (1. + tol)
        || v < (1. + tol) || u > ((1. + tol) - v))
       return false;
@@ -2577,8 +2590,9 @@ class MPyramid : public MElement {
     s[4][1] = 0.;
     s[4][2] = 1.;
   }
-  virtual bool isInside(double u, double v, double w, double tol=1.e-8)
+  virtual bool isInside(double u, double v, double w)
   {
+    double tol = _isInsideTolerance;
     if(u < (w - (1. + tol)) || u > ((1. + tol) - w) || v < (w - (1. + tol)) ||
        v > ((1. + tol) - w) || w < (-tol) || w > (1. + tol))
       return false;
