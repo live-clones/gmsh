@@ -20,14 +20,12 @@
 static void minmax(int n, double *X, double *Y, double *Z,
                    double *min, double *max)
 {
-  const double eps = 1.e-1;
   min[0] = X[0];
   min[1] = Y[0];
   min[2] = Z[0];
   max[0] = X[0];
   max[1] = Y[0];
   max[2] = Z[0];
-
   for(int i = 1; i < n; i++) {
     min[0] = (X[i] < min[0]) ? X[i] : min[0];
     min[1] = (Y[i] < min[1]) ? Y[i] : min[1];
@@ -36,15 +34,6 @@ static void minmax(int n, double *X, double *Y, double *Z,
     max[1] = (Y[i] > max[1]) ? Y[i] : max[1];
     max[2] = (Z[i] > max[2]) ? Z[i] : max[2];
   }
-  const double L = eps * sqrt ((min[0]-max[0])*(min[0]-max[0])+
-			       (min[1]-max[1])*(min[1]-max[1])+
-			       (min[2]-max[2])*(min[2]-max[2]));
-  min[0] -= L;
-  min[1] -= L;
-  min[2] -= L;
-  max[0] += L;
-  max[1] += L;
-  max[2] += L;
 }
 
 static void centroid(int n, double *X, double *Y, double *Z, double *c)
