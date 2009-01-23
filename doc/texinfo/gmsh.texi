@@ -552,7 +552,7 @@ You can skip most of this reference manual if you only want to use Gmsh
 at the first level (i.e., interactively with the GUI). Just read the
 next chapter (@pxref{Running Gmsh on your system}) to learn how to
 launch Gmsh on your system, then go play with the GUI and run the
-tutorials files (@pxref{Tutorial}) bundled in the distribution.
+tutorial files (@pxref{Tutorial}) bundled in the distribution.
 Screencasts that show how to use the GUI are available here:
 @uref{http://www.geuz.org/gmsh/screencasts/}.
 
@@ -717,11 +717,15 @@ while a click on the arrow button on the right will provide access to
 the view's options.
 
 Note that all the options specified interactively can also be directly
-specified in the script files. All available options, with their current
-values, can be saved into a file by selecting `File->Save As->Gmsh
-options', or simply viewed by pressing the `?' button in the status
-bar. To save the current options as your default preferences for all
-future Gmsh sessions, use the `File->Save Default Options' menu.
+specified in the script files. You can save the current options of the
+current active model with the `File->Save Options' menu. This will
+create a new option file with the same filename as the active model, but
+with an extra @file{.opt} extension added. The next time you open this
+model, the associated options will be automatically loaded, too.  To
+save the current options as your default preferences for all future Gmsh
+sessions, use the `File->Save Default Options' menu instead. Finally,
+you can also save the current options in an arbitrary file by choosing
+the `Gmsh options' format in `File->Save As'.
 
 @c -------------------------------------------------------------------------
 @c Non-interactive mode
@@ -732,12 +736,10 @@ future Gmsh sessions, use the `File->Save Default Options' menu.
 
 @cindex Non-interactive mode
 
-You can also run Gmsh non-interactively, in `batch' mode. There is no
-GUI in batch mode and all operations are performed without user
-interaction@footnote{If you compile Gmsh without the GUI, i.e., with
+Gmsh can be run non-interactively in `batch' mode, without
+GUI@footnote{If you compile Gmsh without the GUI, i.e., with
 @code{./configure --disable-gui}, this is the only mode you have access
-to.}. For example, to mesh the first tutorial in non-interactive mode,
-just type:
+to.}. For example, to mesh the first tutorial in batch mode, just type:
 
 @example
 > gmsh t1.geo -2
