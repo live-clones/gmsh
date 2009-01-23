@@ -2944,7 +2944,7 @@ post-processing datasets (@code{$NodeData}, @code{$ElementData},
 
 Any section with an unrecognized header is simply ignored: you can thus
 add comments in a @file{.msh} file by putting them e.g. inside a
-@code{$Comments}/@code{$EndComments}) section.
+@code{$Comments}/@code{$EndComments} section.
 
 Sections can be repeated in the same file, and post-processing sections
 can be put into separate files (e.g. one file per time step).

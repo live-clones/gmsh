@@ -3,5 +3,5 @@
 C:
 chdir C:\cygwin\bin
 
-bash --login C:\cygwin\home\Administrator\nightly.sh
+bash --login C:\cygwin\home\Administrator\windows_nightly.sh
 
