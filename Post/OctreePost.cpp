@@ -382,8 +382,8 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
   return true;
 } 
 
-bool OctreePost::_searchScalar(double x, double y, double z, double *values, 
-                               int step, double *size)
+bool OctreePost::searchScalar(double x, double y, double z, double *values, 
+                              int step, double *size)
 {
   double P[3] = {x, y, z};
 
@@ -413,20 +413,19 @@ bool OctreePost::_searchScalar(double x, double y, double z, double *values,
   return false;
 }
 
-bool OctreePost::searchScalar(double x, double y, double z, double *values, 
-                              int step, double *size)
+bool OctreePost::searchScalarWithTol(double x, double y, double z, double *values, 
+                                     int step, double *size, double tol)
 {
-  bool a = _searchScalar(x, y, z, values, step, size);
+  bool a = searchScalar(x, y, z, values, step, size);
   if(!a){
-    double oldeps1 = element::getTolerance();
-    double oldeps2 = MElement::getTolerance();
-    element::setTolerance(10.);
-    MElement::setTolerance(10.);
-    a = _searchScalar(x, y, z, values, step, size);
-    element::setTolerance(oldeps1);
-    MElement::setTolerance(oldeps2);
+    double oldtol1 = element::getTolerance();
+    double oldtol2 = MElement::getTolerance();
+    element::setTolerance(tol);
+    MElement::setTolerance(tol);
+    a = searchScalar(x, y, z, values, step, size);
+    element::setTolerance(oldtol1);
+    MElement::setTolerance(oldtol2);
   }    
-  if (!a) Msg::Debug("No element found containing point (%g,%g,%g)", x, y, z);
   return a;
 }
 

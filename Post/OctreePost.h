@@ -30,8 +30,6 @@ class OctreePost
                  double *elementSize);
   bool _getValue(void *in, int nbComp, double P[3], int step, 
                  double *values, double *elementSize);
-  bool _searchScalar(double x, double y, double z, double *values, 
-                     int step = -1, double *size = 0);
  public :
   OctreePost(PView *);
   ~OctreePost();
@@ -41,11 +39,13 @@ class OctreePost
   // interpolated unless time step is set to a different value than
   // -1.
   bool searchScalar(double x, double y, double z, double *values, 
-                    int step = -1, double *size = 0);
+                    int step=-1, double *size=0);
+  bool searchScalarWithTol(double x, double y, double z, double *values, 
+                           int step=-1, double *size=0, double tol=1.e-2);
   bool searchVector(double x, double y, double z, double *values, 
-                    int step = -1, double *size = 0);
+                    int step=-1, double *size=0);
   bool searchTensor(double x, double y, double z, double *values, 
-                    int step = -1, double *size = 0);
+                    int step=-1, double *size=0);
 };
 
 #endif

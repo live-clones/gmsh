@@ -1,10 +1,11 @@
-$Id: VERSIONS.txt,v 1.31 2009-01-15 00:45:11 geuzaine Exp $
+$Id: VERSIONS.txt,v 1.32 2009-01-23 07:32:54 geuzaine Exp $
 
-2.3.0 (?): major graphics and GUI code refactoring; new full-quad/hexa
-subdivision algorithm (removed Mesh.RecombineAlgo); improved automatic
-transfinite corner selection (now also for volumes); improved
-visibility browser; modified arrow size, clipping planes and transform
-options; many small improvements and bug fixes all over the place.
+2.3.0 (Jan 23, 2009): major graphics and GUI code refactoring; new
+full-quad/hexa subdivision algorithm (removed Mesh.RecombineAlgo);
+improved automatic transfinite corner selection (now also for
+volumes); improved visibility browser; modified arrow size, clipping
+planes and transform options; many small improvements and bug fixes
+all over the place.
 
 2.2.6 (Nov 21, 2008): better transfinite smoothing and automatic
 corner selection; fixed high order meshing crashes on Windows and
