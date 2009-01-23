@@ -8,8 +8,8 @@ include ../variables
 LIB = ../lib/libGmshGeo${LIBEXT}
 
 INC = ${DASH}I../Common ${DASH}I../Geo ${DASH}I../Mesh\
-      ${DASH}I../Post ${DASH}I../Numeric ${DASH}I../Parser ${DASH}I../Fltk\
-      ${DASH}I../contrib/NR ${DASH}I../contrib/ANN/include\
+      ${DASH}I../Post ${DASH}I../Numeric ${DASH}I../Parser\
+      ${DASH}I../contrib/ANN/include\
       ${DASH}I../contrib/MathEval ${DASH}I../contrib/gmm
 
 CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}

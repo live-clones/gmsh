@@ -135,6 +135,9 @@ adaptiveData${OBJEXT}: adaptiveData.cpp adaptiveData.h ../Numeric/GmshMatrix.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/ListUtils.h \
   ../Common/OS.h
+shapeFunctions${OBJEXT}: shapeFunctions.cpp shapeFunctions.h \
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
+  ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Common/GmshMessage.h
 OctreePost${OBJEXT}: OctreePost.cpp ../Common/Octree.h \
   ../Common/OctreeInternals.h OctreePost.h ../Common/ListUtils.h PView.h \
   ../Geo/SPoint3.h PViewDataList.h PViewData.h ../Geo/SBoundingBox3d.h \

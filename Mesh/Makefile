@@ -8,8 +8,7 @@ include ../variables
 LIB = ../lib/libGmshMesh${LIBEXT}
 
 INC = ${DASH}I../Numeric ${DASH}I../Common ${DASH}I../Geo\
-      ${DASH}I../Mesh ${DASH}I../Post ${DASH}I../Graphics\
-      ${DASH}I../Fltk ${DASH}I../contrib/NR ${DASH}I../contrib/Triangle\
+      ${DASH}I../Mesh ${DASH}I../Post\
       ${DASH}I../contrib/Tetgen ${DASH}I../contrib/Netgen\
       ${DASH}I../contrib/Netgen/libsrc/include\
       ${DASH}I../contrib/Netgen/libsrc/interface\

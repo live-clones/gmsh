@@ -7,7 +7,7 @@ include ../variables
 
 LIB = ../lib/libGmshNumeric${LIBEXT}
 
-INC = ${DASH}I../Common ${DASH}I../Numeric ${DASH}I../contrib/NR ${DASH}I../Geo
+INC = ${DASH}I../Common ${DASH}I../Numeric ${DASH}I../Geo
 
 CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
