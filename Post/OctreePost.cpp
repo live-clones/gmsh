@@ -369,7 +369,7 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
         }
       }
       for(int comp = 0; comp < nbComp; comp++){
-        double val = e->interpolate(nodeval, U[0], U[1], U[2], nbComp);
+        double val = e->interpolate(&nodeval[comp], U[0], U[1], U[2], nbComp);
         if(timestep < 0)
           values[nbComp * step + comp] = val;
         else
