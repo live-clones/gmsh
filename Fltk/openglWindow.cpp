@@ -8,6 +8,7 @@
 #include "graphicWindow.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
+#include "visibilityWindow.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -231,16 +232,22 @@ void openglWindow::draw()
   locked = 0;
 }
 
-// The event model in FLTK is pretty different from other toolkits:
-// the events are passed to the widget handle of the widget that has
-// the focus. If this handle returns 1, then the event is considered
-// as treated, and is suppressed. If the handle returns 0, the event
-// is passed to the parent.
-
 openglWindow *openglWindow::_lastHandled = 0;
+
+void openglWindow::_setLastHandled(openglWindow* w)
+{
+  _lastHandled = w;
+  GUI::instance()->visibility->updatePerWindow();
+}
 
 int openglWindow::handle(int event)
 {
+  // The event model in FLTK is pretty different from other toolkits:
+  // the events are passed to the widget handle of the widget that has
+  // the focus. If this handle returns 1, then the event is considered
+  // as treated, and is suppressed. If the handle returns 0, the event
+  // is passed to the parent.
+
   switch (event) {
 
   case FL_FOCUS: // accept the focus when I'm asked if I want it
@@ -255,7 +262,7 @@ int openglWindow::handle(int event)
     return Fl_Gl_Window::handle(event);
     
   case FL_PUSH:
-    _lastHandled = this;
+    _setLastHandled(this);
     take_focus(); // force keyboard focus when we click in the window
     _curr.set(_ctx);
     if(Fl::event_button() == 1 && 
@@ -339,7 +346,6 @@ int openglWindow::handle(int event)
     return 1;
 
   case FL_RELEASE:
-    _lastHandled = this;
     _curr.set(_ctx);
     CTX.draw_rotation_center = 0;
     if(!lassoMode) {
@@ -364,7 +370,6 @@ int openglWindow::handle(int event)
     return 1;
 
   case FL_DRAG:
-    _lastHandled = this;
     _curr.set(_ctx);
     {
       double dx = _curr.win[0] - _prev.win[0];

@@ -1373,6 +1373,7 @@ class drawPView {
 
     if(data->getDirty() || !data->getNumTimeSteps()) return;
     if(!opt->Visible || opt->Type != PViewOptions::Plot3D) return;
+    if(!_ctx->isVisible(p)) return;
    
     glPointSize(opt->PointSize);
     gl2psPointSize(opt->PointSize * CTX.print.eps_point_size_factor);

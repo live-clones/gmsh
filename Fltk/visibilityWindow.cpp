@@ -4,6 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string>
+#include <sstream>
 #include <map>
 #include <vector>
 #include <string.h>
@@ -16,10 +17,13 @@
 #include "visibilityWindow.h"
 #include "paletteWindow.h"
 #include "contextWindow.h"
+#include "graphicWindow.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "MElement.h"
+#include "PView.h"
+#include "PViewData.h"
 #include "GeoStringInterface.h"
 #include "Options.h"
 #include "Context.h"
@@ -553,7 +557,7 @@ static void _rebuild_tree_browser(bool force)
     std::string s(" <<");
     s += m->getName() + ">>";
     if(m == GModel::current()) s += " (Active)";
-    sprintf(str, "Model %d %s/", i, s.c_str());
+    sprintf(str, "Model [%d] %s/", i, s.c_str());
     Flu_Tree_Browser::Node *n = GUI::instance()->visibility->tree->add(str);
     if(m->getVisibility()) n->select(true);
     Flu_Tree_Browser::Node *e = n->add("Elementary entities/");
@@ -686,6 +690,7 @@ void visibility_cb(Fl_Widget *w, void *data)
 #if defined(HAVE_TREE_BROWSER)
   _rebuild_tree_browser(false);
 #endif
+  GUI::instance()->visibility->updatePerWindow(true);
 }
 
 static void visibility_save_cb(Fl_Widget *w, void *data)
@@ -1039,6 +1044,37 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
   Msg::StatusBar(3, false, "");
 }
 
+static void visibility_per_window_cb(Fl_Widget *w, void *data)
+{
+  std::string what = (const char*)data;
+  if(what == "item"){
+    drawContext *ctx = GUI::instance()->getCurrentOpenglWindow()->getDrawContext();
+    for(int i = 0; i < GUI::instance()->visibility->per_window->size(); i++){
+      if(i < GModel::list.size()){
+        GModel *m = GModel::list[i];
+        if(GUI::instance()->visibility->per_window->selected(i + 1)) ctx->show(m);
+        else ctx->hide(m);
+      }
+      else if(i < GModel::list.size() + PView::list.size()){
+        PView *v = PView::list[i - GModel::list.size()];
+        if(GUI::instance()->visibility->per_window->selected(i + 1)) ctx->show(v);
+        else ctx->hide(v);
+      }
+    }
+  }
+  else if(what == "reset_all"){
+    for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++){
+      for(unsigned int j = 0; j < GUI::instance()->graph[i]->gl.size(); j++){
+        drawContext *ctx = GUI::instance()->graph[i]->gl[j]->getDrawContext();
+        ctx->showAll();
+      }
+    }
+    for(int i = 0; i < GUI::instance()->visibility->per_window->size(); i++)
+      GUI::instance()->visibility->per_window->select(i + 1);
+  }
+  Draw();
+}
+
 visibilityWindow::visibilityWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
@@ -1141,7 +1177,6 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     tree->branch_icons(0, 0);
     tree->branch_text(FL_BLACK, FL_HELVETICA_BOLD, FL_NORMAL_SIZE - 1);
     tree->leaf_text(FL_BLACK, FL_HELVETICA, FL_NORMAL_SIZE - 1);
-    Fl_Group::current()->resizable(tree);
     tree->hide();
 
     tree_create = new Fl_Button
@@ -1155,6 +1190,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
       (width - 1 * BB - 2 * WB, height - 2 * BH - 3 * WB, BB, BH, "Apply");
     b1->callback(visibility_tree_apply_cb);
 
+    g->resizable(tree);
     g->end();
   }
 #endif
@@ -1296,6 +1332,22 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     
     g->end();
   }
+  {
+    Fl_Group *g = new Fl_Group
+      (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Per window");
+    g->resizable(NULL);
+
+    per_window = new Fl_Multi_Browser
+      (2 * WB, 2 * WB + BH, brw, height - 6 * WB - 3 * BH);
+    per_window->callback(visibility_per_window_cb, (void*)"item");
+
+    Fl_Button *b1 = new Fl_Button
+      (width - 1 * BB - 2 * WB, height - 2 * BH - 3 * WB, BB, BH, "Reset all");
+    b1->callback(visibility_per_window_cb, (void*)"reset_all");
+ 
+    g->resizable(per_window);
+    g->end();
+  }
   o->end();
 
   win->resizable(o);
@@ -1325,4 +1377,36 @@ void visibilityWindow::show(bool redrawOnly)
     win->redraw();
   else
     win->show();
+}
+
+void visibilityWindow::updatePerWindow(bool force)
+{
+  static openglWindow *gl = 0;
+  if(!force && gl == GUI::instance()->getCurrentOpenglWindow()) return;
+
+  gl = GUI::instance()->getCurrentOpenglWindow();
+  drawContext *ctx = gl->getDrawContext();
+ 
+  per_window->clear();
+  int line = 1;
+
+  for(unsigned int i = 0; i < GModel::list.size(); i++){
+    GModel *m = GModel::list[i];
+    std::ostringstream sstream;
+    sstream << "Model [" << i << "] <<" << m->getName() << ">>";
+    per_window->add(sstream.str().c_str());
+    if(ctx->isVisible(m))
+      per_window->select(line, 1);
+    line++;
+  }
+
+  for(unsigned int i = 0; i < PView::list.size(); i++){
+    PView *v = PView::list[i];
+    std::ostringstream sstream;
+    sstream << "View [" << i << "] <<" << v->getData()->getName() << ">>";
+    per_window->add(sstream.str().c_str());
+    if(ctx->isVisible(v))
+      per_window->select(line, 1);
+    line++;
+  }
 }

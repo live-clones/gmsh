@@ -7,6 +7,7 @@
 #define _DRAW_CONTEXT_H_
 
 #include <string>
+#include <set>
 #include <FL/gl.h>
 
 //FIXME: workaround faulty fltk installs
@@ -20,6 +21,7 @@
 #include "SBoundingBox3d.h"
 
 class PView;
+class GModel;
 
 class drawTransform {
  public:
@@ -70,6 +72,8 @@ class drawContext {
   drawTransform *_transform;
   GLUquadricObj *_quadric;
   GLuint _displayLists;
+  std::set<GModel*> _hiddenModels;
+  std::set<PView*> _hiddenViews;
 
  public:
   double r[3]; // current Euler angles (in degrees!) 
@@ -102,6 +106,21 @@ class drawContext {
   {
     if(_transform) _transform->transformTwoForm(x, y, z); 
   }
+  void hide(GModel *m){ _hiddenModels.insert(m); }
+  void hide(PView *v){ _hiddenViews.insert(v); }
+  void show(GModel *m)
+  { 
+    std::set<GModel*>::iterator it = _hiddenModels.find(m);
+    if(it != _hiddenModels.end()) _hiddenModels.erase(it); 
+  }
+  void show(PView *v)
+  { 
+    std::set<PView*>::iterator it = _hiddenViews.find(v);
+    if(it != _hiddenViews.end()) _hiddenViews.erase(it); 
+  }
+  void showAll(){ _hiddenModels.clear(); _hiddenViews.clear(); }
+  bool isVisible(GModel *m){ return (_hiddenModels.find(m) == _hiddenModels.end()); }
+  bool isVisible(PView *v){ return (_hiddenViews.find(v) == _hiddenViews.end()); }
   void createQuadricsAndDisplayLists();
   void buildRotationMatrix();
   void setQuaternion(double p1x, double p1y, double p2x, double p2y);

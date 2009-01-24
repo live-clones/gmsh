@@ -37,7 +37,7 @@ void drawContext::drawText2d()
   for(unsigned int i = 0; i < PView::list.size(); i++){
     PViewData *data = PView::list[i]->getData();
     PViewOptions *opt = PView::list[i]->getOptions();
-    if(opt->Visible && opt->DrawStrings){
+    if(opt->Visible && opt->DrawStrings && isVisible(PView::list[i])){
       glColor4ubv((GLubyte *) & opt->color.text2d);
       for(int j = 0; j < data->getNumStrings2D(); j++){
         double x, y, style;
@@ -409,7 +409,8 @@ void drawContext::drawGraph2d()
   for(unsigned int i = 0; i < PView::list.size(); i++){
     PViewData *data = PView::list[i]->getData();
     PViewOptions *opt = PView::list[i]->getOptions();
-    if(!data->getDirty() && opt->Visible && opt->Type != PViewOptions::Plot3D)
+    if(!data->getDirty() && opt->Visible && opt->Type != PViewOptions::Plot3D &&
+       isVisible(PView::list[i]))
       graphs.push_back(PView::list[i]);
   }
   if(graphs.empty()) return;

@@ -968,14 +968,16 @@ void drawContext::drawMesh()
           if(status >= 3 && CTX.mesh.changed & ENT_VOLUME)
             std::for_each(m->firstRegion(), m->lastRegion(), initMeshGRegion());
         }
-        if(status >= 0)
-          std::for_each(m->firstVertex(), m->lastVertex(), drawMeshGVertex(this));
-        if(status >= 1)
-          std::for_each(m->firstEdge(), m->lastEdge(), drawMeshGEdge(this));
-        if(status >= 2)
-          std::for_each(m->firstFace(), m->lastFace(), drawMeshGFace(this));
-        if(status >= 3)
-          std::for_each(m->firstRegion(), m->lastRegion(), drawMeshGRegion(this));
+        if(isVisible(m)){
+          if(status >= 0)
+            std::for_each(m->firstVertex(), m->lastVertex(), drawMeshGVertex(this));
+          if(status >= 1)
+            std::for_each(m->firstEdge(), m->lastEdge(), drawMeshGEdge(this));
+          if(status >= 2)
+            std::for_each(m->firstFace(), m->lastFace(), drawMeshGFace(this));
+          if(status >= 3)
+            std::for_each(m->firstRegion(), m->lastRegion(), drawMeshGRegion(this));
+        }
       }
     }
 

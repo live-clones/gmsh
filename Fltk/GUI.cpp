@@ -552,7 +552,6 @@ void GUI::updateFields()
 
 void GUI::resetVisibility()
 {
-  visibility->browser->clear();
   if(visibility->win->shown())
     visibility_cb(NULL, NULL);
 }

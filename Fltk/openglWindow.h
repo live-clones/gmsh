@@ -45,6 +45,7 @@ class mousePosition {
 class openglWindow : public Fl_Gl_Window {
  private:
   static openglWindow *_lastHandled;
+  static void _setLastHandled(openglWindow*);
   mousePosition _click, _curr, _prev;
   drawContext *_ctx;
   double _point[3];

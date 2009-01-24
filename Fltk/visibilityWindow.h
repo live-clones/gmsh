@@ -7,9 +7,9 @@
 #define _VISIBILITY_WINDOW_H_
 
 #include <FL/Fl_Window.H>
-#include <FL/Fl_Group.H>
 #include <FL/Fl_Choice.H>
 #include <FL/Fl_Browser.H>
+#include <FL/Fl_Multi_Browser.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Input.H>
@@ -24,6 +24,7 @@ class visibilityWindow{
   Fl_Window *win;
   Fl_Choice *browser_type;
   Fl_Browser *browser;
+  Fl_Multi_Browser *per_window;
 #if defined(HAVE_TREE_BROWSER)
   Flu_Tree_Browser *tree;
   Fl_Button *tree_create;
@@ -34,6 +35,7 @@ class visibilityWindow{
  public:
   visibilityWindow(int deltaFontSize=0);
   void show(bool redrawOnly);
+  void updatePerWindow(bool force=false);
 };
 
 void visibility_cb(Fl_Widget *w, void *data);

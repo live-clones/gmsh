@@ -185,7 +185,7 @@ int model_chooser()
   menu->browser->clear();
   for(unsigned int i = 0; i < GModel::list.size(); i++){
     char tmp[256];
-    sprintf(tmp, "Model %d <<%s>>", i, GModel::list[i]->getName().c_str());
+    sprintf(tmp, "Model [%d] <<%s>>", i, GModel::list[i]->getName().c_str());
     menu->browser->add(tmp);
     if(GModel::list[i] == GModel::current()) menu->browser->value(i + 1);
   }
