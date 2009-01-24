@@ -85,7 +85,7 @@ class GUI{
   // since it is used elsewhere (where we want to override widget
   // navigation). This is necessary since FLTK 1.1.
   int testArrowShortcuts();
-  // set the size of the graphic window
+  // set the title of the graphic windows
   void setGraphicTitle(std::string title);
   // update the GUI when views get added or deleted
   void updateViews();
