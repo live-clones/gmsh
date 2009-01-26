@@ -250,7 +250,7 @@ void fieldWindow::saveFieldOptions()
           if(istream >> a){
             if(a != ',')
               Msg::Error("Unexpected character \'%c\' while parsing option "
-                         "'%s' of field \'%s\'", a, it->first.c_str(), f->id);
+                         "'%s' of field \'%d\'", a, it->first.c_str(), f->id);
             sstream << ", ";
           }
         }

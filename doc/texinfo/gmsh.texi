@@ -2489,14 +2489,15 @@ zero (e.g., @code{Solver.ClientServer0 = 0}). This doesn't require any
 modification to be made to the solver.
 
 If you want the solver to interact with Gmsh (for error messages, option
-definitions, post-processing, etc.), you need to link your solver with the
-@file{GmshClient.c} file and add the appropriate function calls inside your
-program. You can then proceed as in the previous case, but this time you
-should set the client-server option to 1 (e.g., @code{Solver.ClientServer0 =
-1}), so that Gmsh and the solver can communicate through a Unix socket. See
-@ref{Solver example}, for an example of how to interface a C++
-solver. Bindings for solvers written in other languages (C, Perl and Python)
-are available in the source distribution.
+definitions, post-processing, etc.), you need to include
+@file{GmshSocket.h} in your code and add the appropriate function calls
+inside your program. You can then proceed as in the previous case, but
+this time you should set the client-server option to 1 (e.g.,
+@code{Solver.ClientServer0 = 1}), so that Gmsh and the solver can
+communicate through a Unix socket. See @ref{Solver example}, for an
+example of how to interface a C++ solver. Bindings for solvers written
+in other languages (C, Perl and Python) are available in the source
+distribution.
 
 @menu
 * Solver options::              
