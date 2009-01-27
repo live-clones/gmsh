@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -47,7 +47,7 @@ int GaussLegendreTet(int n1, int n2, int n3, IntPt *pts)
       for(k=0; k < n3; k++) {
         brickToTet(pt1[i],pt2[j],pt3[k],&(pts[index].pt[0]),
                    &(pts[index].pt[1]),&(pts[index].pt[2]),&dJ);
-	pts[index++].weight = dJ*wt1[i]*wt2[j]*wt3[k]*6.0;
+	pts[index++].weight = dJ*wt1[i]*wt2[j]*wt3[k];
       }
     }
   }
@@ -67,7 +67,7 @@ int GaussLegendreTri(int n1,int n2,IntPt *pts)
     for(j=0; j < n2; j++) {
       quadToTri(pt1[i],pt2[j],&(pts[index].pt[0]),&(pts[index].pt[1]),&dJ);
       pts[index].pt[2] = 0;
-      pts[index++].weight = dJ*wt1[i]*wt2[j]*2.0;
+      pts[index++].weight = dJ*wt1[i]*wt2[j];
     }
   }
   return index;

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -7,7 +7,7 @@
 #include "GaussLegendre1D.h"
 
 IntPt GQQ1[1] = {
-  { {0.0,0.0},4.0 }
+  { {0.0,0.0,0.0},4.0 }
 };
 
 const double xq3[3] = {0.816496580928,-0.408248290464,-0.408248290464};
@@ -108,7 +108,7 @@ int GQQnPt[7] = {1,1,3,4,7,9,16};
 IntPt *getGQQPts(int order)
 { 
   
-  if(order<1)return GQQ[order];
+  if(order<2)return GQQ[order];
   if(order==2)return GQQ[3];
   if(order==3)return GQQ[3];
 
@@ -138,7 +138,7 @@ int getNGQQPts(int order)
   if(order == 3)return 4;
   if(order == 2)return 4;
 
-  if(order < 1)
+  if(order < 2)
     return GQQnPt[order]; 
   return ((order+3)/2)*((order+3)/2);
 }

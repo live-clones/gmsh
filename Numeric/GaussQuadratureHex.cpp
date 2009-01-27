@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -61,7 +61,7 @@ IntPt *getGQHPts(int order);
 int getNGQHPts(int order);
 
 IntPt * GQH[17] = {GQH1,GQH1,GQH6,GQH8,0,0,0,0,0,0,0,0,0,0,0,0,0};
-int GQHnPt[4] = {1,4,5,15};
+int GQHnPt[4] = {1,1,6,8};
 
 IntPt *getGQHPts(int order)
 { 

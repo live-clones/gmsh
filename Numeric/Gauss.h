@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -14,6 +14,9 @@ struct IntPt{
 int GaussLegendreTri(int n1, int n2, IntPt *pts);
 int GaussLegendreTet(int n1, int n2, int n3, IntPt *pts); 
 int GaussLegendreHex(int n1, int n2, int n3, IntPt *pts);
+
+int getNGQLPts (int order);
+IntPt *getGQLPts (int order);
 
 int getNGQTPts(int order);
 IntPt *getGQTPts (int order);
