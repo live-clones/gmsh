@@ -19,6 +19,7 @@ SRC = Numeric.cpp\
       gmshElasticity.cpp\
       EigSolve.cpp\
       FunctionSpace.cpp\
+      GaussQuadratureLin.cpp\
       GaussQuadratureTri.cpp\
       GaussQuadratureQuad.cpp\
       GaussQuadratureTet.cpp\
@@ -107,6 +108,7 @@ gmshElasticity${OBJEXT}: gmshElasticity.cpp gmshElasticity.h \
 EigSolve${OBJEXT}: EigSolve.cpp
 FunctionSpace${OBJEXT}: FunctionSpace.cpp FunctionSpace.h GmshMatrix.h \
   ../Common/GmshConfig.h ../Common/GmshMessage.h ../Common/GmshDefines.h
+GaussQuadratureLin${OBJEXT}: GaussQuadratureLin.cpp Gauss.h GaussLegendre1D.h
 GaussQuadratureTri${OBJEXT}: GaussQuadratureTri.cpp Gauss.h GaussLegendre1D.h
 GaussQuadratureQuad${OBJEXT}: GaussQuadratureQuad.cpp Gauss.h GaussLegendre1D.h
 GaussQuadratureTet${OBJEXT}: GaussQuadratureTet.cpp Gauss.h GaussLegendre1D.h

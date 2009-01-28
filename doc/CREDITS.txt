@@ -21,7 +21,8 @@ with the GSL integration; Marc Ume for the original list code; Matt
 Gundry for the Plot3d mesh format; Jozef Vesely for help with the
 Tetgen integration; Koen Hillewaert for high order element mappings
 and other improvements; Jacques Lechelle for the DIFFPACK mesh format;
-Ruth Sabariego for pyramids.
+Ruth Sabariego for pyramids; Gaetan Bricteux for Gauss integration
+routines.
 
 The AVL tree code (Common/avl.*) and the YUV image code
 (Graphics/gl2yuv.*) are copyright (C) 1988-1993, 1995 The Regents of
