@@ -172,17 +172,17 @@ class Context_T {
 
   // post processing options 
   struct{
-    int draw, link, horizontal_scales ;
-    int smooth, anim_cycle, combine_time, combine_remove_orig ;
+    int draw, link, horizontal_scales;
+    int smooth, anim_cycle, combine_time, combine_remove_orig;
     int file_format, plugins;
-    double anim_delay ;
-    void (*plugin_draw_function)(void *context) ;
+    double anim_delay;
+    void (*plugin_draw_function)(void *context);
   }post;
 
   // solver options 
   struct{
-    int max_delay, plugins, listen ;
-    std::string socket_name ;
+    int max_delay, plugins, listen;
+    std::string socket_name;
   }solver;
 
   // print options 
@@ -220,15 +220,18 @@ class Context_T {
   // how RGBA values are packed and unpacked into/from an unsigned
   // integer to be fed to glColor4ubv (depends on machine byte
   // ordering!):
-  inline unsigned int PACK_COLOR(int R, int G, int B, int A){
+  inline unsigned int PACK_COLOR(int R, int G, int B, int A)
+  {
     if(big_endian) return ( (unsigned int)((R)<<24 | (G)<<16 | (B)<<8 | (A)) );
     else           return ( (unsigned int)((A)<<24 | (B)<<16 | (G)<<8 | (R)) );
   }
-  inline int UNPACK_RED(unsigned int X){
+  inline int UNPACK_RED(unsigned int X)
+  {
     if(big_endian) return ( ( (X) >> 24 ) & 0xff );
     else           return ( (X) & 0xff );
   }
-  inline int UNPACK_GREEN(unsigned int X){
+  inline int UNPACK_GREEN(unsigned int X)
+  {
     if(big_endian) return ( ( (X) >> 16 ) & 0xff );
     else           return ( ( (X) >> 8 ) & 0xff );
   }
@@ -236,7 +239,8 @@ class Context_T {
     if(big_endian) return ( ( (X) >> 8 ) & 0xff );
     else           return ( ( (X) >> 16 ) & 0xff );
   }
-  inline int UNPACK_ALPHA(unsigned int X){
+  inline int UNPACK_ALPHA(unsigned int X)
+  {
     if(big_endian) return ( (X) & 0xff );
     else           return ( ( (X) >> 24 ) & 0xff );
   }
