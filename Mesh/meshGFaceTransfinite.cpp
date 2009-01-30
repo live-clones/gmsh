@@ -16,8 +16,6 @@
 
 #define SQU(a)      ((a)*(a))
 
-extern Context_T CTX;
-
 /*
    s4 +-----c3-----+ s3
       |            |
@@ -299,8 +297,8 @@ int MeshTransfiniteSurface(GFace *gf)
 
   // should we apply the elliptic smoother?
   int numSmooth = 0;
-  if(gf->meshAttributes.transfiniteSmoothing < 0 && CTX.mesh.nb_smoothing > 1)
-    numSmooth = CTX.mesh.nb_smoothing;
+  if(gf->meshAttributes.transfiniteSmoothing < 0 && CTX::instance()->mesh.nb_smoothing > 1)
+    numSmooth = CTX::instance()->mesh.nb_smoothing;
   else if(gf->meshAttributes.transfiniteSmoothing > 0)
     numSmooth = gf->meshAttributes.transfiniteSmoothing;
 

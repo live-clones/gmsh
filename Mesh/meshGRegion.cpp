@@ -17,8 +17,6 @@
 #include "BDS.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 void getAllBoundingVertices(GRegion *gr, std::set<MVertex*> &allBoundingVertices)
 {
   std::list<GFace*> faces = gr->faces();
@@ -192,7 +190,8 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
                      v[j]->onWhat()->mesh_vertices.end(),
                      v[j]));
         MVertex *v1b;
-	if (CTX.mesh.order > 1 && CTX.mesh.second_order_experimental){
+	if (CTX::instance()->mesh.order > 1 && 
+            CTX::instance()->mesh.second_order_experimental){
 	  // PARAMETRIC COORDINATES SHOULD BE SET for the vertex !!!!!!!!!!!!!
 	  // This is not 100 % safe yet, so we reserve that operation for high order
 	  // meshes.
@@ -560,7 +559,7 @@ void meshGRegion::operator() (GRegion *gr)
 
   if(gr->geomType() == GEntity::DiscreteVolume) return;
   if(gr->meshAttributes.Method == MESH_NONE) return;
-  if(CTX.mesh.mesh_only_visible && !gr->getVisibility()) return;
+  if(CTX::instance()->mesh.mesh_only_visible && !gr->getVisibility()) return;
 
   ExtrudeParams *ep = gr->meshAttributes.extrude;
 
@@ -582,10 +581,10 @@ void meshGRegion::operator() (GRegion *gr)
     }
   }
 
-  if(CTX.mesh.algo3d == ALGO_3D_TETGEN_DELAUNAY){
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_TETGEN_DELAUNAY){
     delaunay.push_back(gr);
   }
-  else if(CTX.mesh.algo3d == ALGO_3D_NETGEN ){
+  else if(CTX::instance()->mesh.algo3d == ALGO_3D_NETGEN ){
 #if !defined(HAVE_NETGEN)
     Msg::Error("Netgen is not compiled in this version of Gmsh");
 #else
@@ -594,7 +593,7 @@ void meshGRegion::operator() (GRegion *gr)
     meshNormalsPointOutOfTheRegion(gr);
     std::vector<MVertex*> numberedV;
     Ng_Mesh *ngmesh = buildNetgenStructure(gr, false, numberedV);
-    NgAddOn_GenerateVolumeMesh(ngmesh, CTX.lc); // does not optimize
+    NgAddOn_GenerateVolumeMesh(ngmesh, CTX::instance()->lc); // does not optimize
     TransferVolumeMesh(gr, ngmesh, numberedV);
     Ng_DeleteMesh(ngmesh);
     Ng_Exit();
@@ -624,7 +623,7 @@ void optimizeMeshGRegionNetgen::operator() (GRegion *gr)
   deMeshGRegion dem;
   dem(gr);
   // optimize mesh
-  NgAddOn_OptimizeVolumeMesh(ngmesh, CTX.lc);
+  NgAddOn_OptimizeVolumeMesh(ngmesh, CTX::instance()->lc);
   TransferVolumeMesh(gr, ngmesh, numberedV);
   Ng_DeleteMesh(ngmesh);
   Ng_Exit();

@@ -28,8 +28,6 @@
 #include "GModel.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 // File chooser
 
 #if defined(HAVE_NATIVE_FILE_CHOOSER)
@@ -79,9 +77,10 @@ int file_chooser(int multi, int create, const char *message,
   Fl_File_Chooser::show_label = "Format:";
   Fl_File_Chooser::all_files_label = "All files (*)";
   if(!fc) {
-    fc = new fileChooser(getenv("PWD") ? "." : CTX.home_dir.c_str(), thefilter, 
-                         Fl_File_Chooser::SINGLE, message);
-    fc->position(CTX.file_chooser_position[0], CTX.file_chooser_position[1]);
+    fc = new fileChooser(getenv("PWD") ? "." : CTX::instance()->home_dir.c_str(), 
+                         thefilter, Fl_File_Chooser::SINGLE, message);
+    fc->position(CTX::instance()->file_chooser_position[0], 
+                 CTX::instance()->file_chooser_position[1]);
   }
   if(multi)
     fc->type(Fl_File_Chooser::MULTI);
@@ -155,7 +154,7 @@ int generic_bitmap_dialog(const char *name, const char *title, int format)
   }
   
   dialog->window->label(title);
-  dialog->b->value(CTX.print.text);
+  dialog->b->value(CTX::instance()->print.text);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -204,7 +203,7 @@ int latex_dialog(const char *name)
     dialog->window->hotspot(dialog->window);
   }
   
-  dialog->b->value(CTX.print.tex_as_equation);
+  dialog->b->value(CTX::instance()->print.tex_as_equation);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -266,9 +265,9 @@ int jpeg_dialog(const char *name)
     dialog->window->hotspot(dialog->window);
   }
   
-  dialog->s[0]->value(CTX.print.jpeg_quality);
-  dialog->s[1]->value(CTX.print.jpeg_smoothing);
-  dialog->b->value(CTX.print.text);
+  dialog->s[0]->value(CTX::instance()->print.jpeg_quality);
+  dialog->s[1]->value(CTX::instance()->print.jpeg_smoothing);
+  dialog->b->value(CTX::instance()->print.text);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -329,11 +328,11 @@ int gif_dialog(const char *name)
     dialog->window->hotspot(dialog->window);
   }
   
-  dialog->b[0]->value(CTX.print.gif_dither);
-  dialog->b[1]->value(CTX.print.gif_interlace);
-  dialog->b[2]->value(CTX.print.gif_sort);
-  dialog->b[3]->value(CTX.print.gif_transparent);
-  dialog->b[4]->value(CTX.print.text);
+  dialog->b[0]->value(CTX::instance()->print.gif_dither);
+  dialog->b[1]->value(CTX::instance()->print.gif_interlace);
+  dialog->b[2]->value(CTX::instance()->print.gif_sort);
+  dialog->b[3]->value(CTX::instance()->print.gif_transparent);
+  dialog->b[4]->value(CTX::instance()->print.text);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -447,15 +446,15 @@ int gl2ps_dialog(const char *name, const char *title, int format)
   }
   
   dialog->window->label(title);
-  dialog->c->value(CTX.print.eps_quality);
-  dialog->b[0]->value(CTX.print.eps_compress);
-  dialog->b[1]->value(CTX.print.eps_background);
-  dialog->b[2]->value(CTX.print.eps_occlusion_culling);
-  dialog->b[3]->value(CTX.print.eps_best_root);
-  dialog->b[4]->value(CTX.print.eps_ps3shading);
-  dialog->b[5]->value(CTX.print.text);
+  dialog->c->value(CTX::instance()->print.eps_quality);
+  dialog->b[0]->value(CTX::instance()->print.eps_compress);
+  dialog->b[1]->value(CTX::instance()->print.eps_background);
+  dialog->b[2]->value(CTX::instance()->print.eps_occlusion_culling);
+  dialog->b[3]->value(CTX::instance()->print.eps_best_root);
+  dialog->b[4]->value(CTX::instance()->print.eps_ps3shading);
+  dialog->b[5]->value(CTX::instance()->print.text);
 
-  activate_gl2ps_choices(format, CTX.print.eps_quality, dialog->b);
+  activate_gl2ps_choices(format, CTX::instance()->print.eps_quality, dialog->b);
 
   dialog->window->show();
 
@@ -569,7 +568,7 @@ int geo_dialog(const char *name)
     dialog->window->hotspot(dialog->window);
   }
   
-  dialog->b->value(CTX.print.geo_labels ? 1 : 0);
+  dialog->b->value(CTX::instance()->print.geo_labels ? 1 : 0);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -631,12 +630,12 @@ int pos_dialog(const char *name)
     dialog->window->hotspot(dialog->window);
   }
   
-  dialog->b[0]->value(CTX.mesh.save_all ? 1 : 0);
-  dialog->b[1]->value(CTX.print.pos_elementary ? 1 : 0);
-  dialog->b[2]->value(CTX.print.pos_element ? 1 : 0);
-  dialog->b[3]->value(CTX.print.pos_gamma ? 1 : 0);
-  dialog->b[4]->value(CTX.print.pos_eta ? 1 : 0);
-  dialog->b[5]->value(CTX.print.pos_rho ? 1 : 0);
+  dialog->b[0]->value(CTX::instance()->mesh.save_all ? 1 : 0);
+  dialog->b[1]->value(CTX::instance()->print.pos_elementary ? 1 : 0);
+  dialog->b[2]->value(CTX::instance()->print.pos_element ? 1 : 0);
+  dialog->b[3]->value(CTX::instance()->print.pos_gamma ? 1 : 0);
+  dialog->b[4]->value(CTX::instance()->print.pos_eta ? 1 : 0);
+  dialog->b[5]->value(CTX::instance()->print.pos_rho ? 1 : 0);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -708,10 +707,10 @@ int msh_dialog(const char *name)
     dialog->window->hotspot(dialog->window);
   }
   
-  dialog->c->value((CTX.mesh.msh_file_version == 1.0) ? 0 : 
-                   CTX.mesh.binary ? 2 : 1);
-  dialog->b->value(CTX.mesh.save_all ? 1 : 0);
-  dialog->p->value(CTX.mesh.save_parametric ? 1 : 0);
+  dialog->c->value((CTX::instance()->mesh.msh_file_version == 1.0) ? 0 : 
+                   CTX::instance()->mesh.binary ? 2 : 1);
+  dialog->b->value(CTX::instance()->mesh.save_all ? 1 : 0);
+  dialog->p->value(CTX::instance()->mesh.save_parametric ? 1 : 0);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -769,8 +768,8 @@ int unv_dialog(const char *name)
     dialog->window->hotspot(dialog->window);
   }
   
-  dialog->b[0]->value(CTX.mesh.save_all ? 1 : 0);
-  dialog->b[1]->value(CTX.mesh.save_groups_of_nodes ? 1 : 0);
+  dialog->b[0]->value(CTX::instance()->mesh.save_all ? 1 : 0);
+  dialog->b[1]->value(CTX::instance()->mesh.save_groups_of_nodes ? 1 : 0);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -834,8 +833,8 @@ int bdf_dialog(const char *name)
     dialog->window->hotspot(dialog->window);
   }
   
-  dialog->c->value(CTX.mesh.bdf_field_format);
-  dialog->b->value(CTX.mesh.save_all ? 1 : 0);
+  dialog->c->value(CTX::instance()->mesh.bdf_field_format);
+  dialog->b->value(CTX::instance()->mesh.save_all ? 1 : 0);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -899,12 +898,12 @@ int generic_mesh_dialog(const char *name, const char *title, int format,
   }
   
   dialog->window->label(title);
-  dialog->c->value(CTX.mesh.binary ? 1 : 0);
+  dialog->c->value(CTX::instance()->mesh.binary ? 1 : 0);
   if(binary_support)
     dialog->c->activate();
   else
     dialog->c->deactivate();
-  dialog->b->value(CTX.mesh.save_all ? 1 : 0);
+  dialog->b->value(CTX::instance()->mesh.save_all ? 1 : 0);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -961,42 +960,42 @@ struct CGNSWriteDialog
   void write_all_options()
   {
     opt_mesh_zone_definition(0, GMSH_SET | GMSH_GUI, choiceZoneDef->value());
-    CTX.mesh.cgns_options.baseName = inputBaseName->value();
-    CTX.mesh.cgns_options.zoneName = inputZoneName->value();
-    CTX.mesh.cgns_options.interfaceName = inputInterfaceName->value();
-    CTX.mesh.cgns_options.patchName = inputPatchName->value();
-    CTX.mesh.cgns_options.gridConnectivityLocation =
+    CTX::instance()->mesh.cgns_options.baseName = inputBaseName->value();
+    CTX::instance()->mesh.cgns_options.zoneName = inputZoneName->value();
+    CTX::instance()->mesh.cgns_options.interfaceName = inputInterfaceName->value();
+    CTX::instance()->mesh.cgns_options.patchName = inputPatchName->value();
+    CTX::instance()->mesh.cgns_options.gridConnectivityLocation =
       roundButton1GCatFace->value();
-    CTX.mesh.cgns_options.writeBC = checkButtonWriteBC->value();
-    CTX.mesh.cgns_options.bocoLocation = roundButton1BCatFace->value();
-    CTX.mesh.cgns_options.normalSource = (checkButtonWriteNormals->value()) ?
+    CTX::instance()->mesh.cgns_options.writeBC = checkButtonWriteBC->value();
+    CTX::instance()->mesh.cgns_options.bocoLocation = roundButton1BCatFace->value();
+    CTX::instance()->mesh.cgns_options.normalSource = (checkButtonWriteNormals->value()) ?
        roundButton1NormalElem->value() + 1 : 0;
-    CTX.mesh.cgns_options.vectorDim = choiceVecDim->value() + 2;
-    CTX.mesh.cgns_options.writeUserDef = checkButtonUnknownUserDef->value();
+    CTX::instance()->mesh.cgns_options.vectorDim = choiceVecDim->value() + 2;
+    CTX::instance()->mesh.cgns_options.writeUserDef = checkButtonUnknownUserDef->value();
   }
   void read_all_options()
   {
-    choiceZoneDef->value(CTX.mesh.zone_definition);
-    inputBaseName->value(CTX.mesh.cgns_options.baseName.c_str());
-    inputZoneName->value(CTX.mesh.cgns_options.zoneName.c_str());
-    inputInterfaceName->value(CTX.mesh.cgns_options.interfaceName.c_str());
-    inputPatchName->value(CTX.mesh.cgns_options.patchName.c_str());
-    checkButtonWriteBC->value(CTX.mesh.cgns_options.writeBC);
-    checkButtonWriteNormals->value(CTX.mesh.cgns_options.normalSource);
-    choiceVecDim->value(CTX.mesh.cgns_options.vectorDim - 2);
-    checkButtonUnknownUserDef->value(CTX.mesh.cgns_options.writeUserDef);
+    choiceZoneDef->value(CTX::instance()->mesh.zone_definition);
+    inputBaseName->value(CTX::instance()->mesh.cgns_options.baseName.c_str());
+    inputZoneName->value(CTX::instance()->mesh.cgns_options.zoneName.c_str());
+    inputInterfaceName->value(CTX::instance()->mesh.cgns_options.interfaceName.c_str());
+    inputPatchName->value(CTX::instance()->mesh.cgns_options.patchName.c_str());
+    checkButtonWriteBC->value(CTX::instance()->mesh.cgns_options.writeBC);
+    checkButtonWriteNormals->value(CTX::instance()->mesh.cgns_options.normalSource);
+    choiceVecDim->value(CTX::instance()->mesh.cgns_options.vectorDim - 2);
+    checkButtonUnknownUserDef->value(CTX::instance()->mesh.cgns_options.writeUserDef);
 
     // Call all callbacks to ensure consistent options
     cgnsw_gc_location_cb
-      ((CTX.mesh.cgns_options.gridConnectivityLocation) ?
+      ((CTX::instance()->mesh.cgns_options.gridConnectivityLocation) ?
        roundButton1GCatFace : roundButton0GCatVertex, this);
     // The order of the next 4 is important
     cgnsw_normal_source_cb
-      ((CTX.mesh.cgns_options.normalSource == 2) ?
+      ((CTX::instance()->mesh.cgns_options.normalSource == 2) ?
        roundButton1NormalElem : roundButton0NormalGeo, this);
     cgnsw_write_normals_cb(checkButtonWriteNormals, this);
     cgnsw_bc_location_cb
-      ((CTX.mesh.cgns_options.bocoLocation) ?
+      ((CTX::instance()->mesh.cgns_options.bocoLocation) ?
        roundButton1BCatFace : roundButton0BCatVertex, this);
     cgnsw_write_dummy_bc_cb(checkButtonWriteBC, this);
   }
@@ -1085,7 +1084,7 @@ void cgnsw_normal_source_cb(Fl_Widget *widget, void *data)
 void cgnsw_defaults_cb(Fl_Widget *widget, void *data)
 {
   CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
-  CTX.mesh.cgns_options.setDefaults();
+  CTX::instance()->mesh.cgns_options.setDefaults();
   dlg->read_all_options();
 }
 

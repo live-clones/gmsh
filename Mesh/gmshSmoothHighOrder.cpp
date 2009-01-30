@@ -21,8 +21,6 @@
 
 #define SQU(a)      ((a)*(a))
 
-extern Context_T CTX;
-
 void getDistordedElements(const std::vector<MElement*>  & v, 
                           const double & threshold,
                           std::vector<MElement*>  & d,
@@ -231,7 +229,7 @@ bool straightLine(std::vector<MVertex*> &l, MVertex *n1, MVertex *n2)
     double by = n1->y();
     double ay = n2->y() - by;
     double y = ay * t + by;
-    if(fabs(y-v->y()) > 1.e-07 * CTX.lc){
+    if(fabs(y-v->y()) > 1.e-07 * CTX::instance()->lc){
       return false;      
     }
   }

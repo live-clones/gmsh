@@ -25,8 +25,6 @@
 #include "PViewData.h"
 #endif
 
-extern Context_T CTX;
-
 static MVertex* isEquivalentTo(std::multimap<MVertex*, MVertex*> &m, MVertex *v)
 {
   std::multimap<MVertex*, MVertex*>::iterator it = m.lower_bound(v);
@@ -198,9 +196,9 @@ void GetStatistics(double stat[50], double quality[4][100])
     stat[12] += (*it)->pyramids.size();
   }
   
-  stat[13] = CTX.mesh_timer[0];
-  stat[14] = CTX.mesh_timer[1];
-  stat[15] = CTX.mesh_timer[2];
+  stat[13] = CTX::instance()->mesh_timer[0];
+  stat[14] = CTX::instance()->mesh_timer[1];
+  stat[15] = CTX::instance()->mesh_timer[2];
   
   if(quality){
     for(int i = 0; i < 3; i++)
@@ -270,16 +268,16 @@ void GetStatistics(double stat[50], double quality[4][100])
 
 static bool TooManyElements(GModel *m, int dim)
 {
-  if(CTX.expert_mode || !m->getNumVertices()) return false;
+  if(CTX::instance()->expert_mode || !m->getNumVertices()) return false;
 
   // try to detect obvious mistakes in characteristic lenghts (one of
   // the most common cause for erroneous bug reports on the mailing
   // list)
   double sumAllLc = 0.;
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it)
-    sumAllLc += (*it)->prescribedMeshSizeAtVertex() * CTX.mesh.lc_factor;
+    sumAllLc += (*it)->prescribedMeshSizeAtVertex() * CTX::instance()->mesh.lc_factor;
   sumAllLc /= (double)m->getNumVertices();
-  if(!sumAllLc || pow(CTX.lc / sumAllLc, dim) > 1.e10) 
+  if(!sumAllLc || pow(CTX::instance()->lc / sumAllLc, dim) > 1.e10) 
     return !Msg::GetBinaryAnswer
       ("Your choice of characteristic lengths will likely produce a very\n"
        "large mesh. Do you really want to continue?\n\n"
@@ -291,7 +289,7 @@ static bool TooManyElements(GModel *m, int dim)
 
 static bool CancelDelaunayHybrid(GModel *m)
 {
-  if(CTX.expert_mode) return false;
+  if(CTX::instance()->expert_mode) return false;
   int n = 0;
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     n += (*it)->getNumMeshElements();
@@ -316,18 +314,18 @@ static void Mesh1D(GModel *m)
   std::for_each(m->firstEdge(), m->lastEdge(), meshGEdge());
 
   double t2 = Cpu();
-  CTX.mesh_timer[0] = t2 - t1;
-  Msg::Info("Mesh 1D complete (%g s)", CTX.mesh_timer[0]);
+  CTX::instance()->mesh_timer[0] = t2 - t1;
+  Msg::Info("Mesh 1D complete (%g s)", CTX::instance()->mesh_timer[0]);
   Msg::StatusBar(1, false, "Mesh");
 }
 
 static void PrintMesh2dStatistics(GModel *m)
 {
   FILE *statreport = 0;
-  if(CTX.create_append_statreport == 1)
-    statreport = fopen(CTX.statreport.c_str(), "w");
-  else if(CTX.create_append_statreport == 2)
-    statreport = fopen(CTX.statreport.c_str(), "a");
+  if(CTX::instance()->create_append_statreport == 1)
+    statreport = fopen(CTX::instance()->statreport.c_str(), "w");
+  else if(CTX::instance()->create_append_statreport == 2)
+    statreport = fopen(CTX::instance()->statreport.c_str(), "a");
   else return;
 
   double worst = 1, best = 0, avg = 0;
@@ -352,7 +350,7 @@ static void PrintMesh2dStatistics(GModel *m)
     numFaces++;
   }
 
-  if(CTX.create_append_statreport == 1){
+  if(CTX::instance()->create_append_statreport == 1){
     fprintf(statreport, "2D stats\tname\t\t#faces\t\t#fail\t\t"
             "#t\t\tQavg\t\tQbest\t\tQworst\t\t#Q>90\t\t#Q>90/#t\t"
             "#e\t\ttau\t\t#Egood\t\t#Egood/#e\tCPU\n");
@@ -364,7 +362,7 @@ static void PrintMesh2dStatistics(GModel *m)
           (double)nTotGoodQuality / nTotT);
   fprintf(statreport,"%d\t\t%8.7f\t%d\t\t%8.7f\t%8.1f\n",
           nTotE, exp(e_avg / (double)nTotE), nTotGoodLength,
-          (double)nTotGoodLength / nTotE, CTX.mesh_timer[1]);
+          (double)nTotGoodLength / nTotE, CTX::instance()->mesh_timer[1]);
   fclose(statreport);
 }
 
@@ -372,8 +370,8 @@ static void Mesh2D(GModel *m)
 {
   if(TooManyElements(m, 2)) return;
 
-  if(!CTX.expert_mode && (CTX.mesh.algo2d == ALGO_2D_DELAUNAY ||
-			  CTX.mesh.algo2d == ALGO_2D_FRONTAL)){
+  if(!CTX::instance()->expert_mode && (CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY ||
+			  CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)){
     if(!Msg::GetBinaryAnswer
        ("The 2D Delaunay and Frontal algorithms are still experimental\n"
 	"and produce triangles with random orientations. Do you really\n"
@@ -412,8 +410,8 @@ static void Mesh2D(GModel *m)
   // gmshCollapseSmallEdges (*m);
 
   double t2 = Cpu();
-  CTX.mesh_timer[1] = t2 - t1;
-  Msg::Info("Mesh 2D complete (%g s)", CTX.mesh_timer[1]);
+  CTX::instance()->mesh_timer[1] = t2 - t1;
+  Msg::Info("Mesh 2D complete (%g s)", CTX::instance()->mesh_timer[1]);
   Msg::StatusBar(1, false, "Mesh");
 
   PrintMesh2dStatistics(m);
@@ -455,8 +453,8 @@ static void Mesh3D(GModel *m)
     MeshDelaunayVolume(connected[i]);
 
   double t2 = Cpu();
-  CTX.mesh_timer[2] = t2 - t1;
-  Msg::Info("Mesh 3D complete (%g s)", CTX.mesh_timer[2]);
+  CTX::instance()->mesh_timer[2] = t2 - t1;
+  Msg::Info("Mesh 3D complete (%g s)", CTX::instance()->mesh_timer[2]);
   Msg::StatusBar(1, false, "Mesh");
 }
 
@@ -489,12 +487,12 @@ void AdaptMesh(GModel *m)
   Msg::StatusBar(1, true, "Adapting 3D Mesh...");
   double t1 = Cpu();
 
-  if(CTX.threads_lock) {
+  if(CTX::instance()->threads_lock) {
     Msg::Info("I'm busy! Ask me that later...");
     return;
   }
 
-  CTX.threads_lock = 1;
+  CTX::instance()->threads_lock = 1;
 
   std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
   std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
@@ -514,11 +512,11 @@ void AdaptMesh(GModel *m)
 
 void GenerateMesh(GModel *m, int ask)
 {
-  if(CTX.threads_lock) {
+  if(CTX::instance()->threads_lock) {
     Msg::Info("I'm busy! Ask me that later...");
     return;
   }
-  CTX.threads_lock = 1;
+  CTX::instance()->threads_lock = 1;
 
   Msg::ResetErrorCounter();
 
@@ -554,28 +552,28 @@ void GenerateMesh(GModel *m, int ask)
 
   // Optimize quality of 3D tet mesh
   if(m->getMeshStatus() == 3){
-    for(int i = 0; i < std::max(CTX.mesh.optimize, CTX.mesh.optimize_netgen); i++){
-      if(CTX.mesh.optimize > i) OptimizeMesh(m);
-      if(CTX.mesh.optimize_netgen > i) OptimizeMeshNetgen(m);
+    for(int i = 0; i < std::max(CTX::instance()->mesh.optimize, CTX::instance()->mesh.optimize_netgen); i++){
+      if(CTX::instance()->mesh.optimize > i) OptimizeMesh(m);
+      if(CTX::instance()->mesh.optimize_netgen > i) OptimizeMeshNetgen(m);
     }
   }
 
   // Subdivide into quads or hexas
-  if(m->getMeshStatus() == 2 && CTX.mesh.algo_subdivide == 1) 
-    RefineMesh(m, CTX.mesh.second_order_linear, true);
-  else if(m->getMeshStatus() == 3 && CTX.mesh.algo_subdivide == 2) 
-    RefineMesh(m, CTX.mesh.second_order_linear, false, true);
+  if(m->getMeshStatus() == 2 && CTX::instance()->mesh.algo_subdivide == 1) 
+    RefineMesh(m, CTX::instance()->mesh.second_order_linear, true);
+  else if(m->getMeshStatus() == 3 && CTX::instance()->mesh.algo_subdivide == 2) 
+    RefineMesh(m, CTX::instance()->mesh.second_order_linear, false, true);
   
   // Create high order elements
-  if(m->getMeshStatus() && CTX.mesh.order > 1) 
-    SetOrderN(m, CTX.mesh.order, CTX.mesh.second_order_linear, 
-              CTX.mesh.second_order_incomplete);
+  if(m->getMeshStatus() && CTX::instance()->mesh.order > 1) 
+    SetOrderN(m, CTX::instance()->mesh.order, CTX::instance()->mesh.second_order_linear, 
+              CTX::instance()->mesh.second_order_incomplete);
 
   Msg::Info("%d vertices %d elements",
 	    m->getNumMeshVertices(), m->getNumMeshElements());
 
   Msg::PrintErrorCounter("Mesh generation error summary");
 
-  CTX.threads_lock = 0;
-  CTX.mesh.changed = ENT_ALL;
+  CTX::instance()->threads_lock = 0;
+  CTX::instance()->mesh.changed = ENT_ALL;
 }

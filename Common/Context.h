@@ -13,8 +13,13 @@
 
 // The interface-independent context.
 
-class Context_T {
- public :
+class CTX {
+ private:
+  static CTX *_instance;
+ public:
+  CTX();
+  ~CTX(){}
+  static CTX *instance();
   // general options
   std::vector<std::string> files; // all the files on the command line
   std::string bgm_filename; // background mesh
@@ -220,30 +225,11 @@ class Context_T {
   // how RGBA values are packed and unpacked into/from an unsigned
   // integer to be fed to glColor4ubv (depends on machine byte
   // ordering!):
-  inline unsigned int PACK_COLOR(int R, int G, int B, int A)
-  {
-    if(big_endian) return ( (unsigned int)((R)<<24 | (G)<<16 | (B)<<8 | (A)) );
-    else           return ( (unsigned int)((A)<<24 | (B)<<16 | (G)<<8 | (R)) );
-  }
-  inline int UNPACK_RED(unsigned int X)
-  {
-    if(big_endian) return ( ( (X) >> 24 ) & 0xff );
-    else           return ( (X) & 0xff );
-  }
-  inline int UNPACK_GREEN(unsigned int X)
-  {
-    if(big_endian) return ( ( (X) >> 16 ) & 0xff );
-    else           return ( ( (X) >> 8 ) & 0xff );
-  }
-  inline int UNPACK_BLUE(unsigned int X){
-    if(big_endian) return ( ( (X) >> 8 ) & 0xff );
-    else           return ( ( (X) >> 16 ) & 0xff );
-  }
-  inline int UNPACK_ALPHA(unsigned int X)
-  {
-    if(big_endian) return ( (X) & 0xff );
-    else           return ( ( (X) >> 24 ) & 0xff );
-  }
+  unsigned int pack_color(int R, int G, int B, int A);
+  int unpack_red(unsigned int X);
+  int unpack_green(unsigned int X);
+  int unpack_blue(unsigned int X);
+  int unpack_alpha(unsigned int X);
 };
 
 #endif

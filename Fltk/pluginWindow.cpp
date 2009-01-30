@@ -20,8 +20,6 @@
 #include "Plugin.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 #define MAX_PLUGIN_OPTIONS 50
 struct PluginDialogBox{
   Fl_Group *group;
@@ -141,14 +139,14 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
   if(no_view_selected) p->execute(0);
 
   GUI::instance()->updateViews();
-  CTX.post.plugin_draw_function = NULL;
+  CTX::instance()->post.plugin_draw_function = NULL;
   Draw();
 }
 
 static void plugin_cancel_cb(Fl_Widget *w, void *data)
 {
   GUI::instance()->plugins->win->hide();
-  CTX.post.plugin_draw_function = NULL;
+  CTX::instance()->post.plugin_draw_function = NULL;
   Draw();
 }
 
@@ -236,11 +234,13 @@ pluginWindow::pluginWindow(int deltaFontSize)
   int width0 = 34 * FL_NORMAL_SIZE + WB;
   int height0 = 12 * BH + 4 * WB;
 
-  int width = (CTX.plugin_size[0] < width0) ? width0 : CTX.plugin_size[0];
-  int height = (CTX.plugin_size[1] < height0) ? height0 : CTX.plugin_size[1];
+  int width = (CTX::instance()->plugin_size[0] < width0) ? width0 : 
+    CTX::instance()->plugin_size[0];
+  int height = (CTX::instance()->plugin_size[1] < height0) ? height0 : 
+    CTX::instance()->plugin_size[1];
 
   win = new paletteWindow
-    (width, height, CTX.non_modal_windows ? true : false, "Plugins");
+    (width, height, CTX::instance()->non_modal_windows ? true : false, "Plugins");
   win->box(GMSH_WINDOW_BOX);
 
   int L1 = (int)(0.3 * width), L2 = (int)(0.6 * L1);
@@ -272,7 +272,7 @@ pluginWindow::pluginWindow(int deltaFontSize)
   win->resizable(resize_box);
   win->size_range(width0, height0);
 
-  win->position(CTX.plugin_position[0], CTX.plugin_position[1]);
+  win->position(CTX::instance()->plugin_position[0], CTX::instance()->plugin_position[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;

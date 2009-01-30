@@ -21,8 +21,6 @@
 #include "BackgroundMesh.h"
 #include "PView.h"
 
-extern Context_T CTX;
-
 int main(int argc, char *argv[])
 {
   // Create a new model
@@ -41,8 +39,8 @@ int main(int argc, char *argv[])
   GmshInitialize(argc, argv);
 
   // Non-interactive Gmsh
-  if(CTX.batch) {
-    CTX.terminal = 1;
+  if(CTX::instance()->batch) {
+    CTX::instance()->terminal = 1;
     GmshBatch();
     GmshFinalize();
     Msg::Exit(0);
@@ -66,7 +64,7 @@ int main(int argc, char *argv[])
   Msg::Info("Build date     : %s", Get_GmshBuildDate());
   Msg::Info("Build host     : %s", Get_GmshBuildHost());
   Msg::Info("Packager       : %s", Get_GmshPackager());
-  Msg::Info("Home directory : %s", CTX.home_dir.c_str());
+  Msg::Info("Home directory : %s", CTX::instance()->home_dir.c_str());
   Msg::Info("Launch date    : %s", Msg::GetLaunchDate().c_str());
   Msg::Info("Command line   : %s", Msg::GetCommandLine().c_str());
   Msg::Info("-------------------------------------------------------");
@@ -76,22 +74,22 @@ int main(int argc, char *argv[])
 
   // Open project file and merge all other input files
   OpenProject(GModel::current()->getFileName());
-  for(unsigned int i = 1; i < CTX.files.size(); i++){
-    if(CTX.files[i] == "-new"){
+  for(unsigned int i = 1; i < CTX::instance()->files.size(); i++){
+    if(CTX::instance()->files[i] == "-new"){
       GModel::current()->setVisibility(0);
       new GModel();
     }
     else
-      MergeFile(CTX.files[i]);
+      MergeFile(CTX::instance()->files[i]);
   }
   
-  if(CTX.post.combine_time){
-    PView::combine(true, 2, CTX.post.combine_remove_orig);
+  if(CTX::instance()->post.combine_time){
+    PView::combine(true, 2, CTX::instance()->post.combine_remove_orig);
     GUI::instance()->updateViews();
   }
 
   // Init first context
-  switch (CTX.initial_context) {
+  switch (CTX::instance()->initial_context) {
   case 1: GUI::instance()->menu->setContext(menu_geometry, 0); break;
   case 2: GUI::instance()->menu->setContext(menu_mesh, 0); break;
   case 3: GUI::instance()->menu->setContext(menu_solver, 0); break;
@@ -105,8 +103,8 @@ int main(int argc, char *argv[])
   }
 
   // Read background mesh if any
-  if(!CTX.bgm_filename.empty()) {
-    MergeFile(CTX.bgm_filename);
+  if(!CTX::instance()->bgm_filename.empty()) {
+    MergeFile(CTX::instance()->bgm_filename);
     if(PView::list.size())
       GModel::current()->getFields()->set_background_mesh(PView::list.size() - 1);
     else
@@ -117,7 +115,7 @@ int main(int argc, char *argv[])
   Draw();
 
   // Listen to external solvers
-  if(CTX.solver.listen) Solver(-1, NULL);
+  if(CTX::instance()->solver.listen) Solver(-1, NULL);
 
   // loop
   return GUI::instance()->run();

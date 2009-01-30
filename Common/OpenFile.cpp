@@ -31,41 +31,40 @@
 #include "Draw.h"
 #endif
 
-extern Context_T CTX;
-
 #define SQU(a)      ((a)*(a))
 
 static void FinishUpBoundingBox()
 {
   double range[3];
-  for(int i = 0; i < 3; i++) range[i] = CTX.max[i] - CTX.min[i];
+  for(int i = 0; i < 3; i++) 
+    range[i] = CTX::instance()->max[i] - CTX::instance()->min[i];
 
-  if(range[0] < CTX.geom.tolerance && 
-     range[1] < CTX.geom.tolerance && 
-     range[2] < CTX.geom.tolerance) {
-    CTX.min[0] -= 1.; CTX.min[1] -= 1.;
-    CTX.max[0] += 1.; CTX.max[1] += 1.;
+  if(range[0] < CTX::instance()->geom.tolerance && 
+     range[1] < CTX::instance()->geom.tolerance && 
+     range[2] < CTX::instance()->geom.tolerance) {
+    CTX::instance()->min[0] -= 1.; CTX::instance()->min[1] -= 1.;
+    CTX::instance()->max[0] += 1.; CTX::instance()->max[1] += 1.;
   }
-  else if(range[0] < CTX.geom.tolerance && 
-          range[1] < CTX.geom.tolerance) {
-    CTX.min[0] -= range[2]; CTX.min[1] -= range[2];
-    CTX.max[0] += range[2]; CTX.max[1] += range[2];
+  else if(range[0] < CTX::instance()->geom.tolerance && 
+          range[1] < CTX::instance()->geom.tolerance) {
+    CTX::instance()->min[0] -= range[2]; CTX::instance()->min[1] -= range[2];
+    CTX::instance()->max[0] += range[2]; CTX::instance()->max[1] += range[2];
   }
-  else if(range[0] < CTX.geom.tolerance && 
-          range[2] < CTX.geom.tolerance) {
-    CTX.min[0] -= range[1]; CTX.max[0] += range[1];
+  else if(range[0] < CTX::instance()->geom.tolerance && 
+          range[2] < CTX::instance()->geom.tolerance) {
+    CTX::instance()->min[0] -= range[1]; CTX::instance()->max[0] += range[1];
   }
-  else if(range[1] < CTX.geom.tolerance && 
-          range[2] < CTX.geom.tolerance) {
-    CTX.min[1] -= range[0]; CTX.max[1] += range[0];
+  else if(range[1] < CTX::instance()->geom.tolerance && 
+          range[2] < CTX::instance()->geom.tolerance) {
+    CTX::instance()->min[1] -= range[0]; CTX::instance()->max[1] += range[0];
   }
-  else if(range[0] < CTX.geom.tolerance) {
+  else if(range[0] < CTX::instance()->geom.tolerance) {
     double l = sqrt(SQU(range[1]) + SQU(range[2]));
-    CTX.min[0] -= l; CTX.max[0] += l;
+    CTX::instance()->min[0] -= l; CTX::instance()->max[0] += l;
   }
-  else if(range[1] < CTX.geom.tolerance) {
+  else if(range[1] < CTX::instance()->geom.tolerance) {
     double l = sqrt(SQU(range[0]) + SQU(range[2]));
-    CTX.min[1] -= l; CTX.max[1] += l;
+    CTX::instance()->min[1] -= l; CTX::instance()->max[1] += l;
   }
 }
 
@@ -73,19 +72,20 @@ void SetBoundingBox(double xmin, double xmax,
                     double ymin, double ymax, 
                     double zmin, double zmax)
 {
-  CTX.min[0] = xmin; CTX.max[0] = xmax;
-  CTX.min[1] = ymin; CTX.max[1] = ymax;
-  CTX.min[2] = zmin; CTX.max[2] = zmax;
+  CTX::instance()->min[0] = xmin; CTX::instance()->max[0] = xmax;
+  CTX::instance()->min[1] = ymin; CTX::instance()->max[1] = ymax;
+  CTX::instance()->min[2] = zmin; CTX::instance()->max[2] = zmax;
   FinishUpBoundingBox();
-  CTX.lc = sqrt(SQU(CTX.max[0] - CTX.min[0]) +
-                SQU(CTX.max[1] - CTX.min[1]) + 
-                SQU(CTX.max[2] - CTX.min[2]));
-  for(int i = 0; i < 3; i++) CTX.cg[i] = 0.5 * (CTX.min[i] + CTX.max[i]);
+  CTX::instance()->lc = sqrt(SQU(CTX::instance()->max[0] - CTX::instance()->min[0]) +
+                SQU(CTX::instance()->max[1] - CTX::instance()->min[1]) + 
+                SQU(CTX::instance()->max[2] - CTX::instance()->min[2]));
+  for(int i = 0; i < 3; i++) 
+    CTX::instance()->cg[i] = 0.5 * (CTX::instance()->min[i] + CTX::instance()->max[i]);
 }
 
 void SetBoundingBox()
 {
-  if(CTX.forced_bbox) return;
+  if(CTX::instance()->forced_bbox) return;
 
   SBoundingBox3d bb = GModel::current()->bounds();
   
@@ -102,20 +102,21 @@ void SetBoundingBox()
     bb += SPoint3(1., 1., 1.);
   }
   
-  CTX.min[0] = bb.min().x(); CTX.max[0] = bb.max().x();
-  CTX.min[1] = bb.min().y(); CTX.max[1] = bb.max().y();
-  CTX.min[2] = bb.min().z(); CTX.max[2] = bb.max().z();
+  CTX::instance()->min[0] = bb.min().x(); CTX::instance()->max[0] = bb.max().x();
+  CTX::instance()->min[1] = bb.min().y(); CTX::instance()->max[1] = bb.max().y();
+  CTX::instance()->min[2] = bb.min().z(); CTX::instance()->max[2] = bb.max().z();
   FinishUpBoundingBox();
-  CTX.lc = sqrt(SQU(CTX.max[0] - CTX.min[0]) +
-                SQU(CTX.max[1] - CTX.min[1]) + 
-                SQU(CTX.max[2] - CTX.min[2]));
-  for(int i = 0; i < 3; i++) CTX.cg[i] = 0.5 * (CTX.min[i] + CTX.max[i]);
+  CTX::instance()->lc = sqrt(SQU(CTX::instance()->max[0] - CTX::instance()->min[0]) +
+                SQU(CTX::instance()->max[1] - CTX::instance()->min[1]) + 
+                SQU(CTX::instance()->max[2] - CTX::instance()->min[2]));
+  for(int i = 0; i < 3; i++) 
+    CTX::instance()->cg[i] = 0.5 * (CTX::instance()->min[i] + CTX::instance()->max[i]);
 }
 
-// FIXME: this is necessary for now to have an approximate CTX.lc
+// FIXME: this is necessary for now to have an approximate CTX::instance()->lc
 // *while* parsing input files (it's important since some of the
 // geometrical operations use a tolerance that depends on
-// CTX.lc). This will be removed once the new database is filled
+// CTX::instance()->lc). This will be removed once the new database is filled
 // directly during the parsing step
 static SBoundingBox3d temp_bb;
 
@@ -128,12 +129,12 @@ void AddToTemporaryBoundingBox(double x, double y, double z)
 {
   temp_bb += SPoint3(x, y, z);
   if(temp_bb.empty()) return;
-  CTX.lc = sqrt(SQU(temp_bb.max().x() - temp_bb.min().x()) +
+  CTX::instance()->lc = sqrt(SQU(temp_bb.max().x() - temp_bb.min().x()) +
                 SQU(temp_bb.max().y() - temp_bb.min().y()) + 
                 SQU(temp_bb.max().z() - temp_bb.min().z()));
-  if(CTX.lc == 0) CTX.lc = 1.;
+  if(CTX::instance()->lc == 0) CTX::instance()->lc = 1.;
   // to get correct cg during interctive point creation
-  for(int i = 0; i < 3; i++) CTX.cg[i] = temp_bb.center()[i];
+  for(int i = 0; i < 3; i++) CTX::instance()->cg[i] = temp_bb.center()[i];
 }
 
 int ParseFile(std::string fileName, bool close, bool warnIfMissing)
@@ -198,11 +199,12 @@ void ParseString(std::string str)
 {
   if(str.empty()) return;
   FILE *fp;
-  if((fp = fopen((CTX.home_dir + CTX.tmp_filename).c_str(), "w"))) {
+  if((fp = fopen((CTX::instance()->home_dir + 
+                  CTX::instance()->tmp_filename).c_str(), "w"))) {
     fprintf(fp, str.c_str());
     fprintf(fp, "\n");
     fclose(fp);
-    ParseFile((CTX.home_dir + CTX.tmp_filename).c_str(), true);
+    ParseFile((CTX::instance()->home_dir + CTX::instance()->tmp_filename).c_str(), true);
     GModel::current()->importGEOInternals();
   }
 }
@@ -260,7 +262,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
   }
 #endif
 
-  CTX.geom.draw = 0; // don't try to draw the model while reading
+  CTX::instance()->geom.draw = 0; // don't try to draw the model while reading
 
 #if !defined(HAVE_NO_POST)
   int numViewsBefore = PView::list.size();
@@ -268,7 +270,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
 
   int status = 0;
   if(!strcmp(ext, ".stl") || !strcmp(ext, ".STL")){
-    status = GModel::current()->readSTL(fileName, CTX.geom.tolerance);
+    status = GModel::current()->readSTL(fileName, CTX::instance()->geom.tolerance);
   }
   else if(!strcmp(ext, ".brep") || !strcmp(ext, ".rle") ||
           !strcmp(ext, ".brp") || !strcmp(ext, ".BRP")){
@@ -286,7 +288,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
     status = GModel::current()->readUNV(fileName);
   }
   else if(!strcmp(ext, ".vtk") || !strcmp(ext, ".VTK")){
-    status = GModel::current()->readVTK(fileName, CTX.big_endian);
+    status = GModel::current()->readVTK(fileName, CTX::instance()->big_endian);
   }
   else if(!strcmp(ext, ".wrl") || !strcmp(ext, ".WRL") || 
           !strcmp(ext, ".vrml") || !strcmp(ext, ".VRML") ||
@@ -337,7 +339,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
 #endif
 #endif
   else {
-    CTX.geom.draw = 1;
+    CTX::instance()->geom.draw = 1;
     if(!strncmp(header, "$PTS", 4) || !strncmp(header, "$NO", 3) || 
        !strncmp(header, "$PARA", 5) || !strncmp(header, "$ELM", 4) ||
        !strncmp(header, "$MeshFormat", 11) || !strncmp(header, "$Comments", 9)) {
@@ -359,8 +361,8 @@ int MergeFile(std::string fileName, bool warnIfMissing)
 
   SetBoundingBox();
 
-  CTX.geom.draw = 1;
-  CTX.mesh.changed = ENT_ALL;
+  CTX::instance()->geom.draw = 1;
+  CTX::instance()->mesh.changed = ENT_ALL;
 
 #if defined(HAVE_FLTK) && !defined(HAVE_NO_POST)
   if(GUI::available() && numViewsBefore != (int)PView::list.size())
@@ -384,7 +386,7 @@ void ClearProject()
   for(int i = GModel::list.size() - 1; i >= 0; i--)
     delete GModel::list[i];
   new GModel();
-  SetProjectName(CTX.default_filename);
+  SetProjectName(CTX::instance()->default_filename);
 #if defined(HAVE_FLTK)
   if(GUI::available()){
     GUI::instance()->setGraphicTitle(GModel::current()->getFileName());
@@ -398,11 +400,11 @@ void ClearProject()
 
 void OpenProject(std::string fileName)
 {
-  if(CTX.threads_lock) {
+  if(CTX::instance()->threads_lock) {
     Msg::Info("I'm busy! Ask me that later...");
     return;
   }
-  CTX.threads_lock = 1;
+  CTX::instance()->threads_lock = 1;
 
   if(GModel::current()->empty()){
     // if the current model is empty, make sure it's reaaally
@@ -435,7 +437,7 @@ void OpenProject(std::string fileName)
   if(!StatFile(fileName + ".opt"))
     MergeFile(fileName + ".opt");
 
-  CTX.threads_lock = 0;
+  CTX::instance()->threads_lock = 0;
 
 #if defined(HAVE_FLTK)
   if(GUI::available()){

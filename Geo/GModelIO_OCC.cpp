@@ -20,8 +20,6 @@
 #include "MeshGmsh_EdgeConstrain.hxx"
 #endif
 
-extern Context_T CTX;
-
 #if defined(HAVE_OCC)
 
 void OCC_Internals::buildLists()
@@ -348,10 +346,10 @@ void OCC_Internals::loadBREP(const char *fn)
   BRep_Builder aBuilder;
   BRepTools::Read(shape, (char*)fn, aBuilder);
   BRepTools::Clean(shape);
-  healGeometry(CTX.geom.tolerance, 
-               CTX.geom.occ_fix_small_edges,
-               CTX.geom.occ_fix_small_faces,
-               CTX.geom.occ_sew_faces);
+  healGeometry(CTX::instance()->geom.tolerance, 
+               CTX::instance()->geom.occ_fix_small_edges,
+               CTX::instance()->geom.occ_fix_small_faces,
+               CTX::instance()->geom.occ_sew_faces);
   BRepTools::Clean(shape);
   buildLists();
 }
@@ -364,10 +362,10 @@ void OCC_Internals::loadSTEP(const char *fn)
   reader.TransferRoots(); 
   shape = reader.OneShape();  
   BRepTools::Clean(shape);
-  healGeometry(CTX.geom.tolerance, 
-               CTX.geom.occ_fix_small_edges,
-               CTX.geom.occ_fix_small_faces,
-               CTX.geom.occ_sew_faces);
+  healGeometry(CTX::instance()->geom.tolerance, 
+               CTX::instance()->geom.occ_fix_small_edges,
+               CTX::instance()->geom.occ_fix_small_faces,
+               CTX::instance()->geom.occ_sew_faces);
   BRepTools::Clean(shape);
   buildLists();
 }
@@ -380,10 +378,10 @@ void OCC_Internals::loadIGES(const char *fn)
   reader.TransferRoots(); 
   shape = reader.OneShape();  
   BRepTools::Clean(shape);
-  healGeometry(CTX.geom.tolerance, 
-               CTX.geom.occ_fix_small_edges,
-               CTX.geom.occ_fix_small_faces,
-               CTX.geom.occ_sew_faces);
+  healGeometry(CTX::instance()->geom.tolerance, 
+               CTX::instance()->geom.occ_fix_small_edges,
+               CTX::instance()->geom.occ_fix_small_faces,
+               CTX::instance()->geom.occ_sew_faces);
   BRepTools::Clean(shape);
   buildLists();
 }

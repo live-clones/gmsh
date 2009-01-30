@@ -24,8 +24,6 @@
 #include "Context.h"
 #endif
 
-extern Context_T CTX;
-
 std::vector<GModel*> GModel::list;
 int GModel::_current = -1;
 
@@ -202,7 +200,7 @@ void GModel::snapVertices()
 {
   viter vit = firstVertex();
 
-  double tol = CTX.geom.tolerance;
+  double tol = CTX::instance()->geom.tolerance;
 
   while (vit != lastVertex()){
     std::list<GEdge*> edges = (*vit)->edges();

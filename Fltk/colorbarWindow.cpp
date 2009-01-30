@@ -14,8 +14,6 @@
 #include "Draw.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 #define EPS 1.e-10
 
 // This file defines the colorbarWindow class (subclass of Fl_Window)
@@ -122,11 +120,11 @@ void colorbarWindow::redraw_range(int a, int b)
   for(i = a; i <= b; i++) {
     x = index_to_x(i);
     if(ct->ipar[COLORTABLE_MODE] == COLORTABLE_RGB)
-      intensity = CTX.UNPACK_RED(ct->table[i]);
+      intensity = CTX::instance()->unpack_red(ct->table[i]);
     else if(ct->ipar[COLORTABLE_MODE] == COLORTABLE_HSV) {
-      RGB_to_HSV(CTX.UNPACK_RED(ct->table[i]) / 255.,
-                 CTX.UNPACK_GREEN(ct->table[i]) / 255.,
-                 CTX.UNPACK_BLUE(ct->table[i]) / 255., &H, &S, &V);
+      RGB_to_HSV(CTX::instance()->unpack_red(ct->table[i]) / 255.,
+                 CTX::instance()->unpack_green(ct->table[i]) / 255.,
+                 CTX::instance()->unpack_blue(ct->table[i]) / 255., &H, &S, &V);
       intensity = (int)(H / 6. * 255. + EPS);
     }
     y = intensity_to_y(intensity);
@@ -142,11 +140,11 @@ void colorbarWindow::redraw_range(int a, int b)
   for(i = a; i <= b; i++) {
     x = index_to_x(i);
     if(ct->ipar[COLORTABLE_MODE] == COLORTABLE_RGB)
-      intensity = CTX.UNPACK_GREEN(ct->table[i]);
+      intensity = CTX::instance()->unpack_green(ct->table[i]);
     else if(ct->ipar[COLORTABLE_MODE] == COLORTABLE_HSV) {
-      RGB_to_HSV(CTX.UNPACK_RED(ct->table[i]) / 255.,
-                 CTX.UNPACK_GREEN(ct->table[i]) / 255.,
-                 CTX.UNPACK_BLUE(ct->table[i]) / 255., &H, &S, &V);
+      RGB_to_HSV(CTX::instance()->unpack_red(ct->table[i]) / 255.,
+                 CTX::instance()->unpack_green(ct->table[i]) / 255.,
+                 CTX::instance()->unpack_blue(ct->table[i]) / 255., &H, &S, &V);
       intensity = (int)(S * 255.);
     }
     y = intensity_to_y(intensity);
@@ -162,11 +160,11 @@ void colorbarWindow::redraw_range(int a, int b)
   for(i = a; i <= b; i++) {
     x = index_to_x(i);
     if(ct->ipar[COLORTABLE_MODE] == COLORTABLE_RGB)
-      intensity = CTX.UNPACK_BLUE(ct->table[i]);
+      intensity = CTX::instance()->unpack_blue(ct->table[i]);
     else if(ct->ipar[COLORTABLE_MODE] == COLORTABLE_HSV) {
-      RGB_to_HSV(CTX.UNPACK_RED(ct->table[i]) / 255.,
-                 CTX.UNPACK_GREEN(ct->table[i]) / 255.,
-                 CTX.UNPACK_BLUE(ct->table[i]) / 255., &H, &S, &V);
+      RGB_to_HSV(CTX::instance()->unpack_red(ct->table[i]) / 255.,
+                 CTX::instance()->unpack_green(ct->table[i]) / 255.,
+                 CTX::instance()->unpack_blue(ct->table[i]) / 255., &H, &S, &V);
       intensity = (int)(V * 255.);
     }
     y = intensity_to_y(intensity);
@@ -181,7 +179,7 @@ void colorbarWindow::redraw_range(int a, int b)
   // draw alpha levels
   for(i = a; i <= b; i++) {
     x = index_to_x(i);
-    y = intensity_to_y(CTX.UNPACK_ALPHA(ct->table[i]));
+    y = intensity_to_y(CTX::instance()->unpack_alpha(ct->table[i]));
     if(i != a) {
       fl_color(fl_contrast(FL_BLACK, color_bg));
       fl_line(px, py, x, y);
@@ -196,9 +194,9 @@ void colorbarWindow::redraw_range(int a, int b)
     unsigned int color;
     i = x_to_index(x);
     color = ct->table[i];
-    r = CTX.UNPACK_RED(color);
-    g = CTX.UNPACK_GREEN(color);
-    b = CTX.UNPACK_BLUE(color);
+    r = CTX::instance()->unpack_red(color);
+    g = CTX::instance()->unpack_green(color);
+    b = CTX::instance()->unpack_blue(color);
     fl_color(r, g, b);
     fl_line(x, wedge_y, x, wedge_y + wedge_height - 1);
   }
@@ -302,9 +300,12 @@ void colorbarWindow::draw()
   label_y = h() - 5;
   marker_y = label_y - marker_height - font_height;
   wedge_y = marker_y - wedge_height;
-  color_bg = fl_color_cube(CTX.UNPACK_RED(CTX.color.bg) * FL_NUM_RED / 256,
-                           CTX.UNPACK_GREEN(CTX.color.bg) * FL_NUM_GREEN / 256,
-                           CTX.UNPACK_BLUE(CTX.color.bg) * FL_NUM_BLUE / 256);
+  color_bg = fl_color_cube(CTX::instance()->unpack_red(CTX::instance()->color.bg) * 
+                           FL_NUM_RED / 256,
+                           CTX::instance()->unpack_green(CTX::instance()->color.bg) * 
+                           FL_NUM_GREEN / 256,
+                           CTX::instance()->unpack_blue(CTX::instance()->color.bg) * 
+                           FL_NUM_BLUE / 256);
   redraw_range(0, ct->size - 1);
   redraw_marker();
 }
@@ -612,10 +613,10 @@ int colorbarWindow::handle(int event)
       for(i = a; i <= b; i++) {
         int red, green, blue, alpha;
         double R, G, B, H, S, V;
-        red = CTX.UNPACK_RED(ct->table[i]);
-        green = CTX.UNPACK_GREEN(ct->table[i]);
-        blue = CTX.UNPACK_BLUE(ct->table[i]);
-        alpha = CTX.UNPACK_ALPHA(ct->table[i]);
+        red = CTX::instance()->unpack_red(ct->table[i]);
+        green = CTX::instance()->unpack_green(ct->table[i]);
+        blue = CTX::instance()->unpack_blue(ct->table[i]);
+        alpha = CTX::instance()->unpack_alpha(ct->table[i]);
         if(ct->ipar[COLORTABLE_MODE] == COLORTABLE_RGB) {
           if(p1) red = value;
           if(p2) green = value;
@@ -634,7 +635,7 @@ int colorbarWindow::handle(int event)
           green = (int)(255 * G);
           blue = (int)(255 * B);
         }
-        ct->table[i] = CTX.PACK_COLOR(red, green, blue, alpha);
+        ct->table[i] = CTX::instance()->pack_color(red, green, blue, alpha);
       }
       // redraw the color curves
       if(pentry < entry)

@@ -27,8 +27,6 @@
 #include "OS.h"
 #include "HighOrder.h"
 
-extern Context_T CTX;
-
 void computeEdgeLoops(const GFace *gf,
 		      std::vector<MVertex*> &all_mvertices,
 		      std::vector<int> &indices)
@@ -196,8 +194,8 @@ static void remeshUnrecoveredEdges(std::set<EdgeToRecover> &edgesNotRecovered,
 
 static bool AlgoDelaunay2D(GFace *gf)
 {
-  if(noseam(gf) && (CTX.mesh.algo2d == ALGO_2D_DELAUNAY || 
-		    CTX.mesh.algo2d == ALGO_2D_FRONTAL))
+  if(noseam(gf) && (CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY || 
+		    CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL))
     return true;
   return false;
 }
@@ -462,8 +460,8 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
     int j = 0;
     while(itv != all_vertices.end()){
       MVertex *here = *itv;
-      double XX = CTX.mesh.rand_factor * LC2D * (double)rand() / (double)RAND_MAX;
-      double YY = CTX.mesh.rand_factor * LC2D * (double)rand() / (double)RAND_MAX;
+      double XX = CTX::instance()->mesh.rand_factor * LC2D * (double)rand() / (double)RAND_MAX;
+      double YY = CTX::instance()->mesh.rand_factor * LC2D * (double)rand() / (double)RAND_MAX;
       doc.points[j].where.h = U_[j] + XX;
       doc.points[j].where.v = V_[j] + YY;
       doc.points[j].adjacent = NULL;
@@ -697,9 +695,9 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
 
   // start mesh generation
   if(!AlgoDelaunay2D(gf)){
-    gmshRefineMeshBDS (gf,*m, CTX.mesh.refine_steps, true);
+    gmshRefineMeshBDS (gf,*m, CTX::instance()->mesh.refine_steps, true);
     gmshOptimizeMeshBDS(gf, *m, 2);
-    gmshRefineMeshBDS (gf,*m, CTX.mesh.refine_steps, false);
+    gmshRefineMeshBDS (gf,*m, CTX::instance()->mesh.refine_steps, false);
     gmshOptimizeMeshBDS(gf, *m, 2);
   }
 
@@ -748,11 +746,11 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
   // BDS mesh is passed in order not to recompute local coordinates of
   // vertices
   if(AlgoDelaunay2D(gf)){
-    if (CTX.mesh.algo2d == ALGO_2D_FRONTAL)
+    if (CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
       gmshBowyerWatsonFrontal(gf);
     else
       gmshBowyerWatson(gf);
-    for (int i = 0; i < CTX.mesh.nb_smoothing; i++) 
+    for (int i = 0; i < CTX::instance()->mesh.nb_smoothing; i++) 
       laplaceSmoothing(gf);
   }
   else if (debug){
@@ -1085,8 +1083,10 @@ static bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
         BDS_Point *pp = edgeLoop_BDS[j];
         const double U = pp->u;
         const double V = pp->v;
-        double XX = CTX.mesh.rand_factor * LC2D * (double)rand() / (double)RAND_MAX;
-        double YY = CTX.mesh.rand_factor * LC2D * (double)rand() / (double)RAND_MAX;
+        double XX = CTX::instance()->mesh.rand_factor * LC2D * 
+          (double)rand() / (double)RAND_MAX;
+        double YY = CTX::instance()->mesh.rand_factor * LC2D * 
+          (double)rand() / (double)RAND_MAX;
         doc.points[count].where.h = U + XX;
         doc.points[count].where.v = V + YY;
         doc.points[count].adjacent = NULL;
@@ -1231,9 +1231,9 @@ static bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
 
   // start mesh generation
   if (!AlgoDelaunay2D(gf)){
-    gmshRefineMeshBDS(gf, *m, CTX.mesh.refine_steps, true);
+    gmshRefineMeshBDS(gf, *m, CTX::instance()->mesh.refine_steps, true);
     gmshOptimizeMeshBDS(gf, *m, 2);
-    gmshRefineMeshBDS (gf, *m, -CTX.mesh.refine_steps, false);
+    gmshRefineMeshBDS (gf, *m, -CTX::instance()->mesh.refine_steps, false);
     gmshOptimizeMeshBDS(gf, *m, 2, &recover_map);
     // compute mesh statistics
     computeMeshSizeFieldAccuracy(gf, *m, gf->meshStatistics.efficiency_index,
@@ -1293,11 +1293,11 @@ static bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
   }
   
   if (AlgoDelaunay2D(gf)){
-    if (CTX.mesh.algo2d == ALGO_2D_FRONTAL)
+    if (CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
       gmshBowyerWatsonFrontal(gf);
     else
       gmshBowyerWatson(gf);
-    for (int i = 0; i < CTX.mesh.nb_smoothing; i++) 
+    for (int i = 0; i < CTX::instance()->mesh.nb_smoothing; i++) 
       laplaceSmoothing(gf);
   }
   
@@ -1343,7 +1343,7 @@ void meshGFace::operator() (GFace *gf)
   if(gf->geomType() == GEntity::BoundaryLayerSurface) return;
   if(gf->geomType() == GEntity::ProjectionFace) return;
   if(gf->meshAttributes.Method == MESH_NONE) return;
-  if(CTX.mesh.mesh_only_visible && !gf->getVisibility()) return;
+  if(CTX::instance()->mesh.mesh_only_visible && !gf->getVisibility()) return;
 
   // destroy the mesh if it exists
   deMeshGFace dem;
@@ -1354,8 +1354,8 @@ void meshGFace::operator() (GFace *gf)
 
   const char *algo = "Unknown";
   if(AlgoDelaunay2D(gf))
-    algo = (CTX.mesh.algo2d == ALGO_2D_FRONTAL) ? "Frontal" : "Delaunay";
-  else if(CTX.mesh.algo2d == ALGO_2D_MESHADAPT)
+    algo = (CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL) ? "Frontal" : "Delaunay";
+  else if(CTX::instance()->mesh.algo2d == ALGO_2D_MESHADAPT)
     algo = "MeshAdapt";
   else 
     algo = "MeshAdapt+Delaunay";

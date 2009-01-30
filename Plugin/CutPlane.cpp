@@ -17,8 +17,6 @@
 #undef max
 #endif
 
-extern Context_T CTX;
-
 int GMSH_CutPlanePlugin::iview = 0;
 
 StringXNumber CutPlaneOptions_Number[] = {
@@ -47,8 +45,8 @@ void GMSH_CutPlanePlugin::draw(void *context)
   drawContext *ctx = (drawContext*)context;
   if(num < 0) num = iview;
   if(num >= 0 && num < (int)PView::list.size()){
-    glColor4ubv((GLubyte *) & CTX.color.fg);
-    glLineWidth(CTX.line_width);
+    glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
+    glLineWidth(CTX::instance()->line_width);
     SBoundingBox3d bb = PView::list[num]->getData()->getBoundingBox();
     ctx->drawPlaneInBoundingBox(bb.min().x(), bb.min().y(), bb.min().z(), 
                                 bb.max().x(), bb.max().y(), bb.max().z(), 
@@ -98,7 +96,7 @@ double GMSH_CutPlanePlugin::callbackC(int num, int action, double value)
 double GMSH_CutPlanePlugin::callbackD(int num, int action, double value)
 {
   return callback(num, action, value, &CutPlaneOptions_Number[3].def,
-                  CTX.lc/200., -CTX.lc, CTX.lc);
+                  CTX::instance()->lc/200., -CTX::instance()->lc, CTX::instance()->lc);
 }
 
 double GMSH_CutPlanePlugin::callbackVol(int num, int action, double value)

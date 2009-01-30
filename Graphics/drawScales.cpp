@@ -11,8 +11,6 @@
 #include "Context.h"
 #include "gl2ps.h"
 
-extern Context_T CTX;
-
 static void drawScaleBar(PView *p, double xmin, double ymin, double width, 
                          double height, double tic, int horizontal)
 {
@@ -91,7 +89,7 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin, double ymin
 
   if(!opt->NbIso) return;
 
-  gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
+  gl_font(CTX::instance()->gl_font_enum, CTX::instance()->gl_fontsize);
   double font_h = gl_height(); // total font height
   double font_a = gl_height() - gl_descent(); // height above ref pt
 
@@ -116,7 +114,7 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin, double ymin
   double box = (horizontal ? width : height) / opt->NbIso;
   double vbox = (horizontal ? width : height) / nbv;
 
-  glColor4ubv((GLubyte *) & CTX.color.text);
+  glColor4ubv((GLubyte *) & CTX::instance()->color.text);
 
   if(opt->IntervalsType == PViewOptions::Discrete ||
      opt->IntervalsType == PViewOptions::Numeric ||
@@ -160,7 +158,7 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
 
-  gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
+  gl_font(CTX::instance()->gl_font_enum, CTX::instance()->gl_fontsize);
   double font_h = gl_height();
 
   char label[1024];
@@ -229,7 +227,7 @@ void drawContext::drawScales()
   }
   if(scales.empty()) return;
 
-  gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
+  gl_font(CTX::instance()->gl_font_enum, CTX::instance()->gl_fontsize);
   char label[1024];
   double maxw = 0.;
   for(unsigned int i = 0; i < scales.size(); i++) {
@@ -252,9 +250,9 @@ void drawContext::drawScales()
       int c = fix2dCoordinates(&x, &y);
       if(c & 1) x -= w / 2.;
       if(c & 2) y += h / 2.;
-      drawScale(this, p, x, y, w, h, tic, CTX.post.horizontal_scales);
+      drawScale(this, p, x, y, w, h, tic, CTX::instance()->post.horizontal_scales);
     }
-    else if(CTX.post.horizontal_scales){
+    else if(CTX::instance()->post.horizontal_scales){
       double ysep = 20.;
       double xc = (viewport[2] - viewport[0]) / 2.;
       if(scales.size() == 1){

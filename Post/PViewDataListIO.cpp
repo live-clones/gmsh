@@ -11,8 +11,6 @@
 #include "Context.h"
 #include "adaptiveData.h"
 
-extern Context_T CTX;
-
 bool PViewDataList::readPOS(FILE *fp, double version, int format, int size)
 {
   char name[256];
@@ -398,7 +396,7 @@ class pVertexLessThan{
  public:
   bool operator()(const pVertex ent1, const pVertex ent2) const
   {
-    double tol = CTX.lc * 1.e-10 ;
+    double tol = CTX::instance()->lc * 1.e-10 ;
     if(ent1.X - ent2.X  >  tol) return true;
     if(ent1.X - ent2.X  < -tol) return false;
     if(ent1.Y - ent2.Y  >  tol) return true;

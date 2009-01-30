@@ -21,8 +21,6 @@
 #include "Context.h"
 #endif
 
-extern Context_T CTX;
-
 #define SQU(a)      ((a)*(a))
 
 GFace::GFace(GModel *model, int tag)
@@ -485,7 +483,7 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
 
       GPoint P = point(U, V);
       err2 = sqrt(SQU(X - P.x()) + SQU(Y - P.y()) + SQU(Z - P.z()));
-      if (err2 < 1.e-8 * CTX.lc) return;
+      if (err2 < 1.e-8 * CTX::instance()->lc) return;
 
       while(err > Precision && iter < MaxIter) {
         P = point(U, V);
@@ -520,7 +518,7 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
       if(iter < MaxIter && err <= Precision &&
          Unew <= umax && Vnew <= vmax &&
          Unew >= umin && Vnew >= vmin){
-        if (onSurface && err2 > 1.e-4 * CTX.lc)
+        if (onSurface && err2 > 1.e-4 * CTX::instance()->lc)
           Msg::Warning("Converged for i=%d j=%d (err=%g iter=%d) BUT "
                        "xyz error = %g in point (%e,%e,%e) on surface %d",
                        i, j, err, iter, err2, X, Y, Z, tag());
@@ -683,7 +681,7 @@ bool GFace::buildSTLTriangulation()
   // i,j+1 *---* i+1,j+1
   //       | / |
   //   i,j *---* i+1,j
-  unsigned int c = CTX.color.geom.surface;
+  unsigned int c = CTX::instance()->color.geom.surface;
   unsigned int col[4] = {c, c, c, c};
   for(int i = 0; i < nu - 1; i++){
     for(int j = 0; j < nv - 1; j++){
@@ -707,7 +705,7 @@ bool GFace::buildSTLTriangulation()
 // by default we assume that straight lines are geodesics
 SPoint2 GFace::geodesic(const SPoint2 &pt1 , const SPoint2 &pt2 , double t)
 {
-  if(CTX.mesh.second_order_experimental && geomType() != GEntity::Plane ){
+  if(CTX::instance()->mesh.second_order_experimental && geomType() != GEntity::Plane ){
     // FIXME: this is buggy -- remove the CTX option once we do it in
     // a robust manner
     GPoint gp1 = point(pt1.x(), pt1.y());

@@ -7,8 +7,6 @@
 #include "fourierEdge.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 #if defined(HAVE_FOURIER_MODEL)
 
 fourierEdge::fourierEdge(GModel *model, FM::TopoEdge* edge_, int tag,
@@ -51,7 +49,7 @@ int fourierEdge::minimumDrawSegments() const
   if(geomType() == Line)
     return n;
   else
-    return CTX.geom.num_sub_edges * n;
+    return CTX::instance()->geom.num_sub_edges * n;
 }
 
 #endif

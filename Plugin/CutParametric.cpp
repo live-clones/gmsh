@@ -19,8 +19,6 @@
 #include "matheval.h"
 #endif
 
-extern Context_T CTX;
-
 StringXNumber CutParametricOptions_Number[] = {
   {GMSH_FULLRC, "MinU", GMSH_CutParametricPlugin::callbackMinU, 0.},
   {GMSH_FULLRC, "MaxU", GMSH_CutParametricPlugin::callbackMaxU, 2*3.1416},
@@ -110,7 +108,7 @@ void GMSH_CutParametricPlugin::draw(void *context)
     fillXYZ();
     recompute = 0;
   }
-  glColor4ubv((GLubyte *) & CTX.color.fg);
+  glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
   if(CutParametricOptions_Number[3].def && x.size() > 1){
     glBegin(GL_LINES);
     for(unsigned int i = 1; i < x.size(); ++i){
@@ -122,7 +120,7 @@ void GMSH_CutParametricPlugin::draw(void *context)
   else{
     drawContext *ctx = (drawContext*)context;
     for(unsigned int i = 0; i < x.size(); ++i)
-      ctx->drawSphere(CTX.point_size, x[i], y[i], z[i], 1);
+      ctx->drawSphere(CTX::instance()->point_size, x[i], y[i], z[i], 1);
   }
 #endif
 }

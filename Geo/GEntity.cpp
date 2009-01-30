@@ -15,13 +15,11 @@
 #include "Context.h"
 #endif
 
-extern Context_T CTX;
-
 GEntity::GEntity(GModel *m, int t)
   : _model(m), _tag(t), _visible(1), _selection(0),
     _allElementsVisible(1), va_lines(0), va_triangles(0)
 {
-  _color = CTX.PACK_COLOR(0, 0, 255, 0);
+  _color = CTX::instance()->pack_color(0, 0, 255, 0);
 }
 
 GEntity::~GEntity()
@@ -37,18 +35,18 @@ void GEntity::deleteVertexArrays()
 
 char GEntity::getVisibility()
 {
-  if(CTX.hide_unselected && !CTX.pick_elements && !getSelection() &&
-     geomType() != ProjectionFace)
+  if(CTX::instance()->hide_unselected && !CTX::instance()->pick_elements &&
+     !getSelection() && geomType() != ProjectionFace)
     return false;
   return _visible;
 }
 
 bool GEntity::useColor()
 {
-  int r = CTX.UNPACK_RED(_color);
-  int g = CTX.UNPACK_GREEN(_color);
-  int b = CTX.UNPACK_BLUE(_color);
-  int a = CTX.UNPACK_ALPHA(_color);
+  int r = CTX::instance()->unpack_red(_color);
+  int g = CTX::instance()->unpack_green(_color);
+  int b = CTX::instance()->unpack_blue(_color);
+  int a = CTX::instance()->unpack_alpha(_color);
   if(r == 0 && g == 0 && b == 255 && a == 0)
     return false;
   return true;

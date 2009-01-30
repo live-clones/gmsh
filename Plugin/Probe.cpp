@@ -19,8 +19,6 @@
 #undef max
 #endif
 
-extern Context_T CTX;
-
 int GMSH_ProbePlugin::iview = 0;
 
 StringXNumber ProbeOptions_Number[] = {
@@ -48,8 +46,8 @@ void GMSH_ProbePlugin::draw(void *context)
     double y = ProbeOptions_Number[1].def;
     double z = ProbeOptions_Number[2].def;
     drawContext *ctx = (drawContext*)context;
-    glColor4ubv((GLubyte *) & CTX.color.fg);
-    glLineWidth(CTX.line_width);
+    glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
+    glLineWidth(CTX::instance()->line_width);
     SBoundingBox3d bb = PView::list[num]->getData()->getBoundingBox();
     if(x >= bb.min().x() && x <= bb.max().x() &&
        y >= bb.min().y() && y <= bb.max().y() &&
@@ -70,7 +68,7 @@ void GMSH_ProbePlugin::draw(void *context)
       glVertex3d(x, y, z - d); glVertex3d(x, y, z + d);
       glEnd();
     }
-    ctx->drawSphere(CTX.point_size, x, y, z, 1);
+    ctx->drawSphere(CTX::instance()->point_size, x, y, z, 1);
   }
 #endif
 }
@@ -79,9 +77,9 @@ double GMSH_ProbePlugin::callback(int num, int action, double value, double *opt
 {
   if(action > 0) iview = num;
   switch(action){ // configure the input field
-  case 1: return CTX.lc / 100.;
-  case 2: return -2 * CTX.lc;
-  case 3: return 2 * CTX.lc;
+  case 1: return CTX::instance()->lc / 100.;
+  case 2: return -2 * CTX::instance()->lc;
+  case 3: return 2 * CTX::instance()->lc;
   default: break;
   }
   *opt = value;

@@ -25,8 +25,6 @@
 #include "PluginManager.h"
 #endif
 
-extern Context_T CTX;
-
 int GmshInitialize(int argc, char **argv)
 {
   // we need at least one model during option parsing
@@ -93,16 +91,16 @@ int GmshBatch()
   Msg::Info("Started on %s", Msg::GetLaunchDate().c_str());
 
   OpenProject(GModel::current()->getFileName());
-  for(unsigned int i = 1; i < CTX.files.size(); i++){
-    if(CTX.files[i] == "-new")
+  for(unsigned int i = 1; i < CTX::instance()->files.size(); i++){
+    if(CTX::instance()->files[i] == "-new")
       new GModel();
     else
-      MergeFile(CTX.files[i]);
+      MergeFile(CTX::instance()->files[i]);
   }
 
 #if !defined(HAVE_NO_POST)
-  if(!CTX.bgm_filename.empty()) {
-    MergeFile(CTX.bgm_filename);
+  if(!CTX::instance()->bgm_filename.empty()) {
+    MergeFile(CTX::instance()->bgm_filename);
     if(PView::list.size())
       GModel::current()->getFields()->set_background_mesh(PView::list.size() - 1);
     else
@@ -110,27 +108,27 @@ int GmshBatch()
   }
 #endif
 
-  if(CTX.batch == -3){
-    GmshDaemon(CTX.solver.socket_name);
+  if(CTX::instance()->batch == -3){
+    GmshDaemon(CTX::instance()->solver.socket_name);
   }
-  else if(CTX.batch == -2){
-    GModel::current()->checkMeshCoherence(CTX.geom.tolerance);
+  else if(CTX::instance()->batch == -2){
+    GModel::current()->checkMeshCoherence(CTX::instance()->geom.tolerance);
   }
-  else if(CTX.batch == -1){
-    CreateOutputFile(CTX.output_filename, FORMAT_GEO);
+  else if(CTX::instance()->batch == -1){
+    CreateOutputFile(CTX::instance()->output_filename, FORMAT_GEO);
   }
-  else if(CTX.batch > 0){
-    if(CTX.batch < 4)
-      GModel::current()->mesh(CTX.batch);
-    else if(CTX.batch == 4)
+  else if(CTX::instance()->batch > 0){
+    if(CTX::instance()->batch < 4)
+      GModel::current()->mesh(CTX::instance()->batch);
+    else if(CTX::instance()->batch == 4)
       AdaptMesh(GModel::current());
-    else if(CTX.batch == 5)
-      RefineMesh(GModel::current(), CTX.mesh.second_order_linear);
+    else if(CTX::instance()->batch == 5)
+      RefineMesh(GModel::current(), CTX::instance()->mesh.second_order_linear);
 #if defined(HAVE_CHACO) || defined(HAVE_METIS)
-    if(CTX.batch_after_mesh == 1)
-      PartitionMesh(GModel::current(), CTX.mesh.partition_options);
+    if(CTX::instance()->batch_after_mesh == 1)
+      PartitionMesh(GModel::current(), CTX::instance()->mesh.partition_options);
 #endif
-    CreateOutputFile(CTX.output_filename, CTX.mesh.format);
+    CreateOutputFile(CTX::instance()->output_filename, CTX::instance()->mesh.format);
   }
 
   time_t now;

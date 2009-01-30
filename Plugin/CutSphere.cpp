@@ -13,8 +13,6 @@
 #include "Draw.h"
 #endif
 
-extern Context_T CTX;
-
 StringXNumber CutSphereOptions_Number[] = {
   {GMSH_FULLRC, "Xc", GMSH_CutSpherePlugin::callbackX, 0.},
   {GMSH_FULLRC, "Yc", GMSH_CutSpherePlugin::callbackY, 0.},
@@ -39,8 +37,8 @@ void GMSH_CutSpherePlugin::draw(void *context)
   GLint mode[2];
   glGetIntegerv(GL_POLYGON_MODE, mode);
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  glColor4ubv((GLubyte *) & CTX.color.fg);
-  glLineWidth(CTX.line_width);
+  glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
+  glLineWidth(CTX::instance()->line_width);
   drawContext *ctx = (drawContext*)context;
   ctx->drawSphere(CutSphereOptions_Number[3].def,
                   CutSphereOptions_Number[0].def,
@@ -69,25 +67,25 @@ double GMSH_CutSpherePlugin::callback(int num, int action, double value, double 
 double GMSH_CutSpherePlugin::callbackX(int num, int action, double value)
 {
   return callback(num, action, value, &CutSphereOptions_Number[0].def,
-                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX::instance()->lc/100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
 }
 
 double GMSH_CutSpherePlugin::callbackY(int num, int action, double value)
 {
   return callback(num, action, value, &CutSphereOptions_Number[1].def,
-                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX::instance()->lc/100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
 }
 
 double GMSH_CutSpherePlugin::callbackZ(int num, int action, double value)
 {
   return callback(num, action, value, &CutSphereOptions_Number[2].def,
-                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX::instance()->lc/100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
 }
 
 double GMSH_CutSpherePlugin::callbackR(int num, int action, double value)
 {
   return callback(num, action, value, &CutSphereOptions_Number[3].def,
-                  CTX.lc/100., 0., 2*CTX.lc);
+                  CTX::instance()->lc/100., 0., 2*CTX::instance()->lc);
 }
 
 double GMSH_CutSpherePlugin::callbackVol(int num, int action, double value)

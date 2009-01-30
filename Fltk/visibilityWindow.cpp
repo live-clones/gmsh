@@ -32,8 +32,6 @@
 #include "Parser.h"
 #endif
 
-extern Context_T CTX;
-
 class Vis {
  public:
   Vis(){}
@@ -318,7 +316,7 @@ static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
   // if the browser is not empty, get the selections made in the
   // browser and apply them into the model
   if(VisibilityList::instance()->getNumEntities()){
-    CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+    CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     bool recursive = GUI::instance()->visibility->butt[0]->value() ? true : false;
     VisibilityList::VisibilityType type;
     switch(GUI::instance()->visibility->browser_type->value()){
@@ -850,7 +848,7 @@ static void _apply_visibility(char mode, bool physical,
   bool recursive = GUI::instance()->visibility->butt[0]->value() ? true : false;
 
   if(mode == 1){ // when showing a single entity, first hide everything
-    if(CTX.pick_elements)
+    if(CTX::instance()->pick_elements)
       _set_visibility_by_number(1, -1, 0, false);
     else
       for(int i = 2; i <= 5; i++)
@@ -859,7 +857,7 @@ static void _apply_visibility(char mode, bool physical,
 
   if(mode == 2) mode = 1;
   
-  if(CTX.pick_elements){
+  if(CTX::instance()->pick_elements){
     for(unsigned int i = 0; i < elements.size(); i++)
       elements[i]->setVisibility(mode);
   }
@@ -900,7 +898,7 @@ static void _apply_visibility(char mode, bool physical,
 
 static void visibility_number_cb(Fl_Widget *w, void *data)
 {
-  CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+  CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
 
   // what = 0 for nodes, 1 for elements, 2 for points, 3 for lines, 4
   // for surfaces, 5 for volumes, 6 for physical points, 7 for
@@ -936,62 +934,62 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
   bool physical = (str.find("physical") != std::string::npos);
 
   if(str == "elements to hide"){
-    CTX.pick_elements = 1;
+    CTX::instance()->pick_elements = 1;
     what = ENT_ALL;
     mode = 0;
   }
   else if(str == "points to hide" || str == "physical points to hide"){
-    CTX.pick_elements = 0;
+    CTX::instance()->pick_elements = 0;
     what = ENT_POINT;
     mode = 0;
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(str == "lines to hide" || str == "physical lines to hide"){
-    CTX.pick_elements = 0;
+    CTX::instance()->pick_elements = 0;
     what = ENT_LINE;
     mode = 0;
     opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(str == "surfaces to hide" || str == "physical surfaces to hide"){
-    CTX.pick_elements = 0;
+    CTX::instance()->pick_elements = 0;
     what = ENT_SURFACE;
     mode = 0;
     if(GModel::current()->getMeshStatus() < 2)
       opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(str == "volumes to hide" || str == "physical volumes to hide"){
-    CTX.pick_elements = 0;
+    CTX::instance()->pick_elements = 0;
     what = ENT_VOLUME;
     mode = 0;
     if(GModel::current()->getMeshStatus() < 3)
       opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(str == "elements to show"){
-    CTX.pick_elements = 1;
+    CTX::instance()->pick_elements = 1;
     what = ENT_ALL;
     mode = 1;
   }
   else if(str == "points to show" || str == "physical points to show"){
-    CTX.pick_elements = 0;
+    CTX::instance()->pick_elements = 0;
     what = ENT_POINT;
     mode = 1;
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(str == "lines to show" || str == "physical lines to show"){
-    CTX.pick_elements = 0;
+    CTX::instance()->pick_elements = 0;
     what = ENT_LINE;
     mode = 1;
     opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(str == "surfaces to show" || str == "physical surfaces to show"){
-    CTX.pick_elements = 0;
+    CTX::instance()->pick_elements = 0;
     what = ENT_SURFACE;
     mode = 1;
     if(GModel::current()->getMeshStatus() < 2)
       opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(str == "volumes to show" || str == "physical volumes to show"){
-    CTX.pick_elements = 0;
+    CTX::instance()->pick_elements = 0;
     what = ENT_VOLUME;
     mode = 1;
     if(GModel::current()->getMeshStatus() < 3)
@@ -1000,7 +998,7 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
   else if(str == "show all"){
     for(int i = 1; i <= 5; i++) // elements, points, lines, surfaces, volumes
       _set_visibility_by_number(i, -1, 1, false);
-    CTX.mesh.changed = ENT_ALL;
+    CTX::instance()->mesh.changed = ENT_ALL;
     Draw();  
     return;
   }
@@ -1015,7 +1013,7 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
 
   while(1) {
     if(what == ENT_ALL) 
-      CTX.mesh.changed = ENT_ALL;
+      CTX::instance()->mesh.changed = ENT_ALL;
     Draw();
     Msg::StatusBar(3, false, "Select %s\n[Press %s'q' to abort]", 
                    str.c_str(), mode ? "" : "'u' to undo or ");
@@ -1038,8 +1036,8 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
     }
   }
 
-  CTX.mesh.changed = ENT_ALL;
-  CTX.pick_elements = 0;
+  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->pick_elements = 0;
   Draw();  
   Msg::StatusBar(3, false, "");
 }
@@ -1085,7 +1083,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
   int brw = width - 4 * WB;
 
   win = new paletteWindow
-    (width, height, CTX.non_modal_windows ? true : false, "Visibility");
+    (width, height, CTX::instance()->non_modal_windows ? true : false, "Visibility");
   win->box(GMSH_WINDOW_BOX);
 
   Fl_Tabs *o = new Fl_Tabs
@@ -1365,7 +1363,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     o1->callback(visibility_save_cb);
   }
 
-  win->position(CTX.vis_position[0], CTX.vis_position[1]);
+  win->position(CTX::instance()->vis_position[0], CTX::instance()->vis_position[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;

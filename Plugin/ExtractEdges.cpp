@@ -74,7 +74,7 @@ PView *GMSH_ExtractEdgesPlugin::execute(PView *v)
   if(!data2) return v;
 
   BDS_Mesh bds;
-  //bds.import_view(v1, CTX.lc * 1.e-12);
+  //bds.import_view(v1, CTX::instance()->lc * 1.e-12);
   //bds.classify(angle * M_PI / 180.);
 
   Msg::Error("BDS->classify(angle, edge_prolongation) must be reinterfaced");

@@ -12,8 +12,6 @@
 #include "Context.h"
 #include "Numeric.h"
 
-extern Context_T CTX;
-
 int drawContext::fix2dCoordinates(double *x, double *y)
 {
   int ret = (*x > 99999 && *y > 99999) ? 3 : (*y > 99999) ? 2 : (*x > 99999) ? 1 : 0;
@@ -157,11 +155,13 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
 
   const double tic = 5.;
 
-  glPointSize(CTX.point_size);
-  gl2psPointSize(CTX.point_size * CTX.print.eps_point_size_factor);
+  glPointSize(CTX::instance()->point_size);
+  gl2psPointSize(CTX::instance()->point_size *
+                 CTX::instance()->print.eps_point_size_factor);
 
-  glLineWidth(CTX.line_width);
-  gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
+  glLineWidth(CTX::instance()->line_width);
+  gl2psLineWidth(CTX::instance()->line_width * 
+                 CTX::instance()->print.eps_line_width_factor);
 
   glColor4ubv((GLubyte *) & opt->color.axes);
 
@@ -221,14 +221,15 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
           glEnable(GL_LINE_STIPPLE);
           glLineStipple(1, 0x1111);
           gl2psEnable(GL2PS_LINE_STIPPLE);
-          gl2psLineWidth(1. * CTX.print.eps_line_width_factor);
+          gl2psLineWidth(1. * CTX::instance()->print.eps_line_width_factor);
           glBegin(GL_LINES);
           glVertex2d(xleft, ytop - i * dy);
           glVertex2d(xleft + width, ytop - i * dy);
           glEnd();
           glDisable(GL_LINE_STIPPLE);
           gl2psDisable(GL2PS_LINE_STIPPLE);
-          gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
+          gl2psLineWidth(CTX::instance()->line_width * 
+                         CTX::instance()->print.eps_line_width_factor);
         }
       }
       if(opt->ShowScale){
@@ -267,14 +268,15 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
           glEnable(GL_LINE_STIPPLE);
           glLineStipple(1, 0x1111);
           gl2psEnable(GL2PS_LINE_STIPPLE);
-          gl2psLineWidth(1. * CTX.print.eps_line_width_factor);
+          gl2psLineWidth(1. * CTX::instance()->print.eps_line_width_factor);
           glBegin(GL_LINES);
           glVertex2d(xleft + i * dx, ytop);
           glVertex2d(xleft + i * dx, ybot);
           glEnd();
           glDisable(GL_LINE_STIPPLE);
           gl2psDisable(GL2PS_LINE_STIPPLE);
-          gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
+          gl2psLineWidth(CTX::instance()->line_width * 
+                         CTX::instance()->print.eps_line_width_factor);
         }
         
         if(nb == 1)
@@ -333,10 +335,10 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft, double yto
   PViewOptions *opt = p->getOptions();
 
   glPointSize(opt->PointSize);
-  gl2psPointSize(opt->PointSize * CTX.print.eps_point_size_factor);
+  gl2psPointSize(opt->PointSize * CTX::instance()->print.eps_point_size_factor);
 
   glLineWidth(opt->LineWidth);
-  gl2psLineWidth(opt->LineWidth * CTX.print.eps_line_width_factor);
+  gl2psLineWidth(opt->LineWidth * CTX::instance()->print.eps_line_width_factor);
 
   if(opt->IntervalsType == PViewOptions::Numeric){
     for(unsigned int i = 0; i < y.size(); i++)
@@ -416,7 +418,7 @@ void drawContext::drawGraph2d()
   }
   if(graphs.empty()) return;
 
-  gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
+  gl_font(CTX::instance()->gl_font_enum, CTX::instance()->gl_fontsize);
   double xsep = 0., ysep = 5 * gl_height();
   char label[1024];
   for(unsigned int i = 0; i < graphs.size(); i++){

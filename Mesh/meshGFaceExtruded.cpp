@@ -10,8 +10,6 @@
 #include "Context.h"
 #include "GmshMessage.h"
 
-extern Context_T CTX;
-
 static void createQuaTri(std::vector<MVertex*> &v, GFace *to,
 			 std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
 {
@@ -180,7 +178,7 @@ int MeshExtrudedSurface(GFace *gf,
 
   // build a set with all the vertices on the boundary of the face gf
   double old_tol = MVertexLessThanLexicographic::tolerance; 
-  MVertexLessThanLexicographic::tolerance = 1.e-12 * CTX.lc;
+  MVertexLessThanLexicographic::tolerance = 1.e-12 * CTX::instance()->lc;
 
   std::set<MVertex*, MVertexLessThanLexicographic> pos;
   std::list<GEdge*> edges = gf->edges();

@@ -19,8 +19,6 @@
 
 #define SQU(a)      ((a)*(a))
 
-extern Context_T CTX;
-
 static bool mappingIsInvertible(MTetrahedron *e)
 {
   if (e->getPolynomialOrder() == 1) return 1.0;
@@ -1013,7 +1011,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
 
   gmshHighOrderSmoother *displ2D = 0; 
   gmshHighOrderSmoother *displ3D = 0; 
-  if(CTX.mesh.smooth_internal_edges){
+  if(CTX::instance()->mesh.smooth_internal_edges){
     displ2D = new gmshHighOrderSmoother(2);
     displ3D = new gmshHighOrderSmoother(3);
   }

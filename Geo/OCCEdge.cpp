@@ -11,8 +11,6 @@
 #include "OCCFace.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 #if defined(HAVE_OCC)
 #include "Geom2dLProp_CLProps2d.hxx"
 #include "Geom_BezierCurve.hxx"
@@ -94,7 +92,7 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
   const double dx = p1.x()-p2.x();
   const double dy = p1.y()-p2.y();
   const double dz = p1.z()-p2.z();
-  if(sqrt(dx * dx + dy * dy + dz * dz) > 1.e-4 * CTX.lc){
+  if(sqrt(dx * dx + dy * dy + dz * dz) > 1.e-4 * CTX::instance()->lc){
     // return reparamOnFace(face, epar,-1);      
     Msg::Warning("Reparam on face partially failed for curve %d surface %d at point %g",
 		 tag(), face->tag(), epar);
@@ -204,7 +202,7 @@ int OCCEdge::minimumMeshSegments() const
   if(geomType() == Line)
     np = GEdge::minimumMeshSegments();
   else 
-    np = CTX.mesh.min_curv_points - 1;
+    np = CTX::instance()->mesh.min_curv_points - 1;
   
   // if the edge is closed, ensure that at least 3 points are
   // generated in the 1D mesh (4 segments, one of which is
@@ -219,7 +217,7 @@ int OCCEdge::minimumDrawSegments() const
   if(geomType() == Line)
     return GEdge::minimumDrawSegments();
   else
-    return CTX.geom.num_sub_edges * GEdge::minimumDrawSegments();
+    return CTX::instance()->geom.num_sub_edges * GEdge::minimumDrawSegments();
 }
 
 double OCCEdge::curvature(double par) const 

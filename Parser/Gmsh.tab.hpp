@@ -284,7 +284,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 74 "Gmsh.y"
+#line 72 "Gmsh.y"
 {
   char *c;
   int i;

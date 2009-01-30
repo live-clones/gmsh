@@ -18,8 +18,6 @@
 #include "discreteEdge.h"
 #include "discreteFace.h"
 
-extern Context_T CTX;
-
 static void NoElementsSelectedMode(classificationEditor *e)
 {
   e->_buttons[CLASSBUTTON_DEL]->deactivate();
@@ -54,7 +52,7 @@ static void class_selectgface_cb(Fl_Widget *w, void *data)
   opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
 
   while(1) {
-    CTX.mesh.changed = ENT_ALL;
+    CTX::instance()->mesh.changed = ENT_ALL;
     Draw();
 
     Msg::StatusBar(3, false, "Select Model Face\n"
@@ -81,7 +79,7 @@ static void class_selectgface_cb(Fl_Widget *w, void *data)
       break;
     }
   } 
-  CTX.mesh.changed = ENT_ALL;
+  CTX::instance()->mesh.changed = ENT_ALL;
   Draw();  
   Msg::StatusBar(3, false, "");
 }
@@ -91,10 +89,10 @@ static void class_deleteedge_cb(Fl_Widget *w, void *data)
   classificationEditor *e = (classificationEditor*)data;
   std::vector<MLine*> ele;
   
-  CTX.pick_elements = 1;
+  CTX::instance()->pick_elements = 1;
   
   while(1) {
-    CTX.mesh.changed = ENT_ALL;
+    CTX::instance()->mesh.changed = ENT_ALL;
     Draw();
 
     Msg::StatusBar(3, false, "Select Elements\n"
@@ -102,7 +100,7 @@ static void class_deleteedge_cb(Fl_Widget *w, void *data)
     
     char ib = GUI::instance()->selectEntity(ENT_ALL);
     if(ib == 'l') {
-      if(CTX.pick_elements){
+      if(CTX::instance()->pick_elements){
         for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++){
           MElement *me = GUI::instance()->selectedElements[i];
           if(me->getNumEdges() == 1 && me->getVisibility() != 2){
@@ -141,8 +139,8 @@ static void class_deleteedge_cb(Fl_Widget *w, void *data)
     else e->temporary->lines.push_back(temp[i]);
   }
   
-  CTX.mesh.changed = ENT_ALL;
-  CTX.pick_elements = 0;
+  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->pick_elements = 0;
   Draw();  
   Msg::StatusBar(3, false, "");
 }
@@ -157,8 +155,8 @@ static void class_save_cb(Fl_Widget *w, void *data)
   e->_elements.clear();
   e->edges_detected.clear();
 
-  CTX.mesh.changed = ENT_ALL;
-  CTX.pick_elements = 0;
+  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->pick_elements = 0;
   NoElementsSelectedMode(e);
   Draw();  
   Msg::StatusBar(3, false, "");
@@ -173,8 +171,8 @@ static void class_clear_cb(Fl_Widget *w, void *data)
   }
   e->temporary->lines.clear();
 
-  CTX.mesh.changed = ENT_ALL;
-  CTX.pick_elements = 0;
+  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->pick_elements = 0;
   NoElementsSelectedMode(e);
   Draw();  
   Msg::StatusBar(3, false, "");
@@ -375,7 +373,7 @@ static void class_color_cb(Fl_Widget* w, void* data)
     }
   }
   
-  CTX.mesh.changed = ENT_ALL;
+  CTX::instance()->mesh.changed = ENT_ALL;
   Draw();  
   Msg::StatusBar(3, false, "");
 }
@@ -406,14 +404,14 @@ static void updateedges_cb(Fl_Widget* w, void* data)
     } 
   }
   
-  CTX.mesh.changed = ENT_ALL;
+  CTX::instance()->mesh.changed = ENT_ALL;
   Draw();   
 }
 
 static void class_hide_cb(Fl_Widget *w, void *data)
 {
-  CTX.hide_unselected = !CTX.hide_unselected;
-  CTX.mesh.changed = ENT_ALL;
+  CTX::instance()->hide_unselected = !CTX::instance()->hide_unselected;
+  CTX::instance()->mesh.changed = ENT_ALL;
   Draw();
 }
 
@@ -439,10 +437,10 @@ static void class_select_cb(Fl_Widget *w, void *data)
   classificationEditor *e = (classificationEditor*)data;
   std::vector<MTriangle*> &ele(e->getElements());
 
-  CTX.pick_elements = 1;
+  CTX::instance()->pick_elements = 1;
 
   while(1) {
-    CTX.mesh.changed = ENT_ALL;
+    CTX::instance()->mesh.changed = ENT_ALL;
     Draw();
 
     Msg::StatusBar(3, false, "Select Elements\n"
@@ -450,7 +448,7 @@ static void class_select_cb(Fl_Widget *w, void *data)
     
     char ib = GUI::instance()->selectEntity(ENT_ALL);
     if(ib == 'l') {
-      if(CTX.pick_elements){
+      if(CTX::instance()->pick_elements){
         for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++){
           MElement *me = GUI::instance()->selectedElements[i];
           if(me->getNumEdges() == 3 && me->getVisibility() != 2){
@@ -482,8 +480,8 @@ static void class_select_cb(Fl_Widget *w, void *data)
   
   updateedges_cb(0, data);
 
-  CTX.mesh.changed = ENT_ALL;
-  CTX.pick_elements = 0;
+  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->pick_elements = 0;
   Draw();  
   Msg::StatusBar(3, false, "");
 }
@@ -542,7 +540,7 @@ classificationEditor::classificationEditor()
   const int width = (int)(3.5 * BBB), height = 10 * BH;
 
   _window = new paletteWindow
-    (width, height, CTX.non_modal_windows ? true : false, "Classify");
+    (width, height, CTX::instance()->non_modal_windows ? true : false, "Classify");
   
   new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
   {

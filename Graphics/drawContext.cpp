@@ -13,23 +13,21 @@
 #include "PView.h"
 #include "PViewOptions.h"
 
-extern Context_T CTX;
-
 drawContext::drawContext(drawTransform *transform) 
   : _transform(transform)
 {
   // initialize from temp values in global context
   for(int i = 0; i < 3; i++){
-    r[i] = CTX.tmp_r[i];
-    t[i] = CTX.tmp_t[i];
-    s[i] = CTX.tmp_s[i];
+    r[i] = CTX::instance()->tmp_r[i];
+    t[i] = CTX::instance()->tmp_t[i];
+    s[i] = CTX::instance()->tmp_s[i];
   }
   for(int i = 0; i < 4; i++){
-    quaternion[i] = CTX.tmp_quaternion[i];
+    quaternion[i] = CTX::instance()->tmp_quaternion[i];
   }
   viewport[0] = viewport[1] = 0;
-  viewport[2] = CTX.gl_size[0];
-  viewport[3] = CTX.gl_size[1];
+  viewport[2] = CTX::instance()->gl_size[0];
+  viewport[3] = CTX::instance()->gl_size[1];
 
   render_mode = GMSH_RENDER;
   vxmin = vymin = vxmax = vymax = 0.;
@@ -61,33 +59,43 @@ void drawContext::createQuadricsAndDisplayLists()
 
   // display list 0 (sphere)
   glNewList(_displayLists + 0, GL_COMPILE);
-  gluSphere(_quadric, 1., CTX.quadric_subdivisions, CTX.quadric_subdivisions);
+  gluSphere(_quadric, 1., 
+            CTX::instance()->quadric_subdivisions, 
+            CTX::instance()->quadric_subdivisions);
   glEndList();
 
   // display list 1 (arrow)
   glNewList(_displayLists + 1, GL_COMPILE);
-  glTranslated(0., 0., CTX.arrow_rel_stem_length);
-  if(CTX.arrow_rel_head_radius > 0 && CTX.arrow_rel_stem_length < 1)
-    gluCylinder(_quadric, CTX.arrow_rel_head_radius, 0., 
-                (1. - CTX.arrow_rel_stem_length), CTX.quadric_subdivisions, 1);
-  if(CTX.arrow_rel_head_radius > CTX.arrow_rel_stem_radius)
-    gluDisk(_quadric, CTX.arrow_rel_stem_radius, CTX.arrow_rel_head_radius,
-            CTX.quadric_subdivisions, 1);
+  glTranslated(0., 0., CTX::instance()->arrow_rel_stem_length);
+  if(CTX::instance()->arrow_rel_head_radius > 0 && 
+     CTX::instance()->arrow_rel_stem_length < 1)
+    gluCylinder(_quadric, CTX::instance()->arrow_rel_head_radius, 0., 
+                (1. - CTX::instance()->arrow_rel_stem_length), 
+                CTX::instance()->quadric_subdivisions, 1);
+  if(CTX::instance()->arrow_rel_head_radius > CTX::instance()->arrow_rel_stem_radius)
+    gluDisk(_quadric, CTX::instance()->arrow_rel_stem_radius, 
+            CTX::instance()->arrow_rel_head_radius,
+            CTX::instance()->quadric_subdivisions, 1);
   else
-    gluDisk(_quadric, CTX.arrow_rel_head_radius, CTX.arrow_rel_stem_radius,
-            CTX.quadric_subdivisions, 1);
-  glTranslated(0., 0., -CTX.arrow_rel_stem_length);
-  if(CTX.arrow_rel_stem_radius > 0 && CTX.arrow_rel_stem_length > 0){
-    gluCylinder(_quadric, CTX.arrow_rel_stem_radius, CTX.arrow_rel_stem_radius,
-                CTX.arrow_rel_stem_length, CTX.quadric_subdivisions, 1);
-    gluDisk(_quadric, 0, CTX.arrow_rel_stem_radius, CTX.quadric_subdivisions, 1);
+    gluDisk(_quadric, CTX::instance()->arrow_rel_head_radius, 
+            CTX::instance()->arrow_rel_stem_radius,
+            CTX::instance()->quadric_subdivisions, 1);
+  glTranslated(0., 0., -CTX::instance()->arrow_rel_stem_length);
+  if(CTX::instance()->arrow_rel_stem_radius > 0 && 
+     CTX::instance()->arrow_rel_stem_length > 0){
+    gluCylinder(_quadric, CTX::instance()->arrow_rel_stem_radius, 
+                CTX::instance()->arrow_rel_stem_radius,
+                CTX::instance()->arrow_rel_stem_length,
+                CTX::instance()->quadric_subdivisions, 1);
+    gluDisk(_quadric, 0, CTX::instance()->arrow_rel_stem_radius,
+            CTX::instance()->quadric_subdivisions, 1);
   }
   glEndList();
 }
 
 void drawContext::buildRotationMatrix()
 {
-  if(CTX.useTrackball) {
+  if(CTX::instance()->useTrackball) {
     build_rotmatrix(rot, quaternion);
     setEulerAnglesFromRotationMatrix();
   }
@@ -179,10 +187,11 @@ static int needPolygonOffset()
 {
   GModel *m = GModel::current();
   if(m->getMeshStatus() == 2 &&
-     (CTX.mesh.surfaces_edges || CTX.geom.lines || CTX.geom.surfaces))
+     (CTX::instance()->mesh.surfaces_edges || CTX::instance()->geom.lines || 
+      CTX::instance()->geom.surfaces))
     return 1;
   if(m->getMeshStatus() == 3 && 
-     (CTX.mesh.surfaces_edges || CTX.mesh.volumes_edges))
+     (CTX::instance()->mesh.surfaces_edges || CTX::instance()->mesh.volumes_edges))
     return 1;
   for(unsigned int i = 0; i < PView::list.size(); i++){
     PViewOptions *opt = PView::list[i]->getOptions();
@@ -209,11 +218,13 @@ void drawContext::draw3d()
   // measurement of the change in depth relative to the screen area of
   // the polygon, and r is the smallest value that is guaranteed to
   // produce a resolvable offset for a given implementation.
-  glPolygonOffset(CTX.polygon_offset_factor, CTX.polygon_offset_units);
-  if(CTX.polygon_offset_factor || CTX.polygon_offset_units)
-    CTX.polygon_offset = CTX.polygon_offset_always ? 1 : needPolygonOffset();
+  glPolygonOffset(CTX::instance()->polygon_offset_factor, 
+                  CTX::instance()->polygon_offset_units);
+  if(CTX::instance()->polygon_offset_factor || CTX::instance()->polygon_offset_units)
+    CTX::instance()->polygon_offset = CTX::instance()->polygon_offset_always ? 1 : 
+      needPolygonOffset();
   else
-    CTX.polygon_offset = 0;
+    CTX::instance()->polygon_offset = 0;
 
   glDepthFunc(GL_LESS);
   glEnable(GL_DEPTH_TEST);
@@ -237,15 +248,16 @@ void drawContext::draw2d()
   glOrtho((double)viewport[0], (double)viewport[2],
           (double)viewport[1], (double)viewport[3], -1., 1.);
   // hack to make the 2D primitives appear "in front" in GL2PS
-  glTranslated(0., 0., CTX.clip_factor > 1. ? 1. / CTX.clip_factor : CTX.clip_factor);
+  glTranslated(0., 0., CTX::instance()->clip_factor > 1. ? 
+               1. / CTX::instance()->clip_factor : CTX::instance()->clip_factor);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
   drawGraph2d();
   drawText2d();
-  if(CTX.post.draw) 
+  if(CTX::instance()->post.draw) 
     drawScales();
-  if(CTX.small_axes)
+  if(CTX::instance()->small_axes)
     drawSmallAxes();
 }
 
@@ -254,20 +266,25 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
   double Va = 
     (double) (viewport[3] - viewport[1]) /
     (double) (viewport[2] - viewport[0]);
-  double Wa = (CTX.max[1] - CTX.min[1]) / (CTX.max[0] - CTX.min[0]);
+  double Wa = (CTX::instance()->max[1] - CTX::instance()->min[1]) / 
+    (CTX::instance()->max[0] - CTX::instance()->min[0]);
 
   // compute the viewport in World coordinates (with margins)
   if(Va > Wa) {
-    vxmin = CTX.min[0];
-    vxmax = CTX.max[0];
-    vymin = 0.5 * (CTX.min[1] + CTX.max[1] - Va * (CTX.max[0] - CTX.min[0]));
-    vymax = 0.5 * (CTX.min[1] + CTX.max[1] + Va * (CTX.max[0] - CTX.min[0]));
+    vxmin = CTX::instance()->min[0];
+    vxmax = CTX::instance()->max[0];
+    vymin = 0.5 * (CTX::instance()->min[1] + CTX::instance()->max[1] - 
+                   Va * (CTX::instance()->max[0] - CTX::instance()->min[0]));
+    vymax = 0.5 * (CTX::instance()->min[1] + CTX::instance()->max[1] + 
+                   Va * (CTX::instance()->max[0] - CTX::instance()->min[0]));
   }
   else {
-    vxmin = 0.5 * (CTX.min[0] + CTX.max[0] - (CTX.max[1] - CTX.min[1]) / Va);
-    vxmax = 0.5 * (CTX.min[0] + CTX.max[0] + (CTX.max[1] - CTX.min[1]) / Va);
-    vymin = CTX.min[1];
-    vymax = CTX.max[1];
+    vxmin = 0.5 * (CTX::instance()->min[0] + CTX::instance()->max[0] - 
+                   (CTX::instance()->max[1] - CTX::instance()->min[1]) / Va);
+    vxmax = 0.5 * (CTX::instance()->min[0] + CTX::instance()->max[0] + 
+                   (CTX::instance()->max[1] - CTX::instance()->min[1]) / Va);
+    vymin = CTX::instance()->min[1];
+    vymax = CTX::instance()->max[1];
   }
   vxmin -= (vxmax - vxmin) / 3.;
   vxmax += 0.25 * (vxmax - vxmin);
@@ -291,15 +308,15 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
                   (GLdouble)wpick, (GLdouble)hpick, (GLint *)viewport);
 
   double grad_z, grad_xy;
-  double zmax = std::max(fabs(CTX.min[2]), fabs(CTX.max[2]));
-  if(zmax < CTX.lc) zmax = CTX.lc;
+  double zmax = std::max(fabs(CTX::instance()->min[2]), fabs(CTX::instance()->max[2]));
+  if(zmax < CTX::instance()->lc) zmax = CTX::instance()->lc;
 
-  if(CTX.ortho) {
+  if(CTX::instance()->ortho) {
     // setting up the near and far clipping planes so that the box is
     // large enough to manipulate the model and zoom, but not too big
     // (the z-buffer resolution, e.g., on software Mesa can become
     // insufficient)
-    double clip = zmax * s[2] * CTX.clip_factor;
+    double clip = zmax * s[2] * CTX::instance()->clip_factor;
     glOrtho(vxmin, vxmax, vymin, vymax, -clip, clip);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -307,14 +324,14 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
     grad_xy = 1.;
   }
   else {
-    double clip_near = 0.75 * CTX.clip_factor * zmax;
-    double clip_far = 75. * CTX.clip_factor * zmax;
+    double clip_near = 0.75 * CTX::instance()->clip_factor * zmax;
+    double clip_far = 75. * CTX::instance()->clip_factor * zmax;
     double coef = (75./0.75) / 3.;
     // recenter the model such that the perspective is always at the
     // center of gravity (we should maybe add an option to choose
     // this, as we do for the rotation center)
-    t_init[0] = CTX.cg[0];
-    t_init[1] = CTX.cg[1];
+    t_init[0] = CTX::instance()->cg[0];
+    t_init[1] = CTX::instance()->cg[1];
     vxmin -= t_init[0];
     vxmax -= t_init[0];
     vymin -= t_init[1];
@@ -329,26 +346,26 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
   }
 
   // draw background gradient
-  if(render_mode != GMSH_SELECT && CTX.bg_gradient){
+  if(render_mode != GMSH_SELECT && CTX::instance()->bg_gradient){
     glPushMatrix();
     glLoadIdentity();
     glTranslated(0., 0., -grad_z);
-    if(CTX.bg_gradient == 1){ // vertical
+    if(CTX::instance()->bg_gradient == 1){ // vertical
       glBegin(GL_QUADS);
-      glColor4ubv((GLubyte *) & CTX.color.bg);
+      glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
       glVertex3d(grad_xy * vxmin, grad_xy * vymin, 0.);
       glVertex3d(grad_xy * vxmax, grad_xy * vymin, 0.);
-      glColor4ubv((GLubyte *) & CTX.color.bg_grad);
+      glColor4ubv((GLubyte *) & CTX::instance()->color.bg_grad);
       glVertex3d(grad_xy * vxmax, grad_xy * vymax, 0.);
       glVertex3d(grad_xy * vxmin, grad_xy * vymax, 0.);
       glEnd();
     }
-    else if(CTX.bg_gradient == 2){ // horizontal
+    else if(CTX::instance()->bg_gradient == 2){ // horizontal
       glBegin(GL_QUADS);
-      glColor4ubv((GLubyte *) & CTX.color.bg);
+      glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
       glVertex3d(grad_xy * vxmax, grad_xy * vymin, 0.);
       glVertex3d(grad_xy * vxmax, grad_xy * vymax, 0.);
-      glColor4ubv((GLubyte *) & CTX.color.bg_grad);
+      glColor4ubv((GLubyte *) & CTX::instance()->color.bg_grad);
       glVertex3d(grad_xy * vxmin, grad_xy * vymax, 0.);
       glVertex3d(grad_xy * vxmin, grad_xy * vymin, 0.);
       glEnd();
@@ -358,9 +375,9 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
       double cy = grad_xy * (vymin + vymax) / 2.;
       double r = grad_xy * std::max(vxmax - vxmin, vymax - vymin) / 2.;
       glBegin(GL_TRIANGLE_FAN);
-      glColor4ubv((GLubyte *) & CTX.color.bg_grad);
+      glColor4ubv((GLubyte *) & CTX::instance()->color.bg_grad);
       glVertex3d(cx, cy, 0.);
-      glColor4ubv((GLubyte *) & CTX.color.bg);
+      glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
       glVertex3d(cx + r, cy, 0.);
       int ntheta = 36;
       for(int i = 1; i < ntheta + 1; i ++){
@@ -381,28 +398,28 @@ void drawContext::initRenderModel()
   glTranslated(t[0], t[1], t[2]);
   
   for(int i = 0; i < 6; i++) {
-    if(CTX.light[i]) {
-      GLfloat position[4] = {(GLfloat)CTX.light_position[i][0],
-                             (GLfloat)CTX.light_position[i][1],
-                             (GLfloat)CTX.light_position[i][2],
-                             (GLfloat)CTX.light_position[i][3]};
+    if(CTX::instance()->light[i]) {
+      GLfloat position[4] = {(GLfloat)CTX::instance()->light_position[i][0],
+                             (GLfloat)CTX::instance()->light_position[i][1],
+                             (GLfloat)CTX::instance()->light_position[i][2],
+                             (GLfloat)CTX::instance()->light_position[i][3]};
       glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, position);
 
-      GLfloat r = CTX.UNPACK_RED(CTX.color.ambient_light[i])/255.;
-      GLfloat g = CTX.UNPACK_GREEN(CTX.color.ambient_light[i])/255.;
-      GLfloat b = CTX.UNPACK_BLUE(CTX.color.ambient_light[i])/255.;
+      GLfloat r = CTX::instance()->unpack_red(CTX::instance()->color.ambient_light[i])/255.;
+      GLfloat g = CTX::instance()->unpack_green(CTX::instance()->color.ambient_light[i])/255.;
+      GLfloat b = CTX::instance()->unpack_blue(CTX::instance()->color.ambient_light[i])/255.;
       GLfloat ambient[4] = {r, g, b, 1.0};
       glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, ambient);
 
-      r = CTX.UNPACK_RED(CTX.color.diffuse_light[i])/255.;
-      g = CTX.UNPACK_GREEN(CTX.color.diffuse_light[i])/255.;
-      b = CTX.UNPACK_BLUE(CTX.color.diffuse_light[i])/255.;
+      r = CTX::instance()->unpack_red(CTX::instance()->color.diffuse_light[i])/255.;
+      g = CTX::instance()->unpack_green(CTX::instance()->color.diffuse_light[i])/255.;
+      b = CTX::instance()->unpack_blue(CTX::instance()->color.diffuse_light[i])/255.;
       GLfloat diffuse[4] = {r, g, b, 1.0};
       glLightfv((GLenum)(GL_LIGHT0 + i), GL_DIFFUSE, diffuse);
 
-      r = CTX.UNPACK_RED(CTX.color.specular_light[i])/255.;
-      g = CTX.UNPACK_GREEN(CTX.color.specular_light[i])/255.;
-      b = CTX.UNPACK_BLUE(CTX.color.specular_light[i])/255.;
+      r = CTX::instance()->unpack_red(CTX::instance()->color.specular_light[i])/255.;
+      g = CTX::instance()->unpack_green(CTX::instance()->color.specular_light[i])/255.;
+      b = CTX::instance()->unpack_blue(CTX::instance()->color.specular_light[i])/255.;
       GLfloat specular[4] = {r, g, b, 1.0};
       glLightfv((GLenum)(GL_LIGHT0 + i), GL_SPECULAR, specular);
 
@@ -419,11 +436,12 @@ void drawContext::initRenderModel()
   glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
   glEnable(GL_COLOR_MATERIAL);
   // "white"-only specular material reflection color
-  GLfloat spec[4] = {CTX.shine, CTX.shine, CTX.shine, 1.0};
+  GLfloat spec[4] = {CTX::instance()->shine, CTX::instance()->shine, 
+                     CTX::instance()->shine, 1.0};
   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, spec);
   // specular exponent in [0,128] (larger means more "focused"
   // reflection)
-  glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, CTX.shine_exponent);
+  glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, CTX::instance()->shine_exponent);
 
   glShadeModel(GL_SMOOTH);
 
@@ -444,22 +462,26 @@ void drawContext::initPosition()
   glScaled(s[0], s[1], s[2]);
   glTranslated(t[0], t[1], t[2]);
 
-  if(CTX.rotation_center_cg)
-    glTranslated(CTX.cg[0], CTX.cg[1], CTX.cg[2]);
+  if(CTX::instance()->rotation_center_cg)
+    glTranslated(CTX::instance()->cg[0], 
+                 CTX::instance()->cg[1], 
+                 CTX::instance()->cg[2]);
   else
-    glTranslated(CTX.rotation_center[0],
-                 CTX.rotation_center[1],
-                 CTX.rotation_center[2]);
+    glTranslated(CTX::instance()->rotation_center[0],
+                 CTX::instance()->rotation_center[1],
+                 CTX::instance()->rotation_center[2]);
   
   buildRotationMatrix();
   glMultMatrixd(rot);
 
-  if(CTX.rotation_center_cg)
-    glTranslated(-CTX.cg[0], -CTX.cg[1], -CTX.cg[2]);
+  if(CTX::instance()->rotation_center_cg)
+    glTranslated(-CTX::instance()->cg[0], 
+                 -CTX::instance()->cg[1], 
+                 -CTX::instance()->cg[2]);
   else
-    glTranslated(-CTX.rotation_center[0],
-                 -CTX.rotation_center[1],
-                 -CTX.rotation_center[2]);
+    glTranslated(-CTX::instance()->rotation_center[0],
+                 -CTX::instance()->rotation_center[1],
+                 -CTX::instance()->rotation_center[2]);
 
   // store the projection and modelview matrices at this precise
   // moment (so that we can use them at any later time, even if the
@@ -468,7 +490,7 @@ void drawContext::initPosition()
   glGetDoublev(GL_MODELVIEW_MATRIX, model);
 
   for(int i = 0; i < 6; i++)
-    glClipPlane((GLenum)(GL_CLIP_PLANE0 + i), CTX.clip_plane[i]);
+    glClipPlane((GLenum)(GL_CLIP_PLANE0 + i), CTX::instance()->clip_plane[i]);
 }
 
 // Takes a cursor position in window coordinates and returns the line

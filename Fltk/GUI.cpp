@@ -40,8 +40,6 @@
 #include "Options.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 static int globalShortcut(int event)
 {
   if(!GUI::available()) return 0;
@@ -51,8 +49,8 @@ static int globalShortcut(int event)
 GUI::GUI(int argc, char **argv)
 {
   // set X display
-  if(CTX.display.size())
-    Fl::display(CTX.display.c_str());
+  if(CTX::instance()->display.size())
+    Fl::display(CTX::instance()->display.c_str());
 
   // add global shortcuts
   Fl::add_handler(globalShortcut);
@@ -61,8 +59,8 @@ GUI::GUI(int argc, char **argv)
   FL_NORMAL_SIZE = GetFontSize();
 
   // handle themes and tooltip font size
-  if(CTX.gui_theme.size())
-    Fl::scheme(CTX.gui_theme.c_str());
+  if(CTX::instance()->gui_theme.size())
+    Fl::scheme(CTX::instance()->gui_theme.c_str());
   Fl_Tooltip::size(FL_NORMAL_SIZE);
 
   // register image formats not in core fltk library (jpeg/png)
@@ -80,7 +78,7 @@ GUI::GUI(int argc, char **argv)
   // since the shortcuts should be valid even for hidden windows, and
   // we don't want to test for widget existence every time
   menu = new menuWindow();
-  graph.push_back(new graphicWindow(true, CTX.num_tiles));
+  graph.push_back(new graphicWindow(true, CTX::instance()->num_tiles));
 
 #if defined(WIN32)
   graph[0]->win->icon
@@ -120,27 +118,27 @@ GUI::GUI(int argc, char **argv)
   graph[0]->gl[0]->take_focus();
 
   // create additional graphic windows
-  for(int i = 1; i < CTX.num_windows; i++){
-    graphicWindow *g = new graphicWindow(false, CTX.num_tiles);
+  for(int i = 1; i < CTX::instance()->num_windows; i++){
+    graphicWindow *g = new graphicWindow(false, CTX::instance()->num_tiles);
     g->win->resize(graph.back()->win->x() + 10, graph.back()->win->y() + 10,
                    graph.back()->win->w(), graph.back()->win->h());
     g->win->show();
     graph.push_back(g);
   }
 
-  options = new optionWindow(CTX.deltafontsize);
-  fields = new fieldWindow(CTX.deltafontsize);
-  plugins = new pluginWindow(CTX.deltafontsize);
-  stats = new statisticsWindow(CTX.deltafontsize);
-  visibility = new visibilityWindow(CTX.deltafontsize);
-  clipping = new clippingWindow(CTX.deltafontsize);
-  messages = new messageWindow(CTX.deltafontsize);
-  manip = new manipWindow(CTX.deltafontsize);
-  geoContext = new geometryContextWindow(CTX.deltafontsize);
-  meshContext = new meshContextWindow(CTX.deltafontsize);
+  options = new optionWindow(CTX::instance()->deltafontsize);
+  fields = new fieldWindow(CTX::instance()->deltafontsize);
+  plugins = new pluginWindow(CTX::instance()->deltafontsize);
+  stats = new statisticsWindow(CTX::instance()->deltafontsize);
+  visibility = new visibilityWindow(CTX::instance()->deltafontsize);
+  clipping = new clippingWindow(CTX::instance()->deltafontsize);
+  messages = new messageWindow(CTX::instance()->deltafontsize);
+  manip = new manipWindow(CTX::instance()->deltafontsize);
+  geoContext = new geometryContextWindow(CTX::instance()->deltafontsize);
+  meshContext = new meshContextWindow(CTX::instance()->deltafontsize);
   about = new aboutWindow();
   for(int i = 0; i < MAX_NUM_SOLVERS; i++)
-    solver.push_back(new solverWindow(i, CTX.deltafontsize));
+    solver.push_back(new solverWindow(i, CTX::instance()->deltafontsize));
 
   // init solver plugin stuff
   callForSolverPlugin(-1);
@@ -611,40 +609,40 @@ void GUI::setStatus(const char *msg, int num)
 
 void GUI::storeCurrentWindowsInfo()
 {
-  CTX.position[0] = menu->win->x();
-  CTX.position[1] = menu->win->y();
-  CTX.gl_position[0] = graph[0]->win->x();
-  CTX.gl_position[1] = graph[0]->win->y();
-  CTX.gl_size[0] = graph[0]->win->w();
-  CTX.gl_size[1] = (graph[0]->win->h() - graph[0]->bottom->h());
-  CTX.msg_position[0] = messages->win->x();
-  CTX.msg_position[1] = messages->win->y();
-  CTX.msg_size[0] = messages->win->w();
-  CTX.msg_size[1] = messages->win->h();
-  CTX.opt_position[0] = options->win->x();
-  CTX.opt_position[1] = options->win->y();
-  CTX.plugin_position[0] = plugins->win->x();
-  CTX.plugin_position[1] = plugins->win->y();
-  CTX.plugin_size[0] = plugins->win->w();
-  CTX.plugin_size[1] = plugins->win->h();
-  CTX.field_position[0] = fields->win->x();
-  CTX.field_position[1] = fields->win->y();
-  CTX.field_size[0] = fields->win->w();
-  CTX.field_size[1] = fields->win->h();
-  CTX.stat_position[0] = stats->win->x();
-  CTX.stat_position[1] = stats->win->y();
-  CTX.vis_position[0] = visibility->win->x();
-  CTX.vis_position[1] = visibility->win->y();
-  CTX.clip_position[0] = clipping->win->x();
-  CTX.clip_position[1] = clipping->win->y();
-  CTX.manip_position[0] = manip->win->x();
-  CTX.manip_position[1] = manip->win->y();
-  CTX.ctx_position[0] = geoContext->win->x();
-  CTX.ctx_position[1] = meshContext->win->y();
-  CTX.solver_position[0] = solver[0]->win->x();
-  CTX.solver_position[1] = solver[0]->win->y();
-  file_chooser_get_position(&CTX.file_chooser_position[0],
-                            &CTX.file_chooser_position[1]);
+  CTX::instance()->position[0] = menu->win->x();
+  CTX::instance()->position[1] = menu->win->y();
+  CTX::instance()->gl_position[0] = graph[0]->win->x();
+  CTX::instance()->gl_position[1] = graph[0]->win->y();
+  CTX::instance()->gl_size[0] = graph[0]->win->w();
+  CTX::instance()->gl_size[1] = (graph[0]->win->h() - graph[0]->bottom->h());
+  CTX::instance()->msg_position[0] = messages->win->x();
+  CTX::instance()->msg_position[1] = messages->win->y();
+  CTX::instance()->msg_size[0] = messages->win->w();
+  CTX::instance()->msg_size[1] = messages->win->h();
+  CTX::instance()->opt_position[0] = options->win->x();
+  CTX::instance()->opt_position[1] = options->win->y();
+  CTX::instance()->plugin_position[0] = plugins->win->x();
+  CTX::instance()->plugin_position[1] = plugins->win->y();
+  CTX::instance()->plugin_size[0] = plugins->win->w();
+  CTX::instance()->plugin_size[1] = plugins->win->h();
+  CTX::instance()->field_position[0] = fields->win->x();
+  CTX::instance()->field_position[1] = fields->win->y();
+  CTX::instance()->field_size[0] = fields->win->w();
+  CTX::instance()->field_size[1] = fields->win->h();
+  CTX::instance()->stat_position[0] = stats->win->x();
+  CTX::instance()->stat_position[1] = stats->win->y();
+  CTX::instance()->vis_position[0] = visibility->win->x();
+  CTX::instance()->vis_position[1] = visibility->win->y();
+  CTX::instance()->clip_position[0] = clipping->win->x();
+  CTX::instance()->clip_position[1] = clipping->win->y();
+  CTX::instance()->manip_position[0] = manip->win->x();
+  CTX::instance()->manip_position[1] = manip->win->y();
+  CTX::instance()->ctx_position[0] = geoContext->win->x();
+  CTX::instance()->ctx_position[1] = meshContext->win->y();
+  CTX::instance()->solver_position[0] = solver[0]->win->x();
+  CTX::instance()->solver_position[1] = solver[0]->win->y();
+  file_chooser_get_position(&CTX::instance()->file_chooser_position[0],
+                            &CTX::instance()->file_chooser_position[1]);
 }
 
 void GUI::callForSolverPlugin(int dim)

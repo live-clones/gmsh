@@ -13,8 +13,6 @@
 #include "Context.h"
 #endif
 
-extern Context_T CTX;
-
 MFace::MFace() 
 { 
   for(int i = 0; i < 4; i++){
@@ -25,7 +23,7 @@ MFace::MFace()
 
 MFace::MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3) 
 {
-  if(CTX.mesh.reverse_all_normals){
+  if(CTX::instance()->mesh.reverse_all_normals){
     // Note that we cannot simply change the normal computation,
     // since OpenGL wants the normal to a polygon to be coherent
     // with the ordering of its vertices
@@ -87,8 +85,8 @@ SVector3 MFace::normal() const
   return SVector3(n[0], n[1], n[2]);
 }
 
-bool MFace::computeCorrespondence(const MFace& other,int& rotation,bool& swap) const {
-  
+bool MFace::computeCorrespondence(const MFace &other, int &rotation, bool &swap) const
+{
   rotation = 0;
   swap = false;
   

@@ -14,8 +14,6 @@
 
 #define SQU(a)      ((a)*(a))
 
-extern Context_T CTX;
-
 typedef struct {
   int Num;
   double t, lc, p;
@@ -264,7 +262,7 @@ void meshGEdge::operator() (GEdge *ge)
   if(ge->geomType() == GEntity::DiscreteCurve) return;
   if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
   if(ge->meshAttributes.Method == MESH_NONE) return;
-  if(CTX.mesh.mesh_only_visible && !ge->getVisibility()) return;
+  if(CTX::instance()->mesh.mesh_only_visible && !ge->getVisibility()) return;
 
   deMeshGEdge dem;
   dem(ge);
@@ -280,7 +278,7 @@ void meshGEdge::operator() (GEdge *ge)
   
   // first compute the length of the curve by integrating one
   std::vector<IntPoint> Points;
-  double length = Integration(ge, t_begin, t_end, F_One, Points, 1.e-8 * CTX.lc);
+  double length = Integration(ge, t_begin, t_end, F_One, Points, 1.e-8 * CTX::instance()->lc);
   ge->setLength(length);
   Points.clear();
 
@@ -288,7 +286,7 @@ void meshGEdge::operator() (GEdge *ge)
     Msg::Debug("Curve %d has a zero length", ge->tag());
 
   // TEST
-  if (length < CTX.mesh.tolerance_edge_length) ge->setTooSmall(true);
+  if (length < CTX::instance()->mesh.tolerance_edge_length) ge->setTooSmall(true);
 
   // Integrate detJ/lc du 
   double a;
@@ -302,10 +300,10 @@ void meshGEdge::operator() (GEdge *ge)
     N = ge->meshAttributes.nbPointsTransfinite;
   }
   else{
-    if(CTX.mesh.lc_integration_precision > 1.e-8){
+    if(CTX::instance()->mesh.lc_integration_precision > 1.e-8){
       std::vector<IntPoint> lcPoints;
       Integration(ge, t_begin, t_end, F_Lc_usingInterpLcBis, lcPoints, 
-                  CTX.mesh.lc_integration_precision);
+                  CTX::instance()->mesh.lc_integration_precision);
       buildInterpLc(lcPoints);
       // printInterpLc("toto1.dat");
       // smoothInterpLc(20);
@@ -314,7 +312,7 @@ void meshGEdge::operator() (GEdge *ge)
     }
     else{
       a = Integration(ge, t_begin, t_end, F_Lc, Points,
-		      CTX.mesh.lc_integration_precision);
+		      CTX::instance()->mesh.lc_integration_precision);
     }
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }

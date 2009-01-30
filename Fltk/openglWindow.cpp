@@ -19,8 +19,6 @@
 #include "VertexArray.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 void mousePosition::set(drawContext *ctx)
 {
   for(int i = 0; i < 3; i++){
@@ -93,8 +91,8 @@ void openglWindow::drawScreenMessage()
   if(screenMessage[0].empty() && screenMessage[1].empty()) 
     return;
 
-  glColor4ubv((GLubyte *) & CTX.color.text);
-  gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
+  glColor4ubv((GLubyte *) & CTX::instance()->color.text);
+  gl_font(CTX::instance()->gl_font_enum, CTX::instance()->gl_fontsize);
   double h = gl_height();
   
   if(screenMessage[0].size()){
@@ -169,7 +167,7 @@ void openglWindow::draw()
     glLoadIdentity();
     glColor3d(1., 1., 1.);
     glDisable(GL_DEPTH_TEST);
-    if(selectionMode && CTX.mouse_selection){
+    if(selectionMode && CTX::instance()->mouse_selection){
       glEnable(GL_LINE_STIPPLE);
       glLineStipple(1, 0x0F0F);
     }
@@ -197,31 +195,31 @@ void openglWindow::draw()
   }
   else if(addPointMode) { 
     // draw the whole scene and the point to add
-    if(CTX.fast_redraw) {
-      CTX.mesh.draw = 0;
-      CTX.post.draw = 0;
+    if(CTX::instance()->fast_redraw) {
+      CTX::instance()->mesh.draw = 0;
+      CTX::instance()->post.draw = 0;
     }
-    glClearColor(CTX.UNPACK_RED(CTX.color.bg) / 255.,
-                 CTX.UNPACK_GREEN(CTX.color.bg) / 255.,
-                 CTX.UNPACK_BLUE(CTX.color.bg) / 255., 0.);
+    glClearColor(CTX::instance()->unpack_red(CTX::instance()->color.bg) / 255.,
+                 CTX::instance()->unpack_green(CTX::instance()->color.bg) / 255.,
+                 CTX::instance()->unpack_blue(CTX::instance()->color.bg) / 255., 0.);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     _ctx->draw3d();
-    glColor4ubv((GLubyte *) & CTX.color.fg);
-    glPointSize(CTX.geom.point_size);
+    glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
+    glPointSize(CTX::instance()->geom.point_size);
     glBegin(GL_POINTS);
     glVertex3d(_point[0], _point[1], _point[2]);
     glEnd();
     _ctx->draw2d();
     drawScreenMessage();
     drawBorder();
-    CTX.mesh.draw = 1;
-    CTX.post.draw = 1;
+    CTX::instance()->mesh.draw = 1;
+    CTX::instance()->post.draw = 1;
   }
   else{
     // draw the whole scene
-    glClearColor(CTX.UNPACK_RED(CTX.color.bg) / 255.,
-                 CTX.UNPACK_GREEN(CTX.color.bg) / 255.,
-                 CTX.UNPACK_BLUE(CTX.color.bg) / 255., 0.);
+    glClearColor(CTX::instance()->unpack_green(CTX::instance()->color.bg) / 255.,
+                 CTX::instance()->unpack_green(CTX::instance()->color.bg) / 255.,
+                 CTX::instance()->unpack_blue(CTX::instance()->color.bg) / 255., 0.);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     _ctx->draw3d();
     _ctx->draw2d();
@@ -274,7 +272,7 @@ int openglWindow::handle(int event)
       }
       else if(lassoMode) {
         lassoMode = false;
-        if(selectionMode && CTX.mouse_selection){
+        if(selectionMode && CTX::instance()->mouse_selection){
           // will try to select multiple entities
           _trySelection = 2;
           _trySelectionXYWH[0] = (int)(_click.win[0] + _curr.win[0]) / 2;
@@ -286,7 +284,7 @@ int openglWindow::handle(int event)
           lassoZoom(_ctx, _click, _curr);
         }
       }
-      else if(CTX.mouse_selection){
+      else if(CTX::instance()->mouse_selection){
         // will try to select clicked entity
         _trySelection = 1;
         _trySelectionXYWH[0] = (int)_curr.win[0];
@@ -305,7 +303,7 @@ int openglWindow::handle(int event)
       }
       else if(lassoMode) {
         lassoMode = false;
-        if(selectionMode && CTX.mouse_selection){
+        if(selectionMode && CTX::instance()->mouse_selection){
           // will try to unselect multiple entities
           _trySelection = -2;
           _trySelectionXYWH[0] = (int)(_click.win[0] + _curr.win[0]) / 2;
@@ -317,7 +315,7 @@ int openglWindow::handle(int event)
           lassoZoom(_ctx, _click, _curr);
         }
       }
-      else if(CTX.mouse_selection){
+      else if(CTX::instance()->mouse_selection){
         // will try to unselect clicked entity
         _trySelection = -1;
         _trySelectionXYWH[0] = (int)_curr.win[0];
@@ -328,7 +326,7 @@ int openglWindow::handle(int event)
     }
     else {
       if(Fl::event_state(FL_CTRL) && !lassoMode) {
-        if(CTX.useTrackball)
+        if(CTX::instance()->useTrackball)
           _ctx->setQuaternion(0., 0., 0., 1.);
         else
           _ctx->r[0] = _ctx->r[1] = _ctx->r[2] = 0.;
@@ -347,10 +345,10 @@ int openglWindow::handle(int event)
 
   case FL_RELEASE:
     _curr.set(_ctx);
-    CTX.draw_rotation_center = 0;
+    CTX::instance()->draw_rotation_center = 0;
     if(!lassoMode) {
-      CTX.mesh.draw = 1;
-      CTX.post.draw = 1;
+      CTX::instance()->mesh.draw = 1;
+      CTX::instance()->post.draw = 1;
       redraw();
     }
     _prev.set(_ctx);
@@ -359,7 +357,7 @@ int openglWindow::handle(int event)
   case FL_MOUSEWHEEL:
     {
       double dy = Fl::event_dy();
-      double fact = (5. * CTX.zoom_factor * fabs(dy) + h()) / (double)h();
+      double fact = (5. * CTX::instance()->zoom_factor * fabs(dy) + h()) / (double)h();
       _ctx->s[0] *= ((dy > 0) ? fact : 1./fact);
       _ctx->s[1] = _ctx->s[0];
       _ctx->s[2] = _ctx->s[0];
@@ -388,7 +386,7 @@ int openglWindow::handle(int event)
         }
         else if(Fl::event_button() == 1 && 
                 !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
-          if(CTX.useTrackball)
+          if(CTX::instance()->useTrackball)
             _ctx->addQuaternion((2. * _prev.win[0] - w()) / w(),
                                 (h() - 2. * _prev.win[1]) / h(),
                                 (2. * _curr.win[0] - w()) / w(),
@@ -401,13 +399,13 @@ int openglWindow::handle(int event)
         else if(Fl::event_button() == 2 ||
                 (Fl::event_button() == 1 && Fl::event_state(FL_SHIFT))) {
           if(fabs(dy) > fabs(dx)) {
-            double fact = (CTX.zoom_factor * fabs(dy) + h()) / (double)h();
+            double fact = (CTX::instance()->zoom_factor * fabs(dy) + h()) / (double)h();
             _ctx->s[0] *= ((dy > 0) ? fact : 1./fact);
             _ctx->s[1] = _ctx->s[0];
             _ctx->s[2] = _ctx->s[0];
             _click.recenter(_ctx);
           }
-          else if(!CTX.useTrackball)
+          else if(!CTX::instance()->useTrackball)
             _ctx->r[2] += -180. * dx / (double)w();
         }
         else {
@@ -415,10 +413,10 @@ int openglWindow::handle(int event)
           _ctx->t[1] += (_curr.wnr[1] - _click.wnr[1]);
           _ctx->t[2] = 0.;
         }
-        CTX.draw_rotation_center = 1;
-        if(CTX.fast_redraw) {
-          CTX.mesh.draw = 0;
-          CTX.post.draw = 0;
+        CTX::instance()->draw_rotation_center = 1;
+        if(CTX::instance()->fast_redraw) {
+          CTX::instance()->mesh.draw = 0;
+          CTX::instance()->post.draw = 0;
         }
         redraw();
       }
@@ -438,16 +436,17 @@ int openglWindow::handle(int event)
       double p[3], d[3];
       _ctx->unproject(_curr.win[0], _curr.win[1], p, d);
       // fin closest point to the center of gravity
-      double r[3] = {CTX.cg[0] - p[0], CTX.cg[1] - p[1], CTX.cg[2] - p[2]}, t;
+      double r[3] = {CTX::instance()->cg[0] - p[0], CTX::instance()->cg[1] - p[1], 
+                     CTX::instance()->cg[2] - p[2]}, t;
       prosca(r, d, &t);
       for(int i = 0; i < 3; i++){
         _point[i] = p[i] + t * d[i];
-        if(CTX.geom.snap[i]){
-          double d = _point[i] / CTX.geom.snap[i];
+        if(CTX::instance()->geom.snap[i]){
+          double d = _point[i] / CTX::instance()->geom.snap[i];
           double f = floor(d);
           double c = ceil(d);
           double n = (d - f < c - d) ? f : c;
-          _point[i] = n * CTX.geom.snap[i];
+          _point[i] = n * CTX::instance()->geom.snap[i];
         }
       }
       char str[32];
@@ -466,7 +465,8 @@ int openglWindow::handle(int event)
         std::vector<GFace*> faces;
         std::vector<GRegion*> regions;
         std::vector<MElement*> elements;
-        bool res = processSelectionBuffer(_selection, false, CTX.mouse_hover_meshes, 
+        bool res = processSelectionBuffer(_selection, false, 
+                                          CTX::instance()->mouse_hover_meshes, 
                                           (int)_curr.win[0], (int)_curr.win[1], 5, 5,
                                           vertices, edges, faces, regions, elements);
         if((_selection == ENT_ALL && res) ||
@@ -545,7 +545,8 @@ bool openglWindow::processSelectionBuffer(int type, bool multipleSelection,
   // In our case the selection buffer size is equal to between 5 and 7
   // times the maximum number of possible hits
   GModel *m = GModel::current();
-  int eles = (meshSelection && CTX.pick_elements) ? 4 * m->getNumMeshElements() : 0;
+  int eles = (meshSelection && CTX::instance()->pick_elements) ? 
+    4 * m->getNumMeshElements() : 0;
   int size = 7 * (m->getNumVertices() + m->getNumEdges() + m->getNumFaces() + 
                   m->getNumRegions() + eles) + 1000 ;
 

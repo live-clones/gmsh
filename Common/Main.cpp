@@ -10,19 +10,17 @@
 #include "GmshMessage.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 int main(int argc, char *argv[])
 {
   if(argc < 2){
-    CTX.terminal = 1; 
+    CTX::instance()->terminal = 1; 
     Print_Usage(argv[0]);
     exit(0);
   }
 
   new GModel();
   GmshInitialize(argc, argv);
-  CTX.terminal = CTX.nopopup = 1;
+  CTX::instance()->terminal = CTX::instance()->nopopup = 1;
   GmshBatch();
   GmshFinalize();
 

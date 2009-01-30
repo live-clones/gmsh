@@ -13,15 +13,14 @@
 #include "Context.h"
 #include "gl2ps.h"
 
-extern Context_T CTX;
-
 void drawContext::drawString(std::string s, std::string &font_name, int font_enum, 
                              int font_size, int align)
 {
-  if(CTX.printing && !CTX.print.text) return;
+  if(CTX::instance()->printing && !CTX::instance()->print.text) return;
 
   // change the raster position only if not creating TeX files
-  if(align > 0 && (!CTX.printing || CTX.print.format != FORMAT_TEX)){
+  if(align > 0 && (!CTX::instance()->printing || 
+                   CTX::instance()->print.format != FORMAT_TEX)){
     GLboolean valid;
     glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
     if(valid == GL_TRUE){
@@ -47,13 +46,13 @@ void drawContext::drawString(std::string s, std::string &font_name, int font_enu
     }
   }
   
-  if(!CTX.printing){
+  if(!CTX::instance()->printing){
     gl_font(font_enum, font_size);
     gl_draw(s.c_str());
   }
   else{
-    if(CTX.print.format == FORMAT_TEX){
-      std::string tmp = SanitizeTeXString(s.c_str(), CTX.print.tex_as_equation);
+    if(CTX::instance()->print.format == FORMAT_TEX){
+      std::string tmp = SanitizeTeXString(s.c_str(), CTX::instance()->print.tex_as_equation);
       int opt;
       switch(align){
       case 1: opt = GL2PS_TEXT_B;   break; // bottom center
@@ -68,10 +67,11 @@ void drawContext::drawString(std::string s, std::string &font_name, int font_enu
       }
       gl2psTextOpt(tmp.c_str(), font_name.c_str(), font_size, opt, 0.);
     }
-    else if(CTX.print.eps_quality && (CTX.print.format == FORMAT_PS ||
-                                      CTX.print.format == FORMAT_EPS ||
-                                      CTX.print.format == FORMAT_PDF ||
-                                      CTX.print.format == FORMAT_SVG)){
+    else if(CTX::instance()->print.eps_quality && 
+            (CTX::instance()->print.format == FORMAT_PS ||
+             CTX::instance()->print.format == FORMAT_EPS ||
+             CTX::instance()->print.format == FORMAT_PDF ||
+             CTX::instance()->print.format == FORMAT_SVG)){
       gl2psText(s.c_str(), font_name.c_str(), font_size);
     }
     else{
@@ -83,17 +83,19 @@ void drawContext::drawString(std::string s, std::string &font_name, int font_enu
 
 void drawContext::drawString(std::string s)
 {
-  drawString(s, CTX.gl_font, CTX.gl_font_enum, CTX.gl_fontsize, 0);
+  drawString(s, CTX::instance()->gl_font, CTX::instance()->gl_font_enum, CTX::instance()->gl_fontsize, 0);
 }
 
 void drawContext::drawStringCenter(std::string s)
 {
-  drawString(s, CTX.gl_font, CTX.gl_font_enum, CTX.gl_fontsize, 1);
+  drawString(s, CTX::instance()->gl_font, CTX::instance()->gl_font_enum,
+             CTX::instance()->gl_fontsize, 1);
 }
 
 void drawContext::drawStringRight(std::string s)
 {
-  drawString(s, CTX.gl_font, CTX.gl_font_enum, CTX.gl_fontsize, 2);
+  drawString(s, CTX::instance()->gl_font, CTX::instance()->gl_font_enum,
+             CTX::instance()->gl_fontsize, 2);
 }
 
 void drawContext::drawString(std::string s, double style)
@@ -109,7 +111,7 @@ void drawContext::drawString(std::string s, double style)
     int align = (bits>>16 & 0xff);
     int font_enum = GetFontEnum(font);
     std::string font_name = GetFontName(font);
-    if(!size) size = CTX.gl_fontsize;
+    if(!size) size = CTX::instance()->gl_fontsize;
     drawString(s, font_name, font_enum, size, align);
   }
 }
@@ -166,7 +168,7 @@ void drawContext::drawTaperedCylinder(double width, double val1, double val2,
   glPushMatrix();
   glTranslated(x[0], y[0], z[0]);
   glRotated(phi, axis[0], axis[1], axis[2]);
-  gluCylinder(_quadric, radius1, radius2, length, CTX.quadric_subdivisions, 1);
+  gluCylinder(_quadric, radius1, radius2, length, CTX::instance()->quadric_subdivisions, 1);
   glPopMatrix();
 
   glDisable(GL_LIGHTING);
@@ -196,7 +198,7 @@ void drawContext::drawCylinder(double width, double *x, double *y, double *z, in
   glPushMatrix();
   glTranslated(x[0], y[0], z[0]);
   glRotated(phi, axis[0], axis[1], axis[2]);
-  gluCylinder(_quadric, radius, radius, length, CTX.quadric_subdivisions, 1);
+  gluCylinder(_quadric, radius, radius, length, CTX::instance()->quadric_subdivisions, 1);
   glPopMatrix();
 
   glDisable(GL_LIGHTING);
@@ -239,11 +241,11 @@ static void drawSimpleVector(int arrow, int fill,
   u[1] /= l;
   u[2] /= l;
 
-  double b = CTX.arrow_rel_head_radius * d;
+  double b = CTX::instance()->arrow_rel_head_radius * d;
 
   if(arrow){
-    double f1 = CTX.arrow_rel_stem_length;
-    double f2 = (1 - 2. * CTX.arrow_rel_stem_radius) * f1; // hack :-)
+    double f1 = CTX::instance()->arrow_rel_stem_length;
+    double f2 = (1 - 2. * CTX::instance()->arrow_rel_stem_radius) * f1; // hack :-)
 
     if(fill) {
       glBegin(GL_LINES);
@@ -412,7 +414,7 @@ void drawContext::drawVector(int Type, int Fill, double x, double y, double z,
     glEnd();
     break;
   case 6:
-    if(CTX.arrow_rel_head_radius){
+    if(CTX::instance()->arrow_rel_head_radius){
       glBegin(GL_POINTS);
       glVertex3d(x + dx, y + dy, z + dz);
       glEnd();
@@ -420,7 +422,7 @@ void drawContext::drawVector(int Type, int Fill, double x, double y, double z,
     glBegin(GL_LINES);
     glVertex3d(x + dx, y + dy, z + dz);
     // color gradient
-    glColor4ubv((GLubyte *) & CTX.color.bg);
+    glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
     glVertex3d(x, y, z);
     glEnd();
     break;
@@ -505,7 +507,7 @@ void drawContext::drawBox(double xmin, double ymin, double zmin,
   glEnd();
   if(labels){
     char label[256];
-    double offset = 0.3 * CTX.gl_fontsize * pixel_equiv_x;
+    double offset = 0.3 * CTX::instance()->gl_fontsize * pixel_equiv_x;
     glRasterPos3d(xmin + offset / s[0], 
                   ymin + offset / s[1], 
                   zmin + offset / s[2]);
@@ -555,8 +557,8 @@ void drawContext::drawPlaneInBoundingBox(double xmin, double ymin, double zmin,
   
   double n[3] = {a,b,c}, ll = 50;
   norme(n);
-  if(CTX.arrow_rel_stem_radius)
-    ll = CTX.line_width / CTX.arrow_rel_stem_radius;
+  if(CTX::instance()->arrow_rel_stem_radius)
+    ll = CTX::instance()->line_width / CTX::instance()->arrow_rel_stem_radius;
   n[0] *= ll * pixel_equiv_x / s[0];
   n[1] *= ll * pixel_equiv_x / s[1];
   n[2] *= ll * pixel_equiv_x / s[2];
@@ -577,7 +579,7 @@ void drawContext::drawPlaneInBoundingBox(double xmin, double ymin, double zmin,
         double xx[2] = {p[j].x, p[j-1].x};
         double yy[2] = {p[j].y, p[j-1].y};
         double zz[2] = {p[j].z, p[j-1].z};
-        drawCylinder(CTX.line_width, xx, yy, zz, 1);
+        drawCylinder(CTX::instance()->line_width, xx, yy, zz, 1);
       }
       for(int j = 0; j < nb; j++){
         drawArrow3d(p[j].x, p[j].y, p[j].z, n[0], n[1], n[2], length, 1);

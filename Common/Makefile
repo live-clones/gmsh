@@ -17,6 +17,7 @@ CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 SRC = Gmsh.cpp\
       GmshMessage.cpp\
       GmshDaemon.cpp\
+      Context.cpp\
       Options.cpp\
       CommandLine.cpp\
       OS.cpp\
@@ -76,6 +77,8 @@ GmshMessage${OBJEXT}: GmshMessage.cpp GmshConfig.h GmshMessage.h Gmsh.h \
   ../Mesh/meshPartitionOptions.h ../Common/GmshConfig.h OS.h \
   ../Fltk/GUI.h ../Fltk/messageWindow.h ../Fltk/extraDialogs.h
 GmshDaemon${OBJEXT}: GmshDaemon.cpp GmshMessage.h OS.h GmshSocket.h GmshConfig.h
+Context${OBJEXT}: Context.cpp Context.h ../Geo/CGNSOptions.h \
+  ../Mesh/meshPartitionOptions.h ../Common/GmshConfig.h
 Options${OBJEXT}: Options.cpp GmshConfig.h GmshDefines.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \

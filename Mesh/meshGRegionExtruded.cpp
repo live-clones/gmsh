@@ -12,8 +12,6 @@
 #include "Context.h"
 #include "GmshMessage.h"
 
-extern Context_T CTX;
-
 static void createPriPyrTet(std::vector<MVertex*> &v, GRegion *to)
 {
   int dup[3];
@@ -199,7 +197,7 @@ void meshGRegionExtruded::operator() (GRegion *gr)
 
   // build a set with all the vertices on the boundary of gr
   double old_tol = MVertexLessThanLexicographic::tolerance; 
-  MVertexLessThanLexicographic::tolerance = 1.e-12 * CTX.lc;
+  MVertexLessThanLexicographic::tolerance = 1.e-12 * CTX::instance()->lc;
   std::set<MVertex*, MVertexLessThanLexicographic> pos;
   insertAllVertices(gr, pos);
 
@@ -414,7 +412,7 @@ int SubdivideExtrudedMesh(GModel *m)
   // get all non-recombined extruded regions and vertices
   std::vector<GRegion*> regions;
   double old_tol = MVertexLessThanLexicographic::tolerance; 
-  MVertexLessThanLexicographic::tolerance = 1.e-12 * CTX.lc;
+  MVertexLessThanLexicographic::tolerance = 1.e-12 * CTX::instance()->lc;
   std::set<MVertex*, MVertexLessThanLexicographic> pos;
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
     ExtrudeParams *ep = (*it)->meshAttributes.extrude;

@@ -13,8 +13,6 @@
 #include "Options.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 void manip_cb(Fl_Widget *w, void *data)
 {
   GUI::instance()->manip->show();
@@ -44,7 +42,7 @@ manipWindow::manipWindow(int deltaFontSize)
   int height = 5 * BH + 3 * WB;
 
   win = new paletteWindow
-    (width, height, CTX.non_modal_windows ? true : false, "Manipulator");
+    (width, height, CTX::instance()->non_modal_windows ? true : false, "Manipulator");
   win->box(GMSH_WINDOW_BOX);
 
   Fl_Box *top[3], *left[3];
@@ -90,7 +88,7 @@ manipWindow::manipWindow(int deltaFontSize)
     o->callback(status_xyz1p_cb, (void *)"reset");
   }
 
-  win->position(CTX.manip_position[0], CTX.manip_position[1]);
+  win->position(CTX::instance()->manip_position[0], CTX::instance()->manip_position[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;
@@ -99,7 +97,7 @@ manipWindow::manipWindow(int deltaFontSize)
 void manipWindow::update(bool force)
 {
   if(force || win->shown()){
-    double val1 = CTX.lc;
+    double val1 = CTX::instance()->lc;
     
     double r0 = opt_general_rotation0(0, GMSH_GET, 0);
     double r1 = opt_general_rotation1(0, GMSH_GET, 0);

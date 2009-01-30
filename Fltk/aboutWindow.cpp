@@ -14,11 +14,9 @@
 #include "OS.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 static void help_license_cb(Fl_Widget *w, void *data)
 {
-  std::string prog = FixWindowsPath(CTX.web_browser.c_str());
+  std::string prog = FixWindowsPath(CTX::instance()->web_browser.c_str());
   char cmd[1024];
   ReplaceMultiFormat(prog.c_str(), "http://geuz.org/gmsh/doc/LICENSE.txt", cmd);
   SystemCall(cmd);
@@ -26,7 +24,7 @@ static void help_license_cb(Fl_Widget *w, void *data)
 
 static void help_credits_cb(Fl_Widget *w, void *data)
 {
-  std::string prog = FixWindowsPath(CTX.web_browser.c_str());
+  std::string prog = FixWindowsPath(CTX::instance()->web_browser.c_str());
   char cmd[1024];
   ReplaceMultiFormat(prog.c_str(), "http://geuz.org/gmsh/doc/CREDITS.txt", cmd);
   SystemCall(cmd);
@@ -44,7 +42,7 @@ aboutWindow::aboutWindow()
   int height = 15 * BH + BH/2;
 
   win = new paletteWindow
-    (width, height, CTX.non_modal_windows ? true : false, "About Gmsh");
+    (width, height, CTX::instance()->non_modal_windows ? true : false, "About Gmsh");
   win->box(GMSH_WINDOW_BOX);
 
   {

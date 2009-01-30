@@ -12,8 +12,6 @@
 #include "Triangulate.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 StringXNumber TriangulateOptions_Number[] = {
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
@@ -98,8 +96,8 @@ static void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
   // build a point record structure for the divide and conquer algorithm
   DocRecord doc(points.size());
   for(unsigned int i = 0; i < points.size(); i++){
-    double XX = CTX.mesh.rand_factor * lc * (double)rand() / (double)RAND_MAX;
-    double YY = CTX.mesh.rand_factor * lc * (double)rand() / (double)RAND_MAX;
+    double XX = CTX::instance()->mesh.rand_factor * lc * (double)rand() / (double)RAND_MAX;
+    double YY = CTX::instance()->mesh.rand_factor * lc * (double)rand() / (double)RAND_MAX;
     doc.points[i].where.h = points[i]->x() + XX;
     doc.points[i].where.v = points[i]->y() + YY;
     doc.points[i].adjacent = NULL;

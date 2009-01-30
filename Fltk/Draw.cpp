@@ -14,8 +14,6 @@
 #include "gl2ps.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 void Draw()
 {
   if(!GUI::available()) return;
@@ -30,19 +28,19 @@ void Draw()
 
 void DrawPlugin(void (*draw)(void *context))
 {
-  CTX.post.plugin_draw_function = draw;
-  int old = CTX.draw_bbox;
-  CTX.draw_bbox = 1;
-  if(CTX.fast_redraw){
-    CTX.post.draw = 0;
-    CTX.mesh.draw = 0;
+  CTX::instance()->post.plugin_draw_function = draw;
+  int old = CTX::instance()->draw_bbox;
+  CTX::instance()->draw_bbox = 1;
+  if(CTX::instance()->fast_redraw){
+    CTX::instance()->post.draw = 0;
+    CTX::instance()->mesh.draw = 0;
   }
   Draw();
   // this is reset in each plugin run/cancel callback:
-  // CTX.post.plugin_draw_function = NULL;
-  CTX.draw_bbox = old;
-  CTX.post.draw = 1;
-  CTX.mesh.draw = 1;
+  // CTX::instance()->post.plugin_draw_function = NULL;
+  CTX::instance()->draw_bbox = old;
+  CTX::instance()->post.draw = 1;
+  CTX::instance()->mesh.draw = 1;
 }
 
 void DrawCurrentOpenglWindow(bool make_current)
@@ -50,9 +48,9 @@ void DrawCurrentOpenglWindow(bool make_current)
   if(!GUI::available()) return;
   openglWindow *gl = GUI::instance()->getCurrentOpenglWindow();
   if(make_current) gl->make_current();
-  glClearColor(CTX.UNPACK_RED(CTX.color.bg) / 255.,
-               CTX.UNPACK_GREEN(CTX.color.bg) / 255.,
-               CTX.UNPACK_BLUE(CTX.color.bg) / 255., 0.);
+  glClearColor(CTX::instance()->unpack_red(CTX::instance()->color.bg) / 255.,
+               CTX::instance()->unpack_green(CTX::instance()->color.bg) / 255.,
+               CTX::instance()->unpack_blue(CTX::instance()->color.bg) / 255., 0.);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
   gl->getDrawContext()->draw3d();
   gl->getDrawContext()->draw2d();
@@ -135,8 +133,8 @@ int GetFontAlign(const char *alignstr)
 
 int GetFontSize()
 {
-  if(CTX.fontsize > 0){
-    return CTX.fontsize;
+  if(CTX::instance()->fontsize > 0){
+    return CTX::instance()->fontsize;
   }
   else{
     int w = Fl::w();

@@ -23,8 +23,6 @@
 #include "matheval.h"
 #endif
 
-extern Context_T CTX;
-
 #define NMAX 20
 
 static void saturate(int nb, double val[NMAX][9], double vmin, double vmax, 
@@ -267,8 +265,10 @@ static void changeCoordinates(PView *p, int ient, int iele,
 
 static double evalClipPlane(int clip, double x, double y, double z)
 {
-  return CTX.clip_plane[clip][0] * x + CTX.clip_plane[clip][1] * y + 
-    CTX.clip_plane[clip][2] * z + CTX.clip_plane[clip][3];
+  return CTX::instance()->clip_plane[clip][0] * x + 
+    CTX::instance()->clip_plane[clip][1] * y + 
+    CTX::instance()->clip_plane[clip][2] * z + 
+    CTX::instance()->clip_plane[clip][3];
 }
 
 static double intersectClipPlane(int clip, int numNodes, double xyz[NMAX][3])
@@ -284,15 +284,15 @@ static double intersectClipPlane(int clip, int numNodes, double xyz[NMAX][3])
 static bool isElementVisible(PViewOptions *opt, int dim, int numNodes, 
                              double xyz[NMAX][3])
 {
-  if(!CTX.clip_whole_elements) return true;
+  if(!CTX::instance()->clip_whole_elements) return true;
   bool hidden = false;
   for(int clip = 0; clip < 6; clip++){
     if(opt->Clip & (1 << clip)){
-      if(dim < 3 && CTX.clip_only_volume){
+      if(dim < 3 && CTX::instance()->clip_only_volume){
       }
       else{
 	double d = intersectClipPlane(clip, numNodes, xyz);
-	if(dim == 3 && CTX.clip_only_draw_intersecting_volume && d){
+	if(dim == 3 && CTX::instance()->clip_only_draw_intersecting_volume && d){
 	  hidden = true;
 	  break;
 	}
@@ -998,7 +998,7 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
 
   PViewOptions *opt = p->getOptions();
 
-  if(CTX.polygon_offset || opt->ShowElement)
+  if(CTX::instance()->polygon_offset || opt->ShowElement)
     glEnable(GL_POLYGON_OFFSET_FILL);
 
   if(type == GL_POINTS && opt->PointType > 0){
@@ -1014,7 +1014,7 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
 	int s = (int)(opt->PointSize * f);
 	if(s){
 	  glPointSize(s);
-	  gl2psPointSize(s * CTX.print.eps_point_size_factor);
+	  gl2psPointSize(s * CTX::instance()->print.eps_point_size_factor);
 	  glBegin(GL_POINTS);
 	  glVertex3d(p[0], p[1], p[2]);
 	  glEnd();
@@ -1180,7 +1180,7 @@ static void drawNormalVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
   for(int i = 0; i < 3; i++)
     n[i] *= opt->Normals * ctx->pixel_equiv_x / ctx->s[i];
   glColor4ubv((GLubyte *) & opt->color.normals);
-  ctx->drawVector(CTX.vector_type, 0, pc[0], pc[1], pc[2], n[0], n[1], n[2],
+  ctx->drawVector(CTX::instance()->vector_type, 0, pc[0], pc[1], pc[2], n[0], n[1], n[2],
                   opt->Light);
 }
 
@@ -1197,7 +1197,7 @@ static void drawTangentVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
   for(int i = 0; i < 3; i++)
     t[i] *= opt->Tangents * ctx->pixel_equiv_x / ctx->s[i];
   glColor4ubv((GLubyte *) & opt->color.tangents);
-  ctx->drawVector(CTX.vector_type, 0, pc[0], pc[1], pc[2], t[0], t[1], t[2], 
+  ctx->drawVector(CTX::instance()->vector_type, 0, pc[0], pc[1], pc[2], t[0], t[1], t[2], 
                   opt->Light);
 }
 
@@ -1245,7 +1245,8 @@ class initPView {
   // on Windows/Cygwin
   int _estimateIfClipped(PView *p, int num)
   {
-    if(CTX.clip_whole_elements && CTX.clip_only_draw_intersecting_volume){
+    if(CTX::instance()->clip_whole_elements && 
+       CTX::instance()->clip_only_draw_intersecting_volume){
       PViewOptions *opt = p->getOptions();
       for(int clip = 0; clip < 6; clip++){
 	if(opt->Clip & (1 << clip))
@@ -1352,7 +1353,7 @@ class initPView {
 
 static bool eyeChanged(drawContext *ctx, PView *p)
 {
-  double zeye = 100 * CTX.lc;
+  double zeye = 100 * CTX::instance()->lc;
   SPoint3 tmp(ctx->rot[2] * zeye, ctx->rot[6] * zeye, ctx->rot[10] * zeye);
   if(tmp.distance(p->getEye()) > 1.e-3){
     p->setEye(tmp);
@@ -1377,17 +1378,17 @@ class drawPView {
     if(!_ctx->isVisible(p)) return;
    
     glPointSize(opt->PointSize);
-    gl2psPointSize(opt->PointSize * CTX.print.eps_point_size_factor);
+    gl2psPointSize(opt->PointSize * CTX::instance()->print.eps_point_size_factor);
     
     glLineWidth(opt->LineWidth);
-    gl2psLineWidth(opt->LineWidth * CTX.print.eps_line_width_factor);
+    gl2psLineWidth(opt->LineWidth * CTX::instance()->print.eps_line_width_factor);
     
     if(opt->LightTwoSide)
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
     else
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
     
-    if(!CTX.clip_whole_elements){
+    if(!CTX::instance()->clip_whole_elements){
       for(int i = 0; i < 6; i++)
 	if(opt->Clip & (1 << i))
 	  glEnable((GLenum)(GL_CLIP_PLANE0 + i));
@@ -1395,7 +1396,7 @@ class drawPView {
 	  glDisable((GLenum)(GL_CLIP_PLANE0 + i));
     }
 
-    if(CTX.alpha && ColorTable_IsAlpha(&opt->CT)){
+    if(CTX::instance()->alpha && ColorTable_IsAlpha(&opt->CT)){
       if(opt->FakeTransparency){
         // simple additive blending "a la xpost":
         glBlendFunc(GL_SRC_ALPHA, GL_ONE); // glBlendEquation(GL_FUNC_ADD);
@@ -1455,7 +1456,7 @@ class drawPView {
       }
     }
     
-    if(CTX.alpha){
+    if(CTX::instance()->alpha){
       glDisable(GL_BLEND);
       glEnable(GL_DEPTH_TEST);
     }
@@ -1465,8 +1466,9 @@ class drawPView {
 
     if(opt->Axes && opt->Type == PViewOptions::Plot3D){
       glColor4ubv((GLubyte *) & opt->color.axes);
-      glLineWidth(CTX.line_width);
-      gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
+      glLineWidth(CTX::instance()->line_width);
+      gl2psLineWidth(CTX::instance()->line_width * 
+                     CTX::instance()->print.eps_line_width_factor);
       if(!opt->AxesAutoPosition)
         _ctx->drawAxes(opt->Axes, opt->AxesTics, opt->AxesFormat, opt->AxesLabel,
                        opt->AxesPosition, opt->AxesMikado);
@@ -1493,9 +1495,10 @@ class drawPViewBoundingBox {
     SBoundingBox3d bb = data->getBoundingBox(opt->TimeStep);
     if(bb.empty()) return;
 
-    glColor4ubv((GLubyte *) & CTX.color.fg);
-    glLineWidth(CTX.line_width);
-    gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
+    glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
+    glLineWidth(CTX::instance()->line_width);
+    gl2psLineWidth(CTX::instance()->line_width * 
+                   CTX::instance()->print.eps_line_width_factor);
 
     _ctx->drawBox(bb.min().x(), bb.min().y(), bb.min().z(),
                   bb.max().x(), bb.max().y(), bb.max().z());
@@ -1504,22 +1507,25 @@ class drawPViewBoundingBox {
       if(opt->Clip & (1 << i))
         _ctx->drawPlaneInBoundingBox(bb.min().x(), bb.min().y(), bb.min().z(),
                                      bb.max().x(), bb.max().y(), bb.max().z(),
-                                     CTX.clip_plane[i][0], CTX.clip_plane[i][1], 
-                                     CTX.clip_plane[i][2], CTX.clip_plane[i][3]);
+                                     CTX::instance()->clip_plane[i][0], 
+                                     CTX::instance()->clip_plane[i][1], 
+                                     CTX::instance()->clip_plane[i][2], 
+                                     CTX::instance()->clip_plane[i][3]);
   }
 };
 
 void drawContext::drawPost()
 {
   // draw any plugin-specific stuff
-  if(CTX.post.plugin_draw_function) (*CTX.post.plugin_draw_function)(this);
+  if(CTX::instance()->post.plugin_draw_function) 
+    (*CTX::instance()->post.plugin_draw_function)(this);
 
   if(PView::list.empty()) return;
 
-  if(CTX.draw_bbox || !CTX.post.draw)
+  if(CTX::instance()->draw_bbox || !CTX::instance()->post.draw)
     std::for_each(PView::list.begin(), PView::list.end(), drawPViewBoundingBox(this));
 
-  if(!CTX.post.draw) return;
+  if(!CTX::instance()->post.draw) return;
 
   static bool busy = false;
   if(!busy){

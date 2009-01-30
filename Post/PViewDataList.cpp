@@ -9,8 +9,6 @@
 #include "GmshMessage.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 PViewDataList::PViewDataList(bool allocate, int numalloc)
   : PViewData(), DataSize(sizeof(double)), NbTimeStep(0), 
     Min(VAL_INF), Max(-VAL_INF), Time(0),
@@ -118,7 +116,7 @@ bool PViewDataList::finalize()
       _index[i] += nb[j];
   }
 
-  if(CTX.post.smooth) smooth();
+  if(CTX::instance()->post.smooth) smooth();
 
   return PViewData::finalize();
 }
@@ -627,7 +625,7 @@ static void smoothList(List_T *list, int nbList, int nbTimeStep,
 void PViewDataList::smooth()
 {
   double old_eps = xyzv::eps;
-  xyzv::eps = CTX.lc * 1.e-8;
+  xyzv::eps = CTX::instance()->lc * 1.e-8;
   smooth_data data;
 
   List_T *list = 0;

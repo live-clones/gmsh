@@ -15,8 +15,6 @@
 #include "GUI.h"
 #endif
 
-extern Context_T CTX;
-
 StringXNumber AnnotateOptions_Number[] = {
   {GMSH_FULLRC, "X", GMSH_AnnotatePlugin::callbackX, 50.},
   {GMSH_FULLRC, "Y", GMSH_AnnotatePlugin::callbackY, 30.},
@@ -59,7 +57,7 @@ void GMSH_AnnotatePlugin::draw(void *context)
   double style = getStyle();
   drawContext *ctx = (drawContext*)context;
 
-  glColor4ubv((GLubyte *) & CTX.color.fg);
+  glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
   if(AnnotateOptions_Number[3].def){ // 3D
     glRasterPos3d(X, Y, Z);
     ctx->drawString(AnnotateOptions_String[0].def, style);
@@ -130,9 +128,9 @@ double GMSH_AnnotatePlugin::callbackX(int num, int action, double value)
   // not perfect: the change will only take place if we reopen the dialog...
   int dim3 = (int)AnnotateOptions_Number[3].def;
   return callback(num, action, value, &AnnotateOptions_Number[0].def,
-                  dim3 ? CTX.lc/200. : 0.5, 
-                  dim3 ? -CTX.lc : -100., 
-                  dim3 ? CTX.lc : 100000.);
+                  dim3 ? CTX::instance()->lc/200. : 0.5, 
+                  dim3 ? -CTX::instance()->lc : -100., 
+                  dim3 ? CTX::instance()->lc : 100000.);
 }
 
 double GMSH_AnnotatePlugin::callbackY(int num, int action, double value)
@@ -140,9 +138,9 @@ double GMSH_AnnotatePlugin::callbackY(int num, int action, double value)
   // not perfect: the change will only take place if we reopen the dialog...
   int dim3 = (int)AnnotateOptions_Number[3].def;
   return callback(num, action, value, &AnnotateOptions_Number[1].def,
-                  dim3 ? CTX.lc/200. : 0.5, 
-                  dim3 ? -CTX.lc : -100., 
-                  dim3 ? CTX.lc : 100000.);
+                  dim3 ? CTX::instance()->lc/200. : 0.5, 
+                  dim3 ? -CTX::instance()->lc : -100., 
+                  dim3 ? CTX::instance()->lc : 100000.);
 }
 
 double GMSH_AnnotatePlugin::callbackZ(int num, int action, double value)
@@ -150,9 +148,9 @@ double GMSH_AnnotatePlugin::callbackZ(int num, int action, double value)
   // not perfect: the change will only take place if we reopen the dialog...
   int dim3 = (int)AnnotateOptions_Number[3].def;
   return callback(num, action, value, &AnnotateOptions_Number[2].def,
-                  dim3 ? CTX.lc/200. : 0.5, 
-                  dim3 ? -CTX.lc : -100., 
-                  dim3 ? CTX.lc : 100000.);
+                  dim3 ? CTX::instance()->lc/200. : 0.5, 
+                  dim3 ? -CTX::instance()->lc : -100., 
+                  dim3 ? CTX::instance()->lc : 100000.);
 }
 
 double GMSH_AnnotatePlugin::callback3D(int num, int action, double value)

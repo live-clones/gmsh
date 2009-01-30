@@ -26,8 +26,6 @@
 #include "OS.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 extern StringXColor GeneralOptions_Color[] ;
 extern StringXColor GeometryOptions_Color[] ;
 extern StringXColor MeshOptions_Color[] ;
@@ -110,11 +108,11 @@ static void color_cb(Fl_Widget *w, void *data)
 {
   unsigned int (*fct) (int, int, unsigned int);
   fct = (unsigned int (*)(int, int, unsigned int))data;
-  uchar r = CTX.UNPACK_RED(fct(0, GMSH_GET, 0));
-  uchar g = CTX.UNPACK_GREEN(fct(0, GMSH_GET, 0));
-  uchar b = CTX.UNPACK_BLUE(fct(0, GMSH_GET, 0));
+  uchar r = CTX::instance()->unpack_red(fct(0, GMSH_GET, 0));
+  uchar g = CTX::instance()->unpack_green(fct(0, GMSH_GET, 0));
+  uchar b = CTX::instance()->unpack_blue(fct(0, GMSH_GET, 0));
   if(fl_color_chooser("Color Chooser", r, g, b))
-    fct(0, GMSH_SET | GMSH_GUI, CTX.PACK_COLOR(r, g, b, 255));
+    fct(0, GMSH_SET | GMSH_GUI, CTX::instance()->pack_color(r, g, b, 255));
   Draw();
 }
 
@@ -122,12 +120,15 @@ static void view_color_cb(Fl_Widget *w, void *data)
 {
   unsigned int (*fct) (int, int, unsigned int);
   fct = (unsigned int (*)(int, int, unsigned int))data;
-  uchar r = CTX.UNPACK_RED(fct(GUI::instance()->options->view.index, GMSH_GET, 0));
-  uchar g = CTX.UNPACK_GREEN(fct(GUI::instance()->options->view.index, GMSH_GET, 0));
-  uchar b = CTX.UNPACK_BLUE(fct(GUI::instance()->options->view.index, GMSH_GET, 0));
+  uchar r = CTX::instance()->unpack_red
+    (fct(GUI::instance()->options->view.index, GMSH_GET, 0));
+  uchar g = CTX::instance()->unpack_green
+    (fct(GUI::instance()->options->view.index, GMSH_GET, 0));
+  uchar b = CTX::instance()->unpack_blue
+    (fct(GUI::instance()->options->view.index, GMSH_GET, 0));
   if(fl_color_chooser("Color Chooser", r, g, b))
     fct(GUI::instance()->options->view.index, 
-        GMSH_SET | GMSH_GUI, CTX.PACK_COLOR(r, g, b, 255));
+        GMSH_SET | GMSH_GUI, CTX::instance()->pack_color(r, g, b, 255));
   Draw();
 }
 
@@ -143,7 +144,7 @@ static void options_browser_cb(Fl_Widget *w, void *data)
 
 void options_save_cb(Fl_Widget *w, void *data)
 {
-  std::string fileName = CTX.home_dir + CTX.options_filename;
+  std::string fileName = CTX::instance()->home_dir + CTX::instance()->options_filename;
   Msg::StatusBar(2, true, "Writing '%s'", fileName.c_str());
   Print_Options(0, GMSH_OPTIONSRC, 1, 1, fileName.c_str());
   Msg::StatusBar(2, true, "Wrote '%s'", fileName.c_str());
@@ -152,8 +153,8 @@ void options_save_cb(Fl_Widget *w, void *data)
 static void options_restore_defaults_cb(Fl_Widget *w, void *data)
 {
   // not sure if we have to remove the file...
-  UnlinkFile(CTX.home_dir + CTX.session_filename);
-  UnlinkFile(CTX.home_dir + CTX.options_filename);
+  UnlinkFile(CTX::instance()->home_dir + CTX::instance()->session_filename);
+  UnlinkFile(CTX::instance()->home_dir + CTX::instance()->options_filename);
   ReInit_Options(0);
   Init_Options_GUI(0);
   if(GUI::instance()->menu->module->value() == 3) // hack to refresh the buttons
@@ -208,17 +209,17 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   o->activate((const char*)data);
 
   static double lc = 0.;
-  if(lc != CTX.lc){
-    lc = CTX.lc;
+  if(lc != CTX::instance()->lc){
+    lc = CTX::instance()->lc;
     for(int i = 2; i < 5; i++){
-      o->general.value[i]->minimum(-5 * CTX.lc);
-      o->general.value[i]->maximum(5 * CTX.lc);
+      o->general.value[i]->minimum(-5 * CTX::instance()->lc);
+      o->general.value[i]->maximum(5 * CTX::instance()->lc);
     }
   }
   if(data){
     const char *name = (const char*)data;
     if(!strcmp(name, "rotation_center_coord")){
-      CTX.draw_rotation_center = 1;
+      CTX::instance()->draw_rotation_center = 1;
     }
     else if(!strcmp(name, "light_value")){
       double x, y, z;
@@ -250,7 +251,7 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_session_save(0, GMSH_SET, o->general.butt[8]->value());
   if(sessionrc && !opt_general_session_save(0, GMSH_GET, 0))
     Print_Options(0, GMSH_SESSIONRC, 1, 1, 
-                  (CTX.home_dir + CTX.session_filename).c_str());
+                  (CTX::instance()->home_dir + CTX::instance()->session_filename).c_str());
   opt_general_options_save(0, GMSH_SET, o->general.butt[9]->value());
   opt_general_expert_mode(0, GMSH_SET, o->general.butt[10]->value());
   opt_general_tooltips(0, GMSH_SET, o->general.butt[13]->value());
@@ -305,11 +306,11 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_axes(0, GMSH_SET, o->general.choice[4]->value());
   opt_general_background_gradient(0, GMSH_SET, o->general.choice[5]->value());
 
-  if(CTX.fast_redraw)
-    CTX.post.draw = CTX.mesh.draw = 0;
+  if(CTX::instance()->fast_redraw)
+    CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
   Draw();
-  CTX.post.draw = CTX.mesh.draw = 1;
-  CTX.draw_rotation_center = 0;
+  CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
+  CTX::instance()->draw_rotation_center = 0;
 }
 
 static void general_arrow_param_cb(Fl_Widget *w, void *data)
@@ -376,10 +377,10 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_surface_type(0, GMSH_SET, o->geo.choice[2]->value());
   opt_geometry_transform(0, GMSH_SET, o->geo.choice[3]->value());
   
-  if(CTX.fast_redraw)
-    CTX.post.draw = CTX.mesh.draw = 0;
+  if(CTX::instance()->fast_redraw)
+    CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
   Draw();
-  CTX.post.draw = CTX.mesh.draw = 1;
+  CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
 }
 
 void mesh_options_cb(Fl_Widget *w, void *data)
@@ -451,10 +452,10 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_quality_type(0, GMSH_SET, o->mesh.choice[6]->value());
   opt_mesh_label_type(0, GMSH_SET, o->mesh.choice[7]->value());
 
-  if(CTX.fast_redraw)
-    CTX.post.draw = CTX.mesh.draw = 0;
+  if(CTX::instance()->fast_redraw)
+    CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
   Draw();
-  CTX.post.draw = CTX.mesh.draw = 1;
+  CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
 }
 
 void solver_options_cb(Fl_Widget *w, void *data)
@@ -476,10 +477,10 @@ static void solver_options_ok_cb(Fl_Widget *w, void *data)
 
   opt_solver_socket_name(0, GMSH_SET, o->solver.input[0]->value());
 
-  if(CTX.fast_redraw)
-    CTX.post.draw = CTX.mesh.draw = 0;
+  if(CTX::instance()->fast_redraw)
+    CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
   Draw();
-  CTX.post.draw = CTX.mesh.draw = 1;
+  CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
 }
 
 void post_options_cb(Fl_Widget *w, void *data)
@@ -500,10 +501,10 @@ static void post_options_ok_cb(Fl_Widget *w, void *data)
 
   opt_post_link(0, GMSH_SET, o->post.choice[0]->value());
 
-  if(CTX.fast_redraw)
-    CTX.post.draw = CTX.mesh.draw = 0;
+  if(CTX::instance()->fast_redraw)
+    CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
   Draw();
-  CTX.post.draw = CTX.mesh.draw = 1;
+  CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
 }
 
 void view_options_cb(Fl_Widget *w, void *data)
@@ -1110,10 +1111,10 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
     }
   }
 
-  if(CTX.fast_redraw)
-    CTX.post.draw = CTX.mesh.draw = 0;
+  if(CTX::instance()->fast_redraw)
+    CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
   Draw();
-  CTX.post.draw = CTX.mesh.draw = 1;
+  CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
 }
 
 static void view_options_max_recursion_cb(Fl_Widget *w, void *data)
@@ -1136,7 +1137,7 @@ optionWindow::optionWindow(int deltaFontSize)
   int L = 7 * FL_NORMAL_SIZE;
 
   win = new paletteWindow
-    (width, height, CTX.non_modal_windows ? true : false);
+    (width, height, CTX::instance()->non_modal_windows ? true : false);
   win->box(GMSH_WINDOW_BOX);
   win->label("Options - General");
 
@@ -3037,7 +3038,7 @@ optionWindow::optionWindow(int deltaFontSize)
   }
   view.group->end();
 
-  win->position(CTX.opt_position[0], CTX.opt_position[1]);
+  win->position(CTX::instance()->opt_position[0], CTX::instance()->opt_position[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;
@@ -3120,8 +3121,8 @@ void optionWindow::updateViewGroup(int index)
 
   double maxval = std::max(fabs(data->getMin()), fabs(data->getMax()));
   if(!maxval) maxval = 1.;
-  double val1 = 10. * CTX.lc;
-  double val2 = 2. * CTX.lc / maxval;
+  double val1 = 10. * CTX::instance()->lc;
+  double val2 = 2. * CTX::instance()->lc / maxval;
 
   opt_view_name(index, GMSH_GUI, "");
   opt_view_format(index, GMSH_GUI, "");
@@ -3167,9 +3168,9 @@ void optionWindow::updateViewGroup(int index)
   opt_view_axes_zmin(index, GMSH_GUI, 0);
   opt_view_axes_zmax(index, GMSH_GUI, 0);
   for(int i = 13; i <= 18; i++){
-    view.value[i]->step(CTX.lc/200.);
-    view.value[i]->minimum(-CTX.lc);
-    view.value[i]->maximum(CTX.lc);
+    view.value[i]->step(CTX::instance()->lc/200.);
+    view.value[i]->minimum(-CTX::instance()->lc);
+    view.value[i]->maximum(CTX::instance()->lc);
   }
 
   if(data->getNumElements()) {
@@ -3277,7 +3278,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_arrow_size_max(index, GMSH_GUI, 0);
 
   opt_view_displacement_factor(index, GMSH_GUI, 0);
-  double val3 = 2. * CTX.lc / maxval;
+  double val3 = 2. * CTX::instance()->lc / maxval;
   view.value[63]->step(val3 / 100.);
   view.value[63]->maximum(val3);
 

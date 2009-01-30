@@ -29,8 +29,6 @@
 #include "meshPartition.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 #if defined(HAVE_CHACO) || defined(HAVE_METIS)
 
 // Forward declarations of some callbacks
@@ -74,88 +72,88 @@ struct PartitionDialog
   void write_all_options()
   {
     // Group 0
-    CTX.mesh.partition_options.partitioner = choicePartitioner->value() + 1;
-    CTX.mesh.partition_options.num_partitions =
+    CTX::instance()->mesh.partition_options.partitioner = choicePartitioner->value() + 1;
+    CTX::instance()->mesh.partition_options.num_partitions =
       static_cast<int>(inputNumPartition->value());
 
     // Group 1
-    CTX.mesh.partition_options.global_method = choiceChacoAlg->value() + 1;
+    CTX::instance()->mesh.partition_options.global_method = choiceChacoAlg->value() + 1;
 
     // Group 2
-    CTX.mesh.partition_options.architecture = choiceArchitecture->value();
-    switch(CTX.mesh.partition_options.architecture) {
+    CTX::instance()->mesh.partition_options.architecture = choiceArchitecture->value();
+    switch(CTX::instance()->mesh.partition_options.architecture) {
     case 0:
-      CTX.mesh.partition_options.ndims_tot =
+      CTX::instance()->mesh.partition_options.ndims_tot =
         static_cast<int>(inputNumPartition1->value());
       break;
     case 3:
-      CTX.mesh.partition_options.mesh_dims[2] =
+      CTX::instance()->mesh.partition_options.mesh_dims[2] =
         static_cast<int>(inputNumPartition3->value());
     case 2:
-      CTX.mesh.partition_options.mesh_dims[1] =
+      CTX::instance()->mesh.partition_options.mesh_dims[1] =
         static_cast<int>(inputNumPartition2->value());
     case 1:
-      CTX.mesh.partition_options.mesh_dims[0] =
+      CTX::instance()->mesh.partition_options.mesh_dims[0] =
         static_cast<int>(inputNumPartition1->value());
       break;
     }
-    CTX.mesh.partition_options.ndims = choiceDivisions->value() + 1;
-    CTX.mesh.partition_options.vmax = static_cast<int>(inputVMax->value());
-    CTX.mesh.partition_options.rqi_flag = choiceEigensolver->value();
-    CTX.mesh.partition_options.eigtol = inputEigtol->value();
-    CTX.mesh.partition_options.local_method = choiceLocalAlgorithm->value() + 1;
-    CTX.mesh.partition_options.seed = static_cast<long>(inputSeed->value());
-    CTX.mesh.partition_options.refine_partition = checkButtonRefPart->value();
-    CTX.mesh.partition_options.internal_vertices = checkButtonIntVert->value();
-    CTX.mesh.partition_options.refine_map = checkButtonRefMap->value();
-    CTX.mesh.partition_options.terminal_propogation =
+    CTX::instance()->mesh.partition_options.ndims = choiceDivisions->value() + 1;
+    CTX::instance()->mesh.partition_options.vmax = static_cast<int>(inputVMax->value());
+    CTX::instance()->mesh.partition_options.rqi_flag = choiceEigensolver->value();
+    CTX::instance()->mesh.partition_options.eigtol = inputEigtol->value();
+    CTX::instance()->mesh.partition_options.local_method = choiceLocalAlgorithm->value() + 1;
+    CTX::instance()->mesh.partition_options.seed = static_cast<long>(inputSeed->value());
+    CTX::instance()->mesh.partition_options.refine_partition = checkButtonRefPart->value();
+    CTX::instance()->mesh.partition_options.internal_vertices = checkButtonIntVert->value();
+    CTX::instance()->mesh.partition_options.refine_map = checkButtonRefMap->value();
+    CTX::instance()->mesh.partition_options.terminal_propogation =
       checkButtonTermProp->value();
   
     // Group 3
-    CTX.mesh.partition_options.algorithm = choiceMetisAlg->value() + 1;
+    CTX::instance()->mesh.partition_options.algorithm = choiceMetisAlg->value() + 1;
 
     // Group 4
-    CTX.mesh.partition_options.edge_matching = choiceEdgeMatch->value() + 1;
-    CTX.mesh.partition_options.refine_algorithm = choiceRefineAlg->value() + 1;
+    CTX::instance()->mesh.partition_options.edge_matching = choiceEdgeMatch->value() + 1;
+    CTX::instance()->mesh.partition_options.refine_algorithm = choiceRefineAlg->value() + 1;
   }
   void read_all_options()
   {
     // Group 0
-    choicePartitioner->value(CTX.mesh.partition_options.partitioner - 1);
-    inputNumPartition->value(CTX.mesh.partition_options.num_partitions);
+    choicePartitioner->value(CTX::instance()->mesh.partition_options.partitioner - 1);
+    inputNumPartition->value(CTX::instance()->mesh.partition_options.num_partitions);
 
     // Group 1
-    choiceChacoAlg->value(CTX.mesh.partition_options.global_method - 1);
+    choiceChacoAlg->value(CTX::instance()->mesh.partition_options.global_method - 1);
 
     // Group 2
-    choiceArchitecture->value(CTX.mesh.partition_options.architecture);
-    switch(CTX.mesh.partition_options.architecture) {
+    choiceArchitecture->value(CTX::instance()->mesh.partition_options.architecture);
+    switch(CTX::instance()->mesh.partition_options.architecture) {
     case 0:
-      inputNumPartition1->value(CTX.mesh.partition_options.ndims_tot);
+      inputNumPartition1->value(CTX::instance()->mesh.partition_options.ndims_tot);
       break;
     case 1:
-      inputNumPartition1->value(CTX.mesh.partition_options.mesh_dims[0]);
+      inputNumPartition1->value(CTX::instance()->mesh.partition_options.mesh_dims[0]);
       break;
     }
-    inputNumPartition2->value(CTX.mesh.partition_options.mesh_dims[1]);
-    inputNumPartition3->value(CTX.mesh.partition_options.mesh_dims[2]);
-    choiceDivisions->value(CTX.mesh.partition_options.ndims - 1);
-    inputVMax->value(CTX.mesh.partition_options.vmax);
-    choiceEigensolver->value(CTX.mesh.partition_options.rqi_flag);
-    inputEigtol->value(CTX.mesh.partition_options.eigtol);
-    choiceLocalAlgorithm->value(CTX.mesh.partition_options.local_method - 1);
-    inputSeed->value(CTX.mesh.partition_options.seed);
-    checkButtonRefPart->value(CTX.mesh.partition_options.refine_partition);
-    checkButtonIntVert->value(CTX.mesh.partition_options.internal_vertices);
-    checkButtonRefMap->value(CTX.mesh.partition_options.refine_map);
-    checkButtonTermProp->value(CTX.mesh.partition_options.terminal_propogation);
+    inputNumPartition2->value(CTX::instance()->mesh.partition_options.mesh_dims[1]);
+    inputNumPartition3->value(CTX::instance()->mesh.partition_options.mesh_dims[2]);
+    choiceDivisions->value(CTX::instance()->mesh.partition_options.ndims - 1);
+    inputVMax->value(CTX::instance()->mesh.partition_options.vmax);
+    choiceEigensolver->value(CTX::instance()->mesh.partition_options.rqi_flag);
+    inputEigtol->value(CTX::instance()->mesh.partition_options.eigtol);
+    choiceLocalAlgorithm->value(CTX::instance()->mesh.partition_options.local_method - 1);
+    inputSeed->value(CTX::instance()->mesh.partition_options.seed);
+    checkButtonRefPart->value(CTX::instance()->mesh.partition_options.refine_partition);
+    checkButtonIntVert->value(CTX::instance()->mesh.partition_options.internal_vertices);
+    checkButtonRefMap->value(CTX::instance()->mesh.partition_options.refine_map);
+    checkButtonTermProp->value(CTX::instance()->mesh.partition_options.terminal_propogation);
   
     // Group 3
-    choiceMetisAlg->value(CTX.mesh.partition_options.algorithm - 1);
+    choiceMetisAlg->value(CTX::instance()->mesh.partition_options.algorithm - 1);
 
     // Group 4
-    choiceEdgeMatch->value(CTX.mesh.partition_options.edge_matching - 1);
-    choiceRefineAlg->value(CTX.mesh.partition_options.refine_algorithm - 1);
+    choiceEdgeMatch->value(CTX::instance()->mesh.partition_options.edge_matching - 1);
+    choiceRefineAlg->value(CTX::instance()->mesh.partition_options.refine_algorithm - 1);
 
     // Call all callbacks to ensure consistent options
     partition_opt_chaco_globalalg_cb(choiceChacoAlg, this);
@@ -305,7 +303,7 @@ void partition_opt_spectralcheck_cb(Fl_Widget *widget, void *data)
 void partition_defaults_cb(Fl_Widget *widget, void *data)
 {
   PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
-  CTX.mesh.partition_options.setDefaults();
+  CTX::instance()->mesh.partition_options.setDefaults();
   dlg->read_all_options();
   partition_select_groups_cb(dlg->choicePartitioner, data);
 }
@@ -318,13 +316,13 @@ void partition_partition_cb(Fl_Widget *widget, void *data)
   dlg->write_all_options();
 
   // Partition the mesh
-  int ier = PartitionMesh(GModel::current(), CTX.mesh.partition_options);
+  int ier = PartitionMesh(GModel::current(), CTX::instance()->mesh.partition_options);
 
   // Update the screen
   if(!ier) {
     opt_mesh_zone_definition(0, GMSH_SET, 1.);  // Define zone by partition
     opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 3.);
-    CTX.mesh.changed = ENT_ALL;
+    CTX::instance()->mesh.changed = ENT_ALL;
     Draw();
   }
 }
@@ -469,7 +467,7 @@ void partition_dialog()
   int y = 0;
 
   dlg.window = new paletteWindow
-    (w, h, CTX.non_modal_windows ? true : false, "Partitioner Options");
+    (w, h, CTX::instance()->non_modal_windows ? true : false, "Partitioner Options");
   dlg.window->box(GMSH_WINDOW_BOX);
   dlg.window->callback((Fl_Callback *)partition_cancel_cb, &dlg);
 

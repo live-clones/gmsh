@@ -16,8 +16,6 @@
 #include "Draw.h"
 #endif
 
-extern Context_T CTX;
-
 StringXNumber StreamLinesOptions_Number[] = {
   {GMSH_FULLRC, "X0", GMSH_StreamLinesPlugin::callbackX0, 0.},
   {GMSH_FULLRC, "Y0", GMSH_StreamLinesPlugin::callbackY0, 0.},
@@ -48,13 +46,13 @@ extern "C"
 void GMSH_StreamLinesPlugin::draw(void *context)
 {
 #if defined(HAVE_FLTK)
-  glColor4ubv((GLubyte *) & CTX.color.fg);
+  glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
   drawContext *ctx = (drawContext*)context;
   double p[3];
   for(int i = 0; i < getNbU(); ++i){
     for(int j = 0; j < getNbV(); ++j){
       getPoint(i, j, p);
-      ctx->drawSphere(CTX.point_size, p[0], p[1], p[2], 1);
+      ctx->drawSphere(CTX::instance()->point_size, p[0], p[1], p[2], 1);
     }
   }
 #endif
@@ -79,55 +77,55 @@ double GMSH_StreamLinesPlugin::callback(int num, int action, double value, doubl
 double GMSH_StreamLinesPlugin::callbackX0(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[0].def,
-                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX::instance()->lc/100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackY0(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[1].def,
-                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX::instance()->lc/100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackZ0(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[2].def,
-                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX::instance()->lc/100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackX1(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[3].def,
-                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX::instance()->lc/100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackY1(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[4].def,
-                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX::instance()->lc/100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackZ1(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[5].def,
-                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX::instance()->lc/100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackX2(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[6].def,
-                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX::instance()->lc/100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackY2(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[7].def,
-                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX::instance()->lc/100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackZ2(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[8].def,
-                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX::instance()->lc/100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackU(int num, int action, double value)

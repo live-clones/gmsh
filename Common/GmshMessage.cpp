@@ -25,8 +25,6 @@
 #include "extraDialogs.h"
 #endif
 
-extern Context_T CTX;
-
 int Msg::_commRank = 0;
 int Msg::_commSize = 1;
 int Msg::_verbosity = 4;
@@ -77,7 +75,7 @@ void Msg::Init(int argc, char **argv)
 void Msg::Exit(int level)
 {
   // delete the temp file
-  if(!_commRank) UnlinkFile(CTX.home_dir + CTX.tmp_filename);
+  if(!_commRank) UnlinkFile(CTX::instance()->home_dir + CTX::instance()->tmp_filename);
 
   // exit directly on abnormal program termination (level != 0). We
   // used to call abort() to flush open streams, but on modern OSes
@@ -94,12 +92,12 @@ void Msg::Exit(int level)
   // if we exit cleanly (level==0) and we are in full GUI mode, save
   // the persistent info to disk
   if(GUI::available() && !_commRank) {
-    if(CTX.session_save)
+    if(CTX::instance()->session_save)
       Print_Options(0, GMSH_SESSIONRC, 0, 0, 
-                    (CTX.home_dir + CTX.session_filename).c_str());
-    if(CTX.options_save)
+                    (CTX::instance()->home_dir + CTX::instance()->session_filename).c_str());
+    if(CTX::instance()->options_save)
       Print_Options(0, GMSH_OPTIONSRC, 1, 0, 
-                    (CTX.home_dir + CTX.options_filename).c_str());
+                    (CTX::instance()->home_dir + CTX::instance()->options_filename).c_str());
   }
 #endif
 
@@ -127,14 +125,15 @@ void Msg::Fatal(const char *fmt, ...)
     std::string tmp = std::string("@C1@.") + "Fatal   : " + str;
     GUI::instance()->messages->add(tmp.c_str());
     GUI::instance()->messages->show();
-    GUI::instance()->messages->save((CTX.home_dir + CTX.error_filename).c_str());
+    GUI::instance()->messages->save
+      ((CTX::instance()->home_dir + CTX::instance()->error_filename).c_str());
     fl_alert("A fatal error has occurred which will force Gmsh to abort.\n"
              "The error messages have been saved in the following file:\n\n%s",
-             (CTX.home_dir + CTX.error_filename).c_str());
+             (CTX::instance()->home_dir + CTX::instance()->error_filename).c_str());
   }
 #endif
 
-  if(CTX.terminal){
+  if(CTX::instance()->terminal){
     if(_commSize > 1)
       fprintf(stderr, "Fatal   : [On processor %d] %s\n", _commRank, str);
     else
@@ -169,7 +168,7 @@ void Msg::Error(const char *fmt, ...)
   }
 #endif
 
-  if(CTX.terminal){
+  if(CTX::instance()->terminal){
     if(_commSize > 1) 
       fprintf(stderr, "Error   : [On processor %d] %s\n", _commRank, str);
     else
@@ -200,7 +199,7 @@ void Msg::Warning(const char *fmt, ...)
   }
 #endif
 
-  if(CTX.terminal){
+  if(CTX::instance()->terminal){
     fprintf(stderr, "Warning : %s\n", str);
     fflush(stderr);
   }
@@ -226,7 +225,7 @@ void Msg::Info(const char *fmt, ...)
   }
 #endif
 
-  if(CTX.terminal){
+  if(CTX::instance()->terminal){
     fprintf(stdout, "Info    : %s\n", str);
     fflush(stdout);
   }
@@ -271,7 +270,7 @@ void Msg::Direct(int level, const char *fmt, ...)
   }
 #endif
   
-  if(CTX.terminal){
+  if(CTX::instance()->terminal){
     fprintf(stdout, "%s\n", str);
     fflush(stdout);
   }
@@ -301,7 +300,7 @@ void Msg::StatusBar(int num, bool log, const char *fmt, ...)
   }
 #endif
 
-  if(log && CTX.terminal){
+  if(log && CTX::instance()->terminal){
     fprintf(stdout, "Info    : %s\n", str);
     fflush(stdout);
   }
@@ -326,7 +325,7 @@ void Msg::Debug(const char *fmt, ...)
   }
 #endif
 
-  if(CTX.terminal){
+  if(CTX::instance()->terminal){
     if(_commSize > 1) 
       fprintf(stdout, "Debug   : [On processor %d] %s\n", _commRank, str);
     else
@@ -360,7 +359,7 @@ void Msg::ProgressMeter(int n, int N, const char *fmt, ...)
       GUI::instance()->check();
     }
 #endif
-    if(CTX.terminal){
+    if(CTX::instance()->terminal){
       fprintf(stdout, "%s                     \r", str);
       fflush(stdout);
     }
@@ -373,7 +372,7 @@ void Msg::ProgressMeter(int n, int N, const char *fmt, ...)
 #if defined(HAVE_FLTK)
     if(GUI::available()) GUI::instance()->setStatus("", 1);
 #endif
-    if(CTX.terminal){
+    if(CTX::instance()->terminal){
       fprintf(stdout, "Done!                                              \r");
       fflush(stdout);
     }
@@ -393,7 +392,7 @@ void Msg::PrintTimers()
   }
   if(!str.size()) return;
 
-  if(CTX.terminal){
+  if(CTX::instance()->terminal){
     if(_commSize > 1) 
       fprintf(stdout, "Timers  : [On processor %d] %s\n", _commRank, str.c_str());
     else
@@ -430,7 +429,7 @@ void Msg::PrintErrorCounter(const char *title)
   }
 #endif
 
-  if(CTX.terminal){
+  if(CTX::instance()->terminal){
     fprintf(stderr, "%s\n%s\n%s\n%s\n%s\n%s\n", (prefix + line).c_str(), 
 	    (prefix + title).c_str(), (prefix + warn).c_str(),
 	    (prefix + err).c_str(), (prefix + help).c_str(), 
@@ -443,7 +442,7 @@ double Msg::GetValue(const char *text, double defaultval)
 {
   // if a callback is given let's assume we don't want to be bothered
   // with interactive stuff
-  if(CTX.nopopup || _callback) return defaultval;
+  if(CTX::instance()->nopopup || _callback) return defaultval;
 
 #if defined(HAVE_FLTK)
   if(GUI::available()){
@@ -471,7 +470,7 @@ bool Msg::GetBinaryAnswer(const char *question, const char *yes,
 {
   // if a callback is given let's assume we don't want to be bothered
   // with interactive stuff
-  if(CTX.nopopup || _callback) return defaultval;
+  if(CTX::instance()->nopopup || _callback) return defaultval;
 
 #if defined(HAVE_FLTK)
   if(GUI::available()){

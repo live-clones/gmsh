@@ -6,8 +6,6 @@
 #include "CutMap.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 StringXNumber CutMapOptions_Number[] = {
   {GMSH_FULLRC, "A", GMSH_CutMapPlugin::callbackA, 0.},
   {GMSH_FULLRC, "dTimeStep", NULL, -1.},

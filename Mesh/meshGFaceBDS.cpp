@@ -22,8 +22,6 @@
 #include "Field.h"
 #include "OS.h"
 
-extern Context_T CTX;
-
 double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2)
 {
   const double dx = p1->X - p2->X;
@@ -327,7 +325,7 @@ int edgeSwapTestQuality(BDS_Edge *e, double fact=1.1, bool force=false)
   e->oppositeof (op);
 
   if (!force)
-    if (!edgeSwapTestAngle(e, cos(CTX.mesh.allow_swap_edge_angle * M_PI / 180.)))
+    if (!edgeSwapTestAngle(e, cos(CTX::instance()->mesh.allow_swap_edge_angle * M_PI / 180.)))
       return -1;
   
   double qa1 = qmTriangle(e->p1, e->p2, op[0], QMTRI_RHO);
@@ -352,9 +350,9 @@ void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap)
     // result = 0  => whatever
     // result = 1  => oblige to swap because the quality is greatly improved
     if (!(*it)->deleted){
-      const double qual = CTX.mesh.algo2d == ALGO_2D_MESHADAPT ? 1 : 5;
+      const double qual = CTX::instance()->mesh.algo2d == ALGO_2D_MESHADAPT ? 1 : 5;
       int result = edgeSwapTestQuality(*it,qual);
-      if (CTX.mesh.algo2d == ALGO_2D_MESHADAPT )
+      if (CTX::instance()->mesh.algo2d == ALGO_2D_MESHADAPT )
         { if (m.swap_edge(*it, BDS_SwapEdgeTestQuality(true)))nb_swap++; }
       else if ( result >= 0 && edgeSwapTestDelaunay(*it,gf))
         { if (m.swap_edge(*it, BDS_SwapEdgeTestQuality(false))) nb_swap++; }
@@ -565,7 +563,7 @@ void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
       }
       if ((*itp)->g && (*itp)->g->classif_tag > 0){
 	if (!ne) L = MAX_LC;
-	if(CTX.mesh.lc_from_points)
+	if(CTX::instance()->mesh.lc_from_points)
 	  (*itp)->lc() = L;
 	(*itp)->lcBGM() = L;
       }

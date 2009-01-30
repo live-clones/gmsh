@@ -35,8 +35,6 @@
 #include "MVertex.h"
 #endif
 
-extern Context_T CTX;
-
 class FieldOptionDouble : public FieldOption
 {
  public:
@@ -555,7 +553,7 @@ class GradientField : public Field
       "  F = (Field[IField](X + Delta/2) -\n"
       "       Field[IField](X - Delta/2)) / Delta";
   }
-  GradientField() : iField(0), kind(3), delta(CTX.lc / 1e4)
+  GradientField() : iField(0), kind(3), delta(CTX::instance()->lc / 1e4)
   {
     iField = 1;
     kind = 0;
@@ -616,7 +614,7 @@ class CurvatureField : public Field
     return "Compute the curvature of Field[IField]:\n\n"
       "  F = div(norm(grad(Field[IField])))";
   }
-  CurvatureField() : iField(0), delta(CTX.lc / 1e4)
+  CurvatureField() : iField(0), delta(CTX::instance()->lc / 1e4)
   {
     iField = 1;
     delta = 0.;
@@ -666,7 +664,7 @@ class MaxEigenHessianField : public Field
       "Field[IField], with the gradients evaluated by finite differences:\n\n"
       "  F = max(eig(grad(grad(Field[IField]))))";
   }
-  MaxEigenHessianField() : iField(0), delta(CTX.lc / 1e4)
+  MaxEigenHessianField() : iField(0), delta(CTX::instance()->lc / 1e4)
   {
     iField = 1;
     delta = 0.;
@@ -718,7 +716,7 @@ class LaplacianField : public Field
       "      G(x,y,z+d) + G(x,y,z-d) - 6 * G(x,y,z),\n\n"
       "where G=Field[IField] and d=Delta";
   }
-  LaplacianField() : iField(0), delta(CTX.lc / 1e4)
+  LaplacianField() : iField(0), delta(CTX::instance()->lc / 1e4)
   {
     iField = 1;
     delta = 0.1;
@@ -756,7 +754,7 @@ class MeanField : public Field
       "       G(x,y,z)) / 7,\n\n"
       "where G=Field[IField]";
   }
-  MeanField() : iField(0), delta(CTX.lc / 1e4)
+  MeanField() : iField(0), delta(CTX::instance()->lc / 1e4)
   {
     options["IField"] = new FieldOptionInt
       (iField, "Field index");

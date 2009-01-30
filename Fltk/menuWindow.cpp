@@ -49,8 +49,6 @@
 #include "Options.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 static void file_new_cb(Fl_Widget *w, void *data)
 {
  test:
@@ -153,7 +151,7 @@ static void file_window_cb(Fl_Widget *w, void *data)
   std::string str((const char*)data);
   if(str == "new"){
     graphicWindow *g1 = GUI::instance()->graph.back();
-    graphicWindow *g2 = new graphicWindow(false, CTX.num_tiles);
+    graphicWindow *g2 = new graphicWindow(false, CTX::instance()->num_tiles);
     GUI::instance()->graph.push_back(g2);
     GUI::instance()->setGraphicTitle(GModel::current()->getFileName());
     g2->win->resize(g1->win->x() + 10, g1->win->y() + 10,
@@ -299,7 +297,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
  test:
   if(file_chooser(0, 1, "Save As", pat)) {
     std::string name = file_chooser_get_name(1);
-    if(CTX.confirm_overwrite) {
+    if(CTX::instance()->confirm_overwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
                       "Cancel", "Replace", 0, name.c_str()))
@@ -331,7 +329,7 @@ static void file_rename_cb(Fl_Widget *w, void *data)
  test:
   if(file_chooser(0, 1, "Rename", "*", GModel::current()->getFileName().c_str())) {
     std::string name = file_chooser_get_name(1);
-    if(CTX.confirm_overwrite) {
+    if(CTX::instance()->confirm_overwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
                       "Cancel", "Replace", 0, name.c_str()))
@@ -483,7 +481,7 @@ static void help_command_line_cb(Fl_Widget *w, void *data)
 
 static void help_online_cb(Fl_Widget *w, void *data)
 {
-  std::string prog = FixWindowsPath(CTX.web_browser.c_str());
+  std::string prog = FixWindowsPath(CTX::instance()->web_browser.c_str());
   char cmd[1024];
   ReplaceMultiFormat(prog.c_str(), "http://geuz.org/gmsh/doc/texinfo/", cmd);
   SystemCall(cmd);
@@ -536,7 +534,7 @@ static void geometry_physical_cb(Fl_Widget *w, void *data)
 
 static void geometry_edit_cb(Fl_Widget *w, void *data)
 {
-  std::string prog = FixWindowsPath(CTX.editor.c_str());
+  std::string prog = FixWindowsPath(CTX::instance()->editor.c_str());
   std::string file = FixWindowsPath(GModel::current()->getFileName().c_str());
   char cmd[1024];
   ReplaceMultiFormat(prog.c_str(), file.c_str(), cmd);
@@ -1447,15 +1445,15 @@ static void geometry_physical_add_cb(Fl_Widget *w, void *data)
 
 static void mesh_save_cb(Fl_Widget *w, void *data)
 {
-  std::string name = CTX.output_filename;
-  if(name.empty()) name = GetDefaultFileName(CTX.mesh.format);
-  if(CTX.confirm_overwrite) {
+  std::string name = CTX::instance()->output_filename;
+  if(name.empty()) name = GetDefaultFileName(CTX::instance()->mesh.format);
+  if(CTX::instance()->confirm_overwrite) {
     if(!StatFile(name))
       if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
                     "Cancel", "Replace", 0, name.c_str()))
         return;
   }
-  CreateOutputFile(name, CTX.mesh.format);
+  CreateOutputFile(name, CTX::instance()->mesh.format);
 }
 
 static void mesh_define_cb(Fl_Widget *w, void *data)
@@ -1495,19 +1493,19 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
   int what;
 
   if(!strcmp(str, "elements")){
-    CTX.pick_elements = 1;
+    CTX::instance()->pick_elements = 1;
     what = ENT_ALL;
   }
   else if(!strcmp(str, "lines")){
-    CTX.pick_elements = 0;
+    CTX::instance()->pick_elements = 0;
     what = ENT_LINE;
   }
   else if(!strcmp(str, "surfaces")){
-    CTX.pick_elements = 0;
+    CTX::instance()->pick_elements = 0;
     what = ENT_SURFACE;
   }
   else if(!strcmp(str, "volumes")){
-    CTX.pick_elements = 0;
+    CTX::instance()->pick_elements = 0;
     what = ENT_VOLUME;
   }
   else
@@ -1517,7 +1515,7 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
   std::vector<GEntity*> ent;
 
   while(1) {
-    CTX.mesh.changed = ENT_ALL;
+    CTX::instance()->mesh.changed = ENT_ALL;
     Draw();
 
     if(ele.size() || ent.size())
@@ -1530,7 +1528,7 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
 
     char ib = GUI::instance()->selectEntity(what);
     if(ib == 'l') {
-      if(CTX.pick_elements){
+      if(CTX::instance()->pick_elements){
         for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++){
           if(GUI::instance()->selectedElements[i]->getVisibility() != 2){
             GUI::instance()->selectedElements[i]->setVisibility(2); 
@@ -1560,7 +1558,7 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
       }
     }
     if(ib == 'r') {
-      if(CTX.pick_elements){
+      if(CTX::instance()->pick_elements){
         for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++)
           GUI::instance()->selectedElements[i]->setVisibility(1);
       }
@@ -1574,7 +1572,7 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
       }
     }
     if(ib == 'u') {
-      if(CTX.pick_elements){
+      if(CTX::instance()->pick_elements){
         if(ele.size()){
           ele[ele.size() - 1]->setVisibility(1);
           ele.pop_back();
@@ -1588,7 +1586,7 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
       }
     }
     if(ib == 'e') {
-      if(CTX.pick_elements){
+      if(CTX::instance()->pick_elements){
         for(unsigned int i = 0; i < ele.size(); i++)
           if(ele[i]->getVisibility() == 2) ele[i]->setVisibility(0);
       }
@@ -1606,16 +1604,16 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
     }
   }
 
-  CTX.mesh.changed = ENT_ALL;
-  CTX.pick_elements = 0;
+  CTX::instance()->mesh.changed = ENT_ALL;
+  CTX::instance()->pick_elements = 0;
   Draw();  
   Msg::StatusBar(3, false, "");
 }
 
 static void mesh_inspect_cb(Fl_Widget *w, void *data)
 {
-  CTX.pick_elements = 1;
-  CTX.mesh.changed = ENT_ALL;
+  CTX::instance()->pick_elements = 1;
+  CTX::instance()->mesh.changed = ENT_ALL;
   Draw();
 
   while(1) {
@@ -1647,7 +1645,7 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
         Msg::Direct("  Gamma: %g", ele->gammaShapeMeasure());
         Msg::Direct("  Eta: %g", ele->etaShapeMeasure());
         Msg::Direct("  Disto: %g", ele->distoShapeMeasure());
-        CTX.mesh.changed = ENT_ALL;
+        CTX::instance()->mesh.changed = ENT_ALL;
         Draw();
         GUI::instance()->messages->show();
       }
@@ -1658,8 +1656,8 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
     }
   }
 
-  CTX.pick_elements = 0;
-  CTX.mesh.changed = ENT_ALL;
+  CTX::instance()->pick_elements = 0;
+  CTX::instance()->mesh.changed = ENT_ALL;
   Draw();
   Msg::StatusBar(3, false, "");
 }
@@ -1667,47 +1665,47 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
 static void mesh_degree_cb(Fl_Widget *w, void *data)
 {
   if((long)data == 2)
-    SetOrderN(GModel::current(), 2, CTX.mesh.second_order_linear, 
-              CTX.mesh.second_order_incomplete);
+    SetOrderN(GModel::current(), 2, CTX::instance()->mesh.second_order_linear, 
+              CTX::instance()->mesh.second_order_incomplete);
   else
     SetOrder1(GModel::current());
-  CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+  CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   Draw();
   Msg::StatusBar(2, false, " ");
 }
 
 static void mesh_optimize_cb(Fl_Widget *w, void *data)
 {
-  if(CTX.threads_lock) {
+  if(CTX::instance()->threads_lock) {
     Msg::Info("I'm busy! Ask me that later...");
     return;
   }
-  CTX.threads_lock = 1;
+  CTX::instance()->threads_lock = 1;
   OptimizeMesh(GModel::current());
-  CTX.threads_lock = 0;
-  CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+  CTX::instance()->threads_lock = 0;
+  CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   Draw();
   Msg::StatusBar(2, false, " ");
 }
 
 static void mesh_refine_cb(Fl_Widget *w, void *data)
 {
-  RefineMesh(GModel::current(), CTX.mesh.second_order_linear);
-  CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+  RefineMesh(GModel::current(), CTX::instance()->mesh.second_order_linear);
+  CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   Draw();
   Msg::StatusBar(2, false, " ");
 }
 
 static void mesh_optimize_netgen_cb(Fl_Widget *w, void *data)
 {
-  if(CTX.threads_lock) {
+  if(CTX::instance()->threads_lock) {
     Msg::Info("I'm busy! Ask me that later...");
     return;
   }
-  CTX.threads_lock = 1;
+  CTX::instance()->threads_lock = 1;
   OptimizeMeshNetgen(GModel::current());
-  CTX.threads_lock = 0;
-  CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+  CTX::instance()->threads_lock = 0;
+  CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   Draw();
   Msg::StatusBar(2, false, " ");
 }
@@ -2018,7 +2016,7 @@ static void view_save_as(int index, const char *title, int format)
  test:
   if(file_chooser(0, 1, title, "*", view->getData()->getFileName().c_str())){
     std::string name = file_chooser_get_name(1);
-    if(CTX.confirm_overwrite) {
+    if(CTX::instance()->confirm_overwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
                       "Cancel", "Replace", 0, name.c_str()))
@@ -2079,42 +2077,42 @@ static void view_alias_with_options_cb(Fl_Widget *w, void *data)
 
 static void view_combine_space_all_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(false, 1, CTX.post.combine_remove_orig);
+  PView::combine(false, 1, CTX::instance()->post.combine_remove_orig);
   GUI::instance()->updateViews();
   Draw();
 }
 
 static void view_combine_space_visible_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(false, 0, CTX.post.combine_remove_orig);
+  PView::combine(false, 0, CTX::instance()->post.combine_remove_orig);
   GUI::instance()->updateViews();
   Draw();
 }
 
 static void view_combine_space_by_name_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(false, 2, CTX.post.combine_remove_orig);
+  PView::combine(false, 2, CTX::instance()->post.combine_remove_orig);
   GUI::instance()->updateViews();
   Draw();
 }
 
 static void view_combine_time_all_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(true, 1, CTX.post.combine_remove_orig);
+  PView::combine(true, 1, CTX::instance()->post.combine_remove_orig);
   GUI::instance()->updateViews();
   Draw();
 }
 
 static void view_combine_time_visible_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(true, 0, CTX.post.combine_remove_orig);
+  PView::combine(true, 0, CTX::instance()->post.combine_remove_orig);
   GUI::instance()->updateViews();
   Draw();
 }
 
 static void view_combine_time_by_name_cb(Fl_Widget *w, void *data)
 {
-  PView::combine(true, 2, CTX.post.combine_remove_orig);
+  PView::combine(true, 2, CTX::instance()->post.combine_remove_orig);
   GUI::instance()->updateViews();
   Draw();
 }
@@ -2461,7 +2459,7 @@ menuWindow::menuWindow()
 
   // this is the initial height: no dynamic button is shown
 #if defined(__APPLE__)
-  if(CTX.system_menu_bar){
+  if(CTX::instance()->system_menu_bar){
     _MH = BH + 6; // the menu bar is not in the application
   }
   else{
@@ -2472,13 +2470,13 @@ menuWindow::menuWindow()
 #endif
 
   win = new mainWindow
-    (width, _MH + NB_BUTT_SCROLL * BH, CTX.non_modal_windows ? true : false, "Gmsh");
+    (width, _MH + NB_BUTT_SCROLL * BH, CTX::instance()->non_modal_windows ? true : false, "Gmsh");
   win->box(GMSH_WINDOW_BOX);
   win->callback(file_quit_cb);
 
   int y;
 #if defined(__APPLE__)
-  if(CTX.system_menu_bar){
+  if(CTX::instance()->system_menu_bar){
     // the system menubar is kind of a hack in fltk < 1.1.7: it still
     // creates a real (invisible) menubar. To avoid spurious mouse
     // click events we make it a 1x1 pixel rectangle, 1 pixel off the
@@ -2533,7 +2531,7 @@ menuWindow::menuWindow()
   scroll->end();
 
   win->size(width, _MH);
-  win->position(CTX.position[0], CTX.position[1]);
+  win->position(CTX::instance()->position[0], CTX::instance()->position[1]);
   
   win->end();
 }

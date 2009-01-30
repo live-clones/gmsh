@@ -22,8 +22,6 @@
 #include "OS.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 void solver_cb(Fl_Widget *w, void *data)
 {
   static int init = 0, first[MAX_NUM_SOLVERS];
@@ -78,7 +76,7 @@ static void solver_file_open_cb(Fl_Widget *w, void *data)
 static void solver_file_edit_cb(Fl_Widget *w, void *data)
 {
   int num = (int)(long)data;
-  std::string prog = FixWindowsPath(CTX.editor.c_str());
+  std::string prog = FixWindowsPath(CTX::instance()->editor.c_str());
   std::string file = FixWindowsPath(GUI::instance()->solver[num]->input[0]->value());
   char cmd[1024];
   ReplaceMultiFormat(prog.c_str(), file.c_str(), cmd);
@@ -201,7 +199,7 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
   int BBS = (width - 8 * WB) / 5;
   
   win = new paletteWindow
-    (width, height, CTX.non_modal_windows ? true : false, "Solver");
+    (width, height, CTX::instance()->non_modal_windows ? true : false, "Solver");
   win->box(GMSH_WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs
@@ -297,7 +295,7 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
     o->end();
   }
 
-  win->position(CTX.solver_position[0], CTX.solver_position[1]);
+  win->position(CTX::instance()->solver_position[0], CTX::instance()->solver_position[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;

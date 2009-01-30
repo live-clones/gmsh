@@ -25,8 +25,6 @@
 
 #define SQU(a)      ((a)*(a))
 
-extern Context_T CTX;
-
 int MElement::_globalNum = 0;
 double MElement::_isInsideTolerance = 1.e-6;
 double MElementLessThanLexicographic::tolerance = 1.e-6;
@@ -61,7 +59,7 @@ void MElement::_getFaceRep(MVertex *v0, MVertex *v1, MVertex *v2,
 
 char MElement::getVisibility()
 {
-  if(CTX.hide_unselected && _visible < 2) return false;
+  if(CTX::instance()->hide_unselected && _visible < 2) return false;
   return _visible; 
 }
 
@@ -817,8 +815,8 @@ const gmshFunctionSpace* MTriangle::getFunctionSpace(int o) const
   return 0;
 }
 
-int MTriangleN::getNumEdgesRep(){ return 3 * CTX.mesh.num_sub_edges; }
-int MTriangle6::getNumEdgesRep(){ return 3 * CTX.mesh.num_sub_edges; }
+int MTriangleN::getNumEdgesRep(){ return 3 * CTX::instance()->mesh.num_sub_edges; }
+int MTriangle6::getNumEdgesRep(){ return 3 * CTX::instance()->mesh.num_sub_edges; }
 
 static void _myGetEdgeRep(MTriangle *t, int num, double *x, double *y, double *z,
                           SVector3 *n, int numSubEdges)
@@ -857,16 +855,16 @@ static void _myGetEdgeRep(MTriangle *t, int num, double *x, double *y, double *z
 
 void MTriangleN::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
 {
-  _myGetEdgeRep(this, num, x, y, z, n, CTX.mesh.num_sub_edges);
+  _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.num_sub_edges);
 }
 
 void MTriangle6::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
 {
-  _myGetEdgeRep(this, num, x, y, z, n, CTX.mesh.num_sub_edges);
+  _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.num_sub_edges);
 }
 
-int MTriangle6::getNumFacesRep(){ return SQU(CTX.mesh.num_sub_edges); }
-int MTriangleN::getNumFacesRep(){ return SQU(CTX.mesh.num_sub_edges); }
+int MTriangle6::getNumFacesRep(){ return SQU(CTX::instance()->mesh.num_sub_edges); }
+int MTriangleN::getNumFacesRep(){ return SQU(CTX::instance()->mesh.num_sub_edges); }
 
 static void _myGetFaceRep(MTriangle *t, int num, double *x, double *y, double *z,
                           SVector3 *n, int numSubEdges)
@@ -933,11 +931,11 @@ static void _myGetFaceRep(MTriangle *t, int num, double *x, double *y, double *z
 
 void MTriangleN::getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
 {
-  _myGetFaceRep(this, num, x, y, z, n, CTX.mesh.num_sub_edges);
+  _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.num_sub_edges);
 }
 void MTriangle6::getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
 {
-  _myGetFaceRep(this, num, x, y, z, n, CTX.mesh.num_sub_edges);
+  _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.num_sub_edges);
 }
 
 void MTriangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
@@ -1054,8 +1052,8 @@ const gmshFunctionSpace* MTetrahedron::getFunctionSpace(int o) const
   return 0;
 }
 
-int MTetrahedron10::getNumEdgesRep(){ return 6 * CTX.mesh.num_sub_edges; }
-int MTetrahedronN::getNumEdgesRep(){ return 6 * CTX.mesh.num_sub_edges; }
+int MTetrahedron10::getNumEdgesRep(){ return 6 * CTX::instance()->mesh.num_sub_edges; }
+int MTetrahedronN::getNumEdgesRep(){ return 6 * CTX::instance()->mesh.num_sub_edges; }
 
 static void _myGetEdgeRep(MTetrahedron *tet, int num, double *x, double *y, double *z,
                           SVector3 *n, int numSubEdges)
@@ -1091,16 +1089,16 @@ static void _myGetEdgeRep(MTetrahedron *tet, int num, double *x, double *y, doub
 
 void MTetrahedron10::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
 {
-  _myGetEdgeRep(this, num, x, y, z, n, CTX.mesh.num_sub_edges);
+  _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.num_sub_edges);
 }
 
 void MTetrahedronN::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
 {
-  _myGetEdgeRep(this, num, x, y, z, n, CTX.mesh.num_sub_edges);
+  _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.num_sub_edges);
 }
 
-int MTetrahedronN::getNumFacesRep(){ return 4 * SQU(CTX.mesh.num_sub_edges); }
-int MTetrahedron10::getNumFacesRep(){ return 4 * SQU(CTX.mesh.num_sub_edges); }
+int MTetrahedronN::getNumFacesRep(){ return 4 * SQU(CTX::instance()->mesh.num_sub_edges); }
+int MTetrahedron10::getNumFacesRep(){ return 4 * SQU(CTX::instance()->mesh.num_sub_edges); }
 
 static void _myGetFaceRep(MTetrahedron *tet, int num, double *x, double *y, double *z, 
                           SVector3 *n, int numSubEdges)
@@ -1184,12 +1182,12 @@ static void _myGetFaceRep(MTetrahedron *tet, int num, double *x, double *y, doub
 
 void MTetrahedronN::getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
 {
-  _myGetFaceRep(this, num, x, y, z, n, CTX.mesh.num_sub_edges);
+  _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.num_sub_edges);
 }
 
 void MTetrahedron10::getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
 {
-  _myGetFaceRep(this, num, x, y, z, n, CTX.mesh.num_sub_edges);
+  _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.num_sub_edges);
 }
 
 void MTetrahedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const

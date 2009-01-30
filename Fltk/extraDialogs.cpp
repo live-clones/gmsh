@@ -26,8 +26,6 @@
 #include "GModel.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 // Arrow editor
 
 int arrow_editor(const char *title, double &a, double &b, double &c)
@@ -42,7 +40,7 @@ int arrow_editor(const char *title, double &a, double &b, double &c)
   if(!editor){
     editor = new _editor;
     editor->window = new paletteWindow
-      (2 * BB + 3 * WB, 4 * BH + 3 * WB, CTX.non_modal_windows ? true : false);
+      (2 * BB + 3 * WB, 4 * BH + 3 * WB, CTX::instance()->non_modal_windows ? true : false);
     editor->sa = new Fl_Value_Slider(WB, WB, BB, BH, "Head radius");
     editor->sa->type(FL_HOR_SLIDER);
     editor->sa->align(FL_ALIGN_RIGHT);
@@ -119,7 +117,7 @@ int perspective_editor()
   if(!editor){
     editor = new _editor;
     editor->window = new Fl_Menu_Window(20, 100);
-    if(CTX.non_modal_windows) editor->window->set_non_modal();
+    if(CTX::instance()->non_modal_windows) editor->window->set_non_modal();
     editor->sa = new Release_Slider(0, 0, 20, 100);
     editor->sa->type(FL_VERT_NICE_SLIDER);
     editor->sa->minimum(12);
@@ -130,7 +128,7 @@ int perspective_editor()
   }
 
   editor->window->hotspot(editor->window);
-  editor->sa->value(CTX.clip_factor);
+  editor->sa->value(CTX::instance()->clip_factor);
 
   if(editor->window->non_modal() && !editor->window->shown())
     editor->window->show(); // fix ordering
@@ -151,7 +149,7 @@ static void model_switch_cb(Fl_Widget* w, void *data)
     GModel::current()->setVisibility(1);
   }
   if(w->window()) w->window()->hide();
-  CTX.mesh.changed = ENT_ALL;
+  CTX::instance()->mesh.changed = ENT_ALL;
   GUI::instance()->setGraphicTitle(GModel::current()->getFileName());
   GUI::instance()->resetVisibility();
   Draw();
@@ -171,7 +169,7 @@ int model_chooser()
   if(!menu){
     menu = new _menu;
     menu->window = new Fl_Menu_Window(WW, 6 * BH);
-    if(CTX.non_modal_windows) menu->window->set_non_modal();
+    if(CTX::instance()->non_modal_windows) menu->window->set_non_modal();
     menu->window->border(0);
     Fl_Box *l = new Fl_Box(0, 0, WW, BH, "Select active model:");
     l->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);

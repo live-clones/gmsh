@@ -12,8 +12,6 @@
 #include "GmshMessage.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 gmshFace::gmshFace(GModel *m, Surface *face)
   : GFace(m, face->Num), s(face)
 {

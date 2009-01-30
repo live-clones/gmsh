@@ -18,8 +18,6 @@
 #include "Context.h"
 #include "OS.h"
 
-extern Context_T CTX;
-
 SolverInfo SINFO[MAX_NUM_SOLVERS];
 
 class myGmshServer : public GmshServer{
@@ -36,7 +34,7 @@ class myGmshServer : public GmshServer{
     // using the "real" solution, i.e., threads. Another possibility would
     // be to use Fl::add_fd())
     while(1){
-      if((num >= 0 && SINFO[num].pid < 0) || (num < 0 && !CTX.solver.listen)){
+      if((num >= 0 && SINFO[num].pid < 0) || (num < 0 && !CTX::instance()->solver.listen)){
         // process has been killed or we stopped listening
         return 1;
       }
@@ -84,12 +82,12 @@ int Solver(int num, const char *args)
 #if !defined(WIN32)
       command += " &";
 #endif
-      server->StartClient(command.c_str(), 0, CTX.solver.max_delay);
+      server->StartClient(command.c_str(), 0, CTX::instance()->solver.max_delay);
       return 1;
     }
   }
   else{
-    if(!CTX.solver.listen){
+    if(!CTX::instance()->solver.listen){
       Msg::Info("Stopped listening for solver connections");
       return 0;
     }
@@ -97,19 +95,21 @@ int Solver(int num, const char *args)
     prog = command = "";
   }
 
-  if(!strstr(CTX.solver.socket_name.c_str(), ":")){
+  if(!strstr(CTX::instance()->solver.socket_name.c_str(), ":")){
     // Unix socket
     char tmp[1024];
     if(num >= 0)
-      sprintf(tmp, "%s%s-%d", CTX.home_dir.c_str(), CTX.solver.socket_name.c_str(),
+      sprintf(tmp, "%s%s-%d", CTX::instance()->home_dir.c_str(), 
+              CTX::instance()->solver.socket_name.c_str(),
               num);
     else
-      sprintf(tmp, "%s%s", CTX.home_dir.c_str(), CTX.solver.socket_name.c_str());
+      sprintf(tmp, "%s%s", CTX::instance()->home_dir.c_str(), 
+              CTX::instance()->solver.socket_name.c_str());
     sockname = FixWindowsPath(tmp);
   }
   else{
     // TCP/IP socket
-    sockname = CTX.solver.socket_name;
+    sockname = CTX::instance()->solver.socket_name;
     // if only the port is given, prepend the host name
     if(sockname.size() && sockname[0] == ':')
       sockname = GetHostName() + sockname;
@@ -126,7 +126,7 @@ int Solver(int num, const char *args)
   }
 
   int sock = server->StartClient(command.c_str(), sockname.c_str(),
-                                 CTX.solver.max_delay);
+                                 CTX::instance()->solver.max_delay);
 
   if(sock < 0) {
     switch (sock) {
@@ -176,7 +176,7 @@ int Solver(int num, const char *args)
 
   while(1) {
 
-    int stop = (num < 0 && !CTX.solver.listen);
+    int stop = (num < 0 && !CTX::instance()->solver.listen);
 
     if(stop || (num >= 0 && SINFO[num].pid < 0))
       break;

@@ -19,8 +19,6 @@
 #include "Parser.h"
 #endif
 
-extern Context_T CTX;
-
 double evaluate_scalarfunction(std::string var, double val, std::string funct)
 {
 #if defined(HAVE_NO_PARSER)
@@ -28,16 +26,18 @@ double evaluate_scalarfunction(std::string var, double val, std::string funct)
   return 0.;
 #else
   FILE *tempf = gmsh_yyin;
-  if(!(gmsh_yyin = fopen((CTX.home_dir + CTX.tmp_filename).c_str(), "w"))) {
+  if(!(gmsh_yyin = fopen((CTX::instance()->home_dir + 
+                          CTX::instance()->tmp_filename).c_str(), "w"))) {
     Msg::Error("Unable to open temporary file '%s'", 
-               (CTX.home_dir + CTX.tmp_filename).c_str());
+               (CTX::instance()->home_dir + CTX::instance()->tmp_filename).c_str());
     return 0.;
   }
   // pose "variable = function" and evaluate function
   fprintf(gmsh_yyin, "%s = %.16g ;\n", var.c_str(), val);
   fprintf(gmsh_yyin, "ValeurTemporaire__ = %s ;\n", funct.c_str());
   fclose(gmsh_yyin);
-  gmsh_yyin = fopen((CTX.home_dir + CTX.tmp_filename).c_str(), "r");
+  gmsh_yyin = fopen((CTX::instance()->home_dir +
+                     CTX::instance()->tmp_filename).c_str(), "r");
   while(!feof(gmsh_yyin)) {
     gmsh_yyparse();
   }
@@ -55,16 +55,18 @@ void add_infile(std::string text, std::string filename, bool deleted_something)
 #if defined(HAVE_NO_PARSER)
   Msg::Error("GEO file creation not available without Gmsh parser");
 #else
-  if(!(gmsh_yyin = fopen((CTX.home_dir + CTX.tmp_filename).c_str(), "w"))) {
+  if(!(gmsh_yyin = fopen((CTX::instance()->home_dir + 
+                          CTX::instance()->tmp_filename).c_str(), "w"))) {
     Msg::Error("Unable to open temporary file '%s'", 
-               (CTX.home_dir + CTX.tmp_filename).c_str());
+               (CTX::instance()->home_dir + CTX::instance()->tmp_filename).c_str());
     return;
   }
 
   fprintf(gmsh_yyin, "%s\n", text.c_str());
   Msg::StatusBar(2, true, "%s", text.c_str());
   fclose(gmsh_yyin);
-  gmsh_yyin = fopen((CTX.home_dir + CTX.tmp_filename).c_str(), "r");
+  gmsh_yyin = fopen((CTX::instance()->home_dir +
+                     CTX::instance()->tmp_filename).c_str(), "r");
   while(!feof(gmsh_yyin)) {
     gmsh_yyparse();
   }
@@ -76,7 +78,7 @@ void add_infile(std::string text, std::string filename, bool deleted_something)
     GModel::current()->destroy();
   }
   GModel::current()->importGEOInternals();
-  CTX.mesh.changed = ENT_ALL;
+  CTX::instance()->mesh.changed = ENT_ALL;
 
   FILE *file;
   if(!(file = fopen(filename.c_str(), "a"))) {
@@ -84,7 +86,7 @@ void add_infile(std::string text, std::string filename, bool deleted_something)
     return;
   }
   
-  if(!CTX.expert_mode) {
+  if(!CTX::instance()->expert_mode) {
     char no_ext[256], ext[256], base[256];
     SplitFileName(filename.c_str(), no_ext, ext, base);
     if(strlen(ext) && strcmp(ext, ".geo") && strcmp(ext, ".GEO")){

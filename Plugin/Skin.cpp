@@ -7,8 +7,6 @@
 #include "MallocUtils.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 List_T *GMSH_SkinPlugin::_list = NULL;
 Tree_T *GMSH_SkinPlugin::_skin = NULL;
 int *GMSH_SkinPlugin::_nbList = NULL;
@@ -63,7 +61,7 @@ void GMSH_SkinPlugin::catchErrorMessage(char *errorMessage) const
 int GMSH_SkinPlugin::fcmpElm(const void *a, const void *b)
 {
   Elm *e1 = (Elm *)a, *e2 = (Elm *)b;
-  double s1, s2, TOL = CTX.lc * 1.e-12;
+  double s1, s2, TOL = CTX::instance()->lc * 1.e-12;
   int i;
 
   s1 = s2 = 0.0;

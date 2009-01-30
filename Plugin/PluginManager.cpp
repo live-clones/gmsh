@@ -50,8 +50,6 @@
 #include <FL/filename.H>
 #endif
 
-extern Context_T CTX;
-
 const char *GMSH_PluginEntry = "GMSH_RegisterPlugin";
 
 GMSH_PluginManager *GMSH_PluginManager::_instance = 0;
@@ -152,11 +150,11 @@ GMSH_PluginManager *GMSH_PluginManager::instance()
 
 void GMSH_PluginManager::registerDefaultPlugins()
 {
-  if(CTX.solver.plugins){
+  if(CTX::instance()->solver.plugins){
     // nothing here yet
   }
 
-  if(CTX.post.plugins){
+  if(CTX::instance()->post.plugins){
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
                       ("StreamLines", GMSH_RegisterStreamLinesPlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>

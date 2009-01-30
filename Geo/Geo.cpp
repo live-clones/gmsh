@@ -15,8 +15,6 @@
 
 #define SQU(a)      ((a)*(a))
 
-extern Context_T CTX;
-
 static List_T *ListOfTransformedPoints = NULL;
 
 // Comparison routines
@@ -33,8 +31,8 @@ static int comparePosition(const void *a, const void *b)
   Vertex *q = *(Vertex **)a;
   Vertex *w = *(Vertex **)b;
 
-  // Warning: tolerance! (before 1.61, it was set to 1.e-10 * CTX.lc)
-  double eps = CTX.geom.tolerance * CTX.lc; 
+  // Warning: tolerance! (before 1.61, it was set to 1.e-10 * CTX::instance()->lc)
+  double eps = CTX::instance()->geom.tolerance * CTX::instance()->lc; 
 
   if(q->Pos.X - w->Pos.X > eps) return 1;
   if(q->Pos.X - w->Pos.X < -eps) return -1;
@@ -331,7 +329,7 @@ void End_Curve(Curve *c)
     mat[0][2] = c->Circle.invmat[2][0] = dir12[2];
 
     // assume circle in z=0 plane
-    if(CTX.geom.old_circle) {
+    if(CTX::instance()->geom.old_circle) {
       if(n[0] == 0.0 && n[1] == 0.0) {
         mat[2][0] = c->Circle.invmat[0][2] = 0;
         mat[2][1] = c->Circle.invmat[1][2] = 0;
@@ -425,7 +423,7 @@ void End_Curve(Curve *c)
     for(int i = 0; i < 4; i++)
       c->Circle.v[i] = v[i];
 
-    if(!CTX.expert_mode && c->Num > 0 && A3 - A1 > 1.01 * M_PI){
+    if(!CTX::instance()->expert_mode && c->Num > 0 && A3 - A1 > 1.01 * M_PI){
       Msg::Error("Circle or ellipse arc %d greater than Pi (angle=%g)", c->Num, A3-A1);
       Msg::Error("(If you understand what this implies, you can disable this error");
       Msg::Error("message by selecting `Enable expert mode' in the option dialog.");
@@ -658,7 +656,7 @@ int NEWPOINT(void)
 
 int NEWLINE(void)
 {
-  if(CTX.geom.old_newreg)
+  if(CTX::instance()->geom.old_newreg)
     return NEWREG();
   else
     return (GModel::current()->getGEOInternals()->MaxLineNum + 1);
@@ -666,7 +664,7 @@ int NEWLINE(void)
 
 int NEWLINELOOP(void)
 {
-  if(CTX.geom.old_newreg)
+  if(CTX::instance()->geom.old_newreg)
     return NEWREG();
   else
     return (GModel::current()->getGEOInternals()->MaxLineLoopNum + 1);
@@ -674,7 +672,7 @@ int NEWLINELOOP(void)
 
 int NEWSURFACE(void)
 {
-  if(CTX.geom.old_newreg)
+  if(CTX::instance()->geom.old_newreg)
     return NEWREG();
   else
     return (GModel::current()->getGEOInternals()->MaxSurfaceNum + 1);
@@ -682,7 +680,7 @@ int NEWSURFACE(void)
 
 int NEWSURFACELOOP(void)
 {
-  if(CTX.geom.old_newreg)
+  if(CTX::instance()->geom.old_newreg)
     return NEWREG();
   else
     return (GModel::current()->getGEOInternals()->MaxSurfaceLoopNum + 1);
@@ -690,7 +688,7 @@ int NEWSURFACELOOP(void)
 
 int NEWVOLUME(void)
 {
-  if(CTX.geom.old_newreg)
+  if(CTX::instance()->geom.old_newreg)
     return NEWREG();
   else
     return (GModel::current()->getGEOInternals()->MaxVolumeNum + 1);
@@ -703,7 +701,7 @@ int NEWFIELD(void)
 
 int NEWPHYSICAL(void)
 {
-  if(CTX.geom.old_newreg)
+  if(CTX::instance()->geom.old_newreg)
     return NEWREG();
   else
     return (GModel::current()->getGEOInternals()->MaxPhysicalNum + 1);
@@ -1603,7 +1601,7 @@ static void ApplyTransformationToPoint(double matrix[4][4], Vertex *v,
   // OK if the guy who builds the geometry knowns what he's
   // doing). Instead of adding one more option, let's just bypass all
   // the checks if auto_coherence==0...
-  if(CTX.geom.auto_coherence && end_curve_surface){
+  if(CTX::instance()->geom.auto_coherence && end_curve_surface){
     List_T *All = Tree2List(GModel::current()->getGEOInternals()->Curves);
     for(int i = 0; i < List_Nbr(All); i++) {
       Curve *c;
@@ -1730,7 +1728,7 @@ void TranslateShapes(double X, double Y, double Z, List_T *shapes)
   SetTranslationMatrix(matrix, T);
   ApplicationOnShapes(matrix, shapes);
 
-  if(CTX.geom.auto_coherence)
+  if(CTX::instance()->geom.auto_coherence)
     ReplaceAllDuplicates();
 }
 
@@ -1744,7 +1742,7 @@ void DilatShapes(double X, double Y, double Z, double A, List_T *shapes)
   SetDilatationMatrix(matrix, T, A);
   ApplicationOnShapes(matrix, shapes);
 
-  if(CTX.geom.auto_coherence)
+  if(CTX::instance()->geom.auto_coherence)
     ReplaceAllDuplicates();
 }
 
@@ -1772,7 +1770,7 @@ void RotateShapes(double Ax, double Ay, double Az,
   SetTranslationMatrix(matrix, T);
   ApplicationOnShapes(matrix, shapes);
 
-  if(CTX.geom.auto_coherence)
+  if(CTX::instance()->geom.auto_coherence)
     ReplaceAllDuplicates();
 }
 
@@ -1783,7 +1781,7 @@ void SymmetryShapes(double A, double B, double C, double D, List_T *shapes)
   SetSymmetryMatrix(matrix, A, B, C, D);
   ApplicationOnShapes(matrix, shapes);
 
-  if(CTX.geom.auto_coherence)
+  if(CTX::instance()->geom.auto_coherence)
     ReplaceAllDuplicates();
 }
 
@@ -2009,18 +2007,18 @@ static int Extrude_ProtudePoint(int type, int ip,
     c->end = chapeau;
     break;
   case TRANSLATE_ROTATE:
-    d = CTX.geom.extrude_spline_points;
+    d = CTX::instance()->geom.extrude_spline_points;
     d = d ? d : 1;
     c = Create_Curve(NEWLINE(), MSH_SEGM_SPLN, 1, NULL, NULL, -1, -1, 0., 1.);
     c->Control_Points =
-      List_Create(CTX.geom.extrude_spline_points + 1, 1, sizeof(Vertex *));
+      List_Create(CTX::instance()->geom.extrude_spline_points + 1, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
     if(e)
       c->Extrude->mesh = e->mesh;
     List_Add(c->Control_Points, &pv);
     c->beg = pv;
-    for(i = 0; i < CTX.geom.extrude_spline_points; i++) {
+    for(i = 0; i < CTX::instance()->geom.extrude_spline_points; i++) {
       if(i)
         chapeau = DuplicateVertex(chapeau);
       T[0] = -X0;
@@ -2064,7 +2062,7 @@ static int Extrude_ProtudePoint(int type, int ip,
 
   List_Reset(ListOfTransformedPoints);
 
-  if(CTX.geom.auto_coherence && final)
+  if(CTX::instance()->geom.auto_coherence && final)
     ReplaceAllDuplicates();
 
   return chapeau->Num;
@@ -2224,7 +2222,7 @@ static int Extrude_ProtudeCurve(int type, int ic,
 
   *ps = s;
 
-  if(CTX.geom.auto_coherence && final)
+  if(CTX::instance()->geom.auto_coherence && final)
     ReplaceAllDuplicates();
 
   return chapeau->Num;
@@ -2279,16 +2277,16 @@ static int Extrude_ProtudeSurface(int type, int is,
   // FIXME: this is a really ugly hack for backward compatibility, so
   // that we don't screw up the old .geo files too much. (Before
   // version 1.54, we didn't always create new volumes during "Extrude
-  // Surface". Now we do, but with "CTX.geom.old_newreg==1", this
+  // Surface". Now we do, but with "CTX::instance()->geom.old_newreg==1", this
   // bumps the NEWREG() counter, and thus changes the whole automatic
   // numbering sequence.) So we locally force old_newreg to 0: in most
   // cases, since we define points, curves, etc., before defining
   // volumes, the NEWVOLUME() call below will return a fairly low
   // number, that will not interfere with the other numbers...
-  int tmp = CTX.geom.old_newreg;
-  CTX.geom.old_newreg = 0;
+  int tmp = CTX::instance()->geom.old_newreg;
+  CTX::instance()->geom.old_newreg = 0;
   Volume *v = Create_Volume(NEWVOLUME(), MSH_VOLUME);
-  CTX.geom.old_newreg = tmp;
+  CTX::instance()->geom.old_newreg = tmp;
 
   v->Extrude = new ExtrudeParams;
   v->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
@@ -2398,7 +2396,7 @@ static int Extrude_ProtudeSurface(int type, int is,
 
   *pv = v;
 
-  if(CTX.geom.auto_coherence)
+  if(CTX::instance()->geom.auto_coherence)
     ReplaceAllDuplicates();
 
   List_Reset(ListOfTransformedPoints);
@@ -2479,7 +2477,7 @@ void ExtrudeShapes(int type, List_T *list_in,
           body.Num = ps->Num;
           body.Type = ps->Typ;
           List_Add(list_out, &body);
-          if(CTX.geom.extrude_return_lateral){
+          if(CTX::instance()->geom.extrude_return_lateral){
             for(int j = 0; j < List_Nbr(ps->Generatrices); j++){
               Curve *c;
               List_Read(ps->Generatrices, j, &c);
@@ -2512,7 +2510,7 @@ void ExtrudeShapes(int type, List_T *list_in,
           body.Num = pv->Num;
           body.Type = pv->Typ;
           List_Add(list_out, &body);
-          if(CTX.geom.extrude_return_lateral){
+          if(CTX::instance()->geom.extrude_return_lateral){
             for(int j = 0; j < List_Nbr(pv->Surfaces); j++){
               Surface *s;
               List_Read(pv->Surfaces, j, &s);
@@ -2674,7 +2672,7 @@ static void ReplaceDuplicatePoints()
 
   Msg::Debug("Removed %d duplicate points", start - end);
 
-  if(CTX.geom.old_newreg) {
+  if(CTX::instance()->geom.old_newreg) {
     GModel::current()->getGEOInternals()->MaxPointNum = 0;
     Tree_Action(GModel::current()->getGEOInternals()->Points, MaxNumPoint);
   }
@@ -2785,7 +2783,7 @@ static void ReplaceDuplicateCurves()
 
   Msg::Debug("Removed %d duplicate curves", start - end);
 
-  if(CTX.geom.old_newreg) {
+  if(CTX::instance()->geom.old_newreg) {
     GModel::current()->getGEOInternals()->MaxLineNum = 0;
     Tree_Action(GModel::current()->getGEOInternals()->Curves, MaxNumCurve);
   }
@@ -2847,7 +2845,7 @@ static void ReplaceDuplicateSurfaces()
 
   Msg::Debug("Removed %d duplicate surfaces", start - end);
 
-  if(CTX.geom.old_newreg) {
+  if(CTX::instance()->geom.old_newreg) {
     GModel::current()->getGEOInternals()->MaxSurfaceNum = 0;
     Tree_Action(GModel::current()->getGEOInternals()->Surfaces, MaxNumSurface);
   } 

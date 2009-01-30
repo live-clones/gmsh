@@ -14,8 +14,6 @@
 #include "VertexArray.h"
 #include "Context.h"
 
-extern Context_T CTX;
-
 #if defined(HAVE_OCC)
 #include "Geom_CylindricalSurface.hxx"
 #include "Geom_ConicalSurface.hxx"
@@ -86,7 +84,7 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
   umax += fabs(du) / 100.0;
   vmax += fabs(dv) / 100.0;
   occface = BRep_Tool::Surface(s);
-  if(!CTX.batch) buildSTLTriangulation();
+  if(!CTX::instance()->batch) buildSTLTriangulation();
 }
 
 Range<double> OCCFace::parBounds(int i) const
@@ -302,7 +300,7 @@ bool OCCFace::buildSTLTriangulation()
 
   va_geom_triangles = new VertexArray(3, ntriangles);
   
-  unsigned int c = CTX.color.geom.surface;
+  unsigned int c = CTX::instance()->color.geom.surface;
   unsigned int col[4] = {c, c, c, c};
   for (int j = 1; j <= ntriangles; j++){
     Poly_Triangle triangle = (triangulation->Triangles())(j);
