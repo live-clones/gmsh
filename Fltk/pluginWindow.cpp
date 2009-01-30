@@ -43,7 +43,7 @@ static void plugin_input_value_cb(Fl_Widget *w, void *data)
 
 static void plugin_input_cb(Fl_Widget *w, void *data)
 {
-  const char* (*f)(int, int, const char*) = (const char* (*)(int, int, const char*)) data;
+  std::string (*f)(int, int, std::string) = (std::string (*)(int, int, std::string)) data;
   Fl_Input *input = (Fl_Input*) w;
   f(-1, 0, input->value());
 }
@@ -178,7 +178,7 @@ void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,
         p->dialogBox->input[i] = new Fl_Input
           (x + WB, y + WB + (k + 1) * BH, IW, BH, sxs->str);
         p->dialogBox->input[i]->align(FL_ALIGN_RIGHT);
-        p->dialogBox->input[i]->value(sxs->def);
+        p->dialogBox->input[i]->value(sxs->def.c_str());
         k++;
       }
       for(int i = 0; i < n; i++) {

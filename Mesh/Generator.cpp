@@ -325,9 +325,9 @@ static void PrintMesh2dStatistics(GModel *m)
 {
   FILE *statreport = 0;
   if(CTX.create_append_statreport == 1)
-    statreport = fopen(CTX.statreport, "w");
+    statreport = fopen(CTX.statreport.c_str(), "w");
   else if(CTX.create_append_statreport == 2)
-    statreport = fopen(CTX.statreport, "a");
+    statreport = fopen(CTX.statreport.c_str(), "a");
   else return;
 
   double worst = 1, best = 0, avg = 0;

@@ -1104,7 +1104,8 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
   }
 }
 
-static std::string stringValue(int numComp, double d[9], double norm, char *format)
+static std::string stringValue(int numComp, double d[9], double norm, 
+                               const char *format)
 {
   char label[100];
   if(numComp == 1)
@@ -1143,9 +1144,9 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes, int numCo
       glColor4ubv((GLubyte *) & col);
       glRasterPos3d(pc.x(), pc.y(), pc.z());
       if(opt->CenterGlyphs)
-        ctx->drawStringCenter(stringValue(numComp, d, v, opt->Format));
+        ctx->drawStringCenter(stringValue(numComp, d, v, opt->Format.c_str()));
       else
-        ctx->drawString(stringValue(numComp, d, v, opt->Format));
+        ctx->drawString(stringValue(numComp, d, v, opt->Format.c_str()));
     }
   }
   else if(opt->GlyphLocation == PViewOptions::Vertex){
@@ -1156,9 +1157,9 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes, int numCo
         glColor4ubv((GLubyte *) & col);
         glRasterPos3d(xyz[i][0], xyz[i][1], xyz[i][2]);
         if(opt->CenterGlyphs)
-          ctx->drawStringCenter(stringValue(numComp, val[i], v, opt->Format));
+          ctx->drawStringCenter(stringValue(numComp, val[i], v, opt->Format.c_str()));
         else
-          ctx->drawString(stringValue(numComp, val[i], v, opt->Format));
+          ctx->drawString(stringValue(numComp, val[i], v, opt->Format.c_str()));
       }
     }
   }

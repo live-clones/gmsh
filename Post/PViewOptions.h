@@ -51,9 +51,9 @@ class PViewOptions {
 
   int Type;
   int Position[2], Size[2], AutoPosition;
-  char Format[256];
+  std::string Format;
   int Axes, AxesAutoPosition, AxesMikado, AxesTics[3];
-  char AxesFormat[3][256], AxesLabel[3][256];
+  std::string AxesFormat[3], AxesLabel[3];
   double AxesPosition[6];
   double CustomMin, CustomMax, TmpMin, TmpMax, ExternalMin, ExternalMax;
   SBoundingBox3d TmpBBox;
@@ -77,11 +77,11 @@ class PViewOptions {
   double PointSize, LineWidth;
   GmshColorTable CT;
   int UseStipple, Stipple[10][2];
-  char StippleString[10][32];
+  std::string StippleString[10];
   int ExternalViewIndex, ViewIndexForGenRaise;
   int UseGenRaise;
   double GenRaiseFactor;
-  char GenRaiseX[256], GenRaiseY[256], GenRaiseZ[256];
+  std::string GenRaiseX, GenRaiseY, GenRaiseZ;
   void *GenRaise_f[3];
   int AdaptVisualizationGrid, MaxRecursionLevel;
   double TargetError;

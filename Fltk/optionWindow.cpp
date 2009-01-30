@@ -470,7 +470,7 @@ static void solver_options_ok_cb(Fl_Widget *w, void *data)
   int old_listen = (int)opt_solver_listen(0, GMSH_GET, o->solver.butt[0]->value());
   opt_solver_listen(0, GMSH_SET, o->solver.butt[0]->value());
   if(!old_listen && o->solver.butt[0]->value())
-    Solver(-1, NULL);
+    Solver(-1, 0);
 
   opt_solver_max_delay(0, GMSH_SET, o->solver.value[0]->value());
 
@@ -644,28 +644,17 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double axes_zmax = opt_view_axes_zmax(current, GMSH_GET, 0);
   double gen_raise_factor = opt_view_gen_raise_factor(current, GMSH_GET, 0);
 
-  char name[256]; 
-  strcpy(name, opt_view_name(current, GMSH_GET, NULL));
-  char format[256];
-  strcpy(format, opt_view_format(current, GMSH_GET, NULL));
-  char axes_label0[256];
-  strcpy(axes_label0, opt_view_axes_label0(current, GMSH_GET, NULL));
-  char axes_label1[256];
-  strcpy(axes_label1, opt_view_axes_label1(current, GMSH_GET, NULL));
-  char axes_label2[256];
-  strcpy(axes_label2, opt_view_axes_label2(current, GMSH_GET, NULL));
-  char axes_format0[256];
-  strcpy(axes_format0, opt_view_axes_format0(current, GMSH_GET, NULL));
-  char axes_format1[256];
-  strcpy(axes_format1, opt_view_axes_format1(current, GMSH_GET, NULL));
-  char axes_format2[256];
-  strcpy(axes_format2, opt_view_axes_format2(current, GMSH_GET, NULL));
-  char gen_raise0[256];
-  strcpy(gen_raise0, opt_view_gen_raise0(current, GMSH_GET, NULL));
-  char gen_raise1[256];
-  strcpy(gen_raise1, opt_view_gen_raise1(current, GMSH_GET, NULL));
-  char gen_raise2[256];
-  strcpy(gen_raise2, opt_view_gen_raise2(current, GMSH_GET, NULL));
+  std::string name = opt_view_name(current, GMSH_GET, "");
+  std::string format = opt_view_format(current, GMSH_GET, "");
+  std::string axes_label0 = opt_view_axes_label0(current, GMSH_GET, "");
+  std::string axes_label1 = opt_view_axes_label1(current, GMSH_GET, "");
+  std::string axes_label2 = opt_view_axes_label2(current, GMSH_GET, "");
+  std::string axes_format0 = opt_view_axes_format0(current, GMSH_GET, "");
+  std::string axes_format1 = opt_view_axes_format1(current, GMSH_GET, "");
+  std::string axes_format2 = opt_view_axes_format2(current, GMSH_GET, "");
+  std::string gen_raise0 = opt_view_gen_raise0(current, GMSH_GET, "");
+  std::string gen_raise1 = opt_view_gen_raise1(current, GMSH_GET, "");
+  std::string gen_raise2 = opt_view_gen_raise2(current, GMSH_GET, "");
 
   // modify only the views that need to be updated
   for(int i = 0; i < (int)PView::list.size(); i++) {
@@ -1037,47 +1026,47 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       const char *str;
 
       str = o->view.input[0]->value();
-      if(force || strcmp(str, name))
+      if(force || (str != name))
         opt_view_name(i, GMSH_SET, str);
 
       str = o->view.input[1]->value();
-      if(force || strcmp(str, format))
+      if(force || (str != format))
         opt_view_format(i, GMSH_SET, str);
 
       str = o->view.input[10]->value();
-      if(force || strcmp(str, axes_label0))
+      if(force || (str != axes_label0))
         opt_view_axes_label0(i, GMSH_SET, str);
 
       str = o->view.input[11]->value();
-      if(force || strcmp(str, axes_label1))
+      if(force || (str != axes_label1))
         opt_view_axes_label1(i, GMSH_SET, str);
 
       str = o->view.input[12]->value();
-      if(force || strcmp(str, axes_label2))
+      if(force || (str != axes_label2))
         opt_view_axes_label2(i, GMSH_SET, str);
 
       str = o->view.input[7]->value();
-      if(force || strcmp(str, axes_format0))
+      if(force || (str != axes_format0))
         opt_view_axes_format0(i, GMSH_SET, str);
 
       str = o->view.input[8]->value();
-      if(force || strcmp(str, axes_format1))
+      if(force || (str != axes_format1))
         opt_view_axes_format1(i, GMSH_SET, str);
 
       str = o->view.input[9]->value();
-      if(force || strcmp(str, axes_format2))
+      if(force || (str != axes_format2))
         opt_view_axes_format2(i, GMSH_SET, str);
 
       str = o->view.input[4]->value();
-      if(force || strcmp(str, gen_raise0))
+      if(force || (str != gen_raise0))
         opt_view_gen_raise0(i, GMSH_SET, str);
 
       str = o->view.input[5]->value();
-      if(force || strcmp(str, gen_raise1))
+      if(force || (str != gen_raise1))
         opt_view_gen_raise1(i, GMSH_SET, str);
 
       str = o->view.input[6]->value();
-      if(force || strcmp(str, gen_raise2))
+      if(force || (str != gen_raise2))
         opt_view_gen_raise2(i, GMSH_SET, str);
 
       // colors (since the color buttons modify the values directly
@@ -3134,8 +3123,8 @@ void optionWindow::updateViewGroup(int index)
   double val1 = 10. * CTX.lc;
   double val2 = 2. * CTX.lc / maxval;
 
-  opt_view_name(index, GMSH_GUI, NULL);
-  opt_view_format(index, GMSH_GUI, NULL);
+  opt_view_name(index, GMSH_GUI, "");
+  opt_view_format(index, GMSH_GUI, "");
   opt_view_type(index, GMSH_GUI, 0);
   opt_view_show_scale(index, GMSH_GUI, 0);
   opt_view_draw_strings(index, GMSH_GUI, 0);
@@ -3161,15 +3150,15 @@ void optionWindow::updateViewGroup(int index)
 
   opt_view_axes(index, GMSH_GUI, 0);
   opt_view_axes_mikado(index, GMSH_GUI, 0);
-  opt_view_axes_format0(index, GMSH_GUI, NULL);
-  opt_view_axes_format1(index, GMSH_GUI, NULL);
-  opt_view_axes_format2(index, GMSH_GUI, NULL);
+  opt_view_axes_format0(index, GMSH_GUI, "");
+  opt_view_axes_format1(index, GMSH_GUI, "");
+  opt_view_axes_format2(index, GMSH_GUI, "");
   opt_view_axes_tics0(index, GMSH_GUI, 0);
   opt_view_axes_tics1(index, GMSH_GUI, 0);
   opt_view_axes_tics2(index, GMSH_GUI, 0);
-  opt_view_axes_label0(index, GMSH_GUI, NULL);
-  opt_view_axes_label1(index, GMSH_GUI, NULL);
-  opt_view_axes_label2(index, GMSH_GUI, NULL);
+  opt_view_axes_label0(index, GMSH_GUI, "");
+  opt_view_axes_label1(index, GMSH_GUI, "");
+  opt_view_axes_label2(index, GMSH_GUI, "");
   opt_view_axes_auto_position(index, GMSH_GUI, 0);
   opt_view_axes_xmin(index, GMSH_GUI, 0);
   opt_view_axes_xmax(index, GMSH_GUI, 0);
@@ -3251,9 +3240,9 @@ void optionWindow::updateViewGroup(int index)
   opt_view_use_gen_raise(index, GMSH_GUI, 0);
   opt_view_gen_raise_view(index, GMSH_GUI, 0);
   opt_view_gen_raise_factor(index, GMSH_GUI, 0);
-  opt_view_gen_raise0(index, GMSH_GUI, 0);
-  opt_view_gen_raise1(index, GMSH_GUI, 0);
-  opt_view_gen_raise2(index, GMSH_GUI, 0);
+  opt_view_gen_raise0(index, GMSH_GUI, "");
+  opt_view_gen_raise1(index, GMSH_GUI, "");
+  opt_view_gen_raise2(index, GMSH_GUI, "");
   view.value[2]->step(val2 / 100.);
   view.value[2]->minimum(-val2);
   view.value[2]->maximum(val2);

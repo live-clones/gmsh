@@ -51,8 +51,8 @@ static int globalShortcut(int event)
 GUI::GUI(int argc, char **argv)
 {
   // set X display
-  if(strlen(CTX.display))
-    Fl::display(CTX.display);
+  if(CTX.display.size())
+    Fl::display(CTX.display.c_str());
 
   // add global shortcuts
   Fl::add_handler(globalShortcut);
@@ -61,8 +61,8 @@ GUI::GUI(int argc, char **argv)
   FL_NORMAL_SIZE = GetFontSize();
 
   // handle themes and tooltip font size
-  if(strlen(CTX.gui_theme))
-    Fl::scheme(CTX.gui_theme);
+  if(CTX.gui_theme.size())
+    Fl::scheme(CTX.gui_theme.c_str());
   Fl_Tooltip::size(FL_NORMAL_SIZE);
 
   // register image formats not in core fltk library (jpeg/png)

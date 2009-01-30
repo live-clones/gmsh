@@ -18,7 +18,7 @@ extern Context_T CTX;
 
 static void help_license_cb(Fl_Widget *w, void *data)
 {
-  std::string prog = FixWindowsPath(CTX.web_browser);
+  std::string prog = FixWindowsPath(CTX.web_browser.c_str());
   char cmd[1024];
   ReplaceMultiFormat(prog.c_str(), "http://geuz.org/gmsh/doc/LICENSE.txt", cmd);
   SystemCall(cmd);
@@ -26,7 +26,7 @@ static void help_license_cb(Fl_Widget *w, void *data)
 
 static void help_credits_cb(Fl_Widget *w, void *data)
 {
-  std::string prog = FixWindowsPath(CTX.web_browser);
+  std::string prog = FixWindowsPath(CTX.web_browser.c_str());
   char cmd[1024];
   ReplaceMultiFormat(prog.c_str(), "http://geuz.org/gmsh/doc/CREDITS.txt", cmd);
   SystemCall(cmd);

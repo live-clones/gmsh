@@ -15,7 +15,7 @@
 
 extern Context_T CTX;
 
-void drawContext::drawString(std::string s, const char *font_name, int font_enum, 
+void drawContext::drawString(std::string s, std::string &font_name, int font_enum, 
                              int font_size, int align)
 {
   if(CTX.printing && !CTX.print.text) return;
@@ -66,13 +66,13 @@ void drawContext::drawString(std::string s, const char *font_name, int font_enum
       case 8: opt = GL2PS_TEXT_CR;  break; // center right
       default: opt = GL2PS_TEXT_BL; break; // bottom left
       }
-      gl2psTextOpt(tmp.c_str(), font_name, font_size, opt, 0.);
+      gl2psTextOpt(tmp.c_str(), font_name.c_str(), font_size, opt, 0.);
     }
     else if(CTX.print.eps_quality && (CTX.print.format == FORMAT_PS ||
                                       CTX.print.format == FORMAT_EPS ||
                                       CTX.print.format == FORMAT_PDF ||
                                       CTX.print.format == FORMAT_SVG)){
-      gl2psText(s.c_str(), font_name, font_size);
+      gl2psText(s.c_str(), font_name.c_str(), font_size);
     }
     else{
       gl_font(font_enum, font_size);
@@ -108,7 +108,7 @@ void drawContext::drawString(std::string s, double style)
     int font = (bits>>8 & 0xff);
     int align = (bits>>16 & 0xff);
     int font_enum = GetFontEnum(font);
-    const char *font_name = GetFontName(font);
+    std::string font_name = GetFontName(font);
     if(!size) size = CTX.gl_fontsize;
     drawString(s, font_name, font_enum, size, align);
   }

@@ -4375,18 +4375,18 @@ yyreduce:
   case 69:
 #line 752 "Gmsh.y"
     { 
-      std::string dummy;
-      StringOption(GMSH_SET|GMSH_GUI, (yyvsp[(1) - (6)].c), 0, (yyvsp[(3) - (6)].c), (yyvsp[(5) - (6)].c), dummy);
-      Free((yyvsp[(1) - (6)].c)); Free((yyvsp[(3) - (6)].c));
+      std::string tmp((yyvsp[(5) - (6)].c));
+      StringOption(GMSH_SET|GMSH_GUI, (yyvsp[(1) - (6)].c), 0, (yyvsp[(3) - (6)].c), tmp);
+      Free((yyvsp[(1) - (6)].c)); Free((yyvsp[(3) - (6)].c)); Free((yyvsp[(5) - (6)].c))
     ;}
     break;
 
   case 70:
 #line 758 "Gmsh.y"
     { 
-      std::string dummy;
-      StringOption(GMSH_SET|GMSH_GUI, (yyvsp[(1) - (9)].c), (int)(yyvsp[(3) - (9)].d), (yyvsp[(6) - (9)].c), (yyvsp[(8) - (9)].c), dummy);
-      Free((yyvsp[(1) - (9)].c)); Free((yyvsp[(6) - (9)].c));
+      std::string tmp((yyvsp[(8) - (9)].c));
+      StringOption(GMSH_SET|GMSH_GUI, (yyvsp[(1) - (9)].c), (int)(yyvsp[(3) - (9)].d), (yyvsp[(6) - (9)].c), tmp);
+      Free((yyvsp[(1) - (9)].c)); Free((yyvsp[(6) - (9)].c)); Free((yyvsp[(8) - (9)].c))
     ;}
     break;
 
@@ -7735,7 +7735,7 @@ yyreduce:
 #line 3380 "Gmsh.y"
     { 
       std::string out;
-      StringOption(GMSH_GET, (yyvsp[(1) - (3)].c), 0, (yyvsp[(3) - (3)].c), "", out);
+      StringOption(GMSH_GET, (yyvsp[(1) - (3)].c), 0, (yyvsp[(3) - (3)].c), out);
       (yyval.c) = (char*)Malloc((out.size() + 1) * sizeof(char));
       strcpy((yyval.c), out.c_str());
       Free((yyvsp[(1) - (3)].c)); Free((yyvsp[(3) - (3)].c));
@@ -7746,7 +7746,7 @@ yyreduce:
 #line 3388 "Gmsh.y"
     { 
       std::string out;
-      StringOption(GMSH_GET, (yyvsp[(1) - (6)].c), (int)(yyvsp[(3) - (6)].d), (yyvsp[(6) - (6)].c), "", out);
+      StringOption(GMSH_GET, (yyvsp[(1) - (6)].c), (int)(yyvsp[(3) - (6)].d), (yyvsp[(6) - (6)].c), out);
       (yyval.c) = (char*)Malloc((out.size() + 1) * sizeof(char));
       strcpy((yyval.c), out.c_str());
       Free((yyvsp[(1) - (6)].c)); Free((yyvsp[(6) - (6)].c));

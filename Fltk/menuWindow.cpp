@@ -58,7 +58,7 @@ static void file_new_cb(Fl_Widget *w, void *data)
     std::string name = file_chooser_get_name(1);
     if(!StatFile(name)){
       if(fl_choice("File '%s' already exists.\n\nDo you want to erase it?",
-                   "Cancel", "Erase", NULL, name.c_str()))
+                   "Cancel", "Erase", 0, name.c_str()))
         UnlinkFile(name);
       else
         goto test;
@@ -302,7 +302,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
     if(CTX.confirm_overwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
-                      "Cancel", "Replace", NULL, name.c_str()))
+                      "Cancel", "Replace", 0, name.c_str()))
           goto test;
     }
     int i = file_chooser_get_filter();
@@ -334,7 +334,7 @@ static void file_rename_cb(Fl_Widget *w, void *data)
     if(CTX.confirm_overwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
-                      "Cancel", "Replace", NULL, name.c_str()))
+                      "Cancel", "Replace", 0, name.c_str()))
           goto test;
     }
     rename(GModel::current()->getFileName().c_str(), name.c_str());
@@ -483,7 +483,7 @@ static void help_command_line_cb(Fl_Widget *w, void *data)
 
 static void help_online_cb(Fl_Widget *w, void *data)
 {
-  std::string prog = FixWindowsPath(CTX.web_browser);
+  std::string prog = FixWindowsPath(CTX.web_browser.c_str());
   char cmd[1024];
   ReplaceMultiFormat(prog.c_str(), "http://geuz.org/gmsh/doc/texinfo/", cmd);
   SystemCall(cmd);
@@ -516,12 +516,12 @@ void mod_post_cb(Fl_Widget *w, void *data)
 
 void mod_back_cb(Fl_Widget *w, void *data)
 {
-  GUI::instance()->menu->setContext(NULL, -1);
+  GUI::instance()->menu->setContext(0, -1);
 }
 
 void mod_forward_cb(Fl_Widget *w, void *data)
 {
-  GUI::instance()->menu->setContext(NULL, 1);
+  GUI::instance()->menu->setContext(0, 1);
 }
 
 static void geometry_elementary_cb(Fl_Widget *w, void *data)
@@ -536,7 +536,7 @@ static void geometry_physical_cb(Fl_Widget *w, void *data)
 
 static void geometry_edit_cb(Fl_Widget *w, void *data)
 {
-  std::string prog = FixWindowsPath(CTX.editor);
+  std::string prog = FixWindowsPath(CTX.editor.c_str());
   std::string file = FixWindowsPath(GModel::current()->getFileName().c_str());
   char cmd[1024];
   ReplaceMultiFormat(prog.c_str(), file.c_str(), cmd);
@@ -1452,7 +1452,7 @@ static void mesh_save_cb(Fl_Widget *w, void *data)
   if(CTX.confirm_overwrite) {
     if(!StatFile(name))
       if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
-                    "Cancel", "Replace", NULL, name.c_str()))
+                    "Cancel", "Replace", 0, name.c_str()))
         return;
   }
   CreateOutputFile(name, CTX.mesh.format);
@@ -2021,7 +2021,7 @@ static void view_save_as(int index, const char *title, int format)
     if(CTX.confirm_overwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
-                      "Cancel", "Replace", NULL, name.c_str()))
+                      "Cancel", "Replace", 0, name.c_str()))
           goto test;
     }
     view->write(name, format);
@@ -2237,15 +2237,15 @@ static Fl_Menu_Item module_table[] = {
 
 // Dynamic menus contexts
 contextItem menu_geometry[] = {
-  {"0Geometry", NULL} ,
+  {"0Geometry"} ,
   {"Elementary entities", (Fl_Callback *)geometry_elementary_cb} ,
   {"Physical groups",     (Fl_Callback *)geometry_physical_cb} ,
   {"Edit",                (Fl_Callback *)geometry_edit_cb} , 
   {"Reload",              (Fl_Callback *)geometry_reload_cb} , 
-  {0}
+  {""}
 };  
   contextItem menu_geometry_elementary[] = {
-    {"0Geometry>Elementary", NULL} ,
+    {"0Geometry>Elementary"} ,
     {"Add",       (Fl_Callback *)geometry_elementary_add_cb} ,
     {"Delete",    (Fl_Callback *)geometry_elementary_delete_cb, (void*)0} ,
     {"Translate", (Fl_Callback *)geometry_elementary_translate_cb, (void*)0} ,
@@ -2255,19 +2255,19 @@ contextItem menu_geometry[] = {
     {"Symmetry",  (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)0} ,
     {"Extrude",   (Fl_Callback *)geometry_elementary_extrude_cb, (void*)0} ,
     {"Coherence", (Fl_Callback *)geometry_elementary_coherence_cb} ,
-    {0} 
+    {""} 
   };  
     contextItem menu_geometry_elementary_add[] = {
-      {"0Geometry>Elementary>Add", NULL} ,
+      {"0Geometry>Elementary>Add"} ,
       {"New",       (Fl_Callback *)geometry_elementary_add_new_cb, (void*)0} ,
       {"Translate", (Fl_Callback *)geometry_elementary_add_translate_cb, (void*)0} ,
       {"Rotate",    (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)0} ,
       {"Scale",     (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)0} ,
       {"Symmetry",  (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)0} ,
-      {0} 
+      {""} 
     };  
       contextItem menu_geometry_elementary_add_new[] = {
-        {"0Geometry>Elementary>Add>New", NULL} ,
+        {"0Geometry>Elementary>Add>New"} ,
         {"Parameter",     (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Parameter"} ,
         {"Point",         (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Point"} ,
         {"Straight line", (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Line"} ,
@@ -2278,121 +2278,121 @@ contextItem menu_geometry[] = {
         {"Plane surface", (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Plane Surface"} ,
         {"Ruled surface", (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Ruled Surface"} ,
         {"Volume",        (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Volume"} ,
-        {0} 
+        {""} 
       };  
       contextItem menu_geometry_elementary_add_translate[] = {
-        {"0Geometry>Elementary>Add>Translate", NULL} ,
+        {"0Geometry>Elementary>Add>Translate"} ,
         {"Point",   (Fl_Callback *)geometry_elementary_add_translate_cb, (void*)"Point"} ,  
         {"Line",    (Fl_Callback *)geometry_elementary_add_translate_cb, (void*)"Line"} ,	  
         {"Surface", (Fl_Callback *)geometry_elementary_add_translate_cb, (void*)"Surface"} ,
         {"Volume",  (Fl_Callback *)geometry_elementary_add_translate_cb, (void*)"Volume"} , 
-        {0} 
+        {""} 
       };  
       contextItem menu_geometry_elementary_add_rotate[] = {
-        {"0Geometry>Elementary>Add>Rotate", NULL} ,
+        {"0Geometry>Elementary>Add>Rotate"} ,
         {"Point",   (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)"Point"} ,  
         {"Line",    (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)"Line"} ,	  
         {"Surface", (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)"Surface"} ,
         {"Volume",  (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)"Volume"} , 
-        {0} 
+        {""} 
       };  
       contextItem menu_geometry_elementary_add_scale[] = {
-        {"0Geometry>Elementary>Add>Scale", NULL} ,
+        {"0Geometry>Elementary>Add>Scale"} ,
         {"Point",   (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)"Point"} ,  
         {"Line",    (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)"Line"} ,	  
         {"Surface", (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)"Surface"} ,
         {"Volume",  (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)"Volume"} , 
-        {0} 
+        {""} 
       };  
       contextItem menu_geometry_elementary_add_symmetry[] = {
-        {"0Geometry>Elementary>Add>Symmetry", NULL} ,
+        {"0Geometry>Elementary>Add>Symmetry"} ,
         {"Point",   (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Point"} ,  
         {"Line",    (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Line"} ,	  
         {"Surface", (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Surface"} ,
         {"Volume",  (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Volume"} , 
-        {0} 
+        {""} 
       };  
     contextItem menu_geometry_elementary_delete[] = {
-      {"0Geometry>Elementary>Delete", NULL} ,
+      {"0Geometry>Elementary>Delete"} ,
       {"Point",   (Fl_Callback *)geometry_elementary_delete_cb, (void*)"Point"} ,
       {"Line",    (Fl_Callback *)geometry_elementary_delete_cb, (void*)"Line"} ,
       {"Surface", (Fl_Callback *)geometry_elementary_delete_cb, (void*)"Surface"} ,
       {"Volume",  (Fl_Callback *)geometry_elementary_delete_cb, (void*)"Volume"} ,
-      {0} 
+      {""} 
     };  
     contextItem menu_geometry_elementary_split[] = {
-      {"0Geometry>Elementary>Split",NULL},
+      {"0Geometry>Elementary>Split"},
         {"Line",(Fl_Callback *)geometry_elementary_split_cb,(void*)"Line"},
-        {0}
+        {""}
     };
     contextItem menu_geometry_elementary_translate[] = {
-      {"0Geometry>Elementary>Translate", NULL} ,
+      {"0Geometry>Elementary>Translate"} ,
       {"Point",   (Fl_Callback *)geometry_elementary_translate_cb, (void*)"Point"} ,  
       {"Line",    (Fl_Callback *)geometry_elementary_translate_cb, (void*)"Line"} ,	  
       {"Surface", (Fl_Callback *)geometry_elementary_translate_cb, (void*)"Surface"} ,
       {"Volume",  (Fl_Callback *)geometry_elementary_translate_cb, (void*)"Volume"} , 
-      {0} 
+      {""} 
     };  
     contextItem menu_geometry_elementary_rotate[] = {
-      {"0Geometry>Elementary>Rotate", NULL} ,
+      {"0Geometry>Elementary>Rotate"} ,
       {"Point",   (Fl_Callback *)geometry_elementary_rotate_cb, (void*)"Point"} ,  
       {"Line",    (Fl_Callback *)geometry_elementary_rotate_cb, (void*)"Line"} ,	  
       {"Surface", (Fl_Callback *)geometry_elementary_rotate_cb, (void*)"Surface"} ,
       {"Volume",  (Fl_Callback *)geometry_elementary_rotate_cb, (void*)"Volume"} , 
-      {0} 
+      {""} 
     };  
     contextItem menu_geometry_elementary_scale[] = {
-      {"0Geometry>Elementary>Scale", NULL} ,
+      {"0Geometry>Elementary>Scale"} ,
       {"Point",   (Fl_Callback *)geometry_elementary_scale_cb, (void*)"Point"} ,  
       {"Line",    (Fl_Callback *)geometry_elementary_scale_cb, (void*)"Line"} ,	  
       {"Surface", (Fl_Callback *)geometry_elementary_scale_cb, (void*)"Surface"} ,
       {"Volume",  (Fl_Callback *)geometry_elementary_scale_cb, (void*)"Volume"} , 
-      {0} 
+      {""} 
     };  
     contextItem menu_geometry_elementary_symmetry[] = {
-      {"0Geometry>Elementary>Symmetry", NULL} ,
+      {"0Geometry>Elementary>Symmetry"} ,
       {"Point",   (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)"Point"} ,  
       {"Line",    (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)"Line"} ,	  
       {"Surface", (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)"Surface"} ,
       {"Volume",  (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)"Volume"} , 
-      {0} 
+      {""} 
     };  
     contextItem menu_geometry_elementary_extrude[] = {
-      {"0Geometry>Elementary>Extrude", NULL} ,
+      {"0Geometry>Elementary>Extrude"} ,
       {"Translate", (Fl_Callback *)geometry_elementary_extrude_translate_cb, (void*)0} ,
       {"Rotate",    (Fl_Callback *)geometry_elementary_extrude_rotate_cb, (void*)0} ,
-      {0} 
+      {""} 
     };  
       contextItem menu_geometry_elementary_extrude_translate[] = {
-        {"0Geometry>Elementary>Extrude>Translate", NULL} ,
+        {"0Geometry>Elementary>Extrude>Translate"} ,
         {"Point",   (Fl_Callback *)geometry_elementary_extrude_translate_cb, (void*)"Point"} ,
         {"Line",    (Fl_Callback *)geometry_elementary_extrude_translate_cb, (void*)"Line"} ,
         {"Surface", (Fl_Callback *)geometry_elementary_extrude_translate_cb, (void*)"Surface"} ,
-        {0} 
+        {""} 
       };  
       contextItem menu_geometry_elementary_extrude_rotate[] = {
-        {"0Geometry>Elementary>Extrude>Rotate", NULL} ,
+        {"0Geometry>Elementary>Extrude>Rotate"} ,
         {"Point",   (Fl_Callback *)geometry_elementary_extrude_rotate_cb, (void*)"Point"} ,
         {"Line",    (Fl_Callback *)geometry_elementary_extrude_rotate_cb, (void*)"Line"} ,
         {"Surface", (Fl_Callback *)geometry_elementary_extrude_rotate_cb, (void*)"Surface"} ,
-        {0} 
+        {""} 
       };  
   contextItem menu_geometry_physical[] = {
-    {"0Geometry>Physical", NULL} ,
+    {"0Geometry>Physical"} ,
     {"Add",    (Fl_Callback *)geometry_physical_add_cb, (void*)0} ,
-    {0} 
+    {""} 
   };  
     contextItem menu_geometry_physical_add[] = {
-      {"0Geometry>Physical>Add", NULL} ,
+      {"0Geometry>Physical>Add"} ,
       {"Point",   (Fl_Callback *)geometry_physical_add_cb, (void*)"Point" } ,
       {"Line",    (Fl_Callback *)geometry_physical_add_cb, (void*)"Line" } ,
       {"Surface", (Fl_Callback *)geometry_physical_add_cb, (void*)"Surface" } ,
       {"Volume",  (Fl_Callback *)geometry_physical_add_cb, (void*)"Volume" } ,
-      {0} 
+      {""} 
     };  
 
 contextItem menu_mesh[] = {
-  {"1Mesh", NULL} ,
+  {"1Mesh"} ,
   {"Define",       (Fl_Callback *)mesh_define_cb} ,
   {"Inspect",      (Fl_Callback *)mesh_inspect_cb} , 
   {"Delete",       (Fl_Callback *)mesh_delete_cb} , 
@@ -2414,45 +2414,45 @@ contextItem menu_mesh[] = {
 #endif
   //  {"Reclassify",   (Fl_Callback *)mesh_classify_cb} , 
   {"Save",         (Fl_Callback *)mesh_save_cb} ,
-  {0} 
+  {""} 
 };  
   contextItem menu_mesh_define[] = {
-    {"1Mesh>Define", NULL} ,
+    {"1Mesh>Define"} ,
     {"Fields",      (Fl_Callback *)field_cb},
     {"Characteristic length", (Fl_Callback *)mesh_define_length_cb  } ,
     {"Recombine",   (Fl_Callback *)mesh_define_recombine_cb  } ,
     {"Transfinite", (Fl_Callback *)mesh_define_transfinite_cb  } , 
-    {0} 
+    {""} 
   };  
     contextItem menu_mesh_define_transfinite[] = {
-      {"1Mesh>Define>Transfinite", NULL} ,
+      {"1Mesh>Define>Transfinite"} ,
       {"Line",    (Fl_Callback *)mesh_define_transfinite_line_cb} ,
       {"Surface", (Fl_Callback *)mesh_define_transfinite_surface_cb} ,
       {"Volume",  (Fl_Callback *)mesh_define_transfinite_volume_cb} , 
-      {0} 
+      {""} 
     };  
   contextItem menu_mesh_delete[] = {
-    {"1Mesh>Edit>Delete", NULL} ,
+    {"1Mesh>Edit>Delete"} ,
     {"Elements", (Fl_Callback *)mesh_delete_parts_cb, (void*)"elements"} ,
     {"Lines",    (Fl_Callback *)mesh_delete_parts_cb, (void*)"lines"} ,
     {"Surfaces", (Fl_Callback *)mesh_delete_parts_cb, (void*)"surfaces"} ,
     {"Volumes",  (Fl_Callback *)mesh_delete_parts_cb, (void*)"volumes"} ,
-    {0} 
+    {""} 
   };  
 
 contextItem menu_solver[] = {
-  {"2Solver", NULL} ,
+  {"2Solver"} ,
   {"Solver 0", (Fl_Callback *)solver_cb , (void*)0} ,
   {"Solver 1", (Fl_Callback *)solver_cb , (void*)1} ,
   {"Solver 2", (Fl_Callback *)solver_cb , (void*)2} ,
   {"Solver 3", (Fl_Callback *)solver_cb , (void*)3} ,
   {"Solver 4", (Fl_Callback *)solver_cb , (void*)4} ,
-  {0} 
+  {""} 
 };
 
 contextItem menu_post[] = {
-  {"3Post-processing", NULL} ,
-  {0} 
+  {"3Post-processing"} ,
+  {""} 
 };
 
 menuWindow::menuWindow()
@@ -2547,7 +2547,7 @@ void menuWindow::setContext(contextItem *menu_asked, int flag)
   if(!init_context) {
     init_context = 1;
     for(int i = 0; i < NB_HISTORY_MAX; i++) {
-      menu_history[i] = NULL;
+      menu_history[i] = 0;
     }
   }
 
@@ -2572,12 +2572,16 @@ void menuWindow::setContext(contextItem *menu_asked, int flag)
     else
       return;
   }
-  else {
+  else if(menu_asked){
     menu = menu_asked;
     if(!nb_back || menu_history[nb_back - 1] != menu) {
       menu_history[nb_back++] = menu;
     }
     nb_forward = 0;
+  }
+  else{
+    Msg::Warning("No menu asked...");
+    return;
   }
 
   if(menu[0].label[0] == '0'){
@@ -2588,25 +2592,21 @@ void menuWindow::setContext(contextItem *menu_asked, int flag)
   }
   else if(menu[0].label[0] == '2'){
     module->value(2);
-    menu[1].label = opt_solver_name0(0, GMSH_GET, 0);
-    menu[2].label = opt_solver_name1(0, GMSH_GET, 0);
-    menu[3].label = opt_solver_name2(0, GMSH_GET, 0);
-    menu[4].label = opt_solver_name3(0, GMSH_GET, 0);
-    menu[5].label = opt_solver_name4(0, GMSH_GET, 0);
-    for(int i = 0; i < MAX_NUM_SOLVERS; i++) {
-      if(!strlen(menu[i + 1].label))
-        menu[i + 1].label = NULL;
-    }
+    menu[1].label = opt_solver_name0(0, GMSH_GET, "");
+    menu[2].label = opt_solver_name1(0, GMSH_GET, "");
+    menu[3].label = opt_solver_name2(0, GMSH_GET, "");
+    menu[4].label = opt_solver_name3(0, GMSH_GET, "");
+    menu[5].label = opt_solver_name4(0, GMSH_GET, "");
   }
   else if(menu[0].label[0] == '3'){
     module->value(3);
   }
   else {
-    Msg::Warning("Something is wrong in your dynamic context definition");
+    Msg::Warning("Something is wrong in dynamic menu definition");
     return;
   }
 
-  Msg::StatusBar(1, false, menu[0].label + 1);
+  Msg::StatusBar(1, false, menu[0].label.c_str() + 1);
 
   // cannot use scroll->clear() in fltk 1.1 (should be fixed in 1.3)
   for(unsigned int i = 0; i < push.size(); i++){
@@ -2746,9 +2746,9 @@ void menuWindow::setContext(contextItem *menu_asked, int flag)
     }
   }
   else{ // geometry, mesh and solver contexts
-    while(menu[nb + 1].label) {
+    while(menu[nb + 1].label.size()) {
       Fl_Button *b = new Fl_Button(0, _MH + nb * BH, width, BH);
-      b->copy_label(menu[nb + 1].label);
+      b->copy_label(menu[nb + 1].label.c_str());
       b->callback(menu[nb + 1].callback, menu[nb + 1].arg);
       push.push_back(b);
       scroll->add(b);

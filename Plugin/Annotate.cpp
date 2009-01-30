@@ -44,8 +44,8 @@ static double getStyle()
 {
   int fontsize = (int)AnnotateOptions_Number[4].def, font = 0, align = 0;
 #if defined(HAVE_FLTK)
-  font = GetFontIndex(AnnotateOptions_String[1].def);
-  align = GetFontAlign(AnnotateOptions_String[2].def);
+  font = GetFontIndex(AnnotateOptions_String[1].def.c_str());
+  align = GetFontAlign(AnnotateOptions_String[2].def.c_str());
 #endif
   return (double)((align<<16)|(font<<8)|(fontsize));
 }
@@ -115,14 +115,14 @@ double GMSH_AnnotatePlugin::callback(int num, int action, double value, double *
   return 0.;
 }
 
-const char *GMSH_AnnotatePlugin::callbackStr(int num, int action, const char *value,
-                                             const char **opt)
+std::string GMSH_AnnotatePlugin::callbackStr(int num, int action, std::string value,
+                                             std::string &opt)
 {
-  *opt = value;
+  opt = value;
 #if defined(HAVE_FLTK)
   DrawPlugin(draw);
 #endif
-  return NULL;
+  return opt;
 }
 
 double GMSH_AnnotatePlugin::callbackX(int num, int action, double value)
@@ -167,19 +167,19 @@ double GMSH_AnnotatePlugin::callbackFontSize(int num, int action, double value)
                   1, 5, 100);
 }
 
-const char *GMSH_AnnotatePlugin::callbackText(int num, int action, const char *value)
+std::string GMSH_AnnotatePlugin::callbackText(int num, int action, std::string value)
 {
-  return callbackStr(num, action, value, &AnnotateOptions_String[0].def);
+  return callbackStr(num, action, value, AnnotateOptions_String[0].def);
 }
 
-const char *GMSH_AnnotatePlugin::callbackFont(int num, int action, const char *value)
+std::string GMSH_AnnotatePlugin::callbackFont(int num, int action, std::string value)
 {
-  return callbackStr(num, action, value, &AnnotateOptions_String[1].def);
+  return callbackStr(num, action, value, AnnotateOptions_String[1].def);
 }
 
-const char *GMSH_AnnotatePlugin::callbackAlign(int num, int action, const char *value)
+std::string GMSH_AnnotatePlugin::callbackAlign(int num, int action, std::string value)
 {
-  return callbackStr(num, action, value, &AnnotateOptions_String[2].def);
+  return callbackStr(num, action, value, AnnotateOptions_String[2].def);
 }
 
 void GMSH_AnnotatePlugin::getName(char *name) const
@@ -238,7 +238,7 @@ PView *GMSH_AnnotatePlugin::execute(PView *v)
   double Z = AnnotateOptions_Number[2].def;
   int dim3 = (int)AnnotateOptions_Number[3].def;
   int iView = (int)AnnotateOptions_Number[5].def;
-  const char *text = AnnotateOptions_String[0].def;
+  const char *text = AnnotateOptions_String[0].def.c_str();
   double style = getStyle();
 
   PView *v1 = getView(iView, v);

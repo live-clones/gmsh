@@ -19,22 +19,22 @@ class Context_T {
   std::vector<std::string> files; // all the files on the command line
   std::string bgm_filename; // background mesh
   std::string output_filename; // output file specified with command line option '-o'
-  const char *default_filename;
-  const char *tmp_filename;
-  const char *session_filename;
-  const char *options_filename;
-  const char *error_filename;
-  char statreport[256]; // mesh stat output file
+  std::string default_filename;
+  std::string tmp_filename;
+  std::string session_filename;
+  std::string options_filename;
+  std::string error_filename;
+  std::string statreport; // mesh stat output file
   int create_append_statreport; // do nothing 0 create 1 append 2 
   int session_save, options_save; // save session/option file on exit
   int confirm_overwrite; // confirm overwrite when file->save as
-  const char *display; // forced display host:0.0 under X11 
+  std::string display; // forced display host:0.0 under X11 
   int terminal; // show we print to the terminal console?
   int num_windows, num_tiles; // number of graphical windows/tiles to create
-  const char *editor; // text editor command (with included '%s')
-  const char *web_browser; // web browser command (with included '%s')
+  std::string editor; // text editor command (with included '%s')
+  std::string web_browser; // web browser command (with included '%s')
   std::string home_dir; // the home directory
-  const char *gui_theme; // FLTK GUI theme
+  std::string gui_theme; // FLTK GUI theme
   int tooltips; // show tootips in GUI?
   int position[2]; // position of the menu window on the screen
   int gl_position[2]; // position of the graphic window on the screen
@@ -76,13 +76,13 @@ class Context_T {
   int small_axes, small_axes_size, small_axes_pos[2]; // small axes
   int axes, axes_auto_position, axes_tics[3],axes_mikado; // large axes
   double axes_position[6];
-  char axes_label[3][256], axes_format[3][256];
+  std::string axes_label[3], axes_format[3];
   int threads, threads_lock; // threads?, lock (should be a mutex...) 
   int alpha; // enable alpha blending 
   double zoom_factor; // mouse2 zoom coefficient
   int bg_gradient; // draw background gradient?
   int fontsize, deltafontsize; // fltk font size (and delta for palettes)
-  const char *gl_font; // font for opengl graphics
+  std::string gl_font; // font for opengl graphics
   int gl_font_enum; // font for opengl graphics (fltk enum value)
   int gl_fontsize; // font size for opengl graphics
   double point_size, line_width; // point/line widths
@@ -182,7 +182,7 @@ class Context_T {
   // solver options 
   struct{
     int max_delay, plugins, listen ;
-    const char *socket_name ;
+    std::string socket_name ;
   }solver;
 
   // print options 

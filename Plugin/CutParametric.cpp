@@ -66,9 +66,9 @@ int GMSH_CutParametricPlugin::fillXYZ()
   Msg::Error("MathEval is not compiled in this version of Gmsh");
   return 0;
 #else
-  const char *exprx = CutParametricOptions_String[0].def;
-  const char *expry = CutParametricOptions_String[1].def;
-  const char *exprz = CutParametricOptions_String[2].def;
+  const char *exprx = CutParametricOptions_String[0].def.c_str();
+  const char *expry = CutParametricOptions_String[1].def.c_str();
+  const char *exprz = CutParametricOptions_String[2].def.c_str();
   int nbU = (int)CutParametricOptions_Number[2].def;
 
   x.resize(nbU);
@@ -144,15 +144,15 @@ double GMSH_CutParametricPlugin::callback(int num, int action, double value, dou
   return 0.;
 }
 
-const char *GMSH_CutParametricPlugin::callbackStr(int num, int action, const char *value,
-                                                  const char **opt)
+std::string GMSH_CutParametricPlugin::callbackStr(int num, int action, std::string value,
+                                                  std::string &opt)
 {
-  *opt = value;
+  opt = value;
 #if defined(HAVE_FLTK)
   recompute = 1;
   DrawPlugin(draw);
 #endif
-  return NULL;
+  return opt;
 }
 
 double GMSH_CutParametricPlugin::callbackMinU(int num, int action, double value)
@@ -179,19 +179,19 @@ double GMSH_CutParametricPlugin::callbackConnect(int num, int action, double val
                   1, 0, 1);
 }
 
-const char *GMSH_CutParametricPlugin::callbackX(int num, int action, const char *value)
+std::string GMSH_CutParametricPlugin::callbackX(int num, int action, std::string value)
 {
-  return callbackStr(num, action, value, &CutParametricOptions_String[0].def);
+  return callbackStr(num, action, value, CutParametricOptions_String[0].def);
 }
 
-const char *GMSH_CutParametricPlugin::callbackY(int num, int action, const char *value)
+std::string GMSH_CutParametricPlugin::callbackY(int num, int action, std::string value)
 {
-  return callbackStr(num, action, value, &CutParametricOptions_String[1].def);
+  return callbackStr(num, action, value, CutParametricOptions_String[1].def);
 }
 
-const char *GMSH_CutParametricPlugin::callbackZ(int num, int action, const char *value)
+std::string GMSH_CutParametricPlugin::callbackZ(int num, int action, std::string value)
 {
-  return callbackStr(num, action, value, &CutParametricOptions_String[2].def);
+  return callbackStr(num, action, value, CutParametricOptions_String[2].def);
 }
 
 void GMSH_CutParametricPlugin::getName(char *name) const

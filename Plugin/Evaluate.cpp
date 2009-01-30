@@ -202,7 +202,7 @@ PView *GMSH_EvaluatePlugin::execute(PView *v)
   int externalView = (int)EvaluateOptions_Number[2].def;
   int externalTimeStep = (int)EvaluateOptions_Number[3].def;
   int iView = (int)EvaluateOptions_Number[4].def;
-  const char *expr = EvaluateOptions_String[0].def;
+  const char *expr = EvaluateOptions_String[0].def.c_str();
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

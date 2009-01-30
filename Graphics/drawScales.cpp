@@ -96,7 +96,7 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin, double ymin
   double font_a = gl_height() - gl_descent(); // height above ref pt
 
   char label[1024];
-  sprintf(label, opt->Format, -M_PI * 1.e-4);
+  sprintf(label, opt->Format.c_str(), -M_PI * 1.e-4);
   double maxw = gl_width(label);
 
   int nbv = opt->NbIso;
@@ -123,7 +123,7 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin, double ymin
      opt->IntervalsType == PViewOptions::Continuous){
     for(int i = 0; i < nbv + 1; i++) {
       double v = opt->getScaleValue(i, nbv + 1, opt->TmpMin, opt->TmpMax);
-      sprintf(label, opt->Format, v);
+      sprintf(label, opt->Format.c_str(), v);
       if(horizontal){
         glRasterPos2d(xmin + i * vbox, ymin + height + tic);
         ctx->drawStringCenter(label);
@@ -141,7 +141,7 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin, double ymin
     }
     for(int i = 0; i < nbv; i++) {
       double v = opt->getScaleValue(i, nbv, opt->TmpMin, opt->TmpMax);
-      sprintf(label, opt->Format, v);
+      sprintf(label, opt->Format.c_str(), v);
       if(horizontal){
         glRasterPos2d(xmin + box / 2. + i * vbox, ymin + height + tic);
         ctx->drawStringCenter(label);
@@ -168,7 +168,7 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
   int nt = data->getNumTimeSteps();
   if((opt->ShowTime == 1 && nt > 1) || opt->ShowTime == 2){
     char tmp[256];
-    sprintf(tmp, opt->Format, data->getTime(opt->TimeStep));
+    sprintf(tmp, opt->Format.c_str(), data->getTime(opt->TimeStep));
     sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
   }
   else if((opt->ShowTime == 3 && nt > 1) || opt->ShowTime == 4){
@@ -234,7 +234,7 @@ void drawContext::drawScales()
   double maxw = 0.;
   for(unsigned int i = 0; i < scales.size(); i++) {
     PViewOptions *opt = scales[i]->getOptions();
-    sprintf(label, opt->Format, -M_PI * 1.e-4);
+    sprintf(label, opt->Format.c_str(), -M_PI * 1.e-4);
     maxw = std::max(maxw, gl_width(label));
   }
 
@@ -292,11 +292,11 @@ void drawContext::drawScales()
       }
       // compute width
       width_prev = width;
-      sprintf(label, opt->Format, -M_PI * 1.e-4);
+      sprintf(label, opt->Format.c_str(), -M_PI * 1.e-4);
       width = bar_size + tic + gl_width(label);
       if(opt->ShowTime){
         char tmp[256];
-        sprintf(tmp, opt->Format, data->getTime(opt->TimeStep));
+        sprintf(tmp, opt->Format.c_str(), data->getTime(opt->TimeStep));
         sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
       }
       else

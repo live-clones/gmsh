@@ -318,17 +318,16 @@ bool PViewDataList::writePOS(std::string fileName, bool binary, bool parsed, boo
     fprintf(fp, "$EndPostFormat\n");
   }
 
-  char str[256];
-  strcpy(str, getName().c_str());
-  for(int i = 0; i < (int)strlen(str); i++)
+  std::string str = getName();
+  for(unsigned int i = 0; i < str.size(); i++)
     if(str[i] == ' ') str[i] = '^';
 
   if(!parsed){
     fprintf(fp, "$View /* %s */\n", getName().c_str());
-    if (strlen(str) == 0)
+    if (str.empty())
       fprintf(fp, "noname ");
     else
-      fprintf(fp, "%s ", str);
+      fprintf(fp, "%s ", str.c_str());
     fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
             "%d %d %d %d %d %d %d %d %d %d %d %d\n",
             List_Nbr(Time),

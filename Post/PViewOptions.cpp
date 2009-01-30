@@ -113,11 +113,11 @@ void PViewOptions::createGeneralRaise()
 {
   destroyGeneralRaise();
 
-  char *expr[3] = {GenRaiseX, GenRaiseY, GenRaiseZ};
+  const char *expr[3] = {GenRaiseX.c_str(), GenRaiseY.c_str(), GenRaiseZ.c_str()};
 #if defined(HAVE_MATH_EVAL)
   for(int i = 0; i < 3; i++) {
     if(strlen(expr[i])) {
-      if(!(GenRaise_f[i] = evaluator_create(expr[i])))
+      if(!(GenRaise_f[i] = evaluator_create((char*)expr[i])))
         Msg::Error("Invalid expression '%s'", expr[i]);
     }
   }

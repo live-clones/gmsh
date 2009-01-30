@@ -40,7 +40,7 @@ void solver_cb(Fl_Widget *w, void *data)
     char file[256], no_ext[256], ext[256], base[256];
     SplitFileName(GModel::current()->getFileName().c_str(), no_ext, ext, base);
     strcpy(file, no_ext);
-    strcat(file, SINFO[num].extension);
+    strcat(file, SINFO[num].extension.c_str());
     GUI::instance()->solver[num]->input[0]->value(file);
   }
   if(SINFO[num].nboptions) {
@@ -48,8 +48,8 @@ void solver_cb(Fl_Widget *w, void *data)
       (GUI::instance()->solver[num]->input[0]->value());
     char tmp[256], tmp2[256];
     sprintf(tmp, "\"%s\"", file.c_str());
-    sprintf(tmp2, SINFO[num].name_command, tmp);
-    sprintf(tmp, "%s %s", SINFO[num].option_command, tmp2);
+    sprintf(tmp2, SINFO[num].name_command.c_str(), tmp);
+    sprintf(tmp, "%s %s", SINFO[num].option_command.c_str(), tmp2);
     Solver(num, tmp);
   }
   GUI::instance()->solver[num]->win->show();
@@ -59,7 +59,7 @@ static void solver_file_open_cb(Fl_Widget *w, void *data)
 {
   char tmp[256], tmp2[256];
   int num = (int)(long)data;
-  sprintf(tmp, "*%s", SINFO[num].extension);
+  sprintf(tmp, "*%s", SINFO[num].extension.c_str());
 
   // We allow to create the .pro file... Or should we add a "New file"
   // button?
@@ -68,8 +68,8 @@ static void solver_file_open_cb(Fl_Widget *w, void *data)
     if(SINFO[num].nboptions) {
       std::string file = FixWindowsPath(file_chooser_get_name(1).c_str());
       sprintf(tmp, "\"%s\"", file.c_str());
-      sprintf(tmp2, SINFO[num].name_command, tmp);
-      sprintf(tmp, "%s %s", SINFO[num].option_command, tmp2);
+      sprintf(tmp2, SINFO[num].name_command.c_str(), tmp);
+      sprintf(tmp, "%s %s", SINFO[num].option_command.c_str(), tmp2);
       Solver(num, tmp);
     }
   }
@@ -78,7 +78,7 @@ static void solver_file_open_cb(Fl_Widget *w, void *data)
 static void solver_file_edit_cb(Fl_Widget *w, void *data)
 {
   int num = (int)(long)data;
-  std::string prog = FixWindowsPath(CTX.editor);
+  std::string prog = FixWindowsPath(CTX.editor.c_str());
   std::string file = FixWindowsPath(GUI::instance()->solver[num]->input[0]->value());
   char cmd[1024];
   ReplaceMultiFormat(prog.c_str(), file.c_str(), cmd);
@@ -92,7 +92,7 @@ static void solver_choose_mesh_cb(Fl_Widget *w, void *data)
     GUI::instance()->solver[num]->input[1]->value(file_chooser_get_name(1).c_str());
 }
 
-static int nbs(char *str)
+static int nbs(const char *str)
 {
   int i, nb = 0;
   for(i = 0; i < (int)strlen(str) - 1; i++) {
@@ -117,29 +117,29 @@ static void solver_command_cb(Fl_Widget *w, void *data)
   if(strlen(GUI::instance()->solver[num]->input[1]->value())) {
     std::string m = FixWindowsPath(GUI::instance()->solver[num]->input[1]->value());
     sprintf(tmp, "\"%s\"", m.c_str());
-    sprintf(mesh, SINFO[num].mesh_command, tmp);
+    sprintf(mesh, SINFO[num].mesh_command.c_str(), tmp);
   }
   else {
     strcpy(mesh, "");
   }
 
-  if(nbs(SINFO[num].button_command[idx])) {
+  if(nbs(SINFO[num].button_command[idx].c_str())) {
     for(i = 0; i < idx; i++)
-      usedopts += nbs(SINFO[num].button_command[i]);
+      usedopts += nbs(SINFO[num].button_command[i].c_str());
     if(usedopts > SINFO[num].nboptions) {
       Msg::Error("Missing options to execute command");
       return;
     }
-    sprintf(command, SINFO[num].button_command[idx], SINFO[num].option
-            [usedopts][GUI::instance()->solver[num]->choice[usedopts]->value()]);
+    sprintf(command, SINFO[num].button_command[idx].c_str(), SINFO[num].option
+            [usedopts][GUI::instance()->solver[num]->choice[usedopts]->value()].c_str());
   }
   else {
-    strcpy(command, SINFO[num].button_command[idx]);
+    strcpy(command, SINFO[num].button_command[idx].c_str());
   }
 
   std::string c = FixWindowsPath(GUI::instance()->solver[num]->input[0]->value());
   sprintf(arg, "\"%s\"", c.c_str());
-  sprintf(tmp, SINFO[num].name_command, arg);
+  sprintf(tmp, SINFO[num].name_command.c_str(), arg);
   sprintf(arg, "%s %s %s", tmp, mesh, command);
   Solver(num, arg);
 }
@@ -149,7 +149,7 @@ static void solver_kill_cb(Fl_Widget *w, void *data)
   int num = (int)(long)data;
   if(SINFO[num].pid > 0) {
     if(KillProcess(SINFO[num].pid))
-      Msg::Info("Killed %s pid %d", SINFO[num].name, SINFO[num].pid);
+      Msg::Info("Killed %s pid %d", SINFO[num].name.c_str(), SINFO[num].pid);
   }
   SINFO[num].pid = -1;
 }
@@ -163,13 +163,13 @@ static void solver_ok_cb(Fl_Widget *w, void *data)
     (num, GMSH_SET, GUI::instance()->solver[num]->butt[1]->value());
   opt_solver_client_server
     (num, GMSH_SET, GUI::instance()->solver[num]->butt[2]->value());
-  if(strcmp(opt_solver_executable(num, GMSH_GET, NULL), 
+  if(strcmp(opt_solver_executable(num, GMSH_GET, "").c_str(), 
             GUI::instance()->solver[num]->input[2]->value()))
     retry = 1;
   opt_solver_executable
     (num, GMSH_SET, GUI::instance()->solver[num]->input[2]->value());
   if(retry)
-    solver_cb(NULL, data);
+    solver_cb(0, data);
 }
 
 static void solver_choose_executable_cb(Fl_Widget *w, void *data)
@@ -192,7 +192,7 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   for(int i = 0; i < MAX_NUM_SOLVER_OPTIONS; i++)
-    if(strlen(SINFO[solverIndex].option_name[i]))
+    if(SINFO[solverIndex].option_name[i].size())
       SINFO[solverIndex].nboptions = i + 1;
 
   int LL = 2 * IW;
@@ -255,18 +255,18 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
 
       for(int i = 0; i < SINFO[solverIndex].nboptions; i++) {
         choice[i] = new Fl_Choice
-          (2 * WB, 2 * WB + (6 + i) * BH, LL, BH, SINFO[solverIndex].option_name[i]);
+          (2 * WB, 2 * WB + (6 + i) * BH, LL, BH, SINFO[solverIndex].option_name[i].c_str());
         choice[i]->align(FL_ALIGN_RIGHT);
       }
 
       static int arg[MAX_NUM_SOLVERS][5][2];
       for(int i = 0; i < 4; i++) {
-        if(strlen(SINFO[solverIndex].button_name[i])) {
+        if(SINFO[solverIndex].button_name[i].size()) {
           arg[solverIndex][i][0] = solverIndex;
           arg[solverIndex][i][1] = i;
           command[i] = new Fl_Button
             ((2 + i) * WB + i * BBS, 3 * WB + (6 + SINFO[solverIndex].nboptions) * BH,
-             BBS, BH, SINFO[solverIndex].button_name[i]);
+             BBS, BH, SINFO[solverIndex].button_name[i].c_str());
           command[i]->callback
             (solver_command_cb, (void *)arg[solverIndex][i]);
         }
@@ -288,9 +288,9 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
       Fl_Browser *o = new Fl_Browser
         (2 * WB, 2 * WB + 1 * BH, width - 4 * WB, height - 4 * WB - BH);
       o->add(" ");
-      add_multiline_in_browser(o, "@c@b@.", SINFO[solverIndex].name, false);
+      add_multiline_in_browser(o, "@c@b@.", SINFO[solverIndex].name.c_str(), false);
       o->add(" ");
-      add_multiline_in_browser(o, "@c@. ", SINFO[solverIndex].help, false);
+      add_multiline_in_browser(o, "@c@. ", SINFO[solverIndex].help.c_str(), false);
 
       g->end();
     }

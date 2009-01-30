@@ -181,7 +181,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     int nt = data->getNumTimeSteps();
     if((opt->ShowTime == 1 && nt > 1) || opt->ShowTime == 2){
       char tmp[256];
-      sprintf(tmp, opt->Format, data->getTime(opt->TimeStep));
+      sprintf(tmp, opt->Format.c_str(), data->getTime(opt->TimeStep));
       sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
     }
     else if((opt->ShowTime == 3 && nt > 1) || opt->ShowTime == 4){
@@ -196,7 +196,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   ctx->drawStringCenter(label);
   
   // x label
-  sprintf(label, "%s", opt->AxesLabel[0]);
+  sprintf(label, "%s", opt->AxesLabel[0].c_str());
   glRasterPos2d(xleft + width / 2, ytop - height - 2 * font_h - 2 * tic);
   ctx->drawStringCenter(label);
 
@@ -232,7 +232,8 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
         }
       }
       if(opt->ShowScale){
-        sprintf(label, opt->Format, (i == nb) ? opt->TmpMin : (opt->TmpMax - i * dv));
+        sprintf(label, opt->Format.c_str(), (i == nb) ? opt->TmpMin : 
+                (opt->TmpMax - i * dv));
         glRasterPos2d(xleft - 2 * tic, ytop - i * dy - font_a / 3.);
         ctx->drawStringRight(label);
       }
@@ -243,7 +244,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   if(opt->AxesTics[0] > 0){
     int nb = opt->AxesTics[0];
     if(opt->Axes){
-      sprintf(label, opt->AxesFormat[0], - M_PI * 1.e-4);
+      sprintf(label, opt->AxesFormat[0].c_str(), - M_PI * 1.e-4);
       if((nb - 1) * gl_width(label) > width)
         nb = (int)(width / gl_width(label)) + 1;
     }
@@ -277,9 +278,9 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
         }
         
         if(nb == 1)
-          sprintf(label, opt->AxesFormat[0], xmin);
+          sprintf(label, opt->AxesFormat[0].c_str(), xmin);
         else
-          sprintf(label, opt->AxesFormat[0],
+          sprintf(label, opt->AxesFormat[0].c_str(),
                   xmin + i * (xmax - xmin) / (double)(nb - 1));
         glRasterPos2d(xleft + i * dx, ybot - font_h - tic);
         ctx->drawStringCenter(label);
@@ -316,7 +317,7 @@ static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
     if(numeric){
       glRasterPos2d(px + 3, py + 3);
       char label[256];
-      sprintf(label, opt->Format, y);
+      sprintf(label, opt->Format.c_str(), y);
       ctx->drawString(label);
     }
     else
@@ -420,7 +421,7 @@ void drawContext::drawGraph2d()
   char label[1024];
   for(unsigned int i = 0; i < graphs.size(); i++){
     PViewOptions *opt = graphs[i]->getOptions();
-    sprintf(label, opt->Format, -M_PI * 1.e-4);
+    sprintf(label, opt->Format.c_str(), -M_PI * 1.e-4);
     xsep = std::max(xsep, gl_width(label));
   }
   

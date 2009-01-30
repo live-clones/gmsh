@@ -51,7 +51,7 @@ class GMSH_GSHHSPlugin:public GMSH_Post_Plugin
       }
     };
     class reader_gshhs:public reader{
-      /*	$Id: GSHHS.cpp,v 1.24 2009-01-19 11:57:29 remacle Exp $
+      /*	$Id: GSHHS.cpp,v 1.25 2009-01-30 21:37:43 geuzaine Exp $
        *
        * Include file defining structures used in gshhs.c
        *
@@ -920,8 +920,8 @@ PView *GMSH_GSHHSPlugin::execute(PView * v)
 {
   void projector(SPoint2,SPoint3);
   int iField = (int)GSHHSOptions_Number[0].def;
-  char *filename = (char *)GSHHSOptions_String[0].def;
-  char *outfilename = (char *)GSHHSOptions_String[1].def;
+  char *filename = (char *)GSHHSOptions_String[0].def.c_str();
+  char *outfilename = (char *)GSHHSOptions_String[1].def.c_str();
   std::string format(GSHHSOptions_String[2].def);
   std::string coordinate_name(GSHHSOptions_String[3].def);
   int utm_zone=(int)GSHHSOptions_Number[1].def;

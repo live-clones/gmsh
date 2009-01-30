@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <string>
 #include <string.h>
 #include <FL/gl.h>
 #include "drawContext.h"
@@ -13,9 +14,9 @@
 
 extern Context_T CTX;
 
-static int drawTics(drawContext *ctx, int comp, int n, char *format, char *label,
-                    double p1[3], double p2[3], double perp[3], int mikado,
-                    double pixelfact)
+static int drawTics(drawContext *ctx, int comp, int n, std::string &format, 
+                    std::string &label, double p1[3], double p2[3], 
+                    double perp[3], int mikado, double pixelfact)
 {
   // draws n tic marks (in direction perp) and labels along the line p1->p2
 
@@ -31,7 +32,7 @@ static int drawTics(drawContext *ctx, int comp, int n, char *format, char *label
 
   if(n < 2) return 0;
 
-  if(!strlen(format)) return n;
+  if(format.empty()) return n;
 
   double lp = norme(perp);
   if(!lp){
@@ -82,9 +83,9 @@ static int drawTics(drawContext *ctx, int comp, int n, char *format, char *label
 
     char str[256];
     if(comp < 0) // display the length (ruler)
-      sprintf(str, format, d);
+      sprintf(str, format.c_str(), d);
     else // display the coordinate
-      sprintf(str, format, p[comp]);
+      sprintf(str, format.c_str(), p[comp]);
     double winp[3], winr[3];
     ctx->world2Viewport(p, winp);
     ctx->world2Viewport(r, winr);
@@ -171,8 +172,8 @@ void drawContext::drawAxis(double xmin, double ymin, double zmin,
   }
 }
 
-void drawContext::drawAxes(int mode, int tics[3], char format[3][256],
-                           char label[3][256], double bb[6], int mikado)
+void drawContext::drawAxes(int mode, int tics[3], std::string format[3],
+                           std::string label[3], double bb[6], int mikado)
 {
   // mode 0: nothing
   //      1: axes
@@ -258,8 +259,8 @@ void drawContext::drawAxes(int mode, int tics[3], char format[3][256],
   }
 }
 
-void drawContext::drawAxes(int mode, int tics[3], char format[3][256], 
-                           char label[3][256], SBoundingBox3d &bb, int mikado)
+void drawContext::drawAxes(int mode, int tics[3], std::string format[3], 
+                           std::string label[3], SBoundingBox3d &bb, int mikado)
 {
   double bbox[6] = {bb.min().x(), bb.max().x(),
                     bb.min().y(), bb.max().y(),

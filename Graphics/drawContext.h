@@ -145,14 +145,14 @@ class drawContext {
   void drawAxis(double xmin, double ymin, double zmin,
                 double xmax, double ymax, double zmax, 
                 int nticks, int mikado);
-  void drawAxes(int mode, int tics[3], char format[3][256],
-                char label[3][256], double bb[6], int mikado);
-  void drawAxes(int mode, int tics[3], char format[3][256], 
-                char label[3][256], SBoundingBox3d &bb, int mikado);
+  void drawAxes(int mode, int tics[3], std::string format[3],
+                std::string label[3], double bb[6], int mikado);
+  void drawAxes(int mode, int tics[3], std::string format[3], 
+                std::string label[3], SBoundingBox3d &bb, int mikado);
   void drawAxes();
   void drawSmallAxes();
   void drawScales();
-  void drawString(std::string s, const char *font_name, int font_enum, 
+  void drawString(std::string s, std::string &font_name, int font_enum, 
                   int font_size, int align);
   void drawString(std::string s);
   void drawStringCenter(std::string s);

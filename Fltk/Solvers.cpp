@@ -78,7 +78,7 @@ int Solver(int num, const char *args)
   GmshServer *server = new myGmshServer;
 
   if(num >= 0){
-    prog = FixWindowsPath(SINFO[num].executable_name);
+    prog = FixWindowsPath(SINFO[num].executable_name.c_str());
     if(!SINFO[num].client_server) {
       command = prog + " " + args;
 #if !defined(WIN32)
@@ -97,13 +97,14 @@ int Solver(int num, const char *args)
     prog = command = "";
   }
 
-  if(!strstr(CTX.solver.socket_name, ":")){
+  if(!strstr(CTX.solver.socket_name.c_str(), ":")){
     // Unix socket
     char tmp[1024];
     if(num >= 0)
-      sprintf(tmp, "%s%s-%d", CTX.home_dir.c_str(), CTX.solver.socket_name, num);
+      sprintf(tmp, "%s%s-%d", CTX.home_dir.c_str(), CTX.solver.socket_name.c_str(),
+              num);
     else
-      sprintf(tmp, "%s%s", CTX.home_dir.c_str(), CTX.solver.socket_name);
+      sprintf(tmp, "%s%s", CTX.home_dir.c_str(), CTX.solver.socket_name.c_str());
     sockname = FixWindowsPath(tmp);
   }
   else{
@@ -117,7 +118,7 @@ int Solver(int num, const char *args)
   if(num >= 0){
     std::string tmp2 = "\"" + sockname + "\"";
     char tmp[1024];
-    sprintf(tmp, SINFO[num].socket_command, tmp2.c_str());
+    sprintf(tmp, SINFO[num].socket_command.c_str(), tmp2.c_str());
     command = prog + " " + args + " " + tmp;
 #if !defined(WIN32)
     command += " &";
@@ -206,29 +207,29 @@ int Solver(int num, const char *args)
           break;
         case GmshServer::CLIENT_PROGRESS:
           if(num >= 0)
-            Msg::StatusBar(2, false, "%s %s", SINFO[num].name, message);
+            Msg::StatusBar(2, false, "%s %s", SINFO[num].name.c_str(), message);
           else
             Msg::StatusBar(2, false, "%s", message);
           break;
         case GmshServer::CLIENT_OPTION_1:
           if(num >= 0)
-            strcpy(SINFO[num].option[0][SINFO[num].nbval[0]++], message);
+            SINFO[num].option[0][SINFO[num].nbval[0]++] = message;
           break;
         case GmshServer::CLIENT_OPTION_2:
           if(num >= 0)
-            strcpy(SINFO[num].option[1][SINFO[num].nbval[1]++], message);
+            SINFO[num].option[1][SINFO[num].nbval[1]++] = message;
           break;
         case GmshServer::CLIENT_OPTION_3:
           if(num >= 0)
-            strcpy(SINFO[num].option[2][SINFO[num].nbval[2]++], message);
+            SINFO[num].option[2][SINFO[num].nbval[2]++] = message;
           break;
         case GmshServer::CLIENT_OPTION_4:
           if(num >= 0)
-            strcpy(SINFO[num].option[3][SINFO[num].nbval[3]++], message);
+            SINFO[num].option[3][SINFO[num].nbval[3]++] = message;
           break;
         case GmshServer::CLIENT_OPTION_5:
           if(num >= 0)
-            strcpy(SINFO[num].option[4][SINFO[num].nbval[4]++], message);
+            SINFO[num].option[4][SINFO[num].nbval[4]++] = message;
           break;
         case GmshServer::CLIENT_MERGE_FILE:
           if(num < 0 || (num >= 0 && SINFO[num].merge_views)) {
@@ -244,15 +245,15 @@ int Solver(int num, const char *args)
           Draw();
           break;
         case GmshServer::CLIENT_INFO:
-          Msg::Direct("%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client",
+          Msg::Direct("%-8.8s: %s", num >= 0 ? SINFO[num].name.c_str() : "Client",
                       message);
           break;
         case GmshServer::CLIENT_WARNING:
-          Msg::Direct(2, "%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client",
+          Msg::Direct(2, "%-8.8s: %s", num >= 0 ? SINFO[num].name.c_str() : "Client",
                       message);
           break;
         case GmshServer::CLIENT_ERROR:
-          Msg::Direct(1, "%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client",
+          Msg::Direct(1, "%-8.8s: %s", num >= 0 ? SINFO[num].name.c_str() : "Client",
                       message);
           break;
         case GmshServer::CLIENT_SPEED_TEST:
@@ -261,8 +262,8 @@ int Solver(int num, const char *args)
           break;
         default:
           Msg::Warning("Unknown type of message received from %s",
-              num >= 0 ? SINFO[num].name : "client");
-	  Msg::Direct("%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", 
+                       num >= 0 ? SINFO[num].name.c_str() : "client");
+	  Msg::Direct("%-8.8s: %s", num >= 0 ? SINFO[num].name.c_str() : "Client", 
                       message);
           break;
         }
@@ -285,7 +286,7 @@ int Solver(int num, const char *args)
       if(SINFO[num].nbval[i]) {
         GUI::instance()->solver[num]->choice[i]->clear();
         for(int j = 0; j < SINFO[num].nbval[i]; j++)
-          GUI::instance()->solver[num]->choice[i]->add(SINFO[num].option[i][j]);
+          GUI::instance()->solver[num]->choice[i]->add(SINFO[num].option[i][j].c_str());
         GUI::instance()->solver[num]->choice[i]->value(0);
       }
     }

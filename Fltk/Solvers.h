@@ -6,22 +6,24 @@
 #ifndef _SOLVERS_H_
 #define _SOLVERS_H_
 
+#include <string>
+
 #define MAX_NUM_SOLVERS 5
 #define MAX_NUM_SOLVER_OPTIONS 5
 
 class GmshServer;
 
 typedef struct{
-  char name[256], extension[32], executable_name[256];
-  char mesh_name[256], mesh_command[256];
-  char socket_command[256];
-  char name_command[256];
-  char button_name[MAX_NUM_SOLVER_OPTIONS][32];
-  char button_command[MAX_NUM_SOLVER_OPTIONS][256];
-  char option_name[MAX_NUM_SOLVER_OPTIONS][256], option_command[256];
-  char option[MAX_NUM_SOLVER_OPTIONS][100][256];
+  std::string name, extension, executable_name;
+  std::string mesh_name, mesh_command;
+  std::string socket_command;
+  std::string name_command;
+  std::string button_name[MAX_NUM_SOLVER_OPTIONS];
+  std::string button_command[MAX_NUM_SOLVER_OPTIONS];
+  std::string option_name[MAX_NUM_SOLVER_OPTIONS], option_command;
+  std::string option[MAX_NUM_SOLVER_OPTIONS][100];
   int  nboptions, nbval[MAX_NUM_SOLVER_OPTIONS];
-  const char *help;
+  std::string help;
   int client_server, popup_messages, merge_views;
   int pid;
   GmshServer *server;

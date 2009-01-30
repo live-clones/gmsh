@@ -206,15 +206,15 @@ PView *GMSH_ExtractPlugin::execute(PView *v)
 {
   int step = (int)ExtractOptions_Number[0].def;
   int iView = (int)ExtractOptions_Number[1].def;
-  const char *expr[9] = { ExtractOptions_String[0].def, 
-                          ExtractOptions_String[1].def,
-                          ExtractOptions_String[2].def,
-                          ExtractOptions_String[3].def,
-                          ExtractOptions_String[4].def,
-                          ExtractOptions_String[5].def,
-                          ExtractOptions_String[6].def,
-                          ExtractOptions_String[7].def,
-                          ExtractOptions_String[8].def };
+  const char *expr[9] = { ExtractOptions_String[0].def.c_str(), 
+                          ExtractOptions_String[1].def.c_str(),
+                          ExtractOptions_String[2].def.c_str(),
+                          ExtractOptions_String[3].def.c_str(),
+                          ExtractOptions_String[4].def.c_str(),
+                          ExtractOptions_String[5].def.c_str(),
+                          ExtractOptions_String[6].def.c_str(),
+                          ExtractOptions_String[7].def.c_str(),
+                          ExtractOptions_String[8].def.c_str() };
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

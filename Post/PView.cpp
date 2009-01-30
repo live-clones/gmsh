@@ -90,7 +90,7 @@ PView::PView(std::string xname, std::string yname,
   _options = new PViewOptions(PViewOptions::reference);
   _options->Type = PViewOptions::Plot2DSpace;
   _options->Axes = 2;
-  strcpy(_options->AxesLabel[0], xname.c_str());
+  _options->AxesLabel[0] = xname;
 }
 
 PView::PView(std::string name, std::string type, 

@@ -51,7 +51,7 @@ Context_T CTX;
 // General routines for string options
 
 bool StringOption(int action, const char *category, int num, 
-		  const char *name, const char *val, std::string &out)
+		  const char *name, std::string &val)
 {
   StringXString *s = 0;
   if(!strcmp(category, "General"))
@@ -80,7 +80,7 @@ bool StringOption(int action, const char *category, int num,
     return false;
   }
 
-  out = s[i].function(num, action, val);
+  val = s[i].function(num, action, val);
   return true;
 }
 
@@ -97,7 +97,7 @@ static void Set_StringOptions_GUI(int num, StringXString s[])
 {
   int i = 0;
   while(s[i].str) {
-    s[i].function(num, GMSH_GUI, 0);
+    s[i].function(num, GMSH_GUI, "");
     i++;
   }
 }
@@ -108,10 +108,10 @@ static void Print_StringOptions(int num, int level, int diff, int help,
   int i = 0;
   while(s[i].str) {
     if(s[i].level & level) {
-      if(!diff || strcmp(s[i].function(num, GMSH_GET, NULL), s[i].def)){
+      if(!diff || s[i].function(num, GMSH_GET, "") != s[i].def){
         char tmp[1024];
         sprintf(tmp, "%s%s = \"%s\";%s%s", prefix,
-                s[i].str, s[i].function(num, GMSH_GET, NULL), 
+                s[i].str, s[i].function(num, GMSH_GET, "").c_str(), 
                 help ? " // " : "", help ? s[i].help : "");
         if(file)
           fprintf(file, "%s\n", tmp);
@@ -152,19 +152,12 @@ static void Print_StringOptionsDoc(StringXString s[], const char *prefix, FILE *
     fprintf(file, "%s@*\n", s[i].help);
 
     // sanitize the string for texinfo
-    const char *ptr = s[i].function(0, GMSH_GET, NULL);
-    int len = strlen(ptr);
-    j = 0;
-    while(j < len){
-      tmp[j] = *(ptr++);
-      if(j && tmp[j] == '\n' && tmp[j-1] == '\n')
-        tmp[j-1] = '.';
-      j++;
-      if(j == 1023) break;
+    std::string val = s[i].function(0, GMSH_GET, "");
+    for(unsigned int j = 1; j < val.size(); j++){
+      if(val[j] == '\n' && val[j - 1] == '\n')
+        val[j - 1] = '.';
     }
-    tmp[j] = '\0';
-
-    fprintf(file, "Default value: @code{\"%s\"}@*\n", tmp);
+    fprintf(file, "Default value: @code{\"%s\"}@*\n", val.c_str());
     fprintf(file, "Saved in: @code{%s}\n\n", Get_OptionSaveLevel(s[i].level));
     i++;
   }
@@ -196,7 +189,7 @@ bool NumberOption(int action, const char *category, int num,
   }
 
   int i = 0;
-  while((s[i].str != NULL) && (strcmp(s[i].str, name))) i++;
+  while(s[i].str && strcmp(s[i].str, name)) i++;
   if(!s[i].str){
     Msg::Error("Unknown number option '%s.%s'", category, name);
     return false;
@@ -282,7 +275,7 @@ bool ColorOption(int action, const char *category, int num,
   }
 
   int i = 0;
-  while((s[i].str != NULL) && (strcmp(s[i].str, name))) i++;
+  while(s[i].str && strcmp(s[i].str, name)) i++;
   if(!s[i].str){
     Msg::Error("Unknown color option '%s.%s'", category, name);
     return false;
@@ -295,9 +288,9 @@ int Get_ColorForString(StringX4Int SX4I[], int alpha,
                        const char *str, int *FlagError)
 {
   int i = 0;
-  while((SX4I[i].str != NULL) && (strcmp(SX4I[i].str, str)))
+  while(SX4I[i].str && strcmp(SX4I[i].str, str))
     i++;
-  *FlagError = (SX4I[i].str == NULL) ? 1 : 0;
+  *FlagError = !SX4I[i].str ? 1 : 0;
   if(alpha > 0)
     return CTX.PACK_COLOR(SX4I[i].int1, SX4I[i].int2, SX4I[i].int3, alpha);
   else
@@ -437,7 +430,7 @@ static const char *gmsh_getenv(const char *var)
   // Don't accept top dir or anything partially expanded like
   // c:\Documents and Settings\%USERPROFILE%, etc.
   if(!tmp || !strcmp(tmp, "/") || strstr(tmp, "%") || strstr(tmp, "$"))
-    return NULL;
+    return 0;
   else
     return tmp;
 #endif
@@ -492,7 +485,7 @@ void Init_Options(int num)
   CTX.threads_lock = 0; // very primitive locking
   CTX.mesh.changed = 0;
   CTX.post.combine_time = 0; // try to combine_time views at startup
-  CTX.post.plugin_draw_function = NULL;
+  CTX.post.plugin_draw_function = 0;
 #if defined(HAVE_FLTK)
   CTX.gl_font_enum = FL_HELVETICA;
 #else
@@ -642,7 +635,7 @@ void Print_Options(int num, int level, int diff, int help, const char *filename)
     }
   }
   else
-    file = NULL;
+    file = 0;
 
   if((level & GMSH_SESSIONRC) && file) {
     fprintf(file, "// Gmsh Session File\n");
@@ -860,7 +853,7 @@ void Print_OptionsDoc()
         for(int i = 0; i < m; i++) {
           StringXString *sxs = p->getOptionStr(i);
           fprintf(file, "@item %s\n", sxs->str);
-          fprintf(file, "Default value: @code{\"%s\"}\n", sxs->def);
+          fprintf(file, "Default value: @code{\"%s\"}\n", sxs->def.c_str());
         }
         fprintf(file, "@end table\n");
       }
@@ -935,158 +928,158 @@ void Print_OptionsDoc()
 
 // String option routines
 
-const char *opt_general_axes_label0(OPT_ARGS_STR)
+std::string opt_general_axes_label0(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    strcpy(CTX.axes_label[0], val);
+    CTX.axes_label[0] = val;
 #if defined(HAVE_FLTK)
   if(GUI::available() && (action & GMSH_GUI))
-    GUI::instance()->options->general.input[6]->value(CTX.axes_label[0]);
+    GUI::instance()->options->general.input[6]->value(CTX.axes_label[0].c_str());
 #endif
   return CTX.axes_label[0];
 }
 
-const char *opt_general_axes_label1(OPT_ARGS_STR)
+std::string opt_general_axes_label1(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    strcpy(CTX.axes_label[1], val);
+    CTX.axes_label[1] = val;
 #if defined(HAVE_FLTK)
   if(GUI::available() && (action & GMSH_GUI))
-    GUI::instance()->options->general.input[7]->value(CTX.axes_label[1]);
+    GUI::instance()->options->general.input[7]->value(CTX.axes_label[1].c_str());
 #endif
   return CTX.axes_label[1];
 }
 
-const char *opt_general_axes_label2(OPT_ARGS_STR)
+std::string opt_general_axes_label2(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    strcpy(CTX.axes_label[2], val);
+    CTX.axes_label[2] = val;
 #if defined(HAVE_FLTK)
   if(GUI::available() && (action & GMSH_GUI))
-    GUI::instance()->options->general.input[8]->value(CTX.axes_label[2]);
+    GUI::instance()->options->general.input[8]->value(CTX.axes_label[2].c_str());
 #endif
   return CTX.axes_label[2];
 }
 
-const char *opt_general_axes_format0(OPT_ARGS_STR)
+std::string opt_general_axes_format0(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    strcpy(CTX.axes_format[0], val);
+    CTX.axes_format[0] = val;
 #if defined(HAVE_FLTK)
   if(GUI::available() && (action & GMSH_GUI))
-    GUI::instance()->options->general.input[3]->value(CTX.axes_format[0]);
+    GUI::instance()->options->general.input[3]->value(CTX.axes_format[0].c_str());
 #endif
   return CTX.axes_format[0];
 }
 
-const char *opt_general_axes_format1(OPT_ARGS_STR)
+std::string opt_general_axes_format1(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    strcpy(CTX.axes_format[1], val);
+    CTX.axes_format[1] = val;
 #if defined(HAVE_FLTK)
   if(GUI::available() && (action & GMSH_GUI))
-    GUI::instance()->options->general.input[4]->value(CTX.axes_format[1]);
+    GUI::instance()->options->general.input[4]->value(CTX.axes_format[1].c_str());
 #endif
   return CTX.axes_format[1];
 }
 
-const char *opt_general_axes_format2(OPT_ARGS_STR)
+std::string opt_general_axes_format2(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    strcpy(CTX.axes_format[2], val);
+    CTX.axes_format[2] = val;
 #if defined(HAVE_FLTK)
   if(GUI::available() && (action & GMSH_GUI))
-    GUI::instance()->options->general.input[5]->value(CTX.axes_format[2]);
+    GUI::instance()->options->general.input[5]->value(CTX.axes_format[2].c_str());
 #endif
   return CTX.axes_format[2];
 }
 
-const char *opt_general_display(OPT_ARGS_STR)
+std::string opt_general_display(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX.display = val;
   return CTX.display;
 }
 
-const char *opt_general_filename(OPT_ARGS_STR)
+std::string opt_general_filename(OPT_ARGS_STR)
 {
-  return GModel::current()->getFileName().c_str();
+  return GModel::current()->getFileName();
 }
 
-const char *opt_general_default_filename(OPT_ARGS_STR)
+std::string opt_general_default_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX.default_filename = val;
 #if defined(HAVE_FLTK)
   if(GUI::available() && (action & GMSH_GUI))
-    GUI::instance()->options->general.input[0]->value(CTX.default_filename);
+    GUI::instance()->options->general.input[0]->value(CTX.default_filename.c_str());
 #endif
   return CTX.default_filename;
 }
 
-const char *opt_general_tmp_filename(OPT_ARGS_STR)
+std::string opt_general_tmp_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX.tmp_filename = val;
   return CTX.tmp_filename;
 }
 
-const char *opt_general_error_filename(OPT_ARGS_STR)
+std::string opt_general_error_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX.error_filename = val;
   return CTX.error_filename;
 }
 
-const char *opt_general_session_filename(OPT_ARGS_STR)
+std::string opt_general_session_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX.session_filename = val;
   return CTX.session_filename;
 }
 
-const char *opt_general_options_filename(OPT_ARGS_STR)
+std::string opt_general_options_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX.options_filename = val;
   return CTX.options_filename;
 }
 
-const char *opt_general_editor(OPT_ARGS_STR)
+std::string opt_general_editor(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX.editor = val;
 #if defined(HAVE_FLTK)
   if(GUI::available() && (action & GMSH_GUI))
-    GUI::instance()->options->general.input[1]->value(CTX.editor);
+    GUI::instance()->options->general.input[1]->value(CTX.editor.c_str());
 #endif
   return CTX.editor;
 }
 
-const char *opt_general_web_browser(OPT_ARGS_STR)
+std::string opt_general_web_browser(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX.web_browser = val;
 #if defined(HAVE_FLTK)
   if(GUI::available() && (action & GMSH_GUI))
-    GUI::instance()->options->general.input[2]->value(CTX.web_browser);
+    GUI::instance()->options->general.input[2]->value(CTX.web_browser.c_str());
 #endif
   return CTX.web_browser;
 }
 
-const char *opt_general_gui_theme(OPT_ARGS_STR)
+std::string opt_general_gui_theme(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX.gui_theme = val;
   return CTX.gui_theme;
 }
 
-const char *opt_general_graphics_font(OPT_ARGS_STR)
+std::string opt_general_graphics_font(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX.gl_font = val;
 #if defined(HAVE_FLTK)
-  int index = GetFontIndex(CTX.gl_font);
+  int index = GetFontIndex(CTX.gl_font.c_str());
   if(action & GMSH_SET){
     CTX.gl_font = GetFontName(index);
     CTX.gl_font_enum = GetFontEnum(index);
@@ -1098,94 +1091,94 @@ const char *opt_general_graphics_font(OPT_ARGS_STR)
   return CTX.gl_font;
 }
 
-const char *opt_solver_socket_name(OPT_ARGS_STR)
+std::string opt_solver_socket_name(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX.solver.socket_name = val;
 #if defined(HAVE_FLTK)
   if(GUI::available() && (action & GMSH_GUI))
-    GUI::instance()->options->solver.input[0]->value(CTX.solver.socket_name);
+    GUI::instance()->options->solver.input[0]->value(CTX.solver.socket_name.c_str());
 #endif
   return CTX.solver.socket_name;
 }
 
-const char *opt_solver_name(OPT_ARGS_STR)
+std::string opt_solver_name(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].name, val);
+    SINFO[num].name = val;
   if(GUI::available() && (action & GMSH_GUI))
-    GUI::instance()->solver[num]->win->label(SINFO[num].name);
+    GUI::instance()->solver[num]->win->label(SINFO[num].name.c_str());
   return SINFO[num].name;
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_name0(OPT_ARGS_STR)
+std::string opt_solver_name0(OPT_ARGS_STR)
 {
   return opt_solver_name(0, action, val);
 }
 
-const char *opt_solver_name1(OPT_ARGS_STR)
+std::string opt_solver_name1(OPT_ARGS_STR)
 {
   return opt_solver_name(1, action, val);
 }
 
-const char *opt_solver_name2(OPT_ARGS_STR)
+std::string opt_solver_name2(OPT_ARGS_STR)
 {
   return opt_solver_name(2, action, val);
 }
 
-const char *opt_solver_name3(OPT_ARGS_STR)
+std::string opt_solver_name3(OPT_ARGS_STR)
 {
   return opt_solver_name(3, action, val);
 }
 
-const char *opt_solver_name4(OPT_ARGS_STR)
+std::string opt_solver_name4(OPT_ARGS_STR)
 {
   return opt_solver_name(4, action, val);
 }
 
-const char *opt_solver_executable(OPT_ARGS_STR)
+std::string opt_solver_executable(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].executable_name, val);
+    SINFO[num].executable_name = val;
   if(GUI::available() && (action & GMSH_GUI))
-    GUI::instance()->solver[num]->input[2]->value(SINFO[num].executable_name);
+    GUI::instance()->solver[num]->input[2]->value(SINFO[num].executable_name.c_str());
   return SINFO[num].executable_name;
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_executable0(OPT_ARGS_STR)
+std::string opt_solver_executable0(OPT_ARGS_STR)
 {
   return opt_solver_executable(0, action, val);
 }
 
-const char *opt_solver_executable1(OPT_ARGS_STR)
+std::string opt_solver_executable1(OPT_ARGS_STR)
 {
   return opt_solver_executable(1, action, val);
 }
 
-const char *opt_solver_executable2(OPT_ARGS_STR)
+std::string opt_solver_executable2(OPT_ARGS_STR)
 {
   return opt_solver_executable(2, action, val);
 }
 
-const char *opt_solver_executable3(OPT_ARGS_STR)
+std::string opt_solver_executable3(OPT_ARGS_STR)
 {
   return opt_solver_executable(3, action, val);
 }
 
-const char *opt_solver_executable4(OPT_ARGS_STR)
+std::string opt_solver_executable4(OPT_ARGS_STR)
 {
   return opt_solver_executable(4, action, val);
 }
 
-const char *opt_solver_help(OPT_ARGS_STR)
+std::string opt_solver_help(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1196,785 +1189,785 @@ const char *opt_solver_help(OPT_ARGS_STR)
 #endif
 }
 
-const char *opt_solver_help0(OPT_ARGS_STR)
+std::string opt_solver_help0(OPT_ARGS_STR)
 {
   return opt_solver_help(0, action, val);
 }
 
-const char *opt_solver_help1(OPT_ARGS_STR)
+std::string opt_solver_help1(OPT_ARGS_STR)
 {
   return opt_solver_help(1, action, val);
 }
 
-const char *opt_solver_help2(OPT_ARGS_STR)
+std::string opt_solver_help2(OPT_ARGS_STR)
 {
   return opt_solver_help(2, action, val);
 }
 
-const char *opt_solver_help3(OPT_ARGS_STR)
+std::string opt_solver_help3(OPT_ARGS_STR)
 {
   return opt_solver_help(3, action, val);
 }
 
-const char *opt_solver_help4(OPT_ARGS_STR)
+std::string opt_solver_help4(OPT_ARGS_STR)
 {
   return opt_solver_help(4, action, val);
 }
 
-const char *opt_solver_extension(OPT_ARGS_STR)
+std::string opt_solver_extension(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].extension, val);
+    SINFO[num].extension = val;
   return SINFO[num].extension;
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_extension0(OPT_ARGS_STR)
+std::string opt_solver_extension0(OPT_ARGS_STR)
 {
   return opt_solver_extension(0, action, val);
 }
 
-const char *opt_solver_extension1(OPT_ARGS_STR)
+std::string opt_solver_extension1(OPT_ARGS_STR)
 {
   return opt_solver_extension(1, action, val);
 }
 
-const char *opt_solver_extension2(OPT_ARGS_STR)
+std::string opt_solver_extension2(OPT_ARGS_STR)
 {
   return opt_solver_extension(2, action, val);
 }
 
-const char *opt_solver_extension3(OPT_ARGS_STR)
+std::string opt_solver_extension3(OPT_ARGS_STR)
 {
   return opt_solver_extension(3, action, val);
 }
 
-const char *opt_solver_extension4(OPT_ARGS_STR)
+std::string opt_solver_extension4(OPT_ARGS_STR)
 {
   return opt_solver_extension(4, action, val);
 }
 
-const char *opt_solver_mesh_name(OPT_ARGS_STR)
+std::string opt_solver_mesh_name(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].mesh_name, val);
+    SINFO[num].mesh_name = val;
   return SINFO[num].mesh_name;
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_mesh_name0(OPT_ARGS_STR)
+std::string opt_solver_mesh_name0(OPT_ARGS_STR)
 {
   return opt_solver_mesh_name(0, action, val);
 }
 
-const char *opt_solver_mesh_name1(OPT_ARGS_STR)
+std::string opt_solver_mesh_name1(OPT_ARGS_STR)
 {
   return opt_solver_mesh_name(1, action, val);
 }
 
-const char *opt_solver_mesh_name2(OPT_ARGS_STR)
+std::string opt_solver_mesh_name2(OPT_ARGS_STR)
 {
   return opt_solver_mesh_name(2, action, val);
 }
 
-const char *opt_solver_mesh_name3(OPT_ARGS_STR)
+std::string opt_solver_mesh_name3(OPT_ARGS_STR)
 {
   return opt_solver_mesh_name(3, action, val);
 }
 
-const char *opt_solver_mesh_name4(OPT_ARGS_STR)
+std::string opt_solver_mesh_name4(OPT_ARGS_STR)
 {
   return opt_solver_mesh_name(4, action, val);
 }
 
-const char *opt_solver_mesh_command(OPT_ARGS_STR)
+std::string opt_solver_mesh_command(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].mesh_command, val);
+    SINFO[num].mesh_command = val;
   if(GUI::available() && (action & GMSH_GUI))
-    GUI::instance()->solver[num]->input[1]->value(SINFO[num].mesh_name);
+    GUI::instance()->solver[num]->input[1]->value(SINFO[num].mesh_name.c_str());
   return SINFO[num].mesh_command;
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_mesh_command0(OPT_ARGS_STR)
+std::string opt_solver_mesh_command0(OPT_ARGS_STR)
 {
   return opt_solver_mesh_command(0, action, val);
 }
 
-const char *opt_solver_mesh_command1(OPT_ARGS_STR)
+std::string opt_solver_mesh_command1(OPT_ARGS_STR)
 {
   return opt_solver_mesh_command(1, action, val);
 }
 
-const char *opt_solver_mesh_command2(OPT_ARGS_STR)
+std::string opt_solver_mesh_command2(OPT_ARGS_STR)
 {
   return opt_solver_mesh_command(2, action, val);
 }
 
-const char *opt_solver_mesh_command3(OPT_ARGS_STR)
+std::string opt_solver_mesh_command3(OPT_ARGS_STR)
 {
   return opt_solver_mesh_command(3, action, val);
 }
 
-const char *opt_solver_mesh_command4(OPT_ARGS_STR)
+std::string opt_solver_mesh_command4(OPT_ARGS_STR)
 {
   return opt_solver_mesh_command(4, action, val);
 }
 
-const char *opt_solver_socket_command(OPT_ARGS_STR)
+std::string opt_solver_socket_command(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].socket_command, val);
+    SINFO[num].socket_command = val;
   return SINFO[num].socket_command;
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_socket_command0(OPT_ARGS_STR)
+std::string opt_solver_socket_command0(OPT_ARGS_STR)
 {
   return opt_solver_socket_command(0, action, val);
 }
 
-const char *opt_solver_socket_command1(OPT_ARGS_STR)
+std::string opt_solver_socket_command1(OPT_ARGS_STR)
 {
   return opt_solver_socket_command(1, action, val);
 }
 
-const char *opt_solver_socket_command2(OPT_ARGS_STR)
+std::string opt_solver_socket_command2(OPT_ARGS_STR)
 {
   return opt_solver_socket_command(2, action, val);
 }
 
-const char *opt_solver_socket_command3(OPT_ARGS_STR)
+std::string opt_solver_socket_command3(OPT_ARGS_STR)
 {
   return opt_solver_socket_command(3, action, val);
 }
 
-const char *opt_solver_socket_command4(OPT_ARGS_STR)
+std::string opt_solver_socket_command4(OPT_ARGS_STR)
 {
   return opt_solver_socket_command(4, action, val);
 }
 
-const char *opt_solver_name_command(OPT_ARGS_STR)
+std::string opt_solver_name_command(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].name_command, val);
+    SINFO[num].name_command = val;
   return SINFO[num].name_command;
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_name_command0(OPT_ARGS_STR)
+std::string opt_solver_name_command0(OPT_ARGS_STR)
 {
   return opt_solver_name_command(0, action, val);
 }
 
-const char *opt_solver_name_command1(OPT_ARGS_STR)
+std::string opt_solver_name_command1(OPT_ARGS_STR)
 {
   return opt_solver_name_command(1, action, val);
 }
 
-const char *opt_solver_name_command2(OPT_ARGS_STR)
+std::string opt_solver_name_command2(OPT_ARGS_STR)
 {
   return opt_solver_name_command(2, action, val);
 }
 
-const char *opt_solver_name_command3(OPT_ARGS_STR)
+std::string opt_solver_name_command3(OPT_ARGS_STR)
 {
   return opt_solver_name_command(3, action, val);
 }
 
-const char *opt_solver_name_command4(OPT_ARGS_STR)
+std::string opt_solver_name_command4(OPT_ARGS_STR)
 {
   return opt_solver_name_command(4, action, val);
 }
 
-const char *opt_solver_option_command(OPT_ARGS_STR)
+std::string opt_solver_option_command(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].option_command, val);
+    SINFO[num].option_command = val;
   return SINFO[num].option_command;
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_option_command0(OPT_ARGS_STR)
+std::string opt_solver_option_command0(OPT_ARGS_STR)
 {
   return opt_solver_option_command(0, action, val);
 }
 
-const char *opt_solver_option_command1(OPT_ARGS_STR)
+std::string opt_solver_option_command1(OPT_ARGS_STR)
 {
   return opt_solver_option_command(1, action, val);
 }
 
-const char *opt_solver_option_command2(OPT_ARGS_STR)
+std::string opt_solver_option_command2(OPT_ARGS_STR)
 {
   return opt_solver_option_command(2, action, val);
 }
 
-const char *opt_solver_option_command3(OPT_ARGS_STR)
+std::string opt_solver_option_command3(OPT_ARGS_STR)
 {
   return opt_solver_option_command(3, action, val);
 }
 
-const char *opt_solver_option_command4(OPT_ARGS_STR)
+std::string opt_solver_option_command4(OPT_ARGS_STR)
 {
   return opt_solver_option_command(4, action, val);
 }
 
-const char *opt_solver_first_option(OPT_ARGS_STR)
+std::string opt_solver_first_option(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].option_name[0], val);
+    SINFO[num].option_name[0] = val;
   return SINFO[num].option_name[0];
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_first_option0(OPT_ARGS_STR)
+std::string opt_solver_first_option0(OPT_ARGS_STR)
 {
   return opt_solver_first_option(0, action, val);
 }
 
-const char *opt_solver_first_option1(OPT_ARGS_STR)
+std::string opt_solver_first_option1(OPT_ARGS_STR)
 {
   return opt_solver_first_option(1, action, val);
 }
 
-const char *opt_solver_first_option2(OPT_ARGS_STR)
+std::string opt_solver_first_option2(OPT_ARGS_STR)
 {
   return opt_solver_first_option(2, action, val);
 }
 
-const char *opt_solver_first_option3(OPT_ARGS_STR)
+std::string opt_solver_first_option3(OPT_ARGS_STR)
 {
   return opt_solver_first_option(3, action, val);
 }
 
-const char *opt_solver_first_option4(OPT_ARGS_STR)
+std::string opt_solver_first_option4(OPT_ARGS_STR)
 {
   return opt_solver_first_option(4, action, val);
 }
 
-const char *opt_solver_second_option(OPT_ARGS_STR)
+std::string opt_solver_second_option(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].option_name[1], val);
+    SINFO[num].option_name[1] = val;
   return SINFO[num].option_name[1];
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_second_option0(OPT_ARGS_STR)
+std::string opt_solver_second_option0(OPT_ARGS_STR)
 {
   return opt_solver_second_option(0, action, val);
 }
 
-const char *opt_solver_second_option1(OPT_ARGS_STR)
+std::string opt_solver_second_option1(OPT_ARGS_STR)
 {
   return opt_solver_second_option(1, action, val);
 }
 
-const char *opt_solver_second_option2(OPT_ARGS_STR)
+std::string opt_solver_second_option2(OPT_ARGS_STR)
 {
   return opt_solver_second_option(2, action, val);
 }
 
-const char *opt_solver_second_option3(OPT_ARGS_STR)
+std::string opt_solver_second_option3(OPT_ARGS_STR)
 {
   return opt_solver_second_option(3, action, val);
 }
 
-const char *opt_solver_second_option4(OPT_ARGS_STR)
+std::string opt_solver_second_option4(OPT_ARGS_STR)
 {
   return opt_solver_second_option(4, action, val);
 }
 
-const char *opt_solver_third_option(OPT_ARGS_STR)
+std::string opt_solver_third_option(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].option_name[2], val);
+    SINFO[num].option_name[2] = val;
   return SINFO[num].option_name[2];
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_third_option0(OPT_ARGS_STR)
+std::string opt_solver_third_option0(OPT_ARGS_STR)
 {
   return opt_solver_third_option(0, action, val);
 }
 
-const char *opt_solver_third_option1(OPT_ARGS_STR)
+std::string opt_solver_third_option1(OPT_ARGS_STR)
 {
   return opt_solver_third_option(1, action, val);
 }
 
-const char *opt_solver_third_option2(OPT_ARGS_STR)
+std::string opt_solver_third_option2(OPT_ARGS_STR)
 {
   return opt_solver_third_option(2, action, val);
 }
 
-const char *opt_solver_third_option3(OPT_ARGS_STR)
+std::string opt_solver_third_option3(OPT_ARGS_STR)
 {
   return opt_solver_third_option(3, action, val);
 }
 
-const char *opt_solver_third_option4(OPT_ARGS_STR)
+std::string opt_solver_third_option4(OPT_ARGS_STR)
 {
   return opt_solver_third_option(4, action, val);
 }
 
-const char *opt_solver_fourth_option(OPT_ARGS_STR)
+std::string opt_solver_fourth_option(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].option_name[3], val);
+    SINFO[num].option_name[3] = val;
   return SINFO[num].option_name[3];
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_fourth_option0(OPT_ARGS_STR)
+std::string opt_solver_fourth_option0(OPT_ARGS_STR)
 {
   return opt_solver_fourth_option(0, action, val);
 }
 
-const char *opt_solver_fourth_option1(OPT_ARGS_STR)
+std::string opt_solver_fourth_option1(OPT_ARGS_STR)
 {
   return opt_solver_fourth_option(1, action, val);
 }
 
-const char *opt_solver_fourth_option2(OPT_ARGS_STR)
+std::string opt_solver_fourth_option2(OPT_ARGS_STR)
 {
   return opt_solver_fourth_option(2, action, val);
 }
 
-const char *opt_solver_fourth_option3(OPT_ARGS_STR)
+std::string opt_solver_fourth_option3(OPT_ARGS_STR)
 {
   return opt_solver_fourth_option(3, action, val);
 }
 
-const char *opt_solver_fourth_option4(OPT_ARGS_STR)
+std::string opt_solver_fourth_option4(OPT_ARGS_STR)
 {
   return opt_solver_fourth_option(4, action, val);
 }
 
-const char *opt_solver_fifth_option(OPT_ARGS_STR)
+std::string opt_solver_fifth_option(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].option_name[4], val);
+    SINFO[num].option_name[4] = val;
   return SINFO[num].option_name[4];
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_fifth_option0(OPT_ARGS_STR)
+std::string opt_solver_fifth_option0(OPT_ARGS_STR)
 {
   return opt_solver_fifth_option(0, action, val);
 }
 
-const char *opt_solver_fifth_option1(OPT_ARGS_STR)
+std::string opt_solver_fifth_option1(OPT_ARGS_STR)
 {
   return opt_solver_fifth_option(1, action, val);
 }
 
-const char *opt_solver_fifth_option2(OPT_ARGS_STR)
+std::string opt_solver_fifth_option2(OPT_ARGS_STR)
 {
   return opt_solver_fifth_option(2, action, val);
 }
 
-const char *opt_solver_fifth_option3(OPT_ARGS_STR)
+std::string opt_solver_fifth_option3(OPT_ARGS_STR)
 {
   return opt_solver_fifth_option(3, action, val);
 }
 
-const char *opt_solver_fifth_option4(OPT_ARGS_STR)
+std::string opt_solver_fifth_option4(OPT_ARGS_STR)
 {
   return opt_solver_fifth_option(4, action, val);
 }
 
-const char *opt_solver_first_button(OPT_ARGS_STR)
+std::string opt_solver_first_button(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].button_name[0], val);
+    SINFO[num].button_name[0] = val;
   return SINFO[num].button_name[0];
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_first_button0(OPT_ARGS_STR)
+std::string opt_solver_first_button0(OPT_ARGS_STR)
 {
   return opt_solver_first_button(0, action, val);
 }
 
-const char *opt_solver_first_button1(OPT_ARGS_STR)
+std::string opt_solver_first_button1(OPT_ARGS_STR)
 {
   return opt_solver_first_button(1, action, val);
 }
 
-const char *opt_solver_first_button2(OPT_ARGS_STR)
+std::string opt_solver_first_button2(OPT_ARGS_STR)
 {
   return opt_solver_first_button(2, action, val);
 }
 
-const char *opt_solver_first_button3(OPT_ARGS_STR)
+std::string opt_solver_first_button3(OPT_ARGS_STR)
 {
   return opt_solver_first_button(3, action, val);
 }
 
-const char *opt_solver_first_button4(OPT_ARGS_STR)
+std::string opt_solver_first_button4(OPT_ARGS_STR)
 {
   return opt_solver_first_button(4, action, val);
 }
 
-const char *opt_solver_first_button_command(OPT_ARGS_STR)
+std::string opt_solver_first_button_command(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].button_command[0], val);
+    SINFO[num].button_command[0] = val;
   return SINFO[num].button_command[0];
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_first_button_command0(OPT_ARGS_STR)
+std::string opt_solver_first_button_command0(OPT_ARGS_STR)
 {
   return opt_solver_first_button_command(0, action, val);
 }
 
-const char *opt_solver_first_button_command1(OPT_ARGS_STR)
+std::string opt_solver_first_button_command1(OPT_ARGS_STR)
 {
   return opt_solver_first_button_command(1, action, val);
 }
 
-const char *opt_solver_first_button_command2(OPT_ARGS_STR)
+std::string opt_solver_first_button_command2(OPT_ARGS_STR)
 {
   return opt_solver_first_button_command(2, action, val);
 }
 
-const char *opt_solver_first_button_command3(OPT_ARGS_STR)
+std::string opt_solver_first_button_command3(OPT_ARGS_STR)
 {
   return opt_solver_first_button_command(3, action, val);
 }
 
-const char *opt_solver_first_button_command4(OPT_ARGS_STR)
+std::string opt_solver_first_button_command4(OPT_ARGS_STR)
 {
   return opt_solver_first_button_command(4, action, val);
 }
 
-const char *opt_solver_second_button(OPT_ARGS_STR)
+std::string opt_solver_second_button(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].button_name[1], val);
+    SINFO[num].button_name[1] = val;
   return SINFO[num].button_name[1];
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_second_button0(OPT_ARGS_STR)
+std::string opt_solver_second_button0(OPT_ARGS_STR)
 {
   return opt_solver_second_button(0, action, val);
 }
 
-const char *opt_solver_second_button1(OPT_ARGS_STR)
+std::string opt_solver_second_button1(OPT_ARGS_STR)
 {
   return opt_solver_second_button(1, action, val);
 }
 
-const char *opt_solver_second_button2(OPT_ARGS_STR)
+std::string opt_solver_second_button2(OPT_ARGS_STR)
 {
   return opt_solver_second_button(2, action, val);
 }
 
-const char *opt_solver_second_button3(OPT_ARGS_STR)
+std::string opt_solver_second_button3(OPT_ARGS_STR)
 {
   return opt_solver_second_button(3, action, val);
 }
 
-const char *opt_solver_second_button4(OPT_ARGS_STR)
+std::string opt_solver_second_button4(OPT_ARGS_STR)
 {
   return opt_solver_second_button(4, action, val);
 }
 
-const char *opt_solver_second_button_command(OPT_ARGS_STR)
+std::string opt_solver_second_button_command(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].button_command[1], val);
+    SINFO[num].button_command[1] = val;
   return SINFO[num].button_command[1];
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_second_button_command0(OPT_ARGS_STR)
+std::string opt_solver_second_button_command0(OPT_ARGS_STR)
 {
   return opt_solver_second_button_command(0, action, val);
 }
 
-const char *opt_solver_second_button_command1(OPT_ARGS_STR)
+std::string opt_solver_second_button_command1(OPT_ARGS_STR)
 {
   return opt_solver_second_button_command(1, action, val);
 }
 
-const char *opt_solver_second_button_command2(OPT_ARGS_STR)
+std::string opt_solver_second_button_command2(OPT_ARGS_STR)
 {
   return opt_solver_second_button_command(2, action, val);
 }
 
-const char *opt_solver_second_button_command3(OPT_ARGS_STR)
+std::string opt_solver_second_button_command3(OPT_ARGS_STR)
 {
   return opt_solver_second_button_command(3, action, val);
 }
 
-const char *opt_solver_second_button_command4(OPT_ARGS_STR)
+std::string opt_solver_second_button_command4(OPT_ARGS_STR)
 {
   return opt_solver_second_button_command(4, action, val);
 }
 
-const char *opt_solver_third_button(OPT_ARGS_STR)
+std::string opt_solver_third_button(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].button_name[2], val);
+    SINFO[num].button_name[2] = val;
   return SINFO[num].button_name[2];
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_third_button0(OPT_ARGS_STR)
+std::string opt_solver_third_button0(OPT_ARGS_STR)
 {
   return opt_solver_third_button(0, action, val);
 }
 
-const char *opt_solver_third_button1(OPT_ARGS_STR)
+std::string opt_solver_third_button1(OPT_ARGS_STR)
 {
   return opt_solver_third_button(1, action, val);
 }
 
-const char *opt_solver_third_button2(OPT_ARGS_STR)
+std::string opt_solver_third_button2(OPT_ARGS_STR)
 {
   return opt_solver_third_button(2, action, val);
 }
 
-const char *opt_solver_third_button3(OPT_ARGS_STR)
+std::string opt_solver_third_button3(OPT_ARGS_STR)
 {
   return opt_solver_third_button(3, action, val);
 }
 
-const char *opt_solver_third_button4(OPT_ARGS_STR)
+std::string opt_solver_third_button4(OPT_ARGS_STR)
 {
   return opt_solver_third_button(4, action, val);
 }
 
-const char *opt_solver_third_button_command(OPT_ARGS_STR)
+std::string opt_solver_third_button_command(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].button_command[2], val);
+    SINFO[num].button_command[2] = val;
   return SINFO[num].button_command[2];
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_third_button_command0(OPT_ARGS_STR)
+std::string opt_solver_third_button_command0(OPT_ARGS_STR)
 {
   return opt_solver_third_button_command(0, action, val);
 }
 
-const char *opt_solver_third_button_command1(OPT_ARGS_STR)
+std::string opt_solver_third_button_command1(OPT_ARGS_STR)
 {
   return opt_solver_third_button_command(1, action, val);
 }
 
-const char *opt_solver_third_button_command2(OPT_ARGS_STR)
+std::string opt_solver_third_button_command2(OPT_ARGS_STR)
 {
   return opt_solver_third_button_command(2, action, val);
 }
 
-const char *opt_solver_third_button_command3(OPT_ARGS_STR)
+std::string opt_solver_third_button_command3(OPT_ARGS_STR)
 {
   return opt_solver_third_button_command(3, action, val);
 }
 
-const char *opt_solver_third_button_command4(OPT_ARGS_STR)
+std::string opt_solver_third_button_command4(OPT_ARGS_STR)
 {
   return opt_solver_third_button_command(4, action, val);
 }
 
-const char *opt_solver_fourth_button(OPT_ARGS_STR)
+std::string opt_solver_fourth_button(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].button_name[3], val);
+    SINFO[num].button_name[3] = val;
   return SINFO[num].button_name[3];
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_fourth_button0(OPT_ARGS_STR)
+std::string opt_solver_fourth_button0(OPT_ARGS_STR)
 {
   return opt_solver_fourth_button(0, action, val);
 }
 
-const char *opt_solver_fourth_button1(OPT_ARGS_STR)
+std::string opt_solver_fourth_button1(OPT_ARGS_STR)
 {
   return opt_solver_fourth_button(1, action, val);
 }
 
-const char *opt_solver_fourth_button2(OPT_ARGS_STR)
+std::string opt_solver_fourth_button2(OPT_ARGS_STR)
 {
   return opt_solver_fourth_button(2, action, val);
 }
 
-const char *opt_solver_fourth_button3(OPT_ARGS_STR)
+std::string opt_solver_fourth_button3(OPT_ARGS_STR)
 {
   return opt_solver_fourth_button(3, action, val);
 }
 
-const char *opt_solver_fourth_button4(OPT_ARGS_STR)
+std::string opt_solver_fourth_button4(OPT_ARGS_STR)
 {
   return opt_solver_fourth_button(4, action, val);
 }
 
-const char *opt_solver_fourth_button_command(OPT_ARGS_STR)
+std::string opt_solver_fourth_button_command(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].button_command[3], val);
+    SINFO[num].button_command[3] = val;
   return SINFO[num].button_command[3];
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_fourth_button_command0(OPT_ARGS_STR)
+std::string opt_solver_fourth_button_command0(OPT_ARGS_STR)
 {
   return opt_solver_fourth_button_command(0, action, val);
 }
 
-const char *opt_solver_fourth_button_command1(OPT_ARGS_STR)
+std::string opt_solver_fourth_button_command1(OPT_ARGS_STR)
 {
   return opt_solver_fourth_button_command(1, action, val);
 }
 
-const char *opt_solver_fourth_button_command2(OPT_ARGS_STR)
+std::string opt_solver_fourth_button_command2(OPT_ARGS_STR)
 {
   return opt_solver_fourth_button_command(2, action, val);
 }
 
-const char *opt_solver_fourth_button_command3(OPT_ARGS_STR)
+std::string opt_solver_fourth_button_command3(OPT_ARGS_STR)
 {
   return opt_solver_fourth_button_command(3, action, val);
 }
 
-const char *opt_solver_fourth_button_command4(OPT_ARGS_STR)
+std::string opt_solver_fourth_button_command4(OPT_ARGS_STR)
 {
   return opt_solver_fourth_button_command(4, action, val);
 }
 
-const char *opt_solver_fifth_button(OPT_ARGS_STR)
+std::string opt_solver_fifth_button(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].button_name[4], val);
+    SINFO[num].button_name[4] = val;
   return SINFO[num].button_name[4];
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_fifth_button0(OPT_ARGS_STR)
+std::string opt_solver_fifth_button0(OPT_ARGS_STR)
 {
   return opt_solver_fifth_button(0, action, val);
 }
 
-const char *opt_solver_fifth_button1(OPT_ARGS_STR)
+std::string opt_solver_fifth_button1(OPT_ARGS_STR)
 {
   return opt_solver_fifth_button(1, action, val);
 }
 
-const char *opt_solver_fifth_button2(OPT_ARGS_STR)
+std::string opt_solver_fifth_button2(OPT_ARGS_STR)
 {
   return opt_solver_fifth_button(2, action, val);
 }
 
-const char *opt_solver_fifth_button3(OPT_ARGS_STR)
+std::string opt_solver_fifth_button3(OPT_ARGS_STR)
 {
   return opt_solver_fifth_button(3, action, val);
 }
 
-const char *opt_solver_fifth_button4(OPT_ARGS_STR)
+std::string opt_solver_fifth_button4(OPT_ARGS_STR)
 {
   return opt_solver_fifth_button(4, action, val);
 }
 
-const char *opt_solver_fifth_button_command(OPT_ARGS_STR)
+std::string opt_solver_fifth_button_command(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    strcpy(SINFO[num].button_command[4], val);
+    SINFO[num].button_command[4] = val;
   return SINFO[num].button_command[4];
 #else
   return "undefined";
 #endif
 }
 
-const char *opt_solver_fifth_button_command0(OPT_ARGS_STR)
+std::string opt_solver_fifth_button_command0(OPT_ARGS_STR)
 {
   return opt_solver_fifth_button_command(0, action, val);
 }
 
-const char *opt_solver_fifth_button_command1(OPT_ARGS_STR)
+std::string opt_solver_fifth_button_command1(OPT_ARGS_STR)
 {
   return opt_solver_fifth_button_command(1, action, val);
 }
 
-const char *opt_solver_fifth_button_command2(OPT_ARGS_STR)
+std::string opt_solver_fifth_button_command2(OPT_ARGS_STR)
 {
   return opt_solver_fifth_button_command(2, action, val);
 }
 
-const char *opt_solver_fifth_button_command3(OPT_ARGS_STR)
+std::string opt_solver_fifth_button_command3(OPT_ARGS_STR)
 {
   return opt_solver_fifth_button_command(3, action, val);
 }
 
-const char *opt_solver_fifth_button_command4(OPT_ARGS_STR)
+std::string opt_solver_fifth_button_command4(OPT_ARGS_STR)
 {
   return opt_solver_fifth_button_command(4, action, val);
 }
@@ -1987,7 +1980,7 @@ int _gui_action_valid(int action, int num)
 }
 #endif
 
-const char *opt_view_name(OPT_ARGS_STR)
+std::string opt_view_name(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW(""); 
@@ -2013,16 +2006,16 @@ const char *opt_view_name(OPT_ARGS_STR)
 #endif
 }
 
-const char *opt_view_format(OPT_ARGS_STR)
+std::string opt_view_format(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(opt->Format, val);
+    opt->Format = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    GUI::instance()->options->view.input[1]->value(opt->Format);
+    GUI::instance()->options->view.input[1]->value(opt->Format.c_str());
 #endif
   return opt->Format;
 #else
@@ -2030,27 +2023,27 @@ const char *opt_view_format(OPT_ARGS_STR)
 #endif
 }
 
-const char *opt_view_filename(OPT_ARGS_STR)
+std::string opt_view_filename(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(!data) return "";
-  return data->getFileName().c_str();
+  return data->getFileName();
 #else
   return "";
 #endif
 }
 
-const char *opt_view_axes_label0(OPT_ARGS_STR)
+std::string opt_view_axes_label0(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(opt->AxesLabel[0], val);
+    opt->AxesLabel[0] = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    GUI::instance()->options->view.input[10]->value(opt->AxesLabel[0]);
+    GUI::instance()->options->view.input[10]->value(opt->AxesLabel[0].c_str());
 #endif
   return opt->AxesLabel[0];
 #else
@@ -2058,16 +2051,16 @@ const char *opt_view_axes_label0(OPT_ARGS_STR)
 #endif
 }
 
-const char *opt_view_axes_label1(OPT_ARGS_STR)
+std::string opt_view_axes_label1(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(opt->AxesLabel[1], val);
+    opt->AxesLabel[1] = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    GUI::instance()->options->view.input[11]->value(opt->AxesLabel[1]);
+    GUI::instance()->options->view.input[11]->value(opt->AxesLabel[1].c_str());
 #endif
   return opt->AxesLabel[1];
 #else
@@ -2075,16 +2068,16 @@ const char *opt_view_axes_label1(OPT_ARGS_STR)
 #endif
 }
 
-const char *opt_view_axes_label2(OPT_ARGS_STR)
+std::string opt_view_axes_label2(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(opt->AxesLabel[2], val);
+    opt->AxesLabel[2] = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    GUI::instance()->options->view.input[12]->value(opt->AxesLabel[2]);
+    GUI::instance()->options->view.input[12]->value(opt->AxesLabel[2].c_str());
 #endif
   return opt->AxesLabel[2];
 #else
@@ -2092,16 +2085,16 @@ const char *opt_view_axes_label2(OPT_ARGS_STR)
 #endif
 }
 
-const char *opt_view_axes_format0(OPT_ARGS_STR)
+std::string opt_view_axes_format0(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(opt->AxesFormat[0], val);
+    opt->AxesFormat[0] = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    GUI::instance()->options->view.input[7]->value(opt->AxesFormat[0]);
+    GUI::instance()->options->view.input[7]->value(opt->AxesFormat[0].c_str());
 #endif
   return opt->AxesFormat[0];
 #else
@@ -2109,16 +2102,16 @@ const char *opt_view_axes_format0(OPT_ARGS_STR)
 #endif
 }
 
-const char *opt_view_axes_format1(OPT_ARGS_STR)
+std::string opt_view_axes_format1(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(opt->AxesFormat[1], val);
+    opt->AxesFormat[1] = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    GUI::instance()->options->view.input[8]->value(opt->AxesFormat[1]);
+    GUI::instance()->options->view.input[8]->value(opt->AxesFormat[1].c_str());
 #endif
   return opt->AxesFormat[1];
 #else
@@ -2126,16 +2119,16 @@ const char *opt_view_axes_format1(OPT_ARGS_STR)
 #endif
 }
 
-const char *opt_view_axes_format2(OPT_ARGS_STR)
+std::string opt_view_axes_format2(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(opt->AxesFormat[2], val);
+    opt->AxesFormat[2] = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    GUI::instance()->options->view.input[9]->value(opt->AxesFormat[2]);
+    GUI::instance()->options->view.input[9]->value(opt->AxesFormat[2].c_str());
 #endif
   return opt->AxesFormat[2];
 #else
@@ -2143,17 +2136,17 @@ const char *opt_view_axes_format2(OPT_ARGS_STR)
 #endif
 }
 
-const char *opt_view_gen_raise0(OPT_ARGS_STR)
+std::string opt_view_gen_raise0(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(opt->GenRaiseX, val);
+    opt->GenRaiseX = val;
     if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    GUI::instance()->options->view.input[4]->value(opt->GenRaiseX);
+    GUI::instance()->options->view.input[4]->value(opt->GenRaiseX.c_str());
 #endif
   return opt->GenRaiseX;
 #else
@@ -2161,17 +2154,17 @@ const char *opt_view_gen_raise0(OPT_ARGS_STR)
 #endif
 }
 
-const char *opt_view_gen_raise1(OPT_ARGS_STR)
+std::string opt_view_gen_raise1(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(opt->GenRaiseY, val);
+    opt->GenRaiseY = val;
     if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    GUI::instance()->options->view.input[5]->value(opt->GenRaiseY);
+    GUI::instance()->options->view.input[5]->value(opt->GenRaiseY.c_str());
 #endif
   return opt->GenRaiseY;
 #else
@@ -2179,17 +2172,17 @@ const char *opt_view_gen_raise1(OPT_ARGS_STR)
 #endif
 }
 
-const char *opt_view_gen_raise2(OPT_ARGS_STR)
+std::string opt_view_gen_raise2(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(opt->GenRaiseZ, val);
+    opt->GenRaiseZ = val;
     if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    GUI::instance()->options->view.input[6]->value(opt->GenRaiseZ);
+    GUI::instance()->options->view.input[6]->value(opt->GenRaiseZ.c_str());
 #endif
   return opt->GenRaiseZ;
 #else
@@ -2214,27 +2207,31 @@ int _h2d(char c)
   }
 }
 
-void _string2stipple(char str[32], int &repeat, int &pattern)
+void _string2stipple(std::string str, int &repeat, int &pattern)
 {
   // "n*0xabcd"
-  if(str[1] != '*' || str[2] != '0' || str[3] != 'x'){
+  if(str.size() < 8){
+    repeat = 1;
+    pattern = 0xFFFF;
+  }
+  else if(str[1] != '*' || str[2] != '0' || str[3] != 'x'){
     // bad format
     repeat = 1;
     pattern = 0xFFFF;
   }
   else{
     repeat = (int)str[0] - '0';
-    pattern = 16*16*16*_h2d(str[4]) + 16*16*_h2d(str[5]) + 16*_h2d(str[6]) + _h2d(str[7]);
+    pattern = 16 * 16 * 16 * _h2d(str[4]) + 16 * 16 * _h2d(str[5]) + 
+      16 * _h2d(str[6]) + _h2d(str[7]);
   }
 }
 
-const char *opt_view_stipple0(OPT_ARGS_STR)
+std::string opt_view_stipple0(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strncpy(opt->StippleString[0], val, 31);
-    opt->StippleString[0][31] = '\0'; // just as a precaution
+    opt->StippleString[0] = val;
     _string2stipple(opt->StippleString[0], opt->Stipple[0][0], opt->Stipple[0][1]);
   }
   return opt->StippleString[0];
@@ -2243,13 +2240,12 @@ const char *opt_view_stipple0(OPT_ARGS_STR)
 #endif
 }
 
-const char *opt_view_stipple1(OPT_ARGS_STR)
+std::string opt_view_stipple1(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strncpy(opt->StippleString[1], val, 31);
-    opt->StippleString[1][31] = '\0'; // just as a precaution
+    opt->StippleString[1] = val;
     _string2stipple(opt->StippleString[1], opt->Stipple[1][0], opt->Stipple[1][1]);
   }
   return opt->StippleString[1];
@@ -2258,13 +2254,12 @@ const char *opt_view_stipple1(OPT_ARGS_STR)
 #endif
 }
 
-const char *opt_view_stipple2(OPT_ARGS_STR)
+std::string opt_view_stipple2(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strncpy(opt->StippleString[2], val, 31);
-    opt->StippleString[2][31] = '\0'; // just as a precaution
+    opt->StippleString[2] = val;
     _string2stipple(opt->StippleString[2], opt->Stipple[2][0], opt->Stipple[2][1]);
   }
   return opt->StippleString[2];
@@ -2273,13 +2268,12 @@ const char *opt_view_stipple2(OPT_ARGS_STR)
 #endif
 }
 
-const char *opt_view_stipple3(OPT_ARGS_STR)
+std::string opt_view_stipple3(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strncpy(opt->StippleString[3], val, 31);
-    opt->StippleString[3][31] = '\0'; // just as a precaution
+    opt->StippleString[3] = val;
     _string2stipple(opt->StippleString[3], opt->Stipple[3][0], opt->Stipple[3][1]);
   }
   return opt->StippleString[3];
@@ -2288,13 +2282,12 @@ const char *opt_view_stipple3(OPT_ARGS_STR)
 #endif
 }
 
-const char *opt_view_stipple4(OPT_ARGS_STR)
+std::string opt_view_stipple4(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strncpy(opt->StippleString[4], val, 31);
-    opt->StippleString[4][31] = '\0'; // just as a precaution
+    opt->StippleString[4] = val;
     _string2stipple(opt->StippleString[4], opt->Stipple[4][0], opt->Stipple[4][1]);
   }
   return opt->StippleString[4];
@@ -2303,13 +2296,12 @@ const char *opt_view_stipple4(OPT_ARGS_STR)
 #endif
 }
 
-const char *opt_view_stipple5(OPT_ARGS_STR)
+std::string opt_view_stipple5(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strncpy(opt->StippleString[5], val, 31);
-    opt->StippleString[5][31] = '\0'; // just as a precaution
+    opt->StippleString[5] = val;
     _string2stipple(opt->StippleString[5], opt->Stipple[5][0], opt->Stipple[5][1]);
   }
   return opt->StippleString[5];
@@ -2318,13 +2310,12 @@ const char *opt_view_stipple5(OPT_ARGS_STR)
 #endif
 }
 
-const char *opt_view_stipple6(OPT_ARGS_STR)
+std::string opt_view_stipple6(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strncpy(opt->StippleString[6], val, 31);
-    opt->StippleString[6][31] = '\0'; // just as a precaution
+    opt->StippleString[6] = val;
     _string2stipple(opt->StippleString[6], opt->Stipple[6][0], opt->Stipple[6][1]);
   }
   return opt->StippleString[6];
@@ -2333,13 +2324,12 @@ const char *opt_view_stipple6(OPT_ARGS_STR)
 #endif
 }
 
-const char *opt_view_stipple7(OPT_ARGS_STR)
+std::string opt_view_stipple7(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strncpy(opt->StippleString[7], val, 31);
-    opt->StippleString[7][31] = '\0'; // just as a precaution
+    opt->StippleString[7] = val;
     _string2stipple(opt->StippleString[7], opt->Stipple[7][0], opt->Stipple[7][1]);
   }
   return opt->StippleString[7];
@@ -2348,13 +2338,12 @@ const char *opt_view_stipple7(OPT_ARGS_STR)
 #endif
 }
 
-const char *opt_view_stipple8(OPT_ARGS_STR)
+std::string opt_view_stipple8(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strncpy(opt->StippleString[8], val, 31);
-    opt->StippleString[8][31] = '\0'; // just as a precaution
+    opt->StippleString[8] = val;
     _string2stipple(opt->StippleString[8], opt->Stipple[8][0], opt->Stipple[8][1]);
   }
   return opt->StippleString[8];
@@ -2363,13 +2352,12 @@ const char *opt_view_stipple8(OPT_ARGS_STR)
 #endif
 }
 
-const char *opt_view_stipple9(OPT_ARGS_STR)
+std::string opt_view_stipple9(OPT_ARGS_STR)
 {
 #if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strncpy(opt->StippleString[9], val, 31);
-    opt->StippleString[9][31] = '\0'; // just as a precaution
+    opt->StippleString[9] = val;
     _string2stipple(opt->StippleString[9], opt->Stipple[9][0], opt->Stipple[9][1]);
   }
   return opt->StippleString[9];

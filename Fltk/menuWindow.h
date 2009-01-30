@@ -6,6 +6,7 @@
 #ifndef _MENU_WINDOW_H_
 #define _MENU_WINDOW_H_
 
+#include <string>
 #include <vector>
 #include <FL/Fl_Window.H>
 #if defined(__APPLE__)
@@ -20,7 +21,7 @@
 
 // The dynamic menu contexts
 typedef struct{
-  const char *label;
+  std::string label;
   Fl_Callback *callback;
   void *arg;
 } contextItem;

@@ -82,15 +82,15 @@ StringXString GeneralOptions_String[] = {
 #endif
     "System command to launch a web browser" },
 
-  { 0, NULL , NULL , NULL , NULL }
+  { 0, 0 , 0 , "" , 0 }
 } ;
 
 StringXString GeometryOptions_String[] = {
-  { 0, NULL , NULL , NULL , NULL }
+  { 0, 0 , 0 , "" , 0 }
 } ;
 
 StringXString MeshOptions_String[] = {
-  { 0, NULL , NULL , NULL , NULL }
+  { 0, 0 , 0 , "" , 0 }
 } ;
 
 StringXString SolverOptions_String[] = {
@@ -355,11 +355,11 @@ StringXString SolverOptions_String[] = {
   { F|O, "FifthButtonCommand4" , opt_solver_fifth_button_command4 , "" ,
     "Command associated with the fifth button for solver 4" },
 
-  { 0, NULL , NULL , NULL , NULL }
+  { 0, 0 , 0 , "" , 0 }
 } ;
 
 StringXString PostProcessingOptions_String[] = {
-  { 0, NULL , NULL , NULL , NULL }
+  { 0, 0 , 0 , "" , 0 }
 } ;
 
 StringXString ViewOptions_String[] = {
@@ -412,11 +412,11 @@ StringXString ViewOptions_String[] = {
   { F|O, "Stipple9" , opt_view_stipple9 , "1*0xFFFF" , 
     "Tenth stippling pattern" },
 
-  { 0, NULL , NULL , NULL , NULL }
+  { 0, 0 , 0 , "" , 0 }
 } ;
 
 StringXString PrintOptions_String[] = {
-  { 0, NULL , NULL , NULL , NULL }
+  { 0, 0 , 0 , "" , 0 }
 } ;
 
 // NUMBERS
@@ -785,7 +785,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "ZoomFactor" , opt_general_zoom_factor , 4.0 ,
     "Middle mouse button zoom acceleration factor" },
 
-  { 0, NULL , NULL , 0. , NULL }
+  { 0, 0 , 0 , 0. , 0 }
 } ;
 
 StringXNumber GeometryOptions_Number[] = {
@@ -896,7 +896,7 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "VolumeNumbers" , opt_geometry_volumes_num , 0. , 
     "Display volume numbers? (not implemented yet)" },
 
-  { 0, NULL , NULL , 0. , NULL }
+  { 0, 0 , 0 , 0. , 0 }
 } ;
 
 StringXNumber MeshOptions_Number[] = {
@@ -1133,7 +1133,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "ZoneDefinition" , opt_mesh_zone_definition , 0. , 
     "Method for defining a zone (0=single zone, 1=by partition, 2=by physical)" },
 
-  { 0, NULL , NULL , 0. , NULL }
+  { 0, 0 , 0 , 0. , 0 }
 } ;
 
 StringXNumber SolverOptions_Number[] = {
@@ -1182,7 +1182,7 @@ StringXNumber SolverOptions_Number[] = {
   { F|O, "PopupMessages4" , opt_solver_popup_messages4 , 1. ,
     "Automatically display messages produced by solver 4" },
 
-  { 0, NULL , NULL , 0. , NULL }
+  { 0, 0 , 0 , 0. , 0 }
 } ;
 
 StringXNumber PostProcessingOptions_Number[] = {
@@ -1212,7 +1212,7 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "Smoothing" , opt_post_smooth , 0. ,
     "Apply (non-reversible) smoothing to post-processing view when merged" },
 
-  { 0, NULL , NULL , 0. }
+  { 0, 0 , 0 , 0. }
 } ;
 
 StringXNumber ViewOptions_Number[] = {
@@ -1450,7 +1450,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "Width" , opt_view_size0 , 300. , 
     "Width (in pixels) of the scale or 2D plot" }, 
 
-  { 0, NULL , NULL , 0. , NULL }
+  { 0, 0 , 0 , 0. , 0 }
 } ;
 
 StringXNumber PrintOptions_Number[] = {
@@ -1508,7 +1508,7 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "Text" , opt_print_text , 1. ,
     "Print text strings?" },
 
-  { 0, NULL , NULL , 0. }
+  { 0, 0 , 0 , 0. }
 } ;
 
 // COLORS
@@ -1546,7 +1546,7 @@ StringXColor GeneralOptions_Color[] = {
   { F|O, "SpecularLight" , opt_general_color_specular_light,
     {255, 255, 255, 255}, {255, 255, 255, 255}, {255, 255, 255, 255},
     "Specular light color" },
-  { 0, NULL , NULL ,  {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , NULL }
+  { 0, 0 , 0 ,  {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , 0 }
 } ;
 
 StringXColor GeometryOptions_Color[] = {
@@ -1583,7 +1583,7 @@ StringXColor GeometryOptions_Color[] = {
   { F|O, "Projection" , opt_geometry_color_projection ,
     {0, 255, 0, 255}, {0, 255, 0, 255}, {0, 0, 0, 255},
     "Projection surface color" },
-  { 0, NULL , NULL , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , NULL }
+  { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , 0 }
 } ;
 
 #define COLW  {210, 210, 210, 255}
@@ -1667,15 +1667,15 @@ StringXColor MeshOptions_Color[] = {
   { F|O, "Seventeen", opt_mesh_color_17, COL17, COL17, COLW, "Color 17 in color carousel" },
   { F|O, "Eighteen" , opt_mesh_color_18, COL18, COL18, COLW, "Color 18 in color carousel" },
   { F|O, "Nineteen" , opt_mesh_color_19, COL19, COL19, COLW, "Color 19 in color carousel" },
-  { 0, NULL , NULL , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , NULL }
+  { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , 0 }
 } ;
 
 StringXColor SolverOptions_Color[] = {
-  { 0, NULL , NULL , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , NULL }
+  { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , 0 }
 } ;
 
 StringXColor PostProcessingOptions_Color[] = {
-  { 0, NULL , NULL , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , NULL }
+  { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , 0 }
 } ;
 
 #define ELECOL  {255, 255, 255, 255}, {0, 0, 0, 255}, {0, 0, 0, 255}
@@ -1698,11 +1698,11 @@ StringXColor ViewOptions_Color[] = {
   { F|O, "Text2D" , opt_view_color_text2d , ELECOL, "2D text color" },
   { F|O, "Text3D" , opt_view_color_text3d , ELECOL, "3D text color" },
   { F|O, "Axes" , opt_view_color_axes , ELECOL, "Axes color" },
-  { 0, NULL , NULL , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , NULL }
+  { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , 0 }
 } ;
 
 StringXColor PrintOptions_Color[] = {
-  { 0, NULL , NULL , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , NULL }
+  { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , 0 }
 } ;
 
 #undef S
