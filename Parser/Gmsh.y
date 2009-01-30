@@ -750,12 +750,14 @@ Affectation :
 
   | tSTRING '.' tSTRING tAFFECT StringExpr tEND 
     { 
-      StringOption(GMSH_SET|GMSH_GUI, $1, 0, $3, $5);
+      std::string dummy;
+      StringOption(GMSH_SET|GMSH_GUI, $1, 0, $3, $5, dummy);
       Free($1); Free($3);
     }
   | tSTRING '[' FExpr ']' '.' tSTRING tAFFECT StringExpr tEND 
     { 
-      StringOption(GMSH_SET|GMSH_GUI, $1, (int)$3, $6, $8);
+      std::string dummy;
+      StringOption(GMSH_SET|GMSH_GUI, $1, (int)$3, $6, $8, dummy);
       Free($1); Free($6);
     }
 
@@ -3376,18 +3378,18 @@ StringExprVar :
     }
   | tSTRING '.' tSTRING
     { 
-      const char *val = "";
-      StringOption(GMSH_GET, $1, 0, $3, val);
-      $$ = (char*)Malloc((strlen(val) + 1) * sizeof(char));
-      strcpy($$, val);
+      std::string out;
+      StringOption(GMSH_GET, $1, 0, $3, "", out);
+      $$ = (char*)Malloc((out.size() + 1) * sizeof(char));
+      strcpy($$, out.c_str());
       Free($1); Free($3);
     }
   | tSTRING '[' FExpr ']' '.' tSTRING
     { 
-      const char *val = "";
-      StringOption(GMSH_GET, $1, (int)$3, $6, val);
-      $$ = (char*)Malloc((strlen(val) + 1) * sizeof(char));
-      strcpy($$, val);
+      std::string out;
+      StringOption(GMSH_GET, $1, (int)$3, $6, "", out);
+      $$ = (char*)Malloc((out.size() + 1) * sizeof(char));
+      strcpy($$, out.c_str());
       Free($1); Free($6);
     }
 ;

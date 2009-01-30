@@ -51,7 +51,7 @@ Context_T CTX;
 // General routines for string options
 
 bool StringOption(int action, const char *category, int num, 
-		  const char *name, const char *val)
+		  const char *name, const char *val, std::string &out)
 {
   StringXString *s = 0;
   if(!strcmp(category, "General"))
@@ -80,7 +80,7 @@ bool StringOption(int action, const char *category, int num,
     return false;
   }
 
-  s[i].function(num, action, val);
+  out = s[i].function(num, action, val);
   return true;
 }
 

@@ -65,7 +65,8 @@ int GmshSetMessageHandler(GmshMessage *callback)
 
 int GmshSetOption(std::string category, std::string name, std::string value, int index)
 {
-  if(StringOption(GMSH_SET, category.c_str(), index, name.c_str(), value.c_str()))
+  std::string dummy;
+  if(StringOption(GMSH_SET, category.c_str(), index, name.c_str(), value.c_str(), dummy))
     return 1;
   return 0;
 }

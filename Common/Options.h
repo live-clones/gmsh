@@ -6,6 +6,7 @@
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
 
+#include <string>
 #include "ColorTable.h"
 
 #define GMSH_SET       (1<<0)
@@ -803,7 +804,7 @@ void Print_Options(int num, int level, int diff, int help, const char *filename)
 void Print_OptionsDoc();
 
 bool StringOption(int action, const char *category, int num, 
-		  const char *name, const char *val);
+		  const char *name, const char *val, std::string &out);
 bool NumberOption(int action, const char *category, int num, 
 		  const char *name, double &val);
 bool ColorOption(int action, const char *category, int num, 
