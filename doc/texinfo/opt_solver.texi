@@ -643,11 +643,6 @@ Connect solver 4 to the Gmsh server@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Solver.MaximumDelay
-Maximum delay (in seconds) allowed for solver response@*
-Default value: @code{4}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Solver.MergeViews0
 Automatically merge any post-processing view created by solver 0@*
 Default value: @code{1}@*
