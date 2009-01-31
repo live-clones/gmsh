@@ -135,8 +135,10 @@ static void solver_command_cb(Fl_Widget *w, void *data)
     if(val < SINFO[num].option[usedopts].size())
       sprintf(command, SINFO[num].button_command[idx].c_str(), 
               SINFO[num].option[usedopts][val].c_str());
-    else
-      Msg::Error("Invalid option index: missing value");
+    else{
+      Msg::Warning("Invalid choice (%d) for option %d", val, usedopts);
+      strcpy(command, "");
+    }
   }
   else {
     strcpy(command, SINFO[num].button_command[idx].c_str());
