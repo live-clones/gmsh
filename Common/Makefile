@@ -77,7 +77,7 @@ GmshMessage${OBJEXT}: GmshMessage.cpp GmshConfig.h GmshMessage.h Gmsh.h \
   ../Mesh/meshPartitionOptions.h ../Common/GmshConfig.h OS.h \
   ../Fltk/GUI.h ../Fltk/messageWindow.h ../Fltk/extraDialogs.h
 GmshDaemon${OBJEXT}: GmshDaemon.cpp GmshMessage.h OS.h GmshSocket.h GmshConfig.h
-Context${OBJEXT}: Context.cpp Context.h ../Geo/CGNSOptions.h \
+Context${OBJEXT}: Context.cpp GmshConfig.h Context.h ../Geo/CGNSOptions.h \
   ../Mesh/meshPartitionOptions.h ../Common/GmshConfig.h
 Options${OBJEXT}: Options.cpp GmshConfig.h GmshDefines.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
