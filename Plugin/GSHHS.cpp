@@ -51,7 +51,7 @@ class GMSH_GSHHSPlugin:public GMSH_Post_Plugin
       }
     };
     class reader_gshhs:public reader{
-      /*	$Id: GSHHS.cpp,v 1.26 2009-01-31 00:26:36 geuzaine Exp $
+      /*	$Id: GSHHS.cpp,v 1.27 2009-01-31 00:28:27 geuzaine Exp $
        *
        * Include file defining structures used in gshhs.c
        *
@@ -716,6 +716,7 @@ class GMSH_GSHHSPlugin:public GMSH_Post_Plugin
         if(!merged)
           i++;
       }
+      return true;
     }
     class GeoEarthImport
     {
