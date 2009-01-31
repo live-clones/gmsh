@@ -13,7 +13,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterCurlPlugin();
 }
 
-class GMSH_CurlPlugin : public GMSH_Post_Plugin
+class GMSH_CurlPlugin : public GMSH_PostPlugin
 {
  public:
   GMSH_CurlPlugin(){}

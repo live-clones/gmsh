@@ -13,7 +13,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterDivergencePlugin();
 }
 
-class GMSH_DivergencePlugin : public GMSH_Post_Plugin
+class GMSH_DivergencePlugin : public GMSH_PostPlugin
 {
  public:
   GMSH_DivergencePlugin(){}

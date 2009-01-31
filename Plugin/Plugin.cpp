@@ -5,7 +5,7 @@
 
 #include "Plugin.h"
 
-PView *GMSH_Post_Plugin::getView(int index, PView *view)
+PView *GMSH_PostPlugin::getView(int index, PView *view)
 {
   if(index < 0)
     index = view ? view->getIndex() : 0;
@@ -19,7 +19,7 @@ PView *GMSH_Post_Plugin::getView(int index, PView *view)
   }
 }
 
-PViewDataList *GMSH_Post_Plugin::getDataList(PView *view)
+PViewDataList *GMSH_PostPlugin::getDataList(PView *view)
 {
   if(!view) return 0;
 

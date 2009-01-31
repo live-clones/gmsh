@@ -13,7 +13,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterModulusPhasePlugin();
 }
 
-class GMSH_ModulusPhasePlugin : public GMSH_Post_Plugin
+class GMSH_ModulusPhasePlugin : public GMSH_PostPlugin
 {
 public:
   GMSH_ModulusPhasePlugin(){}

@@ -13,7 +13,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterGradientPlugin();
 }
 
-class GMSH_GradientPlugin : public GMSH_Post_Plugin
+class GMSH_GradientPlugin : public GMSH_PostPlugin
 {
  public:
   GMSH_GradientPlugin(){}

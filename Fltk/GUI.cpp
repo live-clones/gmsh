@@ -647,7 +647,7 @@ void GUI::storeCurrentWindowsInfo()
 
 void GUI::callForSolverPlugin(int dim)
 { 
-  GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();   
+  GMSH_SolverPlugin *sp = PluginManager::instance()->findSolverPlugin();   
   if(sp) sp->popupPropertiesForPhysicalEntity(dim);
 }
 

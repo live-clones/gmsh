@@ -911,7 +911,7 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
                                 std::vector<PCoords> &coords,
                                 std::vector<PValues> &values, 
                                 double &minVal, double &maxVal, 
-                                GMSH_Post_Plugin *plug,
+                                GMSH_PostPlugin *plug,
                                 bool onlyComputeMinMax)
 {
   if(numComp != 1 && numComp != 3){
@@ -1038,7 +1038,7 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
 template <class T>
 void adaptiveElements<T>::addInView(double tol, int step, 
                                     PViewData *in, PViewDataList *out, 
-                                    GMSH_Post_Plugin *plug)
+                                    GMSH_PostPlugin *plug)
 {
   int numComp = in->getNumComponents(0, 0, 0);
   if(numComp != 1 && numComp != 3) return;
@@ -1176,7 +1176,7 @@ double adaptiveData::timerInit = 0.;
 double adaptiveData::timerAdapt = 0.;
 
 void adaptiveData::changeResolution(int step, int level, double tol, 
-                                    GMSH_Post_Plugin *plug)
+                                    GMSH_PostPlugin *plug)
 {
   timerInit = timerAdapt = 0.;
 

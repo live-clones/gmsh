@@ -13,7 +13,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterExtractEdgesPlugin();
 }
 
-class GMSH_ExtractEdgesPlugin : public GMSH_Post_Plugin
+class GMSH_ExtractEdgesPlugin : public GMSH_PostPlugin
 {
  public:
   GMSH_ExtractEdgesPlugin();

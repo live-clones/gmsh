@@ -13,7 +13,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterProbePlugin();
 }
 
-class GMSH_ProbePlugin : public GMSH_Post_Plugin
+class GMSH_ProbePlugin : public GMSH_PostPlugin
 {
   double levelset(double x, double y, double z, double val) const;
   static double callback(int num, int action, double value, double *opt);

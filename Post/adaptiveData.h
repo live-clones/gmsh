@@ -13,7 +13,7 @@
 
 class PViewData;
 class PViewDataList;
-class GMSH_Post_Plugin;
+class GMSH_PostPlugin;
 
 class adaptivePoint {
  public:
@@ -297,13 +297,13 @@ class adaptiveElements {
   // elements in coords/values
   void adapt(double tol, int numComp,
              std::vector<PCoords> &coords, std::vector<PValues> &values,
-             double &minVal, double &maxVal, GMSH_Post_Plugin *plug=0,
+             double &minVal, double &maxVal, GMSH_PostPlugin *plug=0,
              bool onlyComputeMinMax=false);
   // adapt all the T-type elements in the input view and add the
   // refined elements in the output view (we will remove this when we
   // switch to true on-the-fly local refinement in drawPost())
   void addInView(double tol, int step, PViewData *in, PViewDataList *out, 
-                 GMSH_Post_Plugin *plug=0);
+                 GMSH_PostPlugin *plug=0);
 };
 
 class adaptiveData {
@@ -323,7 +323,7 @@ class adaptiveData {
   adaptiveData(PViewData *data);
   ~adaptiveData();
   PViewData *getData(){ return (PViewData*)_outData; }
-  void changeResolution(int step, int level, double tol, GMSH_Post_Plugin *plug=0);
+  void changeResolution(int step, int level, double tol, GMSH_PostPlugin *plug=0);
 };
 
 #endif

@@ -45,7 +45,7 @@ int GmshInitialize(int argc, char **argv)
   
 #if !defined(HAVE_NO_POST)
   // Initialize the default plugins
-  GMSH_PluginManager::instance()->registerDefaultPlugins();
+  PluginManager::instance()->registerDefaultPlugins();
 #endif
 
   // Initialize numeric library (gsl, robust predicates)

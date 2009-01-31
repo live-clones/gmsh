@@ -13,7 +13,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterMakeSimplexPlugin();
 }
 
-class GMSH_MakeSimplexPlugin : public GMSH_Post_Plugin
+class GMSH_MakeSimplexPlugin : public GMSH_PostPlugin
 {
 public:
   GMSH_MakeSimplexPlugin();

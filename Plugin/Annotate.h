@@ -14,7 +14,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterAnnotatePlugin();
 }
 
-class GMSH_AnnotatePlugin : public GMSH_Post_Plugin
+class GMSH_AnnotatePlugin : public GMSH_PostPlugin
 {
 private:
   static double callback(int num, int action, double value, double *opt,

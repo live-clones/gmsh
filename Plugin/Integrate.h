@@ -13,7 +13,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterIntegratePlugin();
 }
 
-class GMSH_IntegratePlugin : public GMSH_Post_Plugin
+class GMSH_IntegratePlugin : public GMSH_PostPlugin
 {
  public:
   GMSH_IntegratePlugin();

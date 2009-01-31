@@ -16,7 +16,7 @@ class PViewOptions;
 class VertexArray;
 class smooth_normals;
 class GModel;
-class GMSH_Post_Plugin;
+class GMSH_PostPlugin;
 
 // A post-processing view.
 class PView{

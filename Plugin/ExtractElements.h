@@ -13,7 +13,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterExtractElementsPlugin();
 }
 
-class GMSH_ExtractElementsPlugin : public GMSH_Post_Plugin
+class GMSH_ExtractElementsPlugin : public GMSH_PostPlugin
 {
  public:
   GMSH_ExtractElementsPlugin(){}

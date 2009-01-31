@@ -13,7 +13,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterHarmonicToTimePlugin();
 }
 
-class GMSH_HarmonicToTimePlugin : public GMSH_Post_Plugin
+class GMSH_HarmonicToTimePlugin : public GMSH_PostPlugin
 {
 public:
   GMSH_HarmonicToTimePlugin();

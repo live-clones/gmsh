@@ -102,7 +102,7 @@ static void plugin_browser_cb(Fl_Widget *w, void *data)
 
 static void plugin_run_cb(Fl_Widget *w, void *data)
 {
-  GMSH_Post_Plugin *p = (GMSH_Post_Plugin*)data;
+  GMSH_PostPlugin *p = (GMSH_PostPlugin*)data;
 
   // get the values from the GUI
   int m = p->getNbOptionsStr();
@@ -251,8 +251,8 @@ pluginWindow::pluginWindow(int deltaFontSize)
   view_browser->has_scrollbar(Fl_Browser_::VERTICAL);
   view_browser->callback(plugin_browser_cb);
 
-  for(GMSH_PluginManager::iter it = GMSH_PluginManager::instance()->begin();
-      it != GMSH_PluginManager::instance()->end(); ++it) {
+  for(PluginManager::iter it = PluginManager::instance()->begin();
+      it != PluginManager::instance()->end(); ++it) {
     GMSH_Plugin *p = (*it).second;
     if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN) {
       char name[256];
@@ -261,7 +261,7 @@ pluginWindow::pluginWindow(int deltaFontSize)
       _createDialogBox(p, 2 * WB + L1 + L2, WB, width - L1 - L2 - 3 * WB, 
                        height - 2 * WB);
       // select first plugin by default
-      if(it == GMSH_PluginManager::instance()->begin()){
+      if(it == PluginManager::instance()->begin()){
         browser->select(1);
         p->dialogBox->group->show();
       }

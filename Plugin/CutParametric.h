@@ -15,7 +15,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterCutParametricPlugin ();
 }
 
-class GMSH_CutParametricPlugin : public GMSH_Post_Plugin 
+class GMSH_CutParametricPlugin : public GMSH_PostPlugin 
 { 
 private:
   static double callback(int num, int action, double value, double *opt,

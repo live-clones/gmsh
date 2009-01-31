@@ -13,7 +13,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterLambda2Plugin();
 }
 
-class GMSH_Lambda2Plugin : public GMSH_Post_Plugin
+class GMSH_Lambda2Plugin : public GMSH_PostPlugin
 {
 public:
   GMSH_Lambda2Plugin();

@@ -13,7 +13,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterCutGridPlugin ();
 }
 
-class GMSH_CutGridPlugin : public GMSH_Post_Plugin
+class GMSH_CutGridPlugin : public GMSH_PostPlugin
 {
   static double callback(int num, int action, double value, double *opt,
                          double step, double min, double max);

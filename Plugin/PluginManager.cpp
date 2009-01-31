@@ -52,19 +52,19 @@
 
 const char *GMSH_PluginEntry = "GMSH_RegisterPlugin";
 
-GMSH_PluginManager *GMSH_PluginManager::_instance = 0;
+PluginManager *PluginManager::_instance = 0;
 
-GMSH_PluginManager::GMSH_PluginManager()
+PluginManager::PluginManager()
 {
 }
 
-GMSH_PluginManager::~GMSH_PluginManager()
+PluginManager::~PluginManager()
 {
   for(iter it = allPlugins.begin(); it != allPlugins.end(); ++it)
     delete(*it).second;
 }
 
-GMSH_Plugin *GMSH_PluginManager::find(char *pluginName)
+GMSH_Plugin *PluginManager::find(char *pluginName)
 {
   iter it = allPlugins.find(pluginName);
   if(it == allPlugins.end())
@@ -72,20 +72,20 @@ GMSH_Plugin *GMSH_PluginManager::find(char *pluginName)
   return (*it).second;
 }
 
-GMSH_Solve_Plugin *GMSH_PluginManager::findSolverPlugin()
+GMSH_SolverPlugin *PluginManager::findSolverPlugin()
 {
   iter it  = allPlugins.begin();
   iter ite = allPlugins.end();
   for (; it != ite; ++it) {
     GMSH_Plugin *p = (*it).second;
-    if(p->getType() == GMSH_Plugin::GMSH_SOLVE_PLUGIN) {
-      return (GMSH_Solve_Plugin*)(p);
+    if(p->getType() == GMSH_Plugin::GMSH_SOLVER_PLUGIN) {
+      return (GMSH_SolverPlugin*)(p);
     }      
   }
   return 0;
 }
 
-void GMSH_PluginManager::action(char *pluginName, char *action, void *data)
+void PluginManager::action(char *pluginName, char *action, void *data)
 {
   GMSH_Plugin *plugin = find(pluginName);
   if(!plugin)
@@ -97,8 +97,8 @@ void GMSH_PluginManager::action(char *pluginName, char *action, void *data)
     throw "Unknown plugin action";
 }
 
-void GMSH_PluginManager::setPluginOption(char *pluginName, char *option,
-                                         char *value)
+void PluginManager::setPluginOption(char *pluginName, char *option,
+                                    char *value)
 {
   GMSH_Plugin *plugin = find(pluginName);
 
@@ -119,8 +119,8 @@ void GMSH_PluginManager::setPluginOption(char *pluginName, char *option,
   throw "Unknown plugin option name";
 }
 
-void GMSH_PluginManager::setPluginOption(char *pluginName, char *option,
-                                         double value)
+void PluginManager::setPluginOption(char *pluginName, char *option,
+                                    double value)
 {
   GMSH_Plugin *plugin = find(pluginName);
 
@@ -140,15 +140,15 @@ void GMSH_PluginManager::setPluginOption(char *pluginName, char *option,
   throw "Unknown plugin option name";
 }
 
-GMSH_PluginManager *GMSH_PluginManager::instance()
+PluginManager *PluginManager::instance()
 {
   if(!_instance) {
-    _instance = new GMSH_PluginManager;
+    _instance = new PluginManager;
   }
   return _instance;
 }
 
-void GMSH_PluginManager::registerDefaultPlugins()
+void PluginManager::registerDefaultPlugins()
 {
   if(CTX::instance()->solver.plugins){
     // nothing here yet
@@ -248,7 +248,7 @@ void GMSH_PluginManager::registerDefaultPlugins()
 #endif
 }
 
-void GMSH_PluginManager::addPlugin(char *dirName, char *pluginName)
+void PluginManager::addPlugin(char *dirName, char *pluginName)
 {
 #if defined(HAVE_NO_DLL) || !defined(HAVE_FLTK)
   Msg::Warning("No dynamic plugin loading on this platform");
@@ -271,7 +271,7 @@ void GMSH_PluginManager::addPlugin(char *dirName, char *pluginName)
   err = dlerror();
   if(err){
     Msg::Warning("Symbol '%s' missing in plugin '%s' (dlerror = %s)",
-        GMSH_PluginEntry, pluginName, err);
+                 GMSH_PluginEntry, pluginName, err);
     return;
   }
 

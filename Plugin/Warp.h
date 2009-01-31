@@ -13,7 +13,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterWarpPlugin();
 }
 
-class GMSH_WarpPlugin : public GMSH_Post_Plugin
+class GMSH_WarpPlugin : public GMSH_PostPlugin
 {
 public:
   GMSH_WarpPlugin(){}

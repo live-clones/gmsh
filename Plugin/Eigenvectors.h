@@ -13,7 +13,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterEigenvectorsPlugin();
 }
 
-class GMSH_EigenvectorsPlugin : public GMSH_Post_Plugin
+class GMSH_EigenvectorsPlugin : public GMSH_PostPlugin
 {
  public:
   GMSH_EigenvectorsPlugin(){}

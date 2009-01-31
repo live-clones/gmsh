@@ -13,7 +13,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterSphericalRaisePlugin();
 }
 
-class GMSH_SphericalRaisePlugin : public GMSH_Post_Plugin
+class GMSH_SphericalRaisePlugin : public GMSH_PostPlugin
 {
 public:
   GMSH_SphericalRaisePlugin(){}

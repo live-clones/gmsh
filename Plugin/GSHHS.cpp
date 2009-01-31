@@ -9,7 +9,7 @@
 #include "GSHHS.h"
 #include "GModel.h"
 
-class GMSH_GSHHSPlugin:public GMSH_Post_Plugin
+class GMSH_GSHHSPlugin:public GMSH_PostPlugin
 {
   public:
     // ************** Inputs (readers) *************
@@ -51,7 +51,7 @@ class GMSH_GSHHSPlugin:public GMSH_Post_Plugin
       }
     };
     class reader_gshhs:public reader{
-      /*	$Id: GSHHS.cpp,v 1.27 2009-01-31 00:28:27 geuzaine Exp $
+      /*	$Id: GSHHS.cpp,v 1.28 2009-01-31 18:30:40 geuzaine Exp $
        *
        * Include file defining structures used in gshhs.c
        *

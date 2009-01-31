@@ -13,7 +13,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterTransformPlugin();
 }
 
-class GMSH_TransformPlugin : public GMSH_Post_Plugin
+class GMSH_TransformPlugin : public GMSH_PostPlugin
 {
 public:
   GMSH_TransformPlugin(){}

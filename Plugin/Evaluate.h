@@ -14,7 +14,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterEvaluatePlugin();
 }
 
-class GMSH_EvaluatePlugin : public GMSH_Post_Plugin
+class GMSH_EvaluatePlugin : public GMSH_PostPlugin
 {
 private:
   OctreePost *_octree;

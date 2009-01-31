@@ -10,7 +10,7 @@
 #include <map>
 
 class GMSH_Plugin;
-class GMSH_Solve_Plugin;
+class GMSH_SolverPlugin;
 
 struct ltstrpg
 {
@@ -20,15 +20,15 @@ struct ltstrpg
   }
 };
 
-class GMSH_PluginManager
+class PluginManager
 {
  private:
-  GMSH_PluginManager();
-  static GMSH_PluginManager *_instance;
+  PluginManager();
+  static PluginManager *_instance;
   std::map<const char*, GMSH_Plugin*, ltstrpg> allPlugins;
 
  public :
-  virtual ~GMSH_PluginManager();
+  virtual ~PluginManager();
   typedef std::map<const char*, GMSH_Plugin*, ltstrpg>::iterator iter;
   
   // register all the plugins that are in $(GMSHPLUGINSHOME). (Note
@@ -36,7 +36,7 @@ class GMSH_PluginManager
   // should call the plugins 'modules'... A plugin is an executable,
   // but that can only be executed from inside another program.)
   void registerDefaultPlugins();
-  static GMSH_PluginManager *instance();
+  static PluginManager *instance();
 
   // Dynamically add a plugin pluginName.so in dirName
   void addPlugin(char *dirName, char *pluginName);
@@ -56,7 +56,7 @@ class GMSH_PluginManager
   GMSH_Plugin *find(char *pluginName);
 
   // Get The ONLY Solver Plugin
-  GMSH_Solve_Plugin *findSolverPlugin();
+  GMSH_SolverPlugin *findSolverPlugin();
 
   // Perform an action on the plugin. Default action are Run and
   // Save. Other plugins may perform other actions.

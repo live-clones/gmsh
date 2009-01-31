@@ -13,7 +13,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterFieldViewPlugin();
 }
 
-class GMSH_FieldViewPlugin : public GMSH_Post_Plugin
+class GMSH_FieldViewPlugin : public GMSH_PostPlugin
 {
  public:
   void getName(char *name) const;

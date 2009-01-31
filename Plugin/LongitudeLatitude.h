@@ -13,7 +13,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterLongituteLatitudePlugin();
 }
 
-class GMSH_LongituteLatitudePlugin : public GMSH_Post_Plugin
+class GMSH_LongituteLatitudePlugin : public GMSH_PostPlugin
 {
 public:
   void getName(char *name) const;

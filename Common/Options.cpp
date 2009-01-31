@@ -762,8 +762,8 @@ void Print_OptionsDoc()
   }
   fprintf(file, "%s@ftable @code\n", warn);
   char author[256], copyright[256], help[4096];
-  for(GMSH_PluginManager::iter it = GMSH_PluginManager::instance()->begin();
-      it != GMSH_PluginManager::instance()->end(); ++it) {
+  for(PluginManager::iter it = PluginManager::instance()->begin();
+      it != PluginManager::instance()->end(); ++it) {
     GMSH_Plugin *p = (*it).second;
     if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN) {
       p->getInfos(author, copyright, help);

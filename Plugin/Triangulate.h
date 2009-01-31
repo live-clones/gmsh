@@ -13,7 +13,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterTriangulatePlugin();
 }
 
-class GMSH_TriangulatePlugin : public GMSH_Post_Plugin
+class GMSH_TriangulatePlugin : public GMSH_PostPlugin
 {
 public:
   GMSH_TriangulatePlugin(){}

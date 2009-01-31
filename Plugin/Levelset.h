@@ -8,7 +8,7 @@
 
 #include "Plugin.h"
 
-class GMSH_LevelsetPlugin : public GMSH_Post_Plugin
+class GMSH_LevelsetPlugin : public GMSH_PostPlugin
 {
  private:
   double _invert;

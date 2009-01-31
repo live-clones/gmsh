@@ -958,7 +958,7 @@ Affectation :
     {
 #if !defined(HAVE_NO_POST)
       try {
-	GMSH_PluginManager::instance()->setPluginOption($3, $6, $8); 
+	PluginManager::instance()->setPluginOption($3, $6, $8); 
       }
       catch (...) {
 	yymsg(0, "Unknown option '%s' or plugin '%s'", $6, $3);
@@ -970,7 +970,7 @@ Affectation :
     {
 #if !defined(HAVE_NO_POST)
       try {
-	GMSH_PluginManager::instance()->setPluginOption($3, $6, $8); 
+	PluginManager::instance()->setPluginOption($3, $6, $8); 
       }
       catch (...) {
 	yymsg(0, "Unknown option '%s' or plugin '%s'", $6, $3);
@@ -1938,7 +1938,7 @@ Command :
      {
 #if !defined(HAVE_NO_POST)
        try {
-	 GMSH_PluginManager::instance()->action($3, $6, 0);
+	 PluginManager::instance()->action($3, $6, 0);
        }
        catch(...) {
 	 yymsg(0, "Unknown action '%s' or plugin '%s'", $6, $3);

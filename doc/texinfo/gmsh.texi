@@ -4140,10 +4140,10 @@ To add a new option in Gmsh:
 
 @enumerate
 @item
-create the option in the @code{Context_T} class
-(@file{Common/Context.h}) if it's a classical option, or in the
-@code{PViewOptions} class (@file{Post/PViewOptions.h}) if it's a
-post-processing view-dependent option;
+create the option in the @code{CTX} class (@file{Common/Context.h}) if
+it's a classical option, or in the @code{PViewOptions} class
+(@file{Post/PViewOptions.h}) if it's a post-processing view-dependent
+option;
 @item
 in @file{Common/DefaultOptions.h}, give a name (for the parser to be able to
 access it), a reference to a handling routine (i.e. @code{opt_XXX}) and a

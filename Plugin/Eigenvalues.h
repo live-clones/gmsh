@@ -13,7 +13,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterEigenvaluesPlugin();
 }
 
-class GMSH_EigenvaluesPlugin : public GMSH_Post_Plugin
+class GMSH_EigenvaluesPlugin : public GMSH_PostPlugin
 {
  public:
   GMSH_EigenvaluesPlugin(){}

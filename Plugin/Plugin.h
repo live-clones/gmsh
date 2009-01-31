@@ -32,7 +32,7 @@ class GMSH_Plugin
     GMSH_CAD_PLUGIN, 
     GMSH_MESH_PLUGIN, 
     GMSH_POST_PLUGIN, 
-    GMSH_SOLVE_PLUGIN 
+    GMSH_SOLVER_PLUGIN 
   } GMSH_PLUGIN_TYPE;
 
   // a dialog box for the user interface
@@ -67,7 +67,7 @@ class GMSH_Plugin
 
 // The base class for post-processing plugins. The user can either
 // modify or duplicate a post-processing view
-class GMSH_Post_Plugin : public GMSH_Plugin
+class GMSH_PostPlugin : public GMSH_Plugin
 {
  public:
   inline GMSH_PLUGIN_TYPE getType() const { return GMSH_Plugin::GMSH_POST_PLUGIN; }
@@ -90,14 +90,14 @@ class GMSH_Post_Plugin : public GMSH_Plugin
 // associate some properties to physical entities, so that we can
 // interface gmsh with a solver (ABAQUS...), i.e., create the input
 // file for the solver
-class GMSH_Solve_Plugin : public GMSH_Plugin
+class GMSH_SolverPlugin : public GMSH_Plugin
 {
  public:
   virtual int getNbOptionsStr() const { return 0; }
   virtual StringXString *getOptionStr(int iopt) { return 0; }
   virtual int getNbOptions() const { return 0; }
   virtual StringXNumber *getOption(int iopt) { return 0; };
-  inline GMSH_PLUGIN_TYPE getType() const { return GMSH_Plugin::GMSH_SOLVE_PLUGIN; }
+  inline GMSH_PLUGIN_TYPE getType() const { return GMSH_Plugin::GMSH_SOLVER_PLUGIN; }
   virtual void run() {} // do nothing
   // popup dialog box
   virtual void popupPropertiesForPhysicalEntity(int dim) = 0;

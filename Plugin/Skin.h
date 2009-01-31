@@ -15,7 +15,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterSkinPlugin();
 }
 
-class GMSH_SkinPlugin : public GMSH_Post_Plugin
+class GMSH_SkinPlugin : public GMSH_PostPlugin
 {
   typedef struct{
     double coord[12];
