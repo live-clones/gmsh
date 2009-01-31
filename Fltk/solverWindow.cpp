@@ -32,7 +32,6 @@ void solver_cb(Fl_Widget *w, void *data)
       first[i] = 1;
     init = 1;
   }
-
   if(first[num]) {
     first[num] = 0;
     char file[256], no_ext[256], ext[256], base[256];
@@ -41,6 +40,11 @@ void solver_cb(Fl_Widget *w, void *data)
     strcat(file, SINFO[num].extension.c_str());
     GUI::instance()->solver[num]->input[0]->value(file);
   }
+  // show the window before calling Solver() to avoid race condition on
+  // Windows (if the message window pops up die to an error, the window
+  // callbacks get messed up)
+  GUI::instance()->solver[num]->win->show();
+
   if(SINFO[num].nboptions) {
     std::string file = FixWindowsPath
       (GUI::instance()->solver[num]->input[0]->value());
@@ -50,7 +54,6 @@ void solver_cb(Fl_Widget *w, void *data)
     sprintf(tmp, "%s %s", SINFO[num].option_command.c_str(), tmp2);
     Solver(num, tmp);
   }
-  GUI::instance()->solver[num]->win->show();
 }
 
 static void solver_file_open_cb(Fl_Widget *w, void *data)
