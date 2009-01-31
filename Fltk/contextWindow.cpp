@@ -49,7 +49,7 @@ geometryContextWindow::geometryContextWindow(int deltaFontSize)
   int width = 31 * FL_NORMAL_SIZE;
   int height = 4 * WB + 8 * BH;
 
-  win = new paletteWindow(width, height, CTX::instance()->non_modal_windows ? true : false, 
+  win = new paletteWindow(width, height, CTX::instance()->nonModalWindows ? true : false, 
                           "Contextual Geometry Definitions");
   win->box(GMSH_WINDOW_BOX);
   {
@@ -188,7 +188,7 @@ geometryContextWindow::geometryContextWindow(int deltaFontSize)
     o->end();
   }
 
-  win->position(CTX::instance()->ctx_position[0], CTX::instance()->ctx_position[1]);
+  win->position(CTX::instance()->ctxPosition[0], CTX::instance()->ctxPosition[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;
@@ -217,7 +217,7 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
   int height = 4 * WB + 4 * BH;
 
   win = new paletteWindow
-    (width, height, CTX::instance()->non_modal_windows, "Contextual Mesh Definitions");
+    (width, height, CTX::instance()->nonModalWindows, "Contextual Mesh Definitions");
   win->box(GMSH_WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
@@ -267,7 +267,7 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
     o->end();
   }
 
-  win->position(CTX::instance()->ctx_position[0], CTX::instance()->ctx_position[1]);
+  win->position(CTX::instance()->ctxPosition[0], CTX::instance()->ctxPosition[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;

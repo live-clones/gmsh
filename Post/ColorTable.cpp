@@ -334,7 +334,7 @@ void ColorTable_Recompute(GmshColorTable * ct)
     b = b < 0 ? 0 : (b > 255 ? 255 : b);
     a = a < 0 ? 0 : (a > 255 ? 255 : a);
     
-    ct->table[i] = CTX::instance()->pack_color(r, g, b, a);
+    ct->table[i] = CTX::instance()->packColor(r, g, b, a);
   }
 
 }
@@ -372,10 +372,10 @@ void ColorTable_Print(GmshColorTable * ct, FILE * fp)
 
   strcpy(tmp1, "");
   for(i = 0; i < ct->size; i++) {
-    r = CTX::instance()->unpack_red(ct->table[i]);
-    g = CTX::instance()->unpack_green(ct->table[i]);
-    b = CTX::instance()->unpack_blue(ct->table[i]);
-    a = CTX::instance()->unpack_alpha(ct->table[i]);
+    r = CTX::instance()->unpackRed(ct->table[i]);
+    g = CTX::instance()->unpackGreen(ct->table[i]);
+    b = CTX::instance()->unpackBlue(ct->table[i]);
+    a = CTX::instance()->unpackAlpha(ct->table[i]);
     if(i && !(i % 4)) {
       if(fp)
         fprintf(fp, "%s\n", tmp1);
@@ -398,7 +398,7 @@ int ColorTable_IsAlpha(GmshColorTable * ct)
 {
   int i, a;
   for(i = 0; i < ct->size; i++) {
-    a = CTX::instance()->unpack_alpha(ct->table[i]);
+    a = CTX::instance()->unpackAlpha(ct->table[i]);
     if(a < 255)
       return 1;
   }

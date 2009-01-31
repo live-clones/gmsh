@@ -13,27 +13,27 @@ public:
   Context_T()
   {
     lc = 1.;
-    hide_unselected = 0;
+    pickElements = 0;
+    hideUnselected = 0;
     geom.tolerance = 1.e-6;
-    mesh.reverse_all_normals = 1;
-    mesh.second_order_experimental = 0;
-    pick_elements = 0;
+    mesh.reverseAllNormals = 1;
+    mesh.secondOrderExperimental = 0;
   }
   double lc;
-  int hide_unselected;
-  int pick_elements;
+  int pickElements;
+  int hideUnselected;
   struct{
     double tolerance;
   } geom;
   struct{
-    int reverse_all_normals;
-    int second_order_experimental;
+    int reverseAllNormals;
+    int secondOrderExperimental;
   } mesh;
-  unsigned int PACK_COLOR(int,int,int,int){ return 0; }
-  int UNPACK_RED(unsigned int){ return 0; }
-  int UNPACK_GREEN(unsigned int){ return 0; }
-  int UNPACK_BLUE(unsigned int){ return 0; }
-  int UNPACK_ALPHA(unsigned int){ return 0; }
+  unsigned int packColor(int,int,int,int){ return 0; }
+  int unpackRed(unsigned int){ return 0; }
+  int unpackGreen(unsigned int){ return 0; }
+  int unpackBlue(unsigned int){ return 0; }
+  int unpackAlpha(unsigned int){ return 0; }
 };
 
 class smooth_normals{

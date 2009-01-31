@@ -202,7 +202,7 @@ int OCCEdge::minimumMeshSegments() const
   if(geomType() == Line)
     np = GEdge::minimumMeshSegments();
   else 
-    np = CTX::instance()->mesh.min_curv_points - 1;
+    np = CTX::instance()->mesh.minCurvPoints - 1;
   
   // if the edge is closed, ensure that at least 3 points are
   // generated in the 1D mesh (4 segments, one of which is
@@ -217,7 +217,7 @@ int OCCEdge::minimumDrawSegments() const
   if(geomType() == Line)
     return GEdge::minimumDrawSegments();
   else
-    return CTX::instance()->geom.num_sub_edges * GEdge::minimumDrawSegments();
+    return CTX::instance()->geom.numSubEdges * GEdge::minimumDrawSegments();
 }
 
 double OCCEdge::curvature(double par) const 

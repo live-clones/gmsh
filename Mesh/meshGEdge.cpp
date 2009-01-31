@@ -262,7 +262,7 @@ void meshGEdge::operator() (GEdge *ge)
   if(ge->geomType() == GEntity::DiscreteCurve) return;
   if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
   if(ge->meshAttributes.Method == MESH_NONE) return;
-  if(CTX::instance()->mesh.mesh_only_visible && !ge->getVisibility()) return;
+  if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) return;
 
   deMeshGEdge dem;
   dem(ge);
@@ -286,7 +286,7 @@ void meshGEdge::operator() (GEdge *ge)
     Msg::Debug("Curve %d has a zero length", ge->tag());
 
   // TEST
-  if (length < CTX::instance()->mesh.tolerance_edge_length) ge->setTooSmall(true);
+  if (length < CTX::instance()->mesh.toleranceEdgeLength) ge->setTooSmall(true);
 
   // Integrate detJ/lc du 
   double a;
@@ -300,10 +300,10 @@ void meshGEdge::operator() (GEdge *ge)
     N = ge->meshAttributes.nbPointsTransfinite;
   }
   else{
-    if(CTX::instance()->mesh.lc_integration_precision > 1.e-8){
+    if(CTX::instance()->mesh.lcIntegrationPrecision > 1.e-8){
       std::vector<IntPoint> lcPoints;
       Integration(ge, t_begin, t_end, F_Lc_usingInterpLcBis, lcPoints, 
-                  CTX::instance()->mesh.lc_integration_precision);
+                  CTX::instance()->mesh.lcIntegrationPrecision);
       buildInterpLc(lcPoints);
       // printInterpLc("toto1.dat");
       // smoothInterpLc(20);
@@ -312,7 +312,7 @@ void meshGEdge::operator() (GEdge *ge)
     }
     else{
       a = Integration(ge, t_begin, t_end, F_Lc, Points,
-		      CTX::instance()->mesh.lc_integration_precision);
+		      CTX::instance()->mesh.lcIntegrationPrecision);
     }
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }

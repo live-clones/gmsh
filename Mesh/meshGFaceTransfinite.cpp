@@ -297,8 +297,8 @@ int MeshTransfiniteSurface(GFace *gf)
 
   // should we apply the elliptic smoother?
   int numSmooth = 0;
-  if(gf->meshAttributes.transfiniteSmoothing < 0 && CTX::instance()->mesh.nb_smoothing > 1)
-    numSmooth = CTX::instance()->mesh.nb_smoothing;
+  if(gf->meshAttributes.transfiniteSmoothing < 0 && CTX::instance()->mesh.nbSmoothing > 1)
+    numSmooth = CTX::instance()->mesh.nbSmoothing;
   else if(gf->meshAttributes.transfiniteSmoothing > 0)
     numSmooth = gf->meshAttributes.transfiniteSmoothing;
 

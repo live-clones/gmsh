@@ -38,7 +38,7 @@ void GMSH_CutSpherePlugin::draw(void *context)
   glGetIntegerv(GL_POLYGON_MODE, mode);
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
-  glLineWidth(CTX::instance()->line_width);
+  glLineWidth(CTX::instance()->lineWidth);
   drawContext *ctx = (drawContext*)context;
   ctx->drawSphere(CutSphereOptions_Number[3].def,
                   CutSphereOptions_Number[0].def,

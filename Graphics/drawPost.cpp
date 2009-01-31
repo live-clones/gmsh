@@ -53,12 +53,12 @@ static SVector3 getPointNormal(PView *p, double v)
 {
   PViewOptions *opt = p->getOptions();
   SVector3 n(0., 0., 0.);
-  if(opt->PointType > 0){
+  if(opt->pointType > 0){
     // when we draw spheres, we use the normalized value (between 0
     // and 1) stored in the first component of the normal to modulate
     // the radius
-    double d = opt->TmpMax - opt->TmpMin;
-    n[0] = (v - opt->TmpMin) / (d ? d : 1.);
+    double d = opt->tmpMax - opt->tmpMin;
+    n[0] = (v - opt->tmpMin) / (d ? d : 1.);
   }
   return n;
 }
@@ -68,14 +68,14 @@ static void getLineNormal(PView *p, double x[2], double y[2], double z[2],
 {
   PViewOptions *opt = p->getOptions();
 
-  if(opt->LineType > 0){
+  if(opt->lineType > 0){
     if(v){
       // when we draw tapered cylinders, we use the normalized values
       // (between 0 and 1) stored in the first component of the
       // normals to modulate the width
-      double d = opt->TmpMax - opt->TmpMin;
-      n[0][0] = (v[0] - opt->TmpMin) / (d ? d : 1.);
-      n[1][0] = (v[1] - opt->TmpMin) / (d ? d : 1.);
+      double d = opt->tmpMax - opt->tmpMin;
+      n[0][0] = (v[0] - opt->tmpMin) / (d ? d : 1.);
+      n[1][0] = (v[1] - opt->tmpMin) / (d ? d : 1.);
     }
     else{
       // when we don't have values we use maximum width cylinders
@@ -118,32 +118,32 @@ static bool getExternalValues(PView *p, int index, int ient, int iele,
   for(int i = 0; i < numNodes; i++)
     for(int j = 0; j < numComp; j++)
       val2[i][j] = val[i][j];
-  opt->ExternalMin = opt->TmpMin;
-  opt->ExternalMax = opt->TmpMax;
+  opt->externalMin = opt->tmpMin;
+  opt->externalMax = opt->tmpMax;
 
   if(index < 0 || index >= (int)PView::list.size()) return false;
 
   PView *p2 = PView::list[index];
   PViewData *data2 = p2->getData();
 
-  if(opt->TimeStep < data2->getNumTimeSteps() && 
-     iele < data2->getNumElements(opt->TimeStep, ient)){
-    if(data2->getNumNodes(opt->TimeStep, ient, iele) == numNodes){
-      numComp2 = data2->getNumComponents(opt->TimeStep, ient, iele);
+  if(opt->timeStep < data2->getNumTimeSteps() && 
+     iele < data2->getNumElements(opt->timeStep, ient)){
+    if(data2->getNumNodes(opt->timeStep, ient, iele) == numNodes){
+      numComp2 = data2->getNumComponents(opt->timeStep, ient, iele);
       for(int i = 0; i < numNodes; i++)
         for(int j = 0; j < numComp2; j++)
-          data2->getValue(opt->TimeStep, ient, iele, i, j, val2[i][j]);
-      if(opt->RangeType == PViewOptions::Custom){
-        opt->ExternalMin = opt->CustomMin;
-        opt->ExternalMax = opt->CustomMax;
+          data2->getValue(opt->timeStep, ient, iele, i, j, val2[i][j]);
+      if(opt->rangeType == PViewOptions::Custom){
+        opt->externalMin = opt->customMin;
+        opt->externalMax = opt->customMax;
       }
-      else if(opt->RangeType == PViewOptions::PerTimeStep){
-        opt->ExternalMin = data2->getMin(opt->TimeStep);
-        opt->ExternalMax = data2->getMax(opt->TimeStep);
+      else if(opt->rangeType == PViewOptions::PerTimeStep){
+        opt->externalMin = data2->getMin(opt->timeStep);
+        opt->externalMax = data2->getMax(opt->timeStep);
       }
       else{
-        opt->ExternalMin = data2->getMin();
-        opt->ExternalMax = data2->getMax();
+        opt->externalMin = data2->getMin();
+        opt->externalMax = data2->getMax();
       }
       return true;
     }
@@ -165,15 +165,15 @@ static void applyGeneralRaise(PView *p, int numNodes, int numComp,
     double values[] = { d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8],
                         xyz[k][0], xyz[k][1], xyz[k][2] };
     for(int i = 0; i < 3; i++) {
-      if(opt->GenRaise_f[i])
-        xyz[k][i] += opt->GenRaiseFactor * evaluator_evaluate
-          (opt->GenRaise_f[i], sizeof(names) / sizeof(names[0]), names, values);
+      if(opt->genRaiseFunction[i])
+        xyz[k][i] += opt->genRaiseFactor * evaluator_evaluate
+          (opt->genRaiseFunction[i], sizeof(names) / sizeof(names[0]), names, values);
     }
 #else
     for(int i = 0; i < 3; i++){
-      int comp = (int)opt->GenRaise_f[i];
+      int comp = (int)opt->genRaiseFunction[i];
       if(comp >= 0)
-        xyz[k][i] += opt->GenRaiseFactor * d[comp];
+        xyz[k][i] += opt->genRaiseFactor * d[comp];
     }
 #endif
   }
@@ -185,7 +185,7 @@ static void changeCoordinates(PView *p, int ient, int iele,
 {
   PViewOptions *opt = p->getOptions();
 
-  if(opt->Explode != 1.) {
+  if(opt->explode != 1.) {
     double barycenter[3] = {0., 0., 0.};
     for(int i = 0; i < numNodes; i++)
       for(int j = 0; j < 3; j++)
@@ -194,39 +194,39 @@ static void changeCoordinates(PView *p, int ient, int iele,
       barycenter[j] /= (double)numNodes;
     for(int i = 0; i < numNodes; i++)
       for(int j = 0; j < 3; j++)
-        xyz[i][j] = barycenter[j] + opt->Explode * (xyz[i][j] - barycenter[j]);
+        xyz[i][j] = barycenter[j] + opt->explode * (xyz[i][j] - barycenter[j]);
   }
   
-  if(opt->Transform[0][0] != 1. || opt->Transform[0][1] != 0. || 
-     opt->Transform[0][2] != 0. || opt->Transform[1][0] != 0. || 
-     opt->Transform[1][1] != 1. || opt->Transform[1][2] != 0. ||
-     opt->Transform[2][0] != 0. || opt->Transform[2][1] != 0. || 
-     opt->Transform[2][2] != 1.){
+  if(opt->transform[0][0] != 1. || opt->transform[0][1] != 0. || 
+     opt->transform[0][2] != 0. || opt->transform[1][0] != 0. || 
+     opt->transform[1][1] != 1. || opt->transform[1][2] != 0. ||
+     opt->transform[2][0] != 0. || opt->transform[2][1] != 0. || 
+     opt->transform[2][2] != 1.){
     for(int i = 0; i < numNodes; i++) {
       double old[3] = {xyz[i][0], xyz[i][1], xyz[i][2]};
       for(int j = 0; j < 3; j++){
         xyz[i][j] = 0.;
         for(int k = 0; k < 3; k++)
-          xyz[i][j] += opt->Transform[j][k] * old[k];
+          xyz[i][j] += opt->transform[j][k] * old[k];
       }
     }
   }
   
-  if(opt->Offset[0] || opt->Offset[1] || opt->Offset[2]){
+  if(opt->offset[0] || opt->offset[1] || opt->offset[2]){
     for(int i = 0; i < numNodes; i++)
       for(int j = 0; j < 3; j++)
-        xyz[i][j] += opt->Offset[j];
+        xyz[i][j] += opt->offset[j];
   }
   
-  if(opt->Raise[0] || opt->Raise[1] || opt->Raise[2]){
+  if(opt->raise[0] || opt->raise[1] || opt->raise[2]){
     for(int i = 0; i < numNodes; i++){
       double v = ComputeScalarRep(numComp, val[i]);
       for(int j = 0; j < 3; j++)
-        xyz[i][j] += opt->Raise[j] * v;
+        xyz[i][j] += opt->raise[j] * v;
     }
   }
 
-  if(opt->NormalRaise && numEdges >= 1 && numEdges <= 4){
+  if(opt->normalRaise && numEdges >= 1 && numEdges <= 4){
     SVector3 n;
     if(numEdges == 1){
       // assumes lines in z=const plane, and raises in that plane
@@ -243,21 +243,21 @@ static void changeCoordinates(PView *p, int ient, int iele,
     for(int i = 0; i < numNodes; i++){
       double v = ComputeScalarRep(numComp, val[i]);
       for(int j = 0; j < 3; j++)
-        xyz[i][j] += n[j] * opt->NormalRaise * v;
+        xyz[i][j] += n[j] * opt->normalRaise * v;
     }
   }
 
-  if(numComp == 3 && opt->VectorType == PViewOptions::Displacement){
+  if(numComp == 3 && opt->vectorType == PViewOptions::Displacement){
     for(int i = 0; i < numNodes; i++){
       for(int j = 0; j < 3; j++)
-        xyz[i][j] += opt->DisplacementFactor * val[i][j];
+        xyz[i][j] += opt->displacementFactor * val[i][j];
     }
   }
 
-  if(opt->UseGenRaise){
+  if(opt->useGenRaise){
     int numComp2;
     double val2[NMAX][9];
-    getExternalValues(p, opt->ViewIndexForGenRaise, ient, iele, numNodes, 
+    getExternalValues(p, opt->viewIndexForGenRaise, ient, iele, numNodes, 
                       numComp, val, numComp2, val2);
     applyGeneralRaise(p, numNodes, numComp2, val2, xyz);
   }
@@ -265,10 +265,10 @@ static void changeCoordinates(PView *p, int ient, int iele,
 
 static double evalClipPlane(int clip, double x, double y, double z)
 {
-  return CTX::instance()->clip_plane[clip][0] * x + 
-    CTX::instance()->clip_plane[clip][1] * y + 
-    CTX::instance()->clip_plane[clip][2] * z + 
-    CTX::instance()->clip_plane[clip][3];
+  return CTX::instance()->clipPlane[clip][0] * x + 
+    CTX::instance()->clipPlane[clip][1] * y + 
+    CTX::instance()->clipPlane[clip][2] * z + 
+    CTX::instance()->clipPlane[clip][3];
 }
 
 static double intersectClipPlane(int clip, int numNodes, double xyz[NMAX][3])
@@ -284,15 +284,15 @@ static double intersectClipPlane(int clip, int numNodes, double xyz[NMAX][3])
 static bool isElementVisible(PViewOptions *opt, int dim, int numNodes, 
                              double xyz[NMAX][3])
 {
-  if(!CTX::instance()->clip_whole_elements) return true;
+  if(!CTX::instance()->clipWholeElements) return true;
   bool hidden = false;
   for(int clip = 0; clip < 6; clip++){
-    if(opt->Clip & (1 << clip)){
-      if(dim < 3 && CTX::instance()->clip_only_volume){
+    if(opt->clip & (1 << clip)){
+      if(dim < 3 && CTX::instance()->clipOnlyVolume){
       }
       else{
 	double d = intersectClipPlane(clip, numNodes, xyz);
-	if(dim == 3 && CTX::instance()->clip_only_draw_intersecting_volume && d){
+	if(dim == 3 && CTX::instance()->clipOnlyDrawIntersectingVolume && d){
 	  hidden = true;
 	  break;
 	}
@@ -321,13 +321,13 @@ static void addScalarPoint(PView *p, double xyz[NMAX][3], double val[NMAX][9],
 
   PViewOptions *opt = p->getOptions();
 
-  double vmin = opt->TmpMin, vmax = opt->TmpMax;
-  if(opt->SaturateValues) saturate(1, val, vmin, vmax, i0);
+  double vmin = opt->tmpMin, vmax = opt->tmpMax;
+  if(opt->saturateValues) saturate(1, val, vmin, vmax, i0);
 
   if(val[i0][0] >= vmin && val[i0][0] <= vmax){
     unsigned int col = opt->getColor(val[i0][0], vmin, vmax, false, 
-                                     (opt->IntervalsType == PViewOptions::Discrete) ? 
-                                     opt->NbIso : -1);
+                                     (opt->intervalsType == PViewOptions::Discrete) ? 
+                                     opt->nbIso : -1);
     SVector3 n = getPointNormal(p, val[i0][0]);
     p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &col, 0, unique);
   }
@@ -357,23 +357,23 @@ static void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9],
 
   PViewOptions *opt = p->getOptions();
 
-  if(opt->Boundary > 0){
-    opt->Boundary--;
+  if(opt->boundary > 0){
+    opt->boundary--;
     addScalarPoint(p, xyz, val, pre, i0, true);
     addScalarPoint(p, xyz, val, pre, i1, true);
-    opt->Boundary++;
+    opt->boundary++;
     return;
   }
 
-  double vmin = opt->TmpMin, vmax = opt->TmpMax;
-  if(opt->SaturateValues) saturate(2, val, vmin, vmax, i0, i1);
+  double vmin = opt->tmpMin, vmax = opt->tmpMax;
+  if(opt->saturateValues) saturate(2, val, vmin, vmax, i0, i1);
 
   double x[2] = {xyz[i0][0], xyz[i1][0]};
   double y[2] = {xyz[i0][1], xyz[i1][1]};
   double z[2] = {xyz[i0][2], xyz[i1][2]};
   double v[2] = {val[i0][0], val[i1][0]};
 
-  if(opt->IntervalsType == PViewOptions::Continuous){
+  if(opt->intervalsType == PViewOptions::Continuous){
     SVector3 n[2];
     getLineNormal(p, x, y, z, v, n, true);
     if(val[i0][0] >= vmin && val[i0][0] <= vmax &&
@@ -395,15 +395,15 @@ static void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9],
     }
   }
 
-  if(opt->IntervalsType == PViewOptions::Discrete){
-    for(int k = 0; k < opt->NbIso; k++){
-      if(vmin == vmax) k = opt->NbIso / 2;
-      double min = opt->getScaleValue(k, opt->NbIso + 1, vmin, vmax);
-      double max = opt->getScaleValue(k + 1, opt->NbIso + 1, vmin, vmax);
+  if(opt->intervalsType == PViewOptions::Discrete){
+    for(int k = 0; k < opt->nbIso; k++){
+      if(vmin == vmax) k = opt->nbIso / 2;
+      double min = opt->getScaleValue(k, opt->nbIso + 1, vmin, vmax);
+      double max = opt->getScaleValue(k + 1, opt->nbIso + 1, vmin, vmax);
       double x2[2], y2[2], z2[2], v2[2];
       int nb = CutLine(x, y, z, v, min, max, x2, y2, z2, v2);
       if(nb == 2){
-        unsigned int color = opt->getColor(k, opt->NbIso);
+        unsigned int color = opt->getColor(k, opt->nbIso);
         unsigned int col[2] = {color, color};
         SVector3 n[2];
         getLineNormal(p, x2, y2, z2, v2, n, true);
@@ -413,14 +413,14 @@ static void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9],
     }
   }
   
-  if(opt->IntervalsType == PViewOptions::Iso){
-    for(int k = 0; k < opt->NbIso; k++) {
-      if(vmin == vmax) k = opt->NbIso / 2;
-      double iso = opt->getScaleValue(k, opt->NbIso, vmin, vmax);
+  if(opt->intervalsType == PViewOptions::Iso){
+    for(int k = 0; k < opt->nbIso; k++) {
+      if(vmin == vmax) k = opt->nbIso / 2;
+      double iso = opt->getScaleValue(k, opt->nbIso, vmin, vmax);
       double x2[1], y2[1], z2[1];
       int nb = IsoLine(x, y, z, v, iso, x2, y2, z2);
       if(nb == 1){
-        unsigned int color = opt->getColor(k, opt->NbIso);
+        unsigned int color = opt->getColor(k, opt->nbIso);
         SVector3 n = getPointNormal(p, iso);
         p->va_points->add(x2, y2, z2, &n, &color, 0, unique);
       }
@@ -444,7 +444,7 @@ static void addOutlineTriangle(PView *p, double xyz[NMAX][3], unsigned int color
     double z[2] = {xyz[il[i][0]][2], xyz[il[i][1]][2]};
     SVector3 n[2] = {nfac, nfac};
     unsigned int col[2] = {color, color};
-    if(opt->SmoothNormals){
+    if(opt->smoothNormals){
       for(int j = 0; j < 2; j++){
         if(pre) p->normals->add(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
         else p->normals->get(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
@@ -463,16 +463,16 @@ static void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9]
 
   const int il[3][2] = {{i0, i1}, {i1, i2}, {i2, i0}};
 
-  if(opt->Boundary > 0){
-    opt->Boundary--;
+  if(opt->boundary > 0){
+    opt->boundary--;
     for(int i = 0; i < 3; i++)
       addScalarLine(p, xyz, val, pre, il[i][0], il[i][1], true);
-    opt->Boundary++;
+    opt->boundary++;
     return;
   }
 
-  double vmin = opt->TmpMin, vmax = opt->TmpMax;
-  if(opt->SaturateValues) saturate(3, val, vmin, vmax, i0, i1, i2);
+  double vmin = opt->tmpMin, vmax = opt->tmpMax;
+  if(opt->saturateValues) saturate(3, val, vmin, vmax, i0, i1, i2);
 
   double x[3] = {xyz[i0][0], xyz[i1][0], xyz[i2][0]};
   double y[3] = {xyz[i0][1], xyz[i1][1], xyz[i2][1]};
@@ -481,14 +481,14 @@ static void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9]
 
   SVector3 nfac = normal3(xyz, i0, i1, i2);
 
-  if(opt->IntervalsType == PViewOptions::Continuous){
+  if(opt->intervalsType == PViewOptions::Continuous){
     if(val[i0][0] >= vmin && val[i0][0] <= vmax &&
        val[i1][0] >= vmin && val[i1][0] <= vmax &&
        val[i2][0] >= vmin && val[i2][0] <= vmax){
       SVector3 n[3] = {nfac, nfac, nfac};
       unsigned int col[3];
       for(int i = 0; i < 3; i++){
-        if(opt->SmoothNormals){
+        if(opt->smoothNormals){
           if(pre) p->normals->add(x[i], y[i], z[i], n[i][0], n[i][1], n[i][2]);
           else p->normals->get(x[i], y[i], z[i], n[i][0], n[i][1], n[i][2]);
         }
@@ -508,7 +508,7 @@ static void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9]
           SVector3 n[3] = {nfac, nfac, nfac};
           unsigned int col[3];
           for(int i = 0; i < 3; i++){
-            if(opt->SmoothNormals){
+            if(opt->smoothNormals){
               if(pre) p->normals->add(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
               else p->normals->get(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
             }
@@ -520,22 +520,22 @@ static void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9]
     }
   }
 
-  if(opt->IntervalsType == PViewOptions::Discrete){
-    for(int k = 0; k < opt->NbIso; k++){
-      if(vmin == vmax) k = opt->NbIso / 2;
-      double min = opt->getScaleValue(k, opt->NbIso + 1, vmin, vmax);
-      double max = opt->getScaleValue(k + 1, opt->NbIso + 1, vmin, vmax);
+  if(opt->intervalsType == PViewOptions::Discrete){
+    for(int k = 0; k < opt->nbIso; k++){
+      if(vmin == vmax) k = opt->nbIso / 2;
+      double min = opt->getScaleValue(k, opt->nbIso + 1, vmin, vmax);
+      double max = opt->getScaleValue(k + 1, opt->nbIso + 1, vmin, vmax);
       double x2[10], y2[10], z2[10], v2[10];
       int nb = CutTriangle(x, y, z, v, min, max, x2, y2, z2, v2);
       if(nb >= 3){
-        unsigned int color = opt->getColor(k, opt->NbIso);
+        unsigned int color = opt->getColor(k, opt->nbIso);
         unsigned int col[3] = {color, color, color};
         for(int j = 2; j < nb; j++){
           double x3[3] = {x2[0], x2[j - 1], x2[j]};
           double y3[3] = {y2[0], y2[j - 1], y2[j]};
           double z3[3] = {z2[0], z2[j - 1], z2[j]};
           SVector3 n[3] = {nfac, nfac, nfac};
-          if(opt->SmoothNormals){
+          if(opt->smoothNormals){
             for(int i = 0; i < 3; i++){
               if(pre) p->normals->add(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
               else p->normals->get(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
@@ -548,17 +548,17 @@ static void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9]
     }
   }
   
-  if(opt->IntervalsType == PViewOptions::Iso){
-    for(int k = 0; k < opt->NbIso; k++) {
-      if(vmin == vmax) k = opt->NbIso / 2;
-      double iso = opt->getScaleValue(k, opt->NbIso, vmin, vmax);
+  if(opt->intervalsType == PViewOptions::Iso){
+    for(int k = 0; k < opt->nbIso; k++) {
+      if(vmin == vmax) k = opt->nbIso / 2;
+      double iso = opt->getScaleValue(k, opt->nbIso, vmin, vmax);
       double x2[3], y2[3], z2[3];
       int nb = IsoTriangle(x, y, z, v, iso, x2, y2, z2);
       if(nb == 2){
-        unsigned int color = opt->getColor(k, opt->NbIso);
+        unsigned int color = opt->getColor(k, opt->nbIso);
         unsigned int col[2] = {color, color};
         SVector3 n[2] = {nfac, nfac};
-        if(opt->SmoothNormals){
+        if(opt->smoothNormals){
           for(int i = 0; i < 2; i++){
             if(pre) p->normals->add(x2[i], y2[i], z2[i], n[i][0], n[i][1], n[i][2]);
             else p->normals->get(x2[i], y2[i], z2[i], n[i][0], n[i][1], n[i][2]);
@@ -588,7 +588,7 @@ static void addOutlineQuadrangle(PView *p, double xyz[NMAX][3], unsigned int col
     double z[2] = {xyz[il[i][0]][2], xyz[il[i][1]][2]};
     SVector3 n[2] = {nfac, nfac};
     unsigned int col[2] = {color, color};
-    if(opt->SmoothNormals){
+    if(opt->smoothNormals){
       for(int j = 0; j < 2; j++){
         if(pre) p->normals->add(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
         else p->normals->get(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
@@ -608,11 +608,11 @@ static void addScalarQuadrangle(PView *p, double xyz[NMAX][3], double val[NMAX][
   const int il[4][2] = {{i0, i1}, {i1, i2}, {i2, i3}, {i3, i0}};
   const int it[2][3] = {{i0, i1, i2}, {i0, i2, i3}};
 
-  if(opt->Boundary > 0){
-    opt->Boundary--;
+  if(opt->boundary > 0){
+    opt->boundary--;
     for(int i = 0; i < 4; i++)
       addScalarLine(p, xyz, val, pre, il[i][0], il[i][1], true);
-    opt->Boundary++;
+    opt->boundary++;
     return;
   }
   
@@ -635,33 +635,33 @@ static void addScalarTetrahedron(PView *p, double xyz[NMAX][3], double val[NMAX]
 
   const int it[4][3] = {{i0, i2, i1}, {i0, i1, i3}, {i0, i3, i2}, {i3, i1, i2}};
 
-  if(opt->Boundary > 0 ||
-     opt->IntervalsType == PViewOptions::Continuous ||
-     opt->IntervalsType == PViewOptions::Discrete){
-    bool skin = (opt->Boundary > 0) ? false : opt->DrawSkinOnly;
-    opt->Boundary--;
+  if(opt->boundary > 0 ||
+     opt->intervalsType == PViewOptions::Continuous ||
+     opt->intervalsType == PViewOptions::Discrete){
+    bool skin = (opt->boundary > 0) ? false : opt->drawSkinOnly;
+    opt->boundary--;
     for(int i = 0; i < 4; i++)
       addScalarTriangle(p, xyz, val, pre, it[i][0], it[i][1], it[i][2], true, skin);
-    opt->Boundary++;
+    opt->boundary++;
     return;
   }
 
-  double vmin = opt->TmpMin, vmax = opt->TmpMax;
-  if(opt->SaturateValues) saturate(4, val, vmin, vmax, i0, i1, i2, i3);
+  double vmin = opt->tmpMin, vmax = opt->tmpMax;
+  if(opt->saturateValues) saturate(4, val, vmin, vmax, i0, i1, i2, i3);
 
   double x[4] = {xyz[i0][0], xyz[i1][0], xyz[i2][0], xyz[i3][0]};
   double y[4] = {xyz[i0][1], xyz[i1][1], xyz[i2][1], xyz[i3][1]};
   double z[4] = {xyz[i0][2], xyz[i1][2], xyz[i2][2], xyz[i3][2]};
   double v[4] = {val[i0][0], val[i1][0], val[i2][0], val[i3][0]};
 
-  if(opt->IntervalsType == PViewOptions::Iso){
-    for(int k = 0; k < opt->NbIso; k++) {
-      if(vmin == vmax) k = opt->NbIso / 2;
-      double iso = opt->getScaleValue(k, opt->NbIso, vmin, vmax);
+  if(opt->intervalsType == PViewOptions::Iso){
+    for(int k = 0; k < opt->nbIso; k++) {
+      if(vmin == vmax) k = opt->nbIso / 2;
+      double iso = opt->getScaleValue(k, opt->nbIso, vmin, vmax);
       double x2[NMAX], y2[NMAX], z2[NMAX], nn[3];
       int nb = IsoSimplex(x, y, z, v, iso, x2, y2, z2, nn);
       if(nb >= 3){
-        unsigned int color = opt->getColor(k, opt->NbIso);
+        unsigned int color = opt->getColor(k, opt->nbIso);
         unsigned int col[3] = {color, color, color};
         for(int j = 2; j < nb; j++){
           double x3[3] = {x2[0], x2[j - 1], x2[j]};
@@ -670,7 +670,7 @@ static void addScalarTetrahedron(PView *p, double xyz[NMAX][3], double val[NMAX]
           SVector3 n[3];
           for(int i = 0; i < 3; i++){
             n[i][0] = nn[0]; n[i][1] = nn[1]; n[i][2] = nn[2];
-            if(opt->SmoothNormals){
+            if(opt->smoothNormals){
               if(pre) p->normals->add(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
               else p->normals->get(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
             }
@@ -704,11 +704,11 @@ static void addScalarHexahedron(PView *p, double xyz[NMAX][3], double val[NMAX][
   const int is[6][4] = {{0, 1, 3, 7}, {0, 4, 1, 7}, {1, 4, 5, 7},
                         {1, 2, 3, 7}, {1, 6, 2, 7}, {1, 5, 6, 7}};
 
-  if(opt->Boundary > 0){
-    opt->Boundary--;
+  if(opt->boundary > 0){
+    opt->boundary--;
     for(int i = 0; i < 6; i++)
       addScalarQuadrangle(p, xyz, val, pre, iq[i][0], iq[i][1], iq[i][2], iq[i][3], true);
-    opt->Boundary++;
+    opt->boundary++;
     return;
   }
   
@@ -737,13 +737,13 @@ static void addScalarPrism(PView *p, double xyz[NMAX][3], double val[NMAX][9],
   const int it[2][3] = {{0, 2, 1}, {3, 4, 5}};
   const int is[3][4] = {{0, 1, 2, 3}, {3, 4, 5, 2}, {1, 2, 4, 3}};
 
-  if(opt->Boundary > 0){
-    opt->Boundary--;
+  if(opt->boundary > 0){
+    opt->boundary--;
     for(int i = 0; i < 3; i++)
       addScalarQuadrangle(p, xyz, val, pre, iq[i][0], iq[i][1], iq[i][2], iq[i][3], true);
     for(int i = 0; i < 2; i++)
       addScalarTriangle(p, xyz, val, pre, it[i][0], it[i][1], it[i][2], true);
-    opt->Boundary++;
+    opt->boundary++;
     return;
   }
   
@@ -769,12 +769,12 @@ static void addScalarPyramid(PView *p, double xyz[NMAX][3], double val[NMAX][9],
   const int it[4][3] = {{0, 1, 4}, {3, 0, 4}, {1, 2, 4}, {2, 3, 4}};
   const int is[2][4] = {{0, 1, 2, 4}, {2, 3, 0, 4}};
 
-  if(opt->Boundary > 0){
-    opt->Boundary--;
+  if(opt->boundary > 0){
+    opt->boundary--;
     addScalarQuadrangle(p, xyz, val, pre, 0, 3, 2, 1, true);
     for(int i = 0; i < 4; i++)
       addScalarTriangle(p, xyz, val, pre, it[i][0], it[i][1], it[i][2], true);
-    opt->Boundary++;
+    opt->boundary++;
     return;
   }
 
@@ -822,24 +822,24 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
 
   int numComp2;
   double val2[NMAX][9];
-  getExternalValues(p, opt->ExternalViewIndex, ient, iele, numNodes, 
+  getExternalValues(p, opt->externalViewIndex, ient, iele, numNodes, 
                     3, val, numComp2, val2);
 
-  if(opt->VectorType == PViewOptions::Displacement){
+  if(opt->vectorType == PViewOptions::Displacement){
     for(int i = 0; i < numNodes; i++)
       val2[i][0] = ComputeScalarRep(numComp2, val2[i]);
 
     // add scalar element with correct min/max
-    double min = opt->TmpMin, max = opt->TmpMax;
-    opt->TmpMin = opt->ExternalMin;
-    opt->TmpMax = opt->ExternalMax;
+    double min = opt->tmpMin, max = opt->tmpMax;
+    opt->tmpMin = opt->externalMin;
+    opt->tmpMax = opt->externalMax;
     addScalarElement(p, numEdges, xyz, val2, pre);
-    opt->TmpMin = min;
-    opt->TmpMax = max;
+    opt->tmpMin = min;
+    opt->tmpMax = max;
 
     // add point trajectories
-    if(!pre && numNodes == 1 && opt->TimeStep > 0 && opt->LineWidth){
-      for(int ts = 0; ts < opt->TimeStep; ts++){
+    if(!pre && numNodes == 1 && opt->timeStep > 0 && opt->lineWidth){
+      for(int ts = 0; ts < opt->timeStep; ts++){
         double xyz0[3], dxyz[3][2];
         for(int j = 0; j < 3; j++){
           data->getNode(ts, ient, iele, 0, xyz0[0], xyz0[1], xyz0[2]);
@@ -852,11 +852,11 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
           norm[i] = sqrt(dxyz[0][i] * dxyz[0][i] + 
                          dxyz[1][i] * dxyz[1][i] + 
                          dxyz[2][i] * dxyz[2][i]);
-          col[i] = opt->getColor(norm[i], opt->TmpMin, opt->TmpMax);
+          col[i] = opt->getColor(norm[i], opt->tmpMin, opt->tmpMax);
         }
         for(int j = 0; j < 3; j++){     
-          dxyz[j][0] = xyz0[j] + dxyz[j][0] * opt->DisplacementFactor;
-          dxyz[j][1] = xyz0[j] + dxyz[j][1] * opt->DisplacementFactor;
+          dxyz[j][0] = xyz0[j] + dxyz[j][0] * opt->displacementFactor;
+          dxyz[j][1] = xyz0[j] + dxyz[j][1] * opt->displacementFactor;
         }
         SVector3 n[2];
         getLineNormal(p, dxyz[0], dxyz[1], dxyz[2], norm, n, true);
@@ -868,13 +868,13 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
 
   if(pre) return;
 
-  if(opt->GlyphLocation == PViewOptions::Vertex){
+  if(opt->glyphLocation == PViewOptions::Vertex){
     for(int i = 0; i < numNodes; i++){
       double v2 = ComputeScalarRep(numComp2, val2[i]);
-      if(v2 >= opt->ExternalMin && v2 <= opt->ExternalMax){
-        unsigned int color = opt->getColor(v2, opt->ExternalMin, opt->ExternalMax, false,
-                                           (opt->IntervalsType == PViewOptions::Discrete) ? 
-                                           opt->NbIso : -1);
+      if(v2 >= opt->externalMin && v2 <= opt->externalMax){
+        unsigned int color = opt->getColor(v2, opt->externalMin, opt->externalMax, false,
+                                           (opt->intervalsType == PViewOptions::Discrete) ? 
+                                           opt->nbIso : -1);
         unsigned int col[2] = {color, color};
         double dxyz[3][2];
         for(int j = 0; j < 3; j++){
@@ -886,7 +886,7 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
     }
   }
 
-  if(opt->GlyphLocation == PViewOptions::COG){
+  if(opt->glyphLocation == PViewOptions::COG){
     SPoint3 pc(0., 0., 0.);
     double d[3] = {0., 0., 0.};
     double d2[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
@@ -903,11 +903,11 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
     // need tolerance since we compare computed results (the average)
     // instead of the raw data used to compute bounds
     double v2 = ComputeScalarRep(numComp2, d2);
-    if(v2 >= opt->ExternalMin * (1. - 1.e-15) &&
-       v2 <= opt->ExternalMax * (1. + 1.e-15)){
-      unsigned int color = opt->getColor(v2, opt->ExternalMin, opt->ExternalMax, false,
-                                         (opt->IntervalsType == PViewOptions::Discrete) ? 
-                                         opt->NbIso : -1);
+    if(v2 >= opt->externalMin * (1. - 1.e-15) &&
+       v2 <= opt->externalMax * (1. + 1.e-15)){
+      unsigned int color = opt->getColor(v2, opt->externalMin, opt->externalMax, false,
+                                         (opt->intervalsType == PViewOptions::Discrete) ? 
+                                         opt->nbIso : -1);
       unsigned int col[2] = {color, color};
       double dxyz[3][2];
       for(int i = 0; i < 3; i++){
@@ -924,7 +924,7 @@ static void addTensorElement(PView *p, int numNodes, int numEdges,
 {
   PViewOptions *opt = p->getOptions();
 
-  if(opt->TensorType == PViewOptions::VonMises){
+  if(opt->tensorType == PViewOptions::VonMises){
     for(int i = 0; i < numNodes; i++)
       val[i][0] = ComputeVonMises(val[i]);
     addScalarElement(p, numEdges, xyz, val, pre);
@@ -937,33 +937,33 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
   PViewData *data = p->getData(true);
   PViewOptions *opt = p->getOptions();
   
-  opt->TmpBBox.reset();
+  opt->tmpBBox.reset();
 
   double xyz[NMAX][3], val[NMAX][9];
-  for(int ent = 0; ent < data->getNumEntities(opt->TimeStep); ent++){
-    if(data->skipEntity(opt->TimeStep, ent)) continue;
-    for(int i = 0; i < data->getNumElements(opt->TimeStep, ent); i++){
-      if(data->skipElement(opt->TimeStep, ent, i, true)) continue;
-      int numEdges = data->getNumEdges(opt->TimeStep, ent, i);
+  for(int ent = 0; ent < data->getNumEntities(opt->timeStep); ent++){
+    if(data->skipEntity(opt->timeStep, ent)) continue;
+    for(int i = 0; i < data->getNumElements(opt->timeStep, ent); i++){
+      if(data->skipElement(opt->timeStep, ent, i, true)) continue;
+      int numEdges = data->getNumEdges(opt->timeStep, ent, i);
       if(opt->skipElement(numEdges)) continue;
-      int numComp = data->getNumComponents(opt->TimeStep, ent, i);
-      int numNodes = data->getNumNodes(opt->TimeStep, ent, i);
+      int numComp = data->getNumComponents(opt->timeStep, ent, i);
+      int numNodes = data->getNumNodes(opt->timeStep, ent, i);
       for(int j = 0; j < numNodes; j++){
-        data->getNode(opt->TimeStep, ent, i, j, xyz[j][0], xyz[j][1], xyz[j][2]);
+        data->getNode(opt->timeStep, ent, i, j, xyz[j][0], xyz[j][1], xyz[j][2]);
         for(int k = 0; k < numComp; k++)
-          data->getValue(opt->TimeStep, ent, i, j, k, val[j][k]);
+          data->getValue(opt->timeStep, ent, i, j, k, val[j][k]);
       }
       changeCoordinates(p, ent, i, numNodes, numEdges, numComp, xyz, val);
-      int dim = data->getDimension(opt->TimeStep, ent, i);
+      int dim = data->getDimension(opt->timeStep, ent, i);
       if(!isElementVisible(opt, dim, numNodes, xyz)) continue;
 
       for(int j = 0; j < numNodes; j++)
-        opt->TmpBBox += SPoint3(xyz[j][0], xyz[j][1], xyz[j][2]);
+        opt->tmpBBox += SPoint3(xyz[j][0], xyz[j][1], xyz[j][2]);
       
-      if(opt->ShowElement && !data->useGaussPoints()) 
+      if(opt->showElement && !data->useGaussPoints()) 
         addOutlineElement(p, numEdges, xyz, preprocessNormalsOnly);
       
-      if(opt->IntervalsType != PViewOptions::Numeric){
+      if(opt->intervalsType != PViewOptions::Numeric){
 	if(data->useGaussPoints()){
 	  for(int j = 0; j < numNodes; j++){
 	    double xyz2[NMAX][3], val2[NMAX][9];
@@ -972,19 +972,19 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
 	    xyz2[0][2] = xyz[j][2];
 	    for(int k = 0; k < numComp; k++)
 	      val2[0][k] = val[j][k];
-	    if(numComp == 1 && opt->DrawScalars)
+	    if(numComp == 1 && opt->drawScalars)
 	      addScalarElement(p, 0, xyz2, val2, preprocessNormalsOnly);
-	    else if(numComp == 3 && opt->DrawVectors)
+	    else if(numComp == 3 && opt->drawVectors)
 	      addVectorElement(p, ent, i, 1, 0, xyz2, val2, preprocessNormalsOnly);
-	    else if(numComp == 9 && opt->DrawTensors)
+	    else if(numComp == 9 && opt->drawTensors)
 	      addTensorElement(p, 1, 0, xyz2, val2, preprocessNormalsOnly);
 	  }
 	}
-        else if(numComp == 1 && opt->DrawScalars)
+        else if(numComp == 1 && opt->drawScalars)
           addScalarElement(p, numEdges, xyz, val, preprocessNormalsOnly);
-        else if(numComp == 3 && opt->DrawVectors)
+        else if(numComp == 3 && opt->drawVectors)
           addVectorElement(p, ent, i, numNodes, numEdges, xyz, val, preprocessNormalsOnly);
-        else if(numComp == 9 && opt->DrawTensors)
+        else if(numComp == 9 && opt->drawTensors)
           addTensorElement(p, numNodes, numEdges, xyz, val, preprocessNormalsOnly);
       }
     }
@@ -998,46 +998,46 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
 
   PViewOptions *opt = p->getOptions();
 
-  if(CTX::instance()->polygon_offset || opt->ShowElement)
+  if(CTX::instance()->polygonOffset || opt->showElement)
     glEnable(GL_POLYGON_OFFSET_FILL);
 
-  if(type == GL_POINTS && opt->PointType > 0){
+  if(type == GL_POINTS && opt->pointType > 0){
     for(int i = 0; i < va->getNumVertices(); i++){
       float *p = va->getVertexArray(3 * i);
       glColor4ubv((GLubyte *)va->getColorArray(4 * i));
       double f = 1.;
-      if(opt->PointType > 1){
+      if(opt->pointType > 1){
         char *n = va->getNormalArray(3 * i);
         f = char2float(*n);
       }
-      if(opt->PointType == 2){
-	int s = (int)(opt->PointSize * f);
+      if(opt->pointType == 2){
+	int s = (int)(opt->pointSize * f);
 	if(s){
 	  glPointSize(s);
-	  gl2psPointSize(s * CTX::instance()->print.eps_point_size_factor);
+	  gl2psPointSize(s * CTX::instance()->print.epsPointSizeFactor);
 	  glBegin(GL_POINTS);
 	  glVertex3d(p[0], p[1], p[2]);
 	  glEnd();
 	}
       }
       else
-	ctx->drawSphere(opt->PointSize * f, p[0], p[1], p[2], opt->Light);
+	ctx->drawSphere(opt->pointSize * f, p[0], p[1], p[2], opt->light);
     }
   }
-  else if(type == GL_LINES && opt->LineType > 0){
+  else if(type == GL_LINES && opt->lineType > 0){
     for(int i = 0; i < va->getNumVertices(); i += 2){
       float *p0 = va->getVertexArray(3 * i);
       float *p1 = va->getVertexArray(3 * (i + 1));
       double x[2] = {p0[0], p1[0]}, y[2] = {p0[1], p1[1]}, z[2] = {p0[2], p1[2]};
       glColor4ubv((GLubyte *)va->getColorArray(4 * i));
-      if(opt->LineType == 2){
+      if(opt->lineType == 2){
         char *n0 = va->getNormalArray(3 * i);
         char *n1 = va->getNormalArray(3 * (i + 1));
         double v0 = char2float(*n0), v1 = char2float(*n1);
-        ctx->drawTaperedCylinder(opt->LineWidth, v0, v1, 0., 1., x, y, z, opt->Light);
+        ctx->drawTaperedCylinder(opt->lineWidth, v0, v1, 0., 1., x, y, z, opt->light);
       }
       else
-        ctx->drawCylinder(opt->LineWidth, x, y, z, opt->Light);
+        ctx->drawCylinder(opt->lineWidth, x, y, z, opt->light);
     }
   }
   else{
@@ -1073,32 +1073,32 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
     float *v = va->getVertexArray(3 * (i + 1));
     glColor4ubv((GLubyte *)va->getColorArray(4 * i));
     double l = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-    double lmax = opt->TmpMax;
-    if((l || opt->VectorType == 6) && lmax){
-      double scale = (opt->ArrowSizeMax - opt->ArrowSizeMin) / lmax;
+    double lmax = opt->tmpMax;
+    if((l || opt->vectorType == 6) && lmax){
+      double scale = (opt->arrowSizeMax - opt->arrowSizeMin) / lmax;
       // log scaling
-      if(opt->ScaleType == PViewOptions::Logarithmic && 
-	 opt->TmpMin > 0 && opt->TmpMax > opt->TmpMin && l != opt->TmpMin){
-	scale = (opt->ArrowSizeMax - opt->ArrowSizeMin) / l * 
-	  log10(l / opt->TmpMin) / log10(opt->TmpMax / opt->TmpMin);
+      if(opt->scaleType == PViewOptions::Logarithmic && 
+	 opt->tmpMin > 0 && opt->tmpMax > opt->tmpMin && l != opt->tmpMin){
+	scale = (opt->arrowSizeMax - opt->arrowSizeMin) / l * 
+	  log10(l / opt->tmpMin) / log10(opt->tmpMax / opt->tmpMin);
       }
-      if(opt->ArrowSizeMin && l) scale += opt->ArrowSizeMin / l;
+      if(opt->arrowSizeMin && l) scale += opt->arrowSizeMin / l;
       double px = scale * v[0];
       double py = scale * v[1];
       double pz = scale * v[2];
       // only draw vectors larger than 1 pixel on screen, except when
       // drawing "comet" glyphs
-      if(opt->VectorType == 6 || fabs(px) > 1. || fabs(py) > 1. || fabs(pz) > 1.){
+      if(opt->vectorType == 6 || fabs(px) > 1. || fabs(py) > 1. || fabs(pz) > 1.){
         double d = ctx->pixel_equiv_x / ctx->s[0];
         double dx = px * d, dy = py * d, dz = pz * d;
         double x = s[0], y = s[1], z = s[2];
-        if(opt->CenterGlyphs){
+        if(opt->centerGlyphs){
           x -= 0.5 * dx;
           y -= 0.5 * dy;
           z -= 0.5 * dz;
         }
-        ctx->drawVector(opt->VectorType, opt->IntervalsType != PViewOptions::Iso,
-                        x, y, z, dx, dy, dz, opt->Light);
+        ctx->drawVector(opt->vectorType, opt->intervalsType != PViewOptions::Iso,
+                        x, y, z, dx, dy, dz, opt->light);
       }
     }
   }
@@ -1128,9 +1128,9 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes, int numCo
   PViewOptions *opt = p->getOptions();
   double d[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
 
-  double vmin = opt->TmpMin, vmax = opt->TmpMax;
+  double vmin = opt->tmpMin, vmax = opt->tmpMax;
 
-  if(opt->GlyphLocation == PViewOptions::COG){
+  if(opt->glyphLocation == PViewOptions::COG){
     SPoint3 pc(0., 0., 0.);
     for(int i = 0; i < numNodes; i++){
       pc += SPoint3(xyz[i][0], xyz[i][1], xyz[i][2]);
@@ -1140,26 +1140,26 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes, int numCo
     for(int j = 0; j < numComp; j++) d[j] /= (double)numNodes;
     double v = ComputeScalarRep(numComp, d);
     if(v >= vmin && v <= vmax){
-      unsigned int col = opt->getColor(v, vmin, vmax, false, opt->NbIso);
+      unsigned int col = opt->getColor(v, vmin, vmax, false, opt->nbIso);
       glColor4ubv((GLubyte *) & col);
       glRasterPos3d(pc.x(), pc.y(), pc.z());
-      if(opt->CenterGlyphs)
-        ctx->drawStringCenter(stringValue(numComp, d, v, opt->Format.c_str()));
+      if(opt->centerGlyphs)
+        ctx->drawStringCenter(stringValue(numComp, d, v, opt->format.c_str()));
       else
-        ctx->drawString(stringValue(numComp, d, v, opt->Format.c_str()));
+        ctx->drawString(stringValue(numComp, d, v, opt->format.c_str()));
     }
   }
-  else if(opt->GlyphLocation == PViewOptions::Vertex){
+  else if(opt->glyphLocation == PViewOptions::Vertex){
     for(int i = 0; i < numNodes; i++){
       double v = ComputeScalarRep(numComp, val[i]);
       if(v >= vmin && v <= vmax){
-        unsigned int col = opt->getColor(v, vmin, vmax, false, opt->NbIso);
+        unsigned int col = opt->getColor(v, vmin, vmax, false, opt->nbIso);
         glColor4ubv((GLubyte *) & col);
         glRasterPos3d(xyz[i][0], xyz[i][1], xyz[i][2]);
-        if(opt->CenterGlyphs)
-          ctx->drawStringCenter(stringValue(numComp, val[i], v, opt->Format.c_str()));
+        if(opt->centerGlyphs)
+          ctx->drawStringCenter(stringValue(numComp, val[i], v, opt->format.c_str()));
         else
-          ctx->drawString(stringValue(numComp, val[i], v, opt->Format.c_str()));
+          ctx->drawString(stringValue(numComp, val[i], v, opt->format.c_str()));
       }
     }
   }
@@ -1178,10 +1178,10 @@ static void drawNormalVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
   SVector3 n = normal3(xyz);
   n.normalize();
   for(int i = 0; i < 3; i++)
-    n[i] *= opt->Normals * ctx->pixel_equiv_x / ctx->s[i];
+    n[i] *= opt->normals * ctx->pixel_equiv_x / ctx->s[i];
   glColor4ubv((GLubyte *) & opt->color.normals);
-  ctx->drawVector(CTX::instance()->vector_type, 0, pc[0], pc[1], pc[2], n[0], n[1], n[2],
-                  opt->Light);
+  ctx->drawVector(CTX::instance()->vectorType, 0, pc[0], pc[1], pc[2], n[0], n[1], n[2],
+                  opt->light);
 }
 
 static void drawTangentVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
@@ -1195,10 +1195,10 @@ static void drawTangentVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
   SVector3 t(p0, p1);
   t.normalize();
   for(int i = 0; i < 3; i++)
-    t[i] *= opt->Tangents * ctx->pixel_equiv_x / ctx->s[i];
+    t[i] *= opt->tangents * ctx->pixel_equiv_x / ctx->s[i];
   glColor4ubv((GLubyte *) & opt->color.tangents);
-  ctx->drawVector(CTX::instance()->vector_type, 0, pc[0], pc[1], pc[2], t[0], t[1], t[2], 
-                  opt->Light);
+  ctx->drawVector(CTX::instance()->vectorType, 0, pc[0], pc[1], pc[2], t[0], t[1], t[2], 
+                  opt->light);
 }
 
 static void drawGlyphs(drawContext *ctx, PView *p)
@@ -1207,32 +1207,32 @@ static void drawGlyphs(drawContext *ctx, PView *p)
   PViewData *data = p->getData(true);
   PViewOptions *opt = p->getOptions();
 
-  if(!opt->Normals && !opt->Tangents && opt->IntervalsType != PViewOptions::Numeric)
+  if(!opt->normals && !opt->tangents && opt->intervalsType != PViewOptions::Numeric)
     return;
 
   Msg::Debug("drawing extra glyphs (this is slow...)");
 
   double xyz[NMAX][3], val[NMAX][9];
-  for(int ent = 0; ent < data->getNumEntities(opt->TimeStep); ent++){
-    if(data->skipEntity(opt->TimeStep, ent)) continue;
-    for(int i = 0; i < data->getNumElements(opt->TimeStep, ent); i++){
-      if(data->skipElement(opt->TimeStep, ent, i, true)) continue;
-      int numEdges = data->getNumEdges(opt->TimeStep, ent, i);
+  for(int ent = 0; ent < data->getNumEntities(opt->timeStep); ent++){
+    if(data->skipEntity(opt->timeStep, ent)) continue;
+    for(int i = 0; i < data->getNumElements(opt->timeStep, ent); i++){
+      if(data->skipElement(opt->timeStep, ent, i, true)) continue;
+      int numEdges = data->getNumEdges(opt->timeStep, ent, i);
       if(opt->skipElement(numEdges)) continue;
-      int dim = data->getDimension(opt->TimeStep, ent, i);
-      int numComp = data->getNumComponents(opt->TimeStep, ent, i);
-      int numNodes = data->getNumNodes(opt->TimeStep, ent, i);
+      int dim = data->getDimension(opt->timeStep, ent, i);
+      int numComp = data->getNumComponents(opt->timeStep, ent, i);
+      int numNodes = data->getNumNodes(opt->timeStep, ent, i);
       for(int j = 0; j < numNodes; j++){
-        data->getNode(opt->TimeStep, ent, i, j, xyz[j][0], xyz[j][1], xyz[j][2]);
+        data->getNode(opt->timeStep, ent, i, j, xyz[j][0], xyz[j][1], xyz[j][2]);
         for(int k = 0; k < numComp; k++)
-          data->getValue(opt->TimeStep, ent, i, j, k, val[j][k]);
+          data->getValue(opt->timeStep, ent, i, j, k, val[j][k]);
       }
       changeCoordinates(p, ent, i, numNodes, numEdges, numComp, xyz, val);
-      if(opt->IntervalsType == PViewOptions::Numeric)
+      if(opt->intervalsType == PViewOptions::Numeric)
         drawNumberGlyphs(ctx, p, numNodes, numComp, xyz, val);
-      if(dim == 2 && opt->Normals)
+      if(dim == 2 && opt->normals)
         drawNormalVectorGlyphs(ctx, p, numNodes, xyz, val);
-      else if(dim == 1 && opt->Tangents)
+      else if(dim == 1 && opt->tangents)
         drawTangentVectorGlyphs(ctx, p, numNodes, xyz, val);  
     }
   }
@@ -1245,11 +1245,11 @@ class initPView {
   // on Windows/Cygwin
   int _estimateIfClipped(PView *p, int num)
   {
-    if(CTX::instance()->clip_whole_elements && 
-       CTX::instance()->clip_only_draw_intersecting_volume){
+    if(CTX::instance()->clipWholeElements && 
+       CTX::instance()->clipOnlyDrawIntersectingVolume){
       PViewOptions *opt = p->getOptions();
       for(int clip = 0; clip < 6; clip++){
-	if(opt->Clip & (1 << clip))
+	if(opt->clip & (1 << clip))
 	  return (int)sqrt((double)num);
       }
     }
@@ -1259,33 +1259,33 @@ class initPView {
   {
     PViewData *data = p->getData(true);
     PViewOptions *opt = p->getOptions();
-    int heuristic = data->getNumPoints(opt->TimeStep);
+    int heuristic = data->getNumPoints(opt->timeStep);
     return heuristic + 10000;
   }
   int _estimateNumLines(PView *p)
   {
     PViewData *data = p->getData(true);
     PViewOptions *opt = p->getOptions();
-    int heuristic = data->getNumLines(opt->TimeStep);
+    int heuristic = data->getNumLines(opt->timeStep);
     return heuristic + 10000;
   }
   int _estimateNumTriangles(PView *p)
   {
     PViewData *data = p->getData(true);
     PViewOptions *opt = p->getOptions();
-    int tris = data->getNumTriangles(opt->TimeStep);
-    int quads = data->getNumQuadrangles(opt->TimeStep);
-    int tets = data->getNumTetrahedra(opt->TimeStep);
-    int prisms = data->getNumPrisms(opt->TimeStep);
-    int pyrs = data->getNumPyramids(opt->TimeStep);
-    int hexas = data->getNumHexahedra(opt->TimeStep);
+    int tris = data->getNumTriangles(opt->timeStep);
+    int quads = data->getNumQuadrangles(opt->timeStep);
+    int tets = data->getNumTetrahedra(opt->timeStep);
+    int prisms = data->getNumPrisms(opt->timeStep);
+    int pyrs = data->getNumPyramids(opt->timeStep);
+    int hexas = data->getNumHexahedra(opt->timeStep);
     int heuristic = 0;
-    if(opt->IntervalsType == PViewOptions::Iso)
+    if(opt->intervalsType == PViewOptions::Iso)
       heuristic = (tets + prisms + pyrs + hexas) / 10;
-    else if(opt->IntervalsType == PViewOptions::Continuous)
+    else if(opt->intervalsType == PViewOptions::Continuous)
       heuristic = (tris + 2 * quads + 6 * tets + 
                    8 * prisms + 6 * pyrs + 12 * hexas);
-    else if(opt->IntervalsType == PViewOptions::Discrete)
+    else if(opt->intervalsType == PViewOptions::Discrete)
       heuristic = (tris + 2 * quads + 6 * tets + 
                    8 * prisms + 6 * pyrs + 12 * hexas) * 2;
     heuristic = _estimateIfClipped(p, heuristic);
@@ -1295,7 +1295,7 @@ class initPView {
   {
     PViewData *data = p->getData(true);
     PViewOptions *opt = p->getOptions();
-    int heuristic = data->getNumVectors(opt->TimeStep);
+    int heuristic = data->getNumVectors(opt->timeStep);
     heuristic = _estimateIfClipped(p, heuristic);
     return heuristic + 1000;
   }
@@ -1307,23 +1307,23 @@ class initPView {
     PViewOptions *opt = p->getOptions();
 
     if(data->getDirty() || !data->getNumTimeSteps() || !p->getChanged()) return;
-    if(!opt->Visible || opt->Type != PViewOptions::Plot3D) return;
+    if(!opt->visible || opt->type != PViewOptions::Plot3D) return;
 
-    if(opt->UseGenRaise) opt->createGeneralRaise();
+    if(opt->useGenRaise) opt->createGeneralRaise();
 
-    if(opt->RangeType == PViewOptions::Custom){
-      opt->TmpMin = opt->CustomMin;
-      opt->TmpMax = opt->CustomMax;
+    if(opt->rangeType == PViewOptions::Custom){
+      opt->tmpMin = opt->customMin;
+      opt->tmpMax = opt->customMax;
     }
-    else if(opt->RangeType == PViewOptions::PerTimeStep){
-      opt->TmpMin = data->getMin(opt->TimeStep);
-      opt->TmpMax = data->getMax(opt->TimeStep);
+    else if(opt->rangeType == PViewOptions::PerTimeStep){
+      opt->tmpMin = data->getMin(opt->timeStep);
+      opt->tmpMax = data->getMax(opt->timeStep);
     }
     else{
       // FIXME: this is not perfect for multi-step adaptive views, as
       // we don't have the correct min/max info for the other steps
-      opt->TmpMin = data->getMin();
-      opt->TmpMax = data->getMax();
+      opt->tmpMin = data->getMin();
+      opt->tmpMax = data->getMax();
     }
 
     p->deleteVertexArrays();
@@ -1333,9 +1333,9 @@ class initPView {
     p->va_vectors = new VertexArray(2, _estimateNumVectors(p));
 
     if(p->normals) delete p->normals;
-    p->normals = new smooth_normals(opt->AngleSmoothNormals);
+    p->normals = new smooth_normals(opt->angleSmoothNormals);
 
-    if(opt->SmoothNormals) addElementsInArrays(p, true);
+    if(opt->smoothNormals) addElementsInArrays(p, true);
     addElementsInArrays(p, false);
 
     p->va_points->finalize();
@@ -1374,30 +1374,30 @@ class drawPView {
     PViewOptions *opt = p->getOptions();
 
     if(data->getDirty() || !data->getNumTimeSteps()) return;
-    if(!opt->Visible || opt->Type != PViewOptions::Plot3D) return;
+    if(!opt->visible || opt->type != PViewOptions::Plot3D) return;
     if(!_ctx->isVisible(p)) return;
    
-    glPointSize(opt->PointSize);
-    gl2psPointSize(opt->PointSize * CTX::instance()->print.eps_point_size_factor);
+    glPointSize(opt->pointSize);
+    gl2psPointSize(opt->pointSize * CTX::instance()->print.epsPointSizeFactor);
     
-    glLineWidth(opt->LineWidth);
-    gl2psLineWidth(opt->LineWidth * CTX::instance()->print.eps_line_width_factor);
+    glLineWidth(opt->lineWidth);
+    gl2psLineWidth(opt->lineWidth * CTX::instance()->print.epsLineWidthFactor);
     
-    if(opt->LightTwoSide)
+    if(opt->lightTwoSide)
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
     else
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
     
-    if(!CTX::instance()->clip_whole_elements){
+    if(!CTX::instance()->clipWholeElements){
       for(int i = 0; i < 6; i++)
-	if(opt->Clip & (1 << i))
+	if(opt->clip & (1 << i))
 	  glEnable((GLenum)(GL_CLIP_PLANE0 + i));
 	else
 	  glDisable((GLenum)(GL_CLIP_PLANE0 + i));
     }
 
-    if(CTX::instance()->alpha && ColorTable_IsAlpha(&opt->CT)){
-      if(opt->FakeTransparency){
+    if(CTX::instance()->alpha && ColorTable_IsAlpha(&opt->colorTable)){
+      if(opt->fakeTransparency){
         // simple additive blending "a la xpost":
         glBlendFunc(GL_SRC_ALPHA, GL_ONE); // glBlendEquation(GL_FUNC_ADD);
         // maximum intensity projection "a la volsuite":
@@ -1417,25 +1417,25 @@ class drawPView {
       }
     }
 
-    if(opt->RangeType == PViewOptions::Custom){
-       opt->TmpMin = opt->CustomMin;
-      opt->TmpMax = opt->CustomMax;
+    if(opt->rangeType == PViewOptions::Custom){
+       opt->tmpMin = opt->customMin;
+      opt->tmpMax = opt->customMax;
     }
-    else if(opt->RangeType == PViewOptions::PerTimeStep){
-      opt->TmpMin = data->getMin(opt->TimeStep);
-      opt->TmpMax = data->getMax(opt->TimeStep);
+    else if(opt->rangeType == PViewOptions::PerTimeStep){
+      opt->tmpMin = data->getMin(opt->timeStep);
+      opt->tmpMax = data->getMax(opt->timeStep);
     }
     else{
       // FIXME: this is not perfect for multi-step adaptive views, as
       // we don't have the correct min/max info for the other steps
-      opt->TmpMin = data->getMin();
-      opt->TmpMax = data->getMax();
+      opt->tmpMin = data->getMin();
+      opt->tmpMax = data->getMax();
     }
 
     // draw all the vertex arrays
     drawArrays(_ctx, p, p->va_points, GL_POINTS, false);
-    drawArrays(_ctx, p, p->va_lines, GL_LINES, opt->Light && opt->LightLines);
-    drawArrays(_ctx, p, p->va_triangles, GL_TRIANGLES, opt->Light);
+    drawArrays(_ctx, p, p->va_lines, GL_LINES, opt->light && opt->lightLines);
+    drawArrays(_ctx, p, p->va_triangles, GL_TRIANGLES, opt->light);
 
     // draw the "pseudo" vertex arrays for vectors
     drawVectorArray(_ctx, p, p->va_vectors);
@@ -1445,12 +1445,12 @@ class drawPView {
     drawGlyphs(_ctx, p);
 
     // draw the 3D strings
-    if(opt->DrawStrings){
+    if(opt->drawStrings){
       glColor4ubv((GLubyte *) & opt->color.text3d);
       for(int i = 0; i < data->getNumStrings3D(); i++){
         double x, y, z, style;
         std::string str;
-        data->getString3D(i, opt->TimeStep, str, x, y, z, style);
+        data->getString3D(i, opt->timeStep, str, x, y, z, style);
         glRasterPos3d(x, y, z);
         _ctx->drawString(str, style);
       }
@@ -1464,17 +1464,17 @@ class drawPView {
     for(int i = 0; i < 6; i++)
       glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 
-    if(opt->Axes && opt->Type == PViewOptions::Plot3D){
+    if(opt->axes && opt->type == PViewOptions::Plot3D){
       glColor4ubv((GLubyte *) & opt->color.axes);
-      glLineWidth(CTX::instance()->line_width);
-      gl2psLineWidth(CTX::instance()->line_width * 
-                     CTX::instance()->print.eps_line_width_factor);
-      if(!opt->AxesAutoPosition)
-        _ctx->drawAxes(opt->Axes, opt->AxesTics, opt->AxesFormat, opt->AxesLabel,
-                       opt->AxesPosition, opt->AxesMikado);
-      else if(!opt->TmpBBox.empty())
-        _ctx->drawAxes(opt->Axes, opt->AxesTics, opt->AxesFormat, opt->AxesLabel,
-                       opt->TmpBBox, opt->AxesMikado);
+      glLineWidth(CTX::instance()->lineWidth);
+      gl2psLineWidth(CTX::instance()->lineWidth * 
+                     CTX::instance()->print.epsLineWidthFactor);
+      if(!opt->axesAutoPosition)
+        _ctx->drawAxes(opt->axes, opt->axesTics, opt->axesFormat, opt->axesLabel,
+                       opt->axesPosition, opt->axesMikado);
+      else if(!opt->tmpBBox.empty())
+        _ctx->drawAxes(opt->axes, opt->axesTics, opt->axesFormat, opt->axesLabel,
+                       opt->tmpBBox, opt->axesMikado);
     }
     
   }
@@ -1490,39 +1490,39 @@ class drawPViewBoundingBox {
     PViewData *data = p->getData();
     PViewOptions *opt = p->getOptions();
 
-    if(!opt->Visible || opt->Type != PViewOptions::Plot3D) return;
+    if(!opt->visible || opt->type != PViewOptions::Plot3D) return;
 
-    SBoundingBox3d bb = data->getBoundingBox(opt->TimeStep);
+    SBoundingBox3d bb = data->getBoundingBox(opt->timeStep);
     if(bb.empty()) return;
 
     glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
-    glLineWidth(CTX::instance()->line_width);
-    gl2psLineWidth(CTX::instance()->line_width * 
-                   CTX::instance()->print.eps_line_width_factor);
+    glLineWidth(CTX::instance()->lineWidth);
+    gl2psLineWidth(CTX::instance()->lineWidth * 
+                   CTX::instance()->print.epsLineWidthFactor);
 
     _ctx->drawBox(bb.min().x(), bb.min().y(), bb.min().z(),
                   bb.max().x(), bb.max().y(), bb.max().z());
     glColor3d(1., 0., 0.);
     for(int i = 0; i < 6; i++)
-      if(opt->Clip & (1 << i))
+      if(opt->clip & (1 << i))
         _ctx->drawPlaneInBoundingBox(bb.min().x(), bb.min().y(), bb.min().z(),
                                      bb.max().x(), bb.max().y(), bb.max().z(),
-                                     CTX::instance()->clip_plane[i][0], 
-                                     CTX::instance()->clip_plane[i][1], 
-                                     CTX::instance()->clip_plane[i][2], 
-                                     CTX::instance()->clip_plane[i][3]);
+                                     CTX::instance()->clipPlane[i][0], 
+                                     CTX::instance()->clipPlane[i][1], 
+                                     CTX::instance()->clipPlane[i][2], 
+                                     CTX::instance()->clipPlane[i][3]);
   }
 };
 
 void drawContext::drawPost()
 {
   // draw any plugin-specific stuff
-  if(CTX::instance()->post.plugin_draw_function) 
-    (*CTX::instance()->post.plugin_draw_function)(this);
+  if(CTX::instance()->post.pluginDrawFunction) 
+    (*CTX::instance()->post.pluginDrawFunction)(this);
 
   if(PView::list.empty()) return;
 
-  if(CTX::instance()->draw_bbox || !CTX::instance()->post.draw)
+  if(CTX::instance()->drawBBox || !CTX::instance()->post.draw)
     std::for_each(PView::list.begin(), PView::list.end(), drawPViewBoundingBox(this));
 
   if(!CTX::instance()->post.draw) return;

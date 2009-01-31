@@ -325,7 +325,7 @@ int edgeSwapTestQuality(BDS_Edge *e, double fact=1.1, bool force=false)
   e->oppositeof (op);
 
   if (!force)
-    if (!edgeSwapTestAngle(e, cos(CTX::instance()->mesh.allow_swap_edge_angle * M_PI / 180.)))
+    if (!edgeSwapTestAngle(e, cos(CTX::instance()->mesh.allowSwapEdgeAngle * M_PI / 180.)))
       return -1;
   
   double qa1 = qmTriangle(e->p1, e->p2, op[0], QMTRI_RHO);
@@ -563,7 +563,7 @@ void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
       }
       if ((*itp)->g && (*itp)->g->classif_tag > 0){
 	if (!ne) L = MAX_LC;
-	if(CTX::instance()->mesh.lc_from_points)
+	if(CTX::instance()->mesh.lcFromPoints)
 	  (*itp)->lc() = L;
 	(*itp)->lcBGM() = L;
       }

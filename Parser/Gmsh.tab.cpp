@@ -4696,10 +4696,10 @@ yyreduce:
 	yymsg(0, "Point %d already exists", num);
       }
       else{
-	double x = CTX::instance()->geom.scaling_factor * (yyvsp[(6) - (7)].v)[0];
-	double y = CTX::instance()->geom.scaling_factor * (yyvsp[(6) - (7)].v)[1];
-	double z = CTX::instance()->geom.scaling_factor * (yyvsp[(6) - (7)].v)[2];
-	double lc = CTX::instance()->geom.scaling_factor * (yyvsp[(6) - (7)].v)[3];
+	double x = CTX::instance()->geom.scalingFactor * (yyvsp[(6) - (7)].v)[0];
+	double y = CTX::instance()->geom.scalingFactor * (yyvsp[(6) - (7)].v)[1];
+	double z = CTX::instance()->geom.scalingFactor * (yyvsp[(6) - (7)].v)[2];
+	double lc = CTX::instance()->geom.scalingFactor * (yyvsp[(6) - (7)].v)[3];
 	if(lc == 0.) lc = MAX_LC; // no mesh size given at the point
 	Vertex *v;
 	if(!myGmshSurface)
@@ -5669,7 +5669,7 @@ yyreduce:
 	if(index >= 0 && index < (int)PView::list.size()){
 	  char tmpstring[1024];
 	  FixRelativePath((yyvsp[(6) - (7)].c), tmpstring);
-	  PView::list[index]->write(tmpstring, CTX::instance()->post.file_format);
+	  PView::list[index]->write(tmpstring, CTX::instance()->post.fileFormat);
 	}
 	else
 	  yymsg(0, "Unknown view %d", index);
@@ -5709,11 +5709,11 @@ yyreduce:
 	yymsg(0, "Surface remeshing must be reinterfaced");
       }
       else if(!strcmp((yyvsp[(1) - (3)].c), "Mesh")){
-	int lock = CTX::instance()->threads_lock;
-	CTX::instance()->threads_lock = 0;
+	int lock = CTX::instance()->lock;
+	CTX::instance()->lock = 0;
 	GModel::current()->importGEOInternals();
 	GModel::current()->mesh((int)(yyvsp[(2) - (3)].d));
-	CTX::instance()->threads_lock = lock;
+	CTX::instance()->lock = lock;
       }
       else
 	yymsg(0, "Unknown command '%s'", (yyvsp[(1) - (3)].c));
@@ -5741,21 +5741,21 @@ yyreduce:
     {
 #if !defined(HAVE_NO_POST)
       if(!strcmp((yyvsp[(2) - (3)].c), "ElementsFromAllViews"))
-	PView::combine(false, 1, CTX::instance()->post.combine_remove_orig);
+	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig);
       else if(!strcmp((yyvsp[(2) - (3)].c), "ElementsFromVisibleViews"))
-	PView::combine(false, 0, CTX::instance()->post.combine_remove_orig);
+	PView::combine(false, 0, CTX::instance()->post.combineRemoveOrig);
       else if(!strcmp((yyvsp[(2) - (3)].c), "ElementsByViewName"))
-	PView::combine(false, 2, CTX::instance()->post.combine_remove_orig);
+	PView::combine(false, 2, CTX::instance()->post.combineRemoveOrig);
       else if(!strcmp((yyvsp[(2) - (3)].c), "TimeStepsFromAllViews"))
-	PView::combine(true, 1, CTX::instance()->post.combine_remove_orig);
+	PView::combine(true, 1, CTX::instance()->post.combineRemoveOrig);
       else if(!strcmp((yyvsp[(2) - (3)].c), "TimeStepsFromVisibleViews"))
-	PView::combine(true, 0, CTX::instance()->post.combine_remove_orig);
+	PView::combine(true, 0, CTX::instance()->post.combineRemoveOrig);
       else if(!strcmp((yyvsp[(2) - (3)].c), "TimeStepsByViewName"))
-	PView::combine(true, 2, CTX::instance()->post.combine_remove_orig);
+	PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
       else if(!strcmp((yyvsp[(2) - (3)].c), "Views"))
-	PView::combine(false, 1, CTX::instance()->post.combine_remove_orig);
+	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig);
       else if(!strcmp((yyvsp[(2) - (3)].c), "TimeSteps"))
-	PView::combine(true, 2, CTX::instance()->post.combine_remove_orig);
+	PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
       else
 	yymsg(0, "Unknown 'Combine' command");
 #endif
@@ -5773,7 +5773,7 @@ yyreduce:
   case 150:
 #line 1978 "Gmsh.y"
     {
-      CTX::instance()->forced_bbox = 0;
+      CTX::instance()->forcedBBox = 0;
       SetBoundingBox();
     ;}
     break;
@@ -5781,7 +5781,7 @@ yyreduce:
   case 151:
 #line 1983 "Gmsh.y"
     {
-      CTX::instance()->forced_bbox = 1;
+      CTX::instance()->forcedBBox = 1;
       SetBoundingBox((yyvsp[(3) - (15)].d), (yyvsp[(5) - (15)].d), (yyvsp[(7) - (15)].d), (yyvsp[(9) - (15)].d), (yyvsp[(11) - (15)].d), (yyvsp[(13) - (15)].d));
     ;}
     break;
@@ -7638,14 +7638,14 @@ yyreduce:
   case 340:
 #line 3297 "Gmsh.y"
     {
-      (yyval.u) = CTX::instance()->pack_color((int)(yyvsp[(2) - (9)].d), (int)(yyvsp[(4) - (9)].d), (int)(yyvsp[(6) - (9)].d), (int)(yyvsp[(8) - (9)].d));
+      (yyval.u) = CTX::instance()->packColor((int)(yyvsp[(2) - (9)].d), (int)(yyvsp[(4) - (9)].d), (int)(yyvsp[(6) - (9)].d), (int)(yyvsp[(8) - (9)].d));
     ;}
     break;
 
   case 341:
 #line 3301 "Gmsh.y"
     {
-      (yyval.u) = CTX::instance()->pack_color((int)(yyvsp[(2) - (7)].d), (int)(yyvsp[(4) - (7)].d), (int)(yyvsp[(6) - (7)].d), 255);
+      (yyval.u) = CTX::instance()->packColor((int)(yyvsp[(2) - (7)].d), (int)(yyvsp[(4) - (7)].d), (int)(yyvsp[(6) - (7)].d), 255);
     ;}
     break;
 

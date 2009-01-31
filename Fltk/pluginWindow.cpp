@@ -139,14 +139,14 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
   if(no_view_selected) p->execute(0);
 
   GUI::instance()->updateViews();
-  CTX::instance()->post.plugin_draw_function = NULL;
+  CTX::instance()->post.pluginDrawFunction = NULL;
   Draw();
 }
 
 static void plugin_cancel_cb(Fl_Widget *w, void *data)
 {
   GUI::instance()->plugins->win->hide();
-  CTX::instance()->post.plugin_draw_function = NULL;
+  CTX::instance()->post.pluginDrawFunction = NULL;
   Draw();
 }
 
@@ -234,13 +234,13 @@ pluginWindow::pluginWindow(int deltaFontSize)
   int width0 = 34 * FL_NORMAL_SIZE + WB;
   int height0 = 12 * BH + 4 * WB;
 
-  int width = (CTX::instance()->plugin_size[0] < width0) ? width0 : 
-    CTX::instance()->plugin_size[0];
-  int height = (CTX::instance()->plugin_size[1] < height0) ? height0 : 
-    CTX::instance()->plugin_size[1];
+  int width = (CTX::instance()->pluginSize[0] < width0) ? width0 : 
+    CTX::instance()->pluginSize[0];
+  int height = (CTX::instance()->pluginSize[1] < height0) ? height0 : 
+    CTX::instance()->pluginSize[1];
 
   win = new paletteWindow
-    (width, height, CTX::instance()->non_modal_windows ? true : false, "Plugins");
+    (width, height, CTX::instance()->nonModalWindows ? true : false, "Plugins");
   win->box(GMSH_WINDOW_BOX);
 
   int L1 = (int)(0.3 * width), L2 = (int)(0.6 * L1);
@@ -272,7 +272,7 @@ pluginWindow::pluginWindow(int deltaFontSize)
   win->resizable(resize_box);
   win->size_range(width0, height0);
 
-  win->position(CTX::instance()->plugin_position[0], CTX::instance()->plugin_position[1]);
+  win->position(CTX::instance()->pluginPosition[0], CTX::instance()->pluginPosition[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;

@@ -848,7 +848,7 @@ static void _apply_visibility(char mode, bool physical,
   bool recursive = GUI::instance()->visibility->butt[0]->value() ? true : false;
 
   if(mode == 1){ // when showing a single entity, first hide everything
-    if(CTX::instance()->pick_elements)
+    if(CTX::instance()->pickElements)
       _set_visibility_by_number(1, -1, 0, false);
     else
       for(int i = 2; i <= 5; i++)
@@ -857,7 +857,7 @@ static void _apply_visibility(char mode, bool physical,
 
   if(mode == 2) mode = 1;
   
-  if(CTX::instance()->pick_elements){
+  if(CTX::instance()->pickElements){
     for(unsigned int i = 0; i < elements.size(); i++)
       elements[i]->setVisibility(mode);
   }
@@ -934,62 +934,62 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
   bool physical = (str.find("physical") != std::string::npos);
 
   if(str == "elements to hide"){
-    CTX::instance()->pick_elements = 1;
+    CTX::instance()->pickElements = 1;
     what = ENT_ALL;
     mode = 0;
   }
   else if(str == "points to hide" || str == "physical points to hide"){
-    CTX::instance()->pick_elements = 0;
+    CTX::instance()->pickElements = 0;
     what = ENT_POINT;
     mode = 0;
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(str == "lines to hide" || str == "physical lines to hide"){
-    CTX::instance()->pick_elements = 0;
+    CTX::instance()->pickElements = 0;
     what = ENT_LINE;
     mode = 0;
     opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(str == "surfaces to hide" || str == "physical surfaces to hide"){
-    CTX::instance()->pick_elements = 0;
+    CTX::instance()->pickElements = 0;
     what = ENT_SURFACE;
     mode = 0;
     if(GModel::current()->getMeshStatus() < 2)
       opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(str == "volumes to hide" || str == "physical volumes to hide"){
-    CTX::instance()->pick_elements = 0;
+    CTX::instance()->pickElements = 0;
     what = ENT_VOLUME;
     mode = 0;
     if(GModel::current()->getMeshStatus() < 3)
       opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(str == "elements to show"){
-    CTX::instance()->pick_elements = 1;
+    CTX::instance()->pickElements = 1;
     what = ENT_ALL;
     mode = 1;
   }
   else if(str == "points to show" || str == "physical points to show"){
-    CTX::instance()->pick_elements = 0;
+    CTX::instance()->pickElements = 0;
     what = ENT_POINT;
     mode = 1;
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(str == "lines to show" || str == "physical lines to show"){
-    CTX::instance()->pick_elements = 0;
+    CTX::instance()->pickElements = 0;
     what = ENT_LINE;
     mode = 1;
     opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(str == "surfaces to show" || str == "physical surfaces to show"){
-    CTX::instance()->pick_elements = 0;
+    CTX::instance()->pickElements = 0;
     what = ENT_SURFACE;
     mode = 1;
     if(GModel::current()->getMeshStatus() < 2)
       opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(str == "volumes to show" || str == "physical volumes to show"){
-    CTX::instance()->pick_elements = 0;
+    CTX::instance()->pickElements = 0;
     what = ENT_VOLUME;
     mode = 1;
     if(GModel::current()->getMeshStatus() < 3)
@@ -1037,7 +1037,7 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
   }
 
   CTX::instance()->mesh.changed = ENT_ALL;
-  CTX::instance()->pick_elements = 0;
+  CTX::instance()->pickElements = 0;
   Draw();  
   Msg::StatusBar(3, false, "");
 }
@@ -1083,7 +1083,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
   int brw = width - 4 * WB;
 
   win = new paletteWindow
-    (width, height, CTX::instance()->non_modal_windows ? true : false, "Visibility");
+    (width, height, CTX::instance()->nonModalWindows ? true : false, "Visibility");
   win->box(GMSH_WINDOW_BOX);
 
   Fl_Tabs *o = new Fl_Tabs
@@ -1363,7 +1363,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     o1->callback(visibility_save_cb);
   }
 
-  win->position(CTX::instance()->vis_position[0], CTX::instance()->vis_position[1]);
+  win->position(CTX::instance()->visPosition[0], CTX::instance()->visPosition[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;

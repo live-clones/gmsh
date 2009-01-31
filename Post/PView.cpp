@@ -34,9 +34,9 @@ PView::PView(bool allocate, int numalloc)
   _init();
   _data = new PViewDataList(allocate, numalloc);
   _options = new PViewOptions(PViewOptions::reference);
-  if(_options->AdaptVisualizationGrid)
-    _data->initAdaptiveData(_options->TimeStep, _options->MaxRecursionLevel,
-                            _options->TargetError);
+  if(_options->adaptVisualizationGrid)
+    _data->initAdaptiveData(_options->timeStep, _options->maxRecursionLevel,
+                            _options->targetError);
 }
 
 PView::PView(PViewData *data)
@@ -44,9 +44,9 @@ PView::PView(PViewData *data)
   _init();
   _data = data;
   _options = new PViewOptions(PViewOptions::reference);
-  if(_options->AdaptVisualizationGrid)
-    _data->initAdaptiveData(_options->TimeStep, _options->MaxRecursionLevel,
-                            _options->TargetError);
+  if(_options->adaptVisualizationGrid)
+    _data->initAdaptiveData(_options->timeStep, _options->maxRecursionLevel,
+                            _options->targetError);
 }
 
 PView::PView(PView *ref, bool copyOptions)
@@ -58,9 +58,9 @@ PView::PView(PView *ref, bool copyOptions)
     _options = new PViewOptions(*ref->getOptions());
   else
     _options = new PViewOptions(PViewOptions::reference);
-  if(_options->AdaptVisualizationGrid)
-    _data->initAdaptiveData(_options->TimeStep, _options->MaxRecursionLevel,
-                            _options->TargetError);
+  if(_options->adaptVisualizationGrid)
+    _data->initAdaptiveData(_options->timeStep, _options->maxRecursionLevel,
+                            _options->targetError);
 }
 
 PView::PView(std::string xname, std::string yname,
@@ -88,9 +88,9 @@ PView::PView(std::string xname, std::string yname,
   data->finalize();
   _data = data;
   _options = new PViewOptions(PViewOptions::reference);
-  _options->Type = PViewOptions::Plot2DSpace;
-  _options->Axes = 2;
-  _options->AxesLabel[0] = xname;
+  _options->type = PViewOptions::Plot2DSpace;
+  _options->axes = 2;
+  _options->axesLabel[0] = xname;
 }
 
 PView::PView(std::string name, std::string type, 
@@ -105,9 +105,9 @@ PView::PView(std::string name, std::string type,
   d->setFileName(name + ".msh");
   _data = d;
   _options = new PViewOptions(PViewOptions::reference);
-  if(_options->AdaptVisualizationGrid)
-    _data->initAdaptiveData(_options->TimeStep, _options->MaxRecursionLevel,
-                            _options->TargetError);
+  if(_options->adaptVisualizationGrid)
+    _data->initAdaptiveData(_options->timeStep, _options->maxRecursionLevel,
+                            _options->targetError);
 }
 
 void PView::addStep(GModel *model, std::map<int, std::vector<double> > &data, 
@@ -189,7 +189,7 @@ void PView::combine(bool time, int how, bool remove)
   for(unsigned int i = 0; i < list.size(); i++) {
     PView *p = list[i];
     PViewData *data = p->getData();
-    if(how || p->getOptions()->Visible) {
+    if(how || p->getOptions()->visible) {
       nameData nd;
       // this will lead to weird results if there are views named
       // "__all__" or "__vis__" :-)

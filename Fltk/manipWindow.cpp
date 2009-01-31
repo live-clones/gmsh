@@ -42,7 +42,7 @@ manipWindow::manipWindow(int deltaFontSize)
   int height = 5 * BH + 3 * WB;
 
   win = new paletteWindow
-    (width, height, CTX::instance()->non_modal_windows ? true : false, "Manipulator");
+    (width, height, CTX::instance()->nonModalWindows ? true : false, "Manipulator");
   win->box(GMSH_WINDOW_BOX);
 
   Fl_Box *top[3], *left[3];
@@ -88,7 +88,7 @@ manipWindow::manipWindow(int deltaFontSize)
     o->callback(status_xyz1p_cb, (void *)"reset");
   }
 
-  win->position(CTX::instance()->manip_position[0], CTX::instance()->manip_position[1]);
+  win->position(CTX::instance()->manipPosition[0], CTX::instance()->manipPosition[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;

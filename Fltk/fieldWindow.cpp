@@ -92,13 +92,13 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
 
   int width0 = 34 * FL_NORMAL_SIZE + WB;
   int height0 = 12 * BH + 4 * WB;
-  int width = (CTX::instance()->field_size[0] < width0) ? width0 : 
-    CTX::instance()->field_size[0];
-  int height = (CTX::instance()->field_size[1] < height0) ? height0 :
-    CTX::instance()->field_size[1];
+  int width = (CTX::instance()->fieldSize[0] < width0) ? width0 : 
+    CTX::instance()->fieldSize[0];
+  int height = (CTX::instance()->fieldSize[1] < height0) ? height0 :
+    CTX::instance()->fieldSize[1];
 
   win = new paletteWindow
-    (width, height, CTX::instance()->non_modal_windows ? true : false, "Fields");
+    (width, height, CTX::instance()->nonModalWindows ? true : false, "Fields");
   win->box(GMSH_WINDOW_BOX);
 
   int x = WB, y = WB, w = (int)(1.5 * BB), h = height - 2 * WB - 3 * BH;
@@ -175,7 +175,7 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
                                     width - 9 * WB - 5 * BB, 
                                     height - 3 * BH - 5 * WB));
   win->size_range(width0, height0);
-  win->position(CTX::instance()->field_position[0], CTX::instance()->field_position[1]);
+  win->position(CTX::instance()->fieldPosition[0], CTX::instance()->fieldPosition[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;

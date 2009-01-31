@@ -42,7 +42,7 @@ static int drawTics(drawContext *ctx, int comp, int n, std::string &format,
     }
   }
   
-  double tmp = 2. * CTX::instance()->gl_fontsize * pixelfact;
+  double tmp = 2. * CTX::instance()->glFontSize * pixelfact;
   if(n * tmp > l) n = 3;
   if(n * tmp > l) n = 2;
   
@@ -87,7 +87,7 @@ static int drawTics(drawContext *ctx, int comp, int n, std::string &format,
     double winp[3], winr[3];
     ctx->world2Viewport(p, winp);
     ctx->world2Viewport(r, winr);
-    gl_font(CTX::instance()->gl_font_enum, CTX::instance()->gl_fontsize);
+    gl_font(CTX::instance()->glFontEnum, CTX::instance()->glFontSize);
     if(fabs(winr[0] - winp[0]) < 2.) // center align
       winr[0] -= gl_width(str) / 2.;
     else if(winr[0] < winp[0]) // right align
@@ -276,10 +276,10 @@ void drawContext::drawAxes()
     }
   }
     
-  if(geometryExists && (CTX::instance()->draw_bbox || !CTX::instance()->mesh.draw)) {
+  if(geometryExists && (CTX::instance()->drawBBox || !CTX::instance()->mesh.draw)) {
     glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
-    glLineWidth(CTX::instance()->line_width);
-    gl2psLineWidth(CTX::instance()->line_width * CTX::instance()->print.eps_line_width_factor);
+    glLineWidth(CTX::instance()->lineWidth);
+    gl2psLineWidth(CTX::instance()->lineWidth * CTX::instance()->print.epsLineWidthFactor);
     drawBox(CTX::instance()->min[0], CTX::instance()->min[1], CTX::instance()->min[2], 
             CTX::instance()->max[0], CTX::instance()->max[1], CTX::instance()->max[2]);
     glColor3d(1.,0.,0.);
@@ -288,39 +288,39 @@ void drawContext::drawAxes()
         drawPlaneInBoundingBox
           (CTX::instance()->min[0], CTX::instance()->min[1], CTX::instance()->min[2],
            CTX::instance()->max[0], CTX::instance()->max[1], CTX::instance()->max[2],
-           CTX::instance()->clip_plane[j][0], CTX::instance()->clip_plane[j][1], 
-           CTX::instance()->clip_plane[j][2], CTX::instance()->clip_plane[j][3]);
+           CTX::instance()->clipPlane[j][0], CTX::instance()->clipPlane[j][1], 
+           CTX::instance()->clipPlane[j][2], CTX::instance()->clipPlane[j][3]);
   }
 
   if(CTX::instance()->axes){
     glColor4ubv((GLubyte *) & CTX::instance()->color.axes);
-    glLineWidth(CTX::instance()->line_width);
-    gl2psLineWidth(CTX::instance()->line_width * 
-                   CTX::instance()->print.eps_line_width_factor);
-    if(!CTX::instance()->axes_auto_position){
-      drawAxes(CTX::instance()->axes, CTX::instance()->axes_tics, 
-               CTX::instance()->axes_format, CTX::instance()->axes_label, 
-               CTX::instance()->axes_position, CTX::instance()->axes_mikado);
+    glLineWidth(CTX::instance()->lineWidth);
+    gl2psLineWidth(CTX::instance()->lineWidth * 
+                   CTX::instance()->print.epsLineWidthFactor);
+    if(!CTX::instance()->axesAutoPosition){
+      drawAxes(CTX::instance()->axes, CTX::instance()->axesTics, 
+               CTX::instance()->axesFormat, CTX::instance()->axesLabel, 
+               CTX::instance()->axesPosition, CTX::instance()->axesMikado);
     }
     else if(geometryExists){
       double bb[6] = 
         {CTX::instance()->min[0], CTX::instance()->max[0], CTX::instance()->min[1], 
          CTX::instance()->max[1], CTX::instance()->min[2], CTX::instance()->max[2]};
-      drawAxes(CTX::instance()->axes, CTX::instance()->axes_tics, 
-               CTX::instance()->axes_format, CTX::instance()->axes_label, 
-               bb, CTX::instance()->axes_mikado);
+      drawAxes(CTX::instance()->axes, CTX::instance()->axesTics, 
+               CTX::instance()->axesFormat, CTX::instance()->axesLabel, 
+               bb, CTX::instance()->axesMikado);
     }
   }
 
-  if(CTX::instance()->draw_rotation_center){
+  if(CTX::instance()->drawRotationCenter){
     glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
-    if(CTX::instance()->rotation_center_cg)
-      drawSphere(CTX::instance()->point_size, CTX::instance()->cg[0],
+    if(CTX::instance()->rotationCenterCg)
+      drawSphere(CTX::instance()->pointSize, CTX::instance()->cg[0],
                  CTX::instance()->cg[1], CTX::instance()->cg[2],
                  CTX::instance()->geom.light);
     else
-      drawSphere(CTX::instance()->point_size, CTX::instance()->rotation_center[0],
-                 CTX::instance()->rotation_center[1], CTX::instance()->rotation_center[2],
+      drawSphere(CTX::instance()->pointSize, CTX::instance()->rotationCenter[0],
+                 CTX::instance()->rotationCenter[1], CTX::instance()->rotationCenter[2],
                  CTX::instance()->geom.light);
   }
 
@@ -328,11 +328,11 @@ void drawContext::drawAxes()
 
 void drawContext::drawSmallAxes()
 {
-  double l = CTX::instance()->small_axes_size;
-  double o = CTX::instance()->gl_fontsize / 5;
+  double l = CTX::instance()->smallAxesSize;
+  double o = CTX::instance()->glFontSize / 5;
 
-  double cx = CTX::instance()->small_axes_pos[0];
-  double cy = CTX::instance()->small_axes_pos[1];
+  double cx = CTX::instance()->smallAxesPos[0];
+  double cy = CTX::instance()->smallAxesPos[1];
   fix2dCoordinates(&cx, &cy);
 
   double xx = l * rot[0];
@@ -342,9 +342,10 @@ void drawContext::drawSmallAxes()
   double zx = l * rot[8];
   double zy = l * rot[9];
 
-  glLineWidth(CTX::instance()->line_width);
-  gl2psLineWidth(CTX::instance()->line_width * CTX::instance()->print.eps_line_width_factor);
-  glColor4ubv((GLubyte *) & CTX::instance()->color.small_axes);
+  glLineWidth(CTX::instance()->lineWidth);
+  gl2psLineWidth(CTX::instance()->lineWidth * 
+                 CTX::instance()->print.epsLineWidthFactor);
+  glColor4ubv((GLubyte *) & CTX::instance()->color.smallAxes);
 
   glBegin(GL_LINES);
   glVertex2d(cx, cy);

@@ -16,9 +16,9 @@ PViewOptions PViewOptions::reference;
 
 PViewOptions::PViewOptions()
 {
-  for(int i = 0; i < 3; i++) GenRaise_f[i] = 0;
-  ColorTable_InitParam(2, &CT);
-  ColorTable_Recompute(&CT);
+  for(int i = 0; i < 3; i++) genRaiseFunction[i] = 0;
+  ColorTable_InitParam(2, &colorTable);
+  ColorTable_Recompute(&colorTable);
 }
 
 PViewOptions::~PViewOptions()
@@ -30,15 +30,15 @@ double PViewOptions::getScaleValue(int iso, int numIso, double min, double max)
 {
   if(numIso == 1) return (min + max) / 2.;
   
-  if(ScaleType == Linear){
+  if(scaleType == Linear){
     return min + iso * (max - min) / (numIso - 1.);
   }
-  else if(ScaleType == Logarithmic){
+  else if(scaleType == Logarithmic){
     // should translate scale instead, with smallest val an option!
     if(min <= 0.) return 0;
     return pow(10., log10(min) + iso * (log10(max) - log10(min)) / (numIso - 1.));
   }
-  else if(ScaleType == DoubleLogarithmic){
+  else if(scaleType == DoubleLogarithmic){
     if(min <= 0.) return 0;
     double iso2 = iso / 2.;
     double numIso2 = numIso / 2.;
@@ -52,14 +52,14 @@ int PViewOptions::getScaleIndex(double val, int numIso, double min, double max,
 {
   if(min == max) return numIso / 2;
 
-  if(forceLinear || ScaleType == Linear){
+  if(forceLinear || scaleType == Linear){
     return (int)((val - min) * (numIso - 1) / (max - min));
   }
-  else if(ScaleType == Logarithmic){
+  else if(scaleType == Logarithmic){
     if(min <= 0.) return 0;
     return (int)((log10(val) - log10(min)) * (numIso - 1) / (log10(max) - log10(min)));
   }
-  else if(ScaleType == DoubleLogarithmic){
+  else if(scaleType == DoubleLogarithmic){
     // FIXME
     if(min <= 0.) return 0;
     return (int)((log10(val) - log10(min)) * (numIso - 1) / (log10(max) - log10(min)));
@@ -70,13 +70,13 @@ int PViewOptions::getScaleIndex(double val, int numIso, double min, double max,
 unsigned int PViewOptions::getColor(double val, double min, double max, 
                                     bool forceLinear, int numColors)
 {
-  if(CT.size == 1) return CT.table[0];
+  if(colorTable.size == 1) return colorTable.table[0];
 
   if(numColors <= 0){ // use full colormap
-    int index = getScaleIndex(val, CT.size, min, max, forceLinear);
+    int index = getScaleIndex(val, colorTable.size, min, max, forceLinear);
     if(index < 0) index = 0;
-    else if(index > CT.size - 1) index = CT.size - 1;
-    return CT.table[index];
+    else if(index > colorTable.size - 1) index = colorTable.size - 1;
+    return colorTable.table[index];
   }
   else{
     // the maximum should belong to the last interval: so use
@@ -89,22 +89,22 @@ unsigned int PViewOptions::getColor(double val, double min, double max,
 
 unsigned int PViewOptions::getColor(int i, int nb)
 {
-  int index = (nb == 1) ? CT.size / 2 : 
-    (int)(i / (double)(nb - 1) * (CT.size - 1) + 0.5);
+  int index = (nb == 1) ? colorTable.size / 2 : 
+    (int)(i / (double)(nb - 1) * (colorTable.size - 1) + 0.5);
   if(index < 0) index = 0;
-  else if(index > CT.size - 1) index = CT.size - 1;
-  return CT.table[index];
+  else if(index > colorTable.size - 1) index = colorTable.size - 1;
+  return colorTable.table[index];
 }
 
 void PViewOptions::destroyGeneralRaise()
 {
   for(int i = 0; i < 3; i++){
 #if defined(HAVE_MATH_EVAL)
-    if(GenRaise_f[i])
-      evaluator_destroy(GenRaise_f[i]);
-    GenRaise_f[i] = 0;
+    if(genRaiseFunction[i])
+      evaluator_destroy(genRaiseFunction[i]);
+    genRaiseFunction[i] = 0;
 #else
-    GenRaise_f[i] = (void*)-1;
+    genRaiseFunction[i] = (void*)-1;
 #endif
   }
 }
@@ -113,25 +113,25 @@ void PViewOptions::createGeneralRaise()
 {
   destroyGeneralRaise();
 
-  const char *expr[3] = {GenRaiseX.c_str(), GenRaiseY.c_str(), GenRaiseZ.c_str()};
+  const char *expr[3] = {genRaiseX.c_str(), genRaiseY.c_str(), genRaiseZ.c_str()};
 #if defined(HAVE_MATH_EVAL)
   for(int i = 0; i < 3; i++) {
     if(strlen(expr[i])) {
-      if(!(GenRaise_f[i] = evaluator_create((char*)expr[i])))
+      if(!(genRaiseFunction[i] = evaluator_create((char*)expr[i])))
         Msg::Error("Invalid expression '%s'", expr[i]);
     }
   }
 #else
   for(int i = 0; i < 3; i++) {
-    if(!strcmp(expr[i], "v0")) GenRaise_f[i] = (void*)0;
-    else if(!strcmp(expr[i], "v1")) GenRaise_f[i] = (void*)1;
-    else if(!strcmp(expr[i], "v2")) GenRaise_f[i] = (void*)2;
-    else if(!strcmp(expr[i], "v3")) GenRaise_f[i] = (void*)3;
-    else if(!strcmp(expr[i], "v4")) GenRaise_f[i] = (void*)4;
-    else if(!strcmp(expr[i], "v5")) GenRaise_f[i] = (void*)5;
-    else if(!strcmp(expr[i], "v6")) GenRaise_f[i] = (void*)6;
-    else if(!strcmp(expr[i], "v7")) GenRaise_f[i] = (void*)7;
-    else if(!strcmp(expr[i], "v8")) GenRaise_f[i] = (void*)8;
+    if(!strcmp(expr[i], "v0")) genRaiseFunction[i] = (void*)0;
+    else if(!strcmp(expr[i], "v1")) genRaiseFunction[i] = (void*)1;
+    else if(!strcmp(expr[i], "v2")) genRaiseFunction[i] = (void*)2;
+    else if(!strcmp(expr[i], "v3")) genRaiseFunction[i] = (void*)3;
+    else if(!strcmp(expr[i], "v4")) genRaiseFunction[i] = (void*)4;
+    else if(!strcmp(expr[i], "v5")) genRaiseFunction[i] = (void*)5;
+    else if(!strcmp(expr[i], "v6")) genRaiseFunction[i] = (void*)6;
+    else if(!strcmp(expr[i], "v7")) genRaiseFunction[i] = (void*)7;
+    else if(!strcmp(expr[i], "v8")) genRaiseFunction[i] = (void*)8;
     else if(strlen(expr[i])) {
       Msg::Error("Invalid expression '%s'", expr[i]);
       return;
@@ -143,14 +143,14 @@ void PViewOptions::createGeneralRaise()
 bool PViewOptions::skipElement(int numEdges)
 {
   switch(numEdges){
-  case 0: return !DrawPoints;
-  case 1: return !DrawLines;
-  case 3: return !DrawTriangles;
-  case 4: return !DrawQuadrangles;
-  case 6: return !DrawTetrahedra;
-  case 12: return !DrawHexahedra;
-  case 9: return !DrawPrisms;
-  case 8: return !DrawPyramids;
+  case 0: return !drawPoints;
+  case 1: return !drawLines;
+  case 3: return !drawTriangles;
+  case 4: return !drawQuadrangles;
+  case 6: return !drawTetrahedra;
+  case 12: return !drawHexahedra;
+  case 9: return !drawPrisms;
+  case 8: return !drawPyramids;
   default: return true;
   }
 }

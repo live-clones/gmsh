@@ -75,7 +75,7 @@ void Msg::Init(int argc, char **argv)
 void Msg::Exit(int level)
 {
   // delete the temp file
-  if(!_commRank) UnlinkFile(CTX::instance()->home_dir + CTX::instance()->tmp_filename);
+  if(!_commRank) UnlinkFile(CTX::instance()->homeDir + CTX::instance()->tmpFileName);
 
   // exit directly on abnormal program termination (level != 0). We
   // used to call abort() to flush open streams, but on modern OSes
@@ -92,12 +92,12 @@ void Msg::Exit(int level)
   // if we exit cleanly (level==0) and we are in full GUI mode, save
   // the persistent info to disk
   if(GUI::available() && !_commRank) {
-    if(CTX::instance()->session_save)
+    if(CTX::instance()->sessionSave)
       Print_Options(0, GMSH_SESSIONRC, 0, 0, 
-                    (CTX::instance()->home_dir + CTX::instance()->session_filename).c_str());
-    if(CTX::instance()->options_save)
+                    (CTX::instance()->homeDir + CTX::instance()->sessionFileName).c_str());
+    if(CTX::instance()->optionsSave)
       Print_Options(0, GMSH_OPTIONSRC, 1, 0, 
-                    (CTX::instance()->home_dir + CTX::instance()->options_filename).c_str());
+                    (CTX::instance()->homeDir + CTX::instance()->optionsFileName).c_str());
   }
 #endif
 
@@ -126,10 +126,10 @@ void Msg::Fatal(const char *fmt, ...)
     GUI::instance()->messages->add(tmp.c_str());
     GUI::instance()->messages->show();
     GUI::instance()->messages->save
-      ((CTX::instance()->home_dir + CTX::instance()->error_filename).c_str());
+      ((CTX::instance()->homeDir + CTX::instance()->errorFileName).c_str());
     fl_alert("A fatal error has occurred which will force Gmsh to abort.\n"
              "The error messages have been saved in the following file:\n\n%s",
-             (CTX::instance()->home_dir + CTX::instance()->error_filename).c_str());
+             (CTX::instance()->homeDir + CTX::instance()->errorFileName).c_str());
   }
 #endif
 
@@ -442,7 +442,7 @@ double Msg::GetValue(const char *text, double defaultval)
 {
   // if a callback is given let's assume we don't want to be bothered
   // with interactive stuff
-  if(CTX::instance()->nopopup || _callback) return defaultval;
+  if(CTX::instance()->noPopup || _callback) return defaultval;
 
 #if defined(HAVE_FLTK)
   if(GUI::available()){
@@ -470,7 +470,7 @@ bool Msg::GetBinaryAnswer(const char *question, const char *yes,
 {
   // if a callback is given let's assume we don't want to be bothered
   // with interactive stuff
-  if(CTX::instance()->nopopup || _callback) return defaultval;
+  if(CTX::instance()->noPopup || _callback) return defaultval;
 
 #if defined(HAVE_FLTK)
   if(GUI::available()){

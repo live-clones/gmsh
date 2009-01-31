@@ -267,9 +267,9 @@ static void select_cb(Fl_Widget *w, void *data)
   const char *str;
 
   switch(what){
-  case ENT_ALL: CTX::instance()->pick_elements = 1; str = "Elements"; break;
-  case ENT_POINT: CTX::instance()->pick_elements = 0; str = "Points"; break;
-  case ENT_SURFACE: CTX::instance()->pick_elements = 0; str = "Surfaces"; break;
+  case ENT_ALL: CTX::instance()->pickElements = 1; str = "Elements"; break;
+  case ENT_POINT: CTX::instance()->pickElements = 0; str = "Points"; break;
+  case ENT_SURFACE: CTX::instance()->pickElements = 0; str = "Surfaces"; break;
   default: return;
   }
 
@@ -289,7 +289,7 @@ static void select_cb(Fl_Widget *w, void *data)
 
     char ib = GUI::instance()->selectEntity(what);
     if(ib == 'l') {
-      if(CTX::instance()->pick_elements){
+      if(CTX::instance()->pickElements){
         for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++){
           if(GUI::instance()->selectedElements[i]->getVisibility() != 2){
             GUI::instance()->selectedElements[i]->setVisibility(2); 
@@ -313,7 +313,7 @@ static void select_cb(Fl_Widget *w, void *data)
       }
     }
     if(ib == 'r') {
-      if(CTX::instance()->pick_elements){
+      if(CTX::instance()->pickElements){
         for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++)
           GUI::instance()->selectedElements[i]->setVisibility(1);
       }
@@ -325,7 +325,7 @@ static void select_cb(Fl_Widget *w, void *data)
       }
     }
     if(ib == 'u') {
-      if(CTX::instance()->pick_elements){
+      if(CTX::instance()->pickElements){
         if(ele.size()){
           ele[ele.size() - 1]->setVisibility(1); ele.pop_back();
         }
@@ -351,7 +351,7 @@ static void select_cb(Fl_Widget *w, void *data)
   }
 
   CTX::instance()->mesh.changed = ENT_ALL;
-  CTX::instance()->pick_elements = 0;
+  CTX::instance()->pickElements = 0;
   Draw();  
   Msg::StatusBar(3, false, "");
 }
@@ -409,7 +409,7 @@ static void filter_cb(Fl_Widget *w, void *data)
 
 static void proj_hide_cb(Fl_Widget *w, void *data)
 {
-  CTX::instance()->hide_unselected = !CTX::instance()->hide_unselected;
+  CTX::instance()->hideUnselected = !CTX::instance()->hideUnselected;
   CTX::instance()->mesh.changed = ENT_ALL;
   Draw();
 }
@@ -742,9 +742,9 @@ void uvPlot::color(double d)
   else
     index = (int)((d - _dmin) * (_colorTable.size - 1) / (_dmax - _dmin));
   unsigned int color = _colorTable.table[index];
-  int r = CTX::instance()->unpack_red(color);
-  int g = CTX::instance()->unpack_green(color);
-  int b = CTX::instance()->unpack_blue(color);
+  int r = CTX::instance()->unpackRed(color);
+  int g = CTX::instance()->unpackGreen(color);
+  int b = CTX::instance()->unpackBlue(color);
   fl_color(r, g, b);
 }
 
@@ -769,9 +769,9 @@ void uvPlot::draw()
   for(int i = 0; i < w(); i++){
     int index = (int)(i * (_colorTable.size - 1) / w());
     unsigned int color = _colorTable.table[index];
-    int r = CTX::instance()->unpack_red(color);
-    int g = CTX::instance()->unpack_green(color);
-    int b = CTX::instance()->unpack_blue(color);
+    int r = CTX::instance()->unpackRed(color);
+    int g = CTX::instance()->unpackGreen(color);
+    int b = CTX::instance()->unpackBlue(color);
     fl_color(r, g, b);
     fl_line(i, ph, i, ph + 10);
   }
@@ -896,7 +896,7 @@ projectionEditor::projectionEditor()
   
   // create all widgets (we construct this once, we never deallocate!)
   _window = new paletteWindow
-    (width, height, CTX::instance()->non_modal_windows ? true : false, "Reparameterize");
+    (width, height, CTX::instance()->nonModalWindows ? true : false, "Reparameterize");
   
   new Fl_Box(WB, WB + BH / 2, BB / 2, BH, "Select:");
   

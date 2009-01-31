@@ -919,8 +919,6 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Binary" , opt_mesh_binary , 0. , 
     "Write mesh files in binary format (if possible)" },
 
-  { F|O, "C1Continuity" , opt_mesh_c1 , 0. ,
-    "Impose C1 continuity to high order meshes (only valid in 2D plane and ElemenOrder = 2)" },
   { F|O, "ChacoArchitecture" , opt_mesh_partition_chaco_architecture, 1. ,
     "(Adv. Chaco): Parallel architecture topology (0=hypercube, 1-3=mesh dimensions)" },
   { F|O, "ChacoEigensolver" , opt_mesh_partition_chaco_eigensolver, 1. ,
@@ -1151,8 +1149,6 @@ StringXNumber SolverOptions_Number[] = {
   { F|O, "ClientServer4" , opt_solver_client_server4 , 0. ,
     "Connect solver 4 to the Gmsh server" },
 
-  { F|O, "MaximumDelay" , opt_solver_max_delay , 4.0 ,
-    "Maximum delay (in seconds) allowed for solver response" },
   { F|O, "MergeViews0" , opt_solver_merge_views0 , 1. , 
     "Automatically merge any post-processing view created by solver 0" },
   { F|O, "MergeViews1" , opt_solver_merge_views1 , 1. , 

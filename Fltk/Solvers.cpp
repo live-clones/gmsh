@@ -82,7 +82,7 @@ int Solver(int num, const char *args)
 #if !defined(WIN32)
       command += " &";
 #endif
-      server->StartClient(command.c_str(), 0, CTX::instance()->solver.max_delay);
+      server->StartClient(command.c_str(), 0, 4.0);
       return 1;
     }
   }
@@ -95,21 +95,21 @@ int Solver(int num, const char *args)
     prog = command = "";
   }
 
-  if(!strstr(CTX::instance()->solver.socket_name.c_str(), ":")){
+  if(!strstr(CTX::instance()->solver.socketName.c_str(), ":")){
     // Unix socket
     char tmp[1024];
     if(num >= 0)
-      sprintf(tmp, "%s%s-%d", CTX::instance()->home_dir.c_str(), 
-              CTX::instance()->solver.socket_name.c_str(),
+      sprintf(tmp, "%s%s-%d", CTX::instance()->homeDir.c_str(), 
+              CTX::instance()->solver.socketName.c_str(),
               num);
     else
-      sprintf(tmp, "%s%s", CTX::instance()->home_dir.c_str(), 
-              CTX::instance()->solver.socket_name.c_str());
+      sprintf(tmp, "%s%s", CTX::instance()->homeDir.c_str(), 
+              CTX::instance()->solver.socketName.c_str());
     sockname = FixWindowsPath(tmp);
   }
   else{
     // TCP/IP socket
-    sockname = CTX::instance()->solver.socket_name;
+    sockname = CTX::instance()->solver.socketName;
     // if only the port is given, prepend the host name
     if(sockname.size() && sockname[0] == ':')
       sockname = GetHostName() + sockname;
@@ -125,8 +125,7 @@ int Solver(int num, const char *args)
 #endif
   }
 
-  int sock = server->StartClient(command.c_str(), sockname.c_str(),
-                                 CTX::instance()->solver.max_delay);
+  int sock = server->StartClient(command.c_str(), sockname.c_str(), 4.0);
 
   if(sock < 0) {
     switch (sock) {

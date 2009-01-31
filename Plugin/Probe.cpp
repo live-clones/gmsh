@@ -47,7 +47,7 @@ void GMSH_ProbePlugin::draw(void *context)
     double z = ProbeOptions_Number[2].def;
     drawContext *ctx = (drawContext*)context;
     glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
-    glLineWidth(CTX::instance()->line_width);
+    glLineWidth(CTX::instance()->lineWidth);
     SBoundingBox3d bb = PView::list[num]->getData()->getBoundingBox();
     if(x >= bb.min().x() && x <= bb.max().x() &&
        y >= bb.min().y() && y <= bb.max().y() &&
@@ -68,7 +68,7 @@ void GMSH_ProbePlugin::draw(void *context)
       glVertex3d(x, y, z - d); glVertex3d(x, y, z + d);
       glEnd();
     }
-    ctx->drawSphere(CTX::instance()->point_size, x, y, z, 1);
+    ctx->drawSphere(CTX::instance()->pointSize, x, y, z, 1);
   }
 #endif
 }

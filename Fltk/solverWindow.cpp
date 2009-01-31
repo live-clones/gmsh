@@ -202,7 +202,7 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
   int BBS = (width - 8 * WB) / 5;
   
   win = new paletteWindow
-    (width, height, CTX::instance()->non_modal_windows ? true : false, "Solver");
+    (width, height, CTX::instance()->nonModalWindows ? true : false, "Solver");
   win->box(GMSH_WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs
@@ -298,7 +298,7 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
     o->end();
   }
 
-  win->position(CTX::instance()->solver_position[0], CTX::instance()->solver_position[1]);
+  win->position(CTX::instance()->solverPosition[0], CTX::instance()->solverPosition[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;

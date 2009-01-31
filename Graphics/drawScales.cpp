@@ -16,12 +16,12 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
 {
   PViewOptions *opt = p->getOptions();
 
-  double box = (horizontal ? width : height) / (opt->NbIso ? opt->NbIso : 1);
+  double box = (horizontal ? width : height) / (opt->nbIso ? opt->nbIso : 1);
 
-  for(int i = 0; i < opt->NbIso; i++) {
-    if(opt->IntervalsType == PViewOptions::Discrete ||
-       opt->IntervalsType == PViewOptions::Numeric){
-      unsigned int col = opt->getColor(i, opt->NbIso);
+  for(int i = 0; i < opt->nbIso; i++) {
+    if(opt->intervalsType == PViewOptions::Discrete ||
+       opt->intervalsType == PViewOptions::Numeric){
+      unsigned int col = opt->getColor(i, opt->nbIso);
       glColor4ubv((GLubyte *) &col);
       glBegin(GL_QUADS);
       if(horizontal){
@@ -38,11 +38,11 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
       }
       glEnd();
     }
-    else if(opt->IntervalsType == PViewOptions::Continuous){
+    else if(opt->intervalsType == PViewOptions::Continuous){
       glBegin(GL_QUADS);
-      double dv = (opt->TmpMax - opt->TmpMin) / (opt->NbIso ? opt->NbIso : 1);
-      double v1 = opt->TmpMin + i * dv;
-      unsigned int col1 = opt->getColor(v1, opt->TmpMin, opt->TmpMax, true);
+      double dv = (opt->tmpMax - opt->tmpMin) / (opt->nbIso ? opt->nbIso : 1);
+      double v1 = opt->tmpMin + i * dv;
+      unsigned int col1 = opt->getColor(v1, opt->tmpMin, opt->tmpMax, true);
       glColor4ubv((GLubyte *) &col1);
       if(horizontal){
         glVertex2d(xmin + i * box, ymin + height);
@@ -52,8 +52,8 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
         glVertex2d(xmin, ymin + i * box);
         glVertex2d(xmin + width, ymin + i * box);
       }
-      double v2 = opt->TmpMin + (i + 1) * dv;
-      unsigned int col2 = opt->getColor(v2, opt->TmpMin, opt->TmpMax, true);
+      double v2 = opt->tmpMin + (i + 1) * dv;
+      unsigned int col2 = opt->getColor(v2, opt->tmpMin, opt->tmpMax, true);
       glColor4ubv((GLubyte *) &col2);
       if(horizontal){
         glVertex2d(xmin + (i + 1) * box, ymin);
@@ -66,7 +66,7 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
       glEnd();
     }
     else{
-      unsigned int col = opt->getColor(i, opt->NbIso);
+      unsigned int col = opt->getColor(i, opt->nbIso);
       glColor4ubv((GLubyte *) &col);
       glBegin(GL_LINES);
       if(horizontal){
@@ -87,20 +87,20 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin, double ymin
 {
   PViewOptions *opt = p->getOptions();
 
-  if(!opt->NbIso) return;
+  if(!opt->nbIso) return;
 
-  gl_font(CTX::instance()->gl_font_enum, CTX::instance()->gl_fontsize);
+  gl_font(CTX::instance()->glFontEnum, CTX::instance()->glFontSize);
   double font_h = gl_height(); // total font height
   double font_a = gl_height() - gl_descent(); // height above ref pt
 
   char label[1024];
-  sprintf(label, opt->Format.c_str(), -M_PI * 1.e-4);
+  sprintf(label, opt->format.c_str(), -M_PI * 1.e-4);
   double maxw = gl_width(label);
 
-  int nbv = opt->NbIso;
-  double f = (opt->IntervalsType == PViewOptions::Discrete ||
-              opt->IntervalsType == PViewOptions::Numeric ||
-              opt->IntervalsType == PViewOptions::Continuous) ? 2 : 2.5;
+  int nbv = opt->nbIso;
+  double f = (opt->intervalsType == PViewOptions::Discrete ||
+              opt->intervalsType == PViewOptions::Numeric ||
+              opt->intervalsType == PViewOptions::Continuous) ? 2 : 2.5;
 
   if(horizontal && width < nbv * maxw){
     if(width < f * maxw) nbv = 1;
@@ -111,17 +111,17 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin, double ymin
     else nbv = 2;
   }
 
-  double box = (horizontal ? width : height) / opt->NbIso;
+  double box = (horizontal ? width : height) / opt->nbIso;
   double vbox = (horizontal ? width : height) / nbv;
 
   glColor4ubv((GLubyte *) & CTX::instance()->color.text);
 
-  if(opt->IntervalsType == PViewOptions::Discrete ||
-     opt->IntervalsType == PViewOptions::Numeric ||
-     opt->IntervalsType == PViewOptions::Continuous){
+  if(opt->intervalsType == PViewOptions::Discrete ||
+     opt->intervalsType == PViewOptions::Numeric ||
+     opt->intervalsType == PViewOptions::Continuous){
     for(int i = 0; i < nbv + 1; i++) {
-      double v = opt->getScaleValue(i, nbv + 1, opt->TmpMin, opt->TmpMax);
-      sprintf(label, opt->Format.c_str(), v);
+      double v = opt->getScaleValue(i, nbv + 1, opt->tmpMin, opt->tmpMax);
+      sprintf(label, opt->format.c_str(), v);
       if(horizontal){
         glRasterPos2d(xmin + i * vbox, ymin + height + tic);
         ctx->drawStringCenter(label);
@@ -133,13 +133,13 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin, double ymin
     }
   }
   else{
-    if(opt->NbIso > 2 && (nbv == 1 || nbv == 2)){
+    if(opt->nbIso > 2 && (nbv == 1 || nbv == 2)){
       vbox = (vbox * nbv - box) / nbv;
       nbv++;
     }
     for(int i = 0; i < nbv; i++) {
-      double v = opt->getScaleValue(i, nbv, opt->TmpMin, opt->TmpMax);
-      sprintf(label, opt->Format.c_str(), v);
+      double v = opt->getScaleValue(i, nbv, opt->tmpMin, opt->tmpMax);
+      sprintf(label, opt->format.c_str(), v);
       if(horizontal){
         glRasterPos2d(xmin + box / 2. + i * vbox, ymin + height + tic);
         ctx->drawStringCenter(label);
@@ -158,19 +158,19 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
 
-  gl_font(CTX::instance()->gl_font_enum, CTX::instance()->gl_fontsize);
+  gl_font(CTX::instance()->glFontEnum, CTX::instance()->glFontSize);
   double font_h = gl_height();
 
   char label[1024];
 
   int nt = data->getNumTimeSteps();
-  if((opt->ShowTime == 1 && nt > 1) || opt->ShowTime == 2){
+  if((opt->showTime == 1 && nt > 1) || opt->showTime == 2){
     char tmp[256];
-    sprintf(tmp, opt->Format.c_str(), data->getTime(opt->TimeStep));
+    sprintf(tmp, opt->format.c_str(), data->getTime(opt->timeStep));
     sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
   }
-  else if((opt->ShowTime == 3 && nt > 1) || opt->ShowTime == 4){
-    sprintf(label, "%s (%d)", data->getName().c_str(), opt->TimeStep);
+  else if((opt->showTime == 3 && nt > 1) || opt->showTime == 4){
+    sprintf(label, "%s (%d)", data->getName().c_str(), opt->timeStep);
   }
   else
     sprintf(label, "%s", data->getName().c_str());
@@ -192,21 +192,21 @@ static void drawScale(drawContext *ctx, PView *p, double xmin, double ymin,
   PViewData *data = p->getData(true);
   PViewOptions *opt = p->getOptions();
 
-  if(opt->ExternalViewIndex >= 0){
-    opt->TmpMin = opt->ExternalMin;
-    opt->TmpMax = opt->ExternalMax;
+  if(opt->externalViewIndex >= 0){
+    opt->tmpMin = opt->externalMin;
+    opt->tmpMax = opt->externalMax;
   }
-  else if(opt->RangeType == PViewOptions::Custom){
-    opt->TmpMin = opt->CustomMin;
-    opt->TmpMax = opt->CustomMax;
+  else if(opt->rangeType == PViewOptions::Custom){
+    opt->tmpMin = opt->customMin;
+    opt->tmpMax = opt->customMax;
   }
-  else if(opt->RangeType == PViewOptions::PerTimeStep){
-    opt->TmpMin = data->getMin(opt->TimeStep);
-    opt->TmpMax = data->getMax(opt->TimeStep);
+  else if(opt->rangeType == PViewOptions::PerTimeStep){
+    opt->tmpMin = data->getMin(opt->timeStep);
+    opt->tmpMax = data->getMax(opt->timeStep);
   }
   else{
-    opt->TmpMin = data->getMin();
-    opt->TmpMax = data->getMax();
+    opt->tmpMin = data->getMin();
+    opt->tmpMax = data->getMax();
   }
 
   drawScaleBar(p, xmin, ymin, width, height, tic, horizontal);
@@ -220,19 +220,19 @@ void drawContext::drawScales()
   for(unsigned int i = 0; i < PView::list.size(); i++){
     PViewData *data = PView::list[i]->getData();
     PViewOptions *opt = PView::list[i]->getOptions();
-    if(!data->getDirty() && opt->Visible && opt->ShowScale && 
-       opt->Type == PViewOptions::Plot3D && data->getNumElements() &&
+    if(!data->getDirty() && opt->visible && opt->showScale && 
+       opt->type == PViewOptions::Plot3D && data->getNumElements() &&
        isVisible(PView::list[i]))
       scales.push_back(PView::list[i]);
   }
   if(scales.empty()) return;
 
-  gl_font(CTX::instance()->gl_font_enum, CTX::instance()->gl_fontsize);
+  gl_font(CTX::instance()->glFontEnum, CTX::instance()->glFontSize);
   char label[1024];
   double maxw = 0.;
   for(unsigned int i = 0; i < scales.size(); i++) {
     PViewOptions *opt = scales[i]->getOptions();
-    sprintf(label, opt->Format.c_str(), -M_PI * 1.e-4);
+    sprintf(label, opt->format.c_str(), -M_PI * 1.e-4);
     maxw = std::max(maxw, gl_width(label));
   }
 
@@ -244,15 +244,15 @@ void drawContext::drawScales()
     PViewData *data = p->getData();
     PViewOptions *opt = p->getOptions();
     
-    if(!opt->AutoPosition) {
-      double w = opt->Size[0], h = opt->Size[1];
-      double x = opt->Position[0], y = opt->Position[1] - h;
+    if(!opt->autoPosition) {
+      double w = opt->size[0], h = opt->size[1];
+      double x = opt->position[0], y = opt->position[1] - h;
       int c = fix2dCoordinates(&x, &y);
       if(c & 1) x -= w / 2.;
       if(c & 2) y += h / 2.;
-      drawScale(this, p, x, y, w, h, tic, CTX::instance()->post.horizontal_scales);
+      drawScale(this, p, x, y, w, h, tic, CTX::instance()->post.horizontalScales);
     }
-    else if(CTX::instance()->post.horizontal_scales){
+    else if(CTX::instance()->post.horizontalScales){
       double ysep = 20.;
       double xc = (viewport[2] - viewport[0]) / 2.;
       if(scales.size() == 1){
@@ -290,11 +290,11 @@ void drawContext::drawScales()
       }
       // compute width
       width_prev = width;
-      sprintf(label, opt->Format.c_str(), -M_PI * 1.e-4);
+      sprintf(label, opt->format.c_str(), -M_PI * 1.e-4);
       width = bar_size + tic + gl_width(label);
-      if(opt->ShowTime){
+      if(opt->showTime){
         char tmp[256];
-        sprintf(tmp, opt->Format.c_str(), data->getTime(opt->TimeStep));
+        sprintf(tmp, opt->format.c_str(), data->getTime(opt->timeStep));
         sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
       }
       else

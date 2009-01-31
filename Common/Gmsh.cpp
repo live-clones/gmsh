@@ -99,8 +99,8 @@ int GmshBatch()
   }
 
 #if !defined(HAVE_NO_POST)
-  if(!CTX::instance()->bgm_filename.empty()) {
-    MergeFile(CTX::instance()->bgm_filename);
+  if(!CTX::instance()->bgmFileName.empty()) {
+    MergeFile(CTX::instance()->bgmFileName);
     if(PView::list.size())
       GModel::current()->getFields()->set_background_mesh(PView::list.size() - 1);
     else
@@ -109,13 +109,13 @@ int GmshBatch()
 #endif
 
   if(CTX::instance()->batch == -3){
-    GmshDaemon(CTX::instance()->solver.socket_name);
+    GmshDaemon(CTX::instance()->solver.socketName);
   }
   else if(CTX::instance()->batch == -2){
     GModel::current()->checkMeshCoherence(CTX::instance()->geom.tolerance);
   }
   else if(CTX::instance()->batch == -1){
-    CreateOutputFile(CTX::instance()->output_filename, FORMAT_GEO);
+    CreateOutputFile(CTX::instance()->outputFileName, FORMAT_GEO);
   }
   else if(CTX::instance()->batch > 0){
     if(CTX::instance()->batch < 4)
@@ -123,12 +123,12 @@ int GmshBatch()
     else if(CTX::instance()->batch == 4)
       AdaptMesh(GModel::current());
     else if(CTX::instance()->batch == 5)
-      RefineMesh(GModel::current(), CTX::instance()->mesh.second_order_linear);
+      RefineMesh(GModel::current(), CTX::instance()->mesh.secondOrderLinear);
 #if defined(HAVE_CHACO) || defined(HAVE_METIS)
-    if(CTX::instance()->batch_after_mesh == 1)
-      PartitionMesh(GModel::current(), CTX::instance()->partition_options);
+    if(CTX::instance()->batchAfterMesh == 1)
+      PartitionMesh(GModel::current(), CTX::instance()->partitionOptions);
 #endif
-    CreateOutputFile(CTX::instance()->output_filename, CTX::instance()->mesh.format);
+    CreateOutputFile(CTX::instance()->outputFileName, CTX::instance()->mesh.format);
   }
 
   time_t now;

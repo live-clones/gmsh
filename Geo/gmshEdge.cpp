@@ -70,9 +70,9 @@ int gmshEdge::minimumMeshSegments () const
     np = GEdge::minimumMeshSegments();
   else if(geomType() == Circle || geomType() == Ellipse)
     np = (int)(fabs(c->Circle.t1 - c->Circle.t2) *
-                 (double)CTX::instance()->mesh.min_circ_points / M_PI) - 1;
+                 (double)CTX::instance()->mesh.minCircPoints / M_PI) - 1;
   else
-    np = CTX::instance()->mesh.min_curv_points - 1;
+    np = CTX::instance()->mesh.minCurvPoints - 1;
   return std::max(np, meshAttributes.minimumMeshSegments);
 }
 
@@ -84,7 +84,7 @@ int gmshEdge::minimumDrawSegments () const
   if(geomType() == Line && !c->geometry)
     return n;
   else
-    return CTX::instance()->geom.num_sub_edges * n;
+    return CTX::instance()->geom.numSubEdges * n;
 }
 
 SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar,int dir) const

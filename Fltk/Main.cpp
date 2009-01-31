@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
   Msg::Info("Build date     : %s", Get_GmshBuildDate());
   Msg::Info("Build host     : %s", Get_GmshBuildHost());
   Msg::Info("Packager       : %s", Get_GmshPackager());
-  Msg::Info("Home directory : %s", CTX::instance()->home_dir.c_str());
+  Msg::Info("Home directory : %s", CTX::instance()->homeDir.c_str());
   Msg::Info("Launch date    : %s", Msg::GetLaunchDate().c_str());
   Msg::Info("Command line   : %s", Msg::GetCommandLine().c_str());
   Msg::Info("-------------------------------------------------------");
@@ -83,13 +83,13 @@ int main(int argc, char *argv[])
       MergeFile(CTX::instance()->files[i]);
   }
   
-  if(CTX::instance()->post.combine_time){
-    PView::combine(true, 2, CTX::instance()->post.combine_remove_orig);
+  if(CTX::instance()->post.combineTime){
+    PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
     GUI::instance()->updateViews();
   }
 
   // Init first context
-  switch (CTX::instance()->initial_context) {
+  switch (CTX::instance()->initialContext) {
   case 1: GUI::instance()->menu->setContext(menu_geometry, 0); break;
   case 2: GUI::instance()->menu->setContext(menu_mesh, 0); break;
   case 3: GUI::instance()->menu->setContext(menu_solver, 0); break;
@@ -103,8 +103,8 @@ int main(int argc, char *argv[])
   }
 
   // Read background mesh if any
-  if(!CTX::instance()->bgm_filename.empty()) {
-    MergeFile(CTX::instance()->bgm_filename);
+  if(!CTX::instance()->bgmFileName.empty()) {
+    MergeFile(CTX::instance()->bgmFileName);
     if(PView::list.size())
       GModel::current()->getFields()->set_background_mesh(PView::list.size() - 1);
     else

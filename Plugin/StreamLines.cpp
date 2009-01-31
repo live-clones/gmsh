@@ -52,7 +52,7 @@ void GMSH_StreamLinesPlugin::draw(void *context)
   for(int i = 0; i < getNbU(); ++i){
     for(int j = 0; j < getNbV(); ++j){
       getPoint(i, j, p);
-      ctx->drawSphere(CTX::instance()->point_size, p[0], p[1], p[2], 1);
+      ctx->drawSphere(CTX::instance()->pointSize, p[0], p[1], p[2], 1);
     }
   }
 #endif
@@ -334,7 +334,7 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
     delete o2;
   }
   else{
-    v3->getOptions()->VectorType = PViewOptions::Displacement;
+    v3->getOptions()->vectorType = PViewOptions::Displacement;
   }
 
   data3->setName(data1->getName() + "_StreamLines");

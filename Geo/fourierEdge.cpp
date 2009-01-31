@@ -49,7 +49,7 @@ int fourierEdge::minimumDrawSegments() const
   if(geomType() == Line)
     return n;
   else
-    return CTX::instance()->geom.num_sub_edges * n;
+    return CTX::instance()->geom.numSubEdges * n;
 }
 
 #endif

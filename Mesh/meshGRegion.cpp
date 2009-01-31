@@ -191,7 +191,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
                      v[j]));
         MVertex *v1b;
 	if (CTX::instance()->mesh.order > 1 && 
-            CTX::instance()->mesh.second_order_experimental){
+            CTX::instance()->mesh.secondOrderExperimental){
 	  // PARAMETRIC COORDINATES SHOULD BE SET for the vertex !!!!!!!!!!!!!
 	  // This is not 100 % safe yet, so we reserve that operation for high order
 	  // meshes.
@@ -559,7 +559,7 @@ void meshGRegion::operator() (GRegion *gr)
 
   if(gr->geomType() == GEntity::DiscreteVolume) return;
   if(gr->meshAttributes.Method == MESH_NONE) return;
-  if(CTX::instance()->mesh.mesh_only_visible && !gr->getVisibility()) return;
+  if(CTX::instance()->mesh.meshOnlyVisible && !gr->getVisibility()) return;
 
   ExtrudeParams *ep = gr->meshAttributes.extrude;
 

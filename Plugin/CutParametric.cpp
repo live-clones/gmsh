@@ -120,7 +120,7 @@ void GMSH_CutParametricPlugin::draw(void *context)
   else{
     drawContext *ctx = (drawContext*)context;
     for(unsigned int i = 0; i < x.size(); ++i)
-      ctx->drawSphere(CTX::instance()->point_size, x[i], y[i], z[i], 1);
+      ctx->drawSphere(CTX::instance()->pointSize, x[i], y[i], z[i], 1);
   }
 #endif
 }

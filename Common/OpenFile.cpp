@@ -85,7 +85,7 @@ void SetBoundingBox(double xmin, double xmax,
 
 void SetBoundingBox()
 {
-  if(CTX::instance()->forced_bbox) return;
+  if(CTX::instance()->forcedBBox) return;
 
   SBoundingBox3d bb = GModel::current()->bounds();
   
@@ -199,12 +199,12 @@ void ParseString(std::string str)
 {
   if(str.empty()) return;
   FILE *fp;
-  if((fp = fopen((CTX::instance()->home_dir + 
-                  CTX::instance()->tmp_filename).c_str(), "w"))) {
+  if((fp = fopen((CTX::instance()->homeDir + 
+                  CTX::instance()->tmpFileName).c_str(), "w"))) {
     fprintf(fp, str.c_str());
     fprintf(fp, "\n");
     fclose(fp);
-    ParseFile((CTX::instance()->home_dir + CTX::instance()->tmp_filename).c_str(), true);
+    ParseFile((CTX::instance()->homeDir + CTX::instance()->tmpFileName).c_str(), true);
     GModel::current()->importGEOInternals();
   }
 }
@@ -288,7 +288,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
     status = GModel::current()->readUNV(fileName);
   }
   else if(!strcmp(ext, ".vtk") || !strcmp(ext, ".VTK")){
-    status = GModel::current()->readVTK(fileName, CTX::instance()->big_endian);
+    status = GModel::current()->readVTK(fileName, CTX::instance()->bigEndian);
   }
   else if(!strcmp(ext, ".wrl") || !strcmp(ext, ".WRL") || 
           !strcmp(ext, ".vrml") || !strcmp(ext, ".VRML") ||
@@ -386,7 +386,7 @@ void ClearProject()
   for(int i = GModel::list.size() - 1; i >= 0; i--)
     delete GModel::list[i];
   new GModel();
-  SetProjectName(CTX::instance()->default_filename);
+  SetProjectName(CTX::instance()->defaultFileName);
 #if defined(HAVE_FLTK)
   if(GUI::available()){
     GUI::instance()->setGraphicTitle(GModel::current()->getFileName());
@@ -400,11 +400,11 @@ void ClearProject()
 
 void OpenProject(std::string fileName)
 {
-  if(CTX::instance()->threads_lock) {
+  if(CTX::instance()->lock) {
     Msg::Info("I'm busy! Ask me that later...");
     return;
   }
-  CTX::instance()->threads_lock = 1;
+  CTX::instance()->lock = 1;
 
   if(GModel::current()->empty()){
     // if the current model is empty, make sure it's reaaally
@@ -437,7 +437,7 @@ void OpenProject(std::string fileName)
   if(!StatFile(fileName + ".opt"))
     MergeFile(fileName + ".opt");
 
-  CTX::instance()->threads_lock = 0;
+  CTX::instance()->lock = 0;
 
 #if defined(HAVE_FLTK)
   if(GUI::available()){

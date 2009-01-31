@@ -28,10 +28,10 @@ static unsigned int getColorByEntity(GEntity *e)
   else if(e->useColor()){ // forced from a script
     return e->getColor();
   }
-  else if(CTX::instance()->mesh.color_carousel == 1){ // by elementary entity
+  else if(CTX::instance()->mesh.colorCarousel == 1){ // by elementary entity
     return CTX::instance()->color.mesh.carousel[abs(e->tag() % 20)];
   }
-  else if(CTX::instance()->mesh.color_carousel == 2){ // by physical entity
+  else if(CTX::instance()->mesh.colorCarousel == 2){ // by physical entity
     int np = e->physicals.size();
     int p = np ? e->physicals[np - 1] : 0;
     return CTX::instance()->color.mesh.carousel[abs(p % 20)];
@@ -46,7 +46,7 @@ static unsigned int getColorByElement(MElement *ele)
   if(ele->getVisibility() > 1){ // selection
     return CTX::instance()->color.geom.selection;
   }
-  else if(CTX::instance()->mesh.color_carousel == 0){ // by element type
+  else if(CTX::instance()->mesh.colorCarousel == 0){ // by element type
     switch(ele->getNumEdges()){
     case 1: return CTX::instance()->color.mesh.line;
     case 3: return CTX::instance()->color.mesh.triangle;
@@ -58,7 +58,7 @@ static unsigned int getColorByElement(MElement *ele)
     default: return CTX::instance()->color.mesh.vertex;
     }
   }
-  else if(CTX::instance()->mesh.color_carousel == 3){ // by partition
+  else if(CTX::instance()->mesh.colorCarousel == 3){ // by partition
     return CTX::instance()->color.mesh.carousel[abs(ele->getPartition() % 20)];
   }
   else{ 
@@ -77,10 +77,10 @@ static unsigned int getColorByElement(MElement *ele)
 
 static double evalClipPlane(int clip, double x, double y, double z)
 {
-  return CTX::instance()->clip_plane[clip][0] * x + 
-    CTX::instance()->clip_plane[clip][1] * y + 
-    CTX::instance()->clip_plane[clip][2] * z + 
-    CTX::instance()->clip_plane[clip][3];
+  return CTX::instance()->clipPlane[clip][0] * x + 
+    CTX::instance()->clipPlane[clip][1] * y + 
+    CTX::instance()->clipPlane[clip][2] * z + 
+    CTX::instance()->clipPlane[clip][3];
 }
 
 static double intersectClipPlane(int clip, MElement *ele)
@@ -98,34 +98,34 @@ static double intersectClipPlane(int clip, MElement *ele)
 static bool isElementVisible(MElement *ele)
 {
   if(!ele->getVisibility()) return false;
-  if(CTX::instance()->mesh.quality_sup) {
+  if(CTX::instance()->mesh.qualitySup) {
     double q;
-    if(CTX::instance()->mesh.quality_type == 3)
+    if(CTX::instance()->mesh.qualityType == 3)
       q = ele->distoShapeMeasure();
-    else if(CTX::instance()->mesh.quality_type == 2)
+    else if(CTX::instance()->mesh.qualityType == 2)
       q = ele->rhoShapeMeasure();
-    else if(CTX::instance()->mesh.quality_type == 1)
+    else if(CTX::instance()->mesh.qualityType == 1)
       q = ele->etaShapeMeasure();
     else
       q = ele->gammaShapeMeasure();
-    if(q < CTX::instance()->mesh.quality_inf || 
-       q > CTX::instance()->mesh.quality_sup) return false;
+    if(q < CTX::instance()->mesh.qualityInf || 
+       q > CTX::instance()->mesh.qualitySup) return false;
   }
-  if(CTX::instance()->mesh.radius_sup) {
+  if(CTX::instance()->mesh.radiusSup) {
     double r = ele->maxEdge();
-    if(r < CTX::instance()->mesh.radius_inf || 
-       r > CTX::instance()->mesh.radius_sup) return false;
+    if(r < CTX::instance()->mesh.radiusInf || 
+       r > CTX::instance()->mesh.radiusSup) return false;
   }
-  if(CTX::instance()->clip_whole_elements){
+  if(CTX::instance()->clipWholeElements){
     bool hidden = false;
     for(int clip = 0; clip < 6; clip++){
       if(CTX::instance()->mesh.clip & (1 << clip)){
-	if(ele->getDim() < 3 && CTX::instance()->clip_only_volume){
+	if(ele->getDim() < 3 && CTX::instance()->clipOnlyVolume){
 	}
 	else{
 	  double d = intersectClipPlane(clip, ele);
 	  if(ele->getDim() == 3 && 
-             CTX::instance()->clip_only_draw_intersecting_volume && d){
+             CTX::instance()->clipOnlyDrawIntersectingVolume && d){
 	    hidden = true;
 	    break;
 	  }
@@ -160,10 +160,10 @@ static bool areSomeElementsCurved(std::vector<T*> &elements)
 static int getLabelStep(int total)
 {
   int step;
-  if(CTX::instance()->mesh.label_frequency == 0.0) 
+  if(CTX::instance()->mesh.labelFrequency == 0.0) 
     step = total;
   else 
-    step = (int)(100.0 / CTX::instance()->mesh.label_frequency);
+    step = (int)(100.0 / CTX::instance()->mesh.labelFrequency);
   return (step > total) ? total : step;
 }
 
@@ -183,16 +183,16 @@ static void drawElementLabels(drawContext *ctx, GEntity *e,
     if(i % labelStep == 0) {
       SPoint3 pc = ele->barycenter();
       char str[256];
-      if(CTX::instance()->mesh.label_type == 4)
+      if(CTX::instance()->mesh.labelType == 4)
         sprintf(str, "(%g,%g,%g)", pc.x(), pc.y(), pc.z());
-      else if(CTX::instance()->mesh.label_type == 3)
+      else if(CTX::instance()->mesh.labelType == 3)
         sprintf(str, "%d", ele->getPartition());
-      else if(CTX::instance()->mesh.label_type == 2){
+      else if(CTX::instance()->mesh.labelType == 2){
         int np = e->physicals.size();
         int p = np ? e->physicals[np - 1] : 0;
         sprintf(str, "%d", p);
       }
-      else if(CTX::instance()->mesh.label_type == 1)
+      else if(CTX::instance()->mesh.labelType == 1)
         sprintf(str, "%d", e->tag());
       else
         sprintf(str, "%d", ele->getNum());
@@ -213,7 +213,7 @@ static void drawNormals(drawContext *ctx, std::vector<T*> &elements)
     for(int j = 0; j < 3; j++)
       n[j] *= CTX::instance()->mesh.normals * ctx->pixel_equiv_x / ctx->s[j];
     SPoint3 pc = ele->barycenter();
-    ctx->drawVector(CTX::instance()->vector_type, 0, pc.x(), pc.y(), pc.z(), 
+    ctx->drawVector(CTX::instance()->vectorType, 0, pc.x(), pc.y(), pc.z(), 
                     n[0], n[1], n[2], CTX::instance()->mesh.light);
   }
 }
@@ -229,7 +229,7 @@ static void drawTangents(drawContext *ctx, std::vector<T*> &elements)
     for(int j = 0; j < 3; j++)
       t[j] *= CTX::instance()->mesh.tangents * ctx->pixel_equiv_x / ctx->s[j];
     SPoint3 pc = ele->barycenter();
-    ctx->drawVector(CTX::instance()->vector_type, 0, pc.x(), pc.y(), pc.z(), 
+    ctx->drawVector(CTX::instance()->vectorType, 0, pc.x(), pc.y(), pc.z(), 
                     t[0], t[1], t[2], CTX::instance()->mesh.light);
   }
 }
@@ -242,23 +242,23 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
   int np = e->physicals.size();
   int physical = np ? e->physicals[np - 1] : 0;
   char str[256];
-  if(CTX::instance()->mesh.label_type == 4)
+  if(CTX::instance()->mesh.labelType == 4)
     sprintf(str, "(%.16g,%.16g,%.16g)", v->x(), v->y(), v->z());
-  else if(CTX::instance()->mesh.label_type == 3){
+  else if(CTX::instance()->mesh.labelType == 3){
     if(partition < 0)
       sprintf(str, "NA");
     else
       sprintf(str, "%d", partition);
   }
-  else if(CTX::instance()->mesh.label_type == 2)
+  else if(CTX::instance()->mesh.labelType == 2)
     sprintf(str, "%d", physical);
-  else if(CTX::instance()->mesh.label_type == 1)
+  else if(CTX::instance()->mesh.labelType == 1)
     sprintf(str, "%d", e->tag());
   else
     sprintf(str, "%d", v->getNum());
 
   if(v->getPolynomialOrder() > 1)
-    glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex_sup);
+    glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
   else
     glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);   
   glRasterPos3d(v->x(), v->y(), v->z());
@@ -268,15 +268,15 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
 static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
 {
   if(CTX::instance()->mesh.points) {
-    if(CTX::instance()->mesh.point_type) {
+    if(CTX::instance()->mesh.pointType) {
       for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
         MVertex *v = e->mesh_vertices[i];
         if(!v->getVisibility()) continue;
         if(v->getPolynomialOrder() > 1)
-          glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex_sup);
+          glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
         else
           glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);     
-        ctx->drawSphere(CTX::instance()->mesh.point_size, v->x(), v->y(), v->z(), 
+        ctx->drawSphere(CTX::instance()->mesh.pointSize, v->x(), v->y(), v->z(), 
                         CTX::instance()->mesh.light);
       }
     }
@@ -286,7 +286,7 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
         MVertex *v = e->mesh_vertices[i];
         if(!v->getVisibility()) continue;
         if(v->getPolynomialOrder() > 1)
-          glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex_sup);
+          glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
         else
           glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);     
         glVertex3d(v->x(), v->y(), v->z());
@@ -294,7 +294,7 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
       glEnd();
     }
   }
-  if(CTX::instance()->mesh.points_num) {
+  if(CTX::instance()->mesh.pointsNum) {
     int labelStep = getLabelStep(e->mesh_vertices.size());
     for(unsigned int i = 0; i < e->mesh_vertices.size(); i++)
       if(i % labelStep == 0) drawVertexLabel(ctx, e, e->mesh_vertices[i]);
@@ -312,11 +312,11 @@ static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
       if(isElementVisible(ele) && v->getVisibility()){
         if(CTX::instance()->mesh.points) {
           if(v->getPolynomialOrder() > 1)
-            glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex_sup);
+            glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
           else
             glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);   
-          if(CTX::instance()->mesh.point_type)
-            ctx->drawSphere(CTX::instance()->mesh.point_size, v->x(), v->y(), v->z(),
+          if(CTX::instance()->mesh.pointType)
+            ctx->drawSphere(CTX::instance()->mesh.pointSize, v->x(), v->y(), v->z(),
                             CTX::instance()->mesh.light);
           else{
             glBegin(GL_POINTS);
@@ -324,7 +324,7 @@ static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
             glEnd();
           }
         }
-        if(CTX::instance()->mesh.points_num)
+        if(CTX::instance()->mesh.pointsNum)
           drawVertexLabel(ctx, e, v);
       }
     }
@@ -465,7 +465,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
     if(CTX::instance()->mesh.explode != 1.) pc = ele->barycenter();
 
     if(edges){
-      bool unique = e->dim() > 1 && !CTX::instance()->pick_elements;
+      bool unique = e->dim() > 1 && !CTX::instance()->pickElements;
       for(int j = 0; j < ele->getNumEdgesRep(); j++){
         double x[2], y[2], z[2];
         SVector3 n[2];
@@ -477,7 +477,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
             z[k] = pc[2] + CTX::instance()->mesh.explode * (z[k] - pc[2]);
           }
         }
-        if(e->dim() == 2 && CTX::instance()->mesh.smooth_normals)
+        if(e->dim() == 2 && CTX::instance()->mesh.smoothNormals)
           for(int k = 0; k < 2; k++)
             e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1], n[k][2]);
         e->va_lines->add(x, y, z, n, col, ele, unique);
@@ -485,8 +485,8 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
     }
 
     if(faces){
-      bool unique = e->dim() > 2 && !CTX::instance()->pick_elements;
-      bool skin = e->dim() > 2 && CTX::instance()->mesh.draw_skin_only;
+      bool unique = e->dim() > 2 && !CTX::instance()->pickElements;
+      bool skin = e->dim() > 2 && CTX::instance()->mesh.drawSkinOnly;
       for(int j = 0; j < ele->getNumFacesRep(); j++){
         double x[3], y[3], z[3];
         SVector3 n[3];
@@ -498,7 +498,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
             z[k] = pc[2] + CTX::instance()->mesh.explode * (z[k] - pc[2]);
           }
         }
-        if(e->dim() == 2 && CTX::instance()->mesh.smooth_normals)
+        if(e->dim() == 2 && CTX::instance()->mesh.smoothNormals)
           for(int k = 0; k < 3; k++)
             e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1], n[k][2]);
         e->va_triangles->add(x, y, z, n, col, ele, unique, skin);
@@ -515,7 +515,7 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va, GLint type
   // If we want to be enable picking of individual elements we need to
   // draw each one separately
   bool select = (ctx->render_mode == drawContext::GMSH_SELECT && 
-                 CTX::instance()->pick_elements && e->model() == GModel::current());
+                 CTX::instance()->pickElements && e->model() == GModel::current());
   if(select) {
     if(va->getNumElementPointers() == va->getNumVertices()){
       for(int i = 0; i < va->getNumVertices(); i += va->getNumVerticesPerElement()){
@@ -547,9 +547,9 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va, GLint type
     glDisableClientState(GL_COLOR_ARRAY);
     glColor4ubv((GLubyte *) & color);
   }
-  else if(CTX::instance()->pick_elements || 
-          (!e->getSelection() && (CTX::instance()->mesh.color_carousel == 0 || 
-                                  CTX::instance()->mesh.color_carousel == 3))){
+  else if(CTX::instance()->pickElements || 
+          (!e->getSelection() && (CTX::instance()->mesh.colorCarousel == 0 || 
+                                  CTX::instance()->mesh.colorCarousel == 3))){
     glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
     glEnableClientState(GL_COLOR_ARRAY);
   }
@@ -559,7 +559,7 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va, GLint type
     glColor4ubv((GLubyte *) & color);
   }
   
-  if(va->getNumVerticesPerElement() > 2 && CTX::instance()->polygon_offset)
+  if(va->getNumVerticesPerElement() > 2 && CTX::instance()->polygonOffset)
     glEnable(GL_POLYGON_OFFSET_FILL);
   
   glDrawArrays(type, 0, va->getNumVertices());
@@ -590,7 +590,7 @@ class drawMeshGVertex {
       glPushName(v->tag());
     }
 
-    if(CTX::instance()->mesh.points || CTX::instance()->mesh.points_num)
+    if(CTX::instance()->mesh.points || CTX::instance()->mesh.pointsNum)
       drawVerticesPerEntity(_ctx, v);
 
     if(select) {
@@ -649,10 +649,10 @@ class drawMeshGEdge {
     if(CTX::instance()->mesh.lines)
       drawArrays(_ctx, e, e->va_lines, GL_LINES, false);
 
-    if(CTX::instance()->mesh.lines_num)
+    if(CTX::instance()->mesh.linesNum)
       drawElementLabels(_ctx, e, e->lines);
 
-    if(CTX::instance()->mesh.points || CTX::instance()->mesh.points_num){
+    if(CTX::instance()->mesh.points || CTX::instance()->mesh.pointsNum){
       if(e->getAllElementsVisible())
         drawVerticesPerEntity(_ctx, e);
       else
@@ -686,7 +686,7 @@ class initMeshGFace {
   int _estimateNumLines(GFace *f)
   {
     int num = 0;
-    if(CTX::instance()->mesh.surfaces_edges){
+    if(CTX::instance()->mesh.surfacesEdges){
       num += (3 * f->triangles.size() + 4 * f->quadrangles.size()) / 2;
       if(CTX::instance()->mesh.explode != 1.) num *= 2;
       if(_curved) num *= 2;
@@ -696,7 +696,7 @@ class initMeshGFace {
   int _estimateNumTriangles(GFace *f)
   {
     int num = 0;
-    if(CTX::instance()->mesh.surfaces_faces){
+    if(CTX::instance()->mesh.surfacesFaces){
       num += (f->triangles.size() + 2 * f->quadrangles.size());
       if(_curved) num *= 4;
     }
@@ -712,8 +712,8 @@ class initMeshGFace {
       (CTX::instance()->mesh.triangles && areAllElementsVisible(f->triangles) && 
        CTX::instance()->mesh.quadrangles && areAllElementsVisible(f->quadrangles));
 
-    bool edg = CTX::instance()->mesh.surfaces_edges;
-    bool fac = CTX::instance()->mesh.surfaces_faces;
+    bool edg = CTX::instance()->mesh.surfacesEdges;
+    bool fac = CTX::instance()->mesh.surfacesFaces;
     if(edg || fac){
       _curved = (areSomeElementsCurved(f->triangles) ||
                  areSomeElementsCurved(f->quadrangles));
@@ -744,20 +744,20 @@ class drawMeshGFace {
     }
 
     drawArrays(_ctx, f, f->va_lines, GL_LINES, 
-               CTX::instance()->mesh.light && CTX::instance()->mesh.light_lines, 
-               CTX::instance()->mesh.surfaces_faces, CTX::instance()->color.mesh.line);
+               CTX::instance()->mesh.light && CTX::instance()->mesh.lightLines, 
+               CTX::instance()->mesh.surfacesFaces, CTX::instance()->color.mesh.line);
     drawArrays(_ctx, f, f->va_triangles, GL_TRIANGLES, CTX::instance()->mesh.light);
 
-    if(CTX::instance()->mesh.surfaces_num) {
+    if(CTX::instance()->mesh.surfacesNum) {
       if(CTX::instance()->mesh.triangles)
-        drawElementLabels(_ctx, f, f->triangles, CTX::instance()->mesh.surfaces_faces, 
+        drawElementLabels(_ctx, f, f->triangles, CTX::instance()->mesh.surfacesFaces, 
                           CTX::instance()->color.mesh.line);
       if(CTX::instance()->mesh.quadrangles)
-        drawElementLabels(_ctx, f, f->quadrangles, CTX::instance()->mesh.surfaces_faces, 
+        drawElementLabels(_ctx, f, f->quadrangles, CTX::instance()->mesh.surfacesFaces, 
                           CTX::instance()->color.mesh.line);
     }
 
-    if(CTX::instance()->mesh.points || CTX::instance()->mesh.points_num){
+    if(CTX::instance()->mesh.points || CTX::instance()->mesh.pointsNum){
       if(f->getAllElementsVisible())
         drawVerticesPerEntity(_ctx, f);
       else{
@@ -795,8 +795,8 @@ class initMeshGRegion {
   bool _curved;
   int _estimateIfClipped(int num)
   {
-    if(CTX::instance()->clip_whole_elements && 
-       CTX::instance()->clip_only_draw_intersecting_volume){
+    if(CTX::instance()->clipWholeElements && 
+       CTX::instance()->clipOnlyDrawIntersectingVolume){
       for(int clip = 0; clip < 6; clip++){
 	if(CTX::instance()->mesh.clip & (1 << clip))
 	  return (int)sqrt((double)num);
@@ -807,7 +807,7 @@ class initMeshGRegion {
   int _estimateNumLines(GRegion *r)
   {
     int num = 0;
-    if(CTX::instance()->mesh.volumes_edges){
+    if(CTX::instance()->mesh.volumesEdges){
       // suppose edge shared by 4 elements on averge (pessmistic)
       num += (12 * r->tetrahedra.size() + 24 * r->hexahedra.size() +
               18 * r->prisms.size() + 16 * r->pyramids.size()) / 4;
@@ -820,7 +820,7 @@ class initMeshGRegion {
   int _estimateNumTriangles(GRegion *r)
   {
     int num = 0;
-    if(CTX::instance()->mesh.volumes_faces){
+    if(CTX::instance()->mesh.volumesFaces){
       num += (4 * r->tetrahedra.size() + 12 * r->hexahedra.size() +
               8 * r->prisms.size() + 6 * r->pyramids.size()) / 2;
       num = _estimateIfClipped(num);
@@ -841,8 +841,8 @@ class initMeshGRegion {
        CTX::instance()->mesh.prisms && areAllElementsVisible(r->prisms) &&
        CTX::instance()->mesh.pyramids && areAllElementsVisible(r->pyramids));
 
-    bool edg = CTX::instance()->mesh.volumes_edges;
-    bool fac = CTX::instance()->mesh.volumes_faces;
+    bool edg = CTX::instance()->mesh.volumesEdges;
+    bool fac = CTX::instance()->mesh.volumesFaces;
     if(edg || fac){
       _curved = (areSomeElementsCurved(r->tetrahedra) || 
                  areSomeElementsCurved(r->hexahedra) ||
@@ -877,30 +877,30 @@ class drawMeshGRegion {
     }
 
     drawArrays(_ctx, r, r->va_lines, GL_LINES, CTX::instance()->mesh.light && 
-               CTX::instance()->mesh.light_lines, CTX::instance()->mesh.volumes_faces,
+               CTX::instance()->mesh.lightLines, CTX::instance()->mesh.volumesFaces,
                CTX::instance()->color.mesh.line);
     drawArrays(_ctx, r, r->va_triangles, GL_TRIANGLES, CTX::instance()->mesh.light);
     
-    if(CTX::instance()->mesh.volumes_num) {
+    if(CTX::instance()->mesh.volumesNum) {
       if(CTX::instance()->mesh.tetrahedra) 
-        drawElementLabels(_ctx, r, r->tetrahedra, CTX::instance()->mesh.volumes_faces || 
-                          CTX::instance()->mesh.surfaces_faces, 
+        drawElementLabels(_ctx, r, r->tetrahedra, CTX::instance()->mesh.volumesFaces || 
+                          CTX::instance()->mesh.surfacesFaces, 
                           CTX::instance()->color.mesh.line);
       if(CTX::instance()->mesh.hexahedra) 
-        drawElementLabels(_ctx, r, r->hexahedra, CTX::instance()->mesh.volumes_faces || 
-                          CTX::instance()->mesh.surfaces_faces, 
+        drawElementLabels(_ctx, r, r->hexahedra, CTX::instance()->mesh.volumesFaces || 
+                          CTX::instance()->mesh.surfacesFaces, 
                           CTX::instance()->color.mesh.line);
       if(CTX::instance()->mesh.prisms) 
-        drawElementLabels(_ctx, r, r->prisms, CTX::instance()->mesh.volumes_faces || 
-                          CTX::instance()->mesh.surfaces_faces,
+        drawElementLabels(_ctx, r, r->prisms, CTX::instance()->mesh.volumesFaces || 
+                          CTX::instance()->mesh.surfacesFaces,
                           CTX::instance()->color.mesh.line);
       if(CTX::instance()->mesh.pyramids) 
-        drawElementLabels(_ctx, r, r->pyramids, CTX::instance()->mesh.volumes_faces ||
-                          CTX::instance()->mesh.surfaces_faces,
+        drawElementLabels(_ctx, r, r->pyramids, CTX::instance()->mesh.volumesFaces ||
+                          CTX::instance()->mesh.surfacesFaces,
                           CTX::instance()->color.mesh.line);
     }
 
-    if(CTX::instance()->mesh.points || CTX::instance()->mesh.points_num){
+    if(CTX::instance()->mesh.points || CTX::instance()->mesh.pointsNum){
       if(r->getAllElementsVisible())
         drawVerticesPerEntity(_ctx, r);
       else{
@@ -942,20 +942,20 @@ void drawContext::drawMesh()
         PView::list[j]->setChanged(true);
   }
 
-  glPointSize(CTX::instance()->mesh.point_size);
-  gl2psPointSize(CTX::instance()->mesh.point_size * 
-                 CTX::instance()->print.eps_point_size_factor);
+  glPointSize(CTX::instance()->mesh.pointSize);
+  gl2psPointSize(CTX::instance()->mesh.pointSize * 
+                 CTX::instance()->print.epsPointSizeFactor);
 
-  glLineWidth(CTX::instance()->mesh.line_width);
-  gl2psLineWidth(CTX::instance()->mesh.line_width *
-                 CTX::instance()->print.eps_line_width_factor);
+  glLineWidth(CTX::instance()->mesh.lineWidth);
+  gl2psLineWidth(CTX::instance()->mesh.lineWidth *
+                 CTX::instance()->print.epsLineWidthFactor);
   
-  if(CTX::instance()->mesh.light_two_side)
+  if(CTX::instance()->mesh.lightTwoSide)
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
   else
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
   
-  if(!CTX::instance()->clip_whole_elements){
+  if(!CTX::instance()->clipWholeElements){
     for(int i = 0; i < 6; i++)
       if(CTX::instance()->mesh.clip & (1 << i)) 
 	glEnable((GLenum)(GL_CLIP_PLANE0 + i));
@@ -978,8 +978,8 @@ void drawContext::drawMesh()
             std::for_each(m->firstEdge(), m->lastEdge(), initMeshGEdge());
           if(status >= 2 && CTX::instance()->mesh.changed & ENT_SURFACE){
             if(m->normals) delete m->normals;
-            m->normals = new smooth_normals(CTX::instance()->mesh.angle_smooth_normals);
-            if(CTX::instance()->mesh.smooth_normals)
+            m->normals = new smooth_normals(CTX::instance()->mesh.angleSmoothNormals);
+            if(CTX::instance()->mesh.smoothNormals)
               std::for_each(m->firstFace(), m->lastFace(), initSmoothNormalsGFace());
             std::for_each(m->firstFace(), m->lastFace(), initMeshGFace());
           }

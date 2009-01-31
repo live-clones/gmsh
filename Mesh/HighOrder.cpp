@@ -1011,7 +1011,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
 
   gmshHighOrderSmoother *displ2D = 0; 
   gmshHighOrderSmoother *displ3D = 0; 
-  if(CTX::instance()->mesh.smooth_internal_edges){
+  if(CTX::instance()->mesh.smoothInternalEdges){
     displ2D = new gmshHighOrderSmoother(2);
     displ3D = new gmshHighOrderSmoother(3);
   }

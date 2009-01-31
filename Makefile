@@ -7,7 +7,7 @@ include variables
 
 GMSH_MAJOR_VERSION = 2
 GMSH_MINOR_VERSION = 3
-GMSH_PATCH_VERSION = 0
+GMSH_PATCH_VERSION = 1
 GMSH_EXTRA_VERSION =
 
 GMSH_VERSION = ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}
@@ -235,8 +235,7 @@ tags:
 	htags
 
 etags:
-	etags `find . \( -name "*.cpp" -o -name "*.c" -o -name "*.h"\
-                      -o -name "*.y" -o -name "*.l" \)`
+	etags `find . \( -name "*.cpp" -o -name "*.h" -o -name "*.y" -o -name "*.l" \)`
 
 # Rules to package the sources
 

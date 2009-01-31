@@ -29,19 +29,19 @@ class drawGVertex {
     }
     
     if(v->getSelection()) {
-      glPointSize(CTX::instance()->geom.point_sel_size);
-      gl2psPointSize(CTX::instance()->geom.point_sel_size * 
-                     CTX::instance()->print.eps_point_size_factor);
+      glPointSize(CTX::instance()->geom.selectedPointSize);
+      gl2psPointSize(CTX::instance()->geom.selectedPointSize * 
+                     CTX::instance()->print.epsPointSizeFactor);
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.selection);
     }
     else {
-      glPointSize(CTX::instance()->geom.point_size);
-      gl2psPointSize(CTX::instance()->geom.point_size *
-                     CTX::instance()->print.eps_point_size_factor);
+      glPointSize(CTX::instance()->geom.pointSize);
+      gl2psPointSize(CTX::instance()->geom.pointSize *
+                     CTX::instance()->print.epsPointSizeFactor);
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.point);
     }
     
-    if(CTX::instance()->geom.highlight_orphans){
+    if(CTX::instance()->geom.highlightOrphans){
       std::list<GEdge*> edges = v->edges();
       if(edges.size() == 0)
         glColor4ubv((GLubyte *) & CTX::instance()->color.geom.highlight[0]);
@@ -53,12 +53,12 @@ class drawGVertex {
     _ctx->transform(x, y, z);
 
     if(CTX::instance()->geom.points) {
-      if(CTX::instance()->geom.point_type > 0) {
+      if(CTX::instance()->geom.pointType > 0) {
         if(v->getSelection())
-          _ctx->drawSphere(CTX::instance()->geom.point_sel_size, x, y, z, 
+          _ctx->drawSphere(CTX::instance()->geom.selectedPointSize, x, y, z, 
                            CTX::instance()->geom.light);
         else
-          _ctx->drawSphere(CTX::instance()->geom.point_size, x, y, z, 
+          _ctx->drawSphere(CTX::instance()->geom.pointSize, x, y, z, 
                            CTX::instance()->geom.light);
       }
       else {
@@ -68,12 +68,11 @@ class drawGVertex {
       }
     }
 
-    if(CTX::instance()->geom.points_num) {
+    if(CTX::instance()->geom.pointsNum) {
       char Num[100];
       sprintf(Num, "%d", v->tag());
-      double offset = (0.5 * CTX::instance()->geom.point_size + 
-                       0.3 * CTX::instance()->gl_fontsize) * 
-        _ctx->pixel_equiv_x;
+      double offset = (0.5 * CTX::instance()->geom.pointSize + 
+                       0.3 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
       glRasterPos3d(x + offset / _ctx->s[0],
                     y + offset / _ctx->s[1],
                     z + offset / _ctx->s[2]);
@@ -106,19 +105,19 @@ class drawGEdge {
     }
     
     if(e->getSelection()) {
-      glLineWidth(CTX::instance()->geom.line_sel_width);
-      gl2psLineWidth(CTX::instance()->geom.line_sel_width * 
-                     CTX::instance()->print.eps_line_width_factor);
+      glLineWidth(CTX::instance()->geom.selectedLineWidth);
+      gl2psLineWidth(CTX::instance()->geom.selectedLineWidth * 
+                     CTX::instance()->print.epsLineWidthFactor);
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.selection);
     }
     else {
-      glLineWidth(CTX::instance()->geom.line_width);
-      gl2psLineWidth(CTX::instance()->geom.line_width * 
-                     CTX::instance()->print.eps_line_width_factor);
+      glLineWidth(CTX::instance()->geom.lineWidth);
+      gl2psLineWidth(CTX::instance()->geom.lineWidth * 
+                     CTX::instance()->print.epsLineWidthFactor);
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.line);
     }
     
-    if(CTX::instance()->geom.highlight_orphans){
+    if(CTX::instance()->geom.highlightOrphans){
       std::list<GFace*> faces = e->faces();
       if(faces.size() == 0)
         glColor4ubv((GLubyte *) & CTX::instance()->color.geom.highlight[0]);
@@ -132,7 +131,7 @@ class drawGEdge {
     
     if(CTX::instance()->geom.lines) {
       int N = e->minimumDrawSegments() + 1;
-      if(CTX::instance()->geom.line_type > 0) {
+      if(CTX::instance()->geom.lineType > 0) {
         for(int i = 0; i < N - 1; i++) {
           double t1 = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
           GPoint p1 = e->point(t1);
@@ -143,8 +142,8 @@ class drawGEdge {
           double z[2] = {p1.z(), p2.z()};
           _ctx->transform(x[0], y[0], z[0]);
           _ctx->transform(x[1], y[1], z[1]);
-          _ctx->drawCylinder(e->getSelection() ? CTX::instance()->geom.line_sel_width : 
-                             CTX::instance()->geom.line_width, x, y, z, 
+          _ctx->drawCylinder(e->getSelection() ? CTX::instance()->geom.selectedLineWidth : 
+                             CTX::instance()->geom.lineWidth, x, y, z, 
                              CTX::instance()->geom.light);
         }
       }
@@ -161,13 +160,12 @@ class drawGEdge {
       }
     }
     
-    if(CTX::instance()->geom.lines_num) {
+    if(CTX::instance()->geom.linesNum) {
       GPoint p = e->point(t_min + 0.5 * (t_max - t_min));
       char Num[100];
       sprintf(Num, "%d", e->tag());
-      double offset = (0.5 * CTX::instance()->geom.line_width + 
-                       0.3 * CTX::instance()->gl_fontsize) *
-        _ctx->pixel_equiv_x;
+      double offset = (0.5 * CTX::instance()->geom.lineWidth + 
+                       0.3 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
       double x = p.x(), y = p.y(), z = p.z();
       _ctx->transform(x, y, z);
       glRasterPos3d(x + offset / _ctx->s[0],
@@ -187,7 +185,7 @@ class drawGEdge {
       double x = p.x(), y = p.y(), z = p.z();
       _ctx->transform(x, y, z);
       _ctx->transformOneForm(der[0], der[1], der[2]);
-      _ctx->drawVector(CTX::instance()->vector_type, 0, x, y, z, der[0], der[1], der[2],
+      _ctx->drawVector(CTX::instance()->vectorType, 0, x, y, z, der[0], der[1], der[2],
                        CTX::instance()->geom.light);
     }
 
@@ -222,8 +220,8 @@ class drawGFace {
       glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
       glEnableClientState(GL_COLOR_ARRAY);
     }
-    if(CTX::instance()->polygon_offset) glEnable(GL_POLYGON_OFFSET_FILL);
-    if(CTX::instance()->geom.surface_type > 1)
+    if(CTX::instance()->polygonOffset) glEnable(GL_POLYGON_OFFSET_FILL);
+    if(CTX::instance()->geom.surfaceType > 1)
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     else
       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -244,7 +242,7 @@ class drawGFace {
     const double vav = 0.5 * (vbounds.high() + vbounds.low());
 
     if(CTX::instance()->geom.surfaces){
-      if(CTX::instance()->geom.surface_type > 0 && f->va_geom_triangles){
+      if(CTX::instance()->geom.surfaceType > 0 && f->va_geom_triangles){
         _drawVertexArray
           (f->va_geom_triangles, CTX::instance()->geom.light, 
            (f->geomType() == GEntity::ProjectionFace) ? true : f->getSelection(), 
@@ -280,11 +278,11 @@ class drawGFace {
       }
     }
 
-    if(CTX::instance()->geom.surfaces_num) {
+    if(CTX::instance()->geom.surfacesNum) {
       GPoint p = f->point(uav, vav);
       char Num[100];
       sprintf(Num, "%d", f->tag());
-      double offset = 0.3 * CTX::instance()->gl_fontsize * _ctx->pixel_equiv_x;
+      double offset = 0.3 * CTX::instance()->glFontSize * _ctx->pixel_equiv_x;
       double x = p.x(), y = p.y(), z = p.z();
       _ctx->transform(x, y, z);
       glRasterPos3d(x + offset / _ctx->s[0],
@@ -302,14 +300,14 @@ class drawGFace {
       double x = p.x(), y = p.y(), z = p.z();
       _ctx->transform(x, y, z);
       _ctx->transformTwoForm(n[0], n[1], n[2]);
-      _ctx->drawVector(CTX::instance()->vector_type, 0, x, y, z, n[0], n[1], n[2],
+      _ctx->drawVector(CTX::instance()->vectorType, 0, x, y, z, n[0], n[1], n[2],
                        CTX::instance()->geom.light);
     }
   }
   void _drawPlaneGFace(GFace *f)
   {
-    if(!CTX::instance()->geom.surface_type || !f->va_geom_triangles ||
-       CTX::instance()->geom.surfaces_num || CTX::instance()->geom.normals){
+    if(!CTX::instance()->geom.surfaceType || !f->va_geom_triangles ||
+       CTX::instance()->geom.surfacesNum || CTX::instance()->geom.normals){
       // We create data here and the routine is not designed to be
       // reentrant, so we must lock it to avoid race conditions when
       // redraw events are fired in rapid succession
@@ -323,7 +321,7 @@ class drawGFace {
 
     //FIXME: cleanup buildGraphicsRep
     if(CTX::instance()->geom.surfaces) {
-      if(CTX::instance()->geom.surface_type > 0 && f->va_geom_triangles){
+      if(CTX::instance()->geom.surfaceType > 0 && f->va_geom_triangles){
         _drawVertexArray(f->va_geom_triangles, CTX::instance()->geom.light, 
                          f->getSelection(), CTX::instance()->color.geom.selection);
       }
@@ -345,10 +343,10 @@ class drawGFace {
 
     if(f->cross.size() < 2) return;
                           
-    if(CTX::instance()->geom.surfaces_num) {
+    if(CTX::instance()->geom.surfacesNum) {
       char Num[100];
       sprintf(Num, "%d", f->tag());
-      double offset = 0.3 * CTX::instance()->gl_fontsize * _ctx->pixel_equiv_x;
+      double offset = 0.3 * CTX::instance()->glFontSize * _ctx->pixel_equiv_x;
       double x = 0.5 * (f->cross[0].x() + f->cross[1].x());
       double y = 0.5 * (f->cross[0].y() + f->cross[1].y());
       double z = 0.5 * (f->cross[0].z() + f->cross[1].z());
@@ -371,7 +369,7 @@ class drawGFace {
       double x = p.x(), y = p.y(), z = p.z();
       _ctx->transform(x, y, z);
       _ctx->transformTwoForm(n[0], n[1], n[2]);
-      _ctx->drawVector(CTX::instance()->vector_type, 0, x, y, z, n[0], n[1], n[2],
+      _ctx->drawVector(CTX::instance()->vectorType, 0, x, y, z, n[0], n[1], n[2],
                        CTX::instance()->geom.light);
     }
   }
@@ -392,15 +390,15 @@ class drawGFace {
     }
     
     if(f->getSelection()) {
-      glLineWidth(CTX::instance()->geom.line_sel_width / 2.);
-      gl2psLineWidth(CTX::instance()->geom.line_sel_width / 2. *
-                     CTX::instance()->print.eps_line_width_factor);
+      glLineWidth(CTX::instance()->geom.selectedLineWidth / 2.);
+      gl2psLineWidth(CTX::instance()->geom.selectedLineWidth / 2. *
+                     CTX::instance()->print.epsLineWidthFactor);
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.selection);
     }
     else {
-      glLineWidth(CTX::instance()->geom.line_width / 2.);
-      gl2psLineWidth(CTX::instance()->geom.line_width / 2. * 
-                     CTX::instance()->print.eps_line_width_factor);
+      glLineWidth(CTX::instance()->geom.lineWidth / 2.);
+      gl2psLineWidth(CTX::instance()->geom.lineWidth / 2. * 
+                     CTX::instance()->print.epsLineWidthFactor);
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.surface);
     }
 
@@ -447,10 +445,10 @@ class drawGRegion {
     if(CTX::instance()->geom.volumes)
       _ctx->drawSphere(size, x, y, z, CTX::instance()->geom.light);
 
-    if(CTX::instance()->geom.volumes_num){
+    if(CTX::instance()->geom.volumesNum){
       char Num[100];
       sprintf(Num, "%d", r->tag());
-      double offset = (0.5 * size + 0.3 * CTX::instance()->gl_fontsize) *
+      double offset = (0.5 * size + 0.3 * CTX::instance()->glFontSize) *
         _ctx->pixel_equiv_x;
       glRasterPos3d(x + offset / _ctx->s[0],
                     y + offset / _ctx->s[1],
@@ -469,7 +467,7 @@ void drawContext::drawGeom()
 {
   if(!CTX::instance()->geom.draw) return;
 
-  if(CTX::instance()->geom.light_two_side)
+  if(CTX::instance()->geom.lightTwoSide)
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
   else
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
@@ -483,15 +481,15 @@ void drawContext::drawGeom()
   for(unsigned int i = 0; i < GModel::list.size(); i++){
     GModel *m = GModel::list[i];
     if(m->getVisibility() && isVisible(m)){
-      if(CTX::instance()->geom.points || CTX::instance()->geom.points_num)
+      if(CTX::instance()->geom.points || CTX::instance()->geom.pointsNum)
         std::for_each(m->firstVertex(), m->lastVertex(), drawGVertex(this));
-      if(CTX::instance()->geom.lines || CTX::instance()->geom.lines_num || 
+      if(CTX::instance()->geom.lines || CTX::instance()->geom.linesNum || 
          CTX::instance()->geom.tangents)
         std::for_each(m->firstEdge(), m->lastEdge(), drawGEdge(this));
-      if(CTX::instance()->geom.surfaces || CTX::instance()->geom.surfaces_num ||
+      if(CTX::instance()->geom.surfaces || CTX::instance()->geom.surfacesNum ||
          CTX::instance()->geom.normals)
         std::for_each(m->firstFace(), m->lastFace(), drawGFace(this));
-      if(CTX::instance()->geom.volumes || CTX::instance()->geom.volumes_num)
+      if(CTX::instance()->geom.volumes || CTX::instance()->geom.volumesNum)
         std::for_each(m->firstRegion(), m->lastRegion(), drawGRegion(this));
     }
   }

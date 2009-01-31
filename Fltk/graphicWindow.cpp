@@ -181,7 +181,7 @@ void status_options_cb(Fl_Widget *w, void *data)
     Draw();
   }
   else if(!strcmp(str, "S")){ // mouse selection
-    if(CTX::instance()->mouse_selection){
+    if(CTX::instance()->mouseSelection){
       opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 0);
       for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++)
         for(unsigned int j = 0; j < GUI::instance()->graph[i]->gl.size(); j++)
@@ -237,9 +237,9 @@ static void status_play_cb(Fl_Widget *w, void *data)
   while(1) {
     if(stop_anim)
       break;
-    if(GetTimeInSeconds() - anim_time > CTX::instance()->post.anim_delay) {
+    if(GetTimeInSeconds() - anim_time > CTX::instance()->post.animDelay) {
       anim_time = GetTimeInSeconds();
-      status_play_manual(!CTX::instance()->post.anim_cycle, 1);
+      status_play_manual(!CTX::instance()->post.animCycle, 1);
     }
     GUI::instance()->check();
   }
@@ -253,7 +253,7 @@ static void status_pause_cb(Fl_Widget *w, void *data)
 
 static void status_rewind_cb(Fl_Widget *w, void *data)
 {
-  if(!CTX::instance()->post.anim_cycle) {
+  if(!CTX::instance()->post.animCycle) {
     for(unsigned int i = 0; i < PView::list.size(); i++)
       opt_view_timestep(i, GMSH_SET | GMSH_GUI, 0);
   }
@@ -267,12 +267,12 @@ static void status_rewind_cb(Fl_Widget *w, void *data)
 
 static void status_stepbackward_cb(Fl_Widget *w, void *data)
 {
-  status_play_manual(!CTX::instance()->post.anim_cycle, -1);
+  status_play_manual(!CTX::instance()->post.animCycle, -1);
 }
 
 static void status_stepforward_cb(Fl_Widget *w, void *data)
 {
-  status_play_manual(!CTX::instance()->post.anim_cycle, 1);
+  status_play_manual(!CTX::instance()->post.animCycle, 1);
 }
 
 static void remove_graphic_window_cb(Fl_Widget *w, void *data)
@@ -320,8 +320,8 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   
   int sh = 2 * FL_NORMAL_SIZE - 4; // status bar height
   int sw = FL_NORMAL_SIZE + 3; // status button width
-  int width = CTX::instance()->gl_size[0];
-  int glheight = CTX::instance()->gl_size[1];
+  int width = CTX::instance()->glSize[0];
+  int glheight = CTX::instance()->glSize[1];
   int height = glheight + sh;
   
   // the graphic window should be a "normal" window (neither modal nor
@@ -461,7 +461,7 @@ graphicWindow::graphicWindow(bool main, int numTiles)
 
   tile->end();
 
-  win->position(CTX::instance()->gl_position[0], CTX::instance()->gl_position[1]);
+  win->position(CTX::instance()->glPosition[0], CTX::instance()->glPosition[1]);
   win->end();
 }
 
@@ -536,7 +536,7 @@ void graphicWindow::setAnimButtons(int mode)
 void graphicWindow::checkAnimButtons()
 {
   bool play = false;
-  if(CTX::instance()->post.anim_cycle){
+  if(CTX::instance()->post.animCycle){
     play = true;
   }
   else{

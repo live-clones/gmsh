@@ -50,7 +50,7 @@ void VertexArray::_addColor(unsigned char r, unsigned char g, unsigned char b,
 
 void VertexArray::_addElement(MElement *ele)
 {
-  if(ele && CTX::instance()->pick_elements) _elements.push_back(ele);
+  if(ele && CTX::instance()->pickElements) _elements.push_back(ele);
 }
 
 void VertexArray::add(double *x, double *y, double *z, SVector3 *n, 
@@ -60,10 +60,10 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
     unsigned char r[100], g[100], b[100], a[100];
     int npe = getNumVerticesPerElement();
     for(int i = 0; i < npe; i++){
-      r[i] = CTX::instance()->unpack_red(col[i]);
-      g[i] = CTX::instance()->unpack_green(col[i]);
-      b[i] = CTX::instance()->unpack_blue(col[i]);
-      a[i] = CTX::instance()->unpack_alpha(col[i]);
+      r[i] = CTX::instance()->unpackRed(col[i]);
+      g[i] = CTX::instance()->unpackGreen(col[i]);
+      b[i] = CTX::instance()->unpackBlue(col[i]);
+      a[i] = CTX::instance()->unpackAlpha(col[i]);
     }
     add(x, y, z, n, r, g, b, a, ele, unique, boundary);
   }

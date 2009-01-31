@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
 
   new GModel();
   GmshInitialize(argc, argv);
-  CTX::instance()->terminal = CTX::instance()->nopopup = 1;
+  CTX::instance()->terminal = CTX::instance()->noPopup = 1;
   GmshBatch();
   GmshFinalize();
 

@@ -22,7 +22,7 @@ void message_cb(Fl_Widget *w, void *data)
 
 static void message_auto_scroll_cb(Fl_Widget *w, void *data)
 {
-  CTX::instance()->msg_auto_scroll = GUI::instance()->messages->butt->value();
+  CTX::instance()->msgAutoScroll = GUI::instance()->messages->butt->value();
 }
 
 static void message_copy_cb(Fl_Widget *w, void *data)
@@ -53,7 +53,7 @@ static void message_save_cb(Fl_Widget *w, void *data)
  test:
   if(file_chooser(0, 1, "Save", "*")) {
     std::string name = file_chooser_get_name(1);
-    if(CTX::instance()->confirm_overwrite) {
+    if(CTX::instance()->confirmOverwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
                       "Cancel", "Replace", NULL, name.c_str()))
@@ -67,11 +67,11 @@ messageWindow::messageWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int width = CTX::instance()->msg_size[0];
-  int height = CTX::instance()->msg_size[1];
+  int width = CTX::instance()->msgSize[0];
+  int height = CTX::instance()->msgSize[1];
 
   win = new paletteWindow
-    (width, height, CTX::instance()->non_modal_windows ? true : false, "Message Console");
+    (width, height, CTX::instance()->nonModalWindows ? true : false, "Message Console");
   win->box(GMSH_WINDOW_BOX);
 
   browser = new Fl_Browser(0, 0, width, height - 2 * WB - BH);
@@ -101,7 +101,7 @@ messageWindow::messageWindow(int deltaFontSize)
   win->resizable(new Fl_Box(1, 1, 4, 4));
   win->size_range(WB + 100 + 2 * BB + 3 * WB, 100);
 
-  win->position(CTX::instance()->msg_position[0], CTX::instance()->msg_position[1]);
+  win->position(CTX::instance()->msgPosition[0], CTX::instance()->msgPosition[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;
@@ -110,7 +110,7 @@ messageWindow::messageWindow(int deltaFontSize)
 void messageWindow::add(const char *msg)
 {
   browser->add(msg, 0);
-  if(CTX::instance()->msg_auto_scroll)
+  if(CTX::instance()->msgAutoScroll)
     browser->bottomline(browser->size());
 }
 

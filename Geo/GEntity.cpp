@@ -19,7 +19,7 @@ GEntity::GEntity(GModel *m, int t)
   : _model(m), _tag(t), _visible(1), _selection(0),
     _allElementsVisible(1), va_lines(0), va_triangles(0)
 {
-  _color = CTX::instance()->pack_color(0, 0, 255, 0);
+  _color = CTX::instance()->packColor(0, 0, 255, 0);
 }
 
 GEntity::~GEntity()
@@ -35,7 +35,7 @@ void GEntity::deleteVertexArrays()
 
 char GEntity::getVisibility()
 {
-  if(CTX::instance()->hide_unselected && !CTX::instance()->pick_elements &&
+  if(CTX::instance()->hideUnselected && !CTX::instance()->pickElements &&
      !getSelection() && geomType() != ProjectionFace)
     return false;
   return _visible;
@@ -43,10 +43,10 @@ char GEntity::getVisibility()
 
 bool GEntity::useColor()
 {
-  int r = CTX::instance()->unpack_red(_color);
-  int g = CTX::instance()->unpack_green(_color);
-  int b = CTX::instance()->unpack_blue(_color);
-  int a = CTX::instance()->unpack_alpha(_color);
+  int r = CTX::instance()->unpackRed(_color);
+  int g = CTX::instance()->unpackGreen(_color);
+  int b = CTX::instance()->unpackBlue(_color);
+  int a = CTX::instance()->unpackAlpha(_color);
   if(r == 0 && g == 0 && b == 255 && a == 0)
     return false;
   return true;

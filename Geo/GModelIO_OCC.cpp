@@ -347,9 +347,9 @@ void OCC_Internals::loadBREP(const char *fn)
   BRepTools::Read(shape, (char*)fn, aBuilder);
   BRepTools::Clean(shape);
   healGeometry(CTX::instance()->geom.tolerance, 
-               CTX::instance()->geom.occ_fix_small_edges,
-               CTX::instance()->geom.occ_fix_small_faces,
-               CTX::instance()->geom.occ_sew_faces);
+               CTX::instance()->geom.occFixSmallEdges,
+               CTX::instance()->geom.occFixSmallFaces,
+               CTX::instance()->geom.occSewFaces);
   BRepTools::Clean(shape);
   buildLists();
 }
@@ -363,9 +363,9 @@ void OCC_Internals::loadSTEP(const char *fn)
   shape = reader.OneShape();  
   BRepTools::Clean(shape);
   healGeometry(CTX::instance()->geom.tolerance, 
-               CTX::instance()->geom.occ_fix_small_edges,
-               CTX::instance()->geom.occ_fix_small_faces,
-               CTX::instance()->geom.occ_sew_faces);
+               CTX::instance()->geom.occFixSmallEdges,
+               CTX::instance()->geom.occFixSmallFaces,
+               CTX::instance()->geom.occSewFaces);
   BRepTools::Clean(shape);
   buildLists();
 }
@@ -379,9 +379,9 @@ void OCC_Internals::loadIGES(const char *fn)
   shape = reader.OneShape();  
   BRepTools::Clean(shape);
   healGeometry(CTX::instance()->geom.tolerance, 
-               CTX::instance()->geom.occ_fix_small_edges,
-               CTX::instance()->geom.occ_fix_small_faces,
-               CTX::instance()->geom.occ_sew_faces);
+               CTX::instance()->geom.occFixSmallEdges,
+               CTX::instance()->geom.occFixSmallFaces,
+               CTX::instance()->geom.occSewFaces);
   BRepTools::Clean(shape);
   buildLists();
 }

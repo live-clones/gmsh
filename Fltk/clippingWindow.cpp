@@ -31,7 +31,7 @@ static void clip_update_cb(Fl_Widget *w, void *data)
     CTX::instance()->geom.clip &= ~(1 << idx);
     CTX::instance()->mesh.clip &= ~(1 << idx);
     for(unsigned int i = 0; i < PView::list.size(); i++)
-      PView::list[i]->getOptions()->Clip &= ~(1 << idx);
+      PView::list[i]->getOptions()->clip &= ~(1 << idx);
     for(int i = 0; i < GUI::instance()->clipping->browser->size(); i++){
       if(GUI::instance()->clipping->browser->selected(i + 1)){
         if(i == 0)
@@ -39,17 +39,17 @@ static void clip_update_cb(Fl_Widget *w, void *data)
         else if(i == 1)
           CTX::instance()->mesh.clip |= (1 << idx);
         else if(i - 2 < (int)PView::list.size())
-          PView::list[i - 2]->getOptions()->Clip |= (1 << idx);
+          PView::list[i - 2]->getOptions()->clip |= (1 << idx);
       }
     }
     for(int i = 0; i < 4; i++)
-      CTX::instance()->clip_plane[idx][i] = GUI::instance()->clipping->value[i]->value();
+      CTX::instance()->clipPlane[idx][i] = GUI::instance()->clipping->value[i]->value();
   }
   else{ // clipping box
     CTX::instance()->geom.clip = 0;
     CTX::instance()->mesh.clip = 0;
     for(unsigned int i = 0; i < PView::list.size(); i++)
-      PView::list[i]->getOptions()->Clip = 0;
+      PView::list[i]->getOptions()->clip = 0;
     for(int i = 0; i < GUI::instance()->clipping->browser->size(); i++){
       if(GUI::instance()->clipping->browser->selected(i + 1)){
         for(int idx = 0; idx < 6; idx++){
@@ -58,7 +58,7 @@ static void clip_update_cb(Fl_Widget *w, void *data)
           else if(i == 1)
             CTX::instance()->mesh.clip |= (1 << idx);
           else if(i - 2 < (int)PView::list.size())
-            PView::list[i - 2]->getOptions()->Clip |= (1 << idx);
+            PView::list[i - 2]->getOptions()->clip |= (1 << idx);
         }
       }
     }
@@ -69,62 +69,62 @@ static void clip_update_cb(Fl_Widget *w, void *data)
                    GUI::instance()->clipping->value[8]->value(),
                    GUI::instance()->clipping->value[9]->value()};
     // left
-    CTX::instance()->clip_plane[0][0] = 1.; 
-    CTX::instance()->clip_plane[0][1] = 0.;
-    CTX::instance()->clip_plane[0][2] = 0.;
-    CTX::instance()->clip_plane[0][3] = -(c[0] - d[0] / 2.);
+    CTX::instance()->clipPlane[0][0] = 1.; 
+    CTX::instance()->clipPlane[0][1] = 0.;
+    CTX::instance()->clipPlane[0][2] = 0.;
+    CTX::instance()->clipPlane[0][3] = -(c[0] - d[0] / 2.);
     // right
-    CTX::instance()->clip_plane[1][0] = -1.; 
-    CTX::instance()->clip_plane[1][1] = 0.; 
-    CTX::instance()->clip_plane[1][2] = 0.;
-    CTX::instance()->clip_plane[1][3] = (c[0] + d[0] / 2.);
+    CTX::instance()->clipPlane[1][0] = -1.; 
+    CTX::instance()->clipPlane[1][1] = 0.; 
+    CTX::instance()->clipPlane[1][2] = 0.;
+    CTX::instance()->clipPlane[1][3] = (c[0] + d[0] / 2.);
     // top
-    CTX::instance()->clip_plane[2][0] = 0.; 
-    CTX::instance()->clip_plane[2][1] = 1.; 
-    CTX::instance()->clip_plane[2][2] = 0.;
-    CTX::instance()->clip_plane[2][3] = -(c[1] - d[1] / 2.);
+    CTX::instance()->clipPlane[2][0] = 0.; 
+    CTX::instance()->clipPlane[2][1] = 1.; 
+    CTX::instance()->clipPlane[2][2] = 0.;
+    CTX::instance()->clipPlane[2][3] = -(c[1] - d[1] / 2.);
     // bottom
-    CTX::instance()->clip_plane[3][0] = 0.; 
-    CTX::instance()->clip_plane[3][1] = -1.; 
-    CTX::instance()->clip_plane[3][2] = 0.;
-    CTX::instance()->clip_plane[3][3] = (c[1] + d[1] / 2.);
+    CTX::instance()->clipPlane[3][0] = 0.; 
+    CTX::instance()->clipPlane[3][1] = -1.; 
+    CTX::instance()->clipPlane[3][2] = 0.;
+    CTX::instance()->clipPlane[3][3] = (c[1] + d[1] / 2.);
     // near
-    CTX::instance()->clip_plane[4][0] = 0.; 
-    CTX::instance()->clip_plane[4][1] = 0.; 
-    CTX::instance()->clip_plane[4][2] = 1.;
-    CTX::instance()->clip_plane[4][3] = -(c[2] - d[2] / 2.);
+    CTX::instance()->clipPlane[4][0] = 0.; 
+    CTX::instance()->clipPlane[4][1] = 0.; 
+    CTX::instance()->clipPlane[4][2] = 1.;
+    CTX::instance()->clipPlane[4][3] = -(c[2] - d[2] / 2.);
     // far
-    CTX::instance()->clip_plane[5][0] = 0.; 
-    CTX::instance()->clip_plane[5][1] = 0.; 
-    CTX::instance()->clip_plane[5][2] = -1.;
-    CTX::instance()->clip_plane[5][3] = (c[2] + d[2] / 2.);
+    CTX::instance()->clipPlane[5][0] = 0.; 
+    CTX::instance()->clipPlane[5][1] = 0.; 
+    CTX::instance()->clipPlane[5][2] = -1.;
+    CTX::instance()->clipPlane[5][3] = (c[2] + d[2] / 2.);
   }
 
-  if(CTX::instance()->clip_whole_elements || 
-     CTX::instance()->clip_whole_elements != 
+  if(CTX::instance()->clipWholeElements || 
+     CTX::instance()->clipWholeElements != 
      GUI::instance()->clipping->butt[0]->value()){
     for(int clip = 0; clip < 6; clip++){
       if(CTX::instance()->mesh.clip)
 	CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
       for(unsigned int index = 0; index < PView::list.size(); index++)
-	if(PView::list[index]->getOptions()->Clip)
+	if(PView::list[index]->getOptions()->clip)
 	  PView::list[index]->setChanged(true);
     }
   }
   
-  CTX::instance()->clip_whole_elements = 
+  CTX::instance()->clipWholeElements = 
     GUI::instance()->clipping->butt[0]->value();
-  CTX::instance()->clip_only_draw_intersecting_volume = 
+  CTX::instance()->clipOnlyDrawIntersectingVolume = 
     GUI::instance()->clipping->butt[1]->value();
-  CTX::instance()->clip_only_volume = 
+  CTX::instance()->clipOnlyVolume = 
     GUI::instance()->clipping->butt[2]->value();
   
-  int old = CTX::instance()->draw_bbox;
-  CTX::instance()->draw_bbox = 1;
-  if(CTX::instance()->fast_redraw)
+  int old = CTX::instance()->drawBBox;
+  CTX::instance()->drawBBox = 1;
+  if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
   Draw();
-  CTX::instance()->draw_bbox = old;
+  CTX::instance()->drawBBox = old;
   CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
 }
 
@@ -141,15 +141,15 @@ static void clip_reset_cb(Fl_Widget *w, void *data)
   CTX::instance()->geom.clip = 0;
   CTX::instance()->mesh.clip = 0;
   for(unsigned int index = 0; index < PView::list.size(); index++)
-    PView::list[index]->getOptions()->Clip = 0;
+    PView::list[index]->getOptions()->clip = 0;
 
   for(int i = 0; i < 6; i++){
-    CTX::instance()->clip_plane[i][0] = 1.;
+    CTX::instance()->clipPlane[i][0] = 1.;
     for(int j = 1; j < 4; j++)
-      CTX::instance()->clip_plane[i][j] = 0.;
+      CTX::instance()->clipPlane[i][j] = 0.;
   }
 
-  if(CTX::instance()->clip_whole_elements){
+  if(CTX::instance()->clipWholeElements){
     CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     for(unsigned int index = 0; index < PView::list.size(); index++)
       PView::list[index]->setChanged(true);
@@ -178,7 +178,7 @@ clippingWindow::clippingWindow(int deltaFontSize)
   int L = 7 * FL_NORMAL_SIZE;
 
   win = new paletteWindow
-    (width, height, CTX::instance()->non_modal_windows ? true : false, "Clipping");
+    (width, height, CTX::instance()->nonModalWindows ? true : false, "Clipping");
   win->box(GMSH_WINDOW_BOX);
 
   browser = new Fl_Multi_Browser(WB, WB, L - WB, height - BH - 3 * WB);
@@ -263,7 +263,7 @@ clippingWindow::clippingWindow(int deltaFontSize)
     o->callback(clip_reset_cb);
   }
 
-  win->position(CTX::instance()->clip_position[0], CTX::instance()->clip_position[1]);
+  win->position(CTX::instance()->clipPosition[0], CTX::instance()->clipPosition[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;
@@ -285,11 +285,11 @@ void clippingWindow::resetBrowser()
     if((i == 0 && CTX::instance()->geom.clip & (1 << idx)) ||
        (i == 1 && CTX::instance()->mesh.clip & (1 << idx)) ||
        (i > 1 && i - 2 < (int)PView::list.size() && 
-        PView::list[i - 2]->getOptions()->Clip & (1 << idx)))
+        PView::list[i - 2]->getOptions()->clip & (1 << idx)))
       browser->select(i + 1);
   }
   for(int i = 0; i < 4; i++)
-    value[i]->value(CTX::instance()->clip_plane[idx][i]);
+    value[i]->value(CTX::instance()->clipPlane[idx][i]);
   for(int i = 4; i < 7; i++)
     value[i]->value(0.);
   for(int i = 7; i < 10; i++)

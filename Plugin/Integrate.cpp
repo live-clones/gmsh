@@ -111,7 +111,7 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
     List_Add(data2->SP, &res);
   }
   data2->NbSP = 1;
-  v2->getOptions()->IntervalsType = PViewOptions::Numeric;
+  v2->getOptions()->intervalsType = PViewOptions::Numeric;
   
   for(int i = 0; i < data1->getNumTimeSteps(); i++){
     double time = data1->getTime(i);

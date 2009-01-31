@@ -15,7 +15,7 @@
 
 // computes the characteristic length of the mesh at a vertex in order
 // to have the geometry captured with accuracy. A parameter called
-// CTX::instance()->mesh.min_circ_points tells the minimum number of points per
+// CTX::instance()->mesh.minCircPoints tells the minimum number of points per
 // radius of curvature
 
 static double max_edge_curvature(const GVertex *gv)
@@ -95,7 +95,7 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
     break;
   }
  
-  double lc = Crv > 0 ? 2 * M_PI / Crv / CTX::instance()->mesh.min_circ_points : MAX_LC;
+  double lc = Crv > 0 ? 2 * M_PI / Crv / CTX::instance()->mesh.minCircPoints : MAX_LC;
   return lc;
 }
 
@@ -142,12 +142,12 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
 
   // lc from points
   double l2 = MAX_LC;
-  if(CTX::instance()->mesh.lc_from_points && ge->dim() < 2) 
+  if(CTX::instance()->mesh.lcFromPoints && ge->dim() < 2) 
     l2 = LC_MVertex_PNTS(ge, U, V);
 
   // lc from curvature
   double l3 = MAX_LC;
-  if(CTX::instance()->mesh.lc_from_curvature && ge->dim() < 3)
+  if(CTX::instance()->mesh.lcFromCurvature && ge->dim() < 3)
     l3 = LC_MVertex_CURV(ge, U, V);
 
   // lc from fields
@@ -158,26 +158,26 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
     if(f) l4 = (*f)(X, Y, Z, ge);
   }
 
-  // take the minimum, then contrain by lc_min and lc_max
+  // take the minimum, then contrain by lcMin and lcMax
   double lc = std::min(std::min(std::min(l1, l2), l3), l4);
-  lc = std::max(lc, CTX::instance()->mesh.lc_min);
-  lc = std::min(lc, CTX::instance()->mesh.lc_max);
+  lc = std::max(lc, CTX::instance()->mesh.lcMin);
+  lc = std::min(lc, CTX::instance()->mesh.lcMax);
 
   if(lc <= 0.){
     Msg::Error("Wrong characteristic length lc = %g (lcmin = %g, lcmax = %g)",
-	       lc, CTX::instance()->mesh.lc_min, CTX::instance()->mesh.lc_max);
+	       lc, CTX::instance()->mesh.lcMin, CTX::instance()->mesh.lcMax);
     lc = l1;
   }
 
-  return lc * CTX::instance()->mesh.lc_factor;
+  return lc * CTX::instance()->mesh.lcFactor;
 }
 
 bool Extend1dMeshIn2dSurfaces()
 {
-  return CTX::instance()->mesh.lc_extend_from_boundary ? true : false;
+  return CTX::instance()->mesh.lcExtendFromBoundary ? true : false;
 }
 
 bool Extend2dMeshIn3dVolumes()
 {
-  return CTX::instance()->mesh.lc_extend_from_boundary ? true : false;
+  return CTX::instance()->mesh.lcExtendFromBoundary ? true : false;
 }

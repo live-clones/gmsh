@@ -1033,10 +1033,10 @@ Shape :
 	yymsg(0, "Point %d already exists", num);
       }
       else{
-	double x = CTX::instance()->geom.scaling_factor * $6[0];
-	double y = CTX::instance()->geom.scaling_factor * $6[1];
-	double z = CTX::instance()->geom.scaling_factor * $6[2];
-	double lc = CTX::instance()->geom.scaling_factor * $6[3];
+	double x = CTX::instance()->geom.scalingFactor * $6[0];
+	double y = CTX::instance()->geom.scalingFactor * $6[1];
+	double z = CTX::instance()->geom.scalingFactor * $6[2];
+	double lc = CTX::instance()->geom.scalingFactor * $6[3];
 	if(lc == 0.) lc = MAX_LC; // no mesh size given at the point
 	Vertex *v;
 	if(!myGmshSurface)
@@ -1890,7 +1890,7 @@ Command :
 	if(index >= 0 && index < (int)PView::list.size()){
 	  char tmpstring[1024];
 	  FixRelativePath($6, tmpstring);
-	  PView::list[index]->write(tmpstring, CTX::instance()->post.file_format);
+	  PView::list[index]->write(tmpstring, CTX::instance()->post.fileFormat);
 	}
 	else
 	  yymsg(0, "Unknown view %d", index);
@@ -1924,11 +1924,11 @@ Command :
 	yymsg(0, "Surface remeshing must be reinterfaced");
       }
       else if(!strcmp($1, "Mesh")){
-	int lock = CTX::instance()->threads_lock;
-	CTX::instance()->threads_lock = 0;
+	int lock = CTX::instance()->lock;
+	CTX::instance()->lock = 0;
 	GModel::current()->importGEOInternals();
 	GModel::current()->mesh((int)$2);
-	CTX::instance()->threads_lock = lock;
+	CTX::instance()->lock = lock;
       }
       else
 	yymsg(0, "Unknown command '%s'", $1);
@@ -1950,21 +1950,21 @@ Command :
     {
 #if !defined(HAVE_NO_POST)
       if(!strcmp($2, "ElementsFromAllViews"))
-	PView::combine(false, 1, CTX::instance()->post.combine_remove_orig);
+	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig);
       else if(!strcmp($2, "ElementsFromVisibleViews"))
-	PView::combine(false, 0, CTX::instance()->post.combine_remove_orig);
+	PView::combine(false, 0, CTX::instance()->post.combineRemoveOrig);
       else if(!strcmp($2, "ElementsByViewName"))
-	PView::combine(false, 2, CTX::instance()->post.combine_remove_orig);
+	PView::combine(false, 2, CTX::instance()->post.combineRemoveOrig);
       else if(!strcmp($2, "TimeStepsFromAllViews"))
-	PView::combine(true, 1, CTX::instance()->post.combine_remove_orig);
+	PView::combine(true, 1, CTX::instance()->post.combineRemoveOrig);
       else if(!strcmp($2, "TimeStepsFromVisibleViews"))
-	PView::combine(true, 0, CTX::instance()->post.combine_remove_orig);
+	PView::combine(true, 0, CTX::instance()->post.combineRemoveOrig);
       else if(!strcmp($2, "TimeStepsByViewName"))
-	PView::combine(true, 2, CTX::instance()->post.combine_remove_orig);
+	PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
       else if(!strcmp($2, "Views"))
-	PView::combine(false, 1, CTX::instance()->post.combine_remove_orig);
+	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig);
       else if(!strcmp($2, "TimeSteps"))
-	PView::combine(true, 2, CTX::instance()->post.combine_remove_orig);
+	PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
       else
 	yymsg(0, "Unknown 'Combine' command");
 #endif
@@ -1976,12 +1976,12 @@ Command :
     } 
    | tBoundingBox tEND
     {
-      CTX::instance()->forced_bbox = 0;
+      CTX::instance()->forcedBBox = 0;
       SetBoundingBox();
     } 
    | tBoundingBox '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}' tEND
     {
-      CTX::instance()->forced_bbox = 1;
+      CTX::instance()->forcedBBox = 1;
       SetBoundingBox($3, $5, $7, $9, $11, $13);
     } 
    | tDraw tEND
@@ -3295,11 +3295,11 @@ RecursiveListOfDouble :
 ColorExpr :
     '{' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
     {
-      $$ = CTX::instance()->pack_color((int)$2, (int)$4, (int)$6, (int)$8);
+      $$ = CTX::instance()->packColor((int)$2, (int)$4, (int)$6, (int)$8);
     }
   | '{' FExpr ',' FExpr ',' FExpr '}'
     {
-      $$ = CTX::instance()->pack_color((int)$2, (int)$4, (int)$6, 255);
+      $$ = CTX::instance()->packColor((int)$2, (int)$4, (int)$6, 255);
     }
 /* shift/reduce conflict
   | '{' tSTRING ',' FExpr '}'

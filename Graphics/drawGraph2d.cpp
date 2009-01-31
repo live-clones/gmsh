@@ -35,12 +35,12 @@ void drawContext::drawText2d()
   for(unsigned int i = 0; i < PView::list.size(); i++){
     PViewData *data = PView::list[i]->getData();
     PViewOptions *opt = PView::list[i]->getOptions();
-    if(opt->Visible && opt->DrawStrings && isVisible(PView::list[i])){
+    if(opt->visible && opt->drawStrings && isVisible(PView::list[i])){
       glColor4ubv((GLubyte *) & opt->color.text2d);
       for(int j = 0; j < data->getNumStrings2D(); j++){
         double x, y, style;
         std::string str;
-        data->getString2D(j, opt->TimeStep, str, x, y, style);
+        data->getString2D(j, opt->timeStep, str, x, y, style);
         fix2dCoordinates(&x, &y);
         glRasterPos2d(x, y);
         drawString(str, style);
@@ -58,10 +58,10 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
   if(data->hasMultipleMeshes()) return false; // cannot handle multi-mesh
 
   int numy = 0;
-  if(opt->Type == PViewOptions::Plot2DSpace){
+  if(opt->type == PViewOptions::Plot2DSpace){
     numy = 1;
   }
-  else if(opt->Type == PViewOptions::Plot2DTime){
+  else if(opt->type == PViewOptions::Plot2DTime){
     numy = 0;
     for(int ent = 0; ent < data->getNumEntities(0); ent++)
       for(int i = 0; i < data->getNumElements(0, ent); i++)
@@ -71,7 +71,7 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
   if(!numy) return false;
   y.resize(numy);
 
-  bool space = (opt->Type == PViewOptions::Plot2DSpace);
+  bool space = (opt->type == PViewOptions::Plot2DSpace);
 
   SPoint3 p0(0., 0., 0.);
 
@@ -81,7 +81,7 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
       int dim = data->getDimension(0, ent, i);
       if(dim < 2){
         int numNodes = data->getNumNodes(0, ent, i);
-        for(int ts = space ? opt->TimeStep : 0; ts < opt->TimeStep + 1; ts++){
+        for(int ts = space ? opt->timeStep : 0; ts < opt->timeStep + 1; ts++){
           int numComp = data->getNumComponents(ts, ent, i);
           for(int j = 0; j < numNodes; j++){
             double val[9], xyz[3];
@@ -147,7 +147,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
 
-  if(!opt->Axes) return;
+  if(!opt->axes) return;
 
   char label[1024];    
   float font_h = gl_height() ? gl_height() : 1; // total font height
@@ -155,13 +155,13 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
 
   const double tic = 5.;
 
-  glPointSize(CTX::instance()->point_size);
-  gl2psPointSize(CTX::instance()->point_size *
-                 CTX::instance()->print.eps_point_size_factor);
+  glPointSize(CTX::instance()->pointSize);
+  gl2psPointSize(CTX::instance()->pointSize *
+                 CTX::instance()->print.epsPointSizeFactor);
 
-  glLineWidth(CTX::instance()->line_width);
-  gl2psLineWidth(CTX::instance()->line_width * 
-                 CTX::instance()->print.eps_line_width_factor);
+  glLineWidth(CTX::instance()->lineWidth);
+  gl2psLineWidth(CTX::instance()->lineWidth * 
+                 CTX::instance()->print.epsLineWidthFactor);
 
   glColor4ubv((GLubyte *) & opt->color.axes);
 
@@ -170,22 +170,22 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   glVertex2d(xleft, ytop);
   glVertex2d(xleft, ytop - height);
   glVertex2d(xleft + width, ytop - height);
-  if(opt->Axes > 1){
+  if(opt->axes > 1){
     glVertex2d(xleft + width, ytop);
     glVertex2d(xleft, ytop);
   }
   glEnd();
 
   // y label
-  if(opt->Type == PViewOptions::Plot2DSpace){
+  if(opt->type == PViewOptions::Plot2DSpace){
     int nt = data->getNumTimeSteps();
-    if((opt->ShowTime == 1 && nt > 1) || opt->ShowTime == 2){
+    if((opt->showTime == 1 && nt > 1) || opt->showTime == 2){
       char tmp[256];
-      sprintf(tmp, opt->Format.c_str(), data->getTime(opt->TimeStep));
+      sprintf(tmp, opt->format.c_str(), data->getTime(opt->timeStep));
       sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
     }
-    else if((opt->ShowTime == 3 && nt > 1) || opt->ShowTime == 4){
-      sprintf(label, "%s (%d)", data->getName().c_str(), opt->TimeStep);
+    else if((opt->showTime == 3 && nt > 1) || opt->showTime == 4){
+      sprintf(label, "%s (%d)", data->getName().c_str(), opt->timeStep);
     }
     else
       sprintf(label, "%s", data->getName().c_str());
@@ -196,45 +196,45 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   ctx->drawStringCenter(label);
   
   // x label
-  sprintf(label, "%s", opt->AxesLabel[0].c_str());
+  sprintf(label, "%s", opt->axesLabel[0].c_str());
   glRasterPos2d(xleft + width / 2, ytop - height - 2 * font_h - 2 * tic);
   ctx->drawStringCenter(label);
 
   // y tics and horizontal grid
-  if(opt->NbIso > 0){
-    int nb = opt->NbIso;
-    if(opt->ShowScale && (opt->NbIso * font_h > height))
+  if(opt->nbIso > 0){
+    int nb = opt->nbIso;
+    if(opt->showScale && (opt->nbIso * font_h > height))
       nb = (int)floor(height / font_h);
     double dy = height / (double)nb;
-    double dv = (opt->TmpMax - opt->TmpMin) / (double)nb;
+    double dv = (opt->tmpMax - opt->tmpMin) / (double)nb;
     for(int i = 0; i < nb + 1; i++){
-      if(opt->Axes > 0){
+      if(opt->axes > 0){
         glBegin(GL_LINES);
         glVertex2d(xleft, ytop - i * dy);
         glVertex2d(xleft + tic, ytop - i * dy);
-        if(opt->Axes > 1){
+        if(opt->axes > 1){
           glVertex2d(xleft + width - tic, ytop - i * dy);
           glVertex2d(xleft + width, ytop - i * dy);
         }
         glEnd();
-        if(opt->Axes > 2 && i != 0 && i != nb){
+        if(opt->axes > 2 && i != 0 && i != nb){
           glEnable(GL_LINE_STIPPLE);
           glLineStipple(1, 0x1111);
           gl2psEnable(GL2PS_LINE_STIPPLE);
-          gl2psLineWidth(1. * CTX::instance()->print.eps_line_width_factor);
+          gl2psLineWidth(1. * CTX::instance()->print.epsLineWidthFactor);
           glBegin(GL_LINES);
           glVertex2d(xleft, ytop - i * dy);
           glVertex2d(xleft + width, ytop - i * dy);
           glEnd();
           glDisable(GL_LINE_STIPPLE);
           gl2psDisable(GL2PS_LINE_STIPPLE);
-          gl2psLineWidth(CTX::instance()->line_width * 
-                         CTX::instance()->print.eps_line_width_factor);
+          gl2psLineWidth(CTX::instance()->lineWidth * 
+                         CTX::instance()->print.epsLineWidthFactor);
         }
       }
-      if(opt->ShowScale){
-        sprintf(label, opt->Format.c_str(), (i == nb) ? opt->TmpMin : 
-                (opt->TmpMax - i * dv));
+      if(opt->showScale){
+        sprintf(label, opt->format.c_str(), (i == nb) ? opt->tmpMin : 
+                (opt->tmpMax - i * dv));
         glRasterPos2d(xleft - 2 * tic, ytop - i * dy - font_a / 3.);
         ctx->drawStringRight(label);
       }
@@ -242,10 +242,10 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   }
 
   // x tics and vertical grid
-  if(opt->AxesTics[0] > 0){
-    int nb = opt->AxesTics[0];
-    if(opt->Axes){
-      sprintf(label, opt->AxesFormat[0].c_str(), - M_PI * 1.e-4);
+  if(opt->axesTics[0] > 0){
+    int nb = opt->axesTics[0];
+    if(opt->axes){
+      sprintf(label, opt->axesFormat[0].c_str(), - M_PI * 1.e-4);
       if((nb - 1) * gl_width(label) > width)
         nb = (int)(width / gl_width(label)) + 1;
     }
@@ -255,34 +255,34 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     double ybot = ytop - height;
     
     for(int i = 0; i < nb; i++){
-      if(opt->Axes){
+      if(opt->axes){
         glBegin(GL_LINES);
         glVertex2d(xleft + i * dx, ybot);
         glVertex2d(xleft + i * dx, ybot + tic);
-        if(opt->Axes > 1){
+        if(opt->axes > 1){
           glVertex2d(xleft + i * dx, ytop);
           glVertex2d(xleft + i * dx, ytop - tic);
         }
         glEnd();
-        if(opt->Axes > 2 && i != 0 && i != nb - 1){
+        if(opt->axes > 2 && i != 0 && i != nb - 1){
           glEnable(GL_LINE_STIPPLE);
           glLineStipple(1, 0x1111);
           gl2psEnable(GL2PS_LINE_STIPPLE);
-          gl2psLineWidth(1. * CTX::instance()->print.eps_line_width_factor);
+          gl2psLineWidth(1. * CTX::instance()->print.epsLineWidthFactor);
           glBegin(GL_LINES);
           glVertex2d(xleft + i * dx, ytop);
           glVertex2d(xleft + i * dx, ybot);
           glEnd();
           glDisable(GL_LINE_STIPPLE);
           gl2psDisable(GL2PS_LINE_STIPPLE);
-          gl2psLineWidth(CTX::instance()->line_width * 
-                         CTX::instance()->print.eps_line_width_factor);
+          gl2psLineWidth(CTX::instance()->lineWidth * 
+                         CTX::instance()->print.epsLineWidthFactor);
         }
         
         if(nb == 1)
-          sprintf(label, opt->AxesFormat[0].c_str(), xmin);
+          sprintf(label, opt->axesFormat[0].c_str(), xmin);
         else
-          sprintf(label, opt->AxesFormat[0].c_str(),
+          sprintf(label, opt->axesFormat[0].c_str(),
                   xmin + i * (xmax - xmin) / (double)(nb - 1));
         glRasterPos2d(xleft + i * dx, ybot - font_h - tic);
         ctx->drawStringCenter(label);
@@ -302,7 +302,7 @@ static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
   double px = xleft;
   if(xmin != xmax) px += (x - xmin) / (xmax - xmin) * width;
 
-  if(opt->SaturateValues){
+  if(opt->saturateValues){
     if(y > ymax)
       y = ymax;
     else if(y < ymin)
@@ -319,7 +319,7 @@ static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
     if(numeric){
       glRasterPos2d(px + 3, py + 3);
       char label[256];
-      sprintf(label, opt->Format.c_str(), y);
+      sprintf(label, opt->format.c_str(), y);
       ctx->drawString(label);
     }
     else
@@ -334,44 +334,44 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft, double yto
 {
   PViewOptions *opt = p->getOptions();
 
-  glPointSize(opt->PointSize);
-  gl2psPointSize(opt->PointSize * CTX::instance()->print.eps_point_size_factor);
+  glPointSize(opt->pointSize);
+  gl2psPointSize(opt->pointSize * CTX::instance()->print.epsPointSizeFactor);
 
-  glLineWidth(opt->LineWidth);
-  gl2psLineWidth(opt->LineWidth * CTX::instance()->print.eps_line_width_factor);
+  glLineWidth(opt->lineWidth);
+  gl2psLineWidth(opt->lineWidth * CTX::instance()->print.epsLineWidthFactor);
 
-  if(opt->IntervalsType == PViewOptions::Numeric){
+  if(opt->intervalsType == PViewOptions::Numeric){
     for(unsigned int i = 0; i < y.size(); i++)
       for(unsigned int j = 0; j < x.size(); j++)
         addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j], 
-                      xmin, xmax, opt->TmpMin, opt->TmpMax, true);
+                      xmin, xmax, opt->tmpMin, opt->tmpMax, true);
   }
 
-  if(opt->IntervalsType == PViewOptions::Iso ||
-     opt->IntervalsType == PViewOptions::Discrete ||
-     opt->IntervalsType == PViewOptions::Numeric){
+  if(opt->intervalsType == PViewOptions::Iso ||
+     opt->intervalsType == PViewOptions::Discrete ||
+     opt->intervalsType == PViewOptions::Numeric){
     glBegin(GL_POINTS);
     for(unsigned int i = 0; i < y.size(); i++)
       for(unsigned int j = 0; j < x.size(); j++)
         addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j], 
-                      xmin, xmax, opt->TmpMin, opt->TmpMax, false);
+                      xmin, xmax, opt->tmpMin, opt->tmpMax, false);
     glEnd();    
   }
 
-  if(opt->IntervalsType == PViewOptions::Discrete ||
-     opt->IntervalsType == PViewOptions::Continuous){
+  if(opt->intervalsType == PViewOptions::Discrete ||
+     opt->intervalsType == PViewOptions::Continuous){
     for(unsigned int i = 0; i < y.size(); i++){
-      if(opt->UseStipple){
+      if(opt->useStipple){
         glEnable(GL_LINE_STIPPLE);
-        glLineStipple(opt->Stipple[i % 10][0], opt->Stipple[i % 10][1]);
+        glLineStipple(opt->stipple[i % 10][0], opt->stipple[i % 10][1]);
         gl2psEnable(GL2PS_LINE_STIPPLE);
       }
       glBegin(GL_LINE_STRIP);
       for(unsigned int j = 0; j < x.size(); j++)
         addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j], 
-                      xmin, xmax, opt->TmpMin, opt->TmpMax, false);
+                      xmin, xmax, opt->tmpMin, opt->tmpMax, false);
       glEnd();
-      if(opt->UseStipple){
+      if(opt->useStipple){
         glDisable(GL_LINE_STIPPLE);
         gl2psDisable(GL2PS_LINE_STIPPLE);
       }
@@ -385,17 +385,17 @@ static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
   
-  if(opt->RangeType == PViewOptions::Custom){
-    opt->TmpMin = opt->CustomMin;
-    opt->TmpMax = opt->CustomMax;
+  if(opt->rangeType == PViewOptions::Custom){
+    opt->tmpMin = opt->customMin;
+    opt->tmpMax = opt->customMax;
   }
-  else if(opt->RangeType == PViewOptions::PerTimeStep){
-    opt->TmpMin = data->getMin(opt->TimeStep);
-    opt->TmpMax = data->getMax(opt->TimeStep);
+  else if(opt->rangeType == PViewOptions::PerTimeStep){
+    opt->tmpMin = data->getMin(opt->timeStep);
+    opt->tmpMax = data->getMax(opt->timeStep);
   }
   else{
-    opt->TmpMin = data->getMin();
-    opt->TmpMax = data->getMax();
+    opt->tmpMin = data->getMin();
+    opt->tmpMax = data->getMax();
   }
   
   std::vector<double> x;
@@ -412,30 +412,30 @@ void drawContext::drawGraph2d()
   for(unsigned int i = 0; i < PView::list.size(); i++){
     PViewData *data = PView::list[i]->getData();
     PViewOptions *opt = PView::list[i]->getOptions();
-    if(!data->getDirty() && opt->Visible && opt->Type != PViewOptions::Plot3D &&
+    if(!data->getDirty() && opt->visible && opt->type != PViewOptions::Plot3D &&
        isVisible(PView::list[i]))
       graphs.push_back(PView::list[i]);
   }
   if(graphs.empty()) return;
 
-  gl_font(CTX::instance()->gl_font_enum, CTX::instance()->gl_fontsize);
+  gl_font(CTX::instance()->glFontEnum, CTX::instance()->glFontSize);
   double xsep = 0., ysep = 5 * gl_height();
   char label[1024];
   for(unsigned int i = 0; i < graphs.size(); i++){
     PViewOptions *opt = graphs[i]->getOptions();
-    sprintf(label, opt->Format.c_str(), -M_PI * 1.e-4);
+    sprintf(label, opt->format.c_str(), -M_PI * 1.e-4);
     xsep = std::max(xsep, gl_width(label));
   }
   
   for(unsigned int i = 0; i < graphs.size(); i++){
     PView *p = graphs[i];
     PViewOptions *opt = graphs[i]->getOptions();
-    if(!opt->AutoPosition){
-      double x = opt->Position[0], y = opt->Position[1];
+    if(!opt->autoPosition){
+      double x = opt->position[0], y = opt->position[1];
       int center = fix2dCoordinates(&x, &y);
-      drawGraph(this, p, x - (center & 1 ? opt->Size[0] / 2. : 0), 
-                y + (center & 2 ? opt->Size[1] / 2. : 0), 
-                opt->Size[0], opt->Size[1]);
+      drawGraph(this, p, x - (center & 1 ? opt->size[0] / 2. : 0), 
+                y + (center & 2 ? opt->size[1] / 2. : 0), 
+                opt->size[0], opt->size[1]);
     }
     else{
       double winw = viewport[2] - viewport[0];

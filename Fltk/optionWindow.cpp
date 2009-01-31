@@ -108,11 +108,11 @@ static void color_cb(Fl_Widget *w, void *data)
 {
   unsigned int (*fct) (int, int, unsigned int);
   fct = (unsigned int (*)(int, int, unsigned int))data;
-  uchar r = CTX::instance()->unpack_red(fct(0, GMSH_GET, 0));
-  uchar g = CTX::instance()->unpack_green(fct(0, GMSH_GET, 0));
-  uchar b = CTX::instance()->unpack_blue(fct(0, GMSH_GET, 0));
+  uchar r = CTX::instance()->unpackRed(fct(0, GMSH_GET, 0));
+  uchar g = CTX::instance()->unpackGreen(fct(0, GMSH_GET, 0));
+  uchar b = CTX::instance()->unpackBlue(fct(0, GMSH_GET, 0));
   if(fl_color_chooser("Color Chooser", r, g, b))
-    fct(0, GMSH_SET | GMSH_GUI, CTX::instance()->pack_color(r, g, b, 255));
+    fct(0, GMSH_SET | GMSH_GUI, CTX::instance()->packColor(r, g, b, 255));
   Draw();
 }
 
@@ -120,15 +120,15 @@ static void view_color_cb(Fl_Widget *w, void *data)
 {
   unsigned int (*fct) (int, int, unsigned int);
   fct = (unsigned int (*)(int, int, unsigned int))data;
-  uchar r = CTX::instance()->unpack_red
+  uchar r = CTX::instance()->unpackRed
     (fct(GUI::instance()->options->view.index, GMSH_GET, 0));
-  uchar g = CTX::instance()->unpack_green
+  uchar g = CTX::instance()->unpackGreen
     (fct(GUI::instance()->options->view.index, GMSH_GET, 0));
-  uchar b = CTX::instance()->unpack_blue
+  uchar b = CTX::instance()->unpackBlue
     (fct(GUI::instance()->options->view.index, GMSH_GET, 0));
   if(fl_color_chooser("Color Chooser", r, g, b))
     fct(GUI::instance()->options->view.index, 
-        GMSH_SET | GMSH_GUI, CTX::instance()->pack_color(r, g, b, 255));
+        GMSH_SET | GMSH_GUI, CTX::instance()->packColor(r, g, b, 255));
   Draw();
 }
 
@@ -144,7 +144,7 @@ static void options_browser_cb(Fl_Widget *w, void *data)
 
 void options_save_cb(Fl_Widget *w, void *data)
 {
-  std::string fileName = CTX::instance()->home_dir + CTX::instance()->options_filename;
+  std::string fileName = CTX::instance()->homeDir + CTX::instance()->optionsFileName;
   Msg::StatusBar(2, true, "Writing '%s'", fileName.c_str());
   Print_Options(0, GMSH_OPTIONSRC, 1, 1, fileName.c_str());
   Msg::StatusBar(2, true, "Wrote '%s'", fileName.c_str());
@@ -153,8 +153,8 @@ void options_save_cb(Fl_Widget *w, void *data)
 static void options_restore_defaults_cb(Fl_Widget *w, void *data)
 {
   // not sure if we have to remove the file...
-  UnlinkFile(CTX::instance()->home_dir + CTX::instance()->session_filename);
-  UnlinkFile(CTX::instance()->home_dir + CTX::instance()->options_filename);
+  UnlinkFile(CTX::instance()->homeDir + CTX::instance()->sessionFileName);
+  UnlinkFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName);
   ReInit_Options(0);
   Init_Options_GUI(0);
   if(GUI::instance()->menu->module->value() == 3) // hack to refresh the buttons
@@ -219,7 +219,7 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   if(data){
     const char *name = (const char*)data;
     if(!strcmp(name, "rotation_center_coord")){
-      CTX::instance()->draw_rotation_center = 1;
+      CTX::instance()->drawRotationCenter = 1;
     }
     else if(!strcmp(name, "light_value")){
       double x, y, z;
@@ -251,7 +251,7 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_session_save(0, GMSH_SET, o->general.butt[8]->value());
   if(sessionrc && !opt_general_session_save(0, GMSH_GET, 0))
     Print_Options(0, GMSH_SESSIONRC, 1, 1, 
-                  (CTX::instance()->home_dir + CTX::instance()->session_filename).c_str());
+                  (CTX::instance()->homeDir + CTX::instance()->sessionFileName).c_str());
   opt_general_options_save(0, GMSH_SET, o->general.butt[9]->value());
   opt_general_expert_mode(0, GMSH_SET, o->general.butt[10]->value());
   opt_general_tooltips(0, GMSH_SET, o->general.butt[13]->value());
@@ -306,11 +306,11 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_axes(0, GMSH_SET, o->general.choice[4]->value());
   opt_general_background_gradient(0, GMSH_SET, o->general.choice[5]->value());
 
-  if(CTX::instance()->fast_redraw)
+  if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
   Draw();
   CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
-  CTX::instance()->draw_rotation_center = 0;
+  CTX::instance()->drawRotationCenter = 0;
 }
 
 static void general_arrow_param_cb(Fl_Widget *w, void *data)
@@ -377,7 +377,7 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_surface_type(0, GMSH_SET, o->geo.choice[2]->value());
   opt_geometry_transform(0, GMSH_SET, o->geo.choice[3]->value());
   
-  if(CTX::instance()->fast_redraw)
+  if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
   Draw();
   CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
@@ -402,7 +402,6 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_order(0, GMSH_SET, o->mesh.value[3]->value());
   opt_mesh_smooth_internal_edges(0, GMSH_SET, o->mesh.butt[3]->value());
   opt_mesh_second_order_incomplete(0, GMSH_SET, o->mesh.butt[4]->value());
-  opt_mesh_c1(0, GMSH_SET, o->mesh.butt[21]->value());
   opt_mesh_points(0, GMSH_SET, o->mesh.butt[6]->value());
   opt_mesh_lines(0, GMSH_SET, o->mesh.butt[7]->value());
   opt_mesh_triangles(0, GMSH_SET, o->mesh.menu->menu()[0].value() ? 1 : 0);
@@ -452,7 +451,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_quality_type(0, GMSH_SET, o->mesh.choice[6]->value());
   opt_mesh_label_type(0, GMSH_SET, o->mesh.choice[7]->value());
 
-  if(CTX::instance()->fast_redraw)
+  if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
   Draw();
   CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
@@ -473,11 +472,9 @@ static void solver_options_ok_cb(Fl_Widget *w, void *data)
   if(!old_listen && o->solver.butt[0]->value())
     Solver(-1, 0);
 
-  opt_solver_max_delay(0, GMSH_SET, o->solver.value[0]->value());
-
   opt_solver_socket_name(0, GMSH_SET, o->solver.input[0]->value());
 
-  if(CTX::instance()->fast_redraw)
+  if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
   Draw();
   CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
@@ -501,7 +498,7 @@ static void post_options_ok_cb(Fl_Widget *w, void *data)
 
   opt_post_link(0, GMSH_SET, o->post.choice[0]->value());
 
-  if(CTX::instance()->fast_redraw)
+  if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
   Draw();
   CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
@@ -1104,14 +1101,14 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       // colorbar window
 
       if(force || (i != current)) {
-        ColorTable_Copy(&PView::list[current]->getOptions()->CT);
-        ColorTable_Paste(&PView::list[i]->getOptions()->CT);
+        ColorTable_Copy(&PView::list[current]->getOptions()->colorTable);
+        ColorTable_Paste(&PView::list[i]->getOptions()->colorTable);
         PView::list[i]->setChanged(true);
       }
     }
   }
 
-  if(CTX::instance()->fast_redraw)
+  if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
   Draw();
   CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
@@ -1137,7 +1134,7 @@ optionWindow::optionWindow(int deltaFontSize)
   int L = 7 * FL_NORMAL_SIZE;
 
   win = new paletteWindow
-    (width, height, CTX::instance()->non_modal_windows ? true : false);
+    (width, height, CTX::instance()->nonModalWindows ? true : false);
   win->box(GMSH_WINDOW_BOX);
   win->label("Options - General");
 
@@ -1983,11 +1980,6 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[3]->type(FL_TOGGLE_BUTTON);
       mesh.butt[3]->callback(mesh_options_ok_cb);
 
-      mesh.butt[21] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Impose C1 continuity (2D-plane only)");
-      mesh.butt[21]->type(FL_TOGGLE_BUTTON);
-      mesh.butt[21]->callback(mesh_options_ok_cb);
-
       o->end();
     }
 
@@ -2271,21 +2263,13 @@ optionWindow::optionWindow(int deltaFontSize)
         Fl_Group *o = new Fl_Group
           (L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "General");
 
-        solver.value[0] = new Fl_Value_Input
-          (L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Maximum solver delay");
-        solver.value[0]->minimum(0);
-        solver.value[0]->maximum(10);
-        solver.value[0]->step(1);
-        solver.value[0]->align(FL_ALIGN_RIGHT);
-        solver.value[0]->callback(solver_options_ok_cb);
-
         solver.input[0] = new Fl_Input
-          (L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Socket name");
+          (L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Socket name");
         solver.input[0]->align(FL_ALIGN_RIGHT);
         solver.input[0]->callback(solver_options_ok_cb);
 
         solver.butt[0] = new Fl_Check_Button
-          (L + 2 * WB, 2 * WB + 3 * BH, BW, BH, 
+          (L + 2 * WB, 2 * WB + 2 * BH, BW, BH, 
            "Always listen to incoming connection requests");
         solver.butt[0]->type(FL_TOGGLE_BUTTON);
         solver.butt[0]->callback(solver_options_ok_cb);
@@ -3038,7 +3022,7 @@ optionWindow::optionWindow(int deltaFontSize)
   }
   view.group->end();
 
-  win->position(CTX::instance()->opt_position[0], CTX::instance()->opt_position[1]);
+  win->position(CTX::instance()->optPosition[0], CTX::instance()->optPosition[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;
@@ -3304,7 +3288,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_color_axes(index, GMSH_GUI, 0);
 
   view.colorbar->update(data->getName().c_str(), data->getMin(), 
-                        data->getMax(), &opt->CT, &v->getChanged());
+                        data->getMax(), &opt->colorTable, &v->getChanged());
 }
 
 void optionWindow::activate(const char *what)

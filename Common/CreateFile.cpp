@@ -139,79 +139,79 @@ void CreateOutputFile(std::string fileName, int format)
 
   case FORMAT_MSH:
     GModel::current()->writeMSH
-      (fileName, CTX::instance()->mesh.msh_file_version,
-       CTX::instance()->mesh.binary, CTX::instance()->mesh.save_all,
-       CTX::instance()->mesh.save_parametric, CTX::instance()->mesh.scaling_factor);
+      (fileName, CTX::instance()->mesh.mshFileVersion,
+       CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
+       CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_STL:
     GModel::current()->writeSTL
-      (fileName, CTX::instance()->mesh.binary, CTX::instance()->mesh.save_all,
-       CTX::instance()->mesh.scaling_factor);
+      (fileName, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
+       CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_VRML:
     GModel::current()->writeVRML
-      (fileName, CTX::instance()->mesh.save_all, CTX::instance()->mesh.scaling_factor);
+      (fileName, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_UNV:
     GModel::current()->writeUNV
-      (fileName, CTX::instance()->mesh.save_all, CTX::instance()->mesh.save_groups_of_nodes,
-       CTX::instance()->mesh.scaling_factor);
+      (fileName, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveGroupsOfNodes,
+       CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_VTK:
     GModel::current()->writeVTK
-      (fileName, CTX::instance()->mesh.binary, CTX::instance()->mesh.save_all,
-       CTX::instance()->mesh.scaling_factor,
-       CTX::instance()->big_endian);
+      (fileName, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
+       CTX::instance()->mesh.scalingFactor,
+       CTX::instance()->bigEndian);
     break;
 
   case FORMAT_MESH:
     GModel::current()->writeMESH
-      (fileName, CTX::instance()->mesh.save_all, CTX::instance()->mesh.scaling_factor);
+      (fileName, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_BDF:
     GModel::current()->writeBDF
-      (fileName, CTX::instance()->mesh.bdf_field_format, CTX::instance()->mesh.save_all,
-       CTX::instance()->mesh.scaling_factor);
+      (fileName, CTX::instance()->mesh.bdfFieldFormat, CTX::instance()->mesh.saveAll,
+       CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_DIFF:
     GModel::current()->writeDIFF
-      (fileName, CTX::instance()->mesh.binary, CTX::instance()->mesh.save_all, 
-       CTX::instance()->mesh.scaling_factor);
+      (fileName, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll, 
+       CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_P3D:
     GModel::current()->writeP3D
-      (fileName, CTX::instance()->mesh.save_all, CTX::instance()->mesh.scaling_factor);
+      (fileName, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_CGNS:
     GModel::current()->writeCGNS
-      (fileName, CTX::instance()->mesh.zone_definition, CTX::instance()->cgns_options, 
-       CTX::instance()->mesh.scaling_factor);
+      (fileName, CTX::instance()->mesh.zoneDefinition, CTX::instance()->cgnsOptions, 
+       CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_MED:
     GModel::current()->writeMED
-      (fileName, CTX::instance()->mesh.save_all, CTX::instance()->mesh.scaling_factor);
+      (fileName, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_POS:
     GModel::current()->writePOS
-      (fileName, CTX::instance()->print.pos_elementary, 
-       CTX::instance()->print.pos_element, CTX::instance()->print.pos_gamma,
-       CTX::instance()->print.pos_eta, CTX::instance()->print.pos_rho,
-       CTX::instance()->print.pos_disto, CTX::instance()->mesh.save_all,
-       CTX::instance()->mesh.scaling_factor);
+      (fileName, CTX::instance()->print.posElementary, 
+       CTX::instance()->print.posElement, CTX::instance()->print.posGamma,
+       CTX::instance()->print.posEta, CTX::instance()->print.posRho,
+       CTX::instance()->print.posDisto, CTX::instance()->mesh.saveAll,
+       CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_GEO:
-    GModel::current()->writeGEO(fileName, CTX::instance()->print.geo_labels);
+    GModel::current()->writeGEO(fileName, CTX::instance()->print.geoLabels);
     break;
 
 #if defined(HAVE_FLTK)
@@ -229,11 +229,11 @@ void CreateOutputFile(std::string fileName, int format)
 
       PixelBuffer buffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
 
-      int old_bg_gradient = CTX::instance()->bg_gradient;
-      if(format == FORMAT_GIF && CTX::instance()->print.gif_transparent)
-        CTX::instance()->bg_gradient = 0;
+      int old_gradient = CTX::instance()->bgGradient;
+      if(format == FORMAT_GIF && CTX::instance()->print.gifTransparent)
+        CTX::instance()->bgGradient = 0;
       buffer.Fill(CTX::instance()->batch);
-      CTX::instance()->bg_gradient = old_bg_gradient;
+      CTX::instance()->bgGradient = old_gradient;
 
       if(format == FORMAT_PPM){
         create_ppm(fp, &buffer);
@@ -243,17 +243,17 @@ void CreateOutputFile(std::string fileName, int format)
       }
       else if(format == FORMAT_GIF){
         create_gif(fp, &buffer,
-                   CTX::instance()->print.gif_dither,
-                   CTX::instance()->print.gif_sort,
-                   CTX::instance()->print.gif_interlace,
-                   CTX::instance()->print.gif_transparent,
-                   CTX::instance()->unpack_red(CTX::instance()->color.bg),
-                   CTX::instance()->unpack_green(CTX::instance()->color.bg), 
-                   CTX::instance()->unpack_blue(CTX::instance()->color.bg));
+                   CTX::instance()->print.gifDither,
+                   CTX::instance()->print.gifSort,
+                   CTX::instance()->print.gifInterlace,
+                   CTX::instance()->print.gifTransparent,
+                   CTX::instance()->unpackRed(CTX::instance()->color.bg),
+                   CTX::instance()->unpackGreen(CTX::instance()->color.bg), 
+                   CTX::instance()->unpackBlue(CTX::instance()->color.bg));
       }
       else if(format == FORMAT_JPEG){
-        create_jpeg(fp, &buffer, CTX::instance()->print.jpeg_quality, 
-                    CTX::instance()->print.jpeg_smoothing);
+        create_jpeg(fp, &buffer, CTX::instance()->print.jpegQuality, 
+                    CTX::instance()->print.jpegSmoothing);
       }
       else{
         create_png(fp, &buffer, 100);
@@ -289,25 +289,25 @@ void CreateOutputFile(std::string fileName, int format)
         break;
       }
 
-      int old_bg_gradient = CTX::instance()->bg_gradient;
-      if(!CTX::instance()->print.eps_background) CTX::instance()->bg_gradient = 0;
+      int old_gradient = CTX::instance()->bgGradient;
+      if(!CTX::instance()->print.epsBackground) CTX::instance()->bgGradient = 0;
       
       PixelBuffer buffer(width, height, GL_RGB, GL_FLOAT);
       
-      if(CTX::instance()->print.eps_quality == 0)
+      if(CTX::instance()->print.epsQuality == 0)
         buffer.Fill(CTX::instance()->batch);
       
       int pssort = 
-        (CTX::instance()->print.eps_quality == 3) ? GL2PS_NO_SORT :
-        (CTX::instance()->print.eps_quality == 2) ? GL2PS_BSP_SORT : 
+        (CTX::instance()->print.epsQuality == 3) ? GL2PS_NO_SORT :
+        (CTX::instance()->print.epsQuality == 2) ? GL2PS_BSP_SORT : 
         GL2PS_SIMPLE_SORT;
       int psoptions =
         GL2PS_SIMPLE_LINE_OFFSET | GL2PS_SILENT |
-        (CTX::instance()->print.eps_occlusion_culling ? GL2PS_OCCLUSION_CULL : 0) |
-        (CTX::instance()->print.eps_best_root ? GL2PS_BEST_ROOT : 0) |
-        (CTX::instance()->print.eps_background ? GL2PS_DRAW_BACKGROUND : 0) |
-        (CTX::instance()->print.eps_compress ? GL2PS_COMPRESS : 0) |
-        (CTX::instance()->print.eps_ps3shading ? 0 : GL2PS_NO_PS3_SHADING);
+        (CTX::instance()->print.epsOcclusionCulling ? GL2PS_OCCLUSION_CULL : 0) |
+        (CTX::instance()->print.epsBestRoot ? GL2PS_BEST_ROOT : 0) |
+        (CTX::instance()->print.epsBackground ? GL2PS_DRAW_BACKGROUND : 0) |
+        (CTX::instance()->print.epsCompress ? GL2PS_COMPRESS : 0) |
+        (CTX::instance()->print.epsPS3Shading ? 0 : GL2PS_NO_PS3_SHADING);
 
       GLint buffsize = 0;
       int res = GL2PS_OVERFLOW;
@@ -316,7 +316,7 @@ void CreateOutputFile(std::string fileName, int format)
         gl2psBeginPage(base, "Gmsh", viewport, 
                        psformat, pssort, psoptions, GL_RGBA, 0, NULL, 
                        15, 20, 10, buffsize, fp, base);
-        if(CTX::instance()->print.eps_quality == 0){
+        if(CTX::instance()->print.epsQuality == 0){
           double modelview[16], projection[16];
           glGetDoublev(GL_PROJECTION_MATRIX, projection);
           glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
@@ -339,7 +339,7 @@ void CreateOutputFile(std::string fileName, int format)
         res = gl2psEndPage();
       }
 
-      CTX::instance()->bg_gradient = old_bg_gradient;
+      CTX::instance()->bgGradient = old_gradient;
       fclose(fp);
     }
     break;
