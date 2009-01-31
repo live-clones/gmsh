@@ -7,6 +7,7 @@
 #define _SOLVERS_H_
 
 #include <string>
+#include <vector>
 
 #define MAX_NUM_SOLVERS 5
 #define MAX_NUM_SOLVER_OPTIONS 5
@@ -21,8 +22,8 @@ typedef struct{
   std::string button_name[MAX_NUM_SOLVER_OPTIONS];
   std::string button_command[MAX_NUM_SOLVER_OPTIONS];
   std::string option_name[MAX_NUM_SOLVER_OPTIONS], option_command;
-  std::string option[MAX_NUM_SOLVER_OPTIONS][100];
-  int  nboptions, nbval[MAX_NUM_SOLVER_OPTIONS];
+  std::vector<std::string> option[MAX_NUM_SOLVER_OPTIONS];
+  int  nboptions;
   std::string help;
   int client_server, popup_messages, merge_views;
   int pid;

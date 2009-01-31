@@ -165,11 +165,10 @@ int Solver(int num, const char *args)
   }
 
   if(num >= 0){
-    for(int i = 0; i < SINFO[num].nboptions; i++)
-      SINFO[num].nbval[i] = 0;
     SINFO[num].pid = 0;
     SINFO[num].server = 0;
   }
+  bool initOption[5] = {true, true, true, true, true};
 
   Msg::StatusBar(2, false, "Running '%s'", prog.c_str());
 
@@ -211,24 +210,44 @@ int Solver(int num, const char *args)
             Msg::StatusBar(2, false, "%s", message);
           break;
         case GmshServer::CLIENT_OPTION_1:
+          if(initOption[0]){
+            SINFO[num].option[0].clear();
+            initOption[0] = false;
+          }
           if(num >= 0)
-            SINFO[num].option[0][SINFO[num].nbval[0]++] = message;
+            SINFO[num].option[0].push_back(message);
           break;
         case GmshServer::CLIENT_OPTION_2:
+          if(initOption[1]){
+            SINFO[num].option[1].clear();
+            initOption[1] = false;
+          }
           if(num >= 0)
-            SINFO[num].option[1][SINFO[num].nbval[1]++] = message;
+            SINFO[num].option[1].push_back(message);
           break;
         case GmshServer::CLIENT_OPTION_3:
+          if(initOption[2]){
+            SINFO[num].option[2].clear();
+            initOption[2] = false;
+          }
           if(num >= 0)
-            SINFO[num].option[2][SINFO[num].nbval[2]++] = message;
+            SINFO[num].option[2].push_back(message);
           break;
         case GmshServer::CLIENT_OPTION_4:
+          if(initOption[3]){
+            SINFO[num].option[3].clear();
+            initOption[3] = false;
+          }
           if(num >= 0)
-            SINFO[num].option[3][SINFO[num].nbval[3]++] = message;
+            SINFO[num].option[3].push_back(message);
           break;
         case GmshServer::CLIENT_OPTION_5:
+          if(initOption[4]){
+            SINFO[num].option[4].clear();
+            initOption[4] = false;
+          }
           if(num >= 0)
-            SINFO[num].option[4][SINFO[num].nbval[4]++] = message;
+            SINFO[num].option[4].push_back(message);
           break;
         case GmshServer::CLIENT_MERGE_FILE:
           if(num < 0 || (num >= 0 && SINFO[num].merge_views)) {
@@ -281,16 +300,17 @@ int Solver(int num, const char *args)
   }
   
   if(num >= 0){
-    for(int i = 0; i < SINFO[num].nboptions; i++) {
-      if(SINFO[num].nbval[i]) {
+    if(!initOption[0] || !initOption[1] || !initOption[2] || 
+       !initOption[3] || !initOption[4]){ // some options have been changed
+      for(int i = 0; i < SINFO[num].nboptions; i++) {
         GUI::instance()->solver[num]->choice[i]->clear();
-        for(int j = 0; j < SINFO[num].nbval[i]; j++)
+        for(int j = 0; j < SINFO[num].option[i].size(); j++)
           GUI::instance()->solver[num]->choice[i]->add(SINFO[num].option[i][j].c_str());
         GUI::instance()->solver[num]->choice[i]->value(0);
       }
     }
   }
-
+  
   server->StopClient();
 
   if(num >= 0){

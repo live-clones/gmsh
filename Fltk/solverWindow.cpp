@@ -110,7 +110,7 @@ static void solver_command_cb(Fl_Widget *w, void *data)
   char tmp[256], mesh[256], arg[512], command[256];
   int num = ((int *)data)[0];
   int idx = ((int *)data)[1];
-  int i, usedopts = 0;
+  int usedopts = 0;
 
   if(SINFO[num].popup_messages)
     GUI::instance()->messages->show(true);
@@ -125,14 +125,18 @@ static void solver_command_cb(Fl_Widget *w, void *data)
   }
 
   if(nbs(SINFO[num].button_command[idx].c_str())) {
-    for(i = 0; i < idx; i++)
+    for(int i = 0; i < idx; i++)
       usedopts += nbs(SINFO[num].button_command[i].c_str());
     if(usedopts > SINFO[num].nboptions) {
       Msg::Error("Missing options to execute command");
       return;
     }
-    sprintf(command, SINFO[num].button_command[idx].c_str(), SINFO[num].option
-            [usedopts][GUI::instance()->solver[num]->choice[usedopts]->value()].c_str());
+    int val = GUI::instance()->solver[num]->choice[usedopts]->value();
+    if(val < SINFO[num].option[usedopts].size())
+      sprintf(command, SINFO[num].button_command[idx].c_str(), 
+              SINFO[num].option[usedopts][val].c_str());
+    else
+      Msg::Error("Invalid option index: missing value");
   }
   else {
     strcpy(command, SINFO[num].button_command[idx].c_str());
