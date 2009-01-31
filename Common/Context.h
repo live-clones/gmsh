@@ -170,10 +170,13 @@ class CTX {
     double angle_smooth_normals;
     double allow_swap_edge_angle;
     int zone_definition;
-    meshPartitionOptions partition_options;
-    CGNSOptions cgns_options;
     int clip; // status of clip planes (bit array)
   } mesh;
+
+  // FIXME: putting these in the mesh struct (where they belong) causes 
+  // an LNK1179 error ("duplicate COMDAT") with MSVC. I have no idea why.
+  meshPartitionOptions partition_options;
+  CGNSOptions cgns_options;
 
   // post processing options 
   struct{

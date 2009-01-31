@@ -126,7 +126,7 @@ int GmshBatch()
       RefineMesh(GModel::current(), CTX::instance()->mesh.second_order_linear);
 #if defined(HAVE_CHACO) || defined(HAVE_METIS)
     if(CTX::instance()->batch_after_mesh == 1)
-      PartitionMesh(GModel::current(), CTX::instance()->mesh.partition_options);
+      PartitionMesh(GModel::current(), CTX::instance()->partition_options);
 #endif
     CreateOutputFile(CTX::instance()->output_filename, CTX::instance()->mesh.format);
   }

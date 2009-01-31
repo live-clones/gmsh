@@ -192,7 +192,7 @@ void CreateOutputFile(std::string fileName, int format)
 
   case FORMAT_CGNS:
     GModel::current()->writeCGNS
-      (fileName, CTX::instance()->mesh.zone_definition, CTX::instance()->mesh.cgns_options, 
+      (fileName, CTX::instance()->mesh.zone_definition, CTX::instance()->cgns_options, 
        CTX::instance()->mesh.scaling_factor);
     break;
 

@@ -960,42 +960,42 @@ struct CGNSWriteDialog
   void write_all_options()
   {
     opt_mesh_zone_definition(0, GMSH_SET | GMSH_GUI, choiceZoneDef->value());
-    CTX::instance()->mesh.cgns_options.baseName = inputBaseName->value();
-    CTX::instance()->mesh.cgns_options.zoneName = inputZoneName->value();
-    CTX::instance()->mesh.cgns_options.interfaceName = inputInterfaceName->value();
-    CTX::instance()->mesh.cgns_options.patchName = inputPatchName->value();
-    CTX::instance()->mesh.cgns_options.gridConnectivityLocation =
+    CTX::instance()->cgns_options.baseName = inputBaseName->value();
+    CTX::instance()->cgns_options.zoneName = inputZoneName->value();
+    CTX::instance()->cgns_options.interfaceName = inputInterfaceName->value();
+    CTX::instance()->cgns_options.patchName = inputPatchName->value();
+    CTX::instance()->cgns_options.gridConnectivityLocation =
       roundButton1GCatFace->value();
-    CTX::instance()->mesh.cgns_options.writeBC = checkButtonWriteBC->value();
-    CTX::instance()->mesh.cgns_options.bocoLocation = roundButton1BCatFace->value();
-    CTX::instance()->mesh.cgns_options.normalSource = (checkButtonWriteNormals->value()) ?
+    CTX::instance()->cgns_options.writeBC = checkButtonWriteBC->value();
+    CTX::instance()->cgns_options.bocoLocation = roundButton1BCatFace->value();
+    CTX::instance()->cgns_options.normalSource = (checkButtonWriteNormals->value()) ?
        roundButton1NormalElem->value() + 1 : 0;
-    CTX::instance()->mesh.cgns_options.vectorDim = choiceVecDim->value() + 2;
-    CTX::instance()->mesh.cgns_options.writeUserDef = checkButtonUnknownUserDef->value();
+    CTX::instance()->cgns_options.vectorDim = choiceVecDim->value() + 2;
+    CTX::instance()->cgns_options.writeUserDef = checkButtonUnknownUserDef->value();
   }
   void read_all_options()
   {
     choiceZoneDef->value(CTX::instance()->mesh.zone_definition);
-    inputBaseName->value(CTX::instance()->mesh.cgns_options.baseName.c_str());
-    inputZoneName->value(CTX::instance()->mesh.cgns_options.zoneName.c_str());
-    inputInterfaceName->value(CTX::instance()->mesh.cgns_options.interfaceName.c_str());
-    inputPatchName->value(CTX::instance()->mesh.cgns_options.patchName.c_str());
-    checkButtonWriteBC->value(CTX::instance()->mesh.cgns_options.writeBC);
-    checkButtonWriteNormals->value(CTX::instance()->mesh.cgns_options.normalSource);
-    choiceVecDim->value(CTX::instance()->mesh.cgns_options.vectorDim - 2);
-    checkButtonUnknownUserDef->value(CTX::instance()->mesh.cgns_options.writeUserDef);
+    inputBaseName->value(CTX::instance()->cgns_options.baseName.c_str());
+    inputZoneName->value(CTX::instance()->cgns_options.zoneName.c_str());
+    inputInterfaceName->value(CTX::instance()->cgns_options.interfaceName.c_str());
+    inputPatchName->value(CTX::instance()->cgns_options.patchName.c_str());
+    checkButtonWriteBC->value(CTX::instance()->cgns_options.writeBC);
+    checkButtonWriteNormals->value(CTX::instance()->cgns_options.normalSource);
+    choiceVecDim->value(CTX::instance()->cgns_options.vectorDim - 2);
+    checkButtonUnknownUserDef->value(CTX::instance()->cgns_options.writeUserDef);
 
     // Call all callbacks to ensure consistent options
     cgnsw_gc_location_cb
-      ((CTX::instance()->mesh.cgns_options.gridConnectivityLocation) ?
+      ((CTX::instance()->cgns_options.gridConnectivityLocation) ?
        roundButton1GCatFace : roundButton0GCatVertex, this);
     // The order of the next 4 is important
     cgnsw_normal_source_cb
-      ((CTX::instance()->mesh.cgns_options.normalSource == 2) ?
+      ((CTX::instance()->cgns_options.normalSource == 2) ?
        roundButton1NormalElem : roundButton0NormalGeo, this);
     cgnsw_write_normals_cb(checkButtonWriteNormals, this);
     cgnsw_bc_location_cb
-      ((CTX::instance()->mesh.cgns_options.bocoLocation) ?
+      ((CTX::instance()->cgns_options.bocoLocation) ?
        roundButton1BCatFace : roundButton0BCatVertex, this);
     cgnsw_write_dummy_bc_cb(checkButtonWriteBC, this);
   }
@@ -1084,7 +1084,7 @@ void cgnsw_normal_source_cb(Fl_Widget *widget, void *data)
 void cgnsw_defaults_cb(Fl_Widget *widget, void *data)
 {
   CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
-  CTX::instance()->mesh.cgns_options.setDefaults();
+  CTX::instance()->cgns_options.setDefaults();
   dlg->read_all_options();
 }
 
