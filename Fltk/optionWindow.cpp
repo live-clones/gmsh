@@ -1021,7 +1021,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
 
       // view_inputs
 
-      const char *str;
+      std::string str;
 
       str = o->view.input[0]->value();
       if(force || (str != name))
