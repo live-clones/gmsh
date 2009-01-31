@@ -663,7 +663,7 @@ void Get_Options(int argc, char *argv[])
 
   if(CTX::instance()->files.empty()){
     std::string base = (getenv("PWD") ? "" : CTX::instance()->homeDir);
-    GModel::current()->setFileName((base + CTX::instance()->defaultFileName).c_str());
+    GModel::current()->setFileName(base + CTX::instance()->defaultFileName);
   }
   else
     GModel::current()->setFileName(CTX::instance()->files[0]);
