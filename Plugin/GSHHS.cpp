@@ -51,7 +51,7 @@ class GMSH_GSHHSPlugin:public GMSH_Post_Plugin
       }
     };
     class reader_gshhs:public reader{
-      /*	$Id: GSHHS.cpp,v 1.25 2009-01-30 21:37:43 geuzaine Exp $
+      /*	$Id: GSHHS.cpp,v 1.26 2009-01-31 00:26:36 geuzaine Exp $
        *
        * Include file defining structures used in gshhs.c
        *
@@ -512,7 +512,7 @@ class GMSH_GSHHSPlugin:public GMSH_Post_Plugin
           }while(p!=i1);
           i0->to_stereo(x[2],y[2],reverse_stereo);
           alpha+=get_angle(x[0],y[0],x[1],y[1],x[2],y[2]);
-          return rint(alpha/(M_PI*2));
+          return (int)(alpha/(M_PI*2));
         }
         int length(iterator i0,iterator i1){
           int l=1;
