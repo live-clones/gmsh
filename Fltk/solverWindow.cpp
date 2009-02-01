@@ -206,7 +206,7 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
   int width = 32 * FL_NORMAL_SIZE;
   int height = (5 + SINFO[solverIndex].nboptions) * BH + 5 * WB;
   int BBS = (width - 9 * WB) / 6;
-  int LL = width - (int)(2.7 * BBS);
+  int LL = width - (int)(2.75 * BBS);
   
   win = new paletteWindow
     (width, height, CTX::instance()->nonModalWindows ? true : false, "Solver");
@@ -226,7 +226,7 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
       menu->callback(solver_ok_cb, (void *)solverIndex);
 
       input[2] = new Fl_Input
-        (2 * WB + BBS / 2, 2 * WB + 1 * BH, LL - BBS / 2, BH, "Solver");
+        (2 * WB + BBS / 2, 2 * WB + 1 * BH, LL - BBS / 2, BH, "Command");
       input[2]->callback(solver_ok_cb, (void *)solverIndex);
 
       Fl_Button *b1 = new Fl_Button
