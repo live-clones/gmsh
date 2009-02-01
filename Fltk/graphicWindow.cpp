@@ -416,37 +416,42 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   dummyBox *resbox = new dummyBox(x, 0, width - x, glheight);
   win->resizable(resbox);
 
-  // opengl window(s)
-  int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
-  if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
-  
+  // tiled opengl windows
   tile = new Fl_Tile(0, 0, width, glheight);
 
   int w2 = width / 2, h2 = glheight / 2;
   if(numTiles == 2){
     gl.push_back(new openglWindow(0, 0, w2, glheight));
-    gl.back()->mode(mode);
     gl.back()->end();
     gl.push_back(new openglWindow(w2, 0, width - w2, glheight));
-    gl.back()->mode(mode);
     gl.back()->end();
   }
   else if(numTiles == 3){
     gl.push_back(new openglWindow(0, 0, w2, glheight));
-    gl.back()->mode(mode);
     gl.back()->end();
     gl.push_back(new openglWindow(w2, 0, width - w2, h2));
-    gl.back()->mode(mode);
     gl.back()->end();
     gl.push_back(new openglWindow(w2, h2, width - w2, glheight - h2));
-    gl.back()->mode(mode);
+    gl.back()->end();
+  }
+  else if(numTiles == 4){
+    gl.push_back(new openglWindow(0, 0, w2, h2));
+    gl.back()->end();
+    gl.push_back(new openglWindow(w2, 0, width - w2, h2));
+    gl.back()->end();
+    gl.push_back(new openglWindow(0, h2, width - w2, glheight - h2));
+    gl.back()->end();
+    gl.push_back(new openglWindow(w2, h2, width - w2, glheight - h2));
     gl.back()->end();
   }
   else{
     gl.push_back(new openglWindow(0, 0, width, glheight));
-    gl.back()->mode(mode);
     gl.back()->end();
   }
+
+  int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
+  if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
+  for(unsigned int i = 0; i < gl.size(); i++) gl[i]->mode(mode);
 
   tile->end();
 
