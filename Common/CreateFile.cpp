@@ -221,8 +221,8 @@ void CreateOutputFile(std::string fileName, int format)
   case FORMAT_JPEG:
   case FORMAT_PNG:
     {
-      FILE *fp;
-      if(!(fp = fopen(fileName.c_str(), "wb"))) {
+      FILE *fp = fopen(fileName.c_str(), "wb");
+      if(!fp){
         Msg::Error("Unable to open file '%s'", fileName.c_str());
         break;
       }
@@ -267,8 +267,8 @@ void CreateOutputFile(std::string fileName, int format)
   case FORMAT_PDF:
   case FORMAT_SVG:
     {
-      FILE *fp;
-      if(!(fp = fopen(fileName.c_str(), "wb"))) {
+      FILE *fp = fopen(fileName.c_str(), "wb");
+      if(!fp){
         Msg::Error("Unable to open file '%s'", fileName.c_str());
         break;
       }
@@ -346,8 +346,8 @@ void CreateOutputFile(std::string fileName, int format)
 
   case FORMAT_TEX:
     {
-      FILE *fp;
-      if(!(fp = fopen(fileName.c_str(), "w"))) {
+      FILE *fp = fopen(fileName.c_str(), "w");
+      if(!fp){
         Msg::Error("Unable to open file '%s'", fileName.c_str());
         break;
       }

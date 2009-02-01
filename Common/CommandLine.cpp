@@ -168,8 +168,8 @@ void Get_Options(int argc, char *argv[])
 
 #if !defined(HAVE_NO_PARSER)
   // Parse session and option files
-  ParseFile((CTX::instance()->homeDir + CTX::instance()->sessionFileName).c_str(), true);
-  ParseFile((CTX::instance()->homeDir + CTX::instance()->optionsFileName).c_str(), true);
+  ParseFile(CTX::instance()->homeDir + CTX::instance()->sessionFileName, true);
+  ParseFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName, true);
 #endif
 
   // Get command line options

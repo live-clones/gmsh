@@ -35,7 +35,7 @@ void GModel::_deleteGEOInternals()
 
 int GModel::readGEO(const std::string &name)
 {
-  ParseFile(name.c_str(), true);
+  ParseFile(name, true);
   return importGEOInternals();
 }
 
@@ -265,7 +265,7 @@ class writeGEdgeGEO {
         fprintf(geo, "  Order %d;\n", c->degre);
         return;
       case MSH_SEGM_SPLN:
-        fprintf(geo, "CatmullRom(%d) = ", c->Num);
+        fprintf(geo, "Spline(%d) = ", c->Num);
         break;
       case MSH_SEGM_BSPLN:
         fprintf(geo, "BSpline(%d) = ", c->Num);
@@ -307,7 +307,7 @@ class writeGEdgeGEO {
             fprintf(geo, "Point(p%d + %d) = {%.16g, %.16g, %.16g, 1.e+22};\n", 
                     ge->tag(), i, p.x(), p.y(), p.z());
           }
-          fprintf(geo, "CatmullRom(%d) = {%d", ge->tag(), ge->getBeginVertex()->tag());
+          fprintf(geo, "Spline(%d) = {%d", ge->tag(), ge->getBeginVertex()->tag());
           for(int i = 1; i < ge->minimumDrawSegments(); i++)
             fprintf(geo, ", p%d + %d", ge->tag(), i);
           fprintf(geo, ", %d};\n", ge->getEndVertex()->tag());

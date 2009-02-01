@@ -25,24 +25,23 @@ double evaluate_scalarfunction(std::string var, double val, std::string funct)
   Msg::Error("Scalar function evaluation not available without Gmsh parser");
   return 0.;
 #else
-  FILE *tempf = gmsh_yyin;
-  if(!(gmsh_yyin = fopen((CTX::instance()->homeDir + 
-                          CTX::instance()->tmpFileName).c_str(), "w"))) {
-    Msg::Error("Unable to open temporary file '%s'", 
-               (CTX::instance()->homeDir + CTX::instance()->tmpFileName).c_str());
+  std::string fileName = CTX::instance()->homeDir + CTX::instance()->tmpFileName;
+  FILE *gmsh_yyin_old = gmsh_yyin;
+  if(!(gmsh_yyin = fopen(fileName.c_str(), "w"))) {
+    Msg::Error("Unable to open temporary file '%s'", fileName.c_str());
+    gmsh_yyin = gmsh_yyin_old;
     return 0.;
   }
   // pose "variable = function" and evaluate function
   fprintf(gmsh_yyin, "%s = %.16g ;\n", var.c_str(), val);
   fprintf(gmsh_yyin, "ValeurTemporaire__ = %s ;\n", funct.c_str());
   fclose(gmsh_yyin);
-  gmsh_yyin = fopen((CTX::instance()->homeDir +
-                     CTX::instance()->tmpFileName).c_str(), "r");
+  gmsh_yyin = fopen(fileName.c_str(), "r");
   while(!feof(gmsh_yyin)) {
     gmsh_yyparse();
   }
   fclose(gmsh_yyin);
-  gmsh_yyin = tempf;
+  gmsh_yyin = gmsh_yyin_old;
   // retreive value
   if(gmsh_yysymbols.count("ValeurTemporaire__")) 
     return gmsh_yysymbols["ValeurTemporaire__"][0];
@@ -50,27 +49,27 @@ double evaluate_scalarfunction(std::string var, double val, std::string funct)
 #endif
 }
 
-void add_infile(std::string text, std::string filename, bool deleted_something)
+void add_infile(std::string text, std::string fileName, bool deleted_something)
 {
 #if defined(HAVE_NO_PARSER)
   Msg::Error("GEO file creation not available without Gmsh parser");
 #else
-  if(!(gmsh_yyin = fopen((CTX::instance()->homeDir + 
-                          CTX::instance()->tmpFileName).c_str(), "w"))) {
-    Msg::Error("Unable to open temporary file '%s'", 
-               (CTX::instance()->homeDir + CTX::instance()->tmpFileName).c_str());
+  std::string tmpFileName = CTX::instance()->homeDir + CTX::instance()->tmpFileName;
+  FILE *gmsh_yyin_old = gmsh_yyin;
+  if(!(gmsh_yyin = fopen(tmpFileName.c_str(), "w"))) {
+    Msg::Error("Unable to open temporary file '%s'", tmpFileName.c_str());
+    gmsh_yyin = gmsh_yyin_old;
     return;
   }
-
   fprintf(gmsh_yyin, "%s\n", text.c_str());
   Msg::StatusBar(2, true, "%s", text.c_str());
   fclose(gmsh_yyin);
-  gmsh_yyin = fopen((CTX::instance()->homeDir +
-                     CTX::instance()->tmpFileName).c_str(), "r");
+  gmsh_yyin = fopen(tmpFileName.c_str(), "r");
   while(!feof(gmsh_yyin)) {
     gmsh_yyparse();
   }
   fclose(gmsh_yyin);
+  gmsh_yyin = gmsh_yyin_old;
 
   if(deleted_something){
     // we need to start from scratch since the command just parsed
@@ -80,15 +79,15 @@ void add_infile(std::string text, std::string filename, bool deleted_something)
   GModel::current()->importGEOInternals();
   CTX::instance()->mesh.changed = ENT_ALL;
 
-  FILE *file;
-  if(!(file = fopen(filename.c_str(), "a"))) {
-    Msg::Error("Unable to open file '%s'", filename.c_str());
+  FILE *fp = fopen(fileName.c_str(), "a");
+  if(!fp) {
+    Msg::Error("Unable to open file '%s'", fileName.c_str());
     return;
   }
   
   if(!CTX::instance()->expertMode) {
     char no_ext[256], ext[256], base[256];
-    SplitFileName(filename.c_str(), no_ext, ext, base);
+    SplitFileName(fileName.c_str(), no_ext, ext, base);
     if(strlen(ext) && strcmp(ext, ".geo") && strcmp(ext, ".GEO")){
       char question[1024];
       sprintf(question, 
@@ -97,22 +96,22 @@ void add_infile(std::string text, std::string filename, bool deleted_something)
               "(You might want to create a new `.geo' file containing the command\n\n"
               "Merge \"%s\";\n\n"
               "and use that file instead. To disable this warning in the future, select\n"
-              "`Enable expert mode' in the option dialog.)", filename.c_str());
+              "`Enable expert mode' in the option dialog.)", fileName.c_str());
       if(!Msg::GetBinaryAnswer(question, "Proceed", "Cancel", false)){
-        fclose(file);
+        fclose(fp);
         return;
       }
     }
   }
 
-  fprintf(file, "%s\n", text.c_str());
-  fclose(file);
+  fprintf(fp, "%s\n", text.c_str());
+  fclose(fp);
 #endif
 }
 
-void coherence(std::string filename)
+void coherence(std::string fileName)
 {
-  add_infile("Coherence;", filename, true);
+  add_infile("Coherence;", fileName, true);
 }
 
 static std::string list2string(List_T *list)
@@ -127,28 +126,28 @@ static std::string list2string(List_T *list)
   return sstream.str();
 }
 
-void delet(List_T *list, std::string filename, std::string what)
+void delet(List_T *list, std::string fileName, std::string what)
 {
   std::ostringstream sstream;
   sstream << "Delete {\n  " << what << "{" << list2string(list) << "};\n}";
-  add_infile(sstream.str(), filename, true);
+  add_infile(sstream.str(), fileName, true);
 }
 
-void add_charlength(List_T *list, std::string filename, std::string lc)
+void add_charlength(List_T *list, std::string fileName, std::string lc)
 {
   std::ostringstream sstream;
   sstream << "Characteristic Length {" << list2string(list) << "} = " << lc << ";";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void add_recosurf(List_T *list, std::string filename)
+void add_recosurf(List_T *list, std::string fileName)
 {
   std::ostringstream sstream;
   sstream << "Recombine Surface {" << list2string(list) << "};";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void add_trsfline(std::vector<int> &l, std::string filename, std::string type, 
+void add_trsfline(std::vector<int> &l, std::string fileName, std::string type, 
                   std::string typearg, std::string pts)
 {
   std::ostringstream sstream;
@@ -160,10 +159,10 @@ void add_trsfline(std::vector<int> &l, std::string filename, std::string type,
   sstream << "} = " << pts;
   if(typearg.size()) sstream << " Using " << type << " " << typearg;
   sstream << ";";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void add_trsfsurf(std::vector<int> &l, std::string filename, std::string dir)
+void add_trsfsurf(std::vector<int> &l, std::string fileName, std::string dir)
 {
   std::ostringstream sstream;
   sstream << "Transfinite Surface {" << l[0] << "}";
@@ -178,10 +177,10 @@ void add_trsfsurf(std::vector<int> &l, std::string filename, std::string dir)
   if(dir != "Left")
     sstream << " " << dir;
   sstream << ";";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void add_trsfvol(std::vector<int> &l, std::string filename)
+void add_trsfvol(std::vector<int> &l, std::string fileName)
 {
   std::ostringstream sstream;
   sstream << "Transfinite Volume{" << l[0] << "} = {";
@@ -190,17 +189,17 @@ void add_trsfvol(std::vector<int> &l, std::string filename)
     sstream << l[i];
   }
   sstream << "};";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void add_param(std::string par, std::string value, std::string filename)
+void add_param(std::string par, std::string value, std::string fileName)
 {
   std::ostringstream sstream;
   sstream << par << " = " << value << ";";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void add_point(std::string filename, std::string x, std::string y,
+void add_point(std::string fileName, std::string x, std::string y,
 	       std::string z, std::string lc)
 {
   std::ostringstream sstream;
@@ -208,40 +207,40 @@ void add_point(std::string filename, std::string x, std::string y,
 	  << z ;
   if(lc.size()) sstream << ", " << lc;
   sstream << "};";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
 void add_field_option(int field_id, std::string option_name, 
-		      std::string option_value, std::string filename)
+		      std::string option_value, std::string fileName)
 {
   std::ostringstream sstream;
   sstream << "Field[" << field_id << "]." << option_name << " = " 
 	  << option_value << ";";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void add_field(int field_id, std::string type_name, std::string filename)
+void add_field(int field_id, std::string type_name, std::string fileName)
 {
   std::ostringstream sstream;
   sstream << "Field[" << field_id << "] = " << type_name << ";";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void delete_field(int field_id, std::string filename)
+void delete_field(int field_id, std::string fileName)
 {
   std::ostringstream sstream;
   sstream << "Delete Field [" << field_id << "];";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void set_background_field(int field_id, std::string filename)
+void set_background_field(int field_id, std::string fileName)
 {
   std::ostringstream sstream;
   sstream << "Background Field = " << field_id << ";";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void add_multline(std::string type, std::vector<int> &p, std::string filename)
+void add_multline(std::string type, std::vector<int> &p, std::string fileName)
 {
   std::ostringstream sstream;
   sstream << type << "(" << NEWLINE() << ") = {";
@@ -250,66 +249,66 @@ void add_multline(std::string type, std::vector<int> &p, std::string filename)
     sstream << p[i];
   }
   sstream << "};";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void add_circ(int p1, int p2, int p3, std::string filename)
+void add_circ(int p1, int p2, int p3, std::string fileName)
 {
   std::ostringstream sstream;
   sstream << "Circle(" << NEWLINE() << ") = {" << p1 << ", " << p2 << ", "
 	  << p3 << "};";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void add_ell(int p1, int p2, int p3, int p4, std::string filename)
+void add_ell(int p1, int p2, int p3, int p4, std::string fileName)
 {
   std::ostringstream sstream;
   sstream << "Ellipse(" << NEWLINE() << ") = {" << p1 << ", " << p2 << ", "
 	  << p3 << ", " << p4 << "};";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void add_lineloop(List_T *list, std::string filename, int *numloop)
+void add_lineloop(List_T *list, std::string fileName, int *numloop)
 {
   if(recognize_loop(list, numloop)) return;
   *numloop = NEWLINELOOP();
   std::ostringstream sstream;
   sstream << "Line Loop(" << *numloop << ") = {" << list2string(list) << "};";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void add_surf(std::string type, List_T *list, std::string filename)
+void add_surf(std::string type, List_T *list, std::string fileName)
 {
   std::ostringstream sstream;  
   sstream << type << "(" << NEWSURFACE() << ") = {" << list2string(list) << "};";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void add_surfloop(List_T *list, std::string filename, int *numloop)
+void add_surfloop(List_T *list, std::string fileName, int *numloop)
 {
   if(recognize_surfloop(list, numloop)) return;
   *numloop = NEWSURFACELOOP();
   std::ostringstream sstream;
   sstream << "Surface Loop(" << *numloop << ") = {" << list2string(list) << "};";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void add_vol(List_T *list, std::string filename)
+void add_vol(List_T *list, std::string fileName)
 {
   std::ostringstream sstream;
   sstream << "Volume(" << NEWVOLUME() << ") = {" << list2string(list) << "};";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void add_physical(std::string type, List_T *list, std::string filename)
+void add_physical(std::string type, List_T *list, std::string fileName)
 {
   std::ostringstream sstream;
   sstream << "Physical " << type << "(" << NEWPHYSICAL() << ") = {" 
 	  << list2string(list) << "};";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void translate(int add, List_T *list, std::string filename, std::string what,
+void translate(int add, List_T *list, std::string fileName, std::string what,
                std::string tx, std::string ty, std::string tz)
 {
   std::ostringstream sstream;
@@ -318,10 +317,10 @@ void translate(int add, List_T *list, std::string filename, std::string what,
   sstream << what << "{" << list2string(list) << "};";
   if(add) sstream << " }";
   sstream << "\n}";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void rotate(int add, List_T *list, std::string filename, std::string what, 
+void rotate(int add, List_T *list, std::string fileName, std::string what, 
             std::string ax, std::string ay, std::string az,
             std::string px, std::string py, std::string pz, std::string angle)
 {
@@ -332,10 +331,10 @@ void rotate(int add, List_T *list, std::string filename, std::string what,
   sstream << what << "{" << list2string(list) << "};";
   if(add) sstream << " }";
   sstream << "\n}";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void dilate(int add, List_T *list, std::string filename, std::string what,
+void dilate(int add, List_T *list, std::string fileName, std::string what,
             std::string dx, std::string dy, std::string dz, std::string df)
 {
   std::ostringstream sstream;
@@ -344,10 +343,10 @@ void dilate(int add, List_T *list, std::string filename, std::string what,
   sstream << what << "{" << list2string(list) << "};";
   if(add) sstream << " }";
   sstream << "\n}";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void symmetry(int add, List_T *list, std::string filename, std::string what,
+void symmetry(int add, List_T *list, std::string fileName, std::string what,
               std::string sa, std::string sb, std::string sc, std::string sd)
 {
   std::ostringstream sstream;
@@ -356,19 +355,19 @@ void symmetry(int add, List_T *list, std::string filename, std::string what,
   sstream << what << "{" << list2string(list) << "};";
   if(add) sstream << " }";
   sstream << "\n}";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void extrude(List_T *list, std::string filename, std::string what, 
+void extrude(List_T *list, std::string fileName, std::string what, 
              std::string tx, std::string ty, std::string tz)
 {
   std::ostringstream sstream;
   sstream << "Extrude {" << tx << ", " << ty << ", " << tz << "} {\n  " << what 
 	  << "{" << list2string(list) << "};\n}";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void protude(List_T *list, std::string filename, std::string what, 
+void protude(List_T *list, std::string fileName, std::string what, 
              std::string ax, std::string ay, std::string az,
              std::string px, std::string py, std::string pz, std::string angle)
 {
@@ -376,12 +375,12 @@ void protude(List_T *list, std::string filename, std::string what,
   sstream << "Extrude {{" << ax << ", " << ay << ", " << az << "}, {" 
 	  << px << ", " << py << ", " << pz << "}, " << angle << "} {\n  "
 	  << what << "{" << list2string(list) << "};\n}";
-  add_infile(sstream.str(), filename);
+  add_infile(sstream.str(), fileName);
 }
 
-void split_edge(int edge_id, List_T *vertices,std::string filename)
+void split_edge(int edge_id, List_T *vertices,std::string fileName)
 {
   std::ostringstream sstream;
   sstream << "Split Line(" << edge_id << ") {" << list2string(vertices) << "};";
-  add_infile(sstream.str(), filename, true);
+  add_infile(sstream.str(), fileName, true);
 }

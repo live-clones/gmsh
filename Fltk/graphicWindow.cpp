@@ -343,68 +343,57 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   int sht = sh - 4; // leave a 2 pixel border at the bottom
   
   butt[5] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_models");
-  x += sw;
   butt[5]->callback(status_options_cb, (void *)"model");
   butt[5]->tooltip("Select active model");
-  
-  butt[0] = new Fl_Button(x, glheight + 2, sw, sht, "X");
   x += sw;
+  butt[0] = new Fl_Button(x, glheight + 2, sw, sht, "X");
   butt[0]->callback(status_xyz1p_cb, (void *)"x");
   butt[0]->tooltip("Set +X or -X view (Alt+x or Alt+Shift+x)");
-  
+  x += sw;  
   butt[1] = new Fl_Button(x, glheight + 2, sw, sht, "Y");
-  x += sw;
   butt[1]->callback(status_xyz1p_cb, (void *)"y");
   butt[1]->tooltip("Set +Y or -Y view (Alt+y or Alt+Shift+y)");
-  
+  x += sw;  
   butt[2] = new Fl_Button(x, glheight + 2, sw, sht, "Z");
-  x += sw;
   butt[2]->callback(status_xyz1p_cb, (void *)"z");
   butt[2]->tooltip("Set +Z or -Z view (Alt+z or Alt+Shift+z)");
-  
+  x += sw;  
   butt[4] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_rotate");
-  x += sw;
   butt[4]->callback(status_xyz1p_cb, (void *)"r");
   butt[4]->tooltip("Rotate +90 or -90 degrees");
-  
+  x += sw;  
   butt[3] = new Fl_Button(x, glheight + 2, 2 * FL_NORMAL_SIZE, sht, "1:1");
-  x += 2 * FL_NORMAL_SIZE;
   butt[3]->callback(status_xyz1p_cb, (void *)"1:1");
   butt[3]->tooltip("Set unit scale");
-  
+  x += 2 * FL_NORMAL_SIZE;  
   butt[8] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_ortho");
-  x += sw;
   butt[8]->callback(status_options_cb, (void *)"p");
   butt[8]->tooltip("Toggle projection mode (Alt+o or Alt+Shift+o)");
-  
+  x += sw;  
   butt[9] = new Fl_Button(x, glheight + 2, sw, sht, "S");
-  x += sw;
   butt[9]->callback(status_options_cb, (void *)"S");
   butt[9]->tooltip("Toggle mouse selection ON/OFF (Escape)");
-  
+  x += sw;  
   butt[6] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_rewind");
-  x += sw;
   butt[6]->callback(status_rewind_cb);
   butt[6]->tooltip("Rewind animation");
   butt[6]->deactivate();
-  
+  x += sw;  
   butt[10] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_back");
-  x += sw;
   butt[10]->callback(status_stepbackward_cb);
   butt[10]->tooltip("Step backward");
   butt[10]->deactivate();
-  
+  x += sw;  
   butt[7] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_play");
-  x += sw;
   butt[7]->callback(status_play_cb);
   butt[7]->tooltip("Play/pause animation");
   butt[7]->deactivate();
-  
+  x += sw;  
   butt[11] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_forward");
-  x += sw;
   butt[11]->callback(status_stepforward_cb);
   butt[11]->tooltip("Step forward");
   butt[11]->deactivate();
+  x += sw;
   
   for(int i = 0; i < 12; i++) {
     butt[i]->box(FL_FLAT_BOX);

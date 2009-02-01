@@ -99,7 +99,7 @@ messageWindow::messageWindow(int deltaFontSize)
   }
 
   win->resizable(new Fl_Box(1, 1, 4, 4));
-  win->size_range(WB + 100 + 2 * BB + 3 * WB, 100);
+  win->size_range(3 * BB + 4 * WB, 100);
 
   win->position(CTX::instance()->msgPosition[0], CTX::instance()->msgPosition[1]);
   win->end();

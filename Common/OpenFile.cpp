@@ -198,13 +198,12 @@ int ParseFile(std::string fileName, bool close, bool warnIfMissing)
 void ParseString(std::string str)
 {
   if(str.empty()) return;
-  FILE *fp;
-  if((fp = fopen((CTX::instance()->homeDir + 
-                  CTX::instance()->tmpFileName).c_str(), "w"))) {
-    fprintf(fp, str.c_str());
-    fprintf(fp, "\n");
+  std::string fileName = CTX::instance()->homeDir + CTX::instance()->tmpFileName;
+  FILE *fp = fopen(fileName.c_str(), "w");
+  if(fp){
+    fprintf(fp, (str + "\n").c_str());
     fclose(fp);
-    ParseFile((CTX::instance()->homeDir + CTX::instance()->tmpFileName).c_str(), true);
+    ParseFile(fileName, true);
     GModel::current()->importGEOInternals();
   }
 }
