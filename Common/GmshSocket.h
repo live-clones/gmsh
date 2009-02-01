@@ -286,7 +286,7 @@ class GmshServer : public GmshSocket{
   virtual ~GmshServer(){}
   virtual int SystemCall(const char *str) = 0;
   virtual int NonBlockingWait(int socket, int num, double waitint) = 0;
-  int StartClient(const char *command, const char *sockname=0, int maxdelay=4)
+  int StartClient(const char *command, const char *sockname=0, int timeout=5)
   {
     bool justwait = (!command || !strlen(command));
     _sockname = sockname;
@@ -365,9 +365,9 @@ class GmshServer : public GmshSocket{
       }
     }
     else{
-      // Wait at most maxdelay seconds for data, issue error if no
+      // Wait at most timeout seconds for data, issue error if no
       // connection in that amount of time
-      if(!Select(tmpsock, maxdelay, 0)){
+      if(!Select(tmpsock, timeout, 0)){
         CloseSocket(tmpsock);
         return -4;  // Error: Socket listening timeout
       }

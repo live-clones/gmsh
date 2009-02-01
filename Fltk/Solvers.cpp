@@ -82,7 +82,7 @@ int Solver(int num, const char *args)
 #if !defined(WIN32)
       command += " &";
 #endif
-      server->StartClient(command.c_str(), 0, 4.0);
+      server->StartClient(command.c_str());
       return 1;
     }
   }
@@ -125,7 +125,7 @@ int Solver(int num, const char *args)
 #endif
   }
 
-  int sock = server->StartClient(command.c_str(), sockname.c_str(), 4.0);
+  int sock = server->StartClient(command.c_str(), sockname.c_str());
 
   if(sock < 0) {
     switch (sock) {
