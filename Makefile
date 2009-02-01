@@ -253,7 +253,8 @@ source-tree: purge
 
 source: source-tree
 	cd gmsh-${GMSH_VERSION} && rm -rf ${GMSH_VERSION_FILE}\
-          Common/GmshConfig.h contrib/Tetgen/*.{cxx,h} contrib/misc/variables.i*
+          Common/GmshConfig.h contrib/Tetgen/*.{cxx,h}\
+          utils/nightly utils/misc/variables.i*
 	tar zcf gmsh-${GMSH_VERSION}-source.tgz gmsh-${GMSH_VERSION}
 
 # Rules to package the binaries

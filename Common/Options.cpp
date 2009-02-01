@@ -5883,8 +5883,12 @@ double opt_solver_client_server(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
     SINFO[num].client_server = (int)val;
-  if(GUI::available() && (action & GMSH_GUI))
-    GUI::instance()->solver[num]->butt[2]->value(SINFO[num].client_server);
+  if(GUI::available() && (action & GMSH_GUI)){
+    if(SINFO[num].client_server)
+      ((Fl_Menu_Item*)GUI::instance()->solver[num]->menu->menu())[0].set();
+    else
+      ((Fl_Menu_Item*)GUI::instance()->solver[num]->menu->menu())[0].clear();
+  }
   return SINFO[num].client_server;
 #else
   return 0.;
@@ -5921,8 +5925,12 @@ double opt_solver_popup_messages(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
     SINFO[num].popup_messages = (int)val;
-  if(GUI::available() && (action & GMSH_GUI))
-    GUI::instance()->solver[num]->butt[0]->value(SINFO[num].popup_messages);
+  if(GUI::available() && (action & GMSH_GUI)){
+    if(SINFO[num].popup_messages)
+      ((Fl_Menu_Item*)GUI::instance()->solver[num]->menu->menu())[1].set();
+    else
+      ((Fl_Menu_Item*)GUI::instance()->solver[num]->menu->menu())[1].clear();
+  }
   return SINFO[num].popup_messages;
 #else
   return 1.;
@@ -5959,8 +5967,12 @@ double opt_solver_merge_views(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
     SINFO[num].merge_views = (int)val;
-  if(GUI::available() && (action & GMSH_GUI))
-    GUI::instance()->solver[num]->butt[1]->value(SINFO[num].merge_views);
+  if(GUI::available() && (action & GMSH_GUI)){
+    if(SINFO[num].merge_views)
+      ((Fl_Menu_Item*)GUI::instance()->solver[num]->menu->menu())[2].set();
+    else
+      ((Fl_Menu_Item*)GUI::instance()->solver[num]->menu->menu())[2].clear();
+  }
   return SINFO[num].merge_views;
 #else
   return 1.;

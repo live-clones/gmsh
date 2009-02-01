@@ -9,7 +9,7 @@
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Choice.H>
-#include <FL/Fl_Check_Button.H>
+#include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Button.H>
 
 class solverWindow{
@@ -17,7 +17,7 @@ class solverWindow{
   Fl_Window *win;
   Fl_Input *input[50];
   Fl_Choice *choice[10];
-  Fl_Check_Button *butt[10];
+  Fl_Menu_Button *menu;
   Fl_Button *command[10];
  public:
   solverWindow(int solverIndex, int deltaFontSize=0);

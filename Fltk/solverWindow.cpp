@@ -164,17 +164,18 @@ static void solver_kill_cb(Fl_Widget *w, void *data)
 static void solver_ok_cb(Fl_Widget *w, void *data)
 {
   int retry = 0, num = (int)(long)data;
-  opt_solver_popup_messages
-    (num, GMSH_SET, GUI::instance()->solver[num]->butt[0]->value());
-  opt_solver_merge_views
-    (num, GMSH_SET, GUI::instance()->solver[num]->butt[1]->value());
+
   opt_solver_client_server
-    (num, GMSH_SET, GUI::instance()->solver[num]->butt[2]->value());
-  if(strcmp(opt_solver_executable(num, GMSH_GET, "").c_str(), 
-            GUI::instance()->solver[num]->input[2]->value()))
+    (num, GMSH_SET, GUI::instance()->solver[num]->menu->menu()[0].value() ? 1 : 0);
+  opt_solver_popup_messages
+    (num, GMSH_SET, GUI::instance()->solver[num]->menu->menu()[1].value() ? 1 : 0);
+  opt_solver_merge_views
+    (num, GMSH_SET, GUI::instance()->solver[num]->menu->menu()[2].value() ? 1 : 0);
+
+  const char *exe = GUI::instance()->solver[num]->input[2]->value();
+  if(strcmp(opt_solver_executable(num, GMSH_GET, "").c_str(), exe))
     retry = 1;
-  opt_solver_executable
-    (num, GMSH_SET, GUI::instance()->solver[num]->input[2]->value());
+  opt_solver_executable(num, GMSH_SET, exe);
   if(retry)
     solver_cb(0, data);
 }
@@ -202,10 +203,10 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
     if(SINFO[solverIndex].option_name[i].size())
       SINFO[solverIndex].nboptions = i + 1;
 
-  int LL = 2 * IW;
-  int width = LL + BB + BB / 3 + 4 * WB;
-  int height = (7 + SINFO[solverIndex].nboptions) * BH + 5 * WB;
-  int BBS = (width - 8 * WB) / 5;
+  int width = 32 * FL_NORMAL_SIZE;
+  int height = (5 + SINFO[solverIndex].nboptions) * BH + 5 * WB;
+  int BBS = (width - 9 * WB) / 6;
+  int LL = width - (int)(2.7 * BBS);
   
   win = new paletteWindow
     (width, height, CTX::instance()->nonModalWindows ? true : false, "Solver");
@@ -217,43 +218,34 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
       Fl_Group *g = new Fl_Group
         (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Controls");
 
-      Fl_Button *b2 = new Fl_Button
-        (2 * WB, 2 * WB + 1 * BH, BB / 2, BH, "Save");
-      b2->callback(options_save_cb);
+      menu = new Fl_Menu_Button
+        (2 * WB, 2 * WB + 1 * BH, BBS / 2, BH);
+      menu->add("Client-server", 0, 0, 0, FL_MENU_TOGGLE);
+      menu->add("Pop-up messages",  0, 0, 0, FL_MENU_TOGGLE);
+      menu->add("Auto-load results", 0, 0, 0, FL_MENU_TOGGLE);
+      menu->callback(solver_ok_cb, (void *)solverIndex);
+
       input[2] = new Fl_Input
-        (2 * WB + BB / 2, 2 * WB + 1 * BH, LL - BB / 2, BH, "Solver");
+        (2 * WB + BBS / 2, 2 * WB + 1 * BH, LL - BBS / 2, BH, "Solver");
       input[2]->callback(solver_ok_cb, (void *)solverIndex);
 
       Fl_Button *b1 = new Fl_Button
         (width - 2 * WB - BBS, 2 * WB + 1 * BH, BBS, BH, "Choose");
       b1->callback(solver_choose_executable_cb, (void *)solverIndex);
 
-      int ww = (LL - WB) / 2;
-      butt[2] = new Fl_Check_Button
-        (2 * WB, 2 * WB + 2 * BH, ww, BH, "Client/server");
-      butt[0] = new Fl_Check_Button
-        (2 * WB, 2 * WB + 3 * BH, ww, BH, "Pop-up messages");
-      butt[1] = new Fl_Check_Button
-        (3 * WB + ww, 2 * WB + 2 * BH, ww, BH, "Auto-load results");
-      
-      for(int i = 0; i < 3; i++){
-        butt[i]->type(FL_TOGGLE_BUTTON);
-        butt[i]->callback(solver_ok_cb, (void *)solverIndex);
-      }
-
       Fl_Button *b4 = new Fl_Button
-        (2 * WB, 2 * WB + 4 * BH, BB / 2, BH, "Edit");
+        (2 * WB, 2 * WB + 2 * BH, BBS, BH, "Edit");
       b4->callback(solver_file_edit_cb, (void *)solverIndex);
       input[0] = new Fl_Input
-        (2 * WB + BB / 2, 2 * WB + 4 * BH, LL - BB / 2, BH, "Input");
+        (2 * WB + BBS, 2 * WB + 2 * BH, LL - BBS, BH, "Input file");
       Fl_Button *b3 = new Fl_Button
-        (width - 2 * WB - BBS, 2 * WB + 4 * BH, BBS, BH, "Choose");
+        (width - 2 * WB - BBS, 2 * WB + 2 * BH, BBS, BH, "Choose");
       b3->callback(solver_file_open_cb, (void *)solverIndex);
 
       input[1] = new Fl_Input
-        (2 * WB, 2 * WB + 5 * BH, LL, BH, "Mesh");
+        (2 * WB, 2 * WB + 3 * BH, LL, BH, "Mesh file");
       Fl_Button *b5 = new Fl_Button
-        (width - 2 * WB - BBS, 2 * WB + 5 * BH, BBS, BH, "Choose");
+        (width - 2 * WB - BBS, 2 * WB + 3 * BH, BBS, BH, "Choose");
       b5->callback(solver_choose_mesh_cb, (void *)solverIndex);
 
       for(int i = 0; i < 3; i++) {
@@ -262,17 +254,17 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
 
       for(int i = 0; i < SINFO[solverIndex].nboptions; i++) {
         choice[i] = new Fl_Choice
-          (2 * WB, 2 * WB + (6 + i) * BH, LL, BH, SINFO[solverIndex].option_name[i].c_str());
+          (2 * WB, 2 * WB + (4 + i) * BH, LL, BH, SINFO[solverIndex].option_name[i].c_str());
         choice[i]->align(FL_ALIGN_RIGHT);
       }
 
       static int arg[MAX_NUM_SOLVERS][5][2];
-      for(int i = 0; i < 4; i++) {
+      for(int i = 0; i < 5; i++) {
         if(SINFO[solverIndex].button_name[i].size()) {
           arg[solverIndex][i][0] = solverIndex;
           arg[solverIndex][i][1] = i;
           command[i] = new Fl_Button
-            ((2 + i) * WB + i * BBS, 3 * WB + (6 + SINFO[solverIndex].nboptions) * BH,
+            ((2 + i) * WB + i * BBS, 3 * WB + (4 + SINFO[solverIndex].nboptions) * BH,
              BBS, BH, SINFO[solverIndex].button_name[i].c_str());
           command[i]->callback
             (solver_command_cb, (void *)arg[solverIndex][i]);
@@ -281,7 +273,7 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
 
       {
         Fl_Button *b = new Fl_Button
-          (width - 2 * WB - BBS, 3 * WB + (6 + SINFO[solverIndex].nboptions) * BH,
+          (width - 2 * WB - BBS, 3 * WB + (4 + SINFO[solverIndex].nboptions) * BH,
            BBS, BH, "Kill");
         b->callback(solver_kill_cb, (void *)solverIndex);
       }

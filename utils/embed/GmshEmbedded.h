@@ -8,17 +8,10 @@
 
 #include "NumericEmbedded.h"
 
-class Context_T{
-public:
-  Context_T()
-  {
-    lc = 1.;
-    pickElements = 0;
-    hideUnselected = 0;
-    geom.tolerance = 1.e-6;
-    mesh.reverseAllNormals = 1;
-    mesh.secondOrderExperimental = 0;
-  }
+class CTX{
+ private:
+  static CTX *_instance;
+ public:
   double lc;
   int pickElements;
   int hideUnselected;
@@ -29,6 +22,21 @@ public:
     int reverseAllNormals;
     int secondOrderExperimental;
   } mesh;
+  CTX()
+  {
+    lc = 1.;
+    pickElements = 0;
+    hideUnselected = 0;
+    geom.tolerance = 1.e-6;
+    mesh.reverseAllNormals = 1;
+    mesh.secondOrderExperimental = 0;
+  }
+  ~CTX(){}
+  static CTX *instance()
+  {
+    if(!_instance) _instance = new CTX();
+    return _instance;
+  }
   unsigned int packColor(int,int,int,int){ return 0; }
   int unpackRed(unsigned int){ return 0; }
   int unpackGreen(unsigned int){ return 0; }

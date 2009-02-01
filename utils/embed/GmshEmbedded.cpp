@@ -6,7 +6,7 @@
 #include "GModel.h"
 #include "GmshEmbedded.h"
 
-Context_T CTX;
+CTX *CTX::_instance = 0;
 
 int GmshInitialize(int argc, char **argv)
 {
