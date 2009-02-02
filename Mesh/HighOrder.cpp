@@ -1036,7 +1036,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
     setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts,
                  displ2D, displ3D);
 
-  Msg::StatusBar(1, true, "Finished meshing order %d...", order);
+  Msg::StatusBar(1, true, "Done meshing order %d", order);
   
   // now we smooth mesh the internal vertices of the faces
   // we do that model face by model face

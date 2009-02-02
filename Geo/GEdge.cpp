@@ -14,13 +14,11 @@
 #include "GEdge.h"
 #include "GFace.h"
 #include "MElement.h"
+#include "Context.h"
 
 #if !defined(HAVE_GMSH_EMBEDDED)
 #include "GaussLegendre1D.h"
-#include "Context.h"
 #endif
-
-extern Context_T CTX;
 
 GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
   : GEntity(model, tag), _tooSmall(false), v0(_v0), v1(_v1)
@@ -194,8 +192,8 @@ double GEdge::length(const double &u0, const double &u1, const int nbQuadPoints)
 #endif
 }
 
-GPoint GEdge::closestPoint(const SPoint3 & q,double& t) const {
-
+GPoint GEdge::closestPoint(const SPoint3 & q,double& t) const
+{
   double tolerance = 1.e-12;
   double dist = 1.;
 
@@ -233,20 +231,15 @@ GPoint GEdge::closestPoint(const SPoint3 & q,double& t) const {
   return point(t);
 }
 
-
-#include <iostream>
-
-
-double GEdge::parFromPoint(const SVector3& Q) const {
+double GEdge::parFromPoint(const SVector3 &Q) const
+{
   double t;
-  bool success = XYZToU(Q,t);
+  bool success = XYZToU(Q, t);
   return t;
 }
 
-bool GEdge::XYZToU(const SVector3& Q,double &u, const double relax) const
+bool GEdge::XYZToU(const SVector3 &Q, double &u, const double relax) const
 {
-  
-  
   const double Precision = 1.e-8;
   const int MaxIter = 25;
   const int NumInitGuess = 11;
@@ -262,10 +255,10 @@ bool GEdge::XYZToU(const SVector3& Q,double &u, const double relax) const
   
   double init[NumInitGuess];
   
-  for (int i=0;i<NumInitGuess;i++) init[i] = uMin + (uMax-uMin)/(NumInitGuess-1)*i;
+  for (int i = 0; i < NumInitGuess; i++) 
+    init[i] = uMin + (uMax - uMin) / (NumInitGuess - 1) * i;
   
   for(int i = 0; i < NumInitGuess; i++){
-    
     u = init[i];
     double uNew = u;
     err = 1.0;
@@ -274,9 +267,9 @@ bool GEdge::XYZToU(const SVector3& Q,double &u, const double relax) const
     SVector3 dPQ = P - Q;
     err2 = dPQ.norm();
     
-    if (err2 < 1.e-8 * CTX.lc) return true;    
+    if (err2 < 1.e-8 * CTX::instance()->lc) return true;    
     
-    while(iter++ < MaxIter && err2 > 1e-8 * CTX.lc) {
+    while(iter++ < MaxIter && err2 > 1e-8 * CTX::instance()->lc) {
       SVector3 der = firstDer(u);
       uNew = u - relax * dot(dPQ,der) / dot(der,der);
       uNew = std::min(uMax,std::max(uMin,uNew));
@@ -288,14 +281,16 @@ bool GEdge::XYZToU(const SVector3& Q,double &u, const double relax) const
       u = uNew;
     } 
   
-    if (err2 < 1e-8 * CTX.lc) return true;
+    if (err2 < 1e-8 * CTX::instance()->lc) return true;
   }
   
   if(relax > 1.e-2) {
-    Msg::Info("point %g %g %g on edge %d : Relaxation factor = %g", Q.x(), Q.y(), Q.z(), 0.75 * relax);
+    Msg::Info("point %g %g %g on edge %d : Relaxation factor = %g", 
+              Q.x(), Q.y(), Q.z(), 0.75 * relax);
     return XYZToU(Q, u, 0.75 * relax);
   }
   
-  Msg::Error("Could not converge reparametrisation of point (%e,%e,%e) on edge %d",Q.x(),Q.y(),Q.z(),tag());
+  Msg::Error("Could not converge reparametrisation of point (%e,%e,%e) on edge %d",
+             Q.x(), Q.y(), Q.z(), tag());
   return false;
 }

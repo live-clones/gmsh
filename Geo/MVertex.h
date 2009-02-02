@@ -10,7 +10,6 @@
 #include <set>
 #include "SPoint2.h"
 #include "SPoint3.h"
-#include "GmshMessage.h"
 
 class GEntity;
 class GEdge;

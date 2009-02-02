@@ -9,6 +9,7 @@
 #include "Geo.h"
 #include "GModel.h"
 #include "Numeric.h"
+#include "HighOrder.h"
 #include "Context.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
@@ -31,10 +32,6 @@
 #include "Draw.h"
 #endif
 
-// KH: modify grid order after reading
-extern Context_T CTX;
-extern void SetOrderN(GModel *m, int order, bool linear, bool incomplete);
-// end KH
 #define SQU(a)      ((a)*(a))
 
 static void FinishUpBoundingBox()
@@ -350,10 +347,8 @@ int MergeFile(std::string fileName, bool warnIfMissing)
 #if !defined(HAVE_NO_POST)
       if(status > 1) status = PView::readMSH(fileName);
 #endif
-      // KH - modify mesh order after reading
-      if (CTX.mesh.order > 1) SetOrderN(GModel::current(),CTX.mesh.order,false,false);
-      // end - KH 
-      
+      if(CTX::instance()->mesh.order > 1) 
+        SetOrderN(GModel::current(), CTX::instance()->mesh.order, false, false);
     }
 #if !defined(HAVE_NO_POST)
     else if(!strncmp(header, "$PostFormat", 11) || 
