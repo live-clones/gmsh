@@ -16,6 +16,7 @@ class discreteEdge : public GEdge {
   virtual GeomType geomType() const { return DiscreteCurve; }
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
+  virtual Range<double> parBounds(int) const;
 };
 
 #endif

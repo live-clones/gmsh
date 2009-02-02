@@ -16,6 +16,8 @@ class MElement;
 class MLine;
 class ExtrudeParams;
 
+#include <set>
+
 // A model edge.
 class GEdge : public GEntity {
  private:
@@ -25,6 +27,8 @@ class GEdge : public GEntity {
  protected:
   GVertex *v0, *v1;
   std::list<GFace *> l_faces;
+
+  std::set<GFace *> bl_faces;
 
  public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
@@ -58,10 +62,16 @@ class GEdge : public GEntity {
 
   // get the point for the given parameter location
   virtual GPoint point(double p) const = 0;
-
+  
   // true if the edge contains the given parameter
   virtual bool containsParam(double pt) const;
 
+  // get the position for the given parameter location
+  virtual SVector3 position(double p) const {
+    GPoint gp = point(p);
+    return SVector3(gp.x(),gp.y(),gp.z());
+  }
+  
   // get first derivative of edge at the given parameter
   virtual SVector3 firstDer(double par) const = 0;
 
@@ -118,6 +128,24 @@ class GEdge : public GEntity {
 
   // true if entity is periodic in the "dim" direction.
   virtual bool periodic(int dim) const { return v0 == v1; }
+
+  // true if edge is used in hyperbolic layer on face gf
+  virtual bool inHyperbolicLayer(GFace* gf) {
+    return bl_faces.find(gf) != bl_faces.end();
+  }
+
+  virtual void flagInHyperbolicLayer(GFace* gf) {bl_faces.insert(gf);}
+
+  // get bounds of parametric coordinate 
+  virtual Range<double> parBounds(int i) const = 0;
+  
+  // return the point on the face closest to the given point
+  virtual GPoint closestPoint(const SPoint3 & queryPoint,double& param) const;
+
+  // try to reparametrise the point on the edge
+  virtual double parFromPoint(const SVector3& Q) const;
+  
+  virtual bool XYZToU(const SVector3& Q,double& t,double relax=0.5) const;
 
   struct {
     char Method;

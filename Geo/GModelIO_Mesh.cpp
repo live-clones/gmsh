@@ -99,6 +99,9 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
   if(part) m->getMeshPartitions().insert(part);
 }
 
+
+// extern void printDistortion(GModel *m, const char *nm,double& minR,double& maxR);
+
 int GModel::readMSH(const std::string &name)
 {
   FILE *fp = fopen(name.c_str(), "rb");
@@ -215,6 +218,7 @@ int GModel::readMSH(const std::string &name)
 	      if(fread(uv, sizeof(double), 1, fp) != 1) return 0;
 	      if(swap) SwapBytes((char*)uv, sizeof(double), 1);
 	    }
+            Msg::Warning("Creating edge vertex \n");
 	    newVertex = new MEdgeVertex(xyz[0], xyz[1], xyz[2], ge, uv[0], -1.0, num);	      
 	  }
 	  else if (iClasDim == 2){
@@ -386,6 +390,14 @@ int GModel::readMSH(const std::string &name)
     storePhysicalTagsInEntities(this, i, physicals[i]);
 
   fclose(fp);
+  
+  char nm[256] = "distorzione.pos";
+
+  double minR;
+  double maxR;
+  
+  // printDistortion(this,nm,minR,maxR);
+
   return postpro ? 2 : 1;
 }
 

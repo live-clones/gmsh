@@ -32,3 +32,7 @@ SVector3 discreteEdge::firstDer(double par) const
   return SVector3();
 }
 
+Range<double> discreteEdge::parBounds(int i) const {
+  Msg::Error("Cannot specify bounds for parametric coordinate on discrete edge");
+  return Range<double>(0,0);
+}

@@ -237,11 +237,15 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
       else
         ve.insert(ve.end(), edgeVertices[p].rbegin(), edgeVertices[p].rend());
     }
-    else{
-      MVertex *v0 = edge.getVertex(0), *v1 = edge.getVertex(1);            
+    
+    else{  
+      
+      MVertex *v0 = edge.getVertex(0), *v1 = edge.getVertex(1);
+      std::vector<MVertex*> temp;
+        
       double u0 = 0., u1 = 0., US[100];
       bool reparamOK = true;
-      if(!linear){
+      if(!linear) {
         reparamOK &= reparamMeshVertexOnEdge(v0, ge, u0);
         if(ge->periodic(0) && v1 == ge->getEndVertex()->mesh_vertices[0])
           u1 = ge->parBounds(0).high();
@@ -251,40 +255,43 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
           double relax = 1.;
           while (1){
             if(computeEquidistantParameters(ge, u0, u1, nPts + 2, US, relax)) 
-              break;
+                break;
             relax /= 2.0;
             if(relax < 1.e-2) 
               break;
           } 
           if(relax < 1.e-2)
-            Msg::Warning("Failed to compute equidistant parameters (relax = %g)",
-                         relax);
+            Msg::Warning("Failed to compute equidistant parameters (relax = %g) for edge %d-%d",
+                         relax,v0->getNum(),v1->getNum());
         }
       }
-      std::vector<MVertex*> temp;
       for(int j = 0; j < nPts; j++){
         const double t = (double)(j + 1)/(nPts + 1);
+        
         double uc = (1. - t) * u0 + t * u1; // can be wrong, that's ok
         MVertex *v;
         if(linear || !reparamOK || uc < u0 || uc > u1){ 
+          Msg::Warning("We don't have a valid parameter on curve %d-%d",v0->getNum(),v1->getNum());
           // we don't have a (valid) parameter on the curve
           SPoint3 pc = edge.interpolate(t);
           v = new MVertex(pc.x(), pc.y(), pc.z(), ge);
         }
-        else {
+        else {          
           GPoint pc = ge->point(US[j + 1]);
-	  v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, US[j + 1]);
-	  if (displ2D){
-	    SPoint3 pc2 = edge.interpolate(t);          
-	    displ2D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
-	    displ3D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
-	  }
+          v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, US[j + 1]);
+            
+          if (displ2D){
+            SPoint3 pc2 = edge.interpolate(t);          
+            displ2D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
+            displ3D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
+          }
         }
         temp.push_back(v);
         // this destroys the ordering of the mesh vertices on the edge
         ge->mesh_vertices.push_back(v);
         ve.push_back(v);
       }
+    
       if(edge.getVertex(0) == edge.getMinVertex())
         edgeVertices[p].insert(edgeVertices[p].end(), temp.begin(), temp.end());
       else
@@ -1019,12 +1026,18 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   // then create new second order vertices/elements
   edgeContainer edgeVertices;
   faceContainer faceVertices;
+  
+  Msg::StatusBar(1, true, "Meshing edges order %d...", order);
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
     setHighOrder(*it, edgeVertices, linear, nPts, displ2D, displ3D);
+
+  Msg::StatusBar(1, true, "Meshing faces %d...", order);
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
     setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts,
                  displ2D, displ3D);
 
+  Msg::StatusBar(1, true, "Finished meshing order %d...", order);
+  
   // now we smooth mesh the internal vertices of the faces
   // we do that model face by model face
   std::vector<MElement*> bad;
