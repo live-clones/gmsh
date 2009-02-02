@@ -23,7 +23,10 @@
 #include "matheval.h"
 #endif
 
-#define NMAX 20
+
+extern Context_T CTX;
+//KH: enlarged size to allow for 4th order mappings (tets)
+#define NMAX 35
 
 static void saturate(int nb, double val[NMAX][9], double vmin, double vmax, 
 		     int i0=0, int i1=1, int i2=2, int i3=3, 
