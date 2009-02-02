@@ -129,10 +129,12 @@ OpenFile${OBJEXT}: OpenFile.cpp GmshConfig.h GmshMessage.h ../Geo/Geo.h \
   ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h \
   ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h \
   ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/meshPartitionOptions.h OpenFile.h CommandLine.h \
-  ../Graphics/ReadImg.h OS.h StringUtils.h ../Parser/Parser.h \
-  ../Post/PView.h ../Post/PViewData.h ../Fltk/GUI.h ../Fltk/Draw.h
+  ../Geo/SBoundingBox3d.h ../Mesh/HighOrder.h ../Geo/MFace.h \
+  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
+  Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \
+  OpenFile.h CommandLine.h ../Graphics/ReadImg.h OS.h StringUtils.h \
+  ../Parser/Parser.h ../Post/PView.h ../Post/PViewData.h ../Fltk/GUI.h \
+  ../Fltk/Draw.h
 CreateFile${OBJEXT}: CreateFile.cpp GmshConfig.h GmshMessage.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \

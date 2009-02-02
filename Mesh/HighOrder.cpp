@@ -261,8 +261,9 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
               break;
           } 
           if(relax < 1.e-2)
-            Msg::Warning("Failed to compute equidistant parameters (relax = %g) for edge %d-%d",
-                         relax,v0->getNum(),v1->getNum());
+            Msg::Warning
+              ("Failed to compute equidistant parameters (relax = %g) for edge %d-%d",
+               relax, v0->getNum(), v1->getNum());
         }
       }
       for(int j = 0; j < nPts; j++){
@@ -271,7 +272,8 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
         double uc = (1. - t) * u0 + t * u1; // can be wrong, that's ok
         MVertex *v;
         if(linear || !reparamOK || uc < u0 || uc > u1){ 
-          Msg::Warning("We don't have a valid parameter on curve %d-%d",v0->getNum(),v1->getNum());
+          Msg::Warning("We don't have a valid parameter on curve %d-%d",
+             v0->getNum(), v1->getNum());
           // we don't have a (valid) parameter on the curve
           SPoint3 pc = edge.interpolate(t);
           v = new MVertex(pc.x(), pc.y(), pc.z(), ge);

@@ -80,7 +80,7 @@ class MVertex{
 
   // get/set the parent entity
   inline GEntity* onWhat() const { return _ge; }
-  inline void setEntity(GEntity *ge) {_ge = ge; }
+  inline void setEntity(GEntity *ge) { _ge = ge; }
 
   // get/set the number
   inline int getNum() const { return _num; }
