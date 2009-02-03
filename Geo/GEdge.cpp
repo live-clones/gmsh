@@ -5,7 +5,6 @@
 
 #include <sstream>
 #include <algorithm>
-#include <limits>
 
 #include "GmshConfig.h"
 #include "GmshDefines.h"
@@ -199,22 +198,19 @@ GPoint GEdge::closestPoint(const SPoint3 & q,double& t) const
 
   Range<double> interval = parBounds(0);
   
-  double tMin = std::min(interval.high(),interval.low());
-  double tMax = std::max(interval.high(),interval.low());
+  double tMin = std::min(interval.high(), interval.low());
+  double tMax = std::max(interval.high(), interval.low());
   double relax = 1.;
-  double dt,dt0,t0;
+  double dt, dt0, t0;
   int nb = 10;
   
   t = (tMin + tMax) * 0.5;
   
   while (relax > 0.1) {
-    
     int i = 0;
-    
-    t    = 0.5 * (tMin + tMax);
-    dt0   = tMax - tMin;
-    dt    = dt0;
-    
+    t = 0.5 * (tMin + tMax);
+    dt0 = tMax - tMin;
+    dt = dt0;
     while (dt > tolerance * dt0 && i++ < nb) {
       t0 = t;
       dt0 = dt;

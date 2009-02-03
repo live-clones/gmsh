@@ -348,7 +348,9 @@ int MergeFile(std::string fileName, bool warnIfMissing)
       if(status > 1) status = PView::readMSH(fileName);
 #endif
       if(CTX::instance()->mesh.order > 1) 
-        SetOrderN(GModel::current(), CTX::instance()->mesh.order, false, false);
+        SetOrderN(GModel::current(), CTX::instance()->mesh.order,
+                  CTX::instance()->mesh.secondOrderLinear, 
+                  CTX::instance()->mesh.secondOrderIncomplete);
     }
 #if !defined(HAVE_NO_POST)
     else if(!strncmp(header, "$PostFormat", 11) || 

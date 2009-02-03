@@ -67,9 +67,10 @@ class GEdge : public GEntity {
   virtual bool containsParam(double pt) const;
 
   // get the position for the given parameter location
-  virtual SVector3 position(double p) const {
+  virtual SVector3 position(double p) const
+  {
     GPoint gp = point(p);
-    return SVector3(gp.x(),gp.y(),gp.z());
+    return SVector3(gp.x(), gp.y(), gp.z());
   }
   
   // get first derivative of edge at the given parameter
@@ -130,7 +131,8 @@ class GEdge : public GEntity {
   virtual bool periodic(int dim) const { return v0 == v1; }
 
   // true if edge is used in hyperbolic layer on face gf
-  virtual bool inHyperbolicLayer(GFace* gf) {
+  virtual bool inHyperbolicLayer(GFace* gf)
+  {
     return bl_faces.find(gf) != bl_faces.end();
   }
 
