@@ -357,14 +357,15 @@ bool reparamMeshVertexOnEdge(const MVertex *v, const GEdge *ge, double &param)
 {
   param = 1.e6;
   Range<double> bounds = ge->parBounds(0);
+  bool ok = true;
   if(ge->getBeginVertex() && ge->getBeginVertex()->mesh_vertices[0] == v)
     param = bounds.low();
   else if(ge->getEndVertex() && ge->getEndVertex()->mesh_vertices[0] == v)
     param = bounds.high();
   else
-    v->getParameter(0, param);
+    ok = v->getParameter(0, param);
 
-  if(param == 1.e6)
+  if(!ok || param == 1.e6)
     param = ge->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
   
   if(param < 1.e6) return true;

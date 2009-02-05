@@ -169,7 +169,7 @@ int GModel::readMSH(const std::string &name)
       vertexMap.clear();
       int minVertex = numVertices + 1, maxVertex = -1;
       for(int i = 0; i < numVertices; i++) {
-        int num, iClasDim, iClasTag;	
+        int num;	
         double xyz[3], uv[2];
 	MVertex *newVertex = 0;
 	if (!parametric){
@@ -186,6 +186,7 @@ int GModel::readMSH(const std::string &name)
 	  newVertex = new MVertex(xyz[0], xyz[1], xyz[2], 0, num);
 	}
 	else{
+          int iClasDim, iClasTag;
 	  if(!binary){	    
 	    if (fscanf(fp, "%d %lf %lf %lf %d %d", &num, &xyz[0], &xyz[1], &xyz[2],
                        &iClasDim, &iClasTag) != 6)
@@ -330,7 +331,7 @@ int GModel::readMSH(const std::string &name)
             }
             createElementMSH(this, num, type, physical, elementary, partition, 
                              vertices, elements, physicals);
-            if(numElements > 100000) 
+            if(numElements > 100000)
               Msg::ProgressMeter(numElementsPartial + i + 1, numElements, 
                                  "Reading elements");
           }
