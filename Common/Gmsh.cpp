@@ -102,7 +102,7 @@ int GmshBatch()
   if(!CTX::instance()->bgmFileName.empty()) {
     MergeFile(CTX::instance()->bgmFileName);
     if(PView::list.size())
-      GModel::current()->getFields()->set_background_mesh(PView::list.size() - 1);
+      GModel::current()->getFields()->setBackgroundMesh(PView::list.size() - 1);
     else
       Msg::Error("Invalid background mesh (no view)");
   }

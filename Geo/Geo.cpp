@@ -696,7 +696,7 @@ int NEWVOLUME(void)
 
 int NEWFIELD(void)
 {
-  return (GModel::current()->getFields()->max_id() + 1);
+  return (GModel::current()->getFields()->maxId() + 1);
 }
 
 int NEWPHYSICAL(void)

@@ -114,11 +114,11 @@ void SetBoundingBox()
     CTX::instance()->cg[i] = 0.5 * (CTX::instance()->min[i] + CTX::instance()->max[i]);
 }
 
-// FIXME: this is necessary for now to have an approximate CTX::instance()->lc
-// *while* parsing input files (it's important since some of the
-// geometrical operations use a tolerance that depends on
-// CTX::instance()->lc). This will be removed once the new database is filled
-// directly during the parsing step
+// FIXME: this is necessary for now to have an approximate
+// CTX::instance()->lc *while* parsing input files (it's important
+// since some of the geometrical operations use a tolerance that
+// depends on CTX::instance()->lc). This will be removed once the new
+// database is filled directly during the parsing step
 static SBoundingBox3d temp_bb;
 
 void ResetTemporaryBoundingBox()

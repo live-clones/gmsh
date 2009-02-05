@@ -44,7 +44,7 @@ static void field_new_cb(Fl_Widget *w, void *data)
 {
   Fl_Menu_Button* mb = ((Fl_Menu_Button*)w);
   FieldManager *fields = GModel::current()->getFields();
-  int id = fields->new_id();
+  int id = fields->newId();
   add_field(id, mb->text(), GModel::current()->getFileName());
   GUI::instance()->fields->editField((*fields)[id]);
 }
@@ -69,9 +69,9 @@ static void field_put_on_view_cb(Fl_Widget *w, void *data)
   Fl_Menu_Button* mb = ((Fl_Menu_Button*)w);
   Field *field = (Field*)GUI::instance()->fields->editor_group->user_data();
   if(mb->value() == 0)
-    field->put_on_new_view();
+    field->putOnNewView();
   else if(mb->value() - 1 < PView::list.size())
-    field->put_on_view(PView::list[mb->value() - 1]);
+    field->putOnView(PView::list[mb->value() - 1]);
   GUI::instance()->updateViews();
   Draw();
 }
@@ -208,7 +208,7 @@ void fieldWindow::loadFieldList()
     std::ostringstream sstream;
     if(it->first == fields.background_field)
       sstream << "@b";
-    sstream << it->first << " " << field->get_name();
+    sstream << it->first << " " << field->getName();
     browser->add(sstream.str().c_str(), field);
     if(it->second == selected_field)
       browser->select(i_entry);
@@ -227,7 +227,7 @@ void fieldWindow::saveFieldOptions()
       it != f->options.end(); it++){
     FieldOption *option = it->second;
     sstream.str("");
-    switch(option->get_type()){
+    switch(option->getType()){
     case FIELD_OPTION_STRING:
     case FIELD_OPTION_PATH:
       sstream << "\"" << ((Fl_Input*)*input)->value() << "\"";
@@ -286,17 +286,17 @@ void fieldWindow::loadFieldOptions()
     FieldOption *option = it->second;
     std::ostringstream vstr;
     std::list<int>::iterator list_it;
-    switch(option->get_type()){
+    switch(option->getType()){
     case FIELD_OPTION_STRING:
     case FIELD_OPTION_PATH:
       ((Fl_Input*)(*input))->value(option->string().c_str());
       break;
     case FIELD_OPTION_INT:
     case FIELD_OPTION_DOUBLE:
-      ((Fl_Value_Input*)(*input))->value(option->numerical_value());
+      ((Fl_Value_Input*)(*input))->value(option->numericalValue());
       break;
     case FIELD_OPTION_BOOL:
-      ((Fl_Check_Button*)(*input))->value((int)option->numerical_value());
+      ((Fl_Check_Button*)(*input))->value((int)option->numericalValue());
       break;
     case FIELD_OPTION_LIST:
       vstr.str("");
@@ -334,7 +334,7 @@ void fieldWindow::editField(Field *f)
   empty_message->hide();
   editor_group->show();
   editor_group->user_data(f);
-  title->label(f->get_name());
+  title->label(f->getName());
   options_scroll->clear();
   options_widget.clear();
   options_scroll->begin();
@@ -342,7 +342,7 @@ void fieldWindow::editField(Field *f)
   int yy = options_scroll->y();
   help_display->clear();
   help_display->add("\n");
-  add_multiline_in_browser(help_display, "", f->get_description().c_str(), 100);
+  add_multiline_in_browser(help_display, "", f->getDescription().c_str(), 100);
   help_display->add("\n");
   help_display->add("@b@cOptions");
   for(std::map<std::string, FieldOption*>::iterator it = f->options.begin(); 
@@ -350,10 +350,10 @@ void fieldWindow::editField(Field *f)
     Fl_Widget *input;
     help_display->add("\n");
     help_display->add(("@b" + it->first).c_str());
-    help_display->add(("@i" + it->second->get_type_name()).c_str());
+    help_display->add(("@i" + it->second->getTypeName()).c_str());
     add_multiline_in_browser
-      (help_display, "", it->second->get_description().c_str(), 100);
-    switch(it->second->get_type()){
+      (help_display, "", it->second->getDescription().c_str(), 100);
+    switch(it->second->getType()){
     case FIELD_OPTION_INT:
     case FIELD_OPTION_DOUBLE:
       input = new Fl_Value_Input(xx, yy, IW, BH, it->first.c_str());

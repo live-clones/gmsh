@@ -39,12 +39,12 @@ class FieldOptionDouble : public FieldOption
 {
  public:
   double &val;
-  FieldOptionType get_type(){ return FIELD_OPTION_DOUBLE; }
+  FieldOptionType getType(){ return FIELD_OPTION_DOUBLE; }
   FieldOptionDouble(double &_val, std::string _help, bool *_status=0)
     : FieldOption(_help, _status), val(_val){}
-  double numerical_value() const { return val; }
-  void numerical_value(double v){ modified(); val = v; }
-  void get_text_representation(std::string &v_str)
+  double numericalValue() const { return val; }
+  void numericalValue(double v){ modified(); val = v; }
+  void getTextRepresentation(std::string &v_str)
   {
     std::ostringstream sstream;
     sstream.precision(16);
@@ -57,12 +57,12 @@ class FieldOptionInt : public FieldOption
 {
  public:
   int &val;
-  FieldOptionType get_type(){ return FIELD_OPTION_INT; }
+  FieldOptionType getType(){ return FIELD_OPTION_INT; }
   FieldOptionInt(int &_val, std::string _help, bool *_status=0) 
     : FieldOption(_help, _status), val(_val){}
-  double numerical_value() const { return val; }
-  void numerical_value(double v){ modified(); val = (int)v; }
-  void get_text_representation(std::string & v_str)
+  double numericalValue() const { return val; }
+  void numericalValue(double v){ modified(); val = (int)v; }
+  void getTextRepresentation(std::string & v_str)
   {
     std::ostringstream sstream;
     sstream << val;
@@ -74,12 +74,12 @@ class FieldOptionList : public FieldOption
 {
  public:
   std::list<int> &val;
-  FieldOptionType get_type(){ return FIELD_OPTION_LIST; }
+  FieldOptionType getType(){ return FIELD_OPTION_LIST; }
   FieldOptionList(std::list<int> &_val, std::string _help, bool *_status=0) 
     : FieldOption(_help, _status), val(_val) {}
   std::list<int> &list(){ modified(); return val; }
   const std::list<int>& list() const { return val; }
-  void get_text_representation(std::string & v_str)
+  void getTextRepresentation(std::string & v_str)
   {
     std::ostringstream sstream;
     sstream << "{";
@@ -97,12 +97,12 @@ class FieldOptionString : public FieldOption
 {
  public:
   std::string & val;
-  virtual FieldOptionType get_type(){ return FIELD_OPTION_STRING; }
+  virtual FieldOptionType getType(){ return FIELD_OPTION_STRING; }
   FieldOptionString(std::string &_val, std::string _help, bool *_status=0)
     : FieldOption(_help, _status), val(_val) {}
   std::string &string() { modified(); return val; }
   const std::string &string() const { return val; }
-  void get_text_representation(std::string &v_str)
+  void getTextRepresentation(std::string &v_str)
   {
     std::ostringstream sstream;
     sstream << "\"" << val << "\"";
@@ -113,7 +113,7 @@ class FieldOptionString : public FieldOption
 class FieldOptionPath : public FieldOptionString
 {
  public:
-  virtual FieldOptionType get_type(){ return FIELD_OPTION_PATH; }
+  virtual FieldOptionType getType(){ return FIELD_OPTION_PATH; }
   FieldOptionPath(std::string &_val, std::string _help, bool *_status=0)
     : FieldOptionString(_val, _help, _status) {}
 };
@@ -122,12 +122,12 @@ class FieldOptionBool : public FieldOption
 {
  public:
   bool & val;
-  FieldOptionType get_type(){ return FIELD_OPTION_BOOL; }
+  FieldOptionType getType(){ return FIELD_OPTION_BOOL; }
   FieldOptionBool(bool & _val, std::string _help, bool *_status=0)
     : FieldOption(_help, _status), val(_val) {}
-  double numerical_value() const { return val; }
-  void numerical_value(double v){ modified(); val = v; }
-  void get_text_representation(std::string & v_str)
+  double numericalValue() const { return val; }
+  void numericalValue(double v){ modified(); val = v; }
+  void getTextRepresentation(std::string & v_str)
   {
     std::ostringstream sstream;
     sstream << val;
@@ -150,7 +150,7 @@ Field *FieldManager::get(int id)
   return it->second;
 }
 
-Field *FieldManager::new_field(int id, std::string type_name)
+Field *FieldManager::newField(int id, std::string type_name)
 {
   if(find(id) != end()) {
     Msg::Error("Field id %i is already defined.", id);
@@ -168,7 +168,7 @@ Field *FieldManager::new_field(int id, std::string type_name)
   return f;
 }
 
-int FieldManager::new_id()
+int FieldManager::newId()
 {
   int i = 0;
   iterator it = begin();
@@ -182,7 +182,7 @@ int FieldManager::new_id()
   return std::max(i, 1);
 }
 
-int FieldManager::max_id()
+int FieldManager::maxId()
 {
   if(!empty())
     return rbegin()->first;
@@ -190,7 +190,7 @@ int FieldManager::max_id()
     return 0;
 }
 
-void FieldManager::delete_field(int id)
+void FieldManager::deleteField(int id)
 {
   iterator it = find(id);
   if(it == end()) {
@@ -222,7 +222,7 @@ class StructuredField : public Field
        &update_needed);
     data = 0;
   }
-  std::string get_description()
+  std::string getDescription()
   {
     return "Linearly interpolate between data provided on a 3D rectangular\n"
       "structured grid.\n\n"
@@ -239,7 +239,7 @@ class StructuredField : public Field
       "between nodes in each direction, n are the numbers of nodes in each\n"
       "direction, and v are the values on each node.";
   }
-  const char *get_name()
+  const char *getName()
   {
     return "Structured";
   }
@@ -323,7 +323,7 @@ class UTMField : public Field
   double a, b, n, n2, n3, n4, n5, e, e2, e1, e12, e13, e14, J1, J2, J3, J4,
     Ap, Bp, Cp, Dp, Ep, e4, e6, ep, ep2, ep4, k0, mu_fact;
  public:
-  std::string get_description()
+  std::string getDescription()
   {
     return "Evaluate Field[IField] in Universal Transverse Mercator coordinates.\n"
       "The formulas for the coordinates transformation are taken from:\n\n"
@@ -369,7 +369,7 @@ class UTMField : public Field
     k0 = 0.9996;
     mu_fact = 1 / (k0 * a * (1 - e2 / 4 - 3 * e4 / 64 - 5 * e6 / 256));
   }
-  const char *get_name()
+  const char *getName()
   {
     return "UTM";
   }
@@ -409,7 +409,7 @@ class LonLatField : public Field
 {
   int field_id;
  public:
-  std::string get_description()
+  std::string getDescription()
   {
     return "Evaluate Field[IField] in geographic coordinates (longitude, latitude):\n\n"
       "  F = Field[IField](atan(y/x), asin(z/sqrt(x^2+y^2+z^2))";
@@ -420,7 +420,7 @@ class LonLatField : public Field
     options["IField"] = new FieldOptionInt
       (field_id, "Index of the field to evaluate.");
   }
-  const char *get_name()
+  const char *getName()
   {
     return "LonLat";
   }
@@ -436,7 +436,7 @@ class BoxField : public Field
 {
   double v_in, v_out, x_min, x_max, y_min, y_max, z_min, z_max;
  public:
-  std::string get_description()
+  std::string getDescription()
   {
     return "The value of this field is VIn inside the box, VOut outside the box.\n"
       "The box is given by\n\n"
@@ -464,7 +464,7 @@ class BoxField : public Field
     options["ZMax"] = new FieldOptionDouble
       (z_max, "Maximum Z coordinate of the box");
   }
-  const char *get_name()
+  const char *getName()
   {
     return "Box";
   }
@@ -481,11 +481,11 @@ class ThresholdField : public Field
   double dmin, dmax, lcmin, lcmax;
   bool sigmoid, stopAtDistMax;
  public:
-  const char *get_name()
+  const char *getName()
   {
     return "Threshold";
   }
-  std::string get_description()
+  std::string getDescription()
   {
     return "F = LCMin if Field[IField] <= DistMin,\n"
       "F = LCMax if Field[IField] >= DistMax,\n"
@@ -543,11 +543,11 @@ class GradientField : public Field
   int iField, kind;
   double delta;
  public:
-  const char *get_name()
+  const char *getName()
   {
     return "Gradient";
   }
-  std::string get_description()
+  std::string getDescription()
   {
     return "Compute the finite difference gradient of Field[IField]:\n\n"
       "  F = (Field[IField](X + Delta/2) -\n"
@@ -605,11 +605,11 @@ class CurvatureField : public Field
   int iField;
   double delta;
  public:
-  const char *get_name()
+  const char *getName()
   {
     return "Curvature";
   }
-  std::string get_description()
+  std::string getDescription()
   {
     return "Compute the curvature of Field[IField]:\n\n"
       "  F = div(norm(grad(Field[IField])))";
@@ -654,11 +654,11 @@ class MaxEigenHessianField : public Field
   int iField;
   double delta;
  public:
-  const char *get_name()
+  const char *getName()
   {
     return "MaxEigenHessian";
   }
-  std::string get_description()
+  std::string getDescription()
   {
     return "Compute the maximum eigenvalue of the Hessian matrix of\n"
       "Field[IField], with the gradients evaluated by finite differences:\n\n"
@@ -704,11 +704,11 @@ class LaplacianField : public Field
   int iField;
   double delta;
  public:
-  const char *get_name()
+  const char *getName()
   {
     return "Laplacian";
   }
-  std::string get_description()
+  std::string getDescription()
   {
     return "Compute finite difference the Laplacian of Field[IField]:\n\n"
       "  F = G(x+d,y,z) + G(x-d,y,z) +\n"
@@ -741,11 +741,11 @@ class MeanField : public Field
   int iField;
   double delta;
  public:
-  const char *get_name()
+  const char *getName()
   {
     return "Mean";
   }
-  std::string get_description()
+  std::string getDescription()
   {
     return "Simple smoother:\n\n"
       "  F = (G(x+delta,y,z) + G(x-delta,y,z) +\n"
@@ -885,11 +885,11 @@ class MathEvalField : public Field
     }
     return expr.evaluate(x, y, z);
   }
-  const char *get_name()
+  const char *getName()
   {
     return "MathEval";
   }
-  std::string get_description()
+  std::string getDescription()
   {
     return "Evaluate a mathematical expression. The expression can contain\n"
       "x, y, z for spatial coordinates, F0, F1, ... for field values, and\n"
@@ -915,7 +915,7 @@ class ParametricField : public Field
     options["FZ"] = new FieldOptionString
       (f[2], "Z component of parametric function", &update_needed);
   }
-  std::string get_description()
+  std::string getDescription()
   {
     return "Evaluate Field IField in parametric coordinates:\n\n"
       "  F = Field[IField](FX,FY,FZ)\n\n"
@@ -938,7 +938,7 @@ class ParametricField : public Field
 		    expr[1].evaluate(x, y, z),
 		    expr[2].evaluate(x, y, z));
   }
-  const char *get_name()
+  const char *getName()
   {
     return "Param";
   }
@@ -968,11 +968,11 @@ class PostViewField : public Field
     if(l <= 0 && crop_negative_values) return MAX_LC;
     return l;
   }
-  const char *get_name()
+  const char *getName()
   {
     return "PostView";
   }
-  std::string get_description()
+  std::string getDescription()
   {
     return "Evaluate the post processing view IView.";
   }
@@ -1004,7 +1004,7 @@ class MinField : public Field
     options["FieldsList"] = new FieldOptionList
       (idlist, "Field indices",	&update_needed);
   }
-  std::string get_description()
+  std::string getDescription()
   {
     return "Take the minimum value of a list of fields.";
   }
@@ -1017,7 +1017,7 @@ class MinField : public Field
     }
     return v;
   }
-  const char *get_name()
+  const char *getName()
   {
     return "Min";
   }
@@ -1032,7 +1032,7 @@ class MaxField : public Field
     options["FieldsList"] = new FieldOptionList
       (idlist, "Field indices", &update_needed);
   }
-  std::string get_description()
+  std::string getDescription()
   {
     return "Take the maximum value of a list of fields.";
   }
@@ -1045,7 +1045,7 @@ class MaxField : public Field
     }
     return v;
   }
-  const char *get_name()
+  const char *getName()
   {
     return "Max";
   }
@@ -1064,7 +1064,7 @@ class RestrictField : public Field
     options["FacesList"] = new FieldOptionList(faces, "Surface indices");
     options["RegionsList"] = new FieldOptionList(regions, "Volume indices");
   }
-  std::string get_description()
+  std::string getDescription()
   {
     return "Restrict the application of a field to a given list of geometrical\n"
       "curves, surfaces or volumes.";
@@ -1084,7 +1084,7 @@ class RestrictField : public Field
       return (*f) (x, y, z);
     return MAX_LC;
   }
-  const char *get_name()
+  const char *getName()
   {
     return "Restrict";
   }
@@ -1123,11 +1123,11 @@ class AttractorField : public Field
     delete[]index;
     delete[]dist;
   }
-  const char *get_name()
+  const char *getName()
   {
     return "Attractor";
   }
-  std::string get_description()
+  std::string getDescription()
   {
     return "Compute the distance from the nearest node in a list. It can also\n"
       "be used to compute the distance from curves, in which case each curve\n"
@@ -1281,7 +1281,7 @@ Field::Field()
 }
 
 #if !defined(HAVE_NO_POST)
-void Field::put_on_new_view()
+void Field::putOnNewView()
 {
   if(GModel::current()->getMeshStatus() < 1){
     Msg::Error("No mesh available to create the view: please mesh your model!");
@@ -1302,7 +1302,7 @@ void Field::put_on_new_view()
   view->setChanged(true);
 }
 
-void Field::put_on_view(PView *view, int comp)
+void Field::putOnView(PView *view, int comp)
 {
   PViewData *data = view->getData();
   for(int ent = 0; ent < data->getNumEntities(0); ent++){
@@ -1326,11 +1326,11 @@ void Field::put_on_view(PView *view, int comp)
 }
 #endif
 
-void FieldManager::set_background_mesh(int iView)
+void FieldManager::setBackgroundMesh(int iView)
 {
-  int id = new_id();
-  Field *f = new_field(id, "PostView");
-  f->options["IView"]->numerical_value(iView);
+  int id = newId();
+  Field *f = newField(id, "PostView");
+  f->options["IView"]->numericalValue(iView);
   (*this)[id] = f;
   background_field = id;
 }

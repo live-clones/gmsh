@@ -883,7 +883,7 @@ Affectation :
     }
   | tField '[' FExpr ']' tAFFECT tSTRING tEND
     {
-      if(!GModel::current()->getFields()->new_field((int)$3, $6))
+      if(!GModel::current()->getFields()->newField((int)$3, $6))
 	yymsg(0, "Cannot create field %i of type '%s'", (int)$3, $6);
       Free($6);
     }
@@ -893,15 +893,15 @@ Affectation :
       if(field){
 	FieldOption *option = field->options[$6];
 	if(option){
-	  try { option->numerical_value($8); }
+	  try { option->numericalValue($8); }
 	  catch(...){
 	    yymsg(0, "Cannot assign a numerical value to option '%s' "
-		  "in field %i of type '%s'", $6, (int)$3, field->get_name());
+		  "in field %i of type '%s'", $6, (int)$3, field->getName());
 	  }
 	}
 	else
 	  yymsg(0, "Unknown option '%s' in field %i of type '%s'",
-		$6, (int)$3, field->get_name());
+		$6, (int)$3, field->getName());
       }
       else
 	yymsg(0, "No field with id %i", (int)$3);
@@ -916,12 +916,12 @@ Affectation :
 	  try { option->string() = $8; }
 	  catch (...){
 	    yymsg(0, "Cannot assign a string value to  option '%s' "
-		  "in field %i of type '%s'", $6, (int)$3, field->get_name());
+		  "in field %i of type '%s'", $6, (int)$3, field->getName());
 	  }
 	}
 	else 
 	  yymsg(0, "Unknown option '%s' in field %i of type '%s'", 
-		$6, (int)$3, field->get_name());
+		$6, (int)$3, field->getName());
       }
       else 
 	yymsg(0, "No field with id %i", (int)$3);
@@ -944,7 +944,7 @@ Affectation :
 	}
 	else
 	  yymsg(0, "Unknown option '%s' in field %i of type '%s'",
-		$6, (int)$3, field->get_name());
+		$6, (int)$3, field->getName());
       }
       else 
 	yymsg(0, "No field with id %i", (int)$3);
@@ -1724,7 +1724,7 @@ Delete :
     }
   | tDelete tField '[' FExpr ']' tEND
     {
-      GModel::current()->getFields()->delete_field((int)$4);
+      GModel::current()->getFields()->deleteField((int)$4);
     }
   | tDelete tSTRING '[' FExpr ']' tEND
     {
@@ -1906,7 +1906,7 @@ Command :
       if(!strcmp($1, "Background") && !strcmp($2, "Mesh")  && !strcmp($3, "View")){
 	int index = (int)$5;
 	if(index >= 0 && index < (int)PView::list.size())
-	  GModel::current()->getFields()->set_background_mesh(index);
+	  GModel::current()->getFields()->setBackgroundMesh(index);
 	else
 	  yymsg(0, "Unknown view %d", index);
       }

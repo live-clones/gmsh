@@ -2130,7 +2130,7 @@ static void view_applybgmesh_cb(Fl_Widget *w, void *data)
 {
   int index =  (int)(long)data;
   if(index >= 0 && index < (int)PView::list.size()){
-    GModel::current()->getFields()->set_background_mesh(index);
+    GModel::current()->getFields()->setBackgroundMesh(index);
   }
 }
 

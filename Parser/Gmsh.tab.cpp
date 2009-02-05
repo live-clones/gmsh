@@ -4529,7 +4529,7 @@ yyreduce:
   case 80:
 #line 885 "Gmsh.y"
     {
-      if(!GModel::current()->getFields()->new_field((int)(yyvsp[(3) - (7)].d), (yyvsp[(6) - (7)].c)))
+      if(!GModel::current()->getFields()->newField((int)(yyvsp[(3) - (7)].d), (yyvsp[(6) - (7)].c)))
 	yymsg(0, "Cannot create field %i of type '%s'", (int)(yyvsp[(3) - (7)].d), (yyvsp[(6) - (7)].c));
       Free((yyvsp[(6) - (7)].c));
     ;}
@@ -4542,15 +4542,15 @@ yyreduce:
       if(field){
 	FieldOption *option = field->options[(yyvsp[(6) - (9)].c)];
 	if(option){
-	  try { option->numerical_value((yyvsp[(8) - (9)].d)); }
+	  try { option->numericalValue((yyvsp[(8) - (9)].d)); }
 	  catch(...){
 	    yymsg(0, "Cannot assign a numerical value to option '%s' "
-		  "in field %i of type '%s'", (yyvsp[(6) - (9)].c), (int)(yyvsp[(3) - (9)].d), field->get_name());
+		  "in field %i of type '%s'", (yyvsp[(6) - (9)].c), (int)(yyvsp[(3) - (9)].d), field->getName());
 	  }
 	}
 	else
 	  yymsg(0, "Unknown option '%s' in field %i of type '%s'",
-		(yyvsp[(6) - (9)].c), (int)(yyvsp[(3) - (9)].d), field->get_name());
+		(yyvsp[(6) - (9)].c), (int)(yyvsp[(3) - (9)].d), field->getName());
       }
       else
 	yymsg(0, "No field with id %i", (int)(yyvsp[(3) - (9)].d));
@@ -4568,12 +4568,12 @@ yyreduce:
 	  try { option->string() = (yyvsp[(8) - (9)].c); }
 	  catch (...){
 	    yymsg(0, "Cannot assign a string value to  option '%s' "
-		  "in field %i of type '%s'", (yyvsp[(6) - (9)].c), (int)(yyvsp[(3) - (9)].d), field->get_name());
+		  "in field %i of type '%s'", (yyvsp[(6) - (9)].c), (int)(yyvsp[(3) - (9)].d), field->getName());
 	  }
 	}
 	else 
 	  yymsg(0, "Unknown option '%s' in field %i of type '%s'", 
-		(yyvsp[(6) - (9)].c), (int)(yyvsp[(3) - (9)].d), field->get_name());
+		(yyvsp[(6) - (9)].c), (int)(yyvsp[(3) - (9)].d), field->getName());
       }
       else 
 	yymsg(0, "No field with id %i", (int)(yyvsp[(3) - (9)].d));
@@ -4599,7 +4599,7 @@ yyreduce:
 	}
 	else
 	  yymsg(0, "Unknown option '%s' in field %i of type '%s'",
-		(yyvsp[(6) - (11)].c), (int)(yyvsp[(3) - (11)].d), field->get_name());
+		(yyvsp[(6) - (11)].c), (int)(yyvsp[(3) - (11)].d), field->getName());
       }
       else 
 	yymsg(0, "No field with id %i", (int)(yyvsp[(3) - (11)].d));
@@ -5488,7 +5488,7 @@ yyreduce:
   case 134:
 #line 1726 "Gmsh.y"
     {
-      GModel::current()->getFields()->delete_field((int)(yyvsp[(4) - (6)].d));
+      GModel::current()->getFields()->deleteField((int)(yyvsp[(4) - (6)].d));
     ;}
     break;
 
@@ -5688,7 +5688,7 @@ yyreduce:
       if(!strcmp((yyvsp[(1) - (7)].c), "Background") && !strcmp((yyvsp[(2) - (7)].c), "Mesh")  && !strcmp((yyvsp[(3) - (7)].c), "View")){
 	int index = (int)(yyvsp[(5) - (7)].d);
 	if(index >= 0 && index < (int)PView::list.size())
-	  GModel::current()->getFields()->set_background_mesh(index);
+	  GModel::current()->getFields()->setBackgroundMesh(index);
 	else
 	  yymsg(0, "Unknown view %d", index);
       }

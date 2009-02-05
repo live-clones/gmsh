@@ -176,7 +176,7 @@ class writeFieldOptionGEO {
   void operator() (std::pair<std::string, FieldOption *> it)
   {
     std::string v;
-    it.second->get_text_representation(v);
+    it.second->getTextRepresentation(v);
     fprintf(geo, "Field[%i].%s = %s;\n", field->id, it.first.c_str(), v.c_str());
   }
 };
@@ -188,7 +188,7 @@ class writeFieldGEO {
   writeFieldGEO(FILE *fp) { geo = fp ? fp : stdout; }
   void operator() (std::pair<const int, Field *> it)
   {
-    fprintf(geo, "Field[%i] = %s;\n", it.first, it.second->get_name());
+    fprintf(geo, "Field[%i] = %s;\n", it.first, it.second->getName());
     std::for_each(it.second->options.begin(), it.second->options.end(),
                   writeFieldOptionGEO(geo, it.second));
   }

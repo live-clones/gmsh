@@ -811,7 +811,7 @@ void Print_OptionsDoc()
       it != fields.map_type_name.end(); it++){
     fprintf(file, "@item %s\n", it->first.c_str());
     Field *f = (*it->second)();
-    std::string field_description=f->get_description();
+    std::string field_description=f->getDescription();
     Sanitize_String_Texi(field_description);
     fprintf(file,"%s@*\n",field_description.c_str());
     fprintf(file, "Options:@*\n");
@@ -820,11 +820,11 @@ void Print_OptionsDoc()
 	it2 != f->options.end(); it2++){
       fprintf(file, "@item %s\n", it2->first.c_str());
       std::string val;
-      it2->second->get_text_representation(val);
+      it2->second->getTextRepresentation(val);
       Sanitize_String_Texi(val);
       fprintf(file, "%s@*\ntype: %s@*\ndefault value: @code{%s}\n",
-              it2->second->get_description().c_str(),
-              it2->second->get_type_name().c_str(),val.c_str());
+              it2->second->getDescription().c_str(),
+              it2->second->getTypeName().c_str(), val.c_str());
     }
     fprintf(file, "@end table\n\n");
   }
