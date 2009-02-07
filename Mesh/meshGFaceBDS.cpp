@@ -4,6 +4,8 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <stdlib.h>
+#include "GmshMessage.h"
+#include "GmshPredicates.h"
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
 #include "BackgroundMesh.h"
@@ -15,7 +17,6 @@
 #include "Context.h"
 #include "GPoint.h"
 #include "GModel.h"
-#include "GmshMessage.h"
 #include "Numeric.h"
 #include "BDS.h"
 #include "qualityMeasures.h"

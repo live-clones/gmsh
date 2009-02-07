@@ -6,13 +6,14 @@
 #include <set>
 #include <map>
 #include <algorithm>
+#include "GmshMessage.h"
+#include "GmshPredicates.h"
 #include "BackgroundMesh.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "meshGFaceOptimize.h"
 #include "meshGFace.h"
 #include "GFace.h"
 #include "Numeric.h"
-#include "GmshMessage.h"
 
 const double LIMIT_ = 0.5 * sqrt(2.0);
 

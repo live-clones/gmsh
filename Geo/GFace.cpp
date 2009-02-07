@@ -254,8 +254,8 @@ void GFace::computeMeanPlane(const std::vector<SPoint3> &points)
   ym /= (double)ndata;
   zm /= (double)ndata;
 
-  Double_Matrix U(ndata, na), V(na, na);
-  Double_Vector sigma(na);
+  gmshMatrix<double> U(ndata, na), V(na, na);
+  gmshVector<double> sigma(na);
   for(int i = 0; i < ndata; i++) {
     U(i, 0) = points[i].x() - xm;
     U(i, 1) = points[i].y() - ym;

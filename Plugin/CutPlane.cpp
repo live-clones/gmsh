@@ -160,7 +160,7 @@ double GMSH_CutPlanePlugin::levelset(double x, double y, double z, double val) c
     CutPlaneOptions_Number[2].def * z + CutPlaneOptions_Number[3].def;
 }
 
-bool GMSH_CutPlanePlugin::geometricalFilter(Double_Matrix *node_positions) const
+bool GMSH_CutPlanePlugin::geometricalFilter(gmshMatrix<double> *node_positions) const
 {
   const double l0 = levelset((*node_positions)(0, 0),
                              (*node_positions)(0, 1),

@@ -386,7 +386,7 @@ void yyerror(char *s);
 void yymsg(int level, const char *fmt, ...);
 void skip_until(const char *skip, const char *until);
 int PrintListOfDouble(char *format, List_T *list, char *buffer);
-Double_Matrix ListOfListOfDouble2Matrix(List_T *list);
+gmshMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 void FixRelativePath(const char *in, char *out);
 
 
@@ -8097,7 +8097,7 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer)
   return 0;
 }
 
-Double_Matrix ListOfListOfDouble2Matrix(List_T *list)
+gmshMatrix<double> ListOfListOfDouble2Matrix(List_T *list)
 {
   int M = List_Nbr(list);
   int N = 0;
@@ -8105,7 +8105,7 @@ Double_Matrix ListOfListOfDouble2Matrix(List_T *list)
     List_T *line = *(List_T**)List_Pointer_Fast(list, i);
     N = std::max(N, List_Nbr(line));
   }
-  Double_Matrix mat(M, N);
+  gmshMatrix<double> mat(M, N);
   for(int i = 0; i < M; i++){
     List_T *line = *(List_T**)List_Pointer_Fast(list, i);
     for(int j = 0; j < List_Nbr(line); j++){

@@ -13,10 +13,6 @@ AC_ARG_WITH(fltk-prefix,
             AC_HELP_STRING([--with-fltk-prefix=PFX],
                            [prefix where FLTK is installed]),
             [FLTK_PREFIX=$withval])
-AC_ARG_WITH(gsl-prefix,
-            AC_HELP_STRING([--with-gsl-prefix=PFX],
-                           [prefix where GSL is installed]),
-            [GSL_PREFIX=$withval])
 AC_ARG_WITH(jpeg-prefix,
             AC_HELP_STRING([--with-jpeg-prefix=PFX],
                            [prefix where the JPEG library and includes are installed]),
@@ -71,9 +67,6 @@ AC_ARG_WITH(blas-lapack-prefix,
             [BLAS_LAPACK_PREFIX=$withval])
 
 dnl Parse '--enable' command line options
-AC_ARG_ENABLE(gsl,
-              AC_HELP_STRING([--enable-gsl],
-                             [use GSL as numerical toolkit (default=yes)]))
 AC_ARG_ENABLE(gui,
               AC_HELP_STRING([--enable-gui],
                              [build the graphical user interface (default=yes)]))
@@ -156,7 +149,6 @@ AC_ARG_ENABLE(minimal,
 dnl "minimal" build shortcut
 if test "x$enable_minimal" = "xyes"; then
   enable_gui=no;
-  enable_gsl=no;
   enable_fm=no;
   enable_netgen=no;
   enable_tetgen=no;
@@ -681,24 +673,6 @@ if test "x${ZLIB}" = "xyes"; then
   fi
 fi 
 
-dnl Check for GSL
-if test "x$enable_gsl" != "xno"; then
-  if test "x${GSL_PREFIX}" != "x"; then
-    LDFLAGS="-L${GSL_PREFIX} -L${GSL_PREFIX}/lib ${LDFLAGS}"
-  fi
-  AC_CHECK_LIB(gsl,main,GSL="yes",[],-lgslcblas)
-  if test "x${GSL}" = "xyes"; then
-    AC_DEFINE(HAVE_GSL)
-    BO="${BO} Gsl"
-    if test "x${GSL_PREFIX}" = "x"; then
-      GMSH_LIBS="${GMSH_LIBS} -lgsl"
-    else
-      GMSH_LIBS="${GMSH_LIBS} -L${GSL_PREFIX} -L${GSL_PREFIX}/lib -lgsl"
-      FLAGS="${FLAGS} -I${GSL_PREFIX} -I${GSL_PREFIX}/include"
-    fi
-  fi
-fi
-
 dnl Check for FourierModel
 if test "x$enable_fm" != "xno"; then
   if test "x${FM_PREFIX}" != "x"; then
@@ -733,60 +707,39 @@ if test "x$enable_fm" != "xno"; then
   fi
 fi
 
-dnl Check for C version of BLAS
+dnl Check for blas and lapack
+AC_PROG_F77
+case "${F77}" in
+  *gfortran*)
+    F77LIB="-lgfortran"
+    ;;
+  *g77*)
+    F77LIB="-lg2c"
+    ;;
+  *)
+    F77LIB=""
+    ;;
+esac
+LDFLAGS="${LDFLAGS} ${F77LIB}"
 if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
-  LDFLAGS="-L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib ${LDFLAGS}"
+  LDFLAGS="${LDFLAGS} -L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib"
 fi
-AC_CHECK_LIB(cblas,cblas_dgemm,CBLAS="yes" BLAS_LIBS="-lcblas")
-if test "x${CBLAS}" != "xyes"; then
-  AC_CHECK_LIB(cblas,cblas_dgemm,CBLAS="yes" BLAS_LIBS="-lcblas -latlas",[],-latlas)
+AC_CHECK_LIB(atlas,ATL_xerbla,
+  AC_CHECK_LIB(f77blas,dgemm_,
+   [BLAS="yes" BLAS_LIBS="${BLAS_LIBS} -lf77blas -latlas"],[],-latlas))
+if test "x${BLAS}" != "xyes"; then
+  AC_CHECK_LIB(blas,dgemm_,[BLAS="yes" BLAS_LIBS="${BLAS_LIBS} -lblas"])
 fi
-if test "x${CBLAS}" = "xyes"; then
-  AC_DEFINE(HAVE_CBLAS)
-  BO="${BO} Cblas"
-else 
-  if test "x${GSL}" = "xyes"; then
-    dnl use unoptimized gsl version
-    BLAS_LIBS="-lgslcblas"
-    AC_DEFINE(HAVE_CBLAS)
-    BO="${BO} Cblas"
+if test "x${BLAS}" = "xyes"; then
+  AC_DEFINE(HAVE_BLAS)
+  BO="${BO} Blas"
+  AC_CHECK_LIB(lapack,dbdsqr_,
+    [LAPACK="yes" BLAS_LIBS="-llapack ${BLAS_LIBS}"],[],${BLAS_LIBS})
+  if test "x${LAPACK}" = "xyes"; then
+    AC_DEFINE(HAVE_LAPACK)
+    BO="${BO} Lapack"
   fi
 fi
-
-dnl Check for Fortran version of blas and lapack (only used when not
-dnl using GSL, or of FourierModel is linked in)
-if test "x${FM}" = "xyes" -o "x${GSL}" != "xyes"; then
-  AC_PROG_F77
-  case "${F77}" in
-    *gfortran*)
-      F77LIB="-lgfortran"
-      ;;
-    *g77*)
-      F77LIB="-lg2c"
-      ;;
-    *)
-      F77LIB=""
-      ;;
-  esac
-  LDFLAGS="${LDFLAGS} ${F77LIB}"
-  AC_CHECK_LIB(atlas,ATL_xerbla,
-    AC_CHECK_LIB(f77blas,dgemm_,
-     [BLAS="yes" BLAS_LIBS="${BLAS_LIBS} -lf77blas -latlas"],[],-latlas))
-  if test "x${BLAS}" != "xyes"; then
-    AC_CHECK_LIB(blas,dgemm_,[BLAS="yes" BLAS_LIBS="${BLAS_LIBS} -lblas"])
-  fi
-  if test "x${BLAS}" = "xyes"; then
-    AC_DEFINE(HAVE_BLAS)
-    BO="${BO} Blas"
-    AC_CHECK_LIB(lapack,dbdsqr_,
-      [LAPACK="yes" BLAS_LIBS="-llapack ${BLAS_LIBS}"],[],${BLAS_LIBS})
-    if test "x${LAPACK}" = "xyes"; then
-      AC_DEFINE(HAVE_LAPACK)
-      BO="${BO} Lapack"
-    fi
-  fi
-fi
-
 if test "x${BLAS_LIBS}" != "x"; then
   if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
     GMSH_LIBS="${GMSH_LIBS} -L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib ${BLAS_LIBS}"

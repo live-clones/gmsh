@@ -197,7 +197,7 @@ void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod, int nb
   int nbval = nbcomp * nbnod;
 
   if(haveInterpolationMatrices()){
-    std::vector<Double_Matrix*> im;
+    std::vector<gmshMatrix<double>*> im;
     if(getInterpolationMatrices(nbedg, im) == 4)
       nbnod = im[2]->size1();
     nbval = nbcomp * im[0]->size1();
@@ -248,7 +248,7 @@ void PViewDataList::_setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg,
                              List_T *list, int nblist)
 {
   if(haveInterpolationMatrices()){
-    std::vector<Double_Matrix*> im;
+    std::vector<gmshMatrix<double>*> im;
     if(getInterpolationMatrices(nbedg, im) == 4)
       nbnod = im[2]->size1();
   }
@@ -665,10 +665,10 @@ bool PViewDataList::combineSpace(nameData &nd)
 
     // copy interpolation from first merged dataset, if any
     if(!i){
-      for(std::map<int, std::vector<Double_Matrix*> >::iterator it = 
+      for(std::map<int, std::vector<gmshMatrix<double>*> >::iterator it = 
             l->_interpolation.begin(); it != l->_interpolation.end(); it++)
         for(unsigned int i = 0; i < it->second.size(); i++)
-          _interpolation[it->first].push_back(new Double_Matrix(*it->second[i]));
+          _interpolation[it->first].push_back(new gmshMatrix<double>(*it->second[i]));
     }
     
     // merge elememts
@@ -793,10 +793,10 @@ bool PViewDataList::combineTime(nameData &nd)
   }
   NbT2 = data[0]->NbT2;
   NbT3 = data[0]->NbT3;
-  for(std::map<int, std::vector<Double_Matrix*> >::iterator it = 
+  for(std::map<int, std::vector<gmshMatrix<double>*> >::iterator it = 
         data[0]->_interpolation.begin(); it != data[0]->_interpolation.end(); it++)
     for(unsigned int i = 0; i < it->second.size(); i++)
-      _interpolation[it->first].push_back(new Double_Matrix(*it->second[i]));
+      _interpolation[it->first].push_back(new gmshMatrix<double>(*it->second[i]));
   
   // merge values for all element types
   for(int i = 0; i < 24; i++){

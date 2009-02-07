@@ -25,7 +25,6 @@ else
 endif
 
 # Change the following to select which version to build:
-ENABLE_GSL=1
 ENABLE_GUI=0
 ENABLE_PARSER=1
 ENABLE_POSTPRO=1
@@ -34,9 +33,6 @@ ENABLE_NETGEN=0
 ENABLE_METIS=0
 ENABLE_OCC=0
 ENABLE_MED=0
-
-# If you selected ENABLE_GSL, specify where the GSL is installed
-GSL_PREFIX="E:/src/gsl-1.8"
 
 # If you selected ENABLE_GUI, specify where FLTK is installed
 FLTK_PREFIX="E:/src/fltk-1.1.9"
@@ -95,10 +91,6 @@ OPTIM=/O2
 GMSH_DIRS=Common Geo Mesh Numeric contrib/ANN contrib/MathEval
 
 # Optional stuff
-ifeq (${ENABLE_GSL},1)
-  FLAGS+=/DHAVE_GSL /I${GSL_PREFIX}
-  GMSH_LIBS+=${GSL_PREFIX}/lib/gsl.lib ${GSL_PREFIX}/lib/gslcblas.lib
-endif
 ifeq (${ENABLE_PARSER},1)
   GMSH_DIRS+=Parser
 else

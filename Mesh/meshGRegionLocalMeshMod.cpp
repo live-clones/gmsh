@@ -791,9 +791,10 @@ bool gmshSmoothVertexOptimize(MTet4 *t,
 
   double xyzopti[3] = {vd.v->x(), vd.v->y(), vd.v->z()};
 
-  double val;
-  minimize_N(3, smooth_obj_3D, deriv_smoothing_objective_function_3D, &vd, 4,
-             xyzopti, val);
+  double val = 0.;
+  Msg::Error("Fletcher-Reeves minimizer routine must be reimplemented");
+  //minimize_N(3, smooth_obj_3D, deriv_smoothing_objective_function_3D, &vd, 4,
+  //         xyzopti, val);
 
   double vTot = 0;
 

@@ -27,7 +27,7 @@ public:
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  
   PView *execute(PView *);
-  virtual bool geometricalFilter(Double_Matrix *) const;
+  virtual bool geometricalFilter(gmshMatrix<double> *) const;
 
   static double callbackA(int, int, double);
   static double callbackB(int, int, double);

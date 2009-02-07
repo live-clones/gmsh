@@ -38,7 +38,7 @@ GMSH_EMBEDDED = ${GMSH_API} Geo/discrete*.cpp\
                 Geo/GEdgeLoop.cpp Geo/GFace.cpp Geo/GRegion.cpp\
                 Geo/MElement.cpp Geo/MFace.cpp Geo/MVertex.cpp\
                 Common/StringUtils.{cpp,h}\
-                Numeric/NumericEmbedded.{cpp,h} Numeric/FunctionSpace.cpp\
+                Numeric/Numeric.{cpp,h} Numeric/FunctionSpace.cpp\
                 utils/embed/GmshEmbedded.{cpp,h} utils/embed/Makefile
 
 # Main building rules

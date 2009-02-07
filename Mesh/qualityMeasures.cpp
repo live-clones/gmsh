@@ -223,7 +223,7 @@ double qmDistorsionOfMapping (MTriangle *e)
     const double di  = mesh_functional_distorsion (e,u,v);
     dmin = (i==0)? di : std::min(dmin,di);
   }
-  const Double_Matrix& points = e->getFunctionSpace()->points;
+  const gmshMatrix<double>& points = e->getFunctionSpace()->points;
 
   for (int i=0;i<e->getNumPrimaryVertices();i++) {
     const double u = points(i,0);
@@ -271,7 +271,7 @@ double qmDistorsionOfMapping (MTetrahedron *e)
     dmin = (i==0)? di : std::min(dmin,di);
   }
   
-  const Double_Matrix& points = e->getFunctionSpace()->points;
+  const gmshMatrix<double>& points = e->getFunctionSpace()->points;
 
   for (int i=0;i<e->getNumPrimaryVertices();i++) {
     const double u = points(i,0);

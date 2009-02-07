@@ -9,12 +9,10 @@
 #undef HAVE_64BIT_SIZE_T
 #undef HAVE_ANN
 #undef HAVE_BLAS
-#undef HAVE_CBLAS
 #undef HAVE_CHACO
 #undef HAVE_FLTK
 #undef HAVE_FOURIER_MODEL
 #undef HAVE_GMM
-#undef HAVE_GSL
 #undef HAVE_LAPACK
 #undef HAVE_LIBCGNS
 #undef HAVE_LIBJPEG

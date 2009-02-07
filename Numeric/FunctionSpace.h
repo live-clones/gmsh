@@ -12,9 +12,9 @@
 
 struct gmshFunctionSpace 
 {
-  Double_Matrix points;
-  Double_Matrix monomials;
-  Double_Matrix coefficients;
+  gmshMatrix<double> points;
+  gmshMatrix<double> monomials;
+  gmshMatrix<double> coefficients;
   inline void evaluateMonomials(double u, double v, double w, double p[]) const 
   {
     for (int j = 0; j < monomials.size1(); j++) {
@@ -98,10 +98,10 @@ class gmshFunctionSpaces
 {
  private:
   static std::map<int, gmshFunctionSpace> fs;
-  static std::map<std::pair<int, int>, Double_Matrix> injector;
+  static std::map<std::pair<int, int>, gmshMatrix<double> > injector;
  public :
   static const gmshFunctionSpace &find(int);
-  static const Double_Matrix &findInjector(int, int);
+  static const gmshMatrix<double> &findInjector(int, int);
 };
 
 #endif

@@ -377,10 +377,11 @@ void optimizeNodeLocations(GFace *gf, smoothVertexDataHON &vdN, double eps = .2)
 
   double F = -smooth_obj_HighOrderN(uv, &vdN);
   if (F < eps){
-    double val;
-    minimize_N(2 * vdN.v.size(), smooth_obj_HighOrderN, 
-               deriv_smoothing_objective_function_HighOrderN, 
-               &vdN, 1, uv, val);
+    double val = 0.;
+    Msg::Error("Fletcher-Reeves minimizer routine must be reimplemented");
+    //minimize_N(2 * vdN.v.size(), smooth_obj_HighOrderN, 
+    //          deriv_smoothing_objective_function_HighOrderN, 
+    //          &vdN, 1, uv, val);
     double Fafter = -smooth_obj_HighOrderN(uv, &vdN);
     printf("%12.5E %12.5E\n", F, Fafter);
     if (F < Fafter){

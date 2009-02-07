@@ -1263,7 +1263,6 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-gsl            use GSL as numerical toolkit (default=yes)
   --enable-gui            build the graphical user interface (default=yes)
   --enable-parser         build the parser (default=yes)
   --enable-post           build the post-processing module (default=yes)
@@ -1298,7 +1297,6 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-fltk-prefix=PFX  prefix where FLTK is installed
-  --with-gsl-prefix=PFX   prefix where GSL is installed
   --with-jpeg-prefix=PFX  prefix where the JPEG library and includes are
                           installed
   --with-png-prefix=PFX   prefix where the PNG library and includes are
@@ -1765,12 +1763,6 @@ if test "${with_fltk_prefix+set}" = set; then
 fi
 
 
-# Check whether --with-gsl-prefix was given.
-if test "${with_gsl_prefix+set}" = set; then
-  withval=$with_gsl_prefix; GSL_PREFIX=$withval
-fi
-
-
 # Check whether --with-jpeg-prefix was given.
 if test "${with_jpeg_prefix+set}" = set; then
   withval=$with_jpeg_prefix; JPEG_PREFIX=$withval
@@ -1848,11 +1840,6 @@ if test "${with_blas_lapack_prefix+set}" = set; then
   withval=$with_blas_lapack_prefix; BLAS_LAPACK_PREFIX=$withval
 fi
 
-
-# Check whether --enable-gsl was given.
-if test "${enable_gsl+set}" = set; then
-  enableval=$enable_gsl;
-fi
 
 # Check whether --enable-gui was given.
 if test "${enable_gui+set}" = set; then
@@ -1987,7 +1974,6 @@ fi
 
 if test "x$enable_minimal" = "xyes"; then
   enable_gui=no;
-  enable_gsl=no;
   enable_fm=no;
   enable_netgen=no;
   enable_tetgen=no;
@@ -5185,84 +5171,6 @@ _ACEOF
   fi
 fi
 
-if test "x$enable_gsl" != "xno"; then
-  if test "x${GSL_PREFIX}" != "x"; then
-    LDFLAGS="-L${GSL_PREFIX} -L${GSL_PREFIX}/lib ${LDFLAGS}"
-  fi
-  { echo "$as_me:$LINENO: checking for main in -lgsl" >&5
-echo $ECHO_N "checking for main in -lgsl... $ECHO_C" >&6; }
-if test "${ac_cv_lib_gsl_main+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lgsl -lgslcblas $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-
-int
-main ()
-{
-return main ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_cxx_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext &&
-       $as_test_x conftest$ac_exeext; then
-  ac_cv_lib_gsl_main=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_gsl_main=no
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_gsl_main" >&5
-echo "${ECHO_T}$ac_cv_lib_gsl_main" >&6; }
-if test $ac_cv_lib_gsl_main = yes; then
-  GSL="yes"
-fi
-
-  if test "x${GSL}" = "xyes"; then
-    cat >>confdefs.h <<\_ACEOF
-#define HAVE_GSL 1
-_ACEOF
-
-    BO="${BO} Gsl"
-    if test "x${GSL_PREFIX}" = "x"; then
-      GMSH_LIBS="${GMSH_LIBS} -lgsl"
-    else
-      GMSH_LIBS="${GMSH_LIBS} -L${GSL_PREFIX} -L${GSL_PREFIX}/lib -lgsl"
-      FLAGS="${FLAGS} -I${GSL_PREFIX} -I${GSL_PREFIX}/include"
-    fi
-  fi
-fi
-
 if test "x$enable_fm" != "xno"; then
   if test "x${FM_PREFIX}" != "x"; then
     LDFLAGS="-L${FM_PREFIX}/lib ${LDFLAGS}"
@@ -5415,160 +5323,7 @@ _ACEOF
   fi
 fi
 
-if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
-  LDFLAGS="-L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib ${LDFLAGS}"
-fi
-{ echo "$as_me:$LINENO: checking for cblas_dgemm in -lcblas" >&5
-echo $ECHO_N "checking for cblas_dgemm in -lcblas... $ECHO_C" >&6; }
-if test "${ac_cv_lib_cblas_cblas_dgemm+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lcblas  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char cblas_dgemm ();
-int
-main ()
-{
-return cblas_dgemm ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_cxx_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext &&
-       $as_test_x conftest$ac_exeext; then
-  ac_cv_lib_cblas_cblas_dgemm=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_cblas_cblas_dgemm=no
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_cblas_cblas_dgemm" >&5
-echo "${ECHO_T}$ac_cv_lib_cblas_cblas_dgemm" >&6; }
-if test $ac_cv_lib_cblas_cblas_dgemm = yes; then
-  CBLAS="yes" BLAS_LIBS="-lcblas"
-fi
-
-if test "x${CBLAS}" != "xyes"; then
-  { echo "$as_me:$LINENO: checking for cblas_dgemm in -lcblas" >&5
-echo $ECHO_N "checking for cblas_dgemm in -lcblas... $ECHO_C" >&6; }
-if test "${ac_cv_lib_cblas_cblas_dgemm+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lcblas -latlas $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char cblas_dgemm ();
-int
-main ()
-{
-return cblas_dgemm ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_cxx_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext &&
-       $as_test_x conftest$ac_exeext; then
-  ac_cv_lib_cblas_cblas_dgemm=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_cblas_cblas_dgemm=no
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_cblas_cblas_dgemm" >&5
-echo "${ECHO_T}$ac_cv_lib_cblas_cblas_dgemm" >&6; }
-if test $ac_cv_lib_cblas_cblas_dgemm = yes; then
-  CBLAS="yes" BLAS_LIBS="-lcblas -latlas"
-fi
-
-fi
-if test "x${CBLAS}" = "xyes"; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_CBLAS 1
-_ACEOF
-
-  BO="${BO} Cblas"
-else
-  if test "x${GSL}" = "xyes"; then
-        BLAS_LIBS="-lgslcblas"
-    cat >>confdefs.h <<\_ACEOF
-#define HAVE_CBLAS 1
-_ACEOF
-
-    BO="${BO} Cblas"
-  fi
-fi
-
-if test "x${FM}" = "xyes" -o "x${GSL}" != "xyes"; then
-  ac_ext=f
+ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
@@ -5828,19 +5583,22 @@ ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
-  case "${F77}" in
-    *gfortran*)
-      F77LIB="-lgfortran"
-      ;;
-    *g77*)
-      F77LIB="-lg2c"
-      ;;
-    *)
-      F77LIB=""
-      ;;
-  esac
-  LDFLAGS="${LDFLAGS} ${F77LIB}"
-  { echo "$as_me:$LINENO: checking for ATL_xerbla in -latlas" >&5
+case "${F77}" in
+  *gfortran*)
+    F77LIB="-lgfortran"
+    ;;
+  *g77*)
+    F77LIB="-lg2c"
+    ;;
+  *)
+    F77LIB=""
+    ;;
+esac
+LDFLAGS="${LDFLAGS} ${F77LIB}"
+if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
+  LDFLAGS="${LDFLAGS} -L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib"
+fi
+{ echo "$as_me:$LINENO: checking for ATL_xerbla in -latlas" >&5
 echo $ECHO_N "checking for ATL_xerbla in -latlas... $ECHO_C" >&6; }
 if test "${ac_cv_lib_atlas_ATL_xerbla+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -5969,8 +5727,8 @@ fi
 
 fi
 
-  if test "x${BLAS}" != "xyes"; then
-    { echo "$as_me:$LINENO: checking for dgemm_ in -lblas" >&5
+if test "x${BLAS}" != "xyes"; then
+  { echo "$as_me:$LINENO: checking for dgemm_ in -lblas" >&5
 echo $ECHO_N "checking for dgemm_ in -lblas... $ECHO_C" >&6; }
 if test "${ac_cv_lib_blas_dgemm_+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -6035,14 +5793,14 @@ if test $ac_cv_lib_blas_dgemm_ = yes; then
   BLAS="yes" BLAS_LIBS="${BLAS_LIBS} -lblas"
 fi
 
-  fi
-  if test "x${BLAS}" = "xyes"; then
-    cat >>confdefs.h <<\_ACEOF
+fi
+if test "x${BLAS}" = "xyes"; then
+  cat >>confdefs.h <<\_ACEOF
 #define HAVE_BLAS 1
 _ACEOF
 
-    BO="${BO} Blas"
-    { echo "$as_me:$LINENO: checking for dbdsqr_ in -llapack" >&5
+  BO="${BO} Blas"
+  { echo "$as_me:$LINENO: checking for dbdsqr_ in -llapack" >&5
 echo $ECHO_N "checking for dbdsqr_ in -llapack... $ECHO_C" >&6; }
 if test "${ac_cv_lib_lapack_dbdsqr_+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -6107,16 +5865,14 @@ if test $ac_cv_lib_lapack_dbdsqr_ = yes; then
   LAPACK="yes" BLAS_LIBS="-llapack ${BLAS_LIBS}"
 fi
 
-    if test "x${LAPACK}" = "xyes"; then
-      cat >>confdefs.h <<\_ACEOF
+  if test "x${LAPACK}" = "xyes"; then
+    cat >>confdefs.h <<\_ACEOF
 #define HAVE_LAPACK 1
 _ACEOF
 
-      BO="${BO} Lapack"
-    fi
+    BO="${BO} Lapack"
   fi
 fi
-
 if test "x${BLAS_LIBS}" != "x"; then
   if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
     GMSH_LIBS="${GMSH_LIBS} -L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib ${BLAS_LIBS}"

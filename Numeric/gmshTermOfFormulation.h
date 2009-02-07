@@ -51,13 +51,13 @@ class gmshNodalFemTerm : public gmshTermOfFormulation {
   gmshNodalFemTerm(GModel *gm) : gmshTermOfFormulation(gm) {}
   virtual ~gmshNodalFemTerm ();
   // compute the element matrix
-  virtual void elementMatrix(MElement *e, Double_Matrix &m) const = 0;
+  virtual void elementMatrix(MElement *e, gmshMatrix<double> &m) const = 0;
 
   void addToMatrix(gmshAssembler &J, MElement *e) const;
   void addToMatrix(gmshAssembler &J, GEntity *ge) const;
   void addToMatrix(gmshAssembler &J) const;
   void addToMatrix(gmshAssembler &J,const std::vector<MElement*> &) const;
-  void addToMatrix(gmshAssembler &Jac, Double_Matrix &localMatrix, MElement *e) const;
+  void addToMatrix(gmshAssembler &Jac, gmshMatrix<double> &localMatrix, MElement *e) const;
 
   void addDirichlet(int physical, int dim, int comp, int field, const gmshFunction &e, 
                     gmshAssembler &);

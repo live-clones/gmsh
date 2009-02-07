@@ -2882,7 +2882,7 @@ struct PointSurface{
   Surface *s;
 };
 
-static void projectPS(Double_Vector &x, Double_Vector &res, void *data)
+static void projectPS(gmshVector<double> &x, gmshVector<double> &res, void *data)
 {
   PointSurface *ps = (PointSurface*)data;
   Vertex c = InterpolateSurface(ps->s, x(0), x(1), 0, 0);
@@ -2900,7 +2900,7 @@ static void projectPS(Double_Vector &x, Double_Vector &res, void *data)
 
 bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2])
 {
-  Double_Vector x(2);
+  gmshVector<double> x(2);
   x(0) = uv[0];
   x(1) = uv[1];
   PointSurface ps = {&p, s};
@@ -3031,7 +3031,7 @@ struct CurveSurface{
   Surface *s;
 };
 
-static void intersectCS(Double_Vector &uvt, Double_Vector &res, void *data)
+static void intersectCS(gmshVector<double> &uvt, gmshVector<double> &res, void *data)
 {
   CurveSurface *cs = (CurveSurface*)data;
   Vertex vs = InterpolateSurface(cs->s, uvt(0), uvt(1), 0, 0);
@@ -3054,7 +3054,7 @@ bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shape
     Curve *c = FindCurve((int)curve_id);
     if(c){
       CurveSurface cs = {c, s};
-      Double_Vector uvt(3);
+      gmshVector<double> uvt(3);
       uvt(0) = 0.5;
       uvt(1) = 0.5;
       uvt(2) = 0.5;

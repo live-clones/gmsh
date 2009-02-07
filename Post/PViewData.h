@@ -35,7 +35,7 @@ class PViewData {
   adaptiveData *_adaptive;
   // interpolation matrices, indexed by the number of edges per
   // element (1 for lines, 3 for triangles, etc.)
-  std::map<int, std::vector<Double_Matrix*> > _interpolation;
+  std::map<int, std::vector<gmshMatrix<double>*> > _interpolation;
 
  public:
   PViewData();
@@ -179,14 +179,14 @@ class PViewData {
   // set/get the interpolation matrices for elements with "type"
   // number of edges
   void setInterpolationMatrices(int type, 
-                                const Double_Matrix &coefVal,
-                                const Double_Matrix &expVal);
+                                const gmshMatrix<double> &coefVal,
+                                const gmshMatrix<double> &expVal);
   void setInterpolationMatrices(int type, 
-                                const Double_Matrix &coefVal,
-                                const Double_Matrix &expVal,
-                                const Double_Matrix &coefGeo, 
-                                const Double_Matrix &expGeo);
-  int getInterpolationMatrices(int type, std::vector<Double_Matrix*> &p);
+                                const gmshMatrix<double> &coefVal,
+                                const gmshMatrix<double> &expVal,
+                                const gmshMatrix<double> &coefGeo, 
+                                const gmshMatrix<double> &expGeo);
+  int getInterpolationMatrices(int type, std::vector<gmshMatrix<double>*> &p);
   inline bool haveInterpolationMatrices(){ return !_interpolation.empty(); }
 
   // smooth the data in the view (makes it C0)

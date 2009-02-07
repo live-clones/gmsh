@@ -115,9 +115,6 @@ const char *Get_GmshShortLicense(){ return GMSH_SHORT_LICENSE; }
 std::string Get_GmshBuildOptions()
 {
   std::string opt;
-#if defined(HAVE_GSL)
-  opt += "GSL ";
-#endif
 #if defined(HAVE_NETGEN)
   opt += "NETGEN ";
 #endif

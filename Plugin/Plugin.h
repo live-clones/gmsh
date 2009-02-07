@@ -83,7 +83,7 @@ class GMSH_PostPlugin : public GMSH_Plugin
   // get the data in list format
   virtual PViewDataList *getDataList(PView *view);
   virtual void assignSpecificVisibility() const {}
-  virtual bool geometricalFilter(Double_Matrix *) const { return true; }
+  virtual bool geometricalFilter(gmshMatrix<double> *) const { return true; }
 };
 
 // The base class for solver plugins. The idea is to be able to

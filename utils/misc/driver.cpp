@@ -3,7 +3,7 @@
 //   ./configure --disable-gui
 //   make install-lib
 //
-// Then compile this driver with "g++ driver.cpp -lGmsh -lgsl -lgslcblas"
+// Then compile this driver with "g++ driver.cpp -lGmsh -llapack -lblas"
 
 #include <stdio.h>
 #include <gmsh/Gmsh.h>

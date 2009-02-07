@@ -6,7 +6,7 @@
 #include "gmshElasticity.h"
 #include "Numeric.h"
 
-void gmshElasticityTerm::elementMatrix(MElement *e, Double_Matrix & m) const
+void gmshElasticityTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
 {
   int nbNodes = e->getNumVertices();
   int integrationOrder = 2 * (e->getPolynomialOrder() - 1);
@@ -31,10 +31,10 @@ void gmshElasticityTerm::elementMatrix(MElement *e, Double_Matrix & m) const
       {  0,   0,   0,    0, C44,   0}, 
       {  0,   0,   0,    0,   0, C44} };
   
-  Double_Matrix H(6, 6);
-  Double_Matrix B(6, 3 * nbNodes);
-  Double_Matrix BTH(3 * nbNodes, 6);
-  Double_Matrix BT(3 * nbNodes, 6);
+  gmshMatrix<double> H(6, 6);
+  gmshMatrix<double> B(6, 3 * nbNodes);
+  gmshMatrix<double> BTH(3 * nbNodes, 6);
+  gmshMatrix<double> BT(3 * nbNodes, 6);
   for (int i = 0; i < 6; i++)
     for (int j = 0; j < 6; j++)
       H(i, j) = C[i][j];
@@ -70,12 +70,7 @@ void gmshElasticityTerm::elementMatrix(MElement *e, Double_Matrix & m) const
       BT(j + 2 * nbNodes, 5) = B(5, j + 2 * nbNodes) = Grads[j][1];
     }
     BTH.set_all(0.);
-    BTH.blas_dgemm(BT, H); 
-    m.blas_dgemm(BTH, B, weight * detJ, 1.);
+    BTH.gemm(BT, H); 
+    m.gemm(BTH, B, weight * detJ, 1.);
   } 
 }
-
-
-
-
-

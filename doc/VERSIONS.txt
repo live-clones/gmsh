@@ -1,6 +1,7 @@
-$Id: VERSIONS.txt,v 1.35 2009-01-30 23:33:51 geuzaine Exp $
+$Id: VERSIONS.txt,v 1.36 2009-02-07 17:14:49 geuzaine Exp $
 
-2.3.1 (?): new per-window visibility; fixes for string options in
+(?): removed GSL dependency (Gmsh now simply requires Blas and
+Lapack); new per-window visibility; fixes for string options in
 parser.
 
 2.3.0 (Jan 23, 2009): major graphics and GUI code refactoring; new

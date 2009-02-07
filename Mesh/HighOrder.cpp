@@ -40,7 +40,7 @@ static bool mappingIsInvertible(MTetrahedron *e)
     if (det0 * detN <= 0.) return false;
   }
 
-  const Double_Matrix &points = e->getFunctionSpace()->points;
+  const gmshMatrix<double> &points = e->getFunctionSpace()->points;
 
   for (int i = 0; i < e->getNumPrimaryVertices(); i++) {
     const double u = points(i,0);
@@ -62,7 +62,7 @@ static double mylength(GEdge *ge, int i, double *u)
   return ge->length(u[i], u[i+1], 10);
 }
 
-static void myresid(int N, GEdge *ge, double *u, Double_Vector &r)
+static void myresid(int N, GEdge *ge, double *u, gmshVector<double> &r)
 {
   double L[100];
   for (int i = 0; i < N - 1; i++) L[i] = mylength(ge, i, u);
@@ -89,10 +89,10 @@ static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N,
 
   // create the tangent matrix
   const int M = N - 2;
-  Double_Matrix J(M, M);
-  Double_Vector DU(M);
-  Double_Vector R(M);
-  Double_Vector Rp(M);
+  gmshMatrix<double> J(M, M);
+  gmshVector<double> DU(M);
+  gmshVector<double> R(M);
+  gmshVector<double> Rp(M);
   
   int iter = 1;
 
@@ -134,7 +134,7 @@ static double mylength(GFace *gf, int i, double *u, double *v)
   return gf->length(SPoint2(u[i], v[i]), SPoint2(u[i + 1], v[i + 1]), 10);
 }
 
-static void myresid(int N, GFace *gf, double *u, double *v, Double_Vector &r)
+static void myresid(int N, GFace *gf, double *u, double *v, gmshVector<double> &r)
 {
   double L[100];
   for (int i = 0; i < N - 1; i++) L[i] = mylength(gf, i, u, v);  
@@ -168,10 +168,10 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
 
   // create the tangent matrix
   const int M = N - 2;
-  Double_Matrix J(M, M);
-  Double_Vector DU(M);
-  Double_Vector R(M);
-  Double_Vector Rp(M);
+  gmshMatrix<double> J(M, M);
+  gmshVector<double> DU(M);
+  gmshVector<double> R(M);
+  gmshVector<double> Rp(M);
   
   int iter = 1;
 
@@ -401,7 +401,7 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
      gf->geomType() == GEntity::BoundaryLayerSurface)
     linear = true;
 
-  Double_Matrix points;
+  gmshMatrix<double> points;
   int start = 0;
 
   switch (nPts){
@@ -550,7 +550,7 @@ static void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &v
                             faceContainer &faceVertices, edgeContainer &edgeVertices,
                             bool linear, int nPts = 1)
 {
-  Double_Matrix points;
+  gmshMatrix<double> points;
   int start = 0;
   
   switch (nPts){
@@ -643,7 +643,7 @@ static void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &v
 static void getRegionVertices(GRegion *gr, MElement *incomplete, MElement *ele, 
                               std::vector<MVertex*> &vr, bool linear, int nPts = 1)
 {
-  Double_Matrix points;
+  gmshMatrix<double> points;
   int start = 0;
 
   switch (nPts){

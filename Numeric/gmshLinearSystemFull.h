@@ -14,8 +14,8 @@
 #include "GmshMatrix.h"
 
 class gmshLinearSystemFull : public gmshLinearSystem {
-  Double_Matrix *_a;
-  Double_Vector *_b, *_x;
+  gmshMatrix<double> *_a;
+  gmshVector<double> *_b, *_x;
 public :
   gmshLinearSystemFull () : _a(0), _b(0), _x(0){}
   virtual bool isAllocated () const {return _a != 0;}
@@ -24,9 +24,9 @@ public :
     if (_a) delete _a;
     if (_x) delete _x;
     if (_b) delete _b;
-    _a = new  Double_Matrix(_nbRows,_nbRows);
-    _b = new  Double_Vector(_nbRows);
-    _x = new  Double_Vector(_nbRows);    
+    _a = new  gmshMatrix<double>(_nbRows,_nbRows);
+    _b = new  gmshVector<double>(_nbRows);
+    _x = new  gmshVector<double>(_nbRows);    
   }
   virtual ~gmshLinearSystemFull ()
   {

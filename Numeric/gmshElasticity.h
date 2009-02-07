@@ -28,7 +28,7 @@ class gmshElasticityTerm : public gmshNodalFemTerm {
  public:
   gmshElasticityTerm(GModel *gm, double E, double nu, int iField = 1) : 
     gmshNodalFemTerm(gm), _E(E), _nu(nu), _iField(iField){}
-  void elementMatrix(MElement *e, Double_Matrix & m) const;
+  void elementMatrix(MElement *e, gmshMatrix<double> &m) const;
 };
 
 #endif

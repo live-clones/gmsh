@@ -16,6 +16,7 @@
 // value to avoid 3 aligned points or 4 cocyclical points!
 
 #include "GmshMessage.h"
+#include "GmshPredicates.h"
 #include "Numeric.h"
 #include "DivideAndConquer.h"
 #include "MallocUtils.h"

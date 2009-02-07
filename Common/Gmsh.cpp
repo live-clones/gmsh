@@ -7,6 +7,7 @@
 #include <time.h>
 #include "GmshConfig.h"
 #include "GmshDefines.h"
+#include "GmshPredicates.h"
 #include "GModel.h"
 #include "GmshMessage.h"
 #include "OpenFile.h"
@@ -14,7 +15,6 @@
 #include "Options.h"
 #include "CommandLine.h"
 #include "OS.h"
-#include "Numeric.h"
 #include "Generator.h"
 #include "Field.h"
 #include "Context.h"
@@ -48,8 +48,8 @@ int GmshInitialize(int argc, char **argv)
   PluginManager::instance()->registerDefaultPlugins();
 #endif
 
-  // Initialize numeric library (gsl, robust predicates)
-  Init_Numeric();
+  // Initialize robust predicates
+  gmsh::exactinit();
 
   if(dummy) delete dummy;
   return 1;

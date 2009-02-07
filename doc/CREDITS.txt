@@ -9,20 +9,20 @@
           <jean-francois.remacle at uclouvain.be>
 
 Major code contributions to Gmsh have been provided by Nicolas Tardieu
-(help with the GSL and Netgen integration), Stephen Guzik (CGNS and
-partitioner integration), Pascale Noyret (MED integration) and
-Jonathan Lambrechts (Fields).
+(help with Netgen integration), Stephen Guzik (CGNS and partitioner
+integration), Pascale Noyret (MED integration) and Jonathan Lambrechts
+(Fields).
 
 Other code contributors include: David Colignon for new colormaps and
 lots of testing and bug reports; Patrick Dular for transfinite mesh
 bug fixes; Laurent Stainier for the eigenvalue solvers and for help
 with the MacOS port and the tensor display code; Pierre Badel for help
-with the GSL integration; Marc Ume for the original list code; Matt
-Gundry for the Plot3d mesh format; Jozef Vesely for help with the
-Tetgen integration; Koen Hillewaert for high order element mappings
-and other improvements; Jacques Lechelle for the DIFFPACK mesh format;
-Ruth Sabariego for pyramids; Gaetan Bricteux for Gauss integration
-routines.
+with root finding and minimization routines; Marc Ume for the original
+list code; Matt Gundry for the Plot3d mesh format; Jozef Vesely for
+help with the Tetgen integration; Koen Hillewaert for high order
+element mappings and other improvements; Jacques Lechelle for the
+DIFFPACK mesh format; Ruth Sabariego for pyramids; Gaetan Bricteux for
+Gauss integration routines.
 
 The AVL tree code (Common/avl.*) and the YUV image code
 (Graphics/gl2yuv.*) are copyright (C) 1988-1993, 1995 The Regents of

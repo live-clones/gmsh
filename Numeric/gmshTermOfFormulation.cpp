@@ -55,7 +55,7 @@ void gmshNodalFemTerm::addToMatrix(gmshAssembler &lsys,const std::vector<MElemen
 }
 
 void gmshNodalFemTerm::addToMatrix(gmshAssembler &lsys, 
-                                   Double_Matrix &localMatrix, 
+                                   gmshMatrix<double> &localMatrix, 
                                    MElement *e) const
 {
   const int nbR = sizeOfR(e);
@@ -78,7 +78,7 @@ void gmshNodalFemTerm::addToMatrix(gmshAssembler &lsys, MElement *e) const
 {
   const int nbR = sizeOfR(e);
   const int nbC = sizeOfC(e);
-  Double_Matrix localMatrix (nbR, nbC);
+  gmshMatrix<double> localMatrix (nbR, nbC);
   elementMatrix(e, localMatrix);
   addToMatrix(lsys, localMatrix, e);
 }

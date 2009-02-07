@@ -5,9 +5,10 @@
 
 #include <math.h>
 #include <stdio.h>
+#include "GmshMessage.h"
+#include "GmshPredicates.h"
 #include "Numeric.h"
 #include "BDS.h"
-#include "GmshMessage.h"
 #include "GFace.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "qualityMeasures.h"

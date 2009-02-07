@@ -11,16 +11,16 @@
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 
-Double_Matrix generate1DMonomials(int order)
+gmshMatrix<double> generate1DMonomials(int order)
 {
-  Double_Matrix monomials(order + 1, 1);
+  gmshMatrix<double> monomials(order + 1, 1);
   for (int i = 0; i < order + 1; i++) monomials(i, 0) = i;
   return monomials;
 }
 
-Double_Matrix generate1DPoints(int order)
+gmshMatrix<double> generate1DPoints(int order)
 {
-  Double_Matrix line(order + 1, 1);
+  gmshMatrix<double> line(order + 1, 1);
   line(0, 0) = -1.;
   line(1, 0) =  1.;
   double dd = 2. / order;
@@ -28,9 +28,9 @@ Double_Matrix generate1DPoints(int order)
   return line;
 }
 
-Double_Matrix generatePascalTriangle(int order)
+gmshMatrix<double> generatePascalTriangle(int order)
 {
-  Double_Matrix monomials((order + 1) * (order + 2) / 2, 2);
+  gmshMatrix<double> monomials((order + 1) * (order + 2) / 2, 2);
   int index = 0;
   for (int i = 0; i <= order; i++) {
     for (int j = 0; j <= i; j++) {
@@ -44,9 +44,9 @@ Double_Matrix generatePascalTriangle(int order)
 
 // generate the exterior hull of the Pascal triangle for Serendipity element
 
-Double_Matrix generatePascalSerendipityTriangle(int order)
+gmshMatrix<double> generatePascalSerendipityTriangle(int order)
 {
-  Double_Matrix monomials(3 * order, 2);
+  gmshMatrix<double> monomials(3 * order, 2);
 
   monomials(0, 0) = 0;
   monomials(0, 1) = 0;
@@ -74,24 +74,24 @@ Double_Matrix generatePascalSerendipityTriangle(int order)
 
 // generate the monomials subspace of all monomials of order exactly == p
 
-Double_Matrix generateMonomialSubspace(int dim, int p)
+gmshMatrix<double> generateMonomialSubspace(int dim, int p)
 {
-  Double_Matrix monomials;
+  gmshMatrix<double> monomials;
   
   switch (dim) {
   case 1:
-    monomials = Double_Matrix(1, 1);
+    monomials = gmshMatrix<double>(1, 1);
     monomials(0, 0) = p;
     break;
   case 2:
-    monomials = Double_Matrix(p + 1, 2);
+    monomials = gmshMatrix<double>(p + 1, 2);
     for (int k = 0; k <= p; k++) {
       monomials(k, 0) = p - k;
       monomials(k, 1) = k;
     }
     break;
   case 3:
-    monomials = Double_Matrix((p + 1) * (p + 2) / 2, 3);
+    monomials = gmshMatrix<double>((p + 1) * (p + 2) / 2, 3);
     int index = 0;
     for (int i = 0; i <= p; i++) {
       for (int k = 0; k <= p - i; k++) {
@@ -108,11 +108,11 @@ Double_Matrix generateMonomialSubspace(int dim, int p)
 
 // generate external hull of the Pascal tetrahedron
 
-Double_Matrix generatePascalSerendipityTetrahedron(int order)
+gmshMatrix<double> generatePascalSerendipityTetrahedron(int order)
 {
   int nbMonomials = 4 + 6 * std::max(0, order - 1) + 
     4 * std::max(0, (order - 2) * (order - 1) / 2);
-  Double_Matrix monomials(nbMonomials, 3);
+  gmshMatrix<double> monomials(nbMonomials, 3);
 
   monomials.set_all(0);
   int index = 1;
@@ -128,7 +128,7 @@ Double_Matrix generatePascalSerendipityTetrahedron(int order)
       }
     }
   }
-  Double_Matrix monomialsMaxOrder = generateMonomialSubspace(3, order);
+  gmshMatrix<double> monomialsMaxOrder = generateMonomialSubspace(3, order);
   int nbMaxOrder = monomialsMaxOrder.size1();
   monomials.copy(monomialsMaxOrder, 0, nbMaxOrder, 0, 3, index, 0);
   return monomials;
@@ -136,15 +136,15 @@ Double_Matrix generatePascalSerendipityTetrahedron(int order)
 
 // generate Pascal tetrahedron
 
-Double_Matrix generatePascalTetrahedron(int order)
+gmshMatrix<double> generatePascalTetrahedron(int order)
 {
   int nbMonomials = (order + 1) * (order + 2) * (order + 3) / 6;
 
-  Double_Matrix monomials(nbMonomials, 3);
+  gmshMatrix<double> monomials(nbMonomials, 3);
 
   int index = 0;
   for (int p = 0; p <= order; p++) {
-    Double_Matrix monOrder = generateMonomialSubspace(3, p);
+    gmshMatrix<double> monOrder = generateMonomialSubspace(3, p);
     int nb = monOrder.size1();
     monomials.copy(monOrder, 0, nb, 0, 3, index, 0);
     index += nb;
@@ -323,14 +323,14 @@ void nodepositionface3(int order,  double *u,  double *v,  double *w)
    }
 }
 
-Double_Matrix gmshGeneratePointsTetrahedron(int order, bool serendip) 
+gmshMatrix<double> gmshGeneratePointsTetrahedron(int order, bool serendip) 
 {
   int nbPoints = 
     (serendip ?
      4 +  6 * std::max(0, order - 1) + 4 * std::max(0, (order - 2) * (order - 1) / 2) :
      (order + 1) * (order + 2) * (order + 3) / 6);
   
-  Double_Matrix point(nbPoints, 3);
+  gmshMatrix<double> point(nbPoints, 3);
 
   double overOrder = (order == 0 ? 1. : 1. / order);
 
@@ -444,7 +444,7 @@ Double_Matrix gmshGeneratePointsTetrahedron(int order, bool serendip)
         
         if (!serendip && order > 3) {
   
-          Double_Matrix interior = gmshGeneratePointsTetrahedron(order - 4, false);
+          gmshMatrix<double> interior = gmshGeneratePointsTetrahedron(order - 4, false);
           for (int k = 0; k < interior.size1(); k++) {
             point(ns + k, 0) = 1. + interior(k, 0) * (order - 4);
             point(ns + k, 1) = 1. + interior(k, 1) * (order - 4);
@@ -459,10 +459,10 @@ Double_Matrix gmshGeneratePointsTetrahedron(int order, bool serendip)
   return point;
 }
 
-Double_Matrix gmshGeneratePointsTriangle(int order, bool serendip) 
+gmshMatrix<double> gmshGeneratePointsTriangle(int order, bool serendip) 
 {
   int nbPoints = serendip ? 3 * order : (order + 1) * (order + 2) / 2;
-  Double_Matrix point(nbPoints, 2);
+  gmshMatrix<double> point(nbPoints, 2);
   
   point(0, 0) = 0;
   point(0, 1) = 0;
@@ -507,7 +507,7 @@ Double_Matrix gmshGeneratePointsTriangle(int order, bool serendip)
       } 
 
       if (order > 2 && !serendip) {
-        Double_Matrix inner = gmshGeneratePointsTriangle(order - 3, serendip);
+        gmshMatrix<double> inner = gmshGeneratePointsTriangle(order - 3, serendip);
         inner.scale(1. - 3. * dd);
         inner.add(dd);
         point.copy(inner, 0, nbPoints - index, 0, 2, index, 0);
@@ -517,18 +517,18 @@ Double_Matrix gmshGeneratePointsTriangle(int order, bool serendip)
   return point;  
 }
 
-Double_Matrix generateLagrangeMonomialCoefficients(const Double_Matrix& monomial,
-                                                   const Double_Matrix& point) 
+gmshMatrix<double> generateLagrangeMonomialCoefficients(const gmshMatrix<double>& monomial,
+                                                   const gmshMatrix<double>& point) 
 {
   if(monomial.size1() != point.size1() || monomial.size2() != point.size2()){
     Msg::Fatal("Wrong sizes for Lagrange coefficients generation");
-    return Double_Matrix(1, 1);
+    return gmshMatrix<double>(1, 1);
   }
   
   int ndofs = monomial.size1();
   int dim = monomial.size2();
   
-  Double_Matrix Vandermonde(ndofs, ndofs);
+  gmshMatrix<double> Vandermonde(ndofs, ndofs);
   for (int i = 0; i < ndofs; i++) {
     for (int j = 0; j < ndofs; j++) {
       double dd = 1.;
@@ -541,13 +541,13 @@ Double_Matrix generateLagrangeMonomialCoefficients(const Double_Matrix& monomial
 
   if (det == 0.){
     Msg::Fatal("Vandermonde matrix has zero determinant!?");
-    return Double_Matrix(1, 1);
+    return gmshMatrix<double>(1, 1);
   }
-  Double_Matrix coefficient(ndofs, ndofs);
+  gmshMatrix<double> coefficient(ndofs, ndofs);
   for (int i = 0; i < ndofs; i++) {
     for (int j = 0; j < ndofs; j++) {
       int f = (i + j) % 2 == 0 ? 1 : -1;
-      Double_Matrix cofactor = Vandermonde.cofactor(i, j);
+      gmshMatrix<double> cofactor = Vandermonde.cofactor(i, j);
       coefficient(i, j) = f * cofactor.determinant() / det;
     }
   }
@@ -659,18 +659,18 @@ const gmshFunctionSpace &gmshFunctionSpaces::find(int tag)
   return fs[tag];
 }
 
-std::map<std::pair<int, int>, Double_Matrix> gmshFunctionSpaces::injector;
+std::map<std::pair<int, int>, gmshMatrix<double> > gmshFunctionSpaces::injector;
 
-const Double_Matrix &gmshFunctionSpaces::findInjector(int tag1, int tag2)
+const gmshMatrix<double> &gmshFunctionSpaces::findInjector(int tag1, int tag2)
 {
   std::pair<int,int> key(tag1,tag2);
-  std::map<std::pair<int, int>, Double_Matrix>::const_iterator it = injector.find(key);
+  std::map<std::pair<int, int>, gmshMatrix<double> >::const_iterator it = injector.find(key);
   if (it != injector.end()) return it->second;
 
   const gmshFunctionSpace& fs1 = find(tag1);
   const gmshFunctionSpace& fs2 = find(tag2);
 
-  Double_Matrix inj(fs1.points.size1(),fs2.points.size1());
+  gmshMatrix<double> inj(fs1.points.size1(),fs2.points.size1());
   
   double sf[256];
   

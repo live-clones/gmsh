@@ -3,6 +3,11 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <set>
+#include <map>
+#include <algorithm>
+#include "GmshMessage.h"
+#include "GmshPredicates.h"
 #include "OS.h"
 #include "BackgroundMesh.h"
 #include "meshGRegion.h"
@@ -11,10 +16,6 @@
 #include "GModel.h"
 #include "GRegion.h"
 #include "Numeric.h"
-#include "GmshMessage.h"
-#include <set>
-#include <map>
-#include <algorithm>
 
 int MTet4::inCircumSphere(const double *p) const
 {
