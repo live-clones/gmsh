@@ -5,11 +5,11 @@
 
 #include "GmshConfig.h"
 #include "MFace.h"
+#include "Numeric.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
 #include "GmshEmbedded.h"
 #else
-#include "Numeric.h"
 #include "Context.h"
 #endif
 

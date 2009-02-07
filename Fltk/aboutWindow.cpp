@@ -76,7 +76,7 @@ aboutWindow::aboutWindow()
     std::vector<std::string> lines = SplitWhiteSpace(Get_GmshBuildOptions(), 30);
     for(unsigned int i = 0; i < lines.size(); i++){
       if(!i)
-        sprintf(buffer, "@c@.Build options: %s", lines[i].c_str());
+        sprintf(buffer, "@c@.Build options:%s", lines[i].c_str());
       else
         sprintf(buffer, "@c@.%s", lines[i].c_str());
         o->add(buffer);

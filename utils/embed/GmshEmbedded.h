@@ -6,8 +6,6 @@
 #ifndef _GMSH_EMBEDDED_H_
 #define _GMSH_EMBEDDED_H_
 
-#include "NumericEmbedded.h"
-
 class CTX{
  private:
   static CTX *_instance;

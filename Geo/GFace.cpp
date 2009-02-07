@@ -12,11 +12,11 @@
 #include "MElement.h"
 #include "VertexArray.h"
 #include "GmshMatrix.h"
+#include "Numeric.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
 #include "GmshEmbedded.h"
 #else
-#include "Numeric.h"
 #include "GaussLegendre1D.h"
 #include "Context.h"
 #endif
