@@ -274,7 +274,7 @@ if test "x$enable_gui" != "xno"; then
       GMSH_DIRS="${GMSH_DIRS} contrib/TreeBrowser"
       GMSH_LIBS="${GMSH_LIBS} -lGmshTreeBrowser"
       AC_DEFINE(HAVE_TREE_BROWSER)
-       BO="${BO} TreeBrowser"
+      BO="${BO} TreeBrowser"
     fi
   fi
 
@@ -856,6 +856,7 @@ if test $ac_cv_sizeof_size_t != 4; then
   fi
 fi
 
+AC_DEFINE_UNQUOTED(GMSH_CONFIG_OPTIONS, "${BO}")
 AC_CONFIG_HEADER(Common/GmshConfig.h:Common/GmshConfig.h.in)
 
 dnl Write output

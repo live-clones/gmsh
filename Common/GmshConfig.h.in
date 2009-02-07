@@ -35,4 +35,6 @@
 #undef HAVE_TETGEN
 #undef HAVE_TREE_BROWSER
 
+#define GMSH_CONFIG_OPTIONS ""
+
 #endif

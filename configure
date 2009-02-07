@@ -3928,7 +3928,7 @@ fi
 #define HAVE_TREE_BROWSER 1
 _ACEOF
 
-       BO="${BO} TreeBrowser"
+      BO="${BO} TreeBrowser"
     fi
   fi
 
@@ -7097,6 +7097,10 @@ _ACEOF
     fi
   fi
 fi
+
+cat >>confdefs.h <<_ACEOF
+#define GMSH_CONFIG_OPTIONS "${BO}"
+_ACEOF
 
 ac_config_headers="$ac_config_headers Common/GmshConfig.h:Common/GmshConfig.h.in"
 

@@ -112,50 +112,7 @@ const char *Get_GmshBuildHost(){ return GMSH_HOST; }
 const char *Get_GmshPackager(){ return GMSH_PACKAGER; }
 const char *Get_GmshBuildOS(){ return GMSH_OS; }
 const char *Get_GmshShortLicense(){ return GMSH_SHORT_LICENSE; }
-std::string Get_GmshBuildOptions()
-{
-  std::string opt;
-#if defined(HAVE_NETGEN)
-  opt += "NETGEN ";
-#endif
-#if defined(HAVE_TETGEN)
-  opt += "TETGEN ";
-#endif
-#if defined(HAVE_LIBJPEG)
-  opt += "JPEG ";
-#endif
-#if defined(HAVE_LIBPNG)
-  opt += "PNG ";
-#endif
-#if defined(HAVE_LIBZ)
-  opt += "ZLIB ";
-#endif
-#if defined(HAVE_MATH_EVAL)
-  opt += "MATHEVAL ";
-#endif
-#if defined(HAVE_METIS)
-  opt += "METIS ";
-#endif
-#if defined(HAVE_CHACO)
-  opt += "CHACO ";
-#endif
-#if defined(HAVE_ANN)
-  opt += "ANN ";
-#endif
-#if defined(HAVE_CGNS)
-  opt += "CGNS ";
-#endif
-#if defined(HAVE_OCC)
-  opt += "OCC ";
-#endif
-#if defined(HAVE_MED)
-  opt += "MED ";
-#endif
-#if defined(HAVE_GMM)
-  opt += "GMM++ ";
-#endif
-  return opt;
-}
+std::string Get_GmshBuildOptions(){ return GMSH_CONFIG_OPTIONS; }
 
 void Get_Options(int argc, char *argv[])
 {
