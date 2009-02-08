@@ -10,13 +10,9 @@
 #include <map>
 #include <vector>
 #include "GmshMatrix.h"
-
-class GModel;
-class GEntity;
-class MElement;
-class MVertex;
-class gmshFunction;
-class gmshAssembler;
+#include "gmshAssembler.h"
+#include "GModel.h"
+#include "MElement.h"
 
 class gmshTermOfFormulation {  
  protected:
@@ -24,8 +20,7 @@ class gmshTermOfFormulation {
  public:
   gmshTermOfFormulation(GModel *gm) : _gm(gm) {}
   virtual ~gmshTermOfFormulation(){}
-  virtual void addToMatrix(gmshAssembler&) const = 0;
-  virtual void addToRightHandSide(gmshAssembler&) const = 0;
+  virtual void addToMatrix(gmshAssembler<double> &) const = 0;
 };
 
 // a nodal finite element term : variables are always defined at nodes
@@ -47,23 +42,58 @@ class gmshNodalFemTerm : public gmshTermOfFormulation {
   }
  public:
   gmshNodalFemTerm(GModel *gm) : gmshTermOfFormulation(gm) {}
-  virtual ~gmshNodalFemTerm ();
-  // compute the element matrix
+  virtual ~gmshNodalFemTerm (){}
   virtual void elementMatrix(MElement *e, gmshMatrix<double> &m) const = 0;
-
-  void addToMatrix(gmshAssembler &J, MElement *e) const;
-  void addToMatrix(gmshAssembler &J, GEntity *ge) const;
-  void addToMatrix(gmshAssembler &J) const;
-  void addToMatrix(gmshAssembler &J,const std::vector<MElement*> &) const;
-  void addToMatrix(gmshAssembler &Jac, gmshMatrix<double> &localMatrix, MElement *e) const;
-
-  void addDirichlet(int physical, int dim, int comp, int field, const gmshFunction &e, 
-                    gmshAssembler &);
-  void addNeumann(int physical, int dim, int icomp, int field, const gmshFunction &e, 
-                  gmshAssembler &);
-  void addToRightHandSide(gmshAssembler &J, GEntity *ge) const;
-  void addToRightHandSide(gmshAssembler &r) const;
-
+  void addToMatrix(gmshAssembler<double> &lsys) const
+  {
+    if (_gm->getNumRegions()){
+      for(GModel::riter it = _gm->firstRegion(); it != _gm->lastRegion(); ++it){
+        addToMatrix(lsys, *it);
+      }
+    }
+    else if(_gm->getNumFaces()){
+      for(GModel::fiter it = _gm->firstFace(); it != _gm->lastFace(); ++it){
+        addToMatrix(lsys, *it);
+      }
+    }  
+  }
+  void addToMatrix(gmshAssembler<double> &lsys, GEntity *ge) const
+  {
+    for(unsigned int i = 0; i < ge->getNumMeshElements(); i++){
+      MElement *e = ge->getMeshElement(i);
+      addToMatrix(lsys, e);
+    }
+  }
+  void addToMatrix(gmshAssembler<double> &lsys, MElement *e) const
+  {
+    const int nbR = sizeOfR(e);
+    const int nbC = sizeOfC(e);
+    gmshMatrix<double> localMatrix (nbR, nbC);
+    elementMatrix(e, localMatrix);
+    addToMatrix(lsys, localMatrix, e);
+  }
+  void addToMatrix(gmshAssembler<double> &lsys, const std::vector<MElement*> &v) const
+  {
+    for (unsigned int i = 0; i < v.size(); i++)
+      addToMatrix(lsys, v[i]);
+  }
+  void addToMatrix(gmshAssembler<double> &lsys, gmshMatrix<double> &localMatrix, 
+                   MElement *e) const
+  {
+    const int nbR = sizeOfR(e);
+    const int nbC = sizeOfC(e);
+    for (int j = 0; j < nbR; j++){
+      MVertex *vR;
+      int iCompR, iFieldR;
+      getLocalDofR(e, j, &vR, &iCompR, &iFieldR);
+      for (int k = 0; k < nbC; k++){
+        MVertex *vC;
+        int iCompC, iFieldC;
+        getLocalDofC(e, k, &vC, &iCompC, &iFieldC);
+        lsys.assemble(vR, iCompR, iFieldR, vC, iCompC, iFieldC, localMatrix(j, k));
+      }
+    }
+  }
 };
 
 #endif

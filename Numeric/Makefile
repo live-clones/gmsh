@@ -13,8 +13,6 @@ CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
 SRC = Numeric.cpp\
       GmshMatrix.cpp\
-      gmshAssembler.cpp\
-      gmshTermOfFormulation.cpp\
       gmshLaplace.cpp\
       gmshElasticity.cpp\
       EigSolve.cpp\

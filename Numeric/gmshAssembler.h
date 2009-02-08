@@ -30,18 +30,20 @@ struct gmshDofKey{
   }
 };
 
+template<class scalar>
 class gmshAssembler {
-  std::map<gmshDofKey, int>    numbering;
-  std::map<gmshDofKey, double> fixed;
-  std::map<gmshDofKey, std::vector<std::pair<gmshDofKey,double> > > constraints;
-  gmshLinearSystem<double> *lsys;
-public:
-  gmshAssembler(gmshLinearSystem<double> *l) : lsys(l) {}
+ private:
+  std::map<gmshDofKey, int> numbering;
+  std::map<gmshDofKey, scalar> fixed;
+  std::map<gmshDofKey, std::vector<std::pair<gmshDofKey, scalar> > > constraints;
+  gmshLinearSystem<scalar> *lsys;
+ public:
+  gmshAssembler(gmshLinearSystem<scalar> *l) : lsys(l) {}
   inline void constraintVertex(MVertex*v, int iComp, int iField,
                                std::vector<MVertex*> &verts,
-                               std::vector<double> &coeffs)
+                               std::vector<scalar> &coeffs)
   {
-    std::vector<std::pair<gmshDofKey, double> > constraint;
+    std::vector<std::pair<gmshDofKey, scalar> > constraint;
     gmshDofKey key(v, iComp, iField);
     for (unsigned int i = 0; i < verts.size(); i++){
       gmshDofKey key2(verts[i], iComp, iField);
@@ -73,15 +75,15 @@ public:
       numbering[key] = size;
     }
   }
-  inline void fixVertex(MVertex*v, int iComp, int iField, double val)
+  inline void fixVertex(MVertex*v, int iComp, int iField, scalar val)
   {
     fixed[gmshDofKey(v, iComp, iField)] = val;
   }
-  inline double getDofValue(MVertex*v, int iComp, int iField) const
+  inline scalar getDofValue(MVertex *v, int iComp, int iField) const
   {
     gmshDofKey key(v, iComp, iField);
     {
-      std::map<gmshDofKey, double>::const_iterator it = fixed.find(key);
+      typename std::map<gmshDofKey, scalar>::const_iterator it = fixed.find(key);
       if (it != fixed.end()) return it->second;
     }
     {
@@ -90,13 +92,13 @@ public:
 	return lsys->getFromSolution(it->second);
     }
     {
-      std::map<gmshDofKey, std::vector<std::pair<gmshDofKey,double> > >::
+      typename std::map<gmshDofKey, std::vector<std::pair<gmshDofKey, scalar> > >::
         const_iterator itConstr = constraints.find(key);
       if (itConstr != constraints.end()){
-	double val = 0;
+	scalar val = 0.;
 	for (unsigned int i = 0; i < itConstr->second.size(); i++){
 	  const gmshDofKey &dofKeyConstr = itConstr->second[i].first;
-	  double valConstr = itConstr->second[i].second;
+	  scalar valConstr = itConstr->second[i].second;
 	  val += getDofValue(dofKeyConstr.v, dofKeyConstr.comp, dofKeyConstr.field)
 	    * valConstr;
 	}
@@ -106,10 +108,62 @@ public:
     return 0.0;
   }
   void assemble(MVertex *vR , int iCompR, int iFieldR,
-                MVertex *vC , int iCompC, int iFieldC,
-                double val);
-  void assemble(MVertex *vR , int iCompR, int iFieldR,
-                double val);
+                MVertex *vC , int iCompC, int iFieldC, scalar val)
+  {
+    if (!lsys->isAllocated()) lsys->allocate(numbering.size());
+
+    std::map<gmshDofKey, int>::iterator 
+      itR = numbering.find(gmshDofKey(vR, iCompR, iFieldR));
+    if (itR != numbering.end()){
+      std::map<gmshDofKey, int>::iterator 
+        itC = numbering.find(gmshDofKey(vC, iCompC, iFieldC));
+      if (itC != numbering.end()){
+        lsys->addToMatrix(itR->second, itC->second, val);
+      }
+      else {
+        typename std::map<gmshDofKey, scalar>::iterator 
+          itF = fixed.find(gmshDofKey(vC, iCompC, iFieldC));
+        if (itF != fixed.end()){
+          lsys->addToRightHandSide(itR->second, -val*itF->second);
+        }
+        else{
+          typename std::map<gmshDofKey, std::vector<std::pair<gmshDofKey, scalar> > >::
+            iterator itConstrC = constraints.find(gmshDofKey(vC, iCompC, iFieldC));
+          if (itConstrC != constraints.end()){
+            for (unsigned int i = 0; i < itConstrC->second.size(); i++){
+              gmshDofKey &dofKeyConstrC = itConstrC->second[i].first;
+              scalar valConstrC = itConstrC->second[i].second;
+              assemble(vR, iCompR, iFieldR,
+                       dofKeyConstrC.v, dofKeyConstrC.comp, dofKeyConstrC.field,
+                       val * valConstrC);
+            }
+          }
+        }
+      }
+    }
+    else{
+      typename std::map<gmshDofKey, std::vector<std::pair<gmshDofKey, scalar> > >::
+        iterator itConstrR = constraints.find(gmshDofKey(vR, iCompR, iFieldR));
+      if (itConstrR != constraints.end()){
+        for (unsigned int i = 0; i < itConstrR->second.size(); i++){
+          gmshDofKey &dofKeyConstrR = itConstrR->second[i].first;
+          scalar valConstrR = itConstrR->second[i].second;
+          assemble(dofKeyConstrR.v,dofKeyConstrR.comp, dofKeyConstrR.field,
+                   vC, iCompC, iFieldC,
+                   val * valConstrR);
+        }
+      }
+    }
+  }
+  void assemble(MVertex *vR , int iCompR, int iFieldR, scalar val)
+  {
+    if (!lsys->isAllocated())lsys->allocate(numbering.size());
+    std::map<gmshDofKey, int>::iterator 
+      itR = numbering.find(gmshDofKey(vR, iCompR, iFieldR));
+    if (itR != numbering.end()){
+      lsys->addToRightHandSide(itR->second, val);
+    }
+  }
   int sizeOfR() const { return numbering.size(); }
   int sizeOfF() const { return fixed.size(); }
 };

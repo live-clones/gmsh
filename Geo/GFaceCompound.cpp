@@ -43,7 +43,7 @@ class gmshGradientBasedDiffusivity : public gmshFunction
   }
 };
 
-static void fixEdgeToValue (GEdge *ed, double value, gmshAssembler &myAssembler)
+static void fixEdgeToValue(GEdge *ed, double value, gmshAssembler<double> &myAssembler)
 {
   myAssembler.fixVertex(ed->getBeginVertex()->mesh_vertices[0], 0, 1, value);
   myAssembler.fixVertex(ed->getEndVertex()->mesh_vertices[0], 0, 1, value);
@@ -205,7 +205,7 @@ void GFaceCompound::parametrize(bool _isU, int ITER) const
 #else
   gmshLinearSystemFull<double> lsys;
 #endif
-  gmshAssembler myAssembler(&lsys);
+  gmshAssembler<double> myAssembler(&lsys);
   gmshGradientBasedDiffusivity diffusivity(coordinates);
   if (ITER > 0) diffusivity.setComponent(_isU);
   
