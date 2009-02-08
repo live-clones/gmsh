@@ -6,12 +6,13 @@
 #ifndef _GMSH_FUNCTION_H_
 #define _GMSH_FUNCTION_H_
 
+template <class scalar>
 class gmshFunction {
-  double _val;
+  scalar _val;
  public :
-  gmshFunction(double val = 0) : _val(val) {}
+  gmshFunction(scalar val=0) : _val(val) {}
   virtual ~gmshFunction(){}
-  virtual double operator () (double x, double y, double z) const { return _val; }
+  virtual scalar operator () (double x, double y, double z) const { return _val; }
 };
 
 #endif

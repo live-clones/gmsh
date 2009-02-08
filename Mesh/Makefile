@@ -129,13 +129,13 @@ gmshSmoothHighOrder${OBJEXT}: gmshSmoothHighOrder.cpp HighOrder.h \
   meshGFaceDelaunayInsertion.h gmshSmoothHighOrder.h \
   ../Numeric/gmshAssembler.h ../Numeric/gmshLinearSystem.h \
   ../Numeric/gmshLaplace.h ../Numeric/gmshTermOfFormulation.h \
-  ../Numeric/GmshMatrix.h ../Numeric/gmshFunction.h ../Common/Gmsh.h \
-  ../Common/GmshMessage.h ../Numeric/GmshMatrix.h \
-  ../Numeric/gmshElasticity.h ../Numeric/gmshTermOfFormulation.h \
-  ../Numeric/GmshMatrix.h ../Numeric/gmshLinearSystemGmm.h \
-  ../Numeric/gmshLinearSystem.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/meshPartitionOptions.h ../Numeric/Numeric.h \
-  ../Numeric/GmshMatrix.h
+  ../Numeric/GmshMatrix.h ../Numeric/gmshAssembler.h \
+  ../Numeric/gmshFunction.h ../Common/Gmsh.h ../Common/GmshMessage.h \
+  ../Numeric/GmshMatrix.h ../Numeric/gmshElasticity.h \
+  ../Numeric/gmshTermOfFormulation.h ../Numeric/GmshMatrix.h \
+  ../Numeric/gmshLinearSystemGmm.h ../Numeric/gmshLinearSystem.h \
+  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h
 meshGEdge${OBJEXT}: meshGEdge.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \

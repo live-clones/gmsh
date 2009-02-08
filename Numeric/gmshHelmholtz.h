@@ -3,9 +3,10 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _GMSH_LAPLACE_H_
-#define _GMSH_LAPLACE_H_
+#ifndef _GMSH_HELMHOLTZ_H_
+#define _GMSH_HELMHOLTZ_H_
 
+#include <complex>
 #include "gmshTermOfFormulation.h"
 #include "gmshFunction.h"
 #include "Gmsh.h"
@@ -13,9 +14,9 @@
 #include "MElement.h"
 #include "GmshMatrix.h"
 
-class gmshLaplaceTerm : public gmshNodalFemTerm<double> {
+class gmshHelmholtzTerm : public gmshNodalFemTerm<std::complex<double> > {
  private:
-  const gmshFunction<double> *_diffusivity;
+  const gmshFunction<std::complex<double> > *_waveNumber;
   const int _iField ;
  protected:
   virtual int sizeOfR(MElement *e) const { return e->getNumVertices(); }
@@ -27,9 +28,10 @@ class gmshLaplaceTerm : public gmshNodalFemTerm<double> {
     *iFieldR = _iField;
   }
  public:
-  gmshLaplaceTerm(GModel *gm, gmshFunction<double> *diffusivity, int iField = 0) : 
-    gmshNodalFemTerm<double>(gm), _diffusivity(diffusivity), _iField(iField){}
-  virtual void elementMatrix(MElement *e, gmshMatrix<double> &m) const;
+  gmshHelmholtzTerm(GModel *gm, gmshFunction<std::complex<double> > *waveNumber, 
+                    int iField = 0) 
+  : gmshNodalFemTerm<std::complex<double> >(gm), _waveNumber(waveNumber), _iField(iField){}
+  virtual void elementMatrix(MElement *e, gmshMatrix<std::complex<double> > &m) const;
 };
 
 #endif

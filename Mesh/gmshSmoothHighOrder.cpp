@@ -435,7 +435,7 @@ void localHarmonicMapping(GModel *gm,
   
   gmshLinearSystemGmm<double> *lsys = new gmshLinearSystemGmm<double>;
   gmshAssembler<double> myAssembler(lsys);
-  gmshFunction f(1.0);
+  gmshFunction<double> f(1.0);
   gmshLaplaceTerm Laplace(gm, &f, 0);
   
   myAssembler.fixVertex ( n1 , 0 , 0 , -1.0);

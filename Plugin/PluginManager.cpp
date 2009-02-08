@@ -39,6 +39,7 @@
 #include "Probe.h"
 #include "FieldView.h"
 #include "GSHHS.h"
+#include "FiniteElement.h"
 #include "Context.h"
 
 #if !defined(HAVE_NO_DLL)
@@ -223,6 +224,8 @@ void PluginManager::registerDefaultPlugins()
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
                       ("CutParametric", GMSH_RegisterCutParametricPlugin()));
 #endif
+    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+                      ("FiniteElement", GMSH_RegisterFiniteElementPlugin()));
   }
 
 #if defined(HAVE_FLTK)

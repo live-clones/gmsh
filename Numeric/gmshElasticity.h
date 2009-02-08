@@ -13,7 +13,7 @@
 #include "GmshMatrix.h"
 
 class gmshElasticityTerm : public gmshNodalFemTerm<double> {
-  double _E,_nu;
+  double _E, _nu;
   int _iField;
  protected:
   virtual int sizeOfR(MElement *e) const { return 3 * e->getNumVertices(); }

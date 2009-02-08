@@ -9,7 +9,8 @@ LIB = ../lib/libGmshPlugin${LIBEXT}
 
 INC = ${DASH}I../Common ${DASH}I../Graphics ${DASH}I../Geo\
       ${DASH}I../Mesh ${DASH}I../Post ${DASH}I../Fltk ${DASH}I../Numeric\
-      ${DASH}I../contrib/ANN/include ${DASH}I../contrib/MathEval
+      ${DASH}I../contrib/ANN/include ${DASH}I../contrib/MathEval\
+      ${DASH}I../contrib/gmm
 
 CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
@@ -31,7 +32,8 @@ SRC = Plugin.cpp PluginManager.cpp\
         Integrate.cpp Gradient.cpp Curl.cpp Divergence.cpp\
         Annotate.cpp Remove.cpp\
         Probe.cpp\
-        HarmonicToTime.cpp ModulusPhase.cpp
+        HarmonicToTime.cpp ModulusPhase.cpp\
+        FiniteElement.cpp
 
 OBJ = ${SRC:.cpp=${OBJEXT}}
 
@@ -77,7 +79,7 @@ PluginManager${OBJEXT}: PluginManager.cpp ../Common/GmshConfig.h Plugin.h \
   LongitudeLatitude.h Triangulate.h Warp.h SphericalRaise.h \
   Eigenvectors.h Eigenvalues.h Lambda2.h Evaluate.h ../Post/OctreePost.h \
   ../Common/Octree.h ../Common/OctreeInternals.h Probe.h FieldView.h \
-  GSHHS.h ../Common/Context.h ../Geo/CGNSOptions.h \
+  GSHHS.h FiniteElement.h ../Common/Context.h ../Geo/CGNSOptions.h \
   ../Mesh/meshPartitionOptions.h
 Levelset${OBJEXT}: Levelset.cpp Levelset.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/GmshMessage.h ../Post/PView.h \
@@ -306,3 +308,26 @@ ModulusPhase${OBJEXT}: ModulusPhase.cpp ModulusPhase.h Plugin.h \
   ../Post/PView.h ../Geo/SPoint3.h ../Post/PViewDataList.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Common/ListUtils.h
+FiniteElement${OBJEXT}: FiniteElement.cpp ../Common/GmshConfig.h ../Geo/GModel.h \
+  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
+  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
+  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
+  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
+  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
+  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h FiniteElement.h Plugin.h ../Common/Options.h \
+  ../Post/ColorTable.h ../Common/GmshMessage.h ../Post/PView.h \
+  ../Post/PViewDataList.h ../Post/PViewData.h ../Numeric/GmshMatrix.h \
+  ../Common/ListUtils.h ../Numeric/gmshAssembler.h \
+  ../Numeric/gmshLinearSystem.h ../Numeric/gmshLaplace.h \
+  ../Numeric/gmshTermOfFormulation.h ../Numeric/GmshMatrix.h \
+  ../Numeric/gmshAssembler.h ../Geo/MElement.h ../Common/GmshDefines.h \
+  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
+  ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
+  ../Numeric/Gauss.h ../Numeric/gmshFunction.h ../Common/Gmsh.h \
+  ../Common/GmshMessage.h ../Numeric/GmshMatrix.h \
+  ../Numeric/gmshHelmholtz.h ../Numeric/gmshTermOfFormulation.h \
+  ../Numeric/gmshFunction.h ../Numeric/GmshMatrix.h \
+  ../Numeric/gmshLinearSystemGmm.h ../Numeric/gmshLinearSystem.h

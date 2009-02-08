@@ -12,7 +12,7 @@
 #include "gmshLinearSystemGmm.h"
 #include "gmshLinearSystemFull.h"
 
-class gmshGradientBasedDiffusivity : public gmshFunction
+class gmshGradientBasedDiffusivity : public gmshFunction<double>
 {
  private:
   MElement *_current;
@@ -274,7 +274,7 @@ void GFaceCompound::parametrize(bool _isU, int ITER) const
   Msg::Debug("Creating term %d dofs numbered %d fixed",
              myAssembler.sizeOfR(), myAssembler.sizeOfF());
 
-  gmshLaplaceTerm laplace (model(), &diffusivity, 1);
+  gmshLaplaceTerm laplace(model(), &diffusivity, 1);
   it = _compound.begin();
   for ( ; it != _compound.end() ; ++it){
     for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
