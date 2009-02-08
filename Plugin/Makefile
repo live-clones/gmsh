@@ -103,7 +103,7 @@ CutMap${OBJEXT}: CutMap.cpp CutMap.h Levelset.h Plugin.h ../Common/Options.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Numeric/GmshMatrix.h \
   ../Common/ListUtils.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/meshPartitionOptions.h ../Common/GmshConfig.h
+  ../Mesh/meshPartitionOptions.h
 Smooth${OBJEXT}: Smooth.cpp Smooth.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/GmshMessage.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
@@ -174,7 +174,7 @@ Triangulate${OBJEXT}: Triangulate.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   Plugin.h ../Common/Options.h ../Post/ColorTable.h ../Post/PView.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Numeric/GmshMatrix.h \
   ../Common/ListUtils.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/meshPartitionOptions.h ../Common/GmshConfig.h
+  ../Mesh/meshPartitionOptions.h
 Warp${OBJEXT}: Warp.cpp Warp.h Plugin.h ../Common/Options.h ../Post/ColorTable.h \
   ../Common/GmshMessage.h ../Post/PView.h ../Geo/SPoint3.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
@@ -192,7 +192,7 @@ Skin${OBJEXT}: Skin.cpp Skin.h Plugin.h ../Common/Options.h ../Post/ColorTable.h
   ../Geo/SPoint3.h ../Numeric/GmshMatrix.h ../Common/ListUtils.h \
   ../Common/TreeUtils.h ../Common/avl.h ../Common/ListUtils.h \
   ../Common/MallocUtils.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/meshPartitionOptions.h ../Common/GmshConfig.h
+  ../Mesh/meshPartitionOptions.h
 GSHHS${OBJEXT}: GSHHS.cpp ../Mesh/Field.h ../Common/GmshConfig.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Geo/SPoint2.h GSHHS.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/GmshMessage.h ../Post/PViewDataList.h \

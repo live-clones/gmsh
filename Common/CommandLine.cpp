@@ -508,7 +508,7 @@ void Get_Options(int argc, char *argv[])
 #endif
         fprintf(stderr, "License        : %s\n", GMSH_SHORT_LICENSE);
         fprintf(stderr, "Build OS       : %s\n", GMSH_OS);
-        fprintf(stderr, "Build options  : %s\n", GMSH_CONFIG_OPTIONS);
+        fprintf(stderr, "Build options  :%s\n", GMSH_CONFIG_OPTIONS);
         fprintf(stderr, "Build date     : %s\n", GMSH_DATE);
         fprintf(stderr, "Build host     : %s\n", GMSH_HOST);
         fprintf(stderr, "Packager       : %s\n", GMSH_PACKAGER);

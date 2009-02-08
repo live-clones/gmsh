@@ -6,8 +6,6 @@
 #ifndef _MESH_PARTITION_OPTIONS_H_
 #define _MESH_PARTITION_OPTIONS_H_
 
-#include "GmshConfig.h"
-
 struct meshPartitionOptions
 {
 
@@ -77,11 +75,7 @@ struct meshPartitionOptions
 
   void setDefaults()
   {
-#if defined(HAVE_CHACO)
-    partitioner = 1;
-#else
     partitioner = 2;
-#endif
     num_partitions = 4;
     global_method = 1;
     architecture = 1;
