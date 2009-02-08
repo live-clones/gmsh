@@ -720,21 +720,22 @@ case "${F77}" in
     F77LIB=""
     ;;
 esac
-LDFLAGS="${LDFLAGS} ${F77LIB}"
 if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
   LDFLAGS="${LDFLAGS} -L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib"
 fi
 AC_CHECK_LIB(atlas,ATL_xerbla,
-  AC_CHECK_LIB(f77blas,dgemm_,
-   [BLAS="yes" BLAS_LIBS="${BLAS_LIBS} -lf77blas -latlas"],[],-latlas))
+             AC_CHECK_LIB(f77blas,dgemm_,[BLAS="yes" BLAS_LIBS="${BLAS_LIBS} 
+                          -lf77blas -latlas"],[],[-latlas ${F77LIB}]),
+             [],${F77LIB})
 if test "x${BLAS}" != "xyes"; then
-  AC_CHECK_LIB(blas,dgemm_,[BLAS="yes" BLAS_LIBS="${BLAS_LIBS} -lblas"])
+  AC_CHECK_LIB(blas,dgemm_,[BLAS="yes" BLAS_LIBS="${BLAS_LIBS} -lblas"],
+               [],${F77LIB})
 fi
 if test "x${BLAS}" = "xyes"; then
   AC_DEFINE(HAVE_BLAS)
   BO="${BO} Blas"
-  AC_CHECK_LIB(lapack,dbdsqr_,
-    [LAPACK="yes" BLAS_LIBS="-llapack ${BLAS_LIBS}"],[],${BLAS_LIBS})
+  AC_CHECK_LIB(lapack,dbdsqr_,[LAPACK="yes" BLAS_LIBS="-llapack ${BLAS_LIBS}"],
+               [],[${BLAS_LIBS} ${F77LIB}])
   if test "x${LAPACK}" = "xyes"; then
     AC_DEFINE(HAVE_LAPACK)
     BO="${BO} Lapack"

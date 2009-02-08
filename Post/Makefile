@@ -51,16 +51,16 @@ depend:
 # DO NOT DELETE THIS LINE
 PView${OBJEXT}: PView.cpp PView.h ../Geo/SPoint3.h PViewDataList.h PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Numeric/GmshMatrix.h \
-  ../Common/ListUtils.h PViewDataGModel.h ../Geo/GModel.h \
-  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
-  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
-  ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
-  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h PViewOptions.h ColorTable.h \
-  ../Common/VertexArray.h ../Common/SmoothData.h adaptiveData.h \
-  ../Common/GmshMessage.h
+  ../Common/GmshConfig.h ../Common/GmshMessage.h ../Common/ListUtils.h \
+  PViewDataGModel.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
+  ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/GPoint.h \
+  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
+  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
+  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
+  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
+  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h PViewOptions.h ColorTable.h \
+  ../Common/VertexArray.h ../Common/SmoothData.h adaptiveData.h
 PViewIO${OBJEXT}: PViewIO.cpp ../Common/GmshConfig.h ../Common/GmshMessage.h \
   PView.h ../Geo/SPoint3.h PViewDataList.h PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Numeric/GmshMatrix.h \
@@ -73,37 +73,37 @@ PViewIO${OBJEXT}: PViewIO.cpp ../Common/GmshConfig.h ../Common/GmshMessage.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Common/StringUtils.h
 PViewData${OBJEXT}: PViewData.cpp PViewData.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint3.h ../Numeric/GmshMatrix.h ../Common/ListUtils.h \
-  adaptiveData.h ../Numeric/Numeric.h ../Numeric/GmshMatrix.h \
-  ../Common/GmshMessage.h
+  ../Geo/SPoint3.h ../Numeric/GmshMatrix.h ../Common/GmshConfig.h \
+  ../Common/GmshMessage.h ../Common/ListUtils.h adaptiveData.h \
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h
 PViewDataIO${OBJEXT}: PViewDataIO.cpp ../Common/GmshMessage.h \
-  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h PViewData.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Common/GmshConfig.h \
+  PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h
 PViewDataList${OBJEXT}: PViewDataList.cpp PViewDataList.h PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Numeric/GmshMatrix.h \
-  ../Common/ListUtils.h ../Numeric/Numeric.h ../Numeric/GmshMatrix.h \
-  ../Common/SmoothData.h ../Common/GmshMessage.h ../Common/Context.h \
-  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
+  ../Common/GmshConfig.h ../Common/GmshMessage.h ../Common/ListUtils.h \
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Common/SmoothData.h \
+  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
 PViewDataListIO${OBJEXT}: PViewDataListIO.cpp PViewDataList.h PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Numeric/GmshMatrix.h \
-  ../Common/ListUtils.h ../Numeric/Numeric.h ../Numeric/GmshMatrix.h \
-  ../Common/GmshMessage.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/meshPartitionOptions.h adaptiveData.h
+  ../Common/GmshConfig.h ../Common/GmshMessage.h ../Common/ListUtils.h \
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Common/Context.h \
+  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h adaptiveData.h
 PViewDataGModel${OBJEXT}: PViewDataGModel.cpp PViewDataGModel.h PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Numeric/GmshMatrix.h \
-  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/GPoint.h \
-  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
-  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Common/GmshDefines.h \
-  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
-  ../Numeric/GmshMatrix.h ../Numeric/Gauss.h ../Numeric/Numeric.h \
-  ../Numeric/GmshMatrix.h
+  ../Common/GmshConfig.h ../Common/GmshMessage.h ../Geo/GModel.h \
+  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
+  ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/MElement.h \
+  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
+  ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h
 PViewDataGModelIO${OBJEXT}: PViewDataGModelIO.cpp ../Common/GmshConfig.h \
   ../Common/GmshMessage.h PViewDataGModel.h PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Numeric/GmshMatrix.h \
@@ -124,29 +124,31 @@ PViewOptions${OBJEXT}: PViewOptions.cpp ../Common/GmshConfig.h \
   ../Common/GmshMessage.h PViewOptions.h ColorTable.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h
 adaptiveData${OBJEXT}: adaptiveData.cpp adaptiveData.h ../Numeric/GmshMatrix.h \
-  ../Plugin/Plugin.h ../Common/Options.h ../Post/ColorTable.h \
-  ../Common/GmshMessage.h ../Post/PView.h ../Geo/SPoint3.h \
-  ../Post/PViewDataList.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint3.h ../Common/ListUtils.h ../Common/OS.h
+  ../Common/GmshConfig.h ../Common/GmshMessage.h ../Plugin/Plugin.h \
+  ../Common/Options.h ../Post/ColorTable.h ../Post/PView.h \
+  ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/ListUtils.h \
+  ../Common/OS.h
 shapeFunctions${OBJEXT}: shapeFunctions.cpp shapeFunctions.h \
-  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Common/GmshMessage.h
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Common/GmshConfig.h \
+  ../Common/GmshMessage.h
 OctreePost${OBJEXT}: OctreePost.cpp ../Common/Octree.h \
   ../Common/OctreeInternals.h OctreePost.h ../Common/ListUtils.h PView.h \
   ../Geo/SPoint3.h PViewDataList.h PViewData.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint3.h ../Numeric/GmshMatrix.h PViewDataGModel.h \
-  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/GPoint.h \
-  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
-  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Numeric/Numeric.h ../Numeric/GmshMatrix.h \
-  ../Common/GmshMessage.h shapeFunctions.h ../Geo/MElement.h \
+  ../Geo/SPoint3.h ../Numeric/GmshMatrix.h ../Common/GmshConfig.h \
+  ../Common/GmshMessage.h PViewDataGModel.h ../Geo/GModel.h \
+  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
+  ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Numeric/Numeric.h \
+  ../Numeric/GmshMatrix.h shapeFunctions.h ../Geo/MElement.h \
   ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h
 ColorTable${OBJEXT}: ColorTable.cpp ../Common/GmshMessage.h ColorTable.h \
   ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \
-  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Common/GmshConfig.h

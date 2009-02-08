@@ -91,38 +91,6 @@ void gmshMatrix<std::complex<double> >::mult(const gmshVector<std::complex<doubl
          &beta, y._data, &INCY);
 }
 
-#else
-
-template<class scalar> 
-void gmshMatrix<scalar>::mult(const gmshMatrix<scalar> &b, gmshMatrix<scalar> &c)
-{
-  c.scale(0.);
-  for(int i = 0; i < _r; i++)
-    for(int j = 0; j < b.size2(); j++)
-      for(int k = 0; k < _c; k++)
-        c._data[i + _r * j] += (*this)(i, k) * b(k, j);
-}
-
-template<class scalar> 
-void gmshMatrix<scalar>::gemm(gmshMatrix<scalar> &a, gmshMatrix<scalar> &b, 
-                              scalar alpha, scalar beta)
-{
-  gmshMatrix<scalar> temp(a.size1(), b.size2());
-  a.mult(b, temp);
-  temp.scale(alpha);
-  scale(beta);
-  add(temp);
-}
-
-template<class scalar> 
-void gmshMatrix<scalar>::mult(const gmshVector<scalar> &x, gmshVector<scalar> &y)
-{
-  y.scale(0.);
-  for(int i = 0; i < _r; i++)
-    for(int j = 0; j < _c; j++)
-      y._data[i] += (*this)(i, j) * x(j);
-}
-
 #endif
 
 #if defined(HAVE_LAPACK)
@@ -176,29 +144,6 @@ bool gmshMatrix<double>::svd(gmshMatrix<double> &V, gmshVector<double> &S)
   V = VT.transpose();
   if(info == 0) return true;
   Msg::Error("Problem in LAPACK SVD (info=%d)", info);
-  return false;
-}
-
-#else
-
-template<class scalar> 
-bool gmshMatrix<scalar>::lu_solve(const gmshVector<scalar> &rhs, gmshVector<scalar> &result)
-{
-  Msg::Error("LU factorization requires LAPACK");
-  return false;
-}
-
-template<class scalar> 
-scalar gmshMatrix<scalar>::determinant() const
-{
-  Msg::Error("Determinant computation requires LAPACK");
-  return 0.;
-}
-
-template<class scalar> 
-bool gmshMatrix<scalar>::svd(gmshMatrix<scalar> &V, gmshVector<scalar> &S)
-{
-  Msg::Error("Singular value decomposition requires LAPACK");
   return false;
 }
 

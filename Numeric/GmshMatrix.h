@@ -7,6 +7,8 @@
 #define _GMSH_MATRIX_H_
 
 #include <math.h>
+#include "GmshConfig.h"
+#include "GmshMessage.h"
 
 template <class scalar> class gmshMatrix;
 
@@ -103,9 +105,29 @@ class gmshMatrix
       for(int j = j0, destj = destj0; j < j0 + nj; j++, destj++)
         (*this)(desti, destj) = a(i, j);
   }
-  void mult(const gmshMatrix<scalar> &b, gmshMatrix<scalar> &c);
+  void mult(const gmshMatrix<scalar> &b, gmshMatrix<scalar> &c)
+#if !defined(HAVE_BLAS)
+  {
+    c.scale(0.);
+    for(int i = 0; i < _r; i++)
+      for(int j = 0; j < b.size2(); j++)
+        for(int k = 0; k < _c; k++)
+          c._data[i + _r * j] += (*this)(i, k) * b(k, j);
+  }
+#endif
+  ;
   void gemm(gmshMatrix<scalar> &a, gmshMatrix<scalar> &b, 
-            scalar alpha=1., scalar beta=1.);
+            scalar alpha=1., scalar beta=1.)
+#if !defined(HAVE_BLAS)
+  {
+    gmshMatrix<scalar> temp(a.size1(), b.size2());
+    a.mult(b, temp);
+    temp.scale(alpha);
+    scale(beta);
+    add(temp);
+  }
+#endif
+  ;
   inline void set_all(const scalar &m) 
   {
     for(int i = 0; i < _r * _c; i++) _data[i] = m;
@@ -127,7 +149,16 @@ class gmshMatrix
       for(int j = 0; j < size2(); j++)
 	(*this)(i, j) += m(i, j);
   }
-  void mult(const gmshVector<scalar> &x, gmshVector<scalar> &y);
+  void mult(const gmshVector<scalar> &x, gmshVector<scalar> &y)
+#if !defined(HAVE_BLAS)
+  {
+    y.scale(0.);
+    for(int i = 0; i < _r; i++)
+      for(int j = 0; j < _c; j++)
+        y._data[i] += (*this)(i, j) * x(j);
+  }
+#endif
+  ;
   inline gmshMatrix<scalar> transpose()
   {
     gmshMatrix<scalar> T(size2(), size1());
@@ -136,7 +167,14 @@ class gmshMatrix
         T(j, i) = (*this)(i, j);
     return T;
   }
-  bool lu_solve(const gmshVector<scalar> &rhs, gmshVector<scalar> &result);
+  bool lu_solve(const gmshVector<scalar> &rhs, gmshVector<scalar> &result)
+#if !defined(HAVE_LAPACK)
+  {
+    Msg::Error("LU factorization requires LAPACK");
+    return false;
+  }
+#endif
+  ;
   gmshMatrix<scalar> cofactor(int i, int j) const 
   {
     int ni = size1();
@@ -150,8 +188,22 @@ class gmshMatrix
     }
     return cof;
   }
-  scalar determinant() const;
-  bool svd(gmshMatrix<scalar> &V, gmshVector<scalar> &S);
+  scalar determinant() const
+#if !defined(HAVE_LAPACK)
+  {
+    Msg::Error("Determinant computation requires LAPACK");
+    return 0.;
+  }
+#endif
+  ;
+  bool svd(gmshMatrix<scalar> &V, gmshVector<scalar> &S)
+#if !defined(HAVE_LAPACK)
+  {
+    Msg::Error("Singular value decomposition requires LAPACK");
+    return false;
+  }
+#endif
+  ;
 };
 
 #endif

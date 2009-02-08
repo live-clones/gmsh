@@ -5594,7 +5594,6 @@ case "${F77}" in
     F77LIB=""
     ;;
 esac
-LDFLAGS="${LDFLAGS} ${F77LIB}"
 if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
   LDFLAGS="${LDFLAGS} -L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib"
 fi
@@ -5604,7 +5603,7 @@ if test "${ac_cv_lib_atlas_ATL_xerbla+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-latlas  $LIBS"
+LIBS="-latlas ${F77LIB} $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -5666,7 +5665,7 @@ if test "${ac_cv_lib_f77blas_dgemm_+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lf77blas -latlas $LIBS"
+LIBS="-lf77blas -latlas ${F77LIB} $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -5722,7 +5721,8 @@ fi
 { echo "$as_me:$LINENO: result: $ac_cv_lib_f77blas_dgemm_" >&5
 echo "${ECHO_T}$ac_cv_lib_f77blas_dgemm_" >&6; }
 if test $ac_cv_lib_f77blas_dgemm_ = yes; then
-  BLAS="yes" BLAS_LIBS="${BLAS_LIBS} -lf77blas -latlas"
+  BLAS="yes" BLAS_LIBS="${BLAS_LIBS}
+                          -lf77blas -latlas"
 fi
 
 fi
@@ -5734,7 +5734,7 @@ if test "${ac_cv_lib_blas_dgemm_+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lblas  $LIBS"
+LIBS="-lblas ${F77LIB} $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -5806,7 +5806,7 @@ if test "${ac_cv_lib_lapack_dbdsqr_+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-llapack ${BLAS_LIBS} $LIBS"
+LIBS="-llapack ${BLAS_LIBS} ${F77LIB} $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
