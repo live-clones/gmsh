@@ -14,18 +14,20 @@
 #include "GModel.h"
 #include "MElement.h"
 
+template<class scalar>
 class gmshTermOfFormulation {  
  protected:
   GModel *_gm;
  public:
   gmshTermOfFormulation(GModel *gm) : _gm(gm) {}
   virtual ~gmshTermOfFormulation(){}
-  virtual void addToMatrix(gmshAssembler<double> &) const = 0;
+  virtual void addToMatrix(gmshAssembler<scalar> &) const = 0;
 };
 
 // a nodal finite element term : variables are always defined at nodes
 // of the mesh
-class gmshNodalFemTerm : public gmshTermOfFormulation {
+template<class scalar>
+class gmshNodalFemTerm : public gmshTermOfFormulation<scalar> {
  protected:
   // return the number of columns of the element matrix
   virtual int sizeOfC(MElement*) const = 0;
@@ -41,43 +43,44 @@ class gmshNodalFemTerm : public gmshTermOfFormulation {
     getLocalDofR(e, iCol, vC, iCompC, iFieldC);
   }
  public:
-  gmshNodalFemTerm(GModel *gm) : gmshTermOfFormulation(gm) {}
+  gmshNodalFemTerm(GModel *gm) : gmshTermOfFormulation<scalar>(gm) {}
   virtual ~gmshNodalFemTerm (){}
-  virtual void elementMatrix(MElement *e, gmshMatrix<double> &m) const = 0;
-  void addToMatrix(gmshAssembler<double> &lsys) const
+  virtual void elementMatrix(MElement *e, gmshMatrix<scalar> &m) const = 0;
+  void addToMatrix(gmshAssembler<scalar> &lsys) const
   {
-    if (_gm->getNumRegions()){
-      for(GModel::riter it = _gm->firstRegion(); it != _gm->lastRegion(); ++it){
+    GModel *m = gmshTermOfFormulation<scalar>::_gm;
+    if (m->getNumRegions()){
+      for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
         addToMatrix(lsys, *it);
       }
     }
-    else if(_gm->getNumFaces()){
-      for(GModel::fiter it = _gm->firstFace(); it != _gm->lastFace(); ++it){
+    else if(m->getNumFaces()){
+      for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
         addToMatrix(lsys, *it);
       }
     }  
   }
-  void addToMatrix(gmshAssembler<double> &lsys, GEntity *ge) const
+  void addToMatrix(gmshAssembler<scalar> &lsys, GEntity *ge) const
   {
     for(unsigned int i = 0; i < ge->getNumMeshElements(); i++){
       MElement *e = ge->getMeshElement(i);
       addToMatrix(lsys, e);
     }
   }
-  void addToMatrix(gmshAssembler<double> &lsys, MElement *e) const
+  void addToMatrix(gmshAssembler<scalar> &lsys, MElement *e) const
   {
     const int nbR = sizeOfR(e);
     const int nbC = sizeOfC(e);
-    gmshMatrix<double> localMatrix (nbR, nbC);
+    gmshMatrix<scalar> localMatrix(nbR, nbC);
     elementMatrix(e, localMatrix);
     addToMatrix(lsys, localMatrix, e);
   }
-  void addToMatrix(gmshAssembler<double> &lsys, const std::vector<MElement*> &v) const
+  void addToMatrix(gmshAssembler<scalar> &lsys, const std::vector<MElement*> &v) const
   {
     for (unsigned int i = 0; i < v.size(); i++)
       addToMatrix(lsys, v[i]);
   }
-  void addToMatrix(gmshAssembler<double> &lsys, gmshMatrix<double> &localMatrix, 
+  void addToMatrix(gmshAssembler<scalar> &lsys, gmshMatrix<scalar> &localMatrix, 
                    MElement *e) const
   {
     const int nbR = sizeOfR(e);

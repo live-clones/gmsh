@@ -13,7 +13,7 @@
 #include "MElement.h"
 #include "GmshMatrix.h"
 
-class gmshLaplaceTerm : public gmshNodalFemTerm {
+class gmshLaplaceTerm : public gmshNodalFemTerm<double> {
  private:
   const gmshFunction *_diffusivity;
   const int _iField ;
@@ -28,7 +28,7 @@ class gmshLaplaceTerm : public gmshNodalFemTerm {
   }
  public:
   gmshLaplaceTerm(GModel *gm, gmshFunction *diffusivity, int iField = 0) : 
-    gmshNodalFemTerm(gm), _diffusivity(diffusivity), _iField(iField){}
+    gmshNodalFemTerm<double>(gm), _diffusivity(diffusivity), _iField(iField){}
   virtual void elementMatrix(MElement *e, gmshMatrix<double> &m) const;
 };
 
