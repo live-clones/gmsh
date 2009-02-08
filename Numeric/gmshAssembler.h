@@ -8,12 +8,10 @@
 
 #include <map>
 #include <vector>
+#include "gmshLinearSystem.h"
 
 class MVertex;
 class MElement;
-class gmshLinearSystem;
-
-#include "gmshLinearSystem.h"
 
 struct gmshDofKey{
   MVertex *v;
@@ -36,9 +34,9 @@ class gmshAssembler {
   std::map<gmshDofKey, int>    numbering;
   std::map<gmshDofKey, double> fixed;
   std::map<gmshDofKey, std::vector<std::pair<gmshDofKey,double> > > constraints;
-  gmshLinearSystem *lsys;
+  gmshLinearSystem<double> *lsys;
 public:
-  gmshAssembler (gmshLinearSystem *l) : lsys(l){}  
+  gmshAssembler(gmshLinearSystem<double> *l) : lsys(l) {}
   inline void constraintVertex(MVertex*v, int iComp, int iField,
                                std::vector<MVertex*> &verts,
                                std::vector<double> &coeffs)
@@ -46,7 +44,7 @@ public:
     std::vector<std::pair<gmshDofKey, double> > constraint;
     gmshDofKey key(v, iComp, iField);
     for (unsigned int i = 0; i < verts.size(); i++){
-      gmshDofKey key2 (verts[i],iComp,iField);
+      gmshDofKey key2(verts[i], iComp, iField);
       constraint.push_back(std::make_pair(key2, coeffs[i]));
     }
     constraints[key] = constraint;
@@ -112,8 +110,8 @@ public:
                 double val);
   void assemble(MVertex *vR , int iCompR, int iFieldR,
                 double val);
-  int sizeOfR () const { return numbering.size(); }
-  int sizeOfF () const { return fixed.size(); }
+  int sizeOfR() const { return numbering.size(); }
+  int sizeOfF() const { return fixed.size(); }
 };
 
 #endif

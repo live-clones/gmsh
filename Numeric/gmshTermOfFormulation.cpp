@@ -9,7 +9,6 @@
 #include "GmshMatrix.h"
 #include "gmshTermOfFormulation.h"
 #include "gmshFunction.h"
-#include "gmshLinearSystem.h"
 #include "gmshAssembler.h"
 
 gmshNodalFemTerm::~gmshNodalFemTerm ()

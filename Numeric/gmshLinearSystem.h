@@ -9,20 +9,20 @@
 // A class that encapsulates a linear system solver interface :
 // building a sparse matrix, solving a linear system
 
+template <class scalar>
 class gmshLinearSystem {
-public :
+ public :
   gmshLinearSystem (){}
-  virtual bool isAllocated () const = 0;
-  virtual void allocate (int nbRows) = 0;
-  virtual ~gmshLinearSystem () {}
-  virtual void  addToMatrix    (int _row, int _col, double val) = 0;
-  virtual double getFromMatrix (int _row, int _col) const = 0;
-  virtual void  addToRightHandSide    (int _row, double val) = 0;
-  virtual double getFromRightHandSide (int _row) const = 0;
-  virtual double getFromSolution (int _row) const = 0;
-  virtual void zeroMatrix () = 0;
-  virtual void zeroRightHandSide () = 0;
-  virtual int systemSolve () = 0;
+  virtual bool isAllocated() const = 0;
+  virtual void allocate(int nbRows) = 0;
+  virtual ~gmshLinearSystem() {}
+  virtual void addToMatrix(int _row, int _col, scalar val) = 0;
+  virtual scalar getFromMatrix(int _row, int _col) const = 0;
+  virtual void addToRightHandSide(int _row, scalar val) = 0;
+  virtual scalar getFromRightHandSide(int _row) const = 0;
+  virtual scalar getFromSolution(int _row) const = 0;
+  virtual void zeroMatrix() = 0;
+  virtual void zeroRightHandSide() = 0;
+  virtual int systemSolve() = 0;
 };
 #endif
-

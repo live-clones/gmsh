@@ -10,61 +10,62 @@
 
 #include "GmshMessage.h"
 #include "gmshLinearSystem.h"
-
 #include "GmshMatrix.h"
 
-class gmshLinearSystemFull : public gmshLinearSystem {
-  gmshMatrix<double> *_a;
-  gmshVector<double> *_b, *_x;
-public :
-  gmshLinearSystemFull () : _a(0), _b(0), _x(0){}
-  virtual bool isAllocated () const {return _a != 0;}
-  virtual void allocate (int _nbRows)
+template <class scalar>
+class gmshLinearSystemFull : public gmshLinearSystem<scalar> {
+ private:
+  gmshMatrix<scalar> *_a;
+  gmshVector<scalar> *_b, *_x;
+ public :
+  gmshLinearSystemFull() : _a(0), _b(0), _x(0){}
+  virtual bool isAllocated() const { return _a != 0; }
+  virtual void allocate(int _nbRows)
   {
-    if (_a) delete _a;
-    if (_x) delete _x;
-    if (_b) delete _b;
-    _a = new  gmshMatrix<double>(_nbRows,_nbRows);
-    _b = new  gmshVector<double>(_nbRows);
-    _x = new  gmshVector<double>(_nbRows);    
+    if(_a) delete _a;
+    if(_x) delete _x;
+    if(_b) delete _b;
+    _a = new gmshMatrix<scalar>(_nbRows, _nbRows);
+    _b = new gmshVector<scalar>(_nbRows);
+    _x = new gmshVector<scalar>(_nbRows);
   }
-  virtual ~gmshLinearSystemFull ()
+  virtual ~gmshLinearSystemFull()
   {
     delete _a;
     delete _b;
     delete _x;
   }
-  virtual void  addToMatrix    (int _row, int _col, double _val) 
+  virtual void addToMatrix(int _row, int _col, scalar _val)
   {
-    if (_val != 0.0) (*_a)(_row, _col) += _val;
+    if(_val != 0.0) (*_a)(_row, _col) += _val;
   }
-  virtual double getFromMatrix (int _row, int _col) const
+  virtual scalar getFromMatrix(int _row, int _col) const
   {
     return (*_a)(_row, _col);
   }
-  virtual void  addToRightHandSide    (int _row, double _val) 
+  virtual void addToRightHandSide(int _row, scalar _val)
   {
-    if (_val != 0.0) (*_b)(_row)+=_val;
+    if(_val != 0.0) (*_b)(_row) += _val;
   }
-  virtual double getFromRightHandSide (int _row) const 
+  virtual scalar getFromRightHandSide(int _row) const 
   {
     return (*_b)(_row);
   }
-  virtual double getFromSolution (int _row) const 
+  virtual scalar getFromSolution(int _row) const 
   {
     return (*_x)(_row);
   }
-  virtual void zeroMatrix () 
+  virtual void zeroMatrix() 
   {
-    _a->set_all(0.0);
+    _a->set_all(0.);
   }
-  virtual void zeroRightHandSide () 
+  virtual void zeroRightHandSide()
   {
-    for (int i = 0; i < _b->size(); i++) (*_b)(i) = 0;
+    for(int i = 0; i < _b->size(); i++) (*_b)(i) = 0.;
   }
-  virtual int systemSolve () 
+  virtual int systemSolve() 
   {
-    _a->lu_solve(*_b,*_x);
+    _a->lu_solve(*_b, *_x);
     return 1;
   }
 };

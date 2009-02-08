@@ -6,24 +6,22 @@
 #ifndef _GMSH_TERM_OF_FORMULATION_H_
 #define _GMSH_TERM_OF_FORMULATION_H_
 
-class GModel;
-class GEntity;
-class MElement;
-class MVertex;
-class gmshLinearSystem;
-class gmshFunction;
-
 #include <math.h>
 #include <map>
 #include <vector>
 #include "GmshMatrix.h"
 
+class GModel;
+class GEntity;
+class MElement;
+class MVertex;
+class gmshFunction;
 class gmshAssembler;
 
 class gmshTermOfFormulation {  
-protected:
+ protected:
   GModel *_gm;
-public:
+ public:
   gmshTermOfFormulation(GModel *gm) : _gm(gm) {}
   virtual ~gmshTermOfFormulation(){}
   virtual void addToMatrix(gmshAssembler&) const = 0;

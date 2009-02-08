@@ -94,7 +94,7 @@ void gmshHighOrderSmoother::smooth(GRegion *gr)
 
 void gmshHighOrderSmoother::smooth ( std::vector<MElement*>  & all)
 {
-  gmshLinearSystemGmm *lsys = new gmshLinearSystemGmm;
+  gmshLinearSystemGmm<double> *lsys = new gmshLinearSystemGmm<double>;
   gmshAssembler myAssembler(lsys);
   gmshElasticityTerm El(0,1.0,.333,getTag());     
   
@@ -433,7 +433,7 @@ void localHarmonicMapping(GModel *gm,
 // 			  std::vector<SPoint2> &ep4
 			  std::vector<MVertex*> &e) {
   
-  gmshLinearSystemGmm *lsys = new gmshLinearSystemGmm;
+  gmshLinearSystemGmm<double> *lsys = new gmshLinearSystemGmm<double>;
   gmshAssembler myAssembler(lsys);
   gmshFunction f(1.0);
   gmshLaplaceTerm Laplace (gm,&f,0);     
@@ -448,7 +448,7 @@ void localHarmonicMapping(GModel *gm,
   Laplace.addToMatrix(myAssembler,t2);   
   lsys->systemSolve();
 
-  gmshLinearSystemGmm *lsys1 = new gmshLinearSystemGmm;
+  gmshLinearSystemGmm<double> *lsys1 = new gmshLinearSystemGmm<double>;
   gmshAssembler myAssembler1(lsys1);
   gmshLaplaceTerm Laplace1 (gm,&f,1);     
   

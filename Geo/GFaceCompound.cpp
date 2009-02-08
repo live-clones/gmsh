@@ -199,11 +199,11 @@ void GFaceCompound::parametrize(bool _isU, int ITER) const
   Msg::Info("Parametrizing Surface %d coordinate %d (ITER %d)", tag(), _isU, ITER); 
   
 #ifdef HAVE_GMM
-  gmshLinearSystemGmm lsys;
+  gmshLinearSystemGmm<double> lsys;
   lsys.setPrec(1.e-10);
-  //lsys.setNoisy(2);
+  if(Msg::GetVerbosity() == 99) lsys.setNoisy(2);
 #else
-  gmshLinearSystemFull lsys;
+  gmshLinearSystemFull<double> lsys;
 #endif
   gmshAssembler myAssembler(&lsys);
   gmshGradientBasedDiffusivity diffusivity(coordinates);
