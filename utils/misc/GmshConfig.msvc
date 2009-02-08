@@ -9,4 +9,6 @@
 // This file is empty on purpose: with MSVC we define everything in
 // the FLAGS variable (in the 'variables' file)
 
+#define GMSH_CONFIG_OPTIONS ""
+
 #endif

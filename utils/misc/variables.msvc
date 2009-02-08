@@ -120,8 +120,10 @@ endif
 
 ifeq (${ENABLE_BLAS_LAPACK},1)
   FLAGS+=/DHAVE_BLAS /DHAVE_LAPACK
-  GMSH_LIBS+=${BLAS_LAPACK_PREFIX}/liblapack.lib
-  GMSH_LIBS+=${BLAS_LAPACK_PREFIX}/libblas.lib
+  GMSH_LIBS+=${BLAS_LAPACK_PREFIX}/liblapack.a
+  GMSH_LIBS+=${BLAS_LAPACK_PREFIX}/libblas.a
+  GMSH_LIBS+=${BLAS_LAPACK_PREFIX}/libg2c.a
+  GMSH_LIBS+=${BLAS_LAPACK_PREFIX}/libgcc.a
 endif
 
 ifeq (${ENABLE_OCC},1)
