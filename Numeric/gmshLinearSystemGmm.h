@@ -77,10 +77,10 @@ class gmshLinearSystemGmm : public gmshLinearSystem<scalar> {
   {
     // gmm::ilutp_precond<gmm::row_matrix<gmm::rsvector<scalar> > > P(*_a, 10,0.);
     gmm::ildltt_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 2, 1.e-10);
-    gmm::iteration iter(_prec);  // defines an iteration object, with a max residu of 1E-8
+    gmm::iteration iter(_prec);
     iter.set_noisy(_noisy);
-    if(_gmres) gmm::gmres(*_a, *_x, *_b, P, 100, iter);  // execute the GMRES algorithm
-    else gmm::cg(*_a, *_x, *_b, P, iter);  // execute the CG algorithm
+    if(_gmres) gmm::gmres(*_a, *_x, *_b, P, 100, iter);
+    else gmm::cg(*_a, *_x, *_b, P, iter);
     return 1;
   }
 };
@@ -107,4 +107,5 @@ public :
 };
 
 #endif
+
 #endif

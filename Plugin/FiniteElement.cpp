@@ -48,6 +48,7 @@ void GMSH_FiniteElementPlugin::getInfos(char *author, char *copyright,
          "Plugin(FiniteElement) solves simple PDEs\n"
          "using the finite element method. This is only\n"
          "intended as a demonstration!\n"
+         "\n"
          "Plugin(FiniteElement) is creates a new view.\n");
 }
 
