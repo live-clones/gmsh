@@ -7,14 +7,9 @@ To install Gmsh, type
 make
 make install
 
-This FLTK 1.1.7 or above (configured with OpenGL support; freely
-available from http://www.fltk.org). You can use the
---with-fltk-prefix configure options (or define the FLTK_PREFIX
-environment variable) if the libraries are not installed in their
-default locations.
-
-To install a non-graphical version of Gmsh (that does not require FLTK
-nor OpenGL), type
+This requires FLTK 1.1.7 or above, configured with OpenGL support.
+FLTK is freely available from http://www.fltk.org. To install a
+non-graphical version of Gmsh (that does not require FLTK), type
 
 ./configure --disable-gui
 make
