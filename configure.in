@@ -746,6 +746,13 @@ if test "x${BLAS_LIBS}" != "x"; then
   else
     GMSH_LIBS="${GMSH_LIBS} ${BLAS_LIBS}"
   fi
+  case "$UNAME" in
+    Darwin*)
+      ;;
+    *)
+      GMSH_LIBS="${GMSH_LIBS} ${F77LIB}"
+      ;;
+  esac
 fi
 
 dnl Check for MPI

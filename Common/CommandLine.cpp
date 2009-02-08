@@ -40,6 +40,18 @@
 #error
 #endif
 
+int Get_GmshMajorVersion(){ return GMSH_MAJOR_VERSION; }
+int Get_GmshMinorVersion(){ return GMSH_MINOR_VERSION; }
+int Get_GmshPatchVersion(){ return GMSH_PATCH_VERSION; }
+const char *Get_GmshExtraVersion(){ return GMSH_EXTRA_VERSION; }
+const char *Get_GmshVersion(){ return GMSH_VERSION; }
+const char *Get_GmshBuildDate(){ return GMSH_DATE; }
+const char *Get_GmshBuildHost(){ return GMSH_HOST; }
+const char *Get_GmshPackager(){ return GMSH_PACKAGER; }
+const char *Get_GmshBuildOS(){ return GMSH_OS; }
+const char *Get_GmshShortLicense(){ return GMSH_SHORT_LICENSE; }
+const char *Get_GmshBuildOptions(){ return GMSH_CONFIG_OPTIONS; }
+
 void Print_Usage(const char *name)
 {
   // If you make changes in this routine, please also change the
@@ -101,18 +113,6 @@ void Print_Usage(const char *name)
   Msg::Direct("  -info                 Show detailed version information");
   Msg::Direct("  -help                 Show this message");
 }
-
-int Get_GmshMajorVersion(){ return GMSH_MAJOR_VERSION; }
-int Get_GmshMinorVersion(){ return GMSH_MINOR_VERSION; }
-int Get_GmshPatchVersion(){ return GMSH_PATCH_VERSION; }
-const char *Get_GmshExtraVersion(){ return GMSH_EXTRA_VERSION; }
-const char *Get_GmshVersion(){ return GMSH_VERSION; }
-const char *Get_GmshBuildDate(){ return GMSH_DATE; }
-const char *Get_GmshBuildHost(){ return GMSH_HOST; }
-const char *Get_GmshPackager(){ return GMSH_PACKAGER; }
-const char *Get_GmshBuildOS(){ return GMSH_OS; }
-const char *Get_GmshShortLicense(){ return GMSH_SHORT_LICENSE; }
-std::string Get_GmshBuildOptions(){ return GMSH_CONFIG_OPTIONS; }
 
 void Get_Options(int argc, char *argv[])
 {
@@ -508,7 +508,7 @@ void Get_Options(int argc, char *argv[])
 #endif
         fprintf(stderr, "License        : %s\n", GMSH_SHORT_LICENSE);
         fprintf(stderr, "Build OS       : %s\n", GMSH_OS);
-        fprintf(stderr, "Build options  : %s\n", Get_GmshBuildOptions().c_str());
+        fprintf(stderr, "Build options  : %s\n", GMSH_CONFIG_OPTIONS);
         fprintf(stderr, "Build date     : %s\n", GMSH_DATE);
         fprintf(stderr, "Build host     : %s\n", GMSH_HOST);
         fprintf(stderr, "Packager       : %s\n", GMSH_PACKAGER);

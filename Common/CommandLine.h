@@ -6,11 +6,6 @@
 #ifndef _COMMAND_LINE_H_
 #define _COMMAND_LINE_H_
 
-#include <string>
-
-void Get_Options(int argc, char *argv[]);
-void Print_Usage(const char *name);
-
 int Get_GmshMajorVersion();
 int Get_GmshMinorVersion();
 int Get_GmshPatchVersion();
@@ -21,6 +16,9 @@ const char *Get_GmshBuildHost();
 const char *Get_GmshPackager();
 const char *Get_GmshBuildOS();
 const char *Get_GmshShortLicense();
-std::string Get_GmshBuildOptions();
+const char *Get_GmshBuildOptions();
+
+void Print_Usage(const char *name);
+void Get_Options(int argc, char *argv[]);
 
 #endif

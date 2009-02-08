@@ -26,6 +26,7 @@ endif
 
 # Change the following to select which version to build:
 ENABLE_GUI=0
+ENABLE_BLAS_LAPACK=1
 ENABLE_PARSER=1
 ENABLE_POSTPRO=1
 ENABLE_TETGEN=1
@@ -36,6 +37,9 @@ ENABLE_MED=0
 
 # If you selected ENABLE_GUI, specify where FLTK is installed
 FLTK_PREFIX="E:/src/fltk-1.1.9"
+
+# If you selected ENABLE_BLAS_LAPACK, specify where Blas/Lapack are installed
+BLAS_LAPACK_PREFIX="E:/src/blaslapack"
 
 # If you selected ENABLE_OCC, specify where OpenCASCADE is installed
 ifneq ($(CASROOT),)
@@ -113,6 +117,13 @@ ifeq (${ENABLE_METIS},1)
   FLAGS+=/DHAVE_METIS
   GMSH_DIRS+=contrib/Metis
 endif
+
+ifeq (${ENABLE_BLAS_LAPACK},1)
+  FLAGS+=/DHAVE_BLAS /DHAVE_LAPACK
+  GMSH_LIBS+=${BLAS_LAPACK_PREFIX}/liblapack.lib
+  GMSH_LIBS+=${BLAS_LAPACK_PREFIX}/libblas.lib
+endif
+
 ifeq (${ENABLE_OCC},1)
   FLAGS+=/DHAVE_OCC /DHAVE_NO_OCC_CONFIG_H /DWNT /I${OCC_PREFIX}/inc
   GMSH_LIBS+=${OCC_PREFIX}/win32/bin/*.lib

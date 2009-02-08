@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
   Msg::Info("-------------------------------------------------------");
   Msg::Info("Gmsh version   : %s", Get_GmshVersion());
   Msg::Info("Build OS       : %s", Get_GmshBuildOS());
-  Msg::Info("Build options  : %s", Get_GmshBuildOptions().c_str());
+  Msg::Info("Build options  : %s", Get_GmshBuildOptions());
   Msg::Info("Build date     : %s", Get_GmshBuildDate());
   Msg::Info("Build host     : %s", Get_GmshBuildHost());
   Msg::Info("Packager       : %s", Get_GmshPackager());
