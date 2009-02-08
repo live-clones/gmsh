@@ -47,9 +47,10 @@ void GMSH_FiniteElementPlugin::getInfos(char *author, char *copyright,
   strcpy(help_text,
          "Plugin(FiniteElement) solves simple PDEs\n"
          "using the finite element method. This is only\n"
-         "intended as a demonstration!\n"
+         "intended as a demonstration tool: it is NOT\n"
+         "intended for general use."
          "\n"
-         "Plugin(FiniteElement) is creates a new view.\n");
+         "Plugin(FiniteElement) creates a new view.\n");
 }
 
 int GMSH_FiniteElementPlugin::getNbOptions() const
@@ -150,8 +151,7 @@ PView *GMSH_FiniteElementPlugin::execute(PView *v)
   }
   else if(equation == "Helmholtz"){
     solver<std::complex<double> > s;
-    std::complex<double> k(parameter, 0.1);
-    gmshFunction<std::complex<double> > waveNumber(k);
+    gmshFunction<std::complex<double> > waveNumber(parameter);
     gmshHelmholtzTerm helmholtz(m, &waveNumber, 1);
     for(unsigned int i = 0; i < groups[3][volume].size(); i++)
       helmholtz.addToMatrix(*s.myAssembler, groups[3][volume][i]);

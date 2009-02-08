@@ -22,10 +22,10 @@ class gmshLinearSystemGmm : public gmshLinearSystem<scalar> {
   gmm::row_matrix<gmm::wsvector<scalar> > *_a;
   std::vector<scalar> *_b, *_x;
   double _prec;
-  int _noisy;
-  int _gmres;
+  int _noisy, _gmres;
  public:
-  gmshLinearSystemGmm() : _a(0), _b(0), _x(0), _prec(1.e-8), _noisy(0), _gmres(0) {}
+  gmshLinearSystemGmm()
+    : _a(0), _b(0), _x(0), _prec(1.e-8), _noisy(0), _gmres(0) {}
   virtual bool isAllocated() const { return _a != 0; }
   virtual void allocate(int _nbRows)
   {
@@ -75,7 +75,7 @@ class gmshLinearSystemGmm : public gmshLinearSystem<scalar> {
   void setGmres(int n){ _gmres = n; }
   virtual int systemSolve() 
   {
-    // gmm::ilutp_precond<gmm::row_matrix<gmm::rsvector<scalar> > > P(*_a, 10,0.);
+    //gmm::ilutp_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 10, 0.);
     gmm::ildltt_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 2, 1.e-10);
     gmm::iteration iter(_prec);
     iter.set_noisy(_noisy);
