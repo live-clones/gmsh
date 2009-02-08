@@ -2639,6 +2639,9 @@ void menuWindow::setContext(contextItem *menu_asked, int flag)
   for(unsigned int i = 0; i < label.size(); i++)
     delete [] label[i];
   label.clear();
+  for(unsigned int i = 0; i < label2.size(); i++)
+    delete [] label2[i];
+  label2.clear();
 
   int width = win->w();
   int popw = 4 * FL_NORMAL_SIZE + 3;
@@ -2655,7 +2658,10 @@ void menuWindow::setContext(contextItem *menu_asked, int flag)
       b1->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
       b1->value(opt->visible);
       b1->copy_label(data->getName().c_str());
-      b1->tooltip(data->getFileName().c_str());
+      char *tmp2 = new char[data->getFileName().size() + 1];
+      strcpy(tmp2, data->getFileName().c_str());
+      b1->tooltip(tmp2);
+      label2.push_back(tmp2);
       
       char *tmp = new char[32];
       sprintf(tmp, "[%d]@#-1>", nb);

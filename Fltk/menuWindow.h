@@ -70,7 +70,7 @@ class menuWindow{
   std::vector<Fl_Button*> toggle2;
   std::vector<popupButton*> popup;
   std::vector<popupButton*> popup2;
-  std::vector<char*> label;
+  std::vector<char*> label, label2;
  public:
   menuWindow();
   void setContext(contextItem *menu_asked, int flag);
