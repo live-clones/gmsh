@@ -139,6 +139,7 @@ PView *GMSH_FiniteElementPlugin::execute(PView *v)
 
   if(equation == "Laplace"){
     solver<double> s;
+    if(!s.myAssembler->sizeOfR()) return 0;
     gmshFunction<double> diffusivity(parameter);
     gmshLaplaceTerm laplace(m, &diffusivity, 1);
     for(unsigned int i = 0; i < groups[3][volume].size(); i++)
@@ -151,6 +152,7 @@ PView *GMSH_FiniteElementPlugin::execute(PView *v)
   }
   else if(equation == "Helmholtz"){
     solver<std::complex<double> > s;
+    if(!s.myAssembler->sizeOfR()) return 0;
     gmshFunction<std::complex<double> > waveNumber(parameter);
     gmshHelmholtzTerm helmholtz(m, &waveNumber, 1);
     for(unsigned int i = 0; i < groups[3][volume].size(); i++)

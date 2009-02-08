@@ -115,7 +115,7 @@ void PView::addStep(GModel *model, std::map<int, std::vector<double> > &data,
 {
   PViewDataGModel *d = dynamic_cast<PViewDataGModel*>(_data);
   if(d) d->addData(model, data, d->getNumTimeSteps(), time, 1);
-  else Msg::Error("Cannot only  step data to model-based datasets");
+  else Msg::Error("Can only add step data to model-based datasets");
 }
 
 PView::~PView()
