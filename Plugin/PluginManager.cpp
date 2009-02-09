@@ -4,6 +4,8 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <map>
+#include <stdlib.h>
+
 #include "GmshConfig.h"
 #include "Plugin.h"
 #include "PluginManager.h"
