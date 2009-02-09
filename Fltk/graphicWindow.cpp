@@ -416,6 +416,11 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   dummyBox *resbox = new dummyBox(x, 0, width - x, glheight);
   win->resizable(resbox);
 
+  // set mininum window size
+  minWidth = x;
+  minHeight = 100;
+  win->size_range(minWidth, minHeight);
+
   // tiled opengl windows
   tile = new Fl_Tile(0, 0, width, glheight);
 

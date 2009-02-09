@@ -2386,10 +2386,14 @@ double opt_general_graphics_size0(OPT_ARGS_NUM)
     CTX::instance()->glSize[0] = (int)val;
 #if defined(HAVE_FLTK)
   if(GUI::available()){
-    if(action & GMSH_SET)
+    if(action & GMSH_SET){
       GUI::instance()->graph[0]->win->size
-        (CTX::instance()->glSize[0], GUI::instance()->graph[0]->bottom->h() + 
-         CTX::instance()->glSize[1]);
+        (CTX::instance()->glSize[0],
+         GUI::instance()->graph[0]->win->h());
+      // workaround resizing bug on Mac
+      GUI::instance()->graph[0]->win->size_range
+        (GUI::instance()->graph[0]->minWidth, GUI::instance()->graph[0]->minHeight);
+    }
   }
 #endif
   return CTX::instance()->glSize[0];
@@ -2401,10 +2405,14 @@ double opt_general_graphics_size1(OPT_ARGS_NUM)
     CTX::instance()->glSize[1] = (int)val;
 #if defined(HAVE_FLTK)
   if(GUI::available()){
-    if(action & GMSH_SET)
+    if(action & GMSH_SET){
       GUI::instance()->graph[0]->win->size
-        (CTX::instance()->glSize[0], GUI::instance()->graph[0]->bottom->h() + 
-         CTX::instance()->glSize[1]);
+        (GUI::instance()->graph[0]->win->w(),
+         GUI::instance()->graph[0]->bottom->h() + CTX::instance()->glSize[1]);
+      // workaround resizing bug on Mac
+      GUI::instance()->graph[0]->win->size_range
+        (GUI::instance()->graph[0]->minWidth, GUI::instance()->graph[0]->minHeight);
+    }
   }
 #endif
   return CTX::instance()->glSize[1];

@@ -24,6 +24,7 @@ class graphicWindow{
   Fl_Box *bottom;
   Fl_Button *butt[12];
   Fl_Box *label[2];
+  int minWidth, minHeight;
  public:
   graphicWindow(bool main=true, int numTiles=1);
   ~graphicWindow();
