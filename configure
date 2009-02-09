@@ -5583,17 +5583,16 @@ ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
-case "${F77}" in
+if test "x$UNAME" != "xDarwin"; then
+  case "${F77}" in
   *gfortran*)
     F77LIB="-lgfortran"
     ;;
   *g77*)
     F77LIB="-lg2c"
     ;;
-  *)
-    F77LIB=""
-    ;;
-esac
+  esac
+fi
 if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
   LDFLAGS="${LDFLAGS} -L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib"
 fi
@@ -5879,13 +5878,7 @@ if test "x${BLAS_LIBS}" != "x"; then
   else
     GMSH_LIBS="${GMSH_LIBS} ${BLAS_LIBS}"
   fi
-  case "$UNAME" in
-    Darwin*)
-      ;;
-    *)
-      GMSH_LIBS="${GMSH_LIBS} ${F77LIB}"
-      ;;
-  esac
+  GMSH_LIBS="${GMSH_LIBS} ${F77LIB}"
 fi
 
 if test "x$enable_mpi" = "xyes"; then

@@ -148,8 +148,8 @@ class gmshAssembler {
         for (unsigned int i = 0; i < itConstrR->second.size(); i++){
           gmshDofKey &dofKeyConstrR = itConstrR->second[i].first;
           scalar valConstrR = itConstrR->second[i].second;
-          assemble(dofKeyConstrR.v,dofKeyConstrR.comp, dofKeyConstrR.field,
-                   vC, iCompC, iFieldC,
+          assemble(dofKeyConstrR.v, dofKeyConstrR.comp, dofKeyConstrR.field,
+                   vC, iCompC, iFieldC, 
                    val * valConstrR);
         }
       }

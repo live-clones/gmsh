@@ -709,17 +709,16 @@ fi
 
 dnl Check for blas and lapack
 AC_PROG_F77
-case "${F77}" in
+if test "x$UNAME" != "xDarwin"; then
+  case "${F77}" in
   *gfortran*)
     F77LIB="-lgfortran"
     ;;
   *g77*)
     F77LIB="-lg2c"
     ;;
-  *)
-    F77LIB=""
-    ;;
-esac
+  esac
+fi
 if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
   LDFLAGS="${LDFLAGS} -L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib"
 fi
@@ -747,13 +746,7 @@ if test "x${BLAS_LIBS}" != "x"; then
   else
     GMSH_LIBS="${GMSH_LIBS} ${BLAS_LIBS}"
   fi
-  case "$UNAME" in
-    Darwin*)
-      ;;
-    *)
-      GMSH_LIBS="${GMSH_LIBS} ${F77LIB}"
-      ;;
-  esac
+  GMSH_LIBS="${GMSH_LIBS} ${F77LIB}"
 fi
 
 dnl Check for MPI
