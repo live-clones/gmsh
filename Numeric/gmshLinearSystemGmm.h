@@ -88,7 +88,7 @@ class gmshLinearSystemGmm : public gmshLinearSystem<scalar> {
 #else
 
 template <class scalar>
-class gmshLinearSystemGmm : public gmshLinearSystem {
+class gmshLinearSystemGmm : public gmshLinearSystem<scalar> {
 public :
   gmshLinearSystemGmm()
   {
