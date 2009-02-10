@@ -6,8 +6,9 @@
 // A small utility that reads a Gmsh mesh file and makes the numbering
 // dense (without gaps in the node/element number sequences)
 
+#include <stdlib.h>
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 #include <vector>
 #include <map>
 
