@@ -125,10 +125,15 @@ double gmshMatrix<double>::determinant() const
   int *ipiv = new int[std::min(M, N)];
   dgetrf_(&M, &N, tmp._data, &lda, ipiv, &info);
   double det = 1.;
-  for(int i = 0; i < size1(); i++){
-    det *= tmp(i, i);
-    if(ipiv[i] != i + 1) det = -det;
+  if(info == 0){
+    for(int i = 0; i < size1(); i++){
+      det *= tmp(i, i);
+      if(ipiv[i] != i + 1) det = -det;
+    }
   }
+  else
+    Msg::Error("Problem in LAPACK factorisation (info=%d)", info);
+  delete [] ipiv;  
   return det;
 }
 

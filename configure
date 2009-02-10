@@ -1274,7 +1274,7 @@ Optional Features:
   --enable-netgen         compile Netgen if available (default=yes)
   --enable-ann            compile ANN if available (default=yes)
   --enable-metis          compile METIS partitioner (default=yes)
-  --enable-chaco          compile Chaco partitioner (default=yes)
+  --enable-chaco          compile Chaco partitioner (default=no)
   --enable-tetgen         compile Tetgen if available (default=yes)
   --enable-matheval       compile MathEval if available (default=yes)
   --enable-gmm            use gmm++ if available (default=yes)
@@ -4582,7 +4582,7 @@ _ACEOF
     fi
   fi
 
-    if test "x$enable_chaco" != "xno"; then
+    if test "x$enable_chaco" = "xyes"; then
     { echo "$as_me:$LINENO: checking for ./contrib/Chaco/main/interface.c" >&5
 echo $ECHO_N "checking for ./contrib/Chaco/main/interface.c... $ECHO_C" >&6; }
 if test "${ac_cv_file___contrib_Chaco_main_interface_c+set}" = set; then
@@ -5171,158 +5171,6 @@ _ACEOF
   fi
 fi
 
-if test "x$enable_fm" != "xno"; then
-  if test "x${FM_PREFIX}" != "x"; then
-    LDFLAGS="-L${FM_PREFIX}/lib ${LDFLAGS}"
-  fi
-  { echo "$as_me:$LINENO: checking for main in -lFourierModel" >&5
-echo $ECHO_N "checking for main in -lFourierModel... $ECHO_C" >&6; }
-if test "${ac_cv_lib_FourierModel_main+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lFourierModel  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-
-int
-main ()
-{
-return main ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_cxx_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext &&
-       $as_test_x conftest$ac_exeext; then
-  ac_cv_lib_FourierModel_main=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_FourierModel_main=no
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_FourierModel_main" >&5
-echo "${ECHO_T}$ac_cv_lib_FourierModel_main" >&6; }
-if test $ac_cv_lib_FourierModel_main = yes; then
-  FM="yes"
-fi
-
-  if test "x${FM}" = "xyes"; then
-        if test "x${FFTW3_PREFIX}" != "x"; then
-      LDFLAGS="-L${FFTW3_PREFIX}/lib ${LDFLAGS}"
-    fi
-    { echo "$as_me:$LINENO: checking for main in -lfftw3" >&5
-echo $ECHO_N "checking for main in -lfftw3... $ECHO_C" >&6; }
-if test "${ac_cv_lib_fftw3_main+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lfftw3  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-
-int
-main ()
-{
-return main ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_cxx_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext &&
-       $as_test_x conftest$ac_exeext; then
-  ac_cv_lib_fftw3_main=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_fftw3_main=no
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_fftw3_main" >&5
-echo "${ECHO_T}$ac_cv_lib_fftw3_main" >&6; }
-if test $ac_cv_lib_fftw3_main = yes; then
-  FFTW3="yes"
-fi
-
-    if test "x${FFTW3}" != "xyes"; then
-      FM=no
-      { echo "$as_me:$LINENO: WARNING: Could not find FFTW3: disabling FourierModel." >&5
-echo "$as_me: WARNING: Could not find FFTW3: disabling FourierModel." >&2;}
-    else
-      cat >>confdefs.h <<\_ACEOF
-#define HAVE_FOURIER_MODEL 1
-_ACEOF
-
-      BO="${BO} FourierModel"
-      if test "x${FM_PREFIX}" = "x"; then
-        GMSH_LIBS="${GMSH_LIBS} -lFourierModel"
-      else
-        GMSH_LIBS="${GMSH_LIBS} -L${FM_PREFIX}/lib -lFourierModel"
-        FLAGS="-I${FM_PREFIX} ${FLAGS}"
-      fi
-      if test "x${FFTW3_PREFIX}" = "x"; then
-        GMSH_LIBS="${GMSH_LIBS} -lfftw3"
-      else
-        GMSH_LIBS="${GMSH_LIBS} -L${FFTW3_PREFIX}/lib -lfftw3"
-        FLAGS="${FLAGS} -I${FFTW3_PREFIX}/include"
-      fi
-    fi
-  fi
-fi
-
 ac_ext=f
 ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -5658,6 +5506,10 @@ fi
 { echo "$as_me:$LINENO: result: $ac_cv_lib_atlas_ATL_xerbla" >&5
 echo "${ECHO_T}$ac_cv_lib_atlas_ATL_xerbla" >&6; }
 if test $ac_cv_lib_atlas_ATL_xerbla = yes; then
+  ATLAS="yes"
+fi
+
+if test "x${ATLAS}" = "xyes"; then
   { echo "$as_me:$LINENO: checking for dgemm_ in -lf77blas" >&5
 echo $ECHO_N "checking for dgemm_ in -lf77blas... $ECHO_C" >&6; }
 if test "${ac_cv_lib_f77blas_dgemm_+set}" = set; then
@@ -5720,12 +5572,10 @@ fi
 { echo "$as_me:$LINENO: result: $ac_cv_lib_f77blas_dgemm_" >&5
 echo "${ECHO_T}$ac_cv_lib_f77blas_dgemm_" >&6; }
 if test $ac_cv_lib_f77blas_dgemm_ = yes; then
-  BLAS="yes" BLAS_LIBS="${BLAS_LIBS}
-                          -lf77blas -latlas"
+  BLAS="yes" BLAS_LIBS="${BLAS_LIBS} -lf77blas -latlas"
 fi
 
 fi
-
 if test "x${BLAS}" != "xyes"; then
   { echo "$as_me:$LINENO: checking for dgemm_ in -lblas" >&5
 echo $ECHO_N "checking for dgemm_ in -lblas... $ECHO_C" >&6; }
@@ -5799,7 +5649,75 @@ if test "x${BLAS}" = "xyes"; then
 _ACEOF
 
   BO="${BO} Blas"
-  { echo "$as_me:$LINENO: checking for dbdsqr_ in -llapack" >&5
+  if test "x${ATLAS}" = "xyes"; then
+    { echo "$as_me:$LINENO: checking for dbdsqr_ in -llapack_atlas" >&5
+echo $ECHO_N "checking for dbdsqr_ in -llapack_atlas... $ECHO_C" >&6; }
+if test "${ac_cv_lib_lapack_atlas_dbdsqr_+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-llapack_atlas ${BLAS_LIBS} ${F77LIB} $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char dbdsqr_ ();
+int
+main ()
+{
+return dbdsqr_ ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_cxx_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_lapack_atlas_dbdsqr_=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_lapack_atlas_dbdsqr_=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_lapack_atlas_dbdsqr_" >&5
+echo "${ECHO_T}$ac_cv_lib_lapack_atlas_dbdsqr_" >&6; }
+if test $ac_cv_lib_lapack_atlas_dbdsqr_ = yes; then
+  LAPACK="yes" BLAS_LIBS="-llapack_atlas ${BLAS_LIBS}"
+fi
+
+  fi
+  if test "x${LAPACK}" != "xyes"; then
+    { echo "$as_me:$LINENO: checking for dbdsqr_ in -llapack" >&5
 echo $ECHO_N "checking for dbdsqr_ in -llapack... $ECHO_C" >&6; }
 if test "${ac_cv_lib_lapack_dbdsqr_+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -5864,6 +5782,7 @@ if test $ac_cv_lib_lapack_dbdsqr_ = yes; then
   LAPACK="yes" BLAS_LIBS="-llapack ${BLAS_LIBS}"
 fi
 
+  fi
   if test "x${LAPACK}" = "xyes"; then
     cat >>confdefs.h <<\_ACEOF
 #define HAVE_LAPACK 1
@@ -5879,6 +5798,158 @@ if test "x${BLAS_LIBS}" != "x"; then
     GMSH_LIBS="${GMSH_LIBS} ${BLAS_LIBS}"
   fi
   GMSH_LIBS="${GMSH_LIBS} ${F77LIB}"
+fi
+
+if test "x${LAPACK}" = "xyes" -a "x$enable_fm" != "xno"; then
+  if test "x${FM_PREFIX}" != "x"; then
+    LDFLAGS="-L${FM_PREFIX}/lib ${LDFLAGS}"
+  fi
+  { echo "$as_me:$LINENO: checking for main in -lFourierModel" >&5
+echo $ECHO_N "checking for main in -lFourierModel... $ECHO_C" >&6; }
+if test "${ac_cv_lib_FourierModel_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lFourierModel  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+return main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_cxx_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_FourierModel_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_FourierModel_main=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_FourierModel_main" >&5
+echo "${ECHO_T}$ac_cv_lib_FourierModel_main" >&6; }
+if test $ac_cv_lib_FourierModel_main = yes; then
+  FM="yes"
+fi
+
+  if test "x${FM}" = "xyes"; then
+        if test "x${FFTW3_PREFIX}" != "x"; then
+      LDFLAGS="-L${FFTW3_PREFIX}/lib ${LDFLAGS}"
+    fi
+    { echo "$as_me:$LINENO: checking for main in -lfftw3" >&5
+echo $ECHO_N "checking for main in -lfftw3... $ECHO_C" >&6; }
+if test "${ac_cv_lib_fftw3_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lfftw3  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+return main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_cxx_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_fftw3_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_fftw3_main=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_fftw3_main" >&5
+echo "${ECHO_T}$ac_cv_lib_fftw3_main" >&6; }
+if test $ac_cv_lib_fftw3_main = yes; then
+  FFTW3="yes"
+fi
+
+    if test "x${FFTW3}" != "xyes"; then
+      FM=no
+      { echo "$as_me:$LINENO: WARNING: Could not find FFTW3: disabling FourierModel." >&5
+echo "$as_me: WARNING: Could not find FFTW3: disabling FourierModel." >&2;}
+    else
+      cat >>confdefs.h <<\_ACEOF
+#define HAVE_FOURIER_MODEL 1
+_ACEOF
+
+      BO="${BO} FourierModel"
+      if test "x${FM_PREFIX}" = "x"; then
+        GMSH_LIBS="${GMSH_LIBS} -lFourierModel"
+      else
+        GMSH_LIBS="${GMSH_LIBS} -L${FM_PREFIX}/lib -lFourierModel"
+        FLAGS="-I${FM_PREFIX} ${FLAGS}"
+      fi
+      if test "x${FFTW3_PREFIX}" = "x"; then
+        GMSH_LIBS="${GMSH_LIBS} -lfftw3"
+      else
+        GMSH_LIBS="${GMSH_LIBS} -L${FFTW3_PREFIX}/lib -lfftw3"
+        FLAGS="${FLAGS} -I${FFTW3_PREFIX}/include"
+      fi
+    fi
+  fi
 fi
 
 if test "x$enable_mpi" = "xyes"; then
