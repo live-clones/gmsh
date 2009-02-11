@@ -131,6 +131,8 @@ double gmshMatrix<double>::determinant() const
       if(ipiv[i] != i + 1) det = -det;
     }
   }
+  else if(info > 0)
+    det = 0.;
   else
     Msg::Error("Problem in LAPACK factorisation (info=%d)", info);
   delete [] ipiv;  
