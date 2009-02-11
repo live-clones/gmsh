@@ -1274,7 +1274,7 @@ Optional Features:
   --enable-netgen         compile Netgen if available (default=yes)
   --enable-ann            compile ANN if available (default=yes)
   --enable-metis          compile METIS partitioner (default=yes)
-  --enable-chaco          compile Chaco partitioner (default=no)
+  --enable-chaco          compile Chaco partitioner (default=yes)
   --enable-tetgen         compile Tetgen if available (default=yes)
   --enable-matheval       compile MathEval if available (default=yes)
   --enable-gmm            use gmm++ if available (default=yes)
@@ -4582,7 +4582,7 @@ _ACEOF
     fi
   fi
 
-    if test "x$enable_chaco" = "xyes"; then
+    if test "x$enable_chaco" != "xno"; then
     { echo "$as_me:$LINENO: checking for ./contrib/Chaco/main/interface.c" >&5
 echo $ECHO_N "checking for ./contrib/Chaco/main/interface.c... $ECHO_C" >&6; }
 if test "${ac_cv_file___contrib_Chaco_main_interface_c+set}" = set; then

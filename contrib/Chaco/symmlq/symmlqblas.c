@@ -9,14 +9,14 @@
 
 /*     symmlqblas  fortran */
 
-/*     daxpy    dcopy    ddot     dnrm2 */
+/*     daxpy_chaco    dcopy_chaco    ddot_chaco     dnrm2_chaco_chaco */
 
 /* ** from netlib, Thu May 16 21:00:13 EDT 1991 *** */
 /* ** Declarations of the form dx(1) changed to dx(*) */
 
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
- /* Subroutine */ int daxpy_(n, da, dx, incx, dy, incy)
+ /* Subroutine */ int daxpy_chaco_(n, da, dx, incx, dy, incy)
 integer  *n;
 doublereal *da, *dx;
 integer  *incx;
@@ -99,10 +99,10 @@ L40:
 /* L50: */
     }
     return 0;
-}				/* daxpy_ */
+}				/* daxpy_chaco_ */
 
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
- /* Subroutine */ int dcopy_(n, dx, incx, dy, incy)
+ /* Subroutine */ int dcopy_chaco_(n, dx, incx, dy, incy)
 integer  *n;
 doublereal *dx;
 integer  *incx;
@@ -185,10 +185,10 @@ L40:
 /* L50: */
     }
     return 0;
-}				/* dcopy_ */
+}				/* dcopy_chaco_ */
 
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
-doublereal ddot_(n, dx, incx, dy, incy)
+doublereal ddot_chaco_(n, dx, incx, dy, incy)
 integer  *n;
 doublereal *dx;
 integer  *incx;
@@ -274,10 +274,10 @@ L40:
 L60:
     ret_val = dtemp;
     return ret_val;
-}				/* ddot_ */
+}				/* ddot_chaco_ */
 
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
-doublereal dnrm2_(n, dx, incx)
+doublereal dnrm2_chaco_(n, dx, incx)
 integer  *n;
 doublereal *dx;
 integer  *incx;
@@ -473,4 +473,4 @@ L200:
     ret_val = xmax * sqrt(sum);
 L300:
     return ret_val;
-}				/* dnrm2_ */
+}				/* dnrm2_chaco_ */

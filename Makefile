@@ -235,7 +235,8 @@ tags:
 	htags
 
 etags:
-	etags `find . \( -name "*.cpp" -o -name "*.h" -o -name "*.y" -o -name "*.l" \)`
+	etags `find . \( -name "*.cpp" -o -name "*.c" -o -name "*.h" -o\
+                         -name "*.y" -o -name "*.l" \)`
 
 # Rules to package the sources
 
