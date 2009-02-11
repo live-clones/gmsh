@@ -113,7 +113,10 @@ bool gmshMatrix<double>::lu_solve(const gmshVector<double> &rhs, gmshVector<doub
   dgesv_(&N, &nrhs, _data, &lda, ipiv, result._data, &ldb, &info);
   delete [] ipiv;
   if(info == 0) return true;
-  Msg::Error("Problem in LAPACK LU (info=%d)", info);
+  if(info > 0)
+    Msg::Error("U(%d,%d)=0 in LU decomposition", info, info);
+  else
+    Msg::Error("Wrong %d-th argument in LU decomposition", -info);
   return false;
 }
 
@@ -134,7 +137,7 @@ double gmshMatrix<double>::determinant() const
   else if(info > 0)
     det = 0.;
   else
-    Msg::Error("Problem in LAPACK factorisation (info=%d)", info);
+    Msg::Error("Wrong %d-th argument in matrix factorization", -info);
   delete [] ipiv;  
   return det;
 }
@@ -150,7 +153,10 @@ bool gmshMatrix<double>::svd(gmshMatrix<double> &V, gmshVector<double> &S)
           VT._data, &LDVT, WORK._data, &LWORK, &info);
   V = VT.transpose();
   if(info == 0) return true;
-  Msg::Error("Problem in LAPACK SVD (info=%d)", info);
+  if(info > 0)
+    Msg::Error("SVD did not converge");
+  else
+    Msg::Error("Wrong %d-th argument in SVD decomposition", -info);
   return false;
 }
 
