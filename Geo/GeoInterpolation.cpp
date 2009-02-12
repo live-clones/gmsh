@@ -656,7 +656,8 @@ Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
     return InterpolateRuledSurface(s, u, v);
   case MSH_SURF_PLAN:
     {
-      Vertex T(u, v, .0);
+      Msg::Error("You should never be here (InterpolateSurface(MSH_PLANE)): contact support ;-)");
+      Vertex T(u, v, 0.);
       Vertex V(s->a, s->b, s->c);
       Projette(&V, s->plan);
       if(V.Pos.Z != 0.)
