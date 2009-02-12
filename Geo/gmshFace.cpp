@@ -35,19 +35,10 @@ gmshFace::gmshFace(GModel *m, Surface *face)
       Msg::Error("Unknown curve %d", c->Num);
   }
 
-  // always compute and store the mean plane for plane surfaces
-  // (simply using the bounding vertices)
-  if(s->Typ == MSH_SURF_PLAN){
-    computeMeanPlane();
-    for(int i = 0; i < 3; i++)
-      for(int j = 0; j < 3; j++)
-        s->plan[i][j] = meanPlane.plan[i][j];
-    s->a = meanPlane.a;
-    s->b = meanPlane.b;
-    s->c = meanPlane.c;
-    s->d = meanPlane.d;
-  }
-  
+  // always compute and store the mean plane for plane surfaces (using
+  // the bounding vertices)
+  if(s->Typ == MSH_SURF_PLAN) computeMeanPlane();
+
   if(s->EmbeddedCurves){
     for(int i = 0; i < List_Nbr(s->EmbeddedCurves); i++){
       Curve *c;

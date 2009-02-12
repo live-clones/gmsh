@@ -11,8 +11,6 @@
 
 #define SQU(a)      ((a)*(a))
 
-// Curves
-
 static Vertex InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
 				     int derivee, double t1, double t2)
 {
@@ -379,8 +377,6 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
 
 }
 
-// Surfaces
-
 // Interpolation transfinie sur un quadrangle :
 // f(u,v) = (1-u)c4(v) + u c2(v) + (1-v)c1(u) + v c3(u)
 //          - [ (1-u)(1-v)s1 + u(1-v)s2 + uv s3 + (1-u)v s4 ]
@@ -606,7 +602,7 @@ Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
 {
   if(derivee) {
     double eps = 1.e-6;
-    Vertex D[4], T;
+    Vertex D[4];
     if(u_v == 1) {
       if(u - eps < 0.0) {
         D[0] = InterpolateSurface(s, u, v, 0, 0);
@@ -627,19 +623,14 @@ Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
         D[1] = InterpolateSurface(s, u, v, 0, 0);
       }
     }
-    T.Pos.X = (D[1].Pos.X - D[0].Pos.X) / eps;
-    T.Pos.Y = (D[1].Pos.Y - D[0].Pos.Y) / eps;
-    T.Pos.Z = (D[1].Pos.Z - D[0].Pos.Z) / eps;
-    return T;
+    return Vertex((D[1].Pos.X - D[0].Pos.X) / eps,
+                  (D[1].Pos.Y - D[0].Pos.Y) / eps,
+                  (D[1].Pos.Z - D[0].Pos.Z) / eps);
   }
 
   if(s->geometry){
-    Vertex T;
     SPoint3 p = s->geometry->point(u, v);
-    T.Pos.X = p.x();
-    T.Pos.Y = p.y();
-    T.Pos.Z = p.z();
-    return T;
+    return Vertex(p.x(), p.y(), p.z());
   }
 
   // FIXME: WARNING -- this is a major hack: we use the exact
@@ -655,35 +646,17 @@ Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
   case MSH_SURF_TRIC: 
     return InterpolateRuledSurface(s, u, v);
   case MSH_SURF_PLAN:
-    {
-      Msg::Error("You should never be here (InterpolateSurface(MSH_PLANE)): contact support ;-)");
-      Vertex T(u, v, 0.);
-      Vertex V(s->a, s->b, s->c);
-      Projette(&V, s->plan);
-      if(V.Pos.Z != 0.)
-        T.Pos.Z = (s->d - V.Pos.X * T.Pos.X - V.Pos.Y * T.Pos.Y) / V.Pos.Z;
-      else
-        T.Pos.Z = 0.;
-      return T;
-    }
+    Msg::Error("Should never interpolate plane surface in InterpolateSurface()");
+    return Vertex(0., 0., 0.);
   case MSH_SURF_BND_LAYER:
-    {
-      Msg::Error("Cannot interpolate boundary layer surface");
-      Vertex T(0., 0., 0.);
-      return T;
-    }    
+    Msg::Error("Cannot interpolate boundary layer surface");
+    return Vertex(0., 0., 0.);
   case MSH_SURF_DISCRETE:
-    {
-      Msg::Error("Cannot interpolate discrete surface");
-      Vertex T(0., 0., 0.);
-      return T;
-    }    
+    Msg::Error("Cannot interpolate discrete surface");
+    return Vertex(0., 0., 0.);
   default:
-    {
-      Msg::Error("Unknown surface type in interpolation");
-      Vertex T(0., 0., 0.);
-      return T;
-    }
+    Msg::Error("Unknown surface type in interpolation");
+    return Vertex(0., 0., 0.);
   }
 }
 

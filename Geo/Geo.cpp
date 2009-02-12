@@ -913,13 +913,6 @@ static void CopySurface(Surface *s, Surface *ss)
   //ss->Method = s->Method;
   //ss->Recombine = s->Recombine;
   //ss->RecombineAngle = s->RecombineAngle;
-  ss->a = s->a;
-  ss->b = s->b;
-  ss->c = s->c;
-  ss->d = s->d;
-  for(i = 0; i < 3; i++)
-    for(j = 0; j < 3; j++)
-      ss->plan[i][j] = s->plan[i][j];
   ss->Generatrices = List_Create(List_Nbr(s->Generatrices), 1, sizeof(Curve *));
   List_Copy(s->Generatrices, ss->Generatrices);
   End_Surface(ss);
