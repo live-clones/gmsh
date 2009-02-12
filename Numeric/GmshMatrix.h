@@ -6,7 +6,6 @@
 #ifndef _GMSH_MATRIX_H_
 #define _GMSH_MATRIX_H_
 
-#include <stdio.h>
 #include <math.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -204,17 +203,6 @@ class gmshMatrix
     return false;
   }
 #endif
-  ;
-  void print()
-  {
-    for(int i = 0; i < size1(); i++){
-      for(int j = 0; j < size2(); j++){
-        printf(" %12.5e");
-      }
-      printf("\n");
-    }
-    return false;
-  }
   ;
 };
 
