@@ -16,10 +16,6 @@
 
 #define EPS 1.e-10
 
-// This file defines the colorbarWindow class (subclass of Fl_Window)
-
-// The constructor
-
 colorbarWindow::colorbarWindow(int x, int y, int w, int h, const char *l)
   : Fl_Window(x, y, w, h, l)
 {
@@ -33,8 +29,6 @@ colorbarWindow::colorbarWindow(int x, int y, int w, int h, const char *l)
   minval = maxval = 0.0;
 }
 
-// Convert window X coordinate to color table index
-
 int colorbarWindow::x_to_index(int x)
 {
   int index;
@@ -46,8 +40,6 @@ int colorbarWindow::x_to_index(int x)
   return index;
 }
 
-// Convert color table index to window X coordinate
-
 int colorbarWindow::index_to_x(int index)
 {
   int x;
@@ -56,21 +48,6 @@ int colorbarWindow::index_to_x(int index)
     x = w() - 1;
   return x;
 }
-
-// Convert a color intensity to a window Y coordinate
-
-int colorbarWindow::intensity_to_y(int intensity)
-{
-  int y;
-  y = (int)(wedge_y - intensity * (double)wedge_y / 255.);
-  if(y < 0)
-    y = 0;
-  else if(y >= wedge_y)
-    y = wedge_y - 1;
-  return y;
-}
-
-// Convert a window Y coordinate to a color intensity
 
 int colorbarWindow::y_to_intensity(int y)
 {
@@ -83,7 +60,16 @@ int colorbarWindow::y_to_intensity(int y)
   return intensity;
 }
 
-// Redraw part of the colorbarWindow (between a and b)
+int colorbarWindow::intensity_to_y(int intensity)
+{
+  int y;
+  y = (int)(wedge_y - intensity * (double)wedge_y / 255.);
+  if(y < 0)
+    y = 0;
+  else if(y >= wedge_y)
+    y = wedge_y - 1;
+  return y;
+}
 
 void colorbarWindow::redraw_range(int a, int b)
 {
@@ -259,9 +245,6 @@ void colorbarWindow::redraw_range(int a, int b)
     fl_draw("HSV", xx0, yy0 + font_height);
 }
 
-
-// Redraw the marker and the text
-
 void colorbarWindow::redraw_marker()
 {
   int x, y0, y1;
@@ -291,8 +274,6 @@ void colorbarWindow::redraw_marker()
   fl_draw(str, 10, label_y);
 }
 
-// Draw everything
-
 void colorbarWindow::draw()
 {
   if(!ct) return;
@@ -310,8 +291,6 @@ void colorbarWindow::draw()
   redraw_marker();
 }
 
-// Update
-
 void colorbarWindow::update(const char *name, double min, double max,
                              GmshColorTable *table, bool *changed)
 {
@@ -322,8 +301,6 @@ void colorbarWindow::update(const char *name, double min, double max,
   maxval = max;
   redraw();
 }
-
-// Handle
 
 int colorbarWindow::handle(int event)
 {

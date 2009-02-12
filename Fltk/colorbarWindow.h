@@ -23,16 +23,22 @@ class colorbarWindow : public Fl_Window {
   GmshColorTable *ct; // pointer to the color table (allocated in the view)
   bool *viewchanged; // pointer to changed bit in view
   Fl_Color color_bg;
+  // convert window X coordinate to color table index
   int x_to_index(int x);
+  // convert color table index to window X coordinate
   int index_to_x(int index);
+  // convert a window Y coordinate to a color intensity
   int y_to_intensity(int y);
+  // convert a color intensity to a window Y coordinate
   int intensity_to_y(int intensity);
+  // redraw part of the colorbarWindow (between a and b)
   void redraw_range(int a, int b);
+  // redraw the marker and the text
   void redraw_marker();
-  void draw();
-  int handle(int);
  public:
   colorbarWindow(int x, int y, int w, int h, const char *l=0);
+  void draw();
+  int handle(int);
   void update(const char *name, double min, double max, GmshColorTable *ct,
               bool *changed);
 };

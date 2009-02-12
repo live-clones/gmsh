@@ -193,7 +193,7 @@ void status_options_cb(Fl_Widget *w, void *data)
   }
 }
 
-static int stop_anim, view_in_cycle = -1;
+static int stop_anim = 0, view_in_cycle = -1;
 
 void status_play_manual(int time, int step)
 {

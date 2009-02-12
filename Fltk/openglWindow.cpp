@@ -125,16 +125,11 @@ void openglWindow::drawBorder()
     */
     glColor3ub(r, g, b);
     glLineWidth(1);
-#if defined(__APPLE__)
-    int ww = 1;
-#else
-    int ww = 0;
-#endif
     glBegin(GL_LINE_LOOP);
     glVertex2d(_ctx->viewport[0], _ctx->viewport[1]);
-    glVertex2d(_ctx->viewport[2] - ww, _ctx->viewport[1]);
-    glVertex2d(_ctx->viewport[2] - ww, _ctx->viewport[3] - ww);
-    glVertex2d(_ctx->viewport[0], _ctx->viewport[3] - ww);
+    glVertex2d(_ctx->viewport[2], _ctx->viewport[1]);
+    glVertex2d(_ctx->viewport[2], _ctx->viewport[3]);
+    glVertex2d(_ctx->viewport[0], _ctx->viewport[3]);
     glEnd();
   }
 }

@@ -17,7 +17,7 @@ struct gmshDofKey{
   MVertex *v;
   int comp;
   int field;
-  gmshDofKey (MVertex *V, int iComp , int iField)
+  gmshDofKey (MVertex *V, int iComp, int iField)
     : v(V), comp(iComp), field(iField) {} 
   bool operator < (const gmshDofKey& d) const
   {
@@ -107,8 +107,8 @@ class gmshAssembler {
     }
     return 0.0;
   }
-  void assemble(MVertex *vR , int iCompR, int iFieldR,
-                MVertex *vC , int iCompC, int iFieldC, scalar val)
+  void assemble(MVertex *vR, int iCompR, int iFieldR,
+                MVertex *vC, int iCompC, int iFieldC, scalar val)
   {
     if (!lsys->isAllocated()) lsys->allocate(numbering.size());
 
@@ -155,7 +155,7 @@ class gmshAssembler {
       }
     }
   }
-  void assemble(MVertex *vR , int iCompR, int iFieldR, scalar val)
+  void assemble(MVertex *vR, int iCompR, int iFieldR, scalar val)
   {
     if (!lsys->isAllocated())lsys->allocate(numbering.size());
     std::map<gmshDofKey, int>::iterator 

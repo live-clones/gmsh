@@ -2904,9 +2904,18 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2])
   x(0) = uv[0];
   x(1) = uv[1];
   PointSurface ps = {&p, s};
-  if(newton_fd(projectPS, x, &ps)){
+
+  double UMIN = 0.;
+  double UMAX = 1.;
+  double VMIN = 0.;
+  double VMAX = 1.;
+  while(1) {
+    newton_fd(projectPS, x, &ps);
     p = InterpolateSurface(s, x(0), x(1), 0, 0);
-    return true;
+    if(x(0) >= UMIN && x(0) <= UMAX && x(1) >= VMIN && x(1) <= VMAX)
+      break;
+    x(0) = UMIN + (UMAX - UMIN) * ((rand() % 10000) / 10000.);
+    x(1) = VMIN + (VMAX - VMIN) * ((rand() % 10000) / 10000.);
   }
   return false;
 }

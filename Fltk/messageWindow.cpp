@@ -31,7 +31,7 @@ static void message_copy_cb(Fl_Widget *w, void *data)
   for(int i = 1; i <= GUI::instance()->messages->browser->size(); i++) {
     if(GUI::instance()->messages->browser->selected(i)) {
       const char *c = GUI::instance()->messages->browser->text(i);
-      if(c[0] == '@')
+      if(strlen(c) > 5 && c[0] == '@')
         buff += std::string(&c[5]);
       else
         buff += std::string(c);
