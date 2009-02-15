@@ -26,6 +26,7 @@ class gmshEdge : public GEdge {
   virtual int minimumDrawSegments() const;
   virtual void resetMeshAttributes();
   virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
+  virtual void writeGEO(FILE *fp);
 };
 
 #endif

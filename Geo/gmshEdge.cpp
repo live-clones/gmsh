@@ -258,3 +258,69 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar,int dir) const
   else
     return GEdge::reparamOnFace(face, epar, dir);
 }
+
+void gmshEdge::writeGEO(FILE *fp)
+{
+  if(!c || c->Num < 0 || c->Typ == MSH_SEGM_DISCRETE) return;
+  switch (c->Typ) {
+  case MSH_SEGM_LINE:
+    fprintf(fp, "Line(%d) = ", c->Num);
+    break;
+  case MSH_SEGM_CIRC:
+  case MSH_SEGM_CIRC_INV:
+    fprintf(fp, "Circle(%d) = ", c->Num);
+    break;
+  case MSH_SEGM_ELLI:
+  case MSH_SEGM_ELLI_INV:
+    fprintf(fp, "Ellipse(%d) = ", c->Num);
+    break;
+  case MSH_SEGM_NURBS:
+    fprintf(fp, "Nurbs(%d) = {", c->Num);
+    for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
+      Vertex *v;
+      List_Read(c->Control_Points, i, &v);
+      if(!i)
+        fprintf(fp, "%d", v->Num);
+      else
+        fprintf(fp, ", %d", v->Num);
+      if(i % 8 == 7 && i != List_Nbr(c->Control_Points) - 1)
+        fprintf(fp, "\n");
+    }
+    fprintf(fp, "}\n");
+    fprintf(fp, "  Knots {");
+    for(int j = 0; j < List_Nbr(c->Control_Points) + c->degre + 1; j++) {
+      if(!j)
+        fprintf(fp, "%.16g", c->k[j]);
+      else
+        fprintf(fp, ", %.16g", c->k[j]);
+      if(j % 5 == 4 && j != List_Nbr(c->Control_Points) + c->degre)
+        fprintf(fp, "\n        ");
+    }
+    fprintf(fp, "}\n");
+    fprintf(fp, "  Order %d;\n", c->degre);
+    return;
+  case MSH_SEGM_SPLN:
+    fprintf(fp, "Spline(%d) = ", c->Num);
+    break;
+  case MSH_SEGM_BSPLN:
+    fprintf(fp, "BSpline(%d) = ", c->Num);
+    break;
+  case MSH_SEGM_BEZIER:
+    fprintf(fp, "Bezier(%d) = ", c->Num);
+    break;
+  default:
+    Msg::Error("Unknown curve type %d", c->Typ);
+    return;
+  }
+  for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
+    Vertex *v;
+    List_Read(c->Control_Points, i, &v);
+    if(i)
+      fprintf(fp, ", %d", v->Num);
+    else
+      fprintf(fp, "{%d", v->Num);
+    if(i % 6 == 7)
+      fprintf(fp, "\n");
+  }
+  fprintf(fp, "};\n");
+}

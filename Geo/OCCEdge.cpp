@@ -30,23 +30,6 @@ OCCEdge::OCCEdge(GModel *model, TopoDS_Edge edge, int num, GVertex *v1, GVertex 
   // build the reverse curve
   c_rev = c;
   c_rev.Reverse();
-
-
-//   if (v0 == v1){
-//     const int JJ = 52;
-//     for (int i=1;i<JJ;i++){
-//       const double t = i/((double) JJ);
-//       const double xi = s0 + (s1-s0) * t; 
-//       GPoint p = point(xi);
-//       MEdgeVertex *v = new MEdgeVertex (p.x(),p.y(),p.z(),this,xi);
-//       mesh_vertices.push_back(v);
-//       meshAttributes.Method = MESH_NONE;
-//       if (i == 1)lines.push_back(new MLine(v1->mesh_vertices[0],v));
-//       else if (i == JJ-1)lines.push_back(new MLine(v,v2->mesh_vertices[0]));
-//       else lines.push_back(new MLine(mesh_vertices[i-1],v));
-//     }
-//   }
-
 }
 
 Range<double> OCCEdge::parBounds(int i) const
@@ -54,7 +37,7 @@ Range<double> OCCEdge::parBounds(int i) const
   return Range<double>(s0, s1);
 }
 
-void OCCEdge::setTrimmed (OCCFace *f)
+void OCCEdge::setTrimmed(OCCFace *f)
 {
   if (!trimmed){
     trimmed = f;
@@ -128,7 +111,7 @@ GPoint OCCEdge::point(double par) const
     return trimmed->point(u, v);
   }
   else if(!curve.IsNull()){
-    gp_Pnt pnt = curve->Value (par);
+    gp_Pnt pnt = curve->Value(par);
     return GPoint(pnt.X(), pnt.Y(), pnt.Z());
   }
   else{
@@ -141,7 +124,7 @@ SVector3 OCCEdge::firstDer(double par) const
 {  
   BRepAdaptor_Curve brepc(c);
   BRepLProp_CLProps prop(brepc, 1, 1e-5);
-  prop.SetParameter (par);
+  prop.SetParameter(par);
   gp_Vec d1 = prop.D1();
   return SVector3(d1.X(), d1.Y(), d1.Z());
 }
@@ -243,19 +226,32 @@ double OCCEdge::curvature(double par) const
       Crv = prop.Curvature();
   }
   if(Crv <= eps) Crv = eps;
-  
-  // std::list<GFace*> ff = faces();
-  // std::list<GFace *>::iterator it =  ff.begin();
-  // while (it != ff.end()){
-  //   SPoint2 par2 = reparamOnFace((*it),par,1);
-  //   const double cc = (*it)->curvature ( par2 );
-  //   if (cc > 0)
-  //     Crv = std::max( Crv, cc);  
-  //   ++it;
-  // }  
-  // printf("curvature = %12.5E\n",Crv); 
-
   return Crv;
+}
+
+void OCCEdge::writeGEO(FILE *fp)
+{
+  if(geomType() == Circle){
+    gp_Pnt center;
+    if(curve.IsNull()){
+      center = Handle(Geom_Circle)::DownCast(curve2d)->Location();
+    }
+    else{
+      center = Handle(Geom_Circle)::DownCast(curve)->Location();
+    }
+    // GEO supports only circle arcs < Pi
+    if(s1 - s0 < M_PI){
+      fprintf(fp, "p%d = newp;\n", tag());
+      fprintf(fp, "Point(p%d + 1) = {%.16g, %.16g, %.16g};\n", 
+              tag(), center.X(), center.Y(), center.Z());
+      fprintf(fp, "Circle(%d) = {%d, p%d + 1, %d};\n", 
+              tag(), getBeginVertex()->tag(), tag(), getEndVertex()->tag());
+    }
+    else
+      GEdge::writeGEO(fp);
+  }
+  else
+    GEdge::writeGEO(fp);
 }
 
 #endif

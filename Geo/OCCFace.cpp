@@ -187,7 +187,7 @@ GEntity::GeomType OCCFace::geomType() const
   return Unknown;
 }
 
-double OCCFace::curvature (const SPoint2 &param) const
+double OCCFace::curvature(const SPoint2 &param) const
 {
   const double eps = 1.e-12;
   BRepAdaptor_Surface sf(s, Standard_True);

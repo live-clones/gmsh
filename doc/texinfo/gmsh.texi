@@ -1001,9 +1001,6 @@ of a given geometry point (@pxref{Points}). The last two cases permit to
 retrieve the indices of entities created through geometrical transformations
 and extrusions (see @ref{Transformations}, and @ref{Extrusions}).
 
-@c todo: explain in detail what numbers are returned once we decide what to
-@c do (chapeau et body pour extrude, etc.)...
-
 To see the practical use of such expressions, have a look at the first
 couple of examples in @ref{Tutorial}. Note that, in order to lighten the
 syntax, you can always omit the braces @code{@{@}} enclosing an
@@ -1970,6 +1967,26 @@ the X, Y and Z components of any point on this axis; the last
 @var{extrude-list}: 
   Point | Line | Surface @{ @var{expression-list} @}; @dots{}
 @end example
+
+As explained in @ref{Floating point expressions}, @var{extrude} can be
+used in an expression, in which case it returns a list of identification
+numbers. By default, the list contains the ``top'' of the extruded
+entity at index 0 and the extruded entity at index 1, followed by the
+``sides'' of the extruded entity at indices 2, 3, etc.  For example:
+
+@example
+  Point(1) = @{0,0,0@};
+  Point(2) = @{1,0,0@};
+  Line(1) = @{1, 2@};
+  out[] = Extrude@{0,1,0@}@{ Line@{1@}; @};
+  Printf("top line = %g", out[0]);
+  Printf("surface = %g", out[1]);
+  Printf("side lines = %g and %g", out[2], out[3]);
+@end example
+
+This behaviour can be changed with the
+@code{Geometry.ExtrudeReturnLateralEntities} option (@pxref{Geometry
+options list}).
 
 @c .........................................................................
 @c Transformations
@@ -3155,7 +3172,7 @@ the nodes is given in @ref{Node ordering}.
 @item @var{number-of-string-tags}
 gives the number of string tags that follow. By default the first
 @var{string-tag} is interpreted as the name of the post-processing view.
-@c FIXME and the second as the name of the interpolation scheme.
+@c todo: and the second as the name of the interpolation scheme?
 
 @item @var{number-of-real-tags}
 gives the number of real number tags that follow. By default the first

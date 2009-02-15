@@ -122,6 +122,33 @@ std::string GEdge::getAdditionalInfoString()
   return sstream.str();
 }
 
+void GEdge::writeGEO(FILE *fp)
+{
+  if(!getBeginVertex() || !getEndVertex() || geomType() == DiscreteCurve) return;
+
+  if(geomType() == Line){
+    fprintf(fp, "Line(%d) = {%d, %d};\n", 
+            tag(), getBeginVertex()->tag(), getEndVertex()->tag());
+  }
+  else{
+    // approximate other curves by splines
+    Range<double> bounds = parBounds(0);
+    double umin = bounds.low();
+    double umax = bounds.high();
+    fprintf(fp, "p%d = newp;\n", tag());
+    for(int i = 1; i < minimumDrawSegments(); i++){
+      double u = umin + (double)i / minimumDrawSegments() * (umax - umin);
+      GPoint p = point(u);
+      fprintf(fp, "Point(p%d + %d) = {%.16g, %.16g, %.16g};\n", 
+              tag(), i, p.x(), p.y(), p.z());
+    }
+    fprintf(fp, "Spline(%d) = {%d", tag(), getBeginVertex()->tag());
+    for(int i = 1; i < minimumDrawSegments(); i++)
+      fprintf(fp, ", p%d + %d", tag(), i);
+    fprintf(fp, ", %d};\n", getEndVertex()->tag());
+  }
+}
+
 bool GEdge::containsParam(double pt) const
 {
   Range<double> rg = parBounds(0);

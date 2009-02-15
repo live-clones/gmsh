@@ -97,3 +97,9 @@ SPoint2 gmshVertex::reparamOnFace(const GFace *face, int dir) const
     return GVertex::reparamOnFace(face, dir);
   }
 }
+
+void gmshVertex::writeGEO(FILE *fp)
+{
+  fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g, %.16g};\n",
+          v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc);
+}

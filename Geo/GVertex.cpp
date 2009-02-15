@@ -56,6 +56,12 @@ std::string GVertex::getAdditionalInfoString()
   return sstream.str();
 }
 
+void GVertex::writeGEO(FILE *fp)
+{
+  fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g, %.16g};\n",
+          tag(), x(), y(), z(), prescribedMeshSizeAtVertex());
+}
+
 unsigned int GVertex::getNumMeshElements()
 {
   return points.size(); 

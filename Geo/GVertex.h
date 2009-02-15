@@ -6,6 +6,7 @@
 #ifndef _GVERTEX_H_
 #define _GVERTEX_H_
 
+#include <stdio.h>
 #include "GEntity.h"
 #include "GPoint.h"
 #include "SPoint2.h"
@@ -39,6 +40,9 @@ class GVertex : public GEntity
   void addEdge(GEdge *e);
   void delEdge(GEdge *e);
 
+  // get the edges that this vertex bounds
+  virtual std::list<GEdge*> edges() const{ return l_edges; }
+
   // get the dimension of the vertex (0)
   virtual int dim() const { return 0; }
 
@@ -58,8 +62,8 @@ class GVertex : public GEntity
   // return a type-specific additional information string
   virtual std::string getAdditionalInfoString();
 
-  // get the edges that this vertex bounds
-   virtual std::list<GEdge*> edges() const{ return l_edges; }
+  // export in GEO format
+  virtual void writeGEO(FILE *fp);
 
   // get number of elements in the mesh
   unsigned int getNumMeshElements();

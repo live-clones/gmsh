@@ -6,6 +6,7 @@
 #ifndef _GREGION_H_
 #define _GREGION_H_
 
+#include <stdio.h>
 #include "GEntity.h"
 
 class MElement;
@@ -50,6 +51,9 @@ class GRegion : public GEntity {
 
   // return a type-specific additional information string
   virtual std::string getAdditionalInfoString();
+
+  // export in GEO format
+  virtual void writeGEO(FILE *fp);
 
   // number of types of elements
   int getNumElementTypes() const { return 4; }

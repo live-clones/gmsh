@@ -196,6 +196,38 @@ std::string GFace::getAdditionalInfoString()
   return sstream.str();
 }
 
+void GFace::writeGEO(FILE *fp)
+{
+  if(geomType() == DiscreteSurface) return;
+
+  std::list<GEdge*> edg = edges();
+  std::list<int> dir = orientations();
+  if(edg.size() && dir.size() == edg.size()){
+    std::vector<int> num, ori;
+    for(std::list<GEdge*>::iterator it = edg.begin(); it != edg.end(); it++)
+      num.push_back((*it)->tag());
+    for(std::list<int>::iterator it = dir.begin(); it != dir.end(); it++)
+      ori.push_back((*it) > 0 ? 1 : -1);
+    fprintf(fp, "Line Loop(%d) = ", tag());
+    for(unsigned int i = 0; i < num.size(); i++){
+      if(i)
+        fprintf(fp, ", %d", num[i] * ori[i]);
+      else
+        fprintf(fp, "{%d", num[i] * ori[i]);
+    }
+    fprintf(fp, "};\n");
+    if(geomType() == GEntity::Plane){
+      fprintf(fp, "Plane Surface(%d) = {%d};\n", tag(), tag());
+    }
+    else if(edg.size() == 3 || edg.size() == 4){
+      fprintf(fp, "Ruled Surface(%d) = {%d};\n", tag(), tag());
+    }
+    else{
+      Msg::Error("Skipping surface %d in export", tag());
+    }
+  }
+}
+
 void GFace::computeMeanPlane()
 {
   std::vector<SPoint3> pts;

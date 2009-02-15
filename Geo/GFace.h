@@ -148,6 +148,9 @@ class GFace : public GEntity
   // return a type-specific additional information string
   virtual std::string getAdditionalInfoString();
 
+  // export in GEO format
+  virtual void writeGEO(FILE *fp);
+
   // fill the crude representation cross
   virtual bool buildRepresentationCross();
 

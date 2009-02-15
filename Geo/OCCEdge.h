@@ -41,6 +41,7 @@ class OCCEdge : public GEdge {
   bool is3D() const { return !curve.IsNull(); }
   void setTrimmed(OCCFace *);
   bool isSeam(const GFace *) const;
+  virtual void writeGEO(FILE *fp);
 };
 
 #endif

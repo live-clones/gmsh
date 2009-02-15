@@ -136,6 +136,23 @@ std::string GRegion::getAdditionalInfoString()
   return sstream.str();
 }
 
+void GRegion::writeGEO(FILE *fp)
+{
+  if(geomType() == DiscreteVolume) return;
+
+  if(l_faces.size()){
+    fprintf(fp, "Surface Loop(%d) = ", tag());
+    for(std::list<GFace*>::iterator it = l_faces.begin(); it != l_faces.end(); it++) {
+      if(it != l_faces.begin())
+        fprintf(fp, ", %d", (*it)->tag());
+      else
+        fprintf(fp, "{%d", (*it)->tag());
+    }
+    fprintf(fp, "};\n");
+    fprintf(fp, "Volume(%d) = {%d};\n", tag(), tag());
+  }
+}
+
 std::list<GEdge*> GRegion::edges() const
 {
   std::list<GEdge*> e;

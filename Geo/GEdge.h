@@ -6,6 +6,7 @@
 #ifndef _GEDGE_H_
 #define _GEDGE_H_
 
+#include <stdio.h>
 #include "GEntity.h"
 #include "GVertex.h"
 #include "SVector3.h"
@@ -94,6 +95,9 @@ class GEdge : public GEntity {
 
   // return a type-specific additional information string
   virtual std::string getAdditionalInfoString();
+
+  // export in GEO format
+  virtual void writeGEO(FILE *fp);
 
   // tell if the edge is a 3D edge (in opposition with a trimmed curve on a surface)
   virtual bool is3D() const { return true; }
