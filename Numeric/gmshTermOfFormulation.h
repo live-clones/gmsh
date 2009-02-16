@@ -97,6 +97,63 @@ class gmshNodalFemTerm : public gmshTermOfFormulation<scalar> {
       }
     }
   }
+  void addDirichlet(int physical, 
+		    int dim, 
+		    int comp, 
+		    int field, 
+		    const gmshFunction<scalar> & e,
+		    gmshAssembler<scalar> &lsys)
+  {
+    std::vector<MVertex *> v;
+    _gm->getMeshVertices (physical, dim,v);
+    for (int i=0;i<v.size();i++)
+      lsys.fixVertex (v[i], comp, field ,  e(v[i]->x(),v[i]->y(),v[i]->z()));
+  }
+  void addNeumann(int physical, 
+		  int dim, 
+		  int comp, 
+		  int field, 
+		  const gmshFunction<scalar> & fct, 
+		  gmshAssembler<scalar> &lsys)
+{
+  std::map<int, std::vector<GEntity*> > groups[4];
+  _gm->getPhysicalGroups(groups);
+  std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].find(physical);  
+  if (it == groups[dim].end())return;
+  double jac[3][3];
+
+  for (int i=0;i<it->second.size();++i){
+    GEntity *ge = it->second[i];
+    for (int j=0; j<ge->getNumMeshElements();j++){
+      MElement *e = ge->getMeshElement(j);
+      int integrationOrder = 2*e->getPolynomialOrder();
+      int nbNodes = e->getNumVertices();
+      int npts;
+      IntPt *GP;
+      e->getIntegrationPoints(integrationOrder, &npts, &GP);  
+      for (int ip=0;ip<npts;ip++){
+	const double u      = GP[ip].pt[0];
+	const double v      = GP[ip].pt[1];
+	const double w      = GP[ip].pt[2];
+	const double weight = GP[ip].weight;
+	const double detJ = e->getJacobian (u,v,w,jac);   
+	double x = 0;
+	double y = 0;
+	double z = 0;
+        double sf[nbNodes];
+        e->getShapeFunctions (u,v,w,sf);
+	for (int k=0;k<nbNodes;k++){  
+	  x += e->getVertex(k)->x() * sf[k];
+	  y += e->getVertex(k)->y() * sf[k];
+	  z += e->getVertex(k)->z() * sf[k];
+	}
+	const scalar FCT = fct (x,y,z);
+	for (int k=0;k<nbNodes;k++){	  
+	  lsys.assemble(e->getVertex(k), comp, field ,detJ * weight * sf[k] * FCT);
+	}
+      }
+    }
+  }    
 };
 
 #endif
