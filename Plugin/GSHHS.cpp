@@ -51,7 +51,7 @@ class GMSH_GSHHSPlugin:public GMSH_PostPlugin
       }
     };
     class reader_gshhs:public reader{
-      /*	$Id: GSHHS.cpp,v 1.28 2009-01-31 18:30:40 geuzaine Exp $
+      /*	$Id: GSHHS.cpp,v 1.29 2009-02-18 11:21:44 remacle Exp $
        *
        * Include file defining structures used in gshhs.c
        *
@@ -353,12 +353,13 @@ class GMSH_GSHHSPlugin:public GMSH_PostPlugin
               +(v[2]-p.v[2])*(v[2]-p.v[2]));
         }
         void to_stereo(double &xp,double &yp,bool inverse_stereo=false){
+        double r=sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
           if(inverse_stereo){
-            yp=v[1]/(1-v[2]);
-            xp=v[0]/(1-v[2]);
+            xp=v[1]/(r-v[2]);
+            yp=v[0]/(r-v[2]);
           }else{
-            xp=-v[1]/(1+v[2]);
-            yp=-v[0]/(1+v[2]);
+            xp=-v[0]/(r+v[2]);
+            yp=-v[1]/(r+v[2]);
           }
         }
         void to_latlon(double &lat,double &lon){
@@ -644,7 +645,7 @@ class GMSH_GSHHSPlugin:public GMSH_PostPlugin
             i=l->remove_range(i,id1);
             result=true;
           }
-          if(not_a_loop!=1 &&(l->orientation(id1,i,reverse_stereo)==-1 || l->length(id1,i)<3)){
+          if(not_a_loop!=1 && (l->orientation(id1,i,reverse_stereo)==-1 || l->length(id1,i)<3)){
             i=l->remove_range(id1,i);
             result=true;
           }else
