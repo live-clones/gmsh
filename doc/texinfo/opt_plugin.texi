@@ -426,6 +426,38 @@ Default value: @code{-1}
 Default value: @code{-1}
 @end table
 
+@item Plugin(FiniteElement)
+Plugin(FiniteElement) solves simple PDEs
+using the finite element method. This is only
+intended as a demonstration tool: it is NOT
+intended for general use.
+Plugin(FiniteElement) creates a new view.
+
+String options:
+@table @code
+@item Equation
+Default value: @code{"Laplace"}
+@item BC1
+Default value: @code{"Dirichlet"}
+@item BC2
+Default value: @code{"Dirichlet"}
+@end table
+Numeric options:
+@table @code
+@item Parameter
+Default value: @code{1}
+@item Volume
+Default value: @code{1}
+@item Surface1
+Default value: @code{2}
+@item Value1
+Default value: @code{0}
+@item Surface2
+Default value: @code{3}
+@item Value2
+Default value: @code{1}
+@end table
+
 @item Plugin(GSHHS)
 Plugin(GSHHS) read different kind of contour lines data and write a .geo file on the surface of a sphere (the Earth).
 The principal application is to load GSHHS data

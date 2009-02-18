@@ -1,19 +1,10 @@
 Some GUI guidelines:
 
-1) To make the interface as visually consistent as possible, please:
-- use the IW, BB, BH, BW and WB values
-- examine what's already done before adding something new...
+1) To make the interface as visually consistent as possible use the
+IW, BB, BH and WB values. And examine what's already done before
+adding something new...
 
-2) Use the following rule for buttons on dialog windows:
-- "OK" is to agree with what is in the dialog *AND* close the dialog
-- "Apply" is to apply the current values selected in the dialog, but
-  leave the dialog open
-- "Cancel" is to close (hide) the dialog and *NOT* apply the
-  changes that might have been made in the dialog
-The "Cancel" button, if present, should always be the last (-> at
-right)
-
-3) Only 'title-capitalize' titles and menus (Rules: 1. Always
+2) Only 'title-capitalize' titles and menus (Rules: 1. Always
 capitalize the first and the last word. 2. Capitalize all nouns,
 pronouns, adjectives, verbs, adverbs, and subordinate
 conjunctions. 3. Lowercase all articles, coordinate conjunctions,
@@ -21,7 +12,7 @@ and prepositions, when they are other than the first or last
 word. 4. Lowercase the "to" in an infinitive.) Capitalize everything
 else like normal english sentences
 
-4) Use an ellipsis character in a menu item for
+3) Use an ellipsis character in a menu item for
 - an action that requires further user input to complete or
   presents an alert allowing the user to cancel the action
   Examples: Find, Go To, Open, Page Setup, and Print.
@@ -37,6 +28,6 @@ Don't use en allipsis for:
   window and are frequently left open to assist in accomplishing the
   task of the main window. Examples: Info and Show Tools.
 
-5) The title of a window opened from a meny should be exactly the
+4) The title of a window opened from a menu should be exactly the
 same as the label of the menu item (without the ellipsis character if
 there is one)
