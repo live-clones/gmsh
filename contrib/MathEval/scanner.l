@@ -46,7 +46,7 @@ static int input_from_string (char *buffer, int max_size);
 whitespace [\ \t]+
 digit [0-9]
 number ({digit}+|{digit}+"."{digit}*|{digit}*"."{digit}+)([Ee][-+]?{digit}+)?
-function "Exp"|"Log"|"Sqrt"|"Sin"|"Cos"|"Tan"|"Ctan"|"Asin"|"Acos"|"Atan"|"Actan"|"Sinh"|"Cosh"|"Tanh"|"Ctanh"|"Asinh"|"Acosh"|"Atanh"|"Actanh"|"Fabs"|"Rand"|"Log10"
+function "Exp"|"Log"|"Sqrt"|"Sin"|"Cos"|"Tan"|"Ctan"|"Asin"|"Acos"|"Atan"|"Actan"|"Sinh"|"Cosh"|"Tanh"|"Ctanh"|"Asinh"|"Acosh"|"Atanh"|"Actanh"|"Fabs"|"Rand"|"Log10"|"Step"|"Delta"|"NanDelta"|"Floor"|"HeavS"
 identifier [a-zA-Z\_][a-zA-Z0-9\_]*
 
 %%

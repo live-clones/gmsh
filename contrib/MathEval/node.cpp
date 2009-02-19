@@ -502,6 +502,43 @@ node_derivative(Node * node, char *name, SymbolTable * symbol_table)
      */
     else if (!strcmp(node->data.function.record->name, "Fabs"))
       return node_create('b', '/', node_create('b', '*', node_derivative(node->data.function.child, name, symbol_table), node_copy(node->data.function.child)), node_create('f', symbol_table_lookup(symbol_table, "Sqrt"), node_create('b', '^', node_copy(node->data.function.child), node_create('c', 2.0))));
+
+     /*
+     * Apply rule of step function derivative. 
+     */
+    else if (!strcmp(node->data.function.record->name, "Step"))
+      return node_create('b', '*',node_derivative(node->data.function.child, name, symbol_table), node_create('f', symbol_table_lookup(symbol_table,"Delta"), node_copy(node->data.function.child)));
+
+    /*
+     * Apply rule of floor function derivative. 
+     */
+    else if (!strcmp(node->data.function.record->name, "Floor"))
+       return node_create('b', '*', node_derivative(node->data.function.child, name, symbol_table), node_create('f',symbol_table_lookup(symbol_table, "Delta"), node_copy(node->data.function.child)));
+
+    /*
+     * Apply rule of smoothed heaviside function derivative. 
+     */
+    else if (!strcmp(node->data.function.record->name, "HeavS")){
+      //printf("********************************  Derivative of smoothed heaviside function not implemented yet, return a Delta function ...");
+      return node_create('b', '*',node_derivative(node->data.function.child, name, symbol_table), node_create('f', symbol_table_lookup(symbol_table,"Delta"), node_copy(node->data.function.child)));
+    }
+
+    /*
+     * Apply rule of delta function derivative. 
+     */
+    else if (!strcmp(node->data.function.record->name, "Delta"))
+      return node_create('b', '*',node_derivative(node->data.function.child, name,symbol_table),node_create('f',symbol_table_lookup(symbol_table, "NanDelta"), node_copy(node->data.function.child)));
+     
+
+    /*
+     * Apply rule of nandelta function derivative. 
+     */
+    else if (!strcmp(node->data.function.record->name, "NanDelta"))
+      return node_create('b', '*', node_derivative(node->data.function.child, name, symbol_table), node_create('f',symbol_table_lookup(symbol_table, "NanDelta"), node_copy(node->data.function.child)));
+
+
+
+
     
   case 'u':
     switch (node->data.un_op.operatorr) {

@@ -26,6 +26,7 @@
 #include "common.h"
 #include "symbol_table.h"
 #include "xmath.h"
+#include <iostream>
 
 /*
  * Type definition for function accepting single argument of double type and
@@ -43,11 +44,11 @@ symbol_table_create(int length)
   static char    *names[] = {"Exp", "Log", "Sqrt", "Sin", "Cos", "Tan", "Ctan", 
 			     "Asin", "Acos", "Atan", "Actan", "Sinh", "Cosh", "Tanh",
 			     "Ctanh", "Asinh", "Acosh", "Atanh", "Actanh", "Fabs", 
-			     "Rand", "Log10" };
+			     "Rand", "Log10" , "Step", "Delta", "NanDelta", "Floor", "HeavS"};
   static double   (*functions[]) (double) = { exp, log, sqrt, sin, cos, tan, x_ctan, 
 					      asin, acos, atan, x_actan, sinh, cosh, tanh, 
 					      x_ctanh, x_asinh, x_acosh, x_atanh, x_actanh,
-					      fabs, x_rand, log10};
+					      fabs, x_rand, log10, x_step, x_delta , x_nandelta, floor, x_heavs};
   unsigned int i;
   
   /*

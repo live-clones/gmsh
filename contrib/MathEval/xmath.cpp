@@ -23,6 +23,10 @@
 #include "xmath.h"
 #include <math.h>
 #include <stdlib.h>
+#include <cmath>
+#include <stdio.h>
+
+using std::fabs;
 
 double
 x_ctan(double x)
@@ -99,3 +103,40 @@ x_rand(double x)
   
   return x*(double)rand()/(double)RAND_MAX;
 }
+double
+x_step(double x)
+{
+	/* 
+	 * Calculate step function value.
+	 */
+	return (x < 0) ? 0 : 1;
+}
+
+double
+x_heavs(double x) //, double eps)
+{
+	/* 
+	 * Calculate smoothed heaviside function value.
+	 */
+  double eps=3.0;
+         return (fabs(x) < eps) ? 0.5*(1+ x/eps +1/3.14*sin(3.14*x/eps)):(x<0? 0:1);
+}
+
+double
+x_delta(double x)
+{
+	/* 
+	 * Calculate delta function value.
+	 */
+	return (x == 0) ? INFINITY : 0;
+}
+
+double
+x_nandelta(double x)
+{
+	/* 
+	 * Calculate modified delta function value.
+	 */
+	return (x == 0) ? NAN : 0;
+}
+

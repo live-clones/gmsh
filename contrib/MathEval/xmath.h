@@ -31,5 +31,9 @@ double x_acosh(double x);
 double x_atanh(double x);
 double x_actanh(double x);
 double x_rand(double x);
+double x_step(double x);
+double x_heavs(double x);
+double x_delta(double x);
+double x_nandelta(double x);
 
 #endif
