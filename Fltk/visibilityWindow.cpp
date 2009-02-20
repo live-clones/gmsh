@@ -1200,17 +1200,20 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     int yy = 2 * WB + BH;
     for(int i = 0; i < 10; i++){
       if(i == 0){
-        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Mesh entities:");
+        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Mesh:");
+        b->labelfont(FL_BOLD);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         yy += BH;
       }
       else if(i == 2){
         Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Elementary entities:");
+        b->labelfont(FL_BOLD);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         yy += BH;
       }
       else if(i == 6){
         Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Physical groups:");
+        b->labelfont(FL_BOLD);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         yy += BH;
       }
@@ -1269,17 +1272,20 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     int yy = 2 * WB + BH;
     for(int i = 0; i < 9; i++){
       if(i == 0){
-        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Mesh entities:");
+        Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Mesh:");
+        b->labelfont(FL_BOLD);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         yy += BH;
       }
       else if(i == 1){
         Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Elementary entities:");
+        b->labelfont(FL_BOLD);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         yy += BH;
       }
       else if(i == 5){
         Fl_Box *b = new Fl_Box(2 * WB, yy, IW, BH, "Physical groups:");
+        b->labelfont(FL_BOLD);
         b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
         yy += BH;
       }
