@@ -3509,8 +3509,8 @@ The nodes of a curved element are numbered in the following order:
 @item the volume internal nodes.
 @end itemize
 
-The numbering for face and volume internal nodes is recursive, ie. the
-numbering follows that of the nodes of an embedded face / volume. The
+The numbering for face and volume internal nodes is recursive, i.e., the
+numbering follows that of the nodes of an embedded face/volume. The
 higher order nodes are assumed to be equispaced on the element.
 
 @c -------------------------------------------------------------------------

@@ -2362,10 +2362,10 @@ optionWindow::optionWindow(int deltaFontSize)
       view.input[0]->callback(view_options_ok_cb);
 
       int sw = (int)(1.5 * FL_NORMAL_SIZE);
-      view.push[3] = new Fl_Repeat_Button
+      view.push[3] = new Fl_Button
         (L + 2 * WB, 2 * WB + 3 * BH, sw, BH, "-");
       view.push[3]->callback(view_options_timestep_cb, (void*)"-");
-      view.push[4] = new Fl_Repeat_Button
+      view.push[4] = new Fl_Button
         (L + 2 * WB + IW - sw, 2 * WB + 3 * BH, sw, BH, "+");
       view.push[4]->callback(view_options_timestep_cb, (void*)"+");
       view.value[50] = new Fl_Value_Input

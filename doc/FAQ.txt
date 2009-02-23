@@ -1,4 +1,4 @@
-$Id: FAQ.txt,v 1.3 2009-02-07 17:14:49 geuzaine Exp $
+$Id: FAQ.txt,v 1.4 2009-02-23 23:56:19 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -21,10 +21,12 @@ GNU foundation's web site at http://www.gnu.org.
 
 * 1.3 What does 'Gmsh' mean?
 
-Nothing ;-)
+Nothing... The name was derived from a previous version called "msh"
+(a shortcut for "mesh"), with the "g" prefix added to differentiate
+it. The default mesh file format used by Gmsh still uses the ".msh"
+extention. 
 
-(Note that in the US, people tend to pronounce 'Gmsh' as
-'Gee-mesh'. Yeehaa!)
+In English people tend to pronounce 'Gmsh' as "gee-mesh".
 
 * 1.4 Where can I find more information?
 
@@ -39,10 +41,8 @@ Section 2: Installation
 
 * 2.1 Which OSes does Gmsh run on?
 
-Gmsh is known to run on Windows 95/98/NT/2000/XP, Linux, Mac OS X,
-Compaq Tru64 Unix (aka OSF1, aka Digital Unix), Sun OS, IBM AIX, SGI
-IRIX, FreeBSD and HP-UX. It should compile on any Unix-like operating
-system, provided that you have access to a recent C and C++ compiler.
+Gmsh is known to run on Windows 2000/XP/Vista, Mac OS X, Linux and
+most Unix variants.
 
 * 2.2 Are there additional requirements to run Gmsh?
 
@@ -50,16 +50,18 @@ You should have the OpenGL libraries installed on your system, and in
 the path of the library loader. A free replacement for OpenGL can be
 found at http://www.mesa3d.org.
 
-* 2.3 What do I need to compile Gmsh from the sources?
+* 2.3 How do I compile Gmsh from the source code?
 
-You need a C and a C++ compiler (e.g. the GNU compilers gcc and g++)
-as well as FLTK (version >= 1.1.7, configured with OpenGL support;
-freely available from http://www.fltk.org).
+You need a C++ compiler. On Unix-like systems just type './configure;
+make; make install'. (Type './configure --help' to get the list of all
+configuration options.) To compile Gmsh on Windows with Visual C++ see
+doc/README.msvc.
 
-* 2.4 How do I compile Gmsh?
-
-Just type './configure; make; make install'. (Type './configure
---help' to get the list of all configuration options.)
+Compiling a bare-bones non-graphical version of Gmsh does not require
+any extra packages. To get a usable version you will need the Blas and
+Lapack libraries. To build the graphical version you will need FLTK >=
+1.1.7 (freely available from http://www.fltk.org), configured with
+OpenGL support.
 
 ********************************************************************
 
@@ -95,7 +97,9 @@ see this ghost triangulation in the printed output (on paper).
 
 * 3.5 How can I save GIF, JPEG, ..., images?
 
-Just choose the appropriate format in 'File->Save As'.
+Just choose the appropriate format in 'File->Save As'. By default Gmsh
+guesses the format from the file extension, so you can just choose
+"myfile.jpg" in the dialog.
 
 * 3.6 How can I save MPEG, AVI, ..., animations?
 
@@ -107,7 +111,9 @@ Section 4: Geometry module
 
 * 4.1 Does Gmsh support NURBS curves/surfaces?
 
-Yes, but only via STEP, IGES or BREP model import (not in .geo files).
+Yes, but only via STEP, IGES or BREP model import (not in .geo
+files). Gmsh has to be compiled with OpenCascade support for this to
+work.
 
 * 4.2 Gmsh is very slow when I use many transformations (Translate,
 Rotate, Symmetry, Extrude, etc. ). What's wrong?
@@ -127,35 +133,12 @@ problem:
 
 * 4.3 How can I display only selected parts of my model?
 
-Use 'Tool->Visibility'.
+Use 'Tools->Visibility'. This allows you to select elementary entities
+and physical groups, as well as mesh elements, in a variety of ways
+(in a list or tree browser, by identification number, interactively,
+or per window).
 
-There are three main modes: 'Elementary entities', in which the
-selections will apply to elementary geometrical entities; 'Physical
-groups', in which the selections will apply to physical entities; and
-'Mesh partitions', in which the selections will apply to mesh
-partitions. 
-
-If the 'Recursive' option is set, selecting an entity also selects all
-its boundaries, recursively. For example, if 'Recursive' is set,
-selecting a surface will automatically select its boundary curves, as
-well as the boundaries of these curves (i.e., points).
-
-In the 'Browser' tab, you can select which entities to show or hide in
-a list (several entities can be selected at once by dragging the mouse
-or by holding the Ctrl or Shift keys while clicking). In the
-'Numerical input' tab, you can choose which entities to show or hide
-by explicitly specifying their identification tags. In the
-'Interactive' tab, you can hide/show entities using the mouse.
-
-4.4 When compiled with OpenCascade support, Gmsh crashes at startup
-
-Try changing these environment variables, which govern how OpenCascade
-allocates memory:
-
-export MMGT_OPT=0
-export MMGT_MMAP=0
-
-4.5 Can I edit STEP/IGES/BRep models?
+* 4.4 Can I edit STEP/IGES/BRep models?
 
 Not yet. At the moment you can only change characteristic lengths and
 define physical groups. The easiest way to do this is to merge the
@@ -170,17 +153,23 @@ Section 5: Mesh module
 
 * 5.1 What should I do when the 2D unstructured algorithm fails?
 
-Verify that the 1D mesh does not self-intersect. If it does, use a
-smaller characteristic length. If it doesn't, send us a bug report
-(including your geometry).
+Verify that the curves in the model do not self-intersect. If the
+model has very small features (such that the smallest characteristic
+length times the random perturbation factor Mesh.RandomFactor
+approaches machine accuracy), try increasing Mesh.RandomFactor.
+
+If everything fails send us a bug report with the version of your
+operating system and the full geometry.
 
 * 5.2 What should I do when the 3D unstructured algorithm fails?
 
-Try the other 3D algorithms (Tool->Options->Mesh->General->3D
-algorithm). If none works, try to adapt the characteristic lengths in
-your input file so that the surface mesh better matches the
-geometrical details of the model. If nothing works, send us a bug
-report (including your geometry).
+Verify that the surfaces in your model do not self-intersect or
+partially overlap. If they don't, try the other 3D algorithms
+(Tool->Options->Mesh->General->3D algorithm) or try to adapt the
+characteristic lengths in your input file so that the surface mesh
+better matches the geometrical details of the model. 
+
+If nothing works, send us a bug report (including your geometry).
 
 * 5.3 The quality of the elements generated by the 3D algorithm is
 very bad.
@@ -196,7 +185,7 @@ hexahedra instead of tetrahedra.
 * 5.5 Does Gmsh automatically couple unstructured tetrahedral meshes
 and structured hexahedral meshed using pyramids?
 
-No. We need you help to implement this.
+No. We need your help to implement this.
 
 * 5.6 Can I explicitly assign region numbers to extruded layers?
 
@@ -251,9 +240,7 @@ the geometry, the mesh, the post-processing views, or any combination
 of the above.  The clipping planes are defined using the four
 coefficients A,B,C,D of the equation A*x+B*y+C*y+D=0, which can be
 adjusted interactively by dragging the mouse in the input
-fields. There is also one additional clipping plane available for
-"cutting" only the mesh (by keeping entire elements), in
-'Tools->Options->Mesh->Cutting'.
+fields.
 
 * 5.13 What is the signification of Rho, Eta and Gamma in 
 Tools->Statistics?
@@ -265,7 +252,7 @@ Eta ~ volume^(2/3) / sum_edge_length^2
 Rho ~ min_edge_length / max_edge_length
 
 For the exact definitions, see Geo/MElement.cpp. The graphs plot the
-the number of elements vs the quality measure.
+the number of elements vs. the quality measure.
 
 ********************************************************************
 
@@ -292,7 +279,7 @@ executable. What's wrong?
 
 The solver executable (for example, 'getdp.exe') has to be in your
 path. If it is not, simply go to the solver options (the second tab in
-the Solver dialog) and specify its location in the 'Executable' field.
+the Solver dialog) and specify its location in the 'Command' field.
 
 * 6.3 Can I launch Gmsh from my solver (instead of launching my solver
 from Gmsh) in order to monitor a solution?
@@ -345,7 +332,7 @@ displacement is too small (or too large), you can scale it with the
 'Displacement factor' option. (Remember that you can drag the mouse in
 all numeric input fields to slide the value!)
 
-Another option is to use the "general transformation expressions" (in
+Another option is to use the 'General transformation expressions' (in
 View->Options->Offset) on a scalar view, with the displacement map
 selected as the data source.
 
@@ -418,32 +405,7 @@ In any case, you can automatically remove all empty views with
 'View->Remove->Empty Views' in the GUI, or with "Delete Empty Views;"
 in a script.
 
-* 7.13 My code generates data "time step by time step", and thus
-cannot easily output Gmsh's multi-time-step post-processing files,
-where the values for all the time steps are given per element. How can
-I use Gmsh's post-processor in this situation?
-
-Just create one view for each time step: Gmsh can handle an arbitrary
-number of views and it can deal with these separate views as
-efficiently as with a single multi-time-step view. The only
-disadvantage is that the total amount of disk space used is greater
-(since the node data is repeated for each time step).
-
-In practice, depending on the size of the data set, you may want to
-store all the views in a single file or create one separate file for
-each view, which you can then load selectively (and thus reduce the
-memory required for the analysis). In any case you can use
-'Tools->Options->Post-processing->View links' to apply options to
-multiple views at once, and the up and down arrow keys to loop through
-(animate) the views (instead of the left and right arrow keys for
-multi-time-step views).
-
-Also note that if all the views are based on the same grid, Gmsh can
-combine the separate views into a multi-time-step view by using the
-'View->Combine->Time Steps' menu, or by using the '-combine' command
-line option.
-
-* 7.14 How can I see "inside" a complicated post-processing view?
+* 7.13 How can I see "inside" a complicated post-processing view?
 
 See question 5.12. 
 
@@ -456,19 +418,8 @@ keyboard shortcuts.
 Yet another (destructive) option is to use the ExtractVolume option in
 the CutSphere or CutPlane plugins.
 
-* 7.15 I am loading a valid 3D scalar view but Gmsh does not display
+* 7.14 I am loading a valid 3D scalar view but Gmsh does not display
 anything!
 
-In versions < 1.61, the default drawing mode for 3D scalar views was
-to draw iso-surfaces. If your data set was constant per element, Gmsh
-would not draw anything (a fix for this would be to run
-Plugin(Smooth), which would average the data on the nodes of the
-grid)... This behavior has changed in version 1.61, and Gmsh now draws
-the solution on the boundary of the elements by default. Iso-surfaces
-are of course still available by setting 'Intervals type' to
-'Iso-values' in 'Tools->Options->View->Range'.
-
-Note that the most efficient way to visualize the dataset on the
-boundary of the elements is to run Plugin(Skin) on the view: this will
-extract the boundary of the dataset and only draw the data on this
-boundary.
+If your dataset is constant per element make sure you don't use the
+'Iso-values' interval type in 'Tools->Options->View->Range'.
