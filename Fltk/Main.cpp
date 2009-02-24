@@ -29,9 +29,9 @@ int main(int argc, char *argv[])
   // Hack to generate automatic documentation (before getting
   // user-defined options)
   if(argc == 2 && std::string(argv[1]) == "-doc"){
-    Init_Options(0);
+    InitOptions(0);
     PluginManager::instance()->registerDefaultPlugins();
-    Print_OptionsDoc();
+    PrintOptionsDoc();
     exit(0);
   }
 
@@ -50,20 +50,20 @@ int main(int argc, char *argv[])
   GUI::instance(argc, argv);
 
   // Set all previously defined options in the GUI
-  Init_Options_GUI(0);
+  InitOptionsGUI(0);
 
   // Say welcome!
   Msg::StatusBar(1, false, "Geometry");
-  Msg::StatusBar(2, false, "Gmsh %s", Get_GmshVersion());
+  Msg::StatusBar(2, false, "Gmsh %s", GetGmshVersion());
 
   // Log the following for bug reports
   Msg::Info("-------------------------------------------------------");
-  Msg::Info("Gmsh version   : %s", Get_GmshVersion());
-  Msg::Info("Build OS       : %s", Get_GmshBuildOS());
-  Msg::Info("Build options  :%s", Get_GmshBuildOptions());
-  Msg::Info("Build date     : %s", Get_GmshBuildDate());
-  Msg::Info("Build host     : %s", Get_GmshBuildHost());
-  Msg::Info("Packager       : %s", Get_GmshPackager());
+  Msg::Info("Gmsh version   : %s", GetGmshVersion());
+  Msg::Info("Build OS       : %s", GetGmshBuildOS());
+  Msg::Info("Build options  :%s", GetGmshBuildOptions());
+  Msg::Info("Build date     : %s", GetGmshBuildDate());
+  Msg::Info("Build host     : %s", GetGmshBuildHost());
+  Msg::Info("Packager       : %s", GetGmshPackager());
   Msg::Info("Home directory : %s", CTX::instance()->homeDir.c_str());
   Msg::Info("Launch date    : %s", Msg::GetLaunchDate().c_str());
   Msg::Info("Command line   : %s", Msg::GetCommandLine().c_str());

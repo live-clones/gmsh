@@ -167,7 +167,7 @@ void status_options_cb(Fl_Widget *w, void *data)
     model_chooser();
   }
   else if(!strcmp(str, "?")){ // display options
-    Print_Options(0, GMSH_FULLRC, 0, 1, NULL);
+    PrintOptions(0, GMSH_FULLRC, 0, 1, NULL);
     GUI::instance()->messages->show();
   }
   else if(!strcmp(str, "p")){ // toggle projection mode

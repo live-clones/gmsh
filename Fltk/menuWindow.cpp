@@ -320,7 +320,7 @@ static void file_options_save_cb(Fl_Widget *w, void *data)
 {
   std::string fileName = GModel::current()->getFileName() + ".opt";
   Msg::StatusBar(2, true, "Writing '%s'", fileName.c_str());
-  Print_Options(0, GMSH_FULLRC, 1, 0, fileName.c_str());
+  PrintOptions(0, GMSH_FULLRC, 1, 0, fileName.c_str());
   Msg::StatusBar(2, true, "Wrote '%s'", fileName.c_str());
 }
 
@@ -475,7 +475,7 @@ static void help_mouse_cb(Fl_Widget *w, void *data)
 static void help_command_line_cb(Fl_Widget *w, void *data)
 {
   Msg::Direct(" ");
-  Print_Usage("gmsh");
+  PrintUsage("gmsh");
   GUI::instance()->messages->show();
 }
 

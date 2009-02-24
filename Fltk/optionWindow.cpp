@@ -146,7 +146,7 @@ void options_save_cb(Fl_Widget *w, void *data)
 {
   std::string fileName = CTX::instance()->homeDir + CTX::instance()->optionsFileName;
   Msg::StatusBar(2, true, "Writing '%s'", fileName.c_str());
-  Print_Options(0, GMSH_OPTIONSRC, 1, 1, fileName.c_str());
+  PrintOptions(0, GMSH_OPTIONSRC, 1, 1, fileName.c_str());
   Msg::StatusBar(2, true, "Wrote '%s'", fileName.c_str());
 }
 
@@ -155,8 +155,8 @@ static void options_restore_defaults_cb(Fl_Widget *w, void *data)
   // not sure if we have to remove the file...
   UnlinkFile(CTX::instance()->homeDir + CTX::instance()->sessionFileName);
   UnlinkFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName);
-  ReInit_Options(0);
-  Init_Options_GUI(0);
+  ReInitOptions(0);
+  InitOptionsGUI(0);
   if(GUI::instance()->menu->module->value() == 3) // hack to refresh the buttons
     GUI::instance()->menu->setContext(menu_post, 0);
   Draw();
@@ -250,8 +250,8 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   double sessionrc = opt_general_session_save(0, GMSH_GET, 0);
   opt_general_session_save(0, GMSH_SET, o->general.butt[8]->value());
   if(sessionrc && !opt_general_session_save(0, GMSH_GET, 0))
-    Print_Options(0, GMSH_SESSIONRC, 1, 1, 
-                  (CTX::instance()->homeDir + CTX::instance()->sessionFileName).c_str());
+    PrintOptions(0, GMSH_SESSIONRC, 1, 1, 
+                 (CTX::instance()->homeDir + CTX::instance()->sessionFileName).c_str());
   opt_general_options_save(0, GMSH_SET, o->general.butt[9]->value());
   opt_general_expert_mode(0, GMSH_SET, o->general.butt[10]->value());
   opt_general_tooltips(0, GMSH_SET, o->general.butt[13]->value());

@@ -833,7 +833,7 @@ Affectation :
 
   | tSTRING '.' tColorTable tAFFECT ListOfColor tEND 
     {
-      GmshColorTable *ct = Get_ColorTable(0);
+      GmshColorTable *ct = GetColorTable(0);
       if(!ct)
 	yymsg(0, "View[%d] does not exist", 0);
       else{
@@ -853,7 +853,7 @@ Affectation :
     }
   | tSTRING '[' FExpr ']' '.' tColorTable tAFFECT ListOfColor tEND 
     {
-      GmshColorTable *ct = Get_ColorTable((int)$3);
+      GmshColorTable *ct = GetColorTable((int)$3);
       if(!ct)
 	yymsg(0, "View[%d] does not exist", (int)$3);
       else{
@@ -2935,9 +2935,9 @@ FExpr_Single :
   | tPi       { $$ = 3.141592653589793; }
   | tMPI_Rank { $$ = Msg::GetCommRank(); }
   | tMPI_Size { $$ = Msg::GetCommSize(); }
-  | tGMSH_MAJOR_VERSION { $$ = Get_GmshMajorVersion(); }
-  | tGMSH_MINOR_VERSION { $$ = Get_GmshMinorVersion(); }
-  | tGMSH_PATCH_VERSION { $$ = Get_GmshPatchVersion(); }
+  | tGMSH_MAJOR_VERSION { $$ = GetGmshMajorVersion(); }
+  | tGMSH_MINOR_VERSION { $$ = GetGmshMinorVersion(); }
+  | tGMSH_PATCH_VERSION { $$ = GetGmshPatchVersion(); }
 
   // Variables
 
@@ -3305,14 +3305,14 @@ ColorExpr :
   | '{' tSTRING ',' FExpr '}'
     {
       int flag;
-      $$ = Get_ColorForString(ColorString, (int)$4, $2, &flag);
+      $$ = GetColorForString(ColorString, (int)$4, $2, &flag);
       if(flag) yymsg(0, "Unknown color '%s'", $2);
     }
 */
   | tSTRING
     {
       int flag;
-      $$ = Get_ColorForString(ColorString, -1, $1, &flag);
+      $$ = GetColorForString(ColorString, -1, $1, &flag);
       if(flag) yymsg(0, "Unknown color '%s'", $1);
       Free($1);
     }
@@ -3333,7 +3333,7 @@ ListOfColor :
   | tSTRING '[' FExpr ']' '.' tColorTable
     {
       $$ = List_Create(256, 10, sizeof(unsigned int));
-      GmshColorTable *ct = Get_ColorTable((int)$3);
+      GmshColorTable *ct = GetColorTable((int)$3);
       if(!ct)
 	yymsg(0, "View[%d] does not exist", (int)$3);
       else{

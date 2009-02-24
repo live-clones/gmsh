@@ -795,11 +795,11 @@ typedef struct {
   const char *help;
 } StringXColor;
 
-void Init_Options(int num);
-void Init_Options_GUI(int num);
-void ReInit_Options(int num);
-void Print_Options(int num, int level, int diff, int help, const char *filename);
-void Print_OptionsDoc();
+void InitOptions(int num);
+void InitOptionsGUI(int num);
+void ReInitOptions(int num);
+void PrintOptions(int num, int level, int diff, int help, const char *filename);
+void PrintOptionsDoc();
 
 bool StringOption(int action, const char *category, int num, 
 		  const char *name, std::string &val);
@@ -808,6 +808,6 @@ bool NumberOption(int action, const char *category, int num,
 bool ColorOption(int action, const char *category, int num, 
 		 const char *name, unsigned int &val);
 
-GmshColorTable *Get_ColorTable(int num);
+GmshColorTable *GetColorTable(int num);
 
 #endif

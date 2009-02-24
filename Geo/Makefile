@@ -99,12 +99,12 @@ GFaceCompound${OBJEXT}: GFaceCompound.cpp ../Common/GmshConfig.h GFaceCompound.h
   ../Numeric/gmshAssembler.h ../Numeric/gmshLinearSystem.h \
   ../Numeric/gmshLaplace.h ../Numeric/gmshTermOfFormulation.h \
   ../Numeric/GmshMatrix.h ../Common/GmshMessage.h \
-  ../Numeric/gmshAssembler.h ../Geo/GModel.h ../Geo/GVertex.h \
-  ../Geo/GEdge.h ../Geo/GFace.h ../Geo/GRegion.h ../Geo/GEntity.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/MElement.h \
-  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
-  ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Numeric/gmshFunction.h ../Numeric/gmshAssembler.h ../Geo/GModel.h \
+  ../Geo/GVertex.h ../Geo/GEdge.h ../Geo/GFace.h ../Geo/GRegion.h \
+  ../Geo/GEntity.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
+  ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
+  ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
+  ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
   ../Numeric/gmshFunction.h ../Common/Gmsh.h ../Common/GmshMessage.h \
   ../Numeric/GmshMatrix.h ../Numeric/Numeric.h ../Numeric/GmshMatrix.h \

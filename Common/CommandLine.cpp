@@ -40,19 +40,19 @@
 #error
 #endif
 
-int Get_GmshMajorVersion(){ return GMSH_MAJOR_VERSION; }
-int Get_GmshMinorVersion(){ return GMSH_MINOR_VERSION; }
-int Get_GmshPatchVersion(){ return GMSH_PATCH_VERSION; }
-const char *Get_GmshExtraVersion(){ return GMSH_EXTRA_VERSION; }
-const char *Get_GmshVersion(){ return GMSH_VERSION; }
-const char *Get_GmshBuildDate(){ return GMSH_DATE; }
-const char *Get_GmshBuildHost(){ return GMSH_HOST; }
-const char *Get_GmshPackager(){ return GMSH_PACKAGER; }
-const char *Get_GmshBuildOS(){ return GMSH_OS; }
-const char *Get_GmshShortLicense(){ return GMSH_SHORT_LICENSE; }
-const char *Get_GmshBuildOptions(){ return GMSH_CONFIG_OPTIONS; }
+int GetGmshMajorVersion(){ return GMSH_MAJOR_VERSION; }
+int GetGmshMinorVersion(){ return GMSH_MINOR_VERSION; }
+int GetGmshPatchVersion(){ return GMSH_PATCH_VERSION; }
+const char *GetGmshExtraVersion(){ return GMSH_EXTRA_VERSION; }
+const char *GetGmshVersion(){ return GMSH_VERSION; }
+const char *GetGmshBuildDate(){ return GMSH_DATE; }
+const char *GetGmshBuildHost(){ return GMSH_HOST; }
+const char *GetGmshPackager(){ return GMSH_PACKAGER; }
+const char *GetGmshBuildOS(){ return GMSH_OS; }
+const char *GetGmshShortLicense(){ return GMSH_SHORT_LICENSE; }
+const char *GetGmshBuildOptions(){ return GMSH_CONFIG_OPTIONS; }
 
-void Print_Usage(const char *name)
+void PrintUsage(const char *name)
 {
   // If you make changes in this routine, please also change the
   // texinfo documentation (doc/texinfo/command_line.texi) and the man
@@ -114,7 +114,7 @@ void Print_Usage(const char *name)
   Msg::Direct("  -help                 Show this message");
 }
 
-void Get_Options(int argc, char *argv[])
+void GetOptions(int argc, char *argv[])
 {
   // print messages on terminal
   int terminal = CTX::instance()->terminal;
@@ -519,7 +519,7 @@ void Get_Options(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "help") || !strcmp(argv[i] + 1, "-help")) {
         fprintf(stderr, "Gmsh, a 3D mesh generator with pre- and post-processing facilities\n");
         fprintf(stderr, "Copyright (C) 1997-2009 Christophe Geuzaine and Jean-Francois Remacle\n");
-        Print_Usage(argv[0]);
+        PrintUsage(argv[0]);
 	Msg::Exit(0);
       }
       else if(!strcmp(argv[i] + 1, "v")) {
@@ -604,7 +604,7 @@ void Get_Options(int argc, char *argv[])
 #endif
       else {
 	Msg::Error("Unknown option '%s'", argv[i]);
-        Print_Usage(argv[0]);
+        PrintUsage(argv[0]);
 	Msg::Exit(1);
       }
 

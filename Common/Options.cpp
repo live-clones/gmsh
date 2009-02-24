@@ -81,7 +81,7 @@ bool StringOption(int action, const char *category, int num,
   return true;
 }
 
-static void Set_DefaultStringOptions(int num, StringXString s[])
+static void SetDefaultStringOptions(int num, StringXString s[])
 {
   int i = 0;
   while(s[i].str) {
@@ -90,7 +90,7 @@ static void Set_DefaultStringOptions(int num, StringXString s[])
   }
 }
 
-static void Set_StringOptions_GUI(int num, StringXString s[])
+static void SetStringOptionsGUI(int num, StringXString s[])
 {
   int i = 0;
   while(s[i].str) {
@@ -99,8 +99,8 @@ static void Set_StringOptions_GUI(int num, StringXString s[])
   }
 }
 
-static void Print_StringOptions(int num, int level, int diff, int help, 
-				StringXString s[], const char *prefix, FILE *file)
+static void PrintStringOptions(int num, int level, int diff, int help, 
+                               StringXString s[], const char *prefix, FILE *file)
 {
   int i = 0;
   while(s[i].str) {
@@ -126,7 +126,7 @@ static void Print_StringOptions(int num, int level, int diff, int help,
   }
 }
 
-static const char *Get_OptionSaveLevel(int level)
+static const char *GetOptionSaveLevel(int level)
 {
   if(level & GMSH_SESSIONRC){
     return "General.SessionFileName";
@@ -139,7 +139,7 @@ static const char *Get_OptionSaveLevel(int level)
   }
 }
 
-static void Print_StringOptionsDoc(StringXString s[], const char *prefix, FILE *file)
+static void PrintStringOptionsDoc(StringXString s[], const char *prefix, FILE *file)
 {
   int i = 0, j;
   char tmp[1024];
@@ -155,7 +155,7 @@ static void Print_StringOptionsDoc(StringXString s[], const char *prefix, FILE *
         val[j - 1] = '.';
     }
     fprintf(file, "Default value: @code{\"%s\"}@*\n", val.c_str());
-    fprintf(file, "Saved in: @code{%s}\n\n", Get_OptionSaveLevel(s[i].level));
+    fprintf(file, "Saved in: @code{%s}\n\n", GetOptionSaveLevel(s[i].level));
     i++;
   }
 }
@@ -195,7 +195,7 @@ bool NumberOption(int action, const char *category, int num,
   return true;
 }
 
-static void Set_DefaultNumberOptions(int num, StringXNumber s[])
+static void SetDefaultNumberOptions(int num, StringXNumber s[])
 {
   int i = 0;
   while(s[i].str) {
@@ -204,7 +204,7 @@ static void Set_DefaultNumberOptions(int num, StringXNumber s[])
   }
 }
 
-static void Set_NumberOptions_GUI(int num, StringXNumber s[])
+static void SetNumberOptionsGUI(int num, StringXNumber s[])
 {
   int i = 0;
   while(s[i].str) {
@@ -213,8 +213,8 @@ static void Set_NumberOptions_GUI(int num, StringXNumber s[])
   }
 }
 
-static void Print_NumberOptions(int num, int level, int diff, int help,
-				StringXNumber s[], const char *prefix, FILE * file)
+static void PrintNumberOptions(int num, int level, int diff, int help,
+                               StringXNumber s[], const char *prefix, FILE * file)
 {
   int i = 0;
   char tmp[1024];
@@ -234,14 +234,14 @@ static void Print_NumberOptions(int num, int level, int diff, int help,
   }
 }
 
-static void Print_NumberOptionsDoc(StringXNumber s[], const char *prefix, FILE * file)
+static void PrintNumberOptionsDoc(StringXNumber s[], const char *prefix, FILE * file)
 {
   int i = 0;
   while(s[i].str) {
     fprintf(file, "@item %s%s\n", prefix, s[i].str);
     fprintf(file, "%s@*\n", s[i].help);
     fprintf(file, "Default value: @code{%g}@*\n", s[i].function(0, GMSH_GET, 0));
-    fprintf(file, "Saved in: @code{%s}\n\n", Get_OptionSaveLevel(s[i].level));
+    fprintf(file, "Saved in: @code{%s}\n\n", GetOptionSaveLevel(s[i].level));
     i++;
   }
 }
@@ -281,8 +281,8 @@ bool ColorOption(int action, const char *category, int num,
   return true;
 }
 
-int Get_ColorForString(StringX4Int SX4I[], int alpha,
-                       const char *str, int *FlagError)
+int GetColorForString(StringX4Int SX4I[], int alpha,
+                      const char *str, int *FlagError)
 {
   int i = 0;
   while(SX4I[i].str && strcmp(SX4I[i].str, str))
@@ -296,7 +296,7 @@ int Get_ColorForString(StringX4Int SX4I[], int alpha,
       (SX4I[i].int1, SX4I[i].int2, SX4I[i].int3, SX4I[i].int4);
 }
 
-static void Set_DefaultColorOptions(int num, StringXColor s[])
+static void SetDefaultColorOptions(int num, StringXColor s[])
 {
   int i = 0;
   // Warning: this assumes that CTX::instance()->color_scheme is set...
@@ -325,7 +325,7 @@ static void Set_DefaultColorOptions(int num, StringXColor s[])
   }
 }
 
-static void Set_ColorOptions_GUI(int num, StringXColor s[])
+static void SetColorOptionsGUI(int num, StringXColor s[])
 {
   int i = 0;
   while(s[i].str) {
@@ -334,8 +334,8 @@ static void Set_ColorOptions_GUI(int num, StringXColor s[])
   }
 }
 
-static void Print_ColorOptions(int num, int level, int diff, int help,
-			       StringXColor s[], const char *prefix, FILE * file)
+static void PrintColorOptions(int num, int level, int diff, int help,
+                              StringXColor s[], const char *prefix, FILE * file)
 {
   int i = 0;
   char tmp[1024];
@@ -373,7 +373,7 @@ static void Print_ColorOptions(int num, int level, int diff, int help,
   }
 }
 
-static void Print_ColorOptionsDoc(StringXColor s[], const char *prefix, FILE * file)
+static void PrintColorOptionsDoc(StringXColor s[], const char *prefix, FILE * file)
 {
   int i = 0;
   while(s[i].str) {
@@ -383,81 +383,81 @@ static void Print_ColorOptionsDoc(StringXColor s[], const char *prefix, FILE * f
             CTX::instance()->unpackRed(s[i].function(0, GMSH_GET, 0)),
             CTX::instance()->unpackGreen(s[i].function(0, GMSH_GET, 0)),
             CTX::instance()->unpackBlue(s[i].function(0, GMSH_GET, 0)));
-    fprintf(file, "Saved in: @code{%s}\n\n", Get_OptionSaveLevel(s[i].level));
+    fprintf(file, "Saved in: @code{%s}\n\n", GetOptionSaveLevel(s[i].level));
     i++;
   }
 }
 
 // General routines
 
-void Init_Options(int num)
+void InitOptions(int num)
 {
   // Default string options
-  Set_DefaultStringOptions(num, GeneralOptions_String);
-  Set_DefaultStringOptions(num, GeometryOptions_String);
-  Set_DefaultStringOptions(num, MeshOptions_String);
-  Set_DefaultStringOptions(num, SolverOptions_String);
-  Set_DefaultStringOptions(num, PostProcessingOptions_String);
-  Set_DefaultStringOptions(num, ViewOptions_String);
-  Set_DefaultStringOptions(num, PrintOptions_String);
+  SetDefaultStringOptions(num, GeneralOptions_String);
+  SetDefaultStringOptions(num, GeometryOptions_String);
+  SetDefaultStringOptions(num, MeshOptions_String);
+  SetDefaultStringOptions(num, SolverOptions_String);
+  SetDefaultStringOptions(num, PostProcessingOptions_String);
+  SetDefaultStringOptions(num, ViewOptions_String);
+  SetDefaultStringOptions(num, PrintOptions_String);
 
   // Default number options
-  Set_DefaultNumberOptions(num, GeneralOptions_Number);
-  Set_DefaultNumberOptions(num, GeometryOptions_Number);
-  Set_DefaultNumberOptions(num, MeshOptions_Number);
-  Set_DefaultNumberOptions(num, SolverOptions_Number);
-  Set_DefaultNumberOptions(num, PostProcessingOptions_Number);
-  Set_DefaultNumberOptions(num, ViewOptions_Number);
-  Set_DefaultNumberOptions(num, PrintOptions_Number);
+  SetDefaultNumberOptions(num, GeneralOptions_Number);
+  SetDefaultNumberOptions(num, GeometryOptions_Number);
+  SetDefaultNumberOptions(num, MeshOptions_Number);
+  SetDefaultNumberOptions(num, SolverOptions_Number);
+  SetDefaultNumberOptions(num, PostProcessingOptions_Number);
+  SetDefaultNumberOptions(num, ViewOptions_Number);
+  SetDefaultNumberOptions(num, PrintOptions_Number);
 
   // Default color options
-  Set_DefaultColorOptions(num, GeneralOptions_Color);
-  Set_DefaultColorOptions(num, GeometryOptions_Color);
-  Set_DefaultColorOptions(num, MeshOptions_Color);
-  Set_DefaultColorOptions(num, SolverOptions_Color);
-  Set_DefaultColorOptions(num, PostProcessingOptions_Color);
-  Set_DefaultColorOptions(num, ViewOptions_Color);
-  Set_DefaultColorOptions(num, PrintOptions_Color);
+  SetDefaultColorOptions(num, GeneralOptions_Color);
+  SetDefaultColorOptions(num, GeometryOptions_Color);
+  SetDefaultColorOptions(num, MeshOptions_Color);
+  SetDefaultColorOptions(num, SolverOptions_Color);
+  SetDefaultColorOptions(num, PostProcessingOptions_Color);
+  SetDefaultColorOptions(num, ViewOptions_Color);
+  SetDefaultColorOptions(num, PrintOptions_Color);
 }
 
-void ReInit_Options(int num)
+void ReInitOptions(int num)
 {
   // horrible trick so that opt_view_XXX will act on the reference view
 #if !defined(HAVE_NO_POST)
   std::vector<PView*> tmp = PView::list;
   PView::list.clear(); 
-  Init_Options(num);
+  InitOptions(num);
   PView::list = tmp; 
   for(unsigned int i = 0; i < PView::list.size(); i++)
     PView::list[i]->setOptions();
 #endif
 }
 
-void Init_Options_GUI(int num)
+void InitOptionsGUI(int num)
 {
-  Set_StringOptions_GUI(num, GeneralOptions_String);
-  Set_StringOptions_GUI(num, GeometryOptions_String);
-  Set_StringOptions_GUI(num, MeshOptions_String);
-  Set_StringOptions_GUI(num, SolverOptions_String);
-  Set_StringOptions_GUI(num, PostProcessingOptions_String);
-  Set_StringOptions_GUI(num, PrintOptions_String);
+  SetStringOptionsGUI(num, GeneralOptions_String);
+  SetStringOptionsGUI(num, GeometryOptions_String);
+  SetStringOptionsGUI(num, MeshOptions_String);
+  SetStringOptionsGUI(num, SolverOptions_String);
+  SetStringOptionsGUI(num, PostProcessingOptions_String);
+  SetStringOptionsGUI(num, PrintOptions_String);
 
-  Set_NumberOptions_GUI(num, GeneralOptions_Number);
-  Set_NumberOptions_GUI(num, GeometryOptions_Number);
-  Set_NumberOptions_GUI(num, MeshOptions_Number);
-  Set_NumberOptions_GUI(num, SolverOptions_Number);
-  Set_NumberOptions_GUI(num, PostProcessingOptions_Number);
-  Set_NumberOptions_GUI(num, PrintOptions_Number);
+  SetNumberOptionsGUI(num, GeneralOptions_Number);
+  SetNumberOptionsGUI(num, GeometryOptions_Number);
+  SetNumberOptionsGUI(num, MeshOptions_Number);
+  SetNumberOptionsGUI(num, SolverOptions_Number);
+  SetNumberOptionsGUI(num, PostProcessingOptions_Number);
+  SetNumberOptionsGUI(num, PrintOptions_Number);
 
-  Set_ColorOptions_GUI(num, GeneralOptions_Color);
-  Set_ColorOptions_GUI(num, GeometryOptions_Color);
-  Set_ColorOptions_GUI(num, MeshOptions_Color);
-  Set_ColorOptions_GUI(num, SolverOptions_Color);
-  Set_ColorOptions_GUI(num, PostProcessingOptions_Color);
-  Set_ColorOptions_GUI(num, PrintOptions_Color);
+  SetColorOptionsGUI(num, GeneralOptions_Color);
+  SetColorOptionsGUI(num, GeometryOptions_Color);
+  SetColorOptionsGUI(num, MeshOptions_Color);
+  SetColorOptionsGUI(num, SolverOptions_Color);
+  SetColorOptionsGUI(num, PostProcessingOptions_Color);
+  SetColorOptionsGUI(num, PrintOptions_Color);
 }
 
-static void Print_OptionCategory(int level, int diff, int help, const char *cat,
+static void PrintOptionCategory(int level, int diff, int help, const char *cat,
                                  FILE *file)
 {
   if(diff || !help || !(level & GMSH_FULLRC))
@@ -474,7 +474,7 @@ static void Print_OptionCategory(int level, int diff, int help, const char *cat,
   }
 }
 
-GmshColorTable *Get_ColorTable(int num)
+GmshColorTable *GetColorTable(int num)
 {
 #if !defined(HAVE_NO_POST)
   PViewOptions *opt;
@@ -491,7 +491,7 @@ GmshColorTable *Get_ColorTable(int num)
 #endif
 }
 
-static void Print_ColorTable(int num, int diff, const char *prefix, FILE *file)
+static void PrintColorTable(int num, int diff, const char *prefix, FILE *file)
 {
 #if !defined(HAVE_NO_POST)
   PViewOptions *opt;
@@ -542,7 +542,7 @@ static void Sanitize_String_Texi(std::string &s)
     s.insert(i++, "@");
 }
 
-void Print_Options(int num, int level, int diff, int help, const char *filename)
+void PrintOptions(int num, int level, int diff, int help, const char *filename)
 {
 #if defined(HAVE_FLTK)
   if(GUI::available())
@@ -584,42 +584,42 @@ void Print_Options(int num, int level, int diff, int help, const char *filename)
     fprintf(file, "//\n");
   }
 
-  Print_OptionCategory(level, diff, help, "General options (strings)", file);
-  Print_StringOptions(num, level, diff, help, GeneralOptions_String, "General.", file);
-  Print_OptionCategory(level, diff, help, "General options (numbers)", file);
-  Print_NumberOptions(num, level, diff, help, GeneralOptions_Number, "General.", file);
-  Print_OptionCategory(level, diff, help, "General options (colors)", file);
-  Print_ColorOptions(num, level, diff, help, GeneralOptions_Color, "General.", file);
+  PrintOptionCategory(level, diff, help, "General options (strings)", file);
+  PrintStringOptions(num, level, diff, help, GeneralOptions_String, "General.", file);
+  PrintOptionCategory(level, diff, help, "General options (numbers)", file);
+  PrintNumberOptions(num, level, diff, help, GeneralOptions_Number, "General.", file);
+  PrintOptionCategory(level, diff, help, "General options (colors)", file);
+  PrintColorOptions(num, level, diff, help, GeneralOptions_Color, "General.", file);
 
-  Print_OptionCategory(level, diff, help, "Geometry options (strings)", file);
-  Print_StringOptions(num, level, diff, help, GeometryOptions_String, "Geometry.", file);
-  Print_OptionCategory(level, diff, help, "Geometry options (numbers)", file);
-  Print_NumberOptions(num, level, diff, help, GeometryOptions_Number, "Geometry.", file);
-  Print_OptionCategory(level, diff, help, "Geometry options (colors)", file);
-  Print_ColorOptions(num, level, diff, help, GeometryOptions_Color, "Geometry.", file);
+  PrintOptionCategory(level, diff, help, "Geometry options (strings)", file);
+  PrintStringOptions(num, level, diff, help, GeometryOptions_String, "Geometry.", file);
+  PrintOptionCategory(level, diff, help, "Geometry options (numbers)", file);
+  PrintNumberOptions(num, level, diff, help, GeometryOptions_Number, "Geometry.", file);
+  PrintOptionCategory(level, diff, help, "Geometry options (colors)", file);
+  PrintColorOptions(num, level, diff, help, GeometryOptions_Color, "Geometry.", file);
 
-  Print_OptionCategory(level, diff, help, "Mesh options (strings)", file);
-  Print_StringOptions(num, level, diff, help, MeshOptions_String, "Mesh.", file);
-  Print_OptionCategory(level, diff, help, "Mesh options (numbers)", file);
-  Print_NumberOptions(num, level, diff, help, MeshOptions_Number, "Mesh.", file);
-  Print_OptionCategory(level, diff, help, "Mesh options (colors)", file);
-  Print_ColorOptions(num, level, diff, help, MeshOptions_Color, "Mesh.", file);
+  PrintOptionCategory(level, diff, help, "Mesh options (strings)", file);
+  PrintStringOptions(num, level, diff, help, MeshOptions_String, "Mesh.", file);
+  PrintOptionCategory(level, diff, help, "Mesh options (numbers)", file);
+  PrintNumberOptions(num, level, diff, help, MeshOptions_Number, "Mesh.", file);
+  PrintOptionCategory(level, diff, help, "Mesh options (colors)", file);
+  PrintColorOptions(num, level, diff, help, MeshOptions_Color, "Mesh.", file);
 
-  Print_OptionCategory(level, diff, help, "Solver options (strings)", file);
-  Print_StringOptions(num, level, diff, help, SolverOptions_String, "Solver.", file);
-  Print_OptionCategory(level, diff, help, "Solver options (numbers)", file);
-  Print_NumberOptions(num, level, diff, help, SolverOptions_Number, "Solver.", file);
-  Print_OptionCategory(level, diff, help, "Solver options (colors)", file);
-  Print_ColorOptions(num, level, diff, help, SolverOptions_Color, "Solver.", file);
+  PrintOptionCategory(level, diff, help, "Solver options (strings)", file);
+  PrintStringOptions(num, level, diff, help, SolverOptions_String, "Solver.", file);
+  PrintOptionCategory(level, diff, help, "Solver options (numbers)", file);
+  PrintNumberOptions(num, level, diff, help, SolverOptions_Number, "Solver.", file);
+  PrintOptionCategory(level, diff, help, "Solver options (colors)", file);
+  PrintColorOptions(num, level, diff, help, SolverOptions_Color, "Solver.", file);
 
-  Print_OptionCategory(level, diff, help, "Post-processing options (strings)", file);
-  Print_StringOptions(num, level, diff, help, PostProcessingOptions_String,
+  PrintOptionCategory(level, diff, help, "Post-processing options (strings)", file);
+  PrintStringOptions(num, level, diff, help, PostProcessingOptions_String,
                       "PostProcessing.", file);
-  Print_OptionCategory(level, diff, help, "Post-processing options (numbers)", file);
-  Print_NumberOptions(num, level, diff, help, PostProcessingOptions_Number,
+  PrintOptionCategory(level, diff, help, "Post-processing options (numbers)", file);
+  PrintNumberOptions(num, level, diff, help, PostProcessingOptions_Number,
                       "PostProcessing.", file);
-  Print_OptionCategory(level, diff, help, "Post-processing options (colors)", file);
-  Print_ColorOptions(num, level, diff, help, PostProcessingOptions_Color,
+  PrintOptionCategory(level, diff, help, "Post-processing options (colors)", file);
+  PrintColorOptions(num, level, diff, help, PostProcessingOptions_Color,
                      "PostProcessing.", file);
 
   if(level & GMSH_FULLRC) {
@@ -627,38 +627,38 @@ void Print_Options(int num, int level, int diff, int help, const char *filename)
     for(unsigned int i = 0; i < PView::list.size(); i++) {
       char tmp[256];
       sprintf(tmp, "View[%d].", i);
-      Print_OptionCategory(level, diff, help, "View options (strings)", file);
-      Print_StringOptions(i, level, diff, help, ViewOptions_String, tmp, file);
-      Print_OptionCategory(level, diff, help, "View options (numbers)", file);
-      Print_NumberOptions(i, level, diff, help, ViewOptions_Number, tmp, file);
-      Print_OptionCategory(level, diff, help, "View options (colors)", file);
-      Print_ColorOptions(i, level, diff, help, ViewOptions_Color, tmp, file);
+      PrintOptionCategory(level, diff, help, "View options (strings)", file);
+      PrintStringOptions(i, level, diff, help, ViewOptions_String, tmp, file);
+      PrintOptionCategory(level, diff, help, "View options (numbers)", file);
+      PrintNumberOptions(i, level, diff, help, ViewOptions_Number, tmp, file);
+      PrintOptionCategory(level, diff, help, "View options (colors)", file);
+      PrintColorOptions(i, level, diff, help, ViewOptions_Color, tmp, file);
       strcat(tmp, "ColorTable");
-      Print_ColorTable(i, diff, tmp, file);
+      PrintColorTable(i, diff, tmp, file);
     }
 #endif
   }
   else if(level & GMSH_OPTIONSRC) {
-    Print_OptionCategory(level, diff, help, "View options (strings)", file);
-    Print_StringOptions(num, level, diff, help, ViewOptions_String, "View.", file);
-    Print_OptionCategory(level, diff, help, "View options (numbers)", file);
-    Print_NumberOptions(num, level, diff, help, ViewOptions_Number, "View.", file);
-    Print_OptionCategory(level, diff, help, "View options (colors)", file);
-    Print_ColorOptions(num, level, diff, help, ViewOptions_Color, "View.", file);
-    Print_ColorTable(num, diff, "View.ColorTable", file);
+    PrintOptionCategory(level, diff, help, "View options (strings)", file);
+    PrintStringOptions(num, level, diff, help, ViewOptions_String, "View.", file);
+    PrintOptionCategory(level, diff, help, "View options (numbers)", file);
+    PrintNumberOptions(num, level, diff, help, ViewOptions_Number, "View.", file);
+    PrintOptionCategory(level, diff, help, "View options (colors)", file);
+    PrintColorOptions(num, level, diff, help, ViewOptions_Color, "View.", file);
+    PrintColorTable(num, diff, "View.ColorTable", file);
   }
 
-  Print_OptionCategory(level, diff, help, "Print options (strings)", file);
-  Print_StringOptions(num, level, diff, help, PrintOptions_String, "Print.", file);
-  Print_OptionCategory(level, diff, help, "Print options (numbers)", file);
-  Print_NumberOptions(num, level, diff, help, PrintOptions_Number, "Print.", file);
-  Print_OptionCategory(level, diff, help, "Print options (colors)", file);
-  Print_ColorOptions(num, level, diff, help, PrintOptions_Color, "Print.", file);
+  PrintOptionCategory(level, diff, help, "Print options (strings)", file);
+  PrintStringOptions(num, level, diff, help, PrintOptions_String, "Print.", file);
+  PrintOptionCategory(level, diff, help, "Print options (numbers)", file);
+  PrintNumberOptions(num, level, diff, help, PrintOptions_Number, "Print.", file);
+  PrintOptionCategory(level, diff, help, "Print options (colors)", file);
+  PrintColorOptions(num, level, diff, help, PrintOptions_Color, "Print.", file);
 
   if(filename) fclose(file);
 }
 
-void Print_OptionsDoc()
+void PrintOptionsDoc()
 {
   const char *warn =
     "@c\n"
@@ -672,9 +672,9 @@ void Print_OptionsDoc()
     return;
   }
   fprintf(file, "%s@ftable @code\n", warn);
-  Print_StringOptionsDoc(GeneralOptions_String, "General.", file);
-  Print_NumberOptionsDoc(GeneralOptions_Number, "General.", file);
-  Print_ColorOptionsDoc(GeneralOptions_Color, "General.", file);
+  PrintStringOptionsDoc(GeneralOptions_String, "General.", file);
+  PrintNumberOptionsDoc(GeneralOptions_Number, "General.", file);
+  PrintColorOptionsDoc(GeneralOptions_Color, "General.", file);
   fprintf(file, "@end ftable\n");
   fclose(file);
 
@@ -684,9 +684,9 @@ void Print_OptionsDoc()
     return;
   }
   fprintf(file, "%s@ftable @code\n", warn);
-  Print_StringOptionsDoc(PrintOptions_String, "Print.", file);
-  Print_NumberOptionsDoc(PrintOptions_Number, "Print.", file);
-  Print_ColorOptionsDoc(PrintOptions_Color, "Print.", file);
+  PrintStringOptionsDoc(PrintOptions_String, "Print.", file);
+  PrintNumberOptionsDoc(PrintOptions_Number, "Print.", file);
+  PrintColorOptionsDoc(PrintOptions_Color, "Print.", file);
   fprintf(file, "@end ftable\n");
   fclose(file);
 
@@ -696,9 +696,9 @@ void Print_OptionsDoc()
     return;
   }
   fprintf(file, "%s@ftable @code\n", warn);
-  Print_StringOptionsDoc(GeometryOptions_String, "Geometry.", file);
-  Print_NumberOptionsDoc(GeometryOptions_Number, "Geometry.", file);
-  Print_ColorOptionsDoc(GeometryOptions_Color, "Geometry.", file);
+  PrintStringOptionsDoc(GeometryOptions_String, "Geometry.", file);
+  PrintNumberOptionsDoc(GeometryOptions_Number, "Geometry.", file);
+  PrintColorOptionsDoc(GeometryOptions_Color, "Geometry.", file);
   fprintf(file, "@end ftable\n");
   fclose(file);
 
@@ -708,9 +708,9 @@ void Print_OptionsDoc()
     return;
   }
   fprintf(file, "%s@ftable @code\n", warn);
-  Print_StringOptionsDoc(MeshOptions_String, "Mesh.", file);
-  Print_NumberOptionsDoc(MeshOptions_Number, "Mesh.", file);
-  Print_ColorOptionsDoc(MeshOptions_Color, "Mesh.", file);
+  PrintStringOptionsDoc(MeshOptions_String, "Mesh.", file);
+  PrintNumberOptionsDoc(MeshOptions_Number, "Mesh.", file);
+  PrintColorOptionsDoc(MeshOptions_Color, "Mesh.", file);
   fprintf(file, "@end ftable\n");
   fclose(file);
 
@@ -720,9 +720,9 @@ void Print_OptionsDoc()
     return;
   }
   fprintf(file, "%s@ftable @code\n", warn);
-  Print_StringOptionsDoc(SolverOptions_String, "Solver.", file);
-  Print_NumberOptionsDoc(SolverOptions_Number, "Solver.", file);
-  Print_ColorOptionsDoc(SolverOptions_Color, "Solver.", file);
+  PrintStringOptionsDoc(SolverOptions_String, "Solver.", file);
+  PrintNumberOptionsDoc(SolverOptions_Number, "Solver.", file);
+  PrintColorOptionsDoc(SolverOptions_Color, "Solver.", file);
   fprintf(file, "@end ftable\n");
   fclose(file);
 
@@ -732,9 +732,9 @@ void Print_OptionsDoc()
     return;
   }
   fprintf(file, "%s@ftable @code\n", warn);
-  Print_StringOptionsDoc(PostProcessingOptions_String, "PostProcessing.", file);
-  Print_NumberOptionsDoc(PostProcessingOptions_Number, "PostProcessing.", file);
-  Print_ColorOptionsDoc(PostProcessingOptions_Color, "PostProcessing.", file);
+  PrintStringOptionsDoc(PostProcessingOptions_String, "PostProcessing.", file);
+  PrintNumberOptionsDoc(PostProcessingOptions_Number, "PostProcessing.", file);
+  PrintColorOptionsDoc(PostProcessingOptions_Color, "PostProcessing.", file);
   fprintf(file, "@end ftable\n");
   fclose(file);
 
@@ -745,13 +745,13 @@ void Print_OptionsDoc()
     return;
   }
   fprintf(file, "%s@ftable @code\n", warn);
-  Print_StringOptionsDoc(ViewOptions_String, "View.", file);
-  Print_NumberOptionsDoc(ViewOptions_Number, "View.", file);
-  Print_ColorOptionsDoc(ViewOptions_Color, "View.", file);
+  PrintStringOptionsDoc(ViewOptions_String, "View.", file);
+  PrintNumberOptionsDoc(ViewOptions_Number, "View.", file);
+  PrintColorOptionsDoc(ViewOptions_Color, "View.", file);
   fprintf(file, "@item View.ColorTable\n");
   fprintf(file, "Color table used to draw the view@*\n");
   fprintf(file, "Saved in: @code{%s}\n\n",
-          Get_OptionSaveLevel(GMSH_FULLRC|GMSH_OPTIONSRC));
+          GetOptionSaveLevel(GMSH_FULLRC|GMSH_OPTIONSRC));
   fprintf(file, "@end ftable\n");
   fclose(file);
 
@@ -3477,33 +3477,33 @@ double opt_general_color_scheme(OPT_ARGS_NUM)
     CTX::instance()->colorScheme = (int)val;
     if(CTX::instance()->colorScheme > 2)
       CTX::instance()->colorScheme = 0;
-    Set_DefaultColorOptions(0, GeneralOptions_Color);
-    Set_DefaultColorOptions(0, GeometryOptions_Color);
-    Set_DefaultColorOptions(0, MeshOptions_Color);
-    Set_DefaultColorOptions(0, SolverOptions_Color);
-    Set_DefaultColorOptions(0, PostProcessingOptions_Color);
+    SetDefaultColorOptions(0, GeneralOptions_Color);
+    SetDefaultColorOptions(0, GeometryOptions_Color);
+    SetDefaultColorOptions(0, MeshOptions_Color);
+    SetDefaultColorOptions(0, SolverOptions_Color);
+    SetDefaultColorOptions(0, PostProcessingOptions_Color);
 #if !defined(HAVE_NO_POST)
     for(unsigned int i = 0; i < PView::list.size(); i++)
-      Set_DefaultColorOptions(i, ViewOptions_Color);
+      SetDefaultColorOptions(i, ViewOptions_Color);
 #endif
-    Set_DefaultColorOptions(0, PrintOptions_Color);
+    SetDefaultColorOptions(0, PrintOptions_Color);
 
-    Set_ColorOptions_GUI(0, GeneralOptions_Color);
-    Set_ColorOptions_GUI(0, GeometryOptions_Color);
-    Set_ColorOptions_GUI(0, MeshOptions_Color);
-    Set_ColorOptions_GUI(0, SolverOptions_Color);
-    Set_ColorOptions_GUI(0, PostProcessingOptions_Color);
+    SetColorOptionsGUI(0, GeneralOptions_Color);
+    SetColorOptionsGUI(0, GeometryOptions_Color);
+    SetColorOptionsGUI(0, MeshOptions_Color);
+    SetColorOptionsGUI(0, SolverOptions_Color);
+    SetColorOptionsGUI(0, PostProcessingOptions_Color);
 #if !defined(HAVE_NO_POST)
     for(unsigned int i = 0; i < PView::list.size(); i++)
-      Set_ColorOptions_GUI(i, ViewOptions_Color);
+      SetColorOptionsGUI(i, ViewOptions_Color);
 #endif
-    Set_ColorOptions_GUI(0, PrintOptions_Color);
+    SetColorOptionsGUI(0, PrintOptions_Color);
 
 #if !defined(HAVE_NO_POST)
     // horrible trick so that opt_view_XXX will act on the reference view
     std::vector<PView*> tmp = PView::list;
     PView::list.clear();
-    Set_DefaultColorOptions(0, ViewOptions_Color);
+    SetDefaultColorOptions(0, ViewOptions_Color);
     PView::list = tmp;
 #endif
   }

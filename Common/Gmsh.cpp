@@ -35,10 +35,10 @@ int GmshInitialize(int argc, char **argv)
   Msg::Init(argc, argv);
 
   // Load default options
-  Init_Options(0);
+  InitOptions(0);
 
   // Read configuration files and command line options
-  Get_Options(argc, argv);
+  GetOptions(argc, argv);
 
   // Make sure we have enough resources (stack)
   CheckResources();

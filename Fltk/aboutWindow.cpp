@@ -60,20 +60,20 @@ aboutWindow::aboutWindow()
     o->add("@c@.Please send all questions and bug reports to");
     o->add("@c@b@.gmsh@geuz.org");
     o->add(" ");
-    sprintf(buffer, "@c@.Version: %s", Get_GmshVersion());
+    sprintf(buffer, "@c@.Version: %s", GetGmshVersion());
     o->add(buffer);
-    sprintf(buffer, "@c@.License: %s", Get_GmshShortLicense());
+    sprintf(buffer, "@c@.License: %s", GetGmshShortLicense());
     o->add(buffer);
     sprintf(buffer, "@c@.Graphical user interface toolkit: FLTK %d.%d.%d", 
             FL_MAJOR_VERSION, FL_MINOR_VERSION, FL_PATCH_VERSION);
     o->add(buffer);
-    sprintf(buffer, "@c@.Build OS: %s", Get_GmshBuildOS());
+    sprintf(buffer, "@c@.Build OS: %s", GetGmshBuildOS());
     o->add(buffer);
-    sprintf(buffer, "@c@.Build date: %s", Get_GmshBuildDate());
+    sprintf(buffer, "@c@.Build date: %s", GetGmshBuildDate());
     o->add(buffer);
-    sprintf(buffer, "@c@.Build host: %s", Get_GmshBuildHost());
+    sprintf(buffer, "@c@.Build host: %s", GetGmshBuildHost());
     o->add(buffer);
-    std::vector<std::string> lines = SplitWhiteSpace(Get_GmshBuildOptions(), 30);
+    std::vector<std::string> lines = SplitWhiteSpace(GetGmshBuildOptions(), 30);
     for(unsigned int i = 0; i < lines.size(); i++){
       if(!i)
         sprintf(buffer, "@c@.Build options:%s", lines[i].c_str());
@@ -81,7 +81,7 @@ aboutWindow::aboutWindow()
         sprintf(buffer, "@c@.%s", lines[i].c_str());
         o->add(buffer);
       }
-    sprintf(buffer, "@c@.Packaged by: %s", Get_GmshPackager());
+    sprintf(buffer, "@c@.Packaged by: %s", GetGmshPackager());
     o->add(buffer);
     o->add(" ");
     o->add("@c@.Visit http://www.geuz.org/gmsh/ for more information");

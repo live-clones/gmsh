@@ -4473,7 +4473,7 @@ yyreduce:
   case 77:
 #line 835 "Gmsh.y"
     {
-      GmshColorTable *ct = Get_ColorTable(0);
+      GmshColorTable *ct = GetColorTable(0);
       if(!ct)
 	yymsg(0, "View[%d] does not exist", 0);
       else{
@@ -4496,7 +4496,7 @@ yyreduce:
   case 78:
 #line 855 "Gmsh.y"
     {
-      GmshColorTable *ct = Get_ColorTable((int)(yyvsp[(3) - (9)].d));
+      GmshColorTable *ct = GetColorTable((int)(yyvsp[(3) - (9)].d));
       if(!ct)
 	yymsg(0, "View[%d] does not exist", (int)(yyvsp[(3) - (9)].d));
       else{
@@ -7171,17 +7171,17 @@ yyreduce:
 
   case 294:
 #line 2938 "Gmsh.y"
-    { (yyval.d) = Get_GmshMajorVersion(); ;}
+    { (yyval.d) = GetGmshMajorVersion(); ;}
     break;
 
   case 295:
 #line 2939 "Gmsh.y"
-    { (yyval.d) = Get_GmshMinorVersion(); ;}
+    { (yyval.d) = GetGmshMinorVersion(); ;}
     break;
 
   case 296:
 #line 2940 "Gmsh.y"
-    { (yyval.d) = Get_GmshPatchVersion(); ;}
+    { (yyval.d) = GetGmshPatchVersion(); ;}
     break;
 
   case 297:
@@ -7653,7 +7653,7 @@ yyreduce:
 #line 3313 "Gmsh.y"
     {
       int flag;
-      (yyval.u) = Get_ColorForString(ColorString, -1, (yyvsp[(1) - (1)].c), &flag);
+      (yyval.u) = GetColorForString(ColorString, -1, (yyvsp[(1) - (1)].c), &flag);
       if(flag) yymsg(0, "Unknown color '%s'", (yyvsp[(1) - (1)].c));
       Free((yyvsp[(1) - (1)].c));
     ;}
@@ -7680,7 +7680,7 @@ yyreduce:
 #line 3334 "Gmsh.y"
     {
       (yyval.l) = List_Create(256, 10, sizeof(unsigned int));
-      GmshColorTable *ct = Get_ColorTable((int)(yyvsp[(3) - (6)].d));
+      GmshColorTable *ct = GetColorTable((int)(yyvsp[(3) - (6)].d));
       if(!ct)
 	yymsg(0, "View[%d] does not exist", (int)(yyvsp[(3) - (6)].d));
       else{

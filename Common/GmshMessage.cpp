@@ -93,11 +93,11 @@ void Msg::Exit(int level)
   // the persistent info to disk
   if(GUI::available() && !_commRank) {
     if(CTX::instance()->sessionSave)
-      Print_Options(0, GMSH_SESSIONRC, 0, 0, 
-                    (CTX::instance()->homeDir + CTX::instance()->sessionFileName).c_str());
+      PrintOptions(0, GMSH_SESSIONRC, 0, 0, 
+                   (CTX::instance()->homeDir + CTX::instance()->sessionFileName).c_str());
     if(CTX::instance()->optionsSave)
-      Print_Options(0, GMSH_OPTIONSRC, 1, 0, 
-                    (CTX::instance()->homeDir + CTX::instance()->optionsFileName).c_str());
+      PrintOptions(0, GMSH_OPTIONSRC, 1, 0, 
+                   (CTX::instance()->homeDir + CTX::instance()->optionsFileName).c_str());
   }
 #endif
 

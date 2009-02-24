@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 {
   if(argc < 2){
     CTX::instance()->terminal = 1; 
-    Print_Usage(argv[0]);
+    PrintUsage(argv[0]);
     exit(0);
   }
 

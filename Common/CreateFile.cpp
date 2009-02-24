@@ -134,7 +134,7 @@ void CreateOutputFile(std::string fileName, int format)
     break;
     
   case FORMAT_OPT:
-    Print_Options(0, GMSH_FULLRC, 1, 1, fileName.c_str());
+    PrintOptions(0, GMSH_FULLRC, 1, 1, fileName.c_str());
     break;
 
   case FORMAT_MSH:
