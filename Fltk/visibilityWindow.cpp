@@ -190,12 +190,12 @@ class VisibilityList { // singleton
         _entities.push_back(new VisModel(GModel::list[i], i));
         std::string name = GModel::list[i]->getName();
         if(GModel::list[i] == GModel::current()) name += " (Active)";
-        setLabel(i, name);
+        setLabel(i, name, 1);
       }
     }
-    if(type == ElementaryEntities){
+    else if(type == ElementaryEntities){
       for(GModel::piter it = m->firstElementaryName(); it != m->lastElementaryName(); ++it)
-        setLabel(it->first, it->second);
+        setLabel(it->first, it->second, 1);
       for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++)
         _entities.push_back(new VisElementary(*it));
       for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
@@ -207,7 +207,7 @@ class VisibilityList { // singleton
     }
     else if(type == PhysicalEntities){
       for(GModel::piter it = m->firstPhysicalName(); it != m->lastPhysicalName(); ++it)
-        setLabel(it->first, it->second);
+        setLabel(it->first, it->second, 1);
       std::map<int, std::vector<GEntity*> > groups[4];
       m->getPhysicalGroups(groups);
       for(int i = 0; i < 4; i++){
@@ -262,21 +262,23 @@ class VisibilityList { // singleton
   std::string getBrowserLine(int n)
   {
     int tag = _entities[n]->getTag();
-    char str[256];
-    bool label_exists = _labels.count(tag);
-    const char *label_color = (label_exists && _labels[tag].second) ? "@b" : "";
-    sprintf(str, "\t%s\t%d\t%s%s", _entities[n]->getName().c_str(), tag, 
-            label_color, label_exists ? _labels[tag].first.c_str() : "");
-    return std::string(str);
+    std::ostringstream sstream;
+    sstream << "\t" << _entities[n]->getName() << "\t" << tag << "\t";
+    if(_labels.count(tag)){
+      if(_labels[tag].second)
+        sstream << "@b";
+      sstream << _labels[tag].first;
+    }
+    return sstream.str();
   }
   // set the sort mode
   void setSortMode(int mode){ _sortMode = (_sortMode != mode) ? mode : -mode; }
   // get the sort mode
   int getSortMode(){ return _sortMode; }
   // associate a label with a tag (quality=0 for "old-style" unreliable labels)
-  void setLabel(int tag, std::string label, int quality=1)
+  void setLabel(int tag, std::string label, int quality)
   { 
-    _labels[tag] = std::make_pair(label, quality); 
+    if(label.size()) _labels[tag] = std::pair<std::string, int>(label, quality); 
   }
   // get the label associated with a tag
   std::string getLabel(int tag){ return _labels[tag].first; }
