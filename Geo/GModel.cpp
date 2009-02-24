@@ -315,7 +315,9 @@ int GModel::setPhysicalName(std::string name, int number)
 
 std::string GModel::getPhysicalName(int number)
 {
-  return physicalNames[number];
+  if(physicalNames.count(number))
+    return physicalNames[number];
+  return "";
 }
 
 SBoundingBox3d GModel::bounds()
