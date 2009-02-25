@@ -122,6 +122,14 @@ x_heavs(double x) //, double eps)
          return (fabs(x) < eps) ? 0.5*(1+ x/eps +1/3.14*sin(3.14*x/eps)):(x<0? 0:1);
 }
 
+#if !defined(INFINITY)
+#define INFINITY 1.e100
+#endif
+
+#if !defined(NAN)
+#define NAN (1./0.)
+#endif
+
 double
 x_delta(double x)
 {
