@@ -127,7 +127,7 @@ x_heavs(double x) //, double eps)
 #endif
 
 #if !defined(NAN)
-#define NAN (1./0.)
+#define NAN 1.100
 #endif
 
 double
