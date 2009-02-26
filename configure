@@ -4535,13 +4535,6 @@ fi
 _ACEOF
 
       BO="${BO} Ann"
-      echo "********************************************************************"
-      echo "  You are building a version of Gmsh that contains ANN, the"
-      echo "  Approximate Nearest Neighbor library. ANN is available under"
-      echo "  the GNU LGPL."
-      echo "  To disable ANN, run configure again with the --disable-ann"
-      echo "  option."
-      echo "********************************************************************"
     fi
   fi
 
@@ -4573,12 +4566,6 @@ fi
 _ACEOF
 
       BO="${BO} Gmm"
-      echo "********************************************************************"
-      echo "  You are building a version of Gmsh that contains the gmm++ mesh"
-      echo "  partitioner. Gmm++ is available under the GNU LGPL."
-      echo "  To disable gmm++, run configure again with the --disable-gmm"
-      echo "  option."
-      echo "********************************************************************"
     fi
   fi
 
@@ -4612,12 +4599,6 @@ fi
 _ACEOF
 
       BO="${BO} Chaco"
-      echo "********************************************************************"
-      echo "  You are building a version of Gmsh that contains the Chaco mesh"
-      echo "  partitioner. Chaco is available under the GNU LGPL."
-      echo "  To disable Chaco, run configure again with the --disable-chaco"
-      echo "  option."
-      echo "********************************************************************"
     fi
   fi
 
@@ -4651,14 +4632,12 @@ fi
 _ACEOF
 
       BO="${BO} Metis"
-      echo "********************************************************************"
-      echo "  You are building a version of Gmsh that contains the METIS mesh"
-      echo "  partitioner."
-      echo "  Please note that by including METIS, you agree with METIS'"
-      echo "  special licensing requirements stated in contrib/Metis/README."
-      echo "  To disable METIS, run configure again with the --disable-metis"
-      echo "  option."
-      echo "********************************************************************"
+      { echo "$as_me:$LINENO: WARNING: By including METIS you have to comply with METIS' special" >&5
+echo "$as_me: WARNING: By including METIS you have to comply with METIS' special" >&2;}
+      { echo "$as_me:$LINENO: WARNING: licensing requirements stated in contrib/Metis/README. To" >&5
+echo "$as_me: WARNING: licensing requirements stated in contrib/Metis/README. To" >&2;}
+      { echo "$as_me:$LINENO: WARNING: disable METIS use the --disable-metis option." >&5
+echo "$as_me: WARNING: disable METIS use the --disable-metis option." >&2;}
     fi
   fi
 
@@ -4692,12 +4671,6 @@ fi
 _ACEOF
 
       BO="${BO} Netgen"
-      echo "********************************************************************"
-      echo "  You are building a version of Gmsh that contains the Netgen 3D"
-      echo "  mesh generator. Netgen is available under the GNU LGPL."
-      echo "  To disable Netgen, run configure again with the --disable-netgen"
-      echo "  option."
-      echo "********************************************************************"
     fi
   fi
 
@@ -4731,14 +4704,12 @@ fi
 _ACEOF
 
       BO="${BO} Tetgen"
-      echo "********************************************************************"
-      echo "  You are building a version of Gmsh that contains the Tetgen 3D"
-      echo "  mesh generator."
-      echo "  Please note that by doing so, you agree with Tetgen's special"
-      echo "  licensing requirements stated in contrib/Tetgen/LICENSE."
-      echo "  To disable Tetgen, run configure again with the --disable-tetgen"
-      echo "  option."
-      echo "********************************************************************"
+      { echo "$as_me:$LINENO: WARNING: By including Tetgen you have to comply with Tetgen' special" >&5
+echo "$as_me: WARNING: By including Tetgen you have to comply with Tetgen' special" >&2;}
+      { echo "$as_me:$LINENO: WARNING: licensing requirements stated in contrib/Tetgen/LICENSE. To" >&5
+echo "$as_me: WARNING: licensing requirements stated in contrib/Tetgen/LICENSE. To" >&2;}
+      { echo "$as_me:$LINENO: WARNING: disable Tetgen, use the --disable-tetgen option" >&5
+echo "$as_me: WARNING: disable Tetgen, use the --disable-tetgen option" >&2;}
     fi
   fi
 
@@ -4772,12 +4743,6 @@ fi
 _ACEOF
 
       BO="${BO} MathEval"
-      echo "********************************************************************"
-      echo "  You are building a version of Gmsh that contains GNU MathEval."
-      echo "  MathEval is available under the GNU GPL."
-      echo "  To disable MathEval, run configure again with the"
-      echo "  --disable-matheval option."
-      echo "********************************************************************"
     fi
   fi
 
@@ -8294,14 +8259,12 @@ if test "$no_create" != yes; then
 fi
 
 
-echo "********************************************************************"
-echo "Gmsh is configured for"
-echo "  - OS           : ${UNAME} on ${HOSTNAME}"
-echo "  - C compiler   : ${CC}"
-echo "  - C++ compiler : ${CXX}"
-echo "  - Linker       : ${LINKER}"
-echo "  - Optimization : ${OPTIM}"
-echo "  - Build options:${BO}"
-echo "********************************************************************"
-echo "Edit 'variables' and 'Common/GmshConfig.h' to fine-tune the config"
-echo "********************************************************************"
+echo ""
+echo "Gmsh has been configured for ${UNAME} with the following options:${BO}"
+echo ""
+echo "C compiler: ${CC}"
+echo "C++ compiler: ${CXX}"
+echo "Linker: ${LINKER}"
+echo "Optimization flags: ${OPTIM}"
+echo ""
+echo "Edit 'variables' and 'Common/GmshConfig.h' to fine-tune the configuration."
