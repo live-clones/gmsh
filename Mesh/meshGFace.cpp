@@ -364,7 +364,7 @@ static bool recover_medge_old(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
 
-static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
+static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh, bool debug = true)
 {
   BDS_GeomEntity CLASS_F (1, 2);
   typedef std::set<MVertex*> v_container;
@@ -573,7 +573,10 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
       }
       
       std::list<GFace *> facesToRemesh;
-      remeshUnrecoveredEdges(edgesNotRecovered, facesToRemesh);
+      if (repairSelfIntersecting1dMesh) 
+	remeshUnrecoveredEdges(edgesNotRecovered, facesToRemesh);
+      else
+	throw edgesNotRecovered;
       std::set<EdgeToRecover>::iterator itr = edgesNotRecovered.begin();
       for (; itr != edgesNotRecovered.end(); ++itr){
 	int p1 = itr->p1;
@@ -586,7 +589,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
       delete [] U_;
       delete [] V_;
       if (RECUR_ITER < 10 && facesToRemesh.size() == 0)
-	return gmsh2DMeshGenerator(gf, RECUR_ITER+1, debug);
+	return gmsh2DMeshGenerator(gf, RECUR_ITER+1,   repairSelfIntersecting1dMesh, debug);
       return false;
     }
     if(RECUR_ITER > 0)
@@ -1370,7 +1373,7 @@ void meshGFace::operator() (GFace *gf)
   Msg::Debug("Generating the mesh");
   if(noseam(gf) || gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){
     //gmsh2DMeshGeneratorPeriodic(gf, debugSurface >= 0 || debugSurface == -100);
-    gmsh2DMeshGenerator(gf, 0, debugSurface >= 0 || debugSurface == -100);
+    gmsh2DMeshGenerator(gf, 0, repairSelfIntersecting1dMesh, debugSurface >= 0 || debugSurface == -100);
   }
   else{
     if(!gmsh2DMeshGeneratorPeriodic(gf, debugSurface >= 0 || debugSurface == -100))

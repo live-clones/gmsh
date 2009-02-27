@@ -1044,10 +1044,13 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   // we do that model face by model face
   std::vector<MElement*> bad;
   double worst;
-  if (displ2D){
+  if (1 || displ2D){
     checkHighOrderTriangles(m, bad, worst);
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
-      if ((*it)->geomType() == GEntity::Plane) displ2D->smooth(*it);
+      if ((*it)->geomType() == GEntity::Plane) {
+	gmshSwapHighOrderTriangles(*it);
+	if (displ2D)displ2D->smooth(*it);
+      }
     // will have to smooth in the planar coordinates, using the metric
   }
 

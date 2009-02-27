@@ -2898,17 +2898,55 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2])
   x(1) = uv[1];
   PointSurface ps = {&p, s};
 
+  Vertex pp = InterpolateSurface(s, uv[0],uv[1], 0, 0);
+  double d2 = (pp.Pos.X - p.Pos.X)*(pp.Pos.X - p.Pos.X) + 
+    (pp.Pos.Y - p.Pos.Y)*(pp.Pos.Y - p.Pos.Y) + 
+    (pp.Pos.Z - p.Pos.Z)*(pp.Pos.Z - p.Pos.Z) ;
+  if (d2 < 1.e-12)return true;
+
+
   double UMIN = 0.;
   double UMAX = 1.;
   double VMIN = 0.;
   double VMAX = 1.;
+  int ITER = 0;
   while(1) {
-    newton_fd(projectPS, x, &ps);
-    p = InterpolateSurface(s, x(0), x(1), 0, 0);
-    if(x(0) >= UMIN && x(0) <= UMAX && x(1) >= VMIN && x(1) <= VMAX)
-      break;
+    bool success = newton_fd(projectPS, x, &ps);
+    if(success && x(0) >= UMIN && x(0) <= UMAX && x(1) >= VMIN && x(1) <= VMAX){
+      p = InterpolateSurface(s, x(0), x(1), 0, 0);
+      uv[0] = x(0);
+      uv[1] = x(1);
+      if (ITER > 0)Msg::Info("ProjectPoint (%g,%g,%g) On Surface %d converged after %d iterations",p.Pos.X,p.Pos.Y,p.Pos.Z,s->Num,ITER);
+      return true;
+    }
     x(0) = UMIN + (UMAX - UMIN) * ((rand() % 10000) / 10000.);
     x(1) = VMIN + (VMAX - VMIN) * ((rand() % 10000) / 10000.);
+    if (ITER++ > 100)break;
+  }
+  {
+    int NSAMPLES = 500;
+    double uok,vok;
+    double dmin = 1.e22;
+    for (int i=0;i<NSAMPLES;i++){
+      const double U = i/(double)(NSAMPLES-1);
+      for (int j=0;j<NSAMPLES;j++){
+	const double V = j/(double)(NSAMPLES-1);
+	Vertex pp = InterpolateSurface(s, U, V, 0, 0);
+	double d2 = (pp.Pos.X - p.Pos.X)*(pp.Pos.X - p.Pos.X) + 
+	  (pp.Pos.Y - p.Pos.Y)*(pp.Pos.Y - p.Pos.Y) + 
+	  (pp.Pos.Z - p.Pos.Z)*(pp.Pos.Z - p.Pos.Z) ;
+	if (d2 < dmin) {
+	  dmin = d2;
+	  uok = U;
+	  vok = V;
+	}
+      }
+    }
+    p = InterpolateSurface(s, uok, vok, 0, 0);
+    uv[0] = uok;
+    uv[1] = vok;
+    if (ITER > 0)Msg::Info("Brute force method used for projection of point (%g %g %g) on surface %d",p.Pos.X,p.Pos.Y,p.Pos.Z,s->Num);
+    return true;
   }
   return false;
 }
@@ -3095,8 +3133,10 @@ void sortEdgesInLoop(int num, List_T *edges)
     List_Read(edges, i, &j);
     if((c = FindCurve(j)))
       List_Add(temp, &c);
-    else
+    else{
+      return;
       Msg::Error("Unknown curve %d in line loop %d", j, num);
+    }
   }
   List_Reset(edges);
 

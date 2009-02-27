@@ -200,10 +200,11 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 
 	  // To be safe, we should ensure that this mesh motion does not lead to an invalid mesh !!!!
 	  //v1b = new MVertex(gp.x(),gp.y(),gp.z(),gf);
-	  if (gp.g()){
+	  if (gp.g() ){
+	    //v1b = new MFaceVertex(v[j]->x(), v[j]->y(), v[j]->z(),gf,gp.u(),gp.v());
 	    v1b = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
-	    Msg::Info("The point has been projected back to the surface (%g %g %g) -> (%g %g %g)",
-		       v[j]->x(), v[j]->y(), v[j]->z(),gp.x(),gp.y(),gp.z());
+	    //	    Msg::Info("The point has been projected back to the surface (%g %g %g) -> (%g %g %g)",
+	    //	      v[j]->x(), v[j]->y(), v[j]->z(),gp.x(),gp.y(),gp.z());
 	  }
 	  else{
 	    v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(),gf);	  
@@ -216,7 +217,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 
         gf->mesh_vertices.push_back(v1b);
         numberedV[out.trifacelist[i * 3 + j] - 1] = v1b;
-        delete v[j];
+	delete v[j];
         v[j] = v1b;
       }
     }

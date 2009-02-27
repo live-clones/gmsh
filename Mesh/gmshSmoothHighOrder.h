@@ -15,6 +15,8 @@ class MElement;
 class GFace;
 class GRegion;
 
+void gmshSwapHighOrderTriangles(GFace *gf);
+
 class gmshHighOrderSmoother 
 {
   const int _tag;

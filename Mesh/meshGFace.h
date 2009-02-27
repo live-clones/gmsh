@@ -14,7 +14,9 @@ class MVertex;
 
 // Create the mesh of the face
 class meshGFace {
+  const bool repairSelfIntersecting1dMesh;
  public :
+  meshGFace (bool r = true) : repairSelfIntersecting1dMesh(true) {}
   void operator () (GFace *);
 };
 

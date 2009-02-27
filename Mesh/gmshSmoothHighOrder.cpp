@@ -209,8 +209,209 @@ void gmshHighOrderSmoother::smooth ( std::vector<MElement*>  & all)
 
 
   delete lsys;
-  
 }
+
+/*
+  n3    n23     n2
+  x-----x-------x
+  |            /|
+  |    t1    /  |
+  |        /    |
+  x n13  x n12  x n24
+  |    /        |
+  |  /    t2    |
+  |/            |
+  x------x------x
+  n1    n14     n4
+*/
+
+static double surfaceTriangleUV(SPoint2 &v1, SPoint2 &v2, SPoint2 &v3)           
+{
+  const double v12[2] = {v2.x() - v1.x(),v2.y() - v1.y()};
+  const double v13[2] = {v3.x() - v1.x(),v3.y() - v1.y()};
+  return 0.5 * fabs (v12[0] * v13[1] - v12[1] * v13[0]);
+}
+
+
+
+struct swap_triangles_p2
+{
+  MTriangle *t1, *t2;
+  MTriangle *t3, *t4;
+  double quality_old;
+  double quality_new;
+  double s_before,s_after;
+  MVertex *n1, *n2, *n3, *n4;
+  MVertex *n12, *n13, *n23, *n14, *n24;
+  MVertex *n34;
+  swap_triangles_p2(const MEdge &me, MTriangle *_t1, MTriangle *_t2, GFace *gf)
+    : t1(_t1), t2(_t2),n1(0),n2(0),n3(0),n12(0),n13(0), n23(0), n14(0), n24(0),n34(0)
+  {
+    n1 = me.getVertex(0);
+    n2 = me.getVertex(1);    
+
+    if (t1->getVertex(0) != n1 && t1->getVertex(0) != n2) n3 = t1->getVertex(0);
+    else if (t1->getVertex(1) != n1 && t1->getVertex(1) != n2) n3 = t1->getVertex(1);
+    else if (t1->getVertex(2) != n1 && t1->getVertex(2) != n2) n3 = t1->getVertex(2);
+    int iStart = 0;
+    for (;iStart<3;iStart++)
+      if (t1->getVertex(iStart) == n1)
+	break;
+    if (n2 == t1->getVertex((iStart+1)%3)){
+      n12 = t1->getVertex((iStart+0)%3 + 3);
+      n23 = t1->getVertex((iStart+1)%3 + 3);
+      n13 = t1->getVertex((iStart+2)%3 + 3);
+    }
+    else{
+      n13 = t1->getVertex((iStart+0)%3 + 3);
+      n23 = t1->getVertex((iStart+1)%3 + 3);
+      n12 = t1->getVertex((iStart+2)%3 + 3);
+    }
+
+    if (t2->getVertex(0) != n1 && t2->getVertex(0) != n2) n4 = t2->getVertex(0);
+    else if (t2->getVertex(1) != n1 && t2->getVertex(1) != n2) n4 = t2->getVertex(1);
+    else if (t2->getVertex(2) != n1 && t2->getVertex(2) != n2) n4 = t2->getVertex(2);
+    iStart = 0;
+    for (;iStart<3;iStart++)
+      if (t2->getVertex(iStart) == n1)
+	break;
+    if (n2 == t2->getVertex((iStart+1)%3)){
+      n24 = t2->getVertex((iStart+1)%3 + 3);
+      n14 = t2->getVertex((iStart+2)%3 + 3);
+    }
+    else{
+      n14 = t2->getVertex((iStart+0)%3 + 3);
+      n24 = t2->getVertex((iStart+1)%3 + 3);
+    }
+    
+    //printf("%p %p %p %p %p %p %p %p %p\n",n1,n2,n3,n4,n12,n23,n13,n24,n14);
+
+    SPoint2 p1,p2,p3,p4;
+    reparamMeshEdgeOnFace(n1,n2,gf,p1,p2);
+    reparamMeshEdgeOnFace(n3,n4,gf,p3,p4);
+
+    s_before = surfaceTriangleUV(p1,p2,p4) + surfaceTriangleUV(p1,p2,p3);
+    s_after =  surfaceTriangleUV(p3,p4,p1) + surfaceTriangleUV(p3,p4,p2);
+
+    SPoint2 p34 = (p3+p4)*.5;
+    GPoint gp34 = gf->point(p34);
+    n34 = new MFaceVertex (gp34.x(),gp34.y(),gp34.z(),gf,p34.x(),p34.y());        
+
+    const double qold1 = t1->distoShapeMeasure() * t1->gammaShapeMeasure();
+    const double qold2 = t2->distoShapeMeasure() * t2->gammaShapeMeasure();
+
+    std::vector<MVertex *>vv;
+    vv.push_back(n13);vv.push_back(n34);vv.push_back(n14);
+    t3 = new MTriangleN (n1,n3,n4,vv,2,t1->getNum(),t1->getPartition());
+    vv.clear();
+    vv.push_back(n34);vv.push_back(n23);vv.push_back(n24);
+    t4 = new MTriangleN (n4,n3,n2,vv,2,t2->getNum(),t2->getPartition());
+
+    const double qnew1 = t3->distoShapeMeasure() * t3->gammaShapeMeasure();
+    const double qnew2 = t4->distoShapeMeasure() * t4->gammaShapeMeasure();
+
+    quality_old = std::min(qold1,qold2);
+    quality_new = std::min(qnew1,qnew2);
+
+  }
+  bool operator < (const swap_triangles_p2 &other) const
+  {
+    return  other.quality_new - other.quality_old < quality_new - quality_old;
+  }
+  void print() const{
+    printf("%d %d %d %d %d %d\n",t1->getVertex(0)->getNum(),t1->getVertex(1)->getNum(),t1->getVertex(2)->getNum(),
+	   t1->getVertex(3)->getNum(),t1->getVertex(4)->getNum(),t1->getVertex(5)->getNum());
+    printf("%d %d %d %d %d %d\n",t2->getVertex(0)->getNum(),t2->getVertex(1)->getNum(),t2->getVertex(2)->getNum(),
+	   t2->getVertex(3)->getNum(),t2->getVertex(4)->getNum(),t2->getVertex(5)->getNum());
+    printf("%d %d %d %d %d %d\n",t3->getVertex(0)->getNum(),t3->getVertex(1)->getNum(),t3->getVertex(2)->getNum(),
+	   t3->getVertex(3)->getNum(),t3->getVertex(4)->getNum(),t3->getVertex(5)->getNum());
+    printf("%d %d %d %d %d %d\n",t4->getVertex(0)->getNum(),t4->getVertex(1)->getNum(),t4->getVertex(2)->getNum(),
+	   t4->getVertex(3)->getNum(),t4->getVertex(4)->getNum(),t4->getVertex(5)->getNum());
+    printf("%d %d %d %d %d %d %d %d %d\n",n1->getNum(),
+    	   n2->getNum(),n3->getNum(),n4->getNum(),
+	   n12->getNum(),n23->getNum(),n13->getNum(),n24->getNum(),n14->getNum());
+  }
+  
+};
+
+
+static int _gmshSwapHighOrderTriangles(GFace *gf)
+{
+  e2t_cont adj;
+  buildEdgeToTriangle(gf->triangles, adj);
+
+  std::set<swap_triangles_p2> pairs;
+
+  for (e2t_cont::iterator it = adj.begin(); it!= adj.end(); ++it){
+    if (it->second.second)
+      pairs.insert(swap_triangles_p2(it->first,
+				     dynamic_cast<MTriangle*>(it->second.first),
+				     dynamic_cast<MTriangle*>(it->second.second),
+				     gf));
+  }
+
+  int nbSwap = 0;
+
+  std::set<MTriangle*> t_removed;
+  std::set<MVertex*> v_removed;
+  std::set<swap_triangles_p2>::iterator itp = pairs.begin();
+
+  std::vector<MTriangle*> triangles2;
+  std::vector<MVertex*> mesh_vertices2;
+
+  while(itp != pairs.end()){
+    double diff = fabs(itp->s_before - itp->s_after);
+    if ( t_removed.find(itp->t1) == t_removed.end() &&
+	 t_removed.find(itp->t2) == t_removed.end() &&
+	 itp->quality_new - itp->quality_old > 0.01 &&
+	 diff < 1.e-9){
+      t_removed.insert(itp->t1);
+      t_removed.insert(itp->t2);
+      v_removed.insert(itp->n12);
+      itp->print();
+      triangles2.push_back(itp->t3);
+      triangles2.push_back(itp->t4);
+      mesh_vertices2.push_back(itp->n34);
+      nbSwap++;
+    }
+    else{
+      delete itp->t3;
+      delete itp->t4;
+      delete itp->n34;
+    }
+    ++itp;
+  }
+  
+  
+  for (unsigned int i = 0; i < gf->mesh_vertices.size(); i++){
+    if (v_removed.find(gf->mesh_vertices[i]) == v_removed.end()){
+      mesh_vertices2.push_back(gf->mesh_vertices[i]);
+    }
+    else {
+      delete gf->mesh_vertices[i];
+    }    
+  }
+  gf->mesh_vertices = mesh_vertices2;
+
+  for (unsigned int i = 0; i < gf->triangles.size(); i++){
+    if (t_removed.find(gf->triangles[i]) == t_removed.end()){
+      triangles2.push_back(gf->triangles[i]);
+    }
+    else {
+      delete gf->triangles[i];
+    }    
+  }
+  //  printf("replacing %d by %d\n",gf->triangles.size(),triangles2.size());
+  gf->triangles = triangles2;
+  return nbSwap;
+}
+
+void gmshSwapHighOrderTriangles(GFace *gf){
+  while(_gmshSwapHighOrderTriangles(gf));
+  //  _gmshSwapHighOrderTriangles(gf);
+}
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // OLD STUFF : STILL USED ?

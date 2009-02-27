@@ -14,6 +14,7 @@
 #include "gmshVertex.h"
 #include "gmshFace.h"
 #include "GFaceCompound.h"
+#include "GEdgeCompound.h"
 #include "gmshEdge.h"
 #include "gmshRegion.h"
 #include "Field.h"
@@ -114,16 +115,20 @@ int GModel::importGEOInternals()
     PhysicalGroup *p;
     List_Read(_geo_internals->PhysicalGroups, i, &p);
     std::list<GFace*>f_compound;
+    std::vector<GEdge*>e_compound;
     for(int j = 0; j < List_Nbr(p->Entities); j++){
       int num;
       List_Read(p->Entities, j, &num);
       GEntity *ge = 0;
       switch(p->Typ){
       case MSH_PHYSICAL_POINT:   ge = getVertexByTag(abs(num)); break;
-      case MSH_PHYSICAL_LINE:    ge = getEdgeByTag(abs(num)); break;
+      case MSH_PHYSICAL_LINE:    
+	ge = getEdgeByTag(abs(num));
+	e_compound.push_back(getEdgeByTag(abs(num)));
+	break; 
       case MSH_PHYSICAL_SURFACE: 
+	ge = getFaceByTag(abs(num));
 	f_compound.push_back(getFaceByTag(abs(num))); 
-	ge = getFaceByTag(abs(num)); 
 	break;
       case MSH_PHYSICAL_VOLUME:  ge = getRegionByTag(abs(num)); break;
       }
@@ -134,6 +139,18 @@ int GModel::importGEOInternals()
     }
     // the physical is a compound i.e. we allow the meshes
     // not to conform internal MEdges of the compound
+    // the physical is a compound i.e. we allow the meshes
+    // not to conform internal MEdges of the compound
+
+    if (p->Typ == MSH_PHYSICAL_LINE && p->Boundaries[0]){
+      GEdge *ge = getEdgeByTag(abs(p->Num));
+      if (!ge){
+	GEdgeCompound *ge = new GEdgeCompound(this, p->Num, e_compound);
+	add(ge);
+      }
+      else
+        ge->resetMeshAttributes();
+    }      
     if (p->Typ == MSH_PHYSICAL_SURFACE && p->Boundaries[0]){
       int i = 0;
       List_T *bnd;

@@ -5402,7 +5402,7 @@ if test "x$UNAME" != "xDarwin"; then
     F77LIB="-lgfortran"
     ;;
   *g77*)
-    F77LIB="-lg2c"
+    F77LIB=""
     ;;
   esac
 fi

@@ -15,7 +15,7 @@ INC = ${DASH}I../Common ${DASH}I../Geo ${DASH}I../Mesh\
 CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
 SRC = GEntity.cpp\
-      GVertex.cpp GEdge.cpp GEdgeLoop.cpp GFace.cpp GFaceCompound.cpp GRegion.cpp\
+      GVertex.cpp GEdge.cpp GEdgeLoop.cpp GFace.cpp GEdgeCompound.cpp GFaceCompound.cpp GRegion.cpp\
       gmshVertex.cpp gmshEdge.cpp gmshFace.cpp gmshRegion.cpp gmshSurface.cpp\
       OCCVertex.cpp OCCEdge.cpp OCCFace.cpp OCCRegion.cpp\
       discreteEdge.cpp discreteFace.cpp discreteRegion.cpp\
@@ -93,6 +93,10 @@ GFace${OBJEXT}: GFace.cpp ../Common/GmshConfig.h ../Common/GmshMessage.h \
   ../Common/VertexArray.h ../Geo/SVector3.h ../Numeric/Numeric.h \
   ../Numeric/GmshMatrix.h ../Numeric/GaussLegendre1D.h \
   ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
+GEdgeCompound${OBJEXT}: GEdgeCompound.cpp ../Common/GmshConfig.h GEdgeCompound.h \
+  GFace.h GEntity.h Range.h SPoint3.h SBoundingBox3d.h GPoint.h \
+  GEdgeLoop.h GEdge.h GVertex.h SPoint2.h SVector3.h Pair.h \
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Common/GmshMessage.h
 GFaceCompound${OBJEXT}: GFaceCompound.cpp ../Common/GmshConfig.h GFaceCompound.h \
   GFace.h GEntity.h Range.h SPoint3.h SBoundingBox3d.h GPoint.h \
   GEdgeLoop.h GEdge.h GVertex.h SPoint2.h SVector3.h Pair.h \
@@ -232,9 +236,9 @@ GModelIO_Geo${OBJEXT}: GModelIO_Geo.cpp ../Common/GmshConfig.h \
   gmshSurface.h ../Numeric/Numeric.h ../Numeric/GmshMatrix.h \
   ../Common/ListUtils.h ../Common/TreeUtils.h ../Common/avl.h \
   ../Common/ListUtils.h ExtrudeParams.h ../Common/SmoothData.h \
-  ../Common/OpenFile.h gmshVertex.h gmshFace.h GFaceCompound.h gmshEdge.h \
-  gmshRegion.h ../Mesh/Field.h ../Post/PView.h ../Geo/SPoint3.h \
-  ../Parser/Parser.h
+  ../Common/OpenFile.h gmshVertex.h gmshFace.h GFaceCompound.h \
+  GEdgeCompound.h gmshEdge.h gmshRegion.h ../Mesh/Field.h ../Post/PView.h \
+  ../Geo/SPoint3.h ../Parser/Parser.h
 GModelIO_Mesh${OBJEXT}: GModelIO_Mesh.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/GmshDefines.h MElement.h \

@@ -75,16 +75,16 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
   double Crv = 0;
   switch(ge->dim()){
   case 0:        
-    // Crv = max_edge_curvature((const GVertex *)ge);
-    // Crv = std::max(max_surf_curvature((const GVertex *)ge), Crv);
-    Crv = max_surf_curvature((const GVertex *)ge);
+    Crv = max_edge_curvature((const GVertex *)ge);
+    Crv = std::max(max_surf_curvature((const GVertex *)ge), Crv);
+    //Crv = max_surf_curvature((const GVertex *)ge);
     break;
   case 1:
     {
       GEdge *ged = (GEdge *)ge;
-      //Crv = ged->curvature(U);
-      //Crv = std::max(Crv, max_surf_curvature(ged, U));
-      Crv = max_surf_curvature(ged, U);      
+      Crv = ged->curvature(U);
+      Crv = std::max(Crv, max_surf_curvature(ged, U));
+      //Crv = max_surf_curvature(ged, U);      
     }
     break;
   case 2:

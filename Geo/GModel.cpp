@@ -874,14 +874,14 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
       MElement *e2 = factory.create(e->getTypeForMSH(), verts, e->getNum(), 
                                     e->getPartition());
       switch(e2->getNumEdges()){
-      case 0: elements[0][entities[i]->tag()].push_back(e2); break;
-      case 1: elements[1][entities[i]->tag()].push_back(e2); break;
-      case 3: elements[2][entities[i]->tag()].push_back(e2); break;
-      case 4: elements[3][entities[i]->tag()].push_back(e2); break;
-      case 6: elements[4][entities[i]->tag()].push_back(e2); break;
+      case 0:  elements[0][entities[i]->tag()].push_back(e2); break;
+      case 1:  elements[1][entities[i]->tag()].push_back(e2); break;
+      case 3:  elements[2][entities[i]->tag()].push_back(e2); break;
+      case 4:  elements[3][entities[i]->tag()].push_back(e2); break;
+      case 6:  elements[4][entities[i]->tag()].push_back(e2); break;
       case 12: elements[5][entities[i]->tag()].push_back(e2); break;
-      case 9: elements[6][entities[i]->tag()].push_back(e2); break;
-      case 8: elements[7][entities[i]->tag()].push_back(e2); break;
+      case 9:  elements[6][entities[i]->tag()].push_back(e2); break;
+      case 8:  elements[7][entities[i]->tag()].push_back(e2); break;
       }
     }
   }

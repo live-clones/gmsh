@@ -102,17 +102,19 @@ class solver{
     GModel *m = GModel::current();
     std::vector<MVertex*> vertices;
 
+    int dim = m->getNumRegions() ? 3 : 2;
+    
     if(bc1 == "Dirichlet"){
-      m->getMeshVertices(surface1, 2, vertices);
+      m->getMeshVertices(surface1, dim-1, vertices);
       for(unsigned int i = 0; i < vertices.size(); i++)
         myAssembler->fixVertex(vertices[i], 0, 1, value1);
     }
     if(bc2 == "Dirichlet"){
-      m->getMeshVertices(surface2, 2, vertices);
+      m->getMeshVertices(surface2, dim-1, vertices);
       for(unsigned int i = 0; i < vertices.size(); i++)
         myAssembler->fixVertex(vertices[i], 0, 1, value2);
     }
-    m->getMeshVertices(volume, 3, vertices);
+    m->getMeshVertices(volume, dim, vertices);
     for(unsigned int i = 0; i < vertices.size(); i++)
       myAssembler->numberVertex(vertices[i], 0, 1);
 
@@ -132,9 +134,10 @@ PView *GMSH_FiniteElementPlugin::execute(PView *v)
   GModel *m = GModel::current();
   std::map<int, std::vector<GEntity*> > groups[4];
   m->getPhysicalGroups(groups);
+  int dim = m->getNumRegions() ? 3 : 2;
 
   std::vector<MVertex*> vertices;
-  m->getMeshVertices(volume, 3, vertices);
+  m->getMeshVertices(volume, dim, vertices);
   std::map<int, std::vector<double> > data;
 
   if(equation == "Laplace"){
@@ -142,8 +145,8 @@ PView *GMSH_FiniteElementPlugin::execute(PView *v)
     if(!s.myAssembler->sizeOfR()) return 0;
     gmshFunction<double> diffusivity(parameter);
     gmshLaplaceTerm laplace(m, &diffusivity, 1);
-    for(unsigned int i = 0; i < groups[3][volume].size(); i++)
-      laplace.addToMatrix(*s.myAssembler, groups[3][volume][i]);
+    for(unsigned int i = 0; i < groups[dim][volume].size(); i++)
+      laplace.addToMatrix(*s.myAssembler, groups[dim][volume][i]);
     s.lsys->systemSolve();
     for (unsigned int i = 0; i < vertices.size(); i++)
       data[vertices[i]->getNum()].push_back
@@ -155,8 +158,8 @@ PView *GMSH_FiniteElementPlugin::execute(PView *v)
     if(!s.myAssembler->sizeOfR()) return 0;
     gmshFunction<std::complex<double> > waveNumber(parameter);
     gmshHelmholtzTerm helmholtz(m, &waveNumber, 1);
-    for(unsigned int i = 0; i < groups[3][volume].size(); i++)
-      helmholtz.addToMatrix(*s.myAssembler, groups[3][volume][i]);
+    for(unsigned int i = 0; i < groups[dim][volume].size(); i++)
+      helmholtz.addToMatrix(*s.myAssembler, groups[dim][volume][i]);
     s.lsys->setGmres(1);
     s.lsys->systemSolve();
     for (unsigned int i = 0; i < vertices.size(); i++)
