@@ -575,15 +575,22 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfInters
       std::list<GFace *> facesToRemesh;
       if (repairSelfIntersecting1dMesh) 
 	remeshUnrecoveredEdges(edgesNotRecovered, facesToRemesh);
-      else
-	throw edgesNotRecovered;
-      std::set<EdgeToRecover>::iterator itr = edgesNotRecovered.begin();
-      for (; itr != edgesNotRecovered.end(); ++itr){
-	int p1 = itr->p1;
-	int p2 = itr->p2;
-	int tag = itr->ge->tag();
-	Msg::Warning("MEdge %d %d in GEdge %d",p1,p2,tag);
+      else{
+	std::set<EdgeToRecover>::iterator itr = edgesNotRecovered.begin();
+	int *error = new int[3*edgesNotRecovered.size()];
+	int I = 0;
+	for (; itr != edgesNotRecovered.end(); ++itr){
+	  int p1 = itr->p1;
+	  int p2 = itr->p2;
+	  int tag = itr->ge->tag();
+	  error[3*I+0] = p1;
+	  error[3*I+1] = p2;
+	  error[3*I+2] = tag;
+	  I++;
+	}
+	throw error;
       }
+
       // delete the mesh
       delete m;
       delete [] U_;
