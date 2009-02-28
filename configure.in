@@ -633,39 +633,39 @@ if test "x${ZLIB}" = "xyes"; then
 fi 
 
 dnl Check for blas and lapack
-AC_PROG_F77
+AC_PROG_FC
 if test "x$UNAME" != "xDarwin"; then
-  case "${F77}" in
+  case "${FC}" in
   *gfortran*)
-    F77LIB="-lgfortran"
+    FCLIB="-lgfortran"
     ;;
   *g77*)
-    F77LIB="-lg2c"
+    FCLIB="-lg2c"
     ;;
   esac
 fi
 if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
   LDFLAGS="${LDFLAGS} -L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib"
 fi
-AC_CHECK_LIB(atlas,ATL_xerbla,ATLAS="yes",[],${F77LIB})
+AC_CHECK_LIB(atlas,ATL_xerbla,ATLAS="yes",[],${FCLIB})
 if test "x${ATLAS}" = "xyes"; then
   AC_CHECK_LIB(f77blas,dgemm_,[BLAS="yes" BLAS_LIBS="${BLAS_LIBS} -lf77blas -latlas"],
-               [],[-latlas ${F77LIB}])
+               [],[-latlas ${FCLIB}])
 fi
 if test "x${BLAS}" != "xyes"; then
   AC_CHECK_LIB(blas,dgemm_,[BLAS="yes" BLAS_LIBS="${BLAS_LIBS} -lblas"],
-               [],${F77LIB})
+               [],${FCLIB})
 fi
 if test "x${BLAS}" = "xyes"; then
   AC_DEFINE(HAVE_BLAS)
   BO="${BO} Blas"
   if test "x${ATLAS}" = "xyes"; then
     AC_CHECK_LIB(lapack_atlas,dbdsqr_,[LAPACK="yes" BLAS_LIBS="-llapack_atlas ${BLAS_LIBS}"],
-                 [],[${BLAS_LIBS} ${F77LIB}])
+                 [],[${BLAS_LIBS} ${FCLIB}])
   fi
   if test "x${LAPACK}" != "xyes"; then
     AC_CHECK_LIB(lapack,dbdsqr_,[LAPACK="yes" BLAS_LIBS="-llapack ${BLAS_LIBS}"],
-                 [],[${BLAS_LIBS} ${F77LIB}])
+                 [],[${BLAS_LIBS} ${FCLIB}])
   fi
   if test "x${LAPACK}" = "xyes"; then
     AC_DEFINE(HAVE_LAPACK)
@@ -678,7 +678,7 @@ if test "x${BLAS_LIBS}" != "x"; then
   else
     GMSH_LIBS="${GMSH_LIBS} ${BLAS_LIBS}"
   fi
-  GMSH_LIBS="${GMSH_LIBS} ${F77LIB}"
+  GMSH_LIBS="${GMSH_LIBS} ${FCLIB}"
 fi
 
 dnl Check for FourierModel (if we have lapack)

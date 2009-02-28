@@ -1,7 +1,6 @@
-/* $Id: gl2ps.h,v 1.72 2009-01-08 23:58:07 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
- * Copyright (C) 1999-2007 Christophe Geuzaine <geuz@geuz.org>
+ * Copyright (C) 1999-2009 C. Geuzaine
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of either:
@@ -37,7 +36,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "GmshConfig.h"
 
 /* Define GL2PSDLL at compile time to build a Windows DLL */
 
@@ -86,7 +84,7 @@
                        0.01 * GL2PS_MINOR_VERSION + \
                        0.0001 * GL2PS_PATCH_VERSION)
 
-#define GL2PS_COPYRIGHT "(C) 1999-2007 Christophe Geuzaine (geuz@geuz.org)"
+#define GL2PS_COPYRIGHT "(C) 1999-2009 C. Geuzaine"
 
 /* Output file formats (the values and the ordering are important!) */
 
