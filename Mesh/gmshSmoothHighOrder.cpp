@@ -319,6 +319,7 @@ struct swap_triangles_p2
     return  other.quality_new - other.quality_old < quality_new - quality_old;
   }
   void print() const{
+    printf("%g <--- %g\n",quality_new,quality_old);
     printf("%d %d %d %d %d %d\n",t1->getVertex(0)->getNum(),t1->getVertex(1)->getNum(),t1->getVertex(2)->getNum(),
 	   t1->getVertex(3)->getNum(),t1->getVertex(4)->getNum(),t1->getVertex(5)->getNum());
     printf("%d %d %d %d %d %d\n",t2->getVertex(0)->getNum(),t2->getVertex(1)->getNum(),t2->getVertex(2)->getNum(),
