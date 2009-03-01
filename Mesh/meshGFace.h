@@ -16,7 +16,7 @@ class MVertex;
 class meshGFace {
   const bool repairSelfIntersecting1dMesh;
  public :
-  meshGFace (bool r = true) : repairSelfIntersecting1dMesh(true) {}
+  meshGFace (bool r = true) : repairSelfIntersecting1dMesh(r) {}
   void operator () (GFace *);
 };
 
