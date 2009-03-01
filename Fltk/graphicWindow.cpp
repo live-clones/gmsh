@@ -111,14 +111,24 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
 
   for(unsigned int i = 0; i < gls.size(); i++){
     drawContext *ctx = gls[i]->getDrawContext();
-    if(!strcmp(str, "r")){ // rotate 90 degress around axis perp to the screen
+    if(!strcmp(str, "r")){
+      // rotate +90 or -90 (shift) degress around axis perp to the
+      // screen, or sync rotation with first window (alt)
       double axis[3] = {0., 0., 1.};
-      if(!Fl::event_state(FL_SHIFT))
+      if(Fl::event_state(FL_ALT)){
+        if(i != 0){
+          drawContext *ctx0 = gls[0]->getDrawContext();
+          ctx->setQuaternion(ctx0->quaternion[0], ctx0->quaternion[1], 
+                             ctx0->quaternion[2], ctx0->quaternion[3]);
+        }
+      }
+      else if(!Fl::event_state(FL_SHIFT))
         ctx->addQuaternionFromAxisAndAngle(axis, -90.);
       else
         ctx->addQuaternionFromAxisAndAngle(axis, 90.);
     }
-    else if(!strcmp(str, "x")){ // X pointing out or into the screen
+    else if(!strcmp(str, "x")){
+      // set X-axis pointing out or into (shift) the screen
       if(!Fl::event_state(FL_SHIFT)){
         ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = -90.;
       }
@@ -127,7 +137,8 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
       }
       ctx->setQuaternionFromEulerAngles();
     }
-    else if(!strcmp(str, "y")){ // Y pointing out or into the screen
+    else if(!strcmp(str, "y")){
+      // set Y-axis pointing out or into (shift) the screen
       if(!Fl::event_state(FL_SHIFT)){
         ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = 180.;
       }
@@ -136,7 +147,8 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
       }
       ctx->setQuaternionFromEulerAngles();
     }
-    else if(!strcmp(str, "z")){ // Z pointing out or into the screen
+    else if(!strcmp(str, "z")){ 
+      // set Z-axis pointing out or into (shift) the screen
       if(!Fl::event_state(FL_SHIFT)){
         ctx->r[0] = 0.; ctx->r[1] = 0.; ctx->r[2] = 0.;
       }
@@ -145,11 +157,25 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
       }
       ctx->setQuaternionFromEulerAngles();
     }
-    else if(!strcmp(str, "1:1")){ // reset translation and scaling
-      ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
-      ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
+    else if(!strcmp(str, "1:1")){
+      // reset translation and scaling, or sync translation and
+      // scaling with the first window (alt)
+      if(Fl::event_state(FL_ALT)){
+        if(i != 0){
+          drawContext *ctx0 = gls[0]->getDrawContext();
+          for(int j = 0; j < 3; j++){
+            ctx->t[j] = ctx0->t[j];
+            ctx->s[j] = ctx0->s[j];
+          }
+        }
+      }
+      else{
+        ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
+        ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
+      }
     }
-    else if(!strcmp(str, "reset")){ // reset everything
+    else if(!strcmp(str, "reset")){ 
+      // reset everything
       ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
       ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
       ctx->r[0] = ctx->r[1] = ctx->r[2] = 0.;
@@ -360,11 +386,11 @@ graphicWindow::graphicWindow(bool main, int numTiles)
   x += sw;  
   butt[4] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_rotate");
   butt[4]->callback(status_xyz1p_cb, (void *)"r");
-  butt[4]->tooltip("Rotate +90 or -90 degrees");
+  butt[4]->tooltip("Rotate +90 or -90 (Shift) degrees, or sync rotations (Alt)");
   x += sw;  
   butt[3] = new Fl_Button(x, glheight + 2, 2 * FL_NORMAL_SIZE, sht, "1:1");
   butt[3]->callback(status_xyz1p_cb, (void *)"1:1");
-  butt[3]->tooltip("Set unit scale");
+  butt[3]->tooltip("Set unit scale, or sync scale (Alt)");
   x += 2 * FL_NORMAL_SIZE;  
   butt[8] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_ortho");
   butt[8]->callback(status_options_cb, (void *)"p");

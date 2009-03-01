@@ -1,4 +1,9 @@
-$Id: TODO.txt,v 1.17 2009-02-05 06:47:19 geuzaine Exp $
+$Id: TODO.txt,v 1.18 2009-03-01 18:27:01 geuzaine Exp $
+
+********************************************************************
+
+Store Octree in PViewDataList and modify OctreePost to use it (the
+same way PViewDataGModel uses the Octree stored in GModel)
 
 ********************************************************************
 
