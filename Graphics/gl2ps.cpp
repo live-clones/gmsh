@@ -1465,7 +1465,8 @@ static GLint gl2psFindRoot(GL2PSlist *primitives, GL2PSprimitive **root)
   }
 }
 
-static void gl2psFreeImagemap(GL2PSimagemap *list){
+static void gl2psFreeImagemap(GL2PSimagemap *list)
+{
   GL2PSimagemap *next;
   while(list != NULL){
     next = list->next;
@@ -5028,7 +5029,7 @@ static void gl2psPrintSVGPixmap(GLfloat x, GLfloat y, GL2PSimage *pixmap)
   gl2psPrintf("\"/>\n");
   gl2psListDelete(png);
 #else
-  gl2psMsg(GL2PS_WARNING, "GL2PS has to be compiled with PNG support in "
+  gl2psMsg(GL2PS_WARNING, "GL2PS must be compiled with PNG support in "
            "order to embed images in SVG streams");
 #endif
 }

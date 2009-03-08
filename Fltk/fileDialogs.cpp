@@ -133,20 +133,23 @@ int generic_bitmap_dialog(const char *name, const char *title, int format)
 {
   struct _generic_bitmap_dialog{
     Fl_Window *window;
-    Fl_Check_Button *b;
+    Fl_Check_Button *b[2];
     Fl_Button *ok, *cancel;
   };
   static _generic_bitmap_dialog *dialog = NULL;
 
   if(!dialog){
     dialog = new _generic_bitmap_dialog;
-    int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
-    dialog->b = new Fl_Check_Button
+    dialog->b[0] = new Fl_Check_Button
       (WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
-    dialog->b->type(FL_TOGGLE_BUTTON);
+    dialog->b[0]->type(FL_TOGGLE_BUTTON);
+    dialog->b[1] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Composite all window tiles"); y += BH;
+    dialog->b[1]->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->end();
@@ -154,7 +157,8 @@ int generic_bitmap_dialog(const char *name, const char *title, int format)
   }
   
   dialog->window->label(title);
-  dialog->b->value(CTX::instance()->print.text);
+  dialog->b[0]->value(CTX::instance()->print.text);
+  dialog->b[1]->value(CTX::instance()->print.compositeWindows);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -163,7 +167,8 @@ int generic_bitmap_dialog(const char *name, const char *title, int format)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-        opt_print_text(0, GMSH_SET | GMSH_GUI, (int)dialog->b->value());
+        opt_print_text(0, GMSH_SET | GMSH_GUI, (int)dialog->b[0]->value());
+        opt_print_composite_windows(0, GMSH_SET | GMSH_GUI, (int)dialog->b[1]->value());
         CreateOutputFile(name, format);
         dialog->window->hide();
         return 1;
@@ -233,14 +238,14 @@ int jpeg_dialog(const char *name)
   struct _jpeg_dialog{
     Fl_Window *window;
     Fl_Value_Slider *s[2];
-    Fl_Check_Button *b;
+    Fl_Check_Button *b[2];
     Fl_Button *ok, *cancel;
   };
   static _jpeg_dialog *dialog = NULL;
 
   if(!dialog){
     dialog = new _jpeg_dialog;
-    int h = 3 * WB + 4 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 5 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "JPEG Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
@@ -256,9 +261,12 @@ int jpeg_dialog(const char *name)
     dialog->s[1]->minimum(0);
     dialog->s[1]->maximum(100);
     dialog->s[1]->step(1);
-    dialog->b = new Fl_Check_Button
+    dialog->b[0] = new Fl_Check_Button
       (WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
-    dialog->b->type(FL_TOGGLE_BUTTON);
+    dialog->b[0]->type(FL_TOGGLE_BUTTON);
+    dialog->b[1] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Composite all window tiles"); y += BH;
+    dialog->b[1]->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->end();
@@ -267,7 +275,8 @@ int jpeg_dialog(const char *name)
   
   dialog->s[0]->value(CTX::instance()->print.jpegQuality);
   dialog->s[1]->value(CTX::instance()->print.jpegSmoothing);
-  dialog->b->value(CTX::instance()->print.text);
+  dialog->b[0]->value(CTX::instance()->print.text);
+  dialog->b[1]->value(CTX::instance()->print.compositeWindows);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -278,7 +287,8 @@ int jpeg_dialog(const char *name)
       if (o == dialog->ok) {
         opt_print_jpeg_quality(0, GMSH_SET | GMSH_GUI, (int)dialog->s[0]->value());
         opt_print_jpeg_smoothing(0, GMSH_SET | GMSH_GUI, (int)dialog->s[1]->value());
-        opt_print_text(0, GMSH_SET | GMSH_GUI, (int)dialog->b->value());
+        opt_print_text(0, GMSH_SET | GMSH_GUI, (int)dialog->b[0]->value());
+        opt_print_composite_windows(0, GMSH_SET | GMSH_GUI, (int)dialog->b[1]->value());
         CreateOutputFile(name, FORMAT_JPEG);
         dialog->window->hide();
         return 1;
@@ -298,14 +308,14 @@ int gif_dialog(const char *name)
 {
   struct _gif_dialog{
     Fl_Window *window;
-    Fl_Check_Button *b[5];
+    Fl_Check_Button *b[6];
     Fl_Button *ok, *cancel;
   };
   static _gif_dialog *dialog = NULL;
 
   if(!dialog){
     dialog = new _gif_dialog;
-    int h = 3 * WB + 6 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 7 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "GIF Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
@@ -319,7 +329,9 @@ int gif_dialog(const char *name)
       (WB, y, 2 * BB + WB, BH, "Transparent background"); y += BH;
     dialog->b[4] = new Fl_Check_Button
       (WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
-    for(int i = 0; i < 5; i++){
+    dialog->b[5] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Composite all window tiles"); y += BH;
+    for(int i = 0; i < 6; i++){
       dialog->b[i]->type(FL_TOGGLE_BUTTON);
     }
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
@@ -333,6 +345,7 @@ int gif_dialog(const char *name)
   dialog->b[2]->value(CTX::instance()->print.gifSort);
   dialog->b[3]->value(CTX::instance()->print.gifTransparent);
   dialog->b[4]->value(CTX::instance()->print.text);
+  dialog->b[5]->value(CTX::instance()->print.compositeWindows);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -346,6 +359,7 @@ int gif_dialog(const char *name)
         opt_print_gif_sort(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value());
         opt_print_gif_transparent(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value());
         opt_print_text(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value());
+        opt_print_composite_windows(0, GMSH_SET | GMSH_GUI, dialog->b[5]->value());
         CreateOutputFile(name, FORMAT_GIF);
         dialog->window->hide();
         return 1;

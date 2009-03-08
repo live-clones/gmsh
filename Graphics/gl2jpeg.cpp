@@ -43,7 +43,7 @@ static void my_output_message(j_common_ptr cinfo)
 
 void create_jpeg(FILE *outfile, PixelBuffer *buffer, int quality, int smoothing)
 {
-  if(buffer->GetFormat() != GL_RGB || buffer->GetType() != GL_UNSIGNED_BYTE){
+  if(buffer->getFormat() != GL_RGB || buffer->getType() != GL_UNSIGNED_BYTE){
     Msg::Error("JPEG only implemented for GL_RGB and GL_UNSIGNED_BYTE");
     return;
   }
@@ -55,8 +55,8 @@ void create_jpeg(FILE *outfile, PixelBuffer *buffer, int quality, int smoothing)
 
   jpeg_create_compress(&cinfo);
   jpeg_stdio_dest(&cinfo, outfile);
-  cinfo.image_width = buffer->GetWidth();
-  cinfo.image_height = buffer->GetHeight();
+  cinfo.image_width = buffer->getWidth();
+  cinfo.image_height = buffer->getHeight();
   cinfo.input_components = 3;
   cinfo.in_color_space = JCS_RGB;
   jpeg_set_defaults(&cinfo);
@@ -65,7 +65,7 @@ void create_jpeg(FILE *outfile, PixelBuffer *buffer, int quality, int smoothing)
   cinfo.smoothing_factor = smoothing;
   jpeg_start_compress(&cinfo, TRUE);
 
-  unsigned char *pixels = (unsigned char*)buffer->GetPixels();
+  unsigned char *pixels = (unsigned char*)buffer->getPixels();
   JSAMPROW row_pointer[1]; 
   int row_stride = cinfo.image_width * cinfo.input_components;
   int i = cinfo.image_height - 1;

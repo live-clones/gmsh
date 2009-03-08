@@ -21,13 +21,13 @@ static PViewDataList *Img2Data(Fl_RGB_Image &img_init, int quads=1,
   img_init.desaturate(); // convert to grayscale
 
   // resize if necessary
-  Fl_RGB_Image * img;
+  Fl_RGB_Image *img;
   if(!resizex || !resizey)
-    img = (Fl_RGB_Image *) img_init.copy();
+    img = (Fl_RGB_Image*)img_init.copy();
   else
-    img = (Fl_RGB_Image *) img_init.copy(resizex, resizey);
+    img = (Fl_RGB_Image*)img_init.copy(resizex, resizey);
 
-  const uchar *data = img->array;
+  const unsigned char *data = img->array;
   int height = img->h();
   int width = img->w();
   int dim = img->d();
@@ -41,8 +41,8 @@ static PViewDataList *Img2Data(Fl_RGB_Image &img_init, int quads=1,
 
   double z = 0.;
   for(int i = 0; i < height - 1; i++) {
-    const uchar *a = data + i * width * dim;
-    const uchar *a1 = data + (i + 1) * width * dim;
+    const unsigned char *a = data + i * width * dim;
+    const unsigned char *a1 = data + (i + 1) * width * dim;
     double y = height - i - 1;
     double y1 = height - i - 2;
     for(int j = 0; j < width - 1; j++) {

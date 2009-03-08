@@ -929,7 +929,7 @@ meaning and syntax as in the C or C++ programming languages.
 Floating point expressions (or, more simply, ``expressions'') are denoted by
 the metasyntactic variable @var{expression} (remember the definition of the
 syntactic rules in @ref{Syntactic rules}), and are evaluated during the
-parsing of the data file:
+parsing of the script file:
 
 @example
 @var{expression}:
@@ -1069,11 +1069,11 @@ Colors expressions are hybrids between fixed-length braced
 
 @noindent The first case permits to use the X Windows names to refer to colors,
 e.g., @code{Red}, @code{SpringGreen}, @code{LavenderBlush3}, @dots{}
-(see @file{Common/Colors.h} in Gmsh's source tree for a complete
-list). The second case permits to define colors by using three
-expressions to specify their red, green and blue components (with values
-comprised between 0 and 255). The third case permits to define colors by
-using their red, green and blue color components as well as their alpha
+(see @file{Common/Colors.h} in the source code for a complete list). The
+second case permits to define colors by using three expressions to
+specify their red, green and blue components (with values comprised
+between 0 and 255). The third case permits to define colors by using
+their red, green and blue color components as well as their alpha
 channel. The last case permits to use the value of a @var{color-option}
 as a @var{color-expression}. The various @w{@var{color-option}s} are
 listed in @ref{Options}.
@@ -1402,7 +1402,7 @@ The following commands can be used anywhere in a Gmsh script:
 
 @item @var{string} = @var{expression};
 Creates a new expression identifier @var{string}, or affects
-@var{expression} to an existing expression identifier. Eleven expression
+@var{expression} to an existing expression identifier. Thirteen expression
 identifiers are predefined (hardcoded in Gmsh's parser):
 
 @ftable @code
@@ -1451,11 +1451,11 @@ Returns the next available surface loop number.
 
 @item newreg
 Returns the next available region number. That is, @code{newreg} returns
-the maximum of @code{newp}, @code{newl}, @code{news}, @code{newv} and
-all physical entity numbers@footnote{For compatibility purposes, the
-behavior of @code{newl}, @code{news}, @code{newv} and @code{newreg} can
-be modified with the @code{Geometry.OldNewReg} option (@pxref{Geometry
-options list}).}.
+the maximum of @code{newp}, @code{newl}, @code{news}, @code{newv},
+@code{newll}, @code{newsl} and all physical entity numbers@footnote{For
+compatibility purposes, the behavior of @code{newl}, @code{news},
+@code{newv} and @code{newreg} can be modified with the
+@code{Geometry.OldNewReg} option (@pxref{Geometry options list}).}.
 @end ftable
 
 @item @var{string} [ ] = @{ @};
@@ -1634,13 +1634,14 @@ the same time.
 @cindex Geometry, module
 @cindex Module, geometry
 
-Gmsh's geometry module provides a simple CAD engine, using a bottom-up
-(boundary representation) approach: you need to first define points (using
-the @code{Point} command: see below), then lines (using @code{Line},
-@code{Circle}, @code{Spline}, @dots{}, commands or by extruding points),
-then surfaces (using for example the @code{Plane Surface} or @code{Ruled
-Surface} commands, or by extruding lines), and finally volumes (using the
-@code{Volume} command or by extruding surfaces).
+Gmsh's geometry module provides a simple CAD engine, using a boundary
+representation (``BRep'') approach: you need to first define points
+(using the @code{Point} command: see below), then lines (using
+@code{Line}, @code{Circle}, @code{Spline}, @dots{}, commands or by
+extruding points), then surfaces (using for example the @code{Plane
+Surface} or @code{Ruled Surface} commands, or by extruding lines), and
+finally volumes (using the @code{Volume} command or by extruding
+surfaces).
 
 These geometrical entities are called ``elementary'' in Gmsh's jargon, and
 are assigned identification numbers when they are created:
@@ -1653,8 +1654,10 @@ are assigned identification numbers when they are created:
 @end enumerate
 
 @noindent Elementary geometrical entities can then be manipulated in various
-ways, for example using the @code{Translate}, @code{Rotate}, @code{Scale} or
-@code{Symmetry} commands.
+ways, for example using the @code{Translate}, @code{Rotate},
+@code{Scale} or @code{Symmetry} commands. They can be deleted with the
+@code{Delete} command, provided that no higher-dimension entity
+references them.
 
 Compound groups of elementary geometrical entities can also be defined and
 are called ``physical'' entities. These physical entities cannot be modified
@@ -2070,7 +2073,10 @@ transformation, unless @code{Geometry.AutoCoherence} is set to zero
 
 @item Delete @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
 Deletes all elementary entities whose identification numbers are given
-in @var{expression-list}.
+in @var{expression-list}. If an entity is linked to another entity (for
+example, if a point is used as a control point of a curve),
+@code{Delete} has no effect (the line will have to be deleted before the
+point can).
 
 @item Hide @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
 Hide the entities listed in @var{expression-list}, if
@@ -2160,13 +2166,13 @@ algorithm can be quite poor.
 If only elementary geometrical entities are defined (or if the
 @code{Mesh.SaveAll} option is set; see @ref{Mesh options list}), the
 grid produced by the mesh module will be saved ``as is''. That is, all
-the elements in the grid will be saved to disk using the identification
-number of the elementary entities they discretize as their elementary
-region number (and 0 as their physical region number@footnote{This
-behaviour was introduced in Gmsh 2.0. In older versions, both the
-elementary and the physical region numbers would be set to the
-identification number of the elementary region.}; @ref{File
-formats}). This can sometimes be inconvenient:
+the elements in the grid will be saved using the identification number
+of the elementary entities they discretize as their elementary region
+number (and 0 as their physical region number@footnote{This behaviour
+was introduced in Gmsh 2.0. In older versions, both the elementary and
+the physical region numbers would be set to the identification number of
+the elementary region.}; @ref{File formats}). This can sometimes be
+inconvenient:
 
 @itemize @bullet
 @item

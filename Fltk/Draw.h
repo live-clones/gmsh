@@ -11,7 +11,6 @@
 void Draw();
 void DrawPlugin(void (*draw)(void *context));
 void DrawCurrentOpenglWindow(bool make_current);
-void GetCurrentOpenglWindowViewport(int viewport[4]);
 int GetFontIndex(const char *fontname);
 int GetFontEnum(int index);
 const char *GetFontName(int index);

@@ -7,14 +7,14 @@
 
 void create_ppm(FILE *outfile, PixelBuffer *buffer)
 {
-  if(buffer->GetFormat() != GL_RGB || buffer->GetType() != GL_UNSIGNED_BYTE){
+  if(buffer->getFormat() != GL_RGB || buffer->getType() != GL_UNSIGNED_BYTE){
     Msg::Error("PPM only implemented for GL_RGB and GL_UNSIGNED_BYTE");
     return;
   }
 
-  int width = buffer->GetWidth();
-  int height = buffer->GetHeight();
-  unsigned char *pixels = (unsigned char*)buffer->GetPixels();
+  int width = buffer->getWidth();
+  int height = buffer->getHeight();
+  unsigned char *pixels = (unsigned char*)buffer->getPixels();
 
   fprintf(outfile, "P6\n");
   fprintf(outfile, "%d %d\n", width, height);

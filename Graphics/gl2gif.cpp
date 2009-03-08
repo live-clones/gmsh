@@ -1164,9 +1164,9 @@ void create_gif(FILE * outfile, PixelBuffer *buffer,
   register long sr = 0, sg = 0, sb = 0, err = 0;
   int fs_direction = 0;
 
-  int width = buffer->GetWidth();
-  int height = buffer->GetHeight();
-  int numcomp = buffer->GetNumComp();
+  int width = buffer->getWidth();
+  int height = buffer->getHeight();
+  int numcomp = buffer->getNumComp();
 
   if(numcomp != 3){
     Msg::Error("GIF only implemented for GL_RGB");
@@ -1177,7 +1177,7 @@ void create_gif(FILE * outfile, PixelBuffer *buffer,
   for(i = 0; i < height; i++)
     static_pixels[i] = (pixel *) Malloc(3 * width * sizeof(pixel));
 
-  unsigned char *pixels = (unsigned char*)buffer->GetPixels();
+  unsigned char *pixels = (unsigned char*)buffer->getPixels();
   for(i = 0; i < height; i++)
     for(j = 0; j < width; j++)
       PPM_ASSIGN(static_pixels[height - 1 - i][j],

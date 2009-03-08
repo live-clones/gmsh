@@ -931,6 +931,13 @@ std::string opt_general_display(OPT_ARGS_STR)
   return CTX::instance()->display;
 }
 
+std::string opt_general_background_image_filename(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->bgImageFileName = val;
+  return CTX::instance()->bgImageFileName;
+}
+
 std::string opt_general_filename(OPT_ARGS_STR)
 {
   return GModel::current()->getFileName();
@@ -3528,6 +3535,20 @@ double opt_general_background_gradient(OPT_ARGS_NUM)
       (CTX::instance()->bgGradient);
 #endif
   return CTX::instance()->bgGradient;
+}
+
+double opt_general_background_image_position0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->bgImagePosition[0] = val;
+  return CTX::instance()->bgImagePosition[0];
+}
+
+double opt_general_background_image_position1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->bgImagePosition[1] = val;
+  return CTX::instance()->bgImagePosition[1];
 }
 
 double opt_general_trackball(OPT_ARGS_NUM)
@@ -8278,6 +8299,13 @@ double opt_print_tex_as_equation(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->print.texAsEquation = (int)val;
   return CTX::instance()->print.texAsEquation;
+}
+
+double opt_print_composite_windows(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.compositeWindows = (int)val;
+  return CTX::instance()->print.compositeWindows;
 }
 
 // Color option routines

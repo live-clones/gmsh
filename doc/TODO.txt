@@ -1,4 +1,8 @@
-$Id: TODO.txt,v 1.18 2009-03-01 18:27:01 geuzaine Exp $
+$Id: TODO.txt,v 1.19 2009-03-08 19:12:34 geuzaine Exp $
+
+********************************************************************
+
+Should we take embedded vertices into account in extrusions?
 
 ********************************************************************
 
@@ -161,12 +165,6 @@ disable all replacements)
 - position with the mouse
 - select/move once positioned?
 - add ability to add arrows
-
-********************************************************************
-
-Add a "bitmap" object in the views, e.g. to add a logo. Maybe would
-be good enough to add another mode in the "background gradient" stuff
-to display an image in the background
 
 ********************************************************************
 

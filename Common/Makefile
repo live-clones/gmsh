@@ -141,9 +141,10 @@ CreateFile${OBJEXT}: CreateFile.cpp GmshConfig.h GmshMessage.h ../Geo/GModel.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h GmshDefines.h StringUtils.h Context.h \
   ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h Options.h \
-  ../Post/ColorTable.h ../Graphics/gl2ps.h ../Common/GmshConfig.h \
-  ../Graphics/gl2gif.h ../Graphics/PixelBuffer.h ../Common/GmshMessage.h \
-  ../Fltk/Draw.h ../Common/MallocUtils.h ../Graphics/gl2jpeg.h \
+  ../Post/ColorTable.h ../Fltk/GUI.h ../Fltk/graphicWindow.h \
+  ../Fltk/openglWindow.h ../Graphics/drawContext.h ../Graphics/gl2ps.h \
+  ../Common/GmshConfig.h ../Graphics/gl2gif.h ../Graphics/PixelBuffer.h \
+  ../Common/GmshMessage.h ../Fltk/Draw.h ../Graphics/gl2jpeg.h \
   ../Graphics/PixelBuffer.h ../Graphics/gl2png.h \
   ../Graphics/PixelBuffer.h ../Graphics/gl2ppm.h \
   ../Graphics/PixelBuffer.h ../Graphics/gl2yuv.h \

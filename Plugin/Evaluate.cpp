@@ -163,6 +163,7 @@ void GMSH_EvaluatePlugin::evaluate(PView *v1, List_T *list1, int nbElm1,
         double tmp[9];
         val2 = tmp;
         if(_octree->searchScalar(x[j], y[j], z[j], val2, timeStep2)){
+        //if(_octree->searchScalarWithTol(x[j], y[j], z[j], val2, timeStep2, 0, 0.1)){
           w[0] = val2[0];
         }
         else if(_octree->searchVector(x[j], y[j], z[j], val2, timeStep2)){

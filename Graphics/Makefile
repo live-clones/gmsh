@@ -145,10 +145,10 @@ gl2ps${OBJEXT}: gl2ps.cpp gl2ps.h ../Common/GmshConfig.h
 gl2gif${OBJEXT}: gl2gif.cpp ../Common/MallocUtils.h gl2gif.h PixelBuffer.h \
   ../Common/GmshConfig.h ../Common/GmshMessage.h ../Fltk/Draw.h
 gl2jpeg${OBJEXT}: gl2jpeg.cpp ../Common/GmshConfig.h gl2jpeg.h PixelBuffer.h \
-  ../Common/GmshMessage.h ../Fltk/Draw.h ../Common/MallocUtils.h
+  ../Common/GmshMessage.h ../Fltk/Draw.h
 gl2png${OBJEXT}: gl2png.cpp ../Common/GmshConfig.h gl2png.h PixelBuffer.h \
-  ../Common/GmshMessage.h ../Fltk/Draw.h ../Common/MallocUtils.h
+  ../Common/GmshMessage.h ../Fltk/Draw.h
 gl2ppm${OBJEXT}: gl2ppm.cpp gl2ppm.h PixelBuffer.h ../Common/GmshConfig.h \
-  ../Common/GmshMessage.h ../Fltk/Draw.h ../Common/MallocUtils.h
+  ../Common/GmshMessage.h ../Fltk/Draw.h
 gl2yuv${OBJEXT}: gl2yuv.cpp ../Common/MallocUtils.h gl2yuv.h PixelBuffer.h \
   ../Common/GmshConfig.h ../Common/GmshMessage.h ../Fltk/Draw.h

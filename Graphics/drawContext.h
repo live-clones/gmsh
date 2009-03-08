@@ -7,6 +7,7 @@
 #define _DRAW_CONTEXT_H_
 
 #include <string>
+#include <vector>
 #include <set>
 #include <FL/gl.h>
 
@@ -74,6 +75,8 @@ class drawContext {
   GLuint _displayLists;
   std::set<GModel*> _hiddenModels;
   std::set<PView*> _hiddenViews;
+  std::vector<GLfloat> _bgImage;
+  int _bgImageSize[2];
 
  public:
   double r[3]; // current Euler angles (in degrees!) 

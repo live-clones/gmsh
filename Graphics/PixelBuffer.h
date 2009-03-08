@@ -6,11 +6,11 @@
 #ifndef _PIXEL_BUFFER_H_
 #define _PIXEL_BUFFER_H_
 
+#include <string.h>
 #include <FL/gl.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "Draw.h"
-#include "MallocUtils.h"
 
 #if defined(HAVE_OSMESA)
 #include <GL/osmesa.h>
@@ -20,7 +20,7 @@ class PixelBuffer{
  private:
   int _width, _height, _numComp, _dataSize;
   GLenum _format, _type;
-  void *_pixels;
+  unsigned char *_pixels;
  public:
   PixelBuffer(int width, int height, GLenum format, GLenum type)
     : _width(width), _height(height), _format(format), _type(type)
@@ -48,27 +48,46 @@ class PixelBuffer{
       _type = GL_UNSIGNED_BYTE;
       _dataSize = sizeof(unsigned char);
     }
-    _pixels = Calloc(_numComp * _width * _height, _dataSize);
+    int n = _numComp * _width * _height * _dataSize;
+    _pixels = new unsigned char[n];
+    for(int i = 0; i < n; i++) _pixels[i] = 0;
   }
   ~PixelBuffer()
   {
-    Free(_pixels);
+    delete [] _pixels;
   }
-  int GetWidth(){ return _width; }
-  int GetHeight(){ return _height; }
-  int GetNumComp(){ return _numComp; }
-  int GetDataSize(){ return _dataSize; }
-  GLenum GetFormat(){ return _format; }
-  GLenum GetType(){ return _type; }
-  void *GetPixels(){ return _pixels; }
-  void Fill(int offscreen)
+  int getWidth(){ return _width; }
+  int getHeight(){ return _height; }
+  int getNumComp(){ return _numComp; }
+  int getDataSize(){ return _dataSize; }
+  GLenum getFormat(){ return _format; }
+  GLenum getType(){ return _type; }
+  void *getPixels(){ return (void*)_pixels; }
+  void copyPixels(int x, int y, PixelBuffer *buffer)
+  {
+    if(x + buffer->getWidth() > _width || y + buffer->getHeight() > _height){
+      Msg::Error("Destination pixel buffer too small for holding copy");
+      return;
+    }
+    if(buffer->getNumComp() != _numComp || buffer->getDataSize() != _dataSize ||
+       buffer->getFormat() != _format || buffer->getType() != _type){
+      Msg::Error("Pixel buffer type mismatch: impossible to copy");
+      return;
+    }
+    for(int i = 0; i < buffer->getWidth(); i++)
+      for(int j = 0; j < buffer->getHeight(); j++)
+        memcpy(_pixels + ((j + y) * _width + (i + x)) * _dataSize * _numComp,
+               (unsigned char*)buffer->getPixels() + (j * buffer->getWidth() + i) *
+               _dataSize * _numComp, _dataSize * _numComp);
+  }
+  void fill(int offscreen)
   {
     if(!offscreen){
       DrawCurrentOpenglWindow(true);
       glFinish();
       glPixelStorei(GL_PACK_ALIGNMENT, 1);
       glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-      glReadPixels(0, 0, _width, _height, _format, _type, _pixels);
+      glReadPixels(0, 0, _width, _height, _format, _type, (void*)_pixels);
     }
     else{
 #if defined(HAVE_OSMESA)
@@ -81,14 +100,14 @@ class PixelBuffer{
 	Msg::Error("OSMesaCreateContext failed");
         return;
       }
-      if(!OSMesaMakeCurrent(ctx, _pixels, GL_UNSIGNED_BYTE, _width, _height)){
+      if(!OSMesaMakeCurrent(ctx, (void*)_pixels, GL_UNSIGNED_BYTE, _width, _height)){
 	Msg::Error("OSMesaMakeCurrent failed");
       }
       DrawCurrentOpenglWindow(false);
       glFinish();
       OSMesaDestroyContext(ctx);
 #else
-      Msg::Warning("Offscreen rendering not available in this version");
+      Msg::Warning("Gmsh must be compiled with OSMesa to support offscreen rendering");
 #endif
     }
   }

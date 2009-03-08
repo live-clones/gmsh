@@ -56,14 +56,6 @@ void DrawCurrentOpenglWindow(bool make_current)
   gl->getDrawContext()->draw2d();
 }
 
-void GetCurrentOpenglWindowViewport(int viewport[4])
-{
-  if(!GUI::available()) return;
-  openglWindow *gl = GUI::instance()->getCurrentOpenglWindow();
-  for(int i = 0; i < 4; i++)
-    viewport[i] = gl->getDrawContext()->viewport[i];
-}
-
 int GetFontIndex(const char *fontname)
 {
   if(fontname){

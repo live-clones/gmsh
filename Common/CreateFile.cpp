@@ -14,6 +14,8 @@
 
 #if defined(HAVE_FLTK)
 #include <FL/gl.h>
+#include "GUI.h"
+#include "graphicWindow.h"
 #include "gl2ps.h"
 #include "gl2gif.h"
 #include "gl2jpeg.h"
@@ -101,6 +103,48 @@ std::string GetDefaultFileName(int format)
   return name;
 }
 
+#if defined(HAVE_FLTK)
+static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
+{
+  PixelBuffer *buffer;
+  if(!CTX::instance()->print.compositeWindows){
+    GLint width = GUI::instance()->getCurrentOpenglWindow()->w();
+    GLint height = GUI::instance()->getCurrentOpenglWindow()->h();
+    buffer = new PixelBuffer(width, height, format, type);
+    buffer->fill(CTX::instance()->batch);
+  }
+  else{
+    graphicWindow *g = GUI::instance()->graph[0];
+    for(unsigned int i = 1; i < GUI::instance()->graph.size(); i++){
+      for(unsigned int j = 0; j < GUI::instance()->graph[i]->gl.size(); j++){
+        if(GUI::instance()->graph[i]->gl[j] == 
+           GUI::instance()->getCurrentOpenglWindow()){
+          g = GUI::instance()->graph[i];
+          break;
+        }
+      }
+    }
+    int ww = 0, hh = 0;
+    std::vector<PixelBuffer*> buffers;
+    for(unsigned int i = 0; i < g->gl.size(); i++){
+      openglWindow::setLastHandled(g->gl[i]);
+      buffer = new PixelBuffer(g->gl[i]->w(), g->gl[i]->h(), format, type);
+      buffer->fill(CTX::instance()->batch);
+      buffers.push_back(buffer);
+      ww = std::max(ww, g->gl[i]->x() + g->gl[i]->w());
+      hh = std::max(hh, g->gl[i]->y() + g->gl[i]->h());
+    }
+    buffer = new PixelBuffer(ww, hh, format, type);
+    for(unsigned int i = 0; i < g->gl.size(); i++){
+      buffer->copyPixels(g->gl[i]->x(), hh - g->gl[i]->h() - g->gl[i]->y(), 
+                         buffers[i]);
+      delete buffers[i];
+    }
+  }
+  return buffer;
+}
+#endif
+
 void CreateOutputFile(std::string fileName, int format)
 {
   if(fileName.empty())
@@ -112,15 +156,6 @@ void CreateOutputFile(std::string fileName, int format)
   int oldformat = CTX::instance()->print.format;
   CTX::instance()->print.format = format;
   CTX::instance()->printing = 1;
-
-#if defined(HAVE_FLTK)
-  int vp[4];
-  GetCurrentOpenglWindowViewport(vp);
-  GLint viewport[4];
-  for(int i = 0; i < 4; i++) viewport[i] = vp[i];
-  GLint width = viewport[2] - viewport[0];
-  GLint height = viewport[3] - viewport[1];
-#endif
 
   bool printEndMessage = true;
   if(format != FORMAT_AUTO) 
@@ -221,28 +256,28 @@ void CreateOutputFile(std::string fileName, int format)
   case FORMAT_JPEG:
   case FORMAT_PNG:
     {
+      if(!GUI::available()) break;
+
       FILE *fp = fopen(fileName.c_str(), "wb");
       if(!fp){
         Msg::Error("Unable to open file '%s'", fileName.c_str());
         break;
       }
 
-      PixelBuffer buffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
-
       int old_gradient = CTX::instance()->bgGradient;
       if(format == FORMAT_GIF && CTX::instance()->print.gifTransparent)
         CTX::instance()->bgGradient = 0;
-      buffer.Fill(CTX::instance()->batch);
+
+      PixelBuffer *buffer = GetCompositePixelBuffer(GL_RGB, GL_UNSIGNED_BYTE);
+
       CTX::instance()->bgGradient = old_gradient;
 
-      if(format == FORMAT_PPM){
-        create_ppm(fp, &buffer);
-      }
-      else if(format == FORMAT_YUV){
-        create_yuv(fp, &buffer);
-      }
-      else if(format == FORMAT_GIF){
-        create_gif(fp, &buffer,
+      if(format == FORMAT_PPM)
+        create_ppm(fp, buffer);
+      else if(format == FORMAT_YUV)
+        create_yuv(fp, buffer);
+      else if(format == FORMAT_GIF)
+        create_gif(fp, buffer, 
                    CTX::instance()->print.gifDither,
                    CTX::instance()->print.gifSort,
                    CTX::instance()->print.gifInterlace,
@@ -250,14 +285,13 @@ void CreateOutputFile(std::string fileName, int format)
                    CTX::instance()->unpackRed(CTX::instance()->color.bg),
                    CTX::instance()->unpackGreen(CTX::instance()->color.bg), 
                    CTX::instance()->unpackBlue(CTX::instance()->color.bg));
-      }
-      else if(format == FORMAT_JPEG){
-        create_jpeg(fp, &buffer, CTX::instance()->print.jpegQuality, 
+      else if(format == FORMAT_JPEG)
+        create_jpeg(fp, buffer, CTX::instance()->print.jpegQuality, 
                     CTX::instance()->print.jpegSmoothing);
-      }
-      else{
-        create_png(fp, &buffer, 100);
-      }
+      else
+        create_png(fp, buffer, 100);
+
+      delete buffer;
       fclose(fp);
     }
     break;
@@ -267,27 +301,17 @@ void CreateOutputFile(std::string fileName, int format)
   case FORMAT_PDF:
   case FORMAT_SVG:
     {
+      if(!GUI::available()) break;
+
       FILE *fp = fopen(fileName.c_str(), "wb");
       if(!fp){
         Msg::Error("Unable to open file '%s'", fileName.c_str());
         break;
       }
-      
-      int psformat;
-      switch(format){
-      case FORMAT_PDF:
-        psformat = GL2PS_PDF;
-        break;
-      case FORMAT_PS:
-        psformat = GL2PS_PS;
-        break;
-      case FORMAT_SVG:
-        psformat = GL2PS_SVG;
-        break;
-      default:
-        psformat = GL2PS_EPS;
-        break;
-      }
+
+      GLint width = GUI::instance()->getCurrentOpenglWindow()->w();
+      GLint height = GUI::instance()->getCurrentOpenglWindow()->h();
+      GLint viewport[4] = {0, 0, width, height};
 
       int old_gradient = CTX::instance()->bgGradient;
       if(!CTX::instance()->print.epsBackground) CTX::instance()->bgGradient = 0;
@@ -295,8 +319,13 @@ void CreateOutputFile(std::string fileName, int format)
       PixelBuffer buffer(width, height, GL_RGB, GL_FLOAT);
       
       if(CTX::instance()->print.epsQuality == 0)
-        buffer.Fill(CTX::instance()->batch);
+        buffer.fill(CTX::instance()->batch);
       
+      int psformat = 
+        (format == FORMAT_PDF) ? GL2PS_PDF :
+        (format == FORMAT_PS) ? GL2PS_PS :
+        (format == FORMAT_SVG) ? GL2PS_SVG :
+        GL2PS_EPS;
       int pssort = 
         (CTX::instance()->print.epsQuality == 3) ? GL2PS_NO_SORT :
         (CTX::instance()->print.epsQuality == 2) ? GL2PS_BSP_SORT : 
@@ -327,14 +356,14 @@ void CreateOutputFile(std::string fileName, int format)
           glMatrixMode(GL_MODELVIEW);
           glLoadIdentity();
           glRasterPos2d(0, 0);
-          gl2psDrawPixels(width, height, 0, 0, GL_RGB, GL_FLOAT, buffer.GetPixels());
+          gl2psDrawPixels(width, height, 0, 0, GL_RGB, GL_FLOAT, buffer.getPixels());
           glMatrixMode(GL_PROJECTION);
           glLoadMatrixd(projection);
           glMatrixMode(GL_MODELVIEW);
           glLoadMatrixd(modelview);
         }
         else{
-          buffer.Fill(CTX::instance()->batch);
+          buffer.fill(CTX::instance()->batch);
         }
         res = gl2psEndPage();
       }
@@ -346,11 +375,16 @@ void CreateOutputFile(std::string fileName, int format)
 
   case FORMAT_TEX:
     {
+      if(!GUI::available()) break;
+
       FILE *fp = fopen(fileName.c_str(), "w");
       if(!fp){
         Msg::Error("Unable to open file '%s'", fileName.c_str());
         break;
       }
+      GLint width = GUI::instance()->getCurrentOpenglWindow()->w();
+      GLint height = GUI::instance()->getCurrentOpenglWindow()->h();
+      GLint viewport[4] = {0, 0, width, height};
       GLint buffsize = 0;
       int res = GL2PS_OVERFLOW;
       while(res == GL2PS_OVERFLOW) {
@@ -361,7 +395,7 @@ void CreateOutputFile(std::string fileName, int format)
         PixelBuffer buffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
         int oldtext = CTX::instance()->print.text;
         CTX::instance()->print.text = 1;
-        buffer.Fill(CTX::instance()->batch);
+        buffer.fill(CTX::instance()->batch);
         CTX::instance()->print.text = oldtext;
         res = gl2psEndPage();
       }

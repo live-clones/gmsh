@@ -699,28 +699,28 @@ void GModel::_deleteOCCInternals()
 
 int GModel::readOCCSTEP(const std::string &fn)
 {
-  Msg::Error("Gmsh has to be compiled with OpenCascade support to load '%s'",
+  Msg::Error("Gmsh must be compiled with OpenCascade support to load '%s'",
 	     fn.c_str());
   return 0;
 }
 
 int GModel::readOCCIGES(const std::string &fn)
 {
-  Msg::Error("Gmsh has to be compiled with OpenCascade support to load '%s'",
+  Msg::Error("Gmsh must be compiled with OpenCascade support to load '%s'",
 	     fn.c_str());
   return 0;
 }
 
 int GModel::readOCCBREP(const std::string &fn)
 {
-  Msg::Error("Gmsh has to be compiled with OpenCascade support to load '%s'",
+  Msg::Error("Gmsh must be compiled with OpenCascade support to load '%s'",
 	     fn.c_str());
   return 0;
 }
 
 int GModel::importOCCShape(const void *shape, const void *options)
 {
-  Msg::Error("Gmsh has to be compiled with OpenCascade support to import "
+  Msg::Error("Gmsh must be compiled with OpenCascade support to import "
 	     "a TopoDS_Shape");
   return 0;
 }

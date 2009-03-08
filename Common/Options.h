@@ -31,6 +31,7 @@ std::string opt_general_axes_label2(OPT_ARGS_STR);
 std::string opt_general_axes_format0(OPT_ARGS_STR);
 std::string opt_general_axes_format1(OPT_ARGS_STR);
 std::string opt_general_axes_format2(OPT_ARGS_STR);
+std::string opt_general_background_image_filename(OPT_ARGS_STR);
 std::string opt_general_display(OPT_ARGS_STR);
 std::string opt_general_filename(OPT_ARGS_STR);
 std::string opt_general_default_filename(OPT_ARGS_STR);
@@ -279,6 +280,8 @@ double opt_general_shine(OPT_ARGS_NUM);
 double opt_general_shine_exponent(OPT_ARGS_NUM);
 double opt_general_color_scheme(OPT_ARGS_NUM);
 double opt_general_background_gradient(OPT_ARGS_NUM);
+double opt_general_background_image_position0(OPT_ARGS_NUM);
+double opt_general_background_image_position1(OPT_ARGS_NUM);
 double opt_general_verbosity(OPT_ARGS_NUM);
 double opt_general_nopopup(OPT_ARGS_NUM);
 double opt_general_non_modal_windows(OPT_ARGS_NUM);
@@ -693,6 +696,7 @@ double opt_print_gif_interlace(OPT_ARGS_NUM);
 double opt_print_gif_transparent(OPT_ARGS_NUM);
 double opt_print_text(OPT_ARGS_NUM);
 double opt_print_tex_as_equation(OPT_ARGS_NUM);
+double opt_print_composite_windows(OPT_ARGS_NUM);
 
 // COLORS
 

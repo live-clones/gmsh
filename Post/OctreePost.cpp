@@ -417,7 +417,7 @@ bool OctreePost::searchScalarWithTol(double x, double y, double z, double *value
                                      int step, double *size, double tol)
 {
   bool a = searchScalar(x, y, z, values, step, size);
-  if(!a){
+  if(!a && tol != 0.){
     double oldtol1 = element::getTolerance();
     double oldtol2 = MElement::getTolerance();
     element::setTolerance(tol);

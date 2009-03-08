@@ -776,7 +776,7 @@ void partition_dialog()
 
 void partition_dialog()
 {
-  Msg::Error("Gmsh has to be compiled with METIS or CHACO support to partition meshes");
+  Msg::Error("Gmsh must be compiled with METIS or CHACO support to partition meshes");
 }
 
 #endif

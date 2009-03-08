@@ -34,6 +34,11 @@ Z-axis label@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.BackgroundImageFileName
+Background image file in JPEG or PNG format@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.DefaultFileName
 Default project file name@*
 Default value: @code{"untitled.geo"}@*
@@ -179,6 +184,16 @@ Draw background gradient (0=none, 1=vertical, 2=horizontal, 3=radial)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.BackgroundImagePositionX
+X position (in pixels) of background image (< 0: right alignment; > 1e5: centered)@*
+Default value: @code{100000}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.BackgroundImagePositionY
+Y position (in pixels) of background image (< 0: right alignment; > 1e5: centered)@*
+Default value: @code{100000}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.Clip0A
 First coefficient in equation for clipping plane 0 (`A' in `AX+BY+CZ+D=0')@*
 Default value: @code{1}@*
@@ -201,12 +216,12 @@ Saved in: @code{-}
 
 @item General.Clip1A
 First coefficient in equation for clipping plane 1@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip1B
 Second coefficient in equation for clipping plane 1@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{-}
 
 @item General.Clip1C
@@ -221,7 +236,7 @@ Saved in: @code{-}
 
 @item General.Clip2A
 First coefficient in equation for clipping plane 2@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip2B
@@ -231,7 +246,7 @@ Saved in: @code{-}
 
 @item General.Clip2C
 Third coefficient in equation for clipping plane 2@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{-}
 
 @item General.Clip2D
@@ -241,7 +256,7 @@ Saved in: @code{-}
 
 @item General.Clip3A
 First coefficient in equation for clipping plane 3@*
-Default value: @code{1}@*
+Default value: @code{-1}@*
 Saved in: @code{-}
 
 @item General.Clip3B
@@ -261,12 +276,12 @@ Saved in: @code{-}
 
 @item General.Clip4A
 First coefficient in equation for clipping plane 4@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip4B
 Second coefficient in equation for clipping plane 4@*
-Default value: @code{0}@*
+Default value: @code{-1}@*
 Saved in: @code{-}
 
 @item General.Clip4C
@@ -281,7 +296,7 @@ Saved in: @code{-}
 
 @item General.Clip5A
 First coefficient in equation for clipping plane 5@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip5B
@@ -291,7 +306,7 @@ Saved in: @code{-}
 
 @item General.Clip5C
 Third coefficient in equation for clipping plane 5@*
-Default value: @code{0}@*
+Default value: @code{-1}@*
 Saved in: @code{-}
 
 @item General.Clip5D
@@ -820,12 +835,12 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.SmallAxesPositionX
-X position of small axes (use negative values for right alignment)@*
+X position (in pixels) of small axes (< 0: right alignment; > 1e5: centered)@*
 Default value: @code{-60}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.SmallAxesPositionY
-Y position of small axes (use negative values for bottom alignment)@*
+Y position (in pixels) of small axes (< 0: right alignment; > 1e5: centered)@*
 Default value: @code{-40}@*
 Saved in: @code{General.OptionsFileName}
 

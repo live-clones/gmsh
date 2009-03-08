@@ -526,21 +526,21 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
 
 int GModel::readMED(const std::string &name)
 {
-  Msg::Error("Gmsh has to be compiled with MED support to read '%s'",
+  Msg::Error("Gmsh must be compiled with MED support to read '%s'",
 	     name.c_str());
   return 0;
 }
 
 int GModel::readMED(const std::string &name, int meshIndex)
 {
-  Msg::Error("Gmsh has to be compiled with MED support to read '%s'",
+  Msg::Error("Gmsh must be compiled with MED support to read '%s'",
 	     name.c_str());
   return 0;
 }
 
 int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor)
 {
-  Msg::Error("Gmsh has to be compiled with MED support to write '%s'",
+  Msg::Error("Gmsh must be compiled with MED support to write '%s'",
 	     name.c_str());
   return 0;
 }

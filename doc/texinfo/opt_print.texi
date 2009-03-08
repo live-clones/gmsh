@@ -4,6 +4,11 @@
 @c
 
 @ftable @code
+@item Print.CompositeWindows
+Composite all window tiles in the same output image (for bitmap output only)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Print.EpsBackground
 Save image background in PostScript/PDF output@*
 Default value: @code{1}@*

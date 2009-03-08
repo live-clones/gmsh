@@ -3,7 +3,10 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <string>
 #include <FL/gl.h>
+#include <FL/Fl_JPEG_Image.H>
+#include <FL/Fl_PNG_Image.H>
 #include "GmshMessage.h"
 #include "drawContext.h"
 #include "Trackball.h"
@@ -12,6 +15,7 @@
 #include "GModel.h"
 #include "PView.h"
 #include "PViewOptions.h"
+#include "gl2ps.h"
 
 drawContext::drawContext(drawTransform *transform) 
   : _transform(transform)
@@ -32,6 +36,8 @@ drawContext::drawContext(drawTransform *transform)
   render_mode = GMSH_RENDER;
   vxmin = vymin = vxmax = vymax = 0.;
   pixel_equiv_x = pixel_equiv_y = 0.;
+
+  _bgImageSize[0] = _bgImageSize[1] = 0;
 
   _quadric = 0; // cannot create it here: needs valid opengl context
   _displayLists = 0;
@@ -247,6 +253,7 @@ void drawContext::draw2d()
   glLoadIdentity();
   glOrtho((double)viewport[0], (double)viewport[2],
           (double)viewport[1], (double)viewport[3], -1., 1.);
+
   // hack to make the 2D primitives appear "in front" in GL2PS
   glTranslated(0., 0., CTX::instance()->clipFactor > 1. ? 
                1. / CTX::instance()->clipFactor : CTX::instance()->clipFactor);
@@ -298,35 +305,149 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
   // no initial translation of the model
   t_init[0] = t_init[1] = t_init[2] = 0.;
 
-  // setup ortho or perspective projection matrix
+  // set up the near and far clipping planes so that the box is large
+  // enough to manipulate the model and zoom, but not too big
+  // (otherwise the z-buffer resolution e.g. with Mesa can become
+  // insufficient)
+  double zmax = std::max(fabs(CTX::instance()->min[2]),
+                         fabs(CTX::instance()->max[2]));
+  if(zmax < CTX::instance()->lc) zmax = CTX::instance()->lc;
+
+  double clip_near, clip_far;
+  if(CTX::instance()->ortho) {
+    clip_near = -zmax * s[2] * CTX::instance()->clipFactor;
+    clip_far = -clip_near;
+  }
+  else {
+    clip_near = 0.75 * CTX::instance()->clipFactor * zmax;
+    clip_far = 75. * CTX::instance()->clipFactor * zmax;
+  }
+
+  // setup projection matrix
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
 
-  // restrict picking to a rectangular region around xpick,ypick in SELECT mode
-  if(render_mode == GMSH_SELECT)
+  // restrict picking to a rectangular region around xpick,ypick
+  if(render_mode == GMSH_SELECT){
     gluPickMatrix((GLdouble)xpick, (GLdouble)(viewport[3] - ypick),
                   (GLdouble)wpick, (GLdouble)hpick, (GLint *)viewport);
+  }
 
-  double grad_z, grad_xy;
-  double zmax = std::max(fabs(CTX::instance()->min[2]), fabs(CTX::instance()->max[2]));
-  if(zmax < CTX::instance()->lc) zmax = CTX::instance()->lc;
+  // draw background if not in selection mode
+  if(render_mode != GMSH_SELECT && (CTX::instance()->bgGradient || 
+                                    CTX::instance()->bgImageFileName.size())){
+    glDisable(GL_DEPTH_TEST);
+    glPushMatrix();
+    glLoadIdentity();
+    // the z values and the translation are only needed for GL2PS,
+    // which does not understand "no depth test" (hence we must make
+    // sure that we draw the background behing the rest of the scene)
+    glOrtho((double)viewport[0], (double)viewport[2],
+            (double)viewport[1], (double)viewport[3], 
+            clip_near, clip_far);
+    glTranslated(0., 0., -0.99 * clip_far);
+
+    // background gradient
+    if(CTX::instance()->bgGradient == 1){ // vertical
+      glBegin(GL_QUADS);
+      glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
+      glVertex2i(viewport[0], viewport[1]);
+      glVertex2i(viewport[2], viewport[1]);
+      glColor4ubv((GLubyte *) & CTX::instance()->color.bgGrad);
+      glVertex2i(viewport[2], viewport[3]);
+      glVertex2i(viewport[0], viewport[3]);
+      glEnd();
+    }
+    else if(CTX::instance()->bgGradient == 2){ // horizontal
+      glBegin(GL_QUADS);
+      glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
+      glVertex2i(viewport[2], viewport[1]);
+      glVertex2i(viewport[2], viewport[3]);
+      glColor4ubv((GLubyte *) & CTX::instance()->color.bgGrad);
+      glVertex2i(viewport[0], viewport[3]);
+      glVertex2i(viewport[0], viewport[1]);
+      glEnd();
+    }
+    else if(CTX::instance()->bgGradient == 3){ // radial
+      double cx = 0.5 * (viewport[0] + viewport[2]);
+      double cy = 0.5 * (viewport[1] + viewport[3]);
+      double r = 0.5 * std::max(viewport[2] - viewport[0],
+                                viewport[3] - viewport[1]);
+      glBegin(GL_TRIANGLE_FAN);
+      glColor4ubv((GLubyte *) & CTX::instance()->color.bgGrad);
+      glVertex2d(cx, cy);
+      glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
+      glVertex2d(cx + r, cy);
+      int ntheta = 36;
+      for(int i = 1; i < ntheta + 1; i ++){
+        double theta = i * 2 * M_PI / (double)ntheta;
+        glVertex2d(cx + r * cos(theta), cy + r * sin(theta));       
+      }
+      glEnd();
+    }
+
+    // hack for GL2PS (to make sure that the image is in front of the
+    // gradient)
+    glTranslated(0., 0., 0.01 * clip_far);
+
+    // background image
+    if(CTX::instance()->bgImageFileName.size()){
+      if(_bgImage.empty()){
+        int idot = CTX::instance()->bgImageFileName.find_last_of('.');
+        std::string ext;
+        if(idot > 0 && idot < CTX::instance()->bgImageFileName.size())
+          ext = CTX::instance()->bgImageFileName.substr(idot + 1);
+        Fl_RGB_Image *img = 0;
+        if(ext == "jpg" || ext == "JPG" || ext == "jpeg" || ext == "JPEG")
+          img = new Fl_JPEG_Image(CTX::instance()->bgImageFileName.c_str());
+        else if(ext == "png" || ext == "PNG")
+          img = new Fl_PNG_Image(CTX::instance()->bgImageFileName.c_str());
+        if(img && img->d() >= 3){
+          const unsigned char *data = img->array;
+          for(int j = img->h() - 1; j >= 0; j--) {
+            for(int i = 0; i < img->w(); i++) {
+              int idx = j * img->w() * img->d() + i * img->d();
+              _bgImage.push_back((GLfloat)data[idx] / 255.);
+              _bgImage.push_back((GLfloat)data[idx + 1] / 255.);
+              _bgImage.push_back((GLfloat)data[idx + 2] / 255.);
+            }
+          }
+          _bgImageSize[0] = img->w();
+          _bgImageSize[1] = img->h();
+        }
+        if(!_bgImageSize[0] || !_bgImageSize[1]){
+          Msg::Error("Could not load valid background image");
+          for(int i = 0; i < 3; i++) _bgImage.push_back(0);
+          _bgImageSize[0] = _bgImageSize[1] = 1.;
+        }
+      }
+      double x = CTX::instance()->bgImagePosition[0];
+      double y = CTX::instance()->bgImagePosition[1];
+      int c = fix2dCoordinates(&x, &y);
+      if(c & 1) x -= _bgImageSize[0] / 2.;
+      if(c & 2) y -= _bgImageSize[1] / 2.;
+      if(x < viewport[0]) x = viewport[0];
+      if(y < viewport[1]) y = viewport[1];
+      glRasterPos2d(x, y);
+      glPixelStorei(GL_PACK_ALIGNMENT, 1);
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+      glDrawPixels(_bgImageSize[0], _bgImageSize[1], GL_RGB, GL_FLOAT,
+                   (void*)&_bgImage[0]);
+      gl2psDrawPixels(_bgImageSize[0], _bgImageSize[1], 0, 0, GL_RGB, GL_FLOAT,
+                      (void*)&_bgImage[0]);
+    }
+
+    glPopMatrix();
+    glEnable(GL_DEPTH_TEST);
+  }
+
 
   if(CTX::instance()->ortho) {
-    // setting up the near and far clipping planes so that the box is
-    // large enough to manipulate the model and zoom, but not too big
-    // (the z-buffer resolution, e.g., on software Mesa can become
-    // insufficient)
-    double clip = zmax * s[2] * CTX::instance()->clipFactor;
-    glOrtho(vxmin, vxmax, vymin, vymax, -clip, clip);
+    glOrtho(vxmin, vxmax, vymin, vymax, clip_near, clip_far);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    grad_z = 0.99 * clip;
-    grad_xy = 1.;
   }
   else {
-    double clip_near = 0.75 * CTX::instance()->clipFactor * zmax;
-    double clip_far = 75. * CTX::instance()->clipFactor * zmax;
-    double coef = (75./0.75) / 3.;
     // recenter the model such that the perspective is always at the
     // center of gravity (we should maybe add an option to choose
     // this, as we do for the rotation center)
@@ -339,54 +460,9 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
     glFrustum(vxmin, vxmax, vymin, vymax, clip_near, clip_far);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+    double coef = (clip_far / clip_near) / 3.;
     glTranslated(-coef * t_init[0], -coef * t_init[1], -coef * clip_near);
     glScaled(coef, coef, coef);
-    grad_z = 0.99 * clip_far;
-    grad_xy = clip_far / clip_near;
-  }
-
-  // draw background gradient
-  if(render_mode != GMSH_SELECT && CTX::instance()->bgGradient){
-    glPushMatrix();
-    glLoadIdentity();
-    glTranslated(0., 0., -grad_z);
-    if(CTX::instance()->bgGradient == 1){ // vertical
-      glBegin(GL_QUADS);
-      glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
-      glVertex3d(grad_xy * vxmin, grad_xy * vymin, 0.);
-      glVertex3d(grad_xy * vxmax, grad_xy * vymin, 0.);
-      glColor4ubv((GLubyte *) & CTX::instance()->color.bgGrad);
-      glVertex3d(grad_xy * vxmax, grad_xy * vymax, 0.);
-      glVertex3d(grad_xy * vxmin, grad_xy * vymax, 0.);
-      glEnd();
-    }
-    else if(CTX::instance()->bgGradient == 2){ // horizontal
-      glBegin(GL_QUADS);
-      glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
-      glVertex3d(grad_xy * vxmax, grad_xy * vymin, 0.);
-      glVertex3d(grad_xy * vxmax, grad_xy * vymax, 0.);
-      glColor4ubv((GLubyte *) & CTX::instance()->color.bgGrad);
-      glVertex3d(grad_xy * vxmin, grad_xy * vymax, 0.);
-      glVertex3d(grad_xy * vxmin, grad_xy * vymin, 0.);
-      glEnd();
-    }
-    else{ // radial
-      double cx = grad_xy * (vxmin + vxmax) / 2.;
-      double cy = grad_xy * (vymin + vymax) / 2.;
-      double r = grad_xy * std::max(vxmax - vxmin, vymax - vymin) / 2.;
-      glBegin(GL_TRIANGLE_FAN);
-      glColor4ubv((GLubyte *) & CTX::instance()->color.bgGrad);
-      glVertex3d(cx, cy, 0.);
-      glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
-      glVertex3d(cx + r, cy, 0.);
-      int ntheta = 36;
-      for(int i = 1; i < ntheta + 1; i ++){
-        double theta = i * 2 * M_PI / (double)ntheta;
-        glVertex3d(cx + r * cos(theta), cy + r * sin(theta), 0.);       
-      }
-      glEnd();
-    }
-    glPopMatrix();
   }
 }
 

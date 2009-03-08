@@ -105,6 +105,9 @@ class CTX {
   double zoomFactor;
   // draw background gradient?
   int bgGradient;
+  // draw background image?
+  std::string bgImageFileName;
+  double bgImagePosition[2];
   // fltk font size (and delta for palette windows)
   int fontSize, deltaFontSize;
   // font name, FLTK enum and size for opengl graphics
@@ -201,6 +204,7 @@ class CTX {
     int jpegQuality, jpegSmoothing, geoLabels, text, texAsEquation;
     int gifDither, gifSort, gifInterlace, gifTransparent;
     int posElementary, posElement, posGamma, posEta, posRho, posDisto;
+    int compositeWindows;
   } print;
   // color options
   struct{
