@@ -509,14 +509,6 @@ bool newton_fd(void (*func)(gmshVector<double> &, gmshVector<double> &, void *),
     
     if (N == 1)
       dx(0) = f(0) / J(0, 0);
-    else if (N == -2){
-      const double det = J(0,0)*J(1,1) - J(1,0)*J(0,1);
-      if (det == 0.0)
-	printf("oops\n");
-      printf("oops\n");
-      dx(0) =  (f(0)*J(1,1) - f(1)*J(0,1))/det;
-      dx(1) = -(f(0)*J(0,0) - f(1)*J(1,0))/det;
-    }
     else
       J.lu_solve(f, dx);
     
