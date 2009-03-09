@@ -2898,12 +2898,12 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2])
   x(1) = uv[1];
   PointSurface ps = {&p, s};
 
-  Vertex pp = InterpolateSurface(s, uv[0],uv[1], 0, 0);
-  double d2 = (pp.Pos.X - p.Pos.X)*(pp.Pos.X - p.Pos.X) + 
+  Vertex pp = InterpolateSurface(s, uv[0], uv[1], 0, 0);
+  double d2 = 
+    (pp.Pos.X - p.Pos.X)*(pp.Pos.X - p.Pos.X) + 
     (pp.Pos.Y - p.Pos.Y)*(pp.Pos.Y - p.Pos.Y) + 
     (pp.Pos.Z - p.Pos.Z)*(pp.Pos.Z - p.Pos.Z) ;
-  if (d2 < 1.e-12)return true;
-
+  if(d2 < 1.e-12) return true;
 
   double UMIN = 0.;
   double UMAX = 1.;
@@ -2916,7 +2916,9 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2])
       p = InterpolateSurface(s, x(0), x(1), 0, 0);
       uv[0] = x(0);
       uv[1] = x(1);
-      if (ITER > 0)Msg::Info("ProjectPoint (%g,%g,%g) On Surface %d converged after %d iterations",p.Pos.X,p.Pos.Y,p.Pos.Z,s->Num,ITER);
+      if (ITER > 0)
+        Msg::Info("ProjectPoint (%g,%g,%g) On Surface %d converged after %d iterations",
+                  p.Pos.X, p.Pos.Y, p.Pos.Z, s->Num, ITER);
       return true;
     }
     x(0) = UMIN + (UMAX - UMIN) * ((rand() % 10000) / 10000.);
@@ -2925,16 +2927,17 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2])
   }
   {
     int NSAMPLES = 500;
-    double uok,vok;
+    double uok, vok;
     double dmin = 1.e22;
-    for (int i=0;i<NSAMPLES;i++){
-      const double U = i/(double)(NSAMPLES-1);
-      for (int j=0;j<NSAMPLES;j++){
-	const double V = j/(double)(NSAMPLES-1);
+    for (int i = 0; i < NSAMPLES; i++){
+      const double U = i / (double)(NSAMPLES - 1);
+      for (int j = 0; j < NSAMPLES; j++){
+	const double V = j / (double)(NSAMPLES - 1);
 	Vertex pp = InterpolateSurface(s, U, V, 0, 0);
-	double d2 = (pp.Pos.X - p.Pos.X)*(pp.Pos.X - p.Pos.X) + 
-	  (pp.Pos.Y - p.Pos.Y)*(pp.Pos.Y - p.Pos.Y) + 
-	  (pp.Pos.Z - p.Pos.Z)*(pp.Pos.Z - p.Pos.Z) ;
+	double d2 =
+          (pp.Pos.X - p.Pos.X) * (pp.Pos.X - p.Pos.X) + 
+	  (pp.Pos.Y - p.Pos.Y) * (pp.Pos.Y - p.Pos.Y) + 
+	  (pp.Pos.Z - p.Pos.Z) * (pp.Pos.Z - p.Pos.Z);
 	if (d2 < dmin) {
 	  dmin = d2;
 	  uok = U;
@@ -2945,7 +2948,9 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2])
     p = InterpolateSurface(s, uok, vok, 0, 0);
     uv[0] = uok;
     uv[1] = vok;
-    if (ITER > 0)Msg::Info("Brute force method used for projection of point (%g %g %g) on surface %d",p.Pos.X,p.Pos.Y,p.Pos.Z,s->Num);
+    if (ITER > 0)
+      Msg::Info("Brute force method used for projection of point (%g %g %g) on surface %d",
+                p.Pos.X, p.Pos.Y, p.Pos.Z, s->Num);
     return true;
   }
   return false;

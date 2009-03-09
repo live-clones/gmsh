@@ -328,10 +328,9 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
   glLoadIdentity();
 
   // restrict picking to a rectangular region around xpick,ypick
-  if(render_mode == GMSH_SELECT){
+  if(render_mode == GMSH_SELECT)
     gluPickMatrix((GLdouble)xpick, (GLdouble)(viewport[3] - ypick),
                   (GLdouble)wpick, (GLdouble)hpick, (GLint *)viewport);
-  }
 
   // draw background if not in selection mode
   if(render_mode != GMSH_SELECT && (CTX::instance()->bgGradient || 
@@ -341,7 +340,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
     glLoadIdentity();
     // the z values and the translation are only needed for GL2PS,
     // which does not understand "no depth test" (hence we must make
-    // sure that we draw the background behing the rest of the scene)
+    // sure that we draw the background behind the rest of the scene)
     glOrtho((double)viewport[0], (double)viewport[2],
             (double)viewport[1], (double)viewport[3], 
             clip_near, clip_far);
