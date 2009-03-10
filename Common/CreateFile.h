@@ -2,6 +2,7 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
+
 #ifndef _CREATE_FILE_H_
 #define _CREATE_FILE_H_
 

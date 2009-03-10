@@ -151,7 +151,7 @@ class GEdge : public GEntity {
   // try to reparametrise the point on the edge
   virtual double parFromPoint(const SVector3& Q) const;
   
-  virtual bool XYZToU(const SVector3& Q,double& t,double relax=0.5) const;
+  virtual bool XYZToU(const SVector3& Q,double& t,const double relax=0.5) const;
 
   struct {
     char Method;
