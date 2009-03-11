@@ -86,9 +86,8 @@ void add_infile(std::string text, std::string fileName, bool deleted_something)
   }
   
   if(!CTX::instance()->expertMode) {
-    char no_ext[256], ext[256], base[256];
-    SplitFileName(fileName.c_str(), no_ext, ext, base);
-    if(strlen(ext) && strcmp(ext, ".geo") && strcmp(ext, ".GEO")){
+    std::string ext = SplitFileName(fileName)[2];
+    if(ext.size() && ext != ".geo" && ext != ".GEO"){
       char question[1024];
       sprintf(question, 
               "A scripting command is going to be appended to a non-`.geo' file.\n\n"

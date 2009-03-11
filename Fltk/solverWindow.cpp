@@ -34,11 +34,9 @@ void solver_cb(Fl_Widget *w, void *data)
   }
   if(first[num]) {
     first[num] = 0;
-    char file[256], no_ext[256], ext[256], base[256];
-    SplitFileName(GModel::current()->getFileName().c_str(), no_ext, ext, base);
-    strcpy(file, no_ext);
-    strcat(file, SINFO[num].extension.c_str());
-    GUI::instance()->solver[num]->input[0]->value(file);
+    std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
+    std::string file = split[0] + split[1] + SINFO[num].extension;
+    GUI::instance()->solver[num]->input[0]->value(file.c_str());
   }
   // show the window before calling Solver() to avoid race condition on
   // Windows (if the message window pops up die to an error, the window
@@ -46,8 +44,7 @@ void solver_cb(Fl_Widget *w, void *data)
   GUI::instance()->solver[num]->win->show();
 
   if(SINFO[num].nboptions) {
-    std::string file = FixWindowsPath
-      (GUI::instance()->solver[num]->input[0]->value());
+    std::string file = FixWindowsPath(GUI::instance()->solver[num]->input[0]->value());
     char tmp[256], tmp2[256];
     sprintf(tmp, "\"%s\"", file.c_str());
     sprintf(tmp2, SINFO[num].name_command.c_str(), tmp);

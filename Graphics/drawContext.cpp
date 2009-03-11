@@ -168,7 +168,7 @@ void drawContext::setEulerAnglesFromRotationMatrix()
 {
   r[1] = asin(rot[8]); // Calculate Y-axis angle
   double C =  cos(r[1]);
-  r[1] *=  180. / M_PI;
+  r[1] *= 180. / M_PI;
   if(fabs(C) > 0.005){ // Gimball lock?
     double tmpx =  rot[10] / C; // No, so get X-axis angle
     double tmpy = -rot[9] / C;
@@ -439,7 +439,6 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
     glPopMatrix();
     glEnable(GL_DEPTH_TEST);
   }
-
 
   if(CTX::instance()->ortho) {
     glOrtho(vxmin, vxmax, vymin, vymax, clip_near, clip_far);

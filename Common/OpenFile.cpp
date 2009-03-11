@@ -211,10 +211,8 @@ void ParseString(std::string str)
 
 static void SetProjectName(std::string fileName)
 {
-  char no_ext[256], ext[256], base[256];
-  SplitFileName(fileName.c_str(), no_ext, ext, base);
   GModel::current()->setFileName(fileName);
-  GModel::current()->setName(base);
+  GModel::current()->setName(SplitFileName(fileName)[1]);
 }
 
 int MergeFile(std::string fileName, bool warnIfMissing)
@@ -242,21 +240,21 @@ int MergeFile(std::string fileName, bool warnIfMissing)
 
   Msg::StatusBar(2, true, "Reading '%s'", fileName.c_str());
 
-  char no_ext[256], ext[256], base[256];
-  SplitFileName(fileName.c_str(), no_ext, ext, base);
+  std::vector<std::string> split = SplitFileName(fileName);
+  std::string noExt = split[0] + split[1], ext = split[2];
 
 #if defined(HAVE_FLTK)
   if(GUI::available()) {
-    if(!strcmp(ext, ".gz")) {
+    if(ext == ".gz") {
       // the real solution would be to rewrite all our I/O functions in
       // terms of gzFile, but until then, this is better than nothing
       if(fl_choice("File '%s' is in gzip format.\n\nDo you want to uncompress it?", 
                    "Cancel", "Uncompress", NULL, fileName.c_str())){
-        if(SystemCall(std::string("gunzip -c ") + fileName + " > " + no_ext))
+        if(SystemCall(std::string("gunzip -c ") + fileName + " > " + noExt))
           Msg::Error("Failed to uncompress `%s': check directory permissions", 
                      fileName.c_str());
-        SetProjectName(no_ext);
-        return MergeFile(no_ext);
+        SetProjectName(noExt);
+        return MergeFile(noExt);
       }
     }
   }
@@ -269,71 +267,62 @@ int MergeFile(std::string fileName, bool warnIfMissing)
 #endif
 
   int status = 0;
-  if(!strcmp(ext, ".stl") || !strcmp(ext, ".STL")){
+  if(ext == ".stl" || ext == ".STL"){
     status = GModel::current()->readSTL(fileName, CTX::instance()->geom.tolerance);
   }
-  else if(!strcmp(ext, ".brep") || !strcmp(ext, ".rle") ||
-          !strcmp(ext, ".brp") || !strcmp(ext, ".BRP")){
+  else if(ext == ".brep" || ext == ".rle" || ext == ".brp" || ext == ".BRP"){
     status = GModel::current()->readOCCBREP(fileName);
   }
-  else if(!strcmp(ext, ".iges") || !strcmp(ext, ".IGES") ||
-          !strcmp(ext, ".igs") || !strcmp(ext, ".IGS")){
+  else if(ext == ".iges" || ext == ".IGES" || ext == ".igs" || ext == ".IGS"){
     status = GModel::current()->readOCCIGES(fileName);
   }
-  else if(!strcmp(ext, ".step") || !strcmp(ext, ".STEP") ||
-          !strcmp(ext, ".stp") || !strcmp(ext, ".STP")){
+  else if(ext == ".step" || ext == ".STEP" || ext == ".stp" || ext == ".STP"){
     status = GModel::current()->readOCCSTEP(fileName);
   }
-  else if(!strcmp(ext, ".unv") || !strcmp(ext, ".UNV")){
+  else if(ext == ".unv" || ext == ".UNV"){
     status = GModel::current()->readUNV(fileName);
   }
-  else if(!strcmp(ext, ".vtk") || !strcmp(ext, ".VTK")){
+  else if(ext == ".vtk" || ext == ".VTK"){
     status = GModel::current()->readVTK(fileName, CTX::instance()->bigEndian);
   }
-  else if(!strcmp(ext, ".wrl") || !strcmp(ext, ".WRL") || 
-          !strcmp(ext, ".vrml") || !strcmp(ext, ".VRML") ||
-          !strcmp(ext, ".iv") || !strcmp(ext, ".IV")){
+  else if(ext == ".wrl" || ext == ".WRL" || ext == ".vrml" || ext == ".VRML" ||
+          ext == ".iv" || ext == ".IV"){
     status = GModel::current()->readVRML(fileName);
   }
-  else if(!strcmp(ext, ".mesh") || !strcmp(ext, ".MESH")){
+  else if(ext == ".mesh" || ext == ".MESH"){
     status = GModel::current()->readMESH(fileName);
   }
-  else if(!strcmp(ext, ".med") || !strcmp(ext, ".MED") ||
-	  !strcmp(ext, ".mmed") || !strcmp(ext, ".MMED") ||
-	  !strcmp(ext, ".rmed") || !strcmp(ext, ".RMED")){
+  else if(ext == ".med" || ext == ".MED" || ext == ".mmed" || ext == ".MMED" ||
+	  ext == ".rmed" || ext == ".RMED"){
     status = GModel::readMED(fileName);
 #if !defined(HAVE_NO_POST)
     if(status > 1) status = PView::readMED(fileName);
 #endif
   }
-  else if(!strcmp(ext, ".bdf") || !strcmp(ext, ".BDF") ||
-          !strcmp(ext, ".nas") || !strcmp(ext, ".NAS")){
+  else if(ext == ".bdf" || ext == ".BDF" || ext == ".nas" || ext == ".NAS"){
     status = GModel::current()->readBDF(fileName);
   }
-  else if(!strcmp(ext, ".p3d") || !strcmp(ext, ".P3D")){
+  else if(ext == ".p3d" || ext == ".P3D"){
     status = GModel::current()->readP3D(fileName);
   }
-  else if(!strcmp(ext, ".fm") || !strcmp(ext, ".FM")) {
+  else if(ext == ".fm" || ext == ".FM") {
     status = GModel::current()->readFourier(fileName);
   }
 #if defined(HAVE_FLTK)
-  else if(!strcmp(ext, ".pnm") || !strcmp(ext, ".PNM") ||
-          !strcmp(ext, ".pbm") || !strcmp(ext, ".PBM") ||
-          !strcmp(ext, ".pgm") || !strcmp(ext, ".PGM") ||
-          !strcmp(ext, ".ppm") || !strcmp(ext, ".PPM")) {
+  else if(ext == ".pnm" || ext == ".PNM" || ext == ".pbm" || ext == ".PBM" ||
+          ext == ".pgm" || ext == ".PGM" || ext == ".ppm" || ext == ".PPM") {
     status = read_pnm(fileName);
   }
-  else if(!strcmp(ext, ".bmp") || !strcmp(ext, ".BMP")) {
+  else if(ext == ".bmp" || ext == ".BMP") {
     status = read_bmp(fileName);
   }
 #if defined(HAVE_LIBJPEG)
-  else if(!strcmp(ext, ".jpg") || !strcmp(ext, ".JPG") ||
-          !strcmp(ext, ".jpeg") || !strcmp(ext, ".JPEG")) {
+  else if(ext == ".jpg" || ext == ".JPG" || ext == ".jpeg" || ext == ".JPEG") {
     status = read_jpeg(fileName);
   }
 #endif
 #if defined(HAVE_LIBPNG)
-  else if(!strcmp(ext, ".png") || !strcmp(ext, ".PNG")) {
+  else if(ext == ".png" || ext == ".PNG") {
     status = read_png(fileName);
   }
 #endif

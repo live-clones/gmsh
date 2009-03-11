@@ -72,24 +72,20 @@ std::string FixWindowsPath(const char *in)
 #endif
 }
 
-void SplitFileName(const char *name, char *no_ext, char *ext, char *base)
+std::vector<std::string> SplitFileName(std::string fileName)
 {
-  strcpy(no_ext, name);
-  strcpy(ext, "");
-  for(int i = strlen(name) - 1; i >= 0; i--){
-    if(name[i] == '.'){
-      strcpy(ext, &name[i]);
-      no_ext[i] = '\0';
-      break;
-    }
-  }
-  strcpy(base, no_ext);
-  for(int i = strlen(no_ext) - 1; i >= 0; i--){
-    if(no_ext[i] == '/' || no_ext[i] == '\\'){
-      strcpy(base, &no_ext[i + 1]);
-      break;
-    }
-  }
+  // returns [path, baseName, extension]
+  int idot = fileName.find_last_of('.');
+  int islash = fileName.find_last_of("/\\");
+  if(idot == std::string::npos) idot = -1;
+  if(islash == std::string::npos) islash = -1;
+  std::vector<std::string> s(3);
+  if(idot > 0)
+    s[2] = fileName.substr(idot);
+  if(islash > 0)
+    s[0] = fileName.substr(0, islash + 1);
+  s[1] = fileName.substr(s[0].size(), fileName.size() - s[0].size() - s[2].size());
+  return s;
 }
 
 std::vector<std::string> SplitWhiteSpace(std::string in, unsigned int len)

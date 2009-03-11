@@ -508,9 +508,7 @@ static void save_projection_cb(Fl_Widget *w, void *data)
         Msg::Error("Unable to open file `%s'", name.c_str());
         return;
       }
-      char no_ext[256], ext[256], base[256];
-      SplitFileName(name.c_str(), no_ext, ext, base);
-      fprintf(fp, "1\n%s\n%s\n", base, ps->GetName().c_str());
+      fprintf(fp, "1\n%s\n%s\n", SplitFileName(name)[1].c_str(), ps->GetName().c_str());
       for(unsigned int i = 0; i < p->parameters.size(); i++)
         fprintf(fp, "%.16g\n", p->parameters[i]->value());
       fclose(fp);

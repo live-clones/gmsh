@@ -3,7 +3,6 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include <string.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -26,53 +25,41 @@
 
 int GuessFileFormatFromFileName(std::string fileName)
 {
-  int len;
-  char ext[256];
-  const char *name = fileName.c_str();
-  for(len = strlen(name) - 1; len >= 0; len--) {
-    if(name[len] == '.') {
-      strcpy(ext, &name[len]);
-      break;
-    }
-  }
-  if(len <= 0)
-    strcpy(ext, "");
-  
-  if     (!strcmp(ext, ".geo"))  return FORMAT_GEO;
-  else if(!strcmp(ext, ".msh"))  return FORMAT_MSH;
-  else if(!strcmp(ext, ".pos"))  return FORMAT_POS;
-  else if(!strcmp(ext, ".opt"))  return FORMAT_OPT;
-  else if(!strcmp(ext, ".unv"))  return FORMAT_UNV;
-  else if(!strcmp(ext, ".vtk"))  return FORMAT_VTK;
-  else if(!strcmp(ext, ".stl"))  return FORMAT_STL;
-  else if(!strcmp(ext, ".cgns")) return FORMAT_CGNS;
-  else if(!strcmp(ext, ".med"))  return FORMAT_MED;
-  else if(!strcmp(ext, ".mesh")) return FORMAT_MESH;
-  else if(!strcmp(ext, ".bdf"))  return FORMAT_BDF;
-  else if(!strcmp(ext, ".diff")) return FORMAT_DIFF;
-  else if(!strcmp(ext, ".nas"))  return FORMAT_BDF;
-  else if(!strcmp(ext, ".p3d"))  return FORMAT_P3D;
-  else if(!strcmp(ext, ".wrl"))  return FORMAT_VRML;
-  else if(!strcmp(ext, ".vrml")) return FORMAT_VRML;
-  else if(!strcmp(ext, ".gif"))  return FORMAT_GIF;
-  else if(!strcmp(ext, ".jpg"))  return FORMAT_JPEG;
-  else if(!strcmp(ext, ".jpeg")) return FORMAT_JPEG;
-  else if(!strcmp(ext, ".png"))  return FORMAT_PNG;
-  else if(!strcmp(ext, ".ps"))   return FORMAT_PS;
-  else if(!strcmp(ext, ".eps"))  return FORMAT_EPS;
-  else if(!strcmp(ext, ".pdf"))  return FORMAT_PDF;
-  else if(!strcmp(ext, ".tex"))  return FORMAT_TEX;
-  else if(!strcmp(ext, ".svg"))  return FORMAT_SVG;
-  else if(!strcmp(ext, ".ppm"))  return FORMAT_PPM;
-  else if(!strcmp(ext, ".yuv"))  return FORMAT_YUV;
+  std::string ext = SplitFileName(fileName)[2];
+  if     (ext == ".geo")  return FORMAT_GEO;
+  else if(ext == ".msh")  return FORMAT_MSH;
+  else if(ext == ".pos")  return FORMAT_POS;
+  else if(ext == ".opt")  return FORMAT_OPT;
+  else if(ext == ".unv")  return FORMAT_UNV;
+  else if(ext == ".vtk")  return FORMAT_VTK;
+  else if(ext == ".stl")  return FORMAT_STL;
+  else if(ext == ".cgns") return FORMAT_CGNS;
+  else if(ext == ".med")  return FORMAT_MED;
+  else if(ext == ".mesh") return FORMAT_MESH;
+  else if(ext == ".bdf")  return FORMAT_BDF;
+  else if(ext == ".diff") return FORMAT_DIFF;
+  else if(ext == ".nas")  return FORMAT_BDF;
+  else if(ext == ".p3d")  return FORMAT_P3D;
+  else if(ext == ".wrl")  return FORMAT_VRML;
+  else if(ext == ".vrml") return FORMAT_VRML;
+  else if(ext == ".gif")  return FORMAT_GIF;
+  else if(ext == ".jpg")  return FORMAT_JPEG;
+  else if(ext == ".jpeg") return FORMAT_JPEG;
+  else if(ext == ".png")  return FORMAT_PNG;
+  else if(ext == ".ps")   return FORMAT_PS;
+  else if(ext == ".eps")  return FORMAT_EPS;
+  else if(ext == ".pdf")  return FORMAT_PDF;
+  else if(ext == ".tex")  return FORMAT_TEX;
+  else if(ext == ".svg")  return FORMAT_SVG;
+  else if(ext == ".ppm")  return FORMAT_PPM;
+  else if(ext == ".yuv")  return FORMAT_YUV;
   else                           return -1;
 }
 
 std::string GetDefaultFileName(int format)
 {
-  char no_ext[256], ext[256], base[256];
-  SplitFileName(GModel::current()->getFileName().c_str(), no_ext, ext, base);
-  std::string name(no_ext);
+  std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
+  std::string name = split[0] + split[1];
   switch(format){
   case FORMAT_GEO:  name += ".geo_unrolled"; break;
   case FORMAT_MSH:  name += ".msh"; break;
@@ -149,9 +136,6 @@ void CreateOutputFile(std::string fileName, int format)
 {
   if(fileName.empty())
     fileName = GetDefaultFileName(format);
-
-  char no_ext[256], ext[256], base[256];
-  SplitFileName(fileName.c_str(), no_ext, ext, base);
 
   int oldformat = CTX::instance()->print.format;
   CTX::instance()->print.format = format;
@@ -308,7 +292,7 @@ void CreateOutputFile(std::string fileName, int format)
         Msg::Error("Unable to open file '%s'", fileName.c_str());
         break;
       }
-
+      std::string base = SplitFileName(fileName)[1];
       GLint width = GUI::instance()->getCurrentOpenglWindow()->w();
       GLint height = GUI::instance()->getCurrentOpenglWindow()->h();
       GLint viewport[4] = {0, 0, width, height};
@@ -342,9 +326,9 @@ void CreateOutputFile(std::string fileName, int format)
       int res = GL2PS_OVERFLOW;
       while(res == GL2PS_OVERFLOW) {
         buffsize += 2048 * 2048;
-        gl2psBeginPage(base, "Gmsh", viewport, 
+        gl2psBeginPage(base.c_str(), "Gmsh", viewport, 
                        psformat, pssort, psoptions, GL_RGBA, 0, NULL, 
-                       15, 20, 10, buffsize, fp, base);
+                       15, 20, 10, buffsize, fp, base.c_str());
         if(CTX::instance()->print.epsQuality == 0){
           double modelview[16], projection[16];
           glGetDoublev(GL_PROJECTION_MATRIX, projection);
@@ -382,6 +366,7 @@ void CreateOutputFile(std::string fileName, int format)
         Msg::Error("Unable to open file '%s'", fileName.c_str());
         break;
       }
+      std::string base = SplitFileName(fileName)[1];
       GLint width = GUI::instance()->getCurrentOpenglWindow()->w();
       GLint height = GUI::instance()->getCurrentOpenglWindow()->h();
       GLint viewport[4] = {0, 0, width, height};
@@ -389,9 +374,9 @@ void CreateOutputFile(std::string fileName, int format)
       int res = GL2PS_OVERFLOW;
       while(res == GL2PS_OVERFLOW) {
         buffsize += 2048 * 2048;
-        gl2psBeginPage(base, "Gmsh", viewport,
+        gl2psBeginPage(base.c_str(), "Gmsh", viewport,
                        GL2PS_TEX, GL2PS_NO_SORT, GL2PS_NONE, GL_RGBA, 0, NULL, 
-                       0, 0, 0, buffsize, fp, base);
+                       0, 0, 0, buffsize, fp, base.c_str());
         PixelBuffer buffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
         int oldtext = CTX::instance()->print.text;
         CTX::instance()->print.text = 1;
