@@ -278,7 +278,7 @@ void Msg::Direct(int level, const char *fmt, ...)
 
 void Msg::StatusBar(int num, bool log, const char *fmt, ...)
 {
-  if(_commRank || _verbosity < 4) return;
+  if(_commRank || _verbosity < 3) return;
   if(num < 1 || num > 3) return;
 
   char str[1024];
@@ -292,7 +292,8 @@ void Msg::StatusBar(int num, bool log, const char *fmt, ...)
 #if defined(HAVE_FLTK)
   if(GUI::available()){
     if(log) GUI::instance()->check();
-    GUI::instance()->setStatus(str, num - 1);
+    if(!log || num != 2 || _verbosity > 3) 
+      GUI::instance()->setStatus(str, num - 1);
     if(log){
       std::string tmp = std::string("Info    : ") + str;
       GUI::instance()->messages->add(tmp.c_str());
@@ -355,7 +356,7 @@ void Msg::ProgressMeter(int n, int N, const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
     if(GUI::available()){
-      GUI::instance()->setStatus(str, 1);
+      if(_verbosity > 3) GUI::instance()->setStatus(str, 1);
       GUI::instance()->check();
     }
 #endif
@@ -370,7 +371,9 @@ void Msg::ProgressMeter(int n, int N, const char *fmt, ...)
 
   if(n > N - 1){
 #if defined(HAVE_FLTK)
-    if(GUI::available()) GUI::instance()->setStatus("", 1);
+    if(GUI::available()){
+      if(_verbosity > 3) GUI::instance()->setStatus("", 1);
+    }
 #endif
     if(CTX::instance()->terminal){
       fprintf(stdout, "Done!                                              \r");
