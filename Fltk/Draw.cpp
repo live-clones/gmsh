@@ -26,6 +26,14 @@ void Draw()
   GUI::instance()->check();
 }
 
+void DrawCurrentOpenglWindow(bool make_current)
+{
+  if(!GUI::available()) return;
+  openglWindow *gl = GUI::instance()->getCurrentOpenglWindow();
+  if(make_current) gl->make_current();
+  gl->redraw();
+}
+
 void DrawPlugin(void (*draw)(void *context))
 {
   CTX::instance()->post.pluginDrawFunction = draw;
@@ -41,19 +49,6 @@ void DrawPlugin(void (*draw)(void *context))
   CTX::instance()->drawBBox = old;
   CTX::instance()->post.draw = 1;
   CTX::instance()->mesh.draw = 1;
-}
-
-void DrawCurrentOpenglWindow(bool make_current)
-{
-  if(!GUI::available()) return;
-  openglWindow *gl = GUI::instance()->getCurrentOpenglWindow();
-  if(make_current) gl->make_current();
-  glClearColor(CTX::instance()->unpackRed(CTX::instance()->color.bg) / 255.,
-               CTX::instance()->unpackGreen(CTX::instance()->color.bg) / 255.,
-               CTX::instance()->unpackBlue(CTX::instance()->color.bg) / 255., 0.);
-  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-  gl->getDrawContext()->draw3d();
-  gl->getDrawContext()->draw2d();
 }
 
 int GetFontIndex(const char *fontname)

@@ -1,8 +1,8 @@
-$Id: VERSIONS.txt,v 1.37 2009-03-08 19:12:34 geuzaine Exp $
+$Id: VERSIONS.txt,v 1.38 2009-03-13 08:04:38 geuzaine Exp $
 
 (?): removed GSL dependency (Gmsh now simply requires Blas and
 Lapack); new per-window visibility; added support for composite window
-printing and background image; fixes for string options in parser.
+printing and background images; fixes for string options in parser.
 
 2.3.0 (Jan 23, 2009): major graphics and GUI code refactoring; new
 full-quad/hexa subdivision algorithm (removed Mesh.RecombineAlgo);
