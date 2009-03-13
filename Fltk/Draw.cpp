@@ -32,6 +32,8 @@ void DrawCurrentOpenglWindow(bool make_current)
   openglWindow *gl = GUI::instance()->getCurrentOpenglWindow();
   if(make_current) gl->make_current();
   gl->redraw();
+  glFlush();
+  GUI::instance()->check();
 }
 
 void DrawPlugin(void (*draw)(void *context))
