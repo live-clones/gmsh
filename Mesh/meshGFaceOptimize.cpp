@@ -11,6 +11,7 @@
 #include "MVertex.h"
 #include "MElement.h"
 #include "BackgroundMesh.h"
+#include "Numeric.h"
 #include "GmshMessage.h"
 #include "Generator.h"
 
@@ -44,11 +45,12 @@ static void setLcs(MTriangle *t, std::map<MVertex*, double> &vSizes)
   }
 }
 
-void buidMeshGenerationDataStructures(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
-                                      std::vector<double> &vSizes,
-                                      std::vector<double> &vSizesBGM,
-                                      std::vector<double> &Us,
-                                      std::vector<double> &Vs)
+void buildMeshGenerationDataStructures(GFace *gf, 
+                                       std::set<MTri3*, compareTri3Ptr> &AllTris,
+                                       std::vector<double> &vSizes,
+                                       std::vector<double> &vSizesBGM,
+                                       std::vector<double> &Us,
+                                       std::vector<double> &Vs)
 {
   std::map<MVertex*, double> vSizesMap;
   std::list<GEdge*> edges = gf->edges();
@@ -102,6 +104,31 @@ void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris)
       gf->triangles.push_back(worst->tri());
     delete worst;
     AllTris.erase(AllTris.begin());      
+  }
+
+  // make sure all the triangles are oriented in the same way (in
+  // parameter space). FIXME: this is really ugly and slow. JF: we
+  // need to change the actual algorithm to ensure that we create
+  // correctly oriented triangles in the first place
+  if(gf->triangles.size() > 1){
+    double u[3], v[3], n1[3], n2[3];
+    MTriangle *t = gf->triangles[0];
+    SPoint2 uv[3];
+    for(int i = 0; i < 3; i++)
+      reparamMeshVertexOnFace(t->getVertex(i), gf, uv[i]);
+    normal3points(uv[0].x(), uv[0].y(), 0., 
+                  uv[1].x(), uv[1].y(), 0., 
+                  uv[2].x(), uv[2].y(), 0., n1);
+    for(unsigned int j = 1; j < gf->triangles.size(); j++){
+      t = gf->triangles[j];
+      for(int i = 0; i < 3; i++)
+        reparamMeshVertexOnFace(t->getVertex(i), gf, uv[i]);
+      normal3points(uv[0].x(), uv[0].y(), 0., 
+                    uv[1].x(), uv[1].y(), 0., 
+                    uv[2].x(), uv[2].y(), 0., n2);
+      double pp; prosca(n1, n2, &pp);
+      if(pp < 0) t->revert();
+    }
   }
 }
 

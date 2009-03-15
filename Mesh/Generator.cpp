@@ -369,18 +369,6 @@ static void PrintMesh2dStatistics(GModel *m)
 static void Mesh2D(GModel *m)
 {
   if(TooManyElements(m, 2)) return;
-
-  if(!CTX::instance()->expertMode && (CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY ||
-                                      CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)){
-    if(!Msg::GetBinaryAnswer
-       ("The 2D Delaunay and Frontal algorithms are still experimental\n"
-	"and produce triangles with random orientations. Do you really\n"
-	"want to continue?\n\n"
-	"(To disable this warning in the future, select `Enable expert\n"
-	"mode' in the option dialog.)",
-	"Continue", "Cancel")) return;
-  }
-  
   Msg::StatusBar(1, true, "Meshing 2D...");
   double t1 = Cpu();
 

@@ -615,7 +615,7 @@ void gmshBowyerWatson(GFace *gf)
   std::set<MTri3*,compareTri3Ptr> AllTris;
   std::vector<double> vSizes, vSizesBGM, Us, Vs;
 
-  buidMeshGenerationDataStructures(gf, AllTris, vSizes, vSizesBGM, Us, Vs);
+  buildMeshGenerationDataStructures(gf, AllTris, vSizes, vSizesBGM, Us, Vs);
 
   // _printTris ("before.pos", AllTris, Us,Vs);
   int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, Us, Vs, vSizes, vSizesBGM);
@@ -701,7 +701,8 @@ void gmshBowyerWatsonFrontal(GFace *gf)
   std::set<MTri3*,compareTri3Ptr> AllTris;
   std::set<MTri3*,compareTri3Ptr> ActiveTris;
   std::vector<double> vSizes, vSizesBGM, Us, Vs;
-  buidMeshGenerationDataStructures(gf, AllTris, vSizes, vSizesBGM, Us, Vs);
+
+  buildMeshGenerationDataStructures(gf, AllTris, vSizes, vSizesBGM, Us, Vs);
 
   // delaunise the initial mesh
   int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, Us, Vs, vSizes, vSizesBGM);
