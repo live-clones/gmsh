@@ -646,7 +646,8 @@ void gmshBowyerWatson(GFace *gf)
                        Vs[base->getVertex(2)->getNum()]) / 3.};
       buildMetric(gf, pa, metric);
       circumCenterMetric(worst->tri(), metric, Us, Vs, center, r2);       
-      insertAPoint(gf,AllTris.begin(),center,metric,Us,Vs,vSizes,vSizesBGM,AllTris);
+      insertAPoint(gf, AllTris.begin(), center, metric, Us, Vs, vSizes, vSizesBGM, 
+                   AllTris);
     }
     //     if(ITER % 10== 0){
     //       char name[245];
@@ -654,7 +655,7 @@ void gmshBowyerWatson(GFace *gf)
     //       _printTris (name, AllTris, Us,Vs,false);
     //     }
   }    
-  transferDataStructure(gf, AllTris); 
+  transferDataStructure(gf, AllTris, Us, Vs); 
 }
 
 /*
@@ -791,6 +792,6 @@ void gmshBowyerWatsonFrontal(GFace *gf)
 
   // char name[245];
   // sprintf(name,"frontal%d.pos", gf->tag());
-  // _printTris (name, AllTris, Us,Vs);
-  transferDataStructure(gf, AllTris); 
+  // _printTris (name, AllTris, Us, Vs);
+  transferDataStructure(gf, AllTris, Us, Vs); 
 } 

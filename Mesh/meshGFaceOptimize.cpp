@@ -93,10 +93,11 @@ void buildMeshGenerationDataStructures(GFace *gf,
   connectTriangles(AllTris);
 }
 
-void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris)
+void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
+                           std::vector<double> &Us, std::vector<double> &Vs)
 {
   while (1) {
-    if (AllTris.begin() == AllTris.end() ) break;
+    if (AllTris.begin() == AllTris.end()) break;
     MTri3 *worst = *AllTris.begin();
     if (worst->isDeleted())
       delete worst->tri();
@@ -106,26 +107,23 @@ void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris)
     AllTris.erase(AllTris.begin());      
   }
 
-  // make sure all the triangles are oriented in the same way (in
-  // parameter space). FIXME: this is really ugly and slow. JF: we
-  // need to change the actual algorithm to ensure that we create
-  // correctly oriented triangles in the first place
+  // make sure all the triangles are oriented in the same way in
+  // parameter space (it would be nicer to change the actual algorithm
+  // to ensure that we create correctly-oriented triangles in the
+  // first place)
   if(gf->triangles.size() > 1){
-    double u[3], v[3], n1[3], n2[3];
+    double n1[3], n2[3];
     MTriangle *t = gf->triangles[0];
-    SPoint2 uv[3];
-    for(int i = 0; i < 3; i++)
-      reparamMeshVertexOnFace(t->getVertex(i), gf, uv[i]);
-    normal3points(uv[0].x(), uv[0].y(), 0., 
-                  uv[1].x(), uv[1].y(), 0., 
-                  uv[2].x(), uv[2].y(), 0., n1);
+    MVertex *v0 = t->getVertex(0), *v1 = t->getVertex(1), *v2 = t->getVertex(2);
+    normal3points(Us[v0->getNum()], Vs[v0->getNum()], 0.,
+                  Us[v1->getNum()], Vs[v1->getNum()], 0.,
+                  Us[v2->getNum()], Vs[v2->getNum()], 0., n1);
     for(unsigned int j = 1; j < gf->triangles.size(); j++){
       t = gf->triangles[j];
-      for(int i = 0; i < 3; i++)
-        reparamMeshVertexOnFace(t->getVertex(i), gf, uv[i]);
-      normal3points(uv[0].x(), uv[0].y(), 0., 
-                    uv[1].x(), uv[1].y(), 0., 
-                    uv[2].x(), uv[2].y(), 0., n2);
+      v0 = t->getVertex(0); v1 = t->getVertex(1); v2 = t->getVertex(2);
+      normal3points(Us[v0->getNum()], Vs[v0->getNum()], 0.,
+                    Us[v1->getNum()], Vs[v1->getNum()], 0.,
+                    Us[v2->getNum()], Vs[v2->getNum()], 0., n2);
       double pp; prosca(n1, n2, &pp);
       if(pp < 0) t->revert();
     }

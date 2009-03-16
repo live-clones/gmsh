@@ -52,7 +52,8 @@ void buildMeshGenerationDataStructures(GFace *gf,
                                        std::vector<double> &vSizesBGM,
                                        std::vector<double> &Us,
                                        std::vector<double> &Vs);
-void transferDataStructure (GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris);
+void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
+                           std::vector<double> &Us, std::vector<double> &Vs);
 void gmshRecombineIntoQuads(GFace *gf);
 
 struct swapquad{
