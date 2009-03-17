@@ -14,16 +14,17 @@ CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 SRC = Numeric.cpp\
       GmshMatrix.cpp\
       gmshLaplace.cpp\
-      gmshHelmholtz.cpp\
-      gmshElasticity.cpp\
+        gmshHelmholtz.cpp\
+        gmshElasticity.cpp\
+        gmshProjection.cpp\
       EigSolve.cpp\
       FunctionSpace.cpp\
       GaussQuadratureLin.cpp\
-      GaussQuadratureTri.cpp\
-      GaussQuadratureQuad.cpp\
-      GaussQuadratureTet.cpp\
-      GaussQuadratureHex.cpp\
-      GaussLegendreSimplex.cpp\
+        GaussQuadratureTri.cpp\
+        GaussQuadratureQuad.cpp\
+        GaussQuadratureTet.cpp\
+        GaussQuadratureHex.cpp\
+        GaussLegendreSimplex.cpp\
       GmshPredicates.cpp\
 
 OBJ = ${SRC:.cpp=${OBJEXT}}
@@ -88,6 +89,22 @@ gmshHelmholtz${OBJEXT}: gmshHelmholtz.cpp gmshHelmholtz.h \
   ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
   ../Common/Gmsh.h ../Common/GmshMessage.h Numeric.h
 gmshElasticity${OBJEXT}: gmshElasticity.cpp gmshElasticity.h \
+  gmshTermOfFormulation.h GmshMatrix.h ../Common/GmshConfig.h \
+  ../Common/GmshMessage.h gmshFunction.h gmshAssembler.h \
+  gmshLinearSystem.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
+  ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
+  ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
+  ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/MElement.h \
+  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
+  ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
+  ../Common/Gmsh.h ../Common/GmshMessage.h Numeric.h
+gmshProjection${OBJEXT}: gmshProjection.cpp gmshProjection.h \
   gmshTermOfFormulation.h GmshMatrix.h ../Common/GmshConfig.h \
   ../Common/GmshMessage.h gmshFunction.h gmshAssembler.h \
   gmshLinearSystem.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \

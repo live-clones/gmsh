@@ -1,10 +1,10 @@
-$Id: VERSIONS.txt,v 1.40 2009-03-16 07:23:48 geuzaine Exp $
+$Id: VERSIONS.txt,v 1.41 2009-03-17 07:36:33 geuzaine Exp $
 
-(?): removed GSL dependency (Gmsh now simply requires Blas and
+2.3.1 (?): removed GSL dependency (Gmsh now simply uses Blas and
 Lapack); new per-window visibility; added support for composite window
-printing and background images; fixes for string options in parser;
-fixed surface mesh orientation for Open Cascade models; fixed triangle
-orientations in Delaunay and Frontal algorithms.
+printing and background images; fixed string option affectation in
+parser; fixed surface mesh orientation for Open Cascade models; fixed
+random triangle orientations in Delaunay and Frontal algorithms.
 
 2.3.0 (Jan 23, 2009): major graphics and GUI code refactoring; new
 full-quad/hexa subdivision algorithm (removed Mesh.RecombineAlgo);

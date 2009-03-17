@@ -10,7 +10,7 @@ void gmshHelmholtzTerm::elementMatrix(MElement *e,
                                       gmshMatrix<std::complex<double> > &m) const
 {
   int nbNodes = e->getNumVertices();
-  int integrationOrder = 2 * e->getPolynomialOrder() - 0;
+  int integrationOrder = 2 * e->getPolynomialOrder();
   int npts;
   IntPt *GP;
   double jac[3][3];
@@ -44,7 +44,7 @@ void gmshHelmholtzTerm::elementMatrix(MElement *e,
 	m(j, k) += ((Grads[j][0] * Grads[k][0] +
                      Grads[j][1] * Grads[k][1] +
                      Grads[j][2] * Grads[k][2]) 
-                    - kk * kk * sf[j] * sf[k]) * weight * detJ * 0.5;
+                    - kk * kk * sf[j] * sf[k]) * weight * detJ;
       }
     }
   }

@@ -84,9 +84,9 @@ void buildMeshGenerationDataStructures(GFace *gf,
     Vs.push_back(param[1]);
   }
   for(unsigned int i = 0; i < gf->triangles.size(); i++){
-    double lc = 0.3333333333 * (vSizes [gf->triangles[i]->getVertex(0)->getNum()] +
-                                vSizes [gf->triangles[i]->getVertex(1)->getNum()] +
-                                vSizes [gf->triangles[i]->getVertex(2)->getNum()]);
+    double lc = 0.3333333333 * (vSizes[gf->triangles[i]->getVertex(0)->getNum()] +
+                                vSizes[gf->triangles[i]->getVertex(1)->getNum()] +
+                                vSizes[gf->triangles[i]->getVertex(2)->getNum()]);
     AllTris.insert(new MTri3(gf->triangles[i], lc));
   }
   gf->triangles.clear();
@@ -243,8 +243,6 @@ void laplaceSmoothing(GFace *gf)
     }  
   }
 }
-
-extern void fourthPoint(double *p1, double *p2, double *p3, double *p4);
 
 double surfaceTriangleUV(MVertex *v1, MVertex *v2, MVertex *v3,           
                          const std::vector<double> &Us,

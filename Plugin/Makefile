@@ -320,7 +320,7 @@ FiniteElement${OBJEXT}: FiniteElement.cpp ../Common/GmshConfig.h ../Geo/GModel.h
   ../Post/ColorTable.h ../Common/GmshMessage.h ../Post/PView.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Numeric/GmshMatrix.h \
   ../Common/ListUtils.h ../Numeric/gmshAssembler.h \
-  ../Numeric/gmshLinearSystem.h ../Numeric/gmshLaplace.h \
+  ../Numeric/gmshLinearSystem.h ../Numeric/gmshProjection.h \
   ../Numeric/gmshTermOfFormulation.h ../Numeric/GmshMatrix.h \
   ../Numeric/gmshFunction.h ../Numeric/gmshAssembler.h ../Geo/MElement.h \
   ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
@@ -328,6 +328,8 @@ FiniteElement${OBJEXT}: FiniteElement.cpp ../Common/GmshConfig.h ../Geo/GModel.h
   ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
   ../Numeric/gmshFunction.h ../Common/Gmsh.h ../Common/GmshMessage.h \
+  ../Numeric/GmshMatrix.h ../Numeric/gmshLaplace.h \
+  ../Numeric/gmshTermOfFormulation.h ../Numeric/gmshFunction.h \
   ../Numeric/GmshMatrix.h ../Numeric/gmshHelmholtz.h \
   ../Numeric/gmshTermOfFormulation.h ../Numeric/gmshFunction.h \
   ../Numeric/GmshMatrix.h ../Numeric/gmshLinearSystemGmm.h \

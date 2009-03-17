@@ -77,7 +77,7 @@ drawContext${OBJEXT}: drawContext.cpp ../Common/GmshMessage.h drawContext.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Post/PView.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h
+  ../Post/ColorTable.h gl2ps.h
 drawMesh${OBJEXT}: drawMesh.cpp drawContext.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Common/GmshMessage.h ../Common/GmshDefines.h \
   ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \

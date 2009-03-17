@@ -218,7 +218,7 @@ double GEdge::length(const double &u0, const double &u1, const int nbQuadPoints)
 #endif
 }
 
-GPoint GEdge::closestPoint(const SPoint3 & q,double& t) const
+GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
 {
   double tolerance = 1.e-12;
   double dist = 1.;
@@ -243,10 +243,10 @@ GPoint GEdge::closestPoint(const SPoint3 & q,double& t) const
       dt0 = dt;
       SVector3 dp = q - position(t);
       SVector3 derP = firstDer(t);
-      double b = dot(derP,derP);
-      double c = dot(derP,dp);
+      double b = dot(derP, derP);
+      double c = dot(derP, dp);
       dt = c / b;
-      t = std::max(tMin,std::min(tMax,t0+relax * dt));
+      t = std::max(tMin, std::min(tMax, t0 + relax * dt));
       dt = fabs(t - t0);
     }
     if (i > nb)  relax *= 0.5;

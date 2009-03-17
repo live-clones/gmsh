@@ -259,7 +259,8 @@ meshGFaceOptimize${OBJEXT}: meshGFaceOptimize.cpp meshGFaceOptimize.h \
   ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/Pair.h BackgroundMesh.h Generator.h
+  ../Geo/Pair.h BackgroundMesh.h ../Numeric/Numeric.h \
+  ../Numeric/GmshMatrix.h Generator.h
 meshGFaceQuadrilateralize${OBJEXT}: meshGFaceQuadrilateralize.cpp \
   meshGFaceQuadrilateralize.h ../Common/GmshMessage.h \
   ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Common/GmshConfig.h \

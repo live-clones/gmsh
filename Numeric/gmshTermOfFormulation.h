@@ -124,6 +124,7 @@ class gmshNodalFemTerm : public gmshTermOfFormulation<scalar> {
     std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].find(physical);  
     if (it == groups[dim].end()) return;
     double jac[3][3];
+    double sf[256];
 
     for (unsigned int i = 0; i < it->second.size(); ++i){
       GEntity *ge = it->second[i];
@@ -135,23 +136,15 @@ class gmshNodalFemTerm : public gmshTermOfFormulation<scalar> {
         IntPt *GP;
         e->getIntegrationPoints(integrationOrder, &npts, &GP);  
         for (int ip = 0; ip < npts; ip++){
-	  const double u      = GP[ip].pt[0];
-	  const double v      = GP[ip].pt[1];
-	  const double w      = GP[ip].pt[2];
+	  const double u = GP[ip].pt[0];
+	  const double v = GP[ip].pt[1];
+	  const double w = GP[ip].pt[2];
 	  const double weight = GP[ip].weight;
-	  const double detJ = e->getJacobian(u,v,w,jac);   
-	  double x = 0;
-	  double y = 0;
-	  double z = 0;
-          double sf[nbNodes];
-          e->getShapeFunctions(u,v,w,sf);
-	  for (int k = 0; k < nbNodes; k++){  
-	    x += e->getVertex(k)->x() * sf[k];
-	    y += e->getVertex(k)->y() * sf[k];
-	    z += e->getVertex(k)->z() * sf[k];
-	  }
-	  const scalar FCT = fct (x,y,z);
-	  for (int k = 0; k < nbNodes; k++){  
+	  const double detJ = e->getJacobian(u, v, w, jac);
+          SPoint3 p; e->pnt(u, v, w, p);
+          e->getShapeFunctions(u, v, w, sf);
+	  const scalar FCT = fct(p.x(), p.y(), p.z());
+	  for (int k = 0; k < nbNodes; k++){
 	    lsys.assemble(e->getVertex(k), comp, field, detJ * weight * sf[k] * FCT);
 	  }
         }

@@ -1,4 +1,10 @@
-$Id: TODO.txt,v 1.20 2009-03-10 12:06:14 geuzaine Exp $
+$Id: TODO.txt,v 1.21 2009-03-17 07:36:33 geuzaine Exp $
+
+********************************************************************
+
+extrude along a given curve (use curve->closestPoint for each xyz in
+ExtrudeParams and extrude along the tangent? not that simple: this
+could lead to self-intersection if curvature >>)
 
 ********************************************************************
 
@@ -126,10 +132,6 @@ add Mesh>Edit>Change orientation>Lines & Surfaces
 
 implement better algo to determine which axes to draw
 (cf. mathematica)
-
-********************************************************************
-
-extrude along a given function or along a parametric curve
 
 ********************************************************************
 
