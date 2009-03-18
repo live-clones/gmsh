@@ -78,7 +78,7 @@ SRC =		main/user_params.c main/interface.c \
 		misc/countup_mesh.c misc/make_subgoal.c \
 		misc/find_maxdeg.c misc/make_maps.c misc/make_setlists.c \
 		misc/sequence.c misc/perturb.c misc/simple_part.c \
-		misc/time_kernels.c misc/timing.c \
+		misc/time_kernels.c misc/timing_chaco.c \
 		util/affirm.c util/array_alloc_2D.c util/bit_reverse.c \
 		util/checkpnt.c util/cpvec.c util/dot.c \
 		util/doubleout.c util/input_int.c util/gray.c \
