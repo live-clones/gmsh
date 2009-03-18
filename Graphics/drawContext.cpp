@@ -416,9 +416,11 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
         }
         if(!_bgImageSize[0] || !_bgImageSize[1]){
           Msg::Error("Could not load valid background image");
+          // make sure we don't try to load it again
           for(int i = 0; i < 3; i++) _bgImage.push_back(0);
           _bgImageSize[0] = _bgImageSize[1] = 1.;
         }
+        if(img) delete img;
       }
       double x = CTX::instance()->bgImagePosition[0];
       double y = CTX::instance()->bgImagePosition[1];
