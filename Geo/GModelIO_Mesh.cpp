@@ -678,7 +678,11 @@ int GModel::readSTL(const std::string &name, double tolerance)
   // "solid", or binary data header
   char buffer[256];
   fgets(buffer, sizeof(buffer), fp);
-  
+
+  // workaround for stupid 3D-DOCTOR software, which uses "solid" to
+  // start its binary files
+  if(!strncmp(buffer, "solid 3D-DOCTOR", 15)) buffer[0] = 'z';
+
   if(!strncmp(buffer, "solid", 5)){
     // ASCII STL
     points.resize(1);
@@ -722,7 +726,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
       unsigned int nfacets = 0;
       size_t ret = fread(&nfacets, sizeof(unsigned int), 1, fp);
       bool swap = false;
-      if(nfacets > 10000000){
+      if(nfacets > 100000000){
         Msg::Info("Swapping bytes from binary file");
         swap = true;
         SwapBytes((char*)&nfacets, sizeof(unsigned int), 1);
