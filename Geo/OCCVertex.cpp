@@ -6,7 +6,7 @@
 #include "GmshConfig.h"
 #include "GModel.h"
 #include "MVertex.h"
-#include "MElement.h"
+#include "MPoint.h"
 #include "OCCVertex.h"
 #include "OCCEdge.h"
 #include "OCCFace.h"

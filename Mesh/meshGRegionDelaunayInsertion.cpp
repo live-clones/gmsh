@@ -15,6 +15,7 @@
 #include "meshGRegionDelaunayInsertion.h"
 #include "GModel.h"
 #include "GRegion.h"
+#include "MTriangle.h"
 #include "Numeric.h"
 
 int MTet4::inCircumSphere(const double *p) const

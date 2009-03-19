@@ -336,8 +336,9 @@ classificationEditor${OBJEXT}: classificationEditor.cpp GUI.h \
   ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Numeric/Gauss.h \
   ../Post/ColorTable.h paletteWindow.h ../Numeric/Numeric.h \
   ../Numeric/GmshMatrix.h Draw.h ../Common/Options.h ../Common/Context.h \
-  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \
-  ../Mesh/meshGFaceDelaunayInsertion.h ../Mesh/meshGFaceOptimize.h \
+  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h ../Geo/MLine.h \
+  ../Geo/MElement.h ../Mesh/meshGFaceDelaunayInsertion.h \
+  ../Geo/MTriangle.h ../Geo/MElement.h ../Mesh/meshGFaceOptimize.h \
   ../Mesh/meshGFaceDelaunayInsertion.h ../Geo/discreteEdge.h \
   ../Geo/GModel.h ../Geo/GEdge.h ../Geo/discreteFace.h ../Geo/GModel.h \
   ../Geo/GFace.h

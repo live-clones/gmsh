@@ -13,6 +13,7 @@
 #include "Options.h"
 #include "Context.h"
 #include "GmshMessage.h"
+#include "MLine.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "meshGFaceOptimize.h"
 #include "discreteEdge.h"

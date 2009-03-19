@@ -98,11 +98,15 @@ PViewDataGModel${OBJEXT}: PViewDataGModel.cpp PViewDataGModel.h PViewData.h \
   ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
   ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/MElement.h \
-  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
-  ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/MLine.h \
+  ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
+  ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
+  ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
+  ../Geo/MTriangle.h ../Geo/MElement.h ../Geo/MQuadrangle.h \
+  ../Geo/MElement.h ../Geo/MTetrahedron.h ../Geo/MElement.h \
+  ../Geo/MHexahedron.h ../Geo/MElement.h ../Geo/MPrism.h \
+  ../Geo/MElement.h ../Geo/MPyramid.h ../Geo/MElement.h \
   ../Numeric/Numeric.h ../Numeric/GmshMatrix.h
 PViewDataGModelIO${OBJEXT}: PViewDataGModelIO.cpp ../Common/GmshConfig.h \
   ../Common/GmshMessage.h PViewDataGModel.h PViewData.h \

@@ -85,13 +85,18 @@ Generator${OBJEXT}: Generator.cpp ../Common/GmshConfig.h ../Common/GmshMessage.h
   ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h \
   ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h \
   ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Common/GmshDefines.h \
-  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
-  ../Numeric/Gauss.h meshGEdge.h meshGFace.h meshGFaceBDS.h meshGRegion.h \
-  BackgroundMesh.h BoundaryLayers.h HighOrder.h Generator.h \
-  ../Post/PView.h ../Post/PViewData.h
+  ../Geo/SBoundingBox3d.h ../Geo/MLine.h ../Geo/MElement.h \
+  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
+  ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
+  ../Geo/MTriangle.h ../Geo/MElement.h ../Geo/MQuadrangle.h \
+  ../Geo/MElement.h ../Geo/MTetrahedron.h ../Geo/MElement.h \
+  ../Geo/MHexahedron.h ../Geo/MElement.h ../Geo/MPrism.h \
+  ../Geo/MElement.h ../Geo/MPyramid.h ../Geo/MElement.h meshGEdge.h \
+  meshGFace.h meshGFaceBDS.h meshGRegion.h BackgroundMesh.h \
+  BoundaryLayers.h HighOrder.h Generator.h ../Post/PView.h \
+  ../Post/PViewData.h
 Field${OBJEXT}: Field.cpp ../Common/GmshConfig.h \
   ../contrib/ANN/include/ANN/ANN.h ../Common/Context.h \
   ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h Field.h \
@@ -112,20 +117,24 @@ Field${OBJEXT}: Field.cpp ../Common/GmshConfig.h \
   ../Geo/SBoundingBox3d.h ../Post/OctreePost.h ../Common/Octree.h \
   ../Common/OctreeInternals.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h
-gmshSmoothHighOrder${OBJEXT}: gmshSmoothHighOrder.cpp HighOrder.h \
+gmshSmoothHighOrder${OBJEXT}: gmshSmoothHighOrder.cpp ../Geo/MLine.h \
+  ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
+  ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
+  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/MFace.h ../Geo/MVertex.h \
+  ../Geo/SVector3.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
+  ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Numeric/Gauss.h \
+  ../Geo/MTriangle.h ../Geo/MElement.h ../Geo/MQuadrangle.h \
+  ../Geo/MElement.h ../Geo/MTetrahedron.h ../Geo/MElement.h \
+  ../Geo/MHexahedron.h ../Geo/MElement.h ../Geo/MPrism.h \
+  ../Geo/MElement.h ../Geo/MPyramid.h ../Geo/MElement.h HighOrder.h \
   ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h \
-  ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h \
-  ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h \
-  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h meshGFaceOptimize.h \
-  ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
-  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h \
-  ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
-  ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Numeric/Gauss.h \
+  ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
+  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
+  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
+  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h meshGFaceOptimize.h \
   meshGFaceDelaunayInsertion.h gmshSmoothHighOrder.h \
   ../Numeric/gmshAssembler.h ../Numeric/gmshLinearSystem.h \
   ../Numeric/gmshLaplace.h ../Numeric/gmshTermOfFormulation.h \
@@ -145,7 +154,7 @@ meshGEdge${OBJEXT}: meshGEdge.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h meshGEdge.h ../Geo/MElement.h \
+  ../Geo/SBoundingBox3d.h meshGEdge.h ../Geo/MLine.h ../Geo/MElement.h \
   ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
@@ -161,29 +170,32 @@ meshGEdgeExtruded${OBJEXT}: meshGEdgeExtruded.cpp ../Geo/GModel.h \
   ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Common/GmshDefines.h \
-  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
+  ../Geo/SBoundingBox3d.h ../Geo/MLine.h ../Geo/MElement.h \
+  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
+  ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Numeric/Gauss.h \
   ../Geo/ExtrudeParams.h ../Common/SmoothData.h
 meshGFace${OBJEXT}: meshGFace.cpp meshGFace.h meshGFaceBDS.h \
-  meshGFaceDelaunayInsertion.h ../Geo/MElement.h ../Common/GmshDefines.h \
-  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/MFace.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Common/GmshMessage.h \
-  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
-  ../Common/GmshConfig.h ../Numeric/Gauss.h meshGFaceQuadrilateralize.h \
-  meshGFaceOptimize.h DivideAndConquer.h BackgroundMesh.h \
-  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
-  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h \
-  ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h \
-  ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GModel.h \
-  ../Geo/GVertex.h ../Geo/GEdge.h ../Geo/GFace.h ../Geo/GRegion.h \
-  ../Geo/GEntity.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
-  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \
+  meshGFaceDelaunayInsertion.h ../Geo/MTriangle.h ../Geo/MElement.h \
+  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
+  ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Geo/SPoint3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
+  ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Numeric/Gauss.h \
+  meshGFaceQuadrilateralize.h meshGFaceOptimize.h DivideAndConquer.h \
+  BackgroundMesh.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
+  ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h \
+  ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
+  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
+  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
+  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEdge.h ../Geo/GFace.h \
+  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/MLine.h ../Geo/MElement.h \
+  ../Geo/MQuadrangle.h ../Geo/MElement.h ../Common/Context.h \
+  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \
   ../Numeric/Numeric.h ../Numeric/GmshMatrix.h BDS.h qualityMeasures.h \
   Field.h ../Post/PView.h ../Common/OS.h HighOrder.h
 meshGFaceTransfinite${OBJEXT}: meshGFaceTransfinite.cpp meshGFace.h \
@@ -193,13 +205,15 @@ meshGFaceTransfinite${OBJEXT}: meshGFaceTransfinite.cpp meshGFace.h \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
   ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MElement.h \
-  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/MEdge.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
-  ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Numeric/Gauss.h \
-  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \
-  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h
+  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MTriangle.h \
+  ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
+  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Common/GmshMessage.h \
+  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
+  ../Common/GmshConfig.h ../Numeric/Gauss.h ../Geo/MQuadrangle.h \
+  ../Geo/MElement.h ../Common/Context.h ../Geo/CGNSOptions.h \
+  ../Mesh/meshPartitionOptions.h ../Numeric/Numeric.h \
+  ../Numeric/GmshMatrix.h
 meshGFaceExtruded${OBJEXT}: meshGFaceExtruded.cpp ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
@@ -208,13 +222,15 @@ meshGFaceExtruded${OBJEXT}: meshGFaceExtruded.cpp ../Geo/GModel.h \
   ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Common/GmshDefines.h \
-  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
+  ../Geo/SBoundingBox3d.h ../Geo/MLine.h ../Geo/MElement.h \
+  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
+  ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Numeric/Gauss.h \
-  ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Common/Context.h \
-  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
+  ../Geo/MTriangle.h ../Geo/MElement.h ../Geo/MQuadrangle.h \
+  ../Geo/MElement.h ../Geo/ExtrudeParams.h ../Common/SmoothData.h \
+  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
 meshGFaceBDS${OBJEXT}: meshGFaceBDS.cpp ../Common/GmshMessage.h \
   ../Numeric/GmshPredicates.h meshGFace.h meshGFaceOptimize.h \
   ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
@@ -222,30 +238,32 @@ meshGFaceBDS${OBJEXT}: meshGFaceBDS.cpp ../Common/GmshMessage.h \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/MFace.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
   ../Common/GmshConfig.h ../Numeric/Gauss.h meshGFaceDelaunayInsertion.h \
-  BackgroundMesh.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h \
-  ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
-  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \
-  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEdge.h ../Geo/GFace.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Numeric/Numeric.h ../Numeric/GmshMatrix.h \
-  BDS.h qualityMeasures.h Field.h ../Post/PView.h ../Common/OS.h
+  ../Geo/MTriangle.h ../Geo/MElement.h BackgroundMesh.h ../Geo/GVertex.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
+  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
+  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h \
+  ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h \
+  ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Common/Context.h \
+  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h ../Geo/GModel.h \
+  ../Geo/GVertex.h ../Geo/GEdge.h ../Geo/GFace.h ../Geo/GRegion.h \
+  ../Geo/GEntity.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h BDS.h qualityMeasures.h \
+  Field.h ../Post/PView.h ../Common/OS.h
 meshGFaceDelaunayInsertion${OBJEXT}: meshGFaceDelaunayInsertion.cpp \
   ../Common/GmshMessage.h ../Numeric/GmshPredicates.h BackgroundMesh.h \
-  meshGFaceDelaunayInsertion.h ../Geo/MElement.h ../Common/GmshDefines.h \
-  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/MFace.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Numeric/FunctionSpace.h \
-  ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Numeric/Gauss.h \
-  meshGFaceOptimize.h meshGFace.h ../Geo/GFace.h ../Geo/GEntity.h \
-  ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h \
-  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/GPoint.h \
-  ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Numeric/Numeric.h \
+  meshGFaceDelaunayInsertion.h ../Geo/MTriangle.h ../Geo/MElement.h \
+  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
+  ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Geo/SPoint3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
+  ../Common/GmshConfig.h ../Numeric/Gauss.h meshGFaceOptimize.h \
+  meshGFace.h ../Geo/GFace.h ../Geo/GEntity.h ../Geo/Range.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
+  ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/GEntity.h \
+  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Numeric/Numeric.h \
   ../Numeric/GmshMatrix.h
 meshGFaceOptimize${OBJEXT}: meshGFaceOptimize.cpp meshGFaceOptimize.h \
   ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
@@ -253,14 +271,15 @@ meshGFaceOptimize${OBJEXT}: meshGFaceOptimize.cpp meshGFaceOptimize.h \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/MFace.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Numeric/Gauss.h \
-  meshGFaceDelaunayInsertion.h qualityMeasures.h ../Geo/GFace.h \
-  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
-  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
-  ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/Pair.h BackgroundMesh.h ../Numeric/Numeric.h \
-  ../Numeric/GmshMatrix.h Generator.h
+  meshGFaceDelaunayInsertion.h ../Geo/MTriangle.h ../Geo/MElement.h \
+  qualityMeasures.h ../Geo/GFace.h ../Geo/GEntity.h ../Geo/Range.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
+  ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/GEntity.h \
+  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/MQuadrangle.h ../Geo/MElement.h \
+  BackgroundMesh.h ../Numeric/Numeric.h ../Numeric/GmshMatrix.h \
+  Generator.h
 meshGFaceQuadrilateralize${OBJEXT}: meshGFaceQuadrilateralize.cpp \
   meshGFaceQuadrilateralize.h ../Common/GmshMessage.h \
   ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Common/GmshConfig.h \
@@ -270,36 +289,39 @@ meshGFaceQuadrilateralize${OBJEXT}: meshGFaceQuadrilateralize.cpp \
   ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/Pair.h meshGFaceDelaunayInsertion.h \
-  ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
-  ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
-  meshGFaceOptimize.h meshGFaceBDS.h BDS.h
+  ../Geo/MTriangle.h ../Geo/MElement.h ../Common/GmshDefines.h \
+  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
+  ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
+  ../Numeric/Gauss.h meshGFaceOptimize.h meshGFaceBDS.h BDS.h
 meshGRegion${OBJEXT}: meshGRegion.cpp ../Common/GmshConfig.h \
   ../Common/GmshMessage.h meshGRegion.h meshGRegionDelaunayInsertion.h \
-  ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
-  ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
-  ../Numeric/Gauss.h ../Numeric/Numeric.h ../Numeric/GmshMatrix.h \
-  BackgroundMesh.h qualityMeasures.h ../Geo/GModel.h ../Geo/GVertex.h \
-  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
-  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h \
-  ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h \
-  ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h \
-  ../Geo/GEntity.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
-  ../Geo/gmshRegion.h ../Geo/Geo.h ../Geo/gmshSurface.h ../Geo/Pair.h \
-  ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
-  ../Geo/SBoundingBox3d.h ../Common/ListUtils.h ../Common/TreeUtils.h \
-  ../Common/avl.h ../Common/ListUtils.h ../Geo/SPoint2.h \
-  ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Geo/GRegion.h BDS.h \
-  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
+  ../Geo/MTetrahedron.h ../Geo/MElement.h ../Common/GmshDefines.h \
+  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/MFace.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Numeric/FunctionSpace.h \
+  ../Numeric/GmshMatrix.h ../Numeric/Gauss.h ../Numeric/Numeric.h \
+  ../Numeric/GmshMatrix.h BackgroundMesh.h qualityMeasures.h \
+  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
+  ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h \
+  ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
+  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
+  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
+  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/gmshRegion.h ../Geo/Geo.h \
+  ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
+  ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SBoundingBox3d.h \
+  ../Common/ListUtils.h ../Common/TreeUtils.h ../Common/avl.h \
+  ../Common/ListUtils.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
+  ../Common/SmoothData.h ../Geo/GRegion.h ../Geo/MLine.h \
+  ../Geo/MElement.h ../Geo/MTriangle.h ../Geo/MElement.h \
+  ../Geo/MQuadrangle.h ../Geo/MElement.h BDS.h ../Common/Context.h \
+  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
 meshGRegionDelaunayInsertion${OBJEXT}: meshGRegionDelaunayInsertion.cpp \
   ../Common/GmshMessage.h ../Numeric/GmshPredicates.h ../Common/OS.h \
   BackgroundMesh.h meshGRegion.h meshGRegionLocalMeshMod.h \
-  meshGRegionDelaunayInsertion.h ../Geo/MElement.h \
+  meshGRegionDelaunayInsertion.h ../Geo/MTetrahedron.h ../Geo/MElement.h \
   ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
@@ -312,7 +334,8 @@ meshGRegionDelaunayInsertion${OBJEXT}: meshGRegionDelaunayInsertion.cpp \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h \
   ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h \
   ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h \
-  ../Geo/GEntity.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h
+  ../Geo/GEntity.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
+  ../Geo/MTriangle.h ../Geo/MElement.h
 meshGRegionTransfinite${OBJEXT}: meshGRegionTransfinite.cpp meshGFace.h \
   ../Geo/GFace.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
@@ -320,12 +343,15 @@ meshGRegionTransfinite${OBJEXT}: meshGRegionTransfinite.cpp meshGFace.h \
   ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
-  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MElement.h \
-  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/MEdge.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
+  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h \
+  ../Geo/MTetrahedron.h ../Geo/MElement.h ../Common/GmshDefines.h \
+  ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Numeric/Gauss.h \
-  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
+  ../Geo/MHexahedron.h ../Geo/MElement.h ../Geo/MPrism.h \
+  ../Geo/MElement.h ../Common/Context.h ../Geo/CGNSOptions.h \
+  ../Mesh/meshPartitionOptions.h
 meshGRegionExtruded${OBJEXT}: meshGRegionExtruded.cpp ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
@@ -334,11 +360,15 @@ meshGRegionExtruded${OBJEXT}: meshGRegionExtruded.cpp ../Geo/GModel.h \
   ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Common/GmshDefines.h \
-  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
+  ../Geo/SBoundingBox3d.h ../Geo/MTriangle.h ../Geo/MElement.h \
+  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
+  ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Numeric/Gauss.h \
+  ../Geo/MQuadrangle.h ../Geo/MElement.h ../Geo/MTetrahedron.h \
+  ../Geo/MElement.h ../Geo/MHexahedron.h ../Geo/MElement.h \
+  ../Geo/MPrism.h ../Geo/MElement.h ../Geo/MPyramid.h ../Geo/MElement.h \
   ../Geo/ExtrudeParams.h ../Common/SmoothData.h meshGFace.h meshGRegion.h \
   ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
 meshGRegionCarveHole${OBJEXT}: meshGRegionCarveHole.cpp ../Common/GmshConfig.h \
@@ -350,20 +380,25 @@ meshGRegionCarveHole${OBJEXT}: meshGRegionCarveHole.cpp ../Common/GmshConfig.h \
   ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Common/GmshDefines.h \
-  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
-  ../Numeric/Gauss.h ../contrib/ANN/include/ANN/ANN.h
+  ../Geo/SBoundingBox3d.h ../Geo/MTriangle.h ../Geo/MElement.h \
+  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
+  ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
+  ../Geo/MQuadrangle.h ../Geo/MElement.h ../Geo/MTetrahedron.h \
+  ../Geo/MElement.h ../Geo/MHexahedron.h ../Geo/MElement.h \
+  ../Geo/MPrism.h ../Geo/MElement.h ../Geo/MPyramid.h ../Geo/MElement.h \
+  ../contrib/ANN/include/ANN/ANN.h
 meshGRegionLocalMeshMod${OBJEXT}: meshGRegionLocalMeshMod.cpp \
   meshGRegionLocalMeshMod.h meshGRegionDelaunayInsertion.h \
-  ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
-  ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
-  ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Numeric/Gauss.h \
-  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h BackgroundMesh.h \
-  qualityMeasures.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/MTetrahedron.h ../Geo/MElement.h ../Common/GmshDefines.h \
+  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/MFace.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Common/GmshMessage.h \
+  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
+  ../Common/GmshConfig.h ../Numeric/Gauss.h ../Numeric/Numeric.h \
+  ../Numeric/GmshMatrix.h BackgroundMesh.h qualityMeasures.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GRegion.h \
   ../Geo/GEntity.h
 DivideAndConquer${OBJEXT}: DivideAndConquer.cpp ../Common/GmshMessage.h \
@@ -384,11 +419,12 @@ BackgroundMesh${OBJEXT}: BackgroundMesh.cpp ../Common/GmshMessage.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h Field.h ../Post/PView.h
 qualityMeasures${OBJEXT}: qualityMeasures.cpp qualityMeasures.h BDS.h \
   ../Common/GmshMessage.h ../Geo/MVertex.h ../Geo/SPoint2.h \
-  ../Geo/SPoint3.h ../Geo/MElement.h ../Common/GmshDefines.h \
-  ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
-  ../Common/GmshConfig.h ../Numeric/Gauss.h ../Numeric/Numeric.h \
+  ../Geo/SPoint3.h ../Geo/MTriangle.h ../Geo/MElement.h \
+  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/MEdge.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/MFace.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Numeric/FunctionSpace.h \
+  ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Numeric/Gauss.h \
+  ../Geo/MTetrahedron.h ../Geo/MElement.h ../Numeric/Numeric.h \
   ../Numeric/GmshMatrix.h
 BoundaryLayers${OBJEXT}: BoundaryLayers.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
@@ -398,13 +434,14 @@ BoundaryLayers${OBJEXT}: BoundaryLayers.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Common/GmshDefines.h \
-  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
+  ../Geo/SBoundingBox3d.h ../Geo/MTriangle.h ../Geo/MElement.h \
+  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
+  ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Numeric/Gauss.h \
-  BoundaryLayers.h ../Geo/ExtrudeParams.h ../Common/SmoothData.h \
-  meshGEdge.h meshGFace.h
+  ../Geo/MQuadrangle.h ../Geo/MElement.h BoundaryLayers.h \
+  ../Geo/ExtrudeParams.h ../Common/SmoothData.h meshGEdge.h meshGFace.h
 BDS${OBJEXT}: BDS.cpp ../Common/GmshMessage.h ../Numeric/GmshPredicates.h \
   ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Common/GmshConfig.h \
   BDS.h ../Geo/GFace.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
@@ -413,11 +450,11 @@ BDS${OBJEXT}: BDS.cpp ../Common/GmshMessage.h ../Numeric/GmshPredicates.h \
   ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/Pair.h meshGFaceDelaunayInsertion.h \
-  ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
-  ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
-  qualityMeasures.h
+  ../Geo/MTriangle.h ../Geo/MElement.h ../Common/GmshDefines.h \
+  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
+  ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
+  ../Numeric/Gauss.h qualityMeasures.h
 HighOrder${OBJEXT}: HighOrder.cpp HighOrder.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
@@ -428,12 +465,17 @@ HighOrder${OBJEXT}: HighOrder.cpp HighOrder.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/MFace.h ../Geo/MVertex.h \
   ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
-  gmshSmoothHighOrder.h ../Geo/MElement.h ../Common/GmshDefines.h \
-  ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Geo/MFace.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
+  gmshSmoothHighOrder.h ../Geo/MLine.h ../Geo/MElement.h \
+  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/MEdge.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h \
+  ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Numeric/Gauss.h \
-  ../Common/OS.h ../Numeric/Numeric.h ../Numeric/GmshMatrix.h \
-  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
+  ../Geo/MTriangle.h ../Geo/MElement.h ../Geo/MQuadrangle.h \
+  ../Geo/MElement.h ../Geo/MTetrahedron.h ../Geo/MElement.h \
+  ../Geo/MHexahedron.h ../Geo/MElement.h ../Geo/MPrism.h \
+  ../Geo/MElement.h ../Geo/MPyramid.h ../Geo/MElement.h ../Common/OS.h \
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Common/Context.h \
+  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
 meshPartition${OBJEXT}: meshPartition.cpp ../Common/GmshConfig.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
@@ -457,9 +499,12 @@ meshRefine${OBJEXT}: meshRefine.cpp HighOrder.h ../Geo/GModel.h ../Geo/GVertex.h
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/MElement.h \
-  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/MEdge.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h \
+  ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/MLine.h \
+  ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
+  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h \
   ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Numeric/Gauss.h \
-  ../Common/OS.h
+  ../Geo/MTriangle.h ../Geo/MElement.h ../Geo/MQuadrangle.h \
+  ../Geo/MElement.h ../Geo/MTetrahedron.h ../Geo/MElement.h \
+  ../Geo/MHexahedron.h ../Geo/MElement.h ../Geo/MPrism.h \
+  ../Geo/MElement.h ../Geo/MPyramid.h ../Geo/MElement.h ../Common/OS.h

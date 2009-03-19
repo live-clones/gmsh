@@ -5,7 +5,12 @@
 
 #include <set>
 #include "GModel.h"
-#include "MElement.h"
+#include "MTriangle.h"
+#include "MQuadrangle.h"
+#include "MTetrahedron.h"
+#include "MHexahedron.h"
+#include "MPrism.h"
+#include "MPyramid.h"
 #include "ExtrudeParams.h"
 #include "meshGFace.h"
 #include "meshGRegion.h"

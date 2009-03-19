@@ -12,7 +12,7 @@
 #include "GModel.h"
 #include "GEdge.h"
 #include "GFace.h"
-#include "MElement.h"
+#include "MLine.h"
 #include "Context.h"
 
 #if !defined(HAVE_GMSH_EMBEDDED)

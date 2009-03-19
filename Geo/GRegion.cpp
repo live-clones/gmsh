@@ -7,7 +7,10 @@
 #include "GModel.h"
 #include "GRegion.h"
 #include "GFace.h"
-#include "MElement.h"
+#include "MTetrahedron.h"
+#include "MHexahedron.h"
+#include "MPrism.h"
+#include "MPyramid.h"
 #include "GmshMessage.h"
 
 GRegion::GRegion(GModel *model, int tag) : GEntity (model, tag)

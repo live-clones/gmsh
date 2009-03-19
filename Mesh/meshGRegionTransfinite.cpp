@@ -8,7 +8,9 @@
 #include "GFace.h"
 #include "GRegion.h"
 #include "MVertex.h"
-#include "MElement.h"
+#include "MTetrahedron.h"
+#include "MHexahedron.h"
+#include "MPrism.h"
 #include "Context.h"
 #include "GmshMessage.h"
 

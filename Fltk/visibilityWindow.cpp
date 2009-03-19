@@ -752,53 +752,24 @@ static void _set_visibility_by_number(int what, int num, char val, bool recursiv
   bool all = (num < 0) ? true : false;
 
   GModel *m = GModel::current();
+  std::vector<GEntity*> entities;
+  m->getEntities(entities);
 
   switch(what){
   case 0: // nodes
-    for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++)
-      for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-        if(all || (*it)->mesh_vertices[i]->getNum() == num) 
-          (*it)->mesh_vertices[i]->setVisibility(val);
-    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
-      for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-        if(all || (*it)->mesh_vertices[i]->getNum() == num) 
-          (*it)->mesh_vertices[i]->setVisibility(val);
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
-      for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-        if(all || (*it)->mesh_vertices[i]->getNum() == num) 
-          (*it)->mesh_vertices[i]->setVisibility(val);
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
-      for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-        if(all || (*it)->mesh_vertices[i]->getNum() == num) 
-          (*it)->mesh_vertices[i]->setVisibility(val);
+    for(unsigned int i = 0; i < entities.size(); i++){
+      for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+        MVertex *v = entities[i]->mesh_vertices[j];
+        if(all || v->getNum() == num) v->setVisibility(val);
+      }
+    }
     break;
   case 1: // elements
-    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
-      for(unsigned int i = 0; i < (*it)->lines.size(); i++)
-        if(all || (*it)->lines[i]->getNum() == num) 
-          (*it)->lines[i]->setVisibility(val);
-    }
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
-      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-        if(all || (*it)->triangles[i]->getNum() == num) 
-          (*it)->triangles[i]->setVisibility(val);
-      for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
-        if(all || (*it)->quadrangles[i]->getNum() == num) 
-          (*it)->quadrangles[i]->setVisibility(val);
-    }
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
-      for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
-        if(all || (*it)->tetrahedra[i]->getNum() == num) 
-          (*it)->tetrahedra[i]->setVisibility(val);
-      for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
-        if(all || (*it)->hexahedra[i]->getNum() == num) 
-          (*it)->hexahedra[i]->setVisibility(val);
-      for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
-        if(all || (*it)->prisms[i]->getNum() == num) 
-          (*it)->prisms[i]->setVisibility(val);
-      for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
-        if(all || (*it)->pyramids[i]->getNum() == num) 
-          (*it)->pyramids[i]->setVisibility(val);
+    for(unsigned int i = 0; i < entities.size(); i++){
+      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+        MElement *e = entities[i]->getMeshElement(j);
+        if(all || e->getNum() == num) e->setVisibility(val);
+      }
     }
     break;
   case 2: // point
@@ -820,22 +791,26 @@ static void _set_visibility_by_number(int what, int num, char val, bool recursiv
   case 6: // physical point
     for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++)
       for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
-        if (all || std::abs((*it)->physicals[i]) == num) (*it)->setVisibility(val, recursive);
+        if (all || std::abs((*it)->physicals[i]) == num)
+          (*it)->setVisibility(val, recursive);
     break;
   case 7: // physical line
     for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
       for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
-        if (all || std::abs((*it)->physicals[i]) == num) (*it)->setVisibility(val, recursive);
+        if (all || std::abs((*it)->physicals[i]) == num) 
+          (*it)->setVisibility(val, recursive);
     break;
   case 8: // physical surface
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
       for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
-        if (all || std::abs((*it)->physicals[i]) == num) (*it)->setVisibility(val, recursive);
+        if (all || std::abs((*it)->physicals[i]) == num) 
+          (*it)->setVisibility(val, recursive);
     break;
   case 9: // physical volume
     for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
       for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
-        if (all || std::abs((*it)->physicals[i]) == num) (*it)->setVisibility(val, recursive);
+        if (all || std::abs((*it)->physicals[i]) == num) 
+          (*it)->setVisibility(val, recursive);
     break;
   }
 }

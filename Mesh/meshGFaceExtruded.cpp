@@ -5,7 +5,9 @@
 
 #include <set>
 #include "GModel.h"
-#include "MElement.h"
+#include "MLine.h"
+#include "MTriangle.h"
+#include "MQuadrangle.h"
 #include "ExtrudeParams.h"
 #include "Context.h"
 #include "GmshMessage.h"

@@ -87,13 +87,17 @@ drawMesh${OBJEXT}: drawMesh.cpp drawContext.h ../Geo/SBoundingBox3d.h \
   ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Geo/MVertex.h \
-  ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
-  ../Common/GmshConfig.h ../Numeric/Gauss.h ../Common/Context.h \
-  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h ../Common/OS.h \
-  gl2ps.h ../Common/VertexArray.h ../Common/SmoothData.h ../Post/PView.h \
+  ../Geo/SBoundingBox3d.h ../Geo/MLine.h ../Geo/MElement.h \
+  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
+  ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
+  ../Common/GmshConfig.h ../Numeric/Gauss.h ../Geo/MTriangle.h \
+  ../Geo/MElement.h ../Geo/MQuadrangle.h ../Geo/MElement.h \
+  ../Geo/MTetrahedron.h ../Geo/MElement.h ../Geo/MHexahedron.h \
+  ../Geo/MElement.h ../Geo/MPrism.h ../Geo/MElement.h ../Geo/MPyramid.h \
+  ../Geo/MElement.h ../Common/Context.h ../Geo/CGNSOptions.h \
+  ../Mesh/meshPartitionOptions.h ../Common/OS.h gl2ps.h \
+  ../Common/VertexArray.h ../Common/SmoothData.h ../Post/PView.h \
   ../Post/PViewData.h
 drawGeom${OBJEXT}: drawGeom.cpp drawContext.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Common/Context.h ../Geo/CGNSOptions.h \

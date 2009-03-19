@@ -7,6 +7,13 @@
 //   Koen Hillewaert
 //
 
+#include "MLine.h"
+#include "MTriangle.h"
+#include "MQuadrangle.h"
+#include "MTetrahedron.h"
+#include "MHexahedron.h"
+#include "MPrism.h"
+#include "MPyramid.h"
 #include "HighOrder.h"
 #include "meshGFaceOptimize.h"
 #include "gmshSmoothHighOrder.h"

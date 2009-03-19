@@ -29,58 +29,6 @@ static bool isActive(MTri3 *t, double limit_, int &active)
   return false;
 }
 
-void circumCenterXY(double *p1, double *p2, double *p3, double *res)
-{
-  double d, a1, a2, a3;
-
-  const double x1 = p1[0];
-  const double x2 = p2[0];
-  const double x3 = p3[0];
-  const double y1 = p1[1];
-  const double y2 = p2[1];
-  const double y3 = p3[1];
-
-  d = 2. * (double)(y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2));
-  if(d == 0.0) {
-    Msg::Warning("Colinear points in circum circle computation");
-    res[0] = res[1] = -99999.;
-    return ;
-  }
-
-  a1 = x1 * x1 + y1 * y1;
-  a2 = x2 * x2 + y2 * y2;
-  a3 = x3 * x3 + y3 * y3;
-  res[0] = (double)((a1 * (y3 - y2) + a2 * (y1 - y3) + a3 * (y2 - y1)) / d);
-  res[1] = (double)((a1 * (x2 - x3) + a2 * (x3 - x1) + a3 * (x1 - x2)) / d);
-}
-
-void circumCenterXYZ(double *p1, double *p2, double *p3, double *res, double *uv)
-{
-  double v1[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
-  double v2[3] = {p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]};
-  double vx[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
-  double vy[3] = {p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]};
-  double vz[3]; prodve(vx, vy, vz); prodve(vz, vx, vy);
-  norme(vx); norme(vy); norme(vz);
-  double p1P[2] = {0.0, 0.0};
-  double p2P[2]; prosca(v1, vx, &p2P[0]); prosca(v1, vy, &p2P[1]);
-  double p3P[2]; prosca(v2, vx, &p3P[0]); prosca(v2, vy, &p3P[1]);
-  double resP[2];
-
-  circumCenterXY(p1P, p2P, p3P,resP);
-
-  if(uv){
-    double mat[2][2] = {{p2P[0] - p1P[0], p3P[0] - p1P[0]},
-                        {p2P[1] - p1P[1], p3P[1] - p1P[1]}};
-    double rhs[2] = {resP[0] - p1P[0], resP[1] - p1P[1]};
-    sys2x2(mat, rhs, uv);
-  }
-  
-  res[0] = p1[0] + resP[0] * vx[0] + resP[1] * vy[0];
-  res[1] = p1[1] + resP[0] * vx[1] + resP[1] * vy[1];
-  res[2] = p1[2] + resP[0] * vx[2] + resP[1] * vy[2];
-}
-
 bool circumCenterMetricInTriangle(MTriangle *base, 
                                   const double *metric,
                                   const std::vector<double> &Us,

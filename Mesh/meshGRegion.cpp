@@ -14,6 +14,10 @@
 #include "GFace.h"
 #include "GEdge.h"
 #include "gmshRegion.h"
+#include "MLine.h"
+#include "MTriangle.h"
+#include "MQuadrangle.h"
+#include "MTetrahedron.h"
 #include "BDS.h"
 #include "Context.h"
 

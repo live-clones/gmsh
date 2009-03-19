@@ -4,7 +4,8 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "GModel.h"
-#include "MElement.h"
+#include "MTriangle.h"
+#include "MQuadrangle.h"
 #include "BoundaryLayers.h"
 #include "ExtrudeParams.h"
 #include "meshGEdge.h"

@@ -10,7 +10,7 @@
 #include "GeoInterpolation.h"
 #include "GmshMessage.h"
 #include "MVertex.h"
-#include "MElement.h"
+#include "MPoint.h"
 
 gmshVertex::gmshVertex(GModel *m, Vertex *_v)
   : GVertex(m, _v->Num, _v->lc), v(_v)

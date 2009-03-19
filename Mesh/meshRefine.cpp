@@ -8,7 +8,13 @@
 //
 
 #include "HighOrder.h"
-#include "MElement.h"
+#include "MLine.h"
+#include "MTriangle.h"
+#include "MQuadrangle.h"
+#include "MTetrahedron.h"
+#include "MHexahedron.h"
+#include "MPrism.h"
+#include "MPyramid.h"
 #include "GmshMessage.h"
 #include "OS.h"
 

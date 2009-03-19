@@ -7,7 +7,12 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
-#include "MElement.h"
+#include "MTriangle.h"
+#include "MQuadrangle.h"
+#include "MTetrahedron.h"
+#include "MHexahedron.h"
+#include "MPrism.h"
+#include "MPyramid.h"
 
 #if !defined(HAVE_ANN)
 

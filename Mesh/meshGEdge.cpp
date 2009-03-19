@@ -6,7 +6,7 @@
 #include "GModel.h"
 #include "meshGEdge.h"
 #include "GEdge.h"
-#include "MElement.h"
+#include "MLine.h"
 #include "BackgroundMesh.h"
 #include "Numeric.h"
 #include "GmshMessage.h"

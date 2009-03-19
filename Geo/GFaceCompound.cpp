@@ -5,10 +5,12 @@
 
 #include "GmshConfig.h"
 #include "GFaceCompound.h"
-#include "gmshAssembler.h"
-#include "gmshLaplace.h"
+#include "MLine.h"
+#include "MTriangle.h"
 #include "Numeric.h"
 #include "Octree.h"
+#include "gmshAssembler.h"
+#include "gmshLaplace.h"
 #include "gmshLinearSystemGmm.h"
 #include "gmshLinearSystemFull.h"
 
