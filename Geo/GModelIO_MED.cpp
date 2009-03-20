@@ -14,8 +14,15 @@
 #include <map>
 #include <sstream>
 #include <vector>
-#include "MElement.h"
 #include "MVertex.h"
+#include "MPoint.h"
+#include "MLine.h"
+#include "MTriangle.h"
+#include "MQuadrangle.h"
+#include "MTetrahedron.h"
+#include "MHexahedron.h"
+#include "MPrism.h"
+#include "MPyramid.h"
 #include "discreteVertex.h"
 
 extern "C" {
