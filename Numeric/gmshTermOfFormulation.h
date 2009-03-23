@@ -47,6 +47,9 @@ class gmshNodalFemTerm : public gmshTermOfFormulation<scalar> {
   gmshNodalFemTerm(GModel *gm) : gmshTermOfFormulation<scalar>(gm) {}
   virtual ~gmshNodalFemTerm (){}
   virtual void elementMatrix(MElement *e, gmshMatrix<scalar> &m) const = 0;
+  virtual void elementVector(MElement *e, gmshVector<scalar> &m) const {
+    m.scale(0.0);
+  }
   void addToMatrix(gmshAssembler<scalar> &lsys) const
   {
     GModel *m = gmshTermOfFormulation<scalar>::_gm;
@@ -151,6 +154,34 @@ class gmshNodalFemTerm : public gmshTermOfFormulation<scalar> {
       }
     }
   }
+  void addToRightHandSide (gmshAssembler<scalar> &lsys) const {
+    GModel *m = gmshTermOfFormulation<scalar>::_gm;
+    if (m->getNumRegions()){
+      for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
+	addToRightHandSide(lsys,*it);
+      }
+    }
+    else if(m->getNumFaces()){
+      for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
+	addToRightHandSide(lsys,*it);
+      }
+    }  
+  }    
+  void addToRightHandSide (gmshAssembler<scalar> &lsys, GEntity *ge) const {
+    for(unsigned int i = 0; i < ge->getNumMeshElements(); i++){
+      MElement *e = ge->getMeshElement (i);
+      int nbR = sizeOfR(e);
+      gmshVector<scalar> V (nbR);
+      elementVector (e, V);
+      // assembly
+      for (int j=0;j<nbR;j++){
+	MVertex *vR;int iCompR,iFieldR;
+	getLocalDofR (e,j,&vR,&iCompR,&iFieldR);
+	lsys.assemble(vR,iCompR,iFieldR,V(j));
+      }
+    }
+  }
+
 };
 
 #endif

@@ -15,6 +15,7 @@
 class gmshElasticityTerm : public gmshNodalFemTerm<double> {
   double _E, _nu;
   int _iField;
+  SVector3 _f;
  protected:
   virtual int sizeOfR(MElement *e) const { return 3 * e->getNumVertices(); }
   virtual int sizeOfC(MElement *e) const { return 3 * e->getNumVertices(); }
@@ -26,9 +27,11 @@ class gmshElasticityTerm : public gmshNodalFemTerm<double> {
     *iFieldR = _iField;
   }
  public:
-  gmshElasticityTerm(GModel *gm, double E, double nu, int iField = 1) : 
-    gmshNodalFemTerm<double>(gm), _E(E), _nu(nu), _iField(iField){}
+ gmshElasticityTerm(GModel *gm, double E, double nu, int iField = 1) : 
+  gmshNodalFemTerm<double>(gm), _E(E), _nu(nu), _iField(iField){}
+  void setVector(const SVector3 &f) {_f = f;}
   void elementMatrix(MElement *e, gmshMatrix<double> &m) const;
+  void elementVector(MElement *e, gmshVector<double> &m) const;
 };
 
 #endif

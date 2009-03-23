@@ -74,3 +74,29 @@ void gmshElasticityTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
     m.gemm(BTH, B, weight * detJ, 1.);
   } 
 }
+
+void gmshElasticityTerm::elementVector(MElement *e, gmshVector<double> &m) const{
+  int nbNodes = e->getNumVertices();
+  int integrationOrder = 2 * e->getPolynomialOrder();
+  int npts;
+  IntPt *GP;
+  double jac[3][3];
+  double ff[256];
+  e->getIntegrationPoints(integrationOrder, &npts, &GP);
+  
+  m.scale(0.);
+  
+  for (int i = 0; i < npts; i++){
+    const double u = GP[i].pt[0];
+    const double v = GP[i].pt[1];
+    const double w = GP[i].pt[2];
+    const double weight = GP[i].weight;
+    const double detJ = e->getJacobian(u, v, w, jac);
+    e->getShapeFunctions(u, v, w, ff);
+    for (int j = 0; j < nbNodes; j++){
+      m(j)           += _f.x() *ff[j] * weight * detJ *.5;
+      m(j+nbNodes)   += _f.y() *ff[j] * weight * detJ *.5;
+      m(j+2*nbNodes) += _f.z() *ff[j] * weight * detJ *.5;
+    }
+  } 
+}
