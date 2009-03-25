@@ -19,6 +19,7 @@ class CTX{
   struct{
     int reverseAllNormals;
     int secondOrderExperimental;
+    int numSubEdges;
   } mesh;
   CTX()
   {

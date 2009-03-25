@@ -5763,6 +5763,10 @@ if test "x${BLAS_LIBS}" != "x"; then
   fi
   GMSH_LIBS="${GMSH_LIBS} ${FCLIB}"
 fi
+if test "x${BLAS}" != "xyes" -o "x${LAPACK}" != "xyes"; then
+  { echo "$as_me:$LINENO: WARNING: Could not find BLAS and/or LAPACK: some Gmsh features will not work." >&5
+echo "$as_me: WARNING: Could not find BLAS and/or LAPACK: some Gmsh features will not work." >&2;}
+fi
 
 if test "x${LAPACK}" = "xyes" -a "x$enable_fm" != "xno"; then
   if test "x${FM_PREFIX}" != "x"; then

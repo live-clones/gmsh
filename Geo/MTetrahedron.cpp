@@ -4,6 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "MTetrahedron.h"
+#include "Numeric.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
 #include "GmshEmbedded.h"

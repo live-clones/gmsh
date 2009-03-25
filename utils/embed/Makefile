@@ -16,8 +16,9 @@ SRC = GModel.cpp\
       GEntity.cpp\
         GVertex.cpp GEdge.cpp GEdgeLoop.cpp GFace.cpp GRegion.cpp\
         discreteEdge.cpp discreteFace.cpp discreteRegion.cpp\
-      MElement.cpp\
-        MFace.cpp MVertex.cpp\
+      MVertex.cpp MFace.cpp MElement.cpp\
+        MLine.cpp MTriangle.cpp MQuadrangle.cpp MTetrahedron.cpp\
+        MHexahedron.cpp MPrism.cpp MPyramid.cpp\
       Numeric.cpp\
         FunctionSpace.cpp\
       StringUtils.cpp\

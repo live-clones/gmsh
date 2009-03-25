@@ -13,10 +13,12 @@
 #include "GEdge.h"
 #include "GFace.h"
 #include "MLine.h"
-#include "Context.h"
 
-#if !defined(HAVE_GMSH_EMBEDDED)
+#if defined(HAVE_GMSH_EMBEDDED)
+#include "GmshEmbedded.h"
+#else
 #include "GaussLegendre1D.h"
+#include "Context.h"
 #endif
 
 GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)

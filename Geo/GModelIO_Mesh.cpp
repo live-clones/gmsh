@@ -566,7 +566,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     writeElementsMSH(fp, (*it)->points, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
-  writeElementHeaderMSH(binary, fp, elements, MSH_LIN_2, MSH_LIN_3, MSH_LIN_4, MSH_LIN_5);
+  writeElementHeaderMSH
+    (binary, fp, elements, MSH_LIN_2, MSH_LIN_3, MSH_LIN_4, MSH_LIN_5);
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     writeElementsMSH(fp, (*it)->lines, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
@@ -612,7 +613,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
 
 int GModel::writePOS(const std::string &name, bool printElementary, 
                      bool printElementNumber, bool printGamma, bool printEta, 
-                     bool printRho, bool printDisto, bool saveAll, double scalingFactor)
+                     bool printRho, bool printDisto, bool saveAll, 
+                     double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), "w");
   if(!fp){
@@ -620,7 +622,8 @@ int GModel::writePOS(const std::string &name, bool printElementary,
     return 0;
   }
 
-  bool f[6] = {printElementary, printElementNumber, printGamma, printEta, printRho,printDisto};
+  bool f[6] = {printElementary, printElementNumber, printGamma, printEta, printRho,
+               printDisto};
 
   bool first = true;  
   std::string names;
@@ -661,9 +664,8 @@ int GModel::writePOS(const std::string &name, bool printElementary,
   for(unsigned int i = 0; i < entities.size(); i++)
     if(saveAll || entities[i]->physicals.size())
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
-        entities[i]->getMeshElement(j)->writePOS(fp, f[0], f[1], f[2], f[3],
-                                                 f[4], f[5], scalingFactor, 
-                                                 entities[i]->tag());
+        entities[i]->getMeshElement(j)->writePOS
+          (fp, f[0], f[1], f[2], f[3], f[4], f[5], scalingFactor, entities[i]->tag());
   fprintf(fp, "};\n");
 
   fclose(fp);

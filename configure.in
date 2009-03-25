@@ -680,6 +680,9 @@ if test "x${BLAS_LIBS}" != "x"; then
   fi
   GMSH_LIBS="${GMSH_LIBS} ${FCLIB}"
 fi
+if test "x${BLAS}" != "xyes" -o "x${LAPACK}" != "xyes"; then
+  AC_MSG_WARN([Could not find BLAS and/or LAPACK: some Gmsh features will not work.])
+fi
 
 dnl Check for FourierModel (if we have lapack)
 if test "x${LAPACK}" = "xyes" -a "x$enable_fm" != "xno"; then

@@ -41,6 +41,11 @@ cpobj: ${OBJ}
 .cpp${OBJEXT}:
 	${CXX} ${CFLAGS} ${DASH}c $<
 
+# Don't optimize J. Shewchuk's predicates. Otherwise, Gmsh may not
+# work properly.
+GmshPredicates${OBJEXT}:
+	${CXX} ${FLAGS} ${INC} ${SYSINCLUDE} ${DASH}c GmshPredicates.cpp
+
 clean:
 	${RM} *.o *.obj 
 

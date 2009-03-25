@@ -83,8 +83,8 @@ GEdge${OBJEXT}: GEdge.cpp ../Common/GmshConfig.h ../Common/GmshDefines.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h MLine.h MElement.h MVertex.h MEdge.h \
   MFace.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
-  ../Numeric/Gauss.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/meshPartitionOptions.h ../Numeric/GaussLegendre1D.h
+  ../Numeric/Gauss.h ../Numeric/GaussLegendre1D.h ../Common/Context.h \
+  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
 GFace${OBJEXT}: GFace.cpp ../Common/GmshConfig.h ../Common/GmshMessage.h \
   GModel.h GVertex.h GEntity.h Range.h SPoint3.h SBoundingBox3d.h \
   GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h GEdgeLoop.h Pair.h \
@@ -352,12 +352,12 @@ MTetrahedron${OBJEXT}: MTetrahedron.cpp MTetrahedron.h MElement.h \
   ../Common/GmshDefines.h MVertex.h SPoint2.h SPoint3.h MEdge.h \
   SVector3.h MFace.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Numeric/Gauss.h \
-  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Common/Context.h \
+  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \
   ../Mesh/qualityMeasures.h ../Mesh/meshGFaceDelaunayInsertion.h \
   ../Geo/MTriangle.h ../Geo/MElement.h \
   ../Mesh/meshGRegionDelaunayInsertion.h ../Geo/MTetrahedron.h \
-  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Mesh/BackgroundMesh.h \
-  ../Mesh/qualityMeasures.h
+  ../Mesh/BackgroundMesh.h ../Mesh/qualityMeasures.h
 MHexahedron${OBJEXT}: MHexahedron.cpp MHexahedron.h MElement.h \
   ../Common/GmshDefines.h MVertex.h SPoint2.h SPoint3.h MEdge.h \
   SVector3.h MFace.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
