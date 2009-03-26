@@ -2150,6 +2150,16 @@ algorithm can be quite poor.
 @c holes with surfaces in contact with the exterior shell, intersecting
 @c primitives, etc.)
 
+@c todo: add section explaining which algorithm to choose in which
+@c situation: 2D (robustness: MeshAdapt>Delaunay>Frontal; performance:
+@c Delaunay>Frontal>MeshAdapt; element quality:
+@c Frontal>Delaunay/MeshAdapt). Tip: for large 2D/plane meshes use
+@c Delaunay/or frontal. Most robust algo for complex curved surfaces:
+@c meshadapt. 3D: most robust and fastest: Tetgen+Delaunay. But if you
+@c need coupling to structured grid: Netgen. In most cases, you should
+@c optimize the mesh.
+
+
 @menu
 * Elementary vs physical entities::  
 * Mesh commands::               

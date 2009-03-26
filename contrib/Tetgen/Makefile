@@ -7,10 +7,22 @@ include ../../variables
 
 LIB = ../../lib/libGmshTetgen${LIBEXT}
 
-# Do not optimize (same as Triangle...) 
+# Don't optimize Tetgen
 CFLAGS = ${FLAGS} ${DASH}DTETLIBRARY
 
-SRC = predicates.cxx tetgen.cxx
+SRC = behavior.cxx\
+      constrain.cxx\
+      delaunay.cxx\
+      flip.cxx\
+      geom.cxx\
+      io.cxx\
+      main.cxx\
+      memorypool.cxx\
+      meshio.cxx\
+      meshstat.cxx\
+      predicates.cxx\
+      surface.cxx
+
 OBJ = ${SRC:.cxx=${OBJEXT}}
 
 .SUFFIXES: ${OBJEXT} .cxx
@@ -37,5 +49,16 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
+behavior${OBJEXT}: behavior.cxx tetgen.h
+constrain${OBJEXT}: constrain.cxx tetgen.h
+delaunay${OBJEXT}: delaunay.cxx tetgen.h
+flip${OBJEXT}: flip.cxx tetgen.h
+geom${OBJEXT}: geom.cxx tetgen.h
+io${OBJEXT}: io.cxx tetgen.h
+main${OBJEXT}: main.cxx tetgen.h
+memorypool${OBJEXT}: memorypool.cxx tetgen.h
+meshio${OBJEXT}: meshio.cxx tetgen.h
+meshstat${OBJEXT}: meshstat.cxx tetgen.h
 predicates${OBJEXT}: predicates.cxx tetgen.h
+surface${OBJEXT}: surface.cxx tetgen.h
 tetgen${OBJEXT}: tetgen.cxx tetgen.h

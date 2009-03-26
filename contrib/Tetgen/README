@@ -1,4 +1,4 @@
-This is TetGen version 1.4.2 (released on April 16, 2007)
+This is an EXPERIMENTAL version of TetGen provided by Hang Si for Gmsh
 
 Please see the documentation of TetGen (available at the following link) for
 compiling and using TetGen.
@@ -13,4 +13,4 @@ Please send bugs/comments to Hang Si <si@wias-berlin.de>
 Thank you and enjoy!
 
 Hang Si
-April 16, 2007
+
