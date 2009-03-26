@@ -157,6 +157,7 @@ class CTX {
     int autoCoherence, highlightOrphans, clip, useTransform;
     double tolerance, snap[3], transform[3][3], offset[3];
     int occFixSmallEdges, occFixSmallFaces, occSewFaces;
+    int copyMeshingMethod;
   } geom;
   // mesh options 
   struct {

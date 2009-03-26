@@ -855,17 +855,16 @@ static int compareAbsCurve(const void *a, const void *b)
   return abs(q->Num) - abs(w->Num);
 }
 
-static void CopyCurve(Curve *c, Curve *cc)
+static void CopyCurve(Curve *c, Curve *cc, bool copyMeshingMethod)
 {
   int i, j;
   cc->Typ = c->Typ;
-  // We should not copy the meshing method : if the meshes are to be
-  // copied, the meshing algorithm will take care of it
-  // (e.g. ExtrudeMesh()).
-  //cc->Method = c->Method; 
-  cc->nbPointsTransfinite = c->nbPointsTransfinite;
-  cc->typeTransfinite = c->typeTransfinite;
-  cc->coeffTransfinite = c->coeffTransfinite;
+  if(copyMeshingMethod){
+    cc->Method = c->Method;
+    cc->nbPointsTransfinite = c->nbPointsTransfinite;
+    cc->typeTransfinite = c->typeTransfinite;
+    cc->coeffTransfinite = c->coeffTransfinite;
+  }
   cc->l = c->l;
   for(i = 0; i < 4; i++)
     for(j = 0; j < 4; j++)
@@ -885,12 +884,12 @@ static void CopyCurve(Curve *c, Curve *cc)
   Tree_Insert(GModel::current()->getGEOInternals()->Curves, &cc);
 }
 
-static Curve *DuplicateCurve(Curve *c)
+static Curve *DuplicateCurve(Curve *c, bool copyMeshingMethod)
 {
   Curve *pc;
   Vertex *v, *newv;
   pc = Create_Curve(NEWLINE(), 0, 1, NULL, NULL, -1, -1, 0., 1.);
-  CopyCurve(c, pc);
+  CopyCurve(c, pc, copyMeshingMethod);
   for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
     List_Read(pc->Control_Points, i, &v);
     newv = DuplicateVertex(v);
@@ -903,59 +902,62 @@ static Curve *DuplicateCurve(Curve *c)
   return pc;
 }
 
-static void CopySurface(Surface *s, Surface *ss)
+static void CopySurface(Surface *s, Surface *ss, bool copyMeshingMethod)
 {
   int i, j;
   ss->Typ = s->Typ;
-  // We should not copy the meshing method (or the recombination
-  // status): if the meshes are to be copied, the meshing algorithm
-  // will take care of it (e.g. ExtrudeMesh()).
-  //ss->Method = s->Method;
-  //ss->Recombine = s->Recombine;
-  //ss->RecombineAngle = s->RecombineAngle;
+  if(copyMeshingMethod){
+    ss->Method = s->Method;
+    ss->Recombine = s->Recombine;
+    ss->RecombineAngle = s->RecombineAngle;
+    if(List_Nbr(s->TrsfPoints)) // TODO!
+      Msg::Error("Transfinite points not created during duplication");
+  }
   ss->Generatrices = List_Create(List_Nbr(s->Generatrices), 1, sizeof(Curve *));
   List_Copy(s->Generatrices, ss->Generatrices);
   End_Surface(ss);
   Tree_Insert(GModel::current()->getGEOInternals()->Surfaces, &ss);
 }
 
-static Surface *DuplicateSurface(Surface *s)
+static Surface *DuplicateSurface(Surface *s, bool copyMeshingMethod)
 {
   Surface *ps;
   Curve *c, *newc;
 
   ps = Create_Surface(NEWSURFACE(), 0);
-  CopySurface(s, ps);
+  CopySurface(s, ps, copyMeshingMethod);
   for(int i = 0; i < List_Nbr(ps->Generatrices); i++) {
     List_Read(ps->Generatrices, i, &c);
-    newc = DuplicateCurve(c);
+    newc = DuplicateCurve(c, copyMeshingMethod);
     List_Write(ps->Generatrices, i, &newc);
   }
   return ps;
 }
 
-static void CopyVolume(Volume *v, Volume *vv)
+static void CopyVolume(Volume *v, Volume *vv, bool copyMeshingMethod)
 {
   vv->Typ = v->Typ;
-  // We should not copy the meshing method (or the recombination
-  // status): if the meshes are to be copied, the meshing algorithm
-  // will take care of it (e.g. ExtrudeMesh()).
+  if(copyMeshingMethod){
+    vv->Method = v->Method;
+    if(List_Nbr(v->TrsfPoints)) // TODO!
+      Msg::Error("Transfinite points not created during duplication");
+  }
   List_Copy(v->Surfaces, vv->Surfaces);
   List_Copy(v->SurfacesOrientations, vv->SurfacesOrientations);
   List_Copy(v->SurfacesByTag, vv->SurfacesByTag);
   Tree_Insert(GModel::current()->getGEOInternals()->Volumes, &vv);
 }
 
-static Volume *DuplicateVolume(Volume *v)
+static Volume *DuplicateVolume(Volume *v, bool copyMeshingMethod)
 {
   Volume *pv;
   Surface *s, *news;
 
   pv = Create_Volume(NEWVOLUME(), 0);
-  CopyVolume(v, pv);
+  CopyVolume(v, pv, copyMeshingMethod);
   for(int i = 0; i < List_Nbr(pv->Surfaces); i++) {
     List_Read(pv->Surfaces, i, &s);
-    news = DuplicateSurface(s);
+    news = DuplicateSurface(s, copyMeshingMethod);
     List_Write(pv->Surfaces, i, &news);
   }
   return pv;
@@ -991,7 +993,7 @@ void CopyShape(int Type, int Num, int *New)
       Msg::Error("Unknown curve %d", Num);
       return;
     }
-    newc = DuplicateCurve(c);
+    newc = DuplicateCurve(c, CTX::instance()->geom.copyMeshingMethod);
     *New = newc->Num;
     break;
   case MSH_SURF_TRIC:
@@ -1001,7 +1003,7 @@ void CopyShape(int Type, int Num, int *New)
       Msg::Error("Unknown surface %d", Num);
       return;
     }
-    news = DuplicateSurface(s);
+    news = DuplicateSurface(s, CTX::instance()->geom.copyMeshingMethod);
     *New = news->Num;
     break;
   case MSH_VOLUME:
@@ -1009,7 +1011,7 @@ void CopyShape(int Type, int Num, int *New)
       Msg::Error("Unknown volume %d", Num);
       return;
     }
-    newvol = DuplicateVolume(vol);
+    newvol = DuplicateVolume(vol, CTX::instance()->geom.copyMeshingMethod);
     *New = newvol->Num;
     break;
   default:
@@ -1314,6 +1316,9 @@ Curve *CreateReversedCurve(Curve *c)
   newc->beg = c->end;
   newc->end = c->beg;
   newc->Method = c->Method;
+  newc->nbPointsTransfinite = c->nbPointsTransfinite;
+  newc->typeTransfinite = -c->typeTransfinite;
+  newc->coeffTransfinite = c->coeffTransfinite;
   newc->degre = c->degre;
   newc->ubeg = 1. - c->uend;
   newc->uend = 1. - c->ubeg;
@@ -2089,7 +2094,7 @@ static int Extrude_ProtudeCurve(int type, int ic,
 
   Msg::Debug("Extrude Curve %d", ic);
 
-  chapeau = DuplicateCurve(pc);
+  chapeau = DuplicateCurve(pc, false);
 
   chapeau->Extrude = new ExtrudeParams(COPIED_ENTITY);
   chapeau->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
@@ -2242,7 +2247,7 @@ static int Extrude_ProtudeSurface(int type, int is,
 
   Msg::Debug("Extrude Surface %d", is);
 
-  chapeau = DuplicateSurface(ps);
+  chapeau = DuplicateSurface(ps, false);
 
   chapeau->Extrude = new ExtrudeParams(COPIED_ENTITY);
   chapeau->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);

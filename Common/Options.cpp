@@ -4677,6 +4677,13 @@ double opt_geometry_clip(OPT_ARGS_NUM)
   return CTX::instance()->geom.clip;
 }
 
+double opt_geometry_copy_meshing_method(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.copyMeshingMethod = (int)val;
+  return CTX::instance()->geom.copyMeshingMethod;
+}
+
 double opt_mesh_optimize(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

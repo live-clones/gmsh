@@ -801,6 +801,8 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F,   "Clip" , opt_geometry_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
+  { F|O, "CopyMeshingMethod" , opt_geometry_copy_meshing_method, 0. ,
+    "Copy meshing method when duplicating geometrical entities?" },
 
   { F|O, "ExtrudeReturnLateralEntities" , opt_geometry_extrude_return_lateral, 1. ,
     "Add lateral entities in lists returned by extrusion commands?" },

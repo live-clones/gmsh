@@ -2560,23 +2560,25 @@ Transfinite :
           double d;
           List_Read($3, i, &d);
           int j = (int)fabs(d);
-          Curve *c = FindCurve(j);
-          if(c){
-            c->Method = MESH_TRANSFINITE;
-            c->nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
-            c->typeTransfinite = type * sign(d);
-            c->coeffTransfinite = coef;
-          }
-          else{
-            GEdge *ge = GModel::current()->getEdgeByTag(j);
-            if(ge){
-              ge->meshAttributes.Method = MESH_TRANSFINITE;
-              ge->meshAttributes.nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
-              ge->meshAttributes.typeTransfinite = type * sign(d);
-              ge->meshAttributes.coeffTransfinite = coef;
+          for(int sign = -1; sign <= 1; sign += 2){
+            Curve *c = FindCurve(sign * j);
+            if(c){
+              c->Method = MESH_TRANSFINITE;
+              c->nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
+              c->typeTransfinite = type * sign(d);
+              c->coeffTransfinite = coef;
             }
-            else
-              yymsg(0, "Unknown line %d", j);
+            else{
+              GEdge *ge = GModel::current()->getEdgeByTag(sign * j);
+              if(ge){
+                ge->meshAttributes.Method = MESH_TRANSFINITE;
+                ge->meshAttributes.nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
+                ge->meshAttributes.typeTransfinite = type * sign(d);
+                ge->meshAttributes.coeffTransfinite = coef;
+              }
+              else if(j > 0)
+                yymsg(0, "Unknown line %d", j);
+            }
           }
         }
         List_Delete($3);

@@ -432,6 +432,7 @@ double opt_geometry_snap0(OPT_ARGS_NUM);
 double opt_geometry_snap1(OPT_ARGS_NUM);
 double opt_geometry_snap2(OPT_ARGS_NUM);
 double opt_geometry_clip(OPT_ARGS_NUM);
+double opt_geometry_copy_meshing_method(OPT_ARGS_NUM);
 double opt_mesh_label_frequency(OPT_ARGS_NUM);
 double opt_mesh_optimize(OPT_ARGS_NUM);
 double opt_mesh_optimize_netgen(OPT_ARGS_NUM);
