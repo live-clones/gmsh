@@ -910,8 +910,8 @@ static void CopySurface(Surface *s, Surface *ss, bool copyMeshingMethod)
     ss->Method = s->Method;
     ss->Recombine = s->Recombine;
     ss->RecombineAngle = s->RecombineAngle;
-    if(List_Nbr(s->TrsfPoints)) // TODO!
-      Msg::Error("Transfinite points not created during duplication");
+    if(List_Nbr(s->TrsfPoints))
+      Msg::Warning("Only automatic transfinite surface specifications can be copied");
   }
   ss->Generatrices = List_Create(List_Nbr(s->Generatrices), 1, sizeof(Curve *));
   List_Copy(s->Generatrices, ss->Generatrices);
@@ -939,8 +939,8 @@ static void CopyVolume(Volume *v, Volume *vv, bool copyMeshingMethod)
   vv->Typ = v->Typ;
   if(copyMeshingMethod){
     vv->Method = v->Method;
-    if(List_Nbr(v->TrsfPoints)) // TODO!
-      Msg::Error("Transfinite points not created during duplication");
+    if(List_Nbr(v->TrsfPoints))
+      Msg::Warning("Only automatic transfinite volume specifications can be copied");
   }
   List_Copy(v->Surfaces, vv->Surfaces);
   List_Copy(v->SurfacesOrientations, vv->SurfacesOrientations);
