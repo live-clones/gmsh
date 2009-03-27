@@ -22,6 +22,8 @@ GMSH_API =\
   Geo/GModel.h Geo/GEntity.h Geo/GPoint.h Geo/GVertex.h Geo/GEdge.h Geo/GFace.h\
   Geo/GRegion.h Geo/GEdgeLoop.h Geo/GFaceCompound.h\
   Geo/MVertex.h Geo/MEdge.h Geo/MFace.h Geo/MElement.h\
+  Geo/MPoint.h Geo/MLine.h Geo/MTriangle.h Geo/MQuadrangle.h\
+  Geo/MTetrahedron.h Geo/MHexahedron.h Geo/MPrism.h Geo/MPyramid.h\
   Geo/discreteVertex.h Geo/discreteEdge.h Geo/discreteFace.h Geo/discreteRegion.h\
   Geo/SPoint2.h Geo/SPoint3.h Geo/SVector3.h Geo/SBoundingBox3d.h Geo/Pair.h Geo/Range.h\
   Numeric/Gauss.h Numeric/FunctionSpace.h Numeric/GmshMatrix.h\
@@ -36,9 +38,9 @@ GMSH_EMBEDDED = ${GMSH_API}\
   Geo/GModel.cpp Geo/GModelIO_Mesh.cpp Geo/GEntity.cpp\
   Geo/GVertex.cpp Geo/GEdge.cpp Geo/GEdgeLoop.cpp Geo/GFace.cpp Geo/GRegion.cpp\
   Geo/discreteEdge.cpp Geo/discreteFace.cpp Geo/discreteRegion.cpp\
-  Geo/MVertex.cpp Geo/MFace.cpp Geo/MElement.cpp Geo/MPoint.h Geo/MLine.{cpp,h}\
-  Geo/MTriangle.{cpp,h} Geo/MQuadrangle.{cpp,h} Geo/MTetrahedron.{cpp,h}\
-  Geo/MHexahedron.{cpp,h} Geo/MPrism.{cpp,h} Geo/MPyramid.{cpp,h}\
+  Geo/MVertex.cpp Geo/MFace.cpp Geo/MElement.cpp Geo/MLine.cpp\
+  Geo/MTriangle.cpp Geo/MQuadrangle.cpp Geo/MTetrahedron.cpp\
+  Geo/MHexahedron.cpp Geo/MPrism.cpp Geo/MPyramid.cpp\
   Numeric/Numeric.{cpp,h} Numeric/FunctionSpace.cpp Common/StringUtils.{cpp,h}\
   utils/embed/GmshEmbedded.{cpp,h} utils/embed/Makefile
 
