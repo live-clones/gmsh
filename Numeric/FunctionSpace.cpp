@@ -537,21 +537,9 @@ gmshMatrix<double> generateLagrangeMonomialCoefficients(const gmshMatrix<double>
     }
   }
 
-  double det = Vandermonde.determinant();
-
-  if (det == 0.){
-    Msg::Fatal("Vandermonde matrix has zero determinant!?");
-    return gmshMatrix<double>(1, 1);
-  }
   gmshMatrix<double> coefficient(ndofs, ndofs);
-  for (int i = 0; i < ndofs; i++) {
-    for (int j = 0; j < ndofs; j++) {
-      int f = (i + j) % 2 == 0 ? 1 : -1;
-      gmshMatrix<double> cofactor = Vandermonde.cofactor(i, j);
-      coefficient(i, j) = f * cofactor.determinant() / det;
-    }
-  }
-  return coefficient;
+  Vandermonde.invert(coefficient);
+  return coefficient.transpose();
 }
 
 std::map<int, gmshFunctionSpace> gmshFunctionSpaces::fs;
