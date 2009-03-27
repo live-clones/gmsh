@@ -127,33 +127,21 @@ bool gmshMatrix<double>::invert(gmshMatrix<double> &result)
 {
   int M = size1(), N = size2(), lda = size1(), info;
   int *ipiv = new int[std::min(M, N)];
-  bool ret = true;
   result = *this;
   dgetrf_(&M, &N, result._data, &lda, ipiv, &info);
   if(info == 0){
     int lwork = M * 4;
     double *work = new double[lwork];
     dgetri_(&M, result._data, &lda, ipiv, work, &lwork, &info);
-    if(info > 0){
-      Msg::Error("U(%d, %d)=0 in LU decomposition", info, info);
-      ret = false;
-    }
-    else if(info < 0){
-      Msg::Error("Wrong %d-th argument in matrix inversion", -info);
-      ret = false;
-    }
     delete [] work;
   }
-  else if(info > 0){
-    Msg::Error("U(%d, %d)=0 in LU decomposition", info, info);
-    ret = false;
-  }
-  else{
-    Msg::Error("Wrong %d-th argument in matrix factorization", -info);
-    ret = false;
-  }
   delete [] ipiv;
-  return ret;
+  if(info == 0) return true;
+  else if(info > 0)
+    Msg::Error("U(%d, %d)=0 in LU decomposition", info, info);
+  else
+    Msg::Error("Wrong %d-th argument in matrix inversion", -info);
+  return false;
 }
 
 template<> 
