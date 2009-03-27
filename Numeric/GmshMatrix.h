@@ -175,6 +175,14 @@ class gmshMatrix
   }
 #endif
   ;
+  bool invert(gmshMatrix<scalar> &result)
+#if !defined(HAVE_LAPACK)
+  {
+    Msg::Error("LU factorization requires LAPACK");
+    return false;
+  }
+#endif
+  ;
   gmshMatrix<scalar> cofactor(int i, int j) const 
   {
     int ni = size1();

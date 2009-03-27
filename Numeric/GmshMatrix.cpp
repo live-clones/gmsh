@@ -99,6 +99,8 @@ extern "C" {
   void dgesv_(int *N, int *nrhs, double *A, int *lda, int *ipiv, 
               double *b, int *ldb, int *info);
   void dgetrf_(int *M, int *N, double *A, int *lda, int *ipiv, int *info);
+  void dgetri_(int *M, double *A, int *lda, int *ipiv, double *work, int *lwork, 
+               int *info);
   void dgesvd_(const char* jobu, const char *jobvt, int *M, int *N,
                double *A, int *lda, double *S, double* U, int *ldu,
                double *VT, int *ldvt, double *work, int *lwork, int *info);
@@ -118,6 +120,40 @@ bool gmshMatrix<double>::lu_solve(const gmshVector<double> &rhs, gmshVector<doub
   else
     Msg::Error("Wrong %d-th argument in LU decomposition", -info);
   return false;
+}
+
+template<>
+bool gmshMatrix<double>::invert(gmshMatrix<double> &result)
+{
+  int M = size1(), N = size2(), lda = size1(), info;
+  int *ipiv = new int[std::min(M, N)];
+  bool ret = true;
+  result = *this;
+  dgetrf_(&M, &N, result._data, &lda, ipiv, &info);
+  if(info == 0){
+    int lwork = M * 4;
+    double *work = new double[lwork];
+    dgetri_(&M, result._data, &lda, ipiv, work, &lwork, &info);
+    if(info > 0){
+      Msg::Error("U(%d, %d)=0 in LU decomposition", info, info);
+      ret = false;
+    }
+    else if(info < 0){
+      Msg::Error("Wrong %d-th argument in matrix inversion", -info);
+      ret = false;
+    }
+    delete [] work;
+  }
+  else if(info > 0){
+    Msg::Error("U(%d, %d)=0 in LU decomposition", info, info);
+    ret = false;
+  }
+  else{
+    Msg::Error("Wrong %d-th argument in matrix factorization", -info);
+    ret = false;
+  }
+  delete [] ipiv;
+  return ret;
 }
 
 template<> 
