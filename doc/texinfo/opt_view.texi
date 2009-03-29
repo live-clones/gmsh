@@ -495,12 +495,12 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.PositionX
-X position (in pixels) of the scale or 2D plot (< 0: right alignment; > 1e5: centered)@*
+X position (in pixels) of the scale or 2D plot (< 0: measure from right edge; >= 1e5: centered)@*
 Default value: @code{100}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.PositionY
-Y position (in pixels) of the scale or 2D plot (< 0: right alignment; > 1e5: centered)@*
+Y position (in pixels) of the scale or 2D plot (< 0: measure from bottom edge; >= 1e5: centered)@*
 Default value: @code{50}@*
 Saved in: @code{General.OptionsFileName}
 

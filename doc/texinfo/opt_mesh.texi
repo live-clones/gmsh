@@ -395,7 +395,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RandomFactor
-Random factor used in the 2D meshing algorithm (use larger values if lc * rand approaches machine accuracy)@*
+Random factor used in the 2D meshing algorithm (should be increased if RandomFactor * size(triangle)/size(model) approaches machine accuracy)@*
 Default value: @code{1e-09}@*
 Saved in: @code{General.OptionsFileName}
 

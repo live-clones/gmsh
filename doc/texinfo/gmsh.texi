@@ -109,7 +109,7 @@ for Gmsh @value{GMSH-VERSION} (@today{}).
 * Copying conditions::          Terms and conditions of use
 * Overview::                    What is Gmsh?
 * How to read this manual?::    Which parts of this manual should you read (if any)?
-* Running Gmsh on your system:: How can you run Gmsh on your machine?
+* Running Gmsh on your system::  How can you run Gmsh on your machine?
 * General tools::               Description of general commands and options
 * Geometry module::             Description of all Geometry commands
 * Mesh module::                 Description of all Mesh commands
@@ -186,6 +186,7 @@ Geometry commands
 
 Mesh module
 
+* Choosing the right unstructured algorithm::  
 * Elementary vs physical entities::  
 * Mesh commands::               
 * Mesh options::                
@@ -2150,27 +2151,102 @@ algorithm can be quite poor.
 @c holes with surfaces in contact with the exterior shell, intersecting
 @c primitives, etc.)
 
-@c todo: add section explaining which algorithm to choose in which
-@c situation: 2D (robustness: MeshAdapt>Delaunay>Frontal; performance:
-@c Delaunay>Frontal>MeshAdapt; element quality:
-@c Frontal>Delaunay/MeshAdapt). Tip: for large 2D/plane meshes use
-@c Delaunay/or frontal. Most robust algo for complex curved surfaces:
-@c meshadapt. 3D: most robust and fastest: Tetgen+Delaunay. But if you
-@c need coupling to structured grid: Netgen. In most cases, you should
-@c optimize the mesh.
-
-
 @menu
+* Choosing the right unstructured algorithm::  
 * Elementary vs physical entities::  
 * Mesh commands::               
 * Mesh options::                
 @end menu
 
 @c -------------------------------------------------------------------------
+@c Choosing the right unstructured algorithm
+@c -------------------------------------------------------------------------
+
+@node Choosing the right unstructured algorithm, Elementary vs physical entities, Mesh module, Mesh module
+@section Choosing the right unstructured algorithm
+
+Gmsh currently provides a choice between three 2D unstructured
+algorithms and between two 3D unstructured algorithms. Each algorithm
+has its own advantages and disadvantages.
+
+For all 2D unstructured algorithms a Delaunay mesh that contains all the
+points of the 1D mesh is initially constructed using a
+divide-and-conquer algorithm@footnote{R. A. Dwyer, @emph{A simple
+divide-and-conquer algorithm for computing Delaunay triangulations in
+O(n log n) expected time}, In Proceedings of the second annual symposium
+on computational geometry, Yorktown Heights, 2--4 June 1986.}. Missing
+edges are recovered using edge swaps@footnote{N. P. Weatherill,
+@emph{The integrity of geometrical boundaries in the two-dimensional
+Delaunay triangulation}, Commun. Appl. Numer. Methods 6(2),
+pp. 101--109, 1990.}. After this initial step three different algorithms
+can be applied to generate the final mesh:
+
+@enumerate
+@item 
+The ``MeshAdapt'' algorithm@footnote{C. Geuzaine and J.-F. Remacle,
+@emph{Gmsh: a three-dimensional finite element mesh generator with
+built-in pre- and post-processing facilities}, International Journal for
+Numerical Methods in Engineering, Accepted for publication, 2009.} is
+based on local mesh modifications. This technique makes use of edge
+swaps, splits, and collapses: long edges are split, short edges are
+collapsed, and edges are swapped if a better geometrical configuration
+is obtained.
+@item
+The ``Delaunay'' algorithm is inspired by the work of the GAMMA team at
+INRIA@footnote{P.-L. George and P. Frey, @emph{Mesh generation}, Hermes,
+Lyon, 2000.}. New points are inserted sequentially at the circumcenter
+of the element that has the largest adimensional circumradius. The mesh
+is then reconnected using an anisotropic Delaunay criterion.
+@item
+The ``Frontal'' algorithm is based on the work of
+Rebay@footnote{S. Rebay, @emph{Efficient unstructured mesh generation by
+means of Delaunay triangulation and Bowyer-Watson algorithm}, J. Comput.
+Phys. 106, pp. 25--138, 1993.}.
+@end enumerate
+
+These algorithms can be ranked as follows:
+
+@example
+              Robustness        Performance      Element quality
+MeshAdapt         1                  3                 2
+Delaunay          2                  1                 2
+Frontal           3                  2                 1
+@end example
+
+For very complex curved surfaces the ``MeshAdapt'' algorithm is the best
+choice. When high element quality is important, the ``Frontal''
+algorithm should be tried. For very large meshes of plane surfaces the
+``Delaunay'' algorithm is the fatest.
+
+In 3D two unstructured algorithms are available:
+
+@enumerate
+@item 
+The ``Tetgen+Delaunay'' algorithm is split into two separate
+steps. First, an initial mesh of the union of all the volumes in the
+model is performed using the Tetgen algorithm@footnote{H. Si,
+@emph{Tetgen: a quality tetrahedral mesh generator and three-dimensional
+Delaunay triangulator}, 2004.}. Then a three-dimensional version of the
+2D Delaunay algorithm described above is applied.
+@item
+The ``Netgen'' algorithm uses J. Schoeberl's frontal
+algorithm@footnote{J. Schoeberl, @emph{Netgen, an advancing front
+2d/3d-mesh generator based on abstract rules}, Comput. Visual. Sci., 1,
+pp. 41--52, 1997.}.
+@end enumerate
+
+The ``Tetgen+Delaunay'' algorithm is the most robust and the
+fastest. However, this algorithm will sometimes modify the surface mesh,
+and is thus not suitable for producing hybrid structured/unstructured
+grids. In that case the ``Netgen'' algorithm should be preferred. The
+quality of the elements produced by both algorithms is comparable. If
+element quality is important the mesh optimizer(s) should be applied.
+
+@c -------------------------------------------------------------------------
 @c Elementary vs. physical entities
 @c -------------------------------------------------------------------------
 
-@node Elementary vs physical entities, Mesh commands, Mesh module, Mesh module
+@node Elementary vs physical entities, Mesh commands, Choosing the right unstructured algorithm, Mesh module
 @section Elementary vs. physical entities
 
 If only elementary geometrical entities are defined (or if the
@@ -2763,9 +2839,10 @@ More explicitly, the syntax for a parsed @code{View} is the following
 @example
 @group
 View "@var{string}" @{
+  @var{type} ( @var{list-of-coords} ) @{ @var{list-of-values} @}; @dots{}
   < TIME @{ @var{expression-list} @}; >
-  @var{type} ( @var{list-of-coords} ) @{ @var{list-of-values} @};
-  @dots{}
+  < INTERPOLATION_SCHEME @{ @var{val-coef-matrix} @} @{ @var{val-exp-matrix} @}
+                  < @{ @var{geo-coef-matrix} @} @{ @var{geo-exp-matrix} @} > ; >
 @};
 @end group
 @end example
@@ -2879,6 +2956,53 @@ arbitrary number of @w{@var{char-expression}s}.
 
 The optional @code{TIME} list can contain a list of expressions giving the
 value of the time (or any other variable) for which an evolution was saved.
+
+The optional @code{INTERPOLATION_SCHEME} lists can contain the
+interpolation matrices used for high-order adaptive visualization.
+
+Let us assume that the approximation of the view's value over an element
+is written as a linear combination of @var{d} basis functions
+@var{f}[@var{j}], @var{j}=0, ..., @var{d}-1 (the coefficients being
+stored in @var{list-of-values}). If @var{f}[@var{j}] = @var{p}[0]
+@var{F}[@var{j}][0] + @var{p}[1] @var{F}[@var{j}][1] + @var{p}[2]
+@var{F}[@var{j}][2] + ..., with @var{p}[@var{i}] =
+@var{u}^@var{P}[@var{i}][0] @var{v}^@var{P}[@var{i}][1]
+@var{w}^@var{P}[@var{i}][2] (@var{u}, @var{v} and @var{w} being the
+coordinates of the element's parameter space), then
+@var{val-coef-matrix} denotes the @var{d} x @var{d} matrix @var{F} and
+@var{val-exp-matrix} denotes the @var{d} x @var{3} matrix @var{P}.
+
+In the same way, let us also assume that the coordinates @var{x},
+@var{y} and @var{z} of the element are obtained through a geometrical
+mapping from parameter space as a linear combination of @var{m} basis
+functions @var{g}[@var{j}], @var{j}=0, ..., @var{m}-1 (the coefficients
+being stored in @var{list-of-coords}).
+
+If @var{g}[@var{j}] = @var{q}[0] @var{G}[@var{j}][0] + @var{q}[1]
+@var{G}[@var{j}][1] + @var{q}[2] @var{G}[@var{j}][2] + ..., with
+@var{q}[@var{i}] = @var{u}^@var{Q}[@var{i}][0]
+@var{v}^@var{Q}[@var{i}][1] @var{w}^@var{Q}[@var{i}][2], then
+@var{val-coef-matrix} denotes the @var{m} x @var{m} matrix @var{G} and
+@var{val-exp-matrix} denotes the @var{m} x @var{3} matrix @var{Q}.
+
+Here are for example the interpolation matrices for a first order
+quadrangle:
+@smallexample
+INTERPOLATION_SCHEME 
+@{
+  @{1/4,-1/4, 1/4,-1/4@},
+  @{1/4, 1/4,-1/4,-1/4@},
+  @{1/4, 1/4, 1/4, 1/4@},
+  @{1/4,-1/4,-1/4, 1/4@}
+@}
+@{ 
+  @{0, 0, 0@},
+  @{1, 0, 0@},
+  @{0, 1, 0@},
+  @{1, 1, 0@}
+@};
+@end smallexample
+
 @end ftable
 
 @c -------------------------------------------------------------------------

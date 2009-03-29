@@ -119,7 +119,7 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary)
 
   GModel *model = _steps[0]->getModel();
 
-  binary = true;
+  //binary = true;
   if(!model->writeMSH(fileName, 2.0, binary, true)) return false;
 
   // append data

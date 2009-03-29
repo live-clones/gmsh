@@ -185,12 +185,12 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.BackgroundImagePositionX
-X position (in pixels) of background image (< 0: right alignment; > 1e5: centered)@*
+X position (in pixels) of background image (< 0: measure from right edge; >= 1e5: centered)@*
 Default value: @code{100000}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.BackgroundImagePositionY
-Y position (in pixels) of background image (< 0: right alignment; > 1e5: centered)@*
+Y position (in pixels) of background image (< 0: measure from bottom edge; >= 1e5: centered)@*
 Default value: @code{100000}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -835,12 +835,12 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.SmallAxesPositionX
-X position (in pixels) of small axes (< 0: right alignment; > 1e5: centered)@*
+X position (in pixels) of small axes (< 0: measure from right edge; >= 1e5: centered)@*
 Default value: @code{-60}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.SmallAxesPositionY
-Y position (in pixels) of small axes (< 0: right alignment; > 1e5: centered)@*
+Y position (in pixels) of small axes (< 0: measure from bottom edge; >= 1e5: centered)@*
 Default value: @code{-40}@*
 Saved in: @code{General.OptionsFileName}
 

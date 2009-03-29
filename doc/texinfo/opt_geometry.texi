@@ -14,6 +14,11 @@ Enable clipping planes? (Plane[i]=2^i, i=0,...,5)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item Geometry.CopyMeshingMethod
+Copy meshing method when duplicating geometrical entities?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.ExtrudeReturnLateralEntities
 Add lateral entities in lists returned by extrusion commands?@*
 Default value: @code{1}@*

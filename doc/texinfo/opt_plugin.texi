@@ -436,26 +436,26 @@ Plugin(FiniteElement) creates a new view.
 String options:
 @table @code
 @item Equation
-Default value: @code{"Laplace"}
-@item BC1
-Default value: @code{"Dirichlet"}
-@item BC2
-Default value: @code{"Dirichlet"}
+Default value: @code{"Projection"}
+@item Parameter
+Default value: @code{"Sin(x*y)"}
+@item Gamma1BC
+Default value: @code{""}
+@item Gamma2BC
+Default value: @code{""}
 @end table
 Numeric options:
 @table @code
-@item Parameter
+@item Omega
 Default value: @code{1}
-@item Volume
-Default value: @code{1}
-@item Surface1
-Default value: @code{2}
-@item Value1
+@item Gamma1
 Default value: @code{0}
-@item Surface2
-Default value: @code{3}
-@item Value2
-Default value: @code{1}
+@item Gamma1Value
+Default value: @code{0}
+@item Gamma2
+Default value: @code{0}
+@item Gamma2Value
+Default value: @code{0}
 @end table
 
 @item Plugin(GSHHS)
