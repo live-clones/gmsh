@@ -83,18 +83,15 @@
 #define ENT_VOLUME   (1<<3)
 #define ENT_ALL      (ENT_POINT | ENT_LINE | ENT_SURFACE | ENT_VOLUME)
 
-// 2D mesh algorithms
-#define ALGO_2D_MESHADAPT_DELAUNAY  1
-#define ALGO_2D_ANISOTROPIC         2 // unused
-#define ALGO_2D_TRIANGLE            3 // unused
-#define ALGO_2D_MESHADAPT           4
+// 2D mesh algorithms (numbers should not be changed)
+#define ALGO_2D_MESHADAPT           1
+#define ALGO_2D_MESHADAPT_OLD       4
 #define ALGO_2D_DELAUNAY            5
 #define ALGO_2D_FRONTAL             6
 
-// 3D mesh algorithms
-#define ALGO_3D_TETGEN_DELAUNAY    1
-#define ALGO_3D_NETGEN             4
-#define ALGO_3D_TETGEN             5 // unused
+// 3D mesh algorithms (numbers should not be changed)
+#define ALGO_3D_DELAUNAY    1
+#define ALGO_3D_FRONTAL     4
 
 // Meshing methods
 #define MESH_NONE         0

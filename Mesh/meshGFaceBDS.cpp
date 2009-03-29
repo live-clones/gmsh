@@ -351,9 +351,9 @@ void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap)
     // result = 0  => whatever
     // result = 1  => oblige to swap because the quality is greatly improved
     if (!(*it)->deleted){
-      const double qual = CTX::instance()->mesh.algo2d == ALGO_2D_MESHADAPT ? 1 : 5;
+      double qual = CTX::instance()->mesh.algo2d == ALGO_2D_MESHADAPT_OLD ? 1 : 5;
       int result = edgeSwapTestQuality(*it,qual);
-      if (CTX::instance()->mesh.algo2d == ALGO_2D_MESHADAPT )
+      if (CTX::instance()->mesh.algo2d == ALGO_2D_MESHADAPT_OLD)
         { if (m.swap_edge(*it, BDS_SwapEdgeTestQuality(true)))nb_swap++; }
       else if ( result >= 0 && edgeSwapTestDelaunay(*it,gf))
         { if (m.swap_edge(*it, BDS_SwapEdgeTestQuality(false))) nb_swap++; }

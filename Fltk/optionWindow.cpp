@@ -440,12 +440,12 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
 
   opt_mesh_point_type(0, GMSH_SET, o->mesh.choice[0]->value());
   opt_mesh_algo2d(0, GMSH_SET,
-                  (o->mesh.choice[2]->value() == 0) ? ALGO_2D_FRONTAL : 
+                  (o->mesh.choice[2]->value() == 0) ? ALGO_2D_MESHADAPT : 
                   (o->mesh.choice[2]->value() == 1) ? ALGO_2D_DELAUNAY :
-                  ALGO_2D_MESHADAPT_DELAUNAY);
+                  ALGO_2D_FRONTAL);
   opt_mesh_algo3d(0, GMSH_SET,
-                  (o->mesh.choice[3]->value() == 0) ? ALGO_3D_TETGEN_DELAUNAY : 
-                  ALGO_3D_NETGEN);
+                  (o->mesh.choice[3]->value() == 0) ? ALGO_3D_DELAUNAY : 
+                  ALGO_3D_FRONTAL);
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
   opt_mesh_color_carousel(0, GMSH_SET, o->mesh.choice[4]->value());
   opt_mesh_quality_type(0, GMSH_SET, o->mesh.choice[6]->value());
@@ -1865,14 +1865,14 @@ optionWindow::optionWindow(int deltaFontSize)
       o->hide();
 
       static Fl_Menu_Item menu_2d_algo[] = {
-        {"Frontal", 0, 0, 0},
+        {"MeshAdapt", 0, 0, 0},
         {"Delaunay", 0, 0, 0},
-        {"MeshAdapt+Delaunay", 0, 0, 0},
+        {"Frontal", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_3d_algo[] = {
-        {"Tetgen+Delaunay", 0, 0, 0},
-        {"Netgen", 0, 0, 0},
+        {"Delaunay", 0, 0, 0},
+        {"Frontal", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_subdivision_algo[] = {

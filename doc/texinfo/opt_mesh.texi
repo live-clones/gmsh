@@ -5,12 +5,12 @@
 
 @ftable @code
 @item Mesh.Algorithm
-2D mesh algorithm (1=MeshAdapt+Delaunay, 4=MeshAdapt, 5=Delaunay, 6=Frontal)@*
+2D mesh algorithm (1=MeshAdapt, 5=Delaunay, 6=Frontal)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Algorithm3D
-3D mesh algorithm (1=Tetgen+Delaunay, 4=Netgen)@*
+3D mesh algorithm (1=Delaunay, 4=Frontal)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

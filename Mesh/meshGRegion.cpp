@@ -249,7 +249,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 #else
 
   for(unsigned int i = 0; i < regions.size(); i++)
-    Msg::StatusBar(2, true, "Meshing volume %d (Tetgen+Delaunay)", regions[i]->tag());
+    Msg::StatusBar(2, true, "Meshing volume %d (Delaunay)", regions[i]->tag());
 
   // put all the faces in the same model
   GRegion *gr = regions[0];
@@ -586,14 +586,14 @@ void meshGRegion::operator() (GRegion *gr)
     }
   }
 
-  if(CTX::instance()->mesh.algo3d == ALGO_3D_TETGEN_DELAUNAY){
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_DELAUNAY){
     delaunay.push_back(gr);
   }
-  else if(CTX::instance()->mesh.algo3d == ALGO_3D_NETGEN ){
+  else if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL){
 #if !defined(HAVE_NETGEN)
     Msg::Error("Netgen is not compiled in this version of Gmsh");
 #else
-    Msg::StatusBar(2, true, "Meshing volume %d (Netgen)", gr->tag());
+    Msg::StatusBar(2, true, "Meshing volume %d (Frontal)", gr->tag());
     // orient the triangles of with respect to this region
     meshNormalsPointOutOfTheRegion(gr);
     std::vector<MVertex*> numberedV;

@@ -366,10 +366,10 @@ line ``attractors'', etc.).
 For each meshing step, all structured mesh directives are executed
 first, and serve as additional constraints for the unstructured parts
 @footnote{Note that mixing structured volume grids with unstructured
-volume grids generated with the default 3D isotropic Delaunay algorithm
-can result, in certain cases, to non-conform surface meshes on their
-shared boundary. If this happens, you may consider using the Netgen
-algorithm for the unstructured part.}.
+volume grids generated with the default 3D Delaunay algorithm can
+result, in certain cases, to non-conform surface meshes on their shared
+boundary. If this happens, you may consider using the frontal algorithm
+for the unstructured part.}.
 
 @c -------------------------------------------------------------------------
 @c Solver: external solver interface
@@ -2222,25 +2222,25 @@ In 3D two unstructured algorithms are available:
 
 @enumerate
 @item 
-The ``Tetgen+Delaunay'' algorithm is split into two separate
-steps. First, an initial mesh of the union of all the volumes in the
-model is performed using the Tetgen algorithm@footnote{H. Si,
-@emph{Tetgen: a quality tetrahedral mesh generator and three-dimensional
-Delaunay triangulator}, 2004.}. Then a three-dimensional version of the
-2D Delaunay algorithm described above is applied.
+The ``Delaunay'' algorithm is split into two separate steps. First, an
+initial mesh of the union of all the volumes in the model is performed
+using the Tetgen algorithm@footnote{H. Si, @emph{Tetgen: a quality
+tetrahedral mesh generator and three-dimensional Delaunay triangulator},
+2004.}. Then a three-dimensional version of the 2D Delaunay algorithm
+described above is applied.
 @item
-The ``Netgen'' algorithm uses J. Schoeberl's frontal
+The ``Frontal'' algorithm uses J. Schoeberl's Netgen frontal
 algorithm@footnote{J. Schoeberl, @emph{Netgen, an advancing front
 2d/3d-mesh generator based on abstract rules}, Comput. Visual. Sci., 1,
 pp. 41--52, 1997.}.
 @end enumerate
 
-The ``Tetgen+Delaunay'' algorithm is the most robust and the
-fastest. However, this algorithm will sometimes modify the surface mesh,
-and is thus not suitable for producing hybrid structured/unstructured
-grids. In that case the ``Netgen'' algorithm should be preferred. The
-quality of the elements produced by both algorithms is comparable. If
-element quality is important the mesh optimizer(s) should be applied.
+The ``Delaunay'' algorithm is the most robust and the fastest. However,
+this algorithm will sometimes modify the surface mesh, and is thus not
+suitable for producing hybrid structured/unstructured grids. In that
+case the ``Frontal'' algorithm should be preferred. The quality of the
+elements produced by both algorithms is comparable. If element quality
+is important the mesh optimizer(s) should be applied.
 
 @c -------------------------------------------------------------------------
 @c Elementary vs. physical entities

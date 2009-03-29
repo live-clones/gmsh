@@ -25,7 +25,7 @@ Set output mesh format (msh, msh1, msh2, unv, vrml, stl, mesh, bdf, p3d, cgns, m
 @item -bin
 Use binary format when available
 @item -algo string
-Select mesh algorithm (iso, frontal, del2d, del3d, netgen)
+Select mesh algorithm (meshadapt, del2d, front2d, del3d, front3d)
 @item -smooth int
 Set number of mesh smoothing steps
 @item -optimize[_netgen]

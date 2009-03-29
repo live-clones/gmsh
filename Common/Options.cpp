@@ -5396,15 +5396,15 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(GUI::available() && (action & GMSH_GUI)) {
     switch (CTX::instance()->mesh.algo2d) {
-    case ALGO_2D_FRONTAL:
-      GUI::instance()->options->mesh.choice[2]->value(0);
-      break;
     case ALGO_2D_DELAUNAY:
       GUI::instance()->options->mesh.choice[2]->value(1);
       break;
-    case ALGO_2D_MESHADAPT_DELAUNAY:
-    default:
+    case ALGO_2D_FRONTAL:
       GUI::instance()->options->mesh.choice[2]->value(2);
+      break;
+    case ALGO_2D_MESHADAPT:
+    default:
+      GUI::instance()->options->mesh.choice[2]->value(0);
       break;
     }
   }
@@ -5438,10 +5438,10 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(GUI::available() && (action & GMSH_GUI)) {
     switch (CTX::instance()->mesh.algo3d) {
-    case ALGO_3D_NETGEN:
+    case ALGO_3D_FRONTAL:
       GUI::instance()->options->mesh.choice[3]->value(1);
       break;
-    case ALGO_3D_TETGEN_DELAUNAY:
+    case ALGO_3D_DELAUNAY:
     default:
       GUI::instance()->options->mesh.choice[3]->value(0);
       break;

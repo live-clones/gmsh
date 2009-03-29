@@ -72,7 +72,7 @@ void PrintUsage(const char *name)
   Msg::Direct("  -bin                  Use binary format when available");  
   Msg::Direct("  -parametric           Save vertices with their parametric coordinates");  
   Msg::Direct("  -numsubedges          Set the number of subdivisions when displaying high order elements");  
-  Msg::Direct("  -algo string          Select mesh algorithm (iso, frontal, del2d, del3d, netgen)");
+  Msg::Direct("  -algo string          Select mesh algorithm (meshadapt, del2d, front2d, del3d, front3d)");
   Msg::Direct("  -smooth int           Set number of mesh smoothing steps");
   Msg::Direct("  -optimize[_netgen]    Optimize quality of tetrahedral elements");
   Msg::Direct("  -order int            Set mesh order (1, ..., 5)");
@@ -471,18 +471,18 @@ void GetOptions(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "algo")) {
         i++;
         if(argv[i]) {
-          if(!strncmp(argv[i], "del3d", 5) || !strncmp(argv[i], "tetgen", 6))
-            CTX::instance()->mesh.algo2d = ALGO_3D_TETGEN_DELAUNAY;
-          else if(!strncmp(argv[i], "netgen", 6))
-            CTX::instance()->mesh.algo3d = ALGO_3D_NETGEN;
-          else if(!strncmp(argv[i], "frontal", 7))
-            CTX::instance()->mesh.algo2d = ALGO_2D_FRONTAL;
+          if(!strncmp(argv[i], "meshadapt", 9) || !strncmp(argv[i], "iso", 3))
+            CTX::instance()->mesh.algo2d = ALGO_2D_MESHADAPT;
+          else if(!strncmp(argv[i], "bds", 3))
+            CTX::instance()->mesh.algo2d = ALGO_2D_MESHADAPT_OLD;
           else if(!strncmp(argv[i], "del2d", 5) || !strncmp(argv[i], "tri", 3))
             CTX::instance()->mesh.algo2d = ALGO_2D_DELAUNAY;
-          else if(!strncmp(argv[i], "bds", 3))
-            CTX::instance()->mesh.algo2d = ALGO_2D_MESHADAPT;
-          else if(!strncmp(argv[i], "del", 3) || !strncmp(argv[i], "iso", 3))
-            CTX::instance()->mesh.algo2d = ALGO_2D_MESHADAPT_DELAUNAY;
+          else if(!strncmp(argv[i], "front2d", 7) || !strncmp(argv[i], "frontal", 7))
+            CTX::instance()->mesh.algo2d = ALGO_2D_FRONTAL;
+          else if(!strncmp(argv[i], "del3d", 5) || !strncmp(argv[i], "tetgen", 6))
+            CTX::instance()->mesh.algo2d = ALGO_3D_DELAUNAY;
+          else if(!strncmp(argv[i], "front3d", 7) || !strncmp(argv[i], "netgen", 6))
+            CTX::instance()->mesh.algo3d = ALGO_3D_FRONTAL;
           else
 	    Msg::Fatal("Unknown mesh algorithm");
           i++;

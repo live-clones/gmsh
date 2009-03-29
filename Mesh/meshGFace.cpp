@@ -1367,10 +1367,10 @@ void meshGFace::operator() (GFace *gf)
   const char *algo = "Unknown";
   if(AlgoDelaunay2D(gf))
     algo = (CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL) ? "Frontal" : "Delaunay";
-  else if(CTX::instance()->mesh.algo2d == ALGO_2D_MESHADAPT)
-    algo = "MeshAdapt";
+  else if(CTX::instance()->mesh.algo2d == ALGO_2D_MESHADAPT_OLD)
+    algo = "MeshAdapt (old)";
   else 
-    algo = "MeshAdapt+Delaunay";
+    algo = "MeshAdapt";
 
   Msg::StatusBar(2, true, "Meshing surface %d (%s, %s)", 
 		 gf->tag(), gf->getTypeString().c_str(), algo);
