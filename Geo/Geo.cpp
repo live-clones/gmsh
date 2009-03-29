@@ -2905,9 +2905,9 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2])
 
   Vertex pp = InterpolateSurface(s, uv[0], uv[1], 0, 0);
   double d2 = 
-    (pp.Pos.X - p.Pos.X)*(pp.Pos.X - p.Pos.X) + 
-    (pp.Pos.Y - p.Pos.Y)*(pp.Pos.Y - p.Pos.Y) + 
-    (pp.Pos.Z - p.Pos.Z)*(pp.Pos.Z - p.Pos.Z) ;
+    (pp.Pos.X - p.Pos.X) * (pp.Pos.X - p.Pos.X) + 
+    (pp.Pos.Y - p.Pos.Y) * (pp.Pos.Y - p.Pos.Y) + 
+    (pp.Pos.Z - p.Pos.Z) * (pp.Pos.Z - p.Pos.Z) ;
   if(d2 < 1.e-12) return true;
 
   double UMIN = 0.;
@@ -2928,7 +2928,7 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2])
     }
     x(0) = UMIN + (UMAX - UMIN) * ((rand() % 10000) / 10000.);
     x(1) = VMIN + (VMAX - VMIN) * ((rand() % 10000) / 10000.);
-    if (ITER++ > 100)break;
+    if(ITER++ > 100) break;
   }
   {
     int NSAMPLES = 500;

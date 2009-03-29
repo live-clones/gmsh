@@ -1409,8 +1409,7 @@ class drawPView {
       }
       else{
         // real translucent blending (requires back-to-front traversal)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        // glBlendEquation(GL_FUNC_ADD);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // glBlendEquation(GL_FUNC_ADD);
         glEnable(GL_BLEND);
         if(eyeChanged(_ctx, p)){
           Msg::Debug("Sorting View[%d] for transparency", p->getIndex());

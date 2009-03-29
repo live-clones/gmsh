@@ -138,7 +138,7 @@ bool gmshMatrix<double>::invert(gmshMatrix<double> &result)
   delete [] ipiv;
   if(info == 0) return true;
   else if(info > 0)
-    Msg::Error("U(%d, %d)=0 in LU decomposition", info, info);
+    Msg::Error("U(%d,%d)=0 in matrix inversion", info, info);
   else
     Msg::Error("Wrong %d-th argument in matrix inversion", -info);
   return false;

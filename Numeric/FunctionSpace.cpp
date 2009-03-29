@@ -518,7 +518,7 @@ gmshMatrix<double> gmshGeneratePointsTriangle(int order, bool serendip)
 }
 
 gmshMatrix<double> generateLagrangeMonomialCoefficients(const gmshMatrix<double>& monomial,
-                                                   const gmshMatrix<double>& point) 
+                                                        const gmshMatrix<double>& point) 
 {
   if(monomial.size1() != point.size1() || monomial.size2() != point.size2()){
     Msg::Fatal("Wrong sizes for Lagrange coefficients generation");
