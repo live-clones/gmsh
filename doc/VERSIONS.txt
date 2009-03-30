@@ -1,4 +1,7 @@
-$Id: VERSIONS.txt,v 1.42 2009-03-18 20:29:26 geuzaine Exp $
+$Id: VERSIONS.txt,v 1.43 2009-03-30 08:19:28 geuzaine Exp $
+
+2.3.2 (?): optionally copy transfinite mesh contraints during geometry
+transformations.
 
 2.3.1 (Mar 18, 2009): removed GSL dependency (Gmsh now simply uses
 Blas and Lapack); new per-window visibility; added support for
