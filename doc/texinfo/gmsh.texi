@@ -2198,10 +2198,10 @@ Lyon, 2000.}. New points are inserted sequentially at the circumcenter
 of the element that has the largest adimensional circumradius. The mesh
 is then reconnected using an anisotropic Delaunay criterion.
 @item
-The ``Frontal'' algorithm is based on the work of
-Rebay@footnote{S. Rebay, @emph{Efficient unstructured mesh generation by
-means of Delaunay triangulation and Bowyer-Watson algorithm}, J. Comput.
-Phys. 106, pp. 25--138, 1993.}.
+The ``Frontal'' algorithm is inspired by the work of
+S. Rebay@footnote{S. Rebay, @emph{Efficient unstructured mesh generation
+by means of Delaunay triangulation and Bowyer-Watson algorithm},
+J. Comput.  Phys. 106, pp. 25--138, 1993.}.
 @end enumerate
 
 These algorithms can be ranked as follows:
@@ -2224,12 +2224,12 @@ In 3D two unstructured algorithms are available:
 @item 
 The ``Delaunay'' algorithm is split into two separate steps. First, an
 initial mesh of the union of all the volumes in the model is performed
-using the Tetgen algorithm@footnote{H. Si, @emph{Tetgen: a quality
+using H. Si's Tetgen algorithm@footnote{H. Si, @emph{Tetgen: a quality
 tetrahedral mesh generator and three-dimensional Delaunay triangulator},
 2004.}. Then a three-dimensional version of the 2D Delaunay algorithm
 described above is applied.
 @item
-The ``Frontal'' algorithm uses J. Schoeberl's Netgen frontal
+The ``Frontal'' algorithm uses J. Schoeberl's Netgen
 algorithm@footnote{J. Schoeberl, @emph{Netgen, an advancing front
 2d/3d-mesh generator based on abstract rules}, Comput. Visual. Sci., 1,
 pp. 41--52, 1997.}.
@@ -2286,6 +2286,12 @@ In the MSH file format (@pxref{File formats}), if physical entities are
 defined, the output mesh only contains those elements that belong to
 physical entities. Other file formats each treat physical entities in
 slightly different ways, depending on their capability to define groups.
+
+In all cases, Gmsh reindexes the mesh vertices and elements so that they
+are numbered in a continuous sequence in the output files. Note that the
+numbers displayed on screen after mesh generation thus usually differ
+from the ones saved in the mesh files. To check the actual numbers saved
+in the output file just load the file back using `File->Open'.
 
 @c -------------------------------------------------------------------------
 @c Mesh commands
