@@ -13,6 +13,7 @@
 #undef HAVE_FLTK
 #undef HAVE_FOURIER_MODEL
 #undef HAVE_GMM
+#undef HAVE_KBIPACK
 #undef HAVE_LAPACK
 #undef HAVE_LIBCGNS
 #undef HAVE_LIBJPEG

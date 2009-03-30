@@ -19,6 +19,9 @@
 #include "GRegion.h"
 #include "GFace.h"
 #include "GVertex.h"
+
+#if defined(HAVE_KBIPACK)
+
 #include "gmp.h"
 extern "C" {
   #include "gmp_normal_form.h" // perhaps make c++ headers instead?
@@ -414,6 +417,6 @@ class CellComplex
    
 };
 
-
+#endif
 
 #endif

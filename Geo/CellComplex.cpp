@@ -7,6 +7,8 @@
 
 #include "CellComplex.h"
 
+#if defined(HAVE_KBIPACK)
+
 CellComplex::CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> subdomain ){
   
   _domain = domain;
@@ -518,3 +520,5 @@ void CellComplex::printComplex(int dim){
     printf("\n");
   }
 }
+
+#endif

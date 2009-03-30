@@ -507,12 +507,15 @@ if test "x$enable_contrib" != "xno"; then
   
   dnl Check for kbipack
   if test "x$enable_kbipack" != "xno"; then
-    AC_CHECK_FILE(./contrib/kbipack/gmp_normal_form.h,KBIPACK="yes")
-    if test "x${KBIPACK}" = "xyes"; then
-      GMSH_DIRS="${GMSH_DIRS} contrib/kbipack"
-      GMSH_LIBS="${GMSH_LIBS} -lGmshKbi -lgmp"
-      AC_DEFINE(HAVE_kbipack)
-      BO="${BO} kbipack"
+    AC_CHECK_LIB(gmp,main,GMP="yes")
+    if test "x${GMP}" = "xyes"; then
+      AC_CHECK_FILE(./contrib/kbipack/gmp_normal_form.h,KBIPACK="yes")
+      if test "x${KBIPACK}" = "xyes"; then
+        GMSH_DIRS="${GMSH_DIRS} contrib/kbipack"
+        GMSH_LIBS="${GMSH_LIBS} -lGmshKbi -lgmp"
+        AC_DEFINE(HAVE_KBIPACK)
+        BO="${BO} Kbipack"
+      fi
     fi
   fi
 
