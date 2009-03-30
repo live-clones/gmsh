@@ -26,13 +26,16 @@ GMSH_API =\
   Geo/MTetrahedron.h Geo/MHexahedron.h Geo/MPrism.h Geo/MPyramid.h\
   Geo/discreteVertex.h Geo/discreteEdge.h Geo/discreteFace.h Geo/discreteRegion.h\
   Geo/SPoint2.h Geo/SPoint3.h Geo/SVector3.h Geo/SBoundingBox3d.h Geo/Pair.h Geo/Range.h\
+  Geo/CellComplex.h\
+  contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h contrib/kbipack/gmp_blas.h\
   Numeric/Gauss.h Numeric/FunctionSpace.h Numeric/GmshMatrix.h\
   Numeric/gmshAssembler.h Numeric/gmshTermOfFormulation.h Numeric/gmshLaplace.h\
   Numeric/gmshElasticity.h Numeric/gmshLinearSystem.h Numeric/gmshLinearSystemGmm.h\
   Numeric/gmshLinearSystemFull.h Numeric/gmshFunction.h\
   Post/PView.h Post/PViewData.h Plugin/PluginManager.h\
   Common/VertexArray.h Common/GmshMessage.h\
-  Common/Gmsh.h Common/GmshConfig.h Common/GmshDefines.h Common/GmshVersion.h 
+  Common/Gmsh.h Common/GmshConfig.h Common/GmshDefines.h Common/GmshVersion.h
+
 
 GMSH_EMBEDDED = ${GMSH_API}\
   Geo/GModel.cpp Geo/GModelIO_Mesh.cpp Geo/GEntity.cpp\

@@ -9,13 +9,14 @@
 #include <functional>
 #include <vector>
 #include "MVertex.h"
+#include "MEdge.h"
 #include "SVector3.h"
 
 // A mesh face.
 class MFace {
  private:
   MVertex *_v[4];
-  char _si[4]; // sorted indices
+  char _si[4]; // sorted indices 
 
  public:
   MFace();

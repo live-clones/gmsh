@@ -74,6 +74,7 @@ MFace::MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3)
   }
   else
     _si[3] = 3;
+    
 }
 
 SVector3 MFace::normal() const
