@@ -1,0 +1,106 @@
+-----------
+KBIPack 1.0
+-----------
+
+This is an ANSI C-implementation of Kannan-Bachem algorithms for Hermite 
+and Smith normal forms for integer matrices. I wrote it to be the core of 
+an integer homology group solver. You are welcome to improve this package, 
+but I am unfortunately unable to invest much more time to it myself. The 
+license is GNU GPL (see below). 
+
+The algorithms are Kannan - Bachem algorithms with improvement by Chou and 
+Collins. The Smith normal form routine expects a large number of unit 
+invariant factors (this occurs in my application) and takes advantage of 
+them as they appear. 
+
+References: 
+-----------
+[1] Ravindran Kannan, Achim Bachem: 
+    "Polynomial algorithms for computing the Smith and Hermite normal 
+    forms of an integer matrix", 
+    SIAM J. Comput., vol. 8, no. 5, pp. 499-507, 1979.
+[2] Tsu-Wu J.Chou, George E. Collins: 
+    "Algorithms for the solution of systems of linear Diophantine equations", 
+     SIAM J. Comput., vol. 11, no. 4, pp. 687-708, 1982.
+[3] GMP homepage http://www.swox.com/gmp/
+[4] GNU gmp page http://www.gnu.org/software/gmp/
+
+Technicalities:
+---------------
+The package relies on GNU multiple precision library gmp to represent large 
+integers. You must have gmp installed before you compile. 
+
+It should run smoothly on UNIX systems with working standard I/O, and 
+in Cygwin (http://www.cygwin.com/). 
+
+You can use this package in at least three ways: 
+1) You can call the functions bkihnf and bkisnf in respective .m-files 
+   from MatLab or Octave. Note that the numbers in the results may be too 
+   large to be exactly read back by them. 
+2) You can use the executable "compute normal form" just like any command. 
+   Use the -h flag to get info. 
+3) You can use just the core routines from your own application. 
+
+Contents: 
+---------
+bkihnf.m                 Integer Hermite normal form for Octave/MatLab 
+bkisnf.m                 Integer Smith normal form for Octave/MatLab 
+compute_normal_form.c    A main program for a comand-line version 
+gmp_blas.c               Low-level routines for integer arrays 
+gmp_blas.h
+gmp_matrix.c             Integer matrix type
+gmp_matrix.h
+gmp_matrix_io.c          I/O for integer matrices
+gmp_matrix_io.h
+gmp_normal_form.c        The core computation routine
+gmp_normal_form.h        
+LICENCE                  The GNU General Public License version 2
+Makefile                 A rudimentary Makefile (just type "make")
+README                   This file
+
+Installation: 
+-------------
+First install gmp (http://www.swox.com/gmp/ or a binary package).
+If you use gcc, just type "make". If not, alter the Makefile as necessary. 
+
+Licensing:
+----------
+Copyright (C) 2005 Saku Suuriniemi
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+Saku Suuriniemi, TUT/Electromagetics
+P.O.Box 692, FIN-33101 Tampere, Finland
+saku.suuriniemi@tut.fi
+http://www.em.tut.fi/Eng/
+
+Background:
+-----------
+The package is a part of my PhD project, so if you find this package useful 
+and wish to refer to my thesis (also available on my homepage), here is the 
+BiBTeX entry: 
+
+@phdthesis{Suuriniemi:PhD2004,
+author="Saku Suuriniemi",
+school="Tampere University of Technology",
+title="Homological computations in electromagnetic modeling",
+address="Tampere",
+year=2004,
+isbn="952-15-1237-7"
+}
+
+Thanks: 
+-------
+Thanks are due to Chistophe Geuzaine for testing and comments. 
