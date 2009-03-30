@@ -28,13 +28,13 @@ struct _CDLIST{
 typedef struct{
   PointNumero search;
   PointNumero already;
-}demi_triangle;
+}HalfTriangle;
 
 typedef struct{
-  demi_triangle *info;
+  HalfTriangle *info;
   PointNumero *t;
   int t_length, info_length;
-}Striangle;
+}STriangle;
 
 typedef struct{
   PointNumero begin;

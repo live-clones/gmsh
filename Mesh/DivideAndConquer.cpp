@@ -162,7 +162,8 @@ static Segment UpperCommonTangent(DT vl, DT vr)
 static int Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k)
 {
   if((h == i) && (h == j) && (h == k)) {
-    Msg::Error("3 identical points in Qtest");
+    Msg::Error("Identical points in triangulation: increase element size "
+               "or Mesh.RandomFactor");
     return 0;
   }
   
@@ -495,14 +496,14 @@ static int ConvertDListToTriangles(DocRecord *doc)
 {
   // on suppose que n >= 3. gPointArray est suppose OK.
 
-  Striangle *striangle;
+  STriangle *striangle;
   int n, i, j;
   int count = 0, count2 = 0;
   PointNumero aa, bb, cc;
   PointRecord *gPointArray = doc->points;
 
   n = doc->numPoints;
-  striangle = (Striangle *) Malloc(n * sizeof(Striangle));
+  striangle = (STriangle *) Malloc(n * sizeof(STriangle));
   count2 = CountPointsOnHull(n, doc->points);
 
   // nombre de triangles que l'on doit obtenir
