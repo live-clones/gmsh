@@ -2968,27 +2968,26 @@ interpolation matrices used for high-order adaptive visualization.
 
 Let us assume that the approximation of the view's value over an element
 is written as a linear combination of @var{d} basis functions
-@var{f}[@var{j}], @var{j}=0, ..., @var{d}-1 (the coefficients being
-stored in @var{list-of-values}). Defining @var{f}[@var{j}] =
-Sum(@var{i}=0, ..., @var{d}-1) @var{p}[@var{i}]
-@var{F}[@var{j}][@var{i}], with @var{p}[@var{i}] =
-@var{u}^@var{P}[@var{i}][0] @var{v}^@var{P}[@var{i}][1]
-@var{w}^@var{P}[@var{i}][2] (@var{u}, @var{v} and @var{w} being the
-coordinates in the element's parameter space), then
-@var{val-coef-matrix} denotes the @var{d} x @var{d} matrix @var{F} and
-@var{val-exp-matrix} denotes the @var{d} x @var{3} matrix @var{P}.
+@var{f}[@var{i}], @var{i}=0, ..., @var{d}-1 (the coefficients being
+stored in @var{list-of-values}). Defining @var{f}[@var{i}] =
+Sum(@var{j}=0, ..., @var{d}-1) @var{F}[@var{i}][@var{j}]
+@var{p}[@var{j}], with @var{p}[@var{j}] = @var{u}^@var{P}[@var{j}][0]
+@var{v}^@var{P}[@var{j}][1] @var{w}^@var{P}[@var{j}][2] (@var{u},
+@var{v} and @var{w} being the coordinates in the element's parameter
+space), then @var{val-coef-matrix} denotes the @var{d} x @var{d} matrix
+@var{F} and @var{val-exp-matrix} denotes the @var{d} x @var{3} matrix
+@var{P}.
 
 In the same way, let us also assume that the coordinates @var{x},
 @var{y} and @var{z} of the element are obtained through a geometrical
 mapping from parameter space as a linear combination of @var{m} basis
-functions @var{g}[@var{j}], @var{j}=0, ..., @var{m}-1 (the coefficients
-being stored in @var{list-of-coords}). Defining @var{g}[@var{j}] =
-Sum(@var{i}=0, ..., @var{m}-1) @var{q}[@var{i}]
-@var{G}[@var{j}][@var{i}], with @var{q}[@var{i}] =
-@var{u}^@var{Q}[@var{i}][0] @var{v}^@var{Q}[@var{i}][1]
-@var{w}^@var{Q}[@var{i}][2], then @var{val-coef-matrix} denotes the
-@var{m} x @var{m} matrix @var{G} and @var{val-exp-matrix} denotes the
-@var{m} x @var{3} matrix @var{Q}.
+functions @var{g}[@var{i}], @var{i}=0, ..., @var{m}-1 (the coefficients
+being stored in @var{list-of-coords}). Defining @var{g}[@var{i}] =
+Sum(@var{j}=0, ..., @var{m}-1) @var{G}[@var{i}][@var{j}]
+@var{q}[@var{j}], with @var{q}[@var{j}] = @var{u}^@var{Q}[@var{j}][0]
+@var{v}^@var{Q}[@var{j}][1] @var{w}^@var{Q}[@var{j}][2], then
+@var{val-coef-matrix} denotes the @var{m} x @var{m} matrix @var{G} and
+@var{val-exp-matrix} denotes the @var{m} x @var{3} matrix @var{Q}.
 
 Here are for example the interpolation matrices for a first order
 quadrangle:
