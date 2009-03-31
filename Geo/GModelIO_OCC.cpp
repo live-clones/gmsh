@@ -592,12 +592,15 @@ static void applyOCCMeshConstraints(GModel *m, const void *constraints)
       // embedding constraint
       if(c.IsEmbedded() && !c.GetFace().IsNull()){
         TopoDS_Shape shape = c.GetFace();
+        Standard_Integer nodeNum;
+        c.GetNodeNumber(nodeNum);
         for(GModel::fiter it2 = m->firstFace(); it2 != m->lastFace(); ++it2){
           GFace *gf = *it2;
           if(gf->getNativeType() != GEntity::OpenCascadeModel) continue;
           TopoDS_Shape *shape2 = (TopoDS_Shape*)gf->getNativePtr();
           if(shape.IsSame(*shape2)){
-            Msg::Debug("... embedding vertex in face %d", gf->tag());
+            Msg::Debug("... embedding vertex %d in face %d", nodeNum, gf->tag());
+            gv->mesh_vertices[0]->setNum(nodeNum);
             gf->addEmbeddedVertex(gv);
           }
         }
