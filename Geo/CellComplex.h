@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <set>
 #include <queue>
+#include "GmshConfig.h"
 #include "MElement.h"
 #include "GModel.h"
 #include "GEntity.h"
