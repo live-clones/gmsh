@@ -1,10 +1,13 @@
 // configure, compile and install Gmsh as a library with
 //
-//   ./configure --disable-gui --disable-netgen --disable-chaco 
-//        --disable-metis --disable-tetgen --prefix=/usr/local/
+//   ./configure --disable-gui --disable-netgen --disable-chaco --prefix=/usr/local/
 //   make install-lib
 //
-// Then compile this driver with "g++ kaka.cpp -lGmsh -llapack -lblas -lgmp"
+// Then compile this driver with "g++ celldriver.cpp -lGmsh -llapack -lblas -lgmp"
+//
+// This program creates .msh files reduced_complex.msh and coreduced_complex.msh
+// of an two port transformer model to represent its relative homology groups.
+
 
 #include <stdio.h>
 #include <gmsh/Gmsh.h>

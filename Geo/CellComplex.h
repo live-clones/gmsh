@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 //
-// Contributed by Matti Pellikka, 16.3.2009.
+// Contributed by Matti Pellikka.
 
 #ifndef _CELLCOMPLEX_H_
 #define _CELLCOMPLEX_H_
@@ -155,6 +155,7 @@ class ZeroSimplex : public Simplex
    
    virtual ~ZeroSimplex(){}
    
+   virtual int getDim() const { return 0; }
    virtual int getNumVertices() const { return 1; }
    virtual int getVertex(int vertex) const {return _v; }
    virtual bool hasVertex(int vertex) const {return (_v == vertex); }
@@ -198,6 +199,7 @@ class OneSimplex : public Simplex
    
    virtual ~OneSimplex(){}
    
+   virtual int getDim() const { return 1; }
    virtual int getNumVertices() const { return 2; }
    virtual int getVertex(int vertex) const {return _v[vertex]; }
    virtual bool hasVertex(int vertex) const {return (_v[0] == vertex || _v[1] == vertex); }
@@ -236,6 +238,7 @@ class TwoSimplex : public Simplex
    
    virtual ~TwoSimplex(){}
    
+   virtual int getDim() const { return 2; }
    virtual int getNumVertices() const { return 3; }
    virtual int getVertex(int vertex) const {return _v[vertex]; }
    virtual bool hasVertex(int vertex) const {return 
@@ -276,6 +279,7 @@ class ThreeSimplex : public Simplex
    
    virtual ~ThreeSimplex(){}
    
+   virtual int getDim() const { return 3; }
    virtual int getNumVertices() const { return 4; }
    virtual int getVertex(int vertex) const {return _v[vertex]; }
    virtual bool hasVertex(int vertex) const {return 
@@ -294,18 +298,14 @@ class Less_Cell{
        return (c1->getNumVertices() < c2->getNumVertices());
      }
      for(int i=0; i < c1->getNumVertices();i++){
-       if(c1->getVertex(i) < c2->getVertex(i)){
-         return true;
-       }
-       else if (c1->getVertex(i) > c2->getVertex(i)){
-         return false;
-       }
+       if(c1->getVertex(i) < c2->getVertex(i)) return true;
+       else if (c1->getVertex(i) > c2->getVertex(i)) return false;
      }
      return false;
    }
 };
 
-// Ordering for the finite element mesh vertices
+// Ordering for the finite element mesh vertices.
 class Less_MVertex{
   public:
    bool operator()(const MVertex* v1, const MVertex* v2) const {
@@ -324,14 +324,13 @@ class CellComplex
    // used in relative homology computation, may be empty
    std::vector<GEntity*> _subdomain;
    
-   // sorted container of unique cells in this cell complex 
-   // mapped according to their dimension
-   std::map< int, std::set<Cell*, Less_Cell> >  _cells;
-   
-   // boundary operator matrices for this cell complex
+   // sorted containers of unique cells in this cell complex 
+   // one for each dimension
+   std::set<Cell*, Less_Cell>  _cells[4];
+    
+   // boundary operator matrices for this chain complex
    // h_k: C_k -> C_(k-1)
-   std::map<int, gmp_matrix*>  _HMatrix; 
-   
+   //gmp_matrix* _HMatrix[4];
    
  public:
    // iterator for the cells of same dimension
@@ -355,6 +354,11 @@ class CellComplex
    virtual void insertCells(bool subdomain);
    
   public: 
+   CellComplex( std::set<Cell*, Less_Cell>* cells ) {
+     for(int i = 0; i < 4; i++){
+     _cells[i] = cells[i]; 
+     }
+   }
    CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> subdomain );
    virtual ~CellComplex(){}
    
@@ -404,19 +408,52 @@ class CellComplex
    // slower, but produces cleaner result
    virtual int coreductionMrozek(Cell* generator);
    
-   
-   // construct boundary operator matrix dim->dim-1
-   virtual void constructHMatrix(int dim);
-   // get the boundary operator matrix dim->dim-1
-   virtual gmp_matrix* getHMatrix(int dim) { return _HMatrix[dim]; }
-   
    // print the vertices of cells of certain dimension
    virtual void printComplex(int dim);
    
    // write this cell complex in legacy .msh format
    virtual int writeComplexMSH(const std::string &name); 
    
+    // construct boundary operator matrix dim->dim-1
+   //virtual void constructHMatrix(int dim);
+   // get the boundary operator matrix dim->dim-1
+   //virtual gmp_matrix* getHMatrix(int dim) { return _HMatrix[dim]; }
+  
+   virtual std::vector<gmp_matrix*> constructHMatrices();
+   
 };
+
+class ChainComplex{
+  private:
+   // boundary operator matrices for this chain complex
+   // h_k: C_k -> C_(k-1)
+   gmp_matrix* _HMatrix[4];
+   
+  public:
+   
+   ChainComplex( std::vector<gmp_matrix*> HMatrix ){
+     for(int i = 0; i < HMatrix.size(); i++){
+       _HMatrix[i] = HMatrix.at(i);
+     }  
+   }
+   ChainComplex(){
+     for(int i = 0; i < 4; i++){
+       _HMatrix[i] = create_gmp_matrix_zero(1,1);
+     }
+   }
+   virtual ~ChainComplex(){}
+   
+   // get the boundary operator matrix dim->dim-1
+   virtual gmp_matrix* getHMatrix(int dim) { return _HMatrix[dim]; }
+   
+   virtual gmp_matrix* ker(gmp_matrix* HMatrix);
+   
+   virtual int printMatrix(gmp_matrix* matrix){ 
+     printf("%d rows and %d columns\n", gmp_matrix_rows(matrix), gmp_matrix_cols(matrix)); 
+     return gmp_matrix_printf(matrix); } 
+     
+};
+
 
 #endif
 
