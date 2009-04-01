@@ -1,5 +1,5 @@
-Geometry.OCCFixSmallEdges=1;
-Geometry.OCCFixSmallFaces=1;
+Geometry.OCCFixSmallEdges = 1;
+Geometry.OCCFixSmallFaces = 1;
 
 Merge "tank.brep";
 

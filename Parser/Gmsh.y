@@ -2576,7 +2576,7 @@ Transfinite :
                 ge->meshAttributes.typeTransfinite = type * sign(d);
                 ge->meshAttributes.coeffTransfinite = coef;
               }
-              else if(j > 0)
+              else if(sign > 0)
                 yymsg(0, "Unknown line %d", j);
             }
           }

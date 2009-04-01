@@ -303,8 +303,8 @@ static bool CancelDelaunayHybrid(GModel *m)
     return !Msg::GetBinaryAnswer
       ("You are trying to generate a mixed structured/unstructured grid using\n"
        "the 3D Delaunay algorithm. This algorithm cannot garantee that the\n"
-       "final mesh will be conforming. You should probably use the Frontal\n"
-       "Netgen algorithm instead. Do you really want to continue?\n\n"
+       "final mesh will be conforming. You should probably use the 3D Frontal\n"
+       "algorithm instead. Do you really want to continue?\n\n"
        "(To disable this warning in the future, select `Enable expert mode'\n"
        "in the option dialog.)",
        "Continue", "Cancel");
