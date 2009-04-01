@@ -1,4 +1,4 @@
-$Id: VERSIONS.txt,v 1.43 2009-03-30 08:19:28 geuzaine Exp $
+$Id: VERSIONS.txt,v 1.44 2009-04-01 18:50:53 geuzaine Exp $
 
 2.3.2 (?): optionally copy transfinite mesh contraints during geometry
 transformations.
@@ -413,9 +413,9 @@ Shewchuk's Triangle as an alternative isotropic 2D mesh generator;
 added AngleSmoothNormals to control sharp edge display with smoothed
 normals; fixed random crash for lighted 3D iso surfaces.
 
-1.23: fixed duplicate elements generation + non-matching tetrahedra
-faces in 3D extruded meshes; better display of displacement maps;
-fixed interactive ellipsis construction; generalized boundary
+1.23 (Aug, 2001): fixed duplicate elements generation + non-matching
+tetrahedra faces in 3D extruded meshes; better display of displacement
+maps; fixed interactive ellipsis construction; generalized boundary
 operator; added new explode option for post-processing views; enhanced
 link view behavior (to update only the changed items); added new
 default plugins: Skin, Transform, Smooth; fixed various other small

@@ -769,8 +769,9 @@ case "$UNAME" in
       BO="${BO} NoDll"
     fi
     if test "x${OCC}" = "xyes"; then
-      GMSH_LIBS="${GMSH_LIBS} -lwinspool -lws2_32"
+      GMSH_LIBS="${GMSH_LIBS} -lwinspool"
     fi
+    GMSH_LIBS="${GMSH_LIBS} -lws2_32"
     if test "x$enable_gui" != "xno"; then
       GMSH_LIBS="${GMSH_LIBS} Fltk/Win32Icon.res"
     fi

@@ -688,9 +688,10 @@ int GModel::readSTL(const std::string &name, double tolerance)
   char buffer[256];
   fgets(buffer, sizeof(buffer), fp);
 
-  // workaround for stupid 3D-DOCTOR software, which uses "solid" to
-  // start its binary files
+  // workaround for stupid tools which use "solid" to start their
+  // binary files
   if(!strncmp(buffer, "solid 3D-DOCTOR", 15)) buffer[0] = 'z';
+  if(!strncmp(buffer, "solid binary STL from Solid Edge", 32)) buffer[0] = 'z';
 
   if(!strncmp(buffer, "solid", 5)){
     // ASCII STL
