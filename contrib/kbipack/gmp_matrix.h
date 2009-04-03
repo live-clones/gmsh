@@ -22,7 +22,7 @@
    P.O.Box 692, FIN-33101 Tampere, Finland
    saku.suuriniemi@tut.fi
 
-   $Id: gmp_matrix.h,v 1.1 2009-03-30 14:10:57 matti Exp $
+   $Id: gmp_matrix.h,v 1.2 2009-04-03 11:06:13 matti Exp $
 */
 
 #ifndef __GMP_MATRIX_H__
@@ -42,12 +42,21 @@ typedef struct
 gmp_matrix * 
 create_gmp_matrix(size_t rows, size_t cols, 
 		  const mpz_t * elems);
+gmp_matrix * 
+create_gmp_matrix_int(size_t rows, size_t cols, 
+		  const long int * elems);
 
 gmp_matrix * 
 create_gmp_matrix_identity(size_t dim);
 
 gmp_matrix * 
 create_gmp_matrix_zero(size_t rows, size_t cols);
+
+/* Copies a block of a matrix to another matrix. No resizing (yet). */
+gmp_matrix * 
+copy_gmp_matrix(const gmp_matrix * matrix, 
+		  const size_t start_row, const size_t start_col, 
+		  const size_t end_row, const size_t end_col);
 
 int 
 destroy_gmp_matrix(gmp_matrix *);

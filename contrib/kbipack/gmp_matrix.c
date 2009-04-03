@@ -22,7 +22,7 @@
    P.O.Box 692, FIN-33101 Tampere, Finland
    saku.suuriniemi@tut.fi
 
-   $Id: gmp_matrix.c,v 1.1 2009-03-30 14:10:57 matti Exp $
+   $Id: gmp_matrix.c,v 1.2 2009-04-03 11:06:12 matti Exp $
 */
 
 
@@ -56,6 +56,38 @@ create_gmp_matrix(size_t r, size_t c,
     {
       mpz_init (new_matrix -> storage[ind]);
       mpz_set  (new_matrix -> storage[ind], e[ind]);
+    }
+
+  return new_matrix;
+}
+
+gmp_matrix * 
+create_gmp_matrix_int(size_t r, size_t c, 
+		  const long int * e)
+{
+  gmp_matrix * new_matrix;
+  size_t       ind;
+
+  new_matrix = (gmp_matrix * ) malloc(sizeof(gmp_matrix));
+  if(new_matrix == NULL)
+    {
+      return NULL;
+    }
+
+  new_matrix -> storage = (mpz_t *) calloc(r*c, sizeof(mpz_t));
+  if(new_matrix -> storage == NULL)
+    {
+      free(new_matrix);
+      return NULL;
+    }
+
+  new_matrix -> rows = r;
+  new_matrix -> cols = c;
+
+  for(ind = 0; ind < r*c; ind ++)
+    {
+      mpz_init    (new_matrix -> storage[ind]);
+      mpz_set_si  (new_matrix -> storage[ind], e[ind]);
     }
 
   return new_matrix;
@@ -125,6 +157,57 @@ create_gmp_matrix_zero(size_t rows, size_t cols)
       mpz_init_set_si (new_matrix -> storage[ind], 0);
     }
 
+  return new_matrix;
+}
+
+gmp_matrix * 
+copy_gmp_matrix(const gmp_matrix * matrix, 
+		  const size_t start_row, const size_t start_col, 
+		  const size_t end_row, const size_t end_col)
+{
+  gmp_matrix * new_matrix;
+  size_t       ind;
+  size_t       r;
+  size_t       c;
+  size_t       old_rows;
+  size_t       old_cols;
+  size_t       i;
+  size_t       j;
+
+  new_matrix = (gmp_matrix * ) malloc(sizeof(gmp_matrix));
+  if(new_matrix == NULL)
+    {
+      return NULL;
+    }
+
+  r = end_row-start_row+1;
+  c = end_col-start_col+1;
+  new_matrix -> storage = (mpz_t *) calloc(r*c, sizeof(mpz_t));
+  if(new_matrix -> storage == NULL)
+    {
+      free(new_matrix);
+      return NULL;
+    }
+
+  new_matrix -> rows = r;
+  new_matrix -> cols = c;
+
+  old_rows = matrix -> rows;
+  old_cols = matrix -> cols;
+
+  ind = 0;
+  for(j = 1; j <= old_cols; j++){
+    if(j >= start_col && j <= end_col){
+      for(i = 1; i <= old_rows; i++){
+        if(i >= start_row && i <= end_row){
+          mpz_init (new_matrix -> storage[ind]);
+          mpz_set  (new_matrix -> storage[ind], matrix -> storage[(j-1)*old_rows+(i-1)]);
+          ind++;
+        }
+      }
+    }
+  }
+     
   return new_matrix;
 }
 

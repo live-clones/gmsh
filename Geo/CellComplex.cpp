@@ -290,7 +290,7 @@ int CellComplex::coreduction(int dim){
         removeCell(cell);
         removeCell(bd_c.at(0));
         count++;
-        coreduced =true;
+        coreduced = true;
       }
       
     }
@@ -317,7 +317,7 @@ int CellComplex::reduction(int dim){
         removeCell(cell);
         removeCell(cbd_c.at(0));
         count++;
-        reduced =true;
+        reduced = true;
       }
       
     }
@@ -335,130 +335,86 @@ void CellComplex::reduceComplex(){
          getSize(3), getSize(2), getSize(1), getSize(0));
 }
 void CellComplex::coreduceComplex(){
+  
+  std::set<Cell*, Less_Cell> removedCells[4];
+  
   printf("Cell complex before coreduction: %d volumes, %d faces, %d edges and %d vertices.\n",
          getSize(3), getSize(2), getSize(1), getSize(0));
-  while (getSize(0) != 0){
-    citer cit = firstCell(0);
-    Cell* cell = *cit;
-    removeCell(cell);
-    //complex.coreductionMrozek(kaka);
-    coreduction(0);
-    coreduction(1);
-    coreduction(2);
+  for(int i = 0; i < 3; i++){
+    while (getSize(i) != 0){
+      citer cit = firstCell(i);
+      Cell* cell = *cit;
+      removedCells[i].insert(cell);
+      _cells[i].erase(cell);
+      //removeCell(cell);
+      //complex.coreductionMrozek(kaka);
+      coreduction(0);
+      coreduction(1);
+      coreduction(2);
+    }
     
-   }
-  
+  }
+  for(int i = 0; i < 3; i++){
+    for(citer cit = removedCells[i].begin(); cit != removedCells[i].end(); cit++){
+      Cell* cell = *cit;
+      _cells[i].insert(cell); 
+    }
+  }
   printf("Cell complex after coreduction: %d volumes, %d faces, %d edges and %d vertices.\n",
          getSize(3), getSize(2), getSize(1), getSize(0));
 }
-/*
-void CellComplex::constructHMatrix(int dim){
   
-  // h_dim: C_dim -> C_(dim-1)
-
-  
-  if(dim > 3 || dim < 1){
-    return;
-  }
-  
-  destroy_gmp_matrix(_HMatrix[dim]);
-  
-  if( _cells[dim].size() == 0 ){
-    _HMatrix[dim] = create_gmp_matrix_zero(1, 1);
-    //gmp_matrix_printf(_HMatrix[dim]);
-    return;
-  }
-  unsigned int cols = _cells[dim].size(); 
-  
-  if( _cells[dim-1].size() == 0){ 
-    _HMatrix[dim] = create_gmp_matrix_zero(1, cols);
-    //gmp_matrix_printf(_HMatrix[dim]);
-    return;
-  }
-  unsigned int rows = _cells[dim-1].size();
-  
-  mpz_t elems[rows*cols];
-  mpz_array_init( elems[0], rows*cols, sizeof(mpz_t) );  
-    
-  citer high = firstCell(dim);
-  citer low = firstCell(dim-1);
-  
-  /*
-  printf("laa %d %d %d \n", rows, cols, rows*cols);
-  for(unsigned int i=0; i < rows*cols; i++){
-    printf(" %d, ", i);
-    if(low == lastCell(dim-1)){
-      printf("rowfull %d ", i);
-      high++;
-      low = firstCell(dim-1);
-    }
-    mpz_set_ui(elems[i], kappa(*high, *low));
-    low++;
-  }
-  */
-  /*
-  unsigned int i = 0;
-  while(i < rows*cols){
-    while(low != lastCell(dim-1)){
-      mpz_set_si(elems[i], kappa(*high, *low));
-      //printf(" %d %d, ",i,  kappa(*high, *low));
-      i++;
-      low++;
-    }
-    low = firstCell(dim-1);
-    high++;
-  }
-  
-  _HMatrix[dim] = create_gmp_matrix(rows, cols,(const mpz_t *) elems);
-   
-  //gmp_matrix_printf(_HMatrix[dim]);
-  
-  return; 
-}
-*/
 std::vector<gmp_matrix*> CellComplex::constructHMatrices(){
   
   // h_dim: C_dim -> C_(dim-1)
   
   std::vector<gmp_matrix*> HMatrix;
-  
-  HMatrix.push_back(create_gmp_matrix_zero(1, 1));
-  
-  for(int dim = 1; dim < 4; dim++){
-    if( _cells[dim].size() == 0 ){
-      HMatrix.push_back( create_gmp_matrix_zero(1, 1));
-      //gmp_matrix_printf(HMatrix[dim]);
-      break;
-    }
-    unsigned int cols = _cells[dim].size(); 
-    
-    if( _cells[dim-1].size() == 0){ 
-      HMatrix.push_back(create_gmp_matrix_zero(1, cols));
-      //gmp_matrix_printf(HMatrix[dim]);
-      break;
-    }
-    unsigned int rows = _cells[dim-1].size();
-    mpz_t elems[rows*cols];
-    mpz_array_init( elems[0], rows*cols, sizeof(mpz_t) );  
-    
-    citer high = firstCell(dim);
-    citer low = firstCell(dim-1);
-    
 
-    unsigned int i = 0;
-    while(i < rows*cols){
-      while(low != lastCell(dim-1)){
-        mpz_set_si(elems[i], kappa(*high, *low));
-        //printf(" %d %d, ",i,  kappa(*high, *low));
-        i++;
-        low++;
-      }
-      low = firstCell(dim-1);
-      high++;
-    }
-    HMatrix.push_back(create_gmp_matrix(rows, cols,(const mpz_t *) elems));
+  HMatrix.push_back(NULL);
+
+  for(int dim = 1; dim < 4; dim++){
+    unsigned int cols = _cells[dim].size();
+    unsigned int rows =  _cells[dim-1].size();
     
-    //gmp_matrix_printf(_HMatrix[dim]);
+    for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
+      Cell* cell = *cit;
+      if(cell->inSubdomain()) cols--;
+    }
+    for(citer cit = firstCell(dim-1); cit != lastCell(dim-1); cit++){
+      Cell* cell = *cit;
+      if(cell->inSubdomain()) rows--;
+    }
+    
+    
+    if( cols == 0 ){
+      HMatrix.push_back(NULL);
+    }
+    else if( rows == 0){
+      HMatrix.push_back(create_gmp_matrix_zero(1, cols));
+    }
+    else{
+      long int elems[rows*cols];
+      
+      citer high = firstCell(dim);
+      citer low = firstCell(dim-1);
+
+      unsigned int i = 0;
+      while(i < rows*cols){
+        while(low != lastCell(dim-1)){      
+          Cell* lowcell = *low;
+          Cell* highcell = *high;
+          if(!(highcell->inSubdomain() || lowcell->inSubdomain())){
+            elems[i] = kappa(*high, *low);
+            i++;
+          }
+          low++;
+        }
+        low = firstCell(dim-1);
+        high++;
+      }
+      HMatrix.push_back(create_gmp_matrix_int(rows, cols, elems));
+      
+    }
   }
   return HMatrix; 
 }
@@ -575,29 +531,112 @@ int CellComplex::writeComplexMSH(const std::string &name){
 }
 
 
-void CellComplex::printComplex(int dim){
+void CellComplex::printComplex(int dim, bool subcomplex){
   for (citer cit = firstCell(dim); cit != lastCell(dim); cit++){
     Cell* cell = *cit;
     for(int i = 0; i < cell->getNumVertices(); i++){
-      printf("%d ", cell->getVertex(i));
+      if(!subcomplex && !cell->inSubdomain()) printf("%d ", cell->getVertex(i));
     }
     printf("\n");
   }
 }
 
-gmp_matrix* ChainComplex::ker(gmp_matrix* HMatrix){
+void ChainComplex::KerCod(int dim){
   
-  // H = USV -> WH = US, W = inv(V)
-  gmp_normal_form* W_USform = create_gmp_Smith_normal_form(HMatrix, NOT_INVERTED, INVERTED);
- 
+  if(dim < 1 || dim > 3 || _HMatrix[dim] == NULL) return;
   
+  gmp_matrix* HMatrix = copy_gmp_matrix(_HMatrix[dim], 1, 1, 
+                                        gmp_matrix_rows(_HMatrix[dim]), gmp_matrix_cols(_HMatrix[dim]));
   
-  return W_USform->canonical;
+  gmp_normal_form* normalForm = create_gmp_Hermite_normal_form(HMatrix, NOT_INVERTED, INVERTED);
+  //printMatrix(normalForm->left);
+  //printMatrix(normalForm->canonical);
+  //printMatrix(normalForm->right);
+  
+  int minRowCol = std::min(gmp_matrix_rows(normalForm->canonical), gmp_matrix_cols(normalForm->canonical));
+  int rank = 0;
+  mpz_t elem;
+  mpz_init(elem);
+  
+  while(rank < minRowCol){
+    gmp_matrix_get_elem(elem, rank+1, rank+1, normalForm->canonical);
+    if(mpz_cmp_si(elem,0) == 0) break;
+    rank++;
+  }
+  
+  if(rank != gmp_matrix_cols(normalForm->canonical)){
+    _kerH[dim] = copy_gmp_matrix(normalForm->right, 1, rank+1, 
+                                 gmp_matrix_rows(normalForm->right),  gmp_matrix_cols(normalForm->right));
+  }
+  
+  if(rank > 0){
+     _codH[dim] = copy_gmp_matrix(normalForm->canonical, 1, 1,
+                                  gmp_matrix_rows(normalForm->canonical), rank);
+    gmp_matrix_left_mult(normalForm->left, _codH[dim]);
+  }
+  
+  mpz_clear(elem);
+  destroy_gmp_normal_form(normalForm);
+  
+  return;
+}
+/*
+//j:B->Z
+void ChainComplex::Inclusion(int dim){
+  
+  if(dim < 1 || dim > 3 || _kerH[dim] == NULL || _codH[dim] == NULL) return;
+  
+  int rows = gmp_matrix_rows(Zbasis);
+  int cols = gmp_matrix_cols(Zbasis);
+  if(rows < cols) return;
+  
+  rows = gmp_matrix_rows(Bbasis);
+  cols = gmp_matrix_cols(Bbasis);
+  if(rows < cols) return;
+  
+  gmp_matrix* Zbasis = copy_gmp_matrix(_ker[dim], 1, 1,
+                                       gmp_matrix_rows(_kerH[dim]), gmp_matrix_cols(_kerH[dim]));
+  gmp_matrix* Bbasis = copy_gmp_matrix(_cod[dim], 1, 1,
+                                       gmp_matrix_rows(_codH[dim]), gmp_matrix_cols(_codH[dim]));
+           
+  // A*inv(V) = U*S
+  normalForm = create_gmp_Smith_normal_form(Zbasis, NOT_INVERTED, INVERTED);
+  
+  mpz_t elem;
+  mpz_init(elem);
+  
+  for(int i = 1; i < cols; i++){
+    gmp_matrix_get_elem(elem, i, i, normalForm->canonical);
+    if(mpz_cmp_si(elem,0) == 0){
+      destroy_gmp_normal_form(normalForm);
+      return;
+    }
+  }
+  
+  gmp_matrix_left_mult(normalForm->left, Bbasis);
+  
+
   
 }
+*/
+
+void ChainComplex::matrixTest(){
   
-
-
+  int rows = 3;
+  int cols = 6;
+  
+  long int elems[rows*cols];
+  for(int i = 1; i<=rows*cols; i++) elems[i-1] = i;
+  
+  gmp_matrix* matrix = create_gmp_matrix_int(rows, cols, elems);
+  
+  gmp_matrix* copymatrix = copy_gmp_matrix(matrix, 3, 2, 3, 5);
+  
+  printMatrix(matrix);
+  printMatrix(copymatrix);
+  
+  return; 
+}
 
 
 #endif
