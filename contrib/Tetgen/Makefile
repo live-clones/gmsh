@@ -61,4 +61,3 @@ meshio${OBJEXT}: meshio.cxx tetgen.h
 meshstat${OBJEXT}: meshstat.cxx tetgen.h
 predicates${OBJEXT}: predicates.cxx tetgen.h
 surface${OBJEXT}: surface.cxx tetgen.h
-tetgen${OBJEXT}: tetgen.cxx tetgen.h

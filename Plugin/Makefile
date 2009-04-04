@@ -77,8 +77,7 @@ PluginManager${OBJEXT}: PluginManager.cpp ../Common/GmshConfig.h Plugin.h \
   HarmonicToTime.h ModulusPhase.h Integrate.h Gradient.h Curl.h \
   Divergence.h Annotate.h Remove.h MakeSimplex.h Smooth.h Transform.h \
   LongitudeLatitude.h Triangulate.h Warp.h SphericalRaise.h \
-  Eigenvectors.h Eigenvalues.h Lambda2.h Evaluate.h ../Post/OctreePost.h \
-  ../Common/Octree.h ../Common/OctreeInternals.h Probe.h FieldView.h \
+  Eigenvectors.h Eigenvalues.h Lambda2.h Evaluate.h Probe.h FieldView.h \
   GSHHS.h FiniteElement.h ../Common/Context.h ../Geo/CGNSOptions.h \
   ../Mesh/meshPartitionOptions.h
 Levelset${OBJEXT}: Levelset.cpp Levelset.h Plugin.h ../Common/Options.h \
@@ -325,7 +324,7 @@ FiniteElement${OBJEXT}: FiniteElement.cpp ../Common/GmshConfig.h ../Geo/GModel.h
   ../Numeric/gmshFunction.h ../Numeric/gmshAssembler.h ../Geo/MElement.h \
   ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/SVector3.h \
   ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
   ../Numeric/gmshFunction.h ../Common/Gmsh.h ../Common/GmshMessage.h \
   ../Numeric/GmshMatrix.h ../Numeric/gmshLaplace.h \

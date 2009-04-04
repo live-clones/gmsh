@@ -103,7 +103,7 @@ Function CheeseHole
   l7 = newreg; Line Loop(l7) = {-c2,-c7,-c12};Ruled Surface(newreg) = {l7};
   l8 = newreg; Line Loop(l8) = {-c6,-c9,c2};  Ruled Surface(newreg) = {l8};
 
-  // We then store the surface loops identification numbers in list
+  // We then store the surface loops identification numbers in a list
   // for later reference (we will need these to define the final
   // volume):
 

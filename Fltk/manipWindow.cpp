@@ -124,7 +124,7 @@ void manipWindow::update(bool force)
       value[i]->step(1.);
       value[i+3]->minimum(-val1);
       value[i+3]->maximum(val1);
-      value[i+3]->step(val1/200.);
+      value[i+3]->step(val1 / 200.);
       value[i+6]->minimum(0.01);
       value[i+6]->maximum(100.);
       value[i+6]->step(0.01);

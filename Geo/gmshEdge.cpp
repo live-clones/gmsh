@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <sstream>
 #include "GModel.h"
 #include "GFace.h"
 #include "GFaceCompound.h"
@@ -61,6 +62,24 @@ GEntity::GeomType gmshEdge::geomType() const
   case MSH_SEGM_DISCRETE: return DiscreteCurve; 
   default : return Unknown;
   }
+}
+
+std::string gmshEdge::getAdditionalInfoString()
+{
+  if(List_Nbr(c->Control_Points) > 0){
+    std::ostringstream sstream;
+    sstream << "{";
+    for(int i = 0; i < List_Nbr(c->Control_Points); i++){
+      if(i) sstream << ",";
+      Vertex *v;
+      List_Read(c->Control_Points, i, &v);
+      sstream << v->Num;
+    }
+    sstream << "}";
+    return sstream.str();    
+  }
+  else
+    return GEdge::getAdditionalInfoString();
 }
 
 int gmshEdge::minimumMeshSegments () const

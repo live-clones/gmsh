@@ -441,7 +441,7 @@ static void TransfiniteSph(Vertex S, Vertex center, Vertex *T)
 
 bool iSRuledSurfaceASphere(Surface *s, SPoint3 &center, double &radius)
 {
-  if(s->Typ != MSH_SURF_REGL && s->Typ != MSH_SURF_TRIC)return false;
+  if(s->Typ != MSH_SURF_REGL && s->Typ != MSH_SURF_TRIC) return false;
 
   bool isSphere = true;
   Vertex *O = 0;

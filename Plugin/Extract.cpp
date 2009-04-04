@@ -232,7 +232,7 @@ PView *GMSH_ExtractPlugin::execute(PView *v)
   }
   else if(step > data1->getNumTimeSteps() - 1){
     Msg::Error("Invalid time step (%d) in View[%d]: using all steps instead",
-        step, v1->getIndex());
+               step, v1->getIndex());
     step = - data1->getNumTimeSteps();
   }
 

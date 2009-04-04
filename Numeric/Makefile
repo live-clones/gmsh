@@ -75,8 +75,9 @@ gmshLaplace${OBJEXT}: gmshLaplace.cpp gmshLaplace.h gmshTermOfFormulation.h \
   ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Common/GmshDefines.h \
   ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
-  ../Numeric/Gauss.h ../Common/Gmsh.h ../Common/GmshMessage.h Numeric.h
+  ../Geo/MEdge.h ../Geo/SVector3.h ../Numeric/FunctionSpace.h \
+  ../Numeric/GmshMatrix.h ../Numeric/Gauss.h ../Common/Gmsh.h \
+  ../Common/GmshMessage.h Numeric.h
 gmshHelmholtz${OBJEXT}: gmshHelmholtz.cpp gmshHelmholtz.h \
   gmshTermOfFormulation.h GmshMatrix.h ../Common/GmshConfig.h \
   ../Common/GmshMessage.h gmshFunction.h gmshAssembler.h \
@@ -90,7 +91,7 @@ gmshHelmholtz${OBJEXT}: gmshHelmholtz.cpp gmshHelmholtz.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/MElement.h \
   ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/SVector3.h \
   ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
   ../Common/Gmsh.h ../Common/GmshMessage.h Numeric.h
 gmshElasticity${OBJEXT}: gmshElasticity.cpp gmshElasticity.h \
@@ -106,7 +107,7 @@ gmshElasticity${OBJEXT}: gmshElasticity.cpp gmshElasticity.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/MElement.h \
   ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/SVector3.h \
   ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
   ../Common/Gmsh.h ../Common/GmshMessage.h Numeric.h
 gmshProjection${OBJEXT}: gmshProjection.cpp gmshProjection.h \
@@ -122,7 +123,7 @@ gmshProjection${OBJEXT}: gmshProjection.cpp gmshProjection.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/MElement.h \
   ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/SVector3.h \
   ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
   ../Common/Gmsh.h ../Common/GmshMessage.h Numeric.h
 EigSolve${OBJEXT}: EigSolve.cpp

@@ -753,7 +753,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfInters
       ++itt;
     }
   }
-  
+
   // the delaunay algo is based directly on internal gmsh structures
   // BDS mesh is passed in order not to recompute local coordinates of
   // vertices

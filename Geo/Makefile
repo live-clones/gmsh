@@ -320,9 +320,9 @@ MVertex${OBJEXT}: MVertex.cpp MVertex.h SPoint2.h SPoint3.h GVertex.h GEntity.h 
   GEdgeLoop.h Pair.h GFaceCompound.h ../Common/GmshMessage.h \
   ../Common/StringUtils.h
 MFace${OBJEXT}: MFace.cpp ../Common/GmshConfig.h MFace.h MVertex.h SPoint2.h \
-  SPoint3.h SVector3.h ../Numeric/Numeric.h ../Numeric/GmshMatrix.h \
-  ../Common/GmshMessage.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/meshPartitionOptions.h
+  SPoint3.h MEdge.h SVector3.h ../Numeric/Numeric.h \
+  ../Numeric/GmshMatrix.h ../Common/GmshMessage.h ../Common/Context.h \
+  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
 MElement${OBJEXT}: MElement.cpp ../Common/GmshConfig.h ../Common/GmshMessage.h \
   MElement.h ../Common/GmshDefines.h MVertex.h SPoint2.h SPoint3.h \
   MEdge.h SVector3.h MFace.h ../Numeric/FunctionSpace.h \
@@ -378,5 +378,9 @@ MPyramid${OBJEXT}: MPyramid.cpp MPyramid.h MElement.h ../Common/GmshDefines.h \
   ../Numeric/Numeric.h ../Numeric/GmshMatrix.h
 MZone${OBJEXT}: MZone.cpp ../Common/GmshConfig.h
 MZoneBoundary${OBJEXT}: MZoneBoundary.cpp ../Common/GmshConfig.h
-CellComplex${OBJEXT}: CellComplex.cpp CellComplex.h 
-  
+CellComplex${OBJEXT}: CellComplex.cpp CellComplex.h ../Common/GmshConfig.h \
+  MElement.h ../Common/GmshDefines.h MVertex.h SPoint2.h SPoint3.h \
+  MEdge.h SVector3.h MFace.h ../Common/GmshMessage.h \
+  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
+  GModel.h GVertex.h GEntity.h Range.h SBoundingBox3d.h GPoint.h GEdge.h \
+  GFace.h GEdgeLoop.h Pair.h GRegion.h

@@ -5,7 +5,6 @@
 
 #include <sstream>
 #include <algorithm>
-
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"

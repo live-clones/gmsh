@@ -100,12 +100,12 @@ GUI${OBJEXT}: GUI.cpp GUI.h graphicWindow.h openglWindow.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/MElement.h \
   ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
-  ../Numeric/Gauss.h ../Post/PView.h Solvers.h ../Mesh/Field.h \
-  ../Plugin/Plugin.h ../Common/Options.h ../Post/PViewDataList.h \
-  ../Post/PViewData.h ../Common/ListUtils.h ../Plugin/PluginManager.h \
-  ../Common/OpenFile.h Win32Icon.h ../Common/Context.h \
-  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
+  ../Geo/MEdge.h ../Geo/SVector3.h ../Numeric/FunctionSpace.h \
+  ../Numeric/GmshMatrix.h ../Numeric/Gauss.h ../Post/PView.h Solvers.h \
+  ../Mesh/Field.h ../Plugin/Plugin.h ../Common/Options.h \
+  ../Post/PViewDataList.h ../Post/PViewData.h ../Common/ListUtils.h \
+  ../Plugin/PluginManager.h ../Common/OpenFile.h Win32Icon.h \
+  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
 graphicWindow${OBJEXT}: graphicWindow.cpp GUI.h graphicWindow.h openglWindow.h \
   ../Graphics/drawContext.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   paletteWindow.h mainWindow.h menuWindow.h popupButton.h messageWindow.h \
@@ -126,10 +126,10 @@ openglWindow${OBJEXT}: openglWindow.cpp openglWindow.h ../Graphics/drawContext.h
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/MElement.h \
   ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
-  ../Numeric/Gauss.h Draw.h ../Numeric/Numeric.h ../Numeric/GmshMatrix.h \
-  GUI.h ../Common/VertexArray.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/meshPartitionOptions.h
+  ../Geo/MEdge.h ../Geo/SVector3.h ../Numeric/FunctionSpace.h \
+  ../Numeric/GmshMatrix.h ../Numeric/Gauss.h Draw.h ../Numeric/Numeric.h \
+  ../Numeric/GmshMatrix.h GUI.h ../Common/VertexArray.h \
+  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
 menuWindow${OBJEXT}: menuWindow.cpp ../Common/GmshConfig.h \
   ../Common/GmshMessage.h GUI.h Draw.h menuWindow.h popupButton.h \
   mainWindow.h graphicWindow.h openglWindow.h ../Graphics/drawContext.h \
@@ -149,14 +149,15 @@ menuWindow${OBJEXT}: menuWindow.cpp ../Common/GmshConfig.h \
   classificationEditor.h ../Geo/MElement.h ../Common/GmshDefines.h \
   ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
-  ../Numeric/Gauss.h ../Common/Options.h Solvers.h \
-  ../Common/CommandLine.h ../Mesh/Generator.h ../Mesh/HighOrder.h \
-  ../Post/PView.h ../Post/PViewData.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h ../Mesh/Field.h ../Common/OS.h \
-  ../Common/StringUtils.h ../Common/OpenFile.h ../Common/CreateFile.h \
-  ../Geo/findLinks.h ../Common/ListUtils.h ../Geo/GeoStringInterface.h \
-  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
+  ../Geo/MEdge.h ../Geo/SVector3.h ../Numeric/FunctionSpace.h \
+  ../Numeric/GmshMatrix.h ../Numeric/Gauss.h ../Common/Options.h \
+  Solvers.h ../Common/CommandLine.h ../Mesh/Generator.h \
+  ../Mesh/HighOrder.h ../Post/PView.h ../Post/PViewData.h \
+  ../Post/PViewOptions.h ../Post/ColorTable.h ../Mesh/Field.h \
+  ../Common/OS.h ../Common/StringUtils.h ../Common/OpenFile.h \
+  ../Common/CreateFile.h ../Geo/findLinks.h ../Common/ListUtils.h \
+  ../Geo/GeoStringInterface.h ../Common/Context.h ../Geo/CGNSOptions.h \
+  ../Mesh/meshPartitionOptions.h
 optionWindow${OBJEXT}: optionWindow.cpp ../Common/GmshConfig.h \
   ../Common/GmshDefines.h ../Common/GmshMessage.h GUI.h optionWindow.h \
   spherePositionWidget.h colorbarWindow.h ../Post/ColorTable.h \
@@ -171,11 +172,11 @@ optionWindow${OBJEXT}: optionWindow.cpp ../Common/GmshConfig.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Geo/MVertex.h \
   ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
-  ../Post/PView.h ../Post/PViewData.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h ../Common/OS.h ../Common/Context.h \
-  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
+  ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/MEdge.h \
+  ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
+  ../Numeric/Gauss.h ../Post/PView.h ../Post/PViewData.h \
+  ../Post/PViewOptions.h ../Post/ColorTable.h ../Common/OS.h \
+  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
 colorbarWindow${OBJEXT}: colorbarWindow.cpp colorbarWindow.h \
   ../Post/ColorTable.h Draw.h ../Common/Context.h ../Geo/CGNSOptions.h \
   ../Mesh/meshPartitionOptions.h
@@ -210,7 +211,7 @@ statisticsWindow${OBJEXT}: statisticsWindow.cpp GUI.h Draw.h statisticsWindow.h 
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/MElement.h \
   ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/SVector3.h \
   ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Numeric/Gauss.h \
   ../Post/PView.h ../Mesh/Generator.h ../Common/Context.h \
@@ -229,11 +230,11 @@ visibilityWindow${OBJEXT}: visibilityWindow.cpp ../Common/GmshConfig.h GUI.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/MElement.h \
   ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
-  ../Numeric/Gauss.h ../Post/PView.h ../Post/PViewData.h \
-  ../Geo/GeoStringInterface.h ../Common/ListUtils.h ../Common/Options.h \
-  ../Post/ColorTable.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/meshPartitionOptions.h ../Parser/Parser.h
+  ../Geo/MEdge.h ../Geo/SVector3.h ../Numeric/FunctionSpace.h \
+  ../Numeric/GmshMatrix.h ../Numeric/Gauss.h ../Post/PView.h \
+  ../Post/PViewData.h ../Geo/GeoStringInterface.h ../Common/ListUtils.h \
+  ../Common/Options.h ../Post/ColorTable.h ../Common/Context.h \
+  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h ../Parser/Parser.h
 clippingWindow${OBJEXT}: clippingWindow.cpp GUI.h Draw.h clippingWindow.h \
   paletteWindow.h ../Common/GmshDefines.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewOptions.h ../Post/ColorTable.h \
@@ -312,8 +313,8 @@ projectionEditor${OBJEXT}: projectionEditor.cpp ../Common/GmshConfig.h GUI.h \
   paletteWindow.h fileDialogs.h ../Geo/GModelIO_Fourier.h ../Geo/GModel.h \
   ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
   ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
+  ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/MEdge.h \
+  ../Geo/SVector3.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Numeric/GmshMatrix.h ../Numeric/Gauss.h Draw.h ../Common/Options.h \
   ../Common/StringUtils.h ../Geo/fourierFace.h ../Geo/GFace.h \
   ../Geo/GModel.h ../Geo/Range.h ../Geo/fourierEdge.h ../Geo/GEdge.h \
@@ -332,13 +333,14 @@ classificationEditor${OBJEXT}: classificationEditor.cpp GUI.h \
   ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Common/GmshDefines.h \
   ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
-  ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Numeric/Gauss.h \
-  ../Post/ColorTable.h paletteWindow.h ../Numeric/Numeric.h \
-  ../Numeric/GmshMatrix.h Draw.h ../Common/Options.h ../Common/Context.h \
-  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h ../Geo/MLine.h \
-  ../Geo/MElement.h ../Mesh/meshGFaceDelaunayInsertion.h \
-  ../Geo/MTriangle.h ../Geo/MElement.h ../Mesh/meshGFaceOptimize.h \
+  ../Geo/MEdge.h ../Geo/SVector3.h ../Common/GmshMessage.h \
+  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
+  ../Common/GmshConfig.h ../Numeric/Gauss.h ../Post/ColorTable.h \
+  paletteWindow.h ../Numeric/Numeric.h ../Numeric/GmshMatrix.h Draw.h \
+  ../Common/Options.h ../Common/Context.h ../Geo/CGNSOptions.h \
+  ../Mesh/meshPartitionOptions.h ../Geo/MLine.h ../Geo/MElement.h \
+  ../Mesh/meshGFaceDelaunayInsertion.h ../Geo/MTriangle.h \
+  ../Geo/MElement.h ../Mesh/meshGFaceOptimize.h \
   ../Mesh/meshGFaceDelaunayInsertion.h ../Geo/discreteEdge.h \
   ../Geo/GModel.h ../Geo/GEdge.h ../Geo/discreteFace.h ../Geo/GModel.h \
   ../Geo/GFace.h

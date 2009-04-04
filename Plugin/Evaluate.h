@@ -7,7 +7,6 @@
 #define _EVALUATE_H_
 
 #include "Plugin.h"
-#include "OctreePost.h"
 
 extern "C"
 {
@@ -16,13 +15,6 @@ extern "C"
 
 class GMSH_EvaluatePlugin : public GMSH_PostPlugin
 {
-private:
-  OctreePost *_octree;
-  void evaluate(PView *v1, List_T *list1, int nbElm1,
-                PView *v2, List_T *list2, int nbElm2,
-                int nbNod, int nbComp, int comp, 
-                int timeStep, int timeStep2,
-                const char *expression);
 public:
   GMSH_EvaluatePlugin(){}
   void getName(char *name) const;

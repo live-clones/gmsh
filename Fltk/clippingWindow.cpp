@@ -306,7 +306,7 @@ void clippingWindow::resetBrowser()
                                    fabs(CTX::instance()->max[i])));
   val1 *= 1.5;
   for(int i = 3; i < 10; i++){
-    value[i]->step(val1/200.);
+    value[i]->step(val1 / 200.);
     value[i]->minimum(-val1);
     value[i]->maximum(val1);
   }

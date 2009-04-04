@@ -22,6 +22,7 @@ class gmshEdge : public GEdge {
   virtual SVector3 firstDer(double par) const;
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return c; }
+  virtual std::string getAdditionalInfoString();
   virtual int minimumMeshSegments() const;
   virtual int minimumDrawSegments() const;
   virtual void resetMeshAttributes();
