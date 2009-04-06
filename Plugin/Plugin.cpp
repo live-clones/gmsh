@@ -29,7 +29,7 @@ PViewDataList *GMSH_PostPlugin::getDataList(PView *view)
   }
   else{
     // FIXME: do automatic data conversion here
-    Msg::Error("This plugin can only be run on list-based datasets");
+    Msg::Error("This plugin can only be run on list-based views (`.pos' files)");
     return 0;
   }
 }

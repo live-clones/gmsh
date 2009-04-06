@@ -155,7 +155,12 @@ PView *GMSH_EvaluatePlugin::execute(PView *v)
     externalTimeStep = 0;
   }
 
-  v1->setChanged(true);
+#if defined(HAVE_MATH_EVAL)
+  void *f = evaluator_create((char*)expr);
+  if(!f){
+    Msg::Error("Invalid expression '%s'", expr);
+    return v;
+  }
 
   OctreePost *octree = 0;
   if((data1->getNumEntities() != data2->getNumEntities()) ||
@@ -163,13 +168,8 @@ PView *GMSH_EvaluatePlugin::execute(PView *v)
     Msg::Info("External view based on different grid: interpolating...");
     octree = new OctreePost(v2);
   }
-  
-#if defined(HAVE_MATH_EVAL)
-  void *f = evaluator_create((char*)expr);
-  if(!f){
-    Msg::Error("Invalid expression '%s'", expr);
-    return v;
-  }
+
+  v1->setChanged(true);
 
   for(int step = 0; step < data1->getNumTimeSteps(); step++){
     if(timeStep >= 0 && timeStep != step) continue;
@@ -219,7 +219,7 @@ PView *GMSH_EvaluatePlugin::execute(PView *v)
                v[comp], v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8],
                w[comp], w[0], w[1], w[2], w[3], w[4], w[5], w[6], w[7], w[8]};
             double res = evaluator_evaluate
-              (f, sizeof(names)/sizeof(names[0]), names, values);
+              (f, sizeof(names) / sizeof(names[0]), names, values);
             data1->setValue(step, ent, ele, nod, comp, res);
             data1->tagNode(step, ent, ele, nod, 1);
           }
@@ -228,11 +228,10 @@ PView *GMSH_EvaluatePlugin::execute(PView *v)
     }
   }
   evaluator_destroy(f);
+  if(octree) delete octree;
 #else
   Msg::Error("MathEval is not compiled in this version of Gmsh");
 #endif
-
-  if(octree) delete octree;
 
   data1->finalize();
 
