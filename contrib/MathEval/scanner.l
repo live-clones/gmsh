@@ -34,6 +34,12 @@
 #define YY_INPUT( buffer, result, max_size ) \
 { result = input_from_string (buffer, max_size); }
 
+/* Added by Gmsh for MSVC */
+#if defined(WIN32)
+#define isatty(arg) -1
+#define YY_NO_UNISTD_H
+#endif
+
 /* Variables used to communicate with code using scanner.  */
 extern SymbolTable *matheval_symbol_table; /* Evaluator symbol table.  */
 extern char *matheval_input_string; /* String representing function.  */

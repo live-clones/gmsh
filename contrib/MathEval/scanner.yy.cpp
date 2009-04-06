@@ -556,6 +556,12 @@ char *metext;
 #define YY_INPUT( buffer, result, max_size ) \
 { result = input_from_string (buffer, max_size); }
 
+/* Added by Gmsh for MSVC */
+#if defined(WIN32)
+#define isatty(arg) -1
+#define YY_NO_UNISTD_H
+#endif
+
 /* Variables used to communicate with code using scanner.  */
 extern SymbolTable *matheval_symbol_table; /* Evaluator symbol table.  */
 extern char *matheval_input_string; /* String representing function.  */
@@ -563,7 +569,7 @@ extern char *matheval_input_string; /* String representing function.  */
 /* Read next max_size character from string into buffer.  */
 static int input_from_string (char *buffer, int max_size);
 /* Token definitions.  */
-#line 567 "scanner.yy.cpp"
+#line 573 "scanner.yy.cpp"
 
 #define INITIAL 0
 
@@ -716,10 +722,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 52 "scanner.l"
+#line 58 "scanner.l"
 
 
-#line 723 "scanner.yy.cpp"
+#line 729 "scanner.yy.cpp"
 
 	if ( !(yy_init) )
 		{
@@ -804,12 +810,12 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 54 "scanner.l"
+#line 60 "scanner.l"
 
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 56 "scanner.l"
+#line 62 "scanner.l"
 {
   /* Create node representing constant with appropriate value.  */
   melval.node = node_create ('c', atof (metext));
@@ -818,7 +824,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 62 "scanner.l"
+#line 68 "scanner.l"
 {
   /* Find symbol table record corresponding to function name.  */
   melval.record = symbol_table_lookup (matheval_symbol_table, metext);
@@ -827,7 +833,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 68 "scanner.l"
+#line 74 "scanner.l"
 {
   Record *record; /* Symbol table record.  */
   /* Inserty variable into symbol table.  */
@@ -838,49 +844,49 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 76 "scanner.l"
+#line 82 "scanner.l"
 {
   return '+';
 }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 80 "scanner.l"
+#line 86 "scanner.l"
 {
   return '-';
 }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 84 "scanner.l"
+#line 90 "scanner.l"
 {
   return '*';
 }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 88 "scanner.l"
+#line 94 "scanner.l"
 {
   return '/';
 }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 92 "scanner.l"
+#line 98 "scanner.l"
 {
   return '^';
 }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 96 "scanner.l"
+#line 102 "scanner.l"
 {
   return '(';
 }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 100 "scanner.l"
+#line 106 "scanner.l"
 {
   return ')';
 }
@@ -888,17 +894,17 @@ YY_RULE_SETUP
 case 12:
 /* rule 12 can match eol */
 YY_RULE_SETUP
-#line 104 "scanner.l"
+#line 110 "scanner.l"
 {
   return '\n';
 }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 108 "scanner.l"
+#line 114 "scanner.l"
 ECHO;
 	YY_BREAK
-#line 902 "scanner.yy.cpp"
+#line 908 "scanner.yy.cpp"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1884,7 +1890,7 @@ void mefree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 108 "scanner.l"
+#line 114 "scanner.l"
 
 
 
