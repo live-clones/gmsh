@@ -23,6 +23,11 @@
 #include "gl2yuv.h"
 #endif
 
+#if defined(WIN32)
+#undef min
+#undef max
+#endif
+
 int GuessFileFormatFromFileName(std::string fileName)
 {
   std::string ext = SplitFileName(fileName)[2];
