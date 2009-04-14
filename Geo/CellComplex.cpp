@@ -7,8 +7,6 @@
 
 #include "CellComplex.h"
 
-#if defined(HAVE_KBIPACK)
-
 CellComplex::CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> subdomain ){
   
   _domain = domain;
@@ -63,6 +61,10 @@ void CellComplex::insertCells(bool subdomain){
     }               
   }
   
+}
+
+void CellComplex::insertCell(Cell* cell){
+  _cells[cell->getDim()].insert(cell);
 }
 
 int Simplex::kappa(Cell* tau) const{
@@ -184,9 +186,9 @@ std::vector< std::set<Cell*, Less_Cell>::iterator > CellComplex::cbdIt(Cell* tau
 }
 
 
-void CellComplex::removeCell(Cell* cell){
+void CellComplex::removeCell(Cell* cell, bool deleteCell){
     _cells[cell->getDim()].erase(cell);
-  delete cell;
+    if(deleteCell) delete cell;
 }
 void CellComplex::removeCellIt(std::set<Cell*, Less_Cell>::iterator cell){
   Cell* c = *cell;
@@ -197,7 +199,7 @@ void CellComplex::removeCellIt(std::set<Cell*, Less_Cell>::iterator cell){
 
 void CellComplex::removeCellQset(Cell*& cell, std::set<Cell*, Less_Cell>& Qset){
    Qset.erase(cell);
-  delete cell;
+   delete cell;
 }
 
 void CellComplex::enqueueCellsIt(std::vector< std::set<Cell*, Less_Cell>::iterator >& cells, 
@@ -272,7 +274,7 @@ int CellComplex::coreductionMrozek(Cell* generator){
 }
 
 
-int CellComplex::coreduction(int dim){
+int CellComplex::coreduction(int dim, bool deleteCells){
   
   if(dim < 0 || dim > 2) return 0;
   
@@ -287,8 +289,8 @@ int CellComplex::coreduction(int dim){
       
       bd_c = bd(cell);
       if(bd_c.size() == 1 && inSameDomain(cell, bd_c.at(0)) ){
-        removeCell(cell);
-        removeCell(bd_c.at(0));
+        removeCell(cell, deleteCells);
+        removeCell(bd_c.at(0), deleteCells);
         count++;
         coreduced = true;
       }
@@ -300,8 +302,39 @@ int CellComplex::coreduction(int dim){
     
 }
 
+int CellComplex::coreduction(int dim, std::set<Cell*, Less_Cell>& removedCells){
+  
+  if(dim < 0 || dim > 2) return 0;
+  
+  std::vector<Cell*> bd_c;
+  int count = 0;
+  
+  bool coreduced = true;
+  while (coreduced){
+    coreduced = false;
+    for(citer cit = firstCell(dim+1); cit != lastCell(dim+1); cit++){
+      Cell* cell = *cit;
+      
+      bd_c = bd(cell);
+      if(bd_c.size() == 1 && inSameDomain(cell, bd_c.at(0)) ){
+        removedCells.insert(cell);
+        removedCells.insert(bd_c.at(0));
+        removeCell(cell, false);
+        removeCell(bd_c.at(0), false);
+        count++;
+        coreduced = true;
+      }
+      
+    }
+  }
+  
+  return count;
+  
+}
 
-int CellComplex::reduction(int dim){
+
+
+int CellComplex::reduction(int dim, bool deleteCells){
   if(dim < 1 || dim > 3) return 0;
   
   std::vector<Cell*> cbd_c;
@@ -314,8 +347,8 @@ int CellComplex::reduction(int dim){
       Cell* cell = *cit;
       cbd_c = cbd(cell);
       if(cbd_c.size() == 1 && inSameDomain(cell, cbd_c.at(0)) ){
-        removeCell(cell);
-        removeCell(cbd_c.at(0));
+        removeCell(cell, deleteCells);
+        removeCell(cbd_c.at(0), deleteCells);
         count++;
         reduced = true;
       }
@@ -334,36 +367,79 @@ void CellComplex::reduceComplex(){
   printf("Cell complex after reduction: %d volumes, %d faces, %d edges and %d vertices.\n",
          getSize(3), getSize(2), getSize(1), getSize(0));
 }
-void CellComplex::coreduceComplex(){
+
+void CellComplex::coreduceComplex(int generatorDim, std::set<Cell*, Less_Cell>& removedCells){
   
-  std::set<Cell*, Less_Cell> removedCells[4];
+  std::set<Cell*, Less_Cell> generatorCells[4];
   
   printf("Cell complex before coreduction: %d volumes, %d faces, %d edges and %d vertices.\n",
          getSize(3), getSize(2), getSize(1), getSize(0));
-  for(int i = 0; i < 3; i++){
+  
+  int i = generatorDim;
+  while (getSize(i) != 0){
+    citer cit = firstCell(i);
+    Cell* cell = *cit;
+    while(!cell->inSubdomain() && cit != lastCell(i)){
+      cell = *cit;
+      cit++;
+    }
+    generatorCells[i].insert(cell);
+    removedCells.insert(cell);
+    removeCell(cell, false);
+    coreduction(0, removedCells);
+    coreduction(1, removedCells);
+    coreduction(2, removedCells);
+  }
+  
+  
+  for(citer cit = generatorCells[i].begin(); cit != generatorCells[i].end(); cit++){
+    Cell* cell = *cit;
+    if(!cell->inSubdomain()) _cells[i].insert(cell);
+    if(!cell->inSubdomain()) removedCells.insert(cell);
+  }
+  printf("Cell complex after coreduction: %d volumes, %d faces, %d edges and %d vertices.\n",
+         getSize(3), getSize(2), getSize(1), getSize(0));
+  
+  return;
+  
+}
+void CellComplex::coreduceComplex(){
+  
+  std::set<Cell*, Less_Cell> generatorCells[4];
+  
+  printf("Cell complex before coreduction: %d volumes, %d faces, %d edges and %d vertices.\n",
+         getSize(3), getSize(2), getSize(1), getSize(0));
+  for(int i = 0; i < 4; i++){
     while (getSize(i) != 0){
       citer cit = firstCell(i);
       Cell* cell = *cit;
-      removedCells[i].insert(cell);
-      _cells[i].erase(cell);
-      //removeCell(cell);
-      //complex.coreductionMrozek(kaka);
+      while(!cell->inSubdomain() && cit != lastCell(i)){
+        cell = *cit;
+        cit++;
+      }
+      generatorCells[i].insert(cell);
+      removeCell(cell, false);
       coreduction(0);
       coreduction(1);
       coreduction(2);
     }
     
   }
-  for(int i = 0; i < 3; i++){
-    for(citer cit = removedCells[i].begin(); cit != removedCells[i].end(); cit++){
+  for(int i = 0; i < 4; i++){
+    for(citer cit = generatorCells[i].begin(); cit != generatorCells[i].end(); cit++){
       Cell* cell = *cit;
-      _cells[i].insert(cell); 
+      if(!cell->inSubdomain()) _cells[i].insert(cell); 
     }
   }
   printf("Cell complex after coreduction: %d volumes, %d faces, %d edges and %d vertices.\n",
          getSize(3), getSize(2), getSize(1), getSize(0));
+  
+  return;
 }
   
+
+#if defined(HAVE_KBIPACK)
+
 std::vector<gmp_matrix*> CellComplex::constructHMatrices(){
   
   // h_dim: C_dim -> C_(dim-1)
@@ -418,7 +494,7 @@ std::vector<gmp_matrix*> CellComplex::constructHMatrices(){
   }
   return HMatrix; 
 }
-
+#endif
 
 void CellComplex::getDomainVertices(std::set<MVertex*, Less_MVertex>& domainVertices, bool subdomain){
 
@@ -541,6 +617,8 @@ void CellComplex::printComplex(int dim, bool subcomplex){
   }
 }
 
+#if defined(HAVE_KBIPACK)
+
 void ChainComplex::KerCod(int dim){
   
   if(dim < 1 || dim > 3 || _HMatrix[dim] == NULL) return;
@@ -580,11 +658,16 @@ void ChainComplex::KerCod(int dim){
   
   return;
 }
-/*
-//j:B->Z
+
+//j:B_(k+1)->Z_k
 void ChainComplex::Inclusion(int dim){
   
-  if(dim < 1 || dim > 3 || _kerH[dim] == NULL || _codH[dim] == NULL) return;
+  if(dim < 1 || dim > 2 || _kerH[dim] == NULL || _codH[dim+1] == NULL) return;
+  
+  gmp_matrix* Zbasis = copy_gmp_matrix(_kerH[dim], 1, 1,
+                                       gmp_matrix_rows(_kerH[dim]), gmp_matrix_cols(_kerH[dim]));
+  gmp_matrix* Bbasis = copy_gmp_matrix(_codH[dim+1], 1, 1,
+                                       gmp_matrix_rows(_codH[dim+1]), gmp_matrix_cols(_codH[dim+1]));
   
   int rows = gmp_matrix_rows(Zbasis);
   int cols = gmp_matrix_cols(Zbasis);
@@ -594,18 +677,13 @@ void ChainComplex::Inclusion(int dim){
   cols = gmp_matrix_cols(Bbasis);
   if(rows < cols) return;
   
-  gmp_matrix* Zbasis = copy_gmp_matrix(_ker[dim], 1, 1,
-                                       gmp_matrix_rows(_kerH[dim]), gmp_matrix_cols(_kerH[dim]));
-  gmp_matrix* Bbasis = copy_gmp_matrix(_cod[dim], 1, 1,
-                                       gmp_matrix_rows(_codH[dim]), gmp_matrix_cols(_codH[dim]));
-           
   // A*inv(V) = U*S
-  normalForm = create_gmp_Smith_normal_form(Zbasis, NOT_INVERTED, INVERTED);
+  gmp_normal_form* normalForm = create_gmp_Smith_normal_form(Zbasis, INVERTED, INVERTED);
   
   mpz_t elem;
   mpz_init(elem);
   
-  for(int i = 1; i < cols; i++){
+  for(int i = 1; i <= cols; i++){
     gmp_matrix_get_elem(elem, i, i, normalForm->canonical);
     if(mpz_cmp_si(elem,0) == 0){
       destroy_gmp_normal_form(normalForm);
@@ -615,10 +693,146 @@ void ChainComplex::Inclusion(int dim){
   
   gmp_matrix_left_mult(normalForm->left, Bbasis);
   
-
+  
+  
+  gmp_matrix* LB = copy_gmp_matrix(Bbasis, 1, 1, gmp_matrix_cols(Zbasis), gmp_matrix_cols(Bbasis));
+  destroy_gmp_matrix(Bbasis);
+  
+  rows = gmp_matrix_rows(LB);
+  cols = gmp_matrix_cols(LB);
+  
+  mpz_t divisor;
+  mpz_init(divisor);
+  mpz_t remainder;
+  mpz_init(remainder);
+  mpz_t result;
+  mpz_init(result);
+  
+  for(int i = 1; i <= rows; i++){
+    gmp_matrix_get_elem(divisor, i, i, normalForm->canonical);
+    for(int j = 1; j <= cols; j++){
+      gmp_matrix_get_elem(elem, i, j, LB);
+      mpz_cdiv_qr(result, remainder, elem, divisor);
+      if(mpz_cmp_si(remainder, 0) == 0){
+        gmp_matrix_set_elem(result, i, j, LB);
+      }
+      else return;
+    }
+  }
+  
+  gmp_matrix_left_mult(normalForm->right, LB);
+  
+  _JMatrix[dim] = LB;
+  
+  mpz_clear(elem);
+  mpz_clear(divisor);
+  mpz_clear(result);
+  destroy_gmp_normal_form(normalForm);
+  
+  return;
   
 }
-*/
+
+void ChainComplex::Quotient(int dim){
+  
+  if(dim < 1 || dim > 3 || _JMatrix[dim] == NULL) return;
+  
+  gmp_matrix* JMatrix = copy_gmp_matrix(_JMatrix[dim], 1, 1,
+                                        gmp_matrix_rows(_JMatrix[dim]), gmp_matrix_cols(_JMatrix[dim]));
+  int rows = gmp_matrix_rows(JMatrix);
+  int cols = gmp_matrix_cols(JMatrix);
+  
+  gmp_normal_form* normalForm = create_gmp_Smith_normal_form(JMatrix, NOT_INVERTED, NOT_INVERTED);
+  
+  mpz_t elem;
+  mpz_init(elem);
+  
+  for(int i = 1; i <= cols; i++){
+    gmp_matrix_get_elem(elem, i, i, normalForm->canonical);
+    if(mpz_cmp_si(elem,0) == 0){
+      destroy_gmp_normal_form(normalForm);
+      return;
+    }
+    if(mpz_cmp_si(elem,1) > 0){
+      _torsion[dim].push_back(mpz_get_si(elem));
+    }
+  }
+  
+  int rank = cols - _torsion[dim].size();
+  if(rows - rank > 0){
+    gmp_matrix* Hbasis = copy_gmp_matrix(normalForm->left, 1, rank+1, rows, rows);
+    _QMatrix[dim] = Hbasis;
+  }
+  
+  mpz_clear(elem);
+  destroy_gmp_normal_form(normalForm);
+  return; 
+}
+
+void ChainComplex::computeHomology(){
+  
+  for(int i=0; i < 4; i++){
+    
+    KerCod(i+1);
+    
+    // 1) no edges, but zero cells
+    if(i == 0 &&  gmp_matrix_cols(getHMatrix(0)) > 0 && getHMatrix(1) == NULL) {
+      _Hbasis[i] = create_gmp_matrix_identity(gmp_matrix_cols(getHMatrix(0)));
+    }
+    
+    // 2) this dimension is empty
+    else if(getHMatrix(i) == NULL && getHMatrix(i+1) == NULL){
+      _Hbasis[i] = NULL;
+    }
+    // 3) No higher dimension cells -> none of the cycles are boundaries
+    else if(getHMatrix(i+1) == NULL){
+      _Hbasis[i] = copy_gmp_matrix(getKerHMatrix(i), 1, 1,
+                                   gmp_matrix_rows(getKerHMatrix(i)), gmp_matrix_cols(getKerHMatrix(i)));
+    }
+   
+    // 5) General case:
+    //   1) Find the bases of boundaries B and cycles Z 
+    //   2) find j: B -> Z and
+    //   3) find quotient Z/j(B) 
+    else {
+      
+      // 4) No lower dimension cells -> all chains are cycles
+      if(getHMatrix(i) == NULL){
+        _kerH[i] = create_gmp_matrix_identity(gmp_matrix_rows(getHMatrix(i+1))); 
+      }
+      
+      Inclusion(i);
+      Quotient(i);
+      
+      if(getCodHMatrix(i+1) == NULL){
+        _Hbasis[i] = getKerHMatrix(i);
+      }
+      else if(getJMatrix(i) == NULL || getQMatrix(i) == NULL){
+        _Hbasis[i] = NULL;
+      }
+      else{
+        _Hbasis[i] = copy_gmp_matrix(getKerHMatrix(i), 1, 1, 
+                                     gmp_matrix_rows(getKerHMatrix(i)), gmp_matrix_cols(getKerHMatrix(i)));
+        gmp_matrix_right_mult(_Hbasis[i], getQMatrix(i));
+      }
+    }
+    
+    destroy_gmp_matrix(_kerH[i]);
+    destroy_gmp_matrix(_codH[i]);
+    destroy_gmp_matrix(_JMatrix[i]);
+    destroy_gmp_matrix(_QMatrix[i]);
+    
+    _kerH[i] = NULL;
+    _codH[i] = NULL;
+    _JMatrix[i] = NULL;
+    _QMatrix[i] = NULL;
+   
+  }
+  
+  
+  return;
+}
+
 
 void ChainComplex::matrixTest(){
   

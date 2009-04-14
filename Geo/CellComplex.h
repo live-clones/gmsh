@@ -28,6 +28,8 @@ extern "C" {
   #include "gmp_normal_form.h" // perhaps make c++ headers instead?
 }
 
+#endif
+
 // Abstract class representing a cell of a cell complex.
 class Cell
 {  
@@ -364,9 +366,12 @@ class CellComplex
    virtual void insertCells(bool subdomain);
    
   public: 
-   CellComplex( std::set<Cell*, Less_Cell>* cells ) {
-     for(int i = 0; i < 4; i++){
-     //_cells[i] = cells[i]; 
+   CellComplex(  std::vector<GEntity*> domain, std::vector<GEntity*> subdomain, std::set<Cell*, Less_Cell> cells ) {
+     _domain = domain;
+     _subdomain = subdomain;
+     for(citer cit = cells.begin(); cit != cells.end(); cit++){
+       Cell* cell = *cit;
+       _cells[cell->getDim()].insert(cell);
      }
    }
    CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> subdomain );
@@ -396,8 +401,10 @@ class CellComplex
    virtual std::vector< std::set<Cell*, Less_Cell>::iterator > cbdIt(Cell* tau);
    
    // remove a cell from this cell complex
-   virtual void removeCell(Cell* cell);
+   virtual void removeCell(Cell* cell, bool deleteCell=true);
    virtual void removeCellIt(std::set<Cell*, Less_Cell>::iterator cell);
+   
+   virtual void insertCell(Cell* cell);
    
    // check whether two cells both belong to subdomain or if neither one does
    virtual bool inSameDomain(Cell* c1, Cell* c2) const { return 
@@ -405,14 +412,20 @@ class CellComplex
    
    // coreduction of this cell complex
    // removes corection pairs of cells of dimension dim and dim+1
-   virtual int coreduction(int dim);
+   virtual int coreduction(int dim, bool deleteCells=true);
+   // stores removed cells
+   virtual int coreduction(int dim, std::set<Cell*, Less_Cell>& removedCells);
    // reduction of this cell complex
    // removes reduction pairs of cell of dimension dim and dim-1
-   virtual int reduction(int dim);
+   virtual int reduction(int dim, bool deleteCells=true);
    
    // useful functions for (co)reduction of cell complex
    virtual void reduceComplex();
    virtual void coreduceComplex();
+   
+   // stores cells removed after removal of generatos of dimension generatorDim
+   virtual void coreduceComplex(int generatorDim, std::set<Cell*, Less_Cell>& removedCells);
+  
    
    // queued coreduction presented in Mrozek's paper
    // slower, but produces cleaner result
@@ -429,15 +442,19 @@ class CellComplex
    // get the boundary operator matrix dim->dim-1
    //virtual gmp_matrix* getHMatrix(int dim) { return _HMatrix[dim]; }
   
+   
+#if defined(HAVE_KBIPACK)   
    // construct boundary operator matrices of this cell complex
    // used to construct a chain complex
    virtual std::vector<gmp_matrix*> constructHMatrices();
+#endif
    
 };
 
+#if defined(HAVE_KBIPACK)
 // A class representing a chain complex of a cell complex.
 // This should only be constructed for a reduced cell complex because of
-// dense matrix reprentations and great computational complexity in its methods.
+// dense matrix representations and great computational complexity in its methods.
 class ChainComplex{
   private:
    // boundary operator matrices for this chain complex
@@ -450,7 +467,10 @@ class ChainComplex{
    
    gmp_matrix* _JMatrix[4];
    gmp_matrix* _QMatrix[4];
-   std::vector<int> _torsion[4];
+   std::vector<long int> _torsion[4];
+   
+   // bases for homology groups
+   gmp_matrix* _Hbasis[4];
    
   public:
    
@@ -463,6 +483,7 @@ class ChainComplex{
        _codH[i] = NULL;
        _JMatrix[i] = NULL;
        _QMatrix[i] = NULL;
+       _Hbasis[i] = NULL;
      }
      
    }
@@ -473,25 +494,30 @@ class ChainComplex{
        _codH[i] = NULL;
        _JMatrix[i] = NULL;
        _QMatrix[i] = NULL;
+       _Hbasis[i] = NULL;
      }
    }
    virtual ~ChainComplex(){}
    
    // get the boundary operator matrix dim->dim-1
-   virtual gmp_matrix* getHMatrix(int dim) { return _HMatrix[dim]; }
-   virtual gmp_matrix* getKerHMatrix(int dim) { return _kerH[dim]; }
-   virtual gmp_matrix* getCodHMatrix(int dim) { return _codH[dim]; }
-   virtual gmp_matrix* getJMatrix(int dim) { return _JMatrix[dim]; }
-   virtual gmp_matrix* getQMatrix(int dim) { return _QMatrix[dim]; }
+   virtual gmp_matrix* getHMatrix(int dim) { if(dim > -1 || dim < 4) return _HMatrix[dim]; else return NULL;}
+   virtual gmp_matrix* getKerHMatrix(int dim) { if(dim > -1 || dim < 4) return _kerH[dim]; else return NULL;}
+   virtual gmp_matrix* getCodHMatrix(int dim) { if(dim > -1 || dim < 4) return _codH[dim]; else return NULL;}
+   virtual gmp_matrix* getJMatrix(int dim) { if(dim > -1 || dim < 4) return _JMatrix[dim]; else return NULL;}
+   virtual gmp_matrix* getQMatrix(int dim) { if(dim > -1 || dim < 4) return _QMatrix[dim]; else return NULL;}
+   virtual gmp_matrix* getHbasis(int dim) { if(dim > -1 || dim < 4) return _Hbasis[dim]; else return NULL;}
    
    // Compute basis for kernel and codomain of boundary operator matrix of dimension dim (ie. ker(h_dim) and cod(h_dim) )
    virtual void KerCod(int dim);
    // Compute matrix representation J for inclusion relation from dim-cells who are boundary of dim+1-cells 
    // to cycles of dim-cells (ie. j: cod(h_(dim+1)) -> ker(h_dim) )
-   virtual void Inclusion(int dim){}
+   virtual void Inclusion(int dim);
    // Compute quotient problem for given inclusion relation j to find representatives of homology groups
    // and possible torsion coeffcients
-   virtual void Quotient(int dim){}
+   virtual void Quotient(int dim);
+   
+   // Compute bases for the homology groups of this chain complex 
+   virtual void computeHomology();
    
    virtual int printMatrix(gmp_matrix* matrix){ 
      printf("%d rows and %d columns\n", gmp_matrix_rows(matrix), gmp_matrix_cols(matrix)); 

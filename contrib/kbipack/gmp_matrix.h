@@ -22,7 +22,7 @@
    P.O.Box 692, FIN-33101 Tampere, Finland
    saku.suuriniemi@tut.fi
 
-   $Id: gmp_matrix.h,v 1.2 2009-04-03 11:06:13 matti Exp $
+   $Id: gmp_matrix.h,v 1.3 2009-04-14 10:02:22 matti Exp $
 */
 
 #ifndef __GMP_MATRIX_H__
@@ -71,6 +71,11 @@ gmp_matrix_cols(const gmp_matrix *);
 int
 gmp_matrix_get_elem(mpz_t elem, size_t row, size_t col,
 		    const gmp_matrix *);
+
+/* (matrix(row, col)) <- elem */
+int
+gmp_matrix_set_elem(mpz_t elem, size_t row, size_t col,
+		    const gmp_matrix *);		    
 
 int
 gmp_matrix_swap_rows(size_t row1, size_t row2, gmp_matrix *);
