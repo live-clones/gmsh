@@ -13,10 +13,11 @@
 #include "GmshMatrix.h"
 
 class gmshElasticityTerm : public gmshNodalFemTerm<double> {
+ protected:
   double _E, _nu;
   int _iField;
   SVector3 _f;
- protected:
+ public:
   virtual int sizeOfR(MElement *e) const { return 3 * e->getNumVertices(); }
   virtual int sizeOfC(MElement *e) const { return 3 * e->getNumVertices(); }
   void getLocalDofR(MElement *e, int iRow, MVertex **vR, int *iCompR, int *iFieldR) const

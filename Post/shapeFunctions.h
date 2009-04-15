@@ -84,6 +84,7 @@ public:
       }
       return sqrt(SQU(jac[0][0])+SQU(jac[0][1])+SQU(jac[0][2]));
     default:
+      jac[0][0] = jac[1][1] = jac[2][2] = 1.;
       return 1.;
     }
   }

@@ -28,7 +28,7 @@ generator of gmsh!
 
 class  GFaceCompoundTriangle {
 public:
-  SPoint2 p1, p2, p3;
+  SPoint3 p1, p2, p3;
   SPoint2 gfp1, gfp2, gfp3;
   SPoint3 v1, v2, v3;
   GFace *gf;
@@ -39,23 +39,25 @@ public:
 class Octree;
 
 class GFaceCompound : public GFace {
+ public:
+  typedef enum {ITERU=0,ITERV=1,ITERD=2} iterationStep;
  protected:
   std::list<GFace*> _compound;
   std::list<GEdge*> _U0, _U1, _V0, _V1;
   mutable GFaceCompoundTriangle *_gfct;
   mutable Octree *oct;
-  mutable std::map<MVertex*,SPoint2> coordinates;
+  mutable std::map<MVertex*,SPoint3> coordinates;
   mutable std::map<MVertex*,SVector3> _normals;
   void buildOct() const ;
-  void parametrize(bool,int) const ;
   void parametrize() const ;
+  void parametrize(iterationStep) const ;
   void computeNormals () const;
   void getBoundingEdges();
   void getTriangle(double u, double v, GFaceCompoundTriangle **lt, 
                    double &_u, double &_v) const;
   virtual double curvature(MTriangle *t) const;
 public:
-  typedef enum {UNITCIRCLE, CYLINDER, BIFURCATION, SQUARE} typeOfIsomorphism;
+  typedef enum {UNITCIRCLE, SQUARE} typeOfIsomorphism;
   GFaceCompound(GModel *m, int tag, 
 		std::list<GFace*> &compound,
 		std::list<GEdge*> &U0,
@@ -69,7 +71,11 @@ public:
   virtual GEntity::GeomType geomType() const { return CompoundSurface; }
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return 0; }
-  SPoint2 getCoordinates(MVertex *v) const { parametrize() ; return coordinates[v]; }
+  SPoint2 getCoordinates(MVertex *v) const { 
+    parametrize() ; 
+    std::map<MVertex*,SPoint3>::iterator it = coordinates.find(v);
+    return SPoint2(it->second.x(),it->second.y()); 
+  }
   virtual bool buildRepresentationCross(){ return false; }
   virtual double curvature(const SPoint2 &param) const;
 private:

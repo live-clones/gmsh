@@ -14,10 +14,10 @@
 #include "GmshMatrix.h"
 
 class gmshLaplaceTerm : public gmshNodalFemTerm<double> {
- private:
+ protected:
   const gmshFunction<double> *_diffusivity;
   const int _iField ;
- protected:
+ public:
   virtual int sizeOfR(MElement *e) const { return e->getNumVertices(); }
   virtual int sizeOfC(MElement *e) const { return e->getNumVertices(); }
   void getLocalDofR(MElement *e, int iRow, MVertex **vR, int *iCompR, int *iFieldR) const
@@ -31,5 +31,14 @@ class gmshLaplaceTerm : public gmshNodalFemTerm<double> {
     gmshNodalFemTerm<double>(gm), _diffusivity(diffusivity), _iField(iField){}
   virtual void elementMatrix(MElement *e, gmshMatrix<double> &m) const;
 };
+
+class gmshLaplaceTerm2DParametric : gmshLaplaceTerm {
+  GFace *_gf;
+ public:
+  gmshLaplaceTerm2DParametric(GFace *gf, gmshFunction<double> *diffusivity, int iField = 0) : 
+  _gf(gf),gmshLaplaceTerm(gf->model(),diffusivity,iField){}
+  virtual void elementMatrix(MElement *e, gmshMatrix<double> &m) const;
+};
+
 
 #endif

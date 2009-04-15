@@ -53,6 +53,14 @@ class gmshVector
     else 
       for(int i = 0; i < _r; ++i) _data[i] *= s;
   }
+
+  inline scalar operator *(const gmshVector<scalar> & other)
+  {
+    scalar s = 0.0;
+    for(int i = 0; i < _r; ++i) s += _data[i]*other._data[i];
+    return s;
+  }
+
 };
 
 template <class scalar>
@@ -171,6 +179,25 @@ class gmshMatrix
 #if !defined(HAVE_LAPACK)
   {
     Msg::Error("LU factorization requires LAPACK");
+    return false;
+  }
+#endif
+  ;
+  bool invertInPlace()
+#if !defined(HAVE_LAPACK)
+  {
+    Msg::Error("Matrix inversion requires LAPACK");
+    return false;
+  }
+#endif
+  ;
+  bool eig(gmshMatrix<scalar> &VL, // left eigenvectors 
+	   gmshVector<double> &DR, // Real part of eigenvalues
+	   gmshVector<double> &DI, // Im part of eigen
+	   gmshMatrix<scalar> &VR)
+#if !defined(HAVE_LAPACK)
+  {
+    Msg::Error("Eigenvalue computations requires LAPACK");
     return false;
   }
 #endif

@@ -104,7 +104,67 @@ extern "C" {
   void dgesvd_(const char* jobu, const char *jobvt, int *M, int *N,
                double *A, int *lda, double *S, double* U, int *ldu,
                double *VT, int *ldvt, double *work, int *lwork, int *info);
+  void dgeev_(const char *jobvl, const char *jobvr, 
+	      int *n, double *a, int *lda, 
+	      double *wr, double *wi, 
+	      double *vl, int *ldvl, 
+	      double *vr, int *ldvr, 
+	      double *work, int *lwork,
+	      int *info); 
 }
+
+template<> 
+bool gmshMatrix<double>::invertInPlace()
+{
+  int N = size1(), nrhs = N, lda = N, ldb = N, info;
+  int *ipiv = new int[N];
+  double * invA = new double[N*N];
+
+  for (size_t i=0;i<N*N;i++) invA[i     ] = 0.;
+  for (size_t i=0;i<N;i++)   invA[i*N+i]  = 1.;
+
+  dgesv_(&N, &nrhs, _data, &lda, ipiv, invA, &ldb, &info);
+  std::memcpy(_data,invA,N*N*sizeof(double));
+
+  delete [] invA;
+  delete [] ipiv;
+
+  if(info == 0) return true;
+  if(info > 0)
+    Msg::Error("U(%d,%d)=0 in matric inversion", info, info);
+  else
+    Msg::Error("Wrong %d-th argument in matrix inversion", -info);
+  return false;
+}
+
+
+template<> 
+bool gmshMatrix<double>::eig(gmshMatrix<double> &VL, // left eigenvectors 
+			     gmshVector<double> &DR, // Real part of eigenvalues
+			     gmshVector<double> &DI, // Im part of eigenvalues
+			     gmshMatrix<double> &VR )
+{
+  int N = size1(), info;
+  int LWORK = 10*N;
+  double * work = new double[LWORK];
+
+  dgeev_("V","V",
+	 &N,_data,
+	 &N,DR._data,DI._data,
+	 VL._data,&N,
+	 VR._data,&N,
+	 work,&LWORK,&info);
+  
+  delete [] work;
+
+  if(info == 0) return true;
+  if(info > 0)
+    Msg::Error("QR Algorithm failed to compute all the eigenvalues", info, info);
+  else
+    Msg::Error("Wrong %d-th argument in eig", -info);
+  return false;
+}
+
 
 template<> 
 bool gmshMatrix<double>::lu_solve(const gmshVector<double> &rhs, gmshVector<double> &result)

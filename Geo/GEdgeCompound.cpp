@@ -23,13 +23,16 @@ void GEdgeCompound::orderEdges()
 {
   std::list<GEdge*> edges ;  
   std::vector<GEdge*> _c ;  
-  for (int i=0;i<_compound.size();i++)edges.push_back(_compound[i]);
+  for (int i=0;i<_compound.size();i++){
+    _compound[i]->setCompound(this);
+    edges.push_back(_compound[i]);
+  }
   _c.push_back(*(edges.begin())); 
   edges.erase(edges.begin());
   _orientation.push_back(true);
   GVertex *first = _c[0]->getBeginVertex();
   GVertex *last = _c[0]->getEndVertex();  
-  
+
   while (first != last){
     if (edges.empty())break;
     for (std::list<GEdge*>::iterator it = edges.begin() ; it != edges.end() ; ++it){

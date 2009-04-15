@@ -288,10 +288,10 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
           GPoint pc = ge->point(US[j + 1]);
           v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, US[j + 1]);
             
-          if (displ2D){
+          if (displ2D || displ3D){
             SPoint3 pc2 = edge.interpolate(t);          
-            displ2D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
-            displ3D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
+            if (displ2D)displ2D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
+            if (displ3D)displ3D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
           }
         }
         temp.push_back(v);
@@ -309,9 +309,10 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
 }
 
 static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
-                            edgeContainer &edgeVertices, bool linear,
-                            int nPts = 1, gmshHighOrderSmoother *displ2D = 0,
-                            gmshHighOrderSmoother *displ3D = 0)
+			    edgeContainer &edgeVertices, bool linear,
+			    int nPts = 1, 
+			    gmshHighOrderSmoother *displ2D = 0,
+			    gmshHighOrderSmoother *displ3D = 0)
 {
   if(gf->geomType() == GEntity::DiscreteSurface ||
      gf->geomType() == GEntity::BoundaryLayerSurface)
@@ -349,9 +350,10 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
         else{
           GPoint pc = gf->point(US[j + 1], VS[j + 1]);
 	  v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, US[j + 1], VS[j + 1]);
-	  if (displ3D){
+	  if (displ2D || displ3D){
 	    SPoint3 pc2 = edge.interpolate(t);          
-	    displ3D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
+	    if (displ3D) displ3D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
+	    if (displ2D) displ2D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
 	  }
         }
         temp.push_back(v);
@@ -477,9 +479,10 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
 	    else{
 	      v = new MVertex(X, Y, Z, gf);
 	    }
-	    if(displ3D){
+	    if(displ3D || displ2D){
 	      SPoint3 pc2 = face.interpolate(t1, t2);
-	      displ3D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
+	      if(displ3D)displ3D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
+	      if(displ2D)displ2D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
 	    }	    
           }
           // should be expensive -> induces a new search each time
@@ -698,6 +701,47 @@ static void setHighOrder(GEdge *ge, edgeContainer &edgeVertices, bool linear,
   ge->deleteVertexArrays();
 }
 
+MTriangle* setHighOrder(MTriangle *t,
+			GFace *gf, 
+			edgeContainer &edgeVertices, 
+			faceContainer &faceVertices, 
+			bool linear, 
+			bool incomplete,
+			int nPts, 
+			gmshHighOrderSmoother *displ2D,
+			gmshHighOrderSmoother *displ3D){
+
+  std::vector<MVertex*> ve, vf;
+  getEdgeVertices(gf, t, ve, edgeVertices, linear, nPts, displ2D, displ3D);
+  if(nPts == 1){
+    return new MTriangle6(t->getVertex(0), t->getVertex(1), t->getVertex(2),
+			  ve[0], ve[1], ve[2]);
+  }
+  else{
+    if(incomplete){
+      return new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
+			    ve, nPts + 1);
+    }
+    else{
+      //      MTriangleN incpl(t->getVertex(0), t->getVertex(1), t->getVertex(2),
+      //      ve, nPts + 1);
+      if (displ2D && gf->geomType() == GEntity::Plane){
+	MTriangle incpl(t->getVertex(0), t->getVertex(1), t->getVertex(2));
+	getFaceVertices(gf, &incpl, t, vf, faceVertices, linear, nPts, displ2D, displ3D);
+      }
+      else{
+            MTriangleN incpl(t->getVertex(0), t->getVertex(1), t->getVertex(2),
+			     ve, nPts + 1);
+	    getFaceVertices(gf, &incpl, t, vf, faceVertices, linear, nPts, displ2D, displ3D);
+      }
+      ve.insert(ve.end(), vf.begin(), vf.end());
+      return new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
+			    ve, nPts + 1);
+    }
+  }  
+}
+
+
 static void setHighOrder(GFace *gf, edgeContainer &edgeVertices, 
                          faceContainer &faceVertices, bool linear, bool incomplete,
                          int nPts = 1, gmshHighOrderSmoother *displ2D = 0,
@@ -706,29 +750,9 @@ static void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
   std::vector<MTriangle*> triangles2;
   for(unsigned int i = 0; i < gf->triangles.size(); i++){
     MTriangle *t = gf->triangles[i];
-    std::vector<MVertex*> ve, vf;
-    getEdgeVertices(gf, t, ve, edgeVertices, linear, nPts, displ2D, displ3D);
-    if(nPts == 1){
-      triangles2.push_back
-        (new MTriangle6(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                        ve[0], ve[1], ve[2]));
-    }
-    else{
-      if(incomplete){
-        triangles2.push_back
-          (new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                          ve, nPts + 1));
-      }
-      else{
-        MTriangleN incpl(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                         ve, nPts + 1);
-        getFaceVertices(gf, &incpl, t, vf, faceVertices, linear, nPts, displ2D, displ3D);
-        ve.insert(ve.end(), vf.begin(), vf.end());
-        triangles2.push_back
-          (new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                          ve, nPts + 1));
-      }
-    }
+    MTriangle *tNew = setHighOrder(t,gf,edgeVertices,faceVertices, linear, incomplete,
+				   nPts,displ2D,displ3D);
+    triangles2.push_back(tNew);
     delete t;
   }
   gf->triangles = triangles2;
@@ -932,29 +956,63 @@ void SetOrder1(GModel *m)
     removeHighOrderVertices(*it);
 }
 
-static void checkHighOrderTriangles(GModel *m, std::vector<MElement*> &bad, double &minJGlob)
+static void checkHighOrderTriangles(const char* cc, GModel *m, std::vector<MElement*> &bad, double &minJGlob)
 {
   bad.clear();
   minJGlob = 1.0;
+  double minGGlob = 1.0;
+  double avg = 0.0;
+  int count = 0, nbfair=0;
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++){
       MTriangle *t = (*it)->triangles[i];
-      double disto = t->distoShapeMeasure();
+      double disto_ = t->distoShapeMeasure();
+      double gamma_ = t->gammaShapeMeasure();
+      double disto = disto_;
       minJGlob = std::min(minJGlob, disto);
+      minGGlob = std::min(minGGlob, gamma_);
+      avg += disto; count++;
       if (disto < 0) bad.push_back(t);
+      else if (disto < 0.2) nbfair++;
     }
   }
-  if (minJGlob > 0) Msg::Info("Worst Element Smoothness %g", minJGlob);
-  else Msg::Warning("Worst Element Smoothness %g", minJGlob);
+  if (minJGlob > 0) Msg::Info("%s : Worst Triangle Smoothness %g Gamma %g NbFair = %d", cc,minJGlob, minGGlob,nbfair );
+  else Msg::Warning("%s : Worst Triangle Smoothness %g (%d negative jacobians) Worst Gamma %g Avg Smoothness %g",cc, minJGlob, bad.size(),minGGlob,avg/(count?count:1));
 }
+
+
+static void checkHighOrderTetrahedron(const char* cc,GModel *m, std::vector<MElement*> &bad, double &minJGlob)
+{
+  bad.clear();
+  minJGlob = 1.0;
+  double minGGlob = 1.0;
+  double avg = 0.0;
+  int count = 0, nbfair=0;
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
+    for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++){
+      MTetrahedron *t = (*it)->tetrahedra[i];
+      double disto_ = t->distoShapeMeasure();
+      double gamma_ = t->gammaShapeMeasure();
+      double disto = disto_;
+      minJGlob = std::min(minJGlob, disto);
+      minGGlob = std::min(minGGlob, gamma_);
+      avg += disto; count++;
+      if (disto < 0) bad.push_back(t);
+      else if (disto < 0.2) nbfair++;
+    }
+  }
+  if (minJGlob > 0) Msg::Info("%s : Worst Tetrahedron Smoothness %g Gamma %g NbFair = %d", cc, minJGlob, minGGlob,nbfair );
+  else Msg::Warning("%s : Worst Tetrahedron Smoothness %g (%d negative jacobians) Worst Gamma %g Avg Smoothness %g", cc, minJGlob, bad.size(),minGGlob,avg/(count?count:1));
+}
+
 
 extern double mesh_functional_distorsion(MTriangle *t, double u, double v);
 
 static void printJacobians(GModel *m, const char *nm)
 {
-  return;
+  //  return;
 
-  const int n = 25;
+  const int n = 15;
   double D[n][n], X[n][n], Y[n][n], Z[n][n];
 
   FILE *f = fopen(nm,"w");
@@ -1050,14 +1108,11 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   // we do that model face by model face
   std::vector<MElement*> bad;
   double worst;
+  checkHighOrderTriangles("Before optimization ", m, bad, worst);
   if (displ2D){
-    checkHighOrderTriangles(m, bad, worst);
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
-      if ((*it)->geomType() == GEntity::Plane) {
-	gmshSwapHighOrderTriangles(*it);
-	if (displ2D) displ2D->smooth(*it);
-      }
-    // will have to smooth in the planar coordinates, using the metric
+      displ2D->optimize(*it,edgeVertices,faceVertices);
+    checkHighOrderTriangles("After optimization ", m, bad, worst);
   }
 
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
@@ -1065,9 +1120,11 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
                  displ2D, displ3D);
 
   // smooth the 3D regions
+  checkHighOrderTetrahedron("Before optimization", m, bad, worst);
   if (displ3D){
     for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
       displ3D->smooth(*it);
+    checkHighOrderTetrahedron("After optimization", m, bad, worst);
   }
 
   if(displ2D){    
@@ -1075,8 +1132,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
     delete displ3D;
   }
 
-  printJacobians(m, "detjIni.pos");
-  checkHighOrderTriangles(m, bad, worst);
+  printJacobians(m, "smoothness.pos");
 
   double t2 = Cpu();
   Msg::Info("Meshing order %d complete (%g s)", order, t2 - t1);

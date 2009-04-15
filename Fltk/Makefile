@@ -82,7 +82,9 @@ Main${OBJEXT}: Main.cpp GUI.h menuWindow.h popupButton.h ../Common/Gmsh.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Mesh/Field.h ../Common/GmshConfig.h \
-  ../Post/PView.h ../Mesh/BackgroundMesh.h
+  ../Geo/STensor3.h ../Geo/SVector3.h ../Numeric/GmshMatrix.h \
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Post/PView.h \
+  ../Mesh/BackgroundMesh.h
 GUI${OBJEXT}: GUI.cpp GUI.h graphicWindow.h openglWindow.h \
   ../Graphics/drawContext.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   menuWindow.h popupButton.h optionWindow.h spherePositionWidget.h \
@@ -102,10 +104,12 @@ GUI${OBJEXT}: GUI.cpp GUI.h graphicWindow.h openglWindow.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
   ../Geo/MEdge.h ../Geo/SVector3.h ../Numeric/FunctionSpace.h \
   ../Numeric/GmshMatrix.h ../Numeric/Gauss.h ../Post/PView.h Solvers.h \
-  ../Mesh/Field.h ../Plugin/Plugin.h ../Common/Options.h \
-  ../Post/PViewDataList.h ../Post/PViewData.h ../Common/ListUtils.h \
-  ../Plugin/PluginManager.h ../Common/OpenFile.h Win32Icon.h \
-  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
+  ../Mesh/Field.h ../Geo/STensor3.h ../Geo/SVector3.h \
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Plugin/Plugin.h \
+  ../Common/Options.h ../Post/PViewDataList.h ../Post/PViewData.h \
+  ../Common/ListUtils.h ../Plugin/PluginManager.h ../Common/OpenFile.h \
+  Win32Icon.h ../Common/Context.h ../Geo/CGNSOptions.h \
+  ../Mesh/meshPartitionOptions.h
 graphicWindow${OBJEXT}: graphicWindow.cpp GUI.h graphicWindow.h openglWindow.h \
   ../Graphics/drawContext.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   paletteWindow.h mainWindow.h menuWindow.h popupButton.h messageWindow.h \
@@ -154,10 +158,11 @@ menuWindow${OBJEXT}: menuWindow.cpp ../Common/GmshConfig.h \
   Solvers.h ../Common/CommandLine.h ../Mesh/Generator.h \
   ../Mesh/HighOrder.h ../Post/PView.h ../Post/PViewData.h \
   ../Post/PViewOptions.h ../Post/ColorTable.h ../Mesh/Field.h \
-  ../Common/OS.h ../Common/StringUtils.h ../Common/OpenFile.h \
-  ../Common/CreateFile.h ../Geo/findLinks.h ../Common/ListUtils.h \
-  ../Geo/GeoStringInterface.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/meshPartitionOptions.h
+  ../Geo/STensor3.h ../Geo/SVector3.h ../Numeric/Numeric.h \
+  ../Numeric/GmshMatrix.h ../Common/OS.h ../Common/StringUtils.h \
+  ../Common/OpenFile.h ../Common/CreateFile.h ../Geo/findLinks.h \
+  ../Common/ListUtils.h ../Geo/GeoStringInterface.h ../Common/Context.h \
+  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
 optionWindow${OBJEXT}: optionWindow.cpp ../Common/GmshConfig.h \
   ../Common/GmshDefines.h ../Common/GmshMessage.h GUI.h optionWindow.h \
   spherePositionWidget.h colorbarWindow.h ../Post/ColorTable.h \
@@ -190,7 +195,9 @@ fieldWindow${OBJEXT}: fieldWindow.cpp GUI.h Draw.h fieldWindow.h paletteWindow.h
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Post/PView.h ../Common/GmshMessage.h \
-  ../Mesh/Field.h ../Common/GmshConfig.h ../Geo/GeoStringInterface.h \
+  ../Mesh/Field.h ../Common/GmshConfig.h ../Geo/STensor3.h \
+  ../Geo/SVector3.h ../Numeric/GmshMatrix.h ../Numeric/Numeric.h \
+  ../Numeric/GmshMatrix.h ../Geo/GeoStringInterface.h \
   ../Common/ListUtils.h ../Common/Options.h ../Post/ColorTable.h \
   ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
 pluginWindow${OBJEXT}: pluginWindow.cpp GUI.h Draw.h pluginWindow.h \

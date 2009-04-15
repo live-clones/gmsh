@@ -199,20 +199,35 @@ double mesh_functional_distorsion(MTriangle *t, double u, double v)
   double normal[3];
   prodve(v1b, v2b, normal);
   
-  double sign;
+  double sign = 1.0;
   prosca(normal1, normal, &sign);
   double det = norm3(normal) * (sign > 0 ? 1. : -1.) / nn;  
 
   // compute distorsion
-  double dist = std::min(1. / det, det); 
-  return dist;
+  //  double dist = std::min(1. / det, det); 
+  return det;
 }
+
+
+double mesh_functional_distorsion_p2(MTriangle *t)
+{
+  double d = mesh_functional_distorsion(t,0.,0.);
+  d = std::min(d,mesh_functional_distorsion(t,1.,0.));
+  d = std::min(d,mesh_functional_distorsion(t,0.,1.));
+  d = std::min(d,mesh_functional_distorsion(t,.5,0.));
+  d = std::min(d,mesh_functional_distorsion(t,0.,0.5));
+  d = std::min(d,mesh_functional_distorsion(t,.5,0.5));
+  return d;
+}
+
 
 
 double qmDistorsionOfMapping (MTriangle *e)
 {
   //  return 1.0;
   if (e->getPolynomialOrder() == 1)return 1.0;
+  //  if (e->getPolynomialOrder() == 2)return mesh_functional_distorsion_p2(e);
+
   IntPt *pts;
   int npts;
   e->getIntegrationPoints(e->getPolynomialOrder(),&npts, &pts);
@@ -283,5 +298,5 @@ double qmDistorsionOfMapping (MTetrahedron *e)
   }
   //  printf("DMIN = %g\n\n",dmin);
 
-  return dmin< 0 ? 0 :dmin;
+  return dmin;
 }

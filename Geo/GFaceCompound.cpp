@@ -45,6 +45,29 @@ class gmshGradientBasedDiffusivity : public gmshFunction<double>
   }
 };
 
+class gmshDistanceBasedDiffusivity : public gmshFunction<double>
+{
+ private:
+  MElement *_current;
+  mutable std::map<MVertex*, SPoint3> _coordinates;
+ public:
+  gmshDistanceBasedDiffusivity (std::map<MVertex*,SPoint3> &coordinates) 
+    : _current (0),_coordinates(coordinates){}
+  void setCurrent (MElement *current){ _current = current; }
+  virtual double operator () (double x, double y, double z) const
+  {
+    double xyz[3] = {x, y, z}, uvw[3];
+    _current->xyz2uvw(xyz, uvw);
+    double value[256];
+    for (int i = 0; i < _current->getNumVertices(); i++){
+      const SPoint3 p = _coordinates[_current->getVertex(i)];
+      value[i] = p[2];
+    }
+    double val = _current->interpolate(value, uvw[0], uvw[1], uvw[2]);
+    return 1.0;//exp(15*val);
+  }
+};
+
 static void fixEdgeToValue(GEdge *ed, double value, gmshAssembler<double> &myAssembler)
 {
   myAssembler.fixVertex(ed->getBeginVertex()->mesh_vertices[0], 0, 1, value);
@@ -58,10 +81,9 @@ void GFaceCompound::parametrize() const
 {
   if (!oct){
     coordinates.clear();
-    parametrize(0, 0);
-    parametrize(1, 0);
-    // parametrize(0,1);
-    // parametrize(1,1);
+    parametrize(ITERD);
+    parametrize(ITERU);
+    parametrize(ITERV);
     computeNormals();
     buildOct();
   }
@@ -69,14 +91,9 @@ void GFaceCompound::parametrize() const
 
 void GFaceCompound::getBoundingEdges()
 {
-  if (_U0.size() && !_V1.size()){
+  if (_U0.size()){
     std::list<GEdge*> :: const_iterator it = _U0.begin();
     for ( ; it != _U0.end() ; ++it){
-      l_edges.push_back(*it);
-      (*it)->addFace(this);
-    }
-    it = _U1.begin();
-    for ( ; it != _U1.end() ; ++it){
       l_edges.push_back(*it);
       (*it)->addFace(this);
     }
@@ -112,6 +129,8 @@ void GFaceCompound::getBoundingEdges()
     l_edges.push_back(*itf);
     (*itf)->addFace(this);
   }
+
+  _U0 = l_edges;
 }
 
 GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
@@ -121,9 +140,7 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 {
   getBoundingEdges();
   if (!_U0.size()) _type = UNITCIRCLE;
-  else if (!_V0.size()) _type = UNITCIRCLE;
-  else if (!_U1.size()) _type = CYLINDER;
-  else if (!_V1.size()) _type = BIFURCATION;
+  else if (!_V1.size()) _type = UNITCIRCLE;
   else _type = SQUARE;
 }
 
@@ -196,26 +213,29 @@ static bool orderVertices(const std::list<GEdge*> &e, std::vector<MVertex*> &l,
   return true;
 }
 
-void GFaceCompound::parametrize(bool _isU, int ITER) const
+void GFaceCompound::parametrize(iterationStep step) const
 {
-  Msg::Info("Parametrizing Surface %d coordinate %d (ITER %d)", tag(), _isU, ITER); 
+  Msg::Info("Parametrizing Surface %d coordinate (ITER %d)", tag(), step); 
   
 #ifdef HAVE_GMM
   gmshLinearSystemGmm<double> lsys;
-  lsys.setPrec(1.e-10);
+  lsys.setPrec(1.e-15);
   if(Msg::GetVerbosity() == 99) lsys.setNoisy(2);
 #else
   gmshLinearSystemFull<double> lsys;
 #endif
   gmshAssembler<double> myAssembler(&lsys);
-  gmshGradientBasedDiffusivity diffusivity(coordinates);
-  if (ITER > 0) diffusivity.setComponent(_isU);
-  
+
+  gmshDistanceBasedDiffusivity diffusivity(coordinates);
+  gmshFunction<double> ONE(1.0);
+
   if (_type == UNITCIRCLE){
     // maps the boundary onto a circle
     std::vector<MVertex*> ordered;
+    std::vector<MVertex*> ordered1;
     std::vector<double> coords;  
-    bool success = orderVertices(l_edges, ordered, coords);
+    std::vector<double> coords1;  
+    bool success = orderVertices(_U0, ordered, coords);
     if (!success){
       Msg::Error("Could not order vertices on boundary");
       return;
@@ -223,25 +243,24 @@ void GFaceCompound::parametrize(bool _isU, int ITER) const
     for (unsigned int i = 0; i < ordered.size(); i++){
       MVertex *v = ordered[i];
       const double theta = 2 * M_PI * coords[i];
-      if (_isU) myAssembler.fixVertex(v, 0, 1, cos(theta));
-      else myAssembler.fixVertex(v, 0, 1, sin(theta));
+      if (step == ITERU) myAssembler.fixVertex(v, 0, 1, cos(theta));
+      else if (step == ITERV) myAssembler.fixVertex(v, 0, 1, sin(theta));
+      else if (step == ITERD) myAssembler.fixVertex(v, 0, 1, 1.0);      
+    }
+    if (step == ITERD && _V0.size()) {
+      success = orderVertices(_V0, ordered1, coords1);
+      if (!success){
+	Msg::Error("Could not order vertices on boundary");
+	return;
+      }
+      for (unsigned int i = 0; i < ordered1.size(); i++){
+	MVertex *v = ordered1[i];
+	myAssembler.fixVertex(v, 0, 1, 0.0);      
+      }    
     }
   }
-  else if (_type == CYLINDER){
-    // maps the boundary onto an annulus
-    std::vector<MVertex*> ordered;
-    std::vector<double> coords;  
-    bool success = orderVertices (_U0, ordered, coords);
-    if (!success)throw;
-    for (unsigned int i = 0; i < ordered.size(); i++){
-      MVertex *v = ordered[i];
-      const double theta = 2 * M_PI * coords[i];
-      if (_isU) myAssembler.fixVertex(v, 0, 1, cos(theta));
-      else myAssembler.fixVertex(v, 0, 1, sin(theta));
-    }
-  }
-  else{
-    if (_isU){
+  else if (_type == SQUARE){
+    if (step == ITERU){
       std::list<GEdge*> :: const_iterator it = _U0.begin();
       for ( ; it != _U0.end(); ++it){
 	fixEdgeToValue(*it, 0.0, myAssembler);
@@ -251,7 +270,7 @@ void GFaceCompound::parametrize(bool _isU, int ITER) const
 	fixEdgeToValue(*it, 1.0, myAssembler);
       }
     }
-    else{
+    else if (step == ITERV){
       std::list<GEdge*> :: const_iterator it = _V0.begin();
       for ( ; it != _V0.end(); ++it){
 	fixEdgeToValue (*it, 0.0, myAssembler);
@@ -262,7 +281,8 @@ void GFaceCompound::parametrize(bool _isU, int ITER) const
       }
     }
   }
-  
+  else throw;
+
   std::list<GFace*>::const_iterator it = _compound.begin();
   for ( ; it != _compound.end(); ++it){
     for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
@@ -276,15 +296,28 @@ void GFaceCompound::parametrize(bool _isU, int ITER) const
   Msg::Debug("Creating term %d dofs numbered %d fixed",
              myAssembler.sizeOfR(), myAssembler.sizeOfF());
 
-  gmshLaplaceTerm laplace(model(), &diffusivity, 1);
-  it = _compound.begin();
-  for ( ; it != _compound.end() ; ++it){
-    for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-      MTriangle *t = (*it)->triangles[i];
-      diffusivity.setCurrent(t);
-      laplace.addToMatrix(myAssembler, t);
-    }
-  }    
+  if (step == ITERD){
+    gmshLaplaceTerm laplace(model(), &ONE, 1);
+    it = _compound.begin();
+    for ( ; it != _compound.end() ; ++it){
+      for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+	MTriangle *t = (*it)->triangles[i];
+	diffusivity.setCurrent(t);
+	laplace.addToMatrix(myAssembler, t);
+      }
+    }    
+  }
+  else{
+    gmshLaplaceTerm laplace(model(), &diffusivity, 1);
+    it = _compound.begin();
+    for ( ; it != _compound.end() ; ++it){
+      for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+	MTriangle *t = (*it)->triangles[i];
+	diffusivity.setCurrent(t);
+	laplace.addToMatrix(myAssembler, t);
+      }
+    }    
+  }
 
   Msg::Debug("Assembly done");
   lsys.systemSolve();
@@ -303,14 +336,14 @@ void GFaceCompound::parametrize(bool _isU, int ITER) const
   for (std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
     MVertex *v = *itv;
     double value = myAssembler.getDofValue(v,0,1);
-    std::map<MVertex*,SPoint2>::iterator itf = coordinates.find(v);
+    std::map<MVertex*,SPoint3>::iterator itf = coordinates.find(v);
     if (itf == coordinates.end()){
-      SPoint2 p (_isU ? value:0.0,_isU ? 0.0:value);
+      SPoint3 p(0,0,0);
+      p[step] = value;
       coordinates[v] = p;
     }
     else{
-      if(_isU) itf->second[0]= value;
-      else itf->second[1]= value;	  
+      itf->second[step]= value;
     }      
   }
 }
@@ -453,9 +486,9 @@ static int GFaceCompoundInEle(void *a, double*c)
   GFaceCompoundTriangle *t = (GFaceCompoundTriangle *)a;
   double M[2][2],R[2],X[2];
   const double eps = 1.e-8;
-  const SPoint2 p0 = t->p1;
-  const SPoint2 p1 = t->p2;
-  const SPoint2 p2 = t->p3;
+  const SPoint3 p0 = t->p1;
+  const SPoint3 p1 = t->p2;
+  const SPoint3 p2 = t->p3;
   M[0][0] = p1.x() - p0.x();
   M[0][1] = p2.x() - p0.x();
   M[1][0] = p1.y() - p0.y();
@@ -480,9 +513,9 @@ void GFaceCompound::getTriangle(double u, double v,
   if (!(*lt)) return;
 
   double M[2][2],X[2],R[2];
-  const SPoint2 p0 = (*lt)->p1;
-  const SPoint2 p1 = (*lt)->p2;
-  const SPoint2 p2 = (*lt)->p3;
+  const SPoint3 p0 = (*lt)->p1;
+  const SPoint3 p1 = (*lt)->p2;
+  const SPoint3 p2 = (*lt)->p3;
   M[0][0] = p1.x() - p0.x();
   M[0][1] = p2.x() - p0.x();
   M[1][0] = p1.y() - p0.y();
@@ -504,7 +537,7 @@ void GFaceCompound::buildOct() const
     for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *t = (*it)->triangles[i];
       for (int j=0;j<3;j++){
-	std::map<MVertex*,SPoint2>::const_iterator itj = 
+	std::map<MVertex*,SPoint3>::const_iterator itj = 
 	  coordinates.find(t->getVertex(j));
 	bb += SPoint3(itj->second.x(),itj->second.y(),0.0);
       }
@@ -539,11 +572,11 @@ void GFaceCompound::buildOct() const
   for ( ; it != _compound.end() ; ++it){
     for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *t = (*it)->triangles[i];
-      std::map<MVertex*,SPoint2>::const_iterator it0 = 
+      std::map<MVertex*,SPoint3>::const_iterator it0 = 
 	coordinates.find(t->getVertex(0));
-      std::map<MVertex*,SPoint2>::const_iterator it1 = 
+      std::map<MVertex*,SPoint3>::const_iterator it1 = 
 	coordinates.find(t->getVertex(1));
-      std::map<MVertex*,SPoint2>::const_iterator it2 = 
+      std::map<MVertex*,SPoint3>::const_iterator it2 = 
 	coordinates.find(t->getVertex(2));
       _gfct[count].p1 = it0->second;
       _gfct[count].p2 = it1->second;

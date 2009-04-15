@@ -199,18 +199,20 @@ Skin${OBJEXT}: Skin.cpp Skin.h Plugin.h ../Common/Options.h ../Post/ColorTable.h
   ../Common/ListUtils.h ../Common/TreeUtils.h ../Common/avl.h \
   ../Common/ListUtils.h ../Common/MallocUtils.h ../Common/Context.h \
   ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
-GSHHS${OBJEXT}: GSHHS.cpp ../Mesh/Field.h ../Common/GmshConfig.h ../Post/PView.h \
-  ../Geo/SPoint3.h ../Geo/SPoint2.h GSHHS.h Plugin.h ../Common/Options.h \
-  ../Post/ColorTable.h ../Common/GmshMessage.h ../Post/PViewDataList.h \
-  ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Numeric/GmshMatrix.h ../Common/ListUtils.h ../Geo/GModel.h \
-  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+GSHHS${OBJEXT}: GSHHS.cpp ../Mesh/Field.h ../Common/GmshConfig.h \
+  ../Geo/STensor3.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Numeric/GmshMatrix.h ../Common/GmshMessage.h ../Numeric/Numeric.h \
+  ../Numeric/GmshMatrix.h ../Post/PView.h ../Geo/SPoint2.h GSHHS.h \
+  Plugin.h ../Common/Options.h ../Post/ColorTable.h \
+  ../Post/PViewDataList.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
+  ../Geo/SPoint3.h ../Common/ListUtils.h ../Geo/GModel.h ../Geo/GVertex.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
   ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
-  ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
-  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h
+  ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h \
+  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h \
+  ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h
 Extract${OBJEXT}: Extract.cpp ../Common/GmshConfig.h Extract.h Plugin.h \
   ../Common/Options.h ../Post/ColorTable.h ../Common/GmshMessage.h \
   ../Post/PView.h ../Geo/SPoint3.h ../Post/PViewDataList.h \
@@ -244,13 +246,14 @@ FieldView${OBJEXT}: FieldView.cpp FieldView.h Plugin.h ../Common/Options.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Numeric/GmshMatrix.h \
   ../Common/GmshConfig.h ../Common/ListUtils.h ../Mesh/Field.h \
-  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/GPoint.h \
-  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
-  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
+  ../Geo/STensor3.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Geo/GModel.h \
+  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h \
+  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h \
+  ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h
 Integrate${OBJEXT}: Integrate.cpp Integrate.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/GmshMessage.h ../Post/PView.h \

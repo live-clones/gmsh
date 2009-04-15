@@ -29,7 +29,7 @@ class gmshTermOfFormulation {
 // of the mesh
 template<class scalar>
 class gmshNodalFemTerm : public gmshTermOfFormulation<scalar> {
- protected:
+ public:
   // return the number of columns of the element matrix
   virtual int sizeOfC(MElement*) const = 0;
   // return the number of rows of the element matrix
@@ -181,7 +181,6 @@ class gmshNodalFemTerm : public gmshTermOfFormulation<scalar> {
       }
     }
   }
-
 };
 
 #endif

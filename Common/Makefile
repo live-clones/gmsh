@@ -67,7 +67,9 @@ Gmsh${OBJEXT}: Gmsh.cpp GmshConfig.h GmshDefines.h ../Numeric/GmshPredicates.h \
   ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h GmshMessage.h OpenFile.h CreateFile.h Options.h \
   ../Post/ColorTable.h CommandLine.h OS.h ../Mesh/Generator.h \
-  ../Mesh/Field.h ../Common/GmshConfig.h ../Post/PView.h Context.h \
+  ../Mesh/Field.h ../Common/GmshConfig.h ../Geo/STensor3.h \
+  ../Geo/SVector3.h ../Numeric/GmshMatrix.h ../Common/GmshMessage.h \
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Post/PView.h Context.h \
   ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \
   ../Mesh/meshPartition.h GmshDaemon.h ../Plugin/PluginManager.h
 GmshMessage${OBJEXT}: GmshMessage.cpp GmshConfig.h GmshMessage.h Gmsh.h \
@@ -88,14 +90,16 @@ Options${OBJEXT}: Options.cpp GmshConfig.h GmshDefines.h ../Geo/GModel.h \
   ../Geo/SBoundingBox3d.h GmshMessage.h ../Fltk/Draw.h \
   ../Mesh/Generator.h Context.h ../Geo/CGNSOptions.h \
   ../Mesh/meshPartitionOptions.h Options.h ../Post/ColorTable.h \
-  DefaultOptions.h ../Mesh/Field.h ../Common/GmshConfig.h ../Post/PView.h \
-  ../Mesh/BackgroundMesh.h ../Post/PViewOptions.h ../Post/ColorTable.h \
-  ../Post/PViewData.h ../Numeric/GmshMatrix.h ../Common/GmshMessage.h \
-  ../Post/adaptiveData.h ../Plugin/PluginManager.h ../Plugin/Plugin.h \
-  ../Common/Options.h ../Post/PViewDataList.h ../Post/PViewData.h \
-  ../Common/ListUtils.h ../Fltk/GUI.h ../Fltk/Solvers.h \
-  ../Fltk/menuWindow.h ../Fltk/popupButton.h ../Fltk/graphicWindow.h \
-  ../Fltk/openglWindow.h ../Graphics/drawContext.h ../Fltk/optionWindow.h \
+  DefaultOptions.h ../Mesh/Field.h ../Common/GmshConfig.h \
+  ../Geo/STensor3.h ../Geo/SVector3.h ../Numeric/GmshMatrix.h \
+  ../Common/GmshMessage.h ../Numeric/Numeric.h ../Numeric/GmshMatrix.h \
+  ../Post/PView.h ../Mesh/BackgroundMesh.h ../Post/PViewOptions.h \
+  ../Post/ColorTable.h ../Post/PViewData.h ../Post/adaptiveData.h \
+  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Options.h \
+  ../Post/PViewDataList.h ../Post/PViewData.h ../Common/ListUtils.h \
+  ../Fltk/GUI.h ../Fltk/Solvers.h ../Fltk/menuWindow.h \
+  ../Fltk/popupButton.h ../Fltk/graphicWindow.h ../Fltk/openglWindow.h \
+  ../Graphics/drawContext.h ../Fltk/optionWindow.h \
   ../Fltk/spherePositionWidget.h ../Fltk/colorbarWindow.h \
   ../Fltk/solverWindow.h ../Fltk/manipWindow.h ../Fltk/messageWindow.h \
   ../Fltk/contextWindow.h ../Fltk/clippingWindow.h

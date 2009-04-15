@@ -21,7 +21,7 @@
 #endif
 
 GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
-  : GEntity(model, tag), _tooSmall(false), v0(_v0), v1(_v1)
+  : GEntity(model, tag), _tooSmall(false), v0(_v0), v1(_v1), compound(0)
 {
   if(v0) v0->addEdge(this);
   if(v1 && v1 != v0) v1->addEdge(this);

@@ -73,9 +73,9 @@ Gmsh.tab${OBJEXT}: Gmsh.tab.cpp ../Common/GmshConfig.h ../Common/GmshMessage.h \
   ../Fltk/Draw.h ../Common/Options.h ../Post/ColorTable.h \
   ../Common/Colors.h ../Common/Options.h Parser.h ../Common/OpenFile.h \
   ../Common/CommandLine.h FunctionManager.h ../Common/OS.h \
-  ../Common/CreateFile.h ../Mesh/Field.h ../Post/PView.h \
-  ../Mesh/BackgroundMesh.h ../Post/PViewDataList.h ../Post/PViewData.h \
-  ../Plugin/PluginManager.h
+  ../Common/CreateFile.h ../Mesh/Field.h ../Geo/STensor3.h \
+  ../Geo/SVector3.h ../Post/PView.h ../Mesh/BackgroundMesh.h \
+  ../Post/PViewDataList.h ../Post/PViewData.h ../Plugin/PluginManager.h
 Gmsh.yy${OBJEXT}: Gmsh.yy.cpp ../Common/GmshMessage.h ../Geo/Geo.h \
   ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
   ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \

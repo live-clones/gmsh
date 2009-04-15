@@ -32,8 +32,11 @@ double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2)
   return l;
 }
 
-inline double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2, GFace *f,
-                                      double SCALINGU, double SCALINGV)
+inline double computeEdgeLinearLength(BDS_Point *p1, 
+				      BDS_Point *p2, 
+				      GFace *f,
+                                      double SCALINGU, 
+				      double SCALINGV)
 {
   GPoint GP = f->point(SPoint2(0.5 * (p1->u + p2->u) * SCALINGU,
                                0.5 * (p1->v + p2->v) * SCALINGV));
@@ -49,8 +52,11 @@ inline double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2, GFace *f,
   return l1 + l2;
 }
 
-inline double computeEdgeMiddleCoord(BDS_Point *p1, BDS_Point *p2, GFace *f,
-                                     double SCALINGU, double SCALINGV)
+inline double computeEdgeMiddleCoord(BDS_Point *p1, 
+				     BDS_Point *p2, 
+				     GFace *f,
+                                     double SCALINGU, 
+				     double SCALINGV)
 {
   if (f->geomType() == GEntity::Plane)
     return 0.5;
@@ -73,8 +79,10 @@ inline double computeEdgeMiddleCoord(BDS_Point *p1, BDS_Point *p2, GFace *f,
     return 0.25 * (3 * l2 - l1) / l2;
 }
 
-inline double computeEdgeLinearLength(BDS_Edge *e, GFace *f, 
-                                      double SCALINGU, double SCALINGV)
+inline double computeEdgeLinearLength(BDS_Edge *e, 
+				      GFace *f, 
+                                      double SCALINGU, 
+				      double SCALINGV)
 {
   if (f->geomType() == GEntity::Plane)
     return e->length();
@@ -84,7 +92,8 @@ inline double computeEdgeLinearLength(BDS_Edge *e, GFace *f,
 
 double NewGetLc(BDS_Point *p)
 {
-  return Extend1dMeshIn2dSurfaces() ? std::min(p->lc(), p->lcBGM()) : p->lcBGM();
+  return Extend1dMeshIn2dSurfaces() ? 
+    std::min(p->lc(), p->lcBGM()) : p->lcBGM();
 }
 
 double NewGetLc(BDS_Edge *e, GFace *f, double SCALINGU, double SCALINGV)

@@ -16,6 +16,7 @@
 class MElement;
 class MLine;
 class ExtrudeParams;
+class GEdgeCompound;
 
 #include <set>
 
@@ -27,8 +28,8 @@ class GEdge : public GEntity {
 
  protected:
   GVertex *v0, *v1;
+  GEdgeCompound *compound; // this model edge belongs to a compound 
   std::list<GFace *> l_faces;
-
   std::set<GFace *> bl_faces;
 
  public:
@@ -152,6 +153,10 @@ class GEdge : public GEntity {
   virtual double parFromPoint(const SVector3& Q) const;
   
   virtual bool XYZToU(const SVector3& Q,double& t,const double relax=0.5) const;
+
+  // compound
+  void setCompound (GEdgeCompound *gec) {compound = gec;}
+  GEdgeCompound *getCompound () const {return compound;}
 
   struct {
     char Method;

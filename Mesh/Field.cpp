@@ -477,15 +477,16 @@ class BoxField : public Field
 
 class ThresholdField : public Field
 {
+ protected :
   int iField;
   double dmin, dmax, lcmin, lcmax;
   bool sigmoid, stopAtDistMax;
  public:
-  const char *getName()
+  virtual const char *getName()
   {
     return "Threshold";
   }
-  std::string getDescription()
+  virtual std::string getDescription()
   {
     return "F = LCMin if Field[IField] <= DistMin,\n"
       "F = LCMax if Field[IField] >= DistMax,\n"
@@ -535,6 +536,80 @@ class ThresholdField : public Field
       lc = lcmin * (1 - r) + lcmax * r;
     }
     return lc;
+  }
+};
+
+class BoundaryLayerField : public ThresholdField {
+public:
+  BoundaryLayerField() 
+  {  }
+  virtual bool isotropic () const {return false;}
+  virtual const char *getName()
+  {
+    return "BoundaryLayer";
+  }
+  virtual std::string getDescription()
+  {
+    return "F = LCMin if Field[IField] <= DistMin,\n"
+      "F = LCMax if Field[IField] >= DistMax,\n"
+      "F = interpolation between LcMin and LcMax if DistMin < Field[IField] < DistMax";
+  }
+  virtual void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0)
+  {
+    Field *field = GModel::current()->getFields()->get(iField);
+    if(!field) {
+      metr(0,0) = 1/(MAX_LC*MAX_LC);
+      metr(1,1) = 1/(MAX_LC*MAX_LC);
+      metr(2,2) = 1/(MAX_LC*MAX_LC);
+      metr(0,1) = metr(0,2) = metr(1,2) = 0;
+      return;
+    }
+    double dist = (*field) (x, y, z);
+
+    double r = (dist - dmin) / (dmax - dmin);
+    r = std::max(std::min(r, 1.), 0.);
+    double lc;
+    if(stopAtDistMax && r >= 1.){
+      lc = MAX_LC;
+    }
+    else if(sigmoid){
+      double s = exp(12. * r - 6.) / (1. + exp(12. * r - 6.));
+      lc = lcmin * (1. - s) + lcmax * s;
+    }
+    else{ // linear
+      lc = lcmin * (1 - r) + lcmax * r;
+    }
+    
+    double delta = std::min(CTX::instance()->lc / 1e4, dist);
+    double gx =
+      ((*field) (x + delta / 2, y, z) -
+       (*field) (x - delta / 2, y, z)) / delta;
+    double gy =
+      ((*field) (x, y + delta / 2, z) -
+       (*field) (x, y - delta / 2, z)) / delta;
+    double gz =
+      ((*field) (x, y, z + delta / 2) -
+       (*field) (x, y, z - delta / 2)) / delta;
+
+    SVector3 g(gx,gy,gz);
+    g.normalize();
+    SVector3 t1,t2;
+
+    if (fabs(gx) < fabs(gy) && fabs(gx) < fabs(gz))
+      t1 = SVector3(1,0,0);
+    else if (fabs(gy) < fabs(gx) && fabs(gy) < fabs(gz))
+      t1 = SVector3(0,1,0);
+    else
+      t1 = SVector3(0,0,1);
+    
+    t2 = crossprod(g,t1);
+    t2.normalize();
+    t1 = crossprod(t2,g);
+    
+    metr  = SMetric3(1./(lc*lc), 
+		     1/(lcmax*lcmax),
+		     1/(lcmax*lcmax),
+		     g,t1,t2);
   }
 };
 
@@ -599,6 +674,7 @@ class GradientField : public Field
     }
   }
 };
+
 
 class CurvatureField : public Field
 {
@@ -1236,6 +1312,7 @@ class AttractorField : public Field
     return sqrt(dist[0]);
   }
 };
+
 #endif
 
 template<class F> class FieldFactoryT : public FieldFactory {
@@ -1252,6 +1329,7 @@ FieldManager::FieldManager()
 {
   map_type_name["Structured"] = new FieldFactoryT<StructuredField>();
   map_type_name["Threshold"] = new FieldFactoryT<ThresholdField>();
+  map_type_name["BoundaryLayer"] = new FieldFactoryT<BoundaryLayerField>();
   map_type_name["Box"] = new FieldFactoryT<BoxField>();
   map_type_name["LonLat"] = new FieldFactoryT<LonLatField>();
 #if !defined(HAVE_NO_POST)

@@ -9,7 +9,7 @@
 void gmshElasticityTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
 {
   int nbNodes = e->getNumVertices();
-  int integrationOrder = 3 * (e->getPolynomialOrder() - 1);
+  int integrationOrder = 3 * (e->getPolynomialOrder() - 1) ;
   int npts;
   IntPt *GP;
   double jac[3][3];

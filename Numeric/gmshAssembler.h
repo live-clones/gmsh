@@ -166,6 +166,13 @@ class gmshAssembler {
   }
   int sizeOfR() const { return numbering.size(); }
   int sizeOfF() const { return fixed.size(); }
+  void systemSolve(){
+    lsys->systemSolve();
+  }  
+  void systemClear(){
+    lsys->zeroMatrix();
+    lsys->zeroRightHandSide();
+  }  
 };
 
 #endif

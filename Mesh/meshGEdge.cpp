@@ -33,30 +33,6 @@ struct xi2lc {
 
 static std::vector<xi2lc> interpLc;
 
-static void smoothInterpLc(int nbSmooth)
-{
-  for(int j = 0; j < nbSmooth; j++){
-    for(int i = 0 ; i < (int)interpLc.size(); i++){               
-      xi2lc &left = (i == 0) ? interpLc[0] : interpLc[i - 1];
-      xi2lc &mid = interpLc[i];
-      xi2lc &right = (i == (int)interpLc.size() - 1) ?
-        interpLc[interpLc.size() - 1] : interpLc[i+1];
-      if(1. / mid.lc > 1.1 * 1. / left.lc) mid.lc = left.lc / 1.1;
-      if(1. / mid.lc > 1.1 * 1. / right.lc) mid.lc = right.lc / 1.1;
-    }
-  } 
-}
-
-static void printInterpLc(const char *name)
-{
-  FILE *f = fopen(name,"w");
-  for(unsigned int i = 0; i < interpLc.size(); i++){              
-    xi2lc &interp = interpLc[i];
-    fprintf(f,"%12.5E %12.5E\n", interp.xi, 1 / interp.lc);
-  }
-  fclose(f);
-}
-
 static void buildInterpLc(const std::vector<IntPoint> &lcPoints)
 {
   IntPoint p;
@@ -74,13 +50,11 @@ static double F_Lc_usingInterpLc(GEdge *ge, double t)
   double t1 = it->xi;
   double l1 = it->lc;
   it++;
-  SVector3 der = ge->firstDer(t);
-  const double d = norm(der);
-  if(it == interpLc.end()) return d * l1;
+  if(it == interpLc.end()) return l1;
   double t2 = it->xi;
   double l2 = it->lc;
   double l = l1 + ((t - t1) / (t2 - t1)) * (l2 - l1);
-  return d * l;
+  return l;
 }
 
 static double F_Lc_usingInterpLcBis(GEdge *ge, double t)
@@ -92,6 +66,9 @@ static double F_Lc_usingInterpLcBis(GEdge *ge, double t)
   double t_begin = bounds.low();
   double t_end = bounds.high();
 
+  SVector3 der = ge->firstDer(t);
+  const double d = norm(der);
+
   if(t == t_begin)
     lc_here = BGM_MeshSize(ge->getBeginVertex(), t, 0, p.x(), p.y(), p.z());
   else if(t == t_end)
@@ -99,7 +76,7 @@ static double F_Lc_usingInterpLcBis(GEdge *ge, double t)
   else
     lc_here = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
 
-  return 1 / lc_here;
+  return d / lc_here;
 }
 
 static double F_Lc(GEdge *ge, double t)
@@ -305,9 +282,6 @@ void meshGEdge::operator() (GEdge *ge)
       Integration(ge, t_begin, t_end, F_Lc_usingInterpLcBis, lcPoints, 
                   CTX::instance()->mesh.lcIntegrationPrecision);
       buildInterpLc(lcPoints);
-      // printInterpLc("toto1.dat");
-      // smoothInterpLc(20);
-      // printInterpLc("toto2.dat");
       a = Integration(ge, t_begin, t_end, F_Lc_usingInterpLc, Points, 1.e-8);
     }
     else{

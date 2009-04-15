@@ -14,6 +14,7 @@
 #include "meshGFace.h"
 #include "GFace.h"
 #include "Numeric.h"
+#include "STensor3.h"
 
 const double LIMIT_ = 0.5 * sqrt(2.0);
 
@@ -521,8 +522,8 @@ static void insertAPoint(GFace *gf,
 
     v->setNum(Us.size());
     double lc1 = ((1. - uv[0] - uv[1]) * vSizes[ptin->tri()->getVertex(0)->getNum()] + 
-		  uv[0] * vSizes [ptin->tri()->getVertex(1)->getNum()] + 
-		  uv[1] * vSizes [ptin->tri()->getVertex(2)->getNum()]); 
+    		  uv[0] * vSizes [ptin->tri()->getVertex(1)->getNum()] + 
+    		  uv[1] * vSizes [ptin->tri()->getVertex(2)->getNum()]); 
     // double eigMetricSurface = gf->getMetricEigenvalue(SPoint2(center[0],center[1]));
     double lc = BGM_MeshSize(gf,center[0],center[1],p.x(),p.y(),p.z());
     vSizesBGM.push_back(lc);
@@ -645,11 +646,28 @@ static double length_metric ( const double p[2], const double q[2], const double
      
 */
 
+void testTensor(){
+  SMetric3 t(1.0);  
+  t(0,0) = 1;
+  t(1,0) = .2;
+  t(1,1) = 2;
+  t(2,2) = 3;
+  gmshMatrix<double> m(3,3);
+  gmshVector<double> v(3);
+  t.eig(m,v);
+  printf("%12.5E %12.5E %12.5E \n",v(0),v(1),v(2));
+  printf("%12.5E %12.5E %12.5E \n",m(0,0),m(1,0),m(2,0));
+  printf("%12.5E %12.5E %12.5E \n",m(0,1),m(1,1),m(2,1));
+  printf("%12.5E %12.5E %12.5E \n",m(0,2),m(1,2),m(2,2));
+}
+
 void gmshBowyerWatsonFrontal(GFace *gf)
 {
   std::set<MTri3*,compareTri3Ptr> AllTris;
   std::set<MTri3*,compareTri3Ptr> ActiveTris;
   std::vector<double> vSizes, vSizesBGM, Us, Vs;
+
+  testTensor();
 
   buildMeshGenerationDataStructures(gf, AllTris, vSizes, vSizesBGM, Us, Vs);
 

@@ -50,3 +50,7 @@ void gmshLaplaceTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
     for (int k = 0; k < j; k++)
 	m(k, j) = m(j, k);
 } 
+
+void gmshLaplaceTerm2DParametric::elementMatrix(MElement *e, gmshMatrix<double> &m) const
+{
+} 

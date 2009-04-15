@@ -236,9 +236,9 @@ GModel${OBJEXT}: GModel.cpp ../Common/GmshConfig.h ../Common/GmshMessage.h \
   MHexahedron.h MPrism.h MPyramid.h discreteRegion.h discreteFace.h \
   discreteEdge.h discreteVertex.h gmshSurface.h ../Numeric/Numeric.h \
   ../Numeric/GmshMatrix.h ../Common/Octree.h ../Common/OctreeInternals.h \
-  ../Common/SmoothData.h ../Mesh/Field.h ../Post/PView.h ../Geo/SPoint3.h \
-  ../Mesh/Generator.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/meshPartitionOptions.h
+  ../Common/SmoothData.h ../Mesh/Field.h ../Geo/STensor3.h \
+  ../Geo/SVector3.h ../Post/PView.h ../Geo/SPoint3.h ../Mesh/Generator.h \
+  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
 GModelIO_Geo${OBJEXT}: GModelIO_Geo.cpp ../Common/GmshConfig.h \
   ../Common/GmshMessage.h GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
@@ -247,8 +247,9 @@ GModelIO_Geo${OBJEXT}: GModelIO_Geo.cpp ../Common/GmshConfig.h \
   ../Common/ListUtils.h ../Common/TreeUtils.h ../Common/avl.h \
   ../Common/ListUtils.h ExtrudeParams.h ../Common/SmoothData.h \
   ../Common/OpenFile.h gmshVertex.h gmshFace.h GFaceCompound.h \
-  GEdgeCompound.h gmshEdge.h gmshRegion.h ../Mesh/Field.h ../Post/PView.h \
-  ../Geo/SPoint3.h ../Parser/Parser.h
+  GEdgeCompound.h gmshEdge.h gmshRegion.h ../Mesh/Field.h \
+  ../Geo/STensor3.h ../Geo/SVector3.h ../Post/PView.h ../Geo/SPoint3.h \
+  ../Parser/Parser.h
 GModelIO_Mesh${OBJEXT}: GModelIO_Mesh.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/GmshDefines.h MPoint.h \
@@ -292,8 +293,9 @@ Geo${OBJEXT}: Geo.cpp ../Common/GmshMessage.h ../Numeric/Numeric.h \
   ../Common/TreeUtils.h ../Common/avl.h ../Common/ListUtils.h \
   ExtrudeParams.h ../Common/SmoothData.h GModel.h GVertex.h GEntity.h \
   GPoint.h GEdge.h GFace.h GEdgeLoop.h GRegion.h GeoInterpolation.h \
-  ../Mesh/Field.h ../Post/PView.h ../Geo/SPoint3.h ../Common/Context.h \
-  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
+  ../Mesh/Field.h ../Geo/STensor3.h ../Geo/SVector3.h ../Post/PView.h \
+  ../Geo/SPoint3.h ../Common/Context.h ../Geo/CGNSOptions.h \
+  ../Mesh/meshPartitionOptions.h
 GeoStringInterface${OBJEXT}: GeoStringInterface.cpp ../Common/GmshConfig.h \
   ../Common/GmshMessage.h ../Numeric/Numeric.h ../Numeric/GmshMatrix.h \
   ../Common/StringUtils.h Geo.h ../Common/GmshDefines.h gmshSurface.h \

@@ -144,9 +144,16 @@ static double _computeDeterminantAndRegularize(MElement *ele, double jac[3][3])
   
   switch (ele->getDim()) {
 
+  case 0:
+    {
+      jac[0][0] = jac[1][1] = jac[2][2] = 1.0;
+      jac[0][1] = jac[1][0] = jac[2][0] = 0.0;
+      jac[0][2] = jac[1][2] = jac[2][1] = 0.0;    
+      break;
+    } 
   case 1: 
     {
-      dJ = sqrt(SQU(jac[0][0]) + SQU(jac[0][1]) + SQU(jac[0][2]));
+      dJ = sqrt(SQU(jac[0][0]) + SQU(jac[1][0]) + SQU(jac[2][0]));
 
       // regularize matrix
       double a[3], b[3], c[3];
@@ -161,8 +168,8 @@ static double _computeDeterminantAndRegularize(MElement *ele, double jac[3][3])
         b[0] = 0.; b[1] = a[2]; b[2] = -a[1];
       }
       prodve(a, b, c);
-      jac[1][0] = b[0]; jac[1][1] = b[1]; jac[1][2] = b[2]; 
-      jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2]; 
+      jac[0][1] = b[0]; jac[1][1] = b[1]; jac[2][1] = b[2]; 
+      jac[0][2] = c[0]; jac[1][2] = c[1]; jac[2][2] = c[2]; 
       break;
     }
   case 2:

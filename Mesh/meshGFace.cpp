@@ -13,6 +13,7 @@
 #include "BackgroundMesh.h"
 #include "GVertex.h"
 #include "GEdge.h"
+#include "GEdgeCompound.h"
 #include "GFace.h"
 #include "GModel.h"
 #include "MVertex.h"
@@ -373,6 +374,26 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfInters
   v_container all_vertices;
   std::map<int, MVertex*>numbered_vertices;
   std::list<GEdge*> edges = gf->edges();
+
+  // here, we will replace edges by their compounds
+  if (gf->geomType() == GEntity::CompoundSurface){
+    std::set<GEdge*> mySet;
+    std::list<GEdge*>::iterator it = edges.begin();
+    while(it != edges.end()){
+      if ((*it)->getCompound()){
+	mySet.insert((*it)->getCompound());
+	printf("compound edge %d found in %d\n",(*it)->getCompound()->tag(), (*it)->tag());
+      }
+      else 
+	mySet.insert(*it);
+      ++it;
+    }
+    printf("replacing %d edges by %d in the compound %d\n",edges.size(),mySet.size(),gf->tag());
+    edges.clear();
+    edges.insert(edges.begin(), mySet.begin(), mySet.end());
+  }
+  
+
   std::list<GEdge*> emb_edges = gf->embeddedEdges();
   std::list<GVertex*> emb_vertx = gf->embeddedVertices();
   std::list<GEdge*>::iterator it = edges.begin();

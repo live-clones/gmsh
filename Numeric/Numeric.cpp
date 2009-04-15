@@ -571,3 +571,125 @@ bool newton_fd(void (*func)(gmshVector<double> &, gmshVector<double> &, void *),
   }
   return false;
 }
+
+/*
+min_a f(x+a*d);
+
+f(x+a*d) = f(x) + f'(x) (
+
+*/
+
+void gmshLineSearch (double (*func)(gmshVector<double> &, void *), void* data, 
+		     gmshVector<double> &x,
+		     gmshVector<double> &p,  
+		     gmshVector<double> &g,  
+		     double &f, 
+		     double stpmax, int &check)
+{
+  int i;
+  double alam,alam2,alamin,f2,fold2,rhs1,rhs2,sum,temp,
+    tmplam;
+
+  const double ALF = 1.0e-4;
+  const double TOLX = 1.0e-9;
+
+  gmshVector<double> xold(x);
+  const double fold = (*func)(xold,data);
+  
+  check=0;
+  int n = x.size();
+  double norm = p.norm();
+  if (norm > stpmax)p.scale(stpmax/norm);
+  double slope=0.0;
+  for (i=0;i<n;i++)slope += g(i)*p(i);
+  double test=0.0;
+  for (i=0;i<n;i++) {
+    temp=fabs(p(i))/std::max(fabs(xold(i)),1.0);
+    if (temp > test) test=temp;
+  }
+  /*
+  for (int j=0;j<100;j++){
+    double sx = (double)j/99;
+    for (i=0;i<n;i++) x(i)=xold(i)+10*sx*p(i);    
+    double jzede = (*func)(x,data); 
+  }
+  */
+
+  alamin=TOLX/test;
+  alam=1.0;
+  while(1) {
+    for (i=0;i<n;i++) x(i)=xold(i)+alam*p(i);
+    f=(*func)(x,data);
+    //    printf("f = %g x = %g %g alam = %g p = %g %g\n",f,x(0),x(1),alam,p(0),p(1));
+   if (alam < alamin) {
+      for (i=0;i<n;i++) x(i)=xold(i);
+      //      printf("ALERT : alam %g alamin %g\n",alam,alamin);
+      check=1;
+      return;
+    } 
+    else if (f <= fold + ALF*alam*slope) return;
+    else {
+      if (alam == 1.0)
+	tmplam = -slope/(2.0*(f-fold-slope));
+      else {
+	rhs1 = f-fold-alam*slope;
+	rhs2=f2-fold2-alam2*slope;
+	const double a=(rhs1/(alam*alam)-rhs2/(alam2*alam2))/(alam-alam2);
+	const double b=(-alam2*rhs1/(alam*alam)+alam*rhs2/(alam2*alam2))/(alam-alam2);
+	if (a == 0.0) tmplam = -slope/(2.0*b);
+	else {
+	  const double disc=b*b-3.0*a*slope;
+	  if (disc<0.0) Msg::Error("Roundoff problem in gmshLineSearch.");
+	  else tmplam=(-b+sqrt(disc))/(3.0*a);
+	}
+	if (tmplam>0.5*alam)
+	  tmplam=0.5*alam;
+      }
+    }
+    alam2=alam;
+    f2 = f;
+    fold2=fold;
+    alam=std::max(tmplam,0.1*alam);
+  }
+}
+
+double minimize_grad_fd (double (*func)(gmshVector<double> &, void *),
+		       gmshVector<double> &x, void *data)
+{
+  const int MAXIT = 3;
+  const double EPS = 1.e-4;
+  const int N = x.size();
+  
+  gmshVector<double> grad(N);
+  gmshVector<double> dir(N);
+  double f,feps,finit;
+
+  for (int iter = 0; iter < MAXIT; iter++){
+    // compute gradient of func
+    f = func(x,data);
+    if (iter == 0)finit = f;
+    //    printf("Opti iter %d x = (%g %g) f = %g\n",iter,x(0),x(1),f);
+    //    printf("grad = (");
+    for (int j = 0; j < N; j++){
+      double h = EPS * fabs(x(j));
+      if(h == 0.) h = EPS;
+      x(j) += h;
+      feps = func(x, data);
+      grad(j) = (feps - f) / h;
+      //      printf("%g ",grad(j));
+      dir(j) = -grad(j);
+      x(j) -= h;
+    }
+    //    printf(")\n ");
+    // do a 1D line search to fine the minimum
+    // of f(x - \alpha \nabla f)
+    double f, stpmax=100000;
+    int check;
+    gmshLineSearch (func, data, x,dir,grad,f,stpmax,check);
+    //    printf("Line search done x = (%g %g) f = %g\n",x(0),x(1),f);
+    if (check == 1)break;
+  }
+  
+  return f;
+}
+
