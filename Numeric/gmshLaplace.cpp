@@ -41,7 +41,7 @@ void gmshLaplaceTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
       for (int k = 0; k <= j; k++){
 	m(j, k) += (Grads[j][0] * Grads[k][0] +
                     Grads[j][1] * Grads[k][1] +
-                    Grads[j][2] * Grads[k][2]) * weight * detJ * _diff * 0.5;
+                    Grads[j][2] * Grads[k][2]) * weight * detJ * _diff;
       }
     }
   }

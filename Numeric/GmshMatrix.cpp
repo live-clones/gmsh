@@ -4,6 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <complex>
+#include <string.h>
 #include "GmshConfig.h"
 #include "GmshMatrix.h"
 #include "GmshMessage.h"
@@ -120,11 +121,11 @@ bool gmshMatrix<double>::invertInPlace()
   int *ipiv = new int[N];
   double * invA = new double[N*N];
 
-  for (size_t i=0;i<N*N;i++) invA[i     ] = 0.;
-  for (size_t i=0;i<N;i++)   invA[i*N+i]  = 1.;
+  for (size_t i = 0; i < N * N; i++) invA[i] = 0.;
+  for (size_t i = 0; i < N; i++) invA[i * N + i] = 1.;
 
   dgesv_(&N, &nrhs, _data, &lda, ipiv, invA, &ldb, &info);
-  std::memcpy(_data,invA,N*N*sizeof(double));
+  memcpy(_data, invA, N * N * sizeof(double));
 
   delete [] invA;
   delete [] ipiv;

@@ -78,7 +78,7 @@ class gmshMatrix
   gmshMatrix(const gmshMatrix<scalar> &other) : _r(other._r), _c(other._c)
   {
     _data = new scalar[_r * _c];
-    memcpy(other);
+    gM_memcpy(other);
   }
   gmshMatrix() : _r(0), _c(0), _data(0) {}
   ~gmshMatrix() { if(_data) delete [] _data; }
@@ -90,11 +90,11 @@ class gmshMatrix
       _r = other._r; 
       _c = other._c;
       _data = new scalar[_r * _c];
-      memcpy(other);
+      gM_memcpy(other);
     }
     return *this;
   }
-  void memcpy(const gmshMatrix<scalar> &other)
+  void gM_memcpy(const gmshMatrix<scalar> &other)
   {
     for(int i = 0; i < _r * _c; ++i) _data[i] = other._data[i];
   }
