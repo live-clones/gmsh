@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <sstream>
 #include <stdlib.h>
 #include "meshGFace.h"
 #include "meshGFaceBDS.h"
@@ -367,7 +368,8 @@ static bool recover_medge_old(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
 
-static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh, bool debug = true)
+static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, 
+                                bool repairSelfIntersecting1dMesh, bool debug = true)
 {
   BDS_GeomEntity CLASS_F (1, 2);
   typedef std::set<MVertex*> v_container;
@@ -585,10 +587,14 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfInters
     }
     
     if (edgesNotRecovered.size()){
-      Msg::Warning(":-( There are %d intersections in the 1d mesh",
-	  edgesNotRecovered.size());
+      std::ostringstream sstream;
+      for (std::set<EdgeToRecover>::iterator itr = edgesNotRecovered.begin();
+           itr != edgesNotRecovered.end(); ++itr)
+        sstream << " " << itr->ge->tag();
+      Msg::Warning(":-( There are %d intersections in the 1D mesh (curves%s)",
+                   edgesNotRecovered.size(), sstream.str().c_str());
       Msg::Warning("8-| Gmsh splits those edges and tries again");
-
+    
       if (debug){
 	char name[245];
 	sprintf(name, "surface%d-not_yet_recovered-real-%d.msh", gf->tag(),RECUR_ITER);
@@ -623,7 +629,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfInters
       return false;
     }
     if(RECUR_ITER > 0)
-      Msg::Warning(":-) Gmsh was able to recover all edges after %d ITERATIONS",
+      Msg::Warning(":-) Gmsh was able to recover all edges after %d iterations",
 		   RECUR_ITER);
     
     //  Msg::Info("Boundary Edges recovered for surface %d", gf->tag());
@@ -917,7 +923,7 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop  &gel,
          if (seam && seam_the_first){
            coords = ((*it)._sign == 1) ? mesh1d_seam : mesh1d_seam_reversed;
            found = (*it);
-           Msg::Info("This test case would have failed in Previous Gmsh Version ;-)");
+           Msg::Info("This test case would have failed in previous Gmsh versions ;-)");
          }
          else{
            coords = ((*it)._sign == 1) ? mesh1d : mesh1d_reversed;

@@ -804,6 +804,8 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "CopyMeshingMethod" , opt_geometry_copy_meshing_method, 0. ,
     "Copy meshing method when duplicating geometrical entities?" },
 
+  { F|O, "ExactExtrusion" , opt_geometry_exact_extrusion, 1. ,
+    "Use exact extrusion formula in interpolations (set to 0 to allow geometrical transformations of extruded entities)" },
   { F|O, "ExtrudeReturnLateralEntities" , opt_geometry_extrude_return_lateral, 1. ,
     "Add lateral entities in lists returned by extrusion commands?" },
   { F|O, "ExtrudeSplinePoints" , opt_geometry_extrude_spline_points, 5. ,

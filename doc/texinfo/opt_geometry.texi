@@ -19,6 +19,11 @@ Copy meshing method when duplicating geometrical entities?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.ExactExtrusion
+Use exact extrusion formula in interpolations (set to 0 to allow geometrical transformations of extruded entities)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.ExtrudeReturnLateralEntities
 Add lateral entities in lists returned by extrusion commands?@*
 Default value: @code{1}@*

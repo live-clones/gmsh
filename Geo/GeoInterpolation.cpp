@@ -8,6 +8,7 @@
 #include "GeoInterpolation.h"
 #include "GeoStringInterface.h"
 #include "Numeric.h"
+#include "Context.h"
 
 #define SQU(a)      ((a)*(a))
 
@@ -633,12 +634,12 @@ Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
     return Vertex(p.x(), p.y(), p.z());
   }
 
-  // FIXME: WARNING -- this is a major hack: we use the exact
-  // extrusion formula if the surface is extruded, so that we create
-  // exact surfaces of revolution. But this WILL fail if the extruded
-  // surface is transformed after the extrusion!
-  if(s->Extrude && s->Extrude->geo.Mode == EXTRUDED_ENTITY && 
-     s->Typ != MSH_SURF_PLAN)
+  // Warning: we use the exact extrusion formula so we can create
+  // exact surfaces of revolution. This WILL fail if the surface is
+  // transformed after the extrusion: in that case set the
+  // exactExtrusion option to 0 to use the normal code path
+  if(CTX::instance()->geom.exactExtrusion && s->Extrude && 
+     s->Extrude->geo.Mode == EXTRUDED_ENTITY && s->Typ != MSH_SURF_PLAN)
     return InterpolateExtrudedSurface(s, u, v);
 
   switch (s->Typ) {
