@@ -1010,8 +1010,6 @@ extern double mesh_functional_distorsion(MTriangle *t, double u, double v);
 
 static void printJacobians(GModel *m, const char *nm)
 {
-  //  return;
-
   const int n = 15;
   double D[n][n], X[n][n], Y[n][n], Z[n][n];
 
@@ -1108,11 +1106,11 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   // we do that model face by model face
   std::vector<MElement*> bad;
   double worst;
-  checkHighOrderTriangles("Before optimization ", m, bad, worst);
   if (displ2D){
+    checkHighOrderTriangles("Before optimization", m, bad, worst);
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
       displ2D->optimize(*it,edgeVertices,faceVertices);
-    checkHighOrderTriangles("After optimization ", m, bad, worst);
+    checkHighOrderTriangles("After optimization", m, bad, worst);
   }
 
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
@@ -1120,20 +1118,18 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
                  displ2D, displ3D);
 
   // smooth the 3D regions
-  checkHighOrderTetrahedron("Before optimization", m, bad, worst);
   if (displ3D){
+    checkHighOrderTetrahedron("Before optimization", m, bad, worst);
     for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
       displ3D->smooth(*it);
     checkHighOrderTetrahedron("After optimization", m, bad, worst);
   }
 
-  if(displ2D){    
-    delete displ2D;
-    delete displ3D;
-  }
+  if(displ2D) delete displ2D;
+  if(displ3D) delete displ3D;
 
-  printJacobians(m, "smoothness.pos");
-
+  //printJacobians(m, "smoothness.pos");
+  
   double t2 = Cpu();
   Msg::Info("Meshing order %d complete (%g s)", order, t2 - t1);
   Msg::StatusBar(1, false, "Mesh");
