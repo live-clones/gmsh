@@ -174,7 +174,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V,
 }
 
 
-// anisotropic version
+// anisotropic version of the background field
 SMetric3 BGM_MeshMetric(GEntity *ge, 
 			double U, double V, 
 			double X, double Y, double Z)
@@ -182,7 +182,7 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
   // default lc (mesh size == size of the model)
   SMetric3 l1(CTX::instance()->lc);
 
-  // lc from points
+  // lc from points            
   SMetric3 l2(MAX_LC);
   if(CTX::instance()->mesh.lcFromPoints && ge->dim() < 2) 
     l2 = SMetric3(LC_MVertex_PNTS(ge, U, V));

@@ -12,10 +12,11 @@ GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound)
 {
   orderEdges ();
   int N = _compound.size();
-  v0 = _orientation[0] ?     _compound[0]->getBeginVertex() : _compound[0]->getEndVertex();
+  v0 = _orientation[0] ?   _compound[0]->getBeginVertex() :     _compound[0]->getEndVertex();
   v1 = _orientation[N-1] ? _compound[N-1]->getEndVertex() :   _compound[N-1]->getBeginVertex();
   v0->addEdge(this);
   v1->addEdge(this);
+  //  printf("%d -> %d\n",v0->tag(),v1->tag());
   parametrize();
 }
 
@@ -56,6 +57,22 @@ void GEdgeCompound::orderEdges()
     }
   }  
   _compound = _c;
+
+  if (_compound.size() < 2)return;
+  if (   _compound[0]->getEndVertex() != _compound[1]->getEndVertex() 
+      && _compound[0]->getEndVertex() != _compound[1]->getBeginVertex()){  
+    for (int i=0;i<_compound.size();i++){
+      _orientation[i] = !_orientation[i] ;
+    }
+  }
+//   for (int i=0;i<_compound.size();i++){
+//     printf("o %d e %d (%d,%d)\n",
+// 	   (int)_orientation[i],
+// 	   _compound[i]->tag(),
+// 	   _compound[i]->getBeginVertex()->tag(),
+// 	   _compound[i]->getEndVertex()->tag());
+//   }
+
 }
 
 int GEdgeCompound::minimumMeshSegments() const{
@@ -75,7 +92,7 @@ GEdgeCompound::~GEdgeCompound()
 }
 
 Range<double> GEdgeCompound::parBounds(int i) const { 
-  return Range<double>(0, _pars[_compound.size()-1]); 
+  return Range<double>(0, _pars[_compound.size()]); 
 }
 
 /*
@@ -90,8 +107,14 @@ void GEdgeCompound::getLocalParameter ( const double &t,
 {
   for (iEdge=0 ; iEdge<_compound.size() ;iEdge++){
     //    printf("iEdge %d par %g\n",iEdge,_pars[iEdge]);
-    if (t <= _pars[iEdge]){
-      tLoc = _orientation[iEdge] ? t - _pars[iEdge] : _pars[iEdge+1] - t;
+    double tmin = _pars[iEdge];
+    double tmax = _pars[iEdge+1];
+    if (t >= tmin && t <= tmax){      
+      Range<double> b = _compound[iEdge]->parBounds(0);
+      tLoc = _orientation[iEdge] ?
+	b.low()  + (t-tmin)/(tmax-tmin) * (b.high()-b.low()) :
+	b.high() - (t-tmin)/(tmax-tmin) * (b.high()-b.low()) ;
+      //      printf("%g %g %d\n",t,tLoc,iEdge);
       return;
     }
   }
@@ -99,10 +122,10 @@ void GEdgeCompound::getLocalParameter ( const double &t,
 
 void GEdgeCompound::parametrize() 
 {
+  _pars.push_back(0.0);
   for (int i=0;i<_compound.size();i++){
     Range<double> b = _compound[i]->parBounds(0);
-    if (!i)_pars.push_back(b.high() - b.low());
-    else _pars.push_back(_pars[i-1]+(b.high() - b.low()));
+    _pars.push_back(_pars[_pars.size()-1]+(b.high() - b.low()));
   }   
 }
 

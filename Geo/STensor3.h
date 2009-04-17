@@ -32,7 +32,7 @@ class SMetric3 {
   }
   // default constructor, identity 
   SMetric3(const double v = 1.0){
-    _val[0] = _val[2] = _val[5] = v;
+    _val[0] = _val[2] = _val[5] = 1./(v*v);
     _val[1] = _val[3] = _val[4] = 0.0;
   }
   SMetric3(const double l1,
