@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include <Fl/Fl_Tabs.H>
-#include <Fl/Fl_Value_Input.H>
+#include <FL/Fl_Tabs.H>
+#include <FL/Fl_Value_Input.H>
 #include "GUI.h"
 #include "classificationEditor.h"
 #include "paletteWindow.h"

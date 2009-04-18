@@ -1599,242 +1599,6 @@ void tetgenmesh::formcavity(face *pssub, arraypool* crosstets,
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
-// formedgecavity()    Form the cavity of a missing edge.                    //
-//                                                                           //
-// The edge [a, b] intersects a set of tets in tetrahedralization T, will be //
-// collected in 'crosstets', it is empty on input. 'cavfaces' and 'cavpoints'//
-// return the sets of boundary faces, and vertices of the cavity, resp.      //
-//                                                                           //
-// Some subfaces may be inside this cavity, they are queued for recovery.    //
-//                                                                           //
-///////////////////////////////////////////////////////////////////////////////
-
-void tetgenmesh::formedgecavity(point pa, point pb, arraypool* crosstets,
-  arraypool* cavfaces, arraypool* cavpoints)
-{
-  triface searchtet, neightet, spintet, *parytet;
-  face firstcrosssh, checksh, *parysh;
-  point *ppt, pc, pd, pe, pf, *parypt;
-  enum intersection dir;
-  int types[2], poss[4];
-  int pos, i;
-
-  tetrahedron ptr;
-  int *iptr, tver;
-
-  // Search a tet whose origin is pa.
-  decode(point2tet(pa), searchtet);
-  assert(searchtet.tet != NULL); // SELF_CHECK
-  for (i = 4; i < 8; i++) {
-    if ((point) searchtet.tet[i] == pa) {
-      // Found. Set pa as its origin.
-      switch (i) {
-        case 4: searchtet.loc = 0; searchtet.ver = 0; break;
-        case 5: searchtet.loc = 0; searchtet.ver = 2; break;
-        case 6: searchtet.loc = 0; searchtet.ver = 4; break;
-        case 7: searchtet.loc = 1; searchtet.ver = 2; break;
-      }
-      break;
-    }
-  }
-  assert(i < 8); // SELF_CHECK
-
-  dir = finddirection(&searchtet, pb);
-  if (dir == ACROSSVERT) return; // The edge is not missing.
-
-  // if (b->verbose > 1) {
-    printf("    Form edge cavity (%d, %d).\n", pointmark(pa), pointmark(pb));
-  // }
-  // The possible cases are: ACROSSFACE and ACROSSEDGE.
-
-  // Go to the opposite (intersect) face.
-  enextfnextself(searchtet);
-  // Add this tet into list.
-  infect(searchtet);
-  crosstets->newindex((void **) &parytet);
-  *parytet = searchtet;
-  // Add all vertices of this tet into list.
-  ppt = (point *) &(searchtet.tet[4]);
-  for (i = 0; i < 4; i++) {
-    pinfect(ppt[i]);
-    cavpoints->newindex((void **) &parypt);
-    *parypt = ppt[i];
-  }
-
-  // There may be several subfaces be crossed by [a, b], remember the
-  //   first encountered one. 
-  firstcrosssh.sh = NULL; // Not found a crossing subface yet.
-
-  // Collect crossing tets of the edge [a, b].
-  while (1) {
-
-    // Enter the next crossing tet.
-    symedgeself(searchtet);
-    pf = oppo(searchtet);
-
-    if (dir == ACROSSFACE) {
-      if (!infected(searchtet)) { // Add this tet into list.
-        infect(searchtet);
-        crosstets->newindex((void **) &parytet);
-        *parytet = searchtet;
-      }
-      if (!pinfected(pf)) { // Add the opposite point into list.
-        pinfect(pf);
-        cavpoints->newindex((void **) &parypt);
-        *parypt = pf;
-      }
-      tspivot(searchtet, checksh); // Check if a subface is crossed.
-      if (checksh.sh != NULL) {
-        // Add this subface into list.
-        subfacstack->newindex((void **) &parysh);
-        *parysh = checksh;
-        if (firstcrosssh.sh == NULL) {
-          firstcrosssh = checksh;
-        }
-      }
-    } else { // dir == ACROSSEDGE
-      // Add all tets containing this edge into list.
-      pc = apex(searchtet);
-      spintet = searchtet;
-      while (1) {
-        fnextself(spintet);
-        if (!infected(spintet)) { // Add this tet into list.
-          infect(spintet);
-          crosstets->newindex((void **) &parytet);
-          *parytet = spintet;
-        }
-        pd = oppo(spintet);
-        if (!pinfected(pd)) { // Add the opposite point into list.
-          pinfect(pd);
-          cavpoints->newindex((void **) &parypt);
-          *parypt = pd;
-        }
-        tspivot(spintet, checksh); // Check if a subface is crossed.
-        if (checksh.sh != NULL) {
-          // Add this subface into list.
-          subfacstack->newindex((void **) &parysh);
-          *parysh = checksh;
-          if (firstcrosssh.sh == NULL) {
-            firstcrosssh = checksh;
-          }
-        }
-        if (apex(spintet) == pc) break;
-      }
-    }
-
-    // Stop if we reach the endpoint.
-    if (pf == pb) break;
-
-    // Search the next tet crossing by [a, b].
-    if (dir == ACROSSFACE) {
-      // One of the 3 opposite faces in 'searchtet' must intersect [a, b].
-      neightet.tet = searchtet.tet;
-      neightet.ver = 0;
-      for (i = 0; i < 3; i++) {
-        neightet.loc = locpivot[searchtet.loc][i];
-        pc = org(neightet);
-        pd = dest(neightet);
-        pe = apex(neightet);
-        pf = oppo(neightet); // The above point.
-        // Test if face [c, d, e] intersects edge [a, b]? Report their
-        //   intersection type ('level' = 1).
-        if (tri_edge_test(pc, pd, pe, pa, pb, pf, 1, types, poss)) {
-          dir = (enum intersection) types[0];
-          pos = poss[0];
-          break;
-        } else {
-          dir = DISJOINT;
-          pos = 0;
-        }
-      }
-      assert(dir != DISJOINT);  // SELF_CHECK
-    } else { // dir == ACROSSEDGE
-      // Find a face (or edge) intersecting with [a, b].
-      spintet = searchtet; // Backup the starting tet.
-      while (1) {
-        // Check the two opposite faces (of the edge) in 'searchtet'.
-        neightet.tet = searchtet.tet;
-        neightet.ver = 0;
-        for (i = 0; i < 2; i++) {
-          neightet.loc = locverpivot[searchtet.loc][searchtet.ver][i];
-          pc = org(neightet);
-          pd = dest(neightet);
-          pe = apex(neightet);
-          pf = oppo(neightet); // The above point.
-          // Test if face [c, d, e] intersects edge [a, b]? Report their
-          //   intersection type ('level' = 1).
-          if (tri_edge_test(pc, pd, pe, pa, pb, pf, 1, types, poss)) {
-            dir = (enum intersection) types[0];
-            pos = poss[0];
-            break;
-          } else {
-            dir = DISJOINT;
-            pos = 0;
-          }
-        }
-        if (dir == DISJOINT) {
-          // No intersection. Go to the next tet.
-          // dir = ACROSSEDGE;
-          fnextself(searchtet);
-          // We should NOT return to the starting tet.
-          assert(searchtet.tet != spintet.tet); // SELF_CHECK
-          continue; // Continue the search.
-        }
-        break; // Found!
-      } // while (1)
-    }
-
-    // Go to the intersect face or edge.
-    if (dir != ACROSSFACE) {
-      // 'dir' is either ACROSSFACE or ACROSSEDGE.
-      assert(dir == ACROSSEDGE); // SELF_CHECK
-      for (i = 0; i < pos; i++) {
-        enextself(neightet);
-      }
-    }
-    searchtet = neightet;
-
-  } // while (1)
-
-  if (b->verbose > 1) {
-    printf("    Formed edge cavity: %ld tets, %ld vertices.\n",
-      crosstets->objects, cavpoints->objects);
-  }
-
-  /*// All crossing tets are found (infected). We can form the cavity.
-  for (i = 0; i < crosstets->objects; i++) {
-    parytet = (triface *) fastlookup(crosstets, i);
-    searchtet = *parytet;
-    for (searchtet.loc = 0; searchtet.loc < 4; searchtet.loc++) {
-      sym(searchtet, neightet);
-      if (!infected(neightet)) {
-        // A bounday face.
-        cavfaces->newindex((void **) &parytet);
-        *parytet = neightet;
-      }
-    }
-  }*/
-
-  // We should find a subface which blocks the visibility between the two
-  //   endpoints of this edge.
-  assert(firstcrosssh.sh != NULL); // SELF_CHECK
-  // Remember this subface.
-  recentsh = firstcrosssh;
-
-  // Only for debugging.
-  for (i = 0; i < crosstets->objects; i++) {
-    parytet = (triface *) fastlookup(crosstets, i);
-    uninfect(*parytet);
-  }
-  for (i = 0; i < cavpoints->objects; i++) {
-    parypt = (point *) fastlookup(cavpoints, i);
-    puninfect(*parypt);
-  }
-  dump_facetof(&firstcrosssh, "facet2.lua");
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//                                                                           //
 // delaunizecavity()    Fill a cavity by Delaunay tetrahedra.                //
 //                                                                           //
 // The tetrahedralizing cavity is the half (top or bottom part) of the whole //
@@ -2941,6 +2705,240 @@ void tetgenmesh::constrainedfacets()
   delete facfaces;
   delete topshells;
   delete botshells;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//                                                                           //
+// scoutedge()    Search an edge in current tetrahedralization.              //
+//                                                                           //
+// The edge [a, b] will be searched. If the edge exists, return a handle in  //
+// the tetrahedralization ('searchtet') referring to this edge. If the edge  //
+// is missing, and the array 'crosstets' is not a NULL,  return the cavity   //
+// of all corssing tets of this edge.                                        //
+//                                                                           //
+///////////////////////////////////////////////////////////////////////////////
+
+enum tetgenmesh::intersection tetgenmesh::scoutedge(point pa, point pb,
+  triface* searchtet, arraypool* crosstets, arraypool* cavfaces,
+  arraypool* cavpoints)
+{
+  triface neightet, spintet, *parytet;
+  face checksh, checkseg;
+  point pc, pd, pe, pf, *ppt, *parypt;
+  enum intersection dir;
+  int types[2], poss[4];
+  int pos, i;
+
+  tetrahedron ptr;
+  int *iptr, tver;
+
+  if (b->verbose > 1) {
+    printf("    Search edge (%d, %d).\n", pointmark(pa), pointmark(pb));
+  }
+
+  // Search a tet whose origin is pa.
+  point2tetorg(pa, *searchtet);
+
+  // Search the line segment [pa, pb].
+  dir = finddirection(searchtet, pb);
+  if (dir == ACROSSVERT) {
+    if (dest(*searchtet) == pb) {
+      // Found! Does there already exist a segment.
+      return SHAREEDGE; // The edge is not missing.
+    } else {
+      return ACROSSVERT; // The edge intersects a vertex.
+    }
+  }
+
+  // The edge is missing, shall we form the edge cavity?
+  if ((crosstets == NULL) && (cavfaces == NULL) && (cavpoints == NULL)) {
+    return dir; // ACROSSFACE and ACROSSEDGE
+  }
+
+  // The possible cases are: ACROSSFACE and ACROSSEDGE.
+  // Go to the opposite (intersect) face.
+  enextfnextself(*searchtet);
+  // Add this tet into list.
+  infect(*searchtet);
+  crosstets->newindex((void **) &parytet);
+  *parytet = *searchtet;
+  // Add all vertices of this tet into list.
+  ppt = (point *) &(searchtet->tet[4]);
+  for (i = 0; i < 4; i++) {
+    pinfect(ppt[i]);
+    cavpoints->newindex((void **) &parypt);
+    *parypt = ppt[i];
+  }
+
+  // Collect all crossing tets of the edge [a, b].
+  while (1) {
+
+    // Enter the next crossing tet.
+    symedgeself(*searchtet);
+    pf = oppo(*searchtet);
+
+    if (dir == ACROSSFACE) {
+      if (!infected(*searchtet)) { // Add this tet into list.
+        infect(*searchtet);
+        crosstets->newindex((void **) &parytet);
+        *parytet = *searchtet;
+      }
+      if (!pinfected(pf)) { // Add the opposite point into list.
+        pinfect(pf);
+        cavpoints->newindex((void **) &parypt);
+        *parypt = pf;
+      }
+      tspivot(*searchtet, checksh); // Check if a subface is crossed.
+      if (checksh.sh != NULL) {
+        // The edge intersect a subface.
+        dir = ACROSSSUBFACE;
+        break;
+      }
+    } else { // dir == ACROSSEDGE
+      // Add all tets containing this edge into list.
+      pc = apex(*searchtet);
+      spintet = *searchtet;
+      while (1) {
+        fnextself(spintet);
+        if (!infected(spintet)) { // Add this tet into list.
+          infect(spintet);
+          crosstets->newindex((void **) &parytet);
+          *parytet = spintet;
+        }
+        pd = oppo(spintet);
+        if (!pinfected(pd)) { // Add the opposite point into list.
+          pinfect(pd);
+          cavpoints->newindex((void **) &parypt);
+          *parypt = pd;
+        }
+        if (apex(spintet) == pc) break;
+      }
+      tsspivot(spintet, checkseg); // Check if a segment is crossed.
+      if (checkseg.sh != NULL) {
+        // The edge intersects a subsegment.
+        dir = ACROSSSUBSEG;
+        break;
+      }
+    }
+
+    // Stop if we reach the endpoint.
+    if (pf == pb) break;
+
+    // Search the next tet crossing by [a, b].
+    if (dir == ACROSSFACE) {
+      // One of the 3 opposite faces in 'searchtet' must intersect [a, b].
+      neightet.tet = searchtet->tet;
+      neightet.ver = 0;
+      for (i = 0; i < 3; i++) {
+        neightet.loc = locpivot[searchtet->loc][i];
+        pc = org(neightet);
+        pd = dest(neightet);
+        pe = apex(neightet);
+        pf = oppo(neightet); // The above point.
+        // Test if face [c, d, e] intersects edge [a, b]? Report their
+        //   intersection type ('level' = 1).
+        if (tri_edge_test(pc, pd, pe, pa, pb, pf, 1, types, poss)) {
+          dir = (enum intersection) types[0];
+          pos = poss[0];
+          break;
+        } else {
+          dir = DISJOINT;
+          pos = 0;
+        }
+      }
+      assert(dir != DISJOINT);  // SELF_CHECK
+    } else { // dir == ACROSSEDGE
+      // Find a face (or edge) intersecting with [a, b].
+      spintet = *searchtet; // Backup the starting tet.
+      while (1) {
+        // Check the two opposite faces (of the edge) in 'searchtet'.
+        neightet.tet = searchtet->tet;
+        neightet.ver = 0;
+        for (i = 0; i < 2; i++) {
+          neightet.loc = locverpivot[searchtet->loc][searchtet->ver][i];
+          pc = org(neightet);
+          pd = dest(neightet);
+          pe = apex(neightet);
+          pf = oppo(neightet); // The above point.
+          // Test if face [c, d, e] intersects edge [a, b]? Report their
+          //   intersection type ('level' = 1).
+          if (tri_edge_test(pc, pd, pe, pa, pb, pf, 1, types, poss)) {
+            dir = (enum intersection) types[0];
+            pos = poss[0];
+            break;
+          } else {
+            dir = DISJOINT;
+            pos = 0;
+          }
+        }
+        if (dir == DISJOINT) {
+          // No intersection. Go to the next tet.
+          fnextself(*searchtet);
+          // Should NOT return to the starting tet.
+          assert(searchtet->tet != spintet.tet); // SELF_CHECK
+          continue; // Continue the search.
+        }
+        break; // Found!
+      } // while (1)
+    }
+
+    // Go to the intersect face or edge.
+    if (dir != ACROSSFACE) {
+      // 'dir' is either ACROSSFACE or ACROSSEDGE.
+      assert(dir == ACROSSEDGE); // SELF_CHECK
+      for (i = 0; i < pos; i++) {
+        enextself(neightet);
+      }
+    }
+    *searchtet = neightet;
+
+  } // while (1)
+
+  if ((dir == ACROSSSUBSEG) || (dir == ACROSSSUBFACE)) {
+    // Uninfect the collected crossing tets and vertices.
+    for (i = 0; i < crosstets->objects; i++) {
+      parytet = (triface *) fastlookup(crosstets, i);
+      uninfect(*parytet);
+    }
+    for (i = 0; i < cavpoints->objects; i++) {
+      parypt = (point *) fastlookup(cavpoints, i);
+      puninfect(*parypt);
+    }
+    crosstets->restart();
+    cavpoints->restart();
+    return dir;
+  }
+
+  //We can form the edge cavity.
+  for (i = 0; i < crosstets->objects; i++) {
+    parytet = (triface *) fastlookup(crosstets, i);
+    *searchtet = *parytet;
+    for (searchtet->loc = 0; searchtet->loc < 4; searchtet->loc++) {
+      sym(*searchtet, neightet);
+      if (!infected(neightet)) {
+        // A cavity bounday face.
+        cavfaces->newindex((void **) &parytet);
+        *parytet = neightet;
+      }
+    }
+  }
+
+  // Uninfect the collected crossing tets and vertices.
+  for (i = 0; i < crosstets->objects; i++) {
+    parytet = (triface *) fastlookup(crosstets, i);
+    uninfect(*parytet);
+  }
+  for (i = 0; i < cavpoints->objects; i++) {
+    parypt = (point *) fastlookup(cavpoints, i);
+    puninfect(*parypt);
+  }
+
+  if (b->verbose > 1) {
+    printf("    Formed edge cavity: %ld tets, %ld faces, %ld vertices.\n",
+      crosstets->objects, cavfaces->objects, cavpoints->objects);
+  }
+
+  return ACROSSFACE; // or ACROSSEDGE
 }
 
 ///////////////////////////////////////////////////////////////////////////////

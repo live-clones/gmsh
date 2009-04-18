@@ -756,7 +756,7 @@ void tetgenmesh::outsubfaces(tetgenio* out)
   char facefilename[FILENAMESIZE];
   int *elist;
   int *emlist;
-  int index, index1=0, index2=0;
+  int index, index1 = 0, index2 = 0;
   triface abuttingtet;
   face faceloop, spinsh;
   point torg, tdest, tapex;

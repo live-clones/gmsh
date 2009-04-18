@@ -560,7 +560,7 @@ enum location {INTET, ONFACE, ONEDGE, ONVERTEX, OUTSIDE, ENCSEGMENT, ENCFACE};
 
 enum intersection {DISJOINT, INTERSECT, SHAREVERT, SHAREEDGE, SHAREFACE,
   TOUCHEDGE, TOUCHFACE, ACROSSVERT, ACROSSEDGE, ACROSSFACE, ACROSSTET,
-  TRIEDGEINT, EDGETRIINT, COLLISIONFACE};
+  TRIEDGEINT, EDGETRIINT, COLLISIONFACE, ACROSSSUBSEG, ACROSSSUBFACE};
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
@@ -1392,6 +1392,30 @@ void tssdissolve(triface& t) {
 #define pointmark(pt) ((int *) (pt))[pointmarkindex]
     
 #define point2tet(pt) ((tetrahedron *) (pt))[point2tetindex]
+
+// Given a point 'pa', return a tet 'searchtet' whose origin is pa.
+
+void point2tetorg(point pa, triface& searchtet)
+{
+  int i;
+
+  // Search a tet whose origin is pa.
+  decode(point2tet(pa), searchtet);
+  assert(searchtet.tet != NULL); // SELF_CHECK
+  for (i = 4; i < 8; i++) {
+    if ((point) searchtet.tet[i] == pa) {
+      // Found. Set pa as its origin.
+      switch (i) {
+        case 4: searchtet.loc = 0; searchtet.ver = 0; break;
+        case 5: searchtet.loc = 0; searchtet.ver = 2; break;
+        case 6: searchtet.loc = 0; searchtet.ver = 4; break;
+        case 7: searchtet.loc = 1; searchtet.ver = 2; break;
+      }
+      break;
+    }
+  }
+  assert(i < 8); // SELF_CHECK
+}
     
 #define point2ppt(pt) ((point *) (pt))[point2tetindex + 1]
 
@@ -1664,7 +1688,6 @@ enum intersection scoutcrosstet(face* ssub, triface* searchtet, arraypool*);
 void recoversubfacebyflips(face* pssub, triface* crossface, arraypool*);
 void formcavity(face*, arraypool*, arraypool*, arraypool*, arraypool*, 
                 arraypool*, arraypool*);
-void formedgecavity(point, point, arraypool*, arraypool*, arraypool*);
 bool delaunizecavity(arraypool*, arraypool*, arraypool*, arraypool*,
                      arraypool*, arraypool*);
 bool fillcavity(arraypool*, arraypool*, arraypool*, arraypool*);
@@ -1672,6 +1695,9 @@ void carvecavity(arraypool*, arraypool*, arraypool*);
 void restorecavity(arraypool*, arraypool*, arraypool*);
 void splitsubedge(point, face*, arraypool*, arraypool*);
 void constrainedfacets();
+
+enum intersection scoutedge(point, point, triface*, arraypool*, arraypool*,
+                            arraypool*);
 
 void formskeleton();
 void carveholes();
