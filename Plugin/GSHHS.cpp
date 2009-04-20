@@ -51,7 +51,7 @@ class GMSH_GSHHSPlugin:public GMSH_PostPlugin
       }
     };
     class reader_gshhs:public reader{
-      /*	$Id: GSHHS.cpp,v 1.29 2009-02-18 11:21:44 remacle Exp $
+      /*	$Id: GSHHS.cpp,v 1.30 2009-04-20 08:47:13 remacle Exp $
        *
        * Include file defining structures used in gshhs.c
        *
@@ -113,7 +113,7 @@ class GMSH_GSHHSPlugin:public GMSH_PostPlugin
       bool first_loop;
       public:
       reader_gshhs(std::string filename){
-        fp=fopen(filename.c_str(),"r");
+        fp=fopen(filename.c_str(),"rb");
         max_east = 270000000;
         first_loop=true;
       }
