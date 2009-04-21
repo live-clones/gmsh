@@ -104,6 +104,9 @@ public :
   virtual void zeroMatrix() {}
   virtual void zeroRightHandSide() {}
   virtual int systemSolve() { return 0; }
+  void setPrec(double p){}
+  void setNoisy(int n){}
+  void setGmres(int n){}
 };
 
 #endif
