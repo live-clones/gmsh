@@ -27,6 +27,7 @@ GMSH_API =\
   Geo/discreteVertex.h Geo/discreteEdge.h Geo/discreteFace.h Geo/discreteRegion.h\
   Geo/SPoint2.h Geo/SPoint3.h Geo/SVector3.h Geo/SBoundingBox3d.h Geo/Pair.h Geo/Range.h\
   Geo/CellComplex.h\
+  Geo/ChainComplex.h\
   contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h contrib/kbipack/gmp_blas.h\
   Numeric/Gauss.h Numeric/FunctionSpace.h Numeric/GmshMatrix.h\
   Numeric/gmshAssembler.h Numeric/gmshTermOfFormulation.h Numeric/gmshLaplace.h\

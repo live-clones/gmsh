@@ -39,7 +39,8 @@ SRC = GEntity.cpp\
         MLine.cpp MTriangle.cpp MQuadrangle.cpp MTetrahedron.cpp\
         MHexahedron.cpp MPrism.cpp MPyramid.cpp\
       MZone.cpp MZoneBoundary.cpp\
-      CellComplex.cpp
+      CellComplex.cpp\
+      ChainComplex.cpp
 
 
 OBJ = ${SRC:.cpp=${OBJEXT}}
@@ -387,3 +388,4 @@ CellComplex${OBJEXT}: CellComplex.cpp CellComplex.h ../Common/GmshConfig.h \
   ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
   GModel.h GVertex.h GEntity.h Range.h SBoundingBox3d.h GPoint.h GEdge.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h
+ChainComplex${OBJEXT}: ChainComplex.cpp ChainComplex.h

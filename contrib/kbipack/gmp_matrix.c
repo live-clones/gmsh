@@ -22,7 +22,7 @@
    P.O.Box 692, FIN-33101 Tampere, Finland
    saku.suuriniemi@tut.fi
 
-   $Id: gmp_matrix.c,v 1.3 2009-04-14 10:02:22 matti Exp $
+   $Id: gmp_matrix.c,v 1.4 2009-04-21 07:06:22 matti Exp $
 */
 
 
@@ -182,6 +182,8 @@ copy_gmp_matrix(const gmp_matrix * matrix,
 
   r = end_row-start_row+1;
   c = end_col-start_col+1;
+  if(r < 1 || c < 1) return NULL;
+  
   new_matrix -> storage = (mpz_t *) calloc(r*c, sizeof(mpz_t));
   if(new_matrix -> storage == NULL)
     {
