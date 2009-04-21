@@ -71,6 +71,9 @@ class GVertex : public GEntity
   // get the element at the given index
   MElement *getMeshElement(unsigned int index);
 
+  // return true if this vertex is on a seam of the given face
+  bool isOnSeam(const GFace *gf) const;
+
   std::vector<MPoint*> points;
 };
 

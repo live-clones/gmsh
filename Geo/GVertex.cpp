@@ -73,3 +73,12 @@ MElement *GVertex::getMeshElement(unsigned int index)
     return points[index]; 
   return 0;
 }
+
+bool GVertex::isOnSeam(const GFace *gf) const
+{
+  std::list<GEdge*>::const_iterator eIter = l_edges.begin();
+  for (; eIter != l_edges.end(); eIter++) {
+    if ( (*eIter)->isSeam(gf) ) return true;
+  }
+  return false;
+}
