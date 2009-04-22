@@ -16,7 +16,7 @@ A GEdgeCompound is a model edge that is the compound of model edges.
 class GEdgeCompound : public GEdge {
  protected:
   std::vector<GEdge*> _compound;
-  std::vector<bool> _orientation;
+  std::vector<int> _orientation;
   std::vector<double> _pars;
   void parametrize() ;
   void orderEdges()  ;

@@ -30,48 +30,66 @@ void GEdgeCompound::orderEdges()
   }
   _c.push_back(*(edges.begin())); 
   edges.erase(edges.begin());
-  _orientation.push_back(true);
+  _orientation.push_back(1);
   GVertex *first = _c[0]->getBeginVertex();
   GVertex *last = _c[0]->getEndVertex();  
 
   while (first != last){
     if (edges.empty())break;
+    bool found = false;
     for (std::list<GEdge*>::iterator it = edges.begin() ; it != edges.end() ; ++it){
       GEdge *e = *it;
       //      printf("last %d edge %d %d\n",last->tag(),e->getBeginVertex()->tag(),
-      //	     e->getEndVertex()->tag());
+      //      	     e->getEndVertex()->tag());
       if (e->getBeginVertex() == last){
 	_c.push_back(e); 
 	edges.erase(it);
-	_orientation.push_back(true);
+	_orientation.push_back(1);
 	last = e->getEndVertex();
+	found = true;
 	break;
       }
       else if (e->getEndVertex() == last){
 	_c.push_back(e); 
 	edges.erase(it);
-	_orientation.push_back(false);
+	_orientation.push_back(0);
 	last = e->getBeginVertex();
+	found = true;
 	break;
+      }
+    }
+    if (!found){
+      if (_c.size() == 1 && _orientation[0]){
+	GVertex *temp = first;
+	first = last;
+	last = temp;
+	_orientation[0] = 0;
+	printf("coucou\n");
+      }
+      else {
+	Msg::Error("Compound Edge %d is wrong",tag());
+	return;
       }
     }
   }  
   _compound = _c;
 
   if (_compound.size() < 2)return;
-  if (   _compound[0]->getEndVertex() != _compound[1]->getEndVertex() 
+  if (_orientation[0] && _compound[0]->getEndVertex() != _compound[1]->getEndVertex() 
       && _compound[0]->getEndVertex() != _compound[1]->getBeginVertex()){  
+    //    printf("coucou again\n");
     for (int i=0;i<_compound.size();i++){
       _orientation[i] = !_orientation[i] ;
     }
   }
-//   for (int i=0;i<_compound.size();i++){
-//     printf("o %d e %d (%d,%d)\n",
-// 	   (int)_orientation[i],
-// 	   _compound[i]->tag(),
-// 	   _compound[i]->getBeginVertex()->tag(),
-// 	   _compound[i]->getEndVertex()->tag());
-//   }
+  return;
+   for (int i=0;i<_compound.size();i++){
+     printf("o %d e %d (%d,%d)\n",
+	    (int)_orientation[i],
+	    _compound[i]->tag(),
+	    _compound[i]->getBeginVertex()->tag(),
+	    _compound[i]->getEndVertex()->tag());
+   }
 
 }
 

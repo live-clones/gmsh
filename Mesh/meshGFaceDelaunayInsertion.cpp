@@ -332,8 +332,11 @@ double getSurfUV(MTriangle *t, std::vector<double> &Us, std::vector<double> &Vs)
 bool insertVertex(GFace *gf, MVertex *v, double *param , MTri3 *t,
                   std::set<MTri3*, compareTri3Ptr> &allTets,
                   std::set<MTri3*, compareTri3Ptr> *activeTets,
-                  std::vector<double> &vSizes, std::vector<double> &vSizesBGM,
-                  std::vector<double> &Us, std::vector<double> &Vs,
+                  std::vector<double> &vSizes, 
+		  std::vector<double> &vSizesBGM,
+		  std::vector<SMetric3> &vMetricsBGM,
+                  std::vector<double> &Us, 
+		  std::vector<double> &Vs,
                   double *metric = 0)
 {
   std::list<edgeXface> shell;
@@ -481,6 +484,7 @@ static void insertAPoint(GFace *gf,
 			 std::vector<double> &Vs,
 			 std::vector<double> &vSizes, 
 			 std::vector<double> &vSizesBGM,
+			 std::vector<SMetric3> &vMetricsBGM,
 			 std::set<MTri3*,compareTri3Ptr> &AllTris,
 			 std::set<MTri3*,compareTri3Ptr> * ActiveTris = 0,
 			 MTri3 *worst = 0){
@@ -526,12 +530,14 @@ static void insertAPoint(GFace *gf,
     		  uv[1] * vSizes [ptin->tri()->getVertex(2)->getNum()]); 
     // double eigMetricSurface = gf->getMetricEigenvalue(SPoint2(center[0],center[1]));
     double lc = BGM_MeshSize(gf,center[0],center[1],p.x(),p.y(),p.z());
+    SMetric3 metr = BGM_MeshMetric(gf,center[0],center[1],p.x(),p.y(),p.z());
+    vMetricsBGM.push_back(metr);
     vSizesBGM.push_back(lc);
     vSizes.push_back(lc1);
     Us.push_back(center[0]);
     Vs.push_back(center[1]);
     
-    if (!insertVertex(gf, v, center, worst, AllTris,ActiveTris, vSizes, vSizesBGM, 
+    if (!insertVertex(gf, v, center, worst, AllTris,ActiveTris, vSizes, vSizesBGM,vMetricsBGM, 
 		      Us, Vs, metric)) {
       Msg::Debug("2D Delaunay : a cavity is not star shaped");
       AllTris.erase(it);
@@ -563,6 +569,7 @@ void gmshBowyerWatson(GFace *gf)
 {
   std::set<MTri3*,compareTri3Ptr> AllTris;
   std::vector<double> vSizes, vSizesBGM, Us, Vs;
+  std::vector<SMetric3> vMetricsBGM;
 
   buildMeshGenerationDataStructures(gf, AllTris, vSizes, vSizesBGM, Us, Vs);
 
@@ -595,7 +602,7 @@ void gmshBowyerWatson(GFace *gf)
                        Vs[base->getVertex(2)->getNum()]) / 3.};
       buildMetric(gf, pa, metric);
       circumCenterMetric(worst->tri(), metric, Us, Vs, center, r2);       
-      insertAPoint(gf, AllTris.begin(), center, metric, Us, Vs, vSizes, vSizesBGM, 
+      insertAPoint(gf, AllTris.begin(), center, metric, Us, Vs, vSizes, vSizesBGM, vMetricsBGM,
                    AllTris);
     }
     //     if(ITER % 10== 0){
@@ -666,6 +673,7 @@ void gmshBowyerWatsonFrontal(GFace *gf)
   std::set<MTri3*,compareTri3Ptr> AllTris;
   std::set<MTri3*,compareTri3Ptr> ActiveTris;
   std::vector<double> vSizes, vSizesBGM, Us, Vs;
+  std::vector<SMetric3> vMetricsBGM;
 
   testTensor();
 
@@ -746,7 +754,7 @@ void gmshBowyerWatsonFrontal(GFace *gf)
       const double d = (rhoM_hat + sqrt (rhoM_hat * rhoM_hat - p * p)) / RATIO;
       
       double newPoint[2] = {midpoint[0] + d * dir[0], midpoint[1] + d * dir[1]};
-      insertAPoint(gf, AllTris.end(), newPoint, metric, Us, Vs, vSizes, vSizesBGM,
+      insertAPoint(gf, AllTris.end(), newPoint, metric, Us, Vs, vSizes, vSizesBGM, vMetricsBGM,
                    AllTris, &ActiveTris, worst);
     } 
 //     if(ITER % 1000== 0){

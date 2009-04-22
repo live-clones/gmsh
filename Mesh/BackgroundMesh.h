@@ -5,9 +5,10 @@
 
 #ifndef _BACKGROUND_MESH_H_
 #define _BACKGROUND_MESH_H_
-
+#include "STensor3.h"
 class GEntity;
 double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double Z);
+SMetric3 BGM_MeshMetric(GEntity *ge, double U, double V, double X, double Y, double Z);
 bool Extend1dMeshIn2dSurfaces();
 bool Extend2dMeshIn3dVolumes();
 

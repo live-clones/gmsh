@@ -180,17 +180,17 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
 			double X, double Y, double Z)
 {
   // default lc (mesh size == size of the model)
-  SMetric3 l1(CTX::instance()->lc);
+  double l1 = CTX::instance()->lc;
 
   // lc from points            
-  SMetric3 l2(MAX_LC);
+  double l2 = MAX_LC;
   if(CTX::instance()->mesh.lcFromPoints && ge->dim() < 2) 
-    l2 = SMetric3(LC_MVertex_PNTS(ge, U, V));
+    l2 = LC_MVertex_PNTS(ge, U, V);
   
   // lc from curvature
-  SMetric3 l3 (MAX_LC);
+  double l3 =MAX_LC;
   if(CTX::instance()->mesh.lcFromCurvature && ge->dim() < 3)
-    l3 = SMetric3(LC_MVertex_CURV(ge, U, V));
+    l3 = LC_MVertex_CURV(ge, U, V);
 
   // lc from fields
   SMetric3 l4 (MAX_LC);
@@ -198,26 +198,28 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
   if(fields->background_field > 0){
     Field *f = fields->get(fields->background_field);
     if(f){
-      //      if (!f->isotropic())
-      //	(*f)(X, Y, Z, ge,l4);
-      //      else
+      if (!f->isotropic())
+	(*f)(X, Y, Z, l4,ge);
+      else
 	l4 = SMetric3((*f)(X, Y, Z, ge));
     }
   }
   
   // take the minimum, then constrain by lcMin and lcMax
-  //  double lc = std::min(std::min(std::min(l1, l2), l3), l4);
+  double lc = std::min(std::min(l1, l2), l3);
 
-  //  lc = std::max(lc, CTX::instance()->mesh.lcMin);
-  //  lc = std::min(lc, CTX::instance()->mesh.lcMax);
+  lc = std::max(lc, CTX::instance()->mesh.lcMin);
+  lc = std::min(lc, CTX::instance()->mesh.lcMax);
 
-  //  if(lc <= 0.){
-  ///    Msg::Error("Wrong characteristic length lc = %g (lcmin = %g, lcmax = %g)",
-  //	       lc, CTX::instance()->mesh.lcMin, CTX::instance()->mesh.lcMax);
-  //    lc = l1;
-  //  }
+  if(lc <= 0.){
+     Msg::Error("Wrong characteristic length lc = %g (lcmin = %g, lcmax = %g)",
+  	       lc, CTX::instance()->mesh.lcMin, CTX::instance()->mesh.lcMax);
+     lc = l1;
+  }
+  SMetric3 LC(lc);
+  return intersection (l4,LC);
 
-//  return lc * CTX::instance()->mesh.lcFactor;
+  //  return lc * CTX::instance()->mesh.lcFactor;
 }
 
 
