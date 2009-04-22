@@ -35,17 +35,20 @@ class Cell
 
    int _bdSize;
    int _cbdSize;
-   
+      
    // whether this cell belongs to a subdomain
    // used in relative homology computation
    bool _inSubdomain;
+   
+   int _tag;
    
   public:
    Cell(){}
    virtual ~Cell(){}
    
    virtual int getDim() const { return _dim; };
-   //virtual int getTag() const { return _tag; };
+   virtual int getTag() const { return _tag; };
+   virtual void setTag(int tag) { _tag = tag; };
    
    // get the number of vertices this cell has
    virtual int getNumVertices() const = 0; //{return _vertices.size();}
@@ -68,7 +71,7 @@ class Cell
    virtual void setBdSize(int size) { _bdSize = size; }
    virtual int getCbdSize() { return _cbdSize; }
    virtual void setCbdSize(int size) { _cbdSize = size; }
-   
+      
    virtual bool inSubdomain() const { return _inSubdomain; }
    
    // print cell vertices
@@ -112,7 +115,7 @@ class Simplex : public Cell
 { 
    
  public:
-   Simplex(){
+   Simplex() : Cell() {
      _cbdSize = 1000; // big number
      _bdSize = 1000;
    }
@@ -344,11 +347,7 @@ class CellComplex
      
    // remove cell from the queue set
    virtual void removeCellQset(Cell*& cell, std::set<Cell*, Less_Cell>& Qset);
-   
-   // get all the finite element mesh vertices in the domain of this cell complex
-   virtual void getDomainVertices(std::set<MVertex*, Less_MVertex>& domainVertices, 
-                                  bool subdomain);
-   
+      
    // insert cells into this cell complex
    virtual void insertCells(bool subdomain);
    
@@ -369,6 +368,9 @@ class CellComplex
    
    virtual std::set<Cell*, Less_Cell> getCells(int dim){ return _cells[dim]; }
    
+   // get all the finite element mesh vertices in the domain of this cell complex
+   virtual void getDomainVertices(std::set<MVertex*, Less_MVertex>& domainVertices, bool subdomain);
+   
    // iterators to the first and last cells of certain dimension
    virtual citer firstCell(int dim) {return _cells[dim].begin(); }
    virtual citer lastCell(int dim) {return _cells[dim].end(); }
@@ -376,7 +378,6 @@ class CellComplex
    // find a cell in this cell complex
    virtual std::set<Cell*, Less_Cell>::iterator findCell(int dim, std::vector<int>& vertices);
    virtual std::set<Cell*, Less_Cell>::iterator findCell(int dim, int vertex, int dummy=0);
-   
    
    // kappa for two cells of this cell complex
    // implementation will vary depending on cell type
@@ -424,7 +425,7 @@ class CellComplex
    // print the vertices of cells of certain dimension
    virtual void printComplex(int dim, bool subcomplex);
    
-   // write this cell complex in legacy .msh format
+   // write this cell complex in .msh format
    virtual int writeComplexMSH(const std::string &name); 
    
    

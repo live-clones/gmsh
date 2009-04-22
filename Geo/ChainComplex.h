@@ -49,6 +49,8 @@ class ChainComplex{
    // bases for homology groups
    gmp_matrix* _Hbasis[4];
    
+   
+   
   public:
    
    ChainComplex(CellComplex* cellComplex);
@@ -85,6 +87,9 @@ class ChainComplex{
    // Compute bases for the homology groups of this chain complex 
    virtual void computeHomology();
    
+   virtual std::vector<int> getCoeffVector(int dim, int chainNumber);
+   virtual int getBasisSize(int dim) {  if(dim > -1 || dim < 4) return gmp_matrix_cols(_Hbasis[dim]); else return 0; } 
+   
    virtual int printMatrix(gmp_matrix* matrix){ 
      printf("%d rows and %d columns\n", gmp_matrix_rows(matrix), gmp_matrix_cols(matrix)); 
      return gmp_matrix_printf(matrix); } 
@@ -93,7 +98,40 @@ class ChainComplex{
    virtual void matrixTest();
 };
 
-
 #endif
+
+// A class representing a chain.
+// Used to visualize generators of the homology groups.
+class Chain{
+   
+  private:
+   // cells and their coefficients in this chain
+   std::vector< std::pair <Cell*, int> > _cells;
+   // name of the chain (optional)
+   std::string _name;
+   // cell complex this chain belongs to
+   CellComplex* _cellComplex;
+   
+  public:
+   Chain(){}
+   Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, CellComplex* cellComplex, std::string name="Chain");
+   ~Chain(){}
+   
+   // get i:th cell of this chain
+   virtual Cell* getCell(int i) { return _cells.at(i).first; }
+   // get coeffcient of i:th cell of this chain
+   virtual int getCoeff(int i) { return _cells.at(i).second; }
+   
+   // number of cells in this chain 
+   virtual int getSize() { return _cells.size(); }
+   
+   // get/set chain name
+   virtual std::string getName() { return _name; }
+   virtual void setName(std::string name) { _name=name; }
+
+   // append this chain to a 2.0 .msh file as $ElementData
+   virtual int writeChainMSH(const std::string &name);
+   
+};
 
 #endif

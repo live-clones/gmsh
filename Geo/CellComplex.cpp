@@ -15,6 +15,15 @@ CellComplex::CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> su
   // subdomain need to be inserted first!
   insertCells(true);
   insertCells(false);
+
+  int tag = 1;
+  for(int i = 0; i < 4; i++){
+    for(citer cit = firstCell(i); cit != lastCell(i); cit++){
+      Cell* cell = *cit;
+      cell->setTag(tag);
+      tag++;
+    }
+  }
   
 }
 void CellComplex::insertCells(bool subdomain){  
@@ -493,13 +502,18 @@ int CellComplex::writeComplexMSH(const std::string &name){
   
     
   FILE *fp = fopen(name.c_str(), "w");
+  
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     printf("Unable to open file.");
     return 0;
   }
   
-  fprintf(fp, "$NOD\n");
+  
+  
+  fprintf(fp, "$MeshFormat\n2.0 0 8\n$EndMeshFormat\n");
+  
+  fprintf(fp, "$Nodes\n");
   
   std::set<MVertex*, Less_MVertex> domainVertices;
   getDomainVertices(domainVertices, true);
@@ -513,38 +527,34 @@ int CellComplex::writeComplexMSH(const std::string &name){
   }
   
       
-  fprintf(fp, "$ENDNOD\n");
-  fprintf(fp, "$ELM\n");
+  fprintf(fp, "$EndNodes\n");
+  fprintf(fp, "$Elements\n");
 
   fprintf(fp, "%d\n", _cells[0].size() + _cells[1].size() + _cells[2].size() + _cells[3].size());
   
-  int index = 1;
-  
   for(citer cit = firstCell(0); cit != lastCell(0); cit++) {
     Cell* vertex = *cit;
-    fprintf(fp, "%d %d %d %d %d %d\n", index, 15, 0, 1, 1, vertex->getVertex(0));
-    index++;
+    fprintf(fp, "%d %d %d %d %d %d %d\n", vertex->getTag(), 15, 3, 0, 0, 0, vertex->getVertex(0));
   }
   
   
   for(citer cit = firstCell(1); cit != lastCell(1); cit++) {
     Cell* edge = *cit;
-    fprintf(fp, "%d %d %d %d %d %d %d\n", index, 1, 0, 1, 2, edge->getVertex(0), edge->getVertex(1));
-    index++;
+    fprintf(fp, "%d %d %d %d %d %d %d %d\n", edge->getTag(), 1, 3, 0, 0, 0, edge->getVertex(0), edge->getVertex(1));
   }
   
   for(citer cit = firstCell(2); cit != lastCell(2); cit++) {
     Cell* face = *cit;
-    fprintf(fp, "%d %d %d %d %d %d %d %d\n", index, 2, 0, 1, 3, face->getVertex(0), face->getVertex(1), face->getVertex(2));
-    index++;
+    fprintf(fp, "%d %d %d %d %d %d %d %d %d\n", face->getTag(), 2, 3, 0, 0, 0, face->getVertex(0), face->getVertex(1), face->getVertex(2));
   }
   for(citer cit = firstCell(3); cit != lastCell(3); cit++) {
     Cell* volume = *cit;
-    fprintf(fp, "%d %d %d %d %d %d %d %d %d\n", index, 4, 0, 1, 4, volume->getVertex(0), volume->getVertex(1), volume->getVertex(2), volume->getVertex(3));
-    index++;
+    fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", volume->getTag(), 4, 3, 0, 0, 0, volume->getVertex(0), volume->getVertex(1), volume->getVertex(2), volume->getVertex(3));
   }
     
-  fprintf(fp, "$ENDELM\n");
+  fprintf(fp, "$EndElements\n");
+  
+  fclose(fp);
   
   return 1;
 }

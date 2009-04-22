@@ -12,6 +12,11 @@
 ChainComplex::ChainComplex(CellComplex* cellComplex){
   
   _HMatrix[0] = NULL;
+  _kerH[0] = NULL;
+  _codH[0] = NULL;
+  _JMatrix[0] = NULL;
+  _QMatrix[0] = NULL;
+  _Hbasis[0] = NULL;
   
   for(int dim = 1; dim < 4; dim++){
     unsigned int cols = cellComplex->getSize(dim);
@@ -256,15 +261,17 @@ void ChainComplex::computeHomology(){
       if(getCodHMatrix(i+1) == NULL){
         _Hbasis[i] = copy_gmp_matrix(getKerHMatrix(i), 1, 1,
                                      gmp_matrix_rows(getKerHMatrix(i)), gmp_matrix_cols(getKerHMatrix(i)));
-      }
+      }  
       else if(getJMatrix(i) == NULL || getQMatrix(i) == NULL){
         _Hbasis[i] = NULL;
-      }
+      } 
       else{
         _Hbasis[i] = copy_gmp_matrix(getKerHMatrix(i), 1, 1, 
                                      gmp_matrix_rows(getKerHMatrix(i)), gmp_matrix_cols(getKerHMatrix(i)));
+        
         gmp_matrix_right_mult(_Hbasis[i], getQMatrix(i));
-      }  
+      } 
+      
     } 
     
     
@@ -303,5 +310,84 @@ void ChainComplex::matrixTest(){
   return; 
 }
 
+std::vector<int> ChainComplex::getCoeffVector(int dim, int chainNumber){
+  
+  std::vector<int> coeffVector;
+  
+  if(dim < 0 || dim > 3) return coeffVector;
+  if(_Hbasis[dim] == NULL || gmp_matrix_cols(_Hbasis[dim]) < chainNumber) return coeffVector;
+  
+  int rows = gmp_matrix_rows(_Hbasis[dim]);
+  
+  int elemi;
+  long int elemli;
+  mpz_t elem;
+  mpz_init(elem);
+  
+  for(int i = 1; i <= rows; i++){
+    gmp_matrix_get_elem(elem, i, chainNumber, _Hbasis[dim]);
+    elemli = mpz_get_si(elem);
+    elemi = elemli;
+    coeffVector.push_back(elemi);
+    //printf("coeff: %d \n", coeffVector.at(i-1));
+  }
+  
+  mpz_clear(elem);
+  return coeffVector;
+  
+}
 
 #endif
+
+Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, CellComplex* cellComplex, std::string name){
+  
+  int i = 0;
+  for(std::set<Cell*, Less_Cell>::iterator cit = cells.begin(); cit != cells.end(); cit++){
+    Cell* cell = *cit;
+    if(!cell->inSubdomain() && coeffs.size() > i){
+      if(coeffs.at(i) != 0) _cells.push_back( std::make_pair(cell, coeffs.at(i)) );
+      i++;
+    }
+  }
+  
+  _name = name;
+  _cellComplex = cellComplex;
+  
+}
+
+int Chain::writeChainMSH(const std::string &name){
+
+  //_cellComplex->writeComplexMSH(name);
+  
+  FILE *fp = fopen(name.c_str(), "a");
+  if(!fp){
+    Msg::Error("Unable to open file '%s'", name.c_str());
+        printf("Unable to open file.");
+        return 0;
+  }
+
+  fprintf(fp, "\n$ElementData\n");
+  
+  fprintf(fp, "1 \n");
+  fprintf(fp, "\"%s\" \n", getName().c_str());
+  fprintf(fp, "1 \n");
+  fprintf(fp, "0.0 \n");
+  fprintf(fp, "4 \n");
+  fprintf(fp, "0 \n");
+  fprintf(fp, "1 \n");
+  fprintf(fp, "%d \n", getSize());
+  fprintf(fp, "0 \n");
+  
+  for(int i = 0; i < _cells.size(); i++){
+    
+    fprintf(fp, "%d %d \n", getCell(i)->getTag(), getCoeff(i));
+    
+  }
+  
+  fprintf(fp, "$EndElementData\n");
+  
+  fclose(fp);
+  
+  return 1;
+  
+}
