@@ -16,11 +16,11 @@
 
 class gmshGradientBasedDiffusivity : public gmshFunction<double>
 {
- private:
+private:
   MElement *_current;
   int _iComp;
   mutable std::map<MVertex*, SPoint2> _coordinates;
- public:
+public:
   gmshGradientBasedDiffusivity (std::map<MVertex*,SPoint2> &coordinates) 
     : _current (0), _iComp(-1),_coordinates(coordinates){}
   void setCurrent (MElement *current){ _current = current; }
@@ -47,10 +47,10 @@ class gmshGradientBasedDiffusivity : public gmshFunction<double>
 
 class gmshDistanceBasedDiffusivity : public gmshFunction<double>
 {
- private:
+private:
   MElement *_current;
   mutable std::map<MVertex*, SPoint3> _coordinates;
- public:
+public:
   gmshDistanceBasedDiffusivity (std::map<MVertex*,SPoint3> &coordinates) 
     : _current (0),_coordinates(coordinates){}
   void setCurrent (MElement *current){ _current = current; }
@@ -79,6 +79,7 @@ static void fixEdgeToValue(GEdge *ed, double value, gmshAssembler<double> &myAss
 
 void GFaceCompound::parametrize() const
 {
+
   if (!oct){
     coordinates.clear();
     parametrize(ITERD);
@@ -152,6 +153,8 @@ GFaceCompound::~GFaceCompound()
   }
 }
 
+
+
 static bool orderVertices(const std::list<GEdge*> &e, std::vector<MVertex*> &l,
                           std::vector<double> &coord)
 {
@@ -211,6 +214,99 @@ static bool orderVertices(const std::list<GEdge*> &e, std::vector<MVertex*> &l,
     if(!found) return false;
   }    
   return true;
+}
+
+SPoint2 GFaceCompound::getCoordinates(MVertex *v) const 
+{ 
+  parametrize() ; 
+  std::map<MVertex*,SPoint3>::iterator it = coordinates.find(v);
+  // return SPoint2(it->second.x(),it->second.y()); 
+
+  if(it != coordinates.end()){
+    return SPoint2(it->second.x(),it->second.y()); 
+  }
+  else{
+
+    double tGlob, tLoc;
+    double tL, tR;
+    int iEdge;
+
+    //getParameter Point
+    v->getParameter(0,tGlob);
+    //printf("global param for point (%g, %g, %g ) = %g\n", v->x(), v->y(), v->z(), tGlob);
+
+    //find compound Edge
+      GEdgeCompound *gec = dynamic_cast<GEdgeCompound*>(v->onWhat());
+      //printf("tag compound=%d, beginvertex=%d, endvertex=%d \n", gec->tag(), gec->getBeginVertex()->tag(), gec->getEndVertex()->tag());
+    
+    if (gec){
+
+      //compute local parameter on Edge
+      gec->getLocalParameter(tGlob,iEdge,tLoc);
+      std::vector<GEdge*> gev = gec->getEdgesOfCompound();
+      GEdge *ge = gev[iEdge];
+      //printf("iEdge =%d, leftV =%d, rightV=%d,  and local param=%g \n", ge->tag(), ge->getBeginVertex()->tag(), ge->getEndVertex()->tag(), tLoc);
+      
+      //left and right vertex of the Edge
+      MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
+      MVertex *v1 = ge->getEndVertex()->mesh_vertices[0];
+      std::map<MVertex*,SPoint3>::iterator itL = coordinates.find(v0);
+      std::map<MVertex*,SPoint3>::iterator itR = coordinates.find(v1);
+  
+      //for the Edge, find the left and right vertices of the initial 1D mesh and interpolate to find (u,v)
+      //printf("number of vertices =%d for Edge =%d \n", ge->mesh_vertices.size(), ge->tag());
+      MVertex *vL = v0;
+      MVertex *vR = v1;
+      double xL = vL->x();
+      double yL = vL->y();
+      double zL = vL->z();
+      tL = ge->parBounds(0).low();
+      tR = ge->parBounds(0).high();
+      //printf("tLeftEDGE=%g tRightEDGE=%g, tLoc=%g\n", tL, tR, tLoc);
+      int j = 0;
+      //printf("j =%d,  veL (%g,%g,%g), -> uv= (%g,%g)\n",j,xL,yL,zL, itL->second.x(), itL->second.y());
+      bool found = false;
+      while (j < ge->mesh_vertices.size()){
+	vR = ge->mesh_vertices[j];
+	double xR=vR->x();
+	double yR=vR->y();
+	double zR=vR->z();
+	//printf("*** L=(%g,%g,%g) et R=(%g,%g,%g)\n",xL,yL,zL, vR->x(), vR->y(), vR->z());
+	//printf("conditions XL %g < %g, yL %g < %g, zL %g < %g \n", fabs(v->x()-xL) , fabs(xL-xR), fabs(v->y()-yL), fabs(yL-yR), fabs(v->z()-zL) , fabs (zL-zR));
+	//printf("conditions XR %g < %g, yR %g < %g, zR %g < %g \n", fabs(v->x()-vR->x()) , fabs(xL-xR),fabs(v->y()-vR->y()), fabs(yL-yR),fabs(v->z()-vR->z()) , fabs (zL-zR));
+	if (fabs(v->x()-xL)      <= fabs(xL-xR) && 	  fabs(v->y()-yL) <= fabs(yL-yR)      && 	   fabs(v->z()-zL) <= fabs (zL-zR) &&
+	    fabs(v->x()-vR->x()) <= fabs(xL-xR) && 	  fabs(v->y()-vR->y()) <= fabs(yL-yR) && 	   fabs(v->z()-vR->z()) <= fabs(zL-zR)){
+	  found = true;
+	  itR = coordinates.find(vR);
+	  vR->getParameter(0,tR);
+	  break;
+	}
+	else{
+	  xL = xR; yL = yR ; zL = zR;
+	  itL = coordinates.find(vR);
+	  vL = vR;
+	  vL->getParameter(0,tL);
+	}
+	j++;
+	//printf("in while j =%d,  vL (%g,%g,%g), -> uv= (%g,%g)\n",j, vL->x(), vL->y(), vL->z(), itL->second.x(), itL->second.y());
+      }
+      if (!found) vR=v1; 
+      //printf("vL (%g,%g,%g), -> uv= (%g,%g)\n",vL->x(), vL->y(), vL->z(), itL->second.x(), itL->second.y());
+      //printf("vR (%g,%g,%g), -> uv= (%g,%g)\n",vR->x(), vR->y(), vR->z(), itR->second.x(), itR->second.y());
+      //printf("tL:%g, tR=%g, tLoc=%g \n", tL, tR, tLoc);
+
+      //Linear interpolation between tL and tR
+      double uloc, vloc;
+      uloc = itL->second.x() + (tLoc-tL)/(tR-tL) * (itR->second.x()-itL->second.x());
+      vloc = itL->second.y() + (tLoc-tL)/(tR-tL) * (itR->second.y()-itL->second.y());
+      //printf("uloc=%g, vloc=%g \n", uloc,vloc);
+
+      //printf("Vertex coordinates not found in compound face \n");
+      //exit(0); 
+
+      return SPoint2(uloc,vloc);
+    }
+  }
 }
 
 void GFaceCompound::parametrize(iterationStep step) const
@@ -383,18 +479,18 @@ double GFaceCompound::curvature(const SPoint2 &param) const
     return  0.0;
   }
 
-//   if (lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface){
-//     SPoint2 pv1, pv2, pv3;
-//     bool ok = reparamMeshVertexOnFace(lt->t->getVertex(0), lt->gf, pv1); 
-//     ok |= reparamMeshVertexOnFace(lt->t->getVertex(1), lt->gf, pv2); 
-//     ok |= reparamMeshVertexOnFace(lt->t->getVertex(2), lt->gf, pv3); 
-//     if (ok){
-//       SPoint2 pv = pv1*(1.-U-V) + pv2*U + pv3*V;
-//       return lt->gf->curvature(pv));
-//     }
-//   }
+  //   if (lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface){
+  //     SPoint2 pv1, pv2, pv3;
+  //     bool ok = reparamMeshVertexOnFace(lt->t->getVertex(0), lt->gf, pv1); 
+  //     ok |= reparamMeshVertexOnFace(lt->t->getVertex(1), lt->gf, pv2); 
+  //     ok |= reparamMeshVertexOnFace(lt->t->getVertex(2), lt->gf, pv3); 
+  //     if (ok){
+  //       SPoint2 pv = pv1*(1.-U-V) + pv2*U + pv3*V;
+  //       return lt->gf->curvature(pv));
+  //     }
+  //   }
 
-//  return curvature(lt->t);
+  //  return curvature(lt->t);
   return 0.;
 }
 
@@ -418,7 +514,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
   getTriangle (par1, par2, &lt, U,V);  
   SPoint3 p(0, 0, 0); 
   if (!lt){
-    Msg::Warning("Re-Parametrized face %d --> point (%g %g) lies outside the domain", tag(), par1,par2); 
+    // Msg::Warning("Re-Parametrized face %d --> point (%g %g) lies outside the domain", tag(), par1,par2); 
   
     return  GPoint(p.x(),p.y(),p.z(),this);
   }

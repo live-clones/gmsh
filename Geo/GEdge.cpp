@@ -271,9 +271,12 @@ bool GEdge::XYZToU(const SVector3 &Q, double &u, const double relax) const
   double err, err2;
   int iter;
 
+  
   Range<double> uu = parBounds(0);
   double uMin = uu.low();
   double uMax = uu.high();
+
+  printf("dans GEdge uMin=%g, uMax=%g \n", uMin, uMax);
 
   SVector3 P;
   
@@ -287,6 +290,8 @@ bool GEdge::XYZToU(const SVector3 &Q, double &u, const double relax) const
     double uNew = u;
     err = 1.0;
     iter = 1;
+
+   
 
     SVector3 dPQ = P - Q;
     err2 = dPQ.norm();

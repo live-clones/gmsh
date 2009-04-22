@@ -234,6 +234,7 @@ void deMeshGEdge::operator() (GEdge *ge)
 
 void meshGEdge::operator() (GEdge *ge) 
 {  
+
   ge->model()->setCurrentMeshEntity(ge);
 
   if(ge->geomType() == GEntity::DiscreteCurve) return;

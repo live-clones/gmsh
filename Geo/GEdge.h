@@ -74,6 +74,10 @@ class GEdge : public GEntity {
     GPoint gp = point(p);
     return SVector3(gp.x(), gp.y(), gp.z());
   }
+
+  // return the parmater location on the edge given a point in space
+  // that is on the edge
+  //virtual double parFromPoint(const SPoint3 &) const;
   
   // get first derivative of edge at the given parameter
   virtual SVector3 firstDer(double par) const = 0;

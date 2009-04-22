@@ -97,7 +97,7 @@ Range<double> GEdgeCompound::parBounds(int i) const {
 
 /*
   +--------+-----------+----------- ... ----+
-  0      _par[1]     _par[2]              _par[N-1]
+  0      _pars[1]     _pars[2]              _pars[N-1]
 
 */
 
@@ -105,8 +105,9 @@ void GEdgeCompound::getLocalParameter ( const double &t,
 					int &iEdge,
 					double & tLoc) const
 {
+
   for (iEdge=0 ; iEdge<_compound.size() ;iEdge++){
-    //    printf("iEdge %d par %g\n",iEdge,_pars[iEdge]);
+    //printf("iEdge=%d tmin=%g\n",iEdge,_pars[iEdge]);
     double tmin = _pars[iEdge];
     double tmax = _pars[iEdge+1];
     if (t >= tmin && t <= tmax){      
@@ -114,7 +115,7 @@ void GEdgeCompound::getLocalParameter ( const double &t,
       tLoc = _orientation[iEdge] ?
 	b.low()  + (t-tmin)/(tmax-tmin) * (b.high()-b.low()) :
 	b.high() - (t-tmin)/(tmax-tmin) * (b.high()-b.low()) ;
-      //      printf("%g %g %d\n",t,tLoc,iEdge);
+      //printf("bhigh=%g, blow=%g, global t=%g , tLoc=%g ,iEdge=%d\n",b.high(), b.low(), t,tLoc,iEdge);
       return;
     }
   }
@@ -127,6 +128,11 @@ void GEdgeCompound::parametrize()
     Range<double> b = _compound[i]->parBounds(0);
     _pars.push_back(_pars[_pars.size()-1]+(b.high() - b.low()));
   }   
+  
+  // for (int i=0;i<_compound.size()+1;i++){
+  // printf("_pars[%d]=%g\n",i, _pars[i] );
+  //}
+
 }
 
 
@@ -143,7 +149,7 @@ GPoint GEdgeCompound::point(double par) const
   double tLoc;
   int iEdge;
   getLocalParameter(par,iEdge,tLoc);
-  //  printf("compound %d par %g edge %d loc %g\n",tag(),par,iEdge,tLoc);
+  //printf("compound %d par %g edge %d loc %g\n",tag(),par,iEdge,tLoc);
   return _compound[iEdge]->point(tLoc);
 }
 

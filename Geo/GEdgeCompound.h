@@ -20,11 +20,11 @@ class GEdgeCompound : public GEdge {
   std::vector<double> _pars;
   void parametrize() ;
   void orderEdges()  ;
+  
+public:
   void getLocalParameter ( const double &t,
 			   int &iEdge,
 			   double & tLoc) const;
-  
-public:
   GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound);
   virtual ~GEdgeCompound();
   Range<double> parBounds(int i) const;
@@ -36,7 +36,7 @@ public:
   virtual double curvature(double t) const;
   virtual int minimumMeshSegments() const;
   virtual int minimumDrawSegments() const;
-
+  std::vector<GEdge*>  getEdgesOfCompound() const { return _compound; }
 };
 
 #endif

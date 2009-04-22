@@ -8,6 +8,7 @@
 
 #include "GFace.h"
 #include "GEdge.h"
+#include "GEdgeCompound.h"
 
 /*
 A GFaceCompound is a model face that is the compound of model faces.
@@ -71,11 +72,9 @@ public:
   virtual GEntity::GeomType geomType() const { return CompoundSurface; }
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return 0; }
-  SPoint2 getCoordinates(MVertex *v) const { 
-    parametrize() ; 
-    std::map<MVertex*,SPoint3>::iterator it = coordinates.find(v);
-    return SPoint2(it->second.x(),it->second.y()); 
-  }
+
+  virtual SPoint2 getCoordinates(MVertex *v) const;
+
   virtual bool buildRepresentationCross(){ return false; }
   virtual double curvature(const SPoint2 &param) const;
 private:
