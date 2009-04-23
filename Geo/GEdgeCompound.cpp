@@ -22,18 +22,51 @@ GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound)
 
 void GEdgeCompound::orderEdges()
 {
-  std::list<GEdge*> edges ;  
   std::vector<GEdge*> _c ;  
+  std::list<GEdge*> edges ;  
+
   for (int i=0;i<_compound.size();i++){
     _compound[i]->setCompound(this);
     edges.push_back(_compound[i]);
   }
-  _c.push_back(*(edges.begin())); 
-  edges.erase(edges.begin());
+
+  // find a lonly edge
+  std::map<GVertex*,GEdge*> tempv;
+  for (std::list<GEdge*>::iterator it = edges.begin() ; it != edges.end() ; ++it){
+    GVertex *v1 = (*it)->getBeginVertex();
+    GVertex *v2 = (*it)->getBeginVertex();
+    std::map<GVertex*,GEdge*>::iterator it1 = tempv.find(v1);
+    if (it1==tempv.end())tempv.insert(std::make_pair(v1,*it));
+    else tempv.erase(it1);
+    std::map<GVertex*,GEdge*>::iterator it2 = tempv.find(v2);
+    if (it2==tempv.end())tempv.insert(std::make_pair(v2,*it));
+    else tempv.erase(it2);
+  }
+
+  GEdge *firstEdge;
+  if (tempv.size()==2){   // non periodic
+    firstEdge = (tempv.begin())->second;
+    for (std::list<GEdge*>::iterator it = edges.begin() ; it != edges.end() ; ++it){
+      if (*it == firstEdge){
+	edges.erase(it);
+	break;
+      }
+    }    
+  }
+  else if (tempv.size()==0) // periodic
+    {
+      firstEdge = *(edges.begin());
+      edges.erase(edges.begin());
+    }
+  else{
+    Msg::Error("EdgeCompound %d is wrong (it has %d end points)",tag(),tempv.size());
+  }
+
+  _c.push_back(firstEdge); 
   _orientation.push_back(1);
   GVertex *first = _c[0]->getBeginVertex();
   GVertex *last = _c[0]->getEndVertex();  
-
+  
   while (first != last){
     if (edges.empty())break;
     bool found = false;
