@@ -11,6 +11,8 @@
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Return_Button.H>
+#include <FL/Fl_Check_Button.H>
+#include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Value_Input.H>
 #include <FL/fl_draw.H>
 #include "GUI.h"
@@ -154,8 +156,10 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
     (x + w - BB, y + h - BH - WB, BB, BH, "Apply");
   apply_btn->callback(field_apply_cb, this);
   
-  background_btn = new Fl_Check_Button
+  background_btn = new Fl_Round_Button
     (x, y + h - BH - WB, w - BB - WB, BH, "Set as background field");
+  background_btn->tooltip("Only a single field can be set as background field.\n"
+                          "To combine multiple fields use the Min or Max fields.");
   options_tab->end();
 
   Fl_Group *help_tab = new Fl_Group(x, y, w, h, "Help");

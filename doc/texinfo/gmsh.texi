@@ -4260,7 +4260,7 @@ interface (@file{Fltk}, @file{Parser}) libraries on the other.
 The geometry and mesh modules are based on an object-oriented model
 class (@file{Geo/GModel.h}), built upon abstract geometrical entity
 classes (@file{Geo/GVertex.h}, @file{Geo/GEdge.h}, @file{Geo/GFace.h}
-and @file{Geo/GRegion.h}). Concrete implementation of the geometrical
+and @file{Geo/GRegion.h}). Concrete implementations of the geometrical
 entity classes are provided for each supported CAD kernel
 (e.g. @file{Geo/gmshVertex.h} for geometry points in Gmsh's native CAD
 format, or @file{Geo/OCCVertex.h} for geometry points from

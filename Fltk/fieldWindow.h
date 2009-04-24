@@ -12,7 +12,6 @@
 #include <FL/Fl_Hold_Browser.H>
 #include <FL/Fl_Widget.H>
 #include <FL/Fl_Button.H>
-#include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Scroll.H>
 #include <FL/Fl_Box.H>
@@ -30,7 +29,7 @@ class fieldWindow{
   Fl_Scroll *options_scroll;
   Fl_Group *editor_group;
   Fl_Box *title, *empty_message;
-  Fl_Check_Button *background_btn;
+  Fl_Button *background_btn;
   Fl_Menu_Button *put_on_view_btn;
   Fl_Browser *help_display;
   Fl_Button *delete_btn;
