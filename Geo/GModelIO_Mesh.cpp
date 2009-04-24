@@ -1510,7 +1510,7 @@ int GModel::writeMESH(const std::string &name, bool saveAll, double scalingFacto
     fprintf(fp, " %d\n", numQuadrangles);
     for(fiter it = firstFace(); it != lastFace(); ++it){
       if(saveAll || (*it)->physicals.size()){
-        for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+        for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
           (*it)->quadrangles[i]->writeMESH(fp, (*it)->tag());
       }
     }
