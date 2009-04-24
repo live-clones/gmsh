@@ -69,7 +69,7 @@ StringXString GeneralOptions_String[] = {
 #elif defined(__APPLE__)
     "open -t %s" ,
 #else
-    "emacs %s &" ,
+    "emacs '%s' &" ,
 #endif
     "System command to launch a text editor" },
   { F|S, "TmpFileName" , opt_general_tmp_filename , ".gmsh-tmp" ,
