@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <stdio.h>
 #if defined(__CYGWIN__)
 #include <sys/cygwin.h>
 #endif

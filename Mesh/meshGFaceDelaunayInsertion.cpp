@@ -675,7 +675,7 @@ void gmshBowyerWatsonFrontal(GFace *gf)
   std::vector<double> vSizes, vSizesBGM, Us, Vs;
   std::vector<SMetric3> vMetricsBGM;
 
-  testTensor();
+  //testTensor();
 
   buildMeshGenerationDataStructures(gf, AllTris, vSizes, vSizesBGM, Us, Vs);
 
