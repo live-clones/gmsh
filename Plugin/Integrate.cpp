@@ -77,7 +77,8 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
   List_Add(data2->SP, &y);
   List_Add(data2->SP, &z);
   for(int step = 0; step < data1->getNumTimeSteps(); step++){
-    double res = 0;
+    double res = 0, resv[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+    bool simpleSum = false;
     for(int ent = 0; ent < data1->getNumEntities(step); ent++){
       for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
 	if(data1->skipElement(step, ent, ele)) continue;
@@ -86,7 +87,7 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
 	bool scalar = (numComp == 1);
 	bool circulation = (numComp == 3 && numEdges == 1);
 	bool flux = (numComp == 3 && (numEdges == 3 || numEdges == 4));
-	if(!scalar && !circulation && !flux) continue;
+	//if(!scalar && !circulation && !flux) continue;
 	int numNodes = data1->getNumNodes(step, ent, ele);
 	int dim = data1->getDimension(step, ent, ele);
 	double x[8], y[8], z[8], val[8 * 3];
@@ -95,19 +96,31 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
 	  for(int comp = 0; comp < numComp; comp++)
 	    data1->getValue(step, ent, ele, nod, comp, val[numComp * nod + comp]);
 	}
-	elementFactory factory;
-	element *element = factory.create(numNodes, dim, x, y, z);
-	if(!element) continue;
-	if(scalar)
-	  res += element->integrate(val);
-	else if(circulation)
-	  res += element->integrateCirculation(val);
-	else if(flux)
-	  res += element->integrateFlux(val);
-	delete element;
+        if(numNodes == 1){
+          simpleSum = true;
+	  for(int comp = 0; comp < numComp; comp++)          
+            resv[comp] += val[comp];
+        }
+        else{
+          elementFactory factory;
+          element *element = factory.create(numNodes, dim, x, y, z);
+          if(!element) continue;
+          if(scalar)
+            res += element->integrate(val);
+          else if(circulation)
+            res += element->integrateCirculation(val);
+          else if(flux)
+            res += element->integrateFlux(val);
+          delete element;
+        }
       }
     }
-    Msg::Info("Step %d: integral = %.16g", step, res);
+    if(simpleSum)
+      Msg::Info("Step %d: sum = %g %g %g %g %g %g %g %g %g", step, resv[0], 
+                resv[1], resv[2], resv[3], resv[4], resv[5], resv[6], resv[7], 
+                resv[8], resv[9]);
+    else
+      Msg::Info("Step %d: integral = %.16g", step, res);
     List_Add(data2->SP, &res);
   }
   data2->NbSP = 1;
