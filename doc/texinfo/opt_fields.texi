@@ -30,6 +30,44 @@ type: list@*
 default value: @code{@{@}}
 @end table
 
+@item BoundaryLayer
+F = LCMin if Field[IField] <= DistMin,@*
+F = LCMax if Field[IField] >= DistMax,@*
+F = interpolation between LcMin and LcMax if DistMin < Field[IField] < DistMax@*
+Options:@*
+@table @code
+@item DistMax
+Distance from entity after which element size will be LcMax@*
+type: float@*
+default value: @code{10}
+@item DistMin
+Distance from entity up to which element size will be LcMin@*
+type: float@*
+default value: @code{1}
+@item IField
+Index of the field to evaluate@*
+type: integer@*
+default value: @code{0}
+@item LcMax
+Element size outside DistMax@*
+type: float@*
+default value: @code{1}
+@item LcMin
+Element size inside DistMin@*
+type: float@*
+default value: @code{0.1}
+@item Sigmoid
+True to interpolate between LcMin and LcMax using a sigmoid,
+false to interpolate linearly@*
+type: boolean@*
+default value: @code{0}
+@item StopAtDistMax
+True to not impose element size outside DistMax (i.e.,
+F = a very big value if Field[IField] > DistMax)@*
+type: boolean@*
+default value: @code{0}
+@end table
+
 @item Box
 The value of this field is VIn inside the box, VOut outside the box.@*
 The box is given by@*

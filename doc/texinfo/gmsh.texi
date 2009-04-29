@@ -2235,12 +2235,14 @@ algorithm@footnote{J. Schoeberl, @emph{Netgen, an advancing front
 pp. 41--52, 1997.}.
 @end enumerate
 
-The ``Delaunay'' algorithm is the most robust and the fastest. However,
-this algorithm will sometimes modify the surface mesh, and is thus not
-suitable for producing hybrid structured/unstructured grids. In that
-case the ``Frontal'' algorithm should be preferred. The quality of the
-elements produced by both algorithms is comparable. If element quality
-is important the mesh optimizer(s) should be applied.
+The ``Delaunay'' algorithm is the most robust and the fastest, and is
+the only one that supports the @code{Field} mechanism to specify element
+sizes (@pxref{Characteristic lengths}). However, this algorithm will
+sometimes modify the surface mesh, and is thus not suitable for
+producing hybrid structured/unstructured grids. In that case the
+``Frontal'' algorithm should be preferred. The quality of the elements
+produced by both algorithms is comparable. If element quality is
+important the mesh optimizer(s) should be applied.
 
 @c -------------------------------------------------------------------------
 @c Elementary vs. physical entities
