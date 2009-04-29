@@ -1,4 +1,4 @@
-lc = 0.01;
+lc = 0.03;
 Point(1) = {0, 0, 0, lc/5};
 Point(2) = {.1, 0,  0, lc/5};
 Point(3) = {.1, .3, 0, lc};
@@ -10,3 +10,4 @@ Line(4) = {4,1} ;
 Line Loop(5) = {4,1,-2,3} ;
 Plane Surface(6) = {5} ;
 Recombine Surface{6};
+Mesh.SubdivisionAlgorithm = 1;

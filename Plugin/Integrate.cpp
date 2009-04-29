@@ -87,7 +87,6 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
 	bool scalar = (numComp == 1);
 	bool circulation = (numComp == 3 && numEdges == 1);
 	bool flux = (numComp == 3 && (numEdges == 3 || numEdges == 4));
-	//if(!scalar && !circulation && !flux) continue;
 	int numNodes = data1->getNumNodes(step, ent, ele);
 	int dim = data1->getDimension(step, ent, ele);
 	double x[8], y[8], z[8], val[8 * 3];
@@ -98,6 +97,7 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
 	}
         if(numNodes == 1){
           simpleSum = true;
+          res += val[0];
 	  for(int comp = 0; comp < numComp; comp++)          
             resv[comp] += val[comp];
         }
@@ -118,7 +118,7 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
     if(simpleSum)
       Msg::Info("Step %d: sum = %g %g %g %g %g %g %g %g %g", step, resv[0], 
                 resv[1], resv[2], resv[3], resv[4], resv[5], resv[6], resv[7], 
-                resv[8], resv[9]);
+                resv[8]);
     else
       Msg::Info("Step %d: integral = %.16g", step, res);
     List_Add(data2->SP, &res);
