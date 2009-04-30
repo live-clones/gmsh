@@ -1892,6 +1892,7 @@ Command :
 	char tmpstring[1024];
 	FixRelativePath($2, tmpstring);
 	MergeFile(tmpstring, true);
+	GModel::current()->createTopologyFromMSH();
       }
       else if(!strcmp($1, "System"))
 	SystemCall($2);

@@ -237,7 +237,9 @@ void meshGEdge::operator() (GEdge *ge)
 
   ge->model()->setCurrentMeshEntity(ge);
 
-  if(ge->geomType() == GEntity::DiscreteCurve) return;
+  if(ge->geomType() == GEntity::DiscreteCurve) {
+    return;
+  }
   if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
   if(ge->meshAttributes.Method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) return;
@@ -276,6 +278,7 @@ void meshGEdge::operator() (GEdge *ge)
   else if(ge->meshAttributes.Method == MESH_TRANSFINITE){
     a = Integration(ge, t_begin, t_end, F_Transfinite, Points, 1.e-8);
     N = ge->meshAttributes.nbPointsTransfinite;
+    printf("Mesh transfinite N=%d, a=%g \n", N, a);
   }
   else{
     if(CTX::instance()->mesh.lcIntegrationPrecision > 1.e-8){
@@ -290,8 +293,9 @@ void meshGEdge::operator() (GEdge *ge)
 		      CTX::instance()->mesh.lcIntegrationPrecision);
     }
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
+    //printf("Mesh NOT transfinite N=%d, a=%g \n", N, a);
   }
-  
+
   // if the curve is periodic and if the begin vertex is identical to
   // the end vertex and if this vertex has only one model curve
   // adjacent to it, then the vertex is not connecting any other
@@ -301,6 +305,7 @@ void meshGEdge::operator() (GEdge *ge)
   if(ge->getBeginVertex() == ge->getEndVertex() && 
      ge->getBeginVertex()->edges().size() == 1){
     end_p = beg_p = ge->point(t_begin);
+    printf("Meshing periodic closed curve \n");
   }
   else{
     MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
@@ -341,11 +346,10 @@ void meshGEdge::operator() (GEdge *ge)
   }
 
   for(unsigned int i = 0; i < ge->mesh_vertices.size() + 1; i++){
-    MVertex *v0 = (i == 0) ? 
-      ge->getBeginVertex()->mesh_vertices[0] : ge->mesh_vertices[i - 1];
-    MVertex *v1 = (i == ge->mesh_vertices.size()) ? 
-      ge->getEndVertex()->mesh_vertices[0] : ge->mesh_vertices[i];
+    MVertex *v0 = (i == 0) ?       ge->getBeginVertex()->mesh_vertices[0] : ge->mesh_vertices[i - 1];
+    MVertex *v1 = (i == ge->mesh_vertices.size()) ?       ge->getEndVertex()->mesh_vertices[0] : ge->mesh_vertices[i];
     ge->lines.push_back(new MLine(v0, v1));
+    //printf("New Line v0=%g v1=%g \n", v0->y(), v1->y());
   }
 
   if(ge->getBeginVertex() == ge->getEndVertex() && 
@@ -355,4 +359,16 @@ void meshGEdge::operator() (GEdge *ge)
     v0->y() = beg_p.y();
     v0->z() = beg_p.z();
   }
+
+  //for (std::vector<MLine*>::iterator it = ge->lines.begin() ; it != ge->lines.end() ; ++it){
+  //  printf("line with : first = %d last=%d \n",  (*it)->getVertex(0)->getIndex(), (*it)->getVertex(1)->getIndex() );
+  //}
+
+//   //if DiscreteCurve, erase all old MLines
+//   if(ge->geomType() == GEntity::DiscreteCurve) {
+//     ge->lines.erase(ge->lines.begin(), ge->lines.end()-(N-1));
+//   }
+
+ 
+
 }

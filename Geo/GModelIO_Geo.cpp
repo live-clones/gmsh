@@ -42,6 +42,8 @@ int GModel::readGEO(const std::string &name)
 
 int GModel::importGEOInternals()
 {
+
+  //printf("Dans import GEO internals \n");
   if(Tree_Nbr(_geo_internals->Points)) {
     List_T *points = Tree2List(_geo_internals->Points);
     for(int i = 0; i < List_Nbr(points); i++){
@@ -67,7 +69,7 @@ int GModel::importGEOInternals()
           e = new gmshEdge(this, c,
                            getVertexByTag(c->beg->Num),
                            getVertexByTag(c->end->Num));
-          add(e);
+         add(e);
         }
         else
           e->resetMeshAttributes();
@@ -180,6 +182,16 @@ int GModel::importGEOInternals()
   Msg::Debug("%d Edges", edges.size());
   Msg::Debug("%d Faces", faces.size());
   Msg::Debug("%d Regions", regions.size());
+
+  for ( std::set<GVertex*, MVertexLessThanLexicographic>::iterator it  = vertices.begin(); it != vertices.end(); it++){
+    printf("WARNING:import GEO vert of Type: %s \n", (*it)->getTypeString().c_str());
+   }
+  for ( std::set<GEdge*, MVertexLessThanLexicographic>::iterator it  = edges.begin(); it != edges.end(); it++){
+    printf("WARNING:import GEO edge of Type: %s \n", (*it)->getTypeString().c_str());
+  }
+  for ( std::set<GFace*, MVertexLessThanLexicographic>::iterator it  = faces.begin(); it != faces.end(); it++){
+    printf("WARNING:import GEO face of Type:  %s \n", (*it)->getTypeString().c_str());
+  }
 
   return 1;
 }

@@ -13,6 +13,7 @@ void ParseString(std::string str);
 void OpenProject(std::string filename);
 void OpenProjectMacFinder(const char *fileName);
 int MergeFile(std::string fileName, bool warnIfMissing=false);
+
 void ClearProject();
 void SetBoundingBox(double xmin, double xmax,
                     double ymin, double ymax, 

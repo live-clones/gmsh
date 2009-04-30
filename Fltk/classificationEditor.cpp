@@ -273,7 +273,7 @@ static GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
   std::map<std::pair<int, int>, GEdge*>::iterator it = 
     newEdges.find(std::make_pair<int, int>(i1, i2));
   if(it == newEdges.end()){
-    discreteEdge *temporary = new discreteEdge(GModel::current(), maxEdgeNum() + 1);
+    discreteEdge *temporary = new discreteEdge(GModel::current(), maxEdgeNum() + 1, 0, 0);
     GModel::current()->add(temporary);
     newEdges[std::make_pair<int, int>(i1, i2)] = temporary;
     return temporary;
@@ -383,7 +383,7 @@ static void updateedges_cb(Fl_Widget* w, void* data)
 {
   classificationEditor *e = (classificationEditor*)data;
  
-  // printf("%d edges detected\n", e->edges_detected.size());
+  printf("%d inside edges detected\n", e->edges_detected.size());
 
   for(unsigned int i = 0; i < e->temporary->lines.size(); i++){
     delete e->temporary->lines[i];
@@ -398,10 +398,12 @@ static void updateedges_cb(Fl_Widget* w, void* data)
     e->temporary->lines.push_back(new MLine(ea.v1, ea.v2));
   } 
 
+  printf("%d boundary edges detected\n",  e->edges_lonly.size());
   if(e->_togbuttons[CLASSTOGBUTTON_CLOS]->value()){
     for(unsigned int i = 0 ; i < e->edges_lonly.size(); i++){
       edge_angle ea = e->edges_lonly[i];
       e->temporary->lines.push_back(new MLine(ea.v1, ea.v2));
+      //check if closed loop
     } 
   }
   
@@ -620,9 +622,9 @@ classificationEditor::classificationEditor()
   // saved for the ones that have been saved by the user
   // and that will be used for next step
 
-  temporary = new discreteEdge(GModel::current(), maxEdgeNum() + 1);
+  temporary = new discreteEdge(GModel::current(), maxEdgeNum() + 1, 0, 0);
   GModel::current()->add(temporary);
-  saved = new discreteEdge(GModel::current(), maxEdgeNum() + 1);
+  saved = new discreteEdge(GModel::current(), maxEdgeNum() + 1, 0, 0);
   GModel::current()->add(saved);
   
   _window->end();

@@ -659,9 +659,9 @@ void GModel::_storeElementsInEntities(std::map<int, std::vector<MElement*> > &ma
       {
         GEdge *e = getEdgeByTag(it->first);
         if(!e){
-          e = new discreteEdge(this, it->first);
+          e = new discreteEdge(this, it->first, 0, 0);
           add(e);
-        }
+       }
         _addElements(e->lines, it->second);
       }
       break;

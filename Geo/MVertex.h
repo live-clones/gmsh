@@ -70,8 +70,7 @@ class MVertex{
   inline void setPolynomialOrder(char order){ _order = order; }
 
   // get/set the coordinates
-  inline double x() const { return _x; }
-  inline double y() const { return _y; }
+  inline double x() const { return _x; }  inline double y() const { return _y; }
   inline double z() const { return _z; }
   inline double & x() { return _x; }
   inline double & y() { return _y; }

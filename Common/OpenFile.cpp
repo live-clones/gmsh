@@ -426,6 +426,7 @@ void OpenProject(std::string fileName)
   // merge the file
   MergeFile(fileName);
 
+
   // merge the associated option file if there is one
   if(!StatFile(fileName + ".opt"))
     MergeFile(fileName + ".opt");

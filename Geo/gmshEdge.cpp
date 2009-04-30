@@ -30,7 +30,7 @@ void gmshEdge::resetMeshAttributes()
 
 Range<double> gmshEdge::parBounds(int i) const
 { 
-  return Range<double>(c->ubeg, c->uend);
+ return Range<double>(c->ubeg, c->uend);
 }
 
 GPoint gmshEdge::point(double par) const

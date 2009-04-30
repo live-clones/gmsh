@@ -10,13 +10,22 @@
 #include "GEdge.h"
 
 class discreteEdge : public GEdge {
+ protected:
+  std::vector<double> _pars;
+  std::vector<int> _orientation;
  public:
-  discreteEdge(GModel *model, int num);
+  discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1);
   virtual ~discreteEdge() {}
+  void getLocalParameter ( const double &t,
+			   int &iEdge,
+			   double & tLoc) const;
   virtual GeomType geomType() const { return DiscreteCurve; }
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
   virtual Range<double> parBounds(int) const;
+  void setVertices(GVertex *_v0, GVertex *_v1){ v0 = _v0; v1 = _v1; }
+  void orderEdge();
+  void parametrize();
 };
 
 #endif

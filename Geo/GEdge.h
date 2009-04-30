@@ -12,6 +12,7 @@
 #include "SVector3.h"
 #include "SPoint3.h"
 #include "SPoint2.h"
+#include "MLine.h"
 
 class MElement;
 class MLine;
@@ -35,6 +36,7 @@ class GEdge : public GEntity {
  public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
   virtual ~GEdge();
+
 
   // delete mesh data
   virtual void deleteMesh();

@@ -22,6 +22,14 @@
 #include "discreteFace.h"
 #include "StringUtils.h"
 #include "GmshMessage.h"
+#include "discreteVertex.h"
+#include "discreteEdge.h"
+#include "discreteFace.h"
+#include "discreteRegion.h"
+#include "MElement.h"
+#include "GEdgeCompound.h"
+
+#include <iostream> // DBG
 
 static void storePhysicalTagsInEntities(GModel *m, int dim,
                                         std::map<int, std::map<int, std::string> > &map)
@@ -104,6 +112,107 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
     physicals[dim][reg][physical] = "unnamed";
   
   if(part) m->getMeshPartitions().insert(part);
+}
+
+void GModel::createTopologyFromMSH(){
+
+  //printf("Dans createTopologyFromMSH \n");
+
+  std::vector<GEntity*> entities;
+  getEntities(entities);
+
+  std::vector<discreteVertex*> vertices;
+  std::vector<discreteEdge*> edges;
+  std::vector<discreteFace*> faces;
+  std::vector<discreteRegion*> regions;
+
+  for (std::vector<GEntity*>::iterator entity = entities.begin(); entity != entities.end(); entity++) {
+    switch ((*entity)->dim()) {
+    case 0:
+      vertices.push_back((discreteVertex*) *entity);
+      break;
+    case 1:
+      edges.push_back((discreteEdge*) *entity);
+      break;
+    case 2:
+      faces.push_back((discreteFace*) *entity);
+      break;
+    case 3:
+      regions.push_back((discreteRegion*) *entity);
+      break;
+    }
+  }
+  //printf("vertices size =%d \n", vertices.size());
+  //printf("edges size =%d \n", edges.size());
+  //printf("faces size =%d \n", faces.size());
+  //printf("regions size =%d \n", regions.size());
+
+  int tag = 100;
+  for (std::vector<discreteEdge*>::iterator edge = edges.begin(); edge != edges.end(); edge++){
+    if (tag < (*edge)->tag() ) tag = (*edge)->tag() + 1;
+  }
+
+ //For each discreteEdge, build a new GEdgeCompound
+  for (std::vector<discreteEdge*>::iterator edge = edges.begin(); edge != edges.end(); edge++){
+
+    //printf("createTopology: %d  EDGES, of size=%d\n",(*edge)->tag(), (*edge)->lines.size());
+
+    //create a map with the tags of the mesh vertices
+    std::map<int, GVertex*> myMap;
+    for (std::vector<MLine*>::const_iterator it = (*edge)->lines.begin() ; it != (*edge)->lines.end() ; ++it){  
+      int tagB = (*it)->getVertex(0)->getNum();
+      int tagE = (*it)->getVertex(1)->getNum();
+
+      std::map<int, GVertex*>::iterator it1 = myMap.find(tagB);
+      std::map<int, GVertex*>::iterator it2 = myMap.find(tagE);
+      if (it1 == myMap.end()){
+	GVertex *gvB = new discreteVertex(this,tagB);
+	gvB->mesh_vertices.push_back((*it)->getVertex(0)); 
+	gvB->points.push_back(new MPoint(gvB->mesh_vertices.back()));
+	myMap.insert(std::make_pair(tagB, gvB));
+      }
+      if (it2 == myMap.end()){
+	GVertex *gvE = new discreteVertex(this,tagE);
+	gvE->mesh_vertices.push_back((*it)->getVertex(1)); 
+	gvE->points.push_back(new MPoint(gvE->mesh_vertices.back()));
+	myMap.insert(std::make_pair(tagE, gvE));
+      }
+    }
+
+ //    for(std::map<int, GVertex*>::const_iterator it = myMap.begin(); it != myMap.end(); ++it){
+//       printf(" tag=%d tagsize=%d\n", it->first, myMap.size());
+//     }
+
+    //create a vector composed of plenty of discreteEdges from the Mlines of the original discreteVertex
+    std::vector<GEdge*> e_compound;
+
+   for (std::vector<MLine*>::const_iterator it = (*edge)->lines.begin() ; it != (*edge)->lines.end() ; ++it){  
+     //printf("MLine =%d %d \n", (*it)->getVertex(0)->getNum(), (*it)->getVertex(1)->getNum());
+
+      int tagB = (*it)->getVertex(0)->getNum();
+      int tagE = (*it)->getVertex(1)->getNum();
+      std::map<int,GVertex*>::iterator it1 = myMap.find(tagB);
+      std::map<int,GVertex*>::iterator it2 = myMap.find(tagE);
+      GVertex *gvB = it1->second;
+      GVertex *gvE = it2->second;
+
+      GEdge *temp = new discreteEdge(this, tag, gvB, gvE); //new GEdge corresponding to the MLine
+      gvB->addEdge(temp);
+      gvE->addEdge(temp);
+
+      e_compound.push_back(temp); //add the compound to the GEdge
+      tag ++;
+
+    }
+
+   //now, we can create the GEdgeCompound
+    GEdge *gec = new GEdgeCompound(this, tag, e_compound);
+    add(gec);
+
+  }
+
+  return;
+
 }
 
 int GModel::readMSH(const std::string &name)
@@ -569,7 +678,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   writeElementHeaderMSH
     (binary, fp, elements, MSH_LIN_2, MSH_LIN_3, MSH_LIN_4, MSH_LIN_5);
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
-    writeElementsMSH(fp, (*it)->lines, saveAll, version, binary, num,
+   writeElementsMSH(fp, (*it)->lines, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
   writeElementHeaderMSH(binary, fp, elements, MSH_TRI_3, MSH_TRI_6, MSH_TRI_9, 
                         MSH_TRI_10, MSH_TRI_12, MSH_TRI_15, MSH_TRI_15I, MSH_TRI_21);
@@ -950,7 +1059,7 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int r
     return 0;
   }
   Msg::Info("%d elements", elements[0][region].size() + 
-      elements[1][region].size() + elements[2][region].size());
+	    elements[1][region].size() + elements[2][region].size());
   return 1;
 }
 
@@ -2279,7 +2388,7 @@ int GModel::readDIFF(const std::string &name)
     while(strstr(str, "Max number of nodes in an element:")==NULL){
       if(!fgets(str, sizeof(str), fp) || feof(fp))
         break;
-      }
+    }
     if(sscanf(str, "%*s %*s %*s %*s %*s %*s %*s %d", &numVerticesPerElement) != 1)
       return 0;
     Msg::Info("numVerticesPerElement %d",numVerticesPerElement); 
