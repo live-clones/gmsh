@@ -22,7 +22,7 @@ list code; Matt Gundry for the Plot3d mesh format; Jozef Vesely for
 help with the Tetgen integration; Koen Hillewaert for high order
 element mappings and other improvements; Jacques Lechelle for the
 DIFFPACK mesh format; Ruth Sabariego for pyramids; Gaetan Bricteux for
-Gauss integration routines.
+Gauss integration routines; Emilie Marchandise for edge compounds. 
 
 The AVL tree code (Common/avl.*) and the YUV image code
 (Graphics/gl2yuv.*) are copyright (C) 1988-1993, 1995 The Regents of
@@ -118,8 +118,7 @@ Dardenne, Christophe Prud'homme, Sebastien Clerc, Jose Miguel Pasini,
 Philippe Lussou, Jacques Kools, Bayram Yenikaya, Peter Hornby, Krishna
 Mohan Gundu, Christopher Stott, Timmy Schumacher, Carl Osterwisch,
 Bruno Frackowiak, Philip Kelleners, Romuald Conty, Renaud Sizaire,
-Michel Benhamou, Emilie Marchandise, Tom De Vuyst, Kris Van den
-Abeele, Simon Vun, Simon Corbin, Thomas De-Soza, Marcus Drosson,
-Antoine Dechaume, Jose Paulo Moitinho de Almeida, Thomas Pinchard,
-Corrado Chisari, Axel Hackbarth, Peter Wainwright, Jiri Hnidek,
-Thierry Thomas.
+Michel Benhamou, Tom De Vuyst, Kris Van den Abeele, Simon Vun, Simon
+Corbin, Thomas De-Soza, Marcus Drosson, Antoine Dechaume, Jose Paulo
+Moitinho de Almeida, Thomas Pinchard, Corrado Chisari, Axel Hackbarth,
+Peter Wainwright, Jiri Hnidek, Thierry Thomas.

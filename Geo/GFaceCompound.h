@@ -6,6 +6,8 @@
 #ifndef _GFACE_COMPOUND_H_
 #define _GFACE_COMPOUND_H_
 
+#include <list>
+#include <map>
 #include "GFace.h"
 #include "GEdge.h"
 #include "GEdgeCompound.h"

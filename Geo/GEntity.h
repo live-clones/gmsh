@@ -7,9 +7,8 @@
 #define _GENTITY_H_
 
 #include <list>
-#include <vector>
 #include <string>
-#include <map>
+#include <vector>
 #include "Range.h"
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"

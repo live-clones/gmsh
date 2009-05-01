@@ -18,13 +18,11 @@ class GEdgeCompound : public GEdge {
   std::vector<GEdge*> _compound;
   std::vector<int> _orientation;
   std::vector<double> _pars;
-  void parametrize() ;
-  void orderEdges()  ;
+  void parametrize();
+  void orderEdges();
   
-public:
-  void getLocalParameter ( const double &t,
-			   int &iEdge,
-			   double & tLoc) const;
+ public:
+  void getLocalParameter(const double &t, int &iEdge, double & tLoc) const;
   GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound);
   virtual ~GEdgeCompound();
   Range<double> parBounds(int i) const;

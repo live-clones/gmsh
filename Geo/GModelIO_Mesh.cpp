@@ -18,8 +18,6 @@
 #include "MPrism.h"
 #include "MPyramid.h"
 #include "SBoundingBox3d.h"
-#include "discreteRegion.h"
-#include "discreteFace.h"
 #include "StringUtils.h"
 #include "GmshMessage.h"
 #include "discreteVertex.h"
@@ -126,7 +124,8 @@ void GModel::createTopologyFromMSH(){
   std::vector<discreteFace*> faces;
   std::vector<discreteRegion*> regions;
 
-  for (std::vector<GEntity*>::iterator entity = entities.begin(); entity != entities.end(); entity++) {
+  for (std::vector<GEntity*>::iterator entity = entities.begin(); 
+       entity != entities.end(); entity++) {
     switch ((*entity)->dim()) {
     case 0:
       vertices.push_back((discreteVertex*) *entity);
@@ -148,18 +147,21 @@ void GModel::createTopologyFromMSH(){
   //printf("regions size =%d \n", regions.size());
 
   int tag = 100;
-  for (std::vector<discreteEdge*>::iterator edge = edges.begin(); edge != edges.end(); edge++){
+  for (std::vector<discreteEdge*>::iterator edge = edges.begin(); 
+       edge != edges.end(); edge++){
     if (tag < (*edge)->tag() ) tag = (*edge)->tag() + 1;
   }
 
  //For each discreteEdge, build a new GEdgeCompound
-  for (std::vector<discreteEdge*>::iterator edge = edges.begin(); edge != edges.end(); edge++){
+  for (std::vector<discreteEdge*>::iterator edge = edges.begin(); 
+       edge != edges.end(); edge++){
 
     //printf("createTopology: %d  EDGES, of size=%d\n",(*edge)->tag(), (*edge)->lines.size());
 
     //create a map with the tags of the mesh vertices
     std::map<int, GVertex*> myMap;
-    for (std::vector<MLine*>::const_iterator it = (*edge)->lines.begin() ; it != (*edge)->lines.end() ; ++it){  
+    for (std::vector<MLine*>::const_iterator it = (*edge)->lines.begin();
+         it != (*edge)->lines.end() ; ++it){  
       int tagB = (*it)->getVertex(0)->getNum();
       int tagE = (*it)->getVertex(1)->getNum();
 
@@ -186,7 +188,8 @@ void GModel::createTopologyFromMSH(){
     //create a vector composed of plenty of discreteEdges from the Mlines of the original discreteVertex
     std::vector<GEdge*> e_compound;
 
-   for (std::vector<MLine*>::const_iterator it = (*edge)->lines.begin() ; it != (*edge)->lines.end() ; ++it){  
+   for (std::vector<MLine*>::const_iterator it = (*edge)->lines.begin();
+        it != (*edge)->lines.end(); ++it){  
      //printf("MLine =%d %d \n", (*it)->getVertex(0)->getNum(), (*it)->getVertex(1)->getNum());
 
       int tagB = (*it)->getVertex(0)->getNum();

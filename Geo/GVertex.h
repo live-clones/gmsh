@@ -6,6 +6,9 @@
 #ifndef _GVERTEX_H_
 #define _GVERTEX_H_
 
+#include <list>
+#include <string>
+#include <vector>
 #include <stdio.h>
 #include "GEntity.h"
 #include "GPoint.h"

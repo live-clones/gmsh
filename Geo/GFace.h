@@ -6,6 +6,9 @@
 #ifndef _GFACE_H_
 #define _GFACE_H_
 
+#include <list>
+#include <string>
+#include <vector>
 #include "GEntity.h"
 #include "GPoint.h"
 #include "GEdgeLoop.h"

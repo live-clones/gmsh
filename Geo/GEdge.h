@@ -6,20 +6,21 @@
 #ifndef _GEDGE_H_
 #define _GEDGE_H_
 
+#include <list>
+#include <string>
+#include <vector>
+#include <set>
 #include <stdio.h>
 #include "GEntity.h"
 #include "GVertex.h"
 #include "SVector3.h"
 #include "SPoint3.h"
 #include "SPoint2.h"
-#include "MLine.h"
 
 class MElement;
 class MLine;
 class ExtrudeParams;
 class GEdgeCompound;
-
-#include <set>
 
 // A model edge.
 class GEdge : public GEntity {

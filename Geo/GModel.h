@@ -7,8 +7,10 @@
 #define _GMODEL_H_
 
 #include <algorithm>
+#include <vector>
 #include <set>
 #include <map>
+#include <string>
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"

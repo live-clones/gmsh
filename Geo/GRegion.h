@@ -6,6 +6,9 @@
 #ifndef _GREGION_H_
 #define _GREGION_H_
 
+#include <list>
+#include <string>
+#include <vector>
 #include <stdio.h>
 #include "GEntity.h"
 
