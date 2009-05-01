@@ -193,11 +193,12 @@ OCCRegion${OBJEXT}: OCCRegion.cpp ../Common/GmshConfig.h ../Common/GmshMessage.h
 discreteEdge${OBJEXT}: discreteEdge.cpp ../Common/GmshConfig.h \
   ../Common/GmshMessage.h discreteEdge.h GModel.h GVertex.h GEntity.h \
   Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
-  SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h Geo.h \
-  ../Common/GmshDefines.h gmshSurface.h ../Numeric/Numeric.h \
-  ../Numeric/GmshMatrix.h ../Common/ListUtils.h ../Common/TreeUtils.h \
-  ../Common/avl.h ../Common/ListUtils.h ExtrudeParams.h \
-  ../Common/SmoothData.h
+  SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h MLine.h MElement.h \
+  ../Common/GmshDefines.h MVertex.h MEdge.h MFace.h \
+  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h Geo.h gmshSurface.h \
+  ../Common/ListUtils.h ../Common/TreeUtils.h ../Common/avl.h \
+  ../Common/ListUtils.h ExtrudeParams.h ../Common/SmoothData.h
 discreteFace${OBJEXT}: discreteFace.cpp ../Common/GmshConfig.h \
   ../Common/GmshMessage.h discreteFace.h GModel.h GVertex.h GEntity.h \
   Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
@@ -258,7 +259,8 @@ GModelIO_Mesh${OBJEXT}: GModelIO_Mesh.cpp GModel.h GVertex.h GEntity.h Range.h \
   ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
   ../Common/GmshConfig.h ../Numeric/Gauss.h MLine.h MTriangle.h \
   MQuadrangle.h MTetrahedron.h MHexahedron.h MPrism.h MPyramid.h \
-  discreteRegion.h discreteFace.h ../Common/StringUtils.h
+  ../Common/StringUtils.h discreteVertex.h discreteEdge.h discreteFace.h \
+  discreteRegion.h GEdgeCompound.h
 GModelIO_OCC${OBJEXT}: GModelIO_OCC.cpp ../Common/GmshConfig.h \
   ../Common/GmshMessage.h GModelIO_OCC.h GModel.h GVertex.h GEntity.h \
   Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \

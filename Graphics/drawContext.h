@@ -11,7 +11,7 @@
 #include <set>
 #include <FL/gl.h>
 
-//FIXME: workaround faulty fltk installs
+//FIXME: work around faulty fltk installs
 //#include <FL/glu.h>
 #ifdef __APPLE__
 #  include <OpenGL/glu.h>
