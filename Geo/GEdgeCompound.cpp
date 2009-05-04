@@ -7,10 +7,10 @@
 //   Emilie Marchandise
 //
 
+#include <stdlib.h>
 #include "GmshConfig.h"
 #include "GEdgeCompound.h"
 #include "Numeric.h"
-#include "stdlib.h"
 
 GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound)
   : GEdge(m, tag, 0 , 0), _compound(compound)

@@ -693,10 +693,12 @@ void window_cb(Fl_Widget *w, void *data)
       oldw = GUI::instance()->graph[0]->win->w();
       oldh = GUI::instance()->graph[0]->win->h();
       GUI::instance()->graph[0]->win->resize(Fl::x(), Fl::y(), Fl::w(), Fl::h());
+      //GUI::instance()->graph[0]->win->fullscreen();
       zoom = 0;
     }
     else{
       GUI::instance()->graph[0]->win->resize(oldx, oldy, oldw, oldh);
+      //GUI::instance()->graph[0]->win->fullscreen_off(oldx, oldy, oldw, oldh);
       zoom = 1;
     }
     GUI::instance()->graph[0]->win->show();
