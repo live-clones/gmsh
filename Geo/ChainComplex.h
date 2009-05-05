@@ -49,6 +49,16 @@ class ChainComplex{
    // bases for homology groups
    gmp_matrix* _Hbasis[4];
    
+   int _dim;
+   
+   // set the matrices
+   virtual void setHMatrix(int dim, gmp_matrix* matrix) { if(dim > -1 && dim < 4) _HMatrix[dim] = matrix;}
+   virtual void setKerHMatrix(int dim, gmp_matrix* matrix) { if(dim > -1 && dim < 4)  _kerH[dim] = matrix;}
+   virtual void setCodHMatrix(int dim, gmp_matrix* matrix) { if(dim > -1 && dim < 4)  _codH[dim] = matrix;}
+   virtual void setJMatrix(int dim, gmp_matrix* matrix) { if(dim > -1 && dim < 4)  _JMatrix[dim] = matrix;}
+   virtual void setQMatrix(int dim, gmp_matrix* matrix) { if(dim > -1 && dim < 4)  _QMatrix[dim] = matrix;}
+   virtual void setHbasis(int dim, gmp_matrix* matrix) { if(dim > -1 && dim < 4) _Hbasis[dim] = matrix;}
+   
    
    
   public:
@@ -64,31 +74,38 @@ class ChainComplex{
        _QMatrix[i] = NULL;
        _Hbasis[i] = NULL;
      }
+     _dim = 0;
    }
    virtual ~ChainComplex(){}
    
+   virtual int getDim() { return _dim; }
+   
    // get the boundary operator matrix dim->dim-1
-   virtual gmp_matrix* getHMatrix(int dim) { if(dim > -1 || dim < 4) return _HMatrix[dim]; else return NULL;}
-   virtual gmp_matrix* getKerHMatrix(int dim) { if(dim > -1 || dim < 4) return _kerH[dim]; else return NULL;}
-   virtual gmp_matrix* getCodHMatrix(int dim) { if(dim > -1 || dim < 4) return _codH[dim]; else return NULL;}
-   virtual gmp_matrix* getJMatrix(int dim) { if(dim > -1 || dim < 4) return _JMatrix[dim]; else return NULL;}
-   virtual gmp_matrix* getQMatrix(int dim) { if(dim > -1 || dim < 4) return _QMatrix[dim]; else return NULL;}
-   virtual gmp_matrix* getHbasis(int dim) { if(dim > -1 || dim < 4) return _Hbasis[dim]; else return NULL;}
+   virtual gmp_matrix* getHMatrix(int dim) { if(dim > -1 && dim < 4) return _HMatrix[dim]; else return NULL;}
+   virtual gmp_matrix* getKerHMatrix(int dim) { if(dim > -1 && dim < 4) return _kerH[dim]; else return NULL;}
+   virtual gmp_matrix* getCodHMatrix(int dim) { if(dim > -1 && dim < 4) return _codH[dim]; else return NULL;}
+   virtual gmp_matrix* getJMatrix(int dim) { if(dim > -1 && dim < 4) return _JMatrix[dim]; else return NULL;}
+   virtual gmp_matrix* getQMatrix(int dim) { if(dim > -1 && dim < 4) return _QMatrix[dim]; else return NULL;}
+   virtual gmp_matrix* getHbasis(int dim) { if(dim > -1 && dim < 4) return _Hbasis[dim]; else return NULL;}
    
    // Compute basis for kernel and codomain of boundary operator matrix of dimension dim (ie. ker(h_dim) and cod(h_dim) )
    virtual void KerCod(int dim);
    // Compute matrix representation J for inclusion relation from dim-cells who are boundary of dim+1-cells 
    // to cycles of dim-cells (ie. j: cod(h_(dim+1)) -> ker(h_dim) )
-   virtual void Inclusion(int dim);
+   virtual void Inclusion(int lowDim, int highDim);
    // Compute quotient problem for given inclusion relation j to find representatives of homology groups
    // and possible torsion coeffcients
    virtual void Quotient(int dim);
    
+   // transpose the boundary operator matrices, these are boundary operator matrices for the dual mesh
+   virtual void transposeHMatrices() { for(int i = 0; i < 4; i++) gmp_matrix_transp(_HMatrix[i]); }
+   virtual void transposeHMatrix(int dim) { if(dim > -1 && dim < 4) gmp_matrix_transp(_HMatrix[dim]); }
+   
    // Compute bases for the homology groups of this chain complex 
-   virtual void computeHomology();
+   virtual void computeHomology(bool dual=false);
    
    virtual std::vector<int> getCoeffVector(int dim, int chainNumber);
-   virtual int getBasisSize(int dim) {  if(dim > -1 || dim < 4) return gmp_matrix_cols(_Hbasis[dim]); else return 0; } 
+   virtual int getBasisSize(int dim) {  if(dim > -1 && dim < 4) return gmp_matrix_cols(_Hbasis[dim]); else return 0; } 
    
    virtual int printMatrix(gmp_matrix* matrix){ 
      printf("%d rows and %d columns\n", gmp_matrix_rows(matrix), gmp_matrix_cols(matrix)); 
@@ -129,7 +146,7 @@ class Chain{
    virtual std::string getName() { return _name; }
    virtual void setName(std::string name) { _name=name; }
 
-   // append this chain to a 2.0 .msh file as $ElementData
+   // append this chain to a 2.0 MSH ASCII file as $ElementData
    virtual int writeChainMSH(const std::string &name);
    
 };

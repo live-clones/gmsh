@@ -40,6 +40,9 @@ class Cell
    // used in relative homology computation
    bool _inSubdomain;
    
+   // whether this cell belongs to the boundary of a cell complex
+   bool _onDomainBoundary;
+   
    int _tag;
    
   public:
@@ -73,6 +76,10 @@ class Cell
    virtual void setCbdSize(int size) { _cbdSize = size; }
       
    virtual bool inSubdomain() const { return _inSubdomain; }
+   virtual void setInSubdomain(bool subdomain)  { _inSubdomain = subdomain; }
+   
+   virtual bool onDomainBoundary() const { return _onDomainBoundary; }
+   virtual void setOnDomainBoundary(bool domainboundary)  { _onDomainBoundary = domainboundary; }
    
    // print cell vertices
    virtual void printCell() const = 0;
@@ -138,7 +145,7 @@ class ZeroSimplex : public Simplex
    double _x, _y, _z;
  public:
    
-   ZeroSimplex(int vertex, bool subdomain=false, double x=0, double y=0, double z=0) : Simplex(){
+   ZeroSimplex(int vertex, bool subdomain=false, bool boundary=false, double x=0, double y=0, double z=0) : Simplex(){
      _v = vertex;
      _dim = 0;
      _bdMaxSize = 0;
@@ -147,8 +154,8 @@ class ZeroSimplex : public Simplex
      _y = y;
      _z = z;
      _inSubdomain = subdomain;
+     _onDomainBoundary = boundary;
    }
-   
    virtual ~ZeroSimplex(){}
    
    virtual int getDim() const { return 0; }
@@ -175,7 +182,7 @@ class OneSimplex : public Simplex
    int _v[2];
   public:
    
-   OneSimplex(std::vector<int> vertices, bool subdomain=false) : Simplex(){
+   OneSimplex(std::vector<int> vertices, bool subdomain=false, bool boundary=false) : Simplex(){
      sort(vertices.begin(), vertices.end());
      _v[0] = vertices.at(0);
      _v[1] = vertices.at(1);
@@ -183,7 +190,10 @@ class OneSimplex : public Simplex
      _bdMaxSize = 2;
      _cbdMaxSize = 1000;
      _inSubdomain = subdomain;
+     _onDomainBoundary = boundary;
    }
+     
+   
    
    // constructor for the dummy one simplex
    // used to find another definite one simplex from the cell complex
@@ -215,7 +225,7 @@ class TwoSimplex : public Simplex
    int _v[3];
   public:
    
-   TwoSimplex(std::vector<int> vertices, bool subdomain=false) : Simplex(){
+   TwoSimplex(std::vector<int> vertices, bool subdomain=false, bool boundary=false) : Simplex(){
      sort(vertices.begin(), vertices.end());
      _v[0] = vertices.at(0);
      _v[1] = vertices.at(1);
@@ -224,6 +234,7 @@ class TwoSimplex : public Simplex
      _bdMaxSize = 3;
      _cbdMaxSize = 2;
      _inSubdomain = subdomain;
+     _onDomainBoundary = boundary;
    }
    // constructor for the dummy one simplex
    TwoSimplex(int vertex, int dummy){
@@ -254,7 +265,7 @@ class ThreeSimplex : public Simplex
    int _v[4];
   public:
    
-   ThreeSimplex(std::vector<int> vertices, bool subdomain=false) : Simplex(){
+   ThreeSimplex(std::vector<int> vertices, bool subdomain=false, bool boundary=false) : Simplex(){
      sort(vertices.begin(), vertices.end());
      _v[0] = vertices.at(0);
      _v[1] = vertices.at(1);
@@ -264,6 +275,7 @@ class ThreeSimplex : public Simplex
      _bdMaxSize = 4;
      _cbdMaxSize = 0;
      _inSubdomain = subdomain;
+     _onDomainBoundary = boundary;
    }
    // constructor for the dummy one simplex
    ThreeSimplex(int vertex, int dummy){
@@ -311,6 +323,21 @@ class Less_Cell{
    }
 };
 
+
+class Equal_Cell{
+  public:
+   bool operator()(const Cell* c1, const Cell* c2) const {
+     
+     if(c1->getNumVertices() != c2->getNumVertices()) return false;
+               
+     for(int i=0; i < c1->getNumVertices();i++){
+       if(c1->getVertex(i) != c2->getVertex(i)) return false;
+     }
+     return true;
+   }
+};
+
+
 // Ordering for the finite element mesh vertices.
 class Less_MVertex{
   public:
@@ -330,9 +357,13 @@ class CellComplex
    // used in relative homology computation, may be empty
    std::vector<GEntity*> _subdomain;
    
+   std::vector<GEntity*> _boundary;
+   
    // sorted containers of unique cells in this cell complex 
    // one for each dimension
    std::set<Cell*, Less_Cell>  _cells[4];
+   
+   std::set<Cell*, Less_Cell>  _originalCells[4];
    
   public:
    // iterator for the cells of same dimension
@@ -342,6 +373,7 @@ class CellComplex
    // enqueue cells in queue if they are not there already
    virtual void enqueueCells(std::vector<Cell*>& cells, 
                              std::queue<Cell*>& Q, std::set<Cell*, Less_Cell>& Qset);
+   virtual void enqueueCells(std::vector<Cell*>& cells, std::list<Cell*>& Q);
    virtual void enqueueCellsIt(std::vector< std::set<Cell*, Less_Cell>::iterator >& cells,
                                std::queue<Cell*>& Q, std::set<Cell*, Less_Cell>& Qset);
      
@@ -349,7 +381,7 @@ class CellComplex
    virtual void removeCellQset(Cell*& cell, std::set<Cell*, Less_Cell>& Qset);
       
    // insert cells into this cell complex
-   virtual void insertCells(bool subdomain);
+   virtual void insertCells(bool subdomain, bool boundary);
    
   public: 
    CellComplex(  std::vector<GEntity*> domain, std::vector<GEntity*> subdomain, std::set<Cell*, Less_Cell> cells ) {
@@ -376,7 +408,7 @@ class CellComplex
    virtual citer lastCell(int dim) {return _cells[dim].end(); }
   
    // find a cell in this cell complex
-   virtual std::set<Cell*, Less_Cell>::iterator findCell(int dim, std::vector<int>& vertices);
+   virtual std::set<Cell*, Less_Cell>::iterator findCell(int dim, std::vector<int>& vertices, bool original=false);
    virtual std::set<Cell*, Less_Cell>::iterator findCell(int dim, int vertex, int dummy=0);
    
    // kappa for two cells of this cell complex
@@ -391,7 +423,7 @@ class CellComplex
    virtual std::vector< std::set<Cell*, Less_Cell>::iterator > cbdIt(Cell* tau);
    
    // remove a cell from this cell complex
-   virtual void removeCell(Cell* cell, bool deleteCell=true);
+   virtual void removeCell(Cell* cell, bool deleteCell=false);
    virtual void removeCellIt(std::set<Cell*, Less_Cell>::iterator cell);
    
    virtual void insertCell(Cell* cell);
@@ -402,12 +434,12 @@ class CellComplex
    
    // coreduction of this cell complex
    // removes corection pairs of cells of dimension dim and dim+1
-   virtual int coreduction(int dim, bool deleteCells=true);
+   virtual int coreduction(int dim, bool deleteCells=false);
    // stores removed cells
    virtual int coreduction(int dim, std::set<Cell*, Less_Cell>& removedCells);
    // reduction of this cell complex
    // removes reduction pairs of cell of dimension dim and dim-1
-   virtual int reduction(int dim, bool deleteCells=true);
+   virtual int reduction(int dim, bool deleteCells=false);
    
    // useful functions for (co)reduction of cell complex
    virtual void reduceComplex();
@@ -421,11 +453,20 @@ class CellComplex
    // queued coreduction presented in Mrozek's paper
    // slower, but produces cleaner result
    virtual int coreductionMrozek(Cell* generator);
+   virtual int coreductionMrozek2(Cell* generator);
+   virtual int coreductionMrozek3(Cell* generator);
+
+   virtual void restoreComplex(){ for(int i = 0; i < 4; i++) _cells[i] = _originalCells[i]; }
+   
+   // add every volume, face and edge its missing boundary cells
+   virtual void repairComplex();
+   // change non-subdomain cells to be in subdomain, subdomain cells to not to be in subdomain
+   virtual void swapSubdomain();
    
    // print the vertices of cells of certain dimension
    virtual void printComplex(int dim, bool subcomplex);
    
-   // write this cell complex in .msh format
+   // write this cell complex in 2.0 MSH ASCII format
    virtual int writeComplexMSH(const std::string &name); 
    
    

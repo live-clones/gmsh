@@ -22,7 +22,7 @@
    P.O.Box 692, FIN-33101 Tampere, Finland
    saku.suuriniemi@tut.fi
 
-   $Id: gmp_matrix.c,v 1.4 2009-04-21 07:06:22 matti Exp $
+   $Id: gmp_matrix.c,v 1.5 2009-05-05 11:35:01 matti Exp $
 */
 
 
@@ -584,6 +584,23 @@ gmp_matrix_transp(gmp_matrix * M)
       return EXIT_FAILURE;
     }
 
+  if(rows == 1){
+    for(i = 1; i <= cols; i++)
+    {
+      mpz_init_set(new_storage[i-1], 
+		       M-> storage[i-1]);
+	    mpz_clear(M-> storage[i-1]);
+    }
+  } 
+  else if(cols == 1){
+    for(i = 1; i <= rows; i++)
+    {
+      mpz_init_set(new_storage[i-1], 
+		       M-> storage[i-1]);
+	    mpz_clear(M-> storage[i-1]);
+    }
+  }
+  else{
   for(i = 1; i <= rows; i++)
     {
       for(j = 1; j <= cols; j++)
@@ -593,6 +610,8 @@ gmp_matrix_transp(gmp_matrix * M)
 	  mpz_clear(M-> storage[(i-1)+(j-1)*rows]);
 	}
     }
+  }
+  
   free(M->storage);
 
   M -> storage = new_storage;

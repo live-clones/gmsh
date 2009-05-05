@@ -6,8 +6,8 @@
 // Then compile this driver with "g++ celldriver.cpp -lGmsh -llapack -lblas -lgmp"
 //
 //
-// This program creates .msh file chains.msh which represents the generators of 
-// an two port transformer model's homology groups.
+// This program creates .msh file chains.msh which represents the generators and
+// the cuts of an two port transformer model's homology groups.
 
 
 #include <stdio.h>
@@ -33,20 +33,19 @@ int main(int argc, char **argv)
   GModel *m = new GModel();
   m->readGEO("transformer.geo");
   m->mesh(3);
-  m->writeMSH("transformer.msh");
   
   printf("This model has: %d GRegions, %d GFaces, %d GEdges and %d GVertices. \n" , m->getNumRegions(), m->getNumFaces(), m->getNumEdges(), m->getNumVertices());
   
   std::vector<GEntity*> domain;
   std::vector<GEntity*> subdomain;
   
-  // whole model
+  // whole model the domain
   for(GModel::riter rit = m->firstRegion(); rit != m->lastRegion(); rit++){
     GEntity *r = *rit;
     domain.push_back(r);
   }
 
-  // the ports
+  // the ports as subdomain
   GModel::fiter sub = m->firstFace();
   GEntity *s = *sub;
   subdomain.push_back(s);
@@ -60,6 +59,9 @@ int main(int argc, char **argv)
   // create a cell complex
   CellComplex* complex = new CellComplex(domain, subdomain);
 
+  // write the cell complex to a .msh file
+  complex->writeComplexMSH("chains.msh");
+
   printf("Cell complex of this model has: %d volumes, %d faces, %d edges and %d vertices\n",
          complex->getSize(3), complex->getSize(2), complex->getSize(1), complex->getSize(0));  
   
@@ -70,9 +72,6 @@ int main(int argc, char **argv)
   ChainComplex* chains = new ChainComplex(complex);
   // compute the homology using the boundary operator matrices
   chains->computeHomology();
-  
-  // write the reduced cell complex to a .msh file
-  complex->writeComplexMSH("chains.msh");
   
   // Append the homology generators to the .msh file as post-processing views. 
   // To visualize the result, open chains.msh with Gmsh GUI and deselect all mesh
@@ -93,8 +92,43 @@ int main(int argc, char **argv)
     }
   }
   
-    
   delete chains;
+  
+  // restore the cell complex to its prereduced state
+  complex->restoreComplex();
+  
+  // reduce the complex by coreduction, this removes all vertices, hence 0 as an argument 
+  complex->coreduceComplex(0);
+  
+  // create a chain complex of a cell complex (construct boundary operator matrices)
+  ChainComplex* dualChains = new ChainComplex(complex);
+  
+  // transpose the boundary operator matrices, 
+  // these are the boundary operator matrices for the dual chain complex
+  dualChains->transposeHMatrices();
+  
+  // compute the homology of the dual complex
+  dualChains->computeHomology(true);  
+  
+  // Append the duals of the cuts of the homology generators to the .msh file.
+  for(int j = 3; j > -1; j--){
+    for(int i = 1; i <= dualChains->getBasisSize(j); i++){
+
+      std::string generator;
+      std::string dimension;
+      convert(i, generator);
+      convert(3-(j-1), dimension);
+
+      std::string name = dimension + "D Dual cut " + generator;
+      Chain* chain = new Chain(complex->getCells(j-1), dualChains->getCoeffVector(j,i), complex, name);
+                chain->writeChainMSH("chains.msh");
+      delete chain;
+    }
+  }
+
+  delete dualChains;
+
+  
   delete complex;  
   delete m;
   GmshFinalize();
