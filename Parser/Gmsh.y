@@ -87,7 +87,7 @@ void FixRelativePath(const char *in, char *out);
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
 %token tFmod tModulo tHypot 
 %token tPrintf tSprintf tStrCat tStrPrefix tStrRelative
-%token tBoundingBox tDraw tToday
+%token tBoundingBox tDraw tToday tCreateTopology
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound
@@ -1892,7 +1892,6 @@ Command :
 	char tmpstring[1024];
 	FixRelativePath($2, tmpstring);
 	MergeFile(tmpstring, true);
-	GModel::current()->createTopologyFromMSH();
       }
       else if(!strcmp($1, "System"))
 	SystemCall($2);
@@ -2007,6 +2006,10 @@ Command :
 #if defined(HAVE_FLTK)
       Draw();
 #endif
+    }
+   | tCreateTopology tEND
+    {
+       GModel::current()->createTopologyFromMSH();
     }
 ;
 

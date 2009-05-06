@@ -108,6 +108,7 @@ Compound                return tCompound;
 Coordinates             return tCoordinates;
 CatmullRom		return tSpline;
 Call                    return tCall;
+CreateTopology          return tCreateTopology;
 
 Delete                  return tDelete;
 Dilate                  return tDilate;
