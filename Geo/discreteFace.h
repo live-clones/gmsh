@@ -8,6 +8,7 @@
 
 #include "GModel.h"
 #include "GFace.h"
+#include "discreteEdge.h"
 
 class discreteFace : public GFace {
  public:
@@ -18,6 +19,7 @@ class discreteFace : public GFace {
   virtual SVector3 normal(const SPoint2 &param) const;
   virtual GEntity::GeomType geomType() const { return DiscreteSurface; }
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const;
+  void setBoundEdges( std::vector<discreteEdge*> edges );
 };
 
 #endif

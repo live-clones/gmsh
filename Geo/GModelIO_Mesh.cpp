@@ -26,6 +26,7 @@
 #include "discreteRegion.h"
 #include "MElement.h"
 #include "GEdgeCompound.h"
+#include "GFaceCompound.h"
 
 #include <iostream> // DBG
 
@@ -114,7 +115,7 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
 
 void GModel::createTopologyFromMSH(){
 
-  //printf("Dans createTopologyFromMSH \n");
+  printf("***** In createTopologyFromMSH: \n");
 
   std::vector<GEntity*> entities;
   getEntities(entities);
@@ -141,79 +142,42 @@ void GModel::createTopologyFromMSH(){
       break;
     }
   }
-  //printf("vertices size =%d \n", vertices.size());
-  //printf("edges size =%d \n", edges.size());
-  //printf("faces size =%d \n", faces.size());
-  //printf("regions size =%d \n", regions.size());
+  printf("vertices size =%d \n", vertices.size());
+  printf("edges size =%d \n", edges.size());
+  printf("faces size =%d \n", faces.size());
+  printf("regions size =%d \n", regions.size());
 
-  int tag = 100;
-  for (std::vector<discreteEdge*>::iterator edge = edges.begin(); 
-       edge != edges.end(); edge++){
-    if (tag < (*edge)->tag() ) tag = (*edge)->tag() + 1;
-  }
-
- //For each discreteEdge, build a new GEdgeCompound
-  for (std::vector<discreteEdge*>::iterator edge = edges.begin(); 
-       edge != edges.end(); edge++){
-
-    //printf("createTopology: %d  EDGES, of size=%d\n",(*edge)->tag(), (*edge)->lines.size());
-
-    //create a map with the tags of the mesh vertices
-    std::map<int, GVertex*> myMap;
-    for (std::vector<MLine*>::const_iterator it = (*edge)->lines.begin();
-         it != (*edge)->lines.end() ; ++it){  
-      int tagB = (*it)->getVertex(0)->getNum();
-      int tagE = (*it)->getVertex(1)->getNum();
-
-      std::map<int, GVertex*>::iterator it1 = myMap.find(tagB);
-      std::map<int, GVertex*>::iterator it2 = myMap.find(tagE);
-      if (it1 == myMap.end()){
-	GVertex *gvB = new discreteVertex(this,tagB);
-	gvB->mesh_vertices.push_back((*it)->getVertex(0)); 
-	gvB->points.push_back(new MPoint(gvB->mesh_vertices.back()));
-	myMap.insert(std::make_pair(tagB, gvB));
-      }
-      if (it2 == myMap.end()){
-	GVertex *gvE = new discreteVertex(this,tagE);
-	gvE->mesh_vertices.push_back((*it)->getVertex(1)); 
-	gvE->points.push_back(new MPoint(gvE->mesh_vertices.back()));
-	myMap.insert(std::make_pair(tagE, gvE));
-      }
-    }
-
- //    for(std::map<int, GVertex*>::const_iterator it = myMap.begin(); it != myMap.end(); ++it){
-//       printf(" tag=%d tagsize=%d\n", it->first, myMap.size());
+//   for(unsigned int i = 0; i < entities.size(); i++)
+//     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+//       printf("entity =%d dim = %d tag =%d \n", i, entities[i]->dim() , entities[i]->mesh_vertices[j]->getIndex());
 //     }
+//   exit(1);
 
-    //create a vector composed of plenty of discreteEdges from the Mlines of the original discreteVertex
-    std::vector<GEdge*> e_compound;
 
-   for (std::vector<MLine*>::const_iterator it = (*edge)->lines.begin();
-        it != (*edge)->lines.end(); ++it){  
-     //printf("MLine =%d %d \n", (*it)->getVertex(0)->getNum(), (*it)->getVertex(1)->getNum());
+  //For each discreteEdge, create Topology
+  //---------------------------------------------------
 
-      int tagB = (*it)->getVertex(0)->getNum();
-      int tagE = (*it)->getVertex(1)->getNum();
-      std::map<int,GVertex*>::iterator it1 = myMap.find(tagB);
-      std::map<int,GVertex*>::iterator it2 = myMap.find(tagE);
-      GVertex *gvB = it1->second;
-      GVertex *gvE = it2->second;
+  for (std::vector<discreteEdge*>::iterator edge = edges.begin(); edge != edges.end(); edge++){
 
-      GEdge *temp = new discreteEdge(this, tag, gvB, gvE); //new GEdge corresponding to the MLine
-      gvB->addEdge(temp);
-      gvE->addEdge(temp);
+    //printf("createTopology:  EDGE= %d, of size=%d\n",(*edge)->tag(), (*edge)->lines.size());
 
-      e_compound.push_back(temp); //add the compound to the GEdge
-      tag ++;
+    (*edge)->orderMLines();
+    (*edge)->parametrize();
+    (*edge)->setBoundVertices(vertices);
 
-    }
-
-   //now, we can create the GEdgeCompound
-    GEdge *gec = new GEdgeCompound(this, tag, e_compound);
-    add(gec);
 
   }
 
+  //For each discreteFace, create Topology
+  //---------------------------------------------------
+
+  for (std::vector<discreteFace*>::iterator face = faces.begin(); face != faces.end(); face++){
+
+    //printf("createTopology: FACE=%d, of size=%d\n",(*face)->tag(), (*face)->getNumMeshElements());
+    (*face)->setBoundEdges(edges);
+
+ }
+  
   return;
 
 }
@@ -657,6 +621,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->writeMSH(fp, binary, saveParametric, 
                                               scalingFactor);
+
+  
   if(binary) fprintf(fp, "\n");
   
   if(version >= 2.0){

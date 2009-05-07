@@ -94,6 +94,8 @@ class GModel
   std::map<int, std::string> physicalNames, elementaryNames;
   int partitionSize[2];
 
+  std::map<int, GEdge*> mesh2Topo;
+
  public:
   GModel(std::string name="");
   virtual ~GModel();

@@ -30,8 +30,6 @@ void MVertex::writeMSH(FILE *fp, bool binary, bool saveParametric, double scalin
 {
   if(_index < 0) return; // negative index vertices are never saved
 
-  //  printf("tag = %d index %d pos = %g %g %g\n",onWhat()->tag(),_index,x(),y(),z());
-
   int myDim = 0, myTag = 0;
   if(saveParametric){
     if(onWhat()){

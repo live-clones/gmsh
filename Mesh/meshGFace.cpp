@@ -378,19 +378,21 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
   std::list<GEdge*> edges = gf->edges();
 
   // here, we will replace edges by their compounds
+  printf("***** In meshGFace: \n");
   if (gf->geomType() == GEntity::CompoundSurface){
+    printf("replace edges by compound lines \n");
     std::set<GEdge*> mySet;
     std::list<GEdge*>::iterator it = edges.begin();
     while(it != edges.end()){
       if ((*it)->getCompound()){
 	mySet.insert((*it)->getCompound());
-	//printf("compound edge %d found in %d\n",(*it)->getCompound()->tag(), (*it)->tag());
+	printf("compound edge %d found in edge %d\n",(*it)->getCompound()->tag(), (*it)->tag());
       }
       else 
 	mySet.insert(*it);
       ++it;
     }
-    //printf("Replacing %d edges by %d in the compound %d\n",edges.size(),mySet.size(),gf->tag());
+    printf("replacing %d edges by %d in the GFaceCompound %d\n",edges.size(),mySet.size(),gf->tag());
     edges.clear();
     edges.insert(edges.begin(), mySet.begin(), mySet.end());
   }
@@ -404,7 +406,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
   // build a set with all points of the boundaries
   it = edges.begin();
   while(it != edges.end()){
-    if ((*it)->isSeam(gf)) return false;
+   if ((*it)->isSeam(gf)) return false;
     if(!(*it)->isMeshDegenerated()){
       for (unsigned int i = 0; i< (*it)->lines.size(); i++){
 	all_vertices.insert((*it)->lines[i]->getVertex(0));
@@ -446,6 +448,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
   double *V_ = new double[all_vertices.size()];
 
   v_container::iterator itv = all_vertices.begin();
+  printf("boundary vertices size = %d \n", all_vertices.size());
 
   int count = 0;
   SBoundingBox3d bbox;
@@ -455,7 +458,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
     reparamMeshVertexOnFace(here, gf, param);
     U_[count] = param[0];
     V_[count] = param[1];
-    //printf("*** meshGFace : %g %g -> u,v  = %g %g\n",here->x(),here->y(),param.x(),param.y());
+    printf("-> meshGFace : %g %g -> u,v  = %g %g\n",here->x(),here->y(),param.x(),param.y());
     (*itv)->setIndex(count);
     numbered_vertices[(*itv)->getIndex()] = *itv;
     bbox += SPoint3(param.x(), param.y(), 0);
@@ -480,6 +483,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
   // We add to the triangulation a box with 4 points that encloses the
   // domain.
   {
+
     DocRecord doc(all_vertices.size() + 4);
     itv = all_vertices.begin();
     int j = 0;

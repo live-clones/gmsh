@@ -8,6 +8,7 @@
 #include "discreteEdge.h"
 #include "MLine.h"
 #include "Numeric.h"
+#include "MPoint.h"
 
 #include <vector>
 #include <list>
@@ -27,10 +28,11 @@ discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
   
 }
 
-void discreteEdge::orderEdge() 
+
+void discreteEdge::orderMLines() 
 {
 
-  printf(" *** ORDERING DISCRETE EDGE %d of size %d \n", this->tag(), lines.size());
+  //printf(" *** ORDERING DISCRETE EDGE %d of size %d \n", this->tag(), lines.size());
 
   std::vector<MLine*> _m ;  
   std::list<MLine*> segments;
@@ -42,7 +44,6 @@ void discreteEdge::orderEdge()
   }
 
   // find a lonly MLine
-  std::map<MVertex*,MLine*> boundv;
   for (std::list<MLine*>::iterator it = segments.begin() ; it != segments.end() ; ++it){
     MVertex *vL = (*it)->getVertex(0);
     MVertex *vR = (*it)->getVertex(1);
@@ -87,7 +88,7 @@ void discreteEdge::orderEdge()
     for (std::list<MLine*>::iterator it = segments.begin() ; it != segments.end() ; ++it){
       MLine *e = *it;
       if (e->getVertex(0) == last){
-	printf("orientation 1: beginV=%d \n", e->getVertex(0)->getNum());
+	//printf("orientation 1: beginV=%d \n", e->getVertex(0)->getNum());
 	_m.push_back(e); 
 	segments.erase(it);
 	_orientation.push_back(1);
@@ -96,7 +97,7 @@ void discreteEdge::orderEdge()
 	break;
       }
       else if (e->getVertex(1) == last){
-	printf("orientation 0: endV=%d \n", e->getVertex(1)->getNum());
+	//printf("orientation 0: endV=%d \n", e->getVertex(1)->getNum());
 	_m.push_back(e); 
 	segments.erase(it);
 	_orientation.push_back(0);
@@ -111,7 +112,7 @@ void discreteEdge::orderEdge()
 	first = last;
 	last = temp;
 	_orientation[0] = 0;
-     }
+      }
       else {
 	Msg::Error("Discrete Edge %d is wrong",tag());
 	return;
@@ -130,13 +131,70 @@ void discreteEdge::orderEdge()
     for (int i=0;i<lines.size();i++) _orientation[i] = !_orientation[i] ;
   }
  
-  for (int i=0;i<lines.size();i++){
-    printf("AFTER ORDERING segment or=%d, vert=%d, %d\n", (int)_orientation[i], lines[i]->getVertex(0)->getNum(), lines[i]->getVertex(1)->getNum() );
-  }
+//   for (int i=0;i<lines.size();i++){
+//     printf("AFTER ORDERING segment or=%d, vert=%d, %d\n", (int)_orientation[i], lines[i]->getVertex(0)->getNum(), lines[i]->getVertex(1)->getNum() );
+//   }
 
- return;
+
+  return;
 
 }
+
+void discreteEdge::setBoundVertices(std::vector<discreteVertex*> vertices)
+{
+
+  if (boundv.size()==2){ 
+    //printf("Found a regular open Curve \n");
+    std::vector<GVertex*> bound_vertices;
+    for (std::map<MVertex*,MLine*>::const_iterator iter = boundv.begin(); iter != boundv.end(); iter++){
+      MVertex* vE = (iter)->first;
+      bool existVertex  = false;
+      for (std::vector<discreteVertex*>::iterator point = vertices.begin(); point != vertices.end(); point++) {
+	//printf("Discrete point =%d bound vE=%d\n", (*point)->tag(), vE->getNum());
+	if ((*point)->tag() == vE->getNum()){
+	  bound_vertices.push_back((*point));
+	  existVertex = true;
+	  break;
+	}
+      }
+      if(!existVertex){ 
+	printf(" !!! bound vertex does not exist, create one \n");
+	GVertex *gvB = new discreteVertex(model(),vE->getNum());
+	bound_vertices.push_back(gvB);
+	gvB->mesh_vertices.push_back(vE);
+	gvB->points.push_back(new MPoint(gvB->mesh_vertices.back()));
+	model()->add(gvB);
+	mesh_vertices.erase(std::find(mesh_vertices.begin(), mesh_vertices.end(), vE));
+     }
+    }
+ 
+    //printf("set bound  vertices %d %d \n",bound_vertices[0]->tag(),bound_vertices[1]->tag());
+    v0 = bound_vertices[0]; 
+    v1 = bound_vertices[1];
+  }
+  else if (boundv.size()==0){ 
+    //printf("Found a closed Curve \n");
+
+    std::vector<MLine*>::const_iterator it = lines.begin();
+    MVertex* vE = (*it)->getVertex(0);
+    GVertex *gvB = new discreteVertex(model(),vE->getNum());
+    gvB->mesh_vertices.push_back(vE);
+    gvB->points.push_back(new MPoint(gvB->mesh_vertices.back()));
+    model()->add(gvB);
+    mesh_vertices.erase(std::find(mesh_vertices.begin(), mesh_vertices.end(), vE));
+
+    //printf("set bound  vertices %d %d , coord = %g %g %g\n",gvB->tag(),gvB->tag(), gvB->x(), gvB->y(), gvB->z());
+    v0 = gvB; 
+    v1 = gvB;
+    
+  }
+
+  v0->addEdge(this);
+  v1->addEdge(this);
+
+  return;
+}
+
 void discreteEdge::parametrize() 
 {
 
@@ -144,29 +202,29 @@ void discreteEdge::parametrize()
     _pars.push_back(i);
   }   
 
-/*
-  +---------------+--------------+----------- ... ----------+
-  _pars[0]=0   _pars[1]=1    _pars[2]=2             _pars[N+1]=N+1
-*/
+  /*
+    +---------------+--------------+----------- ... ----------+
+    _pars[0]=0   _pars[1]=1    _pars[2]=2             _pars[N+1]=N+1
+  */
   
-//    for (int i=0;i<lines.size()+1;i++){
-//      printf("_pars[%d]=%g\n",i, _pars[i] );
-//    }
+  //    for (int i=0;i<lines.size()+1;i++){
+  //      printf("_pars[%d]=%g\n",i, _pars[i] );
+  //    }
 
 }
 
 void discreteEdge::getLocalParameter ( const double &t,
-					int &iLine,
-					double & tLoc) const
+				       int &iLine,
+				       double & tLoc) const
 {
 
   for (iLine=0 ; iLine<lines.size() ;iLine++){
-   double tmin = _pars[iLine];
+    double tmin = _pars[iLine];
     double tmax = _pars[iLine+1];
     if (t >= tmin && t <= tmax){      
       tLoc = _orientation[iLine] ? (t-tmin)/(tmax-tmin)  :  1 - (t-tmin)/(tmax-tmin)  ;
       //printf("getlocal param t=%g, iLine=%d, tLoc=%g \n", t, iLine, tLoc);
-     return;
+      return;
     }
   }
 }
@@ -174,14 +232,19 @@ void discreteEdge::getLocalParameter ( const double &t,
 GPoint discreteEdge::point(double par) const 
 {
   
-  //printf("dans point v0 =%d (%g,%g,%g), v1=%d (%g,%g,%g)\n", v0->tag(), v0->x(),v0->y(), v0->z(), v1->tag(), v1->x(),v1->y(), v1->z());
+  double tLoc;
+  int iEdge;
+  getLocalParameter(par,iEdge,tLoc);
 
   double x, y, z;
-  
-  x = v0->x() + par * (v1->x()- v0->x());
-  y = v0->y() + par * (v1->y()- v0->y());
-  z = v0->z() + par * (v1->z()- v0->z());
+  MVertex *vB = lines[iEdge]->getVertex(0);
+  MVertex *vE = lines[iEdge]->getVertex(1);
 
+  x = vB->x() + tLoc * (vE->x()- vB->x());
+  y = vB->y() + tLoc * (vE->y()- vB->y());
+  z = vB->z() + tLoc * (vE->z()- vB->z());
+
+  //printf("dans point par=%d iEdge =%d, tLoc=%d \n", par, iEdge, tLoc);
   //printf("Discrete Edge POint par=%g, x= %g, y = %g, z = %g \n", par, x,y,z);
   return GPoint(x,y,z);
 }
@@ -189,11 +252,18 @@ GPoint discreteEdge::point(double par) const
 SVector3 discreteEdge::firstDer(double par) const 
 {
 
+  double tLoc;
+  int iEdge;
+  getLocalParameter(par,iEdge,tLoc);
+
+  MVertex *vB = lines[iEdge]->getVertex(0);
+  MVertex *vE = lines[iEdge]->getVertex(1);
+
   double dx,dy,dz;
-  double dt = sqrt((v1->x()-v0->x())*(v1->x()-v0->x()) + (v1->y()-v0->y())*(v1->y()-v0->y()) + (v1->z()-v0->z())*(v1->z()-v0->z()));
-  dx = (v1->x() - v0->x() ) /dt;
-  dy = (v1->y() - v0->y() ) /dt;
-  dz = (v1->z() - v0->z() ) /dt;
+  double dt = sqrt((vE->x()-vB->x())*(vE->x()-vB->x()) + (vE->y()-vB->y())*(vE->y()-vB->y()) + (vE->z()-vB->z())*(vE->z()-vB->z()));
+  dx = (vE->x() - vB->x() ) /dt;
+  dy = (vE->y() - vB->y() ) /dt;
+  dz = (vE->z() - vB->z() ) /dt;
 
   //printf("firstDer discreteEdge  par=%g, dx=%g, dy=%g dz=%g dt=%g \n", par,dx,dy,dz, dt);
   return SVector3(dx,dy,dz);
@@ -202,8 +272,6 @@ SVector3 discreteEdge::firstDer(double par) const
 
 Range<double> discreteEdge::parBounds(int i) const {
 
-  return Range<double>(0, 1);
-  //return Range<double>(0, lines.size()-1); 
-  //return Range<double>(0, _pars[lines.size()-1]); 
-  
+ return Range<double>(0, lines.size()); 
+ 
 }

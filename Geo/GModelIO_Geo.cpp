@@ -122,11 +122,11 @@ int GModel::importGEOInternals()
       GEntity *ge = 0;
       switch(p->Typ){
       case MSH_PHYSICAL_POINT:   ge = getVertexByTag(abs(num)); break;
-      case MSH_PHYSICAL_LINE:    
+      case MSH_PHYSICAL_LINE: 
 	ge = getEdgeByTag(abs(num));
 	e_compound.push_back(getEdgeByTag(abs(num)));
 	break; 
-      case MSH_PHYSICAL_SURFACE: 
+     case MSH_PHYSICAL_SURFACE: 
 	ge = getFaceByTag(abs(num));
 	f_compound.push_back(getFaceByTag(abs(num))); 
 	break;
@@ -180,15 +180,6 @@ int GModel::importGEOInternals()
   Msg::Debug("%d Edges", edges.size());
   Msg::Debug("%d Faces", faces.size());
   Msg::Debug("%d Regions", regions.size());
-
-  for(viter it = firstVertex(); it != lastVertex(); it++)
-    Msg::Debug("Imported GEO vert of Type: %s", (*it)->getTypeString().c_str());
-  for(eiter it = firstEdge(); it != lastEdge(); it++)
-    Msg::Debug("Imported GEO edge of Type: %s", (*it)->getTypeString().c_str());
-  for(fiter it = firstFace(); it != lastFace(); it++)
-    Msg::Debug("Imported GEO face of Type: %s", (*it)->getTypeString().c_str());
-  for(riter it = firstRegion(); it != lastRegion(); it++)
-    Msg::Debug("Imported GEO region of Type: %s", (*it)->getTypeString().c_str());
 
   return 1;
 }

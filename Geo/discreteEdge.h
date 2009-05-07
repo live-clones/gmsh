@@ -8,11 +8,13 @@
 
 #include "GModel.h"
 #include "GEdge.h"
+#include "discreteVertex.h"
 
 class discreteEdge : public GEdge {
  protected:
   std::vector<double> _pars;
   std::vector<int> _orientation;
+  std::map<MVertex*,MLine*> boundv;
  public:
   discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1);
   virtual ~discreteEdge() {}
@@ -23,9 +25,9 @@ class discreteEdge : public GEdge {
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
   virtual Range<double> parBounds(int) const;
-  void setVertices(GVertex *_v0, GVertex *_v1){ v0 = _v0; v1 = _v1; }
-  void orderEdge();
-  void parametrize();
+  void parametrize() ;
+  void orderMLines() ;
+  void setBoundVertices( std::vector<discreteVertex*> vertices );
 };
 
 #endif
