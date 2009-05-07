@@ -458,7 +458,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
     reparamMeshVertexOnFace(here, gf, param);
     U_[count] = param[0];
     V_[count] = param[1];
-    printf("-> meshGFace : %g %g -> u,v  = %g %g\n",here->x(),here->y(),param.x(),param.y());
+    //    printf("-> meshGFace : %g %g -> u,v  = %g %g\n",here->x(),here->y(),param.x(),param.y());
     (*itv)->setIndex(count);
     numbered_vertices[(*itv)->getIndex()] = *itv;
     bbox += SPoint3(param.x(), param.y(), 0);
