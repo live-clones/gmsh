@@ -25,8 +25,7 @@ discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
 void discreteFace::setBoundEdges(std::vector<discreteEdge*> discr_edges)
 {
 
- printf("***** In discrete Face:  \n");
-
+  printf("***** In discrete Face:  \n");
   printf("bound edges =%d \n", edges().size());
 
   for (std::vector<discreteEdge*>::iterator it = discr_edges.begin(); it != discr_edges.end(); it++) {

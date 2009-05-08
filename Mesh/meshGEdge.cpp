@@ -207,6 +207,8 @@ static double Integration(GEdge *ge, double t1, double t2,
 			  double (*f) (GEdge *e, double X),
 			  std::vector<IntPoint> &Points, double Prec)
 {
+
+
   IntPoint from, to;
 
   int depth = 0;
@@ -249,7 +251,7 @@ void meshGEdge::operator() (GEdge *ge)
 
   if(MeshExtrudedCurve(ge)) return;
 
-  Msg::Info("Meshing curve %d (%s)", ge->tag(), ge->getTypeString().c_str());
+  Msg::Info("** Meshing curve %d (%s)", ge->tag(), ge->getTypeString().c_str());
 
   // compute bounds
   Range<double> bounds = ge->parBounds(0);

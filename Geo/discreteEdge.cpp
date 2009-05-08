@@ -214,6 +214,7 @@ void discreteEdge::parametrize()
 
   printf("dans discrete edge %d line.size =%d \n", this->tag(), lines.size());
 
+//  create new MEdge Vertices
 //   std::vector<MVertex*> new_mshv;  
 //   for(int i = 0; i < mesh_vertices.size(); i++){
 //     MVertex *v = mesh_vertices[i];
@@ -225,37 +226,10 @@ void discreteEdge::parametrize()
 //   }
 //   mesh_vertices = new_mshv;
 
-//   std::vector<MVertex*> new_mshv;
-//   for(int i = 0; i < mesh_vertices.size(); i++){
-//     MVertex *vi = mesh_vertices[i]; 
-//     MVertex *mev = new MEdgeVertex(vi->x(),vi->y(),vi->z(), this, i+1);
-//     new_mshv.push_back(mev);
-//     mev->setNum(vi->getNum());
 
-//     newLines.push_back(new MLine(v1, newv));
-//     newLines.push_back(new MLine(newv, v2));
-//     delete ge->lines[i];
-//    for(std::list<GFace*>::iterator it = l_faces.begin(); it != l_faces.end(); ++it){
-//       for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-// 	MTriangle *t = (*it)->triangles[i];
-// 	for (int j = 0; j < 3; j++){
-// 	  MVertex *v  = t->getVertex(j);
-// 	  if (v == vi)	v = mev;
-// 	}
-//       }
-//     }
-//     delete vi ;
-//   }
-//   mesh_vertices = new_mshv;
+// we should loop over Mlines and MTrinagles to take those new MEdgeVertices into account
 
 
-// std::vector<MLine*> newLines;
-// newLines.push_back(new MLine(v1, newv));
-// delete lines[i];
-// newLines.push_back(new MLine(newv, v2));
-// lines = newLines;
-
-  
 //   for (int i = 0; i < mesh_vertices.size(); i++){
 //       double t1;
 //       mesh_vertices[i]->getParameter(0,t1);
@@ -266,7 +240,30 @@ void discreteEdge::parametrize()
 //       printf("** AFTER LINES v1=%d  v2=%d\n",  lines[i]->getVertex(0)->getIndex(), lines[i]->getVertex(1)->getIndex()  );
 //   }
 
-  //exit(1);
+  //exit(1)
+
+
+// du brol ci-dessous ...
+// std::vector<MLine*> newLines;
+// newLines.push_back(new MLine(v1, newv));
+// delete lines[i];
+// lines = newLines;
+
+//   for(int i = 0; i < mesh_vertices.size(); i++){
+//    for(std::list<GFace*>::iterator it = l_faces.begin(); it != l_faces.end(); ++it){
+//       for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+// 	MTriangle *t = (*it)->triangles[i];
+// 	for (int j = 0; j < 3; j++){
+// 	  MVertex *v  = t->getVertex(j);
+// 	  if (v == vi)	v = mev;
+//       }
+//      }
+//     }
+//   }
+
+
+  
+;
  
 }
 
