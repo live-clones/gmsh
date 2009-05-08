@@ -153,31 +153,31 @@ void GModel::createTopologyFromMSH(){
 //     }
 //   exit(1);
 
+  //For each discreteFace, create Topology and if needed create discreteEdges
+  //----------------------------------------------------------------------------
+
+  for (std::vector<discreteFace*>::iterator face = faces.begin(); face != faces.end(); face++){
+
+    printf("createTopology: FACE=%d, of size=%d\n",(*face)->tag(), (*face)->getNumMeshElements());
+    (*face)->setBoundEdges(edges);
+
+  }
 
   //For each discreteEdge, create Topology
   //---------------------------------------------------
 
   for (std::vector<discreteEdge*>::iterator edge = edges.begin(); edge != edges.end(); edge++){
-
-    //printf("createTopology:  EDGE= %d, of size=%d\n",(*edge)->tag(), (*edge)->lines.size());
+    
+    printf("createTopology:  EDGE= %d, of size=%d\n",(*edge)->tag(), (*edge)->lines.size());
 
     (*edge)->orderMLines();
     (*edge)->parametrize();
     (*edge)->setBoundVertices(vertices);
-
-
+    
   }
 
-  //For each discreteFace, create Topology
-  //---------------------------------------------------
+  //exit(1);
 
-  for (std::vector<discreteFace*>::iterator face = faces.begin(); face != faces.end(); face++){
-
-    //printf("createTopology: FACE=%d, of size=%d\n",(*face)->tag(), (*face)->getNumMeshElements());
-    (*face)->setBoundEdges(edges);
-
- }
-  
   return;
 
 }

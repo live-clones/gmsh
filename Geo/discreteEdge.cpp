@@ -9,6 +9,7 @@
 #include "MLine.h"
 #include "Numeric.h"
 #include "MPoint.h"
+#include "MTriangle.h"
 
 #include <vector>
 #include <list>
@@ -211,6 +212,62 @@ void discreteEdge::parametrize()
   //      printf("_pars[%d]=%g\n",i, _pars[i] );
   //    }
 
+  printf("dans discrete edge %d line.size =%d \n", this->tag(), lines.size());
+
+//   std::vector<MVertex*> new_mshv;  
+//   for(int i = 0; i < mesh_vertices.size(); i++){
+//     MVertex *v = mesh_vertices[i];
+//     int param = i+1;
+//     MVertex *newv = new MEdgeVertex(v->x(),v->y(),v->z(), this, param);
+//     new_mshv.push_back(newv);
+//     newv->setNum(v->getNum());
+//     v= newv;
+//   }
+//   mesh_vertices = new_mshv;
+
+//   std::vector<MVertex*> new_mshv;
+//   for(int i = 0; i < mesh_vertices.size(); i++){
+//     MVertex *vi = mesh_vertices[i]; 
+//     MVertex *mev = new MEdgeVertex(vi->x(),vi->y(),vi->z(), this, i+1);
+//     new_mshv.push_back(mev);
+//     mev->setNum(vi->getNum());
+
+//     newLines.push_back(new MLine(v1, newv));
+//     newLines.push_back(new MLine(newv, v2));
+//     delete ge->lines[i];
+//    for(std::list<GFace*>::iterator it = l_faces.begin(); it != l_faces.end(); ++it){
+//       for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+// 	MTriangle *t = (*it)->triangles[i];
+// 	for (int j = 0; j < 3; j++){
+// 	  MVertex *v  = t->getVertex(j);
+// 	  if (v == vi)	v = mev;
+// 	}
+//       }
+//     }
+//     delete vi ;
+//   }
+//   mesh_vertices = new_mshv;
+
+
+// std::vector<MLine*> newLines;
+// newLines.push_back(new MLine(v1, newv));
+// delete lines[i];
+// newLines.push_back(new MLine(newv, v2));
+// lines = newLines;
+
+  
+//   for (int i = 0; i < mesh_vertices.size(); i++){
+//       double t1;
+//       mesh_vertices[i]->getParameter(0,t1);
+//       printf("** AFTER v1=%d  t1=%g\n",  mesh_vertices[i]->getNum(),t1 );
+//   }
+
+//   for (int i = 0; i < lines.size(); i++){
+//       printf("** AFTER LINES v1=%d  v2=%d\n",  lines[i]->getVertex(0)->getIndex(), lines[i]->getVertex(1)->getIndex()  );
+//   }
+
+  //exit(1);
+ 
 }
 
 void discreteEdge::getLocalParameter ( const double &t,

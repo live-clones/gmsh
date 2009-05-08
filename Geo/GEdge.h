@@ -88,7 +88,7 @@ class GEdge : public GEntity {
   // get second derivative of edge at the given parameter (default
   // implentation using central differences)
   virtual SVector3 secondDer(double par) const;
-
+  
   // get the curvature
   virtual double curvature(double par) const;
 
