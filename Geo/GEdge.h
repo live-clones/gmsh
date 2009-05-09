@@ -38,7 +38,6 @@ class GEdge : public GEntity {
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
   virtual ~GEdge();
 
-
   // delete mesh data
   virtual void deleteMesh();
 
@@ -78,10 +77,6 @@ class GEdge : public GEntity {
     return SVector3(gp.x(), gp.y(), gp.z());
   }
 
-  // return the parmater location on the edge given a point in space
-  // that is on the edge
-  //virtual double parFromPoint(const SPoint3 &) const;
-  
   // get first derivative of edge at the given parameter
   virtual SVector3 firstDer(double par) const = 0;
 
@@ -143,27 +138,30 @@ class GEdge : public GEntity {
   virtual bool periodic(int dim) const { return v0 == v1; }
 
   // true if edge is used in hyperbolic layer on face gf
-  virtual bool inHyperbolicLayer(GFace* gf)
+  virtual bool inHyperbolicLayer(GFace *gf)
   {
     return bl_faces.find(gf) != bl_faces.end();
   }
 
-  virtual void flagInHyperbolicLayer(GFace* gf) {bl_faces.insert(gf);}
+  virtual void flagInHyperbolicLayer(GFace *gf) { bl_faces.insert(gf); }
 
   // get bounds of parametric coordinate 
   virtual Range<double> parBounds(int i) const = 0;
   
   // return the point on the face closest to the given point
-  virtual GPoint closestPoint(const SPoint3 & queryPoint,double& param) const;
+  virtual GPoint closestPoint(const SPoint3 &queryPoint, double &param) const;
 
-  // try to reparametrise the point on the edge
-  virtual double parFromPoint(const SVector3& Q) const;
+  // return the parmater location on the edge given a point in space
+  // that is on the edge
+  virtual double parFromPoint(const SPoint3 &P) const;
   
-  virtual bool XYZToU(const SVector3& Q,double& t,const double relax=0.5) const;
+  // compute the parameter U from a point XYZ
+  virtual bool XYZToU(const double X, const double Y, const double Z,
+                      double &U, const double relax=0.5) const;
 
   // compound
-  void setCompound (GEdgeCompound *gec) {compound = gec;}
-  GEdgeCompound *getCompound () const {return compound;}
+  void setCompound(GEdgeCompound *gec) { compound = gec; }
+  GEdgeCompound *getCompound() const { return compound; }
 
   struct {
     char Method;

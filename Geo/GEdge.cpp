@@ -255,14 +255,15 @@ GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
   return point(t);
 }
 
-double GEdge::parFromPoint(const SVector3 &Q) const
+double GEdge::parFromPoint(const SPoint3 &P) const
 {
   double t;
-  bool success = XYZToU(Q, t);
+  XYZToU(P.x(), P.y(), P.z(), t);
   return t;
 }
 
-bool GEdge::XYZToU(const SVector3 &Q, double &u, const double relax) const
+bool GEdge::XYZToU(const double X, const double Y, const double Z, 
+                   double &u, const double relax) const
 {
   const double Precision = 1.e-8;
   const int MaxIter = 25;
@@ -271,14 +272,13 @@ bool GEdge::XYZToU(const SVector3 &Q, double &u, const double relax) const
   double err, err2;
   int iter;
 
-  
   Range<double> uu = parBounds(0);
   double uMin = uu.low();
   double uMax = uu.high();
 
   printf("dans GEdge uMin=%g, uMax=%g \n", uMin, uMax);
 
-  SVector3 P;
+  SVector3 Q(X, Y, Z), P;
   
   double init[NumInitGuess];
   
@@ -290,8 +290,6 @@ bool GEdge::XYZToU(const SVector3 &Q, double &u, const double relax) const
     double uNew = u;
     err = 1.0;
     iter = 1;
-
-   
 
     SVector3 dPQ = P - Q;
     err2 = dPQ.norm();
@@ -316,7 +314,7 @@ bool GEdge::XYZToU(const SVector3 &Q, double &u, const double relax) const
   if(relax > 1.e-2) {
     Msg::Info("point %g %g %g on edge %d : Relaxation factor = %g", 
               Q.x(), Q.y(), Q.z(), 0.75 * relax);
-    return XYZToU(Q, u, 0.75 * relax);
+    return XYZToU(Q.x(), Q.y(), Q.z(), u, 0.75 * relax);
   }
   
   Msg::Error("Could not converge reparametrisation of point (%e,%e,%e) on edge %d",

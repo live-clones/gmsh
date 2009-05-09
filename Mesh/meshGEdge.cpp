@@ -207,8 +207,6 @@ static double Integration(GEdge *ge, double t1, double t2,
 			  double (*f) (GEdge *e, double X),
 			  std::vector<IntPoint> &Points, double Prec)
 {
-
-
   IntPoint from, to;
 
   int depth = 0;
@@ -236,12 +234,9 @@ void deMeshGEdge::operator() (GEdge *ge)
 
 void meshGEdge::operator() (GEdge *ge) 
 {  
-
   ge->model()->setCurrentMeshEntity(ge);
 
-  if(ge->geomType() == GEntity::DiscreteCurve) {
-    return;
-  }
+  if(ge->geomType() == GEntity::DiscreteCurve) return;
   if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
   if(ge->meshAttributes.Method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) return;
@@ -251,7 +246,7 @@ void meshGEdge::operator() (GEdge *ge)
 
   if(MeshExtrudedCurve(ge)) return;
 
-  Msg::Info("** Meshing curve %d (%s)", ge->tag(), ge->getTypeString().c_str());
+  Msg::Info("Meshing curve %d (%s)", ge->tag(), ge->getTypeString().c_str());
 
   // compute bounds
   Range<double> bounds = ge->parBounds(0);
@@ -336,7 +331,6 @@ void meshGEdge::operator() (GEdge *ge)
         double lc  = d/(P1.lc + dlc / dp * (d - P1.p));
         GPoint V = ge->point(t);
         ge->mesh_vertices[NUMP - 1] = new MEdgeVertex(V.x(), V.y(), V.z(), ge, t, lc);
-        // printf("lc = %12.5E %12.5E \n",lc,P1.lc,P2.lc);
         NUMP++;
       }
       else {
@@ -352,7 +346,6 @@ void meshGEdge::operator() (GEdge *ge)
     MVertex *v1 = (i == ge->mesh_vertices.size()) ?
       ge->getEndVertex()->mesh_vertices[0] : ge->mesh_vertices[i];
     ge->lines.push_back(new MLine(v0, v1));
-    // printf("New Line v0=%g v1=%g \n", v0->y(), v1->y());
   }
 
   if(ge->getBeginVertex() == ge->getEndVertex() && 
@@ -362,14 +355,4 @@ void meshGEdge::operator() (GEdge *ge)
     v0->y() = beg_p.y();
     v0->z() = beg_p.z();
   }
-
-  //for (std::vector<MLine*>::iterator it = ge->lines.begin() ; it != ge->lines.end() ; ++it){
-  //  printf("line with : first = %d last=%d \n",  (*it)->getVertex(0)->getIndex(), (*it)->getVertex(1)->getIndex() );
-  //}
-
-//   //if DiscreteCurve, erase all old MLines
-//   if(ge->geomType() == GEntity::DiscreteCurve) {
-//     ge->lines.erase(ge->lines.begin(), ge->lines.end()-(N-1));
-//   }
-
 }

@@ -436,8 +436,8 @@ void GFaceCompound::parametrize(iterationStep step) const
   for (std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
     MVertex *v = *itv;
     double value = myAssembler.getDofValue(v,0,1);
-    if (step == 1)
-      //printf("%p node =%g %g %g , value = %g of size %d \n",v,  v->x(), v->y(), v->z(), value, coordinates.size());
+    //if (step == 1)
+    //printf("%p node =%g %g %g , value = %g of size %d \n",v,  v->x(), v->y(), v->z(), value, coordinates.size());
     std::map<MVertex*,SPoint3>::iterator itf = coordinates.find(v);
     if (itf == coordinates.end()){
       SPoint3 p(0,0,0);

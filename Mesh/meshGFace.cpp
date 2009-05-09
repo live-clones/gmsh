@@ -378,7 +378,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
   std::list<GEdge*> edges = gf->edges();
 
   // here, we will replace edges by their compounds
-  printf("***** In meshGFace: \n");
+  //printf("***** In meshGFace: \n");
   if (gf->geomType() == GEntity::CompoundSurface){
     printf("replace edges by compound lines \n");
     std::set<GEdge*> mySet;
@@ -448,7 +448,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
   double *V_ = new double[all_vertices.size()];
 
   v_container::iterator itv = all_vertices.begin();
-  printf("boundary vertices size = %d \n", all_vertices.size());
+  //printf("boundary vertices size = %d \n", all_vertices.size());
 
   int count = 0;
   SBoundingBox3d bbox;
@@ -1089,26 +1089,28 @@ static bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
          it != gf->edgeLoops.end(); it++){
       std::vector<BDS_Point* > edgeLoop_BDS;
       int nbPointsLocal;
-      if(!buildConsecutiveListOfVertices(gf, *it, edgeLoop_BDS, bbox, m, 
-                                         recover_map, nbPointsLocal, nbPointsTotal, 
-                                         1.e-7*LC2D))
-        if(!buildConsecutiveListOfVertices(gf, *it, edgeLoop_BDS, bbox, m, 
-                                           recover_map, nbPointsLocal, nbPointsTotal,
-                                           1.e-7 * LC2D, true))
-          if(!buildConsecutiveListOfVertices(gf, *it, edgeLoop_BDS, bbox, m,
-                                             recover_map, nbPointsLocal, nbPointsTotal,
-                                             1.e-5 * LC2D))
-            if(!buildConsecutiveListOfVertices(gf, *it, edgeLoop_BDS, bbox, m, 
-                                               recover_map , nbPointsLocal, nbPointsTotal,
-                                               1.e-5 * LC2D, true))
-              if(!buildConsecutiveListOfVertices(gf, *it, edgeLoop_BDS, bbox, m,
-                                                 recover_map , nbPointsLocal, nbPointsTotal,
-                                                 1.e-3 * LC2D)){
-                gf->meshStatistics.status = GFace::FAILED;
-                Msg::Error("The 1D Mesh seems not to be forming a closed loop");
-                m->scalingU = m->scalingV = 1.0;
-                return false;
-              }
+      const double fact[4] = {1.e-12, 1.e-7, 1.e-5, 1.e-3};
+      bool ok = false;
+      for(int i = 0; i < 4; i++){
+        if(buildConsecutiveListOfVertices(gf, *it, edgeLoop_BDS, bbox, m, 
+                                          recover_map, nbPointsLocal, 
+                                          nbPointsTotal, fact[i] * LC2D)){
+          ok = true;
+          break;
+        }
+        if(buildConsecutiveListOfVertices(gf, *it, edgeLoop_BDS, bbox, m, 
+                                          recover_map, nbPointsLocal,
+                                          nbPointsTotal, fact[i] * LC2D, true)){
+          ok = true;
+          break;
+        }
+      }
+      if(!ok){
+        gf->meshStatistics.status = GFace::FAILED;
+        Msg::Error("The 1D Mesh seems not to be forming a closed loop");
+        m->scalingU = m->scalingV = 1.0;
+        return false;
+      }
       nbPointsTotal += nbPointsLocal;
       edgeLoops_BDS.push_back(edgeLoop_BDS);
     }
