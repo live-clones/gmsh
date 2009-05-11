@@ -279,7 +279,7 @@ void ChainComplex::computeHomology(bool dual){
                                          gmp_matrix_rows(getKerHMatrix(lowDim)), 
                                          gmp_matrix_cols(getKerHMatrix(lowDim))) );
     }
-
+    
     // 5) General case:
     //   1) Find the bases of boundaries B and cycles Z 
     //   2) find j: B -> Z and
@@ -321,7 +321,7 @@ void ChainComplex::computeHomology(bool dual){
     setCodHMatrix(lowDim, NULL);
     setJMatrix(lowDim, NULL);
     setQMatrix(lowDim, NULL);
-   
+     
   }
   
   

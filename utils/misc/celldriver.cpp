@@ -93,15 +93,16 @@ int main(int argc, char **argv)
   }
   
   delete chains;
+  delete complex;
   
-  // restore the cell complex to its prereduced state
-  complex->restoreComplex();
+  // create new complex to compute the cuts
+  CellComplex* complex2 = new CellComplex(domain, subdomain);
   
   // reduce the complex by coreduction, this removes all vertices, hence 0 as an argument 
-  complex->coreduceComplex(0);
+  complex2->coreduceComplex(0);
   
   // create a chain complex of a cell complex (construct boundary operator matrices)
-  ChainComplex* dualChains = new ChainComplex(complex);
+  ChainComplex* dualChains = new ChainComplex(complex2);
   
   // transpose the boundary operator matrices, 
   // these are the boundary operator matrices for the dual chain complex
@@ -120,7 +121,7 @@ int main(int argc, char **argv)
       convert(3-(j-1), dimension);
 
       std::string name = dimension + "D Dual cut " + generator;
-      Chain* chain = new Chain(complex->getCells(j-1), dualChains->getCoeffVector(j,i), complex, name);
+      Chain* chain = new Chain(complex2->getCells(j-1), dualChains->getCoeffVector(j,i), complex2, name);
                 chain->writeChainMSH("chains.msh");
       delete chain;
     }
@@ -129,7 +130,7 @@ int main(int argc, char **argv)
   delete dualChains;
 
   
-  delete complex;  
+  delete complex2;  
   delete m;
   GmshFinalize();
   
