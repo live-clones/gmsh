@@ -30,12 +30,15 @@ class OCCFace : public GFace {
   virtual GPoint closestPoint(const SPoint3 & queryPoint, const double initialGuess[2]) const; 
   virtual bool containsPoint(const SPoint3 &pt) const;  
   virtual SVector3 normal(const SPoint2 &param) const; 
-  virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const; 
+  virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const;
+  virtual void secondDer(const SPoint2 &param, SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const;
   virtual GEntity::GeomType geomType() const; 
   ModelType getNativeType() const { return OpenCascadeModel; }
   void * getNativePtr() const { return (void*)&s; }
   virtual SPoint2 parFromPoint(const SPoint3 &) const;
-  virtual double curvature(const SPoint2 &param) const;
+  virtual double curvatureMax(const SPoint2 &param) const;
+  virtual double curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
+                            double *curvMax, double *curvMin) const;
   surface_params getSurfaceParams() const;
 };
 

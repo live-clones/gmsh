@@ -89,11 +89,16 @@ class SMetric3 {
     setMat(m3);
     return *this;
   }
-  void eig (gmshMatrix<double> &V, gmshVector<double> &S) {
+  void eig (gmshMatrix<double> &V, gmshVector<double> &S) const {
     gmshMatrix<double> me(3,3),right(3,3);
     gmshVector<double> im(3);
     getMat(me);
     me.eig(V,S,im,right);
+  }
+  void print() const {
+    printf("  %f\t%f\t%f\n",_val[0],_val[1],_val[3]);
+    printf("  %f\t%f\t%f\n",_val[1],_val[2],_val[4]);
+    printf("  %f\t%f\t%f\n",_val[3],_val[4],_val[5]);
   }
 };
 

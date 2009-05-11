@@ -601,7 +601,7 @@ static Vertex InterpolateExtrudedSurface(Surface *s, double u, double v)
 
 Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
 {
-  if(derivee) {
+  if( derivee == 1 ) {
     double eps = 1.e-6;
     Vertex D[4];
     if(u_v == 1) {
@@ -622,6 +622,44 @@ Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
       else {
         D[0] = InterpolateSurface(s, u, v - eps, 0, 0);
         D[1] = InterpolateSurface(s, u, v, 0, 0);
+      }
+    }
+    return Vertex((D[1].Pos.X - D[0].Pos.X) / eps,
+                  (D[1].Pos.Y - D[0].Pos.Y) / eps,
+                  (D[1].Pos.Z - D[0].Pos.Z) / eps);
+  }
+
+  else if ( derivee == 2 ) {
+    double eps = 1.e-6;
+    Vertex D[2];
+    if(u_v == 1) { // dudu
+      if(u - eps < 0.0) {
+        D[0] = InterpolateSurface(s, u, v, 1, 1);
+        D[1] = InterpolateSurface(s, u + eps, v, 1, 1);
+      }
+      else {
+        D[0] = InterpolateSurface(s, u - eps, v, 1, 1);
+        D[1] = InterpolateSurface(s, u, v, 1, 1);
+      }
+    }
+    else if(u_v == 2) { // dvdv
+      if(v - eps < 0.0) {
+        D[0] = InterpolateSurface(s, u, v, 1, 2);
+        D[1] = InterpolateSurface(s, u, v + eps, 1, 2);
+      }
+      else {
+        D[0] = InterpolateSurface(s, u, v - eps, 1, 2);
+        D[1] = InterpolateSurface(s, u, v, 1, 2);
+      }
+    }
+    else { // dudv
+      if(v - eps < 0.0) {
+        D[0] = InterpolateSurface(s, u, v, 1, 1);
+        D[1] = InterpolateSurface(s, u, v + eps, 1, 1);
+      }
+      else {
+        D[0] = InterpolateSurface(s, u, v - eps, 1, 1);
+        D[1] = InterpolateSurface(s, u, v, 1, 1);
       }
     }
     return Vertex((D[1].Pos.X - D[0].Pos.X) / eps,

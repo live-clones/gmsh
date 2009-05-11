@@ -100,3 +100,9 @@ Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
   Msg::Error("Cannot evaluate derivative on discrete face");
   return Pair<SVector3, SVector3>();
 }
+
+void discreteFace::secondDer(const SPoint2 &param, 
+                             SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
+{
+  Msg::Error("Cannot evaluate derivative on discrete face");
+}

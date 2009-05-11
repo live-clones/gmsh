@@ -128,6 +128,11 @@ class GFace : public GEntity
   // stereographic mappings of the sphere that is used in 2D mesh
   // generation !
   virtual double getMetricEigenvalue(const SPoint2 &);
+  
+  // eigen values are absolute values and sorted from min to max of absolute values
+  // eigen vectors are the COLUMNS of eigVec
+  virtual void getMetricEigenVectors(const SPoint2 &param, 
+                                     double eigVal[2], double eigVec[4]) const;
 
   // return the parmater location on the face given a point in space
   // that is on the face
@@ -145,8 +150,23 @@ class GFace : public GEntity
   // return the first derivate of the face at the parameter location
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const = 0;
 
-  // return the curvature i.e. the divergence of the normal
-  virtual double curvature(const SPoint2 &param) const;
+  // compute the second derivates of the face at the parameter location
+  // (default implementation by central differences)
+  // the derivates have to be allocated before calling this function
+  virtual void secondDer(const SPoint2 &param, 
+                         SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const = 0;
+
+  // return the curvature computed as the divergence of the normal
+  virtual double curvatureDiv(const SPoint2 &param) const;
+
+  // return the maximum curvature at a point
+  virtual double curvatureMax(const SPoint2 &param) const;
+
+  // compute the min and max curvatures and the corresponding directions
+  // return the max curvature
+  // outputs have to be allocated before calling this function
+  virtual double curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
+                            double *curvMax, double *curvMin) const;
 
   // return a type-specific additional information string
   virtual std::string getAdditionalInfoString();

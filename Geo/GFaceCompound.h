@@ -70,7 +70,8 @@ public:
   virtual ~GFaceCompound();
   Range<double> parBounds(int i) const { return Range<double>(0, 1); } 
   virtual GPoint point(double par1, double par2) const; 
-  virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const; 
+  virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const;
+  virtual void secondDer(const SPoint2 &, SVector3 *, SVector3 *, SVector3 *) const; 
   virtual GEntity::GeomType geomType() const { return CompoundSurface; }
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return 0; }

@@ -45,7 +45,7 @@ double max_surf_curvature(const GVertex *gv, double x, double y, double z,
   double curv = 1.e-22;
   while(it != faces.end()){
     SPoint2 par = gv->reparamOnFace((*it), 1);
-    double cc = (*it)->curvature(par);
+    double cc = (*it)->curvatureDiv(par);
     if(cc > 0) curv = std::max(curv, cc);
     ++it;
   }  

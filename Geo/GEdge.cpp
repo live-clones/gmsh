@@ -175,29 +175,14 @@ SPoint2 GEdge::reparamOnFace(const GFace *face, double epar,int dir) const
 
 double GEdge::curvature(double par) const
 {
-  double eps1 = 1.e-5;
-  double eps2 = 1.e-5;
-
-  Range<double> r = parBounds(0);
-  if(r.low() == par) eps2 = 0;
-  if(r.high() == par) eps1 = 0;
-
-  SVector3 n1 = firstDer(par - eps1);
-  SVector3 n2 = firstDer(par + eps2);
-
-  GPoint P1 = point(par - eps1);
-  GPoint P2 = point(par + eps2);
-
-  double D = sqrt ((P1.x() - P2.x()) * (P1.x() - P2.x()) +
-                   (P1.y() - P2.y()) * (P1.y() - P2.y()) +
-                   (P1.z() - P2.z()) * (P1.z() - P2.z()));
-
-  n1.normalize();
-  n2.normalize();
-  const double one_over_D = 1. / D;
-  SVector3 d = one_over_D * (n2 - n1);
-  return norm(d);
+  SVector3 d1 = firstDer(par);
+  SVector3 d2 = secondDer(par);
   
+  double one_over_norm = 1. / norm(d1);
+
+  SVector3 cross_prod = crossprod(d1,d2);
+  
+  return ( norm(cross_prod) * one_over_norm * one_over_norm * one_over_norm );
 }
 
 double GEdge::length(const double &u0, const double &u1, const int nbQuadPoints)

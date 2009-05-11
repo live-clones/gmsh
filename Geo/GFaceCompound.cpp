@@ -559,6 +559,12 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
   return Pair<SVector3, SVector3>(dXdu,dXdv);
 } 
 
+void GFaceCompound::secondDer(const SPoint2 &param, 
+                              SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
+{
+  Msg::Error("Computation of the second derivatives not implemented for compound faces");
+}
+
 static void GFaceCompoundBB(void *a, double*mmin, double*mmax)
 {
   GFaceCompoundTriangle *t = (GFaceCompoundTriangle *)a;

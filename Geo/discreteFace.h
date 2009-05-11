@@ -19,6 +19,8 @@ class discreteFace : public GFace {
   virtual SVector3 normal(const SPoint2 &param) const;
   virtual GEntity::GeomType geomType() const { return DiscreteSurface; }
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const;
+  virtual void secondDer(const SPoint2 &param, 
+                         SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const;
   void setBoundEdges( std::vector<discreteEdge*> edges );
 };
 

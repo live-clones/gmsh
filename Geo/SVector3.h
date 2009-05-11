@@ -7,6 +7,7 @@
 #define _SVECTOR3_H_
 
 #include "SPoint3.h"
+#include <string>
 
 // concrete class for vector of size 3
 class SVector3 {
@@ -21,10 +22,12 @@ class SVector3 {
   SVector3(double x, double y, double z) : P(x, y, z) {}
   SVector3(double v) : P(v, v, v) {}
   SVector3(const double *array) : P(array) {}
+  SVector3(const SVector3& v) : P(v.P) {}
   inline double x(void) const { return P.x(); }
   inline double y(void) const { return P.y(); }
   inline double z(void) const { return P.z(); }
   inline double norm() { return sqrt(P[0] * P[0] + P[1] * P[1] + P[2] * P[2]); }
+  inline double normSq() { return (P[0] * P[0] + P[1] * P[1] + P[2] * P[2]); }
   double normalize() 
   { 
     double n = norm(); if(n){ P[0] /= n; P[1] /= n; P[2] /= n; }
@@ -62,6 +65,8 @@ class SVector3 {
     return *this;
   }
   operator double *() { return P; }
+  void print(std::string name="") const
+  { printf("Vector \'%s\':  %f  %f  %f\n",name.c_str(),P[0],P[1],P[2]); }
 };
 
 inline double dot(const SVector3 &a, const SVector3 &b)
@@ -69,6 +74,9 @@ inline double dot(const SVector3 &a, const SVector3 &b)
 
 inline double norm(const SVector3 &v)
 { return sqrt(dot(v, v)); }
+
+inline double normSq(const SVector3 &v)
+{ return dot(v, v); }
 
 inline SVector3 crossprod(const SVector3 &a, const SVector3 &b)
 { return SVector3(a.y() * b.z() - b.y() * a.z(), 

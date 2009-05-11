@@ -55,19 +55,19 @@ void outputScalarField(std::list<BDS_Face*> t, const char *iii, int param, GFace
 		    pts[1]->X, pts[1]->Y, pts[1]->Z,
 		    pts[2]->X, pts[2]->Y, pts[2]->Z,
 		    pts[3]->X, pts[3]->Y, pts[3]->Z,
-		    gf->curvature(SPoint2(pts[0]->u, pts[0]->v)),
-		    gf->curvature(SPoint2(pts[1]->u, pts[1]->v)),	
-		    gf->curvature(SPoint2(pts[2]->u, pts[2]->v)),
-		    gf->curvature(SPoint2(pts[3]->u, pts[3]->v)));
+		    gf->curvatureDiv(SPoint2(pts[0]->u, pts[0]->v)),
+		    gf->curvatureDiv(SPoint2(pts[1]->u, pts[1]->v)),	
+		    gf->curvatureDiv(SPoint2(pts[2]->u, pts[2]->v)),
+		    gf->curvatureDiv(SPoint2(pts[3]->u, pts[3]->v)));
 	  }
 	  else{
 	    fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 		    pts[0]->X, pts[0]->Y, pts[0]->Z,
 		    pts[1]->X, pts[1]->Y, pts[1]->Z,
 		    pts[2]->X, pts[2]->Y, pts[2]->Z,
-		    gf->curvature(SPoint2(pts[0]->u, pts[0]->v)),
-		    gf->curvature(SPoint2(pts[1]->u, pts[1]->v)),
-		    gf->curvature(SPoint2(pts[2]->u, pts[2]->v)));
+		    gf->curvatureDiv(SPoint2(pts[0]->u, pts[0]->v)),
+		    gf->curvatureDiv(SPoint2(pts[1]->u, pts[1]->v)),
+		    gf->curvatureDiv(SPoint2(pts[2]->u, pts[2]->v)));
 	  }
 	}
       }
