@@ -40,7 +40,8 @@ SRC = GEntity.cpp\
         MHexahedron.cpp MPrism.cpp MPyramid.cpp\
       MZone.cpp MZoneBoundary.cpp\
       CellComplex.cpp\
-      ChainComplex.cpp
+      ChainComplex.cpp\
+      STensor3.cpp
 
 
 OBJ = ${SRC:.cpp=${OBJEXT}}
