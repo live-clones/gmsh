@@ -21,13 +21,15 @@ class SMetric3 {
     return _index[i][j];
   }
   void getMat (gmshMatrix<double> & mat) const{
-    for (int i=0;i<3;i++)
-      for (int j=0;j<3;j++)
+    for (int i=0;i<3;i++){
+      for (int j=0;j<3;j++){
 	mat(i,j) = _val[getIndex(i,j)];			     
+      }
+    }
   }
   void setMat (const gmshMatrix<double> & mat){
     for (int i=0;i<3;i++)
-      for (int j=0;j<3;j++)
+      for (int j=i;j<3;j++)
 	_val[getIndex(i,j)] = mat(i,j);			     
   }
   // default constructor, identity 
@@ -89,17 +91,22 @@ class SMetric3 {
     setMat(m3);
     return *this;
   }
+  SMetric3 transform (gmshMatrix<double> &V){
+    gmshMatrix<double> m(3,3);
+    getMat(m);
+    gmshMatrix<double> result(3,3),temp(3,3);
+    V.transpose().mult(m,temp);
+    temp.mult(V,result);
+    SMetric3 a; a.setMat(result);
+    return a;    
+  }
   void eig (gmshMatrix<double> &V, gmshVector<double> &S) const {
     gmshMatrix<double> me(3,3),right(3,3);
     gmshVector<double> im(3);
     getMat(me);
     me.eig(V,S,im,right);
   }
-  void print() const {
-    printf("  %f\t%f\t%f\n",_val[0],_val[1],_val[3]);
-    printf("  %f\t%f\t%f\n",_val[1],_val[2],_val[4]);
-    printf("  %f\t%f\t%f\n",_val[3],_val[4],_val[5]);
-  }
+  void print(const char *) const;
 };
 
 // scalar product with respect to the metric
@@ -110,35 +117,15 @@ inline double dot(const SVector3 &a, const SMetric3 &m, const SVector3 &b)
     b.z() * ( m(2,0) * a.x() + m(2,1) * a.y() + m(2,2) * a.z() ) ;}
 
 // compute the largest inscribed ellipsoid...
-inline SMetric3 intersection (const SMetric3 &m1, const SMetric3 &m2)
-{
-  SMetric3 im1 = m1.invert();
-  gmshMatrix<double> V(3,3);
-  gmshVector<double> S(3);
-  im1 *= m2;
-  im1.eig(V,S);
-  SVector3 v0(V(0,0),V(1,0),V(2,0));
-  SVector3 v1(V(0,1),V(1,1),V(2,1));
-  SVector3 v2(V(0,2),V(1,2),V(2,2));
-  double l0 = std::max(dot(v0,m1,v0),dot(v0,m2,v0));
-  double l1 = std::max(dot(v1,m1,v1),dot(v1,m2,v1));
-  double l2 = std::max(dot(v2,m1,v2),dot(v2,m2,v2));
-  
-  return SMetric3(l0,l1,l2,v0,v1,v2);  
-}
-
-// (1-t) * m1 + t * m2
-inline SMetric3 interpolation (const SMetric3 &m1, 
-			       const SMetric3 &m2, 
-			       const double t)
-{
-  SMetric3 im1 = m1.invert();
-  SMetric3 im2 = m2.invert();
-  im1 *= (1.-t);
-  im2 *= t;
-  im1 += im2;
-  return im1.invert();
-}
-
+SMetric3 intersection (const SMetric3 &m1, 
+			      const SMetric3 &m2);
+SMetric3 interpolation (const SMetric3 &m1, 
+			const SMetric3 &m2, 
+			const double t);
+SMetric3 interpolation (const SMetric3 &m1, 
+			const SMetric3 &m2, 
+			const SMetric3 &m3, 
+			const double u,
+			const double v);
 
 #endif
