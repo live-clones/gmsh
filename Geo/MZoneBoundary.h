@@ -34,7 +34,7 @@ struct ZonePair
   int zone2;
   ZonePair(const int _zone1, const int _zone2) 
   {
-    if(_zone1 < zone2) {
+    if(_zone1 < _zone2) {
       zone1 = _zone1;
       zone2 = _zone2;
     }
