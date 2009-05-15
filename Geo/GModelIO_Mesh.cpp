@@ -120,63 +120,166 @@ void GModel::createTopologyFromMSH(){
   std::vector<GEntity*> entities;
   getEntities(entities);
 
-  std::vector<discreteVertex*> vertices;
-  std::vector<discreteEdge*> edges;
-  std::vector<discreteFace*> faces;
-  std::vector<discreteRegion*> regions;
+  std::vector<discreteVertex*> Dvertices;
+  std::vector<discreteEdge*> Dedges;
+  std::vector<discreteFace*> Dfaces;
+  std::vector<discreteRegion*> Dregions;
 
   for (std::vector<GEntity*>::iterator entity = entities.begin(); 
        entity != entities.end(); entity++) {
     switch ((*entity)->dim()) {
     case 0:
-      vertices.push_back((discreteVertex*) *entity);
+      Dvertices.push_back((discreteVertex*) *entity);
       break;
     case 1:
-      edges.push_back((discreteEdge*) *entity);
+      Dedges.push_back((discreteEdge*) *entity);
       break;
     case 2:
-      faces.push_back((discreteFace*) *entity);
+      Dfaces.push_back((discreteFace*) *entity);
       break;
     case 3:
-      regions.push_back((discreteRegion*) *entity);
+      Dregions.push_back((discreteRegion*) *entity);
       break;
     }
   }
-  printf("vertices size =%d \n", vertices.size());
-  printf("edges size =%d \n", edges.size());
-  printf("faces size =%d \n", faces.size());
-  printf("regions size =%d \n", regions.size());
 
-//   for(unsigned int i = 0; i < entities.size(); i++)
-//     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
-//       printf("entity =%d dim = %d tag =%d \n", i, entities[i]->dim() , entities[i]->mesh_vertices[j]->getIndex());
-//     }
-//   exit(1);
+//   printf("vertices size =%d \n", Dvertices.size());
+//   printf("edges size =%d \n", Dedges.size());
+//   printf("faces size =%d \n", Dfaces.size());
+//   printf("regions size =%d \n", Dregions.size());
+
 
   //For each discreteFace, create Topology and if needed create discreteEdges
   //----------------------------------------------------------------------------
 
-  for (std::vector<discreteFace*>::iterator face = faces.begin(); face != faces.end(); face++){
+  int initSizeEdges = Dedges.size();
 
-    printf("createTopology: FACE=%d, of size=%d\n",(*face)->tag(), (*face)->getNumMeshElements());
-    (*face)->setBoundEdges(edges);
+  //find boundary edges of each face and put them in 
+  //a map_edges that associates 
+  //the MEdges with the tags of the adjacent faces
 
+  std::map<MEdge, std::vector<int>, Less_Edge > map_edges;
+
+  for (std::vector<discreteFace*>::iterator face = Dfaces.begin(); face != Dfaces.end(); face++){
+    (*face)->findEdges(map_edges);
   }
+
+  //create reverse map, for each face find set of MEdges 
+  //that are candidate for new discrete Edges
+
+  int num = Dedges.size()+1;
+  std::map<int, std::vector<int> > face2Edges;
+
+  while (!map_edges.empty()){
+ 
+    //printf("********** new candidate discrete Edge\n");
+    std::vector<MEdge> myEdges;
+    std::vector<int> tagFaces = map_edges.begin()->second;
+    myEdges.push_back(map_edges.begin()->first);
+    map_edges.erase(map_edges.begin());
+    
+    std::map<MEdge, std::vector<int>, Less_Edge >::iterator itmap = map_edges.begin();
+    while (itmap != map_edges.end()){
+
+      std::vector<int> tagFaces2 = itmap->second;
+      if (tagFaces2 == tagFaces){
+	myEdges.push_back(itmap->first);
+	map_edges.erase(itmap++);
+      }
+      else 
+	itmap++;
+    }
+     
+    //if the loaded mesh already contains discrete Edges
+    //check if the candidate discrete Edge does contain any of those
+    //if not, create discreteEdges 
+    //create a map face2Edges that associate 
+    //for each face the boundary discrete Edges
+
+    if (initSizeEdges != 0 ){
+      //printf(" !!! discrete edges already exist \n");
+      std::vector<int> tagEdges;
+      for(int i = 0; i < myEdges.size(); i++){
+	for (int j=0; j<2; j++) {
+	  if (myEdges[i].getVertex(0)->onWhat()->dim() == 1) {
+	    int tagEdge = myEdges[i].getVertex(0)->onWhat()->tag();
+	    std::vector<int>::iterator itv = std::find(tagEdges.begin(), tagEdges.end(), tagEdge);
+	    if (itv == tagEdges.end()) tagEdges.push_back(tagEdge);
+	  }	  
+	}
+      }
+      for (std::vector<int>::iterator itFace = tagFaces.begin(); itFace != tagFaces.end(); itFace++) {
+	std::map<int, std::vector<int> >::iterator it = face2Edges.find(*itFace);
+	if (it == face2Edges.end())   {
+	  std::vector<int> allEdges; 
+	  allEdges.insert(allEdges.begin(), tagEdges.begin(), tagEdges.end());
+	  face2Edges.insert(std::make_pair(*itFace,allEdges));	 
+	}
+	else{
+	  std::vector<int> allEdges = it->second;
+	  allEdges.insert(allEdges.begin(), tagEdges.begin(), tagEdges.end());
+	  it->second = allEdges;
+	}
+	face2Edges.insert(std::make_pair(*itFace, tagEdges));
+      }
+    }
+    else{
+      discreteEdge *e = new discreteEdge(this, num, 0, 0);
+      add(e);
+      Dedges.push_back(e);
+      std::list<MVertex*> all_vertices;
+      for(int i = 0; i < myEdges.size(); i++) {
+	MVertex *v0 = myEdges[i].getVertex(0);
+	MVertex *v1 = myEdges[i].getVertex(1);
+	e->lines.push_back(new MLine( v0, v1));
+	if (std::find(all_vertices.begin(), all_vertices.end(), v0) == all_vertices.end()) all_vertices.push_back(v0);
+	if (std::find(all_vertices.begin(), all_vertices.end(), v1) == all_vertices.end()) all_vertices.push_back(v1);
+      }
+      e->mesh_vertices.insert(e->mesh_vertices.begin(), all_vertices.begin(), all_vertices.end());
+      
+      for (std::vector<int>::iterator itFace = tagFaces.begin(); itFace != tagFaces.end(); itFace++) {
+	GFace *dFace = getFaceByTag(abs(*itFace));
+	for (std::list<MVertex*>::iterator itv = all_vertices.begin(); itv != all_vertices.end(); itv++) {
+	  std::vector<MVertex*>::iterator itve = std::find(dFace->mesh_vertices.begin(), dFace->mesh_vertices.end(), *itv) ;
+	  if (itve != dFace->mesh_vertices.end()) dFace->mesh_vertices.erase(itve);
+	  (*itv)->setEntity(e);	  
+	}
+	
+	std::map<int, std::vector<int> >::iterator f2e = face2Edges.find(*itFace);
+	if (f2e == face2Edges.end()){
+	  std::vector<int> tagEdges; 
+	  tagEdges.push_back(num);
+	  face2Edges.insert(std::make_pair(*itFace,tagEdges));
+	}
+	else{
+	  std::vector<int> tagEdges = f2e->second;
+	  tagEdges.push_back(num);
+	  f2e->second = tagEdges;
+	}
+      }
+      num++;
+    }
+      
+  };
+
+  //set boundary edges for each face
+   for (std::vector<discreteFace*>::iterator face = Dfaces.begin(); face != Dfaces.end(); face++){
+    std::map<int, std::vector<int> >::iterator ite = face2Edges.find((*face)->tag());
+    std::vector<int> myEdges = ite->second;
+    (*face)->setBoundEdges(myEdges);
+  }
+
 
   //For each discreteEdge, create Topology
-  //---------------------------------------------------
+  //---------------------------------------
 
-  for (std::vector<discreteEdge*>::iterator edge = edges.begin(); edge != edges.end(); edge++){
+  for (std::vector<discreteEdge*>::iterator edge = Dedges.begin(); edge != Dedges.end(); edge++){
     
-    printf("createTopology:  EDGE= %d, of size=%d\n",(*edge)->tag(), (*edge)->lines.size());
-
     (*edge)->orderMLines();
+    (*edge)->setBoundVertices();
     (*edge)->parametrize();
-    (*edge)->setBoundVertices(vertices);
-    
-  }
 
-  //exit(1);
+  }
 
   return;
 
@@ -541,6 +644,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   // if there are no physicals we save all the elements
   if(noPhysicalGroups()) saveAll = true;
 
+
+
   // get the number of vertices and index the vertices in a continuous
   // sequence
   int numVertices = indexMeshVertices(saveAll);
@@ -580,6 +685,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     n = p * (*it)->pyramids.size();
     if(n) elements[(*it)->pyramids[0]->getTypeForMSH()] += n;
   }
+
+ 
 
   int numElements = 0;
   std::map<int, int>::const_iterator it = elements.begin();
@@ -621,10 +728,10 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->writeMSH(fp, binary, saveParametric, 
                                               scalingFactor);
-
+  
   
   if(binary) fprintf(fp, "\n");
-  
+
   if(version >= 2.0){
     if(saveParametric)
       fprintf(fp, "$EndParametricNodes\n");
@@ -654,6 +761,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, (*it)->triangles, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
+ 
   writeElementHeaderMSH(binary, fp, elements, MSH_QUA_4, MSH_QUA_9, MSH_QUA_8);
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, (*it)->quadrangles, saveAll, version, binary, num,

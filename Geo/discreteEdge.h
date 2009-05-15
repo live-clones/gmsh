@@ -27,7 +27,7 @@ class discreteEdge : public GEdge {
   virtual Range<double> parBounds(int) const;
   void parametrize() ;
   void orderMLines() ;
-  void setBoundVertices( std::vector<discreteVertex*> vertices );
+  void setBoundVertices();
 };
 
 #endif

@@ -578,7 +578,7 @@ int GModel::indexMeshVertices(bool all)
       entities[i]->mesh_vertices[j]->setIndex(-1);
   
   // tag all mesh vertices belonging to elements that need to be saved
-  // with 0
+  //with 0
   for(unsigned int i = 0; i < entities.size(); i++)
     if(all || entities[i]->physicals.size())
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
@@ -588,9 +588,21 @@ int GModel::indexMeshVertices(bool all)
   // renumber all the mesh vertices tagged with 0
   int numVertices = 0;
   for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
-      if(!entities[i]->mesh_vertices[j]->getIndex())
-        entities[i]->mesh_vertices[j]->setIndex(++numVertices);
+    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+      //printf("-->entity with %d elems and index %d and mesh_vertices=%d \n ", entities[i]->getNumMeshElements(), entities[i]->mesh_vertices[j]->getIndex(), entities[i]->mesh_vertices.size());
+      if(!entities[i]->mesh_vertices[j]->getIndex()){
+	int newIndex= ++numVertices;
+	entities[i]->mesh_vertices[j]->setIndex(newIndex);
+	//printf("-->entity with %d elems with index=%d\n ", entities[i]->getNumMeshElements(), newIndex);
+      }
+    }
+
+//   printf("numvertices=%d \n", numVertices);
+//   for(unsigned int i = 0; i < entities.size(); i++)
+//     for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
+//       for(int k = 0; k < entities[i]->getMeshElement(j)->getNumVertices(); k++)
+// 	printf("entity with =%d elems, and mesh_vertices =%d index=%d \n", entities[i]->getNumMeshElements(), entities[i]->mesh_vertices.size(), entities[i]->getMeshElement(j)->getVertex(k)->getIndex());
+//   exit(1);
   
   return numVertices;
 }

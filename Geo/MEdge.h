@@ -106,6 +106,7 @@ struct Less_Edge : public std::binary_function<MEdge, MEdge, bool> {
     if(e1.getMaxVertex() < e2.getMaxVertex()) return true;
     return false;
   }
+
 };
 
 #endif

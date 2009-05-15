@@ -380,19 +380,19 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
   // here, we will replace edges by their compounds
   //printf("***** In meshGFace: \n");
   if (gf->geomType() == GEntity::CompoundSurface){
-    printf("replace edges by compound lines \n");
+    //printf("replace edges by compound lines \n");
     std::set<GEdge*> mySet;
     std::list<GEdge*>::iterator it = edges.begin();
     while(it != edges.end()){
       if ((*it)->getCompound()){
 	mySet.insert((*it)->getCompound());
-	printf("compound edge %d found in edge %d\n",(*it)->getCompound()->tag(), (*it)->tag());
+	//printf("compound edge %d found in edge %d\n",(*it)->getCompound()->tag(), (*it)->tag());
       }
       else 
 	mySet.insert(*it);
       ++it;
     }
-    printf("replacing %d edges by %d in the GFaceCompound %d\n",edges.size(),mySet.size(),gf->tag());
+    //printf("replacing %d edges by %d in the GFaceCompound %d\n",edges.size(),mySet.size(),gf->tag());
     edges.clear();
     edges.insert(edges.begin(), mySet.begin(), mySet.end());
   }
@@ -458,7 +458,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
     reparamMeshVertexOnFace(here, gf, param);
     U_[count] = param[0];
     V_[count] = param[1];
-    //    printf("-> meshGFace : %g %g -> u,v  = %g %g\n",here->x(),here->y(),param.x(),param.y());
+    //printf("-->> meshGFace : %g %g -> u,v  = %g %g\n",here->x(),here->y(),param.x(),param.y());
     (*itv)->setIndex(count);
     numbered_vertices[(*itv)->getIndex()] = *itv;
     bbox += SPoint3(param.x(), param.y(), 0);

@@ -48,13 +48,12 @@ void discreteEdge::orderMLines()
   for (std::list<MLine*>::iterator it = segments.begin() ; it != segments.end() ; ++it){
     MVertex *vL = (*it)->getVertex(0);
     MVertex *vR = (*it)->getVertex(1);
-    //printf("MLIne %d %d = (%g, %g, %g) (%g, %g, %g)\n",vL->getNum(), vR->getNum(), vL->x(),vL->y(),vL->z(), vR->x(),vR->y(),vR->z() );
     std::map<MVertex*,MLine*>::iterator it1 = boundv.find(vL);
-    if (it1==boundv.end()) boundv.insert(std::make_pair(vL,*it));
-    else boundv.erase(it1);
+    if (it1==boundv.end())       boundv.insert(std::make_pair(vL,*it));
+    else  boundv.erase(it1);
     std::map<MVertex*,MLine*>::iterator it2 = boundv.find(vR);
-    if (it2==boundv.end())       boundv.insert(std::make_pair(vR,*it));
-    else boundv.erase(it2);
+    if (it2==boundv.end())    boundv.insert(std::make_pair(vR,*it));
+    else    boundv.erase(it2);
   }   
 
   //find the first MLine and erase it from the list segments
@@ -107,7 +106,7 @@ void discreteEdge::orderMLines()
 	break;
       }
     }
-    if (!found  && _orientation[0]){ //reverse orientation of first Line
+    if (!found  && _orientation[0]==1){ //reverse orientation of first Line
       if (_m.size() == 1 ){
 	MVertex *temp = first;
 	first = last;
@@ -141,7 +140,7 @@ void discreteEdge::orderMLines()
 
 }
 
-void discreteEdge::setBoundVertices(std::vector<discreteVertex*> vertices)
+void discreteEdge::setBoundVertices()
 {
 
   if (boundv.size()==2){ 
@@ -150,7 +149,8 @@ void discreteEdge::setBoundVertices(std::vector<discreteVertex*> vertices)
     for (std::map<MVertex*,MLine*>::const_iterator iter = boundv.begin(); iter != boundv.end(); iter++){
       MVertex* vE = (iter)->first;
       bool existVertex  = false;
-      for (std::vector<discreteVertex*>::iterator point = vertices.begin(); point != vertices.end(); point++) {
+      //for (std::vector<discreteVertex*>::iterator point = vertices.begin(); point != vertices.end(); point++) {
+      for(GModel::viter point = model()->firstVertex(); point != model()->lastVertex(); point++){
 	//printf("Discrete point =%d bound vE=%d\n", (*point)->tag(), vE->getNum());
 	if ((*point)->tag() == vE->getNum()){
 	  bound_vertices.push_back((*point));
@@ -159,17 +159,20 @@ void discreteEdge::setBoundVertices(std::vector<discreteVertex*> vertices)
 	}
       }
       if(!existVertex){ 
-	printf(" !!! bound vertex does not exist, create one \n");
+	//printf(" !!! bound vertex %d does not exist, create one \n", vE->getNum());
 	GVertex *gvB = new discreteVertex(model(),vE->getNum());
 	bound_vertices.push_back(gvB);
+	vE->setEntity(gvB);
 	gvB->mesh_vertices.push_back(vE);
 	gvB->points.push_back(new MPoint(gvB->mesh_vertices.back()));
 	model()->add(gvB);
-	mesh_vertices.erase(std::find(mesh_vertices.begin(), mesh_vertices.end(), vE));
      }
+      std::vector<MVertex*>::iterator itve = std::find(mesh_vertices.begin(), mesh_vertices.end(), vE) ;
+      if (itve != mesh_vertices.end()) mesh_vertices.erase(itve);
+
     }
  
-    //printf("set bound  vertices %d %d \n",bound_vertices[0]->tag(),bound_vertices[1]->tag());
+    //printf("set bound  vertices %d %d size mesh-vertices =%d \n",bound_vertices[0]->tag(),bound_vertices[1]->tag(), mesh_vertices.size());
     v0 = bound_vertices[0]; 
     v1 = bound_vertices[1];
   }
@@ -184,7 +187,7 @@ void discreteEdge::setBoundVertices(std::vector<discreteVertex*> vertices)
     model()->add(gvB);
     mesh_vertices.erase(std::find(mesh_vertices.begin(), mesh_vertices.end(), vE));
 
-    //printf("set bound  vertices %d %d , coord = %g %g %g\n",gvB->tag(),gvB->tag(), gvB->x(), gvB->y(), gvB->z());
+    ///printf("set bound  vertices %d %d , coord = %g %g %g\n",gvB->tag(),gvB->tag(), gvB->x(), gvB->y(), gvB->z());
     v0 = gvB; 
     v1 = gvB;
     
@@ -196,38 +199,77 @@ void discreteEdge::setBoundVertices(std::vector<discreteVertex*> vertices)
   return;
 }
 
+
+/*
+    +---------------+--------------+----------- ... ----------+
+    _pars[0]=0   _pars[1]=1    _pars[2]=2             _pars[N+1]=N+1
+*/
 void discreteEdge::parametrize() 
 {
 
+  
   for (int i=0;i<lines.size()+1;i++){
     _pars.push_back(i);
-  }   
+  } 
 
-  /*
-    +---------------+--------------+----------- ... ----------+
-    _pars[0]=0   _pars[1]=1    _pars[2]=2             _pars[N+1]=N+1
-  */
+  //Replace MVertex by MedgeVertex
+  //we need to recreate lines and triangles 
+  //that contain those new MEdgeVertices
+  std::map<MVertex*, MVertex*> old2new;
+
+  std::vector<MVertex*> newVertices;
+  std::vector<MLine*> newLines;
   
-  //    for (int i=0;i<lines.size()+1;i++){
-  //      printf("_pars[%d]=%g\n",i, _pars[i] );
-  //    }
+  MVertex *vL = getBeginVertex()->mesh_vertices[0];
+  int i = 0;
+  for(i=0 ; i < lines.size()-1; i++){
+    MVertex *vR ; 
+    if (_orientation[i] == 1 ) vR = lines[i]->getVertex(1);
+    else vR = lines[i]->getVertex(0);
+    int param = i+1;
+    MVertex *vNEW = new MEdgeVertex(vR->x(),vR->y(),vR->z(), this, param);
+    old2new.insert(std::make_pair(vR,vNEW));
+    newVertices.push_back(vNEW);
+    vNEW->setNum(vR->getNum());
+    newLines.push_back(new MLine(vL, vNEW));
+    _orientation[i] = 1;
+    //printf("i edge =%d , orientation=%d , mesh vertex =%p (%d) newv=%p (%d)  \n", i, _orientation[i], vL, vL->getNum(), vNEW, vNEW->getNum());
+    vL = vNEW;
+  }
+   MVertex *vR = getEndVertex()->mesh_vertices[0];
+   newLines.push_back(new MLine(vL, vR));
+   _orientation[i] = 1;
+   //printf("i edge =%d , orientation=%d , mesh vertex =%p (%d) newv=%p (%d)  \n", i, _orientation[i], vL, vL->getNum(), vR, vR->getNum());
 
-  printf("dans discrete edge %d line.size =%d \n", this->tag(), lines.size());
+   mesh_vertices = newVertices;
+   deleteVertexArrays();
+   lines.clear();
+   lines = newLines;
 
-//  create new MEdge Vertices
-//   std::vector<MVertex*> new_mshv;  
-//   for(int i = 0; i < mesh_vertices.size(); i++){
-//     MVertex *v = mesh_vertices[i];
-//     int param = i+1;
-//     MVertex *newv = new MEdgeVertex(v->x(),v->y(),v->z(), this, param);
-//     new_mshv.push_back(newv);
-//     newv->setNum(v->getNum());
-//     v= newv;
-//   }
-//   mesh_vertices = new_mshv;
-
-
-// we should loop over Mlines and MTrinagles to take those new MEdgeVertices into account
+   for(std::list<GFace*>::iterator iFace = l_faces.begin(); iFace != l_faces.end(); ++iFace){
+     std::vector<MTriangle*> newTriangles;
+     for (unsigned int i = 0; i < (*iFace)->triangles.size(); ++i){
+	MTriangle *t = (*iFace)->triangles[i];
+	MVertex *v[3];
+	v[0]  = t->getVertex(0);
+	v[1]  = t->getVertex(1);
+	v[2]  = t->getVertex(2);
+	//printf("old triangle v0=%p (%d) v1=%p (%d) v2=%p (%d) \n",v[0], v[0]->getNum() , v[1],v[1]->getNum() ,v[2], v[2]->getNum());
+ 	for (int j = 0; j < 3; j++){	 
+ 	  std::map<MVertex*, MVertex*>::iterator itmap = old2new.find(v[j]);
+ 	  MVertex *vNEW;
+ 	  if (itmap != old2new.end())  {
+ 	    vNEW = itmap->second;
+	    v[j]=vNEW;
+  	  }
+  	}
+  	//printf(" new triangle v0=%p (%d) v1=%p (%d) v2=%p (%d) \n",v[0], v[0]->getNum() , v[1],v[1]->getNum() ,v[2], v[2]->getNum());
+ 	newTriangles.push_back(new  MTriangle(v[0], v[1], v[2]));  
+      }
+     (*iFace)->triangles.clear();
+     (*iFace)->deleteVertexArrays();
+     (*iFace)->triangles = newTriangles;
+   }
 
 
 //   for (int i = 0; i < mesh_vertices.size(); i++){
@@ -235,35 +277,7 @@ void discreteEdge::parametrize()
 //       mesh_vertices[i]->getParameter(0,t1);
 //       printf("** AFTER v1=%d  t1=%g\n",  mesh_vertices[i]->getNum(),t1 );
 //   }
-
-//   for (int i = 0; i < lines.size(); i++){
-//       printf("** AFTER LINES v1=%d  v2=%d\n",  lines[i]->getVertex(0)->getIndex(), lines[i]->getVertex(1)->getIndex()  );
-//   }
-
-  //exit(1)
-
-
-// du brol ci-dessous ...
-// std::vector<MLine*> newLines;
-// newLines.push_back(new MLine(v1, newv));
-// delete lines[i];
-// lines = newLines;
-
-//   for(int i = 0; i < mesh_vertices.size(); i++){
-//    for(std::list<GFace*>::iterator it = l_faces.begin(); it != l_faces.end(); ++it){
-//       for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-// 	MTriangle *t = (*it)->triangles[i];
-// 	for (int j = 0; j < 3; j++){
-// 	  MVertex *v  = t->getVertex(j);
-// 	  if (v == vi)	v = mev;
-//       }
-//      }
-//     }
-//   }
-
-
-  
-;
+ 
  
 }
 

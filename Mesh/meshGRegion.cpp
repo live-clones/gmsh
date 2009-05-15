@@ -140,6 +140,8 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
     MVertex *v[2];
     v[0] = numberedV[out.edgelist[i * 2 + 0] - 1];
     v[1] = numberedV[out.edgelist[i * 2 + 1] - 1];
+
+    //implement here the 1D mesh ...
   }
 
   // re-create the triangular meshes FIXME: this can lead to hanging

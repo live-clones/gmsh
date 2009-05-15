@@ -22,57 +22,70 @@ discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
   meshStatistics.status = GFace::DONE;    
 }
 
-void discreteFace::setBoundEdges(std::vector<discreteEdge*> discr_edges)
+void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge > &map_edges){
+
+  //find the boundary edges
+  std::list<MEdge> bound_edges;
+  for (int iFace = 0; iFace  < getNumMeshElements() ; iFace++) {
+    std::vector<MVertex*> fv;
+    MElement *e = getMeshElement(iFace);
+    e->getFaceVertices(0, fv);
+    for (int iEdge = 0; iEdge < e->getNumEdges(); iEdge++) {
+      MEdge tmp_edge =  e->getEdge(iEdge);
+      if (std::find(bound_edges.begin(),bound_edges.end(),tmp_edge) == bound_edges.end())	
+	bound_edges.push_back(tmp_edge);
+      else
+	bound_edges.erase(std::find(bound_edges.begin(),bound_edges.end(),tmp_edge));
+    }
+  }
+ 
+
+  //for the boundary edges, associate the tag of the current discrete face
+  for (std::list<MEdge>::iterator itv = bound_edges.begin() ; itv != bound_edges.end() ; ++itv){
+    std::map<MEdge, std::vector<int> , Less_Edge >::iterator itmap = map_edges.find(*itv);
+    if (itmap == map_edges.end())   {
+      std::vector<int> tagFaces; 
+      tagFaces.push_back(this->tag());
+      map_edges.insert(std::make_pair(*itv,tagFaces));	 
+    }
+    else{
+      std::vector<int> tagFaces = itmap->second;
+      tagFaces.push_back(this->tag());
+      itmap->second = tagFaces;
+      //printf("addface %d %d\n", tagFaces[0], tagFaces[1]);
+    }
+ }
+
+  //printf( "There are  %d bound msh edges \n ",  map_edges.size());
+
+
+}
+
+void discreteFace::setBoundEdges(std::vector<int> tagEdges)
 {
 
-  printf("***** In discrete Face:  \n");
-  printf("bound edges =%d \n", edges().size());
-
-  for (std::vector<discreteEdge*>::iterator it = discr_edges.begin(); it != discr_edges.end(); it++) {
-    l_edges.push_back(*it);
-    l_dirs.push_back(1);
-    (*it)->addFace(this);
-    printf("add Face %d for edge %d\n",this->tag(), (*it)->tag() );
-  }
-
-  printf("bound edges =%d \n", edges().size());
-
-//   std::list<MVertex*> mesh_vertices;
-//   std::list<MVertex*> temp_vertices;
-//   std::list<MEdge> bound_edges;
-//   for (int iFace = 0; iFace  < getNumMeshElements() ; iFace++) {
-//     std::vector<MVertex*> fv;
-//     MElement *e = getMeshElement(iFace);
-//     e->getFaceVertices(0, fv);
-//     for (std::vector<MVertex*>::iterator it_fv = fv.begin(); it_fv != fv.end(); it_fv++) {
-//       if (std::find(mesh_vertices.begin(), mesh_vertices.end(), *it_fv) == mesh_vertices.end())
-// 	mesh_vertices.push_back(*it_fv);
-//     }
-//     for (int iEdge = 0; iEdge < e->getNumEdges(); iEdge++) {
-//       MEdge tmp_edge =  e->getEdge(iEdge);
-//       if (std::find(bound_edges.begin(),bound_edges.end(),tmp_edge) == bound_edges.end()) 
-// 	bound_edges.push_back(tmp_edge);
-//       elsex
-// 	bound_edges.erase(std::find(bound_edges.begin(),bound_edges.end(),tmp_edge));
-//     }
-//   }
-//   printf( "There are %d msh vertices and bound %d msh edges \n ",  mesh_vertices.size(), bound_edges.size());
-
-  // for (std::list<MVertex *>::iterator mesh_vertex = mesh_vertices.begin(); mesh_vertex != mesh_vertices.end(); mesh_vertex++) {
-  //  printf("mesh vertex on entity with tag %d\n", (*mesh_vertex)->onWhat()->tag());
-  //}
-
-
-//   std::list<GEdge*> adj_edges;
-//   for (std::list<MEdge>::iterator be = bound_edges.begin(); be != bound_edges.end(); be++) {
-//     MVertex *v0 = be->getVertex(0);
-//     MVertex *v1 = be->getVertex(1);
-//     printf("bound edge on entity with num=%d, tag %d (dim=%d) et num=%d tag %d (dim=%d) \n", v0->getNum(), v0->onWhat()->tag(), v0->onWhat()->dim(),v1->getNum(), v1->onWhat()->tag(), v0->onWhat()->dim());
-//   }
+  // printf("***** In discrete Face:  \n");
 
   
-  
-    //exit(1);
+//   for(GModel::eiter it = model()->firstEdge(); it != model()->lastEdge(); ++it){
+// //   for (std::vector<discreteEdge*>::iterator it = bound_edges.begin(); it != bound_edges.end(); it++) {
+//     l_edges.push_back(*it);
+//     l_dirs.push_back(1);
+//     (*it)->addFace(this);
+//     printf("add Face %d for edge %d\n",this->tag(), (*it)->tag() );
+//   }
+
+
+ for (std::vector<int>::iterator it = tagEdges.begin(); it != tagEdges.end(); it++) {
+   GEdge *ge = GModel::current()->getEdgeByTag(abs(*it));
+   l_edges.push_back(ge);
+   l_dirs.push_back(1);
+   ge->addFace(this);
+   //printf("for Face %d add bound edge %d\n",this->tag(), ge->tag() );
+ }
+
+ //  printf("bound edges =%d \n", edges().size());
+
 
 }
 

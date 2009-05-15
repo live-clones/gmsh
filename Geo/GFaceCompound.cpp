@@ -92,7 +92,7 @@ void GFaceCompound::parametrize() const
 
 void GFaceCompound::getBoundingEdges()
 {
-  printf("***** In GFaceCompound: size U0=%d, v0=%d\n ", _U0.size(), _V0.size());
+  //printf("***** In GFaceCompound: size U0=%d, v0=%d\n ", _U0.size(), _V0.size());
 
   if (_U0.size()){
     std::list<GEdge*> :: const_iterator it = _U0.begin();
@@ -132,7 +132,7 @@ void GFaceCompound::getBoundingEdges()
   std::set<GEdge*>::iterator itf = _unique.begin();
   for ( ; itf != _unique.end(); ++itf){
     l_edges.push_back(*itf);
-    printf("for edge %d, add face %d \n", (*itf)->tag(), this->tag());
+    //printf("for edge %d, add face %d \n", (*itf)->tag(), this->tag());
     (*itf)->addFace(this);
   }
 
@@ -223,6 +223,7 @@ static bool orderVertices(const std::list<GEdge*> &e, std::vector<MVertex*> &l,
 
 SPoint2 GFaceCompound::getCoordinates(MVertex *v) const 
 { 
+  
   parametrize() ; 
   std::map<MVertex*,SPoint3>::iterator it = coordinates.find(v);
 
@@ -237,7 +238,7 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
 
     //getParameter Point
     v->getParameter(0,tGlob);
-    printf("*** global param for point (%g, %g, %g ) = %g\n", v->x(), v->y(), v->z(), tGlob);
+    //printf("*** global param for point (%g, %g, %g ) = %g\n", v->x(), v->y(), v->z(), tGlob);
 
     //find compound Edge
       GEdgeCompound *gec = dynamic_cast<GEdgeCompound*>(v->onWhat());
@@ -270,12 +271,11 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
       while (j < ge->mesh_vertices.size()){
 	vR = ge->mesh_vertices[j];
 	vR->getParameter(0,tR);
-	//tR = j+1;//HACK HERE
-	//if (!vR->getParameter(0,tR)) {
-	  //printf("vertex vr %p not medgevertex \n", vR);
-	  //exit(1);
-	  //}
-	printf("***tLoc=%g tL=%g, tR=%g L=%p (%g,%g,%g) et R= %p (%g,%g,%g)\n", tLoc, tL, tR, vL, vL->x(),vL->y(),vL->z(),vR, vR->x(), vR->y(), vR->z());
+	if (!vR->getParameter(0,tR)) {
+	  printf("vertex vr %p not medgevertex \n", vR);
+	  exit(1);
+	}
+	//printf("***tLoc=%g tL=%g, tR=%g L=%p (%g,%g,%g) et R= %p (%g,%g,%g)\n", tLoc, tL, tR, vL, vL->x(),vL->y(),vL->z(),vR, vR->x(), vR->y(), vR->z());
 	if (tLoc >= tL && tLoc <= tR){
 	  found = true;
 	  itR = coordinates.find(vR);
@@ -299,13 +299,13 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
       }
       //printf("vL (%g,%g,%g), -> uv= (%g,%g)\n",vL->x(), vL->y(), vL->z(), itL->second.x(), itL->second.y());
       //printf("vR (%g,%g,%g), -> uv= (%g,%g)\n",vR->x(), vR->y(), vR->z(), itR->second.x(), itR->second.y());
-      printf("tL:%g, tR=%g, tLoc=%g \n", tL, tR, tLoc);
+      //printf("tL:%g, tR=%g, tLoc=%g \n", tL, tR, tLoc);
 
       //Linear interpolation between tL and tR
       double uloc, vloc;
       uloc = itL->second.x() + (tLoc-tL)/(tR-tL) * (itR->second.x()-itL->second.x());
       vloc = itL->second.y() + (tLoc-tL)/(tR-tL) * (itR->second.y()-itL->second.y());
-      printf("uloc=%g, vloc=%g \n", uloc,vloc);
+      //printf("uloc=%g, vloc=%g \n", uloc,vloc);
       //exit(1);
 
       return SPoint2(uloc,vloc);
