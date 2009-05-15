@@ -1,19 +1,23 @@
 N = 10;
 
+
+
 // Rotate an alias (does not change the data)
 Merge "../../tutorial/view1.pos";
 For i In {2:N}
   Alias View[0];
   theta = 2*Pi*(i-1)/N;
-  View[i-1].Transform11 =  Cos(theta); View[i-1].Transform12 = Sin(theta);
-  View[i-1].Transform21 = -Sin(theta); View[i-1].Transform22 = Cos(theta);
+  View[i-1].TransformXX =  Cos(theta); View[i-1].TransformXY = Sin(theta);
+  View[i-1].TransformYX = -Sin(theta); View[i-1].TransformYY = Cos(theta);
   View[i-1].ShowScale = 0;
 EndFor
 
-// Rotate using Plugin(Transform) (modifies the data)
+
 /*
+
+// Rotate using Plugin(Transform) (modifies the data)
 For i In {1:N}
-  Merge "tutorial/view1.pos";
+  Merge "../../tutorial/view1.pos";
   theta = 2*Pi*(i-1)/N;
   Plugin(Transform).A11 =  Cos(theta); Plugin(Transform).A12 = Sin(theta);
   Plugin(Transform).A21 = -Sin(theta); Plugin(Transform).A22 = Cos(theta);
@@ -23,4 +27,5 @@ For i In {1:N}
     View[i-1].ShowScale = 0;
   EndIf
 EndFor
+
 */
