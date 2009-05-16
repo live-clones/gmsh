@@ -22,8 +22,8 @@ discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
   meshStatistics.status = GFace::DONE;    
 }
 
-void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge > &map_edges){
-
+void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge > &map_edges)
+{
   //find the boundary edges
   std::list<MEdge> bound_edges;
   for (int iFace = 0; iFace  < getNumMeshElements() ; iFace++) {
@@ -39,7 +39,6 @@ void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge > &map_
     }
   }
  
-
   //for the boundary edges, associate the tag of the current discrete face
   for (std::list<MEdge>::iterator itv = bound_edges.begin() ; itv != bound_edges.end() ; ++itv){
     std::map<MEdge, std::vector<int> , Less_Edge >::iterator itmap = map_edges.find(*itv);
@@ -57,8 +56,6 @@ void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge > &map_
  }
 
   //printf( "There are  %d bound msh edges \n ",  map_edges.size());
-
-
 }
 
 void discreteFace::setBoundEdges(std::vector<int> tagEdges)
@@ -85,10 +82,7 @@ void discreteFace::setBoundEdges(std::vector<int> tagEdges)
  }
 
  //  printf("bound edges =%d \n", edges().size());
-
-
 }
-
 
 GPoint discreteFace::point(double par1, double par2) const 
 {

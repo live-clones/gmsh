@@ -26,13 +26,10 @@ discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
   Tree_Add(model->getGEOInternals()->Curves, &c);
   CreateReversedCurve(c);
 #endif
-  
 }
-
 
 void discreteEdge::orderMLines() 
 {
-
   //printf(" *** ORDERING DISCRETE EDGE %d of size %d \n", this->tag(), lines.size());
 
   std::vector<MLine*> _m ;  
@@ -281,11 +278,9 @@ void discreteEdge::parametrize()
  
 }
 
-void discreteEdge::getLocalParameter ( const double &t,
-				       int &iLine,
-				       double & tLoc) const
+void discreteEdge::getLocalParameter(const double &t, int &iLine, 
+                                     double &tLoc) const
 {
-
   for (iLine=0 ; iLine<lines.size() ;iLine++){
     double tmin = _pars[iLine];
     double tmax = _pars[iLine+1];
@@ -319,7 +314,6 @@ GPoint discreteEdge::point(double par) const
 
 SVector3 discreteEdge::firstDer(double par) const 
 {
-
   double tLoc;
   int iEdge;
   getLocalParameter(par,iEdge,tLoc);
@@ -335,11 +329,9 @@ SVector3 discreteEdge::firstDer(double par) const
 
   //printf("firstDer discreteEdge  par=%g, dx=%g, dy=%g dz=%g dt=%g \n", par,dx,dy,dz, dt);
   return SVector3(dx,dy,dz);
-
 }
 
-Range<double> discreteEdge::parBounds(int i) const {
-
- return Range<double>(0, lines.size()); 
- 
+Range<double> discreteEdge::parBounds(int i) const 
+{
+  return Range<double>(0, lines.size()); 
 }

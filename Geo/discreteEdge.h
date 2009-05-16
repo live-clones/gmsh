@@ -18,15 +18,13 @@ class discreteEdge : public GEdge {
  public:
   discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1);
   virtual ~discreteEdge() {}
-  void getLocalParameter ( const double &t,
-			   int &iEdge,
-			   double & tLoc) const;
+  void getLocalParameter(const double &t, int &iEdge, double &tLoc) const;
   virtual GeomType geomType() const { return DiscreteCurve; }
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
   virtual Range<double> parBounds(int) const;
-  void parametrize() ;
-  void orderMLines() ;
+  void parametrize();
+  void orderMLines();
   void setBoundVertices();
 };
 

@@ -19,11 +19,11 @@ class discreteFace : public GFace {
   virtual SPoint2 parFromPoint(const SPoint3 &p) const;
   virtual SVector3 normal(const SPoint2 &param) const;
   virtual GEntity::GeomType geomType() const { return DiscreteSurface; }
-  virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const;
+  virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &param, 
                          SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const;
-  void setBoundEdges( std::vector<int> tagEdges );
-  void findEdges( std::map<MEdge, std::vector<int>, Less_Edge > &map_edges);
+  void setBoundEdges(std::vector<int> tagEdges);
+  void findEdges(std::map<MEdge, std::vector<int>, Less_Edge > &map_edges);
 };
 
 #endif

@@ -148,10 +148,9 @@ class GFace : public GEntity
   virtual SVector3 normal(const SPoint2 &param) const;
 
   // return the first derivate of the face at the parameter location
-  virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const = 0;
+  virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const = 0;
 
   // compute the second derivates of the face at the parameter location
-  // (default implementation by central differences)
   // the derivates have to be allocated before calling this function
   virtual void secondDer(const SPoint2 &param, 
                          SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const = 0;

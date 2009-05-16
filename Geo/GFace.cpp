@@ -452,7 +452,7 @@ double GFace::curvatureDiv(const SPoint2 &param) const
 
   const double eps = 1.e-5;
 
-  Pair<SVector3,SVector3> der = firstDer(param);
+  Pair<SVector3, SVector3> der = firstDer(param);
 
   SVector3 du = der.first();
   SVector3 dv = der.second();
@@ -463,18 +463,20 @@ double GFace::curvatureDiv(const SPoint2 &param) const
   du.normalize();
   dv.normalize();
 
-  SVector3 n1,n2,n3,n4;
-  if( param.x() - eps < 0.0 ) {
+  SVector3 n1, n2, n3, n4;
+  if(param.x() - eps < 0.0) {
     n1 = normal(SPoint2(param.x(),       param.y()));
     n2 = normal(SPoint2(param.x() + eps, param.y()));
-  } else {
+  }
+  else {
     n1 = normal(SPoint2(param.x() - eps, param.y()));
     n2 = normal(SPoint2(param.x(),       param.y()));
   }
-  if( param.y() - eps < 0.0 ) {
+  if(param.y() - eps < 0.0) {
     n3 = normal(SPoint2(param.x(), param.y()      ));
     n4 = normal(SPoint2(param.x(), param.y() + eps));
-  } else {
+  }
+  else {
     n3 = normal(SPoint2(param.x(), param.y() - eps));
     n4 = normal(SPoint2(param.x(), param.y()      ));
   }
@@ -485,12 +487,12 @@ double GFace::curvatureDiv(const SPoint2 &param) const
   SVector3 dudu = SVector3();
   SVector3 dvdv = SVector3();
   SVector3 dudv = SVector3();
-  secondDer(param,&dudu,&dvdv,&dudv);
+  secondDer(param, &dudu, &dvdv, &dudv);
 
-  double ddu = dot(dndu,du);
-  double ddv = dot(dndv,dv);
+  double ddu = dot(dndu, du);
+  double ddv = dot(dndv, dv);
   
-  return ( fabs(ddu) + fabs(ddv) ) / detJ;
+  return (fabs(ddu) + fabs(ddv)) / detJ;
 }
 
 double GFace::curvatureMax(const SPoint2 &param) const
@@ -503,31 +505,26 @@ double GFace::curvatureMax(const SPoint2 &param) const
   return fabs(eigVal[1]);
 }
 
-double GFace::curvatures(const SPoint2 &param,
-                         SVector3 *dirMax,
-                         SVector3 *dirMin,
-                         double *curvMax,
-                         double *curvMin) const
+double GFace::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
+                         double *curvMax, double *curvMin) const
 {
-  Pair<SVector3,SVector3> D1 = firstDer(param);
+  Pair<SVector3, SVector3> D1 = firstDer(param);
 
-  if (geomType() == Plane)
-    {
-      *dirMax = D1.first();
-      *dirMin = D1.second();
-      *curvMax = 0.;
-      *curvMin = 0.;
-      return 0.;
-    }
-
-  if (geomType() == Sphere)
-    {
-      *dirMax = D1.first();
-      *dirMin = D1.second();
-      *curvMax = curvatureDiv(param);
-      *curvMin = *curvMax;
-      return *curvMax;
-    }
+  if(geomType() == Plane){
+    *dirMax = D1.first();
+    *dirMin = D1.second();
+    *curvMax = 0.;
+    *curvMin = 0.;
+    return 0.;
+  }
+  
+  if(geomType() == Sphere){
+    *dirMax = D1.first();
+    *dirMin = D1.second();
+    *curvMax = curvatureDiv(param);
+    *curvMin = *curvMax;
+    return *curvMax;
+  }
 
   double eigVal[2], eigVec[8];
   getMetricEigenVectors(param, eigVal, eigVec);
@@ -550,8 +547,7 @@ double GFace::getMetricEigenvalue(const SPoint2 &)
 // eigen values are absolute values and sorted from min to max of absolute values
 // eigen vectors are the corresponding COLUMNS of eigVec
 void GFace::getMetricEigenVectors(const SPoint2 &param,
-                                  double eigVal[2],
-                                  double eigVec[4]) const
+                                  double eigVal[2], double eigVec[4]) const
 {
   // first derivatives
   Pair<SVector3,SVector3> D1 = firstDer(param);
@@ -563,7 +559,7 @@ void GFace::getMetricEigenVectors(const SPoint2 &param,
   SVector3 dudu = SVector3();
   SVector3 dvdv = SVector3();
   SVector3 dudv = SVector3();
-  secondDer(param,&dudu,&dvdv,&dudv);
+  secondDer(param, &dudu, &dvdv, &dudv);
 
   // first form
   double form1[2][2];
@@ -579,7 +575,7 @@ void GFace::getMetricEigenVectors(const SPoint2 &param,
 
   // inverse of first form
   double inv_form1[2][2];
-  double inv_det_form1 = 1. / ( form1[0][0] * form1[1][1] - form1[1][0] * form1[0][1] );
+  double inv_det_form1 = 1. / (form1[0][0] * form1[1][1] - form1[1][0] * form1[0][1]);
   inv_form1[0][0] = inv_det_form1 * form1[1][1];
   inv_form1[1][1] = inv_det_form1 * form1[0][0];
   inv_form1[1][0] = inv_form1[0][1] = -1 * inv_det_form1 * form1[0][1];
@@ -595,17 +591,17 @@ void GFace::getMetricEigenVectors(const SPoint2 &param,
   int work1[2];
   double work2[2];
   double eigValI[2];
-  if ( EigSolve(2,2,N,eigVal,eigValI,eigVec,work1,work2) != 1 ) {
-    Msg::Warning("Problem in eigen vectors computation");
-    printf(" N: %f %f %f %f\n",N[0],N[1],N[2],N[3]);
-    printf(" * Eigen values:\n     %f + i * %f\n     %f + i * %f\n",
-           eigVal[0],eigValI[0],eigVal[1],eigValI[1]);
-    printf(" * Eigen vectors (trust it only if eigen values are real):\n");
-    printf("     ( %f, %f ),\n     ( %f, %f ).\n",
-           eigVec[0],eigVec[2],eigVec[1],eigVec[3]);
-    throw;
+  if (EigSolve(2, 2, N, eigVal, eigValI, eigVec, work1, work2) != 1) {
+    Msg::Error("Problem in eigen vectors computation");
+    Msg::Error(" N: %f %f %f %f", N[0], N[1], N[2], N[3]);
+    Msg::Error(" * Eigen values:");
+    Msg::Error("   %f + i * %f,  %f + i * %f",
+               eigVal[0], eigValI[0], eigVal[1], eigValI[1]);
+    Msg::Error(" * Eigen vectors (trust it only if eigen values are real):");
+    Msg::Error("   ( %f, %f ), ( %f, %f )",
+               eigVec[0], eigVec[2], eigVec[1], eigVec[3]);
   }
-  if ( fabs(eigValI[0]) > 1.e-12 ||  fabs(eigValI[1]) > 1.e-12 ) {
+  if (fabs(eigValI[0]) > 1.e-12 || fabs(eigValI[1]) > 1.e-12) {
     Msg::Error("Found imaginary eigenvalues");
   }
 

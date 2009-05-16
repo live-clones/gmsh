@@ -74,7 +74,7 @@ Pair<SVector3, SVector3> fourierFace::firstDer(const SPoint2 &param) const
 void fourierFace::secondDer(const SPoint2 &param, 
                             SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
 {
-  Msg::Error("Computation of the second derivatives not implemented for fourer face");
+  Msg::Error("Computation of the second derivatives not implemented for fourier face");
 }
 
 #endif

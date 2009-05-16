@@ -4,6 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "GmshConfig.h"
+#include "GmshMessage.h"
 #include "fourierProjectionFace.h"
 #include "VertexArray.h"
 
@@ -39,6 +40,12 @@ Pair<SVector3,SVector3> fourierProjectionFace::firstDer(const SPoint2 &param) co
   ps_->Dfdv(param.x(),param.y(),dv[0],dv[1],dv[2]);
   return Pair<SVector3,SVector3>(du,dv);
 } 
+
+void fourierProjectionFace::secondDer(const SPoint2 &param, 
+                                      SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
+{
+  Msg::Error("Computation of the second derivatives not implemented");
+}
 
 SVector3 fourierProjectionFace::normal(const SPoint2 &param) const
 {       
