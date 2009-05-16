@@ -156,7 +156,7 @@ class CTX {
     double normals, tangents, scalingFactor;
     int autoCoherence, highlightOrphans, clip, useTransform;
     double tolerance, snap[3], transform[3][3], offset[3];
-    int occFixSmallEdges, occFixSmallFaces, occSewFaces;
+    int occFixSmallEdges, occFixSmallFaces, occSewFaces, occConnectFaces;
     int copyMeshingMethod, exactExtrusion;
   } geom;
   // mesh options 

@@ -840,6 +840,8 @@ StringXNumber GeometryOptions_Number[] = {
     "Fix small faces in STEP, IGES and BRep models" },
   { F|O, "OCCSewFaces" , opt_geometry_occ_sew_faces , 0. , 
     "Sew faces in STEP, IGES and BRep models" },
+  { F|O, "OCCConnectFaces" , opt_geometry_occ_connect_faces , 0. , 
+    "Cut and connect faces in STEP, IGES and BRep models" },
   { F,   "OffsetX" , opt_geometry_offset0 , 0. , 
     "Model diplay offset along X-axis (in model coordinates)" },
   { F,   "OffsetY" , opt_geometry_offset1 , 0. , 

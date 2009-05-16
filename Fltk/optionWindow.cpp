@@ -351,6 +351,7 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_occ_fix_small_faces(0, GMSH_SET, o->geo.butt[12]->value());
   opt_geometry_occ_sew_faces(0, GMSH_SET, o->geo.butt[13]->value());
   opt_geometry_light_two_side(0, GMSH_SET, o->geo.butt[14]->value());
+  opt_geometry_occ_connect_faces(0, GMSH_SET, o->geo.butt[15]->value());
 
   opt_geometry_normals(0, GMSH_SET, o->geo.value[0]->value());
   opt_geometry_tangents(0, GMSH_SET, o->geo.value[1]->value());
@@ -1627,11 +1628,16 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Sew faces in OpenCascade models");
       geo.butt[13]->type(FL_TOGGLE_BUTTON);
       geo.butt[13]->callback(geometry_options_ok_cb);
+      geo.butt[15] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Cut and merge faces in OpenCascade models");
+      geo.butt[15]->type(FL_TOGGLE_BUTTON);
+      geo.butt[15]->callback(geometry_options_ok_cb);
 
 #if !defined(HAVE_OCC)
       geo.butt[11]->deactivate();
       geo.butt[12]->deactivate();
       geo.butt[13]->deactivate();
+      geo.butt[15]->deactivate();
 #endif
       o->end();
     }

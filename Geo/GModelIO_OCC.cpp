@@ -13,6 +13,7 @@
 #include "OCCRegion.h"
 #include "MElement.h"
 #include "OpenFile.h"
+#include "OCC_Connect.h"
 
 #if defined(HAVE_OCC_MESH_CONSTRAINTS)
 #include "MeshGmsh_Constrain.hxx"
@@ -182,7 +183,7 @@ void OCC_Internals::buildLists()
 
 void OCC_Internals::healGeometry(double tolerance, bool fixsmalledges, 
                                  bool fixspotstripfaces, bool sewfaces, 
-                                 bool makesolids)
+                                 bool makesolids, bool connect)
 {
   int nrc = 0, nrcs = 0;
   TopExp_Explorer e;
@@ -339,6 +340,14 @@ void OCC_Internals::healGeometry(double tolerance, bool fixsmalledges,
         Msg::Info(" not possible");
     }
   }
+
+  if(connect) {
+    OCC_Connect connect; 
+    for(TopExp_Explorer p(shape,TopAbs_SOLID); p.More(); p.Next())
+        connect.Add(p.Current()); 
+    connect.Connect();
+    shape=connect;
+  }
 }
 
 void OCC_Internals::loadBREP(const char *fn)
@@ -349,7 +358,9 @@ void OCC_Internals::loadBREP(const char *fn)
   healGeometry(CTX::instance()->geom.tolerance, 
                CTX::instance()->geom.occFixSmallEdges,
                CTX::instance()->geom.occFixSmallFaces,
-               CTX::instance()->geom.occSewFaces);
+               CTX::instance()->geom.occSewFaces,
+               false,
+               CTX::instance()->geom.occConnectFaces);
   BRepTools::Clean(shape);
   buildLists();
 }
@@ -365,7 +376,9 @@ void OCC_Internals::loadSTEP(const char *fn)
   healGeometry(CTX::instance()->geom.tolerance, 
                CTX::instance()->geom.occFixSmallEdges,
                CTX::instance()->geom.occFixSmallFaces,
-               CTX::instance()->geom.occSewFaces);
+               CTX::instance()->geom.occSewFaces,
+               false,
+               CTX::instance()->geom.occConnectFaces);
   BRepTools::Clean(shape);
   buildLists();
 }
@@ -381,7 +394,9 @@ void OCC_Internals::loadIGES(const char *fn)
   healGeometry(CTX::instance()->geom.tolerance, 
                CTX::instance()->geom.occFixSmallEdges,
                CTX::instance()->geom.occFixSmallFaces,
-               CTX::instance()->geom.occSewFaces);
+               CTX::instance()->geom.occSewFaces,
+               false,
+               CTX::instance()->geom.occConnectFaces);
   BRepTools::Clean(shape);
   buildLists();
 }

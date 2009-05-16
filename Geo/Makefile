@@ -26,6 +26,7 @@ SRC = GEntity.cpp\
         GModelIO_Geo.cpp\
         GModelIO_Mesh.cpp\
         GModelIO_OCC.cpp\
+          OCC_Connect.cpp\
         GModelIO_Fourier.cpp\
         GModelIO_CGNS.cpp\
         GModelIO_MED.cpp\

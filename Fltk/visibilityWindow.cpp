@@ -619,6 +619,7 @@ static void _recur_update_selected(Flu_Tree_Browser::Node *n)
 
 static void visibility_tree_apply_cb(Fl_Widget *w, void *data)
 {
+  CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   bool recursive = GUI::instance()->visibility->butt[0]->value() ? true : false;
   Flu_Tree_Browser::Node *root = GUI::instance()->visibility->tree->first();
   for(int i = 0; i < root->children(); i++){

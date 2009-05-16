@@ -4588,6 +4588,19 @@ double opt_geometry_occ_sew_faces(OPT_ARGS_NUM)
   return CTX::instance()->geom.occSewFaces;
 }
 
+double opt_geometry_occ_connect_faces(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occConnectFaces = val ? 1 : 0;
+#if defined(HAVE_FLTK)
+  if(GUI::available() && (action & GMSH_GUI)) {
+    GUI::instance()->options->geo.butt[15]->value
+      (CTX::instance()->geom.occConnectFaces);
+  }
+#endif
+  return CTX::instance()->geom.occConnectFaces;
+}
+
 double opt_geometry_old_circle(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

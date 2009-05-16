@@ -422,6 +422,7 @@ double opt_geometry_light_two_side(OPT_ARGS_NUM);
 double opt_geometry_occ_fix_small_edges(OPT_ARGS_NUM);
 double opt_geometry_occ_fix_small_faces(OPT_ARGS_NUM);
 double opt_geometry_occ_sew_faces(OPT_ARGS_NUM);
+double opt_geometry_occ_connect_faces(OPT_ARGS_NUM);
 double opt_geometry_old_circle(OPT_ARGS_NUM);
 double opt_geometry_old_newreg(OPT_ARGS_NUM);
 double opt_geometry_num_sub_edges(OPT_ARGS_NUM);
