@@ -729,12 +729,10 @@ static void addOutlinePrism(PView *p, double xyz[NMAX][3], unsigned int color,
   for(int i = 0; i < 2; i++)
     addOutlineTriangle(p, xyz, color, pre, it[i][0], it[i][1], it[i][2]);
 }
-
 static void addScalarPrism(PView *p, double xyz[NMAX][3], double val[NMAX][9],
 			   bool pre)
 {
   PViewOptions *opt = p->getOptions();
-
   const int iq[3][4] = {{0, 1, 4, 3}, {0, 3, 5, 2}, {1, 2, 5, 4}};
   const int it[2][3] = {{0, 2, 1}, {3, 4, 5}};
   const int is[3][4] = {{0, 1, 2, 3}, {3, 4, 5, 2}, {1, 2, 4, 3}};

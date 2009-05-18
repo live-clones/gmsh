@@ -8,6 +8,7 @@
 
 #include "SPoint3.h"
 #include <string>
+#include <stdio.h>
 
 // concrete class for vector of size 3
 class SVector3 {
