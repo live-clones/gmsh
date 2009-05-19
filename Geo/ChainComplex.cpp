@@ -24,15 +24,26 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
     unsigned int rows =  cellComplex->getSize(dim-1);
   
     
-    
+    int index = 1;
     // ignore subdomain cells
     for(std::set<Cell*, Less_Cell>::iterator cit = cellComplex->firstCell(dim); cit != cellComplex->lastCell(dim); cit++){
       Cell* cell = *cit;
-      if(cell->inSubdomain()) cols--;
+      cell->setIndex(index);
+      index++;
+      if(cell->inSubdomain()){
+        index--;
+        cols--;
+      }
     }
+    index = 1;
     for(std::set<Cell*, Less_Cell>::iterator cit = cellComplex->firstCell(dim-1); cit != cellComplex->lastCell(dim-1); cit++){
       Cell* cell = *cit;
-      if(cell->inSubdomain()) rows--;
+      cell->setIndex(index);
+      index++;
+      if(cell->inSubdomain()){
+        index--;
+        rows--;
+      }
     }
     
     
@@ -45,7 +56,34 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
       //_HMatrix[dim] = NULL;
     }
     
+    else{
+     
+      mpz_t elem;
+      mpz_init(elem);
+      
+      _HMatrix[dim] = create_gmp_matrix_zero(rows, cols);
+      for( std::set<Cell*, Less_Cell>::iterator cit = cellComplex->firstCell(dim); cit != cellComplex->lastCell(dim); cit++){
+        Cell* cell = *cit;
+        if(!cell->inSubdomain()){
+          std::list< std::pair<int,Cell*> >bdCell = cell->getOrientedBoundary();
+          for(std::list< std::pair<int, Cell*> >::iterator it = bdCell.begin(); it != bdCell.end(); it++){
+            Cell* bdCell = (*it).second;
+            if(!bdCell->inSubdomain()){
+              int old_elem = 0;
+              gmp_matrix_get_elem(elem, bdCell->getIndex(), cell->getIndex(), _HMatrix[dim]);
+              old_elem = mpz_get_si(elem);
+              mpz_set_si(elem, old_elem + (*it).first);
+              gmp_matrix_set_elem(elem, bdCell->getIndex(), cell->getIndex(), _HMatrix[dim]);
+            }
+          }
+        }
+      }
+      
+      mpz_clear(elem);
+      
+    }
     
+    /*
     else{
       
       long int elems[rows*cols];
@@ -59,6 +97,16 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
           Cell* lowcell = *low;
           Cell* highcell = *high;
           if(!(highcell->inSubdomain() || lowcell->inSubdomain())){
+            
+            
+            std::list< std::pair<int, Cell*> >bdHigh = highcell->getBoundary();
+            for(std::list< std::pair<int, Cell*> >::iterator it = bdHigh.begin(); it != bdHigh.end(); it++){
+              Cell* bdCell = (*it).second;
+              if(bdCell->getTag() == lowcell->getTag()) elems[i] = (*it).first;
+              else elems[i] = 0;
+            }
+            
+              
             elems[i] = cellComplex->kappa(*high, *low);
             i++;
           }
@@ -69,7 +117,9 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
       }
       _HMatrix[dim] = create_gmp_matrix_int(rows, cols, elems);      
     }
-    
+    */
+
+
     _kerH[dim] = NULL;
     _codH[dim] = NULL;
     _JMatrix[dim] = NULL;
@@ -220,7 +270,7 @@ void ChainComplex::Quotient(int dim){
   
   mpz_t elem;
   mpz_init(elem);
-  
+
   for(int i = 1; i <= cols; i++){
     gmp_matrix_get_elem(elem, i, i, normalForm->canonical);
     if(mpz_cmp_si(elem,0) == 0){
@@ -414,13 +464,17 @@ int Chain::writeChainMSH(const std::string &name){
   fprintf(fp, "4 \n");
   fprintf(fp, "0 \n");
   fprintf(fp, "1 \n");
-  fprintf(fp, "%d \n", getSize());
+  fprintf(fp, "%d \n", getNumCells());
   fprintf(fp, "0 \n");
   
+  std::list< std::pair<int, Cell*> > cells;
   for(int i = 0; i < getSize(); i++){
-    
-    fprintf(fp, "%d %d \n", getCell(i)->getTag(), getCoeff(i));
-    
+    Cell* cell = getCell(i);
+    cells = cell->getCells();
+    for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
+      Cell* cell2 = (*it).second;
+      fprintf(fp, "%d %d \n", cell2->getTag(), getCoeff(i)*(*it).first );
+    }
   }
   
   fprintf(fp, "$EndElementData\n");

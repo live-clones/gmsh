@@ -68,6 +68,11 @@ int main(int argc, char **argv)
   // reduce the complex in order to ease homology computation
   complex->reduceComplex();
   
+  // perform series of cell combinatios in order to further ease homology computation
+  complex->combine(3);
+  complex->combine(2);
+  complex->combine(1);
+  
   // create a chain complex of a cell complex (construct boundary operator matrices)
   ChainComplex* chains = new ChainComplex(complex);
   // compute the homology using the boundary operator matrices
@@ -100,6 +105,10 @@ int main(int argc, char **argv)
   
   // reduce the complex by coreduction, this removes all vertices, hence 0 as an argument 
   complex2->coreduceComplex(0);
+  
+  // perform series of "dual complex" cell combinations in order to ease homology computation
+  complex2->cocombine(1);
+  complex2->cocombine(2);
   
   // create a chain complex of a cell complex (construct boundary operator matrices)
   ChainComplex* dualChains = new ChainComplex(complex2);

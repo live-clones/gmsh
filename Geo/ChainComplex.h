@@ -142,6 +142,16 @@ class Chain{
    // number of cells in this chain 
    virtual int getSize() { return _cells.size(); }
    
+   virtual int getNumCells() {
+     int count = 0;
+     for(std::vector< std::pair <Cell*, int> >::iterator it = _cells.begin(); it != _cells.end(); it++){
+       Cell* cell = (*it).first;
+       count = count + cell->getNumCells();
+     }
+     return count;
+   }
+   
+   
    // get/set chain name
    virtual std::string getName() { return _name; }
    virtual void setName(std::string name) { _name=name; }
