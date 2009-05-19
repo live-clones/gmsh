@@ -195,7 +195,7 @@ class VisibilityList { // singleton
     }
     else if(type == ElementaryEntities){
       for(GModel::piter it = m->firstElementaryName(); it != m->lastElementaryName(); ++it)
-        setLabel(it->first, it->second, 1);
+        setLabel(it->first.second, it->second, 1);
       for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++)
         _entities.push_back(new VisElementary(*it));
       for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
@@ -207,7 +207,7 @@ class VisibilityList { // singleton
     }
     else if(type == PhysicalEntities){
       for(GModel::piter it = m->firstPhysicalName(); it != m->lastPhysicalName(); ++it)
-        setLabel(it->first, it->second, 1);
+        setLabel(it->first.second, it->second, 1);
       std::map<int, std::vector<GEntity*> > groups[4];
       m->getPhysicalGroups(groups);
       for(int i = 0; i < 4; i++){
@@ -498,8 +498,8 @@ static void _add_physical_group(int dim, int num, std::vector<GEntity*> &ge,
   char str[256];
   Flu_Tree_Browser::Node *n2 = 0;
   std::string name;
-  if(ge[0]->model()->getPhysicalName(num).size())
-    name += std::string(" <<") + ge[0]->model()->getPhysicalName(num) + ">>";
+  if(ge[0]->model()->getPhysicalName(dim, num).size())
+    name += std::string(" <<") + ge[0]->model()->getPhysicalName(dim, num) + ">>";
   switch(dim){
   case 3:
     sprintf(str, "Physical Volume %d%s/", num, name.c_str());

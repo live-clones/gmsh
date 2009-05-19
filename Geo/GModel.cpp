@@ -306,25 +306,42 @@ int GModel::getMaxPhysicalNumber()
   return num;
 }
 
-int GModel::setPhysicalName(std::string name, int number)
+int GModel::setPhysicalName(std::string name, int dim, int number)
 {
   // check if the name is already used
-  std::map<int, std::string>::iterator it = physicalNames.begin();
+  piter it = physicalNames.begin();
   while(it != physicalNames.end()){
-    if(it->second == name) return it->first;
+    if(name == it->second && dim == it->first.first) return it->first.second;
     ++it;
   }
   // if no number is given, find the next available one
   if(!number) number = getMaxPhysicalNumber() + 1;
-  physicalNames[number] = name;
+  physicalNames[std::pair<int, int>(dim, number)] = name;
   return number;
 }
 
-std::string GModel::getPhysicalName(int number)
+std::string GModel::getPhysicalName(int dim, int number)
 {
-  if(physicalNames.count(number))
-    return physicalNames[number];
+  if(physicalNames.count(std::pair<int, int>(dim, number)))
+    return physicalNames[std::pair<int, int>(dim, number)];
   return "";
+}
+
+void GModel::setSelection(int val)
+{
+  std::vector<GEntity*> entities;
+  getEntities(entities);
+
+  for(unsigned int i = 0; i < entities.size(); i++){
+    entities[i]->setSelection(val);
+    // reset selection in elements (stored in the visibility flag to
+    // save space)
+    if(val == 0){
+      for(int j = 0; j < entities[i]->getNumMeshElements(); j++)
+        if(entities[i]->getMeshElement(j)->getVisibility() == 2)
+          entities[i]->getMeshElement(j)->setVisibility(1);
+    }
+  }  
 }
 
 SBoundingBox3d GModel::bounds()
@@ -504,12 +521,12 @@ MVertex *GModel::getMeshVertexByTag(int n)
     return _vertexMapCache[n];
 }
 
-void GModel::getMeshVertices(int number, int dim, std::vector<MVertex*> &v)
+void GModel::getMeshVerticesForPhysicalGroup(int dim, int num, std::vector<MVertex*> &v)
 {
   v.clear();
   std::map<int, std::vector<GEntity*> > groups[4];
   getPhysicalGroups(groups);
-  std::map<int, std::vector<GEntity*> >::const_iterator it = groups[dim].find(number);
+  std::map<int, std::vector<GEntity*> >::const_iterator it = groups[dim].find(num);
   if(it == groups[dim].end()) return;
   const std::vector<GEntity *> &entities = it->second;
   std::set<MVertex*> sv;
@@ -913,19 +930,172 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
   return diff;
 }
 
-void GModel::setSelection(int val)
+void GModel::createTopologyFromMesh()
 {
+  printf("***** In createTopologyFromMesh: \n");
+
   std::vector<GEntity*> entities;
   getEntities(entities);
 
-  for(unsigned int i = 0; i < entities.size(); i++){
-    entities[i]->setSelection(val);
-    // reset selection in elements (stored in the visibility flag to
-    // save space)
-    if(val == 0){
-      for(int j = 0; j < entities[i]->getNumMeshElements(); j++)
-        if(entities[i]->getMeshElement(j)->getVisibility() == 2)
-          entities[i]->getMeshElement(j)->setVisibility(1);
+  std::vector<discreteVertex*> Dvertices;
+  std::vector<discreteEdge*> Dedges;
+  std::vector<discreteFace*> Dfaces;
+  std::vector<discreteRegion*> Dregions;
+
+  for (std::vector<GEntity*>::iterator entity = entities.begin(); 
+       entity != entities.end(); entity++) {
+    switch ((*entity)->dim()) {
+    case 0:
+      Dvertices.push_back((discreteVertex*) *entity);
+      break;
+    case 1:
+      Dedges.push_back((discreteEdge*) *entity);
+      break;
+    case 2:
+      Dfaces.push_back((discreteFace*) *entity);
+      break;
+    case 3:
+      Dregions.push_back((discreteRegion*) *entity);
+      break;
     }
-  }  
+  }
+
+//   printf("vertices size =%d \n", Dvertices.size());
+//   printf("edges size =%d \n", Dedges.size());
+//   printf("faces size =%d \n", Dfaces.size());
+//   printf("regions size =%d \n", Dregions.size());
+
+
+  //For each discreteFace, create Topology and if needed create discreteEdges
+  //----------------------------------------------------------------------------
+
+  int initSizeEdges = Dedges.size();
+
+  //find boundary edges of each face and put them in 
+  //a map_edges that associates 
+  //the MEdges with the tags of the adjacent faces
+
+  std::map<MEdge, std::vector<int>, Less_Edge > map_edges;
+
+  for (std::vector<discreteFace*>::iterator face = Dfaces.begin(); face != Dfaces.end(); face++){
+    (*face)->findEdges(map_edges);
+  }
+
+  //create reverse map, for each face find set of MEdges 
+  //that are candidate for new discrete Edges
+
+  int num = Dedges.size()+1;
+  std::map<int, std::vector<int> > face2Edges;
+
+  while (!map_edges.empty()){
+ 
+    //printf("********** new candidate discrete Edge\n");
+    std::vector<MEdge> myEdges;
+    std::vector<int> tagFaces = map_edges.begin()->second;
+    myEdges.push_back(map_edges.begin()->first);
+    map_edges.erase(map_edges.begin());
+    
+    std::map<MEdge, std::vector<int>, Less_Edge >::iterator itmap = map_edges.begin();
+    while (itmap != map_edges.end()){
+
+      std::vector<int> tagFaces2 = itmap->second;
+      if (tagFaces2 == tagFaces){
+	myEdges.push_back(itmap->first);
+	map_edges.erase(itmap++);
+      }
+      else 
+	itmap++;
+    }
+     
+    //if the loaded mesh already contains discrete Edges
+    //check if the candidate discrete Edge does contain any of those
+    //if not, create discreteEdges 
+    //create a map face2Edges that associate 
+    //for each face the boundary discrete Edges
+
+    if (initSizeEdges != 0 ){
+      //printf(" !!! discrete edges already exist \n");
+      std::vector<int> tagEdges;
+      for(int i = 0; i < myEdges.size(); i++){
+	for (int j=0; j<2; j++) {
+	  if (myEdges[i].getVertex(0)->onWhat()->dim() == 1) {
+	    int tagEdge = myEdges[i].getVertex(0)->onWhat()->tag();
+	    std::vector<int>::iterator itv = std::find(tagEdges.begin(), tagEdges.end(), tagEdge);
+	    if (itv == tagEdges.end()) tagEdges.push_back(tagEdge);
+	  }	  
+	}
+      }
+      for (std::vector<int>::iterator itFace = tagFaces.begin(); itFace != tagFaces.end(); itFace++) {
+	std::map<int, std::vector<int> >::iterator it = face2Edges.find(*itFace);
+	if (it == face2Edges.end())   {
+	  std::vector<int> allEdges; 
+	  allEdges.insert(allEdges.begin(), tagEdges.begin(), tagEdges.end());
+	  face2Edges.insert(std::make_pair(*itFace,allEdges));	 
+	}
+	else{
+	  std::vector<int> allEdges = it->second;
+	  allEdges.insert(allEdges.begin(), tagEdges.begin(), tagEdges.end());
+	  it->second = allEdges;
+	}
+	face2Edges.insert(std::make_pair(*itFace, tagEdges));
+      }
+    }
+    else{
+      discreteEdge *e = new discreteEdge(this, num, 0, 0);
+      add(e);
+      Dedges.push_back(e);
+      std::list<MVertex*> all_vertices;
+      for(int i = 0; i < myEdges.size(); i++) {
+	MVertex *v0 = myEdges[i].getVertex(0);
+	MVertex *v1 = myEdges[i].getVertex(1);
+	e->lines.push_back(new MLine( v0, v1));
+	if (std::find(all_vertices.begin(), all_vertices.end(), v0) == all_vertices.end()) all_vertices.push_back(v0);
+	if (std::find(all_vertices.begin(), all_vertices.end(), v1) == all_vertices.end()) all_vertices.push_back(v1);
+      }
+      e->mesh_vertices.insert(e->mesh_vertices.begin(), all_vertices.begin(), all_vertices.end());
+      
+      for (std::vector<int>::iterator itFace = tagFaces.begin(); itFace != tagFaces.end(); itFace++) {
+	GFace *dFace = getFaceByTag(abs(*itFace));
+	for (std::list<MVertex*>::iterator itv = all_vertices.begin(); itv != all_vertices.end(); itv++) {
+	  std::vector<MVertex*>::iterator itve = std::find(dFace->mesh_vertices.begin(), dFace->mesh_vertices.end(), *itv) ;
+	  if (itve != dFace->mesh_vertices.end()) dFace->mesh_vertices.erase(itve);
+	  (*itv)->setEntity(e);	  
+	}
+	
+	std::map<int, std::vector<int> >::iterator f2e = face2Edges.find(*itFace);
+	if (f2e == face2Edges.end()){
+	  std::vector<int> tagEdges; 
+	  tagEdges.push_back(num);
+	  face2Edges.insert(std::make_pair(*itFace,tagEdges));
+	}
+	else{
+	  std::vector<int> tagEdges = f2e->second;
+	  tagEdges.push_back(num);
+	  f2e->second = tagEdges;
+	}
+      }
+      num++;
+    }
+      
+  };
+
+  //set boundary edges for each face
+   for (std::vector<discreteFace*>::iterator face = Dfaces.begin(); face != Dfaces.end(); face++){
+    std::map<int, std::vector<int> >::iterator ite = face2Edges.find((*face)->tag());
+    std::vector<int> myEdges = ite->second;
+    (*face)->setBoundEdges(myEdges);
+  }
+
+
+  //For each discreteEdge, create Topology
+  //---------------------------------------
+
+  for (std::vector<discreteEdge*>::iterator edge = Dedges.begin(); edge != Dedges.end(); edge++){
+    
+    (*edge)->orderMLines();
+    (*edge)->setBoundVertices();
+    (*edge)->parametrize();
+
+  }
 }
+

@@ -47,7 +47,7 @@ class GModel
   // an octree for fast mesh element lookup
   Octree *_octree;
 
-  // geo model internal data
+  // Geo (Gmsh native) model internal data
   GEO_Internals *_geo_internals;
   void _createGEOInternals();
   void _deleteGEOInternals();
@@ -61,7 +61,7 @@ class GModel
   void _createFMInternals();
   void _deleteFMInternals();
  
-  // characteristic Lengths fields
+  // characteristic length (mesh size) fields
   FieldManager *_fields;
 
   // store the elements given in the map (indexed by elementary region
@@ -69,12 +69,12 @@ class GModel
   // the fly if needed
   void _storeElementsInEntities(std::map<int, std::vector<MElement*> > &map);
 
-  // loop over all vertices connected to elements and associate geo
-  // entity
+  // loop over all vertices connected to elements and associate
+  // geometrical entity
   void _associateEntityWithMeshVertices();
 
-  // store the vertices in the entity they are associated with, and
-  // delete those that are not associated with any geo entity
+  // store the vertices in the geometrical entity they are associated
+  // with, and delete those that are not associated with any entity
   void _storeVerticesInEntities(std::map<int, MVertex*> &vertices);
   void _storeVerticesInEntities(std::vector<MVertex*> &vertices);
 
@@ -86,14 +86,21 @@ class GModel
   static int _current;
 
  protected:
+  // the sets of geometrical regions, faces, edges and vertices in the
+  // model
   std::set<GRegion*, GEntityLessThan> regions;
   std::set<GFace*, GEntityLessThan> faces;
   std::set<GEdge*, GEntityLessThan> edges;
   std::set<GVertex*, GEntityLessThan> vertices;
-  std::set<int> meshPartitions;
-  std::map<int, std::string> physicalNames, elementaryNames;
-  int partitionSize[2];
 
+  // map between the pair <dimension, elementary or physical number>
+  // and an optional associated name
+  std::map<std::pair<int, int>, std::string> physicalNames, elementaryNames;
+
+  // the set of all used mesh partition numbers
+  std::set<int> meshPartitions;
+
+  int partitionSize[2];
   std::map<int, GEdge*> mesh2Topo;
 
  public:
@@ -107,7 +114,7 @@ class GModel
   // index >= 0
   static GModel *current(int index=-1);
 
-  // find the model by name
+  // find a model by name
   static GModel *findByName(std::string name);
 
   // delete everything in a GModel
@@ -122,7 +129,7 @@ class GModel
   OCC_Internals *getOCCInternals(){ return _occ_internals; }
   FM_Internals *getFMInternals() { return _fm_internals; }
 
-  // access characteristic length fields
+  // access characteristic length (mesh size) fields
   FieldManager *getFields(){ return _fields; }
 
   // get/set the model name
@@ -146,13 +153,13 @@ class GModel
   // quickly check if the model is empty (contains no entities)
   bool empty() const;
 
+  // region, face, edge and vertex iterators
   typedef std::set<GRegion*, GEntityLessThan>::iterator riter;
   typedef std::set<GFace*, GEntityLessThan>::iterator fiter;
   typedef std::set<GEdge*, GEntityLessThan>::iterator eiter;
   typedef std::set<GVertex*, GEntityLessThan>::iterator viter;
-  typedef std::map<int, std::string>::iterator piter;
 
-  // get an iterator initialized to the first/last entity in this model.
+  // get an iterator initialized to the first/last entity in this model
   riter firstRegion() { return regions.begin(); }
   fiter firstFace() { return faces.begin(); }
   eiter firstEdge() { return edges.begin(); }
@@ -197,6 +204,9 @@ class GModel
   // return the highest number associated with a physical entity
   int getMaxPhysicalNumber();
 
+  // elementary/physical name iterator
+  typedef std::map<std::pair<int, int>, std::string>::iterator piter;
+
   // get an iterator on the elementary/physical names
   piter firstPhysicalName() { return physicalNames.begin(); }
   piter lastPhysicalName() { return physicalNames.end(); }
@@ -206,11 +216,13 @@ class GModel
   // get the number of physical names
   int numPhysicalNames(){ return physicalNames.size(); }
 
-  // associate a name with a physical number (returns new id if number==0)
-  int setPhysicalName(std::string name, int number=0);
+  // associate a name with a physical entity of dimension "dim" and
+  // number "num" (returns a new number id if "num"==0)
+  int setPhysicalName(std::string name, int dim, int num=0);
 
-  // get the name (if any) of a given physical group
-  std::string getPhysicalName(int number);
+  // get the name (if any) of a given physical group of dimension
+  // "dim" and id number "num"
+  std::string getPhysicalName(int dim, int num);
 
   // set the selection flag on all entities
   void setSelection(int val);
@@ -228,7 +240,7 @@ class GModel
   // dimension and return the dimension
   int getNumMeshElements(unsigned c[4]);
 
-  // access a mesh element by coordinates
+  // access a mesh element by coordinates (using an octree search)
   MElement *getMeshElementByCoord(SPoint3 &p);
 
   // return the total number of vertices in the mesh
@@ -238,8 +250,8 @@ class GModel
   MVertex *getMeshVertexByTag(int n);
 
   // get all the mesh vertices associated with the physical group
-  // "number" of dimension "dim"
-  void getMeshVertices(int number, int dim, std::vector<MVertex*> &);
+  // of dimension "dim" and id number "num"
+  void getMeshVerticesForPhysicalGroup(int dim, int num, std::vector<MVertex*> &);
 
   // index all the (used) mesh vertices in a continuous sequence,
   // starting at 1
@@ -274,6 +286,9 @@ class GModel
   // remove duplicate mesh vertices
   int removeDuplicateMeshVertices(double tolerance);
 
+  // create topology from mesh
+  void createTopologyFromMesh();
+
   // a container for smooth normals
   smooth_normals *normals;
 
@@ -301,13 +316,10 @@ class GModel
   int writeMSH(const std::string &name, double version=1.0, bool binary=false,
                bool saveAll=false, bool saveParametric=false, double scalingFactor=1.0);
 
-  //Create topology from mesh
-  void createTopologyFromMSH();
-
-  // Mesh statistics (as Gmsh post-processing views)
+  // mesh statistics (saved as a Gmsh post-processing view)
   int writePOS(const std::string &name, bool printElementary,
                bool printElementNumber, bool printGamma, bool printEta, bool printRho,
-               bool printDisto,bool saveAll=false, double scalingFactor=1.0);
+               bool printDisto, bool saveAll=false, double scalingFactor=1.0);
 
   // Stereo lithography format
   int readSTL(const std::string &name, double tolerance=1.e-3);

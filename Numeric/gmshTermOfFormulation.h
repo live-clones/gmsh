@@ -110,7 +110,7 @@ class gmshNodalFemTerm : public gmshTermOfFormulation<scalar> {
   {
     std::vector<MVertex *> v;
     GModel *m = gmshTermOfFormulation<scalar>::_gm;
-    m->getMeshVertices(physical, dim, v);
+    m->getMeshVerticesForPhysicalGroup(dim, physical, v);
     for (unsigned int i = 0; i < v.size(); i++)
       lsys.fixVertex(v[i], comp, field, e(v[i]->x(), v[i]->y(), v[i]->z()));
   }

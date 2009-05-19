@@ -145,16 +145,16 @@ class solver{
     int dim = m->getNumRegions() ? 3 : 2;
     
     if(bc1 == "Dirichlet"){
-      m->getMeshVertices(surface1, dim-1, vertices);
+      m->getMeshVerticesForPhysicalGroup(dim - 1, surface1, vertices);
       for(unsigned int i = 0; i < vertices.size(); i++)
         myAssembler->fixVertex(vertices[i], 0, 1, value1);
     }
     if(bc2 == "Dirichlet"){
-      m->getMeshVertices(surface2, dim-1, vertices);
+      m->getMeshVerticesForPhysicalGroup(dim - 1, surface2, vertices);
       for(unsigned int i = 0; i < vertices.size(); i++)
         myAssembler->fixVertex(vertices[i], 0, 1, value2);
     }
-    m->getMeshVertices(volume, dim, vertices);
+    m->getMeshVerticesForPhysicalGroup(dim, volume, vertices);
     for(unsigned int i = 0; i < vertices.size(); i++)
       myAssembler->numberVertex(vertices[i], 0, 1);
 
@@ -177,7 +177,7 @@ PView *GMSH_FiniteElementPlugin::execute(PView *v)
   int dim = m->getNumRegions() ? 3 : 2;
 
   std::vector<MVertex*> vertices;
-  m->getMeshVertices(volume, dim, vertices);
+  m->getMeshVerticesForPhysicalGroup(dim, volume, vertices);
   std::map<int, std::vector<double> > data;
 
   if(equation == "Projection"){

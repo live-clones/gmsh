@@ -306,7 +306,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
       Msg::Error("Could not read info for MED family %d", i + 1);
     }
     else{
-      elementaryNames[-familyNum] = familyName;
+      elementaryNames[std::pair<int, int>(-1, -familyNum)] = familyName;
       if(numGroups > 0){
 	GEntity *ge; // family tags are unique (for all dimensions)
 	if((ge = getRegionByTag(-familyNum))){}
@@ -318,7 +318,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
 	    char tmp[MED_TAILLE_LNOM + 1];
 	    strncpy(tmp, &groupNames[j * MED_TAILLE_LNOM], MED_TAILLE_LNOM);
 	    tmp[MED_TAILLE_LNOM] = '\0';
-	    ge->physicals.push_back(setPhysicalName(tmp));
+	    ge->physicals.push_back(setPhysicalName(tmp, ge->dim()));
 	  }
 	}
       }
@@ -413,7 +413,8 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
 	std::string familyName = "F_" + fs.str();
 	std::string groupName;
 	for(unsigned j = 0; j < entities[i]->physicals.size(); j++){
-	  std::string tmp = getPhysicalName(entities[i]->physicals[j]);
+	  std::string tmp = getPhysicalName
+            (entities[i]->dim(), entities[i]->physicals[j]);
 	  if(tmp.empty()){ // create unique name
 	    std::ostringstream gs;
 	    gs << entities[i]->dim() << "D_" << entities[i]->physicals[j];

@@ -216,11 +216,12 @@ class writePhysicalGroupGEO {
   FILE *geo;
   int dim;
   bool printLabels;
-  std::map<int, std::string> &oldLabels, &newLabels;
+  std::map<int, std::string> &oldLabels;
+  std::map<std::pair<int, int>, std::string> &newLabels;
  public :
   writePhysicalGroupGEO(FILE *fp, int i, bool labels,
                         std::map<int, std::string> &o,
-                        std::map<int, std::string> &n)
+                        std::map<std::pair<int, int>, std::string> &n)
     : dim(i), printLabels(labels), oldLabels(o), newLabels(n)
   { 
     geo = fp ? fp : stdout; 
@@ -233,8 +234,8 @@ class writePhysicalGroupGEO {
         oldName = oldLabels[g.first];
         fprintf(geo, "%s = %d;\n", oldName.c_str(), g.first);
       }
-      else if(newLabels.count(g.first)) {
-        newName = newLabels[g.first];
+      else if(newLabels.count(std::pair<int, int>(dim, g.first))) {
+        newName = newLabels[std::pair<int, int>(dim, g.first)];
       }
     }
 

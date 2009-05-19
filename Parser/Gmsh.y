@@ -53,6 +53,7 @@ static std::vector<double> ViewCoord;
 static List_T *ViewValueList = 0;
 static int *ViewNumList = 0;
 static ExtrudeParams extr;
+static int curPhysDim = 0;
 static gmshSurface *myGmshSurface = 0;
 #define MAX_RECUR_LOOPS 100
 static int ImbricatedLoop = 0;
@@ -990,7 +991,8 @@ PhysicalId :
   | StringExpr
     { 
       $$ = GModel::current()->setPhysicalName
-	(std::string($1), ++GModel::current()->getGEOInternals()->MaxPhysicalNum);
+        (std::string($1), curPhysDim, 
+         ++GModel::current()->getGEOInternals()->MaxPhysicalNum);
       Free($1);
     }
 ;
@@ -1049,19 +1051,23 @@ Shape :
       $$.Type = MSH_POINT;
       $$.Num = num;
     }
-  | tPhysical tPoint '(' PhysicalId ')' tAFFECT ListOfDouble tEND
+  | tPhysical tPoint 
     {
-      int num = (int)$4;
+      curPhysDim = 0;
+    }
+    '(' PhysicalId ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$5;
       if(FindPhysicalGroup(num, MSH_PHYSICAL_POINT)){
 	yymsg(0, "Physical point %d already exists", num);
       }
       else{
-	List_T *temp = ListOfDouble2ListOfInt($7);
+	List_T *temp = ListOfDouble2ListOfInt($8);
 	PhysicalGroup *p = Create_PhysicalGroup(num, MSH_PHYSICAL_POINT, temp);
 	List_Delete(temp);
 	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
       }
-      List_Delete($7);
+      List_Delete($8);
       $$.Type = MSH_PHYSICAL_POINT;
       $$.Num = num;
     }
@@ -1282,19 +1288,23 @@ Shape :
       $$.Type = MSH_SEGM_LOOP;
       $$.Num = num;
     }
-  | tPhysical tLine '(' PhysicalId ')' tAFFECT ListOfDouble tEND
+  | tPhysical tLine 
     {
-      int num = (int)$4;
+      curPhysDim = 1;
+    }
+    '(' PhysicalId ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$5;
       if(FindPhysicalGroup(num, MSH_PHYSICAL_LINE)){
 	yymsg(0, "Physical line %d already exists", num);
       }
       else{
-	List_T *temp = ListOfDouble2ListOfInt($7);
+	List_T *temp = ListOfDouble2ListOfInt($8);
 	PhysicalGroup *p = Create_PhysicalGroup(num, MSH_PHYSICAL_LINE, temp);
 	List_Delete(temp);
 	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
       }
-      List_Delete($7);
+      List_Delete($8);
       $$.Type = MSH_PHYSICAL_LINE;
       $$.Num = num;
     }
@@ -1443,19 +1453,23 @@ Shape :
       $$.Type = MSH_SURF_LOOP;
       $$.Num = num;
     }
-  | tPhysical tSurface '(' PhysicalId ')' tAFFECT ListOfDouble tEND
+  | tPhysical tSurface 
     {
-      int num = (int)$4;
+      curPhysDim = 2;
+    }
+    '(' PhysicalId ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$5;
       if(FindPhysicalGroup(num, MSH_PHYSICAL_SURFACE)){
 	yymsg(0, "Physical surface %d already exists", num);
       }
       else{
-	List_T *temp = ListOfDouble2ListOfInt($7);
+	List_T *temp = ListOfDouble2ListOfInt($8);
 	PhysicalGroup *p = Create_PhysicalGroup(num, MSH_PHYSICAL_SURFACE, temp);
 	List_Delete(temp);
 	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
       }
-      List_Delete($7);
+      List_Delete($8);
       $$.Type = MSH_PHYSICAL_SURFACE;
       $$.Num = num;
     }
@@ -1542,19 +1556,23 @@ Shape :
       $$.Type = MSH_VOLUME;
       $$.Num = num;
     }
-  | tPhysical tVolume '(' PhysicalId ')' tAFFECT ListOfDouble tEND
+  | tPhysical tVolume 
     {
-      int num = (int)$4;
+      curPhysDim = 3;
+    }
+    '(' PhysicalId ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$5;
       if(FindPhysicalGroup(num, MSH_PHYSICAL_VOLUME)){
 	yymsg(0, "Physical volume %d already exists", num);
       }
       else{
-	List_T *temp = ListOfDouble2ListOfInt($7);
+	List_T *temp = ListOfDouble2ListOfInt($8);
 	PhysicalGroup *p = Create_PhysicalGroup(num, MSH_PHYSICAL_VOLUME, temp);
 	List_Delete(temp);
 	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
       }
-      List_Delete($7);
+      List_Delete($8);
       $$.Type = MSH_PHYSICAL_VOLUME;
       $$.Num = num;
     }
@@ -2009,7 +2027,7 @@ Command :
     }
    | tCreateTopology tEND
     {
-       GModel::current()->createTopologyFromMSH();
+       GModel::current()->createTopologyFromMesh();
     }
 ;
 
