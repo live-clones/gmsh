@@ -22,9 +22,11 @@ discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
   meshStatistics.status = GFace::DONE;    
 }
 
+
 void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge > &map_edges)
 {
   //find the boundary edges
+
   std::list<MEdge> bound_edges;
   for (int iFace = 0; iFace  < getNumMeshElements() ; iFace++) {
     std::vector<MVertex*> fv;
@@ -62,16 +64,6 @@ void discreteFace::setBoundEdges(std::vector<int> tagEdges)
 {
 
   // printf("***** In discrete Face:  \n");
-
-  
-//   for(GModel::eiter it = model()->firstEdge(); it != model()->lastEdge(); ++it){
-// //   for (std::vector<discreteEdge*>::iterator it = bound_edges.begin(); it != bound_edges.end(); it++) {
-//     l_edges.push_back(*it);
-//     l_dirs.push_back(1);
-//     (*it)->addFace(this);
-//     printf("add Face %d for edge %d\n",this->tag(), (*it)->tag() );
-//   }
-
 
  for (std::vector<int>::iterator it = tagEdges.begin(); it != tagEdges.end(); it++) {
    GEdge *ge = GModel::current()->getEdgeByTag(abs(*it));

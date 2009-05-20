@@ -146,10 +146,9 @@ void discreteEdge::setBoundVertices()
     for (std::map<MVertex*,MLine*>::const_iterator iter = boundv.begin(); iter != boundv.end(); iter++){
       MVertex* vE = (iter)->first;
       bool existVertex  = false;
-      //for (std::vector<discreteVertex*>::iterator point = vertices.begin(); point != vertices.end(); point++) {
       for(GModel::viter point = model()->firstVertex(); point != model()->lastVertex(); point++){
-	//printf("Discrete point =%d bound vE=%d\n", (*point)->tag(), vE->getNum());
-	if ((*point)->tag() == vE->getNum()){
+	//printf("Discrete point =%d %d  bound vE=%d %d\n",(*point)->tag(), (*point)->mesh_vertices[0]->getNum(), vE->getNum(), vE->getIndex());
+	if ((*point)->mesh_vertices[0]->getNum() == vE->getNum()){
 	  bound_vertices.push_back((*point));
 	  existVertex = true;
 	  break;
@@ -174,7 +173,7 @@ void discreteEdge::setBoundVertices()
     v1 = bound_vertices[1];
   }
   else if (boundv.size()==0){ 
-    //printf("Found a closed Curve \n");
+    //printf("Found a closed Curve add vertex \n");
 
     std::vector<MLine*>::const_iterator it = lines.begin();
     MVertex* vE = (*it)->getVertex(0);

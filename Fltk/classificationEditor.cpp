@@ -58,7 +58,7 @@ static void class_selectgface_cb(Fl_Widget *w, void *data)
     Draw();
 
     Msg::StatusBar(3, false, "Select Model Face\n"
-        "[Press 'e' to end selection or 'q' to abort]");
+		   "[Press 'e' to end selection or 'q' to abort]");
     
     char ib = GUI::instance()->selectEntity(ENT_SURFACE);
     if(ib == 'l') {
@@ -98,7 +98,7 @@ static void class_deleteedge_cb(Fl_Widget *w, void *data)
     Draw();
 
     Msg::StatusBar(3, false, "Select Elements\n"
-        "[Press 'e' to end selection or 'q' to abort]");
+		   "[Press 'e' to end selection or 'q' to abort]");
     
     char ib = GUI::instance()->selectEntity(ENT_ALL);
     if(ib == 'l') {
@@ -275,6 +275,7 @@ static GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
     newEdges.find(std::make_pair<int, int>(i1, i2));
   if(it == newEdges.end()){
     discreteEdge *temporary = new discreteEdge(GModel::current(), maxEdgeNum() + 1, 0, 0);
+    printf("add new edge gf1=%d gf2=%d \n", t1, t2);
     GModel::current()->add(temporary);
     newEdges[std::make_pair<int, int>(i1, i2)] = temporary;
     return temporary;
@@ -290,6 +291,7 @@ static void recurClassifyEdges(MTri3 *t,
                                std::map<std::pair<int, int>, GEdge*> &newEdges)
 {
   if(!t->isDeleted()){
+
     t->setDeleted(true);
     GFace *gf1 = reverse[t->tri()];
     for(int i = 0; i < 3; i++){
@@ -310,6 +312,7 @@ static void recurClassifyEdges(MTri3 *t,
       if(tn)
         recurClassifyEdges(tn, reverse, lines, touched, newEdges);
     }
+
   }
 }
 
@@ -367,10 +370,96 @@ static void class_color_cb(Fl_Widget* w, void* data)
     
     it = tris.begin();
     
+    //classify edges that are bound by different GFaces
+    //--------------------------------------------------
     std::map<std::pair<int, int>, GEdge*> newEdges;
     std::set<MLine*> touched;
     recurClassifyEdges(*it, reverse, lines, touched, newEdges);
     GModel::current()->remove(e->saved);
+
+    //check if new edges should not be splitted 
+    //splitted if composed of several open or closed edges
+    //-----------------------------------------------------
+    for (std::map<std::pair<int, int>, GEdge*>::iterator it = newEdges.begin() ; it != newEdges.end() ; ++it){
+
+      GEdge *ge = it->second;
+      printf("new edge with tag %d \n", ge->tag());
+
+      std::list<MLine*> segments;
+      for (int i=0; i < ge->lines.size(); i++){
+	segments.push_back(ge->lines[i]);
+      }
+
+      //for each actual GEdge
+      while (! segments.empty()) {
+	std::vector<MLine*> myLines;
+	std::list<MLine*>::iterator it = segments.begin();
+
+	MVertex *vB = (*it)->getVertex(0);
+	MVertex *vE = (*it)->getVertex(1);
+	myLines.push_back(*it);
+	segments.erase(it);
+	it++;
+
+	//printf("***candidate mline %d %d of size \n", vB->getNum(), vE->getNum(), segments.size());
+
+   	for (int i=0; i<2; i++) {
+
+	  bool found = false;
+	  for (std::list<MLine*>::iterator it = segments.begin() ; it != segments.end(); ++it){	
+	    MVertex *v1 = (*it)->getVertex(0);
+	    MVertex *v2 = (*it)->getVertex(1);
+	    //printf("mline %d %d \n", v1->getNum(), v2->getNum());
+
+	    if ( v1 == vE  ){
+	      //printf("->push back this mline \n");
+	      myLines.push_back(*it);
+	      segments.erase(it);
+	      vE = v2;
+	      i = -1;
+	    }
+	    else if ( v2 == vE){
+	      //printf("->push back this mline \n");
+	      myLines.push_back(*it);
+	      segments.erase(it);
+	      vE = v1;
+	      i=-1;
+	    }
+	  }
+
+	  if (vB == vE) break;
+
+	  if (segments.empty()) break;
+
+	  //printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
+	  MVertex *temp = vB;
+	  vB = vE;
+	  vE = temp;
+	  //printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
+
+	}
+	
+// 	printf("************ CANDIDATE NEW EDGE \n");
+// 	for (std::vector<MLine*>::iterator it = myLines.begin() ; it != myLines.end() ; ++it){
+// 	  MVertex *v1 = (*it)->getVertex(0);
+// 	  MVertex *v2 = (*it)->getVertex(1);
+// 	  printf("Line %d %d \n", v1->getNum(), v2->getNum());
+// 	}
+	GEdge *newGe = new discreteEdge(GModel::current(), maxEdgeNum() + 1, 0, 0);
+	newGe->lines.insert(newGe->lines.end(), myLines.begin(), myLines.end());
+	GModel::current()->add(newGe);
+	//printf("create new edge with tag =%d\n", maxEdgeNum());
+	
+      }//end for each actual GEdge
+  
+    }
+
+    for (std::map<std::pair<int, int>, GEdge*>::iterator it = newEdges.begin() ; it != newEdges.end() ; ++it){
+      GEdge *ge = it->second;
+      GModel::current()->remove(ge);
+    }
+
+
 
     while(it != tris.end()){
       delete *it;
@@ -451,7 +540,7 @@ static void class_select_cb(Fl_Widget *w, void *data)
     Draw();
 
     Msg::StatusBar(3, false, "Select Elements\n"
-        "[Press 'e' to end selection or 'q' to abort]");
+		   "[Press 'e' to end selection or 'q' to abort]");
     
     char ib = GUI::instance()->selectEntity(ENT_ALL);
     if(ib == 'l') {

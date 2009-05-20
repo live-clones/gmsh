@@ -113,6 +113,7 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
   if(part) m->getMeshPartitions().insert(part);
 }
 
+
 int GModel::readMSH(const std::string &name)
 {
   FILE *fp = fopen(name.c_str(), "rb");

@@ -92,22 +92,26 @@ void GFaceCompound::parametrize() const
 
 void GFaceCompound::getBoundingEdges()
 {
-  //printf("***** In GFaceCompound: size U0=%d, v0=%d\n ", _U0.size(), _V0.size());
+  printf("***** In GFaceCompound: size U0=%d, v0=%d\n ", _U0.size(), _V0.size());
 
+  //in case the bounding edges are explicitely given
   if (_U0.size()){
     std::list<GEdge*> :: const_iterator it = _U0.begin();
     for ( ; it != _U0.end() ; ++it){
       l_edges.push_back(*it);
+      //printf("U0 for edge %d, add face %d \n", (*it)->tag(), this->tag());
       (*it)->addFace(this);
     }
     it = _V0.begin();
     for ( ; it != _V0.end() ; ++it){
       l_edges.push_back(*it);
+      //printf("V0 for edge %d, add face %d \n", (*it)->tag(), this->tag());
       (*it)->addFace(this);
     }
     return;
   }
 
+  // in case the bounding edges are not given Boundary { {} };
   std::set<GEdge*> _unique;
   std::multiset<GEdge*> _touched;
   std::list<GFace*>::iterator it = _compound.begin();
@@ -124,8 +128,7 @@ void GFaceCompound::getBoundingEdges()
     std::list<GEdge*> :: iterator ite = ed.begin();
     for ( ; ite != ed.end() ; ++ite){
       if (!(*ite)->degenerate(0) && _touched.count(*ite) == 1) {	
-	_unique.insert(*ite);
-      }
+	_unique.insert(*ite);      }
     }    
   }    
 
@@ -136,7 +139,34 @@ void GFaceCompound::getBoundingEdges()
     (*itf)->addFace(this);
   }
 
-  _U0 = l_edges;
+  //find a closed loop for assigning boundary conditions
+  std::list<GEdge*> _loop;
+  std::map<GVertex*,GEdge*> tempv;
+  std::set<GEdge*>::iterator its = _unique.begin();
+  GVertex *vB = (*its)->getBeginVertex();
+  GVertex *v = (*its)->getEndVertex();
+  _loop.push_back(*its);
+  printf("boundary add edge=%d \n", (*its)->tag());
+  //printf("edge=%d  vB=%d v =%d\n", (*its)->tag(), vB->tag(), v->tag());
+  its++;
+  for ( ; its != _unique.end() ; ++its){
+    GVertex *v1 = (*its)->getBeginVertex();
+    GVertex *v2 = (*its)->getEndVertex();
+    if (v1 == v) {
+      printf("boundary add edge=%d \n", (*its)->tag());
+      _loop.push_back(*its);
+      v = v2;
+    }
+    else if (v2 == v) {
+      printf("boundaryn add edge=%d \n", (*its)->tag());
+      _loop.push_back(*its);
+      v = v1;
+    }
+    if (v == vB) break;
+  }
+ 
+  _U0 = _loop;
+
 }
 
 GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
@@ -148,6 +178,11 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   if (!_U0.size()) _type = UNITCIRCLE;
   else if (!_V1.size()) _type = UNITCIRCLE;
   else _type = SQUARE;
+
+  for (std::list<GFace*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
+    if (!(*it)) Msg::Error("Incorrect face in compound surface %d\n", tag);
+  }
+
 }
 
 GFaceCompound::~GFaceCompound()
