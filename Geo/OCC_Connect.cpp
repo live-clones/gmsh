@@ -56,12 +56,6 @@
 #include <BRepBuilderAPI_Transform.hxx>
 
 
-template <typename T>
-T max(T const &a, T const &b)
-{
-    return a<b? b:a;
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 // Printing routines
 ////////////////////////////////////////////////////////////////////////////////
@@ -150,7 +144,7 @@ int OCC_Connect::SaveBRep(char const *name)
 	p.RemoveFirst()
     )
 	BB.Add(compound,p.First());
-    BRepTools::Write(compound,name);
+    BRepTools::Write(compound, (char*)name);
 }
 
 void OCC_Connect::Dump(ostream &out) const
@@ -600,8 +594,8 @@ void OCC_Connect::Intersect(BRep_Builder &BB, TopoDS_Shape &target,
             BRepExtrema_ExtPC distance(vertex,edge);
             if(!distance.IsDone())
                 continue;
-            double tolerance=max(BRep_Tool::Tolerance(edge),
-                BRep_Tool::Tolerance(vertex));
+            double tolerance=std::max(BRep_Tool::Tolerance(edge),
+				      BRep_Tool::Tolerance(vertex));
             for(int i=1;i<=distance.NbExt();i++) {
                 if(distance.Value(i)<tolerance) {
                     try {
@@ -652,8 +646,8 @@ void OCC_Connect::Intersect(BRep_Builder &BB, TopoDS_Shape &target,
             BRepExtrema_ExtPC distance(vertex,edge);
             if(!distance.IsDone())
                 continue;
-            double tolerance=max(BRep_Tool::Tolerance(edge),
-                BRep_Tool::Tolerance(vertex));
+            double tolerance=std::max(BRep_Tool::Tolerance(edge),
+				      BRep_Tool::Tolerance(vertex));
             for(int i=1;i<=distance.NbExt();i++) {
                 if(distance.Value(i)<tolerance) {
                     try {
