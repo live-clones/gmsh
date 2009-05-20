@@ -45,6 +45,7 @@ static void ElementsSelectedMode(classificationEditor *e)
   e->_togbuttons[CLASSTOGBUTTON_HIDE]->deactivate(); 
 }
 
+// we should 
 static void class_selectgface_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor*)data;
@@ -337,6 +338,9 @@ static void class_color_cb(Fl_Widget* w, void* data)
       ++it;
     }
   }
+
+  if ( !tris.size() )return;
+
 
   connectTriangles(tris);
 
