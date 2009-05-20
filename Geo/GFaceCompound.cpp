@@ -174,14 +174,20 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 			     std::list<GEdge*> &U1, std::list<GEdge*> &V1)
   : GFace(m, tag), _compound(compound), _U0(U0), _U1(U1), _V0(V0), _V1(V1), oct(0)
 {
+
+  for (std::list<GFace*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
+    if (!(*it)){
+      Msg::Error("Incorrect face in compound surface %d\n", tag);
+      Msg::Exit(1);
+    }
+  }
+
   getBoundingEdges();
   if (!_U0.size()) _type = UNITCIRCLE;
   else if (!_V1.size()) _type = UNITCIRCLE;
   else _type = SQUARE;
 
-  for (std::list<GFace*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
-    if (!(*it)) Msg::Error("Incorrect face in compound surface %d\n", tag);
-  }
+
 
 }
 
@@ -307,16 +313,16 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
 	vR = ge->mesh_vertices[j];
 	vR->getParameter(0,tR);
 	if (!vR->getParameter(0,tR)) {
-	  printf("vertex vr %p not medgevertex \n", vR);
-	  exit(1);
+	  Msg::Error("vertex vr %p not medgevertex \n", vR);
+	  Msg::Exit(1);
 	}
 	//printf("***tLoc=%g tL=%g, tR=%g L=%p (%g,%g,%g) et R= %p (%g,%g,%g)\n", tLoc, tL, tR, vL, vL->x(),vL->y(),vL->z(),vR, vR->x(), vR->y(), vR->z());
 	if (tLoc >= tL && tLoc <= tR){
 	  found = true;
 	  itR = coordinates.find(vR);
 	  if (itR == coordinates.end()){
-	    printf("vertex %p (%g %g %g) not found\n", vR, vR->x(), vR->y(), vR->z());
-	    exit(1);
+	    Msg::Error("vertex %p (%g %g %g) not found\n", vR, vR->x(), vR->y(), vR->z());
+	    Msg::Exit(1);
 	  }
 	  break;
 	}

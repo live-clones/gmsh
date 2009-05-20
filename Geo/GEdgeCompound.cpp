@@ -15,6 +15,14 @@
 GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound)
   : GEdge(m, tag, 0 , 0), _compound(compound)
 {
+
+  for (std::vector<GEdge*>::iterator it = compound.begin(); it != compound.end(); ++it){
+    if (!(*it)) {
+      Msg::Error("Incorrect edge in compound line %d\n", tag);
+      Msg::Exit(1);
+    }
+  }
+
   orderEdges ();
   int N = _compound.size();
   v0 = _orientation[0] ?   _compound[0]->getBeginVertex() :     _compound[0]->getEndVertex();
@@ -75,7 +83,7 @@ void GEdgeCompound::orderEdges()
     }
   else{
     Msg::Error("EdgeCompound %d is wrong (it has %d end points)",tag(),tempv.size());
-    exit(1);
+    Msg::Exit(1);
   }
 
   //loop over all segments to order segments and store it in the list _c

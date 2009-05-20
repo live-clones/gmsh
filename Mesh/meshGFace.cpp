@@ -378,7 +378,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
   std::list<GEdge*> edges = gf->edges();
 
   // here, we will replace edges by their compounds
-  //printf("***** In meshGFace: \n");
+  printf("***** In meshGFace: \n");
   if (gf->geomType() == GEntity::CompoundSurface){
     //printf("replace edges by compound lines \n");
     std::set<GEdge*> mySet;
@@ -448,7 +448,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
   double *V_ = new double[all_vertices.size()];
 
   v_container::iterator itv = all_vertices.begin();
-  //printf("boundary vertices size = %d \n", all_vertices.size());
+  printf("boundary vertices size = %d \n", all_vertices.size());
 
   int count = 0;
   SBoundingBox3d bbox;
@@ -458,7 +458,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
     reparamMeshVertexOnFace(here, gf, param);
     U_[count] = param[0];
     V_[count] = param[1];
-    //printf("-->> meshGFace : %g %g -> u,v  = %g %g\n",here->x(),here->y(),param.x(),param.y());
+    //printf("-->> meshGFace : %g %g -> u,v  = %g %g\n",here->x(),here->y(), param.x(),param.y() );
     (*itv)->setIndex(count);
     numbered_vertices[(*itv)->getIndex()] = *itv;
     bbox += SPoint3(param.x(), param.y(), 0);
@@ -539,7 +539,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
       }      
       m->add_point(num, U, V, gf);
     }
-    
+ 
     
     for(int i = 0; i < doc.numTriangles; i++) {
       MVertex *V1 = (MVertex*)doc.points[doc.triangles[i].a].data;
@@ -548,10 +548,9 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
       m->add_triangle(V1->getIndex(), V2->getIndex(), V3->getIndex());
     }
 
-
     // Recover the boundary edges and compute characteristic lenghts
     // using mesh edge spacing
-    if(debug && RECUR_ITER == 0){
+    if( debug && RECUR_ITER == 0){
       char name[245];
       sprintf(name, "surface%d-initial-real.pos", gf->tag());
       outputScalarField(m->triangles, name, 0);
@@ -632,11 +631,12 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
 	return gmsh2DMeshGenerator(gf, RECUR_ITER+1,   repairSelfIntersecting1dMesh, debug);
       return false;
     }
+
     if(RECUR_ITER > 0)
-      Msg::Warning(":-) Gmsh was able to recover all edges after %d iterations",
-		   RECUR_ITER);
+      Msg::Warning(":-) Gmsh was able to recover all edges after %d iterations", RECUR_ITER);
     
-    //  Msg::Info("Boundary Edges recovered for surface %d", gf->tag());
+    Msg::Info("Boundary Edges recovered for surface %d", gf->tag());
+     
     // Look for an edge that is on the boundary for which one of the two
     // neighbors has a negative number node. The other triangle is
     // inside the domain and, because all edges were recovered,
@@ -669,7 +669,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
       ++it;
     }
     // compute characteristic lengths at vertices    
-    Msg::Debug("Computing mesh size field at mesh vertices", edgesToRecover.size());
+    Msg::Debug("Computing mesh size field at mesh vertices %d", edgesToRecover.size());
     for(int i = 0; i < doc.numPoints; i++){
       MVertex *here = (MVertex *)doc.points[i].data;
       int num = here->getIndex();
@@ -730,15 +730,15 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
   }
 
   int nb_swap;
-  // outputScalarField(m->triangles, "beforeswop.pos",1);
+  //outputScalarField(m->triangles, "beforeswop.pos",1);
   Msg::Debug("Delaunizing the initial mesh");
   gmshDelaunayizeBDS(gf, *m, nb_swap);
-  // outputScalarField(m->triangles, "afterswop.pos",0)
+  //outputScalarField(m->triangles, "afterswop.pos",0);
   Msg::Debug("Starting to add internal points");
 
   // start mesh generation
   if(!AlgoDelaunay2D(gf)){
-    gmshRefineMeshBDS (gf,*m, CTX::instance()->mesh.refineSteps, true);
+    gmshRefineMeshBDS(gf,*m, CTX::instance()->mesh.refineSteps, true);
     gmshOptimizeMeshBDS(gf, *m, 2);
     gmshRefineMeshBDS (gf,*m, CTX::instance()->mesh.refineSteps, false);
     gmshOptimizeMeshBDS(gf, *m, 2);
@@ -789,7 +789,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
   // BDS mesh is passed in order not to recompute local coordinates of
   // vertices
   if(AlgoDelaunay2D(gf)){
-    if (CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
+     if (CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
       gmshBowyerWatsonFrontal(gf);
     else
       gmshBowyerWatson(gf);

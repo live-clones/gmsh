@@ -449,9 +449,9 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
     if (!e->deleted){
       const double coord = 0.5;
       BDS_Point *mid ;
-      mid  = m.add_point(++m.MAXPOINTNUMBER,
-                         coord * e->p1->u + (1 - coord) * e->p2->u,
-                         coord * e->p1->v + (1 - coord) * e->p2->v,gf);
+      double U = coord * e->p1->u + (1 - coord) * e->p2->u;
+      double V = coord * e->p1->v + (1 - coord) * e->p2->v;
+      mid  = m.add_point(++m.MAXPOINTNUMBER, U , V, gf);
       mid->lcBGM() = BGM_MeshSize
         (gf,
          (coord * e->p1->u + (1 - coord) * e->p2->u)*m.scalingU,
@@ -534,10 +534,10 @@ void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q)
 void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT, 
                        const bool computeNodalSizeField)
 {
+
   int IT = 0;
   
   int MAXNP = m.MAXPOINTNUMBER;
-
 
   // classify correctly the embedded vertices
   // use a negative model face number to avoid
@@ -553,6 +553,7 @@ void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     p->lcBGM() = (*itvx)->prescribedMeshSizeAtVertex();
     ++itvx;
   }
+ 
 
   // IF ASKED , compute nodal size field using 1D Mesh
   if (computeNodalSizeField){
@@ -597,6 +598,7 @@ void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     int NN1 = m.edges.size();
     int NN2 = 0;
     std::list<BDS_Edge*>::iterator it = m.edges.begin();
+
     while (1){
       if (NN2++ >= NN1)break;
       if (!(*it)->deleted){
@@ -608,6 +610,8 @@ void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
       }
       ++it;
     }
+
+     
     if ((minL > MINE_ && maxL < MAXE_) || IT > (abs(NIT))) break;
     double maxE = MAXE_;
     double minE = MINE_;
@@ -623,7 +627,7 @@ void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     double t5 = Cpu();
     smoothVertexPass(gf, m, nb_smooth, false);
     double t6 = Cpu();
-    // swapEdgePass ( gf, m, nb_swap);
+    swapEdgePass ( gf, m, nb_swap);
     double t7 = Cpu();
     // clean up the mesh
     t_spl += t2 - t1;
@@ -632,13 +636,16 @@ void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     t_sw  += t7 - t6;
     t_col += t4 - t3;
     t_sm  += t6 - t5;
-    m.cleanup();        
+    m.cleanup();    
+
     IT++;
     Msg::Debug(" iter %3d minL %8.3f/%8.3f maxL %8.3f/%8.3f : "
         "%6d splits, %6d swaps, %6d collapses, %6d moves",
         IT, minL, minE, maxL, maxE, nb_split, nb_swap, nb_collaps, nb_smooth);
     if (nb_split == 0 && nb_collaps == 0) break;
+
   }  
+
   
   double t_total = t_spl + t_sw + t_col + t_sm;
   if(!t_total) t_total = 1.e-6;
