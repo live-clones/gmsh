@@ -155,8 +155,14 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin, double ymin
 static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin, 
                            double width, double height, double tic, int horizontal)
 {
-  PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
+  PViewData *data;
+  
+  // requested by Laurent: but is this really what we should be doing?
+  if(opt->externalViewIndex >= 0 && opt->externalViewIndex < PView::list.size())
+    data = PView::list[opt->externalViewIndex]->getData();
+  else
+    data = p->getData();
 
   gl_font(CTX::instance()->glFontEnum, CTX::instance()->glFontSize);
   double font_h = gl_height();

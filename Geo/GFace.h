@@ -39,18 +39,14 @@ class GRegion;
 class GFace : public GEntity
 {
  protected:
-  // edge loops will replace what follows (list of al the edges of the
-  // face + directions)
+  // edge loops might replace what follows (list of all the edges of
+  // the face + directions)
   std::list<GEdge *> l_edges;
   std::list<int> l_dirs;
   GRegion *r1, *r2;
   mean_plane meanPlane;
-  std::list<GEdge *> embedded_edges;
-  std::list<GVertex *> embedded_vertices;
-  // given a list of GEdges, the function builds a list of wires,
-  // i.e. closed edge loops.  the first wire is the one that is the
-  // outer contour of the face.
-  void resolveWires();
+  std::list<GEdge*> embedded_edges;
+  std::list<GVertex*> embedded_vertices;
 
  public: // this will become protected or private
   std::list<GEdgeLoop> edgeLoops;

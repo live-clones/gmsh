@@ -552,8 +552,8 @@ as a library.
 You can skip most of this reference manual if you only want to use Gmsh
 at the first level (i.e., interactively with the GUI). Just read the
 next chapter (@pxref{Running Gmsh on your system}) to learn how to
-launch Gmsh on your system, then go play with the GUI and run the
-tutorial files (@pxref{Tutorial}) bundled in the distribution.
+launch Gmsh on your system, then go experiment with the GUI and the
+tutorial files (@pxref{Tutorial}) provided in the distribution.
 Screencasts that show how to use the GUI are available here:
 @uref{http://www.geuz.org/gmsh/screencasts/}.
 
