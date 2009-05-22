@@ -1931,10 +1931,17 @@ std::string opt_view_name(OPT_ARGS_STR)
   if(action & GMSH_SET) {
     data->setName(val);
 #if defined(HAVE_FLTK)
-    if(GUI::available() && num >= 0 && 
-       num < (int)GUI::instance()->menu->toggle.size()) {
-      GUI::instance()->menu->toggle[num]->copy_label(data->getName().c_str());
-      GUI::instance()->menu->toggle[num]->redraw();
+    // change name in GUI for the view and its aliases
+    if(GUI::available()){
+      for(unsigned int i = 0; i < PView::list.size(); i++){
+        if((i == num || 
+            PView::list[i]->getAliasOf() == view->getNum() ||
+            PView::list[i]->getNum() == view->getAliasOf()) && 
+           i < (int)GUI::instance()->menu->toggle.size()) {
+          GUI::instance()->menu->toggle[i]->copy_label(data->getName().c_str());
+          GUI::instance()->menu->toggle[i]->redraw();
+        }
+      }
     }
 #endif
   }
