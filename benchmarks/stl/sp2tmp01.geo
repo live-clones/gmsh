@@ -1,3 +1,4 @@
+Mesh.CharacteristicLengthFactor = 0.1;
 
 Merge "sp2tmp01_1.stl";
 Merge "sp2tmp01_2.stl";

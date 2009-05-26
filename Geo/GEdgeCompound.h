@@ -30,7 +30,7 @@ public:
   Range<double> parBounds(int i) const;
   virtual GPoint point(double par) const; 
   virtual SVector3 firstDer(double par) const; 
-  virtual GEntity::GeomType geomType() const { return CompoundCurve; }
+  virtual GEntity::GeomType geomType() const { return CompoundCurve;  }
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return 0; }
   virtual double curvature(double t) const;

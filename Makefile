@@ -20,7 +20,7 @@ GMSH_DATE = `date "+%Y%m%d"`
 
 GMSH_API =\
   Geo/GModel.h Geo/GEntity.h Geo/GPoint.h Geo/GVertex.h Geo/GEdge.h Geo/GFace.h\
-  Geo/GRegion.h Geo/GEdgeLoop.h Geo/GFaceCompound.h\
+  Geo/GRegion.h Geo/GEdgeLoop.h Geo/GFaceCompound.h Geo/GRegionCompound.h\
   Geo/MVertex.h Geo/MEdge.h Geo/MFace.h Geo/MElement.h\
   Geo/MPoint.h Geo/MLine.h Geo/MTriangle.h Geo/MQuadrangle.h\
   Geo/MTetrahedron.h Geo/MHexahedron.h Geo/MPrism.h Geo/MPyramid.h\

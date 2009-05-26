@@ -15,6 +15,7 @@
 #include "gmshFace.h"
 #include "GFaceCompound.h"
 #include "GEdgeCompound.h"
+#include "GRegionCompound.h"
 #include "gmshEdge.h"
 #include "gmshRegion.h"
 #include "Field.h"
@@ -114,8 +115,9 @@ int GModel::importGEOInternals()
   for(int i = 0; i < List_Nbr(_geo_internals->PhysicalGroups); i++){
     PhysicalGroup *p;
     List_Read(_geo_internals->PhysicalGroups, i, &p);
-    std::list<GFace*>f_compound;
     std::vector<GEdge*>e_compound;
+    std::list<GFace*>f_compound;
+    std::vector<GRegion*>r_compound;
     for(int j = 0; j < List_Nbr(p->Entities); j++){
       int num;
       List_Read(p->Entities, j, &num);
@@ -130,7 +132,10 @@ int GModel::importGEOInternals()
 	ge = getFaceByTag(abs(num));
 	f_compound.push_back(getFaceByTag(abs(num))); 
 	break;
-      case MSH_PHYSICAL_VOLUME:  ge = getRegionByTag(abs(num)); break;
+      case MSH_PHYSICAL_VOLUME:  
+	ge = getRegionByTag(abs(num)); 
+	r_compound.push_back(getRegionByTag(abs(num))); 
+	break;
       }
       int pnum = sign(num) * p->Num;
       if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) == 
@@ -172,7 +177,17 @@ int GModel::importGEOInternals()
       }
       else
         gf->resetMeshAttributes();
-    }      
+    }   
+    if (p->Typ == MSH_PHYSICAL_VOLUME && p->Boundaries[0]){
+      GRegion *gr = getRegionByTag(abs(p->Num));
+      if (!gr){
+	GRegionCompound *gr = new GRegionCompound(this, p->Num, r_compound);
+	add(gr);
+      }
+      else
+        gr->resetMeshAttributes();
+    }
+   
   }
 
   Msg::Debug("Gmsh model imported:");

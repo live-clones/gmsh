@@ -20,6 +20,7 @@ class MElement;
 class MTriangle;
 class MQuadrangle;
 class ExtrudeParams;
+class GFaceCompound;
 
 struct mean_plane
 {
@@ -45,8 +46,14 @@ class GFace : public GEntity
   std::list<int> l_dirs;
   GRegion *r1, *r2;
   mean_plane meanPlane;
-  std::list<GEdge*> embedded_edges;
-  std::list<GVertex*> embedded_vertices;
+  std::list<GEdge *> embedded_edges;
+  std::list<GVertex *> embedded_vertices;
+  // given a list of GEdges, the function builds a list of wires,
+  // i.e. closed edge loops.  the first wire is the one that is the
+  // outer contour of the face.
+  void resolveWires();
+  GFaceCompound *compound; // this model edge belongs to a compound 
+
 
  public: // this will become protected or private
   std::list<GEdgeLoop> edgeLoops;
@@ -203,6 +210,11 @@ class GFace : public GEntity
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
+
+  // compound
+  void setCompound(GFaceCompound *gfc) { compound = gfc; }
+  GFaceCompound *getCompound() const { return compound; }
+
 
   struct {
     // do we recombine the triangles of the mesh?

@@ -378,7 +378,6 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
   std::list<GEdge*> edges = gf->edges();
 
   // here, we will replace edges by their compounds
-  printf("***** In meshGFace: \n");
   if (gf->geomType() == GEntity::CompoundSurface){
     //printf("replace edges by compound lines \n");
     std::set<GEdge*> mySet;
@@ -448,7 +447,6 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
   double *V_ = new double[all_vertices.size()];
 
   v_container::iterator itv = all_vertices.begin();
-  printf("boundary vertices size = %d \n", all_vertices.size());
 
   int count = 0;
   SBoundingBox3d bbox;

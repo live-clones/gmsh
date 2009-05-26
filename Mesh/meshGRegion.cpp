@@ -20,6 +20,7 @@
 #include "MTetrahedron.h"
 #include "BDS.h"
 #include "Context.h"
+#include "GFaceCompound.h"
 
 void getAllBoundingVertices(GRegion *gr, std::set<MVertex*> &allBoundingVertices)
 {
@@ -492,6 +493,11 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
   std::list<GFace*> faces = gr->faces();
   std::list<GFace*>::iterator it = faces.begin();
 
+
+  printf("in normals faces size = %d \n", faces.size());
+  for (std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++)
+    printf("in normals face %d \n", (*it)->tag());
+
   double rrr[6];
   setRand(rrr);
                    
@@ -580,6 +586,7 @@ void meshGRegion::operator() (GRegion *gr)
   
   std::list<GFace*> faces = gr->faces();
 
+
   // sanity check
   for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
     if((*it)->quadrangles.size()){
@@ -587,6 +594,28 @@ void meshGRegion::operator() (GRegion *gr)
       return;
     }
   }
+
+  //replace discreteFaces by their compounds
+  if (gr->geomType() == GEntity::CompoundVolume){
+    std::set<GFace*> mySet;
+    std::list<GFace*>::iterator it = faces.begin();
+    while(it != faces.end()){
+      if ((*it)->getCompound()){
+	mySet.insert((*it)->getCompound());
+	printf("compound face %d found in face %d\n",(*it)->getCompound()->tag(), (*it)->tag());
+      }
+      else 
+	mySet.insert(*it);
+      ++it;
+    }
+    printf("replacing %d edges by %d in the GFaceCompound %d\n",faces.size(),mySet.size(),gr->tag());
+    faces.clear();
+    faces.insert(faces.begin(), mySet.begin(), mySet.end());
+    gr->set(faces);
+  }
+
+
+  std::list<GFace*> myface = gr->faces();
 
   if(CTX::instance()->mesh.algo3d == ALGO_3D_DELAUNAY){
     delaunay.push_back(gr);

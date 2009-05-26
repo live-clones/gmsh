@@ -16,6 +16,7 @@
 #include "Numeric.h"
 #include "EigSolve.h"
 
+
 #if defined(HAVE_GMSH_EMBEDDED)
 #include "GmshEmbedded.h"
 #else

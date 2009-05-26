@@ -92,7 +92,15 @@ void GFaceCompound::parametrize() const
 
 void GFaceCompound::getBoundingEdges()
 {
+
+ 
+  for (std::list<GFace*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
+    printf("set compound %d for face %d \n", tag(),(*it)->tag());
+    (*it)->setCompound(this);
+   }
+
   printf("***** In GFaceCompound: size U0=%d, v0=%d\n ", _U0.size(), _V0.size());
+
 
   //in case the bounding edges are explicitely given
   if (_U0.size()){

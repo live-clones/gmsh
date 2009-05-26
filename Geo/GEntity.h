@@ -94,7 +94,8 @@ class GEntity {
     DiscreteSurface,
     CompoundSurface,
     Volume,
-    DiscreteVolume
+    DiscreteVolume, 
+    CompoundVolume
   };
 
   // return a string describing the entity type
@@ -134,7 +135,8 @@ class GEntity {
       "Discrete surface",
       "Compound surface",
       "Volume",
-      "Discrete volume"
+      "Discrete volume", 
+      "Compound Volume"
     };
     unsigned int type = (unsigned int)geomType();
     if(type >= sizeof(name) / sizeof(name[0]))

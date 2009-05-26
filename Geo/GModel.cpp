@@ -960,10 +960,21 @@ void GModel::createTopologyFromMesh()
     }
   }
 
-//   printf("vertices size =%d \n", Dvertices.size());
-//   printf("edges size =%d \n", Dedges.size());
-//   printf("faces size =%d \n", Dfaces.size());
-//   printf("regions size =%d \n", Dregions.size());
+  printf("vertices size =%d \n", Dvertices.size());
+  printf("edges size =%d \n", Dedges.size());
+  printf("faces size =%d \n", Dfaces.size());
+  printf("regions size =%d \n", Dregions.size());
+
+  //For each discreteRegion, create Topology
+  //---------------------------------------
+
+  for (std::vector<discreteRegion*>::iterator region = Dregions.begin(); region != Dregions.end(); region++){
+    
+    printf("create topology for region \n", (*region)->tag());
+
+    (*region)->setBoundFaces();
+
+  }
 
 
   //For each discreteFace, create Topology and if needed create discreteEdges
@@ -1085,7 +1096,6 @@ void GModel::createTopologyFromMesh()
     std::vector<int> myEdges = ite->second;
     (*face)->setBoundEdges(myEdges);
   }
-
 
   //For each discreteEdge, create Topology
   //---------------------------------------
