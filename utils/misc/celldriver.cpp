@@ -66,7 +66,7 @@ int main(int argc, char **argv)
          complex->getSize(3), complex->getSize(2), complex->getSize(1), complex->getSize(0));  
   
   // reduce the complex in order to ease homology computation
-  complex->reduceComplex();
+  complex->reduceComplex(true);
   
   // perform series of cell combinatios in order to further ease homology computation
   complex->combine(3);
@@ -104,9 +104,10 @@ int main(int argc, char **argv)
   CellComplex* complex2 = new CellComplex(domain, subdomain);
   
   // reduce the complex by coreduction, this removes all vertices, hence 0 as an argument 
-  complex2->coreduceComplex(0);
+  complex2->coreduceComplex(true);
   
   // perform series of "dual complex" cell combinations in order to ease homology computation
+  complex2->cocombine(0);
   complex2->cocombine(1);
   complex2->cocombine(2);
   
@@ -127,10 +128,10 @@ int main(int argc, char **argv)
       std::string generator;
       std::string dimension;
       convert(i, generator);
-      convert(3-(j-1), dimension);
+      convert(3-j, dimension);
 
       std::string name = dimension + "D Dual cut " + generator;
-      Chain* chain = new Chain(complex2->getCells(j-1), dualChains->getCoeffVector(j,i), complex2, name);
+      Chain* chain = new Chain(complex2->getCells(j), dualChains->getCoeffVector(j,i), complex2, name);
                 chain->writeChainMSH("chains.msh");
       delete chain;
     }

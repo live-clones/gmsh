@@ -36,28 +36,29 @@ class ChainComplex{
   private:
    // boundary operator matrices for this chain complex
    // h_k: C_k -> C_(k-1)
-   gmp_matrix* _HMatrix[4];
+   gmp_matrix* _HMatrix[5];
    
    // Basis matrices for the kernels and codomains of the boundary operator matrices
-   gmp_matrix* _kerH[4];
-   gmp_matrix* _codH[4];
+   gmp_matrix* _kerH[5];
+   gmp_matrix* _codH[5];
    
-   gmp_matrix* _JMatrix[4];
-   gmp_matrix* _QMatrix[4];
-   std::vector<long int> _torsion[4];
+   gmp_matrix* _JMatrix[5];
+   gmp_matrix* _QMatrix[5];
+   std::vector<long int> _torsion[5];
    
    // bases for homology groups
-   gmp_matrix* _Hbasis[4];
+   gmp_matrix* _Hbasis[5];
    
    int _dim;
+   CellComplex* _cellComplex;
    
    // set the matrices
-   virtual void setHMatrix(int dim, gmp_matrix* matrix) { if(dim > -1 && dim < 4) _HMatrix[dim] = matrix;}
-   virtual void setKerHMatrix(int dim, gmp_matrix* matrix) { if(dim > -1 && dim < 4)  _kerH[dim] = matrix;}
-   virtual void setCodHMatrix(int dim, gmp_matrix* matrix) { if(dim > -1 && dim < 4)  _codH[dim] = matrix;}
-   virtual void setJMatrix(int dim, gmp_matrix* matrix) { if(dim > -1 && dim < 4)  _JMatrix[dim] = matrix;}
-   virtual void setQMatrix(int dim, gmp_matrix* matrix) { if(dim > -1 && dim < 4)  _QMatrix[dim] = matrix;}
-   virtual void setHbasis(int dim, gmp_matrix* matrix) { if(dim > -1 && dim < 4) _Hbasis[dim] = matrix;}
+   virtual void setHMatrix(int dim, gmp_matrix* matrix) { if(dim > -1 && dim < 5) _HMatrix[dim] = matrix;}
+   virtual void setKerHMatrix(int dim, gmp_matrix* matrix) { if(dim > -1 && dim < 5)  _kerH[dim] = matrix;}
+   virtual void setCodHMatrix(int dim, gmp_matrix* matrix) { if(dim > -1 && dim < 5)  _codH[dim] = matrix;}
+   virtual void setJMatrix(int dim, gmp_matrix* matrix) { if(dim > -1 && dim < 5)  _JMatrix[dim] = matrix;}
+   virtual void setQMatrix(int dim, gmp_matrix* matrix) { if(dim > -1 && dim < 5)  _QMatrix[dim] = matrix;}
+   virtual void setHbasis(int dim, gmp_matrix* matrix) { if(dim > -1 && dim < 5) _Hbasis[dim] = matrix;}
    
    
    
@@ -66,7 +67,7 @@ class ChainComplex{
    ChainComplex(CellComplex* cellComplex);
       
    ChainComplex(){
-     for(int i = 0; i < 4; i++){
+     for(int i = 0; i < 5; i++){
        _HMatrix[i] = create_gmp_matrix_zero(1,1);
        _kerH[i] = NULL;
        _codH[i] = NULL;
@@ -81,12 +82,12 @@ class ChainComplex{
    virtual int getDim() { return _dim; }
    
    // get the boundary operator matrix dim->dim-1
-   virtual gmp_matrix* getHMatrix(int dim) { if(dim > -1 && dim < 4) return _HMatrix[dim]; else return NULL;}
-   virtual gmp_matrix* getKerHMatrix(int dim) { if(dim > -1 && dim < 4) return _kerH[dim]; else return NULL;}
-   virtual gmp_matrix* getCodHMatrix(int dim) { if(dim > -1 && dim < 4) return _codH[dim]; else return NULL;}
-   virtual gmp_matrix* getJMatrix(int dim) { if(dim > -1 && dim < 4) return _JMatrix[dim]; else return NULL;}
-   virtual gmp_matrix* getQMatrix(int dim) { if(dim > -1 && dim < 4) return _QMatrix[dim]; else return NULL;}
-   virtual gmp_matrix* getHbasis(int dim) { if(dim > -1 && dim < 4) return _Hbasis[dim]; else return NULL;}
+   virtual gmp_matrix* getHMatrix(int dim) { if(dim > -1 && dim < 5) return _HMatrix[dim]; else return NULL;}
+   virtual gmp_matrix* getKerHMatrix(int dim) { if(dim > -1 && dim < 5) return _kerH[dim]; else return NULL;}
+   virtual gmp_matrix* getCodHMatrix(int dim) { if(dim > -1 && dim < 5) return _codH[dim]; else return NULL;}
+   virtual gmp_matrix* getJMatrix(int dim) { if(dim > -1 && dim < 5) return _JMatrix[dim]; else return NULL;}
+   virtual gmp_matrix* getQMatrix(int dim) { if(dim > -1 && dim < 5) return _QMatrix[dim]; else return NULL;}
+   virtual gmp_matrix* getHbasis(int dim) { if(dim > -1 && dim < 5) return _Hbasis[dim]; else return NULL;}
    
    // Compute basis for kernel and codomain of boundary operator matrix of dimension dim (ie. ker(h_dim) and cod(h_dim) )
    virtual void KerCod(int dim);
@@ -98,14 +99,14 @@ class ChainComplex{
    virtual void Quotient(int dim);
    
    // transpose the boundary operator matrices, these are boundary operator matrices for the dual mesh
-   virtual void transposeHMatrices() { for(int i = 0; i < 4; i++) gmp_matrix_transp(_HMatrix[i]); }
-   virtual void transposeHMatrix(int dim) { if(dim > -1 && dim < 4) gmp_matrix_transp(_HMatrix[dim]); }
+   virtual void transposeHMatrices() { for(int i = 0; i < 5; i++) gmp_matrix_transp(_HMatrix[i]); }
+   virtual void transposeHMatrix(int dim) { if(dim > -1 && dim < 5) gmp_matrix_transp(_HMatrix[dim]); }
    
    // Compute bases for the homology groups of this chain complex 
    virtual void computeHomology(bool dual=false);
    
    virtual std::vector<int> getCoeffVector(int dim, int chainNumber);
-   virtual int getBasisSize(int dim) {  if(dim > -1 && dim < 4) return gmp_matrix_cols(_Hbasis[dim]); else return 0; } 
+   virtual int getBasisSize(int dim) {  if(dim > -1 && dim < 5) return gmp_matrix_cols(_Hbasis[dim]); else return 0; } 
    
    virtual int printMatrix(gmp_matrix* matrix){ 
      printf("%d rows and %d columns\n", gmp_matrix_rows(matrix), gmp_matrix_cols(matrix)); 

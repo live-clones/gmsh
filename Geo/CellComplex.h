@@ -116,7 +116,18 @@ class Cell
        if(*cell2 == *cell) { _coboundary.erase(it); break; }
      }
    }
-      
+   
+   virtual void clearBoundary() { _boundary.clear(); }
+   virtual void clearCoboundary() { _coboundary.clear(); }
+   
+   virtual void makeDualCell(){ 
+     std::list< std::pair<int, Cell*> > temp = _boundary;
+     _boundary = _coboundary;
+     _coboundary = temp;
+     _dim = 3-_dim;
+     
+   }
+   
    virtual void printBoundary() {  
      for(std::list< std::pair<int, Cell*> >::iterator it = _boundary.begin(); it != _boundary.end(); it++){
        printf("Boundary cell orientation: %d ", (*it).first);
@@ -215,7 +226,7 @@ class ZeroSimplex : public Simplex
    }
    ~ZeroSimplex(){}
    
-   int getDim() const { return 0; }
+   //int getDim() const { return 0; }
    int getNumVertices() const { return 1; }
    int getVertex(int vertex) const {return _v; }
    int getSortedVertex(int vertex) const {return _v; }
@@ -268,7 +279,7 @@ class OneSimplex : public Simplex
    
    ~OneSimplex(){}
    
-   int getDim() const { return 1; }
+   //int getDim() const { return 1; }
    int getNumVertices() const { return 2; }
    int getNumFacets() const {  return 2; }
    int getVertex(int vertex) const {return _v[vertex]; }
@@ -335,7 +346,7 @@ class TwoSimplex : public Simplex
    
    ~TwoSimplex(){}
    
-   int getDim() const { return 2; }
+   //int getDim() const { return 2; }
    int getNumVertices() const { return 3; }
    int getNumFacets() const { return 3; }
    int getVertex(int vertex) const {return _v[vertex]; }
@@ -405,7 +416,7 @@ class ThreeSimplex : public Simplex
    
    ~ThreeSimplex(){}
    
-   int getDim() const { return 3; }
+   //int getDim() const { return 3; }
    int getNumVertices() const { return 4; }
    int getNumFacets() const { return 4; }
    int getVertex(int vertex) const {return _v[vertex]; }
@@ -466,7 +477,7 @@ class Quadrangle : public Cell
    }
    ~Quadrangle(){}
    
-   int getDim() const { return 2; }
+   //int getDim() const { return 2; }
    int getNumVertices() const { return 4; }
    int getNumFacets() const { return 4; }
    int getVertex(int vertex) const {return _v[vertex]; }
@@ -650,7 +661,7 @@ class CombinedCell : public Cell{
 // A class representing a cell complex made out of a finite element mesh.
 class CellComplex
 {
- private:
+ protected:
    
    // the domain in the model which this cell complex covers
    std::vector<GEntity*> _domain;
@@ -666,7 +677,12 @@ class CellComplex
    // one for each dimension
    std::set<Cell*, Less_Cell>  _cells[4];
    
-   std::set<Cell*, Less_Cell>  _originalCells[4];
+   //std::set<Cell*, Less_Cell>  _originalCells[4];
+   
+   // Betti numbers of this cell complex (ranks of homology groups)
+   int _betti[4];
+   
+   int _dim;
    
   public:
    // iterator for the cells of same dimension
@@ -692,12 +708,39 @@ class CellComplex
        _cells[cell->getDim()].insert(cell);
      }
    }
-   CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> subdomain );
-   virtual ~CellComplex(){}
+   /*
+   CellComplex(CellComplex* cellComplex){
+     
+     _domain = cellComplex->_domain;
+     _subdomain = cellComplex->_subdomain;
+     _boundary = cellComplex->_boundary;
+     _domainVertices = cellComplex->_domainVertices;
+     
+     for(int i = 0; i < 4; i++){
+       _betti[i] = cellComplex->_betti[i];
+       
+       for(citer cit = cellComplex->_cells[i].begin(); cit != cellComplex->_cells[i].end(); cit++){
+         Cell* cell = *cit;
+         if(i == 0) _cells[i].insert(new ZeroSimplex(*cell));
+         
+       }
+       
+       _originalCells[i] = _cells[i];
+     }
+     
+     _dim = cellComplex->_dim;
+     
+   }*/
    
+   CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> subdomain );
+   CellComplex(){}
+   virtual ~CellComplex(){}
+
    
    // get the number of certain dimensional cells
    virtual int getSize(int dim){ return _cells[dim].size(); }
+   
+   virtual int getDim() {return _dim; } 
    
    virtual std::set<Cell*, Less_Cell> getCells(int dim){ return _cells[dim]; }
       
@@ -706,8 +749,8 @@ class CellComplex
    virtual citer lastCell(int dim) {return _cells[dim].end(); }
   
    // find a cell in this cell complex
-   virtual std::set<Cell*, Less_Cell>::iterator findCell(int dim, std::vector<int>& vertices, bool original=false);
-   virtual std::set<Cell*, Less_Cell>::iterator findCell(int dim, int vertex, int dummy=0);
+   //virtual std::set<Cell*, Less_Cell>::iterator findCell(int dim, std::vector<int>& vertices, bool original=false);
+   //virtual std::set<Cell*, Less_Cell>::iterator findCell(int dim, int vertex, int dummy=0);
    
    // kappa for two cells of this cell complex
    // implementation will vary depending on cell type
@@ -726,27 +769,33 @@ class CellComplex
    
    // coreduction of this cell complex
    // removes corection pairs of cells of dimension dim and dim+1
-   virtual int coreduction(int dim);
+   //virtual int coreduction(int dim);
+   //virtual int coreduction();
    
    // stores removed cells
    
    // reduction of this cell complex
    // removes reduction pairs of cell of dimension dim and dim-1
    virtual int reduction(int dim);
+   //virtual int reduction(Cell* generator);
    
    // useful functions for (co)reduction of cell complex
-   virtual void reduceComplex();
-   // coreduction up to generators of dimension generatorDim
-   virtual void coreduceComplex(int generatorDim=3);
+   virtual void reduceComplex(bool omitHighdim = false);
+   virtual void coreduceComplex(bool omitlowDim = false);
+   
+   //virtual void coreduceComplex(int generatorDim);
+   //virtual void coreduceComplex();
    
    // queued coreduction presented in Mrozek's paper
    // slower, but produces cleaner result
-   virtual int coreductionMrozek(Cell* generator);
+   virtual int coreduction(Cell* generator);
       
    // add every volume, face and edge its missing boundary cells
-   virtual void repairComplex(int i=3);
+   //virtual void repairComplex(int i=3);
    // change non-subdomain cells to be in subdomain, subdomain cells to not to be in subdomain
    virtual void swapSubdomain();
+   virtual void removeSubdomain();
+   
    
    // print the vertices of cells of certain dimension
    virtual void printComplex(int dim);
@@ -756,6 +805,36 @@ class CellComplex
    
    virtual int combine(int dim);
    virtual int cocombine(int dim);
+   
+   virtual void computeBettiNumbers();
+   virtual int getBettiNumber(int i) { if(i > -1 && i < 4) return _betti[i]; else return 0; }
+   
+   virtual void makeDualComplex(){
+     std::set<Cell*, Less_Cell> temp = _cells[0];
+     _cells[0] = _cells[3];
+     _cells[3] = temp;
+     temp = _cells[1];
+     _cells[1] = _cells[2];
+     _cells[2] = temp;
+     
+     for(int i = 0; i < 4; i++){
+       for(citer cit = firstCell(i); cit != lastCell(i); cit++){
+         Cell* cell = *cit;
+         cell->makeDualCell();
+       }
+     }
+   }
+   
+};
+
+
+class DualCellComplex : public CellComplex
+{
+   
+  public:
+   
+   DualCellComplex(CellComplex* cellComplex);
+   ~DualCellComplex(){}
    
 };
 
