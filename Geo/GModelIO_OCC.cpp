@@ -12,6 +12,7 @@
 #include "OCCFace.h"
 #include "OCCRegion.h"
 #include "MElement.h"
+#include "MLine.h"
 #include "OpenFile.h"
 #include "OCC_Connect.h"
 

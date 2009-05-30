@@ -349,8 +349,9 @@ classificationEditor${OBJEXT}: classificationEditor.cpp GUI.h \
   ../Mesh/meshGFaceDelaunayInsertion.h ../Geo/MTriangle.h \
   ../Geo/MElement.h ../Mesh/meshGFaceOptimize.h \
   ../Mesh/meshGFaceDelaunayInsertion.h ../Geo/discreteEdge.h \
-  ../Geo/GModel.h ../Geo/GEdge.h ../Geo/discreteFace.h ../Geo/GModel.h \
-  ../Geo/GFace.h
+  ../Geo/GModel.h ../Geo/GEdge.h ../Geo/discreteVertex.h ../Geo/GModel.h \
+  ../Geo/GVertex.h ../Geo/MVertex.h ../Geo/discreteFace.h ../Geo/GModel.h \
+  ../Geo/GFace.h ../Geo/discreteEdge.h ../Geo/MEdge.h
 partitionDialog${OBJEXT}: partitionDialog.cpp ../Common/GmshConfig.h \
   ../Common/GmshDefines.h ../Common/GmshMessage.h GUI.h paletteWindow.h \
   ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \

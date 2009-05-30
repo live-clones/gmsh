@@ -325,7 +325,9 @@ meshGRegion${OBJEXT}: meshGRegion.cpp ../Common/GmshConfig.h \
   ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Geo/GRegion.h \
   ../Geo/MLine.h ../Geo/MElement.h ../Geo/MTriangle.h ../Geo/MElement.h \
   ../Geo/MQuadrangle.h ../Geo/MElement.h BDS.h ../Common/Context.h \
-  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
+  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \
+  ../Geo/GFaceCompound.h ../Geo/GFace.h ../Geo/GEdge.h \
+  ../Geo/GEdgeCompound.h ../Geo/GFace.h ../Geo/GEdge.h
 meshGRegionDelaunayInsertion${OBJEXT}: meshGRegionDelaunayInsertion.cpp \
   ../Common/GmshMessage.h ../Numeric/GmshPredicates.h ../Common/OS.h \
   BackgroundMesh.h ../Geo/STensor3.h ../Geo/SVector3.h ../Geo/SPoint3.h \

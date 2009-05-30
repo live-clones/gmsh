@@ -174,12 +174,15 @@ Triangulate${OBJEXT}: Triangulate.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/discreteFace.h ../Geo/GModel.h \
-  ../Geo/GFace.h ../Mesh/DivideAndConquer.h ../Common/GmshMessage.h \
-  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h Triangulate.h \
-  Plugin.h ../Common/Options.h ../Post/ColorTable.h ../Post/PView.h \
-  ../Post/PViewDataList.h ../Post/PViewData.h ../Numeric/GmshMatrix.h \
-  ../Common/GmshConfig.h ../Common/ListUtils.h ../Common/Context.h \
-  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
+  ../Geo/GFace.h ../Geo/discreteEdge.h ../Geo/GModel.h ../Geo/GEdge.h \
+  ../Geo/discreteVertex.h ../Geo/GModel.h ../Geo/GVertex.h \
+  ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Mesh/DivideAndConquer.h \
+  ../Common/GmshMessage.h Triangulate.h Plugin.h ../Common/Options.h \
+  ../Post/ColorTable.h ../Post/PView.h ../Post/PViewDataList.h \
+  ../Post/PViewData.h ../Numeric/GmshMatrix.h ../Common/GmshConfig.h \
+  ../Common/ListUtils.h ../Common/Context.h ../Geo/CGNSOptions.h \
+  ../Mesh/meshPartitionOptions.h
 Warp${OBJEXT}: Warp.cpp Warp.h Plugin.h ../Common/Options.h ../Post/ColorTable.h \
   ../Common/GmshMessage.h ../Post/PView.h ../Geo/SPoint3.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \

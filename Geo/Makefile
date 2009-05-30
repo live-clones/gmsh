@@ -98,8 +98,8 @@ GFace${OBJEXT}: GFace.cpp ../Common/GmshConfig.h ../Common/GmshMessage.h \
   MEdge.h MFace.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
   ../Numeric/Gauss.h MQuadrangle.h ../Common/VertexArray.h \
   ../Geo/SVector3.h ../Numeric/Numeric.h ../Numeric/GmshMatrix.h \
-  ../Numeric/GaussLegendre1D.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/meshPartitionOptions.h
+  ../Numeric/EigSolve.h ../Numeric/GaussLegendre1D.h ../Common/Context.h \
+  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
 GRegion${OBJEXT}: GRegion.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h MTetrahedron.h MElement.h \
@@ -132,6 +132,11 @@ GFaceCompound${OBJEXT}: GFaceCompound.cpp ../Common/GmshConfig.h GFaceCompound.h
   ../Numeric/gmshLinearSystemGmm.h ../Numeric/gmshLinearSystem.h \
   ../Numeric/gmshLinearSystemFull.h ../Numeric/gmshLinearSystem.h \
   ../Numeric/GmshMatrix.h
+GRegionCompound${OBJEXT}: GRegionCompound.cpp ../Common/GmshConfig.h \
+  GRegionCompound.h GRegion.h GEntity.h Range.h SPoint3.h \
+  SBoundingBox3d.h GFace.h GPoint.h GEdgeLoop.h GEdge.h GVertex.h \
+  SPoint2.h SVector3.h Pair.h GFaceCompound.h GEdgeCompound.h \
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Common/GmshMessage.h
 gmshVertex${OBJEXT}: gmshVertex.cpp GFace.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h GEdgeLoop.h GEdge.h GVertex.h SPoint2.h \
   SVector3.h Pair.h gmshVertex.h Geo.h ../Common/GmshDefines.h \
@@ -195,24 +200,28 @@ OCCRegion${OBJEXT}: OCCRegion.cpp ../Common/GmshConfig.h ../Common/GmshMessage.h
 discreteEdge${OBJEXT}: discreteEdge.cpp ../Common/GmshConfig.h \
   ../Common/GmshMessage.h discreteEdge.h GModel.h GVertex.h GEntity.h \
   Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
-  SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h MLine.h MElement.h \
-  ../Common/GmshDefines.h MVertex.h MEdge.h MFace.h \
+  SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h discreteVertex.h \
+  MVertex.h MLine.h MElement.h ../Common/GmshDefines.h MEdge.h MFace.h \
   ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
-  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h Geo.h gmshSurface.h \
-  ../Common/ListUtils.h ../Common/TreeUtils.h ../Common/avl.h \
-  ../Common/ListUtils.h ExtrudeParams.h ../Common/SmoothData.h
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h MPoint.h MTriangle.h \
+  MQuadrangle.h MPrism.h MTetrahedron.h MHexahedron.h MPyramid.h Geo.h \
+  gmshSurface.h ../Common/ListUtils.h ../Common/TreeUtils.h \
+  ../Common/avl.h ../Common/ListUtils.h ExtrudeParams.h \
+  ../Common/SmoothData.h
 discreteFace${OBJEXT}: discreteFace.cpp ../Common/GmshConfig.h \
   ../Common/GmshMessage.h discreteFace.h GModel.h GVertex.h GEntity.h \
   Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
-  SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h Geo.h \
-  ../Common/GmshDefines.h gmshSurface.h ../Numeric/Numeric.h \
-  ../Numeric/GmshMatrix.h ../Common/ListUtils.h ../Common/TreeUtils.h \
-  ../Common/avl.h ../Common/ListUtils.h ExtrudeParams.h \
-  ../Common/SmoothData.h
+  SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h discreteEdge.h \
+  discreteVertex.h MVertex.h MEdge.h MTriangle.h MElement.h \
+  ../Common/GmshDefines.h MFace.h ../Numeric/FunctionSpace.h \
+  ../Numeric/GmshMatrix.h ../Numeric/Gauss.h Geo.h gmshSurface.h \
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Common/ListUtils.h \
+  ../Common/TreeUtils.h ../Common/avl.h ../Common/ListUtils.h \
+  ExtrudeParams.h ../Common/SmoothData.h
 discreteRegion${OBJEXT}: discreteRegion.cpp ../Common/GmshConfig.h \
   discreteRegion.h GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
-  GEdgeLoop.h Pair.h GRegion.h Geo.h ../Common/GmshDefines.h \
+  GEdgeLoop.h Pair.h GRegion.h MVertex.h Geo.h ../Common/GmshDefines.h \
   gmshSurface.h ../Numeric/Numeric.h ../Numeric/GmshMatrix.h \
   ../Common/GmshMessage.h ../Common/ListUtils.h ../Common/TreeUtils.h \
   ../Common/avl.h ../Common/ListUtils.h ExtrudeParams.h \
@@ -228,9 +237,10 @@ fourierFace${OBJEXT}: fourierFace.cpp ../Common/GmshConfig.h \
   SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h MVertex.h fourierFace.h \
   fourierEdge.h
 fourierProjectionFace${OBJEXT}: fourierProjectionFace.cpp ../Common/GmshConfig.h \
-  fourierProjectionFace.h GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
-  SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
-  GEdgeLoop.h Pair.h GRegion.h ../Common/VertexArray.h ../Geo/SVector3.h
+  ../Common/GmshMessage.h fourierProjectionFace.h GModel.h GVertex.h \
+  GEntity.h Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
+  SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/VertexArray.h \
+  ../Geo/SVector3.h
 GModel${OBJEXT}: GModel.cpp ../Common/GmshConfig.h ../Common/GmshMessage.h \
   GModel.h GVertex.h GEntity.h Range.h SPoint3.h SBoundingBox3d.h \
   GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h GEdgeLoop.h Pair.h \
@@ -251,9 +261,9 @@ GModelIO_Geo${OBJEXT}: GModelIO_Geo.cpp ../Common/GmshConfig.h \
   ../Common/ListUtils.h ../Common/TreeUtils.h ../Common/avl.h \
   ../Common/ListUtils.h ExtrudeParams.h ../Common/SmoothData.h \
   ../Common/OpenFile.h gmshVertex.h gmshFace.h GFaceCompound.h \
-  GEdgeCompound.h gmshEdge.h gmshRegion.h ../Mesh/Field.h \
-  ../Geo/STensor3.h ../Geo/SVector3.h ../Post/PView.h ../Geo/SPoint3.h \
-  ../Parser/Parser.h
+  GEdgeCompound.h GRegionCompound.h gmshEdge.h gmshRegion.h \
+  ../Mesh/Field.h ../Geo/STensor3.h ../Geo/SVector3.h ../Post/PView.h \
+  ../Geo/SPoint3.h ../Parser/Parser.h
 GModelIO_Mesh${OBJEXT}: GModelIO_Mesh.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/GmshDefines.h MPoint.h \
@@ -262,7 +272,7 @@ GModelIO_Mesh${OBJEXT}: GModelIO_Mesh.cpp GModel.h GVertex.h GEntity.h Range.h \
   ../Common/GmshConfig.h ../Numeric/Gauss.h MLine.h MTriangle.h \
   MQuadrangle.h MTetrahedron.h MHexahedron.h MPrism.h MPyramid.h \
   ../Common/StringUtils.h discreteVertex.h discreteEdge.h discreteFace.h \
-  discreteRegion.h GEdgeCompound.h
+  discreteRegion.h GEdgeCompound.h GFaceCompound.h
 GModelIO_OCC${OBJEXT}: GModelIO_OCC.cpp ../Common/GmshConfig.h \
   ../Common/GmshMessage.h GModelIO_OCC.h GModel.h GVertex.h GEntity.h \
   Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
@@ -271,7 +281,8 @@ GModelIO_OCC${OBJEXT}: GModelIO_OCC.cpp ../Common/GmshConfig.h \
   OCCVertex.h OCCEdge.h OCCFace.h OCCRegion.h MElement.h \
   ../Common/GmshDefines.h MVertex.h MEdge.h MFace.h \
   ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
-  ../Common/OpenFile.h
+  MLine.h ../Common/OpenFile.h OCC_Connect.h
+OCC_Connect${OBJEXT}: OCC_Connect.cpp OCC_Connect.h ../Common/GmshConfig.h
 GModelIO_Fourier${OBJEXT}: GModelIO_Fourier.cpp ../Common/GmshConfig.h \
   ../Common/GmshMessage.h GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
@@ -399,3 +410,6 @@ ChainComplex${OBJEXT}: ChainComplex.cpp ChainComplex.h ../Common/GmshConfig.h \
   ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
   GModel.h GVertex.h GEntity.h Range.h SBoundingBox3d.h GPoint.h GEdge.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h CellComplex.h
+STensor3${OBJEXT}: STensor3.cpp STensor3.h SVector3.h SPoint3.h \
+  ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Common/GmshMessage.h \
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h
