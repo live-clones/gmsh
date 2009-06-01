@@ -5,7 +5,6 @@
 
 #include <math.h>
 #include <algorithm>
-#include <FL/gl.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "drawContext.h"
@@ -173,7 +172,7 @@ static void applyGeneralRaise(PView *p, int numNodes, int numComp,
     }
 #else
     for(int i = 0; i < 3; i++){
-      int comp = (int)opt->genRaiseFunction[i];
+      int comp = (int)(long int)opt->genRaiseFunction[i];
       if(comp >= 0)
         xyz[k][i] += opt->genRaiseFactor * d[comp];
     }

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include <FL/gl.h>
 #include "drawContext.h"
+#include "Draw.h"
 #include "PView.h"
 #include "PViewOptions.h"
 #include "PViewData.h"
@@ -149,9 +149,9 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
 
   if(!opt->axes) return;
 
-  char label[1024];    
-  float font_h = gl_height() ? gl_height() : 1; // total font height
-  float font_a = font_h - gl_descent(); // height above ref. point
+  char label[1024];
+  float font_h = GetStringHeight() ? GetStringHeight() : 1; // total font height
+  float font_a = font_h - GetStringDescent(); // height above ref. point
 
   const double tic = 5.;
 
@@ -246,8 +246,8 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     int nb = opt->axesTics[0];
     if(opt->axes){
       sprintf(label, opt->axesFormat[0].c_str(), - M_PI * 1.e-4);
-      if((nb - 1) * gl_width(label) > width)
-        nb = (int)(width / gl_width(label)) + 1;
+      if((nb - 1) * GetStringWidth(label) > width)
+        nb = (int)(width / GetStringWidth(label)) + 1;
     }
     if(nb == 1) nb++;
     
@@ -418,13 +418,13 @@ void drawContext::drawGraph2d()
   }
   if(graphs.empty()) return;
 
-  gl_font(CTX::instance()->glFontEnum, CTX::instance()->glFontSize);
-  double xsep = 0., ysep = 5 * gl_height();
+  SetFont(CTX::instance()->glFontEnum, CTX::instance()->glFontSize);
+  double xsep = 0., ysep = 5 * GetStringHeight();
   char label[1024];
   for(unsigned int i = 0; i < graphs.size(); i++){
     PViewOptions *opt = graphs[i]->getOptions();
     sprintf(label, opt->format.c_str(), -M_PI * 1.e-4);
-    xsep = std::max(xsep, gl_width(label));
+    xsep = std::max(xsep, GetStringWidth(label));
   }
   
   for(unsigned int i = 0; i < graphs.size(); i++){

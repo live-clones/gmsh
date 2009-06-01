@@ -4,14 +4,18 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string.h>
-#include <FL/Fl_JPEG_Image.H>
-#include <FL/Fl_PNM_Image.H>
-#include <FL/Fl_PNG_Image.H>
-#include <FL/Fl_BMP_Image.H>
 #include "ReadImg.h"
 #include "GmshMessage.h"
 #include "PView.h"
 #include "PViewDataList.h"
+#include "GmshConfig.h"
+
+#if defined(HAVE_FLTK)
+
+#include <FL/Fl_JPEG_Image.H>
+#include <FL/Fl_PNM_Image.H>
+#include <FL/Fl_PNG_Image.H>
+#include <FL/Fl_BMP_Image.H>
 
 // from an image, we create a post-procession view
 
@@ -131,3 +135,12 @@ int read_bmp(std::string fileName)
   Fl_BMP_Image img(fileName.c_str());
   return EndPos(fileName.c_str(), Img2Data(img));
 }
+
+#else
+
+int read_pnm(std::string fileName){ return 0; }
+int read_jpeg(std::string fileName){ return 0; }
+int read_png(std::string fileName){ return 0; }
+int read_bmp(std::string fileName){ return 0; }
+
+#endif

@@ -4,7 +4,6 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string.h>
-#include <FL/gl.h>
 #include "drawContext.h"
 #include "Draw.h"
 #include "GmshDefines.h"
@@ -27,9 +26,9 @@ void drawContext::drawString(std::string s, std::string &font_name, int font_enu
       GLdouble pos[4];
       glGetDoublev(GL_CURRENT_RASTER_POSITION, pos);
       double x[3], w[3] = {pos[0], pos[1], pos[2]};
-      gl_font(font_enum, font_size);
-      float width = gl_width(s.c_str());
-      float height = gl_height();
+      SetFont(font_enum, font_size);
+      float width = GetStringWidth(s.c_str());
+      float height = GetStringHeight();
       switch(align){
       case 1: w[0] -= width/2.;                     break; // bottom center
       case 2: w[0] -= width;                        break; // bottom right
@@ -47,8 +46,8 @@ void drawContext::drawString(std::string s, std::string &font_name, int font_enu
   }
   
   if(!CTX::instance()->printing){
-    gl_font(font_enum, font_size);
-    gl_draw(s.c_str());
+    SetFont(font_enum, font_size);
+    DrawString(s.c_str());
   }
   else{
     if(CTX::instance()->print.format == FORMAT_TEX){
@@ -76,8 +75,8 @@ void drawContext::drawString(std::string s, std::string &font_name, int font_enu
       gl2psText(s.c_str(), font_name.c_str(), font_size);
     }
     else{
-      gl_font(font_enum, font_size);
-      gl_draw(s.c_str());
+      SetFont(font_enum, font_size);
+      DrawString(s.c_str());
     }
   }
 }

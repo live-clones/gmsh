@@ -92,22 +92,22 @@ void openglWindow::drawScreenMessage()
     return;
 
   glColor4ubv((GLubyte *) & CTX::instance()->color.text);
-  gl_font(CTX::instance()->glFontEnum, CTX::instance()->glFontSize);
-  double h = gl_height();
+  SetFont(CTX::instance()->glFontEnum, CTX::instance()->glFontSize);
+  double h = GetStringHeight();
   
   if(screenMessage[0].size()){
     const char *txt = screenMessage[0].c_str();
-    double w = gl_width(txt);
+    double w = GetStringWidth(txt);
     glRasterPos2d(_ctx->viewport[2] / 2. - w / 2., 
                   _ctx->viewport[3] - 1.2 * h);
-    gl_draw(txt);
+    DrawString(txt);
   }
   if(screenMessage[1].size()){
     const char *txt = screenMessage[1].c_str();
-    double w = gl_width(txt);
+    double w = GetStringWidth(txt);
     glRasterPos2d(_ctx->viewport[2] / 2. - w / 2.,
                   _ctx->viewport[3] - 2.4 * h);
-    gl_draw(txt);
+    DrawString(txt);
   }
 }
 

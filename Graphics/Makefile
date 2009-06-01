@@ -65,19 +65,19 @@ ReadImg${OBJEXT}: ReadImg.cpp ReadImg.h ../Common/GmshMessage.h ../Post/PView.h 
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Numeric/GmshMatrix.h \
   ../Common/GmshConfig.h ../Common/ListUtils.h
-drawContext${OBJEXT}: drawContext.cpp ../Common/GmshMessage.h drawContext.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h Trackball.h \
-  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \
-  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Common/GmshConfig.h \
-  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/GPoint.h \
-  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
-  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Post/PView.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h gl2ps.h
+drawContext${OBJEXT}: drawContext.cpp ../Common/GmshConfig.h \
+  ../Common/GmshMessage.h drawContext.h ../Geo/SBoundingBox3d.h \
+  ../Geo/SPoint3.h Trackball.h ../Common/Context.h ../Geo/CGNSOptions.h \
+  ../Mesh/meshPartitionOptions.h ../Numeric/Numeric.h \
+  ../Numeric/GmshMatrix.h ../Geo/GModel.h ../Geo/GVertex.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
+  ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Post/PView.h \
+  ../Post/PViewOptions.h ../Post/ColorTable.h gl2ps.h
 drawMesh${OBJEXT}: drawMesh.cpp drawContext.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Common/GmshMessage.h ../Common/GmshDefines.h \
   ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
@@ -118,24 +118,24 @@ drawPost${OBJEXT}: drawPost.cpp ../Common/GmshConfig.h ../Common/GmshMessage.h \
   ../Common/SmoothData.h ../Common/Context.h ../Geo/CGNSOptions.h \
   ../Mesh/meshPartitionOptions.h gl2ps.h
 drawAxes${OBJEXT}: drawAxes.cpp drawContext.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint3.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
-  ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/GPoint.h \
-  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
-  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/meshPartitionOptions.h ../Numeric/Numeric.h \
-  ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Common/GmshMessage.h \
-  gl2ps.h
+  ../Geo/SPoint3.h ../Fltk/Draw.h ../Geo/GModel.h ../Geo/GVertex.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
+  ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Common/Context.h \
+  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Common/GmshConfig.h \
+  ../Common/GmshMessage.h gl2ps.h
 drawScales${OBJEXT}: drawScales.cpp drawContext.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint3.h ../Post/PView.h ../Post/PViewOptions.h \
+  ../Geo/SPoint3.h ../Fltk/Draw.h ../Post/PView.h ../Post/PViewOptions.h \
   ../Post/ColorTable.h ../Post/PViewData.h ../Numeric/GmshMatrix.h \
   ../Common/GmshConfig.h ../Common/GmshMessage.h ../Common/Context.h \
   ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h gl2ps.h
 drawGraph2d${OBJEXT}: drawGraph2d.cpp drawContext.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint3.h ../Post/PView.h ../Post/PViewOptions.h \
+  ../Geo/SPoint3.h ../Fltk/Draw.h ../Post/PView.h ../Post/PViewOptions.h \
   ../Post/ColorTable.h ../Post/PViewData.h ../Numeric/GmshMatrix.h \
   ../Common/GmshConfig.h ../Common/GmshMessage.h gl2ps.h \
   ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include <FL/gl.h>
 #include "drawContext.h"
+#include "Draw.h"
 #include "PView.h"
 #include "PViewOptions.h"
 #include "PViewData.h"
@@ -89,13 +89,13 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin, double ymin
 
   if(!opt->nbIso) return;
 
-  gl_font(CTX::instance()->glFontEnum, CTX::instance()->glFontSize);
-  double font_h = gl_height(); // total font height
-  double font_a = gl_height() - gl_descent(); // height above ref pt
+  SetFont(CTX::instance()->glFontEnum, CTX::instance()->glFontSize);
+  double font_h = GetStringHeight(); // total font height
+  double font_a = GetStringHeight() - GetStringDescent(); // height above ref pt
 
   char label[1024];
   sprintf(label, opt->format.c_str(), -M_PI * 1.e-4);
-  double maxw = gl_width(label);
+  double maxw = GetStringWidth(label);
 
   int nbv = opt->nbIso;
   double f = (opt->intervalsType == PViewOptions::Discrete ||
@@ -164,8 +164,8 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
   else
     data = p->getData();
 
-  gl_font(CTX::instance()->glFontEnum, CTX::instance()->glFontSize);
-  double font_h = gl_height();
+  SetFont(CTX::instance()->glFontEnum, CTX::instance()->glFontSize);
+  double font_h = GetStringHeight();
 
   char label[1024];
 
@@ -233,13 +233,13 @@ void drawContext::drawScales()
   }
   if(scales.empty()) return;
 
-  gl_font(CTX::instance()->glFontEnum, CTX::instance()->glFontSize);
+  SetFont(CTX::instance()->glFontEnum, CTX::instance()->glFontSize);
   char label[1024];
   double maxw = 0.;
   for(unsigned int i = 0; i < scales.size(); i++) {
     PViewOptions *opt = scales[i]->getOptions();
     sprintf(label, opt->format.c_str(), -M_PI * 1.e-4);
-    maxw = std::max(maxw, gl_width(label));
+    maxw = std::max(maxw, GetStringWidth(label));
   }
 
   const double tic = 10., bar_size = 16.;
@@ -273,13 +273,13 @@ void drawContext::drawScales()
         double h = bar_size;
         double x = xc - (i % 2 ? -xsep / 1.5 : w + xsep / 1.5);
         double y = viewport[1] + ysep + 
-          (i / 2) * (bar_size + tic + 2 * gl_height() + ysep);
+          (i / 2) * (bar_size + tic + 2 * GetStringHeight() + ysep);
         drawScale(this, p, x, y, w, h, tic, 1);
       }
     }
     else{
       double xsep = 20.;
-      double dy = 2. * gl_height();
+      double dy = 2. * GetStringHeight();
       if(scales.size() == 1){
         double ysep = (viewport[3] - viewport[1]) / 6.;
         double w = bar_size, h = viewport[3] - viewport[1] - 2 * ysep - dy;
@@ -297,7 +297,7 @@ void drawContext::drawScales()
       // compute width
       width_prev = width;
       sprintf(label, opt->format.c_str(), -M_PI * 1.e-4);
-      width = bar_size + tic + gl_width(label);
+      width = bar_size + tic + GetStringWidth(label);
       if(opt->showTime){
         char tmp[256];
         sprintf(tmp, opt->format.c_str(), data->getTime(opt->timeStep));
@@ -305,7 +305,7 @@ void drawContext::drawScales()
       }
       else
         sprintf(label, "%s", data->getName().c_str());
-      width = std::max(width, gl_width(label));
+      width = std::max(width, GetStringWidth(label));
       if(i % 2) width_total += std::max(bar_size + width, bar_size + width_prev);
     }
   }

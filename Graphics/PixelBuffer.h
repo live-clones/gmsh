@@ -7,10 +7,17 @@
 #define _PIXEL_BUFFER_H_
 
 #include <string.h>
-#include <FL/gl.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "Draw.h"
+
+#if defined(__APPLE__)
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#else
+#include <GL/gl.h>
+#include <GL/glu.h>
+#endif
 
 #if defined(HAVE_OSMESA)
 #include <GL/osmesa.h>

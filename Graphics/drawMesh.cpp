@@ -4,7 +4,6 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <math.h>
-#include <FL/gl.h>
 #include "drawContext.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"

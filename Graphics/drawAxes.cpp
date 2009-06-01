@@ -5,8 +5,8 @@
 
 #include <string>
 #include <string.h>
-#include <FL/gl.h>
 #include "drawContext.h"
+#include "Draw.h"
 #include "GModel.h"
 #include "Context.h"
 #include "Numeric.h"
@@ -87,15 +87,15 @@ static int drawTics(drawContext *ctx, int comp, int n, std::string &format,
     double winp[3], winr[3];
     ctx->world2Viewport(p, winp);
     ctx->world2Viewport(r, winr);
-    gl_font(CTX::instance()->glFontEnum, CTX::instance()->glFontSize);
+    SetFont(CTX::instance()->glFontEnum, CTX::instance()->glFontSize);
     if(fabs(winr[0] - winp[0]) < 2.) // center align
-      winr[0] -= gl_width(str) / 2.;
+      winr[0] -= GetStringWidth(str) / 2.;
     else if(winr[0] < winp[0]) // right align
-      winr[0] -= gl_width(str);
+      winr[0] -= GetStringWidth(str);
     if(fabs(winr[1] - winp[1]) < 2.) // center align
-      winr[1] -= gl_height() / 3.;
+      winr[1] -= GetStringHeight() / 3.;
     else if(winr[1] < winp[1]) // top align
-      winr[1] -= gl_height();
+      winr[1] -= GetStringHeight();
     ctx->viewport2World(winr, r);
     glRasterPos3d(r[0], r[1], r[2]);
     ctx->drawString(str);

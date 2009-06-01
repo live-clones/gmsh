@@ -4,9 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string>
-#include <FL/gl.h>
-#include <FL/Fl_JPEG_Image.H>
-#include <FL/Fl_PNG_Image.H>
+#include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "drawContext.h"
 #include "Trackball.h"
@@ -16,6 +14,11 @@
 #include "PView.h"
 #include "PViewOptions.h"
 #include "gl2ps.h"
+
+#if defined(HAVE_FLTK)
+#include <FL/Fl_JPEG_Image.H>
+#include <FL/Fl_PNG_Image.H>
+#endif
 
 drawContext::drawContext(drawTransform *transform) 
   : _transform(transform)
@@ -391,6 +394,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
 
     // background image
     if(CTX::instance()->bgImageFileName.size()){
+#if defined(HAVE_FLTK)
       if(_bgImage.empty()){
         int idot = CTX::instance()->bgImageFileName.find_last_of('.');
         std::string ext;
@@ -436,6 +440,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
                    (void*)&_bgImage[0]);
       gl2psDrawPixels(_bgImageSize[0], _bgImageSize[1], 0, 0, GL_RGB, GL_FLOAT,
                       (void*)&_bgImage[0]);
+#endif
     }
 
     glPopMatrix();

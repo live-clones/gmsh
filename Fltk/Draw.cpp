@@ -4,6 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string.h>
+#include <FL/gl.h>
 #include "GUI.h"
 #include "graphicWindow.h"
 #include "optionWindow.h"
@@ -133,4 +134,29 @@ int GetFontSize()
     else if(w <= 1920) return 14;
     else               return 15;
   }
+}
+
+void SetFont(int fontid, int fontsize)
+{
+  gl_font(fontid, fontsize);
+}
+
+double GetStringWidth(const char *str)
+{
+  return gl_width(str);
+}
+
+int GetStringHeight()
+{
+  return gl_height();
+}
+
+int GetStringDescent()
+{
+  return gl_descent();
+}
+
+void DrawString(const char *str)
+{
+  gl_draw(str);
 }

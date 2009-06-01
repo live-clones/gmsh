@@ -9,17 +9,15 @@
 #include <string>
 #include <vector>
 #include <set>
-#include <FL/gl.h>
-
-//FIXME: work around faulty fltk installs
-//#include <FL/glu.h>
-#ifdef __APPLE__
-#  include <OpenGL/glu.h>
-#else
-#  include <GL/glu.h>
-#endif
-
 #include "SBoundingBox3d.h"
+
+#if defined(__APPLE__)
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#else
+#include <GL/gl.h>
+#include <GL/glu.h>
+#endif
 
 class PView;
 class GModel;
