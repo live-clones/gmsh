@@ -145,9 +145,8 @@ AC_ARG_ENABLE(tree-browser,
 AC_ARG_ENABLE(mpi,
               AC_HELP_STRING([--enable-mpi],
                              [enable MPI support (default=no)]))
-AC_ARG_ENABLE(minimal,
-              AC_HELP_STRING([--enable-minimal],
-                             [build minimal standalone version (default=no)]))
+AC_ARG_ENABLE(graphics)
+AC_ARG_ENABLE(minimal)
 
 dnl "minimal" build shortcut
 if test "x$enable_minimal" = "xyes"; then
@@ -392,6 +391,11 @@ else
   else
     AC_DEFINE(HAVE_NO_PARSER)
     BO="${BO} NoParser"
+  fi
+
+  if test "x$enable_graphics" = "xyes"; then
+    GMSH_DIRS="${GMSH_DIRS} Graphics"
+    GMSH_LIBS="${GMSH_LIBS} -lGmshGraphics"
   fi
 
   dnl re-add Common to work around linker shortcomings on some archs

@@ -1292,7 +1292,7 @@ Optional Features:
                           Linux)
   --enable-tree-browser   enable tree browser (default=yes)
   --enable-mpi            enable MPI support (default=no)
-  --enable-minimal        build minimal standalone version (default=no)
+
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1970,6 +1970,11 @@ fi
 # Check whether --enable-mpi was given.
 if test "${enable_mpi+set}" = set; then
   enableval=$enable_mpi;
+fi
+
+# Check whether --enable-graphics was given.
+if test "${enable_graphics+set}" = set; then
+  enableval=$enable_graphics;
 fi
 
 # Check whether --enable-minimal was given.
@@ -4235,6 +4240,11 @@ _ACEOF
 _ACEOF
 
     BO="${BO} NoParser"
+  fi
+
+  if test "x$enable_graphics" = "xyes"; then
+    GMSH_DIRS="${GMSH_DIRS} Graphics"
+    GMSH_LIBS="${GMSH_LIBS} -lGmshGraphics"
   fi
 
     GMSH_DIRS="${GMSH_DIRS} Numeric"
