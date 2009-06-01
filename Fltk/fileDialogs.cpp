@@ -31,12 +31,16 @@
 // File chooser
 
 #if defined(HAVE_NATIVE_FILE_CHOOSER)
+
 #include <FL/Fl_Native_File_Chooser.H>
 static Fl_Native_File_Chooser *fc = 0;
+
 #else
+
 #include <FL/Fl_File_Chooser.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_File_Input.H>
+
 class fileChooser : public Fl_File_Chooser {
   // we derive our own so we can set its position (The original file
   // chooser doesn't expose its window to the world, so we need to use
@@ -67,7 +71,9 @@ class fileChooser : public Fl_File_Chooser {
   int x(){ if(_win) return _win->x(); else return 100; }
   int y(){ if(_win) return _win->y(); else return 100; }
 };
+
 static fileChooser *fc = 0;
+
 #endif
 
 int file_chooser(int multi, int create, const char *message,
