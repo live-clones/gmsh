@@ -294,7 +294,7 @@ fileDialogs${OBJEXT}: fileDialogs.cpp ../Common/GmshConfig.h \
   ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h \
   ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/meshPartitionOptions.h fileChooser.h
+  ../Mesh/meshPartitionOptions.h
 extraDialogs${OBJEXT}: extraDialogs.cpp GUI.h paletteWindow.h \
   ../Common/GmshDefines.h ../Common/OpenFile.h ../Common/CreateFile.h \
   ../Common/Options.h ../Post/ColorTable.h Draw.h ../Geo/GModel.h \
