@@ -69,13 +69,12 @@ CellComplex::CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> su
       }
     }
   }
-    
   // insert cells into cell complex
   // subdomain need to be inserted first!
   insert_cells(true, true);
   insert_cells(false, true);
   insert_cells(false, false);
-  
+
   // find mesh vertices in the domain
   for(unsigned int j=0; j < domain.size(); j++) {  
     for(unsigned int i=0; i < domain.at(j)->getNumMeshElements(); i++){
@@ -85,6 +84,7 @@ CellComplex::CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> su
       }
     }
   }
+
   for(unsigned int j=0; j < subdomain.size(); j++) {
     for(unsigned int i=0; i < subdomain.at(j)->getNumMeshElements(); i++){
       for(int k=0; k < subdomain.at(j)->getMeshElement(i)->getNumVertices(); k++){
@@ -94,7 +94,7 @@ CellComplex::CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> su
     }
   }
   
-  
+
   // attach individual tags to cells
   int tag = 1;
   for(int i = 0; i < 4; i++){
@@ -120,11 +120,12 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
   else if(boundary) domain = _boundary;
   else domain = _domain;
   
-  std::vector<int> vertices;
+  std::vector<MVertex*> vertices;
   int vertex = 0;
   
   std::pair<citer, bool> insertInfo;
   
+
   // add highest dimensional cells
   for(unsigned int j=0; j < domain.size(); j++) {
     for(unsigned int i=0; i < domain.at(j)->getNumMeshElements(); i++){
@@ -132,7 +133,7 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
       
       for(int k=0; k < domain.at(j)->getMeshElement(i)->getNumVertices(); k++){
         MVertex* vertex = domain.at(j)->getMeshElement(i)->getVertex(k);
-        vertices.push_back(vertex->getNum());
+        vertices.push_back(vertex);
       }
       
       int dim = domain.at(j)->getMeshElement(i)->getDim();
@@ -141,23 +142,23 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
       if(dim == 3) cell = new ThreeSimplex(vertices, 0, subdomain, boundary);
       else if(dim == 2) cell = new TwoSimplex(vertices, 0, subdomain, boundary);
       else if(dim == 1) cell = new OneSimplex(vertices, 0, subdomain, boundary);
-      else cell = new ZeroSimplex(vertices.at(0), 0, subdomain, boundary);
+      else cell = new ZeroSimplex(vertices, 0, subdomain, boundary);
       insertInfo = _cells[dim].insert(cell);
       if(!insertInfo.second) delete cell;
     }
   }
-  
+
   // add lower dimensional cells recursively
   for (int dim = 3; dim > 0; dim--){
     for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
       Cell* cell = *cit;
-      std::vector<int> vertices;
+      std::vector<MVertex*> vertices;
       for(int i = 0; i < cell->getNumFacets(); i++){ 
         cell->getFacetVertices(i, vertices);
         Cell* newCell;
         if(dim == 3) newCell = new TwoSimplex(vertices, 0, subdomain, boundary);
         else if(dim == 2) newCell = new OneSimplex(vertices, 0, subdomain, boundary);
-        else if(dim == 1) newCell = new ZeroSimplex(vertices.at(0), 0, subdomain, boundary);
+        else if(dim == 1) newCell = new ZeroSimplex(vertices, 0, subdomain, boundary);
         insertInfo = _cells[dim-1].insert(newCell);
         if(!insertInfo.second){
           delete newCell;
@@ -186,7 +187,7 @@ void CellComplex::insertCell(Cell* cell){
 
 int Simplex::kappa(Cell* tau) const{
   for(int i=0; i < tau->getNumVertices(); i++){
-    if( !(this->hasVertex(tau->getVertex(i))) ) return 0;
+    if( !(this->hasVertex(tau->getVertex(i)->getNum())) ) return 0;
   }
   
   if(this->getDim() - tau->getDim() != 1) return 0;
@@ -246,62 +247,6 @@ int OneSimplex::kappa(Cell* tau) const{
   if(tau->getVertex(0) == this->getVertex(0)) return -1;
   else return 1;
     
-}
-*/
-
-int Quadrangle::kappa(Cell* tau) const{
-  for(int i=0; i < tau->getNumVertices(); i++){
-    if( !(this->hasVertex(tau->getVertex(i))) ) return 0;
-  }
-  
-  if(tau->getDim() != 1) return 0;
-  
-  int value=1;
-  
-  std::vector<int> vTau = tau->getVertexVector();
-  
-  for(int i = 0; i < this->getNumFacets(); i++){
-    std::vector<int> v;
-    this->getFacetVertices(i, v);
-    value = -1;
-    do {
-      value = value*-1;
-      if(v == vTau) return value;
-    }
-    while (std::next_permutation(v.begin(), v.end()) );
-  }
-    
-  return value;
-}
-
-/*
-std::set<Cell*, Less_Cell>::iterator CellComplex::findCell(int dim, std::vector<int>& vertices, bool original){
-  Cell* cell;
-  
-  if(dim == 0) cell = new ZeroSimplex(vertices.at(0));
-  else if(dim == 1) cell = new OneSimplex(vertices);
-  else if(dim == 2) cell = new TwoSimplex(vertices);
-  else cell = new ThreeSimplex(vertices);
-  
-  citer cit;
-  if(!original) cit = _cells[dim].find(cell);
-  else cit = _originalCells[dim].find(cell);
-
-  delete cell;
-  return cit;
-}
-
-std::set<Cell*, Less_Cell>::iterator CellComplex::findCell(int dim, int vertex, int dummy){
-  Cell* cell;
-  if(dim == 0) cell = new ZeroSimplex(vertex);
-  else if(dim == 1) cell = new OneSimplex(vertex, dummy);
-  else if(dim == 2) cell = new TwoSimplex(vertex, dummy);
-  else cell = new ThreeSimplex(vertex, dummy);
-  
-  citer cit = _cells[dim].lower_bound(cell);
-  
-  delete cell;
-  return cit;
 }
 */
 
@@ -380,79 +325,6 @@ int CellComplex::coreduction(Cell* generator){
   //printf("Coreduction: %d loops with %d coreductions\n", round, coreductions);
   return coreductions;
 }
-/*
-int CellComplex::coreduction(int dim){
-  
-  if(dim < 0 || dim > 2) return 0;
-  
-  std::list<Cell*> bd_c;
-  int count = 0;
-  
-  bool coreduced = true;
-  while (coreduced){
-    coreduced = false;
-    for(citer cit = firstCell(dim+1); cit != lastCell(dim+1); cit++){
-      Cell* cell = *cit;
-      
-      bd_c = cell->getBoundary();
-      if(bd_c.size() == 1 && inSameDomain(cell, bd_c.front()) ){
-        removeCell(cell);
-        removeCell(bd_c.front());
-        count++;
-        coreduced = true;
-      }
-      
-    }
-  }
-  
-  return count;
-    
-}
-*/
-/* 
-int CellComplex::reduction(Cell* generator){
-
-  int count = 0;
-  
-  std::queue<Cell*> Q;
-  std::set<Cell*, Less_Cell> Qset;
-  
-  Q.push(generator);
-  Qset.insert(generator);
-  
-  
-  std::list<Cell*> cbd_s;
-  std::list<Cell*> bd_c;
-  Cell* s;
-  int round = 0;
-  while( !Q.empty() ){
-    round++;
-    //printf("%d ", round);
-    
-    s = Q.front();
-    Q.pop();
-    removeCellQset(s, Qset);
-
-    cbd_s = s->getCoboundary();
-    if( cbd_s.size() == 1 && inSameDomain(s, cbd_s.front()) ){
-      removeCell(s);
-      bd_c = cbd_s.front()->getBoundary();
-      enqueueCells(bd_c, Q, Qset);
-      removeCell(cbd_s.front());
-      count++;
-    }
-    else if(cbd_s.empty()){
-      bd_c = s->getBoundary();
-      enqueueCells(bd_c, Q, Qset);
-    }
-    
-    
-  }
-  
-  return count;
-}
-*/
-
 
 int CellComplex::reduction(int dim){
   if(dim < 1 || dim > 3) return 0;
@@ -483,13 +355,6 @@ void CellComplex::reduceComplex(bool omitHighdim){
   printf("Cell complex before reduction: %d volumes, %d faces, %d edges and %d vertices.\n",
          getSize(3), getSize(2), getSize(1), getSize(0));
 
-  
-  //reduction(3);
-  //reduction(2);
-  //reduction(1);
-  
-  
-  
   int count = 0;
   for(int i = 3; i > 0; i--) count = count + reduction(i);
   
@@ -527,45 +392,7 @@ void CellComplex::reduceComplex(bool omitHighdim){
          getSize(3), getSize(2), getSize(1), getSize(0));
 }
 
-/*
-void CellComplex::coreduceComplex(int generatorDim){
 
-  
-  std::set<Cell*, Less_Cell> generatorCells[4];
-  
-  printf("Cell complex before coreduction: %d volumes, %d faces, %d edges and %d vertices.\n",
-         getSize(3), getSize(2), getSize(1), getSize(0));
-  for(int i = 0; i < 4; i++){    
-    while (getSize(i) != 0){
-      //if(generatorDim == i || i == generatorDim+1) break;
-      citer cit = firstCell(i);
-      Cell* cell = *cit;
-      while(!cell->inSubdomain() && cit != lastCell(i)){
-        cell = *cit;
-        cit++;
-      }
-      if(!cell->inSubdomain()) generatorCells[i].insert(cell);
-      removeCell(cell);
-
-      coreduction(cell);
-    }
-    if(generatorDim == i) break;
-    
-  }
-  
-  for(int i = 0; i < 4; i++){
-    for(citer cit = generatorCells[i].begin(); cit != generatorCells[i].end(); cit++){
-      Cell* cell = *cit;
-      _cells[i].insert(cell); 
-    }
-  }
-  
-  printf("Cell complex after coreduction: %d volumes, %d faces, %d edges and %d vertices.\n",
-         getSize(3), getSize(2), getSize(1), getSize(0));
-  
-  return;
-}
-*/
 void CellComplex::removeSubdomain(){
   
   for(int i = 0; i < 4; i++){
@@ -581,55 +408,7 @@ void CellComplex::removeSubdomain(){
   return;
 }
 
-/*
-int CellComplex::coreduction(int dim){
-  
-  int count = 0;
-  
-  std::queue<Cell*> Q;
-  std::set<Cell*, Less_Cell> Qset;
-  
-  std::list<Cell*> bd_s;
-  std::list<Cell*> cbd_c;
-  
-  for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
-    
-    Cell* cell = *cit;
-    cbd_c = cell->getCoboundary();
-    enqueueCells(cbd_c, Q, Qset);
-    
-    int round = 0;
-    while( !Q.empty() ){
-      round++;
-      //printf("%d ", round);
-      
-      Cell* s = Q.front();
-      Q.pop();
-      
-      bd_s = s->getBoundary();
-      
-      if( bd_s.size() == 1 && inSameDomain(s, bd_s.front()) ){
-        removeCell(s);
-        cbd_c = bd_s.front()->getCoboundary();
-        enqueueCells(cbd_c, Q, Qset);
-        removeCell(bd_s.front());
-        cit = firstCell(dim);
-        count++;
-      }
-      else if(bd_s.empty()){
-        cbd_c = s->getCoboundary();
-        enqueueCells(cbd_c, Q, Qset);
-      }
-      
-      removeCellQset(s, Qset);
-      
-    }
-    
-    
-  }
-  return count;
-}
-*/
+
 void CellComplex::coreduceComplex(bool omitLowdim){
 
   printf("Cell complex before coreduction: %d volumes, %d faces, %d edges and %d vertices.\n",
@@ -668,24 +447,7 @@ void CellComplex::coreduceComplex(bool omitLowdim){
     
     
   }
-  /*
-  std::set<Cell*, Less_Cell> generatorCells;
-  
-  while (getSize(0) != 0){
-    citer cit = firstCell(0);
-    Cell* cell = *cit;
-    while(!cell->inSubdomain() && cit != lastCell(0)){
-      cell = *cit;
-      cit++;
-    }
-    if(!cell->inSubdomain()) generatorCells.insert(cell);
-    removeCell(cell);
     
-    coreduction(cell);
-  }
-  */
-    
-  
   printf("Cell complex after coreduction: %d volumes, %d faces, %d edges and %d vertices.\n",
          getSize(3), getSize(2), getSize(1), getSize(0));
   
@@ -694,18 +456,6 @@ void CellComplex::coreduceComplex(bool omitLowdim){
 
 void CellComplex::computeBettiNumbers(){
   
-  /*
-  removeSubdomain();
-  
-  int count = 0;
-  for(int dim = 0; dim < 4; dim++){
-    citer cit = firstCell(dim);
-    if(cit != lastCell(dim)){
-      Cell* cell = *cit;
-      count = count + coreduction(cell);
-    }
-  }
-  */
   for(int i = 0; i < 4; i++){
     printf("Betti number computation process: step %d of 4 \n", i+1);
     
@@ -913,41 +663,6 @@ int CellComplex::combine(int dim){
   return count;
 }
 
-/*
-void CellComplex::repairComplex(int i){
-  
-  printf("Cell complex before repair: %d volumes, %d faces, %d edges and %d vertices.\n",
-         getSize(3), getSize(2), getSize(1), getSize(0));
-  
-  while(i > 0){
-    
-    for(citer cit = firstCell(i); cit != lastCell(i); cit++){
-      Cell* cell = *cit;
-      std::vector<int> vertices = cell->getVertexVector();
-      
-      for(int j=0; j < vertices.size(); j++){
-        std::vector<int> bVertices;
-        
-        for(int k=0; k < vertices.size(); k++){
-          if (k !=j ) bVertices.push_back(vertices.at(k));
-        }
-        citer cit2  = findCell(i-1, bVertices, true);
-        Cell* cell2 = *cit2;
-        _cells[i-1].insert(cell2);
-        
-      }
-    }
-  i--;
-    
-  }
-
-  printf("Cell complex after repair: %d volumes, %d faces, %d edges and %d vertices.\n",
-         getSize(3), getSize(2), getSize(1), getSize(0));
-  
-  return;
-}
-*/
- 
 void CellComplex::swapSubdomain(){
   
   for(int i = 0; i < 4; i++){
@@ -1021,7 +736,7 @@ int CellComplex::writeComplexMSH(const std::string &name){
     if(vertex->inSubdomain()) physical = 3;
     else if(vertex->onDomainBoundary()) physical = 2;
     else physical = 1;
-     fprintf(fp, "%d %d %d %d %d %d %d\n", vertex->getTag(), 15, 3, 0, 0, physical, vertex->getVertex(0));
+     fprintf(fp, "%d %d %d %d %d %d %d\n", vertex->getTag(), 15, 3, 0, 0, physical, vertex->getVertex(0)->getNum());
   }
   
   std::list< std::pair<int, Cell*> > cells;
@@ -1033,7 +748,7 @@ int CellComplex::writeComplexMSH(const std::string &name){
     cells = edge->getCells();
     for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
       Cell* cell = (*it).second;
-      fprintf(fp, "%d %d %d %d %d %d %d %d\n", cell->getTag(), 1, 3, 0, 0, physical, cell->getVertex(0), cell->getVertex(1));
+      fprintf(fp, "%d %d %d %d %d %d %d %d\n", cell->getTag(), 1, 3, 0, 0, physical, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum());
     }
   }
   
@@ -1045,7 +760,7 @@ int CellComplex::writeComplexMSH(const std::string &name){
     cells = face->getCells();
     for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
       Cell* cell = (*it).second;
-      fprintf(fp, "%d %d %d %d %d %d %d %d %d\n", cell->getTag(), 2, 3, 0, 0, physical, cell->getVertex(0), cell->getVertex(1), cell->getVertex(2));
+      fprintf(fp, "%d %d %d %d %d %d %d %d %d\n", cell->getTag(), 2, 3, 0, 0, physical, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum());
     }
   }
   for(citer cit = firstCell(3); cit != lastCell(3); cit++) {
@@ -1056,7 +771,7 @@ int CellComplex::writeComplexMSH(const std::string &name){
     cells = volume->getCells();
     for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
       Cell* cell = (*it).second;
-      fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getTag(), 4, 3, 0, 0, physical, cell->getVertex(0), cell->getVertex(1), cell->getVertex(2), cell->getVertex(3));
+      fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getTag(), 4, 3, 0, 0, physical, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
     }
   }
     
@@ -1072,20 +787,10 @@ void CellComplex::printComplex(int dim){
   for (citer cit = firstCell(dim); cit != lastCell(dim); cit++){
     Cell* cell = *cit;
     for(int i = 0; i < cell->getNumVertices(); i++){
-      printf("%d ", cell->getVertex(i));
+      printf("%d ", cell->getVertex(i)->getNum());
     }
     printf("\n");
   }
 }
 
 
-  
-DualCellComplex::DualCellComplex(CellComplex* cellComplex){
-  
-  for(int i = 0; i < 4; i++){
-    _cells[i] = cellComplex->getCells(i);
-  }
-  
-  
-  
-}
