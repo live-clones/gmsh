@@ -11,6 +11,7 @@
 #include "MElement.h"
 #include "MEdge.h"
 #include "meshGFaceDelaunayInsertion.h"
+#include "STensor3.h"
 
 class GFace;
 class MVertex;
@@ -50,6 +51,7 @@ void buildMeshGenerationDataStructures(GFace *gf,
                                        std::set<MTri3*, compareTri3Ptr> &AllTris,
                                        std::vector<double> &vSizes,
                                        std::vector<double> &vSizesBGM,
+                                       std::vector<SMetric3> &vMetricsBGM,
                                        std::vector<double> &Us,
                                        std::vector<double> &Vs);
 void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,

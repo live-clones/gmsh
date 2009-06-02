@@ -511,11 +511,11 @@ void gmshHighOrderSmoother::smooth_metric ( std::vector<MElement*>  & all, GFace
   
   double dx0 = smooth_metric_ ( v, gf, myAssembler, verticesToMove,El);
   double dx = dx0;
-  //  printf(" dx0 = %12.5E\n",dx0);
+  printf(" dx0 = %12.5E\n",dx0);
   int iter = 0;
   while(1){
     double dx2 = smooth_metric_ ( v,gf, myAssembler, verticesToMove,El);
-    //    printf(" dx2  = %12.5E\n",dx2);
+    printf(" dx2  = %12.5E\n",dx2);
     if (fabs(dx2-dx) < 1.e-4 * dx0)break;
     if (iter++ > 10)break;
     dx = dx2;

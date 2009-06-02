@@ -45,7 +45,7 @@ void GEdgeCompound::orderEdges()
     edges.push_back(_compound[i]);
   }
 
- // find a lonly edge
+  // find a lonely edge
   std::map<GVertex*,GEdge*> tempv;
   for (std::list<GEdge*>::iterator it = edges.begin() ; it != edges.end() ; ++it){
     GVertex *v1 = (*it)->getBeginVertex();
@@ -120,7 +120,7 @@ void GEdgeCompound::orderEdges()
 	first = last;
 	last = temp;
 	_orientation[0] = 0;
-     }
+      }
       else {
 	Msg::Error("Compound Edge %d is wrong",tag());
 	return;

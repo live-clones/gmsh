@@ -202,6 +202,7 @@ double mesh_functional_distorsion(MTriangle *t, double u, double v)
   double sign = 1.0;
   prosca(normal1, normal, &sign);
   double det = norm3(normal) * (sign > 0 ? 1. : -1.) / nn;  
+  //double det = norm3(normal);
 
   // compute distorsion
   //  double dist = std::min(1. / det, det); 

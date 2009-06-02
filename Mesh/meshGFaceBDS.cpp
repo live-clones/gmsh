@@ -38,8 +38,12 @@ inline double computeEdgeLinearLength(BDS_Point *p1,
                                       double SCALINGU, 
 				      double SCALINGV)
 {
+
   GPoint GP = f->point(SPoint2(0.5 * (p1->u + p2->u) * SCALINGU,
                                0.5 * (p1->v + p2->v) * SCALINGV));
+
+  if (!GP.succeeded())
+    return computeEdgeLinearLength(p1,p2);
 
   const double dx1 = p1->X - GP.x();
   const double dy1 = p1->Y - GP.y();
@@ -410,17 +414,22 @@ void splitEdgePassUnsorted(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
         const double coord = computeEdgeMiddleCoord((*it)->p1, (*it)->p2, gf,
                                                     m.scalingU, m.scalingV);
         BDS_Point *mid;
-        mid  = m.add_point(++m.MAXPOINTNUMBER,
-                           coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u,
-                           coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v, gf);
-        mid->lcBGM() = BGM_MeshSize
-          (gf,
-           (coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u)*m.scalingU,
-           (coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v)*m.scalingV,
-           mid->X,mid->Y,mid->Z);
-        mid->lc() = 0.5 * ((*it)->p1->lc() +  (*it)->p2->lc());
-        if(!m.split_edge(*it, mid)) m.del_point(mid);
-        else nb_split++;
+
+	GPoint gpp = gf->point(coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u,
+			       coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v);
+	if (gpp.succeeded()){  
+	  mid  = m.add_point(++m.MAXPOINTNUMBER,
+			     coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u,
+			     coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v, gf);
+	  mid->lcBGM() = BGM_MeshSize
+	    (gf,
+	     (coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u)*m.scalingU,
+	     (coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v)*m.scalingV,
+	     mid->X,mid->Y,mid->Z);
+	  mid->lc() = 0.5 * ((*it)->p1->lc() +  (*it)->p2->lc());
+	  if(!m.split_edge(*it, mid)) m.del_point(mid);
+	  else nb_split++;
+	}
       }
     }
     ++it;
@@ -451,15 +460,21 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
       BDS_Point *mid ;
       double U = coord * e->p1->u + (1 - coord) * e->p2->u;
       double V = coord * e->p1->v + (1 - coord) * e->p2->v;
-      mid  = m.add_point(++m.MAXPOINTNUMBER, U , V, gf);
-      mid->lcBGM() = BGM_MeshSize
-        (gf,
-         (coord * e->p1->u + (1 - coord) * e->p2->u)*m.scalingU,
-         (coord * e->p1->v + (1 - coord) * e->p2->v)*m.scalingV,
-         mid->X,mid->Y,mid->Z);
-      mid->lc() = 0.5 * (e->p1->lc() +  e->p2->lc());
-      if(!m.split_edge(e, mid)) m.del_point(mid);
-      else nb_split++;
+
+      GPoint gpp = gf->point(U,V);
+      if (gpp.succeeded()){  
+	mid  = m.add_point(++m.MAXPOINTNUMBER, gpp.x(),gpp.y(),gpp.z());
+	mid->u = U;
+	mid->v = V;
+	mid->lcBGM() = BGM_MeshSize
+	  (gf,
+	   (coord * e->p1->u + (1 - coord) * e->p2->u)*m.scalingU,
+	   (coord * e->p1->v + (1 - coord) * e->p2->v)*m.scalingV,
+	   mid->X,mid->Y,mid->Z);
+	mid->lc() = 0.5 * (e->p1->lc() +  e->p2->lc());
+	if(!m.split_edge(e, mid)) m.del_point(mid);
+	else nb_split++;
+      }
     }
   }
 }

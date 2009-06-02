@@ -526,32 +526,24 @@ void GFaceCompound::computeNormals () const
   for ( ; itn != _normals.end() ; ++itn) itn->second.normalize();
 }
 
-double GFaceCompound::curvature(const SPoint2 &param) const
+double GFaceCompound::curvatureMax(const SPoint2 &param) const
 {
   parametrize();
   double U,V;
   GFaceCompoundTriangle *lt;
   getTriangle (param.x(),param.y(), &lt, U,V);  
   if (!lt){
+    printf("oops\n");
     return  0.0;
   }
-
-  //   if (lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface){
-  //     SPoint2 pv1, pv2, pv3;
-  //     bool ok = reparamMeshVertexOnFace(lt->t->getVertex(0), lt->gf, pv1); 
-  //     ok |= reparamMeshVertexOnFace(lt->t->getVertex(1), lt->gf, pv2); 
-  //     ok |= reparamMeshVertexOnFace(lt->t->getVertex(2), lt->gf, pv3); 
-  //     if (ok){
-  //       SPoint2 pv = pv1*(1.-U-V) + pv2*U + pv3*V;
-  //       return lt->gf->curvature(pv));
-  //     }
-  //   }
-
-  //  return curvature(lt->t);
+  if (lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface){
+    SPoint2 pv = lt->gfp1*(1.-U-V) + lt->gfp2*U + lt->gfp3*V;
+    return lt->gf->curvatureMax(pv);
+  }
   return 0.;
 }
 
-double GFaceCompound::curvature(MTriangle *t) const
+double GFaceCompound::curvature(MTriangle *t, double u, double v) const
 {
   SVector3 n1 = _normals[t->getVertex(0)];
   SVector3 n2 = _normals[t->getVertex(1)];
@@ -559,7 +551,7 @@ double GFaceCompound::curvature(MTriangle *t) const
   double val[9] = {n1.x(),n2.x(),n3.x(),
 		   n1.y(),n2.y(),n3.y(),
 		   n1.z(),n2.z(),n3.z()};
-  //  return fabs(t->interpolateDiv (val,0.,0.,0.));
+  return fabs(t->interpolateDiv (val,u,v,0.0));
   return 0.;
 }
 
@@ -569,11 +561,12 @@ GPoint GFaceCompound::point(double par1, double par2) const
   double U,V;
   GFaceCompoundTriangle *lt;
   getTriangle (par1, par2, &lt, U,V);  
-  SPoint3 p(0, 0, 0); 
+  SPoint3 p(3, 3, 0); 
   if (!lt){
-    // Msg::Warning("Re-Parametrized face %d --> point (%g %g) lies outside the domain", tag(), par1,par2); 
-  
-    return  GPoint(p.x(),p.y(),p.z(),this);
+    //    Msg::Warning("Re-Parametrized face %d --> point (%g %g) lies outside the domain", tag(), par1,par2);   
+    GPoint gp (p.x(),p.y(),p.z(),this);
+    gp.setNoSuccess();
+    return gp;
   }
   if (0 && lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface){
     SPoint2 pv = lt->gfp1*(1.-U-V) + lt->gfp2*U + lt->gfp3*V;
@@ -626,10 +619,11 @@ static void GFaceCompoundBB(void *a, double*mmin, double*mmax)
 
   const double dx = mmax[0] - mmin[0];
   const double dy = mmax[1] - mmin[1];
-  mmin[0] -= .02*dx;
-  mmin[1] -= .02*dy;
-  mmax[0] += .02*dx;
-  mmax[1] += .02*dy;
+  const double eps = 0.0;//1.e-12;
+  mmin[0] -= eps*dx;
+  mmin[1] -= eps*dy;
+  mmax[0] += eps*dx;
+  mmax[1] += eps*dy;
 }
 
 static void GFaceCompoundCentroid(void *a, double*c)
@@ -669,7 +663,17 @@ void GFaceCompound::getTriangle(double u, double v,
   
   double uv[3] = {u, v, 0};
   *lt = (GFaceCompoundTriangle*)Octree_Search(uv, oct);
-  if (!(*lt)) return;
+ //  if (!(*lt)) {
+//     for (int i=0;i<nbT;i++){
+//       if (GFaceCompoundInEle (&_gfct[i],uv)){
+// 	*lt = &_gfct[i];
+// 	break;
+//       }
+//     } 
+//   }
+  if (!(*lt)){
+    return;
+  }
 
   double M[2][2],X[2],R[2];
   const SPoint3 p0 = (*lt)->p1;
@@ -685,6 +689,8 @@ void GFaceCompound::getTriangle(double u, double v,
   _u = X[0];
   _v = X[1];
 }
+
+
 
 void GFaceCompound::buildOct() const
 {
@@ -714,6 +720,40 @@ void GFaceCompound::buildOct() const
   it = _compound.begin();
   count = 0;
 
+  for ( ; it != _compound.end() ; ++it){
+    for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+      MTriangle *t = (*it)->triangles[i];
+      std::map<MVertex*,SPoint3>::const_iterator it0 = 
+	coordinates.find(t->getVertex(0));
+      std::map<MVertex*,SPoint3>::const_iterator it1 = 
+	coordinates.find(t->getVertex(1));
+      std::map<MVertex*,SPoint3>::const_iterator it2 = 
+	coordinates.find(t->getVertex(2));
+      _gfct[count].p1 = it0->second;
+      _gfct[count].p2 = it1->second;
+      _gfct[count].p3 = it2->second;
+      if ((*it)->geomType() != GEntity::DiscreteSurface){
+	reparamMeshVertexOnFace(t->getVertex(0), *it, _gfct[count].gfp1); 
+	reparamMeshVertexOnFace(t->getVertex(1), *it, _gfct[count].gfp2); 
+	reparamMeshVertexOnFace(t->getVertex(2), *it, _gfct[count].gfp3); 
+      }
+      _gfct[count].v1 = SPoint3(t->getVertex(0)->x(),t->getVertex(0)->y(),t->getVertex(0)->z());      
+      _gfct[count].v2 = SPoint3(t->getVertex(1)->x(),t->getVertex(1)->y(),t->getVertex(1)->z());      
+      _gfct[count].v3 = SPoint3(t->getVertex(2)->x(),t->getVertex(2)->y(),t->getVertex(2)->z());      
+      _gfct[count].gf = *it;      
+      Octree_Insert(&_gfct[count], oct);
+      count ++;
+    }
+  }
+  nbT = count;
+  Octree_Arrange(oct);
+  printStuff();
+}
+
+void GFaceCompound::printStuff() const
+{
+  std::list<GFace*> :: const_iterator it = _compound.begin();
+
   FILE * uvx = fopen("UVX.pos","w");
   FILE * uvy = fopen("UVY.pos","w");
   FILE * uvz = fopen("UVZ.pos","w");
@@ -737,34 +777,32 @@ void GFaceCompound::buildOct() const
 	coordinates.find(t->getVertex(1));
       std::map<MVertex*,SPoint3>::const_iterator it2 = 
 	coordinates.find(t->getVertex(2));
-      _gfct[count].p1 = it0->second;
-      _gfct[count].p2 = it1->second;
-      _gfct[count].p3 = it2->second;
-      if ((*it)->geomType() != GEntity::DiscreteSurface){
-	reparamMeshVertexOnFace(t->getVertex(0), *it, _gfct[count].gfp1); 
-	reparamMeshVertexOnFace(t->getVertex(1), *it, _gfct[count].gfp2); 
-	reparamMeshVertexOnFace(t->getVertex(2), *it, _gfct[count].gfp3); 
-      }
-      _gfct[count].v1 = SPoint3(t->getVertex(0)->x(),t->getVertex(0)->y(),t->getVertex(0)->z());      
-      _gfct[count].v2 = SPoint3(t->getVertex(1)->x(),t->getVertex(1)->y(),t->getVertex(1)->z());      
-      _gfct[count].v3 = SPoint3(t->getVertex(2)->x(),t->getVertex(2)->y(),t->getVertex(2)->z());      
-      _gfct[count].gf = *it;      
-      fprintf(xyzu,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+      fprintf(xyzu,"VT(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g,%g};\n",
 	      t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
 	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
 	      t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
-	      it0->second.x(),it1->second.x(),it2->second.x());
+	      (35.*it0->second.x()-t->getVertex(0)->x()), -t->getVertex(0)->y(), (35.*it0->second.y()-t->getVertex(0)->z()),
+	      (35.*it1->second.x()-t->getVertex(1)->x()), -t->getVertex(1)->y(), (35.*it1->second.y()-t->getVertex(1)->z()),
+	      (35.*it2->second.x()-t->getVertex(2)->x()), -t->getVertex(2)->y(), (35.*it2->second.y()-t->getVertex(2)->z()));
       fprintf(xyzv,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 	      t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
 	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
 	      t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
 	      it0->second.y(),it1->second.y(),it2->second.y());
-      const double K = fabs(curvature (t));
+      /*      fprintf(xyzu,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+	      t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
+	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
+	      t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
+	      it0->second.x(),it1->second.x(),it2->second.x());*/
+      double K1 = curvature(t,it0->second.x(),it0->second.y());
+      double K2 = curvature(t,it1->second.x(),it1->second.y());
+      double K3 = curvature(t,it2->second.x(),it2->second.y());
+      //      const double K = fabs(curvature (t));
       fprintf(xyzc,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 	      t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
 	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
 	      t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
-              K, K, K);
+              K1, K2, K3);
       
       fprintf(uvx,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 	      it0->second.x(), it0->second.y(), 0.0,
@@ -781,9 +819,6 @@ void GFaceCompound::buildOct() const
 	      it1->second.x(), it1->second.y(), 0.0,
 	      it2->second.x(), it2->second.y(), 0.0,
 	      t->getVertex(0)->z(), t->getVertex(1)->z(), t->getVertex(2)->z());
-      
-      Octree_Insert(&_gfct[count], oct);
-      count ++;
     }
   }
   fprintf(uvx,"};\n");

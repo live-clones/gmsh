@@ -1370,7 +1370,7 @@ void deMeshGFace::operator() (GFace *gf)
   gf->meshStatistics.nbTriangle = gf->meshStatistics.nbEdge = 0;
 }
 
-const int debugSurface = -1;
+const int debugSurface = -1;//-100;
 
 void meshGFace::operator() (GFace *gf)
 {

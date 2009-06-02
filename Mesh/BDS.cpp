@@ -1196,7 +1196,11 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
   LC /= (sTot);
 
   GPoint gp = gf->point(U * scalingU, V * scalingV);
-
+  
+  if (!gp.succeeded()){
+    printf ("iha\n");
+    return false;
+  }
   const double oldX = p->X;
   const double oldY = p->Y;
   const double oldZ = p->Z;
@@ -1307,6 +1311,8 @@ bool BDS_Mesh::smooth_point_parametric(BDS_Point *p, GFace *gf)
   }
 
   GPoint gp = gf->point(U * scalingU, V * scalingV);
+  if (!gp.succeeded())return false;
+
   p->u = U;
   p->v = V;
   p->lc() = LC;

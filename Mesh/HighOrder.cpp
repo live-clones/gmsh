@@ -1010,7 +1010,7 @@ extern double mesh_functional_distorsion(MTriangle *t, double u, double v);
 
 static void printJacobians(GModel *m, const char *nm)
 {
-  const int n = 15;
+  const int n = 100;
   double D[n][n], X[n][n], Y[n][n], Z[n][n];
 
   FILE *f = fopen(nm,"w");
@@ -1025,9 +1025,12 @@ static void printJacobians(GModel *m, const char *nm)
           double v = (double)k / (n - 1);         
           t->pnt(u, v, 0, pt);
 	  D[i][k] = mesh_functional_distorsion(t, u, v);
-          X[i][k] = pt.x();
-          Y[i][k] = pt.y();
-          Z[i][k] = pt.z();
+          //X[i][k] = u;
+          //Y[i][k] = v;
+          //Z[i][k] = 0.0;
+	  X[i][k] = pt.x();
+	  Y[i][k] = pt.y();
+	  Z[i][k] = pt.z();
         }
       }
       for(int i= 0; i < n -1; i++){
@@ -1128,7 +1131,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   if(displ2D) delete displ2D;
   if(displ3D) delete displ3D;
 
-  //printJacobians(m, "smoothness.pos");
+  //  printJacobians(m, "smoothness.pos");
   
   double t2 = Cpu();
   Msg::Info("Meshing order %d complete (%g s)", order, t2 - t1);

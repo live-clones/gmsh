@@ -1,6 +1,6 @@
 Mesh.CharacteristicLengthFactor=6;
 
-Merge "square_CLASS.msh";
+Merge "square.msh";
 CreateTopology;
 
 Compound Line(150)={1,2};

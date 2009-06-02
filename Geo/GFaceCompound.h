@@ -47,6 +47,7 @@ class GFaceCompound : public GFace {
  protected:
   std::list<GFace*> _compound;
   std::list<GEdge*> _U0, _U1, _V0, _V1;
+  mutable int nbT;
   mutable GFaceCompoundTriangle *_gfct;
   mutable Octree *oct;
   mutable std::map<MVertex*,SPoint3> coordinates;
@@ -58,7 +59,8 @@ class GFaceCompound : public GFace {
   void getBoundingEdges();
   void getTriangle(double u, double v, GFaceCompoundTriangle **lt, 
                    double &_u, double &_v) const;
-  virtual double curvature(MTriangle *t) const;
+  virtual double curvature(MTriangle *t, double u, double v) const;
+  void printStuff() const;
 public:
   typedef enum {UNITCIRCLE, SQUARE} typeOfIsomorphism;
   GFaceCompound(GModel *m, int tag, 
@@ -79,7 +81,7 @@ public:
   virtual SPoint2 getCoordinates(MVertex *v) const;
 
   virtual bool buildRepresentationCross(){ return false; }
-  virtual double curvature(const SPoint2 &param) const;
+  virtual double curvatureMax(const SPoint2 &param) const;
 private:
   typeOfIsomorphism _type;
 };

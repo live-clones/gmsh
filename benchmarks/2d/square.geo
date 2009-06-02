@@ -11,7 +11,3 @@ Line(4) = {1, 2};
 Line Loop(5) = {1, 2, 3, 4};
 Plane Surface(10) = {5};
 
-//Compound Line(150)={1,2};
-//Compound Line(160)={3,4};
-
-//Compound Surface(170)={10} Boundary {{}};

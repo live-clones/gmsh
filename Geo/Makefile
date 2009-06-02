@@ -15,7 +15,7 @@ INC = ${DASH}I../Common ${DASH}I../Geo ${DASH}I../Mesh\
 
 CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
-SRC = GEntity.cpp\
+SRC = GEntity.cpp STensor3.cpp\
         GVertex.cpp GEdge.cpp GFace.cpp GRegion.cpp\
         GEdgeLoop.cpp GEdgeCompound.cpp GFaceCompound.cpp GRegionCompound.cpp\
         gmshVertex.cpp gmshEdge.cpp gmshFace.cpp gmshRegion.cpp gmshSurface.cpp\

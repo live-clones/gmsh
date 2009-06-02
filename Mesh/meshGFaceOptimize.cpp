@@ -50,6 +50,7 @@ void buildMeshGenerationDataStructures(GFace *gf,
                                        std::set<MTri3*, compareTri3Ptr> &AllTris,
                                        std::vector<double> &vSizes,
                                        std::vector<double> &vSizesBGM,
+				       std::vector<SMetric3> &vMetricsBGM,
                                        std::vector<double> &Us,
                                        std::vector<double> &Vs)
 {
@@ -79,6 +80,7 @@ void buildMeshGenerationDataStructures(GFace *gf,
     it->first->setNum(NUM++);
     vSizes.push_back(it->second);
     vSizesBGM.push_back(it->second);
+    vMetricsBGM.push_back(SMetric3(it->second));
     SPoint2 param;
     reparamMeshVertexOnFace(it->first, gf, param);
     Us.push_back(param[0]);
@@ -235,9 +237,11 @@ void laplaceSmoothing(GFace *gf)
 	  ver->setParameter(0, cu / fact);
 	  ver->setParameter(1, cv / fact);
 	  GPoint pt = gf->point(SPoint2(cu / fact, cv / fact));
-	  ver->x() = pt.x();
-	  ver->y() = pt.y();
-	  ver->z() = pt.z();
+	  if (pt.succeeded()){
+	    ver->x() = pt.x();
+	    ver->y() = pt.y();
+	    ver->z() = pt.z();
+	  }
 	}
       }
       ++it;

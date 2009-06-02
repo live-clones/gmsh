@@ -7,6 +7,7 @@
 #define _MESH_GFACE_DELAUNAY_INSERTIONFACE_H_
 
 #include "MTriangle.h"
+#include "STensor3.h"
 #include <list>
 #include <set>
 #include <map>
@@ -50,7 +51,7 @@ class MTri3
   void forceRadius (double r){ circum_radius = r; }
   double getRadius () const { return circum_radius; }
 
-  MTri3(MTriangle *t, double lc);
+  MTri3(MTriangle *t, double lc, SMetric3 *m = 0);
   inline MTriangle *tri() const { return base; }
   inline void  setNeigh(int iN , MTri3 *n) { neigh[iN] = n; }
   inline MTri3 *getNeigh(int iN ) const { return neigh[iN]; }

@@ -159,6 +159,8 @@ class GFace : public GEntity
                          SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const = 0;
 
   // return the curvature computed as the divergence of the normal
+  inline double curvature(const SPoint2 &param) const 
+  {return curvatureMax(param);}
   virtual double curvatureDiv(const SPoint2 &param) const;
 
   // return the maximum curvature at a point

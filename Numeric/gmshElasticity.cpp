@@ -71,6 +71,7 @@ void gmshElasticityTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
     }
     BTH.set_all(0.);
     BTH.gemm(BT, H); 
+    //    printf("detJ = %22.15E\n",detJ);
     m.gemm(BTH, B, weight * detJ, 1.);
   } 
 }
