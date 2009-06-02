@@ -947,6 +947,14 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
       if(opt->skipElement(numEdges)) continue;
       int numComp = data->getNumComponents(opt->timeStep, ent, i);
       int numNodes = data->getNumNodes(opt->timeStep, ent, i);
+      if(numNodes > 20){
+        Msg::Error("Should never draw view with > 20 nodes per element: adapt?");
+        continue;
+      }
+      if(numComp > 9){
+        Msg::Error("Should never draw view with > 9 components: adapt?");
+        continue;
+      }
       for(int j = 0; j < numNodes; j++){
         data->getNode(opt->timeStep, ent, i, j, xyz[j][0], xyz[j][1], xyz[j][2]);
         for(int k = 0; k < numComp; k++)

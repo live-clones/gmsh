@@ -66,7 +66,7 @@ GModel::~GModel()
 GModel *GModel::current(int index)
 {
   if(list.empty()){
-    Msg::Error("No current model available: creating one");
+    Msg::Warning("No current model available: creating one");
     new GModel();
   }
   if(index >= 0) _current = index;
