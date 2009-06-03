@@ -50,7 +50,7 @@ tetgenbehavior::tetgenbehavior()
   nofacewritten = 0;
   noiterationnum = 0;
   nobisect = 0;
-  steiner = -1;
+  steinerleft = -1l;
   nomerge = 0;
   docheck = 0;
   quiet = 0;
@@ -360,7 +360,7 @@ bool tetgenbehavior::parse_commandline(int argc, char **argv)
             k++;
           }
           workstring[k] = '\0';
-          steiner = (int) strtol(workstring, (char **) NULL, 0);
+          steinerleft = (int) strtol(workstring, (char **) NULL, 0);
         } 
       } else if (argv[i][j] == 'D') {
         conformdel++;

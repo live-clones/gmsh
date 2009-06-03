@@ -21,6 +21,7 @@ SRC = behavior.cxx\
       meshio.cxx\
       meshstat.cxx\
       predicates.cxx\
+      refine.cxx\
       surface.cxx
 
 OBJ = ${SRC:.cxx=${OBJEXT}}

@@ -40,9 +40,7 @@ SRC = GEntity.cpp STensor3.cpp\
         MLine.cpp MTriangle.cpp MQuadrangle.cpp MTetrahedron.cpp\
         MHexahedron.cpp MPrism.cpp MPyramid.cpp\
       MZone.cpp MZoneBoundary.cpp\
-      CellComplex.cpp ChainComplex.cpp Homology.cpp\
-      STensor3.cpp
-
+      CellComplex.cpp ChainComplex.cpp Homology.cpp
 
 OBJ = ${SRC:.cpp=${OBJEXT}}
 

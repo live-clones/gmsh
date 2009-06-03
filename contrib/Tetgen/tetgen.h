@@ -442,11 +442,11 @@ class tetgenbehavior {    // Begin of class tetgenbehavior
   int nomerge;                                                       // -M
   int nobisect;                                                      // -Y
   int nojettison;                                                    // -J
-  int steiner;                                         // -S with a number
   int docheck;                                                       // -C
   int quiet;                                                         // -Q
   int verbose;                                                       // -V
   int useshelles;                                 // -p, -r, -q, -d, or -R
+  long steinerleft;                                    // -S with a number
   REAL minratio;                                        // number after -q
   REAL goodratio;                     // number calculated from 'minratio' 
   REAL minangle;                                    // minimum angle bound
@@ -1373,15 +1373,22 @@ void tssbond1(triface& t, face& s) {
   }
   // Bond the segment.
   ((shellface *) (t).tet[8])[locver2edge[(t).loc][(t).ver]] = sencode((s));
-} 
+}
 
-// tssdissolve() -- dissolve a tet-seg bond at the tet edge.
+// sstbond() -- bond a tet edge to a segment (only at the segment side).
+
+#define sstbond(s, t) (s).sh[9] = (shellface) encode(t)
+
+// tssdissolve() -- dissolve a tet-seg bond at the tet edge side.
 
 void tssdissolve(triface& t) {
   if ((t).tet[8] != NULL) {
     ((shellface *) (t).tet[8])[locver2edge[(t).loc][(t).ver]] = NULL;
   }
 }
+
+// sstdissolve() -- dissolve a tet-seg bond at the segment side.
+//   Use stdissolve().
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
@@ -1473,6 +1480,7 @@ memorypool *subsegpool, *subfacepool;
 memorypool *tet2segpool, *tet2subpool;
 memorypool *pointpool;
 memorypool *flippool;
+memorypool *badsegpool, *badsubpool, *badtetpool;
 
 // A dummy point at infinity (see [Guibas & Stolfi 85]).  All the hull
 //   tetrahedra having this point as a vertex.
@@ -1487,6 +1495,12 @@ arraypool *caveshlist, *caveshbdlist;
 
 // Stacks used by the boundary recovery algorithm.
 arraypool *subsegstack, *subfacstack;
+
+// Arrays used for facet recovery.
+arraypool *tg_crosstets, *tg_topnewtets, *tg_botnewtets;
+arraypool *tg_topfaces, *tg_botfaces, *tg_midfaces;
+arraypool *tg_topshells, *tg_botshells, *tg_facfaces;
+arraypool *tg_toppoints, *tg_botpoints, *tg_facpoints;
 
 // Variables for accessing data fields (initialized in initializepools()).
 int point2tetindex, pointmarkindex;
@@ -1529,7 +1543,7 @@ long triedgcount, triedgcopcount, trivercopcount;
 long across_face_count, across_edge_count, across_max_count;
 long r1count, r2count, r3count;
 long maxcavsize, maxregionsize;
-long ndelaunayedgecount, cavityexpcount;
+long cavitycount, ndelaunayedgecount, cavityexpcount;
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
@@ -1681,6 +1695,8 @@ void meshsurface();
 enum intersection finddirection(triface* searchtet, point endpt);
 enum intersection scoutsegment(face* sseg, triface* searchtet, point* refpt);
 void getsegmentsplitpoint(face* sseg, point refpt, REAL* vt);
+void getsegmentsplitpoint2(face* sseg, point refpt, REAL* vt);
+void getsegmentsplitpoint3(face* sseg, point refpt, REAL* vt);
 void delaunizesegments();
 
 enum intersection scoutsubface(face* ssub, triface* searchtet);
@@ -1696,11 +1712,26 @@ void restorecavity(arraypool*, arraypool*, arraypool*);
 void splitsubedge(point, face*, arraypool*, arraypool*);
 void constrainedfacets();
 
-enum intersection scoutedge(point, point, triface*, arraypool*, arraypool*,
-                            arraypool*);
+enum intersection scoutsegment2(face*, triface*, arraypool*);
+bool tetrasegcavity(face*, arraypool*, arraypool*, arraypool*, arraypool*,
+                    arraypool*, arraypool*, arraypool*, arraypool*);
+bool recoversegments(arraypool*, arraypool*, arraypool*, arraypool*, 
+                     arraypool*, arraypool*);
+void constrainedsegments();
 
 void formskeleton();
 void carveholes();
+
+///////////////////////////////////////////////////////////////////////////////
+//                                                                           //
+// Mesh refinement functions.                                                //
+//                                                                           //
+///////////////////////////////////////////////////////////////////////////////
+
+bool checkedge4encroach(face& seg, point testpt, int enqflag);
+void repairencsegs();
+
+void enforcequality();
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
@@ -1730,11 +1761,11 @@ void outvoronoi(tetgenio* out);
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
-void checkmesh();
+int checkmesh();
 int checkshells(int);
 int checkdelaunay(int);
 int checksegments();
-void checkconforming();
+int checkconforming();
 void algorithmstatistics();
 void qualitystatistics();
 void statistics();
@@ -1754,11 +1785,16 @@ void initialize()
   tet2segpool = tet2subpool = (memorypool *) NULL;
   pointpool = (memorypool *) NULL;
   flippool = (memorypool *) NULL;
+  badsegpool = badsubpool = badtetpool = (memorypool *) NULL;
   dummypoint = (point) NULL;
   futureflip = (badface *) NULL;
   cavetetlist = cavebdrylist = caveoldtetlist = (arraypool *) NULL;
   caveshlist = caveshbdlist = (arraypool *) NULL;
   subsegstack = subfacstack = (arraypool *) NULL;
+  arraypool *tg_crosstets, *tg_topnewtets, *tg_botnewtets;
+  tg_topfaces = tg_botfaces = tg_midfaces = NULL;
+  tg_topshells = tg_botshells = tg_facfaces = NULL;
+  tg_toppoints = tg_botpoints = tg_facpoints = NULL;
   point2tetindex = pointmarkindex = 0;
   elemmarkerindex = 0;
   elemattribindex = volumeboundindex = highorderindex = 0;
@@ -1781,7 +1817,7 @@ void initialize()
   across_face_count = across_edge_count = across_max_count = 0l;
   r1count = r2count = r3count = 0l;
   maxcavsize = maxregionsize = 0l;
-  ndelaunayedgecount = cavityexpcount = 0l;
+  cavitycount = ndelaunayedgecount = cavityexpcount = 0l;
 }
 
 void deinitialize()
@@ -1834,7 +1870,7 @@ void pteti(int i, int j, int k, int l);
 void pface(int i, int j, int k);
 bool pedge(int i, int j);
 void psubface(int i, int j, int k);
-void psubseg(int i, int j);
+int psubseg(int i, int j);
 int pmark(point p);
 void pvert(point p);
 int pverti(int i);
@@ -1848,6 +1884,7 @@ void print_facearray(arraypool* facearray);
 void print_subfacearray(arraypool* subfacearray);
 void dump_cavity(arraypool *topfaces, arraypool *botfaces);
 void dump_facetof(face* pssub, char* filename);
+void dump_cavitynewtets();
 
 ///////////////////////////////////////////////////////////////////////////////
 };  // End of class tetgenmesh;

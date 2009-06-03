@@ -260,7 +260,7 @@ enum tetgenmesh::location tetgenmesh::sinsertvertex(point insertpt,
   face neighsh, newsh, casout, casin;
   face aseg, bseg, aoutseg, boutseg;
   face checkseg;
-  triface neightet;
+  triface neightet, spintet;
   point pa, pb, pc;
   enum location loc;
   REAL sign, ori, area;
@@ -597,6 +597,22 @@ enum tetgenmesh::location tetgenmesh::sinsertvertex(point insertpt,
     if (b->verbose > 1) {
       printf("    Split seg (%d, %d) by %d.\n", pointmark(pa), pointmark(pb), 
         pointmark(insertpt));
+    }
+    // Detach the adjacent tets from this segment.
+    stpivot(aseg, neightet);
+    if (neightet.tet != NULL) {
+      // It should not be a dead tet.
+      assert(neightet.tet[4] != NULL); // SELF_CHECK
+      assert(((org(neightet) == pa) && (dest(neightet) == pb)) ||
+             ((org(neightet) == pb) && (dest(neightet) == pa))); // SELF_CHECK
+      spintet = neightet;
+      while (1) {
+        tssdissolve(spintet);
+        fnextself(spintet);
+        if (spintet.tet == neightet.tet) break;
+      }
+      // Clean the seg-to-tet pointer.
+      stdissolve(aseg);
     }
     // Insert the new point p.
     makeshellface(subsegpool, &bseg);

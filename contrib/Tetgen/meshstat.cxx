@@ -104,13 +104,13 @@ int tetgenmesh::mi1mo3[3] = {2, 0, 1};
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
-void tetgenmesh::checkmesh()
+int tetgenmesh::checkmesh()
 {
   triface tetloop;
   triface neightet, symtet;
   point pa, pb, pc, pd;
   REAL ori;
-  int horrors;
+  int horrors, i;
 
   if (!b->quiet) {
     printf("  Checking consistency of mesh...\n");
@@ -138,11 +138,13 @@ void tetgenmesh::checkmesh()
             horrors++;
           }
         }
-        if (infected(tetloop)) {
+        if (infected(tetloop)) { 
+          // This may be a bug. Report it.
           printf("  !! (%d, %d, %d, %d) is infected.\n", pointmark(pa),
             pointmark(pb), pointmark(pc), pointmark(pd));
         }
         if (marktested(tetloop)) {
+          // This may be a bug. Report it.
           printf("  !! (%d, %d, %d, %d) is marked.\n", pointmark(pa),
             pointmark(pb), pointmark(pc), pointmark(pd));
         }
@@ -178,6 +180,16 @@ void tetgenmesh::checkmesh()
             pointmark(oppo(neightet)));
           horrors++;
         }
+        // Check if they have the same apex.
+        if (apex(neightet) != pc) {
+          printf("  !! !! Wrong face-face bond:\n");
+          printf("    First:  (%d, %d, %d, %d)\n", pointmark(pa),
+            pointmark(pb), pointmark(pc), pointmark(pd));
+          printf("    Second: (%d, %d, %d, %d)\n", pointmark(org(neightet)),
+            pointmark(dest(neightet)), pointmark(apex(neightet)),
+            pointmark(oppo(neightet)));
+          horrors++;
+        }
         // Check if they have the same opposite.
         if (oppo(neightet) == pd) {
           printf("  !! !! Two identical tetra:\n");
@@ -188,6 +200,22 @@ void tetgenmesh::checkmesh()
             pointmark(oppo(neightet)));
           horrors++;
         }
+      }
+      if (facemarked(tetloop)) {
+        // This may be a bug. Report it.
+        printf("  !! tetface (%d, %d, %d) %d is marked.\n", pointmark(pa),
+          pointmark(pb), pointmark(pc), pointmark(pd));
+      }
+    }
+    // Check the six edges of this tet.
+    for (i = 0; i < 6; i++) {
+      tetloop.loc = edge2locver[i][0];
+      tetloop.ver = edge2locver[i][1];
+      if (edgemarked(tetloop)) {
+        // This may be a bug. Report it.
+        printf("  !! tetedge (%d, %d) %d, %d is marked.\n", 
+          pointmark(org(tetloop)), pointmark(dest(tetloop)), 
+          pointmark(apex(tetloop)), pointmark(oppo(tetloop)));
       }
     }
     tetloop.tet = tetrahedrontraverse();
@@ -200,6 +228,8 @@ void tetgenmesh::checkmesh()
     printf("  !! !! !! !! %d %s witnessed.\n", horrors, 
       horrors > 1 ? "abnormity" : "abnormities");
   }
+
+  return horrors;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -215,7 +245,8 @@ int tetgenmesh::checkshells(int sub2tet)
   triface neightet, symtet;
   face shloop, spinsh, nextsh;
   face checkseg;
-  point pa, pb;
+  point pa, pb, *ppt;
+  int count;
   int horrors, i;
 
   tetrahedron ptr;
@@ -273,9 +304,33 @@ int tetgenmesh::checkshells(int sub2tet)
       // Check the tet-subface connections.
       stpivot(shloop, neightet);
       if (neightet.tet != NULL) {
+        // Check if the tet and subface have the same vertices.
+        ppt = (point *) shloop.sh;
+        for (i = 0; i < 3; i++) {
+          pinfect(ppt[3 + i]); // Infect the subface vertices.
+        }
+        ppt = (point *) neightet.tet;
+        count = 0;  // Count the infected vertices of this tet.
+        for (i = 0; i < 4; i++) {
+          if (pinfected(ppt[4 + i])) count++; 
+        }
+        ppt = (point *) shloop.sh;
+        for (i = 0; i < 3; i++) {
+          puninfect(ppt[3 + i]); // Uninfect the subface vertices.
+        }
+        if (count != 3) {
+          printf("  !! !! Wrong tet-sub connection (face does not match).\n");
+          printf("    Sub: x%lx (%d, %d, %d).\n", (unsigned long) shloop.sh,
+            pmark(sorg(shloop)), pmark(sdest(shloop)), pmark(sapex(shloop)));
+          printf("    Tet: x%lx (%d, %d, %d, %d).\n", 
+            (unsigned long) neightet.tet, pmark(org(neightet)), 
+            pmark(dest(neightet)), pmark(apex(neightet)), 
+            pmark(oppo(neightet)));
+          horrors++;
+        }
         tspivot(neightet, spinsh);
         if (spinsh.sh != shloop.sh) {
-          printf("  !! !! Wrong connection betwee tet and subface.\n");
+          printf("  !! !! Wrong tet-sub connection (wrong subfaces).\n");
           printf("    Sub: x%lx (%d, %d, %d).\n", (unsigned long) shloop.sh,
             pmark(sorg(shloop)), pmark(sdest(shloop)), pmark(sapex(shloop)));
           printf("    Tet: x%lx (%d, %d, %d, %d).\n", 
@@ -287,7 +342,7 @@ int tetgenmesh::checkshells(int sub2tet)
           symself(neightet);
           tspivot(neightet, spinsh);
           if (spinsh.sh != shloop.sh) {
-            printf("  !! !! Wrong connection betwee tet and subface.\n");
+            printf("  !! !! Wrong tet-sub connection (wrong subfaces).\n");
             printf("    Sub: x%lx (%d, %d, %d).\n", (unsigned long) shloop.sh,
               pmark(sorg(shloop)), pmark(sdest(shloop)), pmark(sapex(shloop)));
             printf("    Tet: x%lx (%d, %d, %d, %d).\n", 
@@ -303,6 +358,16 @@ int tetgenmesh::checkshells(int sub2tet)
         //   pmark(sorg(shloop)), pmark(sdest(shloop)), pmark(sapex(shloop)));
         // horrors++;
       }
+    }
+    if (sinfected(shloop)) {
+      // This may be a bug. report it.
+      printf("  !! A infected subface: (%d, %d, %d).\n", pmark(sorg(shloop)),
+        pmark(sdest(shloop)), pmark(sapex(shloop)));
+    }
+    if (smarktested(shloop)) {
+      // This may be a bug. report it.
+      printf("  !! A marked subface: (%d, %d, %d).\n", pmark(sorg(shloop)), 
+        pmark(sdest(shloop)), pmark(sapex(shloop)));
     }
     shloop.sh = shellfacetraverse(subfacepool);
   }
@@ -440,11 +505,11 @@ int tetgenmesh::checksegments()
             do {
               tsspivot(neightet, checkseg);
               if (checkseg.sh != sseg.sh) {
-                printf("  !! Wrong tet-seg connection.\n");
+                printf("  !! Wrong tet->seg connection.\n");
                 printf("    Tet: x%lx (%d, %d, %d, %d) - ", 
-                  (unsigned long) tetloop.tet, pointmark(org(tetloop)),
-                  pointmark(dest(tetloop)), pointmark(apex(tetloop)),
-                  pointmark(oppo(tetloop)));
+                  (unsigned long) neightet.tet, pointmark(org(neightet)),
+                  pointmark(dest(neightet)), pointmark(apex(neightet)),
+                  pointmark(oppo(neightet)));
                 if (checkseg.sh != NULL) {
                   printf("Seg x%lx (%d, %d).\n", (unsigned long) checkseg.sh,
                   pointmark(sorg(checkseg)), pointmark(sdest(checkseg))); 
@@ -456,6 +521,23 @@ int tetgenmesh::checksegments()
               fnextself(neightet);
             } while (neightet.tet != tetloop.tet);
           }
+          // Check the seg->tet pointer.
+          stpivot(sseg, neightet);
+          if (neightet.tet == NULL) {
+            printf("  !! Wrong seg->tet connection (A NULL tet).\n");
+            horrors++;
+          } else {
+            if (!(((org(neightet) == pa) && (dest(neightet) == pb)) ||
+                ((org(neightet) == pb) && (dest(neightet) == pa)))) {
+              printf("  !! Wrong seg->tet connection (Wrong edge).\n");
+              printf("    Tet: x%lx (%d, %d, %d, %d) - Seg: x%lx (%d, %d).\n", 
+                (unsigned long) neightet.tet, pointmark(org(neightet)),
+                pointmark(dest(neightet)), pointmark(apex(neightet)),
+                pointmark(oppo(neightet)), (unsigned long) sseg.sh,
+                pointmark(pa), pointmark(pb));
+              horrors++;
+            }
+          }
         }
       }
     }
@@ -466,6 +548,42 @@ int tetgenmesh::checksegments()
     printf("  Segments are connected properly.\n");
   } else {
     printf("  !! !! !! !! Found %d missing connections.\n", horrors);
+  }
+
+  return horrors;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//                                                                           //
+// checkconforming()    Check if the mesh is boundary conforming Delaunay.   //
+//                                                                           //
+///////////////////////////////////////////////////////////////////////////////
+
+int tetgenmesh::checkconforming()
+{
+  face shloop;
+  int horrors;
+
+  horrors = 0;
+
+  // Find all encroached segments.
+  subsegpool->traversalinit();
+  shloop.shver = 0;
+  shloop.sh = shellfacetraverse(subsegpool);
+  while (shloop.sh != NULL) {
+    if (checkedge4encroach(shloop, NULL, 0)) {
+      printf("  !! Segment x%lx (%d, %d) is encroached.\n", 
+        (unsigned long) shloop.sh, pointmark(sorg(shloop)),
+        pointmark(sdest(shloop)));
+      horrors++;
+    }
+    shloop.sh = shellfacetraverse(subsegpool);
+  }
+
+  if (horrors == 0) {
+    printf("  Segments are boundary conforming Delaunay.\n");
+  } else {
+    printf("  !! !! !! !! Found %d encroached segments.\n", horrors);
   }
 
   return horrors;
@@ -592,8 +710,8 @@ void tetgenmesh::statistics()
   if (b->verbose > 0) {
     printf("  Euler characteristic of mesh domain: %ld\n", pointpool->items 
       - meshedges + facenumber - tetnumber);
-    printf("  Euler characteristic of boundary: %ld\n", pointpool->items 
-      - meshsubedges + subfacepool->items);
+    //printf("  Euler characteristic of boundary: %ld\n", pointpool->items 
+    //  - meshsubedges + subfacepool->items);
     printf("\n");
   }
 
@@ -871,13 +989,16 @@ void tetgenmesh::psh(face *s)
     } else {
       printf("      [8] = x%lx  %d\n", (unsigned long) prtsh.sh, prtsh.shver);
     }
+  }
 
-    decode(s->sh[9], prttet);
-    if (prttet.tet == NULL) {
+  // Print the adjacent tet of this subface or segment.
+  decode(s->sh[9], prttet);
+  if (prttet.tet == NULL) {
       printf("      [9] = Outer space\n");
-    } else {
-      printf("      [9] = x%lx  %d\n",(unsigned long) prttet.tet, prttet.loc);
-    }
+  } else {
+    printf("      [9] = x%lx  (%d, %d, %d, %d)\n",(unsigned long) prttet.tet, 
+      pointmark(org(prttet)), pointmark(dest(prttet)), 
+      pointmark(apex(prttet)), pointmark(oppo(prttet)));
   }
 }
 
@@ -1129,9 +1250,11 @@ void tetgenmesh::psubface(int i, int j, int k)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Print the information of the subsegment (i, j).
+// Return 1 if seg-to-tet pointer is broken.
 
-void tetgenmesh::psubseg(int i, int j)
+int tetgenmesh::psubseg(int i, int j)
 {
+  triface t;
   face s; //, s1;
   point forg, fdest;
   bool bflag;
@@ -1157,6 +1280,26 @@ void tetgenmesh::psubseg(int i, int j)
       fdest = farsdest(s);
       printf("  seg x%lx (%d, %d) < (%d, %d)\n", (unsigned long) s.sh, i, j,
         pointmark(forg), pointmark(fdest));
+      // Chekc seg-to-tet pointer
+      stpivot(s, t);
+      if (t.tet != NULL) {
+        if (t.tet[4] != NULL) {
+          forg = org(t);
+          fdest = dest(t);
+          if (((pointmark(forg) == i) && (pointmark(fdest) == j)) || 
+              ((pointmark(forg) == j) && (pointmark(fdest) == i))) {
+            printf("  adj tet x%lx (%d, %d, %d, %d)\n", (unsigned long) t.tet,
+              pointmark(forg), pointmark(fdest), pointmark(apex(t)), 
+              pointmark(oppo(t)));
+          } else {
+            printf("  !! Wrong seg-to-tet pointer.\n");
+            return 1;
+          }
+        } else {
+          printf("  !! A DEAD seg-to-tet pointer.\n");
+          return 1;
+        }
+      }
       /*// Print the adjacent subsegments at i and j.
       senext2(s, s1);
       spivotself(s1);
@@ -1184,6 +1327,7 @@ void tetgenmesh::psubseg(int i, int j)
   if (!bflag) {
     printf("  !! Not exist.\n");
   }
+  return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1569,6 +1713,52 @@ void tetgenmesh::dump_facetof(face *pssub, char *filename)
   fclose(fout);
 
   delete tmpfaces;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Dump the new tets of a cavity (in draw_tet() lua commands)
+
+void tetgenmesh::dump_cavitynewtets()
+{
+  arraypool *newtets;
+  triface searchtet, neightet, *parytet;
+  point *ppt;
+  int i;
+
+  newtets = new arraypool(sizeof(triface), 8);
+
+  // Collect all tets of the DT.
+  marktest(recenttet);
+  newtets->newindex((void **) &parytet);
+  *parytet = recenttet;
+  for (i = 0; i < newtets->objects; i++) {
+    searchtet = * (triface *) fastlookup(newtets, i);
+    for (searchtet.loc = 0; searchtet.loc < 4; searchtet.loc++) {
+      sym(searchtet, neightet);
+      if (!marktested(neightet)) {
+        marktest(neightet);
+        newtets->newindex((void **) &parytet);
+        *parytet = neightet;
+      }
+    }
+  }
+  // Comment: All new tets are marktested.
+
+  // Output the new tets.
+  for (i = 0; i < newtets->objects; i++) {
+    parytet = (triface *) fastlookup(newtets, i);
+    ppt = (point *) parytet->tet;
+    if (ppt[7] != dummypoint) {
+      printf("p:draw_tet(%d, %d, %d, %d) -- %i\n", pointmark(ppt[4]),
+        pointmark(ppt[5]), pointmark(ppt[6]), pointmark(ppt[7]), i);
+    } else {
+      printf("-- p:draw_tet(%d, %d, %d, -1) -- %i\n", pointmark(ppt[4]),
+        pointmark(ppt[5]), pointmark(ppt[6]), i);
+    }
+    unmarktest(*parytet); // Unmarktest it.
+  }
+
+  delete newtets;
 }
 
 #endif // #ifndef meshstatCXX

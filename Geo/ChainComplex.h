@@ -116,8 +116,6 @@ class ChainComplex{
    virtual void matrixTest();
 };
 
-#endif
-
 // A class representing a chain.
 // Used to visualize generators of the homology groups.
 class Chain{
@@ -163,5 +161,7 @@ class Chain{
    virtual void getData(std::map<int, std::vector<double> >& data);
    
 };
+
+#endif
 
 #endif

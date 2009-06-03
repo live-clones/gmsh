@@ -573,18 +573,22 @@ void tetgenmesh::flip14(point newpt, triface* splittet, int flipflag)
       if (checkseg.sh != NULL) {
         tssbond1(*splittet, checkseg);
         tssbond1(newface, checkseg);
+        // Let the segment remember an adjacent tet.
+        sstbond(checkseg, *splittet);
       }
       enextself(newface); // [b,d], [c,d], [a,d]
       enext(castets[i], casface);
       tsspivot(casface, checkseg); 
       if (checkseg.sh != NULL) {
         tssbond1(newface, checkseg);
+        sstbond(checkseg, newface);
       }
       enextself(newface); // [d,a], [d,b], [d,c]
       enext2(castets[i], casface);
       tsspivot(casface, checkseg);
       if (checkseg.sh != NULL) {
         tssbond1(newface, checkseg);
+        sstbond(checkseg, newface);
       }
       enextself(*splittet);
     }
@@ -769,6 +773,7 @@ void tetgenmesh::flip26(point newpt, triface* splitface, int flipflag)
         tsspivot(casface, checkseg);
         if (checkseg.sh != NULL) {
           tssbond1(newface, checkseg);
+          sstbond(checkseg, newface);
         }
         enextself(casface);
         enextself(newface);
@@ -786,6 +791,7 @@ void tetgenmesh::flip26(point newpt, triface* splitface, int flipflag)
         tsspivot(casface, checkseg);
         if (checkseg.sh != NULL) {
           tssbond1(newface, checkseg);
+          sstbond(checkseg, newface);
         }
         enextself(casface);
         enextself(newface);
@@ -993,6 +999,7 @@ void tetgenmesh::flipn2n(point newpt, triface* splitedge, int flipflag)
         tsspivot(casface, checkseg);
         if (checkseg.sh != NULL) {
           tssbond1(newface, checkseg);
+          sstbond(checkseg, newface);
         }
         enextself(casface);
         enextself(newface);
@@ -1005,6 +1012,7 @@ void tetgenmesh::flipn2n(point newpt, triface* splitedge, int flipflag)
         tsspivot(casface, checkseg);
         if (checkseg.sh != NULL) {
           tssbond1(newface, checkseg);
+          sstbond(checkseg, newface);
         }
         enextself(casface);
         enextself(newface);
@@ -1257,6 +1265,7 @@ void tetgenmesh::flip23(triface* fliptets, int hullflag, int flipflag)
         enextfnext(fliptets[i], newface);
         enextself(newface);
         tssbond1(newface, checkseg);
+        sstbond(checkseg, newface);
       }
     }
     // The top three: da, db, dc. Each edge belongs to two tets.
@@ -1266,9 +1275,11 @@ void tetgenmesh::flip23(triface* fliptets, int hullflag, int flipflag)
       if (checkseg.sh != NULL) {
         enext(fliptets[i], newface);
         tssbond1(newface, checkseg);
+        sstbond(checkseg, newface);
         enext0fnext(fliptets[(i + 2) % 3], newface);
         enextself(newface);
         tssbond1(newface, checkseg);
+        sstbond(checkseg, newface);
       }
     }
     // The bot three: ae, be, ce. Each edge belongs to two tets.
@@ -1278,9 +1289,11 @@ void tetgenmesh::flip23(triface* fliptets, int hullflag, int flipflag)
       if (checkseg.sh != NULL) {
         enext2(fliptets[i], newface);
         tssbond1(newface, checkseg);
+        sstbond(checkseg, newface);
         enext0fnext(fliptets[(i + 2) % 3], newface);
         enext2self(newface);
         tssbond1(newface, checkseg);
+        sstbond(checkseg, newface);
       }
     }
   }
@@ -1455,15 +1468,19 @@ void tetgenmesh::flip32(triface* fliptets, int hullflag, int flipflag)
   if (checksubsegs) {
     // Check if the flip edge is subsegment.
     tsspivot(fliptets[0], checkseg);
-    if ((checkseg.sh != NULL) && !sinfected(checkseg)) {
-      // This subsegment will be flipped. Queue it.
-      if (b->verbose > 1) {
-        printf("      Queue a flipped segment (%d, %d).\n",
-          pointmark(sorg(checkseg)), pointmark(sdest(checkseg)));
+    if ((checkseg.sh != NULL)) {
+      if (!sinfected(checkseg)) {
+        // This subsegment will be flipped. Queue it.
+        if (b->verbose > 1) {
+          printf("      Queue a flipped segment (%d, %d).\n",
+            pointmark(sorg(checkseg)), pointmark(sdest(checkseg)));
+        }
+        sinfect(checkseg);  // Only save it once.
+        subsegstack->newindex((void **) &pssub);
+        *pssub = checkseg;
       }
-      sinfect(checkseg);  // Only save it once.
-      subsegstack->newindex((void **) &pssub);
-      *pssub = checkseg;
+      // Clean the seg-to-tet pointer.
+      stdissolve(checkseg);
     }
   }
 
@@ -1566,6 +1583,7 @@ void tetgenmesh::flip32(triface* fliptets, int hullflag, int flipflag)
       tsspivot(topcastets[i], checkseg);
       if (checkseg.sh != NULL) {
         tssbond1(fliptets[0], checkseg);
+        sstbond(checkseg, fliptets[0]);
       }
       enextself(fliptets[0]);
     }
@@ -1577,6 +1595,7 @@ void tetgenmesh::flip32(triface* fliptets, int hullflag, int flipflag)
       tsspivot(casface, checkseg);
       if (checkseg.sh != NULL) {
         tssbond1(newface, checkseg);
+        sstbond(checkseg, newface);
       }
       enextself(fliptets[0]);
     }
@@ -1585,6 +1604,7 @@ void tetgenmesh::flip32(triface* fliptets, int hullflag, int flipflag)
       tsspivot(botcastets[i], checkseg);
       if (checkseg.sh != NULL) {
         tssbond1(fliptets[1], checkseg);
+        sstbond(checkseg, fliptets[1]);
       }
       enext2self(fliptets[1]);
     }
@@ -1596,6 +1616,7 @@ void tetgenmesh::flip32(triface* fliptets, int hullflag, int flipflag)
       tsspivot(casface, checkseg);
       if (checkseg.sh != NULL) {
         tssbond1(newface, checkseg);
+        sstbond(checkseg, newface);
       }
       enext2self(fliptets[1]);
     }
@@ -1873,7 +1894,7 @@ void tetgenmesh::lawsonflip3d(int flipflag)
   point *pt, pd, pe;
   REAL sign, ori;
   long flipcount;
-  // bool bflag; // for flipflag = 3.
+  bool bflag; // for flipflag = 3.
   int n, i;
 
   int *iptr;
@@ -1963,29 +1984,29 @@ void tetgenmesh::lawsonflip3d(int flipflag)
       }
       if (i == 3) {
         // A 2-to-3 flip is found.
-        // if (flipflag == 3) {
-        //   // Do not flip a subface.
-        //   tspivot(fliptet, checksh);
-        //   bflag = (checksh.sh == NULL);
-        // } else {
-        //   bflag = true;
-        // }
-        // if (bflag) {
+        if (flipflag == 3) {
+          // Do not flip a subface.
+          tspivot(fliptet, checksh);
+          bflag = (checksh.sh == NULL);
+        } else {
+          bflag = true;
+        }
+        if (bflag) {
           fliptets[0] = fliptet; // tet abcd, d is the new vertex.
           symedge(fliptets[0], fliptets[1]); // tet bace.
           flip23(fliptets, 0, flipflag);
           recenttet = fliptets[0]; // for point location.
-        // }
+        }
       } else {
         // A 3-to-2 or 4-to-4 may possible.
-        // if (flipflag == 3) {
-        //   // Do not flip a subsegment.
-        //   tsspivot(fliptet, checkseg);
-        //   bflag = (checkseg.sh == NULL);
-        // } else {
-        //   bflag = true;
-        // }
-        // if (bflag) {
+        if (flipflag == 3) {
+          // Do not flip a subsegment.
+          tsspivot(fliptet, checkseg);
+          bflag = (checkseg.sh == NULL);
+        } else {
+          bflag = true;
+        }
+        if (bflag) {
           enext0fnext(fliptet, fliptets[0]);
           esymself(fliptets[0]); // tet badc, d is the new vertex.
           n = 0;
@@ -2015,19 +2036,29 @@ void tetgenmesh::lawsonflip3d(int flipflag)
             recenttet = fliptets[0]; // for point location.
           } else {
             // An unflipable face. Will be flipped later.
-            if (flipflag > 1) {
+            if (flipflag == 2) { // if (flipflag > 1) {
               // Queue all other faces at the edge for flipping.
+              if (b->verbose > 1) {
+                printf("    Queue an N32 edge (%d, %d)", 
+                  pointmark(org(fliptets[0])), pointmark(dest(fliptets[0])));
+              }
               pe = apex(fliptets[0]);
               fliptets[1] = fliptets[0];
               while (1) {
+                if (b->verbose > 1) {
+                  printf("  %d", pointmark(apex(fliptets[1])));
+                }
                 pd = oppo(fliptets[1]);
                 futureflip = flippush(futureflip, &fliptets[1], pd);
                 fnextself(fliptets[1]);
                 if (apex(fliptets[1]) == pe) break;
               }
+              if (b->verbose > 1) {
+                printf("\n");
+              }
             }
           }
-        // } // bflag
+        } // bflag
       } // if (i == 3)
     } // if (sign < 0)
   }

@@ -158,7 +158,10 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
     double guess[2] = {0,0};
     int Count = 0;
     for(int j = 0; j < 3; j++){   
-      if(v[j]->onWhat()->dim() == 2){
+      if(!v[j]->onWhat()){
+        Msg::Error("Uncategorized vertex %d", v[j]->getNum());
+      }
+      else if(v[j]->onWhat()->dim() == 2){
 	double uu,vv;
 	v[j]->getParameter(0,uu);
 	v[j]->getParameter(1,vv);
