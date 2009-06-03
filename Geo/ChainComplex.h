@@ -160,6 +160,8 @@ class Chain{
    // append this chain to a 2.0 MSH ASCII file as $ElementData
    virtual int writeChainMSH(const std::string &name);
    
+   virtual void getData(std::map<int, std::vector<double> >& data);
+   
 };
 
 #endif

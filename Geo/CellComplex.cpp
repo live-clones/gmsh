@@ -140,7 +140,7 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
       int dim = domain.at(j)->getMeshElement(i)->getDim();
       int type = domain.at(j)->getMeshElement(i)->getTypeForMSH();
       Cell* cell;
-      if(dim == 3) cell = new ThreeSimplex(vertices, 0, subdomain, boundary);
+      if(dim == 3) cell = new ThreeSimplex(vertices, 0, subdomain, boundary); 
       else if(dim == 2) cell = new TwoSimplex(vertices, 0, subdomain, boundary);
       else if(dim == 1) cell = new OneSimplex(vertices, 0, subdomain, boundary);
       else cell = new ZeroSimplex(vertices, 0, subdomain, boundary);
@@ -267,6 +267,8 @@ void CellComplex::removeCell(Cell* cell){
     Cell* bdCell = *it;
     bdCell->removeCoboundaryCell(cell);
   }
+
+  //_trash.push_back(cell);
   
 }
 
@@ -358,7 +360,6 @@ void CellComplex::reduceComplex(bool omitHighdim){
 
   int count = 0;
   for(int i = 3; i > 0; i--) count = count + reduction(i);
-  
   
   
   if(count == 0 && omitHighdim){
@@ -737,7 +738,7 @@ int CellComplex::writeComplexMSH(const std::string &name){
     if(vertex->inSubdomain()) physical = 3;
     else if(vertex->onDomainBoundary()) physical = 2;
     else physical = 1;
-     fprintf(fp, "%d %d %d %d %d %d %d\n", vertex->getTag(), 15, 3, 0, 0, physical, vertex->getVertex(0)->getNum());
+     fprintf(fp, "%d %d %d %d %d %d %d\n", vertex->getNum(), 15, 3, 0, 0, physical, vertex->getVertex(0)->getNum());
   }
   
   std::list< std::pair<int, Cell*> > cells;
@@ -749,7 +750,7 @@ int CellComplex::writeComplexMSH(const std::string &name){
     cells = edge->getCells();
     for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
       Cell* cell = (*it).second;
-      fprintf(fp, "%d %d %d %d %d %d %d %d\n", cell->getTag(), 1, 3, 0, 0, physical, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum());
+      fprintf(fp, "%d %d %d %d %d %d %d %d\n", cell->getNum(), 1, 3, 0, 0, physical, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum());
     }
   }
   
@@ -761,7 +762,7 @@ int CellComplex::writeComplexMSH(const std::string &name){
     cells = face->getCells();
     for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
       Cell* cell = (*it).second;
-      fprintf(fp, "%d %d %d %d %d %d %d %d %d\n", cell->getTag(), 2, 3, 0, 0, physical, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum());
+      fprintf(fp, "%d %d %d %d %d %d %d %d %d\n", cell->getNum(), 2, 3, 0, 0, physical, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum());
     }
   }
   for(citer cit = firstCell(3); cit != lastCell(3); cit++) {
@@ -772,7 +773,7 @@ int CellComplex::writeComplexMSH(const std::string &name){
     cells = volume->getCells();
     for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
       Cell* cell = (*it).second;
-      fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getTag(), 4, 3, 0, 0, physical, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
+      fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), 4, 3, 0, 0, physical, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
     }
   }
     

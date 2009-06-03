@@ -6,18 +6,24 @@
 // Contributed by Matti Pellikka
 
 #include <stdlib.h>
+#include "Gmsh.h"
 #include "GmshConfig.h"
 #include "GModel.h"
-#include "CellComplex.h"
+#include "Homology.h"
+#include "PViewDataGModel.h"
 #include "HomologyComputation.h"
 
 
 StringXNumber HomologyComputationOptions_Number[] = {
-  {GMSH_FULLRC, "test number", NULL, 1.},
+  {GMSH_FULLRC, "Physical group for domain", NULL, 0.},
+  {GMSH_FULLRC, "Physical group for subdomain", NULL, 0.},
+  {GMSH_FULLRC, "Compute generators", NULL, 1.},
+  {GMSH_FULLRC, "Compute thick cuts", NULL, 0.},
+  {GMSH_FULLRC, "Swap subdomain", NULL, 0.},
 };
 
 StringXString HomologyComputationOptions_String[] = {
-  {GMSH_FULLRC, "test string", NULL, "test string"},
+  {GMSH_FULLRC, "Filename", NULL, "homology.msh"}
 };
 
 extern "C"
@@ -36,12 +42,13 @@ void GMSH_HomologyComputationPlugin::getName(char *name) const
 void GMSH_HomologyComputationPlugin::getInfos(char *author, char *copyright,
                                    char *help_text) const
 {
-  strcpy(author, "Matti Pellikka");
+  strcpy(author, "Matti Pellikka (matti.pellikka@tut.fi)");
   strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
   strcpy(help_text,
-         "Plugin(HomologyComputation) is here!\n"
+         "Plugin(HomologyComputation) computes generators \n"
+         "for (relative) homology groups and their thick cuts. \n"
          "\n"
-         "Plugin(HomologyComputation) creates a new view.\n");
+         "Plugin(HomologyComputation) creates new views.\n");
 }
 
 int GMSH_HomologyComputationPlugin::getNbOptions() const
@@ -72,28 +79,39 @@ void GMSH_HomologyComputationPlugin::catchErrorMessage(char *errorMessage) const
 
 PView *GMSH_HomologyComputationPlugin::execute(PView *v)
 {
-  std::string testString = HomologyComputationOptions_String[0].def;
-  int testInt = (int)HomologyComputationOptions_Number[0].def;
+  std::string fileName = HomologyComputationOptions_String[0].def;
+  if(fileName.empty()) {
+    Msg::Error("Filename not given!");
+    return 0;
+  }
+  
+  std::vector<int> domain;
+  std::vector<int> subdomain;
+  
+  domain.push_back((int)HomologyComputationOptions_Number[0].def);
+  subdomain.push_back((int)HomologyComputationOptions_Number[1].def);
+
+  int gen = (int)HomologyComputationOptions_Number[2].def;
+  int cuts = (int)HomologyComputationOptions_Number[3].def;
+  int swap = (int)HomologyComputationOptions_Number[4].def;
 
   GModel *m = GModel::current();
-  std::map<int, std::vector<GEntity*> > groups[4];
-  m->getPhysicalGroups(groups);
-
-  std::map<int, std::vector<double> > data;
-
-  std::vector<GEntity*> domain;
-  std::vector<GEntity*> subdomain;
-
-  // Here's the problem, linker cannot find the method for the constructor of 
-  // CellComplex class, or any other methods coded in Geo/CellComplex.cpp
   
-  //CellComplex* testComplex = new CellComplex(domain, subdomain);
+  Homology* homology = new Homology(m, domain, subdomain);
   
-  // insert homology fun here
+  if(swap == 1) homology->swapSubdomain();
+  if(gen == 1 && cuts != 1) {
+    homology->findGenerators(fileName);
+    GmshMergeFile(fileName);
+  }
+  else if(cuts == 1 && gen != 1) {
+    homology->findThickCuts(fileName);
+    GmshMergeFile(fileName);
+  }
+  else Msg::Error("Choose either generators or thick cuts to compute.");
   
-  PView *pv = new PView("homology", "ElementData", m, data, 0.);
+  delete homology; 
   
-  Msg::Error("test.");
   
   return 0;
 }

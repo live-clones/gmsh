@@ -62,7 +62,7 @@ class Cell
    virtual void setTag(int tag) { _tag = tag; };
    virtual int getIndex() const { return _index; };
    virtual void setIndex(int index) { _index = index; };
-   
+   virtual int getNum() { return -1; }
    
    // get the number of vertices this cell has
    virtual int getNumVertices() const = 0;
@@ -211,6 +211,7 @@ class ZeroSimplex : public Simplex, public MPoint
    ~ZeroSimplex(){}
    
    int getDim() const { return 0; }
+   int getNum() { return MPoint::getNum(); }
    int getNumVertices() const { return 1; }
    MVertex* getVertex(int vertex) const {return _v[0]; }
    int getSortedVertex(int vertex) const {return _v[0]->getNum(); }
@@ -244,6 +245,7 @@ class OneSimplex : public Simplex, public MLine
    ~OneSimplex(){}
    
    int getDim() const { return 1; }
+   int getNum() { return MLine::getNum(); }
    int getNumVertices() const { return 2; }
    int getNumFacets() const {  return 2; }
    MVertex* getVertex(int vertex) const {return _v[vertex]; }
@@ -289,6 +291,7 @@ class TwoSimplex : public Simplex, public MTriangle
    ~TwoSimplex(){}
    
    int getDim() const { return 2; }
+   int getNum() { return MTriangle::getNum(); }
    int getNumVertices() const { return 3; }
    int getNumFacets() const { return 3; }
    MVertex* getVertex(int vertex) const {return _v[vertex]; }
@@ -331,6 +334,7 @@ class ThreeSimplex : public Simplex, public MTetrahedron
    ~ThreeSimplex(){}
    
    int getDim() const { return 3; }
+   int getNum() { return MTetrahedron::getNum(); }
    int getNumVertices() const { return 4; }
    int getNumFacets() const { return 4; }
    MVertex* getVertex(int vertex) const {return _v[vertex]; }
@@ -513,6 +517,8 @@ class CellComplex
    // one for each dimension
    std::set<Cell*, Less_Cell>  _cells[4];
    
+   std::vector<Cell*> _trash;
+   
    //std::set<Cell*, Less_Cell>  _originalCells[4];
    
    // Betti numbers of this cell complex (ranks of homology groups)
@@ -570,7 +576,12 @@ class CellComplex
    
    CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> subdomain );
    CellComplex(){}
-   ~CellComplex(){}
+   ~CellComplex(){ 
+     for(int i = 0; i < _trash.size(); i++){
+       Cell* cell = _trash.at(i);
+       delete cell;
+     }
+   }
 
    
    // get the number of certain dimensional cells

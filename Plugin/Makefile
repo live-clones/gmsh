@@ -342,4 +342,4 @@ FiniteElement${OBJEXT}: FiniteElement.cpp ../Common/GmshConfig.h ../Geo/GModel.h
   ../Numeric/gmshLinearSystem.h
 HomologyComputation${OBJEXT}: HomologyComputation.cpp Plugin.h \
   ../Geo/GModel.h ../Geo/GEntity.h ../Geo/CellComplex.h \
-  ../Post/PView.h HomologyComputation.h
+  ../Post/PView.h HomologyComputation.h ../Geo/Homology.h

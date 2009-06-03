@@ -40,8 +40,7 @@ SRC = GEntity.cpp STensor3.cpp\
         MLine.cpp MTriangle.cpp MQuadrangle.cpp MTetrahedron.cpp\
         MHexahedron.cpp MPrism.cpp MPyramid.cpp\
       MZone.cpp MZoneBoundary.cpp\
-      CellComplex.cpp\
-      ChainComplex.cpp\
+      CellComplex.cpp ChainComplex.cpp Homology.cpp\
       STensor3.cpp
 
 
@@ -413,3 +412,4 @@ ChainComplex${OBJEXT}: ChainComplex.cpp ChainComplex.h ../Common/GmshConfig.h \
 STensor3${OBJEXT}: STensor3.cpp STensor3.h SVector3.h SPoint3.h \
   ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Common/GmshMessage.h \
   ../Numeric/Numeric.h ../Numeric/GmshMatrix.h
+Homology${OBJEXT}: Homology.cpp Homology.h CellComplex.h ChainComplex.h

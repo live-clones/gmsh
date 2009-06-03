@@ -487,7 +487,7 @@ int Chain::writeChainMSH(const std::string &name){
     cells = cell->getCells();
     for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
       Cell* cell2 = (*it).second;
-      fprintf(fp, "%d %d \n", cell2->getTag(), getCoeff(i)*(*it).first );
+      fprintf(fp, "%d %d \n", cell2->getNum(), getCoeff(i)*(*it).first );
     }
   }
   
@@ -497,4 +497,30 @@ int Chain::writeChainMSH(const std::string &name){
   
   return 1;
   
+}
+
+void Chain::getData(std::map<int, std::vector<double> > & data){
+  
+  if(getSize() == 0) return;
+  
+  std::list< std::pair<int, Cell*> > cells;
+  for(int i = 0; i < getSize(); i++){
+    Cell* cell = getCell(i);
+    cells = cell->getCells();
+    for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
+      Cell* cell2 = (*it).second;
+      std::vector<double> coeff;
+      coeff.push_back(getCoeff(i)*(*it).first);
+      std::pair<int, std::vector<double> >  dataPair = std::make_pair(cell2->getTag(), coeff);
+      data.insert(dataPair);
+      //printf("%d, %d, \n", cell2->getNum(), (int)coeff.at(0));
+      
+    }
+  }
+  
+  //for(std::map<int, std::vector<double> >::iterator it = data.begin(); it != data.end(); it++){
+  //  printf("%d, %d, \n", (*it).first, (int)(*it).second.at(0));  
+  //}
+  
+  return; 
 }
