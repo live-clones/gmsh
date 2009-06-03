@@ -43,6 +43,7 @@
 #include "GSHHS.h"
 #include "FiniteElement.h"
 #include "Context.h"
+#include "HomologyComputation.h"
 
 #if !defined(HAVE_NO_DLL)
 #include <dlfcn.h>
@@ -228,6 +229,8 @@ void PluginManager::registerDefaultPlugins()
 #endif
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
                       ("FiniteElement", GMSH_RegisterFiniteElementPlugin()));
+    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+                      ("HomologyComputation", GMSH_RegisterHomologyComputationPlugin()));
   }
 
 #if defined(HAVE_FLTK)

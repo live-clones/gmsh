@@ -33,7 +33,8 @@ SRC = Plugin.cpp PluginManager.cpp\
         Annotate.cpp Remove.cpp\
         Probe.cpp\
         HarmonicToTime.cpp ModulusPhase.cpp\
-        FiniteElement.cpp
+        FiniteElement.cpp\
+        HomologyComputation.cpp
 
 OBJ = ${SRC:.cpp=${OBJEXT}}
 
@@ -339,3 +340,6 @@ FiniteElement${OBJEXT}: FiniteElement.cpp ../Common/GmshConfig.h ../Geo/GModel.h
   ../Numeric/gmshTermOfFormulation.h ../Numeric/gmshFunction.h \
   ../Numeric/GmshMatrix.h ../Numeric/gmshLinearSystemGmm.h \
   ../Numeric/gmshLinearSystem.h
+HomologyComputation${OBJEXT}: HomologyComputation.cpp Plugin.h \
+  ../Geo/GModel.h ../Geo/GEntity.h ../Geo/CellComplex.h \
+  ../Post/PView.h HomologyComputation.h

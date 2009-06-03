@@ -7,6 +7,7 @@
 
 #include "CellComplex.h"
 
+
 CellComplex::CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> subdomain ){
   
   _domain = domain;

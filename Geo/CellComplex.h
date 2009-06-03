@@ -26,7 +26,6 @@
 #include "GVertex.h"
 
 
-
 // Abstract class representing an elemtary cell of a cell complex.
 class Cell
 {  
@@ -498,7 +497,7 @@ class CombinedCell : public Cell{
 // A class representing a cell complex made out of a finite element mesh.
 class CellComplex
 {
- protected:
+ private:
    
    // the domain in the model which this cell complex covers
    std::vector<GEntity*> _domain;
@@ -527,14 +526,14 @@ class CellComplex
    
   protected: 
    // enqueue cells in queue if they are not there already
-   virtual void enqueueCells(std::list<Cell*>& cells, 
+   void enqueueCells(std::list<Cell*>& cells, 
                              std::queue<Cell*>& Q, std::set<Cell*, Less_Cell>& Qset);
    // remove cell from the queue set
-   virtual void removeCellQset(Cell*& cell, std::set<Cell*, Less_Cell>& Qset);
+   void removeCellQset(Cell*& cell, std::set<Cell*, Less_Cell>& Qset);
       
    // insert cells into this cell complex
    //virtual void insert_cells(bool subdomain, bool boundary);
-   virtual void insert_cells(bool subdomain, bool boundary);
+   void insert_cells(bool subdomain, bool boundary);
    
   public: 
    CellComplex(  std::vector<GEntity*> domain, std::vector<GEntity*> subdomain, std::set<Cell*, Less_Cell> cells ) {
@@ -571,68 +570,68 @@ class CellComplex
    
    CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> subdomain );
    CellComplex(){}
-   virtual ~CellComplex(){}
+   ~CellComplex(){}
 
    
    // get the number of certain dimensional cells
-   virtual int getSize(int dim){ return _cells[dim].size(); }
+   int getSize(int dim){ return _cells[dim].size(); }
    
-   virtual int getDim() {return _dim; } 
+   int getDim() {return _dim; } 
    
-   virtual std::set<Cell*, Less_Cell> getCells(int dim){ return _cells[dim]; }
+   std::set<Cell*, Less_Cell> getCells(int dim){ return _cells[dim]; }
       
    // iterators to the first and last cells of certain dimension
-   virtual citer firstCell(int dim) {return _cells[dim].begin(); }
-   virtual citer lastCell(int dim) {return _cells[dim].end(); }
+    citer firstCell(int dim) {return _cells[dim].begin(); }
+    citer lastCell(int dim) {return _cells[dim].end(); }
   
    // kappa for two cells of this cell complex
    // implementation will vary depending on cell type
-   virtual inline int kappa(Cell* sigma, Cell* tau) const { return sigma->kappa(tau); }
+   inline int kappa(Cell* sigma, Cell* tau) const { return sigma->kappa(tau); }
    
    // remove a cell from this cell complex
-   virtual void removeCell(Cell* cell);
-   virtual void replaceCells(Cell* c1, Cell* c2, Cell* newCell, bool orMatch, bool co=false);
+   void removeCell(Cell* cell);
+   void replaceCells(Cell* c1, Cell* c2, Cell* newCell, bool orMatch, bool co=false);
    
    
-   virtual void insertCell(Cell* cell);
+   void insertCell(Cell* cell);
    
    // check whether two cells both belong to subdomain or if neither one does
-   virtual bool inSameDomain(Cell* c1, Cell* c2) const { return 
+   bool inSameDomain(Cell* c1, Cell* c2) const { return 
        ( (!c1->inSubdomain() && !c2->inSubdomain()) || (c1->inSubdomain() && c2->inSubdomain()) ); }
    
    
    // reduction of this cell complex
    // removes reduction pairs of cell of dimension dim and dim-1
-   virtual int reduction(int dim);
+   int reduction(int dim);
    
    
    // useful functions for (co)reduction of cell complex
-   virtual void reduceComplex(bool omitHighdim = false);
-   virtual void coreduceComplex(bool omitlowDim = false);
+   void reduceComplex(bool omitHighdim = false);
+   void coreduceComplex(bool omitlowDim = false);
    
    // queued coreduction presented in Mrozek's paper
-   virtual int coreduction(Cell* generator);
-      
+   int coreduction(Cell* generator);
+   
    // add every volume, face and edge its missing boundary cells
-   //virtual void repairComplex(int i=3);
+   // void repairComplex(int i=3);
    // change non-subdomain cells to be in subdomain, subdomain cells to not to be in subdomain
-   virtual void swapSubdomain();
-   virtual void removeSubdomain();
+   void swapSubdomain();
+   void removeSubdomain();
    
    
    // print the vertices of cells of certain dimension
-   virtual void printComplex(int dim);
+   void printComplex(int dim);
    
    // write this cell complex in 2.0 MSH ASCII format
-   virtual int writeComplexMSH(const std::string &name); 
+   int writeComplexMSH(const std::string &name); 
    
-   virtual int combine(int dim);
-   virtual int cocombine(int dim);
+   int combine(int dim);
+   int cocombine(int dim);
    
-   virtual void computeBettiNumbers();
-   virtual int getBettiNumber(int i) { if(i > -1 && i < 4) return _betti[i]; else return 0; }
+   void computeBettiNumbers();
+   int getBettiNumber(int i) { if(i > -1 && i < 4) return _betti[i]; else return 0; }
    
-   virtual void makeDualComplex(){
+   void makeDualComplex(){
      std::set<Cell*, Less_Cell> temp = _cells[0];
      _cells[0] = _cells[3];
      _cells[3] = temp;
