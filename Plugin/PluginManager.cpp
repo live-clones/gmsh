@@ -229,8 +229,10 @@ void PluginManager::registerDefaultPlugins()
 #endif
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
                       ("FiniteElement", GMSH_RegisterFiniteElementPlugin()));
+#if defined(HAVE_KBIPACK)
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
                       ("HomologyComputation", GMSH_RegisterHomologyComputationPlugin()));
+#endif
   }
 
 #if defined(HAVE_FLTK)

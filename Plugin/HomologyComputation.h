@@ -11,6 +11,7 @@
 #include <string>
 #include "Plugin.h"
 
+#if defined(HAVE_KBIPACK)
 extern "C"
 {
   GMSH_Plugin *GMSH_RegisterHomologyComputationPlugin();
@@ -29,5 +30,7 @@ public:
   StringXString *getOptionStr(int iopt);  
   PView *execute(PView *);
 };
+
+#endif
 
 #endif

@@ -9,7 +9,7 @@
 #include "Homology.h"
 #include "ChainComplex.h"
 
-
+#if defined(HAVE_KBIPACK)
 Homology::Homology(GModel* model, std::vector<int> physicalDomain, std::vector<int> physicalSubdomain){
   
   _model = model;
@@ -147,3 +147,4 @@ void Homology::findThickCuts(std::string fileName){
   delete chains;
   
 }
+#endif

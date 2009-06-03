@@ -437,8 +437,6 @@ std::vector<int> ChainComplex::getCoeffVector(int dim, int chainNumber){
   
 }
 
-#endif
-
 Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, CellComplex* cellComplex, std::string name){
   
   int i = 0;
@@ -524,3 +522,5 @@ void Chain::getData(std::map<int, std::vector<double> > & data){
   
   return; 
 }
+
+#endif

@@ -9,8 +9,9 @@
 #define _HOMOLOGY_H_
 
 #include <sstream>
-
 #include "CellComplex.h"
+
+#if defined(HAVE_KBIPACK)
 
 template <class TTypeA, class TTypeB>
 bool convert(const TTypeA& input, TTypeB& output ){
@@ -38,5 +39,7 @@ class Homology
    void swapSubdomain() { _cellComplex->swapSubdomain(); }
       
 };
+
+#endif
 
 #endif

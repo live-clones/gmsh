@@ -13,7 +13,7 @@
 #include "PViewDataGModel.h"
 #include "HomologyComputation.h"
 
-
+#if defined(HAVE_KBIPACK)
 StringXNumber HomologyComputationOptions_Number[] = {
   {GMSH_FULLRC, "Physical group for domain", NULL, 0.},
   {GMSH_FULLRC, "Physical group for subdomain", NULL, 0.},
@@ -115,3 +115,5 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   
   return 0;
 }
+
+#endif

@@ -25,6 +25,7 @@
 #include "GFace.h"
 #include "GVertex.h"
 
+#if defined(HAVE_KBIPACK)
 
 // Abstract class representing an elemtary cell of a cell complex.
 class Cell
@@ -659,5 +660,7 @@ class CellComplex
    }
    
 };
+
+#endif
 
 #endif
