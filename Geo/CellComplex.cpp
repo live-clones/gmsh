@@ -421,14 +421,16 @@ int CellComplex::coreduceComplex(bool omitLowdim){
   
   int count = 0;
   
-  removeSubdomain();
+  CellComplex::removeSubdomain();
   
   
   for(int dim = 0; dim < 4; dim++){
     citer cit = firstCell(dim);
-    if(cit != lastCell(dim)){
+    while(cit != lastCell(dim)){
       Cell* cell = *cit;
       count = count + coreduction(cell);
+      if(count != 0) break;
+      cit++;
     }
   } 
   

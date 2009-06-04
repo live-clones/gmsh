@@ -313,6 +313,7 @@ Physical Surface(1001) = {64,66,68,105,54,58};  //gh0
 Physical Surface(700) = {75,1034}; //elec0
 Physical Surface(701) = {79,1032}; //elec1
 
+Physical Surface(702) = {75,1034,79,1032}; //elec1+2
 
 
 

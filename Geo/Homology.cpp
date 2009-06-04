@@ -86,7 +86,9 @@ void Homology::findGenerators(std::string fileName){
   chains->computeHomology();
   Msg::Info("Homology Computation complete.");
   
+  int HRank[4];
   for(int j = 0; j < 4; j++){
+    HRank[j] = 0;
     for(int i = 1; i <= chains->getBasisSize(j); i++){
       
       std::string generator;
@@ -97,16 +99,17 @@ void Homology::findGenerators(std::string fileName){
       std::string name = dimension + "D Generator " + generator;
       Chain* chain = new Chain(_cellComplex->getCells(j), chains->getCoeffVector(j,i), _cellComplex, name);
       chain->writeChainMSH(fileName);
+      if(chain->getSize() != 0) HRank[j] = HRank[j] + 1;
       delete chain;
     }
   }
   
   Msg::Info("Ranks of homology groups for primal cell complex:");
-  Msg::Info("H0 = %d", chains->getBasisSize(0));
-  Msg::Info("H1 = %d", chains->getBasisSize(1));
-  Msg::Info("H2 = %d", chains->getBasisSize(2));
-  Msg::Info("H3 = %d", chains->getBasisSize(3));
-  if(omitted != 0) Msg::Info("%d 0D generators are not shown completely.", omitted);
+  Msg::Info("H0 = %d", HRank[0]);
+  Msg::Info("H1 = %d", HRank[1]);
+  Msg::Info("H2 = %d", HRank[2]);
+  Msg::Info("H3 = %d", HRank[3]);
+  if(omitted != 0) Msg::Info("Computation of %dD generators was omitted.", _cellComplex->getDim());
   
   
   Msg::Info("Wrote results to %s.", fileName.c_str());
@@ -117,6 +120,8 @@ void Homology::findGenerators(std::string fileName){
 }
 
 void Homology::findThickCuts(std::string fileName){
+  
+  _cellComplex->removeSubdomain();
   
   Msg::Info("Reducing Cell Complex...");
   int omitted = _cellComplex->coreduceComplex(true);
@@ -135,28 +140,33 @@ void Homology::findThickCuts(std::string fileName){
   chains->computeHomology(true);
   Msg::Info("Homology Computation complete.");
   
+  int dim = _cellComplex->getDim();
+  
+  int HRank[4];
   for(int j = 3; j > -1; j--){
+    HRank[j] = 0;
     for(int i = 1; i <= chains->getBasisSize(j); i++){
       
       std::string generator;
       std::string dimension;
       convert(i, generator);
-      convert(3-j, dimension);
+      convert(dim-j, dimension);
       
       std::string name = dimension + "D Thick cut " + generator;
       Chain* chain = new Chain(_cellComplex->getCells(j), chains->getCoeffVector(j,i), _cellComplex, name);
       chain->writeChainMSH(fileName);
+      if(chain->getSize() != 0) HRank[j] = HRank[j] + 1;
       delete chain;
             
     }
   }
   
   Msg::Info("Ranks of homology groups for dual cell complex:");
-  Msg::Info("H0 = %d", chains->getBasisSize(3));
-  Msg::Info("H1 = %d", chains->getBasisSize(2));
-  Msg::Info("H2 = %d", chains->getBasisSize(1));
-  Msg::Info("H3 = %d", chains->getBasisSize(0));
-  if(omitted != 0) Msg::Info("%d 3D thick cuts are not shown completely.", omitted);
+  Msg::Info("H0 = %d", HRank[0]);
+  Msg::Info("H1 = %d", HRank[1]);
+  Msg::Info("H2 = %d", HRank[2]);
+  Msg::Info("H3 = %d", HRank[3]);
+  if(omitted != 0) Msg::Info("Computation of %dD thick cuts was omitted.", dim);
   
   
   Msg::Info("Wrote results to %s.", fileName.c_str());
