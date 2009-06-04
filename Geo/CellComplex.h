@@ -618,8 +618,8 @@ class CellComplex
    
    
    // useful functions for (co)reduction of cell complex
-   void reduceComplex(bool omitHighdim = false);
-   void coreduceComplex(bool omitlowDim = false);
+   int reduceComplex(bool omitHighdim = false);
+   int coreduceComplex(bool omitlowDim = false);
    
    // queued coreduction presented in Mrozek's paper
    int coreduction(Cell* generator);

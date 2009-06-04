@@ -71,7 +71,7 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain, std::vector<i
 void Homology::findGenerators(std::string fileName){
   
   Msg::Info("Reducing Cell Complex...");
-  _cellComplex->reduceComplex(true);
+  int omitted = _cellComplex->reduceComplex(true);
   _cellComplex->combine(3);
   _cellComplex->combine(2);
   _cellComplex->combine(1);
@@ -100,6 +100,15 @@ void Homology::findGenerators(std::string fileName){
       delete chain;
     }
   }
+  
+  Msg::Info("Ranks of homology groups for primal cell complex:");
+  Msg::Info("H0 = %d", chains->getBasisSize(0));
+  Msg::Info("H1 = %d", chains->getBasisSize(1));
+  Msg::Info("H2 = %d", chains->getBasisSize(2));
+  Msg::Info("H3 = %d", chains->getBasisSize(3));
+  if(omitted != 0) Msg::Info("%d 0D generators are not shown completely.", omitted);
+  
+  
   Msg::Info("Wrote results to %s.", fileName.c_str());
   
   delete chains;
@@ -110,7 +119,7 @@ void Homology::findGenerators(std::string fileName){
 void Homology::findThickCuts(std::string fileName){
   
   Msg::Info("Reducing Cell Complex...");
-  _cellComplex->coreduceComplex(true);
+  int omitted = _cellComplex->coreduceComplex(true);
   _cellComplex->cocombine(0);
   _cellComplex->cocombine(1);
   _cellComplex->cocombine(2);
@@ -134,13 +143,21 @@ void Homology::findThickCuts(std::string fileName){
       convert(i, generator);
       convert(3-j, dimension);
       
-      std::string name = dimension + "D Dual cut " + generator;
+      std::string name = dimension + "D Thick cut " + generator;
       Chain* chain = new Chain(_cellComplex->getCells(j), chains->getCoeffVector(j,i), _cellComplex, name);
       chain->writeChainMSH(fileName);
       delete chain;
             
     }
   }
+  
+  Msg::Info("Ranks of homology groups for dual cell complex:");
+  Msg::Info("H0 = %d", chains->getBasisSize(3));
+  Msg::Info("H1 = %d", chains->getBasisSize(2));
+  Msg::Info("H2 = %d", chains->getBasisSize(1));
+  Msg::Info("H3 = %d", chains->getBasisSize(0));
+  if(omitted != 0) Msg::Info("%d 3D thick cuts are not shown completely.", omitted);
+  
   
   Msg::Info("Wrote results to %s.", fileName.c_str());
   

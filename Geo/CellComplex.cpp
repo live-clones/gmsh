@@ -355,14 +355,14 @@ int CellComplex::reduction(int dim){
 }
 
  
-void CellComplex::reduceComplex(bool omitHighdim){
+int CellComplex::reduceComplex(bool omitHighdim){
   printf("Cell complex before reduction: %d volumes, %d faces, %d edges and %d vertices.\n",
          getSize(3), getSize(2), getSize(1), getSize(0));
 
   int count = 0;
   for(int i = 3; i > 0; i--) count = count + reduction(i);
   
-  
+  int omitted = 0;
   if(count == 0 && omitHighdim){
     
     removeSubdomain();
@@ -376,7 +376,7 @@ void CellComplex::reduceComplex(bool omitHighdim){
       reduction(3);
       reduction(2);
       reduction(1);
-             
+      omitted++;
      }
     
     
@@ -393,6 +393,8 @@ void CellComplex::reduceComplex(bool omitHighdim){
   
   printf("Cell complex after reduction: %d volumes, %d faces, %d edges and %d vertices.\n",
          getSize(3), getSize(2), getSize(1), getSize(0));
+  
+  return omitted;
 }
 
 
@@ -412,7 +414,7 @@ void CellComplex::removeSubdomain(){
 }
 
 
-void CellComplex::coreduceComplex(bool omitLowdim){
+int CellComplex::coreduceComplex(bool omitLowdim){
 
   printf("Cell complex before coreduction: %d volumes, %d faces, %d edges and %d vertices.\n",
          getSize(3), getSize(2), getSize(1), getSize(0));
@@ -430,6 +432,7 @@ void CellComplex::coreduceComplex(bool omitLowdim){
     }
   } 
   
+  int omitted = 0;
   if(count == 0 && omitLowdim){
     std::set<Cell*, Less_Cell> generatorCells;
     
@@ -439,6 +442,7 @@ void CellComplex::coreduceComplex(bool omitLowdim){
       generatorCells.insert(cell);
       removeCell(cell);
       coreduction(cell);
+      omitted++;
     }
     
     for(citer cit = generatorCells.begin(); cit != generatorCells.end(); cit++){
@@ -454,7 +458,7 @@ void CellComplex::coreduceComplex(bool omitLowdim){
   printf("Cell complex after coreduction: %d volumes, %d faces, %d edges and %d vertices.\n",
          getSize(3), getSize(2), getSize(1), getSize(0));
   
-  return;
+  return omitted;
 }
 
 void CellComplex::computeBettiNumbers(){

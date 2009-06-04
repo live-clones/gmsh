@@ -3711,7 +3711,7 @@ esac
 if test "x$enable_gui" != "xno"; then
 
   GMSH_DIRS="Common Geo Mesh Post Plugin Numeric Parser Graphics Fltk"
-  GMSH_LIBS="-Llib -lGmshFltk -lGmshCommon -lGmshMesh -lGmshGeo -lGmshPost -lGmshPlugin"
+  GMSH_LIBS="-Llib -lGmshFltk -lGmshCommon -lGmshMesh -lGmshPost -lGmshPlugin -lGmshGeo"
   GMSH_LIBS="${GMSH_LIBS} -lGmshCommon -lGmshGraphics -lGmshParser -lGmshNumeric"
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_FLTK 1
@@ -4222,7 +4222,7 @@ else
 
   if test "x$enable_post" != "xno"; then
     GMSH_DIRS="${GMSH_DIRS} Post Plugin"
-    GMSH_LIBS="${GMSH_LIBS} -lGmshPost -lGmshPlugin"
+    GMSH_LIBS="${GMSH_LIBS} -lGmshPost -lGmshPlugin -lGmshGeo"
   else
     cat >>confdefs.h <<\_ACEOF
 #define HAVE_NO_POST 1

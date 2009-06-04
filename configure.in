@@ -233,7 +233,7 @@ dnl Choose to build the GUI or the batch version
 if test "x$enable_gui" != "xno"; then
 
   GMSH_DIRS="Common Geo Mesh Post Plugin Numeric Parser Graphics Fltk"
-  GMSH_LIBS="-Llib -lGmshFltk -lGmshCommon -lGmshMesh -lGmshGeo -lGmshPost -lGmshPlugin"
+  GMSH_LIBS="-Llib -lGmshFltk -lGmshCommon -lGmshMesh -lGmshPost -lGmshPlugin -lGmshGeo"
   GMSH_LIBS="${GMSH_LIBS} -lGmshCommon -lGmshGraphics -lGmshParser -lGmshNumeric"
   AC_DEFINE(HAVE_FLTK)
   BO="${BO} Fltk"
@@ -379,7 +379,7 @@ else
 
   if test "x$enable_post" != "xno"; then
     GMSH_DIRS="${GMSH_DIRS} Post Plugin"
-    GMSH_LIBS="${GMSH_LIBS} -lGmshPost -lGmshPlugin"
+    GMSH_LIBS="${GMSH_LIBS} -lGmshPost -lGmshPlugin -lGmshGeo"
   else
     AC_DEFINE(HAVE_NO_POST)
     BO="${BO} NoPost"
