@@ -8,6 +8,7 @@
 
 #include "Homology.h"
 #include "ChainComplex.h"
+#include "OS.h"
 
 #if defined(HAVE_KBIPACK)
 Homology::Homology(GModel* model, std::vector<int> physicalDomain, std::vector<int> physicalSubdomain){
@@ -15,7 +16,7 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain, std::vector<i
   _model = model;
   
   Msg::Info("Creating a Cell Complex...");
-  
+  double t1 = Cpu();
   
   std::map<int, std::vector<GEntity*> > groups[4];
   model->getPhysicalGroups(groups);
@@ -60,8 +61,8 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain, std::vector<i
     Msg::Error("Check the domain & the mesh.");
     return;
   }
-  
-  Msg::Info("Cell Complex complete.");
+  double t2 = Cpu();
+  Msg::Info("Cell Complex complete (%g s).", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges and %d vertices.",
             _cellComplex->getSize(3), _cellComplex->getSize(2), _cellComplex->getSize(1), _cellComplex->getSize(0));
   
@@ -71,20 +72,24 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain, std::vector<i
 void Homology::findGenerators(std::string fileName){
   
   Msg::Info("Reducing Cell Complex...");
+  double t1 = Cpu();
   int omitted = _cellComplex->reduceComplex(true);
   _cellComplex->combine(3);
   _cellComplex->combine(2);
   _cellComplex->combine(1);
-  Msg::Info("Cell Complex reduction complete.");
+  double t2 = Cpu();
+  Msg::Info("Cell Complex reduction complete (%g s).", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges and %d vertices.",
             _cellComplex->getSize(3), _cellComplex->getSize(2), _cellComplex->getSize(1), _cellComplex->getSize(0));
 
   _cellComplex->writeComplexMSH(fileName);
   
   Msg::Info("Computing homology groups...");
+  t1 = Cpu();
   ChainComplex* chains = new ChainComplex(_cellComplex);
   chains->computeHomology();
-  Msg::Info("Homology Computation complete.");
+  t2 = Cpu();
+  Msg::Info("Homology Computation complete (%g s).", t2 - t1);
   
   int HRank[4];
   for(int j = 0; j < 4; j++){
@@ -97,9 +102,12 @@ void Homology::findGenerators(std::string fileName){
       convert(j, dimension);
       
       std::string name = dimension + "D Generator " + generator;
-      Chain* chain = new Chain(_cellComplex->getCells(j), chains->getCoeffVector(j,i), _cellComplex, name);
+      Chain* chain = new Chain(_cellComplex->getCells(j), chains->getCoeffVector(j,i), _cellComplex, name, chains->getTorsion(j,i));
       chain->writeChainMSH(fileName);
-      if(chain->getSize() != 0) HRank[j] = HRank[j] + 1;
+      if(chain->getSize() != 0) {
+        HRank[j] = HRank[j] + 1;
+        if(chain->getTorsion() != 1) Msg::Warning("%dD Generator %d has torsion coefficient %d!", j, i, chain->getTorsion());
+      }
       delete chain;
     }
   }
@@ -124,27 +132,31 @@ void Homology::findThickCuts(std::string fileName){
   _cellComplex->removeSubdomain();
   
   Msg::Info("Reducing Cell Complex...");
+  double t1 = Cpu();
   int omitted = _cellComplex->coreduceComplex(true);
   _cellComplex->cocombine(0);
   _cellComplex->cocombine(1);
   _cellComplex->cocombine(2);
-  Msg::Info("Cell Complex reduction complete.");
+  double t2 = Cpu();
+  Msg::Info("Cell Complex reduction complete (%g s).", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges and %d vertices.",
             _cellComplex->getSize(3), _cellComplex->getSize(2), _cellComplex->getSize(1), _cellComplex->getSize(0));
  
   _cellComplex->writeComplexMSH(fileName);
   
   Msg::Info("Computing homology groups...");
+  t1 = Cpu();
   ChainComplex* chains = new ChainComplex(_cellComplex);
   chains->transposeHMatrices();
   chains->computeHomology(true);
-  Msg::Info("Homology Computation complete.");
+  t2 = Cpu();
+  Msg::Info("Homology Computation complete (%g s).", t2- t1);
   
   int dim = _cellComplex->getDim();
   
   int HRank[4];
+  for(int i = 0; i < 4; i++) HRank[i] = 0;
   for(int j = 3; j > -1; j--){
-    HRank[j] = 0;
     for(int i = 1; i <= chains->getBasisSize(j); i++){
       
       std::string generator;
@@ -153,9 +165,12 @@ void Homology::findThickCuts(std::string fileName){
       convert(dim-j, dimension);
       
       std::string name = dimension + "D Thick cut " + generator;
-      Chain* chain = new Chain(_cellComplex->getCells(j), chains->getCoeffVector(j,i), _cellComplex, name);
+      Chain* chain = new Chain(_cellComplex->getCells(j), chains->getCoeffVector(j,i), _cellComplex, name, chains->getTorsion(j,i));
       chain->writeChainMSH(fileName);
-      if(chain->getSize() != 0) HRank[j] = HRank[j] + 1;
+      if(chain->getSize() != 0){
+        HRank[dim-j] = HRank[dim-j] + 1;
+        if(chain->getTorsion() != 1) Msg::Warning("%dD Thick cut %d has torsion coefficient %d!", j, i, chain->getTorsion());
+      }
       delete chain;
             
     }

@@ -658,6 +658,7 @@ int CellComplex::combine(int dim){
         replaceCells(c1, c2, newCell, (or1 != or2));
         
         cit = firstCell(dim);
+        //cit++;
         count++;
       }
       removeCellQset(s, Qset);

@@ -275,16 +275,14 @@ void ChainComplex::Quotient(int dim){
   
   mpz_t elem;
   mpz_init(elem);
-
+    
   for(int i = 1; i <= cols; i++){
     gmp_matrix_get_elem(elem, i, i, normalForm->canonical);
     if(mpz_cmp_si(elem,0) == 0){
       destroy_gmp_normal_form(normalForm);
       return;
     }
-    if(mpz_cmp_si(elem,1) > 0){
-      _torsion[dim].push_back(mpz_get_si(elem));
-    }
+    if(mpz_cmp_si(elem,1) > 0) _torsion[dim].push_back(mpz_get_si(elem));
   }
   
   int rank = cols - _torsion[dim].size();
@@ -437,7 +435,15 @@ std::vector<int> ChainComplex::getCoeffVector(int dim, int chainNumber){
   
 }
 
-Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, CellComplex* cellComplex, std::string name){
+int ChainComplex::getTorsion(int dim, int chainNumber){
+  if(dim < 0 || dim > 4) return 0;
+  if(_Hbasis[dim] == NULL || gmp_matrix_cols(_Hbasis[dim]) < chainNumber) return 0;
+  if(_torsion[dim].empty() || _torsion[dim].size() < chainNumber) return 1;
+  else return _torsion[dim].at(chainNumber-1);
+  
+}
+
+Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, CellComplex* cellComplex, std::string name, int torsion){
   
   int i = 0;
   for(std::set<Cell*, Less_Cell>::iterator cit = cells.begin(); cit != cells.end(); cit++){
@@ -448,9 +454,9 @@ Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, CellComp
     }
     
   }
-  
   _name = name;
   _cellComplex = cellComplex;
+  _torsion = torsion;
   
 }
 
