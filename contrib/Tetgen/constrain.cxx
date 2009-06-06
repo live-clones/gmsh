@@ -807,8 +807,12 @@ void tetgenmesh::getsegmentsplitpoint2(face* sseg, point refpt, REAL* vt)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// getsegmentsplitpoint3()    Calculate a split point in the given segment.
-// This routine does not check far origin and far dest.
+//                                                                           //
+// getsegmentsplitpoint3()    Calculate a split point in the given segment.  //
+//                                                                           //
+// This routine does not check far origin and far dest.                      //
+//                                                                           //
+///////////////////////////////////////////////////////////////////////////////
 
 void tetgenmesh::getsegmentsplitpoint3(face* sseg, point refpt, REAL* vt)
 {
@@ -837,7 +841,8 @@ void tetgenmesh::getsegmentsplitpoint3(face* sseg, point refpt, REAL* vt)
     if (getpointtype(ei) == RIDGEVERTEX) {
       if (getpointtype(ej) == ACUTEVERTEX) {
         // ej is an ACUTEVERTEX.
-        stype = 1; sign = -1;
+        stype = 1; 
+        sign = -1; // Exchange ei and ej.
         ek = ej;
       } else {
         if (getpointtype(ej) == RIDGEVERTEX) {
@@ -857,7 +862,8 @@ void tetgenmesh::getsegmentsplitpoint3(face* sseg, point refpt, REAL* vt)
     } else {
       // ei is a STEINERVERTEX.
       if (getpointtype(ej) == ACUTEVERTEX) {
-        stype = 1; sign = -1;
+        stype = 1; 
+        sign = -1; // Exchange ei and ej.
         ek = ej;
       } else {
         // ej is either a RIDGEVERTEX or STEINERVERTEX.
@@ -996,12 +1002,9 @@ void tetgenmesh::delaunizesegments()
       if (dir != ACROSSVERT) {
         // Create the new point.
         makepoint(&newpt);
-        getsegmentsplitpoint(&sseg, refpt, newpt);
+        // getsegmentsplitpoint(&sseg, refpt, newpt);
+        getsegmentsplitpoint3(&sseg, refpt, newpt);
         setpointtype(newpt, STEINERVERTEX);
-        // DEBUG
-        if (pointmark(newpt) == 4157) {
-          printf("debug point\n");
-        }
         // Split the segment by newpt.
         sinsertvertex(newpt, &splitsh, &sseg, true, false);
         // Insert newpt into the DT. If 'checksubfaces == 1' the current
