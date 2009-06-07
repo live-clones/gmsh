@@ -19,34 +19,6 @@
 #include "VertexArray.h"
 #include "Context.h"
 
-void mousePosition::set(drawContext *ctx)
-{
-  for(int i = 0; i < 3; i++){
-    s[i] = ctx->s[i];
-    t[i] = ctx->t[i];
-  }
-
-  win[0] = (double)Fl::event_x();
-  win[1] = (double)Fl::event_y();
-  win[2] = 0.;
-
-  wnr[0] = 
-    (ctx->vxmin + win[0] / (double)ctx->viewport[2] * (ctx->vxmax - ctx->vxmin)) 
-    / ctx->s[0] - ctx->t[0] + ctx->t_init[0] / ctx->s[0];
-  wnr[1] = 
-    (ctx->vymax - win[1] / (double)ctx->viewport[3] * (ctx->vymax - ctx->vymin))
-    / ctx->s[1] - ctx->t[1] + ctx->t_init[1] / ctx->s[1];
-  wnr[2] = 0.;
-}
-
-void mousePosition::recenter(drawContext *ctx)
-{
-  // compute the equivalent translation to apply *after* the scaling
-  // so that the scaling is done around the point which was clicked:
-  ctx->t[0] = t[0] * (s[0] / ctx->s[0]) - wnr[0] * (1. - (s[0] / ctx->s[0]));
-  ctx->t[1] = t[1] * (s[1] / ctx->s[1]) - wnr[1] * (1. - (s[1] / ctx->s[1]));
-}
-  
 static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &click2)
 {
   if(click1.win[0] == click2.win[0] || click1.win[1] == click2.win[1])
@@ -235,12 +207,6 @@ void openglWindow::_setLastHandled(openglWindow* w)
 
 int openglWindow::handle(int event)
 {
-  // The event model in FLTK is pretty different from other toolkits:
-  // the events are passed to the widget handle of the widget that has
-  // the focus. If this handle returns 1, then the event is considered
-  // as treated, and is suppressed. If the handle returns 0, the event
-  // is passed to the parent.
-
   switch (event) {
 
   case FL_FOCUS: // accept the focus when I'm asked if I want it
@@ -257,7 +223,7 @@ int openglWindow::handle(int event)
   case FL_PUSH:
     _setLastHandled(this);
     take_focus(); // force keyboard focus when we click in the window
-    _curr.set(_ctx);
+    _curr.set(_ctx, Fl::event_x(), Fl::event_y());
     if(Fl::event_button() == 1 && 
        !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
       if(!lassoMode && Fl::event_state(FL_CTRL)) {
@@ -333,20 +299,20 @@ int openglWindow::handle(int event)
         lassoMode = false;
       }
     }
-    _click.set(_ctx);
-    _prev.set(_ctx);
+    _click.set(_ctx, Fl::event_x(), Fl::event_y());
+    _prev.set(_ctx, Fl::event_x(), Fl::event_y());
     GUI::instance()->manip->update();
     return 1;
 
   case FL_RELEASE:
-    _curr.set(_ctx);
+    _curr.set(_ctx, Fl::event_x(), Fl::event_y());
     CTX::instance()->drawRotationCenter = 0;
     if(!lassoMode) {
       CTX::instance()->mesh.draw = 1;
       CTX::instance()->post.draw = 1;
       redraw();
     }
-    _prev.set(_ctx);
+    _prev.set(_ctx, Fl::event_x(), Fl::event_y());
     return 1;
 
   case FL_MOUSEWHEEL:
@@ -363,7 +329,7 @@ int openglWindow::handle(int event)
     return 1;
 
   case FL_DRAG:
-    _curr.set(_ctx);
+    _curr.set(_ctx, Fl::event_x(), Fl::event_y());
     {
       double dx = _curr.win[0] - _prev.win[0];
       double dy = _curr.win[1] - _prev.win[1];
@@ -416,12 +382,12 @@ int openglWindow::handle(int event)
         redraw();
       }
     }
-    _prev.set(_ctx);
+    _prev.set(_ctx, Fl::event_x(), Fl::event_y());
     GUI::instance()->manip->update();
     return 1;
 
   case FL_MOVE:
-    _curr.set(_ctx);
+    _curr.set(_ctx, Fl::event_x(), Fl::event_y());
     if(lassoMode){
       redraw();
     }
@@ -483,7 +449,7 @@ int openglWindow::handle(int event)
                        me ? me->getInfoString().c_str() : "");
       }
     }
-    _prev.set(_ctx);
+    _prev.set(_ctx, Fl::event_x(), Fl::event_y());
     return 1;
 
   default:

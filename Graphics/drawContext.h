@@ -178,4 +178,51 @@ class drawContext {
                               int shade=0);
 };
 
+class mousePosition {
+ public:
+  double win[3]; // window coordinates
+  double wnr[3]; // world coordinates BEFORE rotation
+  double s[3]; // scaling state when the event was recorded
+  double t[3]; // translation state when the event was recorded
+  mousePosition()
+  {
+    for(int i = 0; i < 3; i++)
+      win[i] = wnr[i] = s[i] = t[i] = 0.;
+  }
+  mousePosition(const mousePosition &instance)
+  {
+    for(int i = 0; i < 3; i++){
+      win[i] = instance.win[i];
+      wnr[i] = instance.wnr[i];
+      s[i] = instance.s[i];
+      t[i] = instance.t[i];
+    }
+  }
+  void set(drawContext *ctx, int x, int y)
+  {
+    for(int i = 0; i < 3; i++){
+      s[i] = ctx->s[i];
+      t[i] = ctx->t[i];
+    }
+    win[0] = (double)x;
+    win[1] = (double)y;
+    win[2] = 0.;
+
+    wnr[0] = 
+      (ctx->vxmin + win[0] / (double)ctx->viewport[2] * (ctx->vxmax - ctx->vxmin)) 
+      / ctx->s[0] - ctx->t[0] + ctx->t_init[0] / ctx->s[0];
+    wnr[1] = 
+      (ctx->vymax - win[1] / (double)ctx->viewport[3] * (ctx->vymax - ctx->vymin))
+      / ctx->s[1] - ctx->t[1] + ctx->t_init[1] / ctx->s[1];
+    wnr[2] = 0.;
+  }
+  void recenter(drawContext *ctx)
+  {
+    // compute the equivalent translation to apply *after* the scaling
+    // so that the scaling is done around the point which was clicked:
+    ctx->t[0] = t[0] * (s[0] / ctx->s[0]) - wnr[0] * (1. - (s[0] / ctx->s[0]));
+    ctx->t[1] = t[1] * (s[1] / ctx->s[1]) - wnr[1] * (1. - (s[1] / ctx->s[1]));
+  }
+};
+
 #endif

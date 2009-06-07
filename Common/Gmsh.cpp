@@ -63,16 +63,32 @@ int GmshSetMessageHandler(GmshMessage *callback)
 
 int GmshSetOption(std::string category, std::string name, std::string value, int index)
 {
-  if(StringOption(GMSH_SET, category.c_str(), index, name.c_str(), value))
-    return 1;
-  return 0;
+  return StringOption(GMSH_SET, category.c_str(), index, name.c_str(), value);
 }
 
 int GmshSetOption(std::string category, std::string name, double value, int index)
 {
-  if(NumberOption(GMSH_SET, category.c_str(), index, name.c_str(), value))
-    return 1;
-  return 0;
+  return NumberOption(GMSH_SET, category.c_str(), index, name.c_str(), value);
+}
+
+int GmshSetOption(std::string category, std::string name, unsigned int value, int index)
+{
+  return ColorOption(GMSH_SET, category.c_str(), index, name.c_str(), value);
+}
+
+int GmshGetOption(std::string category, std::string name, std::string &value, int index)
+{
+  return StringOption(GMSH_GET, category.c_str(), index, name.c_str(), value);
+}
+
+int GmshGetOption(std::string category, std::string name, double &value, int index)
+{
+  return NumberOption(GMSH_GET, category.c_str(), index, name.c_str(), value);
+}
+
+int GmshGetOption(std::string category, std::string name, unsigned int &value, int index)
+{
+  return ColorOption(GMSH_GET, category.c_str(), index, name.c_str(), value);
 }
 
 int GmshMergeFile(std::string fileName)

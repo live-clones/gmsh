@@ -581,8 +581,8 @@ with your own code), you will need to learn the internal Gmsh
 Application Programming Interface (API). No complete documentation of
 this API is available yet; a good starting point is @ref{Programming
 notes}, which gives a short introduction to Gmsh's internal source code
-structure. Then have a look e.g. at @file{utils/misc/driver.cpp} in the
-source code.
+structure. Then have a look e.g. at the examples in the
+@file{utils/api_demos/} directory in the source code.
 
 @c -------------------------------------------------------------------------
 @c Syntactic rules used in the manual

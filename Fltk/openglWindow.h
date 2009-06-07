@@ -18,30 +18,6 @@ class GFace;
 class GRegion;
 class MElement;
 
-class mousePosition {
- public:
-  double win[3]; // window coordinates
-  double wnr[3]; // world coordinates BEFORE rotation
-  double s[3]; // scaling state when the event was recorded
-  double t[3]; // translation state when the event was recorded
-  mousePosition()
-  {
-    for(int i = 0; i < 3; i++)
-      win[i] = wnr[i] = s[i] = t[i] = 0.;
-  }
-  mousePosition(const mousePosition &instance)
-  {
-    for(int i = 0; i < 3; i++){
-      win[i] = instance.win[i];
-      wnr[i] = instance.wnr[i];
-      s[i] = instance.s[i];
-      t[i] = instance.t[i];
-    }
-  }
-  void set(drawContext *ctx);
-  void recenter(drawContext *ctx);
-};
-
 class openglWindow : public Fl_Gl_Window {
  private:
   static openglWindow *_lastHandled;
