@@ -5,7 +5,7 @@
 #   export CXX="g++ -m64"
 #   ./configure --disable-gui --disable-netgen --disable-fm --disable-kbipack\
 #               --disable-occ --enable-graphics --disable-med --disable-chaco\
-#               --disable-metis --prefix=~/src/gmsh/utils/api_demos
+#               --disable-metis --prefix=$HOME/src/gmsh/utils/api_demos
 #   make install-lib
 # 
 
