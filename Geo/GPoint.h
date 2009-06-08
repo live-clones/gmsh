@@ -10,11 +10,11 @@
 
 class GEntity;
 
-class GPoint 
+class GPoint
 {
  private:
   double X, Y, Z;
-  const GEntity *e;  
+  const GEntity *e;
   double par[2];
   bool success;
  public:
@@ -54,6 +54,7 @@ class GPoint
   }
   bool setNoSuccess (){
     success = false;
+    return success;
   }
 };
 
