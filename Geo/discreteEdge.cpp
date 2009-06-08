@@ -33,11 +33,11 @@ discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
 #endif
 }
 
-void discreteEdge::orderMLines() 
+void discreteEdge::orderMLines()
 {
   //printf(" *** ORDERING DISCRETE EDGE %d of size %d \n", this->tag(), lines.size());
 
-  std::vector<MLine*> _m ;  
+  std::vector<MLine*> _m ;
   std::list<MLine*> segments;
 
   //store all lines in a list : segments
@@ -56,7 +56,7 @@ void discreteEdge::orderMLines()
     std::map<MVertex*,MLine*>::iterator it2 = boundv.find(vR);
     if (it2==boundv.end())    boundv.insert(std::make_pair(vR,*it));
     else    boundv.erase(it2);
-  }   
+  }
 
   //find the first MLine and erase it from the list segments
   MLine *firstLine;
@@ -67,7 +67,7 @@ void discreteEdge::orderMLines()
 	segments.erase(it);
 	break;
       }
-    }    
+    }
   }
   else if (boundv.size()==0) // periodic
     {
@@ -79,10 +79,10 @@ void discreteEdge::orderMLines()
   }
 
   //loop over all segments to order segments and store it in the list _m
-  _m.push_back(firstLine); 
+  _m.push_back(firstLine);
   _orientation.push_back(1);
   MVertex *first = _m[0]->getVertex(0);
-  MVertex *last = _m[0]->getVertex(1);   
+  MVertex *last = _m[0]->getVertex(1);
   //printf("first =%d last =%d \n", first->getNum(), last->getNum());
   while (first != last){
     if (segments.empty())break;
@@ -91,7 +91,7 @@ void discreteEdge::orderMLines()
       MLine *e = *it;
       if (e->getVertex(0) == last){
 	//printf("orientation 1: beginV=%d \n", e->getVertex(0)->getNum());
-	_m.push_back(e); 
+	_m.push_back(e);
 	segments.erase(it);
 	_orientation.push_back(1);
 	last = e->getVertex(1);
@@ -100,7 +100,7 @@ void discreteEdge::orderMLines()
       }
       else if (e->getVertex(1) == last){
 	//printf("orientation 0: endV=%d \n", e->getVertex(1)->getNum());
-	_m.push_back(e); 
+	_m.push_back(e);
 	segments.erase(it);
 	_orientation.push_back(0);
 	last = e->getVertex(0);
@@ -120,19 +120,19 @@ void discreteEdge::orderMLines()
 	return;
       }
     }
-  }  
+  }
 
   //lines is now a list of ordered MLines
   lines = _m;
 
-  //special case reverse orientation 
+  //special case reverse orientation
   if (lines.size() < 2) return;
-  if (_orientation[0] && lines[0]->getVertex(1) != lines[1]->getVertex(1) 
-      && lines[0]->getVertex(1) != lines[1]->getVertex(0)){  
+  if (_orientation[0] && lines[0]->getVertex(1) != lines[1]->getVertex(1)
+      && lines[0]->getVertex(1) != lines[1]->getVertex(0)){
     printf("coucou here \n");
     for (int i=0;i<lines.size();i++) _orientation[i] = !_orientation[i] ;
   }
- 
+
 //   for (int i=0;i<lines.size();i++){
 //     printf("AFTER ORDERING segment or=%d, vert=%d, %d\n", (int)_orientation[i], lines[i]->getVertex(0)->getNum(), lines[i]->getVertex(1)->getNum() );
 //   }
@@ -145,7 +145,7 @@ void discreteEdge::orderMLines()
 void discreteEdge::setBoundVertices()
 {
 
-  if (boundv.size()==2){ 
+  if (boundv.size()==2){
     //printf("Found a regular open Curve \n");
     std::vector<GVertex*> bound_vertices;
     for (std::map<MVertex*,MLine*>::const_iterator iter = boundv.begin(); iter != boundv.end(); iter++){
@@ -159,7 +159,7 @@ void discreteEdge::setBoundVertices()
 	  break;
 	}
       }
-      if(!existVertex){ 
+      if(!existVertex){
 	//printf(" !!! bound vertex %d does not exist, create one \n", vE->getNum());
 	GVertex *gvB = new discreteVertex(model(),vE->getNum());
 	bound_vertices.push_back(gvB);
@@ -172,12 +172,12 @@ void discreteEdge::setBoundVertices()
       if (itve != mesh_vertices.end()) mesh_vertices.erase(itve);
 
     }
- 
+
     //printf("set bound  vertices %d %d size mesh-vertices =%d \n",bound_vertices[0]->tag(),bound_vertices[1]->tag(), mesh_vertices.size());
-    v0 = bound_vertices[0]; 
+    v0 = bound_vertices[0];
     v1 = bound_vertices[1];
   }
-  else if (boundv.size()==0){ 
+  else if (boundv.size()==0){
     //printf("Found a closed Curve add vertex \n");
 
     std::vector<MLine*>::const_iterator it = lines.begin();
@@ -189,9 +189,9 @@ void discreteEdge::setBoundVertices()
     mesh_vertices.erase(std::find(mesh_vertices.begin(), mesh_vertices.end(), vE));
 
     ///printf("set bound  vertices %d %d , coord = %g %g %g\n",gvB->tag(),gvB->tag(), gvB->x(), gvB->y(), gvB->z());
-    v0 = gvB; 
+    v0 = gvB;
     v1 = gvB;
-    
+
   }
 
   v0->addEdge(this);
@@ -205,26 +205,26 @@ void discreteEdge::setBoundVertices()
     +---------------+--------------+----------- ... ----------+
     _pars[0]=0   _pars[1]=1    _pars[2]=2             _pars[N+1]=N+1
 */
-void discreteEdge::parametrize() 
+void discreteEdge::parametrize()
 {
 
-  
+
   for (int i=0;i<lines.size()+1;i++){
     _pars.push_back(i);
-  } 
+  }
 
   //Replace MVertex by MedgeVertex
-  //we need to recreate lines, triangles and tets 
+  //we need to recreate lines, triangles and tets
   //that contain those new MEdgeVertices
   std::map<MVertex*, MVertex*> old2new;
 
   std::vector<MVertex*> newVertices;
   std::vector<MLine*> newLines;
-  
+
   MVertex *vL = getBeginVertex()->mesh_vertices[0];
   int i = 0;
   for(i=0 ; i < lines.size()-1; i++){
-    MVertex *vR ; 
+    MVertex *vR ;
     if (_orientation[i] == 1 ) vR = lines[i]->getVertex(1);
     else vR = lines[i]->getVertex(0);
     int param = i+1;
@@ -253,12 +253,13 @@ void discreteEdge::parametrize()
      for (unsigned int i = 0; i < (*iFace)->getNumMeshElements(); ++i){
        MElement *e = (*iFace)->getMeshElement(i);
        int N = e->getNumVertices();
-       MVertex *v[N];
+       //MVertex *v[N];
+       std::vector<MVertex *> v(N);
        for(int j = 0; j < N; j++){
 	 v[j] = e->getVertex(j);
        }
 	//printf("old triangle v0=%p (%d) v1=%p (%d) v2=%p (%d) \n",v[0], v[0]->getNum() , v[1],v[1]->getNum() ,v[2], v[2]->getNum());
- 	for (int j = 0; j < N; j++){	 
+ 	for (int j = 0; j < N; j++){
  	  std::map<MVertex*, MVertex*>::iterator itmap = old2new.find(v[j]);
  	  MVertex *vNEW;
  	  if (itmap != old2new.end())  {
@@ -267,7 +268,7 @@ void discreteEdge::parametrize()
   	  }
   	}
   	//printf(" new triangle v0=%p (%d) v1=%p (%d) v2=%p (%d) \n",v[0], v[0]->getNum() , v[1],v[1]->getNum() ,v[2], v[2]->getNum());
-	if (N == 3) newTriangles.push_back(new  MTriangle(v[0], v[1], v[2]));  
+	if (N == 3) newTriangles.push_back(new  MTriangle(v[0], v[1], v[2]));
 	else if ( N == 4)  newQuadrangles.push_back(new  MQuadrangle(v[0], v[1], v[2], v[3]));
 
       }
@@ -288,11 +289,12 @@ void discreteEdge::parametrize()
      for (unsigned int i = 0; i < (*iRegion)->getNumMeshElements(); ++i){
        MElement *e = (*iRegion)->getMeshElement(i);
        int N = e->getNumVertices();
-       MVertex *v[N];
+       //MVertex *v[N];
+       std::vector<MVertex *> v(N);
        for(int j = 0; j < N; j++){
 	 v[j] = e->getVertex(j);
        }
- 	for (int j = 0; j < N; j++){	 
+ 	for (int j = 0; j < N; j++){
  	  std::map<MVertex*, MVertex*>::iterator itmap = old2new.find(v[j]);
  	  MVertex *vNEW;
  	  if (itmap != old2new.end())  {
@@ -300,7 +302,7 @@ void discreteEdge::parametrize()
 	    v[j]=vNEW;
   	  }
   	}
-	if (N == 4) newTetrahedra.push_back(new  MTetrahedron(v[0], v[1], v[2], v[3]));  
+	if (N == 4) newTetrahedra.push_back(new  MTetrahedron(v[0], v[1], v[2], v[3]));
 	else if ( N == 5)  newPyramids.push_back(new  MPyramid(v[0], v[1], v[2], v[3], v[4]));
 	else if ( N == 6)  newPrisms.push_back(new  MPrism(v[0], v[1], v[2], v[3], v[4], v[5]));
 	else if ( N == 8)  newHexahedra.push_back(new  MHexahedron(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]));
@@ -324,17 +326,17 @@ void discreteEdge::parametrize()
 //       mesh_vertices[i]->getParameter(0,t1);
 //       printf("** AFTER v1=%d  t1=%g\n",  mesh_vertices[i]->getNum(),t1 );
 //   }
- 
- 
+
+
 }
 
-void discreteEdge::getLocalParameter(const double &t, int &iLine, 
+void discreteEdge::getLocalParameter(const double &t, int &iLine,
                                      double &tLoc) const
 {
   for (iLine=0 ; iLine<lines.size() ;iLine++){
     double tmin = _pars[iLine];
     double tmax = _pars[iLine+1];
-    if (t >= tmin && t <= tmax){      
+    if (t >= tmin && t <= tmax){
       tLoc = _orientation[iLine] ? (t-tmin)/(tmax-tmin)  :  1 - (t-tmin)/(tmax-tmin)  ;
       //printf("getlocal param t=%g, iLine=%d, tLoc=%g \n", t, iLine, tLoc);
       return;
@@ -342,9 +344,9 @@ void discreteEdge::getLocalParameter(const double &t, int &iLine,
   }
 }
 
-GPoint discreteEdge::point(double par) const 
+GPoint discreteEdge::point(double par) const
 {
-  
+
   double tLoc;
   int iEdge;
   getLocalParameter(par,iEdge,tLoc);
@@ -362,7 +364,7 @@ GPoint discreteEdge::point(double par) const
   return GPoint(x,y,z);
 }
 
-SVector3 discreteEdge::firstDer(double par) const 
+SVector3 discreteEdge::firstDer(double par) const
 {
   double tLoc;
   int iEdge;
@@ -381,7 +383,7 @@ SVector3 discreteEdge::firstDer(double par) const
   return SVector3(dx,dy,dz);
 }
 
-Range<double> discreteEdge::parBounds(int i) const 
+Range<double> discreteEdge::parBounds(int i) const
 {
-  return Range<double>(0, lines.size()); 
+  return Range<double>(0, lines.size());
 }
