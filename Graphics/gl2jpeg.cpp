@@ -16,16 +16,6 @@ void create_jpeg(FILE *outfile, PixelBuffer *buffer, int quality, int smoothing)
 
 #else
 
-/* Some releases of the Cygwin JPEG libraries (as well as the JPEG
-   library bundled with FLTK) don't have a correctly updated header
-   file for the INT32 data type; the following define from Shane Hill
-   seems to be a usable workaround... */
-
-#if defined(WIN32)
-#define XMD_H
-#define boolean char
-#endif
-
 extern "C"
 {
 #include <jpeglib.h>
