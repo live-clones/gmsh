@@ -698,9 +698,16 @@ GPoint GFaceCompound::point(double par1, double par2) const
     double ap = dot(t1,t2)/dot(t2,t2);
     double bp = dot(Pij,t2)/dot(t1,t2);
     
-    SVector3 XX4 = (.5*((ap*bp*t2)-(a*bp*t1)) ) *.25  +
-      (Pij + .5*((a*b*t1) - (ap*bp*t2)))*.5 +  lt->v1;
-    
+     SPoint3 X4;
+    if (dot(n1,n2)/(norm(n1)*norm(n2)) > 0.9999){
+       X4.setPosition(.5*(lt->v1.x()+lt->v2.x()),  .5*(lt->v1.y()+lt->v2.y()), .5*(lt->v1.z()+lt->v2.z()) );
+
+    }
+    else{
+      SVector3 XX4 = (.5*((ap*bp*t2)-(a*bp*t1)) ) *.25  +  (Pij + .5*((a*b*t1) - (ap*bp*t2)))*.5 +  lt->v1;
+      X4.setPosition(XX4.x(), XX4.y(), XX4.z());
+      }
+
     t2 = n3 - n2*dot(n2,n3);
     t3 =  n3*(dot(n2,n3)) - n2; 
     Pij = lt->v3 - lt->v2;
@@ -710,8 +717,14 @@ GPoint GFaceCompound::point(double par1, double par2) const
     ap = dot(t2,t3)/dot(t3,t3);
     bp = dot(Pij,t3)/dot(t2,t3);
     
-    SVector3 XX5 = (.5*((ap*bp*t3)-(a*bp*t2)) ) *.35  +
-      (Pij + .5*((a*b*t2) - (ap*bp*t3)))*.5 +  lt->v2;
+     SPoint3 X5;
+    if (dot(n2,n3)/(norm(n2)*norm(n3)) > 0.9999){
+      X5.setPosition(.5*(lt->v2.x()+lt->v3.x()), .5*(lt->v2.y()+lt->v3.y()),  .5*(lt->v2.z()+lt->v3.z()));     
+    }
+    else{
+      SVector3 XX5 = (.5*((ap*bp*t3)-(a*bp*t2)) ) *.35 + (Pij + .5*((a*b*t2) - (ap*bp*t3)))*.5 +  lt->v2;
+      X5.setPosition(XX5.x(), XX5.y(), XX5.z());
+    }
     
     t3 = n1 - n3*dot(n3,n1);
     t1 =  n1*(dot(n3,n1)) - n3; 
@@ -722,12 +735,15 @@ GPoint GFaceCompound::point(double par1, double par2) const
     ap = dot(t3,t1)/dot(t1,t1);
     bp = dot(Pij,t1)/dot(t3,t1);
     
-    SVector3 XX6 = (.5*((ap*bp*t1)-(a*bp*t3)) ) *.15  +
-      (Pij + .5*((a*b*t3) - (ap*bp*t1)))*.5 +  lt->v3;
-    
-    SPoint3 X4(XX4.x(), XX4.y(), XX4.z());
-    SPoint3 X5(XX5.x(), XX5.y(), XX5.z());
-    SPoint3 X6(XX6.x(), XX6.y(), XX6.z());
+     SPoint3 X6;
+     if (dot(n1,n3)/(norm(n1)*norm(n3)) > 0.9999){
+       X6.setPosition(.5*(lt->v1.x()+lt->v3.x()), .5*(lt->v1.y()+lt->v3.y()), .5*(lt->v1.z()+lt->v3.z()) );
+     }
+     else{
+       SVector3 XX6 = (.5*((ap*bp*t1)-(a*bp*t3)) ) *.15  +    (Pij + .5*((a*b*t3) - (ap*bp*t1)))*.5 +  lt->v3;
+       X6.setPosition(XX6.x(), XX6.y(), XX6.z());
+     }
+
     
     const gmshFunctionSpace& fs = gmshFunctionSpaces::find(MSH_TRI_6);
     double f1[6];
