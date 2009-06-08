@@ -10,7 +10,8 @@ LIB = ../../lib/libGmshTetgen${LIBEXT}
 # Don't optimize Tetgen
 CFLAGS = ${FLAGS} ${DASH}DTETLIBRARY
 
-SRC = tetgen.cxx
+SRC = tetgen.cxx \
+      predicates.cxx
 
 OBJ = ${SRC:.cxx=${OBJEXT}}
 
