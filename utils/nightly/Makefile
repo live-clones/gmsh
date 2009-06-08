@@ -21,7 +21,7 @@ gmsh-update:
 	rm -rf ${GMSH}/gmsh-*cvs*
 	echo "BUILD BEGIN: `date`" > ${LOG}
 	cd ${GMSH} && export CVS_RSH=ssh && cvs update -dPA >> ${LOG} 2>&1
-	cd ${GMSH} && ./configure --enable-universal --disable-fm\
+	cd ${GMSH} && ./configure --enable-universal --disable-fm --disable-kbipack\
                                   --with-occ-prefix=/usr/local/opencascade\
                                   --with-fltk-prefix=/usr/local >> ${LOG} 2>&1
 	cd ${GMSH} && make clean >> ${LOG} 2>&1
