@@ -778,7 +778,7 @@ void insertVerticesInRegion (GRegion *gr)
 
   while(1){
     if(allTets.empty()){
-      Msg::Error("No tetrahedra in region %d", gr->tag());
+      Msg::Error("No tetrahedra in region %d %d", gr->tag(), allTets.size());
       break;
     }
       
@@ -787,7 +787,7 @@ void insertVerticesInRegion (GRegion *gr)
     if(worst->isDeleted()){
       myFactory.Free(worst);
       allTets.erase(allTets.begin());
-      // Msg::Info("Worst tet is deleted");
+      Msg::Info("Worst tet is deleted");
     }
     else{
       if(ITER++ %5000 == 0)
@@ -851,4 +851,6 @@ void insertVerticesInRegion (GRegion *gr)
     myFactory.Free(worst);
     allTets.erase(allTets.begin());      
   }
+
+
 }

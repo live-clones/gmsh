@@ -13,6 +13,100 @@
 #include "gmshLaplace.h"
 #include "gmshLinearSystemGmm.h"
 #include "gmshLinearSystemFull.h"
+#include "FunctionSpace.h"
+#include "GmshDefines.h"
+
+struct GradNormals{
+
+  gmshVector<double> g1_U;
+  gmshVector<double> g1_V;
+  gmshVector<double> g2_U;
+  gmshVector<double> g2_V;
+  gmshVector<double> g3_U;
+  gmshVector<double> g3_V;
+  SVector3 n1, n2, n3;
+  SPoint3 v1, v2, v3;
+
+};
+
+static void normalS(gmshVector<double> &x, gmshVector<double> &res, void *data)
+{
+
+  GradNormals *gn = (GradNormals*)data;
+
+  //printf("g1_U= %g %g %g %g %g %g \n", gn->g1_U(0), gn->g1_U(1), gn->g1_U(2), gn->g1_U(3), gn->g1_U(4), gn->g1_U(5));
+
+  double Xi[6][3];
+  Xi[0][0] = gn->v1.x();   Xi[0][1] = gn->v1.y();  Xi[0][2] = gn->v1.z();
+  Xi[1][0] = gn->v2.x();   Xi[1][1] = gn->v2.y();  Xi[1][2] = gn->v2.z();
+  Xi[2][0] = gn->v3.x();   Xi[2][1] = gn->v3.y();  Xi[2][2] = gn->v3.z();
+  Xi[3][0] = x(0);         Xi[3][1] = x(1);        Xi[3][2] = x(2);
+  Xi[4][0] = x(3);         Xi[4][1] = x(4);        Xi[4][2] = x(5);
+  Xi[5][0] = x(6);         Xi[5][1] = x(7);        Xi[5][2] = x(8);
+  
+  double dXdU_p1[3], dXdV_p1[3];
+  double dXdU_p2[3], dXdV_p2[3];
+  double dXdU_p3[3], dXdV_p3[3];
+
+  dXdU_p1[0] = 0.; dXdU_p1[1] = 0.;dXdU_p1[2] = 0.;
+  dXdU_p2[0] = 0.; dXdU_p2[1] = 0.;dXdU_p2[2] = 0.;
+  dXdU_p3[0] = 0.; dXdU_p3[1] = 0.;dXdU_p3[2] = 0.;
+  dXdV_p1[0] = 0.; dXdV_p1[1] = 0.;dXdV_p1[2] = 0.;
+  dXdV_p2[0] = 0.; dXdV_p2[1] = 0.;dXdV_p2[2] = 0.;
+  dXdV_p3[0] = 0.; dXdV_p3[1] = 0.;dXdV_p3[2] = 0.;
+  for (int i=0; i< 6; i++){
+    for ( int j =0; j<3; j++){
+      dXdU_p1[j] += Xi[i][j]*gn->g1_U(i);
+      dXdV_p1[j] += Xi[i][j]*gn->g1_V(i);
+      dXdU_p2[j] += Xi[i][j]*gn->g2_U(i);
+      dXdV_p2[j] += Xi[i][j]*gn->g2_V(i);
+      dXdU_p3[j] += Xi[i][j]*gn->g3_U(i);
+      dXdV_p3[j] += Xi[i][j]*gn->g3_V(i);
+    }
+  }
+
+  SVector3 dXdU_1(dXdU_p1[0], dXdU_p1[1], dXdU_p1[2]);
+  SVector3 dXdV_1(dXdV_p1[0], dXdV_p1[1], dXdV_p1[2]);
+  SVector3 dXdU_2(dXdU_p2[0], dXdU_p2[1], dXdU_p2[2]);
+  SVector3 dXdV_2(dXdV_p2[0], dXdV_p2[1], dXdV_p2[2]);
+  SVector3 dXdU_3(dXdU_p3[0], dXdU_p3[1], dXdU_p3[2]);
+  SVector3 dXdV_3(dXdV_p3[0], dXdV_p3[1], dXdV_p3[2]);
+
+  SVector3 n1_UV = crossprod(dXdU_1, dXdV_1);    n1_UV.normalize();
+  SVector3 n2_UV = crossprod(dXdU_2, dXdV_2);    n2_UV.normalize();
+  SVector3 n3_UV = crossprod(dXdU_3, dXdV_3);    n3_UV.normalize();
+
+  res(0) = n1_UV.x() - gn->n1.x();
+  res(1) = n1_UV.y() - gn->n1.y();
+  res(2) = n1_UV.z() - gn->n1.z();
+
+  res(3) = n2_UV.x() - gn->n2.x();
+  res(4) = n2_UV.y() - gn->n2.y();
+  res(5) = n2_UV.z() - gn->n2.z();
+
+  res(6) = n3_UV.x() - gn->n3.x();
+  res(7) = n3_UV.y() - gn->n3.y();
+  res(8) = n3_UV.z() - gn->n3.z();
+
+  printf("X4 =%g %g %g \n", x(0), x(1), x(2));
+  printf("X5 =%g %g %g \n", x(3), x(4), x(5));
+  printf("X6 =%g %g %g \n", x(6), x(7), x(8));
+
+  printf(" X n1UV =%g n1 =%g \n", n1_UV.x() , gn->n1.x());
+  printf(" Y n1UV =%g n1 =%g \n", n1_UV.y() , gn->n1.y());
+  printf(" Z n1UV =%g n1 =%g \n", n1_UV.z() , gn->n1.z());
+
+  printf(" X n2UV =%g n2 =%g \n", n2_UV.x() , gn->n2.x());
+  printf(" Y n2UV =%g n2 =%g \n", n2_UV.y() , gn->n2.y());
+  printf(" Z n2UV =%g n2 =%g \n", n2_UV.z() , gn->n2.z());
+
+  printf(" X n3UV =%g n3 =%g \n", n3_UV.x() , gn->n3.x());
+  printf(" Y n3UV =%g n3 =%g \n", n3_UV.y() , gn->n3.y());
+  printf(" Z n3UV =%g n3 =%g \n", n3_UV.z() , gn->n3.z());
+
+//   printf(" *** res =%g %g %g %g %g %g %g %g %g \n",  res(0) ,  res(1) ,  res(2) ,  res(3) ,  res(4) ,  res(5) ,  res(6) ,  res(7) ,  res(8) );
+
+}
 
 class gmshGradientBasedDiffusivity : public gmshFunction<double>
 {
@@ -559,6 +653,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
 {
   parametrize();
   double U,V;
+  double par[2] = {par1,par2};
   GFaceCompoundTriangle *lt;
   getTriangle (par1, par2, &lt, U,V);  
   SPoint3 p(3, 3, 0); 
@@ -573,9 +668,139 @@ GPoint GFaceCompound::point(double par1, double par2) const
     return lt->gf->point(pv.x(),pv.y());
   }
   
-  p = lt->v1*(1.-U-V) + lt->v2*U + lt->v3*V;
-  double par[2] = {par1,par2};
-  return GPoint(p.x(),p.y(),p.z(),this,par);
+  const int LINEARMESH = false;
+
+  if (LINEARMESH){
+
+    //linear Lagrange mesh
+    //-------------------------
+    p = lt->v1*(1.-U-V) + lt->v2*U + lt->v3*V;
+    return GPoint(p.x(),p.y(),p.z(),this,par);
+
+  }
+  else{
+    
+    //quadratic Lagrange mesh
+    //-------------------------
+    
+    const SVector3 n1 = _normals[lt->tri->getVertex(0)];
+    const SVector3 n2 = _normals[lt->tri->getVertex(1)];
+    const SVector3 n3 = _normals[lt->tri->getVertex(2)];
+    
+    SVector3 t1, t2, t3, Pij; 
+    
+    t1 = n2 - n1*dot(n1,n2);
+    t2 =  n2*(dot(n1,n2)) - n1; 
+    Pij = lt->v2 - lt->v1;
+    
+    double a = dot(t1,t2)/dot(t1,t1);
+    double b = dot(Pij,t1)/dot(t1,t2);
+    double ap = dot(t1,t2)/dot(t2,t2);
+    double bp = dot(Pij,t2)/dot(t1,t2);
+    
+    SVector3 XX4 = (.5*((ap*bp*t2)-(a*bp*t1)) ) *.25  +
+      (Pij + .5*((a*b*t1) - (ap*bp*t2)))*.5 +  lt->v1;
+    
+    t2 = n3 - n2*dot(n2,n3);
+    t3 =  n3*(dot(n2,n3)) - n2; 
+    Pij = lt->v3 - lt->v2;
+    
+    a = dot(t2,t3)/dot(t2,t2);
+    b = dot(Pij,t2)/dot(t2,t3);
+    ap = dot(t2,t3)/dot(t3,t3);
+    bp = dot(Pij,t3)/dot(t2,t3);
+    
+    SVector3 XX5 = (.5*((ap*bp*t3)-(a*bp*t2)) ) *.35  +
+      (Pij + .5*((a*b*t2) - (ap*bp*t3)))*.5 +  lt->v2;
+    
+    t3 = n1 - n3*dot(n3,n1);
+    t1 =  n1*(dot(n3,n1)) - n3; 
+    Pij = lt->v1 - lt->v3;
+    
+    a = dot(t3,t1)/dot(t3,t3);
+    b = dot(Pij,t3)/dot(t3,t1);
+    ap = dot(t3,t1)/dot(t1,t1);
+    bp = dot(Pij,t1)/dot(t3,t1);
+    
+    SVector3 XX6 = (.5*((ap*bp*t1)-(a*bp*t3)) ) *.15  +
+      (Pij + .5*((a*b*t3) - (ap*bp*t1)))*.5 +  lt->v3;
+    
+    SPoint3 X4(XX4.x(), XX4.y(), XX4.z());
+    SPoint3 X5(XX5.x(), XX5.y(), XX5.z());
+    SPoint3 X6(XX6.x(), XX6.y(), XX6.z());
+    
+    const gmshFunctionSpace& fs = gmshFunctionSpaces::find(MSH_TRI_6);
+    double f1[6];
+    fs.f(U,V,0,f1);
+    p = lt->v1*f1[0] + lt->v2*f1[1] + lt->v3*f1[2] +  X4*f1[3] + X5*f1[4] + X6*f1[5];
+    return GPoint(p.x(),p.y(),p.z(),this,par);
+    
+  }
+
+//   gmshVector<double> x(9);
+//   const gmshFunctionSpace& fs = gmshFunctionSpaces::find(MSH_TRI_6);
+//   double g1[6][3]; 
+//   double g2[6][3]; 
+//   double g3[6][3];
+//   fs.df(0,0,0,g1);
+//   fs.df(1,0,0,g2);
+//   fs.df(0,1,0,g3);
+//   gmshVector<double> dNdU_1(6);
+//   gmshVector<double> dNdV_1(6);
+//   for (int i=0; i<6; i++) dNdU_1(i) = g1[i][0];
+//   for (int i=0; i<6; i++) dNdV_1(i) = g1[i][1];
+//   gmshVector<double> dNdU_2(6);
+//   gmshVector<double> dNdV_2(6);
+//   for (int i=0; i<6; i++) dNdU_2(i) = g2[i][0];
+//   for (int i=0; i<6; i++) dNdV_2(i) = g2[i][1];
+//   gmshVector<double> dNdU_3(6);
+//   gmshVector<double> dNdV_3(6);
+//   for (int i=0; i<6; i++) dNdU_3(i) = g3[i][0];
+//   for (int i=0; i<6; i++) dNdV_3(i) = g3[i][1];
+
+
+
+//   //x4,y4,z4   //x5,y5,z5   //x6,y6,z6
+//   x(0) = .5*(lt->v1.x()+lt->v2.x());   x(1) = .5*(lt->v1.y()+lt->v2.y());   x(2) = .5*(lt->v1.z()+lt->v2.z());
+//   x(3) = .5*(lt->v2.x()+lt->v3.x());   x(4) = .5*(lt->v2.y()+lt->v3.y());   x(5) = .5*(lt->v2.z()+lt->v3.z());
+//   x(6) = .5*(lt->v1.x()+lt->v3.x());   x(7) = .5*(lt->v1.y()+lt->v3.y());   x(8) = .5*(lt->v1.z()+lt->v3.z());
+
+//   GradNormals gn = {dNdU_1, dNdV_1, dNdU_2, dNdV_2,dNdU_3, dNdV_3, 
+// 		    n1, n2, n3, lt->v1, lt->v2, lt->v3};
+//   printf("AV X4 =%g %g %g \n", x(0), x(1), x(2));
+//   printf("AV X5 =%g %g %g \n", x(3), x(4), x(5));
+//   printf("AV X6 =%g %g %g \n", x(6), x(7), x(8));
+  
+//   bool success = newton_fd(normalS, x, &gn);
+//   if (success) printf("succees !\n");
+
+//   printf("NEW X4 =%g %g %g \n", x(0), x(1), x(2));
+//   printf("NEW X5 =%g %g %g \n", x(3), x(4), x(5));
+//   printf("NEW X6 =%g %g %g \n", x(6), x(7), x(8));
+//   //exit(1);
+
+//   SPoint3 X4(x(0), x(1), x(2));
+//   SPoint3 X5(x(3), x(4), x(5));
+//   SPoint3 X6(x(6), x(7), x(8));
+//   double f1[6];
+//   fs.f(U,V,0,f1);
+// //   printf("U=%g V=%g \n", U, V);
+// //   printf("X1 =%g %g %g \n", lt->v1.x(),  lt->v1.y(),  lt->v1.z());
+// //   printf("X2 =%g %g %g \n", lt->v2.x(),  lt->v2.y(),  lt->v2.z());
+// //   printf("X3 =%g %g %g \n", lt->v3.x(),  lt->v3.y(),  lt->v3.z());
+// //   printf("X4 =%g %g %g \n", x(0), x(1), x(2));
+// //   printf("X5 =%g %g %g \n", x(3), x(4), x(5));
+// //   printf("X6 =%g %g %g \n", x(6), x(7), x(8));
+// //   printf("f1=%g %g %g %g %g %g \n", f1[0], f1[1],f1[2],f1[3],f1[4],f1[5]);
+
+
+
+
+
+
+
+
+ 
 }
 
 Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
@@ -740,7 +965,8 @@ void GFaceCompound::buildOct() const
       _gfct[count].v1 = SPoint3(t->getVertex(0)->x(),t->getVertex(0)->y(),t->getVertex(0)->z());      
       _gfct[count].v2 = SPoint3(t->getVertex(1)->x(),t->getVertex(1)->y(),t->getVertex(1)->z());      
       _gfct[count].v3 = SPoint3(t->getVertex(2)->x(),t->getVertex(2)->y(),t->getVertex(2)->z());      
-      _gfct[count].gf = *it;      
+      _gfct[count].gf = *it;  
+      _gfct[count].tri = t;     
       Octree_Insert(&_gfct[count], oct);
       count ++;
     }
@@ -835,3 +1061,5 @@ void GFaceCompound::printStuff() const
   fclose(xyzc);
   Octree_Arrange(oct);
 }
+
+

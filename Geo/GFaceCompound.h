@@ -35,6 +35,7 @@ public:
   SPoint2 gfp1, gfp2, gfp3;
   SPoint3 v1, v2, v3;
   GFace *gf;
+  MTriangle *tri;
   GFaceCompoundTriangle () : gf(0)
   {}
 } ;

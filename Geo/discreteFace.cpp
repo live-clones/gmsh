@@ -85,7 +85,7 @@ GPoint discreteFace::point(double par1, double par2) const
 SPoint2 discreteFace::parFromPoint(const SPoint3 &p) const
 {
 
-  Msg::Error("Cannot compute parametric coordinates on discrete face");
+  //Msg::Error("Cannot compute parametric coordinates on discrete face");
   return SPoint2();
 }
 

@@ -443,8 +443,10 @@ static void Mesh3D(GModel *m)
   // quality reasons)
   std::vector<std::vector<GRegion*> > connected;
   FindConnectedRegions(delaunay, connected);
-  for(unsigned int i = 0; i < connected.size(); i++)
+  for(unsigned int i = 0; i < connected.size(); i++){
+    printf("*********Meshing all delaunay regions\n");
     MeshDelaunayVolume(connected[i]);
+  }
 
   double t2 = Cpu();
   CTX::instance()->meshTimer[2] = t2 - t1;

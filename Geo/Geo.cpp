@@ -3091,6 +3091,7 @@ static void intersectCS(gmshVector<double> &uvt, gmshVector<double> &res, void *
   res(2) = vs.Pos.Z - vc.Pos.Z;
 }
 
+
 bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shapes)
 {
   Surface *s = FindSurface(surface_id);
