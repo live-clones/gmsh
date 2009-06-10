@@ -202,7 +202,7 @@ void ParseString(std::string str)
   std::string fileName = CTX::instance()->homeDir + CTX::instance()->tmpFileName;
   FILE *fp = fopen(fileName.c_str(), "w");
   if(fp){
-    fprintf(fp, (str + "\n").c_str());
+    fprintf(fp, "%s", (str + "\n").c_str());
     fclose(fp);
     ParseFile(fileName, true);
     GModel::current()->importGEOInternals();

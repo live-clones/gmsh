@@ -143,7 +143,8 @@ template<>
 bool gmshMatrix<double>::eig(gmshMatrix<double> &VL, // left eigenvectors 
 			     gmshVector<double> &DR, // Real part of eigenvalues
 			     gmshVector<double> &DI, // Im part of eigenvalues
-			     gmshMatrix<double> &VR )
+			     gmshMatrix<double> &VR,
+                             bool sortRealPart) // if true: sorted from min '|DR|' to max '|DR|'
 {
   int N = size1(), info;
   int LWORK = 10*N;
@@ -158,12 +159,35 @@ bool gmshMatrix<double>::eig(gmshMatrix<double> &VL, // left eigenvectors
   
   delete [] work;
 
-  if(info == 0) return true;
   if(info > 0)
     Msg::Error("QR Algorithm failed to compute all the eigenvalues", info, info);
-  else
+  else if(info < 0)
     Msg::Error("Wrong %d-th argument in eig", -info);
-  return false;
+
+  if (sortRealPart) {
+    double tmp[8];
+    // do permutations
+    for (int i=0; i<(size1()-1); i++) {
+      int minR = i;
+      for (int j=i+1; j<size1(); j++) if ( fabs(DR(j)) < fabs(DR(minR)) ) minR = j;
+      if ( minR != i )
+        {
+          tmp[0] = DR(i); tmp[1] = DI(i);
+          tmp[2] = VL(0,i); tmp[3] = VL(1,i); tmp[4] = VL(2,i);
+          tmp[5] = VR(0,i); tmp[6] = VR(1,i); tmp[7] = VR(2,i);
+        
+          DR(i) = DR(minR); DI(i) = DI(minR);
+          VL(0,i) = VL(0,minR); VL(1,i) = VL(1,minR); VL(2,i) = VL(2,minR);
+          VR(0,i) = VR(0,minR); VR(1,i) = VR(1,minR); VR(2,i) = VR(2,minR);
+        
+          DR(minR) = tmp[0]; DI(minR) = tmp[1];
+          VL(0,minR) = tmp[2]; VL(1,minR) = tmp[3]; VL(2,minR) = tmp[4];
+          VR(0,minR) = tmp[5]; VR(1,minR) = tmp[6]; VR(2,minR) = tmp[7];
+        }
+    }
+  }
+
+  return true;
 }
 
 

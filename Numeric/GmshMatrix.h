@@ -60,6 +60,14 @@ class gmshVector
     for(int i = 0; i < _r; ++i) s += _data[i]*other._data[i];
     return s;
   }
+  void print(const char * name="") const {
+    printf("Printing vector %s:\n",name);
+    printf("  ");
+    for(int I = 0; I < size(); I++){
+      printf("%12.5E ",(*this)(I));
+    }
+    printf("\n");
+  }
 
 };
 
@@ -175,6 +183,19 @@ class gmshMatrix
         T(j, i) = (*this)(i, j);
     return T;
   }
+  inline void transposeInPlace()
+  {
+    if ( size1() != size2() ) {
+      Msg::Error("Not a square matrix (size1: %d, size2: %d)",size1(),size2());
+    }
+    scalar t;
+    for(int i = 0; i < size1(); i++)
+      for(int j = 0; j < i; j++) {
+        t = _data[i + _r * j];
+        _data[i + _r * j] = _data[j + _r * i];
+        _data[j + _r * i] = t;
+      }
+  }
   bool lu_solve(const gmshVector<scalar> &rhs, gmshVector<scalar> &result)
 #if !defined(HAVE_LAPACK)
   {
@@ -194,7 +215,8 @@ class gmshMatrix
   bool eig(gmshMatrix<scalar> &VL, // left eigenvectors 
 	   gmshVector<double> &DR, // Real part of eigenvalues
 	   gmshVector<double> &DI, // Im part of eigen
-	   gmshMatrix<scalar> &VR)
+	   gmshMatrix<scalar> &VR,
+           bool sortRealPart=false) // if true: sorted from min 'DR' to max 'DR'
 #if !defined(HAVE_LAPACK)
   {
     Msg::Error("Eigenvalue computations requires LAPACK");
@@ -239,6 +261,18 @@ class gmshMatrix
   }
 #endif
   ;
+  void print(const char * name="") const {
+    printf("Printing matrix %s:\n",name);
+    int ni = size1();
+    int nj = size2();
+    for(int I = 0; I < ni; I++){
+      printf("  ");
+      for(int J = 0; J < nj; J++){
+        printf("%12.5E ",(*this)(I, J));
+      }
+      printf("\n");
+    }
+  }
 };
 
 #endif
