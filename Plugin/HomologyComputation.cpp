@@ -15,11 +15,14 @@
 
 #if defined(HAVE_KBIPACK)
 StringXNumber HomologyComputationOptions_Number[] = {
-  {GMSH_FULLRC, "Physical group for domain", NULL, 0.},
-  {GMSH_FULLRC, "Physical group for subdomain", NULL, 0.},
+  {GMSH_FULLRC, "1. Physical group for domain", NULL, 0.},
+  {GMSH_FULLRC, "2. Physical group for domain", NULL, 0.},
+  {GMSH_FULLRC, "1. Physical group for subdomain", NULL, 0.},
+  {GMSH_FULLRC, "2. Physical group for subdomain", NULL, 0.},
   {GMSH_FULLRC, "Compute generators", NULL, 1.},
   {GMSH_FULLRC, "Compute thick cuts", NULL, 0.},
   {GMSH_FULLRC, "Swap subdomain", NULL, 0.},
+  {GMSH_FULLRC, "Combine cells", NULL, 1.}
 };
 
 StringXString HomologyComputationOptions_String[] = {
@@ -89,22 +92,27 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   std::vector<int> subdomain;
   
   domain.push_back((int)HomologyComputationOptions_Number[0].def);
-  subdomain.push_back((int)HomologyComputationOptions_Number[1].def);
+  domain.push_back((int)HomologyComputationOptions_Number[1].def);
+  subdomain.push_back((int)HomologyComputationOptions_Number[2].def);  
+  subdomain.push_back((int)HomologyComputationOptions_Number[3].def);
 
-  int gen = (int)HomologyComputationOptions_Number[2].def;
-  int cuts = (int)HomologyComputationOptions_Number[3].def;
-  int swap = (int)HomologyComputationOptions_Number[4].def;
+  int gens = (int)HomologyComputationOptions_Number[4].def;
+  int cuts = (int)HomologyComputationOptions_Number[5].def;
+  int swap = (int)HomologyComputationOptions_Number[6].def;
+  int combine = (int)HomologyComputationOptions_Number[7].def;
 
   GModel *m = GModel::current();
   
   Homology* homology = new Homology(m, domain, subdomain);
+  if(combine == 0) homology->setCombine(false); 
+  
   
   if(swap == 1) homology->swapSubdomain();
-  if(gen == 1 && cuts != 1) {
+  if(gens == 1 && cuts != 1) {
     homology->findGenerators(fileName);
     GmshMergeFile(fileName);
   }
-  else if(cuts == 1 && gen != 1) {
+  else if(cuts == 1 && gens != 1) {
     homology->findThickCuts(fileName);
     GmshMergeFile(fileName);
   }

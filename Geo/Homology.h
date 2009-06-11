@@ -28,10 +28,15 @@ class Homology
    CellComplex* _cellComplex;
    GModel* _model;
    
+   bool _combine;
+   
   public:
    
    Homology(GModel* model, std::vector<int> physicalDomain, std::vector<int> physicalSubdomain);
    ~Homology(){ delete _cellComplex; }
+   
+   bool getCombine() { return _combine; }
+   bool setCombine(bool combine) { _combine = combine; }
    
    void findGenerators(std::string fileName);
    void findThickCuts(std::string fileName);

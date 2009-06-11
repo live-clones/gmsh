@@ -105,10 +105,11 @@ CellComplex::CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> su
       cell->setTag(tag);
       tag++;
     }
-    //_originalCells[i] = _cells[i];
+    _cells2[i] = _cells[i];
     _betti[i] = 0;
     if(getSize(i) > _dim) _dim = i;
   }
+  
   
 }
 
@@ -254,6 +255,8 @@ int OneSimplex::kappa(Cell* tau) const{
 
 void CellComplex::removeCell(Cell* cell){
   
+  //_trash.insert(cell);
+  
   _cells[cell->getDim()].erase(cell);
   
   std::list<Cell*> coboundary = cell->getCoboundary();
@@ -269,7 +272,6 @@ void CellComplex::removeCell(Cell* cell){
     bdCell->removeCoboundaryCell(cell);
   }
 
-  //_trash.push_back(cell);
   
 }
 
@@ -332,7 +334,6 @@ int CellComplex::coreduction(Cell* generator){
 
 int CellComplex::reduction(int dim){
   if(dim < 1 || dim > 3) return 0;
-  
   std::list<Cell*> cbd_c;
   int count = 0;
   
@@ -343,7 +344,9 @@ int CellComplex::reduction(int dim){
       Cell* cell = *cit;
       cbd_c = cell->getCoboundary();
       if(cbd_c.size() == 1 && inSameDomain(cell, cbd_c.front()) ){
+        
         removeCell(cell);
+        
         removeCell(cbd_c.front());
         count++;
         reduced = true;
@@ -362,24 +365,33 @@ int CellComplex::reduceComplex(bool omitHighdim){
   int count = 0;
   for(int i = 3; i > 0; i--) count = count + reduction(i);
   
+ 
+  
   int omitted = 0;
   if(count == 0 && omitHighdim){
     
-    removeSubdomain();
+    CellComplex::removeSubdomain();
+    CellComplex::removeSubdomain();
     std::set<Cell*, Less_Cell> generatorCells;
-    
+ 
     while (getSize(getDim()) != 0){
       citer cit = firstCell(getDim());
+ 
       Cell* cell = *cit;
       generatorCells.insert(cell);
       removeCell(cell);
+
       reduction(3);
+
       reduction(2);
+
       reduction(1);
+
       omitted++;
+      
      }
     
-    
+
     for(citer cit = generatorCells.begin(); cit != generatorCells.end(); cit++){
       Cell* cell = *cit;
       cell->clearBoundary();
@@ -389,7 +401,6 @@ int CellComplex::reduceComplex(bool omitHighdim){
     
     
   }
-  
   
   printf("Cell complex after reduction: %d volumes, %d faces, %d edges and %d vertices.\n",
          getSize(3), getSize(2), getSize(1), getSize(0));
@@ -422,7 +433,7 @@ int CellComplex::coreduceComplex(bool omitLowdim){
   int count = 0;
   
   CellComplex::removeSubdomain();
-  
+  CellComplex::removeSubdomain();
   
   for(int dim = 0; dim < 4; dim++){
     citer cit = firstCell(dim);
@@ -495,7 +506,7 @@ void CellComplex::computeBettiNumbers(){
 void CellComplex::replaceCells(Cell* c1, Cell* c2, Cell* newCell, bool orMatch, bool co){
 
   int dim = c1->getDim();
-  
+
   std::list< std::pair<int, Cell*> > coboundary1 = c1->getOrientedCoboundary();
   std::list< std::pair<int, Cell*> > coboundary2 = c2->getOrientedCoboundary();
   std::list< std::pair<int, Cell*> > boundary1 = c1->getOrientedBoundary();
@@ -506,7 +517,7 @@ void CellComplex::replaceCells(Cell* c1, Cell* c2, Cell* newCell, bool orMatch, 
     Cell* cbdCell = (*it).second;
     int ori = (*it).first;
     cbdCell->removeBoundaryCell(c1);
-    cbdCell->addBoundaryCell(ori, newCell);
+    cbdCell->addBoundaryCell(ori, newCell, true);
   }
   for(std::list< std::pair<int, Cell*> >::iterator it = coboundary2.begin(); it != coboundary2.end(); it++){
     Cell* cbdCell = (*it).second;
@@ -519,16 +530,16 @@ void CellComplex::replaceCells(Cell* c1, Cell* c2, Cell* newCell, bool orMatch, 
         Cell* cell2 = (*it2).second;
         if(*cell2 == *cbdCell) old = true;
       }
-      if(!old) cbdCell->addBoundaryCell(ori, newCell);
+      if(!old) cbdCell->addBoundaryCell(ori, newCell, true);
     }
-    else cbdCell->addBoundaryCell(ori, newCell);
+    else cbdCell->addBoundaryCell(ori, newCell, true);
   }
   
   for(std::list< std::pair<int, Cell* > >::iterator it = boundary1.begin(); it != boundary1.end(); it++){
     Cell* bdCell = (*it).second;
     int ori = (*it).first;
     bdCell->removeCoboundaryCell(c1);
-    bdCell->addCoboundaryCell(ori, newCell);
+    bdCell->addCoboundaryCell(ori, newCell, true);
   }
   for(std::list< std::pair<int, Cell* > >::iterator it = boundary2.begin(); it != boundary2.end(); it++){
     Cell* bdCell = (*it).second;
@@ -541,14 +552,16 @@ void CellComplex::replaceCells(Cell* c1, Cell* c2, Cell* newCell, bool orMatch, 
         Cell* cell2 = (*it2).second;
         if(*cell2 == *bdCell) old = true;
       }
-      if(!old)  bdCell->addCoboundaryCell(ori, newCell);
+      if(!old)  bdCell->addCoboundaryCell(ori, newCell, true);
     }
-    else bdCell->addCoboundaryCell(ori, newCell);
+    else bdCell->addCoboundaryCell(ori, newCell, true);
     
   }
   
   _cells[dim].erase(c1);
   _cells[dim].erase(c2);
+  //_trash.insert(c1);
+  //_trash.insert(c2);
   _cells[dim].insert(newCell);
   
   
@@ -584,6 +597,8 @@ int CellComplex::cocombine(int dim){
       if(bd_c.size() == 2 && !(*(bd_c.front().second) == *(bd_c.back().second)) 
          && inSameDomain(s, bd_c.front().second) && inSameDomain(s, bd_c.back().second) ){
         
+        int or1 = bd_c.front().first;
+        int or2 = bd_c.back().first;
         Cell* c1 = bd_c.front().second;
         Cell* c2 = bd_c.back().second;
         
@@ -591,16 +606,14 @@ int CellComplex::cocombine(int dim){
         enqueueCells(cbd_c, Q, Qset);
         cbd_c = c2->getCoboundary();
         enqueueCells(cbd_c, Q, Qset);
-        
-        int or1 = bd_c.front().first;
-        int or2 = bd_c.back().first;
-                
+          
         removeCell(s);
         CombinedCell* newCell = new CombinedCell(c1, c2, (or1 != or2), true );
         replaceCells(c1, c2, newCell, (or1 != or2), true);
         
         cit = firstCell(dim);
         count++;
+
       }
       removeCellQset(s, Qset);
       
@@ -641,25 +654,23 @@ int CellComplex::combine(int dim){
         
       if(cbd_c.size() == 2 && !(*(cbd_c.front().second) == *(cbd_c.back().second)) 
          && inSameDomain(s, cbd_c.front().second) && inSameDomain(s, cbd_c.back().second) ){
-        
+        int or1 = cbd_c.front().first;
+        int or2 = cbd_c.back().first;
         Cell* c1 = cbd_c.front().second;
         Cell* c2 = cbd_c.back().second;
-        
+                            
         bd_c = c1->getBoundary();
         enqueueCells(bd_c, Q, Qset);
         bd_c = c2->getBoundary();
         enqueueCells(bd_c, Q, Qset);
-        
-        int or1 = cbd_c.front().first;
-        int or2 = cbd_c.back().first;
-        
+          
         removeCell(s);
         CombinedCell* newCell = new CombinedCell(c1, c2, (or1 != or2) );
         replaceCells(c1, c2, newCell, (or1 != or2));
-        
         cit = firstCell(dim);
         //cit++;
         count++;
+
       }
       removeCellQset(s, Qset);
       
@@ -667,7 +678,7 @@ int CellComplex::combine(int dim){
   }
   
   printf("Cell complex after combining: %d volumes, %d faces, %d edges and %d vertices.\n",
-          getSize(3), getSize(2), getSize(1), getSize(0));
+       getSize(3), getSize(2), getSize(1), getSize(0));
   
   
   return count;

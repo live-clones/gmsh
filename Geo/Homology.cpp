@@ -14,6 +14,7 @@
 Homology::Homology(GModel* model, std::vector<int> physicalDomain, std::vector<int> physicalSubdomain){
   
   _model = model;
+  _combine = true;
   
   Msg::Info("Creating a Cell Complex...");
   double t1 = Cpu();
@@ -74,14 +75,22 @@ void Homology::findGenerators(std::string fileName){
   Msg::Info("Reducing Cell Complex...");
   double t1 = Cpu();
   int omitted = _cellComplex->reduceComplex(true);
-  _cellComplex->combine(3);
-  _cellComplex->combine(2);
-  _cellComplex->combine(1);
+  //_cellComplex->checkCoherence();
+  if(getCombine()){
+    _cellComplex->combine(3);
+    _cellComplex->reduceComplex(false);
+    _cellComplex->combine(2);
+    _cellComplex->reduceComplex(false);
+    _cellComplex->combine(1);
+    _cellComplex->reduceComplex(false);
+  }
+  //_cellComplex->checkCoherence();
   double t2 = Cpu();
   Msg::Info("Cell Complex reduction complete (%g s).", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges and %d vertices.",
             _cellComplex->getSize(3), _cellComplex->getSize(2), _cellComplex->getSize(1), _cellComplex->getSize(0));
 
+    
   _cellComplex->writeComplexMSH(fileName);
   
   Msg::Info("Computing homology groups...");
@@ -119,29 +128,37 @@ void Homology::findGenerators(std::string fileName){
   Msg::Info("H3 = %d", HRank[3]);
   if(omitted != 0) Msg::Info("Computation of %dD generators was omitted.", _cellComplex->getDim());
   
-  
   Msg::Info("Wrote results to %s.", fileName.c_str());
   
   delete chains;
+  
+  printf("H0 = %d \n", HRank[0]);
+  printf("H1 = %d \n", HRank[1]);
+  printf("H2 = %d \n", HRank[2]);
+  printf("H3 = %d \n", HRank[3]);
   
   return;
 }
 
 void Homology::findThickCuts(std::string fileName){
   
-  _cellComplex->removeSubdomain();
-  
   Msg::Info("Reducing Cell Complex...");
   double t1 = Cpu();
   int omitted = _cellComplex->coreduceComplex(true);
-  _cellComplex->cocombine(0);
-  _cellComplex->cocombine(1);
-  _cellComplex->cocombine(2);
+  //_cellComplex->checkCoherence();
+  if(getCombine()){
+    _cellComplex->cocombine(0);
+    _cellComplex->cocombine(1);
+    _cellComplex->cocombine(2);
+  }
+  //_cellComplex->checkCoherence();
   double t2 = Cpu();
   Msg::Info("Cell Complex reduction complete (%g s).", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges and %d vertices.",
             _cellComplex->getSize(3), _cellComplex->getSize(2), _cellComplex->getSize(1), _cellComplex->getSize(0));
  
+  
+  
   _cellComplex->writeComplexMSH(fileName);
   
   Msg::Info("Computing homology groups...");
@@ -153,6 +170,8 @@ void Homology::findThickCuts(std::string fileName){
   Msg::Info("Homology Computation complete (%g s).", t2- t1);
   
   int dim = _cellComplex->getDim();
+ 
+  
   
   int HRank[4];
   for(int i = 0; i < 4; i++) HRank[i] = 0;
@@ -175,7 +194,7 @@ void Homology::findThickCuts(std::string fileName){
             
     }
   }
-  
+   
   Msg::Info("Ranks of homology groups for dual cell complex:");
   Msg::Info("H0 = %d", HRank[0]);
   Msg::Info("H1 = %d", HRank[1]);
@@ -183,10 +202,15 @@ void Homology::findThickCuts(std::string fileName){
   Msg::Info("H3 = %d", HRank[3]);
   if(omitted != 0) Msg::Info("Computation of %dD thick cuts was omitted.", dim);
   
-  
   Msg::Info("Wrote results to %s.", fileName.c_str());
   
   delete chains;
   
+  printf("H0 = %d \n", HRank[0]);
+  printf("H1 = %d \n", HRank[1]);
+  printf("H2 = %d \n", HRank[2]);
+  printf("H3 = %d \n", HRank[3]);
+  
+  return;
 }
 #endif

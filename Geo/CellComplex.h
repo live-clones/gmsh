@@ -88,6 +88,7 @@ class Cell
      for( std::list< std::pair<int, Cell*> >::iterator it= _boundary.begin();it!= _boundary.end();it++){
        Cell* cell = (*it).second;
        boundary.push_back(cell);
+       if((*it).first == 0) boundary.push_back(cell);
      }
      return boundary;
    }
@@ -97,26 +98,50 @@ class Cell
      for( std::list< std::pair<int, Cell*> >::iterator it= _coboundary.begin();it!= _coboundary.end();it++){
        Cell* cell = (*it).second;
        coboundary.push_back(cell);
+       if((*it).first == 0) coboundary.push_back(cell);
      }
      return coboundary;
    }
    
-   virtual void addBoundaryCell(int orientation, Cell* cell) { _boundary.push_back( std::make_pair(orientation, cell)); }
-   virtual void addCoboundaryCell(int orientation, Cell* cell) { _coboundary.push_back( std::make_pair(orientation, cell)); }
+   virtual void addBoundaryCell(int orientation, Cell* cell, bool duplicates=false) {
+     if(!duplicates){
+       for(std::list< std::pair<int, Cell*> >::iterator it = _boundary.begin(); it != _boundary.end(); it++){
+         Cell* cell2 = (*it).second;
+         int ori2 = (*it).first;
+         if(*cell2 == *cell && !duplicates) return;
+       }
+     }
+     _boundary.push_back( std::make_pair(orientation, cell));
+     
+   }
+   virtual void addCoboundaryCell(int orientation, Cell* cell, bool duplicates=false) {
+     if(!duplicates){
+       for(std::list< std::pair<int, Cell*> >::iterator it = _coboundary.begin(); it != _coboundary.end(); it++){
+         Cell* cell2 = (*it).second;
+         int ori2 = (*it).first;
+         if(*cell2 == *cell && !duplicates) return;
+       }
+     }
+     _coboundary.push_back( std::make_pair(orientation, cell));
+   }
    
-   virtual void removeBoundaryCell(Cell* cell) {
+   virtual int removeBoundaryCell(Cell* cell) {
+     int count = 0;
      for(std::list< std::pair<int, Cell*> >::iterator it = _boundary.begin(); it != _boundary.end(); it++){
        Cell* cell2 = (*it).second;
-       if(*cell2 == *cell) { _boundary.erase(it); break; }
+       if(*cell2 == *cell) { _boundary.erase(it); count++; it = _boundary.begin(); }
      }
+     return count;
    }
-   virtual void removeCoboundaryCell(Cell* cell) { 
+   virtual int removeCoboundaryCell(Cell* cell) {
+     int count = 0;
      for(std::list< std::pair<int, Cell*> >::iterator it = _coboundary.begin(); it != _coboundary.end(); it++){
        Cell* cell2 = (*it).second;
-       if(*cell2 == *cell) { _coboundary.erase(it); break; }
+       if(*cell2 == *cell)  { _coboundary.erase(it); count++; it = _coboundary.begin(); }
      }
+     return count;
    }
-   
+      
    virtual void clearBoundary() { _boundary.clear(); }
    virtual void clearCoboundary() { _coboundary.clear(); }
    
@@ -187,6 +212,7 @@ class Simplex : public Cell
  public:
    Simplex() : Cell() {
      _combined = false;
+     _index = 0;
    }
    ~Simplex(){}  
   
@@ -413,6 +439,7 @@ class CombinedCell : public Cell{
   public:
    
    CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co=false) : Cell(){
+     _index = c1->getIndex();
      _tag = c1->getTag();
      _dim = c1->getDim();
      _inSubdomain = c1->inSubdomain();
@@ -518,7 +545,9 @@ class CellComplex
    // one for each dimension
    std::set<Cell*, Less_Cell>  _cells[4];
    
-   std::vector<Cell*> _trash;
+   // trashbin for cell pointers removed from cell complex
+   std::set<Cell*, Less_Cell>  _cells2[4];
+   std::set<Cell*, Less_Cell> _trash;
    
    //std::set<Cell*, Less_Cell>  _originalCells[4];
    
@@ -531,7 +560,7 @@ class CellComplex
    // iterator for the cells of same dimension
    typedef std::set<Cell*, Less_Cell>::iterator citer;
    
-  protected: 
+  private: 
    // enqueue cells in queue if they are not there already
    void enqueueCells(std::list<Cell*>& cells, 
                              std::queue<Cell*>& Q, std::set<Cell*, Less_Cell>& Qset);
@@ -541,6 +570,19 @@ class CellComplex
    // insert cells into this cell complex
    //virtual void insert_cells(bool subdomain, bool boundary);
    void insert_cells(bool subdomain, bool boundary);
+   
+   // remove a cell from this cell complex
+   void removeCell(Cell* cell);
+   void replaceCells(Cell* c1, Cell* c2, Cell* newCell, bool orMatch, bool co=false);
+   void insertCell(Cell* cell);
+
+   // reduction of this cell complex
+   // removes reduction pairs of cell of dimension dim and dim-1
+   int reduction(int dim);
+ 
+   // queued coreduction presented in Mrozek's paper
+   int coreduction(Cell* generator);
+ 
    
   public: 
    CellComplex(  std::vector<GEntity*> domain, std::vector<GEntity*> subdomain, std::set<Cell*, Less_Cell> cells ) {
@@ -578,10 +620,19 @@ class CellComplex
    CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> subdomain );
    CellComplex(){}
    ~CellComplex(){ 
-     for(int i = 0; i < _trash.size(); i++){
-       Cell* cell = _trash.at(i);
-       delete cell;
+     //for(std::set<Cell*, Less_Cell>::iterator it = _trash.begin(); it != _trash.end(); it++){
+     //  Cell* cell = *it;
+     //  delete cell;
+     //}
+     
+     for(int i = 0; i < 4; i++){
+       _cells[i].clear();
+       for(citer cit = _cells2[i].begin(); cit != _cells2[i].end(); cit++){
+         Cell* cell = *cit;
+         delete cell;
+       }
      }
+     
    }
 
    
@@ -593,36 +644,23 @@ class CellComplex
    std::set<Cell*, Less_Cell> getCells(int dim){ return _cells[dim]; }
       
    // iterators to the first and last cells of certain dimension
-    citer firstCell(int dim) {return _cells[dim].begin(); }
-    citer lastCell(int dim) {return _cells[dim].end(); }
+   citer firstCell(int dim) {return _cells[dim].begin(); }
+   citer lastCell(int dim) {return _cells[dim].end(); }
   
    // kappa for two cells of this cell complex
    // implementation will vary depending on cell type
    inline int kappa(Cell* sigma, Cell* tau) const { return sigma->kappa(tau); }
    
-   // remove a cell from this cell complex
-   void removeCell(Cell* cell);
-   void replaceCells(Cell* c1, Cell* c2, Cell* newCell, bool orMatch, bool co=false);
-   
-   
-   void insertCell(Cell* cell);
    
    // check whether two cells both belong to subdomain or if neither one does
    bool inSameDomain(Cell* c1, Cell* c2) const { return 
        ( (!c1->inSubdomain() && !c2->inSubdomain()) || (c1->inSubdomain() && c2->inSubdomain()) ); }
-   
-   
-   // reduction of this cell complex
-   // removes reduction pairs of cell of dimension dim and dim-1
-   int reduction(int dim);
-   
+     
    
    // useful functions for (co)reduction of cell complex
    int reduceComplex(bool omitHighdim = false);
    int coreduceComplex(bool omitlowDim = false);
    
-   // queued coreduction presented in Mrozek's paper
-   int coreduction(Cell* generator);
    
    // add every volume, face and edge its missing boundary cells
    // void repairComplex(int i=3);
@@ -640,6 +678,13 @@ class CellComplex
    int combine(int dim);
    int cocombine(int dim);
    
+   void emptyTrash() {
+     for(std::set<Cell*, Less_Cell>::iterator it = _trash.begin(); it != _trash.end(); it++){
+       Cell* cell = *it;
+       delete cell;
+     }
+   }
+   
    void computeBettiNumbers();
    int getBettiNumber(int i) { if(i > -1 && i < 4) return _betti[i]; else return 0; }
    
@@ -655,6 +700,27 @@ class CellComplex
        for(citer cit = firstCell(i); cit != lastCell(i); cit++){
          Cell* cell = *cit;
          cell->makeDualCell();
+       }
+     }
+   }
+   
+   void checkCoherence(){
+     for(int i = 0; i < 4; i++){
+       for(citer cit = firstCell(i); cit != lastCell(i); cit++){
+         Cell* cell = *cit;
+         std::list< std::pair<int, Cell*> > boundary;
+         for(std::list< std::pair<int, Cell* > >::iterator it = boundary.begin(); it != boundary.end(); it++){
+           Cell* bdCell = (*it).second;
+           citer cit = _cells[bdCell->getDim()].find(bdCell);
+           if(cit == lastCell(bdCell->getDim())) printf("Warning! Incoherent boundary!");
+         }
+         std::list< std::pair<int, Cell*> > coboundary;
+         for(std::list< std::pair<int, Cell* > >::iterator it = coboundary.begin(); it != coboundary.end(); it++){
+           Cell* cbdCell = (*it).second;
+           citer cit = _cells[cbdCell->getDim()].find(cbdCell);
+           if(cit == lastCell(cbdCell->getDim())) printf("Warning! Incoherent coboundary!");
+         }
+         
        }
      }
    }

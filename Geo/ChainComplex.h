@@ -77,7 +77,16 @@ class ChainComplex{
      }
      _dim = 0;
    }
-   ~ChainComplex(){}
+   ~ChainComplex(){
+     for(int i = 0; i < 5; i++){
+       destroy_gmp_matrix(_HMatrix[i]);
+       destroy_gmp_matrix(_kerH[i]);
+       destroy_gmp_matrix(_codH[i]);
+       destroy_gmp_matrix(_JMatrix[i]);
+       destroy_gmp_matrix(_QMatrix[i]);
+       destroy_gmp_matrix(_Hbasis[i]);
+     }
+   }
    
    int getDim() { return _dim; }
    

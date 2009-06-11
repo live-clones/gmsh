@@ -76,11 +76,21 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
             Cell* bdCell = (*it).second;
             if(!bdCell->inSubdomain()){
               int old_elem = 0;
-              //printf("kaka1: %d, kaka2: %d \n", bdCell->getIndex(), cell->getIndex());
-              gmp_matrix_get_elem(elem, bdCell->getIndex(), cell->getIndex(), _HMatrix[dim]);
-              old_elem = mpz_get_si(elem);
-              mpz_set_si(elem, old_elem + (*it).first);
-              gmp_matrix_set_elem(elem, bdCell->getIndex(), cell->getIndex(), _HMatrix[dim]);
+              //printf("cell1: %d, cell2: %d \n", bdCell->getIndex(), cell->getIndex());
+              if(bdCell->getIndex() > gmp_matrix_rows( _HMatrix[dim]) || bdCell->getIndex() < 1 
+                 || cell->getIndex() > gmp_matrix_cols( _HMatrix[dim]) || cell->getIndex() < 1){
+                printf("Warning: Index out of bound! HMatrix: %d. \n", dim);
+              }
+              else{
+                gmp_matrix_get_elem(elem, bdCell->getIndex(), cell->getIndex(), _HMatrix[dim]);
+                old_elem = mpz_get_si(elem);
+                mpz_set_si(elem, old_elem + (*it).first);
+                if( (old_elem + (*it).first) > 1 || (old_elem + (*it).first) < -1 ){
+                  printf("Warning: Invalid incidence index: %d! HMatrix: %d. \n", (old_elem + (*it).first), dim);
+                   mpz_set_si(elem, 0);
+                }
+                gmp_matrix_set_elem(elem, bdCell->getIndex(), cell->getIndex(), _HMatrix[dim]);
+              }
             }
           }
         }
