@@ -237,36 +237,59 @@ void GFaceCompound::getBoundingEdges()
   std::set<GEdge*>::iterator itf = _unique.begin();
   for ( ; itf != _unique.end(); ++itf){
     l_edges.push_back(*itf);
-    //printf("for edge %d, add face %d \n", (*itf)->tag(), this->tag());
+    printf("for edge %d, add face %d \n", (*itf)->tag(), this->tag());
     (*itf)->addFace(this);
   }
 
-  //find a closed loop for assigning boundary conditions
   std::list<GEdge*> _loop;
-  std::map<GVertex*,GEdge*> tempv;
-  std::set<GEdge*>::iterator its = _unique.begin();
-  GVertex *vB = (*its)->getBeginVertex();
-  GVertex *v = (*its)->getEndVertex();
-  _loop.push_back(*its);
-  printf("boundary add edge=%d \n", (*its)->tag());
-  //printf("edge=%d  vB=%d v =%d\n", (*its)->tag(), vB->tag(), v->tag());
-  its++;
-  for ( ; its != _unique.end() ; ++its){
-    GVertex *v1 = (*its)->getBeginVertex();
-    GVertex *v2 = (*its)->getEndVertex();
-    if (v1 == v) {
-      printf("boundary add edge=%d \n", (*its)->tag());
-      _loop.push_back(*its);
-      v = v2;
+  while (!_unique.empty()) {
+    std::set<GEdge*>::iterator it = _unique.begin();
+    GVertex *vB = (*it)->getBeginVertex();
+    GVertex *vE = (*it)->getEndVertex();
+    printf("boundary add edge=%d \n", (*it)->tag());
+    _loop.push_back(*it);
+    _unique.erase(it);
+    it++;
+    
+    bool found = false;
+    for (int i=0; i<2; i++) {
+           
+      for (std::set<GEdge*>::iterator it = _unique.begin() ; it != _unique.end(); ++it){	
+	GVertex *v1 = (*it)->getBeginVertex();
+	GVertex *v2 = (*it)->getEndVertex();
+	
+	if ( v1 == vE  ){
+	  printf("boundary add edge=%d \n", (*it)->tag());
+	  _loop.push_back(*it);
+	  _unique.erase(it);
+	  vE = v2;
+	  i = -1;
+	}
+	else if ( v2 == vE){
+	  printf("boundary add edge=%d \n", (*it)->tag());
+	  _loop.push_back(*it);
+	  _unique.erase(it);
+	  vE = v1;
+	  i=-1;
+	}
+      }
+      
+      if (vB == vE) {
+	found = true;
+	break;
+      }
+      
+      if (_unique.empty())  break;
+      
+      GVertex *temp = vB;
+      vB = vE;
+      vE = temp;
     }
-    else if (v2 == v) {
-      printf("boundaryn add edge=%d \n", (*its)->tag());
-      _loop.push_back(*its);
-      v = v1;
-    }
-    if (v == vB) break;
-  }
- 
+
+    if (found == true) break;
+    
+  } 
+  
   _U0 = _loop;
 
 }
@@ -706,7 +729,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
     else{
       SVector3 XX4 = (.5*((ap*bp*t2)-(a*bp*t1)) ) *.25  +  (Pij + .5*((a*b*t1) - (ap*bp*t2)))*.5 +  lt->v1;
       X4.setPosition(XX4.x(), XX4.y(), XX4.z());
-      }
+    }
 
     t2 = n3 - n2*dot(n2,n3);
     t3 =  n3*(dot(n2,n3)) - n2; 
@@ -955,7 +978,8 @@ void GFaceCompound::buildOct() const
   double ssize[3] = {bb.max().x() - bb.min().x(),
 		     bb.max().y() - bb.min().y(),
 		     bb.max().z() - bb.min().z()};
-  oct = Octree_Create(10, origin, ssize, GFaceCompoundBB, GFaceCompoundCentroid,
+  const int maxElePerBucket = 11;
+  oct = Octree_Create(maxElePerBucket, origin, ssize, GFaceCompoundBB, GFaceCompoundCentroid,
                       GFaceCompoundInEle);
 
   it = _compound.begin();
@@ -982,7 +1006,7 @@ void GFaceCompound::buildOct() const
       _gfct[count].v2 = SPoint3(t->getVertex(1)->x(),t->getVertex(1)->y(),t->getVertex(1)->z());      
       _gfct[count].v3 = SPoint3(t->getVertex(2)->x(),t->getVertex(2)->y(),t->getVertex(2)->z());      
       _gfct[count].gf = *it;  
-      _gfct[count].tri = t;     
+      _gfct[count].tri = t;  
       Octree_Insert(&_gfct[count], oct);
       count ++;
     }

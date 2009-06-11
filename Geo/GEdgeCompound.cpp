@@ -228,8 +228,8 @@ GPoint GEdgeCompound::point(double par) const
   double tLoc;
   int iEdge;
   getLocalParameter(par,iEdge,tLoc);
-  //printf("compound %d par %g edge %d loc %g\n",tag(),par,iEdge,tLoc);
   return _compound[iEdge]->point(tLoc);
+
 }
 
 SVector3 GEdgeCompound::firstDer(double par) const

@@ -26,6 +26,7 @@
 discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
   : GEdge(model, num, _v0, _v1)
 {
+  createdTopo = false;
 #if !defined(HAVE_GMSH_EMBEDDED)
   Curve *c = Create_Curve(num, MSH_SEGM_DISCRETE, 0, 0, 0, -1, -1, 0., 1.);
   Tree_Add(model->getGEOInternals()->Curves, &c);
@@ -33,6 +34,16 @@ discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
 #endif
 }
 
+void discreteEdge::createTopo()
+{
+
+  if(!createdTopo){ 
+    orderMLines();
+    setBoundVertices();
+    createdTopo = true;
+  }
+
+}
 void discreteEdge::orderMLines()
 {
   //printf(" *** ORDERING DISCRETE EDGE %d of size %d \n", this->tag(), lines.size());
@@ -330,6 +341,38 @@ void discreteEdge::parametrize()
 
 }
 
+void discreteEdge::computeNormals () const
+{
+  printf("!!!!!!! dans compute normals l_face size =%d \n", l_faces.size());
+  _normals.clear();
+  double J[3][3];
+
+  for(std::list<GFace*>::const_iterator iFace = l_faces.begin(); iFace != l_faces.end(); ++iFace){
+    for (unsigned int i = 0; i < (*iFace)->triangles.size(); ++i){
+      MTriangle *t = (*iFace)->triangles[i];
+      t->getJacobian(0, 0, 0, J);
+      SVector3 d1(J[0][0], J[0][1], J[0][2]);
+      SVector3 d2(J[1][0], J[1][1], J[1][2]);
+      SVector3 n = crossprod(d1, d2);
+      n.normalize();
+      for (int j = 0; j < 3; j++){
+	std::map<MVertex*, SVector3>::iterator itn = _normals.find(t->getVertex(j));
+	if (itn == _normals.end())_normals[t->getVertex(j)] = n;
+	else itn->second += n;
+      }
+    }
+  }
+  std::map<MVertex*,SVector3>::iterator itn = _normals.begin();
+  for ( ; itn != _normals.end() ; ++itn){
+    itn->second.normalize();
+    printf("NUM = %d xx = %g %g %g  \n", itn->first->getNum(), itn->first->x(), itn->first->y(), itn->first->z() ) ;
+    printf("normal =%g %g %g \n", itn->second.x(), itn->second.y(), itn->second.z());
+  }
+
+  printf("********* normal  size = %d \n", _normals.size());
+
+}
+
 void discreteEdge::getLocalParameter(const double &t, int &iLine,
                                      double &tLoc) const
 {
@@ -355,13 +398,79 @@ GPoint discreteEdge::point(double par) const
   MVertex *vB = lines[iEdge]->getVertex(0);
   MVertex *vE = lines[iEdge]->getVertex(1);
 
-  x = vB->x() + tLoc * (vE->x()- vB->x());
-  y = vB->y() + tLoc * (vE->y()- vB->y());
-  z = vB->z() + tLoc * (vE->z()- vB->z());
+ const int LINEARMESH = false;
 
-  //printf("dans point par=%d iEdge =%d, tLoc=%d \n", par, iEdge, tLoc);
-  //printf("Discrete Edge POint par=%g, x= %g, y = %g, z = %g \n", par, x,y,z);
-  return GPoint(x,y,z);
+  if (LINEARMESH){
+
+    //linear Lagrange mesh
+    //-------------------------
+    x = vB->x() + tLoc * (vE->x()- vB->x());
+    y = vB->y() + tLoc * (vE->y()- vB->y());
+    z = vB->z() + tLoc * (vE->z()- vB->z());
+    
+    //printf("dans point par=%d iEdge =%d, tLoc=%d \n", par, iEdge, tLoc);
+    //printf("Discrete Edge POint par=%g, x= %g, y = %g, z = %g \n", par, x,y,z);
+    
+    return GPoint(x,y,z);
+  }
+  else{
+    
+    //quadratic Lagrange mesh
+    //-------------------------
+    computeNormals();    
+
+    const SVector3 n1 = _normals[vB];
+    const SVector3 n2 = _normals[vE];
+
+    std::map<MVertex*, SVector3>::iterator itn = _normals.find(vB);
+    if (itn == _normals.end()) printf("vB not found \n");
+
+    std::map<MVertex*, SVector3>::iterator itn2 = _normals.find(vE);
+    if (itn2 == _normals.end()) printf("vE not found \n");
+
+    SPoint3 v1(vB->x(),vB->y(),vB->z());  
+    SPoint3 v2(vE->x(),vE->y(),vE->z());
+  
+    SVector3 t1, t2, Pij; 
+    t1 = n2 - n1*dot(n1,n2);
+    t2 =  n2*(dot(n1,n2)) - n1; 
+    Pij = v2 - v1;
+    
+    double a = dot(t1,t2)/dot(t1,t1);
+    double b = dot(Pij,t1)/dot(t1,t2);
+    double ap = dot(t1,t2)/dot(t2,t2);
+    double bp = dot(Pij,t2)/dot(t1,t2);
+    
+    SPoint3 X3b(.5*(v1.x()+v2.x()),  .5*(v1.y()+v2.y()), .5*(v1.z()+v2.z()) );
+  
+     SPoint3 X3;
+     if (dot(n1,n2)/(norm(n1)*norm(n2)) > 0.9999){
+        X3.setPosition(.5*(v1.x()+v2.x()),  .5*(v1.y()+v2.y()), .5*(v1.z()+v2.z()) );
+     }
+     else{
+       SVector3 XX3 = (.5*((ap*bp*t2)-(a*bp*t1)) ) *.25  +  (Pij + .5*((a*b*t1) - (ap*bp*t2)))*.5 +  v1;
+       X3.setPosition(XX3.x(), XX3.y(), XX3.z());
+     } 
+    
+     printf("normal x1 num=%d  coord = %g %g %g \n" , vB->getNum(), v1.x(), v1.y(), v1.z());
+     printf("normal n1 = %g %g %g \n", n1.x(), n1.y(), n1.z());
+     printf("normal x2 num = %d coord = %g %g %g \n", vE->getNum(), v2.x(), v2.y(), v2.z());
+     printf("normal n2 = %g %g %g \n", n2.x(), n2.y(), n2.z());
+     printf("normal x3 = %g %g %g \n", X3.x(), X3.y(), X3.z());
+     printf("normal x3b = %g %g %g \n", X3b.x(), X3b.y(), X3b.z());
+     //exit(1);
+ 
+    const gmshFunctionSpace& fs = gmshFunctionSpaces::find(MSH_LIN_3);
+    double f1[3];
+    SPoint3 p(0, 0, 0);
+    double U = 2*tLoc -1;
+    fs.f(U,0,0,f1);
+
+    p = v1*f1[0] + v2*f1[1] + X3*f1[2];
+    return GPoint(p.x(),p.y(),p.z());
+  
+  }
+
 }
 
 SVector3 discreteEdge::firstDer(double par) const

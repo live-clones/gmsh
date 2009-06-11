@@ -15,6 +15,8 @@ class discreteEdge : public GEdge {
   std::vector<double> _pars;
   std::vector<int> _orientation;
   std::map<MVertex*,MLine*> boundv;
+  mutable std::map<MVertex*,SVector3> _normals;
+  bool createdTopo;
  public:
   discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1);
   virtual ~discreteEdge() {}
@@ -26,6 +28,8 @@ class discreteEdge : public GEdge {
   void parametrize();
   void orderMLines();
   void setBoundVertices();
+  void createTopo();
+  void computeNormals () const;
 };
 
 #endif

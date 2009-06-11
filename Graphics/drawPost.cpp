@@ -1018,6 +1018,7 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
         f = char2float(*n);
       }
       if(opt->pointType == 2){
+
 	int s = (int)(opt->pointSize * f);
 	if(s){
 	  glPointSize(s);
