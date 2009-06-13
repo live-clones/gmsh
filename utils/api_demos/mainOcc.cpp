@@ -1,17 +1,18 @@
 // g++ -I/usr/local/opencascade/inc driverOCC.cpp -lGmsh -L/usr/local/opencascade/lib -lTKSTEP -lTKSTEP209 -lTKSTEPAttr -lTKSTEPBase -lTKIGES -lTKXSBase -lTKOffset -lTKFeat -lTKFillet -lTKBool -lTKShHealing -lTKMesh -lTKHLR -lTKBO -lTKPrim -lTKTopAlgo -lTKGeomAlgo -lTKBRep -lTKGeomBase -lTKG3d -lTKG2d -lTKAdvTools -lTKMath -lTKernel -lm
 
+#include <stdio.h>
+#include <gmsh/Gmsh.h>
+#include <gmsh/GmshConfig.h>
+#include <gmsh/GModel.h>
+#include <gmsh/MElement.h>
+
 #if !defined(HAVE_NO_OCC_CONFIG_H)
 #include "config.h"
 #endif
-#include "TopoDS_Shape.hxx"
-#include "BRep_Tool.hxx"
-#include "BRep_Builder.hxx"
-#include "BRepTools.hxx"
-
-#include <stdio.h>
-#include <gmsh/Gmsh.h>
-#include <gmsh/GModel.h>
-#include <gmsh/MElement.h>
+#include <TopoDS_Shape.hxx>
+#include <BRep_Tool.hxx>
+#include <BRep_Builder.hxx>
+#include <BRepTools.hxx>
 
 class mymsg : public GmshMessage{
 private:

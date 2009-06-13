@@ -97,9 +97,9 @@ void mouse(int button, int state, int x, int y)
 int main(int argc, char **argv)
 {
   GmshInitialize(argc, argv);
-  GmshSetOption("General", "Terminal", 1);
-  GmshSetOption("View", "IntervalsType", 1);
-  GmshSetOption("View", "AdaptVisualizationGrid", 1);
+  GmshSetOption("General", "Terminal", 1.);
+  GmshSetOption("View", "IntervalsType", 1.);
+  GmshSetOption("View", "AdaptVisualizationGrid", 1.);
   GmshSetOption("View", "TargetError", 0.00001);
   GmshSetOption("View", "MaxRecursionLevel", 3.); 
 

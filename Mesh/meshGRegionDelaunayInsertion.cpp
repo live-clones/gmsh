@@ -385,12 +385,12 @@ void adaptMeshGRegion::operator () (GRegion *gr)
       }
     }
     Msg::Info("Adaptation : START with %12.5E QBAD %12.5E QAVG %12.5E",
-        totalVolumeb, worst, avg / count);
+              totalVolumeb, worst, avg / count);
     for (int i = 0; i < nbRanges; i++){
       double low  = (double)i / nbRanges;
       double high = (double)(i + 1) / nbRanges;
       Msg::Info("Opti : %3.2f < QUAL < %3.2f : %9d elements ",
-          low, high, quality_ranges[i]);
+                low, high, quality_ranges[i]);
     }                 
   }    
     
@@ -493,7 +493,7 @@ void adaptMeshGRegion::operator () (GRegion *gr)
     }
     double t2 = Cpu();
     Msg::Info("Opti : (%d,%d,%d) = %12.5E QBAD %12.5E QAVG %12.5E (%8.3f sec)",
-        nbESwap, nbFSwap, nbReloc, totalVolumeb, worst, avg / count, t2 - t1);
+              nbESwap, nbFSwap, nbReloc, totalVolumeb, worst, avg / count, t2 - t1);
     break;
   }
   
@@ -503,7 +503,7 @@ void adaptMeshGRegion::operator () (GRegion *gr)
   
   if (nbSlivers){
     Msg::Info("Opti : %d illegal tets are still in the mesh, trying to remove them",
-        nbSlivers);
+              nbSlivers);
   }
   else{
     Msg::Info("Opti : no illegal tets in the mesh ;-)", nbSlivers);
@@ -513,7 +513,7 @@ void adaptMeshGRegion::operator () (GRegion *gr)
     double low  = (double)i / nbRanges;
     double high = (double)(i + 1) / nbRanges;
     Msg::Info("Opti : %3.2f < QUAL < %3.2f : %9d elements",
-        low, high, quality_ranges[i]);
+              low, high, quality_ranges[i]);
   }                   
   
   for (CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it){
@@ -568,12 +568,12 @@ void gmshOptimizeMesh(GRegion *gr, const gmshQualityMeasure4Tet &qm)
       }
     }
     Msg::Info("Opti : START with %12.5E QBAD %12.5E QAVG %12.5E",
-        totalVolumeb, worst, avg / count);
+              totalVolumeb, worst, avg / count);
     for (int i = 0; i < nbRanges; i++){
       double low  = (double)i / nbRanges;
       double high = (double)(i + 1) / nbRanges;
       Msg::Info("Opti : %3.2f < QUAL < %3.2f : %9d elements",
-          low, high, quality_ranges[i]);
+                low, high, quality_ranges[i]);
     }                 
   }    
   
@@ -676,7 +676,7 @@ void gmshOptimizeMesh(GRegion *gr, const gmshQualityMeasure4Tet &qm)
     }
     double t2 = Cpu();
     Msg::Info("Opti : (%d,%d,%d) = %12.5E QBAD %12.5E QAVG %12.5E (%8.3f sec)",
-        nbESwap, nbFSwap, nbReloc, totalVolumeb, worst, avg / count, t2 - t1);
+              nbESwap, nbFSwap, nbReloc, totalVolumeb, worst, avg / count, t2 - t1);
   }
   
   if (illegals.size()){
@@ -690,7 +690,7 @@ void gmshOptimizeMesh(GRegion *gr, const gmshQualityMeasure4Tet &qm)
     double low  = (double)i / nbRanges;
     double high = (double)(i + 1) / nbRanges;
     Msg::Info("Opti : %3.2f < QUAL < %3.2f : %9d elements",
-        low, high, quality_ranges[i]);
+              low, high, quality_ranges[i]);
   }                   
 
   for (CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it){
@@ -750,7 +750,7 @@ void insertVerticesInRegion (GRegion *gr)
       recur_classify(*it, theRegion, faces_bound, bidon, gr->model(), search);
       double _t2 = Cpu();
       Msg::Debug("found %d tets with %d faces (%g sec for the classification)",
-          theRegion.size(), faces_bound.size(), _t2 - _t1);
+                 theRegion.size(), faces_bound.size(), _t2 - _t1);
       GRegion *myGRegion = getRegionFromBoundingFaces(gr->model(), faces_bound);
       // Msg::Info("a region is found %p",myGRegion);
       if(myGRegion) // a geometrical region associated to the list of faces has been found
@@ -787,12 +787,12 @@ void insertVerticesInRegion (GRegion *gr)
     if(worst->isDeleted()){
       myFactory.Free(worst);
       allTets.erase(allTets.begin());
-      Msg::Info("Worst tet is deleted");
+      //Msg::Info("Worst tet is deleted");
     }
     else{
       if(ITER++ %5000 == 0)
         Msg::Info("%d points created -- Worst tet radius is %g",
-            vSizes.size(), worst->getRadius());
+                  vSizes.size(), worst->getRadius());
       if(worst->getRadius() < 1) break;
       double center[3];
       worst->circumcenter(center);

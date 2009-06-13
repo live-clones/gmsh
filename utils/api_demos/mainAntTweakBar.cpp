@@ -70,38 +70,50 @@ void keyboard(unsigned char key, int x, int y)
   glutPostRedisplay();
 }
 
-static int xprev = 0, yprev = 0, specialkey = 0;
+static mousePosition clickPos, prevPos;
+static int specialKey = 0;
 
 void mouseMotion(int x, int y)
 {
   if(TwEventMouseMotionGLUT(x, y)) return;
   int w = ctx->viewport[2]; 
   int h = ctx->viewport[3];
-  if(specialkey == GLUT_ACTIVE_SHIFT){
-    double dx = x - xprev;
-    double dy = y - yprev;
+
+  mousePosition currPos;
+  currPos.set(ctx, x, y);
+
+  if(specialKey == GLUT_ACTIVE_SHIFT){
+    double dx = currPos.win[0] - prevPos.win[0];
+    double dy = currPos.win[1] - prevPos.win[1];
     if(fabs(dy) > fabs(dx)) {
       double fact = (4. * fabs(dy) + h) / (double)h;
       ctx->s[0] *= ((dy > 0) ? fact : 1. / fact);
       ctx->s[1] = ctx->s[0];
       ctx->s[2] = ctx->s[0];
+      clickPos.recenter(ctx);
     }
   }
-  else{
-    ctx->addQuaternion((2. * xprev - w) / w, (h - 2. * yprev) / h,
-                       (2. * x - w) / w, (h - 2. * y) / h);
+  else if(specialKey == GLUT_ACTIVE_ALT){
+    ctx->t[0] += (currPos.wnr[0] - clickPos.wnr[0]);
+    ctx->t[1] += (currPos.wnr[1] - clickPos.wnr[1]);
+    ctx->t[2] = 0.;
   }
-  xprev = x;
-  yprev = y;
+  else{
+    ctx->addQuaternion
+      ((2. * prevPos.win[0] - w) / w, (h - 2. * prevPos.win[1]) / h,
+       (2. * currPos.win[0] - w) / w, (h - 2. * currPos.win[1]) / h);
+  }
+
+  prevPos.set(ctx, x, y);
   glutPostRedisplay();
 }
 
 void mouseButton(int button, int state, int x, int y)
 {
   if(TwEventMouseButtonGLUT(button, state, x, y)) return;
-  specialkey = glutGetModifiers();
-  xprev = x;
-  yprev = y;
+  specialKey = glutGetModifiers();
+  clickPos.set(ctx, x, y);
+  prevPos.set(ctx, x, y);
 }
 
 // AntTweakBar callbacks
@@ -207,7 +219,7 @@ int main(int argc, char **argv)
   TwGLUTModifiersFunc(glutGetModifiers);
 
   TwBar *bar = TwNewBar("Options");
-  TwDefine(" Options size='200 400' "); // color='0 0 0' alpha=128");
+  TwDefine(" Options size='200 400' color='50 50 50' alpha=128");
   {
     TwEnumVal axesEV[6] = { {0, "None"}, {1, "Simple axes"}, {2, "Box"}, 
                             {3, "Full grid"}, {4, "Open grid"}, {5, "Ruler"} };

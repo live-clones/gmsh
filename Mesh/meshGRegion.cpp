@@ -218,7 +218,8 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 	  }
 	  else{
 	    v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(),gf);	  
-	    Msg::Warning("The point was not projected back to the surface (%g %g %g)", v[j]->x(), v[j]->y(), v[j]->z());
+	    Msg::Warning("The point was not projected back to the surface (%g %g %g)", 
+                         v[j]->x(), v[j]->y(), v[j]->z());
 	  }
 	}
 	else{
@@ -292,10 +293,10 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
         Msg::Info("%d faces self-intersect", out.numberoftrifaces);
         for (int i = 0; i < out.numberoftrifaces; i++){
           Msg::Info("face (%d %d %d) on model face %d",
-              numberedV[out.trifacelist[i * 3 + 0] - 1]->getNum(),
-              numberedV[out.trifacelist[i * 3 + 1] - 1]->getNum(),
-              numberedV[out.trifacelist[i * 3 + 2] - 1]->getNum(),
-              out.trifacemarkerlist[i]);
+                    numberedV[out.trifacelist[i * 3 + 0] - 1]->getNum(),
+                    numberedV[out.trifacelist[i * 3 + 1] - 1]->getNum(),
+                    numberedV[out.trifacelist[i * 3 + 2] - 1]->getNum(),
+                    out.trifacemarkerlist[i]);
         }
       }
       catch (int error2){
@@ -320,7 +321,6 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 
   // now do insertion of points
   insertVerticesInRegion(gr);
-  Msg::Info("Gmsh 3D Delaunay has generated %d tets", gr->tetrahedra.size());
 #endif
 }
 

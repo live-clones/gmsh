@@ -1,5 +1,5 @@
 #
-# how to build a standalone 64 bit gmsh lib on OSX:
+# how to build a standalone 64 bit gmsh graphics lib on OSX:
 # 
 #   export CC="gcc -m64"
 #   export CXX="g++ -m64"
@@ -10,13 +10,16 @@
 # 
 
 mainAntTweakBar: mainAntTweakBar.cpp
-	g++ -m64 -o mainAntTweakBar -Iinclude mainAntTweakBar.cpp -Llib\
-          -lGmsh -lAntTweakBar\
-          -framework OpenGL -framework GLUT -framework Cocoa -framework ApplicationServices\
-          -llapack -lblas -lz -lm
+	g++ -g -m64 -o mainAntTweakBar -Iinclude mainAntTweakBar.cpp -Llib\
+          -lGmsh -lAntTweakBar -framework OpenGL -framework GLUT -framework Cocoa\
+          -framework ApplicationServices -llapack -lblas -lz -lm
 
 mainGlut: mainGlut.cpp
-	g++ -m64 -o mainGlut -Iinclude mainGlut.cpp -Llib -lGmsh\
-          -framework OpenGL -framework GLUT -framework Cocoa -framework ApplicationServices\
-          -llapack -lblas -lz -lm
+	g++ -g -m64 -o mainGlut -Iinclude mainGlut.cpp -Llib -lGmsh\
+          -framework OpenGL -framework GLUT -framework Cocoa\
+          -framework ApplicationServices -llapack -lblas -lz -lm
+
+mainPost: mainPost.cpp
+	g++ -g -m64 -o mainPost -Iinclude mainPost.cpp -Llib -lGmsh\
+          -framework ApplicationServices -llapack -lblas -lz -lm
 

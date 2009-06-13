@@ -179,11 +179,15 @@ void tetgenmesh::repairencsegs()
 void tetgenmesh::enforcequality()
 {
   face shloop;
+  REAL bakeps;
   long bakptcount;
 
   if (!b->quiet) {
     printf("Conforming Delaunay meshing.\n");
   }
+
+  bakeps = b->epsilon;  // Bakup the epsilon.
+  b->epsilon = 0;
 
   // Initialize the pool for storing encroched segments.
   badsegpool = new memorypool(sizeof(badface), SUBPERBLOCK, POINTER, 0);
@@ -238,6 +242,8 @@ void tetgenmesh::enforcequality()
   delete tg_botshells;
 
   delete badsegpool;
+
+  b->epsilon = bakeps;  // Restore the epsilon.
 }
 
 #endif // #ifndef refineCXX
