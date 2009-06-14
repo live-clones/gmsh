@@ -535,7 +535,7 @@ if test "x$enable_occ" = "xyes"; then
   if test "x${OCC_PREFIX}" != "x"; then
     LDFLAGS="-L${OCC_PREFIX}/lib ${LDFLAGS}"
   fi
-  AC_CHECK_LIB(TKernel,main,OCC="yes")
+  AC_CHECK_LIB(TKernel,sin,OCC="yes", AC_CHECK_LIB(TKernel,cos,OCC=yes,,"-ldl"))
   if test "x${OCC}" = "xyes"; then
     # DataExchange (subset; see occ/ros/adm/make/Makefile for more info)
     OCC_LIBS="-lTKSTEP -lTKSTEP209 -lTKSTEPAttr -lTKSTEPBase -lTKIGES -lTKXSBase"

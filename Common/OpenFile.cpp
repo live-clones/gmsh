@@ -202,7 +202,7 @@ void ParseString(std::string str)
   std::string fileName = CTX::instance()->homeDir + CTX::instance()->tmpFileName;
   FILE *fp = fopen(fileName.c_str(), "w");
   if(fp){
-    fprintf(fp, "%s", (str + "\n").c_str());
+    fprintf(fp, "%s\n", str.c_str());
     fclose(fp);
     ParseFile(fileName, true);
     GModel::current()->importGEOInternals();
@@ -425,7 +425,6 @@ void OpenProject(std::string fileName)
 
   // merge the file
   MergeFile(fileName);
-
 
   // merge the associated option file if there is one
   if(!StatFile(fileName + ".opt"))

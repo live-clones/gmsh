@@ -2229,10 +2229,10 @@ tetrahedral mesh generator and three-dimensional Delaunay triangulator},
 2004.}. Then a three-dimensional version of the 2D Delaunay algorithm
 described above is applied.
 @item
-The ``Frontal'' algorithm uses J. Schoeberl's Netgen
-algorithm@footnote{J. Schoeberl, @emph{Netgen, an advancing front
-2d/3d-mesh generator based on abstract rules}, Comput. Visual. Sci., 1,
-pp. 41--52, 1997.}.
+The ``Frontal'' algorithm uses J. Schoeberl's Netgen algorithm
+@footnote{J. Schoeberl, @emph{Netgen, an advancing front 2d/3d-mesh
+generator based on abstract rules}, Comput. Visual. Sci., 1, pp. 41--52,
+1997.}.
 @end enumerate
 
 The ``Delaunay'' algorithm is the most robust and the fastest, and is
