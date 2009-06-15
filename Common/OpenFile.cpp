@@ -10,12 +10,14 @@
 #include "GModel.h"
 #include "Numeric.h"
 #include "HighOrder.h"
+		      
 #include "Context.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
 #include "ReadImg.h"
 #include "OS.h"
 #include "StringUtils.h"
+#include "GeomMeshMatcher.h"
 
 #if !defined(HAVE_NO_PARSER)
 #include "Parser.h"
@@ -332,6 +334,19 @@ int MergeFile(std::string fileName, bool warnIfMissing)
     if(!strncmp(header, "$PTS", 4) || !strncmp(header, "$NO", 3) || 
        !strncmp(header, "$PARA", 5) || !strncmp(header, "$ELM", 4) ||
        !strncmp(header, "$MeshFormat", 11) || !strncmp(header, "$Comments", 9)) {
+
+      // MATCHER
+      if(CTX::instance()->geom.matchGeomAndMesh  && !GModel::current()->empty() ) {
+        GModel* tmp_model = new GModel();
+        tmp_model->readMSH(fileName);
+        //tmp_model->scaleMesh(1000);
+	int match_status = GeomMeshMatcher::instance()->match(GModel::current(), tmp_model);
+        if (match_status)
+	  fileName = "out.msh";
+        delete tmp_model;
+      }
+      // MATCHER END
+
       status = GModel::current()->readMSH(fileName);
 #if !defined(HAVE_NO_POST)
       if(status > 1) status = PView::readMSH(fileName);

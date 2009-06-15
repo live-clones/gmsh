@@ -12,6 +12,7 @@
 #include "MPrism.h"
 #include "MPyramid.h"
 #include "GmshMessage.h"
+#include "VertexArray.h"
 
 GRegion::GRegion(GModel *model, int tag) : GEntity (model, tag)
 {
@@ -108,6 +109,57 @@ SBoundingBox3d GRegion::bounds() const
       res += mesh_vertices[i]->point();
   }
   return res;
+}
+
+SOrientedBoundingBox* GRegion::getOBB() {
+  if (!(this->_obb)) {
+    vector<SPoint3> vertices;
+    list<GFace*> b_faces = this->faces();
+    for (list<GFace*>::iterator b_face = b_faces.begin(); b_face != b_faces.end(); b_face++) {
+      if((*b_face)->getNumMeshVertices() > 0) {
+	int N = (*b_face)->getNumMeshVertices();
+	for (int i = 0; i < N; i++) {
+	  MVertex* mv = (*b_face)->getMeshVertex(i);
+	  vertices.push_back(mv->point());
+	}
+	list<GEdge*> eds = (*b_face)->edges();
+	for(list<GEdge*>::iterator ed = eds.begin(); ed != eds.end(); ed++) {
+	  int N2 = (*ed)->getNumMeshVertices();
+	  for (int i = 0; i < N2; i++) {
+	    MVertex* mv = (*ed)->getMeshVertex(i);
+	    vertices.push_back(mv->point());
+	  }
+	  // Don't forget to add the first and last vertices...
+	  SPoint3 pt1((*ed)->getBeginVertex()->x(),(*ed)->getBeginVertex()->y(),(*ed)->getBeginVertex()->z());
+	  SPoint3 pt2((*ed)->getEndVertex()->x(),(*ed)->getEndVertex()->y(),(*ed)->getEndVertex()->z());
+	  vertices.push_back(pt1);
+	  vertices.push_back(pt2);
+	}
+      } else if ((*b_face)->buildSTLTriangulation()) {
+	int N = (*b_face)->va_geom_triangles->getNumVertices();
+        for(int i = 0; i < N; i++) {
+	  SPoint3 p(((*b_face)->va_geom_triangles->getVertexArray(3*i))[0],
+		    ((*b_face)->va_geom_triangles->getVertexArray(3*i))[1],
+		    ((*b_face)->va_geom_triangles->getVertexArray(3*i))[2]);
+	  vertices.push_back(p);	  
+	}
+      } else {
+	int N = 10;
+        list<GEdge*> b_edges = (*b_face)->edges();
+        for (list<GEdge*>::iterator b_edge = b_edges.begin(); b_edge != b_edges.end(); b_edge++) {
+	  Range<double> tr = (*b_edge)->parBounds(0);
+	  for (int j = 0; j < N; j++) {
+	    double t = tr.low() + (double)j / (double)(N-1)*(tr.high() - tr.low());
+	    GPoint p = (*b_edge)->point(t);
+	    SPoint3 pt(p.x(),p.y(),p.z());
+	    vertices.push_back(pt);
+	  }
+	}       
+      }
+    }
+    this->_obb = SOrientedBoundingBox::buildOBB(vertices);
+  }
+  return (this->_obb);
 }
 
 void GRegion::setVisibility(char val, bool recursive)

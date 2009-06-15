@@ -158,6 +158,7 @@ class CTX {
     double tolerance, snap[3], transform[3][3], offset[3];
     int occFixSmallEdges, occFixSmallFaces, occSewFaces, occConnectFaces;
     int copyMeshingMethod, exactExtrusion;
+    int matchGeomAndMesh;
   } geom;
   // mesh options 
   struct {

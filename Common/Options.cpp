@@ -4711,6 +4711,13 @@ double opt_geometry_exact_extrusion(OPT_ARGS_NUM)
   return CTX::instance()->geom.exactExtrusion;
 }
 
+double opt_geometry_match_geom_and_mesh(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.matchGeomAndMesh = (int)val;
+  return CTX::instance()->geom.matchGeomAndMesh;
+}
+
 double opt_mesh_optimize(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

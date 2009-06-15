@@ -49,6 +49,9 @@ class GRegion : public GEntity {
   // get the bounding box
   virtual SBoundingBox3d bounds() const;
 
+  // get the oriented bounding box
+  virtual SOrientedBoundingBox* getOBB();
+
   // check if the region is connected to another region by an edge
   bool edgeConnected(GRegion *r) const;
 

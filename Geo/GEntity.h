@@ -12,6 +12,7 @@
 #include "Range.h"
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
+#include "SOrientedBoundingBox.h"
 
 class GModel;
 class GVertex;
@@ -39,6 +40,9 @@ class GEntity {
 
   // the color of the entity (ignored if set to transparent blue)
   unsigned int _color;
+
+ protected:
+  SOrientedBoundingBox *_obb;
 
  public: // these will become protected at some point
   // the mesh vertices uniquely owned by the entity
@@ -207,6 +211,9 @@ class GEntity {
   // get the bounding box
   virtual SBoundingBox3d bounds() const { return SBoundingBox3d(); }
 
+  //  get the oriented bounding box
+  virtual SOrientedBoundingBox* getOBB() {return new SOrientedBoundingBox(); }
+  
   // get/set the visibility flag
   virtual char getVisibility();
   virtual void setVisibility(char val, bool recursive=false){ _visible = val; }

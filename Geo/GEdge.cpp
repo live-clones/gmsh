@@ -107,6 +107,39 @@ SBoundingBox3d GEdge::bounds() const
   return bbox;
 }
 
+SOrientedBoundingBox* GEdge::getOBB() {
+  if (!(this->_obb)) {
+    vector<SPoint3> vertices;
+    if(this->getNumMeshVertices() > 0) {
+      int N = this->getNumMeshVertices();
+      for (int i = 0; i < N; i++) {
+	MVertex* mv = this->getMeshVertex(i);
+        vertices.push_back(mv->point());
+      }
+      // Don't forget to add the first and last vertices...
+      SPoint3 pt1(this->getBeginVertex()->x(),this->getBeginVertex()->y(),this->getBeginVertex()->z());
+      SPoint3 pt2(this->getEndVertex()->x(),this->getEndVertex()->y(),this->getEndVertex()->z());
+      vertices.push_back(pt1);
+      vertices.push_back(pt2);
+    } else if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve){
+      Range<double> tr = this->parBounds(0);
+      // N can be choosen arbitrarily, but 10 points seems reasonable
+      int N = 10;
+      for (int i = 0; i < N; i++) {
+        double t = tr.low() + (double)i / (double)(N-1)*(tr.high() - tr.low());
+        GPoint p = point(t);
+        SPoint3 pt(p.x(),p.y(),p.z());
+        vertices.push_back(pt);
+      }
+    } else {
+      SPoint3 dummy(0,0,0);
+      vertices.push_back(dummy);
+    }
+    this->_obb = SOrientedBoundingBox::buildOBB(vertices);
+  }
+  return (this->_obb);
+}
+
 void GEdge::setVisibility(char val, bool recursive)
 {
   GEntity::setVisibility(val);

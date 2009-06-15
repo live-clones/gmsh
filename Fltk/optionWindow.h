@@ -30,7 +30,7 @@ class optionWindow{
   Fl_Return_Button *redraw;
   struct{
     Fl_Group *group;
-    Fl_Check_Button *butt[20];
+    Fl_Check_Button *butt[21];
     Fl_Button *push[20];
     Fl_Value_Input *value[50];
     Fl_Button *color[50];

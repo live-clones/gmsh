@@ -187,6 +187,7 @@ void OCC_Internals::healGeometry(double tolerance, bool fixsmalledges,
                                  bool makesolids, bool connect)
 {
   int nrc = 0, nrcs = 0;
+
   TopExp_Explorer e;
   for(e.Init(shape, TopAbs_COMPOUND); e.More(); e.Next()) nrc++;
   for(e.Init(shape, TopAbs_COMPSOLID); e.More(); e.Next()) nrcs++;

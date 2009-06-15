@@ -985,7 +985,6 @@ void GModel::createTopologyFromMesh()
   //find boundary edges of each face and put them in 
   //a map_edges that associates 
   //the MEdges with the tags of the adjacent faces
-
   std::map<MEdge, std::vector<int>, Less_Edge > map_edges;
 
   for (std::vector<discreteFace*>::iterator face = Dfaces.begin(); face != Dfaces.end(); face++){

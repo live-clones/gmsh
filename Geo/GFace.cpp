@@ -146,6 +146,57 @@ SBoundingBox3d GFace::bounds() const
   return res;
 }
 
+SOrientedBoundingBox* GFace::getOBB() {
+  if (!(this->_obb)) {
+    vector<SPoint3> vertices;
+    if(this->getNumMeshVertices() > 0) {
+      int N = this->getNumMeshVertices();
+      for (int i = 0; i < N; i++) {
+	MVertex* mv = this->getMeshVertex(i);
+        vertices.push_back(mv->point());
+      }
+      list<GEdge*> eds = this->edges();
+      for(list<GEdge*>::iterator ed = eds.begin(); ed != eds.end(); ed++) {
+	int N2 = (*ed)->getNumMeshVertices();
+        for (int i = 0; i < N2; i++) {
+	  MVertex* mv = (*ed)->getMeshVertex(i);
+          vertices.push_back(mv->point());
+	}
+        // Don't forget to add the first and last vertices...
+        SPoint3 pt1((*ed)->getBeginVertex()->x(),(*ed)->getBeginVertex()->y(),(*ed)->getBeginVertex()->z());
+        SPoint3 pt2((*ed)->getEndVertex()->x(),(*ed)->getEndVertex()->y(),(*ed)->getEndVertex()->z());
+        vertices.push_back(pt1);
+	vertices.push_back(pt2);
+      }
+    } else if(buildSTLTriangulation()) {
+      int N = va_geom_triangles->getNumVertices();
+      for (int i = 0; i < N; i++) {
+        SPoint3 p((va_geom_triangles->getVertexArray(3*i))[0],
+                  (va_geom_triangles->getVertexArray(3*i))[1],
+                  (va_geom_triangles->getVertexArray(3*i))[2]);
+        vertices.push_back(p);
+      }
+    } else {
+      // Fallback, if we can't make a STL triangulation of the surface, use its
+      // edges..
+      list<GEdge*> b_edges = this->edges();
+      int N = 10;
+      for (list<GEdge*>::iterator b_edge = b_edges.begin(); b_edge != b_edges.end(); b_edge++) {
+        Range<double> tr = (*b_edge)->parBounds(0);
+        for (int j = 0; j < N; j++) {
+          double t = tr.low() + (double)j / (double)(N-1)*(tr.high() - tr.low());
+          GPoint p = (*b_edge)->point(t);
+          SPoint3 pt(p.x(),p.y(),p.z());
+          vertices.push_back(pt);
+        }
+      }
+    }
+    this->_obb =  SOrientedBoundingBox::buildOBB(vertices);
+  }
+  return (this->_obb);
+}
+
+
 surface_params GFace::getSurfaceParams() const
 {
   surface_params p;

@@ -11,6 +11,7 @@
 #include "StringUtils.h"
 #include "Context.h"
 #include "gl2ps.h"
+#include "SVector3.h"
 
 void drawContext::drawString(std::string s, std::string &font_name, int font_enum, 
                              int font_size, int align)

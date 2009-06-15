@@ -9,6 +9,7 @@
 #include "VertexArray.h"
 #include "GModel.h"
 #include "SBoundingBox3d.h"
+#include "GmshMessage.h"
 
 class drawGVertex {
  private :
@@ -378,7 +379,7 @@ class drawGFace {
   void operator () (GFace *f)
   {
     if(!f->getVisibility()) return;
-    if(f->geomType() == GEntity::DiscreteSurface) return;
+     if(f->geomType() == GEntity::DiscreteSurface) return;
     if(f->geomType() == GEntity::BoundaryLayerSurface) return;
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 
@@ -405,7 +406,7 @@ class drawGFace {
       _drawPlaneGFace(f);
     else
       _drawParametricGFace(f);
-    
+
     if(select) {
       glPopName();
       glPopName();
@@ -454,7 +455,7 @@ class drawGRegion {
                     z + offset / _ctx->s[2]);
       _ctx->drawString(Num);
     }
-
+    
     if(select) {
       glPopName();
       glPopName();
