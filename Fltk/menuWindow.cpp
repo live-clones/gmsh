@@ -940,16 +940,21 @@ static void add_new_surface_volume(int mode)
               }
             }
             if(ib == 'l') {
-              int num = (type == ENT_LINE) ? 
-                GUI::instance()->selectedEdges[0]->tag() :
-                GUI::instance()->selectedFaces[0]->tag();
-              if(select_contour(type, num, List1)) {
-                if(type == ENT_LINE)
-                  add_lineloop(List1, GModel::current()->getFileName(), &num);
-                else
-                  add_surfloop(List1, GModel::current()->getFileName(), &num);
-                List_Reset(List1);
-                List_Add(List2, &num);
+              int size = (type == ENT_LINE) ? 
+                GUI::instance()->selectedEdges.size() :
+                GUI::instance()->selectedFaces.size();
+              for(int i=0;i<size;i++){
+                int num = (type == ENT_LINE) ? 
+                  GUI::instance()->selectedEdges[i]->tag() :
+                  GUI::instance()->selectedFaces[i]->tag();
+                if(select_contour(type, num, List1)) {
+                  if(type == ENT_LINE)
+                    add_lineloop(List1, GModel::current()->getFileName(), &num);
+                  else
+                    add_surfloop(List1, GModel::current()->getFileName(), &num);
+                  List_Reset(List1);
+                  List_Add(List2, &num);
+                }
               }
             }
             if(ib == 'r') {
@@ -957,6 +962,7 @@ static void add_new_surface_volume(int mode)
                            "surface/volume creation");
             }
           }
+          List_Unique(List2,fcmp_absint);
           if(List_Nbr(List2)) {
             switch (mode) {
             case 0: add_surf("Plane Surface", List2, 

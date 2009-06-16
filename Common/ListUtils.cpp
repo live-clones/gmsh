@@ -154,6 +154,23 @@ void List_Sort(List_T * liste, int (*fcmp) (const void *a, const void *b))
   qsort(liste->array, liste->n, liste->size, fcmp);
 }
 
+void List_Unique(List_T * liste, int (*fcmp) (const void *a, const void *b))
+{
+  if(liste->isorder != 1) {
+    List_Sort(liste, fcmp);
+    liste->isorder = 1;
+  }
+  if(!List_Nbr(liste))
+    return;
+  int write_index=0;
+  for( int i=1; i < List_Nbr(liste); i++){
+     void *data=List_Pointer(liste,i);
+    if((fcmp(data,(void*)List_Pointer(liste,write_index))))
+      List_Write(liste,++write_index,data);
+  }
+  liste->n=write_index+1;
+}
+
 int List_Search(List_T * liste, void *data,
                 int (*fcmp) (const void *a, const void *b))
 {

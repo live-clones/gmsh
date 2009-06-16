@@ -6,6 +6,7 @@
 // Contributed by Bastien Gorissen
 
 #include <math.h>
+#include <stdlib.h>
 #include "SOrientedBoundingBox.h"
 #include "GmshMatrix.h"
 

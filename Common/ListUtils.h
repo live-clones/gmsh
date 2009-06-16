@@ -35,6 +35,7 @@ void   *List_Pointer_NoChange(List_T *liste, int index);
 void   *List_Pointer_Fast(List_T *liste, int index);
 void   *List_Pointer_Test(List_T *liste, int index);
 void    List_Sort(List_T *liste, int (*fcmp)(const void *a, const void *b));
+void    List_Unique(List_T *liste, int (*fcmp)(const void *a, const void *b));
 int     List_Search(List_T *liste, void *data, int (*fcmp)(const void *a, const void *b));
 int     List_ISearch(List_T *liste, void *data, int (*fcmp)(const void *a, const void *b));
 int     List_ISearchSeq(List_T *liste, void * data, int (*fcmp)(const void *a, const void *b));
