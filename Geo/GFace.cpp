@@ -146,7 +146,7 @@ SBoundingBox3d GFace::bounds() const
   return res;
 }
 
-SOrientedBoundingBox* GFace::getOBB() {
+SOrientedBoundingBox GFace::getOBB() {
   if (!(this->_obb)) {
     vector<SPoint3> vertices;
     if(this->getNumMeshVertices() > 0) {
@@ -193,7 +193,7 @@ SOrientedBoundingBox* GFace::getOBB() {
     }
     this->_obb =  SOrientedBoundingBox::buildOBB(vertices);
   }
-  return (this->_obb);
+  return (SOrientedBoundingBox(this->_obb));
 }
 
 

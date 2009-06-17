@@ -191,13 +191,13 @@ vector<Pair<GEdge*,GEdge*> >*  GeomMeshMatcher::matchEdges(GModel* m1, GModel* m
       Msg::Info("There are %i edges that could match.",common_edges.size());
       // So, first step is to build an array of points taken on the geo entity
       // Then, compute the minimal bounding box
-      SOrientedBoundingBox* geo_obb = ((GEdge*)(*entity1))->getOBB();
+      SOrientedBoundingBox geo_obb = ((GEdge*)(*entity1))->getOBB();
 
      GEdge* choice = 0;
       double best_score = DBL_MAX;
       // Next, let's iterate over the mesh entities.
       for (vector<GEdge*>::iterator candidate = common_edges.begin(); candidate != common_edges.end(); candidate++) {
-          SOrientedBoundingBox* mesh_obb = (*candidate)->getOBB();
+          SOrientedBoundingBox mesh_obb = (*candidate)->getOBB();
             Msg::Info("Comparing score : %f", SOrientedBoundingBox::compare(geo_obb,mesh_obb));
 
 	    //if (geo_obb->intersects(mesh_obb)) {
@@ -273,26 +273,26 @@ vector<Pair<GFace*,GFace*> >* GeomMeshMatcher:: matchFaces(GModel* m1, GModel* m
 
       int N;
       // Then, compute the minimal bounding box
-      SOrientedBoundingBox* geo_obb = ((GFace*)(*entity1))->getOBB();
+      SOrientedBoundingBox geo_obb = ((GFace*)(*entity1))->getOBB();
 
 
       GFace* choice = 0;
       double best_score = DBL_MAX;
       // Next, let's iterate over the mesh entities.
       for (vector<GFace*>::iterator candidate = common_faces.begin(); candidate != common_faces.end(); candidate++) {
-          SOrientedBoundingBox* mesh_obb = (*candidate)->getOBB();
+          SOrientedBoundingBox mesh_obb = (*candidate)->getOBB();
           Msg::Info("Comparing score : %f", SOrientedBoundingBox::compare(geo_obb,mesh_obb));
 
-          double cen_dist1 = geo_obb->getCenter()[0]-mesh_obb->getCenter()[0];
-          double cen_dist2 = geo_obb->getCenter()[1]-mesh_obb->getCenter()[1];
-          double cen_dist3 = geo_obb->getCenter()[2]-mesh_obb->getCenter()[2];
+          double cen_dist1 = geo_obb.getCenter()[0]-mesh_obb.getCenter()[0];
+          double cen_dist2 = geo_obb.getCenter()[1]-mesh_obb.getCenter()[1];
+          double cen_dist3 = geo_obb.getCenter()[2]-mesh_obb.getCenter()[2];
           double score1 = sqrt(   cen_dist1*cen_dist1
                                 + cen_dist2*cen_dist2
                                 + cen_dist3*cen_dist3);
 
-          double score2 = fabs(geo_obb->getSize()[0]-mesh_obb->getSize()[0]);
-          double score3 = fabs(geo_obb->getSize()[1]-mesh_obb->getSize()[1]);
-          double score4 = fabs(geo_obb->getSize()[2]-mesh_obb->getSize()[2]);
+          double score2 = fabs(geo_obb.getSize()[0]-mesh_obb.getSize()[0]);
+          double score3 = fabs(geo_obb.getSize()[1]-mesh_obb.getSize()[1]);
+          double score4 = fabs(geo_obb.getSize()[2]-mesh_obb.getSize()[2]);
 
 
           if (fmax(fmax(score1,score2),fmax(score3,score4)) < best_score) {
@@ -379,7 +379,7 @@ vector<Pair<GRegion*,GRegion*> >* GeomMeshMatcher:: matchRegions(GModel* m1, GMo
       double** vertices = new double*[N_total];
      
       // Then, compute the minimal bounding box
-      SOrientedBoundingBox* geo_obb = ((GRegion*) *entity1)->getOBB();
+      SOrientedBoundingBox geo_obb = ((GRegion*) *entity1)->getOBB();
 
 
       GRegion* choice = 0;
@@ -387,20 +387,20 @@ vector<Pair<GRegion*,GRegion*> >* GeomMeshMatcher:: matchRegions(GModel* m1, GMo
       // Next, let's iterate over the mesh entities.
       for (vector<GRegion*>::iterator candidate = common_regions.begin(); candidate != common_regions.end(); candidate++) {
           // Again, build an array with the vertices.
-          SOrientedBoundingBox* mesh_obb = (*candidate)->getOBB();
+          SOrientedBoundingBox mesh_obb = (*candidate)->getOBB();
           Msg::Info("Comparing score : %f", SOrientedBoundingBox::compare(geo_obb,mesh_obb));
 
-          if (geo_obb->intersects(mesh_obb)) {
-            double cen_dist1 = geo_obb->getCenter()[0]-mesh_obb->getCenter()[0];
-            double cen_dist2 = geo_obb->getCenter()[1]-mesh_obb->getCenter()[1];
-            double cen_dist3 = geo_obb->getCenter()[2]-mesh_obb->getCenter()[2];
+          if (geo_obb.intersects(mesh_obb)) {
+            double cen_dist1 = geo_obb.getCenter()[0]-mesh_obb.getCenter()[0];
+            double cen_dist2 = geo_obb.getCenter()[1]-mesh_obb.getCenter()[1];
+            double cen_dist3 = geo_obb.getCenter()[2]-mesh_obb.getCenter()[2];
             double score1 = sqrt(   cen_dist1*cen_dist1
                                   + cen_dist2*cen_dist2
                                   + cen_dist3*cen_dist3);
   
-            double score2 = fabs(geo_obb->getSize()[0]-mesh_obb->getSize()[0]);
-            double score3 = fabs(geo_obb->getSize()[1]-mesh_obb->getSize()[1]);
-            double score4 = fabs(geo_obb->getSize()[2]-mesh_obb->getSize()[2]);
+            double score2 = fabs(geo_obb.getSize()[0]-mesh_obb.getSize()[0]);
+            double score3 = fabs(geo_obb.getSize()[1]-mesh_obb.getSize()[1]);
+            double score4 = fabs(geo_obb.getSize()[2]-mesh_obb.getSize()[2]);
   
 
             if (fmax(fmax(score1,score2),fmax(score3,score4)) < best_score) {

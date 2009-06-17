@@ -102,8 +102,54 @@ SOrientedBoundingBox::SOrientedBoundingBox(SVector3& center,
   p8y = center[1] + (axisX[1]*dx) + (axisY[1]*dy) + (axisZ[1]*dz);
   p8z = center[2] + (axisX[2]*dx) + (axisY[2]*dy) + (axisZ[2]*dz);
 
+}
 
+//-----------------------------------------------------------------------------
 
+SOrientedBoundingBox::SOrientedBoundingBox(SOrientedBoundingBox* other) {
+
+  this->size = other->getSize();
+  this->axisX = other->getAxis(0);
+  this->axisY = other->getAxis(1);
+  this->axisZ = other->getAxis(2);
+  this->center = other->getCenter();
+
+  double dx = 0.5*size[0];
+  double dy = 0.5*size[1];
+  double dz = 0.5*size[2];
+
+  p1x = center[0] - (axisX[0]*dx) - (axisY[0]*dy) - (axisZ[0]*dz);
+  p1y = center[1] - (axisX[1]*dx) - (axisY[1]*dy) - (axisZ[1]*dz);
+  p1z = center[2] - (axisX[2]*dx) - (axisY[2]*dy) - (axisZ[2]*dz);
+
+  p2x = center[0] + (axisX[0]*dx) - (axisY[0]*dy) - (axisZ[0]*dz);
+  p2y = center[1] + (axisX[1]*dx) - (axisY[1]*dy) - (axisZ[1]*dz);
+  p2z = center[2] + (axisX[2]*dx) - (axisY[2]*dy) - (axisZ[2]*dz);
+
+  p3x = center[0] - (axisX[0]*dx) + (axisY[0]*dy) - (axisZ[0]*dz);
+  p3y = center[1] - (axisX[1]*dx) + (axisY[1]*dy) - (axisZ[1]*dz);
+  p3z = center[2] - (axisX[2]*dx) + (axisY[2]*dy) - (axisZ[2]*dz);
+
+  p4x = center[0] + (axisX[0]*dx) + (axisY[0]*dy) - (axisZ[0]*dz);
+  p4y = center[1] + (axisX[1]*dx) + (axisY[1]*dy) - (axisZ[1]*dz);
+  p4z = center[2] + (axisX[2]*dx) + (axisY[2]*dy) - (axisZ[2]*dz);
+
+  p5x = center[0] - (axisX[0]*dx) - (axisY[0]*dy) + (axisZ[0]*dz);
+  p5y = center[1] - (axisX[1]*dx) - (axisY[1]*dy) + (axisZ[1]*dz);
+  p5z = center[2] - (axisX[2]*dx) - (axisY[2]*dy) + (axisZ[2]*dz);
+
+  p6x = center[0] + (axisX[0]*dx) - (axisY[0]*dy) + (axisZ[0]*dz);
+  p6y = center[1] + (axisX[1]*dx) - (axisY[1]*dy) + (axisZ[1]*dz);
+  p6z = center[2] + (axisX[2]*dx) - (axisY[2]*dy) + (axisZ[2]*dz);
+
+  p7x = center[0] - (axisX[0]*dx) + (axisY[0]*dy) + (axisZ[0]*dz);
+  p7y = center[1] - (axisX[1]*dx) + (axisY[1]*dy) + (axisZ[1]*dz);
+  p7z = center[2] - (axisX[2]*dx) + (axisY[2]*dy) + (axisZ[2]*dz);
+
+  p8x = center[0] + (axisX[0]*dx) + (axisY[0]*dy) + (axisZ[0]*dz);
+  p8y = center[1] + (axisX[1]*dx) + (axisY[1]*dy) + (axisZ[1]*dz);
+  p8z = center[2] + (axisX[2]*dx) + (axisY[2]*dy) + (axisZ[2]*dz);
+  
 }
 
 //-----------------------------------------------------------------------------
@@ -134,24 +180,24 @@ SVector3 SOrientedBoundingBox::getAxis(int axis) {
 
 //-----------------------------------------------------------------------------
 
-bool SOrientedBoundingBox::intersects(SOrientedBoundingBox* obb) {
+bool SOrientedBoundingBox::intersects(SOrientedBoundingBox& obb) {
 
   SVector3 collide_axes[15];
   for (int i = 0; i < 3; i ++) {
     collide_axes[i] = this->getAxis(i);
-    collide_axes[i+3] = obb->getAxis(i);
+    collide_axes[i+3] = obb.getAxis(i);
   }
 
   SVector3 sizes[2];
   sizes[0] = this->getSize();
-  sizes[1] = obb->getSize();
+  sizes[1] = obb.getSize();
 
   for(unsigned int i=0 ; i<3 ; i++) {
     for(unsigned int j=3 ; j<6 ; j++) {
       collide_axes[3*i+j+3] = crossprod(collide_axes[i],collide_axes[j]);
     }
   }
-  SVector3 T = obb->getCenter() - this->getCenter();
+  SVector3 T = obb.getCenter() - this->getCenter();
 
   for(unsigned int i=0 ; i<15 ; i++) {
     double val = 0.0;
@@ -516,23 +562,23 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(vector<SPoint3> vertices) {
           size[0], size[1], size[2], Axis1, Axis2, Axis3));
 }
 
-double SOrientedBoundingBox::compare(SOrientedBoundingBox* obb1, SOrientedBoundingBox* obb2) {
+double SOrientedBoundingBox::compare(SOrientedBoundingBox& obb1, SOrientedBoundingBox& obb2) {
 
   // "center term"
-  double center_term = norm(obb1->getCenter() - obb2->getCenter());
+  double center_term = norm(obb1.getCenter() - obb2.getCenter());
 
   // "size term"
   double size_term = 0.0;
   for (int i = 0; i < 3; i++) {
-    if ((obb1->getSize())(i) + (obb2->getSize())(i) != 0) {
-      size_term += fabs((obb1->getSize())(i) - (obb2->getSize())(i)) / ((obb1->getSize())(i) + (obb2->getSize())(i));
+    if ((obb1.getSize())(i) + (obb2.getSize())(i) != 0) {
+      size_term += fabs((obb1.getSize())(i) - (obb2.getSize())(i)) / ((obb1.getSize())(i) + (obb2.getSize())(i));
     }
   }
 
   // "orientation term"
   double orientation_term = 0.0;
   for (int i = 0; i < 3; i++) {
-    orientation_term += 1 - fabs(dot(obb1->getAxis(i),obb2->getAxis(i)));
+    orientation_term += 1 - fabs(dot(obb1.getAxis(i),obb2.getAxis(i)));
   }
 
   return (center_term + size_term + orientation_term);

@@ -107,7 +107,7 @@ SBoundingBox3d GEdge::bounds() const
   return bbox;
 }
 
-SOrientedBoundingBox* GEdge::getOBB() {
+SOrientedBoundingBox GEdge::getOBB() {
   if (!(this->_obb)) {
     vector<SPoint3> vertices;
     if(this->getNumMeshVertices() > 0) {
@@ -137,7 +137,7 @@ SOrientedBoundingBox* GEdge::getOBB() {
     }
     this->_obb = SOrientedBoundingBox::buildOBB(vertices);
   }
-  return (this->_obb);
+  return (SOrientedBoundingBox(this->_obb));
 }
 
 void GEdge::setVisibility(char val, bool recursive)

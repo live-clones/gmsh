@@ -111,7 +111,7 @@ SBoundingBox3d GRegion::bounds() const
   return res;
 }
 
-SOrientedBoundingBox* GRegion::getOBB() {
+SOrientedBoundingBox GRegion::getOBB() {
   if (!(this->_obb)) {
     vector<SPoint3> vertices;
     list<GFace*> b_faces = this->faces();
@@ -159,7 +159,7 @@ SOrientedBoundingBox* GRegion::getOBB() {
     }
     this->_obb = SOrientedBoundingBox::buildOBB(vertices);
   }
-  return (this->_obb);
+  return (SOrientedBoundingBox(this->_obb));
 }
 
 void GRegion::setVisibility(char val, bool recursive)

@@ -212,7 +212,7 @@ class GEntity {
   virtual SBoundingBox3d bounds() const { return SBoundingBox3d(); }
 
   //  get the oriented bounding box
-  virtual SOrientedBoundingBox* getOBB() {return new SOrientedBoundingBox(); }
+  virtual SOrientedBoundingBox getOBB() {return SOrientedBoundingBox(); }
   
   // get/set the visibility flag
   virtual char getVisibility();

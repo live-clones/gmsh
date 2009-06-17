@@ -59,6 +59,8 @@ class SOrientedBoundingBox {
                         const SVector3& axisY,
                         const SVector3& axisZ);
 
+    // Copy constructor
+    SOrientedBoundingBox(SOrientedBoundingBox* other);
     ~SOrientedBoundingBox();
 
     SVector3 getCenter()  {return (this->center);};
@@ -75,9 +77,9 @@ class SOrientedBoundingBox {
 
     static SOrientedBoundingBox* buildOBB(vector<SPoint3> vertices);
 
-    bool intersects(SOrientedBoundingBox* obb);
+    bool intersects(SOrientedBoundingBox& obb);
 
-    static double compare(SOrientedBoundingBox* obb1, SOrientedBoundingBox* obb2);
+    static double compare(SOrientedBoundingBox& obb1, SOrientedBoundingBox& obb2);
 
   private:
     SVector3 center;

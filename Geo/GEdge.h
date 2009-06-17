@@ -62,7 +62,7 @@ class GEdge : public GEntity {
   virtual SBoundingBox3d bounds() const;
 
   // get the oriented bounding box
-  virtual SOrientedBoundingBox* getOBB();
+  virtual SOrientedBoundingBox getOBB();
 
   // faces that this entity bounds
   virtual std::list<GFace*> faces() const { return l_faces; }

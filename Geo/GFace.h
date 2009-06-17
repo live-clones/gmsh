@@ -111,7 +111,7 @@ class GFace : public GEntity
   virtual SBoundingBox3d bounds() const;
 
   // get the oriented bounding box
-  virtual SOrientedBoundingBox* getOBB();
+  virtual SOrientedBoundingBox getOBB();
   
   // retrieve surface params
   virtual surface_params getSurfaceParams() const;
