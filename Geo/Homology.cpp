@@ -72,9 +72,12 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain, std::vector<i
 
 void Homology::findGenerators(std::string fileName){
   
+  
+  
   Msg::Info("Reducing Cell Complex...");
   double t1 = Cpu();
   int omitted = _cellComplex->reduceComplex(true);
+  
   //_cellComplex->checkCoherence();
   if(getCombine()){
     _cellComplex->combine(3);
@@ -90,6 +93,7 @@ void Homology::findGenerators(std::string fileName){
   Msg::Info("%d volumes, %d faces, %d edges and %d vertices.",
             _cellComplex->getSize(3), _cellComplex->getSize(2), _cellComplex->getSize(1), _cellComplex->getSize(0));
 
+  //for(int i = 0; i < 4; i++) _cellComplex->printComplex(i);
     
   _cellComplex->writeComplexMSH(fileName);
   

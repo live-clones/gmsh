@@ -141,7 +141,15 @@ class Cell
      }
      return count;
    }
-      
+   
+   virtual bool hasBoundary(Cell* cell){
+     for(std::list< std::pair<int, Cell*> >::iterator it = _boundary.begin(); it != _boundary.end(); it++){
+       Cell* cell2 = (*it).second;
+       if(*cell2 == *cell) return true;
+     }
+     return false;
+   }
+   
    virtual void clearBoundary() { _boundary.clear(); }
    virtual void clearCoboundary() { _coboundary.clear(); }
    
@@ -160,6 +168,14 @@ class Cell
        cell2->printCell();
      }
    }
+   virtual void printCoboundary() {
+     for(std::list< std::pair<int, Cell*> >::iterator it = _coboundary.begin(); it != _coboundary.end(); it++){
+       printf("Coboundary cell orientation: %d ", (*it).first);
+       Cell* cell2 = (*it).second;
+       cell2->printCell();
+     }
+   }
+   
    
    
    virtual bool inSubdomain() const { return _inSubdomain; }
@@ -435,6 +451,7 @@ class CombinedCell : public Cell{
    std::vector<MVertex*> _v;
    std::vector<int> _vs;
    std::list< std::pair<int, Cell*> > _cells;
+   int _num;
    
   public:
    
@@ -442,9 +459,14 @@ class CombinedCell : public Cell{
      _index = c1->getIndex();
      _tag = c1->getTag();
      _dim = c1->getDim();
+     _num = c1->getNum();
      _inSubdomain = c1->inSubdomain();
      _onDomainBoundary = c1->onDomainBoundary();
      _combined = true;
+     
+     _v.reserve(c1->getNumVertices() + c2->getNumVertices());
+     _vs.reserve(c1->getNumVertices() + c2->getNumVertices());
+            
      
      _v = c1->getVertexVector();
      for(int i = 0; i < c2->getNumVertices(); i++){
@@ -461,14 +483,31 @@ class CombinedCell : public Cell{
        _cells.push_back(*it);
      }
      
-     _boundary = c1->getOrientedBoundary();
+     if(!co) _boundary = c1->getOrientedBoundary();
+     
+     std::list< std::pair<int, Cell*> > c1Boundary = c1->getOrientedBoundary();
      std::list< std::pair<int, Cell*> > c2Boundary = c2->getOrientedBoundary();
+     /*
+     for(std::list< std::pair<int, Cell*> >::iterator it = c1Boundary.begin(); it != c1Boundary.end(); it++){
+       Cell* cell = (*it).second;
+       if(co){
+         bool old = false;
+         for(std::list< std::pair<int, Cell* > >::iterator it2 = c2Boundary.begin(); it2 != c2Boundary.end(); it2++){
+           Cell* cell2 = (*it2).second;
+           if(*cell2 == *cell) old = true;
+         }
+         if(!old) _boundary.push_back(*it);
+       }
+       else _boundary.push_back(*it);
+     }
+     */
+     
      for(std::list< std::pair<int, Cell*> >::iterator it = c2Boundary.begin(); it != c2Boundary.end(); it++){
        if(!orMatch) (*it).first = -1*(*it).first;
        Cell* cell = (*it).second;
        if(co){
          bool old = false;
-         for(std::list< std::pair<int, Cell* > >::iterator it2 = _boundary.begin(); it2 != _boundary.end(); it2++){
+         for(std::list< std::pair<int, Cell* > >::iterator it2 = c1Boundary.begin(); it2 != c1Boundary.end(); it2++){
            Cell* cell2 = (*it2).second;
            if(*cell2 == *cell) old = true;
          }
@@ -477,14 +516,32 @@ class CombinedCell : public Cell{
        else _boundary.push_back(*it);
      }
      
-     _coboundary = c1->getOrientedCoboundary();
+     if(co) _coboundary = c1->getOrientedCoboundary();
+     std::list< std::pair<int, Cell*> > c1Coboundary = c1->getOrientedCoboundary();
      std::list< std::pair<int, Cell*> > c2Coboundary = c2->getOrientedCoboundary();
+     
+     /*
+     for(std::list< std::pair<int, Cell* > >::iterator it = c1Coboundary.begin(); it != c1Coboundary.end(); it++){
+       
+       Cell* cell = (*it).second;
+       if(!co){
+         bool old = false;
+         for(std::list< std::pair<int, Cell* > >::iterator it2 = c2Coboundary.begin(); it2 != c2Coboundary.end(); it2++){
+           Cell* cell2 = (*it2).second;
+           if(*cell2 == *cell) old = true;
+         }
+         if(!old) _coboundary.push_back(*it);
+       }
+       else _coboundary.push_back(*it);
+     }
+     */
+     
      for(std::list< std::pair<int, Cell* > >::iterator it = c2Coboundary.begin(); it != c2Coboundary.end(); it++){
        if(!orMatch) (*it).first = -1*(*it).first;
        Cell* cell = (*it).second;
        if(!co){
          bool old = false;
-         for(std::list< std::pair<int, Cell* > >::iterator it2 = _coboundary.begin(); it2 != _coboundary.end(); it2++){
+         for(std::list< std::pair<int, Cell* > >::iterator it2 = c1Coboundary.begin(); it2 != c1Coboundary.end(); it2++){
            Cell* cell2 = (*it2).second;
            if(*cell2 == *cell) old = true;
          }
@@ -497,6 +554,7 @@ class CombinedCell : public Cell{
   
    ~CombinedCell(){} 
    
+   int getNum() { return _num; }
    int getNumVertices() const { return _v.size(); } 
    MVertex* getVertex(int vertex) const { return _v.at(vertex); }
    int getSortedVertex(int vertex) const { return _vs.at(vertex); }
@@ -506,6 +564,9 @@ class CombinedCell : public Cell{
    
    // true if this cell has given vertex
    bool hasVertex(int vertex) const {
+     //std::vector<int>::iterator it = std::find(_vs.begin(), _vs.end(), vertex);
+     //if (it == _vs.end()) return false;
+     //else return true;
      for(int i = 0; i < _v.size(); i++){
        if(_v.at(i)->getNum() == vertex) return true;
      }
@@ -522,7 +583,6 @@ class CombinedCell : public Cell{
    
    std::list< std::pair<int, Cell*> > getCells() { return _cells; }
    int getNumCells() {return _cells.size();}
-      
    
 };
 
@@ -626,11 +686,17 @@ class CellComplex
      //}
      
      for(int i = 0; i < 4; i++){
+       
+       for(citer cit = _cells[i].begin(); cit != _cells[i].end(); cit++){
+         Cell* cell = *cit;
+         if(cell->combined()) delete cell;
+       }
        _cells[i].clear();
        for(citer cit = _cells2[i].begin(); cit != _cells2[i].end(); cit++){
          Cell* cell = *cit;
          delete cell;
        }
+        _cells2[i].clear();
      }
      
    }

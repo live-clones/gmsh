@@ -87,7 +87,7 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
                 mpz_set_si(elem, old_elem + (*it).first);
                 if( (old_elem + (*it).first) > 1 || (old_elem + (*it).first) < -1 ){
                   printf("Warning: Invalid incidence index: %d! HMatrix: %d. \n", (old_elem + (*it).first), dim);
-                   mpz_set_si(elem, 0);
+                   //mpz_set_si(elem, 0);
                 }
                 gmp_matrix_set_elem(elem, bdCell->getIndex(), cell->getIndex(), _HMatrix[dim]);
               }
