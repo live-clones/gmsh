@@ -45,6 +45,7 @@ class Octree;
 class GFaceCompound : public GFace {
  public:
   typedef enum {ITERU=0,ITERV=1,ITERD=2} iterationStep;
+  void computeNormals (std::map<MVertex*,SVector3> &normals) const;
  protected:
   std::list<GFace*> _compound;
   std::list<GEdge*> _U0, _U1, _V0, _V1;
@@ -78,6 +79,7 @@ public:
   virtual GEntity::GeomType geomType() const { return CompoundSurface; }
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return 0; }
+
 
   virtual SPoint2 getCoordinates(MVertex *v) const;
 

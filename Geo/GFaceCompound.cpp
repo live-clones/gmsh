@@ -618,6 +618,14 @@ void GFaceCompound::parametrize(iterationStep step) const
   }
 }
 
+
+void GFaceCompound::computeNormals (std::map<MVertex*,SVector3> &normals) const
+{
+
+  computeNormals ();
+  normals = _normals;
+
+}
 void GFaceCompound::computeNormals () const
 {
   _normals.clear();
@@ -691,7 +699,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
     return lt->gf->point(pv.x(),pv.y());
   }
   
-  const int LINEARMESH = false;
+  const bool LINEARMESH = false;
 
   if (LINEARMESH){
 
@@ -702,79 +710,122 @@ GPoint GFaceCompound::point(double par1, double par2) const
 
   }
   else{
-    
-    //quadratic Lagrange mesh
+
+    //curved PN triangle
     //-------------------------
-    
+
     const SVector3 n1 = _normals[lt->tri->getVertex(0)];
     const SVector3 n2 = _normals[lt->tri->getVertex(1)];
     const SVector3 n3 = _normals[lt->tri->getVertex(2)];
     
-    SVector3 t1, t2, t3, Pij; 
-    
-    t1 = n2 - n1*dot(n1,n2);
-    t2 =  n2*(dot(n1,n2)) - n1; 
-    Pij = lt->v2 - lt->v1;
-    
-    double a = dot(t1,t2)/dot(t1,t1);
-    double b = dot(Pij,t1)/dot(t1,t2);
-    double ap = dot(t1,t2)/dot(t2,t2);
-    double bp = dot(Pij,t2)/dot(t1,t2);
-    
-     SPoint3 X4;
-    if (dot(n1,n2)/(norm(n1)*norm(n2)) > 0.9999){
-       X4.setPosition(.5*(lt->v1.x()+lt->v2.x()),  .5*(lt->v1.y()+lt->v2.y()), .5*(lt->v1.z()+lt->v2.z()) );
+    SVector3 b300,b030,b003;
+    SVector3 b210,b120,b021,b012,b102,b201,E,VV,b111;
+    double  w12,w21,w23,w32,w31,w13;
 
-    }
-    else{
-      SVector3 XX4 = (.5*((ap*bp*t2)-(a*bp*t1)) ) *.25  +  (Pij + .5*((a*b*t1) - (ap*bp*t2)))*.5 +  lt->v1;
-      X4.setPosition(XX4.x(), XX4.y(), XX4.z());
-    }
+    b300 = lt->v1;
+    b030 = lt->v2;
+    b003 = lt->v3;
+    w12 = dot(lt->v2 - lt->v1, n1);
+    w21 = dot(lt->v1 - lt->v2, n2);
+    w23 = dot(lt->v3 - lt->v2, n2);
+    w32 = dot(lt->v2 - lt->v3, n3);
+    w31 = dot(lt->v1 - lt->v3, n3);
+    w13 = dot(lt->v3 - lt->v1, n1);
+    b210 = (2*lt->v1 + lt->v2 -w12*n1)*0.333; 
+    b120 = (2*lt->v2 + lt->v1-w21*n2)*0.333;
+    b021 = (2*lt->v2 + lt->v3-w23*n2)*0.333;
+    b012 = (2*lt->v3 + lt->v2-w32*n3)*0.333;
+    b102 = (2*lt->v3 + lt->v1-w31*n3)*0.333;
+    b201 = (2*lt->v1 + lt->v3-w13*n1)*0.333;
+    E=(b210+b120+b021+b012+b102+b201)*0.16667;
+    VV=(lt->v1+lt->v2+lt->v3)*0.333;
+    b111=E+(E-VV)*0.5;
 
-    t2 = n3 - n2*dot(n2,n3);
-    t3 =  n3*(dot(n2,n3)) - n2; 
-    Pij = lt->v3 - lt->v2;
-    
-    a = dot(t2,t3)/dot(t2,t2);
-    b = dot(Pij,t2)/dot(t2,t3);
-    ap = dot(t2,t3)/dot(t3,t3);
-    bp = dot(Pij,t3)/dot(t2,t3);
-    
-     SPoint3 X5;
-    if (dot(n2,n3)/(norm(n2)*norm(n3)) > 0.9999){
-      X5.setPosition(.5*(lt->v2.x()+lt->v3.x()), .5*(lt->v2.y()+lt->v3.y()),  .5*(lt->v2.z()+lt->v3.z()));     
-    }
-    else{
-      SVector3 XX5 = (.5*((ap*bp*t3)-(a*bp*t2)) ) *.35 + (Pij + .5*((a*b*t2) - (ap*bp*t3)))*.5 +  lt->v2;
-      X5.setPosition(XX5.x(), XX5.y(), XX5.z());
-    }
-    
-    t3 = n1 - n3*dot(n3,n1);
-    t1 =  n1*(dot(n3,n1)) - n3; 
-    Pij = lt->v1 - lt->v3;
-    
-    a = dot(t3,t1)/dot(t3,t3);
-    b = dot(Pij,t3)/dot(t3,t1);
-    ap = dot(t3,t1)/dot(t1,t1);
-    bp = dot(Pij,t1)/dot(t3,t1);
-    
-     SPoint3 X6;
-     if (dot(n1,n3)/(norm(n1)*norm(n3)) > 0.9999){
-       X6.setPosition(.5*(lt->v1.x()+lt->v3.x()), .5*(lt->v1.y()+lt->v3.y()), .5*(lt->v1.z()+lt->v3.z()) );
-     }
-     else{
-       SVector3 XX6 = (.5*((ap*bp*t1)-(a*bp*t3)) ) *.15  +    (Pij + .5*((a*b*t3) - (ap*bp*t1)))*.5 +  lt->v3;
-       X6.setPosition(XX6.x(), XX6.y(), XX6.z());
-     }
+    double W = 1-U-V;
+    SVector3 point = b300*W*W*W+b030*U*U*U+b003*V*V*V+
+      b210*3.*W*W*U+b120*3.*W*U*U+b201*3.*W*W*V+
+      b021*3.*U*U*V+b102*3.*W*V*V+b012*3.*U*V*V+
+      b111*6.*W*U*V;
 
-    
-    const gmshFunctionSpace& fs = gmshFunctionSpaces::find(MSH_TRI_6);
-    double f1[6];
-    fs.f(U,V,0,f1);
-    p = lt->v1*f1[0] + lt->v2*f1[1] + lt->v3*f1[2] +  X4*f1[3] + X5*f1[4] + X6*f1[5];
-    return GPoint(p.x(),p.y(),p.z(),this,par);
-    
+    SPoint3 PP(point.x(), point.y(), point.z());
+    return GPoint(PP.x(),PP.y(),PP.z(),this,par);
+
   }
+ //  else{
+    
+//     //quadratic Lagrange mesh
+//     //-------------------------
+    
+//     const SVector3 n1 = _normals[lt->tri->getVertex(0)];
+//     const SVector3 n2 = _normals[lt->tri->getVertex(1)];
+//     const SVector3 n3 = _normals[lt->tri->getVertex(2)];
+    
+//     SVector3 t1, t2, t3, Pij; 
+    
+//     t1 = n2 - n1*dot(n1,n2);
+//     t2 =  n2*(dot(n1,n2)) - n1; 
+//     Pij = lt->v2 - lt->v1;
+    
+//     double a = dot(t1,t2)/dot(t1,t1);
+//     double b = dot(Pij,t1)/dot(t1,t2);
+//     double ap = dot(t1,t2)/dot(t2,t2);
+//     double bp = dot(Pij,t2)/dot(t1,t2);
+    
+//      SPoint3 X4;
+//     if (dot(n1,n2)/(norm(n1)*norm(n2)) > 0.9999){
+//       printf("close zero \n");
+//        X4.setPosition(.5*(lt->v1.x()+lt->v2.x()),  .5*(lt->v1.y()+lt->v2.y()), .5*(lt->v1.z()+lt->v2.z()) );
+
+//     }
+//     else{
+//       SVector3 XX4 = (.5*((ap*bp*t2)-(a*bp*t1)) ) *.25  +  (Pij + .5*((a*b*t1) - (ap*bp*t2))) *0.5 +  lt->v1;
+//       X4.setPosition(XX4.x(), XX4.y(), XX4.z());
+//     }
+
+//     t2 = n3 - n2*dot(n2,n3);
+//     t3 =  n3*(dot(n2,n3)) - n2; 
+//     Pij = lt->v3 - lt->v2;
+    
+//     a = dot(t2,t3)/dot(t2,t2);
+//     b = dot(Pij,t2)/dot(t2,t3);
+//     ap = dot(t2,t3)/dot(t3,t3);
+//     bp = dot(Pij,t3)/dot(t2,t3);
+    
+//      SPoint3 X5;
+//     if (dot(n2,n3)/(norm(n2)*norm(n3)) > 0.9999){
+//       X5.setPosition(.5*(lt->v2.x()+lt->v3.x()), .5*(lt->v2.y()+lt->v3.y()),  .5*(lt->v2.z()+lt->v3.z()));     
+//     }
+//     else{
+//       SVector3 XX5 = (.5*((ap*bp*t3)-(a*bp*t2)) ) *.35 + (Pij + .5*((a*b*t2) - (ap*bp*t3)))*.5 +  lt->v2;
+//       X5.setPosition(XX5.x(), XX5.y(), XX5.z());
+//     }
+    
+//     t3 = n1 - n3*dot(n3,n1);
+//     t1 =  n1*(dot(n3,n1)) - n3; 
+//     Pij = lt->v1 - lt->v3;
+    
+//     a = dot(t3,t1)/dot(t3,t3);
+//     b = dot(Pij,t3)/dot(t3,t1);
+//     ap = dot(t3,t1)/dot(t1,t1);
+//     bp = dot(Pij,t1)/dot(t3,t1);
+    
+//      SPoint3 X6;
+//      if (dot(n1,n3)/(norm(n1)*norm(n3)) > 0.9999){
+//        X6.setPosition(.5*(lt->v1.x()+lt->v3.x()), .5*(lt->v1.y()+lt->v3.y()), .5*(lt->v1.z()+lt->v3.z()) );
+//      }
+//      else{
+//        SVector3 XX6 = (.5*((ap*bp*t1)-(a*bp*t3)) ) *.15  +    (Pij + .5*((a*b*t3) - (ap*bp*t1)))*.5 +  lt->v3;
+//        X6.setPosition(XX6.x(), XX6.y(), XX6.z());
+//      }
+
+    
+//     const gmshFunctionSpace& fs = gmshFunctionSpaces::find(MSH_TRI_6);
+//     double f1[6];
+//     fs.f(U,V,0,f1);
+//     p = lt->v1*f1[0] + lt->v2*f1[1] + lt->v3*f1[2] +  X4*f1[3] + X5*f1[4] + X6*f1[5];
+//     return GPoint(p.x(),p.y(),p.z(),this,par);
+    
+//   }
 
 //   gmshVector<double> x(9);
 //   const gmshFunctionSpace& fs = gmshFunctionSpaces::find(MSH_TRI_6);
@@ -1020,12 +1071,28 @@ void GFaceCompound::printStuff() const
 {
   std::list<GFace*> :: const_iterator it = _compound.begin();
 
-  FILE * uvx = fopen("UVX.pos","w");
-  FILE * uvy = fopen("UVY.pos","w");
-  FILE * uvz = fopen("UVZ.pos","w");
-  FILE * xyzu = fopen("XYZU.pos","w");
-  FILE * xyzv = fopen("XYZV.pos","w");
-  FILE * xyzc = fopen("XYZC.pos","w");
+  char name1[256], name2[256], name3[256];
+  char name4[256], name5[256], name6[256];
+  //sprintf(name1, "UVX-%d.pos", (*it)->tag());
+  //sprintf(name2, "UVY-%d.pos", (*it)->tag());
+  //sprintf(name3, "UVZ-%d.pos", (*it)->tag()); 
+  //sprintf(name4, "XYZU-%d.pos", (*it)->tag());
+  //sprintf(name5, "XYZV-%d.pos", (*it)->tag());
+  //sprintf(name6, "XYZC-%d.pos", (*it)->tag());
+
+ sprintf(name1, "UVX.pos");
+ sprintf(name2, "UVY.pos");
+ sprintf(name3, "UVZ.pos"); 
+ sprintf(name4, "XYZU.pos");
+ sprintf(name5, "XYZV.pos");
+ sprintf(name6, "XYZC.pos");
+
+  FILE * uvx = fopen(name1,"w");
+  FILE * uvy = fopen(name2,"w");
+  FILE * uvz = fopen(name3,"w");
+  FILE * xyzu = fopen(name4,"w");
+  FILE * xyzv = fopen(name5,"w");
+  FILE * xyzc = fopen(name6,"w");
 
   fprintf(uvx,"View \"\"{\n");
   fprintf(uvy,"View \"\"{\n");
@@ -1043,13 +1110,18 @@ void GFaceCompound::printStuff() const
 	coordinates.find(t->getVertex(1));
       std::map<MVertex*,SPoint3>::const_iterator it2 = 
 	coordinates.find(t->getVertex(2));
-      fprintf(xyzu,"VT(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g,%g};\n",
+         fprintf(xyzu,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 	      t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
 	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
 	      t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
-	      (35.*it0->second.x()-t->getVertex(0)->x()), -t->getVertex(0)->y(), (35.*it0->second.y()-t->getVertex(0)->z()),
-	      (35.*it1->second.x()-t->getVertex(1)->x()), -t->getVertex(1)->y(), (35.*it1->second.y()-t->getVertex(1)->z()),
-	      (35.*it2->second.x()-t->getVertex(2)->x()), -t->getVertex(2)->y(), (35.*it2->second.y()-t->getVertex(2)->z()));
+	      it0->second.x(),it1->second.x(),it2->second.x());
+//       fprintf(xyzu,"VT(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g,%g};\n",
+// 	      t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
+// 	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
+// 	      t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
+// 	      (35.*it0->second.x()-t->getVertex(0)->x()), -t->getVertex(0)->y(), (35.*it0->second.y()-t->getVertex(0)->z()),
+// 	      (35.*it1->second.x()-t->getVertex(1)->x()), -t->getVertex(1)->y(), (35.*it1->second.y()-t->getVertex(1)->z()),
+// 	      (35.*it2->second.x()-t->getVertex(2)->x()), -t->getVertex(2)->y(), (35.*it2->second.y()-t->getVertex(2)->z()));
       fprintf(xyzv,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 	      t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
 	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),

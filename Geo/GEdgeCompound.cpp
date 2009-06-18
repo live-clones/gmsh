@@ -16,12 +16,12 @@ GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound)
   : GEdge(m, tag, 0 , 0), _compound(compound)
 {
 
-  for (std::vector<GEdge*>::iterator it = compound.begin(); it != compound.end(); ++it){
-    if (!(*it)) {
-      Msg::Error("Incorrect edge in compound line %d\n", tag);
-      Msg::Exit(1);
-    }
-  }
+//   for (std::vector<GEdge*>::iterator it = compound.begin(); it != compound.end(); ++it){
+//     if (!(*it)) {
+//       Msg::Error("Incorrect edge in compound line %d\n", tag);
+//       Msg::Exit(1);
+//     }
+//   }
 
   orderEdges ();
   int N = _compound.size();
