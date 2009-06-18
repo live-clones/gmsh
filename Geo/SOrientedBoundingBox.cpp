@@ -6,6 +6,7 @@
 // Contributed by Bastien Gorissen
 
 #include <math.h>
+#include <time.h>
 #include <stdlib.h>
 #include "SOrientedBoundingBox.h"
 #include "GmshMatrix.h"
@@ -65,11 +66,11 @@ SOrientedBoundingBox::SOrientedBoundingBox(SVector3& center,
 
   this->axisZ = axisZ;
   this->axisZ.normalize();
-  
+
   double dx = 0.5*size[0];
   double dy = 0.5*size[1];
   double dz = 0.5*size[2];
-  
+
   p1x = center[0] - (axisX[0]*dx) - (axisY[0]*dy) - (axisZ[0]*dz);
   p1y = center[1] - (axisX[1]*dx) - (axisY[1]*dy) - (axisZ[1]*dz);
   p1z = center[2] - (axisX[2]*dx) - (axisY[2]*dy) - (axisZ[2]*dz);
@@ -77,7 +78,7 @@ SOrientedBoundingBox::SOrientedBoundingBox(SVector3& center,
   p2x = center[0] + (axisX[0]*dx) - (axisY[0]*dy) - (axisZ[0]*dz);
   p2y = center[1] + (axisX[1]*dx) - (axisY[1]*dy) - (axisZ[1]*dz);
   p2z = center[2] + (axisX[2]*dx) - (axisY[2]*dy) - (axisZ[2]*dz);
-  
+
   p3x = center[0] - (axisX[0]*dx) + (axisY[0]*dy) - (axisZ[0]*dz);
   p3y = center[1] - (axisX[1]*dx) + (axisY[1]*dy) - (axisZ[1]*dz);
   p3z = center[2] - (axisX[2]*dx) + (axisY[2]*dy) - (axisZ[2]*dz);
@@ -149,7 +150,7 @@ SOrientedBoundingBox::SOrientedBoundingBox(SOrientedBoundingBox* other) {
   p8x = center[0] + (axisX[0]*dx) + (axisY[0]*dy) + (axisZ[0]*dz);
   p8y = center[1] + (axisX[1]*dx) + (axisY[1]*dy) + (axisZ[1]*dz);
   p8z = center[2] + (axisX[2]*dx) + (axisY[2]*dy) + (axisZ[2]*dz);
-  
+
 }
 
 //-----------------------------------------------------------------------------
@@ -161,21 +162,23 @@ SOrientedBoundingBox::~SOrientedBoundingBox() { }
 
 
 double SOrientedBoundingBox::getMaxSize() {
-  return (fmaxf(this->size[0], fmaxf(this->size[1], this->size[2])));
+  return (std::max(this->size[0], std::max(this->size[1], this->size[2])));
 }
 
 //-----------------------------------------------------------------------------
 
 
 SVector3 SOrientedBoundingBox::getAxis(int axis) {
+  SVector3 ret;
   switch (axis) {
     case 0:
-      return (this->axisX);
+      ret=this->axisX;
     case 1:
-      return (this->axisY);
+      ret=this->axisY;
     case 2:
-      return (this->axisZ);
+      ret=this->axisZ;
   }
+  return ret;
 }
 
 //-----------------------------------------------------------------------------
@@ -289,8 +292,8 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(vector<SPoint3> vertices) {
     mins(i) = DBL_MAX;
     maxs(i) = -DBL_MAX;
     for (int j = 0; j < num_vertices; j++) {
-      maxs(i) = fmaxf(maxs(i),projected(i,j));
-      mins(i) = fminf(mins(i),projected(i,j));
+      maxs(i) =std::max(maxs(i),projected(i,j));
+      mins(i) = std::min(mins(i),projected(i,j));
     }
   }
 
@@ -438,7 +441,7 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(vector<SPoint3> vertices) {
     rotation_inv(1,0) =   sine; rotation_inv(1,1) = cosine;
 
     rotation_inv.mult(center_before_rot,center_rot);
-    
+
     gmshVector<double> axis_rot1(2);
     gmshVector<double> axis_rot2(2);
 
@@ -466,21 +469,21 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(vector<SPoint3> vertices) {
   double min_pca = DBL_MAX;
   double max_pca = -DBL_MAX;
   for (int i = 0; i < num_vertices; i++) {
-    min_pca = fminf(min_pca,projected(smallest_comp,i));
-    max_pca = fmaxf(max_pca,projected(smallest_comp,i));
+    min_pca = std::min(min_pca,projected(smallest_comp,i));
+    max_pca = std::max(max_pca,projected(smallest_comp,i));
   }
   double center_pca = (max_pca+min_pca)/2.0;
   double size_pca = (max_pca-min_pca);
- 
+
   double raw_data[3][5];
   raw_data[0][0] = size_pca;
   raw_data[1][0] = least_rectangle.size->at(0);
   raw_data[2][0] = least_rectangle.size->at(1);
-  
+
   raw_data[0][1] = center_pca;
   raw_data[1][1] = least_rectangle.center->at(0);
   raw_data[2][1] = least_rectangle.center->at(1);
-  
+
   for (int i = 0; i < 3; i++) {
     raw_data[0][2+i] = left_eigv(i,smallest_comp);
     raw_data[1][2+i] = least_rectangle.axisX->at(0)*left_eigv(i,smallest_comp==0?1:0) +
@@ -490,7 +493,7 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(vector<SPoint3> vertices) {
   }
   //  Msg::Info("Test 1 : %f %f",least_rectangle.center->at(0),least_rectangle.center->at(1));
 //  Msg::Info("Test 2 : %f %f",least_rectangle.axisY->at(0),least_rectangle.axisY->at(1));
-  
+
   int tri[3];
 
   if (size_pca > least_rectangle.size->at(0)) {  // P > R0
