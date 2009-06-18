@@ -34,18 +34,18 @@
 #include <LocOpe_SplitShape.hxx>
 
 ////////////////////////////////////////////////////////////////////////////////
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////
 class OCC_Connect {
     struct LessThanIntegerSet {
-	bool operator()(std::set<int> const &a, std::set<int> const &b);
+	bool operator()(std::set<int> const &a, std::set<int> const &b) const;
     };
     typedef std::map<std::set<int>,std::set<int>,LessThanIntegerSet> mapping_t;
 
     class FaceCutters:public std::vector<TopoDS_Wire> {
         std::vector<TopoDS_Edge> edges;
         int rebuilt;
-    public: 
+    public:
         FaceCutters(void) { rebuilt=0; }
 	void Build(TopoDS_Face const &,TopoDS_Shape&,int);
 	void Add(TopoDS_Edge const&);
@@ -73,12 +73,12 @@ private:
     void MergeEdges(TopoDS_Shape&,TopoDS_Shape&) const;
     void MergeFaces(TopoDS_Shape&) const;
     void PerformBoolean(union tree*);
-    void Intersect(BRep_Builder &BB, TopoDS_Shape &target, 
+    void Intersect(BRep_Builder &BB, TopoDS_Shape &target,
         TopoDS_Shape &shape, TopoDS_Shape &tool);
     bool CanMergeCurve(TopoDS_Edge edge1,TopoDS_Edge edge2) const;
     bool CanMergeFace(TopoDS_Face face1,TopoDS_Face face2) const;
     void PrintItemCount(TopoDS_Shape const &shape) const;
-    cutmap_t SelectCuttingEdges(TopTools_IndexedMapOfShape &edges, 
+    cutmap_t SelectCuttingEdges(TopTools_IndexedMapOfShape &edges,
         TopTools_IndexedMapOfShape &faces);
 };
 

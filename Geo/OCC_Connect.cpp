@@ -106,15 +106,15 @@ static inline ostream &operator <<(ostream &o,const TopOpeBRep_P2Dstatus &A)
 
 template <typename T>
 static inline std::ostream &operator<<(std::ostream &out, std::set<T> const &a)
-{ 
+{
     std::copy(a.begin(),a.end(),std::ostream_iterator<T>(out," "));
     return out;
 }
 
-bool OCC_Connect::LessThanIntegerSet::operator()(std::set<int> const &a, 
-    std::set<int> const &b)
-{   
-    std::set<int>::iterator pa=a.begin(), pb=b.begin();
+bool OCC_Connect::LessThanIntegerSet::operator()(std::set<int> const &a,
+    std::set<int> const &b) const
+{
+    std::set<int>::const_iterator pa=a.begin(), pb=b.begin();
     for(; pa!=a.end() && pb!=b.end(); pa++, pb++ ) {
 	if(*pa<*pb)
 	    return 1;
@@ -145,6 +145,7 @@ int OCC_Connect::SaveBRep(char const *name)
     )
 	BB.Add(compound,p.First());
     BRepTools::Write(compound, (char*)name);
+    return 1;
 }
 
 void OCC_Connect::Dump(ostream &out) const
@@ -185,7 +186,7 @@ void OCC_Connect::FaceCutters::Add(TopoDS_Edge const &edge)
     rebuilt=0;
 }
 
-int OCC_Connect::FaceCutters::FindConnectedEdge(int v, 
+int OCC_Connect::FaceCutters::FindConnectedEdge(int v,
     std::vector<int> &done,
     std::vector<std::vector<int> > &v_edge
 )  {
@@ -211,7 +212,7 @@ void dump(std::vector<std::pair<int,int> > const &e2v, std::ostream &out,
 }
 
 void FinishEdge(int edge,
-    std::vector<std::set<int> > &v2e, 
+    std::vector<std::set<int> > &v2e,
     std::vector<std::pair<int,int> > &e2v)
 {
     int verbose=0;
@@ -229,8 +230,8 @@ void FinishEdge(int edge,
 	    e2v[*e].first=nv;
 	else
 	    e2v[*e].second=nv;
-	if(verbose) 
-          std::cout << "Created vertex " << nv << "(" << fv << "), edge[" << *e 
+	if(verbose)
+          std::cout << "Created vertex " << nv << "(" << fv << "), edge[" << *e
                     << "]=" << e2v[*e].first << " " << e2v[*e].second << "\n";
 	v2e[fv].erase(*e);
     }
@@ -246,7 +247,7 @@ void FinishEdge(int edge,
 	    e2v[*e].first=nv;
 	else
 	    e2v[*e].second=nv;
-	if(verbose) 
+	if(verbose)
           std::cout << "Created vertex " << nv << "(" << sv << "), edge[" << *e <<
             "]=" << e2v[*e].first << " " << e2v[*e].second << "\n";
 	v2e[sv].erase(*e);
@@ -264,9 +265,9 @@ void OCC_Connect::FaceCutters::Build(TopoDS_Face const &face,
     for(int i=0; i<edges.size(); i++) {
         TopExp::MapShapes(edges[i],TopAbs_VERTEX,vertices);
         TopoDS_Vertex v1, v2;
-        TopExp::Vertices(edges[i],v1,v2); 
+        TopExp::Vertices(edges[i],v1,v2);
         std::pair<int,int> t(vertices.FindIndex(v1),vertices.FindIndex(v2));
-        e2v.push_back(t);                        
+        e2v.push_back(t);
     }
 
     std::vector<std::set<int> > v2e;
@@ -327,7 +328,7 @@ void OCC_Connect::FaceCutters::Build(TopoDS_Face const &face,
             for(std::set<int>::iterator v=current_vertices.begin();
                 v!=current_vertices.end();
                 v++
-            ) { 
+            ) {
                 for(std::set<int>::iterator e=v2e[*v].begin() ;
                     e!=v2e[*v].end();
                     e++
@@ -335,7 +336,7 @@ void OCC_Connect::FaceCutters::Build(TopoDS_Face const &face,
                     if(processed_edges.count(*e))
 			continue;
 
-		    int other=e2v[*e].first==*v? 
+		    int other=e2v[*e].first==*v?
 			e2v[*e].second:e2v[*e].first;
 
 		    if(open_mode) {
@@ -346,8 +347,8 @@ void OCC_Connect::FaceCutters::Build(TopoDS_Face const &face,
 			    BRepBuilderAPI_MakeWire wire;
 			    if(verbose&Cutting)
                                 std::cout << "CUT Open wire:";
-			    for(p=wires[*v].begin(); 
-				p!=wires[*v].end(); 
+			    for(p=wires[*v].begin();
+				p!=wires[*v].end();
 				p++
 			    ) {
 				FinishEdge(*p, v2e, e2v);
@@ -376,8 +377,8 @@ void OCC_Connect::FaceCutters::Build(TopoDS_Face const &face,
 
 			    BRepBuilderAPI_MakeWire wire;
 			    std::deque<int>::const_iterator p;
-			    for(p=wires[other].begin(); 
-				p!=wires[other].end(); 
+			    for(p=wires[other].begin();
+				p!=wires[other].end();
 				p++
 			    ) {
 				FinishEdge(*p, v2e, e2v);
@@ -386,8 +387,8 @@ void OCC_Connect::FaceCutters::Build(TopoDS_Face const &face,
                                     std::cout << ' ' << (*p)+1;
 			    }
 			    std::deque<int>::reverse_iterator rp;
-			    for(rp=wires[*v].rbegin(); 
-				rp!=wires[*v].rend(); 
+			    for(rp=wires[*v].rbegin();
+				rp!=wires[*v].rend();
 				rp++
 			    ) {
 				FinishEdge(*rp, v2e, e2v);
@@ -429,7 +430,7 @@ void OCC_Connect::FaceCutters::Build(TopoDS_Face const &face,
 }
 
 inline OCC_Connect::cutmap_t OCC_Connect::SelectCuttingEdges(
-    TopTools_IndexedMapOfShape &edges, 
+    TopTools_IndexedMapOfShape &edges,
     TopTools_IndexedMapOfShape &faces)
 {
     cutmap_t cutters;
@@ -440,7 +441,7 @@ inline OCC_Connect::cutmap_t OCC_Connect::SelectCuttingEdges(
 
             if(BRep_Tool::Degenerated(c_edge)) {
                 if(verbose&CuttingReject)
-                    cout << "Rejected(" << __LINE__ << ") edge " << edge 
+                    cout << "Rejected(" << __LINE__ << ") edge " << edge
                         << " in face " << face << endl;
                 continue;
             }
@@ -449,16 +450,16 @@ inline OCC_Connect::cutmap_t OCC_Connect::SelectCuttingEdges(
             TopExp::MapShapes(c_face,TopAbs_EDGE,already_there);
             if(already_there.Contains(c_edge)) {
                 if(verbose&CuttingReject)
-                    cout << "Rejected(" << __LINE__ << ") edge " << edge 
+                    cout << "Rejected(" << __LINE__ << ") edge " << edge
                         << " in face " << face << endl;
                 continue;
             }
 
             BRepExtrema_DistShapeShape dist(c_edge,c_face);
-            double tol=BRep_Tool::Tolerance(c_face); 
+            double tol=BRep_Tool::Tolerance(c_face);
             if(dist.Value()>tol) {
                 if(verbose&CuttingReject)
-                    cout << "Rejected(" << __LINE__ << ") edge " << edge 
+                    cout << "Rejected(" << __LINE__ << ") edge " << edge
                         << " in face " << face << endl;
                 continue;
             }
@@ -467,7 +468,7 @@ inline OCC_Connect::cutmap_t OCC_Connect::SelectCuttingEdges(
             Handle(Geom_Curve) c3d=BRep_Tool::Curve(c_edge,s,e);
             if(c3d.IsNull()) {
                 if(verbose&CuttingReject)
-                    cout << "Rejected(" << __LINE__ << ") edge " << edge 
+                    cout << "Rejected(" << __LINE__ << ") edge " << edge
                         << " in face " << face << endl;
                 continue;
             }
@@ -477,7 +478,7 @@ inline OCC_Connect::cutmap_t OCC_Connect::SelectCuttingEdges(
             BRepExtrema_DistShapeShape dist_mf(vm,c_face);
             if(dist_mf.Value()>tol) {
                 if(verbose&CuttingReject)
-                    cout << "Rejected(" << __LINE__ << ") edge " << edge 
+                    cout << "Rejected(" << __LINE__ << ") edge " << edge
                         << " in face " << face << endl;
                 continue;
             }
@@ -498,7 +499,7 @@ inline OCC_Connect::cutmap_t OCC_Connect::SelectCuttingEdges(
     return cutters;
 }
 
-void OCC_Connect::Intersect(BRep_Builder &BB, TopoDS_Shape &target, 
+void OCC_Connect::Intersect(BRep_Builder &BB, TopoDS_Shape &target,
     TopoDS_Shape &shape, TopoDS_Shape &tool)
 {
     int t=0;
@@ -548,7 +549,7 @@ void OCC_Connect::Intersect(BRep_Builder &BB, TopoDS_Shape &target,
 			catch(Standard_ConstructionError c) {
 			    if(verbose&Cutting)
 				cout << "Ooops \n";
-			} 
+			}
 		    }
 		}
 		if(!p.IsVertex(2)) {
@@ -584,7 +585,7 @@ void OCC_Connect::Intersect(BRep_Builder &BB, TopoDS_Shape &target,
     for(int e=1; e<=edges.Extent(); e++) {
         TopoDS_Edge edge=TopoDS::Edge(edges(e));
         TopoDS_Vertex o1, o2;
-        TopExp::Vertices(edge,o1,o2); 
+        TopExp::Vertices(edge,o1,o2);
         int skip1=vertices.FindIndex(o1);
         int skip2=vertices.FindIndex(o2);
         for(int v=1; v<=vertices.Extent(); v++) {
@@ -615,10 +616,10 @@ void OCC_Connect::Intersect(BRep_Builder &BB, TopoDS_Shape &target,
                                 BRep_Tool::Pnt(vertex));
                             double d2=BRep_Tool::Pnt(v2).Distance(
                                 BRep_Tool::Pnt(vertex));
-                            cout << "Adding " << i << " to edge " << e 
-                                << " distance=" << distance.Value(i) 
-                                << " parameter=" << distance.Parameter(i) 
-                                << " point=" << distance.Point(i) 
+                            cout << "Adding " << i << " to edge " << e
+                                << " distance=" << distance.Value(i)
+                                << " parameter=" << distance.Parameter(i)
+                                << " point=" << distance.Point(i)
                                 << " dv1=" << d1
                                 << " dv2=" << d2
                                 << endl;
@@ -636,7 +637,7 @@ void OCC_Connect::Intersect(BRep_Builder &BB, TopoDS_Shape &target,
     for(int e=1; e<=edges.Extent(); e++) {
         TopoDS_Edge edge=TopoDS::Edge(edges(e));
         TopoDS_Vertex o1, o2;
-        TopExp::Vertices(edge,o1,o2); 
+        TopExp::Vertices(edge,o1,o2);
         int skip1=vertices.FindIndex(o1);
         int skip2=vertices.FindIndex(o2);
         for(int v=1; v<=vertices.Extent(); v++) {
@@ -666,10 +667,10 @@ void OCC_Connect::Intersect(BRep_Builder &BB, TopoDS_Shape &target,
                                 BRep_Tool::Pnt(vertex));
                             double d2=BRep_Tool::Pnt(v2).Distance(
                                 BRep_Tool::Pnt(vertex));
-                            cout << "Adding " << i << " to edge " << e 
-                                << " distance=" << distance.Value(i) 
-                                << " parameter=" << distance.Parameter(i) 
-                                << " point=" << distance.Point(i) 
+                            cout << "Adding " << i << " to edge " << e
+                                << " distance=" << distance.Value(i)
+                                << " parameter=" << distance.Parameter(i)
+                                << " point=" << distance.Point(i)
                                 << " dv1=" << d1
                                 << " dv2=" << d2
                                 << endl;
@@ -781,11 +782,11 @@ do {
                 // FIXME This doesn't work.
                 cout << "IGNORED Closed wire with less than three edges\n";
                 continue;
-            } 
+            }
 	    //BRepTools::Dump(*p,cout);
 	    try {
                 splitter.Add(*p,face);
-	    } 
+	    }
             catch(Standard_ConstructionError c) {
                 cout << "splitting the face failed\n";
                 retry=1;
@@ -884,11 +885,11 @@ void OCC_Connect::MergeEdges(TopoDS_Shape &shape1, TopoDS_Shape &shape2) const
 		    }
 		    replacer.Remove(orig);
 		    goto skip;
-		} else if(o1.IsSame(r1) && o1.IsSame(r2) 
+		} else if(o1.IsSame(r1) && o1.IsSame(r2)
 		    && CanMergeCurve(orig,repl)
 		) {
 		    if(verbose&Cutting) {
-			cout << "Degenerated edge, replace " << i+1 
+			cout << "Degenerated edge, replace " << i+1
 			    << " with " << j+1 << '\n';
 			BRepTools::Dump(orig,cout);
 			BRepTools::Dump(repl,cout);
@@ -899,10 +900,10 @@ void OCC_Connect::MergeEdges(TopoDS_Shape &shape1, TopoDS_Shape &shape2) const
 		    goto skip;
 		}
 		cout << i+1 << " Degenerated\n";
-	    } 
+	    }
 	    if(o1.IsSame(r1) && o2.IsSame(r2) && CanMergeCurve(orig,repl))  {
                 if(verbose&Cutting) {
-                    cout << "Same order of vertices, replace " << i+1 
+                    cout << "Same order of vertices, replace " << i+1
                         << " with " << j+1 << '\n';
                     BRepTools::Dump(orig,cout);
                     BRepTools::Dump(repl,cout);
@@ -913,7 +914,7 @@ void OCC_Connect::MergeEdges(TopoDS_Shape &shape1, TopoDS_Shape &shape2) const
             }
 	    if(o1.IsSame(r2) && o2.IsSame(r1) && CanMergeCurve(orig,repl)) {
                 if(verbose&Cutting) {
-                    cout << "Reversed order of vertices, replace " << i+1 
+                    cout << "Reversed order of vertices, replace " << i+1
                         << " with " << j+1 << '\n';
                     BRepTools::Dump(orig,cout);
                     BRepTools::Dump(repl,cout);
@@ -953,7 +954,7 @@ bool OCC_Connect::CanMergeFace(TopoDS_Face face1,TopoDS_Face face2) const
 #if 0
             double dist=dss.Value();
             if(dist>tol) {
-                cout << "Distance=" << dist << " v=" << v << " u=" << u 
+                cout << "Distance=" << dist << " v=" << v << " u=" << u
                     << " pnt=" << surface->Value(u,v) << endl;
                 BRepTools::Dump(face2,cout);
                 return 0;
@@ -985,19 +986,19 @@ void OCC_Connect::MergeFaces(TopoDS_Shape &shape) const
 		face_edges.insert(0);
 	    } else
 		face_edges.insert(edge);
-        } 
+        }
         mapping[face_edges].insert(i+1);
     }
 
     if(verbose&Cutting) {
         for(mapping_t::iterator p=mapping.begin(); p!=mapping.end(); p++)
-            cout << "edges [ " << p->first << "] in face" 
+            cout << "edges [ " << p->first << "] in face"
                 << (p->second.size()<2? " ":"s ") << "[ " << p->second << "]\n";
     }
 
     /***************************************************************************
         If two faces have an identical set of edges, they can be merged
-	when the planes are never seperated by more than the tolerance. 
+	when the planes are never seperated by more than the tolerance.
     ***************************************************************************/
     BRepTools_ReShape replacer;
     for(mapping_t::iterator p=mapping.begin(); p!=mapping.end(); p++) {
@@ -1005,7 +1006,7 @@ void OCC_Connect::MergeFaces(TopoDS_Shape &shape) const
             continue;
         std::vector<int> uniq;
         for(std::set<int>::iterator q=p->second.begin();
-            q!=p->second.end(); 
+            q!=p->second.end();
             q++
         ) {
             for(std::vector<int>::iterator r=uniq.begin(); r!=uniq.end(); r++) {
