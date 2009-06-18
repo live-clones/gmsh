@@ -113,7 +113,7 @@ vector<Pair<GVertex*,GVertex*> >* GeomMeshMatcher::matchVertices(GModel* m1, GMo
          entity2++)
     {
       if ((*entity2)->dim() != 0) continue;
-      for (int ed = 0; 
+      for (int ed = 0;
            ed < ((discreteVertex*) *entity2)->getNumMeshElements();
            ed++)
       {
@@ -124,7 +124,7 @@ vector<Pair<GVertex*,GVertex*> >* GeomMeshMatcher::matchVertices(GModel* m1, GMo
             fabs(v1->y() - v2->y()) < tol &&
             fabs(v1->z() - v2->z()) < tol )
         {
-          Msg::Info("Vertices %i (in m1) and %i (in m2) match.", 
+          Msg::Info("Vertices %i (in m1) and %i (in m2) match.",
                     counter1,
                     counter2);
 
@@ -136,7 +136,7 @@ vector<Pair<GVertex*,GVertex*> >* GeomMeshMatcher::matchVertices(GModel* m1, GMo
           num_matched_vertices++;
           break;
         }
-      } 
+      }
       counter2++;
     }
     counter1++;
@@ -147,7 +147,7 @@ vector<Pair<GVertex*,GVertex*> >* GeomMeshMatcher::matchVertices(GModel* m1, GMo
 
 vector<Pair<GEdge*,GEdge*> >*  GeomMeshMatcher::matchEdges(GModel* m1, GModel* m2, vector<Pair<GVertex*,GVertex*> >* coresp_v) {
 
-  int num_matched_edges = 0; 
+  int num_matched_edges = 0;
   int num_total_edges = 0;
 
   // Vector that will be returned.
@@ -181,7 +181,7 @@ vector<Pair<GEdge*,GEdge*> >*  GeomMeshMatcher::matchEdges(GModel* m1, GModel* m
 
     if (common_edges.size() == 1) {
       coresp_e->push_back( Pair<GEdge*,GEdge*> ((GEdge*) *entity1, common_edges[0]));
-       Msg::Info("Edges %i (in m1) and %i (in m2) match.", 
+       Msg::Info("Edges %i (in m1) and %i (in m2) match.",
                    ((GEdge*)*entity1)->tag(),
                     common_edges[0]->tag());
       common_edges[0]->setTag(((GEdge*) *entity1)->tag());
@@ -201,14 +201,14 @@ vector<Pair<GEdge*,GEdge*> >*  GeomMeshMatcher::matchEdges(GModel* m1, GModel* m
             Msg::Info("Comparing score : %f", SOrientedBoundingBox::compare(geo_obb,mesh_obb));
 
 	    //if (geo_obb->intersects(mesh_obb)) {
-  
+
             //double cen_dist1 = geo_obb->getCenter()[0]-mesh_obb->getCenter()[0];
             //double cen_dist2 = geo_obb->getCenter()[1]-mesh_obb->getCenter()[1];
             //double cen_dist3 = geo_obb->getCenter()[2]-mesh_obb->getCenter()[2];
             //double score1 = sqrt(   cen_dist1*cen_dist1
 	    //                       + cen_dist2*cen_dist2
             //                      + cen_dist3*cen_dist3);
-  
+
 	    // double score2 = fabs(geo_obb->getSize()[0]-mesh_obb->getSize()[0]);
             //double score3 = fabs(geo_obb->getSize()[1]-mesh_obb->getSize()[1]);
             //double score4 = fabs(geo_obb->getSize()[2]-mesh_obb->getSize()[2]);
@@ -219,8 +219,8 @@ vector<Pair<GEdge*,GEdge*> >*  GeomMeshMatcher::matchEdges(GModel* m1, GModel* m
 		choice = (*candidate);
 	      }
 	      //}
-        }         
-       Msg::Info("Edges %i (in m1) and %i (in m2) match.", 
+        }
+       Msg::Info("Edges %i (in m1) and %i (in m2) match.",
                    ((GEdge*)*entity1)->tag(),
                     choice->tag());
        coresp_e->push_back(Pair<GEdge*,GEdge*>((GEdge*) *entity1 ,
@@ -295,8 +295,8 @@ vector<Pair<GFace*,GFace*> >* GeomMeshMatcher:: matchFaces(GModel* m1, GModel* m
           double score4 = fabs(geo_obb.getSize()[2]-mesh_obb.getSize()[2]);
 
 
-          if (fmax(fmax(score1,score2),fmax(score3,score4)) < best_score) {
-            best_score = fmax(fmax(score1,score2),fmax(score3,score4));
+          if (std::max(std::max(score1,score2),std::max(score3,score4)) < best_score) {
+            best_score = std::max(std::max(score1,score2),std::max(score3,score4));
             choice = (*candidate);
           }
         }
@@ -377,7 +377,7 @@ vector<Pair<GRegion*,GRegion*> >* GeomMeshMatcher:: matchRegions(GModel* m1, GMo
       int count = 0;
       const int N_total = N*boundaries.size();
       double** vertices = new double*[N_total];
-     
+
       // Then, compute the minimal bounding box
       SOrientedBoundingBox geo_obb = ((GRegion*) *entity1)->getOBB();
 
@@ -397,17 +397,17 @@ vector<Pair<GRegion*,GRegion*> >* GeomMeshMatcher:: matchRegions(GModel* m1, GMo
             double score1 = sqrt(   cen_dist1*cen_dist1
                                   + cen_dist2*cen_dist2
                                   + cen_dist3*cen_dist3);
-  
+
             double score2 = fabs(geo_obb.getSize()[0]-mesh_obb.getSize()[0]);
             double score3 = fabs(geo_obb.getSize()[1]-mesh_obb.getSize()[1]);
             double score4 = fabs(geo_obb.getSize()[2]-mesh_obb.getSize()[2]);
-  
 
-            if (fmax(fmax(score1,score2),fmax(score3,score4)) < best_score) {
-              best_score = fmax(fmax(score1,score2),fmax(score3,score4));
+
+            if (std::max(std::max(score1,score2),std::max(score3,score4)) < best_score) {
+              best_score = std::max(std::max(score1,score2),std::max(score3,score4));
               choice = (*candidate);
             }
-          } 
+          }
         }
        coresp_r->push_back(Pair<GRegion*,GRegion*>((GRegion*) *entity1 ,
                                              choice));
