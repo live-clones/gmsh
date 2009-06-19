@@ -462,16 +462,81 @@ class BoxField : public Field
     options["ZMin"] = new FieldOptionDouble
       (z_min, "Minimum Z coordinate of the box");
     options["ZMax"] = new FieldOptionDouble
-      (z_max, "Maximum Z coordinate of the box");
+      (z_max, "Maximum Z coordinate of the box");    
   }
   const char *getName()
   {
     return "Box";
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
-  {
+  {    
     return (x <= x_max && x >= x_min && y <= y_max && y >= y_min && z <= z_max
             && z >= z_min) ? v_in : v_out;
+  }
+};
+
+class CylinderField : public Field
+{
+  double v_in, v_out;
+  double xc,yc,zc;
+  double xa,ya,za;
+  double R;
+  
+ public:
+  std::string getDescription()
+  {
+    return "The value of this field is VIn inside the cylinder, VOut outside.\n"
+      "The cylinder is given by\n\n"
+      "  ||dX||^2 < R^2 &&\n"
+      "  dX = (X - X0) - ((X - X0).A)/(||A||^2) . A";
+  }
+  CylinderField()
+  {
+    v_in = v_out = xc = yc = zc = xa = ya = R = 0;
+    za = 1.;
+    
+    options["VIn"] = new FieldOptionDouble
+      (v_in, "Value inside the cylinder");
+    options["VOut"] = new FieldOptionDouble
+      (v_out, "Value outside the cylinder");
+
+    options["XCenter"] = new FieldOptionDouble
+      (xc, "X coordinate of the cylinder center");
+    options["YCenter"] = new FieldOptionDouble
+      (yc, "Y coordinate of the cylinder center");
+    options["ZCenter"] = new FieldOptionDouble
+      (zc, "Z coordinate of the cylinder center");
+
+    
+    options["XAxis"] = new FieldOptionDouble
+      (xa, "X component of the cylinder axis");
+    options["YAxis"] = new FieldOptionDouble
+      (ya, "Y component of the cylinder axis");
+    options["ZAxis"] = new FieldOptionDouble
+      (za, "Z component of the cylinder axis");
+
+    options["Radius"] = new FieldOptionDouble
+      (R,"Radius");    
+    
+  }
+  const char *getName()
+  {
+    return "Cylinder";
+  }
+  double operator() (double x, double y, double z, GEntity *ge=0)
+  {    
+    double dx = x-xc;
+    double dy = y-yc;
+    double dz = z-zc;
+    
+    double adx = (xa * dx + ya * dy + za * dz)/(xa*xa + ya*ya + za*za);
+    
+    dx -= adx * xa;
+    dy -= adx * ya;
+    dz -= adx * za;
+    
+    return (dx*dx + dy*dy + dz*dz < R*R) ? v_in : v_out;
+    
   }
 };
 
@@ -1331,6 +1396,7 @@ FieldManager::FieldManager()
   map_type_name["Threshold"] = new FieldFactoryT<ThresholdField>();
   map_type_name["BoundaryLayer"] = new FieldFactoryT<BoundaryLayerField>();
   map_type_name["Box"] = new FieldFactoryT<BoxField>();
+  map_type_name["Cylinder"] = new FieldFactoryT<CylinderField>();
   map_type_name["LonLat"] = new FieldFactoryT<LonLatField>();
 #if !defined(HAVE_NO_POST)
   map_type_name["PostView"] = new FieldFactoryT<PostViewField>();
