@@ -15,7 +15,8 @@ int main(int argc, char **argv)
   GmshInitialize(argc, argv);
   //GmshSetOption("Mesh", "Algorithm", 5);
   GModel *m = new GModel();
-  m->readGEO("../../tutorial/t5.geo");
+  //m->readGEO("../../tutorial/t5.geo");
+  GmshMergeFile("../../tutorial/t5.geo"); // will also set the bbox
   m->mesh(3);
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
     GRegion *r = *it;

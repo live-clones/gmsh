@@ -198,9 +198,11 @@ void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod, int nb
 
   if(haveInterpolationMatrices()){
     std::vector<gmshMatrix<double>*> im;
-    if(getInterpolationMatrices(nbedg, im) == 4)
+    int nim = getInterpolationMatrices(nbedg, im);
+    if(nim == 4)
       nbnod = im[2]->size1();
-    nbval = nbcomp * im[0]->size1();
+    if(nim)
+      nbval = nbcomp * im[0]->size1();
   }
   
   int nb = List_Nbr(list) / nbelm;
@@ -663,13 +665,12 @@ bool PViewDataList::combineSpace(nameData &nd)
       return false;
     }
 
-    // copy interpolation from first merged dataset, if any
-    if(!i){
-      for(std::map<int, std::vector<gmshMatrix<double>*> >::iterator it = 
-            l->_interpolation.begin(); it != l->_interpolation.end(); it++)
+    // copy interpolation marices
+    for(std::map<int, std::vector<gmshMatrix<double>*> >::iterator it = 
+          l->_interpolation.begin(); it != l->_interpolation.end(); it++)
+      if(_interpolation[it->first].empty())
         for(unsigned int i = 0; i < it->second.size(); i++)
           _interpolation[it->first].push_back(new gmshMatrix<double>(*it->second[i]));
-    }
     
     // merge elememts
     List_Merge(l->SP, SP); NbSP += l->NbSP; List_Merge(l->VP, VP); NbVP += l->NbVP;
