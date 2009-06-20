@@ -509,7 +509,7 @@ void CellComplex::computeBettiNumbers(){
 void CellComplex::replaceCells(Cell* c1, Cell* c2, Cell* newCell, bool orMatch, bool co){
 
   int dim = c1->getDim();
-
+  /*
   std::list< std::pair<int, Cell*> > coboundary1 = c1->getOrientedCoboundary();
   std::list< std::pair<int, Cell*> > coboundary2 = c2->getOrientedCoboundary();
   std::list< std::pair<int, Cell*> > boundary1 = c1->getOrientedBoundary();
@@ -538,7 +538,7 @@ void CellComplex::replaceCells(Cell* c1, Cell* c2, Cell* newCell, bool orMatch, 
     else cbdCell->addBoundaryCell(ori, newCell, true);
   }
   */
-  
+  /*
   for(std::list< std::pair<int, Cell*> >::iterator it = coboundary2.begin(); it != coboundary2.end(); it++){
     Cell* cbdCell = (*it).second;
     int ori  = (*it).first;
@@ -579,7 +579,7 @@ void CellComplex::replaceCells(Cell* c1, Cell* c2, Cell* newCell, bool orMatch, 
     
   }
   */
-  
+  /*
   for(std::list< std::pair<int, Cell* > >::iterator it = boundary2.begin(); it != boundary2.end(); it++){
     Cell* bdCell = (*it).second;
     int ori = (*it).first;
@@ -596,7 +596,7 @@ void CellComplex::replaceCells(Cell* c1, Cell* c2, Cell* newCell, bool orMatch, 
     else bdCell->addCoboundaryCell(ori, newCell, true);
     
   }
-  
+  */
   _cells[dim].erase(c1);
   _cells[dim].erase(c2);
   //removeCell(c1);
@@ -652,8 +652,11 @@ int CellComplex::cocombine(int dim){
         enqueueCells(cbd_c, Q, Qset);
           
         CombinedCell* newCell = new CombinedCell(c1, c2, (or1 != or2), true );
-        replaceCells(c1, c2, newCell, (or1 != or2), true);
-        
+        //replaceCells(c1, c2, newCell, (or1 != or2), true);
+        _cells[dim].erase(c1);
+        _cells[dim].erase(c2);
+        _cells[dim].insert(newCell);
+          
         cit = firstCell(dim);
         count++;
         }
@@ -711,7 +714,10 @@ int CellComplex::combine(int dim){
           
         
         CombinedCell* newCell = new CombinedCell(c1, c2, (or1 != or2) );
-        replaceCells(c1, c2, newCell, (or1 != or2));
+        _cells[dim].erase(c1);
+        _cells[dim].erase(c2);
+        _cells[dim].insert(newCell);
+        //replaceCells(c1, c2, newCell, (or1 != or2));
         //removeCell(s);
         cit = firstCell(dim);
         //cit++;
