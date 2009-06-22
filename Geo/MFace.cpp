@@ -3,6 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <vector>
+#include <algorithm>
 #include "GmshConfig.h"
 #include "MFace.h"
 #include "Numeric.h"
@@ -13,31 +15,32 @@
 #include "Context.h"
 #endif
 
-MFace::MFace() 
-{ 
-  for(int i = 0; i < 4; i++){
-    _v[i] = 0; 
-    _si[i] = 0;
-  }
+void sortVertices(std::vector<MVertex*> v, std::vector<char> &si)
+{
+  std::vector<MVertex*> sorted = v;
+  std::sort(sorted.begin(), sorted.end());
+  for(unsigned int i = 0; i < sorted.size(); i++)
+    si.push_back(std::distance(v.begin(), std::find(v.begin(), v.end(), sorted[i])));
 }
 
 MFace::MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3) 
 {
+  _v.push_back(v0);
   if(CTX::instance()->mesh.reverseAllNormals){
     // Note that we cannot simply change the normal computation,
     // since OpenGL wants the normal to a polygon to be coherent
     // with the ordering of its vertices
-    if(v3){
-      _v[0] = v0; _v[1] = v3; _v[2] = v2; _v[3] = v1;
-    }
-    else{
-      _v[0] = v0; _v[1] = v2; _v[2] = v1; _v[3] = v3;
-    }
+    if(v3) _v.push_back(v3);
+    _v.push_back(v2);
+    _v.push_back(v1);
   }
   else{
-    _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3;
+    _v.push_back(v1);
+    _v.push_back(v2);
+    if(v3) _v.push_back(v3);
   }
-  // This is simply an unrolled insertion sort (hopefully fast).  Note that if
+  sortVertices(_v, _si);
+  /*// This is simply an unrolled insertion sort (hopefully fast).  Note that if
   // _v[3] == 0, _v[3] is not sorted.
   if(_v[1] < _v[0]) {
     _si[0] = 1;
@@ -73,8 +76,14 @@ MFace::MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3)
       _si[2] = 3;
   }
   else
-    _si[3] = 3;
+    _si[3] = 3;*/
     
+}
+MFace::MFace(std::vector<MVertex*> v)
+{
+  for(unsigned int i = 0; i < v.size(); i++)
+    _v.push_back(v[i]);
+  sortVertices(_v,_si);
 }
 
 SVector3 MFace::normal() const
@@ -92,14 +101,14 @@ bool MFace::computeCorrespondence(const MFace &other, int &rotation, bool &swap)
   swap = false;
   
   if (*this == other) {
-    for (int i=0;i<getNumVertices();i++) {
+    for (int i = 0; i < getNumVertices(); i++) {
       if (_v[0] == other.getVertex(i)) {
         rotation = i;
         break;
       }
     }
-    if (_v[1] == other.getVertex((rotation+1)%getNumVertices())) swap = false;
-    else                                                         swap = true;
+    if (_v[1] == other.getVertex((rotation + 1) % getNumVertices())) swap = false;
+    else swap = true;
     return true;
   }
   return false;

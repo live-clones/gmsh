@@ -15,6 +15,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "MElementCut.h"
 #include "discreteRegion.h"
 #include "discreteFace.h"
 #include "discreteEdge.h"
@@ -407,15 +408,15 @@ int GModel::getNumMeshElements()
   return n;
 }
 
-int GModel::getNumMeshElements(unsigned c[4])
+int GModel::getNumMeshElements(unsigned c[5])
 {
-  c[0] = 0; c[1] = 0; c[2] = 0; c[3] = 0;
+  c[0] = 0; c[1] = 0; c[2] = 0; c[3] = 0; c[4] = 0;
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     (*it)->getNumMeshElements(c);
-  if(c[0] + c[1] + c[2] + c[3]) return 3;
+  if(c[0] + c[1] + c[2] + c[3] + c[4]) return 3;
   for(fiter it = firstFace(); it != lastFace(); ++it)
     (*it)->getNumMeshElements(c);
-  if(c[0] + c[1]) return 2;
+  if(c[0] + c[1] + c[2]) return 2;
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     (*it)->getNumMeshElements(c);
   if(c[0]) return 1;
@@ -1233,5 +1234,26 @@ void GModel::createTopologyFromMesh()
   }
 
 
+}
+
+GModel *GModel::buildCutGModel(gLevelset *ls)
+{
+  std::map<int, std::vector<MElement*> > elements[10];
+  std::map<int, std::map<int, std::string> > physicals[4];
+  std::map<int, MVertex*> vertexMap;
+
+  GModel *cutGM =  buildCutMesh(this, ls, elements, vertexMap, physicals);
+
+  for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
+    cutGM->_storeElementsInEntities(elements[i]);
+
+  cutGM->_associateEntityWithMeshVertices();
+
+  cutGM->_storeVerticesInEntities(vertexMap);
+
+  for(int i = 0; i < 4; i++)
+    cutGM->_storePhysicalTagsInEntities(i, physicals[i]);
+
+  return cutGM;
 }
 

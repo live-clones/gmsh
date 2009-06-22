@@ -11,20 +11,26 @@
 #include "MVertex.h"
 #include "MEdge.h"
 #include "SVector3.h"
+#include "GmshMessage.h"
 
 // A mesh face.
 class MFace {
  private:
-  MVertex *_v[4];
-  char _si[4]; // sorted indices 
+  std::vector<MVertex *> _v;
+  std::vector<char> _si; // sorted indices 
 
  public:
-  MFace();
+  MFace() {}
   MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3=0);
-  inline int getNumVertices() const { return _v[3] ? 4 : 3; }
+  MFace(std::vector<MVertex*> v);
+  inline int getNumVertices() const { return _v.size(); }
   inline MVertex *getVertex(const int i) const { return _v[i]; }
   inline MVertex *getSortedVertex(const int i) const { return _v[int(_si[i])]; }
-  
+  inline MEdge getEdge(const int i) const
+  {
+    return MEdge(getVertex(i), getVertex((i + 1) % getNumVertices()));
+  }
+
   bool computeCorrespondence(const MFace&,int&,bool&) const;
 
   void getOrderedVertices(std::vector<MVertex*> &verts) const
@@ -34,10 +40,8 @@ class MFace {
   }
   void getOrderedVertices(const MVertex **const verts) const
   {
-    verts[0] = getSortedVertex(0);
-    verts[1] = getSortedVertex(1);
-    verts[2] = getSortedVertex(2);
-    verts[3] = getSortedVertex(3);
+    for(int i = 0; i < getNumVertices(); i++)
+      verts[i] = getSortedVertex(i);
   }
   SVector3 normal() const;
   SVector3 tangent(int num) const
@@ -91,24 +95,30 @@ class MFace {
         p[2] += v->z() * ff[i] * .25;
       } 
     }
+    else
+      Msg::Error("Cannot interpolate inside a polygonal MFace with more than 4 edges");
     return p;
   }
 };
 
 inline bool operator==(const MFace &f1, const MFace &f2)
 {
-  return (f1.getSortedVertex(0) == f2.getSortedVertex(0) &&
-          f1.getSortedVertex(1) == f2.getSortedVertex(1) &&
-          f1.getSortedVertex(2) == f2.getSortedVertex(2) &&
-          f1.getSortedVertex(3) == f2.getSortedVertex(3));
+  if(f1.getNumVertices() != f2.getNumVertices())
+    return false;
+  for(int i = 0; i < f1.getNumVertices(); i++)
+    if(f1.getSortedVertex(i) != f2.getSortedVertex(i))
+      return false;
+  return true;
 }
 
 inline bool operator!=(const MFace &f1, const MFace &f2)
 {
-  return (f1.getSortedVertex(0) != f2.getSortedVertex(0) ||
-          f1.getSortedVertex(1) != f2.getSortedVertex(1) ||
-          f1.getSortedVertex(2) != f2.getSortedVertex(2) ||
-          f1.getSortedVertex(3) != f2.getSortedVertex(3));
+  if(f1.getNumVertices() != f2.getNumVertices())
+    return true;
+  for(int i = 0; i < f1.getNumVertices(); i++)
+    if(f1.getSortedVertex(i) != f2.getSortedVertex(i))
+      return true;
+  return false;
 }
 
 struct Equal_Face : public std::binary_function<MFace, MFace, bool> {
@@ -121,18 +131,13 @@ struct Equal_Face : public std::binary_function<MFace, MFace, bool> {
 struct Less_Face : public std::binary_function<MFace, MFace, bool> {
   bool operator()(const MFace &f1, const MFace &f2) const
   {
-    if(f1.getSortedVertex(0) < f2.getSortedVertex(0)) return true;
-    if(f1.getSortedVertex(0) > f2.getSortedVertex(0)) return false;
-    if(f1.getSortedVertex(1) < f2.getSortedVertex(1)) return true;
-    if(f1.getSortedVertex(1) > f2.getSortedVertex(1)) return false;
-    if(f1.getSortedVertex(2) < f2.getSortedVertex(2)) return true;
-    if(f1.getSortedVertex(2) > f2.getSortedVertex(2)) return false;
-    if(f1.getSortedVertex(3) < f2.getSortedVertex(3)) return true;
+    for(int i = 0; i < f1.getNumVertices(); i++) {
+      if(f1.getSortedVertex(i) < f2.getSortedVertex(i)) return true;
+      if(f1.getSortedVertex(i) > f2.getSortedVertex(i)) return false;
+    }
     return false;
   }
 };
-
-
 
 
 #endif

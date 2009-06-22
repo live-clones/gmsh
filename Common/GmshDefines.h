@@ -72,8 +72,10 @@
 #define MSH_TET_56 31
 #define MSH_TET_34 32
 #define MSH_TET_52 33
+#define MSH_POLYG_ 34
+#define MSH_POLYH_ 35
 
-#define MSH_NUM_TYPE 33
+#define MSH_NUM_TYPE 35
 
 // Geometric entities
 #define ENT_NONE     0

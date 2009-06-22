@@ -17,6 +17,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "MElementCut.h"
 #include "SBoundingBox3d.h"
 #include "StringUtils.h"
 #include "GmshMessage.h"
@@ -30,17 +31,17 @@
 
 #include <iostream> // DBG
 
-static void storePhysicalTagsInEntities(GModel *m, int dim,
-                                        std::map<int, std::map<int, std::string> > &map)
+void GModel::_storePhysicalTagsInEntities(int dim,
+                                          std::map<int, std::map<int, std::string> > &map)
 {
   std::map<int, std::map<int, std::string> >::const_iterator it = map.begin();
   for(; it != map.end(); ++it){
     GEntity *ge = 0;
     switch(dim){
-    case 0: ge = m->getVertexByTag(it->first); break;
-    case 1: ge = m->getEdgeByTag(it->first); break;
-    case 2: ge = m->getFaceByTag(it->first); break;
-    case 3: ge = m->getRegionByTag(it->first); break;
+    case 0: ge = getVertexByTag(it->first); break;
+    case 1: ge = getEdgeByTag(it->first); break;
+    case 2: ge = getFaceByTag(it->first); break;
+    case 3: ge = getRegionByTag(it->first); break;
     }
     if(ge){
       std::map<int, std::string>::const_iterator it2 = it->second.begin();
@@ -83,7 +84,7 @@ static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
 
 static void createElementMSH(GModel *m, int num, int type, int physical, 
                              int reg, int part, std::vector<MVertex*> &v, 
-                             std::map<int, std::vector<MElement*> > elements[8],
+                             std::map<int, std::vector<MElement*> > elements[10],
                              std::map<int, std::map<int, std::string> > physicals[4])
 {
   MElementFactory factory;
@@ -94,16 +95,53 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
     return;
   }
 
-  switch(e->getNumEdges()){
-  case 0 : elements[0][reg].push_back(e); break;
-  case 1 : elements[1][reg].push_back(e); break;
-  case 3 : elements[2][reg].push_back(e); break;
-  case 4 : elements[3][reg].push_back(e); break;
-  case 6 : elements[4][reg].push_back(e); break;
-  case 12 : elements[5][reg].push_back(e); break;
-  case 9 : elements[6][reg].push_back(e); break;
-  case 8 : elements[7][reg].push_back(e); break;
-  default : Msg::Error("Wrong number of edges in element"); return;
+  switch(type){
+  case MSH_PNT :
+    elements[0][reg].push_back(e); break;
+  case MSH_LIN_2 :
+  case MSH_LIN_3 :
+  case MSH_LIN_4 :
+  case MSH_LIN_5 :
+  case MSH_LIN_6 :
+    elements[1][reg].push_back(e); break;
+  case MSH_TRI_3 :
+  case MSH_TRI_6 :
+  case MSH_TRI_9 :
+  case MSH_TRI_10 :
+  case MSH_TRI_12 :
+  case MSH_TRI_15 :
+  case MSH_TRI_15I :
+  case MSH_TRI_21 :
+    elements[2][reg].push_back(e); break;
+  case MSH_QUA_4 :
+  case MSH_QUA_9 :
+  case MSH_QUA_8 :
+    elements[3][reg].push_back(e); break;
+  case MSH_TET_4 :
+  case MSH_TET_10 :
+  case MSH_TET_20 :
+  case MSH_TET_35 :
+  case MSH_TET_56 :
+  case MSH_TET_34 :
+  case MSH_TET_52 :
+    elements[4][reg].push_back(e); break;
+  case MSH_HEX_8 :
+  case MSH_HEX_27 :
+  case MSH_HEX_20 :
+    elements[5][reg].push_back(e); break;
+  case MSH_PRI_6 :
+  case MSH_PRI_18 :
+  case MSH_PRI_15 :
+    elements[6][reg].push_back(e); break;
+  case MSH_PYR_5 :
+  case MSH_PYR_14 :
+  case MSH_PYR_13 :
+    elements[7][reg].push_back(e); break;
+  case MSH_POLYG_ :
+    elements[8][reg].push_back(e); break;
+  case MSH_POLYH_ :
+    elements[9][reg].push_back(e); break;
+  default : Msg::Error("Wrong type of element"); return;
   }
   
   int dim = e->getDim();
@@ -125,7 +163,7 @@ int GModel::readMSH(const std::string &name)
   char str[256] = "XXX";
   double version = 1.0;
   bool binary = false, swap = false, postpro = false;
-  std::map<int, std::vector<MElement*> > elements[8];
+  std::map<int, std::vector<MElement*> > elements[10];
   std::map<int, std::map<int, std::string> > physicals[4];
   std::map<int, MVertex*> vertexMap;
   std::vector<MVertex*> vertexVector;
@@ -402,7 +440,7 @@ int GModel::readMSH(const std::string &name)
 
   // store the physical tags
   for(int i = 0; i < 4; i++)
-    storePhysicalTagsInEntities(this, i, physicals[i]);
+    _storePhysicalTagsInEntities(i, physicals[i]);
 
   fclose(fp);
 
@@ -505,6 +543,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     if(n) elements[(*it)->triangles[0]->getTypeForMSH()] += n;
     n = p * (*it)->quadrangles.size();
     if(n) elements[(*it)->quadrangles[0]->getTypeForMSH()] += n;
+    n = p * (*it)->polygons.size();
+    if(n) elements[(*it)->polygons[0]->getTypeForMSH()] += n;
   }
   for(riter it = firstRegion(); it != lastRegion(); ++it){
     int p = (saveAll ? 1 : (*it)->physicals.size());
@@ -516,6 +556,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     if(n) elements[(*it)->prisms[0]->getTypeForMSH()] += n;
     n = p * (*it)->pyramids.size();
     if(n) elements[(*it)->pyramids[0]->getTypeForMSH()] += n;
+    n = p * (*it)->polyhedra.size();
+    if(n) elements[(*it)->polyhedra[0]->getTypeForMSH()] += n;
   }
 
  
@@ -599,6 +641,10 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, (*it)->quadrangles, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
+  writeElementHeaderMSH(binary, fp, elements, MSH_POLYG_);
+  for(fiter it = firstFace(); it != lastFace(); it++)
+    writeElementsMSH(fp, (*it)->polygons, saveAll, version, binary, num,
+                     (*it)->tag(), (*it)->physicals);
   writeElementHeaderMSH(binary, fp, elements, MSH_TET_4, MSH_TET_10, MSH_TET_20, 
                         MSH_TET_35, MSH_TET_56, MSH_TET_52);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
@@ -615,6 +661,10 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   writeElementHeaderMSH(binary, fp, elements, MSH_PYR_5, MSH_PYR_14, MSH_PYR_13);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->pyramids, saveAll, version, binary, num,
+                     (*it)->tag(), (*it)->physicals);
+  writeElementHeaderMSH(binary, fp, elements, MSH_POLYH_);
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    writeElementsMSH(fp, (*it)->polyhedra, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
   
   if(binary) fprintf(fp, "\n");
@@ -1243,7 +1293,7 @@ int GModel::readUNV(const std::string &name)
   _storeVerticesInEntities(vertexMap);
 
   for(int i = 0; i < 4; i++)  
-    storePhysicalTagsInEntities(this, i, physicals[i]);
+    _storePhysicalTagsInEntities(i, physicals[i]);
 
   fclose(fp);
   return 1;
@@ -2259,7 +2309,7 @@ int GModel::readDIFF(const std::string &name)
   }
 
   char str[256] = "XXX";
-  std::map<int, std::vector<MElement*> > elements[8];
+  std::map<int, std::vector<MElement*> > elements[10];
   std::map<int, std::map<int, std::string> > physicals[4];
   std::map<int, MVertex*> vertexMap;
   std::vector<MVertex*> vertexVector;
@@ -2530,7 +2580,7 @@ int GModel::readDIFF(const std::string &name)
 
   // store the physical tags
   for(int i = 0; i < 4; i++)
-    storePhysicalTagsInEntities(this, i, physicals[i]);
+    _storePhysicalTagsInEntities(i, physicals[i]);
 
   fclose(fp);
   return 1;

@@ -16,6 +16,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "MElementCut.h"
 #include "GEntity.h"
 #include "GFace.h"
 #include "StringUtils.h"
@@ -669,6 +670,7 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_QUA_4  : if(name) *name = "Quadrilateral 4"; return 4;
   case MSH_QUA_8  : if(name) *name = "Quadrilateral 8"; return 4 + 4;
   case MSH_QUA_9  : if(name) *name = "Quadrilateral 9"; return 4 + 4 + 1;
+  case MSH_POLYG_ : if(name) *name = "Polygon";         return 0;
   case MSH_TET_4  : if(name) *name = "Tetrahedron 4";   return 4;
   case MSH_TET_10 : if(name) *name = "Tetrahedron 10";  return 4 + 6;
   case MSH_TET_20 : if(name) *name = "Tetrahedron 20";  return 4 + 12 + 4;
@@ -685,6 +687,7 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_PYR_5  : if(name) *name = "Pyramid 5";       return 5;
   case MSH_PYR_13 : if(name) *name = "Pyramid 13";      return 5 + 8;
   case MSH_PYR_14 : if(name) *name = "Pyramid 14";      return 5 + 8 + 1;
+  case MSH_POLYH_ : if(name) *name = "Polyhedron";      return 0;
   default: 
     Msg::Error("Unknown type of element %d", typeMSH); 
     if(name) *name = "Unknown"; 
@@ -713,6 +716,7 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_QUA_4:  return new MQuadrangle(v, num, part);
   case MSH_QUA_8:  return new MQuadrangle8(v, num, part);
   case MSH_QUA_9:  return new MQuadrangle9(v, num, part);
+  case MSH_POLYG_: return new MPolygon(v, num, part);
   case MSH_TET_4:  return new MTetrahedron(v, num, part);
   case MSH_TET_10: return new MTetrahedron10(v, num, part);
   case MSH_HEX_8:  return new MHexahedron(v, num, part);
@@ -729,6 +733,7 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_TET_35: return new MTetrahedronN(v, 4, num, part);
   case MSH_TET_52: return new MTetrahedronN(v, 5, num, part);
   case MSH_TET_56: return new MTetrahedronN(v, 5, num, part);
+  case MSH_POLYH_: return new MPolyhedron(v, num, part);
   default:         return 0;
   }
 }

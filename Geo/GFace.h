@@ -19,6 +19,7 @@
 class MElement;
 class MTriangle;
 class MQuadrangle;
+class MPolygon;
 class ExtrudeParams;
 class GFaceCompound;
 
@@ -201,7 +202,7 @@ class GFace : public GEntity
   void getMeanPlaneData(double plan[3][3]) const;
 
   // number of types of elements
-  int getNumElementTypes() const { return 2; }
+  int getNumElementTypes() const { return 3; }
 
   // get total/by-type number of elements in the mesh
   unsigned int getNumMeshElements();
@@ -262,6 +263,7 @@ class GFace : public GEntity
 
   std::vector<MTriangle*> triangles;
   std::vector<MQuadrangle*> quadrangles;
+  std::vector<MPolygon*> polygons;
 };
 
 #endif

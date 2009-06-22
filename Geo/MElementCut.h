@@ -1,0 +1,277 @@
+// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+
+#ifndef _MELEMENTCUT_H_
+#define _MELEMENTCUT_H_
+
+#include "MElement.h"
+#include "MTetrahedron.h"
+#include "MTriangle.h"
+#include "MLine.h"
+
+class gLevelset;
+class GModel;
+
+class MPolyhedron : public MElement {
+ protected:
+  bool _owner;
+  MElement* _orig;
+  std::vector<MTetrahedron*> _parts;
+  std::vector<MVertex*> _vertices;
+  std::vector<MEdge> _edges;
+  std::vector<MFace> _faces;
+  void _init();
+ public:
+  MPolyhedron(std::vector<MVertex*> v, int num=0, int part=0)
+    : MElement(num, part)
+  {
+    _orig = NULL; _owner = false;
+    /*_parts.push_back(new MTetrahedron(v[0], v[1], v[2], v[3]));
+    for(unsigned int i = 4; i < v.size(); i++) {
+      unsigned int k;
+      double xyz[3] = {v[i]->x(), v[i]->y(), v[i]->z()};
+      for(k = 0; k < _parts.size(); k++) {
+        double uvw[3]; _parts[k]->xyz2uvw(xyz,uvw);
+        if(_parts[k]->isInside(uvw[0],uvw[1],uvw[2])) break;
+      }
+      if(k < _parts.size()) {
+        MTetrahedron tmp = *(_parts[k]);
+        delete _parts[k];
+        _parts.erase(_parts.begin() + k);
+        for(int t = 0; t < 4; t++) {
+          MTetrahedron *tet = new MTetrahedron(tmp.getFace(t).getVertex(0), tmp.getFace(t).getVertex(1),
+                                             tmp.getFace(t).getVertex(2), v[i]);
+          if(tet->getVolume() != 0) _parts.push_back(tet);
+          else delete tet;
+        }
+      }
+      else {
+        double dmin = 0.; int tet, face;
+        for(k = 0; k < _parts.size(); k++) {
+          for(int f = 0; f < 4; f++) {
+            double dist = v[i]->distance(_parts[k]->getFace(f).getVertex(0))
+                        + v[i]->distance(_parts[k]->getFace(f).getVertex(1))
+                        + v[i]->distance(_parts[k]->getFace(f).getVertex(2));
+            if(dmin == 0 || dist < dmin) {dmin = dist; tet = k; face = f;}
+          }
+        }
+        //_parts.push_back(new MTetrahedron());
+      }
+    }*/
+  }
+  MPolyhedron(std::vector<MTetrahedron*> vT, int num=0, int part=0)
+    : MElement(num, part)
+  {
+    _orig = NULL; _owner = false;
+    for(unsigned int i = 0; i < vT.size(); i++)
+      _parts.push_back(vT[i]);
+    _init();
+  }
+  MPolyhedron(std::vector<MTetrahedron*> vT, MElement* orig, bool owner, int num=0, int part=0)
+    : MElement(num, part), _orig(orig), _owner(owner)
+  {
+    for(unsigned int i = 0; i < vT.size(); i++)
+      _parts.push_back(vT[i]);
+    _init();
+  }
+  ~MPolyhedron() 
+  {
+    if(_owner)
+      delete _orig;
+    for(unsigned int i = 0; i < _parts.size(); i++)
+      delete _parts[i];
+  }
+  virtual int getDim() { return 3; }
+  virtual int getNumVertices() const { return _vertices.size(); }
+  virtual MVertex *getVertex(int num) { return _vertices[num]; }
+  virtual int getNumEdges() { return _edges.size(); }
+  virtual MEdge getEdge(int num) { return _edges[num]; }
+  virtual int getNumEdgesRep() { return _edges.size(); }
+  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
+  {
+    MEdge e(getEdge(num));
+    for(unsigned int i = 0; i < _faces.size(); i++)
+      for(int j = 0; j < 3; j++)
+        if(_faces[i].getEdge(j) == e)
+          _getEdgeRep(e.getVertex(0), e.getVertex(1), x, y, z, n, i);
+  }
+  virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
+  {
+    v.resize(2);
+    v[0] = _edges[num].getVertex(0);
+    v[1] = _edges[num].getVertex(1);
+  }
+  virtual int getNumFaces() { return _faces.size(); }
+  virtual MFace getFace(int num) { return _faces[num]; }
+  virtual int getNumFacesRep() { return _faces.size(); }
+  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
+  {
+    _getFaceRep(_faces[num].getVertex(0), _faces[num].getVertex(1),
+                _faces[num].getVertex(2), x, y, z, n);
+  }
+  virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
+  {
+    v.resize(3);
+    v[0] = _faces[num].getVertex(0);
+    v[1] = _faces[num].getVertex(1);
+    v[2] = _faces[num].getVertex(2);
+  }
+  virtual int getTypeForMSH() const { return MSH_POLYH_; }
+  virtual double getVolume()
+  {
+    double vol = 0;
+    for(unsigned int i = 0; i < _parts.size(); i++)
+      vol += _parts[i]->getVolume();
+    return vol;
+  }
+  virtual int getVolumeSign() { return (getVolume() >= 0) ? 1 : -1; }
+  virtual const gmshFunctionSpace* getFunctionSpace(int order=-1) const 
+  {
+    return _orig->getFunctionSpace(order);
+  }
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
+  {
+    _orig->getShapeFunctions(u, v, w, s, o);
+  }
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
+  {
+    _orig->getGradShapeFunctions(u, v, w, s, o);
+  }
+  virtual void xyz2uvw(double xyz[3], double uvw[3])
+  {
+    _orig->xyz2uvw(xyz,uvw);
+  }
+  virtual bool isInside(double u, double v, double w);
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
+};
+
+class MPolygon : public MElement {
+ protected:
+  bool _owner;
+  MElement* _orig;
+  std::vector<MTriangle*> _parts;
+  std::vector<MVertex*> _vertices;
+  void _initVertices();
+ public:
+  MPolygon(std::vector<MVertex*> v, int num=0, int part=0)
+    : MElement(num, part)
+  {
+    _orig = NULL; _owner = false;
+    for(unsigned int i = 0; i < v.size(); i++)
+      _vertices.push_back(v[i]);
+    for(unsigned int i = 1; i < v.size() - 1; i++)
+      _parts.push_back(new MTriangle(v[0], v[i], v[i+1]));
+  }
+  MPolygon(std::vector<MTriangle*> vT, int num=0, int part=0)
+    : MElement(num, part)
+  {
+    _orig = NULL; _owner = false;
+    for(unsigned int i = 0; i < vT.size(); i++)
+      _parts.push_back(vT[i]);
+    _initVertices();
+  }
+  MPolygon(std::vector<MTriangle*> vT, MElement* orig, bool owner, int num=0, int part=0)
+    : MElement(num, part), _orig(orig), _owner(owner)
+  {
+    for(unsigned int i = 0; i < vT.size(); i++)
+      _parts.push_back(vT[i]);
+    _initVertices();
+  }
+  ~MPolygon() 
+  {
+    if(_owner)
+      delete _orig;
+    for(unsigned int i = 0; i < _parts.size(); i++)
+      delete _parts[i];
+  }
+  virtual int getDim(){ return 2; }
+  virtual int getNumVertices() const { return _vertices.size(); }
+  virtual MVertex *getVertex(int num) { return _vertices[num]; }
+  virtual int getNumEdges() { return _vertices.size(); }
+  virtual MEdge getEdge(int num)
+  {
+    return MEdge(_vertices[num], _vertices[(num + 1) % _vertices.size()]);
+  }
+  virtual int getNumEdgesRep() { return getNumEdges(); }
+  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n) 
+  {
+    MEdge e(getEdge(num));
+    _getEdgeRep(e.getVertex(0), e.getVertex(1), x, y, z, n, 0);
+  }
+  virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
+  {
+    v.resize(2);
+    v[0] = _vertices[num];
+    v[1] = _vertices[(num + 1) % _vertices.size()];
+  }
+  virtual int getNumFaces() { return 1; }
+  virtual MFace getFace(int num) { return MFace(_vertices); }
+  virtual int getNumFacesRep() { return _parts.size(); }
+  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
+  {
+   _getFaceRep(_parts[num]->getVertex(0), _parts[num]->getVertex(1),
+                _parts[num]->getVertex(2), x, y, z, n);
+  }
+  virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
+  {
+    v.resize(_vertices.size());
+    for (unsigned int i = 0; i < _vertices.size(); i++)
+      v[i] = _vertices[i];
+  }
+  virtual int getTypeForMSH() const { return MSH_POLYG_; }
+  virtual const gmshFunctionSpace* getFunctionSpace(int order=-1) const 
+  {
+    return _orig->getFunctionSpace(order);
+  }
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
+  {
+    _orig->getShapeFunctions(u, v, w, s, o);
+  }
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
+  {
+    _orig->getGradShapeFunctions(u, v, w, s, o);
+  }
+  virtual void xyz2uvw(double xyz[3], double uvw[3])
+  {
+    _orig->xyz2uvw(xyz,uvw);
+  }
+  virtual bool isInside(double u, double v, double w);
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
+};
+
+class MTriangleBorder : public MTriangle {
+ protected:
+  MPolyhedron* _domains[2];
+ public:
+  MTriangleBorder(MVertex *v0, MVertex *v1, MVertex *v2,
+                  MPolyhedron* d1, MPolyhedron* d2, int num=0, int part=0)
+    : MTriangle(v0, v1, v2, num, part)
+  {
+    _domains[0] = d1; _domains[1] = d2;
+  }
+  ~MTriangleBorder() {}
+  MPolyhedron* getDomain(int i) const { return _domains[i]; }
+};
+
+class MLineBorder : public MLine {
+ protected:
+  MPolygon* _domains[2];
+ public:
+  MLineBorder(MVertex *v0, MVertex *v1,
+              MPolygon* d1, MPolygon* d2, int num=0, int part=0)
+    : MLine(v0, v1, num, part)
+  {
+    _domains[0] = d1; _domains[1] = d2;
+  }
+  ~MLineBorder() {}
+  MPolygon* getDomain(int i) const { return _domains[i]; }
+};
+
+GModel *buildCutMesh(GModel *gm, gLevelset *ls,
+                     std::map<int, std::vector<MElement*> > elements[10],
+                     std::map<int, MVertex*> &vertexMap,
+                     std::map<int, std::map<int, std::string> > physicals[4]);
+
+#endif

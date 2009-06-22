@@ -25,6 +25,7 @@ class OCC_Internals;
 class smooth_normals;
 class FieldManager;
 class CGNSOptions;
+class gLevelset;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel
@@ -77,6 +78,10 @@ class GModel
   // with, and delete those that are not associated with any entity
   void _storeVerticesInEntities(std::map<int, MVertex*> &vertices);
   void _storeVerticesInEntities(std::vector<MVertex*> &vertices);
+
+  // store the physical tags in the geometrical entities
+  void _storePhysicalTagsInEntities(int dim,
+                                    std::map<int, std::map<int, std::string> > &map);
 
   // entity that is currently being meshed (used for error reporting)
   GEntity *_currentMeshEntity;
@@ -238,7 +243,7 @@ class GModel
 
   // get the number of each type of element in the mesh at the largest
   // dimension and return the dimension
-  int getNumMeshElements(unsigned c[4]);
+  int getNumMeshElements(unsigned c[5]);
 
   // access a mesh element by coordinates (using an octree search)
   MElement *getMeshElementByCoord(SPoint3 &p);
@@ -294,6 +299,9 @@ class GModel
 
   // mesh the model
   int mesh(int dimension);
+
+  // build a new GModel by cutting the elements crossed by the levelset ls
+  GModel *buildCutGModel(gLevelset *ls);
 
   // Gmsh native CAD format
   int importGEOInternals();

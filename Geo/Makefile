@@ -10,7 +10,7 @@ LIB = ../lib/libGmshGeo${LIBEXT}
 INC = ${DASH}I../Common ${DASH}I../Geo ${DASH}I../Mesh\
       ${DASH}I../Post ${DASH}I../Numeric ${DASH}I../Parser\
       ${DASH}I../contrib/ANN/include\
-      ${DASH}I../contrib/kbipack\
+      ${DASH}I../contrib/kbipack ${DASH}I../contrib/DiscreteIntegration\
       ${DASH}I../contrib/MathEval ${DASH}I../contrib/gmm
 
 CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
@@ -40,7 +40,7 @@ SRC = GEntity.cpp STensor3.cpp\
       MFace.cpp\
       MElement.cpp\
         MLine.cpp MTriangle.cpp MQuadrangle.cpp MTetrahedron.cpp\
-        MHexahedron.cpp MPrism.cpp MPyramid.cpp\
+        MHexahedron.cpp MPrism.cpp MPyramid.cpp MElementCut.cpp\
       MZone.cpp MZoneBoundary.cpp\
       CellComplex.cpp ChainComplex.cpp Homology.cpp
 
@@ -379,18 +379,14 @@ MQuadrangle${OBJEXT}: MQuadrangle.cpp MQuadrangle.h MElement.h \
   ../Numeric/Gauss.h ../Numeric/GaussLegendre1D.h ../Common/Context.h \
   ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \
   ../Mesh/qualityMeasures.h
-MTetrahedron${OBJEXT}: MTetrahedron.cpp MTetrahedron.h MElement.h \
-  ../Common/GmshDefines.h MVertex.h SPoint2.h SPoint3.h MEdge.h \
+MTetrahedron${OBJEXT}: MTetrahedron.cpp MTetrahedron.h MElement.h MTriangle.h \
+  ../Common/GmshDefines.h MVertex.h SPoint2.h SPoint3.h MEdge.h STensor3.h \
   SVector3.h MFace.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Common/GmshMessage.h \
   ../Numeric/Gauss.h ../Numeric/Numeric.h ../Common/Context.h \
-  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \
-  ../Mesh/qualityMeasures.h ../Mesh/meshGFaceDelaunayInsertion.h \
-  ../Geo/MTriangle.h ../Geo/MElement.h \
-  ../Mesh/meshGRegionDelaunayInsertion.h ../Geo/MTetrahedron.h \
-  ../Numeric/Numeric.h ../Mesh/BackgroundMesh.h ../Geo/STensor3.h \
-  ../Geo/SVector3.h ../Numeric/GmshMatrix.h ../Numeric/Numeric.h \
-  ../Mesh/qualityMeasures.h
+  CGNSOptions.h ../Mesh/meshPartitionOptions.h ../Mesh/qualityMeasures.h \
+  ../Mesh/meshGFaceDelaunayInsertion.h ../Mesh/meshGRegionDelaunayInsertion.h \
+  ../Mesh/BackgroundMesh.h ../Mesh/qualityMeasures.h
 MHexahedron${OBJEXT}: MHexahedron.cpp MHexahedron.h MElement.h \
   ../Common/GmshDefines.h MVertex.h SPoint2.h SPoint3.h MEdge.h \
   SVector3.h MFace.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
@@ -404,8 +400,14 @@ MPrism${OBJEXT}: MPrism.cpp MPrism.h MElement.h ../Common/GmshDefines.h \
 MPyramid${OBJEXT}: MPyramid.cpp MPyramid.h MElement.h ../Common/GmshDefines.h \
   MVertex.h SPoint2.h SPoint3.h MEdge.h SVector3.h MFace.h \
   ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
-  ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Common/GmshMessage.h \
-  ../Numeric/Gauss.h ../Numeric/Numeric.h
+  ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Numeric/Gauss.h \
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h
+MElementCut${OBJECT}: MElementCut.cpp MElementCut.h MElement.h \
+  ../Common/GmshDefines.h MVertex.h SPoint2.h SPoint3.h MEdge.h \
+  SVector3.h MFace.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
+  ../Numeric/GmshMatrix.h ../Common/GmshConfig.h ../Numeric/Gauss.h \
+  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h \
+  MTetrahedron.h MTriangle.h MLine.h
 MZone${OBJEXT}: MZone.cpp ../Common/GmshConfig.h
 MZoneBoundary${OBJEXT}: MZoneBoundary.cpp ../Common/GmshConfig.h
 CellComplex${OBJEXT}: CellComplex.cpp CellComplex.h ../Common/GmshConfig.h \

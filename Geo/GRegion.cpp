@@ -11,6 +11,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "MElementCut.h"
 #include "GmshMessage.h"
 #include "VertexArray.h"
 
@@ -43,11 +44,13 @@ void GRegion::deleteMesh()
   prisms.clear();
   for(unsigned int i = 0; i < pyramids.size(); i++) delete pyramids[i];
   pyramids.clear();
+  for(unsigned int i = 0; i < polyhedra.size(); i++) delete polyhedra[i];
+  polyhedra.clear();
 }
 
 unsigned int GRegion::getNumMeshElements()
 { 
-  return tetrahedra.size() + hexahedra.size() + prisms.size() + pyramids.size();
+  return tetrahedra.size() + hexahedra.size() + prisms.size() + pyramids.size() + polyhedra.size();
 }
 
 void GRegion::getNumMeshElements(unsigned *const c) const
@@ -56,6 +59,7 @@ void GRegion::getNumMeshElements(unsigned *const c) const
   c[1] += hexahedra.size();
   c[2] += prisms.size();
   c[3] += pyramids.size();
+  c[4] += polyhedra.size();
 }
 
 MElement *const *GRegion::getStartElementType(int type) const
@@ -73,6 +77,9 @@ MElement *const *GRegion::getStartElementType(int type) const
   case 3:
     if(pyramids.empty()) return 0; // msvc would throw an exception
     return reinterpret_cast<MElement *const *>(&pyramids[0]);
+  case 4:
+    if(polyhedra.empty()) return 0;
+    return reinterpret_cast<MElement *const *>(&polyhedra[0]);
   }
   return 0;
 }
@@ -87,6 +94,8 @@ MElement *GRegion::getMeshElement(unsigned int index)
     return prisms[index - tetrahedra.size() - hexahedra.size()];
   else if(index < tetrahedra.size() + hexahedra.size() + prisms.size() + pyramids.size())
     return pyramids[index - tetrahedra.size() - hexahedra.size() - prisms.size()];
+  else if(index < tetrahedra.size() + hexahedra.size() + prisms.size() + pyramids.size() + polyhedra.size())
+    return polyhedra[index - tetrahedra.size() - hexahedra.size() - prisms.size() - pyramids.size()];
   return 0;
 }
 

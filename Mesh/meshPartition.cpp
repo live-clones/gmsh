@@ -284,11 +284,13 @@ int MakeGraph(GModel *const model, Graph &graph, BoElemGrVec *const boElemGrVec)
     ElemTypeTetra = 0,
     ElemTypeHexa = 1,
     ElemTypePrism = 2,
-    ElemTypePyramid = 3
+    ElemTypePyramid = 3,
+    ElemTypePolyh = 4
   };
   enum {
     ElemTypeTri = 0,
     ElemTypeQuad = 1,
+    ElemTypePolyg = 2
   };
 
   int ier = 0;  
@@ -303,7 +305,7 @@ int MakeGraph(GModel *const model, Graph &graph, BoElemGrVec *const boElemGrVec)
 
 //--Get the dimension of the mesh and count the numbers of elements
 
-      unsigned numElem[4];
+      unsigned numElem[5];
       const int meshDim = model->getNumMeshElements(numElem);
       if(meshDim < 2) {
         Msg::Error("No mesh elements were found");
@@ -317,9 +319,10 @@ int MakeGraph(GModel *const model, Graph &graph, BoElemGrVec *const boElemGrVec)
         {
           try {
             // Allocate memory for the graph
-            const int numGrVert = numElem[ElemTypeTri] + numElem[ElemTypeQuad];
-            const int maxGrEdge =
-              (numElem[ElemTypeTri]*3 + numElem[ElemTypeQuad]*4)/2;
+            const int numGrVert = numElem[ElemTypeTri] + numElem[ElemTypeQuad]
+                                  + numElem[ElemTypePolyg];
+            const int maxGrEdge = (numElem[ElemTypeTri]*3 + numElem[ElemTypeQuad]*4
+                                   + numElem[ElemTypePolyg]*4)/2;
             graph.allocate(numGrVert, maxGrEdge);
             // Make the graph
             MakeGraphDIM<2>(model->firstFace(), model->lastFace(),
@@ -338,10 +341,12 @@ int MakeGraph(GModel *const model, Graph &graph, BoElemGrVec *const boElemGrVec)
             // Allocate memory for the graph
             const int numGrVert =
               numElem[ElemTypeTetra] + numElem[ElemTypeHexa] +
-              numElem[ElemTypePrism] + numElem[ElemTypePyramid];
+              numElem[ElemTypePrism] + numElem[ElemTypePyramid] +
+              numElem[ElemTypePolyh];
             const int maxGrEdge =
               (numElem[ElemTypeTetra]*4 + numElem[ElemTypeHexa]*6 +
-               (numElem[ElemTypePrism] + numElem[ElemTypePyramid])*5)/2;
+               numElem[ElemTypePrism]*5 + numElem[ElemTypePyramid]*5 +
+               numElem[ElemTypePolyh]*5)/2;
             graph.allocate(numGrVert, maxGrEdge);
             // Make the graph
             MakeGraphDIM<3>(model->firstRegion(), model->lastRegion(),
@@ -538,8 +543,8 @@ struct MakeGraphFromEntity
   static void eval(const GEntity *const entity, FaceMap &faceMap,
                    GrVertexMap &grVertMap, Graph &graph)
   {
-    unsigned numElem[4];
-    numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
+    unsigned numElem[5];
+    numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0; numElem[4] = 0;
     entity->getNumMeshElements(numElem);
     // Loop over all types of elements
     int nType = entity->getNumElementTypes();
@@ -613,8 +618,8 @@ struct MatchBoElemToGrVertex
                    const GrVertexMap &grVertMap, const Graph &graph,
                    std::vector<BoElemGr> &boElemGrVec)
   {
-    unsigned numElem[4];
-    numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
+    unsigned numElem[5];
+    numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0; numElem[4] = 0;
     entity->getNumMeshElements(numElem);
     // Loop over all types of elements
     int nType = entity->getNumElementTypes();

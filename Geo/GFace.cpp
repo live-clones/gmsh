@@ -11,6 +11,7 @@
 #include "GEdge.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
+#include "MElementCut.h"
 #include "VertexArray.h"
 #include "GmshMatrix.h"
 #include "Numeric.h"
@@ -86,17 +87,20 @@ void GFace::deleteMesh()
   triangles.clear();
   for(unsigned int i = 0; i < quadrangles.size(); i++) delete quadrangles[i];
   quadrangles.clear();
+  for(unsigned int i = 0; i < polygons.size(); i++) delete polygons[i];
+  polygons.clear();
 }
 
 unsigned int GFace::getNumMeshElements()
 { 
-  return triangles.size() + quadrangles.size(); 
+  return triangles.size() + quadrangles.size() + polygons.size(); 
 }
 
 void GFace::getNumMeshElements(unsigned *const c) const
 {
   c[0] += triangles.size();
   c[1] += quadrangles.size();
+  c[2] += polygons.size();
 }
 
 MElement *const *GFace::getStartElementType(int type) const
@@ -108,6 +112,9 @@ MElement *const *GFace::getStartElementType(int type) const
   case 1:
     if(quadrangles.empty()) return 0; // msvc would throw an exception
     return reinterpret_cast<MElement *const *>(&quadrangles[0]);
+  case 2:
+    if(polygons.empty()) return 0;
+    return reinterpret_cast<MElement *const *>(&polygons[0]);
   }
   return 0;
 }
@@ -118,6 +125,8 @@ MElement *GFace::getMeshElement(unsigned int index)
     return triangles[index];
   else if(index < triangles.size() + quadrangles.size())
     return quadrangles[index - triangles.size()];
+  else if(index < triangles.size() + quadrangles.size() + polygons.size())
+    return polygons[index - triangles.size() - quadrangles.size()];
   return 0;
 }
 

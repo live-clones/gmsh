@@ -17,6 +17,7 @@ class MTetrahedron;
 class MHexahedron;
 class MPrism;
 class MPyramid;
+class MPolyhedron;
 class ExtrudeParams;
 
 // A model region.
@@ -62,7 +63,7 @@ class GRegion : public GEntity {
   virtual void writeGEO(FILE *fp);
 
   // number of types of elements
-  int getNumElementTypes() const { return 4; }
+  int getNumElementTypes() const { return 5; }
 
   // get total/by-type number of elements in the mesh
   unsigned int getNumMeshElements();
@@ -94,6 +95,7 @@ class GRegion : public GEntity {
   std::vector<MHexahedron*> hexahedra;
   std::vector<MPrism*> prisms;
   std::vector<MPyramid*> pyramids;
+  std::vector<MPolyhedron*> polyhedra;
 };
 
 #endif

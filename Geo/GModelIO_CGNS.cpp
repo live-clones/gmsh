@@ -279,13 +279,13 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
         partitions.resize(numZone);
         for(int i = 0; i != numZone; ++i)
           partitions[i].elements.reserve(getMaxPartitionSize());
-        unsigned numElem[4];
+        unsigned numElem[5];
         meshDim = getNumMeshElements(numElem);
         // Load the dummy entities with the elements in each partition
         switch(meshDim) {
         case 3:
           for(riter it = firstRegion(); it != lastRegion(); ++it) {
-            numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
+            numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0; numElem[4] = 0;
             (*it)->getNumMeshElements(numElem);
             const int nType = (*it)->getNumElementTypes();
             for(int iType = 0; iType != nType; ++iType) {
@@ -300,7 +300,7 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
           break;
         case 2:
           for(fiter it = firstFace(); it != lastFace(); ++it) {
-            numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
+            numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0; numElem[4] = 0;
             (*it)->getNumMeshElements(numElem);
             const int nType = (*it)->getNumElementTypes();
             for(int iType = 0; iType != nType; ++iType) {
@@ -349,8 +349,8 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
 
   if(zoneDefinition == 0) {
     numZone = 1;
-    unsigned numElem[4];
-    numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
+    unsigned numElem[5];
+    numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0; numElem[4] = 0;
     meshDim = getNumMeshElements(numElem);
     switch(meshDim) {
     case 3:

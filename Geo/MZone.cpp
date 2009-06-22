@@ -269,8 +269,8 @@ struct ParseEntity
                    ElementConnectivity *zoneElemConn,
                    const int partition)
   {
-    unsigned numElem[4];
-    numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
+    unsigned numElem[5];
+    numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0; numElem[4] = 0;
     entity->getNumMeshElements(numElem);
     // Loop over all types of elements
     int nType = entity->getNumElementTypes();
