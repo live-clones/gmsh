@@ -1899,10 +1899,16 @@ void tetgenmesh::lawsonflip3d(int flipflag)
 
   int *iptr;
 
+  // for flipflag = 2.
+  point pa, pb, ppa, ppb;
+  int ecount;
+
   if (b->verbose > 1) {
     printf("    Lawson flip %ld faces.\n", flippool->items);
     flipcount = flip23count + flip32count;
   }
+
+  ecount = 0; // Initialize the counter.
 
   while (futureflip != (badface *) NULL) {
 
@@ -2018,6 +2024,9 @@ void tetgenmesh::lawsonflip3d(int flipflag)
             // Found a 3-to-2 flip.
             flip32(fliptets, 0, flipflag);
             recenttet = fliptets[0]; // for point location.
+            if (flipflag == 2) {
+              ecount = 0; // Clear the counter.
+            }
           } else if ((n == 4) && (ori == 0)) {
             // Find a 4-to-4 flip.
             flipnmcount++;
@@ -2034,6 +2043,9 @@ void tetgenmesh::lawsonflip3d(int flipflag)
             fliptets[2] = baktets[1];
             flip32(fliptets, 1, flipflag); // hull tet may involve.
             recenttet = fliptets[0]; // for point location.
+            if (flipflag == 2) {
+              ecount = 0; // Clear the counter.
+            }
           } else {
             // An unflipable face. Will be flipped later.
             if (flipflag == 2) { // if (flipflag > 1) {
@@ -2056,6 +2068,48 @@ void tetgenmesh::lawsonflip3d(int flipflag)
               if (b->verbose > 1) {
                 printf("\n");
               }
+              ecount++; // Increase the counter.
+              if (ecount >= 1000) {
+                // assert(0); // A flip deadlock.
+                // Dump the dead lock case.
+                pa = org(fliptets[0]);
+                pb = dest(fliptets[0]);
+                if (ecount == 1000) {
+                  printf("-- Flip failed after inserting point %ld.\n", 
+                    pointpool->items);
+                  ppa = pa;  // Bakup the startiing loop edge.
+                  ppb = pb;
+                } else {
+                  if (((ppa == pa) && (ppb == pb)) ||
+                      ((ppa == pb) && (ppb == pa))) {
+                    // Dump the current mesh and exit.
+                    outnodes(0);
+                    outelements(0);
+                    exit(1);
+                  }                      
+                }
+                printf("p:draw_subseg(%d, %d)\n",pointmark(pa),pointmark(pb));
+                printf("p:draw_subface(%d, %d, %d)\n", pointmark(org(fliptet)),
+                  pointmark(dest(fliptet)), pointmark(apex(fliptet)));
+                printf("p:draw_tet(%d, %d, %d, %d)\n", pointmark(org(fliptet)),
+                  pointmark(dest(fliptet)), pointmark(apex(fliptet)),
+                  pointmark(oppo(fliptet)));
+                symedge(fliptet, fliptets[1]);  
+                printf("p:draw_tet(%d, %d, %d, %d)\n", 
+                  pointmark(org(fliptets[1])),
+                  pointmark(dest(fliptets[1])), 
+                  pointmark(apex(fliptets[1])),
+                  pointmark(oppo(fliptets[1])));
+                pe = apex(fliptets[0]);
+                fliptets[1] = fliptets[0];
+                while (1) {
+                  pd = oppo(fliptets[1]);
+                  printf("  -- p:draw_tet(%d, %d, %d, %d)\n", pointmark(pa),
+                    pointmark(pb),pointmark(apex(fliptets[1])),pointmark(pd));
+                  fnextself(fliptets[1]);
+                  if (apex(fliptets[1]) == pe) break;
+                }
+              } // if (ecount >= 1000)
             }
           }
         } // bflag

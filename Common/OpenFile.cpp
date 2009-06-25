@@ -80,8 +80,8 @@ void SetBoundingBox(double xmin, double xmax,
   CTX::instance()->min[2] = zmin; CTX::instance()->max[2] = zmax;
   FinishUpBoundingBox();
   CTX::instance()->lc = sqrt(SQU(CTX::instance()->max[0] - CTX::instance()->min[0]) +
-                SQU(CTX::instance()->max[1] - CTX::instance()->min[1]) + 
-                SQU(CTX::instance()->max[2] - CTX::instance()->min[2]));
+                             SQU(CTX::instance()->max[1] - CTX::instance()->min[1]) + 
+                             SQU(CTX::instance()->max[2] - CTX::instance()->min[2]));
   for(int i = 0; i < 3; i++) 
     CTX::instance()->cg[i] = 0.5 * (CTX::instance()->min[i] + CTX::instance()->max[i]);
 }

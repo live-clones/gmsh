@@ -6,8 +6,13 @@
 #include "GModel.h"
 #include "MElement.h"
 #include "MElementCut.h"
+
+//#define HAVE_LEVELSET
+
+#if defined(HAVE_LEVELSET)
 #include "DILevelset.h"
 #include "Integration3D.h"
+#endif
 
 //---------------------------------------- MPolyhedron ----------------------------
 
@@ -174,6 +179,8 @@ void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
 }
 
 //---------------------------------------- CutMesh ----------------------------
+
+#if defined(HAVE_LEVELSET)
 
 int getElementVertexNum (DI_Point p, MElement *e)
 {
@@ -573,11 +580,14 @@ static void elementCutMesh (MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
   }
 }
 
+#endif
+
 GModel *buildCutMesh(GModel *gm, gLevelset *ls, 
                      std::map<int, std::vector<MElement*> > elements[10],
                      std::map<int, MVertex*> &vertexMap,
                      std::map<int, std::map<int, std::string> > physicals[4])
 {
+#if defined(HAVE_LEVELSET)
   GModel *cutGM = new GModel;
 
   std::map<int, std::vector<MElement*> > border[2];
@@ -635,5 +645,9 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   }printf("numbering borders finished \n");
 
   return cutGM;
+#else
+  Msg::Error("Gmsh need to be compiled with levelset support to cut mesh");
+  return 0;
+#endif
 }
 
