@@ -114,7 +114,7 @@ CellComplex::CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> su
 }
 
 void CellComplex::insert_cells(bool subdomain, bool boundary){
-  
+
   // works only for simplcial meshes at the moment!
   
   std::vector<GEntity*> domain;
@@ -215,8 +215,8 @@ int Simplex::kappa(Cell* tau) const{
   int value=1;
   
   for(int i = 0; i < this->getNumFacets(); i++){
-    std::vector<int> vTau = tau->getVertexVector(); 
-    std::vector<int> v;
+    std::vector<MVertex*> vTau = tau->getVertexVector(); 
+    std::vector<MVertex*> v;
     this->getFacetVertices(i, v);
     value = -1;
     
@@ -239,7 +239,8 @@ int Simplex::kappa(Cell* tau) const{
   
   return 0;
 }
-
+*/
+/*
 int OneSimplex::kappa(Cell* tau) const{
   for(int i=0; i < tau->getNumVertices(); i++){
     if( !(this->hasVertex(tau->getVertex(i))) ) return 0;
@@ -255,25 +256,28 @@ int OneSimplex::kappa(Cell* tau) const{
 
 void CellComplex::removeCell(Cell* cell){
   
-  //_trash.insert(cell);
+  std::list< std::pair< int, Cell*> > coboundary = cell->getOrientedCoboundary();
+  std::list< std::pair< int, Cell*> > boundary = cell->getOrientedBoundary();
+  //std::list<Cell*> boundary = cell->getBoundary();
+  //std::list<Cell*> coboundary = cell->getCoboundary();
   
-  _cells[cell->getDim()].erase(cell);
-  
-  std::list<Cell*> coboundary = cell->getCoboundary();
-  std::list<Cell*> boundary = cell->getBoundary();
-  
-  for(std::list<Cell*>::iterator it = coboundary.begin(); it != coboundary.end(); it++){ 
-    Cell* cbdCell = *it;
+  for(std::list< std::pair< int, Cell*> >::iterator it = coboundary.begin(); it != coboundary.end(); it++){
+  //for(std::list<Cell*>::iterator it = coboundary.begin(); it != coboundary.end(); it++){
+    Cell* cbdCell = (*it).second;
+    //Cell* cbdCell = *it;
     cbdCell->removeBoundaryCell(cell);
   }
   
-  for(std::list<Cell*>::iterator it = boundary.begin(); it != boundary.end(); it++){
-    Cell* bdCell = *it;
+  
+  for(std::list< std::pair< int, Cell*> >::iterator it = boundary.begin(); it != boundary.end(); it++){
+  //for(std::list<Cell*>::iterator it = boundary.begin(); it != boundary.end(); it++){
+    Cell* bdCell = (*it).second;
+    //Cell* bdCell = *it;
     bdCell->removeCoboundaryCell(cell);
   }
-
-  //cell->clearBoundary();
-  //cell->clearCoboundary();
+  
+  _cells[cell->getDim()].erase(cell);
+  
   
 }
 
@@ -346,11 +350,11 @@ int CellComplex::reduction(int dim){
     for(citer cit = firstCell(dim-1); cit != lastCell(dim-1); cit++){
       Cell* cell = *cit;
       cbd_c = cell->getCoboundary();
-      if(cbd_c.size() == 1 && inSameDomain(cell, cbd_c.front()) ){
-        
-        removeCell(cell);
+      if( cbd_c.size() == 1 && inSameDomain(cell, cbd_c.front()) ){
         
         removeCell(cbd_c.front());
+        removeCell(cell);
+        //removeCell(cbd_c.front());
         count++;
         reduced = true;
       }
@@ -385,11 +389,8 @@ int CellComplex::reduceComplex(bool omitHighdim){
       removeCell(cell);
 
       reduction(3);
-
       reduction(2);
-
       reduction(1);
-
       omitted++;
       
      }
@@ -451,13 +452,13 @@ int CellComplex::coreduceComplex(bool omitLowdim){
   int omitted = 0;
   if(count == 0 && omitLowdim){
     std::set<Cell*, Less_Cell> generatorCells;
-    
     while (getSize(0) != 0){
       citer cit = firstCell(0);
       Cell* cell = *cit;
       generatorCells.insert(cell);
       removeCell(cell);
-      coreduction(cell);
+      coreduceComplex(false);
+      //coreduction(cell);
       omitted++;
     }
     
@@ -505,111 +506,6 @@ void CellComplex::computeBettiNumbers(){
 }
 
 
-
-void CellComplex::replaceCells(Cell* c1, Cell* c2, Cell* newCell, bool orMatch, bool co){
-
-  int dim = c1->getDim();
-  /*
-  std::list< std::pair<int, Cell*> > coboundary1 = c1->getOrientedCoboundary();
-  std::list< std::pair<int, Cell*> > coboundary2 = c2->getOrientedCoboundary();
-  std::list< std::pair<int, Cell*> > boundary1 = c1->getOrientedBoundary();
-  std::list< std::pair<int, Cell*> > boundary2 = c2->getOrientedBoundary();
-  
-  
-  for(std::list< std::pair<int, Cell*> >::iterator it = coboundary1.begin(); it != coboundary1.end(); it++){
-    Cell* cbdCell = (*it).second;
-    int ori = (*it).first;
-    cbdCell->removeBoundaryCell(c1);
-    cbdCell->addBoundaryCell(ori, newCell, true);
-  }
-  /*
-  for(std::list< std::pair<int, Cell*> >::iterator it = coboundary1.begin(); it != coboundary1.end(); it++){
-    Cell* cbdCell = (*it).second;
-    int ori  = (*it).first;
-    cbdCell->removeBoundaryCell(c1);
-    if(!co){
-      bool old = false;
-      for(std::list< std::pair<int, Cell* > >::iterator it2 = coboundary2.begin(); it2 != coboundary2.end(); it2++){
-        Cell* cell2 = (*it2).second;
-        if(*cell2 == *cbdCell) old = true;
-      }
-      if(!old) cbdCell->addBoundaryCell(ori, newCell, true);
-    }
-    else cbdCell->addBoundaryCell(ori, newCell, true);
-  }
-  */
-  /*
-  for(std::list< std::pair<int, Cell*> >::iterator it = coboundary2.begin(); it != coboundary2.end(); it++){
-    Cell* cbdCell = (*it).second;
-    int ori  = (*it).first;
-    if(!orMatch) ori = -1*ori;
-    cbdCell->removeBoundaryCell(c2);
-    if(!co){
-      bool old = false;
-      for(std::list< std::pair<int, Cell* > >::iterator it2 = coboundary1.begin(); it2 != coboundary1.end(); it2++){
-        Cell* cell2 = (*it2).second;
-        if(*cell2 == *cbdCell) old = true;
-      }
-      if(!old) cbdCell->addBoundaryCell(ori, newCell, true);
-    }
-    else cbdCell->addBoundaryCell(ori, newCell, true);
-  }
-  
-  
-  for(std::list< std::pair<int, Cell* > >::iterator it = boundary1.begin(); it != boundary1.end(); it++){
-    Cell* bdCell = (*it).second;
-    int ori = (*it).first;
-    bdCell->removeCoboundaryCell(c1);
-    bdCell->addCoboundaryCell(ori, newCell, true);
-  }
-  /*
-  for(std::list< std::pair<int, Cell* > >::iterator it = boundary1.begin(); it != boundary1.end(); it++){
-    Cell* bdCell = (*it).second;
-    int ori = (*it).first;
-    bdCell->removeCoboundaryCell(c1);
-    if(co){
-      bool old = false;
-      for(std::list< std::pair<int, Cell* > >::iterator it2 = boundary2.begin(); it2 != boundary2.end(); it2++){
-        Cell* cell2 = (*it2).second;
-        if(*cell2 == *bdCell) old = true;
-      }
-      if(!old)  bdCell->addCoboundaryCell(ori, newCell, true);
-    }
-    else bdCell->addCoboundaryCell(ori, newCell, true);
-    
-  }
-  */
-  /*
-  for(std::list< std::pair<int, Cell* > >::iterator it = boundary2.begin(); it != boundary2.end(); it++){
-    Cell* bdCell = (*it).second;
-    int ori = (*it).first;
-    if(!orMatch) ori = -1*ori;
-    bdCell->removeCoboundaryCell(c2);
-    if(co){
-      bool old = false;
-      for(std::list< std::pair<int, Cell* > >::iterator it2 = boundary1.begin(); it2 != boundary1.end(); it2++){
-        Cell* cell2 = (*it2).second;
-        if(*cell2 == *bdCell) old = true;
-      }
-      if(!old)  bdCell->addCoboundaryCell(ori, newCell, true);
-    }
-    else bdCell->addCoboundaryCell(ori, newCell, true);
-    
-  }
-  */
-  _cells[dim].erase(c1);
-  _cells[dim].erase(c2);
-  //removeCell(c1);
-  //removeCell(c2);
-  //_trash.insert(c1);
-  //_trash.insert(c2);
-  _cells[dim].insert(newCell);
-  
-  
-  
-  return;
-}
-
 int CellComplex::cocombine(int dim){
  
   printf("Cell complex before cocombining: %d volumes, %d faces, %d edges and %d vertices.\n",
@@ -635,14 +531,15 @@ int CellComplex::cocombine(int dim){
       
       bd_c = s->getOrientedBoundary();
       
-      if(bd_c.size() == 2 && !(*(bd_c.front().second) == *(bd_c.back().second)) 
-         && inSameDomain(s, bd_c.front().second) && inSameDomain(s, bd_c.back().second) ){
+      if(s->getBoundarySize() == 2 && !(*(bd_c.front().second) == *(bd_c.back().second)) 
+         && inSameDomain(s, bd_c.front().second) && inSameDomain(s, bd_c.back().second)
+         && bd_c.front().second->getNumVertices() < getSize(dim) // heuristics for mammoth cell birth control
+         && bd_c.back().second->getNumVertices() < getSize(dim)){
         
         int or1 = bd_c.front().first;
         int or2 = bd_c.back().first;
         Cell* c1 = bd_c.front().second;
         Cell* c2 = bd_c.back().second;
-        if( c1->getNumVertices() < getSize(dim) && c2->getNumVertices() < getSize(dim) ){
         
         removeCell(s);
         
@@ -652,14 +549,12 @@ int CellComplex::cocombine(int dim){
         enqueueCells(cbd_c, Q, Qset);
           
         CombinedCell* newCell = new CombinedCell(c1, c2, (or1 != or2), true );
-        //replaceCells(c1, c2, newCell, (or1 != or2), true);
-        _cells[dim].erase(c1);
-        _cells[dim].erase(c2);
+        removeCell(c1);
+        removeCell(c2);
         _cells[dim].insert(newCell);
           
         cit = firstCell(dim);
         count++;
-        }
       }
       removeCellQset(s, Qset);
       
@@ -687,44 +582,39 @@ int CellComplex::combine(int dim){
   
   
   for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
-  
     Cell* cell = *cit;
     bd_c = cell->getBoundary();
     enqueueCells(bd_c, Q, Qset);
     while(Q.size() != 0){
 
       Cell* s = Q.front();
-      Q.pop();
+      Q.pop(); 
       
       cbd_c = s->getOrientedCoboundary();
         
-      if(cbd_c.size() == 2 && !(*(cbd_c.front().second) == *(cbd_c.back().second)) 
-         && inSameDomain(s, cbd_c.front().second) && inSameDomain(s, cbd_c.back().second)){
+      if(s->getCoboundarySize() == 2 && !(*(cbd_c.front().second) == *(cbd_c.back().second)) 
+         && inSameDomain(s, cbd_c.front().second) && inSameDomain(s, cbd_c.back().second)
+         && cbd_c.front().second->getNumVertices() < getSize(dim) // heuristics for mammoth cell birth control
+         && cbd_c.back().second->getNumVertices() < getSize(dim)){
         int or1 = cbd_c.front().first;
         int or2 = cbd_c.back().first;
         Cell* c1 = cbd_c.front().second;
         Cell* c2 = cbd_c.back().second;
-        if( c1->getNumVertices() < getSize(dim) && c2->getNumVertices() < getSize(dim)){
                   
         removeCell(s);
+          
         bd_c = c1->getBoundary();
         enqueueCells(bd_c, Q, Qset);
         bd_c = c2->getBoundary();
         enqueueCells(bd_c, Q, Qset);
-          
         
         CombinedCell* newCell = new CombinedCell(c1, c2, (or1 != or2) );
-        _cells[dim].erase(c1);
-        _cells[dim].erase(c2);
-        _cells[dim].insert(newCell);
-        //replaceCells(c1, c2, newCell, (or1 != or2));
-        //removeCell(s);
+        removeCell(c1);
+        removeCell(c2);
+        std::pair<citer, bool> insertInfo =  _cells[dim].insert(newCell);
+        if(!insertInfo.second) printf("Warning: Combined cell not inserted! \n");
         cit = firstCell(dim);
-        //cit++;
         count++;
-          
-        }
-
       }
       removeCellQset(s, Qset);
       
@@ -866,6 +756,63 @@ void CellComplex::printComplex(int dim){
     cell->printCoboundary();
     printf("--- \n");
   }
+}
+
+bool CellComplex::checkCoherence(){
+  bool coherent = true;
+  for(int i = 0; i < 4; i++){
+    for(citer cit = firstCell(i); cit != lastCell(i); cit++){
+      Cell* cell = *cit;
+      std::list< std::pair<int, Cell*> > boundary = cell->getOrientedBoundary();
+      for(std::list< std::pair<int, Cell* > >::iterator it = boundary.begin(); it != boundary.end(); it++){
+        Cell* bdCell = (*it).second;
+        int ori = (*it).first;
+        citer cit = _cells[bdCell->getDim()].find(bdCell);
+        if(cit == lastCell(bdCell->getDim())){ 
+          printf("Warning! Boundary cell not in cell complex! Boundary removed. \n", cell->getDim());
+          //printf(" "); cell->printCell();
+          //printf(" "); bdCell->printCell();
+          cell->removeBoundaryCell(bdCell);
+          coherent = false;
+        }
+        if(!bdCell->hasCoboundary(cell)){
+          printf("Warning! Incoherent boundary/coboundary pair! Fixed. \n");
+          //printf(" "); cell->printCell();
+          //printf(" "); cell->printBoundary();
+          //printf(" "); bdCell->printCell();
+          //printf(" "); bdCell->printCoboundary();
+          bdCell->addCoboundaryCell(ori, cell);
+          coherent = false;
+        }
+        
+      }
+      std::list< std::pair<int, Cell*> > coboundary = cell->getOrientedCoboundary();
+      for(std::list< std::pair<int, Cell* > >::iterator it = coboundary.begin(); it != coboundary.end(); it++){
+        Cell* cbdCell = (*it).second;
+        int ori = (*it).first;
+        citer cit = _cells[cbdCell->getDim()].find(cbdCell);
+        if(cit == lastCell(cbdCell->getDim())){ 
+          printf("Warning! Coboundary cell not in cell complex! Coboundary removed. \n", cell->getDim());
+          //printf(" "); cell->printCell();
+          //printf(" "); cbdCell->printCell();
+          cell->removeCoboundaryCell(cbdCell);
+          coherent = false;
+        }
+        if(!cbdCell->hasBoundary(cell)){
+          printf("Warning! Incoherent coboundary/boundary pair! Fixed. \n");
+          //printf(" "); cell->printCell();
+          //printf(" "); cell->printCoboundary();
+          //printf(" "); cbdCell->printCell();
+          //printf(" "); cbdCell->printBoundary();
+          cbdCell->addBoundaryCell(ori, cell);
+          coherent = false;
+        }
+        
+      }
+      
+    }
+  }
+  return coherent;
 }
 
 #endif

@@ -78,23 +78,22 @@ void Homology::findGenerators(std::string fileName){
   double t1 = Cpu();
   int omitted = _cellComplex->reduceComplex(true);
   
-  //_cellComplex->checkCoherence();
   if(getCombine()){
     _cellComplex->combine(3);
-    _cellComplex->reduceComplex(false);
+    _cellComplex->reduction(2);
     _cellComplex->combine(2);
-    _cellComplex->reduceComplex(false);
+    _cellComplex->reduction(1);
     _cellComplex->combine(1);
-    _cellComplex->reduceComplex(false);
   }
-  //_cellComplex->checkCoherence();
+  _cellComplex->checkCoherence();
+  
   double t2 = Cpu();
   Msg::Info("Cell Complex reduction complete (%g s).", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges and %d vertices.",
             _cellComplex->getSize(3), _cellComplex->getSize(2), _cellComplex->getSize(1), _cellComplex->getSize(0));
 
-  //for(int i = 0; i < 4; i++) _cellComplex->printComplex(i);
-    
+  //for(int i = 0; i < 4; i++) { printf("Dim %d: \n", i); _cellComplex->printComplex(i); }
+  
   _cellComplex->writeComplexMSH(fileName);
   
   Msg::Info("Computing homology groups...");
@@ -146,16 +145,20 @@ void Homology::findGenerators(std::string fileName){
 
 void Homology::findThickCuts(std::string fileName){
   
+  //for(int i = 0; i < 4; i++) { printf("Dim %d: \n", i); _cellComplex->printComplex(i); }
+  
   Msg::Info("Reducing Cell Complex...");
   double t1 = Cpu();
   int omitted = _cellComplex->coreduceComplex(true);
+  //for(int i = 0; i < 4; i++) { printf("Dim %d: \n", i); _cellComplex->printComplex(i); }
+  //_cellComplex->coreduceComplex(false);
   //_cellComplex->checkCoherence();
   if(getCombine()){
     _cellComplex->cocombine(0);
     _cellComplex->cocombine(1);
     _cellComplex->cocombine(2);
   }
-  //_cellComplex->checkCoherence();
+  _cellComplex->checkCoherence();
   double t2 = Cpu();
   Msg::Info("Cell Complex reduction complete (%g s).", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges and %d vertices.",

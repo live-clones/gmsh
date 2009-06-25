@@ -86,8 +86,9 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
                 old_elem = mpz_get_si(elem);
                 mpz_set_si(elem, old_elem + (*it).first);
                 if( (old_elem + (*it).first) > 1 || (old_elem + (*it).first) < -1 ){
-                  printf("Warning: Invalid incidence index: %d! HMatrix: %d. \n", (old_elem + (*it).first), dim);
-                   //mpz_set_si(elem, 0);
+                  printf("Warning: Invalid incidence index: %d! HMatrix: %d.", (old_elem + (*it).first), dim);
+                  printf(" Set to %d. \n", (old_elem + (*it).first) % 2);
+                  mpz_set_si(elem, (old_elem + (*it).first) % 2);
                 }
                 gmp_matrix_set_elem(elem, bdCell->getIndex(), cell->getIndex(), _HMatrix[dim]);
               }
@@ -351,6 +352,7 @@ void ChainComplex::computeHomology(bool dual){
                                          gmp_matrix_cols(getKerHMatrix(lowDim))) );
     }
     
+   
     // 5) General case:
     //   1) Find the bases of boundaries B and cycles Z 
     //   2) find j: B -> Z and
