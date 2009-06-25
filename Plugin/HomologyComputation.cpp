@@ -21,8 +21,7 @@ StringXNumber HomologyComputationOptions_Number[] = {
   {GMSH_FULLRC, "2. Physical group for subdomain", NULL, 0.},
   {GMSH_FULLRC, "Compute generators", NULL, 1.},
   {GMSH_FULLRC, "Compute thick cuts", NULL, 0.},
-  {GMSH_FULLRC, "Swap subdomain", NULL, 0.},
-  {GMSH_FULLRC, "Combine cells", NULL, 1.}
+  {GMSH_FULLRC, "Omit dimensions", NULL, 1.},
 };
 
 StringXString HomologyComputationOptions_String[] = {
@@ -98,16 +97,18 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
 
   int gens = (int)HomologyComputationOptions_Number[4].def;
   int cuts = (int)HomologyComputationOptions_Number[5].def;
-  int swap = (int)HomologyComputationOptions_Number[6].def;
-  int combine = (int)HomologyComputationOptions_Number[7].def;
+  int omit = (int)HomologyComputationOptions_Number[6].def;
+  //int combine = (int)HomologyComputationOptions_Number[7].def;
+  
 
   GModel *m = GModel::current();
   
   Homology* homology = new Homology(m, domain, subdomain);
-  if(combine == 0) homology->setCombine(false); 
+  //if(combine == 0) homology->setCombine(false); 
+  homology->setOmit(omit);
   
+  //if(swap == 1) homology->swapSubdomain();
   
-  if(swap == 1) homology->swapSubdomain();
   if(gens == 1 && cuts != 1) {
     homology->findGenerators(fileName);
     GmshMergeFile(fileName);

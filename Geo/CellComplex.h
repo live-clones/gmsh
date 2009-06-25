@@ -766,8 +766,8 @@ class CellComplex
      
    
    // useful functions for (co)reduction of cell complex
-   int reduceComplex(bool omitHighdim = false);
-   int coreduceComplex(bool omitlowDim = false);
+   int reduceComplex(int omit = 0);
+   int coreduceComplex(int omit = 0);
    
    
    // add every volume, face and edge its missing boundary cells

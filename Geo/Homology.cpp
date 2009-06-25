@@ -15,6 +15,7 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain, std::vector<i
   
   _model = model;
   _combine = true;
+  _omit = 1;
   
   Msg::Info("Creating a Cell Complex...");
   double t1 = Cpu();
@@ -76,7 +77,7 @@ void Homology::findGenerators(std::string fileName){
   
   Msg::Info("Reducing Cell Complex...");
   double t1 = Cpu();
-  int omitted = _cellComplex->reduceComplex(true);
+  int omitted = _cellComplex->reduceComplex(_omit);
   
   if(getCombine()){
     _cellComplex->combine(3);
@@ -129,7 +130,7 @@ void Homology::findGenerators(std::string fileName){
   Msg::Info("H1 = %d", HRank[1]);
   Msg::Info("H2 = %d", HRank[2]);
   Msg::Info("H3 = %d", HRank[3]);
-  if(omitted != 0) Msg::Info("Computation of %dD generators was omitted.", _cellComplex->getDim());
+  if(omitted != 0) Msg::Info("Computation of generators in %d highest dimensions was omitted.", _omit);
   
   Msg::Info("Wrote results to %s.", fileName.c_str());
   
@@ -149,7 +150,7 @@ void Homology::findThickCuts(std::string fileName){
   
   Msg::Info("Reducing Cell Complex...");
   double t1 = Cpu();
-  int omitted = _cellComplex->coreduceComplex(true);
+  int omitted = _cellComplex->coreduceComplex(_omit);
   //for(int i = 0; i < 4; i++) { printf("Dim %d: \n", i); _cellComplex->printComplex(i); }
   //_cellComplex->coreduceComplex(false);
   //_cellComplex->checkCoherence();
@@ -207,7 +208,7 @@ void Homology::findThickCuts(std::string fileName){
   Msg::Info("H1 = %d", HRank[1]);
   Msg::Info("H2 = %d", HRank[2]);
   Msg::Info("H3 = %d", HRank[3]);
-  if(omitted != 0) Msg::Info("Computation of %dD thick cuts was omitted.", dim);
+  if(omitted != 0) Msg::Info("Computation of %d highest dimension thick cuts was omitted.", _omit);
   
   Msg::Info("Wrote results to %s.", fileName.c_str());
   

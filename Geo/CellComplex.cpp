@@ -365,7 +365,7 @@ int CellComplex::reduction(int dim){
 }
 
  
-int CellComplex::reduceComplex(bool omitHighdim){
+int CellComplex::reduceComplex(int omit){
   printf("Cell complex before reduction: %d volumes, %d faces, %d edges and %d vertices.\n",
          getSize(3), getSize(2), getSize(1), getSize(0));
 
@@ -375,14 +375,17 @@ int CellComplex::reduceComplex(bool omitHighdim){
  
   
   int omitted = 0;
-  if(count == 0 && omitHighdim){
+  if(omit > getDim()) omit = getDim();
+  for(int i = 0; i < omit; i++){
+  //if(count == 0 && omit > 0){
     
     CellComplex::removeSubdomain();
     CellComplex::removeSubdomain();
     std::set<Cell*, Less_Cell> generatorCells;
  
-    while (getSize(getDim()) != 0){
-      citer cit = firstCell(getDim());
+    
+    while (getSize(getDim()-i) != 0){
+      citer cit = firstCell(getDim()-i);
  
       Cell* cell = *cit;
       generatorCells.insert(cell);
@@ -400,7 +403,7 @@ int CellComplex::reduceComplex(bool omitHighdim){
       Cell* cell = *cit;
       cell->clearBoundary();
       cell->clearCoboundary();
-      _cells[getDim()].insert(cell);
+      _cells[getDim()-i].insert(cell);
     }
     
     
@@ -429,7 +432,7 @@ void CellComplex::removeSubdomain(){
 }
 
 
-int CellComplex::coreduceComplex(bool omitLowdim){
+int CellComplex::coreduceComplex(int omit){
 
   printf("Cell complex before coreduction: %d volumes, %d faces, %d edges and %d vertices.\n",
          getSize(3), getSize(2), getSize(1), getSize(0));
@@ -450,14 +453,16 @@ int CellComplex::coreduceComplex(bool omitLowdim){
   } 
   
   int omitted = 0;
-  if(count == 0 && omitLowdim){
+  //if(count == 0 && omit > 0){
+  if(omit > getDim()) omit = getDim();
+  for(int i = 0; i < omit; i++){
     std::set<Cell*, Less_Cell> generatorCells;
-    while (getSize(0) != 0){
-      citer cit = firstCell(0);
+    while (getSize(i) != 0){
+      citer cit = firstCell(i);
       Cell* cell = *cit;
       generatorCells.insert(cell);
       removeCell(cell);
-      coreduceComplex(false);
+      coreduceComplex(0);
       //coreduction(cell);
       omitted++;
     }
@@ -466,9 +471,8 @@ int CellComplex::coreduceComplex(bool omitLowdim){
       Cell* cell = *cit;
       cell->clearBoundary();
       cell->clearCoboundary();
-      _cells[0].insert(cell);
+      _cells[i].insert(cell);
     }
-    
     
   }
     

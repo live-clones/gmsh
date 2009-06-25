@@ -29,6 +29,7 @@ class Homology
    GModel* _model;
    
    bool _combine;
+   int _omit;
    
   public:
    
@@ -42,7 +43,16 @@ class Homology
    void findThickCuts(std::string fileName);
       
    void swapSubdomain() { _cellComplex->swapSubdomain(); }
-      
+
+   int getOmit() {return _omit; }
+   void setOmit(int omit) { 
+     if(omit > _cellComplex->getDim() || omit < 0) {
+       Msg::Error("Invalid number of dimensions to omit. Must be between 0 - %d.", _cellComplex->getDim());
+       Msg::Warning("Set to omit 1 dimension.");
+       _omit = 1;
+     }
+     else _omit = omit;
+   }
 };
 
 #endif
