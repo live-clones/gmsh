@@ -688,12 +688,15 @@ void gmshBowyerWatson(GFace *gf)
                       (Vs[base->getVertex(0)->getNum()] + 
                        Vs[base->getVertex(1)->getNum()] + 
                        Vs[base->getVertex(2)->getNum()]) / 3.};
-      SMetric3 m = interpolation (vMetricsBGM[base->getVertex(0)->getNum()],
-				  vMetricsBGM[base->getVertex(1)->getNum()],
-				  vMetricsBGM[base->getVertex(2)->getNum()],
-				  pa[0],pa[1]);
-      buildMetric(gf, pa, m, metric);
-      //buildMetric(gf, pa,  metric);
+      if (_experimental_anisotropic_blues_band_){
+        SMetric3 m = interpolation (vMetricsBGM[base->getVertex(0)->getNum()],
+                                    vMetricsBGM[base->getVertex(1)->getNum()],
+                                    vMetricsBGM[base->getVertex(2)->getNum()],
+                                    pa[0],pa[1]);
+        buildMetric(gf, pa, m, metric);
+      }
+      else
+        buildMetric(gf, pa,  metric);
       circumCenterMetric(worst->tri(), metric, Us, Vs, center, r2);       
       insertAPoint(gf, AllTris.begin(), center, metric, Us, Vs, vSizes, vSizesBGM, vMetricsBGM,
                    AllTris);
