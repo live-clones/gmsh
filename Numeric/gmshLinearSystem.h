@@ -13,6 +13,7 @@ template <class scalar>
 class gmshLinearSystem {
  public :
   gmshLinearSystem (){}
+  virtual ~gmshLinearSystem (){}
   virtual bool isAllocated() const = 0;
   virtual void allocate(int nbRows) = 0;
   virtual void addToMatrix(int _row, int _col, scalar val) = 0;

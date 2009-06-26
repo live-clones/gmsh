@@ -36,7 +36,7 @@ class gmshLaplaceTerm2DParametric : gmshLaplaceTerm {
   GFace *_gf;
  public:
   gmshLaplaceTerm2DParametric(GFace *gf, gmshFunction<double> *diffusivity, int iField = 0) : 
-  _gf(gf),gmshLaplaceTerm(gf->model(),diffusivity,iField){}
+    gmshLaplaceTerm(gf->model(), diffusivity, iField), _gf(gf) {}
   virtual void elementMatrix(MElement *e, gmshMatrix<double> &m) const;
 };
 

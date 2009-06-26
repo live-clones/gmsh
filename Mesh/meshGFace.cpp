@@ -1459,7 +1459,7 @@ void orientMeshGFace::operator()(GFace *gf)
     // surface orientions in OCC do not seem to be consistent with the
     // orientation of the bounding edges, so we compare the normals
     // pointwise in an element
-    for(int i = 0; i < gf->getNumMeshElements(); i++){
+    for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
       MElement *e = gf->getMeshElement(i);
       for(int j = 0; j < e->getNumVertices(); j++){
         MVertex *v = e->getVertex(j);
@@ -1469,7 +1469,7 @@ void orientMeshGFace::operator()(GFace *gf)
           SVector3 nf = gf->normal(param); 
           if(dot(ne, nf) < 0){
             Msg::Debug("Reverting orientation of mesh in face %d", gf->tag());
-            for(int k = 0; k < gf->getNumMeshElements(); k++)
+            for(unsigned int k = 0; k < gf->getNumMeshElements(); k++)
               gf->getMeshElement(k)->revert();
           }
           return;

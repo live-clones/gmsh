@@ -36,7 +36,7 @@ static int _gmshFindOptimalLocationsPN(GFace *gf,gmshHighOrderSmoother *s);
 
 static double shapeMeasure (MElement *e) {
   const double d1 = e->distoShapeMeasure();
-  const double d2 = e->gammaShapeMeasure();
+  //const double d2 = e->gammaShapeMeasure();
   return d1;
 }
 
@@ -146,7 +146,6 @@ static double _DeformationEnergy (MElement *e,
 
   dx.scale(0.0);
   Kdx.scale(0.0);
-  int C = 0;
   for (int i=0;i<N;i++){
     SVector3 disp = s->getDisplacement(e->getVertex(i));
     SVector3 str  = s->getSSL(e->getVertex(i));
@@ -225,7 +224,7 @@ static double _function_pNt (gmshVector<double> &x, void *data){
   static double xx[256];
   static double yy[256];
   static double zz[256];
-  for (int i=0;i<p->n.size();i++){
+  for (unsigned int i=0;i<p->n.size();i++){
     GPoint gp12 = p->gf->point(SPoint2(x(2*i),x(2*i+1)));
     //  printf("%g %g = %g %g\n",x(0),x(1),gp12.x(),gp12.y());
     xx[i] = p->n[i]->x();
@@ -236,7 +235,7 @@ static double _function_pNt (gmshVector<double> &x, void *data){
     p->n[i]->z() = gp12.z();
   }
   double q = std::min(shapeMeasure(p->t1),shapeMeasure(p->t2));      
-  for (int i=0;i<p->n.size();i++){
+  for (unsigned int i=0;i<p->n.size();i++){
     p->n[i]->x() = xx[i];
     p->n[i]->y() = yy[i];
     p->n[i]->z() = zz[i];
@@ -249,7 +248,7 @@ static double _function_pNtB (gmshVector<double> &x, void *data){
   static double xx[256];
   static double yy[256];
   static double zz[256];
-  for (int i=0;i<p->n.size();i++){
+  for (unsigned int i=0;i<p->n.size();i++){
     GPoint gp12 = p->gf->point(SPoint2(x(2*i),x(2*i+1)));
     //  printf("%g %g = %g %g\n",x(0),x(1),gp12.x(),gp12.y());
     xx[i] = p->n[i]->x();
@@ -260,7 +259,7 @@ static double _function_pNtB (gmshVector<double> &x, void *data){
     p->n[i]->z() = gp12.z();
   }
   double E = _DeformationEnergy(p);
-  for (int i=0;i<p->n.size();i++){
+  for (unsigned int i=0;i<p->n.size();i++){
     p->n[i]->x() = xx[i];
     p->n[i]->y() = yy[i];
     p->n[i]->z() = zz[i];
@@ -555,7 +554,7 @@ double gmshHighOrderSmoother::smooth_metric_ ( std::vector<MElement*>  & v,
 
   if (myAssembler.sizeOfR()){
 
-    for (int i=0;i<v.size();i++){
+    for (unsigned int i=0;i<v.size();i++){
       MElement *e = v[i];            
       int nbNodes = e->getNumVertices();
       const int n2 = 2*nbNodes;
@@ -901,7 +900,7 @@ struct swap_triangles_p2
     gmshVector<double> pp(2);
     pp(0) = p34_linear.x();
     pp(1) = p34_linear.y();
-    double opti = minimize_grad_fd (_function_p2tB, pp, &data);
+    minimize_grad_fd (_function_p2tB, pp, &data);
     return _test;
   }
 
@@ -1042,7 +1041,6 @@ static int optimalLocationP2_ (GFace *gf,
   reparamMeshEdgeOnFace(n3,n4,gf,p3,p4);
   SPoint2 p34_linear = (p1+p2)*.5;
   SPoint2 dirt = p4-p3;
-  SPoint2 dirn = (-dirt.y(), dirt.x());
 
   gmshVector<double> pp(2);
   pp(0) = p12.x();
@@ -1081,7 +1079,6 @@ int optimalLocationPN_ (GFace *gf, const MEdge &me, MTriangle *t1, MTriangle *t2
   MVertex *n2 = me.getVertex(1);
   // get all the other nodes that are on the edge
   int N = t1->getNumVertices();
-  int NF = t1->getNumFaceVertices();
   int NE = t1->getNumEdgeVertices();
   std::vector<MVertex*> toOptimize;
   for (int i=3;i<3+NE;i++){
@@ -1102,7 +1099,7 @@ int optimalLocationPN_ (GFace *gf, const MEdge &me, MTriangle *t1, MTriangle *t2
   }
 
   gmshVector<double> pp(2*toOptimize.size());
-  for (int i=0;i<toOptimize.size();i++){
+  for (unsigned int i=0;i<toOptimize.size();i++){
     SPoint2 pt;
     reparamMeshVertexOnFace(toOptimize[i],gf,pt);
     pp(2*i)   = pt[0];
@@ -1116,7 +1113,7 @@ int optimalLocationPN_ (GFace *gf, const MEdge &me, MTriangle *t1, MTriangle *t2
   if (init-opti < 1.e-5*(init))return 0;
   printf("Optimization has reduced the deformation energy %g -> %g\n",
 	 init,opti);
-  for (int i=0;i<toOptimize.size();i++){
+  for (unsigned int i=0;i<toOptimize.size();i++){
     GPoint gp12 = gf->point(SPoint2(pp(2*i),pp(2*i+1)));
     toOptimize[i]->x() = gp12.x();
     toOptimize[i]->y() = gp12.y();
@@ -1493,8 +1490,8 @@ void optimizeNodeLocations(GFace *gf, smoothVertexDataHON &vdN, double eps = .2)
 
   double F = -smooth_obj_HighOrderN(uv, &vdN);
   if (F < eps){
-    double val = 0.;
     Msg::Error("Fletcher-Reeves minimizer routine must be reimplemented");
+    // double val = 0.;
     //minimize_N(2 * vdN.v.size(), smooth_obj_HighOrderN, 
     //          deriv_smoothing_objective_function_HighOrderN, 
     //          &vdN, 1, uv, val);
@@ -1590,9 +1587,9 @@ void localHarmonicMapping(GModel *gm,
     const double V =  myAssembler1.getDofValue (v, 0 ,1);
     printf("point %g %g -> %g %g\n",v->x(),v->y(),U,V);
     // we are in t1
-    if (U >= V){
-      const double ut = U;
-    }
+    //if (U >= V){
+    //const double ut = U;
+    //}
   }
 
 

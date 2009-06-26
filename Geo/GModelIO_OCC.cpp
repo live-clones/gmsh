@@ -585,15 +585,25 @@ int GModel::readOCCSTEP(const std::string &fn)
   return 1;
 }
 
-static void applyOCCMeshConstraints(GModel *m, const void *constraints)
+int GModel::importOCCShape(const void *shape)
+{
+  _occ_internals = new OCC_Internals;
+  _occ_internals->loadShape((TopoDS_Shape*)shape);
+  _occ_internals->buildGModel(this);
+  snapVertices();
+  SetBoundingBox();
+  return 1;
+}
+
+int GModel::applyOCCMeshConstraints(const void *constraints)
 {
 #if defined(HAVE_OCC_MESH_CONSTRAINTS)
   MeshGmsh_Constrain *meshConstraints = (MeshGmsh_Constrain*)constraints;
-
+  
   // apply mesh constraints on model vertices
   MeshGmsh_DataMapOfShapeOfVertexConstrain vertexConstraints;
   meshConstraints->GetVertexConstrain(vertexConstraints);
-  for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it){
+  for(GModel::viter it = firstVertex(); it != lastVertex(); ++it){
     GVertex *gv = *it;
     if(gv->getNativeType() != GEntity::OpenCascadeModel) continue;
     TopoDS_Shape *s = (TopoDS_Shape*)gv->getNativePtr();
@@ -611,7 +621,7 @@ static void applyOCCMeshConstraints(GModel *m, const void *constraints)
         TopoDS_Shape shape = c.GetFace();
         Standard_Integer nodeNum;
         c.GetNodeNumber(nodeNum);
-        for(GModel::fiter it2 = m->firstFace(); it2 != m->lastFace(); ++it2){
+        for(GModel::fiter it2 = firstFace(); it2 != lastFace(); ++it2){
           GFace *gf = *it2;
           if(gf->getNativeType() != GEntity::OpenCascadeModel) continue;
           TopoDS_Shape *shape2 = (TopoDS_Shape*)gf->getNativePtr();
@@ -628,7 +638,7 @@ static void applyOCCMeshConstraints(GModel *m, const void *constraints)
   // apply mesh constraints on model edges
   MeshGmsh_DataMapOfShapeOfEdgeConstrain edgeConstraints;
   meshConstraints->GetEdgeConstrain(edgeConstraints);
-  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
+  for(GModel::eiter it = firstEdge(); it != lastEdge(); ++it){
     GEdge *ge = *it;
     if(ge->getNativeType() != GEntity::OpenCascadeModel) continue;
     TopoDS_Shape *s = (TopoDS_Shape*)ge->getNativePtr();
@@ -682,7 +692,7 @@ static void applyOCCMeshConstraints(GModel *m, const void *constraints)
       // embedding constraint
       if(c.IsEmbedded() && !c.GetFace().IsNull()){
         TopoDS_Shape shape = c.GetFace();
-        for(GModel::fiter it2 = m->firstFace(); it2 != m->lastFace(); ++it2){
+        for(GModel::fiter it2 = firstFace(); it2 != lastFace(); ++it2){
           GFace *gf = *it2;
           if(gf->getNativeType() != GEntity::OpenCascadeModel) continue;
           TopoDS_Shape *shape2 = (TopoDS_Shape*)gf->getNativePtr();
@@ -697,18 +707,10 @@ static void applyOCCMeshConstraints(GModel *m, const void *constraints)
       }
     }
   }
-#endif
-}
-
-int GModel::importOCCShape(const void *shape, const void *meshConstraints)
-{
-  _occ_internals = new OCC_Internals;
-  _occ_internals->loadShape((TopoDS_Shape*)shape);
-  _occ_internals->buildGModel(this);
-  snapVertices();
-  SetBoundingBox();
-  if(meshConstraints) applyOCCMeshConstraints(this, meshConstraints);
   return 1;
+#else
+  return 0;
+#endif
 }
 
 #else
