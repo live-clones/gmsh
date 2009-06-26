@@ -158,7 +158,8 @@ public:
       value[i] = p[2];
     }
     double val = _current->interpolate(value, uvw[0], uvw[1], uvw[2]);
-    return 1.0;//exp(15*val);
+    //return exp(5*val);
+    return 1.0;
   }
 };
 
@@ -176,7 +177,7 @@ void GFaceCompound::parametrize() const
 
   if (!oct){
     coordinates.clear();
-    parametrize(ITERD);
+    //parametrize(ITERD);
     parametrize(ITERU);
     parametrize(ITERV);
     computeNormals();
@@ -574,7 +575,7 @@ void GFaceCompound::parametrize(iterationStep step) const
     }    
   }
   else{
-    gmshLaplaceTerm laplace(model(), &diffusivity, 1);
+    gmshLaplaceTerm laplace(model(), &ONE, 1);
     it = _compound.begin();
     for ( ; it != _compound.end() ; ++it){
       for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){

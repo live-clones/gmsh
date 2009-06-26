@@ -740,7 +740,7 @@ int GModel::readOCCBREP(const std::string &fn)
   return 0;
 }
 
-int GModel::importOCCShape(const void *shape, const void *options)
+int GModel::importOCCShape(const void *shape)  //, const void *options)
 {
   Msg::Error("Gmsh must be compiled with OpenCascade support to import "
 	     "a TopoDS_Shape");

@@ -401,7 +401,7 @@ static void class_color_cb(Fl_Widget* w, void* data)
 	segments.erase(it);
 	it++;
 
-	//printf("***candidate mline %d %d of size \n", vB->getNum(), vE->getNum(), segments.size());
+	printf("***candidate mline %d %d of size \n", vB->getNum(), vE->getNum(), segments.size());
 
    	for (int i=0; i<2; i++) {
 
@@ -409,17 +409,17 @@ static void class_color_cb(Fl_Widget* w, void* data)
 	  for (std::list<MLine*>::iterator it = segments.begin() ; it != segments.end(); ++it){	
 	    MVertex *v1 = (*it)->getVertex(0);
 	    MVertex *v2 = (*it)->getVertex(1);
-	    //printf("mline %d %d \n", v1->getNum(), v2->getNum());
+	    printf("mline %d %d \n", v1->getNum(), v2->getNum());
 
 	    if ( v1 == vE  ){
-	      //printf("->push back this mline \n");
+	      printf("->push back this mline \n");
 	      myLines.push_back(*it);
 	      segments.erase(it);
 	      vE = v2;
 	      i = -1;
 	    }
 	    else if ( v2 == vE){
-	      //printf("->push back this mline \n");
+	      printf("->push back this mline \n");
 	      myLines.push_back(*it);
 	      segments.erase(it);
 	      vE = v1;
@@ -431,28 +431,30 @@ static void class_color_cb(Fl_Widget* w, void* data)
 
 	  if (segments.empty()) break;
 
-	  //printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
+	  printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
 	  MVertex *temp = vB;
 	  vB = vE;
 	  vE = temp;
-	  //printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
+	  printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
 
 	}
 	
-// 	printf("************ CANDIDATE NEW EDGE \n");
-// 	for (std::vector<MLine*>::iterator it = myLines.begin() ; it != myLines.end() ; ++it){
-// 	  MVertex *v1 = (*it)->getVertex(0);
-// 	  MVertex *v2 = (*it)->getVertex(1);
-// 	  printf("Line %d %d \n", v1->getNum(), v2->getNum());
-// 	}
+ 	printf("************ CANDIDATE NEW EDGE \n");
+ 	for (std::vector<MLine*>::iterator it = myLines.begin() ; it != myLines.end() ; ++it){
+ 	  MVertex *v1 = (*it)->getVertex(0);
+ 	  MVertex *v2 = (*it)->getVertex(1);
+ 	  printf("Line %d %d \n", v1->getNum(), v2->getNum());
+ 	}
 	GEdge *newGe = new discreteEdge(GModel::current(), maxEdgeNum() + 1, 0, 0);
 	newGe->lines.insert(newGe->lines.end(), myLines.begin(), myLines.end());
 	GModel::current()->add(newGe);
-	//printf("create new edge with tag =%d\n", maxEdgeNum());
+	printf("create new edge with tag =%d\n", maxEdgeNum());
 	
       }//end for each actual GEdge
-  
+
     }
+
+    printf("end new edge with tag \n");
 
     for (std::map<std::pair<int, int>, GEdge*>::iterator it = newEdges.begin() ; it != newEdges.end() ; ++it){
       GEdge *ge = it->second;
@@ -466,6 +468,8 @@ static void class_color_cb(Fl_Widget* w, void* data)
       ++it;
     }
   }
+  
+  printf("before drawing \n");
   
   CTX::instance()->mesh.changed = ENT_ALL;
   Draw();  
