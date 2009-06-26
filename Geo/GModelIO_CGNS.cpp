@@ -658,7 +658,7 @@ int get_zone_definition(GModel &model, const int zoneDefinition,
         break;
       case 2:  // Zone defined by physical
         partition = -1;
-        _zoneName = model.getPhysicalName(globalPhysicalIt->first).c_str();
+        _zoneName = model.getPhysicalName(3/*FIXME*/, globalPhysicalIt->first);
         physicalItBegin = globalPhysicalIt++;
         physicalItEnd = globalPhysicalIt;
         break;
