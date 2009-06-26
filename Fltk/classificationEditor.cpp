@@ -383,7 +383,7 @@ static void class_color_cb(Fl_Widget* w, void* data)
     for (std::map<std::pair<int, int>, GEdge*>::iterator it = newEdges.begin() ; it != newEdges.end() ; ++it){
 
       GEdge *ge = it->second;
-      printf("new edge with tag %d \n", ge->tag());
+      printf("NEW edge with tag  = %d \n", ge->tag());
 
       std::list<MLine*> segments;
       for (int i=0; i < ge->lines.size(); i++){
@@ -391,7 +391,8 @@ static void class_color_cb(Fl_Widget* w, void* data)
       }
 
       //for each actual GEdge
-      while (! segments.empty()) {
+      while (!segments.empty()) {
+
 	std::vector<MLine*> myLines;
 	std::list<MLine*>::iterator it = segments.begin();
 
@@ -401,7 +402,7 @@ static void class_color_cb(Fl_Widget* w, void* data)
 	segments.erase(it);
 	it++;
 
-	printf("***candidate mline %d %d of size \n", vB->getNum(), vE->getNum(), segments.size());
+	//printf("***candidate mline %d %d of size %d \n", vB->getNum(), vE->getNum(), segments.size());
 
    	for (int i=0; i<2; i++) {
 
@@ -409,19 +410,24 @@ static void class_color_cb(Fl_Widget* w, void* data)
 	  for (std::list<MLine*>::iterator it = segments.begin() ; it != segments.end(); ++it){	
 	    MVertex *v1 = (*it)->getVertex(0);
 	    MVertex *v2 = (*it)->getVertex(1);
-	    printf("mline %d %d \n", v1->getNum(), v2->getNum());
-
+	    //printf("mline %d %d \n", v1->getNum(), v2->getNum());
+	    
+	    std::list<MLine*>::iterator itp;
 	    if ( v1 == vE  ){
-	      printf("->push back this mline \n");
+	      //printf("->push back this mline \n");
 	      myLines.push_back(*it);
-	      segments.erase(it);
+	      itp = it;
+	      it++;
+	      segments.erase(itp);
 	      vE = v2;
 	      i = -1;
 	    }
 	    else if ( v2 == vE){
-	      printf("->push back this mline \n");
+	      //printf("->push back this mline \n");
 	      myLines.push_back(*it);
-	      segments.erase(it);
+	      itp = it;
+	      it++;
+	      segments.erase(itp);
 	      vE = v1;
 	      i=-1;
 	    }
@@ -431,20 +437,20 @@ static void class_color_cb(Fl_Widget* w, void* data)
 
 	  if (segments.empty()) break;
 
-	  printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
+	  //printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
 	  MVertex *temp = vB;
 	  vB = vE;
 	  vE = temp;
-	  printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
+	  //printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
 
 	}
 	
- 	printf("************ CANDIDATE NEW EDGE \n");
- 	for (std::vector<MLine*>::iterator it = myLines.begin() ; it != myLines.end() ; ++it){
- 	  MVertex *v1 = (*it)->getVertex(0);
- 	  MVertex *v2 = (*it)->getVertex(1);
- 	  printf("Line %d %d \n", v1->getNum(), v2->getNum());
- 	}
+//  	printf("************ CANDIDATE NEW EDGE \n");
+//  	for (std::vector<MLine*>::iterator it = myLines.begin() ; it != myLines.end() ; ++it){
+//  	  MVertex *v1 = (*it)->getVertex(0);
+//  	  MVertex *v2 = (*it)->getVertex(1);
+//  	  printf("Line %d %d \n", v1->getNum(), v2->getNum());
+//  	}
 	GEdge *newGe = new discreteEdge(GModel::current(), maxEdgeNum() + 1, 0, 0);
 	newGe->lines.insert(newGe->lines.end(), myLines.begin(), myLines.end());
 	GModel::current()->add(newGe);

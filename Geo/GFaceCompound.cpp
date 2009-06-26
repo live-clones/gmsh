@@ -259,17 +259,22 @@ void GFaceCompound::getBoundingEdges()
 	GVertex *v1 = (*it)->getBeginVertex();
 	GVertex *v2 = (*it)->getEndVertex();
 	
+	std::set<GEdge*>::iterator itp;
 	if ( v1 == vE  ){
 	  printf("boundary add edge=%d \n", (*it)->tag());
 	  _loop.push_back(*it);
-	  _unique.erase(it);
+	  itp = it;
+	  it++;
+	  _unique.erase(itp);
 	  vE = v2;
 	  i = -1;
 	}
 	else if ( v2 == vE){
 	  printf("boundary add edge=%d \n", (*it)->tag());
 	  _loop.push_back(*it);
-	  _unique.erase(it);
+	  itp = it;
+	  it++;
+	  _unique.erase(itp);
 	  vE = v1;
 	  i=-1;
 	}

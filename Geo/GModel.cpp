@@ -1092,17 +1092,22 @@ void GModel::createTopologyFromMesh()
 	    MVertex *v2 = (*it).getVertex(1);
 	    //printf("mline %d %d size=%d\n", v1->getNum(), v2->getNum(), myEdges.size());
 
+	    std::vector<MEdge>::iterator itp;
 	    if ( v1 == vE  ){
 	      //printf("->v1 = vE push back this mline \n");
 	      myLines.push_back(*it);
-	      myEdges.erase(it);
+	      itp = it;
+	      it++;
+	      myEdges.erase(itp);
 	      vE = v2;
 	      i = -1;
 	    }
 	    else if ( v2 == vE){
 	      //printf("->v2 = VE push back this mline \n");
 	      myLines.push_back(*it);
-	      myEdges.erase(it);
+	      itp = it;
+	      it++;
+	      myEdges.erase(itp);
 	      vE = v1;
 	      i=-1;
 	    }
