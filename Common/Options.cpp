@@ -40,11 +40,6 @@
 #include "clippingWindow.h"
 #endif
 
-#if defined(WIN32)
-#undef min
-#undef max
-#endif
-
 // General routines for string options
 
 bool StringOption(int action, const char *category, int num, 

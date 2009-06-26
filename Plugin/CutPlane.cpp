@@ -12,11 +12,6 @@
 #include "Draw.h"
 #endif
 
-#if defined(WIN32)
-#undef min
-#undef max
-#endif
-
 int GMSH_CutPlanePlugin::iview = 0;
 
 StringXNumber CutPlaneOptions_Number[] = {

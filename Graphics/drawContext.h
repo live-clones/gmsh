@@ -11,6 +11,12 @@
 #include <set>
 #include "SBoundingBox3d.h"
 
+#if defined(WIN32)
+#include <windows.h>
+#undef min
+#undef max
+#endif
+
 #if defined(__APPLE__)
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>

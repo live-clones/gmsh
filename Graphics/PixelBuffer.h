@@ -11,6 +11,12 @@
 #include "GmshMessage.h"
 #include "Draw.h"
 
+#if defined(WIN32)
+#include <windows.h>
+#undef min
+#undef max
+#endif
+
 #if defined(__APPLE__)
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>

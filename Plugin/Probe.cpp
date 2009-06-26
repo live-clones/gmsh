@@ -14,11 +14,6 @@
 #include "Draw.h"
 #endif
 
-#if defined(WIN32)
-#undef min
-#undef max
-#endif
-
 int GMSH_ProbePlugin::iview = 0;
 
 StringXNumber ProbeOptions_Number[] = {
