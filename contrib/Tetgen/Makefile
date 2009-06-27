@@ -10,19 +10,8 @@ LIB = ../../lib/libGmshTetgen${LIBEXT}
 # Don't optimize Tetgen
 CFLAGS = ${FLAGS} ${DASH}DTETLIBRARY
 
-SRC = behavior.cxx\
-      constrain.cxx\
-      delaunay.cxx\
-      flip.cxx\
-      geom.cxx\
-      io.cxx\
-      main.cxx\
-      memorypool.cxx\
-      meshio.cxx\
-      meshstat.cxx\
-      predicates.cxx\
-      refine.cxx\
-      surface.cxx
+SRC = tetgen.cxx \
+      predicates.cxx
 
 OBJ = ${SRC:.cxx=${OBJEXT}}
 
@@ -50,16 +39,3 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-behavior${OBJEXT}: behavior.cxx tetgen.h
-constrain${OBJEXT}: constrain.cxx tetgen.h
-delaunay${OBJEXT}: delaunay.cxx tetgen.h
-flip${OBJEXT}: flip.cxx tetgen.h
-geom${OBJEXT}: geom.cxx tetgen.h
-io${OBJEXT}: io.cxx tetgen.h
-main${OBJEXT}: main.cxx tetgen.h
-memorypool${OBJEXT}: memorypool.cxx tetgen.h
-meshio${OBJEXT}: meshio.cxx tetgen.h
-meshstat${OBJEXT}: meshstat.cxx tetgen.h
-predicates${OBJEXT}: predicates.cxx tetgen.h
-refine${OBJEXT}: refine.cxx tetgen.h
-surface${OBJEXT}: surface.cxx tetgen.h
