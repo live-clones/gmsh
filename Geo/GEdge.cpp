@@ -240,7 +240,6 @@ double GEdge::length(const double &u0, const double &u1, const int nbQuadPoints)
 GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
 {
   double tolerance = 1.e-12;
-  double dist = 1.;
 
   Range<double> interval = parBounds(0);
   
@@ -283,7 +282,6 @@ double GEdge::parFromPoint(const SPoint3 &P) const
 bool GEdge::XYZToU(const double X, const double Y, const double Z, 
                    double &u, const double relax) const
 {
-  const double Precision = 1.e-8;
   const int MaxIter = 25;
   const int NumInitGuess = 11;
 

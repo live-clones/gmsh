@@ -648,7 +648,7 @@ static void blend_cb(Fl_Widget *w, void *data)
     m->getFMInternals()->makeGFace(m->getFMInternals()->current()->
 				   GetGroup(0)->GetBlendGroup()->
 				   GetPatch(i),m);
-  for (int i = 0; i < faces.size(); i++) {
+  for (unsigned int i = 0; i < faces.size(); i++) {
     //delete_fourier(faces[i]);
     faces[i]->setVisibility(0, true);
   }
@@ -1041,8 +1041,8 @@ projectionEditor::projectionEditor()
                                   "Blend");
     b1->callback(blend_cb, this);
     
-    Fl_Button *b2 = new Fl_Button(2 * WB + BB, height - WB - BH, BB, 
-                                  BH, "Intersect");
+    //Fl_Button *b2 = new Fl_Button(2 * WB + BB, height - WB - BH, BB, 
+    //                            BH, "Intersect");
   }
 
   _window->end();

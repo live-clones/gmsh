@@ -143,13 +143,6 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
   Draw();
 }
 
-static void plugin_cancel_cb(Fl_Widget *w, void *data)
-{
-  GUI::instance()->plugins->win->hide();
-  CTX::instance()->post.pluginDrawFunction = NULL;
-  Draw();
-}
-
 void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,
                                     int width, int height)
 {

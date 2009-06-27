@@ -78,8 +78,8 @@ std::vector<std::string> SplitFileName(std::string fileName)
   // returns [path, baseName, extension]
   int idot = fileName.find_last_of('.');
   int islash = fileName.find_last_of("/\\");
-  if(idot == std::string::npos) idot = -1;
-  if(islash == std::string::npos) islash = -1;
+  if(idot == (int)std::string::npos) idot = -1;
+  if(islash == (int)std::string::npos) islash = -1;
   std::vector<std::string> s(3);
   if(idot > 0)
     s[2] = fileName.substr(idot);

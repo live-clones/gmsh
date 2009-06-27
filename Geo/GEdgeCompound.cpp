@@ -39,7 +39,7 @@ void GEdgeCompound::orderEdges()
   std::vector<GEdge*> _c ;  
   std::list<GEdge*> edges ;  
 
-  for (int i=0;i<_compound.size();i++){
+  for (unsigned int i=0;i<_compound.size();i++){
     //printf("set compound %d for edge %d \n", tag(), _compound[i]->tag());
     _compound[i]->setCompound(this);
     edges.push_back(_compound[i]);
@@ -136,7 +136,7 @@ void GEdgeCompound::orderEdges()
   if (_orientation[0] && _compound[0]->getEndVertex() != _compound[1]->getEndVertex() 
       && _compound[0]->getEndVertex() != _compound[1]->getBeginVertex()){  
     //    printf("coucou again\n");
-    for (int i=0;i<_compound.size();i++){
+    for (unsigned int i = 0; i < _compound.size(); i++){
       _orientation[i] = !_orientation[i] ;
     }
   }
@@ -154,23 +154,28 @@ void GEdgeCompound::orderEdges()
 
 }
 
-int GEdgeCompound::minimumMeshSegments() const{
+int GEdgeCompound::minimumMeshSegments() const
+{
   int N = 0;
-  for (int i=0;i<_compound.size();i++)N +=_compound[i]->minimumMeshSegments();
-  return N;
-}
-int GEdgeCompound::minimumDrawSegments() const{
-  int N = 0;
-  for (int i=0;i<_compound.size();i++)N +=_compound[i]->minimumDrawSegments();
+  for (unsigned int i = 0; i < _compound.size(); i++) 
+    N +=_compound[i]->minimumMeshSegments();
   return N;
 }
 
+int GEdgeCompound::minimumDrawSegments() const
+{
+  int N = 0;
+  for (unsigned int i = 0; i < _compound.size(); i++)
+    N +=_compound[i]->minimumDrawSegments();
+  return N;
+}
 
 GEdgeCompound::~GEdgeCompound()
 {
 }
 
-Range<double> GEdgeCompound::parBounds(int i) const { 
+Range<double> GEdgeCompound::parBounds(int i) const
+{ 
   return Range<double>(0, _pars[_compound.size()]); 
 }
 
@@ -185,7 +190,7 @@ void GEdgeCompound::getLocalParameter ( const double &t,
 					double & tLoc) const
 {
 
-  for (iEdge=0 ; iEdge<_compound.size() ;iEdge++){
+  for (iEdge = 0; iEdge < (int)_compound.size(); iEdge++){
     //printf("iEdge=%d tmin=%g\n",iEdge,_pars[iEdge]);
     double tmin = _pars[iEdge];
     double tmax = _pars[iEdge+1];
@@ -203,7 +208,7 @@ void GEdgeCompound::getLocalParameter ( const double &t,
 void GEdgeCompound::parametrize() 
 {
   _pars.push_back(0.0);
-  for (int i=0;i<_compound.size();i++){
+  for (unsigned int i = 0; i < _compound.size(); i++){
     Range<double> b = _compound[i]->parBounds(0);
     _pars.push_back(_pars[_pars.size()-1]+(b.high() - b.low()));
   }   
@@ -213,7 +218,6 @@ void GEdgeCompound::parametrize()
   //}
 
 }
-
 
 double GEdgeCompound::curvature(double par) const
 {
@@ -239,4 +243,3 @@ SVector3 GEdgeCompound::firstDer(double par) const
   getLocalParameter(par,iEdge,tLoc);
   return _compound[iEdge]->firstDer(tLoc);
 } 
-

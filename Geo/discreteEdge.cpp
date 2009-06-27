@@ -53,7 +53,7 @@ void discreteEdge::orderMLines()
   std::list<MLine*> segments;
 
   //store all lines in a list : segments
-  for (int i=0;i<lines.size();i++){
+  for (unsigned int i = 0; i < lines.size(); i++){
     //printf("BEFORE ORDERING segment i=%d, vert=%d, %d\n", i, lines[i]->getVertex(0)->getNum(), lines[i]->getVertex(1)->getNum() );
     segments.push_back(lines[i]);
   }
@@ -142,7 +142,7 @@ void discreteEdge::orderMLines()
   if (_orientation[0] && lines[0]->getVertex(1) != lines[1]->getVertex(1)
       && lines[0]->getVertex(1) != lines[1]->getVertex(0)){
     printf("coucou here \n");
-    for (int i=0;i<lines.size();i++) _orientation[i] = !_orientation[i] ;
+    for (unsigned int i = 0; i < lines.size(); i++) _orientation[i] = !_orientation[i] ;
   }
 
 //   for (int i=0;i<lines.size();i++){
@@ -236,7 +236,7 @@ void discreteEdge::setBoundVertices()
 void discreteEdge::parametrize()
 { 
 
-  for (int i=0;i<lines.size()+1;i++){
+  for (unsigned int i = 0; i < lines.size() + 1; i++){
     _pars.push_back(i);
   }
 
@@ -250,7 +250,7 @@ void discreteEdge::parametrize()
 
   MVertex *vL = getBeginVertex()->mesh_vertices[0];
   int i = 0;
-  for(i=0 ; i < lines.size()-1; i++){
+  for(i = 0 ; i < (int)lines.size() - 1; i++){
     MVertex *vR ;
     if (_orientation[i] == 1 ) vR = lines[i]->getVertex(1);
     else vR = lines[i]->getVertex(0);
@@ -402,7 +402,7 @@ void discreteEdge::computeNormals () const
 void discreteEdge::getLocalParameter(const double &t, int &iLine,
                                      double &tLoc) const
 {
-  for (iLine=0 ; iLine<lines.size() ;iLine++){
+  for (iLine = 0; iLine < (int)lines.size(); iLine++){
     double tmin = _pars[iLine];
     double tmax = _pars[iLine+1];
     if (t >= tmin && t <= tmax){

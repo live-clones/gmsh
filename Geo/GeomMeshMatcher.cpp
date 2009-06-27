@@ -113,7 +113,7 @@ vector<Pair<GVertex*,GVertex*> >* GeomMeshMatcher::matchVertices(GModel* m1, GMo
          entity2++)
     {
       if ((*entity2)->dim() != 0) continue;
-      for (int ed = 0;
+      for (unsigned int ed = 0;
            ed < ((discreteVertex*) *entity2)->getNumMeshElements();
            ed++)
       {
@@ -158,8 +158,6 @@ vector<Pair<GEdge*,GEdge*> >*  GeomMeshMatcher::matchEdges(GModel* m1, GModel* m
   m1->getEntities(m1_entities);
   vector<GEntity*> m2_entities;
   m2->getEntities(m2_entities);
-
-  int counter1 = 0;
 
   for (vector<GEntity*>::iterator entity1 = m1_entities.begin();
        entity1 != m1_entities.end();
@@ -248,8 +246,6 @@ vector<Pair<GFace*,GFace*> >* GeomMeshMatcher:: matchFaces(GModel* m1, GModel* m
   vector<GEntity*> m2_entities;
   m2->getEntities(m2_entities);
 
-  int counter1 = 0;
-
   for (vector<GEntity*>::iterator entity1 = m1_entities.begin();
        entity1 != m1_entities.end();
        entity1++)
@@ -271,7 +267,6 @@ vector<Pair<GFace*,GFace*> >* GeomMeshMatcher:: matchFaces(GModel* m1, GModel* m
       num_matched_faces++;
     } else if (common_faces.size() > 1) {
 
-      int N;
       // Then, compute the minimal bounding box
       SOrientedBoundingBox geo_obb = ((GFace*)(*entity1))->getOBB();
 
@@ -326,8 +321,6 @@ vector<Pair<GRegion*,GRegion*> >* GeomMeshMatcher:: matchRegions(GModel* m1, GMo
   vector<GEntity*> m2_entities;
   m2->getEntities(m2_entities);
 
-  int counter1 = 0;
-
   for (vector<GEntity*>::iterator entity1 = m1_entities.begin();
        entity1 != m1_entities.end();
        entity1++)
@@ -373,14 +366,8 @@ vector<Pair<GRegion*,GRegion*> >* GeomMeshMatcher:: matchRegions(GModel* m1, GMo
 */
       list<GEdge*> boundaries = ((GRegion*) *entity1)->edges();
 
-      const int N = 10;
-      int count = 0;
-      const int N_total = N*boundaries.size();
-      double** vertices = new double*[N_total];
-
       // Then, compute the minimal bounding box
       SOrientedBoundingBox geo_obb = ((GRegion*) *entity1)->getOBB();
-
 
       GRegion* choice = 0;
       double best_score = DBL_MAX;

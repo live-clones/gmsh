@@ -1025,7 +1025,8 @@ static void visibility_per_window_cb(Fl_Widget *w, void *data)
   std::string what = (const char*)data;
   if(what == "item"){
     drawContext *ctx = GUI::instance()->getCurrentOpenglWindow()->getDrawContext();
-    for(int i = 0; i < GUI::instance()->visibility->per_window->size(); i++){
+    for(unsigned int i = 0; 
+        i < (unsigned int)GUI::instance()->visibility->per_window->size(); i++){
       if(i < GModel::list.size()){
         GModel *m = GModel::list[i];
         if(GUI::instance()->visibility->per_window->selected(i + 1)) ctx->show(m);

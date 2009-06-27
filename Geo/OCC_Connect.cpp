@@ -205,7 +205,7 @@ void dump(std::vector<std::pair<int,int> > const &e2v, std::ostream &out,
     const char *name="name")
 {
     out << "graph " << name << " {\n";
-    for(int e=0; e<e2v.size(); e++) {
+    for(unsigned int e = 0; e < e2v.size(); e++) {
       out << "    " << e2v[e].first << " -- " << e2v[e].second << "[label=" << e+1 << "]\n";
     }
     out << "}\n";
@@ -262,7 +262,7 @@ void OCC_Connect::FaceCutters::Build(TopoDS_Face const &face,
     /* First we create some data structures to access the topology */
     TopTools_IndexedMapOfShape vertices;
     std::vector<std::pair<int,int> > e2v;
-    for(int i=0; i<edges.size(); i++) {
+    for(unsigned int i = 0; i < edges.size(); i++) {
         TopExp::MapShapes(edges[i],TopAbs_VERTEX,vertices);
         TopoDS_Vertex v1, v2;
         TopExp::Vertices(edges[i],v1,v2);
@@ -271,17 +271,17 @@ void OCC_Connect::FaceCutters::Build(TopoDS_Face const &face,
     }
 
     std::vector<std::set<int> > v2e;
-    for(int e=0; e<e2v.size(); e++) {
-        if(e2v[e].first>=v2e.size())
+    for(unsigned int e = 0; e < e2v.size(); e++) {
+      if(e2v[e].first >= (int)v2e.size())
             v2e.resize(e2v[e].first+1);
         v2e[e2v[e].first].insert(e);
-        if(e2v[e].second>=v2e.size())
+        if(e2v[e].second >= (int)v2e.size())
             v2e.resize(e2v[e].second+1);
         v2e[e2v[e].second].insert(e);
     }
 
     std::set<int> open, odd;
-    for(int i=0; i<v2e.size(); i++) {
+    for(unsigned int i = 0; i < v2e.size(); i++) {
         if(v2e[i].size()==0)
             continue;
         else if(v2e[i].size()==1)
@@ -294,11 +294,11 @@ void OCC_Connect::FaceCutters::Build(TopoDS_Face const &face,
         std::cerr << "Inconsistent open loops\n";
     if(odd.size()&1)
         std::cerr << "Inconsistent odd loops\n";
-    int first_edge=-1;
+
     for(;;) {
-        int open_mode;
+        int open_mode = -1;
         std::set<int> current_vertices;
-        for(int start=0; start<v2e.size(); start++) {
+        for(unsigned int start = 0; start < v2e.size(); start++) {
 	    if(v2e[start].size()==1) {
 		if(verbose&Cutting)
                   std::cout << "start open at " << start << "\n";
@@ -308,7 +308,7 @@ void OCC_Connect::FaceCutters::Build(TopoDS_Face const &face,
 	    }
         }
         if(!current_vertices.size()) {
-	    for(int start=0; start<v2e.size(); start++) {
+	    for(unsigned int start = 0; start < v2e.size(); start++) {
 		if(v2e[start].size()) {
 		    if(verbose&Cutting)
                       std::cout << "start closed at " << start << "\n";
@@ -421,7 +421,7 @@ void OCC_Connect::FaceCutters::Build(TopoDS_Face const &face,
         BRep_Builder BB;
         TopoDS_Compound compound;
         BB.MakeCompound(compound);
-        for(int i=0; i<edges.size(); i++)
+        for(unsigned int i = 0; i < edges.size(); i++)
             BB.Add(compound,edges[i]);
         BRepTools::Write(compound,"cutter.brep");
         ofstream out("cutter.dot",ios::trunc|ios::out);
@@ -502,7 +502,6 @@ inline OCC_Connect::cutmap_t OCC_Connect::SelectCuttingEdges(
 void OCC_Connect::Intersect(BRep_Builder &BB, TopoDS_Shape &target,
     TopoDS_Shape &shape, TopoDS_Shape &tool)
 {
-    int t=0;
     /***************************************************************************
       	We start by splitting edges at all the edge-edge intersections.
 	This may generate new vertices and edges.
@@ -940,7 +939,7 @@ bool OCC_Connect::CanMergeFace(TopoDS_Face face1,TopoDS_Face face2) const
     // FIXME, this really does not work.
     return 1;
 
-    double tol=1e-7;
+    //double tol=1e-7;
 
     Handle(Geom_Surface) surface=BRep_Tool::Surface(face1);
     Standard_Real u1, u2, v1, v2;

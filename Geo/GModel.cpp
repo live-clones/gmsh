@@ -338,7 +338,7 @@ void GModel::setSelection(int val)
     // reset selection in elements (stored in the visibility flag to
     // save space)
     if(val == 0){
-      for(int j = 0; j < entities[i]->getNumMeshElements(); j++)
+      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
         if(entities[i]->getMeshElement(j)->getVisibility() == 2)
           entities[i]->getMeshElement(j)->setVisibility(1);
     }
@@ -1040,7 +1040,7 @@ void GModel::createTopologyFromMesh()
 	}
       }
       else {
-	for(int i = 0; i < myEdges.size(); i++){
+	for(unsigned int i = 0; i < myEdges.size(); i++){
 	  if (myEdges[i].getVertex(0)->onWhat()->dim() == 1) {
 	    int tagEdge = myEdges[i].getVertex(0)->onWhat()->tag();
 	    //printf("tagedge =%d \n", tagEdge);
@@ -1141,7 +1141,7 @@ void GModel::createTopologyFromMesh()
 	add(e);
 	Dedges.push_back(e);
 	std::list<MVertex*> all_vertices;
-	for(int i = 0; i < myLines.size(); i++) {
+	for(unsigned int i = 0; i < myLines.size(); i++) {
 	  MVertex *v0 = myLines[i].getVertex(0);
 	  MVertex *v1 = myLines[i].getVertex(1);
 	  e->lines.push_back(new MLine( v0, v1));

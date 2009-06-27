@@ -313,7 +313,7 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(vector<SPoint3> vertices) {
   */
   // We take the smallest component, then project the data on the plane defined by the other twos
 
-  int smallest_comp;
+  int smallest_comp = 0;
   if (sizes[0] <= sizes[1] && sizes[0] <= sizes[2])
     smallest_comp = 0;
   else if (sizes[1] <= sizes[0] && sizes[1] <= sizes[2])
@@ -344,7 +344,7 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(vector<SPoint3> vertices) {
   DocRecord record(points.size());
   record.numPoints = points.size();
   srand((unsigned)time(0));
-  for (int i = 0; i < points.size(); i++) {
+  for (unsigned int i = 0; i < points.size(); i++) {
     record.points[i].where.h = points[i]->x()+(10e-6)*sizes[smallest_comp==0?1:0]*(-0.5+((double)rand())/RAND_MAX);
     record.points[i].where.v = points[i]->y()+(10e-6)*sizes[smallest_comp==2?1:0]*(-0.5+((double)rand())/RAND_MAX);
     record.points[i].adjacent = NULL;

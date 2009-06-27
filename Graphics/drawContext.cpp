@@ -398,7 +398,7 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
       if(_bgImage.empty()){
         int idot = CTX::instance()->bgImageFileName.find_last_of('.');
         std::string ext;
-        if(idot > 0 && idot < CTX::instance()->bgImageFileName.size())
+        if(idot > 0 && idot < (int)CTX::instance()->bgImageFileName.size())
           ext = CTX::instance()->bgImageFileName.substr(idot + 1);
         Fl_RGB_Image *img = 0;
         if(ext == "jpg" || ext == "JPG" || ext == "jpeg" || ext == "JPEG")

@@ -72,7 +72,7 @@ static void field_put_on_view_cb(Fl_Widget *w, void *data)
   Field *field = (Field*)GUI::instance()->fields->editor_group->user_data();
   if(mb->value() == 0)
     field->putOnNewView();
-  else if(mb->value() - 1 < PView::list.size())
+  else if(mb->value() - 1 < (int)PView::list.size())
     field->putOnView(PView::list[mb->value() - 1]);
   GUI::instance()->updateViews();
   Draw();

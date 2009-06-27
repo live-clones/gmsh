@@ -304,7 +304,7 @@ int Solver(int num, const char *args)
        !initOption[3] || !initOption[4]){ // some options have been changed
       for(int i = 0; i < SINFO[num].nboptions; i++) {
         GUI::instance()->solver[num]->choice[i]->clear();
-        for(int j = 0; j < SINFO[num].option[i].size(); j++)
+        for(unsigned int j = 0; j < SINFO[num].option[i].size(); j++)
           GUI::instance()->solver[num]->choice[i]->add(SINFO[num].option[i][j].c_str());
         GUI::instance()->solver[num]->choice[i]->value(0);
       }

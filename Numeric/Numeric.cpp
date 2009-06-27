@@ -590,16 +590,13 @@ f(x+a*d) = f(x) + f'(x) (
 
 */
 
-void gmshLineSearch (double (*func)(gmshVector<double> &, void *), void* data, 
-		     gmshVector<double> &x,
-		     gmshVector<double> &p,  
-		     gmshVector<double> &g,  
-		     double &f, 
-		     double stpmax, int &check)
+void gmshLineSearch(double (*func)(gmshVector<double> &, void *), void* data, 
+                    gmshVector<double> &x, gmshVector<double> &p,  
+                    gmshVector<double> &g, double &f, 
+                    double stpmax, int &check)
 {
   int i;
-  double alam,alam2,alamin,f2,fold2,rhs1,rhs2,sum,temp,
-    tmplam;
+  double alam, alam2 = 1., alamin, f2 = 0., fold2 = 0., rhs1, rhs2, temp, tmplam;
 
   const double ALF = 1.0e-4;
   const double TOLX = 1.0e-9;

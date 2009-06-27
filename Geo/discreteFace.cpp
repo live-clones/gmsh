@@ -28,7 +28,7 @@ void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge > &map_
   //find the boundary edges
 
   std::list<MEdge> bound_edges;
-  for (int iFace = 0; iFace  < getNumMeshElements() ; iFace++) {
+  for (unsigned int iFace = 0; iFace  < getNumMeshElements() ; iFace++) {
     std::vector<MVertex*> fv;
     MElement *e = getMeshElement(iFace);
     e->getFaceVertices(0, fv);

@@ -28,10 +28,9 @@ class FM_Internals {
   void buildGModel(FM::Reader* reater, GModel* model);
 
   FM::Reader* getReader(int tag) 
-    { 
-      if (tag < reader.size())
-	return reader[tag]; 
-    }
+  { 
+    if(tag < (int)reader.size()) return reader[tag];
+  }
   int getSize() { return reader.size(); }
   FM::Reader* current() { return reader[reader.size() - 1]; }
 };

@@ -25,9 +25,8 @@ class MPolyhedron : public MElement {
   void _init();
  public:
   MPolyhedron(std::vector<MVertex*> v, int num=0, int part=0)
-    : MElement(num, part)
+    : MElement(num, part), _owner(false), _orig(0)
   {
-    _orig = NULL; _owner = false;
     /*_parts.push_back(new MTetrahedron(v[0], v[1], v[2], v[3]));
     for(unsigned int i = 4; i < v.size(); i++) {
       unsigned int k;
@@ -62,15 +61,14 @@ class MPolyhedron : public MElement {
     }*/
   }
   MPolyhedron(std::vector<MTetrahedron*> vT, int num=0, int part=0)
-    : MElement(num, part)
+    : MElement(num, part), _owner(false), _orig(0)
   {
-    _orig = NULL; _owner = false;
     for(unsigned int i = 0; i < vT.size(); i++)
       _parts.push_back(vT[i]);
     _init();
   }
   MPolyhedron(std::vector<MTetrahedron*> vT, MElement* orig, bool owner, int num=0, int part=0)
-    : MElement(num, part), _orig(orig), _owner(owner)
+    : MElement(num, part), _owner(owner), _orig(orig)
   {
     for(unsigned int i = 0; i < vT.size(); i++)
       _parts.push_back(vT[i]);
@@ -156,24 +154,22 @@ class MPolygon : public MElement {
   void _initVertices();
  public:
   MPolygon(std::vector<MVertex*> v, int num=0, int part=0)
-    : MElement(num, part)
+    : MElement(num, part), _owner(false), _orig(0)
   {
-    _orig = NULL; _owner = false;
     for(unsigned int i = 0; i < v.size(); i++)
       _vertices.push_back(v[i]);
     for(unsigned int i = 1; i < v.size() - 1; i++)
       _parts.push_back(new MTriangle(v[0], v[i], v[i+1]));
   }
   MPolygon(std::vector<MTriangle*> vT, int num=0, int part=0)
-    : MElement(num, part)
+    : MElement(num, part), _owner(false), _orig(0)
   {
-    _orig = NULL; _owner = false;
     for(unsigned int i = 0; i < vT.size(); i++)
       _parts.push_back(vT[i]);
     _initVertices();
   }
   MPolygon(std::vector<MTriangle*> vT, MElement* orig, bool owner, int num=0, int part=0)
-    : MElement(num, part), _orig(orig), _owner(owner)
+    : MElement(num, part), _owner(owner), _orig(orig)
   {
     for(unsigned int i = 0; i < vT.size(); i++)
       _parts.push_back(vT[i]);

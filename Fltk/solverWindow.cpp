@@ -129,7 +129,7 @@ static void solver_command_cb(Fl_Widget *w, void *data)
       return;
     }
     int val = GUI::instance()->solver[num]->choice[usedopts]->value();
-    if(val < SINFO[num].option[usedopts].size())
+    if(val < (int)SINFO[num].option[usedopts].size())
       sprintf(command, SINFO[num].button_command[idx].c_str(), 
               SINFO[num].option[usedopts][val].c_str());
     else{

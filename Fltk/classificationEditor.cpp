@@ -196,17 +196,6 @@ static void class_ok_cb(Fl_Widget *w, void *data)
   Msg::StatusBar(3, false, "");
 }
 
-static void class_okcolor_cb(Fl_Widget *w, void *data)
-{
-  classificationEditor *e = (classificationEditor*)data;
-  e->edge_detec->deactivate();
-  e->edge_detec->show();
-  e->face_color->deactivate();
-  e->face_color->hide();
-  //  class_save_cb(w,data);
-  Msg::StatusBar(3, false, "");
-}
-
 static int maxEdgeNum()
 {
   GModel::eiter it = GModel::current()->firstEdge();
@@ -386,7 +375,7 @@ static void class_color_cb(Fl_Widget* w, void* data)
       printf("NEW edge with tag  = %d \n", ge->tag());
 
       std::list<MLine*> segments;
-      for (int i=0; i < ge->lines.size(); i++){
+      for (unsigned int i = 0; i < ge->lines.size(); i++){
 	segments.push_back(ge->lines[i]);
       }
 
@@ -406,7 +395,6 @@ static void class_color_cb(Fl_Widget* w, void* data)
 
    	for (int i=0; i<2; i++) {
 
-	  bool found = false;
 	  for (std::list<MLine*>::iterator it = segments.begin() ; it != segments.end(); ++it){	
 	    MVertex *v1 = (*it)->getVertex(0);
 	    MVertex *v2 = (*it)->getVertex(1);
@@ -486,7 +474,7 @@ static void updateedges_cb(Fl_Widget* w, void* data)
 {
   classificationEditor *e = (classificationEditor*)data;
  
-  printf("%d inside edges detected\n", e->edges_detected.size());
+  printf("%d inside edges detected\n", (int)e->edges_detected.size());
 
   for(unsigned int i = 0; i < e->temporary->lines.size(); i++){
     delete e->temporary->lines[i];
@@ -501,7 +489,7 @@ static void updateedges_cb(Fl_Widget* w, void* data)
     e->temporary->lines.push_back(new MLine(ea.v1, ea.v2));
   } 
 
-  printf("%d boundary edges detected\n",  e->edges_lonly.size());
+  printf("%d boundary edges detected\n", (int)e->edges_lonly.size());
   if(e->_togbuttons[CLASSTOGBUTTON_CLOS]->value()){
     for(unsigned int i = 0 ; i < e->edges_lonly.size(); i++){
       edge_angle ea = e->edges_lonly[i];

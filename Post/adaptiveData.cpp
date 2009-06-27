@@ -927,7 +927,7 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
   }
   
   int numVals = _coeffsVal ? _coeffsVal->size1() : T::numNodes;
-  if(numVals != values.size()){
+  if(numVals != (int)values.size()){
     Msg::Error("Wrong number of values in adaptation %d != %i", 
                numVals, values.size());
     return;
@@ -970,7 +970,7 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
   }
   
   int numNodes = _coeffsGeom ? _coeffsGeom->size1() : T::numNodes;
-  if(numNodes != coords.size()){
+  if(numNodes != (int)coords.size()){
     Msg::Error("Wrong number of nodes in adaptation %d != %i", 
                numNodes, coords.size());
     return;

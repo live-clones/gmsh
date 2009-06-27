@@ -136,9 +136,7 @@ static const char *GetOptionSaveLevel(int level)
 
 static void PrintStringOptionsDoc(StringXString s[], const char *prefix, FILE *file)
 {
-  int i = 0, j;
-  char tmp[1024];
-
+  int i = 0;
   while(s[i].str) {
     fprintf(file, "@item %s%s\n", prefix, s[i].str);
     fprintf(file, "%s@*\n", s[i].help);
@@ -1928,7 +1926,7 @@ std::string opt_view_name(OPT_ARGS_STR)
 #if defined(HAVE_FLTK)
     // change name in GUI for the view and its aliases
     if(GUI::available()){
-      for(unsigned int i = 0; i < PView::list.size(); i++){
+      for(int i = 0; i < (int)PView::list.size(); i++){
         if((i == num || 
             PView::list[i]->getAliasOf() == view->getNum() ||
             PView::list[i]->getNum() == view->getAliasOf()) && 

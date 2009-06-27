@@ -904,7 +904,6 @@ static Curve *DuplicateCurve(Curve *c, bool copyMeshingMethod)
 
 static void CopySurface(Surface *s, Surface *ss, bool copyMeshingMethod)
 {
-  int i, j;
   ss->Typ = s->Typ;
   if(copyMeshingMethod){
     ss->Method = s->Method;
@@ -2932,7 +2931,7 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2])
   }
   {
     int NSAMPLES = 500;
-    double uok, vok;
+    double uok = 0.5, vok = 0.5;
     double dmin = 1.e22;
     for (int i = 0; i < NSAMPLES; i++){
       const double U = i / (double)(NSAMPLES - 1);

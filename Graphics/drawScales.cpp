@@ -159,7 +159,7 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
   PViewData *data;
   
   // requested by Laurent: but is this really what we should be doing?
-  if(opt->externalViewIndex >= 0 && opt->externalViewIndex < PView::list.size())
+  if(opt->externalViewIndex >= 0 && opt->externalViewIndex < (int)PView::list.size())
     data = PView::list[opt->externalViewIndex]->getData();
   else
     data = p->getData();

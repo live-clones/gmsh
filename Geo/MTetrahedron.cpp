@@ -202,8 +202,7 @@ static void _myGetFaceRep(MTetrahedron *tet, int num, double *x, double *y, doub
   const double d = 1. / numSubEdges;
 
   SPoint3 pnt1, pnt2, pnt3;
-  double J1[2][3], J2[2][3], J3[2][3];
-  double u1,v1,u2,v2,u3,v3;
+  double u1, v1, u2, v2, u3, v3;
   if (ix % 2 == 0){
     u1 = ix / 2 * d; v1= iy*d;
     u2 = (ix / 2 + 1) * d ; v2 =  iy * d;
@@ -227,16 +226,16 @@ static void _myGetFaceRep(MTetrahedron *tet, int num, double *x, double *y, doub
   double W2 = pp[iVertex1][2] * (1.-u2-v2) + pp[iVertex2][2] * u2 + pp[iVertex3][2] * v2;
   double W3 = pp[iVertex1][2] * (1.-u3-v3) + pp[iVertex2][2] * u3 + pp[iVertex3][2] * v3;
 
-  tet->pnt(U1,V1,W1,pnt1);
-  tet->pnt(U2,V2,W2,pnt2);
-  tet->pnt(U3,V3,W3,pnt3);
+  tet->pnt(U1, V1, W1, pnt1);
+  tet->pnt(U2, V2, W2, pnt2);
+  tet->pnt(U3, V3, W3, pnt3);
 
   x[0] = pnt1.x(); x[1] = pnt2.x(); x[2] = pnt3.x();
   y[0] = pnt1.y(); y[1] = pnt2.y(); y[2] = pnt3.y();
   z[0] = pnt1.z(); z[1] = pnt2.z(); z[2] = pnt3.z();
 
-  SVector3 d1(x[1]-x[0],y[1]-y[0],z[1]-z[0]);
-  SVector3 d2(x[2]-x[0],y[2]-y[0],z[2]-z[0]);
+  SVector3 d1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
+  SVector3 d2(x[2] - x[0], y[2] - y[0], z[2] - z[0]);
   n[0] = crossprod(d1, d2);
   n[0].normalize();
   n[1] = n[0];
