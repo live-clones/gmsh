@@ -1,4 +1,16 @@
-// g++ -I/usr/local/opencascade/inc driverOCC.cpp -lGmsh -L/usr/local/opencascade/lib -lTKSTEP -lTKSTEP209 -lTKSTEPAttr -lTKSTEPBase -lTKIGES -lTKXSBase -lTKOffset -lTKFeat -lTKFillet -lTKBool -lTKShHealing -lTKMesh -lTKHLR -lTKBO -lTKPrim -lTKTopAlgo -lTKGeomAlgo -lTKBRep -lTKGeomBase -lTKG3d -lTKG2d -lTKAdvTools -lTKMath -lTKernel -lm
+// This demonstrates how to import an OpenCascade model WITHOUT using
+// Gmsh's own I/O layer (useful if you create OCC objects in your own
+// code, that you want to import dynamically in Gmsh).
+//
+// If you just want to load OpenCascade files (.brep, .step, etc.) you
+// SHOULD NOT use this interface: simply use the standard I/O API.
+
+// g++ -I/usr/local/opencascade/inc driverOCC.cpp -lGmsh
+// -L/usr/local/opencascade/lib -lTKSTEP -lTKSTEP209 -lTKSTEPAttr
+// -lTKSTEPBase -lTKIGES -lTKXSBase -lTKOffset -lTKFeat -lTKFillet
+// -lTKBool -lTKShHealing -lTKMesh -lTKHLR -lTKBO -lTKPrim -lTKTopAlgo
+// -lTKGeomAlgo -lTKBRep -lTKGeomBase -lTKG3d -lTKG2d -lTKAdvTools
+// -lTKMath -lTKernel -lm
 
 #include <stdio.h>
 #include <gmsh/Gmsh.h>
@@ -53,7 +65,7 @@ int main(int argc, char **argv)
   GmshSetMessageHandler(&c);
 
   // import the shape, and mesh it
-  m.importOCCShape((void*)&shape, 0);
+  m.importOCCShape((void*)&shape);
   try{
     m.mesh(2);
   }
