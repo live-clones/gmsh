@@ -1972,6 +1972,7 @@ if test "${enable_mpi+set}" = set; then
   enableval=$enable_mpi;
 fi
 
+
 # Check whether --enable-graphics was given.
 if test "${enable_graphics+set}" = set; then
   enableval=$enable_graphics;
@@ -1980,6 +1981,11 @@ fi
 # Check whether --enable-minimal was given.
 if test "${enable_minimal+set}" = set; then
   enableval=$enable_minimal;
+fi
+
+# Check whether --enable-tetgen-new was given.
+if test "${enable_tetgen_new+set}" = set; then
+  enableval=$enable_tetgen_new;
 fi
 
 
@@ -4691,8 +4697,44 @@ _ACEOF
     fi
   fi
 
+    if test "x$enable_tetgen_new" = "xyes"; then
+    { echo "$as_me:$LINENO: checking for ./contrib/TetgenNew/tetgen.h" >&5
+echo $ECHO_N "checking for ./contrib/TetgenNew/tetgen.h... $ECHO_C" >&6; }
+if test "${ac_cv_file___contrib_TetgenNew_tetgen_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "./contrib/TetgenNew/tetgen.h"; then
+  ac_cv_file___contrib_TetgenNew_tetgen_h=yes
+else
+  ac_cv_file___contrib_TetgenNew_tetgen_h=no
+fi
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_file___contrib_TetgenNew_tetgen_h" >&5
+echo "${ECHO_T}$ac_cv_file___contrib_TetgenNew_tetgen_h" >&6; }
+if test $ac_cv_file___contrib_TetgenNew_tetgen_h = yes; then
+  TETGEN="yes"
+fi
+
+    if test "x${TETGEN}" = "xyes"; then
+      GMSH_DIRS="${GMSH_DIRS} contrib/TetgenNew"
+      GMSH_LIBS="${GMSH_LIBS} -lGmshTetgenNew"
+      cat >>confdefs.h <<\_ACEOF
+#define HAVE_TETGEN 1
+_ACEOF
+
+      BO="${BO} TetgenNew"
+      { echo "$as_me:$LINENO: WARNING: You are building with an experimental version of Tetgen that" >&5
+echo "$as_me: WARNING: You are building with an experimental version of Tetgen that" >&2;}
+      { echo "$as_me:$LINENO: WARNING: is KNOWN TO BE BUGGY on 64 bits archs and on WIN32/MSVC." >&5
+echo "$as_me: WARNING: is KNOWN TO BE BUGGY on 64 bits archs and on WIN32/MSVC." >&2;}
+    fi
+  else
     if test "x$enable_tetgen" != "xno"; then
-    { echo "$as_me:$LINENO: checking for ./contrib/Tetgen/tetgen.h" >&5
+      { echo "$as_me:$LINENO: checking for ./contrib/Tetgen/tetgen.h" >&5
 echo $ECHO_N "checking for ./contrib/Tetgen/tetgen.h... $ECHO_C" >&6; }
 if test "${ac_cv_file___contrib_Tetgen_tetgen_h+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -4713,20 +4755,21 @@ if test $ac_cv_file___contrib_Tetgen_tetgen_h = yes; then
   TETGEN="yes"
 fi
 
-    if test "x${TETGEN}" = "xyes"; then
-      GMSH_DIRS="${GMSH_DIRS} contrib/Tetgen"
-      GMSH_LIBS="${GMSH_LIBS} -lGmshTetgen"
-      cat >>confdefs.h <<\_ACEOF
+      if test "x${TETGEN}" = "xyes"; then
+        GMSH_DIRS="${GMSH_DIRS} contrib/Tetgen"
+        GMSH_LIBS="${GMSH_LIBS} -lGmshTetgen"
+        cat >>confdefs.h <<\_ACEOF
 #define HAVE_TETGEN 1
 _ACEOF
 
-      BO="${BO} Tetgen"
-      { echo "$as_me:$LINENO: WARNING: By including Tetgen you have to comply with Tetgen' special" >&5
+        BO="${BO} Tetgen"
+        { echo "$as_me:$LINENO: WARNING: By including Tetgen you have to comply with Tetgen' special" >&5
 echo "$as_me: WARNING: By including Tetgen you have to comply with Tetgen' special" >&2;}
-      { echo "$as_me:$LINENO: WARNING: licensing requirements stated in contrib/Tetgen/LICENSE. To" >&5
+        { echo "$as_me:$LINENO: WARNING: licensing requirements stated in contrib/Tetgen/LICENSE. To" >&5
 echo "$as_me: WARNING: licensing requirements stated in contrib/Tetgen/LICENSE. To" >&2;}
-      { echo "$as_me:$LINENO: WARNING: disable Tetgen, use the --disable-tetgen option" >&5
+        { echo "$as_me:$LINENO: WARNING: disable Tetgen, use the --disable-tetgen option" >&5
 echo "$as_me: WARNING: disable Tetgen, use the --disable-tetgen option" >&2;}
+      fi
     fi
   fi
 
