@@ -4,10 +4,10 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string>
-#include "GUI.h"
-#include "menuWindow.h"
 #include "Gmsh.h"
 #include "GmshMessage.h"
+#include "GUI.h"
+#include "menuWindow.h"
 #include "Draw.h"
 #include "Context.h"
 #include "Options.h"

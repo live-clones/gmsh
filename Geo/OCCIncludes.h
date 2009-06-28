@@ -110,11 +110,9 @@ using std::iostream;
 #include "BRepAlgoAPI_Cut.hxx"
 #endif
 
-// some Windows versions define min/max macros! 
 #if defined(WIN32)
 #undef min
 #undef max
 #endif
 
 #endif
-
