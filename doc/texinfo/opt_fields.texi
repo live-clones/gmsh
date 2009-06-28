@@ -127,6 +127,52 @@ type: integer@*
 default value: @code{1}
 @end table
 
+@item Cylinder
+The value of this field is VIn inside the cylinder, VOut outside.@*
+The cylinder is given by@*
+@*
+  ||dX||^2 < R^2 &&@*
+  dX = (X - X0) - ((X - X0).A)/(||A||^2) . A@*
+Options:@*
+@table @code
+@item Radius
+Radius@*
+type: float@*
+default value: @code{0}
+@item VIn
+Value inside the cylinder@*
+type: float@*
+default value: @code{0}
+@item VOut
+Value outside the cylinder@*
+type: float@*
+default value: @code{0}
+@item XAxis
+X component of the cylinder axis@*
+type: float@*
+default value: @code{0}
+@item XCenter
+X coordinate of the cylinder center@*
+type: float@*
+default value: @code{0}
+@item YAxis
+Y component of the cylinder axis@*
+type: float@*
+default value: @code{0}
+@item YCenter
+Y coordinate of the cylinder center@*
+type: float@*
+default value: @code{0}
+@item ZAxis
+Z component of the cylinder axis@*
+type: float@*
+default value: @code{1}
+@item ZCenter
+Z coordinate of the cylinder center@*
+type: float@*
+default value: @code{0}
+@end table
+
 @item Gradient
 Compute the finite difference gradient of Field[IField]:@*
 @*

@@ -548,6 +548,35 @@ Default value: @code{20}
 Default value: @code{-1}
 @end table
 
+@item Plugin(HomologyComputation)
+Plugin(HomologyComputation) computes generators 
+for (relative) homology groups and their thick cuts. 
+
+Plugin(HomologyComputation) creates new views.
+
+String options:
+@table @code
+@item Filename
+Default value: @code{"homology.msh"}
+@end table
+Numeric options:
+@table @code
+@item 1. Physical group for domain
+Default value: @code{0}
+@item 2. Physical group for domain
+Default value: @code{0}
+@item 1. Physical group for subdomain
+Default value: @code{0}
+@item 2. Physical group for subdomain
+Default value: @code{0}
+@item Compute generators
+Default value: @code{1}
+@item Compute thick cuts
+Default value: @code{0}
+@item Omit dimensions
+Default value: @code{1}
+@end table
+
 @item Plugin(Integrate)
 Plugin(Integrate) integrates scalar fields over
 all the elements in the view `iView', as well

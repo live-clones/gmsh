@@ -266,7 +266,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MshFileVersion
 Version of the MSH file format to use@*
-Default value: @code{2}@*
+Default value: @code{2.1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.NbHexahedra

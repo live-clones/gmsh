@@ -74,6 +74,11 @@ Display width of lines (in pixels)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.MatchGeomAndMesh
+Matches geometries and meshes.@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.Normals
 Display size of normal vectors (in pixels)@*
 Default value: @code{0}@*
@@ -96,6 +101,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCSewFaces
 Sew faces in STEP, IGES and BRep models@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCConnectFaces
+Cut and connect faces in STEP, IGES and BRep models@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
