@@ -23,7 +23,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-// Modified for Gmsh (C++, 64 bits, ...)
+// Modified for Gmsh (C++ and 64 bit compatibility)
 
 #include <stdio.h>
 

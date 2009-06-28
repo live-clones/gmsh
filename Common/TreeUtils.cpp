@@ -93,6 +93,12 @@ int Tree_Size(Tree_T * tree)
   return tree->size;
 }
 
+void Tree_Action(Tree_T *tree, void (*action) (void *data, void *dummy))
+{
+  if(!tree) return;
+  avl_foreach(tree->root, action, AVL_FORWARD);
+}
+
 static List_T *pListTransfer;
 
 void TransferList(void *a, void *b)

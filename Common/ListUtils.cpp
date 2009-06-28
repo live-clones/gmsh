@@ -96,22 +96,6 @@ void List_Write(List_T * liste, int index, void *data)
   }
 }
 
-void List_Put(List_T * liste, int index, void *data)
-{
-  if(index < 0)
-    Msg::Error("Wrong list index (put)");
-  else {
-    if(index >= liste->n) {
-      liste->n = index + 1;
-      List_Realloc(liste, liste->n);
-      List_Write(liste, index, data);
-    }
-    else {
-      List_Write(liste, index, data);
-    }
-  }
-}
-
 void List_Pop(List_T * liste)
 {
   if(liste->n > 0)
@@ -137,15 +121,6 @@ void *List_Pointer_NoChange(List_T * liste, int index)
 
 void *List_Pointer_Fast(List_T * liste, int index)
 {
-  return (&liste->array[index * liste->size]);
-}
-
-void *List_Pointer_Test(List_T * liste, int index)
-{
-  if(!liste || (index < 0) || (index >= liste->n))
-    return NULL;
-
-  liste->isorder = 0;
   return (&liste->array[index * liste->size]);
 }
 
@@ -184,20 +159,6 @@ int List_Search(List_T * liste, void *data,
   if(ptr == NULL)
     return (0);
   return (1);
-}
-
-int List_ISearch(List_T * liste, void *data,
-                 int (*fcmp) (const void *a, const void *b))
-{
-  void *ptr;
-
-  if(liste->isorder != 1)
-    List_Sort(liste, fcmp);
-  liste->isorder = 1;
-  ptr = (void *)bsearch(data, liste->array, liste->n, liste->size, fcmp);
-  if(ptr == NULL)
-    return (-1);
-  return (((long)ptr - (long)liste->array) / liste->size);
 }
 
 int List_ISearchSeq(List_T * liste, void *data,
@@ -276,16 +237,6 @@ void List_Copy(List_T * a, List_T * b)
   }
 }
 
-void List_Merge(List_T * a, List_T * b)
-{
-  int i;
-
-  if(!a || !b) return;
-  for(i = 0; i < List_Nbr(a); i++) {
-    List_Add(b, List_Pointer_Fast(a, i));
-  }
-}
-
 void List_Remove(List_T *a, int i)
 {
   memcpy(&a->array[i * a->size], &a->array[(i + 1) * a->size], 
@@ -304,6 +255,19 @@ void List_Insert_In_List(List_T *a, int i, List_T *b)
            b->size);
   for(int j = 0;j < a->n; j++)
     memcpy(List_Pointer_Fast(b, i + j), List_Pointer_Fast(a, j), b->size);
+}
+
+List_T *ListOfDouble2ListOfInt(List_T *dList)
+{
+  int n = List_Nbr(dList); 
+  List_T *iList = List_Create(n, n, sizeof(int));
+  for(int i = 0; i < n; i++){
+    double d;
+    List_Read(dList, i, &d);
+    int j = (int)d;
+    List_Add(iList, &j);
+  }
+  return iList;
 }
 
 // Comparison functions
@@ -329,18 +293,5 @@ int fcmp_double(const void *a, const void *b)
     return -1;
   else
     return 0;
-}
-
-List_T *ListOfDouble2ListOfInt(List_T *dList)
-{
-  int n = List_Nbr(dList); 
-  List_T *iList = List_Create(n, n, sizeof(int));
-  for(int i = 0; i < n; i++){
-    double d;
-    List_Read(dList, i, &d);
-    int j = (int)d;
-    List_Add(iList, &j);
-  }
-  return iList;
 }
 
