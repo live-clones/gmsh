@@ -69,23 +69,23 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-Main${OBJEXT}: Main.cpp GUI.h menuWindow.h popupButton.h ../Common/Gmsh.h \
-  ../Common/GmshMessage.h Draw.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/meshPartitionOptions.h ../Common/Options.h ../Post/ColorTable.h \
-  ../Parser/Parser.h ../Common/OpenFile.h ../Common/CommandLine.h \
-  Solvers.h ../Plugin/PluginManager.h ../Geo/GModel.h ../Geo/GVertex.h \
-  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/SOrientedBoundingBox.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/Pair.h \
-  ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h \
-  ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
-  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Mesh/Field.h ../Common/GmshConfig.h \
-  ../Geo/STensor3.h ../Geo/SVector3.h ../Numeric/GmshMatrix.h \
-  ../Numeric/Numeric.h ../Numeric/GmshMatrix.h ../Post/PView.h \
-  ../Mesh/BackgroundMesh.h
+Main${OBJEXT}: Main.cpp ../Common/Gmsh.h ../Common/GmshMessage.h GUI.h \
+  menuWindow.h popupButton.h Draw.h ../Common/Context.h \
+  ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h ../Common/Options.h \
+  ../Post/ColorTable.h ../Parser/Parser.h ../Common/OpenFile.h \
+  ../Common/CommandLine.h Solvers.h ../Plugin/PluginManager.h \
+  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
+  ../Geo/SOrientedBoundingBox.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint2.h ../Geo/Pair.h ../Geo/GPoint.h ../Geo/SPoint2.h \
+  ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
+  ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Mesh/Field.h \
+  ../Common/GmshConfig.h ../Geo/STensor3.h ../Geo/SVector3.h \
+  ../Numeric/GmshMatrix.h ../Numeric/Numeric.h ../Numeric/GmshMatrix.h \
+  ../Post/PView.h ../Mesh/BackgroundMesh.h
 GUI${OBJEXT}: GUI.cpp GUI.h graphicWindow.h openglWindow.h \
   ../Graphics/drawContext.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   menuWindow.h popupButton.h optionWindow.h spherePositionWidget.h \
