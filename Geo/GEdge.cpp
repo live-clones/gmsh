@@ -12,13 +12,8 @@
 #include "GEdge.h"
 #include "GFace.h"
 #include "MLine.h"
-
-#if defined(HAVE_GMSH_EMBEDDED)
-#include "GmshEmbedded.h"
-#else
 #include "GaussLegendre1D.h"
 #include "Context.h"
-#endif
 
 GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
   : GEntity(model, tag), _tooSmall(false), v0(_v0), v1(_v1), compound(0)
@@ -220,9 +215,6 @@ double GEdge::curvature(double par) const
 
 double GEdge::length(const double &u0, const double &u1, const int nbQuadPoints)
 {
-#if defined(HAVE_GMSH_EMBEDDED)
-  return -1.;
-#else
   double *t = 0, *w = 0;
   gmshGaussLegendre1D(nbQuadPoints, &t, &w);
   double L = 0.0;
@@ -234,7 +226,6 @@ double GEdge::length(const double &u0, const double &u1, const int nbQuadPoints)
     L += d * w[i] * rapJ;
   }
   return L;
-#endif
 }
 
 GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const

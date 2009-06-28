@@ -8,12 +8,7 @@
 #include "GEntity.h"
 #include "MElement.h"
 #include "VertexArray.h"
-
-#if defined(HAVE_GMSH_EMBEDDED)
-#include "GmshEmbedded.h"
-#else
 #include "Context.h"
-#endif
 
 GEntity::GEntity(GModel *m, int t)
   : _model(m), _tag(t), _visible(1), _selection(0),

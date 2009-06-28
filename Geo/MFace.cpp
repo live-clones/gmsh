@@ -8,12 +8,7 @@
 #include "GmshConfig.h"
 #include "MFace.h"
 #include "Numeric.h"
-
-#if defined(HAVE_GMSH_EMBEDDED)
-#include "GmshEmbedded.h"
-#else
 #include "Context.h"
-#endif
 
 void sortVertices(std::vector<MVertex*> v, std::vector<char> &si)
 {

@@ -20,17 +20,12 @@
 #include "discreteFace.h"
 #include "discreteEdge.h"
 #include "discreteVertex.h"
-
-#if defined(HAVE_GMSH_EMBEDDED)
-#include "GmshEmbedded.h"
-#else
 #include "gmshSurface.h"
 #include "Octree.h"
 #include "SmoothData.h"
 #include "Field.h"
 #include "Generator.h"
 #include "Context.h"
-#endif
 
 std::vector<GModel*> GModel::list;
 int GModel::_current = -1;
@@ -42,26 +37,19 @@ GModel::GModel(std::string name)
 {
   partitionSize[0] = 0; partitionSize[1] = 0;
   list.push_back(this);
-
-#if !defined(HAVE_GMSH_EMBEDDED)
   // at the moment we always create (at least an empty) GEO model
   _createGEOInternals();
   _fields = new FieldManager();
-#endif
 }
 
 GModel::~GModel()
 {
   std::vector<GModel*>::iterator it = std::find(list.begin(), list.end(), this);
   if(it != list.end()) list.erase(it);
-
   destroy();
-
-#if !defined(HAVE_GMSH_EMBEDDED)
   _deleteGEOInternals();
   _deleteOCCInternals();
   delete _fields;
-#endif
 }
 
 GModel *GModel::current(int index)
@@ -116,23 +104,19 @@ void GModel::destroy()
   MVertex::resetGlobalNumber();
   MElement::resetGlobalNumber();
 
-#if !defined(HAVE_GMSH_EMBEDDED)
   if(normals) delete normals;
   normals = 0;
 
   _fields->reset();
   gmshSurface::reset();
-#endif
 }
 
 void GModel::destroyMeshCaches()
 {
   _vertexVectorCache.clear();
   _vertexMapCache.clear();
-#if !defined(HAVE_GMSH_EMBEDDED)
   if(_octree) Octree_Delete(_octree);
   _octree = 0;
-#endif
 }
 
 bool GModel::empty() const
@@ -359,13 +343,8 @@ SBoundingBox3d GModel::bounds()
 
 int GModel::mesh(int dimension)
 {
-#if !defined(HAVE_GMSH_EMBEDDED)
   GenerateMesh(this, dimension);
   return true;
-#else
-  Msg::Error("Embedded Gmsh cannot do mesh generation");
-  return false;
-#endif
 }
 
 int GModel::getMeshStatus(bool countDiscrete)
@@ -464,7 +443,6 @@ static int MElementInEle(void *a, double *x)
 
 MElement *GModel::getMeshElementByCoord(SPoint3 &p)
 {
-#if !defined(HAVE_GMSH_EMBEDDED)
   if(!_octree){
     Msg::Debug("Rebuilding mesh element octree");
     SBoundingBox3d bb = bounds();
@@ -484,10 +462,6 @@ MElement *GModel::getMeshElementByCoord(SPoint3 &p)
   }
   double P[3] = {p.x(), p.y(), p.z()};
   return (MElement*)Octree_Search(P, _octree);
-#else
-  Msg::Error("Embedded Gmsh cannot perform octree-based element searches");
-  return 0;
-#endif
 }
 
 MVertex *GModel::getMeshVertexByTag(int n)

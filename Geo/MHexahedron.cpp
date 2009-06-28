@@ -23,8 +23,6 @@ int MHexahedron::getVolumeSign()
 
 void MHexahedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
 {
-#if !defined(HAVE_GMSH_EMBEDDED)
   *npts = getNGQHPts(pOrder);
   *pts = getGQHPts(pOrder);
-#endif
 }

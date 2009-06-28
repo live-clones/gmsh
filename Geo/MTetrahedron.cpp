@@ -5,68 +5,42 @@
 
 #include "MTetrahedron.h"
 #include "Numeric.h"
-
-#if defined(HAVE_GMSH_EMBEDDED)
-#include "GmshEmbedded.h"
-#else
 #include "Context.h"
 #include "qualityMeasures.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "meshGRegionDelaunayInsertion.h"
-#endif
 
 #define SQU(a)      ((a)*(a))
 
 SPoint3 MTetrahedron::circumcenter()
 {
-#if defined(HAVE_GMSH_EMBEDDED)
-  return SPoint3();
-#else
   MTet4 t(this,0);
   double res[3];
   t.circumcenter(res);
   return SPoint3(res[0],res[1],res[2]);
-#endif
 }
 
 double MTetrahedron::distoShapeMeasure()
 {
-#if defined(HAVE_GMSH_EMBEDDED)
-  return 1.;
-#else
   return qmDistorsionOfMapping(this);
-#endif
 }
 
 double MTetrahedronN::distoShapeMeasure()
 {
-#if defined(HAVE_GMSH_EMBEDDED)
-  return 1.;
-#else
-  // if (_disto < -1.e21)
   _disto = qmDistorsionOfMapping(this);
   return _disto;
-#endif
 }
 
 double MTetrahedron::gammaShapeMeasure()
 {
-#if defined(HAVE_GMSH_EMBEDDED)
-  return 0.;
-#else
   double vol;
   return qmTet(this, QMTET_2, &vol);
-#endif
 }
 
 double MTetrahedron::etaShapeMeasure()
 {
-#if defined(HAVE_GMSH_EMBEDDED)
-  return 0.;
-#else
   double vol;
   return qmTet(this, QMTET_3, &vol);
-#endif
 }
 
 double MTetrahedron::getVolume()
@@ -254,8 +228,6 @@ void MTetrahedron10::getFaceRep(int num, double *x, double *y, double *z, SVecto
 
 void MTetrahedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
 {
-#if !defined(HAVE_GMSH_EMBEDDED)
   *npts = getNGQTetPts(pOrder);
   *pts = getGQTetPts(pOrder);
-#endif
 }

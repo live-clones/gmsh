@@ -16,14 +16,8 @@
 #include "GmshMatrix.h"
 #include "Numeric.h"
 #include "EigSolve.h"
-
-
-#if defined(HAVE_GMSH_EMBEDDED)
-#include "GmshEmbedded.h"
-#else
 #include "GaussLegendre1D.h"
 #include "Context.h"
-#endif
 
 #define SQU(a)      ((a)*(a))
 
@@ -868,9 +862,6 @@ struct graphics_point{
 
 bool GFace::buildSTLTriangulation()
 {
-#if defined(HAVE_GMSH_EMBEDDED)
-  return false;
-#else
   // Build a simple triangulation for surfaces which we know are not
   // trimmed
   if(geomType() != ParametricSurface && geomType() != ProjectionFace)
@@ -920,7 +911,6 @@ bool GFace::buildSTLTriangulation()
   }
   va_geom_triangles->finalize();
   return true;
-#endif
 }
 
 // by default we assume that straight lines are geodesics
@@ -954,9 +944,6 @@ SPoint2 GFace::geodesic(const SPoint2 &pt1 , const SPoint2 &pt2 , double t)
 // dC/dt = dC/du du/dt + dC/dv dv/dt
 double GFace::length(const SPoint2 &pt1, const SPoint2 &pt2, int nbQuadPoints)
 {
-#if defined(HAVE_GMSH_EMBEDDED)
-  return -1.;
-#else
   double *t = 0, *w = 0;
   double L = 0.0;
   gmshGaussLegendre1D(nbQuadPoints, &t, &w);
@@ -969,5 +956,4 @@ double GFace::length(const SPoint2 &pt1, const SPoint2 &pt2, int nbQuadPoints)
     L += d * w[i] ;
   }
   return L;
-#endif
 }

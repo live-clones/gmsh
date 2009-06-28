@@ -21,12 +21,7 @@
 #include "GFace.h"
 #include "StringUtils.h"
 #include "Numeric.h"
-
-#if defined(HAVE_GMSH_EMBEDDED)
-#include "GmshEmbedded.h"
-#else
 #include "Context.h"
-#endif
 
 #define SQU(a)      ((a)*(a))
 
@@ -100,20 +95,16 @@ double MElement::rhoShapeMeasure()
 
 void MElement::getShapeFunctions(double u, double v, double w, double s[], int o)
 {
-#if !defined(HAVE_GMSH_EMBEDDED)
   const gmshFunctionSpace* fs = getFunctionSpace(o);
   if(fs) fs->f(u, v, w, s);
   else Msg::Error("Function space not implemented for this type of element");
-#endif
 }
 
 void MElement::getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
 {
-#if !defined(HAVE_GMSH_EMBEDDED)
   const gmshFunctionSpace* fs = getFunctionSpace(o);
   if(fs) fs->df(u, v, w, s);
   else Msg::Error("Function space not implemented for this type of element");
-#endif
 }
 
 SPoint3 MElement::barycenter()

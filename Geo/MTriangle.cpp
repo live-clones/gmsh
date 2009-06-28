@@ -5,46 +5,29 @@
 
 #include "MTriangle.h"
 #include "Numeric.h"
-
-#if defined(HAVE_GMSH_EMBEDDED)
-#include "GmshEmbedded.h"
-#else
 #include "Context.h"
 #include "qualityMeasures.h"
-#endif
 
 #define SQU(a)      ((a)*(a))
 
 SPoint3 MTriangle::circumcenter()
 {
-#if defined(HAVE_GMSH_EMBEDDED)
-  return SPoint3();
-#else
   double p1[3] = {_v[0]->x(), _v[0]->y(), _v[0]->z()};
   double p2[3] = {_v[1]->x(), _v[1]->y(), _v[1]->z()};
   double p3[3] = {_v[2]->x(), _v[2]->y(), _v[2]->z()};
   double res[3];
   circumCenterXYZ(p1, p2, p3, res);
   return SPoint3(res[0], res[1], res[2]);
-#endif
 }
 
 double MTriangle::distoShapeMeasure()
 {
-#if defined(HAVE_GMSH_EMBEDDED)
-  return 1.;
-#else
   return qmDistorsionOfMapping(this);
-#endif
 }
 
 double MTriangle::gammaShapeMeasure()
 {
-#if defined(HAVE_GMSH_EMBEDDED)
-  return 0.;
-#else
   return qmTriangle(this, QMTRI_RHO);
-#endif
 }
 
 const gmshFunctionSpace* MTriangle::getFunctionSpace(int o) const
@@ -201,9 +184,7 @@ void MTriangle6::getFaceRep(int num, double *x, double *y, double *z, SVector3 *
 
 void MTriangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
 {
-#if !defined(HAVE_GMSH_EMBEDDED)
   *npts = getNGQTPts(pOrder);
   *pts = getGQTPts(pOrder);
-#endif
 }
 

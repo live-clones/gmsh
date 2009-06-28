@@ -4,14 +4,9 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "MLine.h"
-
-#if defined(HAVE_GMSH_EMBEDDED)
-#include "GmshEmbedded.h"
-#else
 #include "GaussLegendre1D.h"
 #include "Context.h"
 #include "qualityMeasures.h"
-#endif
 
 const gmshFunctionSpace* MLine::getFunctionSpace(int o) const
 {
@@ -30,7 +25,6 @@ const gmshFunctionSpace* MLine::getFunctionSpace(int o) const
 
 void MLine::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
 {
-#if !defined(HAVE_GMSH_EMBEDDED)
   static IntPt GQL[100]; 
   double *t, *w;
   int nbP = pOrder / 2 + 1;
@@ -43,5 +37,4 @@ void MLine::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
   }
   *npts = nbP;
   *pts = GQL;
-#endif
 }

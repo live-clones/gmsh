@@ -3,6 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <vector>
+#include <list>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "discreteEdge.h"
@@ -15,36 +17,26 @@
 #include "MTetrahedron.h"
 #include "MHexahedron.h"
 #include "MPyramid.h"
-
-
-#include <vector>
-#include <list>
-
-#if !defined(HAVE_GMSH_EMBEDDED)
 #include "Geo.h"
-#endif
 
 discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
   : GEdge(model, num, _v0, _v1)
 {
   createdTopo = false;
-#if !defined(HAVE_GMSH_EMBEDDED)
   Curve *c = Create_Curve(num, MSH_SEGM_DISCRETE, 0, 0, 0, -1, -1, 0., 1.);
   Tree_Add(model->getGEOInternals()->Curves, &c);
   CreateReversedCurve(c);
-#endif
 }
 
 void discreteEdge::createTopo()
 {
-
   if(!createdTopo){ 
     orderMLines();
     setBoundVertices();
     createdTopo = true;
   }
-
 }
+
 void discreteEdge::orderMLines()
 {
   //printf(" *** ORDERING DISCRETE EDGE %d of size %d \n", this->tag(), lines.size());
