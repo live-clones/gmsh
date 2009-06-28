@@ -3,69 +3,111 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 //
-// Contributed by Bastien Gorissen
+// Contributor(s):
+//   Bastien Gorissen
+//
 
 #include <math.h>
 #include <time.h>
 #include <stdlib.h>
 #include "SOrientedBoundingBox.h"
 #include "GmshMatrix.h"
-
 #include "DivideAndConquer.h"
 #include "SBoundingBox3d.h"
 
-using namespace std;
-
-double SOrientedBoundingRectangle::area() {
-  double b = this->size->at(0);
-  double B = this->size->at(1);
+double SOrientedBoundingRectangle::area() 
+{
+  double b = size->at(0);
+  double B = size->at(1);
   return (b*B);
 }
 
-SOrientedBoundingRectangle::SOrientedBoundingRectangle() {
-  this->center = new vector<double>(2,0);
-  this->size =   new vector<double>(2,0);
-  this->axisX = new vector<double>(2,0);
-  this->axisY = new vector<double>(2,0);
-};
-SOrientedBoundingRectangle::~SOrientedBoundingRectangle() {
+SOrientedBoundingRectangle::SOrientedBoundingRectangle() 
+{
+  center = new std::vector<double>(2,0);
+  size = new std::vector<double>(2,0);
+  axisX = new std::vector<double>(2,0);
+  axisY = new std::vector<double>(2,0);
+}
+
+SOrientedBoundingRectangle::~SOrientedBoundingRectangle()
+{
   delete center;
   delete size;
   delete axisX;
   delete axisY;
-};
-
-SOrientedBoundingBox::SOrientedBoundingBox() {
-
-  this->center = SVector3();
-  this->size = SVector3();
-  this->axisX = SVector3();
-  this->axisY = SVector3();
-  this->axisZ = SVector3();
 }
-//-----------------------------------------------------------------------------
 
+SOrientedBoundingBox::SOrientedBoundingBox()
+{
+  center = SVector3();
+  size = SVector3();
+  axisX = SVector3();
+  axisY = SVector3();
+  axisZ = SVector3();
+}
 
-SOrientedBoundingBox::SOrientedBoundingBox(SVector3& center,
-                                         double sizeX,
-                                         double sizeY,
-                                         double sizeZ,
-                                         const SVector3& axisX,
-                                         const SVector3& axisY,
-                                         const SVector3& axisZ) {
+SOrientedBoundingBox::SOrientedBoundingBox(SVector3 &center_,
+                                           double sizeX,
+                                           double sizeY,
+                                           double sizeZ,
+                                           const SVector3 &axisX_,
+                                           const SVector3 &axisY_,
+                                           const SVector3 &axisZ_)
+{
+  center = center_;
+  size = SVector3(sizeX, sizeY, sizeZ);
+  axisX = axisX_;
+  axisX.normalize();
+  axisY = axisY_;
+  axisY.normalize();
+  axisZ = axisZ_;
+  axisZ.normalize();
 
-  this->center = center;
+  double dx = 0.5 * size[0];
+  double dy = 0.5 * size[1];
+  double dz = 0.5 * size[2];
 
-  this->size = SVector3(sizeX, sizeY, sizeZ);
+  p1x = center[0] - (axisX[0]*dx) - (axisY[0]*dy) - (axisZ[0]*dz);
+  p1y = center[1] - (axisX[1]*dx) - (axisY[1]*dy) - (axisZ[1]*dz);
+  p1z = center[2] - (axisX[2]*dx) - (axisY[2]*dy) - (axisZ[2]*dz);
 
-  this->axisX = axisX;
-  this->axisX.normalize();
+  p2x = center[0] + (axisX[0]*dx) - (axisY[0]*dy) - (axisZ[0]*dz);
+  p2y = center[1] + (axisX[1]*dx) - (axisY[1]*dy) - (axisZ[1]*dz);
+  p2z = center[2] + (axisX[2]*dx) - (axisY[2]*dy) - (axisZ[2]*dz);
 
-  this->axisY = axisY;
-  this->axisY.normalize();
+  p3x = center[0] - (axisX[0]*dx) + (axisY[0]*dy) - (axisZ[0]*dz);
+  p3y = center[1] - (axisX[1]*dx) + (axisY[1]*dy) - (axisZ[1]*dz);
+  p3z = center[2] - (axisX[2]*dx) + (axisY[2]*dy) - (axisZ[2]*dz);
 
-  this->axisZ = axisZ;
-  this->axisZ.normalize();
+  p4x = center[0] + (axisX[0]*dx) + (axisY[0]*dy) - (axisZ[0]*dz);
+  p4y = center[1] + (axisX[1]*dx) + (axisY[1]*dy) - (axisZ[1]*dz);
+  p4z = center[2] + (axisX[2]*dx) + (axisY[2]*dy) - (axisZ[2]*dz);
+
+  p5x = center[0] - (axisX[0]*dx) - (axisY[0]*dy) + (axisZ[0]*dz);
+  p5y = center[1] - (axisX[1]*dx) - (axisY[1]*dy) + (axisZ[1]*dz);
+  p5z = center[2] - (axisX[2]*dx) - (axisY[2]*dy) + (axisZ[2]*dz);
+
+  p6x = center[0] + (axisX[0]*dx) - (axisY[0]*dy) + (axisZ[0]*dz);
+  p6y = center[1] + (axisX[1]*dx) - (axisY[1]*dy) + (axisZ[1]*dz);
+  p6z = center[2] + (axisX[2]*dx) - (axisY[2]*dy) + (axisZ[2]*dz);
+
+  p7x = center[0] - (axisX[0]*dx) + (axisY[0]*dy) + (axisZ[0]*dz);
+  p7y = center[1] - (axisX[1]*dx) + (axisY[1]*dy) + (axisZ[1]*dz);
+  p7z = center[2] - (axisX[2]*dx) + (axisY[2]*dy) + (axisZ[2]*dz);
+
+  p8x = center[0] + (axisX[0]*dx) + (axisY[0]*dy) + (axisZ[0]*dz);
+  p8y = center[1] + (axisX[1]*dx) + (axisY[1]*dy) + (axisZ[1]*dz);
+  p8z = center[2] + (axisX[2]*dx) + (axisY[2]*dy) + (axisZ[2]*dz);
+}
+
+SOrientedBoundingBox::SOrientedBoundingBox(SOrientedBoundingBox* other)
+{
+  size = other->getSize();
+  axisX = other->getAxis(0);
+  axisY = other->getAxis(1);
+  axisZ = other->getAxis(2);
+  center = other->getCenter();
 
   double dx = 0.5*size[0];
   double dy = 0.5*size[1];
@@ -105,94 +147,31 @@ SOrientedBoundingBox::SOrientedBoundingBox(SVector3& center,
 
 }
 
-//-----------------------------------------------------------------------------
-
-SOrientedBoundingBox::SOrientedBoundingBox(SOrientedBoundingBox* other) {
-
-  this->size = other->getSize();
-  this->axisX = other->getAxis(0);
-  this->axisY = other->getAxis(1);
-  this->axisZ = other->getAxis(2);
-  this->center = other->getCenter();
-
-  double dx = 0.5*size[0];
-  double dy = 0.5*size[1];
-  double dz = 0.5*size[2];
-
-  p1x = center[0] - (axisX[0]*dx) - (axisY[0]*dy) - (axisZ[0]*dz);
-  p1y = center[1] - (axisX[1]*dx) - (axisY[1]*dy) - (axisZ[1]*dz);
-  p1z = center[2] - (axisX[2]*dx) - (axisY[2]*dy) - (axisZ[2]*dz);
-
-  p2x = center[0] + (axisX[0]*dx) - (axisY[0]*dy) - (axisZ[0]*dz);
-  p2y = center[1] + (axisX[1]*dx) - (axisY[1]*dy) - (axisZ[1]*dz);
-  p2z = center[2] + (axisX[2]*dx) - (axisY[2]*dy) - (axisZ[2]*dz);
-
-  p3x = center[0] - (axisX[0]*dx) + (axisY[0]*dy) - (axisZ[0]*dz);
-  p3y = center[1] - (axisX[1]*dx) + (axisY[1]*dy) - (axisZ[1]*dz);
-  p3z = center[2] - (axisX[2]*dx) + (axisY[2]*dy) - (axisZ[2]*dz);
-
-  p4x = center[0] + (axisX[0]*dx) + (axisY[0]*dy) - (axisZ[0]*dz);
-  p4y = center[1] + (axisX[1]*dx) + (axisY[1]*dy) - (axisZ[1]*dz);
-  p4z = center[2] + (axisX[2]*dx) + (axisY[2]*dy) - (axisZ[2]*dz);
-
-  p5x = center[0] - (axisX[0]*dx) - (axisY[0]*dy) + (axisZ[0]*dz);
-  p5y = center[1] - (axisX[1]*dx) - (axisY[1]*dy) + (axisZ[1]*dz);
-  p5z = center[2] - (axisX[2]*dx) - (axisY[2]*dy) + (axisZ[2]*dz);
-
-  p6x = center[0] + (axisX[0]*dx) - (axisY[0]*dy) + (axisZ[0]*dz);
-  p6y = center[1] + (axisX[1]*dx) - (axisY[1]*dy) + (axisZ[1]*dz);
-  p6z = center[2] + (axisX[2]*dx) - (axisY[2]*dy) + (axisZ[2]*dz);
-
-  p7x = center[0] - (axisX[0]*dx) + (axisY[0]*dy) + (axisZ[0]*dz);
-  p7y = center[1] - (axisX[1]*dx) + (axisY[1]*dy) + (axisZ[1]*dz);
-  p7z = center[2] - (axisX[2]*dx) + (axisY[2]*dy) + (axisZ[2]*dz);
-
-  p8x = center[0] + (axisX[0]*dx) + (axisY[0]*dy) + (axisZ[0]*dz);
-  p8y = center[1] + (axisX[1]*dx) + (axisY[1]*dy) + (axisZ[1]*dz);
-  p8z = center[2] + (axisX[2]*dx) + (axisY[2]*dy) + (axisZ[2]*dz);
-
+double SOrientedBoundingBox::getMaxSize() 
+{
+  return (std::max(size[0], std::max(size[1], size[2])));
 }
 
-//-----------------------------------------------------------------------------
-
-
-SOrientedBoundingBox::~SOrientedBoundingBox() { }
-
-//-----------------------------------------------------------------------------
-
-
-double SOrientedBoundingBox::getMaxSize() {
-  return (std::max(this->size[0], std::max(this->size[1], this->size[2])));
-}
-
-//-----------------------------------------------------------------------------
-
-
-SVector3 SOrientedBoundingBox::getAxis(int axis) {
+SVector3 SOrientedBoundingBox::getAxis(int axis)
+{
   SVector3 ret;
   switch (axis) {
-    case 0:
-      ret=this->axisX;
-    case 1:
-      ret=this->axisY;
-    case 2:
-      ret=this->axisZ;
+  case 0: return axisX;
+  case 1: return axisY;
+  case 2: return axisZ;
   }
-  return ret;
 }
 
-//-----------------------------------------------------------------------------
-
-bool SOrientedBoundingBox::intersects(SOrientedBoundingBox& obb) {
-
+bool SOrientedBoundingBox::intersects(SOrientedBoundingBox& obb) 
+{
   SVector3 collide_axes[15];
   for (int i = 0; i < 3; i ++) {
-    collide_axes[i] = this->getAxis(i);
+    collide_axes[i] = getAxis(i);
     collide_axes[i+3] = obb.getAxis(i);
   }
 
   SVector3 sizes[2];
-  sizes[0] = this->getSize();
+  sizes[0] = getSize();
   sizes[1] = obb.getSize();
 
   for(unsigned int i=0 ; i<3 ; i++) {
@@ -200,7 +179,7 @@ bool SOrientedBoundingBox::intersects(SOrientedBoundingBox& obb) {
       collide_axes[3*i+j+3] = crossprod(collide_axes[i],collide_axes[j]);
     }
   }
-  SVector3 T = obb.getCenter() - this->getCenter();
+  SVector3 T = obb.getCenter() - getCenter();
 
   for(unsigned int i=0 ; i<15 ; i++) {
     double val = 0.0;
@@ -214,10 +193,8 @@ bool SOrientedBoundingBox::intersects(SOrientedBoundingBox& obb) {
   return true;
 }
 
-//-----------------------------------------------------------------------------
-
-SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(vector<SPoint3> vertices) {
-
+SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertices)
+{
   int num_vertices = vertices.size();
   // First organize the data
   gmshMatrix<double> data(3,num_vertices);
@@ -323,11 +300,11 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(vector<SPoint3> vertices) {
 
   // The projection has been done circa line 161.
   // We just ignore the coordinate corresponding to smallest_comp.
-  vector<SPoint2*> points;
+  std::vector<SPoint2*> points;
   for (int i = 0; i < num_vertices; i++) {
     SPoint2* p = new SPoint2(projected(smallest_comp==0?1:0,i), projected(smallest_comp==2?1:2,i));
     bool keep = true;
-    for (vector<SPoint2*>::iterator point = points.begin();point != points.end();point++) {
+    for (std::vector<SPoint2*>::iterator point = points.begin();point != points.end();point++) {
       if ( fabs((*p)[0] -(**point)[0]) < 10e-10 && fabs((*p)[1] -(**point)[1]) < 10e-10 ) {
         keep = false;
         break;
@@ -353,7 +330,7 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(vector<SPoint3> vertices) {
 
   record.MakeMeshWithPoints();
 
-  vector<Segment> convex_hull;
+  std::vector<Segment> convex_hull;
   for (int i = 0; i < record.numTriangles; i++) {
     Segment segs[3];
     segs[0].from = record.triangles[i].a;
@@ -365,7 +342,7 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(vector<SPoint3> vertices) {
 
     for (int j = 0; j < 3; j++) {
       bool okay = true;
-      for (vector<Segment>::iterator seg = convex_hull.begin(); seg != convex_hull.end(); seg++) {
+      for (std::vector<Segment>::iterator seg = convex_hull.begin(); seg != convex_hull.end(); seg++) {
         if ( ((*seg).from == segs[j].from && (*seg).from == segs[j].to) ||  ((*seg).from == segs[j].to && (*seg).from == segs[j].from)) {
           convex_hull.erase(seg);
           okay = false;
@@ -393,7 +370,7 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(vector<SPoint3> vertices) {
   least_rectangle.size->at(0) = -1;
   least_rectangle.size->at(1) = 1;
 
-  for (vector<Segment>::iterator seg = convex_hull.begin(); seg != convex_hull.end(); seg++) {
+  for (std::vector<Segment>::iterator seg = convex_hull.begin(); seg != convex_hull.end(); seg++) {
 
     gmshVector<double> segment(2);
     //segment(0) = record.points[(*seg).from].where.h - record.points[(*seg).to].where.h;
@@ -565,8 +542,8 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(vector<SPoint3> vertices) {
           size[0], size[1], size[2], Axis1, Axis2, Axis3));
 }
 
-double SOrientedBoundingBox::compare(SOrientedBoundingBox& obb1, SOrientedBoundingBox& obb2) {
-
+double SOrientedBoundingBox::compare(SOrientedBoundingBox& obb1, SOrientedBoundingBox& obb2)
+{
   // "center term"
   double center_term = norm(obb1.getCenter() - obb2.getCenter());
 
@@ -587,4 +564,3 @@ double SOrientedBoundingBox::compare(SOrientedBoundingBox& obb1, SOrientedBoundi
   return (center_term + size_term + orientation_term);
 
 }
-

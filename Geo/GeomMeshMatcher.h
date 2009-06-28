@@ -3,11 +3,14 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 //
-// Contributed by Bastien Gorissen
+// Contributor(s):
+//   Bastien Gorissen
+//
 
-#ifndef GEOMMESHMATCHER_H
-#define GEOMMESHMATCHER_H
+#ifndef _GEOM_MESH_MATCHER_H_
+#define _GEOM_MESH_MATCHER_H_
 
+#include <vector>
 #include "GModel.h"
 #include "GVertex.h"
 #include "GEdge.h"
@@ -15,25 +18,23 @@
 #include "GRegion.h"
 #include "Pair.h"
 
-#include <vector>
-
 class GeomMeshMatcher {
  private:
-  vector<Pair<GVertex*,GVertex*> >* matchVertices(GModel* m1, GModel *m2);
-  vector<Pair<GEdge*,GEdge*> >* matchEdges(GModel* m1, GModel* m2, vector<Pair<GVertex*,GVertex*> >* coresp_v);
-  vector<Pair<GFace*,GFace*> >* matchFaces(GModel* m1, GModel* m2,  vector<Pair<GEdge*,GEdge*> >* coresp_e);
-  vector<Pair<GRegion*,GRegion*> >* matchRegions(GModel* m1, GModel* m2, vector<Pair<GFace*,GFace*> >* coresp_f);
-  static GeomMeshMatcher* _gmm_instance;
-  GeomMeshMatcher() {};
-  ~GeomMeshMatcher() {};
+  std::vector<Pair<GVertex*, GVertex*> > *matchVertices(GModel *m1, GModel *m2);
+  std::vector<Pair<GEdge*, GEdge*> > *matchEdges
+  (GModel* m1, GModel* m2, std::vector<Pair<GVertex*, GVertex*> > *coresp_v);
+  std::vector<Pair<GFace*, GFace*> > *matchFaces
+  (GModel* m1, GModel* m2,  std::vector<Pair<GEdge*,GEdge*> > *coresp_e);
+  std::vector<Pair<GRegion*, GRegion*> > *matchRegions
+  (GModel *m1, GModel *m2, std::vector<Pair<GFace*,GFace*> > *coresp_f);
+  static GeomMeshMatcher *_gmm_instance;
+  GeomMeshMatcher() {}
+  ~GeomMeshMatcher() {}
 
  public:
-  static GeomMeshMatcher* instance();
+  static GeomMeshMatcher *instance();
   static void destroy();
   int match(GModel* geom, GModel* mesh);
 };
-
-
-
 
 #endif
