@@ -986,8 +986,6 @@ void drawContext::drawMesh()
 	glDisable((GLenum)(GL_CLIP_PLANE0 + i));
   }
 
-  const int fakeTransparency = true;
-
   static bool busy = false;
   if(!busy){
     busy = true;
