@@ -39,3 +39,5 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
+tetgen${OBJEXT}: tetgen.cxx tetgen.h
+predicates${OBJEXT}: predicates.cxx tetgen.h

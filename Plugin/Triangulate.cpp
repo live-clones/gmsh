@@ -69,16 +69,17 @@ static void Project(MVertex *v, double mat[3][3])
   v->z() = Z;
 }
 
-static void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
+static void Triangulate(int nbIn, std::vector<double> &inList, 
+                        int *nbOut, std::vector<double> &outList,
                         int nbTimeStep, int nbComp)
 {
   if(nbIn < 3) return;
 
   // project points onto plane
   std::vector<MVertex*> points;
-  int nb = List_Nbr(inList) / nbIn;
-  for(int i = 0; i < List_Nbr(inList); i += nb){
-    double *p = (double *)List_Pointer_Fast(inList, i);
+  int nb = inList.size() / nbIn;
+  for(unsigned int i = 0; i < inList.size(); i += nb){
+    double *p = &inList[i];
     points.push_back(new MVertex(p[0], p[1], p[2]));
   }
   discreteFace *s = new discreteFace(GModel::current(), GModel::current()->getNumFaces() + 1);
@@ -101,7 +102,7 @@ static void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
     doc.points[i].where.h = points[i]->x() + XX;
     doc.points[i].where.v = points[i]->y() + YY;
     doc.points[i].adjacent = NULL;
-    doc.points[i].data = List_Pointer_Fast(inList, i * nb); 
+    doc.points[i].data = (void*)&inList[i * nb]; 
     delete points[i];
   }
 
@@ -114,14 +115,14 @@ static void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
     double *pb = (double*)doc.points[doc.triangles[i].b].data;
     double *pc = (double*)doc.points[doc.triangles[i].c].data;
     for(int j = 0; j < 3; j++) {
-      List_Add(outList, pa + j);
-      List_Add(outList, pb + j);
-      List_Add(outList, pc + j);
+      outList.push_back(pa[j]);
+      outList.push_back(pb[j]);
+      outList.push_back(pc[j]);
     }
     for(int j = 0; j < nbTimeStep; j++) {
-      for(int k = 0; k < nbComp; k++) List_Add(outList, pa + 3 + j * nbComp + k);
-      for(int k = 0; k < nbComp; k++) List_Add(outList, pb + 3 + j * nbComp + k);
-      for(int k = 0; k < nbComp; k++) List_Add(outList, pc + 3 + j * nbComp + k);
+      for(int k = 0; k < nbComp; k++) outList.push_back(pa[3 + j * nbComp + k]);
+      for(int k = 0; k < nbComp; k++) outList.push_back(pb[3 + j * nbComp + k]);
+      for(int k = 0; k < nbComp; k++) outList.push_back(pc[3 + j * nbComp + k]);
     }
     (*nbOut)++;
   }
@@ -137,7 +138,7 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
   PViewDataList *data1 = getDataList(v1);
   if(!data1) return v;
 
-  PView *v2 = new PView(true, data1->getNumElements());
+  PView *v2 = new PView();
 
   PViewDataList *data2 = getDataList(v2);
   if(!data2) return v;
@@ -147,8 +148,7 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
   Triangulate(data1->NbVP, data1->VP, &data2->NbVT, data2->VT, nts, 3);
   Triangulate(data1->NbTP, data1->TP, &data2->NbTT, data2->TT, nts, 9);
 
-  for(int i = 0; i < List_Nbr(data1->Time); i++)
-    List_Add(data2->Time, List_Pointer(data1->Time, i));
+  data2->Time = data1->Time;
   data2->setName(data1->getName() + "_Triangulate");
   data2->setFileName(data1->getName() + "_Triangulate.pos");
   data2->finalize();

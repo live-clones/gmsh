@@ -29,10 +29,10 @@ void PView::_init()
   for(unsigned int i = 0; i < list.size(); i++) list[i]->setIndex(i);
 }
 
-PView::PView(bool allocate, int numalloc)
+PView::PView()
 {
   _init();
-  _data = new PViewDataList(allocate, numalloc);
+  _data = new PViewDataList();
   _options = new PViewOptions(PViewOptions::reference);
   if(_options->adaptVisualizationGrid)
     _data->initAdaptiveData(_options->timeStep, _options->maxRecursionLevel,
@@ -67,20 +67,20 @@ PView::PView(std::string xname, std::string yname,
              std::vector<double> &x, std::vector<double> &y)
 {
   _init();
-  PViewDataList *data = new PViewDataList(true);
+  PViewDataList *data = new PViewDataList();
   for(unsigned int i = 0; i < y.size(); i++){
     double d;
     if(x.size() == y.size()){
-      List_Add(data->SP, &x[i]);
+      data->SP.push_back(x[i]);
     }
     else{
       d = y.size() > 1 ? (double)i / (double)(y.size() - 1) : 0.;
-      List_Add(data->SP, &d);
+      data->SP.push_back(d);
     }
     d = 0.;
-    List_Add(data->SP, &d);
-    List_Add(data->SP, &d);
-    List_Add(data->SP, &y[i]);
+    data->SP.push_back(d);
+    data->SP.push_back(d);
+    data->SP.push_back(y[i]);
     data->NbSP++;
   }
   data->setName(yname);
@@ -220,7 +220,7 @@ void PView::combine(bool time, int how, bool remove)
   for(unsigned int i = 0; i < nds.size(); i++){
     if(nds[i].data.size() > 1){
       // there's potentially something to combine
-      PView *p = new PView(true);
+      PView *p = new PView();
       PViewData *data = p->getData();
       bool res = time ? data->combineTime(nds[i]): data->combineSpace(nds[i]);
       if(res)

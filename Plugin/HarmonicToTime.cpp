@@ -65,25 +65,24 @@ void GMSH_HarmonicToTimePlugin::catchErrorMessage(char *errorMessage) const
 }
 
 
-static void h2t(int nb1, List_T *list1, int *nb2, List_T *list2,
+static void h2t(int nb1, std::vector<double> &list1, 
+                int *nb2, std::vector<double> &list2,
                 int nbNod, int nbComp, int rIndex, int iIndex, int nSteps)
 {
   if(!nb1) return;
 
-  int nb = List_Nbr(list1) / nb1;
-  for(int i = 0; i < List_Nbr(list1); i += nb) {
+  int nb = list1.size() / nb1;
+  for(unsigned int i = 0; i < list1.size(); i += nb) {
     for(int j = 0; j < 3 * nbNod; j++)
-      List_Add(list2, List_Pointer_Fast(list1, i + j));
-    double *valr = (double *)List_Pointer_Fast(list1, i + 3 * nbNod +
-                                               nbNod * nbComp * rIndex);
-    double *vali = (double *)List_Pointer_Fast(list1, i + 3 * nbNod +
-                                               nbNod * nbComp * iIndex);
+      list2.push_back(list1[i + j]);
+    double *valr = &list1[i + 3 * nbNod + nbNod * nbComp * rIndex];
+    double *vali = &list1[i + 3 * nbNod + nbNod * nbComp * iIndex];
     for(int t = 0; t < nSteps; t++) {
       double p = 2. * M_PI * t / nSteps;
       for(int j = 0; j < nbNod; j++) {
         for(int k = 0; k < nbComp; k++) {
           double val = valr[nbComp * j + k] * cos(p) - vali[nbComp * j + k] * sin(p);
-          List_Add(list2, &val);          
+          list2.push_back(val);          
         }
       }
     }
@@ -115,7 +114,7 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView * v)
     return v1;
   }
 
-  PView *v2 = new PView(true, data1->getNumElements() * nSteps);
+  PView *v2 = new PView();
 
   PViewDataList *data2 = getDataList(v2);
   if(!data2) return v;
@@ -147,7 +146,7 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView * v)
 
   for(int i = 0; i < nSteps; i++){
     double p = 2. * M_PI * i / (double)nSteps;
-    List_Add(data2->Time, &p);
+    data2->Time.push_back(p);
   }
   data2->setName(data1->getName() + "_HarmonicToTime");
   data2->setFileName(data1->getName() + "_HarmonicToTime.pos");

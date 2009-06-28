@@ -4,7 +4,6 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "ExtractEdges.h"
-#include "BDS.h"
 
 StringXNumber ExtractEdgesOptions_Number[] = {
   {GMSH_FULLRC, "Angle", NULL, 22.},
@@ -68,32 +67,16 @@ PView *GMSH_ExtractEdgesPlugin::execute(PView *v)
   PViewDataList *data1 = getDataList(v1);
   if(!data1) return v;
 
-  PView *v2 = new PView(true);
+  PView *v2 = new PView();
 
   PViewDataList *data2 = getDataList(v2);
   if(!data2) return v;
 
-  BDS_Mesh bds;
+  //BDS_Mesh bds;
   //bds.import_view(v1, CTX::instance()->lc * 1.e-12);
   //bds.classify(angle * M_PI / 180.);
 
-  Msg::Error("BDS->classify(angle, edge_prolongation) must be reinterfaced");
-
-  std::list<BDS_Edge*>::iterator it  = bds.edges.begin();
-  std::list<BDS_Edge*>::iterator ite = bds.edges.end();
-  while (it != ite){
-    BDS_GeomEntity *g = (*it)->g;
-    if(g && g->classif_degree == 1) {
-      List_Add(data2->SL, &(*it)->p1->X); List_Add(data2->SL, &(*it)->p2->X);
-      List_Add(data2->SL, &(*it)->p1->Y); List_Add(data2->SL, &(*it)->p2->Y);
-      List_Add(data2->SL, &(*it)->p1->Z); List_Add(data2->SL, &(*it)->p2->Z);
-      double val = g->classif_tag;
-      List_Add(data2->SL, &val);
-      List_Add(data2->SL, &val);
-      data2->NbSL++;
-    }
-    ++it;
-  }
+  Msg::Error("classify(angle, edge_prolongation) must be reinterfaced");
 
   data2->setName(data1->getName() + "_ExtractEdges");
   data2->setFileName(data1->getName() + "_ExtractEdges.pos");

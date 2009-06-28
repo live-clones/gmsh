@@ -5,7 +5,6 @@
 
 #include "Levelset.h"
 #include "MakeSimplex.h"
-#include "ListUtils.h"
 #include "Numeric.h"
 #include "adaptiveData.h"
 
@@ -193,50 +192,50 @@ void GMSH_LevelsetPlugin::_addElement(int step, int np, int numEdges, int numCom
                                       double xp[12], double yp[12], double zp[12],
                                       double valp[12][9], PViewDataList *out)
 {
-  List_T *list;
+  std::vector<double> *list;
   int *nbPtr;
   switch(np){
   case 1:
-    if(numComp == 1)      { list = out->SP; nbPtr = &out->NbSP; }
-    else if(numComp == 3) { list = out->VP; nbPtr = &out->NbVP; }
-    else                  { list = out->TP; nbPtr = &out->NbTP; }
+    if(numComp == 1)      { list = &out->SP; nbPtr = &out->NbSP; }
+    else if(numComp == 3) { list = &out->VP; nbPtr = &out->NbVP; }
+    else                  { list = &out->TP; nbPtr = &out->NbTP; }
     break;
   case 2:
-    if(numComp == 1)      { list = out->SL; nbPtr = &out->NbSL; }
-    else if(numComp == 3) { list = out->VL; nbPtr = &out->NbVL; }
-    else                  { list = out->TL; nbPtr = &out->NbTL; }
+    if(numComp == 1)      { list = &out->SL; nbPtr = &out->NbSL; }
+    else if(numComp == 3) { list = &out->VL; nbPtr = &out->NbVL; }
+    else                  { list = &out->TL; nbPtr = &out->NbTL; }
     break;
   case 3:
-    if(numComp == 1)      { list = out->ST; nbPtr = &out->NbST; }
-    else if(numComp == 3) { list = out->VT; nbPtr = &out->NbVT; }
-    else                  { list = out->TT; nbPtr = &out->NbTT; }
+    if(numComp == 1)      { list = &out->ST; nbPtr = &out->NbST; }
+    else if(numComp == 3) { list = &out->VT; nbPtr = &out->NbVT; }
+    else                  { list = &out->TT; nbPtr = &out->NbTT; }
     break;
   case 4:
     if(!_extractVolume || numEdges <= 4){
-      if(numComp == 1)      { list = out->SQ; nbPtr = &out->NbSQ; }
-      else if(numComp == 3) { list = out->VQ; nbPtr = &out->NbVQ; }
-      else                  { list = out->TQ; nbPtr = &out->NbTQ; }
+      if(numComp == 1)      { list = &out->SQ; nbPtr = &out->NbSQ; }
+      else if(numComp == 3) { list = &out->VQ; nbPtr = &out->NbVQ; }
+      else                  { list = &out->TQ; nbPtr = &out->NbTQ; }
     }
     else{
-      if(numComp == 1)      { list = out->SS; nbPtr = &out->NbSS; }
-      else if(numComp == 3) { list = out->VS; nbPtr = &out->NbVS; }
-      else                  { list = out->TS; nbPtr = &out->NbTS; }
+      if(numComp == 1)      { list = &out->SS; nbPtr = &out->NbSS; }
+      else if(numComp == 3) { list = &out->VS; nbPtr = &out->NbVS; }
+      else                  { list = &out->TS; nbPtr = &out->NbTS; }
     }
     break;
   case 5:
-    if(numComp == 1)      { list = out->SY; nbPtr = &out->NbSY; }
-    else if(numComp == 3) { list = out->VY; nbPtr = &out->NbVY; }
-    else                  { list = out->TY; nbPtr = &out->NbTY; }
+    if(numComp == 1)      { list = &out->SY; nbPtr = &out->NbSY; }
+    else if(numComp == 3) { list = &out->VY; nbPtr = &out->NbVY; }
+    else                  { list = &out->TY; nbPtr = &out->NbTY; }
     break;
   case 6:
-    if(numComp == 1)      { list = out->SI; nbPtr = &out->NbSI; }
-    else if(numComp == 3) { list = out->VI; nbPtr = &out->NbVI; }
-    else                  { list = out->TI; nbPtr = &out->NbTI; }
+    if(numComp == 1)      { list = &out->SI; nbPtr = &out->NbSI; }
+    else if(numComp == 3) { list = &out->VI; nbPtr = &out->NbVI; }
+    else                  { list = &out->TI; nbPtr = &out->NbTI; }
     break;
   case 8:
-    if(numComp == 1)      { list = out->SH; nbPtr = &out->NbSH; }
-    else if(numComp == 3) { list = out->VH; nbPtr = &out->NbVH; }
-    else                  { list = out->TH; nbPtr = &out->NbTH; }
+    if(numComp == 1)      { list = &out->SH; nbPtr = &out->NbSH; }
+    else if(numComp == 3) { list = &out->VH; nbPtr = &out->NbVH; }
+    else                  { list = &out->TH; nbPtr = &out->NbTH; }
     break;
   default:
     return;
@@ -245,16 +244,16 @@ void GMSH_LevelsetPlugin::_addElement(int step, int np, int numEdges, int numCom
   // copy the elements in the output data
   if(!step || !_valueIndependent) {
     for(int k = 0; k < np; k++) 
-      List_Add(list, &xp[k]);
+      list->push_back(xp[k]);
     for(int k = 0; k < np; k++)
-      List_Add(list, &yp[k]);
+      list->push_back(yp[k]);
     for(int k = 0; k < np; k++)
-      List_Add(list, &zp[k]);
+      list->push_back(zp[k]);
     (*nbPtr)++;
   }
   for(int k = 0; k < np; k++)
     for(int l = 0; l < numComp; l++)
-      List_Add(list, &valp[k][l]);
+      list->push_back(valp[k][l]);
 }
 
 void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
@@ -431,7 +430,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
   if(_valueIndependent) {
     // create a single output view containing the (possibly
     // multi-step) levelset
-    PViewDataList *out = getDataList(new PView(true));
+    PViewDataList *out = getDataList(new PView());
     for(int ent = 0; ent < vdata->getNumEntities(0); ent++){
       for(int ele = 0; ele < vdata->getNumElements(0, ent); ele++){
 	if(vdata->skipElement(0, ent, ele)) continue;
@@ -453,7 +452,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
   else{
     // create one view per timestep
     for(int step = 0; step < vdata->getNumTimeSteps(); step++){
-      PViewDataList *out = getDataList(new PView(true));
+      PViewDataList *out = getDataList(new PView());
       for(int ent = 0; ent < vdata->getNumEntities(step); ent++){
         for(int ele = 0; ele < vdata->getNumElements(step, ent); ele++){
 	  if(vdata->skipElement(step, ent, ele)) continue;

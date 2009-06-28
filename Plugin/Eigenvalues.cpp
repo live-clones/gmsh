@@ -50,17 +50,17 @@ void GMSH_EigenvaluesPlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Eigenvalues failed...");
 }
 
-static List_T *incrementList(PViewDataList *data2, int numEdges)
+static std::vector<double> *incrementList(PViewDataList *data2, int numEdges)
 {
   switch(numEdges){
-  case 0: data2->NbSP++; return data2->SP;
-  case 1: data2->NbSL++; return data2->SL;
-  case 3: data2->NbST++; return data2->ST;
-  case 4: data2->NbSQ++; return data2->SQ;
-  case 6: data2->NbSS++; return data2->SS;
-  case 12: data2->NbSH++; return data2->SH;
-  case 9: data2->NbSI++; return data2->SI;
-  case 8: data2->NbSY++; return data2->SY;
+  case 0: data2->NbSP++; return &data2->SP;
+  case 1: data2->NbSL++; return &data2->SL;
+  case 3: data2->NbST++; return &data2->ST;
+  case 4: data2->NbSQ++; return &data2->SQ;
+  case 6: data2->NbSS++; return &data2->SS;
+  case 12: data2->NbSH++; return &data2->SH;
+  case 9: data2->NbSI++; return &data2->SI;
+  case 8: data2->NbSY++; return &data2->SY;
   default: return 0;
   }
 }
@@ -78,9 +78,9 @@ PView *GMSH_EigenvaluesPlugin::execute(PView *v)
     return v;
   }
 
-  PView *min = new PView(true);
-  PView *mid = new PView(true);
-  PView *max = new PView(true);
+  PView *min = new PView();
+  PView *mid = new PView();
+  PView *max = new PView();
 
   PViewDataList *dmin = getDataList(min);
   PViewDataList *dmid = getDataList(mid);
@@ -92,9 +92,9 @@ PView *GMSH_EigenvaluesPlugin::execute(PView *v)
       int numComp = data1->getNumComponents(0, ent, ele);
       if(numComp != 9) continue;
       int numEdges = data1->getNumEdges(0, ent, ele);
-      List_T *outmin = incrementList(dmin, numEdges);
-      List_T *outmid = incrementList(dmid, numEdges);
-      List_T *outmax = incrementList(dmax, numEdges);
+      std::vector<double> *outmin = incrementList(dmin, numEdges);
+      std::vector<double> *outmid = incrementList(dmid, numEdges);
+      std::vector<double> *outmax = incrementList(dmax, numEdges);
       if(!outmin || !outmid || !outmax) continue;
       int numNodes = data1->getNumNodes(0, ent, ele);
       double xyz[3][8];
@@ -102,9 +102,9 @@ PView *GMSH_EigenvaluesPlugin::execute(PView *v)
 	data1->getNode(0, ent, ele, nod, xyz[0][nod], xyz[1][nod], xyz[2][nod]);
       for(int i = 0; i < 3; i++){
 	for(int nod = 0; nod < numNodes; nod++){
-	  List_Add(outmin, &xyz[i][nod]);
-	  List_Add(outmid, &xyz[i][nod]);
-	  List_Add(outmax, &xyz[i][nod]);
+	  outmin->push_back(xyz[i][nod]);
+	  outmid->push_back(xyz[i][nod]);
+	  outmax->push_back(xyz[i][nod]);
 	}
       }
       for(int step = 0; step < data1->getNumTimeSteps(); step++){
@@ -116,9 +116,9 @@ PView *GMSH_EigenvaluesPlugin::execute(PView *v)
 			    {val[3], val[4], val[5]},
 			    {val[6], val[7], val[8]}};
 	  eigenvalue(A, w);
-	  List_Add(outmin, &w[2]);
-	  List_Add(outmid, &w[1]);
-	  List_Add(outmax, &w[0]);
+	  outmin->push_back(w[2]);
+	  outmid->push_back(w[1]);
+	  outmax->push_back(w[0]);
 	}
       }
     }
@@ -126,9 +126,9 @@ PView *GMSH_EigenvaluesPlugin::execute(PView *v)
   
   for(int i = 0; i < data1->getNumTimeSteps(); i++){
     double time = data1->getTime(i);
-    List_Add(dmin->Time, &time);
-    List_Add(dmid->Time, &time);
-    List_Add(dmax->Time, &time);
+    dmin->Time.push_back(time);
+    dmid->Time.push_back(time);
+    dmax->Time.push_back(time);
   }
   dmin->setName(data1->getName() + "_MinEigenvalues");
   dmin->setFileName(data1->getName() + "_MinEigenvalues.pos");

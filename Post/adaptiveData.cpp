@@ -8,7 +8,6 @@
 #include <set>
 #include "adaptiveData.h"
 #include "Plugin.h"
-#include "ListUtils.h"
 #include "OS.h"
 
 //#define TIMER
@@ -1044,42 +1043,42 @@ void adaptiveElements<T>::addInView(double tol, int step,
   if(numComp != 1 && numComp != 3) return;
   
   int numEle = 0, *outNb = 0;
-  List_T *outList = 0;
+  std::vector<double> *outList = 0;
   switch(T::numEdges){
   case 1: 
     numEle = in->getNumLines(); 
     outNb = (numComp == 1) ? &out->NbSL : &out->NbVL;
-    outList = (numComp == 1) ? out->SL : out->VL;
+    outList = (numComp == 1) ? &out->SL : &out->VL;
     break;
   case 3:
     numEle = in->getNumTriangles();
     outNb = (numComp == 1) ? &out->NbST : &out->NbVT;
-    outList = (numComp == 1) ? out->ST : out->VT;
+    outList = (numComp == 1) ? &out->ST : &out->VT;
     break;
   case 4:
     numEle = in->getNumQuadrangles();
     outNb = (numComp == 1) ? &out->NbSQ : &out->NbVQ;
-    outList = (numComp == 1) ? out->SQ : out->VQ;
+    outList = (numComp == 1) ? &out->SQ : &out->VQ;
     break;
   case 6:
     numEle = in->getNumTetrahedra();
     outNb = (numComp == 1) ? &out->NbSS : &out->NbVS;
-    outList = (numComp == 1) ? out->SS : out->VS;
+    outList = (numComp == 1) ? &out->SS : &out->VS;
     break;
   case 9: 
     numEle = in->getNumPrisms();
     outNb = (numComp == 1) ? &out->NbSI : &out->NbVI;
-    outList = (numComp == 1) ? out->SI : out->VI;
+    outList = (numComp == 1) ? &out->SI : &out->VI;
     break;
   case 12: 
     numEle = in->getNumHexahedra();
     outNb = (numComp == 1) ? &out->NbSH : &out->NbVH;
-    outList = (numComp == 1) ? out->SH : out->VH;
+    outList = (numComp == 1) ? &out->SH : &out->VH;
     break;
   }
   if(!numEle) return;
   
-  List_Reset(outList);
+  outList->clear();
   *outNb = 0;
   
   for(int ent = 0; ent < in->getNumEntities(step); ent++){
@@ -1115,14 +1114,14 @@ void adaptiveElements<T>::addInView(double tol, int step,
       *outNb += coords.size() / T::numNodes;
       for(unsigned int i = 0; i < coords.size() / T::numNodes; i++){
         for(int k = 0; k < T::numNodes; ++k) 
-          List_Add(outList, &coords[T::numNodes * i + k].c[0]);
+          outList->push_back(coords[T::numNodes * i + k].c[0]);
         for(int k = 0; k < T::numNodes; ++k) 
-          List_Add(outList, &coords[T::numNodes * i + k].c[1]);
+          outList->push_back(coords[T::numNodes * i + k].c[1]);
         for(int k = 0; k < T::numNodes; ++k) 
-          List_Add(outList, &coords[T::numNodes * i + k].c[2]);
+          outList->push_back(coords[T::numNodes * i + k].c[2]);
         for(int k = 0; k < T::numNodes; ++k)
           for(int l = 0; l < numComp; ++l)
-            List_Add(outList, &values[T::numNodes * i + k].v[l]);
+            outList->push_back(values[T::numNodes * i + k].v[l]);
       }
     }
   }
@@ -1133,7 +1132,7 @@ adaptiveData::adaptiveData(PViewData *data)
     _lines(0), _triangles(0), _quadrangles(0), 
     _tetrahedra(0), _hexahedra(0), _prisms(0)
 {
-  _outData = new PViewDataList(true);
+  _outData = new PViewDataList();
   std::vector<gmshMatrix<double>*> p;
   if(_inData->getNumLines()){
     _inData->getInterpolationMatrices(1, p);

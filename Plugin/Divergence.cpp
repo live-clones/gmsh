@@ -51,17 +51,17 @@ void GMSH_DivergencePlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Divergence failed...");
 }
 
-static List_T *incrementList(PViewDataList *data2, int numEdges)
+static std::vector<double> *incrementList(PViewDataList *data2, int numEdges)
 {
   switch(numEdges){
-  case 0: data2->NbSP++; return data2->SP;
-  case 1: data2->NbSL++; return data2->SL;
-  case 3: data2->NbST++; return data2->ST;
-  case 4: data2->NbSQ++; return data2->SQ;
-  case 6: data2->NbSS++; return data2->SS;
-  case 12: data2->NbSH++; return data2->SH;
-  case 9: data2->NbSI++; return data2->SI;
-  case 8: data2->NbSY++; return data2->SY;
+  case 0: data2->NbSP++; return &data2->SP;
+  case 1: data2->NbSL++; return &data2->SL;
+  case 3: data2->NbST++; return &data2->ST;
+  case 4: data2->NbSQ++; return &data2->SQ;
+  case 6: data2->NbSS++; return &data2->SS;
+  case 12: data2->NbSH++; return &data2->SH;
+  case 9: data2->NbSI++; return &data2->SI;
+  case 8: data2->NbSY++; return &data2->SY;
   default: return 0;
   }
 }
@@ -79,7 +79,7 @@ PView *GMSH_DivergencePlugin::execute(PView *v)
     return v;
   }
 
-  PView *v2 = new PView(true, data1->getNumElements());
+  PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
 
   for(int ent = 0; ent < data1->getNumEntities(0); ent++){
@@ -88,7 +88,7 @@ PView *GMSH_DivergencePlugin::execute(PView *v)
       int numComp = data1->getNumComponents(0, ent, ele);
       if(numComp != 3) continue;
       int numEdges = data1->getNumEdges(0, ent, ele);
-      List_T *out = incrementList(data2, numEdges);
+      std::vector<double> *out = incrementList(data2, numEdges);
       if(!out) continue;
       int numNodes = data1->getNumNodes(0, ent, ele);
       double x[8], y[8], z[8], val[8 * 3];
@@ -98,9 +98,9 @@ PView *GMSH_DivergencePlugin::execute(PView *v)
       elementFactory factory;
       element *element = factory.create(numNodes, dim, x, y, z);
       if(!element) continue;
-      for(int nod = 0; nod < numNodes; nod++) List_Add(out, &x[nod]);
-      for(int nod = 0; nod < numNodes; nod++) List_Add(out, &y[nod]);
-      for(int nod = 0; nod < numNodes; nod++) List_Add(out, &z[nod]);
+      for(int nod = 0; nod < numNodes; nod++) out->push_back(x[nod]);
+      for(int nod = 0; nod < numNodes; nod++) out->push_back(y[nod]);
+      for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]);
       for(int step = 0; step < data1->getNumTimeSteps(); step++){
 	for(int nod = 0; nod < numNodes; nod++)
 	  for(int comp = 0; comp < numComp; comp++)
@@ -109,7 +109,7 @@ PView *GMSH_DivergencePlugin::execute(PView *v)
 	  double u, v, w;
 	  element->getNode(nod, u, v, w);
 	  double f = element->interpolateDiv(val, u, v, w, 3);
-	  List_Add(out, &f);
+	  out->push_back(f);
 	}
       }
       delete element;
@@ -118,7 +118,7 @@ PView *GMSH_DivergencePlugin::execute(PView *v)
 
   for(int i = 0; i < data1->getNumTimeSteps(); i++){
     double time = data1->getTime(i);
-    List_Add(data2->Time, &time);
+    data2->Time.push_back(time);
   }
   data2->setName(data1->getName() + "_Divergence");
   data2->setFileName(data1->getName() + "_Divergence.pos");

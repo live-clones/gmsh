@@ -7,9 +7,9 @@
 #include "MallocUtils.h"
 #include "Context.h"
 
-List_T *GMSH_SkinPlugin::_list = NULL;
-Tree_T *GMSH_SkinPlugin::_skin = NULL;
-int *GMSH_SkinPlugin::_nbList = NULL;
+std::vector<double> *GMSH_SkinPlugin::_list = 0;
+Tree_T *GMSH_SkinPlugin::_skin = 0;
+int *GMSH_SkinPlugin::_nbList = 0;
 int GMSH_SkinPlugin::_nbNod = 0;
 int GMSH_SkinPlugin::_nbComp = 0;
 int GMSH_SkinPlugin::_nbTimeStep = 0;
@@ -100,24 +100,24 @@ void GMSH_SkinPlugin::addInView(void *a, void *b)
   Elm *e = (Elm *)a;
 
   for(int i = 0; i < 3 * _nbNod; i++)
-    List_Add(_list, &e->coord[i]);
+    _list->push_back(e->coord[i]);
   for(int ts = 0; ts < _nbTimeStep; ts++)
     for(int k = 0; k < _nbNod * _nbComp; k++)
-      List_Add(_list, &e->val[_nbNod * _nbComp * ts + k]);
+      _list->push_back(e->val[_nbNod * _nbComp * ts + k]);
   Free(e->val);
   (*_nbList)++;
 }
 
-void GMSH_SkinPlugin::skinList(List_T *inList, int inNbList, 
+void GMSH_SkinPlugin::skinList(std::vector<double> &inList, int inNbList, 
                                int inNbNod, int inNbFac, int fxn[6][4])
 {
   if(!inNbList)
     return;
 
-  int nb = List_Nbr(inList) / inNbList;
-  for(int i = 0; i < List_Nbr(inList); i += nb) {
-    double *coord = (double *)List_Pointer_Fast(inList, i);
-    double *val = (double *)List_Pointer_Fast(inList, i + 3 * inNbNod);
+  int nb = inList.size() / inNbList;
+  for(unsigned int i = 0; i < inList.size(); i += nb) {
+    double *coord = &inList[i];
+    double *val = &inList[i + 3 * inNbNod];
     for(int j = 0; j < inNbFac; j++) {
       Elm e, *pe;
       for(int k = 0; k < _nbNod; k++) {
@@ -152,7 +152,7 @@ PView *GMSH_SkinPlugin::execute(PView *v)
   PViewDataList *data1 = getDataList(v1);
   if(!data1) return v;
 
-  PView *v2 = new PView(true);
+  PView *v2 = new PView();
 
   PViewDataList *data2 = getDataList(v2);
   if(!data2) return v;
@@ -173,21 +173,21 @@ PView *GMSH_SkinPlugin::execute(PView *v)
   _nbNod = 2;
   // scalar
   _skin = Tree_Create(sizeof(Elm), fcmpElm);
-  _list = data2->SL; _nbList = &data2->NbSL; _nbComp = 1;
+  _list = &data2->SL; _nbList = &data2->NbSL; _nbComp = 1;
   skinList(data1->ST, data1->NbST, 3, 3, skinTri);
   skinList(data1->SQ, data1->NbSQ, 4, 4, skinQua);
   Tree_Action(_skin, addInView);
   Tree_Delete(_skin);
   // vector
   _skin = Tree_Create(sizeof(Elm), fcmpElm);
-  _list = data2->VL; _nbList = &data2->NbVL; _nbComp = 3;
+  _list = &data2->VL; _nbList = &data2->NbVL; _nbComp = 3;
   skinList(data1->VT, data1->NbVT, 3, 3, skinTri);
   skinList(data1->VQ, data1->NbVQ, 4, 4, skinQua);
   Tree_Action(_skin, addInView);
   Tree_Delete(_skin);
   // tensor
   _skin = Tree_Create(sizeof(Elm), fcmpElm);
-  _list = data2->TL; _nbList = &data2->NbTL; _nbComp = 9;
+  _list = &data2->TL; _nbList = &data2->NbTL; _nbComp = 9;
   skinList(data1->TT, data1->NbTT, 3, 3, skinTri);
   skinList(data1->TQ, data1->NbTQ, 4, 4, skinQua);
   Tree_Action(_skin, addInView);
@@ -197,7 +197,7 @@ PView *GMSH_SkinPlugin::execute(PView *v)
   _nbNod = 3;
   // scalar
   _skin = Tree_Create(sizeof(Elm), fcmpElm);
-  _list = data2->ST; _nbList = &data2->NbST; _nbComp = 1;
+  _list = &data2->ST; _nbList = &data2->NbST; _nbComp = 1;
   skinList(data1->SS, data1->NbSS, 4, 4, skinTet);
   skinList(data1->SI, data1->NbSI, 6, 2, skinPri2);
   skinList(data1->SY, data1->NbSY, 5, 4, skinPyr2);
@@ -205,7 +205,7 @@ PView *GMSH_SkinPlugin::execute(PView *v)
   Tree_Delete(_skin);
   // vector
   _skin = Tree_Create(sizeof(Elm), fcmpElm);
-  _list = data2->VT; _nbList = &data2->NbVT; _nbComp = 3;
+  _list = &data2->VT; _nbList = &data2->NbVT; _nbComp = 3;
   skinList(data1->VS, data1->NbVS, 4, 4, skinTet);
   skinList(data1->VI, data1->NbVI, 6, 2, skinPri2);
   skinList(data1->VY, data1->NbVY, 5, 4, skinPyr2);
@@ -213,7 +213,7 @@ PView *GMSH_SkinPlugin::execute(PView *v)
   Tree_Delete(_skin);
   // tensor
   _skin = Tree_Create(sizeof(Elm), fcmpElm);
-  _list = data2->TT; _nbList = &data2->NbTT; _nbComp = 9;
+  _list = &data2->TT; _nbList = &data2->NbTT; _nbComp = 9;
   skinList(data1->TS, data1->NbTS, 4, 4, skinTet);
   skinList(data1->TI, data1->NbTI, 6, 2, skinPri2);
   skinList(data1->TY, data1->NbTY, 5, 4, skinPyr2);
@@ -224,7 +224,7 @@ PView *GMSH_SkinPlugin::execute(PView *v)
   _nbNod = 4;
   // scalar
   _skin = Tree_Create(sizeof(Elm), fcmpElm);
-  _list = data2->SQ; _nbList = &data2->NbSQ; _nbComp = 1;
+  _list = &data2->SQ; _nbList = &data2->NbSQ; _nbComp = 1;
   skinList(data1->SH, data1->NbSH, 8, 6, skinHex);
   skinList(data1->SI, data1->NbSI, 6, 3, skinPri1);
   skinList(data1->SY, data1->NbSY, 5, 1, skinPyr1);
@@ -232,7 +232,7 @@ PView *GMSH_SkinPlugin::execute(PView *v)
   Tree_Delete(_skin);
   // vector
   _skin = Tree_Create(sizeof(Elm), fcmpElm);
-  _list = data2->VQ; _nbList = &data2->NbVQ; _nbComp = 3;
+  _list = &data2->VQ; _nbList = &data2->NbVQ; _nbComp = 3;
   skinList(data1->VH, data1->NbVH, 8, 6, skinHex);
   skinList(data1->VI, data1->NbVI, 6, 3, skinPri1);
   skinList(data1->VY, data1->NbVY, 5, 1, skinPyr1);
@@ -240,15 +240,14 @@ PView *GMSH_SkinPlugin::execute(PView *v)
   Tree_Delete(_skin);
   // tensor
   _skin = Tree_Create(sizeof(Elm), fcmpElm);
-  _list = data2->TQ; _nbList = &data2->NbTQ; _nbComp = 9;
+  _list = &data2->TQ; _nbList = &data2->NbTQ; _nbComp = 9;
   skinList(data1->TH, data1->NbTH, 8, 6, skinHex);
   skinList(data1->TI, data1->NbTI, 6, 3, skinPri1);
   skinList(data1->TY, data1->NbTY, 5, 1, skinPyr1);
   Tree_Action(_skin, addInView);
   Tree_Delete(_skin);
 
-  for(int i = 0; i < List_Nbr(data1->Time); i++)
-    List_Add(data2->Time, List_Pointer(data1->Time, i));
+  data2->Time = data1->Time;
   data2->setName(data1->getName() + "_Skin");
   data2->setFileName(data1->getName() + "_Skin.pos");
   data2->finalize();

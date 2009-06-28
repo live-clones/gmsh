@@ -5,7 +5,6 @@
 
 #include "Octree.h"
 #include "OctreePost.h"
-#include "ListUtils.h"
 #include "PView.h"
 #include "PViewDataList.h"
 #include "PViewDataGModel.h"
@@ -192,14 +191,10 @@ void pyrCentroid(void *a, double *x)
   centroid(5, X, Y, Z, x);
 }
 
-static void addListOfStuff(Octree *o, List_T *l, int nbelm)
+static void addListOfStuff(Octree *o, std::vector<double> &l, int nbelm)
 {
-  if(!l) return;
- 
-  for(int i = 0; i < List_Nbr(l); i += nbelm){
-    double * X = (double *)List_Pointer_Fast(l, i);
-    Octree_Insert(X, o);
-  }
+  for(unsigned int i = 0; i < l.size(); i += nbelm)
+    Octree_Insert(&l[i], o);
 }
 
 // OctreePost implementation

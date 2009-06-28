@@ -50,7 +50,7 @@ static std::map<std::string, std::string > gmsh_yystringsymbols;
 static PViewDataList *ViewData;
 #endif
 static std::vector<double> ViewCoord;
-static List_T *ViewValueList = 0;
+static std::vector<double> *ViewValueList = 0;
 static int *ViewNumList = 0;
 static ExtrudeParams extr;
 static int curPhysDim = 0;
@@ -282,7 +282,7 @@ Views :
     // nothing
     {
 #if !defined(HAVE_NO_POST)
-      ViewData = new PViewDataList(true); 
+      ViewData = new PViewDataList(); 
 #endif
     }
   | Views Element
@@ -301,149 +301,107 @@ ElementCoords :
 
 ElementValues :
     FExpr
-    { if(ViewValueList) List_Add(ViewValueList, &$1); }
+    { if(ViewValueList) ViewValueList->push_back($1); }
   | ElementValues ',' FExpr
-    { if(ViewValueList) List_Add(ViewValueList, &$3); }
+    { if(ViewValueList) ViewValueList->push_back($3); }
 ;
 
 Element : 
     tSTRING 
     {
 #if !defined(HAVE_NO_POST)
-      if(!strcmp($1, "SP")){
-	ViewValueList = ViewData->SP; ViewNumList = &ViewData->NbSP;
+      if(!strncmp($1, "SP", 2)){
+	ViewValueList = &ViewData->SP; ViewNumList = &ViewData->NbSP;
       }
-      else if(!strcmp($1, "VP")){
-	ViewValueList = ViewData->VP; ViewNumList = &ViewData->NbVP;
+      else if(!strncmp($1, "VP", 2)){
+	ViewValueList = &ViewData->VP; ViewNumList = &ViewData->NbVP;
       }
-      else if(!strcmp($1, "TP")){
-	ViewValueList = ViewData->TP; ViewNumList = &ViewData->NbTP;
+      else if(!strncmp($1, "TP", 2)){
+	ViewValueList = &ViewData->TP; ViewNumList = &ViewData->NbTP;
       }
-      else if(!strcmp($1, "SL")){
-	ViewValueList = ViewData->SL; ViewNumList = &ViewData->NbSL;
+      else if(!strncmp($1, "SL", 2)){
+	ViewValueList = &ViewData->SL; ViewNumList = &ViewData->NbSL;
+        if(strlen($1) > 2) ViewData->setOrder2(1);
       }
-      else if(!strcmp($1, "VL")){
-	ViewValueList = ViewData->VL; ViewNumList = &ViewData->NbVL;
+      else if(!strncmp($1, "VL", 2)){
+	ViewValueList = &ViewData->VL; ViewNumList = &ViewData->NbVL;
+        if(strlen($1) > 2) ViewData->setOrder2(1);
       }
-      else if(!strcmp($1, "TL")){
-	ViewValueList = ViewData->TL; ViewNumList = &ViewData->NbTL;
+      else if(!strncmp($1, "TL", 2)){
+	ViewValueList = &ViewData->TL; ViewNumList = &ViewData->NbTL;
+        if(strlen($1) > 2) ViewData->setOrder2(1);
       }
-      else if(!strcmp($1, "ST")){
-	ViewValueList = ViewData->ST; ViewNumList = &ViewData->NbST;
+      else if(!strncmp($1, "ST", 2)){
+	ViewValueList = &ViewData->ST; ViewNumList = &ViewData->NbST;
+        if(strlen($1) > 2) ViewData->setOrder2(3);
       }
-      else if(!strcmp($1, "VT")){
-	ViewValueList = ViewData->VT; ViewNumList = &ViewData->NbVT;
+      else if(!strncmp($1, "VT", 2)){
+	ViewValueList = &ViewData->VT; ViewNumList = &ViewData->NbVT;
+        if(strlen($1) > 2) ViewData->setOrder2(3);
       }
-      else if(!strcmp($1, "TT")){
-	ViewValueList = ViewData->TT; ViewNumList = &ViewData->NbTT;
+      else if(!strncmp($1, "TT", 2)){
+	ViewValueList = &ViewData->TT; ViewNumList = &ViewData->NbTT;
+        if(strlen($1) > 2) ViewData->setOrder2(3);
       }
-      else if(!strcmp($1, "SQ")){
-	ViewValueList = ViewData->SQ; ViewNumList = &ViewData->NbSQ;
+      else if(!strncmp($1, "SQ", 2)){
+	ViewValueList = &ViewData->SQ; ViewNumList = &ViewData->NbSQ;
+        if(strlen($1) > 2) ViewData->setOrder2(4);
       }
-      else if(!strcmp($1, "VQ")){
-	ViewValueList = ViewData->VQ; ViewNumList = &ViewData->NbVQ;
+      else if(!strncmp($1, "VQ", 2)){
+	ViewValueList = &ViewData->VQ; ViewNumList = &ViewData->NbVQ;
+        if(strlen($1) > 2) ViewData->setOrder2(4);
       }
-      else if(!strcmp($1, "TQ")){
-	ViewValueList = ViewData->TQ; ViewNumList = &ViewData->NbTQ;
+      else if(!strncmp($1, "TQ", 2)){
+	ViewValueList = &ViewData->TQ; ViewNumList = &ViewData->NbTQ;
+        if(strlen($1) > 2) ViewData->setOrder2(4);
       }
-      else if(!strcmp($1, "SS")){
-	ViewValueList = ViewData->SS; ViewNumList = &ViewData->NbSS;
+      else if(!strncmp($1, "SS", 2)){
+	ViewValueList = &ViewData->SS; ViewNumList = &ViewData->NbSS;
+        if(strlen($1) > 2) ViewData->setOrder2(6);
       }
-      else if(!strcmp($1, "VS")){
-	ViewValueList = ViewData->VS; ViewNumList = &ViewData->NbVS;
+      else if(!strncmp($1, "VS", 2)){
+	ViewValueList = &ViewData->VS; ViewNumList = &ViewData->NbVS;
+        if(strlen($1) > 2) ViewData->setOrder2(6);
       }
-      else if(!strcmp($1, "TS")){
-	ViewValueList = ViewData->TS; ViewNumList = &ViewData->NbTS;
+      else if(!strncmp($1, "TS", 2)){
+	ViewValueList = &ViewData->TS; ViewNumList = &ViewData->NbTS;
+        if(strlen($1) > 2) ViewData->setOrder2(6);
       }
-      else if(!strcmp($1, "SH")){
-	ViewValueList = ViewData->SH; ViewNumList = &ViewData->NbSH;
+      else if(!strncmp($1, "SH", 2)){
+	ViewValueList = &ViewData->SH; ViewNumList = &ViewData->NbSH;
+        if(strlen($1) > 2) ViewData->setOrder2(12);
       }
-      else if(!strcmp($1, "VH")){
-	ViewValueList = ViewData->VH; ViewNumList = &ViewData->NbVH;
+      else if(!strncmp($1, "VH", 2)){
+	ViewValueList = &ViewData->VH; ViewNumList = &ViewData->NbVH;
+        if(strlen($1) > 2) ViewData->setOrder2(12);
       }
-      else if(!strcmp($1, "TH")){
-	ViewValueList = ViewData->TH; ViewNumList = &ViewData->NbTH;
+      else if(!strncmp($1, "TH", 2)){
+	ViewValueList = &ViewData->TH; ViewNumList = &ViewData->NbTH;
+        if(strlen($1) > 2) ViewData->setOrder2(12);
       }
-      else if(!strcmp($1, "SI")){
-	ViewValueList = ViewData->SI; ViewNumList = &ViewData->NbSI;
+      else if(!strncmp($1, "SI", 2)){
+	ViewValueList = &ViewData->SI; ViewNumList = &ViewData->NbSI;
+        if(strlen($1) > 2) ViewData->setOrder2(9);
       }
-      else if(!strcmp($1, "VI")){
-	ViewValueList = ViewData->VI; ViewNumList = &ViewData->NbVI;
+      else if(!strncmp($1, "VI", 2)){
+	ViewValueList = &ViewData->VI; ViewNumList = &ViewData->NbVI;
+        if(strlen($1) > 2) ViewData->setOrder2(9);
       }
-      else if(!strcmp($1, "TI")){
-	ViewValueList = ViewData->TI; ViewNumList = &ViewData->NbTI;
+      else if(!strncmp($1, "TI", 2)){
+	ViewValueList = &ViewData->TI; ViewNumList = &ViewData->NbTI;
+        if(strlen($1) > 2) ViewData->setOrder2(9);
       }
-      else if(!strcmp($1, "SY")){
-	ViewValueList = ViewData->SY; ViewNumList = &ViewData->NbSY;
+      else if(!strncmp($1, "SY", 2)){
+	ViewValueList = &ViewData->SY; ViewNumList = &ViewData->NbSY;
+        if(strlen($1) > 2) ViewData->setOrder2(8);
       }
-      else if(!strcmp($1, "VY")){
-	ViewValueList = ViewData->VY; ViewNumList = &ViewData->NbVY;
+      else if(!strncmp($1, "VY", 2)){
+	ViewValueList = &ViewData->VY; ViewNumList = &ViewData->NbVY;
+        if(strlen($1) > 2) ViewData->setOrder2(8);
       }
-      else if(!strcmp($1, "TY")){
-	ViewValueList = ViewData->TY; ViewNumList = &ViewData->NbTY;
-      }
-      else if(!strcmp($1, "SL2")){
-	ViewValueList = ViewData->SL2; ViewNumList = &ViewData->NbSL2;
-      }
-      else if(!strcmp($1, "VL2")){
-	ViewValueList = ViewData->VL2; ViewNumList = &ViewData->NbVL2;
-      }
-      else if(!strcmp($1, "TL2")){
-	ViewValueList = ViewData->TL2; ViewNumList = &ViewData->NbTL2;
-      }
-      else if(!strcmp($1, "ST2")){
-	ViewValueList = ViewData->ST2; ViewNumList = &ViewData->NbST2;
-      }
-      else if(!strcmp($1, "VT2")){
-	ViewValueList = ViewData->VT2; ViewNumList = &ViewData->NbVT2;
-      }
-      else if(!strcmp($1, "TT2")){
-	ViewValueList = ViewData->TT2; ViewNumList = &ViewData->NbTT2;
-      }
-      else if(!strcmp($1, "SQ2")){
-	ViewValueList = ViewData->SQ2; ViewNumList = &ViewData->NbSQ2;
-      }
-      else if(!strcmp($1, "VQ2")){
-	ViewValueList = ViewData->VQ2; ViewNumList = &ViewData->NbVQ2;
-      }
-      else if(!strcmp($1, "TQ2")){
-	ViewValueList = ViewData->TQ2; ViewNumList = &ViewData->NbTQ2;
-      }
-      else if(!strcmp($1, "SS2")){
-	ViewValueList = ViewData->SS2; ViewNumList = &ViewData->NbSS2;
-      }
-      else if(!strcmp($1, "VS2")){
-	ViewValueList = ViewData->VS2; ViewNumList = &ViewData->NbVS2;
-      }
-      else if(!strcmp($1, "TS2")){
-	ViewValueList = ViewData->TS2; ViewNumList = &ViewData->NbTS2;
-      }
-      else if(!strcmp($1, "SH2")){
-	ViewValueList = ViewData->SH2; ViewNumList = &ViewData->NbSH2;
-      }
-      else if(!strcmp($1, "VH2")){
-	ViewValueList = ViewData->VH2; ViewNumList = &ViewData->NbVH2;
-      }
-      else if(!strcmp($1, "TH2")){
-	ViewValueList = ViewData->TH2; ViewNumList = &ViewData->NbTH2;
-      }
-      else if(!strcmp($1, "SI2")){
-	ViewValueList = ViewData->SI2; ViewNumList = &ViewData->NbSI2;
-      }
-      else if(!strcmp($1, "VI2")){
-	ViewValueList = ViewData->VI2; ViewNumList = &ViewData->NbVI2;
-      }
-      else if(!strcmp($1, "TI2")){
-	ViewValueList = ViewData->TI2; ViewNumList = &ViewData->NbTI2;
-      }
-      else if(!strcmp($1, "SY2")){
-	ViewValueList = ViewData->SY2; ViewNumList = &ViewData->NbSY2;
-      }
-      else if(!strcmp($1, "VY2")){
-	ViewValueList = ViewData->VY2; ViewNumList = &ViewData->NbVY2;
-      }
-      else if(!strcmp($1, "TY2")){
-	ViewValueList = ViewData->TY2; ViewNumList = &ViewData->NbTY2;
+      else if(!strncmp($1, "TY", 2)){
+	ViewValueList = &ViewData->TY; ViewNumList = &ViewData->NbTY;
+        if(strlen($1) > 2) ViewData->setOrder2(8);
       }
       else{
 	yymsg(0, "Unknown element type '%s'", $1);	
@@ -459,7 +417,7 @@ Element :
       if(ViewValueList){
 	for(int i = 0; i < 3; i++)
 	  for(int j = 0; j < ViewCoord.size() / 3; j++) 
-	    List_Add(ViewValueList, &ViewCoord[3 * j + i]);
+	    ViewValueList->push_back(ViewCoord[3 * j + i]);
       }
 #endif
     }
@@ -475,14 +433,14 @@ Text2DValues :
     StringExprVar
     { 
 #if !defined(HAVE_NO_POST)
-      for(int i = 0; i < (int)strlen($1)+1; i++) List_Add(ViewData->T2C, &$1[i]); 
+      for(int i = 0; i < (int)strlen($1) + 1; i++) ViewData->T2C.push_back($1[i]);
 #endif
       Free($1);
     }
   | Text2DValues ',' StringExprVar
     { 
 #if !defined(HAVE_NO_POST)
-      for(int i = 0; i < (int)strlen($3)+1; i++) List_Add(ViewData->T2C, &$3[i]); 
+      for(int i = 0; i < (int)strlen($3) + 1; i++) ViewData->T2C.push_back($3[i]);
 #endif
       Free($3);
     }
@@ -492,11 +450,10 @@ Text2D :
     tText2D '(' FExpr ',' FExpr ',' FExpr ')'
     { 
 #if !defined(HAVE_NO_POST)
-      List_Add(ViewData->T2D, &$3); 
-      List_Add(ViewData->T2D, &$5);
-      List_Add(ViewData->T2D, &$7); 
-      double d = List_Nbr(ViewData->T2C);
-      List_Add(ViewData->T2D, &d); 
+      ViewData->T2D.push_back($3); 
+      ViewData->T2D.push_back($5);
+      ViewData->T2D.push_back($7); 
+      ViewData->T2D.push_back(ViewData->T2C.size()); 
 #endif
     }
     '{' Text2DValues '}' tEND
@@ -511,14 +468,14 @@ Text3DValues :
     StringExprVar
     { 
 #if !defined(HAVE_NO_POST)
-      for(int i = 0; i < (int)strlen($1)+1; i++) List_Add(ViewData->T3C, &$1[i]); 
+      for(int i = 0; i < (int)strlen($1) + 1; i++) ViewData->T3C.push_back($1[i]);
 #endif
       Free($1);
     }
   | Text3DValues ',' StringExprVar
     { 
 #if !defined(HAVE_NO_POST)
-      for(int i = 0; i < (int)strlen($3)+1; i++) List_Add(ViewData->T3C, &$3[i]); 
+      for(int i = 0; i < (int)strlen($3) + 1; i++) ViewData->T3C.push_back($3[i]);
 #endif
       Free($3);
     }
@@ -528,10 +485,9 @@ Text3D :
     tText3D '(' FExpr ',' FExpr ',' FExpr ',' FExpr ')'
     { 
 #if !defined(HAVE_NO_POST)
-      List_Add(ViewData->T3D, &$3); List_Add(ViewData->T3D, &$5);
-      List_Add(ViewData->T3D, &$7); List_Add(ViewData->T3D, &$9); 
-      double d = List_Nbr(ViewData->T3C);
-      List_Add(ViewData->T3D, &d); 
+      ViewData->T3D.push_back($3); ViewData->T3D.push_back($5);
+      ViewData->T3D.push_back($7); ViewData->T3D.push_back($9);
+      ViewData->T3D.push_back(ViewData->T3C.size()); 
 #endif
     }
     '{' Text3DValues '}' tEND
@@ -584,7 +540,7 @@ Time :
     tTime 
     {
 #if !defined(HAVE_NO_POST)
-      ViewValueList = ViewData->Time;
+      ViewValueList = &ViewData->Time;
 #endif
     }
    '{' ElementValues '}' tEND

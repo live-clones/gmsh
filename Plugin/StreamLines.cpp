@@ -244,7 +244,7 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
     o2 = new OctreePost(v2);
   }
 
-  PView *v3 = new PView(true);
+  PView *v3 = new PView();
   PViewDataList *data3 = getDataList(v3);
 
   const double b1 = 1. / 3., b2 = 2. / 3., b3 = 1. / 3., b4 = 1. / 6.;
@@ -261,9 +261,9 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
       }
       else{
         data3->NbVP++;
-        List_Add(data3->VP, &X[0]);
-        List_Add(data3->VP, &X[1]);
-        List_Add(data3->VP, &X[2]);            
+        data3->VP.push_back(X[0]);
+        data3->VP.push_back(X[1]);
+        data3->VP.push_back(X[2]);            
       }
 
       int currentTimeStep = 0;
@@ -275,11 +275,11 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
         if(timeStep < 0){
           double T0 = data1->getTime(0);
           double currentT = T0 + DT * iter;
-          List_Add(data3->Time, &currentT);
+          data3->Time.push_back(currentT);
           for(; currentTimeStep < data1->getNumTimeSteps() - 1 && 
                 currentT > 0.5 * (data1->getTime(currentTimeStep) + 
                                   data1->getTime(currentTimeStep + 1));
-              currentTimeStep++);
+          currentTimeStep++);
         }
         else{
           currentTimeStep = timeStep;
@@ -308,22 +308,19 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
 
         if(data2){
           data3->NbSL++;
-          List_Add(data3->SL, &XPREV[0]);
-          List_Add(data3->SL, &X[0]);
-          List_Add(data3->SL, &XPREV[1]);
-          List_Add(data3->SL, &X[1]);
-          List_Add(data3->SL, &XPREV[2]);
-          List_Add(data3->SL, &X[2]);
+          data3->SL.push_back(XPREV[0]); data3->SL.push_back(X[0]);
+          data3->SL.push_back(XPREV[1]); data3->SL.push_back(X[1]);
+          data3->SL.push_back(XPREV[2]); data3->SL.push_back(X[2]);
           for(int k = 0; k < data2->getNumTimeSteps(); k++)
-            List_Add(data3->SL, &val2[k]);
+            data3->SL.push_back(val2[k]);
           o2->searchScalar(X[0], X[1], X[2], val2, -1);
           for(int k = 0; k < data2->getNumTimeSteps(); k++)
-            List_Add(data3->SL, &val2[k]);
+            data3->SL.push_back(val2[k]);
         }
         else{
-          List_Add(data3->VP, &DX[0]);
-          List_Add(data3->VP, &DX[1]);
-          List_Add(data3->VP, &DX[2]);         
+          data3->VP.push_back(DX[0]);
+          data3->VP.push_back(DX[1]);
+          data3->VP.push_back(DX[2]);         
         }
       }
     }

@@ -930,6 +930,24 @@ class drawMeshGRegion {
   }
 };
 
+static void beginFakeTransparency()
+{
+  return;
+  CTX::instance()->color.mesh.triangle = CTX::instance()->packColor(255, 0, 0, 128);
+  // simple additive blending "a la xpost":
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE); // glBlendEquation(GL_FUNC_ADD);
+  // maximum intensity projection "a la volsuite":
+  // glBlendFunc(GL_ONE, GL_ONE); // glBlendEquation(GL_MAX);
+  glEnable(GL_BLEND);
+  glDisable(GL_DEPTH_TEST);
+}
+
+static void endFakeTransparency()
+{
+  return;
+  glDisable(GL_BLEND);
+  glEnable(GL_DEPTH_TEST);
+}
 
 // Main drawing routine
 
@@ -968,6 +986,8 @@ void drawContext::drawMesh()
 	glDisable((GLenum)(GL_CLIP_PLANE0 + i));
   }
 
+  const int fakeTransparency = true;
+
   static bool busy = false;
   if(!busy){
     busy = true;
@@ -996,8 +1016,11 @@ void drawContext::drawMesh()
             std::for_each(m->firstVertex(), m->lastVertex(), drawMeshGVertex(this));
           if(status >= 1)
             std::for_each(m->firstEdge(), m->lastEdge(), drawMeshGEdge(this));
-          if(status >= 2)
+          if(status >= 2){
+            beginFakeTransparency();
             std::for_each(m->firstFace(), m->lastFace(), drawMeshGFace(this));
+            endFakeTransparency();
+          }
           if(status >= 3)
             std::for_each(m->firstRegion(), m->lastRegion(), drawMeshGRegion(this));
         }

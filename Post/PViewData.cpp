@@ -4,7 +4,6 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "PViewData.h"
-#include "ListUtils.h"
 #include "adaptiveData.h"
 #include "Numeric.h"
 #include "GmshMessage.h"

@@ -48,22 +48,14 @@ bool PView::readPOS(std::string fileName, int fileIndex)
         Msg::Error("Unknown data size (%d) in post-processing file", size);
         return false;
       }
-      if(format == 0)
-        format = LIST_FORMAT_ASCII;
-      else if(format == 1)
-        format = LIST_FORMAT_BINARY;
-      else {
-        Msg::Error("Unknown format for view");
-        return false;
-      }
 
     }
     else if(!strncmp(&str[1], "View", 4)){
 
       index++;
       if(fileIndex < 0 || fileIndex == index){
-        PViewDataList *d = new PViewDataList(false);
-        if(!d->readPOS(fp, version, format, size)){
+        PViewDataList *d = new PViewDataList();
+        if(!d->readPOS(fp, version, format ? true : false)){
           Msg::Error("Could not read data in list format");
           delete d;
           return false;

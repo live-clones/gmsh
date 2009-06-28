@@ -41,7 +41,7 @@ static PViewDataList *Img2Data(Fl_RGB_Image &img_init, int quads=1,
     return 0;
   }
 
-  PViewDataList *d = new PViewDataList(true);
+  PViewDataList *d = new PViewDataList();
 
   double z = 0.;
   for(int i = 0; i < height - 1; i++) {
@@ -57,26 +57,26 @@ static PViewDataList *Img2Data(Fl_RGB_Image &img_init, int quads=1,
       double val3 = (double)a1[j + 1]/255.;
       double val4 = (double)a[j + 1]/255.;
       if(quads){ // generate quads
-        List_Add(d->SQ, &x); List_Add(d->SQ, &x); 
-        List_Add(d->SQ, &x1); List_Add(d->SQ, &x1);
-        List_Add(d->SQ, &y); List_Add(d->SQ, &y1);
-        List_Add(d->SQ, &y1); List_Add(d->SQ, &y);
-        List_Add(d->SQ, &z); List_Add(d->SQ, &z);
-        List_Add(d->SQ, &z); List_Add(d->SQ, &z);
-        List_Add(d->SQ, &val1); List_Add(d->SQ, &val2);
-        List_Add(d->SQ, &val3); List_Add(d->SQ, &val4);
+        d->SQ.push_back(x); d->SQ.push_back(x); 
+        d->SQ.push_back(x1); d->SQ.push_back(x1);
+        d->SQ.push_back(y); d->SQ.push_back(y1);
+        d->SQ.push_back(y1); d->SQ.push_back(y);
+        d->SQ.push_back(z); d->SQ.push_back(z);
+        d->SQ.push_back(z); d->SQ.push_back(z);
+        d->SQ.push_back(val1); d->SQ.push_back(val2);
+        d->SQ.push_back(val3); d->SQ.push_back(val4);
         d->NbSQ++;
       }
       else{ // generate triangles
-        List_Add(d->ST, &x); List_Add(d->ST, &x); List_Add(d->ST, &x1);
-        List_Add(d->ST, &y); List_Add(d->ST, &y1); List_Add(d->ST, &y1);
-        List_Add(d->ST, &z); List_Add(d->ST, &z); List_Add(d->ST, &z);
-        List_Add(d->ST, &val1); List_Add(d->ST, &val2); List_Add(d->ST, &val3);
+        d->ST.push_back(x); d->ST.push_back(x); d->ST.push_back(x1);
+        d->ST.push_back(y); d->ST.push_back(y1); d->ST.push_back(y1);
+        d->ST.push_back(z); d->ST.push_back(z); d->ST.push_back(z);
+        d->ST.push_back(val1); d->ST.push_back(val2); d->ST.push_back(val3);
         d->NbST++;
-        List_Add(d->ST, &x); List_Add(d->ST, &x1); List_Add(d->ST, &x1);
-        List_Add(d->ST, &y); List_Add(d->ST, &y1); List_Add(d->ST, &y);
-        List_Add(d->ST, &z); List_Add(d->ST, &z); List_Add(d->ST, &z);
-        List_Add(d->ST, &val1); List_Add(d->ST, &val3); List_Add(d->ST, &val4);
+        d->ST.push_back(x); d->ST.push_back(x1); d->ST.push_back(x1);
+        d->ST.push_back(y); d->ST.push_back(y1); d->ST.push_back(y);
+        d->ST.push_back(z); d->ST.push_back(z); d->ST.push_back(z);
+        d->ST.push_back(val1); d->ST.push_back(val3); d->ST.push_back(val4);
         d->NbST++;
       }
     }

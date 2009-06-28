@@ -142,7 +142,7 @@ PView *GMSH_ProbePlugin::execute(PView *v)
   PView *v1 = getView(iView, v);
   if(!v1) return v;
 
-  PView *v2 = new PView(true);
+  PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
 
   int numSteps = v1->getData()->getNumTimeSteps();
@@ -151,32 +151,32 @@ PView *GMSH_ProbePlugin::execute(PView *v)
   OctreePost o(v1);
 
   if(o.searchScalar(x, y, z, val)){
-    List_Add(data2->SP, &x);
-    List_Add(data2->SP, &y);
-    List_Add(data2->SP, &z);
+    data2->SP.push_back(x);
+    data2->SP.push_back(y);
+    data2->SP.push_back(z);
     for(int i = 0; i < numSteps; i++)
-      List_Add(data2->SP, &val[i]);
+      data2->SP.push_back(val[i]);
     data2->NbSP++;
   }
 
   if(o.searchVector(x, y, z, val)){
-    List_Add(data2->VP, &x);
-    List_Add(data2->VP, &y);
-    List_Add(data2->VP, &z);
+    data2->VP.push_back(x);
+    data2->VP.push_back(y);
+    data2->VP.push_back(z);
     for(int i = 0; i < numSteps; i++){
       for(int j = 0; j < 3; j++)
-        List_Add(data2->VP, &val[3*i+j]);
+        data2->VP.push_back(val[3 * i + j]);
     }
     data2->NbVP++;
   }
 
   if(o.searchTensor(x, y, z, val)){
-    List_Add(data2->TP, &x);
-    List_Add(data2->TP, &y);
-    List_Add(data2->TP, &z);
+    data2->TP.push_back(x);
+    data2->TP.push_back(y);
+    data2->TP.push_back(z);
     for(int i = 0; i < numSteps; i++){
       for(int j = 0; j < 9; j++)
-        List_Add(data2->TP, &val[9*i+j]);
+        data2->TP.push_back(val[9 * i + j]);
     }
     data2->NbTP++;
   }
@@ -185,7 +185,7 @@ PView *GMSH_ProbePlugin::execute(PView *v)
   
   for(int i = 0; i < numSteps; i++){
     double time = v1->getData()->getTime(i);
-    List_Add(data2->Time, &time);
+    data2->Time.push_back(time);
   }
   data2->setName(v1->getData()->getName() + "_Probe");
   data2->setFileName(v1->getData()->getName() + "_Probe.pos");

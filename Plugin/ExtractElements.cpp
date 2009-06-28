@@ -57,8 +57,8 @@ void GMSH_ExtractElementsPlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "ExtractElements failed...");
 }
 
-static void extract(List_T *inList, int inNb, 
-                    List_T *outList, int *outNb, 
+static void extract(std::vector<double> &inList, int inNb, 
+                    std::vector<double> &outList, int *outNb, 
                     int timeStep, int nbNod, int nbComp)
 {
   if(!inNb)
@@ -67,10 +67,9 @@ static void extract(List_T *inList, int inNb,
   double MinVal = ExtractElementsOptions_Number[0].def;
   double MaxVal = ExtractElementsOptions_Number[1].def;
 
-  int nb = List_Nbr(inList) / inNb;
-  for(int i = 0; i < List_Nbr(inList); i += nb) {
-    double *vals = (double *)List_Pointer_Fast(inList, i + 3 * nbNod + 
-                                               timeStep * nbNod * nbComp);
+  int nb = inList.size() / inNb;
+  for(unsigned int i = 0; i < inList.size(); i += nb) {
+    double *vals = &inList[i + 3 * nbNod + timeStep * nbNod * nbComp];
     double d = 0.;
     for(int k = 0; k < nbNod; k++) {
       double *v = &vals[nbComp * k];
@@ -91,7 +90,7 @@ static void extract(List_T *inList, int inNb,
     // worrying about roundoff errors
     if(d >= MinVal && d < MaxVal){
       for(int j = 0; j < nb; j++)
-        List_Add(outList, List_Pointer_Fast(inList, i + j));
+        outList.push_back(inList[i + j]);
       (*outNb)++;
     }
   }
@@ -108,7 +107,7 @@ PView *GMSH_ExtractElementsPlugin::execute(PView *v)
   PViewDataList *data1 = getDataList(v1);
   if(!data1) return v;
 
-  PView *v2 = new PView(true);
+  PView *v2 = new PView();
 
   PViewDataList *data2 = getDataList(v2);
   if(!data2) return v;
@@ -152,8 +151,7 @@ PView *GMSH_ExtractElementsPlugin::execute(PView *v)
   extract(data1->VY, data1->NbVY, data2->VY, &data2->NbVY, step, 5, 3);
   extract(data1->TY, data1->NbTY, data2->TY, &data2->NbTY, step, 5, 9);
 
-  for(int i = 0; i < List_Nbr(data1->Time); i++)
-    List_Add(data2->Time, List_Pointer(data1->Time, i));
+  data2->Time = data1->Time;
   data2->setName(data1->getName() + "_ExtractElements");
   data2->setFileName(data1->getName() + "_ExtractElements.pos");
   data2->finalize();

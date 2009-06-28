@@ -228,21 +228,21 @@ void GMSH_CutGridPlugin::getPoint(int iU, int iV, double *X)
 
 void GMSH_CutGridPlugin::addInView(int numsteps, int connect, int nbcomp, 
                                    double ***pnts, double ***vals, 
-                                   List_T *P, int *nP, 
-                                   List_T *L, int *nL, 
-                                   List_T *Q, int *nQ)
+                                   std::vector<double> &P, int *nP, 
+                                   std::vector<double> &L, int *nL, 
+                                   std::vector<double> &Q, int *nQ)
 {
   if(!connect || (getNbU() == 1 && getNbV() == 1)){ // generate points
     
     for(int i = 0; i < getNbU(); ++i){
       for(int j = 0; j < getNbV(); ++j){
-        List_Add(P, &pnts[i][j][0]);
-        List_Add(P, &pnts[i][j][1]);
-        List_Add(P, &pnts[i][j][2]);
+        P.push_back(pnts[i][j][0]);
+        P.push_back(pnts[i][j][1]);
+        P.push_back(pnts[i][j][2]);
         (*nP)++;
         for(int k = 0; k < numsteps; ++k){
           for(int l = 0; l < nbcomp; ++l)
-            List_Add(P, &vals[i][j][nbcomp*k+l]);
+            P.push_back(vals[i][j][nbcomp*k+l]);
         }
       }
     }
@@ -252,51 +252,51 @@ void GMSH_CutGridPlugin::addInView(int numsteps, int connect, int nbcomp,
     
     if(getNbU() == 1){
       for(int i = 0; i < getNbV()-1; ++i){
-        List_Add(L, &pnts[0][i][0]); List_Add(L, &pnts[0][i+1][0]);
-        List_Add(L, &pnts[0][i][1]); List_Add(L, &pnts[0][i+1][1]);
-        List_Add(L, &pnts[0][i][2]); List_Add(L, &pnts[0][i+1][2]);
+        L.push_back(pnts[0][i][0]); L.push_back(pnts[0][i+1][0]);
+        L.push_back(pnts[0][i][1]); L.push_back(pnts[0][i+1][1]);
+        L.push_back(pnts[0][i][2]); L.push_back(pnts[0][i+1][2]);
         (*nL)++;
         for(int k = 0; k < numsteps; ++k){
           for(int l = 0; l < nbcomp; ++l)
-            List_Add(L, &vals[0][i  ][nbcomp*k+l]);
+            L.push_back(vals[0][i  ][nbcomp*k+l]);
           for(int l = 0; l < nbcomp; ++l)
-            List_Add(L, &vals[0][i+1][nbcomp*k+l]);
+            L.push_back(vals[0][i+1][nbcomp*k+l]);
         }
       }
     }
     else if(getNbV() == 1){
       for(int i = 0; i < getNbU()-1; ++i){
-        List_Add(L, &pnts[i][0][0]); List_Add(L, &pnts[i+1][0][0]);
-        List_Add(L, &pnts[i][0][1]); List_Add(L, &pnts[i+1][0][1]);
-        List_Add(L, &pnts[i][0][2]); List_Add(L, &pnts[i+1][0][2]);
+        L.push_back(pnts[i][0][0]); L.push_back(pnts[i+1][0][0]);
+        L.push_back(pnts[i][0][1]); L.push_back(pnts[i+1][0][1]);
+        L.push_back(pnts[i][0][2]); L.push_back(pnts[i+1][0][2]);
         (*nL)++;
         for(int k = 0; k < numsteps; ++k){
           for(int l = 0; l < nbcomp; ++l)
-            List_Add(L, &vals[i  ][0][nbcomp*k+l]);
+            L.push_back(vals[i  ][0][nbcomp*k+l]);
           for(int l = 0; l < nbcomp; ++l)
-            List_Add(L, &vals[i+1][0][nbcomp*k+l]);
+            L.push_back(vals[i+1][0][nbcomp*k+l]);
         }
       }
     }
     else{
       for(int i = 0; i < getNbU()-1; ++i){
         for(int j = 0; j < getNbV()-1; ++j){
-          List_Add(Q, &pnts[i  ][j  ][0]); List_Add(Q, &pnts[i+1][j  ][0]);
-          List_Add(Q, &pnts[i+1][j+1][0]); List_Add(Q, &pnts[i  ][j+1][0]);
-          List_Add(Q, &pnts[i  ][j  ][1]); List_Add(Q, &pnts[i+1][j  ][1]);
-          List_Add(Q, &pnts[i+1][j+1][1]); List_Add(Q, &pnts[i  ][j+1][1]);
-          List_Add(Q, &pnts[i  ][j  ][2]); List_Add(Q, &pnts[i+1][j  ][2]);
-          List_Add(Q, &pnts[i+1][j+1][2]); List_Add(Q, &pnts[i  ][j+1][2]);
+          Q.push_back(pnts[i  ][j  ][0]); Q.push_back(pnts[i+1][j  ][0]);
+          Q.push_back(pnts[i+1][j+1][0]); Q.push_back(pnts[i  ][j+1][0]);
+          Q.push_back(pnts[i  ][j  ][1]); Q.push_back(pnts[i+1][j  ][1]);
+          Q.push_back(pnts[i+1][j+1][1]); Q.push_back(pnts[i  ][j+1][1]);
+          Q.push_back(pnts[i  ][j  ][2]); Q.push_back(pnts[i+1][j  ][2]);
+          Q.push_back(pnts[i+1][j+1][2]); Q.push_back(pnts[i  ][j+1][2]);
           (*nQ)++;
           for(int k = 0; k < numsteps; ++k){
             for(int l = 0; l < nbcomp; ++l)
-              List_Add(Q, &vals[i  ][j  ][nbcomp*k+l]);
+              Q.push_back(vals[i  ][j  ][nbcomp*k+l]);
             for(int l = 0; l < nbcomp; ++l)
-              List_Add(Q, &vals[i+1][j  ][nbcomp*k+l]);
+              Q.push_back(vals[i+1][j  ][nbcomp*k+l]);
             for(int l = 0; l < nbcomp; ++l)
-              List_Add(Q, &vals[i+1][j+1][nbcomp*k+l]);
+              Q.push_back(vals[i+1][j+1][nbcomp*k+l]);
             for(int l = 0; l < nbcomp; ++l)
-              List_Add(Q, &vals[i  ][j+1][nbcomp*k+l]);
+              Q.push_back(vals[i  ][j+1][nbcomp*k+l]);
           }
         }
       }
@@ -311,7 +311,7 @@ PView *GMSH_CutGridPlugin::GenerateView(PView *v1, int connect)
 
   PViewData *data1 = v1->getData();
 
-  PView *v2 = new PView(true);
+  PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
  
   OctreePost o(v1);

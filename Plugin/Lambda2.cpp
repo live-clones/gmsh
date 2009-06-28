@@ -91,39 +91,34 @@ static int inv3x3tran(double mat[3][3], double inv[3][3], double *det)
   return 1;
 }
 
-static void eigen(List_T *inList, int inNb, 
-                  List_T *outList, int *outNb,
+static void eigen(std::vector<double> &inList, int inNb, 
+                  std::vector<double> &outList, int *outNb,
                   int nbTime, int nbNod, int nbComp, int lam)
 {
   if(!inNb || (nbComp != 3 && nbComp != 9) || lam < 1 || lam > 3)
     return;
 
   // loop on elements  
-  int nb = List_Nbr(inList) / inNb;
-  for(int i = 0; i < List_Nbr(inList); i += nb) {
-
-    // FIXME: there was this test in the old Plugin(Gradient)
-    // double *yy = (double *)List_Pointer_Fast(inList, i + nbNod);
-    // if(yy[0] > 0){
+  int nb = inList.size() / inNb;
+  for(unsigned int i = 0; i < inList.size(); i += nb) {
 
     // copy node coordinates
     for(int j = 0; j < 3 * nbNod; j++)
-      List_Add(outList, List_Pointer_Fast(inList, i + j));
+      outList.push_back(inList[i + j]);
     
     // loop on time steps
     for(int j = 0; j < nbTime; j++){
 
-      double *x = (double *)List_Pointer_Fast(inList, i);
-      double *y = (double *)List_Pointer_Fast(inList, i + nbNod);
-      double *z = (double *)List_Pointer_Fast(inList, i + 2 * nbNod);
+      double *x = &inList[i];
+      double *y = &inList[i + nbNod];
+      double *z = &inList[i + 2 * nbNod];
 
       double GradVel[3][3];
 
       if(nbComp == 9){ 
         // val is the velocity gradient tensor: we assume that it is
         // constant per element
-        double *v = (double *)List_Pointer_Fast(inList, i + 3 * nbNod + 
-                                                nbNod * nbComp * j + nbComp * 0);
+        double *v = &inList[i + 3 * nbNod + nbNod * nbComp * j + nbComp * 0];
         GradVel[0][0] = v[0]; GradVel[0][1] = v[1]; GradVel[0][2] = v[2];
         GradVel[1][0] = v[3]; GradVel[1][1] = v[4]; GradVel[1][2] = v[5];
         GradVel[2][0] = v[6]; GradVel[2][1] = v[7]; GradVel[2][2] = v[8];
@@ -137,8 +132,7 @@ static void eigen(List_T *inList, int inNb,
         const int MAX_NOD = 4; 
         double val[3][MAX_NOD];
         for(int k = 0; k < nbNod; k++){
-          double *v = (double *)List_Pointer_Fast(inList, i + 3 * nbNod + 
-                                                  nbNod * nbComp * j + nbComp * k);
+          double *v = &inList[i + 3 * nbNod + nbNod * nbComp * j + nbComp * k];
           for(int l = 0; l < 3; l++){
             val[l][k] = v[l];
           }
@@ -217,14 +211,11 @@ static void eigen(List_T *inList, int inNb,
       double lambda[3];
       eigenvalue(a, lambda);
       for(int k = 0; k < nbNod; k++)
-        List_Add(outList, &lambda[lam-1]);
+        outList.push_back(lambda[lam-1]);
     }
 
     (*outNb)++;
 
-    // FIXME: end of the yy[0]>0 test in the old Plugin(Gradient)
-    // }
-    
   }
 }
 
@@ -239,7 +230,7 @@ PView *GMSH_Lambda2Plugin::execute(PView *v)
   PViewDataList *data1 = getDataList(v1);
   if(!data1) return v;
 
-  PView *v2 = new PView(true);
+  PView *v2 = new PView();
 
   PViewDataList *data2 = getDataList(v2);
   if(!data2) return v;
@@ -266,8 +257,7 @@ PView *GMSH_Lambda2Plugin::execute(PView *v)
   //eigen(data1->VI, data1->NbVI, data2->SI, &data2->NbSI, nts, 6, 3, ev);
   //eigen(data1->VY, data1->NbVY, data2->SY, &data2->NbSY, nts, 5, 3, ev);
 
-  for(int i = 0; i < List_Nbr(data1->Time); i++)
-    List_Add(data2->Time, List_Pointer(data1->Time, i));
+  data2->Time = data1->Time;
   data2->setName(data1->getName() + "_Lambda2");
   data2->setFileName(data1->getName() + "_Lambda2.pos");
   data2->finalize();

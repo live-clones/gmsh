@@ -10,7 +10,6 @@
 #include <string>
 #include "PViewData.h"
 #include "SBoundingBox3d.h"
-#include "ListUtils.h"
 
 // The container for list-based datasets (for which all elements are
 // discontinuous).
@@ -18,46 +17,46 @@ class PViewDataList : public PViewData {
  public: 
   // FIXME: all these members will be made private once the plugins
   // have been rewritten
-  int DataSize; // size(double) or sizeof(float)
   int NbTimeStep;
   double Min, Max;
   std::vector<double> TimeStepMin, TimeStepMax;
   SBoundingBox3d BBox;
-  List_T *Time;
+  std::vector<double> Time;
   int NbSP, NbVP, NbTP;
-  List_T *SP, *VP, *TP; // points
-  int NbSL, NbVL, NbTL, NbSL2, NbVL2, NbTL2;
-  List_T *SL, *VL, *TL, *SL2, *VL2, *TL2; // lines
-  int NbST, NbVT, NbTT, NbST2, NbVT2, NbTT2;
-  List_T *ST, *VT, *TT, *ST2, *VT2, *TT2; // triangles
-  int NbSQ, NbVQ, NbTQ, NbSQ2, NbVQ2, NbTQ2;
-  List_T *SQ, *VQ, *TQ, *SQ2, *VQ2, *TQ2; // quadrangles
-  int NbSS, NbVS, NbTS, NbSS2, NbVS2, NbTS2;
-  List_T *SS, *VS, *TS, *SS2, *VS2, *TS2; // tetrahedra
-  int NbSH, NbVH, NbTH, NbSH2, NbVH2, NbTH2;
-  List_T *SH, *VH, *TH, *SH2, *VH2, *TH2; // hexahedra
-  int NbSI, NbVI, NbTI, NbSI2, NbVI2, NbTI2;
-  List_T *SI, *VI, *TI, *SI2, *VI2, *TI2; // prisms
-  int NbSY, NbVY, NbTY, NbSY2, NbVY2, NbTY2;
-  List_T *SY, *VY, *TY, *SY2, *VY2, *TY2; // pyramids
+  std::vector<double> SP, VP, TP; // points
+  int NbSL, NbVL, NbTL;
+  std::vector<double> SL, VL, TL; // lines
+  int NbST, NbVT, NbTT;
+  std::vector<double> ST, VT, TT; // triangles
+  int NbSQ, NbVQ, NbTQ;
+  std::vector<double> SQ, VQ, TQ; // quadrangles
+  int NbSS, NbVS, NbTS;
+  std::vector<double> SS, VS, TS; // tetrahedra
+  int NbSH, NbVH, NbTH;
+  std::vector<double> SH, VH, TH; // hexahedra
+  int NbSI, NbVI, NbTI;
+  std::vector<double> SI, VI, TI; // prisms
+  int NbSY, NbVY, NbTY;
+  std::vector<double> SY, VY, TY; // pyramids
   int NbT2, NbT3;
-  List_T *T2D, *T2C, *T3D, *T3C; // 2D and 3D text strings
+  std::vector<double> T2D, T3D; // 2D and 3D text strings
+  std::vector<char> T2C, T3C; 
  private:
   int _index[24];
   int _lastElement, _lastDimension;
   int _lastNumNodes, _lastNumComponents, _lastNumValues, _lastNumEdges;
   double *_lastXYZ, *_lastVal;
-  void _stat(List_T *D, List_T *C, int nb);
-  void _stat(List_T *list, int nbcomp, int nbelm, int nbnod, int nbedg);
+  void _stat(std::vector<double> &D, std::vector<char> &C, int nb);
+  void _stat(std::vector<double> &list, int nbcomp, int nbelm, int nbnod, int nbedg);
   void _setLast(int ele);
   void _setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg,
-                List_T *list, int nblist);
+                std::vector<double> &list, int nblist);
   void _getString(int dim, int i, int timestep, std::string &str, 
                   double &x, double &y, double &z, double &style);
   void _splitCurvedElements();
  public:
-  PViewDataList(bool allocate=true, int numalloc=1000);
-  ~PViewDataList();
+  PViewDataList();
+  ~PViewDataList(){}
   bool finalize();
   int getNumTimeSteps(){ return NbTimeStep; }
   double getTime(int step);
@@ -99,10 +98,11 @@ class PViewDataList : public PViewData {
   bool combineSpace(nameData &nd);
 
   // specific to list-based data sets
-  void getRawData(int type, List_T **l, int **ne, int *nc, int *nn);
+  void getRawData(int type, std::vector<double> **l, int **ne, int *nc, int *nn);
+  void setOrder2(int nbedg);
 
   // I/O routines
-  bool readPOS(FILE *fp, double version, int format, int size);
+  bool readPOS(FILE *fp, double version, bool binary);
   bool writePOS(std::string fileName, bool binary=false, bool parsed=true,
                 bool append=false);
   bool writeMSH(std::string fileName, bool binary=false);

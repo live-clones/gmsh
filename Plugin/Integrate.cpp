@@ -67,15 +67,15 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
   if(!v1) return v;
 
   PViewData *data1 = v1->getData();
-  PView *v2 = new PView(true);
+  PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
   
   double x = data1->getBoundingBox().center().x();
   double y = data1->getBoundingBox().center().y();
   double z = data1->getBoundingBox().center().z();
-  List_Add(data2->SP, &x);
-  List_Add(data2->SP, &y);
-  List_Add(data2->SP, &z);
+  data2->SP.push_back(x);
+  data2->SP.push_back(y);
+  data2->SP.push_back(z);
   for(int step = 0; step < data1->getNumTimeSteps(); step++){
     double res = 0, resv[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
     bool simpleSum = false;
@@ -121,14 +121,14 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
                 resv[8]);
     else
       Msg::Info("Step %d: integral = %.16g", step, res);
-    List_Add(data2->SP, &res);
+    data2->SP.push_back(res);
   }
   data2->NbSP = 1;
   v2->getOptions()->intervalsType = PViewOptions::Numeric;
   
   for(int i = 0; i < data1->getNumTimeSteps(); i++){
     double time = data1->getTime(i);
-    List_Add(data2->Time, &time);
+    data2->Time.push_back(time);
   }
   data2->setName(data1->getName() + "_Integrate");
   data2->setFileName(data1->getName() + "_Integrate.pos");

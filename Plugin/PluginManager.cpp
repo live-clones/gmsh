@@ -7,6 +7,7 @@
 #include <stdlib.h>
 
 #include "GmshConfig.h"
+#include "Context.h"
 #include "Plugin.h"
 #include "PluginManager.h"
 #include "CutMap.h"
@@ -42,7 +43,6 @@
 #include "FieldView.h"
 #include "GSHHS.h"
 #include "FiniteElement.h"
-#include "Context.h"
 #include "HomologyComputation.h"
 
 #if !defined(HAVE_NO_DLL)

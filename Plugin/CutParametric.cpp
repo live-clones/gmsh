@@ -242,29 +242,30 @@ void GMSH_CutParametricPlugin::catchErrorMessage(char *errorMessage) const
 static void addInView(int connect, int i, int nbcomp, int nbtime,
                       double x0, double y0, double z0, double *res0,
                       double x, double y, double z, double *res,
-                      List_T *P, int *nP, List_T *L, int *nL)
+                      std::vector<double> &P, int *nP, 
+                      std::vector<double> &L, int *nL)
 {
   if(connect){
     if(i){
-      List_Add(L, &x0); List_Add(L, &x);
-      List_Add(L, &y0); List_Add(L, &y);
-      List_Add(L, &z0); List_Add(L, &z);
+      L.push_back(x0); L.push_back(x);
+      L.push_back(y0); L.push_back(y);
+      L.push_back(z0); L.push_back(z);
       for(int k = 0; k < nbtime; ++k){
         for(int l = 0; l < nbcomp; ++l)
-          List_Add(L, &res0[nbcomp*k+l]); 
+          L.push_back(res0[nbcomp * k + l]); 
         for(int l = 0; l < nbcomp; ++l)
-          List_Add(L, &res[nbcomp*k+l]);
+          L.push_back(res[nbcomp * k + l]);
       }
       (*nL)++;
     }
   }
   else{
-    List_Add(P, &x);
-    List_Add(P, &y);
-    List_Add(P, &z);
+    P.push_back(x);
+    P.push_back(y);
+    P.push_back(z);
     for(int k = 0; k < nbtime; ++k)
       for(int l = 0; l < nbcomp; ++l)
-        List_Add(P, &res[nbcomp*k+l]);
+        P.push_back(res[nbcomp * k + l]);
     (*nP)++;
   }
 }
@@ -287,7 +288,7 @@ PView *GMSH_CutParametricPlugin::execute(PView *v)
 
   OctreePost o(v1);
 
-  PView *v2 = new PView(true);
+  PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
 
   double *res0 = new double[9 * numSteps];

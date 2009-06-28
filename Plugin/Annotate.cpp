@@ -246,24 +246,22 @@ PView *GMSH_AnnotatePlugin::execute(PView *v)
   if(!data1) return v;
 
   if(dim3){
-    List_Add(data1->T3D, &X);
-    List_Add(data1->T3D, &Y);
-    List_Add(data1->T3D, &Z);
-    List_Add(data1->T3D, &style); 
-    double d = List_Nbr(data1->T3C);
-    List_Add(data1->T3D, &d); 
+    data1->T3D.push_back(X);
+    data1->T3D.push_back(Y);
+    data1->T3D.push_back(Z);
+    data1->T3D.push_back(style); 
+    data1->T3D.push_back(data1->T3C.size()); 
     for(int i = 0; i < (int)strlen(text) + 1; i++) 
-      List_Add(data1->T3C, (void*)&text[i]); 
+      data1->T3C.push_back(text[i]);
     data1->NbT3++;
   }
   else{
-    List_Add(data1->T2D, &X);
-    List_Add(data1->T2D, &Y);
-    List_Add(data1->T2D, &style); 
-    double d = List_Nbr(data1->T2C);
-    List_Add(data1->T2D, &d); 
+    data1->T2D.push_back(X);
+    data1->T2D.push_back(Y);
+    data1->T2D.push_back(style); 
+    data1->T2D.push_back(data1->T2C.size()); 
     for(int i = 0; i < (int)strlen(text) + 1; i++) 
-      List_Add(data1->T2C, (void*)&text[i]); 
+      data1->T2C.push_back(text[i]);
     data1->NbT2++;
   }
 

@@ -51,31 +51,31 @@ void GMSH_GradientPlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Gradient failed...");
 }
 
-static List_T *incrementList(PViewDataList *data2, int numComp, int numEdges)
+static std::vector<double> *incrementList(PViewDataList *data2, int numComp, int numEdges)
 {
   if(numComp == 1){
     switch(numEdges){
-    case 0: data2->NbVP++; return data2->VP;
-    case 1: data2->NbVL++; return data2->VL;
-    case 3: data2->NbVT++; return data2->VT;
-    case 4: data2->NbVQ++; return data2->VQ;
-    case 6: data2->NbVS++; return data2->VS;
-    case 12: data2->NbVH++; return data2->VH;
-    case 9: data2->NbVI++; return data2->VI;
-    case 8: data2->NbVY++; return data2->VY;
+    case 0: data2->NbVP++; return &data2->VP;
+    case 1: data2->NbVL++; return &data2->VL;
+    case 3: data2->NbVT++; return &data2->VT;
+    case 4: data2->NbVQ++; return &data2->VQ;
+    case 6: data2->NbVS++; return &data2->VS;
+    case 12: data2->NbVH++; return &data2->VH;
+    case 9: data2->NbVI++; return &data2->VI;
+    case 8: data2->NbVY++; return &data2->VY;
     default: return 0;
     }
   }
   else if(numComp == 3){
     switch(numEdges){
-    case 0: data2->NbTP++; return data2->TP;
-    case 1: data2->NbTL++; return data2->TL;
-    case 3: data2->NbTT++; return data2->TT;
-    case 4: data2->NbTQ++; return data2->TQ;
-    case 6: data2->NbTS++; return data2->TS;
-    case 12: data2->NbTH++; return data2->TH;
-    case 9: data2->NbTI++; return data2->TI;
-    case 8: data2->NbTY++; return data2->TY;
+    case 0: data2->NbTP++; return &data2->TP;
+    case 1: data2->NbTL++; return &data2->TL;
+    case 3: data2->NbTT++; return &data2->TT;
+    case 4: data2->NbTQ++; return &data2->TQ;
+    case 6: data2->NbTS++; return &data2->TS;
+    case 12: data2->NbTH++; return &data2->TH;
+    case 9: data2->NbTI++; return &data2->TI;
+    case 8: data2->NbTY++; return &data2->TY;
     default: return 0;
     }
   }
@@ -95,7 +95,7 @@ PView *GMSH_GradientPlugin::execute(PView *v)
     return v;
   }
 
-  PView *v2 = new PView(true, data1->getNumElements());
+  PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
 
   for(int ent = 0; ent < data1->getNumEntities(0); ent++){
@@ -104,7 +104,7 @@ PView *GMSH_GradientPlugin::execute(PView *v)
       int numComp = data1->getNumComponents(0, ent, ele);
       if(numComp != 1 && numComp != 3) continue;
       int numEdges = data1->getNumEdges(0, ent, ele);
-      List_T *out = incrementList(data2, numComp, numEdges);
+      std::vector<double> *out = incrementList(data2, numComp, numEdges);
       if(!out) continue;
       int numNodes = data1->getNumNodes(0, ent, ele);
       double x[8], y[8], z[8], val[8 * 3];
@@ -114,9 +114,9 @@ PView *GMSH_GradientPlugin::execute(PView *v)
       elementFactory factory;
       element *element = factory.create(numNodes, dim, x, y, z);
       if(!element) continue;
-      for(int nod = 0; nod < numNodes; nod++) List_Add(out, &x[nod]);
-      for(int nod = 0; nod < numNodes; nod++) List_Add(out, &y[nod]);
-      for(int nod = 0; nod < numNodes; nod++) List_Add(out, &z[nod]);
+      for(int nod = 0; nod < numNodes; nod++) out->push_back(x[nod]);
+      for(int nod = 0; nod < numNodes; nod++) out->push_back(y[nod]);
+      for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]);
       for(int step = 0; step < data1->getNumTimeSteps(); step++){
 	for(int nod = 0; nod < numNodes; nod++)
 	  for(int comp = 0; comp < numComp; comp++)
@@ -126,9 +126,9 @@ PView *GMSH_GradientPlugin::execute(PView *v)
 	  element->getNode(nod, u, v, w);
 	  for(int comp = 0; comp < numComp; comp++){
 	    element->interpolateGrad(val + comp, u, v, w, f, numComp);
-	    List_Add(out, &f[0]);
-	    List_Add(out, &f[1]);
-	    List_Add(out, &f[2]);
+	    out->push_back(f[0]);
+	    out->push_back(f[1]);
+	    out->push_back(f[2]);
 	  }
 	}
       }
@@ -138,7 +138,7 @@ PView *GMSH_GradientPlugin::execute(PView *v)
 
   for(int i = 0; i < data1->getNumTimeSteps(); i++){
     double time = data1->getTime(i);
-    List_Add(data2->Time, &time);
+    data2->Time.push_back(time);
   }
   data2->setName(data1->getName() + "_Gradient");
   data2->setFileName(data1->getName() + "_Gradient.pos");

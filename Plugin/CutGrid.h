@@ -19,9 +19,9 @@ class GMSH_CutGridPlugin : public GMSH_PostPlugin
                          double step, double min, double max);
   void addInView(int numsteps, int connect, int nbcomp, 
                  double ***pnts, double ***vals, 
-                 List_T *P, int *nP, 
-                 List_T *L, int *nL, 
-                 List_T *Q, int *nQ);
+                 std::vector<double> &P, int *nP, 
+                 std::vector<double> &L, int *nL, 
+                 std::vector<double> &Q, int *nQ);
   PView *GenerateView (PView *v, int connectPoints);
 public:
   GMSH_CutGridPlugin(){}
