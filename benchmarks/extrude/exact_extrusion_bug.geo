@@ -28,3 +28,6 @@ Rotate {{0,1,0}, {0,0,0}, Pi/4} { Surface{6,11}; }
 // revolution... One more shortcoming of our little CAD engine :-)
 Extrude {0,0,1}{ Line{4}; }
 Rotate {{0,1,0}, {0,0,0}, Pi/4} { Surface{6,10}; }
+
+// Here's a hack to fix it:
+//Geometry.ExactExtrusion = 0;
