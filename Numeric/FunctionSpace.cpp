@@ -11,24 +11,24 @@
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 
-gmshMatrix<double> generate1DMonomials(int order)
+static gmshMatrix<double> generate1DMonomials(int order)
 {
   gmshMatrix<double> monomials(order + 1, 1);
   for (int i = 0; i < order + 1; i++) monomials(i, 0) = i;
   return monomials;
 }
 
-gmshMatrix<double> generate1DPoints(int order)
+static gmshMatrix<double> generate1DPoints(int order)
 {
   gmshMatrix<double> line(order + 1, 1);
   line(0, 0) = -1.;
   line(1, 0) =  1.;
   double dd = 2. / order;
-  for (int i = 2; i < order+1; i++) line(i, 0) = -1. + dd * (i - 1);
+  for (int i = 2; i < order + 1; i++) line(i, 0) = -1. + dd * (i - 1);
   return line;
 }
 
-gmshMatrix<double> generatePascalTriangle(int order)
+static gmshMatrix<double> generatePascalTriangle(int order)
 {
   gmshMatrix<double> monomials((order + 1) * (order + 2) / 2, 2);
   int index = 0;
@@ -44,7 +44,7 @@ gmshMatrix<double> generatePascalTriangle(int order)
 
 // generate the exterior hull of the Pascal triangle for Serendipity element
 
-gmshMatrix<double> generatePascalSerendipityTriangle(int order)
+static gmshMatrix<double> generatePascalSerendipityTriangle(int order)
 {
   gmshMatrix<double> monomials(3 * order, 2);
 
@@ -74,7 +74,7 @@ gmshMatrix<double> generatePascalSerendipityTriangle(int order)
 
 // generate the monomials subspace of all monomials of order exactly == p
 
-gmshMatrix<double> generateMonomialSubspace(int dim, int p)
+static gmshMatrix<double> generateMonomialSubspace(int dim, int p)
 {
   gmshMatrix<double> monomials;
   
@@ -108,7 +108,7 @@ gmshMatrix<double> generateMonomialSubspace(int dim, int p)
 
 // generate external hull of the Pascal tetrahedron
 
-gmshMatrix<double> generatePascalSerendipityTetrahedron(int order)
+static gmshMatrix<double> generatePascalSerendipityTetrahedron(int order)
 {
   int nbMonomials = 4 + 6 * std::max(0, order - 1) + 
     4 * std::max(0, (order - 2) * (order - 1) / 2);
@@ -136,7 +136,7 @@ gmshMatrix<double> generatePascalSerendipityTetrahedron(int order)
 
 // generate Pascal tetrahedron
 
-gmshMatrix<double> generatePascalTetrahedron(int order)
+static gmshMatrix<double> generatePascalTetrahedron(int order)
 {
   int nbMonomials = (order + 1) * (order + 2) * (order + 3) / 6;
 
@@ -153,14 +153,14 @@ gmshMatrix<double> generatePascalTetrahedron(int order)
   return monomials;
 }  
 
-int nbdoftriangle(int order) { return (order + 1) * (order + 2) / 2; }
-int nbdoftriangleserendip(int order) { return 3 * order; }
+static int nbdoftriangle(int order) { return (order + 1) * (order + 2) / 2; }
+static int nbdoftriangleserendip(int order) { return 3 * order; }
 
 //KH : caveat : node coordinates are not yet coherent with node numbering associated
 //              to numbering of principal vertices of face !!!!
 
 // uv surface - orientation v0-v2-v1
-void nodepositionface0(int order, double *u, double *v, double *w)
+static void nodepositionface0(int order, double *u, double *v, double *w)
 {
   int ndofT = nbdoftriangle(order);
   if (order == 0) { u[0] = 0.; v[0] = 0.; w[0] = 0.; return; }
@@ -202,14 +202,14 @@ void nodepositionface0(int order, double *u, double *v, double *w)
 }
 
 // uw surface - orientation v0-v1-v3
-void nodepositionface1(int order, double *u, double *v, double *w)
+static void nodepositionface1(int order, double *u, double *v, double *w)
 {
    int ndofT = nbdoftriangle(order);
    if (order == 0) { u[0] = 0.; v[0] = 0.; w[0] = 0.; return; }
    
-   u[0]= 0.;    v[0]= 0.;  w[0] = 0.;
-   u[1]= order; v[1]= 0;   w[1] = 0.;
-   u[2]= 0.;    v[2]= 0.;  w[2] = order;
+   u[0] = 0.;    v[0]= 0.;  w[0] = 0.;
+   u[1] = order; v[1]= 0.;  w[1] = 0.;
+   u[2] = 0.;    v[2]= 0.;  w[2] = order;
    // edges
    for (int k = 0; k < (order - 1); k++){
      u[3 + k] = k + 1; 
@@ -242,7 +242,7 @@ void nodepositionface1(int order, double *u, double *v, double *w)
 }
 
 // vw surface - orientation v0-v3-v2
-void nodepositionface2(int order, double *u, double *v, double *w)
+static void nodepositionface2(int order, double *u, double *v, double *w)
 {
    int ndofT = nbdoftriangle(order);
    if (order == 0) { u[0] = 0.; v[0] = 0.; return; }
@@ -283,7 +283,7 @@ void nodepositionface2(int order, double *u, double *v, double *w)
 }
 
 // uvw surface  - orientation v3-v1-v2
-void nodepositionface3(int order,  double *u,  double *v,  double *w)
+static void nodepositionface3(int order,  double *u,  double *v,  double *w)
 {
    int ndofT = nbdoftriangle(order);
    if (order == 0) { u[0] = 0.; v[0] = 0.; w[0] = 0.; return; }
@@ -323,7 +323,7 @@ void nodepositionface3(int order,  double *u,  double *v,  double *w)
    }
 }
 
-gmshMatrix<double> gmshGeneratePointsTetrahedron(int order, bool serendip) 
+static gmshMatrix<double> gmshGeneratePointsTetrahedron(int order, bool serendip) 
 {
   int nbPoints = 
     (serendip ?
@@ -459,7 +459,7 @@ gmshMatrix<double> gmshGeneratePointsTetrahedron(int order, bool serendip)
   return point;
 }
 
-gmshMatrix<double> gmshGeneratePointsTriangle(int order, bool serendip) 
+static gmshMatrix<double> gmshGeneratePointsTriangle(int order, bool serendip) 
 {
   int nbPoints = serendip ? 3 * order : (order + 1) * (order + 2) / 2;
   gmshMatrix<double> point(nbPoints, 2);
@@ -517,8 +517,8 @@ gmshMatrix<double> gmshGeneratePointsTriangle(int order, bool serendip)
   return point;  
 }
 
-gmshMatrix<double> generateLagrangeMonomialCoefficients(const gmshMatrix<double>& monomial,
-                                                        const gmshMatrix<double>& point) 
+static gmshMatrix<double> generateLagrangeMonomialCoefficients
+  (const gmshMatrix<double>& monomial, const gmshMatrix<double>& point) 
 {
   if(monomial.size1() != point.size1() || monomial.size2() != point.size2()){
     Msg::Fatal("Wrong sizes for Lagrange coefficients generation");
