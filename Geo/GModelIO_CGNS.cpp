@@ -285,7 +285,8 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
         switch(meshDim) {
         case 3:
           for(riter it = firstRegion(); it != lastRegion(); ++it) {
-            numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0; numElem[4] = 0;
+            numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
+            numElem[4] = 0;
             (*it)->getNumMeshElements(numElem);
             const int nType = (*it)->getNumElementTypes();
             for(int iType = 0; iType != nType; ++iType) {
@@ -300,7 +301,8 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
           break;
         case 2:
           for(fiter it = firstFace(); it != lastFace(); ++it) {
-            numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0; numElem[4] = 0;
+            numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
+            numElem[4] = 0;
             (*it)->getNumMeshElements(numElem);
             const int nType = (*it)->getNumElementTypes();
             for(int iType = 0; iType != nType; ++iType) {
@@ -658,7 +660,7 @@ int get_zone_definition(GModel &model, const int zoneDefinition,
         break;
       case 2:  // Zone defined by physical
         partition = -1;
-        _zoneName = model.getPhysicalName(3/*FIXME*/, globalPhysicalIt->first);
+        _zoneName = model.getPhysicalName(DIM, globalPhysicalIt->first).c_str();
         physicalItBegin = globalPhysicalIt++;
         physicalItEnd = globalPhysicalIt;
         break;
