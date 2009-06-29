@@ -617,6 +617,7 @@ void expand_name(std::string &s, const int index, const char *const name)
  *   zoneDefinition     - (I) how to define the zone (see enum in code)
  *   numZone            - (I) Number of zones in the domain
  *   options            - (I) options for CGNS I/O
+ *   meshDim            - (I) dimension of the mesh elements
  *   group              - (I) the group of physicals used to define the mesh
  *   globalZoneIndex    - (I/O)
  *   globalPhysicalIt   - (I/O) a global scope iterator to the physicals
@@ -630,6 +631,7 @@ void expand_name(std::string &s, const int index, const char *const name)
 
 int get_zone_definition(GModel &model, const int zoneDefinition,
                         const int numZone, const CGNSOptions &options,
+                        const int meshDim,
                         const PhysGroupMap &group, int &globalZoneIndex,
                         PhysGroupMap::const_iterator &globalPhysicalIt,
                         int &zoneIndex, int &partition,
@@ -660,7 +662,8 @@ int get_zone_definition(GModel &model, const int zoneDefinition,
         break;
       case 2:  // Zone defined by physical
         partition = -1;
-        _zoneName = model.getPhysicalName(DIM, globalPhysicalIt->first).c_str();
+        _zoneName = model.getPhysicalName(meshDim, globalPhysicalIt->first)
+           .c_str();
         physicalItBegin = globalPhysicalIt++;
         physicalItEnd = globalPhysicalIt;
         break;
@@ -1013,9 +1016,9 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
           int zoneIndex;
           int partition;
           if(get_zone_definition
-             (model, zoneDefinition, numZone, options, group, globalZoneIndex,
-              globalPhysicalIt, zoneTask.zoneIndex, partition, physicalItBegin,
-              physicalItEnd, zoneTask.zoneName)) {
+             (model, zoneDefinition, numZone, options, DIM, group,
+              globalZoneIndex, globalPhysicalIt, zoneTask.zoneIndex, partition,
+              physicalItBegin, physicalItEnd, zoneTask.zoneName)) {
             omp_set_lock(&threadWLock);
             --threadsWorking;
             omp_unset_lock(&threadWLock);
