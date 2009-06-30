@@ -415,6 +415,7 @@ void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
   const char *str = getStringForPOS();
   if(!str) return;
 
+  setVolumePositive();
   int n = getNumVertices();
   fprintf(fp, "%s(", str);
   for(int i = 0; i < n; i++){
@@ -520,6 +521,7 @@ void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
 
 void MElement::writeVRML(FILE *fp)
 {
+  setVolumePositive();
   for(int i = 0; i < getNumVertices(); i++)
     fprintf(fp, "%d,", getVertex(i)->getIndex() - 1);
   fprintf(fp, "-1,\n");
@@ -579,6 +581,7 @@ void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
 
 void MElement::writeMESH(FILE *fp, int elementary)
 {
+  setVolumePositive();
   for(int i = 0; i < getNumVertices(); i++)
     fprintf(fp, " %d", getVertex(i)->getIndex());
   fprintf(fp, " %d\n", elementary);
