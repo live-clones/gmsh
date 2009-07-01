@@ -97,114 +97,57 @@ void GMSH_ExtractPlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Extract failed...");
 }
 
-static void extract(const char *expr[9], std::vector<double> &inList, int inNb, 
-                    std::vector<double> *outListScalar, int *outNbScalar, 
-                    std::vector<double> *outListVector, int *outNbVector, 
-                    std::vector<double> *outListTensor, int *outNbTensor, 
-                    int timeStep, int nbNod, int nbComp)
+static std::vector<double> *incrementList(PViewDataList *data2, int numComp2, 
+                                          int numEdges)
 {
-  if(!inNb)
-    return;
-
-  int outNbComp, *outNb;
-  std::vector<double> *outList;
-
-  if(strlen(expr[3]) || strlen(expr[4]) || strlen(expr[5]) || 
-     strlen(expr[6]) || strlen(expr[7]) || strlen(expr[8])){
-    outNbComp = 9;
-    outNb = outNbTensor;
-    outList = outListTensor;
-    for(int i = 0; i < 9; i++)
-      if(!strlen(expr[i])) expr[i] = "0";
+  switch(numEdges){
+  case 0:
+    if     (numComp2 == 1){ data2->NbSP++; return &data2->SP; }
+    else if(numComp2 == 3){ data2->NbVP++; return &data2->VP; }
+    else if(numComp2 == 9){ data2->NbTP++; return &data2->TP; }
+    break;
+  case 1:
+    if     (numComp2 == 1){ data2->NbSL++; return &data2->SL; }
+    else if(numComp2 == 3){ data2->NbVL++; return &data2->VL; }
+    else if(numComp2 == 9){ data2->NbTL++; return &data2->TL; }
+    break;
+  case 3: 
+    if     (numComp2 == 1){ data2->NbST++; return &data2->ST; }
+    else if(numComp2 == 3){ data2->NbVT++; return &data2->VT; }
+    else if(numComp2 == 9){ data2->NbTT++; return &data2->TT; }
+    break;
+  case 4: 
+    if     (numComp2 == 1){ data2->NbSQ++; return &data2->SQ; }
+    else if(numComp2 == 3){ data2->NbVQ++; return &data2->VQ; }
+    else if(numComp2 == 9){ data2->NbTQ++; return &data2->TQ; }
+    break;
+  case 6:
+    if     (numComp2 == 1){ data2->NbSS++; return &data2->SS; }
+    else if(numComp2 == 3){ data2->NbVS++; return &data2->VS; }
+    else if(numComp2 == 9){ data2->NbTS++; return &data2->TS; }
+    break;
+  case 12: 
+    if     (numComp2 == 1){ data2->NbSH++; return &data2->SH; }
+    else if(numComp2 == 3){ data2->NbVH++; return &data2->VH; }
+    else if(numComp2 == 9){ data2->NbTH++; return &data2->TH; }
+    break;
+  case 9: 
+    if     (numComp2 == 1){ data2->NbSI++; return &data2->SI; }
+    else if(numComp2 == 3){ data2->NbVI++; return &data2->VI; }
+    else if(numComp2 == 9){ data2->NbTI++; return &data2->TI; }
+    break;
+  case 8:
+    if     (numComp2 == 1){ data2->NbSY++; return &data2->SY; }
+    else if(numComp2 == 3){ data2->NbVY++; return &data2->VY; }
+    else if(numComp2 == 9){ data2->NbTY++; return &data2->TY; }
+    break;
   }
-  else if(strlen(expr[1]) || strlen(expr[2])){
-    outNbComp = 3;
-    outNb = outNbVector;
-    outList = outListVector;
-    for(int i = 0; i < 3; i++)
-      if(!strlen(expr[i])) expr[i] = "0";
-  }
-  else{
-    outNbComp = 1;
-    outNb = outNbScalar;
-    outList = outListScalar;
-  }
-
-  // if we have MathEval, we can evaluate arbitrary expressions;
-  // otherwise, we only allow to extract single components
-
-#if defined(HAVE_MATH_EVAL)
-  void *f[9] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-  for(int i = 0; i < outNbComp; i++){
-    f[i] = evaluator_create((char*)expr[i]);
-    if(!f[i]){
-      Msg::Error("Invalid expression '%s'", expr[i]);
-      for(int j = 0; j < i; j++)
-        if(f[j]) evaluator_destroy(f[j]);
-      return;
-    }
-  }
-#else
-  int comp[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-  for(int i = 0; i < outNbComp; i++){
-    if     (!strcmp(expr[i], "v0")) comp[i] = 0;
-    else if(!strcmp(expr[i], "v1")) comp[i] = 1;
-    else if(!strcmp(expr[i], "v2")) comp[i] = 2;
-    else if(!strcmp(expr[i], "v3")) comp[i] = 3;
-    else if(!strcmp(expr[i], "v4")) comp[i] = 4;
-    else if(!strcmp(expr[i], "v5")) comp[i] = 5;
-    else if(!strcmp(expr[i], "v6")) comp[i] = 6;
-    else if(!strcmp(expr[i], "v7")) comp[i] = 7;
-    else if(!strcmp(expr[i], "v8")) comp[i] = 8;
-    else{
-      Msg::Error("Invalid expression '%s'", expr[i]);
-      return;
-    }
-  }
-#endif
-
-  int timeBeg = (timeStep < 0) ? 0 : timeStep;
-  int timeEnd = (timeStep < 0) ? -timeStep : timeStep + 1;
-
-  int nb = inList.size() / inNb;
-  for(unsigned int i = 0; i < inList.size(); i += nb) {
-    double *x = &inList[i];
-    double *y = &inList[i + nbNod];
-    double *z = &inList[i + 2 * nbNod];
-    for(int j = 0; j < 3 * nbNod; j++)
-      outList->push_back(inList[i + j]);
-    for(int j = timeBeg; j < timeEnd; j++){
-      for(int k = 0; k < nbNod; k++){
-        double xx = x[k];
-        double yy = y[k];
-        double zz = z[k];
-        double d[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
-        for(int l = 0; l < nbComp; l++)
-          d[l] = inList[i + 3 * nbNod + nbNod * nbComp * j + nbComp * k + l];
-        for(int l = 0; l < outNbComp; l++){
-#if defined(HAVE_MATH_EVAL)
-          char *names[] = { "x", "y", "z", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8" };
-          double values[] = { xx, yy, zz, d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8] };
-          double res = evaluator_evaluate(f[l], sizeof(names)/sizeof(names[0]), names, values);
-#else
-          double res = d[comp[l]];
-#endif
-          outList->push_back(res);
-        }
-      }
-    }
-    (*outNb)++;
-  }
-
-#if defined(HAVE_MATH_EVAL)
-  for(int i = 0; i < outNbComp; i++)
-    evaluator_destroy(f[i]);
-#endif
+  return 0;
 }
 
 PView *GMSH_ExtractPlugin::execute(PView *v)
 {
-  int step = (int)ExtractOptions_Number[0].def;
+  int timeStep = (int)ExtractOptions_Number[0].def;
   int iView = (int)ExtractOptions_Number[1].def;
   const char *expr[9] = { ExtractOptions_String[0].def.c_str(), 
                           ExtractOptions_String[1].def.c_str(),
@@ -218,86 +161,123 @@ PView *GMSH_ExtractPlugin::execute(PView *v)
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
+  PViewData *data1 = v1->getData();
 
-  PViewDataList *data1 = getDataList(v1);
-  if(!data1) return v;
+  if(data1->hasMultipleMeshes()){
+    Msg::Error("Extract plugin cannot be applied to multi-mesh views");
+    return v;
+  }
+
+  int numComp2;
+  if(strlen(expr[3]) || strlen(expr[4]) || strlen(expr[5]) || 
+     strlen(expr[6]) || strlen(expr[7]) || strlen(expr[8])){
+    numComp2 = 9;
+    for(int i = 0; i < 9; i++)
+      if(!strlen(expr[i])) expr[i] = "0";
+  }
+  else if(strlen(expr[1]) || strlen(expr[2])){
+    numComp2 = 3;
+    for(int i = 0; i < 3; i++)
+      if(!strlen(expr[i])) expr[i] = "0";
+  }
+  else{
+    numComp2 = 1;
+  }
+
+  // if we have MathEval, we can evaluate arbitrary expressions;
+  // otherwise, we only allow to extract single components
+#if defined(HAVE_MATH_EVAL)
+  void *f[9] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+  for(int i = 0; i < numComp2; i++){
+    f[i] = evaluator_create((char*)expr[i]);
+    if(!f[i]){
+      Msg::Error("Invalid expression '%s'", expr[i]);
+      for(int j = 0; j < i; j++)
+        if(f[j]) evaluator_destroy(f[j]);
+      return v;
+    }
+  }
+#else
+  int comp2[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  for(int i = 0; i < numComp2; i++){
+    if     (!strcmp(expr[i], "v0")) comp2[i] = 0;
+    else if(!strcmp(expr[i], "v1")) comp2[i] = 1;
+    else if(!strcmp(expr[i], "v2")) comp2[i] = 2;
+    else if(!strcmp(expr[i], "v3")) comp2[i] = 3;
+    else if(!strcmp(expr[i], "v4")) comp2[i] = 4;
+    else if(!strcmp(expr[i], "v5")) comp2[i] = 5;
+    else if(!strcmp(expr[i], "v6")) comp2[i] = 6;
+    else if(!strcmp(expr[i], "v7")) comp2[i] = 7;
+    else if(!strcmp(expr[i], "v8")) comp2[i] = 8;
+    else{
+      Msg::Error("Invalid expression '%s'", expr[i]);
+      return v;
+    }
+  }
+#endif
 
   PView *v2 = new PView();
-
   PViewDataList *data2 = getDataList(v2);
-  if(!data2) return v;
 
-  if(step < 0){
-    step = - data1->getNumTimeSteps();
+  if(timeStep < 0){
+    timeStep = - data1->getNumTimeSteps();
   }
-  else if(step > data1->getNumTimeSteps() - 1){
+  else if(timeStep > data1->getNumTimeSteps() - 1){
     Msg::Error("Invalid time step (%d) in View[%d]: using all steps instead",
-               step, v1->getIndex());
-    step = - data1->getNumTimeSteps();
+               timeStep, v1->getIndex());
+    timeStep = - data1->getNumTimeSteps();
   }
 
-  // points
-  extract(expr, data1->SP, data1->NbSP, &data2->SP, &data2->NbSP, 
-          &data2->VP, &data2->NbVP, &data2->TP, &data2->NbTP, step, 1, 1);
-  extract(expr, data1->VP, data1->NbVP, &data2->SP, &data2->NbSP,
-          &data2->VP, &data2->NbVP, &data2->TP, &data2->NbTP, step, 1, 3);
-  extract(expr, data1->TP, data1->NbTP, &data2->SP, &data2->NbSP,
-          &data2->VP, &data2->NbVP, &data2->TP, &data2->NbTP, step, 1, 9);
-  // lines                                                                              
-  extract(expr, data1->SL, data1->NbSL, &data2->SL, &data2->NbSL,
-          &data2->VL, &data2->NbVL, &data2->TL, &data2->NbTL, step, 2, 1);
-  extract(expr, data1->VL, data1->NbVL, &data2->SL, &data2->NbSL,
-          &data2->VL, &data2->NbVL, &data2->TL, &data2->NbTL, step, 2, 3);
-  extract(expr, data1->TL, data1->NbTL, &data2->SL, &data2->NbSL,
-          &data2->VL, &data2->NbVL, &data2->TL, &data2->NbTL, step, 2, 9);
-  // triangles                                                                          
-  extract(expr, data1->ST, data1->NbST, &data2->ST, &data2->NbST,
-          &data2->VT, &data2->NbVT, &data2->TT, &data2->NbTT, step, 3, 1);
-  extract(expr, data1->VT, data1->NbVT, &data2->ST, &data2->NbST,
-          &data2->VT, &data2->NbVT, &data2->TT, &data2->NbTT, step, 3, 3);
-  extract(expr, data1->TT, data1->NbTT, &data2->ST, &data2->NbST,
-          &data2->VT, &data2->NbVT, &data2->TT, &data2->NbTT, step, 3, 9);
-  // quadrangles                                                                        
-  extract(expr, data1->SQ, data1->NbSQ, &data2->SQ, &data2->NbSQ,
-          &data2->VQ, &data2->NbVQ, &data2->TQ, &data2->NbTQ, step, 4, 1);
-  extract(expr, data1->VQ, data1->NbVQ, &data2->SQ, &data2->NbSQ,
-          &data2->VQ, &data2->NbVQ, &data2->TQ, &data2->NbTQ, step, 4, 3);
-  extract(expr, data1->TQ, data1->NbTQ, &data2->SQ, &data2->NbSQ,
-          &data2->VQ, &data2->NbVQ, &data2->TQ, &data2->NbTQ, step, 4, 9);
-  // tets                                                                               
-  extract(expr, data1->SS, data1->NbSS, &data2->SS, &data2->NbSS,
-          &data2->VS, &data2->NbVS, &data2->TS, &data2->NbTS, step, 4, 1);
-  extract(expr, data1->VS, data1->NbVS, &data2->SS, &data2->NbSS,
-          &data2->VS, &data2->NbVS, &data2->TS, &data2->NbTS, step, 4, 3);
-  extract(expr, data1->TS, data1->NbTS, &data2->SS, &data2->NbSS,
-          &data2->VS, &data2->NbVS, &data2->TS, &data2->NbTS, step, 4, 9);
-  // hexas                                                                              
-  extract(expr, data1->SH, data1->NbSH, &data2->SH, &data2->NbSH,
-          &data2->VH, &data2->NbVH, &data2->TH, &data2->NbTH, step, 8, 1);
-  extract(expr, data1->VH, data1->NbVH, &data2->SH, &data2->NbSH,
-          &data2->VH, &data2->NbVH, &data2->TH, &data2->NbTH, step, 8, 3);
-  extract(expr, data1->TH, data1->NbTH, &data2->SH, &data2->NbSH,
-          &data2->VH, &data2->NbVH, &data2->TH, &data2->NbTH, step, 8, 9);
-  // prisms                                                                             
-  extract(expr, data1->SI, data1->NbSI, &data2->SI, &data2->NbSI,
-          &data2->VI, &data2->NbVI, &data2->TI, &data2->NbTI, step, 6, 1);
-  extract(expr, data1->VI, data1->NbVI, &data2->SI, &data2->NbSI,
-          &data2->VI, &data2->NbVI, &data2->TI, &data2->NbTI, step, 6, 3);
-  extract(expr, data1->TI, data1->NbTI, &data2->SI, &data2->NbSI,
-          &data2->VI, &data2->NbVI, &data2->TI, &data2->NbTI, step, 6, 9);
-  // pyramids                                                                           
-  extract(expr, data1->SY, data1->NbSY, &data2->SY, &data2->NbSY,
-          &data2->VY, &data2->NbVY, &data2->TY, &data2->NbTY, step, 5, 1);
-  extract(expr, data1->VY, data1->NbVY, &data2->SY, &data2->NbSY,
-          &data2->VY, &data2->NbVY, &data2->TY, &data2->NbTY, step, 5, 3);
-  extract(expr, data1->TY, data1->NbTY, &data2->SY, &data2->NbSY,
-          &data2->VY, &data2->NbVY, &data2->TY, &data2->NbTY, step, 5, 9);
+  for(int ent = 0; ent < data1->getNumEntities(0); ent++){
+    for(int ele = 0; ele < data1->getNumElements(0, ent); ele++){
+      if(data1->skipElement(0, ent, ele)) continue;
+      int numNodes = data1->getNumNodes(0, ent, ele);
+      int numEdges = data1->getNumEdges(0, ent, ele);
+      int numComp = data1->getNumComponents(0, ent, ele);
+      std::vector<double> *out = incrementList(data2, numComp2, numEdges);
+      std::vector<double> x(numNodes), y(numNodes), z(numNodes);
+      for(int nod = 0; nod < numNodes; nod++)
+        data1->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
+      for(int nod = 0; nod < numNodes; nod++) out->push_back(x[nod]); 
+      for(int nod = 0; nod < numNodes; nod++) out->push_back(y[nod]); 
+      for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]); 
+      int timeBeg = (timeStep < 0) ? 0 : timeStep;
+      int timeEnd = (timeStep < 0) ? -timeStep : timeStep + 1;
+      for(int step = timeBeg; step < timeEnd; step++){
+        for(int nod = 0; nod < numNodes; nod++){
+          double v[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
+          for(int comp = 0; comp < numComp; comp++)
+	    data1->getValue(step, ent, ele, nod, comp, v[comp]);
+          for(int comp = 0; comp < numComp2; comp++){
+#if defined(HAVE_MATH_EVAL)
+            char *names[] = { "x", "y", "z", "v0", "v1", "v2", 
+                              "v3", "v4", "v5", "v6", "v7", "v8" };
+            double values[] = { x[nod], y[nod], z[nod], v[0], v[1], v[2], 
+                                v[3], v[4], v[5], v[6], v[7], v[8] };
+            double res = evaluator_evaluate(f[comp], sizeof(names) / sizeof(names[0]),
+                                            names, values);
+#else
+            double res = v[comp2[comp]];
+#endif
+            out->push_back(res);
+          }
+        }
+      }
+    }
+  }
+  
+#if defined(HAVE_MATH_EVAL)
+  for(int i = 0; i < numComp2; i++)
+    evaluator_destroy(f[i]);
+#endif
 
-  if(step < 0)
-    data2->Time = data1->Time;
+  if(timeStep < 0){
+    for(int i = 0; i < data1->getNumTimeSteps(); i++)
+      data2->Time.push_back(data1->getTime(i));
+  }
   else
-    data2->Time.push_back(data1->Time[step]);
-
+    data2->Time.push_back(data1->getTime(timeStep));
+        
   data2->setName(data1->getName() + "_Extract");
   data2->setFileName(data1->getName() + "_Extract.pos");
   data2->finalize();
