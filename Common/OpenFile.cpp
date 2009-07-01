@@ -133,8 +133,8 @@ void AddToTemporaryBoundingBox(double x, double y, double z)
   temp_bb += SPoint3(x, y, z);
   if(temp_bb.empty()) return;
   CTX::instance()->lc = sqrt(SQU(temp_bb.max().x() - temp_bb.min().x()) +
-                SQU(temp_bb.max().y() - temp_bb.min().y()) + 
-                SQU(temp_bb.max().z() - temp_bb.min().z()));
+                             SQU(temp_bb.max().y() - temp_bb.min().y()) + 
+                             SQU(temp_bb.max().z() - temp_bb.min().z()));
   if(CTX::instance()->lc == 0) CTX::instance()->lc = 1.;
   // to get correct cg during interctive point creation
   for(int i = 0; i < 3; i++) CTX::instance()->cg[i] = temp_bb.center()[i];

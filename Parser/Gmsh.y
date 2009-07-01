@@ -1987,6 +1987,9 @@ Command :
    | tBoundingBox tEND
     {
       CTX::instance()->forcedBBox = 0;
+      // make sure we transfer everything into GModel before computing
+      // the bounding box
+      GModel::current()->importGEOInternals();
       SetBoundingBox();
     } 
    | tBoundingBox '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}' tEND

@@ -54,7 +54,7 @@ bool PViewData::writeSTL(std::string fileName)
         fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
         fprintf(fp, "  outer loop\n");
         fprintf(fp, "    vertex %g %g %g\n", x[0], y[0], z[0]);
-        fprintf(fp, "    vertex %g %g %g\n", x[2], y[1], z[1]);
+        fprintf(fp, "    vertex %g %g %g\n", x[2], y[2], z[2]);
         fprintf(fp, "    vertex %g %g %g\n", x[3], y[3], z[3]);
         fprintf(fp, "  endloop\n");
         fprintf(fp, "endfacet\n");
