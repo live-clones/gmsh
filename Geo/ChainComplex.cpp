@@ -384,7 +384,6 @@ void ChainComplex::computeHomology(bool dual){
       
     } 
     
-    
     destroy_gmp_matrix(getKerHMatrix(lowDim));
     destroy_gmp_matrix(getCodHMatrix(lowDim));
     destroy_gmp_matrix(getJMatrix(lowDim));

@@ -103,7 +103,7 @@ void Homology::findGenerators(std::string fileName){
   chains->computeHomology();
   t2 = Cpu();
   Msg::Info("Homology Computation complete (%g s).", t2 - t1);
-  
+   
   int HRank[4];
   for(int j = 0; j < 4; j++){
     HRank[j] = 0;
@@ -151,14 +151,23 @@ void Homology::findThickCuts(std::string fileName){
   Msg::Info("Reducing Cell Complex...");
   double t1 = Cpu();
   int omitted = _cellComplex->coreduceComplex(_omit);
-  //for(int i = 0; i < 4; i++) { printf("Dim %d: \n", i); _cellComplex->printComplex(i); }
-  //_cellComplex->coreduceComplex(false);
-  //_cellComplex->checkCoherence();
+  /*
+  _cellComplex->makeDualComplex();
+  int omitted = _cellComplex->reduceComplex(_omit);
+  if(getCombine()){
+    _cellComplex->combine(3);
+    _cellComplex->combine(2);
+    _cellComplex->combine(1);
+  }
+  _cellComplex->makeDualComplex();
+  */
+  
   if(getCombine()){
     _cellComplex->cocombine(0);
     _cellComplex->cocombine(1);
     _cellComplex->cocombine(2);
   }
+  
   _cellComplex->checkCoherence();
   double t2 = Cpu();
   Msg::Info("Cell Complex reduction complete (%g s).", t2 - t1);

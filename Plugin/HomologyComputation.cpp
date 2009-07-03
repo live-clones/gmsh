@@ -22,6 +22,7 @@ StringXNumber HomologyComputationOptions_Number[] = {
   {GMSH_FULLRC, "Compute generators", NULL, 1.},
   {GMSH_FULLRC, "Compute thick cuts", NULL, 0.},
   {GMSH_FULLRC, "Omit dimensions", NULL, 1.},
+  //{GMSH_FULLRC, "Combine cells", NULL, 1.},
 };
 
 StringXString HomologyComputationOptions_String[] = {
