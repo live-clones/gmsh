@@ -419,6 +419,9 @@ static void class_color_cb(Fl_Widget* w, void* data)
 	      vE = v1;
 	      i=-1;
 	    }
+
+	    if (it == segments.end()) break;
+
 	  }
 
 	  if (vB == vE) break;
