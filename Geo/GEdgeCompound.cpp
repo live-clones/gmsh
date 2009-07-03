@@ -27,7 +27,6 @@ GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound)
   int N = _compound.size();
   v0 = _orientation[0] ?   _compound[0]->getBeginVertex() :     _compound[0]->getEndVertex();
   v1 = _orientation[N-1] ? _compound[N-1]->getEndVertex() :   _compound[N-1]->getBeginVertex();
-  //printf("vertices of compound %d -> %d\n",v0->tag(),v1->tag());
   v0->addEdge(this);
   v1->addEdge(this);
 
@@ -40,7 +39,6 @@ void GEdgeCompound::orderEdges()
   std::list<GEdge*> edges ;  
 
   for (unsigned int i=0;i<_compound.size();i++){
-    //printf("set compound %d for edge %d \n", tag(), _compound[i]->tag());
     _compound[i]->setCompound(this);
     edges.push_back(_compound[i]);
   }
@@ -50,16 +48,13 @@ void GEdgeCompound::orderEdges()
   for (std::list<GEdge*>::iterator it = edges.begin() ; it != edges.end() ; ++it){
     GVertex *v1 = (*it)->getBeginVertex();
     GVertex *v2 = (*it)->getEndVertex();
-    //printf("BEFORE ORDERING segment vert=%d,  %d \n", v1->tag(), v2->tag());
     std::map<GVertex*,GEdge*>::iterator it1 = tempv.find(v1);
     if (it1==tempv.end()) {
-      //printf("insert v1=%d \n", v1->tag());
       tempv.insert(std::make_pair(v1,*it));
     }
     else tempv.erase(it1);
     std::map<GVertex*,GEdge*>::iterator it2 = tempv.find(v2);
     if (it2==tempv.end()){
-      //printf("insert v2=%d \n", v2->tag());
       tempv.insert(std::make_pair(v2,*it));
     }
     else tempv.erase(it2);
@@ -97,9 +92,12 @@ void GEdgeCompound::orderEdges()
     bool found = false;
     for (std::list<GEdge*>::iterator it = edges.begin() ; it != edges.end() ; ++it){
       GEdge *e = *it;
+      std::list<GEdge*>::iterator itp;
      if (e->getBeginVertex() == last){
 	_c.push_back(e); 
-	edges.erase(it);
+	itp = it;
+	it++;
+	edges.erase(itp);
 	_orientation.push_back(1);
 	last = e->getEndVertex();
 	found = true;
@@ -107,7 +105,9 @@ void GEdgeCompound::orderEdges()
       }
       else if (e->getEndVertex() == last){
 	_c.push_back(e); 
-	edges.erase(it);
+	itp = it;
+	it++;
+	edges.erase(itp);
 	_orientation.push_back(0);
 	last = e->getBeginVertex();
 	found = true;
@@ -135,21 +135,11 @@ void GEdgeCompound::orderEdges()
   if (_compound.size() < 2)return;
   if (_orientation[0] && _compound[0]->getEndVertex() != _compound[1]->getEndVertex() 
       && _compound[0]->getEndVertex() != _compound[1]->getBeginVertex()){  
-    //    printf("coucou again\n");
     for (unsigned int i = 0; i < _compound.size(); i++){
       _orientation[i] = !_orientation[i] ;
     }
   }
 
-//   for (int i=0;i<_compound.size();i++){
-//     printf("i = %d , o %d e %d (%d,%d)\n",
-// 	   i, (int)_orientation[i],
-// 	   _compound[i]->tag(),
-// 	   _compound[i]->getBeginVertex()->tag(),
-// 	   _compound[i]->getEndVertex()->tag());
-//  }
-//   exit(1);
-  
   return;
 
 }

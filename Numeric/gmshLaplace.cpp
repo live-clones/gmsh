@@ -37,12 +37,15 @@ void gmshLaplaceTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
       Grads[j][2] = invjac[2][0] * grads[j][0] + invjac[2][1] * grads[j][1] +
         invjac[2][2] * grads[j][2];
     }
+    double pi = 3.14;
     double H_x=1.0;
+    double H_y=1.0;
+    double H_z=1.0;
     for (int j = 0; j < nbNodes; j++){
       for (int k = 0; k <= j; k++){
 	m(j, k) += (H_x*Grads[j][0] * Grads[k][0] +
-                    Grads[j][1] * Grads[k][1] +
-                    Grads[j][2] * Grads[k][2]) * weight * detJ * _diff;
+                    H_y*Grads[j][1] * Grads[k][1] +
+                    H_z*Grads[j][2] * Grads[k][2]) * weight * detJ * _diff;
       }
     }
   }
