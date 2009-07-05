@@ -434,7 +434,7 @@ CellComplex${OBJEXT}: CellComplex.cpp CellComplex.h ../Common/GmshConfig.h \
   ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Gauss.h \
   MPoint.h MLine.h MTriangle.h MTetrahedron.h GModel.h GVertex.h \
   GEntity.h Range.h SBoundingBox3d.h SOrientedBoundingBox.h Pair.h \
-  GPoint.h GEdge.h GFace.h GEdgeLoop.h GRegion.h
+  GPoint.h GEdge.h GFace.h GEdgeLoop.h GRegion.h ../Common/OS.h
 ChainComplex${OBJEXT}: ChainComplex.cpp ChainComplex.h ../Common/GmshConfig.h \
   MElement.h ../Common/GmshDefines.h MVertex.h SPoint2.h SPoint3.h \
   MEdge.h SVector3.h MFace.h ../Common/GmshMessage.h \

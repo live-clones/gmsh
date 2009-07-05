@@ -73,8 +73,7 @@ PluginManager${OBJEXT}: PluginManager.cpp ../Common/GmshConfig.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Numeric/GmshMatrix.h PluginManager.h CutMap.h \
   Levelset.h CutGrid.h StreamLines.h CutPlane.h CutParametric.h \
-  CutSphere.h Skin.h ../Common/TreeUtils.h ../Common/avl.h \
-  ../Common/ListUtils.h Extract.h ExtractElements.h ExtractEdges.h \
+  CutSphere.h Skin.h Extract.h ExtractElements.h ExtractEdges.h \
   HarmonicToTime.h ModulusPhase.h Integrate.h Gradient.h Curl.h \
   Divergence.h Annotate.h Remove.h MakeSimplex.h Smooth.h Transform.h \
   LongitudeLatitude.h Triangulate.h Warp.h SphericalRaise.h \
@@ -194,9 +193,7 @@ Skin${OBJEXT}: Skin.cpp Skin.h Plugin.h ../Common/Options.h ../Post/ColorTable.h
   ../Common/GmshMessage.h ../Post/PView.h ../Geo/SPoint3.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Numeric/GmshMatrix.h ../Common/GmshConfig.h \
-  ../Common/TreeUtils.h ../Common/avl.h ../Common/ListUtils.h \
-  ../Common/MallocUtils.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/meshPartitionOptions.h
+  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
 GSHHS${OBJEXT}: GSHHS.cpp ../Mesh/Field.h ../Common/GmshConfig.h \
   ../Geo/STensor3.h ../Geo/SVector3.h ../Geo/SPoint3.h \
   ../Numeric/GmshMatrix.h ../Common/GmshMessage.h ../Numeric/Numeric.h \
