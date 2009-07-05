@@ -97,49 +97,49 @@ void GMSH_ExtractPlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Extract failed...");
 }
 
-static std::vector<double> *incrementList(PViewDataList *data2, int numComp2, 
+static std::vector<double> *incrementList(PViewDataList *data, int numComp, 
                                           int numEdges)
 {
   switch(numEdges){
   case 0:
-    if     (numComp2 == 1){ data2->NbSP++; return &data2->SP; }
-    else if(numComp2 == 3){ data2->NbVP++; return &data2->VP; }
-    else if(numComp2 == 9){ data2->NbTP++; return &data2->TP; }
+    if     (numComp == 1){ data->NbSP++; return &data->SP; }
+    else if(numComp == 3){ data->NbVP++; return &data->VP; }
+    else if(numComp == 9){ data->NbTP++; return &data->TP; }
     break;
   case 1:
-    if     (numComp2 == 1){ data2->NbSL++; return &data2->SL; }
-    else if(numComp2 == 3){ data2->NbVL++; return &data2->VL; }
-    else if(numComp2 == 9){ data2->NbTL++; return &data2->TL; }
+    if     (numComp == 1){ data->NbSL++; return &data->SL; }
+    else if(numComp == 3){ data->NbVL++; return &data->VL; }
+    else if(numComp == 9){ data->NbTL++; return &data->TL; }
     break;
   case 3: 
-    if     (numComp2 == 1){ data2->NbST++; return &data2->ST; }
-    else if(numComp2 == 3){ data2->NbVT++; return &data2->VT; }
-    else if(numComp2 == 9){ data2->NbTT++; return &data2->TT; }
+    if     (numComp == 1){ data->NbST++; return &data->ST; }
+    else if(numComp == 3){ data->NbVT++; return &data->VT; }
+    else if(numComp == 9){ data->NbTT++; return &data->TT; }
     break;
   case 4: 
-    if     (numComp2 == 1){ data2->NbSQ++; return &data2->SQ; }
-    else if(numComp2 == 3){ data2->NbVQ++; return &data2->VQ; }
-    else if(numComp2 == 9){ data2->NbTQ++; return &data2->TQ; }
+    if     (numComp == 1){ data->NbSQ++; return &data->SQ; }
+    else if(numComp == 3){ data->NbVQ++; return &data->VQ; }
+    else if(numComp == 9){ data->NbTQ++; return &data->TQ; }
     break;
   case 6:
-    if     (numComp2 == 1){ data2->NbSS++; return &data2->SS; }
-    else if(numComp2 == 3){ data2->NbVS++; return &data2->VS; }
-    else if(numComp2 == 9){ data2->NbTS++; return &data2->TS; }
+    if     (numComp == 1){ data->NbSS++; return &data->SS; }
+    else if(numComp == 3){ data->NbVS++; return &data->VS; }
+    else if(numComp == 9){ data->NbTS++; return &data->TS; }
     break;
   case 12: 
-    if     (numComp2 == 1){ data2->NbSH++; return &data2->SH; }
-    else if(numComp2 == 3){ data2->NbVH++; return &data2->VH; }
-    else if(numComp2 == 9){ data2->NbTH++; return &data2->TH; }
+    if     (numComp == 1){ data->NbSH++; return &data->SH; }
+    else if(numComp == 3){ data->NbVH++; return &data->VH; }
+    else if(numComp == 9){ data->NbTH++; return &data->TH; }
     break;
   case 9: 
-    if     (numComp2 == 1){ data2->NbSI++; return &data2->SI; }
-    else if(numComp2 == 3){ data2->NbVI++; return &data2->VI; }
-    else if(numComp2 == 9){ data2->NbTI++; return &data2->TI; }
+    if     (numComp == 1){ data->NbSI++; return &data->SI; }
+    else if(numComp == 3){ data->NbVI++; return &data->VI; }
+    else if(numComp == 9){ data->NbTI++; return &data->TI; }
     break;
   case 8:
-    if     (numComp2 == 1){ data2->NbSY++; return &data2->SY; }
-    else if(numComp2 == 3){ data2->NbVY++; return &data2->VY; }
-    else if(numComp2 == 9){ data2->NbTY++; return &data2->TY; }
+    if     (numComp == 1){ data->NbSY++; return &data->SY; }
+    else if(numComp == 3){ data->NbVY++; return &data->VY; }
+    else if(numComp == 9){ data->NbTY++; return &data->TY; }
     break;
   }
   return 0;
