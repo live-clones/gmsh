@@ -7,7 +7,6 @@
 #define _SKIN_H_
 
 #include "Plugin.h"
-#include "TreeUtils.h"
 
 extern "C"
 {
@@ -16,17 +15,6 @@ extern "C"
 
 class GMSH_SkinPlugin : public GMSH_PostPlugin
 {
-  typedef struct{
-    double coord[12];
-    double *val;
-  } Elm;
-  static std::vector<double> *_list;
-  static Tree_T *_skin;
-  static int *_nbList, _nbNod, _nbComp, _nbTimeStep;
-  static int fcmpElm(const void *a, const void *b);
-  static void addInView(void *a, void *b);
-  void skinList(std::vector<double> &inList, int inNbList, 
-                int inNbNod, int inNbFac, int fxn[6][4]);
  public:
   GMSH_SkinPlugin(){}
   void getName(char *name) const;

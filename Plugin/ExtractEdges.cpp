@@ -64,13 +64,10 @@ PView *GMSH_ExtractEdgesPlugin::execute(PView *v)
   PView *v1 = getView(iView, v);
   if(!v1) return v;
 
-  PViewDataList *data1 = getDataList(v1);
-  if(!data1) return v;
+  PViewData *data1 = v1->getData();
 
   PView *v2 = new PView();
-
   PViewDataList *data2 = getDataList(v2);
-  if(!data2) return v;
 
   //BDS_Mesh bds;
   //bds.import_view(v1, CTX::instance()->lc * 1.e-12);

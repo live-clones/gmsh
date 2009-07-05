@@ -3,16 +3,9 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <set>
 #include "Skin.h"
-#include "MallocUtils.h"
 #include "Context.h"
-
-std::vector<double> *GMSH_SkinPlugin::_list = 0;
-Tree_T *GMSH_SkinPlugin::_skin = 0;
-int *GMSH_SkinPlugin::_nbList = 0;
-int GMSH_SkinPlugin::_nbNod = 0;
-int GMSH_SkinPlugin::_nbComp = 0;
-int GMSH_SkinPlugin::_nbTimeStep = 0;
 
 StringXNumber SkinOptions_Number[] = {
   {GMSH_FULLRC, "iView", NULL, -1.}
@@ -58,87 +51,99 @@ void GMSH_SkinPlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Skin failed...");
 }
 
-int GMSH_SkinPlugin::fcmpElm(const void *a, const void *b)
-{
-  Elm *e1 = (Elm *)a, *e2 = (Elm *)b;
-  double s1, s2, TOL = CTX::instance()->lc * 1.e-12;
-  int i;
-
-  s1 = s2 = 0.0;
-  for(i = 0; i < _nbNod; i++) {
-    s1 += e1->coord[i];
-    s2 += e2->coord[i];
-  }
-  if(s1 - s2 > TOL)
-    return 1;
-  else if(s1 - s2 < -TOL)
-    return -1;
-  s1 = s2 = 0.0;
-  for(i = 0; i < _nbNod; i++) {
-    s1 += e1->coord[_nbNod + i];
-    s2 += e2->coord[_nbNod + i];
-  }
-  if(s1 - s2 > TOL)
-    return 1;
-  else if(s1 - s2 < -TOL)
-    return -1;
-  s1 = s2 = 0.0;
-  for(i = 0; i < _nbNod; i++) {
-    s1 += e1->coord[2 * _nbNod + i];
-    s2 += e2->coord[2 * _nbNod + i];
-  }
-  if(s1 - s2 > TOL)
-    return 1;
-  else if(s1 - s2 < -TOL)
-    return -1;
-
-  return 0;
-}
-
-void GMSH_SkinPlugin::addInView(void *a, void *b)
-{
-  Elm *e = (Elm *)a;
-
-  for(int i = 0; i < 3 * _nbNod; i++)
-    _list->push_back(e->coord[i]);
-  for(int ts = 0; ts < _nbTimeStep; ts++)
-    for(int k = 0; k < _nbNod * _nbComp; k++)
-      _list->push_back(e->val[_nbNod * _nbComp * ts + k]);
-  Free(e->val);
-  (*_nbList)++;
-}
-
-void GMSH_SkinPlugin::skinList(std::vector<double> &inList, int inNbList, 
-                               int inNbNod, int inNbFac, int fxn[6][4])
-{
-  if(!inNbList)
-    return;
-
-  int nb = inList.size() / inNbList;
-  for(unsigned int i = 0; i < inList.size(); i += nb) {
-    double *coord = &inList[i];
-    double *val = &inList[i + 3 * inNbNod];
-    for(int j = 0; j < inNbFac; j++) {
-      Elm e, *pe;
-      for(int k = 0; k < _nbNod; k++) {
-        e.coord[k] = coord[fxn[j][k]]; // x
-        e.coord[_nbNod + k] = coord[inNbNod + fxn[j][k]]; // y
-        e.coord[2 * _nbNod + k] = coord[2 * inNbNod + fxn[j][k]]; // z
-      }
-      if(!(pe = (Elm *)Tree_PQuery(_skin, &e))) {
-        e.val = (double *)Malloc(_nbNod * _nbComp * _nbTimeStep * sizeof(double));
-        for(int k = 0; k < _nbNod; k++)
-          for(int ts = 0; ts < _nbTimeStep; ts++)
-            for(int n = 0; n < _nbComp; n++)
-              e.val[_nbNod * _nbComp * ts + _nbComp * k + n] =
-                val[inNbNod * _nbComp * ts + _nbComp * fxn[j][k] + n];
-        Tree_Add(_skin, &e);
-      }
-      else {
-        Free(pe->val);
-        Tree_Suppress(_skin, pe);
-      }
+class ElmData {
+ public:
+  int numComp;
+  std::vector<double> x, y, z;
+  std::vector<double> v;
+  ElmData(int n) : numComp(n) {}
+  SPoint3 barycenter() const
+  {
+    SPoint3 p(0., 0., 0.);
+    int N = x.size();
+    for(int i = 0; i < N; i++){
+      p[0] += x[i];
+      p[1] += y[i];
+      p[2] += z[i];
     }
+    p[0] /= (double)N;
+    p[1] /= (double)N;
+    p[2] /= (double)N;
+    return p;
+  }
+  void addInView(PViewDataList *data) const
+  {
+    std::vector<double> *vec = 0;
+    switch(x.size()){
+    case 1:
+      if     (numComp == 1){ data->NbSP++; vec = &data->SP; break; }
+      else if(numComp == 3){ data->NbVP++; vec = &data->VP; break; }
+      else if(numComp == 9){ data->NbTP++; vec = &data->TP; break; }
+      break;
+    case 2:
+      if     (numComp == 1){ data->NbSL++; vec = &data->SL; break; }
+      else if(numComp == 3){ data->NbVL++; vec = &data->VL; break; }
+      else if(numComp == 9){ data->NbTL++; vec = &data->TL; break; }
+      break;
+    case 3: 
+      if     (numComp == 1){ data->NbST++; vec = &data->ST; break; }
+      else if(numComp == 3){ data->NbVT++; vec = &data->VT; break; }
+      else if(numComp == 9){ data->NbTT++; vec = &data->TT; break; }
+      break;
+    case 4: 
+      if     (numComp == 1){ data->NbSQ++; vec = &data->SQ; break; }
+      else if(numComp == 3){ data->NbVQ++; vec = &data->VQ; break; }
+      else if(numComp == 9){ data->NbTQ++; vec = &data->TQ; break; }
+      break;
+    }
+    if(!vec) return;
+    for(unsigned int i = 0; i < x.size(); i++) vec->push_back(x[i]);
+    for(unsigned int i = 0; i < y.size(); i++) vec->push_back(y[i]);
+    for(unsigned int i = 0; i < z.size(); i++) vec->push_back(z[i]);
+    for(unsigned int i = 0; i < v.size(); i++) vec->push_back(v[i]);
+  }
+};
+
+class ElmDataLessThan{
+ public:
+  static double tolerance;
+  bool operator()(const ElmData &e1, const ElmData &e2) const
+  {
+    SPoint3 p1 = e1.barycenter();
+    SPoint3 p2 = e2.barycenter();
+    if(p1.x() - p2.x() >  tolerance) return true;
+    if(p1.x() - p2.x() < -tolerance) return false;
+    if(p1.y() - p2.y() >  tolerance) return true;
+    if(p1.y() - p2.y() < -tolerance) return false;
+    if(p1.z() - p2.z() >  tolerance) return true;
+    return false;
+  }
+};
+
+double ElmDataLessThan::tolerance = 1.e-12;
+
+static int getBoundary(int numEdges, const int (**boundary)[6][4])
+{
+  static const int tri[6][4] = 
+    {{0,1,-1,-1}, {1,2,-1,-1}, {2,0,-1,-1}};
+  static const int qua[6][4] = 
+    {{0,1,-1,-1}, {1,2,-1,-1}, {2,3,-1,-1}, {3,0,-1,-1}};
+  static const int tet[6][4] = 
+    {{0,1,3,-1}, {0,2,1,-1}, {0,3,2,-1}, {1,2,3,-1}};
+  static const int hex[6][4] = 
+    {{0,1,5,4}, {0,3,2,1}, {0,4,7,3}, {1,2,6,5}, {2,3,7,6}, {4,5,6,7}};
+  static const int pri[6][4] = 
+    {{0,1,4,3}, {0,3,5,2}, {1,2,5,4}, {0,2,1,-1}, {3,4,5,-1}};
+  static const int pyr[6][4] = 
+    {{0,3,2,1}, {0,1,4,-1}, {0,4,3,-1}, {1,2,4,-1}, {2,3,4,-1}};
+  switch(numEdges){
+  case 3: *boundary = &tri; return 3;
+  case 4: *boundary = &qua; return 4;
+  case 6: *boundary = &tet; return 4;
+  case 12: *boundary = &hex; return 6;
+  case 9: *boundary = &pri; return 5;
+  case 8: *boundary = &pyr; return 5;
+  default : return 0;
   }
 }
 
@@ -148,106 +153,65 @@ PView *GMSH_SkinPlugin::execute(PView *v)
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
+  PViewData *data1 = v1->getData();
 
-  PViewDataList *data1 = getDataList(v1);
-  if(!data1) return v;
+  if(data1->hasMultipleMeshes()){
+    Msg::Error("Skin plugin cannot be applied to multi-mesh views");
+    return v;
+  }
 
   PView *v2 = new PView();
-
   PViewDataList *data2 = getDataList(v2);
-  if(!data2) return v;
 
-  _nbTimeStep = data1->getNumTimeSteps();
+  std::set<ElmData, ElmDataLessThan> skin;
+  ElmDataLessThan::tolerance = CTX::instance()->lc * 1.e-12;
 
-  int skinTri[6][4] = {{0,1,-1,-1}, {1,2,-1,-1}, {2,0,-1,-1}};
-  int skinQua[6][4] = {{0,1,-1,-1}, {1,2,-1,-1}, {2,3,-1,-1}, {3,0,-1,-1}};
-  int skinTet[6][4] = {{0,1,3,-1}, {0,2,1,-1}, {0,3,2,-1}, {1,2,3,-1}};
-  int skinHex[6][4] = {{0,1,5,4}, {0,3,2,1}, {0,4,7,3},
-                       {1,2,6,5}, {2,3,7,6}, {4,5,6,7}};
-  int skinPri1[6][4] = {{0,1,4,3}, {0,3,5,2}, {1,2,5,4}};
-  int skinPri2[6][4] = {{0,2,1,-1}, {3,4,5,-1}};
-  int skinPyr1[6][4] = {{0,3,2,1}};
-  int skinPyr2[6][4] = {{0,1,4,-1}, {0,4,3,-1}, {1,2,4,-1}, {2,3,4,-1}};
+  for(int ent = 0; ent < data1->getNumEntities(0); ent++){
+    for(int ele = 0; ele < data1->getNumElements(0, ent); ele++){
+      if(data1->skipElement(0, ent, ele)) continue;
+      int numComp = data1->getNumComponents(0, ent, ele);
+      int numEdges = data1->getNumEdges(0, ent, ele);
+      const int (*boundary)[6][4];
+      int numBoundary = getBoundary(numEdges, &boundary);
+      if(!numBoundary) continue;
+      for(int i = 0; i < numBoundary; i++){
+        ElmData e(numComp);
+        for(int j = 0; j < 4; j++){
+          int nod = (*boundary)[i][j];
+          if(nod < 0) continue;
+          double x, y, z;
+          data1->getNode(0, ent, ele, nod, x, y, z);
+          e.x.push_back(x);
+          e.y.push_back(y);
+          e.z.push_back(z);
+        }
+        std::set<ElmData, ElmDataLessThan>::iterator it = skin.find(e);
+        if(it == skin.end()){
+          for(int step = 0; step < data1->getNumTimeSteps(); step++){
+            for(int j = 0; j < 4; j++){
+              int nod = (*boundary)[i][j];
+              if(nod < 0) continue;
+              double v;
+              for(int comp = 0; comp < numComp; comp++){
+                data1->getValue(step, ent, ele, nod, comp, v);
+                e.v.push_back(v);
+              }
+            }
+          }
+          skin.insert(e);
+        }
+        else
+          skin.erase(it);
+      }
+    }
+  }
 
-  // Generate lines
-  _nbNod = 2;
-  // scalar
-  _skin = Tree_Create(sizeof(Elm), fcmpElm);
-  _list = &data2->SL; _nbList = &data2->NbSL; _nbComp = 1;
-  skinList(data1->ST, data1->NbST, 3, 3, skinTri);
-  skinList(data1->SQ, data1->NbSQ, 4, 4, skinQua);
-  Tree_Action(_skin, addInView);
-  Tree_Delete(_skin);
-  // vector
-  _skin = Tree_Create(sizeof(Elm), fcmpElm);
-  _list = &data2->VL; _nbList = &data2->NbVL; _nbComp = 3;
-  skinList(data1->VT, data1->NbVT, 3, 3, skinTri);
-  skinList(data1->VQ, data1->NbVQ, 4, 4, skinQua);
-  Tree_Action(_skin, addInView);
-  Tree_Delete(_skin);
-  // tensor
-  _skin = Tree_Create(sizeof(Elm), fcmpElm);
-  _list = &data2->TL; _nbList = &data2->NbTL; _nbComp = 9;
-  skinList(data1->TT, data1->NbTT, 3, 3, skinTri);
-  skinList(data1->TQ, data1->NbTQ, 4, 4, skinQua);
-  Tree_Action(_skin, addInView);
-  Tree_Delete(_skin);
-
-  // Generate triangles
-  _nbNod = 3;
-  // scalar
-  _skin = Tree_Create(sizeof(Elm), fcmpElm);
-  _list = &data2->ST; _nbList = &data2->NbST; _nbComp = 1;
-  skinList(data1->SS, data1->NbSS, 4, 4, skinTet);
-  skinList(data1->SI, data1->NbSI, 6, 2, skinPri2);
-  skinList(data1->SY, data1->NbSY, 5, 4, skinPyr2);
-  Tree_Action(_skin, addInView);
-  Tree_Delete(_skin);
-  // vector
-  _skin = Tree_Create(sizeof(Elm), fcmpElm);
-  _list = &data2->VT; _nbList = &data2->NbVT; _nbComp = 3;
-  skinList(data1->VS, data1->NbVS, 4, 4, skinTet);
-  skinList(data1->VI, data1->NbVI, 6, 2, skinPri2);
-  skinList(data1->VY, data1->NbVY, 5, 4, skinPyr2);
-  Tree_Action(_skin, addInView);
-  Tree_Delete(_skin);
-  // tensor
-  _skin = Tree_Create(sizeof(Elm), fcmpElm);
-  _list = &data2->TT; _nbList = &data2->NbTT; _nbComp = 9;
-  skinList(data1->TS, data1->NbTS, 4, 4, skinTet);
-  skinList(data1->TI, data1->NbTI, 6, 2, skinPri2);
-  skinList(data1->TY, data1->NbTY, 5, 4, skinPyr2);
-  Tree_Action(_skin, addInView);
-  Tree_Delete(_skin);
-
-  // Generate quads
-  _nbNod = 4;
-  // scalar
-  _skin = Tree_Create(sizeof(Elm), fcmpElm);
-  _list = &data2->SQ; _nbList = &data2->NbSQ; _nbComp = 1;
-  skinList(data1->SH, data1->NbSH, 8, 6, skinHex);
-  skinList(data1->SI, data1->NbSI, 6, 3, skinPri1);
-  skinList(data1->SY, data1->NbSY, 5, 1, skinPyr1);
-  Tree_Action(_skin, addInView);
-  Tree_Delete(_skin);
-  // vector
-  _skin = Tree_Create(sizeof(Elm), fcmpElm);
-  _list = &data2->VQ; _nbList = &data2->NbVQ; _nbComp = 3;
-  skinList(data1->VH, data1->NbVH, 8, 6, skinHex);
-  skinList(data1->VI, data1->NbVI, 6, 3, skinPri1);
-  skinList(data1->VY, data1->NbVY, 5, 1, skinPyr1);
-  Tree_Action(_skin, addInView);
-  Tree_Delete(_skin);
-  // tensor
-  _skin = Tree_Create(sizeof(Elm), fcmpElm);
-  _list = &data2->TQ; _nbList = &data2->NbTQ; _nbComp = 9;
-  skinList(data1->TH, data1->NbTH, 8, 6, skinHex);
-  skinList(data1->TI, data1->NbTI, 6, 3, skinPri1);
-  skinList(data1->TY, data1->NbTY, 5, 1, skinPyr1);
-  Tree_Action(_skin, addInView);
-  Tree_Delete(_skin);
-
-  data2->Time = data1->Time;
+  for(std::set<ElmData, ElmDataLessThan>::iterator it = skin.begin();
+      it != skin.end(); it++)
+    it->addInView(data2);
+  
+  for(int i = 0; i < data1->getNumTimeSteps(); i++)
+    data2->Time.push_back(data1->getTime(i));
   data2->setName(data1->getName() + "_Skin");
   data2->setFileName(data1->getName() + "_Skin.pos");
   data2->finalize();

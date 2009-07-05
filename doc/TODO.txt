@@ -1,4 +1,10 @@
-$Id: TODO.txt,v 1.29 2009-06-28 16:06:04 geuzaine Exp $
+$Id: TODO.txt,v 1.30 2009-07-05 06:40:27 geuzaine Exp $
+
+********************************************************************
+
+replace last uses of shapeFunctions.h with MElement.h (might want to
+create a pool of MVertices to speed up temp element creation in
+plugins)
 
 ********************************************************************
 
