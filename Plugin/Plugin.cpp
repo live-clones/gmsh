@@ -19,14 +19,14 @@ PView *GMSH_PostPlugin::getView(int index, PView *view)
   }
 }
 
-PViewDataList *GMSH_PostPlugin::getDataList(PView *view, bool error)
+PViewDataList *GMSH_PostPlugin::getDataList(PView *view, bool showError)
 {
   if(!view) return 0;
 
   PViewDataList *data = dynamic_cast<PViewDataList*>(view->getData());
   if(data)
     return data;
-  else if(error)
+  else if(showError)
     Msg::Error("This plugin can only be run on list-based views (`.pos' files)");
   return 0;
 }

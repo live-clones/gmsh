@@ -81,7 +81,7 @@ class GMSH_PostPlugin : public GMSH_Plugin
   // get the view given an index and a default value
   virtual PView *getView(int index, PView *view);
   // get the data in list format
-  virtual PViewDataList *getDataList(PView *view, bool error=1);
+  virtual PViewDataList *getDataList(PView *view, bool showError=true);
   virtual void assignSpecificVisibility() const {}
   virtual bool geometricalFilter(gmshMatrix<double> *) const { return true; }
 };
