@@ -677,6 +677,7 @@ OPTIM
 LINKER
 GMSH_DIRS
 GMSH_LIBS
+LIBEXT
 LIBOBJS
 LTLIBOBJS'
 ac_subst_files=''
@@ -3567,6 +3568,7 @@ case "$UNAME" in
   Darwin*)
     RANLIB=true
     AR="libtool -o"
+    LIBEXT=".a"
     ;;
   *)
     if test -n "$ac_tool_prefix"; then
@@ -3711,6 +3713,7 @@ echo "$as_me: error: Could not find the library archiver, aborting." >&2;}
    { (exit 1); exit 1; }; }
     fi
     AR="${AR} ruvs"
+    LIBEXT=".a"
     ;;
 esac
 
@@ -7379,6 +7382,7 @@ ac_config_headers="$ac_config_headers Common/GmshConfig.h:Common/GmshConfig.h.in
 
 
 
+
 ac_config_files="$ac_config_files variables"
 
 cat >confcache <<\_ACEOF
@@ -8060,11 +8064,12 @@ OPTIM!$OPTIM$ac_delim
 LINKER!$LINKER$ac_delim
 GMSH_DIRS!$GMSH_DIRS$ac_delim
 GMSH_LIBS!$GMSH_LIBS$ac_delim
+LIBEXT!$LIBEXT$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 66; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 67; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

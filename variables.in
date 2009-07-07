@@ -43,7 +43,7 @@ DASH=-
 
 # The extension to use for object files, libraries and executables
 OBJEXT=.o
-LIBEXT=.a
+LIBEXT=@LIBEXT@
 EXEEXT=@EXEEXT@
 
 # File handling commands

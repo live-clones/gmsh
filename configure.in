@@ -221,6 +221,7 @@ case "$UNAME" in
   Darwin*)
     RANLIB=true
     AR="libtool -o"
+    LIBEXT=".a"
     ;;
   *)
     AC_PROG_RANLIB
@@ -229,6 +230,7 @@ case "$UNAME" in
       AC_MSG_ERROR([Could not find the library archiver, aborting.])
     fi
     AR="${AR} ruvs"
+    LIBEXT=".a"
     ;;
 esac
 
@@ -876,6 +878,7 @@ AC_SUBST(LINKER)
 AC_SUBST(GMSH_DIRS)
 AC_SUBST(GMSH_LIBS)
 AC_SUBST(AR)
+AC_SUBST(LIBEXT)
 AC_CONFIG_FILES([variables])
 AC_OUTPUT
 
