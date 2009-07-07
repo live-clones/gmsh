@@ -49,6 +49,7 @@ class Cell
    int _tag;
    int _index; 
    
+      
    // cells on the boundary and on the coboundary of thhis cell
    std::list< std::pair<int, Cell*> > _boundary;
    std::list< std::pair<int, Cell*> > _coboundary;
@@ -57,6 +58,7 @@ class Cell
    
   public:
    Cell(){
+     
      _bdSize = 0;
      _cbdSize = 0;
    }
@@ -68,7 +70,7 @@ class Cell
    virtual int getIndex() const { return _index; };
    virtual void setIndex(int index) { _index = index; };
    virtual int getNum() { return -1; }
-   
+
    // get the number of vertices this cell has
    virtual int getNumVertices() const = 0;
    virtual MVertex* getVertex(int vertex) const = 0; //{return _vertices.at(vertex);}

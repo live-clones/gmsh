@@ -279,7 +279,6 @@ void CellComplex::removeCell(Cell* cell){
   
   _cells[cell->getDim()].erase(cell);
   
-  
 }
 
 void CellComplex::removeCellQset(Cell*& cell, std::set<Cell*, Less_Cell>& Qset){
@@ -353,12 +352,16 @@ int CellComplex::reduction(int dim){
       cbd_c = cell->getCoboundary();
       if( cbd_c.size() == 1 && inSameDomain(cell, cbd_c.front()) ){
         
+        ++cit;
         removeCell(cbd_c.front());
         removeCell(cell);
         count++;
         reduced = true;
+        
       }
     }
+    
+    
   }
   
   return count;
@@ -694,7 +697,7 @@ int CellComplex::combine(int dim){
         int or2 = cbd_c.back().first;
         Cell* c1 = cbd_c.front().second;
         Cell* c2 = cbd_c.back().second;
-                  
+          
         removeCell(s);
           
         bd_c = c1->getBoundary();
