@@ -61,7 +61,7 @@ class GModel
   FM_Internals *_fm_internals;
   void _createFMInternals();
   void _deleteFMInternals();
- 
+
   // characteristic length (mesh size) fields
   FieldManager *_fields;
 
@@ -229,6 +229,10 @@ class GModel
   // "dim" and id number "num"
   std::string getPhysicalName(int dim, int num);
 
+  // get the number of a given physical group of dimension
+  // "dim" and name "name". return -1 if not found
+  int getPhysicalNumber(const int &dim, const std::string & name);
+
   // set the selection flag on all entities
   void setSelection(int val);
 
@@ -369,7 +373,7 @@ class GModel
   // is allowed to load multiple models/meshes)
   static int readMED(const std::string &name);
   int readMED(const std::string &name, int meshIndex);
-  int writeMED(const std::string &name, 
+  int writeMED(const std::string &name,
 	       bool saveAll=false, double scalingFactor=1.0);
 
   // VTK format
