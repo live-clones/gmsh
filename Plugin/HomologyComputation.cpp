@@ -15,14 +15,14 @@
 
 #if defined(HAVE_KBIPACK)
 StringXNumber HomologyComputationOptions_Number[] = {
-  {GMSH_FULLRC, "1. Physical group for domain", NULL, 0.},
-  {GMSH_FULLRC, "2. Physical group for domain", NULL, 0.},
-  {GMSH_FULLRC, "1. Physical group for subdomain", NULL, 0.},
-  {GMSH_FULLRC, "2. Physical group for subdomain", NULL, 0.},
-  {GMSH_FULLRC, "Compute generators", NULL, 1.},
-  {GMSH_FULLRC, "Compute thick cuts", NULL, 0.},
-  {GMSH_FULLRC, "Omit dimensions", NULL, 1.},
-  //{GMSH_FULLRC, "Combine cells", NULL, 1.},
+  {GMSH_FULLRC, "PhysicalGroupForDomain1", NULL, 0.},
+  {GMSH_FULLRC, "PhysicalGroupForDomain2", NULL, 0.},
+  {GMSH_FULLRC, "PhysicalGroupForSubdomain1", NULL, 0.},
+  {GMSH_FULLRC, "PhysicalGroupForSubdomain2", NULL, 0.},
+  {GMSH_FULLRC, "ComputeGenerators", NULL, 1.},
+  {GMSH_FULLRC, "ComputeThickCuts", NULL, 0.},
+  {GMSH_FULLRC, "OmitDimensions", NULL, 1.},
+  //{GMSH_FULLRC, "CombineCells", NULL, 1.},
 };
 
 StringXString HomologyComputationOptions_String[] = {
