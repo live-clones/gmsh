@@ -191,6 +191,7 @@ StrPrefix               return tStrPrefix;
 StrRelative             return tStrRelative;
 Show                    return tShow;
 Symmetry                return tSymmetry;
+SyncModel               return tSyncModel;
 
 T2                      return tText2D;
 T3                      return tText3D;

@@ -88,7 +88,7 @@ void FixRelativePath(const char *in, char *out);
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
 %token tFmod tModulo tHypot 
 %token tPrintf tSprintf tStrCat tStrPrefix tStrRelative
-%token tBoundingBox tDraw tToday tCreateTopology
+%token tBoundingBox tDraw tToday tSyncModel tCreateTopology
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound
@@ -1984,11 +1984,16 @@ Command :
     {
       exit(0);
     } 
+   | tSyncModel tEND
+    {
+      // FIXME: this is a hack to force a transfer from the old DB to
+      // the new DB. This will become unnecessary if/when we fill the 
+      // GModel directly during parsing.
+      GModel::current()->importGEOInternals();
+    } 
    | tBoundingBox tEND
     {
       CTX::instance()->forcedBBox = 0;
-      // make sure we transfer everything into GModel before computing
-      // the bounding box
       GModel::current()->importGEOInternals();
       SetBoundingBox();
     } 
