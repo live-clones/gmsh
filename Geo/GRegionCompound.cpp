@@ -15,7 +15,7 @@
 GRegionCompound::GRegionCompound(GModel *m, int tag, std::vector<GRegion*> &compound)
   : GRegion(m, tag),  _compound(compound)
 {
-  printf("********* In GRegion compound size =%d  \n", _compound.size());
+  //printf("********* In GRegion compound size =%d  \n", _compound.size());
   getBoundingFaces();
 }
 
@@ -29,7 +29,7 @@ void GRegionCompound::getBoundingFaces(){
   std::multiset<GFace*> _touched;
   std::vector<GRegion*>::iterator it = _compound.begin();
   for ( ; it != _compound.end(); ++it){
-    printf("face %d \n", (*it)->tag());
+    //printf("face %d \n", (*it)->tag());
     std::list<GFace*> ed = (*it)->faces();
    std::list<GFace*> :: iterator ite = ed.begin();
     for ( ; ite != ed.end(); ++ite){
@@ -49,7 +49,7 @@ void GRegionCompound::getBoundingFaces(){
   std::set<GFace*>::iterator itf = _unique.begin();
   for ( ; itf != _unique.end(); ++itf){
     l_faces.push_back(*itf);
-    printf("for face %d, add region %d \n", (*itf)->tag(), this->tag());
+    //printf("for face %d, add region %d \n", (*itf)->tag(), this->tag());
     (*itf)->addRegion(this);
   }
 

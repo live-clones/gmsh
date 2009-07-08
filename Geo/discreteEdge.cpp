@@ -338,15 +338,6 @@ void discreteEdge::parametrize()
 
    }
 
-
-
-//   for (int i = 0; i < mesh_vertices.size(); i++){
-//       double t1;
-//       mesh_vertices[i]->getParameter(0,t1);
-//       printf("** AFTER v1=%d  t1=%g\n",  mesh_vertices[i]->getNum(),t1 );
-//   }
-
-
    computeNormals();
 
 }
@@ -386,8 +377,6 @@ void discreteEdge::computeNormals () const
     //printf("NUM = %d xx = %g %g %g  \n", itn->first->getNum(), itn->first->x(), itn->first->y(), itn->first->z() ) ;
     //printf("normal =%g %g %g \n", itn->second.x(), itn->second.y(), itn->second.z());
   }
-
-  printf("********* normal  size = %d \n", _normals.size());
 
 }
 

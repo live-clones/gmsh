@@ -916,7 +916,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
 
 void GModel::createTopologyFromMesh()
 {
-  printf("***** In createTopologyFromMesh: \n");
+  Msg::Debug("***** In createTopologyFromMesh:");
 
   std::vector<GEntity*> entities;
   getEntities(entities);
@@ -944,10 +944,10 @@ void GModel::createTopologyFromMesh()
     }
   }
 
-  printf("vertices size =%d \n", Dvertices.size());
-  printf("edges size =%d \n", Dedges.size());
-  printf("faces size =%d \n", Dfaces.size());
-  printf("regions size =%d \n", Dregions.size());
+  Msg::Debug("vertices size =%d", Dvertices.size());
+  Msg::Debug("edges size =%d ", Dedges.size());
+  Msg::Debug("faces size =%d ", Dfaces.size());
+  Msg::Debug("regions size =%d", Dregions.size());
 
   //For each discreteRegion, create Topology
   //---------------------------------------
@@ -1094,7 +1094,6 @@ void GModel::createTopologyFromMesh()
 	      vE = v1;
 	      i=-1;
 	    }
-
 	    if (it == myEdges.end()) break;
 	  }
 	  printf("end Edges \n");
@@ -1132,7 +1131,6 @@ void GModel::createTopologyFromMesh()
 	  if (std::find(all_vertices.begin(), all_vertices.end(), v1) == all_vertices.end()) all_vertices.push_back(v1);
 	}
 	e->mesh_vertices.insert(e->mesh_vertices.begin(), all_vertices.begin(), all_vertices.end());
-	printf("all vertice size =%d\n", all_vertices.size());
 
 	for (std::vector<int>::iterator itFace = tagFaces.begin(); itFace != tagFaces.end(); itFace++) {
 	  GFace *dFace = getFaceByTag(abs(*itFace));

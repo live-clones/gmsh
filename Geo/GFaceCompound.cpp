@@ -11,6 +11,7 @@
 #include "Octree.h"
 #include "gmshAssembler.h"
 #include "gmshLaplace.h"
+#include "gmshConvexCombination.h"
 #include "gmshLinearSystemGmm.h"
 #include "gmshLinearSystemFull.h"
 #include "FunctionSpace.h"
@@ -50,12 +51,14 @@ public:
 class gmshDistanceBasedDiffusivity : public gmshFunction<double>
 {
 private:
+  mutable int comp;
   MElement *_current;
   mutable std::map<MVertex*, SPoint3> _coordinates;
 public:
   gmshDistanceBasedDiffusivity (std::map<MVertex*,SPoint3> &coordinates) 
-    : _current (0),_coordinates(coordinates){}
+    : _current (0),_coordinates(coordinates), comp(0){}
   void setCurrent (MElement *current){ _current = current; }
+  void setCompound(int compound){ comp = compound; }
   virtual double operator () (double x, double y, double z) const
   {
     double xyz[3] = {x, y, z}, uvw[3];
@@ -66,8 +69,11 @@ public:
       value[i] = p[2];
     }
     double val = _current->interpolate(value, uvw[0], uvw[1], uvw[2]);
-    //return exp(5*val);
+    //return 1./(exp(x)+1.e-4);//exp(5*val);
     return 1.0;
+    //printf("compiound =%d \n", comp);
+    //if (comp == 8) return 1.0;
+    //else return 1.e-15;
   }
 };
 
@@ -98,12 +104,8 @@ void GFaceCompound::getBoundingEdges()
 
  
   for (std::list<GFace*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
-    printf("set compound %d for face %d \n", tag(),(*it)->tag());
     (*it)->setCompound(this);
    }
-
-  printf("***** In GFaceCompound: size U0=%d, v0=%d\n ", _U0.size(), _V0.size());
-
 
   //in case the bounding edges are explicitely given
   if (_U0.size()){
@@ -146,7 +148,7 @@ void GFaceCompound::getBoundingEdges()
   std::set<GEdge*>::iterator itf = _unique.begin();
   for ( ; itf != _unique.end(); ++itf){
     l_edges.push_back(*itf);
-    printf("for edge %d, add face %d \n", (*itf)->tag(), this->tag());
+    //printf("for edge %d, add face %d \n", (*itf)->tag(), this->tag());
     (*itf)->addFace(this);
   }
 
@@ -491,12 +493,15 @@ void GFaceCompound::parametrize(iterationStep step) const
     }    
   }
   else{
+    //gmshConvexCombinationTerm laplace(model(), &ONE, 1);
     gmshLaplaceTerm laplace(model(), &ONE, 1);
+    //gmshLaplaceTerm laplace(model(), &diffusivity, 1);
     it = _compound.begin();
     for ( ; it != _compound.end() ; ++it){
       for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
 	MTriangle *t = (*it)->triangles[i];
-	diffusivity.setCurrent(t);
+	//diffusivity.setCompound((*it)->tag());
+	//diffusivity.setCurrent(t);
 	laplace.addToMatrix(myAssembler, t);
       }
     }    
@@ -917,7 +922,8 @@ void GFaceCompound::printStuff() const
 	      t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
 	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
 	      t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
-              K1, K2, K3);
+	      it0->second.z(),it1->second.z(),it2->second.z());
+              //K1, K2, K3);
       
       fprintf(uvx,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 	      it0->second.x(), it0->second.y(), 0.0,

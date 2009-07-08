@@ -38,14 +38,14 @@ void gmshLaplaceTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
         invjac[2][2] * grads[j][2];
     }
     double pi = 3.14;
-    double H_x=1.0;
-    double H_y=1.0;
-    double H_z=1.0;
+    double K_x=1.0;
+    double K_y=1.0;
+    double K_z=1.0;
     for (int j = 0; j < nbNodes; j++){
       for (int k = 0; k <= j; k++){
-	m(j, k) += (H_x*Grads[j][0] * Grads[k][0] +
-                    H_y*Grads[j][1] * Grads[k][1] +
-                    H_z*Grads[j][2] * Grads[k][2]) * weight * detJ * _diff;
+	m(j, k) += (K_x*Grads[j][0] * Grads[k][0] +
+                    K_y*Grads[j][1] * Grads[k][1] +
+                    K_z*Grads[j][2] * Grads[k][2]) * weight * detJ * _diff;
       }
     }
   }
@@ -53,7 +53,27 @@ void gmshLaplaceTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
   for (int j = 0; j < nbNodes; j++)
     for (int k = 0; k < j; k++)
 	m(k, j) = m(j, k);
-} 
+
+
+  //check for positive scheme
+//   //printf("ELEM\n");
+   for (int j = 0; j < nbNodes; j++){
+     double sum = m(j,0)+m(j,1)+m(j,2);
+     if (sum < 0.0){
+       printf("Sum LINE gmshLaplace Term NEG <0  %g %g %g\n", m(j,0),m(j,1),m(j,2));
+//       for (int k = 0; k < nbNodes; k++)	m(j,k) = -1.;
+//       m(j,j) = (nbNodes-1);
+     }
+//     else{
+//       printf("Sum POS\n");
+//     }
+//     //for (int k = 0; k < nbNodes; k++) {
+//     //printf("m(%d,%d)=%g ", j,k, m(j,k));
+//     //}
+//     //printf("\n");
+     }
+
+}
 
 void gmshLaplaceTerm2DParametric::elementMatrix(MElement *e, gmshMatrix<double> &m) const
 {

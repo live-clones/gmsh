@@ -137,6 +137,8 @@ GFaceCompound${OBJEXT}: GFaceCompound.cpp ../Common/GmshConfig.h GFaceCompound.h
   ../Geo/GEntity.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
   ../Geo/MElement.h ../Numeric/gmshFunction.h ../Common/Gmsh.h \
   ../Common/GmshMessage.h ../Numeric/GmshMatrix.h \
+  ../Numeric/gmshConvexCombination.h ../Numeric/gmshTermOfFormulation.h \
+  ../Numeric/gmshFunction.h ../Numeric/GmshMatrix.h \
   ../Numeric/gmshLinearSystemGmm.h ../Numeric/gmshLinearSystem.h \
   ../Numeric/gmshLinearSystemFull.h ../Numeric/gmshLinearSystem.h \
   ../Numeric/GmshMatrix.h
