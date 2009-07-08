@@ -10,6 +10,7 @@
 #undef HAVE_ANN
 #undef HAVE_BLAS
 #undef HAVE_CHACO
+#undef HAVE_DINTEGRATION
 #undef HAVE_FLTK
 #undef HAVE_FOURIER_MODEL
 #undef HAVE_GMM

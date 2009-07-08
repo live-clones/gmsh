@@ -7,9 +7,9 @@
 #include "MElement.h"
 #include "MElementCut.h"
 
-//#define HAVE_LEVELSET
+//#define HAVE_DINTEGRATION
 
-#if defined(HAVE_LEVELSET)
+#if defined(HAVE_DINTEGRATION)
 #include "DILevelset.h"
 #include "Integration3D.h"
 #endif
@@ -180,7 +180,7 @@ void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
 
 //---------------------------------------- CutMesh ----------------------------
 
-#if defined(HAVE_LEVELSET)
+#if defined(HAVE_DINTEGRATION)
 
 int getElementVertexNum (DI_Point p, MElement *e)
 {
@@ -587,8 +587,8 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
                      std::map<int, MVertex*> &vertexMap,
                      std::map<int, std::map<int, std::string> > physicals[4])
 {
-#if defined(HAVE_LEVELSET)
-  GModel *cutGM = new GModel;
+#if defined(HAVE_DINTEGRATION)
+  GModel *cutGM = new GModel; printf("have levelset");
 
   std::map<int, std::vector<MElement*> > border[2];
   std::vector<MVertex*> newVertices;
