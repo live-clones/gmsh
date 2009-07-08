@@ -57,10 +57,10 @@ void gmshLaplaceTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
 
   //check for positive scheme
 //   //printf("ELEM\n");
-   for (int j = 0; j < nbNodes; j++){
-     double sum = m(j,0)+m(j,1)+m(j,2);
-     if (sum < 0.0){
-       printf("Sum LINE gmshLaplace Term NEG <0  %g %g %g\n", m(j,0),m(j,1),m(j,2));
+//   for (int j = 0; j < nbNodes; j++){
+//     double sum = m(j,0)+m(j,1)+m(j,2);
+//     if (sum < 0.0){
+//       printf("Sum LINE gmshLaplace Term NEG <0  %g %g %g\n", m(j,0),m(j,1),m(j,2));
 //       for (int k = 0; k < nbNodes; k++)	m(j,k) = -1.;
 //       m(j,j) = (nbNodes-1);
      }
