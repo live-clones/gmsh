@@ -41,7 +41,7 @@ inline double det4 (double d11, double d12, double d13, double d14,
                     double d21, double d22, double d23, double d24,
                     double d31, double d32, double d33, double d34,
                     double d41, double d42, double d43, double d44) {
-  return d11 * det3(d22, d23, d24, d32, d33, d34, d42, d43, d44) 
+  return d11 * det3(d22, d23, d24, d32, d33, d34, d42, d43, d44)
        - d21 * det3(d12, d13, d14, d32, d33, d34, d42, d43, d44)
        + d31 * det3(d12, d13, d14, d22, d23, d24, d42, d43, d44)
        - d41 * det3(d12, d13, d14, d22, d23, d24, d32, d33, d34);
@@ -49,12 +49,12 @@ inline double det4 (double d11, double d12, double d13, double d14,
 
 // distance
 inline double distance(const DI_Point &p1, const DI_Point &p2) {
-  return sqrt((p1.x() - p2.x()) * (p1.x() - p2.x()) 
+  return sqrt((p1.x() - p2.x()) * (p1.x() - p2.x())
             + (p1.y() - p2.y()) * (p1.y() - p2.y())
             + (p1.z() - p2.z()) * (p1.z() - p2.z()));
 }
 inline double distance(const DI_CuttingPoint &p1, const DI_CuttingPoint &p2) {
-  return sqrt((p1.x() - p2.x()) * (p1.x() - p2.x()) 
+  return sqrt((p1.x() - p2.x()) * (p1.x() - p2.x())
             + (p1.y() - p2.y()) * (p1.y() - p2.y())
             + (p1.z() - p2.z()) * (p1.z() - p2.z()));
 }
@@ -199,25 +199,25 @@ bool isCrossed (const DI_Point &p1, const DI_Point &p2) {
   double v1 = p1.ls(), v2 = p2.ls();
   return isCrossed (v1, v2);
 }
- 
+
 // return the index of the point with minimum x,y and z
 int minimum(double *x, double *y, double *z, const int num) {
   double xm = x[0];
   for(int i = 1; i < num; i++) if(x[i] < xm) xm = x[i];
-  int INDx[num]; int countx = 0;
+   std::vector<int> INDx(num); int countx = 0;
   for(int i = 0; i < num; i++) if(x[i] == xm) INDx[countx++] = i;
   if(countx == 1) return INDx[0];
 
-  double ym = y[INDx[0]]; const int cx = countx;
-  for(int i = 1; i < cx; i++) if(y[INDx[i]] < ym) ym = y[INDx[i]];
-  int INDy[cx]; int county = 0;
-  for(int i = 0; i < cx; i++) if(y[INDx[i]] == ym) INDy[county++] = INDx[i];
+  double ym = y[INDx[0]];
+  for(int i = 1; i < countx; i++) if(y[INDx[i]] < ym) ym = y[INDx[i]];
+  std::vector<int> INDy(countx); int county = 0;
+  for(int i = 0; i < countx; i++) if(y[INDx[i]] == ym) INDy[county++] = INDx[i];
   if(county == 1) return INDy[0];
 
-  double zm = z[INDy[0]]; const int cy = county;
-  for(int i = 1; i < cy; i++) if(z[INDy[i]] < zm) zm = z[INDy[i]];
-  int INDz[cy]; int countz = 0;
-  for(int i = 0; i < cy; i++) if(z[INDy[i]] == zm) INDz[countz++] = INDy[i];
+  double zm = z[INDy[0]];
+  for(int i = 1; i < county; i++) if(z[INDy[i]] < zm) zm = z[INDy[i]];
+  std::vector<int> INDz(county); int countz = 0;
+  for(int i = 0; i < county; i++) if(z[INDy[i]] == zm) INDz[countz++] = INDy[i];
   assert (countz == 1);
   return INDz[0];
 }
@@ -228,7 +228,7 @@ double qualityTri(const DI_Point &p0, const DI_Point p1, const DI_Point &p2) {
   double b = distance(p0, p2);
   double c = distance(p1, p2);
 
-  double rhoO = a * b * c / sqrt((a + b + c) * (b + c - a) * (c + a - b) * (a + b - c)); 
+  double rhoO = a * b * c / sqrt((a + b + c) * (b + c - a) * (c + a - b) * (a + b - c));
   double rhoI = a * b * c / (2 * (a + b + c) * rhoO);
   return 2 * rhoI / rhoO;
 }
@@ -307,7 +307,7 @@ inline double qualityTet (double x1, double y1, double z1, double x2, double y2,
   return 3 * rhoI / rhoO;
 }
 
-// Return the cutting of a pyramid cut into 2 tetras with the best quality faces 
+// Return the cutting of a pyramid cut into 2 tetras with the best quality faces
 // (x1,x2,x3,x4 form the base in ccw and x5 is the summit)
 int bestQuality(const DI_Point &p1, const DI_Point &p2, const DI_Point &p3,
                 const DI_Point &p4, const DI_Point &p5, DI_Tetra &t1, DI_Tetra &t2) {
@@ -407,7 +407,7 @@ int bestQuality (const DI_Point &p0, const DI_Point &p1, const DI_Point &p2,
     else{
       if(cut3[2] == 1) cut = 5;
       else cut = 4;
-    } 
+    }
   }
 
   assert(cut > -1);
@@ -502,7 +502,7 @@ DI_Point::DI_Point (double x, double y, double z, gLevelset &ls) : x_(x), y_(y),
 }
 DI_Point & DI_Point::operator= (const DI_Point &rhs) {
   if(this != &rhs){
-    x_ = rhs.x(); y_ = rhs.y(); z_ = rhs.z(); Ls = rhs.Ls; 
+    x_ = rhs.x(); y_ = rhs.y(); z_ = rhs.z(); Ls = rhs.Ls;
   }
   return *this;
 }
@@ -541,7 +541,7 @@ void DI_IntegrationPoint::computeLs (const DI_Element *e, const std::vector<cons
       double ls = RPN[l]->choose(ls1, ls2);
       Ls.pop_back(); Ls.pop_back();
       Ls.push_back(ls);
-    }  
+    }
   }
   assert (Ls.size() == 1);
   setLs(Ls.back());
@@ -570,7 +570,7 @@ DI_Element::DI_Element(const DI_Element &cp) : lsTag_(cp.lsTag()), polOrder_(cp.
     for(int i = 0; i < cp.nbMid(); i++)
       mid_[i] = new DI_Point(cp.mid(i));
   }
-  else 
+  else
     mid_ = NULL;
 }
 /*DI_Element::~DI_Element() {
@@ -613,9 +613,8 @@ void DI_Element::setPolynomialOrder (int o) {
   case 2 :
     mid_ = new DI_Point*[nbMid()];
     for(int i = 0; i < nbMid(); i++) {
-      const int nbV = nbVert();
-      int s[nbV]; int n;
-      midV(i, s, &n);
+      std::vector<int> s(nbVert()); int n;
+      midV(i, &s[0], n);
       double xc = 0, yc = 0, zc = 0;
       for(int j = 0; j < n; j++){
         xc += x(s[j]); yc += y(s[j]); zc += z(s[j]); }
@@ -636,9 +635,8 @@ void DI_Element::setPolynomialOrder (int o, const DI_Element *e, const std::vect
   case 2 :
     mid_ = new DI_Point*[nbMid()];
     for(int i = 0; i < nbMid(); i++) {
-      const int nbV = nbVert();
-      int s[nbV]; int n;
-      midV(i, s, &n);
+      std::vector<int> s(nbVert()); int n;
+      midV(i, &s[0], n);
       double xc = 0, yc = 0, zc = 0;
       for(int j = 0; j < n; j++){
         xc += x(s[j]); yc += y(s[j]); zc += z(s[j]); }
@@ -669,9 +667,8 @@ void DI_Element::addLs (const DI_Element *e, const gLevelset &Ls) {
     pts_[j]->addLs(adjustLs(ls));
   }
   for(int j = 0; j < nbMid(); ++j) {
-    const int nbV = nbVert();
-    int s[nbV]; int n;
-    e->midV(j, s, &n);
+     std::vector<int> s(nbVert()); int n;
+    e->midV(j, &s[0], n);
     double xc = 0, yc = 0, zc = 0;
     for(int k = 0; k < n; k++){
       xc += e->x(s[k]); yc += e->y(s[k]); zc += e->z(s[k]); }
@@ -797,7 +794,7 @@ void DI_Element::integrationPoints (const int polynomialOrder, const DI_Element 
     loc->mappingIP(IPloc);
     mappingIP(ip_ref[j]);
     ip_ref[j].addLocC(IPloc.x(), IPloc.y(), IPloc.z());
-    DI_IntegrationPoint pp = IPloc; pp.computeLs(e, RPN); 
+    DI_IntegrationPoint pp = IPloc; pp.computeLs(e, RPN);
     //ip_ref[j].setLs(loc->evalLs(IPloc.x(), IPloc.y(), IPloc.z()));//levelset computed in the subelement FIXME check sign!
     //ip_ref[j].setLs(evalLs(ip_ref[j].x(), ip_ref[j].y(), ip_ref[j].z()));
     ip_ref[j].setLs(pp.ls());
@@ -820,10 +817,10 @@ void DI_Element::getCuttingPoints (const DI_Element *e, const std::vector<const 
   }
 }
 void DI_Element::evalC (const double u, const double v, const double w, double *ev, int order) const {
-  const int nbV = nbVert() + nbMid();
-  double s[nbV];
+  int nbV = nbVert() + nbMid();
+  std::vector<double> s(nbV);
   ev[0] = 0; ev[1] = 0; ev[2] = 0;
-  getShapeFunctions (u, v, w, s, order); //printf("o=%d nbV=%d s=%g,%g,%g,%g,%g,%g\n",order,nbV,s[0],s[1],s[2],s[3],s[4],s[5]);
+  getShapeFunctions (u, v, w, &s[0], order); //printf("o=%d nbV=%d s=%g,%g,%g,%g,%g,%g\n",order,nbV,s[0],s[1],s[2],s[3],s[4],s[5]);
   for(int i = 0; i < nbV; i++){
     ev[0] += x(i) * s[i];
     ev[1] += y(i) * s[i];
@@ -833,9 +830,8 @@ void DI_Element::evalC (const double u, const double v, const double w, double *
 double DI_Element::evalLs (const double u, const double v, const double w, int iLs, int order) const{
   if(iLs == -1) iLs = sizeLs() - 1; //last ls value
   double vls = 0;
-  const int nbV = nbVert() + nbMid();
-  double s[nbV];
-  getShapeFunctions (u, v, w, s, order);
+  std::vector<double> s(nbVert() + nbMid());
+  getShapeFunctions (u, v, w, &s[0], order);
   for(int i = 0; i < nbVert() + nbMid(); i++)
     vls += ls(i, iLs) * s[i];
   return adjustLs(vls);
@@ -853,8 +849,12 @@ double DI_Element::detJ (const double u, const double v, const double w) const {
   J[0][0] = J[0][1] = J[0][2] = 0.;
   J[1][0] = J[1][1] = J[1][2] = 0.;
   J[2][0] = J[2][1] = J[2][2] = 0.;
-  const int nbV = nbVert();
-  double s[nbV][3];
+  /*double **s=new double*[nbVert()+ nbMid()];
+  for(int i = 0; i < nbVert()+ nbMid(); ++i){
+      s[i] = new double[3];//s[i] = new double[getDim()];
+  }*/
+  typedef double d3[3];
+  d3 *s=new d3[nbVert()+ nbMid()];
   getGradShapeFunctions(u, v, w, s);
   switch(getDim()){
   case 3 :
@@ -862,20 +862,26 @@ double DI_Element::detJ (const double u, const double v, const double w) const {
       J[0][0] += x(i) * s[i][0]; J[0][1] += y(i) * s[i][0]; J[0][2] += z(i) * s[i][0];
       J[1][0] += x(i) * s[i][1]; J[1][1] += y(i) * s[i][1]; J[1][2] += z(i) * s[i][1];
       J[2][0] += x(i) * s[i][2]; J[2][1] += y(i) * s[i][2]; J[2][2] += z(i) * s[i][2];
+//      delete [] s[i];
     }
+	delete [] s;
     return det3(J[0][0], J[0][1], J[0][2], J[1][0], J[1][1], J[1][2], J[2][0], J[2][1], J[2][2]);
   case 2 :
     for(int i = 0; i < nbVert() + nbMid(); i++) {
       J[0][0] += x(i) * s[i][0]; J[0][1] += y(i) * s[i][0]; J[0][2] += z(i) * s[i][0];
       J[1][0] += x(i) * s[i][1]; J[1][1] += y(i) * s[i][1]; J[1][2] += z(i) * s[i][1];
+//      delete [] s[i];
     }
+    delete [] s;
     return sqrt(sq2(J[0][0] * J[1][1] - J[0][1] * J[1][0]) +
                 sq2(J[0][2] * J[1][0] - J[0][0] * J[1][2]) +
                 sq2(J[0][1] * J[1][2] - J[0][2] * J[1][1])); // allways > 0 => does'nt allow to check if twist !!!!
   case 1 :
     for(int i = 0; i < nbVert() + nbMid(); i++) {
       J[0][0] += x(i) * s[i][0]; J[0][1] += y(i) * s[i][0]; J[0][2] += z(i) * s[i][0];
+//      delete [] s[i];
     }
+    delete [] s;
     return sqrt(sq2(J[0][0]) + sq2(J[0][1]) + sq2(J[0][2])); // allways > 0 !!!!
   default :
     return 1.;
@@ -945,7 +951,7 @@ void DI_Element::computeLsTagBound(std::vector<DI_Quad> &quads, std::vector<DI_T
   /*DI_Element *e1 = NULL, *e2 = NULL, *et = NULL;
   int NT = triangles.size(), NQ = quads.size();
   for(int i = 0; i < NT + NQ; i++){
-    if((i < NT  && belongsTo(*this, triangles[i])) || 
+    if((i < NT  && belongsTo(*this, triangles[i])) ||
        (i >= NT && belongsTo(*this, quads[i-NT]))) {
       if(i < NT) et = &triangles[i];
       else et = &quads[i-NT];
@@ -1004,7 +1010,7 @@ void DI_Line::computeIntegral() {
 void DI_Line::getShapeFunctions (double u, double v, double w, double s[], int ord) const {
   int order = (ord == -1) ? getPolynomialOrder() : ord;
   switch (order) {
-  case 1 : 
+  case 1 :
     s[0] = (1. - u) / 2.;
     s[1] = (1. + u) / 2.;
     break;
@@ -1051,7 +1057,7 @@ void DI_Triangle::computeIntegral() {
     integral_ = TriSurf(pt(0), pt(1), pt(2));
     break;
   case 2 :
-    integral_ = TriSurf(pt(0), mid(0), mid(2)) + TriSurf(pt(1), mid(0), mid(1)) 
+    integral_ = TriSurf(pt(0), mid(0), mid(2)) + TriSurf(pt(1), mid(0), mid(1))
               + TriSurf(pt(2), mid(1), mid(2)) + TriSurf(mid(0), mid(1), mid(2));
     break;
   default :
@@ -1061,7 +1067,7 @@ void DI_Triangle::computeIntegral() {
 void DI_Triangle::getShapeFunctions (double u, double v, double w, double s[], int ord) const {
   int order = (ord == -1) ? getPolynomialOrder() : ord;
   switch (order) {
-  case 1 : 
+  case 1 :
     s[0] = 1. - u - v;
     s[1] = u;
     s[2] = v;
@@ -1081,7 +1087,7 @@ void DI_Triangle::getShapeFunctions (double u, double v, double w, double s[], i
 void DI_Triangle::getGradShapeFunctions (const double u, const double v, const double w, double s[][3], int ord) const {
   int order = (ord == -1) ? getPolynomialOrder() : ord;
   switch (order) {
-  case 1 : 
+  case 1 :
     s[0][0] = -1.; s[0][1] = -1.; s[0][2] = 0.;
     s[1][0] =  1.; s[1][1] =  0.; s[1][2] = 0.;
     s[2][0] =  0.; s[2][1] =  1.; s[2][2] = 0.;
@@ -1137,9 +1143,9 @@ void DI_Quad::computeIntegral() {
     integral_ = TriSurf(pt(0), pt(1), pt(2)) + TriSurf(pt(0), pt(2), pt(3));
     break;
   case 2 :
-    integral_ = TriSurf(pt(0), mid(0), mid(4)) + TriSurf(pt(0), mid(4), mid(3)) 
+    integral_ = TriSurf(pt(0), mid(0), mid(4)) + TriSurf(pt(0), mid(4), mid(3))
               + TriSurf(pt(1), mid(1), mid(4)) + TriSurf(pt(1), mid(4), mid(0))
-              + TriSurf(pt(2), mid(2), mid(4)) + TriSurf(pt(2), mid(4), mid(1)) 
+              + TriSurf(pt(2), mid(2), mid(4)) + TriSurf(pt(2), mid(4), mid(1))
               + TriSurf(pt(3), mid(3), mid(4)) + TriSurf(pt(3), mid(4), mid(2));
     break;
   default :
@@ -1149,7 +1155,7 @@ void DI_Quad::computeIntegral() {
 void DI_Quad::getShapeFunctions (double u, double v, double w, double s[], int ord) const {
   int order = (ord == -1) ? getPolynomialOrder() : ord;
   switch (order) {
-  case 1 : 
+  case 1 :
     s[0] = (1. - u) * (1. - v) / 4.;
     s[1] = (1. + u) * (1. - v) / 4.;
     s[2] = (1. + u) * (1. + v) / 4.;
@@ -1173,7 +1179,7 @@ void DI_Quad::getShapeFunctions (double u, double v, double w, double s[], int o
 void DI_Quad::getGradShapeFunctions (const double u, const double v, const double w, double s[][3], int ord) const {
   int order = (ord == -1) ? getPolynomialOrder() : ord;
   switch (order) {
-  case 1 : 
+  case 1 :
     s[0][0] = -0.25 * (1. - v); s[0][1] = -0.25 * (1. - u); s[0][2] = 0.;
     s[1][0] =  0.25 * (1. - v); s[1][1] = -0.25 * (1. + u); s[1][2] = 0.;
     s[2][0] =  0.25 * (1. + v); s[2][1] =  0.25 * (1. + u); s[2][2] = 0.;
@@ -1244,7 +1250,7 @@ void DI_Tetra::computeIntegral() {
 void DI_Tetra::getShapeFunctions (double u, double v, double w, double s[], int ord) const {
   int order = (ord == -1) ? getPolynomialOrder() : ord;
   switch (order) {
-  case 1 : 
+  case 1 :
     s[0] = 1. - u - v - w;
     s[1] = u;
     s[2] = v;
@@ -1269,7 +1275,7 @@ void DI_Tetra::getShapeFunctions (double u, double v, double w, double s[], int 
 void DI_Tetra::getGradShapeFunctions (const double u, const double v, const double w, double s[][3], int ord) const {
   int order = (ord == -1) ? getPolynomialOrder() : ord;
   switch (order) {
-  case 1 : 
+  case 1 :
     s[0][0] = -1.; s[0][1] = -1.; s[0][2] = -1.;
     s[1][0] =  1.; s[1][1] =  0.; s[1][2] =  0.;
     s[2][0] =  0.; s[2][1] =  1.; s[2][2] =  0.;
@@ -1328,7 +1334,7 @@ double tet_detJ2 (const double &x, const double &y, const double &z,
                   const double &x8, const double &y8, const double &z8, const double &x9, const double &y9, const double &z9) {
   return det3(x0*(-3+4*x+4*y+4*z)+x1*(4*x-1)+x4*4*(1-2*x-y-z)-x5*4*y-x6*4*z+x7*4*y+x9*4*z,
               x0*(-3+4*x+4*y+4*z)+x2*(4*y-1)-x4*4*x+x5*4*(1-x-2*y-z)-x6*4*z+x7*4*x+x8*4*z,
-              x0*(-3+4*x+4*y+4*z)+x3*(4*z-1)-x4*4*x-x5*4*y+x6*4*(1-x-y-2*z)+x8*4*y+x9*4*x, 
+              x0*(-3+4*x+4*y+4*z)+x3*(4*z-1)-x4*4*x-x5*4*y+x6*4*(1-x-y-2*z)+x8*4*y+x9*4*x,
               y0*(-3+4*x+4*y+4*z)+y1*(4*x-1)+y4*4*(1-2*x-y-z)-y5*4*y-y6*4*z+y7*4*y+y9*4*z,
               y0*(-3+4*x+4*y+4*z)+y2*(4*y-1)-y4*4*x+y5*4*(1-x-2*y-z)-y6*4*z+y7*4*x+y8*4*z,
               y0*(-3+4*x+4*y+4*z)+y3*(4*z-1)-y4*4*x-y5*4*y+y6*4*(1-x-y-2*z)+y8*4*y+y9*4*x,
@@ -1361,7 +1367,7 @@ void DI_Hexa::computeIntegral() {
 void DI_Hexa::getShapeFunctions (double u, double v, double w, double s[], int ord) const {
   int order = (ord == -1) ? getPolynomialOrder() : ord;
   switch (order) {
-  case 1 : 
+  case 1 :
     s[0] = (1. - u) * (1. - v) * (1. - w) / 8.;
     s[1] = (1. + u) * (1. - v) * (1. - w) / 8.;
     s[2] = (1. + u) * (1. + v) * (1. - w) / 8.;
@@ -1407,7 +1413,7 @@ void DI_Hexa::getShapeFunctions (double u, double v, double w, double s[], int o
 void DI_Hexa::getGradShapeFunctions (const double u, const double v, const double w, double s[][3], int ord) const {
   int order = (ord == -1) ? getPolynomialOrder() : ord;
   switch (order) {
-  case 1 : 
+  case 1 :
     s[0][0] = -0.125 * (1. - v) * (1. - w);
     s[0][1] = -0.125 * (1. - u) * (1. - w);
     s[0][2] = -0.125 * (1. - u) * (1. - v);
@@ -1508,7 +1514,7 @@ void DI_Triangle::selfSplit (const DI_Element *e, const std::vector<const gLevel
     if(fabs(pt(i).ls()) < ZERO_LS_TOL)
       ze[nbZe++] = i;
   for(int i = 0; i < nbZe; i++)
-    cuttingPoints.push_back(DI_CuttingPoint(pt(ze[i]))); 
+    cuttingPoints.push_back(DI_CuttingPoint(pt(ze[i])));
     // !! we add these points several times => remove later
 
   if (!isCrossed(pt(0), pt(1)) && !isCrossed(pt(0), pt(2)) && !isCrossed(pt(1), pt(2))) {
@@ -1628,7 +1634,7 @@ void DI_Tetra::selfSplit (const DI_Element *e, const std::vector<const gLevelset
       !isCrossed(pt(0), pt(3)) && !isCrossed(pt(1), pt(3)) && !isCrossed(pt(2), pt(3))) {
     subTetras.push_back(*this);
     if(nbZe == 3)
-      surfTriangles.push_back(DI_Triangle(pt(ze[0]), pt(ze[1]), pt(ze[2]), tag)); 
+      surfTriangles.push_back(DI_Triangle(pt(ze[0]), pt(ze[1]), pt(ze[2]), tag));
       // !! we add these triangles twice => remove the second later
     return;
   }
@@ -1744,7 +1750,7 @@ void DI_Tetra::selfSplit (const DI_Element *e, const std::vector<const gLevelset
       break;
     }
     case 3 : {// 3 edges cut => 1 tetra + 1 prism => split into 4 tetras
-      int i1 = IND[0], i2 = IND[1], i3 = IND[2]; 
+      int i1 = IND[0], i2 = IND[1], i3 = IND[2];
 
       if(i1 == 0 && i2 == 3) {
         swap(U[1], U[2]); swap(i2, i3);
@@ -1825,7 +1831,7 @@ void DI_Tetra::selfSplit (const DI_Element *e, const std::vector<const gLevelset
       break;
     }
     case 4 : {// 4 edges cut => 2 prisms => split into 6 tetras
-      int i1 = IND[0], i2 = IND[1], i3 = IND[2], i4 = IND[3]; 
+      int i1 = IND[0], i2 = IND[1], i3 = IND[2], i4 = IND[3];
 
       if(i1 == 0 && i2 == 2) {
         swap(U[0], U[1]); swap(i1, i2);
@@ -1969,7 +1975,7 @@ void DI_Hexa::splitIntoTetras(std::vector<DI_Tetra> &tetras) const
 // -------------------INTEGRATION POINTS --------------------------------------
 // -----------------------------------------------------------------------------
 
-// return the integration points in the reference line 
+// return the integration points in the reference line
 void DI_Line::getRefIntegrationPoints ( const int polynomialOrder , std::vector<DI_IntegrationPoint> &ip) const {
   int N = getNGQLPts(polynomialOrder);
   IntPt* intpt (getGQLPts(polynomialOrder));
@@ -1978,7 +1984,7 @@ void DI_Line::getRefIntegrationPoints ( const int polynomialOrder , std::vector<
   }
 }
 
-// return the integration points in the reference triangle 
+// return the integration points in the reference triangle
 void DI_Triangle::getRefIntegrationPoints ( const int polynomialOrder , std::vector<DI_IntegrationPoint> &ip) const {
   int pO = polynomialOrder;
   if(pO == 11 || pO == 16 || pO == 18 || pO == 20) pO++;
@@ -1990,7 +1996,7 @@ void DI_Triangle::getRefIntegrationPoints ( const int polynomialOrder , std::vec
   }
 }
 
-// return the integration points in the reference triangle 
+// return the integration points in the reference triangle
 void DI_Quad::getRefIntegrationPoints ( const int polynomialOrder , std::vector<DI_IntegrationPoint> &ip) const {
   int N = getNGQQPts(polynomialOrder);
   IntPt* intpt (getGQQPts(polynomialOrder));
@@ -1999,7 +2005,7 @@ void DI_Quad::getRefIntegrationPoints ( const int polynomialOrder , std::vector<
   }
 }
 
-// return the integration points in the reference tetra 
+// return the integration points in the reference tetra
 void DI_Tetra::getRefIntegrationPoints ( const int polynomialOrder , std::vector<DI_IntegrationPoint> &ip) const {
   int pO = polynomialOrder;
   if(pO == 9) pO++;
@@ -2010,7 +2016,7 @@ void DI_Tetra::getRefIntegrationPoints ( const int polynomialOrder , std::vector
   }
 }
 
-// return the integration points in the reference Cube 
+// return the integration points in the reference Cube
 void DI_Hexa::getRefIntegrationPoints ( const int polynomialOrder , std::vector<DI_IntegrationPoint> &ip) const {
   int N = getNGQHPts(polynomialOrder);
   IntPt* intpt (getGQHPts(polynomialOrder));
@@ -2080,7 +2086,7 @@ void DI_Line::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
     assert(ll_subLines[l].sizeLs() == 1);
     ll_subLines[l].computeLsTagDom(&ll, RPN);
     DI_Line ll_subLn = ll_subLines[l];
-    mappingEl(&ll_subLn); 
+    mappingEl(&ll_subLn);
     ll_subLn.integrationPoints(polynomialOrder, &ll_subLines[l], &ll, RPN, ip);
     lines.push_back(ll_subLn);
   }
@@ -2316,7 +2322,7 @@ void DI_Quad::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
                    std::vector<DI_IntegrationPoint> &ipS, std::vector<DI_CuttingPoint> &cp,
                    const int polynomialOrderQ, const int polynomialOrderTr, const int polynomialOrderL,
                    std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
-                   std::vector<DI_Line> &surfLines, int recurLevel) const 
+                   std::vector<DI_Line> &surfLines, int recurLevel) const
 {
   printf(" "); printls();
   std::vector<const gLevelset *> RPN, RPNi;
@@ -2714,7 +2720,7 @@ void DI_Hexa::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
                    const int polynomialOrderQ, const int polynomialOrderTr,
                    std::vector<DI_Hexa> &subHexas, std::vector<DI_Tetra> &subTetras,
                    std::vector<DI_Quad> &surfQuads, std::vector<DI_Triangle> &surfTriangles,
-                   std::vector<DI_Line> &frontLines, int recurLevel) const 
+                   std::vector<DI_Line> &frontLines, int recurLevel) const
 {
   printf(" "); print();
 
@@ -2863,7 +2869,7 @@ void DI_Hexa::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
     bool changeSign = false;
     double sign0 = hh_cp[0].ls();
     for(int i = 1; i < (int)hh_cp.size(); i++)
-      if(sign0*hh_cp[i].ls() <= 0) 
+      if(sign0*hh_cp[i].ls() <= 0)
         {changeSign = true; break;}
     if(!changeSign) {
       hh_subHexas.clear();
@@ -2976,7 +2982,7 @@ void DI_Hexa::cut (const DI_Element *e, const std::vector<const gLevelset *> RPN
       // order the 4 nodes
       if(!ordered4Nodes(pt(ze[0]), pt(ze[1]), pt(ze[2]), pt(ze[3]))) swap(ze[2], ze[3]);
       // add the quad twice if the face belongs to 2 hexas => remove it later!
-      if(ze[0] == 2) surfQuads.push_back(DI_Quad(pt(ze[1]), pt(ze[2]), pt(ze[3]), pt(ze[0]), RPNi.back()->getTag())); 
+      if(ze[0] == 2) surfQuads.push_back(DI_Quad(pt(ze[1]), pt(ze[2]), pt(ze[3]), pt(ze[0]), RPNi.back()->getTag()));
       // to assert that the quad will be split into triangles in the same manner as the hexa into tetras.
       else surfQuads.push_back(DI_Quad(pt(ze[0]), pt(ze[1]), pt(ze[2]), pt(ze[3]), RPNi.back()->getTag()));
     }

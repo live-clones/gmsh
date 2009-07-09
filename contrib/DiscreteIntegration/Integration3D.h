@@ -125,7 +125,7 @@ class DI_IntegrationPoint
   // return the weight
   inline double weight () const {return weight_;}
   // print the coordinates, the local coordinates, the weight and the levelset value
-  void print() const { 
+  void print() const {
     printf("IP : x=(%g,%g,%g) xl=(%g,%g,%g) w=%g ls=%g\n", x_, y_, z_, xl_, yl_, zl_, weight_, ls_); }
 };
 
@@ -143,11 +143,11 @@ static inline double LineLength (const DI_Point p1, const DI_Point p2)
 static inline double TriSurf(double x1, double y1, double z1, double x2, double y2, double z2,
                              double x3, double y3, double z3)
 {
-  return 0.5 * sqrt((x1 * (y2 - y3) - x2 * (y1 - y3) + x3 * (y1 - y2)) * 
+  return 0.5 * sqrt((x1 * (y2 - y3) - x2 * (y1 - y3) + x3 * (y1 - y2)) *
                     (x1 * (y2 - y3) - x2 * (y1 - y3) + x3 * (y1 - y2))
-                  + (y1 * (z2 - z3) - y2 * (z1 - z3) + y3 * (z1 - z2)) * 
+                  + (y1 * (z2 - z3) - y2 * (z1 - z3) + y3 * (z1 - z2)) *
                     (y1 * (z2 - z3) - y2 * (z1 - z3) + y3 * (z1 - z2))
-                  + (z1 * (x2 - x3) - z2 * (x1 - x3) + z3 * (x1 - x2)) * 
+                  + (z1 * (x2 - x3) - z2 * (x1 - x3) + z3 * (x1 - x2)) *
                     (z1 * (x2 - x3) - z2 * (x1 - x3) + z3 * (x1 - x2)));
 }
 static inline double TriSurf (const DI_Point p1, const DI_Point p2, const DI_Point p3)
@@ -178,7 +178,7 @@ class DI_Element
  protected:
   int lsTag_;       // tag to specify the belonging to a levelset (default : -1)
                     // domain elements : -1 = outside / +1 = inside
-                    // interface elements : tag of the levelset that created the element 
+                    // interface elements : tag of the levelset that created the element
                     //                      -1 = out of the domain border
   DI_Point **pts_;  // vertices
   DI_Point **mid_;  // middle vertices
@@ -205,7 +205,7 @@ class DI_Element
   // return the indices of the 2 points of the eth edge
   virtual void vert(const int e, int &s1, int &s2) const = 0;
   // return the indices of eth middle node and the number of indices n
-  virtual void midV(const int e, int *s, int *n) const = 0;
+  virtual void midV(const int e, int *s, int &n) const = 0;
   // return the polynomial order of the shape functions
   int getPolynomialOrder() const {return polOrder_;}
   // set the polynomial order of the shape functions
@@ -217,7 +217,7 @@ class DI_Element
   bool isInsideDomain  () const {return lsTag_ > 0.;}
   bool isOutsideDomain () const {return lsTag_ < 0.;}
   bool isOnBorder () const {return lsTag_ > 0.;}
-  // set tag 
+  // set tag
   void setLsTag(const int tag) {lsTag_ = tag;}
   // return the integral (surface for 2D elements, volume for 3D elements)
   double integral() const {return integral_;}
@@ -242,7 +242,7 @@ class DI_Element
                     const std::vector<const gLevelset *> RPNi);
   // return true if the point pt is inside the element
   bool contain (const DI_Point &pt) const;
-  // return true if the element e is inside the element 
+  // return true if the element e is inside the element
   // (works only for triangles and quadrangles for the moment)
   bool contain (const DI_Element *e) const;
   // choose the levelset for each point
@@ -288,7 +288,7 @@ class DI_Element
   virtual void getShapeFunctions (double u, double v, double w, double s[], int order = -1) const = 0;
   // compute the coordinates in the element from the local coordinates (x,y,z)
   void evalC (const double x, const double y, const double z, double *ev, int order = -1) const;
-  // evaluate the levelset at the local coordinates 
+  // evaluate the levelset at the local coordinates
   // with the ith levelset value in the vector Ls of the points
   // if i=-1, use the last value in Ls
   double evalLs (const double x, const double y, const double z, int iLs = -1, int order = -1) const;
@@ -301,7 +301,7 @@ class DI_Element
   bool testDetJ() const;
   // set the lsTag to +1 if the element is inside the domain (compute in the reference element)
   void computeLsTagDom(const DI_Element *e, const std::vector<const gLevelset *> RPN);
-  // set the lsTag to -1 if the element is not on the boundary of the final levelset 
+  // set the lsTag to -1 if the element is not on the boundary of the final levelset
   // (compute in the reference element)
   void computeLsTagBound(std::vector<DI_Hexa> &hexas, std::vector<DI_Tetra> &tetras);
   void computeLsTagBound(std::vector<DI_Quad> &quads, std::vector<DI_Triangle> &triangles);
@@ -318,7 +318,7 @@ class DI_CuttingPoint
   double xl_, yl_, zl_;
   std::vector<double> Ls;
  public:
-  DI_CuttingPoint (const DI_Point pt) 
+  DI_CuttingPoint (const DI_Point pt)
     : x_(pt.x()), y_(pt.y()), z_(pt.z()), xl_(pt.x()), yl_(pt.y()), zl_(pt.z()), Ls(pt.Ls) { }
   inline void addLocC (double xl, double yl, double zl) {xl_ = xl; yl_ = yl; zl_ = zl;}
   inline void move (double x, double y, double z) {x_ = x; y_ = y; z_ = z;}
@@ -403,8 +403,8 @@ class DI_Line : public DI_Element
                                         std::vector<DI_IntegrationPoint> &ipS) const;
   inline void vert(const int edge, int &s1, int &s2) const {
     s1 = 0; s2 = 1;}
-  void midV (const int e, int *s, int *n) const {
-    s[0] = 0; s[1] = 1; *n = 2;
+  void midV (const int e, int *s, int &n) const {
+    s[0] = 0; s[1] = 1; n  = 2;
   }
   void getShapeFunctions (double u, double v, double w, double s[], int order = -1) const;
   void getGradShapeFunctions (const double u, const double v, const double w,
@@ -483,11 +483,11 @@ class DI_Triangle : public DI_Element
     int v[3][2] = {{0, 1}, {1, 2}, {2, 0}};
     s1 = v[edge][0]; s2 = v[edge][1];
   }
-  void midV (const int e, int *s, int *n) const {
+  void midV (const int e, int *s, int &n) const {
     switch(e) {
-    case 0 : s[0] = 0; s[1] = 1; *n = 2; return;
-    case 1 : s[0] = 1; s[1] = 2; *n = 2; return;
-    case 2 : s[0] = 2; s[1] = 0; *n = 2; return;
+    case 0 : s[0] = 0; s[1] = 1; n  = 2; return;
+    case 1 : s[0] = 1; s[1] = 2; n  = 2; return;
+    case 2 : s[0] = 2; s[1] = 0; n  = 2; return;
     default : n = 0; return;
     }
   }
@@ -579,13 +579,13 @@ class DI_Quad : public DI_Element
     int v[4][2] = {{0, 1}, {1, 2}, {2, 3}, {3, 0}};
     s1 = v[edge][0]; s2 = v[edge][1];
   }
-  void midV (const int e, int *s, int *n) const {
+  void midV (const int e, int *s, int &n) const {
     switch(e) {
-    case 0 : s[0] = 0; s[1] = 1; *n = 2; return;
-    case 1 : s[0] = 1; s[1] = 2; *n = 2; return;
-    case 2 : s[0] = 2; s[1] = 3; *n = 2; return;
-    case 3 : s[0] = 3; s[1] = 0; *n = 2; return;
-    case 4 : s[0] = 0; s[1] = 1; s[2] = 2; s[3] = 3; *n = 4; return;
+    case 0 : s[0] = 0; s[1] = 1; n  = 2; return;
+    case 1 : s[0] = 1; s[1] = 2; n  = 2; return;
+    case 2 : s[0] = 2; s[1] = 3; n  = 2; return;
+    case 3 : s[0] = 3; s[1] = 0; n  = 2; return;
+    case 4 : s[0] = 0; s[1] = 1; s[2] = 2; s[3] = 3; n  = 4; return;
     default : n = 0; return;
     }
   }
@@ -673,14 +673,14 @@ class DI_Tetra : public DI_Element
     int v[6][2] = {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {2, 3}, {3, 1}};
     s1 = v[edge][0]; s2 = v[edge][1];
   }
-  void midV (const int e, int *s, int *n) const {
+  void midV (const int e, int *s, int &n) const {
     switch(e) {
-    case 0 : s[0] = 0; s[1] = 1; *n = 2; return;
-    case 1 : s[0] = 0; s[1] = 2; *n = 2; return;
-    case 2 : s[0] = 0; s[1] = 3; *n = 2; return;
-    case 3 : s[0] = 1; s[1] = 2; *n = 2; return;
-    case 4 : s[0] = 2; s[1] = 3; *n = 2; return;
-    case 5 : s[0] = 3; s[1] = 1; *n = 2; return;
+    case 0 : s[0] = 0; s[1] = 1; n  = 2; return;
+    case 1 : s[0] = 0; s[1] = 2; n  = 2; return;
+    case 2 : s[0] = 0; s[1] = 3; n  = 2; return;
+    case 3 : s[0] = 1; s[1] = 2; n  = 2; return;
+    case 4 : s[0] = 2; s[1] = 3; n  = 2; return;
+    case 5 : s[0] = 3; s[1] = 1; n  = 2; return;
     default : n = 0; return;
     }
   }
@@ -705,12 +705,12 @@ class DI_Tetra : public DI_Element
 };
 
 // ------------------------------------------------------------------------------------------------
-//          4----7 
+//          4----7
 //         /|   /|
 //        5----6 |
-//        | 0--|-3 
+//        | 0--|-3
 //        |/   |/
-//        1----2   
+//        1----2
 // edge0=(0,1) edge1=(1,2) edge2=(2,3) edge3=(3,0)
 // edge4=(0,4) edge5=(1,5) edge6=(2,6) edge7=(3,7)
 // edge8=(4,5) edge9=(5,6) edge10=(6,7) edge11=(7,4)
@@ -788,28 +788,28 @@ class DI_Hexa : public DI_Element
                     {2, 6}, {3, 7}, {4, 5}, {5, 6}, {6, 7}, {7, 4}};
     s1 = v[edge][0]; s2 = v[edge][1];
   }
-  void midV (const int e, int *s, int *n) const {
+  void midV (const int e, int *s, int &n) const {
     switch(e) {
-    case 0 : s[0] = 0; s[1] = 1; *n = 2; return;
-    case 1 : s[0] = 1; s[1] = 2; *n = 2; return;
-    case 2 : s[0] = 2; s[1] = 3; *n = 2; return;
-    case 3 : s[0] = 3; s[1] = 0; *n = 2; return;
-    case 4 : s[0] = 0; s[1] = 4; *n = 2; return;
-    case 5 : s[0] = 1; s[1] = 5; *n = 2; return;
-    case 6 : s[0] = 2; s[1] = 6; *n = 2; return;
-    case 7 : s[0] = 3; s[1] = 7; *n = 2; return;
-    case 8 : s[0] = 4; s[1] = 5; *n = 2; return;
-    case 9 : s[0] = 5; s[1] = 6; *n = 2; return;
-    case 10 : s[0] = 6; s[1] = 7; *n = 2; return;
-    case 11 : s[0] = 7; s[1] = 4; *n = 2; return;
-    case 12 : s[0] = 0; s[1] = 1; s[2] = 2; s[3] = 3; *n = 4; return;
-    case 13 : s[0] = 0; s[1] = 4; s[2] = 5; s[3] = 1; *n = 4; return;
-    case 14 : s[0] = 1; s[1] = 5; s[2] = 6; s[3] = 2; *n = 4; return;
-    case 15 : s[0] = 2; s[1] = 6; s[2] = 7; s[3] = 3; *n = 4; return;
-    case 16 : s[0] = 0; s[1] = 3; s[2] = 7; s[3] = 4; *n = 4; return;
-    case 17 : s[0] = 4; s[1] = 7; s[2] = 6; s[3] = 5; *n = 4; return;
+    case 0 : s[0] = 0; s[1] = 1; n  = 2; return;
+    case 1 : s[0] = 1; s[1] = 2; n  = 2; return;
+    case 2 : s[0] = 2; s[1] = 3; n  = 2; return;
+    case 3 : s[0] = 3; s[1] = 0; n  = 2; return;
+    case 4 : s[0] = 0; s[1] = 4; n  = 2; return;
+    case 5 : s[0] = 1; s[1] = 5; n  = 2; return;
+    case 6 : s[0] = 2; s[1] = 6; n  = 2; return;
+    case 7 : s[0] = 3; s[1] = 7; n  = 2; return;
+    case 8 : s[0] = 4; s[1] = 5; n  = 2; return;
+    case 9 : s[0] = 5; s[1] = 6; n  = 2; return;
+    case 10 : s[0] = 6; s[1] = 7; n  = 2; return;
+    case 11 : s[0] = 7; s[1] = 4; n  = 2; return;
+    case 12 : s[0] = 0; s[1] = 1; s[2] = 2; s[3] = 3; n  = 4; return;
+    case 13 : s[0] = 0; s[1] = 4; s[2] = 5; s[3] = 1; n  = 4; return;
+    case 14 : s[0] = 1; s[1] = 5; s[2] = 6; s[3] = 2; n  = 4; return;
+    case 15 : s[0] = 2; s[1] = 6; s[2] = 7; s[3] = 3; n  = 4; return;
+    case 16 : s[0] = 0; s[1] = 3; s[2] = 7; s[3] = 4; n  = 4; return;
+    case 17 : s[0] = 4; s[1] = 7; s[2] = 6; s[3] = 5; n  = 4; return;
     case 18 : s[0] = 0; s[1] = 1; s[2] = 2; s[3] = 3; s[4] = 4; s[5] = 5; s[6] = 6; s[7] = 7;
-              *n = 8; return;
+              n  = 8; return;
     default : n = 0; return;
     }
   }
@@ -819,7 +819,7 @@ class DI_Hexa : public DI_Element
   double detJ (const double &xP, const double &yP, const double &zP) const;
   void cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
             std::vector<DI_IntegrationPoint> &ipS, std::vector<DI_CuttingPoint> &cp,
-            const int polynomialOrderH, const int polynomialOrderT, 
+            const int polynomialOrderH, const int polynomialOrderT,
             const int polynomialOrderQ, const int polynomialOrderTr,
             std::vector<DI_Hexa> &notCutHexas, std::vector<DI_Tetra> &subTetras,
             std::vector<DI_Quad> &surfQuads, std::vector<DI_Triangle> &surfTriangles,
