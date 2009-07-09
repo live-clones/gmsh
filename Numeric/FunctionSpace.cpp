@@ -532,14 +532,14 @@ static gmshMatrix<double> generateLagrangeMonomialCoefficients
   for (int i = 0; i < ndofs; i++) {
     for (int j = 0; j < ndofs; j++) {
       double dd = 1.;
-      for (int k = 0; k < dim; k++) dd *= pow(point(i, k), monomial(j, k));
+      for (int k = 0; k < dim; k++) dd *= pow(point(j, k), monomial(i, k));
       Vandermonde(i, j) = dd;
     }
   }
 
   gmshMatrix<double> coefficient(ndofs, ndofs);
   Vandermonde.invert(coefficient);
-  return coefficient.transpose();
+  return coefficient;
 }
 
 std::map<int, gmshFunctionSpace> gmshFunctionSpaces::fs;
