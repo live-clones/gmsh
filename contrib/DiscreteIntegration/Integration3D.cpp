@@ -4,7 +4,6 @@
 #include "Integration3D.h"
 #include "recurCut.h"
 #include "../../Numeric/Gauss.h"
-#include "../../Numeric/GaussLegendre1D.h"
 
 #define ZERO_LS_TOL  1.e-7
 #define EQUALITY_TOL 1.e-15
@@ -202,23 +201,23 @@ bool isCrossed (const DI_Point &p1, const DI_Point &p2) {
 }
  
 // return the index of the point with minimum x,y and z
-int minimum(double *x, double *y, double *z, int num) {
+int minimum(double *x, double *y, double *z, const int num) {
   double xm = x[0];
   for(int i = 1; i < num; i++) if(x[i] < xm) xm = x[i];
   int INDx[num]; int countx = 0;
   for(int i = 0; i < num; i++) if(x[i] == xm) INDx[countx++] = i;
   if(countx == 1) return INDx[0];
 
-  double ym = y[INDx[0]];
-  for(int i = 1; i < countx; i++) if(y[INDx[i]] < ym) ym = y[INDx[i]];
-  int INDy[countx]; int county = 0;
-  for(int i = 0; i < countx; i++) if(y[INDx[i]] == ym) INDy[county++] = INDx[i];
+  double ym = y[INDx[0]]; const int cx = countx;
+  for(int i = 1; i < cx; i++) if(y[INDx[i]] < ym) ym = y[INDx[i]];
+  int INDy[cx]; int county = 0;
+  for(int i = 0; i < cx; i++) if(y[INDx[i]] == ym) INDy[county++] = INDx[i];
   if(county == 1) return INDy[0];
 
-  double zm = z[INDy[0]];
-  for(int i = 1; i < county; i++) if(z[INDy[i]] < zm) zm = z[INDy[i]];
-  int INDz[county]; int countz = 0;
-  for(int i = 0; i < county; i++) if(z[INDy[i]] == zm) INDz[countz++] = INDy[i];
+  double zm = z[INDy[0]]; const int cy = county;
+  for(int i = 1; i < cy; i++) if(z[INDy[i]] < zm) zm = z[INDy[i]];
+  int INDz[cy]; int countz = 0;
+  for(int i = 0; i < cy; i++) if(z[INDy[i]] == zm) INDz[countz++] = INDy[i];
   assert (countz == 1);
   return INDz[0];
 }
@@ -614,7 +613,8 @@ void DI_Element::setPolynomialOrder (int o) {
   case 2 :
     mid_ = new DI_Point*[nbMid()];
     for(int i = 0; i < nbMid(); i++) {
-      int s[nbVert()]; int n;
+      const int nbV = nbVert();
+      int s[nbV]; int n;
       midV(i, s, &n);
       double xc = 0, yc = 0, zc = 0;
       for(int j = 0; j < n; j++){
@@ -636,7 +636,8 @@ void DI_Element::setPolynomialOrder (int o, const DI_Element *e, const std::vect
   case 2 :
     mid_ = new DI_Point*[nbMid()];
     for(int i = 0; i < nbMid(); i++) {
-      int s[nbVert()]; int n;
+      const int nbV = nbVert();
+      int s[nbV]; int n;
       midV(i, s, &n);
       double xc = 0, yc = 0, zc = 0;
       for(int j = 0; j < n; j++){
@@ -668,7 +669,8 @@ void DI_Element::addLs (const DI_Element *e, const gLevelset &Ls) {
     pts_[j]->addLs(adjustLs(ls));
   }
   for(int j = 0; j < nbMid(); ++j) {
-    int s[nbVert()]; int n;
+    const int nbV = nbVert();
+    int s[nbV]; int n;
     e->midV(j, s, &n);
     double xc = 0, yc = 0, zc = 0;
     for(int k = 0; k < n; k++){
@@ -818,7 +820,7 @@ void DI_Element::getCuttingPoints (const DI_Element *e, const std::vector<const 
   }
 }
 void DI_Element::evalC (const double u, const double v, const double w, double *ev, int order) const {
-  int nbV = nbVert() + nbMid();
+  const int nbV = nbVert() + nbMid();
   double s[nbV];
   ev[0] = 0; ev[1] = 0; ev[2] = 0;
   getShapeFunctions (u, v, w, s, order); //printf("o=%d nbV=%d s=%g,%g,%g,%g,%g,%g\n",order,nbV,s[0],s[1],s[2],s[3],s[4],s[5]);
@@ -831,7 +833,8 @@ void DI_Element::evalC (const double u, const double v, const double w, double *
 double DI_Element::evalLs (const double u, const double v, const double w, int iLs, int order) const{
   if(iLs == -1) iLs = sizeLs() - 1; //last ls value
   double vls = 0;
-  double s[nbVert() + nbMid()];
+  const int nbV = nbVert() + nbMid();
+  double s[nbV];
   getShapeFunctions (u, v, w, s, order);
   for(int i = 0; i < nbVert() + nbMid(); i++)
     vls += ls(i, iLs) * s[i];
@@ -850,7 +853,8 @@ double DI_Element::detJ (const double u, const double v, const double w) const {
   J[0][0] = J[0][1] = J[0][2] = 0.;
   J[1][0] = J[1][1] = J[1][2] = 0.;
   J[2][0] = J[2][1] = J[2][2] = 0.;
-  double s[nbVert()][3];
+  const int nbV = nbVert();
+  double s[nbV][3];
   getGradShapeFunctions(u, v, w, s);
   switch(getDim()){
   case 3 :

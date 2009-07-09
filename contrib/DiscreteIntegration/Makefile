@@ -39,6 +39,7 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-DILevelset.o: DILevelset.cpp DILevelset.h
-recurCut.o: recurCut.cpp recurCut.h Integration3D.h DILevelset.h
-Integration3D.o: Integration3D.cpp Integration3D.h DILevelset.h recurCut.h
+DILevelset${OBJEXT}: DILevelset.cpp DILevelset.h
+recurCut${OBJEXT}: recurCut.cpp recurCut.h Integration3D.h DILevelset.h
+Integration3D${OBJEXT}: Integration3D.cpp Integration3D.h DILevelset.h recurCut.h \
+  ../../Numeric/Gauss.h 
