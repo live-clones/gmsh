@@ -95,6 +95,7 @@ class MQuadrangle : public MElement {
     v.resize(4);
     _getFaceVertices(v);
   }
+  virtual int getType() const { return TYPE_QUA; }
   virtual int getTypeForMSH() const { return MSH_QUA_4; }
   virtual int getTypeForUNV() const { return 94; } // thin shell linear quadrilateral
   virtual int getTypeForVTK() const { return 9; }

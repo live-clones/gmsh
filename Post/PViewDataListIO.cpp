@@ -9,6 +9,7 @@
 #include "Numeric.h"
 #include "StringUtils.h"
 #include "GmshMessage.h"
+#include "GmshDefines.h"
 #include "Context.h"
 #include "adaptiveData.h"
 
@@ -218,27 +219,27 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
   dVecRead(SY, NbSY2 * (NbTimeStep * 14 * 1 + 42), fp, binary, swap);
   dVecRead(VY, NbVY2 * (NbTimeStep * 14 * 3 + 42), fp, binary, swap);
   dVecRead(TY, NbTY2 * (NbTimeStep * 14 * 9 + 42), fp, binary, swap);
-  if(NbSL2){ NbSL = NbSL2; setOrder2(1); }
-  if(NbVL2){ NbVL = NbVL2; setOrder2(1); }
-  if(NbTL2){ NbTL = NbTL2; setOrder2(1); }
-  if(NbST2){ NbST = NbST2; setOrder2(3); }
-  if(NbVT2){ NbVT = NbVT2; setOrder2(3); }
-  if(NbTT2){ NbTT = NbTT2; setOrder2(3); }
-  if(NbSQ2){ NbSQ = NbSQ2; setOrder2(4); }
-  if(NbVQ2){ NbVQ = NbVQ2; setOrder2(4); }
-  if(NbTQ2){ NbTQ = NbTQ2; setOrder2(4); }
-  if(NbSS2){ NbSS = NbSS2; setOrder2(6); }
-  if(NbVS2){ NbVS = NbVS2; setOrder2(6); }
-  if(NbTS2){ NbTS = NbTS2; setOrder2(6); }
-  if(NbSH2){ NbSH = NbSH2; setOrder2(12); }
-  if(NbVH2){ NbVH = NbVH2; setOrder2(12); }
-  if(NbTH2){ NbTH = NbTH2; setOrder2(12); }
-  if(NbSI2){ NbSI = NbSI2; setOrder2(9); }
-  if(NbVI2){ NbVI = NbVI2; setOrder2(9); }
-  if(NbTI2){ NbTI = NbTI2; setOrder2(9); }
-  if(NbSY2){ NbSY = NbSY2; setOrder2(8); }
-  if(NbVY2){ NbVY = NbVY2; setOrder2(8); }
-  if(NbTY2){ NbTY = NbTY2; setOrder2(8); }
+  if(NbSL2){ NbSL = NbSL2; setOrder2(TYPE_LIN); }
+  if(NbVL2){ NbVL = NbVL2; setOrder2(TYPE_LIN); }
+  if(NbTL2){ NbTL = NbTL2; setOrder2(TYPE_LIN); }
+  if(NbST2){ NbST = NbST2; setOrder2(TYPE_TRI); }
+  if(NbVT2){ NbVT = NbVT2; setOrder2(TYPE_TRI); }
+  if(NbTT2){ NbTT = NbTT2; setOrder2(TYPE_TRI); }
+  if(NbSQ2){ NbSQ = NbSQ2; setOrder2(TYPE_QUA); }
+  if(NbVQ2){ NbVQ = NbVQ2; setOrder2(TYPE_QUA); }
+  if(NbTQ2){ NbTQ = NbTQ2; setOrder2(TYPE_QUA); }
+  if(NbSS2){ NbSS = NbSS2; setOrder2(TYPE_TET); }
+  if(NbVS2){ NbVS = NbVS2; setOrder2(TYPE_TET); }
+  if(NbTS2){ NbTS = NbTS2; setOrder2(TYPE_TET); }
+  if(NbSH2){ NbSH = NbSH2; setOrder2(TYPE_HEX); }
+  if(NbVH2){ NbVH = NbVH2; setOrder2(TYPE_HEX); }
+  if(NbTH2){ NbTH = NbTH2; setOrder2(TYPE_HEX); }
+  if(NbSI2){ NbSI = NbSI2; setOrder2(TYPE_PRI); }
+  if(NbVI2){ NbVI = NbVI2; setOrder2(TYPE_PRI); }
+  if(NbTI2){ NbTI = NbTI2; setOrder2(TYPE_PRI); }
+  if(NbSY2){ NbSY = NbSY2; setOrder2(TYPE_PYR); }
+  if(NbVY2){ NbVY = NbVY2; setOrder2(TYPE_PYR); }
+  if(NbTY2){ NbTY = NbTY2; setOrder2(TYPE_PYR); }
  
   dVecRead(T2D, NbT2 * 4, fp, binary, swap);
   cVecRead(T2C, t2l, fp, binary, swap, (version <= 1.2));

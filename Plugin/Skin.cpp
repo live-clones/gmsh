@@ -6,6 +6,7 @@
 #include <set>
 #include "Skin.h"
 #include "Context.h"
+#include "GmshDefines.h"
 
 StringXNumber SkinOptions_Number[] = {
   {GMSH_FULLRC, "iView", NULL, -1.}
@@ -122,7 +123,7 @@ class ElmDataLessThan{
 
 double ElmDataLessThan::tolerance = 1.e-12;
 
-static int getBoundary(int numEdges, const int (**boundary)[6][4])
+static int getBoundary(int type, const int (**boundary)[6][4])
 {
   static const int tri[6][4] = 
     {{0,1,-1,-1}, {1,2,-1,-1}, {2,0,-1,-1}};
@@ -136,13 +137,13 @@ static int getBoundary(int numEdges, const int (**boundary)[6][4])
     {{0,1,4,3}, {0,3,5,2}, {1,2,5,4}, {0,2,1,-1}, {3,4,5,-1}};
   static const int pyr[6][4] = 
     {{0,3,2,1}, {0,1,4,-1}, {0,4,3,-1}, {1,2,4,-1}, {2,3,4,-1}};
-  switch(numEdges){
-  case 3: *boundary = &tri; return 3;
-  case 4: *boundary = &qua; return 4;
-  case 6: *boundary = &tet; return 4;
-  case 12: *boundary = &hex; return 6;
-  case 9: *boundary = &pri; return 5;
-  case 8: *boundary = &pyr; return 5;
+  switch(type){
+  case TYPE_TRI: *boundary = &tri; return 3;
+  case TYPE_QUA: *boundary = &qua; return 4;
+  case TYPE_TET: *boundary = &tet; return 4;
+  case TYPE_HEX: *boundary = &hex; return 6;
+  case TYPE_PRI: *boundary = &pri; return 5;
+  case TYPE_PYR: *boundary = &pyr; return 5;
   default : return 0;
   }
 }
@@ -170,9 +171,9 @@ PView *GMSH_SkinPlugin::execute(PView *v)
     for(int ele = 0; ele < data1->getNumElements(0, ent); ele++){
       if(data1->skipElement(0, ent, ele)) continue;
       int numComp = data1->getNumComponents(0, ent, ele);
-      int numEdges = data1->getNumEdges(0, ent, ele);
+      int type = data1->getType(0, ent, ele);
       const int (*boundary)[6][4];
-      int numBoundary = getBoundary(numEdges, &boundary);
+      int numBoundary = getBoundary(type, &boundary);
       if(!numBoundary) continue;
       for(int i = 0; i < numBoundary; i++){
         ElmData e(numComp);

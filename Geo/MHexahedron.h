@@ -111,6 +111,7 @@ class MHexahedron : public MElement {
     v.resize(4);
     _getFaceVertices(num, v);
   }
+  virtual int getType() const { return TYPE_HEX; }
   virtual int getTypeForMSH() const { return MSH_HEX_8; }
   virtual int getTypeForUNV() const { return 115; } // solid linear brick
   virtual int getTypeForVTK() const { return 12; }

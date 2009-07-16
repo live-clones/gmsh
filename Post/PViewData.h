@@ -33,8 +33,7 @@ class PViewData {
  protected:
   // adaptive visualization data
   adaptiveData *_adaptive;
-  // interpolation matrices, indexed by the number of edges per
-  // element (1 for lines, 3 for triangles, etc.)
+  // interpolation matrices, indexed by the type of element
   std::map<int, std::vector<gmshMatrix<double>*> > _interpolation;
 
  public:
@@ -136,6 +135,9 @@ class PViewData {
   // entity
   virtual int getNumEdges(int step, int ent, int ele) = 0;
 
+  // return the type of the ele-th element in the ent-th entity
+  virtual int getType(int step, int ent, int ele) = 0;
+
   // return the number of 2D/3D strings in the view
   virtual int getNumStrings2D(){ return 0; }
   virtual int getNumStrings3D(){ return 0; }
@@ -176,8 +178,7 @@ class PViewData {
   // return the adaptive data
   adaptiveData *getAdaptiveData(){ return _adaptive; }
 
-  // set/get the interpolation matrices for elements with "type"
-  // number of edges
+  // set/get the interpolation matrices for elements with type "type"
   void setInterpolationMatrices(int type, 
                                 const gmshMatrix<double> &coefVal,
                                 const gmshMatrix<double> &expVal);

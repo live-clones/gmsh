@@ -44,12 +44,12 @@ class PViewDataList : public PViewData {
  private:
   int _index[24];
   int _lastElement, _lastDimension;
-  int _lastNumNodes, _lastNumComponents, _lastNumValues, _lastNumEdges;
+  int _lastNumNodes, _lastNumComponents, _lastNumValues, _lastNumEdges, _lastType;
   double *_lastXYZ, *_lastVal;
   void _stat(std::vector<double> &D, std::vector<char> &C, int nb);
-  void _stat(std::vector<double> &list, int nbcomp, int nbelm, int nbnod, int nbedg);
+  void _stat(std::vector<double> &list, int nbcomp, int nbelm, int nbnod, int type);
   void _setLast(int ele);
-  void _setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg,
+  void _setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg, int type,
                 std::vector<double> &list, int nblist);
   void _getString(int dim, int i, int timestep, std::string &str, 
                   double &x, double &y, double &z, double &style);
@@ -86,6 +86,7 @@ class PViewDataList : public PViewData {
   void getValue(int step, int ent, int ele, int nod, int comp, double &val);
   void setValue(int step, int ent, int ele, int nod, int comp, double val);
   int getNumEdges(int step, int ent, int ele);
+  int getType(int step, int ent, int ele);
   int getNumStrings2D(){ return NbT2; }
   int getNumStrings3D(){ return NbT3; }
   void getString2D(int i, int step, std::string &str, 
@@ -99,7 +100,7 @@ class PViewDataList : public PViewData {
 
   // specific to list-based data sets
   void getRawData(int type, std::vector<double> **l, int **ne, int *nc, int *nn);
-  void setOrder2(int nbedg);
+  void setOrder2(int type);
 
   // I/O routines
   bool readPOS(FILE *fp, double version, bool binary);

@@ -5,6 +5,7 @@
 
 #include "Curl.h"
 #include "shapeFunctions.h"
+#include "GmshDefines.h"
 
 StringXNumber CurlOptions_Number[] = {
   {GMSH_FULLRC, "iView", NULL, -1.}
@@ -51,17 +52,17 @@ void GMSH_CurlPlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Curl failed...");
 }
 
-static std::vector<double> *incrementList(PViewDataList *data2, int numEdges)
+static std::vector<double> *incrementList(PViewDataList *data2, int type)
 {
-  switch(numEdges){
-  case 0: data2->NbVP++; return &data2->VP;
-  case 1: data2->NbVL++; return &data2->VL;
-  case 3: data2->NbVT++; return &data2->VT;
-  case 4: data2->NbVQ++; return &data2->VQ;
-  case 6: data2->NbVS++; return &data2->VS;
-  case 12: data2->NbVH++; return &data2->VH;
-  case 9: data2->NbVI++; return &data2->VI;
-  case 8: data2->NbVY++; return &data2->VY;
+  switch(type){
+  case TYPE_PNT: data2->NbVP++; return &data2->VP;
+  case TYPE_LIN: data2->NbVL++; return &data2->VL;
+  case TYPE_TRI: data2->NbVT++; return &data2->VT;
+  case TYPE_QUA: data2->NbVQ++; return &data2->VQ;
+  case TYPE_TET: data2->NbVS++; return &data2->VS;
+  case TYPE_HEX: data2->NbVH++; return &data2->VH;
+  case TYPE_PRI: data2->NbVI++; return &data2->VI;
+  case TYPE_PYR: data2->NbVY++; return &data2->VY;
   default: return 0;
   }
 }
@@ -87,8 +88,8 @@ PView *GMSH_CurlPlugin::execute(PView *v)
       if(data1->skipElement(0, ent, ele)) continue;
       int numComp = data1->getNumComponents(0, ent, ele);
       if(numComp != 3) continue;
-      int numEdges = data1->getNumEdges(0, ent, ele);
-      std::vector<double> *out = incrementList(data2, numEdges);
+      int type = data1->getType(0, ent, ele);
+      std::vector<double> *out = incrementList(data2, type);
       if(!out) continue;
       int numNodes = data1->getNumNodes(0, ent, ele);
       double x[8], y[8], z[8], val[8 * 3];

@@ -470,7 +470,7 @@ void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
 
 void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
 {
-  if(getNumEdges() != 3 && getNumEdges() != 4) return;
+  if(getType() != TYPE_TRI && getType() != TYPE_QUA) return;
   int qid[3] = {0, 2, 3};
   SVector3 n = getFace(0).normal();
   if(!binary){

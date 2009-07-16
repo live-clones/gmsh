@@ -9,6 +9,7 @@
 #include "adaptiveData.h"
 #include "Plugin.h"
 #include "OS.h"
+#include "GmshDefines.h"
 
 //#define TIMER
 
@@ -1135,27 +1136,27 @@ adaptiveData::adaptiveData(PViewData *data)
   _outData = new PViewDataList();
   std::vector<gmshMatrix<double>*> p;
   if(_inData->getNumLines()){
-    _inData->getInterpolationMatrices(1, p);
+    _inData->getInterpolationMatrices(TYPE_LIN, p);
     _lines = new adaptiveElements<adaptiveLine>(p);
   }
   if(_inData->getNumTriangles()){
-    _inData->getInterpolationMatrices(3, p);
+    _inData->getInterpolationMatrices(TYPE_TRI, p);
     _triangles = new adaptiveElements<adaptiveTriangle>(p);
   }
   if(_inData->getNumQuadrangles()){
-    _inData->getInterpolationMatrices(4, p);
+    _inData->getInterpolationMatrices(TYPE_QUA, p);
     _quadrangles = new adaptiveElements<adaptiveQuadrangle>(p);
   }
   if(_inData->getNumTetrahedra()){
-    _inData->getInterpolationMatrices(6, p);
+    _inData->getInterpolationMatrices(TYPE_TET, p);
     _tetrahedra = new adaptiveElements<adaptiveTetrahedron>(p);
   }
   if(_inData->getNumPrisms()){
-    _inData->getInterpolationMatrices(9, p);
+    _inData->getInterpolationMatrices(TYPE_PRI, p);
     _prisms = new adaptiveElements<adaptivePrism>(p);
   }
   if(_inData->getNumHexahedra()){
-    _inData->getInterpolationMatrices(12, p);
+    _inData->getInterpolationMatrices(TYPE_HEX, p);
     _hexahedra = new adaptiveElements<adaptiveHexahedron>(p);
   }
 }

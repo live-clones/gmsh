@@ -100,6 +100,7 @@ class MTetrahedron : public MElement {
     v.resize(3);
     _getFaceVertices(num, v);
   }
+  virtual int getType() const { return TYPE_TET; }
   virtual int getTypeForMSH() const { return MSH_TET_4; }
   virtual int getTypeForUNV() const { return 111; } // solid linear tetrahedron
   virtual int getTypeForVTK() const { return 10; }

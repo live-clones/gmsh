@@ -82,64 +82,39 @@ static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
   return true;
 }
 
-static void createElementMSH(GModel *m, int num, int type, int physical, 
+static void createElementMSH(GModel *m, int num, int typeMSH, int physical, 
                              int reg, int part, std::vector<MVertex*> &v, 
                              std::map<int, std::vector<MElement*> > elements[10],
                              std::map<int, std::map<int, std::string> > physicals[4])
 {
   MElementFactory factory;
-  MElement *e = factory.create(type, v, num, part);
+  MElement *e = factory.create(typeMSH, v, num, part);
 
   if(!e){
-    Msg::Error("Unknown type of element %d", type);
+    Msg::Error("Unknown type of element %d", typeMSH);
     return;
   }
 
-  switch(type){
-  case MSH_PNT :
+  switch(e->getType()){
+  case TYPE_PNT :
     elements[0][reg].push_back(e); break;
-  case MSH_LIN_2 :
-  case MSH_LIN_3 :
-  case MSH_LIN_4 :
-  case MSH_LIN_5 :
-  case MSH_LIN_6 :
+  case TYPE_LIN :
     elements[1][reg].push_back(e); break;
-  case MSH_TRI_3 :
-  case MSH_TRI_6 :
-  case MSH_TRI_9 :
-  case MSH_TRI_10 :
-  case MSH_TRI_12 :
-  case MSH_TRI_15 :
-  case MSH_TRI_15I :
-  case MSH_TRI_21 :
+  case TYPE_TRI :
     elements[2][reg].push_back(e); break;
-  case MSH_QUA_4 :
-  case MSH_QUA_9 :
-  case MSH_QUA_8 :
+  case TYPE_QUA :
     elements[3][reg].push_back(e); break;
-  case MSH_TET_4 :
-  case MSH_TET_10 :
-  case MSH_TET_20 :
-  case MSH_TET_35 :
-  case MSH_TET_56 :
-  case MSH_TET_34 :
-  case MSH_TET_52 :
+  case TYPE_TET :
     elements[4][reg].push_back(e); break;
-  case MSH_HEX_8 :
-  case MSH_HEX_27 :
-  case MSH_HEX_20 :
+  case TYPE_HEX :
     elements[5][reg].push_back(e); break;
-  case MSH_PRI_6 :
-  case MSH_PRI_18 :
-  case MSH_PRI_15 :
+  case TYPE_PRI :
     elements[6][reg].push_back(e); break;
-  case MSH_PYR_5 :
-  case MSH_PYR_14 :
-  case MSH_PYR_13 :
+  case TYPE_PYR :
     elements[7][reg].push_back(e); break;
-  case MSH_POLYG_ :
+  case TYPE_POLYG :
     elements[8][reg].push_back(e); break;
-  case MSH_POLYH_ :
+  case TYPE_POLYH :
     elements[9][reg].push_back(e); break;
   default : Msg::Error("Wrong type of element"); return;
   }
@@ -272,7 +247,7 @@ int GModel::readMSH(const std::string &name)
 	      if(fread(uv, sizeof(double), 1, fp) != 1) return 0;
 	      if(swap) SwapBytes((char*)uv, sizeof(double), 1);
 	    }
-	    newVertex = new MEdgeVertex(xyz[0], xyz[1], xyz[2], ge, uv[0], -1.0, num);	      
+	    newVertex = new MEdgeVertex(xyz[0], xyz[1], xyz[2], ge, uv[0], -1.0, num);
 	  }
 	  else if (iClasDim == 2){
 	    GFace *gf = getFaceByTag(iClasTag);
@@ -283,7 +258,7 @@ int GModel::readMSH(const std::string &name)
 	      if(fread(uv, sizeof(double), 2, fp) != 2) return 0;
 	      if(swap) SwapBytes((char*)uv, sizeof(double), 2);
 	    }	    
-	    newVertex = new MFaceVertex(xyz[0], xyz[1], xyz[2], gf, uv[0], uv[1], num);	      
+	    newVertex = new MFaceVertex(xyz[0], xyz[1], xyz[2], gf, uv[0], uv[1], num);
 	  }
 	  else if (iClasDim == 3){
 	    GRegion *gr = getRegionByTag(iClasTag);

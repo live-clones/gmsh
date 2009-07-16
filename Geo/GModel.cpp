@@ -362,11 +362,13 @@ int GModel::getMeshStatus(bool countDiscrete)
     if((countDiscrete || ((*it)->geomType() != GEntity::DiscreteVolume &&
 			  (*it)->meshAttributes.Method != MESH_NONE)) &&
        ((*it)->tetrahedra.size() ||(*it)->hexahedra.size() ||
-        (*it)->prisms.size() || (*it)->pyramids.size())) return 3;
+        (*it)->prisms.size() || (*it)->pyramids.size() ||
+        (*it)->polyhedra.size())) return 3;
   for(fiter it = firstFace(); it != lastFace(); ++it)
     if((countDiscrete || ((*it)->geomType() != GEntity::DiscreteSurface &&
 			  (*it)->meshAttributes.Method != MESH_NONE)) &&
-       ((*it)->triangles.size() || (*it)->quadrangles.size())) return 2;
+       ((*it)->triangles.size() || (*it)->quadrangles.size() ||
+        (*it)->polygons.size())) return 2;
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     if((countDiscrete || ((*it)->geomType() != GEntity::DiscreteCurve &&
 			  (*it)->meshAttributes.Method != MESH_NONE)) &&
@@ -552,12 +554,14 @@ void GModel::removeInvisibleElements()
     removeInvisible((*it)->hexahedra, all);
     removeInvisible((*it)->prisms, all);
     removeInvisible((*it)->pyramids, all);
+    removeInvisible((*it)->polyhedra, all);
     (*it)->deleteVertexArrays();
   }
   for(fiter it = firstFace(); it != lastFace(); ++it){
     bool all = !(*it)->getVisibility();
     removeInvisible((*it)->triangles, all);
     removeInvisible((*it)->quadrangles, all);
+    removeInvisible((*it)->polygons, all);
     (*it)->deleteVertexArrays();
   }
   for(eiter it = firstEdge(); it != lastEdge(); ++it){
@@ -643,9 +647,9 @@ void GModel::_storeElementsInEntities(std::map<int, std::vector<MElement*> > &ma
   std::map<int, std::vector<MElement*> >::const_iterator it = map.begin();
   for(; it != map.end(); ++it){
     if(!it->second.size()) continue;
-    int numEdges = it->second[0]->getNumEdges();
-    switch(numEdges){
-    case 0:
+    int type = it->second[0]->getType();
+    switch(type){
+    case TYPE_PNT:
       {
         GVertex *v = getVertexByTag(it->first);
         if(!v){
@@ -656,7 +660,7 @@ void GModel::_storeElementsInEntities(std::map<int, std::vector<MElement*> > &ma
 	  _addElements(v->points, it->second);
       }
       break;
-    case 1:
+    case TYPE_LIN:
       {
         GEdge *e = getEdgeByTag(it->first);
         if(!e){
@@ -666,28 +670,30 @@ void GModel::_storeElementsInEntities(std::map<int, std::vector<MElement*> > &ma
         _addElements(e->lines, it->second);
       }
       break;
-    case 3: case 4:
+    case TYPE_TRI: case TYPE_QUA: case TYPE_POLYG:
       {
         GFace *f = getFaceByTag(it->first);
         if(!f){
           f = new discreteFace(this, it->first);
           add(f);
         }
-        if(numEdges == 3) _addElements(f->triangles, it->second);
-        else _addElements(f->quadrangles, it->second);
+        if(type == TYPE_TRI) _addElements(f->triangles, it->second);
+        else if(type == TYPE_QUA) _addElements(f->quadrangles, it->second);
+        else _addElements(f->polygons, it->second);
       }
       break;
-    case 6: case 12: case 9: case 8:
+    case TYPE_TET: case TYPE_HEX: case TYPE_PYR: case TYPE_PRI: case TYPE_POLYH:
       {
         GRegion *r = getRegionByTag(it->first);
         if(!r){
           r = new discreteRegion(this, it->first);
           add(r);
         }
-        if(numEdges == 6) _addElements(r->tetrahedra, it->second);
-        else if(numEdges == 12) _addElements(r->hexahedra, it->second);
-        else if(numEdges == 9) _addElements(r->prisms, it->second);
-        else _addElements(r->pyramids, it->second);
+        if(type == TYPE_TET) _addElements(r->tetrahedra, it->second);
+        else if(type == TYPE_HEX) _addElements(r->hexahedra, it->second);
+        else if(type == TYPE_PRI) _addElements(r->prisms, it->second);
+        else if(type == TYPE_PYR) _addElements(r->pyramids, it->second);
+        else _addElements(r->polyhedra, it->second);
       }
       break;
     }
@@ -717,10 +723,12 @@ void GModel::_associateEntityWithMeshVertices()
     _associateEntityWithElementVertices(*it, (*it)->hexahedra);
     _associateEntityWithElementVertices(*it, (*it)->prisms);
     _associateEntityWithElementVertices(*it, (*it)->pyramids);
+    _associateEntityWithElementVertices(*it, (*it)->polyhedra);
   }
   for(fiter it = firstFace(); it != lastFace(); ++it){
     _associateEntityWithElementVertices(*it, (*it)->triangles);
     _associateEntityWithElementVertices(*it, (*it)->quadrangles);
+    _associateEntityWithElementVertices(*it, (*it)->polygons);
   }
   for(eiter it = firstEdge(); it != lastEdge(); ++it){
     _associateEntityWithElementVertices(*it, (*it)->lines);
@@ -865,7 +873,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
     return 0;
   }
 
-  std::map<int, std::vector<MElement*> > elements[8];
+  std::map<int, std::vector<MElement*> > elements[10];
   for(unsigned int i = 0; i < entities.size(); i++){
     for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
       MElement *e = entities[i]->getMeshElement(j);
@@ -881,15 +889,18 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
       MElementFactory factory;
       MElement *e2 = factory.create(e->getTypeForMSH(), verts, e->getNum(),
                                     e->getPartition());
-      switch(e2->getNumEdges()){
-      case 0:  elements[0][entities[i]->tag()].push_back(e2); break;
-      case 1:  elements[1][entities[i]->tag()].push_back(e2); break;
-      case 3:  elements[2][entities[i]->tag()].push_back(e2); break;
-      case 4:  elements[3][entities[i]->tag()].push_back(e2); break;
-      case 6:  elements[4][entities[i]->tag()].push_back(e2); break;
-      case 12: elements[5][entities[i]->tag()].push_back(e2); break;
-      case 9:  elements[6][entities[i]->tag()].push_back(e2); break;
-      case 8:  elements[7][entities[i]->tag()].push_back(e2); break;
+      switch(e2->getType()){
+      case TYPE_PNT: elements[0][entities[i]->tag()].push_back(e2); break;
+      case TYPE_LIN: elements[1][entities[i]->tag()].push_back(e2); break;
+      case TYPE_TRI: elements[2][entities[i]->tag()].push_back(e2); break;
+      case TYPE_QUA: elements[3][entities[i]->tag()].push_back(e2); break;
+      case TYPE_TET: elements[4][entities[i]->tag()].push_back(e2); break;
+      case TYPE_HEX: elements[5][entities[i]->tag()].push_back(e2); break;
+      case TYPE_PRI: elements[6][entities[i]->tag()].push_back(e2); break;
+      case TYPE_PYR: elements[7][entities[i]->tag()].push_back(e2); break;
+      case TYPE_POLYG: elements[8][entities[i]->tag()].push_back(e2); break;
+      case TYPE_POLYH: elements[9][entities[i]->tag()].push_back(e2); break;
+
       }
     }
   }

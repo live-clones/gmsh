@@ -139,6 +139,9 @@ class MElement
     v.resize(0);
   }
 
+  //get the type of the element
+  virtual int getType() const = 0;
+
   // get the max/min edge length
   virtual double maxEdge();
   virtual double minEdge();

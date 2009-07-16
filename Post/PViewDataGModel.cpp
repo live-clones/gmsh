@@ -92,14 +92,14 @@ bool PViewDataGModel::finalize()
 
 void PViewDataGModel::_addInterpolationMatricesForElement(MElement *e)
 {
-  int edg = e->getNumEdges();
+  int type = e->getType();
   const gmshFunctionSpace *fs = e->getFunctionSpace();
   if(fs){
     if(e->getPolynomialOrder() > 1)
-      setInterpolationMatrices(edg, fs->coefficients, fs->monomials,
+      setInterpolationMatrices(type, fs->coefficients, fs->monomials,
                                fs->coefficients, fs->monomials);
     else
-      setInterpolationMatrices(edg, fs->coefficients, fs->monomials);
+      setInterpolationMatrices(type, fs->coefficients, fs->monomials);
   }                               
 }
 
@@ -411,6 +411,11 @@ void PViewDataGModel::setValue(int step, int ent, int ele, int nod, int comp, do
 int PViewDataGModel::getNumEdges(int step, int ent, int ele)
 { 
   return _getElement(step, ent, ele)->getNumEdges();
+}
+
+int PViewDataGModel::getType(int step, int ent, int ele)
+{
+  return _getElement(step, ent, ele)->getType();
 }
 
 void PViewDataGModel::revertElement(int step, int ent, int ele)

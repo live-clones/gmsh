@@ -116,6 +116,7 @@ class MPolyhedron : public MElement {
     v[1] = _faces[num].getVertex(1);
     v[2] = _faces[num].getVertex(2);
   }
+  virtual int getType() const { return TYPE_POLYH; }
   virtual int getTypeForMSH() const { return MSH_POLYH_; }
   virtual double getVolume()
   {
@@ -207,7 +208,7 @@ class MPolygon : public MElement {
   virtual int getNumFacesRep() { return _parts.size(); }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
   {
-   _getFaceRep(_parts[num]->getVertex(0), _parts[num]->getVertex(1),
+    _getFaceRep(_parts[num]->getVertex(0), _parts[num]->getVertex(1),
                 _parts[num]->getVertex(2), x, y, z, n);
   }
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
@@ -216,6 +217,7 @@ class MPolygon : public MElement {
     for (unsigned int i = 0; i < _vertices.size(); i++)
       v[i] = _vertices[i];
   }
+  virtual int getType() const { return TYPE_POLYG; }
   virtual int getTypeForMSH() const { return MSH_POLYG_; }
   virtual const gmshFunctionSpace* getFunctionSpace(int order=-1) const 
   {

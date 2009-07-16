@@ -105,7 +105,7 @@ static void class_deleteedge_cb(Fl_Widget *w, void *data)
       if(CTX::instance()->pickElements){
         for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++){
           MElement *me = GUI::instance()->selectedElements[i];
-          if(me->getNumEdges() == 1 && me->getVisibility() != 2){
+          if(me->getType() == TYPE_LIN && me->getVisibility() != 2){
             me->setVisibility(2); ele.push_back((MLine*)me);
           }
         }
@@ -548,7 +548,7 @@ static void class_select_cb(Fl_Widget *w, void *data)
       if(CTX::instance()->pickElements){
         for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++){
           MElement *me = GUI::instance()->selectedElements[i];
-          if(me->getNumEdges() == 3 && me->getVisibility() != 2){
+          if(me->getType() == TYPE_TRI && me->getVisibility() != 2){
             me->setVisibility(2); ele.push_back((MTriangle*)me);
           }
         }

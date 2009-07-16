@@ -5,6 +5,7 @@
 
 #include "Gradient.h"
 #include "shapeFunctions.h"
+#include "GmshDefines.h"
 
 StringXNumber GradientOptions_Number[] = {
   {GMSH_FULLRC, "iView", NULL, -1.}
@@ -51,31 +52,31 @@ void GMSH_GradientPlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Gradient failed...");
 }
 
-static std::vector<double> *incrementList(PViewDataList *data2, int numComp, int numEdges)
+static std::vector<double> *incrementList(PViewDataList *data2, int numComp, int type)
 {
   if(numComp == 1){
-    switch(numEdges){
-    case 0: data2->NbVP++; return &data2->VP;
-    case 1: data2->NbVL++; return &data2->VL;
-    case 3: data2->NbVT++; return &data2->VT;
-    case 4: data2->NbVQ++; return &data2->VQ;
-    case 6: data2->NbVS++; return &data2->VS;
-    case 12: data2->NbVH++; return &data2->VH;
-    case 9: data2->NbVI++; return &data2->VI;
-    case 8: data2->NbVY++; return &data2->VY;
+    switch(type){
+    case TYPE_PNT: data2->NbVP++; return &data2->VP;
+    case TYPE_LIN: data2->NbVL++; return &data2->VL;
+    case TYPE_TRI: data2->NbVT++; return &data2->VT;
+    case TYPE_QUA: data2->NbVQ++; return &data2->VQ;
+    case TYPE_TET: data2->NbVS++; return &data2->VS;
+    case TYPE_HEX: data2->NbVH++; return &data2->VH;
+    case TYPE_PRI: data2->NbVI++; return &data2->VI;
+    case TYPE_PYR: data2->NbVY++; return &data2->VY;
     default: return 0;
     }
   }
   else if(numComp == 3){
-    switch(numEdges){
-    case 0: data2->NbTP++; return &data2->TP;
-    case 1: data2->NbTL++; return &data2->TL;
-    case 3: data2->NbTT++; return &data2->TT;
-    case 4: data2->NbTQ++; return &data2->TQ;
-    case 6: data2->NbTS++; return &data2->TS;
-    case 12: data2->NbTH++; return &data2->TH;
-    case 9: data2->NbTI++; return &data2->TI;
-    case 8: data2->NbTY++; return &data2->TY;
+    switch(type){
+    case TYPE_PNT: data2->NbTP++; return &data2->TP;
+    case TYPE_LIN: data2->NbTL++; return &data2->TL;
+    case TYPE_TRI: data2->NbTT++; return &data2->TT;
+    case TYPE_QUA: data2->NbTQ++; return &data2->TQ;
+    case TYPE_TET: data2->NbTS++; return &data2->TS;
+    case TYPE_HEX: data2->NbTH++; return &data2->TH;
+    case TYPE_PRI: data2->NbTI++; return &data2->TI;
+    case TYPE_PYR: data2->NbTY++; return &data2->TY;
     default: return 0;
     }
   }
@@ -103,8 +104,8 @@ PView *GMSH_GradientPlugin::execute(PView *v)
       if(data1->skipElement(0, ent, ele)) continue;
       int numComp = data1->getNumComponents(0, ent, ele);
       if(numComp != 1 && numComp != 3) continue;
-      int numEdges = data1->getNumEdges(0, ent, ele);
-      std::vector<double> *out = incrementList(data2, numComp, numEdges);
+      int type = data1->getType(0, ent, ele);
+      std::vector<double> *out = incrementList(data2, numComp, type);
       if(!out) continue;
       int numNodes = data1->getNumNodes(0, ent, ele);
       double x[8], y[8], z[8], val[8 * 3];

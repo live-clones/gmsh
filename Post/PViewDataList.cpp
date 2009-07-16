@@ -20,7 +20,7 @@ PViewDataList::PViewDataList()
     NbSY(0), NbVY(0), NbTY(0), NbT2(0), NbT3(0),
     _lastElement(-1), _lastDimension(-1), _lastNumNodes(-1), 
     _lastNumComponents(-1), _lastNumValues(-1), _lastNumEdges(-1),
-    _lastXYZ(0), _lastVal(0)
+    _lastType(-1), _lastXYZ(0), _lastVal(0)
 {
   for(int i = 0; i < 24; i++) _index[i] = 0;
 }
@@ -39,14 +39,22 @@ bool PViewDataList::finalize()
   _stat(T2D, T2C, 4); _stat(T3D, T3C, 5);
 
   // compute min/max and other statistics for all element lists
-  _stat(SP, 1, NbSP, 1, 0); _stat(VP, 3, NbVP, 1, 0); _stat(TP, 9, NbTP, 1, 0);
-  _stat(SL, 1, NbSL, 2, 1); _stat(VL, 3, NbVL, 2, 1); _stat(TL, 9, NbTL, 2, 1);
-  _stat(ST, 1, NbST, 3, 3); _stat(VT, 3, NbVT, 3, 3); _stat(TT, 9, NbTT, 3, 3);
-  _stat(SQ, 1, NbSQ, 4, 4); _stat(VQ, 3, NbVQ, 4, 4); _stat(TQ, 9, NbTQ, 4, 4);
-  _stat(SS, 1, NbSS, 4, 6); _stat(VS, 3, NbVS, 4, 6); _stat(TS, 9, NbTS, 4, 6);
-  _stat(SH, 1, NbSH, 8,12); _stat(VH, 3, NbVH, 8,12); _stat(TH, 9, NbTH, 8,12);
-  _stat(SI, 1, NbSI, 6, 9); _stat(VI, 3, NbVI, 6, 9); _stat(TI, 9, NbTI, 6, 9);
-  _stat(SY, 1, NbSY, 5, 8); _stat(VY, 3, NbVY, 5, 8); _stat(TY, 9, NbTY, 5, 8);
+  _stat(SP, 1, NbSP, 1, TYPE_PNT); _stat(VP, 3, NbVP, 1, TYPE_PNT);
+  _stat(TP, 9, NbTP, 1, TYPE_PNT);
+  _stat(SL, 1, NbSL, 2, TYPE_LIN); _stat(VL, 3, NbVL, 2, TYPE_LIN);
+  _stat(TL, 9, NbTL, 2, TYPE_LIN);
+  _stat(ST, 1, NbST, 3, TYPE_TRI); _stat(VT, 3, NbVT, 3, TYPE_TRI);
+  _stat(TT, 9, NbTT, 3, TYPE_TRI);
+  _stat(SQ, 1, NbSQ, 4, TYPE_QUA); _stat(VQ, 3, NbVQ, 4, TYPE_QUA);
+  _stat(TQ, 9, NbTQ, 4, TYPE_QUA);
+  _stat(SS, 1, NbSS, 4, TYPE_TET); _stat(VS, 3, NbVS, 4, TYPE_TET);
+  _stat(TS, 9, NbTS, 4, TYPE_TET);
+  _stat(SH, 1, NbSH, 8, TYPE_HEX); _stat(VH, 3, NbVH, 8, TYPE_HEX);
+  _stat(TH, 9, NbTH, 8, TYPE_HEX);
+  _stat(SI, 1, NbSI, 6, TYPE_PRI); _stat(VI, 3, NbVI, 6, TYPE_PRI);
+  _stat(TI, 9, NbTI, 6, TYPE_PRI);
+  _stat(SY, 1, NbSY, 5, TYPE_PYR); _stat(VY, 3, NbVY, 5, TYPE_PYR);
+  _stat(TY, 9, NbTY, 5, TYPE_PYR);
 
   // add dummy time values if none (or too few) time values are
   // provided (e.g. using the old parsed format)
@@ -132,7 +140,7 @@ void PViewDataList::_stat(std::vector<double> &D, std::vector<char> &C, int nb)
 }
 
 void PViewDataList::_stat(std::vector<double> &list, int nbcomp, int nbelm,
-                          int nbnod, int nbedg)
+                          int nbnod, int type)
 {
   // compute statistics for element lists
   if(!nbelm) return;  
@@ -141,7 +149,7 @@ void PViewDataList::_stat(std::vector<double> &list, int nbcomp, int nbelm,
 
   if(haveInterpolationMatrices()){
     std::vector<gmshMatrix<double>*> im;
-    int nim = getInterpolationMatrices(nbedg, im);
+    int nim = getInterpolationMatrices(type, im);
     if(nim == 4)
       nbnod = im[2]->size1();
     if(nim)
@@ -189,12 +197,12 @@ void PViewDataList::_stat(std::vector<double> &list, int nbcomp, int nbelm,
   }
 }
 
-void PViewDataList::_setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg,
+void PViewDataList::_setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg, int type,
                              std::vector<double> &list, int nblist)
 {
   if(haveInterpolationMatrices()){
     std::vector<gmshMatrix<double>*> im;
-    if(getInterpolationMatrices(nbedg, im) == 4)
+    if(getInterpolationMatrices(type, im) == 4)
       nbnod = im[2]->size1();
   }
 
@@ -202,6 +210,7 @@ void PViewDataList::_setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg,
   _lastNumNodes = nbnod;
   _lastNumComponents = nbcomp;
   _lastNumEdges = nbedg;
+  _lastType = type;
   int nb = list.size() / nblist;
   _lastXYZ = &list[ele * nb];
   _lastVal = &list[ele * nb + 3 * _lastNumNodes];
@@ -212,44 +221,44 @@ void PViewDataList::_setLast(int ele)
 {
   _lastElement = ele;
   if(ele < _index[2]){ // points
-    if(ele < _index[0]) _setLast(ele, 0, 1, 1, 0, SP, NbSP);
-    else if(ele < _index[1]) _setLast(ele - _index[0], 0, 1, 3, 0, VP, NbVP);
-    else _setLast(ele - _index[1], 0, 1, 9, 0, TP, NbTP);
+    if(ele < _index[0]) _setLast(ele, 0, 1, 1, 0, TYPE_PNT, SP, NbSP);
+    else if(ele < _index[1]) _setLast(ele - _index[0], 0, 1, 3, 0, TYPE_PNT, VP, NbVP);
+    else _setLast(ele - _index[1], 0, 1, 9, 0, TYPE_PNT, TP, NbTP);
   }
   else if(ele < _index[5]){ // lines
-    if(ele < _index[3]) _setLast(ele - _index[2], 1, 2, 1, 1, SL, NbSL);
-    else if(ele < _index[4]) _setLast(ele - _index[3], 1, 2, 3, 1, VL, NbVL);
-    else _setLast(ele - _index[4], 1, 2, 9, 1, TL, NbTL);
+    if(ele < _index[3]) _setLast(ele - _index[2], 1, 2, 1, 1, TYPE_LIN, SL, NbSL);
+    else if(ele < _index[4]) _setLast(ele - _index[3], 1, 2, 3, 1, TYPE_LIN, VL, NbVL);
+    else _setLast(ele - _index[4], 1, 2, 9, 1, TYPE_LIN, TL, NbTL);
   }
   else if(ele < _index[8]){ // triangles
-    if(ele < _index[6]) _setLast(ele - _index[5], 2, 3, 1, 3, ST, NbST);
-    else if(ele < _index[7]) _setLast(ele - _index[6], 2, 3, 3, 3, VT, NbVT);
-    else _setLast(ele - _index[7], 2, 3, 9, 3, TT, NbTT);
+    if(ele < _index[6]) _setLast(ele - _index[5], 2, 3, 1, 3, TYPE_TRI, ST, NbST);
+    else if(ele < _index[7]) _setLast(ele - _index[6], 2, 3, 3, 3, TYPE_TRI, VT, NbVT);
+    else _setLast(ele - _index[7], 2, 3, 9, 3, TYPE_TRI, TT, NbTT);
   }
   else if(ele < _index[11]){ // quadrangles
-    if(ele < _index[9]) _setLast(ele - _index[8], 2, 4, 1, 4, SQ, NbSQ);
-    else if(ele < _index[10]) _setLast(ele - _index[9], 2, 4, 3, 4, VQ, NbVQ);
-    else _setLast(ele - _index[10], 2, 4, 9, 4, TQ, NbTQ);
+    if(ele < _index[9]) _setLast(ele - _index[8], 2, 4, 1, 4, TYPE_QUA, SQ, NbSQ);
+    else if(ele < _index[10]) _setLast(ele - _index[9], 2, 4, 3, 4, TYPE_QUA, VQ, NbVQ);
+    else _setLast(ele - _index[10], 2, 4, 9, 4, TYPE_QUA, TQ, NbTQ);
   }
   else if(ele < _index[14]){ // tetrahedra
-    if(ele < _index[12]) _setLast(ele - _index[11], 3, 4, 1, 6, SS, NbSS);
-    else if(ele < _index[13]) _setLast(ele - _index[12], 3, 4, 3, 6, VS, NbVS);
-    else _setLast(ele - _index[13], 3, 4, 9, 6, TS, NbTS);
+    if(ele < _index[12]) _setLast(ele - _index[11], 3, 4, 1, 6, TYPE_TET, SS, NbSS);
+    else if(ele < _index[13]) _setLast(ele - _index[12], 3, 4, 3, 6, TYPE_TET, VS, NbVS);
+    else _setLast(ele - _index[13], 3, 4, 9, 6, TYPE_TET, TS, NbTS);
   }
   else if(ele < _index[17]){ // hexahedra
-    if(ele < _index[15]) _setLast(ele - _index[14], 3, 8, 1, 12, SH, NbSH);
-    else if(ele < _index[16]) _setLast(ele - _index[15], 3, 8, 3, 12, VH, NbVH);
-    else _setLast(ele - _index[16], 3, 8, 9, 12, TH, NbTH);
+    if(ele < _index[15]) _setLast(ele - _index[14], 3, 8, 1, 12, TYPE_HEX, SH, NbSH);
+    else if(ele < _index[16]) _setLast(ele - _index[15], 3, 8, 3, 12, TYPE_HEX, VH, NbVH);
+    else _setLast(ele - _index[16], 3, 8, 9, 12, TYPE_HEX, TH, NbTH);
   }
   else if(ele < _index[20]){ // prisms
-    if(ele < _index[18]) _setLast(ele - _index[17], 3, 6, 1, 9, SI, NbSI);
-    else if(ele < _index[19]) _setLast(ele - _index[18], 3, 6, 3, 9, VI, NbVI);
-    else _setLast(ele - _index[19], 3, 6, 9, 9, TI, NbTI);
+    if(ele < _index[18]) _setLast(ele - _index[17], 3, 6, 1, 9, TYPE_PRI, SI, NbSI);
+    else if(ele < _index[19]) _setLast(ele - _index[18], 3, 6, 3, 9, TYPE_PRI, VI, NbVI);
+    else _setLast(ele - _index[19], 3, 6, 9, 9, TYPE_PRI, TI, NbTI);
   }
   else{ // pyramids
-    if(ele < _index[21]) _setLast(ele - _index[20], 3, 5, 1, 8, SY, NbSY);
-    else if(ele < _index[22]) _setLast(ele - _index[21], 3, 5, 3, 8, VY, NbVY);
-    else _setLast(ele - _index[22], 3, 5, 9, 8, TY, NbTY);
+    if(ele < _index[21]) _setLast(ele - _index[20], 3, 5, 1, 8, TYPE_PYR, SY, NbSY);
+    else if(ele < _index[22]) _setLast(ele - _index[21], 3, 5, 3, 8, TYPE_PYR, VY, NbVY);
+    else _setLast(ele - _index[22], 3, 5, 9, 8, TYPE_PYR, TY, NbTY);
   }
 }
 
@@ -326,6 +335,12 @@ int PViewDataList::getNumEdges(int step, int ent, int ele)
 {
   if(ele != _lastElement) _setLast(ele);
   return _lastNumEdges;
+}
+
+int PViewDataList::getType(int step, int ent, int ele)
+{
+  if(ele != _lastElement) _setLast(ele);
+  return _lastType;
 }
 
 void PViewDataList::_getString(int dim, int i, int step, std::string &str, 
@@ -757,23 +772,23 @@ void PViewDataList::getRawData(int type, std::vector<double> **l, int **ne,
   }
 }
 
-void PViewDataList::setOrder2(int numEdges)
+void PViewDataList::setOrder2(int type)
 {
-  int type = 0;
-  switch(numEdges){
-  case 1: type = MSH_LIN_3; break;
-  case 3: type = MSH_TRI_6; break;
-  case 4: type = MSH_QUA_9; break;
-  case 6: type = MSH_TET_10; break;
-  case 12: type = MSH_HEX_27; break;
-  case 9: type = MSH_PRI_18; break;
-  case 8: type = MSH_PYR_14; break;
+  int typeMSH = 0;
+  switch(type){
+  case TYPE_LIN: typeMSH = MSH_LIN_3; break;
+  case TYPE_TRI: typeMSH = MSH_TRI_6; break;
+  case TYPE_QUA: typeMSH = MSH_QUA_9; break;
+  case TYPE_TET: typeMSH = MSH_TET_10; break;
+  case TYPE_HEX: typeMSH = MSH_HEX_27; break;
+  case TYPE_PRI: typeMSH = MSH_PRI_18; break;
+  case TYPE_PYR: typeMSH = MSH_PYR_14; break;
   }
-  const gmshFunctionSpace *fs = &gmshFunctionSpaces::find(type);
+  const gmshFunctionSpace *fs = &gmshFunctionSpaces::find(typeMSH);
   if(!fs){
-    Msg::Error("Could not find function space for element type %d", type);
+    Msg::Error("Could not find function space for element type %d", typeMSH);
     return;
   }
-  setInterpolationMatrices(numEdges, fs->coefficients, fs->monomials,
+  setInterpolationMatrices(type, fs->coefficients, fs->monomials,
                            fs->coefficients, fs->monomials);
 }

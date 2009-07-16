@@ -7,6 +7,7 @@
 #include "MakeSimplex.h"
 #include "Numeric.h"
 #include "adaptiveData.h"
+#include "GmshDefines.h"
 
 static const int exn[13][12][2] = {
   {{0,0}}, // point
@@ -24,18 +25,18 @@ static const int exn[13][12][2] = {
    {2,6}, {3,7}, {4,5}, {4,7}, {5,6}, {6,7}} // hexa
 };
 
-static int numSimplexDec(int numEdges)
+static int numSimplexDec(int type)
 {
-  switch(numEdges){
-  case 4: return 2;
-  case 12: return 6;
-  case 9: return 3;
-  case 8: return 2;
+  switch(type){
+  case TYPE_QUA: return 2;
+  case TYPE_HEX: return 6;
+  case TYPE_PRI: return 3;
+  case TYPE_PYR: return 2;
   default: return 1;
   }
 }
 
-static void getSimplexDec(int numNodes, int numEdges, int i, 
+static void getSimplexDec(int numNodes, int numEdges, int type, int i, 
                           int &n0, int &n1, int &n2, int &n3,
                           int &nn, int &ne)
 {
@@ -44,17 +45,17 @@ static void getSimplexDec(int numNodes, int numEdges, int i,
                                 {1,2,3,7}, {1,6,2,7}, {1,5,6,7}};
   static const int pri[3][4] = {{0,1,2,4}, {0,2,4,5}, {0,3,4,5}};
   static const int pyr[2][4] = {{0,1,3,4}, {1,2,3,4}};
-  switch(numEdges){
-  case 4: 
+  switch(type){
+  case TYPE_QUA:
     n0 = qua[i][0]; n1 = qua[i][1]; n2 = qua[i][2]; nn = 3; ne = 3; 
     break;
-  case 12:
+  case TYPE_HEX:
     n0 = hex[i][0]; n1 = hex[i][1]; n2 = hex[i][2]; n3 = hex[i][3]; nn = 4; ne = 6;
     break;
-  case 9:
+  case TYPE_PRI:
     n0 = pri[i][0]; n1 = pri[i][1]; n2 = pri[i][2]; n3 = pri[i][3]; nn = 4; ne = 6;
     break;
-  case 8:
+  case TYPE_PYR:
     n0 = pyr[i][0]; n1 = pyr[i][1]; n2 = pyr[i][2]; n3 = pyr[i][3]; nn = 4; ne = 6;
     break;
   default:
@@ -265,11 +266,12 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
   int numNodes = vdata->getNumNodes(step, ent, ele);
   int numEdges = vdata->getNumEdges(step, ent, ele);
   int numComp = wdata->getNumComponents(wstep, ent, ele);
+  int type = vdata->getType(step, ent, ele);
 
-  for(int simplex = 0; simplex < numSimplexDec(numEdges); simplex++){
+  for(int simplex = 0; simplex < numSimplexDec(type); simplex++){
     double xp[12], yp[12], zp[12], valp[12][9];
     int n[4], np = 0, ep[12], nsn, nse;
-    getSimplexDec(numNodes, numEdges, simplex, n[0], n[1], n[2], n[3], nsn, nse);
+    getSimplexDec(numNodes, numEdges, type, simplex, n[0], n[1], n[2], n[3], nsn, nse);
 
     for(int i = 0; i < nse; i++){
       int n0 = exn[nse][i][0], n1 = exn[nse][i][1];

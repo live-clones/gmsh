@@ -116,6 +116,7 @@ class MPrism : public MElement {
     v.resize((num < 2) ? 3 : 4);
     _getFaceVertices(num, v);
   }
+  virtual int getType() const { return TYPE_PRI; }
   virtual int getTypeForMSH() const { return MSH_PRI_6; }
   virtual int getTypeForUNV() const { return 112; } // solid linear wedge
   virtual int getTypeForVTK() const { return 13; }

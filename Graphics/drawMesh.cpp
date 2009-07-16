@@ -52,14 +52,14 @@ static unsigned int getColorByElement(MElement *ele)
     return CTX::instance()->color.geom.selection;
   }
   else if(CTX::instance()->mesh.colorCarousel == 0){ // by element type
-    switch(ele->getNumEdges()){
-    case 1: return CTX::instance()->color.mesh.line;
-    case 3: return CTX::instance()->color.mesh.triangle;
-    case 4: return CTX::instance()->color.mesh.quadrangle;
-    case 6: return CTX::instance()->color.mesh.tetrahedron;
-    case 12: return CTX::instance()->color.mesh.hexahedron;
-    case 9: return CTX::instance()->color.mesh.prism;
-    case 8: return CTX::instance()->color.mesh.pyramid;
+    switch(ele->getType()){
+    case TYPE_LIN: return CTX::instance()->color.mesh.line;
+    case TYPE_TRI: return CTX::instance()->color.mesh.triangle;
+    case TYPE_QUA: return CTX::instance()->color.mesh.quadrangle;
+    case TYPE_TET: return CTX::instance()->color.mesh.tetrahedron;
+    case TYPE_HEX: return CTX::instance()->color.mesh.hexahedron;
+    case TYPE_PRI: return CTX::instance()->color.mesh.prism;
+    case TYPE_PYR: return CTX::instance()->color.mesh.pyramid;
     default: return CTX::instance()->color.mesh.vertex;
     }
   }

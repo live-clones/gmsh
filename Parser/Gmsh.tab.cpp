@@ -3945,87 +3945,87 @@ yyreduce:
       }
       else if(!strncmp((yyvsp[(1) - (1)].c), "SL", 2)){
 	ViewValueList = &ViewData->SL; ViewNumList = &ViewData->NbSL;
-        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(1);
+        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(TYPE_LIN);
       }
       else if(!strncmp((yyvsp[(1) - (1)].c), "VL", 2)){
 	ViewValueList = &ViewData->VL; ViewNumList = &ViewData->NbVL;
-        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(1);
+        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(TYPE_LIN);
       }
       else if(!strncmp((yyvsp[(1) - (1)].c), "TL", 2)){
 	ViewValueList = &ViewData->TL; ViewNumList = &ViewData->NbTL;
-        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(1);
+        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(TYPE_LIN);
       }
       else if(!strncmp((yyvsp[(1) - (1)].c), "ST", 2)){
 	ViewValueList = &ViewData->ST; ViewNumList = &ViewData->NbST;
-        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(3);
+        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(TYPE_TRI);
       }
       else if(!strncmp((yyvsp[(1) - (1)].c), "VT", 2)){
 	ViewValueList = &ViewData->VT; ViewNumList = &ViewData->NbVT;
-        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(3);
+        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(TYPE_TRI);
       }
       else if(!strncmp((yyvsp[(1) - (1)].c), "TT", 2)){
 	ViewValueList = &ViewData->TT; ViewNumList = &ViewData->NbTT;
-        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(3);
+        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(TYPE_TRI);
       }
       else if(!strncmp((yyvsp[(1) - (1)].c), "SQ", 2)){
 	ViewValueList = &ViewData->SQ; ViewNumList = &ViewData->NbSQ;
-        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(4);
+        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(TYPE_QUA);
       }
       else if(!strncmp((yyvsp[(1) - (1)].c), "VQ", 2)){
 	ViewValueList = &ViewData->VQ; ViewNumList = &ViewData->NbVQ;
-        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(4);
+        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(TYPE_QUA);
       }
       else if(!strncmp((yyvsp[(1) - (1)].c), "TQ", 2)){
 	ViewValueList = &ViewData->TQ; ViewNumList = &ViewData->NbTQ;
-        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(4);
+        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(TYPE_QUA);
       }
       else if(!strncmp((yyvsp[(1) - (1)].c), "SS", 2)){
 	ViewValueList = &ViewData->SS; ViewNumList = &ViewData->NbSS;
-        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(6);
+        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(TYPE_TET);
       }
       else if(!strncmp((yyvsp[(1) - (1)].c), "VS", 2)){
 	ViewValueList = &ViewData->VS; ViewNumList = &ViewData->NbVS;
-        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(6);
+        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(TYPE_TET);
       }
       else if(!strncmp((yyvsp[(1) - (1)].c), "TS", 2)){
 	ViewValueList = &ViewData->TS; ViewNumList = &ViewData->NbTS;
-        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(6);
+        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(TYPE_TET);
       }
       else if(!strncmp((yyvsp[(1) - (1)].c), "SH", 2)){
 	ViewValueList = &ViewData->SH; ViewNumList = &ViewData->NbSH;
-        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(12);
+        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(TYPE_HEX);
       }
       else if(!strncmp((yyvsp[(1) - (1)].c), "VH", 2)){
 	ViewValueList = &ViewData->VH; ViewNumList = &ViewData->NbVH;
-        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(12);
+        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(TYPE_HEX);
       }
       else if(!strncmp((yyvsp[(1) - (1)].c), "TH", 2)){
 	ViewValueList = &ViewData->TH; ViewNumList = &ViewData->NbTH;
-        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(12);
+        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(TYPE_HEX);
       }
       else if(!strncmp((yyvsp[(1) - (1)].c), "SI", 2)){
 	ViewValueList = &ViewData->SI; ViewNumList = &ViewData->NbSI;
-        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(9);
+        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(TYPE_PRI);
       }
       else if(!strncmp((yyvsp[(1) - (1)].c), "VI", 2)){
 	ViewValueList = &ViewData->VI; ViewNumList = &ViewData->NbVI;
-        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(9);
+        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(TYPE_PRI);
       }
       else if(!strncmp((yyvsp[(1) - (1)].c), "TI", 2)){
 	ViewValueList = &ViewData->TI; ViewNumList = &ViewData->NbTI;
-        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(9);
+        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(TYPE_PRI);
       }
       else if(!strncmp((yyvsp[(1) - (1)].c), "SY", 2)){
 	ViewValueList = &ViewData->SY; ViewNumList = &ViewData->NbSY;
-        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(8);
+        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(TYPE_PYR);
       }
       else if(!strncmp((yyvsp[(1) - (1)].c), "VY", 2)){
 	ViewValueList = &ViewData->VY; ViewNumList = &ViewData->NbVY;
-        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(8);
+        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(TYPE_PYR);
       }
       else if(!strncmp((yyvsp[(1) - (1)].c), "TY", 2)){
 	ViewValueList = &ViewData->TY; ViewNumList = &ViewData->NbTY;
-        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(8);
+        if(strlen((yyvsp[(1) - (1)].c)) > 2) ViewData->setOrder2(TYPE_PYR);
       }
       else{
 	yymsg(0, "Unknown element type '%s'", (yyvsp[(1) - (1)].c));	
@@ -4145,12 +4145,13 @@ yyreduce:
     {
 #if !defined(HAVE_NO_POST)
       int type = 
-	(ViewData->NbSL || ViewData->NbVL) ? 1 : 
-	(ViewData->NbST || ViewData->NbVT) ? 3 : 
-	(ViewData->NbSQ || ViewData->NbVQ) ? 4 : 
-	(ViewData->NbSS || ViewData->NbVS) ? 6 : 
-	(ViewData->NbSI || ViewData->NbVI) ? 9 : 
-      	(ViewData->NbSH || ViewData->NbVH) ? 12 : 
+	(ViewData->NbSL || ViewData->NbVL) ? TYPE_LIN : 
+	(ViewData->NbST || ViewData->NbVT) ? TYPE_TRI : 
+	(ViewData->NbSQ || ViewData->NbVQ) ? TYPE_QUA : 
+	(ViewData->NbSS || ViewData->NbVS) ? TYPE_TET : 
+	(ViewData->NbSY || ViewData->NbVY) ? TYPE_PYR : 
+	(ViewData->NbSI || ViewData->NbVI) ? TYPE_PRI : 
+      	(ViewData->NbSH || ViewData->NbVH) ? TYPE_HEX : 
 	0;
       ViewData->setInterpolationMatrices(type, ListOfListOfDouble2Matrix((yyvsp[(3) - (8)].l)), 
                                          ListOfListOfDouble2Matrix((yyvsp[(6) - (8)].l)));
@@ -4163,11 +4164,11 @@ yyreduce:
     {
 #if !defined(HAVE_NO_POST)
       int type = 
-	(ViewData->NbSL || ViewData->NbVL) ? 1 : 
-	(ViewData->NbST || ViewData->NbVT) ? 3 : 
-	(ViewData->NbSQ || ViewData->NbVQ) ? 4 : 
-	(ViewData->NbSS || ViewData->NbVS) ? 6 : 
-      	(ViewData->NbSH || ViewData->NbVH) ? 12 : 
+	(ViewData->NbSL || ViewData->NbVL) ? TYPE_LIN : 
+	(ViewData->NbST || ViewData->NbVT) ? TYPE_TRI : 
+	(ViewData->NbSQ || ViewData->NbVQ) ? TYPE_QUA : 
+	(ViewData->NbSS || ViewData->NbVS) ? TYPE_TET : 
+      	(ViewData->NbSH || ViewData->NbVH) ? TYPE_HEX : 
 	0;
       ViewData->setInterpolationMatrices(type, ListOfListOfDouble2Matrix((yyvsp[(3) - (14)].l)), 
                                          ListOfListOfDouble2Matrix((yyvsp[(6) - (14)].l)),

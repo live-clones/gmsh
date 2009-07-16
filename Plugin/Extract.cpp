@@ -4,6 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "GmshConfig.h"
+#include "GmshDefines.h"
 #include "Extract.h"
 
 #if defined(HAVE_MATH_EVAL)
@@ -98,45 +99,45 @@ void GMSH_ExtractPlugin::catchErrorMessage(char *errorMessage) const
 }
 
 static std::vector<double> *incrementList(PViewDataList *data, int numComp, 
-                                          int numEdges)
+                                          int type)
 {
-  switch(numEdges){
-  case 0:
+  switch(type){
+  case TYPE_PNT:
     if     (numComp == 1){ data->NbSP++; return &data->SP; }
     else if(numComp == 3){ data->NbVP++; return &data->VP; }
     else if(numComp == 9){ data->NbTP++; return &data->TP; }
     break;
-  case 1:
+  case TYPE_LIN:
     if     (numComp == 1){ data->NbSL++; return &data->SL; }
     else if(numComp == 3){ data->NbVL++; return &data->VL; }
     else if(numComp == 9){ data->NbTL++; return &data->TL; }
     break;
-  case 3: 
+  case TYPE_TRI:
     if     (numComp == 1){ data->NbST++; return &data->ST; }
     else if(numComp == 3){ data->NbVT++; return &data->VT; }
     else if(numComp == 9){ data->NbTT++; return &data->TT; }
     break;
-  case 4: 
+  case TYPE_QUA:
     if     (numComp == 1){ data->NbSQ++; return &data->SQ; }
     else if(numComp == 3){ data->NbVQ++; return &data->VQ; }
     else if(numComp == 9){ data->NbTQ++; return &data->TQ; }
     break;
-  case 6:
+  case TYPE_TET:
     if     (numComp == 1){ data->NbSS++; return &data->SS; }
     else if(numComp == 3){ data->NbVS++; return &data->VS; }
     else if(numComp == 9){ data->NbTS++; return &data->TS; }
     break;
-  case 12: 
+  case TYPE_HEX:
     if     (numComp == 1){ data->NbSH++; return &data->SH; }
     else if(numComp == 3){ data->NbVH++; return &data->VH; }
     else if(numComp == 9){ data->NbTH++; return &data->TH; }
     break;
-  case 9: 
+  case TYPE_PRI:
     if     (numComp == 1){ data->NbSI++; return &data->SI; }
     else if(numComp == 3){ data->NbVI++; return &data->VI; }
     else if(numComp == 9){ data->NbTI++; return &data->TI; }
     break;
-  case 8:
+  case TYPE_PYR:
     if     (numComp == 1){ data->NbSY++; return &data->SY; }
     else if(numComp == 3){ data->NbVY++; return &data->VY; }
     else if(numComp == 9){ data->NbTY++; return &data->TY; }
@@ -232,9 +233,9 @@ PView *GMSH_ExtractPlugin::execute(PView *v)
     for(int ele = 0; ele < data1->getNumElements(0, ent); ele++){
       if(data1->skipElement(0, ent, ele)) continue;
       int numNodes = data1->getNumNodes(0, ent, ele);
-      int numEdges = data1->getNumEdges(0, ent, ele);
+      int type = data1->getType(0, ent, ele);
       int numComp = data1->getNumComponents(0, ent, ele);
-      std::vector<double> *out = incrementList(data2, numComp2, numEdges);
+      std::vector<double> *out = incrementList(data2, numComp2, type);
       std::vector<double> x(numNodes), y(numNodes), z(numNodes);
       for(int nod = 0; nod < numNodes; nod++)
         data1->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);

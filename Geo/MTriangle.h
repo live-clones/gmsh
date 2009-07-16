@@ -97,6 +97,7 @@ class MTriangle : public MElement {
     v.resize(3);
     _getFaceVertices(v);
   }
+  virtual int getType() const { return TYPE_TRI; }
   virtual int getTypeForMSH() const { return MSH_TRI_3; }
   virtual int getTypeForUNV() const { return 91; } // thin shell linear triangle
   virtual int getTypeForVTK() const { return 5; }

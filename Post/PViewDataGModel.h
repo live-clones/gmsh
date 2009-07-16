@@ -158,6 +158,7 @@ class PViewDataGModel : public PViewData {
   void getValue(int step, int ent, int ele, int node, int comp, double &val);
   void setValue(int step, int ent, int ele, int node, int comp, double val);
   int getNumEdges(int step, int ent, int ele);
+  int getType(int step, int ent, int ele);
   void revertElement(int step, int ent, int ele);
   void smooth();
   bool skipEntity(int step, int ent);

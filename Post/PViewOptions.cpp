@@ -6,6 +6,7 @@
 #include <string.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "GmshDefines.h"
 #include "PViewOptions.h"
 
 #if defined(HAVE_MATH_EVAL)
@@ -140,17 +141,17 @@ void PViewOptions::createGeneralRaise()
 #endif
 }
 
-bool PViewOptions::skipElement(int numEdges)
+bool PViewOptions::skipElement(int type)
 {
-  switch(numEdges){
-  case 0: return !drawPoints;
-  case 1: return !drawLines;
-  case 3: return !drawTriangles;
-  case 4: return !drawQuadrangles;
-  case 6: return !drawTetrahedra;
-  case 12: return !drawHexahedra;
-  case 9: return !drawPrisms;
-  case 8: return !drawPyramids;
+  switch(type){
+  case TYPE_PNT: return !drawPoints;
+  case TYPE_LIN: return !drawLines;
+  case TYPE_TRI: return !drawTriangles;
+  case TYPE_QUA: return !drawQuadrangles;
+  case TYPE_TET: return !drawTetrahedra;
+  case TYPE_HEX: return !drawHexahedra;
+  case TYPE_PRI: return !drawPrisms;
+  case TYPE_PYR: return !drawPyramids;
   default: return true;
   }
 }

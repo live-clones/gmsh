@@ -5,6 +5,7 @@
 
 #include "Eigenvalues.h"
 #include "Numeric.h"
+#include "GmshDefines.h"
 
 StringXNumber EigenvaluesOptions_Number[] = {
   {GMSH_FULLRC, "iView", NULL, -1.}
@@ -50,17 +51,17 @@ void GMSH_EigenvaluesPlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Eigenvalues failed...");
 }
 
-static std::vector<double> *incrementList(PViewDataList *data2, int numEdges)
+static std::vector<double> *incrementList(PViewDataList *data2, int type)
 {
-  switch(numEdges){
-  case 0: data2->NbSP++; return &data2->SP;
-  case 1: data2->NbSL++; return &data2->SL;
-  case 3: data2->NbST++; return &data2->ST;
-  case 4: data2->NbSQ++; return &data2->SQ;
-  case 6: data2->NbSS++; return &data2->SS;
-  case 12: data2->NbSH++; return &data2->SH;
-  case 9: data2->NbSI++; return &data2->SI;
-  case 8: data2->NbSY++; return &data2->SY;
+  switch(type){
+  case TYPE_PNT: data2->NbSP++; return &data2->SP;
+  case TYPE_LIN: data2->NbSL++; return &data2->SL;
+  case TYPE_TRI: data2->NbST++; return &data2->ST;
+  case TYPE_QUA: data2->NbSQ++; return &data2->SQ;
+  case TYPE_TET: data2->NbSS++; return &data2->SS;
+  case TYPE_HEX: data2->NbSH++; return &data2->SH;
+  case TYPE_PRI: data2->NbSI++; return &data2->SI;
+  case TYPE_PYR: data2->NbSY++; return &data2->SY;
   default: return 0;
   }
 }
@@ -91,10 +92,10 @@ PView *GMSH_EigenvaluesPlugin::execute(PView *v)
       if(data1->skipElement(0, ent, ele)) continue;
       int numComp = data1->getNumComponents(0, ent, ele);
       if(numComp != 9) continue;
-      int numEdges = data1->getNumEdges(0, ent, ele);
-      std::vector<double> *outmin = incrementList(dmin, numEdges);
-      std::vector<double> *outmid = incrementList(dmid, numEdges);
-      std::vector<double> *outmax = incrementList(dmax, numEdges);
+      int type = data1->getType(0, ent, ele);
+      std::vector<double> *outmin = incrementList(dmin, type);
+      std::vector<double> *outmid = incrementList(dmid, type);
+      std::vector<double> *outmax = incrementList(dmax, type);
       if(!outmin || !outmid || !outmax) continue;
       int numNodes = data1->getNumNodes(0, ent, ele);
       double xyz[3][8];

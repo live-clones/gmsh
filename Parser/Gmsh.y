@@ -321,87 +321,87 @@ Element :
       }
       else if(!strncmp($1, "SL", 2)){
 	ViewValueList = &ViewData->SL; ViewNumList = &ViewData->NbSL;
-        if(strlen($1) > 2) ViewData->setOrder2(1);
+        if(strlen($1) > 2) ViewData->setOrder2(TYPE_LIN);
       }
       else if(!strncmp($1, "VL", 2)){
 	ViewValueList = &ViewData->VL; ViewNumList = &ViewData->NbVL;
-        if(strlen($1) > 2) ViewData->setOrder2(1);
+        if(strlen($1) > 2) ViewData->setOrder2(TYPE_LIN);
       }
       else if(!strncmp($1, "TL", 2)){
 	ViewValueList = &ViewData->TL; ViewNumList = &ViewData->NbTL;
-        if(strlen($1) > 2) ViewData->setOrder2(1);
+        if(strlen($1) > 2) ViewData->setOrder2(TYPE_LIN);
       }
       else if(!strncmp($1, "ST", 2)){
 	ViewValueList = &ViewData->ST; ViewNumList = &ViewData->NbST;
-        if(strlen($1) > 2) ViewData->setOrder2(3);
+        if(strlen($1) > 2) ViewData->setOrder2(TYPE_TRI);
       }
       else if(!strncmp($1, "VT", 2)){
 	ViewValueList = &ViewData->VT; ViewNumList = &ViewData->NbVT;
-        if(strlen($1) > 2) ViewData->setOrder2(3);
+        if(strlen($1) > 2) ViewData->setOrder2(TYPE_TRI);
       }
       else if(!strncmp($1, "TT", 2)){
 	ViewValueList = &ViewData->TT; ViewNumList = &ViewData->NbTT;
-        if(strlen($1) > 2) ViewData->setOrder2(3);
+        if(strlen($1) > 2) ViewData->setOrder2(TYPE_TRI);
       }
       else if(!strncmp($1, "SQ", 2)){
 	ViewValueList = &ViewData->SQ; ViewNumList = &ViewData->NbSQ;
-        if(strlen($1) > 2) ViewData->setOrder2(4);
+        if(strlen($1) > 2) ViewData->setOrder2(TYPE_QUA);
       }
       else if(!strncmp($1, "VQ", 2)){
 	ViewValueList = &ViewData->VQ; ViewNumList = &ViewData->NbVQ;
-        if(strlen($1) > 2) ViewData->setOrder2(4);
+        if(strlen($1) > 2) ViewData->setOrder2(TYPE_QUA);
       }
       else if(!strncmp($1, "TQ", 2)){
 	ViewValueList = &ViewData->TQ; ViewNumList = &ViewData->NbTQ;
-        if(strlen($1) > 2) ViewData->setOrder2(4);
+        if(strlen($1) > 2) ViewData->setOrder2(TYPE_QUA);
       }
       else if(!strncmp($1, "SS", 2)){
 	ViewValueList = &ViewData->SS; ViewNumList = &ViewData->NbSS;
-        if(strlen($1) > 2) ViewData->setOrder2(6);
+        if(strlen($1) > 2) ViewData->setOrder2(TYPE_TET);
       }
       else if(!strncmp($1, "VS", 2)){
 	ViewValueList = &ViewData->VS; ViewNumList = &ViewData->NbVS;
-        if(strlen($1) > 2) ViewData->setOrder2(6);
+        if(strlen($1) > 2) ViewData->setOrder2(TYPE_TET);
       }
       else if(!strncmp($1, "TS", 2)){
 	ViewValueList = &ViewData->TS; ViewNumList = &ViewData->NbTS;
-        if(strlen($1) > 2) ViewData->setOrder2(6);
+        if(strlen($1) > 2) ViewData->setOrder2(TYPE_TET);
       }
       else if(!strncmp($1, "SH", 2)){
 	ViewValueList = &ViewData->SH; ViewNumList = &ViewData->NbSH;
-        if(strlen($1) > 2) ViewData->setOrder2(12);
+        if(strlen($1) > 2) ViewData->setOrder2(TYPE_HEX);
       }
       else if(!strncmp($1, "VH", 2)){
 	ViewValueList = &ViewData->VH; ViewNumList = &ViewData->NbVH;
-        if(strlen($1) > 2) ViewData->setOrder2(12);
+        if(strlen($1) > 2) ViewData->setOrder2(TYPE_HEX);
       }
       else if(!strncmp($1, "TH", 2)){
 	ViewValueList = &ViewData->TH; ViewNumList = &ViewData->NbTH;
-        if(strlen($1) > 2) ViewData->setOrder2(12);
+        if(strlen($1) > 2) ViewData->setOrder2(TYPE_HEX);
       }
       else if(!strncmp($1, "SI", 2)){
 	ViewValueList = &ViewData->SI; ViewNumList = &ViewData->NbSI;
-        if(strlen($1) > 2) ViewData->setOrder2(9);
+        if(strlen($1) > 2) ViewData->setOrder2(TYPE_PRI);
       }
       else if(!strncmp($1, "VI", 2)){
 	ViewValueList = &ViewData->VI; ViewNumList = &ViewData->NbVI;
-        if(strlen($1) > 2) ViewData->setOrder2(9);
+        if(strlen($1) > 2) ViewData->setOrder2(TYPE_PRI);
       }
       else if(!strncmp($1, "TI", 2)){
 	ViewValueList = &ViewData->TI; ViewNumList = &ViewData->NbTI;
-        if(strlen($1) > 2) ViewData->setOrder2(9);
+        if(strlen($1) > 2) ViewData->setOrder2(TYPE_PRI);
       }
       else if(!strncmp($1, "SY", 2)){
 	ViewValueList = &ViewData->SY; ViewNumList = &ViewData->NbSY;
-        if(strlen($1) > 2) ViewData->setOrder2(8);
+        if(strlen($1) > 2) ViewData->setOrder2(TYPE_PYR);
       }
       else if(!strncmp($1, "VY", 2)){
 	ViewValueList = &ViewData->VY; ViewNumList = &ViewData->NbVY;
-        if(strlen($1) > 2) ViewData->setOrder2(8);
+        if(strlen($1) > 2) ViewData->setOrder2(TYPE_PYR);
       }
       else if(!strncmp($1, "TY", 2)){
 	ViewValueList = &ViewData->TY; ViewNumList = &ViewData->NbTY;
-        if(strlen($1) > 2) ViewData->setOrder2(8);
+        if(strlen($1) > 2) ViewData->setOrder2(TYPE_PYR);
       }
       else{
 	yymsg(0, "Unknown element type '%s'", $1);	
@@ -504,12 +504,13 @@ InterpolationMatrix :
     {
 #if !defined(HAVE_NO_POST)
       int type = 
-	(ViewData->NbSL || ViewData->NbVL) ? 1 : 
-	(ViewData->NbST || ViewData->NbVT) ? 3 : 
-	(ViewData->NbSQ || ViewData->NbVQ) ? 4 : 
-	(ViewData->NbSS || ViewData->NbVS) ? 6 : 
-	(ViewData->NbSI || ViewData->NbVI) ? 9 : 
-      	(ViewData->NbSH || ViewData->NbVH) ? 12 : 
+	(ViewData->NbSL || ViewData->NbVL) ? TYPE_LIN : 
+	(ViewData->NbST || ViewData->NbVT) ? TYPE_TRI : 
+	(ViewData->NbSQ || ViewData->NbVQ) ? TYPE_QUA : 
+	(ViewData->NbSS || ViewData->NbVS) ? TYPE_TET : 
+	(ViewData->NbSY || ViewData->NbVY) ? TYPE_PYR : 
+	(ViewData->NbSI || ViewData->NbVI) ? TYPE_PRI : 
+      	(ViewData->NbSH || ViewData->NbVH) ? TYPE_HEX : 
 	0;
       ViewData->setInterpolationMatrices(type, ListOfListOfDouble2Matrix($3), 
                                          ListOfListOfDouble2Matrix($6));
@@ -522,11 +523,11 @@ InterpolationMatrix :
     {
 #if !defined(HAVE_NO_POST)
       int type = 
-	(ViewData->NbSL || ViewData->NbVL) ? 1 : 
-	(ViewData->NbST || ViewData->NbVT) ? 3 : 
-	(ViewData->NbSQ || ViewData->NbVQ) ? 4 : 
-	(ViewData->NbSS || ViewData->NbVS) ? 6 : 
-      	(ViewData->NbSH || ViewData->NbVH) ? 12 : 
+	(ViewData->NbSL || ViewData->NbVL) ? TYPE_LIN : 
+	(ViewData->NbST || ViewData->NbVT) ? TYPE_TRI : 
+	(ViewData->NbSQ || ViewData->NbVQ) ? TYPE_QUA : 
+	(ViewData->NbSS || ViewData->NbVS) ? TYPE_TET : 
+      	(ViewData->NbSH || ViewData->NbVH) ? TYPE_HEX : 
 	0;
       ViewData->setInterpolationMatrices(type, ListOfListOfDouble2Matrix($3), 
                                          ListOfListOfDouble2Matrix($6),

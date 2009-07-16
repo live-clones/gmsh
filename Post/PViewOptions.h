@@ -113,8 +113,8 @@ class PViewOptions {
   // create/destroy math evaluators for general raise option
   void createGeneralRaise();
   void destroyGeneralRaise();
-  // return true if one should not draw elements with numEdges edges
-  bool skipElement(int numEdges);
+  // return true if one should not draw elements with type type
+  bool skipElement(int type);
 };
 
 #endif

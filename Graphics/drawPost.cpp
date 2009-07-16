@@ -7,6 +7,7 @@
 #include <algorithm>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "GmshDefines.h"
 #include "drawContext.h"
 #include "Numeric.h"
 #include "Iso.h"
@@ -181,7 +182,7 @@ static void applyGeneralRaise(PView *p, int numNodes, int numComp,
 }
 
 static void changeCoordinates(PView *p, int ient, int iele,
-                              int numNodes, int numEdges, int numComp, 
+                              int numNodes, int type, int numComp, 
                               double xyz[NMAX][3], double val[NMAX][9])
 {
   PViewOptions *opt = p->getOptions();
@@ -227,9 +228,9 @@ static void changeCoordinates(PView *p, int ient, int iele,
     }
   }
 
-  if(opt->normalRaise && numEdges >= 1 && numEdges <= 4){
+  if(opt->normalRaise && (type == TYPE_LIN || type == TYPE_TRI || type ==TYPE_QUA)){
     SVector3 n;
-    if(numEdges == 1){
+    if(type == TYPE_LIN){
       // assumes lines in z=const plane, and raises in that plane
       double x[2] = {xyz[0][0], xyz[1][0]};
       double y[2] = {xyz[0][1], xyz[1][1]};
@@ -781,38 +782,38 @@ static void addScalarPyramid(PView *p, double xyz[NMAX][3], double val[NMAX][9],
     addScalarTetrahedron(p, xyz, val, pre, is[i][0], is[i][1], is[i][2], is[i][3]);
 }
 
-static void addOutlineElement(PView *p, int numEdges, double xyz[NMAX][3], bool pre)
+static void addOutlineElement(PView *p, int type, double xyz[NMAX][3], bool pre)
 {
   PViewOptions *opt = p->getOptions();
-  switch(numEdges){
-  case 0: addOutlinePoint(p, xyz, opt->color.point, pre); break;
-  case 1: addOutlineLine(p, xyz, opt->color.line, pre); break;
-  case 3: addOutlineTriangle(p, xyz, opt->color.triangle, pre); break;
-  case 4: addOutlineQuadrangle(p, xyz, opt->color.quadrangle, pre); break;
-  case 6: addOutlineTetrahedron(p, xyz, opt->color.tetrahedron, pre); break;
-  case 12: addOutlineHexahedron(p, xyz, opt->color.hexahedron, pre); break;
-  case 9: addOutlinePrism(p, xyz, opt->color.prism, pre); break;
-  case 8: addOutlinePyramid(p, xyz, opt->color.pyramid, pre); break;
+  switch(type){
+  case TYPE_PNT: addOutlinePoint(p, xyz, opt->color.point, pre); break;
+  case TYPE_LIN: addOutlineLine(p, xyz, opt->color.line, pre); break;
+  case TYPE_TRI: addOutlineTriangle(p, xyz, opt->color.triangle, pre); break;
+  case TYPE_QUA: addOutlineQuadrangle(p, xyz, opt->color.quadrangle, pre); break;
+  case TYPE_TET: addOutlineTetrahedron(p, xyz, opt->color.tetrahedron, pre); break;
+  case TYPE_HEX: addOutlineHexahedron(p, xyz, opt->color.hexahedron, pre); break;
+  case TYPE_PRI: addOutlinePrism(p, xyz, opt->color.prism, pre); break;
+  case TYPE_PYR: addOutlinePyramid(p, xyz, opt->color.pyramid, pre); break;
   }
 }
 
-static void addScalarElement(PView *p, int numEdges, double xyz[NMAX][3],
+static void addScalarElement(PView *p, int type, double xyz[NMAX][3],
 			     double val[NMAX][9], bool pre)
 {
-  switch(numEdges){
-  case 0: addScalarPoint(p, xyz, val, pre); break;
-  case 1: addScalarLine(p, xyz, val, pre); break;
-  case 3: addScalarTriangle(p, xyz, val, pre); break;
-  case 4: addScalarQuadrangle(p, xyz, val, pre); break;
-  case 6: addScalarTetrahedron(p, xyz, val, pre); break;
-  case 12: addScalarHexahedron(p, xyz, val, pre); break;
-  case 9: addScalarPrism(p, xyz, val, pre); break;
-  case 8: addScalarPyramid(p, xyz, val, pre); break;
+  switch(type){
+  case TYPE_PNT: addScalarPoint(p, xyz, val, pre); break;
+  case TYPE_LIN: addScalarLine(p, xyz, val, pre); break;
+  case TYPE_TRI: addScalarTriangle(p, xyz, val, pre); break;
+  case TYPE_QUA: addScalarQuadrangle(p, xyz, val, pre); break;
+  case TYPE_TET: addScalarTetrahedron(p, xyz, val, pre); break;
+  case TYPE_HEX: addScalarHexahedron(p, xyz, val, pre); break;
+  case TYPE_PRI: addScalarPrism(p, xyz, val, pre); break;
+  case TYPE_PYR: addScalarPyramid(p, xyz, val, pre); break;
   }
 }
 
 static void addVectorElement(PView *p, int ient, int iele, int numNodes, 
-			     int numEdges, double xyz[NMAX][3], double val[NMAX][9], 
+			     int type, double xyz[NMAX][3], double val[NMAX][9], 
 			     bool pre)
 {
   // use adaptive data if available
@@ -832,7 +833,7 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
     double min = opt->tmpMin, max = opt->tmpMax;
     opt->tmpMin = opt->externalMin;
     opt->tmpMax = opt->externalMax;
-    addScalarElement(p, numEdges, xyz, val2, pre);
+    addScalarElement(p, type, xyz, val2, pre);
     opt->tmpMin = min;
     opt->tmpMax = max;
 
@@ -918,7 +919,7 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
   }
 }
 
-static void addTensorElement(PView *p, int numNodes, int numEdges,
+static void addTensorElement(PView *p, int numNodes, int type,
 			     double xyz[NMAX][3], double val[NMAX][9], bool pre)
 {
   PViewOptions *opt = p->getOptions();
@@ -926,7 +927,7 @@ static void addTensorElement(PView *p, int numNodes, int numEdges,
   if(opt->tensorType == PViewOptions::VonMises){
     for(int i = 0; i < numNodes; i++)
       val[i][0] = ComputeVonMises(val[i]);
-    addScalarElement(p, numEdges, xyz, val, pre);
+    addScalarElement(p, type, xyz, val, pre);
   }
 }
 
@@ -943,8 +944,8 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
     if(data->skipEntity(opt->timeStep, ent)) continue;
     for(int i = 0; i < data->getNumElements(opt->timeStep, ent); i++){
       if(data->skipElement(opt->timeStep, ent, i, true)) continue;
-      int numEdges = data->getNumEdges(opt->timeStep, ent, i);
-      if(opt->skipElement(numEdges)) continue;
+      int type = data->getType(opt->timeStep, ent, i);
+      if(opt->skipElement(type)) continue;
       int numComp = data->getNumComponents(opt->timeStep, ent, i);
       int numNodes = data->getNumNodes(opt->timeStep, ent, i);
       if(numNodes > 20){
@@ -960,7 +961,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
         for(int k = 0; k < numComp; k++)
           data->getValue(opt->timeStep, ent, i, j, k, val[j][k]);
       }
-      changeCoordinates(p, ent, i, numNodes, numEdges, numComp, xyz, val);
+      changeCoordinates(p, ent, i, numNodes, type, numComp, xyz, val);
       int dim = data->getDimension(opt->timeStep, ent, i);
       if(!isElementVisible(opt, dim, numNodes, xyz)) continue;
 
@@ -968,7 +969,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
         opt->tmpBBox += SPoint3(xyz[j][0], xyz[j][1], xyz[j][2]);
       
       if(opt->showElement && !data->useGaussPoints()) 
-        addOutlineElement(p, numEdges, xyz, preprocessNormalsOnly);
+        addOutlineElement(p, type, xyz, preprocessNormalsOnly);
       
       if(opt->intervalsType != PViewOptions::Numeric){
 	if(data->useGaussPoints()){
@@ -980,19 +981,19 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
 	    for(int k = 0; k < numComp; k++)
 	      val2[0][k] = val[j][k];
 	    if(numComp == 1 && opt->drawScalars)
-	      addScalarElement(p, 0, xyz2, val2, preprocessNormalsOnly);
+	      addScalarElement(p, TYPE_PNT, xyz2, val2, preprocessNormalsOnly);
 	    else if(numComp == 3 && opt->drawVectors)
-	      addVectorElement(p, ent, i, 1, 0, xyz2, val2, preprocessNormalsOnly);
+	      addVectorElement(p, ent, i, 1, TYPE_PNT, xyz2, val2, preprocessNormalsOnly);
 	    else if(numComp == 9 && opt->drawTensors)
-	      addTensorElement(p, 1, 0, xyz2, val2, preprocessNormalsOnly);
+	      addTensorElement(p, 1, TYPE_PNT, xyz2, val2, preprocessNormalsOnly);
 	  }
 	}
         else if(numComp == 1 && opt->drawScalars)
-          addScalarElement(p, numEdges, xyz, val, preprocessNormalsOnly);
+          addScalarElement(p, type, xyz, val, preprocessNormalsOnly);
         else if(numComp == 3 && opt->drawVectors)
-          addVectorElement(p, ent, i, numNodes, numEdges, xyz, val, preprocessNormalsOnly);
+          addVectorElement(p, ent, i, numNodes, type, xyz, val, preprocessNormalsOnly);
         else if(numComp == 9 && opt->drawTensors)
-          addTensorElement(p, numNodes, numEdges, xyz, val, preprocessNormalsOnly);
+          addTensorElement(p, numNodes, type, xyz, val, preprocessNormalsOnly);
       }
     }
   }
@@ -1225,8 +1226,8 @@ static void drawGlyphs(drawContext *ctx, PView *p)
     if(data->skipEntity(opt->timeStep, ent)) continue;
     for(int i = 0; i < data->getNumElements(opt->timeStep, ent); i++){
       if(data->skipElement(opt->timeStep, ent, i, true)) continue;
-      int numEdges = data->getNumEdges(opt->timeStep, ent, i);
-      if(opt->skipElement(numEdges)) continue;
+      int type = data->getType(opt->timeStep, ent, i);
+      if(opt->skipElement(type)) continue;
       int dim = data->getDimension(opt->timeStep, ent, i);
       int numComp = data->getNumComponents(opt->timeStep, ent, i);
       int numNodes = data->getNumNodes(opt->timeStep, ent, i);
@@ -1235,7 +1236,7 @@ static void drawGlyphs(drawContext *ctx, PView *p)
         for(int k = 0; k < numComp; k++)
           data->getValue(opt->timeStep, ent, i, j, k, val[j][k]);
       }
-      changeCoordinates(p, ent, i, numNodes, numEdges, numComp, xyz, val);
+      changeCoordinates(p, ent, i, numNodes, type, numComp, xyz, val);
       if(opt->intervalsType == PViewOptions::Numeric)
         drawNumberGlyphs(ctx, p, numNodes, numComp, xyz, val);
       if(dim == 2 && opt->normals)

@@ -38,6 +38,7 @@ class MPoint : public MElement {
   virtual MFace getFace(int num){ return MFace(); }
   virtual int getNumFacesRep(){ return 0; }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n){}
+  virtual int getType() const { return TYPE_PNT; }
   virtual int getTypeForMSH() const { return MSH_PNT; }
   virtual int getTypeForVTK() const { return 1; }
   virtual const char *getStringForPOS() const { return "SP"; }

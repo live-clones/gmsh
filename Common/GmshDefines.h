@@ -38,6 +38,18 @@
 #define FORMAT_MED           33
 #define FORMAT_DIFF          34
 
+// Element types
+#define TYPE_PNT 1
+#define TYPE_LIN 2
+#define TYPE_TRI 3
+#define TYPE_QUA 4
+#define TYPE_TET 5
+#define TYPE_PYR 6
+#define TYPE_PRI 7
+#define TYPE_HEX 8
+#define TYPE_POLYG 9
+#define TYPE_POLYH 10
+
 // Element types in .msh file format
 #define MSH_LIN_2  1
 #define MSH_TRI_3  2
