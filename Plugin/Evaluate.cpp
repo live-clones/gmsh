@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <vector>
 #include "GmshConfig.h"
 #include "Evaluate.h"
 #include "OctreePost.h"
@@ -189,26 +190,25 @@ PView *GMSH_EvaluatePlugin::execute(PView *v)
     for(int ent = 0; ent < data1->getNumEntities(step); ent++){
       for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
 	if(data1->skipElement(step, ent, ele)) continue;
+        int numComp = data1->getNumComponents(step, ent, ele);
+        int numComp2 = data2->getNumComponents(step2, ent, ele);
         for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++){
           double x, y, z;
           int tag = data1->getNode(step, ent, ele, nod, x, y, z);
           if(tag) continue; // node has already been modified
-
-          double v[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
-	  for(int comp = 0; comp < data1->getNumComponents(step, ent, ele); comp++)
+          std::vector<double> v(numComp, 0.), w(numComp2, 0.);
+	  for(int comp = 0; comp < numComp; comp++)
 	    data1->getValue(step, ent, ele, nod, comp, v[comp]);
-
-          double w[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
           if(octree){
-            if(!octree->searchScalar(x, y, z, w, step2))
-              if(!octree->searchVector(x, y, z, w, step2))
-                octree->searchTensor(x, y, z, w, step2);
+            if(!octree->searchScalar(x, y, z, &w[0], step2))
+              if(!octree->searchVector(x, y, z, &w[0], step2))
+                octree->searchTensor(x, y, z, &w[0], step2);
           }
           else
-            for(int comp = 0; comp < data2->getNumComponents(step2, ent, ele); comp++)
+            for(int comp = 0; comp < numComp2; comp++)
               data2->getValue(step2, ent, ele, nod, comp, w[comp]);
           
-	  for(int comp = 0; comp < data1->getNumComponents(step, ent, ele); comp++){
+	  for(int comp = 0; comp < numComp; comp++){
             if(component >= 0 && component != comp) continue;
             char *names[] = 
               {"x", "y", "z", "Time", "TimeStep",

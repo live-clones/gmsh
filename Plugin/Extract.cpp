@@ -246,7 +246,7 @@ PView *GMSH_ExtractPlugin::execute(PView *v)
       int timeEnd = (timeStep < 0) ? -timeStep : timeStep + 1;
       for(int step = timeBeg; step < timeEnd; step++){
         for(int nod = 0; nod < numNodes; nod++){
-          double v[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
+          std::vector<double> v(numComp);
           for(int comp = 0; comp < numComp; comp++)
 	    data1->getValue(step, ent, ele, nod, comp, v[comp]);
           for(int comp = 0; comp < numComp2; comp++){
