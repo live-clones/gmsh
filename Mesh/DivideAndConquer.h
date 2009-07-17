@@ -26,14 +26,8 @@ struct _CDLIST{
 };
 
 typedef struct{
-  PointNumero search;
-  PointNumero already;
-}HalfTriangle;
-
-typedef struct{
-  HalfTriangle *info;
   PointNumero *t;
-  int t_length, info_length;
+  int t_length;
 }STriangle;
 
 typedef struct{
@@ -50,15 +44,22 @@ typedef struct{
   PointNumero a, b, c;
 }Triangle;
 
+
 class DocRecord{
  public:
   int numPoints;        // number of points
   PointRecord *points;  // points to triangulate
   int numTriangles;     // number of triangles
   Triangle *triangles;  // 2D results
+  STriangle *striangle; // connected points
   DocRecord(int n);
+  double & x(int i)
+  {return points[i].where.v;} 
+  double & y(int i)
+  {return points[i].where.h;} 
   ~DocRecord();
   void MakeMeshWithPoints();
+  void MakeVoronoi();
 };
 
 #endif

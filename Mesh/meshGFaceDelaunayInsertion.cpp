@@ -69,7 +69,9 @@ void circumCenterMetric(double *pa, double *pb, double *pc,
     d * (pa[1] * pa[1] - pc[1] * pc[1]) + 
     2. * b * (pa[0] * pa[1] - pc[0] * pc[1]);
 
-  sys2x2(sys, rhs, x);
+  if (!sys2x2(sys, rhs, x)){
+    //    printf("%g %g %g\n",a,b,d);
+  }
 
   Radius2 = 
     (x[0] - pa[0]) * (x[0] - pa[0]) * a +
@@ -618,15 +620,15 @@ static void insertAPoint(GFace *gf,
     		  uv[0] * vSizes [ptin->tri()->getVertex(1)->getNum()] + 
     		  uv[1] * vSizes [ptin->tri()->getVertex(2)->getNum()]); 
     double lc = BGM_MeshSize(gf,center[0],center[1],p.x(),p.y(),p.z());
-    SMetric3 metr = BGM_MeshMetric(gf,center[0],center[1],p.x(),p.y(),p.z());
+    //SMetric3 metr = BGM_MeshMetric(gf,center[0],center[1],p.x(),p.y(),p.z());
     //    vMetricsBGM.push_back(metr);
     vSizesBGM.push_back(lc);
     vSizes.push_back(lc1);
     Us.push_back(center[0]);
     Vs.push_back(center[1]);
     
-    if (!insertVertex(gf, v, center, worst, AllTris,ActiveTris, vSizes, vSizesBGM,vMetricsBGM, 
-		      Us, Vs, metric) || !p.succeeded()) {
+    if (!p.succeeded() || !insertVertex(gf, v, center, worst, AllTris,ActiveTris, vSizes, vSizesBGM,vMetricsBGM, 
+					Us, Vs, metric) ) {
       //      Msg::Debug("2D Delaunay : a cavity is not star shaped");
       AllTris.erase(it);
       worst->forceRadius(-1);

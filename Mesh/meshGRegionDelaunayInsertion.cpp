@@ -787,7 +787,6 @@ void insertVerticesInRegion (GRegion *gr)
     if(worst->isDeleted()){
       myFactory.Free(worst);
       allTets.erase(allTets.begin());
-      //Msg::Info("Worst tet is deleted");
     }
     else{
       if(ITER++ %5000 == 0)

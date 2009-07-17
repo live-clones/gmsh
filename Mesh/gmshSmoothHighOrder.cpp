@@ -21,6 +21,7 @@
 #include "gmshLaplace.h"
 #include "gmshElasticity.h"
 #include "gmshLinearSystemGmm.h"
+#include "gmshLinearSystemCSR.h"
 #include "GFace.h"
 #include "GRegion.h"
 #include "Context.h"
@@ -428,9 +429,9 @@ void gmshHighOrderSmoother::computeMetricVector (GFace *gf,
 void gmshHighOrderSmoother::smooth_metric ( std::vector<MElement*>  & all, GFace *gf)
 {
   gmshLinearSystemGmm<double> *lsys = new gmshLinearSystemGmm<double>;
-  //  lsys->setNoisy(1);
+  lsys->setNoisy(1);
   lsys->setGmres(1);
-  lsys->setPrec(1.e-7);
+  lsys->setPrec(1.e-9);
   gmshAssembler<double> myAssembler(lsys);
   gmshElasticityTerm El(0, 1.0, .333, getTag());
   
@@ -516,7 +517,7 @@ void gmshHighOrderSmoother::smooth_metric ( std::vector<MElement*>  & all, GFace
     double dx2 = smooth_metric_ ( v,gf, myAssembler, verticesToMove,El);
     printf(" dx2  = %12.5E\n",dx2);
     if (fabs(dx2-dx) < 1.e-4 * dx0)break;
-    if (iter++ > 10)break;
+    if (iter++ > 2)break;
     dx = dx2;
   }
 
@@ -615,10 +616,10 @@ double gmshHighOrderSmoother::smooth_metric_ ( std::vector<MElement*>  & v,
 
 void gmshHighOrderSmoother::smooth ( std::vector<MElement*>  & all)
 {
-  gmshLinearSystemGmm<double> *lsys = new gmshLinearSystemGmm<double>;
+  gmshLinearSystemCSRGmm<double> *lsys = new gmshLinearSystemCSRGmm<double>;
   lsys->setNoisy(1);
   lsys->setGmres(1);
-  lsys->setPrec(1.e-5);
+  lsys->setPrec(5.e-8);
   gmshAssembler<double> myAssembler(lsys);
   gmshElasticityTerm El(0, 1.0, .333, getTag());
   
@@ -632,7 +633,7 @@ void gmshHighOrderSmoother::smooth ( std::vector<MElement*>  & all)
 
   if (!v.size()) return;
 
-  const int nbLayers = 2;
+  const int nbLayers = 1;
   for (int i=0;i<nbLayers;i++){
     addOneLayer ( all, v, layer);
     v.insert(v.end(),layer.begin(),layer.end());

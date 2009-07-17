@@ -149,6 +149,7 @@ gmshSmoothHighOrder${OBJEXT}: gmshSmoothHighOrder.cpp ../Geo/MLine.h \
   ../Numeric/GmshMatrix.h ../Numeric/gmshElasticity.h \
   ../Numeric/gmshTermOfFormulation.h ../Numeric/GmshMatrix.h \
   ../Numeric/gmshLinearSystemGmm.h ../Numeric/gmshLinearSystem.h \
+  ../Numeric/gmshLinearSystemCSR.h ../Numeric/gmshLinearSystem.h \
   ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h
 meshGEdge${OBJEXT}: meshGEdge.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \

@@ -633,7 +633,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
     if(RECUR_ITER > 0)
       Msg::Warning(":-) Gmsh was able to recover all edges after %d iterations", RECUR_ITER);
     
-    Msg::Info("Boundary Edges recovered for surface %d", gf->tag());
+    Msg::Debug("Boundary Edges recovered for surface %d", gf->tag());
      
     // Look for an edge that is on the boundary for which one of the two
     // neighbors has a negative number node. The other triangle is
@@ -1077,8 +1077,8 @@ static bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
   // Buid a BDS_Mesh structure that is convenient for doing the actual
   // meshing procedure
   BDS_Mesh *m = new BDS_Mesh;
-  m->scalingU = fabs(du);
-  m->scalingV = fabs(dv);
+  m->scalingU = 1;//fabs(du);
+  m->scalingV = 1;//fabs(dv);
   std::vector<std::vector<BDS_Point*> > edgeLoops_BDS;
   SBoundingBox3d bbox;
   int nbPointsTotal = 0;
@@ -1449,8 +1449,9 @@ void orientMeshGFace::operator()(GFace *gf)
 {
   gf->model()->setCurrentMeshEntity(gf);
 
+  return;
   if(gf->geomType() == GEntity::ProjectionFace) return;
-
+  if(gf->geomType() == GEntity::CompoundSurface)return;
   // in old versions we did not reorient transfinite surface meshes;
   // we could add the following to provide backward compatibility:
   // if(gf->meshAttributes.Method == MESH_TRANSFINITE) return;

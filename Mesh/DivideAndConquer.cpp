@@ -496,14 +496,15 @@ static int ConvertDListToTriangles(DocRecord *doc)
 {
   // on suppose que n >= 3. gPointArray est suppose OK.
 
-  STriangle *striangle;
+  //  STriangle *striangle;
   int n, i, j;
   int count = 0, count2 = 0;
   PointNumero aa, bb, cc;
   PointRecord *gPointArray = doc->points;
 
   n = doc->numPoints;
-  striangle = (STriangle *) Malloc(n * sizeof(STriangle));
+  STriangle *striangle = (STriangle *) Malloc(n * sizeof(STriangle));
+
   count2 = CountPointsOnHull(n, doc->points);
 
   // nombre de triangles que l'on doit obtenir
@@ -516,8 +517,6 @@ static int ConvertDListToTriangles(DocRecord *doc)
     // de points (t_length)
     striangle[i].t = ConvertDlistToArray(&gPointArray[i].adjacent,
                                          &striangle[i].t_length);
-    striangle[i].info = NULL;
-    striangle[i].info_length = 0;
   }
 
   // on balaye les noeuds de gauche a droite -> on cree les triangles
@@ -536,11 +535,8 @@ static int ConvertDListToTriangles(DocRecord *doc)
       }
     }
   }
-  for(i = 0; i < n; i++)
-    Free(striangle[i].t);
-  Free(striangle);
   doc->numTriangles = count2;
-
+  doc->striangle = striangle;
   return 1;
 }
 
@@ -563,7 +559,7 @@ static void RemoveAllDList(int n, PointRecord *pPointArray)
 }
 
 DocRecord::DocRecord(int n) 
-  : numPoints(n), points(NULL), numTriangles(0), triangles(NULL)
+  : numPoints(n), points(NULL), striangle(0),numTriangles(0), triangles(NULL)
 {
   if(numPoints)
     points = (PointRecord*)Malloc(numPoints * sizeof(PointRecord));
@@ -573,6 +569,11 @@ DocRecord::~DocRecord()
 {
   Free(points);
   Free(triangles);
+  if (striangle){
+    for(int i = 0; i < numPoints; i++)
+      Free(striangle[i].t);
+    Free(striangle);
+  }
 }
 
 void DocRecord::MakeMeshWithPoints()
@@ -581,4 +582,17 @@ void DocRecord::MakeMeshWithPoints()
   BuildDelaunay(this);
   ConvertDListToTriangles(this);
   RemoveAllDList(numPoints, points);
+  for(int i = 0; i < numPoints; i++)
+    Free(striangle[i].t);
+  Free(striangle);
+  striangle = 0;
 }
+
+void DocRecord::MakeVoronoi(){
+  if(numPoints < 3) return;
+  BuildDelaunay(this);
+  //  TagPointsOnHull(this);
+  ConvertDListToTriangles(this);
+  RemoveAllDList(numPoints, points);  
+}
+

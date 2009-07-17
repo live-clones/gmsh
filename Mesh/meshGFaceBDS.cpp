@@ -100,20 +100,41 @@ double NewGetLc(BDS_Point *p)
     std::min(p->lc(), p->lcBGM()) : p->lcBGM();
 }
 
+static double correctLC_ (BDS_Point *p1,BDS_Point *p2, GFace *f,
+			  double SCALINGU, double SCALINGV){
+  double l1 = NewGetLc(p1);
+  double l2 = NewGetLc(p2);  
+  double l = 0.5*(l1+l2);
+
+  //  printf(" %g %g -- %g %g\n",SCALINGU,SCALINGV,l1,l2);
+
+  if(CTX::instance()->mesh.lcFromCurvature)
+    {
+      //      GPoint GP = f->point(SPoint2(0.5 * (p1->u + p2->u) * SCALINGU,
+      //				   0.5 * (p1->v + p2->v) * SCALINGV));
+      //      double l3 = BGM_MeshSize(f,GP.u(),GP.v(),GP.x(),GP.y(),GP.z());
+      double l3=l2;
+      double lcmin = std::min(std::min(l1,l2),l3);
+      l1 = std::min(lcmin*1.2,l1);
+      l2 = std::min(lcmin*1.2,l2);
+      l3 = std::min(lcmin*1.2,l3);
+      l = (l1+l2+l3)/3.0;
+    }
+  return l;
+}
+
 double NewGetLc(BDS_Edge *e, GFace *f, double SCALINGU, double SCALINGV)
 {
   double linearLength = computeEdgeLinearLength(e, f, SCALINGU, SCALINGV);
-  double l1 = NewGetLc(e->p1);
-  double l2 = NewGetLc(e->p2);
-  return 2 * linearLength / (l1 + l2);
+  double l = correctLC_ (e->p1,e->p2,f, SCALINGU, SCALINGV); 
+  return linearLength / l;
 }
 
 double NewGetLc(BDS_Point *p1,BDS_Point *p2, GFace *f, double su, double sv)
 {
   double linearLength = computeEdgeLinearLength(p1, p2, f, su, sv);
-  double l1 = NewGetLc(p1);
-  double l2 = NewGetLc(p2);
-  return 2 * linearLength / (l1 + l2);
+  double l = correctLC_ (p1,p2,f, su, sv); 
+  return linearLength / l;
 }
 
 void computeMeshSizeFieldAccuracy(GFace *gf, BDS_Mesh &m, double &avg, 
@@ -415,8 +436,8 @@ void splitEdgePassUnsorted(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
                                                     m.scalingU, m.scalingV);
         BDS_Point *mid;
 
-	GPoint gpp = gf->point(coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u,
-			       coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v);
+	GPoint gpp = gf->point(m.scalingU*(coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u),
+			       m.scalingV*(coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v));
 	if (gpp.succeeded()){  
 	  mid  = m.add_point(++m.MAXPOINTNUMBER,
 			     coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u,
@@ -461,7 +482,7 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
       double U = coord * e->p1->u + (1 - coord) * e->p2->u;
       double V = coord * e->p1->v + (1 - coord) * e->p2->v;
 
-      GPoint gpp = gf->point(U,V);
+      GPoint gpp = gf->point(m.scalingU*U,m.scalingV*V);
       if (gpp.succeeded()){  
 	mid  = m.add_point(++m.MAXPOINTNUMBER, gpp.x(),gpp.y(),gpp.z());
 	mid->u = U;
