@@ -13,6 +13,7 @@
 #include "gmshLaplace.h"
 #include "gmshConvexCombination.h"
 #include "gmshLinearSystemGmm.h"
+#include "gmshLinearSystemCSR.h"
 #include "gmshLinearSystemFull.h"
 #include "FunctionSpace.h"
 #include "GmshDefines.h"
@@ -86,12 +87,21 @@ static void fixEdgeToValue(GEdge *ed, double value, gmshAssembler<double> &myAss
   }
 }
 
+bool GFaceCompound::trivial() const {
+  if  (_compound.size() == 1 && 
+       (*(_compound.begin()))->getNativeType()==GEntity::OpenCascadeModel &&
+       (*(_compound.begin()))->geomType() != GEntity::DiscreteSurface ){
+    return true;
+  }
+  return false;
+}
+
 void GFaceCompound::parametrize() const
 {
+  if (trivial())return;
 
   if (!oct){
     coordinates.clear();
-    //parametrize(ITERD);
     parametrize(ITERU);
     parametrize(ITERV);
     computeNormals();
@@ -101,7 +111,6 @@ void GFaceCompound::parametrize() const
 
 void GFaceCompound::getBoundingEdges()
 {
-
  
   for (std::list<GFace*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
     (*it)->setCompound(this);
@@ -148,7 +157,6 @@ void GFaceCompound::getBoundingEdges()
   std::set<GEdge*>::iterator itf = _unique.begin();
   for ( ; itf != _unique.end(); ++itf){
     l_edges.push_back(*itf);
-    //printf("for edge %d, add face %d \n", (*itf)->tag(), this->tag());
     (*itf)->addFace(this);
   }
 
@@ -157,40 +165,35 @@ void GFaceCompound::getBoundingEdges()
     std::set<GEdge*>::iterator it = _unique.begin();
     GVertex *vB = (*it)->getBeginVertex();
     GVertex *vE = (*it)->getEndVertex();
-    //printf("boundary add edge=%d \n", (*it)->tag());
+    //    printf("boundary add edge=%d (%d,%d)\n", (*it)->tag(),vB->tag(),vE->tag());
     _loop.push_back(*it);
     _unique.erase(it);
     it++;
     
     bool found = false;
-    for (int i=0; i<2; i++) {
-           
-      for (std::set<GEdge*>::iterator it = _unique.begin() ; it != _unique.end(); ++it){	
-	GVertex *v1 = (*it)->getBeginVertex();
-	GVertex *v2 = (*it)->getEndVertex();
+    for (int i=0; i<2; i++) {           
+      for (std::set<GEdge*>::iterator itx = _unique.begin() ; itx != _unique.end(); ++itx){	
+	GVertex *v1 = (*itx)->getBeginVertex();
+	GVertex *v2 = (*itx)->getEndVertex();
 	
 	std::set<GEdge*>::iterator itp;
 	if ( v1 == vE  ){
-	  //printf("boundary add edge=%d \n", (*it)->tag());
-	  _loop.push_back(*it);
-	  itp = it;
-	  it++;
+	  _loop.push_back(*itx);
+	  itp = itx;
+	  itx++;
 	  _unique.erase(itp);
 	  vE = v2;
 	  i = -1;
 	}
 	else if ( v2 == vE){
-	  //printf("boundary add edge=%d \n", (*it)->tag());
-	  _loop.push_back(*it);
-	  itp = it;
-	  it++;
+	  _loop.push_back(*itx);
+	  itp = itx;
+	  itx++;
 	  _unique.erase(itp);
 	  vE = v1;
 	  i=-1;
 	}
-
-	if (it == _unique.end()) break;
-
+	if (itx == _unique.end()) break;
       }
       
       if (vB == vE) {
@@ -208,9 +211,7 @@ void GFaceCompound::getBoundingEdges()
     if (found == true) break;
     
   } 
-  
   _U0 = _loop;
-
 }
 
 GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
@@ -250,6 +251,9 @@ static bool orderVertices(const std::list<GEdge*> &e, std::vector<MVertex*> &l,
 {
   l.clear();
   coord.clear();
+
+  //  printf("%d lines\n",e.size());
+
   std::list<GEdge*>::const_iterator it = e.begin();
   std::list<MLine*> temp;
   double tot_length = 0;
@@ -273,7 +277,7 @@ static bool orderVertices(const std::list<GEdge*> &e, std::vector<MVertex*> &l,
   temp.erase(temp.begin());
 
   while (temp.size()){
-    bool found = 0;
+    bool found = false;
     for (std::list<MLine*>::iterator itl = temp.begin(); itl != temp.end(); ++itl){
       MLine *ll = *itl;
       MVertex *v0 = ll->getVertex(0);
@@ -308,6 +312,11 @@ static bool orderVertices(const std::list<GEdge*> &e, std::vector<MVertex*> &l,
 
 SPoint2 GFaceCompound::getCoordinates(MVertex *v) const 
 { 
+  if (trivial()){
+    SPoint2 param;
+    reparamMeshVertexOnFace(v, (*(_compound.begin())),param);
+    return param;
+  }
   
   parametrize() ; 
   std::map<MVertex*,SPoint3>::iterator it = coordinates.find(v);
@@ -403,7 +412,9 @@ void GFaceCompound::parametrize(iterationStep step) const
   Msg::Info("Parametrizing Surface %d coordinate (ITER %d)", tag(), step); 
   
 #ifdef HAVE_GMM
-  gmshLinearSystemGmm<double> lsys;
+
+  //  gmshLinearSystemGmm<double> lsys;
+  gmshLinearSystemCSRGmm<double> lsys;
   lsys.setPrec(1.e-15);
   if(Msg::GetVerbosity() == 99) lsys.setNoisy(2);
 #else
@@ -425,6 +436,9 @@ void GFaceCompound::parametrize(iterationStep step) const
       Msg::Error("Could not order vertices on boundary");
       return;
     }
+
+    //    printf("%d v on the boundary\n", ordered.size());
+    
     for (unsigned int i = 0; i < ordered.size(); i++){
       MVertex *v = ordered[i];
       const double theta = 2 * M_PI * coords[i];
@@ -487,7 +501,7 @@ void GFaceCompound::parametrize(iterationStep step) const
     for ( ; it != _compound.end() ; ++it){
       for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
 	MTriangle *t = (*it)->triangles[i];
-	diffusivity.setCurrent(t);
+	//	diffusivity.setCurrent(t);
 	laplace.addToMatrix(myAssembler, t);
       }
     }    
@@ -500,8 +514,6 @@ void GFaceCompound::parametrize(iterationStep step) const
     for ( ; it != _compound.end() ; ++it){
       for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
 	MTriangle *t = (*it)->triangles[i];
-	//diffusivity.setCompound((*it)->tag());
-	//diffusivity.setCurrent(t);
 	laplace.addToMatrix(myAssembler, t);
       }
     }    
@@ -575,12 +587,16 @@ void GFaceCompound::computeNormals () const
 
 double GFaceCompound::curvatureMax(const SPoint2 &param) const
 {
+  if (trivial()){
+    return (*(_compound.begin()))->curvatureMax(param);
+  }
+
   parametrize();
   double U,V;
   GFaceCompoundTriangle *lt;
   getTriangle (param.x(),param.y(), &lt, U,V);  
   if (!lt){
-    printf("oops\n");
+    //    printf("oops\n");
     return  0.0;
   }
   if (lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface){
@@ -592,6 +608,7 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
 
 double GFaceCompound::curvature(MTriangle *t, double u, double v) const
 {
+
   SVector3 n1 = _normals[t->getVertex(0)];
   SVector3 n2 = _normals[t->getVertex(1)];
   SVector3 n3 = _normals[t->getVertex(2)];
@@ -604,6 +621,10 @@ double GFaceCompound::curvature(MTriangle *t, double u, double v) const
 
 GPoint GFaceCompound::point(double par1, double par2) const
 {
+  if (trivial()){
+    return (*(_compound.begin()))->point(par1,par2);
+  }
+
   parametrize();
   double U,V;
   double par[2] = {par1,par2};
@@ -615,7 +636,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
     gp.setNoSuccess();
     return gp;
   }
-  if (0 && lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface){
+  if (lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface){
     SPoint2 pv = lt->gfp1*(1.-U-V) + lt->gfp2*U + lt->gfp3*V;
     return lt->gf->point(pv.x(),pv.y());
   }
@@ -670,13 +691,15 @@ GPoint GFaceCompound::point(double par1, double par2) const
 
     SPoint3 PP(point.x(), point.y(), point.z());
     return GPoint(PP.x(),PP.y(),PP.z(),this,par);
-
   }
- 
 }
 
 Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
 {
+  if (trivial()){
+    return (*(_compound.begin()))->firstDer(param);
+  }
+
   parametrize();
   double U,V,UDU,UDV,VDU,VDV;
   GFaceCompoundTriangle *lt;
@@ -849,6 +872,26 @@ void GFaceCompound::buildOct() const
   printStuff();
 }
 
+int GFaceCompound::genusGeom ()
+{
+ std::list<GFace*> :: const_iterator it = _compound.begin();
+  std::set<MEdge, Less_Edge> es;
+ std::set<MVertex*> vs;
+ int N = 0;
+ for ( ; it != _compound.end() ; ++it){
+    for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+      N++;
+      MTriangle *e = (*it)->triangles[i];
+      for (int j=0;j<e->getNumVertices();j++)vs.insert(e->getVertex(j));
+      for (int j=0;j<e->getNumEdges();j++)es.insert(e->getEdge(j));
+    }
+ }
+ int poincare = vs.size() - es.size() + N;// = 2g + 2 - b
+
+ return (poincare - 2 + edgeLoops.size())/2;
+}
+
+
 void GFaceCompound::printStuff() const
 {
   std::list<GFace*> :: const_iterator it = _compound.begin();
@@ -892,11 +935,6 @@ void GFaceCompound::printStuff() const
 	coordinates.find(t->getVertex(1));
       std::map<MVertex*,SPoint3>::const_iterator it2 = 
 	coordinates.find(t->getVertex(2));
-         fprintf(xyzu,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
-	      t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
-	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
-	      t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
-	      it0->second.x(),it1->second.x(),it2->second.x());
 //       fprintf(xyzu,"VT(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g,%g};\n",
 // 	      t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
 // 	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
@@ -909,11 +947,11 @@ void GFaceCompound::printStuff() const
 	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
 	      t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
 	      it0->second.y(),it1->second.y(),it2->second.y());
-      /*      fprintf(xyzu,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+      fprintf(xyzu,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 	      t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
 	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
 	      t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
-	      it0->second.x(),it1->second.x(),it2->second.x());*/
+	      it0->second.x(),it1->second.x(),it2->second.x());
       double K1 = curvature(t,it0->second.x(),it0->second.y());
       double K2 = curvature(t,it1->second.x(),it1->second.y());
       double K3 = curvature(t,it2->second.x(),it2->second.y());

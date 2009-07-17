@@ -9,6 +9,10 @@ dnl Check that this is the gmsh source tree
 AC_INIT(Geo/GModel.h)
 
 dnl Parse '--with' command-line options
+AC_ARG_WITH(taucs-prefix,
+            AC_HELP_STRING([--with-taucs-prefix=PFX],
+                           [prefix where TAUCS is installed]),
+            [TAUCS_PREFIX=$withval])
 AC_ARG_WITH(fltk-prefix,
             AC_HELP_STRING([--with-fltk-prefix=PFX],
                            [prefix where FLTK is installed]),
@@ -127,6 +131,9 @@ AC_ARG_ENABLE(cgns,
 AC_ARG_ENABLE(occ,
               AC_HELP_STRING([--enable-occ],
                              [enable OpenCascade support (default=no)]))
+AC_ARG_ENABLE(taucs,
+              AC_HELP_STRING([--enable-taucs],
+                             [enable Taucs support (default=no)]))
 AC_ARG_ENABLE(hdf5,
               AC_HELP_STRING([--enable-hdf5],
                              [enable HDF5 support (default=no)]))
@@ -171,6 +178,7 @@ if test "x$enable_minimal" = "xyes"; then
   enable_cgns=no;
   enable_hdf5=no;
   enable_zlib=no;
+  enable_taucs=no;
   if test "x$enable_post" != "xyes"; then
     enable_post=no;
   fi
@@ -585,6 +593,30 @@ if test "x$enable_occ" = "xyes"; then
     else
       GMSH_LIBS="${GMSH_LIBS} -L${OCC_PREFIX}/lib ${OCC_LIBS}"
       FLAGS="${FLAGS} -I${OCC_PREFIX}/inc"
+    fi
+  fi
+fi
+
+dnl Check for Taucs
+if test "x${TAUCS_PREFIX}" != "x"; then
+  if test "x$enable_taucs" != "xno"; then
+    enable_taucs="yes"
+  fi
+fi
+if test "x$enable_taucs" = "xyes"; then
+  if test "x${TAUCS_PREFIX}" != "x"; then
+    LDFLAGS="-L${TAUCS_PREFIX}/lib ${LDFLAGS}"
+  fi
+  AC_CHECK_FILE(${TAUCS_PREFIX}/src/taucs.h,TAUCS="yes")
+  if test "x${TAUCS}" = "xyes"; then
+    TAUCS_LIBS="-ltaucs"
+    AC_DEFINE(HAVE_TAUCS)
+    BO="${BO} Taucs"
+    if test "x${TAUCS_PREFIX}" = "x"; then
+      GMSH_LIBS="${GMSH_LIBS} ${TAUCS_LIBS}"
+    else
+      GMSH_LIBS="${GMSH_LIBS} -L${TAUCS_PREFIX}/lib ${TAUCS_LIBS}"
+      FLAGS="${FLAGS} -I${TAUCS_PREFIX}/src -I${TAUCS_PREFIX}"
     fi
   fi
 fi

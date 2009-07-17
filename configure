@@ -1285,6 +1285,7 @@ Optional Features:
   --enable-osmesa         use OSMesa for offscreen rendering (default=no)
   --enable-cgns           enable CGNS output (default=no)
   --enable-occ            enable OpenCascade support (default=no)
+  --enable-taucs          enable Taucs support (default=no)
   --enable-hdf5           enable HDF5 support (default=no)
   --enable-med            enable MED support (default=yes)
   --enable-fm             enable support for FourierModel (default=yes)
@@ -1300,6 +1301,7 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-taucs-prefix=PFX prefix where TAUCS is installed
   --with-fltk-prefix=PFX  prefix where FLTK is installed
   --with-jpeg-prefix=PFX  prefix where the JPEG library and includes are
                           installed
@@ -1761,6 +1763,12 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+# Check whether --with-taucs-prefix was given.
+if test "${with_taucs_prefix+set}" = set; then
+  withval=$with_taucs_prefix; TAUCS_PREFIX=$withval
+fi
+
+
 # Check whether --with-fltk-prefix was given.
 if test "${with_fltk_prefix+set}" = set; then
   withval=$with_fltk_prefix; FLTK_PREFIX=$withval
@@ -1945,6 +1953,11 @@ if test "${enable_occ+set}" = set; then
   enableval=$enable_occ;
 fi
 
+# Check whether --enable-taucs was given.
+if test "${enable_taucs+set}" = set; then
+  enableval=$enable_taucs;
+fi
+
 # Check whether --enable-hdf5 was given.
 if test "${enable_hdf5+set}" = set; then
   enableval=$enable_hdf5;
@@ -2013,6 +2026,7 @@ if test "x$enable_minimal" = "xyes"; then
   enable_cgns=no;
   enable_hdf5=no;
   enable_zlib=no;
+  enable_taucs=no;
   if test "x$enable_post" != "xyes"; then
     enable_post=no;
   fi
@@ -5106,6 +5120,54 @@ _ACEOF
     else
       GMSH_LIBS="${GMSH_LIBS} -L${OCC_PREFIX}/lib ${OCC_LIBS}"
       FLAGS="${FLAGS} -I${OCC_PREFIX}/inc"
+    fi
+  fi
+fi
+
+if test "x${TAUCS_PREFIX}" != "x"; then
+  if test "x$enable_taucs" != "xno"; then
+    enable_taucs="yes"
+  fi
+fi
+if test "x$enable_taucs" = "xyes"; then
+  if test "x${TAUCS_PREFIX}" != "x"; then
+    LDFLAGS="-L${TAUCS_PREFIX}/lib ${LDFLAGS}"
+  fi
+  as_ac_File=`echo "ac_cv_file_${TAUCS_PREFIX}/src/taucs.h" | $as_tr_sh`
+{ echo "$as_me:$LINENO: checking for ${TAUCS_PREFIX}/src/taucs.h" >&5
+echo $ECHO_N "checking for ${TAUCS_PREFIX}/src/taucs.h... $ECHO_C" >&6; }
+if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "${TAUCS_PREFIX}/src/taucs.h"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+ac_res=`eval echo '${'$as_ac_File'}'`
+	       { echo "$as_me:$LINENO: result: $ac_res" >&5
+echo "${ECHO_T}$ac_res" >&6; }
+if test `eval echo '${'$as_ac_File'}'` = yes; then
+  TAUCS="yes"
+fi
+
+  if test "x${TAUCS}" = "xyes"; then
+    TAUCS_LIBS="-ltaucs"
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_TAUCS 1
+_ACEOF
+
+    BO="${BO} Taucs"
+    if test "x${TAUCS_PREFIX}" = "x"; then
+      GMSH_LIBS="${GMSH_LIBS} ${TAUCS_LIBS}"
+    else
+      GMSH_LIBS="${GMSH_LIBS} -L${TAUCS_PREFIX}/lib ${TAUCS_LIBS}"
+      FLAGS="${FLAGS} -I${TAUCS_PREFIX}/src -I${TAUCS_PREFIX}"
     fi
   fi
 fi

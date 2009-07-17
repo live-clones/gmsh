@@ -964,3 +964,32 @@ double GFace::length(const SPoint2 &pt1, const SPoint2 &pt2, int nbQuadPoints)
   }
   return L;
 }
+
+int GFace::poincareMesh()  
+{
+  std::set<MEdge, Less_Edge> es;
+  std::set<MVertex*> vs;
+  for (int i=0; i<getNumMeshElements() ; i++){ 
+    MElement *e = getMeshElement(i);
+    for (int j=0;j<e->getNumVertices();j++)vs.insert(e->getVertex(j));
+    for (int j=0;j<e->getNumEdges();j++)es.insert(e->getEdge(j));
+  }
+  return  vs.size() - es.size() + getNumMeshElements();  
+}
+
+int GFace::genusGeom()  
+{
+  int G = 0;
+  int nSeams = 0;
+  std::set<GEdge*> single_seams;
+  for (std::list<GEdge*>::iterator it = l_edges.begin();
+       it!=l_edges.end();++it){
+    if ((*it)->isSeam(this)){
+      nSeams++;
+      std::set<GEdge*>::iterator it2 = single_seams.find(*it);
+      if (it2 != single_seams.end())single_seams.erase(it2);
+      else single_seams.insert(*it);
+    }
+  }
+  return nSeams - single_seams.size();
+}

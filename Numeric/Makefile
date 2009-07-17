@@ -7,7 +7,7 @@ include ../variables
 
 LIB = ../lib/libGmshNumeric${LIBEXT}
 
-INC = ${DASH}I../Common ${DASH}I../Numeric ${DASH}I../Geo
+INC = ${DASH}I../Common ${DASH}I../Numeric ${DASH}I../Geo ${DASH}I../contrib/gmm 
 
 CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
@@ -18,6 +18,7 @@ SRC = Numeric.cpp\
         gmshHelmholtz.cpp\
         gmshElasticity.cpp\
         gmshProjection.cpp\
+        gmshLinearSystemCSR.cpp\
       EigSolve.cpp\
       FunctionSpace.cpp\
       GaussQuadratureLin.cpp\
@@ -149,6 +150,8 @@ gmshProjection${OBJEXT}: gmshProjection.cpp gmshProjection.h \
   ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/MEdge.h \
   ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
   ../Numeric/Gauss.h ../Common/Gmsh.h ../Common/GmshMessage.h Numeric.h
+gmshLinearSystemCSR${OBJEXT}: gmshLinearSystemCSR.cpp ../Common/GmshConfig.h \
+  ../Common/GmshMessage.h gmshLinearSystemCSR.h gmshLinearSystem.h
 EigSolve${OBJEXT}: EigSolve.cpp
 FunctionSpace${OBJEXT}: FunctionSpace.cpp FunctionSpace.h GmshMatrix.h \
   ../Common/GmshConfig.h ../Common/GmshMessage.h ../Common/GmshDefines.h

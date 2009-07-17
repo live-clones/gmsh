@@ -140,6 +140,7 @@ GFaceCompound${OBJEXT}: GFaceCompound.cpp ../Common/GmshConfig.h GFaceCompound.h
   ../Numeric/gmshConvexCombination.h ../Numeric/gmshTermOfFormulation.h \
   ../Numeric/gmshFunction.h ../Numeric/GmshMatrix.h \
   ../Numeric/gmshLinearSystemGmm.h ../Numeric/gmshLinearSystem.h \
+  ../Numeric/gmshLinearSystemCSR.h ../Numeric/gmshLinearSystem.h \
   ../Numeric/gmshLinearSystemFull.h ../Numeric/gmshLinearSystem.h \
   ../Numeric/GmshMatrix.h
 GRegionCompound${OBJEXT}: GRegionCompound.cpp ../Common/GmshConfig.h \

@@ -17,12 +17,23 @@ gmshFace::gmshFace(GModel *m, Surface *face)
 {
   resetMeshAttributes();
 
+  std::list<GEdge*> l_wire;
+  GVertex *first = 0;
   for(int i = 0; i < List_Nbr(s->Generatrices); i++){
     Curve *c;
     List_Read(s->Generatrices, i, &c);
     GEdge *e = m->getEdgeByTag(abs(c->Num));
-
     if(e){
+      GVertex *start = (c->Num > 0) ? e->getBeginVertex() : e->getEndVertex();
+      GVertex *next  = (c->Num > 0) ? e->getEndVertex() : e->getBeginVertex();
+      if ( ! first ) first = start;
+      l_wire.push_back(e);
+      if ( next == first ){
+	edgeLoops.push_back(GEdgeLoop(l_wire));
+	l_wire.clear();
+	first = 0;
+      }
+
       l_edges.push_back(e);
       e->addFace(this);
       l_dirs.push_back((c->Num > 0) ? 1 : -1);
@@ -62,6 +73,7 @@ gmshFace::gmshFace(GModel *m, Surface *face)
     }
   }
   isSphere = iSRuledSurfaceASphere(s, center, radius);
+
 }
 
 double gmshFace::getMetricEigenvalue(const SPoint2 &pt)

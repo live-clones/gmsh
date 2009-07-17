@@ -49,12 +49,7 @@ class GFace : public GEntity
   mean_plane meanPlane;
   std::list<GEdge *> embedded_edges;
   std::list<GVertex *> embedded_vertices;
-  // given a list of GEdges, the function builds a list of wires,
-  // i.e. closed edge loops.  the first wire is the one that is the
-  // outer contour of the face.
-  void resolveWires();
   GFaceCompound *compound; // this model edge belongs to a compound 
-
 
  public: // this will become protected or private
   std::list<GEdgeLoop> edgeLoops;
@@ -116,6 +111,19 @@ class GFace : public GEntity
   
   // retrieve surface params
   virtual surface_params getSurfaceParams() const;
+
+  // compute the genus G of the surface
+  // we have the poincare constant CHI = #V-#E+#F
+  // where #V #E and #F are the number of vertices, edges
+  // and faces of the surface
+  // Then, CHI = 2 G + 2 - B
+  // where B is the number of boundaries (edge loops) of the
+  // surface. This topological constant can be computed using both the
+  // geometry and the mesh. Both approaches should give the same result ;-)
+  // by default, genus is ZERO
+  int poincareMesh ();
+  int genusMesh () {return (poincareMesh() + edgeLoops.size() - 2)/2;}
+  virtual int genusGeom ();
 
   // return the point on the face corresponding to the given parameter
   virtual GPoint point(double par1, double par2) const = 0;

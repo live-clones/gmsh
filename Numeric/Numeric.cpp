@@ -549,7 +549,6 @@ bool newton_fd(void (*func)(gmshVector<double> &, gmshVector<double> &, void *),
   for (int iter = 0; iter < MAXIT; iter++){
      func(x, f, data);
      
-     printf("coucou av break !! \n");
      bool isZero = false;
      for (int k=0; k<N; k++) {
 	 if (f(k) == 0. ) isZero = true;
@@ -557,7 +556,6 @@ bool newton_fd(void (*func)(gmshVector<double> &, gmshVector<double> &, void *),
 	 if (isZero == false) break;
        }
      if (isZero) break;
-     printf("coucou ap break !! \n");
     //printf("**** fffffff0=%g %g %g %g %g %g %g %g %g\n", f(0), f(1), f(2),  f(3), f(4),  f(5), f(6),  f(7), f(8));
 
     for (int j = 0; j < N; j++){

@@ -63,6 +63,7 @@ class GFaceCompound : public GFace {
                    double &_u, double &_v) const;
   virtual double curvature(MTriangle *t, double u, double v) const;
   void printStuff() const;
+  bool trivial() const ;
 public:
   typedef enum {UNITCIRCLE, SQUARE} typeOfIsomorphism;
   GFaceCompound(GModel *m, int tag, 
@@ -72,19 +73,17 @@ public:
 		std::list<GEdge*> &V0,
 		std::list<GEdge*> &V1);
   virtual ~GFaceCompound();
-  Range<double> parBounds(int i) const { return Range<double>(0, 1); } 
+  Range<double> parBounds(int i) const { return trivial() ? (*(_compound.begin()))->parBounds(i) : Range<double>(-1, 1); } 
   virtual GPoint point(double par1, double par2) const; 
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &, SVector3 *, SVector3 *, SVector3 *) const; 
   virtual GEntity::GeomType geomType() const { return CompoundSurface; }
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return 0; }
-
-
   virtual SPoint2 getCoordinates(MVertex *v) const;
-
   virtual bool buildRepresentationCross(){ return false; }
   virtual double curvatureMax(const SPoint2 &param) const;
+  virtual int genusGeom ();
 private:
   typeOfIsomorphism _type;
 };
