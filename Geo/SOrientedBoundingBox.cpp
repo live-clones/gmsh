@@ -15,14 +15,14 @@
 #include "DivideAndConquer.h"
 #include "SBoundingBox3d.h"
 
-double SOrientedBoundingRectangle::area() 
+double SOrientedBoundingRectangle::area()
 {
   double b = size->at(0);
   double B = size->at(1);
   return (b*B);
 }
 
-SOrientedBoundingRectangle::SOrientedBoundingRectangle() 
+SOrientedBoundingRectangle::SOrientedBoundingRectangle()
 {
   center = new std::vector<double>(2,0);
   size = new std::vector<double>(2,0);
@@ -147,7 +147,7 @@ SOrientedBoundingBox::SOrientedBoundingBox(SOrientedBoundingBox* other)
 
 }
 
-double SOrientedBoundingBox::getMaxSize() 
+double SOrientedBoundingBox::getMaxSize()
 {
   return (std::max(size[0], std::max(size[1], size[2])));
 }
@@ -156,13 +156,14 @@ SVector3 SOrientedBoundingBox::getAxis(int axis)
 {
   SVector3 ret;
   switch (axis) {
-  case 0: return axisX;
-  case 1: return axisY;
-  case 2: return axisZ;
+  case 0: ret=axisX;
+  case 1: ret=axisY;
+  case 2: ret=axisZ;
   }
+  return ret;
 }
 
-bool SOrientedBoundingBox::intersects(SOrientedBoundingBox& obb) 
+bool SOrientedBoundingBox::intersects(SOrientedBoundingBox& obb)
 {
   SVector3 collide_axes[15];
   for (int i = 0; i < 3; i ++) {
