@@ -1,6 +1,10 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "gmshLinearSystemCSR.h"
+#include <stdlib.h>
+#include <string.h>
+
+
 
 #define SWAP(a,b)  temp=(a);(a)=(b);(b)=temp;
 #define SWAPI(a,b) tempi=(a);(a)=(b);(b)=tempi;
