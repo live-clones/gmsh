@@ -1065,7 +1065,7 @@ void GModel::createTopologyFromMesh()
       //printf("create face2Edges myEdges.size =%d \n", myEdges.size());
 
 
-      //for each actual GEdge
+     //for each actual GEdge
       while (! myEdges.empty()) {
 	std::vector<MEdge> myLines;
 	myLines.clear();
@@ -1077,42 +1077,37 @@ void GModel::createTopologyFromMesh()
 	myEdges.erase(it);
 	it++;
 
-	printf("***candidate mline %d %d of size %d \n", vB->getNum(), vE->getNum(), myEdges.size());
+	//printf("***candidate mline %d %d of size %d \n", vB->getNum(), vE->getNum(), myEdges.size());
 
    	for (int i=0; i<2; i++) {
 
-	  for (std::vector<MEdge>::iterator it = myEdges.begin() ; it != myEdges.end(); it++){
+	  std::vector<MEdge>::iterator it= myEdges.begin() ;
+	  while (it != myEdges.end()){
 	    MVertex *v1 = (*it).getVertex(0);
 	    MVertex *v2 = (*it).getVertex(1);
-	    //printf("mline %d %d size=%d\n", v1->getNum(), v2->getNum(), myEdges.size());
+	    //printf("mline %d %d \n", v1->getNum(), v2->getNum());
 
 	    std::vector<MEdge>::iterator itp;
 	    if ( v1 == vE  ){
 	      //printf("->v1 = vE push back this mline \n");
 	      myLines.push_back(*it);
-	      itp = it;
-	      it++;
-	      myEdges.erase(itp);
+	      myEdges.erase(it);
 	      vE = v2;
 	      i = -1;
 	    }
 	    else if ( v2 == vE){
 	      //printf("->v2 = VE push back this mline \n");
 	      myLines.push_back(*it);
-	      itp = it;
-	      it++;
-	      myEdges.erase(itp);
+	      myEdges.erase(it);
 	      vE = v1;
 	      i=-1;
 	    }
-	    if (it == myEdges.end()) break;
-	  }
-	  printf("end Edges \n");
+	    else it++;
 
-	  if (vB == vE) {
-	    //printf("vB = ve = \n");
-	    break;
 	  }
+	  //printf("end Edges \n");
+
+	  if (vB == vE) break;
 
 	  if (myEdges.empty()) break;
 
@@ -1124,12 +1119,12 @@ void GModel::createTopologyFromMesh()
 
 	}
 
-//  	printf("************ CANDIDATE NEW EDGE with num =%d\n", num);
-//  	for (std::vector<MEdge>::iterator it = myLines.begin() ; it != myLines.end() ; ++it){
-//  	  MVertex *v1 = (*it).getVertex(0);
-//  	  MVertex *v2 = (*it).getVertex(1);
-//  	  printf("Line %d %d \n", v1->getNum(), v2->getNum());
-//  	}
+ 	//printf("************ CANDIDATE NEW EDGE with num =%d size=%d\n", num, myLines.size());
+  	//for (std::vector<MEdge>::iterator it = myLines.begin() ; it != myLines.end() ; ++it){
+  	//  MVertex *v1 = (*it).getVertex(0);
+  	//  MVertex *v2 = (*it).getVertex(1);
+  	//  printf("Line %d %d \n", v1->getNum(), v2->getNum());
+  	//}
 	discreteEdge *e = new discreteEdge(this, num, 0, 0);
 	add(e);
 	Dedges.push_back(e);
