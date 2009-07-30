@@ -144,6 +144,8 @@ class MPolyhedron : public MElement {
   }
   virtual bool isInside(double u, double v, double w);
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
+  virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
+                        int num=0, int elementary=1, int physical=1);
 };
 
 class MPolygon : public MElement {
@@ -157,10 +159,9 @@ class MPolygon : public MElement {
   MPolygon(std::vector<MVertex*> v, int num=0, int part=0)
     : MElement(num, part), _owner(false), _orig(0)
   {
-    for(unsigned int i = 0; i < v.size(); i++)
-      _vertices.push_back(v[i]);
-    for(unsigned int i = 1; i < v.size() - 1; i++)
-      _parts.push_back(new MTriangle(v[0], v[i], v[i+1]));
+    for(unsigned int i = 0; i < v.size() / 3; i++)
+      _parts.push_back(new MTriangle(v[i * 3], v[i * 3 + 1], v[i * 3 + 2]));
+    _initVertices();
   }
   MPolygon(std::vector<MTriangle*> vT, int num=0, int part=0)
     : MElement(num, part), _owner(false), _orig(0)
@@ -237,6 +238,8 @@ class MPolygon : public MElement {
   }
   virtual bool isInside(double u, double v, double w);
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
+  virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
+                        int num=0, int elementary=1, int physical=1);
 };
 
 class MTriangleBorder : public MTriangle {

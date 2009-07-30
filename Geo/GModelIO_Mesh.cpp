@@ -316,7 +316,10 @@ int GModel::readMSH(const std::string &name)
               else if(j == 2) partition = tag;
               // ignore any other tags for now
             }
-            if(!(numVertices = MElement::getInfoMSH(type))) return 0;
+            if(!(numVertices = MElement::getInfoMSH(type))) {
+              if(type != MSH_POLYG_ && type !=MSH_POLYH_) return 0;
+              fscanf(fp, "%d", &numVertices);
+            }
           }
           int indices[60];
           for(int j = 0; j < numVertices; j++) fscanf(fp, "%d", &indices[j]);

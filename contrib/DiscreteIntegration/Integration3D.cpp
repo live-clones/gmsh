@@ -204,7 +204,7 @@ bool isCrossed (const DI_Point &p1, const DI_Point &p2) {
 int minimum(double *x, double *y, double *z, const int num) {
   double xm = x[0];
   for(int i = 1; i < num; i++) if(x[i] < xm) xm = x[i];
-   std::vector<int> INDx(num); int countx = 0;
+  std::vector<int> INDx(num); int countx = 0;
   for(int i = 0; i < num; i++) if(x[i] == xm) INDx[countx++] = i;
   if(countx == 1) return INDx[0];
 
@@ -526,6 +526,11 @@ void DI_Point::computeLs (const DI_Element *e, const std::vector<const gLevelset
       chooseLs(RPNi[l]);
   }
 }
+void DI_Point::computeLs (const gLevelset &ls) {
+  Ls.clear();
+  double l = ls(x_, y_, z_);
+  Ls.push_back(adjustLs(l));
+}
 bool DI_Point::equal(const DI_Point &p) const {
   return (fabs(x() - p.x()) < EQUALITY_TOL && fabs(y() - p.y()) < EQUALITY_TOL && fabs(z() - p.z()) < EQUALITY_TOL);
 }
@@ -667,7 +672,7 @@ void DI_Element::addLs (const DI_Element *e, const gLevelset &Ls) {
     pts_[j]->addLs(adjustLs(ls));
   }
   for(int j = 0; j < nbMid(); ++j) {
-     std::vector<int> s(nbVert()); int n;
+    std::vector<int> s(nbVert()); int n;
     e->midV(j, &s[0], n);
     double xc = 0, yc = 0, zc = 0;
     for(int k = 0; k < n; k++){

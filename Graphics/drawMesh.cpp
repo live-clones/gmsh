@@ -183,7 +183,7 @@ static void drawElementLabels(drawContext *ctx, GEntity *e,
   int labelStep = getLabelStep(elements.size());
 
   for(unsigned int i = 0; i < elements.size(); i++){
-    MElement *ele = elements[i];
+    MElement *ele = (MElement*) elements[i];
     if(!isElementVisible(ele)) continue;
     if(i % labelStep == 0) {
       SPoint3 pc = ele->barycenter();
@@ -459,7 +459,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
                                 bool edges, bool faces)
 {
   for(unsigned int i = 0; i < elements.size(); i++){
-    MElement *ele = elements[i];
+    MElement *ele = (MElement*) elements[i];
 
     if(!isElementVisible(ele) || ele->getDim() < 1) continue;
     
@@ -726,6 +726,7 @@ class initMeshGFace {
       f->va_triangles = new VertexArray(3, _estimateNumTriangles(f));
       if(CTX::instance()->mesh.triangles) addElementsInArrays(f, f->triangles, edg, fac);
       if(CTX::instance()->mesh.quadrangles) addElementsInArrays(f, f->quadrangles, edg, fac);
+      addElementsInArrays(f, f->polygons, edg, fac);
       f->va_lines->finalize();
       f->va_triangles->finalize();
     }
@@ -760,6 +761,8 @@ class drawMeshGFace {
       if(CTX::instance()->mesh.quadrangles)
         drawElementLabels(_ctx, f, f->quadrangles, CTX::instance()->mesh.surfacesFaces, 
                           CTX::instance()->color.mesh.line);
+      drawElementLabels(_ctx, f, f->polygons, CTX::instance()->mesh.surfacesFaces, 
+                        CTX::instance()->color.mesh.line);
     }
 
     if(CTX::instance()->mesh.points || CTX::instance()->mesh.pointsNum){
@@ -859,6 +862,7 @@ class initMeshGRegion {
       if(CTX::instance()->mesh.hexahedra) addElementsInArrays(r, r->hexahedra, edg, fac);
       if(CTX::instance()->mesh.prisms) addElementsInArrays(r, r->prisms, edg, fac);
       if(CTX::instance()->mesh.pyramids) addElementsInArrays(r, r->pyramids, edg, fac);
+      addElementsInArrays(r, r->polyhedra, edg, fac);
       r->va_lines->finalize();
       r->va_triangles->finalize();
     }
@@ -903,6 +907,9 @@ class drawMeshGRegion {
         drawElementLabels(_ctx, r, r->pyramids, CTX::instance()->mesh.volumesFaces ||
                           CTX::instance()->mesh.surfacesFaces,
                           CTX::instance()->color.mesh.line);
+      drawElementLabels(_ctx, r, r->polyhedra, CTX::instance()->mesh.volumesFaces ||
+                        CTX::instance()->mesh.surfacesFaces,
+                        CTX::instance()->color.mesh.line);
     }
 
     if(CTX::instance()->mesh.points || CTX::instance()->mesh.pointsNum){

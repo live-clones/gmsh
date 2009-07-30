@@ -106,6 +106,51 @@ void MPolyhedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
     *npts += nptsi;
   }
 }
+void MPolyhedron::writeMSH(FILE *fp, double version, bool binary, int num, 
+                        int elementary, int physical)
+{
+  int type = getTypeForMSH();
+
+  if(!type) return;
+
+  // if necessary, change the ordering of the vertices to get positive
+  // volume
+  setVolumePositive();
+  int n = _parts.size() * 4;
+  int numE = getNum();
+  int partE = getPartition();
+
+  if(!binary){
+    fprintf(fp, "%d %d", num ? num : numE, type);
+    if(version < 2.0)
+      fprintf(fp, " %d %d %d", abs(physical), elementary, n);
+    else
+      fprintf(fp, " 3 %d %d %d", abs(physical), elementary, partE);
+  }
+  else{
+    int tags[4] = {num ? num : numE, abs(physical), elementary, partE};
+    fwrite(tags, sizeof(int), 4, fp);
+  }
+
+  if(physical < 0) revert();
+
+  fprintf(fp, " %d", n);
+  int verts[180];
+  for(unsigned int i = 0; i < _parts.size(); i++)
+    for(int j = 0; j < 4; j++)
+      verts[i * 4 + j] = _parts[i]->getVertex(j)->getIndex();
+
+  if(!binary){
+    for(int i = 0; i < n; i++)
+      fprintf(fp, " %d", verts[i]);
+    fprintf(fp, "\n");
+  }
+  else{
+    fwrite(verts, sizeof(int), n, fp);
+  }
+
+  if(physical < 0) revert();
+}
 
 //------------------------------------------- MPolygon ------------------------------
 
@@ -176,6 +221,51 @@ void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
     }
     *npts += nptsi;
   }
+}
+void MPolygon::writeMSH(FILE *fp, double version, bool binary, int num, 
+                        int elementary, int physical)
+{
+  int type = getTypeForMSH();
+
+  if(!type) return;
+
+  // if necessary, change the ordering of the vertices to get positive
+  // volume
+  setVolumePositive();
+  int n = _parts.size() * 3;
+  int numE = getNum();
+  int partE = getPartition();
+
+  if(!binary){
+    fprintf(fp, "%d %d", num ? num : numE, type);
+    if(version < 2.0)
+      fprintf(fp, " %d %d %d", abs(physical), elementary, n);
+    else
+      fprintf(fp, " 3 %d %d %d", abs(physical), elementary, partE);
+  }
+  else{
+    int tags[4] = {num ? num : numE, abs(physical), elementary, partE};
+    fwrite(tags, sizeof(int), 4, fp);
+  }
+
+  if(physical < 0) revert();
+
+  fprintf(fp, " %d", n);
+  int verts[120];
+  for(unsigned int i = 0; i < _parts.size(); i++)
+    for(int j = 0; j < 3; j++)
+      verts[i * 3 + j] = _parts[i]->getVertex(j)->getIndex();
+
+  if(!binary){
+    for(int i = 0; i < n; i++)
+      fprintf(fp, " %d", verts[i]);
+    fprintf(fp, "\n");
+  }
+  else{
+    fwrite(verts, sizeof(int), n, fp);
+  }
+
+  if(physical < 0) revert();
 }
 
 //---------------------------------------- CutMesh ----------------------------
@@ -569,6 +659,7 @@ static void elementCutMesh (MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
   case MSH_PNT :
     {
       DI_Point P(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z());
+      P.computeLs(*ls);
       int reg = P.lsTag() * elementary;
       elements[0][reg].push_back(copy);
       assignPhysicals(GM, gePhysicals, reg, 0, physicals);
@@ -588,7 +679,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
                      std::map<int, std::map<int, std::string> > physicals[4])
 {
 #if defined(HAVE_DINTEGRATION)
-  GModel *cutGM = new GModel; printf("have levelset");
+  GModel *cutGM = new GModel;
 
   std::map<int, std::vector<MElement*> > border[2];
   std::vector<MVertex*> newVertices;
@@ -604,19 +695,11 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
                       vertexMap, newVertices, elements, border, physicals);
       cutGM->getMeshPartitions().insert(e->getPartition());
     }
-  }printf("cutting finished\n");
-  std::map<int, std::vector<MElement*> >::iterator iter = elements[2].begin();
-  for(; iter != elements[2].end(); iter++){
-    printf("triangle face %d\n",iter->first);
-    for(unsigned int i = 0; i < iter->second.size(); i++)
-      printf("%d : (%g, %g, %g), (%g, %g, %g), (%g, %g, %g)\n",iter->second[i]->getNum(),
-             iter->second[i]->getVertex(0)->x(), iter->second[i]->getVertex(0)->y(), 0.,
-             iter->second[i]->getVertex(1)->x(), iter->second[i]->getVertex(1)->y(), 0.,
-             iter->second[i]->getVertex(2)->x(), iter->second[i]->getVertex(2)->y(), 0.);
   }
 
   // number the new vertices and add in vertexMap
-  int num = vertexMap.end()->first;
+  std::map<int, MVertex* >::iterator itend = vertexMap.end(); itend--;
+  int num = itend->first;
   for(unsigned int i = 0; i < newVertices.size(); i++) {
     newVertices[i]->setNum(++num);
     vertexMap[num] = newVertices[i];
@@ -642,7 +725,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
     for(int j = 0; j < it->second.size(); j++)
       elements[2][n].push_back(it->second[j]);
     it->second.clear();
-  }printf("numbering borders finished \n");
+  }
 
   return cutGM;
 #else

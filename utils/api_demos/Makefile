@@ -8,6 +8,8 @@
 #               --disable-metis --prefix=$HOME/src/gmsh/utils/api_demos
 #   make install-lib
 # 
+GMSHLIBDIR = $(DEVROOT)/gmshLib
+GMSHINCDIR = $(DEVROOT)/gmsh/include
 
 mainAntTweakBar: mainAntTweakBar.cpp
 	g++ -g -m64 -o mainAntTweakBar -Iinclude mainAntTweakBar.cpp -Llib\
@@ -22,4 +24,8 @@ mainGlut: mainGlut.cpp
 mainPost: mainPost.cpp
 	g++ -g -m64 -o mainPost -Iinclude mainPost.cpp -Llib -lGmsh\
           -framework ApplicationServices -llapack -lblas -lz -lm
+
+levelset: mainLevelset.cpp
+	g++ -g -I${GMSHINCDIR} -DHAVE_GSL -DHAVE_GLEVELSETS -DHAVE_GMM -DHAVE_SPARSKIT \
+	-o levelset mainLevelset.cpp -L${GMSHLIBDIR} -lGmsh -lgsl -lgslcblas -llapack -lblas
 

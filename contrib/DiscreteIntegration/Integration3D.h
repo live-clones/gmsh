@@ -54,6 +54,8 @@ class DI_Point
   void chooseLs (const gLevelset *Lsi);
   // clear Ls and add the levelset values computed with RPNi
   void computeLs (const DI_Element *e, const std::vector<const gLevelset *> RPNi);
+  // clear Ls and add the levelset value computed with ls
+  void computeLs (const gLevelset &ls);
   // remove the last value in Ls and add ls
   inline void changeLs (const double ls) {Ls.pop_back(); Ls.push_back(ls);}
   // change the coordinates
@@ -404,7 +406,7 @@ class DI_Line : public DI_Element
   inline void vert(const int edge, int &s1, int &s2) const {
     s1 = 0; s2 = 1;}
   void midV (const int e, int *s, int &n) const {
-    s[0] = 0; s[1] = 1; n  = 2;
+    s[0] = 0; s[1] = 1; n = 2;
   }
   void getShapeFunctions (double u, double v, double w, double s[], int order = -1) const;
   void getGradShapeFunctions (const double u, const double v, const double w,
@@ -485,9 +487,9 @@ class DI_Triangle : public DI_Element
   }
   void midV (const int e, int *s, int &n) const {
     switch(e) {
-    case 0 : s[0] = 0; s[1] = 1; n  = 2; return;
-    case 1 : s[0] = 1; s[1] = 2; n  = 2; return;
-    case 2 : s[0] = 2; s[1] = 0; n  = 2; return;
+    case 0 : s[0] = 0; s[1] = 1; n = 2; return;
+    case 1 : s[0] = 1; s[1] = 2; n = 2; return;
+    case 2 : s[0] = 2; s[1] = 0; n = 2; return;
     default : n = 0; return;
     }
   }
@@ -581,11 +583,11 @@ class DI_Quad : public DI_Element
   }
   void midV (const int e, int *s, int &n) const {
     switch(e) {
-    case 0 : s[0] = 0; s[1] = 1; n  = 2; return;
-    case 1 : s[0] = 1; s[1] = 2; n  = 2; return;
-    case 2 : s[0] = 2; s[1] = 3; n  = 2; return;
-    case 3 : s[0] = 3; s[1] = 0; n  = 2; return;
-    case 4 : s[0] = 0; s[1] = 1; s[2] = 2; s[3] = 3; n  = 4; return;
+    case 0 : s[0] = 0; s[1] = 1; n = 2; return;
+    case 1 : s[0] = 1; s[1] = 2; n = 2; return;
+    case 2 : s[0] = 2; s[1] = 3; n = 2; return;
+    case 3 : s[0] = 3; s[1] = 0; n = 2; return;
+    case 4 : s[0] = 0; s[1] = 1; s[2] = 2; s[3] = 3; n = 4; return;
     default : n = 0; return;
     }
   }
@@ -675,12 +677,12 @@ class DI_Tetra : public DI_Element
   }
   void midV (const int e, int *s, int &n) const {
     switch(e) {
-    case 0 : s[0] = 0; s[1] = 1; n  = 2; return;
-    case 1 : s[0] = 0; s[1] = 2; n  = 2; return;
-    case 2 : s[0] = 0; s[1] = 3; n  = 2; return;
-    case 3 : s[0] = 1; s[1] = 2; n  = 2; return;
-    case 4 : s[0] = 2; s[1] = 3; n  = 2; return;
-    case 5 : s[0] = 3; s[1] = 1; n  = 2; return;
+    case 0 : s[0] = 0; s[1] = 1; n = 2; return;
+    case 1 : s[0] = 0; s[1] = 2; n = 2; return;
+    case 2 : s[0] = 0; s[1] = 3; n = 2; return;
+    case 3 : s[0] = 1; s[1] = 2; n = 2; return;
+    case 4 : s[0] = 2; s[1] = 3; n = 2; return;
+    case 5 : s[0] = 3; s[1] = 1; n = 2; return;
     default : n = 0; return;
     }
   }
@@ -790,26 +792,26 @@ class DI_Hexa : public DI_Element
   }
   void midV (const int e, int *s, int &n) const {
     switch(e) {
-    case 0 : s[0] = 0; s[1] = 1; n  = 2; return;
-    case 1 : s[0] = 1; s[1] = 2; n  = 2; return;
-    case 2 : s[0] = 2; s[1] = 3; n  = 2; return;
-    case 3 : s[0] = 3; s[1] = 0; n  = 2; return;
-    case 4 : s[0] = 0; s[1] = 4; n  = 2; return;
-    case 5 : s[0] = 1; s[1] = 5; n  = 2; return;
-    case 6 : s[0] = 2; s[1] = 6; n  = 2; return;
-    case 7 : s[0] = 3; s[1] = 7; n  = 2; return;
-    case 8 : s[0] = 4; s[1] = 5; n  = 2; return;
-    case 9 : s[0] = 5; s[1] = 6; n  = 2; return;
-    case 10 : s[0] = 6; s[1] = 7; n  = 2; return;
-    case 11 : s[0] = 7; s[1] = 4; n  = 2; return;
-    case 12 : s[0] = 0; s[1] = 1; s[2] = 2; s[3] = 3; n  = 4; return;
-    case 13 : s[0] = 0; s[1] = 4; s[2] = 5; s[3] = 1; n  = 4; return;
-    case 14 : s[0] = 1; s[1] = 5; s[2] = 6; s[3] = 2; n  = 4; return;
-    case 15 : s[0] = 2; s[1] = 6; s[2] = 7; s[3] = 3; n  = 4; return;
-    case 16 : s[0] = 0; s[1] = 3; s[2] = 7; s[3] = 4; n  = 4; return;
-    case 17 : s[0] = 4; s[1] = 7; s[2] = 6; s[3] = 5; n  = 4; return;
+    case 0 : s[0] = 0; s[1] = 1; n = 2; return;
+    case 1 : s[0] = 1; s[1] = 2; n = 2; return;
+    case 2 : s[0] = 2; s[1] = 3; n = 2; return;
+    case 3 : s[0] = 3; s[1] = 0; n = 2; return;
+    case 4 : s[0] = 0; s[1] = 4; n = 2; return;
+    case 5 : s[0] = 1; s[1] = 5; n = 2; return;
+    case 6 : s[0] = 2; s[1] = 6; n = 2; return;
+    case 7 : s[0] = 3; s[1] = 7; n = 2; return;
+    case 8 : s[0] = 4; s[1] = 5; n = 2; return;
+    case 9 : s[0] = 5; s[1] = 6; n = 2; return;
+    case 10 : s[0] = 6; s[1] = 7; n = 2; return;
+    case 11 : s[0] = 7; s[1] = 4; n = 2; return;
+    case 12 : s[0] = 0; s[1] = 1; s[2] = 2; s[3] = 3; n = 4; return;
+    case 13 : s[0] = 0; s[1] = 4; s[2] = 5; s[3] = 1; n = 4; return;
+    case 14 : s[0] = 1; s[1] = 5; s[2] = 6; s[3] = 2; n = 4; return;
+    case 15 : s[0] = 2; s[1] = 6; s[2] = 7; s[3] = 3; n = 4; return;
+    case 16 : s[0] = 0; s[1] = 3; s[2] = 7; s[3] = 4; n = 4; return;
+    case 17 : s[0] = 4; s[1] = 7; s[2] = 6; s[3] = 5; n = 4; return;
     case 18 : s[0] = 0; s[1] = 1; s[2] = 2; s[3] = 3; s[4] = 4; s[5] = 5; s[6] = 6; s[7] = 7;
-              n  = 8; return;
+              n = 8; return;
     default : n = 0; return;
     }
   }
