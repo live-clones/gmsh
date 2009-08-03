@@ -825,7 +825,7 @@ void DI_Element::evalC (const double u, const double v, const double w, double *
   int nbV = nbVert() + nbMid();
   std::vector<double> s(nbV);
   ev[0] = 0; ev[1] = 0; ev[2] = 0;
-  getShapeFunctions (u, v, w, &s[0], order); //printf("o=%d nbV=%d s=%g,%g,%g,%g,%g,%g\n",order,nbV,s[0],s[1],s[2],s[3],s[4],s[5]);
+  getShapeFunctions (u, v, w, &s[0], order);
   for(int i = 0; i < nbV; i++){
     ev[0] += x(i) * s[i];
     ev[1] += y(i) * s[i];
@@ -1014,15 +1014,17 @@ void DI_Line::computeIntegral() {
 }
 void DI_Line::getShapeFunctions (double u, double v, double w, double s[], int ord) const {
   int order = (ord == -1) ? getPolynomialOrder() : ord;
+  double valm = (fabs(1. - u) < 1.e-16) ? 0. : (1. - u);
+  double valp = (fabs(1. + u) < 1.e-16) ? 0. : (1. + u);
   switch (order) {
   case 1 :
-    s[0] = (1. - u) / 2.;
-    s[1] = (1. + u) / 2.;
+    s[0] = valm / 2.;
+    s[1] = valp / 2.;
     break;
   case 2 :
-    s[0] = u * (u - 1.) / 2.;
-    s[1] = u * (u + 1.) / 2.;
-    s[2] = (1. - u) * (1. + u);
+    s[0] = -u * valm / 2.;
+    s[1] = u * valp / 2.;
+    s[2] = valm * valp;
     break;
   default : printf("Order %d line function space not implemented ", order); print();
   }
@@ -1071,19 +1073,20 @@ void DI_Triangle::computeIntegral() {
 }
 void DI_Triangle::getShapeFunctions (double u, double v, double w, double s[], int ord) const {
   int order = (ord == -1) ? getPolynomialOrder() : ord;
+  double val1 = (fabs(1. - u - v) < 1.e-16) ? 0. : (1. - u - v);
   switch (order) {
   case 1 :
-    s[0] = 1. - u - v;
+    s[0] = val1;
     s[1] = u;
     s[2] = v;
     break;
   case 2 :
-    s[0] = (1. - u - v) * (1. - 2. * u - 2. * v);
+    s[0] = val1 * (1. - 2. * u - 2. * v);
     s[1] = u * (2. * u - 1.);
     s[2] = v * (2. * v - 1.);
-    s[3] = 4. * u * (1. - u - v);
+    s[3] = 4. * u * val1;
     s[4] = 4. * u * v;
-    s[5] = 4. * v * (1. - u - v);
+    s[5] = 4. * v * val1;
     break;
   default :
     printf("Order %d triangle function space not implemented ", order); print();
@@ -2273,7 +2276,7 @@ void DI_Triangle::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip
     assert(tt_subTriangles[t].sizeLs() == 1);
     tt_subTriangles[t].computeLsTagDom(&tt, RPN);
     DI_Triangle tt_subTr = tt_subTriangles[t];
-    mappingEl(&tt_subTr);                       //tt_subTr.printls();
+    mappingEl(&tt_subTr);
     tt_subTr.integrationPoints(polynomialOrderTr, &tt_subTriangles[t], &tt, RPN, ip);
     subTriangles.push_back(tt_subTr);
   }

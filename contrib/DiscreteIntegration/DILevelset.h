@@ -32,24 +32,24 @@ protected:
 public:
   gLevelset() : tag_(-1) {}
   virtual ~gLevelset(){}
-  virtual double operator () (const double &x, const double &y, const double &z) const = 0;
+  virtual double operator() (const double &x, const double &y, const double &z) const = 0;
   // inline double operator () (const SPoint3 &p) const {return this->operator()(p.x(),p.y(),p.z());}
-  bool isInsideDomain  (const double &x, const double &y, const double &z) const {return this->operator()(x,y,z)*insideDomain > 0.;}
-  bool isOutsideDomain (const double &x, const double &y, const double &z) const {return this->operator()(x,y,z)*insideDomain < 0.;}
+  bool isInsideDomain (const double &x, const double &y, const double &z) const {return this->operator()(x,y,z) * insideDomain > 0.;}
+  bool isOutsideDomain (const double &x, const double &y, const double &z) const {return this->operator()(x,y,z) * insideDomain < 0.;}
   bool isOnBorder      (const double &x, const double &y, const double &z) const {return this->operator()(x,y,z) == 0.;}
   virtual std::vector<const gLevelset *> getChildren() const = 0;
-  virtual double choose (double d1, double d2) const=0;
+  virtual double choose (double d1, double d2) const = 0;
   virtual int type() const = 0;
-  virtual bool isPrimitive() const =0;
+  virtual bool isPrimitive() const = 0;
   void setTag(int t) {
     assert(isPrimitive());
-    tag_=t;
+    tag_ = t;
   }
   virtual int getTag() const { return tag_; }
   void getPrimitives(std::vector<const gLevelset *> &primitives) const;
   void getRPN(std::vector<const gLevelset *> &gLsRPN) const;
   double H (const double &x, const double &y, const double &z) const {
-    if ( isInsideDomain(x,y,z) || isOnBorder(x,y,z)) return 1.0;
+    if (isInsideDomain(x,y,z) || isOnBorder(x,y,z)) return 1.0;
     return 0.0;
   }
   void print() const {
@@ -69,7 +69,7 @@ public:
     case INTER :       printf("INTER"); break;
     case LSMESH:       printf("LSMESH"); break;
     }
-    printf(" Tag=%d\n",getTag());
+    printf(" Tag=%d\n", getTag());
   }
 };
 
@@ -80,8 +80,8 @@ class gLevelsetPrimitive : public gLevelset
 public:
   gLevelsetPrimitive() : gLevelset() {}
   gLevelsetPrimitive(int &tag) {
-    if (tag<1) {
-      printf("Tag of the levelset (%d) must be greater than 0.\n",tag);
+    if (tag < 1) {
+      printf("Tag of the levelset (%d) must be greater than 0.\n", tag);
       throw;
     }
     tag_ = tag++;
@@ -98,36 +98,36 @@ public:
 
 class gLevelsetSphere : public gLevelsetPrimitive
 {
-  double xc,yc,zc,r;
+  double xc, yc, zc, r;
 public:
-  gLevelsetSphere (const double &x, const double &y, const double &z, const double &R, int &tag) : gLevelsetPrimitive(tag),xc(x),yc(y),zc(z),r(R) {}
+  gLevelsetSphere (const double &x, const double &y, const double &z, const double &R, int &tag) : gLevelsetPrimitive(tag), xc(x), yc(y), zc(z), r(R) {}
   virtual double operator () (const double &x, const double &y, const double &z) const
-    {return sqrt((xc-x)*(xc-x)+(yc-y)*(yc-y)+(zc-z)*(zc-z)) - r;}
+    {return sqrt((xc - x) * (xc - x) + (yc - y) * (yc - y) + (zc - z) * (zc - z)) - r;}
   int type() const {return SPHERE;}
 };
 
 class gLevelsetPlane : public gLevelsetPrimitive
 {
-  double a,b,c,d;
+  double a, b, c, d;
 public:
   // define the plane _a*x+_b*y+_c*z+_d, with outward normal (a,b,c)
-  gLevelsetPlane (const double &_a, const double &_b, const double &_c, const double &_d, int &tag) : gLevelsetPrimitive(tag),a(_a),b(_b),c(_c),d(_d) {}
+  gLevelsetPlane (const double &_a, const double &_b, const double &_c, const double &_d, int &tag) : gLevelsetPrimitive(tag), a(_a), b(_b), c(_c), d(_d) {}
   // define the plane passing through the point pt and with outward normal norm
-  gLevelsetPlane (const double * pt, const double *norm, int &tag);
+  gLevelsetPlane (const double *pt, const double *norm, int &tag);
   // define the plane passing through the 3 points pt1,pt2,pt3 and with outward normal (pt1,pt2)x(pt1,pt3)
   gLevelsetPlane (const double *pt1, const double *pt2, const double *pt3, int &tag);
   // return negative value inward and positive value outward
-  virtual double operator () (const double &x, const double &y, const double &z) const
-    {return a*x + b*y + c*z + d;} 
+  virtual double operator() (const double &x, const double &y, const double &z) const
+    {return a * x + b * y + c * z + d;} 
   int type() const {return PLANE;}
 };
 
 class gLevelsetQuadric : public gLevelsetPrimitive
 {
 protected:
-  double A[3][3],B[3],C;
+  double A[3][3], B[3], C;
   void translate (const double transl[3]);
-  void rotate    (const double rotate[3][3]);  
+  void rotate (const double rotate[3][3]);  
   void computeRotationMatrix (const double dir[3], double t[3][3]); 
   void computeRotationMatrix (const double dir1[3], const double dir2[3] , double t[3][3]); 
   void Ax (const double x[3], double res[3], double fact=1.0);
@@ -139,27 +139,27 @@ public:
   gLevelsetQuadric(int &tag) : gLevelsetPrimitive(tag) {init(); }
   ~gLevelsetQuadric() {}
   double operator () (const double &x, const double &y, const double &z) const;
-  virtual int type() const =0;
+  virtual int type() const = 0;
 };
 
 class gLevelsetGenCylinder : public gLevelsetQuadric
 {
 public:
-  gLevelsetGenCylinder (const double * pt, const double *dir, const double &R, int &tag);
+  gLevelsetGenCylinder (const double *pt, const double *dir, const double &R, int &tag);
   int type() const {return GENCYLINDER;}
 };
 
 class gLevelsetEllipsoid : public gLevelsetQuadric
 {
 public:
-  gLevelsetEllipsoid (const double * pt, const double *dir, const double &a, const double &b, const double &c, int &tag);
+  gLevelsetEllipsoid (const double *pt, const double *dir, const double &a, const double &b, const double &c, int &tag);
   int type() const {return ELLIPS;}
 };
 
 class gLevelsetCone : public gLevelsetQuadric
 {
 public:
-  gLevelsetCone (const double * pt, const double * dir, const double &angle, int &tag);
+  gLevelsetCone (const double *pt, const double *dir, const double &angle, int &tag);
   int type() const {return CONE;}
 };
 
@@ -179,21 +179,21 @@ protected:
   std::vector<const gLevelset *> children;
 public:
   gLevelsetTools () {}
-  gLevelsetTools (std::vector<const gLevelset *> &p) {children=p;}
+  gLevelsetTools (std::vector<const gLevelset *> &p) {children = p;}
   ~gLevelsetTools () {
-    for(int i=0;i<(int)children.size();i++)
+    for(int i = 0; i < (int)children.size(); i++)
       delete children[i];
   }
   double operator () (const double &x, const double &y, const double &z) const {
-    double d = (*children[0])(x,y,z);
-    for (int i=1;i<(int)children.size();i++){
-      double dt = (*children[i])(x,y,z);
-      d = choose(d,dt);
+    double d = (*children[0])(x, y, z);
+    for (int i = 1; i < (int)children.size(); i++){
+      double dt = (*children[i])(x, y, z);
+      d = choose(d, dt);
     }
     return d;
   }
   std::vector<const gLevelset *> getChildren() const {return children;}
-  virtual double choose (double d1, double d2) const=0;
+  virtual double choose (double d1, double d2) const = 0;
   virtual int type() const = 0;
   bool isPrimitive() const {return false;}
 };
@@ -202,10 +202,9 @@ class gLevelsetReverse : public gLevelset
 {
   const gLevelset *ls;
 public:
-  gLevelsetReverse ( const gLevelset * p) : ls(p){ 
-  }
+  gLevelsetReverse (const gLevelset *p) : ls(p){}
   double operator () (const double &x, const double &y, const double &z) const {
-    return -(*ls)(x,y,z);
+    return -(*ls)(x, y, z);
   }
   std::vector<const gLevelset *> getChildren() const {return ls->getChildren();}
   bool isPrimitive() const {return ls->isPrimitive();}
@@ -219,9 +218,9 @@ public:
 class gLevelsetCut : public gLevelsetTools
 {
 public:
-  gLevelsetCut ( std::vector<const gLevelset *> &p) : gLevelsetTools(p) { }
+  gLevelsetCut (std::vector<const gLevelset *> &p) : gLevelsetTools(p) { }
   double choose (double d1, double d2) const {
-    return (d1>-d2)?d1:-d2; // greater of d1 and -d2
+    return (d1 > -d2) ? d1 : -d2; // greater of d1 and -d2
   }
   int type() const {return CUT;} 
 };
@@ -230,9 +229,9 @@ public:
 class gLevelsetUnion : public gLevelsetTools
 {
 public:
-  gLevelsetUnion ( std::vector<const gLevelset *> &p) : gLevelsetTools(p) { }
+  gLevelsetUnion (std::vector<const gLevelset *> &p) : gLevelsetTools(p) { }
   double choose (double d1, double d2) const {
-    return (d1<d2)?d1:d2; // lesser of d1 and d2
+    return (d1 < d2) ? d1 : d2; // lesser of d1 and d2
   }
   int type() const {return UNION;}
 };
@@ -241,9 +240,9 @@ public:
 class gLevelsetIntersection : public gLevelsetTools
 {
 public:
-  gLevelsetIntersection ( std::vector<const gLevelset *> &p) : gLevelsetTools(p) { }
+  gLevelsetIntersection (std::vector<const gLevelset *> &p) : gLevelsetTools(p) { }
   double choose (double d1, double d2) const {
-    return (d1>d2)?d1:d2; // greater of d1 and d2
+    return (d1 > d2) ? d1 : d2; // greater of d1 and d2
   }
   int type() const {return INTER;}
 };
@@ -252,14 +251,14 @@ public:
 class gLevelsetCrack : public gLevelsetTools
 {
 public:
-  gLevelsetCrack ( std::vector<const gLevelset *> &p) {
-    assert (p.size()==2);
+  gLevelsetCrack (std::vector<const gLevelset *> &p) {
+    assert (p.size() == 2);
     children.push_back(p[0]);
     children.push_back(new gLevelsetReverse(p[0]));
     children.push_back(p[1]);
   }
   double choose (double d1, double d2) const {
-    return (d1>d2)?d1:d2; // greater of d1 and d2
+    return (d1 > d2) ? d1 : d2; // greater of d1 and d2
   }
   int type() const {return CRACK;}
 };
@@ -271,10 +270,10 @@ class gLevelsetImproved : public gLevelset
 protected:
   gLevelset *Ls;
 public:
-  double operator () (const double &x, const double &y, const double &z) const {return (*Ls)(x,y,z);}
+  double operator() (const double &x, const double &y, const double &z) const {return (*Ls)(x, y, z);}
   std::vector<const gLevelset *> getChildren() const { return Ls->getChildren(); }
-  double choose (double d1, double d2) const { return Ls->choose(d1,d2); }
-  virtual int type() const =0;
+  double choose (double d1, double d2) const { return Ls->choose(d1, d2); }
+  virtual int type() const = 0;
   bool isPrimitive() const {return Ls->isPrimitive();}
 };
 
@@ -319,7 +318,7 @@ public:
   // tags of the faces are : exterior face :             tag+0
   //                         plane face including pt :   tag+1
   //                         plane face opposite to pt : tag+2
-  gLevelsetCylinder (const double * pt, const double *dir, const double &R, const double &H, int &tag);
+  gLevelsetCylinder (const double *pt, const double *dir, const double &R, const double &H, int &tag);
   // create a cylinder : pt is the point in the middle of the cylinder base,
   //                     dir is the direction of the cylinder axis,
   //                     R is the outer radius of the cylinder,
@@ -329,7 +328,7 @@ public:
   //                         plane face including pt :   tag+1
   //                         plane face opposite to pt : tag+2
   //                         interior face :             tag+3
-  gLevelsetCylinder (const double * pt, const double *dir, const double &R, const double &r, const double &H, int &tag);
+  gLevelsetCylinder (const double *pt, const double *dir, const double &R, const double &r, const double &H, int &tag);
   int type() const {return CYLINDER;}
 };
 

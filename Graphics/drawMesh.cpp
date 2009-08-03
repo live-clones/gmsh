@@ -15,6 +15,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "MElementCut.h"
 #include "Context.h"
 #include "OS.h"
 #include "gl2ps.h"
@@ -212,7 +213,7 @@ static void drawNormals(drawContext *ctx, std::vector<T*> &elements)
 {
   glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.normals);
   for(unsigned int i = 0; i < elements.size(); i++){
-    MElement *ele = elements[i];
+    MElement *ele = (MElement*) elements[i];
     if(!isElementVisible(ele)) continue;
     SVector3 n = ele->getFace(0).normal();
     for(int j = 0; j < 3; j++)
@@ -311,7 +312,7 @@ static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
                                    std::vector<T*> &elements)
 {
   for(unsigned int i = 0; i < elements.size(); i++){
-    MElement *ele = elements[i];
+    MElement *ele = (MElement*) elements[i];
     for(int j = 0; j < ele->getNumVertices(); j++){
       MVertex *v = ele->getVertex(j);
       if(isElementVisible(ele) && v->getVisibility()){
@@ -345,7 +346,7 @@ static void drawBarycentricDual(std::vector<T*> &elements)
   gl2psEnable(GL2PS_LINE_STIPPLE);
   glBegin(GL_LINES);
   for(unsigned int i = 0; i < elements.size(); i++){
-    MElement *ele = elements[i];
+    MElement *ele = (MElement*) elements[i];
     if(!isElementVisible(ele)) continue;
     SPoint3 pc = ele->barycenter();
     if(ele->getDim() == 2){
@@ -433,7 +434,7 @@ template<class T>
 static void addSmoothNormals(GEntity *e, std::vector<T*> &elements)
 {
   for(unsigned int i = 0; i < elements.size(); i++){
-    MElement *ele = elements[i];
+    MElement *ele = (MElement*) elements[i];
     SPoint3 pc(0., 0., 0.);
     if(CTX::instance()->mesh.explode != 1.) pc = ele->barycenter();
     for(int j = 0; j < ele->getNumFacesRep(); j++){
@@ -682,6 +683,7 @@ class initSmoothNormalsGFace {
   {
     addSmoothNormals(f, f->triangles);
     addSmoothNormals(f, f->quadrangles);
+    addSmoothNormals(f, f->polygons);
   }
 };
 
@@ -692,7 +694,7 @@ class initMeshGFace {
   {
     int num = 0;
     if(CTX::instance()->mesh.surfacesEdges){
-      num += (3 * f->triangles.size() + 4 * f->quadrangles.size()) / 2;
+      num += (3 * f->triangles.size() + 4 * f->quadrangles.size() + 4 * f->polygons.size()) / 2;
       if(CTX::instance()->mesh.explode != 1.) num *= 2;
       if(_curved) num *= 2;
     }
@@ -702,7 +704,7 @@ class initMeshGFace {
   {
     int num = 0;
     if(CTX::instance()->mesh.surfacesFaces){
-      num += (f->triangles.size() + 2 * f->quadrangles.size());
+      num += (f->triangles.size() + 2 * f->quadrangles.size() + 2 * f->polygons.size());
       if(_curved) num *= 4;
     }
     return num + 100;
@@ -773,17 +775,20 @@ class drawMeshGFace {
           drawVerticesPerElement(_ctx, f, f->triangles);
         if(CTX::instance()->mesh.quadrangles) 
           drawVerticesPerElement(_ctx, f, f->quadrangles);
+        drawVerticesPerElement(_ctx, f, f->polygons);
       }
     }
 
     if(CTX::instance()->mesh.normals) {
       if(CTX::instance()->mesh.triangles) drawNormals(_ctx, f->triangles);
       if(CTX::instance()->mesh.quadrangles) drawNormals(_ctx, f->quadrangles);
+      drawNormals(_ctx, f->polygons);
     }
 
     if(CTX::instance()->mesh.dual) {
       if(CTX::instance()->mesh.triangles) drawBarycentricDual(f->triangles);
       if(CTX::instance()->mesh.quadrangles) drawBarycentricDual(f->quadrangles);
+      drawBarycentricDual(f->polygons);
     }
     else if(CTX::instance()->mesh.voronoi) {
       if(CTX::instance()->mesh.triangles) drawVoronoiDual(f->triangles);
@@ -817,8 +822,11 @@ class initMeshGRegion {
     int num = 0;
     if(CTX::instance()->mesh.volumesEdges){
       // suppose edge shared by 4 elements on averge (pessmistic)
+      int numLP = 0;
+      for(unsigned int i = 0; i < r->polyhedra.size(); i++)
+        numLP += 2 * r->polyhedra[i]->getNumEdges();
       num += (12 * r->tetrahedra.size() + 24 * r->hexahedra.size() +
-              18 * r->prisms.size() + 16 * r->pyramids.size()) / 4;
+              18 * r->prisms.size() + 16 * r->pyramids.size() + numLP) / 4;
       num = _estimateIfClipped(num);
       if(CTX::instance()->mesh.explode != 1.) num *= 4;
       if(_curved) num *= 2;
@@ -829,8 +837,11 @@ class initMeshGRegion {
   {
     int num = 0;
     if(CTX::instance()->mesh.volumesFaces){
+      int numFP = 0;
+      for(unsigned int i = 0; i < r->polyhedra.size(); i++)
+        numFP += r->polyhedra[i]->getNumFaces();
       num += (4 * r->tetrahedra.size() + 12 * r->hexahedra.size() +
-              8 * r->prisms.size() + 6 * r->pyramids.size()) / 2;
+              8 * r->prisms.size() + 6 * r->pyramids.size() + numFP) / 2;
       num = _estimateIfClipped(num);
       if(CTX::instance()->mesh.explode != 1.) num *= 2;
       if(_curved) num *= 4;
@@ -920,6 +931,7 @@ class drawMeshGRegion {
         if(CTX::instance()->mesh.hexahedra) drawVerticesPerElement(_ctx, r, r->hexahedra);
         if(CTX::instance()->mesh.prisms) drawVerticesPerElement(_ctx, r, r->prisms);
         if(CTX::instance()->mesh.pyramids) drawVerticesPerElement(_ctx, r, r->pyramids);
+        drawVerticesPerElement(_ctx, r, r->polyhedra);
       }
     }
 
@@ -928,6 +940,7 @@ class drawMeshGRegion {
       if(CTX::instance()->mesh.hexahedra) drawBarycentricDual(r->hexahedra);
       if(CTX::instance()->mesh.prisms) drawBarycentricDual(r->prisms);
       if(CTX::instance()->mesh.pyramids) drawBarycentricDual(r->pyramids);
+      drawBarycentricDual(r->polyhedra);
     }
 
     if(select) {

@@ -98,6 +98,7 @@ drawMesh${OBJEXT}: drawMesh.cpp drawContext.h ../Geo/SBoundingBox3d.h \
   ../Geo/MElement.h ../Geo/MTetrahedron.h ../Geo/MElement.h \
   ../Geo/MHexahedron.h ../Geo/MElement.h ../Geo/MPrism.h \
   ../Geo/MElement.h ../Geo/MPyramid.h ../Geo/MElement.h \
+  ../Geo/MElementCut.h ../Geo/MElement.h \
   ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/meshPartitionOptions.h \
   ../Common/OS.h gl2ps.h ../Common/VertexArray.h ../Common/SmoothData.h \
   ../Post/PView.h ../Post/PViewData.h
