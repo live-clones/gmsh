@@ -11,6 +11,7 @@
 #include "GFace.h"
 #include "GEdge.h"
 #include "GEdgeCompound.h"
+#include "meshGFaceOptimize.h"
 
 /*
 A GFaceCompound is a model face that is the compound of model faces.
@@ -52,11 +53,15 @@ class GFaceCompound : public GFace {
   mutable int nbT;
   mutable GFaceCompoundTriangle *_gfct;
   mutable Octree *oct;
+  mutable v2t_cont adjv;
+  mutable bool mapv2Tri;
   mutable std::map<MVertex*,SPoint3> coordinates;
   mutable std::map<MVertex*,SVector3> _normals;
   void buildOct() const ;
   void parametrize() const ;
   void parametrize(iterationStep) const ;
+  bool checkOrientation() const;
+  void one2OneMap() const;
   void computeNormals () const;
   void getBoundingEdges();
   void getTriangle(double u, double v, GFaceCompoundTriangle **lt, 
@@ -64,6 +69,7 @@ class GFaceCompound : public GFace {
   virtual double curvature(MTriangle *t, double u, double v) const;
   void printStuff() const;
   bool trivial() const ;
+
 public:
   typedef enum {UNITCIRCLE, SQUARE} typeOfIsomorphism;
   GFaceCompound(GModel *m, int tag, 

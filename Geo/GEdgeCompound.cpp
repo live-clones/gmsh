@@ -79,6 +79,7 @@ void GEdgeCompound::orderEdges()
   else{
     Msg::Error("EdgeCompound %d is wrong (it has %d end points)",tag(),tempv.size());
     Msg::Exit(1);
+
   }
 
   //loop over all segments to order segments and store it in the list _c

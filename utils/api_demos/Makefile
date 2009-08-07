@@ -22,8 +22,9 @@ mainGlut: mainGlut.cpp
           -framework ApplicationServices -llapack -lblas -lz -lm
 
 mainPost: mainPost.cpp
-	g++ -g -m64 -o mainPost -Iinclude mainPost.cpp -Llib -lGmsh\
+	g++ -g  -o mainPost -Iinclude mainPost.cpp -Llib -lGmsh\
           -framework ApplicationServices -llapack -lblas -lz -lm
+
 
 levelset: mainLevelset.cpp
 	g++ -g -I${GMSHINCDIR} -DHAVE_GSL -DHAVE_GLEVELSETS -DHAVE_GMM -DHAVE_SPARSKIT \

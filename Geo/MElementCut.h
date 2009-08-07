@@ -163,6 +163,15 @@ class MPolygon : public MElement {
       _parts.push_back(new MTriangle(v[i * 3], v[i * 3 + 1], v[i * 3 + 2]));
     _initVertices();
   }
+  MPolygon(std::vector<MElement*> vT, int num=0, int part=0)
+    : MElement(num, part), _owner(false), _orig(0)
+  {
+    for(unsigned int i = 0; i < vT.size(); i++){
+      MTriangle *t = (MTriangle*) vT[i];
+      _parts.push_back(t);
+    }
+    _initVertices();
+  }
   MPolygon(std::vector<MTriangle*> vT, int num=0, int part=0)
     : MElement(num, part), _owner(false), _orig(0)
   {

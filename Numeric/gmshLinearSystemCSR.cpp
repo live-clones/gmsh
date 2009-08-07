@@ -291,17 +291,14 @@ void sortColumns (int NbLines,
 template<>
 int gmshLinearSystemCSRGmm<double> :: systemSolve()
 {
-  sortColumns(_b->size(),
-	      CSRList_Nbr(a_),
-	      (INDEX_TYPE *) ptr_->array,
-	      (INDEX_TYPE *) jptr_->array, 
-	      (INDEX_TYPE *) ai_->array, 
-	      (double*) a_->array);
+  if(!sorted)
+    sortColumns(_b->size(),
+		CSRList_Nbr(a_),
+		(INDEX_TYPE *) ptr_->array,
+		(INDEX_TYPE *) jptr_->array, 
+		(INDEX_TYPE *) ai_->array, 
+		(double*) a_->array);
   sorted = true;
-
-  //  for (int i=0;i<_b->size();i++)
-  //    printf("%d ",((INDEX_TYPE *) jptr_->array)[i]);
-  //  printf("\n");
 
   gmm::csr_matrix_ref<double*,INDEX_TYPE *,INDEX_TYPE *, 0>  ref((double*) a_->array, 
 								 (INDEX_TYPE *) ai_->array,
@@ -319,17 +316,41 @@ int gmshLinearSystemCSRGmm<double> :: systemSolve()
 }
 #endif
 
+#if defined(HAVE_GMM)
+#include "gmm.h"
+template<>
+int gmshLinearSystemCSRGmm<double> :: checkSystem()
+{
+  if(!sorted)
+    sortColumns(_b->size(),
+		CSRList_Nbr(a_),
+		(INDEX_TYPE *) ptr_->array,
+		(INDEX_TYPE *) jptr_->array, 
+		(INDEX_TYPE *) ai_->array, 
+		(double*) a_->array);
+  sorted = true;
+
+  printf("Coucou check system \n");
+  for (int i=0;i<_b->size();i++)
+    printf("%d ",((INDEX_TYPE *) jptr_->array)[i]);
+  printf("\n");
+
+  return 1;
+}
+#endif
+
 #if defined(HAVE_TAUCSw)
 #include "taucs.h"
 template<>
 int gmshLinearSystemCSRTaucs<double> :: systemSolve()
 {
-  sortColumns(_b->size(),
-	      CSRList_Nbr(a_),
-	      (INDEX_TYPE *) ptr_->array,
-	      (INDEX_TYPE *) jptr_->array, 
-	      (INDEX_TYPE *) ai_->array, 
-	      (double*) a_->array);
+  if(!sorted)
+    sortColumns(_b->size(),
+		CSRList_Nbr(a_),
+		(INDEX_TYPE *) ptr_->array,
+		(INDEX_TYPE *) jptr_->array, 
+		(INDEX_TYPE *) ai_->array, 
+		(double*) a_->array);
   sorted = true;
 
   taucs_ccs_matrix myVeryCuteTaucsMatrix;

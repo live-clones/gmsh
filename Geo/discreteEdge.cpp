@@ -150,7 +150,7 @@ void discreteEdge::setBoundVertices()
 {
 
   if (boundv.size()==2){
-    printf("Found a regular open Curve \n");
+    //printf("Found a regular open Curve \n");
     std::vector<GVertex*> bound_vertices;
     for (std::map<MVertex*,MLine*>::const_iterator iter = boundv.begin(); iter != boundv.end(); iter++){
       MVertex* vE = (iter)->first;
@@ -447,55 +447,6 @@ GPoint discreteEdge::point(double par) const
     return GPoint(PP.x(),PP.y(),PP.z());
 
   }
-//   else{
-    
-//     //quadratic Lagrange mesh
-//     //-------------------------
-
-//     const SVector3 n1 = _normals[vB];
-//     const SVector3 n2 = _normals[vE];
-
-//     SPoint3 v1(vB->x(),vB->y(),vB->z());  
-//     SPoint3 v2(vE->x(),vE->y(),vE->z());
-  
-//     SVector3 t1, t2, Pij; 
-//     t1 = n2 - n1*dot(n1,n2);
-//     t2 =  n2*(dot(n1,n2)) - n1; 
-//     Pij = v2 - v1;
-    
-//     double a = dot(t1,t2)/dot(t1,t1);
-//     double b = dot(Pij,t1)/dot(t1,t2);
-//     double ap = dot(t1,t2)/dot(t2,t2);
-//     double bp = dot(Pij,t2)/dot(t1,t2);
-    
-//     SPoint3 X3;
-//     if (dot(n1,n2)/(norm(n1)*norm(n2)) > 0.9999){
-//       printf("coucou normals \n");
-//       X3.setPosition(.5*(v1.x()+v2.x()),  .5*(v1.y()+v2.y()), .5*(v1.z()+v2.z()) );
-//     }
-//     else{
-//       SVector3 XX3 = (.5*((ap*bp*t2)-(a*bp*t1)) ) *.25  +  (Pij + .5*((a*b*t1) - (ap*bp*t2)))*.5 +  v1;
-//       X3.setPosition(XX3.x(), XX3.y(), XX3.z());
-//     } 
-    
-//    //   printf("normal x1 num=%d  coord = %g %g %g \n" , vB->getNum(), v1.x(), v1.y(), v1.z());
-// //      printf("normal n1 = %g %g %g \n", n1.x(), n1.y(), n1.z());
-// //      printf("normal x2 num = %d coord = %g %g %g \n", vE->getNum(), v2.x(), v2.y(), v2.z());
-// //      printf("normal n2 = %g %g %g \n", n2.x(), n2.y(), n2.z());
-// //      printf("normal x3 = %g %g %g \n", X3.x(), X3.y(), X3.z());
-// //      printf("normal x3b = %g %g %g \n", X3b.x(), X3b.y(), X3b.z());
-//      //exit(1);
- 
-//     const gmshFunctionSpace& fs = gmshFunctionSpaces::find(MSH_LIN_3);
-//     double f1[3];
-//     SPoint3 p(0, 0, 0);
-//     double U = 2*tLoc -1;
-//     fs.f(U,0,0,f1);
-
-//     p = v1*f1[0] + v2*f1[1] + X3*f1[2];
-//     return GPoint(p.x(),p.y(),p.z());
-  
-//   }
 
 }
 

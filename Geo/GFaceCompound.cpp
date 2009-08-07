@@ -17,6 +17,10 @@
 #include "gmshLinearSystemFull.h"
 #include "FunctionSpace.h"
 #include "GmshDefines.h"
+#include "GmshPredicates.h"
+#include "meshGFaceOptimize.h"
+#include "MElementCut.h"
+#include "GEntity.h"
 
 class gmshGradientBasedDiffusivity : public gmshFunction<double>
 {
@@ -96,14 +100,160 @@ bool GFaceCompound::trivial() const {
   return false;
 }
 
+bool GFaceCompound::checkOrientation() const
+{
+  double U1, V1, U2,V2, U3,V3;
+  std::list<GFace*>::const_iterator it = _compound.begin();
+  double a_old, a_new;
+  bool oriented = true;
+  int iter = 0;
+  for ( ; it != _compound.end(); ++it){
+    for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+      MTriangle *t = (*it)->triangles[i];
+      SPoint3 v1 = coordinates[t->getVertex(0)];
+      SPoint3 v2 = coordinates[t->getVertex(1)];
+      SPoint3 v3 = coordinates[t->getVertex(2)];
+      double p1[2] = {v1[0],v1[1]};
+      double p2[2] = {v2[0],v2[1]};
+      double p3[2] = {v3[0],v3[1]};
+      a_new = gmsh::orient2d(p1, p2, p3);
+      if (iter == 0) a_old=a_new;
+      if (a_new*a_old < 0.){
+	oriented = false;
+	break;
+      }
+      else{
+	a_old = a_new;
+      }
+      iter ++;
+    }    
+  }  
+
+  if(!oriented ){
+    Msg::Info("*** Could not compute reparametrization with the harmonic map.");
+    Msg::Info("*** Force One-2-One Map.");
+    one2OneMap();
+    checkOrientation();
+  }
+  else{
+    Msg::Info("Harmonic mapping successfully computed ...");
+  }
+
+  return oriented;
+
+}
+
+void GFaceCompound::one2OneMap() const{
+
+  if (!mapv2Tri){
+    std::vector<MTriangle*> allTri;
+    std::list<GFace*>::const_iterator it = _compound.begin();
+    for ( ; it != _compound.end(); ++it){
+      allTri.insert(allTri.end(), (*it)->triangles.begin(), (*it)->triangles.end() );
+    }
+    buildVertexToTriangle(allTri, adjv);
+    //printf("allTri size =%d\n", allTri.size());
+    mapv2Tri=true;
+  }
+
+ for (v2t_cont::iterator it = adjv.begin(); it!= adjv.end(); ++it){
+   MVertex *v = it->first;
+   std::vector<MElement*> vTri = it->second;
+   int nbV = vTri.size();
+   double a_old, a_new;
+   bool badCavity = false;
+
+   std::map<MVertex*,SPoint3>::iterator itV = coordinates.find(v);
+   //printf("*** Node = %d: (%g %g) cavity size = %d \n", v->getNum(), itV->second.x(), itV->second.y(), nbV);
+
+   std::set<MVertex*> cavV;
+
+   for (unsigned int i = 0; i < nbV; ++i){
+     MTriangle *t = (MTriangle*) vTri[i];
+     SPoint3 v1 = coordinates[t->getVertex(0)];
+     SPoint3 v2 = coordinates[t->getVertex(1)];
+     SPoint3 v3 = coordinates[t->getVertex(2)];
+     for (int k=0; k< 3; k++){
+        MVertex *vk = t->getVertex(k);
+        std::set<MVertex*>::const_iterator it = cavV.find(vk);
+        if( it == cavV.end() && v != vk ) {
+	  cavV.insert(vk);
+	  //if (v != vk) cavV.insert(vk);
+	  //if (v->onWhat()->dim() == 1 && v == vk)  cavV.insert(vk);
+	}
+     }
+    
+     double p1[2] = {v1[0],v1[1]};
+     double p2[2] = {v2[0],v2[1]};
+     double p3[2] = {v3[0],v3[1]};
+     //printf("p1=(%g %g) p2=(%g %g) p3=(%g %g)\n",v1[0],v1[1], v2[0],v2[1], v3[0],v3[1] );
+     a_new = gmsh::orient2d(p1, p2, p3);
+     if (i == 0) a_old=a_new;
+     if (a_new*a_old < 0.)   badCavity = true;
+     a_old = a_new;
+   }
+   if(badCavity){
+     Msg::Info("Wrong cavity place vertex (%d onwhat=%d) at center of gravity (sizeCav=%d).",  v->getNum(),  v->onWhat()->dim(), nbV);
+     
+     int nbVert = cavV.size();
+     //printf("nbVert =%d \n", nbVert);
+     double u_cg = 0.0;
+     double v_cg = 0.0;
+     for (std::set<MVertex*>::const_iterator it = cavV.begin() ; it != cavV.end() ; ++it){
+       SPoint3 vsp = coordinates[*it];
+       u_cg+=vsp[0];
+       v_cg+=vsp[1];
+     }
+     u_cg/=nbVert;
+     v_cg/=nbVert;
+     //printf("ucg=%g vcg=%g \n", u_cg, v_cg);
+     SPoint3 p_cg(u_cg,v_cg,0);
+     coordinates[v] = p_cg;
+
+     //  //NEW CAVITY:
+//       printf("//**** NEW CAVITY****** \n " );
+//       for (int i=0; i< nbV; i++){
+// 	MTriangle *t = (MTriangle*) vTri[i];
+// 	SPoint3 v1 = coordinates[t->getVertex(0)];
+// 	SPoint3 v2 = coordinates[t->getVertex(1)];
+// 	SPoint3 v3 = coordinates[t->getVertex(2)];
+
+// 	printf("//////////////////// \n " );
+// 	double p1[2] = {v1[0],v1[1]};
+// 	double p2[2] = {v2[0],v2[1]};
+// 	double p3[2] = {v3[0],v3[1]};
+// 	a_new = gmsh::orient2d(p1, p2, p3);
+// 	MVertex *e1=t->getVertex(0);	MVertex *e2=t->getVertex(1);	MVertex *e3=t->getVertex(2);
+// 	printf("Point(%d)={%g, %g, 0}; \n ",e1->getNum(), v1[0],v1[1] );
+// 	printf("Point(%d)={%g, %g, 0}; \n ",e2->getNum(), v2[0],v2[1] );
+// 	printf("Point(%d)={%g, %g, 0}; \n ",e3->getNum(), v3[0],v3[1] );
+// 	printf("Line(%d)={%d,%d}; \n", e1->getNum()+e2->getNum() , e1->getNum(), e2->getNum());
+// 	printf("Line(%d)={%d,%d}; \n", e2->getNum()+e3->getNum() , e2->getNum(), e3->getNum());
+// 	printf("Line(%d)={%d,%d}; \n", e3->getNum()+e1->getNum() , e3->getNum(), e1->getNum());
+// 	printf("Surface(%d)={%d,%d, %d}; \n", e3->getNum()+e1->getNum() + e2->getNum(), e3->getNum(), e1->getNum()+e2->getNum() , 
+// 	       e2->getNum()+e3->getNum() , e3->getNum()+e1->getNum() );
+// 	printf("//Area=%g \n", a_new);
+//       }
+//       //NEW CAVITY:
+//       exit(1);
+
+   }
+ }
+  
+}
+
 void GFaceCompound::parametrize() const
 {
   if (trivial())return;
 
   if (!oct){
-    coordinates.clear();
+    coordinates.clear(); 
+
     parametrize(ITERU);
     parametrize(ITERV);
+
+    checkOrientation();
+    
     computeNormals();
     buildOct();
   }
@@ -121,13 +271,11 @@ void GFaceCompound::getBoundingEdges()
     std::list<GEdge*> :: const_iterator it = _U0.begin();
     for ( ; it != _U0.end() ; ++it){
       l_edges.push_back(*it);
-      //printf("U0 for edge %d, add face %d \n", (*it)->tag(), this->tag());
       (*it)->addFace(this);
     }
     it = _V0.begin();
     for ( ; it != _V0.end() ; ++it){
       l_edges.push_back(*it);
-      //printf("V0 for edge %d, add face %d \n", (*it)->tag(), this->tag());
       (*it)->addFace(this);
     }
     return;
@@ -165,7 +313,6 @@ void GFaceCompound::getBoundingEdges()
     std::set<GEdge*>::iterator it = _unique.begin();
     GVertex *vB = (*it)->getBeginVertex();
     GVertex *vE = (*it)->getEndVertex();
-    //    printf("boundary add edge=%d (%d,%d)\n", (*it)->tag(),vB->tag(),vE->tag());
     _loop.push_back(*it);
     _unique.erase(it);
     it++;
@@ -232,7 +379,7 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   else if (!_V1.size()) _type = UNITCIRCLE;
   else _type = SQUARE;
 
-
+  mapv2Tri = false;
 
 }
 
@@ -412,10 +559,9 @@ void GFaceCompound::parametrize(iterationStep step) const
   Msg::Info("Parametrizing Surface %d coordinate (ITER %d)", tag(), step); 
   
 #ifdef HAVE_GMM
-
-  //  gmshLinearSystemGmm<double> lsys;
+  //gmshLinearSystemGmm<double> lsys;
   gmshLinearSystemCSRGmm<double> lsys;
-  lsys.setPrec(1.e-15);
+  lsys.setPrec(1.e-10);
   if(Msg::GetVerbosity() == 99) lsys.setNoisy(2);
 #else
   gmshLinearSystemFull<double> lsys;
@@ -437,25 +583,11 @@ void GFaceCompound::parametrize(iterationStep step) const
       return;
     }
 
-    //    printf("%d v on the boundary\n", ordered.size());
-    
     for (unsigned int i = 0; i < ordered.size(); i++){
       MVertex *v = ordered[i];
       const double theta = 2 * M_PI * coords[i];
       if (step == ITERU) myAssembler.fixVertex(v, 0, 1, cos(theta));
-      else if (step == ITERV) myAssembler.fixVertex(v, 0, 1, sin(theta));
-      else if (step == ITERD) myAssembler.fixVertex(v, 0, 1, 1.0);      
-    }
-    if (step == ITERD && _V0.size()) {
-      success = orderVertices(_V0, ordered1, coords1);
-      if (!success){
-	Msg::Error("Could not order vertices on boundary");
-	return;
-      }
-      for (unsigned int i = 0; i < ordered1.size(); i++){
-	MVertex *v = ordered1[i];
-	myAssembler.fixVertex(v, 0, 1, 0.0);      
-      }    
+      else if (step == ITERV) myAssembler.fixVertex(v, 0, 1, sin(theta));    
     }
   }
   else if (_type == SQUARE){
@@ -494,34 +626,22 @@ void GFaceCompound::parametrize(iterationStep step) const
 
   Msg::Debug("Creating term %d dofs numbered %d fixed",
              myAssembler.sizeOfR(), myAssembler.sizeOfF());
-
-  if (step == ITERD){
-    gmshLaplaceTerm laplace(model(), &ONE, 1);
-    it = _compound.begin();
-    for ( ; it != _compound.end() ; ++it){
-      for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-	MTriangle *t = (*it)->triangles[i];
-	//	diffusivity.setCurrent(t);
-	laplace.addToMatrix(myAssembler, t);
-      }
-    }    
+  
+  //gmshConvexCombinationTerm laplace(model(), &ONE, 1);
+  gmshLaplaceTerm laplace(model(), &ONE, 1);
+  it = _compound.begin();
+  for ( ; it != _compound.end() ; ++it){
+    for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+      MTriangle *t = (*it)->triangles[i];
+      laplace.addToMatrix(myAssembler, t);
+    }
   }
-  else{
-    //gmshConvexCombinationTerm laplace(model(), &ONE, 1);
-    gmshLaplaceTerm laplace(model(), &ONE, 1);
-    //gmshLaplaceTerm laplace(model(), &diffusivity, 1);
-    it = _compound.begin();
-    for ( ; it != _compound.end() ; ++it){
-      for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-	MTriangle *t = (*it)->triangles[i];
-	laplace.addToMatrix(myAssembler, t);
-      }
-    }    
-  }
-
+ 
   Msg::Debug("Assembly done");
   lsys.systemSolve();
   Msg::Debug("System solved");
+
+
   it = _compound.begin();
   std::set<MVertex *>allNodes;
   for ( ; it != _compound.end() ; ++it){
@@ -536,8 +656,6 @@ void GFaceCompound::parametrize(iterationStep step) const
   for (std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
     MVertex *v = *itv;
     double value = myAssembler.getDofValue(v,0,1);
-    //if (step == 1)
-    //printf("%p node =%g %g %g , value = %g of size %d \n",v,  v->x(), v->y(), v->z(), value, coordinates.size());
     std::map<MVertex*,SPoint3>::iterator itf = coordinates.find(v);
     if (itf == coordinates.end()){
       SPoint3 p(0,0,0);

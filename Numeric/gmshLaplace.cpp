@@ -54,25 +54,6 @@ void gmshLaplaceTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
     for (int k = 0; k < j; k++)
       m(k, j) = m(j, k);
   
-  
-  //check for positive scheme
-//   //printf("ELEM\n");
-//   for (int j = 0; j < nbNodes; j++){
-//     double sum = m(j,0)+m(j,1)+m(j,2);
-//     if (sum < 0.0){
-//       printf("Sum LINE gmshLaplace Term NEG <0  %g %g %g\n", m(j,0),m(j,1),m(j,2));
-//       for (int k = 0; k < nbNodes; k++)	m(j,k) = -1.;
-//       m(j,j) = (nbNodes-1);
-  //   }
-//     else{
-//       printf("Sum POS\n");
-//     }
-//     //for (int k = 0; k < nbNodes; k++) {
-//     //printf("m(%d,%d)=%g ", j,k, m(j,k));
-//     //}
-//     //printf("\n");
-//     }
-
 }
 
 void gmshLaplaceTerm2DParametric::elementMatrix(MElement *e, gmshMatrix<double> &m) const

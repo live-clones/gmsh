@@ -145,6 +145,15 @@ class gmshLinearSystemCSRGmm : public gmshLinearSystemCSR<scalar> {
     Msg::Error("Gmm++ is not available in this version of Gmsh");
   }
 #endif
+  virtual int checkSystem() 
+#if defined(HAVE_GMM)
+    ;
+#else
+  {
+    Msg::Error("Gmm++ is not available in this version of Gmsh");
+  }
+#endif
+
 };
 
 template <class scalar>

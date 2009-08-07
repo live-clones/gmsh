@@ -9,6 +9,7 @@
 #include <map>
 #include <vector>
 #include "gmshLinearSystem.h"
+#include <stdlib.h>
 
 class MVertex;
 class MElement;
@@ -35,6 +36,7 @@ class gmshAssembler {
  private:
   std::map<gmshDofKey, int> numbering;
   std::map<gmshDofKey, scalar> fixed;
+  std::map<gmshDofKey, scalar> fixedFULL;
   std::map<gmshDofKey, std::vector<std::pair<gmshDofKey, scalar> > > constraints;
   gmshLinearSystem<scalar> *lsys;
  public:
@@ -79,6 +81,10 @@ class gmshAssembler {
   {
     fixed[gmshDofKey(v, iComp, iField)] = val;
   }
+  inline void fixVertexFULL(MVertex*v, int iComp, int iField, scalar val)
+  {
+    fixedFULL[gmshDofKey(v, iComp, iField)] = val;
+  }
   inline scalar getDofValue(MVertex *v, int iComp, int iField) const
   {
     gmshDofKey key(v, iComp, iField);
@@ -117,13 +123,21 @@ class gmshAssembler {
     if (itR != numbering.end()){
       std::map<gmshDofKey, int>::iterator 
         itC = numbering.find(gmshDofKey(vC, iCompC, iFieldC));
-      if (itC != numbering.end()){
+      typename std::map<gmshDofKey, scalar>::iterator 
+	itFF = fixedFULL.find(gmshDofKey(vR, iCompR, iFieldR));
+      if (itC != numbering.end() && itFF ==  fixedFULL.end()){
         lsys->addToMatrix(itR->second, itC->second, val);
+      }
+      else if (itFF != fixedFULL.end()){
+	//printf("RHS = %g,  ligne=%d \n",  itFF->second, itR->second);
+	lsys->addToMatrix(itR->second,itR->second, 1. );
+	lsys->addToRightHandSide(itR->second, itFF->second);
       }
       else {
         typename std::map<gmshDofKey, scalar>::iterator 
           itF = fixed.find(gmshDofKey(vC, iCompC, iFieldC));
         if (itF != fixed.end()){
+	  //printf("RHS = val%g itF=%g \n", val, itF->second);
           lsys->addToRightHandSide(itR->second, -val*itF->second);
         }
         else{
