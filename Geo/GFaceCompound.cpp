@@ -91,6 +91,217 @@ static void fixEdgeToValue(GEdge *ed, double value, gmshAssembler<double> &myAss
   }
 }
 
+static void computeCGKernelPolygon(std::map<MVertex*,SPoint3> &coordinates, std::vector<MVertex*> &cavV, double &ucg, double &vcg){
+
+   ucg = 0.0;
+   vcg = 0.0;
+
+  //Place at CG polygon
+  //--------------------
+//   int nbVert = cavV.size();
+//   printf("nbVert =%d \n", nbVert);
+
+//   for (std::set<MVertex*>::const_iterator it = cavV.begin() ; it != cavV.end() ; ++it){
+//     SPoint3 vsp = coordinates[*it];
+//     ucg+=vsp[0];
+//     vcg+=vsp[1];
+//   }
+//   ucg/=nbVert;
+//   vcg/=nbVert;
+//   printf("ucg=%g vcg=%g \n", ucg, vcg);
+
+  //Place at CG KERNEL polygon
+  //--------------------------
+
+  int nbPts = cavV.size();
+  //printf("COUCOU kernel polygon nbPts = %d\n", nbPts);
+  gmshMatrix<double> u(100,2);
+  int i=0;
+  for (std::vector<MVertex*>::iterator it = cavV.begin(); it != cavV.end(); it++){
+    SPoint3 vsp = coordinates[*it];
+    u(i,0) = vsp[0];
+    u(i,1) = vsp[1];
+    //printf("u(%d,0)=%g, u(%d, 1)=%g \n", i, vsp[0], i, vsp[1]);
+    i++;
+  }    
+
+ //cavity 1
+ //     mat(0,0) =0.4158; mat(0,1)=0.445671;
+//      mat(1,0) =0.39449; mat(1,1)= 0.473701;
+//      mat(2,0) =0.399136; mat(2,1)= 0.452657;
+//      mat(3,0) =0.424101; mat(3,1)= 0.435164;
+//      mat(4,0) =0.431606; mat(4,1)= 0.44255;
+//      mat(5,0) =0.42926; mat(5,1)= 0.442389;
+
+    //  //cavity 3
+//      mat(0,0) = 0. ; mat(0,1) = 5.;
+//      mat(1,0) = -4. ; mat(1,1) = -4.;
+//      mat(2,0) = 0. ; mat(2,1) = 0.;
+//      mat(3,0) = 4. ; mat(3,1) = -4.;
+
+//      //cavity 4
+//      mat(0,0) =0.; mat(0,1)=5. ;
+//      mat(1,0) =-2.; mat(1,1)=1. ;  
+//      mat(2,0) =-4.; mat(2,1)=1. ;  
+//      mat(3,0) =-2.; mat(3,1)= -1.; 
+//      mat(4,0) =2.; mat(4,1)=-1. ;  
+//      mat(5,0) =4.; mat(5,1)=1. ;  
+//      mat(6,0) =2.; mat(6,1)= 1.;
+
+//      //cavity 5
+//      mat(0,0) =0.; mat(0,1)=5. ;
+//      mat(1,0) =-2.; mat(1,1)=1. ;  
+//      mat(2,0) =-4.; mat(2,1)=1. ;  
+//      mat(3,0) =-2.; mat(3,1)= -1.; 
+//      mat(4,0) =-4.; mat(4,1)=-5. ;  
+//      mat(5,0) =0.; mat(5,1)=-3 ;  
+//      mat(6,0) =4.; mat(6,1)=-5.; 
+//      mat(7,0) =2.; mat(7,1)=-1. ;  
+//      mat(8,0) =4.; mat(8,1)=1. ;  
+//      mat(9,0) =2.; mat(9,1)= 1.; 
+     
+//      //cavity 6
+//      mat(0,0) =1.; mat(0,1)=0. ;
+//      mat(1,0) =1.;mat(1,1)=1. ;  
+//      mat(2,0) =0.;mat(2,1)=1. ; 
+//      mat(3,0) =0.;mat(3,1)=0. ;
+
+  double eps=-5.e-6;
+  int N=nbPts;
+  
+  std::set<int> setP;
+  for (int k=0; k< nbPts; k++) setP.insert(k);
+  //for(std::set<int>::iterator it =setP.begin(); it != setP.end(); it++) printf("setP =%d \n", *it);
+
+  if(nbPts  > 3){
+
+    for (int i=0; i< nbPts-2; i++){
+        int next=i+1;
+        //printf("*** POINT i=%d next=%d\n", i, next);
+        //printf("-----------------------\n");
+	double x1, x2, y1, y2; 
+        x1=u(i,0);    y1=u(i,1);
+        x2=u(next,0); y2=u(next,1);
+        for ( int j=i+2; j < nbPts; j++){
+            int jnext = j+1;
+            if(j == nbPts-1) jnext = 0; 
+            //printf("---> POINT j=%d jnext=%d\n", j, jnext); 
+	    double x3, x4, y3, y4, x,y;
+	    double a, b, c, d;
+            x3=u(j,0);      y3=u(j,1);  
+            x4=u(jnext,0);  y4=u(jnext,1);
+            a=(y2-y1)/(x2-x1);
+            c=(y4-y3)/(x4-x3);
+            b=y1-a*x1;
+            d=y3-c*x3;
+            if (std::abs(a-c) > 1.e-5 & x2!=x1 & x4 !=x3 & jnext != i){
+                x=(d-b)/(a-c);
+                y=a*x+b;
+                bool exist= false;
+                for (int k= 1; k < setP.size(); k++){
+                    if (x  == u(k,0) & y == u(k,1)) exist = true;
+		}
+		if (!exist){
+		  //printf("---> intersection (%d)=%g %g %g %g\n", N, x, y, a, c);
+		  u(N,0)=x; u(N,1)=y;
+		  setP.insert(N);
+		  N++;
+		} 
+	    }
+	}
+
+    }
+
+    //for(std::set<int>::iterator it =setP.begin(); it != setP.end(); it++) printf("setP =%d \n", *it);
+
+    int nbAll = setP.size();
+    //printf("LAST DELETE LOOP nball=%d\n", nbAll);
+    //printf("*********************\n");
+    for (int i=0; i <nbPts; i++){
+      int next=i+1;   
+      if(next==nbPts) next=0;
+      //printf("*** POINT i=%d next=%d\n", i, next);
+      //printf("-----------------------\n");
+      double p1[2]={u(next,0)-u(i,0), u(next,1)-u(i,1) };
+      for (int k=0; k < nbAll; k++){
+	double p2[2] ={u(k,0)-u(i,0), u(k,1)-u(i,1)};
+	double crossProd = p1[0]*p2[1]-p2[0]*p1[1];
+	if(crossProd <  eps){
+	  //printf("delete node k=%d, cross=%d\n", k, crossProd);
+	  setP.erase(k);
+	}
+      }
+    }
+
+    //for(std::set<int>::iterator it =setP.begin(); it != setP.end(); it++) printf("setP =%d \n", *it); 
+
+  }
+
+  int nbFinal = setP.size();
+  if (nbFinal > 0){
+    for(std::set<int>::iterator it =setP.begin(); it != setP.end(); it++){
+      ucg += u(*it,0);
+      vcg += u(*it,1);
+    }
+    ucg/=nbFinal;
+    vcg/=nbFinal;
+  }
+  else{
+    Msg::Error("No Kernel for polygon. Try reparametrization with new initial mesh.");
+    Msg::Exit(0);
+  }
+
+}
+
+static void myPolygon(std::vector<MElement*> &vTri, std::vector<MVertex*> &vPoly){
+
+  std::vector<MEdge> ePoly;
+  for (unsigned int i = 0; i  < vTri.size() ; i++) {
+    MTriangle *t = (MTriangle*) vTri[i];
+    for (int iEdge = 0; iEdge < 3; iEdge++) {
+      MEdge tmp_edge =  t->getEdge(iEdge);
+      MVertex *vB = tmp_edge.getVertex(0);
+      MVertex *vE = tmp_edge.getVertex(1);
+      if (std::find(ePoly.begin(), ePoly.end(), tmp_edge) == ePoly.end())
+	ePoly.push_back(tmp_edge);
+      else
+	ePoly.erase(std::find(ePoly.begin(), ePoly.end(),tmp_edge));
+    }
+  }
+
+//   printf("epoly.size=%d  vTri=%d\n", ePoly.size(), vTri.size());
+//   for (std::vector<MEdge>::iterator ite = ePoly.begin(); ite != ePoly.end(); ite++){
+//      MVertex *vB = ite->getVertex(0);
+//      MVertex *vE = ite->getVertex(1);
+//      printf("VB=%d vE=%d \n", vB->getNum(), vE->getNum());
+//   }
+
+  std::vector<MEdge>::iterator ite= ePoly.begin() ;
+  MVertex *vINIT = ite->getVertex(0);
+  vPoly.push_back(vINIT);
+  vPoly.push_back(ite->getVertex(1));
+  ePoly.erase(ite);
+
+   while (!ePoly.empty()){
+     ite= ePoly.begin() ;
+     while (ite != ePoly.end()){
+       MVertex *vB = ite->getVertex(0);
+       if( vB == vPoly.back()){
+ 	MVertex *vE = ite->getVertex(1);
+	if (vE != vINIT) vPoly.push_back(vE);
+ 	ePoly.erase(ite);
+       }
+       else ite++;
+     }
+  }
+
+//   printf("epoly.size=%d  vTri=%d, cavV.size =%d\n", ePoly.size(), vTri.size(), vPoly.size());
+//   for (std::vector<MVertex*>::iterator itv = vPoly.begin(); itv != vPoly.end(); itv++){
+//     printf("VV=%d \n", (*itv)->getNum());
+//   }
+
+}
+
 bool GFaceCompound::trivial() const {
   if  (_compound.size() == 1 && 
        (*(_compound.begin()))->getNativeType()==GEntity::OpenCascadeModel &&
@@ -143,6 +354,31 @@ bool GFaceCompound::checkOrientation() const
 
 }
 
+bool GFaceCompound::checkCavity(std::vector<MElement*> &vTri) const{
+  
+  bool badCavity = false;
+  
+  int nbV = vTri.size();
+  double a_old, a_new;
+  for (unsigned int i = 0; i < nbV; ++i){
+    MTriangle *t = (MTriangle*) vTri[i];
+    SPoint3 v1 = coordinates[t->getVertex(0)];
+    SPoint3 v2 = coordinates[t->getVertex(1)];
+    SPoint3 v3 = coordinates[t->getVertex(2)];  
+    double p1[2] = {v1[0],v1[1]};
+    double p2[2] = {v2[0],v2[1]};
+    double p3[2] = {v3[0],v3[1]};
+    //printf("p1=(%g %g) p2=(%g %g) p3=(%g %g)\n",v1[0],v1[1], v2[0],v2[1], v3[0],v3[1] );
+     a_new = gmsh::orient2d(p1, p2, p3);
+     if (i == 0) a_old=a_new;
+     if (a_new*a_old < 0.)   badCavity = true;
+     a_old = a_new;
+   }
+
+   return badCavity;
+
+}
+
 void GFaceCompound::one2OneMap() const{
 
   if (!mapv2Tri){
@@ -152,90 +388,54 @@ void GFaceCompound::one2OneMap() const{
       allTri.insert(allTri.end(), (*it)->triangles.begin(), (*it)->triangles.end() );
     }
     buildVertexToTriangle(allTri, adjv);
-    //printf("allTri size =%d\n", allTri.size());
     mapv2Tri=true;
   }
 
  for (v2t_cont::iterator it = adjv.begin(); it!= adjv.end(); ++it){
    MVertex *v = it->first;
-   std::vector<MElement*> vTri = it->second;
-   int nbV = vTri.size();
-   double a_old, a_new;
-   bool badCavity = false;
-
    std::map<MVertex*,SPoint3>::iterator itV = coordinates.find(v);
-   //printf("*** Node = %d: (%g %g) cavity size = %d \n", v->getNum(), itV->second.x(), itV->second.y(), nbV);
-
-   std::set<MVertex*> cavV;
-
-   for (unsigned int i = 0; i < nbV; ++i){
-     MTriangle *t = (MTriangle*) vTri[i];
-     SPoint3 v1 = coordinates[t->getVertex(0)];
-     SPoint3 v2 = coordinates[t->getVertex(1)];
-     SPoint3 v3 = coordinates[t->getVertex(2)];
-     for (int k=0; k< 3; k++){
-        MVertex *vk = t->getVertex(k);
-        std::set<MVertex*>::const_iterator it = cavV.find(vk);
-        if( it == cavV.end() && v != vk ) {
-	  cavV.insert(vk);
-	  //if (v != vk) cavV.insert(vk);
-	  //if (v->onWhat()->dim() == 1 && v == vk)  cavV.insert(vk);
-	}
-     }
-    
-     double p1[2] = {v1[0],v1[1]};
-     double p2[2] = {v2[0],v2[1]};
-     double p3[2] = {v3[0],v3[1]};
-     //printf("p1=(%g %g) p2=(%g %g) p3=(%g %g)\n",v1[0],v1[1], v2[0],v2[1], v3[0],v3[1] );
-     a_new = gmsh::orient2d(p1, p2, p3);
-     if (i == 0) a_old=a_new;
-     if (a_new*a_old < 0.)   badCavity = true;
-     a_old = a_new;
-   }
+ 
+   std::vector<MVertex*> cavV;
+   std::vector<MElement*> vTri = it->second;
+   bool badCavity = checkCavity(vTri);
+  
    if(badCavity){
-     Msg::Info("Wrong cavity place vertex (%d onwhat=%d) at center of gravity (sizeCav=%d).",  v->getNum(),  v->onWhat()->dim(), nbV);
-     
-     int nbVert = cavV.size();
-     //printf("nbVert =%d \n", nbVert);
-     double u_cg = 0.0;
-     double v_cg = 0.0;
-     for (std::set<MVertex*>::const_iterator it = cavV.begin() ; it != cavV.end() ; ++it){
-       SPoint3 vsp = coordinates[*it];
-       u_cg+=vsp[0];
-       v_cg+=vsp[1];
-     }
-     u_cg/=nbVert;
-     v_cg/=nbVert;
-     //printf("ucg=%g vcg=%g \n", u_cg, v_cg);
+     Msg::Info("Wrong cavity around vertex (%d onwhat=%d).",  v->getNum(),  v->onWhat()->dim());
+     Msg::Info("--> Place vertex at center of gravity of %d-Polygon kernel." ,  vTri.size());
+
+//      for (int i=0; i<  vTri.size(); i++){
+//        MTriangle *t = (MTriangle*) vTri[i];
+//        SPoint3 v1 = coordinates[t->getVertex(0)];
+//        SPoint3 v2 = coordinates[t->getVertex(1)];
+//        SPoint3 v3 = coordinates[t->getVertex(2)];
+       
+//        printf("//////////////////// \n " );
+//        double p1[2] = {v1[0],v1[1]};
+//        double p2[2] = {v2[0],v2[1]};
+//        double p3[2] = {v3[0],v3[1]};
+//        double a_new = gmsh::orient2d(p1, p2, p3);
+//        MVertex *e1=t->getVertex(0);	MVertex *e2=t->getVertex(1);	MVertex *e3=t->getVertex(2);
+//        printf("Point(%d)={%g, %g, 0}; \n ",e1->getNum(), v1[0],v1[1] );
+//        printf("Point(%d)={%g, %g, 0}; \n ",e2->getNum(), v2[0],v2[1] );
+//        printf("Point(%d)={%g, %g, 0}; \n ",e3->getNum(), v3[0],v3[1] );
+//        printf("Line(%d)={%d,%d}; \n", e1->getNum()+e2->getNum() , e1->getNum(), e2->getNum());
+//        printf("Line(%d)={%d,%d}; \n", e2->getNum()+e3->getNum() , e2->getNum(), e3->getNum());
+//        printf("Line(%d)={%d,%d}; \n", e3->getNum()+e1->getNum() , e3->getNum(), e1->getNum());
+//        printf("Surface(%d)={%d,%d, %d}; \n", e3->getNum()+e1->getNum() + e2->getNum(), e3->getNum(), e1->getNum()+e2->getNum() , 
+// 	      e2->getNum()+e3->getNum() , e3->getNum()+e1->getNum() );
+//        printf("//Area=%g \n", a_new);
+//      }
+
+     double u_cg, v_cg;
+     myPolygon(vTri, cavV);
+     computeCGKernelPolygon(coordinates, cavV, u_cg, v_cg);
      SPoint3 p_cg(u_cg,v_cg,0);
      coordinates[v] = p_cg;
 
-     //  //NEW CAVITY:
-//       printf("//**** NEW CAVITY****** \n " );
-//       for (int i=0; i< nbV; i++){
-// 	MTriangle *t = (MTriangle*) vTri[i];
-// 	SPoint3 v1 = coordinates[t->getVertex(0)];
-// 	SPoint3 v2 = coordinates[t->getVertex(1)];
-// 	SPoint3 v3 = coordinates[t->getVertex(2)];
-
-// 	printf("//////////////////// \n " );
-// 	double p1[2] = {v1[0],v1[1]};
-// 	double p2[2] = {v2[0],v2[1]};
-// 	double p3[2] = {v3[0],v3[1]};
-// 	a_new = gmsh::orient2d(p1, p2, p3);
-// 	MVertex *e1=t->getVertex(0);	MVertex *e2=t->getVertex(1);	MVertex *e3=t->getVertex(2);
-// 	printf("Point(%d)={%g, %g, 0}; \n ",e1->getNum(), v1[0],v1[1] );
-// 	printf("Point(%d)={%g, %g, 0}; \n ",e2->getNum(), v2[0],v2[1] );
-// 	printf("Point(%d)={%g, %g, 0}; \n ",e3->getNum(), v3[0],v3[1] );
-// 	printf("Line(%d)={%d,%d}; \n", e1->getNum()+e2->getNum() , e1->getNum(), e2->getNum());
-// 	printf("Line(%d)={%d,%d}; \n", e2->getNum()+e3->getNum() , e2->getNum(), e3->getNum());
-// 	printf("Line(%d)={%d,%d}; \n", e3->getNum()+e1->getNum() , e3->getNum(), e1->getNum());
-// 	printf("Surface(%d)={%d,%d, %d}; \n", e3->getNum()+e1->getNum() + e2->getNum(), e3->getNum(), e1->getNum()+e2->getNum() , 
-// 	       e2->getNum()+e3->getNum() , e3->getNum()+e1->getNum() );
-// 	printf("//Area=%g \n", a_new);
-//       }
-//       //NEW CAVITY:
-//       exit(1);
+     //printf("Kernel CG: ucg=%g vcg=%g \n", u_cg, v_cg);
+     //bool testbadCavity = checkCavity(vTri);
+     //if (testbadCavity == true ) printf("**** New cavity is KO \n");
+     //else  printf("-- New cavity is OK \n"); 
 
    }
  }

@@ -62,6 +62,7 @@ class GFaceCompound : public GFace {
   void parametrize(iterationStep) const ;
   bool checkOrientation() const;
   void one2OneMap() const;
+  bool checkCavity(std::vector<MElement*> &vTri) const;
   void computeNormals () const;
   void getBoundingEdges();
   void getTriangle(double u, double v, GFaceCompoundTriangle **lt, 
