@@ -96,20 +96,6 @@ static void computeCGKernelPolygon(std::map<MVertex*,SPoint3> &coordinates, std:
    ucg = 0.0;
    vcg = 0.0;
 
-  //Place at CG polygon
-  //--------------------
-//   int nbVert = cavV.size();
-//   printf("nbVert =%d \n", nbVert);
-
-//   for (std::set<MVertex*>::const_iterator it = cavV.begin() ; it != cavV.end() ; ++it){
-//     SPoint3 vsp = coordinates[*it];
-//     ucg+=vsp[0];
-//     vcg+=vsp[1];
-//   }
-//   ucg/=nbVert;
-//   vcg/=nbVert;
-//   printf("ucg=%g vcg=%g \n", ucg, vcg);
-
   //Place at CG KERNEL polygon
   //--------------------------
 
@@ -166,7 +152,7 @@ static void computeCGKernelPolygon(std::map<MVertex*,SPoint3> &coordinates, std:
 //      mat(2,0) =0.;mat(2,1)=1. ; 
 //      mat(3,0) =0.;mat(3,1)=0. ;
 
-  double eps=-5.e-6;
+  double eps=-5.e-7;
   int N=nbPts;
   
   std::set<int> setP;
@@ -247,8 +233,17 @@ static void computeCGKernelPolygon(std::map<MVertex*,SPoint3> &coordinates, std:
     vcg/=nbFinal;
   }
   else{
-    Msg::Error("No Kernel for polygon. Try reparametrization with new initial mesh.");
-    Msg::Exit(0);
+    Msg::Info("----> No Kernel for polygon:  place point at CG polygon.");
+
+    //Place at CG polygon
+    //--------------------
+    for (std::vector<MVertex*>::iterator it = cavV.begin() ; it != cavV.end() ; ++it){
+      SPoint3 vsp = coordinates[*it];
+      ucg+=vsp[0];
+      vcg+=vsp[1];
+    }
+    ucg/=nbPts;
+    vcg/=nbPts;
   }
 
 }
@@ -286,10 +281,14 @@ static void myPolygon(std::vector<MElement*> &vTri, std::vector<MVertex*> &vPoly
      ite= ePoly.begin() ;
      while (ite != ePoly.end()){
        MVertex *vB = ite->getVertex(0);
+       MVertex *vE = ite->getVertex(1);
        if( vB == vPoly.back()){
- 	MVertex *vE = ite->getVertex(1);
-	if (vE != vINIT) vPoly.push_back(vE);
- 	ePoly.erase(ite);
+	 if (vE != vINIT) vPoly.push_back(vE);
+	 ePoly.erase(ite);
+       }
+       else if( vE == vPoly.back()){
+	 if (vB != vINIT) vPoly.push_back(vB);
+	 ePoly.erase(ite);
        }
        else ite++;
      }
@@ -400,8 +399,19 @@ void GFaceCompound::one2OneMap() const{
    bool badCavity = checkCavity(vTri);
   
    if(badCavity){
-     Msg::Info("Wrong cavity around vertex (%d onwhat=%d).",  v->getNum(),  v->onWhat()->dim());
+     Msg::Info("Wrong cavity around vertex %d (onwhat=%d).",  v->getNum(),  v->onWhat()->dim());
      Msg::Info("--> Place vertex at center of gravity of %d-Polygon kernel." ,  vTri.size());
+
+     double u_cg, v_cg;
+     myPolygon(vTri, cavV);
+     computeCGKernelPolygon(coordinates, cavV, u_cg, v_cg);
+     SPoint3 p_cg(u_cg,v_cg,0);
+     coordinates[v] = p_cg;
+
+//      printf("Kernel CG: ucg=%g vcg=%g \n", u_cg, v_cg);
+//      bool testbadCavity = checkCavity(vTri);
+//      if (testbadCavity == true ) printf("**** New cavity is KO \n");
+//      else  printf("-- New cavity is OK \n"); 
 
 //      for (int i=0; i<  vTri.size(); i++){
 //        MTriangle *t = (MTriangle*) vTri[i];
@@ -425,17 +435,6 @@ void GFaceCompound::one2OneMap() const{
 // 	      e2->getNum()+e3->getNum() , e3->getNum()+e1->getNum() );
 //        printf("//Area=%g \n", a_new);
 //      }
-
-     double u_cg, v_cg;
-     myPolygon(vTri, cavV);
-     computeCGKernelPolygon(coordinates, cavV, u_cg, v_cg);
-     SPoint3 p_cg(u_cg,v_cg,0);
-     coordinates[v] = p_cg;
-
-     //printf("Kernel CG: ucg=%g vcg=%g \n", u_cg, v_cg);
-     //bool testbadCavity = checkCavity(vTri);
-     //if (testbadCavity == true ) printf("**** New cavity is KO \n");
-     //else  printf("-- New cavity is OK \n"); 
 
    }
  }
@@ -759,9 +758,9 @@ void GFaceCompound::parametrize(iterationStep step) const
   Msg::Info("Parametrizing Surface %d coordinate (ITER %d)", tag(), step); 
   
 #ifdef HAVE_GMM
-  //gmshLinearSystemGmm<double> lsys;
-  gmshLinearSystemCSRGmm<double> lsys;
-  lsys.setPrec(1.e-10);
+  gmshLinearSystemGmm<double> lsys;
+  //gmshLinearSystemCSRGmm<double> lsys;
+  lsys.setPrec(1.e-15);
   if(Msg::GetVerbosity() == 99) lsys.setNoisy(2);
 #else
   gmshLinearSystemFull<double> lsys;
