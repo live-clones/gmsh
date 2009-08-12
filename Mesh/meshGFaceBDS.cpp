@@ -33,10 +33,10 @@ double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2)
 }
 
 inline double computeEdgeLinearLength(BDS_Point *p1, 
-				      BDS_Point *p2, 
-				      GFace *f,
-                                      double SCALINGU, 
-				      double SCALINGV)
+					  BDS_Point *p2, 
+					  GFace *f,
+					  double SCALINGU, 
+					  double SCALINGV)
 {
 
   GPoint GP = f->point(SPoint2(0.5 * (p1->u + p2->u) * SCALINGU,
@@ -54,6 +54,78 @@ inline double computeEdgeLinearLength(BDS_Point *p1,
   const double dz2 = p2->Z - GP.z();
   const double l2 = sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2);
   return l1 + l2;
+}
+
+inline double computeEdgeLinearLength_new(BDS_Point *p1, 
+					  BDS_Point *p2, 
+					  GFace *f,
+					  double SCALINGU, 
+					  double SCALINGV)
+{
+  const int nbSb = 10;
+  GPoint GP[nbSb-1];
+
+  for (int i=1;i<nbSb;i++){
+    double xi = (double)i/nbSb;
+    GP[i-1] = f->point(SPoint2(((1-xi) * p1->u + xi * p2->u) * SCALINGU,
+			       ((1-xi) * p1->v + xi * p2->v) * SCALINGV));
+    if (!GP[i-1].succeeded())
+      return computeEdgeLinearLength(p1,p2);
+  }
+  double l = 0;
+  for (int i=0;i<nbSb;i++){
+    if (i == 0){
+      const double dx1 = p1->X - GP[0].x();
+      const double dy1 = p1->Y - GP[0].y();
+      const double dz1 = p1->Z - GP[0].z();
+      l+= sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1);
+    }
+    else if (i == nbSb-1){
+      const double dx1 = p2->X - GP[nbSb-1].x();
+      const double dy1 = p2->Y - GP[nbSb-1].y();
+      const double dz1 = p2->Z - GP[nbSb-1].z();
+      l+= sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1);
+    }
+    else{
+      const double dx1 = GP[i].x() - GP[i-1].x();
+      const double dy1 = GP[i].y() - GP[i-1].y();
+      const double dz1 = GP[i].z() - GP[i-1].z();
+      l+= sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1);
+    }
+  }
+  return l;
+}
+
+
+
+inline double computeEdgeMiddleCoord_new(BDS_Point *p1, 
+				     BDS_Point *p2, 
+				     GFace *f,
+				     double SCALINGU, 
+				     double SCALINGV)
+{
+  const int nbSb = 3;
+  double L  = computeEdgeLinearLength(p1,p2);
+  GPoint GP[nbSb];
+  for (int i=1;i<nbSb;i++){
+    double xi = (double)i/nbSb;
+    GP[i-1] = f->point(SPoint2(((1-xi) * p1->u + xi * p2->u) * SCALINGU,
+				      ((1-xi) * p1->v + xi * p2->v) * SCALINGV));
+    if (!GP[i-1].succeeded())
+      return 0.5;
+    const double dx1 = p1->X - GP[i-1].x();
+    const double dy1 = p1->Y - GP[i-1].y();
+    const double dz1 = p1->Z - GP[i-1].z();
+    double LPLUS = sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1);
+    if (LPLUS > L*.5){
+      double XIMINUS, XIPLUS,LPLUS,LMINUS;
+      if (i==1){
+	XIMINUS=0;
+      }
+      return  XIMINUS +  (LPLUS - L*.5)/(LPLUS-LMINUS)/(nbSb-1);
+    }
+  }
+  return 0.5;
 }
 
 inline double computeEdgeMiddleCoord(BDS_Point *p1, 
@@ -431,9 +503,9 @@ void splitEdgePassUnsorted(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
     if (!(*it)->deleted){
       double lone = NewGetLc(*it, gf, m.scalingU, m.scalingV);
       if ((*it)->numfaces() == 2 && (lone > MAXE_)){
-        //const double coord = 0.5;
-        const double coord = computeEdgeMiddleCoord((*it)->p1, (*it)->p2, gf,
-                                                    m.scalingU, m.scalingV);
+        const double coord = 0.5;
+        //const double coord = computeEdgeMiddleCoord((*it)->p1, (*it)->p2, gf,
+	//                                                    m.scalingU, m.scalingV);
         BDS_Point *mid;
 
 	GPoint gpp = gf->point(m.scalingU*(coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u),
@@ -478,6 +550,8 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
     BDS_Edge *e = edges[i].second;
     if (!e->deleted){
       const double coord = 0.5;
+	    //  const double coord = computeEdgeMiddleCoord((*it)->p1, (*it)->p2, gf,
+	    //                                      m.scalingU, m.scalingV);
       BDS_Point *mid ;
       double U = coord * e->p1->u + (1 - coord) * e->p2->u;
       double V = coord * e->p1->v + (1 - coord) * e->p2->v;

@@ -291,7 +291,7 @@ void sortColumns (int NbLines,
 template<>
 int gmshLinearSystemCSRGmm<double> :: systemSolve()
 {
-  if(!sorted)
+  if (!sorted)
     sortColumns(_b->size(),
 		CSRList_Nbr(a_),
 		(INDEX_TYPE *) ptr_->array,

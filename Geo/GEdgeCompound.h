@@ -24,7 +24,9 @@ public:
   void getLocalParameter ( const double &t,
 			   int &iEdge,
 			   double & tLoc) const;
-
+  void getCompoundParameter ( GEdge *ge,
+			      const double &tLoc,
+			      double &t) const;
   GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound);
   virtual ~GEdgeCompound();
   Range<double> parBounds(int i) const;

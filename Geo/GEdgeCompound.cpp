@@ -195,6 +195,29 @@ void GEdgeCompound::getLocalParameter ( const double &t,
   }
 }
 
+// give a GEdge and 
+void GEdgeCompound::getCompoundParameter ( GEdge *ge,
+					   const double &tLoc,
+					   double &t) const
+{
+
+  for (int iEdge = 0; iEdge < (int)_compound.size(); iEdge++){
+    //printf("iEdge=%d tmin=%g\n",iEdge,_pars[iEdge]);
+    if (ge == _compound[iEdge]){
+      double tmin = _pars[iEdge];
+      double tmax = _pars[iEdge+1];
+      Range<double> b = _compound[iEdge]->parBounds(0);
+      t = _orientation[iEdge] ? 
+	tmin + (tLoc - b.low())/(b.high()-b.low()) * (tmax-tmin):
+	tmax - (tLoc - b.low())/(b.high()-b.low()) * (tmax-tmin);
+      //printf("bhigh=%g, blow=%g, global t=%g , tLoc=%g ,iEdge=%d\n",b.high(), b.low(), t,tLoc,iEdge);
+      return;
+    }
+  }
+}
+
+
+
 void GEdgeCompound::parametrize() 
 {
   _pars.push_back(0.0);
