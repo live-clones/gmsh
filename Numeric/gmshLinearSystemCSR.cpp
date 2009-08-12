@@ -339,7 +339,7 @@ int gmshLinearSystemCSRGmm<double> :: checkSystem()
 }
 #endif
 
-#if defined(HAVE_TAUCSw)
+#if defined(HAVE_TAUCS)
 #include "taucs.h"
 template<>
 int gmshLinearSystemCSRTaucs<double> :: systemSolve()
