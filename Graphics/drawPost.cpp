@@ -25,7 +25,7 @@
 
 // we only "really" draw forst order elements (high order ones are
 // subdivided in adaptiveView beforehand)
-#define NMAX 20
+#define NMAX 35
 
 static void saturate(int nb, double val[NMAX][9], double vmin, double vmax, 
 		     int i0=0, int i1=1, int i2=2, int i3=3, 
@@ -948,7 +948,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
       if(opt->skipElement(type)) continue;
       int numComp = data->getNumComponents(opt->timeStep, ent, i);
       int numNodes = data->getNumNodes(opt->timeStep, ent, i);
-      if(numNodes > 20){
+      if(numNodes > 35){
         Msg::Error("Should never draw view with > 20 nodes per element: adapt?");
         continue;
       }
