@@ -485,9 +485,10 @@ class CylinderField : public Field
  public:
   std::string getDescription()
   {
-    return "The value of this field is VIn inside the cylinder, VOut outside.\n"
+    return "The value of this field is VIn inside a frustrated cylinder, VOut outside.\n"
       "The cylinder is given by\n\n"
       "  ||dX||^2 < R^2 &&\n"
+      "  (X-X0).A < ||A||^2\n"
       "  dX = (X - X0) - ((X - X0).A)/(||A||^2) . A";
   }
   CylinderField()
@@ -535,7 +536,7 @@ class CylinderField : public Field
     dy -= adx * ya;
     dz -= adx * za;
     
-    return (dx*dx + dy*dy + dz*dz < R*R) ? v_in : v_out;
+    return ((dx*dx + dy*dy + dz*dz < R*R) && fabs(adx) < 1) ? v_in : v_out;
     
   }
 };
