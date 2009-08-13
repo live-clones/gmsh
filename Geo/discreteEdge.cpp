@@ -460,16 +460,19 @@ SVector3 discreteEdge::firstDer(double par) const
   MVertex *vE = lines[iEdge]->getVertex(1);
 
   double dx,dy,dz;
-  double dt = sqrt((vE->x()-vB->x())*(vE->x()-vB->x()) + (vE->y()-vB->y())*(vE->y()-vB->y()) + (vE->z()-vB->z())*(vE->z()-vB->z()));
+  //double dt = sqrt((vE->x()-vB->x())*(vE->x()-vB->x()) + (vE->y()-vB->y())*(vE->y()-vB->y()) + (vE->z()-vB->z())*(vE->z()-vB->z()));
+  //Length of each line of discrete Edge=1.
+  double dt= 1.0;
   dx = (vE->x() - vB->x() ) /dt;
   dy = (vE->y() - vB->y() ) /dt;
   dz = (vE->z() - vB->z() ) /dt;
 
-  //printf("firstDer discreteEdge  par=%g, dx=%g, dy=%g dz=%g dt=%g \n", par,dx,dy,dz, dt);
-  return SVector3(dx,dy,dz);
+  SVector3 der(dx,dy,dz);
+  return der;
 }
 
 Range<double> discreteEdge::parBounds(int i) const
 {
+  //  printf("par bound discreteEdge =%g \n", lines.size());
   return Range<double>(0, lines.size());
 }

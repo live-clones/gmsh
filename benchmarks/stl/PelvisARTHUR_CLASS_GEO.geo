@@ -1,4 +1,4 @@
-Mesh.CharacteristicLengthFactor=0.03;
+Mesh.CharacteristicLengthFactor=0.2;
 
 Merge "PelvisARTHUR_CLASS.msh";
 CreateTopology;
@@ -10,7 +10,7 @@ Compound Line(10)={4};
 Compound Line(20)={5};
 
 Compound Surface(200)={2} Boundary {{}};
-Compound Surface(400)={3} Boundary {{4},{5}};
+Compound Surface(400)={3} Boundary {{}};
 
 Compound Volume(2000) = {1003};
 

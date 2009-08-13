@@ -38,7 +38,7 @@ void gmshLaplaceTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
         invjac[2][2] * grads[j][2];
     }
     double pi = 3.14;
-    double K_x=1.0;
+    double K_x= 1.0;
     double K_y=1.0;
     double K_z=1.0;
     for (int j = 0; j < nbNodes; j++){

@@ -1,4 +1,4 @@
-Mesh.CharacteristicLengthFactor=0.05;
+Mesh.CharacteristicLengthFactor=0.5;
 
 Merge "implant_CLASS.msh";
 CreateTopology;

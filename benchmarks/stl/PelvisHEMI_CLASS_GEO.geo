@@ -1,4 +1,4 @@
-Mesh.CharacteristicLengthFactor=0.03;
+Mesh.CharacteristicLengthFactor=0.1;
 
 Merge "PelvisHEMI_CLASS.msh";
 CreateTopology;
@@ -12,10 +12,9 @@ Compound Line(70)={7};
 Compound Line(80)={8};
 Compound Line(90)={9};
 
-//Compound Surface(100)={2} Boundary {{}};
-//Compound Surface(200)={3} Boundary {{},{},{},{}};
-//Compound Surface(200)={3} Boundary {{8},{6,7},{},{}};
-//Compound Surface(300)={4} Boundary {{}};
+Compound Surface(100)={2} Boundary {{}};
+//Compound Surface(200)={3} Boundary {{}};
+Compound Surface(300)={4} Boundary {{}};
 Compound Surface(400)={5} Boundary {{}};
 
 //Compound Volume(5000)={1000};

@@ -1476,6 +1476,25 @@ Shape :
       $$.Type = MSH_PHYSICAL_SURFACE;
       $$.Num = num;
     }
+ //EMI ADDED
+ | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$4;
+      if(FindPhysicalGroup(num, MSH_PHYSICAL_SURFACE)){
+	yymsg(0, "Physical surface %d already exists", num);
+      }
+      else{
+	List_T *temp = ListOfDouble2ListOfInt($7);
+	List_T *S[4] = {0, 0, 0, 0};
+	PhysicalGroup *p = Create_PhysicalGroup(num, MSH_PHYSICAL_SURFACE, temp, S);
+	List_Delete(temp);
+        List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
+      }
+      List_Delete($7);
+      $$.Type = MSH_PHYSICAL_SURFACE;
+      $$.Num = num;
+    }
+ // END EMI ADDED
 
   | tCompound tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
     {

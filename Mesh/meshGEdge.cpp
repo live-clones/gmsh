@@ -97,7 +97,11 @@ static double F_Lc(GEdge *ge, double t)
 
   SVector3 der = ge->firstDer(t);
   const double d = norm(der);
+
+  //printf("lc_here=%g d=%g nb =%g\n", lc_here,d,  d/lc_here);
+
   return d / lc_here;
+
 }
 
 static double F_Transfinite(GEdge *ge, double t)
@@ -275,7 +279,6 @@ void meshGEdge::operator() (GEdge *ge)
   else if(ge->meshAttributes.Method == MESH_TRANSFINITE){
     a = Integration(ge, t_begin, t_end, F_Transfinite, Points, 1.e-8);
     N = ge->meshAttributes.nbPointsTransfinite;
-    Msg::Debug("Meshing transfinite N=%d, a=%g", N, a);
   }
   else{
     if(CTX::instance()->mesh.lcIntegrationPrecision > 1.e-8){
@@ -287,9 +290,10 @@ void meshGEdge::operator() (GEdge *ge)
     }
     else{
       a = Integration(ge, t_begin, t_end, F_Lc, Points,
-		      CTX::instance()->mesh.lcIntegrationPrecision);
+      		      CTX::instance()->mesh.lcIntegrationPrecision);
     }
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
+   
   }
 
   // if the curve is periodic and if the begin vertex is identical to
