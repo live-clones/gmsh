@@ -132,6 +132,13 @@ if(ENABLE_BLAS_LAPACK)
       set(HAVE_LAPACK TRUE)
       list(APPEND CONFIG_OPTIONS "RefBlas" "RefLapack")
     endif(EASY_LAPACK AND EASY_BLAS AND EASY_G2C AND EASY_GCC)
+  elseif(APPLE)
+    # on Mac we know blas and lapack are available, so don't force users
+    # to install a Fortran compiler
+    set(LAPACK_LIBRARIES "-llapack -lblas")
+    set(HAVE_BLAS TRUE)
+    set(HAVE_LAPACK TRUE)
+    list(APPEND CONFIG_OPTIONS "Blas" "Lapack")
   endif(WIN32)
   if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
     enable_language(Fortran)
