@@ -99,10 +99,10 @@ PView *GMSH_TransformPlugin::execute(PView *v)
   for(int step = 0; step < data1->getNumTimeSteps(); step++){
     for(int ent = 0; ent < data1->getNumEntities(step); ent++){
       for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
-	if(data1->skipElement(step, ent, ele)) continue;
-	if(swap) data1->revertElement(step, ent, ele);
-	for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
-	  data1->tagNode(step, ent, ele, nod, 0);
+        if(data1->skipElement(step, ent, ele)) continue;
+        if(swap) data1->revertElement(step, ent, ele);
+        for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
+          data1->tagNode(step, ent, ele, nod, 0);
       }
     }
   }
@@ -111,19 +111,19 @@ PView *GMSH_TransformPlugin::execute(PView *v)
   for(int step = 0; step < data1->getNumTimeSteps(); step++){
     for(int ent = 0; ent < data1->getNumEntities(step); ent++){
       for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
-	if(data1->skipElement(step, ent, ele)) continue;
-	for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++){
-	  double x, y, z;
-	  int tag = data1->getNode(step, ent, ele, nod, x, y, z);
-	  if(!tag){
-	    double x2, y2, z2;
-	    x2 = mat[0][0] * x + mat[0][1] * y + mat[0][2] * z + mat[0][3];
-	    y2 = mat[1][0] * x + mat[1][1] * y + mat[1][2] * z + mat[1][3];
-	    z2 = mat[2][0] * x + mat[2][1] * y + mat[2][2] * z + mat[2][3];
-	    data1->setNode(step, ent, ele, nod, x2, y2, z2);
-	    data1->tagNode(step, ent, ele, nod, 1);
-	  }
-	}
+        if(data1->skipElement(step, ent, ele)) continue;
+        for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++){
+          double x, y, z;
+          int tag = data1->getNode(step, ent, ele, nod, x, y, z);
+          if(!tag){
+            double x2, y2, z2;
+            x2 = mat[0][0] * x + mat[0][1] * y + mat[0][2] * z + mat[0][3];
+            y2 = mat[1][0] * x + mat[1][1] * y + mat[1][2] * z + mat[1][3];
+            z2 = mat[2][0] * x + mat[2][1] * y + mat[2][2] * z + mat[2][3];
+            data1->setNode(step, ent, ele, nod, x2, y2, z2);
+            data1->tagNode(step, ent, ele, nod, 1);
+          }
+        }
       }
     }
   }

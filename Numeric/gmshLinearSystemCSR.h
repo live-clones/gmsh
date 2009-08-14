@@ -37,7 +37,7 @@ class gmshLinearSystemCSR : public gmshLinearSystem<scalar> {
   std::vector<scalar> *_b, *_x;
  public:
   gmshLinearSystemCSR()
-  : a_(0),sorted(false) {}
+  : sorted(false), a_(0) {}
   virtual bool isAllocated() const { return a_ != 0; }
   virtual void allocate(int) ;
   virtual ~gmshLinearSystemCSR()
@@ -57,13 +57,13 @@ class gmshLinearSystemCSR : public gmshLinearSystem<scalar> {
 
     if(something[il]) {
       while(1){
-	if(ai[position_] == ic){
-	  a[position_] += val;
-	  //	  if (il == 0)	  printf("FOUND %d %d %d\n",il,ic,position_);
-	  return;
-	}
-	if (ptr[position_] == 0)break;
-	position_ = ptr[position_];
+        if(ai[position_] == ic){
+          a[position_] += val;
+          //      if (il == 0)    printf("FOUND %d %d %d\n",il,ic,position_);
+          return;
+        }
+        if (ptr[position_] == 0)break;
+        position_ = ptr[position_];
       }
     }  
   
@@ -143,6 +143,7 @@ class gmshLinearSystemCSRGmm : public gmshLinearSystemCSR<scalar> {
 #else
   {
     Msg::Error("Gmm++ is not available in this version of Gmsh");
+    return 0;
   }
 #endif
   virtual int checkSystem() 
@@ -170,6 +171,7 @@ class gmshLinearSystemCSRTaucs : public gmshLinearSystemCSR<scalar> {
 #else
   {
     Msg::Error("Taucs is not available in this version of Gmsh");
+    return 0;
   }
 #endif
 };

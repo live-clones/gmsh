@@ -32,8 +32,8 @@
 #include "HighOrder.h"
 
 void computeEdgeLoops(const GFace *gf,
-		      std::vector<MVertex*> &all_mvertices,
-		      std::vector<int> &indices)
+                      std::vector<MVertex*> &all_mvertices,
+                      std::vector<int> &indices)
 {
   std::list<GEdge*> edges = gf->edges();
   std::list<int> ori = gf->orientations();
@@ -64,13 +64,13 @@ void computeEdgeLoops(const GFace *gf,
     }
     else{
       if(it == edges.end ()){
-	Msg::Error("Something wrong in edge loop computation");
-	return;
+        Msg::Error("Something wrong in edge loop computation");
+        return;
       }
       v_start = ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
       if(v_start != v_end){
-	Msg::Error("Something wrong in edge loop computation");
-	return;
+        Msg::Error("Something wrong in edge loop computation");
+        return;
       }
       v_end = ((*ito) != 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
     }
@@ -114,7 +114,7 @@ static bool noseam(GFace *gf)
 }
 
 static void remeshUnrecoveredEdges(std::set<EdgeToRecover> &edgesNotRecovered, 
-				   std::list<GFace*> &facesToRemesh)
+                                   std::list<GFace*> &facesToRemesh)
 {
   facesToRemesh.clear();
   deMeshGFace dem;
@@ -199,7 +199,7 @@ static void remeshUnrecoveredEdges(std::set<EdgeToRecover> &edgesNotRecovered,
 static bool AlgoDelaunay2D(GFace *gf)
 {
   if(noseam(gf) && (CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY || 
-		    CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL))
+                    CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL))
     return true;
   return false;
 }
@@ -224,7 +224,7 @@ void computeElementShapes(GFace *gf, double &worst, double &avg, double &best,
 }
 
 static bool recover_medge(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r, 
-			  std::set<EdgeToRecover> *not_recovered, int pass_)
+                          std::set<EdgeToRecover> *not_recovered, int pass_)
 {
   BDS_GeomEntity *g = 0;
   if (pass_ == 2){
@@ -269,7 +269,7 @@ static bool recover_medge(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r,
 }
 
 static bool recover_medge_old(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r, 
-			      std::set<EdgeToRecover> *not_recovered, int pass_)
+                              std::set<EdgeToRecover> *not_recovered, int pass_)
 {
   BDS_GeomEntity *g = 0;
   if (pass_ == 2){
@@ -384,11 +384,11 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
     std::list<GEdge*>::iterator it = edges.begin();
     while(it != edges.end()){
       if ((*it)->getCompound()){
-	mySet.insert((*it)->getCompound());
-	//printf("compound edge %d found in edge %d\n",(*it)->getCompound()->tag(), (*it)->tag());
+        mySet.insert((*it)->getCompound());
+        //printf("compound edge %d found in edge %d\n",(*it)->getCompound()->tag(), (*it)->tag());
       }
       else 
-	mySet.insert(*it);
+        mySet.insert(*it);
       ++it;
     }
     //printf("replacing %d edges by %d in the GFaceCompound %d\n",edges.size(),mySet.size(),gf->tag());
@@ -408,8 +408,8 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
    if ((*it)->isSeam(gf)) return false;
     if(!(*it)->isMeshDegenerated()){
       for (unsigned int i = 0; i< (*it)->lines.size(); i++){
-	all_vertices.insert((*it)->lines[i]->getVertex(0));
-	all_vertices.insert((*it)->lines[i]->getVertex(1));
+        all_vertices.insert((*it)->lines[i]->getVertex(0));
+        all_vertices.insert((*it)->lines[i]->getVertex(1));
       }      
     }
     ++it;
@@ -419,11 +419,11 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
   while(it != emb_edges.end()){
     if(!(*it)->isMeshDegenerated()){
       all_vertices.insert((*it)->mesh_vertices.begin(),
-			  (*it)->mesh_vertices.end() );
+                          (*it)->mesh_vertices.end() );
       all_vertices.insert((*it)->getBeginVertex()->mesh_vertices.begin(),
-			  (*it)->getBeginVertex()->mesh_vertices.end());
+                          (*it)->getBeginVertex()->mesh_vertices.end());
       all_vertices.insert((*it)->getEndVertex()->mesh_vertices.begin(),
-			  (*it)->getEndVertex()->mesh_vertices.end());
+                          (*it)->getEndVertex()->mesh_vertices.end());
     }
     ++it;
   }
@@ -431,14 +431,14 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
   // add embedded vertices
   while(itvx != emb_vertx.end()){
     all_vertices.insert((*itvx)->mesh_vertices.begin(),
-			(*itvx)->mesh_vertices.end() );
+                        (*itvx)->mesh_vertices.end() );
     ++itvx;
   }
  
   if (all_vertices.size() < 3){
     Msg::Warning("Mesh Generation of Model Face %d Skipped: "
-		 "Only %d Mesh Vertices on The Contours",
-		 gf->tag(), all_vertices.size());
+                 "Only %d Mesh Vertices on The Contours",
+                 gf->tag(), all_vertices.size());
     gf->meshStatistics.status = GFace::DONE;
     return true;
   }
@@ -532,8 +532,8 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
         V = bb[-1 - num]->y();
       }
       else{
-	U = U_[num];
-	V = V_[num];
+        U = U_[num];
+        V = V_[num];
       }      
       m->add_point(num, U, V, gf);
     }
@@ -566,13 +566,13 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
     it = edges.begin();
     while(it != edges.end()){
       if(!(*it)->isMeshDegenerated())
-	recover_medge(m, *it, &edgesToRecover, &edgesNotRecovered, 1);
+        recover_medge(m, *it, &edgesToRecover, &edgesNotRecovered, 1);
       ++it;
     }
     it = emb_edges.begin();
     while(it != emb_edges.end()){
       if(!(*it)->isMeshDegenerated())
-	recover_medge(m, *it, &edgesToRecover, &edgesNotRecovered, 1);
+        recover_medge(m, *it, &edgesToRecover, &edgesNotRecovered, 1);
       ++it;
     }
     
@@ -582,7 +582,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
     it = edges.begin();
     while(it != edges.end()){
       if(!(*it)->isMeshDegenerated()){
-	recover_medge(m, *it, &edgesToRecover, &edgesNotRecovered, 2);
+        recover_medge(m, *it, &edgesToRecover, &edgesNotRecovered, 2);
       }
       ++it;
     }
@@ -597,28 +597,28 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
       Msg::Warning("8-| Gmsh splits those edges and tries again");
     
       if (debug){
-	char name[245];
-	sprintf(name, "surface%d-not_yet_recovered-real-%d.msh", gf->tag(),RECUR_ITER);
-	gf->model()->writeMSH(name);
+        char name[245];
+        sprintf(name, "surface%d-not_yet_recovered-real-%d.msh", gf->tag(),RECUR_ITER);
+        gf->model()->writeMSH(name);
       }
       
       std::list<GFace *> facesToRemesh;
       if (repairSelfIntersecting1dMesh) 
-	remeshUnrecoveredEdges(edgesNotRecovered, facesToRemesh);
+        remeshUnrecoveredEdges(edgesNotRecovered, facesToRemesh);
       else{
-	std::set<EdgeToRecover>::iterator itr = edgesNotRecovered.begin();
-	int *_error = new int[3*edgesNotRecovered.size()];
-	int I = 0;
-	for (; itr != edgesNotRecovered.end(); ++itr){
-	  int p1 = itr->p1;
-	  int p2 = itr->p2;
-	  int tag = itr->ge->tag();
-	  _error[3*I+0] = p1;
-	  _error[3*I+1] = p2;
-	  _error[3*I+2] = tag;
-	  I++;
-	}
-	throw _error;
+        std::set<EdgeToRecover>::iterator itr = edgesNotRecovered.begin();
+        int *_error = new int[3*edgesNotRecovered.size()];
+        int I = 0;
+        for (; itr != edgesNotRecovered.end(); ++itr){
+          int p1 = itr->p1;
+          int p2 = itr->p2;
+          int tag = itr->ge->tag();
+          _error[3*I+0] = p1;
+          _error[3*I+1] = p2;
+          _error[3*I+2] = tag;
+          I++;
+        }
+        throw _error;
       }
 
       // delete the mesh
@@ -626,7 +626,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
       delete [] U_;
       delete [] V_;
       if (RECUR_ITER < 10 && facesToRemesh.size() == 0)
-	return gmsh2DMeshGenerator(gf, RECUR_ITER+1,   repairSelfIntersecting1dMesh, debug);
+        return gmsh2DMeshGenerator(gf, RECUR_ITER+1,   repairSelfIntersecting1dMesh, debug);
       return false;
     }
 
@@ -643,27 +643,27 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
     {
       std::list<BDS_Edge*>::iterator ite = m->edges.begin();
       while (ite != m->edges.end()){
-	BDS_Edge *e = *ite;
-	if(e->g  && e->numfaces() == 2){
-	  BDS_Point *oface[2];
-	  e->oppositeof(oface);
-	  if (oface[0]->iD < 0){
-	    recur_tag(e->faces(1), &CLASS_F);
-	    break;
-	  }
-	  else if (oface[1]->iD < 0){
-	    recur_tag(e->faces(0), &CLASS_F);
-	    break;
-	  }
-	}
-	++ite;
+        BDS_Edge *e = *ite;
+        if(e->g  && e->numfaces() == 2){
+          BDS_Point *oface[2];
+          e->oppositeof(oface);
+          if (oface[0]->iD < 0){
+            recur_tag(e->faces(1), &CLASS_F);
+            break;
+          }
+          else if (oface[1]->iD < 0){
+            recur_tag(e->faces(0), &CLASS_F);
+            break;
+          }
+        }
+        ++ite;
       }
     }
     
     it = emb_edges.begin();
     while(it != emb_edges.end()){
       if(!(*it)->isMeshDegenerated())
-	recover_medge(m, *it, &edgesToRecover, &edgesNotRecovered, 2);
+        recover_medge(m, *it, &edgesToRecover, &edgesNotRecovered, 2);
       ++it;
     }
     // compute characteristic lengths at vertices    
@@ -674,15 +674,15 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
       GEntity *ge = here->onWhat();
       BDS_Point *pp = m->find_point(num);
       if(ge->dim() == 0){
- 	pp->lcBGM() = BGM_MeshSize(ge, 0, 0, here->x(), here->y(), here->z());
+        pp->lcBGM() = BGM_MeshSize(ge, 0, 0, here->x(), here->y(), here->z());
       }
       else if(ge->dim() == 1){
- 	double u;
- 	here->getParameter(0,u);
- 	pp->lcBGM() = BGM_MeshSize(ge, u, 0, here->x(), here->y(), here->z());
+        double u;
+        here->getParameter(0,u);
+        pp->lcBGM() = BGM_MeshSize(ge, u, 0, here->x(), here->y(), here->z());
       }
       else
- 	pp->lcBGM() = MAX_LC;      
+        pp->lcBGM() = MAX_LC;      
       pp->lc() = pp->lcBGM();
     }
     for(int ip = 0; ip < 4; ip++) delete bb[ip];
@@ -839,11 +839,11 @@ static void printMesh1d(int iEdge, int seam, std::vector<SPoint2> &m)
 }
 
 static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop  &gel,
-					   std::vector<BDS_Point*> &result,
-					   SBoundingBox3d &bbox, BDS_Mesh *m,
-					   std::map<BDS_Point*, MVertex*> &recover_map_global,
-					   int &count, int countTot, double tol,
-					   bool seam_the_first = false)
+                                           std::vector<BDS_Point*> &result,
+                                           SBoundingBox3d &bbox, BDS_Mesh *m,
+                                           std::map<BDS_Point*, MVertex*> &recover_map_global,
+                                           int &count, int countTot, double tol,
+                                           bool seam_the_first = false)
 {
   // for each edge, we build a list of points that are the mapping of
   // the edge points on the face for seams, we build the list for
@@ -1404,7 +1404,7 @@ void meshGFace::operator() (GFace *gf)
     algo = "MeshAdapt";
 
   Msg::StatusBar(2, true, "Meshing surface %d (%s, %s)", 
-		 gf->tag(), gf->getTypeString().c_str(), algo);
+                 gf->tag(), gf->getTypeString().c_str(), algo);
 
   // compute loops on the fly (indices indicate start and end points
   // of a loop; loops are not yet oriented)
@@ -1423,7 +1423,7 @@ void meshGFace::operator() (GFace *gf)
   //  gmshQMorph(gf);
   
   Msg::Debug("Type %d %d triangles generated, %d internal vertices",
-	     gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
+             gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
 }
 
 template<class T>

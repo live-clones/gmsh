@@ -100,7 +100,8 @@ void MElement::getShapeFunctions(double u, double v, double w, double s[], int o
   else Msg::Error("Function space not implemented for this type of element");
 }
 
-void MElement::getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
+void MElement::getGradShapeFunctions(double u, double v, double w, double s[][3], 
+                                     int o)
 {
   const gmshFunctionSpace* fs = getFunctionSpace(o);
   if(fs) fs->df(u, v, w, s);
@@ -498,21 +499,21 @@ void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
   else{
     char data[50];
     float *coords = (float*)data;
-    coords[0] = n[0];
-    coords[1] = n[1];
-    coords[2] = n[2];
+    coords[0] = (float)n[0];
+    coords[1] = (float)n[1];
+    coords[2] = (float)n[2];
     for(int j = 0; j < 3; j++){
-      coords[3 + 3 * j] = getVertex(j)->x() * scalingFactor;
-      coords[3 + 3 * j + 1] = getVertex(j)->y() * scalingFactor;
-      coords[3 + 3 * j + 2] = getVertex(j)->z() * scalingFactor;
+      coords[3 + 3 * j] = (float)(getVertex(j)->x() * scalingFactor);
+      coords[3 + 3 * j + 1] = (float)(getVertex(j)->y() * scalingFactor);
+      coords[3 + 3 * j + 2] = (float)(getVertex(j)->z() * scalingFactor);
     }
     data[48] = data[49] = 0;
     fwrite(data, sizeof(char), 50, fp);
     if(getNumVertices() == 4){
       for(int j = 0; j < 3; j++){
-        coords[3 + 3 * j] = getVertex(qid[j])->x() * scalingFactor;
-        coords[3 + 3 * j + 1] = getVertex(qid[j])->y() * scalingFactor;
-        coords[3 + 3 * j + 2] = getVertex(qid[j])->z() * scalingFactor;
+        coords[3 + 3 * j] = (float)(getVertex(qid[j])->x() * scalingFactor);
+        coords[3 + 3 * j + 1] = (float)(getVertex(qid[j])->y() * scalingFactor);
+        coords[3 + 3 * j + 2] = (float)(getVertex(qid[j])->z() * scalingFactor);
       }
       fwrite(data, sizeof(char), 50, fp);
     }
@@ -579,15 +580,18 @@ void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
   if(physical < 0) revert();
 }
 
-void MElement::writeMESH(FILE *fp, int elementary)
+void MElement::writeMESH(FILE *fp, int elementTagType, int elementary, 
+                         int physical)
 {
   setVolumePositive();
   for(int i = 0; i < getNumVertices(); i++)
     fprintf(fp, " %d", getVertex(i)->getIndex());
-  fprintf(fp, " %d\n", elementary);
+  fprintf(fp, " %d\n", (elementTagType == 3) ? _partition : 
+          (elementTagType == 2) ? physical : elementary);
 }
 
-void MElement::writeBDF(FILE *fp, int format, int elementary)
+void MElement::writeBDF(FILE *fp, int format, int elementTagType, int elementary,
+                        int physical)
 {
   const char *str = getStringForBDF();
   if(!str) return;
@@ -597,8 +601,11 @@ void MElement::writeBDF(FILE *fp, int format, int elementary)
   const char *cont[4] = {"E", "F", "G", "H"};
   int ncont = 0;
   
+  int tag =  (elementTagType == 3) ? _partition : (elementTagType == 2) ? 
+    physical : elementary;
+
   if(format == 0){ // free field format
-    fprintf(fp, "%s,%d,%d", str, _num, elementary);
+    fprintf(fp, "%s,%d,%d", str, _num, tag);
     for(int i = 0; i < n; i++){
       fprintf(fp, ",%d", getVertexBDF(i)->getIndex());
       if(i != n - 1 && !((i + 3) % 8)){
@@ -611,7 +618,7 @@ void MElement::writeBDF(FILE *fp, int format, int elementary)
     fprintf(fp, "\n");
   }
   else{ // small or large field format
-    fprintf(fp, "%-8s%-8d%-8d", str, _num, elementary);
+    fprintf(fp, "%-8s%-8d%-8d", str, _num, tag);
     for(int i = 0; i < n; i++){
       fprintf(fp, "%-8d", getVertexBDF(i)->getIndex());
       if(i != n - 1 && !((i + 3) % 8)){
@@ -690,7 +697,7 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
 }
 
 MElement *MElementFactory::create(int type, std::vector<MVertex*> &v, 
-				  int num, int part)
+                                  int num, int part)
 {
   switch (type) {
   case MSH_PNT:    return new MPoint(v, num, part);

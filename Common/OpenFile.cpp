@@ -10,7 +10,7 @@
 #include "GModel.h"
 #include "Numeric.h"
 #include "HighOrder.h"
-		      
+                      
 #include "Context.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
@@ -30,7 +30,7 @@
 
 #if defined(HAVE_FLTK)
 #include <FL/fl_ask.H>
-#include "GUI.h"
+#include "FlGui.h"
 #include "Draw.h"
 #endif
 
@@ -190,8 +190,8 @@ int ParseFile(std::string fileName, bool close, bool warnIfMissing)
   gmsh_yyviewindex = old_yyviewindex;
 
 #if defined(HAVE_FLTK) && !defined(HAVE_NO_POST)
-  if(GUI::available() && numViewsBefore != (int)PView::list.size())
-    GUI::instance()->updateViews();
+  if(FlGui::available() && numViewsBefore != (int)PView::list.size())
+    FlGui::instance()->updateViews();
 #endif
 
   return 1;
@@ -223,8 +223,8 @@ int MergeFile(std::string fileName, bool warnIfMissing)
     SetProjectName(fileName);
 
 #if defined(HAVE_FLTK)
-  if(GUI::available())
-    GUI::instance()->setGraphicTitle(GModel::current()->getFileName());
+  if(FlGui::available())
+    FlGui::instance()->setGraphicTitle(GModel::current()->getFileName());
 #endif
 
   // added 'b' for pure Windows programs, since some of these files
@@ -246,7 +246,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
   std::string noExt = split[0] + split[1], ext = split[2];
 
 #if defined(HAVE_FLTK)
-  if(GUI::available()) {
+  if(FlGui::available()) {
     if(ext == ".gz") {
       // the real solution would be to rewrite all our I/O functions in
       // terms of gzFile, but until then, this is better than nothing
@@ -295,7 +295,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
     status = GModel::current()->readMESH(fileName);
   }
   else if(ext == ".med" || ext == ".MED" || ext == ".mmed" || ext == ".MMED" ||
-	  ext == ".rmed" || ext == ".RMED"){
+          ext == ".rmed" || ext == ".RMED"){
     status = GModel::readMED(fileName);
 #if !defined(HAVE_NO_POST)
     if(status > 1) status = PView::readMED(fileName);
@@ -340,9 +340,9 @@ int MergeFile(std::string fileName, bool warnIfMissing)
         GModel* tmp_model = new GModel();
         tmp_model->readMSH(fileName);
         //tmp_model->scaleMesh(1000);
-	int match_status = GeomMeshMatcher::instance()->match(GModel::current(), tmp_model);
+        int match_status = GeomMeshMatcher::instance()->match(GModel::current(), tmp_model);
         if (match_status)
-	  fileName = "out.msh";
+          fileName = "out.msh";
         delete tmp_model;
       }
       // MATCHER END
@@ -373,8 +373,8 @@ int MergeFile(std::string fileName, bool warnIfMissing)
   CTX::instance()->mesh.changed = ENT_ALL;
 
 #if defined(HAVE_FLTK) && !defined(HAVE_NO_POST)
-  if(GUI::available() && numViewsBefore != (int)PView::list.size())
-    GUI::instance()->updateViews();
+  if(FlGui::available() && numViewsBefore != (int)PView::list.size())
+    FlGui::instance()->updateViews();
 #endif
 
   if(!status) Msg::Error("Error loading '%s'", fileName.c_str());
@@ -396,11 +396,11 @@ void ClearProject()
   new GModel();
   SetProjectName(CTX::instance()->defaultFileName);
 #if defined(HAVE_FLTK)
-  if(GUI::available()){
-    GUI::instance()->setGraphicTitle(GModel::current()->getFileName());
-    GUI::instance()->resetVisibility();
-    GUI::instance()->updateViews();
-    GUI::instance()->updateFields();
+  if(FlGui::available()){
+    FlGui::instance()->setGraphicTitle(GModel::current()->getFileName());
+    FlGui::instance()->resetVisibility();
+    FlGui::instance()->updateViews();
+    FlGui::instance()->updateFields();
     GModel::current()->setSelection(0);
   }
 #endif
@@ -448,10 +448,10 @@ void OpenProject(std::string fileName)
   CTX::instance()->lock = 0;
 
 #if defined(HAVE_FLTK)
-  if(GUI::available()){
-    GUI::instance()->resetVisibility();
-    GUI::instance()->updateViews();
-    GUI::instance()->updateFields();
+  if(FlGui::available()){
+    FlGui::instance()->resetVisibility();
+    FlGui::instance()->updateViews();
+    FlGui::instance()->updateFields();
     GModel::current()->setSelection(0);
   }
 #endif
@@ -461,7 +461,7 @@ void OpenProjectMacFinder(const char *fileName)
 {
 #if defined(HAVE_FLTK)
   static int first = 1;
-  if(first || !GUI::available()){
+  if(first || !FlGui::available()){
     // just copy the filename: it will be opened when the GUI is ready
     // in main()
     GModel::current()->setFileName(fileName);

@@ -278,8 +278,9 @@ void drawContext::drawAxes()
     
   if(geometryExists && (CTX::instance()->drawBBox || !CTX::instance()->mesh.draw)) {
     glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
-    glLineWidth(CTX::instance()->lineWidth);
-    gl2psLineWidth(CTX::instance()->lineWidth * CTX::instance()->print.epsLineWidthFactor);
+    glLineWidth((float)CTX::instance()->lineWidth);
+    gl2psLineWidth((float)(CTX::instance()->lineWidth * 
+                           CTX::instance()->print.epsLineWidthFactor));
     drawBox(CTX::instance()->min[0], CTX::instance()->min[1], CTX::instance()->min[2], 
             CTX::instance()->max[0], CTX::instance()->max[1], CTX::instance()->max[2]);
     glColor3d(1.,0.,0.);
@@ -294,9 +295,9 @@ void drawContext::drawAxes()
 
   if(CTX::instance()->axes){
     glColor4ubv((GLubyte *) & CTX::instance()->color.axes);
-    glLineWidth(CTX::instance()->lineWidth);
-    gl2psLineWidth(CTX::instance()->lineWidth * 
-                   CTX::instance()->print.epsLineWidthFactor);
+    glLineWidth((float)CTX::instance()->lineWidth);
+    gl2psLineWidth((float)(CTX::instance()->lineWidth * 
+                           CTX::instance()->print.epsLineWidthFactor));
     if(!CTX::instance()->axesAutoPosition){
       drawAxes(CTX::instance()->axes, CTX::instance()->axesTics, 
                CTX::instance()->axesFormat, CTX::instance()->axesLabel, 
@@ -342,9 +343,9 @@ void drawContext::drawSmallAxes()
   double zx = l * rot[8];
   double zy = l * rot[9];
 
-  glLineWidth(CTX::instance()->lineWidth);
-  gl2psLineWidth(CTX::instance()->lineWidth * 
-                 CTX::instance()->print.epsLineWidthFactor);
+  glLineWidth((float)CTX::instance()->lineWidth);
+  gl2psLineWidth((float)(CTX::instance()->lineWidth * 
+                         CTX::instance()->print.epsLineWidthFactor));
   glColor4ubv((GLubyte *) & CTX::instance()->color.smallAxes);
 
   glBegin(GL_LINES);

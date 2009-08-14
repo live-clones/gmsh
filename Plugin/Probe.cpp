@@ -42,7 +42,7 @@ void GMSH_ProbePlugin::draw(void *context)
     double z = ProbeOptions_Number[2].def;
     drawContext *ctx = (drawContext*)context;
     glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
-    glLineWidth(CTX::instance()->lineWidth);
+    glLineWidth((float)CTX::instance()->lineWidth);
     SBoundingBox3d bb = PView::list[num]->getData()->getBoundingBox();
     if(x >= bb.min().x() && x <= bb.max().x() &&
        y >= bb.min().y() && y <= bb.max().y() &&

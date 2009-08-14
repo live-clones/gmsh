@@ -206,8 +206,8 @@ void GModel::snapVertices()
         t = parb.high();
       }
       else{
-	Msg::Error("Weird vertex: impossible to snap");
-	break;
+        Msg::Error("Weird vertex: impossible to snap");
+        break;
       }
       GPoint gp = (*it)->point(t);
       double d = sqrt((gp.x() - (*vit)->x()) * (gp.x() - (*vit)->x()) +
@@ -216,7 +216,7 @@ void GModel::snapVertices()
       if (d > tol){
         (*vit)->setPosition(gp);
         Msg::Warning("Geom Vertex %d Corrupted (%12.5E)... Snap performed",
-		     (*vit)->tag(), d);
+                     (*vit)->tag(), d);
       }
     }
     vit++;
@@ -252,7 +252,7 @@ void GModel::getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4])
       // should be "reversed"
       int p = std::abs(entities[i]->physicals[j]);
       if(std::find(group[p].begin(), group[p].end(), entities[i]) == group[p].end())
-	group[p].push_back(entities[i]);
+        group[p].push_back(entities[i]);
     }
   }
 }
@@ -274,7 +274,7 @@ void GModel::deletePhysicalGroup(int dim, int num)
       std::vector<int> p;
       for(unsigned int j = 0; j < entities[i]->physicals.size(); j++)
         if(entities[i]->physicals[j] != num)
-	  p.push_back(entities[i]->physicals[j]);
+          p.push_back(entities[i]->physicals[j]);
       entities[i]->physicals = p;
     }
   }
@@ -360,18 +360,18 @@ int GModel::getMeshStatus(bool countDiscrete)
 {
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     if((countDiscrete || ((*it)->geomType() != GEntity::DiscreteVolume &&
-			  (*it)->meshAttributes.Method != MESH_NONE)) &&
+                          (*it)->meshAttributes.Method != MESH_NONE)) &&
        ((*it)->tetrahedra.size() ||(*it)->hexahedra.size() ||
         (*it)->prisms.size() || (*it)->pyramids.size() ||
         (*it)->polyhedra.size())) return 3;
   for(fiter it = firstFace(); it != lastFace(); ++it)
     if((countDiscrete || ((*it)->geomType() != GEntity::DiscreteSurface &&
-			  (*it)->meshAttributes.Method != MESH_NONE)) &&
+                          (*it)->meshAttributes.Method != MESH_NONE)) &&
        ((*it)->triangles.size() || (*it)->quadrangles.size() ||
         (*it)->polygons.size())) return 2;
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     if((countDiscrete || ((*it)->geomType() != GEntity::DiscreteCurve &&
-			  (*it)->meshAttributes.Method != MESH_NONE)) &&
+                          (*it)->meshAttributes.Method != MESH_NONE)) &&
        (*it)->lines.size()) return 1;
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     if((*it)->mesh_vertices.size()) return 0;
@@ -459,16 +459,16 @@ MElement *GModel::getMeshElementByCoord(SPoint3 &p)
     SBoundingBox3d bb = bounds();
     double min[3] = {bb.min().x(), bb.min().y(), bb.min().z()};
     double size[3] = {bb.max().x() - bb.min().x(),
-		      bb.max().y() - bb.min().y(),
-		      bb.max().z() - bb.min().z()};
+                      bb.max().y() - bb.min().y(),
+                      bb.max().z() - bb.min().z()};
     const int maxElePerBucket = 100; // memory vs. speed trade-off
     _octree = Octree_Create(maxElePerBucket, min, size,
-			    MElementBB, MElementCentroid, MElementInEle);
+                            MElementBB, MElementCentroid, MElementInEle);
     std::vector<GEntity*> entities;
     getEntities(entities);
     for(unsigned int i = 0; i < entities.size(); i++)
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
-	Octree_Insert(entities[i]->getMeshElement(j), _octree);
+        Octree_Insert(entities[i]->getMeshElement(j), _octree);
     Octree_Arrange(_octree);
   }
   double P[3] = {p.x(), p.y(), p.z()};
@@ -489,15 +489,15 @@ MVertex *GModel::getMeshVertexByTag(int n)
       // numbering starts at 1
       _vertexVectorCache.resize(MVertex::getGlobalNumber() + 1);
       for(unsigned int i = 0; i < entities.size(); i++)
-	for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
-	  _vertexVectorCache[entities[i]->mesh_vertices[j]->getNum()] =
-	    entities[i]->mesh_vertices[j];
+        for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
+          _vertexVectorCache[entities[i]->mesh_vertices[j]->getNum()] =
+            entities[i]->mesh_vertices[j];
     }
     else{
       for(unsigned int i = 0; i < entities.size(); i++)
-	for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
-	  _vertexMapCache[entities[i]->mesh_vertices[j]->getNum()] =
-	    entities[i]->mesh_vertices[j];
+        for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
+          _vertexMapCache[entities[i]->mesh_vertices[j]->getNum()] =
+            entities[i]->mesh_vertices[j];
     }
   }
 
@@ -523,9 +523,9 @@ void GModel::getMeshVerticesForPhysicalGroup(int dim, int num, std::vector<MVert
     }
     else{
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
-	MElement *e = entities[i]->getMeshElement(j);
-	for(int k = 0; k < e->getNumVertices(); k++)
-	  sv.insert(e->getVertex(k));
+        MElement *e = entities[i]->getMeshElement(j);
+        for(int k = 0; k < e->getNumVertices(); k++)
+          sv.insert(e->getVertex(k));
       }
     }
   }
@@ -587,15 +587,15 @@ int GModel::indexMeshVertices(bool all)
   for(unsigned int i = 0; i < entities.size(); i++)
     if(all || entities[i]->physicals.size())
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
-	for(int k = 0; k < entities[i]->getMeshElement(j)->getNumVertices(); k++)
-	  entities[i]->getMeshElement(j)->getVertex(k)->setIndex(0);
+        for(int k = 0; k < entities[i]->getMeshElement(j)->getNumVertices(); k++)
+          entities[i]->getMeshElement(j)->getVertex(k)->setIndex(0);
 
   // renumber all the mesh vertices tagged with 0
   int numVertices = 0;
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
       if(!entities[i]->mesh_vertices[j]->getIndex())
-	entities[i]->mesh_vertices[j]->setIndex(++numVertices);
+        entities[i]->mesh_vertices[j]->setIndex(++numVertices);
 
   return numVertices;
 }
@@ -656,8 +656,8 @@ void GModel::_storeElementsInEntities(std::map<int, std::vector<MElement*> > &ma
           v = new discreteVertex(this, it->first);
           add(v);
         }
-	if(v->points.empty()) // CAD points already have one by default
-	  _addElements(v->points, it->second);
+        if(v->points.empty()) // CAD points already have one by default
+          _addElements(v->points, it->second);
       }
       break;
     case TYPE_LIN:
@@ -706,8 +706,8 @@ static void _associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &el
   for(unsigned int i = 0; i < elements.size(); i++)
     for(int j = 0; j < elements[i]->getNumVertices(); j++){
       if (!elements[i]->getVertex(j)->onWhat() ||
-	  elements[i]->getVertex(j)->onWhat()->dim() > ge->dim()){
-	elements[i]->getVertex(j)->setEntity(ge);
+          elements[i]->getVertex(j)->onWhat()->dim() > ge->dim()){
+        elements[i]->getVertex(j)->setEntity(ge);
       }
     }
 }
@@ -746,7 +746,7 @@ void GModel::_storeVerticesInEntities(std::map<int, MVertex*> &vertices)
     GEntity *ge = v->onWhat();
     if(ge){
       if(ge->dim() || ge->mesh_vertices.empty()){ // special case for points
-	ge->mesh_vertices.push_back(v);
+        ge->mesh_vertices.push_back(v);
       }
     }
     else
@@ -761,9 +761,9 @@ void GModel::_storeVerticesInEntities(std::vector<MVertex*> &vertices)
     if(v){ // the vector is allowed to have null entries
       GEntity *ge = v->onWhat();
       if(ge) {
-	if(ge->dim() || ge->mesh_vertices.empty()){ // special case for points
-	  ge->mesh_vertices.push_back(v);
-	}
+        if(ge->dim() || ge->mesh_vertices.empty()){ // special case for points
+          ge->mesh_vertices.push_back(v);
+        }
       }
       else
         delete v; // we delete all unused vertices
@@ -792,16 +792,16 @@ void GModel::checkMeshCoherence(double tolerance)
     int num = 0;
     for(unsigned int i = 0; i < entities.size(); i++){
       for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
-	MVertex *v = entities[i]->mesh_vertices[j];
-	std::set<MVertex*, MVertexLessThanLexicographic>::iterator it = pos.find(v);
-	if(it == pos.end()){
-	  pos.insert(v);
-	}
-	else{
-	  Msg::Info("Vertices %d and %d have identical position (%g, %g, %g)",
-		    (*it)->getNum(), v->getNum(), v->x(), v->y(), v->z());
-	  num++;
-	}
+        MVertex *v = entities[i]->mesh_vertices[j];
+        std::set<MVertex*, MVertexLessThanLexicographic>::iterator it = pos.find(v);
+        if(it == pos.end()){
+          pos.insert(v);
+        }
+        else{
+          Msg::Info("Vertices %d and %d have identical position (%g, %g, %g)",
+                    (*it)->getNum(), v->getNum(), v->x(), v->y(), v->z());
+          num++;
+        }
       }
     }
     if(num) Msg::Warning("%d duplicate vertices", num);
@@ -816,25 +816,25 @@ void GModel::checkMeshCoherence(double tolerance)
     int num = 0;
     for(unsigned int i = 0; i < entities.size(); i++){
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
-	MElement *e = entities[i]->getMeshElement(j);
-	std::set<MElement*, MElementLessThanLexicographic>::iterator it = pos.find(e);
-	if(it == pos.end()){
-	  pos.insert(e);
-	}
-	else{
-	  std::ostringstream sstream;
-	  sstream << "Element " << e->getNum() << " [ ";
-	  for (int k = 0; k < e->getNumVertices(); k++)
-	    sstream << e->getVertex(k)->getNum() << " ";
-	  sstream << "] on entity " << entities[i]->tag()
-		  << " has same barycenter as element " << (*it)->getNum()
-		  << " [ ";
-	  for (int k = 0; k < (*it)->getNumVertices(); k++)
-	    sstream << (*it)->getVertex(k)->getNum() << " ";
-	  sstream << "]";
-	  Msg::Info("%s", sstream.str().c_str());
-	  num++;
-	}
+        MElement *e = entities[i]->getMeshElement(j);
+        std::set<MElement*, MElementLessThanLexicographic>::iterator it = pos.find(e);
+        if(it == pos.end()){
+          pos.insert(e);
+        }
+        else{
+          std::ostringstream sstream;
+          sstream << "Element " << e->getNum() << " [ ";
+          for (int k = 0; k < e->getNumVertices(); k++)
+            sstream << e->getVertex(k)->getNum() << " ";
+          sstream << "] on entity " << entities[i]->tag()
+                  << " has same barycenter as element " << (*it)->getNum()
+                  << " [ ";
+          for (int k = 0; k < (*it)->getNumVertices(); k++)
+            sstream << (*it)->getVertex(k)->getNum() << " ";
+          sstream << "]";
+          Msg::Info("%s", sstream.str().c_str());
+          num++;
+        }
       }
     }
     if(num) Msg::Warning("%d duplicate elements", num);
@@ -1005,11 +1005,11 @@ void GModel::createTopologyFromMesh()
 
       std::vector<int> tagFaces2 = itmap->second;
       if (tagFaces2 == tagFaces){
-	myEdges.push_back(itmap->first);
-	map_edges.erase(itmap++);
+        myEdges.push_back(itmap->first);
+        map_edges.erase(itmap++);
       }
       else
-	itmap++;
+        itmap++;
     }
 
     //if the loaded mesh already contains discrete Edges
@@ -1022,42 +1022,42 @@ void GModel::createTopologyFromMesh()
       //printf(" !!! discrete edges already exist %d \n", myEdges.size());
       std::vector<int> tagEdges;
       if ( myEdges.size() == 1){
-	for (std::vector<discreteEdge*>::iterator edge = Dedges.begin(); edge != Dedges.end(); edge++){
-	  (*edge)->createTopo();
-	  if( ( (*edge)->getBeginVertex()->mesh_vertices[0] == myEdges[0].getVertex(0)  &&
- 		(*edge)->getEndVertex()->mesh_vertices[0] == myEdges[0].getVertex(1) ) ||
- 	      ( (*edge)->getBeginVertex()->mesh_vertices[0] == myEdges[0].getVertex(1)  &&
- 		(*edge)->getEndVertex()->mesh_vertices[0] == myEdges[0].getVertex(0) )){
-	    //printf("**********add tagedge =%d \n", (*edge)->tag());
- 	    tagEdges.push_back((*edge)->tag());
-	  }
-	}
+        for (std::vector<discreteEdge*>::iterator edge = Dedges.begin(); edge != Dedges.end(); edge++){
+          (*edge)->createTopo();
+          if( ( (*edge)->getBeginVertex()->mesh_vertices[0] == myEdges[0].getVertex(0)  &&
+                (*edge)->getEndVertex()->mesh_vertices[0] == myEdges[0].getVertex(1) ) ||
+              ( (*edge)->getBeginVertex()->mesh_vertices[0] == myEdges[0].getVertex(1)  &&
+                (*edge)->getEndVertex()->mesh_vertices[0] == myEdges[0].getVertex(0) )){
+            //printf("**********add tagedge =%d \n", (*edge)->tag());
+            tagEdges.push_back((*edge)->tag());
+          }
+        }
       }
       else {
-	for(unsigned int i = 0; i < myEdges.size(); i++){
-	  if (myEdges[i].getVertex(0)->onWhat()->dim() == 1) {
-	    int tagEdge = myEdges[i].getVertex(0)->onWhat()->tag();
-	    //printf("tagedge =%d \n", tagEdge);
-	    std::vector<int>::iterator itv = std::find(tagEdges.begin(), tagEdges.end(), tagEdge);
-	    if (itv == tagEdges.end()) {
-	      tagEdges.push_back(tagEdge);
-	    }
-	  }
-	}
+        for(unsigned int i = 0; i < myEdges.size(); i++){
+          if (myEdges[i].getVertex(0)->onWhat()->dim() == 1) {
+            int tagEdge = myEdges[i].getVertex(0)->onWhat()->tag();
+            //printf("tagedge =%d \n", tagEdge);
+            std::vector<int>::iterator itv = std::find(tagEdges.begin(), tagEdges.end(), tagEdge);
+            if (itv == tagEdges.end()) {
+              tagEdges.push_back(tagEdge);
+            }
+          }
+        }
       }
       for (std::vector<int>::iterator itFace = tagFaces.begin(); itFace != tagFaces.end(); itFace++) {
-	std::map<int, std::vector<int> >::iterator it = face2Edges.find(*itFace);
-	if (it == face2Edges.end())   {
-	  std::vector<int> allEdges;
-	  allEdges.insert(allEdges.begin(), tagEdges.begin(), tagEdges.end());
-	  face2Edges.insert(std::make_pair(*itFace,allEdges));
-	}
-	else{
-	  std::vector<int> allEdges = it->second;
-	  allEdges.insert(allEdges.begin(), tagEdges.begin(), tagEdges.end());
-	  it->second = allEdges;
-	}
-	face2Edges.insert(std::make_pair(*itFace, tagEdges));
+        std::map<int, std::vector<int> >::iterator it = face2Edges.find(*itFace);
+        if (it == face2Edges.end())   {
+          std::vector<int> allEdges;
+          allEdges.insert(allEdges.begin(), tagEdges.begin(), tagEdges.end());
+          face2Edges.insert(std::make_pair(*itFace,allEdges));
+        }
+        else{
+          std::vector<int> allEdges = it->second;
+          allEdges.insert(allEdges.begin(), tagEdges.begin(), tagEdges.end());
+          it->second = allEdges;
+        }
+        face2Edges.insert(std::make_pair(*itFace, tagEdges));
       }
       //printf(" !!! END discrete edges already exist %d \n", myEdges.size());
     }
@@ -1067,98 +1067,98 @@ void GModel::createTopologyFromMesh()
 
      //for each actual GEdge
       while (! myEdges.empty()) {
-	std::vector<MEdge> myLines;
-	myLines.clear();
-	std::vector<MEdge>::iterator it = myEdges.begin();
+        std::vector<MEdge> myLines;
+        myLines.clear();
+        std::vector<MEdge>::iterator it = myEdges.begin();
 
-	MVertex *vB = (*it).getVertex(0);
-	MVertex *vE = (*it).getVertex(1);
-	myLines.push_back(*it);
-	myEdges.erase(it);
-	it++;
+        MVertex *vB = (*it).getVertex(0);
+        MVertex *vE = (*it).getVertex(1);
+        myLines.push_back(*it);
+        myEdges.erase(it);
+        it++;
 
-	//printf("***candidate mline %d %d of size %d \n", vB->getNum(), vE->getNum(), myEdges.size());
+        //printf("***candidate mline %d %d of size %d \n", vB->getNum(), vE->getNum(), myEdges.size());
 
-   	for (int i=0; i<2; i++) {
+        for (int i=0; i<2; i++) {
 
-	  std::vector<MEdge>::iterator it= myEdges.begin() ;
-	  while (it != myEdges.end()){
-	    MVertex *v1 = (*it).getVertex(0);
-	    MVertex *v2 = (*it).getVertex(1);
-	    //printf("mline %d %d \n", v1->getNum(), v2->getNum());
+          std::vector<MEdge>::iterator it= myEdges.begin() ;
+          while (it != myEdges.end()){
+            MVertex *v1 = (*it).getVertex(0);
+            MVertex *v2 = (*it).getVertex(1);
+            //printf("mline %d %d \n", v1->getNum(), v2->getNum());
 
-	    std::vector<MEdge>::iterator itp;
-	    if ( v1 == vE  ){
-	      //printf("->v1 = vE push back this mline \n");
-	      myLines.push_back(*it);
-	      myEdges.erase(it);
-	      vE = v2;
-	      i = -1;
-	    }
-	    else if ( v2 == vE){
-	      //printf("->v2 = VE push back this mline \n");
-	      myLines.push_back(*it);
-	      myEdges.erase(it);
-	      vE = v1;
-	      i=-1;
-	    }
-	    else it++;
+            std::vector<MEdge>::iterator itp;
+            if ( v1 == vE  ){
+              //printf("->v1 = vE push back this mline \n");
+              myLines.push_back(*it);
+              myEdges.erase(it);
+              vE = v2;
+              i = -1;
+            }
+            else if ( v2 == vE){
+              //printf("->v2 = VE push back this mline \n");
+              myLines.push_back(*it);
+              myEdges.erase(it);
+              vE = v1;
+              i=-1;
+            }
+            else it++;
 
-	  }
-	  //printf("end Edges \n");
+          }
+          //printf("end Edges \n");
 
-	  if (vB == vE) break;
+          if (vB == vE) break;
 
-	  if (myEdges.empty()) break;
+          if (myEdges.empty()) break;
 
-	  //printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
-	  MVertex *temp = vB;
-	  vB = vE;
-	  vE = temp;
-	  //printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
+          //printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
+          MVertex *temp = vB;
+          vB = vE;
+          vE = temp;
+          //printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
 
-	}
+        }
 
- 	//printf("************ CANDIDATE NEW EDGE with num =%d size=%d\n", num, myLines.size());
-  	//for (std::vector<MEdge>::iterator it = myLines.begin() ; it != myLines.end() ; ++it){
-  	//  MVertex *v1 = (*it).getVertex(0);
-  	//  MVertex *v2 = (*it).getVertex(1);
-  	//  printf("Line %d %d \n", v1->getNum(), v2->getNum());
-  	//}
-	discreteEdge *e = new discreteEdge(this, num, 0, 0);
-	add(e);
-	Dedges.push_back(e);
-	std::list<MVertex*> all_vertices;
-	for(unsigned int i = 0; i < myLines.size(); i++) {
-	  MVertex *v0 = myLines[i].getVertex(0);
-	  MVertex *v1 = myLines[i].getVertex(1);
-	  e->lines.push_back(new MLine( v0, v1));
-	  if (std::find(all_vertices.begin(), all_vertices.end(), v0) == all_vertices.end()) all_vertices.push_back(v0);
-	  if (std::find(all_vertices.begin(), all_vertices.end(), v1) == all_vertices.end()) all_vertices.push_back(v1);
-	}
-	e->mesh_vertices.insert(e->mesh_vertices.begin(), all_vertices.begin(), all_vertices.end());
+        //printf("************ CANDIDATE NEW EDGE with num =%d size=%d\n", num, myLines.size());
+        //for (std::vector<MEdge>::iterator it = myLines.begin() ; it != myLines.end() ; ++it){
+        //  MVertex *v1 = (*it).getVertex(0);
+        //  MVertex *v2 = (*it).getVertex(1);
+        //  printf("Line %d %d \n", v1->getNum(), v2->getNum());
+        //}
+        discreteEdge *e = new discreteEdge(this, num, 0, 0);
+        add(e);
+        Dedges.push_back(e);
+        std::list<MVertex*> all_vertices;
+        for(unsigned int i = 0; i < myLines.size(); i++) {
+          MVertex *v0 = myLines[i].getVertex(0);
+          MVertex *v1 = myLines[i].getVertex(1);
+          e->lines.push_back(new MLine( v0, v1));
+          if (std::find(all_vertices.begin(), all_vertices.end(), v0) == all_vertices.end()) all_vertices.push_back(v0);
+          if (std::find(all_vertices.begin(), all_vertices.end(), v1) == all_vertices.end()) all_vertices.push_back(v1);
+        }
+        e->mesh_vertices.insert(e->mesh_vertices.begin(), all_vertices.begin(), all_vertices.end());
 
-	for (std::vector<int>::iterator itFace = tagFaces.begin(); itFace != tagFaces.end(); itFace++) {
-	  GFace *dFace = getFaceByTag(abs(*itFace));
-	  for (std::list<MVertex*>::iterator itv = all_vertices.begin(); itv != all_vertices.end(); itv++) {
-	    std::vector<MVertex*>::iterator itve = std::find(dFace->mesh_vertices.begin(), dFace->mesh_vertices.end(), *itv) ;
-	    if (itve != dFace->mesh_vertices.end()) dFace->mesh_vertices.erase(itve);
-	    (*itv)->setEntity(e);
-	  }
+        for (std::vector<int>::iterator itFace = tagFaces.begin(); itFace != tagFaces.end(); itFace++) {
+          GFace *dFace = getFaceByTag(abs(*itFace));
+          for (std::list<MVertex*>::iterator itv = all_vertices.begin(); itv != all_vertices.end(); itv++) {
+            std::vector<MVertex*>::iterator itve = std::find(dFace->mesh_vertices.begin(), dFace->mesh_vertices.end(), *itv) ;
+            if (itve != dFace->mesh_vertices.end()) dFace->mesh_vertices.erase(itve);
+            (*itv)->setEntity(e);
+          }
 
-	  std::map<int, std::vector<int> >::iterator f2e = face2Edges.find(*itFace);
-	  if (f2e == face2Edges.end()){
-	    std::vector<int> tagEdges;
-	    tagEdges.push_back(num);
-	    face2Edges.insert(std::make_pair(*itFace,tagEdges));
-	  }
-	  else{
-	    std::vector<int> tagEdges = f2e->second;
-	    tagEdges.push_back(num);
-	    f2e->second = tagEdges;
-	  }
-	}
-	num++;
+          std::map<int, std::vector<int> >::iterator f2e = face2Edges.find(*itFace);
+          if (f2e == face2Edges.end()){
+            std::vector<int> tagEdges;
+            tagEdges.push_back(num);
+            face2Edges.insert(std::make_pair(*itFace,tagEdges));
+          }
+          else{
+            std::vector<int> tagEdges = f2e->second;
+            tagEdges.push_back(num);
+            f2e->second = tagEdges;
+          }
+        }
+        num++;
 
       }//end for each actual GEdge
 
@@ -1168,36 +1168,36 @@ void GModel::createTopologyFromMesh()
 //       Dedges.push_back(e);
 //       std::list<MVertex*> all_vertices;
 //       for(int i = 0; i < myEdges.size(); i++) {
-// 	MVertex *v0 = myEdges[i].getVertex(0);
-// 	MVertex *v1 = myEdges[i].getVertex(1);
-// 	e->lines.push_back(new MLine( v0, v1));
-// 	if (std::find(all_vertices.begin(), all_vertices.end(), v0) == all_vertices.end()) all_vertices.push_back(v0);
-// 	if (std::find(all_vertices.begin(), all_vertices.end(), v1) == all_vertices.end()) all_vertices.push_back(v1);
+//      MVertex *v0 = myEdges[i].getVertex(0);
+//      MVertex *v1 = myEdges[i].getVertex(1);
+//      e->lines.push_back(new MLine( v0, v1));
+//      if (std::find(all_vertices.begin(), all_vertices.end(), v0) == all_vertices.end()) all_vertices.push_back(v0);
+//      if (std::find(all_vertices.begin(), all_vertices.end(), v1) == all_vertices.end()) all_vertices.push_back(v1);
 //       }
 //       e->mesh_vertices.insert(e->mesh_vertices.begin(), all_vertices.begin(), all_vertices.end());
 //       printf("all vertice size =%d\n", all_vertices.size());
 
 //       for (std::vector<int>::iterator itFace = tagFaces.begin(); itFace != tagFaces.end(); itFace++) {
-// 	GFace *dFace = getFaceByTag(abs(*itFace));
-// 	printf("face =%d \n", dFace->tag());
-// 	for (std::list<MVertex*>::iterator itv = all_vertices.begin(); itv != all_vertices.end(); itv++) {
-// 	  printf("vertrx=%d \n", (*itv)->getNum());
-// 	  std::vector<MVertex*>::iterator itve = std::find(dFace->mesh_vertices.begin(), dFace->mesh_vertices.end(), *itv) ;
-// 	  if (itve != dFace->mesh_vertices.end()) dFace->mesh_vertices.erase(itve);
-// 	  (*itv)->setEntity(e);
-// 	}
+//      GFace *dFace = getFaceByTag(abs(*itFace));
+//      printf("face =%d \n", dFace->tag());
+//      for (std::list<MVertex*>::iterator itv = all_vertices.begin(); itv != all_vertices.end(); itv++) {
+//        printf("vertrx=%d \n", (*itv)->getNum());
+//        std::vector<MVertex*>::iterator itve = std::find(dFace->mesh_vertices.begin(), dFace->mesh_vertices.end(), *itv) ;
+//        if (itve != dFace->mesh_vertices.end()) dFace->mesh_vertices.erase(itve);
+//        (*itv)->setEntity(e);
+//      }
 
-// 	std::map<int, std::vector<int> >::iterator f2e = face2Edges.find(*itFace);
-// 	if (f2e == face2Edges.end()){
-// 	  std::vector<int> tagEdges;
-// 	  tagEdges.push_back(num);
-// 	  face2Edges.insert(std::make_pair(*itFace,tagEdges));
-// 	}
-// 	else{
-// 	  std::vector<int> tagEdges = f2e->second;
-// 	  tagEdges.push_back(num);
-// 	  f2e->second = tagEdges;
-// 	}
+//      std::map<int, std::vector<int> >::iterator f2e = face2Edges.find(*itFace);
+//      if (f2e == face2Edges.end()){
+//        std::vector<int> tagEdges;
+//        tagEdges.push_back(num);
+//        face2Edges.insert(std::make_pair(*itFace,tagEdges));
+//      }
+//      else{
+//        std::vector<int> tagEdges = f2e->second;
+//        tagEdges.push_back(num);
+//        f2e->second = tagEdges;
+//      }
 //       }
 //       num++;
 

@@ -125,7 +125,6 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
   else domain = _domain;
   
   std::vector<MVertex*> vertices;
-  int vertex = 0;
   
   std::pair<citer, bool> insertInfo;
   
@@ -141,7 +140,6 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
       }
       
       int dim = domain.at(j)->getMeshElement(i)->getDim();
-      int type = domain.at(j)->getMeshElement(i)->getTypeForMSH();
       Cell* cell;
       if(dim == 3) cell = new ThreeSimplex(vertices, 0, subdomain, boundary); 
       else if(dim == 2) cell = new TwoSimplex(vertices, 0, subdomain, boundary);
@@ -821,7 +819,7 @@ int CellComplex::writeComplexMSH(const std::string &name){
   
   fprintf(fp, "$Nodes\n");
   
-  fprintf(fp, "%d\n", _domainVertices.size());
+  fprintf(fp, "%d\n", (int)_domainVertices.size());
   
   for(std::set<MVertex*, Less_MVertex>::iterator vit = _domainVertices.begin(); vit != _domainVertices.end(); vit++){
     MVertex* vertex = *vit;
@@ -917,7 +915,7 @@ bool CellComplex::checkCoherence(){
         int ori = (*it).first;
         citer cit = _cells[bdCell->getDim()].find(bdCell);
         if(cit == lastCell(bdCell->getDim())){ 
-          printf("Warning! Boundary cell not in cell complex! Boundary removed. \n", cell->getDim());
+          printf("Warning! Boundary cell not in cell complex! Boundary removed. \n");
           //printf(" "); cell->printCell();
           //printf(" "); bdCell->printCell();
           cell->removeBoundaryCell(bdCell);
@@ -940,7 +938,7 @@ bool CellComplex::checkCoherence(){
         int ori = (*it).first;
         citer cit = _cells[cbdCell->getDim()].find(cbdCell);
         if(cit == lastCell(cbdCell->getDim())){ 
-          printf("Warning! Coboundary cell not in cell complex! Coboundary removed. \n", cell->getDim());
+          printf("Warning! Coboundary cell not in cell complex! Coboundary removed. \n");
           //printf(" "); cell->printCell();
           //printf(" "); cbdCell->printCell();
           cell->removeCoboundaryCell(cbdCell);

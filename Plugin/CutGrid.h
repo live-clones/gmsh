@@ -23,7 +23,7 @@ class GMSH_CutGridPlugin : public GMSH_PostPlugin
                  std::vector<double> &L, int *nL, 
                  std::vector<double> &Q, int *nQ);
   PView *GenerateView (PView *v, int connectPoints);
-public:
+ public:
   GMSH_CutGridPlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *help_text) const;

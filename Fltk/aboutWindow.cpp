@@ -7,7 +7,7 @@
 #include <FL/Fl_Browser.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Button.H>
-#include "GUI.h"
+#include "FlGui.h"
 #include "aboutWindow.h"
 #include "paletteWindow.h"
 #include "CommandLine.h"
@@ -40,7 +40,7 @@ aboutWindow::aboutWindow()
 {
   char buffer[1024];
   int width = 28 * FL_NORMAL_SIZE;
-  int height = 15 * BH + BH/2;
+  int height = 17 * BH;
 
   win = new paletteWindow
     (width, height, CTX::instance()->nonModalWindows ? true : false, "About Gmsh");

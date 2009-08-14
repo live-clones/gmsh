@@ -55,22 +55,22 @@ void FM_Internals::makeGFace(FM::Patch* patch, GModel* model)
   i1 = eB->GetStartPoint()->GetTag();
   i2 = eB->GetEndPoint()->GetTag();
   model->add(new fourierEdge(model, eB, eB->GetTag(), model->getVertexByTag(i1),
-			 model->getVertexByTag(i2)));
+                         model->getVertexByTag(i2)));
   FM::TopoEdge* eR = new FM::TopoEdge(++tagEdge, curveR, vLR, vUR); 
   i1 = eR->GetStartPoint()->GetTag();
   i2 = eR->GetEndPoint()->GetTag();
   model->add(new fourierEdge(model, eR, eR->GetTag(), model->getVertexByTag(i1),
-			 model->getVertexByTag(i2))); 
+                         model->getVertexByTag(i2))); 
   FM::TopoEdge* eT = new FM::TopoEdge(++tagEdge, curveT, vUR, vUL);
   i1 = eT->GetStartPoint()->GetTag();
   i2 = eT->GetEndPoint()->GetTag();
   model->add(new fourierEdge(model, eT, eT->GetTag(), model->getVertexByTag(i1),
-			 model->getVertexByTag(i2)));
+                         model->getVertexByTag(i2)));
   FM::TopoEdge* eL = new FM::TopoEdge(++tagEdge, curveL, vUL, vLL); 
   i1 = eL->GetStartPoint()->GetTag();
   i2 = eL->GetEndPoint()->GetTag();
   model->add(new fourierEdge(model, eL, eL->GetTag(), model->getVertexByTag(i1),
-			 model->getVertexByTag(i2)));
+                         model->getVertexByTag(i2)));
   
   FM::TopoFace* face = new FM::TopoFace(model->getNumFaces() + 1, patch);
   face->AddEdge(eB); face->AddEdge(eR); 
@@ -152,7 +152,7 @@ int GModel::readFourier(const std::string &fn)
 int GModel::writeFourier(const std::string &fn)
 {
   Msg::Error("Gmsh must be compiled with Fourier Model support to load '%s'",
-	     fn.c_str());
+             fn.c_str());
   return 0;
 }
 

@@ -8,8 +8,8 @@
 #include "Context.h"
 #include "Numeric.h"
 
-template<int N> float ElementDataLessThan<N>::tolerance = 0.;
-float BarycenterLessThan::tolerance = 0.;
+template<int N> float ElementDataLessThan<N>::tolerance = 0.0F;
+float BarycenterLessThan::tolerance = 0.0F;
 
 VertexArray::VertexArray(int numVerticesPerElement, int numElements) 
   : _numVerticesPerElement(numVerticesPerElement)
@@ -40,7 +40,7 @@ void VertexArray::_addNormal(float nx, float ny, float nz)
 }
 
 void VertexArray::_addColor(unsigned char r, unsigned char g, unsigned char b,
-			    unsigned char a)
+                            unsigned char a)
 {
   _colors.push_back(r);
   _colors.push_back(g);
@@ -72,14 +72,14 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
 }
 
 void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned char *r, 
-		      unsigned char *g, unsigned char *b, unsigned char *a, 
-		      MElement *ele, bool unique, bool boundary)
+                      unsigned char *g, unsigned char *b, unsigned char *a, 
+                      MElement *ele, bool unique, bool boundary)
 {
   int npe = getNumVerticesPerElement();
 
   if(boundary && npe == 3){
     ElementData<3> e(x, y, z, n, r, g, b, a, ele);
-    ElementDataLessThan<3>::tolerance = CTX::instance()->lc * 1.e-12;
+    ElementDataLessThan<3>::tolerance = (float)(CTX::instance()->lc * 1.e-12);
     std::set<ElementData<3>, ElementDataLessThan<3> >::iterator it = _data3.find(e);
     if(it == _data3.end())
       _data3.insert(e);
@@ -89,18 +89,18 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned cha
   }
 
   if(unique){
-    Barycenter pc(0., 0., 0.);
+    Barycenter pc(0.0F, 0.0F, 0.0F);
     for(int i = 0; i < npe; i++)
       pc += Barycenter(x[i], y[i], z[i]);
-    BarycenterLessThan::tolerance = CTX::instance()->lc * 1.e-12;
+    BarycenterLessThan::tolerance = (float)(CTX::instance()->lc * 1.e-12);
     if(_barycenters.find(pc) != _barycenters.end()) 
       return;
     _barycenters.insert(pc);
   }
 
   for(int i = 0; i < npe; i++){
-    _addVertex(x[i], y[i], z[i]);
-    if(n) _addNormal(n[i].x(), n[i].y(), n[i].z());
+    _addVertex((float)x[i], (float)y[i], (float)z[i]);
+    if(n) _addNormal((float)n[i].x(), (float)n[i].y(), (float)n[i].z());
     if(r && g && b && a) _addColor(r[i], g[i], b[i], a[i]);
     _addElement(ele);
   }
@@ -195,11 +195,11 @@ void VertexArray::sort(double x, double y, double z)
       for(int k = 0; k < 3; k++)
         sortedVertices.push_back(elements[i].v[3 * j + k]);
       if(elements[i].n)
-	for(int k = 0; k < 3; k++)
+        for(int k = 0; k < 3; k++)
           sortedNormals.push_back(elements[i].n[3 * j + k]);
       if(elements[i].c)
-	for(int k = 0; k < 4; k++)
-	  sortedColors.push_back(elements[i].c[4 * j + k]);
+        for(int k = 0; k < 4; k++)
+          sortedColors.push_back(elements[i].c[4 * j + k]);
     }
   }
   

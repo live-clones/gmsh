@@ -37,7 +37,7 @@ class Homology
    ~Homology(){ delete _cellComplex; }
    
    bool getCombine() { return _combine; }
-   bool setCombine(bool combine) { _combine = combine; }
+   bool setCombine(bool combine) { _combine = combine; return _combine; }
    
    void findGenerators(std::string fileName);
    void findThickCuts(std::string fileName);

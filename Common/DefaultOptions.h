@@ -61,7 +61,8 @@ StringXString GeneralOptions_String[] = {
     "Option file created with `Tools->Options->Save'; automatically read on startup" },
 
   { 0,   "SessionFileName" , opt_general_session_filename , ".gmshrc" ,
-    "Option file into which session specific information is saved; automatically read on startup" },
+    "Option file into which session specific information is saved; automatically "
+    "read on startup" },
 
   { F|O, "TextEditor" , opt_general_editor , 
 #if defined(WIN32)
@@ -463,9 +464,11 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "BackgroundGradient" , opt_general_background_gradient , 1. ,
     "Draw background gradient (0=none, 1=vertical, 2=horizontal, 3=radial)" },
   { F|O, "BackgroundImagePositionX" , opt_general_background_image_position0 , 1.e5 ,
-    "X position (in pixels) of background image (< 0: measure from right edge; >= 1e5: centered)" },
+    "X position (in pixels) of background image (< 0: measure from right edge; "
+    ">= 1e5: centered)" },
   { F|O, "BackgroundImagePositionY" , opt_general_background_image_position1 , 1.e5 ,
-    "Y position (in pixels) of background image (< 0: measure from bottom edge; >= 1e5: centered)" },
+    "Y position (in pixels) of background image (< 0: measure from bottom edge; "
+    ">= 1e5: centered)" },
 
   { F,   "Clip0A" , opt_general_clip0a , 1.0 ,
     "First coefficient in equation for clipping plane 0 (`A' in `AX+BY+CZ+D=0')" },
@@ -516,15 +519,19 @@ StringXNumber GeneralOptions_Number[] = {
   { F,   "Clip5D" , opt_general_clip5d , 0.0 , 
     "Fourth coefficient in equation for clipping plane 5" },
   { F,   "ClipFactor" , opt_general_clip_factor , 5.0 , 
-    "Near and far clipping plane distance factor (decrease value for better z-buffer resolution)" },
-  { F|O, "ClipOnlyDrawIntersectingVolume" , opt_general_clip_only_draw_intersecting_volume , 0. , 
+    "Near and far clipping plane distance factor (decrease value for better "
+    "z-buffer resolution)" },
+  { F|O, "ClipOnlyDrawIntersectingVolume" , 
+    opt_general_clip_only_draw_intersecting_volume , 0. , 
     "Only draw layer of elements that intersect the clipping plane" },
   { F|O, "ClipOnlyVolume" , opt_general_clip_only_volume , 0. , 
     "Only clip volume elements" },
   { F|S, "ClipPositionX" , opt_general_clip_position0 , 650. , 
-    "Horizontal position (in pixels) of the upper left corner of the clipping planes window" }, 
+    "Horizontal position (in pixels) of the upper left corner of the clipping "
+    "planes window" }, 
   { F|S, "ClipPositionY" , opt_general_clip_position1 , 150. , 
-    "Vertical position (in pixels) of the upper left corner of the clipping planes window" }, 
+    "Vertical position (in pixels) of the upper left corner of the clipping "
+    "planes window" }, 
   { F|O, "ClipWholeElements" , opt_general_clip_whole_elements , 0. , 
     "Clip whole elements" },
 
@@ -533,17 +540,21 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "ConfirmOverwrite" , opt_general_confirm_overwrite, 1. , 
     "Ask confirmation before overwriting files?" }, 
   { F|S, "ContextPositionX" , opt_general_context_position0 , 650. , 
-    "Horizontal position (in pixels) of the upper left corner of the contextual windows" }, 
+    "Horizontal position (in pixels) of the upper left corner of the contextual "
+    "windows" }, 
   { F|S, "ContextPositionY" , opt_general_context_position1 , 150. ,
-    "Vertical position (in pixels) of the upper left corner of the contextual windows" }, 
+    "Vertical position (in pixels) of the upper left corner of the contextual "
+    "windows" }, 
 
   { F|O, "DoubleBuffer" , opt_general_double_buffer , 1. ,
-    "Use a double buffered graphic window (on Unix, should be set to 0 when working on a remote host without GLX)" },
+    "Use a double buffered graphic window (on Unix, should be set to 0 when "
+    "working on a remote host without GLX)" },
   { F|O, "DrawBoundingBoxes" , opt_general_draw_bounding_box, 0. ,
     "Draw bounding boxes" },
 
   { F|O, "ExpertMode" , opt_general_expert_mode, 0. ,
-    "Enable expert mode (to disable all the messages meant for inexperienced users)" },
+    "Enable expert mode (to disable all the messages meant for inexperienced "
+    "users)" },
 
   { F|O, "FastRedraw" , opt_general_fast_redraw, 0. ,
     "Draw simplified model while rotating, panning and zooming" },
@@ -556,9 +567,11 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "FieldWidth" , opt_general_field_size0 , 300. , 
     "Width (in pixels) of the field window" }, 
   { F|S, "FileChooserPositionX" , opt_general_file_chooser_position0 , 200. , 
-    "Horizontal position (in pixels) of the upper left corner of the file chooser windows" }, 
+    "Horizontal position (in pixels) of the upper left corner of the file chooser "
+    "windows" }, 
   { F|S, "FileChooserPositionY" , opt_general_file_chooser_position1 , 200. ,
-    "Vertical position (in pixels) of the upper left corner of the file chooser windows" }, 
+    "Vertical position (in pixels) of the upper left corner of the file chooser "
+    "windows" }, 
   { F|O, "FontSize" , opt_general_fontsize , -1. , 
     "Size of the font in the user interface (-1=automatic)" },
 
@@ -567,14 +580,17 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "GraphicsHeight" , opt_general_graphics_size1 , 600. , 
     "Height (in pixels) of the graphic window" }, 
   { F|S, "GraphicsPositionX" , opt_general_graphics_position0 , 50. , 
-    "Horizontal position (in pixels) of the upper left corner of the graphic window" }, 
+    "Horizontal position (in pixels) of the upper left corner of the graphic "
+    "window" }, 
   { F|S, "GraphicsPositionY" , opt_general_graphics_position1 , 50. ,
-    "Vertical position (in pixels) of the upper left corner of the graphic window" }, 
+    "Vertical position (in pixels) of the upper left corner of the graphic "
+    "window" }, 
   { F|S, "GraphicsWidth" , opt_general_graphics_size0 , 600. , 
     "Width (in pixels) of the graphic window" }, 
 
   { F|O, "InitialModule", opt_general_initial_context, 0. , 
-    "Module launched on startup (0=automatic, 1=geometry, 2=mesh, 3=solver, 4=post-processing) " },
+    "Module launched on startup (0=automatic, 1=geometry, 2=mesh, 3=solver, "
+    "4=post-processing) " },
 
   { F|O, "Light0" , opt_general_light0 , 1. ,
     "Enable light source 0" },
@@ -585,7 +601,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Light0Z" , opt_general_light02 , 1.0 , 
     "Z position of light source 0" },
   { F|O, "Light0W" , opt_general_light03 , 0.0 , 
-    "Divisor of the X, Y and Z coordinates of light source 0 (W=0 means infinitely far source)" },
+    "Divisor of the X, Y and Z coordinates of light source 0 (W=0 means "
+    "infinitely far source)" },
   { F|O, "Light1" , opt_general_light1 , 0.,
     "Enable light source 1" },
   { F|O, "Light1X" , opt_general_light10 , 0.5 , 
@@ -595,7 +612,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Light1Z" , opt_general_light12 , 1.0 , 
     "Z position of light source 1" },
   { F|O, "Light1W" , opt_general_light13 , 0.0 , 
-    "Divisor of the X, Y and Z coordinates of light source 1 (W=0 means infinitely far source)" },
+    "Divisor of the X, Y and Z coordinates of light source 1 (W=0 means infinitely "
+    "far source)" },
   { F|O, "Light2" , opt_general_light2 , 0.,
     "Enable light source 2" },
   { F|O, "Light2X" , opt_general_light20 , 0.5 , 
@@ -605,7 +623,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Light2Z" , opt_general_light22 , 1.0 , 
     "Z position of light source 2" },
   { F|O, "Light2W" , opt_general_light23 , 0.0 , 
-    "Divisor of the X, Y and Z coordinates of light source 2 (W=0 means infinitely far source)" },
+    "Divisor of the X, Y and Z coordinates of light source 2 (W=0 means infinitely "
+    "far source)" },
   { F|O, "Light3" , opt_general_light3 , 0.,
     "Enable light source 3" },
   { F|O, "Light3X" , opt_general_light30 , 0.5 , 
@@ -615,7 +634,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Light3Z" , opt_general_light32 , 1.0 , 
     "Z position of light source 3" },
   { F|O, "Light3W" , opt_general_light33 , 0.0 , 
-    "Divisor of the X, Y and Z coordinates of light source 3 (W=0 means infinitely far source)" },
+    "Divisor of the X, Y and Z coordinates of light source 3 (W=0 means infinitely "
+    "far source)" },
   { F|O, "Light4" , opt_general_light4 , 0.,
     "Enable light source 4" },
   { F|O, "Light4X" , opt_general_light40 , 0.5 , 
@@ -625,7 +645,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Light4Z" , opt_general_light42 , 1.0 , 
     "Z position of light source 4" },
   { F|O, "Light4W" , opt_general_light43 , 0.0 , 
-    "Divisor of the X, Y and Z coordinates of light source 4 (W=0 means infinitely far source)" },
+    "Divisor of the X, Y and Z coordinates of light source 4 (W=0 means infinitely "
+    "far source)" },
   { F|O, "Light5" , opt_general_light5 , 0.,
     "Enable light source 5" },
   { F|O, "Light5X" , opt_general_light50 , 0.5 , 
@@ -635,14 +656,17 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Light5Z" , opt_general_light52 , 1.0 , 
     "Z position of light source 5" },
   { F|O, "Light5W" , opt_general_light53 , 0.0 , 
-    "Divisor of the X, Y and Z coordinates of light source 5 (W=0 means infinitely far source)" },
+    "Divisor of the X, Y and Z coordinates of light source 5 (W=0 means infinitely "
+    "far source)" },
   { F|O, "LineWidth" , opt_general_line_width , 1.0 , 
     "Display width of lines (in pixels)" },
 
   { F|S, "ManipulatorPositionX" , opt_general_manip_position0 , 650. , 
-    "Horizontal position (in pixels) of the upper left corner of the manipulator window" }, 
+    "Horizontal position (in pixels) of the upper left corner of the manipulator "
+    "window" }, 
   { F|S, "ManipulatorPositionY" , opt_general_manip_position1 , 150. , 
-    "Vertical position (in pixels) of the upper left corner of the manipulator window" }, 
+    "Vertical position (in pixels) of the upper left corner of the manipulator "
+    "window" }, 
   { F,   "MaxX" , opt_general_xmax , 0. , 
     "Maximum model coordinate along the X-axis (read-only)" }, 
   { F,   "MaxY" , opt_general_ymax , 0. , 
@@ -656,9 +680,11 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "MessageAutoScroll" , opt_general_message_auto_scroll , 1. , 
     "Automatically scroll message window" }, 
   { F|S, "MessagePositionX" , opt_general_message_position0 , 650. , 
-    "Horizontal position (in pixels) of the upper left corner of the message window" }, 
+    "Horizontal position (in pixels) of the upper left corner of the message "
+    "window" }, 
   { F|S, "MessagePositionY" , opt_general_message_position1 , 490. , 
-    "Vertical position (in pixels) of the upper left corner of the message window" }, 
+    "Vertical position (in pixels) of the upper left corner of the message "
+    "window" }, 
   { F|S, "MessageHeight" , opt_general_message_size1 , 300. , 
     "Height (in pixels) of the message window" }, 
   { F|S, "MessageWidth" , opt_general_message_size0 , 400. , 
@@ -675,19 +701,23 @@ StringXNumber GeneralOptions_Number[] = {
     "Enable mouse selection" },
 
   { F|S, "NonModalWindows" , opt_general_non_modal_windows , 1. ,
-    "Force all control windows to be on top of the graphic window (\"non-modal\")" },
+    "Force all control windows to be on top of the graphic window "
+    "(\"non-modal\")" },
   { F|O, "NoPopup" , opt_general_nopopup , 0. , 
-    "Disable interactive dialog windows in scripts (and use default values instead)" },
+    "Disable interactive dialog windows in scripts (and use default values "
+    "instead)" },
 
   { F|S, "OptionsPositionX" , opt_general_option_position0 , 650. , 
-    "Horizontal position (in pixels) of the upper left corner of the option window" }, 
+    "Horizontal position (in pixels) of the upper left corner of the option "
+    "window" }, 
   { F|S, "OptionsPositionY" , opt_general_option_position1 , 150. , 
     "Vertical position (in pixels) of the upper left corner of the option window" }, 
   { F|O, "Orthographic" , opt_general_orthographic , 1. ,
     "Orthographic projection mode (0=perspective projection)" },
 
   { F|S, "PluginPositionX" , opt_general_plugin_position0 , 650. , 
-    "Horizontal position (in pixels) of the upper left corner of the plugin window" }, 
+    "Horizontal position (in pixels) of the upper left corner of the plugin "
+    "window" }, 
   { F|S, "PluginPositionY" , opt_general_plugin_position1 , 550. , 
     "Vertical position (in pixels) of the upper left corner of the plugin window" }, 
   { F|S, "PluginHeight" , opt_general_plugin_size1 , 300. , 
@@ -718,7 +748,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F,   "RotationZ" , opt_general_rotation2 , 0.0 , 
     "Third Euler angle (used if Trackball=0)" }, 
   { F|O, "RotationCenterGravity" , opt_general_rotation_center_cg , 1. ,
-    "Rotate around the (pseudo) center of mass instead of (RotationCenterX, RotationCenterY, RotationCenterZ)" },
+    "Rotate around the (pseudo) center of mass instead of (RotationCenterX, "
+    "RotationCenterY, RotationCenterZ)" },
   { F,   "RotationCenterX" , opt_general_rotation_center0 , 0.0 , 
     "X coordinate of the center of rotation" }, 
   { F,   "RotationCenterY" , opt_general_rotation_center1 , 0.0 , 
@@ -727,9 +758,11 @@ StringXNumber GeneralOptions_Number[] = {
     "Z coordinate of the center of rotation" }, 
 
   { F|S, "SaveOptions" , opt_general_options_save, 0. , 
-    "Automatically save current options in General.OptionsFileName each time you quit Gmsh?" }, 
+    "Automatically save current options in General.OptionsFileName each time "
+    "you quit Gmsh?" }, 
   { F|S, "SaveSession" , opt_general_session_save, 1. , 
-    "Automatically save session specific information in General.SessionFileName each time you quit Gmsh?" }, 
+    "Automatically save session specific information in General.SessionFileName "
+    "each time you quit Gmsh?" }, 
   { F,   "ScaleX" , opt_general_scale0 , 1.0 , 
     "X-axis scale factor" },
   { F,   "ScaleY" , opt_general_scale1 , 1.0 , 
@@ -743,19 +776,24 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "SmallAxes" , opt_general_small_axes , 1. ,
     "Display the small axes" },
   { F|O, "SmallAxesPositionX" , opt_general_small_axes_position0 , -60. ,
-    "X position (in pixels) of small axes (< 0: measure from right edge; >= 1e5: centered)" },
+    "X position (in pixels) of small axes (< 0: measure from right edge; >= 1e5:"
+    " centered)" },
   { F|O, "SmallAxesPositionY" , opt_general_small_axes_position1 , -40. ,
-    "Y position (in pixels) of small axes (< 0: measure from bottom edge; >= 1e5: centered)" },
+    "Y position (in pixels) of small axes (< 0: measure from bottom edge; >= 1e5:"
+    " centered)" },
   { F|O, "SmallAxesSize" , opt_general_small_axes_size , 30. ,
     "Size (in pixels) of small axes" },
   { F|S, "SolverPositionX" , opt_general_solver_position0 , 650. , 
-    "Horizontal position (in pixels) of the upper left corner of the solver windows" }, 
+    "Horizontal position (in pixels) of the upper left corner of the solver "
+    "windows" }, 
   { F|S, "SolverPositionY" , opt_general_solver_position1 , 150. ,
     "Vertical position (in pixels) of the upper left corner of the solver windows" }, 
   { F|S, "StatisticsPositionX" , opt_general_statistics_position0 , 650. , 
-    "Horizontal position (in pixels) of the upper left corner of the statistic window" }, 
+    "Horizontal position (in pixels) of the upper left corner of the statistic "
+    "window" }, 
   { F|S, "StatisticsPositionY" , opt_general_statistics_position1 , 150. , 
-    "Vertical position (in pixels) of the upper left corner of the statistic window" }, 
+    "Vertical position (in pixels) of the upper left corner of the statistic"
+    " window" }, 
   { F|S, "SystemMenuBar" , opt_general_system_menu_bar , 1. , 
     "Use the system menu bar on Mac OS X?" }, 
 
@@ -785,9 +823,11 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Verbosity" , opt_general_verbosity , 4. ,
     "Level of information printed during processing (0=no information)" },
   { F|S, "VisibilityPositionX" , opt_general_visibility_position0 , 650. , 
-    "Horizontal position (in pixels) of the upper left corner of the visibility window" }, 
+    "Horizontal position (in pixels) of the upper left corner of the visibility "
+    "window" }, 
   { F|S, "VisibilityPositionY" , opt_general_visibility_position1 , 150. , 
-    "Vertical position (in pixels) of the upper left corner of the visibility window" }, 
+    "Vertical position (in pixels) of the upper left corner of the visibility "
+    "window" }, 
 
   { F|O, "ZoomFactor" , opt_general_zoom_factor , 4.0 ,
     "Middle mouse button zoom acceleration factor" },
@@ -805,7 +845,8 @@ StringXNumber GeometryOptions_Number[] = {
     "Copy meshing method when duplicating geometrical entities?" },
 
   { F|O, "ExactExtrusion" , opt_geometry_exact_extrusion, 1. ,
-    "Use exact extrusion formula in interpolations (set to 0 to allow geometrical transformations of extruded entities)" },
+    "Use exact extrusion formula in interpolations (set to 0 to allow "
+    "geometrical transformations of extruded entities)" },
   { F|O, "ExtrudeReturnLateralEntities" , opt_geometry_extrude_return_lateral, 1. ,
     "Add lateral entities in lists returned by extrusion commands?" },
   { F|O, "ExtrudeSplinePoints" , opt_geometry_extrude_spline_points, 5. ,
@@ -825,7 +866,8 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "LineSelectWidth" , opt_geometry_line_sel_width , 2. , 
     "Display width of selected lines (in pixels)" },
   { F|O, "LineType" , opt_geometry_line_type , 0. , 
-    "Display lines as solid color segments (0), 3D cylinders (1) or tapered cylinders (2)" },
+    "Display lines as solid color segments (0), 3D cylinders (1) or tapered "
+    "cylinders (2)" },
   { F|O, "LineWidth" , opt_geometry_line_width , 2. , 
     "Display width of lines (in pixels)" },
 
@@ -854,7 +896,8 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "OldCircle" , opt_geometry_old_circle , 0. , 
     "Use old circle description (compatibility option for old Gmsh geometries)" },
   { F|O, "OldNewReg" , opt_geometry_old_newreg , 1. , 
-    "Use old newreg definition for geometrical transformations (compatibility option for old Gmsh geometries)" },
+    "Use old newreg definition for geometrical transformations (compatibility "
+    "option for old Gmsh geometries)" },
 
   { F|O, "Points" , opt_geometry_points , 1. ,
     "Display geometry points?" },
@@ -928,7 +971,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" }, 
   { F|O, "AllowSwapAngle" , opt_mesh_allow_swap_edge_angle , 10.0 ,
-    "Treshold angle (in degrees) between faces normals under which we allow an edge swap" }, 
+    "Treshold angle (in degrees) between faces normals under which we allow "
+    "an edge swap" }, 
 
   { F|O, "BdfFieldFormat" , opt_mesh_bdf_field_format , 1. , 
     "Field format for Nastran BDF files (0=free, 1=small, 2=large)" },
@@ -936,13 +980,17 @@ StringXNumber MeshOptions_Number[] = {
     "Write mesh files in binary format (if possible)" },
 
   { F|O, "ChacoArchitecture" , opt_mesh_partition_chaco_architecture, 1. ,
-    "(Adv. Chaco): Parallel architecture topology (0=hypercube, 1-3=mesh dimensions)" },
+    "(Adv. Chaco): Parallel architecture topology (0=hypercube, 1-3=mesh "
+    "dimensions)" },
   { F|O, "ChacoEigensolver" , opt_mesh_partition_chaco_eigensolver, 1. ,
-    "(Adv. Chaco): Type of eigensolver for a spectral algorithm (0=Lanczos, 1=Multilevel RQI/Symmlq)" },
+    "(Adv. Chaco): Type of eigensolver for a spectral algorithm (0=Lanczos, "
+    "1=Multilevel RQI/Symmlq)" },
   { F|O, "ChacoEigTol" , opt_mesh_partition_chaco_eigtol, 1.E-3 ,
-    "(Adv. Chaco): Tolerance of the eigensolver for spectral or multilevel-KL algorithms" },
+    "(Adv. Chaco): Tolerance of the eigensolver for spectral or multilevel-KL "
+    "algorithms" },
   { F|O, "ChacoGlobalMethod" , opt_mesh_partition_chaco_global_method, 1. ,
-    "Chaco partitioning algorithm (1=Multilevel-KL, 2=Spectral, 4=Linear, 5=Random, 6=Scattered)" },
+    "Chaco partitioning algorithm (1=Multilevel-KL, 2=Spectral, 4=Linear, "
+    "5=Random, 6=Scattered)" },
   { F|O, "ChacoHypercubeDim" , opt_mesh_partition_chaco_ndims_tot, 2. ,
     "(Adv. Chaco): Dimensional partitioning for a hypercube topology" },
   { F|O, "ChacoLocalMethod" , opt_mesh_partition_chaco_local_method, 1. ,
@@ -958,16 +1006,21 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "ChacoSeed" , opt_mesh_partition_chaco_seed, 7654321. ,
     "(Adv. Chaco): Seed for random number generator" },
   { F|O, "ChacoVMax" , opt_mesh_partition_chaco_vmax, 250. ,
-    "(Adv. Chaco): Maximum vertices in a coarse graph (for multilevel-KL algorithm and Multilevel RQI/Symmlq eigensolver)" },
-  { F|O, "ChacoParamINTERNAL_VERTICES" , opt_mesh_partition_chaco_internal_vertices, 0. ,
+    "(Adv. Chaco): Maximum vertices in a coarse graph (for multilevel-KL "
+    "algorithm and Multilevel RQI/Symmlq eigensolver)" },
+  { F|O, "ChacoParamINTERNAL_VERTICES" , 
+    opt_mesh_partition_chaco_internal_vertices, 0. ,
     "(Adv. Chaco): Parameter INTERNAL_VERTICES" },
   { F|O, "ChacoParamREFINE_MAP" , opt_mesh_partition_chaco_refine_map, 1. ,
     "(Adv. Chaco): Parameter REFINE_MAP" },
-  { F|O, "ChacoParamREFINE_PARTITION" , opt_mesh_partition_chaco_refine_partition, 0. ,
+  { F|O, "ChacoParamREFINE_PARTITION" , 
+    opt_mesh_partition_chaco_refine_partition, 0. ,
     "(Adv. Chaco): Parameter REFINE_PARTITION" },
-  { F|O, "ChacoParamTERMINAL_PROPOGATION" , opt_mesh_partition_chaco_terminal_propogation, 0. ,
+  { F|O, "ChacoParamTERMINAL_PROPOGATION" , 
+    opt_mesh_partition_chaco_terminal_propogation, 0. ,
     "(Adv. Chaco): Parameter TERMINAL_PROPOGATION" },
-  { F|O, "CharacteristicLengthExtendFromBoundary" , opt_mesh_lc_extend_from_boundary, 1. ,
+  { F|O, "CharacteristicLengthExtendFromBoundary" , 
+    opt_mesh_lc_extend_from_boundary, 1. ,
     "Extend characteristic lengths from the boundaries inside the surface/volume" },
   { F|O, "CharacteristicLengthFactor" , opt_mesh_lc_factor , 1.0 ,
     "Factor applied to all characteristic lengths" },
@@ -982,7 +1035,8 @@ StringXNumber MeshOptions_Number[] = {
   { F,   "Clip" , opt_mesh_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
   { F|O, "ColorCarousel" , opt_mesh_color_carousel , 1. ,
-    "Mesh coloring (0=by element type, 1=by elementary entity, 2=by physical entity, 3=by partition)" },
+    "Mesh coloring (0=by element type, 1=by elementary entity, 2=by physical "
+    "entity, 3=by partition)" },
   { F,   "CpuTime" , opt_mesh_cpu_time , 0. , 
     "CPU time (in seconds) for the generation of the current mesh (read-only)" },
 
@@ -991,13 +1045,15 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Dual" , opt_mesh_dual , 0. ,
     "Display the dual mesh obtained by barycentric subdivision" },
 
-  { F|O, "ElementOrder" , opt_mesh_order , 1. , // "Order" is a reserved token in the parser
+  { F|O, "ElementOrder" , opt_mesh_order , 1. ,
+    // "Order" is a reserved token in the parser
     "Element order (1=linear elements, N (<6) = elements of higher order)" },
   { F|O, "Explode" , opt_mesh_explode , 1.0 ,
     "Element shrinking factor (between 0 and 1)" },
 
   { F|O, "Format" , opt_mesh_format , FORMAT_MSH , 
-    "Mesh output format (1=msh, 2=unv, 19=vrml, 27=stl, 30=mesh, 31=bdf, 32=cgns, 33=med)" },
+    "Mesh output format (1=msh, 2=unv, 19=vrml, 27=stl, 30=mesh, 31=bdf, "
+    "32=cgns, 33=med)" },
 
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. , 
     "Display mesh hexahedra?" },
@@ -1005,7 +1061,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "LabelsFrequency" , opt_mesh_label_frequency , 100. , 
     "Labels display frequency?" },
   { F|O, "LabelType" , opt_mesh_label_type , 0. , 
-    "Type of element label (0=element number, 1=elementary entity number, 2=physical entity number, 3=partition number, 4=coordinates)" },
+    "Type of element label (0=element number, 1=elementary entity number, "
+    "2=physical entity number, 3=partition number, 4=coordinates)" },
   { F|O, "LcIntegrationPrecision" , opt_mesh_lc_integration_precision, 1.e-9 ,
     "Accuracy of evaluation of the LC field for 1D mesh generation" },
   { F|O, "Light" , opt_mesh_light , 1. , 
@@ -1026,9 +1083,11 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
     "METIS partitioning algorithm (1=Recursive, 2=K-way)" },
   { F|O, "MetisEdgeMatching" , opt_mesh_partition_metis_edge_matching, 3. ,
-    "(Adv. METIS): Determines the matching type (1=Random, 2=Heavy-Edge, 3=Sorted Heavy-Edge)" },
+    "(Adv. METIS): Determines the matching type (1=Random, 2=Heavy-Edge, "
+    "3=Sorted Heavy-Edge)" },
   { F|O, "MetisRefinementAlgorithm" , opt_mesh_partition_metis_refine_algorithm, 3. ,
-    "(Adv. METIS): Algorithm for k-way refinement (1=Random, 2=Greedy, 3=Random with minimized connectivity)" },
+    "(Adv. METIS): Algorithm for k-way refinement (1=Random, 2=Greedy, "
+    "3=Random with minimized connectivity)" },
   { F|O, "MinimumCirclePoints" , opt_mesh_min_circ_points, 7. ,
     "Minimum number of points used to mesh a circle" },
   { F|O, "MinimumCurvePoints" , opt_mesh_min_curv_points, 3. ,
@@ -1060,7 +1119,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Optimize" , opt_mesh_optimize , 0. , 
     "Optimize the mesh to improve the quality of tetrahedral elements" },
   { F|O, "OptimizeNetgen" , opt_mesh_optimize_netgen , 0. , 
-    "Optimize the mesh using Netgen to improve the quality of tetrahedral elements" },
+    "Optimize the mesh using Netgen to improve the quality of tetrahedral "
+    "elements" },
 
   { F|O, "Partitioner" , opt_mesh_partition_partitioner, 2. ,
     "Partitioner software (1=Chacho, 2=METIS)" },
@@ -1084,14 +1144,16 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "QualitySup" , opt_mesh_quality_sup , 0.0 , 
     "Only display elements whose quality measure is smaller than QualitySup" },
   { F|O, "QualityType" , opt_mesh_quality_type , 2. , 
-    "Type of quality measure (0=gamma~vol/sum_face/max_edge, 1=eta~vol^(2/3)/sum_edge^2, 2=rho~min_edge/max_edge)" },
+    "Type of quality measure (0=gamma~vol/sum_face/max_edge, "
+    "1=eta~vol^(2/3)/sum_edge^2, 2=rho~min_edge/max_edge)" },
 
   { F|O, "RadiusInf" , opt_mesh_radius_inf , 0.0 , 
     "Only display elements whose longest edge is greater than RadiusInf" },
   { F|O, "RadiusSup" , opt_mesh_radius_sup , 0.0 , 
     "Only display elements whose longest edge is smaller than RadiusSup" },
   { F|O, "RandomFactor" , opt_mesh_rand_factor , 1.e-9 ,
-    "Random factor used in the 2D meshing algorithm (should be increased if RandomFactor * size(triangle)/size(model) approaches machine accuracy)" },
+    "Random factor used in the 2D meshing algorithm (should be increased if "
+    "RandomFactor * size(triangle)/size(model) approaches machine accuracy)" },
   { F|O, "RefineSteps" , opt_mesh_refine_steps , 10 ,
     "Number of refinement steps in the MeshAdapt-based 2D algorithms" }, 
   { F|O, "ReverseAllNormals" , opt_mesh_reverse_all_normals , 0. , 
@@ -1099,10 +1161,14 @@ StringXNumber MeshOptions_Number[] = {
 
   { F,   "SaveAll" , opt_mesh_save_all , 0. , 
     "Ignore Physical definitions and save all elements" },
-  { F,   "SaveParametric" , opt_mesh_save_parametric , 0. , 
+  { F|O, "SaveElementTagType" , opt_mesh_save_element_tag_type , 1. , 
+    "Type of the element tag saved in mesh formats that don't support saving "
+    "physical or partition ids (1=elementary, 2=physical, 3=partition)" },
+  { F|O, "SaveParametric" , opt_mesh_save_parametric , 0. , 
     "Save parametric coordinates of nodes" },
-  { F,   "SaveGroupsOfNodes" , opt_mesh_save_groups_of_nodes , 0. , 
-    "Save groups of nodes for each physical line and surface (UNV mesh format only)" },
+  { F|O, "SaveGroupsOfNodes" , opt_mesh_save_groups_of_nodes , 0. , 
+    "Save groups of nodes for each physical line and surface (UNV mesh "
+    "format only)" },
   { F|O, "ScalingFactor" , opt_mesh_scaling_factor , 1.0 ,
     "Global scaling factor applied to the saved mesh" },
   { F|O, "SecondOrderExperimental" , opt_mesh_second_order_experimental , 0. ,
@@ -1131,7 +1197,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Tetrahedra" , opt_mesh_tetrahedra , 1. , 
     "Display mesh tetrahedra?" },
   { F|O, "ToleranceEdgeLength" , opt_mesh_tolerance_edge_length, 0.0,
-    "Skip a model edge in mesh generation if its length is less than user's defined tolerance" },
+    "Skip a model edge in mesh generation if its length is less than user's "
+    "defined tolerance" },
   { F|O, "Triangles" , opt_mesh_triangles , 1. , 
     "Display mesh triangles?" },
 
@@ -1207,13 +1274,15 @@ StringXNumber PostProcessingOptions_Number[] = {
     "Remove original views after a Combine operation" },
 
   { F|O, "Format" , opt_post_file_format , 0. ,
-    "Default file format for post-processing views (0=ASCII view, 1=binary view, 2=parsed view, 3=STL triangulation, 4=text, 5=mesh)" },
+    "Default file format for post-processing views (0=ASCII view, 1=binary "
+    "view, 2=parsed view, 3=STL triangulation, 4=text, 5=mesh)" },
 
   { F|O, "HorizontalScales" , opt_post_horizontal_scales , 1. , 
     "Display value scales horizontally" },
 
   { F|O, "Link" , opt_post_link , 0. ,
-    "Link post-processing views (0=none, 1/2=changes in visible/all, 3/4=everything in visible/all)" },
+    "Link post-processing views (0=none, 1/2=changes in visible/all, "
+    "3/4=everything in visible/all)" },
 
   { F,   "NbViews" , opt_post_nb_views , 0. ,
     "Current number of views merged (read-only)" },
@@ -1264,7 +1333,8 @@ StringXNumber ViewOptions_Number[] = {
     "Number of tics on the Z-axis" },
 
   { F|O, "Boundary" , opt_view_boundary , 0. ,
-    "Draw the `N minus b'-dimensional boundary of the element (N=element dimension, b=option value)" },
+    "Draw the `N minus b'-dimensional boundary of the element (N=element "
+    "dimension, b=option value)" },
 
   { F|O, "CenterGlyphs" , opt_view_center_glyphs , 0, 
     "Center glyphs (arrows, numbers, etc.)" },
@@ -1392,11 +1462,14 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "PointSize" , opt_view_point_size , 3. , 
     "Display size of points (in pixels)" },
   { F|O, "PointType" , opt_view_point_type , 0. , 
-    "Display points as solid color dots (0), 3D spheres (1), scaled dots (2) or scaled spheres (3)" },
+    "Display points as solid color dots (0), 3D spheres (1), scaled dots "
+    "(2) or scaled spheres (3)" },
   { F|O, "PositionX" , opt_view_position0 , 100. , 
-    "X position (in pixels) of the scale or 2D plot (< 0: measure from right edge; >= 1e5: centered)" }, 
+    "X position (in pixels) of the scale or 2D plot (< 0: measure from right "
+    "edge; >= 1e5: centered)" }, 
   { F|O, "PositionY" , opt_view_position1 , 50. , 
-    "Y position (in pixels) of the scale or 2D plot (< 0: measure from bottom edge; >= 1e5: centered)" }, 
+    "Y position (in pixels) of the scale or 2D plot (< 0: measure from bottom "
+    "edge; >= 1e5: centered)" }, 
 
   { F,   "RaiseX" , opt_view_raise0 , 0. , 
     "Elevation of the view along X-axis (in model coordinates)" },
@@ -1416,7 +1489,8 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "ShowScale" , opt_view_show_scale , 1. ,
     "Show value scale?" },
   { F|O, "ShowTime" , opt_view_show_time , 1. ,
-    "Time display mode (0=hidden, 1=value if multi-step, 2=value always, 3=step if multi-step, 4=step always)" },
+    "Time display mode (0=hidden, 1=value if multi-step, 2=value always, "
+    "3=step if multi-step, 4=step always)" },
   { F|O, "SmoothNormals" , opt_view_smooth_normals , 0. ,
     "Smooth the normals?" },
   { F|O, "Stipple" , opt_view_use_stipple , 0. ,
@@ -1455,7 +1529,8 @@ StringXNumber ViewOptions_Number[] = {
     "Use generalized raise?" },
 
   { F|O, "VectorType" , opt_view_vector_type , 4 ,
-    "Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement, 6=comet)" },
+    "Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, "
+    "5=displacement, 6=comet)" },
   { F,   "Visible" , opt_view_visible , 1. ,
     "Is the view visible?" },
 
@@ -1484,7 +1559,8 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "EpsPS3Shading" , opt_print_eps_ps3shading , 0. ,
     "Enable PostScript Level 3 shading" },
   { F|O, "EpsQuality" , opt_print_eps_quality , 1. ,
-    "PostScript/PDF quality (0=bitmap, 1=vector (simple sort), 2=vector (accurate sort), 3=vector (unsorted)" },
+    "PostScript/PDF quality (0=bitmap, 1=vector (simple sort), 2=vector "
+    "(accurate sort), 3=vector (unsorted)" },
 
   { F|O, "Format" , opt_print_format , FORMAT_AUTO , 
     "File format (10=automatic)" }, 
@@ -1506,17 +1582,22 @@ StringXNumber PrintOptions_Number[] = {
     "JPEG smoothing (between 0 and 100)" },
 
   { F|O, "PostElementary" , opt_print_pos_elementary , 1. ,
-    "Save elementary region tags in mesh statistics exported as post-processing views" },
+    "Save elementary region tags in mesh statistics exported as "
+    "post-processing views" },
   { F|O, "PostElement" , opt_print_pos_element , 0. ,
     "Save element numbers in mesh statistics exported as post-processing views" },
   { F|O, "PostGamma" , opt_print_pos_gamma , 0. ,
-    "Save Gamma quality measure in mesh statistics exported as post-processing views" },
+    "Save Gamma quality measure in mesh statistics exported as "
+    "post-processing views" },
   { F|O, "PostEta" , opt_print_pos_eta , 0. ,
-    "Save Eta quality measure in mesh statistics exported as post-processing views" },
+    "Save Eta quality measure in mesh statistics exported as "
+    "post-processing views" },
   { F|O, "PostRho" , opt_print_pos_rho , 0. ,
-    "Save Rho quality measure in mesh statistics exported as post-processing views" },
+    "Save Rho quality measure in mesh statistics exported as "
+    "post-processing views" },
   { F|O, "PostDisto" , opt_print_pos_disto , 0. ,
-    "Save Disto quality measure in mesh statistics exported as post-processing views" },
+    "Save Disto quality measure in mesh statistics exported as "
+    "post-processing views" },
 
   { F|O, "TexAsEquation" , opt_print_tex_as_equation , 0. ,
     "Print all TeX strings as equations" },
@@ -1662,26 +1743,46 @@ StringXColor MeshOptions_Color[] = {
   { F|O, "Normals" , opt_mesh_color_normals ,
     {255, 0, 0, 255}, {255, 0, 0, 255}, {0, 0, 0, 255},
     "Normal mesh vector color" },
-  { F|O, "Zero"     , opt_mesh_color_0 , COL0, COL0, COLW, "Color 0 in color carousel" },
-  { F|O, "One"      , opt_mesh_color_1 , COL1, COL1, COLW, "Color 1 in color carousel" },
-  { F|O, "Two"      , opt_mesh_color_2 , COL2, COL2, COLW, "Color 2 in color carousel" },
-  { F|O, "Three"    , opt_mesh_color_3 , COL3, COL3, COLW, "Color 3 in color carousel" },
-  { F|O, "Four"     , opt_mesh_color_4 , COL4, COL4, COLW, "Color 4 in color carousel" },
-  { F|O, "Five"     , opt_mesh_color_5 , COL5, COL5, COLW, "Color 5 in color carousel" },
-  { F|O, "Six"      , opt_mesh_color_6 , COL6, COL6, COLW, "Color 6 in color carousel" },
-  { F|O, "Seven"    , opt_mesh_color_7 , COL7, COL7, COLW, "Color 7 in color carousel" },
-  { F|O, "Eight"    , opt_mesh_color_8 , COL8, COL8, COLW, "Color 8 in color carousel" },
-  { F|O, "Nine"     , opt_mesh_color_9 , COL9, COL9, COLW, "Color 9 in color carousel" },
-  { F|O, "Ten"      , opt_mesh_color_10, COL10, COL10, COLW, "Color 10 in color carousel" },
-  { F|O, "Eleven"   , opt_mesh_color_11, COL11, COL11, COLW, "Color 11 in color carousel" },
-  { F|O, "Twelve"   , opt_mesh_color_12, COL12, COL12, COLW, "Color 12 in color carousel" },
-  { F|O, "Thirteen" , opt_mesh_color_13, COL13, COL13, COLW, "Color 13 in color carousel" },
-  { F|O, "Fourteen" , opt_mesh_color_14, COL14, COL14, COLW, "Color 14 in color carousel" },
-  { F|O, "Fifteen"  , opt_mesh_color_15, COL15, COL15, COLW, "Color 15 in color carousel" },
-  { F|O, "Sixteen"  , opt_mesh_color_16, COL16, COL16, COLW, "Color 16 in color carousel" },
-  { F|O, "Seventeen", opt_mesh_color_17, COL17, COL17, COLW, "Color 17 in color carousel" },
-  { F|O, "Eighteen" , opt_mesh_color_18, COL18, COL18, COLW, "Color 18 in color carousel" },
-  { F|O, "Nineteen" , opt_mesh_color_19, COL19, COL19, COLW, "Color 19 in color carousel" },
+  { F|O, "Zero"     , opt_mesh_color_0 , COL0, COL0, COLW, 
+    "Color 0 in color carousel" },
+  { F|O, "One"      , opt_mesh_color_1 , COL1, COL1, COLW, 
+    "Color 1 in color carousel" },
+  { F|O, "Two"      , opt_mesh_color_2 , COL2, COL2, COLW, 
+    "Color 2 in color carousel" },
+  { F|O, "Three"    , opt_mesh_color_3 , COL3, COL3, COLW, 
+    "Color 3 in color carousel" },
+  { F|O, "Four"     , opt_mesh_color_4 , COL4, COL4, COLW, 
+    "Color 4 in color carousel" },
+  { F|O, "Five"     , opt_mesh_color_5 , COL5, COL5, COLW, 
+    "Color 5 in color carousel" },
+  { F|O, "Six"      , opt_mesh_color_6 , COL6, COL6, COLW, 
+    "Color 6 in color carousel" },
+  { F|O, "Seven"    , opt_mesh_color_7 , COL7, COL7, COLW, 
+    "Color 7 in color carousel" },
+  { F|O, "Eight"    , opt_mesh_color_8 , COL8, COL8, COLW, 
+    "Color 8 in color carousel" },
+  { F|O, "Nine"     , opt_mesh_color_9 , COL9, COL9, COLW, 
+    "Color 9 in color carousel" },
+  { F|O, "Ten"      , opt_mesh_color_10, COL10, COL10, COLW, 
+    "Color 10 in color carousel" },
+  { F|O, "Eleven"   , opt_mesh_color_11, COL11, COL11, COLW, 
+    "Color 11 in color carousel" },
+  { F|O, "Twelve"   , opt_mesh_color_12, COL12, COL12, COLW, 
+    "Color 12 in color carousel" },
+  { F|O, "Thirteen" , opt_mesh_color_13, COL13, COL13, COLW, 
+    "Color 13 in color carousel" },
+  { F|O, "Fourteen" , opt_mesh_color_14, COL14, COL14, COLW, 
+    "Color 14 in color carousel" },
+  { F|O, "Fifteen"  , opt_mesh_color_15, COL15, COL15, COLW, 
+    "Color 15 in color carousel" },
+  { F|O, "Sixteen"  , opt_mesh_color_16, COL16, COL16, COLW, 
+    "Color 16 in color carousel" },
+  { F|O, "Seventeen", opt_mesh_color_17, COL17, COL17, COLW, 
+    "Color 17 in color carousel" },
+  { F|O, "Eighteen" , opt_mesh_color_18, COL18, COL18, COLW, 
+    "Color 18 in color carousel" },
+  { F|O, "Nineteen" , opt_mesh_color_19, COL19, COL19, COLW, 
+    "Color 19 in color carousel" },
   { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , 0 }
 } ;
 

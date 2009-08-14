@@ -163,7 +163,7 @@ class gmshMatrix
   {
     for(int i = 0; i < size1(); i++)
       for(int j = 0; j < size2(); j++)
-	(*this)(i, j) += m(i, j);
+        (*this)(i, j) += m(i, j);
   }
   void mult(const gmshVector<scalar> &x, gmshVector<scalar> &y)
 #if !defined(HAVE_BLAS)
@@ -213,9 +213,9 @@ class gmshMatrix
 #endif
   ;
   bool eig(gmshMatrix<scalar> &VL, // left eigenvectors 
-	   gmshVector<double> &DR, // Real part of eigenvalues
-	   gmshVector<double> &DI, // Im part of eigen
-	   gmshMatrix<scalar> &VR,
+           gmshVector<double> &DR, // Real part of eigenvalues
+           gmshVector<double> &DI, // Im part of eigen
+           gmshMatrix<scalar> &VR,
            bool sortRealPart=false) // if true: sorted from min 'DR' to max 'DR'
 #if !defined(HAVE_LAPACK)
   {
@@ -239,8 +239,8 @@ class gmshMatrix
     gmshMatrix<scalar> cof(ni - 1, nj - 1);
     for(int I = 0; I < ni; I++){
       for(int J = 0; J < nj; J++){
-	if(J != j && I != i)
-	  cof(I < i ? I : I - 1, J < j ? J : J - 1) = (*this)(I, J);
+        if(J != j && I != i)
+          cof(I < i ? I : I - 1, J < j ? J : J - 1) = (*this)(I, J);
       }
     }
     return cof;

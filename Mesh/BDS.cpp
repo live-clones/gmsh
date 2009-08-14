@@ -25,51 +25,51 @@ void outputScalarField(std::list<BDS_Face*> t, const char *iii, int param, GFace
     if (!(*tit)->deleted){
       (*tit)->getNodes(pts);
       if(param)
-	fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
-		pts[0]->u, pts[0]->v, 0.0,
-		pts[1]->u, pts[1]->v, 0.0,
-		pts[2]->u, pts[2]->v, 0.0,
-		pts[0]->iD, pts[1]->iD, pts[2]->iD);
+        fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+                pts[0]->u, pts[0]->v, 0.0,
+                pts[1]->u, pts[1]->v, 0.0,
+                pts[2]->u, pts[2]->v, 0.0,
+                pts[0]->iD, pts[1]->iD, pts[2]->iD);
       else{
-	if(!gf){
-	  if (pts[3]){
-	    fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
-		    pts[0]->X, pts[0]->Y, pts[0]->Z,
-		    pts[1]->X, pts[1]->Y, pts[1]->Z,
-		    pts[2]->X, pts[2]->Y, pts[2]->Z, 
-		    pts[3]->X, pts[3]->Y, pts[3]->Z, 
-		    pts[0]->iD, pts[1]->iD, pts[2]->iD, pts[3]->iD);
-	  }
-	  else{
-	    fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
-		    pts[0]->X, pts[0]->Y, pts[0]->Z,
-		    pts[1]->X, pts[1]->Y, pts[1]->Z,
-		    pts[2]->X, pts[2]->Y, pts[2]->Z, 
-		    pts[0]->iD, pts[1]->iD, pts[2]->iD);
-	  }
-	}
-	else{
-	  if (pts[3]){
-	    fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
-		    pts[0]->X, pts[0]->Y, pts[0]->Z,
-		    pts[1]->X, pts[1]->Y, pts[1]->Z,
-		    pts[2]->X, pts[2]->Y, pts[2]->Z,
-		    pts[3]->X, pts[3]->Y, pts[3]->Z,
-		    gf->curvatureDiv(SPoint2(pts[0]->u, pts[0]->v)),
-		    gf->curvatureDiv(SPoint2(pts[1]->u, pts[1]->v)),	
-		    gf->curvatureDiv(SPoint2(pts[2]->u, pts[2]->v)),
-		    gf->curvatureDiv(SPoint2(pts[3]->u, pts[3]->v)));
-	  }
-	  else{
-	    fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
-		    pts[0]->X, pts[0]->Y, pts[0]->Z,
-		    pts[1]->X, pts[1]->Y, pts[1]->Z,
-		    pts[2]->X, pts[2]->Y, pts[2]->Z,
-		    gf->curvatureDiv(SPoint2(pts[0]->u, pts[0]->v)),
-		    gf->curvatureDiv(SPoint2(pts[1]->u, pts[1]->v)),
-		    gf->curvatureDiv(SPoint2(pts[2]->u, pts[2]->v)));
-	  }
-	}
+        if(!gf){
+          if (pts[3]){
+            fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
+                    pts[0]->X, pts[0]->Y, pts[0]->Z,
+                    pts[1]->X, pts[1]->Y, pts[1]->Z,
+                    pts[2]->X, pts[2]->Y, pts[2]->Z, 
+                    pts[3]->X, pts[3]->Y, pts[3]->Z, 
+                    pts[0]->iD, pts[1]->iD, pts[2]->iD, pts[3]->iD);
+          }
+          else{
+            fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+                    pts[0]->X, pts[0]->Y, pts[0]->Z,
+                    pts[1]->X, pts[1]->Y, pts[1]->Z,
+                    pts[2]->X, pts[2]->Y, pts[2]->Z, 
+                    pts[0]->iD, pts[1]->iD, pts[2]->iD);
+          }
+        }
+        else{
+          if (pts[3]){
+            fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
+                    pts[0]->X, pts[0]->Y, pts[0]->Z,
+                    pts[1]->X, pts[1]->Y, pts[1]->Z,
+                    pts[2]->X, pts[2]->Y, pts[2]->Z,
+                    pts[3]->X, pts[3]->Y, pts[3]->Z,
+                    gf->curvatureDiv(SPoint2(pts[0]->u, pts[0]->v)),
+                    gf->curvatureDiv(SPoint2(pts[1]->u, pts[1]->v)),    
+                    gf->curvatureDiv(SPoint2(pts[2]->u, pts[2]->v)),
+                    gf->curvatureDiv(SPoint2(pts[3]->u, pts[3]->v)));
+          }
+          else{
+            fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+                    pts[0]->X, pts[0]->Y, pts[0]->Z,
+                    pts[1]->X, pts[1]->Y, pts[1]->Z,
+                    pts[2]->X, pts[2]->Y, pts[2]->Z,
+                    gf->curvatureDiv(SPoint2(pts[0]->u, pts[0]->v)),
+                    gf->curvatureDiv(SPoint2(pts[1]->u, pts[1]->v)),
+                    gf->curvatureDiv(SPoint2(pts[2]->u, pts[2]->v)));
+          }
+        }
       }
     }
     ++tit;
@@ -250,13 +250,13 @@ BDS_Edge *BDS_Mesh::recover_edge_fast(BDS_Point *p1, BDS_Point *p2){
       BDS_Edge *e= t->oppositeEdge (p1);
       BDS_Face *f= e->otherFace (t);
       if (!f->e4){
-	BDS_Point *p2b = f->oppositeVertex(e);
-	if (p2 == p2b){
-	  if (swap_edge(e, BDS_SwapEdgeTestQuality(false,false))){
-	    printf("coucou\n");
-	    return find_edge (p1,p2->iD);
-	  }
-	}
+        BDS_Point *p2b = f->oppositeVertex(e);
+        if (p2 == p2b){
+          if (swap_edge(e, BDS_SwapEdgeTestQuality(false,false))){
+            printf("coucou\n");
+            return find_edge (p1,p2->iD);
+          }
+        }
       }
     }
     ++it;
@@ -282,7 +282,6 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2
   Msg::Debug("edge %d %d has to be recovered", num1, num2);
   
   int ix = 0;
-  int ixMax = 300;
   double x[2];
   while(1){
     std::vector<BDS_Edge*> intersected;
@@ -293,27 +292,27 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2
     while(it != edges.end()){
       e = (*it);
       if(!e->deleted && e->p1 != p1 && e->p1 != p2 && e->p2 != p1 && e->p2 != p2)
-	if(Intersect_Edges_2d(e->p1->u, e->p1->v,
-			      e->p2->u, e->p2->v,
-			      p1->u, p1->v,
-			      p2->u, p2->v,x)){
-	  // intersect
-	  if(e2r && e2r->find(EdgeToRecover(e->p1->iD, e->p2->iD, 0)) != e2r->end()){
-	    std::set<EdgeToRecover>::iterator itr1 = 
-	      e2r->find(EdgeToRecover(e->p1->iD, e->p2->iD, 0));		    
-	    std::set<EdgeToRecover>::iterator itr2 = 
-	      e2r->find(EdgeToRecover(num1, num2, 0));
-	    Msg::Debug("edge %d %d on model edge %d cannot be recovered because"
-		" it intersects %d %d on model edge %d", num1, num2, itr2->ge->tag(),
-		e->p1->iD, e->p2->iD, itr1->ge->tag());
-	    // now throw a class that contains the diagnostic
-	    not_recovered->insert(EdgeToRecover(num1, num2, itr2->ge));
-	    not_recovered->insert(EdgeToRecover(e->p1->iD, e->p2->iD, itr1->ge));
-	    selfIntersection = true;
-	  }
-	  if (e->numfaces() != e->numTriangles())return 0;
-	  intersected.push_back(e);	  
-	}
+        if(Intersect_Edges_2d(e->p1->u, e->p1->v,
+                              e->p2->u, e->p2->v,
+                              p1->u, p1->v,
+                              p2->u, p2->v,x)){
+          // intersect
+          if(e2r && e2r->find(EdgeToRecover(e->p1->iD, e->p2->iD, 0)) != e2r->end()){
+            std::set<EdgeToRecover>::iterator itr1 = 
+              e2r->find(EdgeToRecover(e->p1->iD, e->p2->iD, 0));                    
+            std::set<EdgeToRecover>::iterator itr2 = 
+              e2r->find(EdgeToRecover(num1, num2, 0));
+            Msg::Debug("edge %d %d on model edge %d cannot be recovered because"
+                " it intersects %d %d on model edge %d", num1, num2, itr2->ge->tag(),
+                e->p1->iD, e->p2->iD, itr1->ge->tag());
+            // now throw a class that contains the diagnostic
+            not_recovered->insert(EdgeToRecover(num1, num2, itr2->ge));
+            not_recovered->insert(EdgeToRecover(e->p1->iD, e->p2->iD, itr1->ge));
+            selfIntersection = true;
+          }
+          if (e->numfaces() != e->numTriangles())return 0;
+          intersected.push_back(e);       
+        }
       ++it;
     }
 
@@ -329,17 +328,18 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2
     if(!intersected.size() || ix > 1000){
       BDS_Edge *eee = find_edge(num1, num2);
       if(!eee){
-	outputScalarField(triangles, "debugp.pos", 1);
-	outputScalarField(triangles, "debugr.pos", 0);
-	Msg::Debug("edge %d %d cannot be recovered at all, look at debugp.pos "
-	    "and debugr.pos", num1, num2);
-	return 0;
+        outputScalarField(triangles, "debugp.pos", 1);
+        outputScalarField(triangles, "debugr.pos", 0);
+        Msg::Debug("edge %d %d cannot be recovered at all, look at debugp.pos "
+            "and debugr.pos", num1, num2);
+        return 0;
       }
       return eee;
     }
     
     int ichoice = ix++ % intersected.size();
-    bool success = swap_edge(intersected[ichoice], BDS_SwapEdgeTestQuality(false, false));
+    //bool success = 
+      swap_edge(intersected[ichoice], BDS_SwapEdgeTestQuality(false, false));
     // printf("trying to swop %d %d = %d (%d %d)\n", intersected[ichoice]->p1->iD,
     //        intersected[ichoice]->p2->iD, success, intersected[ichoice]->deleted,
     //        intersected[ichoice]->numfaces());

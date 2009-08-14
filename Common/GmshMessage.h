@@ -71,7 +71,7 @@ class Msg {
   static void PrintErrorCounter(const char *title);
   static double GetValue(const char *text, double defaultval);
   static bool GetBinaryAnswer(const char *question, const char *yes, 
-			      const char *no,  bool defaultval=true);
+                              const char *no,  bool defaultval=true);
 };
 
 #endif

@@ -80,8 +80,8 @@ static void createTet(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, GRegio
 }
 
 static int getExtrudedVertices(MElement *ele, ExtrudeParams *ep, int j, int k, 
-			       std::set<MVertex*, MVertexLessThanLexicographic> &pos,
-			       std::vector<MVertex*> &verts)
+                               std::set<MVertex*, MVertexLessThanLexicographic> &pos,
+                               std::vector<MVertex*> &verts)
 {
   std::set<MVertex*, MVertexLessThanLexicographic>::iterator itp;
   double x[8], y[8], z[8];
@@ -113,7 +113,7 @@ static int getExtrudedVertices(MElement *ele, ExtrudeParams *ep, int j, int k,
 }
 
 static void extrudeMesh(GFace *from, GRegion *to,
-			std::set<MVertex*, MVertexLessThanLexicographic> &pos)
+                        std::set<MVertex*, MVertexLessThanLexicographic> &pos)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
 
@@ -163,7 +163,7 @@ static void extrudeMesh(GFace *from, GRegion *to,
 }
 
 static void insertAllVertices(GRegion *gr, 
-			      std::set<MVertex*, MVertexLessThanLexicographic> &pos)
+                              std::set<MVertex*, MVertexLessThanLexicographic> &pos)
 {
   pos.insert(gr->mesh_vertices.begin(), gr->mesh_vertices.end());
   std::list<GFace*> faces = gr->faces();
@@ -227,21 +227,21 @@ void meshGRegionExtruded::operator() (GRegion *gr)
 }
 
 static int edgeExists(MVertex *v1, MVertex *v2, 
-		      std::set<std::pair<MVertex*, MVertex*> > &edges)
+                      std::set<std::pair<MVertex*, MVertex*> > &edges)
 {
   std::pair<MVertex*, MVertex*> p(std::min(v1, v2), std::max(v1, v2));
   return edges.count(p);
 }
 
 static void createEdge(MVertex *v1, MVertex *v2, 
-		       std::set<std::pair<MVertex*, MVertex*> > &edges)
+                       std::set<std::pair<MVertex*, MVertex*> > &edges)
 {
   std::pair<MVertex*, MVertex*> p(std::min(v1, v2), std::max(v1, v2));
   edges.insert(p);
 }
 
 static void deleteEdge(MVertex *v1, MVertex *v2, 
-		       std::set<std::pair<MVertex*, MVertex*> > &edges)
+                       std::set<std::pair<MVertex*, MVertex*> > &edges)
 {
   std::pair<MVertex*, MVertex*> p(std::min(v1, v2), std::max(v1, v2));
   edges.erase(p);
@@ -249,8 +249,8 @@ static void deleteEdge(MVertex *v1, MVertex *v2,
 
 // subdivide the 3 lateral faces of each prism
 static void phase1(GRegion *gr,
-		   std::set<MVertex*, MVertexLessThanLexicographic> &pos,
-		   std::set<std::pair<MVertex*, MVertex*> > &edges)
+                   std::set<MVertex*, MVertexLessThanLexicographic> &pos,
+                   std::set<std::pair<MVertex*, MVertex*> > &edges)
 {
   ExtrudeParams *ep = gr->meshAttributes.extrude;
   GFace *from = gr->model()->getFaceByTag(std::abs(ep->geo.Source));
@@ -284,10 +284,10 @@ static void phase1(GRegion *gr,
 
 // modify lateral edges to make them "tet-compatible"
 static void phase2(GRegion *gr,
-		   std::set<MVertex*, MVertexLessThanLexicographic> &pos,
-		   std::set<std::pair<MVertex*, MVertex*> > &edges,
-		   std::set<std::pair<MVertex*, MVertex*> > &edges_swap,
-		   int &swap)
+                   std::set<MVertex*, MVertexLessThanLexicographic> &pos,
+                   std::set<std::pair<MVertex*, MVertex*> > &edges,
+                   std::set<std::pair<MVertex*, MVertex*> > &edges_swap,
+                   int &swap)
 {
   ExtrudeParams *ep = gr->meshAttributes.extrude;
   GFace *from = gr->model()->getFaceByTag(std::abs(ep->geo.Source));
@@ -352,8 +352,8 @@ static void phase2(GRegion *gr,
  
 // create tets
 static void phase3(GRegion *gr,
-		   std::set<MVertex*, MVertexLessThanLexicographic> &pos,
-		   std::set<std::pair<MVertex*, MVertex*> > &edges)
+                   std::set<MVertex*, MVertexLessThanLexicographic> &pos,
+                   std::set<std::pair<MVertex*, MVertex*> > &edges)
 {
   ExtrudeParams *ep = gr->meshAttributes.extrude;
   GFace *from = gr->model()->getFaceByTag(std::abs(ep->geo.Source));

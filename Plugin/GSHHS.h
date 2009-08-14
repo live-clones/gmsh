@@ -13,5 +13,4 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterGSHHSPlugin();
 }
 
-
 #endif

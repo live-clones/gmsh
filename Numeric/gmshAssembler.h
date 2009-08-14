@@ -95,20 +95,20 @@ class gmshAssembler {
     {
       std::map<gmshDofKey, int>::const_iterator it = numbering.find(key);
       if (it != numbering.end())
-	return lsys->getFromSolution(it->second);
+        return lsys->getFromSolution(it->second);
     }
     {
       typename std::map<gmshDofKey, std::vector<std::pair<gmshDofKey, scalar> > >::
         const_iterator itConstr = constraints.find(key);
       if (itConstr != constraints.end()){
-	scalar val = 0.;
-	for (unsigned int i = 0; i < itConstr->second.size(); i++){
-	  const gmshDofKey &dofKeyConstr = itConstr->second[i].first;
-	  scalar valConstr = itConstr->second[i].second;
-	  val += getDofValue(dofKeyConstr.v, dofKeyConstr.comp, dofKeyConstr.field)
-	    * valConstr;
-	}
-	return val;
+        scalar val = 0.;
+        for (unsigned int i = 0; i < itConstr->second.size(); i++){
+          const gmshDofKey &dofKeyConstr = itConstr->second[i].first;
+          scalar valConstr = itConstr->second[i].second;
+          val += getDofValue(dofKeyConstr.v, dofKeyConstr.comp, dofKeyConstr.field)
+            * valConstr;
+        }
+        return val;
       }
     }
     return 0.0;

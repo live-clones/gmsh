@@ -22,10 +22,10 @@ class GMSH_LevelsetPlugin : public GMSH_PostPlugin
                           PViewDataList *out);
  protected:
   double _ref[3], _targetError;
-  int _valueTimeStep, _valueView, _valueIndependent, _recurLevel, _extractVolume;  
+  int _valueTimeStep, _valueView, _valueIndependent, _recurLevel, _extractVolume;
   typedef enum {NONE, PLANE, SPHERE, MAP} ORIENTATION;
   ORIENTATION _orientation;
-public:
+ public:
   GMSH_LevelsetPlugin();
   virtual double levelset(double x, double y, double z, double val) const = 0;
   virtual PView *execute(PView *);

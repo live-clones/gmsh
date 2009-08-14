@@ -66,8 +66,8 @@ void GEdgeCompound::orderEdges()
     firstEdge = (tempv.begin())->second;
     for (std::list<GEdge*>::iterator it = edges.begin() ; it != edges.end() ; ++it){
       if (*it == firstEdge){
-	edges.erase(it);
-	break;
+        edges.erase(it);
+        break;
       }
     }    
   }
@@ -95,36 +95,36 @@ void GEdgeCompound::orderEdges()
       GEdge *e = *it;
       std::list<GEdge*>::iterator itp;
      if (e->getBeginVertex() == last){
-	_c.push_back(e); 
-	itp = it;
-	it++;
-	edges.erase(itp);
-	_orientation.push_back(1);
-	last = e->getEndVertex();
-	found = true;
-	break;
+        _c.push_back(e); 
+        itp = it;
+        it++;
+        edges.erase(itp);
+        _orientation.push_back(1);
+        last = e->getEndVertex();
+        found = true;
+        break;
       }
       else if (e->getEndVertex() == last){
-	_c.push_back(e); 
-	itp = it;
-	it++;
-	edges.erase(itp);
-	_orientation.push_back(0);
-	last = e->getBeginVertex();
-	found = true;
-	break;
+        _c.push_back(e); 
+        itp = it;
+        it++;
+        edges.erase(itp);
+        _orientation.push_back(0);
+        last = e->getBeginVertex();
+        found = true;
+        break;
       }
     }
     if (!found){
       if (_c.size() == 1 && _orientation[0]){
-	GVertex *temp = first;
-	first = last;
-	last = temp;
-	_orientation[0] = 0;
+        GVertex *temp = first;
+        first = last;
+        last = temp;
+        _orientation[0] = 0;
       }
       else {
-	Msg::Error("Compound Edge %d is wrong",tag());
-	return;
+        Msg::Error("Compound Edge %d is wrong",tag());
+        return;
       }
     }
   }  
@@ -148,7 +148,7 @@ void GEdgeCompound::orderEdges()
 int GEdgeCompound::minimumMeshSegments() const
 {
   int N = 0;
-  for (int i=0;i<_compound.size();i++)N +=_compound[i]->minimumMeshSegments();
+  for (unsigned int i = 0; i < _compound.size(); i++) N +=_compound[i]->minimumMeshSegments();
   return 3;
 }
 
@@ -176,8 +176,8 @@ Range<double> GEdgeCompound::parBounds(int i) const
 */
 
 void GEdgeCompound::getLocalParameter ( const double &t,
-					int &iEdge,
-					double & tLoc) const
+                                        int &iEdge,
+                                        double & tLoc) const
 {
 
   for (iEdge = 0; iEdge < (int)_compound.size(); iEdge++){
@@ -187,8 +187,8 @@ void GEdgeCompound::getLocalParameter ( const double &t,
     if (t >= tmin && t <= tmax){      
       Range<double> b = _compound[iEdge]->parBounds(0);
       tLoc = _orientation[iEdge] ?
-	b.low()  + (t-tmin)/(tmax-tmin) * (b.high()-b.low()) :
-	b.high() - (t-tmin)/(tmax-tmin) * (b.high()-b.low()) ;
+        b.low()  + (t-tmin)/(tmax-tmin) * (b.high()-b.low()) :
+        b.high() - (t-tmin)/(tmax-tmin) * (b.high()-b.low()) ;
       //printf("bhigh=%g, blow=%g, global t=%g , tLoc=%g ,iEdge=%d\n",b.high(), b.low(), t,tLoc,iEdge);
       return;
     }

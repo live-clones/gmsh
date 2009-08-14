@@ -414,15 +414,20 @@ Ignore Physical definitions and save all elements@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item Mesh.SaveElementTagType
+Type of the element tag saved in mesh formats that don't support saving physical or partition ids (1=elementary, 2=physical, 3=partition)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.SaveParametric
 Save parametric coordinates of nodes@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SaveGroupsOfNodes
 Save groups of nodes for each physical line and surface (UNV mesh format only)@*
 Default value: @code{0}@*
-Saved in: @code{-}
+Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ScalingFactor
 Global scaling factor applied to the saved mesh@*

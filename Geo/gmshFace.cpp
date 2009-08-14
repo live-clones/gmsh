@@ -29,9 +29,9 @@ gmshFace::gmshFace(GModel *m, Surface *face)
       if ( ! first ) first = start;
       l_wire.push_back(e);
       if ( next == first ){
-	edgeLoops.push_back(GEdgeLoop(l_wire));
-	l_wire.clear();
-	first = 0;
+        edgeLoops.push_back(GEdgeLoop(l_wire));
+        l_wire.clear();
+        first = 0;
       }
 
       l_edges.push_back(e);
@@ -226,15 +226,15 @@ GPoint gmshFace::closestPoint(const SPoint3 & qp, const double initialGuess[2]) 
     for (int i = 0; i < 2; i++){
       BN[i] = 0;
       for (int k = 0; k < 3; k++){
-	BN[i] += B[k] * M[k][i];
+        BN[i] += B[k] * M[k][i];
       }
     }
     for (int i = 0; i < 2; i++){
       for (int j = 0; j < 2; j++){
-	MN[i][j] = 0;
-	for (int k = 0; k < 3; k++){
-	  MN[i][j] += M[k][i] * M[k][j];
-	}
+        MN[i][j] = 0;
+        for (int k = 0; k < 3; k++){
+          MN[i][j] += M[k][i] * M[k][j];
+        }
       }
     }
     sys2x2(MN, BN, UV);

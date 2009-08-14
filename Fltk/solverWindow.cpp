@@ -9,7 +9,7 @@
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Browser.H>
 #include "GModel.h"
-#include "GUI.h"
+#include "FlGui.h"
 #include "solverWindow.h"
 #include "paletteWindow.h"
 #include "optionWindow.h"
@@ -36,15 +36,15 @@ void solver_cb(Fl_Widget *w, void *data)
     first[num] = 0;
     std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
     std::string file = split[0] + split[1] + SINFO[num].extension;
-    GUI::instance()->solver[num]->input[0]->value(file.c_str());
+    FlGui::instance()->solver[num]->input[0]->value(file.c_str());
   }
   // show the window before calling Solver() to avoid race condition on
   // Windows (if the message window pops up die to an error, the window
   // callbacks get messed up)
-  GUI::instance()->solver[num]->win->show();
+  FlGui::instance()->solver[num]->win->show();
 
   if(SINFO[num].nboptions) {
-    std::string file = FixWindowsPath(GUI::instance()->solver[num]->input[0]->value());
+    std::string file = FixWindowsPath(FlGui::instance()->solver[num]->input[0]->value());
     char tmp[256], tmp2[256];
     sprintf(tmp, "\"%s\"", file.c_str());
     sprintf(tmp2, SINFO[num].name_command.c_str(), tmp);
@@ -62,7 +62,7 @@ static void solver_file_open_cb(Fl_Widget *w, void *data)
   // We allow to create the .pro file... Or should we add a "New file"
   // button?
   if(file_chooser(0, 0, "Choose", tmp)) {
-    GUI::instance()->solver[num]->input[0]->value(file_chooser_get_name(1).c_str());
+    FlGui::instance()->solver[num]->input[0]->value(file_chooser_get_name(1).c_str());
     if(SINFO[num].nboptions) {
       std::string file = FixWindowsPath(file_chooser_get_name(1).c_str());
       sprintf(tmp, "\"%s\"", file.c_str());
@@ -77,7 +77,7 @@ static void solver_file_edit_cb(Fl_Widget *w, void *data)
 {
   int num = (int)(long)data;
   std::string prog = FixWindowsPath(CTX::instance()->editor.c_str());
-  std::string file = FixWindowsPath(GUI::instance()->solver[num]->input[0]->value());
+  std::string file = FixWindowsPath(FlGui::instance()->solver[num]->input[0]->value());
   char cmd[1024];
   ReplaceMultiFormat(prog.c_str(), file.c_str(), cmd);
   SystemCall(cmd);
@@ -87,7 +87,7 @@ static void solver_choose_mesh_cb(Fl_Widget *w, void *data)
 {
   int num = (int)(long)data;
   if(file_chooser(0, 0, "Choose", "*"))
-    GUI::instance()->solver[num]->input[1]->value(file_chooser_get_name(1).c_str());
+    FlGui::instance()->solver[num]->input[1]->value(file_chooser_get_name(1).c_str());
 }
 
 static int nbs(const char *str)
@@ -110,10 +110,10 @@ static void solver_command_cb(Fl_Widget *w, void *data)
   int usedopts = 0;
 
   if(SINFO[num].popup_messages)
-    GUI::instance()->messages->show(true);
+    FlGui::instance()->messages->show(true);
 
-  if(strlen(GUI::instance()->solver[num]->input[1]->value())) {
-    std::string m = FixWindowsPath(GUI::instance()->solver[num]->input[1]->value());
+  if(strlen(FlGui::instance()->solver[num]->input[1]->value())) {
+    std::string m = FixWindowsPath(FlGui::instance()->solver[num]->input[1]->value());
     sprintf(tmp, "\"%s\"", m.c_str());
     sprintf(mesh, SINFO[num].mesh_command.c_str(), tmp);
   }
@@ -128,7 +128,7 @@ static void solver_command_cb(Fl_Widget *w, void *data)
       Msg::Error("Missing options to execute command");
       return;
     }
-    int val = GUI::instance()->solver[num]->choice[usedopts]->value();
+    int val = FlGui::instance()->solver[num]->choice[usedopts]->value();
     if(val < (int)SINFO[num].option[usedopts].size())
       sprintf(command, SINFO[num].button_command[idx].c_str(), 
               SINFO[num].option[usedopts][val].c_str());
@@ -141,7 +141,7 @@ static void solver_command_cb(Fl_Widget *w, void *data)
     strcpy(command, SINFO[num].button_command[idx].c_str());
   }
 
-  std::string c = FixWindowsPath(GUI::instance()->solver[num]->input[0]->value());
+  std::string c = FixWindowsPath(FlGui::instance()->solver[num]->input[0]->value());
   sprintf(arg, "\"%s\"", c.c_str());
   sprintf(tmp, SINFO[num].name_command.c_str(), arg);
   sprintf(arg, "%s %s %s", tmp, mesh, command);
@@ -163,13 +163,13 @@ static void solver_ok_cb(Fl_Widget *w, void *data)
   int retry = 0, num = (int)(long)data;
 
   opt_solver_client_server
-    (num, GMSH_SET, GUI::instance()->solver[num]->menu->menu()[0].value() ? 1 : 0);
+    (num, GMSH_SET, FlGui::instance()->solver[num]->menu->menu()[0].value() ? 1 : 0);
   opt_solver_popup_messages
-    (num, GMSH_SET, GUI::instance()->solver[num]->menu->menu()[1].value() ? 1 : 0);
+    (num, GMSH_SET, FlGui::instance()->solver[num]->menu->menu()[1].value() ? 1 : 0);
   opt_solver_merge_views
-    (num, GMSH_SET, GUI::instance()->solver[num]->menu->menu()[2].value() ? 1 : 0);
+    (num, GMSH_SET, FlGui::instance()->solver[num]->menu->menu()[2].value() ? 1 : 0);
 
-  const char *exe = GUI::instance()->solver[num]->input[2]->value();
+  const char *exe = FlGui::instance()->solver[num]->input[2]->value();
   if(strcmp(opt_solver_executable(num, GMSH_GET, "").c_str(), exe))
     retry = 1;
   opt_solver_executable(num, GMSH_SET, exe);
@@ -187,7 +187,7 @@ static void solver_choose_executable_cb(Fl_Widget *w, void *data)
                   "*"
 #endif
                   )){
-    GUI::instance()->solver[num]->input[2]->value(file_chooser_get_name(1).c_str());
+    FlGui::instance()->solver[num]->input[2]->value(file_chooser_get_name(1).c_str());
     solver_ok_cb(w, data);
   }
 }

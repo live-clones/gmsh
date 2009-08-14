@@ -441,7 +441,7 @@ static void elementCutMesh (MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
         elements[9][elementary].push_back(p2);
         assignPhysicals(GM, gePhysicals, elementary, 3, physicals);
 
-        for (int i = 0; i < surfTriangles.size(); i++){
+        for (unsigned int i = 0; i < surfTriangles.size(); i++){
           MVertex *mv[3] = {NULL, NULL, NULL};
           for(int j = 0; j < 3; j++){
             int numV = getElementVertexNum(surfTriangles[i].pt(j), e);
@@ -559,7 +559,7 @@ static void elementCutMesh (MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
         elements[8][elementary].push_back(p2);
         assignPhysicals(GM, gePhysicals, elementary, 2, physicals);
 
-        for (int i = 0; i < boundLines.size(); i++){
+        for (unsigned int i = 0; i < boundLines.size(); i++){
           MVertex *mv[2] = {NULL, NULL};
           for(int j = 0; j < 2; j++){
             int numV = getElementVertexNum(boundLines[i].pt(j), e);
@@ -652,7 +652,7 @@ static void elementCutMesh (MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
     {
       DI_Point P(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z());
       P.computeLs(*ls);
-      int reg = P.lsTag() * elementary;
+      int reg = (int)(P.lsTag() * elementary);
       elements[0][reg].push_back(copy);
       assignPhysicals(GM, gePhysicals, reg, 0, physicals);
     }
@@ -682,7 +682,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   int numEle = gm->getNumMeshElements();
 
   for(unsigned int i = 0; i < gmEntities.size(); i++) {
-    for(int j = 0; j < gmEntities[i]->getNumMeshElements(); j++) {
+    for(unsigned int j = 0; j < gmEntities[i]->getNumMeshElements(); j++) {
       MElement *e = gmEntities[i]->getMeshElement(j);
       elementCutMesh (e, ls, gmEntities[i], gm, numEle,
                       vertexMap, newVertices, elements, border, physicals, entityCut);
@@ -727,7 +727,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   for(unsigned int i = 0; i < newVertices.size(); i++) {
     newVertices[i]->setNum(++num);
     vertexMap[num] = newVertices[i];
-  }printf("numbering vertices finished : %d vertices \n",vertexMap.size());
+  }printf("numbering vertices finished : %d vertices \n", (int)vertexMap.size());
 
   return cutGM;
 #else

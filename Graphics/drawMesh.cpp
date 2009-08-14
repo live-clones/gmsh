@@ -126,20 +126,20 @@ static bool isElementVisible(MElement *ele)
     bool hidden = false;
     for(int clip = 0; clip < 6; clip++){
       if(CTX::instance()->mesh.clip & (1 << clip)){
-	if(ele->getDim() < 3 && CTX::instance()->clipOnlyVolume){
-	}
-	else{
-	  double d = intersectClipPlane(clip, ele);
-	  if(ele->getDim() == 3 && 
+        if(ele->getDim() < 3 && CTX::instance()->clipOnlyVolume){
+        }
+        else{
+          double d = intersectClipPlane(clip, ele);
+          if(ele->getDim() == 3 && 
              CTX::instance()->clipOnlyDrawIntersectingVolume && d){
-	    hidden = true;
-	    break;
-	  }
-	  else if(d < 0){
-	    hidden = true;
-	    break;
-	  }
-	}
+            hidden = true;
+            break;
+          }
+          else if(d < 0){
+            hidden = true;
+            break;
+          }
+        }
       }
     }
     if(hidden) return false;
@@ -184,7 +184,7 @@ static void drawElementLabels(drawContext *ctx, GEntity *e,
   int labelStep = getLabelStep(elements.size());
 
   for(unsigned int i = 0; i < elements.size(); i++){
-    MElement *ele = (MElement*) elements[i];
+    MElement *ele = elements[i];
     if(!isElementVisible(ele)) continue;
     if(i % labelStep == 0) {
       SPoint3 pc = ele->barycenter();
@@ -213,7 +213,7 @@ static void drawNormals(drawContext *ctx, std::vector<T*> &elements)
 {
   glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.normals);
   for(unsigned int i = 0; i < elements.size(); i++){
-    MElement *ele = (MElement*) elements[i];
+    MElement *ele = elements[i];
     if(!isElementVisible(ele)) continue;
     SVector3 n = ele->getFace(0).normal();
     for(int j = 0; j < 3; j++)
@@ -312,7 +312,7 @@ static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
                                    std::vector<T*> &elements)
 {
   for(unsigned int i = 0; i < elements.size(); i++){
-    MElement *ele = (MElement*) elements[i];
+    MElement *ele = elements[i];
     for(int j = 0; j < ele->getNumVertices(); j++){
       MVertex *v = ele->getVertex(j);
       if(isElementVisible(ele) && v->getVisibility()){
@@ -346,7 +346,7 @@ static void drawBarycentricDual(std::vector<T*> &elements)
   gl2psEnable(GL2PS_LINE_STIPPLE);
   glBegin(GL_LINES);
   for(unsigned int i = 0; i < elements.size(); i++){
-    MElement *ele = (MElement*) elements[i];
+    MElement *ele = elements[i];
     if(!isElementVisible(ele)) continue;
     SPoint3 pc = ele->barycenter();
     if(ele->getDim() == 2){
@@ -393,17 +393,17 @@ static void drawVoronoiDual(std::vector<T*> &elements)
     if(ele->getDim() == 2){
       for(int j = 0; j < ele->getNumEdges(); j++){
         MEdge e = ele->getEdge(j);
-	SVector3 p2p1(e.getVertex(1)->x() - e.getVertex(0)->x(),
-		      e.getVertex(1)->y() - e.getVertex(0)->y(),
-		      e.getVertex(1)->z() - e.getVertex(0)->z());
-	SVector3 pcp1(pc.x() - e.getVertex(0)->x(),
-		      pc.y() - e.getVertex(0)->y(),
-		      pc.z() - e.getVertex(0)->z());
-	double alpha = dot(pcp1,p2p1) / dot(p2p1,p2p1);
+        SVector3 p2p1(e.getVertex(1)->x() - e.getVertex(0)->x(),
+                      e.getVertex(1)->y() - e.getVertex(0)->y(),
+                      e.getVertex(1)->z() - e.getVertex(0)->z());
+        SVector3 pcp1(pc.x() - e.getVertex(0)->x(),
+                      pc.y() - e.getVertex(0)->y(),
+                      pc.z() - e.getVertex(0)->z());
+        double alpha = dot(pcp1,p2p1) / dot(p2p1,p2p1);
         SPoint3 p((1 - alpha)*e.getVertex(0)->x() + alpha * e.getVertex(1)->x(), 
-		  (1 - alpha)*e.getVertex(0)->y() + alpha * e.getVertex(1)->y(),
-		  (1 - alpha)*e.getVertex(0)->z() + alpha * e.getVertex(1)->z());
-	glVertex3d(pc.x(), pc.y(), pc.z());
+                  (1 - alpha)*e.getVertex(0)->y() + alpha * e.getVertex(1)->y(),
+                  (1 - alpha)*e.getVertex(0)->z() + alpha * e.getVertex(1)->z());
+        glVertex3d(pc.x(), pc.y(), pc.z());
         glVertex3d(p.x(), p.y(), p.z());
       }
     }
@@ -434,7 +434,7 @@ template<class T>
 static void addSmoothNormals(GEntity *e, std::vector<T*> &elements)
 {
   for(unsigned int i = 0; i < elements.size(); i++){
-    MElement *ele = (MElement*) elements[i];
+    MElement *ele = elements[i];
     SPoint3 pc(0., 0., 0.);
     if(CTX::instance()->mesh.explode != 1.) pc = ele->barycenter();
     for(int j = 0; j < ele->getNumFacesRep(); j++){
@@ -460,7 +460,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
                                 bool edges, bool faces)
 {
   for(unsigned int i = 0; i < elements.size(); i++){
-    MElement *ele = (MElement*) elements[i];
+    MElement *ele = elements[i];
 
     if(!isElementVisible(ele) || ele->getDim() < 1) continue;
     
@@ -694,7 +694,8 @@ class initMeshGFace {
   {
     int num = 0;
     if(CTX::instance()->mesh.surfacesEdges){
-      num += (3 * f->triangles.size() + 4 * f->quadrangles.size() + 4 * f->polygons.size()) / 2;
+      num += (3 * f->triangles.size() + 4 * f->quadrangles.size() + 
+              4 * f->polygons.size()) / 2;
       if(CTX::instance()->mesh.explode != 1.) num *= 2;
       if(_curved) num *= 2;
     }
@@ -704,7 +705,8 @@ class initMeshGFace {
   {
     int num = 0;
     if(CTX::instance()->mesh.surfacesFaces){
-      num += (f->triangles.size() + 2 * f->quadrangles.size() + 2 * f->polygons.size());
+      num += (f->triangles.size() + 2 * f->quadrangles.size() +
+              2 * f->polygons.size());
       if(_curved) num *= 4;
     }
     return num + 100;
@@ -811,8 +813,8 @@ class initMeshGRegion {
     if(CTX::instance()->clipWholeElements && 
        CTX::instance()->clipOnlyDrawIntersectingVolume){
       for(int clip = 0; clip < 6; clip++){
-	if(CTX::instance()->mesh.clip & (1 << clip))
-	  return (int)sqrt((double)num);
+        if(CTX::instance()->mesh.clip & (1 << clip))
+          return (int)sqrt((double)num);
       }
     }
     return num;
@@ -985,13 +987,13 @@ void drawContext::drawMesh()
         PView::list[j]->setChanged(true);
   }
 
-  glPointSize(CTX::instance()->mesh.pointSize);
-  gl2psPointSize(CTX::instance()->mesh.pointSize * 
-                 CTX::instance()->print.epsPointSizeFactor);
+  glPointSize((float)CTX::instance()->mesh.pointSize);
+  gl2psPointSize((float)(CTX::instance()->mesh.pointSize * 
+                         CTX::instance()->print.epsPointSizeFactor));
 
-  glLineWidth(CTX::instance()->mesh.lineWidth);
-  gl2psLineWidth(CTX::instance()->mesh.lineWidth *
-                 CTX::instance()->print.epsLineWidthFactor);
+  glLineWidth((float)CTX::instance()->mesh.lineWidth);
+  gl2psLineWidth((float)(CTX::instance()->mesh.lineWidth *
+                         CTX::instance()->print.epsLineWidthFactor));
   
   if(CTX::instance()->mesh.lightTwoSide)
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
@@ -1001,9 +1003,9 @@ void drawContext::drawMesh()
   if(!CTX::instance()->clipWholeElements){
     for(int i = 0; i < 6; i++)
       if(CTX::instance()->mesh.clip & (1 << i)) 
-	glEnable((GLenum)(GL_CLIP_PLANE0 + i));
+        glEnable((GLenum)(GL_CLIP_PLANE0 + i));
       else
-	glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+        glDisable((GLenum)(GL_CLIP_PLANE0 + i));
   }
 
   static bool busy = false;

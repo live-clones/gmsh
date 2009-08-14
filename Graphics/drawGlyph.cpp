@@ -28,8 +28,8 @@ void drawContext::drawString(std::string s, std::string &font_name, int font_enu
       glGetDoublev(GL_CURRENT_RASTER_POSITION, pos);
       double x[3], w[3] = {pos[0], pos[1], pos[2]};
       SetFont(font_enum, font_size);
-      float width = GetStringWidth(s.c_str());
-      float height = GetStringHeight();
+      double width = GetStringWidth(s.c_str());
+      double height = GetStringHeight();
       switch(align){
       case 1: w[0] -= width/2.;                     break; // bottom center
       case 2: w[0] -= width;                        break; // bottom right

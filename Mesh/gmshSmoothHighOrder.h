@@ -38,9 +38,9 @@ public:
   }  
   void smooth ( std::vector<MElement*> & );
   double smooth_metric_ ( std::vector<MElement*> &, GFace *gf,
-			  gmshAssembler<double> &myAssembler,
-			  std::set<MVertex*> &verticesToMove,
-			  gmshElasticityTerm &El);
+                          gmshAssembler<double> &myAssembler,
+                          std::set<MVertex*> &verticesToMove,
+                          gmshElasticityTerm &El);
   void smooth_metric ( std::vector<MElement*> &, GFace *gf );
   void smooth ( GFace* , bool metric = false);
   void smooth_p2point ( GFace* );
@@ -48,16 +48,16 @@ public:
   void smooth ( GRegion* );
   int getTag() const {return _tag;}
   void swap(GFace *, 
-	    edgeContainer &edgeVertices,
-	    faceContainer &faceVertices);
+            edgeContainer &edgeVertices,
+            faceContainer &faceVertices);
   void optimize(GFace *, 
-		edgeContainer &edgeVertices,
-		faceContainer &faceVertices);
+                edgeContainer &edgeVertices,
+                faceContainer &faceVertices);
   void computeMetricVector (GFace *gf, 
-			    MElement *e, 
-			    gmshMatrix<double> &J,
-			    gmshMatrix<double> &JT,
-			    gmshVector<double> &D);
+                            MElement *e, 
+                            gmshMatrix<double> &J,
+                            gmshMatrix<double> &JT,
+                            gmshVector<double> &D);
   void moveToStraightSidedLocation  (MVertex *) const;
   void moveToTargetLocation  (MVertex *) const;
   void moveToStraightSidedLocation  (MElement *) const;
@@ -75,8 +75,8 @@ public:
        return SVector3(0.0,0.0,0.0);
      else{
        return SVector3(itt->second.x() - it->second.x(),
-		       itt->second.y() - it->second.y(),
-		       itt->second.z() - it->second.z());
+                       itt->second.y() - it->second.y(),
+                       itt->second.z() - it->second.z());
      }
   }
 };

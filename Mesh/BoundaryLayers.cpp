@@ -48,7 +48,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
           Msg::Error("Unknown source face %d for boundary layer", ep->geo.Source);
           return 0;
         }
-	if(ep->geo.Source < 0) sourceFaceInvert[from->tag()] = true;
+        if(ep->geo.Source < 0) sourceFaceInvert[from->tag()] = true;
         sourceFaces.insert(from);
         std::list<GEdge*> e = from->edges();
         sourceEdges.insert(e.begin(), e.end());
@@ -133,7 +133,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
     GFace *gf = *it;
     if(gf->geomType() == GEntity::BoundaryLayerSurface){
       Msg::StatusBar(2, true, "Meshing surface %d (%s)", gf->tag(), 
-		     gf->getTypeString().c_str());
+                     gf->getTypeString().c_str());
       deMeshGFace dem;
       dem(gf);
       MeshExtrudedSurface(gf);

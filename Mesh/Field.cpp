@@ -673,9 +673,9 @@ public:
     t1 = crossprod(t2,g);
     
     metr  = SMetric3(1./(lc*lc), 
-		     1/(lcmax*lcmax),
-		     1/(lcmax*lcmax),
-		     g,t1,t2);
+                     1/(lcmax*lcmax),
+                     1/(lcmax*lcmax),
+                     g,t1,t2);
   }
 };
 
@@ -735,7 +735,7 @@ class GradientField : public Field
       return sqrt(gx * gx + gy * gy + gz * gz);
     default:
       Msg::Error("Field %i : Unknown kind (%i) of gradient.", this->id,
-		 kind);
+                 kind);
       return MAX_LC;
     }
   }
@@ -787,7 +787,7 @@ class CurvatureField : public Field
     grad_norm(*field, x, y, z + delta / 2, grad[4]);
     grad_norm(*field, x, y, z - delta / 2, grad[5]);
     return (grad[0][0] - grad[1][0] + grad[2][1] - 
-	    grad[3][1] + grad[4][2] - grad[5][2]) / delta;
+            grad[3][1] + grad[4][2] - grad[5][2]) / delta;
   }
 };
 
@@ -872,9 +872,9 @@ class LaplacianField : public Field
     Field *field = GModel::current()->getFields()->get(iField);
     if(!field) return MAX_LC;
     return ((*field) (x + delta , y, z)+ (*field) (x - delta , y, z)
-	    +(*field) (x, y + delta , z)+ (*field) (x, y - delta , z)
-	    +(*field) (x, y, z + delta )+ (*field) (x, y, z - delta )
-	    -6* (*field) (x , y, z)) / (delta*delta);
+            +(*field) (x, y + delta , z)+ (*field) (x, y - delta , z)
+            +(*field) (x, y, z + delta )+ (*field) (x, y, z - delta )
+            -6* (*field) (x , y, z)) / (delta*delta);
   }
 };
 
@@ -908,9 +908,9 @@ class MeanField : public Field
     Field *field = GModel::current()->getFields()->get(iField);
     if(!field) return MAX_LC;
     return ((*field) (x + delta , y, z) + (*field) (x - delta, y, z)
-	    + (*field) (x, y + delta, z) + (*field) (x, y - delta, z)
-	    + (*field) (x, y, z + delta) + (*field) (x, y, z - delta)
-	    + (*field) (x, y, z)) / 7;
+            + (*field) (x, y + delta, z) + (*field) (x, y - delta, z)
+            + (*field) (x, y, z + delta) + (*field) (x, y, z - delta)
+            + (*field) (x, y, z)) / 7;
   }
 };
 
@@ -937,10 +937,10 @@ class MathEvalExpression
         values[i] = x;
         break;
       case -2: 
-	values[i] = y;
+        values[i] = y;
         break;
       case -3: 
-	values[i] = z;
+        values[i] = z;
         break;
       default:
         {
@@ -962,7 +962,8 @@ class MathEvalExpression
   {
     free_members();
     error_status = false;
-    c_str_function = strdup(f.c_str());
+    c_str_function = new char[f.size() + 1];
+    strcpy(c_str_function, f.c_str());
     eval = evaluator_create(c_str_function);
     if(!eval) {
       error_status = true;
@@ -992,11 +993,11 @@ class MathEvalExpression
   void free_members()
   {
     if(c_str_function)
-      free(c_str_function);
+      delete [] c_str_function;
     if(eval)
       evaluator_destroy(eval);
     if(values)
-      delete[]values;
+      delete [] values;
     if(evaluators_id)
       delete evaluators_id;
   }
@@ -1022,7 +1023,7 @@ class MathEvalField : public Field
     if(update_needed) {
       if(!expr.set_function(f))
         Msg::Error("Field %i: Invalid matheval expression \"%s\"",
-		   this->id, f.c_str());
+                   this->id, f.c_str());
       update_needed = false;
     }
     return expr.evaluate(x, y, z);
@@ -1070,15 +1071,15 @@ class ParametricField : public Field
       for(int i = 0; i < 3; i++) {
         if(!expr[i].set_function(f[i]))
           Msg::Error("Field %i : Invalid matheval expression \"%s\"",
-		     this->id, f[i].c_str());
+                     this->id, f[i].c_str());
       }
       update_needed = false;
     }
     Field *field = GModel::current()->getFields()->get(ifield);
     if(!field) return MAX_LC;
     return (*field)(expr[0].evaluate(x, y, z),
-		    expr[1].evaluate(x, y, z),
-		    expr[2].evaluate(x, y, z));
+                    expr[1].evaluate(x, y, z),
+                    expr[2].evaluate(x, y, z));
   }
   const char *getName()
   {
@@ -1144,7 +1145,7 @@ class MinField : public Field
   MinField()
   {
     options["FieldsList"] = new FieldOptionList
-      (idlist, "Field indices",	&update_needed);
+      (idlist, "Field indices", &update_needed);
   }
   std::string getDescription()
   {
@@ -1284,7 +1285,7 @@ class AttractorField : public Field
         delete kdtree;
       }
       int totpoints = nodes_id.size() + n_nodes_by_edge * edges_id.size() + 
-	n_nodes_by_edge * n_nodes_by_edge * faces_id.size();
+        n_nodes_by_edge * n_nodes_by_edge * faces_id.size();
       if(totpoints)
         zeronodes = annAllocPts(totpoints, 4);
       int k = 0;
@@ -1340,33 +1341,33 @@ class AttractorField : public Field
         Surface *s = FindSurface(*it);
         if(s) {
           for(int i = 0; i < n_nodes_by_edge; i++) {
-	    for(int j = 0; j < n_nodes_by_edge; j++) {
-	      double u = (double)i / (n_nodes_by_edge - 1);
-	      double v = (double)j / (n_nodes_by_edge - 1);
-	      Vertex V = InterpolateSurface(s, u, v, 0, 0);
-	      zeronodes[k][0] = V.Pos.X;
-	      zeronodes[k][1] = V.Pos.Y;
-	      zeronodes[k++][2] = V.Pos.Z;
-	    }
-	  }
+            for(int j = 0; j < n_nodes_by_edge; j++) {
+              double u = (double)i / (n_nodes_by_edge - 1);
+              double v = (double)j / (n_nodes_by_edge - 1);
+              Vertex V = InterpolateSurface(s, u, v, 0, 0);
+              zeronodes[k][0] = V.Pos.X;
+              zeronodes[k][1] = V.Pos.Y;
+              zeronodes[k++][2] = V.Pos.Z;
+            }
+          }
         }
         else {
           GFace *f = GModel::current()->getFaceByTag(*it);
           if(f) {
             for(int i = 0; i < n_nodes_by_edge; i++) {
-	      for(int j = 0; j < n_nodes_by_edge; j++) {
-		double u = (double)i / (n_nodes_by_edge - 1);
-		double v = (double)j / (n_nodes_by_edge - 1);
-		Range<double> b1 = ge->parBounds(0);
-		Range<double> b2 = ge->parBounds(1);
-		double t1 = b1.low() + u * (b1.high() - b1.low());
-		double t2 = b2.low() + v * (b2.high() - b2.low());
-		GPoint gp = f->point(t1, t2);
-		zeronodes[k][0] = gp.x();
-		zeronodes[k][1] = gp.y();
-		zeronodes[k++][2] = gp.z();
-	      }
-	    }
+              for(int j = 0; j < n_nodes_by_edge; j++) {
+                double u = (double)i / (n_nodes_by_edge - 1);
+                double v = (double)j / (n_nodes_by_edge - 1);
+                Range<double> b1 = ge->parBounds(0);
+                Range<double> b2 = ge->parBounds(1);
+                double t1 = b1.low() + u * (b1.high() - b1.low());
+                double t2 = b2.low() + v * (b2.high() - b2.low());
+                GPoint gp = f->point(t1, t2);
+                zeronodes[k][0] = gp.x();
+                zeronodes[k][1] = gp.y();
+                zeronodes[k++][2] = gp.z();
+              }
+            }
           }
         }
       }
@@ -1454,11 +1455,11 @@ void Field::putOnView(PView *view, int comp)
     for(int ele = 0; ele < data->getNumElements(0, ent); ele++){
       if(data->skipElement(0, ent, ele)) continue;
       for(int nod = 0; nod < data->getNumNodes(0, ent, ele); nod++){
-	double x, y, z;
-	data->getNode(0, ent, ele, nod, x, y, z);
+        double x, y, z;
+        data->getNode(0, ent, ele, nod, x, y, z);
         double val = (*this)(x, y, z);
-	for(int comp = 0; comp < data->getNumComponents(0, ent, ele); comp++)
-	  data->setValue(0, ent, ele, nod, comp, val);
+        for(int comp = 0; comp < data->getNumComponents(0, ent, ele); comp++)
+          data->setValue(0, ent, ele, nod, comp, val);
       }
     }
   }

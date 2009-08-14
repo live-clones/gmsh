@@ -15,7 +15,7 @@
 #include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Value_Input.H>
 #include <FL/fl_draw.H>
-#include "GUI.h"
+#include "FlGui.h"
 #include "Draw.h"
 #include "fieldWindow.h"
 #include "paletteWindow.h"
@@ -31,15 +31,15 @@
 
 void field_cb(Fl_Widget *w, void *data)
 {
-  GUI::instance()->fields->win->show();
-  GUI::instance()->fields->editField(NULL);
+  FlGui::instance()->fields->win->show();
+  FlGui::instance()->fields->editField(NULL);
 }
 
 static void field_delete_cb(Fl_Widget *w, void *data)
 {
-  Field *f = (Field*)GUI::instance()->fields->editor_group->user_data();
+  Field *f = (Field*)FlGui::instance()->fields->editor_group->user_data();
   delete_field(f->id, GModel::current()->getFileName());
-  GUI::instance()->fields->editField(NULL);
+  FlGui::instance()->fields->editField(NULL);
 }
 
 static void field_new_cb(Fl_Widget *w, void *data)
@@ -48,33 +48,33 @@ static void field_new_cb(Fl_Widget *w, void *data)
   FieldManager *fields = GModel::current()->getFields();
   int id = fields->newId();
   add_field(id, mb->text(), GModel::current()->getFileName());
-  GUI::instance()->fields->editField((*fields)[id]);
+  FlGui::instance()->fields->editField((*fields)[id]);
 }
 
 static void field_apply_cb(Fl_Widget *w, void *data)
 {
-  GUI::instance()->fields->saveFieldOptions();
+  FlGui::instance()->fields->saveFieldOptions();
 }
 
 static void field_browser_cb(Fl_Widget *w, void *data)
 {
-  int selected = GUI::instance()->fields->browser->value();
+  int selected = FlGui::instance()->fields->browser->value();
   if(!selected){
-    GUI::instance()->fields->editField(NULL);
+    FlGui::instance()->fields->editField(NULL);
   }
-  Field *f = (Field*)GUI::instance()->fields->browser->data(selected);
-  GUI::instance()->fields->editField(f);
+  Field *f = (Field*)FlGui::instance()->fields->browser->data(selected);
+  FlGui::instance()->fields->editField(f);
 }
 
 static void field_put_on_view_cb(Fl_Widget *w, void *data)
 {
   Fl_Menu_Button* mb = ((Fl_Menu_Button*)w);
-  Field *field = (Field*)GUI::instance()->fields->editor_group->user_data();
+  Field *field = (Field*)FlGui::instance()->fields->editor_group->user_data();
   if(mb->value() == 0)
     field->putOnNewView();
   else if(mb->value() - 1 < (int)PView::list.size())
     field->putOnView(PView::list[mb->value() - 1]);
-  GUI::instance()->updateViews();
+  FlGui::instance()->updateViews();
   Draw();
 }
 
@@ -306,9 +306,9 @@ void fieldWindow::loadFieldOptions()
       vstr.str("");
       for(list_it = option->list().begin(); list_it != option->list().end();
           list_it++){
-	if(list_it!=option->list().begin())
-	  vstr << ", ";
-	vstr << *list_it;
+        if(list_it!=option->list().begin())
+          vstr << ", ";
+        vstr << *list_it;
       }
       ((Fl_Input*)(*input))->value(vstr.str().c_str());
       break;

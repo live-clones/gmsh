@@ -86,8 +86,8 @@ class MTetrahedron : public MElement {
   virtual MFace getFace(int num)
   {
     return MFace(_v[faces_tetra(num, 0)],
-		 _v[faces_tetra(num, 1)],
-		 _v[faces_tetra(num, 2)]);
+                 _v[faces_tetra(num, 1)],
+                 _v[faces_tetra(num, 2)]);
   }
   virtual int getNumFacesRep(){ return 4; }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
@@ -274,12 +274,12 @@ class MTetrahedron10 : public MTetrahedron {
  *          ,/  |  `\              E = order - 1
  *        ,/    '.   `\            C = 4 + 6*E 
  *      ,/       |     `\          F = ((order - 1)*(order - 2))/2
- *    ,/         |       `\	   N = total number of vertices
+ *    ,/         |       `\        N = total number of vertices
  *   0-----------'.--------1
  *    `\.         |      ,/        Interior vertex numbers  
  *       `\.      |    ,/            for edge 0 <= i <= 5: 4+i*E to 3+(i+1)*E
- *          `\.   '. ,/		     for face 0 <= j <= 3: C+j*F to C-1+(j+1)*F
- *             `\. |/		     in volume           : C+4*F to N-1
+ *          `\.   '. ,/              for face 0 <= j <= 3: C+j*F to C-1+(j+1)*F
+ *             `\. |/                in volume           : C+4*F to N-1
  *                `3
  *
  */
@@ -293,12 +293,12 @@ class MTetrahedron10 : public MTetrahedron {
  *          ,5  |  `6              E = order - 1
  *        ,/    12   `\            C = 4 + 6*E 
  *      ,4       |     `7          F = ((order - 1)*(order - 2))/2
- *    ,/         |       `\	   N = total number of vertices
+ *    ,/         |       `\        N = total number of vertices
  *   0-----9-----'.--8-----1
  *    `\.         |      ,/        Interior vertex numbers
  *       10.     13    ,14           for edge 0 <= i <= 5: 4+i*E to 3+(i+1)*E
- *          `\.   '. 15		     for face 0 <= j <= 3: C+j*F to C-1+(j+1)*F
- *             11\.|/ 	     in volume           : C+4*F to N-1
+ *          `\.   '. 15              for face 0 <= j <= 3: C+j*F to C-1+(j+1)*F
+ *             11\.|/        in volume           : C+4*F to N-1
  *                `3
  *
  */
@@ -348,7 +348,7 @@ class MTetrahedronN : public MTetrahedron {
   double _disto;
  public:
   MTetrahedronN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, 
-		std::vector<MVertex*> &v, char order, int num=0, int part=0) 
+                std::vector<MVertex*> &v, char order, int num=0, int part=0) 
     : MTetrahedron(v0, v1, v2, v3, num, part) , _vs (v), _order(order),_disto(-1.e22)
   {
     for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);

@@ -118,33 +118,33 @@ PView *GMSH_EigenvectorsPlugin::execute(PView *v)
       int numNodes = data1->getNumNodes(0, ent, ele);
       double xyz[3][8];
       for(int nod = 0; nod < numNodes; nod++)
-	data1->getNode(0, ent, ele, nod, xyz[0][nod], xyz[1][nod], xyz[2][nod]);
+        data1->getNode(0, ent, ele, nod, xyz[0][nod], xyz[1][nod], xyz[2][nod]);
       for(int i = 0; i < 3; i++){
-	for(int nod = 0; nod < numNodes; nod++){
-	  outmin->push_back(xyz[i][nod]);
-	  outmid->push_back(xyz[i][nod]);
-	  outmax->push_back(xyz[i][nod]);
-	}
+        for(int nod = 0; nod < numNodes; nod++){
+          outmin->push_back(xyz[i][nod]);
+          outmid->push_back(xyz[i][nod]);
+          outmax->push_back(xyz[i][nod]);
+        }
       }
       for(int step = 0; step < data1->getNumTimeSteps(); step++){
-	for(int nod = 0; nod < numNodes; nod++){
-	  double val[9];
-	  for(int comp = 0; comp < numComp; comp++)
-	    data1->getValue(step, ent, ele, nod, comp, val[comp]);
-	  double wr[3], wi[3], B[9];
-	  if(!EigSolve3x3(val, wr, wi, B))
-	    Msg::Error("Eigensolver failed to converge");
-	  nbcomplex += nonzero(wi); 
-	  if(!scale) wr[0] = wr[1] = wr[2] = 1.;
-	  for(int i = 0; i < 3; i++){
-	    double res;
-	    // wrong if there are complex eigenvals (B contains both
-	    // real and imag parts: cf. explanation in EigSolve.cpp)
-	    res = wr[0] * B[i]; outmin->push_back(res);
-	    res = wr[1] * B[3 + i]; outmid->push_back(res);
-	    res = wr[2] * B[6 + i]; outmax->push_back(res);
-	  }
-	}
+        for(int nod = 0; nod < numNodes; nod++){
+          double val[9];
+          for(int comp = 0; comp < numComp; comp++)
+            data1->getValue(step, ent, ele, nod, comp, val[comp]);
+          double wr[3], wi[3], B[9];
+          if(!EigSolve3x3(val, wr, wi, B))
+            Msg::Error("Eigensolver failed to converge");
+          nbcomplex += nonzero(wi); 
+          if(!scale) wr[0] = wr[1] = wr[2] = 1.;
+          for(int i = 0; i < 3; i++){
+            double res;
+            // wrong if there are complex eigenvals (B contains both
+            // real and imag parts: cf. explanation in EigSolve.cpp)
+            res = wr[0] * B[i]; outmin->push_back(res);
+            res = wr[1] * B[3 + i]; outmid->push_back(res);
+            res = wr[2] * B[6 + i]; outmax->push_back(res);
+          }
+        }
       }
     }
   }

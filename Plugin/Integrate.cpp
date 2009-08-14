@@ -81,24 +81,24 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
     bool simpleSum = false;
     for(int ent = 0; ent < data1->getNumEntities(step); ent++){
       for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
-	if(data1->skipElement(step, ent, ele)) continue;
-	int numComp = data1->getNumComponents(step, ent, ele);
-	int numEdges = data1->getNumEdges(step, ent, ele);
-	bool scalar = (numComp == 1);
-	bool circulation = (numComp == 3 && numEdges == 1);
-	bool flux = (numComp == 3 && (numEdges == 3 || numEdges == 4));
-	int numNodes = data1->getNumNodes(step, ent, ele);
-	int dim = data1->getDimension(step, ent, ele);
-	double x[8], y[8], z[8], val[8 * 3];
-	for(int nod = 0; nod < numNodes; nod++){
-	  data1->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
-	  for(int comp = 0; comp < numComp; comp++)
-	    data1->getValue(step, ent, ele, nod, comp, val[numComp * nod + comp]);
-	}
+        if(data1->skipElement(step, ent, ele)) continue;
+        int numComp = data1->getNumComponents(step, ent, ele);
+        int numEdges = data1->getNumEdges(step, ent, ele);
+        bool scalar = (numComp == 1);
+        bool circulation = (numComp == 3 && numEdges == 1);
+        bool flux = (numComp == 3 && (numEdges == 3 || numEdges == 4));
+        int numNodes = data1->getNumNodes(step, ent, ele);
+        int dim = data1->getDimension(step, ent, ele);
+        double x[8], y[8], z[8], val[8 * 3];
+        for(int nod = 0; nod < numNodes; nod++){
+          data1->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
+          for(int comp = 0; comp < numComp; comp++)
+            data1->getValue(step, ent, ele, nod, comp, val[numComp * nod + comp]);
+        }
         if(numNodes == 1){
           simpleSum = true;
           res += val[0];
-	  for(int comp = 0; comp < numComp; comp++)          
+          for(int comp = 0; comp < numComp; comp++)          
             resv[comp] += val[comp];
         }
         else{

@@ -152,14 +152,14 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
     p[2] = (PointData*)doc.points[doc.triangles[i].c].data;
     int numComp = 0;
     std::vector<double> *vec = 0;
-    if(p[0]->v.size() == 3 + 9 * numSteps && 
-       p[1]->v.size() == 3 + 9 * numSteps &&
-       p[2]->v.size() == 3 + 9 * numSteps){
+    if((int)p[0]->v.size() == 3 + 9 * numSteps && 
+       (int)p[1]->v.size() == 3 + 9 * numSteps &&
+       (int)p[2]->v.size() == 3 + 9 * numSteps){
       numComp = 9; data2->NbTT++; vec = &data2->TT;
     }
-    else if(p[0]->v.size() == 3 + 3 * numSteps && 
-            p[1]->v.size() == 3 + 3 * numSteps &&
-            p[2]->v.size() == 3 + 3 * numSteps){
+    else if((int)p[0]->v.size() == 3 + 3 * numSteps && 
+            (int)p[1]->v.size() == 3 + 3 * numSteps &&
+            (int)p[2]->v.size() == 3 + 3 * numSteps){
       numComp = 3; data2->NbVT++; vec = &data2->VT;
     }
     else{

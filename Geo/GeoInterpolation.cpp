@@ -13,7 +13,7 @@
 #define SQU(a)      ((a)*(a))
 
 static Vertex InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
-				     int derivee, double t1, double t2)
+                                     int derivee, double t1, double t2)
 {
   Vertex V;
   int i, j;
@@ -86,7 +86,7 @@ static Vertex InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
 
 // interpolation in the parametric space !
 SPoint2 InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
-			       double t1, double t2, gmshSurface *s)
+                               double t1, double t2, gmshSurface *s)
 {
   Vertex V;
   int i, j;
@@ -386,8 +386,8 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
    (1.-u)*c4+u*c2+(1.-v)*c1+v*c3-((1.-u)*(1.-v)*s1+u*(1.-v)*s2+u*v*s3+(1.-u)*v*s4)
 
 static Vertex TransfiniteQua(Vertex c1, Vertex c2, Vertex c3, Vertex c4,
-			     Vertex s1, Vertex s2, Vertex s3, Vertex s4,
-			     double u, double v)
+                             Vertex s1, Vertex s2, Vertex s3, Vertex s4,
+                             double u, double v)
 {
   Vertex V;
 
@@ -409,7 +409,7 @@ static Vertex TransfiniteQua(Vertex c1, Vertex c2, Vertex c3, Vertex c4,
 #define TRAN_TRI(c1,c2,c3,s1,s2,s3,u,v) u*c2+(1.-v)*c1+v*c3-(u*(1.-v)*s2+u*v*s3);
 
 static Vertex TransfiniteTri(Vertex c1, Vertex c2, Vertex c3,
-			     Vertex s1, Vertex s2, Vertex s3, double u, double v)
+                             Vertex s1, Vertex s2, Vertex s3, double u, double v)
 {
   Vertex V;
   V.lc = TRAN_TRI(c1.lc, c2.lc, c3.lc, s1.lc, s2.lc, s3.lc, u, v);
@@ -458,29 +458,29 @@ bool iSRuledSurfaceASphere(Surface *s, SPoint3 &center, double &radius)
     // try to be intelligent (hum)
     for(int i = 0; i < std::min(List_Nbr(s->Generatrices), 4); i++) {
       if(C[i]->Typ != MSH_SEGM_CIRC && C[i]->Typ != MSH_SEGM_CIRC_INV){
-	isSphere = false;
+        isSphere = false;
       }
       else if(isSphere){
-	if(!i){
-	  List_Read(C[i]->Control_Points, 1, &O);
-	  ((double *)center)[0]= O->Pos.X;
-	  ((double *)center)[1]= O->Pos.Y;
-	  ((double *)center)[2]= O->Pos.Z;
-	}
-	else{
-	  Vertex *tmp;
-	  List_Read(C[i]->Control_Points, 1, &tmp);
-	  if(compareVertex(&O, &tmp))
-	    isSphere = false;
-	}
+        if(!i){
+          List_Read(C[i]->Control_Points, 1, &O);
+          ((double *)center)[0]= O->Pos.X;
+          ((double *)center)[1]= O->Pos.Y;
+          ((double *)center)[2]= O->Pos.Z;
+        }
+        else{
+          Vertex *tmp;
+          List_Read(C[i]->Control_Points, 1, &tmp);
+          if(compareVertex(&O, &tmp))
+            isSphere = false;
+        }
       }
     }
   }
   if (isSphere){
     Vertex *p = C[0]->beg;
     radius = sqrt ((p->Pos.X - center.x())+
-		   (p->Pos.Y - center.y())+
-		   (p->Pos.Z - center.z()));
+                   (p->Pos.Y - center.y())+
+                   (p->Pos.Z - center.z()));
   }
 
   return isSphere;
@@ -506,31 +506,31 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
     // try to be intelligent (hum)
     for(int i = 0; i < std::min(List_Nbr(s->Generatrices), 4); i++) {
       if(C[i]->Typ != MSH_SEGM_CIRC && C[i]->Typ != MSH_SEGM_CIRC_INV){
-	isSphere = false;
+        isSphere = false;
       }
       else if(isSphere){
-	if(!i){
-	  List_Read(C[i]->Control_Points, 1, &O);
-	}
-	else{
-	  Vertex *tmp;
-	  List_Read(C[i]->Control_Points, 1, &tmp);
-	  if(compareVertex(&O, &tmp))
-	    isSphere = false;
-	}
+        if(!i){
+          List_Read(C[i]->Control_Points, 1, &O);
+        }
+        else{
+          Vertex *tmp;
+          List_Read(C[i]->Control_Points, 1, &tmp);
+          if(compareVertex(&O, &tmp))
+            isSphere = false;
+        }
       }
     }
     if(isSphere){
       double n[3] = {C[0]->Circle.invmat[0][2],
-		     C[0]->Circle.invmat[1][2],
-		     C[0]->Circle.invmat[2][2]};
+                     C[0]->Circle.invmat[1][2],
+                     C[0]->Circle.invmat[2][2]};
       bool isPlane = true;
       for(int i = 1; i < std::min(List_Nbr(s->Generatrices), 4); i++)
-	isPlane &= (n[0] == C[i]->Circle.invmat[0][2] &&
-		    n[1] == C[i]->Circle.invmat[1][2] &&
-		    n[2] == C[i]->Circle.invmat[2][2]);
+        isPlane &= (n[0] == C[i]->Circle.invmat[0][2] &&
+                    n[1] == C[i]->Circle.invmat[1][2] &&
+                    n[2] == C[i]->Circle.invmat[2][2]);
       if(isPlane)
-	isSphere = false;
+        isSphere = false;
     }
   }
   

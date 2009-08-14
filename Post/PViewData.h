@@ -104,9 +104,9 @@ class PViewData {
   // ele-th element in the ent-th entity (if the node has a tag,
   // getNode returns it)
   virtual int getNode(int step, int ent, int ele, int nod, 
-		      double &x, double &y, double &z) = 0;
+                      double &x, double &y, double &z) = 0;
   virtual void setNode(int step, int ent, int ele, int nod,
-		       double x, double y, double z);
+                       double x, double y, double z);
   virtual void tagNode(int step, int ent, int ele, int nod, int tag){}
 
   // return the number of componts available for the ele-th element in
@@ -157,7 +157,7 @@ class PViewData {
   // check if we should skip the given entity/element
   virtual bool skipEntity(int step, int ent){ return false; }
   virtual bool skipElement(int step, int ent, int ele,
-			   bool checkVisibility=false){ return false; }
+                           bool checkVisibility=false){ return false; }
 
   // check if the data has the given step/partition/etc.
   virtual bool hasTimeStep(int step){ return step < getNumTimeSteps(); }

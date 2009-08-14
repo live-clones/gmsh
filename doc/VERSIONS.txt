@@ -1,9 +1,10 @@
-$Id: VERSIONS.txt,v 1.47 2009-07-06 05:44:25 geuzaine Exp $
+$Id: VERSIONS.txt,v 1.48 2009-08-14 08:25:37 geuzaine Exp $
 
-2.4.0 (?): optionally copy transfinite mesh contraints during geometry
-transformations; bumped mesh version format to 2.1 (small change in
-the $PhysicalNames section, where the group dimension is now
-required); ported most plugins to the new post-processing API.
+2.4.0 (?): switched build system to CMake; optionally copy transfinite
+mesh contraints during geometry transformations; bumped mesh version
+format to 2.1 (small change in the $PhysicalNames section, where the
+group dimension is now required); ported most plugins to the new
+post-processing API.
 
 2.3.1 (Mar 18, 2009): removed GSL dependency (Gmsh now simply uses
 Blas and Lapack); new per-window visibility; added support for

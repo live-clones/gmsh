@@ -98,7 +98,7 @@ class smooth_normals{
   float tol;
   std::set<xyzn, lessthanxyzn> c;  
  public:
-  smooth_normals(double angle) : tol(angle) {}
+  smooth_normals(double angle) : tol((float)angle) {}
   void add(double x, double y, double z, double nx, double ny, double nz);
   bool get(double x, double y, double z, double &nx, double &ny, double &nz);
 };

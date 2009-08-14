@@ -156,9 +156,9 @@ PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T *intlist, List_T *b
     for(int i = 0; i < 4; i++) {
       p->Boundaries[i] = List_Create(List_Nbr(bndlist[i]), 1, sizeof(int));
       for(int j = 0; j < List_Nbr(bndlist[i]); j++) {
-	int k;
-	List_Read(bndlist[i], j, &k);
-	List_Add(p->Boundaries[i], &k);
+        int k;
+        List_Read(bndlist[i], j, &k);
+        List_Add(p->Boundaries[i], &k);
       }
     }
   }
@@ -358,7 +358,7 @@ void End_Curve(Curve *c)
     else if(!v[3] && fabs((R - R2) / (R + R2)) > 0.1){
       // check cocircular pts (allow 10% error)
       Msg::Error("Control points of Circle %d are not cocircular %g %g",
-		 c->Num, R, R2);
+                 c->Num, R, R2);
     }
 
     // A1 = angle first pt
@@ -719,7 +719,7 @@ int NEWREG(void)
 }
 
 static int compare2Lists(List_T *List1, List_T *List2,
-			 int (*fcmp) (const void *a, const void *b))
+                         int (*fcmp) (const void *a, const void *b))
 {
   int i, found;
 
@@ -1410,7 +1410,7 @@ static void SetTranslationMatrix(double matrix[4][4], double T[3])
 }
 
 static void SetSymmetryMatrix(double matrix[4][4], double A, double B, double C,
-			      double D)
+                              double D)
 {
   double F = -2.0 / (A * A + B * B + C * C);
   matrix[0][0] = 1. + A * A * F;
@@ -1544,6 +1544,7 @@ static void vecmat4x4(double mat[4][4], double vec[4], double res[4])
   }
 }
 
+#if 0
 static void printCurve(Curve *c)
 {
   Vertex *v;
@@ -1552,7 +1553,7 @@ static void printCurve(Curve *c)
   for(int i = 0; i < N; i++) {
     List_Read(c->Control_Points, i, &v);
     Msg::Debug("Vertex %d (%g,%g,%g,%g)", v->Num, v->Pos.X, v->Pos.Y,
-	       v->Pos.Z, v->lc);
+               v->Pos.Z, v->lc);
   }
 }
 
@@ -1567,9 +1568,10 @@ static void printSurface(Surface *s)
     printCurve(c);
   }
 }
+#endif
 
 static void ApplyTransformationToPoint(double matrix[4][4], Vertex *v,
-				       bool end_curve_surface=false)
+                                       bool end_curve_surface=false)
 {
   double pos[4], vec[4];
 
@@ -1707,7 +1709,7 @@ static void ApplicationOnShapes(double matrix[4][4], List_T *shapes)
       break;
     default:
       Msg::Error("Impossible to transform entity %d (of type %d)", O.Num,
-		 O.Type);
+                 O.Type);
       break;
     }
   }
@@ -1862,7 +1864,7 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary)
       break;
     default:
       Msg::Error("Impossible to take boundary of entity %d (of type %d)", O.Num,
-		 O.Type);
+                 O.Type);
       break;
     }
   }
@@ -1902,11 +1904,11 @@ void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams *e)
 }
 
 static int Extrude_ProtudePoint(int type, int ip,
-				double T0, double T1, double T2,
-				double A0, double A1, double A2,
-				double X0, double X1, double X2, double alpha,
-				Curve **pc, Curve **prc, int final, 
-				ExtrudeParams *e)
+                                double T0, double T1, double T2,
+                                double A0, double A1, double A2,
+                                double X0, double X1, double X2, double alpha,
+                                Curve **pc, Curve **prc, int final, 
+                                ExtrudeParams *e)
 {
   double matrix[4][4], T[3], Ax[3], d;
   Vertex V, *pv, *newp, *chapeau;
@@ -2066,11 +2068,11 @@ static int Extrude_ProtudePoint(int type, int ip,
 }
 
 static int Extrude_ProtudeCurve(int type, int ic,
-				double T0, double T1, double T2,
-				double A0, double A1, double A2,
-				double X0, double X1, double X2, double alpha,
-				Surface **ps, int final, 
-				ExtrudeParams *e)
+                                double T0, double T1, double T2,
+                                double A0, double A1, double A2,
+                                double X0, double X1, double X2, double alpha,
+                                Surface **ps, int final, 
+                                ExtrudeParams *e)
 {
   double matrix[4][4], T[3], Ax[3];
   Curve *CurveBeg, *CurveEnd;
@@ -2226,10 +2228,10 @@ static int Extrude_ProtudeCurve(int type, int ic,
 }
 
 static int Extrude_ProtudeSurface(int type, int is,
-				  double T0, double T1, double T2,
-				  double A0, double A1, double A2,
-				  double X0, double X1, double X2, double alpha,
-				  Volume **pv, ExtrudeParams *e)
+                                  double T0, double T1, double T2,
+                                  double A0, double A1, double A2,
+                                  double X0, double X1, double X2, double alpha,
+                                  Volume **pv, ExtrudeParams *e)
 {
   double matrix[4][4], T[3], Ax[3];
   Curve *c, *c2;
@@ -2524,7 +2526,7 @@ void ExtrudeShapes(int type, List_T *list_in,
       break;
     default:
       Msg::Error("Impossible to extrude entity %d (of type %d)",
-		 shape.Num, shape.Type);
+                 shape.Num, shape.Type);
       break;
     }
   }
@@ -2936,17 +2938,17 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2])
     for (int i = 0; i < NSAMPLES; i++){
       const double U = i / (double)(NSAMPLES - 1);
       for (int j = 0; j < NSAMPLES; j++){
-	const double V = j / (double)(NSAMPLES - 1);
-	Vertex pp = InterpolateSurface(s, U, V, 0, 0);
-	double d2 =
+        const double V = j / (double)(NSAMPLES - 1);
+        Vertex pp = InterpolateSurface(s, U, V, 0, 0);
+        double d2 =
           (pp.Pos.X - p.Pos.X) * (pp.Pos.X - p.Pos.X) + 
-	  (pp.Pos.Y - p.Pos.Y) * (pp.Pos.Y - p.Pos.Y) + 
-	  (pp.Pos.Z - p.Pos.Z) * (pp.Pos.Z - p.Pos.Z);
-	if (d2 < dmin) {
-	  dmin = d2;
-	  uok = U;
-	  vok = V;
-	}
+          (pp.Pos.Y - p.Pos.Y) * (pp.Pos.Y - p.Pos.Y) + 
+          (pp.Pos.Z - p.Pos.Z) * (pp.Pos.Z - p.Pos.Z);
+        if (d2 < dmin) {
+          dmin = d2;
+          uok = U;
+          vok = V;
+        }
       }
     }
     p = InterpolateSurface(s, uok, vok, 0, 0);
@@ -3165,7 +3167,7 @@ void sortEdgesInLoop(int num, List_T *edges)
         if(c2->end == c0->beg) {
           if(List_Nbr(temp)) {
             Msg::Info("Starting subloop %d in Line Loop %d (are you sure about this?)",
-		      ++k, num);
+                      ++k, num);
             c0 = c1 = *(Curve **)List_Pointer(temp, 0);
             List_Add(edges, &c1->Num);
             List_PSuppress(temp, 0);

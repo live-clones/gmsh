@@ -551,9 +551,9 @@ bool newton_fd(void (*func)(gmshVector<double> &, gmshVector<double> &, void *),
      
      bool isZero = false;
      for (int k=0; k<N; k++) {
-	 if (f(k) == 0. ) isZero = true;
-	 else isZero = false;
-	 if (isZero == false) break;
+         if (f(k) == 0. ) isZero = true;
+         else isZero = false;
+         if (isZero == false) break;
        }
      if (isZero) break;
     //printf("**** fffffff0=%g %g %g %g %g %g %g %g %g\n", f(0), f(1), f(2),  f(3), f(4),  f(5), f(6),  f(7), f(8));
@@ -636,20 +636,20 @@ void gmshLineSearch(double (*func)(gmshVector<double> &, void *), void* data,
     else if (f <= fold + ALF*alam*slope) return;
     else {
       if (alam == 1.0)
-	tmplam = -slope/(2.0*(f-fold-slope));
+        tmplam = -slope/(2.0*(f-fold-slope));
       else {
-	rhs1 = f-fold-alam*slope;
-	rhs2=f2-fold2-alam2*slope;
-	const double a=(rhs1/(alam*alam)-rhs2/(alam2*alam2))/(alam-alam2);
-	const double b=(-alam2*rhs1/(alam*alam)+alam*rhs2/(alam2*alam2))/(alam-alam2);
-	if (a == 0.0) tmplam = -slope/(2.0*b);
-	else {
-	  const double disc=b*b-3.0*a*slope;
-	  if (disc<0.0) Msg::Error("Roundoff problem in gmshLineSearch.");
-	  else tmplam=(-b+sqrt(disc))/(3.0*a);
-	}
-	if (tmplam>0.5*alam)
-	  tmplam=0.5*alam;
+        rhs1 = f-fold-alam*slope;
+        rhs2=f2-fold2-alam2*slope;
+        const double a=(rhs1/(alam*alam)-rhs2/(alam2*alam2))/(alam-alam2);
+        const double b=(-alam2*rhs1/(alam*alam)+alam*rhs2/(alam2*alam2))/(alam-alam2);
+        if (a == 0.0) tmplam = -slope/(2.0*b);
+        else {
+          const double disc=b*b-3.0*a*slope;
+          if (disc<0.0) Msg::Error("Roundoff problem in gmshLineSearch.");
+          else tmplam=(-b+sqrt(disc))/(3.0*a);
+        }
+        if (tmplam>0.5*alam)
+          tmplam=0.5*alam;
       }
     }
     alam2=alam;
@@ -660,7 +660,7 @@ void gmshLineSearch(double (*func)(gmshVector<double> &, void *), void* data,
 }
 
 double minimize_grad_fd (double (*func)(gmshVector<double> &, void *),
-		       gmshVector<double> &x, void *data)
+                       gmshVector<double> &x, void *data)
 {
   const int MAXIT = 3;
   const double EPS = 1.e-4;

@@ -37,13 +37,12 @@ void gmshLaplaceTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
       Grads[j][2] = invjac[2][0] * grads[j][0] + invjac[2][1] * grads[j][1] +
         invjac[2][2] * grads[j][2];
     }
-    double pi = 3.14;
-    double K_x= 1.0;
+    double K_x=1.0;
     double K_y=1.0;
     double K_z=1.0;
     for (int j = 0; j < nbNodes; j++){
       for (int k = 0; k <= j; k++){
-	m(j, k) += (K_x*Grads[j][0] * Grads[k][0] +
+        m(j, k) += (K_x*Grads[j][0] * Grads[k][0] +
                     K_y*Grads[j][1] * Grads[k][1] +
                     K_z*Grads[j][2] * Grads[k][2]) * weight * detJ * _diff;
       }
@@ -53,7 +52,6 @@ void gmshLaplaceTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
   for (int j = 0; j < nbNodes; j++)
     for (int k = 0; k < j; k++)
       m(k, j) = m(j, k);
-  
 }
 
 void gmshLaplaceTerm2DParametric::elementMatrix(MElement *e, gmshMatrix<double> &m) const

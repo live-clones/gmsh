@@ -61,7 +61,7 @@ private:
   mutable std::map<MVertex*, SPoint3> _coordinates;
 public:
   gmshDistanceBasedDiffusivity (std::map<MVertex*,SPoint3> &coordinates) 
-    : _current (0),_coordinates(coordinates), comp(0){}
+    : comp(0), _current (0), _coordinates(coordinates) {}
   void setCurrent (MElement *current){ _current = current; }
   void setCompound(int compound){ comp = compound; }
   virtual double operator () (double x, double y, double z) const
@@ -73,7 +73,7 @@ public:
       const SPoint3 p = _coordinates[_current->getVertex(i)];
       value[i] = p[2];
     }
-    double val = _current->interpolate(value, uvw[0], uvw[1], uvw[2]);
+    //double val = _current->interpolate(value, uvw[0], uvw[1], uvw[2]);
     //return 1./(exp(x)+1.e-4);//exp(5*val);
     return 1.0;
     //printf("compiound =%d \n", comp);
@@ -180,12 +180,12 @@ static void computeCGKernelPolygon(std::map<MVertex*,SPoint3> &coordinates, std:
             c=(y4-y3)/(x4-x3);
             b=y1-a*x1;
             d=y3-c*x3;
-            if (std::abs(a-c) > 1.e-5 & x2!=x1 & x4 !=x3 & jnext != i){
+            if (std::abs(a-c) > 1.e-5 && x2!=x1 && x4 !=x3 && jnext != i){
                 x=(d-b)/(a-c);
                 y=a*x+b;
                 bool exist= false;
-                for (int k= 1; k < setP.size(); k++){
-                    if (x  == u(k,0) & y == u(k,1)) exist = true;
+                for (unsigned int k= 1; k < setP.size(); k++){
+                    if (x  == u(k,0) && y == u(k,1)) exist = true;
 		}
 		if (!exist){
 		  //printf("---> intersection (%d)=%g %g %g %g\n", N, x, y, a, c);
@@ -255,8 +255,6 @@ static void myPolygon(std::vector<MElement*> &vTri, std::vector<MVertex*> &vPoly
     MTriangle *t = (MTriangle*) vTri[i];
     for (int iEdge = 0; iEdge < 3; iEdge++) {
       MEdge tmp_edge =  t->getEdge(iEdge);
-      MVertex *vB = tmp_edge.getVertex(0);
-      MVertex *vE = tmp_edge.getVertex(1);
       if (std::find(ePoly.begin(), ePoly.end(), tmp_edge) == ePoly.end())
 	ePoly.push_back(tmp_edge);
       else
@@ -312,9 +310,8 @@ bool GFaceCompound::trivial() const {
 
 bool GFaceCompound::checkOrientation() const
 {
-  double U1, V1, U2,V2, U3,V3;
   std::list<GFace*>::const_iterator it = _compound.begin();
-  double a_old, a_new;
+  double a_old = 0, a_new;
   bool oriented = true;
   int iter = 0;
   for ( ; it != _compound.end(); ++it){
@@ -357,8 +354,8 @@ bool GFaceCompound::checkCavity(std::vector<MElement*> &vTri) const{
   
   bool badCavity = false;
   
-  int nbV = vTri.size();
-  double a_old, a_new;
+  unsigned int nbV = vTri.size();
+  double a_old = 0, a_new;
   for (unsigned int i = 0; i < nbV; ++i){
     MTriangle *t = (MTriangle*) vTri[i];
     SPoint3 v1 = coordinates[t->getVertex(0)];
@@ -708,7 +705,7 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
       int j = 0;
       tL=tB;
       bool found = false;
-      while (j < ge->mesh_vertices.size()){
+      while (j < (int)ge->mesh_vertices.size()){
 	vR = ge->mesh_vertices[j];
 	vR->getParameter(0,tR);
 	if (!vR->getParameter(0,tR)) {
@@ -751,6 +748,8 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
       return SPoint2(uloc,vloc);
     }
   }
+  // never here
+  return SPoint2(0, 0);
 }
 
 void GFaceCompound::parametrize(iterationStep step) const
@@ -1018,7 +1017,7 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
   }
 
   parametrize();
-  double U,V,UDU,UDV,VDU,VDV;
+  double U,V;
   GFaceCompoundTriangle *lt;
   getTriangle (param.x(), param.y(), &lt, U,V);
   if (!lt)
@@ -1269,9 +1268,9 @@ void GFaceCompound::printStuff() const
 	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
 	      t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
 	      it0->second.x(),it1->second.x(),it2->second.x());
-      double K1 = curvature(t,it0->second.x(),it0->second.y());
-      double K2 = curvature(t,it1->second.x(),it1->second.y());
-      double K3 = curvature(t,it2->second.x(),it2->second.y());
+      //double K1 = curvature(t,it0->second.x(),it0->second.y());
+      //double K2 = curvature(t,it1->second.x(),it1->second.y());
+      //double K3 = curvature(t,it2->second.x(),it2->second.y());
       //      const double K = fabs(curvature (t));
       fprintf(xyzc,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 	      t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),

@@ -31,11 +31,11 @@ IntPt GQQ4[4] = {
 };
 
 const double pq7[7] = {1.142857142857,0.595238095238,0.595238095238,
-		       0.416666666666,0.416666666666,0.416666666666,0.416666666666};
+                       0.416666666666,0.416666666666,0.416666666666,0.416666666666};
 const double xq7[7] = {0.0,-0.683130051064,0.683130051064,0.890654421782,
-		       -0.890654421782,0.374256642286,-0.374256642286};
+                       -0.890654421782,0.374256642286,-0.374256642286};
 const double yq7[7] = {0.0,-0.683130051064,0.683130051064,-0.374256642286,0.374256642286,
-		       -0.890654421782,0.890654421782,};
+                       -0.890654421782,0.890654421782,};
 IntPt GQQ7[7] = {
   { {xq7[0],yq7[0],0},pq7[0] },
   { {xq7[1],yq7[1],0},pq7[1] },
@@ -70,15 +70,15 @@ IntPt GQQ9[9] = {
 const double a16 = 0.861136311594053;
 const double b16 = 0.339981043584856;
 const double xq16[16] = {-a16, -b16, b16, a16, -a16, -b16, b16, a16,  
-		   -a16, -b16, b16, a16, -a16, -b16, b16, a16};
+                   -a16, -b16, b16, a16, -a16, -b16, b16, a16};
 const double yq16[16] = {-a16, -a16, -a16, -a16, -b16, -b16, -b16, -b16,
-			 b16, b16, b16, b16, a16, a16, a16, a16};
+                         b16, b16, b16, b16, a16, a16, a16, a16};
 const double pe2 = 0.347854845137454 * 0.347854845137454;
 const double pf2 = 0.652145154862546 * 0.652145154862546;
 const double pef = 0.347854845137454 * 0.652145154862546;
 
 double pq16[16] = { pe2, pef,  pef, pe2, pef, pf2, pf2, pef, 
-		    pef, pf2, pf2, pef, pe2, pef, pef, pe2};
+                    pef, pf2, pf2, pef, pe2, pef, pef, pe2};
 
 IntPt GQQ16[16] = {
   { {xq16[0],yq16[0],0},pq16[0] },
@@ -121,13 +121,13 @@ IntPt *getGQQPts(int order)
       GQQ[index] = new IntPt[n*n];
       int k = 0;
       for(int i=0; i < n; i++) {
-	for(int j=0; j < n; j++) {
-	  GQQ[index][k].pt[0] = pt[i];
-	  GQQ[index][k].pt[1] = pt[j];
-	  GQQ[index][k].pt[2] = 0.0;
-	  GQQ[index][k++].weight = wt[i]*wt[j];
-	  //	  printf ("%f %f %f\n",pt[i],pt[j],wt[i]*wt[j]);
-	}
+        for(int j=0; j < n; j++) {
+          GQQ[index][k].pt[0] = pt[i];
+          GQQ[index][k].pt[1] = pt[j];
+          GQQ[index][k].pt[2] = 0.0;
+          GQQ[index][k++].weight = wt[i]*wt[j];
+          //      printf ("%f %f %f\n",pt[i],pt[j],wt[i]*wt[j]);
+        }
       }
     }
   return GQQ[index];

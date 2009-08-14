@@ -121,7 +121,7 @@ bool smooth_data::exportview(std::string filename)
 
 // Normal smoother
 
-float xyzn::eps = 1.e-6;
+float xyzn::eps = 1.e-6F;
 
 float xyzn::angle(int i, char nx, char ny, char nz)
 {
@@ -160,7 +160,7 @@ void xyzn::update(char nx, char ny, char nz, float tol)
       // single point...
       if(n[i].nb < 100){
         float c1 = (float)(n[i].nb) / (float)(n[i].nb + 1);
-        float c2 = 1. / (float)(n[i].nb + 1);
+        float c2 = 1.0F / (float)(n[i].nb + 1);
         n[i].nx = (char)(c1 * n[i].nx + c2 * nx);
         n[i].ny = (char)(c1 * n[i].ny + c2 * ny);
         n[i].nz = (char)(c1 * n[i].nz + c2 * nz);
@@ -178,30 +178,37 @@ void xyzn::update(char nx, char ny, char nz, float tol)
 void smooth_normals::add(double x, double y, double z,
                          double nx, double ny, double nz)
 {
-  xyzn xyz(x, y, z);
+  xyzn xyz((float)x, (float)y, (float)z);
   std::set<xyzn, lessthanxyzn>::const_iterator it = c.find(xyz);
   if(it == c.end()) {
-    xyz.update(float2char(nx), float2char(ny), float2char(nz), tol);
+    xyz.update(float2char((float)nx), 
+               float2char((float)ny),
+               float2char((float)nz), tol);
     c.insert(xyz);
   }
   else {
     // we can do this because we know that it will not destroy the set
     // ordering
     xyzn *p = (xyzn *) & (*it);
-    p->update(float2char(nx), float2char(ny), float2char(nz), tol);
+    p->update(float2char((float)nx), 
+              float2char((float)ny), 
+              float2char((float)nz), tol);
   }    
 }
 
 bool smooth_normals::get(double x, double y, double z,
                          double &nx, double &ny, double &nz)
 {
-  std::set<xyzn, lessthanxyzn>::const_iterator it = c.find(xyzn(x, y, z));
-  if(it == c.end())
-    return false;
+  std::set<xyzn, lessthanxyzn>::const_iterator it = 
+    c.find(xyzn((float)x, (float)y, (float)z));
+
+  if(it == c.end()) return false;
 
   xyzn *p = (xyzn *) & (*it);
   for(unsigned int i = 0; i < p->n.size(); i++){
-    if(fabs(p->angle(i, float2char(nx), float2char(ny), float2char(nz))) < tol) {
+    if(fabs(p->angle(i, float2char((float)nx), 
+                     float2char((float)ny),
+                     float2char((float)nz))) < tol) {
       nx = char2float(p->n[i].nx);
       ny = char2float(p->n[i].ny);
       nz = char2float(p->n[i].nz);

@@ -40,7 +40,7 @@ class stepData{
   std::vector<std::vector<double> > _gaussPoints;
  public:
   stepData(GModel *model, int numComp, std::string fileName="", int fileIndex=-1, 
-	   double time=0., double min=VAL_INF, double max=-VAL_INF)
+           double time=0., double min=VAL_INF, double max=-VAL_INF)
     : _model(model), _fileName(fileName), _fileIndex(fileIndex), _time(time), 
       _min(min), _max(max), _numComp(numComp), _data(0)
   {
@@ -78,8 +78,8 @@ class stepData{
     if(allocIfNeeded){
       if(index >= getNumData()) resizeData(index + 100); // optimize this
       if(!(*_data)[index]){
-	(*_data)[index] = new real[_numComp * mult];
-	for(int i = 0; i < _numComp * mult; i++) (*_data)[index][i] = 0.;
+        (*_data)[index] = new real[_numComp * mult];
+        for(int i = 0; i < _numComp * mult; i++) (*_data)[index][i] = 0.;
       }
     }
     else{

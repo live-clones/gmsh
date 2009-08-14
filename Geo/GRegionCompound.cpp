@@ -41,8 +41,8 @@ void GRegionCompound::getBoundingFaces(){
     std::list<GFace*> ed = (*it)->faces();
     std::list<GFace*> :: iterator ite = ed.begin();
     for ( ; ite != ed.end() ; ++ite){
-      if (!(*ite)->degenerate(0) && _touched.count(*ite) == 1) {	
-	_unique.insert(*ite);      }
+      if (!(*ite)->degenerate(0) && _touched.count(*ite) == 1) {        
+        _unique.insert(*ite);      }
     }    
   }    
 

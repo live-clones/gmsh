@@ -80,7 +80,7 @@ void circumCenterMetric(double *pa, double *pb, double *pc,
 }
 
 void circumCenterMetricXYZ(double *p1, double *p2, double *p3, SMetric3 & metric, 
-			   double *res, double *uv, double &radius)
+                           double *res, double *uv, double &radius)
 {
   double v1[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
   double v2[3] = {p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]};
@@ -149,23 +149,23 @@ void buildMetric(GFace *gf, double *uv, SMetric3 & m, double *metric)
   Pair<SVector3, SVector3> der = gf->firstDer(SPoint2(uv[0], uv[1]));
   
   SVector3 x1 (m(0,0) * der.first().x() +
-	       m(1,0) * der.first().y() +
-	       m(2,0) * der.first().z(),
-	       m(0,1) * der.first().x() +
-	       m(1,1) * der.first().y() +
-	       m(2,1) * der.first().z(),
-	       m(0,2) * der.first().x() +
-	       m(1,2) * der.first().y() +
-	       m(2,2) * der.first().z());
+               m(1,0) * der.first().y() +
+               m(2,0) * der.first().z(),
+               m(0,1) * der.first().x() +
+               m(1,1) * der.first().y() +
+               m(2,1) * der.first().z(),
+               m(0,2) * der.first().x() +
+               m(1,2) * der.first().y() +
+               m(2,2) * der.first().z());
   SVector3 x2 (m(0,0) * der.second().x() +
-	       m(1,0) * der.second().y() +
-	       m(2,0) * der.second().z(),
-	       m(0,1) * der.second().x() +
-	       m(1,1) * der.second().y() +
-	       m(2,1) * der.second().z(),
-	       m(0,2) * der.second().x() +
-	       m(1,2) * der.second().y() +
-	       m(2,2) * der.second().z());
+               m(1,0) * der.second().y() +
+               m(2,0) * der.second().z(),
+               m(0,1) * der.second().x() +
+               m(1,1) * der.second().y() +
+               m(2,1) * der.second().z(),
+               m(0,2) * der.second().x() +
+               m(1,2) * der.second().y() +
+               m(2,2) * der.second().z());
 
   metric[0] = dot(x1, der.first());
   metric[1] = dot(x2, der.first());
@@ -414,10 +414,10 @@ bool insertVertex(GFace *gf, MVertex *v, double *param , MTri3 *t,
                   std::set<MTri3*, compareTri3Ptr> &allTets,
                   std::set<MTri3*, compareTri3Ptr> *activeTets,
                   std::vector<double> &vSizes, 
-		  std::vector<double> &vSizesBGM,
-		  std::vector<SMetric3> &vMetricsBGM,
+                  std::vector<double> &vSizesBGM,
+                  std::vector<SMetric3> &vMetricsBGM,
                   std::vector<double> &Us, 
-		  std::vector<double> &Vs,
+                  std::vector<double> &Vs,
                   double *metric = 0)
 {
   std::list<edgeXface> shell;
@@ -452,19 +452,19 @@ bool insertVertex(GFace *gf, MVertex *v, double *param , MTri3 *t,
     MTriangle *t = new MTriangle(it->v[0], it->v[1], v);
     const double ONE_THIRD = 1./3.;
     double lc = ONE_THIRD * (vSizes[t->getVertex(0)->getNum()] +
-			     vSizes[t->getVertex(1)->getNum()] +
-			     vSizes[t->getVertex(2)->getNum()]);
+                             vSizes[t->getVertex(1)->getNum()] +
+                             vSizes[t->getVertex(2)->getNum()]);
     double lcBGM = ONE_THIRD * (vSizesBGM[t->getVertex(0)->getNum()] +
-				vSizesBGM[t->getVertex(1)->getNum()] +
-				vSizesBGM[t->getVertex(2)->getNum()]);
+                                vSizesBGM[t->getVertex(1)->getNum()] +
+                                vSizesBGM[t->getVertex(2)->getNum()]);
     double LL = Extend1dMeshIn2dSurfaces() ? std::min(lc, lcBGM) : lcBGM;
 
     MTri3 *t4;
     if (_experimental_anisotropic_blues_band_){
       SMetric3 metrBGM = interpolation ( vMetricsBGM[t->getVertex(0)->getNum()],
-					 vMetricsBGM[t->getVertex(1)->getNum()],
-					 vMetricsBGM[t->getVertex(2)->getNum()],
-					 ONE_THIRD,ONE_THIRD);
+                                         vMetricsBGM[t->getVertex(1)->getNum()],
+                                         vMetricsBGM[t->getVertex(2)->getNum()],
+                                         ONE_THIRD,ONE_THIRD);
       
       t4 = new MTri3(t, LL,&metrBGM); 
     }
@@ -473,11 +473,11 @@ bool insertVertex(GFace *gf, MVertex *v, double *param , MTri3 *t,
     }
 
     double d1 = sqrt((it->v[0]->x() - v->x()) * (it->v[0]->x() - v->x()) +
- 		     (it->v[0]->y() - v->y()) * (it->v[0]->y() - v->y()) +
- 		     (it->v[0]->z() - v->z()) * (it->v[0]->z() - v->z()));
+                     (it->v[0]->y() - v->y()) * (it->v[0]->y() - v->y()) +
+                     (it->v[0]->z() - v->z()) * (it->v[0]->z() - v->z()));
     double d2 = sqrt((it->v[1]->x() - v->x()) * (it->v[1]->x() - v->x()) +
- 		     (it->v[1]->y() - v->y()) * (it->v[1]->y() - v->y()) +
- 		     (it->v[1]->z() - v->z()) * (it->v[1]->z() - v->z()));
+                     (it->v[1]->y() - v->y()) * (it->v[1]->y() - v->y()) +
+                     (it->v[1]->z() - v->z()) * (it->v[1]->z() - v->z()));
     if (d1 < LL * .25 || d2 < LL * .25) onePointIsTooClose = true;
     
     // if (t4->getRadius () < LIMIT_ / 2) onePointIsTooClose = true;
@@ -501,11 +501,11 @@ bool insertVertex(GFace *gf, MVertex *v, double *param , MTri3 *t,
     allTets.insert(newTris, newTris + shell.size());
     if (activeTets){
       for (std::list<MTri3*>::iterator i = new_cavity.begin(); i != new_cavity.end(); ++i){
-	int active_edge;
-	if(isActive(*i, LIMIT_, active_edge) && (*i)->getRadius() > LIMIT_){
-	  if ((*activeTets).find(*i) == (*activeTets).end())
-	    (*activeTets).insert(*i);
-	}
+        int active_edge;
+        if(isActive(*i, LIMIT_, active_edge) && (*i)->getRadius() > LIMIT_){
+          if ((*activeTets).find(*i) == (*activeTets).end())
+            (*activeTets).insert(*i);
+        }
       }
     }
     delete [] newTris;
@@ -535,34 +535,34 @@ void _printTris(char *name, std::set<MTri3*, compareTri3Ptr> &AllTris,
     MTri3 *worst = *it;
     if (!worst->isDeleted()){
       if (param)
-	fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
-		Us [(worst)->tri()->getVertex(0)->getNum()],
-		Vs [(worst)->tri()->getVertex(0)->getNum()],
-		0.0,
-		Us [(worst)->tri()->getVertex(1)->getNum()],
-		Vs [(worst)->tri()->getVertex(1)->getNum()],
-		0.0,
-		Us [(worst)->tri()->getVertex(2)->getNum()],
-		Vs [(worst)->tri()->getVertex(2)->getNum()],
-		0.0,
-		(worst)->getRadius(),
-		(worst)->getRadius(),
-		(worst)->getRadius());
+        fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
+                Us [(worst)->tri()->getVertex(0)->getNum()],
+                Vs [(worst)->tri()->getVertex(0)->getNum()],
+                0.0,
+                Us [(worst)->tri()->getVertex(1)->getNum()],
+                Vs [(worst)->tri()->getVertex(1)->getNum()],
+                0.0,
+                Us [(worst)->tri()->getVertex(2)->getNum()],
+                Vs [(worst)->tri()->getVertex(2)->getNum()],
+                0.0,
+                (worst)->getRadius(),
+                (worst)->getRadius(),
+                (worst)->getRadius());
       else
-	fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
-		(worst)->tri()->getVertex(0)->x(),
-		(worst)->tri()->getVertex(0)->y(),
-		(worst)->tri()->getVertex(0)->z(),
-		(worst)->tri()->getVertex(1)->x(),
-		(worst)->tri()->getVertex(1)->y(),
-		(worst)->tri()->getVertex(1)->z(),
-		(worst)->tri()->getVertex(2)->x(),
-		(worst)->tri()->getVertex(2)->y(),
-		(worst)->tri()->getVertex(2)->z(),
-		(worst)->getRadius(),
-		(worst)->getRadius(),
-		(worst)->getRadius()
-		);
+        fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
+                (worst)->tri()->getVertex(0)->x(),
+                (worst)->tri()->getVertex(0)->y(),
+                (worst)->tri()->getVertex(0)->z(),
+                (worst)->tri()->getVertex(1)->x(),
+                (worst)->tri()->getVertex(1)->y(),
+                (worst)->tri()->getVertex(1)->z(),
+                (worst)->tri()->getVertex(2)->x(),
+                (worst)->tri()->getVertex(2)->y(),
+                (worst)->tri()->getVertex(2)->z(),
+                (worst)->getRadius(),
+                (worst)->getRadius(),
+                (worst)->getRadius()
+                );
     }
     ++it;
   }
@@ -571,17 +571,17 @@ void _printTris(char *name, std::set<MTri3*, compareTri3Ptr> &AllTris,
 }
 
 static void insertAPoint(GFace *gf,
-			 std::set<MTri3*,compareTri3Ptr>::iterator it, 
-			 double center[2],
-			 double metric[3], 
-			 std::vector<double> &Us, 
-			 std::vector<double> &Vs,
-			 std::vector<double> &vSizes, 
-			 std::vector<double> &vSizesBGM,
-			 std::vector<SMetric3> &vMetricsBGM,
-			 std::set<MTri3*,compareTri3Ptr> &AllTris,
-			 std::set<MTri3*,compareTri3Ptr> * ActiveTris = 0,
-			 MTri3 *worst = 0){
+                         std::set<MTri3*,compareTri3Ptr>::iterator it, 
+                         double center[2],
+                         double metric[3], 
+                         std::vector<double> &Us, 
+                         std::vector<double> &Vs,
+                         std::vector<double> &vSizes, 
+                         std::vector<double> &vSizesBGM,
+                         std::vector<SMetric3> &vMetricsBGM,
+                         std::set<MTri3*,compareTri3Ptr> &AllTris,
+                         std::set<MTri3*,compareTri3Ptr> * ActiveTris = 0,
+                         MTri3 *worst = 0){
   if (worst){
     it = AllTris.find(worst);
     if (worst != *it){
@@ -593,7 +593,7 @@ static void insertAPoint(GFace *gf,
 
   MTri3 *ptin = 0;
   double uv[2];
-  MTriangle *base = worst->tri();
+  //MTriangle *base = worst->tri();
   bool inside = invMapUV(worst->tri(), center, Us, Vs, uv, 1.e-8);    
   if (inside)ptin = worst;
   if (!inside && worst->getNeigh(0)){
@@ -617,8 +617,8 @@ static void insertAPoint(GFace *gf,
     MVertex *v = new MFaceVertex(p.x(), p.y(), p.z(), gf, center[0], center[1]);
     v->setNum(Us.size());
     double lc1 = ((1. - uv[0] - uv[1]) * vSizes[ptin->tri()->getVertex(0)->getNum()] + 
-    		  uv[0] * vSizes [ptin->tri()->getVertex(1)->getNum()] + 
-    		  uv[1] * vSizes [ptin->tri()->getVertex(2)->getNum()]); 
+                  uv[0] * vSizes [ptin->tri()->getVertex(1)->getNum()] + 
+                  uv[1] * vSizes [ptin->tri()->getVertex(2)->getNum()]); 
     double lc = BGM_MeshSize(gf,center[0],center[1],p.x(),p.y(),p.z());
     //SMetric3 metr = BGM_MeshMetric(gf,center[0],center[1],p.x(),p.y(),p.z());
     //    vMetricsBGM.push_back(metr);
@@ -628,11 +628,11 @@ static void insertAPoint(GFace *gf,
     Vs.push_back(center[1]);
     
     if (!p.succeeded() || !insertVertex(gf, v, center, worst, AllTris,ActiveTris, vSizes, vSizesBGM,vMetricsBGM, 
-					Us, Vs, metric) ) {
+                                        Us, Vs, metric) ) {
       //      Msg::Debug("2D Delaunay : a cavity is not star shaped");
       AllTris.erase(it);
       worst->forceRadius(-1);
-      AllTris.insert(worst);		        
+      AllTris.insert(worst);                    
       delete v;
     }
     else {
@@ -641,14 +641,14 @@ static void insertAPoint(GFace *gf,
   }
   else {
     /*    Msg::Debug("Point %g %g is outside (%g %g , %g %g , %g %g) (metric %g %g %g)",
-	center[0], center[1],
-	Us[base->getVertex(0)->getNum()], 
-	Vs[base->getVertex(0)->getNum()], 
-	Us[base->getVertex(1)->getNum()], 
-	Vs[base->getVertex(1)->getNum()], 
-	Us[base->getVertex(2)->getNum()], 
-	Vs[base->getVertex(2)->getNum()], 
-	metric[0], metric[1], metric[2]);*/
+        center[0], center[1],
+        Us[base->getVertex(0)->getNum()], 
+        Vs[base->getVertex(0)->getNum()], 
+        Us[base->getVertex(1)->getNum()], 
+        Vs[base->getVertex(1)->getNum()], 
+        Us[base->getVertex(2)->getNum()], 
+        Vs[base->getVertex(2)->getNum()], 
+        metric[0], metric[1], metric[2]);*/
     AllTris.erase(it);
     worst->forceRadius(0);
     AllTris.insert(worst);
@@ -678,8 +678,8 @@ void gmshBowyerWatson(GFace *gf)
     }
     else{
       if(ITER++ % 5000 == 0)
-	Msg::Debug("%7d points created -- Worst tri radius is %8.3f",
-	    vSizes.size(), worst->getRadius());
+        Msg::Debug("%7d points created -- Worst tri radius is %8.3f",
+            vSizes.size(), worst->getRadius());
       double center[2],metric[3],r2;
       if (worst->getRadius() < 0.5 * sqrt(2.0)) break;
       circUV(worst->tri(), Us, Vs, center, gf);
@@ -723,8 +723,8 @@ void gmshBowyerWatson(GFace *gf)
 static double length_metric ( const double p[2], const double q[2], const double metric[3])
 {
   return sqrt (   (p[0]-q[0]) * metric [0] * (p[0]-q[0]) +
-		2*(p[0]-q[0]) * metric [1] * (p[1]-q[1]) +
-		  (p[1]-q[1]) * metric [2] * (p[1]-q[1]) );
+                2*(p[0]-q[0]) * metric [1] * (p[1]-q[1]) +
+                  (p[1]-q[1]) * metric [2] * (p[1]-q[1]) );
 }
 
 /*
@@ -800,18 +800,18 @@ void gmshBowyerWatsonFrontal(GFace *gf)
     if (!worst->isDeleted() && isActive(worst, LIMIT_, active_edge) && 
         worst->getRadius() > LIMIT_){
       if(ITER++ % 5000 == 0)
-	Msg::Debug("%7d points created -- Worst tri radius is %8.3f",
-	    vSizes.size(), worst->getRadius());
+        Msg::Debug("%7d points created -- Worst tri radius is %8.3f",
+            vSizes.size(), worst->getRadius());
       // compute circum center of that guy
       double center[2],metric[3],r2;
       MTriangle *base = worst->tri();
       circUV(base, Us, Vs, center, gf);
       double pa[2] = {(Us[base->getVertex(0)->getNum()] + 
-		       Us[base->getVertex(1)->getNum()] + 
-		       Us[base->getVertex(2)->getNum()]) / 3.,
-		      (Vs[base->getVertex(0)->getNum()] + 
-		       Vs[base->getVertex(1)->getNum()] + 
-		       Vs[base->getVertex(2)->getNum()]) / 3.};
+                       Us[base->getVertex(1)->getNum()] + 
+                       Us[base->getVertex(2)->getNum()]) / 3.,
+                      (Vs[base->getVertex(0)->getNum()] + 
+                       Vs[base->getVertex(1)->getNum()] + 
+                       Vs[base->getVertex(2)->getNum()]) / 3.};
       buildMetric(gf, pa, metric);
       circumCenterMetric(worst->tri(), metric, Us, Vs, center, r2); 
       // compute the middle point of the edge
@@ -819,11 +819,11 @@ void gmshBowyerWatsonFrontal(GFace *gf)
       int ip2 = active_edge;
       // printf("the active edge is %d : %g %g -> %g %g\n",
       //        active_edge,base->getVertex(ip1)->x(),base->getVertex(ip1)->y(),
-      // 	base->getVertex(ip2)->x(),base->getVertex(ip2)->y());
+      //        base->getVertex(ip2)->x(),base->getVertex(ip2)->y());
       double P[2] =  {Us[base->getVertex(ip1)->getNum()],  
-		      Vs[base->getVertex(ip1)->getNum()]};
+                      Vs[base->getVertex(ip1)->getNum()]};
       double Q[2] =  {Us[base->getVertex(ip2)->getNum()], 
-		      Vs[base->getVertex(ip2)->getNum()]};
+                      Vs[base->getVertex(ip2)->getNum()]};
       double midpoint[2] = {0.5 * (P[0] + Q[0]), 0.5 * (P[1] + Q[1])};
       
       // now we have the edge center and the center of the circumcircle, 

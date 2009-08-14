@@ -225,8 +225,8 @@ OctreePost::OctreePost(PView *v)
     SBoundingBox3d bb = _theViewDataList->getBoundingBox();
     double min[3] = {bb.min().x(), bb.min().y(), bb.min().z()};
     double size[3] = {bb.max().x() - bb.min().x(),
-		      bb.max().y() - bb.min().y(),
-		      bb.max().z() - bb.min().z()};                   
+                      bb.max().y() - bb.min().y(),
+                      bb.max().z() - bb.min().z()};                   
     const int maxElePerBucket = 100; // memory vs. speed trade-off
     
     PViewDataList *l = _theViewDataList;
@@ -334,7 +334,7 @@ bool OctreePost::_getValue(void *in, int dim, int nbNod, int nbComp,
 } 
 
 bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
-			   double *values, double *elementSize)
+                           double *values, double *elementSize)
 {
   if(!in) return false;
 
@@ -359,7 +359,7 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
       for(int nod = 0; nod < e->getNumVertices(); nod++){
         for(int comp = 0; comp < nbComp; comp++){
           if(!_theViewDataGModel->getValueByIndex(step, dataIndex[nod], nod, comp, 
-						  nodeval[nod * nbComp + comp]))
+                                                  nodeval[nod * nbComp + comp]))
             return false;
         }
       }

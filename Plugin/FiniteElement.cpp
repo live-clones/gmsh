@@ -192,7 +192,7 @@ PView *GMSH_FiniteElementPlugin::execute(PView *v)
     for (unsigned int i = 0; i < vertices.size(); i++)
       data[vertices[i]->getNum()].push_back
         (s.myAssembler->getDofValue(vertices[i], 0, 1));
-    PView *pv = new PView("projection", "NodeData", m, data, 0.);
+    new PView("projection", "NodeData", m, data, 0.);
   }
   else if(equation == "Laplace"){
     solver<double> s;
@@ -205,7 +205,7 @@ PView *GMSH_FiniteElementPlugin::execute(PView *v)
     for (unsigned int i = 0; i < vertices.size(); i++)
       data[vertices[i]->getNum()].push_back
         (s.myAssembler->getDofValue(vertices[i], 0, 1));
-    PView *pv = new PView("laplace", "NodeData", m, data, 0.);
+    new PView("laplace", "NodeData", m, data, 0.);
   }
   else if(equation == "Helmholtz"){
     solver<std::complex<double> > s;

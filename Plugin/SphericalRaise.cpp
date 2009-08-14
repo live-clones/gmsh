@@ -93,9 +93,9 @@ PView *GMSH_SphericalRaisePlugin::execute(PView *v)
   for(int step = 0; step < data1->getNumTimeSteps(); step++){
     for(int ent = 0; ent < data1->getNumEntities(step); ent++){
       for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
-	if(data1->skipElement(step, ent, ele)) continue;
-	for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
-	  data1->tagNode(step, ent, ele, nod, 0);
+        if(data1->skipElement(step, ent, ele)) continue;
+        for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
+          data1->tagNode(step, ent, ele, nod, 0);
       }
     }
   }
@@ -104,25 +104,25 @@ PView *GMSH_SphericalRaisePlugin::execute(PView *v)
   for(int step = 0; step < data1->getNumTimeSteps(); step++){
     for(int ent = 0; ent < data1->getNumEntities(step); ent++){
       for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
-	if(data1->skipElement(step, ent, ele)) continue;
-	for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++){
-	  double x, y, z;
-	  int tag = data1->getNode(step, ent, ele, nod, x, y, z);
-	  if(!tag){
-	    double r[3], val;
-	    r[0] = x - center[0];
-	    r[1] = y - center[1];
-	    r[2] = z - center[2];
-	    norme(r);
-	    data1->getScalarValue(step, ent, ele, nod, val);
-	    double coef = offset + raise * val;
-	    x += coef * r[0];
-	    y += coef * r[1];
-	    z += coef * r[2];
-	    data1->setNode(step, ent, ele, nod, x, y, z);
-	    data1->tagNode(step, ent, ele, nod, 1);
-	  }
-	}
+        if(data1->skipElement(step, ent, ele)) continue;
+        for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++){
+          double x, y, z;
+          int tag = data1->getNode(step, ent, ele, nod, x, y, z);
+          if(!tag){
+            double r[3], val;
+            r[0] = x - center[0];
+            r[1] = y - center[1];
+            r[2] = z - center[2];
+            norme(r);
+            data1->getScalarValue(step, ent, ele, nod, val);
+            double coef = offset + raise * val;
+            x += coef * r[0];
+            y += coef * r[1];
+            z += coef * r[2];
+            data1->setNode(step, ent, ele, nod, x, y, z);
+            data1->tagNode(step, ent, ele, nod, 1);
+          }
+        }
       }
     }
   }

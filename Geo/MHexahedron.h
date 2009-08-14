@@ -88,9 +88,9 @@ class MHexahedron : public MElement {
   virtual MFace getFace(int num)
   {
     return MFace(_v[faces_hexa(num, 0)],
-		 _v[faces_hexa(num, 1)],
-		 _v[faces_hexa(num, 2)],
-		 _v[faces_hexa(num, 3)]);
+                 _v[faces_hexa(num, 1)],
+                 _v[faces_hexa(num, 2)],
+                 _v[faces_hexa(num, 3)]);
   }
   virtual int getNumFacesRep(){ return 12; }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
@@ -262,13 +262,13 @@ class MHexahedron20 : public MHexahedron {
   virtual MVertex *getVertexMED(int num)
   {
     static const int map[20] = {0, 3, 2, 1, 4, 7, 6, 5, 9, 13, 11, 
-				8, 17, 19, 18, 16, 10, 15, 14, 12};
+                                8, 17, 19, 18, 16, 10, 15, 14, 12};
     return getVertex(map[num]); 
   }
   virtual MVertex *getVertexDIFF(int num)
   {
     static const int map[20] = {2, 3, 7, 6, 0, 1, 5, 4, 9, 18, 12, 
-				19, 14, 11, 15, 13, 8, 16, 17, 10};
+                                19, 14, 11, 15, 13, 8, 16, 17, 10};
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices() const { return 12; }

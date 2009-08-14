@@ -58,7 +58,7 @@ bool PViewDataList::finalize()
 
   // add dummy time values if none (or too few) time values are
   // provided (e.g. using the old parsed format)
-  if(Time.size() < NbTimeStep) {
+  if((int)Time.size() < NbTimeStep) {
     for(int i = Time.size(); i < NbTimeStep; i++)
       Time.push_back(i);
   }
@@ -275,7 +275,7 @@ int PViewDataList::getNumNodes(int step, int ent, int ele)
 }
 
 int PViewDataList::getNode(int step, int ent, int ele, int nod,
-			   double &x, double &y, double &z)
+                           double &x, double &y, double &z)
 {
   if(ele != _lastElement) _setLast(ele);
   x = _lastXYZ[nod];
@@ -285,7 +285,7 @@ int PViewDataList::getNode(int step, int ent, int ele, int nod,
 }
 
 void PViewDataList::setNode(int step, int ent, int ele, int nod, 
-			    double x, double y, double z)
+                            double x, double y, double z)
 {
   if(step) return;
   if(ele != _lastElement) _setLast(ele);
@@ -327,8 +327,8 @@ void PViewDataList::setValue(int step, int ent, int ele, int nod, int comp, doub
   if(ele != _lastElement) _setLast(ele);
   if(step >= NbTimeStep) step = 0;
   _lastVal[step * _lastNumNodes  * _lastNumComponents + 
-	   nod * _lastNumComponents +
-	   comp] = val;
+           nod * _lastNumComponents +
+           comp] = val;
 }
 
 int PViewDataList::getNumEdges(int step, int ent, int ele)
@@ -359,7 +359,7 @@ void PViewDataList::_getString(int dim, int i, int step, std::string &str,
 
   int index, nbchar;
   double *d1 = &td[i * nbd];
-  double *d2 = ((i + 1) * nbd < td.size()) ? &td[(i + 1) * nbd] : 0;
+  double *d2 = ((i + 1) * nbd < (int)td.size()) ? &td[(i + 1) * nbd] : 0;
 
   if(dim == 2) {
     x = d1[0];
@@ -433,10 +433,10 @@ void PViewDataList::revertElement(int step, int ent, int ele)
   for(int step = 0; step < getNumTimeSteps(); step++)
     for(int i = 0; i < _lastNumNodes; i++)
       for(int k = 0; k < _lastNumComponents; k++)
-	_lastVal[_lastNumComponents * _lastNumNodes * step + 
-		 _lastNumComponents * i + k] = 
-	  V[_lastNumComponents * _lastNumNodes * step +
-	    _lastNumComponents * (_lastNumNodes - i - 1) + k];
+        _lastVal[_lastNumComponents * _lastNumNodes * step + 
+                 _lastNumComponents * i + k] = 
+          V[_lastNumComponents * _lastNumNodes * step +
+            _lastNumComponents * (_lastNumNodes - i - 1) + k];
 }
 
 static void generateConnectivities(std::vector<double> &list, int nbList, int nbTimeStep,
@@ -449,7 +449,7 @@ static void generateConnectivities(std::vector<double> &list, int nbList, int nb
     double *x = &list[i];
     double *y = &list[i + nbVert];
     double *z = &list[i + 2 * nbVert];
-    double *v = &list[list, i + 3 * nbVert];
+    double *v = &list[i + 3 * nbVert];
     for(int j = 0; j < nbVert; j++) {
       for(int ts = 0; ts < nbTimeStep; ts++)
         for(int k = 0; k < nbComp; k++)

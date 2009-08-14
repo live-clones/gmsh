@@ -15,7 +15,7 @@ extern "C"
 
 class GMSH_Lambda2Plugin : public GMSH_PostPlugin
 {
-public:
+ public:
   GMSH_Lambda2Plugin();
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *helpText) const;

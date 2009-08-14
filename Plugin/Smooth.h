@@ -15,7 +15,7 @@ extern "C"
 
 class GMSH_SmoothPlugin : public GMSH_PostPlugin
 {
-public:
+ public:
   GMSH_SmoothPlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *help_text) const;

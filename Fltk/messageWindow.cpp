@@ -8,7 +8,7 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
 #include <FL/fl_ask.H>
-#include "GUI.h"
+#include "FlGui.h"
 #include "messageWindow.h"
 #include "paletteWindow.h"
 #include "fileDialogs.h"
@@ -18,20 +18,20 @@
 
 void message_cb(Fl_Widget *w, void *data)
 {
-  GUI::instance()->messages->show();
+  FlGui::instance()->messages->show();
 }
 
 static void message_auto_scroll_cb(Fl_Widget *w, void *data)
 {
-  CTX::instance()->msgAutoScroll = GUI::instance()->messages->butt->value();
+  CTX::instance()->msgAutoScroll = FlGui::instance()->messages->butt->value();
 }
 
 static void message_copy_cb(Fl_Widget *w, void *data)
 {
   std::string buff;
-  for(int i = 1; i <= GUI::instance()->messages->browser->size(); i++) {
-    if(GUI::instance()->messages->browser->selected(i)) {
-      const char *c = GUI::instance()->messages->browser->text(i);
+  for(int i = 1; i <= FlGui::instance()->messages->browser->size(); i++) {
+    if(FlGui::instance()->messages->browser->selected(i)) {
+      const char *c = FlGui::instance()->messages->browser->text(i);
       if(strlen(c) > 5 && c[0] == '@')
         buff += std::string(&c[5]);
       else
@@ -46,7 +46,7 @@ static void message_copy_cb(Fl_Widget *w, void *data)
 
 static void message_clear_cb(Fl_Widget *w, void *data)
 {
-  GUI::instance()->messages->browser->clear();
+  FlGui::instance()->messages->browser->clear();
 }
 
 static void message_save_cb(Fl_Widget *w, void *data)
@@ -60,7 +60,7 @@ static void message_save_cb(Fl_Widget *w, void *data)
                       "Cancel", "Replace", NULL, name.c_str()))
           goto test;
     }
-    GUI::instance()->messages->save(name.c_str());
+    FlGui::instance()->messages->save(name.c_str());
   }
 }
 

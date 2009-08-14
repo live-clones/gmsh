@@ -28,7 +28,7 @@ void add_multline(std::string type, std::vector<int> &p, std::string fileName);
 void add_circ(int p1, int p2, int p3, std::string fileName);
 void add_ell(int p1, int p2, int p3, int p4, std::string fileName);
 void add_field_option(int field_id, std::string option_name, std::string option_value,
-		      std::string fileName);
+                      std::string fileName);
 void add_field(int field_id, std::string type_name, std::string fileName);
 void delete_field(int field_id, std::string fileName);
 void set_background_field(int field_id,std::string fileName);

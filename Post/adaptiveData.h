@@ -107,7 +107,7 @@ class adaptiveQuadrangle {
   static int numNodes, numEdges;
  public:
   adaptiveQuadrangle(adaptivePoint *p1, adaptivePoint *p2, 
-		     adaptivePoint *p3, adaptivePoint *p4)    
+                     adaptivePoint *p3, adaptivePoint *p4)    
     : visible(false)
   {
     p[0] = p1;
@@ -143,7 +143,7 @@ class adaptivePrism {
   static int numNodes, numEdges;
  public:
   adaptivePrism(adaptivePoint *p1, adaptivePoint *p2, 
-		      adaptivePoint *p3, adaptivePoint *p4, 
+                      adaptivePoint *p3, adaptivePoint *p4, 
           adaptivePoint *p5, adaptivePoint *p6)
     : visible(false)
   {
@@ -186,7 +186,7 @@ class adaptiveTetrahedron {
   static int numNodes, numEdges;
  public:
   adaptiveTetrahedron(adaptivePoint *p1, adaptivePoint *p2, 
-		      adaptivePoint *p3, adaptivePoint *p4)
+                      adaptivePoint *p3, adaptivePoint *p4)
     : visible(false)
   {
     p[0] = p1;
@@ -223,8 +223,8 @@ class adaptiveHexahedron {
   static int numNodes, numEdges;
  public:
   adaptiveHexahedron(adaptivePoint *p1, adaptivePoint *p2, adaptivePoint *p3, 
-		     adaptivePoint *p4, adaptivePoint *p5, adaptivePoint *p6, 
-		     adaptivePoint *p7, adaptivePoint *p8)
+                     adaptivePoint *p4, adaptivePoint *p5, adaptivePoint *p6, 
+                     adaptivePoint *p7, adaptivePoint *p8)
     : visible(false)
   {
     p[0] = p1;

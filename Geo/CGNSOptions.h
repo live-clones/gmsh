@@ -8,8 +8,9 @@
 #ifndef _CGNSOPTIONS_H_
 #define _CGNSOPTIONS_H_
 
-struct CGNSOptions
+class CGNSOptions
 {
+ public:
   // Types
   enum CGNSLocationType {
     LocVertex = 0,

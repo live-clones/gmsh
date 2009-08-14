@@ -51,7 +51,7 @@ static void cleanElement()
 }
 
 static void computeShapeFunctions(gmshMatrix<double> *coeffs, gmshMatrix<double> *eexps,
-				  double u, double v, double w, gmshVector<double> *sf,
+                                  double u, double v, double w, gmshVector<double> *sf,
                                   gmshVector<double> *tmp)
 {
   for(int i = 0; i < eexps->size1(); i++) {

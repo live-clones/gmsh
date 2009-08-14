@@ -13,7 +13,7 @@
 
 #if defined(HAVE_FLTK)
 #include <FL/gl.h>
-#include "GUI.h"
+#include "FlGui.h"
 #include "graphicWindow.h"
 #include "gl2ps.h"
 #include "gl2gif.h"
@@ -95,18 +95,18 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
 {
   PixelBuffer *buffer;
   if(!CTX::instance()->print.compositeWindows){
-    GLint width = GUI::instance()->getCurrentOpenglWindow()->w();
-    GLint height = GUI::instance()->getCurrentOpenglWindow()->h();
+    GLint width = FlGui::instance()->getCurrentOpenglWindow()->w();
+    GLint height = FlGui::instance()->getCurrentOpenglWindow()->h();
     buffer = new PixelBuffer(width, height, format, type);
     buffer->fill(CTX::instance()->batch);
   }
   else{
-    graphicWindow *g = GUI::instance()->graph[0];
-    for(unsigned int i = 1; i < GUI::instance()->graph.size(); i++){
-      for(unsigned int j = 0; j < GUI::instance()->graph[i]->gl.size(); j++){
-        if(GUI::instance()->graph[i]->gl[j] == 
-           GUI::instance()->getCurrentOpenglWindow()){
-          g = GUI::instance()->graph[i];
+    graphicWindow *g = FlGui::instance()->graph[0];
+    for(unsigned int i = 1; i < FlGui::instance()->graph.size(); i++){
+      for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++){
+        if(FlGui::instance()->graph[i]->gl[j] == 
+           FlGui::instance()->getCurrentOpenglWindow()){
+          g = FlGui::instance()->graph[i];
           break;
         }
       }
@@ -189,12 +189,14 @@ void CreateOutputFile(std::string fileName, int format)
 
   case FORMAT_MESH:
     GModel::current()->writeMESH
-      (fileName, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
+      (fileName, CTX::instance()->mesh.saveElementTagType, 
+       CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_BDF:
     GModel::current()->writeBDF
-      (fileName, CTX::instance()->mesh.bdfFieldFormat, CTX::instance()->mesh.saveAll,
+      (fileName, CTX::instance()->mesh.bdfFieldFormat, 
+       CTX::instance()->mesh.saveElementTagType, CTX::instance()->mesh.saveAll,
        CTX::instance()->mesh.scalingFactor);
     break;
 
@@ -240,7 +242,7 @@ void CreateOutputFile(std::string fileName, int format)
   case FORMAT_JPEG:
   case FORMAT_PNG:
     {
-      if(!GUI::available()) break;
+      if(!FlGui::available()) break;
 
       FILE *fp = fopen(fileName.c_str(), "wb");
       if(!fp){
@@ -285,7 +287,7 @@ void CreateOutputFile(std::string fileName, int format)
   case FORMAT_PDF:
   case FORMAT_SVG:
     {
-      if(!GUI::available()) break;
+      if(!FlGui::available()) break;
 
       FILE *fp = fopen(fileName.c_str(), "wb");
       if(!fp){
@@ -293,8 +295,8 @@ void CreateOutputFile(std::string fileName, int format)
         break;
       }
       std::string base = SplitFileName(fileName)[1];
-      GLint width = GUI::instance()->getCurrentOpenglWindow()->w();
-      GLint height = GUI::instance()->getCurrentOpenglWindow()->h();
+      GLint width = FlGui::instance()->getCurrentOpenglWindow()->w();
+      GLint height = FlGui::instance()->getCurrentOpenglWindow()->h();
       GLint viewport[4] = {0, 0, width, height};
 
       int old_gradient = CTX::instance()->bgGradient;
@@ -359,7 +361,7 @@ void CreateOutputFile(std::string fileName, int format)
 
   case FORMAT_TEX:
     {
-      if(!GUI::available()) break;
+      if(!FlGui::available()) break;
 
       FILE *fp = fopen(fileName.c_str(), "w");
       if(!fp){
@@ -367,8 +369,8 @@ void CreateOutputFile(std::string fileName, int format)
         break;
       }
       std::string base = SplitFileName(fileName)[1];
-      GLint width = GUI::instance()->getCurrentOpenglWindow()->w();
-      GLint height = GUI::instance()->getCurrentOpenglWindow()->h();
+      GLint width = FlGui::instance()->getCurrentOpenglWindow()->w();
+      GLint height = FlGui::instance()->getCurrentOpenglWindow()->h();
       GLint viewport[4] = {0, 0, width, height};
       GLint buffsize = 0;
       int res = GL2PS_OVERFLOW;

@@ -25,7 +25,7 @@ generator with built-in pre- and post-processing facilities</h1>
 <p>
 <h3 align="center">Christophe Geuzaine and Jean-François Remacle</h3>
 <p>
-<h3 align=center>Version 2.3.1, March 18 2009</h3>
+<h3 align=center>Version 2.4.0, ? 2009</h3>
 <p>
 <center>
   <a href="#Description">Description</a> |
@@ -52,26 +52,24 @@ ASCII text files using Gmsh's own scripting language.
 <p>
 See the screencasts for a <a href="/gmsh/screencasts/">quick tour of
 Gmsh's graphical user interface</a>, or the reference manual for a
-more thorough <a href="/gmsh/doc/texinfo/gmsh_2.html">overview of
-Gmsh's capabilities</a>.
+more thorough <a href="/gmsh/doc/texinfo/gmsh.html#Overview">overview
+of Gmsh's capabilities</a>.
 
 <h2><a name="Download"></a>Download</h2>
 
 Gmsh is distributed under the terms of
 the <a href="http://www.gnu.org/copyleft/gpl.html">GNU General Public
-License (GPL)</a>. Pre-compiled binaries<a href="#opengl-footnote"
-name="opengl-footmark"><sup>1</sup></a> are available for Windows (XP
-&amp; Vista), Linux (Intel, glibc 2.3) and Mac OS X (10.5, Universal
-binary). Tutorial and demos files are included in all the archives.
+License (GPL)</a>. Pre-compiled binaries are available for Windows (XP
+or Vista), Linux (Intel, glibc 2.3) and Mac OS X (10.5,
+Intel). Tutorial and demos files are included in all the archives.
 
 <ul>
 <li>
 <strong>Current stable release</strong>:
-<a href="/gmsh/bin/Windows/gmsh-2.3.1-Windows.zip"><strong>Windows</strong></a>,
-<a href="/gmsh/bin/Linux/gmsh-2.3.1-Linux.tgz"><strong>Linux</strong></a>,
-<a href="/gmsh/bin/MacOSX/gmsh-2.3.1-MacOSX.tgz"><strong>Mac OS X</strong></a> and
-<a href="/gmsh/src/gmsh-2.3.1-source.tgz"><strong>source code</strong></a>
-<a href="#build-footnote" name="build-footmark"><sup>2</sup></a>
+<a href="/gmsh/bin/Windows/gmsh-2.4.0-Windows.zip"><strong>Windows</strong></a>,
+<a href="/gmsh/bin/Linux/gmsh-2.4.0-Linux.tgz"><strong>Linux</strong></a>,
+<a href="/gmsh/bin/MacOSX/gmsh-2.4.0-MacOSX.dmg"><strong>Mac OS X</strong></a> and
+<a href="/gmsh/src/gmsh-2.4.0-source.tgz"><strong>source code</strong></a>
 <p>
 <li>Experimental versions (these might be buggy, or might not even
 launch: use at your own risk!):
@@ -80,7 +78,7 @@ launch: use at your own risk!):
 (<a href="/gmsh/bin/Windows/nightly.log">build log</a>),
 <a href="/gmsh/bin/Linux/gmsh-nightly-Linux.tgz">Linux</a>
 (<a href="/gmsh/bin/Linux/nightly.log">build log</a>),
-<a href="/gmsh/bin/MacOSX/gmsh-nightly-MacOSX.tgz">Mac OS X</a>
+<a href="/gmsh/bin/MacOSX/gmsh-nightly-MacOSX.dmg">Mac OS X</a>
 (<a href="/gmsh/bin/MacOSX/nightly.log">build log</a>)
 <li>nightly <a href="/gmsh/src/gmsh-nightly-source.tgz">cvs source
 snapshot</a>
@@ -116,10 +114,8 @@ questions or bug reports.
 <ul>
   <li><a href="/gmsh/doc/texinfo/gmsh.html">Reference manual</a> 
       (also available in
-      <a href="/gmsh/doc/texinfo/gmsh.pdf">pdf</a>,
-      <a href="/gmsh/doc/texinfo/gmsh.txt">text</a> and
-      <a href="/gmsh/doc/texinfo/gmsh-info.tgz">info</a> formats, or as a 
-      <a href="/gmsh/doc/texinfo/gmsh-full.html">single html file</a>)
+      <a href="/gmsh/doc/texinfo/gmsh.pdf">PDF</a> or in
+      <a href="/gmsh/doc/texinfo/gmsh.txt">plain text</a>)
   <li><a href="/gmsh/screencasts/">Screencasts</a> showing how to use
     the graphical user interface
   <li><a href="/gmsh/doc/FAQ.txt">Frequently asked questions (FAQ)</a>
@@ -273,21 +269,6 @@ graphical user interface.
 <input type="image" src="/images/donation.gif" name="submit" 
        alt="Make a donation with PayPal">
 </form>
-
-<hr>
-<a name="opengl-footnote"></a><a href="#opengl-footmark"><sup>1</sup></a>You
-need the OpenGL libraries installed on your system (and in the path of
-the library loader). A free replacement for OpenGL can be found
-at <a href="http://mesa3d.sourceforge.net/">http://mesa3d.sourceforge.net</a>.
-Remember that you may have to reconfigure the loader (ldconfig under
-Linux) or modify the LD_LIBRARY_PATH/SHLIB_PATH/etc. environment
-variable in order for Gmsh to find the libraries.
-<p>
-<a name="build-footnote"></a><a href="#build-footmark"><sup>2</sup></a>You
-need the <a href="http://www.fltk.org/">FLTK (>= 1.1.7)</a> library
-and include files properly installed on your system in order to
-compile the graphical version of Gmsh. Non-graphical versions can be
-compiled without FLTK.
 
 <p>
 Back to <a href="/">geuz.org</a>

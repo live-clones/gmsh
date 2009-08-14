@@ -17,7 +17,7 @@ extern "C"
 
 class GMSH_CutParametricPlugin : public GMSH_PostPlugin 
 { 
-private:
+ private:
   static double callback(int num, int action, double value, double *opt,
                          double step, double min, double max);
   static std::string callbackStr(int num, int action, std::string value, 
@@ -25,7 +25,7 @@ private:
   static int fillXYZ();
   static int recompute;
   static std::vector<double> x, y, z;
-public:
+ public:
   GMSH_CutParametricPlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *help_text) const;

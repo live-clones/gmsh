@@ -74,8 +74,8 @@ void *searchElement(octantBucket *buckets, double *pt,
                     InEleFunction xyzInElement);
 int xyzInElementBB(double *xyz, void *region, BBFunction BBElement);
 void insertOneBB(void *, double *, double *, octantBucket *);
-void *searchAllElements(octantBucket *_buckets_head, double *_pt, globalInfo *_globalPara,
-                        BBFunction BBElement, InEleFunction xyzInElement, 
-                        std::list<void *> *_elements);
+void *searchAllElements(octantBucket *_buckets_head, double *_pt, 
+                        globalInfo *_globalPara, BBFunction BBElement, 
+                        InEleFunction xyzInElement, std::list<void *> *_elements);
 
 #endif

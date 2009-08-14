@@ -19,7 +19,7 @@ int gif_dialog(const char *filename);
 int geo_dialog(const char *filename);
 int generic_bitmap_dialog(const char *filename, const char *title, int format);
 int generic_mesh_dialog(const char *filename, const char *title, int format,
-			bool binary_supports);
+                        bool binary_support, bool element_tag_support);
 int gl2ps_dialog(const char *filename, const char *title, int format);
 int options_dialog(const char *filename);
 int pos_dialog(const char *filename);

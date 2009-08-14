@@ -16,7 +16,7 @@
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Hold_Browser.H>
 #include <FL/Fl_Box.H>
-#include "GUI.h"
+#include "FlGui.h"
 #include "paletteWindow.h"
 #include "GmshDefines.h"
 #include "OpenFile.h"
@@ -150,8 +150,8 @@ static void model_switch_cb(Fl_Widget* w, void *data)
   }
   if(w->window()) w->window()->hide();
   CTX::instance()->mesh.changed = ENT_ALL;
-  GUI::instance()->setGraphicTitle(GModel::current()->getFileName());
-  GUI::instance()->resetVisibility();
+  FlGui::instance()->setGraphicTitle(GModel::current()->getFileName());
+  FlGui::instance()->resetVisibility();
   Draw();
 }
 

@@ -15,7 +15,7 @@ extern "C"
 
 class GMSH_SphericalRaisePlugin : public GMSH_PostPlugin
 {
-public:
+ public:
   GMSH_SphericalRaisePlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *helpText) const;

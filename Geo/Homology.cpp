@@ -28,23 +28,23 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain, std::vector<i
   std::vector<GEntity*> domainEntities;
   std::vector<GEntity*> subdomainEntities;
     
-  for(int i = 0; i < physicalDomain.size(); i++){
+  for(unsigned int i = 0; i < physicalDomain.size(); i++){
     for(int j = 0; j < 4; j++){
       it = groups[j].find(physicalDomain.at(i));
       if(it != groups[j].end()){
         std::vector<GEntity*> physicalGroup = (*it).second;
-        for(int k = 0; k < physicalGroup.size(); k++){
+        for(unsigned int k = 0; k < physicalGroup.size(); k++){
           domainEntities.push_back(physicalGroup.at(k));
         }
       }
     }
   }
-  for(int i = 0; i < physicalSubdomain.size(); i++){           
+  for(unsigned int i = 0; i < physicalSubdomain.size(); i++){           
     for(int j = 0; j < 4; j++){
       it = groups[j].find(physicalSubdomain.at(i));
       if(it != groups[j].end()){
         std::vector<GEntity*> physicalGroup = (*it).second;
-        for(int k = 0; k < physicalGroup.size(); k++){
+        for(unsigned int k = 0; k < physicalGroup.size(); k++){
           subdomainEntities.push_back(physicalGroup.at(k));
         }
         

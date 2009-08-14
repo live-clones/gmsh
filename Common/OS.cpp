@@ -174,16 +174,3 @@ int SystemCall(std::string command)
 #endif
 }
 
-//HACK: allow the use of mixed debug/non-debug code with MSVC
-#if (defined (_MSC_VER) && defined (_DEBUG))
-extern "C" {
-   _CRTIMP void __cdecl _invalid_parameter_noinfo(void) {  }
-}
-#endif
-
-//HACK: fix undefined hypot with MSVC
-#if defined (_MSC_VER)
-extern "C" {
-  double hypot(double x, double y){ return _hypot(x, y); }
-}
-#endif

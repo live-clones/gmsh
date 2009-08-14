@@ -198,16 +198,16 @@ class GmshClient : public GmshSocket {
       // UNIX socket (testing ":" is not enough with Windows paths)
       _sock = socket(PF_UNIX, SOCK_STREAM, 0);
       if(_sock < 0)
-	return -1;  // Error: Couldn't create socket
+        return -1;  // Error: Couldn't create socket
       // try to connect socket to given name
       struct sockaddr_un addr_un;
       memset((char *) &addr_un, 0, sizeof(addr_un));
       addr_un.sun_family = AF_UNIX;
       strcpy(addr_un.sun_path, sockname);
       for(int tries = 0; tries < 5; tries++) {
-	if(connect(_sock, (struct sockaddr *)&addr_un, sizeof(addr_un)) >= 0)
-	  return _sock;
-	_Sleep(100);
+        if(connect(_sock, (struct sockaddr *)&addr_un, sizeof(addr_un)) >= 0)
+          return _sock;
+        _Sleep(100);
       }
 #else
       return -1; // Unix sockets are not available on Windows
@@ -217,19 +217,19 @@ class GmshClient : public GmshSocket {
       // TCP/IP socket
       _sock = socket(AF_INET, SOCK_STREAM, 0);
       if(_sock < 0)
-	return -1; // Error: Couldn't create socket
+        return -1; // Error: Couldn't create socket
       // try to connect socket to host:port
       const char *port = strstr(sockname, ":");
       int portno = atoi(port + 1);
       int remotelen = strlen(sockname) - strlen(port);
       char remote[256];
       if(remotelen > 0)
-	strncpy(remote, sockname, remotelen);
+        strncpy(remote, sockname, remotelen);
       remote[remotelen] = '\0';
       struct hostent *server;
       if(!(server = gethostbyname(remote))){
         CloseSocket(_sock);
-	return -3; // Error: No such host
+        return -3; // Error: No such host
       }
       struct sockaddr_in addr_in;
       memset((char *) &addr_in, 0, sizeof(addr_in));
@@ -237,9 +237,9 @@ class GmshClient : public GmshSocket {
       memcpy((char *)&addr_in.sin_addr.s_addr, (char *)server->h_addr, server->h_length);
       addr_in.sin_port = htons(portno);
       for(int tries = 0; tries < 5; tries++) {
-	if(connect(_sock, (struct sockaddr *)&addr_in, sizeof(addr_in)) >= 0)
-	  return _sock;
-	_Sleep(100);
+        if(connect(_sock, (struct sockaddr *)&addr_in, sizeof(addr_in)) >= 0)
+          return _sock;
+        _Sleep(100);
       }
     }
     CloseSocket(_sock);

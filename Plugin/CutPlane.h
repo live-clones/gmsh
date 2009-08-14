@@ -19,7 +19,7 @@ class GMSH_CutPlanePlugin : public GMSH_LevelsetPlugin
   static double callback(int num, int action, double value, double *opt,
                          double step, double min, double max);
   static int iview;
-public:
+ public:
   GMSH_CutPlanePlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *helpText) const;

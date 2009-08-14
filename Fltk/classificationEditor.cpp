@@ -5,7 +5,7 @@
 
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Value_Input.H>
-#include "GUI.h"
+#include "FlGui.h"
 #include "classificationEditor.h"
 #include "paletteWindow.h"
 #include "Numeric.h"
@@ -58,13 +58,13 @@ static void class_selectgface_cb(Fl_Widget *w, void *data)
     Draw();
 
     Msg::StatusBar(3, false, "Select Model Face\n"
-		   "[Press 'e' to end selection or 'q' to abort]");
+                   "[Press 'e' to end selection or 'q' to abort]");
     
-    char ib = GUI::instance()->selectEntity(ENT_SURFACE);
+    char ib = FlGui::instance()->selectEntity(ENT_SURFACE);
     if(ib == 'l') {
-      for(unsigned int i = 0; i < GUI::instance()->selectedFaces.size(); i++){
-        GUI::instance()->selectedFaces[i]->setSelection(1);
-        temp.push_back(GUI::instance()->selectedFaces[i]);
+      for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
+        FlGui::instance()->selectedFaces[i]->setSelection(1);
+        temp.push_back(FlGui::instance()->selectedFaces[i]);
       }
     }
     // ok store the list of gfaces !
@@ -98,13 +98,13 @@ static void class_deleteedge_cb(Fl_Widget *w, void *data)
     Draw();
 
     Msg::StatusBar(3, false, "Select Elements\n"
-		   "[Press 'e' to end selection or 'q' to abort]");
+                   "[Press 'e' to end selection or 'q' to abort]");
     
-    char ib = GUI::instance()->selectEntity(ENT_ALL);
+    char ib = FlGui::instance()->selectEntity(ENT_ALL);
     if(ib == 'l') {
       if(CTX::instance()->pickElements){
-        for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++){
-          MElement *me = GUI::instance()->selectedElements[i];
+        for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++){
+          MElement *me = FlGui::instance()->selectedElements[i];
           if(me->getType() == TYPE_LIN && me->getVisibility() != 2){
             me->setVisibility(2); ele.push_back((MLine*)me);
           }
@@ -112,8 +112,8 @@ static void class_deleteedge_cb(Fl_Widget *w, void *data)
       }
     }
     if(ib == 'r') {
-      for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++)
-        GUI::instance()->selectedElements[i]->setVisibility(1);
+      for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++)
+        FlGui::instance()->selectedElements[i]->setVisibility(1);
     }
     // ok, we compute edges !
     if(ib == 'e') {
@@ -376,77 +376,77 @@ static void class_color_cb(Fl_Widget* w, void* data)
 
       std::list<MLine*> segments;
       for (unsigned int i = 0; i < ge->lines.size(); i++){
-	segments.push_back(ge->lines[i]);
+        segments.push_back(ge->lines[i]);
       }
 
       //for each actual GEdge
       while (!segments.empty()) {
 
-	std::vector<MLine*> myLines;
-	std::list<MLine*>::iterator it = segments.begin();
+        std::vector<MLine*> myLines;
+        std::list<MLine*>::iterator it = segments.begin();
 
-	MVertex *vB = (*it)->getVertex(0);
-	MVertex *vE = (*it)->getVertex(1);
-	myLines.push_back(*it);
-	segments.erase(it);
-	it++;
+        MVertex *vB = (*it)->getVertex(0);
+        MVertex *vE = (*it)->getVertex(1);
+        myLines.push_back(*it);
+        segments.erase(it);
+        it++;
 
-	//printf("***candidate mline %d %d of size %d \n", vB->getNum(), vE->getNum(), segments.size());
+        //printf("***candidate mline %d %d of size %d \n", vB->getNum(), vE->getNum(), segments.size());
 
-   	for (int i=0; i<2; i++) {
+        for (int i=0; i<2; i++) {
 
-	  for (std::list<MLine*>::iterator it = segments.begin() ; it != segments.end(); ++it){	
-	    MVertex *v1 = (*it)->getVertex(0);
-	    MVertex *v2 = (*it)->getVertex(1);
-	    //printf("mline %d %d \n", v1->getNum(), v2->getNum());
-	    
-	    std::list<MLine*>::iterator itp;
-	    if ( v1 == vE  ){
-	      //printf("->push back this mline \n");
-	      myLines.push_back(*it);
-	      itp = it;
-	      it++;
-	      segments.erase(itp);
-	      vE = v2;
-	      i = -1;
-	    }
-	    else if ( v2 == vE){
-	      //printf("->push back this mline \n");
-	      myLines.push_back(*it);
-	      itp = it;
-	      it++;
-	      segments.erase(itp);
-	      vE = v1;
-	      i=-1;
-	    }
+          for (std::list<MLine*>::iterator it = segments.begin() ; it != segments.end(); ++it){ 
+            MVertex *v1 = (*it)->getVertex(0);
+            MVertex *v2 = (*it)->getVertex(1);
+            //printf("mline %d %d \n", v1->getNum(), v2->getNum());
+            
+            std::list<MLine*>::iterator itp;
+            if ( v1 == vE  ){
+              //printf("->push back this mline \n");
+              myLines.push_back(*it);
+              itp = it;
+              it++;
+              segments.erase(itp);
+              vE = v2;
+              i = -1;
+            }
+            else if ( v2 == vE){
+              //printf("->push back this mline \n");
+              myLines.push_back(*it);
+              itp = it;
+              it++;
+              segments.erase(itp);
+              vE = v1;
+              i=-1;
+            }
 
-	    if (it == segments.end()) break;
+            if (it == segments.end()) break;
 
-	  }
+          }
 
-	  if (vB == vE) break;
+          if (vB == vE) break;
 
-	  if (segments.empty()) break;
+          if (segments.empty()) break;
 
-	  //printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
-	  MVertex *temp = vB;
-	  vB = vE;
-	  vE = temp;
-	  //printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
+          //printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
+          MVertex *temp = vB;
+          vB = vE;
+          vE = temp;
+          //printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
 
-	}
-	
-//  	printf("************ CANDIDATE NEW EDGE \n");
-//  	for (std::vector<MLine*>::iterator it = myLines.begin() ; it != myLines.end() ; ++it){
-//  	  MVertex *v1 = (*it)->getVertex(0);
-//  	  MVertex *v2 = (*it)->getVertex(1);
-//  	  printf("Line %d %d \n", v1->getNum(), v2->getNum());
-//  	}
-	GEdge *newGe = new discreteEdge(GModel::current(), maxEdgeNum() + 1, 0, 0);
-	newGe->lines.insert(newGe->lines.end(), myLines.begin(), myLines.end());
-	GModel::current()->add(newGe);
-	printf("create new edge with tag =%d\n", maxEdgeNum());
-	
+        }
+        
+//      printf("************ CANDIDATE NEW EDGE \n");
+//      for (std::vector<MLine*>::iterator it = myLines.begin() ; it != myLines.end() ; ++it){
+//        MVertex *v1 = (*it)->getVertex(0);
+//        MVertex *v2 = (*it)->getVertex(1);
+//        printf("Line %d %d \n", v1->getNum(), v2->getNum());
+//      }
+        GEdge *newGe = new discreteEdge(GModel::current(), maxEdgeNum() + 1, 0, 0);
+        newGe->lines.insert(newGe->lines.end(), myLines.begin(), myLines.end());
+        GModel::current()->add(newGe);
+        printf("create new edge with tag =%d\n", maxEdgeNum());
+        
       }//end for each actual GEdge
 
     }
@@ -541,13 +541,13 @@ static void class_select_cb(Fl_Widget *w, void *data)
     Draw();
 
     Msg::StatusBar(3, false, "Select Elements\n"
-		   "[Press 'e' to end selection or 'q' to abort]");
+                   "[Press 'e' to end selection or 'q' to abort]");
     
-    char ib = GUI::instance()->selectEntity(ENT_ALL);
+    char ib = FlGui::instance()->selectEntity(ENT_ALL);
     if(ib == 'l') {
       if(CTX::instance()->pickElements){
-        for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++){
-          MElement *me = GUI::instance()->selectedElements[i];
+        for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++){
+          MElement *me = FlGui::instance()->selectedElements[i];
           if(me->getType() == TYPE_TRI && me->getVisibility() != 2){
             me->setVisibility(2); ele.push_back((MTriangle*)me);
           }
@@ -555,8 +555,8 @@ static void class_select_cb(Fl_Widget *w, void *data)
       }
     }
     if(ib == 'r') {
-      for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++)
-        GUI::instance()->selectedElements[i]->setVisibility(1);
+      for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++)
+        FlGui::instance()->selectedElements[i]->setVisibility(1);
     }
     // ok, we compute edges !
     if(ib == 'e') {

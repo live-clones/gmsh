@@ -291,7 +291,7 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
         // X3 = X + a3 * DT * V(X2)
         // X4 = X + a4 * DT * V(X3)
         // X = X + b1 X1 + b2 X2 + b3 X3 + b4 x4
-	double val[3];
+        double val[3];
         o1.searchVector(X[0], X[1], X[2], val, currentTimeStep);
         for(int k = 0; k < 3; k++) X1[k] = X[k] + DT * val[k] * a1;
         o1.searchVector(X1[0], X1[1], X1[2], val, currentTimeStep);

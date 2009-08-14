@@ -100,27 +100,27 @@ PView *GMSH_EigenvaluesPlugin::execute(PView *v)
       int numNodes = data1->getNumNodes(0, ent, ele);
       double xyz[3][8];
       for(int nod = 0; nod < numNodes; nod++)
-	data1->getNode(0, ent, ele, nod, xyz[0][nod], xyz[1][nod], xyz[2][nod]);
+        data1->getNode(0, ent, ele, nod, xyz[0][nod], xyz[1][nod], xyz[2][nod]);
       for(int i = 0; i < 3; i++){
-	for(int nod = 0; nod < numNodes; nod++){
-	  outmin->push_back(xyz[i][nod]);
-	  outmid->push_back(xyz[i][nod]);
-	  outmax->push_back(xyz[i][nod]);
-	}
+        for(int nod = 0; nod < numNodes; nod++){
+          outmin->push_back(xyz[i][nod]);
+          outmid->push_back(xyz[i][nod]);
+          outmax->push_back(xyz[i][nod]);
+        }
       }
       for(int step = 0; step < data1->getNumTimeSteps(); step++){
-	for(int nod = 0; nod < numNodes; nod++){
-	  double val[9], w[3];
-	  for(int comp = 0; comp < numComp; comp++)
-	    data1->getValue(step, ent, ele, nod, comp, val[comp]);
-	  double A[3][3] = {{val[0], val[1], val[2]},
-			    {val[3], val[4], val[5]},
-			    {val[6], val[7], val[8]}};
-	  eigenvalue(A, w);
-	  outmin->push_back(w[2]);
-	  outmid->push_back(w[1]);
-	  outmax->push_back(w[0]);
-	}
+        for(int nod = 0; nod < numNodes; nod++){
+          double val[9], w[3];
+          for(int comp = 0; comp < numComp; comp++)
+            data1->getValue(step, ent, ele, nod, comp, val[comp]);
+          double A[3][3] = {{val[0], val[1], val[2]},
+                            {val[3], val[4], val[5]},
+                            {val[6], val[7], val[8]}};
+          eigenvalue(A, w);
+          outmin->push_back(w[2]);
+          outmid->push_back(w[1]);
+          outmax->push_back(w[0]);
+        }
       }
     }
   }

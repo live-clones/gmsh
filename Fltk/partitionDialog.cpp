@@ -21,7 +21,7 @@
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
-#include "GUI.h"
+#include "FlGui.h"
 #include "paletteWindow.h"
 #include "GModel.h"
 #include "Draw.h"

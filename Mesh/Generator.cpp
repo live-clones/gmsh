@@ -45,8 +45,8 @@ static MVertex* isEquivalentTo(std::multimap<MVertex*, MVertex*> &m, MVertex *v)
 }
 
 static void buildASetOfEquivalentMeshVertices(GFace *gf, 
-					      std::multimap<MVertex*, MVertex *> &equivalent,
-					      std::map<GVertex*, MVertex*> &bm)
+                                              std::multimap<MVertex*, MVertex *> &equivalent,
+                                              std::map<GVertex*, MVertex*> &bm)
 {
   // an edge is degenerated when is length is considered to be
   // zero. In some cases, a model edge can be considered as too
@@ -65,11 +65,11 @@ static void buildASetOfEquivalentMeshVertices(GFace *gf,
       MVertex *va = *((*it)->getBeginVertex()->mesh_vertices.begin());
       MVertex *vb = *((*it)->getEndVertex()->mesh_vertices.begin());
       if (va != vb){
-	equivalent.insert(std::make_pair(va, vb));
-	equivalent.insert(std::make_pair(vb, va));
-	bm[(*it)->getBeginVertex()] = va;
-	bm[(*it)->getEndVertex()] = vb;
-	printf("%d equivalent to %d\n", va->getNum(), vb->getNum());
+        equivalent.insert(std::make_pair(va, vb));
+        equivalent.insert(std::make_pair(vb, va));
+        bm[(*it)->getBeginVertex()] = va;
+        bm[(*it)->getEndVertex()] = vb;
+        printf("%d equivalent to %d\n", va->getNum(), vb->getNum());
       }
     }
     ++it;
@@ -81,10 +81,10 @@ static void buildASetOfEquivalentMeshVertices(GFace *gf,
       MVertex *va = *((*it)->getBeginVertex()->mesh_vertices.begin());
       MVertex *vb = *((*it)->getEndVertex()->mesh_vertices.begin());
       if (va != vb){
-	equivalent.insert(std::make_pair(va, vb));
-	equivalent.insert(std::make_pair(vb, va));
-	bm[(*it)->getBeginVertex()] = va;
-	bm[(*it)->getEndVertex()] = vb;
+        equivalent.insert(std::make_pair(va, vb));
+        equivalent.insert(std::make_pair(vb, va));
+        bm[(*it)->getBeginVertex()] = va;
+        bm[(*it)->getEndVertex()] = vb;
       }
     }
     ++it;
@@ -216,28 +216,28 @@ void GetStatistics(double stat[50], double quality[4][100])
     double disto=0., distoMin=1., distoMax=0.;
     if (m->firstRegion() == m->lastRegion()){
       for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
-	GetQualityMeasure((*it)->quadrangles, gamma, gammaMin, gammaMax,
-			  eta, etaMin, etaMax, rho, rhoMin, rhoMax, 
-			  disto, distoMin, distoMax, quality);
-	GetQualityMeasure((*it)->triangles, gamma, gammaMin, gammaMax,
-			  eta, etaMin, etaMax, rho, rhoMin, rhoMax,
-			  disto, distoMin, distoMax, quality);
+        GetQualityMeasure((*it)->quadrangles, gamma, gammaMin, gammaMax,
+                          eta, etaMin, etaMax, rho, rhoMin, rhoMax, 
+                          disto, distoMin, distoMax, quality);
+        GetQualityMeasure((*it)->triangles, gamma, gammaMin, gammaMax,
+                          eta, etaMin, etaMax, rho, rhoMin, rhoMax,
+                          disto, distoMin, distoMax, quality);
       }
     }
     else{
       for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
-	GetQualityMeasure((*it)->tetrahedra, gamma, gammaMin, gammaMax,
-			  eta, etaMin, etaMax, rho, rhoMin, rhoMax, 
-			  disto, distoMin, distoMax, quality);
-	GetQualityMeasure((*it)->hexahedra, gamma, gammaMin, gammaMax,
-			  eta, etaMin, etaMax, rho, rhoMin, rhoMax,
-			  disto, distoMin, distoMax, quality);
-	GetQualityMeasure((*it)->prisms, gamma, gammaMin, gammaMax,
-			  eta, etaMin, etaMax, rho, rhoMin, rhoMax,
-			  disto, distoMin, distoMax,quality);
-	GetQualityMeasure((*it)->pyramids, gamma, gammaMin, gammaMax,
-			  eta, etaMin, etaMax, rho, rhoMin, rhoMax,
-			  disto, distoMin, distoMax, quality);
+        GetQualityMeasure((*it)->tetrahedra, gamma, gammaMin, gammaMax,
+                          eta, etaMin, etaMax, rho, rhoMin, rhoMax, 
+                          disto, distoMin, distoMax, quality);
+        GetQualityMeasure((*it)->hexahedra, gamma, gammaMin, gammaMax,
+                          eta, etaMin, etaMax, rho, rhoMin, rhoMax,
+                          disto, distoMin, distoMax, quality);
+        GetQualityMeasure((*it)->prisms, gamma, gammaMin, gammaMax,
+                          eta, etaMin, etaMax, rho, rhoMin, rhoMax,
+                          disto, distoMin, distoMax,quality);
+        GetQualityMeasure((*it)->pyramids, gamma, gammaMin, gammaMax,
+                          eta, etaMin, etaMax, rho, rhoMin, rhoMax,
+                          disto, distoMin, distoMax, quality);
       }
     }
     double N = stat[9] + stat[10] + stat[11] + stat[12];
@@ -412,7 +412,7 @@ static void Mesh2D(GModel *m)
 }
 
 static void FindConnectedRegions(std::vector<GRegion*> &delaunay, 
-				 std::vector<std::vector<GRegion*> > &connected)
+                                 std::vector<std::vector<GRegion*> > &connected)
 {
   // FIXME: need to split region vector into connected components here!
   connected.push_back(delaunay);
@@ -444,7 +444,6 @@ static void Mesh3D(GModel *m)
   std::vector<std::vector<GRegion*> > connected;
   FindConnectedRegions(delaunay, connected);
   for(unsigned int i = 0; i < connected.size(); i++){
-    printf("*********Meshing all delaunay regions\n");
     MeshDelaunayVolume(connected[i]);
   }
 
@@ -567,7 +566,7 @@ void GenerateMesh(GModel *m, int ask)
               CTX::instance()->mesh.secondOrderIncomplete);
 
   Msg::Info("%d vertices %d elements",
-	    m->getNumMeshVertices(), m->getNumMeshElements());
+            m->getNumMeshVertices(), m->getNumMeshElements());
 
   Msg::PrintErrorCounter("Mesh generation error summary");
 

@@ -507,6 +507,7 @@ double opt_mesh_dual(OPT_ARGS_NUM);
 double opt_mesh_voronoi(OPT_ARGS_NUM);
 double opt_mesh_draw_skin_only(OPT_ARGS_NUM);
 double opt_mesh_save_all(OPT_ARGS_NUM);
+double opt_mesh_save_element_tag_type(OPT_ARGS_NUM);
 double opt_mesh_save_parametric(OPT_ARGS_NUM);
 double opt_mesh_save_groups_of_nodes(OPT_ARGS_NUM);
 double opt_mesh_color_carousel(OPT_ARGS_NUM);
@@ -811,11 +812,11 @@ void PrintOptions(int num, int level, int diff, int help, const char *filename);
 void PrintOptionsDoc();
 
 bool StringOption(int action, const char *category, int num, 
-		  const char *name, std::string &val);
+                  const char *name, std::string &val);
 bool NumberOption(int action, const char *category, int num, 
-		  const char *name, double &val);
+                  const char *name, double &val);
 bool ColorOption(int action, const char *category, int num, 
-		 const char *name, unsigned int &val);
+                 const char *name, unsigned int &val);
 
 GmshColorTable *GetColorTable(int num);
 

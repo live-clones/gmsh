@@ -122,4 +122,4 @@ Bruno Frackowiak, Philip Kelleners, Romuald Conty, Renaud Sizaire,
 Michel Benhamou, Tom De Vuyst, Kris Van den Abeele, Simon Vun, Simon
 Corbin, Thomas De-Soza, Marcus Drosson, Antoine Dechaume, Jose Paulo
 Moitinho de Almeida, Thomas Pinchard, Corrado Chisari, Axel Hackbarth,
-Peter Wainwright, Jiri Hnidek, Thierry Thomas.
+Peter Wainwright, Jiri Hnidek, Thierry Thomas, Konstantinos Poulios.

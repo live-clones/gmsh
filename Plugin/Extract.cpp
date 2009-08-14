@@ -248,7 +248,7 @@ PView *GMSH_ExtractPlugin::execute(PView *v)
         for(int nod = 0; nod < numNodes; nod++){
           std::vector<double> v(numComp);
           for(int comp = 0; comp < numComp; comp++)
-	    data1->getValue(step, ent, ele, nod, comp, v[comp]);
+            data1->getValue(step, ent, ele, nod, comp, v[comp]);
           for(int comp = 0; comp < numComp2; comp++){
 #if defined(HAVE_MATH_EVAL)
             char *names[] = { "x", "y", "z", "v0", "v1", "v2", 

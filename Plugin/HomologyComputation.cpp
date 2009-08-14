@@ -14,6 +14,7 @@
 #include "HomologyComputation.h"
 
 #if defined(HAVE_KBIPACK)
+
 StringXNumber HomologyComputationOptions_Number[] = {
   {GMSH_FULLRC, "PhysicalGroupForDomain1", NULL, 0.},
   {GMSH_FULLRC, "PhysicalGroupForDomain2", NULL, 0.},

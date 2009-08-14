@@ -1,0 +1,23 @@
+# Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
+#
+# See the LICENSE.txt file for license information. Please report all
+# bugs and problems to <gmsh@geuz.org>.
+
+set(SRC
+  QGui.cpp
+  Draw.cpp
+  GLWidget.cpp
+  graphicWindow.cpp
+)
+
+set(MOC_HDR
+  GLWidget.h
+  graphicWindow.h
+)
+
+append_gmsh_src(Qt "${SRC}")
+
+foreach(FILE ${MOC_HDR})
+  list(APPEND MOC_LIST Qt/${FILE})
+endforeach(FILE)
+set(GMSH_MOC_HDR ${GMSH_MOC_HDR};${MOC_LIST} PARENT_SCOPE)

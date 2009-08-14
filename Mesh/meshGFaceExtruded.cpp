@@ -13,7 +13,7 @@
 #include "GmshMessage.h"
 
 static void createQuaTri(std::vector<MVertex*> &v, GFace *to,
-			 std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
+                         std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
 
@@ -46,8 +46,8 @@ static void createQuaTri(std::vector<MVertex*> &v, GFace *to,
 }
 
 static void extrudeMesh(GEdge *from, GFace *to,
-			std::set<MVertex*, MVertexLessThanLexicographic> &pos,
-			std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
+                        std::set<MVertex*, MVertexLessThanLexicographic> &pos,
+                        std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
 
@@ -107,7 +107,7 @@ static void extrudeMesh(GEdge *from, GFace *to,
 }
 
 static void copyMesh(GFace *from, GFace *to,
-		     std::set<MVertex*, MVertexLessThanLexicographic> &pos)
+                     std::set<MVertex*, MVertexLessThanLexicographic> &pos)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
 

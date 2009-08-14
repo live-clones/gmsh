@@ -30,9 +30,8 @@ double GetStringWidth(const char *str)
 { return glutBitmapLength(GLUT_BITMAP_HELVETICA_18, (const unsigned char*)str); }
 int GetStringHeight(){ return 18; }
 int GetStringDescent(){ return 6; }
-void DrawString(const char *str)
-{ for (int i = 0; i < strlen(str); i++) 
-    glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, str[i]); }
+void DrawString(const char *str){ for (int i = 0; i < strlen(str); i++) 
+  glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, str[i]); }
 
 // GLUT callbacks
 void display()
@@ -219,55 +218,64 @@ int main(int argc, char **argv)
   TwGLUTModifiersFunc(glutGetModifiers);
 
   TwBar *bar = TwNewBar("Options");
-  TwDefine(" Options size='200 400' color='50 50 50' alpha=128");
+  TwDefine("Options size='200 400' color='50 50 50' alpha=128");
   {
     TwEnumVal axesEV[6] = { {0, "None"}, {1, "Simple axes"}, {2, "Box"}, 
                             {3, "Full grid"}, {4, "Open grid"}, {5, "Ruler"} };
     TwType axesType = TwDefineEnum("AxesType", axesEV, 6);
-    TwAddVarCB(bar, "Axes", axesType, SetInt32CB, GetInt32CB, (void*)"General.Axes", 
-               " group='General' help='Change axes.' ");
-    TwAddVarCB(bar, "LightDir", TW_TYPE_DIR3D, SetLightDirCB, GetLightDirCB, 0,
-               " group='General' label='Light direction' close help='Change light direction.' ");
+    TwAddVarCB(bar, "Axes", axesType, SetInt32CB, GetInt32CB, 
+               (void*)"General.Axes", "group='General' help='Change axes.' ");
+    TwAddVarCB(bar, "LightDir", TW_TYPE_DIR3D, SetLightDirCB, GetLightDirCB, 
+               0, "group='General' label='Light direction' close help='Change "
+               "light direction.' ");
     {
-      TwAddVarCB(bar, "Background", TW_TYPE_COLOR32, SetColorCB, GetColorCB, (void*)"General.Background",
-                 " group='GeneralColor' label='Background color' ");
-      TwAddVarCB(bar, "BackgroundGradient", TW_TYPE_COLOR32, SetColorCB, GetColorCB, (void*)"General.BackgroundGradient",
-                 " group='GeneralColor' label='Background gradient color' ");
-      TwDefine(" Options/GeneralColor  label='Colors' close group='General' ");
+      TwAddVarCB(bar, "Background", TW_TYPE_COLOR32, SetColorCB, GetColorCB,
+                 (void*)"General.Background", "group='GeneralColor' "
+                 "label='Background color' ");
+      TwAddVarCB(bar, "BackgroundGradient", TW_TYPE_COLOR32, SetColorCB, GetColorCB,
+                 (void*)"General.BackgroundGradient", "group='GeneralColor' "
+                 "label='Background gradient color' ");
+      TwDefine("Options/GeneralColor  label='Colors' close group='General' ");
     }
-    TwDefine(" Options/General close ");
+    TwDefine("Options/General close ");
   }
   {
-    TwAddVarCB(bar, "Points", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, (void*)"Geometry.Points",
-               " group='Geometry' help='Draw points.' ");
-    TwAddVarCB(bar, "Lines", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, (void*)"Geometry.Lines",
-               " group='Geometry' help='Draw lines.' ");
-    TwAddVarCB(bar, "Surfaces", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, (void*)"Geometry.Surfaces",
-               " group='Geometry' help='Draw surfaces.' ");
-    TwAddVarCB(bar, "Volumes", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, (void*)"Geometry.Volumes",
-               " group='Geometry' help='Draw volumes.' ");
+    TwAddVarCB(bar, "Points", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, 
+               (void*)"Geometry.Points", "group='Geometry' help='Draw points.' ");
+    TwAddVarCB(bar, "Lines", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, 
+               (void*)"Geometry.Lines", "group='Geometry' help='Draw lines.' ");
+    TwAddVarCB(bar, "Surfaces", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB,
+               (void*)"Geometry.Surfaces", "group='Geometry' help='Draw surfaces.' ");
+    TwAddVarCB(bar, "Volumes", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, 
+               (void*)"Geometry.Volumes", "group='Geometry' help='Draw volumes.' ");
   }
   {
-    TwAddVarCB(bar, "Vertices", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, (void*)"Mesh.Points",
-               " group='Mesh' help='Draw mesh vertices.' ");
-    TwAddVarCB(bar, "MeshLines", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, (void*)"Mesh.Lines",
-               " group='Mesh' label='Lines' help='Draw line mesh.' ");
-    TwAddVarCB(bar, "SurfaceEdges", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, (void*)"Mesh.SurfaceEdges",
-               " group='Mesh' label='Surface edges' help='Draw surface mesh edges.' ");
-    TwAddVarCB(bar, "SurfaceFaces", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, (void*)"Mesh.SurfaceFaces",
-               " group='Mesh' label='Surface faces' help='Draw surface mesh faces.' ");
-    TwAddVarCB(bar, "VolumeEdges", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, (void*)"Mesh.VolumeEdges",
-               " group='Mesh' label='Volume edges' help='Draw volume mesh edges.' ");
-    TwAddVarCB(bar, "VolumeFaces", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, (void*)"Mesh.VolumeFaces",
-               " group='Mesh' label='Volume faces' help='Draw volume mesh faces.' ");
-    TwAddVarCB(bar, "Explode", TW_TYPE_DOUBLE, SetDoubleCB, GetDoubleCB, (void*)"Mesh.Explode",
-               " group='Mesh' label='Explode factor' min=0 max=1 step=0.01 help='Explode mesh.' ");
-    TwAddVarCB(bar, "SizeFactor", TW_TYPE_DOUBLE, SetDoubleCB, GetDoubleCB, (void*)"Mesh.CharacteristicLengthFactor",
-               " group='Mesh' label='Element size factor' min=0.01 max=100 step=0.01 ");
+    TwAddVarCB(bar, "Vertices", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, 
+               (void*)"Mesh.Points", "group='Mesh' help='Draw mesh vertices.' ");
+    TwAddVarCB(bar, "MeshLines", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, 
+               (void*)"Mesh.Lines", "group='Mesh' label='Lines' help='Draw line mesh.' ");
+    TwAddVarCB(bar, "SurfaceEdges", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, 
+               (void*)"Mesh.SurfaceEdges", "group='Mesh' label='Surface edges' "
+               "help='Draw surface mesh edges.' ");
+    TwAddVarCB(bar, "SurfaceFaces", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, 
+               (void*)"Mesh.SurfaceFaces", "group='Mesh' label='Surface faces' "
+               "help='Draw surface mesh faces.' ");
+    TwAddVarCB(bar, "VolumeEdges", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, 
+               (void*)"Mesh.VolumeEdges", "group='Mesh' label='Volume edges' "
+               "help='Draw volume mesh edges.' ");
+    TwAddVarCB(bar, "VolumeFaces", TW_TYPE_BOOL32, SetInt32CB, GetInt32CB, 
+               (void*)"Mesh.VolumeFaces", "group='Mesh' label='Volume faces' "
+               "help='Draw volume mesh faces.' ");
+    TwAddVarCB(bar, "Explode", TW_TYPE_DOUBLE, SetDoubleCB, GetDoubleCB,
+               (void*)"Mesh.Explode", "group='Mesh' label='Explode factor' "
+               "min=0 max=1 step=0.01 help='Explode mesh.' ");
+    TwAddVarCB(bar, "SizeFactor", TW_TYPE_DOUBLE, SetDoubleCB, GetDoubleCB, 
+               (void*)"Mesh.CharacteristicLengthFactor", "group='Mesh' "
+               "label='Element size factor' min=0.01 max=100 step=0.01 ");
   }
 
   TwBar *menubar = TwNewBar("Menu");
-  TwDefine(" Menu size='200 400' position='500 30' iconified='true' ");
+  TwDefine("Menu size='200 400' position='500 30' iconified='true' ");
   TwAddButton(menubar, "Elementary entities", MenuCB, (void*)"Elementary", 0);
   TwAddButton(menubar, "Physical groups", MenuCB, (void*)"Physical", 0);
   TwAddButton(menubar, "Edit", MenuCB, (void*)"Edit", 0);

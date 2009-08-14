@@ -8,6 +8,7 @@
 
 #include <map>
 #include <list>
+
 class GFace;
 class GModel;
 class BDS_Mesh;
@@ -28,4 +29,5 @@ void gmshCollapseSmallEdges(GModel &gm);
 BDS_Mesh *gmsh2BDS(std::list<GFace*> &l);
 double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2);
 void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q);
+
 #endif

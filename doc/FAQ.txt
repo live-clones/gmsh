@@ -1,4 +1,4 @@
-$Id: FAQ.txt,v 1.5 2009-03-30 06:34:13 geuzaine Exp $
+$Id: FAQ.txt,v 1.6 2009-08-14 08:25:37 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -52,16 +52,18 @@ found at http://www.mesa3d.org.
 
 * 2.3 How do I compile Gmsh from the source code?
 
-You need a C++ compiler. On Unix-like systems just type './configure;
-make; make install'. (Type './configure --help' to get the list of all
-configuration options.) To compile Gmsh on Windows with Visual C++ see
-doc/README.msvc.
+You need cmake (http://www.cmake.org) and a C++ compiler. See the
+README.txt file in the top-level source directory for more
+information.
 
-Compiling a bare-bones non-graphical version of Gmsh does not require
-any extra packages. To get a usable version you will need the BLAS and
-Lapack libraries. To build the graphical version you will need FLTK >=
-1.1.7 (freely available from http://www.fltk.org), configured with
-OpenGL support.
+* 2.4 Where does Gmsh save its configuration files?
+
+Gmsh will attempt to save temporary files and persistent configuration
+options first in the $GMSH_HOME directory, then in the $HOME, $TMP or
+$TEMP directories (in that order) if the $GMSH_HOME environment
+variable is not defined. If none of these variables are defined, Gmsh
+will try to save/load its configuration files from the current working
+directory.
 
 ********************************************************************
 
@@ -70,9 +72,14 @@ Section 3: General problems
 * 3.1 Gmsh (from a binary distribution) complains about missing
   libraries.
 
-Try 'ldd gmsh' (or 'otool -L gmsh' on Mac OS X) to check if all the
-required shared libraries are installed on your system. If not,
-install them. If it still doesn't work, recompile Gmsh from the
+On Windows, if your system complains about missing OPENGL32.DLL or
+GLU32.DLL libraries, then OpenGL is not properly installed on your
+machine. You can download OpenGL from Microsoft's web site, or
+directly from http://www.opengl.org.
+
+On Unix try 'ldd gmsh' (or 'otool -L gmsh' on Mac OS X) to check if
+all the required shared libraries are installed on your system. If
+not, install them. If it still doesn't work, recompile Gmsh from the
 sources.
 
 * 3.2 Gmsh keeps re-displaying its graphics when other windows

@@ -1,0 +1,20 @@
+// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+
+#ifndef _GMSH_VERSION_H_
+#define _GMSH_VERSION_H_
+
+#define GMSH_MAJOR_VERSION ${GMSH_MAJOR_VERSION}
+#define GMSH_MINOR_VERSION ${GMSH_MINOR_VERSION}
+#define GMSH_PATCH_VERSION ${GMSH_PATCH_VERSION}
+#define GMSH_EXTRA_VERSION "${GMSH_EXTRA_VERSION}"
+#define GMSH_VERSION       "${GMSH_VERSION}"
+#define GMSH_DATE          "${GMSH_DATE}"
+#define GMSH_HOST          "${GMSH_HOST}"
+#define GMSH_PACKAGER      "${GMSH_PACKAGER}"
+#define GMSH_OS            "${GMSH_OS}"
+#define GMSH_SHORT_LICENSE "${GMSH_SHORT_LICENSE}"
+
+#endif

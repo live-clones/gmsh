@@ -21,7 +21,7 @@
 
 StringXNumber CutParametricOptions_Number[] = {
   {GMSH_FULLRC, "MinU", GMSH_CutParametricPlugin::callbackMinU, 0.},
-  {GMSH_FULLRC, "MaxU", GMSH_CutParametricPlugin::callbackMaxU, 2*3.1416},
+  {GMSH_FULLRC, "MaxU", GMSH_CutParametricPlugin::callbackMaxU, 2 * 3.1416},
   {GMSH_FULLRC, "nPointsU", GMSH_CutParametricPlugin::callbackN, 360.},
   {GMSH_FULLRC, "ConnectPoints", GMSH_CutParametricPlugin::callbackConnect, 0.},
   {GMSH_FULLRC, "iView", NULL, -1.}
@@ -93,9 +93,9 @@ int GMSH_CutParametricPlugin::fillXYZ()
   for(int i = 0; i < nbU; ++i){
     char *names[] = { "u" };
     double values[] = { getU(i) };
-    x[i] = evaluator_evaluate(fx, sizeof(names)/sizeof(names[0]), names, values);
-    y[i] = evaluator_evaluate(fy, sizeof(names)/sizeof(names[0]), names, values);
-    z[i] = evaluator_evaluate(fz, sizeof(names)/sizeof(names[0]), names, values);
+    x[i] = evaluator_evaluate(fx, sizeof(names) / sizeof(names[0]), names, values);
+    y[i] = evaluator_evaluate(fy, sizeof(names) / sizeof(names[0]), names, values);
+    z[i] = evaluator_evaluate(fz, sizeof(names) / sizeof(names[0]), names, values);
   }
   return 1;
 #endif

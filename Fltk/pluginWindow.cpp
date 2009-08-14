@@ -11,7 +11,7 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Scroll.H>
-#include "GUI.h"
+#include "FlGui.h"
 #include "Draw.h"
 #include "pluginWindow.h"
 #include "paletteWindow.h"
@@ -21,7 +21,8 @@
 #include "Context.h"
 
 #define MAX_PLUGIN_OPTIONS 50
-struct PluginDialogBox{
+class PluginDialogBox{
+ public:
   Fl_Group *group;
   Fl_Value_Input *value[MAX_PLUGIN_OPTIONS];
   Fl_Input *input[MAX_PLUGIN_OPTIONS];
@@ -29,7 +30,7 @@ struct PluginDialogBox{
 
 void plugin_cb(Fl_Widget *w, void *data)
 {
-  GUI::instance()->plugins->show((int)(long)data);
+  FlGui::instance()->plugins->show((int)(long)data);
 }
 
 static void plugin_input_value_cb(Fl_Widget *w, void *data)
@@ -50,9 +51,9 @@ static void plugin_browser_cb(Fl_Widget *w, void *data)
 {
   // get selected plugin
   GMSH_Plugin *p = 0;
-  for(int i = 1; i <= GUI::instance()->plugins->browser->size(); i++) {
-    if(GUI::instance()->plugins->browser->selected(i)) {
-      p = (GMSH_Plugin*)GUI::instance()->plugins->browser->data(i);
+  for(int i = 1; i <= FlGui::instance()->plugins->browser->size(); i++) {
+    if(FlGui::instance()->plugins->browser->selected(i)) {
+      p = (GMSH_Plugin*)FlGui::instance()->plugins->browser->data(i);
       break;
     }
   }
@@ -60,8 +61,8 @@ static void plugin_browser_cb(Fl_Widget *w, void *data)
 
   // get first first selected view
   int iView = -1;
-  for(int i = 1; i <= GUI::instance()->plugins->view_browser->size(); i++) {
-    if(GUI::instance()->plugins->view_browser->selected(i)) {
+  for(int i = 1; i <= FlGui::instance()->plugins->view_browser->size(); i++) {
+    if(FlGui::instance()->plugins->view_browser->selected(i)) {
       iView = i - 1;
       break;
     }
@@ -95,8 +96,8 @@ static void plugin_browser_cb(Fl_Widget *w, void *data)
   }
 
   // hide all plugin groups except the selected one
-  for(int i = 1; i <= GUI::instance()->plugins->browser->size(); i++)
-    ((GMSH_Plugin*)GUI::instance()->plugins->browser->data(i))->dialogBox->group->hide();
+  for(int i = 1; i <= FlGui::instance()->plugins->browser->size(); i++)
+    ((GMSH_Plugin*)FlGui::instance()->plugins->browser->data(i))->dialogBox->group->hide();
   p->dialogBox->group->show();
 }
 
@@ -120,8 +121,8 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
 
   // run on all selected views
   bool no_view_selected = true;
-  for(int i = 1; i <= GUI::instance()->plugins->view_browser->size(); i++) {
-    if(GUI::instance()->plugins->view_browser->selected(i)) {
+  for(int i = 1; i <= FlGui::instance()->plugins->view_browser->size(); i++) {
+    if(FlGui::instance()->plugins->view_browser->selected(i)) {
       no_view_selected = false;
       try{
         if(i - 1 >= 0 && i - 1 < (int)PView::list.size())
@@ -138,7 +139,7 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
   }
   if(no_view_selected) p->execute(0);
 
-  GUI::instance()->updateViews();
+  FlGui::instance()->updateViews();
   CTX::instance()->post.pluginDrawFunction = NULL;
   Draw();
 }

@@ -11,7 +11,7 @@
 void GEdgeSigned::print() const
 {
   Msg::Info("GEdgeSigned : Edge %d sign %d Ordered Vertices %d,%d",
-	    ge->tag(), _sign, getBeginVertex()->tag(), getEndVertex()->tag());
+            ge->tag(), _sign, getBeginVertex()->tag(), getEndVertex()->tag());
 }
 
 int countInList(std::list<GEdge*> &wire, GEdge *ge)

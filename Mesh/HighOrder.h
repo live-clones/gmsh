@@ -27,12 +27,12 @@ void SetOrderN(GModel *m, int order, bool linear=true, bool incomplete=false);
 
 
 MTriangle* setHighOrder(MTriangle *t,
-			GFace *gf, 
-			edgeContainer &edgeVertices, 
-			faceContainer &faceVertices, 
-			bool linear, 
-			bool incomplete,
-			int nPts = 1, 
-			gmshHighOrderSmoother *displ2D = 0,
-			gmshHighOrderSmoother *displ3D = 0);
+                        GFace *gf, 
+                        edgeContainer &edgeVertices, 
+                        faceContainer &faceVertices, 
+                        bool linear, 
+                        bool incomplete,
+                        int nPts = 1, 
+                        gmshHighOrderSmoother *displ2D = 0,
+                        gmshHighOrderSmoother *displ3D = 0);
 #endif

@@ -38,8 +38,8 @@ static void setLcs(MTriangle *t, std::map<MVertex*, double> &vSizes)
       double dy = vi->y()-vj->y();
       double dz = vi->z()-vj->z();
       double l = sqrt(dx * dx + dy * dy + dz * dz);
-      std::map<MVertex*,double>::iterator iti = vSizes.find(vi);	  
-      std::map<MVertex*,double>::iterator itj = vSizes.find(vj);	  
+      std::map<MVertex*,double>::iterator iti = vSizes.find(vi);          
+      std::map<MVertex*,double>::iterator itj = vSizes.find(vj);          
       if (iti->second < 0 || iti->second > l) iti->second = l;
       if (itj->second < 0 || itj->second > l) itj->second = l;
     }
@@ -50,7 +50,7 @@ void buildMeshGenerationDataStructures(GFace *gf,
                                        std::set<MTri3*, compareTri3Ptr> &AllTris,
                                        std::vector<double> &vSizes,
                                        std::vector<double> &vSizesBGM,
-				       std::vector<SMetric3> &vMetricsBGM,
+                                       std::vector<SMetric3> &vMetricsBGM,
                                        std::vector<double> &Us,
                                        std::vector<double> &Vs)
 {
@@ -221,28 +221,28 @@ void laplaceSmoothing(GFace *gf)
         const std::vector<MElement*> &lt = it->second;
         double cu = 0, cv = 0;
         double pu[4], pv[4];
-	double fact  = 0.0;
+        double fact  = 0.0;
         for (unsigned int i = 0; i < lt.size(); i++){
           parametricCoordinates(lt[i], gf, pu, pv);
           cu += (pu[0] + pu[1] + pu[2]);
           cv += (pv[0] + pv[1] + pv[2]);
-	  if (lt[i]->getNumVertices() == 4){
-	    cu += pu[3];
-	    cv += pv[3];
-	  }	    
-	  fact += lt[i]->getNumVertices();
+          if (lt[i]->getNumVertices() == 4){
+            cu += pu[3];
+            cv += pv[3];
+          }         
+          fact += lt[i]->getNumVertices();
           // have to test validity !
         }
-	if (fact != 0.0){
-	  ver->setParameter(0, cu / fact);
-	  ver->setParameter(1, cv / fact);
-	  GPoint pt = gf->point(SPoint2(cu / fact, cv / fact));
-	  if (pt.succeeded()){
-	    ver->x() = pt.x();
-	    ver->y() = pt.y();
-	    ver->z() = pt.z();
-	  }
-	}
+        if (fact != 0.0){
+          ver->setParameter(0, cu / fact);
+          ver->setParameter(1, cv / fact);
+          GPoint pt = gf->point(SPoint2(cu / fact, cv / fact));
+          if (pt.succeeded()){
+            ver->x() = pt.x();
+            ver->y() = pt.y();
+            ver->z() = pt.z();
+          }
+        }
       }
       ++it;
     }  
@@ -611,9 +611,9 @@ bool gmshBuildVertexCavity(MTri3 *t, int iLocalVertex, MVertex **v1,
         }
         if (!t) return false;
         if (t->isDeleted()){ 
-	  Msg::Error("Impossible to build vertex cavity");
-	  return false;
-	}  
+          Msg::Error("Impossible to build vertex cavity");
+          return false;
+        }  
         cavity.push_back(t);
         for (int j = 0; j < 3; j++){
           if (t->tri()->getVertex(j) !=lastinring && t->tri()->getVertex(j) != *v1){
@@ -858,12 +858,12 @@ static void _gmshRecombineIntoQuads(GFace *gf)
   for (e2t_cont::iterator it = adj.begin(); it!= adj.end(); ++it){
     if (it->second.second && 
         it->second.first->getNumVertices() == 3 &&  
-	it->second.second->getNumVertices() == 3 &&
+        it->second.second->getNumVertices() == 3 &&
         (emb_edgeverts.find(it->first.getVertex(0)) == emb_edgeverts.end() ||
          emb_edgeverts.find(it->first.getVertex(1)) == emb_edgeverts.end()))
       pairs.insert(recombine_triangle(it->first,
-				      it->second.first,
-				      it->second.second));
+                                      it->second.first,
+                                      it->second.second));
   }
 
   std::set<MElement*> touched;
@@ -875,9 +875,9 @@ static void _gmshRecombineIntoQuads(GFace *gf)
       MElement *t1 = itp->t1;
       MElement *t2 = itp->t2;
       if (touched.find(t1) == touched.end() &&
-	  touched.find(t2) == touched.end()){
-	touched.insert(t1);
-	touched.insert(t2);
+          touched.find(t2) == touched.end()){
+        touched.insert(t1);
+        touched.insert(t2);
 
         int orientation = 0;
         for(int i = 0; i < 3; i++) {
@@ -894,7 +894,7 @@ static void _gmshRecombineIntoQuads(GFace *gf)
           q = new MQuadrangle(itp->n1, itp->n3, itp->n2, itp->n4);
         else
           q = new MQuadrangle(itp->n1, itp->n4, itp->n2, itp->n3);
-	gf->quadrangles.push_back(q);
+        gf->quadrangles.push_back(q);
       }
     }
     ++itp;

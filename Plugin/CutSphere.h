@@ -18,7 +18,7 @@ class GMSH_CutSpherePlugin : public GMSH_LevelsetPlugin
   double levelset(double x, double y, double z, double val) const;
   static double callback(int num, int action, double value, double *opt,
                          double step, double min, double max);
-public:
+ public:
   GMSH_CutSpherePlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *helpText) const;

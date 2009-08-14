@@ -156,16 +156,16 @@ SOrientedBoundingBox GFace::getOBB()
     if(getNumMeshVertices() > 0) {
       int N = getNumMeshVertices();
       for (int i = 0; i < N; i++) {
-	MVertex* mv = getMeshVertex(i);
+        MVertex* mv = getMeshVertex(i);
         vertices.push_back(mv->point());
       }
       std::list<GEdge*> eds = edges();
       for(std::list<GEdge*>::iterator ed = eds.begin(); ed != eds.end(); ed++) {
-	int N2 = (*ed)->getNumMeshVertices();
+        int N2 = (*ed)->getNumMeshVertices();
         for (int i = 0; i < N2; i++) {
-	  MVertex* mv = (*ed)->getMeshVertex(i);
+          MVertex* mv = (*ed)->getMeshVertex(i);
           vertices.push_back(mv->point());
-	}
+        }
         // Don't forget to add the first and last vertices...
         SPoint3 pt1((*ed)->getBeginVertex()->x(),
                     (*ed)->getBeginVertex()->y(),
@@ -174,7 +174,7 @@ SOrientedBoundingBox GFace::getOBB()
                     (*ed)->getEndVertex()->y(),
                     (*ed)->getEndVertex()->z());
         vertices.push_back(pt1);
-	vertices.push_back(pt2);
+        vertices.push_back(pt2);
       }
     } 
     else if(buildSTLTriangulation()) {
@@ -455,13 +455,13 @@ end:
   Msg::Debug("Surface: %d", tag());
   Msg::Debug("SVD    : %g,%g,%g (min=%d)", svd[0], svd[1], svd[2], min);
   Msg::Debug("Plane  : (%g x + %g y + %g z = %g)",
-	     meanPlane.a, meanPlane.b, meanPlane.c, meanPlane.d);
+             meanPlane.a, meanPlane.b, meanPlane.c, meanPlane.d);
   Msg::Debug("Normal : (%g , %g , %g )",
-	     meanPlane.a, meanPlane.b, meanPlane.c);
+             meanPlane.a, meanPlane.b, meanPlane.c);
   Msg::Debug("t1     : (%g , %g , %g )", t1[0], t1[1], t1[2]);
   Msg::Debug("t2     : (%g , %g , %g )", t2[0], t2[1], t2[2]);
   Msg::Debug("pt     : (%g , %g , %g )",
-	     meanPlane.x, meanPlane.y, meanPlane.z);
+             meanPlane.x, meanPlane.y, meanPlane.z);
 
   //check coherence for plane surfaces
   if(geomType() == Plane) {
@@ -930,9 +930,9 @@ SPoint2 GFace::geodesic(const SPoint2 &pt1 , const SPoint2 &pt2 , double t)
     GPoint gp2 = point(pt2.x(), pt2.y());
     SPoint2 guess = pt1 + (pt2 - pt1) * t;
     GPoint gp = closestPoint(SPoint3(gp1.x() + t * (gp2.x() - gp1.x()),
-				     gp1.y() + t * (gp2.y() - gp1.y()),
-				     gp1.z() + t * (gp2.z() - gp1.z())),
-			     (double*)guess);
+                                     gp1.y() + t * (gp2.y() - gp1.y()),
+                                     gp1.z() + t * (gp2.z() - gp1.z())),
+                             (double*)guess);
     if (gp.g())
       return SPoint2(gp.u(), gp.v());
     else
@@ -969,17 +969,16 @@ int GFace::poincareMesh()
 {
   std::set<MEdge, Less_Edge> es;
   std::set<MVertex*> vs;
-  for (int i=0; i<getNumMeshElements() ; i++){ 
+  for(unsigned int i = 0; i < getNumMeshElements(); i++){ 
     MElement *e = getMeshElement(i);
-    for (int j=0;j<e->getNumVertices();j++)vs.insert(e->getVertex(j));
-    for (int j=0;j<e->getNumEdges();j++)es.insert(e->getEdge(j));
+    for(int j = 0; j < e->getNumVertices(); j++) vs.insert(e->getVertex(j));
+    for(int j = 0; j < e->getNumEdges(); j++) es.insert(e->getEdge(j));
   }
-  return  vs.size() - es.size() + getNumMeshElements();  
+  return vs.size() - es.size() + getNumMeshElements();  
 }
 
 int GFace::genusGeom()  
 {
-  int G = 0;
   int nSeams = 0;
   std::set<GEdge*> single_seams;
   for (std::list<GEdge*>::iterator it = l_edges.begin();

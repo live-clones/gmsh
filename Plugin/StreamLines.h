@@ -17,7 +17,7 @@ class GMSH_StreamLinesPlugin : public GMSH_PostPlugin
 {
   static double callback(int num, int action, double value, double *opt,
                          double step, double min, double max);
-public:
+ public:
   GMSH_StreamLinesPlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *help_text) const;

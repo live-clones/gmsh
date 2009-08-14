@@ -528,10 +528,10 @@ void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool, const BooleanOperato
             if (aValueC.ShapeType() != TopAbs_SOLID) isOnlySolids = false;
           }
           if (isOnlySolids)
-	    Msg::Error("Face gluing not implemented");
-	  //  theNewShape = GEOMImpl_GlueDriver::GlueFaces(C, Precision::Confusion());
+            Msg::Error("Face gluing not implemented");
+          //  theNewShape = GEOMImpl_GlueDriver::GlueFaces(C, Precision::Confusion());
           //else
-	      theNewShape = C;
+              theNewShape = C;
         }       
       }
       break;
@@ -647,47 +647,47 @@ int GModel::applyOCCMeshConstraints(const void *constraints)
       const MeshGmsh_EdgeConstrain &c(edgeConstraints.Find(*s));
       // prescribed mesh constraint
       if(c.IsMeshImposed()){
-	TColStd_SequenceOfInteger nodeNum;
-	c.GetNodesNumber(nodeNum);
-	TColStd_SequenceOfReal nodePar;
-	c.GetParameters(nodePar);
-	int n = nodeNum.Length();
-	if(n < 2){
-	  Msg::Error("We need at least two points in the edge constraint");
-	}
-	else if(nodePar.Length() != n){
-	  Msg::Error("Wrong number of parameters in edge constraint: %d != %d",
-		     nodeNum.Length(), nodePar.Length());
-	}
-	else{
-	  // set the mesh as immutable
-	  ge->meshAttributes.Method == MESH_NONE;
-	  // set the correct tags on the boundary vertices
-	  bool invert = (nodePar.Value(1) > nodePar.Value(n));
-	  int numbeg = nodeNum.Value(invert ? n : 1);
-	  int numend = nodeNum.Value(invert ? 1 : n);
-	  Msg::Debug("... beg=%d end=%d", numbeg, numend);
-	  ge->getBeginVertex()->mesh_vertices[0]->setNum(numbeg);
-	  ge->getEndVertex()->mesh_vertices[0]->setNum(numend);
-	  // set the mesh on the edge
-	  for(int i = 2; i < n; i++){
-	    int num = nodeNum.Value(invert ? n - i + 1 : i);
-	    double u = nodePar.Value(invert ? n - i + 1 : i);
-	    GPoint p = ge->point(u);
-	    Msg::Debug("... adding mesh vertex num=%d u=%g xyz=(%g,%g,%g)",
-		       num, u, p.x(), p.y(), p.z());
-	    MEdgeVertex *v = new MEdgeVertex(p.x(), p.y(), p.z(), ge, u);
-	    v->setNum(num);
-	    ge->mesh_vertices.push_back(v);
-	  }
-	  for(unsigned int i = 0; i < ge->mesh_vertices.size() + 1; i++){
-	    MVertex *v0 = (i == 0) ? 
-	      ge->getBeginVertex()->mesh_vertices[0] : ge->mesh_vertices[i - 1];
-	    MVertex *v1 = (i == ge->mesh_vertices.size()) ? 
-	      ge->getEndVertex()->mesh_vertices[0] : ge->mesh_vertices[i];
-	    ge->lines.push_back(new MLine(v0, v1));
-	  }
-	}
+        TColStd_SequenceOfInteger nodeNum;
+        c.GetNodesNumber(nodeNum);
+        TColStd_SequenceOfReal nodePar;
+        c.GetParameters(nodePar);
+        int n = nodeNum.Length();
+        if(n < 2){
+          Msg::Error("We need at least two points in the edge constraint");
+        }
+        else if(nodePar.Length() != n){
+          Msg::Error("Wrong number of parameters in edge constraint: %d != %d",
+                     nodeNum.Length(), nodePar.Length());
+        }
+        else{
+          // set the mesh as immutable
+          ge->meshAttributes.Method == MESH_NONE;
+          // set the correct tags on the boundary vertices
+          bool invert = (nodePar.Value(1) > nodePar.Value(n));
+          int numbeg = nodeNum.Value(invert ? n : 1);
+          int numend = nodeNum.Value(invert ? 1 : n);
+          Msg::Debug("... beg=%d end=%d", numbeg, numend);
+          ge->getBeginVertex()->mesh_vertices[0]->setNum(numbeg);
+          ge->getEndVertex()->mesh_vertices[0]->setNum(numend);
+          // set the mesh on the edge
+          for(int i = 2; i < n; i++){
+            int num = nodeNum.Value(invert ? n - i + 1 : i);
+            double u = nodePar.Value(invert ? n - i + 1 : i);
+            GPoint p = ge->point(u);
+            Msg::Debug("... adding mesh vertex num=%d u=%g xyz=(%g,%g,%g)",
+                       num, u, p.x(), p.y(), p.z());
+            MEdgeVertex *v = new MEdgeVertex(p.x(), p.y(), p.z(), ge, u);
+            v->setNum(num);
+            ge->mesh_vertices.push_back(v);
+          }
+          for(unsigned int i = 0; i < ge->mesh_vertices.size() + 1; i++){
+            MVertex *v0 = (i == 0) ? 
+              ge->getBeginVertex()->mesh_vertices[0] : ge->mesh_vertices[i - 1];
+            MVertex *v1 = (i == ge->mesh_vertices.size()) ? 
+              ge->getEndVertex()->mesh_vertices[0] : ge->mesh_vertices[i];
+            ge->lines.push_back(new MLine(v0, v1));
+          }
+        }
       }
       // embedding constraint
       if(c.IsEmbedded() && !c.GetFace().IsNull()){
@@ -722,35 +722,35 @@ void GModel::_deleteOCCInternals()
 int GModel::readOCCSTEP(const std::string &fn)
 {
   Msg::Error("Gmsh must be compiled with OpenCascade support to load '%s'",
-	     fn.c_str());
+             fn.c_str());
   return 0;
 }
 
 int GModel::readOCCIGES(const std::string &fn)
 {
   Msg::Error("Gmsh must be compiled with OpenCascade support to load '%s'",
-	     fn.c_str());
+             fn.c_str());
   return 0;
 }
 
 int GModel::readOCCBREP(const std::string &fn)
 {
   Msg::Error("Gmsh must be compiled with OpenCascade support to load '%s'",
-	     fn.c_str());
+             fn.c_str());
   return 0;
 }
 
 int GModel::importOCCShape(const void *shape)
 {
   Msg::Error("Gmsh must be compiled with OpenCascade support to import "
-	     "a TopoDS_Shape");
+             "a TopoDS_Shape");
   return 0;
 }
 
 int GModel::applyOCCMeshConstraints(const void *constraints)
 {
   Msg::Error("Gmsh must be compiled with OpenCascade support to apply "
-	     "OCC mesh constraints");
+             "OCC mesh constraints");
   return 0;
 }
 

@@ -116,13 +116,13 @@ bool OCC_Connect::LessThanIntegerSet::operator()(std::set<int> const &a,
 {
     std::set<int>::const_iterator pa=a.begin(), pb=b.begin();
     for(; pa!=a.end() && pb!=b.end(); pa++, pb++ ) {
-	if(*pa<*pb)
-	    return 1;
-	if(*pb<*pa)
-	    return 0;
+        if(*pa<*pb)
+            return 1;
+        if(*pb<*pa)
+            return 0;
     }
     if(pb!=b.end())
-	return 1;
+        return 1;
     return 0;
 }
 
@@ -140,10 +140,10 @@ int OCC_Connect::SaveBRep(char const *name)
     BB.MakeCompound(compound);
     TopTools_ListOfShape p;
     for(p=scale.Modified(assembly.front());
-	!p.IsEmpty();
-	p.RemoveFirst()
+        !p.IsEmpty();
+        p.RemoveFirst()
     )
-	BB.Add(compound,p.First());
+        BB.Add(compound,p.First());
     BRepTools::Write(compound, (char*)name);
     return 1;
 }
@@ -173,7 +173,7 @@ void OCC_Connect::Collect(void)
     BB.MakeCompound(result);
     while(assembly.size()>0) {
         if(verbose&Cutting)
-	    cout << "Adding item\n";
+            cout << "Adding item\n";
         BB.Add(result,assembly.front());
         assembly.pop_front();
     }
@@ -222,35 +222,35 @@ void FinishEdge(int edge,
     int fv=e2v[edge].first;
     v2e[fv].erase(edge);
     while(v2e[fv].size()>1) {
-	std::set<int>::iterator e=v2e[fv].begin();
-	int nv=v2e.size();
-	v2e.push_back(std::set<int>());
-	v2e[nv].insert(*e);
-	if(e2v[*e].first==fv)
-	    e2v[*e].first=nv;
-	else
-	    e2v[*e].second=nv;
-	if(verbose)
+        std::set<int>::iterator e=v2e[fv].begin();
+        int nv=v2e.size();
+        v2e.push_back(std::set<int>());
+        v2e[nv].insert(*e);
+        if(e2v[*e].first==fv)
+            e2v[*e].first=nv;
+        else
+            e2v[*e].second=nv;
+        if(verbose)
           std::cout << "Created vertex " << nv << "(" << fv << "), edge[" << *e
                     << "]=" << e2v[*e].first << " " << e2v[*e].second << "\n";
-	v2e[fv].erase(*e);
+        v2e[fv].erase(*e);
     }
 
     int sv=e2v[edge].second;
     v2e[sv].erase(edge);
     while(v2e[sv].size()>1) {
-	std::set<int>::iterator e=v2e[sv].begin();
-	int nv=v2e.size();
-	v2e.push_back(std::set<int>());
-	v2e[nv].insert(*e);
-	if(e2v[*e].first==sv)
-	    e2v[*e].first=nv;
-	else
-	    e2v[*e].second=nv;
-	if(verbose)
+        std::set<int>::iterator e=v2e[sv].begin();
+        int nv=v2e.size();
+        v2e.push_back(std::set<int>());
+        v2e[nv].insert(*e);
+        if(e2v[*e].first==sv)
+            e2v[*e].first=nv;
+        else
+            e2v[*e].second=nv;
+        if(verbose)
           std::cout << "Created vertex " << nv << "(" << sv << "), edge[" << *e <<
             "]=" << e2v[*e].first << " " << e2v[*e].second << "\n";
-	v2e[sv].erase(*e);
+        v2e[sv].erase(*e);
     }
 }
 
@@ -299,27 +299,27 @@ void OCC_Connect::FaceCutters::Build(TopoDS_Face const &face,
         int open_mode = -1;
         std::set<int> current_vertices;
         for(unsigned int start = 0; start < v2e.size(); start++) {
-	    if(v2e[start].size()==1) {
-		if(verbose&Cutting)
+            if(v2e[start].size()==1) {
+                if(verbose&Cutting)
                   std::cout << "start open at " << start << "\n";
-		current_vertices.insert(start);
-		open_mode=1;
-		break;
-	    }
+                current_vertices.insert(start);
+                open_mode=1;
+                break;
+            }
         }
         if(!current_vertices.size()) {
-	    for(unsigned int start = 0; start < v2e.size(); start++) {
-		if(v2e[start].size()) {
-		    if(verbose&Cutting)
+            for(unsigned int start = 0; start < v2e.size(); start++) {
+                if(v2e[start].size()) {
+                    if(verbose&Cutting)
                       std::cout << "start closed at " << start << "\n";
-		    current_vertices.insert(start);
-		    open_mode=0;
-		    break;
-		}
-	    }
+                    current_vertices.insert(start);
+                    open_mode=0;
+                    break;
+                }
+            }
         }
         if(!current_vertices.size())
-	    break;
+            break;
 
         std::map<int,std::deque<int> > wires;
         std::set<int> processed_edges;
@@ -334,80 +334,80 @@ void OCC_Connect::FaceCutters::Build(TopoDS_Face const &face,
                     e++
                 ) {
                     if(processed_edges.count(*e))
-			continue;
+                        continue;
 
-		    int other=e2v[*e].first==*v?
-			e2v[*e].second:e2v[*e].first;
+                    int other=e2v[*e].first==*v?
+                        e2v[*e].second:e2v[*e].first;
 
-		    if(open_mode) {
-			if(v2e[other].size()==1) {
-			    // Other is open end too, finish wire.
-			    wires[*v].push_back(*e);
-			    std::deque<int>::const_iterator p;
-			    BRepBuilderAPI_MakeWire wire;
-			    if(verbose&Cutting)
+                    if(open_mode) {
+                        if(v2e[other].size()==1) {
+                            // Other is open end too, finish wire.
+                            wires[*v].push_back(*e);
+                            std::deque<int>::const_iterator p;
+                            BRepBuilderAPI_MakeWire wire;
+                            if(verbose&Cutting)
                                 std::cout << "CUT Open wire:";
-			    for(p=wires[*v].begin();
-				p!=wires[*v].end();
-				p++
-			    ) {
-				FinishEdge(*p, v2e, e2v);
-				wire.Add(edges[*p]);
-				if(verbose&Cutting)
+                            for(p=wires[*v].begin();
+                                p!=wires[*v].end();
+                                p++
+                            ) {
+                                FinishEdge(*p, v2e, e2v);
+                                wire.Add(edges[*p]);
+                                if(verbose&Cutting)
                                     std::cout << ' ' << (*p)+1;
-			    }
-			    if(verbose&Cutting)
+                            }
+                            if(verbose&Cutting)
                                 std::cout << "\n";
-			    push_back(wire);
-			    goto next_vertex;
-			}
-		    } else {
-			if( current_vertices.count(other) ||
-			    next_vertices.count(other)
-			) {
+                            push_back(wire);
+                            goto next_vertex;
+                        }
+                    } else {
+                        if( current_vertices.count(other) ||
+                            next_vertices.count(other)
+                        ) {
                             if(verbose&Cutting)
                                 std::cout << "CUT Closed wire:";
-			    wires[*v].push_back(*e);
-			    while(wires[other].front()
-				==wires[*v].front()
-			    ) {
-				wires[other].pop_front();
-				wires[*v].pop_front();
-			    }
+                            wires[*v].push_back(*e);
+                            while(wires[other].front()
+                                ==wires[*v].front()
+                            ) {
+                                wires[other].pop_front();
+                                wires[*v].pop_front();
+                            }
 
-			    BRepBuilderAPI_MakeWire wire;
-			    std::deque<int>::const_iterator p;
-			    for(p=wires[other].begin();
-				p!=wires[other].end();
-				p++
-			    ) {
-				FinishEdge(*p, v2e, e2v);
-				wire.Add(edges[*p]);
+                            BRepBuilderAPI_MakeWire wire;
+                            std::deque<int>::const_iterator p;
+                            for(p=wires[other].begin();
+                                p!=wires[other].end();
+                                p++
+                            ) {
+                                FinishEdge(*p, v2e, e2v);
+                                wire.Add(edges[*p]);
                                 if(verbose&Cutting)
                                     std::cout << ' ' << (*p)+1;
-			    }
-			    std::deque<int>::reverse_iterator rp;
-			    for(rp=wires[*v].rbegin();
-				rp!=wires[*v].rend();
-				rp++
-			    ) {
-				FinishEdge(*rp, v2e, e2v);
-				wire.Add(edges[*rp]);
+                            }
+                            std::deque<int>::reverse_iterator rp;
+                            for(rp=wires[*v].rbegin();
+                                rp!=wires[*v].rend();
+                                rp++
+                            ) {
+                                FinishEdge(*rp, v2e, e2v);
+                                wire.Add(edges[*rp]);
                                 if(verbose&Cutting)
                                     std::cout << ' ' << (*rp)+1;
-			    }
+                            }
                             if(verbose&Cutting)
                                 std::cout << "\n";
-			    push_back(wire);
-			    goto next_vertex;
-			}
-		    }
-		    if(current_vertices.count(other)==0) {
-			wires[other]=wires[*v];
-			wires[other].push_back(*e);
-			processed_edges.insert(*e);
-			next_vertices.insert(other);
-		    }
+                            push_back(wire);
+                            goto next_vertex;
+                        }
+                    }
+                    if(current_vertices.count(other)==0) {
+                        wires[other]=wires[*v];
+                        wires[other].push_back(*e);
+                        processed_edges.insert(*e);
+                        next_vertices.insert(other);
+                    }
                 }
             }
             current_vertices=next_vertices;
@@ -484,7 +484,7 @@ inline OCC_Connect::cutmap_t OCC_Connect::SelectCuttingEdges(
             }
 
             if(verbose&Cutting)
-		cout << "Accepted edge " << edge << " in face " << face << endl;
+                cout << "Accepted edge " << edge << " in face " << face << endl;
 
             // Add missing PCurve if necessary
             Handle_Geom2d_Curve c=BRep_Tool::CurveOnSurface(c_edge,c_face,s,e);
@@ -503,71 +503,71 @@ void OCC_Connect::Intersect(BRep_Builder &BB, TopoDS_Shape &target,
     TopoDS_Shape &shape, TopoDS_Shape &tool)
 {
     /***************************************************************************
-      	We start by splitting edges at all the edge-edge intersections.
-	This may generate new vertices and edges.
+        We start by splitting edges at all the edge-edge intersections.
+        This may generate new vertices and edges.
     ***************************************************************************/
     MergeVertices(shape,tool);
     LocOpe_SplitShape splitter1(shape);
     LocOpe_SplitShape splitter2(tool);
     TopOpeBRep_ShapeIntersector intersector;
     for(intersector.InitIntersection(shape,tool);
-	intersector.MoreIntersection();
-	intersector.NextIntersection()
+        intersector.MoreIntersection();
+        intersector.NextIntersection()
     ) {
-	if(verbose&Cutting) {
-	    cout << "++++++++++++++++++++++++++++++++++++++++"
-		"++++++++++++++++++++++++++++++++++++++++\n";
-	    intersector.DumpCurrent(1); cout << " --> ";
-	    intersector.DumpCurrent(2); cout << '\n';
-	}
+        if(verbose&Cutting) {
+            cout << "++++++++++++++++++++++++++++++++++++++++"
+                "++++++++++++++++++++++++++++++++++++++++\n";
+            intersector.DumpCurrent(1); cout << " --> ";
+            intersector.DumpCurrent(2); cout << '\n';
+        }
 
-	TopOpeBRep_EdgesIntersector &ee=intersector.ChangeEdgesIntersector();
-	if( intersector.CurrentGeomShape(1).ShapeType()==TopAbs_EDGE &&
+        TopOpeBRep_EdgesIntersector &ee=intersector.ChangeEdgesIntersector();
+        if( intersector.CurrentGeomShape(1).ShapeType()==TopAbs_EDGE &&
             intersector.CurrentGeomShape(2).ShapeType()==TopAbs_EDGE
         ) {
-	    for(ee.InitPoint(); ee.MorePoint(); ee.NextPoint()) {
-		TopOpeBRep_Point2d const &p=ee.Point();
-		if(verbose&Cutting)
-		    cout << "point loop " << p.Parameter(1) << '\n';
-		TopoDS_Vertex vertex;
-		if(p.IsVertex(1))
-		    vertex=p.Vertex(1);
-		else if(p.IsVertex(2))
-		    vertex=p.Vertex(2);
-		else
-		    vertex=BRepBuilderAPI_MakeVertex(p.Value());
-		if(!p.IsVertex(1)) {
-		    TopoDS_Edge edge=TopoDS::Edge(ee.Edge(1));
-		    if(!splitter1.CanSplit(edge)) {
-			if(verbose&Cutting)
-			    cout << "Cannot split 1\n";;
-		    } else {
-			if(verbose&Cutting)
-			    cout << "splitting model 1\n";
-			try { splitter1.Add(vertex,p.Parameter(1),edge); }
-			catch(Standard_ConstructionError c) {
-			    if(verbose&Cutting)
-				cout << "Ooops \n";
-			}
-		    }
-		}
-		if(!p.IsVertex(2)) {
-		    TopoDS_Edge edge=TopoDS::Edge(ee.Edge(2));
-		    if(!splitter2.CanSplit(edge)) {
-			if(verbose&Cutting)
-			    cout << "Cannot split 2\n";;
-		    } else {
-			if(verbose&Cutting)
-			    cout << "splitting model 2\n";
-			try { splitter2.Add(vertex,p.Parameter(2),edge); }
-			catch(Standard_ConstructionError c) {
-			    if(verbose&Cutting)
-				cout << "Ooops \n";
-			}
-		    }
-		}
-	    }
-	}
+            for(ee.InitPoint(); ee.MorePoint(); ee.NextPoint()) {
+                TopOpeBRep_Point2d const &p=ee.Point();
+                if(verbose&Cutting)
+                    cout << "point loop " << p.Parameter(1) << '\n';
+                TopoDS_Vertex vertex;
+                if(p.IsVertex(1))
+                    vertex=p.Vertex(1);
+                else if(p.IsVertex(2))
+                    vertex=p.Vertex(2);
+                else
+                    vertex=BRepBuilderAPI_MakeVertex(p.Value());
+                if(!p.IsVertex(1)) {
+                    TopoDS_Edge edge=TopoDS::Edge(ee.Edge(1));
+                    if(!splitter1.CanSplit(edge)) {
+                        if(verbose&Cutting)
+                            cout << "Cannot split 1\n";;
+                    } else {
+                        if(verbose&Cutting)
+                            cout << "splitting model 1\n";
+                        try { splitter1.Add(vertex,p.Parameter(1),edge); }
+                        catch(Standard_ConstructionError c) {
+                            if(verbose&Cutting)
+                                cout << "Ooops \n";
+                        }
+                    }
+                }
+                if(!p.IsVertex(2)) {
+                    TopoDS_Edge edge=TopoDS::Edge(ee.Edge(2));
+                    if(!splitter2.CanSplit(edge)) {
+                        if(verbose&Cutting)
+                            cout << "Cannot split 2\n";;
+                    } else {
+                        if(verbose&Cutting)
+                            cout << "splitting model 2\n";
+                        try { splitter2.Add(vertex,p.Parameter(2),edge); }
+                        catch(Standard_ConstructionError c) {
+                            if(verbose&Cutting)
+                                cout << "Ooops \n";
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /***************************************************************************
@@ -595,7 +595,7 @@ void OCC_Connect::Intersect(BRep_Builder &BB, TopoDS_Shape &target,
             if(!distance.IsDone())
                 continue;
             double tolerance=std::max(BRep_Tool::Tolerance(edge),
-				      BRep_Tool::Tolerance(vertex));
+                                      BRep_Tool::Tolerance(vertex));
             for(int i=1;i<=distance.NbExt();i++) {
                 if(distance.Value(i)<tolerance) {
                     try {
@@ -647,7 +647,7 @@ void OCC_Connect::Intersect(BRep_Builder &BB, TopoDS_Shape &target,
             if(!distance.IsDone())
                 continue;
             double tolerance=std::max(BRep_Tool::Tolerance(edge),
-				      BRep_Tool::Tolerance(vertex));
+                                      BRep_Tool::Tolerance(vertex));
             for(int i=1;i<=distance.NbExt();i++) {
                 if(distance.Value(i)<tolerance) {
                     try {
@@ -683,43 +683,43 @@ void OCC_Connect::Intersect(BRep_Builder &BB, TopoDS_Shape &target,
     }
 
     /***************************************************************************
-      	We need the shapes with all the edge-edge intersections to split
-	all the faces. All vertices and edges which can be merged, will
-	be merged.
+        We need the shapes with all the edge-edge intersections to split
+        all the faces. All vertices and edges which can be merged, will
+        be merged.
     ***************************************************************************/
     TopoDS_Compound intermediate1;
     BB.MakeCompound(intermediate1);
     for(TopTools_ListIteratorOfListOfShape p(splitter1.DescendantShapes(shape));
-	p.More();
-	p.Next()
+        p.More();
+        p.Next()
     ) {
-	BB.Add(intermediate1,p.Value());
+        BB.Add(intermediate1,p.Value());
     }
     TopoDS_Compound intermediate2;
     BB.MakeCompound(intermediate2);
     for(TopTools_ListIteratorOfListOfShape p(splitter2.DescendantShapes(tool));
-	p.More();
-	p.Next()
+        p.More();
+        p.Next()
     ) {
-	BB.Add(intermediate2,p.Value());
+        BB.Add(intermediate2,p.Value());
     }
     if(verbose&Cutting) {
-	cout << "Before merging vertices and edges\n";
-	TopoDS_Compound t;
-	BB.MakeCompound(t);
-	BB.Add(t,intermediate1);
-	BB.Add(t,intermediate2);
-	PrintItemCount(t);
+        cout << "Before merging vertices and edges\n";
+        TopoDS_Compound t;
+        BB.MakeCompound(t);
+        BB.Add(t,intermediate1);
+        BB.Add(t,intermediate2);
+        PrintItemCount(t);
     }
     MergeVertices(intermediate1,intermediate2);
     MergeEdges(intermediate1,intermediate2);
     if(verbose&Cutting) {
-	cout << "After merging vertices and edges\n";
-	TopoDS_Compound t;
-	BB.MakeCompound(t);
-	BB.Add(t,intermediate1);
-	BB.Add(t,intermediate2);
-	PrintItemCount(t);
+        cout << "After merging vertices and edges\n";
+        TopoDS_Compound t;
+        BB.MakeCompound(t);
+        BB.Add(t,intermediate1);
+        BB.Add(t,intermediate2);
+        PrintItemCount(t);
     }
 
     // Create the result
@@ -730,10 +730,10 @@ void OCC_Connect::Intersect(BRep_Builder &BB, TopoDS_Shape &target,
 
     // Add any missing PCurves
     for(TopExp_Explorer face(result,TopAbs_FACE); face.More(); face.Next()) {
-	for(TopExp_Explorer edge(face.Current(),TopAbs_EDGE);
-	    edge.More();
-	    edge.Next()
-	) {
+        for(TopExp_Explorer edge(face.Current(),TopAbs_EDGE);
+            edge.More();
+            edge.Next()
+        ) {
             Standard_Real s, e;
             TopoDS_Edge c_edge=TopoDS::Edge(edge.Current());
             TopoDS_Face c_face=TopoDS::Face(face.Current());
@@ -743,13 +743,13 @@ void OCC_Connect::Intersect(BRep_Builder &BB, TopoDS_Shape &target,
                     cout << "Adding missing PCurve\n";
                 ShapeFix_Edge().FixAddPCurve(c_edge,c_face,false,1e-7);
             }
-	}
+        }
     }
 
     /***************************************************************************
-	We determine which edges/wires are going to cut a face. To do this
-	we create a map of FaceCutters which is indexed by the face number
-	in the faces map. The FaceCutters generate the correct cutting wires.
+        We determine which edges/wires are going to cut a face. To do this
+        we create a map of FaceCutters which is indexed by the face number
+        in the faces map. The FaceCutters generate the correct cutting wires.
     ***************************************************************************/
     int retry;
 do {
@@ -761,7 +761,7 @@ do {
     cutmap_t cutters=SelectCuttingEdges(edges,faces);
 
     /***************************************************************************
-	Apply all face splits stored in the map.
+        Apply all face splits stored in the map.
     ***************************************************************************/
     int cut_count=0;
     LocOpe_SplitShape splitter(result);
@@ -769,9 +769,9 @@ do {
         TopoDS_Face const &face=TopoDS::Face(faces(f->first));
         FaceCutters &cutter=f->second;
         cut_count+=cutter.size();
-	if(verbose&Cutting) {
+        if(verbose&Cutting) {
             cout << "Cutting face " << f->first << " *************************\n";
-	    BRepTools::Dump(face,cout);
+            BRepTools::Dump(face,cout);
         }
         cutter.Build(face,result,verbose);
         for(FaceCutters::iterator p=cutter.begin(); p!=cutter.end(); p++) {
@@ -782,10 +782,10 @@ do {
                 cout << "IGNORED Closed wire with less than three edges\n";
                 continue;
             }
-	    //BRepTools::Dump(*p,cout);
-	    try {
+            //BRepTools::Dump(*p,cout);
+            try {
                 splitter.Add(*p,face);
-	    }
+            }
             catch(Standard_ConstructionError c) {
                 cout << "splitting the face failed\n";
                 retry=1;
@@ -800,10 +800,10 @@ do {
     BB.MakeCompound(cutted);
     int count=0;
     for(TopTools_ListIteratorOfListOfShape p(splitter.DescendantShapes(result));
-	p.More();
-	p.Next()
+        p.More();
+        p.Next()
     ) {
-	if(++count==1) {
+        if(++count==1) {
             if(verbose&Cutting) {
                 cout << "--------- " << count << " ---------------------------\n";
                 BRepTools::Dump(p.Value(),cout);
@@ -825,12 +825,12 @@ void OCC_Connect::MergeVertices(TopoDS_Shape &shape1,TopoDS_Shape &shape2) const
     BRepTools_ReShape replacer;
     for(int i=0;i<imap.Extent();i++) {
         for(int j=0;j<omap.Extent();j++) {
-	    TopoDS_Vertex orig=TopoDS::Vertex(imap(i+1));
-	    TopoDS_Vertex repl=TopoDS::Vertex(omap(j+1));
+            TopoDS_Vertex orig=TopoDS::Vertex(imap(i+1));
+            TopoDS_Vertex repl=TopoDS::Vertex(omap(j+1));
             if(BRepTools::Compare(orig,repl)) {
-		repl.Orientation(orig.Orientation());
-		replacer.Replace(orig,repl);
-		// FIXME, tolerance and point should be updated
+                repl.Orientation(orig.Orientation());
+                replacer.Replace(orig,repl);
+                // FIXME, tolerance and point should be updated
                 goto skip;
             }
         }
@@ -846,17 +846,17 @@ void OCC_Connect::MergeVertices(TopoDS_Shape &shape1,TopoDS_Shape &shape2) const
 bool OCC_Connect::CanMergeCurve(TopoDS_Edge edge1,TopoDS_Edge edge2) const
 {
     if(BRep_Tool::Degenerated(edge1) && BRep_Tool::Degenerated(edge2))
-	return 1;
+        return 1;
 
     double tol=1e-7;
 
     Standard_Real s,e;
     Handle(Geom_Curve) curve=BRep_Tool::Curve(edge1,s,e);
     for(Standard_Real i=s;i<=e;i+=(e-s)/10) {
-	TopoDS_Vertex v=BRepBuilderAPI_MakeVertex(curve->Value(i));
-	double dist=BRepExtrema_DistShapeShape(edge2,v).Value();
-	if(dist>tol)
-	    return 0;
+        TopoDS_Vertex v=BRepBuilderAPI_MakeVertex(curve->Value(i));
+        double dist=BRepExtrema_DistShapeShape(edge2,v).Value();
+        if(dist>tol)
+            return 0;
     }
     return 1;
 }
@@ -869,58 +869,58 @@ void OCC_Connect::MergeEdges(TopoDS_Shape &shape1, TopoDS_Shape &shape2) const
     BRepTools_ReShape replacer;
     for(int i=0;i<imap.Extent();i++) {
         for(int j=0;j<omap.Extent();j++) {
-	    TopoDS_Edge orig=TopoDS::Edge(imap(i+1));
-	    TopoDS_Edge repl=TopoDS::Edge(omap(j+1));
+            TopoDS_Edge orig=TopoDS::Edge(imap(i+1));
+            TopoDS_Edge repl=TopoDS::Edge(omap(j+1));
 
-	    TopoDS_Vertex o1, o2, r1, r2;
-	    TopExp::Vertices(orig,o1,o2,true);
-	    TopExp::Vertices(repl,r1,r2,true);
+            TopoDS_Vertex o1, o2, r1, r2;
+            TopExp::Vertices(orig,o1,o2,true);
+            TopExp::Vertices(repl,r1,r2,true);
 
-	    if(o1.IsSame(o2)) {
-		if(!BRep_Tool::Degenerated(orig)) {
-		    if(verbose&Cutting) {
-			cout << "Same vertex in edge\n";
-			BRepTools::Dump(orig,cout);
-		    }
-		    replacer.Remove(orig);
-		    goto skip;
-		} else if(o1.IsSame(r1) && o1.IsSame(r2)
-		    && CanMergeCurve(orig,repl)
-		) {
-		    if(verbose&Cutting) {
-			cout << "Degenerated edge, replace " << i+1
-			    << " with " << j+1 << '\n';
-			BRepTools::Dump(orig,cout);
-			BRepTools::Dump(repl,cout);
-		    }
-		    // FIXME, update tolerance
-		    BRepTools::Dump(repl.Complemented(),cout);
-		    replacer.Replace(orig,repl.Complemented());
-		    goto skip;
-		}
-		cout << i+1 << " Degenerated\n";
-	    }
-	    if(o1.IsSame(r1) && o2.IsSame(r2) && CanMergeCurve(orig,repl))  {
+            if(o1.IsSame(o2)) {
+                if(!BRep_Tool::Degenerated(orig)) {
+                    if(verbose&Cutting) {
+                        cout << "Same vertex in edge\n";
+                        BRepTools::Dump(orig,cout);
+                    }
+                    replacer.Remove(orig);
+                    goto skip;
+                } else if(o1.IsSame(r1) && o1.IsSame(r2)
+                    && CanMergeCurve(orig,repl)
+                ) {
+                    if(verbose&Cutting) {
+                        cout << "Degenerated edge, replace " << i+1
+                            << " with " << j+1 << '\n';
+                        BRepTools::Dump(orig,cout);
+                        BRepTools::Dump(repl,cout);
+                    }
+                    // FIXME, update tolerance
+                    BRepTools::Dump(repl.Complemented(),cout);
+                    replacer.Replace(orig,repl.Complemented());
+                    goto skip;
+                }
+                cout << i+1 << " Degenerated\n";
+            }
+            if(o1.IsSame(r1) && o2.IsSame(r2) && CanMergeCurve(orig,repl))  {
                 if(verbose&Cutting) {
                     cout << "Same order of vertices, replace " << i+1
                         << " with " << j+1 << '\n';
                     BRepTools::Dump(orig,cout);
                     BRepTools::Dump(repl,cout);
                 }
-		// FIXME, update tolerance
-		replacer.Replace(orig,repl);
-		goto skip;
+                // FIXME, update tolerance
+                replacer.Replace(orig,repl);
+                goto skip;
             }
-	    if(o1.IsSame(r2) && o2.IsSame(r1) && CanMergeCurve(orig,repl)) {
+            if(o1.IsSame(r2) && o2.IsSame(r1) && CanMergeCurve(orig,repl)) {
                 if(verbose&Cutting) {
                     cout << "Reversed order of vertices, replace " << i+1
                         << " with " << j+1 << '\n';
                     BRepTools::Dump(orig,cout);
                     BRepTools::Dump(repl,cout);
                 }
-		// FIXME, update tolerance
-		replacer.Replace(orig,repl.Complemented());
-		goto skip;
+                // FIXME, update tolerance
+                replacer.Replace(orig,repl.Complemented());
+                goto skip;
             }
         }
         if(verbose&Cutting)
@@ -970,7 +970,7 @@ void OCC_Connect::MergeFaces(TopoDS_Shape &shape) const
 {
     /***************************************************************************
         We must find faces which are the same. Since all edges are already
-	merged, we know that faces which can be merged have identical edges.
+        merged, we know that faces which can be merged have identical edges.
     ***************************************************************************/
     TopTools_IndexedMapOfShape faces, edges;
     TopExp::MapShapes(shape,TopAbs_FACE,faces);
@@ -981,10 +981,10 @@ void OCC_Connect::MergeFaces(TopoDS_Shape &shape) const
         for(TopExp_Explorer p(faces(i+1),TopAbs_EDGE); p.More(); p.Next()) {
             int edge=edges.FindIndex(p.Current());
             if(BRep_Tool::Degenerated(TopoDS::Edge(edges(edge)))) {
-		cout << "Degenerate edge " << edge << " inserted a 0\n";
-		face_edges.insert(0);
-	    } else
-		face_edges.insert(edge);
+                cout << "Degenerate edge " << edge << " inserted a 0\n";
+                face_edges.insert(0);
+            } else
+                face_edges.insert(edge);
         }
         mapping[face_edges].insert(i+1);
     }
@@ -997,7 +997,7 @@ void OCC_Connect::MergeFaces(TopoDS_Shape &shape) const
 
     /***************************************************************************
         If two faces have an identical set of edges, they can be merged
-	when the planes are never seperated by more than the tolerance.
+        when the planes are never seperated by more than the tolerance.
     ***************************************************************************/
     BRepTools_ReShape replacer;
     for(mapping_t::iterator p=mapping.begin(); p!=mapping.end(); p++) {

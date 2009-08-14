@@ -80,15 +80,15 @@ IntPt *getGQHPts(int order)
       GQH[index] = new IntPt[n*n*n];
       int l = 0;
       for(int i=0; i < n; i++) {
-	for(int j=0; j < n; j++) {
-	  for(int k=0; k < n; k++) {
-	    GQH[index][l].pt[0] = pt[i];
-	    GQH[index][l].pt[1] = pt[j];
-	    GQH[index][l].pt[2] = pt[k];
-	    GQH[index][l++].weight = wt[i]*wt[j]*wt[k];
-	    //	    printf ("%f %f %f %f\n",pt[i],pt[j],pt[k],wt[i]*wt[j]*wt[k]);
-	  }
-	}
+        for(int j=0; j < n; j++) {
+          for(int k=0; k < n; k++) {
+            GQH[index][l].pt[0] = pt[i];
+            GQH[index][l].pt[1] = pt[j];
+            GQH[index][l].pt[2] = pt[k];
+            GQH[index][l++].weight = wt[i]*wt[j]*wt[k];
+            //      printf ("%f %f %f %f\n",pt[i],pt[j],pt[k],wt[i]*wt[j]*wt[k]);
+          }
+        }
       }
     }
   return GQH[index];

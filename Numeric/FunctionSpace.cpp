@@ -154,7 +154,7 @@ static gmshMatrix<double> generatePascalTetrahedron(int order)
 }  
 
 static int nbdoftriangle(int order) { return (order + 1) * (order + 2) / 2; }
-static int nbdoftriangleserendip(int order) { return 3 * order; }
+//static int nbdoftriangleserendip(int order) { return 3 * order; }
 
 //KH : caveat : node coordinates are not yet coherent with node numbering associated
 //              to numbering of principal vertices of face !!!!

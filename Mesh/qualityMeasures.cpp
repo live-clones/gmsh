@@ -67,12 +67,14 @@ double qmTriangle(const double &xa, const double &ya, const double &za,
     // condition number
   case QMTRI_COND:
     {
+      /*
       double a [3] = {xc - xa, yc - ya, zc - za};
       double b [3] = {xb - xa, yb - ya, zb - za};
       double c [3] ; prodve(a, b, c); norme(c);
       double A[3][3] = {{a[0] , b[0] , c[0]} ,
                         {a[1] , b[1] , c[1]} ,
                         {a[2] , b[2] , c[2]}};
+      */
       quality = -1;
     }
     break;
@@ -103,7 +105,6 @@ double qmTet(const double &x1, const double &y1, const double &z1,
              const double &x4, const double &y4, const double &z4, 
              const gmshQualityMeasure4Tet &cr, double *volume)
 {
-  double quality;
   switch(cr){
   case QMTET_ONE:
     return 1.0;
@@ -179,21 +180,19 @@ double mesh_functional_distorsion(MTriangle *t, double u, double v)
 {
   // compute uncurved element jacobian d_u x and d_v x
   double mat[3][3];  
-  double d1 = t->getPrimaryJacobian(u,v,0,mat);
-  
-   //double d1 = t->getJacobian(u,v,0,mat);
+  t->getPrimaryJacobian(u, v, 0, mat);
+  // t->getJacobian(u,v,0,mat);
   double v1[3] = {mat[0][0], mat[0][1], mat[0][2]};
   double v2[3] = {mat[1][0], mat[1][1], mat[1][2]};
   double normal1[3];
   prodve(v1, v2, normal1);
   double nn = sqrt(normal1[0]*normal1[0] + 
-  		   normal1[1]*normal1[1] + 
-  		   normal1[2]*normal1[2]);
+                   normal1[1]*normal1[1] + 
+                   normal1[2]*normal1[2]);
   
   // compute uncurved element jacobian d_u x and d_v x
   
-  double d2 = t->getJacobian(u, v, 0, mat);
-  
+  t->getJacobian(u, v, 0, mat);
   double v1b[3] = {mat[0][0], mat[0][1], mat[0][2]};
   double v2b[3] = {mat[1][0], mat[1][1], mat[1][2]};
   double normal[3];
@@ -226,27 +225,26 @@ double mesh_functional_distorsion_p2(MTriangle *t)
 double qmDistorsionOfMapping (MTriangle *e)
 {
   //  return 1.0;
-  if (e->getPolynomialOrder() == 1)return 1.0;
-  //  if (e->getPolynomialOrder() == 2)return mesh_functional_distorsion_p2(e);
+  if (e->getPolynomialOrder() == 1) return 1.0;
+  //  if (e->getPolynomialOrder() == 2) return mesh_functional_distorsion_p2(e);
 
   IntPt *pts;
   int npts;
   e->getIntegrationPoints(e->getPolynomialOrder(),&npts, &pts);
   double dmin;
-  for (int i=0;i<npts;i++){
+  for (int i = 0 ; i < npts; i++){
     const double u = pts[i].pt[0];
     const double v = pts[i].pt[1];
-    const double w = pts[i].pt[2];
-    const double di  = mesh_functional_distorsion (e,u,v);
-    dmin = (i==0)? di : std::min(dmin,di);
+    const double di  = mesh_functional_distorsion (e, u, v);
+    dmin = (i == 0)? di : std::min(dmin, di);
   }
   const gmshMatrix<double>& points = e->getFunctionSpace()->points;
 
-  for (int i=0;i<e->getNumPrimaryVertices();i++) {
-    const double u = points(i,0);
-    const double v = points(i,1);
-    const double di  = mesh_functional_distorsion (e,u,v);
-    dmin = std::min(dmin,di);
+  for (int i = 0; i < e->getNumPrimaryVertices(); i++) {
+    const double u = points(i, 0);
+    const double v = points(i, 1);
+    const double di  = mesh_functional_distorsion (e, u, v);
+    dmin = std::min(dmin, di);
   }
   return dmin;
 }

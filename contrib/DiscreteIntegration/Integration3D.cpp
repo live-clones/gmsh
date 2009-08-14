@@ -1773,7 +1773,7 @@ void DI_Tetra::selfSplit (const DI_Element *e, const std::vector<const gLevelset
       DI_Tetra t1 = DI_Tetra(pt(s1), U[0], U[1], U[2]);
       DI_Triangle tr = DI_Triangle(U[0], U[1], U[2], tag); //t1.print(); tr.print();
       DI_Tetra t2, t3, t4;
-      int qual = bestQuality(U[0], U[1], U[2], pt(s2), pt(s3), pt(s4), t2, t3, t4, QError); //t2.print(); t3.print(); t4.print();
+      bestQuality(U[0], U[1], U[2], pt(s2), pt(s3), pt(s4), t2, t3, t4, QError); //t2.print(); t3.print(); t4.print();
       /*t2 = DI_Tetra(U[0],V[0],W[0], x(s2),y(s2),z(s2), U[1],V[1],W[1], U[2],V[2],W[2]);
       t3 = DI_Tetra(U[2],V[2],W[2], U[1],V[1],W[1], x(s3),y(s3),z(s3), x(s2),y(s2),z(s2));
       t4 = DI_Tetra(U[2],V[2],W[2], x(s3),y(s3),z(s3), x(s4),y(s4),z(s4), x(s2),y(s2),z(s2));*/
@@ -1856,10 +1856,10 @@ void DI_Tetra::selfSplit (const DI_Element *e, const std::vector<const gLevelset
 
       DI_Tetra t1, t2, t3, t4, t5, t6;
       DI_Triangle tr1, tr2;
-      int qualt = bestQuality(U[0], U[1], U[2], U[3], tr1, tr2);
+      bestQuality(U[0], U[1], U[2], U[3], tr1, tr2);
       tr1.setLsTag(tag); tr2.setLsTag(tag);
-      int qualT1 = bestQuality(pt(s1), U[0], U[1], pt(s4), U[3], U[2], t1, t2, t3, QError);
-      int qualT2 = bestQuality(pt(s2), U[0], U[3], pt(s3), U[1], U[2], t4, t5, t6, QError);
+      bestQuality(pt(s1), U[0], U[1], pt(s4), U[3], U[2], t1, t2, t3, QError);
+      bestQuality(pt(s2), U[0], U[3], pt(s3), U[1], U[2], t4, t5, t6, QError);
       //tr1.print(); tr2.print(); t1.print(); t2.print(); t3.print(); t4.print(); t5.print(); t6.print();
       /*t1 = DI_Tetra(U[0],V[0],W[0], x(s2),y(s2),z(s2), U[1],V[1],W[1],    U[3],V[3],W[3]);
       t2 = DI_Tetra(U[1],V[1],W[1], U[3],V[3],W[3],    x(s2),y(s2),z(s2), U[2],V[2],W[2]);

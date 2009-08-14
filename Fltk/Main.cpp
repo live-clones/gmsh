@@ -6,7 +6,7 @@
 #include <string>
 #include "Gmsh.h"
 #include "GmshMessage.h"
-#include "GUI.h"
+#include "FlGui.h"
 #include "menuWindow.h"
 #include "Draw.h"
 #include "Context.h"
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
   }
 
   // Create the GUI
-  GUI::instance(argc, argv);
+  FlGui::instance(argc, argv);
 
   // Set all previously defined options in the GUI
   InitOptionsGUI(0);
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
   Msg::Info("-------------------------------------------------------");
 
   // Display the GUI immediately to have a quick "a la Windows" launch time
-  GUI::instance()->check();
+  FlGui::instance()->check();
 
   // Open project file and merge all other input files
   OpenProject(GModel::current()->getFileName());
@@ -85,20 +85,20 @@ int main(int argc, char *argv[])
   
   if(CTX::instance()->post.combineTime){
     PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
-    GUI::instance()->updateViews();
+    FlGui::instance()->updateViews();
   }
 
   // Init first context
   switch (CTX::instance()->initialContext) {
-  case 1: GUI::instance()->menu->setContext(menu_geometry, 0); break;
-  case 2: GUI::instance()->menu->setContext(menu_mesh, 0); break;
-  case 3: GUI::instance()->menu->setContext(menu_solver, 0); break;
-  case 4: GUI::instance()->menu->setContext(menu_post, 0); break;
+  case 1: FlGui::instance()->menu->setContext(menu_geometry, 0); break;
+  case 2: FlGui::instance()->menu->setContext(menu_mesh, 0); break;
+  case 3: FlGui::instance()->menu->setContext(menu_solver, 0); break;
+  case 4: FlGui::instance()->menu->setContext(menu_post, 0); break;
   default: // automatic
     if(PView::list.size())
-      GUI::instance()->menu->setContext(menu_post, 0);
+      FlGui::instance()->menu->setContext(menu_post, 0);
     else
-      GUI::instance()->menu->setContext(menu_geometry, 0);
+      FlGui::instance()->menu->setContext(menu_geometry, 0);
     break;
   }
 
@@ -118,5 +118,5 @@ int main(int argc, char *argv[])
   if(CTX::instance()->solver.listen) Solver(-1, NULL);
 
   // loop
-  return GUI::instance()->run();
+  return FlGui::instance()->run();
 }

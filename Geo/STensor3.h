@@ -23,14 +23,14 @@ class SMetric3 {
   void getMat (gmshMatrix<double> & mat) const{
     for (int i=0;i<3;i++){
       for (int j=0;j<3;j++){
-	mat(i,j) = _val[getIndex(i,j)];			     
+        mat(i,j) = _val[getIndex(i,j)];                      
       }
     }
   }
   void setMat (const gmshMatrix<double> & mat){
     for (int i=0;i<3;i++)
       for (int j=i;j<3;j++)
-	_val[getIndex(i,j)] = mat(i,j);			     
+        _val[getIndex(i,j)] = mat(i,j);                      
   }
   SMetric3(const SMetric3& m){
     for (int i=0; i<6; i++) _val[i]=m._val[i];
@@ -41,11 +41,11 @@ class SMetric3 {
     _val[1] = _val[3] = _val[4] = 0.0;
   }
 /*   SMetric3(const double l1, // (h_1)^-2 */
-/* 	   const double l2, */
-/* 	   const double l3, */
-/* 	   const SVector3 &t1, */
-/* 	   const SVector3 &t2, */
-/* 	   const SVector3 &t3){ */
+/*         const double l2, */
+/*         const double l3, */
+/*         const SVector3 &t1, */
+/*         const SVector3 &t2, */
+/*         const SVector3 &t3){ */
 /*     SVector3 t1b = t1; */
 /*     SVector3 t2b = t2; */
 /*     SVector3 t3b = t3; */
@@ -60,11 +60,11 @@ class SMetric3 {
 /*     _val[5] = dot (t3b,t3); */
 /*   } */
   SMetric3(const double l1, // l1 = h1^-2
-	   const double l2,
-	   const double l3,
-	   const SVector3 &t1,
-	   const SVector3 &t2,
-	   const SVector3 &t3)
+           const double l2,
+           const double l3,
+           const SVector3 &t1,
+           const SVector3 &t2,
+           const SVector3 &t3)
     {
       // M = e^1 * diag * e^1^t
       // where the elements of diag are l_i = h_i^-2
@@ -159,21 +159,21 @@ inline double dot(const SVector3 &a, const SMetric3 &m, const SVector3 &b)
 
 // compute the largest inscribed ellipsoid...
 SMetric3 intersection (const SMetric3 &m1, 
-			      const SMetric3 &m2);
+                              const SMetric3 &m2);
 SMetric3 interpolation (const SMetric3 &m1, 
-			const SMetric3 &m2, 
-			const double t);
+                        const SMetric3 &m2, 
+                        const double t);
 SMetric3 interpolation (const SMetric3 &m1, 
-			const SMetric3 &m2, 
-			const SMetric3 &m3, 
-			const double u,
-			const double v);
+                        const SMetric3 &m2, 
+                        const SMetric3 &m3, 
+                        const double u,
+                        const double v);
 SMetric3 interpolation (const SMetric3 &m1, 
-			const SMetric3 &m2, 
-			const SMetric3 &m3, 
-			const SMetric3 &m4, 
-			const double u,
-			const double v,
-			const double w);
+                        const SMetric3 &m2, 
+                        const SMetric3 &m3, 
+                        const SMetric3 &m4, 
+                        const double u,
+                        const double v,
+                        const double w);
 
 #endif

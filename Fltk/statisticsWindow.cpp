@@ -6,7 +6,7 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
-#include "GUI.h"
+#include "FlGui.h"
 #include "Draw.h"
 #include "statisticsWindow.h"
 #include "paletteWindow.h"
@@ -18,12 +18,12 @@
 
 void statistics_cb(Fl_Widget *w, void *data)
 {
-  GUI::instance()->stats->show();
+  FlGui::instance()->stats->show();
 }
 
 static void statistics_update_cb(Fl_Widget *w, void *data)
 {
-  GUI::instance()->stats->compute(true);
+  FlGui::instance()->stats->compute(true);
 }
 
 static void statistics_histogram_cb(Fl_Widget *w, void *data)
@@ -33,19 +33,19 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
   std::vector<double> x, y;
 
   if(name == "Gamma2D"){
-    for(int i = 0; i < 100; i++) y.push_back(GUI::instance()->stats->quality[0][i]);
+    for(int i = 0; i < 100; i++) y.push_back(FlGui::instance()->stats->quality[0][i]);
     new PView("Gamma", "# Elements", x, y);
   }
   else if(name == "Eta2D"){
-    for(int i = 0; i < 100; i++) y.push_back(GUI::instance()->stats->quality[1][i]);
+    for(int i = 0; i < 100; i++) y.push_back(FlGui::instance()->stats->quality[1][i]);
     new PView("Eta", "# Elements", x, y);
   }
   else if(name == "Rho2D"){
-    for(int i = 0; i < 100; i++) y.push_back(GUI::instance()->stats->quality[2][i]);
+    for(int i = 0; i < 100; i++) y.push_back(FlGui::instance()->stats->quality[2][i]);
     new PView("Rho", "# Elements", x, y);
   }
   else if(name == "Disto2D"){
-    for(int i = 0; i < 100; i++) y.push_back(GUI::instance()->stats->quality[3][i]);
+    for(int i = 0; i < 100; i++) y.push_back(FlGui::instance()->stats->quality[3][i]);
     new PView("Disto", "# Elements", x, y);
   }
   else{
@@ -70,7 +70,7 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
     new PView(name, "ElementData", GModel::current(), d);
   }
 
-  GUI::instance()->updateViews();
+  FlGui::instance()->updateViews();
   Draw();
 }
 

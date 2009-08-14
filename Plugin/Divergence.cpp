@@ -25,7 +25,7 @@ void GMSH_DivergencePlugin::getName(char *name) const
 }
 
 void GMSH_DivergencePlugin::getInfos(char *author, char *copyright,
-				     char *help_text) const
+                                     char *help_text) const
 {
   strcpy(author, "C. Geuzaine, J.-F. Remacle");
   strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
@@ -94,7 +94,7 @@ PView *GMSH_DivergencePlugin::execute(PView *v)
       int numNodes = data1->getNumNodes(0, ent, ele);
       double x[8], y[8], z[8], val[8 * 3];
       for(int nod = 0; nod < numNodes; nod++)
-	data1->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
+        data1->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
       int dim = data1->getDimension(0, ent, ele);
       elementFactory factory;
       element *element = factory.create(numNodes, dim, x, y, z);
@@ -103,15 +103,15 @@ PView *GMSH_DivergencePlugin::execute(PView *v)
       for(int nod = 0; nod < numNodes; nod++) out->push_back(y[nod]);
       for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]);
       for(int step = 0; step < data1->getNumTimeSteps(); step++){
-	for(int nod = 0; nod < numNodes; nod++)
-	  for(int comp = 0; comp < numComp; comp++)
-	    data1->getValue(step, ent, ele, nod, comp, val[numComp * nod + comp]);
-	for(int nod = 0; nod < numNodes; nod++){
-	  double u, v, w;
-	  element->getNode(nod, u, v, w);
-	  double f = element->interpolateDiv(val, u, v, w, 3);
-	  out->push_back(f);
-	}
+        for(int nod = 0; nod < numNodes; nod++)
+          for(int comp = 0; comp < numComp; comp++)
+            data1->getValue(step, ent, ele, nod, comp, val[numComp * nod + comp]);
+        for(int nod = 0; nod < numNodes; nod++){
+          double u, v, w;
+          element->getNode(nod, u, v, w);
+          double f = element->interpolateDiv(val, u, v, w, 3);
+          out->push_back(f);
+        }
       }
       delete element;
     }

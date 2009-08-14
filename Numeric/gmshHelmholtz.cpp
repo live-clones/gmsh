@@ -41,7 +41,7 @@ void gmshHelmholtzTerm::elementMatrix(MElement *e,
     }
     for (int j = 0; j < nbNodes; j++){
       for (int k = 0; k < nbNodes; k++){
-	m(j, k) += ((Grads[j][0] * Grads[k][0] +
+        m(j, k) += ((Grads[j][0] * Grads[k][0] +
                      Grads[j][1] * Grads[k][1] +
                      Grads[j][2] * Grads[k][2]) 
                     - kk * kk * sf[j] * sf[k]) * weight * detJ;

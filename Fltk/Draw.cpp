@@ -5,7 +5,7 @@
 
 #include <string.h>
 #include <FL/gl.h>
-#include "GUI.h"
+#include "FlGui.h"
 #include "graphicWindow.h"
 #include "optionWindow.h"
 #include "GmshDefines.h"
@@ -17,24 +17,24 @@
 
 void Draw()
 {
-  if(!GUI::available()) return;
-  for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++){
-    for(unsigned int j = 0; j < GUI::instance()->graph[i]->gl.size(); j++){
-      GUI::instance()->graph[i]->gl[j]->make_current();
-      GUI::instance()->graph[i]->gl[j]->redraw();
+  if(!FlGui::available()) return;
+  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++){
+    for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++){
+      FlGui::instance()->graph[i]->gl[j]->make_current();
+      FlGui::instance()->graph[i]->gl[j]->redraw();
     }
   }
-  GUI::instance()->check();
+  FlGui::instance()->check();
 }
 
 void DrawCurrentOpenglWindow(bool make_current)
 {
-  if(!GUI::available()) return;
-  openglWindow *gl = GUI::instance()->getCurrentOpenglWindow();
+  if(!FlGui::available()) return;
+  openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
   if(make_current) gl->make_current();
   gl->redraw();
   glFlush();
-  GUI::instance()->check();
+  FlGui::instance()->check();
 }
 
 void DrawPlugin(void (*draw)(void *context))

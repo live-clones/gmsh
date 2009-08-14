@@ -38,7 +38,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 class OCC_Connect {
     struct LessThanIntegerSet {
-	bool operator()(std::set<int> const &a, std::set<int> const &b) const;
+        bool operator()(std::set<int> const &a, std::set<int> const &b) const;
     };
     typedef std::map<std::set<int>,std::set<int>,LessThanIntegerSet> mapping_t;
 
@@ -47,8 +47,8 @@ class OCC_Connect {
         int rebuilt;
     public:
         FaceCutters(void) { rebuilt=0; }
-	void Build(TopoDS_Face const &,TopoDS_Shape&,int);
-	void Add(TopoDS_Edge const&);
+        void Build(TopoDS_Face const &,TopoDS_Shape&,int);
+        void Add(TopoDS_Edge const&);
     private:
         int FindConnectedEdge(int v, std::vector<int> &done,
             std::vector<std::vector<int> > &v_edge);

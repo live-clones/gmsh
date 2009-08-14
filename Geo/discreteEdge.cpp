@@ -68,8 +68,8 @@ void discreteEdge::orderMLines()
     firstLine = (boundv.begin())->second;
     for (std::list<MLine*>::iterator it = segments.begin() ; it != segments.end() ; ++it){
       if (*it == firstLine){
-	segments.erase(it);
-	break;
+        segments.erase(it);
+        break;
       }
     }
   }
@@ -94,34 +94,34 @@ void discreteEdge::orderMLines()
     for (std::list<MLine*>::iterator it = segments.begin() ; it != segments.end() ; ++it){
       MLine *e = *it;
       if (e->getVertex(0) == last){
-	//printf("orientation 1: beginV=%d \n", e->getVertex(0)->getNum());
-	_m.push_back(e);
-	segments.erase(it);
-	_orientation.push_back(1);
-	last = e->getVertex(1);
-	found = true;
-	break;
+        //printf("orientation 1: beginV=%d \n", e->getVertex(0)->getNum());
+        _m.push_back(e);
+        segments.erase(it);
+        _orientation.push_back(1);
+        last = e->getVertex(1);
+        found = true;
+        break;
       }
       else if (e->getVertex(1) == last){
-	//printf("orientation 0: endV=%d \n", e->getVertex(1)->getNum());
-	_m.push_back(e);
-	segments.erase(it);
-	_orientation.push_back(0);
-	last = e->getVertex(0);
-	found = true;
-	break;
+        //printf("orientation 0: endV=%d \n", e->getVertex(1)->getNum());
+        _m.push_back(e);
+        segments.erase(it);
+        _orientation.push_back(0);
+        last = e->getVertex(0);
+        found = true;
+        break;
       }
     }
     if (!found  && _orientation[0]==1){ //reverse orientation of first Line
       if (_m.size() == 1 ){
-	MVertex *temp = first;
-	first = last;
-	last = temp;
-	_orientation[0] = 0;
+        MVertex *temp = first;
+        first = last;
+        last = temp;
+        _orientation[0] = 0;
       }
       else {
-	Msg::Error("Discrete Edge %d is wrong",tag());
-	return;
+        Msg::Error("Discrete Edge %d is wrong",tag());
+        return;
       }
     }
   }
@@ -156,21 +156,21 @@ void discreteEdge::setBoundVertices()
       MVertex* vE = (iter)->first;
       bool existVertex  = false;
       for(GModel::viter point = model()->firstVertex(); point != model()->lastVertex(); point++){
-	//printf("Discrete point =%d %d  bound vE=%d\n",(*point)->tag(), (*point)->mesh_vertices[0]->getNum(), vE->getNum());
-	if ((*point)->mesh_vertices[0]->getNum() == vE->getNum()){
-	  bound_vertices.push_back((*point));
-	  existVertex = true;
-	  break;
-	}
+        //printf("Discrete point =%d %d  bound vE=%d\n",(*point)->tag(), (*point)->mesh_vertices[0]->getNum(), vE->getNum());
+        if ((*point)->mesh_vertices[0]->getNum() == vE->getNum()){
+          bound_vertices.push_back((*point));
+          existVertex = true;
+          break;
+        }
       }
       if(!existVertex){
-	//printf(" !!! bound vertex %d does not exist, create one \n", vE->getNum());
-	GVertex *gvB = new discreteVertex(model(),vE->getNum());
-	bound_vertices.push_back(gvB);
-	vE->setEntity(gvB);
-	gvB->mesh_vertices.push_back(vE);
-	gvB->points.push_back(new MPoint(gvB->mesh_vertices.back()));
-	model()->add(gvB);
+        //printf(" !!! bound vertex %d does not exist, create one \n", vE->getNum());
+        GVertex *gvB = new discreteVertex(model(),vE->getNum());
+        bound_vertices.push_back(gvB);
+        vE->setEntity(gvB);
+        gvB->mesh_vertices.push_back(vE);
+        gvB->points.push_back(new MPoint(gvB->mesh_vertices.back()));
+        model()->add(gvB);
      }
       std::vector<MVertex*>::iterator itve = std::find(mesh_vertices.begin(), mesh_vertices.end(), vE) ;
       if (itve != mesh_vertices.end()) mesh_vertices.erase(itve);
@@ -191,9 +191,9 @@ void discreteEdge::setBoundVertices()
     for(GModel::viter point = model()->firstVertex(); point != model()->lastVertex(); point++){
       //printf("Discrete point =%d %d  bound vE=%d \n",(*point)->tag(), (*point)->mesh_vertices[0]->getNum(), vE->getNum());
        if ((*point)->mesh_vertices[0]->getNum() == vE->getNum()){
-	 bound_vertex = (*point);
-	 existVertex = true;
-	 break;
+         bound_vertex = (*point);
+         existVertex = true;
+         break;
        }
      }
      if(!existVertex){
@@ -275,20 +275,20 @@ void discreteEdge::parametrize()
        //MVertex *v[N];
        std::vector<MVertex *> v(N);
        for(int j = 0; j < N; j++){
-	 v[j] = e->getVertex(j);
+         v[j] = e->getVertex(j);
        }
-	//printf("old triangle v0=%p (%d) v1=%p (%d) v2=%p (%d) \n",v[0], v[0]->getNum() , v[1],v[1]->getNum() ,v[2], v[2]->getNum());
- 	for (int j = 0; j < N; j++){
- 	  std::map<MVertex*, MVertex*>::iterator itmap = old2new.find(v[j]);
- 	  MVertex *vNEW;
- 	  if (itmap != old2new.end())  {
- 	    vNEW = itmap->second;
-	    v[j]=vNEW;
-  	  }
-  	}
-  	//printf(" new triangle v0=%p (%d) v1=%p (%d) v2=%p (%d) \n",v[0], v[0]->getNum() , v[1],v[1]->getNum() ,v[2], v[2]->getNum());
-	if (N == 3) newTriangles.push_back(new  MTriangle(v[0], v[1], v[2]));
-	else if ( N == 4)  newQuadrangles.push_back(new  MQuadrangle(v[0], v[1], v[2], v[3]));
+        //printf("old triangle v0=%p (%d) v1=%p (%d) v2=%p (%d) \n",v[0], v[0]->getNum() , v[1],v[1]->getNum() ,v[2], v[2]->getNum());
+        for (int j = 0; j < N; j++){
+          std::map<MVertex*, MVertex*>::iterator itmap = old2new.find(v[j]);
+          MVertex *vNEW;
+          if (itmap != old2new.end())  {
+            vNEW = itmap->second;
+            v[j]=vNEW;
+          }
+        }
+        //printf(" new triangle v0=%p (%d) v1=%p (%d) v2=%p (%d) \n",v[0], v[0]->getNum() , v[1],v[1]->getNum() ,v[2], v[2]->getNum());
+        if (N == 3) newTriangles.push_back(new  MTriangle(v[0], v[1], v[2]));
+        else if ( N == 4)  newQuadrangles.push_back(new  MQuadrangle(v[0], v[1], v[2], v[3]));
 
       }
      (*iFace)->deleteVertexArrays();
@@ -311,20 +311,20 @@ void discreteEdge::parametrize()
        //MVertex *v[N];
        std::vector<MVertex *> v(N);
        for(int j = 0; j < N; j++){
-	 v[j] = e->getVertex(j);
+         v[j] = e->getVertex(j);
        }
- 	for (int j = 0; j < N; j++){
- 	  std::map<MVertex*, MVertex*>::iterator itmap = old2new.find(v[j]);
- 	  MVertex *vNEW;
- 	  if (itmap != old2new.end())  {
- 	    vNEW = itmap->second;
-	    v[j]=vNEW;
-  	  }
-  	}
-	if (N == 4) newTetrahedra.push_back(new  MTetrahedron(v[0], v[1], v[2], v[3]));
-	else if ( N == 5)  newPyramids.push_back(new  MPyramid(v[0], v[1], v[2], v[3], v[4]));
-	else if ( N == 6)  newPrisms.push_back(new  MPrism(v[0], v[1], v[2], v[3], v[4], v[5]));
-	else if ( N == 8)  newHexahedra.push_back(new  MHexahedron(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]));
+        for (int j = 0; j < N; j++){
+          std::map<MVertex*, MVertex*>::iterator itmap = old2new.find(v[j]);
+          MVertex *vNEW;
+          if (itmap != old2new.end())  {
+            vNEW = itmap->second;
+            v[j]=vNEW;
+          }
+        }
+        if (N == 4) newTetrahedra.push_back(new  MTetrahedron(v[0], v[1], v[2], v[3]));
+        else if ( N == 5)  newPyramids.push_back(new  MPyramid(v[0], v[1], v[2], v[3], v[4]));
+        else if ( N == 6)  newPrisms.push_back(new  MPrism(v[0], v[1], v[2], v[3], v[4], v[5]));
+        else if ( N == 8)  newHexahedra.push_back(new  MHexahedron(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]));
       }
      (*iRegion)->deleteVertexArrays();
      (*iRegion)->tetrahedra.clear();
@@ -365,9 +365,9 @@ void discreteEdge::computeNormals () const
       SVector3 n = crossprod(d1, d2);
       n.normalize();
       for (int j = 0; j < 3; j++){
-	std::map<MVertex*, SVector3>::iterator itn = _normals.find(t->getVertex(j));
-	if (itn == _normals.end())_normals[t->getVertex(j)] = n;
-	else itn->second += n;
+        std::map<MVertex*, SVector3>::iterator itn = _normals.find(t->getVertex(j));
+        if (itn == _normals.end())_normals[t->getVertex(j)] = n;
+        else itn->second += n;
       }
     }
   }

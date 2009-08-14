@@ -20,7 +20,7 @@
 
 #if defined(HAVE_FLTK)
 #include <FL/fl_ask.H>
-#include "GUI.h"
+#include "FlGui.h"
 #include "messageWindow.h"
 #include "extraDialogs.h"
 #endif
@@ -91,7 +91,7 @@ void Msg::Exit(int level)
 #if defined(HAVE_FLTK)
   // if we exit cleanly (level==0) and we are in full GUI mode, save
   // the persistent info to disk
-  if(GUI::available() && !_commRank) {
+  if(FlGui::available() && !_commRank) {
     if(CTX::instance()->sessionSave)
       PrintOptions(0, GMSH_SESSIONRC, 0, 0, 
                    (CTX::instance()->homeDir + CTX::instance()->sessionFileName).c_str());
@@ -120,12 +120,12 @@ void Msg::Fatal(const char *fmt, ...)
   if(_callback) (*_callback)("Fatal", str);
 
 #if defined(HAVE_FLTK)
-  if(GUI::available()){
-    GUI::instance()->check();
+  if(FlGui::available()){
+    FlGui::instance()->check();
     std::string tmp = std::string("@C1@.") + "Fatal   : " + str;
-    GUI::instance()->messages->add(tmp.c_str());
-    GUI::instance()->messages->show();
-    GUI::instance()->messages->save
+    FlGui::instance()->messages->add(tmp.c_str());
+    FlGui::instance()->messages->show();
+    FlGui::instance()->messages->save
       ((CTX::instance()->homeDir + CTX::instance()->errorFileName).c_str());
     fl_alert("A fatal error has occurred which will force Gmsh to abort.\n"
              "The error messages have been saved in the following file:\n\n%s",
@@ -160,11 +160,11 @@ void Msg::Error(const char *fmt, ...)
   if(_callback) (*_callback)("Error", str);
 
 #if defined(HAVE_FLTK)
-  if(GUI::available()){
-    GUI::instance()->check();
+  if(FlGui::available()){
+    FlGui::instance()->check();
     std::string tmp = std::string("@C1@.") + "Error   : " + str;
-    GUI::instance()->messages->add(tmp.c_str());
-    GUI::instance()->messages->show();
+    FlGui::instance()->messages->add(tmp.c_str());
+    FlGui::instance()->messages->show();
   }
 #endif
 
@@ -192,10 +192,10 @@ void Msg::Warning(const char *fmt, ...)
   if(_callback) (*_callback)("Warning", str);
 
 #if defined(HAVE_FLTK)
-  if(GUI::available()){
-    GUI::instance()->check();
+  if(FlGui::available()){
+    FlGui::instance()->check();
     std::string tmp = std::string("@C1@.") + "Warning : " + str;
-    GUI::instance()->messages->add(tmp.c_str());
+    FlGui::instance()->messages->add(tmp.c_str());
   }
 #endif
 
@@ -218,10 +218,10 @@ void Msg::Info(const char *fmt, ...)
   if(_callback) (*_callback)("Info", str);
 
 #if defined(HAVE_FLTK)
-  if(GUI::available()){
-    GUI::instance()->check();
+  if(FlGui::available()){
+    FlGui::instance()->check();
     std::string tmp = std::string("Info    : ") + str;
-    GUI::instance()->messages->add(tmp.c_str());
+    FlGui::instance()->messages->add(tmp.c_str());
   }
 #endif
 
@@ -257,16 +257,16 @@ void Msg::Direct(int level, const char *fmt, ...)
   if(_callback) (*_callback)("Direct", str);
 
 #if defined(HAVE_FLTK)
-  if(GUI::available()){
-    GUI::instance()->check();
+  if(FlGui::available()){
+    FlGui::instance()->check();
     std::string tmp;
     if(level < 3)
       tmp = std::string("@C1@.") + str;
     else
       tmp = std::string("@C4@.") + str;
-    GUI::instance()->messages->add(tmp.c_str());
+    FlGui::instance()->messages->add(tmp.c_str());
     if(level == 1)
-      GUI::instance()->messages->show();
+      FlGui::instance()->messages->show();
   }
 #endif
   
@@ -290,13 +290,13 @@ void Msg::StatusBar(int num, bool log, const char *fmt, ...)
   if(_callback && log) (*_callback)("Info", str);
 
 #if defined(HAVE_FLTK)
-  if(GUI::available()){
-    if(log) GUI::instance()->check();
+  if(FlGui::available()){
+    if(log) FlGui::instance()->check();
     if(!log || num != 2 || _verbosity > 3) 
-      GUI::instance()->setStatus(str, num - 1);
+      FlGui::instance()->setStatus(str, num - 1);
     if(log){
       std::string tmp = std::string("Info    : ") + str;
-      GUI::instance()->messages->add(tmp.c_str());
+      FlGui::instance()->messages->add(tmp.c_str());
     }
   }
 #endif
@@ -320,9 +320,9 @@ void Msg::Debug(const char *fmt, ...)
   if(_callback) (*_callback)("Debug", str);
 
 #if defined(HAVE_FLTK)
-  if(GUI::available()){
+  if(FlGui::available()){
     std::string tmp = std::string("Debug   : ") + str;
-    GUI::instance()->messages->add(tmp.c_str());
+    FlGui::instance()->messages->add(tmp.c_str());
   }
 #endif
 
@@ -355,9 +355,9 @@ void Msg::ProgressMeter(int n, int N, const char *fmt, ...)
     strcat(str, str2);
 
 #if defined(HAVE_FLTK)
-    if(GUI::available()){
-      if(_verbosity > 3) GUI::instance()->setStatus(str, 1);
-      GUI::instance()->check();
+    if(FlGui::available()){
+      if(_verbosity > 3) FlGui::instance()->setStatus(str, 1);
+      FlGui::instance()->check();
     }
 #endif
     if(CTX::instance()->terminal){
@@ -371,8 +371,8 @@ void Msg::ProgressMeter(int n, int N, const char *fmt, ...)
 
   if(n > N - 1){
 #if defined(HAVE_FLTK)
-    if(GUI::available()){
-      if(_verbosity > 3) GUI::instance()->setStatus("", 1);
+    if(FlGui::available()){
+      if(_verbosity > 3) FlGui::instance()->setStatus("", 1);
     }
 #endif
     if(CTX::instance()->terminal){
@@ -417,16 +417,16 @@ void Msg::PrintErrorCounter(const char *title)
   sprintf(err, "%5d error%s", _errorCount, _errorCount == 1 ? "" : "s");
 
 #if defined(HAVE_FLTK)
-  if(GUI::available()){
+  if(FlGui::available()){
     std::string red("@C1@.");
-    GUI::instance()->messages->add((red + prefix + line).c_str());
-    GUI::instance()->messages->add((red + prefix + title).c_str());
-    GUI::instance()->messages->add((red + prefix + warn).c_str());
-    GUI::instance()->messages->add((red + prefix + err).c_str());
-    GUI::instance()->messages->add((red + prefix + help).c_str());
-    GUI::instance()->messages->add((red + prefix + line).c_str());
+    FlGui::instance()->messages->add((red + prefix + line).c_str());
+    FlGui::instance()->messages->add((red + prefix + title).c_str());
+    FlGui::instance()->messages->add((red + prefix + warn).c_str());
+    FlGui::instance()->messages->add((red + prefix + err).c_str());
+    FlGui::instance()->messages->add((red + prefix + help).c_str());
+    FlGui::instance()->messages->add((red + prefix + line).c_str());
     if(_errorCount){
-      GUI::instance()->messages->show();
+      FlGui::instance()->messages->show();
       fl_beep();
     }
   }
@@ -434,9 +434,9 @@ void Msg::PrintErrorCounter(const char *title)
 
   if(CTX::instance()->terminal){
     fprintf(stderr, "%s\n%s\n%s\n%s\n%s\n%s\n", (prefix + line).c_str(), 
-	    (prefix + title).c_str(), (prefix + warn).c_str(),
-	    (prefix + err).c_str(), (prefix + help).c_str(), 
-	    (prefix + line).c_str());
+            (prefix + title).c_str(), (prefix + warn).c_str(),
+            (prefix + err).c_str(), (prefix + help).c_str(), 
+            (prefix + line).c_str());
     fflush(stderr);
   }
 }
@@ -448,7 +448,7 @@ double Msg::GetValue(const char *text, double defaultval)
   if(CTX::instance()->noPopup || _callback) return defaultval;
 
 #if defined(HAVE_FLTK)
-  if(GUI::available()){
+  if(FlGui::available()){
     char defaultstr[256];
     sprintf(defaultstr, "%.16g", defaultval);
     const char *ret = fl_input(text, defaultstr);
@@ -469,14 +469,14 @@ double Msg::GetValue(const char *text, double defaultval)
 }
 
 bool Msg::GetBinaryAnswer(const char *question, const char *yes, 
-			      const char *no, bool defaultval)
+                              const char *no, bool defaultval)
 {
   // if a callback is given let's assume we don't want to be bothered
   // with interactive stuff
   if(CTX::instance()->noPopup || _callback) return defaultval;
 
 #if defined(HAVE_FLTK)
-  if(GUI::available()){
+  if(FlGui::available()){
     if(fl_choice(question, no, yes, NULL))
       return true;
     else
@@ -486,7 +486,7 @@ bool Msg::GetBinaryAnswer(const char *question, const char *yes,
 
   while(1){
     printf("%s\n\n[%s] or [%s]? (default=%s) ", question, yes, no, 
-	   defaultval ? yes : no);
+           defaultval ? yes : no);
     char str[256];
     char *ret = fgets(str, sizeof(str), stdin);
     if(!ret || !strlen(str) || !strcmp(str, "\n"))

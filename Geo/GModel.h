@@ -351,12 +351,12 @@ class GModel
 
   // Medit (INRIA) mesh format
   int readMESH(const std::string &name);
-  int writeMESH(const std::string &name,
+  int writeMESH(const std::string &name, int elementTagType=1,
                 bool saveAll=false, double scalingFactor=1.0);
 
   // Nastran Bulk Data File format
   int readBDF(const std::string &name);
-  int writeBDF(const std::string &name, int format=0,
+  int writeBDF(const std::string &name, int format=0, int elementTagType=1,
                bool saveAll=false, double scalingFactor=1.0);
 
   // Plot3D structured mesh format
@@ -374,13 +374,13 @@ class GModel
   static int readMED(const std::string &name);
   int readMED(const std::string &name, int meshIndex);
   int writeMED(const std::string &name,
-	       bool saveAll=false, double scalingFactor=1.0);
+               bool saveAll=false, double scalingFactor=1.0);
 
   // VTK format
   int readVTK(const std::string &name, bool bigEndian=false);
   int writeVTK(const std::string &name, bool binary=false,
                bool saveAll=false, double scalingFactor=1.0,
-	       bool bigEndian=false);
+               bool bigEndian=false);
 
   // DIFFPACK format
   int readDIFF(const std::string &name);

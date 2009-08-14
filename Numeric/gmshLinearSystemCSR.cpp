@@ -4,20 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-
 #define SWAP(a,b)  temp=(a);(a)=(b);(b)=temp;
 #define SWAPI(a,b) tempi=(a);(a)=(b);(b)=tempi;
-
-// #if defined(HAVE_TAUCS)
-// #include "taucs.h"
-// #endif
-
-// #if defined(HAVE_GMM)
-// #include <gmm.h>
-// #include <gmm_interface.h>
-// #endif
-
 
 void *CSRMalloc(size_t size)
 {
@@ -134,7 +122,7 @@ void gmshLinearSystemCSR<double> :: allocate(int _nbRows)
 }
 
 const int NSTACK   = 50;
-const int M_sort2  = 7;
+const unsigned int M_sort2  = 7;
 
 static void free_ivector(int *v, long nl, long nh){
   // free an int vector allocated with ivector() 
@@ -169,22 +157,22 @@ void _sort2_xkws (unsigned long n, double arr[], INDEX_TYPE ai[] , INDEX_TYPE aj
   for (;;) {
     if (ir-l < M_sort2) {
       for (j=l+1;j<=ir;j++) {
-	a=arr[j -1];
-	b=ai[j -1];
-	c=aj[j -1];
-	for (i=j-1;i>=1;i--) {
-	  if (cmpij(ai[i -1],aj[i -1],b,c) <= 0) break;
-	  arr[i+1 -1]=arr[i -1];
-	  ai[i+1 -1]=ai[i -1];
-	  aj[i+1 -1]=aj[i -1];
-	}
-	arr[i+1 -1]=a;
-	ai[i+1 -1]=b;
-	aj[i+1 -1]=c;
+        a=arr[j -1];
+        b=ai[j -1];
+        c=aj[j -1];
+        for (i=j-1;i>=1;i--) {
+          if (cmpij(ai[i -1],aj[i -1],b,c) <= 0) break;
+          arr[i+1 -1]=arr[i -1];
+          ai[i+1 -1]=ai[i -1];
+          aj[i+1 -1]=aj[i -1];
+        }
+        arr[i+1 -1]=a;
+        ai[i+1 -1]=b;
+        aj[i+1 -1]=c;
       }
       if (!jstack) {
-	free_ivector(istack,1,NSTACK);
-	return;
+        free_ivector(istack,1,NSTACK);
+        return;
       }
       ir=istack[jstack];
       l=istack[jstack-1];
@@ -196,19 +184,19 @@ void _sort2_xkws (unsigned long n, double arr[], INDEX_TYPE ai[] , INDEX_TYPE aj
       SWAPI(ai[k -1],ai[l+1 -1])
       SWAPI(aj[k -1],aj[l+1 -1])
       if (cmpij(ai[l+1 -1],aj[l+1 -1],ai[ir -1],aj[ir -1])>0){
-	SWAP(arr[l+1 -1],arr[ir -1])
-	SWAPI(ai[l+1 -1],ai[ir -1])
-	SWAPI(aj[l+1 -1],aj[ir -1])
+        SWAP(arr[l+1 -1],arr[ir -1])
+        SWAPI(ai[l+1 -1],ai[ir -1])
+        SWAPI(aj[l+1 -1],aj[ir -1])
       }
       if (cmpij(ai[l -1],aj[l -1],ai[ir -1],aj[ir -1])>0){
-	SWAP(arr[l -1],arr[ir -1])
-	SWAPI(ai[l -1],ai[ir -1])
-	SWAPI(aj[l -1],aj[ir -1])
+        SWAP(arr[l -1],arr[ir -1])
+        SWAPI(ai[l -1],ai[ir -1])
+        SWAPI(aj[l -1],aj[ir -1])
       }
       if (cmpij(ai[l+1 -1],aj[l+1 -1],ai[l -1],aj[l -1])>0){
-	SWAP(arr[l+1 -1],arr[l -1])
-	SWAPI(ai[l+1 -1],ai[l -1])
-	SWAPI(aj[l+1 -1],aj[l -1])
+        SWAP(arr[l+1 -1],arr[l -1])
+        SWAPI(ai[l+1 -1],ai[l -1])
+        SWAPI(aj[l+1 -1],aj[l -1])
       }
       i=l+1;
       j=ir;
@@ -216,13 +204,13 @@ void _sort2_xkws (unsigned long n, double arr[], INDEX_TYPE ai[] , INDEX_TYPE aj
       b=ai[l -1];
       c=aj[l -1];
       for (;;) {
-	do i++; while (cmpij(ai[i -1],aj[i -1],b,c) < 0);
-	do j--; while (cmpij(ai[j -1],aj[j -1],b,c) > 0);
-	if (j < i) break;
-	SWAP(arr[i -1],arr[j -1])
-	SWAPI(ai[i -1],ai[j -1])
-	SWAPI(aj[i -1],aj[j -1])
-	}
+        do i++; while (cmpij(ai[i -1],aj[i -1],b,c) < 0);
+        do j--; while (cmpij(ai[j -1],aj[j -1],b,c) > 0);
+        if (j < i) break;
+        SWAP(arr[i -1],arr[j -1])
+        SWAPI(ai[i -1],ai[j -1])
+        SWAPI(aj[i -1],aj[j -1])
+        }
       arr[l -1]=arr[j -1];
       arr[j -1]=a;
       ai[l -1]=ai[j -1];
@@ -231,18 +219,18 @@ void _sort2_xkws (unsigned long n, double arr[], INDEX_TYPE ai[] , INDEX_TYPE aj
       aj[j -1]=c;
       jstack += 2;
       if (jstack > NSTACK) {
-	Msg::Fatal("NSTACK too small while sorting the columns of the matrix");
-	throw;
+        Msg::Fatal("NSTACK too small while sorting the columns of the matrix");
+        throw;
       }
       if (ir-i+1 >= j-l) {
-	istack[jstack]=ir;
-	istack[jstack-1]=i;
-	ir=j-1;
+        istack[jstack]=ir;
+        istack[jstack-1]=i;
+        ir=j-1;
       } 
       else {
-	istack[jstack]=j-1;
-	istack[jstack-1]=l;
-	l=i;
+        istack[jstack]=j-1;
+        istack[jstack-1]=l;
+        l=i;
       }
     }
   }
@@ -250,11 +238,11 @@ void _sort2_xkws (unsigned long n, double arr[], INDEX_TYPE ai[] , INDEX_TYPE aj
 
 template <class scalar>
 void sortColumns (int NbLines, 
-		  int nnz, 
-		  INDEX_TYPE *ptr, 
-		  INDEX_TYPE *jptr, 
-		  INDEX_TYPE *ai, 
-		  scalar *a) {
+                  int nnz, 
+                  INDEX_TYPE *ptr, 
+                  INDEX_TYPE *jptr, 
+                  INDEX_TYPE *ai, 
+                  scalar *a) {
    // replace pointers by lines
   int *count = new int [NbLines];
 
@@ -301,9 +289,9 @@ int gmshLinearSystemCSRGmm<double> :: systemSolve()
   sorted = true;
 
   gmm::csr_matrix_ref<double*,INDEX_TYPE *,INDEX_TYPE *, 0>  ref((double*) a_->array, 
-								 (INDEX_TYPE *) ai_->array,
-								 (INDEX_TYPE *) jptr_->array,
-								 _b->size(), _b->size());
+                                                                 (INDEX_TYPE *) ai_->array,
+                                                                 (INDEX_TYPE *) jptr_->array,
+                                                                 _b->size(), _b->size());
   gmm::csr_matrix<double,0> M;
   M.init_with(ref);
 
@@ -331,7 +319,7 @@ int gmshLinearSystemCSRGmm<double> :: checkSystem()
   sorted = true;
 
   printf("Coucou check system \n");
-  for (int i=0;i<_b->size();i++)
+  for (unsigned int i = 0; i < _b->size(); i++)
     printf("%d ",((INDEX_TYPE *) jptr_->array)[i]);
   printf("\n");
 
@@ -360,8 +348,8 @@ int gmshLinearSystemCSRTaucs<double> :: systemSolve()
   myVeryCuteTaucsMatrix.values.d = (double*) a_->array;
   char* options[] = { "taucs.factor.LLT=true", NULL };  
   int result = taucs_linsolve(&myVeryCuteTaucsMatrix, 
-			      NULL, 1, &(*_x)[0],&(*_b)[0],
-			      options,NULL);			     
+                              NULL, 1, &(*_x)[0],&(*_b)[0],
+                              options,NULL);                         
   if (result != TAUCS_SUCCESS){
     Msg::Error("Taucs Was Not Successfull");
   }  

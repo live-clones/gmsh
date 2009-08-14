@@ -15,7 +15,7 @@
 #include "MElement.h"
 #include "Draw.h"
 #include "Numeric.h"
-#include "GUI.h"
+#include "FlGui.h"
 #include "VertexArray.h"
 #include "Context.h"
 
@@ -36,7 +36,7 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &cl
 
   ctx->initPosition();
   Draw();
-  GUI::instance()->manip->update();
+  FlGui::instance()->manip->update();
 }
 
 openglWindow::openglWindow(int x, int y, int w, int h, const char *l)
@@ -96,7 +96,7 @@ void openglWindow::drawBorder()
       Fl::get_color(FL_BACKGROUND_COLOR, r, g, b);
     */
     glColor3ub(r, g, b);
-    glLineWidth(1);
+    glLineWidth(1.0F);
     glBegin(GL_LINE_LOOP);
     glVertex2d(_ctx->viewport[0], _ctx->viewport[1]);
     glVertex2d(_ctx->viewport[2], _ctx->viewport[1]);
@@ -141,7 +141,7 @@ void openglWindow::draw()
     // glBlendEquation(GL_FUNC_ADD);
     glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
     glEnable(GL_BLEND);
-    glLineWidth(0.2);
+    glLineWidth(0.2F);
     glBegin(GL_LINE_LOOP);
     glVertex2d(_click.win[0], _ctx->viewport[3] - _click.win[1]);
     glVertex2d(_lassoXY[0], _ctx->viewport[3] - _click.win[1]);
@@ -166,13 +166,15 @@ void openglWindow::draw()
       CTX::instance()->mesh.draw = 0;
       CTX::instance()->post.draw = 0;
     }
-    glClearColor(CTX::instance()->unpackRed(CTX::instance()->color.bg) / 255.,
-                 CTX::instance()->unpackGreen(CTX::instance()->color.bg) / 255.,
-                 CTX::instance()->unpackBlue(CTX::instance()->color.bg) / 255., 0.);
+    glClearColor
+      ((GLclampf)(CTX::instance()->unpackRed(CTX::instance()->color.bg) / 255.),
+       (GLclampf)(CTX::instance()->unpackGreen(CTX::instance()->color.bg) / 255.),
+       (GLclampf)(CTX::instance()->unpackBlue(CTX::instance()->color.bg) / 255.), 
+       0.0F);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     _ctx->draw3d();
     glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
-    glPointSize(CTX::instance()->geom.pointSize);
+    glPointSize((float)CTX::instance()->geom.pointSize);
     glBegin(GL_POINTS);
     glVertex3d(_point[0], _point[1], _point[2]);
     glEnd();
@@ -184,9 +186,11 @@ void openglWindow::draw()
   }
   else{
     // draw the whole scene
-    glClearColor(CTX::instance()->unpackRed(CTX::instance()->color.bg) / 255.,
-                 CTX::instance()->unpackGreen(CTX::instance()->color.bg) / 255.,
-                 CTX::instance()->unpackBlue(CTX::instance()->color.bg) / 255., 0.);
+    glClearColor
+      ((GLclampf)(CTX::instance()->unpackRed(CTX::instance()->color.bg) / 255.),
+       (GLclampf)(CTX::instance()->unpackGreen(CTX::instance()->color.bg) / 255.),
+       (GLclampf)(CTX::instance()->unpackBlue(CTX::instance()->color.bg) / 255.), 
+       0.0F);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     _ctx->draw3d();
     _ctx->draw2d();
@@ -202,7 +206,7 @@ openglWindow *openglWindow::_lastHandled = 0;
 void openglWindow::_setLastHandled(openglWindow* w)
 {
   _lastHandled = w;
-  GUI::instance()->visibility->updatePerWindow();
+  FlGui::instance()->visibility->updatePerWindow();
 }
 
 int openglWindow::handle(int event)
@@ -216,7 +220,7 @@ int openglWindow::handle(int event)
   case FL_SHORTCUT:
   case FL_KEYBOARD:
     // override the default widget arrow-key-navigation
-    if(GUI::instance()->testArrowShortcuts())
+    if(FlGui::instance()->testArrowShortcuts())
       return 1;
     return Fl_Gl_Window::handle(event);
     
@@ -301,7 +305,7 @@ int openglWindow::handle(int event)
     }
     _click.set(_ctx, Fl::event_x(), Fl::event_y());
     _prev.set(_ctx, Fl::event_x(), Fl::event_y());
-    GUI::instance()->manip->update();
+    FlGui::instance()->manip->update();
     return 1;
 
   case FL_RELEASE:
@@ -325,7 +329,7 @@ int openglWindow::handle(int event)
       _prev.recenter(_ctx);
       redraw();
     }
-    GUI::instance()->manip->update();
+    FlGui::instance()->manip->update();
     return 1;
 
   case FL_DRAG:
@@ -383,7 +387,7 @@ int openglWindow::handle(int event)
       }
     }
     _prev.set(_ctx, Fl::event_x(), Fl::event_y());
-    GUI::instance()->manip->update();
+    FlGui::instance()->manip->update();
     return 1;
 
   case FL_MOVE:
@@ -412,11 +416,11 @@ int openglWindow::handle(int event)
       }
       char str[32];
       sprintf(str, "%g", _point[0]); 
-      GUI::instance()->geoContext->input[2]->value(str);
+      FlGui::instance()->geoContext->input[2]->value(str);
       sprintf(str, "%g", _point[1]); 
-      GUI::instance()->geoContext->input[3]->value(str);
+      FlGui::instance()->geoContext->input[3]->value(str);
       sprintf(str, "%g", _point[2]); 
-      GUI::instance()->geoContext->input[4]->value(str);
+      FlGui::instance()->geoContext->input[4]->value(str);
       redraw();
     }
     else{ // hover mode
@@ -684,7 +688,7 @@ char openglWindow::selectEntity(int type,
     faces.clear();
     regions.clear();
     elements.clear();
-    GUI::instance()->wait();
+    FlGui::instance()->wait();
     if(quitSelection) {
       _selection = ENT_NONE;
       selectionMode = false;

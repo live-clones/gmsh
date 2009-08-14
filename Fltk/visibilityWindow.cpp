@@ -12,7 +12,7 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
 #include "GmshConfig.h"
-#include "GUI.h"
+#include "FlGui.h"
 #include "Draw.h"
 #include "visibilityWindow.h"
 #include "paletteWindow.h"
@@ -288,10 +288,10 @@ VisibilityList *VisibilityList::_instance = 0;
 
 static void _rebuild_list_browser()
 {
-  GUI::instance()->visibility->browser->clear();
+  FlGui::instance()->visibility->browser->clear();
 
   VisibilityList::VisibilityType type;
-  switch(GUI::instance()->visibility->browser_type->value()){
+  switch(FlGui::instance()->visibility->browser_type->value()){
   case 0: type = VisibilityList::Models; break;
   case 2: type = VisibilityList::PhysicalEntities; break;
   case 3: type = VisibilityList::MeshPartitions; break;
@@ -300,17 +300,17 @@ static void _rebuild_list_browser()
 
   VisibilityList::instance()->update(type);
   for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++){
-    GUI::instance()->visibility->browser->add
+    FlGui::instance()->visibility->browser->add
       (VisibilityList::instance()->getBrowserLine(i).c_str());
     if(VisibilityList::instance()->getVisibility(i))
-      GUI::instance()->visibility->browser->select(i + 1);
+      FlGui::instance()->visibility->browser->select(i + 1);
   }
   
   // activate/deactivate delete button
   if(type == VisibilityList::PhysicalEntities)
-    GUI::instance()->visibility->push[0]->activate();
+    FlGui::instance()->visibility->push[0]->activate();
   else
-    GUI::instance()->visibility->push[0]->deactivate();
+    FlGui::instance()->visibility->push[0]->deactivate();
 }
 
 static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
@@ -319,9 +319,9 @@ static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
   // browser and apply them into the model
   if(VisibilityList::instance()->getNumEntities()){
     CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
-    bool recursive = GUI::instance()->visibility->butt[0]->value() ? true : false;
+    bool recursive = FlGui::instance()->visibility->butt[0]->value() ? true : false;
     VisibilityList::VisibilityType type;
-    switch(GUI::instance()->visibility->browser_type->value()){
+    switch(FlGui::instance()->visibility->browser_type->value()){
     case 0: type = VisibilityList::Models; break;
     case 2: type = VisibilityList::PhysicalEntities; break;
     case 3: type = VisibilityList::MeshPartitions; break;
@@ -329,12 +329,12 @@ static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
     }
     VisibilityList::instance()->setAllInvisible(type);
     for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++)
-      if(GUI::instance()->visibility->browser->selected(i + 1))
+      if(FlGui::instance()->visibility->browser->selected(i + 1))
         VisibilityList::instance()->setVisibility(i, 1, recursive);
     // then refresh the browser to account for recursive selections
     for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++)
       if(VisibilityList::instance()->getVisibility(i))
-        GUI::instance()->visibility->browser->select(i + 1);
+        FlGui::instance()->visibility->browser->select(i + 1);
     Draw();
   }
 }
@@ -343,7 +343,7 @@ static void visibility_delete_cb(Fl_Widget *w, void *data)
 {
   bool all = true;
   for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++){
-    if(!GUI::instance()->visibility->browser->selected(i + 1)){
+    if(!FlGui::instance()->visibility->browser->selected(i + 1)){
       all = false;
       break;
     }
@@ -353,7 +353,7 @@ static void visibility_delete_cb(Fl_Widget *w, void *data)
   }
   else{
     for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++){
-      if(GUI::instance()->visibility->browser->selected(i + 1)){
+      if(FlGui::instance()->visibility->browser->selected(i + 1)){
         Vis *v = VisibilityList::instance()->getEntity(i);
         GModel::current()->deletePhysicalGroup(v->getDim(), v->getTag());
       }
@@ -381,37 +381,37 @@ static void visibility_sort_cb(Fl_Widget *w, void *data)
 
   if(val == 0) { // select or deselect everything
     int selectall = 0;
-    for(int i = 0; i < GUI::instance()->visibility->browser->size(); i++)
-      if(!GUI::instance()->visibility->browser->selected(i + 1)) {
+    for(int i = 0; i < FlGui::instance()->visibility->browser->size(); i++)
+      if(!FlGui::instance()->visibility->browser->selected(i + 1)) {
         selectall = 1;
         break;
       }
     if(selectall)
-      for(int i = 0; i < GUI::instance()->visibility->browser->size(); i++)
-        GUI::instance()->visibility->browser->select(i + 1);
+      for(int i = 0; i < FlGui::instance()->visibility->browser->size(); i++)
+        FlGui::instance()->visibility->browser->select(i + 1);
     else
-      GUI::instance()->visibility->browser->deselect();
+      FlGui::instance()->visibility->browser->deselect();
   }
   else if(val == -1){ // invert the selection
-    int *state = new int[GUI::instance()->visibility->browser->size()];
-    for(int i = 0; i < GUI::instance()->visibility->browser->size(); i++)
-      state[i] = GUI::instance()->visibility->browser->selected(i + 1);
-    GUI::instance()->visibility->browser->deselect();
-    for(int i = 0; i < GUI::instance()->visibility->browser->size(); i++)
-      if(!state[i]) GUI::instance()->visibility->browser->select(i + 1);
+    int *state = new int[FlGui::instance()->visibility->browser->size()];
+    for(int i = 0; i < FlGui::instance()->visibility->browser->size(); i++)
+      state[i] = FlGui::instance()->visibility->browser->selected(i + 1);
+    FlGui::instance()->visibility->browser->deselect();
+    for(int i = 0; i < FlGui::instance()->visibility->browser->size(); i++)
+      if(!state[i]) FlGui::instance()->visibility->browser->select(i + 1);
     delete [] state;
   }
   else if(val == -2){ // create new parameter name for selection
-    for(int i = 0; i < GUI::instance()->visibility->browser->size(); i++){
-      if(GUI::instance()->visibility->browser->selected(i + 1)){
+    for(int i = 0; i < FlGui::instance()->visibility->browser->size(); i++){
+      if(FlGui::instance()->visibility->browser->selected(i + 1)){
         static char tmpstr[256];
         sprintf(tmpstr, "%d", VisibilityList::instance()->getTag(i));
-        GUI::instance()->geoContext->input[1]->value(tmpstr);
+        FlGui::instance()->geoContext->input[1]->value(tmpstr);
         break;
       }
     }
-    GUI::instance()->geoContext->input[0]->value("NewName");
-    GUI::instance()->geoContext->show(0);
+    FlGui::instance()->geoContext->input[0]->value("NewName");
+    FlGui::instance()->geoContext->show(0);
   }
   else { // set new sorting mode
     VisibilityList::instance()->setSortMode(val);
@@ -541,15 +541,15 @@ static void _rebuild_tree_browser(bool force)
         GModel::list[i]->getNumVertices();
     }
     if(numEnt > 10000){
-      GUI::instance()->visibility->tree->hide();
-      GUI::instance()->visibility->tree_create->show();
+      FlGui::instance()->visibility->tree->hide();
+      FlGui::instance()->visibility->tree_create->show();
       return;
     }
   }
 
-  GUI::instance()->visibility->tree_create->hide();
-  GUI::instance()->visibility->tree->show();
-  GUI::instance()->visibility->tree->clear();
+  FlGui::instance()->visibility->tree_create->hide();
+  FlGui::instance()->visibility->tree->show();
+  FlGui::instance()->visibility->tree->clear();
 
   char str[128];
   for(unsigned int i = 0; i < GModel::list.size(); i++){
@@ -558,7 +558,7 @@ static void _rebuild_tree_browser(bool force)
     s += m->getName() + ">>";
     if(m == GModel::current()) s += " (Active)";
     sprintf(str, "Model [%d] %s/", i, s.c_str());
-    Flu_Tree_Browser::Node *n = GUI::instance()->visibility->tree->add(str);
+    Flu_Tree_Browser::Node *n = FlGui::instance()->visibility->tree->add(str);
     if(m->getVisibility()) n->select(true);
     Flu_Tree_Browser::Node *e = n->add("Elementary entities/");
     e->select(true);
@@ -597,7 +597,7 @@ static void _recur_set_visible(Flu_Tree_Browser::Node *n)
 {
   if(n->user_data() && n->selected()){
     GEntity *ge = (GEntity*)n->user_data();
-    bool recursive = GUI::instance()->visibility->butt[0]->value() ? true : false;
+    bool recursive = FlGui::instance()->visibility->butt[0]->value() ? true : false;
     ge->setVisibility(1, recursive);
     // force this: if we ask to see an entity, let's assume that we
     // don't want the whole model to be invisible
@@ -620,8 +620,8 @@ static void _recur_update_selected(Flu_Tree_Browser::Node *n)
 static void visibility_tree_apply_cb(Fl_Widget *w, void *data)
 {
   CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
-  bool recursive = GUI::instance()->visibility->butt[0]->value() ? true : false;
-  Flu_Tree_Browser::Node *root = GUI::instance()->visibility->tree->first();
+  bool recursive = FlGui::instance()->visibility->butt[0]->value() ? true : false;
+  Flu_Tree_Browser::Node *root = FlGui::instance()->visibility->tree->first();
   for(int i = 0; i < root->children(); i++){
     GModel *m = GModel::list[i];
     Flu_Tree_Browser::Node *n = root->child(i);
@@ -683,15 +683,15 @@ void visibility_cb(Fl_Widget *w, void *data)
   // accordingly
   const char *str = (const char*)data;
   if(str && !strcmp(str, "redraw_only"))
-    GUI::instance()->visibility->show(true);
+    FlGui::instance()->visibility->show(true);
   else
-    GUI::instance()->visibility->show(false);
+    FlGui::instance()->visibility->show(false);
 
   _rebuild_list_browser();
 #if defined(HAVE_TREE_BROWSER)
   _rebuild_tree_browser(false);
 #endif
-  GUI::instance()->visibility->updatePerWindow(true);
+  FlGui::instance()->visibility->updatePerWindow(true);
 }
 
 static void visibility_save_cb(Fl_Widget *w, void *data)
@@ -823,7 +823,7 @@ static void _apply_visibility(char mode, bool physical,
                               std::vector<GRegion*> &regions,
                               std::vector<MElement*> &elements)
 {
-  bool recursive = GUI::instance()->visibility->butt[0]->value() ? true : false;
+  bool recursive = FlGui::instance()->visibility->butt[0]->value() ? true : false;
 
   if(mode == 1){ // when showing a single entity, first hide everything
     if(CTX::instance()->pickElements)
@@ -869,9 +869,9 @@ static void _apply_visibility(char mode, bool physical,
           _set_visibility_by_number(9, regions[i]->physicals[j], mode, recursive);
     }
   }
-  int pos = GUI::instance()->visibility->browser->position();
+  int pos = FlGui::instance()->visibility->browser->position();
   visibility_cb(NULL, (void*)"redraw_only");
-  GUI::instance()->visibility->browser->position(pos);
+  FlGui::instance()->visibility->browser->position(pos);
 }
 
 static void visibility_number_cb(Fl_Widget *w, void *data)
@@ -891,16 +891,16 @@ static void visibility_number_cb(Fl_Widget *w, void *data)
   else{ // hide
     val = 0;
   }
-  const char *str = GUI::instance()->visibility->input[what]->value();
+  const char *str = FlGui::instance()->visibility->input[what]->value();
 
   int num = (!strcmp(str, "all") || !strcmp(str, "*")) ? -1 : atoi(str);
-  bool recursive = GUI::instance()->visibility->butt[0]->value() ? true : false;
+  bool recursive = FlGui::instance()->visibility->butt[0]->value() ? true : false;
   
   _set_visibility_by_number(what, num, val, recursive);
 
-  int pos = GUI::instance()->visibility->browser->position();
+  int pos = FlGui::instance()->visibility->browser->position();
   visibility_cb(NULL, (void*)"redraw_only");
-  GUI::instance()->visibility->browser->position(pos);
+  FlGui::instance()->visibility->browser->position(pos);
   Draw();
 }
 
@@ -996,14 +996,14 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
     Msg::StatusBar(3, false, "Select %s\n[Press %s'q' to abort]", 
                    str.c_str(), mode ? "" : "'u' to undo or ");
 
-    char ib = GUI::instance()->selectEntity(what);
+    char ib = FlGui::instance()->selectEntity(what);
     if(ib == 'l') {
       // store for possible undo later
-      vertices = GUI::instance()->selectedVertices;
-      edges = GUI::instance()->selectedEdges;
-      faces = GUI::instance()->selectedFaces;
-      regions = GUI::instance()->selectedRegions;
-      elements = GUI::instance()->selectedElements;
+      vertices = FlGui::instance()->selectedVertices;
+      edges = FlGui::instance()->selectedEdges;
+      faces = FlGui::instance()->selectedFaces;
+      regions = FlGui::instance()->selectedRegions;
+      elements = FlGui::instance()->selectedElements;
       _apply_visibility(mode, physical, vertices, edges, faces, regions, elements);
     }
     if(ib == 'u' && !mode){ // undo only in hide mode
@@ -1024,30 +1024,30 @@ static void visibility_per_window_cb(Fl_Widget *w, void *data)
 {
   std::string what = (const char*)data;
   if(what == "item"){
-    drawContext *ctx = GUI::instance()->getCurrentOpenglWindow()->getDrawContext();
+    drawContext *ctx = FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
     for(unsigned int i = 0; 
-        i < (unsigned int)GUI::instance()->visibility->per_window->size(); i++){
+        i < (unsigned int)FlGui::instance()->visibility->per_window->size(); i++){
       if(i < GModel::list.size()){
         GModel *m = GModel::list[i];
-        if(GUI::instance()->visibility->per_window->selected(i + 1)) ctx->show(m);
+        if(FlGui::instance()->visibility->per_window->selected(i + 1)) ctx->show(m);
         else ctx->hide(m);
       }
       else if(i < GModel::list.size() + PView::list.size()){
         PView *v = PView::list[i - GModel::list.size()];
-        if(GUI::instance()->visibility->per_window->selected(i + 1)) ctx->show(v);
+        if(FlGui::instance()->visibility->per_window->selected(i + 1)) ctx->show(v);
         else ctx->hide(v);
       }
     }
   }
   else if(what == "reset_all"){
-    for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++){
-      for(unsigned int j = 0; j < GUI::instance()->graph[i]->gl.size(); j++){
-        drawContext *ctx = GUI::instance()->graph[i]->gl[j]->getDrawContext();
+    for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++){
+      for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++){
+        drawContext *ctx = FlGui::instance()->graph[i]->gl[j]->getDrawContext();
         ctx->showAll();
       }
     }
-    for(int i = 0; i < GUI::instance()->visibility->per_window->size(); i++)
-      GUI::instance()->visibility->per_window->select(i + 1);
+    for(int i = 0; i < FlGui::instance()->visibility->per_window->size(); i++)
+      FlGui::instance()->visibility->per_window->select(i + 1);
   }
   Draw();
 }
@@ -1365,9 +1365,9 @@ void visibilityWindow::show(bool redrawOnly)
 void visibilityWindow::updatePerWindow(bool force)
 {
   static openglWindow *gl = 0;
-  if(!force && gl == GUI::instance()->getCurrentOpenglWindow()) return;
+  if(!force && gl == FlGui::instance()->getCurrentOpenglWindow()) return;
 
-  gl = GUI::instance()->getCurrentOpenglWindow();
+  gl = FlGui::instance()->getCurrentOpenglWindow();
   drawContext *ctx = gl->getDrawContext();
  
   per_window->clear();

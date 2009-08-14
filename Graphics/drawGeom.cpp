@@ -29,15 +29,15 @@ class drawGVertex {
     }
     
     if(v->getSelection()) {
-      glPointSize(CTX::instance()->geom.selectedPointSize);
-      gl2psPointSize(CTX::instance()->geom.selectedPointSize * 
-                     CTX::instance()->print.epsPointSizeFactor);
+      glPointSize((float)CTX::instance()->geom.selectedPointSize);
+      gl2psPointSize((float)(CTX::instance()->geom.selectedPointSize * 
+                             CTX::instance()->print.epsPointSizeFactor));
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.selection);
     }
     else {
-      glPointSize(CTX::instance()->geom.pointSize);
-      gl2psPointSize(CTX::instance()->geom.pointSize *
-                     CTX::instance()->print.epsPointSizeFactor);
+      glPointSize((float)CTX::instance()->geom.pointSize);
+      gl2psPointSize((float)(CTX::instance()->geom.pointSize *
+                             CTX::instance()->print.epsPointSizeFactor));
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.point);
     }
     
@@ -105,15 +105,15 @@ class drawGEdge {
     }
     
     if(e->getSelection()) {
-      glLineWidth(CTX::instance()->geom.selectedLineWidth);
-      gl2psLineWidth(CTX::instance()->geom.selectedLineWidth * 
-                     CTX::instance()->print.epsLineWidthFactor);
+      glLineWidth((float)CTX::instance()->geom.selectedLineWidth);
+      gl2psLineWidth((float)(CTX::instance()->geom.selectedLineWidth * 
+                             CTX::instance()->print.epsLineWidthFactor));
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.selection);
     }
     else {
-      glLineWidth(CTX::instance()->geom.lineWidth);
-      gl2psLineWidth(CTX::instance()->geom.lineWidth * 
-                     CTX::instance()->print.epsLineWidthFactor);
+      glLineWidth((float)CTX::instance()->geom.lineWidth);
+      gl2psLineWidth((float)(CTX::instance()->geom.lineWidth * 
+                             CTX::instance()->print.epsLineWidthFactor));
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.line);
     }
     
@@ -390,15 +390,15 @@ class drawGFace {
     }
     
     if(f->getSelection()) {
-      glLineWidth(CTX::instance()->geom.selectedLineWidth / 2.);
-      gl2psLineWidth(CTX::instance()->geom.selectedLineWidth / 2. *
-                     CTX::instance()->print.epsLineWidthFactor);
+      glLineWidth((float)(CTX::instance()->geom.selectedLineWidth / 2.));
+      gl2psLineWidth((float)(CTX::instance()->geom.selectedLineWidth / 2. *
+                             CTX::instance()->print.epsLineWidthFactor));
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.selection);
     }
     else {
-      glLineWidth(CTX::instance()->geom.lineWidth / 2.);
-      gl2psLineWidth(CTX::instance()->geom.lineWidth / 2. * 
-                     CTX::instance()->print.epsLineWidthFactor);
+      glLineWidth((float)(CTX::instance()->geom.lineWidth / 2.));
+      gl2psLineWidth((float)(CTX::instance()->geom.lineWidth / 2. * 
+                             CTX::instance()->print.epsLineWidthFactor));
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.surface);
     }
 

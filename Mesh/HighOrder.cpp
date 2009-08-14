@@ -309,10 +309,10 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
 }
 
 static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
-			    edgeContainer &edgeVertices, bool linear,
-			    int nPts = 1, 
-			    gmshHighOrderSmoother *displ2D = 0,
-			    gmshHighOrderSmoother *displ3D = 0)
+                            edgeContainer &edgeVertices, bool linear,
+                            int nPts = 1, 
+                            gmshHighOrderSmoother *displ2D = 0,
+                            gmshHighOrderSmoother *displ3D = 0)
 {
   if(gf->geomType() == GEntity::DiscreteSurface ||
      gf->geomType() == GEntity::BoundaryLayerSurface)
@@ -349,12 +349,12 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
         }
         else{
           GPoint pc = gf->point(US[j + 1], VS[j + 1]);
-	  v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, US[j + 1], VS[j + 1]);
-	  if (displ2D || displ3D){
-	    SPoint3 pc2 = edge.interpolate(t);          
-	    if (displ3D) displ3D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
-	    if (displ2D) displ2D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
-	  }
+          v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, US[j + 1], VS[j + 1]);
+          if (displ2D || displ3D){
+            SPoint3 pc2 = edge.interpolate(t);          
+            if (displ3D) displ3D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
+            if (displ2D) displ2D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
+          }
         }
         temp.push_back(v);
         gf->mesh_vertices.push_back(v);
@@ -441,8 +441,8 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
       SPoint2 pts[20];
       bool reparamOK = true;
       if(!linear){
-	for(int k = 0; k < incomplete->getNumVertices(); k++)
-	  reparamOK &= reparamMeshVertexOnFace(incomplete->getVertex(k), gf, pts[k]);
+        for(int k = 0; k < incomplete->getNumVertices(); k++)
+          reparamOK &= reparamMeshVertexOnFace(incomplete->getVertex(k), gf, pts[k]);
       }
       if(face.getNumVertices() == 3 && nPts > 1){ // tri face
         for(int k = start; k < points.size1(); k++){
@@ -454,36 +454,36 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
             v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
           }
           else{
-	    double X(0), Y(0), Z(0), GUESS[2] = {0, 0};
+            double X(0), Y(0), Z(0), GUESS[2] = {0, 0};
             double sf[256]; 
             incomplete->getShapeFunctions(t1, t2, 0, sf);
-	    for (int j = 0; j < incomplete->getNumVertices(); j++){
-	      MVertex *vt = incomplete->getVertex(j);
+            for (int j = 0; j < incomplete->getNumVertices(); j++){
+              MVertex *vt = incomplete->getVertex(j);
               X += sf[j] * vt->x();
-	      Y += sf[j] * vt->y();
-	      Z += sf[j] * vt->z();
-	      if (reparamOK){
-		GUESS[0] += sf[j] * pts[j][0];
-		GUESS[1] += sf[j] * pts[j][1];
-	      }
-	    }
-	    if(reparamOK){
-	      GPoint gp = gf->closestPoint(SPoint3(X, Y, Z), GUESS);
-	      if (gp.g()){
-		v = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
-	      }
-	      else{
-		v = new MVertex(X, Y, Z, gf);
-	      }
-	    }
-	    else{
-	      v = new MVertex(X, Y, Z, gf);
-	    }
-	    if(displ3D || displ2D){
-	      SPoint3 pc2 = face.interpolate(t1, t2);
-	      if(displ3D)displ3D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
-	      if(displ2D)displ2D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
-	    }	    
+              Y += sf[j] * vt->y();
+              Z += sf[j] * vt->z();
+              if (reparamOK){
+                GUESS[0] += sf[j] * pts[j][0];
+                GUESS[1] += sf[j] * pts[j][1];
+              }
+            }
+            if(reparamOK){
+              GPoint gp = gf->closestPoint(SPoint3(X, Y, Z), GUESS);
+              if (gp.g()){
+                v = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
+              }
+              else{
+                v = new MVertex(X, Y, Z, gf);
+              }
+            }
+            else{
+              v = new MVertex(X, Y, Z, gf);
+            }
+            if(displ3D || displ2D){
+              SPoint3 pc2 = face.interpolate(t1, t2);
+              if(displ3D)displ3D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
+              if(displ2D)displ2D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
+            }       
           }
           // should be expensive -> induces a new search each time
           vtcs.push_back(v);
@@ -702,41 +702,41 @@ static void setHighOrder(GEdge *ge, edgeContainer &edgeVertices, bool linear,
 }
 
 MTriangle* setHighOrder(MTriangle *t,
-			GFace *gf, 
-			edgeContainer &edgeVertices, 
-			faceContainer &faceVertices, 
-			bool linear, 
-			bool incomplete,
-			int nPts, 
-			gmshHighOrderSmoother *displ2D,
-			gmshHighOrderSmoother *displ3D){
+                        GFace *gf, 
+                        edgeContainer &edgeVertices, 
+                        faceContainer &faceVertices, 
+                        bool linear, 
+                        bool incomplete,
+                        int nPts, 
+                        gmshHighOrderSmoother *displ2D,
+                        gmshHighOrderSmoother *displ3D){
 
   std::vector<MVertex*> ve, vf;
   getEdgeVertices(gf, t, ve, edgeVertices, linear, nPts, displ2D, displ3D);
   if(nPts == 1){
     return new MTriangle6(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-			  ve[0], ve[1], ve[2]);
+                          ve[0], ve[1], ve[2]);
   }
   else{
     if(incomplete){
       return new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-			    ve, nPts + 1);
+                            ve, nPts + 1);
     }
     else{
       //      MTriangleN incpl(t->getVertex(0), t->getVertex(1), t->getVertex(2),
       //      ve, nPts + 1);
       if (displ2D && gf->geomType() == GEntity::Plane){
-	MTriangle incpl(t->getVertex(0), t->getVertex(1), t->getVertex(2));
-	getFaceVertices(gf, &incpl, t, vf, faceVertices, linear, nPts, displ2D, displ3D);
+        MTriangle incpl(t->getVertex(0), t->getVertex(1), t->getVertex(2));
+        getFaceVertices(gf, &incpl, t, vf, faceVertices, linear, nPts, displ2D, displ3D);
       }
       else{
             MTriangleN incpl(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-			     ve, nPts + 1);
-	    getFaceVertices(gf, &incpl, t, vf, faceVertices, linear, nPts, displ2D, displ3D);
+                             ve, nPts + 1);
+            getFaceVertices(gf, &incpl, t, vf, faceVertices, linear, nPts, displ2D, displ3D);
       }
       ve.insert(ve.end(), vf.begin(), vf.end());
       return new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-			    ve, nPts + 1);
+                            ve, nPts + 1);
     }
   }  
 }
@@ -751,7 +751,7 @@ static void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
   for(unsigned int i = 0; i < gf->triangles.size(); i++){
     MTriangle *t = gf->triangles[i];
     MTriangle *tNew = setHighOrder(t,gf,edgeVertices,faceVertices, linear, incomplete,
-				   nPts,displ2D,displ3D);
+                                   nPts,displ2D,displ3D);
     triangles2.push_back(tNew);
     delete t;
   }
@@ -793,8 +793,8 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
     getEdgeVertices(gr, t, ve, edgeVertices, linear, nPts, displ2D, displ3D);
     if(nPts == 1){
       tetrahedra2.push_back
-	(new MTetrahedron10(t->getVertex(0), t->getVertex(1), t->getVertex(2), 
-			    t->getVertex(3), ve[0], ve[1], ve[2], ve[3], ve[4], ve[5]));
+        (new MTetrahedron10(t->getVertex(0), t->getVertex(1), t->getVertex(2), 
+                            t->getVertex(3), ve[0], ve[1], ve[2], ve[3], ve[4], ve[5]));
     }
     else{
       getFaceVertices(gr, t, vf, faceVertices, edgeVertices, linear, nPts);
@@ -1024,13 +1024,13 @@ static void printJacobians(GModel *m, const char *nm)
           double u = (double)i / (n - 1);
           double v = (double)k / (n - 1);         
           t->pnt(u, v, 0, pt);
-	  D[i][k] = mesh_functional_distorsion(t, u, v);
+          D[i][k] = mesh_functional_distorsion(t, u, v);
           //X[i][k] = u;
           //Y[i][k] = v;
           //Z[i][k] = 0.0;
-	  X[i][k] = pt.x();
-	  Y[i][k] = pt.y();
-	  Z[i][k] = pt.z();
+          X[i][k] = pt.x();
+          Y[i][k] = pt.y();
+          Z[i][k] = pt.z();
         }
       }
       for(int i= 0; i < n -1; i++){

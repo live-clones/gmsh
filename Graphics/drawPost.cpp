@@ -23,13 +23,13 @@
 #include "matheval.h"
 #endif
 
-// we only "really" draw forst order elements (high order ones are
-// subdivided in adaptiveView beforehand)
-#define NMAX 35
+// we only really draw first order elements (high order ones should
+// always be subdivided in adaptiveView beforehand)
+#define NMAX 35 // SHOULD BE 8!
 
 static void saturate(int nb, double val[NMAX][9], double vmin, double vmax, 
-		     int i0=0, int i1=1, int i2=2, int i3=3, 
-		     int i4=4, int i5=5, int i6=6, int i7=7)
+                     int i0=0, int i1=1, int i2=2, int i3=3, 
+                     int i4=4, int i5=5, int i6=6, int i7=7)
 {
   int id[8] = {i0, i1, i2, i3, i4, i5, i6, i7};
   for(int i = 0; i < nb; i++){
@@ -66,7 +66,7 @@ static SVector3 getPointNormal(PView *p, double v)
 }
 
 static void getLineNormal(PView *p, double x[2], double y[2], double z[2],
-			  double *v, SVector3 n[2], bool computeNormal)
+                          double *v, SVector3 n[2], bool computeNormal)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -110,8 +110,8 @@ static void getLineNormal(PView *p, double x[2], double y[2], double z[2],
 }
 
 static bool getExternalValues(PView *p, int index, int ient, int iele, 
-			      int numNodes, int numComp, double val[NMAX][9], 
-			      int &numComp2, double val2[NMAX][9])
+                              int numNodes, int numComp, double val[NMAX][9], 
+                              int &numComp2, double val2[NMAX][9])
 {
   PViewOptions *opt = p->getOptions();
 
@@ -154,7 +154,7 @@ static bool getExternalValues(PView *p, int index, int ient, int iele,
 }
 
 static void applyGeneralRaise(PView *p, int numNodes, int numComp, 
-			      double vals[NMAX][9], double xyz[NMAX][3])
+                              double vals[NMAX][9], double xyz[NMAX][3])
 {
   PViewOptions *opt = p->getOptions();
 
@@ -293,15 +293,15 @@ static bool isElementVisible(PViewOptions *opt, int dim, int numNodes,
       if(dim < 3 && CTX::instance()->clipOnlyVolume){
       }
       else{
-	double d = intersectClipPlane(clip, numNodes, xyz);
-	if(dim == 3 && CTX::instance()->clipOnlyDrawIntersectingVolume && d){
-	  hidden = true;
-	  break;
-	}
-	else if(d < 0){
-	  hidden = true;
-	  break;
-	}
+        double d = intersectClipPlane(clip, numNodes, xyz);
+        if(dim == 3 && CTX::instance()->clipOnlyDrawIntersectingVolume && d){
+          hidden = true;
+          break;
+        }
+        else if(d < 0){
+          hidden = true;
+          break;
+        }
       }
     }
   }
@@ -309,7 +309,7 @@ static bool isElementVisible(PViewOptions *opt, int dim, int numNodes,
 }
 
 static void addOutlinePoint(PView *p, double xyz[NMAX][3], unsigned int color, 
-			    bool pre, int i0=0)
+                            bool pre, int i0=0)
 {
   if(pre) return;
   SVector3 n = getPointNormal(p, 1.);
@@ -317,7 +317,7 @@ static void addOutlinePoint(PView *p, double xyz[NMAX][3], unsigned int color,
 }
 
 static void addScalarPoint(PView *p, double xyz[NMAX][3], double val[NMAX][9],
-			   bool pre, int i0=0, bool unique=false)
+                           bool pre, int i0=0, bool unique=false)
 {
   if(pre) return;
 
@@ -336,7 +336,7 @@ static void addScalarPoint(PView *p, double xyz[NMAX][3], double val[NMAX][9],
 }
 
 static void addOutlineLine(PView *p, double xyz[NMAX][3], unsigned int color,
-			   bool pre, int i0=0, int i1=1)
+                           bool pre, int i0=0, int i1=1)
 {
   if(pre) return;
 
@@ -353,7 +353,7 @@ static void addOutlineLine(PView *p, double xyz[NMAX][3], unsigned int color,
 }
 
 static void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9],
-			  bool pre, int i0=0, int i1=1, bool unique=false)
+                          bool pre, int i0=0, int i1=1, bool unique=false)
 {
   if(pre) return;
 
@@ -432,7 +432,7 @@ static void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9],
 }
 
 static void addOutlineTriangle(PView *p, double xyz[NMAX][3], unsigned int color, 
-			       bool pre, int i0=0, int i1=1, int i2=2)
+                               bool pre, int i0=0, int i1=1, int i2=2)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -458,8 +458,8 @@ static void addOutlineTriangle(PView *p, double xyz[NMAX][3], unsigned int color
 }
 
 static void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9], 
-			      bool pre, int i0=0, int i1=1, int i2=2,
-			      bool unique=false, bool skin=false)
+                              bool pre, int i0=0, int i1=1, int i2=2,
+                              bool unique=false, bool skin=false)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -576,7 +576,7 @@ static void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9]
 }
 
 static void addOutlineQuadrangle(PView *p, double xyz[NMAX][3], unsigned int color, 
-				 bool pre, int i0=0, int i1=1, int i2=2, int i3=3)
+                                 bool pre, int i0=0, int i1=1, int i2=2, int i3=3)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -602,8 +602,8 @@ static void addOutlineQuadrangle(PView *p, double xyz[NMAX][3], unsigned int col
 }
 
 static void addScalarQuadrangle(PView *p, double xyz[NMAX][3], double val[NMAX][9], 
-				bool pre, int i0=0, int i1=1, int i2=2, int i3=3,
-				bool unique=false)
+                                bool pre, int i0=0, int i1=1, int i2=2, int i3=3,
+                                bool unique=false)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -623,7 +623,7 @@ static void addScalarQuadrangle(PView *p, double xyz[NMAX][3], double val[NMAX][
 }
 
 static void addOutlineTetrahedron(PView *p, double xyz[NMAX][3], unsigned int color, 
-				  bool pre)
+                                  bool pre)
 {
   const int it[4][3] = {{0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {3, 1, 2}};
   for(int i = 0; i < 4; i++)
@@ -631,7 +631,7 @@ static void addOutlineTetrahedron(PView *p, double xyz[NMAX][3], unsigned int co
 }
 
 static void addScalarTetrahedron(PView *p, double xyz[NMAX][3], double val[NMAX][9], 
-				 bool pre, int i0=0, int i1=1, int i2=2, int i3=3)
+                                 bool pre, int i0=0, int i1=1, int i2=2, int i3=3)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -686,7 +686,7 @@ static void addScalarTetrahedron(PView *p, double xyz[NMAX][3], double val[NMAX]
 }
 
 static void addOutlineHexahedron(PView *p, double xyz[NMAX][3], unsigned int color,
-				 bool pre)
+                                 bool pre)
 {
   const int iq[6][4] = {{0, 3, 2, 1}, {0, 1, 5, 4}, {0, 4, 7, 3},
                         {1, 2, 6, 5}, {2, 3, 7, 6}, {4, 5, 6, 7}};
@@ -697,7 +697,7 @@ static void addOutlineHexahedron(PView *p, double xyz[NMAX][3], unsigned int col
 }
 
 static void addScalarHexahedron(PView *p, double xyz[NMAX][3], double val[NMAX][9],
-				bool pre)
+                                bool pre)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -719,7 +719,7 @@ static void addScalarHexahedron(PView *p, double xyz[NMAX][3], double val[NMAX][
 }
 
 static void addOutlinePrism(PView *p, double xyz[NMAX][3], unsigned int color, 
-			    bool pre)
+                            bool pre)
 {
   const int iq[3][4] = {{0, 1, 4, 3}, {0, 3, 5, 2}, {1, 2, 5, 4}};
   const int it[2][3] = {{0, 2, 1}, {3, 4, 5}};
@@ -730,7 +730,7 @@ static void addOutlinePrism(PView *p, double xyz[NMAX][3], unsigned int color,
     addOutlineTriangle(p, xyz, color, pre, it[i][0], it[i][1], it[i][2]);
 }
 static void addScalarPrism(PView *p, double xyz[NMAX][3], double val[NMAX][9],
-			   bool pre)
+                           bool pre)
 {
   PViewOptions *opt = p->getOptions();
   const int iq[3][4] = {{0, 1, 4, 3}, {0, 3, 5, 2}, {1, 2, 5, 4}};
@@ -752,7 +752,7 @@ static void addScalarPrism(PView *p, double xyz[NMAX][3], double val[NMAX][9],
 }
 
 static void addOutlinePyramid(PView *p, double xyz[NMAX][3], unsigned int color,
-			      bool pre)
+                              bool pre)
 {
   const int it[4][3] = {{0, 1, 4}, {3, 0, 4}, {1, 2, 4}, {2, 3, 4}};
 
@@ -762,7 +762,7 @@ static void addOutlinePyramid(PView *p, double xyz[NMAX][3], unsigned int color,
 }
 
 static void addScalarPyramid(PView *p, double xyz[NMAX][3], double val[NMAX][9],
-			     bool pre)
+                             bool pre)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -798,7 +798,7 @@ static void addOutlineElement(PView *p, int type, double xyz[NMAX][3], bool pre)
 }
 
 static void addScalarElement(PView *p, int type, double xyz[NMAX][3],
-			     double val[NMAX][9], bool pre)
+                             double val[NMAX][9], bool pre)
 {
   switch(type){
   case TYPE_PNT: addScalarPoint(p, xyz, val, pre); break;
@@ -813,8 +813,8 @@ static void addScalarElement(PView *p, int type, double xyz[NMAX][3],
 }
 
 static void addVectorElement(PView *p, int ient, int iele, int numNodes, 
-			     int type, double xyz[NMAX][3], double val[NMAX][9], 
-			     bool pre)
+                             int type, double xyz[NMAX][3], double val[NMAX][9], 
+                             bool pre)
 {
   // use adaptive data if available
   PViewData *data = p->getData(true);
@@ -920,7 +920,7 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
 }
 
 static void addTensorElement(PView *p, int numNodes, int type,
-			     double xyz[NMAX][3], double val[NMAX][9], bool pre)
+                             double xyz[NMAX][3], double val[NMAX][9], bool pre)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -933,6 +933,8 @@ static void addTensorElement(PView *p, int numNodes, int type,
 
 static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
 {
+  static int numNodesError = 0, numCompError = 0;
+
   // use adaptive data if available
   PViewData *data = p->getData(true);
   PViewOptions *opt = p->getOptions();
@@ -948,12 +950,21 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
       if(opt->skipElement(type)) continue;
       int numComp = data->getNumComponents(opt->timeStep, ent, i);
       int numNodes = data->getNumNodes(opt->timeStep, ent, i);
-      if(numNodes > 35){
-        Msg::Error("Should never draw view with > 20 nodes per element: adapt?");
+      if(numNodes > NMAX){
+        if(numNodesError != numNodes){
+          numNodesError = numNodes;
+          Msg::Error("You should never draw views with > %d nodes per element: use",
+                     NMAX);
+          Msg::Error("'Adapt visualization grid' to view high-order datasets!");
+        }
         continue;
       }
       if(numComp > 9){
-        Msg::Error("Should never draw view with > 9 components: adapt?");
+        if(numCompError != numComp){
+          numCompError = numComp;
+          Msg::Error("You should never draw views with > 9 values per node: use");
+          Msg::Error("'Adapt visualization grid' to view high-order datasets!");
+        }
         continue;
       }
       for(int j = 0; j < numNodes; j++){
@@ -972,22 +983,22 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
         addOutlineElement(p, type, xyz, preprocessNormalsOnly);
       
       if(opt->intervalsType != PViewOptions::Numeric){
-	if(data->useGaussPoints()){
-	  for(int j = 0; j < numNodes; j++){
-	    double xyz2[NMAX][3], val2[NMAX][9];
-	    xyz2[0][0] = xyz[j][0];
-	    xyz2[0][1] = xyz[j][1];
-	    xyz2[0][2] = xyz[j][2];
-	    for(int k = 0; k < numComp; k++)
-	      val2[0][k] = val[j][k];
-	    if(numComp == 1 && opt->drawScalars)
-	      addScalarElement(p, TYPE_PNT, xyz2, val2, preprocessNormalsOnly);
-	    else if(numComp == 3 && opt->drawVectors)
-	      addVectorElement(p, ent, i, 1, TYPE_PNT, xyz2, val2, preprocessNormalsOnly);
-	    else if(numComp == 9 && opt->drawTensors)
-	      addTensorElement(p, 1, TYPE_PNT, xyz2, val2, preprocessNormalsOnly);
-	  }
-	}
+        if(data->useGaussPoints()){
+          for(int j = 0; j < numNodes; j++){
+            double xyz2[NMAX][3], val2[NMAX][9];
+            xyz2[0][0] = xyz[j][0];
+            xyz2[0][1] = xyz[j][1];
+            xyz2[0][2] = xyz[j][2];
+            for(int k = 0; k < numComp; k++)
+              val2[0][k] = val[j][k];
+            if(numComp == 1 && opt->drawScalars)
+              addScalarElement(p, TYPE_PNT, xyz2, val2, preprocessNormalsOnly);
+            else if(numComp == 3 && opt->drawVectors)
+              addVectorElement(p, ent, i, 1, TYPE_PNT, xyz2, val2, preprocessNormalsOnly);
+            else if(numComp == 9 && opt->drawTensors)
+              addTensorElement(p, 1, TYPE_PNT, xyz2, val2, preprocessNormalsOnly);
+          }
+        }
         else if(numComp == 1 && opt->drawScalars)
           addScalarElement(p, type, xyz, val, preprocessNormalsOnly);
         else if(numComp == 3 && opt->drawVectors)
@@ -1019,18 +1030,17 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
         f = char2float(*n);
       }
       if(opt->pointType == 2){
-
-	int s = (int)(opt->pointSize * f);
-	if(s){
-	  glPointSize(s);
-	  gl2psPointSize(s * CTX::instance()->print.epsPointSizeFactor);
-	  glBegin(GL_POINTS);
-	  glVertex3d(p[0], p[1], p[2]);
-	  glEnd();
-	}
+        int s = (int)(opt->pointSize * f);
+        if(s){
+          glPointSize((float)s);
+          gl2psPointSize((float)(s * CTX::instance()->print.epsPointSizeFactor));
+          glBegin(GL_POINTS);
+          glVertex3d(p[0], p[1], p[2]);
+          glEnd();
+        }
       }
       else
-	ctx->drawSphere(opt->pointSize * f, p[0], p[1], p[2], opt->light);
+        ctx->drawSphere(opt->pointSize * f, p[0], p[1], p[2], opt->light);
     }
   }
   else if(type == GL_LINES && opt->lineType > 0){
@@ -1087,9 +1097,9 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
       double scale = (opt->arrowSizeMax - opt->arrowSizeMin) / lmax;
       // log scaling
       if(opt->scaleType == PViewOptions::Logarithmic && 
-	 opt->tmpMin > 0 && opt->tmpMax > opt->tmpMin && l != opt->tmpMin){
-	scale = (opt->arrowSizeMax - opt->arrowSizeMin) / l * 
-	  log10(l / opt->tmpMin) / log10(opt->tmpMax / opt->tmpMin);
+         opt->tmpMin > 0 && opt->tmpMax > opt->tmpMin && l != opt->tmpMin){
+        scale = (opt->arrowSizeMax - opt->arrowSizeMin) / l * 
+          log10(l / opt->tmpMin) / log10(opt->tmpMax / opt->tmpMin);
       }
       if(opt->arrowSizeMin && l) scale += opt->arrowSizeMin / l;
       double px = scale * v[0];
@@ -1132,7 +1142,7 @@ static std::string stringValue(int numComp, double d[9], double norm,
 }
 
 static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes, int numComp, 
-			     double xyz[NMAX][3], double val[NMAX][9])
+                             double xyz[NMAX][3], double val[NMAX][9])
 {
   PViewOptions *opt = p->getOptions();
   double d[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
@@ -1258,8 +1268,8 @@ class initPView {
        CTX::instance()->clipOnlyDrawIntersectingVolume){
       PViewOptions *opt = p->getOptions();
       for(int clip = 0; clip < 6; clip++){
-	if(opt->clip & (1 << clip))
-	  return (int)sqrt((double)num);
+        if(opt->clip & (1 << clip))
+          return (int)sqrt((double)num);
       }
     }
     return num;
@@ -1353,8 +1363,8 @@ class initPView {
     p->va_vectors->finalize();
 
     Msg::Info("Rendering %d vertices", p->va_points->getNumVertices() + 
-	      p->va_lines->getNumVertices() + p->va_triangles->getNumVertices() + 
-	      p->va_vectors->getNumVertices());
+              p->va_lines->getNumVertices() + p->va_triangles->getNumVertices() + 
+              p->va_vectors->getNumVertices());
 
     p->setChanged(false);
   }
@@ -1386,11 +1396,13 @@ class drawPView {
     if(!opt->visible || opt->type != PViewOptions::Plot3D) return;
     if(!_ctx->isVisible(p)) return;
    
-    glPointSize(opt->pointSize);
-    gl2psPointSize(opt->pointSize * CTX::instance()->print.epsPointSizeFactor);
+    glPointSize((float)opt->pointSize);
+    gl2psPointSize((float)(opt->pointSize * 
+                           CTX::instance()->print.epsPointSizeFactor));
     
-    glLineWidth(opt->lineWidth);
-    gl2psLineWidth(opt->lineWidth * CTX::instance()->print.epsLineWidthFactor);
+    glLineWidth((float)opt->lineWidth);
+    gl2psLineWidth((float)(opt->lineWidth *
+                           CTX::instance()->print.epsLineWidthFactor));
     
     if(opt->lightTwoSide)
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
@@ -1399,10 +1411,10 @@ class drawPView {
     
     if(!CTX::instance()->clipWholeElements){
       for(int i = 0; i < 6; i++)
-	if(opt->clip & (1 << i))
-	  glEnable((GLenum)(GL_CLIP_PLANE0 + i));
-	else
-	  glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+        if(opt->clip & (1 << i))
+          glEnable((GLenum)(GL_CLIP_PLANE0 + i));
+        else
+          glDisable((GLenum)(GL_CLIP_PLANE0 + i));
     }
 
     if(CTX::instance()->alpha && ColorTable_IsAlpha(&opt->colorTable)){
@@ -1474,9 +1486,9 @@ class drawPView {
 
     if(opt->axes && opt->type == PViewOptions::Plot3D){
       glColor4ubv((GLubyte *) & opt->color.axes);
-      glLineWidth(CTX::instance()->lineWidth);
-      gl2psLineWidth(CTX::instance()->lineWidth * 
-                     CTX::instance()->print.epsLineWidthFactor);
+      glLineWidth((float)CTX::instance()->lineWidth);
+      gl2psLineWidth((float)(CTX::instance()->lineWidth * 
+                             CTX::instance()->print.epsLineWidthFactor));
       if(!opt->axesAutoPosition)
         _ctx->drawAxes(opt->axes, opt->axesTics, opt->axesFormat, opt->axesLabel,
                        opt->axesPosition, opt->axesMikado);
@@ -1504,9 +1516,9 @@ class drawPViewBoundingBox {
     if(bb.empty()) return;
 
     glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
-    glLineWidth(CTX::instance()->lineWidth);
-    gl2psLineWidth(CTX::instance()->lineWidth * 
-                   CTX::instance()->print.epsLineWidthFactor);
+    glLineWidth((float)CTX::instance()->lineWidth);
+    gl2psLineWidth((float)(CTX::instance()->lineWidth * 
+                           CTX::instance()->print.epsLineWidthFactor));
 
     _ctx->drawBox(bb.min().x(), bb.min().y(), bb.min().z(),
                   bb.max().x(), bb.max().y(), bb.max().z());

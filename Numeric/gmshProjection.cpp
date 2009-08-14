@@ -26,7 +26,7 @@ void gmshProjectionTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
     e->getShapeFunctions(u, v, w, sf);
     for (int j = 0; j < nbNodes; j++){
       for (int k = 0; k < nbNodes; k++){
-	m(j, k) += sf[j] * sf[k] * weight * detJ;
+        m(j, k) += sf[j] * sf[k] * weight * detJ;
       }
     }
   }

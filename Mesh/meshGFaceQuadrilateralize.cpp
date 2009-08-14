@@ -65,8 +65,8 @@ public:
     for (int i=0;i<5;i++){
       std::set<BDS_Edge*>::iterator it = stat[i].find(e);
       if (it !=stat[i].end()){
-	stat[i].erase(it);
-	return;
+        stat[i].erase(it);
+        return;
       }
     }
   }
@@ -93,11 +93,11 @@ SVector3 norm_edge (BDS_Point *p1, BDS_Point *p2){
 }
 
 void recur_empty_cavity (BDS_Face *f,
-			 BDS_Edge   *be[4],
-			 BDS_Point *bv[4],
-			 std::set<BDS_Face*> & faces, 
-			 std::set<BDS_Edge*> & edges, 
-			 std::set<BDS_Point*> & vertices){
+                         BDS_Edge   *be[4],
+                         BDS_Point *bv[4],
+                         std::set<BDS_Face*> & faces, 
+                         std::set<BDS_Edge*> & edges, 
+                         std::set<BDS_Point*> & vertices){
   if (faces.find(f) != faces.end())return;
   faces.insert(f);
   BDS_Edge *ee[3] = {f->e1,f->e2,f->e3};
@@ -105,9 +105,9 @@ void recur_empty_cavity (BDS_Face *f,
     BDS_Edge *e = ee[i];
     if (e != be[0] && e != be[1] && e != be[2] && e != be[3])
       {
-	edges.insert(e);
-	BDS_Face *of = e->otherFace(f);
-	recur_empty_cavity (of,be,bv,faces,edges,vertices);
+        edges.insert(e);
+        BDS_Face *of = e->otherFace(f);
+        recur_empty_cavity (of,be,bv,faces,edges,vertices);
       }
   }
 }
@@ -124,9 +124,9 @@ void gmshEdgeFront::emptyCavity (BDS_Edge *bottom, BDS_Edge *top, BDS_Edge *left
   std::set<BDS_Point*> m_vertices;
   BDS_Edge   *be[4] = {bottom,top,left,right};
   BDS_Point *bv[4] = {bottom->commonvertex(left),
-		       left->commonvertex(top),
-		       top->commonvertex(right),
-		       right->commonvertex(bottom)};
+                       left->commonvertex(top),
+                       top->commonvertex(right),
+                       right->commonvertex(bottom)};
 
 
   recur_empty_cavity (f,be,bv,m_faces,m_edges,m_vertices);
@@ -168,8 +168,8 @@ SVector3 gmshEdgeFront::normal (BDS_Edge*e) const{
   SVector3 t2 (p3->X-p1->X,p3->Y-p1->Y,p3->Z-p1->Z);
   SVector3 t3 = crossprod(t1,t2);
   double m[3][3] = {{t1.x(),t2.x(),t3.x()},
-		    {t1.y(),t2.y(),t3.y()},
-		    {t1.z(),t2.z(),t3.z()}};
+                    {t1.y(),t2.y(),t3.y()},
+                    {t1.z(),t2.z(),t3.z()}};
   double im[3][3];
   inv3x3(m,im);
   SVector3 n (im[1][0],im[1][1],im[1][2]);
@@ -207,7 +207,7 @@ void gmshEdgeFront::initiate () {
   std::list<BDS_Edge*>::iterator it = m->edges.begin();
   while (it!= m->edges.end()){
     if (((*it)->numfaces() == 1 && (*it)->faces(0)->e4 == 0) ||
-	((*it)->numfaces() == 2 && (*it)->numTriangles() == 1)) {
+        ((*it)->numfaces() == 2 && (*it)->numTriangles() == 1)) {
       edges.insert(*it);
     }
     ++it;
@@ -247,7 +247,7 @@ int gmshEdgeFront::computeStatus (BDS_Edge *e) const {
   if (dot(n1,n3) < 0)angle2 = M_PI;
 
   //  printf("edge %d %d angles %g (%d %d) %g (%d %d)\n",e->p1->iD,e->p2->iD,angle1*180/M_PI,e1->p1->iD,e1->p2->iD,angle2*180/M_PI,
-  //	 e2->p1->iD,e2->p2->iD); 
+  //     e2->p1->iD,e2->p2->iD); 
 
   const double angleLimit = 3*M_PI/4.;
 
@@ -259,13 +259,13 @@ int gmshEdgeFront::computeStatus (BDS_Edge *e) const {
 
 
 bool gmshEdgeFront::formQuad (BDS_Edge *e,
-			      BDS_Edge *left,
-			      BDS_Edge *right){  
+                              BDS_Edge *left,
+                              BDS_Edge *right){  
 
     printf("e (%d,%d), l(%d,%d), r(%d,%d)\n",
-	 e->p1->iD,e->p2->iD,
-	 left->p1->iD,left->p2->iD,
-	 right->p1->iD,right->p2->iD);
+         e->p1->iD,e->p2->iD,
+         left->p1->iD,left->p2->iD,
+         right->p1->iD,right->p2->iD);
   
 
   //  outputScalarField(m->triangles, "deb_before.pos", 0);
@@ -303,10 +303,10 @@ bool gmshEdgeFront::formQuad (BDS_Edge *e,
   // top edge becomes part of the front
 
   /*  printf("(%d,%d),(%d,%d),(%d,%d),(%d,%d)\n",
-	 e->p1->iD,e->p2->iD,
-	 left->p1->iD,left->p2->iD,
-	 top->p1->iD,top->p2->iD,
-	 right->p1->iD,right->p2->iD);
+         e->p1->iD,e->p2->iD,
+         left->p1->iD,left->p2->iD,
+         top->p1->iD,top->p2->iD,
+         right->p1->iD,right->p2->iD);
   */
   //  outputScalarField(m->triangles, "deb.pos", 0);
 
@@ -335,7 +335,8 @@ bool gmshEdgeFront::formQuad (BDS_Edge *e,
 
   for (unsigned int i=0;i<toUpdate.size();i++){
     toUpdate[i]->config_modified = true;
-    bool done = m->smooth_point_parametric(toUpdate[i], gf);
+    //bool done = 
+        m->smooth_point_parametric(toUpdate[i], gf);
     //    printf("smooth done %d (g %d)\n",done,toUpdate[i]->g->classif_degree);
   }
 
@@ -343,7 +344,7 @@ bool gmshEdgeFront::formQuad (BDS_Edge *e,
     BDS_Point *p = toUpdate[i];
     for (std::list<BDS_Edge*>::iterator itp = p->edges.begin(); itp != p->edges.end() ; ++ itp){
       if (inFront(*itp)){
-	updateStatus(*itp);	
+        updateStatus(*itp);     
       } 
     }
   }  
@@ -372,8 +373,8 @@ BDS_Edge *gmshEdgeFront::findOptimalEdge(BDS_Point *p, BDS_Point *avoid){
       d.normalize();
       double COS = dot(n,d);
       if (COS > lowerBound && q != avoid){
-	lowerBound = COS;
-	found = *itp;
+        lowerBound = COS;
+        found = *itp;
       } 
     }    
   }
@@ -389,48 +390,48 @@ BDS_Edge *gmshEdgeFront::findOptimalEdge(BDS_Point *p, BDS_Point *avoid){
     while(it != ite) {
       BDS_Face *t = *it;
       if (!t->e4){
-	BDS_Edge *e = t->oppositeEdge(p);
-	if (e->numfaces() == 2){
-	  BDS_Face *f = e->otherFace(t);
-	  if (!f->e4){
-	    BDS_Point *target = f->oppositeVertex(e);
-	    // ONLY WORKS IN 2D for now !!!!!!!!!!!!!!!!!!!
-	    Intersect_Edges_2d ( e->p1->X,e->p1->Y,
-				 e->p2->X,e->p2->Y,
-				 p->X,p->Y,
-				 p->X+n.x(),p->Y + n.y(),x);
-	    if ( x[0] >= 0 && x[0] <= 1){
-	      SVector3 d (target->X-p->X,target->Y-p->Y,target->Z-p->Z);
-	      d.normalize();
-	      double COS = dot(n,d);
-	      double L2 = sqrt ((target->X - p->X) *(target->X - p->X) +
-				(target->X - p->Y) *(target->X - p->Y) +
-				(target->X - p->Z) *(target->X - p->Z) );
-	      
-	      // swapping the edge alllow to find an edgge that has the right direction and
-	      // right size
-	      if (COS > cos (M_PI/6.0) && L2 < L){
-		m->swap_edge( e, BDS_SwapEdgeTestQuality(false,false));
-		BDS_Edge *newE = m->find_edge(p,target);
-		//	      printf("swapping -> %p\n",newE);
-		return newE;	      
-	      }
-	      // split the edge
-	      else{	     
-		BDS_Point *mid;
-		mid  = m->add_point(++m->MAXPOINTNUMBER,(1.-x[0])*e->p1->u + x[0]*e->p2->u,
-				    (1.-x[0])*e->p1->v + x[0]*e->p2->v,gf);
-		mid->lc() = 0.5 * (p->lc() +  target->lc());
-		mid->g = e->p1->g;
-		m->split_edge(e, mid);
-		BDS_Edge *newE = m->find_edge(p,mid);
-		//	      printf("splitting -> %p %p\n",newE,e->p1->g);
-		//	      m->cleanup();
-		return newE;
-	      }
-	    }
-	  }
-	}
+        BDS_Edge *e = t->oppositeEdge(p);
+        if (e->numfaces() == 2){
+          BDS_Face *f = e->otherFace(t);
+          if (!f->e4){
+            BDS_Point *target = f->oppositeVertex(e);
+            // ONLY WORKS IN 2D for now !!!!!!!!!!!!!!!!!!!
+            Intersect_Edges_2d ( e->p1->X,e->p1->Y,
+                                 e->p2->X,e->p2->Y,
+                                 p->X,p->Y,
+                                 p->X+n.x(),p->Y + n.y(),x);
+            if ( x[0] >= 0 && x[0] <= 1){
+              SVector3 d (target->X-p->X,target->Y-p->Y,target->Z-p->Z);
+              d.normalize();
+              double COS = dot(n,d);
+              double L2 = sqrt ((target->X - p->X) *(target->X - p->X) +
+                                (target->X - p->Y) *(target->X - p->Y) +
+                                (target->X - p->Z) *(target->X - p->Z) );
+              
+              // swapping the edge alllow to find an edgge that has the right direction and
+              // right size
+              if (COS > cos (M_PI/6.0) && L2 < L){
+                m->swap_edge( e, BDS_SwapEdgeTestQuality(false,false));
+                BDS_Edge *newE = m->find_edge(p,target);
+                //            printf("swapping -> %p\n",newE);
+                return newE;          
+              }
+              // split the edge
+              else{          
+                BDS_Point *mid;
+                mid  = m->add_point(++m->MAXPOINTNUMBER,(1.-x[0])*e->p1->u + x[0]*e->p2->u,
+                                    (1.-x[0])*e->p1->v + x[0]*e->p2->v,gf);
+                mid->lc() = 0.5 * (p->lc() +  target->lc());
+                mid->g = e->p1->g;
+                m->split_edge(e, mid);
+                BDS_Edge *newE = m->find_edge(p,mid);
+                //            printf("splitting -> %p %p\n",newE,e->p1->g);
+                //            m->cleanup();
+                return newE;
+              }
+            }
+          }
+        }
       }
       ++it;
     }    
@@ -445,7 +446,7 @@ bool gmshEdgeFront::emptyFront (int tag){
   // front edges tagged "tag" is empty
   if (stat[tag].size() == 0)return true;
   BDS_Edge *e = *(stat[tag].begin());
-  BDS_Edge *left,*right;
+  BDS_Edge *left,*right=0;
   eiter it1,it2;
 
   std::vector<eiter> fe1,fe2;
@@ -545,18 +546,18 @@ int gmshQMorph (GFace *gf)
   while (1){
     if (front.emptyFront ( 3 )){
       if (front.emptyFront ( 2 )){
-	if (front.emptyFront ( 1 )){
-	  if (front.emptyFront ( 0 )){
-	    int ns;
-	    smoothVertexPass(gf,*pm,ns,false);
-	    printf("nex row iter %6d->>>\n",ITER);
-	    front.initiate();
-	    int _numQuadsNew = numQuads (pm);
-	    if (front.edges.size() == 0 || _numQuads == _numQuadsNew)
-	      break;
-	    _numQuads = _numQuadsNew;
-	  }
-	}
+        if (front.emptyFront ( 1 )){
+          if (front.emptyFront ( 0 )){
+            int ns;
+            smoothVertexPass(gf,*pm,ns,false);
+            printf("nex row iter %6d->>>\n",ITER);
+            front.initiate();
+            int _numQuadsNew = numQuads (pm);
+            if (front.edges.size() == 0 || _numQuads == _numQuadsNew)
+              break;
+            _numQuads = _numQuadsNew;
+          }
+        }
       }
     }
     ITER++;

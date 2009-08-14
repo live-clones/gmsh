@@ -24,7 +24,7 @@ void GMSH_LongituteLatitudePlugin::getName(char *name) const
 }
 
 void GMSH_LongituteLatitudePlugin::getInfos(char *author, char *copyright,
-			       char *help_text) const
+                               char *help_text) const
 {
   strcpy(author, "J. Lambrechts");
   strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
@@ -63,9 +63,9 @@ PView *GMSH_LongituteLatitudePlugin::execute(PView *v)
   for(int step = 0; step < data1->getNumTimeSteps(); step++){
     for(int ent = 0; ent < data1->getNumEntities(step); ent++){
       for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
-	if(data1->skipElement(step, ent, ele)) continue;
-	for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
-	  data1->tagNode(step, ent, ele, nod, 0);
+        if(data1->skipElement(step, ent, ele)) continue;
+        for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
+          data1->tagNode(step, ent, ele, nod, 0);
       }
     }
   } 

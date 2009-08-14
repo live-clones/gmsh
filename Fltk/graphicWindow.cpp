@@ -6,7 +6,7 @@
 #include <string.h>
 #include <FL/fl_draw.H>
 #include <FL/fl_ask.H>
-#include "GUI.h"
+#include "FlGui.h"
 #include "graphicWindow.h"
 #include "paletteWindow.h"
 #include "mainWindow.h"
@@ -92,11 +92,11 @@ static void gmsh_models(Fl_Color c)
 
 static graphicWindow *getGraphicWindow(Fl_Widget *w)
 {
-  if(!w || !w->parent()) return GUI::instance()->graph[0];
-  for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++)
-    if(GUI::instance()->graph[i]->win == w->parent())
-      return GUI::instance()->graph[i];
-  return GUI::instance()->graph[0];
+  if(!w || !w->parent()) return FlGui::instance()->graph[0];
+  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+    if(FlGui::instance()->graph[i]->win == w->parent())
+      return FlGui::instance()->graph[i];
+  return FlGui::instance()->graph[0];
 }
 
 void status_xyz1p_cb(Fl_Widget *w, void *data)
@@ -107,7 +107,7 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
   if(w)
     gls = getGraphicWindow(w)->gl;
   else
-    gls.push_back(GUI::instance()->getCurrentOpenglWindow());
+    gls.push_back(FlGui::instance()->getCurrentOpenglWindow());
 
   for(unsigned int i = 0; i < gls.size(); i++){
     drawContext *ctx = gls[i]->getDrawContext();
@@ -183,7 +183,7 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
     }
   }
   Draw();
-  GUI::instance()->manip->update();
+  FlGui::instance()->manip->update();
 }
 
 void status_options_cb(Fl_Widget *w, void *data)
@@ -194,7 +194,7 @@ void status_options_cb(Fl_Widget *w, void *data)
   }
   else if(!strcmp(str, "?")){ // display options
     PrintOptions(0, GMSH_FULLRC, 0, 1, NULL);
-    GUI::instance()->messages->show();
+    FlGui::instance()->messages->show();
   }
   else if(!strcmp(str, "p")){ // toggle projection mode
     if(!Fl::event_state(FL_SHIFT)){
@@ -209,9 +209,9 @@ void status_options_cb(Fl_Widget *w, void *data)
   else if(!strcmp(str, "S")){ // mouse selection
     if(CTX::instance()->mouseSelection){
       opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 0);
-      for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++)
-        for(unsigned int j = 0; j < GUI::instance()->graph[i]->gl.size(); j++)
-          GUI::instance()->graph[i]->gl[j]->cursor
+      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+        for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+          FlGui::instance()->graph[i]->gl[j]->cursor
             (FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
     }
     else
@@ -267,7 +267,7 @@ static void status_play_cb(Fl_Widget *w, void *data)
       anim_time = GetTimeInSeconds();
       status_play_manual(!CTX::instance()->post.animCycle, 1);
     }
-    GUI::instance()->check();
+    FlGui::instance()->check();
   }
 }
 
@@ -305,15 +305,15 @@ static void remove_graphic_window_cb(Fl_Widget *w, void *data)
 {
   std::vector<graphicWindow*> graph2;
   graphicWindow *deleteMe = 0;
-  for(unsigned int i = 0; i < GUI::instance()->graph.size(); i++){
-    if(GUI::instance()->graph[i]->win == w)
-      deleteMe = GUI::instance()->graph[i];
+  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++){
+    if(FlGui::instance()->graph[i]->win == w)
+      deleteMe = FlGui::instance()->graph[i];
     else
-      graph2.push_back(GUI::instance()->graph[i]);
+      graph2.push_back(FlGui::instance()->graph[i]);
   }
   if(deleteMe){  
     openglWindow::setLastHandled(0);
-    GUI::instance()->graph = graph2;
+    FlGui::instance()->graph = graph2;
     delete deleteMe;
   }
 }

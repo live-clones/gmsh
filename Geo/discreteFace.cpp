@@ -29,10 +29,10 @@ void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge > &map_
     e->getFaceVertices(0, fv);
     for (int iEdge = 0; iEdge < e->getNumEdges(); iEdge++) {
       MEdge tmp_edge =  e->getEdge(iEdge);
-      if (std::find(bound_edges.begin(),bound_edges.end(),tmp_edge) == bound_edges.end())	
-	bound_edges.push_back(tmp_edge);
+      if (std::find(bound_edges.begin(),bound_edges.end(),tmp_edge) == bound_edges.end())       
+        bound_edges.push_back(tmp_edge);
       else
-	bound_edges.erase(std::find(bound_edges.begin(),bound_edges.end(),tmp_edge));
+        bound_edges.erase(std::find(bound_edges.begin(),bound_edges.end(),tmp_edge));
     }
   }
  
@@ -42,7 +42,7 @@ void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge > &map_
     if (itmap == map_edges.end())   {
       std::vector<int> tagFaces; 
       tagFaces.push_back(this->tag());
-      map_edges.insert(std::make_pair(*itv,tagFaces));	 
+      map_edges.insert(std::make_pair(*itv,tagFaces));   
     }
     else{
       std::vector<int> tagFaces = itmap->second;

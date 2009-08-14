@@ -75,6 +75,6 @@ void invert_singular_matrix3x3(double MM[3][3], double II[3][3]);
 bool newton_fd(void (*func)(gmshVector<double> &, gmshVector<double> &, void *),
                gmshVector<double> &x, void *data, double relax=1., double tolx=1.e-6);
 double minimize_grad_fd (double (*func)(gmshVector<double> &, void *),
-			 gmshVector<double> &x, void *data);
+                         gmshVector<double> &x, void *data);
 
 #endif

@@ -10,7 +10,7 @@
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
-#include "GUI.h"
+#include "FlGui.h"
 #include "optionWindow.h"
 #include "paletteWindow.h"
 #include "menuWindow.h"
@@ -121,25 +121,25 @@ static void view_color_cb(Fl_Widget *w, void *data)
   unsigned int (*fct) (int, int, unsigned int);
   fct = (unsigned int (*)(int, int, unsigned int))data;
   uchar r = CTX::instance()->unpackRed
-    (fct(GUI::instance()->options->view.index, GMSH_GET, 0));
+    (fct(FlGui::instance()->options->view.index, GMSH_GET, 0));
   uchar g = CTX::instance()->unpackGreen
-    (fct(GUI::instance()->options->view.index, GMSH_GET, 0));
+    (fct(FlGui::instance()->options->view.index, GMSH_GET, 0));
   uchar b = CTX::instance()->unpackBlue
-    (fct(GUI::instance()->options->view.index, GMSH_GET, 0));
+    (fct(FlGui::instance()->options->view.index, GMSH_GET, 0));
   if(fl_color_chooser("Color Chooser", r, g, b))
-    fct(GUI::instance()->options->view.index, 
+    fct(FlGui::instance()->options->view.index, 
         GMSH_SET | GMSH_GUI, CTX::instance()->packColor(r, g, b, 255));
   Draw();
 }
 
 void options_cb(Fl_Widget *w, void *data)
 {
-  GUI::instance()->options->win->show();
+  FlGui::instance()->options->win->show();
 }
 
 static void options_browser_cb(Fl_Widget *w, void *data)
 {
-  GUI::instance()->options->showGroup(GUI::instance()->options->browser->value());
+  FlGui::instance()->options->showGroup(FlGui::instance()->options->browser->value());
 }
 
 void options_save_cb(Fl_Widget *w, void *data)
@@ -157,43 +157,43 @@ static void options_restore_defaults_cb(Fl_Widget *w, void *data)
   UnlinkFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName);
   ReInitOptions(0);
   InitOptionsGUI(0);
-  if(GUI::instance()->menu->module->value() == 3) // hack to refresh the buttons
-    GUI::instance()->menu->setContext(menu_post, 0);
+  if(FlGui::instance()->menu->module->value() == 3) // hack to refresh the buttons
+    FlGui::instance()->menu->setContext(menu_post, 0);
   Draw();
 }
 
 void general_options_cb(Fl_Widget *w, void *data)
 {
-  GUI::instance()->options->showGroup(1);
+  FlGui::instance()->options->showGroup(1);
 }
 
 static void general_options_color_scheme_cb(Fl_Widget *w, void *data)
 {
   opt_general_color_scheme
-    (0, GMSH_SET, GUI::instance()->options->general.choice[3]->value());
+    (0, GMSH_SET, FlGui::instance()->options->general.choice[3]->value());
   Draw();
 }
 
 static void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
 {
   Msg::StatusBar(3, false, "Select entity\n[Press 'q' to abort]");
-  char ib = GUI::instance()->selectEntity(ENT_ALL);
+  char ib = FlGui::instance()->selectEntity(ENT_ALL);
   if(ib == 'l') {
     SPoint3 pc(0., 0., 0.);
-    if(GUI::instance()->selectedVertices.size())
-      pc.setPosition(GUI::instance()->selectedVertices[0]->x(),
-                     GUI::instance()->selectedVertices[0]->y(),
-                     GUI::instance()->selectedVertices[0]->z());
-    else if(GUI::instance()->selectedEdges.size())
-      pc = GUI::instance()->selectedEdges[0]->bounds().center();
-    else if(GUI::instance()->selectedFaces.size())
-      pc = GUI::instance()->selectedFaces[0]->bounds().center();
-    else if(GUI::instance()->selectedRegions.size())
-      pc = GUI::instance()->selectedRegions[0]->bounds().center();
-    else if(GUI::instance()->selectedElements.size())
-      pc = GUI::instance()->selectedElements[0]->barycenter();
+    if(FlGui::instance()->selectedVertices.size())
+      pc.setPosition(FlGui::instance()->selectedVertices[0]->x(),
+                     FlGui::instance()->selectedVertices[0]->y(),
+                     FlGui::instance()->selectedVertices[0]->z());
+    else if(FlGui::instance()->selectedEdges.size())
+      pc = FlGui::instance()->selectedEdges[0]->bounds().center();
+    else if(FlGui::instance()->selectedFaces.size())
+      pc = FlGui::instance()->selectedFaces[0]->bounds().center();
+    else if(FlGui::instance()->selectedRegions.size())
+      pc = FlGui::instance()->selectedRegions[0]->bounds().center();
+    else if(FlGui::instance()->selectedElements.size())
+      pc = FlGui::instance()->selectedElements[0]->barycenter();
     opt_general_rotation_center_cg
-      (0, GMSH_SET, GUI::instance()->options->general.butt[15]->value());
+      (0, GMSH_SET, FlGui::instance()->options->general.butt[15]->value());
     opt_general_rotation_center0(0, GMSH_SET|GMSH_GUI, pc.x());
     opt_general_rotation_center1(0, GMSH_SET|GMSH_GUI, pc.y());
     opt_general_rotation_center2(0, GMSH_SET|GMSH_GUI, pc.z());
@@ -205,7 +205,7 @@ static void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
 
 static void general_options_ok_cb(Fl_Widget *w, void *data)
 {
-  optionWindow *o = GUI::instance()->options;
+  optionWindow *o = FlGui::instance()->options;
   o->activate((const char*)data);
 
   static double lc = 0.;
@@ -328,12 +328,12 @@ static void general_arrow_param_cb(Fl_Widget *w, void *data)
 
 void geometry_options_cb(Fl_Widget *w, void *data)
 {
-  GUI::instance()->options->showGroup(2);
+  FlGui::instance()->options->showGroup(2);
 }
 
 static void geometry_options_ok_cb(Fl_Widget *w, void *data)
 {
-  optionWindow *o = GUI::instance()->options;
+  optionWindow *o = FlGui::instance()->options;
   o->activate((const char*)data);
 
   opt_geometry_points(0, GMSH_SET, o->geo.butt[0]->value());
@@ -386,12 +386,12 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
 
 void mesh_options_cb(Fl_Widget *w, void *data)
 {
-  GUI::instance()->options->showGroup(3);
+  FlGui::instance()->options->showGroup(3);
 }
 
 static void mesh_options_ok_cb(Fl_Widget *w, void *data)
 {
-  optionWindow *o = GUI::instance()->options;
+  optionWindow *o = FlGui::instance()->options;
   o->activate((const char*)data);
 
   opt_mesh_reverse_all_normals(0, GMSH_SET, o->mesh.butt[0]->value());
@@ -460,12 +460,12 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
 
 void solver_options_cb(Fl_Widget *w, void *data)
 {
-  GUI::instance()->options->showGroup(4);
+  FlGui::instance()->options->showGroup(4);
 }
 
 static void solver_options_ok_cb(Fl_Widget *w, void *data)
 {
-  optionWindow *o = GUI::instance()->options;
+  optionWindow *o = FlGui::instance()->options;
   o->activate((const char*)data);
 
   int old_listen = (int)opt_solver_listen(0, GMSH_GET, o->solver.butt[0]->value());
@@ -483,12 +483,12 @@ static void solver_options_ok_cb(Fl_Widget *w, void *data)
 
 void post_options_cb(Fl_Widget *w, void *data)
 {
-  GUI::instance()->options->showGroup(5);
+  FlGui::instance()->options->showGroup(5);
 }
 
 static void post_options_ok_cb(Fl_Widget *w, void *data)
 {
-  optionWindow *o = GUI::instance()->options;
+  optionWindow *o = FlGui::instance()->options;
   o->activate((const char*)data);
 
   opt_post_anim_cycle(0, GMSH_SET, o->post.butt[0]->value());
@@ -507,7 +507,7 @@ static void post_options_ok_cb(Fl_Widget *w, void *data)
 
 void view_options_cb(Fl_Widget *w, void *data)
 {
-  GUI::instance()->options->showGroup((int)(long)data + 6);
+  FlGui::instance()->options->showGroup((int)(long)data + 6);
 }
 
 static void view_options_timestep_cb(Fl_Widget *w, void *data)
@@ -517,7 +517,7 @@ static void view_options_timestep_cb(Fl_Widget *w, void *data)
   for(int i = 0; i < (int)PView::list.size(); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
-       (links == 0 && i == GUI::instance()->options->view.index)) {
+       (links == 0 && i == FlGui::instance()->options->view.index)) {
       if(str == "=")
         opt_view_timestep(i, GMSH_SET, ((Fl_Value_Input *) w)->value());
       else if(str == "-")
@@ -533,11 +533,11 @@ static void view_options_timestep_cb(Fl_Widget *w, void *data)
 
 static void view_options_ok_cb(Fl_Widget *w, void *data)
 {
-  int current = GUI::instance()->options->view.index;
+  int current = FlGui::instance()->options->view.index;
 
   if(current < 0) return;
 
-  optionWindow *o = GUI::instance()->options;
+  optionWindow *o = FlGui::instance()->options;
   o->activate((const char*)data);
 
   if(data){
@@ -1118,11 +1118,11 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
 static void view_options_max_recursion_cb(Fl_Widget *w, void *data)
 {
   std::string str((const char*)data);
-  int val = (int)GUI::instance()->options->view.value[33]->value();
+  int val = (int)FlGui::instance()->options->view.value[33]->value();
   if(str == "-" && val > 0)
-    GUI::instance()->options->view.value[33]->value(val - 1);
+    FlGui::instance()->options->view.value[33]->value(val - 1);
   else if(str == "+")
-    GUI::instance()->options->view.value[33]->value(val + 1);
+    FlGui::instance()->options->view.value[33]->value(val + 1);
   view_options_ok_cb(0, 0);
 }
 

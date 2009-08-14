@@ -119,7 +119,7 @@ class ChainComplex{
    int getBasisSize(int dim) {  if(dim > -1 && dim < 5) return gmp_matrix_cols(_Hbasis[dim]); else return 0; } 
    
    int printMatrix(gmp_matrix* matrix){ 
-     printf("%d rows and %d columns\n", gmp_matrix_rows(matrix), gmp_matrix_cols(matrix)); 
+     printf("%d rows and %d columns\n", (int)gmp_matrix_rows(matrix), (int)gmp_matrix_cols(matrix)); 
      return gmp_matrix_printf(matrix); } 
    
    // debugging aid

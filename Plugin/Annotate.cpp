@@ -12,7 +12,7 @@
 #include <FL/gl.h>
 #include "drawContext.h"
 #include "Draw.h"
-#include "GUI.h"
+#include "FlGui.h"
 #endif
 
 StringXNumber AnnotateOptions_Number[] = {

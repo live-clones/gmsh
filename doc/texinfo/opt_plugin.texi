@@ -15,7 +15,8 @@ the position (`X',`Y'). The string is aligned
 according to `Align'. If `iView' < 0, the plugin
 is run on the current view.
 
-Plugin(Annotate) is executed in-place.
+Plugin(Annotate) is executed in-place for list-based
+datasets or creates a new view for other datasets.
 
 String options:
 @table @code
@@ -561,19 +562,19 @@ Default value: @code{"homology.msh"}
 @end table
 Numeric options:
 @table @code
-@item 1. Physical group for domain
+@item PhysicalGroupForDomain1
 Default value: @code{0}
-@item 2. Physical group for domain
+@item PhysicalGroupForDomain2
 Default value: @code{0}
-@item 1. Physical group for subdomain
+@item PhysicalGroupForSubdomain1
 Default value: @code{0}
-@item 2. Physical group for subdomain
+@item PhysicalGroupForSubdomain2
 Default value: @code{0}
-@item Compute generators
+@item ComputeGenerators
 Default value: @code{1}
-@item Compute thick cuts
+@item ComputeThickCuts
 Default value: @code{0}
-@item Omit dimensions
+@item OmitDimensions
 Default value: @code{1}
 @end table
 

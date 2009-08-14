@@ -102,11 +102,11 @@ class gmshNodalFemTerm : public gmshTermOfFormulation<scalar> {
     }
   }
   void addDirichlet(int physical,
-		    int dim,
-		    int comp,
-		    int field,
-		    const gmshFunction<scalar> &e,
-		    gmshAssembler<scalar> &lsys)
+                    int dim,
+                    int comp,
+                    int field,
+                    const gmshFunction<scalar> &e,
+                    gmshAssembler<scalar> &lsys)
   {
     std::vector<MVertex *> v;
     GModel *m = gmshTermOfFormulation<scalar>::_gm;
@@ -115,11 +115,11 @@ class gmshNodalFemTerm : public gmshTermOfFormulation<scalar> {
       lsys.fixVertex(v[i], comp, field, e(v[i]->x(), v[i]->y(), v[i]->z()));
   }
   void addNeumann(int physical,
-		  int dim,
-		  int comp,
-		  int field,
-		  const gmshFunction<scalar> &fct,
-		  gmshAssembler<scalar> &lsys)
+                  int dim,
+                  int comp,
+                  int field,
+                  const gmshFunction<scalar> &fct,
+                  gmshAssembler<scalar> &lsys)
   {
     std::map<int, std::vector<GEntity*> > groups[4];
     GModel *m = gmshTermOfFormulation<scalar>::_gm;
@@ -139,17 +139,17 @@ class gmshNodalFemTerm : public gmshTermOfFormulation<scalar> {
         IntPt *GP;
         e->getIntegrationPoints(integrationOrder, &npts, &GP);  
         for (int ip = 0; ip < npts; ip++){
-	  const double u = GP[ip].pt[0];
-	  const double v = GP[ip].pt[1];
-	  const double w = GP[ip].pt[2];
-	  const double weight = GP[ip].weight;
-	  const double detJ = e->getJacobian(u, v, w, jac);
+          const double u = GP[ip].pt[0];
+          const double v = GP[ip].pt[1];
+          const double w = GP[ip].pt[2];
+          const double weight = GP[ip].weight;
+          const double detJ = e->getJacobian(u, v, w, jac);
           SPoint3 p; e->pnt(u, v, w, p);
           e->getShapeFunctions(u, v, w, sf);
-	  const scalar FCT = fct(p.x(), p.y(), p.z());
-	  for (int k = 0; k < nbNodes; k++){
-	    lsys.assemble(e->getVertex(k), comp, field, detJ * weight * sf[k] * FCT);
-	  }
+          const scalar FCT = fct(p.x(), p.y(), p.z());
+          for (int k = 0; k < nbNodes; k++){
+            lsys.assemble(e->getVertex(k), comp, field, detJ * weight * sf[k] * FCT);
+          }
         }
       }
     }
@@ -158,12 +158,12 @@ class gmshNodalFemTerm : public gmshTermOfFormulation<scalar> {
     GModel *m = gmshTermOfFormulation<scalar>::_gm;
     if (m->getNumRegions()){
       for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
-	addToRightHandSide(lsys,*it);
+        addToRightHandSide(lsys,*it);
       }
     }
     else if(m->getNumFaces()){
       for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
-	addToRightHandSide(lsys,*it);
+        addToRightHandSide(lsys,*it);
       }
     }  
   }    
@@ -175,9 +175,9 @@ class gmshNodalFemTerm : public gmshTermOfFormulation<scalar> {
       elementVector (e, V);
       // assembly
       for (int j=0;j<nbR;j++){
-	MVertex *vR;int iCompR,iFieldR;
-	getLocalDofR (e,j,&vR,&iCompR,&iFieldR);
-	lsys.assemble(vR,iCompR,iFieldR,V(j));
+        MVertex *vR;int iCompR,iFieldR;
+        getLocalDofR (e,j,&vR,&iCompR,&iFieldR);
+        lsys.assemble(vR,iCompR,iFieldR,V(j));
       }
     }
   }

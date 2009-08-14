@@ -15,7 +15,7 @@ extern "C"
 
 class GMSH_LongituteLatitudePlugin : public GMSH_PostPlugin
 {
-public:
+ public:
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *help_text) const;
   void catchErrorMessage(char *errorMessage) const;

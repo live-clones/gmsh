@@ -5,7 +5,7 @@
 
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
-#include "GUI.h"
+#include "FlGui.h"
 #include "Draw.h"
 #include "manipWindow.h"
 #include "paletteWindow.h"
@@ -15,21 +15,21 @@
 
 void manip_cb(Fl_Widget *w, void *data)
 {
-  GUI::instance()->manip->show();
+  FlGui::instance()->manip->show();
 }
 
 static void manip_update_cb(Fl_Widget *w, void *data)
 {
-  drawContext *ctx = GUI::instance()->getCurrentOpenglWindow()->getDrawContext();
-  ctx->r[0] = GUI::instance()->manip->value[0]->value();
-  ctx->r[1] = GUI::instance()->manip->value[1]->value();
-  ctx->r[2] = GUI::instance()->manip->value[2]->value();
-  ctx->t[0] = GUI::instance()->manip->value[3]->value();
-  ctx->t[1] = GUI::instance()->manip->value[4]->value();
-  ctx->t[2] = GUI::instance()->manip->value[5]->value();
-  ctx->s[0] = GUI::instance()->manip->value[6]->value();
-  ctx->s[1] = GUI::instance()->manip->value[7]->value();
-  ctx->s[2] = GUI::instance()->manip->value[8]->value();
+  drawContext *ctx = FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+  ctx->r[0] = FlGui::instance()->manip->value[0]->value();
+  ctx->r[1] = FlGui::instance()->manip->value[1]->value();
+  ctx->r[2] = FlGui::instance()->manip->value[2]->value();
+  ctx->t[0] = FlGui::instance()->manip->value[3]->value();
+  ctx->t[1] = FlGui::instance()->manip->value[4]->value();
+  ctx->t[2] = FlGui::instance()->manip->value[5]->value();
+  ctx->s[0] = FlGui::instance()->manip->value[6]->value();
+  ctx->s[1] = FlGui::instance()->manip->value[7]->value();
+  ctx->s[2] = FlGui::instance()->manip->value[8]->value();
   ctx->setQuaternionFromEulerAngles();
   Draw();
 }

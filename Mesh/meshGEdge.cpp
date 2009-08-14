@@ -174,9 +174,9 @@ static double trapezoidal(IntPoint * P1, IntPoint * P2)
 }
 
 static void RecursiveIntegration(GEdge *ge, IntPoint *from, IntPoint *to,
-				 double (*f) (GEdge *e, double X), 
-				 std::vector<IntPoint> &Points,
-				 double Prec, int *depth)
+                                 double (*f) (GEdge *e, double X), 
+                                 std::vector<IntPoint> &Points,
+                                 double Prec, int *depth)
 {
   IntPoint P, p1;
 
@@ -208,8 +208,8 @@ static void RecursiveIntegration(GEdge *ge, IntPoint *from, IntPoint *to,
 }
 
 static double Integration(GEdge *ge, double t1, double t2, 
-			  double (*f) (GEdge *e, double X),
-			  std::vector<IntPoint> &Points, double Prec)
+                          double (*f) (GEdge *e, double X),
+                          std::vector<IntPoint> &Points, double Prec)
 {
   IntPoint from, to;
 
@@ -290,10 +290,9 @@ void meshGEdge::operator() (GEdge *ge)
     }
     else{
       a = Integration(ge, t_begin, t_end, F_Lc, Points,
-      		      CTX::instance()->mesh.lcIntegrationPrecision);
+                      CTX::instance()->mesh.lcIntegrationPrecision);
     }
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
-   
   }
 
   // if the curve is periodic and if the begin vertex is identical to

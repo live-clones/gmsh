@@ -27,7 +27,7 @@ extern "C" int Gmsh_printf(const char *fmt, ...)
     std::strcpy(buf, p);
     Msg::Direct(buf);
     // New line for each interior '\n'
-    while(p = std::strtok(NULL, "\n")) {
+    while((p = std::strtok(NULL, "\n"))) {
       std::strcpy(buf, p);
       Msg::Direct(buf);
     }
@@ -35,4 +35,5 @@ extern "C" int Gmsh_printf(const char *fmt, ...)
   // If more than 1 trailing '\n', or only "\n" in the string, print a blank
   // line.
   if(*last == '\n') Msg::Direct(" ");
+  return 0;
 }

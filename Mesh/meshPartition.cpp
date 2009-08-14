@@ -154,9 +154,9 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
       // Some setup (similar to that of Chaco/input/input.c)
       if(options.global_method != 2) options.rqi_flag = 0;
       if(options.global_method == 1 || options.rqi_flag) {
-	if (options.vmax < 2*(1 << options.ndims)) {
+        if (options.vmax < 2*(1 << options.ndims)) {
           options.vmax = 2*(1 << options.ndims);
-	}
+        }
       }
       // Ensure num_partitions reflects values used by Chaco
       switch(options.architecture) {

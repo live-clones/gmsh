@@ -53,10 +53,8 @@ class DocRecord{
   Triangle *triangles;  // 2D results
   STriangle *striangle; // connected points
   DocRecord(int n);
-  double & x(int i)
-  {return points[i].where.v;} 
-  double & y(int i)
-  {return points[i].where.h;} 
+  double & x(int i){ return points[i].where.v; } 
+  double & y(int i){ return points[i].where.h; } 
   ~DocRecord();
   void MakeMeshWithPoints();
   void MakeVoronoi();

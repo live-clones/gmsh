@@ -83,7 +83,9 @@ all copies.
 @c Table of contents
 @c =========================================================================
 
+@ifnothtml
 @summarycontents
+@end ifnothtml
 @contents
 
 @c =========================================================================
@@ -118,7 +120,7 @@ for Gmsh @value{GMSH-VERSION} (@today{}).
 * File formats::                Input and output file formats
 * Tutorial::                    A step-by-step tutorial
 * Options::                     List of all available options
-* Programming notes::           Notes for developers
+* Information for developers::  Info for Gmsh developers
 * Random tips and tricks::      Tips and tricks to make your life easier
 * Frequently asked questions::  The Gmsh FAQ
 * Version history::             Changelog
@@ -241,11 +243,12 @@ Options
 * Solver options list::         
 * Post-processing options list::  
 
-Programming notes
+Information for developers
 
-* Main code structure::         
+* Getting the source::          
+* Source code structure::       
 * Coding style::                
-* Option handling::             
+* Adding a new option::         
 
 @end detailmenu
 @end menu
@@ -334,34 +337,27 @@ The mesh generation is performed in the same bottom-up flow as the
 geometry creation: lines are discretized first; the mesh of the lines is
 then used to mesh the surfaces; then the mesh of the surfaces is used to
 mesh the volumes. In this process, the mesh of an entity is only
-constrained by the mesh of its boundary@footnote{For example, in three
-dimensions:
-
-@itemize @bullet
-@item
-the triangles discretizing a surface will be forced to be faces of
-tetrahedra in the final 3D mesh only if the surface is part of the
-boundary of a volume;
-@item
-the line elements discretizing a curve will be forced to be edges of
-tetrahedra in the final 3D mesh only if the curve is part of the
-boundary of a surface, itself part of the boundary of a volume;
-@item
-a single node discretizing a point in the middle of a volume will be
-forced to be a vertex of one of the tetrahedra in the final 3D mesh only
-if this point is connected to a curve, itself part of the boundary of a
-surface, itself part of the boundary of a volume...
-@end itemize
-}. This automatically assures the conformity of the mesh when, for
-example, two surfaces share a common line. But this also implies that
-the discretization of an ``isolated'' (@var{n}-1)-th dimensional entity
+constrained by the mesh of its boundary. For example, in three
+dimensions, the triangles discretizing a surface will be forced to be
+faces of tetrahedra in the final 3D mesh only if the surface is part of
+the boundary of a volume; the line elements discretizing a curve will be
+forced to be edges of tetrahedra in the final 3D mesh only if the curve
+is part of the boundary of a surface, itself part of the boundary of a
+volume; a single node discretizing a point in the middle of a volume
+will be forced to be a vertex of one of the tetrahedra in the final 3D
+mesh only if this point is connected to a curve, itself part of the
+boundary of a surface, itself part of the boundary of a volume. This
+automatically assures the conformity of the mesh when, for example, two
+surfaces share a common line. But this also implies that the
+discretization of an ``isolated'' (@var{n}-1)-th dimensional entity
 inside an @var{n}-th dimensional entity does @emph{not} constrain the
-@var{n}-th dimensional mesh.  Every meshing step is constrained by the
-characteristic length field, which can be uniform, specified by
-characteristic lengths associated with points in the geometry, or
-defined by general ``fields'' (a scalar field defined on another mesh
-using post-processing view, threshold fields associated with point or
-line ``attractors'', etc.).
+@var{n}-th dimensional mesh---unless it is explicitly told to do so
+(@pxref{Miscellaneous mesh commands}).  Every meshing step is
+constrained by the characteristic length field, which can be uniform,
+specified by characteristic lengths associated with points in the
+geometry, or defined by general ``fields'' (a scalar field defined on
+another mesh using post-processing view, threshold fields associated
+with point or line ``attractors'', etc.).
 
 For each meshing step, all structured mesh directives are executed
 first, and serve as additional constraints for the unstructured parts
@@ -502,8 +498,9 @@ elements).
 @end itemize
 
 If you have the skills and some free time, feel free to join the
-project! We gladly accept any code contributions (@pxref{Programming
-notes}) to remedy the aforementioned (and all other) shortcomings...
+project! We gladly accept any code contributions (@pxref{Information for
+developers}) to remedy the aforementioned (and all other)
+shortcomings...
 
 @c -------------------------------------------------------------------------
 @c Bug reports
@@ -579,9 +576,9 @@ built: check the `File->Save As' menu for a list of available formats.
 Finally, to use Gmsh at the third level (i.e., to link the Gmsh library
 with your own code), you will need to learn the internal Gmsh
 Application Programming Interface (API). No complete documentation of
-this API is available yet; a good starting point is @ref{Programming
-notes}, which gives a short introduction to Gmsh's internal source code
-structure. Then have a look e.g. at the examples in the
+this API is available yet; a good starting point is @ref{Source code
+structure}, which gives a short introduction to Gmsh's internal source
+code structure. Then have a look e.g. at the examples in the
 @file{utils/api_demos/} directory in the source code.
 
 @c -------------------------------------------------------------------------
@@ -738,9 +735,9 @@ the `Gmsh options' format in `File->Save As'.
 @cindex Non-interactive mode
 
 Gmsh can be run non-interactively in `batch' mode, without
-GUI@footnote{If you compile Gmsh without the GUI, i.e., with
-@code{./configure --disable-gui}, this is the only mode you have access
-to.}. For example, to mesh the first tutorial in batch mode, just type:
+GUI@footnote{If you compile Gmsh without the GUI, this is the only mode
+you have access to.}. For example, to mesh the first tutorial in batch
+mode, just type:
 
 @example
 > gmsh t1.geo -2
@@ -2220,7 +2217,7 @@ Frontal           3                  2                 1
 For very complex curved surfaces the ``MeshAdapt'' algorithm is the best
 choice. When high element quality is important, the ``Frontal''
 algorithm should be tried. For very large meshes of plane surfaces the
-``Delaunay'' algorithm is the fatest.
+``Delaunay'' algorithm is the fastest.
 
 In 3D two unstructured algorithms are available:
 
@@ -2506,7 +2503,7 @@ Selects surfaces to be meshed with the 2D transfinite algorithm. The
 @var{expression-list} on the right-hand-side should contain the
 identification numbers of three or four points on the boundary of the
 surface that define the corners of the transfinite interpolation. If no
-identfication numbers are given, the transfinite algorithm will try to
+identification numbers are given, the transfinite algorithm will try to
 find the corners automatically. The optional argument specifies the way
 the triangles are oriented when the mesh is not recombined.
 
@@ -2515,7 +2512,7 @@ Selects five- or six-face volumes to be meshed with the 3D transfinite
 algorithm.  The @var{expression-list} on the right-hand-side should
 contain the identification numbers of the six or eight points on the
 boundary of the volume that define the corners of the transfinite
-interpolation. If no identfication numbers are given, the transfinite
+interpolation. If no identification numbers are given, the transfinite
 algorithm will try to find the corners automatically.
 
 @end ftable
@@ -2530,6 +2527,11 @@ algorithm will try to find the corners automatically.
 Here is a list of all other mesh commands currently available:
 
 @ftable @code
+@item Point | Line @{ @var{expression-list} @} In Surface @{ @var{expression} @};
+Embed the point(s) or line(s) in the given surface. The surface mesh
+will conform to the mesh of the point(s) or lines(s). Note that embeded
+lines only work with the MeshAdapt 2-D algorithm.
+
 @item Coherence Mesh;
 Removes all duplicate mesh vertices.
 
@@ -2571,7 +2573,7 @@ Shows the mesh of the entity @var{char-expression}, if
 
 @item Smoother Surface @{ @var{expression-list} @} = @var{expression};
 Sets number of elliptic smoothing steps for the surfaces listed in
-@var{expression-list} (smothing only applies to transfinite meshes at
+@var{expression-list} (smoothing only applies to transfinite meshes at
 the moment).
 @end ftable
 
@@ -3651,7 +3653,7 @@ higher order nodes are assumed to be equispaced on the element.
 
 This section describes Gmsh's older native file formats. Future versions
 of Gmsh will continue to support these formats, but we recommend that
-you do not use them in new aplications.
+you do not use them in new applications.
 
 @c .........................................................................
 @c MSH file format version 1.0
@@ -4131,7 +4133,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c Options
 @c =========================================================================
 
-@node Options, Programming notes, Tutorial, Top
+@node Options, Information for developers, Tutorial, Top
 @appendix Options
 
 This appendix lists all the available options. Gmsh's default behavior
@@ -4207,34 +4209,79 @@ Options' menu.
 @c The @code{ColorTable} is defined as a list...
 
 @c =========================================================================
-@c Programming notes
+@c Information for developers
 @c =========================================================================
 
-@node Programming notes, Random tips and tricks, Options, Top
-@appendix Programming notes
+@node Information for developers, Random tips and tricks, Options, Top
+@appendix Information for developers
 
+@cindex Developer, information
 @cindex Programming, notes
 
 Gmsh is written in C++, the scripting language is parsed using Lex and
 Yacc (actually, Flex and Bison), and the GUI relies on OpenGL for the 3D
 graphics and FLTK (@uref{http://www.fltk.org}) for the widget
-set. Gmsh's build system is based on autoconf. Practical notes on how to
-compile Gmsh's source code are included in the distribution. See
-@ref{Frequently asked questions}, for more information.
-
+set. Gmsh's build system is based on CMake
+(@uref{http://www.cmake.org}). Practical notes on how to compile Gmsh's
+source code are included in the distribution. See @ref{Frequently asked
+questions}, for more information.
 
 @menu
-* Main code structure::         
+* Getting the source::          
+* Source code structure::       
 * Coding style::                
-* Option handling::             
+* Adding a new option::         
 @end menu
 
 @c -------------------------------------------------------------------------
-@c Main code structure
+@c Getting the source
 @c -------------------------------------------------------------------------
 
-@node Main code structure, Coding style, Programming notes, Programming notes
-@section Main code structure
+@node Getting the source, Source code structure, Information for developers, Information for developers
+@section Getting the source
+
+Stable releases and nightly source snapshots are available from
+@uref{http://www.geuz.org/gmsh/src/}.
+
+If you have an account on cvs.geuz.org you can also access the CVS
+repository directly:
+
+@enumerate
+@item
+Set the variable CVS_RSH to ssh ('export CVS_RSH=ssh' with bash, or
+'setenv CVS_RSH ssh' with tcsh)
+@item
+The first time you want to download the latest full source by CVS, type:
+
+@example
+cvs -d username@@cvs.geuz.org:/cvsroot checkout gmsh
+@end example
+
+where username is your login on cvs.geuz.org
+@item
+To update your local version to the latest and greatest, go in the gmsh
+directory and type:
+
+@example
+cvs update -dPA
+@end example
+
+@item
+To commit your changes to the central repository, go in the gmsh
+directory and type:
+
+@example
+cvs commit
+@end example
+
+@end enumerate
+
+@c -------------------------------------------------------------------------
+@c Source code structure
+@c -------------------------------------------------------------------------
+
+@node Source code structure, Coding style, Getting the source, Information for developers
+@section Source code structure
 
 Gmsh's code is structured in several libraries, roughly separated
 between the three main core modules (@file{Geo}, @file{Mesh},
@@ -4257,7 +4304,7 @@ views (@file{Post/PView.h}) and abstract data containers (derived from
 @c Coding style
 @c -------------------------------------------------------------------------
 
-@node Coding style, Option handling, Main code structure, Programming notes
+@node Coding style, Adding a new option, Source code structure, Information for developers
 @section Coding style
 
 If you plan to contribute code to the Gmsh project, here are some easy rules
@@ -4276,11 +4323,11 @@ convert all tabs to spaces.
 @end enumerate
 
 @c -------------------------------------------------------------------------
-@c Option handling
+@c Adding a new option
 @c -------------------------------------------------------------------------
 
-@node Option handling,  , Coding style, Programming notes
-@section Option handling
+@node Adding a new option,  , Coding style, Information for developers
+@section Adding a new option
 
 To add a new option in Gmsh:
 
@@ -4312,11 +4359,110 @@ optional: create the associated widget in @file{Fltk/optionWindow.cpp};
 @c * purify
 @c * memprof
 
+
+@c -------------------------------------------------------------------------
+@c Compiling with OpenCASCADE
+@c -------------------------------------------------------------------------
+
+@c @node Compiling with OpenCASCADE,  , Coding style, Information for developers
+@c @section Compiling with OpenCASCADE
+
+@c How to build OpenCascade 6.3 (OCC) for Gmsh:
+
+@c - Get the source distribution of OCC and unpack it (you only need the
+@c   "ros" subdirectory). In the following <OpenCascade dir> refers to
+@c   the directory where OCC is installed (e.g ~/OpenCASCADE6.3.0)
+
+@c - OS/compiler specific stuff:
+
+@c    * On Windows, use Visual C++ to compile the libraries, or use the
+@c      precompiled DLLs directly. (The MinGW compiler used to work with
+@c      OCC 6.2 but do not anymore with 6.3.)
+
+@c    * on Mac OS X unfortunately you cannot build universal libs simply
+@c      by using "-arch i386 -arch ppc" (the code depends on
+@c      configure-time endinanness checks). So, first configure and build
+@c      with
+
+@c      export CFLAGS="-arch i386"
+@c      export CXXFLAGS="-arch i386" 
+
+@c      and then do "make distclean" and configure and build again
+@c      with 
+     
+@c      export CFLAGS="-arch ppc"
+@c      export CXXFLAGS="-arch ppc"
+
+@c      after the install step, use "lipo" to merge both archs, e.g.
+
+@c      lipo -create libi386.a libppc.a -output libuniversal.a
+
+@c - Go to the <OpenCascade dir>/ros directory and type
+
+@c   ./configure --prefix=/usr/local/opencascade --enable-debug=no 
+@c     --enable-production=yes --enable-static=yes --enable-shared=no
+@c     --disable-dependency-tracking
+
+@c - Then go to the <OpenCascade dir>/ros/adm/make/ directory and
+@c   run "make" in the following subdirectories, e.g. by running the
+@c   following bash script:
+
+@c     #!/bin/bash
+@c     for lib in TKernel TKMath TKAdvTools TKG2d TKG3d TKGeomBase TKBRep 
+@c       TKGeomAlgo TKTopAlgo TKPrim TKBO TKHLR TKMesh TKShHealing TKBool 
+@c       TKFillet TKFeat TKOffset TKXSBase TKIGES TKSTEPBase TKSTEPAttr 
+@c       TKSTEP209 TKSTEP; do
+@c         cd $lib && make; cd ..;
+@c     done
+
+@c    Note that this is the same as doing "make FoundationClasses", "make
+@c    ModelingData", "make ModelingAlgorithms" and part of "make
+@c    DataExchange"
+
+@c - Finally, run this other bash script in the same directory (to install
+@c   the libraries)
+
+@c     #!/bin/bash
+@c     for lib in TKernel TKMath TKAdvTools TKG2d TKG3d TKGeomBase TKBRep 
+@c       TKGeomAlgo TKTopAlgo TKPrim TKBO TKHLR TKMesh TKShHealing TKBool 
+@c       TKFillet TKFeat TKOffset TKXSBase TKIGES TKSTEPBase TKSTEPAttr 
+@c       TKSTEP209 TKSTEP; do
+@c         cd $lib && make install; cd ..;
+@c     done
+
+@c   and copy config.h and the <OpenCascade dir>/ros/inc/ subdirectory
+@c   to /usr/local/opencascade (This is the same as a doing a partial 
+@c   'make install')
+
+@c OpenCascade is now installed and ready to be used by Gmsh. To compile
+@c Gmsh with OpenCascade support:
+
+@c - Go to the gmsh source directory
+
+@c - Run "./configure --enable-occ --with-occ-prefix=/usr/local/opencascade" and
+@c   then "make"
+
+@c - If you get errors like
+
+@c     undefined reference to `pthread_create'
+@c     undefined reference to `pthread_detach'
+@c     ...
+
+@c   edit the "variables" file and add "-pthread" to the OPTIM variable, e.g.:
+
+@c     OPTIM="-g -O2 -pthread"
+   
+@c   and run make again
+
+@c - If compiling is successful then you are done and you can enjoy
+@c   importing IGES/STEP/BREP files into Gmsh!
+
+
 @c =========================================================================
 @c Random tips and tricks
 @c =========================================================================
 
-@node Random tips and tricks, Frequently asked questions, Programming notes, Top
+@node Random tips and tricks, Frequently asked questions, Information for developers, Top
 @appendix Random tips and tricks
 
 @cindex Tips

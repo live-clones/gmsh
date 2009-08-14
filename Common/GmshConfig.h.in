@@ -6,38 +6,41 @@
 #ifndef _GMSH_CONFIG_H_
 #define _GMSH_CONFIG_H_
 
-#undef HAVE_64BIT_SIZE_T
-#undef HAVE_ANN
-#undef HAVE_BLAS
-#undef HAVE_CHACO
-#undef HAVE_DINTEGRATION
-#undef HAVE_FLTK
-#undef HAVE_FOURIER_MODEL
-#undef HAVE_GMM
-#undef HAVE_KBIPACK
-#undef HAVE_LAPACK
-#undef HAVE_LIBCGNS
-#undef HAVE_LIBJPEG
-#undef HAVE_LIBPNG
-#undef HAVE_LIBZ
-#undef HAVE_MATH_EVAL
-#undef HAVE_MED
-#undef HAVE_METIS
-#undef HAVE_MPI
-#undef HAVE_NATIVE_FILE_CHOOSER
-#undef HAVE_NETGEN
-#undef HAVE_NO_DLL
-#undef HAVE_NO_PARSER
-#undef HAVE_NO_POST
-#undef HAVE_NO_SOCKLEN_T
-#undef HAVE_NO_VSNPRINTF
-#undef HAVE_OCC
-#undef HAVE_OCC_MESH_CONSTRAINTS
-#undef HAVE_OSMESA
-#undef HAVE_TAUCS
-#undef HAVE_TETGEN
-#undef HAVE_TREE_BROWSER
+#cmakedefine HAVE_64BIT_SIZE_T
+#cmakedefine HAVE_ANN
+#cmakedefine HAVE_BLAS
+#cmakedefine HAVE_CHACO
+#cmakedefine HAVE_DINTEGRATION
+#cmakedefine HAVE_FLTK
+#cmakedefine HAVE_FOURIER_MODEL
+#cmakedefine HAVE_GMM
+#cmakedefine HAVE_KBIPACK
+#cmakedefine HAVE_LAPACK
+#cmakedefine HAVE_LIBCGNS
+#cmakedefine HAVE_LIBJPEG
+#cmakedefine HAVE_LIBPNG
+#cmakedefine HAVE_LIBZ
+#cmakedefine HAVE_MATH_EVAL
+#cmakedefine HAVE_MED
+#cmakedefine HAVE_METIS
+#cmakedefine HAVE_MPI
+#cmakedefine HAVE_NATIVE_FILE_CHOOSER
+#cmakedefine HAVE_NETGEN
+#cmakedefine HAVE_NO_DLL
+#cmakedefine HAVE_NO_PARSER
+#cmakedefine HAVE_NO_POST
+#cmakedefine HAVE_NO_SOCKLEN_T
+#cmakedefine HAVE_NO_VSNPRINTF
+#cmakedefine HAVE_OCC
+#cmakedefine HAVE_OCC_MESH_CONSTRAINTS
+#cmakedefine HAVE_OSMESA
+#cmakedefine HAVE_QT
+#cmakedefine HAVE_TAUCS
+#cmakedefine HAVE_TETGEN
+#cmakedefine HAVE_TREE_BROWSER
 
-#define GMSH_CONFIG_OPTIONS ""
+#define GMSH_CONFIG_OPTIONS "${GMSH_CONFIG_OPTIONS}"
+
+${GMSH_CONFIG_PRAGMAS}
 
 #endif

@@ -8,7 +8,7 @@
 #include <FL/Fl_Scroll.H>
 #include <FL/Fl_Repeat_Button.H>
 #include "GmshConfig.h"
-#include "GUI.h"
+#include "FlGui.h"
 #include "projectionEditor.h"
 #include "paletteWindow.h"
 #include "fileDialogs.h"
@@ -233,20 +233,20 @@ static void set_position_cb(Fl_Widget *w, void *data)
   projectionEditor *e = (projectionEditor*)data;
   projection *p = e->getCurrentProjection();
   if(p){
-    char ib = GUI::instance()->selectEntity(ENT_ALL);
+    char ib = FlGui::instance()->selectEntity(ENT_ALL);
     if(ib == 'l'){
-      if(GUI::instance()->selectedVertices.size()){
-        p->parameters[0]->value(GUI::instance()->selectedVertices[0]->x());
-        p->parameters[1]->value(GUI::instance()->selectedVertices[0]->y());
-        p->parameters[2]->value(GUI::instance()->selectedVertices[0]->z());
+      if(FlGui::instance()->selectedVertices.size()){
+        p->parameters[0]->value(FlGui::instance()->selectedVertices[0]->x());
+        p->parameters[1]->value(FlGui::instance()->selectedVertices[0]->y());
+        p->parameters[2]->value(FlGui::instance()->selectedVertices[0]->z());
       }
-      else if(GUI::instance()->selectedElements.size()){
-        SPoint3 pc = GUI::instance()->selectedElements[0]->barycenter();
+      else if(FlGui::instance()->selectedElements.size()){
+        SPoint3 pc = FlGui::instance()->selectedElements[0]->barycenter();
         p->parameters[0]->value(pc.x());
         p->parameters[1]->value(pc.y());
         p->parameters[2]->value(pc.z());
-        if(GUI::instance()->selectedElements[0]->getNumFaces()){
-          MFace f = GUI::instance()->selectedElements[0]->getFace(0);
+        if(FlGui::instance()->selectedElements[0]->getNumFaces()){
+          MFace f = FlGui::instance()->selectedElements[0]->getFace(0);
           SVector3 n = f.normal();
           p->parameters[3]->value(n[0]);
           p->parameters[4]->value(n[1]);
@@ -282,46 +282,46 @@ static void select_cb(Fl_Widget *w, void *data)
 
     if(ele.size() || ent.size())
       Msg::StatusBar(3, false, "Select %s\n[Press 'e' to end selection, 'u' to undo" 
-		  "last selection or 'q' to abort]", str);
+                  "last selection or 'q' to abort]", str);
     else
       Msg::StatusBar(3, false, "Select %s\n"
-		  "[Press 'e' to end selection or 'q' to abort]", str);
+                  "[Press 'e' to end selection or 'q' to abort]", str);
 
-    char ib = GUI::instance()->selectEntity(what);
+    char ib = FlGui::instance()->selectEntity(what);
     if(ib == 'l') {
       if(CTX::instance()->pickElements){
-        for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++){
-          if(GUI::instance()->selectedElements[i]->getVisibility() != 2){
-            GUI::instance()->selectedElements[i]->setVisibility(2); 
-            ele.push_back(GUI::instance()->selectedElements[i]);
+        for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++){
+          if(FlGui::instance()->selectedElements[i]->getVisibility() != 2){
+            FlGui::instance()->selectedElements[i]->setVisibility(2); 
+            ele.push_back(FlGui::instance()->selectedElements[i]);
           }
         }
       }
       else{
-        for(unsigned int i = 0; i < GUI::instance()->selectedVertices.size(); i++){
-          if(GUI::instance()->selectedVertices[i]->getSelection() != 1){
-            GUI::instance()->selectedVertices[i]->setSelection(1);
-            ent.push_back(GUI::instance()->selectedVertices[i]);
+        for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
+          if(FlGui::instance()->selectedVertices[i]->getSelection() != 1){
+            FlGui::instance()->selectedVertices[i]->setSelection(1);
+            ent.push_back(FlGui::instance()->selectedVertices[i]);
           }
         }
-        for(unsigned int i = 0; i < GUI::instance()->selectedFaces.size(); i++){
-          if(GUI::instance()->selectedFaces[i]->getSelection() != 1){
-            GUI::instance()->selectedFaces[i]->setSelection(1);
-            ent.push_back(GUI::instance()->selectedFaces[i]);
+        for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
+          if(FlGui::instance()->selectedFaces[i]->getSelection() != 1){
+            FlGui::instance()->selectedFaces[i]->setSelection(1);
+            ent.push_back(FlGui::instance()->selectedFaces[i]);
           }
         }
       }
     }
     if(ib == 'r') {
       if(CTX::instance()->pickElements){
-        for(unsigned int i = 0; i < GUI::instance()->selectedElements.size(); i++)
-          GUI::instance()->selectedElements[i]->setVisibility(1);
+        for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++)
+          FlGui::instance()->selectedElements[i]->setVisibility(1);
       }
       else{
-        for(unsigned int i = 0; i < GUI::instance()->selectedVertices.size(); i++)
-          GUI::instance()->selectedVertices[i]->setSelection(0);
-        for(unsigned int i = 0; i < GUI::instance()->selectedFaces.size(); i++)
-          GUI::instance()->selectedFaces[i]->setSelection(0);
+        for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++)
+          FlGui::instance()->selectedVertices[i]->setSelection(0);
+        for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++)
+          FlGui::instance()->selectedFaces[i]->setSelection(0);
       }
     }
     if(ib == 'u') {
@@ -551,67 +551,67 @@ static void compute_cb(Fl_Widget *w, void *data)
     if (e->getPatchType()) {
       // create the US-FFT/Windowing faces (with boundaries)
       FM::Patch* patch =
-	new FM::WFPatch(0, ps->clone(), u, v, f, 3, uModes, vModes);
+        new FM::WFPatch(0, ps->clone(), u, v, f, 3, uModes, vModes);
       m->getFMInternals()->current()->GetGroup(0)->GetBlendGroup()->
-	AddPatch(patch);
+        AddPatch(patch);
       m->getFMInternals()->makeGFace(patch,m);
       //makeGFace(patch);
     }
     else {
       // create the Fourier faces (with boundaries)
       if(ps->IsUPeriodic()) {
-	FM::Patch* patchL = 
-	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
-			 uM, vM, h0, h1, h2, h3);
-	patchL->SetMinU(-0.35);
-	patchL->SetMaxU(0.35);
-	m->getFMInternals()->current()->GetGroup(0)->GetBlendGroup()->
-	  AddPatch(patchL);
-	m->getFMInternals()->makeGFace(patchL,m);
-	//makeGFace(patchL);
-	FM::Patch* patchR = 
-	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
-			 uM, vM, h0, h1, h2, h3);
-	patchR->SetMinU(0.15);
-	patchR->SetMaxU(0.85);
-	m->getFMInternals()->current()->GetGroup(0)->GetBlendGroup()->
-	  AddPatch(patchR);
-	m->getFMInternals()->makeGFace(patchR,m);
-	//makeGFace(patchR);
+        FM::Patch* patchL = 
+          new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
+                         uM, vM, h0, h1, h2, h3);
+        patchL->SetMinU(-0.35);
+        patchL->SetMaxU(0.35);
+        m->getFMInternals()->current()->GetGroup(0)->GetBlendGroup()->
+          AddPatch(patchL);
+        m->getFMInternals()->makeGFace(patchL,m);
+        //makeGFace(patchL);
+        FM::Patch* patchR = 
+          new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
+                         uM, vM, h0, h1, h2, h3);
+        patchR->SetMinU(0.15);
+        patchR->SetMaxU(0.85);
+        m->getFMInternals()->current()->GetGroup(0)->GetBlendGroup()->
+          AddPatch(patchR);
+        m->getFMInternals()->makeGFace(patchR,m);
+        //makeGFace(patchR);
       }
       else if (ps->IsVPeriodic()) {
-	FM::Patch* patchL = 
-	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
-			 uM, vM, h0, h1, h2, h3);
-	patchL->SetMinV(-0.35);
-	patchL->SetMaxV(0.35);
-	m->getFMInternals()->current()->GetGroup(0)->GetBlendGroup()->
-	  AddPatch(patchL);
-	m->getFMInternals()->makeGFace(patchL,m);
-	//makeGFace(patchL);
-	FM::Patch* patchR = 
-	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
-			 uM, vM, h0, h1, h2, h3);
-	patchR->SetMinV(0.15);
-	patchR->SetMaxV(0.85);
-	m->getFMInternals()->current()->GetGroup(0)->GetBlendGroup()->
-	  AddPatch(patchR);
-	m->getFMInternals()->makeGFace(patchR,m);
-	//makeGFace(patchR);
+        FM::Patch* patchL = 
+          new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
+                         uM, vM, h0, h1, h2, h3);
+        patchL->SetMinV(-0.35);
+        patchL->SetMaxV(0.35);
+        m->getFMInternals()->current()->GetGroup(0)->GetBlendGroup()->
+          AddPatch(patchL);
+        m->getFMInternals()->makeGFace(patchL,m);
+        //makeGFace(patchL);
+        FM::Patch* patchR = 
+          new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
+                         uM, vM, h0, h1, h2, h3);
+        patchR->SetMinV(0.15);
+        patchR->SetMaxV(0.85);
+        m->getFMInternals()->current()->GetGroup(0)->GetBlendGroup()->
+          AddPatch(patchR);
+        m->getFMInternals()->makeGFace(patchR,m);
+        //makeGFace(patchR);
       }
       else {
-	FM::Patch* patch = 
-	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
-			 uM, vM, h0, h1, h2, h3);
-	m->getFMInternals()->current()->GetGroup(0)->GetBlendGroup()->
-	  AddPatch(patch);
-	m->getFMInternals()->makeGFace(patch,m);
-	//makeGFace(patch);
+        FM::Patch* patch = 
+          new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
+                         uM, vM, h0, h1, h2, h3);
+        m->getFMInternals()->current()->GetGroup(0)->GetBlendGroup()->
+          AddPatch(patch);
+        m->getFMInternals()->makeGFace(patch,m);
+        //makeGFace(patch);
       }
     }
   }
   printf("nPatches = %d\n",m->getFMInternals()->current()->GetGroup(0)->
-	 GetBlendGroup()->GetNumPatches());
+         GetBlendGroup()->GetNumPatches());
   Draw();
 }
 
@@ -644,10 +644,10 @@ static void blend_cb(Fl_Widget *w, void *data)
 
   m->getFMInternals()->current()->GetGroup(0)->GetBlendGroup()->Blend();
   for (int i = 0; i < m->getFMInternals()->current()->GetGroup(0)->
-	 GetBlendGroup()->GetNumPatches(); i++)
+         GetBlendGroup()->GetNumPatches(); i++)
     m->getFMInternals()->makeGFace(m->getFMInternals()->current()->
-				   GetGroup(0)->GetBlendGroup()->
-				   GetPatch(i),m);
+                                   GetGroup(0)->GetBlendGroup()->
+                                   GetPatch(i),m);
   for (unsigned int i = 0; i < faces.size(); i++) {
     //delete_fourier(faces[i]);
     faces[i]->setVisibility(0, true);
@@ -675,10 +675,10 @@ static void action_cb(Fl_Widget *w, void *data)
   }
   else if(what == "delete_select" || what == "save_select"){
     Msg::StatusBar(3, false, "Select Surface\n[Press 'e' to end selection 'q' to abort]");
-    char ib = GUI::instance()->selectEntity(ENT_SURFACE);
+    char ib = FlGui::instance()->selectEntity(ENT_SURFACE);
     if(ib == 'l') faces.insert(faces.end(), 
-                               GUI::instance()->selectedFaces.begin(), 
-                               GUI::instance()->selectedFaces.end());
+                               FlGui::instance()->selectedFaces.begin(), 
+                               FlGui::instance()->selectedFaces.end());
     Msg::StatusBar(3, false, "");
   }
 

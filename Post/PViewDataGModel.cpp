@@ -35,26 +35,26 @@ bool PViewDataGModel::finalize()
       // treat these 2 special cases separately for maximum efficiency
       int numComp = _steps[step]->getNumComponents();
       for(int i = 0; i < _steps[step]->getNumData(); i++){
-	double *d = _steps[step]->getData(i);
-	if(d){
-	  double val = ComputeScalarRep(numComp, d);
-	  _steps[step]->setMin(std::min(_steps[step]->getMin(), val));
-	  _steps[step]->setMax(std::max(_steps[step]->getMax(), val));
-	}
+        double *d = _steps[step]->getData(i);
+        if(d){
+          double val = ComputeScalarRep(numComp, d);
+          _steps[step]->setMin(std::min(_steps[step]->getMin(), val));
+          _steps[step]->setMax(std::max(_steps[step]->getMax(), val));
+        }
       }
     }
     else{
       // general case (slower)
       for(int ent = 0; ent < getNumEntities(step); ent++){
-	for(int ele = 0; ele < getNumElements(step, ent); ele++){
-	  if(skipElement(step, ent, ele)) continue;
-	  for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
-	    double val;
-	    getScalarValue(step, ent, ele, nod, val);
-	    _steps[step]->setMin(std::min(_steps[step]->getMin(), val));
-	    _steps[step]->setMax(std::max(_steps[step]->getMax(), val));
-	  }
-	}
+        for(int ele = 0; ele < getNumElements(step, ent); ele++){
+          if(skipElement(step, ent, ele)) continue;
+          for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
+            double val;
+            getScalarValue(step, ent, ele, nod, val);
+            _steps[step]->setMin(std::min(_steps[step]->getMin(), val));
+            _steps[step]->setMax(std::max(_steps[step]->getMax(), val));
+          }
+        }
       }
     }
     _min = std::min(_min, _steps[step]->getMin());
@@ -288,7 +288,7 @@ int PViewDataGModel::getNumNodes(int step, int ent, int ele)
 }
 
 int PViewDataGModel::getNode(int step, int ent, int ele, int nod, 
-			     double &x, double &y, double &z)
+                             double &x, double &y, double &z)
 {
   MElement *e = _getElement(step, ent, ele);
   if(_type == GaussPointData){ 
@@ -302,9 +302,9 @@ int PViewDataGModel::getNode(int step, int ent, int ele, int nod,
     else{
       double vx[8], vy[8], vz[8];
       for(int i = 0; i < e->getNumPrimaryVertices(); i++){
-	vx[i] = e->getVertex(i)->x();
-	vy[i] = e->getVertex(i)->y();
-	vz[i] = e->getVertex(i)->z();
+        vx[i] = e->getVertex(i)->x();
+        vy[i] = e->getVertex(i)->y();
+        vz[i] = e->getVertex(i)->z();
       }
       x = e->interpolate(vx, p[3 * nod], p[3 * nod + 1], p[3 * nod + 2], 1, 1);
       y = e->interpolate(vy, p[3 * nod], p[3 * nod + 1], p[3 * nod + 2], 1, 1);
@@ -431,30 +431,30 @@ void PViewDataGModel::smooth()
     GModel *m = _steps[step]->getModel();
     int numComp = _steps[step]->getNumComponents();
     _steps2.push_back(new stepData<double>(m, numComp, _steps[step]->getFileName(),
-					   _steps[step]->getFileIndex()));
+                                           _steps[step]->getFileIndex()));
     std::map<int, int> nodeConnect;
     for(int ent = 0; ent < getNumEntities(step); ent++){
       for(int ele = 0; ele < getNumElements(step, ent); ele++){
-	MElement *e = _steps[step]->getEntity(ent)->getMeshElement(ele);
-	double val;
-	if(!getValueByIndex(step, e->getNum(), 0, 0, val)) continue;
-	for(int nod = 0; nod < e->getNumVertices(); nod++){
-	  MVertex *v = e->getVertex(nod);
-	  if(nodeConnect.count(v->getNum()))
-	    nodeConnect[v->getNum()]++;
-	  else
-	    nodeConnect[v->getNum()] = 1;
-	  double *d = _steps2.back()->getData(v->getNum(), true);
-	  for(int j = 0; j < numComp; j++)
-	    if(getValueByIndex(step, e->getNum(), nod, j, val)) d[j] += val;
-	}
+        MElement *e = _steps[step]->getEntity(ent)->getMeshElement(ele);
+        double val;
+        if(!getValueByIndex(step, e->getNum(), 0, 0, val)) continue;
+        for(int nod = 0; nod < e->getNumVertices(); nod++){
+          MVertex *v = e->getVertex(nod);
+          if(nodeConnect.count(v->getNum()))
+            nodeConnect[v->getNum()]++;
+          else
+            nodeConnect[v->getNum()] = 1;
+          double *d = _steps2.back()->getData(v->getNum(), true);
+          for(int j = 0; j < numComp; j++)
+            if(getValueByIndex(step, e->getNum(), nod, j, val)) d[j] += val;
+        }
       }
     }
     for(int i = 0; i < _steps2.back()->getNumData(); i++){
       double *d = _steps2.back()->getData(i);
       if(d){
-	double f = nodeConnect[i];
-	if(f) for(int j = 0; j < numComp; j++) d[j] /= f;
+        double f = nodeConnect[i];
+        if(f) for(int j = 0; j < numComp; j++) d[j] /= f;
       }
     }
   }

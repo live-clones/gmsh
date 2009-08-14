@@ -227,8 +227,8 @@ void drawContext::draw3d()
   // measurement of the change in depth relative to the screen area of
   // the polygon, and r is the smallest value that is guaranteed to
   // produce a resolvable offset for a given implementation.
-  glPolygonOffset(CTX::instance()->polygonOffsetFactor, 
-                  CTX::instance()->polygonOffsetUnits);
+  glPolygonOffset((float)CTX::instance()->polygonOffsetFactor, 
+                  (float)CTX::instance()->polygonOffsetUnits);
   if(CTX::instance()->polygonOffsetFactor || CTX::instance()->polygonOffsetUnits)
     CTX::instance()->polygonOffset = CTX::instance()->polygonOffsetAlways ? 1 : 
       needPolygonOffset();
@@ -410,9 +410,9 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
           for(int j = img->h() - 1; j >= 0; j--) {
             for(int i = 0; i < img->w(); i++) {
               int idx = j * img->w() * img->d() + i * img->d();
-              _bgImage.push_back((GLfloat)data[idx] / 255.);
-              _bgImage.push_back((GLfloat)data[idx + 1] / 255.);
-              _bgImage.push_back((GLfloat)data[idx + 2] / 255.);
+              _bgImage.push_back((GLfloat)data[idx] / 255.F);
+              _bgImage.push_back((GLfloat)data[idx + 1] / 255.F);
+              _bgImage.push_back((GLfloat)data[idx + 2] / 255.F);
             }
           }
           _bgImageSize[0] = img->w();
@@ -486,22 +486,31 @@ void drawContext::initRenderModel()
                              (GLfloat)CTX::instance()->lightPosition[i][3]};
       glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, position);
 
-      GLfloat r = CTX::instance()->unpackRed(CTX::instance()->color.ambientLight[i])/255.;
-      GLfloat g = CTX::instance()->unpackGreen(CTX::instance()->color.ambientLight[i])/255.;
-      GLfloat b = CTX::instance()->unpackBlue(CTX::instance()->color.ambientLight[i])/255.;
-      GLfloat ambient[4] = {r, g, b, 1.0};
+      GLfloat r = (GLfloat)(CTX::instance()->unpackRed
+                            (CTX::instance()->color.ambientLight[i]) / 255.);
+      GLfloat g = (GLfloat)(CTX::instance()->unpackGreen
+                            (CTX::instance()->color.ambientLight[i]) / 255.);
+      GLfloat b = (GLfloat)(CTX::instance()->unpackBlue
+                            (CTX::instance()->color.ambientLight[i]) / 255.);
+      GLfloat ambient[4] = {r, g, b, 1.0F};
       glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, ambient);
 
-      r = CTX::instance()->unpackRed(CTX::instance()->color.diffuseLight[i])/255.;
-      g = CTX::instance()->unpackGreen(CTX::instance()->color.diffuseLight[i])/255.;
-      b = CTX::instance()->unpackBlue(CTX::instance()->color.diffuseLight[i])/255.;
-      GLfloat diffuse[4] = {r, g, b, 1.0};
+      r = (GLfloat)(CTX::instance()->unpackRed
+                    (CTX::instance()->color.diffuseLight[i]) / 255.);
+      g = (GLfloat)(CTX::instance()->unpackGreen
+                    (CTX::instance()->color.diffuseLight[i]) / 255.);
+      b = (GLfloat)(CTX::instance()->unpackBlue
+                    (CTX::instance()->color.diffuseLight[i]) / 255.);
+      GLfloat diffuse[4] = {r, g, b, 1.0F};
       glLightfv((GLenum)(GL_LIGHT0 + i), GL_DIFFUSE, diffuse);
 
-      r = CTX::instance()->unpackRed(CTX::instance()->color.specularLight[i])/255.;
-      g = CTX::instance()->unpackGreen(CTX::instance()->color.specularLight[i])/255.;
-      b = CTX::instance()->unpackBlue(CTX::instance()->color.specularLight[i])/255.;
-      GLfloat specular[4] = {r, g, b, 1.0};
+      r = (GLfloat)(CTX::instance()->unpackRed
+                    (CTX::instance()->color.specularLight[i]) / 255.);
+      g = (GLfloat)(CTX::instance()->unpackGreen
+                    (CTX::instance()->color.specularLight[i]) / 255.);
+      b = (GLfloat)(CTX::instance()->unpackBlue
+                    (CTX::instance()->color.specularLight[i]) / 255.);
+      GLfloat specular[4] = {r, g, b, 1.0F};
       glLightfv((GLenum)(GL_LIGHT0 + i), GL_SPECULAR, specular);
 
       glEnable((GLenum)(GL_LIGHT0 + i));
@@ -517,12 +526,14 @@ void drawContext::initRenderModel()
   glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
   glEnable(GL_COLOR_MATERIAL);
   // "white"-only specular material reflection color
-  GLfloat spec[4] = {CTX::instance()->shine, CTX::instance()->shine, 
-                     CTX::instance()->shine, 1.0};
+  GLfloat spec[4] = {(GLfloat)CTX::instance()->shine, 
+                     (GLfloat)CTX::instance()->shine, 
+                     (GLfloat)CTX::instance()->shine, 1.0F};
   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, spec);
   // specular exponent in [0,128] (larger means more "focused"
   // reflection)
-  glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, CTX::instance()->shineExponent);
+  glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 
+              (GLfloat)CTX::instance()->shineExponent);
 
   glShadeModel(GL_SMOOTH);
 

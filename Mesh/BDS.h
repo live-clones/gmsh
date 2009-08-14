@@ -213,7 +213,7 @@ class BDS_Edge
   {
     if(numfaces()!=2) {
       Msg::Fatal("otherFace wrong, ony %d faces attached to edge %d %d",
-		 numfaces(), p1->iD, p2->iD);
+                 numfaces(), p1->iD, p2->iD);
       return 0;
     }
     if(f == _faces[0]) return _faces[1];
@@ -273,14 +273,14 @@ class BDS_Face
   {
     if (e4){
       Msg::Fatal("oppositeVertex to edge %d %d cannot be applied to a quad", 
-		 e->p1->iD, e->p2->iD);
+                 e->p1->iD, e->p2->iD);
       return 0;
     }
     if (e == e1) return e2->commonvertex(e3);
     if (e == e2) return e1->commonvertex(e3);
     if (e == e3) return e1->commonvertex(e2);
     Msg::Fatal("edge  %d %d does not belong to this triangle",
-	       e->p1->iD, e->p2->iD);
+               e->p1->iD, e->p2->iD);
     return 0;
   }
   inline void getNodes(BDS_Point *n[4]) const
@@ -467,6 +467,6 @@ void outputScalarField(std::list<BDS_Face*> t, const char *fn, int param, GFace 
 void recur_tag(BDS_Face *t, BDS_GeomEntity *g);
 int Intersect_Edges_2d(double x1, double y1, double x2, double y2,
                        double x3, double y3, double x4, double y4,
-		       double x[2]);
+                       double x[2]);
 
 #endif

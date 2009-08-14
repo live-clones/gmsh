@@ -125,17 +125,17 @@ int GModel::importGEOInternals()
       switch(p->Typ){
       case MSH_PHYSICAL_POINT:   ge = getVertexByTag(abs(num)); break;
       case MSH_PHYSICAL_LINE: 
-	ge = getEdgeByTag(abs(num));
-	e_compound.push_back(getEdgeByTag(abs(num)));
-	break; 
+        ge = getEdgeByTag(abs(num));
+        e_compound.push_back(getEdgeByTag(abs(num)));
+        break; 
      case MSH_PHYSICAL_SURFACE: 
-	ge = getFaceByTag(abs(num));
-	f_compound.push_back(getFaceByTag(abs(num))); 
-	break;
+        ge = getFaceByTag(abs(num));
+        f_compound.push_back(getFaceByTag(abs(num))); 
+        break;
       case MSH_PHYSICAL_VOLUME:  
-	ge = getRegionByTag(abs(num)); 
-	r_compound.push_back(getRegionByTag(abs(num))); 
-	break;
+        ge = getRegionByTag(abs(num)); 
+        r_compound.push_back(getRegionByTag(abs(num))); 
+        break;
       }
       int pnum = sign(num) * p->Num;
       if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) == 
@@ -150,8 +150,8 @@ int GModel::importGEOInternals()
     if (p->Typ == MSH_PHYSICAL_LINE && p->Boundaries[0]){
       GEdge *ge = getEdgeByTag(abs(p->Num));
       if (!ge){
-	GEdgeCompound *ge = new GEdgeCompound(this, p->Num, e_compound);
-	add(ge);
+        GEdgeCompound *ge = new GEdgeCompound(this, p->Num, e_compound);
+        add(ge);
       }
       else
         ge->resetMeshAttributes();
@@ -161,19 +161,19 @@ int GModel::importGEOInternals()
       List_T *bnd;
       std::list<GEdge*> b[4];
       while((bnd = p->Boundaries[i])){
-	if (i > 3)break;
-	for(int j = 0; j < List_Nbr(bnd); j++){
-	  int ie;
-	  List_Read(bnd, j, &ie);
-	  b[i].push_back(getEdgeByTag(abs(ie)));
-	}
-	i++;
+        if (i > 3)break;
+        for(int j = 0; j < List_Nbr(bnd); j++){
+          int ie;
+          List_Read(bnd, j, &ie);
+          b[i].push_back(getEdgeByTag(abs(ie)));
+        }
+        i++;
       }
       GFace *gf = getFaceByTag(abs(p->Num));
       if (!gf){
-	GFaceCompound *gf = new GFaceCompound(this, p->Num, f_compound, 
+        GFaceCompound *gf = new GFaceCompound(this, p->Num, f_compound, 
                                               b[0], b[1], b[2], b[3]);
-	add(gf);
+        add(gf);
       }
       else
         gf->resetMeshAttributes();
@@ -181,8 +181,8 @@ int GModel::importGEOInternals()
     if (p->Typ == MSH_PHYSICAL_VOLUME && p->Boundaries[0]){
       GRegion *gr = getRegionByTag(abs(p->Num));
       if (!gr){
-	GRegionCompound *gr = new GRegionCompound(this, p->Num, r_compound);
-	add(gr);
+        GRegionCompound *gr = new GRegionCompound(this, p->Num, r_compound);
+        add(gr);
       }
       else
         gr->resetMeshAttributes();

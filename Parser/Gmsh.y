@@ -416,7 +416,7 @@ Element :
 #if !defined(HAVE_NO_POST)
       if(ViewValueList){
 	for(int i = 0; i < 3; i++)
-	  for(int j = 0; j < ViewCoord.size() / 3; j++) 
+	  for(unsigned int j = 0; j < ViewCoord.size() / 3; j++) 
 	    ViewValueList->push_back(ViewCoord[3 * j + i]);
       }
 #endif
@@ -602,7 +602,7 @@ Affectation :
 	  yymsg(0, "Unknown variable '%s'", $1);
       }
       else{
-	if(gmsh_yysymbols[$1].size() < index + 1)
+	if((int)gmsh_yysymbols[$1].size() < index + 1)
 	  gmsh_yysymbols[$1].resize(index + 1, 0.);
 	switch($5){
 	case 0 : gmsh_yysymbols[$1][index] = $6; break;
@@ -638,7 +638,7 @@ Affectation :
 	  for(int i = 0; i < List_Nbr($4); i++){
 	    int index = (int)(*(double*)List_Pointer($4, i));
 	    double d = *(double*)List_Pointer($8, i);
-	    if(gmsh_yysymbols[$1].size() < index + 1)
+	    if((int)gmsh_yysymbols[$1].size() < index + 1)
 	      gmsh_yysymbols[$1].resize(index + 1, 0.);
 	    switch($7){
 	    case 0 : gmsh_yysymbols[$1][index] = d; break;
@@ -689,7 +689,7 @@ Affectation :
 	yymsg(0, "Unknown variable '%s'", $1); 
       else{
 	int index = (int)$3;
-	if(gmsh_yysymbols[$1].size() < index + 1)
+	if((int)gmsh_yysymbols[$1].size() < index + 1)
 	  gmsh_yysymbols[$1].resize(index + 1, 0.);
 	gmsh_yysymbols[$1][index] += $5;
       }
@@ -1430,7 +1430,6 @@ Shape :
       $$.Type = MSH_PHYSICAL_SURFACE;
       $$.Num = num;
     }
-
   | tCompound tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
@@ -1448,8 +1447,8 @@ Shape :
       $$.Type = MSH_PHYSICAL_VOLUME;
       $$.Num = num;
     }
-
-  | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tSTRING '{' RecursiveListOfListOfDouble '}' tEND
+  | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tSTRING 
+      '{' RecursiveListOfListOfDouble '}' tEND
     {
       int num = (int)$4;
       if(FindPhysicalGroup(num, MSH_PHYSICAL_SURFACE)){
@@ -1476,8 +1475,7 @@ Shape :
       $$.Type = MSH_PHYSICAL_SURFACE;
       $$.Num = num;
     }
- //EMI ADDED
- | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
       if(FindPhysicalGroup(num, MSH_PHYSICAL_SURFACE)){
@@ -1494,8 +1492,6 @@ Shape :
       $$.Type = MSH_PHYSICAL_SURFACE;
       $$.Num = num;
     }
- // END EMI ADDED
-
   | tCompound tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
@@ -3017,7 +3013,7 @@ FExpr_Single :
 	yymsg(0, "Unknown variable '%s'", $1);
 	$$ = 0.;
       }
-      else if(gmsh_yysymbols[$1].size() < index + 1){
+      else if((int)gmsh_yysymbols[$1].size() < index + 1){
 	yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
 	$$ = 0.;
       }
@@ -3052,7 +3048,7 @@ FExpr_Single :
 	yymsg(0, "Unknown variable '%s'", $1);
 	$$ = 0.;
       }
-      else if(gmsh_yysymbols[$1].size() < index + 1){
+      else if((int)gmsh_yysymbols[$1].size() < index + 1){
 	yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
 	$$ = 0.;
       }
@@ -3300,7 +3296,7 @@ FExpr_Multi :
       else{
 	for(int i = 0; i < List_Nbr($4); i++){
 	  int index = (int)(*(double*)List_Pointer_Fast($4, i));
-	  if(gmsh_yysymbols[$1].size() < index + 1)
+	  if((int)gmsh_yysymbols[$1].size() < index + 1)
 	    yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
 	  else
 	    List_Add($$, &gmsh_yysymbols[$1][index]);

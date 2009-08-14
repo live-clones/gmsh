@@ -15,7 +15,7 @@ extern "C"
 
 class GMSH_WarpPlugin : public GMSH_PostPlugin
 {
-public:
+ public:
   GMSH_WarpPlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *help_text) const;

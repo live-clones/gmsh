@@ -62,7 +62,7 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
   
   if(c2d.IsNull()){
     Msg::Fatal("Reparam on face failed: curve %d is not on surface %d",
-	       tag(), face->tag());
+               tag(), face->tag());
   }
 
   double u, v;
@@ -78,11 +78,11 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
   if(sqrt(dx * dx + dy * dy + dz * dz) > 1.e-4 * CTX::instance()->lc){
     // return reparamOnFace(face, epar,-1);      
     Msg::Warning("Reparam on face partially failed for curve %d surface %d at point %g",
-		 tag(), face->tag(), epar);
+                 tag(), face->tag(), epar);
     Msg::Warning("On the face %d local (%g %g) global (%g %g %g)",
-		 face->tag(), u, v, p2.x(), p2.y(), p2.z());
+                 face->tag(), u, v, p2.x(), p2.y(), p2.z());
     Msg::Warning("On the edge %d local (%g) global (%g %g %g)",
-		 tag(), epar, p1.x(), p1.y(), p1.z());
+                 tag(), epar, p1.x(), p1.y(), p1.z());
     // GPoint ppp = face->closestPoint(SPoint3(p1.x(), p1.y(), p1.z()));
     // return SPoint2(ppp.u(), ppp.v());
   }

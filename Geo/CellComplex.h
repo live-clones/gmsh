@@ -154,6 +154,7 @@ class Cell
          return ori;
        }
      }
+     return 0;
    }
    virtual int removeCoboundaryCell(Cell* cell, bool other=true) {
      for(std::list< std::pair<int, Cell*> >::iterator it = _coboundary.begin(); it != _coboundary.end(); it++){
@@ -166,6 +167,7 @@ class Cell
          return ori;
        }
      }
+     return 0;
    }
    
    virtual bool hasBoundary(Cell* cell){
@@ -521,7 +523,7 @@ class CombinedCell : public Cell{
        if(!this->hasVertex(c2->getVertex(i)->getNum())) _v.push_back(c2->getVertex(i));
      }
      
-     for(int i = 0; i < _v.size(); i++) _vs.push_back(_v.at(i)->getNum());
+     for(unsigned int i = 0; i < _v.size(); i++) _vs.push_back(_v.at(i)->getNum());
      std::sort(_vs.begin(), _vs.end());
      
      _cells = c1->getCells();
@@ -608,7 +610,7 @@ class CombinedCell : public Cell{
      //std::vector<int>::iterator it = std::find(_vs.begin(), _vs.end(), vertex);
      //if (it == _vs.end()) return false;
      //else return true;
-     for(int i = 0; i < _v.size(); i++){
+     for(unsigned int i = 0; i < _v.size(); i++){
        if(_v.at(i)->getNum() == vertex) return true;
      }
      return false;

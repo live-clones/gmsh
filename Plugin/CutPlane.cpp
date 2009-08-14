@@ -41,7 +41,7 @@ void GMSH_CutPlanePlugin::draw(void *context)
   if(num < 0) num = iview;
   if(num >= 0 && num < (int)PView::list.size()){
     glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
-    glLineWidth(CTX::instance()->lineWidth);
+    glLineWidth((float)CTX::instance()->lineWidth);
     SBoundingBox3d bb = PView::list[num]->getData()->getBoundingBox();
     ctx->drawPlaneInBoundingBox(bb.min().x(), bb.min().y(), bb.min().z(), 
                                 bb.max().x(), bb.max().y(), bb.max().z(), 
@@ -91,7 +91,8 @@ double GMSH_CutPlanePlugin::callbackC(int num, int action, double value)
 double GMSH_CutPlanePlugin::callbackD(int num, int action, double value)
 {
   return callback(num, action, value, &CutPlaneOptions_Number[3].def,
-                  CTX::instance()->lc/200., -CTX::instance()->lc, CTX::instance()->lc);
+                  CTX::instance()->lc / 200., -CTX::instance()->lc, 
+                  CTX::instance()->lc);
 }
 
 double GMSH_CutPlanePlugin::callbackVol(int num, int action, double value)
@@ -150,8 +151,7 @@ void GMSH_CutPlanePlugin::catchErrorMessage(char *errorMessage) const
 
 double GMSH_CutPlanePlugin::levelset(double x, double y, double z, double val) const
 {
-  return CutPlaneOptions_Number[0].def * x +
-    CutPlaneOptions_Number[1].def * y +
+  return CutPlaneOptions_Number[0].def * x + CutPlaneOptions_Number[1].def * y +
     CutPlaneOptions_Number[2].def * z + CutPlaneOptions_Number[3].def;
 }
 

@@ -63,7 +63,7 @@ void MVertex::writeMSH(FILE *fp, bool binary, bool saveParametric, double scalin
       double _u;
       getParameter(0, _u);
       if(!binary)
-        fprintf(fp, " %.16g\n", _u); 	    
+        fprintf(fp, " %.16g\n", _u);        
       else
         fwrite(&_u, sizeof(double), 1, fp);
     }
@@ -80,7 +80,7 @@ void MVertex::writeMSH(FILE *fp, bool binary, bool saveParametric, double scalin
     }
     else
       if(!binary)
-        fprintf(fp, "\n"); 	    
+        fprintf(fp, "\n");          
   }
 }
 
@@ -120,7 +120,7 @@ void MVertex::writeVTK(FILE *fp, bool binary, double scalingFactor, bool bigEndi
   }
   else{
     fprintf(fp, "%.16g %.16g %.16g\n",
-	    x() * scalingFactor, y() * scalingFactor, z() * scalingFactor);
+            x() * scalingFactor, y() * scalingFactor, z() * scalingFactor);
   }
 }
 
@@ -220,19 +220,19 @@ static void getAllParameters(MVertex *v, GFace *gf, std::vector<SPoint2> &params
     bool seam = false;
     for(std::list<GEdge*>::iterator it = ed.begin(); it != ed.end(); it++){
       if((*it)->isSeam(gf)) {
-	Range<double> range = (*it)->parBounds(0);
-	if (gv == (*it)->getBeginVertex()){
-	  params.push_back((*it)->reparamOnFace(gf, range.low(),-1));
-	  params.push_back((*it)->reparamOnFace(gf, range.low(), 1));
-	}
-	else if (gv == (*it)->getEndVertex()){
-	  params.push_back((*it)->reparamOnFace(gf, range.high(),-1));
-	  params.push_back((*it)->reparamOnFace(gf, range.high(), 1));
-	}
-	else{
+        Range<double> range = (*it)->parBounds(0);
+        if (gv == (*it)->getBeginVertex()){
+          params.push_back((*it)->reparamOnFace(gf, range.low(),-1));
+          params.push_back((*it)->reparamOnFace(gf, range.low(), 1));
+        }
+        else if (gv == (*it)->getEndVertex()){
+          params.push_back((*it)->reparamOnFace(gf, range.high(),-1));
+          params.push_back((*it)->reparamOnFace(gf, range.high(), 1));
+        }
+        else{
           Msg::Warning("Strange!");
-	}
-	seam = true;
+        }
+        seam = true;
       }
     }
     if (!seam)
@@ -312,8 +312,8 @@ bool reparamMeshVertexOnFace(const MVertex *v, const GFace *gf, SPoint2 &param)
     return true;
   }
 
-  if(v->onWhat()->geomType() == GEntity::DiscreteCurve || 	 
-     v->onWhat()->geomType() == GEntity::BoundaryLayerCurve){ 	 
+  if(v->onWhat()->geomType() == GEntity::DiscreteCurve ||        
+     v->onWhat()->geomType() == GEntity::BoundaryLayerCurve){    
     param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
     return true;
   }

@@ -5,7 +5,7 @@
 
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Return_Button.H>
-#include "GUI.h"
+#include "FlGui.h"
 #include "Draw.h"
 #include "contextWindow.h"
 #include "paletteWindow.h"
@@ -16,20 +16,20 @@
 
 static void con_geometry_define_parameter_cb(Fl_Widget *w, void *data)
 {
-  add_param(GUI::instance()->geoContext->input[0]->value(),
-            GUI::instance()->geoContext->input[1]->value(),
+  add_param(FlGui::instance()->geoContext->input[0]->value(),
+            FlGui::instance()->geoContext->input[1]->value(),
             GModel::current()->getFileName());
-  GUI::instance()->resetVisibility();
+  FlGui::instance()->resetVisibility();
 }
 
 static void con_geometry_define_point_cb(Fl_Widget *w, void *data)
 {
   add_point(GModel::current()->getFileName(),
-            GUI::instance()->geoContext->input[2]->value(),
-            GUI::instance()->geoContext->input[3]->value(),
-            GUI::instance()->geoContext->input[4]->value(),
-            GUI::instance()->geoContext->input[5]->value());
-  GUI::instance()->resetVisibility();
+            FlGui::instance()->geoContext->input[2]->value(),
+            FlGui::instance()->geoContext->input[3]->value(),
+            FlGui::instance()->geoContext->input[4]->value(),
+            FlGui::instance()->geoContext->input[5]->value());
+  FlGui::instance()->resetVisibility();
   GModel::current()->setSelection(0);
   SetBoundingBox();
   Draw();
@@ -37,9 +37,9 @@ static void con_geometry_define_point_cb(Fl_Widget *w, void *data)
 
 static void con_geometry_snap_cb(Fl_Widget *w, void *data)
 {
-  CTX::instance()->geom.snap[0] = GUI::instance()->geoContext->value[0]->value();
-  CTX::instance()->geom.snap[1] = GUI::instance()->geoContext->value[1]->value();
-  CTX::instance()->geom.snap[2] = GUI::instance()->geoContext->value[2]->value();
+  CTX::instance()->geom.snap[0] = FlGui::instance()->geoContext->value[0]->value();
+  CTX::instance()->geom.snap[1] = FlGui::instance()->geoContext->value[1]->value();
+  CTX::instance()->geom.snap[2] = FlGui::instance()->geoContext->value[2]->value();
 }
 
 geometryContextWindow::geometryContextWindow(int deltaFontSize)

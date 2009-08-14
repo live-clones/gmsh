@@ -90,7 +90,7 @@ int MeshTransfiniteSurface(GFace *gf)
   findTransfiniteCorners(gf, corners);
   if(corners.size () != 3 && corners.size () != 4){
     Msg::Error("Surface %d is transfinite but has %d corners",
-	       gf->tag(), corners.size());
+               gf->tag(), corners.size());
     return 0;
   }
 
@@ -100,7 +100,7 @@ int MeshTransfiniteSurface(GFace *gf)
 
   if(indices.size () != 2){
     Msg::Error("Surface %d is transfinite but has %d holes",
-	       gf->tag(), indices.size() - 2);
+               gf->tag(), indices.size() - 2);
     return 0;
   }
 
@@ -159,7 +159,7 @@ int MeshTransfiniteSurface(GFace *gf)
     int Lb = N4 - N3, Hb = m_vertices.size() - N4;
     if(Lb != L || Hb != H){
       Msg::Error("Surface %d cannot be meshed using the transfinite algo", 
-		 gf->tag());
+                 gf->tag());
       return 0;
     }
   }
@@ -167,7 +167,7 @@ int MeshTransfiniteSurface(GFace *gf)
     int Lb = m_vertices.size() - N3;      
     if(Lb != L){
       Msg::Error("Surface %d cannot be meshed using the transfinite algo %d != %d", 
-		 gf->tag(), L, Lb);
+                 gf->tag(), L, Lb);
       return 0;
     }      
   }

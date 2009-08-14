@@ -559,7 +559,7 @@ static void RemoveAllDList(int n, PointRecord *pPointArray)
 }
 
 DocRecord::DocRecord(int n) 
-  : numPoints(n), points(NULL), striangle(0),numTriangles(0), triangles(NULL)
+  : numPoints(n), points(NULL), numTriangles(0), triangles(NULL), striangle(0)
 {
   if(numPoints)
     points = (PointRecord*)Malloc(numPoints * sizeof(PointRecord));

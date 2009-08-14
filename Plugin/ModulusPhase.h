@@ -15,7 +15,7 @@ extern "C"
 
 class GMSH_ModulusPhasePlugin : public GMSH_PostPlugin
 {
-public:
+ public:
   GMSH_ModulusPhasePlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *help_text) const;

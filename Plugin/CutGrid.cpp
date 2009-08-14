@@ -91,55 +91,64 @@ double GMSH_CutGridPlugin::callback(int num, int action, double value, double *o
 double GMSH_CutGridPlugin::callbackX0(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[0].def,
-                  CTX::instance()->lc/100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
+                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
+                  2 * CTX::instance()->lc);
 }
 
 double GMSH_CutGridPlugin::callbackY0(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[1].def,
-                  CTX::instance()->lc/100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
+                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
+                  2 * CTX::instance()->lc);
 }
 
 double GMSH_CutGridPlugin::callbackZ0(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[2].def,
-                  CTX::instance()->lc/100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
+                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
+                  2 * CTX::instance()->lc);
 }
 
 double GMSH_CutGridPlugin::callbackX1(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[3].def,
-                  CTX::instance()->lc/100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
+                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
+                  2 * CTX::instance()->lc);
 }
 
 double GMSH_CutGridPlugin::callbackY1(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[4].def,
-                  CTX::instance()->lc/100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
+                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc, 
+                  2 * CTX::instance()->lc);
 }
 
 double GMSH_CutGridPlugin::callbackZ1(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[5].def,
-                  CTX::instance()->lc/100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
+                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc, 
+                  2 * CTX::instance()->lc);
 }
 
 double GMSH_CutGridPlugin::callbackX2(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[6].def,
-                  CTX::instance()->lc/100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
+                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
+                  2 * CTX::instance()->lc);
 }
 
 double GMSH_CutGridPlugin::callbackY2(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[7].def,
-                  CTX::instance()->lc/100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
+                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
+                  2 * CTX::instance()->lc);
 }
 
 double GMSH_CutGridPlugin::callbackZ2(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[8].def,
-                  CTX::instance()->lc/100., -2*CTX::instance()->lc, 2*CTX::instance()->lc);
+                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
+                  2 * CTX::instance()->lc);
 }
 
 double GMSH_CutGridPlugin::callbackU(int num, int action, double value)
@@ -203,12 +212,12 @@ void GMSH_CutGridPlugin::catchErrorMessage(char *errorMessage) const
 
 int GMSH_CutGridPlugin::getNbU()
 {
-  return   (int)CutGridOptions_Number[9].def;
+  return (int)CutGridOptions_Number[9].def;
 }
 
 int GMSH_CutGridPlugin::getNbV()
 {
-  return   (int)CutGridOptions_Number[10].def;
+  return (int)CutGridOptions_Number[10].def;
 }
 
 void GMSH_CutGridPlugin::getPoint(int iU, int iV, double *X)
@@ -217,13 +226,13 @@ void GMSH_CutGridPlugin::getPoint(int iU, int iV, double *X)
   double v = getNbV() > 1 ? (double)iV / (double)(getNbV() - 1.) : 0.;
   X[0] = CutGridOptions_Number[0].def + 
     u  * (CutGridOptions_Number[3].def-CutGridOptions_Number[0].def) +
-    v  * (CutGridOptions_Number[6].def-CutGridOptions_Number[0].def) ;
+    v  * (CutGridOptions_Number[6].def-CutGridOptions_Number[0].def);
   X[1] = CutGridOptions_Number[1].def + 
     u  * (CutGridOptions_Number[4].def-CutGridOptions_Number[1].def) +
-    v  * (CutGridOptions_Number[7].def-CutGridOptions_Number[1].def) ;
+    v  * (CutGridOptions_Number[7].def-CutGridOptions_Number[1].def);
   X[2] = CutGridOptions_Number[2].def + 
     u  * (CutGridOptions_Number[5].def-CutGridOptions_Number[2].def) +
-    v  * (CutGridOptions_Number[8].def-CutGridOptions_Number[2].def) ;
+    v  * (CutGridOptions_Number[8].def-CutGridOptions_Number[2].def);
 }
 
 void GMSH_CutGridPlugin::addInView(int numsteps, int connect, int nbcomp, 

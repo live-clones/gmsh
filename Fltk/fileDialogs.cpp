@@ -21,7 +21,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
-#include "GUI.h"
+#include "FlGui.h"
 #include "CreateFile.h"
 #include "Options.h"
 #include "Draw.h"
@@ -852,7 +852,7 @@ int bdf_dialog(const char *name)
 {
   struct _bdf_dialog{
     Fl_Window *window;
-    Fl_Choice *c;
+    Fl_Choice *c, *d;
     Fl_Check_Button *b;
     Fl_Button *ok, *cancel;
   };
@@ -865,17 +865,27 @@ int bdf_dialog(const char *name)
     {0}
   };
 
-  int BBB = BB + 9; // labels too long
+  static Fl_Menu_Item tagmenu[] = {
+    {"Elementary entity", 0, 0, 0},
+    {"Physical entity", 0, 0, 0},
+    {"Partition", 0, 0, 0},
+    {0}
+  };
+  
+  int BBB = BB + 16; // labels too long
 
   if(!dialog){
     dialog = new _bdf_dialog;
-    int h = 3 * WB + 3 * BH, w = 2 * BBB + 3 * WB, y = WB;
+    int h = 3 * WB + 4 * BH, w = 2 * BBB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "BDF Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
-    dialog->c = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "Format"); y += BH;
+    dialog->c = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Format"); y += BH;
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
+    dialog->d = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Element tag"); y += BH;
+    dialog->d->menu(tagmenu);
+    dialog->d->align(FL_ALIGN_RIGHT);
     dialog->b = new Fl_Check_Button
       (WB, y, 2 * BBB + WB, BH, "Save all (ignore physical groups)"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
@@ -886,6 +896,8 @@ int bdf_dialog(const char *name)
   }
   
   dialog->c->value(CTX::instance()->mesh.bdfFieldFormat);
+  dialog->d->value((CTX::instance()->mesh.saveElementTagType == 3) ? 2 :
+                   (CTX::instance()->mesh.saveElementTagType == 2) ? 1 : 0);
   dialog->b->value(CTX::instance()->mesh.saveAll ? 1 : 0);
   dialog->window->show();
 
@@ -896,6 +908,8 @@ int bdf_dialog(const char *name)
       if (!o) break;
       if (o == dialog->ok) {
         opt_mesh_bdf_field_format(0, GMSH_SET | GMSH_GUI, dialog->c->value());
+        opt_mesh_save_element_tag_type(0, GMSH_SET | GMSH_GUI, 
+                                       dialog->d->value() + 1);
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
         CreateOutputFile(name, FORMAT_BDF);
         dialog->window->hide();
@@ -913,11 +927,11 @@ int bdf_dialog(const char *name)
 // Generic mesh dialog
 
 int generic_mesh_dialog(const char *name, const char *title, int format,
-			bool binary_support)
+                        bool binary_support, bool element_tag_support)
 {
   struct _generic_mesh_dialog{
     Fl_Window *window;
-    Fl_Choice *c;
+    Fl_Choice *c, *d;
     Fl_Check_Button *b;
     Fl_Button *ok, *cancel;
   };
@@ -929,17 +943,27 @@ int generic_mesh_dialog(const char *name, const char *title, int format,
     {0}
   };
 
-  int BBB = BB + 9; // labels too long
+  static Fl_Menu_Item tagmenu[] = {
+    {"Elementary entity", 0, 0, 0},
+    {"Physical entity", 0, 0, 0},
+    {"Partition", 0, 0, 0},
+    {0}
+  };
+
+  int BBB = BB + 16; // labels too long
 
   if(!dialog){
     dialog = new _generic_mesh_dialog;
-    int h = 3 * WB + 3 * BH, w = 2 * BBB + 3 * WB, y = WB;
+    int h = 3 * WB + 4 * BH, w = 2 * BBB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
-    dialog->c = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "Format"); y += BH;
+    dialog->c = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Format"); y += BH;
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
+    dialog->d = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Element tag"); y += BH;
+    dialog->d->menu(tagmenu);
+    dialog->d->align(FL_ALIGN_RIGHT);
     dialog->b = new Fl_Check_Button
       (WB, y, 2 * BBB + WB, BH, "Save all (ignore physical groups)"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
@@ -955,6 +979,12 @@ int generic_mesh_dialog(const char *name, const char *title, int format,
     dialog->c->activate();
   else
     dialog->c->deactivate();
+  dialog->d->value((CTX::instance()->mesh.saveElementTagType == 3) ? 2 :
+                   (CTX::instance()->mesh.saveElementTagType == 2) ? 1 : 0);
+  if(element_tag_support)
+    dialog->d->activate();
+  else
+    dialog->d->deactivate();
   dialog->b->value(CTX::instance()->mesh.saveAll ? 1 : 0);
   dialog->window->show();
 
@@ -965,6 +995,8 @@ int generic_mesh_dialog(const char *name, const char *title, int format,
       if (!o) break;
       if (o == dialog->ok) {
         opt_mesh_binary(0, GMSH_SET | GMSH_GUI, dialog->c->value());
+        opt_mesh_save_element_tag_type(0, GMSH_SET | GMSH_GUI, 
+                                       dialog->d->value() + 1);
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
         CreateOutputFile(name, format);
         dialog->window->hide();

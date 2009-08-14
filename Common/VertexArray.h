@@ -20,16 +20,16 @@ class ElementData {
   MElement *_ele;
  public:
   ElementData(double *x, double *y, double *z, SVector3 *n, unsigned char *r,
-	      unsigned char *g, unsigned char *b, unsigned char *a, MElement *ele)
+              unsigned char *g, unsigned char *b, unsigned char *a, MElement *ele)
   {
     for(int i = 0; i < N; i++){
-      _x[i] = x[i];
-      _y[i] = y[i];
-      _z[i] = z[i];
+      _x[i] = (float)x[i];
+      _y[i] = (float)y[i];
+      _z[i] = (float)z[i];
       if(n){
-        _nx[i] = n[i].x();
-        _ny[i] = n[i].y();
-        _nz[i] = n[i].z();
+        _nx[i] = (float)n[i].x();
+        _ny[i] = (float)n[i].y();
+        _nz[i] = (float)n[i].z();
       }
       else
         _nx[i] = _ny[i] = _nz[i] = 0.;
@@ -91,7 +91,8 @@ class Barycenter {
  private:
   float _x, _y, _z;
  public:
-  Barycenter(double x, double y, double z) : _x(x), _y(y), _z(z){}
+  Barycenter(double x, double y, double z) 
+    : _x((float)x), _y((float)y), _z((float)z){}
   inline float x() const { return _x; }
   inline float y() const { return _y; }
   inline float z() const { return _z; }
@@ -125,7 +126,7 @@ class VertexArray{
   void _addVertex(float x, float y, float z);
   void _addNormal(float nx, float ny, float nz);
   void _addColor(unsigned char r, unsigned char g, unsigned char b, 
-		 unsigned char a);
+                 unsigned char a);
   void _addElement(MElement *ele);
  public:
   VertexArray(int numVerticesPerElement, int numElements);
@@ -150,9 +151,9 @@ class VertexArray{
   // element if another one with the same barycenter is not already
   // present)
   void add(double *x, double *y, double *z, SVector3 *n, unsigned int *col, 
-	   MElement *ele=0, bool unique=true, bool boundary=false);
+           MElement *ele=0, bool unique=true, bool boundary=false);
   void add(double *x, double *y, double *z, SVector3 *n, unsigned char *r=0, 
-	   unsigned char *g=0, unsigned char *b=0, unsigned char *a=0,
+           unsigned char *g=0, unsigned char *b=0, unsigned char *a=0,
            MElement *ele=0, bool unique=true, bool boundary=false);
   // finalize the arrays
   void finalize();

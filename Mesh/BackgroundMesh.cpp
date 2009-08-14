@@ -120,16 +120,16 @@ static double LC_MVertex_PNTS(GEntity *ge, double U, double V)
       GVertex *v1 = ged->getBeginVertex();
       GVertex *v2 = ged->getEndVertex();
       if (v1 && v2){
-	Range<double> range = ged->parBounds(0);      
-	double a = (U - range.low()) / (range.high() - range.low()); 
-	double lc = (1 - a) * v1->prescribedMeshSizeAtVertex() +
-	  (a) * v2->prescribedMeshSizeAtVertex() ;
-	// FIXME we might want to remove this to make all lc treatment consistent
-	if(lc >= MAX_LC) return CTX::instance()->lc / 10.;
-	return lc;
+        Range<double> range = ged->parBounds(0);      
+        double a = (U - range.low()) / (range.high() - range.low()); 
+        double lc = (1 - a) * v1->prescribedMeshSizeAtVertex() +
+          (a) * v2->prescribedMeshSizeAtVertex() ;
+        // FIXME we might want to remove this to make all lc treatment consistent
+        if(lc >= MAX_LC) return CTX::instance()->lc / 10.;
+        return lc;
       }
       else 
-	return MAX_LC; 
+        return MAX_LC; 
     }
   default:
     return MAX_LC;
@@ -138,7 +138,7 @@ static double LC_MVertex_PNTS(GEntity *ge, double U, double V)
 
 // This is the only function that is used by the meshers
 double BGM_MeshSize(GEntity *ge, double U, double V, 
-		    double X, double Y, double Z)
+                    double X, double Y, double Z)
 {
   // default lc (mesh size == size of the model)
   double l1 = CTX::instance()->lc;
@@ -167,7 +167,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V,
 
   if(lc <= 0.){
     Msg::Error("Wrong characteristic length lc = %g (lcmin = %g, lcmax = %g)",
-	       lc, CTX::instance()->mesh.lcMin, CTX::instance()->mesh.lcMax);
+               lc, CTX::instance()->mesh.lcMin, CTX::instance()->mesh.lcMax);
     lc = l1;
   }
 
@@ -177,8 +177,8 @@ double BGM_MeshSize(GEntity *ge, double U, double V,
 
 // anisotropic version of the background field
 SMetric3 BGM_MeshMetric(GEntity *ge, 
-			double U, double V, 
-			double X, double Y, double Z)
+                        double U, double V, 
+                        double X, double Y, double Z)
 {
   // default lc (mesh size == size of the model)
   double l1 = CTX::instance()->lc;
@@ -200,9 +200,9 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
     Field *f = fields->get(fields->background_field);
     if(f){
       if (!f->isotropic())
-	(*f)(X, Y, Z, l4,ge);
+        (*f)(X, Y, Z, l4,ge);
       else
-	l4 = SMetric3((*f)(X, Y, Z, ge));
+        l4 = SMetric3((*f)(X, Y, Z, ge));
     }
   }
   
@@ -214,7 +214,7 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
 
   if(lc <= 0.){
      Msg::Error("Wrong characteristic length lc = %g (lcmin = %g, lcmax = %g)",
-  	       lc, CTX::instance()->mesh.lcMin, CTX::instance()->mesh.lcMax);
+               lc, CTX::instance()->mesh.lcMin, CTX::instance()->mesh.lcMax);
      lc = l1;
   }
   SMetric3 LC(lc);

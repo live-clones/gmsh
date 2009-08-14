@@ -369,12 +369,12 @@ bool PViewDataList::writePOS(std::string fileName, bool binary, bool parsed, boo
       fprintf(fp, "%s ", str.c_str());
     fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
             "%d %d %d %d %d %d %d %d %d %d %d %d\n",
-            Time.size(),
+            (int)Time.size(),
             NbSP, NbVP, NbTP, NbSL, NbVL, NbTL,
             NbST, NbVT, NbTT, NbSQ, NbVQ, NbTQ,
             NbSS, NbVS, NbTS, NbSH, NbVH, NbTH,
             NbSI, NbVI, NbTI, NbSY, NbVY, NbTY,
-            NbT2, T2C.size(), NbT3, T3C.size());
+            NbT2, (int)T2C.size(), NbT3, (int)T3C.size());
     if(binary) {
       int one = 1;
       if(!fwrite(&one, sizeof(int), 1, fp)){

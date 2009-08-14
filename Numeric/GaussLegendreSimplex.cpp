@@ -47,7 +47,7 @@ int GaussLegendreTet(int n1, int n2, int n3, IntPt *pts)
       for(k=0; k < n3; k++) {
         brickToTet(pt1[i],pt2[j],pt3[k],&(pts[index].pt[0]),
                    &(pts[index].pt[1]),&(pts[index].pt[2]),&dJ);
-	pts[index++].weight = dJ*wt1[i]*wt2[j]*wt3[k];
+        pts[index++].weight = dJ*wt1[i]*wt2[j]*wt3[k];
       }
     }
   }

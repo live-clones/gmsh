@@ -199,22 +199,22 @@ void add_param(std::string par, std::string value, std::string fileName)
 }
 
 void add_point(std::string fileName, std::string x, std::string y,
-	       std::string z, std::string lc)
+               std::string z, std::string lc)
 {
   std::ostringstream sstream;
   sstream << "Point(" << NEWPOINT() << ") = {" << x << ", " << y << ", " 
-	  << z ;
+          << z ;
   if(lc.size()) sstream << ", " << lc;
   sstream << "};";
   add_infile(sstream.str(), fileName);
 }
 
 void add_field_option(int field_id, std::string option_name, 
-		      std::string option_value, std::string fileName)
+                      std::string option_value, std::string fileName)
 {
   std::ostringstream sstream;
   sstream << "Field[" << field_id << "]." << option_name << " = " 
-	  << option_value << ";";
+          << option_value << ";";
   add_infile(sstream.str(), fileName);
 }
 
@@ -255,7 +255,7 @@ void add_circ(int p1, int p2, int p3, std::string fileName)
 {
   std::ostringstream sstream;
   sstream << "Circle(" << NEWLINE() << ") = {" << p1 << ", " << p2 << ", "
-	  << p3 << "};";
+          << p3 << "};";
   add_infile(sstream.str(), fileName);
 }
 
@@ -263,7 +263,7 @@ void add_ell(int p1, int p2, int p3, int p4, std::string fileName)
 {
   std::ostringstream sstream;
   sstream << "Ellipse(" << NEWLINE() << ") = {" << p1 << ", " << p2 << ", "
-	  << p3 << ", " << p4 << "};";
+          << p3 << ", " << p4 << "};";
   add_infile(sstream.str(), fileName);
 }
 
@@ -303,7 +303,7 @@ void add_physical(std::string type, List_T *list, std::string fileName)
 {
   std::ostringstream sstream;
   sstream << "Physical " << type << "(" << NEWPHYSICAL() << ") = {" 
-	  << list2string(list) << "};";
+          << list2string(list) << "};";
   add_infile(sstream.str(), fileName);
 }
 
@@ -325,7 +325,7 @@ void rotate(int add, List_T *list, std::string fileName, std::string what,
 {
   std::ostringstream sstream;
   sstream << "Rotate {{" << ax << ", " << ay << ", " << az << "}, {" 
-	  << px << ", " << py << ", " << pz << "}, " << angle << "} {\n  ";
+          << px << ", " << py << ", " << pz << "}, " << angle << "} {\n  ";
   if(add) sstream << "Duplicata { ";
   sstream << what << "{" << list2string(list) << "};";
   if(add) sstream << " }";
@@ -362,7 +362,7 @@ void extrude(List_T *list, std::string fileName, std::string what,
 {
   std::ostringstream sstream;
   sstream << "Extrude {" << tx << ", " << ty << ", " << tz << "} {\n  " << what 
-	  << "{" << list2string(list) << "};\n}";
+          << "{" << list2string(list) << "};\n}";
   add_infile(sstream.str(), fileName);
 }
 
@@ -372,8 +372,8 @@ void protude(List_T *list, std::string fileName, std::string what,
 {
   std::ostringstream sstream;
   sstream << "Extrude {{" << ax << ", " << ay << ", " << az << "}, {" 
-	  << px << ", " << py << ", " << pz << "}, " << angle << "} {\n  "
-	  << what << "{" << list2string(list) << "};\n}";
+          << px << ", " << py << ", " << pz << "}, " << angle << "} {\n  "
+          << what << "{" << list2string(list) << "};\n}";
   add_infile(sstream.str(), fileName);
 }
 

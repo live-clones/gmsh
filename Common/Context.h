@@ -180,6 +180,7 @@ class CTX {
     int smoothInternalEdges, minCircPoints, minCurvPoints;
     int saveAll, saveGroupsOfNodes, binary, bdfFieldFormat, saveParametric;
     int smoothNormals, reverseAllNormals, zoneDefinition, clip;
+    int saveElementTagType;
   } mesh;
   // FIXME: putting these in the mesh struct (where they belong) causes 
   // an LNK1179 error ("duplicate COMDAT") with MSVC...

@@ -109,7 +109,7 @@ SOrientedBoundingBox GEdge::getOBB()
     if(getNumMeshVertices() > 0) {
       int N = getNumMeshVertices();
       for (int i = 0; i < N; i++) {
-	MVertex* mv = getMeshVertex(i);
+        MVertex* mv = getMeshVertex(i);
         vertices.push_back(mv->point());
       }
       // Don't forget to add the first and last vertices...

@@ -59,14 +59,14 @@ static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
     for(unsigned int i = 0; i < gf->triangles.size(); i++){
       MTriangle *t = gf->triangles[i];
       if(t->getNumVertices() == 6){
-	triangles2.push_back
-	  (new MTriangle(t->getVertex(0), t->getVertex(3), t->getVertex(5)));
-	triangles2.push_back
-	  (new MTriangle(t->getVertex(3), t->getVertex(4), t->getVertex(5)));
-	triangles2.push_back
-	  (new MTriangle(t->getVertex(3), t->getVertex(1), t->getVertex(4)));
-	triangles2.push_back
-	  (new MTriangle(t->getVertex(5), t->getVertex(4), t->getVertex(2)));
+        triangles2.push_back
+          (new MTriangle(t->getVertex(0), t->getVertex(3), t->getVertex(5)));
+        triangles2.push_back
+          (new MTriangle(t->getVertex(3), t->getVertex(4), t->getVertex(5)));
+        triangles2.push_back
+          (new MTriangle(t->getVertex(3), t->getVertex(1), t->getVertex(4)));
+        triangles2.push_back
+          (new MTriangle(t->getVertex(5), t->getVertex(4), t->getVertex(2)));
       }
       delete t;
     }
@@ -92,32 +92,32 @@ static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
     for(unsigned int i = 0; i < gf->triangles.size(); i++){
       MTriangle *t = gf->triangles[i];
       if(t->getNumVertices() == 6){
-	SPoint2 pt;
-	SPoint3 ptx; t->pnt(0.5, 0.5, 0, ptx);
-	bool reparamOK = true;
-	for(int k = 0; k < 6; k++){
+        SPoint2 pt;
+        SPoint3 ptx; t->pnt(0.5, 0.5, 0, ptx);
+        bool reparamOK = true;
+        for(int k = 0; k < 6; k++){
           SPoint2 temp;
-	  reparamOK &= reparamMeshVertexOnFace(t->getVertex(k), gf, temp);
-	  pt[0] += temp[0] / 6.;
-	  pt[1] += temp[1] / 6.;
-	}
-	MVertex *newv;
-	if (reparamOK){
-	  GPoint gp = gf->point(pt);		
-	  newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, pt[0], pt[1]);
-	}
-	else {
-	  newv = new MVertex(ptx.x(), ptx.y(), ptx.z(), gf);
-	}
-	gf->mesh_vertices.push_back(newv);
+          reparamOK &= reparamMeshVertexOnFace(t->getVertex(k), gf, temp);
+          pt[0] += temp[0] / 6.;
+          pt[1] += temp[1] / 6.;
+        }
+        MVertex *newv;
+        if (reparamOK){
+          GPoint gp = gf->point(pt);            
+          newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, pt[0], pt[1]);
+        }
+        else {
+          newv = new MVertex(ptx.x(), ptx.y(), ptx.z(), gf);
+        }
+        gf->mesh_vertices.push_back(newv);
         if(splitIntoHexas) faceVertices[t->getFace(0)].push_back(newv);
-	quadrangles2.push_back
-	  (new MQuadrangle(t->getVertex(0), t->getVertex(3), newv, t->getVertex(5)));
-	quadrangles2.push_back
-	  (new MQuadrangle(t->getVertex(3), t->getVertex(1), t->getVertex(4), newv));
-	quadrangles2.push_back
-	  (new MQuadrangle(t->getVertex(5), newv,t->getVertex(4), t->getVertex(2)));
-	delete t;
+        quadrangles2.push_back
+          (new MQuadrangle(t->getVertex(0), t->getVertex(3), newv, t->getVertex(5)));
+        quadrangles2.push_back
+          (new MQuadrangle(t->getVertex(3), t->getVertex(1), t->getVertex(4), newv));
+        quadrangles2.push_back
+          (new MQuadrangle(t->getVertex(5), newv,t->getVertex(4), t->getVertex(2)));
+        delete t;
       }
     }
     gf->triangles.clear();
@@ -210,19 +210,19 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas, faceContainer &faceVerti
         SPoint3 pc = t->barycenter();
         newv.push_back(new MVertex(pc.x(), pc.y(), pc.z(), gr));
         gr->mesh_vertices.push_back(newv.back());
-	hexahedra2.push_back
-	  (new MHexahedron(t->getVertex(0), t->getVertex(4), newv[0], t->getVertex(6),
+        hexahedra2.push_back
+          (new MHexahedron(t->getVertex(0), t->getVertex(4), newv[0], t->getVertex(6),
                            t->getVertex(7), newv[1], newv[4], newv[2]));
-	hexahedra2.push_back
-	  (new MHexahedron(t->getVertex(4), t->getVertex(1), t->getVertex(5), newv[0],
+        hexahedra2.push_back
+          (new MHexahedron(t->getVertex(4), t->getVertex(1), t->getVertex(5), newv[0],
                            newv[1], t->getVertex(9), newv[3], newv[4]));
-	hexahedra2.push_back
-	  (new MHexahedron(t->getVertex(6),  newv[0], t->getVertex(5), t->getVertex(2),
+        hexahedra2.push_back
+          (new MHexahedron(t->getVertex(6),  newv[0], t->getVertex(5), t->getVertex(2),
                            newv[2], newv[4], newv[3], t->getVertex(8)));
-	hexahedra2.push_back
-	  (new MHexahedron(t->getVertex(3),  t->getVertex(9), newv[1], t->getVertex(7),
+        hexahedra2.push_back
+          (new MHexahedron(t->getVertex(3),  t->getVertex(9), newv[1], t->getVertex(7),
                            t->getVertex(8), newv[3], newv[4], newv[2]));
-	delete t;
+        delete t;
       }
     }
     gr->tetrahedra.clear();
@@ -247,23 +247,23 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas, faceContainer &faceVerti
         SPoint3 pc = p->barycenter();
         newv.push_back(new MVertex(pc.x(), pc.y(), pc.z(), gr));
         gr->mesh_vertices.push_back(newv.back());
-	hexahedra2.push_back
-	  (new MHexahedron(p->getVertex(0), p->getVertex(6), newv[0], p->getVertex(7),
+        hexahedra2.push_back
+          (new MHexahedron(p->getVertex(0), p->getVertex(6), newv[0], p->getVertex(7),
                            p->getVertex(8), p->getVertex(15), newv[2], p->getVertex(16)));
-	hexahedra2.push_back
-	  (new MHexahedron(p->getVertex(1), p->getVertex(9), newv[0], p->getVertex(6),
+        hexahedra2.push_back
+          (new MHexahedron(p->getVertex(1), p->getVertex(9), newv[0], p->getVertex(6),
                            p->getVertex(10), p->getVertex(17), newv[2], p->getVertex(15)));
-	hexahedra2.push_back
-	  (new MHexahedron(p->getVertex(2), p->getVertex(7), newv[0], p->getVertex(9),
+        hexahedra2.push_back
+          (new MHexahedron(p->getVertex(2), p->getVertex(7), newv[0], p->getVertex(9),
                            p->getVertex(11), p->getVertex(16), newv[2], p->getVertex(17)));
-	hexahedra2.push_back
-	  (new MHexahedron(p->getVertex(8), p->getVertex(15), newv[2], p->getVertex(16),
+        hexahedra2.push_back
+          (new MHexahedron(p->getVertex(8), p->getVertex(15), newv[2], p->getVertex(16),
                            p->getVertex(3), p->getVertex(12), newv[1], p->getVertex(13)));
-	hexahedra2.push_back
-	  (new MHexahedron(p->getVertex(10), p->getVertex(17), newv[2], p->getVertex(15),
+        hexahedra2.push_back
+          (new MHexahedron(p->getVertex(10), p->getVertex(17), newv[2], p->getVertex(15),
                            p->getVertex(4), p->getVertex(14), newv[1], p->getVertex(12)));
-	hexahedra2.push_back
-	  (new MHexahedron(p->getVertex(11), p->getVertex(16), newv[2], p->getVertex(17),
+        hexahedra2.push_back
+          (new MHexahedron(p->getVertex(11), p->getVertex(16), newv[2], p->getVertex(17),
                            p->getVertex(5), p->getVertex(13), newv[1], p->getVertex(14)));
       }
     }
@@ -281,22 +281,22 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas, faceContainer &faceVerti
                     p->getVertex(8), p->getVertex(15), p->getVertex(16)));
       prisms2.push_back
         (new MPrism(p->getVertex(8), p->getVertex(15), p->getVertex(16), 
-                    p->getVertex(3), p->getVertex(12), p->getVertex(13)));		
+                    p->getVertex(3), p->getVertex(12), p->getVertex(13)));              
       prisms2.push_back
         (new MPrism(p->getVertex(6), p->getVertex(1), p->getVertex(9), 
-                    p->getVertex(15), p->getVertex(10), p->getVertex(17)));		
+                    p->getVertex(15), p->getVertex(10), p->getVertex(17)));             
       prisms2.push_back
         (new MPrism(p->getVertex(15), p->getVertex(10), p->getVertex(17), 
-                    p->getVertex(12), p->getVertex(4), p->getVertex(14)));		
+                    p->getVertex(12), p->getVertex(4), p->getVertex(14)));              
       prisms2.push_back
         (new MPrism(p->getVertex(7), p->getVertex(9), p->getVertex(2), 
-                    p->getVertex(16), p->getVertex(17), p->getVertex(11)));		
+                    p->getVertex(16), p->getVertex(17), p->getVertex(11)));             
       prisms2.push_back
         (new MPrism(p->getVertex(16), p->getVertex(17), p->getVertex(11), 
-                    p->getVertex(13), p->getVertex(14), p->getVertex(5)));		
+                    p->getVertex(13), p->getVertex(14), p->getVertex(5)));              
       prisms2.push_back
         (new MPrism(p->getVertex(9), p->getVertex(7), p->getVertex(6), 
-                    p->getVertex(17), p->getVertex(16), p->getVertex(15)));		
+                    p->getVertex(17), p->getVertex(16), p->getVertex(15)));             
       prisms2.push_back
         (new MPrism(p->getVertex(17), p->getVertex(16), p->getVertex(15), 
                     p->getVertex(14), p->getVertex(13), p->getVertex(12)));
@@ -363,7 +363,7 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads, bool splitIntoHexas
 {
   Msg::StatusBar(1, true, "Refining mesh...");
   double t1 = Cpu();
-	
+        
   // Create 2nd order mesh (using "2nd order complete" elements) to
   // generate vertex positions
   SetOrderN(m, 2, linear, false);

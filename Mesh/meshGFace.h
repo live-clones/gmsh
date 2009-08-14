@@ -46,7 +46,7 @@ void computeEdgeLoops(const GFace *gf,
                       std::vector<int> &indices);
 void findTransfiniteCorners(GFace *gf, std::vector<MVertex*> &corners);
 int MeshTransfiniteSurface(GFace *gf);
-int MeshExtrudedSurface(GFace *gf, 
-                        std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges=0);
+int MeshExtrudedSurface(GFace *gf, std::set<std::pair<MVertex*, MVertex*> > 
+                        *constrainedEdges=0);
 
 #endif

@@ -121,7 +121,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
   }
  
   Msg::Info("%d points %d edges and %d faces in the final mesh",
-	    out.numberofpoints, out.numberofedges, out.numberoftrifaces);
+            out.numberofpoints, out.numberofedges, out.numberoftrifaces);
 
   // Tetgen modifies both surface & edge mesh, so we need to re-create
   // everything
@@ -162,30 +162,30 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
         Msg::Error("Uncategorized vertex %d", v[j]->getNum());
       }
       else if(v[j]->onWhat()->dim() == 2){
-	double uu,vv;
-	v[j]->getParameter(0,uu);
-	v[j]->getParameter(1,vv);
-	guess[0] += uu;
-	guess[1] += vv;
-	Count++;
+        double uu,vv;
+        v[j]->getParameter(0,uu);
+        v[j]->getParameter(1,vv);
+        guess[0] += uu;
+        guess[1] += vv;
+        Count++;
       }
       else if (v[j]->onWhat()->dim() == 1){
-	GEdge *ge = (GEdge*)v[j]->onWhat();
-	double UU;
-	v[j]->getParameter(0, UU);
-	SPoint2 param;
-	param = ge->reparamOnFace(gf, UU, 1);
-	guess[0]+=param.x();
-	guess[1]+=param.y();
-	Count++;
+        GEdge *ge = (GEdge*)v[j]->onWhat();
+        double UU;
+        v[j]->getParameter(0, UU);
+        SPoint2 param;
+        param = ge->reparamOnFace(gf, UU, 1);
+        guess[0]+=param.x();
+        guess[1]+=param.y();
+        Count++;
       }
       else if (v[j]->onWhat()->dim() == 0){
-	SPoint2 param;
-	GVertex *gv = (GVertex*)v[j]->onWhat();
-	param = gv->reparamOnFace(gf,1);
-	guess[0]+=param.x();
-	guess[1]+=param.y();
-	Count++;
+        SPoint2 param;
+        GVertex *gv = (GVertex*)v[j]->onWhat();
+        param = gv->reparamOnFace(gf,1);
+        guess[0]+=param.x();
+        guess[1]+=param.y();
+        Count++;
       }
     }
     if (Count != 0){
@@ -200,35 +200,35 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
                      v[j]->onWhat()->mesh_vertices.end(),
                      v[j]));
         MVertex *v1b;
-	if (CTX::instance()->mesh.order > 1 && 
+        if (CTX::instance()->mesh.order > 1 && 
             CTX::instance()->mesh.secondOrderExperimental){
-	  // PARAMETRIC COORDINATES SHOULD BE SET for the vertex !!!!!!!!!!!!!
-	  // This is not 100 % safe yet, so we reserve that operation for high order
-	  // meshes.
-	  //	  Msg::Debug("A new point has been inserted in mesh face %d by the 3D mesher, guess %g %g",gf->tag(),guess[0],guess[1]);
-	  GPoint gp = gf->closestPoint (SPoint3(v[j]->x(), v[j]->y(), v[j]->z()),guess);
+          // PARAMETRIC COORDINATES SHOULD BE SET for the vertex !!!!!!!!!!!!!
+          // This is not 100 % safe yet, so we reserve that operation for high order
+          // meshes.
+          //      Msg::Debug("A new point has been inserted in mesh face %d by the 3D mesher, guess %g %g",gf->tag(),guess[0],guess[1]);
+          GPoint gp = gf->closestPoint (SPoint3(v[j]->x(), v[j]->y(), v[j]->z()),guess);
 
-	  // To be safe, we should ensure that this mesh motion does not lead to an invalid mesh !!!!
-	  //v1b = new MVertex(gp.x(),gp.y(),gp.z(),gf);
-	  if (gp.g() ){
-	    //v1b = new MFaceVertex(v[j]->x(), v[j]->y(), v[j]->z(),gf,gp.u(),gp.v());
-	    v1b = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
-	    //	    Msg::Info("The point has been projected back to the surface (%g %g %g) -> (%g %g %g)",
-	    //	      v[j]->x(), v[j]->y(), v[j]->z(),gp.x(),gp.y(),gp.z());
-	  }
-	  else{
-	    v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(),gf);	  
-	    Msg::Warning("The point was not projected back to the surface (%g %g %g)", 
+          // To be safe, we should ensure that this mesh motion does not lead to an invalid mesh !!!!
+          //v1b = new MVertex(gp.x(),gp.y(),gp.z(),gf);
+          if (gp.g() ){
+            //v1b = new MFaceVertex(v[j]->x(), v[j]->y(), v[j]->z(),gf,gp.u(),gp.v());
+            v1b = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
+            //      Msg::Info("The point has been projected back to the surface (%g %g %g) -> (%g %g %g)",
+            //        v[j]->x(), v[j]->y(), v[j]->z(),gp.x(),gp.y(),gp.z());
+          }
+          else{
+            v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(),gf);        
+            Msg::Warning("The point was not projected back to the surface (%g %g %g)", 
                          v[j]->x(), v[j]->y(), v[j]->z());
-	  }
-	}
-	else{
-	  v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(),gf);
-	}
+          }
+        }
+        else{
+          v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(),gf);
+        }
 
         gf->mesh_vertices.push_back(v1b);
         numberedV[out.trifacelist[i * 3 + j] - 1] = v1b;
-	delete v[j];
+        delete v[j];
         v[j] = v1b;
       }
     }
@@ -280,13 +280,13 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
     char opts[128];
     buildTetgenStructure(gr, in, numberedV);
     sprintf(opts, "pe%c", 
-	    (Msg::GetVerbosity() < 3) ? 'Q': (Msg::GetVerbosity() > 6)? 'V': '\0');
+            (Msg::GetVerbosity() < 3) ? 'Q': (Msg::GetVerbosity() > 6)? 'V': '\0');
     try{
       tetrahedralize(opts, &in, &out);
     }
     catch (int error){
       Msg::Error("Self intersecting surface mesh, computing intersections "
-		 "(this could take a while)");
+                 "(this could take a while)");
       sprintf(opts, "dV");
       try{
         tetrahedralize(opts, &in, &out);
@@ -496,11 +496,6 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
   std::list<GFace*> faces = gr->faces();
   std::list<GFace*>::iterator it = faces.begin();
 
-
-  printf("in normals faces size = %d \n", faces.size());
-  for (std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++)
-    printf("in normals face %d \n", (*it)->tag());
-
   double rrr[6];
   setRand(rrr);
                    
@@ -604,14 +599,15 @@ void meshGRegion::operator() (GRegion *gr)
     std::list<GFace*>::iterator it = faces.begin();
     while(it != faces.end()){
       if ((*it)->getCompound()){
-	mySet.insert((*it)->getCompound());
-	printf("compound face %d found in face %d\n",(*it)->getCompound()->tag(), (*it)->tag());
+        mySet.insert((*it)->getCompound());
+        printf("compound face %d found in face %d\n",(*it)->getCompound()->tag(), (*it)->tag());
       }
       else 
-	mySet.insert(*it);
+        mySet.insert(*it);
       ++it;
     }
-    printf("replacing %d edges by %d in the GFaceCompound %d\n",faces.size(),mySet.size(),gr->tag());
+    printf("replacing %d edges by %d in the GFaceCompound %d\n",
+           (int)faces.size(), (int)mySet.size(), gr->tag());
     faces.clear();
     faces.insert(faces.begin(), mySet.begin(), mySet.end());
     gr->set(faces);

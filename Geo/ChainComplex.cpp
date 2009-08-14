@@ -77,8 +77,8 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
             if(!bdCell->inSubdomain()){
               int old_elem = 0;
               //printf("cell1: %d, cell2: %d \n", bdCell->getIndex(), cell->getIndex());
-              if(bdCell->getIndex() > gmp_matrix_rows( _HMatrix[dim]) || bdCell->getIndex() < 1 
-                 || cell->getIndex() > gmp_matrix_cols( _HMatrix[dim]) || cell->getIndex() < 1){
+              if(bdCell->getIndex() > (int)gmp_matrix_rows( _HMatrix[dim]) || bdCell->getIndex() < 1 
+                 || cell->getIndex() > (int)gmp_matrix_cols( _HMatrix[dim]) || cell->getIndex() < 1){
                 printf("Warning: Index out of bound! HMatrix: %d. \n", dim);
               }
               else{
@@ -173,7 +173,7 @@ void ChainComplex::KerCod(int dim){
     rank++;
   }
   
-  if(rank != gmp_matrix_cols(normalForm->canonical)){
+  if(rank != (int)gmp_matrix_cols(normalForm->canonical)){
     _kerH[dim] = copy_gmp_matrix(normalForm->right, 1, rank+1, 
                                  gmp_matrix_rows(normalForm->right),  gmp_matrix_cols(normalForm->right));
   }
@@ -424,7 +424,7 @@ std::vector<int> ChainComplex::getCoeffVector(int dim, int chainNumber){
   std::vector<int> coeffVector;
   
   if(dim < 0 || dim > 4) return coeffVector;
-  if(_Hbasis[dim] == NULL || gmp_matrix_cols(_Hbasis[dim]) < chainNumber) return coeffVector;
+  if(_Hbasis[dim] == NULL || (int)gmp_matrix_cols(_Hbasis[dim]) < chainNumber) return coeffVector;
   
   int rows = gmp_matrix_rows(_Hbasis[dim]);
   
@@ -448,8 +448,8 @@ std::vector<int> ChainComplex::getCoeffVector(int dim, int chainNumber){
 
 int ChainComplex::getTorsion(int dim, int chainNumber){
   if(dim < 0 || dim > 4) return 0;
-  if(_Hbasis[dim] == NULL || gmp_matrix_cols(_Hbasis[dim]) < chainNumber) return 0;
-  if(_torsion[dim].empty() || _torsion[dim].size() < chainNumber) return 1;
+  if(_Hbasis[dim] == NULL || (int)gmp_matrix_cols(_Hbasis[dim]) < chainNumber) return 0;
+  if(_torsion[dim].empty() || (int)_torsion[dim].size() < chainNumber) return 1;
   else return _torsion[dim].at(chainNumber-1);
   
 }
@@ -459,7 +459,7 @@ Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, CellComp
   int i = 0;
   for(std::set<Cell*, Less_Cell>::iterator cit = cells.begin(); cit != cells.end(); cit++){
     Cell* cell = *cit;
-    if(!cell->inSubdomain() && coeffs.size() > i){
+    if(!cell->inSubdomain() && (int)coeffs.size() > i){
       if(coeffs.at(i) != 0) _cells.push_back( std::make_pair(cell, coeffs.at(i)) );
       i++;
     }

@@ -5,7 +5,7 @@
 
 #include <string.h>
 #include <string>
-#include "GUI.h"
+#include "FlGui.h"
 #include "solverWindow.h"
 #include "menuWindow.h"
 #include "GmshMessage.h"
@@ -46,7 +46,7 @@ class myGmshServer : public GmshServer{
       if(ret == 0){ 
         // nothing available: wait at most waitint seconds, and in the
         // meantime respond to FLTK events
-        GUI::instance()->wait(waitint);
+        FlGui::instance()->wait(waitint);
       }
       else if(ret > 0){ 
         // data is there
@@ -159,7 +159,7 @@ int Solver(int num, const char *args)
     }
     if(num >= 0){
       for(int i = 0; i < SINFO[num].nboptions; i++)
-        GUI::instance()->solver[num]->choice[i]->clear();
+        FlGui::instance()->solver[num]->choice[i]->clear();
     }
     return 0;
   }
@@ -255,7 +255,7 @@ int Solver(int num, const char *args)
             MergeFile(message);
             Draw();
             if(n != (int)PView::list.size()) 
-              GUI::instance()->menu->setContext(menu_post, 0);
+              FlGui::instance()->menu->setContext(menu_post, 0);
           }
           break;
         case GmshServer::CLIENT_PARSE_STRING:
@@ -281,11 +281,11 @@ int Solver(int num, const char *args)
         default:
           Msg::Warning("Unknown type of message received from %s",
                        num >= 0 ? SINFO[num].name.c_str() : "client");
-	  Msg::Direct("%-8.8s: %s", num >= 0 ? SINFO[num].name.c_str() : "Client", 
+          Msg::Direct("%-8.8s: %s", num >= 0 ? SINFO[num].name.c_str() : "Client", 
                       message);
           break;
         }
-        GUI::instance()->check();
+        FlGui::instance()->check();
       }
       else{
         Msg::Warning("Failed to receive message body on socket: aborting");
@@ -303,10 +303,10 @@ int Solver(int num, const char *args)
     if(!initOption[0] || !initOption[1] || !initOption[2] || 
        !initOption[3] || !initOption[4]){ // some options have been changed
       for(int i = 0; i < SINFO[num].nboptions; i++) {
-        GUI::instance()->solver[num]->choice[i]->clear();
+        FlGui::instance()->solver[num]->choice[i]->clear();
         for(unsigned int j = 0; j < SINFO[num].option[i].size(); j++)
-          GUI::instance()->solver[num]->choice[i]->add(SINFO[num].option[i][j].c_str());
-        GUI::instance()->solver[num]->choice[i]->value(0);
+          FlGui::instance()->solver[num]->choice[i]->add(SINFO[num].option[i][j].c_str());
+        FlGui::instance()->solver[num]->choice[i]->value(0);
       }
     }
   }

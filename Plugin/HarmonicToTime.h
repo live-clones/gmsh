@@ -15,7 +15,7 @@ extern "C"
 
 class GMSH_HarmonicToTimePlugin : public GMSH_PostPlugin
 {
-public:
+ public:
   GMSH_HarmonicToTimePlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *help_text) const;

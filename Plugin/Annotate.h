@@ -16,12 +16,12 @@ extern "C"
 
 class GMSH_AnnotatePlugin : public GMSH_PostPlugin
 {
-private:
+ private:
   static double callback(int num, int action, double value, double *opt,
                          double step, double min, double max);
   static std::string callbackStr(int num, int action, std::string value,
                                  std::string &opt);
-public:
+ public:
   GMSH_AnnotatePlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *helpText) const;

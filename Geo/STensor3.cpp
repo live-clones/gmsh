@@ -4,8 +4,8 @@
 void SMetric3::print (const char *s) const
 {
   printf(" metric %s : %12.5E %12.5E %12.5E %12.5E %12.5E %12.5E \n",s,
-	 (*this)(0,0),(*this)(1,1),(*this)(2,2),
-	 (*this)(0,1),(*this)(0,2),(*this)(1,2));
+         (*this)(0,0),(*this)(1,1),(*this)(2,2),
+         (*this)(0,1),(*this)(0,2),(*this)(1,2));
 }
 
 
@@ -28,8 +28,8 @@ SMetric3 intersection (const SMetric3 &m1, const SMetric3 &m2)
 
 // (1-t) * m1 + t * m2
 SMetric3 interpolation (const SMetric3 &m1, 
-			       const SMetric3 &m2, 
-			       const double t)
+                               const SMetric3 &m2, 
+                               const double t)
 {
   SMetric3 im1 = m1.invert();
   SMetric3 im2 = m2.invert();
@@ -40,10 +40,10 @@ SMetric3 interpolation (const SMetric3 &m1,
 }
 
 SMetric3 interpolation (const SMetric3 &m1, 
-			const SMetric3 &m2, 
-			const SMetric3 &m3, 
-			const double u,
-			const double v)
+                        const SMetric3 &m2, 
+                        const SMetric3 &m3, 
+                        const double u,
+                        const double v)
 {
   SMetric3 im1 = m1.invert();
   SMetric3 im2 = m2.invert();
@@ -57,12 +57,12 @@ SMetric3 interpolation (const SMetric3 &m1,
 }
 
 SMetric3 interpolation (const SMetric3 &m1, 
-			const SMetric3 &m2, 
-			const SMetric3 &m3,  
-			const SMetric3 &m4, 
-			const double u,
-			const double v,
-			const double w)
+                        const SMetric3 &m2, 
+                        const SMetric3 &m3,  
+                        const SMetric3 &m4, 
+                        const double u,
+                        const double v,
+                        const double w)
 {
   SMetric3 im1 = m1.invert();
   SMetric3 im2 = m2.invert();
