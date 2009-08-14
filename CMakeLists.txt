@@ -715,9 +715,9 @@ set(CPACK_STRIP_FILES TRUE)
 
 set(CPACK_SOURCE_PACKAGE_FILE_NAME gmsh-${GMSH_VERSION}-source)
 set(CPACK_SOURCE_GENERATOR TGZ)
-set(CPACK_SOURCE_IGNORE_FILES "/CVS/" "/.svn" "~$" "DS_Store$"
-    "GmshConfig.h$" "GmshVersion.h$" "/benchmarks/" "/tmp/" "/bin/" "/lib/" 
-    "/nightly/") # "/Tetgen.*/.*(cxx|h)")
+set(CPACK_SOURCE_IGNORE_FILES "/CVS/" "/.svn" "~$" "DS_Store$" "GmshConfig.h$" 
+    "GmshVersion.h$" "/benchmarks/" "/tmp/" "/bin/" "/lib/" "/nightly/" 
+    "GPATH" "GRTAGS" "GSYMS" "GTAGS" "/HTML/" "/Tetgen.*/.*(cxx|h)")
 
 # make sure we remove previous installs before doing the next one
 # (make package; make package_source can lead to huge file lists
