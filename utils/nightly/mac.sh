@@ -1,8 +1,7 @@
 #!/bin/sh
 
 GMSH=${HOME}/src/gmsh
-#LOG=${GMSH}/nightly.log
-LOG=/dev/stdout
+LOG=${GMSH}/nightly.log
 WEB_BIN=geuzaine@geuz.org:/home/www/geuz.org/gmsh/bin/MacOSX
 CMAKE=/usr/local/bin/cmake
 
