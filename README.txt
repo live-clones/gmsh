@@ -70,12 +70,16 @@ Build Gmsh from the command line
 
     ccmake ..
 
-  or you can specify options directly on the command line, e.g.
+  or you can specify options directly on the command line, for example
 
     cmake -DCMAKE_PREFIX_PATH=/opt/local ..
 
   to specify the location of external packages installed in
-  non-standard directories, or
+  non-standard directories, 
+
+    cmake -DCMAKE_INSTALL_PREFIX=/opt
+
+  to change the installation directory, or
 
     cmake -DENABLE_FLTK=0 ..
 
