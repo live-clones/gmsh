@@ -128,10 +128,11 @@ default value: @code{1}
 @end table
 
 @item Cylinder
-The value of this field is VIn inside the cylinder, VOut outside.@*
+The value of this field is VIn inside a frustrated cylinder, VOut outside.@*
 The cylinder is given by@*
 @*
   ||dX||^2 < R^2 &&@*
+  (X-X0).A < ||A||^2@*
   dX = (X - X0) - ((X - X0).A)/(||A||^2) . A@*
 Options:@*
 @table @code
