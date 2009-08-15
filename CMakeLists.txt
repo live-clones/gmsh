@@ -726,7 +726,6 @@ set(CPACK_RESOURCE_FILE_README ${WELCOME_FILE})
 set(CPACK_RESOURCE_FILE_WELCOME ${WELCOME_FILE})
 set(CPACK_PACKAGE_EXECUTABLE "gmsh;Gmsh")
 set(CPACK_STRIP_FILES TRUE)
-
 set(CPACK_SOURCE_PACKAGE_FILE_NAME gmsh-${GMSH_VERSION}-source)
 set(CPACK_SOURCE_GENERATOR TGZ)
 set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_BINARY_DIR}" "/CVS/" "/.svn" "~$" 
@@ -734,11 +733,14 @@ set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_BINARY_DIR}" "/CVS/" "/.svn" "~$"
     "/bin/" "/lib/" "/nightly/" "GPATH" "GRTAGS" "GSYMS" "GTAGS" "/HTML/" 
     "/TetgenNew/") #"/Tetgen.*/.*(cxx|h)")
 
-# make sure we remove previous installs before doing the next one
-# ("make package; make package_source" would lead to huge file lists
-# getting generated due to the Applications symlink in the bundle)
-set(CPACK_INSTALL_COMMANDS 
-    "${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/_CPack_Packages")
+if(UNIX)
+  # make sure we remove previous installs before doing the next one
+  # (on Mac for example "make package; make package_source" would lead
+  # to huge file lists getting generated due to the 'Applications'
+  # symlink in the bundle)
+  set(CPACK_INSTALL_COMMANDS 
+      "${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/_CPack_Packages")
+endif(UNIX)
 
 if(APPLE)
   set(CPACK_GENERATOR Bundle)
