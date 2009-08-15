@@ -577,6 +577,8 @@ include_directories(Common Fltk Geo Graphics Mesh Numeric Parser Plugin
 # target)
 add_library(lib STATIC EXCLUDE_FROM_ALL ${GMSH_SRC})
 set_target_properties(lib PROPERTIES OUTPUT_NAME Gmsh)
+set_target_properties(lib PROPERTIES DEBUG_OUTPUT_NAME Gmshd)
+#SET_TARGET_PROPERTIES(lib PROPERTIES DEBUG_POSTFIX d) 
 
 if(HAVE_FLTK)
   add_executable(gmsh WIN32 Fltk/Main.cpp ${GMSH_SRC})
