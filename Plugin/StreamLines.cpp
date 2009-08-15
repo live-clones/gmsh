@@ -140,18 +140,9 @@ double GMSH_StreamLinesPlugin::callbackV(int num, int action, double value)
                   1, 1, 100);
 }
 
-void GMSH_StreamLinesPlugin::getName(char *name) const
+std::string GMSH_StreamLinesPlugin::getHelp() const
 {
-  strcpy(name, "Stream Lines");
-}
-
-void GMSH_StreamLinesPlugin::getInfos(char *author, char *copyright,
-                                      char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(StreamLines) computes stream lines\n"
+  return "Plugin(StreamLines) computes stream lines\n"
          "from the `TimeStep'-th time step of a vector\n"
          "view `iView' and optionally interpolates the\n"
          "scalar view `dView' on the resulting stream\n"
@@ -172,7 +163,7 @@ void GMSH_StreamLinesPlugin::getInfos(char *author, char *copyright,
          "\n"
          "Plugin(StreamLines) creates one new view. This\n"
          "view contains multi-step vector points if `dView'\n"
-         "< 0, or single-step scalar lines if `dView' >= 0.\n");
+         "< 0, or single-step scalar lines if `dView' >= 0.\n";
 }
 
 int GMSH_StreamLinesPlugin::getNbOptions() const
@@ -183,11 +174,6 @@ int GMSH_StreamLinesPlugin::getNbOptions() const
 StringXNumber *GMSH_StreamLinesPlugin::getOption(int iopt)
 {
   return &StreamLinesOptions_Number[iopt];
-}
-
-void GMSH_StreamLinesPlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "StreamLines failed...");
 }
 
 int GMSH_StreamLinesPlugin::getNbU()

@@ -21,17 +21,9 @@ extern "C"
   }
 }
 
-void GMSH_EigenvectorsPlugin::getName(char *name) const
+std::string GMSH_EigenvectorsPlugin::getHelp() const
 {
-  strcpy(name, "Eigenvectors");
-}
-
-void GMSH_EigenvectorsPlugin::getInfos(char *author, char *copyright, char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(Eigenvectors) computes the three (right)\n"
+  return "Plugin(Eigenvectors) computes the three (right)\n"
          "eigenvectors of each tensor in the view `iView'\n"
          "and sorts them according to the value of the\n"
          "associated eigenvalues. If `ScaleByEigenvalues'\n"
@@ -41,7 +33,7 @@ void GMSH_EigenvectorsPlugin::getInfos(char *author, char *copyright, char *help
          "the plugin is run on the current view.\n"
          "\n"
          "Plugin(Eigenvectors) creates three new\n"
-         "vector views.\n");
+         "vector views.\n";
 }
 
 int GMSH_EigenvectorsPlugin::getNbOptions() const
@@ -52,11 +44,6 @@ int GMSH_EigenvectorsPlugin::getNbOptions() const
 StringXNumber *GMSH_EigenvectorsPlugin::getOption(int iopt)
 {
   return &EigenvectorsOptions_Number[iopt];
-}
-
-void GMSH_EigenvectorsPlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "Eigenvectors failed...");
 }
 
 static std::vector<double> *incrementList(PViewDataList *data2, int type)

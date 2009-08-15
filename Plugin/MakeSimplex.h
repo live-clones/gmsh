@@ -16,10 +16,9 @@ extern "C"
 class GMSH_MakeSimplexPlugin : public GMSH_PostPlugin
 {
 public:
-  GMSH_MakeSimplexPlugin();
-  void getName(char *name) const;
-  void getInfos(char *author, char *copyright, char *help_text) const;
-  void catchErrorMessage(char *errorMessage) const;
+  GMSH_MakeSimplexPlugin(){}
+  std::string getName() const { return "MakeSimplex"; }
+  std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);  
   PView *execute(PView *);

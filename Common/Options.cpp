@@ -754,14 +754,12 @@ void PrintOptionsDoc()
     return;
   }
   fprintf(file, "%s@ftable @code\n", warn);
-  char author[256], copyright[256], help[4096];
-  for(PluginManager::iter it = PluginManager::instance()->begin();
-      it != PluginManager::instance()->end(); ++it) {
-    GMSH_Plugin *p = (*it).second;
+  for(std::map<std::string, GMSH_Plugin*>::iterator it = PluginManager::
+        instance()->begin(); it != PluginManager::instance()->end(); ++it) {
+    GMSH_Plugin *p = it->second;
     if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN) {
-      p->getInfos(author, copyright, help);
-      fprintf(file, "@item Plugin(%s)\n", (*it).first);
-      fprintf(file, "%s\n", help);
+      fprintf(file, "@item Plugin(%s)\n", p->getName().c_str());
+      fprintf(file, "%s\n", p->getHelp().c_str());
 
       int m = p->getNbOptionsStr();
       if(m){

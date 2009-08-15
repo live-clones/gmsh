@@ -113,25 +113,16 @@ double GMSH_CutPlanePlugin::callbackTarget(int num, int action, double value)
                   0.01, 0., 1.);
 }
 
-void GMSH_CutPlanePlugin::getName(char *name) const
+std::string GMSH_CutPlanePlugin::getHelp() const
 {
-  strcpy(name, "Cut Plane");
-}
-
-void GMSH_CutPlanePlugin::getInfos(char *author, char *copyright,
-                                   char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(CutPlane) cuts the view `iView' with\n"
+  return "Plugin(CutPlane) cuts the view `iView' with\n"
          "the plane `A'*X + `B'*Y + `C'*Z + `D' = 0. If\n"
          "`ExtractVolume' is nonzero, the plugin extracts\n"
          "the elements on one side of the plane (depending\n"
          "on the sign of `ExtractVolume'). If `iView' < 0,\n"
          "the plugin is run on the current view.\n"
          "\n"
-         "Plugin(CutPlane) creates one new view.\n");
+         "Plugin(CutPlane) creates one new view.\n";
 }
 
 int GMSH_CutPlanePlugin::getNbOptions() const
@@ -142,11 +133,6 @@ int GMSH_CutPlanePlugin::getNbOptions() const
 StringXNumber *GMSH_CutPlanePlugin::getOption(int iopt)
 {
   return &CutPlaneOptions_Number[iopt];
-}
-
-void GMSH_CutPlanePlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "CutPlane failed...");
 }
 
 double GMSH_CutPlanePlugin::levelset(double x, double y, double z, double val) const

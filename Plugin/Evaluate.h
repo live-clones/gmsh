@@ -17,9 +17,8 @@ class GMSH_EvaluatePlugin : public GMSH_PostPlugin
 {
  public:
   GMSH_EvaluatePlugin(){}
-  void getName(char *name) const;
-  void getInfos(char *author, char *copyright, char *helpText) const;
-  void catchErrorMessage(char *errorMessage) const;
+  std::string getName() const { return "Evaluate"; }
+  std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);  
   int getNbOptionsStr() const;

@@ -30,18 +30,9 @@ extern "C"
   }
 }
 
-void GMSH_TransformPlugin::getName(char *name) const
+std::string GMSH_TransformPlugin::getHelp() const
 {
-  strcpy(name, "Transform");
-}
-
-void GMSH_TransformPlugin::getInfos(char *author, char *copyright,
-                                    char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(Transform) transforms the homogeneous\n"
+  return "Plugin(Transform) transforms the homogeneous\n"
          "node coordinates (x,y,z,1) of the elements in\n"
          "the view `iView' by the matrix\n"
          "[`A11' `A12' `A13' `Tx']\n"
@@ -51,7 +42,7 @@ void GMSH_TransformPlugin::getInfos(char *author, char *copyright,
          "elements is reversed. If `iView' < 0, the plugin\n"
          "is run on the current view.\n"
          "\n"
-         "Plugin(Transform) is executed in-place.\n");
+         "Plugin(Transform) is executed in-place.\n";
 }
 
 int GMSH_TransformPlugin::getNbOptions() const
@@ -62,11 +53,6 @@ int GMSH_TransformPlugin::getNbOptions() const
 StringXNumber *GMSH_TransformPlugin::getOption(int iopt)
 {
   return &TransformOptions_Number[iopt];
-}
-
-void GMSH_TransformPlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "Transform failed...");
 }
 
 PView *GMSH_TransformPlugin::execute(PView *v)

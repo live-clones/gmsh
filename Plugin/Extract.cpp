@@ -40,17 +40,9 @@ extern "C"
   }
 }
 
-void GMSH_ExtractPlugin::getName(char *name) const
+std::string GMSH_ExtractPlugin::getHelp() const
 {
-  strcpy(name, "Extract");
-}
-
-void GMSH_ExtractPlugin::getInfos(char *author, char *copyright, char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(Extract) extracts a combination of\n"
+  return "Plugin(Extract) extracts a combination of\n"
          "components from the `TimeStep'th time step\n"
          "in the view `iView'. If only `Expression0' is\n"
          "given (and `Expression1', ..., `Expression8' are\n"
@@ -70,7 +62,7 @@ void GMSH_ExtractPlugin::getInfos(char *author, char *copyright, char *help_text
          "in the view. If `iView' < 0, the plugin is run on\n"
          "the current view.\n"
          "\n"
-         "Plugin(Extract) creates one new view.\n");
+         "Plugin(Extract) creates one new view.\n";
 }
 
 int GMSH_ExtractPlugin::getNbOptions() const
@@ -91,11 +83,6 @@ int GMSH_ExtractPlugin::getNbOptionsStr() const
 StringXString *GMSH_ExtractPlugin::getOptionStr(int iopt)
 {
   return &ExtractOptions_String[iopt];
-}
-
-void GMSH_ExtractPlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "Extract failed...");
 }
 
 static std::vector<double> *incrementList(PViewDataList *data, int numComp, 

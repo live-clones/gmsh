@@ -20,21 +20,13 @@ extern "C"
   }
 }
 
-void GMSH_SkinPlugin::getName(char *name) const
+std::string GMSH_SkinPlugin::getHelp() const
 {
-  strcpy(name, "Skin");
-}
-
-void GMSH_SkinPlugin::getInfos(char *author, char *copyright, char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(Skin) extracts the skin (the boundary) of\n"
+  return "Plugin(Skin) extracts the skin (the boundary) of\n"
          "the view `iView'. If `iView' < 0, the plugin is run\n"
          "on the current view.\n"
          "\n"
-         "Plugin(Skin) creates one new view.\n");
+         "Plugin(Skin) creates one new view.\n";
 }
 
 int GMSH_SkinPlugin::getNbOptions() const
@@ -45,11 +37,6 @@ int GMSH_SkinPlugin::getNbOptions() const
 StringXNumber *GMSH_SkinPlugin::getOption(int iopt)
 {
   return &SkinOptions_Number[iopt];
-}
-
-void GMSH_SkinPlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "Skin failed...");
 }
 
 class ElmData {

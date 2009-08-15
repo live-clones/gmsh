@@ -24,24 +24,15 @@ extern "C"
   }
 }
 
-void GMSH_TriangulatePlugin::getName(char *name) const
+std::string GMSH_TriangulatePlugin::getHelp() const
 {
-  strcpy(name, "Triangulate");
-}
-
-void GMSH_TriangulatePlugin::getInfos(char *author, char *copyright,
-                                      char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(Triangulate) triangulates the points in the\n"
+  return "Plugin(Triangulate) triangulates the points in the\n"
          "view `iView', assuming that all the points belong\n"
          "to a surface that can be projected one-to-one\n"
          "onto a plane. If `iView' < 0, the plugin is run on\n"
          "the current view.\n"
          "\n"
-         "Plugin(Triangulate) creates one new view.\n");
+         "Plugin(Triangulate) creates one new view.\n";
 }
 
 int GMSH_TriangulatePlugin::getNbOptions() const
@@ -52,11 +43,6 @@ int GMSH_TriangulatePlugin::getNbOptions() const
 StringXNumber *GMSH_TriangulatePlugin::getOption(int iopt)
 {
   return &TriangulateOptions_Number[iopt];
-}
-
-void GMSH_TriangulatePlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "Triangulate failed...");
 }
 
 class PointData : public MVertex {

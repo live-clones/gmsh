@@ -661,9 +661,9 @@ void redraw_cb(Fl_Widget *w, void *data)
 void window_cb(Fl_Widget *w, void *data)
 {
   static int oldx = 0, oldy = 0, oldw = 0, oldh = 0, zoom = 1;
-  const char *str = (const char*)data;
+  std::string str((const char*)data);
 
-  if(!strcmp(str, "minimize")){
+  if(str == "minimize"){
     for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
       if(FlGui::instance()->graph[i]->win->shown())
         FlGui::instance()->graph[i]->win->iconize();
@@ -686,7 +686,7 @@ void window_cb(Fl_Widget *w, void *data)
     if(FlGui::instance()->menu->win->shown())
       FlGui::instance()->menu->win->iconize();
   }
-  else if(!strcmp(str, "zoom")){
+  else if(str == "zoom"){
     if(zoom){
       oldx = FlGui::instance()->graph[0]->win->x();
       oldy = FlGui::instance()->graph[0]->win->y();
@@ -704,7 +704,7 @@ void window_cb(Fl_Widget *w, void *data)
     FlGui::instance()->graph[0]->win->show();
     FlGui::instance()->menu->win->show();
   }
-  else if(!strcmp(str, "front")){
+  else if(str == "front"){
     // the order is important!
     for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
       FlGui::instance()->graph[i]->win->show();

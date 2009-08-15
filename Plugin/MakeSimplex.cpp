@@ -17,30 +17,16 @@ extern "C"
   }
 }
 
-GMSH_MakeSimplexPlugin::GMSH_MakeSimplexPlugin()
+std::string GMSH_MakeSimplexPlugin::getHelp() const
 {
-  ;
-}
-
-void GMSH_MakeSimplexPlugin::getName(char *name) const
-{
-  strcpy(name, "Make Simplex");
-}
-
-void GMSH_MakeSimplexPlugin::getInfos(char *author, char *copyright,
-                                      char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(MakeSimplex) decomposes all non-\n"
+  return "Plugin(MakeSimplex) decomposes all non-\n"
          "simplectic elements (quadrangles, prisms,\n"
          "hexahedra, pyramids) in the view `iView' into\n"
          "simplices (triangles, tetrahedra). If `iView' < 0,\n"
          "the plugin is run on the current view.\n"
          "\n"
          "Plugin(MakeSimplex) is executed\n"
-         "in-place.\n");
+         "in-place.\n";
 }
 
 int GMSH_MakeSimplexPlugin::getNbOptions() const
@@ -51,11 +37,6 @@ int GMSH_MakeSimplexPlugin::getNbOptions() const
 StringXNumber *GMSH_MakeSimplexPlugin::getOption(int iopt)
 {
   return &MakeSimplexOptions_Number[iopt];
-}
-
-void GMSH_MakeSimplexPlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "MakeSimplex failed...");
 }
 
 static void decomposeList(PViewDataList *data, int nbNod, int nbComp,

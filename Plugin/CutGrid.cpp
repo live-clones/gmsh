@@ -169,18 +169,9 @@ double GMSH_CutGridPlugin::callbackConnect(int num, int action, double value)
                   1, 0, 1);
 }
 
-void GMSH_CutGridPlugin::getName(char *name) const
+std::string GMSH_CutGridPlugin::getHelp() const
 {
-  strcpy(name, "Cut Grid");
-}
-
-void GMSH_CutGridPlugin::getInfos(char *author, char *copyright,
-                                   char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(CutGrid) cuts the view `iView' with a\n"
+  return "Plugin(CutGrid) cuts the view `iView' with a\n"
          "rectangular grid defined by the 3 points\n"
          "(`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of\n"
          "U) and (`X2',`Y2',`Z2') (axis of V). The number of\n"
@@ -192,7 +183,7 @@ void GMSH_CutGridPlugin::getInfos(char *author, char *copyright,
          "`nPointsV'. If `iView' < 0, the plugin is run on\n"
          "the current view.\n"
          "\n"
-         "Plugin(CutGrid) creates one new view.\n");
+         "Plugin(CutGrid) creates one new view.\n";
 }
 
 int GMSH_CutGridPlugin::getNbOptions() const
@@ -203,11 +194,6 @@ int GMSH_CutGridPlugin::getNbOptions() const
 StringXNumber *GMSH_CutGridPlugin::getOption(int iopt)
 {
   return &CutGridOptions_Number[iopt];
-}
-
-void GMSH_CutGridPlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "CutGrid failed...");
 }
 
 int GMSH_CutGridPlugin::getNbU()

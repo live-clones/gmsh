@@ -19,22 +19,13 @@ extern "C"
   }
 }
 
-void GMSH_CurlPlugin::getName(char *name) const
+std::string GMSH_CurlPlugin::getHelp() const
 {
-  strcpy(name, "Curl");
-}
-
-void GMSH_CurlPlugin::getInfos(char *author, char *copyright,
-                               char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(Curl) computes the curl of the field\n"
+  return "Plugin(Curl) computes the curl of the field\n"
          "in the view `iView'. If `iView' < 0, the plugin\n"
          "is run on the current view.\n"
          "\n"
-         "Plugin(Curl) creates one new view.\n");
+         "Plugin(Curl) creates one new view.\n";
 }
 
 int GMSH_CurlPlugin::getNbOptions() const
@@ -45,11 +36,6 @@ int GMSH_CurlPlugin::getNbOptions() const
 StringXNumber *GMSH_CurlPlugin::getOption(int iopt)
 {
   return &CurlOptions_Number[iopt];
-}
-
-void GMSH_CurlPlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "Curl failed...");
 }
 
 static std::vector<double> *incrementList(PViewDataList *data2, int type)

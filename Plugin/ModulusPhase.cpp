@@ -19,25 +19,16 @@ extern "C"
   }
 }
 
-void GMSH_ModulusPhasePlugin::getName(char *name) const
+std::string GMSH_ModulusPhasePlugin::getHelp() const
 {
-  strcpy(name, "Modulus Phase");
-}
-
-void GMSH_ModulusPhasePlugin::getInfos(char *author, char *copyright,
-                                        char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(ModulusPhase) interprets the time steps\n"
+  return "Plugin(ModulusPhase) interprets the time steps\n"
          "`realPart' and `imaginaryPart' in the view `iView'\n"
          "as the real and imaginary parts of a complex field\n"
          "and replaces them with their corresponding\n"
          "modulus and phase. If `iView' < 0, the plugin is\n"
          "run on the current view.\n"
          "\n"
-         "Plugin(ModulusPhase) is executed in-place.\n");
+         "Plugin(ModulusPhase) is executed in-place.\n";
 }
 
 int GMSH_ModulusPhasePlugin::getNbOptions() const
@@ -48,11 +39,6 @@ int GMSH_ModulusPhasePlugin::getNbOptions() const
 StringXNumber *GMSH_ModulusPhasePlugin::getOption(int iopt)
 {
   return &ModulusPhaseOptions_Number[iopt];
-}
-
-void GMSH_ModulusPhasePlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "ModulusPhase failed...");
 }
 
 PView *GMSH_ModulusPhasePlugin::execute(PView *v)

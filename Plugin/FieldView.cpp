@@ -21,18 +21,9 @@ extern "C"
   }
 }
 
-void GMSH_FieldViewPlugin::getName(char *name) const
+std::string GMSH_FieldViewPlugin::getHelp() const
 {
-  strcpy(name, "FieldView");
-}
-
-void GMSH_FieldViewPlugin::getInfos(char *author, char *copyright,
-                                    char *help_text) const
-{
-  strcpy(author, "J. Lambrechts");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(FieldView) evaluates a field on the choosen view.\n");
+  return "Plugin(FieldView) evaluates a field on the choosen view.\n";
 }
 
 int GMSH_FieldViewPlugin::getNbOptions() const
@@ -43,11 +34,6 @@ int GMSH_FieldViewPlugin::getNbOptions() const
 StringXNumber *GMSH_FieldViewPlugin::getOption(int iopt)
 {
   return &FieldViewOptions_Number[iopt];
-}
-
-void GMSH_FieldViewPlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "FieldView failed...");
 }
 
 PView *GMSH_FieldViewPlugin::execute(PView *v)

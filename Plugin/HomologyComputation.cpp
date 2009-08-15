@@ -38,21 +38,12 @@ extern "C"
   }
 }
 
-void GMSH_HomologyComputationPlugin::getName(char *name) const
+std::string GMSH_HomologyComputationPlugin::getHelp() const
 {
-  strcpy(name, "Homology Computation");
-}
-
-void GMSH_HomologyComputationPlugin::getInfos(char *author, char *copyright,
-                                   char *help_text) const
-{
-  strcpy(author, "Matti Pellikka (matti.pellikka@tut.fi)");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(HomologyComputation) computes generators \n"
+  return "Plugin(HomologyComputation) computes generators \n"
          "for (relative) homology groups and their thick cuts. \n"
          "\n"
-         "Plugin(HomologyComputation) creates new views.\n");
+         "Plugin(HomologyComputation) creates new views.\n";
 }
 
 int GMSH_HomologyComputationPlugin::getNbOptions() const
@@ -74,12 +65,6 @@ StringXString *GMSH_HomologyComputationPlugin::getOptionStr(int iopt)
 {
   return &HomologyComputationOptions_String[iopt];
 }
-
-void GMSH_HomologyComputationPlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "Homology Computation failed...");
-}
-
 
 PView *GMSH_HomologyComputationPlugin::execute(PView *v)
 {

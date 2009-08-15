@@ -6,30 +6,21 @@
 #ifndef _PLUGIN_MANAGER_H_
 #define _PLUGIN_MANAGER_H_
 
-#include <cstring>
 #include <map>
+#include <string>
 
 class GMSH_Plugin;
 class GMSH_SolverPlugin;
 
-struct ltstrpg
-{
-  bool operator()(const char* s1, const char* s2) const
-  {
-    return strcmp(s1, s2) < 0;
-  }
-};
-
 class PluginManager
 {
  private:
-  PluginManager();
+  PluginManager(){}
   static PluginManager *_instance;
-  std::map<const char*, GMSH_Plugin*, ltstrpg> allPlugins;
+  std::map<std::string, GMSH_Plugin*> allPlugins;
 
  public :
   virtual ~PluginManager();
-  typedef std::map<const char*, GMSH_Plugin*, ltstrpg>::iterator iter;
   
   // register all the plugins that are in $(GMSHPLUGINSHOME). (Note
   // that loading a .so is not what is usually called a 'plugin': we
@@ -39,28 +30,30 @@ class PluginManager
   static PluginManager *instance();
 
   // Dynamically add a plugin pluginName.so in dirName
-  void addPlugin(char *dirName, char *pluginName);
+  void addPlugin(std::string fileName);
 
   // Uninstall a given plugin
-  void uninstallPlugin(char *pluginName);
+  void uninstallPlugin(std::string pluginName);
 
   // Set an option to a value in plugin named pluginName
-  void setPluginOption(char *pluginName, char *option, double value);
-  void setPluginOption(char *pluginName, char *option, char *value);
+  void setPluginOption(std::string pluginName, std::string option, 
+                       double value);
+  void setPluginOption(std::string pluginName, std::string option, 
+                       std::string value);
 
   // Iterator on plugins
-  inline iter begin(){ return allPlugins.begin(); }
-  inline iter end(){ return allPlugins.end(); }
+  std::map<std::string, GMSH_Plugin*>::iterator begin(){ return allPlugins.begin(); }
+  std::map<std::string, GMSH_Plugin*>::iterator end(){ return allPlugins.end(); }
 
   // Find a plugin named pluginName
-  GMSH_Plugin *find(char *pluginName);
+  GMSH_Plugin *find(std::string pluginName);
 
   // Get The ONLY Solver Plugin
   GMSH_SolverPlugin *findSolverPlugin();
 
   // Perform an action on the plugin. Default action are Run and
   // Save. Other plugins may perform other actions.
-  void action(char *pluginMane, char *action, void *data);
+  void action(std::string pluginName, std::string action, void *data);
 };
 
 #endif

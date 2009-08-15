@@ -21,9 +21,8 @@ class GMSH_CutPlanePlugin : public GMSH_LevelsetPlugin
   static int iview;
  public:
   GMSH_CutPlanePlugin(){}
-  void getName(char *name) const;
-  void getInfos(char *author, char *copyright, char *helpText) const;
-  void catchErrorMessage(char *errorMessage) const;
+  std::string getName() const { return "CutPlane"; }
+  std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  
   PView *execute(PView *);

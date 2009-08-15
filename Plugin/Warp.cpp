@@ -23,18 +23,9 @@ extern "C"
   }
 }
 
-void GMSH_WarpPlugin::getName(char *name) const
+std::string GMSH_WarpPlugin::getHelp() const
 {
-  strcpy(name, "Warp");
-}
-
-void GMSH_WarpPlugin::getInfos(char *author, char *copyright,
-                               char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(Warp) transforms the elements in the\n"
+  return "Plugin(Warp) transforms the elements in the\n"
          "view `iView' by adding to their node coordinates\n"
          "the vector field stored in the `TimeStep'-th time\n"
          "step of the view `dView', scaled by `Factor'. If\n"
@@ -45,7 +36,7 @@ void GMSH_WarpPlugin::getInfos(char *author, char *copyright,
          "parameter.) If `iView' < 0, the plugin is run on\n"
          "the current view.\n"
          "\n"
-         "Plugin(Warp) is executed in-place.\n");
+         "Plugin(Warp) is executed in-place.\n";
 }
 
 int GMSH_WarpPlugin::getNbOptions() const
@@ -56,11 +47,6 @@ int GMSH_WarpPlugin::getNbOptions() const
 StringXNumber *GMSH_WarpPlugin::getOption(int iopt)
 {
   return &WarpOptions_Number[iopt];
-}
-
-void GMSH_WarpPlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "Warp failed...");
 }
 
 PView *GMSH_WarpPlugin::execute(PView *v)

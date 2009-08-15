@@ -19,22 +19,13 @@ extern "C"
   }
 }
 
-void GMSH_DivergencePlugin::getName(char *name) const
+std::string GMSH_DivergencePlugin::getHelp() const
 {
-  strcpy(name, "Divergence");
-}
-
-void GMSH_DivergencePlugin::getInfos(char *author, char *copyright,
-                                     char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(Divergence) computes the divergence of the\n"
+  return "Plugin(Divergence) computes the divergence of the\n"
          "field in the view `iView'. If `iView' < 0, the plugin\n"
          "is run on the current view.\n"
          "\n"
-         "Plugin(Divergence) creates one new view.\n");
+         "Plugin(Divergence) creates one new view.\n";
 }
 
 int GMSH_DivergencePlugin::getNbOptions() const
@@ -45,11 +36,6 @@ int GMSH_DivergencePlugin::getNbOptions() const
 StringXNumber *GMSH_DivergencePlugin::getOption(int iopt)
 {
   return &DivergenceOptions_Number[iopt];
-}
-
-void GMSH_DivergencePlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "Divergence failed...");
 }
 
 static std::vector<double> *incrementList(PViewDataList *data2, int type)

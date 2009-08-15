@@ -16,10 +16,9 @@ extern "C"
 class GMSH_ExtractEdgesPlugin : public GMSH_PostPlugin
 {
  public:
-  GMSH_ExtractEdgesPlugin();
-  void getName(char *name) const;
-  void getInfos(char *author, char *copyright, char *helpText) const;
-  void catchErrorMessage(char *errorMessage) const;
+  GMSH_ExtractEdgesPlugin(){}
+  std::string getName() const { return "ExtractEdges"; }
+  std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);  
   PView *execute(PView *);

@@ -23,23 +23,15 @@ extern "C"
   }
 }
 
-void GMSH_ExtractElementsPlugin::getName(char *name) const
+std::string GMSH_ExtractElementsPlugin::getHelp() const
 {
-  strcpy(name, "Extract Elements");
-}
-
-void GMSH_ExtractElementsPlugin::getInfos(char *author, char *copyright, char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(ExtractElements) extracts the elements\n"
+  return "Plugin(ExtractElements) extracts the elements\n"
          "from the view `iView' whose `TimeStep'-th values\n"
          "(averaged by element) are comprised between\n"
          "`MinVal' and `MaxVal'. If `iView' < 0, the plugin\n"
          "is run on the current view.\n"
          "\n"
-         "Plugin(ExtractElements) creates one new view.\n");
+         "Plugin(ExtractElements) creates one new view.\n";
 }
 
 int GMSH_ExtractElementsPlugin::getNbOptions() const
@@ -50,11 +42,6 @@ int GMSH_ExtractElementsPlugin::getNbOptions() const
 StringXNumber *GMSH_ExtractElementsPlugin::getOption(int iopt)
 {
   return &ExtractElementsOptions_Number[iopt];
-}
-
-void GMSH_ExtractElementsPlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "ExtractElements failed...");
 }
 
 static void extract(std::vector<double> &inList, int inNb, 

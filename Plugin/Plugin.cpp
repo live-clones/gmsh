@@ -3,7 +3,14 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <stdio.h>
 #include "Plugin.h"
+
+void GMSH_Plugin::catchErrorMessage(char *errorMessage) const
+{
+  std::string str = getName() + "failed...";
+  strcpy(errorMessage, str.c_str());
+}
 
 PView *GMSH_PostPlugin::getView(int index, PView *view)
 {

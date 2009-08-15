@@ -32,18 +32,9 @@ extern "C"
   }
 }
 
-void GMSH_EvaluatePlugin::getName(char *name) const
+std::string GMSH_EvaluatePlugin::getHelp() const
 {
-  strcpy(name, "Evaluate");
-}
-
-void GMSH_EvaluatePlugin::getInfos(char *author, char *copyright,
-                                   char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(Evaluate) sets the `Component'-th\n"
+  return "Plugin(Evaluate) sets the `Component'-th\n"
          "component of the `TimeStep'-th time step in the\n"
          "view `iView' to the expression `Expression'.\n"
          "`Expression' can contain:\n"
@@ -87,7 +78,7 @@ void GMSH_EvaluatePlugin::getInfos(char *author, char *copyright,
          "`ExternalView' < 0, the plugin uses `iView'\n"
          "instead.\n"
          "\n"
-         "Plugin(Evaluate) is executed in-place.\n");
+         "Plugin(Evaluate) is executed in-place.\n";
 }
 
 int GMSH_EvaluatePlugin::getNbOptions() const
@@ -108,11 +99,6 @@ int GMSH_EvaluatePlugin::getNbOptionsStr() const
 StringXString *GMSH_EvaluatePlugin::getOptionStr(int iopt)
 {
   return &EvaluateOptions_String[iopt];
-}
-
-void GMSH_EvaluatePlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "Evaluate failed...");
 }
 
 PView *GMSH_EvaluatePlugin::execute(PView *v)

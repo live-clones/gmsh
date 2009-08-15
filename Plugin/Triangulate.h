@@ -17,9 +17,8 @@ class GMSH_TriangulatePlugin : public GMSH_PostPlugin
 {
  public:
   GMSH_TriangulatePlugin(){}
-  void getName(char *name) const;
-  void getInfos(char *author, char *copyright, char *helpText) const;
-  void catchErrorMessage(char *errorMessage) const;
+  std::string getName() const { return "Triangulate"; }
+  std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);  
   PView *execute(PView *);

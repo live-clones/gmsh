@@ -24,18 +24,9 @@ extern "C"
   }
 }
 
-void GMSH_SphericalRaisePlugin::getName(char *name) const
+std::string GMSH_SphericalRaisePlugin::getHelp() const
 {
-  strcpy(name, "Spherical Raise");
-}
-
-void GMSH_SphericalRaisePlugin::getInfos(char *author, char *copyright,
-                                         char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(SphericalRaise) transforms the\n"
+  return "Plugin(SphericalRaise) transforms the\n"
          "coordinates of the elements in the view\n"
          "`iView' using the values associated with the\n"
          "`TimeStep'-th time step. Instead of elevating\n"
@@ -49,7 +40,7 @@ void GMSH_SphericalRaisePlugin::getInfos(char *author, char *copyright,
          "If `iView' < 0, the plugin is run on the current\n"
          "view.\n"
          "\n"
-         "Plugin(SphericalRaise) is executed in-place.\n");
+         "Plugin(SphericalRaise) is executed in-place.\n";
 }
 
 int GMSH_SphericalRaisePlugin::getNbOptions() const
@@ -60,11 +51,6 @@ int GMSH_SphericalRaisePlugin::getNbOptions() const
 StringXNumber *GMSH_SphericalRaisePlugin::getOption(int iopt)
 {
   return &SphericalRaiseOptions_Number[iopt];
-}
-
-void GMSH_SphericalRaisePlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "SphericalRaise failed...");
 }
 
 PView *GMSH_SphericalRaisePlugin::execute(PView *v)

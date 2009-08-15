@@ -19,9 +19,8 @@ class GMSH_StreamLinesPlugin : public GMSH_PostPlugin
                          double step, double min, double max);
  public:
   GMSH_StreamLinesPlugin(){}
-  void getName(char *name) const;
-  void getInfos(char *author, char *copyright, char *help_text) const;
-  void catchErrorMessage(char *errorMessage) const;
+  std::string getName() const { return "StreamLines"; }
+  std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  
   PView *execute(PView *);

@@ -192,18 +192,9 @@ std::string GMSH_CutParametricPlugin::callbackZ(int num, int action, std::string
   return callbackStr(num, action, value, CutParametricOptions_String[2].def);
 }
 
-void GMSH_CutParametricPlugin::getName(char *name) const
+std::string GMSH_CutParametricPlugin::getHelp() const
 {
-  strcpy(name, "Cut Parametric");
-}
-
-void GMSH_CutParametricPlugin::getInfos(char *author, char *copyright,
-                                   char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(CutParametric) cuts the view `iView' with\n"
+  return "Plugin(CutParametric) cuts the view `iView' with\n"
          "the parametric function (`X'(u), `Y'(u), `Z'(u)),\n"
          "using `nPointsU' values of the parameter u in\n"
          "[`MinU', `MaxU']. If `ConnectPoints' is set, the\n"
@@ -211,7 +202,7 @@ void GMSH_CutParametricPlugin::getInfos(char *author, char *copyright,
          "plugin generates points. If `iView' < 0, the plugin\n"
          "is run on the current view.\n"
          "\n"
-         "Plugin(CutParametric) creates one new view.\n");
+         "Plugin(CutParametric) creates one new view.\n";
 }
 
 int GMSH_CutParametricPlugin::getNbOptions() const
@@ -232,11 +223,6 @@ int GMSH_CutParametricPlugin::getNbOptionsStr() const
 StringXString *GMSH_CutParametricPlugin::getOptionStr(int iopt)
 {
   return &CutParametricOptions_String[iopt];
-}
-
-void GMSH_CutParametricPlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "CutParametric failed...");
 }
 
 static void addInView(int connect, int i, int nbcomp, int nbtime,

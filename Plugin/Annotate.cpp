@@ -180,18 +180,9 @@ std::string GMSH_AnnotatePlugin::callbackAlign(int num, int action, std::string 
   return callbackStr(num, action, value, AnnotateOptions_String[2].def);
 }
 
-void GMSH_AnnotatePlugin::getName(char *name) const
+std::string GMSH_AnnotatePlugin::getHelp() const
 {
-  strcpy(name, "Annotate");
-}
-
-void GMSH_AnnotatePlugin::getInfos(char *author, char *copyright,
-                                   char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(Annotate) adds the text string `Text',\n"
+  return "Plugin(Annotate) adds the text string `Text',\n"
          "in font `Font' and size `FontSize', in the view\n"
          "`iView'. If `ThreeD' is equal to 1, the plugin inserts\n"
          "the string in model coordinates at the position\n"
@@ -202,7 +193,7 @@ void GMSH_AnnotatePlugin::getInfos(char *author, char *copyright,
          "is run on the current view.\n"
          "\n"
          "Plugin(Annotate) is executed in-place for list-based\n"
-         "datasets or creates a new view for other datasets.\n");
+         "datasets or creates a new view for other datasets.\n";
 }
 
 int GMSH_AnnotatePlugin::getNbOptions() const
@@ -225,11 +216,6 @@ StringXString *GMSH_AnnotatePlugin::getOptionStr(int iopt)
   return &AnnotateOptions_String[iopt];
 }
 
-void GMSH_AnnotatePlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "Annotate failed...");
-}
-
 PView *GMSH_AnnotatePlugin::execute(PView *v)
 {
   double X = AnnotateOptions_Number[0].def;
@@ -237,7 +223,7 @@ PView *GMSH_AnnotatePlugin::execute(PView *v)
   double Z = AnnotateOptions_Number[2].def;
   int dim3 = (int)AnnotateOptions_Number[3].def;
   int iView = (int)AnnotateOptions_Number[5].def;
-  const char *text = AnnotateOptions_String[0].def.c_str();
+  std::string text = AnnotateOptions_String[0].def;
   double style = getStyle();
 
   PView *v1 = getView(iView, v);
@@ -257,8 +243,9 @@ PView *GMSH_AnnotatePlugin::execute(PView *v)
     data2->T3D.push_back(Z);
     data2->T3D.push_back(style); 
     data2->T3D.push_back(data2->T3C.size()); 
-    for(int i = 0; i < (int)strlen(text) + 1; i++) 
+    for(unsigned int i = 0; i < text.size(); i++) 
       data2->T3C.push_back(text[i]);
+    data2->T3C.push_back('\0');
     data2->NbT3++;
   }
   else{
@@ -266,8 +253,9 @@ PView *GMSH_AnnotatePlugin::execute(PView *v)
     data2->T2D.push_back(Y);
     data2->T2D.push_back(style); 
     data2->T2D.push_back(data2->T2C.size()); 
-    for(int i = 0; i < (int)strlen(text) + 1; i++) 
+    for(unsigned int i = 0; i < text.size(); i++) 
       data2->T2C.push_back(text[i]);
+    data2->T2C.push_back('\0');
     data2->NbT2++;
   }
 

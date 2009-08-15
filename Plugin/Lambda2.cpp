@@ -19,23 +19,9 @@ extern "C"
   }
 }
 
-GMSH_Lambda2Plugin::GMSH_Lambda2Plugin()
+std::string GMSH_Lambda2Plugin::getHelp() const
 {
-  ;
-}
-
-void GMSH_Lambda2Plugin::getName(char *name) const
-{
-  strcpy(name, "Lambda2");
-}
-
-void GMSH_Lambda2Plugin::getInfos(char *author, char *copyright,
-                                   char *help_text) const
-{
-  strcpy(author, "E. Marchandise");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(Lambda2) computes the eigenvalues\n"
+  return "Plugin(Lambda2) computes the eigenvalues\n"
          "Lambda(1,2,3) of the tensor (S_ik S_kj +\n"
          "Om_ik Om_kj), where S_ij = 0.5 (ui,j + uj,i)\n"
          "and Om_ij = 0.5 (ui,j - uj,i) are respectively\n"
@@ -50,7 +36,7 @@ void GMSH_Lambda2Plugin::getInfos(char *author, char *copyright,
          "the velocity gradient tensor. If `iView' < 0,\n"
          "the plugin is run on the current view.\n"
          "\n"
-         "Plugin(Lambda2) creates one new view.\n");
+         "Plugin(Lambda2) creates one new view.\n";
 }
 
 int GMSH_Lambda2Plugin::getNbOptions() const
@@ -61,11 +47,6 @@ int GMSH_Lambda2Plugin::getNbOptions() const
 StringXNumber *GMSH_Lambda2Plugin::getOption(int iopt)
 {
   return &Lambda2Options_Number[iopt];
-}
-
-void GMSH_Lambda2Plugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "Lambda2 failed...");
 }
 
 static int inv3x3tran(double mat[3][3], double inv[3][3], double *det)

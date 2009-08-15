@@ -17,9 +17,8 @@ class GMSH_HarmonicToTimePlugin : public GMSH_PostPlugin
 {
  public:
   GMSH_HarmonicToTimePlugin(){}
-  void getName(char *name) const;
-  void getInfos(char *author, char *copyright, char *help_text) const;
-  void catchErrorMessage(char *errorMessage) const;
+  std::string getName() const { return "HarmonicToTime"; }
+  std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);  
   PView *execute(PView *);

@@ -25,9 +25,8 @@ class GMSH_CutGridPlugin : public GMSH_PostPlugin
   PView *GenerateView (PView *v, int connectPoints);
  public:
   GMSH_CutGridPlugin(){}
-  void getName(char *name) const;
-  void getInfos(char *author, char *copyright, char *help_text) const;
-  void catchErrorMessage(char *errorMessage) const;
+  std::string getName() const { return "CutGrid"; }
+  std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  
   PView *execute(PView *);

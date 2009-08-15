@@ -13,8 +13,7 @@
 //  Some Plugins are default gmsh plugins and are insterted directly
 //  in the executable. I think that it's a good way to start.
 
-#include <string.h>
-#include <stdio.h>
+#include <string>
 #include "Options.h"
 #include "GmshMessage.h"
 #include "PView.h"
@@ -46,12 +45,14 @@ class GMSH_Plugin
 
   // return plugin type, name and info
   virtual GMSH_PLUGIN_TYPE getType() const = 0;
-  virtual void getName(char *name) const = 0;
-  virtual void getInfos(char *author, char *copyright, char *helpText) const = 0;
+  virtual std::string getName() const = 0;
+  virtual std::string getHelp() const = 0;
+  virtual std::string getAuthor() const { return "C. Geuzaine, J.-F. Remacle"; }
+  virtual std::string getCopyright() const { return "C. Geuzaine, J.-F. Remacle"; }
 
   // when an error is thrown by the plugin, the plugin manager will
   // show the message and hopefully continue
-  virtual void catchErrorMessage(char *errorMessage) const = 0;
+  virtual void catchErrorMessage(char *errorMessage) const;
 
   // gmsh-style numeric options
   virtual int getNbOptions() const = 0;

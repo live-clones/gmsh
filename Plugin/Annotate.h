@@ -23,9 +23,8 @@ class GMSH_AnnotatePlugin : public GMSH_PostPlugin
                                  std::string &opt);
  public:
   GMSH_AnnotatePlugin(){}
-  void getName(char *name) const;
-  void getInfos(char *author, char *copyright, char *helpText) const;
-  void catchErrorMessage(char *errorMessage) const;
+  std::string getName() const { return "Annotate"; }
+  std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  
   int getNbOptionsStr() const;

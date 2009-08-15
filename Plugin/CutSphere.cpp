@@ -103,25 +103,16 @@ double GMSH_CutSpherePlugin::callbackRecur(int num, int action, double value)
                   1, 0, 10);
 }
 
-void GMSH_CutSpherePlugin::getName(char *name) const
+std::string GMSH_CutSpherePlugin::getHelp() const
 {
-  strcpy(name, "Cut Sphere");
-}
-
-void GMSH_CutSpherePlugin::getInfos(char *author, char *copyright,
-                                    char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(CutSphere) cuts the view `iView' with the\n"
+  return "Plugin(CutSphere) cuts the view `iView' with the\n"
          "sphere (X-`Xc')^2 + (Y-`Yc')^2 + (Z-`Zc')^2 = `R'^2.\n"
          "If `ExtractVolume' is nonzero, the plugin extracts\n"
          "the elements inside (if `ExtractVolume' < 0) or\n"
          "outside (if `ExtractVolume' > 0) the sphere. If\n"
          "`iView' < 0, the plugin is run on the current view.\n"
          "\n"
-         "Plugin(CutSphere) creates one new view.\n");
+         "Plugin(CutSphere) creates one new view.\n";
 }
 
 int GMSH_CutSpherePlugin::getNbOptions() const
@@ -132,11 +123,6 @@ int GMSH_CutSpherePlugin::getNbOptions() const
 StringXNumber *GMSH_CutSpherePlugin::getOption(int iopt)
 {
   return &CutSphereOptions_Number[iopt];
-}
-
-void GMSH_CutSpherePlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "CutSphere failed...");
 }
 
 double GMSH_CutSpherePlugin::levelset(double x, double y, double z,

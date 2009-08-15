@@ -16,10 +16,10 @@ extern "C"
 class GMSH_Lambda2Plugin : public GMSH_PostPlugin
 {
  public:
-  GMSH_Lambda2Plugin();
-  void getName(char *name) const;
-  void getInfos(char *author, char *copyright, char *helpText) const;
-  void catchErrorMessage(char *errorMessage) const;
+  GMSH_Lambda2Plugin(){}
+  std::string getName() const { return "Lambda2"; }
+  std::string getHelp() const;
+  std::string getAuthor() const { return "E. Marchandise"; }
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);  
   PView *execute(PView *);

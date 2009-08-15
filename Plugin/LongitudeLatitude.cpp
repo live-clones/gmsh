@@ -18,22 +18,13 @@ extern "C"
   }
 }
 
-void GMSH_LongituteLatitudePlugin::getName(char *name) const
+std::string GMSH_LongituteLatitudePlugin::getHelp() const
 {
-  strcpy(name, "LongituteLatitude");
-}
-
-void GMSH_LongituteLatitudePlugin::getInfos(char *author, char *copyright,
-                               char *help_text) const
-{
-  strcpy(author, "J. Lambrechts");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(LongituteLatitude) Project the view `iView'\n"
+  return "Plugin(LongituteLatitude) Project the view `iView'\n"
          "in Longitude-Latitude. If `iView' < 0, the plugin\n"
          "is run on the current view.\n"
          "\n"
-         "Plugin(LongituteLatitude) is executed in place.\n");
+         "Plugin(LongituteLatitude) is executed in place.\n";
 }
 
 int GMSH_LongituteLatitudePlugin::getNbOptions() const
@@ -44,11 +35,6 @@ int GMSH_LongituteLatitudePlugin::getNbOptions() const
 StringXNumber *GMSH_LongituteLatitudePlugin::getOption(int iopt)
 {
   return &LongituteLatitudeOptions_Number[iopt];
-}
-
-void GMSH_LongituteLatitudePlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "LongituteLatitude failed...");
 }
 
 PView *GMSH_LongituteLatitudePlugin::execute(PView *v)

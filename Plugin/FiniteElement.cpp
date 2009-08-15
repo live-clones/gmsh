@@ -40,23 +40,14 @@ extern "C"
   }
 }
 
-void GMSH_FiniteElementPlugin::getName(char *name) const
+std::string GMSH_FiniteElementPlugin::getHelp() const
 {
-  strcpy(name, "Finite Element");
-}
-
-void GMSH_FiniteElementPlugin::getInfos(char *author, char *copyright,
-                                   char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(FiniteElement) solves simple PDEs\n"
+  return "Plugin(FiniteElement) solves simple PDEs\n"
          "using the finite element method. This is only\n"
          "intended as a demonstration tool: it is NOT\n"
          "intended for general use."
          "\n"
-         "Plugin(FiniteElement) creates a new view.\n");
+         "Plugin(FiniteElement) creates a new view.\n";
 }
 
 int GMSH_FiniteElementPlugin::getNbOptions() const
@@ -77,11 +68,6 @@ int GMSH_FiniteElementPlugin::getNbOptionsStr() const
 StringXString *GMSH_FiniteElementPlugin::getOptionStr(int iopt)
 {
   return &FiniteElementOptions_String[iopt];
-}
-
-void GMSH_FiniteElementPlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "FiniteElement failed...");
 }
 
 template<class scalar>

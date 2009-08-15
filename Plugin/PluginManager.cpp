@@ -5,8 +5,8 @@
 
 #include <map>
 #include <stdlib.h>
-
 #include "GmshConfig.h"
+#include "StringUtils.h"
 #include "Context.h"
 #include "Plugin.h"
 #include "PluginManager.h"
@@ -58,19 +58,16 @@ const char *GMSH_PluginEntry = "GMSH_RegisterPlugin";
 
 PluginManager *PluginManager::_instance = 0;
 
-PluginManager::PluginManager()
-{
-}
-
 PluginManager::~PluginManager()
 {
-  for(iter it = allPlugins.begin(); it != allPlugins.end(); ++it)
+  for(std::map<std::string, GMSH_Plugin*>::iterator it = allPlugins.begin();
+      it != allPlugins.end(); ++it)
     delete(*it).second;
 }
 
-GMSH_Plugin *PluginManager::find(char *pluginName)
+GMSH_Plugin *PluginManager::find(std::string pluginName)
 {
-  iter it = allPlugins.find(pluginName);
+  std::map<std::string, GMSH_Plugin*>::iterator it = allPlugins.find(pluginName);
   if(it == allPlugins.end())
     return 0;
   return (*it).second;
@@ -78,8 +75,8 @@ GMSH_Plugin *PluginManager::find(char *pluginName)
 
 GMSH_SolverPlugin *PluginManager::findSolverPlugin()
 {
-  iter it  = allPlugins.begin();
-  iter ite = allPlugins.end();
+  std::map<std::string, GMSH_Plugin*>::iterator it = allPlugins.begin();
+  std::map<std::string, GMSH_Plugin*>::iterator ite = allPlugins.end();
   for (; it != ite; ++it) {
     GMSH_Plugin *p = (*it).second;
     if(p->getType() == GMSH_Plugin::GMSH_SOLVER_PLUGIN) {
@@ -89,54 +86,42 @@ GMSH_SolverPlugin *PluginManager::findSolverPlugin()
   return 0;
 }
 
-void PluginManager::action(char *pluginName, char *action, void *data)
+void PluginManager::action(std::string pluginName, std::string action, void *data)
 {
   GMSH_Plugin *plugin = find(pluginName);
-  if(!plugin)
-    throw "Unknown plugin name";
+  if(!plugin) throw "Unknown plugin name";
 
-  if(!strcmp(action, "Run"))
+  if(action == "Run")
     plugin->run();
   else
     throw "Unknown plugin action";
 }
 
-void PluginManager::setPluginOption(char *pluginName, char *option,
-                                    char *value)
+void PluginManager::setPluginOption(std::string pluginName, std::string option, 
+                                    std::string value)
 {
   GMSH_Plugin *plugin = find(pluginName);
-
-  if(!plugin)
-    throw "Unknown plugin name";
+  if(!plugin) throw "Unknown plugin name";
 
   for(int i = 0; i < plugin->getNbOptionsStr(); i++) {
-    StringXString *sxs;
-    // get the ith option of the plugin
-    sxs = plugin->getOptionStr(i);
-    // look if it's the good option name
-    if(!strcmp(sxs->str, option)) {
+    StringXString *sxs = plugin->getOptionStr(i);
+    if(option == std::string(sxs->str)) {
       sxs->def = value;
       return;
     }
   }
-
   throw "Unknown plugin option name";
 }
 
-void PluginManager::setPluginOption(char *pluginName, char *option,
+void PluginManager::setPluginOption(std::string pluginName, std::string option, 
                                     double value)
 {
   GMSH_Plugin *plugin = find(pluginName);
-
-  if(!plugin)
-    throw "Unknown plugin name";
+  if(!plugin) throw "Unknown plugin name";
 
   for(int i = 0; i < plugin->getNbOptions(); i++) {
-    StringXNumber *sxn;
-    // get the ith option of the plugin
-    sxn = plugin->getOption(i);
-    // look if it's the good option name
-    if(!strcmp(sxn->str, option)) {
+    StringXNumber *sxn = plugin->getOption(i);
+    if(option == std::string(sxn->str)) {
       sxn->def = value;
       return;
     }
@@ -146,9 +131,7 @@ void PluginManager::setPluginOption(char *pluginName, char *option,
 
 PluginManager *PluginManager::instance()
 {
-  if(!_instance) {
-    _instance = new PluginManager;
-  }
+  if(!_instance) _instance = new PluginManager;
   return _instance;
 }
 
@@ -159,98 +142,93 @@ void PluginManager::registerDefaultPlugins()
   }
 
   if(CTX::instance()->post.plugins){
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("StreamLines", GMSH_RegisterStreamLinesPlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("CutGrid", GMSH_RegisterCutGridPlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("CutMap", GMSH_RegisterCutMapPlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("CutPlane", GMSH_RegisterCutPlanePlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("CutSphere", GMSH_RegisterCutSpherePlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Skin", GMSH_RegisterSkinPlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Extract", GMSH_RegisterExtractPlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("ExtractElements", GMSH_RegisterExtractElementsPlugin()));
 #if 0 // waiting for BDS rewrite
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("ExtractEdges", GMSH_RegisterExtractEdgesPlugin()));
 #endif
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("MakeSimplex", GMSH_RegisterMakeSimplexPlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Smooth", GMSH_RegisterSmoothPlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Transform", GMSH_RegisterTransformPlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("LongitudeLatitude",GMSH_RegisterLongituteLatitudePlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Warp", GMSH_RegisterWarpPlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("SphericalRaise", GMSH_RegisterSphericalRaisePlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("HarmonicToTime", GMSH_RegisterHarmonicToTimePlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("ModulusPhase", GMSH_RegisterModulusPhasePlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Integrate", GMSH_RegisterIntegratePlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Gradient", GMSH_RegisterGradientPlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Curl", GMSH_RegisterCurlPlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Divergence", GMSH_RegisterDivergencePlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Annotate", GMSH_RegisterAnnotatePlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Remove", GMSH_RegisterRemovePlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Eigenvectors", GMSH_RegisterEigenvectorsPlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Eigenvalues", GMSH_RegisterEigenvaluesPlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Lambda2", GMSH_RegisterLambda2Plugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Probe", GMSH_RegisterProbePlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("FieldView", GMSH_RegisterFieldViewPlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Triangulate", GMSH_RegisterTriangulatePlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("GSHHS", GMSH_RegisterGSHHSPlugin()));
 #if defined(HAVE_MATH_EVAL)
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Evaluate", GMSH_RegisterEvaluatePlugin()));
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("CutParametric", GMSH_RegisterCutParametricPlugin()));
 #endif
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("FiniteElement", GMSH_RegisterFiniteElementPlugin()));
 #if defined(HAVE_KBIPACK)
-    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("HomologyComputation", GMSH_RegisterHomologyComputationPlugin()));
 #endif
   }
 
 #if defined(HAVE_FLTK)
-  char *homeplugins = getenv("GMSHPLUGINSHOME");
-  if(!homeplugins) return;
+  char *pluginsHome = getenv("GMSHPLUGINSHOME");
+  if(!pluginsHome) return;
   struct dirent **list;
-  int nbFiles = fl_filename_list(homeplugins, &list);
+  int nbFiles = fl_filename_list(pluginsHome, &list);
   if(nbFiles <= 0)
     return;
   for(int i = 0; i < nbFiles; i++) {
-    char *name = list[i]->d_name;
-    if(strlen(name) > 3) {
-      char ext[6];
-      strcpy(ext, name + (strlen(name) - 3));
-      if(!strcmp(ext, ".so") || !strcmp(ext, "dll")) {
-        addPlugin(homeplugins, name);
-      }
-    }
+    std::string ext = SplitFileName(list[i]->d_name)[2];
+    if(ext == ".so" || ext == ".dll")
+      addPlugin(list[i]->d_name);
   }
   for(int i = 0; i < nbFiles; i++)
     free(list[i]);
@@ -258,42 +236,36 @@ void PluginManager::registerDefaultPlugins()
 #endif
 }
 
-void PluginManager::addPlugin(char *dirName, char *pluginName)
+void PluginManager::addPlugin(std::string fileName)
 {
 #if defined(HAVE_NO_DLL) || !defined(HAVE_FLTK)
   Msg::Warning("No dynamic plugin loading on this platform");
 #else
-  char dynamic_lib[1024];
-  char plugin_name[256];
-  char plugin_author[256];
-  char plugin_copyright[256];
-  char plugin_help[1024];
-  class GMSH_Plugin *(*registerPlugin) (void);
-  sprintf(dynamic_lib, "%s/%s", dirName, pluginName);
-  Msg::Info("Opening Plugin '%s'", dynamic_lib);
-  void *hlib = dlopen(dynamic_lib, RTLD_NOW);
+  Msg::Info("Opening Plugin '%s'", fileName.c_str());
+  void *hlib = dlopen(fileName.c_str(), RTLD_NOW);
   const char *err = dlerror();
   if(!hlib){
-    Msg::Warning("Error in opening %s (dlerror = %s)", dynamic_lib, err);
+    Msg::Warning("Could not open '%s' (dlerror = %s)", fileName.c_str(), err);
     return;
   }
+
+  class GMSH_Plugin *(*registerPlugin) (void);
   registerPlugin = (class GMSH_Plugin * (*)(void))dlsym(hlib, GMSH_PluginEntry);
   err = dlerror();
   if(err){
-    Msg::Warning("Symbol '%s' missing in plugin '%s' (dlerror = %s)",
-                 GMSH_PluginEntry, pluginName, err);
+    Msg::Warning("Symbol '%s' missing in '%s' (dlerror = %s)",
+                 GMSH_PluginEntry, fileName.c_str(), err);
     return;
   }
 
   GMSH_Plugin *p = registerPlugin();
   p->hlib = hlib;
-  p->getName(plugin_name);
-  p->getInfos(plugin_author, plugin_copyright, plugin_help);
-  if(allPlugins.find(plugin_name) != allPlugins.end()) {
-    Msg::Warning("Plugin '%s' multiply defined", pluginName);
+  if(allPlugins.find(p->getName()) != allPlugins.end()) {
+    Msg::Warning("Plugin '%s' multiply defined", fileName.c_str());
     return;
   }
-  allPlugins.insert(std::pair<const char*, GMSH_Plugin*>(plugin_name, p));
-  Msg::Info("Loaded Plugin '%s' (%s)", plugin_name, plugin_author);
+
+  allPlugins.insert(std::pair<std::string, GMSH_Plugin*>(p->getName(), p));
+  Msg::Info("Loaded Plugin '%s' (%s)", p->getName().c_str(), p->getAuthor().c_str());
 #endif
 }

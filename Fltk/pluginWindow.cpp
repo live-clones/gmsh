@@ -198,18 +198,14 @@ void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,
 
       Fl_Browser *o = new Fl_Browser
         (x + WB, y + WB + BH, width - 2 * WB, height - 2 * WB - BH);
-
-      char name[1024], copyright[256], author[256], help[4096];
-      p->getName(name);
-      p->getInfos(author, copyright, help);
-
       o->add(" ");
-      add_multiline_in_browser(o, "@c@b@.", name, false);
+      add_multiline_in_browser(o, "@c@b@.", p->getName().c_str(), false);
       o->add(" ");
-      add_multiline_in_browser(o, "", help, false);
+      add_multiline_in_browser(o, "", p->getHelp().c_str(), false);
       o->add(" ");
-      add_multiline_in_browser(o, "Author: ", author, false);
-      add_multiline_in_browser(o, "Copyright (C) ", copyright, false);
+      add_multiline_in_browser(o, "Author: ", p->getAuthor().c_str(), false);
+      add_multiline_in_browser(o, "Copyright (C) ", p->getCopyright().c_str(), 
+                               false);
       o->add(" ");
 
       g->end();
@@ -245,13 +241,11 @@ pluginWindow::pluginWindow(int deltaFontSize)
   view_browser->has_scrollbar(Fl_Browser_::VERTICAL);
   view_browser->callback(plugin_browser_cb);
 
-  for(PluginManager::iter it = PluginManager::instance()->begin();
-      it != PluginManager::instance()->end(); ++it) {
-    GMSH_Plugin *p = (*it).second;
+  for(std::map<std::string, GMSH_Plugin*>::iterator it = PluginManager::
+        instance()->begin(); it != PluginManager::instance()->end(); ++it) {
+    GMSH_Plugin *p = it->second;
     if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN) {
-      char name[256];
-      p->getName(name);
-      browser->add(name, p);
+      browser->add(p->getName().c_str(), p);
       _createDialogBox(p, 2 * WB + L1 + L2, WB, width - L1 - L2 - 3 * WB, 
                        height - 2 * WB);
       // select first plugin by default

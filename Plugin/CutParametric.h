@@ -27,9 +27,8 @@ class GMSH_CutParametricPlugin : public GMSH_PostPlugin
   static std::vector<double> x, y, z;
  public:
   GMSH_CutParametricPlugin(){}
-  void getName(char *name) const;
-  void getInfos(char *author, char *copyright, char *help_text) const;
-  void catchErrorMessage(char *errorMessage) const;
+  std::string getName() const { return "CutParametric"; }
+  std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  
   int getNbOptionsStr() const;

@@ -99,22 +99,13 @@ double GMSH_ProbePlugin::callbackZ(int num, int action, double value)
   return callback(num, action, value, &ProbeOptions_Number[2].def);
 }
 
-void GMSH_ProbePlugin::getName(char *name) const
+std::string GMSH_ProbePlugin::getHelp() const
 {
-  strcpy(name, "Probe");
-}
-
-void GMSH_ProbePlugin::getInfos(char *author, char *copyright,
-                                   char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(Probe) gets the value of the view `iView' at\n"
+  return "Plugin(Probe) gets the value of the view `iView' at\n"
          "the point (`X',`Y',`Z'). If `iView' < 0, the plugin is\n"
          "run on the current view.\n"
          "\n"
-         "Plugin(Probe) creates one new view.\n");
+         "Plugin(Probe) creates one new view.\n";
 }
 
 int GMSH_ProbePlugin::getNbOptions() const
@@ -125,11 +116,6 @@ int GMSH_ProbePlugin::getNbOptions() const
 StringXNumber *GMSH_ProbePlugin::getOption(int iopt)
 {
   return &ProbeOptions_Number[iopt];
-}
-
-void GMSH_ProbePlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "Probe failed...");
 }
 
 PView *GMSH_ProbePlugin::execute(PView *v)

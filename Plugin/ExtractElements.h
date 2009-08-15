@@ -17,9 +17,8 @@ class GMSH_ExtractElementsPlugin : public GMSH_PostPlugin
 {
  public:
   GMSH_ExtractElementsPlugin(){}
-  void getName(char *name) const;
-  void getInfos(char *author, char *copyright, char *helpText) const;
-  void catchErrorMessage(char *errorMessage) const;
+  std::string getName() const { return "ExtractElements"; }
+  std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);  
   PView *execute(PView *);

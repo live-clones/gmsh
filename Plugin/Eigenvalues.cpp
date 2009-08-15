@@ -19,21 +19,13 @@ extern "C"
   }
 }
 
-void GMSH_EigenvaluesPlugin::getName(char *name) const
+std::string GMSH_EigenvaluesPlugin::getHelp() const
 {
-  strcpy(name, "Eigenvalues");
-}
-
-void GMSH_EigenvaluesPlugin::getInfos(char *author, char *copyright, char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(Eigenvalues) computes the three real\n"
+  return "Plugin(Eigenvalues) computes the three real\n"
          "eigenvalues of each tensor in the view `iView'.\n"
          "If `iView' < 0, the plugin is run on the current view.\n"
          "\n"
-         "Plugin(Eigenvalues) creates three new scalar views.\n");
+         "Plugin(Eigenvalues) creates three new scalar views.\n";
 }
 
 int GMSH_EigenvaluesPlugin::getNbOptions() const
@@ -44,11 +36,6 @@ int GMSH_EigenvaluesPlugin::getNbOptions() const
 StringXNumber *GMSH_EigenvaluesPlugin::getOption(int iopt)
 {
   return &EigenvaluesOptions_Number[iopt];
-}
-
-void GMSH_EigenvaluesPlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "Eigenvalues failed...");
 }
 
 static std::vector<double> *incrementList(PViewDataList *data2, int type)

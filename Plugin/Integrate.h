@@ -16,10 +16,9 @@ extern "C"
 class GMSH_IntegratePlugin : public GMSH_PostPlugin
 {
  public:
-  GMSH_IntegratePlugin();
-  void getName(char *name) const;
-  void getInfos(char *author, char *copyright, char *help_text) const;
-  void catchErrorMessage(char *errorMessage) const;
+  GMSH_IntegratePlugin(){}
+  std::string getName() const { return "Integrate"; }
+  std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);  
   PView *execute(PView *);

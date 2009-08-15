@@ -19,22 +19,13 @@ extern "C"
   }
 }
 
-void GMSH_GradientPlugin::getName(char *name) const
+std::string GMSH_GradientPlugin::getHelp() const
 {
-  strcpy(name, "Gradient");
-}
-
-void GMSH_GradientPlugin::getInfos(char *author, char *copyright,
-                                   char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(Gradient) computes the gradient of the\n"
+  return "Plugin(Gradient) computes the gradient of the\n"
          "field in the view `iView'. If `iView' < 0, the\n"
          "plugin is run on the current view.\n"
          "\n"
-         "Plugin(Gradient) creates one new view.\n");
+         "Plugin(Gradient) creates one new view.\n";
 }
 
 int GMSH_GradientPlugin::getNbOptions() const
@@ -45,11 +36,6 @@ int GMSH_GradientPlugin::getNbOptions() const
 StringXNumber *GMSH_GradientPlugin::getOption(int iopt)
 {
   return &GradientOptions_Number[iopt];
-}
-
-void GMSH_GradientPlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "Gradient failed...");
 }
 
 static std::vector<double> *incrementList(PViewDataList *data2, int numComp, int type)

@@ -16,9 +16,9 @@ extern "C"
 class GMSH_LongituteLatitudePlugin : public GMSH_PostPlugin
 {
  public:
-  void getName(char *name) const;
-  void getInfos(char *author, char *copyright, char *help_text) const;
-  void catchErrorMessage(char *errorMessage) const;
+  std::string getName() const { return "LongitudeLatitude"; }
+  std::string getHelp() const;
+  std::string getAuthor() const { return "J. Lambrechts"; }
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);  
   PView *execute(PView *);

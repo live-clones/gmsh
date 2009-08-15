@@ -17,22 +17,13 @@ extern "C"
   }
 }
 
-void GMSH_SmoothPlugin::getName(char *name) const
+std::string GMSH_SmoothPlugin::getHelp() const
 {
-  strcpy(name, "Smooth");
-}
-
-void GMSH_SmoothPlugin::getInfos(char *author, char *copyright,
-                                 char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(Smooth) averages the values at the nodes\n"
+  return "Plugin(Smooth) averages the values at the nodes\n"
          "of the scalar view `iView'. If `iView' < 0, the\n"
          "plugin is run on the current view.\n"
          "\n"
-         "Plugin(Smooth) is executed in-place.\n");
+         "Plugin(Smooth) is executed in-place.\n";
 }
 
 int GMSH_SmoothPlugin::getNbOptions() const
@@ -43,11 +34,6 @@ int GMSH_SmoothPlugin::getNbOptions() const
 StringXNumber *GMSH_SmoothPlugin::getOption(int iopt)
 {
   return &SmoothOptions_Number[iopt];
-}
-
-void GMSH_SmoothPlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "Smooth failed...");
 }
 
 PView *GMSH_SmoothPlugin::execute(PView *v)

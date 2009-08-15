@@ -77,18 +77,9 @@ double GMSH_CutMapPlugin::callbackTarget(int num, int action, double value)
   return 0.;
 }
 
-void GMSH_CutMapPlugin::getName(char *name) const
+std::string GMSH_CutMapPlugin::getHelp() const
 {
-  strcpy(name, "Cut Map");
-}
-
-void GMSH_CutMapPlugin::getInfos(char *author, char *copyright,
-                                 char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(CutMap) extracts the isosurface of value\n"
+  return "Plugin(CutMap) extracts the isosurface of value\n"
          "`A' from the view `iView' and draws the\n"
          "`dTimeStep'-th value of the view `dView' on the\n"
          "isosurface. If `iView' < 0, the plugin is run\n"
@@ -102,7 +93,7 @@ void GMSH_CutMapPlugin::getInfos(char *author, char *copyright,
          "< 0) than the isosurface `A'.\n"
          "\n"
          "Plugin(CutMap) creates as many views as there\n"
-         "are time steps in `iView'.\n");
+         "are time steps in `iView'.\n";
 }
 
 int GMSH_CutMapPlugin::getNbOptions() const
@@ -113,11 +104,6 @@ int GMSH_CutMapPlugin::getNbOptions() const
 StringXNumber *GMSH_CutMapPlugin::getOption(int iopt)
 {
   return &CutMapOptions_Number[iopt];
-}
-
-void GMSH_CutMapPlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "CutMap failed...");
 }
 
 double GMSH_CutMapPlugin::levelset(double x, double y, double z, double val) const

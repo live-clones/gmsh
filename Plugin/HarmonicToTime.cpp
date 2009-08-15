@@ -21,18 +21,9 @@ extern "C"
   }
 }
 
-void GMSH_HarmonicToTimePlugin::getName(char *name) const
+std::string GMSH_HarmonicToTimePlugin::getHelp() const
 {
-  strcpy(name, "Harmonic to Time");
-}
-
-void GMSH_HarmonicToTimePlugin::getInfos(char *author, char *copyright,
-                                        char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(HarmonicToTime) takes the values in the\n"
+  return "Plugin(HarmonicToTime) takes the values in the\n"
          "time steps `RealPart' and `ImaginaryPart' of\n"
          "the view `iView', and creates a new view\n"
          "containing (`iView'[`RealPart'] * cos(p) -\n"
@@ -41,7 +32,7 @@ void GMSH_HarmonicToTimePlugin::getInfos(char *author, char *copyright,
          "If `iView' < 0, the plugin is run on the\n"
          "current view.\n"
          "\n"
-         "Plugin(HarmonicToTime) creates one new view.\n");
+         "Plugin(HarmonicToTime) creates one new view.\n";
 }
 
 int GMSH_HarmonicToTimePlugin::getNbOptions() const
@@ -52,11 +43,6 @@ int GMSH_HarmonicToTimePlugin::getNbOptions() const
 StringXNumber *GMSH_HarmonicToTimePlugin::getOption(int iopt)
 {
   return &HarmonicToTimeOptions_Number[iopt];
-}
-
-void GMSH_HarmonicToTimePlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "HarmonicToTime failed...");
 }
 
 static std::vector<double> *incrementList(PViewDataList *data, int numComp, 

@@ -30,22 +30,13 @@ extern "C"
   }
 }
 
-void GMSH_RemovePlugin::getName(char *name) const
+std::string GMSH_RemovePlugin::getHelp() const
 {
-  strcpy(name, "Remove");
-}
-
-void GMSH_RemovePlugin::getInfos(char *author, char *copyright,
-                                   char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(Remove) removes the marked items\n"
+  return "Plugin(Remove) removes the marked items\n"
          "from the view `iView'. If `iView' < 0, the plugin\n"
          "is run on the current view.\n"
          "\n"
-         "Plugin(Remove) is executed in-place.\n");
+         "Plugin(Remove) is executed in-place.\n";
 }
 
 int GMSH_RemovePlugin::getNbOptions() const
@@ -56,11 +47,6 @@ int GMSH_RemovePlugin::getNbOptions() const
 StringXNumber *GMSH_RemovePlugin::getOption(int iopt)
 {
   return &RemoveOptions_Number[iopt];
-}
-
-void GMSH_RemovePlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "Remove failed...");
 }
 
 PView *GMSH_RemovePlugin::execute(PView *v)

@@ -18,9 +18,8 @@ class GMSH_CutMapPlugin : public GMSH_LevelsetPlugin
   double levelset(double x, double y, double z, double val) const;
  public:
   GMSH_CutMapPlugin(){}
-  void getName(char *name) const;
-  void getInfos(char *author, char *copyright, char *helpText) const;
-  void catchErrorMessage(char *errorMessage) const;
+  std::string getName() const { return "CutMap"; }
+  std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  
   PView *execute(PView *);

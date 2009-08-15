@@ -18,27 +18,14 @@ extern "C"
   }
 }
 
-GMSH_ExtractEdgesPlugin::GMSH_ExtractEdgesPlugin()
+std::string GMSH_ExtractEdgesPlugin::getHelp() const
 {
-  ;
-}
-
-void GMSH_ExtractEdgesPlugin::getName(char *name) const
-{
-  strcpy(name, "Extract Edges");
-}
-
-void GMSH_ExtractEdgesPlugin::getInfos(char *author, char *copyright, char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(ExtractEdges) extracts the geometry edges\n"
+  return "Plugin(ExtractEdges) extracts the geometry edges\n"
          "from the surface view `iView', using `Angle' as\n"
          "the dihedral angle tolerance. If `iView' < 0, then\n"
          "plugin is run on the current view.\n"
          "\n"
-         "Plugin(ExtractEdges) creates one new view.\n");
+         "Plugin(ExtractEdges) creates one new view.\n";
 }
 
 int GMSH_ExtractEdgesPlugin::getNbOptions() const
@@ -49,11 +36,6 @@ int GMSH_ExtractEdgesPlugin::getNbOptions() const
 StringXNumber *GMSH_ExtractEdgesPlugin::getOption(int iopt)
 {
   return &ExtractEdgesOptions_Number[iopt];
-}
-
-void GMSH_ExtractEdgesPlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "Extract Edges failed...");
 }
 
 PView *GMSH_ExtractEdgesPlugin::execute(PView *v)

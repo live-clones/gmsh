@@ -19,29 +19,15 @@ extern "C"
   }
 }
 
-GMSH_IntegratePlugin::GMSH_IntegratePlugin()
+std::string GMSH_IntegratePlugin::getHelp() const
 {
-  ;
-}
-
-void GMSH_IntegratePlugin::getName(char *name) const
-{
-  strcpy(name, "Integrate");
-}
-
-void GMSH_IntegratePlugin::getInfos(char *author, char *copyright,
-                                    char *help_text) const
-{
-  strcpy(author, "C. Geuzaine, J.-F. Remacle");
-  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
-  strcpy(help_text,
-         "Plugin(Integrate) integrates scalar fields over\n"
+  return "Plugin(Integrate) integrates scalar fields over\n"
          "all the elements in the view `iView', as well\n"
          "as the circulation/flux of vector fields over\n"
          "line/surface elements. If `iView' < 0, the\n"
          "plugin is run on the current view.\n"
          "\n"
-         "Plugin(Integrate) creates one new view.\n");
+         "Plugin(Integrate) creates one new view.\n";
 }
 
 int GMSH_IntegratePlugin::getNbOptions() const
@@ -52,11 +38,6 @@ int GMSH_IntegratePlugin::getNbOptions() const
 StringXNumber *GMSH_IntegratePlugin::getOption(int iopt)
 {
   return &IntegrateOptions_Number[iopt];
-}
-
-void GMSH_IntegratePlugin::catchErrorMessage(char *errorMessage) const
-{
-  strcpy(errorMessage, "Integrate failed...");
 }
 
 PView *GMSH_IntegratePlugin::execute(PView * v)

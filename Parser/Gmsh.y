@@ -934,7 +934,7 @@ Affectation :
 	yymsg(0, "Unknown option '%s' or plugin '%s'", $6, $3);
       }
 #endif
-      Free($3); Free($6);
+      Free($3); Free($6); Free($8);
     }
 ;
 

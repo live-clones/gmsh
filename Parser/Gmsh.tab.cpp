@@ -4654,7 +4654,7 @@ yyreduce:
 	yymsg(0, "Unknown option '%s' or plugin '%s'", (yyvsp[(6) - (9)].c), (yyvsp[(3) - (9)].c));
       }
 #endif
-      Free((yyvsp[(3) - (9)].c)); Free((yyvsp[(6) - (9)].c));
+      Free((yyvsp[(3) - (9)].c)); Free((yyvsp[(6) - (9)].c)); Free((yyvsp[(8) - (9)].c));
     ;}
     break;
 
