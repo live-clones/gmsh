@@ -1942,8 +1942,8 @@ int GModel::readP3D(const std::string &name)
           }
         }
       }
-      for(unsigned int i = 0; i < gf->transfinite_vertices.size() - 1; i++)
-        for(unsigned int j = 0; j < gf->transfinite_vertices[0].size() - 1; j++)
+      for(int i = 0; i < gf->transfinite_vertices.size() - 1; i++)
+        for(int j = 0; j < gf->transfinite_vertices[0].size() - 1; j++)
           gf->quadrangles.push_back
             (new MQuadrangle(gf->transfinite_vertices[i    ][j    ],
                              gf->transfinite_vertices[i + 1][j    ],
@@ -1981,9 +1981,9 @@ int GModel::readP3D(const std::string &name)
           }
         }
       }
-      for(unsigned int i = 0; i < gr->transfinite_vertices.size() - 1; i++)
-        for(unsigned int j = 0; j < gr->transfinite_vertices[0].size() - 1; j++)
-          for(unsigned int k = 0; k < gr->transfinite_vertices[0][0].size() - 1; k++)
+      for(int i = 0; i < gr->transfinite_vertices.size() - 1; i++)
+        for(int j = 0; j < gr->transfinite_vertices[0].size() - 1; j++)
+          for(int k = 0; k < gr->transfinite_vertices[0][0].size() - 1; k++)
             gr->hexahedra.push_back
               (new MHexahedron(gr->transfinite_vertices[i    ][j    ][k    ],
                                gr->transfinite_vertices[i + 1][j    ][k    ],

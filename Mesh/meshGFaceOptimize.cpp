@@ -662,7 +662,7 @@ bool gmshVertexCollapse(const double lMin, MTri3 *t1, GFace *gf,
   }
 
   double surfAfter = 0.0;
-  for(unsigned int i = 0; i < ring.size() - 2; i++){
+  for(int i = 0; i < ring.size() - 2; i++){
     MVertex *v1 = ring[(iMin + 1 + i) % ring.size()];
     MVertex *v2 = ring[(iMin + 1 + i + 1) % ring.size()];
     double sAfter = surfaceTriangleUV(v1, v2, ring[iMin], Us, Vs);
@@ -674,7 +674,7 @@ bool gmshVertexCollapse(const double lMin, MTri3 *t1, GFace *gf,
   //  printf("%12.5E %12.5E %d\n",surfBefore,surfAfter,iMin);
   if(fabs(surfBefore - surfAfter) > 1.e-10*(surfBefore + surfAfter)) return false;
 
-  for(unsigned int i = 0; i < ring.size() - 2; i++){
+  for(int i = 0; i < ring.size() - 2; i++){
     MVertex *v1 = ring[(iMin + 1 + i) % ring.size()];
     MVertex *v2 = ring[(iMin + 1 + i + 1) % ring.size()];
     MTriangle *t = new MTriangle(v1,v2,ring[iMin]);
