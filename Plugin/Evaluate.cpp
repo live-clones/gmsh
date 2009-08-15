@@ -101,7 +101,7 @@ StringXString *GMSH_EvaluatePlugin::getOptionStr(int iopt)
   return &EvaluateOptions_String[iopt];
 }
 
-PView *GMSH_EvaluatePlugin::execute(PView *v)
+PView *GMSH_EvaluatePlugin::execute(PView *view)
 {
   int component = (int)EvaluateOptions_Number[0].def;
   int timeStep = (int)EvaluateOptions_Number[1].def;
@@ -110,8 +110,8 @@ PView *GMSH_EvaluatePlugin::execute(PView *v)
   int iView = (int)EvaluateOptions_Number[4].def;
   const char *expr = EvaluateOptions_String[0].def.c_str();
 
-  PView *v1 = getView(iView, v);
-  if(!v1) return v;
+  PView *v1 = getView(iView, view);
+  if(!v1) return view;
 
   PViewData *data1 = v1->getData();
 
@@ -146,7 +146,7 @@ PView *GMSH_EvaluatePlugin::execute(PView *v)
   void *f = evaluator_create((char*)expr);
   if(!f){
     Msg::Error("Invalid expression '%s'", expr);
-    return v;
+    return view;
   }
 
   OctreePost *octree = 0;

@@ -133,7 +133,7 @@ static std::vector<double> *incrementList(PViewDataList *data, int numComp,
   return 0;
 }
 
-PView *GMSH_ExtractPlugin::execute(PView *v)
+PView *GMSH_ExtractPlugin::execute(PView *view)
 {
   int timeStep = (int)ExtractOptions_Number[0].def;
   int iView = (int)ExtractOptions_Number[1].def;
@@ -147,13 +147,13 @@ PView *GMSH_ExtractPlugin::execute(PView *v)
                           ExtractOptions_String[7].def.c_str(),
                           ExtractOptions_String[8].def.c_str() };
 
-  PView *v1 = getView(iView, v);
-  if(!v1) return v;
+  PView *v1 = getView(iView, view);
+  if(!v1) return view;
   PViewData *data1 = v1->getData();
 
   if(data1->hasMultipleMeshes()){
     Msg::Error("Extract plugin cannot be applied to multi-mesh views");
-    return v;
+    return view;
   }
 
   int numComp2;
@@ -182,7 +182,7 @@ PView *GMSH_ExtractPlugin::execute(PView *v)
       Msg::Error("Invalid expression '%s'", expr[i]);
       for(int j = 0; j < i; j++)
         if(f[j]) evaluator_destroy(f[j]);
-      return v;
+      return view;
     }
   }
 #else
@@ -199,7 +199,7 @@ PView *GMSH_ExtractPlugin::execute(PView *v)
     else if(!strcmp(expr[i], "v8")) comp2[i] = 8;
     else{
       Msg::Error("Invalid expression '%s'", expr[i]);
-      return v;
+      return view;
     }
   }
 #endif
