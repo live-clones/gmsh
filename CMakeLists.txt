@@ -445,13 +445,13 @@ if(ENABLE_OCC)
   list(LENGTH OCC_LIBS_REQUIRED NUM_OCC_LIBS_REQUIRED)
   set(OCC_LIBS)
   foreach(OCC ${OCC_LIBS_REQUIRED})
-    set(OCC_LIB OCC_LIB-NOTFOUND CACHE INTERNAL "")
-    # unset(OCC_LIB CACHE) # cleaner, but only available in cmake >= 2.6.4
     find_library(OCC_LIB ${OCC} PATHS ENV CASROOT PATH_SUFFIXES lib 
                  ${OCC_SYS_NAME}/lib)
     if(OCC_LIB)
       list(APPEND OCC_LIBS ${OCC_LIB})
     endif(OCC_LIB)
+    set(OCC_LIB OCC_LIB-NOTFOUND CACHE INTERNAL "")
+    # unset(OCC_LIB CACHE) # cleaner, but only available in cmake >= 2.6.4
   endforeach(OCC)
   list(LENGTH OCC_LIBS NUM_OCC_LIBS)
   if(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
