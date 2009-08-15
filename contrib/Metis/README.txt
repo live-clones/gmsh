@@ -14,7 +14,7 @@ library compile on all the architectures supported by Gmsh)
  * Started 8/27/94
  * George
  *
- * $Id: README,v 1.4 2006-02-24 22:07:08 geuzaine Exp $
+ * $Id: README.txt,v 1.1 2009-08-15 09:31:23 geuzaine Exp $
  */
 
 

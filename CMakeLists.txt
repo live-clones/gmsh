@@ -445,12 +445,13 @@ if(ENABLE_OCC)
   list(LENGTH OCC_LIBS_REQUIRED NUM_OCC_LIBS_REQUIRED)
   set(OCC_LIBS)
   foreach(OCC ${OCC_LIBS_REQUIRED})
+    set(OCC_LIB OCC_LIB-NOTFOUND CACHE INTERNAL "")
+    # unset(OCC_LIB CACHE) # cleaner, but only available in cmake >= 2.6.4
     find_library(OCC_LIB ${OCC} PATHS ENV CASROOT PATH_SUFFIXES lib 
                  ${OCC_SYS_NAME}/lib)
     if(OCC_LIB)
       list(APPEND OCC_LIBS ${OCC_LIB})
     endif(OCC_LIB)
-    unset(OCC_LIB CACHE)
   endforeach(OCC)
   list(LENGTH OCC_LIBS NUM_OCC_LIBS)
   if(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
@@ -576,6 +577,7 @@ include_directories(Common Fltk Geo Graphics Mesh Numeric Parser Plugin
 # target)
 add_library(lib STATIC EXCLUDE_FROM_ALL ${GMSH_SRC})
 set_target_properties(lib PROPERTIES OUTPUT_NAME Gmsh)
+
 if(HAVE_FLTK)
   add_executable(gmsh WIN32 Fltk/Main.cpp ${GMSH_SRC})
   target_link_libraries(gmsh ${FLTK_LIBRARIES} ${EXTERNAL_LIBRARIES} 
@@ -634,7 +636,7 @@ macro(unix2dos VARNAME)
     if(CYGWIN)
       string(REGEX REPLACE "\n" "\r\n" F1 "${F0}")
       file(WRITE ${CMAKE_BINARY_DIR}/unix2dos/${N} "${F1}")
-    else(CYGWIN) # if not in cygwin, assume cmake does it for us
+    else(CYGWIN) # if not in cygwin, cmake adds '\r's automatically
       file(WRITE ${CMAKE_BINARY_DIR}/unix2dos/${N} "${F0}")
     endif(CYGWIN)
     list(APPEND UNIX2DOS_FILES ${CMAKE_BINARY_DIR}/unix2dos/${N})
@@ -727,12 +729,13 @@ set(CPACK_STRIP_FILES TRUE)
 
 set(CPACK_SOURCE_PACKAGE_FILE_NAME gmsh-${GMSH_VERSION}-source)
 set(CPACK_SOURCE_GENERATOR TGZ)
-set(CPACK_SOURCE_IGNORE_FILES "/CVS/" "/.svn" "~$" "DS_Store$" "GmshConfig.h$" 
-    "GmshVersion.h$" "/benchmarks/" "/tmp/" "/bin/" "/lib/" "/nightly/" 
-    "GPATH" "GRTAGS" "GSYMS" "GTAGS" "/HTML/" "/TetgenNew/") #"/Tetgen.*/.*(cxx|h)")
+set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_BINARY_DIR}" "/CVS/" "/.svn" "~$" 
+    "DS_Store$" "GmshConfig.h$" "GmshVersion.h$" "/benchmarks/" "/tmp/" 
+    "/bin/" "/lib/" "/nightly/" "GPATH" "GRTAGS" "GSYMS" "GTAGS" "/HTML/" 
+    "/TetgenNew/") #"/Tetgen.*/.*(cxx|h)")
 
 # make sure we remove previous installs before doing the next one
-# (make package; make package_source can lead to huge file lists
+# ("make package; make package_source" would lead to huge file lists
 # getting generated due to the Applications symlink in the bundle)
 set(CPACK_INSTALL_COMMANDS 
     "${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/_CPack_Packages")
@@ -740,9 +743,12 @@ set(CPACK_INSTALL_COMMANDS
 if(APPLE)
   set(CPACK_GENERATOR Bundle)
   set(CPACK_BUNDLE_NAME Gmsh)
-  set(CPACK_BUNDLE_PLIST ${CMAKE_SOURCE_DIR}/utils/misc/Info.plist)
+  file(READ ${CMAKE_SOURCE_DIR}/utils/misc/gmsh_app.plist F0)
+  string(REPLACE GMSH_VERSION "${GMSH_VERSION}" F1 "${F0}")
+  file(WRITE ${CMAKE_BINARY_DIR}/Info.plist "${F1}")
+  set(CPACK_BUNDLE_PLIST ${CMAKE_BINARY_DIR}/Info.plist)
   set(CPACK_BUNDLE_ICON ${CMAKE_SOURCE_DIR}/Fltk/MacIcons.icns)
-  set(CPACK_BUNDLE_STARTUP_COMMAND ${CMAKE_SOURCE_DIR}/utils/misc/gmsh_bundle.sh)
+  set(CPACK_BUNDLE_STARTUP_COMMAND ${CMAKE_SOURCE_DIR}/utils/misc/gmsh_app.sh)
   install(FILES ${CMAKE_SOURCE_DIR}/Fltk/MacIconsGeo.icns DESTINATION .
           RENAME GmshGeo.icns)
   install(FILES ${CMAKE_SOURCE_DIR}/Fltk/MacIconsMsh.icns DESTINATION .

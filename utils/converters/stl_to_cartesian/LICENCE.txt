@@ -1,0 +1,3 @@
+Code posted by "Billy" on:
+
+http://www.cfd-online.com/Forums/openfoam-meshing-opensource/61973-generating-unstructured-grids-stl-files.html
