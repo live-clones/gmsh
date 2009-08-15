@@ -122,7 +122,7 @@ void PViewDataList::_stat(std::vector<double> &D, std::vector<char> &C, int nb)
   for(unsigned int i = 0; i < D.size(); i += nb){
     double beg = D[i + nb - 1];
     double end;
-    if(i > D.size() - 2 * nb)
+    if(i + 2 * nb > D.size())
       end = C.size();
     else
       end = D[i + nb + nb - 1];
