@@ -19,7 +19,6 @@ drawContext *ctx = 0;
 // Gmsh redefinitions (reimplement stuff in Fltk/Draw.h)
 void Draw(){ ctx->draw3d(); ctx->draw2d(); }
 void DrawCurrentOpenglWindow(bool make_current){}
-void DrawPlugin(void (*draw)(void *context)){}
 int GetFontIndex(const char *fontname){ return 0; }
 int GetFontEnum(int index){ return 0; }
 const char *GetFontName(int index){ return "Helvetica"; }

@@ -1,87 +1,46 @@
-/***************************************************************
- *                FLU - FLTK Utility Widgets 
- *  Copyright (C) 2002 Jason Bryan, Ohio Supercomputer Center, Ohio State University
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * To contribute, advise, suggest, berate, recommend, criticise,
- * or otherwise communicate with me:    jbryan@osc.edu
- *                                      Ohio Supercomputer Center
- *                                      1224 Kinnear Rd
- *                                      Columbus, Ohio 43212
- ***************************************************************/
+                           Fl_Tree License
+                           May 29, 2005
 
-
------------------------------------------------------------------------
-
- This library depends on the following GPL free libraries:
-    FLTK
-
- This library also uses OpenGL, which is a registered trademark of Silicon
-  Graphics, Inc. (SGI), and Doxygen, a free HTML page generator for documentation
-  of C++ classes.
-
-
- This library is hereby distributed under the same LGPL license as FLTK.
- Have fun with it!
-
------------------------------------------------------------------------
-
-                             FLTK License
-                           December 11, 2001
-
-The FLTK library and included programs are provided under the terms
+The Fl_Tree library and included programs are provided under the terms
 of the GNU Library General Public License (LGPL) with the following
 exceptions:
 
-    1. Modifications to the FLTK configure script, config
+    1. Modifications to the Fl_Tree configure script, config
        header file, and makefiles by themselves to support
        a specific platform do not constitute a modified or
        derivative work.
 
        The authors do request that such modifications be
-       contributed to the FLTK project - send all
-       contributions to "fltk-bugs@fltk.org".
+       contributed to the Fl_Tree project - send all
+       contributions to "erco at seriss dot com".
 
-    2. Widgets that are subclassed from FLTK widgets do not
+    2. Widgets that are subclassed from Fl_Tree widgets do not
        constitute a derivative work.
 
     3. Static linking of applications and widgets to the
-       FLTK library does not constitute a derivative work
+       Fl_Tree library does not constitute a derivative work
        and does not require the author to provide source
        code for the application or widget, use the shared
-       FLTK libraries, or link their applications or
-       widgets against a user-supplied version of FLTK.
+       Fl_Tree libraries, or link their applications or
+       widgets against a user-supplied version of Fl_Tree.
 
        If you link the application or widget to a modified
-       version of FLTK, then the changes to FLTK must be
+       version of Fl_Tree, then the changes to Fl_Tree must be
        provided under the terms of the LGPL in sections
        1, 2, and 4.
 
-    4. You do not have to provide a copy of the FLTK license
-       with programs that are linked to the FLTK library, nor
-       do you have to identify the FLTK license in your
+    4. You do not have to provide a copy of the Fl_Tree license
+       with programs that are linked to the Fl_Tree library, nor
+       do you have to identify the Fl_Tree license in your
        program or documentation as required by section 6
        of the LGPL.
 
-       However, programs must still identify their use of FLTK.
+       However, programs must still identify their use of Fl_Tree.
        The following example statement can be included in user
        documentation to satisfy this requirement:
 
            [program/widget] is based in part on the work of
-           the FLTK project (http://www.fltk.org).
+           the Fl_Tree project http://seriss.com/people/erco/fltk/Fl_Tree/
 
 -----------------------------------------------------------------------
 
@@ -139,7 +98,7 @@ library.  If the library is modified by someone else and passed on, we
 want its recipients to know that what they have is not the original
 version, so that any problems introduced by others will not reflect on
 the original authors' reputations.
-
+
   Finally, any free program is threatened constantly by software
 patents.  We wish to avoid the danger that companies distributing free
 software will individually obtain patent licenses, thus in effect
@@ -186,7 +145,7 @@ works together with the library.
 
   Note that it is possible for a library to be covered by the ordinary
 General Public License rather than by this special one.
-
+
 		  GNU LIBRARY GENERAL PUBLIC LICENSE
    TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
 
@@ -233,7 +192,7 @@ Library.
   You may charge a fee for the physical act of transferring a copy,
 and you may at your option offer warranty protection in exchange for a
 fee.
-
+
   2. You may modify your copy or copies of the Library or any portion
 of it, thus forming a work based on the Library, and copy and
 distribute such modifications or work under the terms of Section 1
@@ -291,7 +250,7 @@ instead of to this License.  (If a newer version than version 2 of the
 ordinary GNU General Public License has appeared, then you can specify
 that version instead if you wish.)  Do not make any other change in
 these notices.
-
+
   Once this change is made in a given copy, it is irreversible for
 that copy, so the ordinary GNU General Public License applies to all
 subsequent copies and derivative works made from that copy.
@@ -342,7 +301,7 @@ Library will still fall under Section 6.)
 distribute the object code for the work under the terms of Section 6.
 Any executables containing that work also fall under Section 6,
 whether or not they are linked directly with the Library itself.
-
+
   6. As an exception to the Sections above, you may also compile or
 link a "work that uses the Library" with the Library to produce a
 work containing portions of the Library, and distribute that work
@@ -396,7 +355,7 @@ restrictions of other proprietary libraries that do not normally
 accompany the operating system.  Such a contradiction means you cannot
 use both them and the Library together in an executable that you
 distribute.
-
+
   7. You may place library facilities that are a work based on the
 Library side-by-side in a single library together with other library
 facilities not covered by this License, and distribute such a combined
@@ -437,7 +396,7 @@ subject to these terms and conditions.  You may not impose any further
 restrictions on the recipients' exercise of the rights granted herein.
 You are not responsible for enforcing compliance by third parties to
 this License.
-
+
   11. If, as a consequence of a court judgment or allegation of patent
 infringement or for any other reason (not limited to patent issues),
 conditions are imposed on you (whether by court order, agreement or
@@ -489,7 +448,7 @@ conditions either of that version or of any later version published by
 the Free Software Foundation.  If the Library does not specify a
 license version number, you may choose any version ever published by
 the Free Software Foundation.
-
+
   14. If you wish to incorporate parts of the Library into other free
 programs whose distribution conditions are incompatible with these,
 write to the author to ask for permission.  For software which is
@@ -523,7 +482,7 @@ SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGES.
 
 		     END OF TERMS AND CONDITIONS
-
+
      Appendix: How to Apply These Terms to Your New Libraries
 
   If you develop a new library, and you want it to be of the greatest

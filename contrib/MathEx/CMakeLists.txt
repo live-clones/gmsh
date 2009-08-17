@@ -4,12 +4,7 @@
 # bugs and problems to <gmsh@geuz.org>.
 
 set(SRC
-  matheval.cpp
-  node.cpp
-  scanner.yy.cpp
-  parser.tab.cpp
-  symbol_table.cpp
-  xmath.cpp
+  mathex.cpp
 )
 
-append_gmsh_src(contrib/MathEval "${SRC}")
+append_gmsh_src(contrib/MathEx "${SRC}")

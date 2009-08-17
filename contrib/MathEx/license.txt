@@ -1,0 +1,35 @@
+BMP libray License
+------------------
+
+The MathEx library and included programs are part of SSCILIB and provided under
+the terms of the GNU Library/Lesser General Public License (LGPL) 2.1 or latter,
+with following static linking exceptions:
+
+   1. The combined work statically linked with unmodified MathEx library will
+distributed under your own license.
+
+   2. The application or libraries statically linked with MathEx library must identify 
+their use of SSCILIB library. For example, text like
+"[application/library] is based in part on the work of the SSCILIB Library
+ (http://sscilib.sourceforge.net/)" 
+will included in document or help to satisfy this requirement.
+
+   3. The folowing five modifications on MathEx library in way to fit your 
+requirement does not implies in modification of source code:
+    i. Modification of the MathEx config script, makefiles or instalation tools.
+   ii. change of name space definition
+using namespace smlib
+to other one (need if it conflict with other library)
+
+   4. The modifications of source code implies in the GNU Library/Lesser General Public License 2.1 or latter, without this static linking exceptions.
+
+End of license term
+-------------------
+
+For GNU Library/lesser General Public License, see the lesser.txt or visit
+http://www.gnu.org/
+
+June of 2003.
+
+Sadao Massago
+http://www2.dm.ufscar.br/~sadao

@@ -4,7 +4,10 @@
 # bugs and problems to <gmsh@geuz.org>.
 
 set(SRC
-  Flu_Tree_Browser.cpp
+  Fl_Tree.cxx
+  Fl_Tree_Item.cxx
+  Fl_Tree_Item_Array.cxx
+  Fl_Tree_Prefs.cxx
 )
 
-append_gmsh_src(contrib/TreeBrowser "${SRC}")
+append_gmsh_src(contrib/Fl_Tree "${SRC}")
