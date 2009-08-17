@@ -205,7 +205,7 @@ class MTetrahedron10 : public MTetrahedron {
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual MVertex *getVertexUNV(int num)
   {
-    static const int map[10] = {0, 4, 1, 5, 2, 6, 8, 9, 7, 3};
+    static const int map[10] = {0, 4, 1, 5, 2, 6, 7, 9, 8, 3};
     return getVertex(map[num]); 
   }
   virtual MVertex *getVertexBDF(int num)

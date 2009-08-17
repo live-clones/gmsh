@@ -1225,8 +1225,8 @@ int GModel::readUNV(const std::string &name)
           case 118: 
             elements[3][elementary].push_back
               (new MTetrahedron10(vertices[0], vertices[2], vertices[4], vertices[9],
-                                  vertices[1], vertices[3], vertices[5], vertices[8],
-                                  vertices[6], vertices[7], num));
+                                  vertices[1], vertices[3], vertices[5], vertices[6],
+                                  vertices[8], vertices[7], num));
             dim = 3;
             break;
           case 104: case 115:  
