@@ -10,8 +10,6 @@
 #include <vector>
 #include "ListUtils.h"
 
-double evaluate_scalarfunction(std::string var, double val, std::string funct);
-
 void coherence(std::string fileName);
 void delet(List_T *list, std::string fileName, std::string what);
 void add_infile(std::string text, std::string fileName, bool deleted_something=false);

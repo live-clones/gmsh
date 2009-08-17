@@ -1146,26 +1146,6 @@ Shape :
       $$.Type = MSH_SEGM_ELLI;
       $$.Num = num;
     }
-  | tParametric '(' FExpr ')' tAFFECT 
-      '{' FExpr ',' FExpr ',' tBIGSTR ',' tBIGSTR ',' tBIGSTR '}' tEND
-    {
-      int num = (int)$3;
-      if(FindCurve(num)){
-	yymsg(0, "Curve %d already exists", num);
-      }
-      else{
-	Curve *c = Create_Curve(num, MSH_SEGM_PARAMETRIC, 2, NULL, NULL,
-				-1, -1, $7, $9);
-	strcpy(c->functu, $11);
-	strcpy(c->functv, $13);
-	strcpy(c->functw, $15);
-	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
-	CreateReversedCurve(c);
-      }
-      Free($11); Free($13); Free($15);
-      $$.Type = MSH_SEGM_PARAMETRIC;
-      $$.Num = num;
-    }
   | tBSpline '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;

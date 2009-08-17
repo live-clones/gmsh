@@ -49,7 +49,6 @@ GEntity::GeomType gmshEdge::geomType() const
 {
   switch (c->Typ){
   case MSH_SEGM_LINE : return Line;
-  case MSH_SEGM_PARAMETRIC : return ParametricCurve;
   case MSH_SEGM_CIRC :  
   case MSH_SEGM_CIRC_INV : return Circle;
   case MSH_SEGM_ELLI:

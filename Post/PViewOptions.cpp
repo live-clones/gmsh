@@ -8,23 +8,19 @@
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "PViewOptions.h"
-
-#if defined(HAVE_MATH_EVAL)
-#include "matheval.h"
-#endif
+#include "mathEvaluator.h"
 
 PViewOptions PViewOptions::reference;
 
-PViewOptions::PViewOptions()
+PViewOptions::PViewOptions() : genRaiseEvaluator(0)
 {
-  for(int i = 0; i < 3; i++) genRaiseFunction[i] = 0;
   ColorTable_InitParam(2, &colorTable);
   ColorTable_Recompute(&colorTable);
 }
 
 PViewOptions::~PViewOptions()
 {
-  destroyGeneralRaise();
+  if(genRaiseEvaluator) delete genRaiseEvaluator;
 }
 
 double PViewOptions::getScaleValue(int iso, int numIso, double min, double max)
@@ -97,48 +93,23 @@ unsigned int PViewOptions::getColor(int i, int nb)
   return colorTable.table[index];
 }
 
-void PViewOptions::destroyGeneralRaise()
-{
-  for(int i = 0; i < 3; i++){
-#if defined(HAVE_MATH_EVAL)
-    if(genRaiseFunction[i])
-      evaluator_destroy(genRaiseFunction[i]);
-    genRaiseFunction[i] = 0;
-#else
-    genRaiseFunction[i] = (void*)-1;
-#endif
-  }
-}
-
 void PViewOptions::createGeneralRaise()
 {
-  destroyGeneralRaise();
+  const char *names[] = 
+    { "x", "y", "z", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8"};
+  unsigned int numVariables = sizeof(names) / sizeof(names[0]);
+  std::vector<std::string> expressions(3), variables(numVariables);
+  expressions[0] = genRaiseX;
+  expressions[1] = genRaiseY;
+  expressions[2] = genRaiseZ;
+  for(unsigned int i = 0; i < numVariables; i++) variables[i] = names[i];
 
-  const char *expr[3] = {genRaiseX.c_str(), genRaiseY.c_str(), genRaiseZ.c_str()};
-#if defined(HAVE_MATH_EVAL)
-  for(int i = 0; i < 3; i++) {
-    if(strlen(expr[i])) {
-      if(!(genRaiseFunction[i] = evaluator_create((char*)expr[i])))
-        Msg::Error("Invalid expression '%s'", expr[i]);
-    }
+  if(genRaiseEvaluator) delete genRaiseEvaluator;
+  genRaiseEvaluator = new mathEvaluator(expressions, variables);
+  if(expressions.empty()){
+    delete genRaiseEvaluator;
+    genRaiseEvaluator = 0;
   }
-#else
-  for(int i = 0; i < 3; i++) {
-    if(!strcmp(expr[i], "v0")) genRaiseFunction[i] = (void*)0;
-    else if(!strcmp(expr[i], "v1")) genRaiseFunction[i] = (void*)1;
-    else if(!strcmp(expr[i], "v2")) genRaiseFunction[i] = (void*)2;
-    else if(!strcmp(expr[i], "v3")) genRaiseFunction[i] = (void*)3;
-    else if(!strcmp(expr[i], "v4")) genRaiseFunction[i] = (void*)4;
-    else if(!strcmp(expr[i], "v5")) genRaiseFunction[i] = (void*)5;
-    else if(!strcmp(expr[i], "v6")) genRaiseFunction[i] = (void*)6;
-    else if(!strcmp(expr[i], "v7")) genRaiseFunction[i] = (void*)7;
-    else if(!strcmp(expr[i], "v8")) genRaiseFunction[i] = (void*)8;
-    else if(strlen(expr[i])) {
-      Msg::Error("Invalid expression '%s'", expr[i]);
-      return;
-    }
-  }
-#endif
 }
 
 bool PViewOptions::skipElement(int type)

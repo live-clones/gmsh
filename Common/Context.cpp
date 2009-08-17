@@ -69,7 +69,6 @@ CTX::CTX()
   lock = 0; // very primitive locking
   mesh.changed = 0;
   post.combineTime = 0; // try to combineTime views at startup
-  post.pluginDrawFunction = 0;
 #if defined(HAVE_FLTK)
   glFontEnum = FL_HELVETICA;
 #else

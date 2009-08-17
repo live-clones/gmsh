@@ -20,10 +20,6 @@ void DrawCurrentOpenglWindow(bool make_current)
 {
 }
 
-void DrawPlugin(void (*draw)(void *context))
-{
-}
-
 int GetFontIndex(const char *fontname)
 {
   return 0;

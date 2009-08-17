@@ -8,15 +8,12 @@
 #include "OctreePost.h"
 #include "CutParametric.h"
 #include "Context.h"
+#include "mathEvaluator.h"
 
 #if defined(HAVE_FLTK)
 #include <FL/gl.h>
 #include "drawContext.h"
 #include "Draw.h"
-#endif
-
-#if defined(HAVE_MATH_EVAL)
-#include "matheval.h"
 #endif
 
 StringXNumber CutParametricOptions_Number[] = {
@@ -60,45 +57,27 @@ std::vector<double> GMSH_CutParametricPlugin::z;
 
 int GMSH_CutParametricPlugin::fillXYZ()
 {
-#if !defined(HAVE_MATH_EVAL)
-  Msg::Error("MathEval is not compiled in this version of Gmsh");
-  return 0;
-#else
-  const char *exprx = CutParametricOptions_String[0].def.c_str();
-  const char *expry = CutParametricOptions_String[1].def.c_str();
-  const char *exprz = CutParametricOptions_String[2].def.c_str();
-  int nbU = (int)CutParametricOptions_Number[2].def;
+  std::vector<std::string> expressions(3), variables(1);
+  for(int i = 0; i < 3; i++) 
+    expressions[i] = CutParametricOptions_String[i].def;
+  variables[0] = "u";
+  mathEvaluator f(expressions, variables);
+  if(expressions.empty()) return 0;
 
+  int nbU = (int)CutParametricOptions_Number[2].def;
   x.resize(nbU);
   y.resize(nbU);
   z.resize(nbU);
-  void *fx = evaluator_create((char*)exprx);
-  if(!fx){
-    Msg::Error("Invalid expression '%s'", exprx);
-    return 0;
-  }
-  void *fy = evaluator_create((char*)expry);
-  if(!fy){
-    evaluator_destroy(fx);
-    Msg::Error("Invalid expression '%s'", expry);
-    return 0;
-  }
-  void *fz = evaluator_create((char*)exprz);
-  if(!fz){
-    Msg::Error("Invalid expression '%s'", exprz);
-    evaluator_destroy(fx);
-    evaluator_destroy(fy);
-    return 0;
-  }
+  std::vector<double> val(1), res(3);
   for(int i = 0; i < nbU; ++i){
-    char *names[] = { "u" };
-    double values[] = { getU(i) };
-    x[i] = evaluator_evaluate(fx, sizeof(names) / sizeof(names[0]), names, values);
-    y[i] = evaluator_evaluate(fy, sizeof(names) / sizeof(names[0]), names, values);
-    z[i] = evaluator_evaluate(fz, sizeof(names) / sizeof(names[0]), names, values);
+    val[0] = getU(i);
+    if(f.eval(val, res)){
+      x[i] = res[0];
+      y[i] = res[1];
+      z[i] = res[2];
+    }
   }
   return 1;
-#endif
 }
 
 void GMSH_CutParametricPlugin::draw(void *context)
@@ -135,10 +114,8 @@ double GMSH_CutParametricPlugin::callback(int num, int action, double value, dou
   default: break;
   }
   *opt = value;
-#if defined(HAVE_FLTK)
   recompute = 1;
-  DrawPlugin(draw);
-#endif
+  GMSH_Plugin::setDrawFunction(draw);
   return 0.;
 }
 
@@ -146,10 +123,8 @@ std::string GMSH_CutParametricPlugin::callbackStr(int num, int action, std::stri
                                                   std::string &opt)
 {
   opt = value;
-#if defined(HAVE_FLTK)
   recompute = 1;
-  DrawPlugin(draw);
-#endif
+  GMSH_Plugin::setDrawFunction(draw);
   return opt;
 }
 

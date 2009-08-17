@@ -14,14 +14,12 @@
 #include "PView.h"
 #include "PViewOptions.h"
 #include "PViewData.h"
+#include "Plugin.h"
 #include "VertexArray.h"
 #include "SmoothData.h"
 #include "Context.h"
 #include "gl2ps.h"
-
-#if defined(HAVE_MATH_EVAL)
-#include "matheval.h"
-#endif
+#include "mathEvaluator.h"
 
 // we only really draw first order elements (high order ones should
 // always be subdivided in adaptiveView beforehand)
@@ -157,27 +155,15 @@ static void applyGeneralRaise(PView *p, int numNodes, int numComp,
                               double vals[NMAX][9], double xyz[NMAX][3])
 {
   PViewOptions *opt = p->getOptions();
+  if(!opt->genRaiseEvaluator) return;
 
+  std::vector<double> values(12, 0.), res(3);
   for(int k = 0; k < numNodes; k++) {
-    double d[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
-    for(int l = 0; l < numComp; l++) d[l] = vals[k][l];
-#if defined(HAVE_MATH_EVAL)
-    char *names[] = { "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8" ,
-                      "x", "y", "z" };
-    double values[] = { d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8],
-                        xyz[k][0], xyz[k][1], xyz[k][2] };
-    for(int i = 0; i < 3; i++) {
-      if(opt->genRaiseFunction[i])
-        xyz[k][i] += opt->genRaiseFactor * evaluator_evaluate
-          (opt->genRaiseFunction[i], sizeof(names) / sizeof(names[0]), names, values);
-    }
-#else
-    for(int i = 0; i < 3; i++){
-      int comp = (int)(long int)opt->genRaiseFunction[i];
-      if(comp >= 0)
-        xyz[k][i] += opt->genRaiseFactor * d[comp];
-    }
-#endif
+    for(int i = 0; i < 3; i++) values[i] = xyz[k][i];
+    for(int i = 0; i < std::min(numComp, 9); i++) values[3 + i] = vals[k][i];
+    if(opt->genRaiseEvaluator->eval(values, res))
+      for(int i = 0; i < 3; i++)
+        xyz[k][i] += opt->genRaiseFactor * res[i];
   }
 }
 
@@ -1537,8 +1523,7 @@ class drawPViewBoundingBox {
 void drawContext::drawPost()
 {
   // draw any plugin-specific stuff
-  if(CTX::instance()->post.pluginDrawFunction) 
-    (*CTX::instance()->post.pluginDrawFunction)(this);
+  if(GMSH_Plugin::draw) (*GMSH_Plugin::draw)(this);
 
   if(PView::list.empty()) return;
 

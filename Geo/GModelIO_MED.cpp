@@ -463,7 +463,7 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
   
   // write the elements
   {
-    med_geometrie_element typ;
+    med_geometrie_element typ = MED_NONE;
     { // points
       std::vector<med_int> conn, fam;
       for(viter it = firstVertex(); it != lastVertex(); it++)

@@ -594,7 +594,7 @@ void gmshLineSearch(double (*func)(gmshVector<double> &, void *), void* data,
                     double stpmax, int &check)
 {
   int i;
-  double alam, alam2 = 1., alamin, f2 = 0., fold2 = 0., rhs1, rhs2, temp, tmplam;
+  double alam, alam2 = 1., alamin, f2 = 0., fold2 = 0., rhs1, rhs2, temp, tmplam = 0.;
 
   const double ALF = 1.0e-4;
   const double TOLX = 1.0e-9;

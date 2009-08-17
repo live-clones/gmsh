@@ -12,10 +12,7 @@
 #include "gmshLaplace.h"
 #include "gmshHelmholtz.h"
 #include "gmshLinearSystemGmm.h"
-
-#if defined(HAVE_MATH_EVAL)
-#include "matheval.h"
-#endif
+#include "mathEvaluator.h"
 
 StringXNumber FiniteElementOptions_Number[] = {
   {GMSH_FULLRC, "Omega", NULL, 1.},
@@ -74,33 +71,35 @@ template<class scalar>
 class gmshMathEvalFunction : public gmshFunction<scalar> {
  private:
   std::string _str;
-  void *_f;
+  mathEvaluator *_f;
  public:
   gmshMathEvalFunction(std::string str) : _str(str)
   {
-#if defined(HAVE_MATH_EVAL)
-    _f = evaluator_create((char*)_str.c_str());
-    if(!_f) Msg::Error("Invalid expression '%s'", _str.c_str());
-#endif
+    std::vector<std::string> expressions(1), variables(3);
+    expressions[0] = str;
+    variables[0] = "x";
+    variables[1] = "y";
+    variables[2] = "z";
+    _f = new mathEvaluator(expressions, variables);
+    if(expressions.empty()){
+      delete _f;
+      _f = 0;
+    }
   }
   virtual ~gmshMathEvalFunction()
   {
-#if defined(HAVE_MATH_EVAL)
-    if(_f) evaluator_destroy(_f);
-#endif
+    if(_f) delete _f;
   }
   virtual scalar operator () (double x, double y, double z) const 
   { 
-#if defined(HAVE_MATH_EVAL)
     if(_f){
-      char *names[] = {"x", "y", "z"};
-      double values[] = {x, y, z};
-      return evaluator_evaluate(_f, sizeof(names)/sizeof(names[0]), names, values);
+      std::vector<double> values(3), res(1);
+      values[0] = x;
+      values[1] = y;
+      values[2] = z;
+      if(_f->eval(values, res)) return res[0];
     }
     return atof(_str.c_str());
-#else
-    return atof(_str.c_str());
-#endif
   }
 };
 

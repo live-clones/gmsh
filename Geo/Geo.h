@@ -6,7 +6,6 @@
 #ifndef _GEO_H_
 #define _GEO_H_
 
-#include <map>
 #include <math.h>
 #include "GmshDefines.h"
 #include "gmshSurface.h"
@@ -30,7 +29,6 @@
 #define MSH_SEGM_BSPLN         207
 #define MSH_SEGM_NURBS         208
 #define MSH_SEGM_BEZIER        209
-#define MSH_SEGM_PARAMETRIC    210
 #define MSH_SEGM_BND_LAYER     211
 #define MSH_SEGM_DISCRETE      212
 #define MSH_SEGM_FROM_GMODEL   213
@@ -99,14 +97,16 @@ class DrawingColor{
   unsigned int geom, mesh;
 };
 
-typedef struct{
+class CircParam{
+ public:
   double t1, t2, f1, f2, incl;
   Vertex *v[4];
   double invmat[3][3];
   double n[3];
-}CircParam;
+};
 
-typedef struct{
+class Curve{
+ public:
   int Num;
   int Typ;
   char Visible;
@@ -123,17 +123,18 @@ typedef struct{
   float *k;
   int degre;
   CircParam Circle;
-  char functu[256], functv[256], functw[256];
   DrawingColor Color;
   gmshSurface *geometry;
-}Curve;
+};
 
-typedef struct{
+class EdgeLoop{
+ public:
   int Num;
   List_T *Curves;
-}EdgeLoop;
+};
 
-typedef struct{
+class Surface{
+ public:
   int Num;
   int Typ;
   char Visible;
@@ -155,14 +156,16 @@ typedef struct{
   // should be the only one in gmsh, so parameter "Type" should
   // disappear from the class Surface.
   gmshSurface *geometry;
-}Surface;
+};
 
-typedef struct{
+class SurfaceLoop{
+ public:
   int Num;
   List_T *Surfaces;
-}SurfaceLoop;
+};
 
-typedef struct {
+class Volume {
+ public:
   int Num;
   int Typ;
   char Visible;
@@ -173,15 +176,16 @@ typedef struct {
   List_T *SurfacesOrientations;
   List_T *SurfacesByTag;
   DrawingColor Color;
-}Volume;
+};
 
-typedef struct{
+class PhysicalGroup{
+ public:
   int Num;
   int Typ;
   char Visible;
   List_T *Entities;
   List_T *Boundaries[4];
-}PhysicalGroup;
+};
 
 class GEO_Internals{
  private:
@@ -203,10 +207,11 @@ class GEO_Internals{
   void reset_physicals();
 };
 
-typedef struct {
+class Shape{
+ public:
   int Type;
   int Num;
-} Shape;
+};
 
 int compareVertex(const void *a, const void *b);
 

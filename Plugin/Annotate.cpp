@@ -12,7 +12,6 @@
 #include <FL/gl.h>
 #include "drawContext.h"
 #include "Draw.h"
-#include "FlGui.h"
 #endif
 
 StringXNumber AnnotateOptions_Number[] = {
@@ -107,9 +106,7 @@ double GMSH_AnnotatePlugin::callback(int num, int action, double value, double *
   default: break;
   }
   *opt = value;
-#if defined(HAVE_FLTK)
-  DrawPlugin(draw);
-#endif
+  GMSH_Plugin::setDrawFunction(draw);
   return 0.;
 }
 
@@ -117,9 +114,7 @@ std::string GMSH_AnnotatePlugin::callbackStr(int num, int action, std::string va
                                              std::string &opt)
 {
   opt = value;
-#if defined(HAVE_FLTK)
-  DrawPlugin(draw);
-#endif
+  GMSH_Plugin::setDrawFunction(draw);
   return opt;
 }
 

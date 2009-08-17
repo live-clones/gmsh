@@ -64,9 +64,7 @@ double GMSH_CutPlanePlugin::callback(int num, int action, double value, double *
   default: break;
   }
   *opt = value;
-#if defined(HAVE_FLTK)
-  DrawPlugin(draw);
-#endif
+  GMSH_Plugin::setDrawFunction(draw);
   return 0.;
 }
 

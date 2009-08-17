@@ -21,6 +21,7 @@ set(SRC
       GaussQuadratureHex.cpp
       GaussLegendreSimplex.cpp
     GmshPredicates.cpp
+  mathEvaluator.cpp
 )
 
 append_gmsh_src(Numeric "${SRC}")

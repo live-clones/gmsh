@@ -22,11 +22,12 @@ option(ENABLE_CGNS "Enable CGNS mesh export" OFF)
 option(ENABLE_CHACO "Enable Chaco mesh partitioner" ON)
 option(ENABLE_DINTEGRATION "Enable discrete integration and levelsets" ON)
 option(ENABLE_FLTK "Build FLTK GUI" ON)
+option(ENABLE_FL_TREE "Enable FLTK tree browser widget" ON)
 option(ENABLE_FOURIER_MODEL "Enable Fourier geometrical models" OFF)
 option(ENABLE_GMM "Enable GMM linear algebra solvers" ON)
 option(ENABLE_GRAPHICS "Compile-in OpenGL graphics even if there is no GUI" OFF)
 option(ENABLE_KBIPACK "Enable Kbipack for homology solver" ON)
-option(ENABLE_MATH_EVAL "Enable MathEval expression parser" ON)
+option(ENABLE_MATHEX "Enable MathEx expression parser" ON)
 option(ENABLE_MED "Enable MED mesh and post-processing file formats" ON)
 option(ENABLE_METIS "Enable Metis mesh partitioner" ON)
 option(ENABLE_NATIVE_FILE_CHOOSER "Enable native file chooser in GUI" ON)
@@ -39,7 +40,6 @@ option(ENABLE_QT "Build QT GUI" OFF)
 option(ENABLE_TAUCS "Enable Taucs linear algebra solver" ON)
 option(ENABLE_TETGEN "Enable Tetgen mesh generator" ON)
 option(ENABLE_TETGEN_NEW "Enable experimental version of Tetgen" OFF)
-option(ENABLE_TREE_BROWSER "Enable FLTK tree browser widget" ON)
 
 set(GMSH_MAJOR_VERSION 2)
 set(GMSH_MINOR_VERSION 4)
@@ -201,11 +201,11 @@ if(ENABLE_FLTK)
       list(APPEND CONFIG_OPTIONS "NativeFileChooser")
       add_definitions(-DFLTK1)
     endif(ENABLE_NATIVE_FILE_CHOOSER)
-    if(ENABLE_TREE_BROWSER)
-      add_subdirectory(contrib/TreeBrowser)
-      set(HAVE_TREE_BROWSER TRUE)
-      list(APPEND CONFIG_OPTIONS "TreeBrowser")
-    endif(ENABLE_TREE_BROWSER)
+    if(ENABLE_FL_TREE)
+      add_subdirectory(contrib/Fl_Tree)
+      set(HAVE_FL_TREE TRUE)
+      list(APPEND CONFIG_OPTIONS "FlTree")
+    endif(ENABLE_FL_TREE)
   endif(FLTK_FOUND)
 elseif(ENABLE_QT)
   find_package(Qt4)
@@ -331,11 +331,11 @@ if(ENABLE_KBIPACK)
   endif(GMP_LIB)
 endif(ENABLE_KBIPACK)
 
-if(ENABLE_MATH_EVAL)
-  add_subdirectory(contrib/MathEval)
-  set(HAVE_MATH_EVAL TRUE)
-  list(APPEND CONFIG_OPTIONS "MathEval")
-endif(ENABLE_MATH_EVAL)
+if(ENABLE_MATHEX)
+  add_subdirectory(contrib/MathEx)
+  set(HAVE_MATHEX TRUE)
+  list(APPEND CONFIG_OPTIONS "MathEx")
+endif(ENABLE_MATHEX)
 
 if(ENABLE_METIS)
   add_subdirectory(contrib/Metis)
@@ -562,9 +562,9 @@ endif(EXTERNAL_INCLUDES)
 # we could specify include dirs more selectively, but this is simpler
 include_directories(Common Fltk Geo Graphics Mesh Numeric Parser Plugin
   Post Qt contrib/ANN/include contrib/Chaco/main contrib/DiscreteIntegration
-  contrib/MathEval contrib/Metis contrib/NativeFileChooser 
-  contrib/Netgen contrib/Netgen/libsrc/include contrib/Netgen/libsrc/interface
-  contrib/Tetgen contrib/TreeBrowser contrib/gmm contrib/kbipack
+  contrib/MathEx contrib/Metis contrib/NativeFileChooser contrib/Netgen 
+  contrib/Netgen/libsrc/include contrib/Netgen/libsrc/interface
+  contrib/Tetgen contrib/Fl_Tree contrib/gmm contrib/kbipack
   ${EXTERNAL_INCLUDES} ${CMAKE_BINARY_DIR}/Common)
 
 # we don't build the lib by default (we could then create the gmsh
@@ -577,8 +577,9 @@ include_directories(Common Fltk Geo Graphics Mesh Numeric Parser Plugin
 # target)
 add_library(lib STATIC EXCLUDE_FROM_ALL ${GMSH_SRC})
 set_target_properties(lib PROPERTIES OUTPUT_NAME Gmsh)
-set_target_properties(lib PROPERTIES DEBUG_OUTPUT_NAME Gmshd)
-#SET_TARGET_PROPERTIES(lib PROPERTIES DEBUG_POSTFIX d) 
+if(MSVC)
+  SET_TARGET_PROPERTIES(lib PROPERTIES DEBUG_POSTFIX d) 
+endif(MSVC)
 
 if(HAVE_FLTK)
   add_executable(gmsh WIN32 Fltk/Main.cpp ${GMSH_SRC})

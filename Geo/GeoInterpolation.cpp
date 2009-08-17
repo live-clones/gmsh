@@ -266,14 +266,6 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
     }
     break;
 
-  case MSH_SEGM_PARAMETRIC:
-    V.Pos.X = evaluate_scalarfunction("t", u, c->functu);
-    V.Pos.Y = evaluate_scalarfunction("t", u, c->functv);
-    V.Pos.Z = evaluate_scalarfunction("t", u, c->functw);
-    V.w = (1. - u) * c->beg->w + u * c->end->w;
-    V.lc = (1. - u) * c->beg->lc + u * c->end->lc;
-    break;
-
   case MSH_SEGM_CIRC:
   case MSH_SEGM_CIRC_INV:
   case MSH_SEGM_ELLI:
@@ -375,7 +367,6 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
   }
   V.u = u;
   return V;
-
 }
 
 // Interpolation transfinie sur un quadrangle :

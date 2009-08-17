@@ -81,9 +81,6 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
     return v1;
   }
 
-  PView *v2 = new PView();
-  PViewDataList *data2 = getDataList(v2);
-
   // create list of points with associated data
   std::vector<MVertex*> points;
   int numSteps = data1->getNumTimeSteps();
@@ -100,6 +97,13 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
           data1->getValue(step, ent, ele, 0, comp, v->v[3 + numComp * step + comp]);
       points.push_back(v);
     }
+  }
+
+  if(points.size() < 3){
+    Msg::Error("Need at least 3 points to triangulate");
+    for(unsigned int i = 0; i < points.size(); i++)
+      delete points[i];
+    return v1;
   }
 
   // project points onto plane
@@ -131,6 +135,8 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
   doc.MakeMeshWithPoints();
 
   // create output (using unperturbed data)
+  PView *v2 = new PView();
+  PViewDataList *data2 = getDataList(v2);
   for(int i = 0; i < doc.numTriangles; i++){
     PointData *p[3];
     p[0] = (PointData*)doc.points[doc.triangles[i].a].data;

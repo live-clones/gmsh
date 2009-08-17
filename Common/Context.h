@@ -192,7 +192,6 @@ class CTX {
     int smooth, animCycle, combineTime, combineRemoveOrig;
     int fileFormat, plugins;
     double animDelay;
-    void (*pluginDrawFunction)(void*);
   }post;
   // solver options 
   struct{

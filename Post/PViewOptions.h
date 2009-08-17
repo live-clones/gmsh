@@ -10,6 +10,8 @@
 #include "ColorTable.h"
 #include "SBoundingBox3d.h"
 
+class mathEvaluator;
+
 // The display options of a post-processing view.
 class PViewOptions {
  public:
@@ -82,7 +84,7 @@ class PViewOptions {
   int useGenRaise;
   double genRaiseFactor;
   std::string genRaiseX, genRaiseY, genRaiseZ;
-  void *genRaiseFunction[3];
+  mathEvaluator *genRaiseEvaluator;
   int adaptVisualizationGrid, maxRecursionLevel;
   double targetError;
   int clip; // status of clip planes (bit array)
@@ -110,9 +112,8 @@ class PViewOptions {
                         bool forceLinear=false, int numColors=-1);
   // get i-th color amongst nb (i in [0, nb - 1])
   unsigned int getColor(int i, int nb);
-  // create/destroy math evaluators for general raise option
+  // create math evaluator for general raise option
   void createGeneralRaise();
-  void destroyGeneralRaise();
   // return true if one should not draw elements with type type
   bool skipElement(int type);
 };

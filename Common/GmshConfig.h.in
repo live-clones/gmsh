@@ -12,6 +12,7 @@
 #cmakedefine HAVE_CHACO
 #cmakedefine HAVE_DINTEGRATION
 #cmakedefine HAVE_FLTK
+#cmakedefine HAVE_FL_TREE
 #cmakedefine HAVE_FOURIER_MODEL
 #cmakedefine HAVE_GMM
 #cmakedefine HAVE_KBIPACK
@@ -20,7 +21,7 @@
 #cmakedefine HAVE_LIBJPEG
 #cmakedefine HAVE_LIBPNG
 #cmakedefine HAVE_LIBZ
-#cmakedefine HAVE_MATH_EVAL
+#cmakedefine HAVE_MATHEX
 #cmakedefine HAVE_MED
 #cmakedefine HAVE_METIS
 #cmakedefine HAVE_MPI
@@ -37,7 +38,6 @@
 #cmakedefine HAVE_QT
 #cmakedefine HAVE_TAUCS
 #cmakedefine HAVE_TETGEN
-#cmakedefine HAVE_TREE_BROWSER
 
 #define GMSH_CONFIG_OPTIONS "${GMSH_CONFIG_OPTIONS}"
 

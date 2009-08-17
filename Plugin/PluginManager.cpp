@@ -8,6 +8,7 @@
 #include "GmshConfig.h"
 #include "StringUtils.h"
 #include "Context.h"
+#include "Draw.h"
 #include "Plugin.h"
 #include "PluginManager.h"
 #include "CutMap.h"
@@ -62,7 +63,7 @@ PluginManager::~PluginManager()
 {
   for(std::map<std::string, GMSH_Plugin*>::iterator it = allPlugins.begin();
       it != allPlugins.end(); ++it)
-    delete(*it).second;
+    delete it->second;
 }
 
 GMSH_Plugin *PluginManager::find(std::string pluginName)
@@ -70,7 +71,7 @@ GMSH_Plugin *PluginManager::find(std::string pluginName)
   std::map<std::string, GMSH_Plugin*>::iterator it = allPlugins.find(pluginName);
   if(it == allPlugins.end())
     return 0;
-  return (*it).second;
+  return it->second;
 }
 
 GMSH_SolverPlugin *PluginManager::findSolverPlugin()
@@ -78,7 +79,7 @@ GMSH_SolverPlugin *PluginManager::findSolverPlugin()
   std::map<std::string, GMSH_Plugin*>::iterator it = allPlugins.begin();
   std::map<std::string, GMSH_Plugin*>::iterator ite = allPlugins.end();
   for (; it != ite; ++it) {
-    GMSH_Plugin *p = (*it).second;
+    GMSH_Plugin *p = it->second;
     if(p->getType() == GMSH_Plugin::GMSH_SOLVER_PLUGIN) {
       return (GMSH_SolverPlugin*)(p);
     }      
@@ -204,12 +205,10 @@ void PluginManager::registerDefaultPlugins()
                       ("Triangulate", GMSH_RegisterTriangulatePlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("GSHHS", GMSH_RegisterGSHHSPlugin()));
-#if defined(HAVE_MATH_EVAL)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Evaluate", GMSH_RegisterEvaluatePlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("CutParametric", GMSH_RegisterCutParametricPlugin()));
-#endif
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("FiniteElement", GMSH_RegisterFiniteElementPlugin()));
 #if defined(HAVE_KBIPACK)
@@ -269,3 +268,4 @@ void PluginManager::addPlugin(std::string fileName)
   Msg::Info("Loaded Plugin '%s' (%s)", p->getName().c_str(), p->getAuthor().c_str());
 #endif
 }
+

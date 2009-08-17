@@ -443,87 +443,96 @@ class listBrowser : public Fl_Browser{
     : Fl_Browser(x, y, w, h, c){}
 };
 
-#if defined(HAVE_TREE_BROWSER)
+#if defined(HAVE_FL_TREE)
 
-static void _add_vertex(GVertex *gv, Flu_Tree_Browser::Node *n)
+static void _add_vertex(GVertex *gv, Fl_Tree *tree, std::string path)
 {
-  char str[128];
-  sprintf(str, "Point %d", gv->tag());
-  Flu_Tree_Browser::Node *n2 = n->add(str);
-  if(gv->getVisibility()) n2->select(true);
-  n2->user_data((void*)gv);
+  std::ostringstream vertex;
+  vertex << path << "Point " << gv->tag() << "/";
+  Fl_Tree_Item *n = tree->add(vertex.str().c_str());
+  if(gv->getVisibility()) n->select(1);
+  n->userdata((void*)gv);
+  n->close();
 }
 
-static void _add_edge(GEdge *ge, Flu_Tree_Browser::Node *n)
+static void _add_edge(GEdge *ge, Fl_Tree *tree, std::string path)
 {
-  char str[128];
-  sprintf(str, "Line %d/", ge->tag());
-  Flu_Tree_Browser::Node *n2 = n->add(str);
-  if(ge->getVisibility()) n2->select(true);
-  n2->user_data((void*)ge);
+  std::ostringstream edge;
+  edge << path << "Line " << ge->tag() << "/";
+  Fl_Tree_Item *n = tree->add(edge.str().c_str());
+  if(ge->getVisibility()) n->select(1);
+  n->userdata((void*)ge);
+  n->close();
   if(ge->getBeginVertex())
-    _add_vertex(ge->getBeginVertex(), n2);
+    _add_vertex(ge->getBeginVertex(), tree, edge.str());
   if(ge->getEndVertex())
-    _add_vertex(ge->getEndVertex(), n2);
+    _add_vertex(ge->getEndVertex(), tree, edge.str());
 }
 
-static void _add_face(GFace *gf, Flu_Tree_Browser::Node *n)
+static void _add_face(GFace *gf, Fl_Tree *tree, std::string path)
 {
-  char str[128];
-  sprintf(str, "Surface %d/", gf->tag());
-  Flu_Tree_Browser::Node *n2 = n->add(str);
-  if(gf->getVisibility()) n2->select(true);
-  n2->user_data((void*)gf);
+  std::ostringstream face;
+  face << path << "Surface " << gf->tag() << "/";
+  Fl_Tree_Item *n = tree->add(face.str().c_str());
+  if(gf->getVisibility()) n->select(1);
+  n->userdata((void*)gf);
+  n->close();
   std::list<GEdge*> edges = gf->edges();
   for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++)
-    _add_edge(*it, n2);
+    _add_edge(*it, tree, face.str());
 }
 
-static void _add_region(GRegion *gr, Flu_Tree_Browser::Node *n)
+static void _add_region(GRegion *gr, Fl_Tree *tree, std::string path)
 {
-  char str[128];
-  sprintf(str, "Volume %d/", gr->tag());
-  Flu_Tree_Browser::Node *n2 = n->add(str);
-  if(gr->getVisibility()) n2->select(true);
-  n2->user_data((void*)gr);
+  std::ostringstream region;
+  region << path << "Volume " << gr->tag() << "/";
+  Fl_Tree_Item *n = tree->add(region.str().c_str());
+  if(gr->getVisibility()) n->select(1);
+  n->userdata((void*)gr);
+  n->close();
   std::list<GFace*> faces = gr->faces();
   for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++)
-    _add_face(*it, n2);
+    _add_face(*it, tree, region.str());
 }
 
 static void _add_physical_group(int dim, int num, std::vector<GEntity*> &ge,
-                                Flu_Tree_Browser::Node *n)
+                                Fl_Tree *tree, std::string path)
 {
   if(ge.empty()) return;
-  char str[256];
-  Flu_Tree_Browser::Node *n2 = 0;
   std::string name;
   if(ge[0]->model()->getPhysicalName(dim, num).size())
     name += std::string(" <<") + ge[0]->model()->getPhysicalName(dim, num) + ">>";
+  Fl_Tree_Item *n;
+  std::ostringstream group;
+  group << path;
   switch(dim){
   case 3:
-    sprintf(str, "Physical Volume %d%s/", num, name.c_str());
-    n2 = n->add(str);
+    group << "Physical Volume " << num << name << "/";
+    n = tree->add(group.str().c_str());
+    n->close();
     for(unsigned int i = 0; i < ge.size(); i++)
-      _add_region((GRegion*)ge[i], n2);
+      _add_region((GRegion*)ge[i], tree, group.str());
     break;
   case 2:
-    sprintf(str, "Physical Surface %d%s/", num, name.c_str());
-    n2 = n->add(str);
+    group << "Physical Surface " << num << name << "/";
+    n = tree->add(group.str().c_str());
+    n->close();
     for(unsigned int i = 0; i < ge.size(); i++)
-      _add_face((GFace*)ge[i], n2);
+      _add_face((GFace*)ge[i], tree, group.str());
     break;
   case 1:
-    sprintf(str, "Physical Line %d%s/", num, name.c_str());
-    n2 = n->add(str);
+    group << "Physical Line " << num << name << "/";
+    n = tree->add(group.str().c_str());
+    n->close();
     for(unsigned int i = 0; i < ge.size(); i++)
-      _add_edge((GEdge*)ge[i], n2);
+      _add_edge((GEdge*)ge[i], tree, group.str());
     break;
   case 0:
-    sprintf(str, "Physical Point %d%s/", num, name.c_str());
-    n2 = n->add(str);
+    group << "Physical Point " << num << name << "/";
+    n = tree->add(group.str().c_str());
+    n->close();
     for(unsigned int i = 0; i < ge.size(); i++)
-      _add_vertex((GVertex*)ge[i], n2);
+      _add_vertex((GVertex*)ge[i], tree, group.str());
     break;
   default:
     break;
@@ -551,34 +560,46 @@ static void _rebuild_tree_browser(bool force)
   FlGui::instance()->visibility->tree->show();
   FlGui::instance()->visibility->tree->clear();
 
-  char str[128];
   for(unsigned int i = 0; i < GModel::list.size(); i++){
     GModel *m = GModel::list[i];
-    std::string s(" <<");
-    s += m->getName() + ">>";
-    if(m == GModel::current()) s += " (Active)";
-    sprintf(str, "Model [%d] %s/", i, s.c_str());
-    Flu_Tree_Browser::Node *n = FlGui::instance()->visibility->tree->add(str);
-    if(m->getVisibility()) n->select(true);
-    Flu_Tree_Browser::Node *e = n->add("Elementary entities/");
-    e->select(true);
+    std::ostringstream model;
+    model << "Model [" << i << "] <<" << m->getName() << ">>";
+    if(m == GModel::current()) model << " (Active)";
+    model << "/";
+
+    Fl_Tree_Item *n;
+    n = FlGui::instance()->visibility->tree->add(model.str().c_str());
+    if(m->getVisibility()) n->select(1);
+    n->close();
+
+    std::string elementary = model.str() + "Elementary entities/";
+    n = FlGui::instance()->visibility->tree->add(elementary.c_str());
+    n->close();
+
     for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
-      _add_region(*it, e);
+      _add_region(*it, FlGui::instance()->visibility->tree, elementary);
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
-      _add_face(*it, e);
+      _add_face(*it, FlGui::instance()->visibility->tree, elementary);
     for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
-      _add_edge(*it, e);
+      _add_edge(*it, FlGui::instance()->visibility->tree, elementary);
     for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++)
-      _add_vertex(*it, e);
-    Flu_Tree_Browser::Node *g = n->add("Physical groups/");
-    g->select(true);
+      _add_vertex(*it, FlGui::instance()->visibility->tree, elementary);
+
+    std::string physical = model.str() + "Physical groups/";
+    n = FlGui::instance()->visibility->tree->add(physical.c_str());
+    n->close();
+
     std::map<int, std::vector<GEntity*> > groups[4];
     m->getPhysicalGroups(groups);
     for(int i = 3; i >= 0; i--)
       for(std::map<int, std::vector<GEntity*> >::iterator it = groups[i].begin();
           it != groups[i].end(); it++)
-        _add_physical_group(i, it->first, it->second, g);
+        _add_physical_group(i, it->first, it->second,
+                            FlGui::instance()->visibility->tree, physical);
   }
+
+  FlGui::instance()->visibility->tree->root_label("Gmsh");
+  FlGui::instance()->visibility->tree->redraw();
 }
 
 static void build_tree_cb(Fl_Widget *w, void *data)
@@ -586,17 +607,17 @@ static void build_tree_cb(Fl_Widget *w, void *data)
   _rebuild_tree_browser(true);
 }
 
-static void _recur_select(Flu_Tree_Browser::Node *n)
+static void _recur_select(Fl_Tree_Item *n)
 {
-  n->select(true);
+  n->select(1);
   for(int i = 0; i < n->children(); i++)
     _recur_select(n->child(i));
 }
 
-static void _recur_set_visible(Flu_Tree_Browser::Node *n)
+static void _recur_set_visible(Fl_Tree_Item *n)
 {
-  if(n->user_data() && n->selected()){
-    GEntity *ge = (GEntity*)n->user_data();
+  if(n->userdata() && n->is_selected()){
+    GEntity *ge = (GEntity*)n->userdata();
     bool recursive = FlGui::instance()->visibility->butt[0]->value() ? true : false;
     ge->setVisibility(1, recursive);
     // force this: if we ask to see an entity, let's assume that we
@@ -607,11 +628,11 @@ static void _recur_set_visible(Flu_Tree_Browser::Node *n)
     _recur_set_visible(n->child(i));
 }
 
-static void _recur_update_selected(Flu_Tree_Browser::Node *n)
+static void _recur_update_selected(Fl_Tree_Item *n)
 {
-  if(n->user_data()){
-    GEntity *ge = (GEntity*)n->user_data();
-    n->select(ge->getVisibility() ? true : false);
+  if(n->userdata()){
+    GEntity *ge = (GEntity*)n->userdata();
+    n->select(ge->getVisibility() ? 1 : 0);
   }
   for(int i = 0; i < n->children(); i++)
     _recur_update_selected(n->child(i));
@@ -621,22 +642,23 @@ static void visibility_tree_apply_cb(Fl_Widget *w, void *data)
 {
   CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   bool recursive = FlGui::instance()->visibility->butt[0]->value() ? true : false;
-  Flu_Tree_Browser::Node *root = FlGui::instance()->visibility->tree->first();
+
+  Fl_Tree_Item *root = FlGui::instance()->visibility->tree->root();
   for(int i = 0; i < root->children(); i++){
     GModel *m = GModel::list[i];
-    Flu_Tree_Browser::Node *n = root->child(i);
+    Fl_Tree_Item *n = root->child(i);
     // treat special levels separately
     if(recursive){
-      if(n->selected()){ // if model is selected
+      if(root->is_selected() || n->is_selected()){ // if root or model is selected
         _recur_select(n);
       }
       else{
         for(int j = 0; j < n->children(); j++){
-          if(n->child(j)->selected()) // if elementary/physical is selected
+          if(n->child(j)->is_selected()) // if elementary/physical is selected
             _recur_select(n->child(j));
           else if(j == 1){
             for(int k = 0; k < n->child(j)->children(); k++){
-              if(n->child(j)->child(k)->selected()) // if physical ent is selected
+              if(n->child(j)->child(k)->is_selected()) // if physical ent is selected
                 _recur_select(n->child(j)->child(k));
             }
           }
@@ -653,26 +675,26 @@ static void visibility_tree_apply_cb(Fl_Widget *w, void *data)
     // update tree selection
     _recur_update_selected(n);
   }
+  FlGui::instance()->visibility->tree->redraw();
   Draw();
 }
 
-class treeBrowser : public Flu_Tree_Browser{
+class treeBrowser : public Fl_Tree{
   int handle(int event)
   {
     switch(event){
     case FL_SHORTCUT:
     case FL_KEYBOARD:
-      if(Fl::test_shortcut(FL_Enter) || 
-         Fl::test_shortcut(FL_KP_Enter)){
+      if(Fl::test_shortcut(FL_Enter) || Fl::test_shortcut(FL_KP_Enter)){
         visibility_tree_apply_cb(NULL, NULL);
         return 1;
       }
     }
-    return Flu_Tree_Browser::handle(event);
+    return Fl_Tree::handle(event);
   }
  public:
   treeBrowser(int x, int y, int w , int h, const char* c = 0)
-    : Flu_Tree_Browser(x, y, w, h, c){}
+    : Fl_Tree(x, y, w, h, c){}
 };
 
 #endif
@@ -688,7 +710,7 @@ void visibility_cb(Fl_Widget *w, void *data)
     FlGui::instance()->visibility->show(false);
 
   _rebuild_list_browser();
-#if defined(HAVE_TREE_BROWSER)
+#if defined(HAVE_FL_TREE)
   _rebuild_tree_browser(false);
 #endif
   FlGui::instance()->visibility->updatePerWindow(true);
@@ -1112,6 +1134,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
       browser = new listBrowser
         (2 * WB, 2 * WB + 2 * BH, brw, height - 6 * WB - 4 * BH);
       browser->type(FL_MULTI_BROWSER);
+      browser->textsize(FL_NORMAL_SIZE - 1);
       browser->column_widths(cols);
       
       gg->end();
@@ -1141,19 +1164,15 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     g->end();
     Fl_Group::current()->resizable(g);
   }
-#if defined(HAVE_TREE_BROWSER)
+#if defined(HAVE_FL_TREE)
   {
     Fl_Group *g = new Fl_Group
       (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Tree browser");
 
-    tree = new treeBrowser
-      (2 * WB, 2 * WB + BH, brw, height - 6 * WB - 3 * BH);
-    tree->show_root(false);
-    tree->box(FL_DOWN_BOX);
-    tree->insertion_mode(FLU_INSERT_BACK);
-    tree->branch_icons(0, 0);
-    tree->branch_text(FL_BLACK, FL_HELVETICA_BOLD, FL_NORMAL_SIZE - 1);
-    tree->leaf_text(FL_BLACK, FL_HELVETICA, FL_NORMAL_SIZE - 1);
+    tree = new treeBrowser(2 * WB, 2 * WB + BH, brw, height - 6 * WB - 3 * BH);
+    tree->labelsize(FL_NORMAL_SIZE - 1);
+    tree->selectmode(FL_TREE_SELECT_MULTI);
+    tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
     tree->hide();
 
     tree_create = new Fl_Button

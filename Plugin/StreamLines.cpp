@@ -68,9 +68,7 @@ double GMSH_StreamLinesPlugin::callback(int num, int action, double value, doubl
   default: break;
   }
   *opt = value;
-#if defined(HAVE_FLTK)
-  DrawPlugin(draw);
-#endif
+  GMSH_Plugin::setDrawFunction(draw);
   return 0.;
 }
 

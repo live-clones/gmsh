@@ -4,7 +4,30 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <stdio.h>
+#include <string.h>
+#include "GmshConfig.h"
 #include "Plugin.h"
+#include "Context.h"
+#include "Draw.h"
+
+void (*GMSH_Plugin::draw)(void*) = 0;
+
+void GMSH_Plugin::setDrawFunction(void (*fct)(void *context))
+{
+#if defined(HAVE_FLTK)
+  draw = fct;
+  int old = CTX::instance()->drawBBox;
+  CTX::instance()->drawBBox = 1;
+  if(CTX::instance()->fastRedraw){
+    CTX::instance()->post.draw = 0;
+    CTX::instance()->mesh.draw = 0;
+  }
+  Draw();
+  CTX::instance()->drawBBox = old;
+  CTX::instance()->post.draw = 1;
+  CTX::instance()->mesh.draw = 1;
+#endif
+}
 
 void GMSH_Plugin::catchErrorMessage(char *errorMessage) const
 {

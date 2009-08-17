@@ -6,10 +6,7 @@
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "Extract.h"
-
-#if defined(HAVE_MATH_EVAL)
-#include "matheval.h"
-#endif
+#include "mathEvaluator.h"
 
 StringXNumber ExtractOptions_Number[] = {
   {GMSH_FULLRC, "TimeStep", NULL, -1.},
@@ -17,11 +14,7 @@ StringXNumber ExtractOptions_Number[] = {
 };
 
 StringXString ExtractOptions_String[] = {
-#if defined(HAVE_MATH_EVAL)
   {GMSH_FULLRC, "Expression0", NULL, "Sqrt(v0^2+v1^2+v2^2)"},
-#else
-  {GMSH_FULLRC, "Expression0", NULL, "v0"},
-#endif
   {GMSH_FULLRC, "Expression1", NULL, ""},
   {GMSH_FULLRC, "Expression2", NULL, ""},
   {GMSH_FULLRC, "Expression3", NULL, ""},
@@ -137,16 +130,9 @@ PView *GMSH_ExtractPlugin::execute(PView *view)
 {
   int timeStep = (int)ExtractOptions_Number[0].def;
   int iView = (int)ExtractOptions_Number[1].def;
-  const char *expr[9] = { ExtractOptions_String[0].def.c_str(), 
-                          ExtractOptions_String[1].def.c_str(),
-                          ExtractOptions_String[2].def.c_str(),
-                          ExtractOptions_String[3].def.c_str(),
-                          ExtractOptions_String[4].def.c_str(),
-                          ExtractOptions_String[5].def.c_str(),
-                          ExtractOptions_String[6].def.c_str(),
-                          ExtractOptions_String[7].def.c_str(),
-                          ExtractOptions_String[8].def.c_str() };
-
+  std::vector<std::string> expr(9);
+  for(int i = 0; i < 9; i++) expr[i] = ExtractOptions_String[i].def;
+  
   PView *v1 = getView(iView, view);
   if(!v1) return view;
   PViewData *data1 = v1->getData();
@@ -157,53 +143,31 @@ PView *GMSH_ExtractPlugin::execute(PView *view)
   }
 
   int numComp2;
-  if(strlen(expr[3]) || strlen(expr[4]) || strlen(expr[5]) || 
-     strlen(expr[6]) || strlen(expr[7]) || strlen(expr[8])){
+  if(expr[3].size() || expr[4].size() || expr[5].size() || 
+     expr[6].size() || expr[7].size() || expr[8].size()){
     numComp2 = 9;
     for(int i = 0; i < 9; i++)
-      if(!strlen(expr[i])) expr[i] = "0";
+      if(expr[i].empty()) expr[i] = "0";
   }
-  else if(strlen(expr[1]) || strlen(expr[2])){
+  else if(expr[1].size() || expr[2].size()){
     numComp2 = 3;
     for(int i = 0; i < 3; i++)
-      if(!strlen(expr[i])) expr[i] = "0";
+      if(expr[i].empty()) expr[i] = "0";
   }
   else{
     numComp2 = 1;
   }
+  expr.resize(numComp2);
 
-  // if we have MathEval, we can evaluate arbitrary expressions;
-  // otherwise, we only allow to extract single components
-#if defined(HAVE_MATH_EVAL)
-  void *f[9] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-  for(int i = 0; i < numComp2; i++){
-    f[i] = evaluator_create((char*)expr[i]);
-    if(!f[i]){
-      Msg::Error("Invalid expression '%s'", expr[i]);
-      for(int j = 0; j < i; j++)
-        if(f[j]) evaluator_destroy(f[j]);
-      return view;
-    }
-  }
-#else
-  int comp2[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-  for(int i = 0; i < numComp2; i++){
-    if     (!strcmp(expr[i], "v0")) comp2[i] = 0;
-    else if(!strcmp(expr[i], "v1")) comp2[i] = 1;
-    else if(!strcmp(expr[i], "v2")) comp2[i] = 2;
-    else if(!strcmp(expr[i], "v3")) comp2[i] = 3;
-    else if(!strcmp(expr[i], "v4")) comp2[i] = 4;
-    else if(!strcmp(expr[i], "v5")) comp2[i] = 5;
-    else if(!strcmp(expr[i], "v6")) comp2[i] = 6;
-    else if(!strcmp(expr[i], "v7")) comp2[i] = 7;
-    else if(!strcmp(expr[i], "v8")) comp2[i] = 8;
-    else{
-      Msg::Error("Invalid expression '%s'", expr[i]);
-      return view;
-    }
-  }
-#endif
-
+  const char *names[] = 
+    { "x", "y", "z", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8" };
+  unsigned int numVariables = sizeof(names) / sizeof(names[0]);
+  std::vector<std::string> variables(numVariables);
+  for(unsigned int i = 0; i < numVariables; i++) variables[i] = names[i];
+  mathEvaluator f(expr, variables);
+  if(expr.empty()) return view;
+  std::vector<double> values(numVariables), res(numComp2);
+          
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
 
@@ -233,32 +197,19 @@ PView *GMSH_ExtractPlugin::execute(PView *view)
       int timeEnd = (timeStep < 0) ? -timeStep : timeStep + 1;
       for(int step = timeBeg; step < timeEnd; step++){
         for(int nod = 0; nod < numNodes; nod++){
-          std::vector<double> v(numComp);
+          std::vector<double> v(std::max(9, numComp), 0.);
           for(int comp = 0; comp < numComp; comp++)
             data1->getValue(step, ent, ele, nod, comp, v[comp]);
-          for(int comp = 0; comp < numComp2; comp++){
-#if defined(HAVE_MATH_EVAL)
-            char *names[] = { "x", "y", "z", "v0", "v1", "v2", 
-                              "v3", "v4", "v5", "v6", "v7", "v8" };
-            double values[] = { x[nod], y[nod], z[nod], v[0], v[1], v[2], 
-                                v[3], v[4], v[5], v[6], v[7], v[8] };
-            double res = evaluator_evaluate(f[comp], sizeof(names) / sizeof(names[0]),
-                                            names, values);
-#else
-            double res = v[comp2[comp]];
-#endif
-            out->push_back(res);
-          }
+          values[0] = x[nod]; values[1] = y[nod]; values[2] = z[nod];
+          for(int i = 0; i < 9; i++) values[3 + i] = v[i];
+          if(f.eval(values, res))
+            for(int i = 0; i < numComp2; i++)
+              out->push_back(res[i]);
         }
       }
     }
   }
   
-#if defined(HAVE_MATH_EVAL)
-  for(int i = 0; i < numComp2; i++)
-    evaluator_destroy(f[i]);
-#endif
-
   if(timeStep < 0){
     for(int i = 0; i < data1->getNumTimeSteps(); i++)
       data2->Time.push_back(data1->getTime(i));

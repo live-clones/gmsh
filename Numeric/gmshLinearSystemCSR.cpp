@@ -1,3 +1,8 @@
+// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "gmshLinearSystemCSR.h"
@@ -68,8 +73,6 @@ void CSRList_Delete(CSRList_T *liste)
   }
 }
 
-
-
 void CSRList_Add(CSRList_T *liste, void *data)
 {
   liste->n++;
@@ -85,7 +88,7 @@ int CSRList_Nbr(CSRList_T *liste)
 }
 
 template<>
-void gmshLinearSystemCSR<double> :: allocate(int _nbRows)
+void gmshLinearSystemCSR<double>::allocate(int _nbRows)
 {
   if(a_) {
     CSRList_Delete(a_);
@@ -97,7 +100,7 @@ void gmshLinearSystemCSR<double> :: allocate(int _nbRows)
     delete something;
   }
   
-  if (_nbRows == 0){
+  if(_nbRows == 0){
     a_ = 0; 
     ai_ = 0; 
     ptr_ = 0; 
@@ -124,12 +127,14 @@ void gmshLinearSystemCSR<double> :: allocate(int _nbRows)
 const int NSTACK   = 50;
 const unsigned int M_sort2  = 7;
 
-static void free_ivector(int *v, long nl, long nh){
+static void free_ivector(int *v, long nl, long nh)
+{
   // free an int vector allocated with ivector() 
   free((char*)(v+nl-1));
 }
 
-static int * ivector(long nl, long nh) {
+static int *ivector(long nl, long nh)
+{
   // allocate an int vector with subscript range v[nl..nh] 
   int *v;  
   v=(int *)malloc((size_t) ((nh-nl+2)*sizeof(int)));
@@ -137,16 +142,18 @@ static int * ivector(long nl, long nh) {
   return v-nl+1;
 }
 
-static int  cmpij(INDEX_TYPE ai,INDEX_TYPE aj,INDEX_TYPE bi,INDEX_TYPE bj){
+static int cmpij(INDEX_TYPE ai,INDEX_TYPE aj,INDEX_TYPE bi,INDEX_TYPE bj)
+{
   if(ai<bi)return -1;
   if(ai>bi)return 1;
   if(aj<bj)return -1;
   if(aj>bj)return 1;
   return 0;
 }
-template <class scalar>
-void _sort2_xkws (unsigned long n, double arr[], INDEX_TYPE ai[] , INDEX_TYPE aj [] ) {
 
+template <class scalar>
+void _sort2_xkws(unsigned long n, double arr[], INDEX_TYPE ai[], INDEX_TYPE aj[])
+{
   unsigned long i,ir=n,j,k,l=1;
   int *istack,jstack=0;
   INDEX_TYPE tempi;
@@ -237,47 +244,47 @@ void _sort2_xkws (unsigned long n, double arr[], INDEX_TYPE ai[] , INDEX_TYPE aj
 }
 
 template <class scalar>
-void sortColumns (int NbLines, 
-                  int nnz, 
-                  INDEX_TYPE *ptr, 
-                  INDEX_TYPE *jptr, 
-                  INDEX_TYPE *ai, 
-                  scalar *a) {
-   // replace pointers by lines
+void sortColumns(int NbLines, 
+                 int nnz, 
+                 INDEX_TYPE *ptr, 
+                 INDEX_TYPE *jptr, 
+                 INDEX_TYPE *ai, 
+                 scalar *a)
+{
+  // replace pointers by lines
   int *count = new int [NbLines];
 
-   for(int i=0;i<NbLines;i++){
-     count[i] = 0;
-     INDEX_TYPE _position =  jptr[i];
-     while(1){
-       count[i]++;
-       INDEX_TYPE _position_temp = _position;
-       _position = ptr[_position];
-       ptr[_position_temp] = i;
-       if (_position == 0) break;
-     }
-   }   
-   _sort2_xkws<double>(nnz,a,ptr,ai);   
-    jptr[0] = 0;
-    for(int i=1;i<=NbLines;i++){
-      jptr[i] = jptr[i-1] + count[i-1];
+  for(int i=0;i<NbLines;i++){
+    count[i] = 0;
+    INDEX_TYPE _position =  jptr[i];
+    while(1){
+      count[i]++;
+      INDEX_TYPE _position_temp = _position;
+      _position = ptr[_position];
+      ptr[_position_temp] = i;
+      if (_position == 0) break;
     }
-
-   for(int i=0;i<NbLines;i++){
-     for (int j= jptr[i] ; j<jptr[i+1]-1 ; j++){
-       ptr[j] = j+1;
-     }
-     ptr[jptr[i+1]] = 0;
-   }
-
-
-   delete[] count;
+  }   
+  _sort2_xkws<double>(nnz,a,ptr,ai);   
+  jptr[0] = 0;
+  for(int i=1;i<=NbLines;i++){
+    jptr[i] = jptr[i-1] + count[i-1];
+  }
+  
+  for(int i=0;i<NbLines;i++){
+    for (int j= jptr[i] ; j<jptr[i+1]-1 ; j++){
+      ptr[j] = j+1;
+    }
+    ptr[jptr[i+1]] = 0;
+  }
+  
+  delete[] count;
 }
 
 #if defined(HAVE_GMM)
 #include "gmm.h"
 template<>
-int gmshLinearSystemCSRGmm<double> :: systemSolve()
+int gmshLinearSystemCSRGmm<double>::systemSolve()
 {
   if (!sorted)
     sortColumns(_b->size(),
@@ -288,14 +295,13 @@ int gmshLinearSystemCSRGmm<double> :: systemSolve()
 		(double*) a_->array);
   sorted = true;
 
-  gmm::csr_matrix_ref<double*,INDEX_TYPE *,INDEX_TYPE *, 0>  ref((double*) a_->array, 
-                                                                 (INDEX_TYPE *) ai_->array,
-                                                                 (INDEX_TYPE *) jptr_->array,
-                                                                 _b->size(), _b->size());
+  gmm::csr_matrix_ref<double*,INDEX_TYPE *,INDEX_TYPE *, 0>  
+    ref((double*)a_->array, (INDEX_TYPE *) ai_->array,
+        (INDEX_TYPE *)jptr_->array, _b->size(), _b->size());
   gmm::csr_matrix<double,0> M;
   M.init_with(ref);
 
-  gmm::ildltt_precond<gmm::csr_matrix<double,0>  > P(M, 10, 1.e-10);
+  gmm::ildltt_precond<gmm::csr_matrix<double, 0> > P(M, 10, 1.e-10);
   gmm::iteration iter(_prec);
   iter.set_noisy(_noisy);
   if(_gmres) gmm::gmres(M, *_x, *_b, P, 100, iter);
@@ -307,7 +313,7 @@ int gmshLinearSystemCSRGmm<double> :: systemSolve()
 #if defined(HAVE_GMM)
 #include "gmm.h"
 template<>
-int gmshLinearSystemCSRGmm<double> :: checkSystem()
+int gmshLinearSystemCSRGmm<double>::checkSystem()
 {
   if(!sorted)
     sortColumns(_b->size(),
@@ -330,7 +336,7 @@ int gmshLinearSystemCSRGmm<double> :: checkSystem()
 #if defined(HAVE_TAUCS)
 #include "taucs.h"
 template<>
-int gmshLinearSystemCSRTaucs<double> :: systemSolve()
+int gmshLinearSystemCSRTaucs<double>::systemSolve()
 {
   if(!sorted)
     sortColumns(_b->size(),

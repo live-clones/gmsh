@@ -14,6 +14,7 @@
 #if defined(HAVE_FLTK)
 #include <FL/gl.h>
 #include "FlGui.h"
+#include "Draw.h"
 #include "graphicWindow.h"
 #include "gl2ps.h"
 #include "gl2gif.h"

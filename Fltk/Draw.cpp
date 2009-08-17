@@ -37,23 +37,6 @@ void DrawCurrentOpenglWindow(bool make_current)
   FlGui::instance()->check();
 }
 
-void DrawPlugin(void (*draw)(void *context))
-{
-  CTX::instance()->post.pluginDrawFunction = draw;
-  int old = CTX::instance()->drawBBox;
-  CTX::instance()->drawBBox = 1;
-  if(CTX::instance()->fastRedraw){
-    CTX::instance()->post.draw = 0;
-    CTX::instance()->mesh.draw = 0;
-  }
-  Draw();
-  // this is reset in each plugin run/cancel callback:
-  // CTX::instance()->post.pluginDrawFunction = NULL;
-  CTX::instance()->drawBBox = old;
-  CTX::instance()->post.draw = 1;
-  CTX::instance()->mesh.draw = 1;
-}
-
 int GetFontIndex(const char *fontname)
 {
   if(fontname){

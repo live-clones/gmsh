@@ -10,7 +10,6 @@
 // for each widget toolkit: FLTK, Qt, etc.)
 
 void Draw();
-void DrawPlugin(void (*draw)(void *context));
 void DrawCurrentOpenglWindow(bool make_current);
 int GetFontIndex(const char *fontname);
 int GetFontEnum(int index);

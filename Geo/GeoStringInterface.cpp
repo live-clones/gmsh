@@ -19,36 +19,6 @@
 #include "Parser.h"
 #endif
 
-double evaluate_scalarfunction(std::string var, double val, std::string funct)
-{
-#if defined(HAVE_NO_PARSER)
-  Msg::Error("Scalar function evaluation not available without Gmsh parser");
-  return 0.;
-#else
-  std::string fileName = CTX::instance()->homeDir + CTX::instance()->tmpFileName;
-  FILE *gmsh_yyin_old = gmsh_yyin;
-  if(!(gmsh_yyin = fopen(fileName.c_str(), "w"))) {
-    Msg::Error("Unable to open temporary file '%s'", fileName.c_str());
-    gmsh_yyin = gmsh_yyin_old;
-    return 0.;
-  }
-  // pose "variable = function" and evaluate function
-  fprintf(gmsh_yyin, "%s = %.16g ;\n", var.c_str(), val);
-  fprintf(gmsh_yyin, "ValeurTemporaire__ = %s ;\n", funct.c_str());
-  fclose(gmsh_yyin);
-  gmsh_yyin = fopen(fileName.c_str(), "r");
-  while(!feof(gmsh_yyin)) {
-    gmsh_yyparse();
-  }
-  fclose(gmsh_yyin);
-  gmsh_yyin = gmsh_yyin_old;
-  // retreive value
-  if(gmsh_yysymbols.count("ValeurTemporaire__")) 
-    return gmsh_yysymbols["ValeurTemporaire__"][0];
-  return 0.;
-#endif
-}
-
 void add_infile(std::string text, std::string fileName, bool deleted_something)
 {
 #if defined(HAVE_NO_PARSER)

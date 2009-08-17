@@ -15,8 +15,8 @@
 #include <FL/Fl_Input.H>
 #include "GmshConfig.h"
 
-#if defined(HAVE_TREE_BROWSER)
-#include "Flu_Tree_Browser.h"
+#if defined(HAVE_FL_TREE)
+#include "FL/Fl_Tree.H"
 #endif
 
 class visibilityWindow{
@@ -25,8 +25,8 @@ class visibilityWindow{
   Fl_Choice *browser_type;
   Fl_Browser *browser;
   Fl_Multi_Browser *per_window;
-#if defined(HAVE_TREE_BROWSER)
-  Flu_Tree_Browser *tree;
+#if defined(HAVE_FL_TREE)
+  Fl_Tree *tree;
   Fl_Button *tree_create;
 #endif
   Fl_Check_Button *butt[2];

@@ -140,7 +140,7 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
   if(no_view_selected) p->execute(0);
 
   FlGui::instance()->updateViews();
-  CTX::instance()->post.pluginDrawFunction = NULL;
+  GMSH_Plugin::draw = 0;
   Draw();
 }
 

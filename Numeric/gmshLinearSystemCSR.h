@@ -3,16 +3,13 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _GMSH_LINEAR_SYSTEM_TAUCS_H_
-#define _GMSH_LINEAR_SYSTEM_TAUCS_H_
+#ifndef _GMSH_LINEAR_SYSTEM_CSR_H_
+#define _GMSH_LINEAR_SYSTEM_CSR_H_
 
-// Interface to TAUCS
-
+#include <vector>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "gmshLinearSystem.h"
-
-#include <vector>
 
 typedef int INDEX_TYPE ;
 
@@ -175,6 +172,5 @@ class gmshLinearSystemCSRTaucs : public gmshLinearSystemCSR<scalar> {
   }
 #endif
 };
-
 
 #endif

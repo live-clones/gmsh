@@ -6,7 +6,6 @@
 #include <string.h>
 #include "GmshMessage.h"
 #include "Numeric.h"
-#include "MallocUtils.h"
 #include "Geo.h"
 #include "GModel.h"
 #include "GeoInterpolation.h"
@@ -139,7 +138,7 @@ static void Free_Vertex(void *a, void *b)
 
 PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T *intlist, List_T *bndlist[4])
 {
-  PhysicalGroup *p = (PhysicalGroup *)Malloc(sizeof(PhysicalGroup));
+  PhysicalGroup *p = new PhysicalGroup;
   p->Entities = List_Create(List_Nbr(intlist), 1, sizeof(int));
   p->Num = Num;
   GModel::current()->getGEOInternals()->MaxPhysicalNum = 
@@ -170,14 +169,14 @@ static void Free_PhysicalGroup(void *a, void *b)
   PhysicalGroup *p = *(PhysicalGroup **)a;
   if(p) {
     List_Delete(p->Entities);
-    Free(p);
+    delete p;
     p = NULL;
   }
 }
 
 EdgeLoop *Create_EdgeLoop(int Num, List_T *intlist)
 {
-  EdgeLoop *l = (EdgeLoop *)Malloc(sizeof(EdgeLoop));
+  EdgeLoop *l = new EdgeLoop;
   l->Curves = List_Create(List_Nbr(intlist), 1, sizeof(int));
   l->Num = Num;
   GModel::current()->getGEOInternals()->MaxLineLoopNum = 
@@ -195,14 +194,14 @@ static void Free_EdgeLoop(void *a, void *b)
   EdgeLoop *l = *(EdgeLoop **)a;
   if(l) {
     List_Delete(l->Curves);
-    Free(l);
+    delete l;
     l = NULL;
   }
 }
 
 SurfaceLoop *Create_SurfaceLoop(int Num, List_T *intlist)
 {
-  SurfaceLoop *l = (SurfaceLoop *)Malloc(sizeof(SurfaceLoop));
+  SurfaceLoop *l = new SurfaceLoop;
   l->Surfaces = List_Create(List_Nbr(intlist), 1, sizeof(int));
   l->Num = Num;
   GModel::current()->getGEOInternals()->MaxSurfaceLoopNum = 
@@ -220,7 +219,7 @@ static void Free_SurfaceLoop(void *a, void *b)
   SurfaceLoop *l = *(SurfaceLoop **)a;
   if(l) {
     List_Delete(l->Surfaces);
-    Free(l);
+    delete l;
     l = NULL;
   }
 }
@@ -468,7 +467,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
                           {-3, 3.0, 0, 0.0},
                           {1, 0, 0, 0.0} };
 
-  Curve *pC = (Curve *)Malloc(sizeof(Curve));
+  Curve *pC = new Curve;
   pC->Color.type = 0;
   pC->Visible = 1;
   pC->Extrude = NULL;
@@ -506,7 +505,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
   pC->uend = u2;
 
   if(Knots) {
-    pC->k = (float *)Malloc(List_Nbr(Knots) * sizeof(float));
+    pC->k = new float[List_Nbr(Knots)];
     double kmin = .0, kmax = 1.;
     List_Read(Knots, 0, &kmin);
     List_Read(Knots, List_Nbr(Knots) - 1, &kmax);
@@ -572,16 +571,16 @@ static void Free_Curve(void *a, void *b)
 {
   Curve *pC = *(Curve **)a;
   if(pC) {
-    Free(pC->k);
+    delete [] pC->k;
     List_Delete(pC->Control_Points);
-    Free(pC);
+    delete pC;
     pC = NULL;
   }
 }
 
 Surface *Create_Surface(int Num, int Typ)
 {
-  Surface *pS = (Surface *)Malloc(sizeof(Surface));
+  Surface *pS = new Surface;
   pS->Color.type = 0;
   pS->Visible = 1;
   pS->Num = Num;
@@ -613,14 +612,14 @@ static void Free_Surface(void *a, void *b)
     List_Delete(pS->Generatrices);
     List_Delete(pS->EmbeddedCurves);
     List_Delete(pS->EmbeddedPoints);
-    Free(pS);
+    delete pS;
     pS = NULL;
   }
 }
 
 Volume *Create_Volume(int Num, int Typ)
 {
-  Volume *pV = (Volume *)Malloc(sizeof(Volume));
+  Volume *pV = new Volume;
   pV->Color.type = 0;
   pV->Visible = 1;
   pV->Num = Num;
@@ -644,7 +643,7 @@ static void Free_Volume(void *a, void *b)
     List_Delete(pV->Surfaces);
     List_Delete(pV->SurfacesOrientations);
     List_Delete(pV->SurfacesByTag);
-    Free(pV);
+    delete pV;
     pV = NULL;
   }
 }
@@ -875,11 +874,6 @@ static void CopyCurve(Curve *c, Curve *cc, bool copyMeshingMethod)
   cc->uend = c->uend;
   cc->Control_Points = List_Create(List_Nbr(c->Control_Points), 1, sizeof(Vertex *));
   List_Copy(c->Control_Points, cc->Control_Points);
-  if(c->Typ == MSH_SEGM_PARAMETRIC){
-    strcpy(cc->functu, c->functu);
-    strcpy(cc->functv, c->functv);
-    strcpy(cc->functw, c->functw);
-  }
   End_Curve(cc);
   Tree_Insert(GModel::current()->getGEOInternals()->Curves, &cc);
 }
@@ -987,7 +981,6 @@ void CopyShape(int Type, int Num, int *New)
   case MSH_SEGM_ELLI:
   case MSH_SEGM_ELLI_INV:
   case MSH_SEGM_NURBS:
-  case MSH_SEGM_PARAMETRIC:
     if(!(c = FindCurve(Num))) {
       Msg::Error("Unknown curve %d", Num);
       return;
@@ -1114,7 +1107,6 @@ void DeleteShape(int Type, int Num)
   case MSH_SEGM_ELLI:
   case MSH_SEGM_ELLI_INV:
   case MSH_SEGM_NURBS:
-  case MSH_SEGM_PARAMETRIC:
     DeleteCurve(Num);
     DeleteCurve(-Num);
     break;
@@ -1179,7 +1171,6 @@ void ColorShape(int Type, int Num, unsigned int Color)
   case MSH_SEGM_ELLI:
   case MSH_SEGM_ELLI_INV:
   case MSH_SEGM_NURBS:
-  case MSH_SEGM_PARAMETRIC:
   case MSH_SEGM_DISCRETE:
     ColorCurve(Num, Color);
     break;
@@ -1221,7 +1212,6 @@ void VisibilityShape(int Type, int Num, int Mode)
   case MSH_SEGM_ELLI:
   case MSH_SEGM_ELLI_INV:
   case MSH_SEGM_NURBS:
-  case MSH_SEGM_PARAMETRIC:
   case MSH_SEGM_DISCRETE:
     if((c = FindCurve(Num)))
       c->Visible = Mode;
@@ -1297,8 +1287,7 @@ Curve *CreateReversedCurve(Curve *c)
   }
 
   if(c->Typ == MSH_SEGM_NURBS && c->k) {
-    newc->k = (float *)malloc((c->degre + List_Nbr(c->Control_Points) + 1) *
-                              sizeof(float));
+    newc->k = new float[c->degre + List_Nbr(c->Control_Points) + 1];
     for(i = 0; i < c->degre + List_Nbr(c->Control_Points) + 1; i++)
       newc->k[c->degre + List_Nbr(c->Control_Points) - i] = c->k[i];
   }
@@ -1684,7 +1673,6 @@ static void ApplicationOnShapes(double matrix[4][4], List_T *shapes)
     case MSH_SEGM_ELLI:
     case MSH_SEGM_ELLI_INV:
     case MSH_SEGM_NURBS:
-    case MSH_SEGM_PARAMETRIC:
       c = FindCurve(O.Num);
       if(c)
         ApplyTransformationToCurve(matrix, c);
@@ -1803,7 +1791,6 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary)
     case MSH_SEGM_BSPLN:
     case MSH_SEGM_NURBS:
     case MSH_SEGM_BEZIER:
-    case MSH_SEGM_PARAMETRIC:
     case MSH_SEGM_BND_LAYER:
       {
         Curve *c = FindCurve(O.Num);
@@ -2461,7 +2448,6 @@ void ExtrudeShapes(int type, List_T *list_in,
     case MSH_SEGM_ELLI:
     case MSH_SEGM_ELLI_INV:
     case MSH_SEGM_NURBS:
-    case MSH_SEGM_PARAMETRIC:
       {
         Surface *ps = 0;
         Shape top;

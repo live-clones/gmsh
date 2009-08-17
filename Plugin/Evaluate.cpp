@@ -7,10 +7,7 @@
 #include "GmshConfig.h"
 #include "Evaluate.h"
 #include "OctreePost.h"
-
-#if defined(HAVE_MATH_EVAL)
-#include "matheval.h"
-#endif
+#include "mathEvaluator.h"
 
 StringXNumber EvaluateOptions_Number[] = {
   {GMSH_FULLRC, "Component", NULL, -1.},
@@ -108,7 +105,6 @@ PView *GMSH_EvaluatePlugin::execute(PView *view)
   int externalView = (int)EvaluateOptions_Number[2].def;
   int externalTimeStep = (int)EvaluateOptions_Number[3].def;
   int iView = (int)EvaluateOptions_Number[4].def;
-  const char *expr = EvaluateOptions_String[0].def.c_str();
 
   PView *v1 = getView(iView, view);
   if(!v1) return view;
@@ -142,12 +138,17 @@ PView *GMSH_EvaluatePlugin::execute(PView *view)
     externalTimeStep = 0;
   }
 
-#if defined(HAVE_MATH_EVAL)
-  void *f = evaluator_create((char*)expr);
-  if(!f){
-    Msg::Error("Invalid expression '%s'", expr);
-    return view;
-  }
+  const char *names[] = 
+    {"x", "y", "z", "Time", "TimeStep",
+     "v", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8",
+     "w", "w0", "w1", "w2", "w3", "w4", "w5", "w6", "w7", "w8"};
+  unsigned int numVariables = sizeof(names) / sizeof(names[0]);
+  std::vector<std::string> expressions(1), variables(numVariables);
+  expressions[0] = EvaluateOptions_String[0].def;
+  for(unsigned int i = 0; i < numVariables; i++) variables[i] = names[i];
+  mathEvaluator f(expressions, variables);
+  if(expressions.empty()) return view;
+  std::vector<double> values(numVariables), res(1);
 
   OctreePost *octree = 0;
   if((data1->getNumEntities() != data2->getNumEntities()) ||
@@ -177,14 +178,15 @@ PView *GMSH_EvaluatePlugin::execute(PView *view)
       for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
         if(data1->skipElement(step, ent, ele)) continue;
         int numComp = data1->getNumComponents(step, ent, ele);
-        int numComp2 = data2->getNumComponents(step2, ent, ele);
+        int numComp2 = octree ? 9 : data2->getNumComponents(step2, ent, ele);
         for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++){
           double x, y, z;
           int tag = data1->getNode(step, ent, ele, nod, x, y, z);
           if(tag) continue; // node has already been modified
-          std::vector<double> v(numComp, 0.), w(numComp2, 0.);
+          std::vector<double> v(std::max(9, numComp), 0.);
           for(int comp = 0; comp < numComp; comp++)
             data1->getValue(step, ent, ele, nod, comp, v[comp]);
+          std::vector<double> w(std::max(9, numComp2), 0.);
           if(octree){
             if(!octree->searchScalar(x, y, z, &w[0], step2))
               if(!octree->searchVector(x, y, z, &w[0], step2))
@@ -196,28 +198,22 @@ PView *GMSH_EvaluatePlugin::execute(PView *view)
           
           for(int comp = 0; comp < numComp; comp++){
             if(component >= 0 && component != comp) continue;
-            char *names[] = 
-              {"x", "y", "z", "Time", "TimeStep",
-               "v", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8",
-               "w", "w0", "w1", "w2", "w3", "w4", "w5", "w6", "w7", "w8"};
-            double values[] = 
-              {x, y, z, time, step,
-               v[comp], v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8],
-               w[comp], w[0], w[1], w[2], w[3], w[4], w[5], w[6], w[7], w[8]};
-            double res = evaluator_evaluate
-              (f, sizeof(names) / sizeof(names[0]), names, values);
-            data1->setValue(step, ent, ele, nod, comp, res);
+            values[0] = x; values[1] = y; values[2] = z;
+            values[3] = time; values[4] = step;
+            values[5] = v[comp];
+            for(int i = 0; i < 9; i++) values[6 + i] = v[i];
+            values[15] = w[comp];
+            for(int i = 0; i < 9; i++) values[16 + i] = w[i];
+            if(f.eval(values, res))
+              data1->setValue(step, ent, ele, nod, comp, res[0]);
             data1->tagNode(step, ent, ele, nod, 1);
           }
         }
       }
     }
   }
-  evaluator_destroy(f);
+
   if(octree) delete octree;
-#else
-  Msg::Error("MathEval is not compiled in this version of Gmsh");
-#endif
 
   data1->finalize();
 

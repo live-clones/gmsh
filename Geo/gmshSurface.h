@@ -18,9 +18,9 @@
 
 class gmshSurface
 {
-protected:  
+ protected:  
   static std::map<int, gmshSurface*> allGmshSurfaces;
-public:
+ public:
   //there are points define in this surface parameterization
   bool vertex_defined_on_surface;
   virtual ~gmshSurface(){}
@@ -59,9 +59,10 @@ public:
 
 class gmshSphere : public gmshSurface
 {
+ private:
   double xc, yc, zc, r;
   gmshSphere(double _x, double _y, double _z, double _r) : xc(_x), yc(_y), zc(_z), r(_r){}
-public:
+ public:
   static gmshSurface *NewSphere(int _iSphere, double _x, double _y, double _z, double _r);
   virtual Range<double> parBounds(int i) const 
   { 
@@ -85,10 +86,11 @@ public:
 #include "stdio.h"
 class gmshPolarSphere : public gmshSurface
 {
+ private:
   double r;
   SPoint3 o;
   gmshPolarSphere(double x, double y, double z, double _r);
-public:
+ public:
   static gmshSurface *NewPolarSphere(int _iSphere, double _x, double _y, double _z, double _r);
   virtual Range<double> parBounds(int i) const 
   { 
@@ -113,12 +115,15 @@ public:
   }
 };
 
+class mathEvaluator;
+
 class gmshParametricSurface : public gmshSurface
 {
-  void *evalX, *evalY, *evalZ;
+ private:
+  mathEvaluator *_f;
   gmshParametricSurface(char*, char*, char*);
   ~gmshParametricSurface();
-public:
+ public:
   static gmshSurface *NewParametricSurface(int iSurf, char*, char*, char*);
   virtual Range<double> parBounds(int i) const;
   virtual gmshSurface::gmshSurfaceType geomType() const 

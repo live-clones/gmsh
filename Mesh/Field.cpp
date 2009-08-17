@@ -14,25 +14,22 @@
 #include <string.h>
 #include <sstream>
 #include "GmshConfig.h"
-
-#if defined(HAVE_MATH_EVAL)
-#include "matheval.h"
-#endif
-#if defined(HAVE_ANN)
-#include "ANN/ANN.h"
-#endif
-
 #include "Context.h"
 #include "Field.h"
 #include "GeoInterpolation.h"
 #include "GModel.h"
 #include "GmshMessage.h"
 #include "Numeric.h"
+#include "mathEvaluator.h"
 
 #if !defined(HAVE_NO_POST)
 #include "OctreePost.h"
 #include "PViewDataList.h"
 #include "MVertex.h"
+#endif
+
+#if defined(HAVE_ANN)
+#include "ANN/ANN.h"
 #endif
 
 class FieldOptionDouble : public FieldOption
@@ -914,96 +911,67 @@ class MeanField : public Field
   }
 };
 
-#if defined(HAVE_MATH_EVAL)
 class MathEvalExpression
 {
-  bool error_status;
-  std::list<Field*> *list;
-  int nvalues;
-  char **names;
-  double *values;
-  void *eval;
-  int *evaluators_id;
-  std::string function;
-  char *c_str_function;
+ private:
+  mathEvaluator *_f;
+  std::set<int> _fields;
  public:
-  double evaluate(double x, double y, double z)
+  MathEvalExpression() : _f(0) {}
+  ~MathEvalExpression(){ if(_f) delete _f; }
+  bool set_function(const std::string &f)
   {
-    if(error_status)
-      return MAX_LC;
-    for(int i = 0; i < nvalues; i++){
-      switch (evaluators_id[i]) {
-      case -1:
-        values[i] = x;
-        break;
-      case -2: 
-        values[i] = y;
-        break;
-      case -3: 
-        values[i] = z;
-        break;
-      default:
-        {
-          Field *f = GModel::current()->getFields()->get(evaluators_id[i]);
-          values[i] = f ? (*f) (x, y, z) : MAX_LC;
+    // get id numbers of fields appearing in the function
+    _fields.clear();
+    unsigned int i = 0;
+    while(i < f.size()){
+      unsigned int j = 0;
+      if(f[i] == 'F'){
+        std::string id("");
+        while(i + 1 + j < f.size() && f[i + 1 + j] >= '0' && f[i + 1 + j] <= '9'){
+          id += f[i + 1 + j];
+          j++;
         }
+        _fields.insert(atoi(id.c_str()));
       }
+      i += j + 1;
     }
-    return evaluator_evaluate(eval, nvalues, names, values);
-  }
-  MathEvalExpression()
-  {
-    eval = 0;
-    values = 0;
-    c_str_function = 0;
-    evaluators_id = 0;
-  }
-  bool set_function(const std::string & f)
-  {
-    free_members();
-    error_status = false;
-    c_str_function = new char[f.size() + 1];
-    strcpy(c_str_function, f.c_str());
-    eval = evaluator_create(c_str_function);
-    if(!eval) {
-      error_status = true;
+    std::vector<std::string> expressions(1), variables(3 + _fields.size());
+    expressions[0] = f;
+    variables[0] = "x"; 
+    variables[1] = "y"; 
+    variables[2] = "z";
+    i = 3;
+    for(std::set<int>::iterator it = _fields.begin(); it != _fields.end(); it++){
+      std::ostringstream sstream;
+      sstream << "F" << *it;
+      variables[i++] = sstream.str();
+    }
+    if(_f) delete _f;
+    _f = new mathEvaluator(expressions, variables);
+    if(expressions.empty()) {
+      delete _f;
+      _f = 0;
       return false;
-    }
-    evaluator_get_variables(eval, &names, &nvalues);
-    values = new double[nvalues];
-    evaluators_id = new int[nvalues];
-    for(int i = 0; i < nvalues; i++) {
-      int id;
-      if(!strcmp("x", names[i]))
-        evaluators_id[i] = -1;
-      else if(!strcmp("y", names[i]))
-        evaluators_id[i] = -2;
-      else if(!strcmp("z", names[i]))
-        evaluators_id[i] = -3;
-      else if(sscanf(names[i], "F%i", &id) == 1)
-        evaluators_id[i] = id;
-      else {
-        Msg::Error("Unknown matheval argument \"%s\"\n", names[i]);
-        error_status = true;
-        return false;
-      }
     }
     return true;
   }
-  void free_members()
+  double evaluate(double x, double y, double z)
   {
-    if(c_str_function)
-      delete [] c_str_function;
-    if(eval)
-      evaluator_destroy(eval);
-    if(values)
-      delete [] values;
-    if(evaluators_id)
-      delete evaluators_id;
-  }
-  ~MathEvalExpression()
-  {
-    free_members();
+    if(!_f) return MAX_LC;
+    std::vector<double> values(3 + _fields.size()), res(1);
+    values[0] = x;
+    values[1] = y;
+    values[2] = z;
+    int i = 3;
+    for(std::set<int>::iterator it = _fields.begin(); it != _fields.end(); it++){
+      Field *field = GModel::current()->getFields()->get(*it);
+      values[i++] = field ? (*field)(x, y, z) : MAX_LC;
+    }
+    if(_f->eval(values, res)) 
+      return res[0];
+    else
+      return MAX_LC;
   }
 };
 
@@ -1086,7 +1054,6 @@ class ParametricField : public Field
     return "Param";
   }
 };
-#endif
 
 #if !defined(HAVE_NO_POST)
 class PostViewField : public Field
@@ -1411,10 +1378,8 @@ FieldManager::FieldManager()
   map_type_name["Laplacian"] = new FieldFactoryT<LaplacianField>();
   map_type_name["Mean"] = new FieldFactoryT<MeanField>();
   map_type_name["Curvature"] = new FieldFactoryT<CurvatureField>();
-#if defined(HAVE_MATH_EVAL)
   map_type_name["Param"] = new FieldFactoryT<ParametricField>();
   map_type_name["MathEval"] = new FieldFactoryT<MathEvalField>();
-#endif
 #if defined(HAVE_ANN)
   map_type_name["Attractor"] = new FieldFactoryT<AttractorField>();
 #endif

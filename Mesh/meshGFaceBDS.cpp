@@ -118,7 +118,7 @@ inline double computeEdgeMiddleCoord_new(BDS_Point *p1,
     const double dz1 = p1->Z - GP[i-1].z();
     double LPLUS = sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1);
     if (LPLUS > L*.5){
-      double XIMINUS, XIPLUS,LPLUS,LMINUS;
+      double XIMINUS, LPLUS, LMINUS;
       if (i==1){
 	XIMINUS=0;
       }

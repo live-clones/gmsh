@@ -64,6 +64,10 @@ class GMSH_Plugin
 
   // run the plugin
   virtual void run() = 0;
+
+  // dynamic pointer to a drawing function
+  static void setDrawFunction(void (*fct)(void *));
+  static void (*draw)(void*);
 };
 
 // The base class for post-processing plugins. The user can either
