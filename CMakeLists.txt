@@ -18,7 +18,6 @@ project(gmsh CXX C)
 
 option(ENABLE_ANN "Enable ANN to compute Approximate Nearest Neighbors" ON)
 option(ENABLE_BLAS_LAPACK "Use BLAS/Lapack for basic linear algebra" ON)
-option(ENABLE_BLAS_INTEL "Use Intel Blas/Lapack " OFF)
 option(ENABLE_CGNS "Enable CGNS mesh export" OFF)
 option(ENABLE_CHACO "Enable Chaco mesh partitioner" ON)
 option(ENABLE_DINTEGRATION "Enable discrete integration and levelsets" ON)
@@ -52,8 +51,7 @@ set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
 set(GMSH_VERSION "${GMSH_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}")
 set(GMSH_SHORT_LICENSE "GNU General Public License")
 
-list(APPEND GMSH_API
-#set(GMSH_API
+set(GMSH_API
   ${CMAKE_BINARY_DIR}/Common/GmshConfig.h 
   ${CMAKE_BINARY_DIR}/Common/GmshVersion.h
   Common/Gmsh.h Common/GmshDefines.h Common/GmshMessage.h Common/VertexArray.h
@@ -74,12 +72,8 @@ list(APPEND GMSH_API
   Post/PView.h Post/PViewData.h Plugin/PluginManager.h
   Graphics/drawContext.h
   contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h 
-    contrib/kbipack/gmp_blas.h)
-if(ENABLE_DINTEGRATION)
-list(APPEND GMSH_API contrib/DiscreteIntegration/DILevelset.h)
-#set(GMSH_API ${GMSH_API} contrib/DiscreteIntegration/DILevelset.h)
-endif(ENABLE_DINTEGRATION)
-
+    contrib/kbipack/gmp_blas.h
+  contrib/DiscreteIntegration/DILevelset.h)
 
 execute_process(COMMAND date "+%Y%m%d" OUTPUT_VARIABLE DATE 
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -125,21 +119,44 @@ macro(append_gmsh_src DIRECTORY_NAME SRC_FILES)
 endmacro(append_gmsh_src)
 
 if(ENABLE_BLAS_LAPACK)
-  if(WIN32)
-    # on Windows first try to get the libs in CMAKE_PREFIX without
-    # further checks (useful for Visual C++ users who don't have a
-    # Fortran compiler, and who can just download our precompiled
-    # "gmsh-dep" package)
-    find_library(EASY_LAPACK lapack ${CMAKE_PREFIX_PATH}/lib NO_DEFAULT_PATH)
-    find_library(EASY_BLAS blas ${CMAKE_PREFIX_PATH}/lib NO_DEFAULT_PATH)
-    find_library(EASY_G2C g2c ${CMAKE_PREFIX_PATH}/lib NO_DEFAULT_PATH)
-    find_library(EASY_GCC gcc ${CMAKE_PREFIX_PATH}/lib NO_DEFAULT_PATH)
-    if(EASY_LAPACK AND EASY_BLAS AND EASY_G2C AND EASY_GCC)
-      set(LAPACK_LIBRARIES ${EASY_LAPACK} ${EASY_BLAS} ${EASY_G2C} ${EASY_GCC})
-      set(HAVE_BLAS TRUE)
-      set(HAVE_LAPACK TRUE)
-      list(APPEND CONFIG_OPTIONS "RefBlas" "RefLapack")
-    endif(EASY_LAPACK AND EASY_BLAS AND EASY_G2C AND EASY_GCC)
+  if(MSVC)
+    # on Windows with Visual C++ try really hard to find blas/lapack
+    # *without* requiring a Fortran compiler: 1) first try to get the
+    # Intel MKL in MKL_PREFIX_PATH; if failed 2) try to to get the
+    # reference blas/lapack libs in CMAKE_PREFIX_PATH (useful for
+    # users with no Fortan compiler and no MKL license, who can just
+    # download our precompiled "gmsh-dep" package)
+    if(MKL_PREFIX_PATH)
+      if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set(MKL_PATH ${MKL_PREFIX_PATH}/em64t/lib)
+      else(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set(MKL_PATH ${MKL_PREFIX_PATH}/ia32/lib)
+      endif(CMAKE_SIZEOF_VOID_P EQUAL 8)
+      find_library(LIBGUIDE libguide ${MKL_PATH})
+      find_library(MKL_C mkl_c PATHS ${MKL_PATH})
+      find_library(MKL_INTEL_C mkl_intel_c ${MKL_PATH})
+      find_library(MKL_INTEL_THREAD mkl_intel_thread ${MKL_PATH})
+      find_library(MKL_CORE mkl_core ${MKL_PATH})
+      if(LIBGUIDE AND MKL_C AND MKL_INTEL_C AND MKL_INTEL_THREAD AND MKL_CORE)
+        set(LAPACK_LIBRARIES ${LIBGUIDE} ${MKL_C} ${MKL_INTEL_C} 
+            ${MKL_INTEL_THREAD} ${MKL_CORE})
+        set(HAVE_BLAS TRUE)
+        set(HAVE_LAPACK TRUE)
+        list(APPEND CONFIG_OPTIONS "IntelBlas" "IntelLapack")
+      endif(LIBGUIDE AND MKL_C AND MKL_INTEL_C AND MKL_INTEL_THREAD AND MKL_CORE)
+    endif(MKL_PREFIX_PATH)
+    if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
+      find_library(REF_LAPACK lapack ${CMAKE_PREFIX_PATH}/lib NO_DEFAULT_PATH)
+      find_library(REF_BLAS blas ${CMAKE_PREFIX_PATH}/lib NO_DEFAULT_PATH)
+      find_library(REF_G2C g2c ${CMAKE_PREFIX_PATH}/lib NO_DEFAULT_PATH)
+      find_library(REF_GCC gcc ${CMAKE_PREFIX_PATH}/lib NO_DEFAULT_PATH)
+      if(REF_LAPACK AND REF_BLAS AND REF_G2C AND REF_GCC)
+        set(LAPACK_LIBRARIES ${REF_LAPACK} ${REF_BLAS} ${REF_G2C} ${REF_GCC})
+        set(HAVE_BLAS TRUE)
+        set(HAVE_LAPACK TRUE)
+        list(APPEND CONFIG_OPTIONS "RefBlas" "RefLapack")
+      endif(REF_LAPACK AND REF_BLAS AND REF_G2C AND REF_GCC)
+    endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
   elseif(APPLE)
     # on Mac we know blas and lapack are available, so don't force users
     # to install a Fortran compiler
@@ -147,8 +164,8 @@ if(ENABLE_BLAS_LAPACK)
     set(HAVE_BLAS TRUE)
     set(HAVE_LAPACK TRUE)
     list(APPEND CONFIG_OPTIONS "Blas" "Lapack")
-  endif(WIN32)
-  if(NOT HAVE_BLAS OR NOT HAVE_LAPACK AND NOT ENABLE_BLAS_INTEL)
+  endif(MSVC)
+  if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
     enable_language(Fortran)
     find_package(BLAS)
     if(BLAS_FOUND)
@@ -171,25 +188,7 @@ if(ENABLE_BLAS_LAPACK)
         endif(CMAKE_Fortran_COMPILER MATCHES "gfortran")
       endif(CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
     endif(BLAS_FOUND)
-  endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK AND NOT ENABLE_BLAS_INTEL)
-  if(ENABLE_BLAS_INTEL)
-    if(WIN32 AND MSVC)
-      SET(MKL_LIBRARY_DIR "C:/Program Files/Intel/MKL/10.0.4.023" CACHE PATH "Intel Blas/Lapack absolute library directory.")
-      set(HAVE_BLAS TRUE)
-      list(APPEND CONFIG_OPTIONS "Blas")
-      set(HAVE_LAPACK TRUE)
-      list(APPEND CONFIG_OPTIONS "Lapack")
-      set(LAPACK_TEMP_LIBRARIES "libguide.lib" "mkl_c.lib" "mkl_intel_c.lib" "mkl_intel_thread.lib" "mkl_core.lib")
-      #IF 32BIT
-      FOREACH(i ${LAPACK_TEMP_LIBRARIES})
-        LIST(APPEND LAPACK_LIBRARIES "${MKL_LIBRARY_DIR}/ia32/lib/${i};")
-      ENDFOREACH(i)
-      #IF 64 BIT
-      #FOREACH(i ${LAPACK_TEMP_LIBRARIES})
-      #  LIST(APPEND LAPACK_LIBRARIES "${MKL_LIBRARY_DIR}/em64t/lib/${i};")
-      #ENDFOREACH(i)    
-    endif(WIN32 AND MSVC)
-  endif(ENABLE_BLAS_INTEL)
+  endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
 endif(ENABLE_BLAS_LAPACK)
 
 add_subdirectory(Common)
@@ -815,6 +814,7 @@ message("")
 message("Run 'ccmake ${CMAKE_SOURCE_DIR}' to fine-tune the configuration.")
 message("")
 
-mark_as_advanced(BISON EASY_BLAS EASY_G2C EASY_GCC EASY_LAPACK ENABLE_GRAPHICS
-                 FLEX GMP_LIB GMSH_EXTRA_VERSION HDF5_LIB MAKEINFO MED_LIB 
-                 OCC_INC SZ_LIB TAUCS_LIB TEXI2PDF)
+mark_as_advanced(BISON ENABLE_GRAPHICS FLEX GMP_LIB GMSH_EXTRA_VERSION 
+                 HDF5_LIB LIBGUIDE MAKEINFO MED_LIB MKL_C MKL_CORE MKL_INTEL_C
+                 MKL_INTEL_THREAD OCC_INC REF_BLAS REF_G2C REF_GCC REF_LAPACK 
+                 SZ_LIB TAUCS_LIB TEXI2PDF)
