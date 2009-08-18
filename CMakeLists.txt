@@ -18,6 +18,7 @@ project(gmsh CXX C)
 
 option(ENABLE_ANN "Enable ANN to compute Approximate Nearest Neighbors" ON)
 option(ENABLE_BLAS_LAPACK "Use BLAS/Lapack for basic linear algebra" ON)
+option(ENABLE_BLAS_INTEL "Use Intel Blas/Lapack " OFF)
 option(ENABLE_CGNS "Enable CGNS mesh export" OFF)
 option(ENABLE_CHACO "Enable Chaco mesh partitioner" ON)
 option(ENABLE_DINTEGRATION "Enable discrete integration and levelsets" ON)
@@ -51,7 +52,8 @@ set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
 set(GMSH_VERSION "${GMSH_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}")
 set(GMSH_SHORT_LICENSE "GNU General Public License")
 
-set(GMSH_API
+list(APPEND GMSH_API
+#set(GMSH_API
   ${CMAKE_BINARY_DIR}/Common/GmshConfig.h 
   ${CMAKE_BINARY_DIR}/Common/GmshVersion.h
   Common/Gmsh.h Common/GmshDefines.h Common/GmshMessage.h Common/VertexArray.h
@@ -73,6 +75,11 @@ set(GMSH_API
   Graphics/drawContext.h
   contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h 
     contrib/kbipack/gmp_blas.h)
+if(ENABLE_DINTEGRATION)
+list(APPEND GMSH_API contrib/DiscreteIntegration/DILevelset.h)
+#set(GMSH_API ${GMSH_API} contrib/DiscreteIntegration/DILevelset.h)
+endif(ENABLE_DINTEGRATION)
+
 
 execute_process(COMMAND date "+%Y%m%d" OUTPUT_VARIABLE DATE 
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -141,7 +148,7 @@ if(ENABLE_BLAS_LAPACK)
     set(HAVE_LAPACK TRUE)
     list(APPEND CONFIG_OPTIONS "Blas" "Lapack")
   endif(WIN32)
-  if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
+  if(NOT HAVE_BLAS OR NOT HAVE_LAPACK AND NOT ENABLE_BLAS_INTEL)
     enable_language(Fortran)
     find_package(BLAS)
     if(BLAS_FOUND)
@@ -164,7 +171,25 @@ if(ENABLE_BLAS_LAPACK)
         endif(CMAKE_Fortran_COMPILER MATCHES "gfortran")
       endif(CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
     endif(BLAS_FOUND)
-  endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
+  endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK AND NOT ENABLE_BLAS_INTEL)
+  if(ENABLE_BLAS_INTEL)
+    if(WIN32 AND MSVC)
+      SET(MKL_LIBRARY_DIR "C:/Program Files/Intel/MKL/10.0.4.023" CACHE PATH "Intel Blas/Lapack absolute library directory.")
+      set(HAVE_BLAS TRUE)
+      list(APPEND CONFIG_OPTIONS "Blas")
+      set(HAVE_LAPACK TRUE)
+      list(APPEND CONFIG_OPTIONS "Lapack")
+      set(LAPACK_TEMP_LIBRARIES "libguide.lib" "mkl_c.lib" "mkl_intel_c.lib" "mkl_intel_thread.lib" "mkl_core.lib")
+      #IF 32BIT
+      FOREACH(i ${LAPACK_TEMP_LIBRARIES})
+        LIST(APPEND LAPACK_LIBRARIES "${MKL_LIBRARY_DIR}/ia32/lib/${i};")
+      ENDFOREACH(i)
+      #IF 64 BIT
+      #FOREACH(i ${LAPACK_TEMP_LIBRARIES})
+      #  LIST(APPEND LAPACK_LIBRARIES "${MKL_LIBRARY_DIR}/em64t/lib/${i};")
+      #ENDFOREACH(i)    
+    endif(WIN32 AND MSVC)
+  endif(ENABLE_BLAS_INTEL)
 endif(ENABLE_BLAS_LAPACK)
 
 add_subdirectory(Common)
