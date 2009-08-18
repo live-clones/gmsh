@@ -121,26 +121,21 @@ endmacro(append_gmsh_src)
 if(ENABLE_BLAS_LAPACK)
   if(MSVC)
     # on Windows with Visual C++ try really hard to find blas/lapack
-    # in CMAKE_PREFIX_PATH *without* requiring a Fortran compiler: 1)
-    # try to find the Intel MKL; if not found 2) try to get the
-    # reference blas/lapack libs (useful for users with no Fortan
-    # compiler and no MKL license, who can just download our
+    # *without* requiring a Fortran compiler: 1) try to find the Intel
+    # MKL libs using the standard search path; if not found 2) try to
+    # get the reference blas/lapack libs (useful for users with no
+    # Fortran compiler and no MKL license, who can just download our
     # precompiled "gmsh-dep" package)
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
       set(MKL_PATH em64t/lib)
     else(CMAKE_SIZEOF_VOID_P EQUAL 8)
       set(MKL_PATH ia32/lib)
     endif(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    find_library(LIBGUIDE libguide PATHS ${CMAKE_PREFIX_PATH} 
-                 PATH_SUFFIXES ${MKL_PATH})
-    find_library(MKL_C mkl_c PATHS ${CMAKE_PREFIX_PATH} 
-                 PATH_SUFFIXES ${MKL_PATH})
-    find_library(MKL_INTEL_C mkl_intel_c PATHS ${CMAKE_PREFIX_PATH} 
-                 PATH_SUFFIXES ${MKL_PATH})
-    find_library(MKL_INTEL_THREAD mkl_intel_thread PATHS ${CMAKE_PREFIX_PATH} 
-                 PATH_SUFFIXES ${MKL_PATH})
-    find_library(MKL_CORE mkl_core PATHS ${CMAKE_PREFIX_PATH} 
-                 PATH_SUFFIXES ${MKL_PATH})
+    find_library(LIBGUIDE libguide PATH_SUFFIXES ${MKL_PATH})
+    find_library(MKL_C mkl_c PATH_SUFFIXES ${MKL_PATH})
+    find_library(MKL_INTEL_C mkl_intel_c PATH_SUFFIXES ${MKL_PATH})
+    find_library(MKL_INTEL_THREAD mkl_intel_thread PATH_SUFFIXES ${MKL_PATH})
+    find_library(MKL_CORE mkl_core PATH_SUFFIXES ${MKL_PATH})
     if(LIBGUIDE AND MKL_C AND MKL_INTEL_C AND MKL_INTEL_THREAD AND MKL_CORE)
       set(LAPACK_LIBRARIES ${LIBGUIDE} ${MKL_C} ${MKL_INTEL_C} 
           ${MKL_INTEL_THREAD} ${MKL_CORE})
@@ -149,14 +144,10 @@ if(ENABLE_BLAS_LAPACK)
       list(APPEND CONFIG_OPTIONS "IntelBlas" "IntelLapack")
     endif(LIBGUIDE AND MKL_C AND MKL_INTEL_C AND MKL_INTEL_THREAD AND MKL_CORE)
     if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
-      find_library(REF_LAPACK lapack PATHS ${CMAKE_PREFIX_PATH}
-                   PATH_SUFFIXES lib NO_DEFAULT_PATH)
-      find_library(REF_BLAS blas PATHS ${CMAKE_PREFIX_PATH}
-                   PATH_SUFFIXES lib NO_DEFAULT_PATH)
-      find_library(REF_G2C g2c PATHS ${CMAKE_PREFIX_PATH}
-                   PATH_SUFFIXES lib NO_DEFAULT_PATH)
-      find_library(REF_GCC gcc PATHS ${CMAKE_PREFIX_PATH}
-                   PATH_SUFFIXES lib NO_DEFAULT_PATH)
+      find_library(REF_LAPACK lapack)
+      find_library(REF_BLAS blas)
+      find_library(REF_G2C g2c)
+      find_library(REF_GCC gcc)
       if(REF_LAPACK AND REF_BLAS AND REF_G2C AND REF_GCC)
         set(LAPACK_LIBRARIES ${REF_LAPACK} ${REF_BLAS} ${REF_G2C} ${REF_GCC})
         set(HAVE_BLAS TRUE)
