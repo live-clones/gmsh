@@ -99,7 +99,8 @@ class MElement
   virtual MVertex *getVertexDIFF(int num){ return getVertex(num); }
 
   // get the number of vertices associated with edges, faces and
-  // volumes (nonzero only for higher order elements)
+  // volumes (nonzero only for higher order elements, polygons or
+  // polyhedra)
   virtual int getNumEdgeVertices() const { return 0; }
   virtual int getNumFaceVertices() const { return 0; }
   virtual int getNumVolumeVertices() const { return 0; }
@@ -210,7 +211,8 @@ class MElement
   double interpolateDiv(double val[], double u, double v, double w, int stride=3,
                         int order=-1);
 
-  // integration routine 
+  // integration routines
+  virtual int getNumIntegrationPointsToAllocate(int pOrder) const { return 0; }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
   {
     Msg::Error("No integration points defined for this type of element");
