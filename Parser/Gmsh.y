@@ -1721,9 +1721,9 @@ ListOfShapes :
 //  L E V E L S E T
 
 LevelSet :
-    tLevelset tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
+    tLevelset tPlane '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      if(!strcmp($2, "plane") && List_Nbr($7) == 4){
+      if(List_Nbr($7) == 4){
         int t = (int)$4;
         if(FindLevelSet(t)){
 	  yymsg(0, "Levelset %d already exists", t);
@@ -1737,7 +1737,67 @@ LevelSet :
           Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
         }
       }
-      else if(!strcmp($2, "union")){
+      else
+        yymsg(0, "Wrong levelset definition (%d)", $4);
+    }
+  | tLevelset tPlane '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ',' RecursiveListOfDouble '}' tEND
+    {
+      if(List_Nbr($12) == 0){
+        int t = (int)$4;
+        if(FindLevelSet(t)){
+	  yymsg(0, "Levelset %d already exists", t);
+        }
+        else {
+          double pt[3] = {$8[0], $8[1], $8[2]};
+          double n[3] = {$10[0], $10[1], $10[2]};
+          gLevelset *ls = new gLevelsetPlane(pt, n, t);
+          LevelSet *l = Create_LevelSet(ls->getTag(), ls);
+          Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
+        }
+      }
+      else
+        yymsg(0, "Wrong levelset definition (%d)", $4);
+    }
+  | tLevelset tPlane '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ',' VExpr ',' RecursiveListOfDouble '}' tEND
+    {
+      if(List_Nbr($14) == 0){
+        int t = (int)$4;
+        if(FindLevelSet(t)){
+	  yymsg(0, "Levelset %d already exists", t);
+        }
+        else {
+          double pt1[3] = {$8[0], $8[1], $8[2]};
+          double pt2[3] = {$10[0], $10[1], $10[2]};
+          double pt3[3] = {$12[0], $12[1], $12[2]};
+          gLevelset *ls = new gLevelsetPlane(pt1, pt2, pt3, t);
+          LevelSet *l = Create_LevelSet(ls->getTag(), ls);
+          Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
+        }
+      }
+      else
+        yymsg(0, "Wrong levelset definition (%d)", $4);
+    }
+  | tLevelset tSphere '(' FExpr ')' tAFFECT '{' VExpr ',' RecursiveListOfDouble '}' tEND
+    {
+      if(List_Nbr($10) == 1){
+        int t = (int)$4;
+        if(FindLevelSet(t)){
+	  yymsg(0, "Levelset %d already exists", t);
+        }
+        else {
+          double d;
+          List_Read($10, 0, &d);
+          gLevelset *ls = new gLevelsetSphere($8[0], $8[1], $8[2], d, t);
+          LevelSet *l = Create_LevelSet(ls->getTag(), ls);
+          Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
+        }
+      }
+      else
+        yymsg(0, "Wrong levelset definition (%d)", $4);
+    }
+  | tLevelset tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      if(!strcmp($2, "Union")){
         int t = (int)$4;
         if(FindLevelSet(t)){
 	  yymsg(0, "Levelset %d already exists", t);
@@ -1755,7 +1815,7 @@ LevelSet :
           Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
         }
       }
-      else if(!strcmp($2, "intersection")){
+      else if(!strcmp($2, "Intersection")){
         int t = (int)$4;
         if(FindLevelSet(t)){
 	  yymsg(0, "Levelset %d already exists", t);
@@ -1773,7 +1833,7 @@ LevelSet :
           Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
         }
       }
-      else if(!strcmp($2, "cut")){
+      else if(!strcmp($2, "Cut")){
         int t = (int)$4;
         if(FindLevelSet(t)){
 	  yymsg(0, "Levelset %d already exists", t);
@@ -1791,7 +1851,7 @@ LevelSet :
           Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
         }
       }
-      else if(!strcmp($2, "crack")){
+      else if(!strcmp($2, "Crack")){
         int t = (int)$4;
         if(FindLevelSet(t)){
 	  yymsg(0, "Levelset %d already exists", t);
@@ -1815,7 +1875,7 @@ LevelSet :
     }
   | tLevelset tSTRING '{' FExpr '}' tEND
     {
-      if(!strcmp($2, "cutMesh")){
+      if(!strcmp($2, "CutMesh")){
         int t = (int)$4;
         GModel *GM = GModel::current();
         GM->buildCutGModel(FindLevelSet(t)->ls);
@@ -1825,40 +1885,8 @@ LevelSet :
         yymsg(0, "Wrong levelset definition");
       Free($2);
     }
-  | tLevelset tSTRING '(' FExpr ')' tAFFECT '{' VExpr ',' ListOfDouble '}' tEND
-    {
-      if(!strcmp($2, "sphere") && List_Nbr($10) == 1){
-        int t = (int)$4;
-        if(FindLevelSet(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          double d;
-          List_Read($10, 0, &d);
-          gLevelset *ls = new gLevelsetSphere($8[0], $8[1], $8[2], d, t);
-          LevelSet *l = Create_LevelSet(ls->getTag(), ls);
-          Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
-        }
-      }
-      else
-        yymsg(0, "Wrong levelset definition (%d)", $4);
-      Free($2);
-    }
   | tLevelset tSTRING '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ',' ListOfDouble '}' tEND
     {
-      if(!strcmp($2, "Plane") && List_Nbr($12) == 0){
-        int t = (int)$4;
-        if(FindLevelSet(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          double pt[3] = {$8[0], $8[1], $8[2]};
-          double n[3] = {$10[0], $10[1], $10[2]};
-          gLevelset *ls = new gLevelsetPlane(pt, n, t);
-          LevelSet *l = Create_LevelSet(ls->getTag(), ls);
-          Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
-        }
-      }
       if(!strcmp($2, "Cylinder") && List_Nbr($12) == 1){
         int t = (int)$4;
         if(FindLevelSet(t)){
@@ -1874,7 +1902,7 @@ LevelSet :
           Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
         }
       }
-      if(!strcmp($2, "Cone") && List_Nbr($12) == 1){
+      else if(!strcmp($2, "Cone") && List_Nbr($12) == 1){
         int t = (int)$4;
         if(FindLevelSet(t)){
 	  yymsg(0, "Levelset %d already exists", t);
@@ -1889,7 +1917,7 @@ LevelSet :
           Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
         }
       }
-      if(!strcmp($2, "Cylinder") && List_Nbr($12) == 2){
+      else if(!strcmp($2, "Cylinder") && List_Nbr($12) == 2){
         int t = (int)$4;
         if(FindLevelSet(t)){
 	  yymsg(0, "Levelset %d already exists", t);
@@ -1905,7 +1933,7 @@ LevelSet :
           Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
         }
       }
-      if(!strcmp($2, "Cylinder") && List_Nbr($12) == 3){
+      else if(!strcmp($2, "Cylinder") && List_Nbr($12) == 3){
         int t = (int)$4;
         if(FindLevelSet(t)){
 	  yymsg(0, "Levelset %d already exists", t);
@@ -1921,7 +1949,7 @@ LevelSet :
           Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
         }
       }
-      if(!strcmp($2, "Ellips") && List_Nbr($12) == 3){
+      else if(!strcmp($2, "Ellipsoid") && List_Nbr($12) == 3){
         int t = (int)$4;
         if(FindLevelSet(t)){
 	  yymsg(0, "Levelset %d already exists", t);
@@ -1937,7 +1965,7 @@ LevelSet :
           Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
         }
       }
-      if(!strcmp($2, "Quadric") && List_Nbr($12) == 5){
+      else if(!strcmp($2, "Quadric") && List_Nbr($12) == 5){
         int t = (int)$4;
         if(FindLevelSet(t)){
 	  yymsg(0, "Levelset %d already exists", t);
@@ -1949,26 +1977,6 @@ LevelSet :
           double pt[3] = {$8[0], $8[1], $8[2]};
           double dir[3] = {$10[0], $10[1], $10[2]};
           gLevelset *ls = new gLevelsetGeneralQuadric(pt, dir, d[0], d[1], d[2], d[3], d[4], t);
-          LevelSet *l = Create_LevelSet(ls->getTag(), ls);
-          Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
-        }
-      }
-      else
-        yymsg(0, "Wrong levelset definition (%d)", $4);
-      Free($2);
-    }
-  | tLevelset tSTRING '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ',' VExpr ',' ListOfDouble '}' tEND
-    {
-      if(!strcmp($2, "Plane") && List_Nbr($14) == 0){
-        int t = (int)$4;
-        if(FindLevelSet(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          double pt1[3] = {$8[0], $8[1], $8[2]};
-          double pt2[3] = {$10[0], $10[1], $10[2]};
-          double pt3[3] = {$12[0], $12[1], $12[2]};
-          gLevelset *ls = new gLevelsetPlane(pt1, pt2, pt3, t);
           LevelSet *l = Create_LevelSet(ls->getTag(), ls);
           Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
         }

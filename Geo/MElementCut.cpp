@@ -172,11 +172,30 @@ void MPolygon::_initVertices()
     }
   }
 
-  _vertices.push_back(edges.back().getVertex(0));
+  /*_vertices.push_back(edges.back().getVertex(0));
   _vertices.push_back(edges.back().getVertex(1));
-  edges.pop_back();
+  edges.pop_back();*/
+  std::vector<MEdge>::iterator ite = edges.begin();
+  MVertex *vINIT = ite->getVertex(0);
+  _vertices.push_back(ite->getVertex(0));
+  _vertices.push_back(ite->getVertex(1));
+  edges.erase(ite);
+
   while(edges.size() > 1) {
-    for(int k = edges.size() - 1; k >= 0; k--) {
+    ite = edges.begin() ;
+    for(ite = edges.begin(); ite != edges.end(); ite++) {
+      if(ite->getVertex(0) == _vertices.back()) {
+        _vertices.push_back(ite->getVertex(1));
+        edges.erase(ite);
+        break;
+      }
+      else if(ite->getVertex(1) == _vertices.back()) {
+        _vertices.push_back(ite->getVertex(0));
+        edges.erase(ite);
+        break;
+      }
+    }
+    /*for(int k = edges.size() - 1; k >= 0; k--) {
       if(edges[k].getVertex(0) == _vertices.back()){
         _vertices.push_back(edges[k].getVertex(1));
         edges.erase(edges.begin() + k);
@@ -186,8 +205,8 @@ void MPolygon::_initVertices()
         _vertices.push_back(edges[k].getVertex(0));
         edges.erase(edges.begin() + k);
         break;
-      }
-    }
+      } printf("no common summit k=%d\n",k);
+    }*/
   }
 
   for(unsigned int i = 0; i < _parts.size(); i++) {
