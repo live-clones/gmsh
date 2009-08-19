@@ -20,6 +20,7 @@ class MPolyhedron : public MElement {
   MElement* _orig;
   std::vector<MTetrahedron*> _parts;
   std::vector<MVertex*> _vertices;
+  std::vector<MVertex*> _innerVertices;
   std::vector<MEdge> _edges;
   std::vector<MFace> _faces;
   void _init();
@@ -82,8 +83,13 @@ class MPolyhedron : public MElement {
       delete _parts[i];
   }
   virtual int getDim() { return 3; }
-  virtual int getNumVertices() const { return _vertices.size(); }
-  virtual MVertex *getVertex(int num) { return _vertices[num]; }
+  virtual int getNumVertices() const { return _vertices.size() + _innerVertices.size(); }
+  virtual int getNumVolumeVertices() const { return _innerVertices.size(); }
+  virtual MVertex *getVertex(int num)
+  {
+    return (num < _vertices.size()) ? _vertices[num] :
+                                      _innerVertices[num - _vertices.size()];
+  }
   virtual int getNumEdges() { return _edges.size(); }
   virtual MEdge getEdge(int num) { return _edges[num]; }
   virtual int getNumEdgesRep() { return _edges.size(); }
@@ -144,6 +150,10 @@ class MPolyhedron : public MElement {
   }
   virtual bool isInside(double u, double v, double w);
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
+  virtual int getNumIntegrationPointsToAllocate (int pOrder)
+  {
+    return _parts.size() * getNGQTetPts(pOrder);
+  }
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
                         int num=0, int elementary=1, int physical=1);
 };
@@ -154,6 +164,7 @@ class MPolygon : public MElement {
   MElement* _orig;
   std::vector<MTriangle*> _parts;
   std::vector<MVertex*> _vertices;
+  std::vector<MVertex*> _innerVertices;
   void _initVertices();
  public:
   MPolygon(std::vector<MVertex*> v, int num=0, int part=0)
@@ -194,8 +205,13 @@ class MPolygon : public MElement {
       delete _parts[i];
   }
   virtual int getDim(){ return 2; }
-  virtual int getNumVertices() const { return _vertices.size(); }
-  virtual MVertex *getVertex(int num) { return _vertices[num]; }
+  virtual int getNumVertices() const { return _vertices.size() + _innerVertices.size(); }
+  virtual int getNumFaceVertices() const { return _innerVertices.size(); }
+  virtual MVertex *getVertex(int num)
+  {
+    return (num < _vertices.size()) ? _vertices[num] :
+                                      _innerVertices[num - _vertices.size()];
+  }
   virtual int getNumEdges() { return _vertices.size(); }
   virtual MEdge getEdge(int num)
   {
@@ -223,9 +239,9 @@ class MPolygon : public MElement {
   }
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
-    v.resize(_vertices.size());
-    for (unsigned int i = 0; i < _vertices.size(); i++)
-      v[i] = _vertices[i];
+    v.resize(_vertices.size() + _innerVertices.size());
+    for (unsigned int i = 0; i < _vertices.size() + _innerVertices.size(); i++)
+      v[i] = (i < _vertices.size()) ? _vertices[i] : _innerVertices[i - _vertices.size()];
   }
   virtual int getType() const { return TYPE_POLYG; }
   virtual int getTypeForMSH() const { return MSH_POLYG_; }
@@ -247,6 +263,10 @@ class MPolygon : public MElement {
   }
   virtual bool isInside(double u, double v, double w);
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
+  virtual int getNumIntegrationPointsToAllocate (int pOrder)
+  {
+    return _parts.size() * getNGQTPts(pOrder);
+  }
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
                         int num=0, int elementary=1, int physical=1);
 };

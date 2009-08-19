@@ -153,6 +153,7 @@ Loop                    return tLoop;
 Log                     return tLog;
 Log10                   return tLog10;
 Layers                  return tLayers;
+Levelset                return tLevelset;
 
 Modulo                  return tModulo;
 MPI_Rank                return tMPI_Rank;

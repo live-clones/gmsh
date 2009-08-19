@@ -4,6 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <sstream>
+#include <string.h>
 #include <FL/Fl.H>
 #include <FL/Fl_Tooltip.H>
 #include <FL/Fl_Shared_Image.H>

@@ -77,6 +77,13 @@ static int compareVolume(const void *a, const void *b)
   return q->Num - w->Num;
 }
 
+static int compareLevelSet(const void *a, const void *b)
+{
+  LevelSet *q = *(LevelSet **)a;
+  LevelSet *w = *(LevelSet **)b;
+  return q->Num - w->Num;
+}
+
 static int comparePhysicalGroup(const void *a, const void *b)
 {
   PhysicalGroup *q = *(PhysicalGroup **)a;
@@ -648,6 +655,23 @@ static void Free_Volume(void *a, void *b)
   }
 }
 
+LevelSet *Create_LevelSet(int Num, gLevelset *l)
+{
+  LevelSet *pL = new LevelSet;
+  pL->Num = Num;
+  pL->ls = l;
+  return pL;
+}
+
+static void Free_LevelSet(void *a, void *b)
+{
+  LevelSet *pL = *(LevelSet **)a;
+  if(pL) {
+    delete pL;
+    pL = NULL;
+  }
+}
+
 int NEWPOINT(void)
 {
   return (GModel::current()->getGEOInternals()->MaxPointNum + 1);
@@ -789,6 +813,17 @@ Volume *FindVolume(int inum)
   pv->Num = inum;
   if(Tree_Query(GModel::current()->getGEOInternals()->Volumes, &pv)) {
     return pv;
+  }
+  return NULL;
+}
+
+LevelSet *FindLevelSet(int inum)
+{
+  LevelSet L, *pl;
+  pl = &L;
+  pl->Num = inum; 
+  if(Tree_Query(GModel::current()->getGEOInternals()->LevelSets, &pl)) {
+    return pl;
   }
   return NULL;
 }
@@ -3308,6 +3343,7 @@ void GEO_Internals::alloc_all()
   Surfaces = Tree_Create(sizeof(Surface *), compareSurface);
   SurfaceLoops = Tree_Create(sizeof(SurfaceLoop *), compareSurfaceLoop);
   Volumes = Tree_Create(sizeof(Volume *), compareVolume);
+  LevelSets = Tree_Create(sizeof(LevelSet *), compareLevelSet);
   PhysicalGroups = List_Create(5, 5, sizeof(PhysicalGroup *));
 }
 
@@ -3321,6 +3357,7 @@ void GEO_Internals::free_all()
   Tree_Action(Surfaces, Free_Surface); Tree_Delete(Surfaces);
   Tree_Action(SurfaceLoops, Free_SurfaceLoop); Tree_Delete(SurfaceLoops);
   Tree_Action(Volumes, Free_Volume); Tree_Delete(Volumes);
+  Tree_Action(LevelSets, Free_LevelSet); Tree_Delete(LevelSets);
   List_Action(PhysicalGroups, Free_PhysicalGroup); List_Delete(PhysicalGroups);
 }
 

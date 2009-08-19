@@ -22,7 +22,8 @@ mainPost: mainPost.cpp
 
 
 mainLevelset: mainLevelset.cpp
-	g++ ${FLAGS} -o mainLevelset mainLevelset.cpp ${LIB} -llapack -lblas
+	g++ ${FLAGS} $(INC) -DHAVE_GSL -DHAVE_GLEVELSETS -DHAVE_GMM -DHAVE_SPARSKIT \
+	-o mainLevelset mainLevelset.cpp ${LIB} -lgsl -lgslcblas -llapack -lblas
 
 clean:
 	rm -rf mainSimple mainAntTweakBar mainGlut mainPost mainLevelset\

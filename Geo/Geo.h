@@ -13,6 +13,7 @@
 #include "TreeUtils.h"
 #include "SPoint2.h"
 #include "ExtrudeParams.h"
+#include "DILevelset.h"
 
 #define MSH_POINT              100
 #define MSH_POINT_BND_LAYER    101
@@ -198,6 +199,7 @@ class GEO_Internals{
   Tree_T *Volumes;
   Tree_T *SurfaceLoops;
   Tree_T *EdgeLoops;
+  Tree_T *LevelSets;
   List_T *PhysicalGroups;
   int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
   int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
@@ -211,6 +213,14 @@ class Shape{
  public:
   int Type;
   int Num;
+};
+
+class gLevelset;
+
+class LevelSet {
+ public:
+  int Num;
+  gLevelset *ls;
 };
 
 int compareVertex(const void *a, const void *b);
@@ -228,6 +238,7 @@ EdgeLoop *Create_EdgeLoop(int Num, List_T * intlist);
 SurfaceLoop *Create_SurfaceLoop(int Num, List_T * intlist);
 PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T * intlist,
                                     List_T *bndlist[4] = 0);
+LevelSet *Create_LevelSet(int Num, gLevelset *l);
 
 void End_Curve(Curve * c);
 void End_Surface(Surface * s);
@@ -248,6 +259,7 @@ EdgeLoop *FindEdgeLoop(int inum);
 Surface *FindSurface(int inum);
 SurfaceLoop *FindSurfaceLoop(int inum);
 Volume *FindVolume(int inum);
+LevelSet *FindLevelSet(int inum);
 PhysicalGroup *FindPhysicalGroup(int inum, int type);
 
 void TranslateShapes(double X,double Y,double Z, List_T *shapes);

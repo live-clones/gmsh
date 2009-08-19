@@ -156,6 +156,8 @@ void MPolyhedron::writeMSH(FILE *fp, double version, bool binary, int num,
 
 void MPolygon::_initVertices()
 {
+  if(_parts.size() == 0) return;
+
   std::vector<MEdge> edges;
   for(unsigned int i = 0; i < _parts.size(); i++) {
     for(int j = 0; j < 3; j++) {
@@ -174,7 +176,7 @@ void MPolygon::_initVertices()
   _vertices.push_back(edges.back().getVertex(1));
   edges.pop_back();
   while(edges.size() > 1) {
-    for(int k = edges.size() - 1; k >=0; k--) {
+    for(int k = edges.size() - 1; k >= 0; k--) {
       if(edges[k].getVertex(0) == _vertices.back()){
         _vertices.push_back(edges[k].getVertex(1));
         edges.erase(edges.begin() + k);
@@ -187,6 +189,62 @@ void MPolygon::_initVertices()
       }
     }
   }
+
+  for(unsigned int i = 0; i < _parts.size(); i++) {
+    for(int j = 0; j < 3; j++) {
+      if(std::find(_vertices.begin(), _vertices.end(), _parts[i]->getVertex(j)) == _vertices.end())
+        _innerVertices.push_back(_parts[i]->getVertex(j));
+    }
+  }
+
+  /*std::vector<MEdge> edges;
+  for(unsigned int i = 0; i < _parts.size(); i++) {
+    for(int j = 0; j < 3; j++) {
+      if(std::find(edges.begin(), edges.end(), _parts[i]->getEdge(j)) == edges.end())
+        edges.push_back(_parts[i]->getEdge(j));
+      else
+        edges.erase(std::find(edges.begin(), edges.end(), _parts[i]->getEdge(j)));
+    }
+  }
+
+  std::vector<MEdge>::iterator ite = edges.begin();
+  MVertex *vINIT = ite->getVertex(0);
+  _vertices.push_back(ite->getVertex(0));
+  _vertices.push_back(ite->getVertex(1));
+  edges.erase(ite);
+
+  while (!edges.empty()){
+    ite = edges.begin() ;
+    while (ite != edges.end()){
+      MVertex *vB = ite->getVertex(0);
+      if( vB == _vertices.back()){
+        MVertex *vE = ite->getVertex(1);
+        if (vE != vINIT) _vertices.push_back(vE);
+        edges.erase(ite);
+      }
+      else if( ite->getVertex(1) == _vertices.back()){
+        MVertex *vE = ite->getVertex(0);
+        if (vE != vINIT) _vertices.push_back(vE);
+        edges.erase(ite);
+      }
+      else ite++;
+    }
+  }*/
+
+  /*while(edges.size() > 1) {
+    for(ite = edges.begin(); ite != edges.end(); ite++) {
+      if(ite->getVertex(0) == _vertices.back()) {
+        _vertices.push_back(ite->getVertex(1));
+        edges.erase(ite);
+        break;
+      }
+      else if(ite->getVertex(1) == _vertices.back()) {
+        _vertices.push_back(ite->getVertex(0));
+        edges.erase(ite);
+        break;
+      }
+    }
+  }*/
 }
 bool MPolygon::isInside(double u, double v, double w)
 {
@@ -690,7 +748,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
     }
   }
 
-  // add borders in elements and change the tag if it's already used
+  // add borders in map elements and change the tag if it's already used
   std::map<int, std::vector<MElement*> >::iterator itbo, itel;
   for(itbo = border[0].begin(); itbo != border[0].end(); itbo++) {
     int reg = itbo->first;

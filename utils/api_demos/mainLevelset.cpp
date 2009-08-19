@@ -618,18 +618,19 @@ int main(int argc, char **argv)
 
   const double pt [3]={0.,0.,0.};
   const double dir[3]={0,0,1};
+  tag=1;
   std::vector<const gLevelset*> li;
-  li.push_back(new gLevelsetPlane(0,0,-1,0.5, tag));  //  -/+
-  li.push_back(new gLevelsetPlane(0,0,1,-0.5, tag));
-  //li.push_back(new gLevelsetGenCylinder(pt,dir,.3, tag));  //  -|+
-  //const gLevelset *ls = new gLevelsetIntersection(li);
+  li.push_back(new gLevelsetPlane(0,-1,0,0.52, tag));  //  -/+
+  li.push_back(new gLevelsetPlane(-1,0,0,0.52, tag));
+  //li.push_back(new gLevelsetGenCylinder(pt,dir,.75, tag));  //  -|+
+  gLevelset *ls = new gLevelsetIntersection(li);
   //const gLevelset *ls =  new gLevelsetReverse (ls1);
-  gLevelset *ls = new gLevelsetGenCylinder(pt, dir, 0.5, tag);
+  //gLevelset *ls = new gLevelsetGenCylinder(pt, dir, 0.75, tag);
 
   GmshInitialize(argc, argv);
   GmshSetOption("General", "Terminal", 1.);
   GModel *m = new GModel;
-  m->readMSH(argv[1]);
+  m->readMSH(argv[1]); printf("mesh read\n");
 
   /*printf("  carreTri\n");
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
@@ -639,7 +640,7 @@ int main(int argc, char **argv)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
       printf("pte %d (%g,%g)\n",(*it)->mesh_vertices[i]->getNum(),(*it)->mesh_vertices[i]->x(),(*it)->mesh_vertices[i]->y()); printf("\n");*/
 
-  GModel *cm = m->buildCutGModel(ls); printf("\n");
+  GModel *cm = m->buildCutGModel(ls); printf("mesh cut\n");
 
   /*printf("  ccutmesh\n");
   for(GModel::fiter it = cm->firstFace(); it != cm->lastFace(); ++it){
@@ -657,7 +658,7 @@ int main(int argc, char **argv)
       printf("pte %d (%g,%g)\n",(*it)->mesh_vertices[i]->getNum(),(*it)->mesh_vertices[i]->x(),(*it)->mesh_vertices[i]->y());
   }*/
 
-  cm->writeMSH("cutMesh.msh",2);
+  cm->writeMSH("cutMesh.msh",2); printf("mesh written\n");
 
   /*GFace *gf = m->getFaceByTag(6); std::cout<<"face "<<gf<< " "<<gf->mesh_vertices.size()<<std::endl;
   GEdge *ge1 = m->getEdgeByTag(1); std::cout<<"edge1 "<<ge1<< " "<<ge1->mesh_vertices.size()<<std::endl;

@@ -510,7 +510,7 @@ void DI_Point::addLs (const DI_Element *e) {
   Ls.push_back(e->evalLs(x_, y_, z_));
 }
 void DI_Point::chooseLs (const gLevelset *Lsi) {
-  assert(Ls.size() > 1);
+  if(Ls.size() < 2) return;
   double ls1 = Ls[Ls.size() - 2], ls2 = Ls[Ls.size() - 1];
   double ls = Lsi->choose(ls1, ls2);
   Ls.pop_back(); Ls.pop_back();
@@ -682,8 +682,8 @@ void DI_Element::addLs (const DI_Element *e, const gLevelset &Ls) {
   }
 }
 void DI_Element::chooseLs (const gLevelset *Lsi) {
-  if(sizeLs() < 2) printf("chooseLs : type=%d\n", type());
-  assert(sizeLs() > 1);
+  if(sizeLs() < 2)
+    printf("chooseLs with element size < 2 : typeEl=%d\n", type());
   for(int i = 0; i < nbVert(); i++)
     pts_[i]->chooseLs(Lsi);
   for(int i = 0; i < nbMid(); i++)

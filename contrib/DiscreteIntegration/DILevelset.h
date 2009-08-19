@@ -41,10 +41,7 @@ public:
   virtual double choose (double d1, double d2) const = 0;
   virtual int type() const = 0;
   virtual bool isPrimitive() const = 0;
-  void setTag(int t) {
-    assert(isPrimitive());
-    tag_ = t;
-  }
+  void setTag(int t) { tag_ = t; }
   virtual int getTag() const { return tag_; }
   void getPrimitives(std::vector<const gLevelset *> &primitives) const;
   void getRPN(std::vector<const gLevelset *> &gLsRPN) const;
@@ -192,10 +189,24 @@ public:
     }
     return d;
   }
-  std::vector<const gLevelset *> getChildren() const {return children;}
+  std::vector<const gLevelset *> getChildren() const {
+    if(children.size() != 1) return children;
+    return children[0]->getChildren();
+  }
   virtual double choose (double d1, double d2) const = 0;
-  virtual int type() const = 0;
-  bool isPrimitive() const {return false;}
+  virtual int type2() const = 0;
+  virtual int type() const {
+    if(children.size() != 1) return type2();
+    return children[0]->type();
+  }
+  bool isPrimitive() const {
+    if(children.size() != 1) return false;
+    return children[0]->isPrimitive();
+  }
+  int getTag() const {
+    if(children.size() != 1) return tag_;
+    return children[0]->getTag();
+  }
 };
 
 class gLevelsetReverse : public gLevelset
@@ -222,7 +233,7 @@ public:
   double choose (double d1, double d2) const {
     return (d1 > -d2) ? d1 : -d2; // greater of d1 and -d2
   }
-  int type() const {return CUT;} 
+  int type2() const {return CUT;}
 };
 
 // This levelset takes the minimum
@@ -233,7 +244,7 @@ public:
   double choose (double d1, double d2) const {
     return (d1 < d2) ? d1 : d2; // lesser of d1 and d2
   }
-  int type() const {return UNION;}
+  int type2() const {return UNION;}
 };
 
 // This levelset takes the maximum
@@ -244,7 +255,7 @@ public:
   double choose (double d1, double d2) const {
     return (d1 > d2) ? d1 : d2; // greater of d1 and d2
   }
-  int type() const {return INTER;}
+  int type2() const {return INTER;}
 };
 
 // Crack defined by a normal and a tangent levelset
@@ -252,15 +263,16 @@ class gLevelsetCrack : public gLevelsetTools
 {
 public:
   gLevelsetCrack (std::vector<const gLevelset *> &p) {
-    assert (p.size() == 2);
+    if (p.size() != 2)
+      printf("Error : gLevelsetCrack needs 2 levelsets\n");
     children.push_back(p[0]);
     children.push_back(new gLevelsetReverse(p[0]));
-    children.push_back(p[1]);
+    if(p[1]) children.push_back(p[1]);
   }
   double choose (double d1, double d2) const {
     return (d1 > d2) ? d1 : d2; // greater of d1 and d2
   }
-  int type() const {return CRACK;}
+  int type2() const {return CRACK;}
 };
 
 // --------------------------------------------------------------------------------------------------------------
