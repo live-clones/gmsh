@@ -1885,7 +1885,7 @@ LevelSet :
         yymsg(0, "Wrong levelset definition");
       Free($2);
     }
-  | tLevelset tSTRING '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ',' ListOfDouble '}' tEND
+  | tLevelset tSTRING '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ',' RecursiveListOfDouble '}' tEND
     {
       if(!strcmp($2, "Cylinder") && List_Nbr($12) == 1){
         int t = (int)$4;

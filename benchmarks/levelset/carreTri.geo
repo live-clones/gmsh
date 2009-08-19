@@ -28,10 +28,11 @@ Physical Surface(1000) = {6};
 Mesh 2;
 
 Levelset Plane (1) = {0,-1,0,0.5};
-//Levelset Plane (2) = {-1,0,0,0.5};
-Levelset Sphere (2) = {{0,0,0},0.75};
-Levelset Intersection (3) = {1,2};
-Levelset CutMesh {3};
+Levelset Plane (2) = {-1,0,0,0.5};
+Levelset Sphere (3) = {{0,0,0},0.75};
+Levelset Ellipsoid (4) = { {0,0,0}, {1,0,0}, 0.55, 0.55, 0.75 };
+Levelset Intersection (10) = {1,4};
+Levelset CutMesh {10};
 
 //Transfinite Line{1,3}=nb+1;
 //Transfinite Line{2,4}=2*nb+1+1;
