@@ -18,6 +18,8 @@
 #include "PView.h"
 #include "PluginManager.h"
 #include "Plugin.h"
+#include "GModel.h"
+#include "MVertex.h"
 #include "Context.h"
 
 #define MAX_PLUGIN_OPTIONS 50
@@ -144,6 +146,27 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
   Draw();
 }
 
+static void plugin_create_new_view_cb(Fl_Widget *w, void *data)
+{
+  if(GModel::current()->getMeshStatus() < 1){
+    Msg::Error("No mesh available to create the view: please mesh your model!");
+    return;
+  }
+  std::map<int, std::vector<double> > d;
+  std::vector<GEntity*> entities;
+  GModel::current()->getEntities(entities);
+  for(unsigned int i = 0; i < entities.size(); i++){
+    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+      MVertex *v = entities[i]->mesh_vertices[j];
+      d[v->getNum()].push_back(0.);
+    }
+  }
+  PView *view = new PView("New view", "NodeData", GModel::current(), d);
+  view->setChanged(true);
+  FlGui::instance()->updateViews();
+  Draw();
+}
+
 void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,
                                     int width, int height)
 {
@@ -237,9 +260,12 @@ pluginWindow::pluginWindow(int deltaFontSize)
   browser = new Fl_Hold_Browser(WB, WB, L1, height - 2 * WB);
   browser->callback(plugin_browser_cb);
 
-  view_browser = new Fl_Multi_Browser(WB + L1, WB, L2, height - 2 * WB);
+  view_browser = new Fl_Multi_Browser(WB + L1, WB, L2, height - 2 * WB - BH);
   view_browser->has_scrollbar(Fl_Browser_::VERTICAL);
   view_browser->callback(plugin_browser_cb);
+
+  Fl_Button *b = new Fl_Button(WB + L1, height - WB - BH, L2, BH, "New view");
+  b->callback(plugin_create_new_view_cb);
 
   for(std::map<std::string, GMSH_Plugin*>::iterator it = PluginManager::
         instance()->begin(); it != PluginManager::instance()->end(); ++it) {
@@ -309,3 +335,4 @@ void pluginWindow::resetViewBrowser()
 
   plugin_browser_cb(NULL, NULL);
 }
+
