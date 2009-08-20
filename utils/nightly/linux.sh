@@ -3,7 +3,7 @@
 GMSH=${HOME}/src/gmsh
 LOG=${GMSH}/nightly.log
 WEB_BIN=geuzaine@geuz.org:/home/www/geuz.org/gmsh/bin/Linux
-CMAKE=cmake
+CMAKE=/usr/local/bin/cmake
 
 rm -f ${LOG}
 rm -rf ${GMSH}/bin
