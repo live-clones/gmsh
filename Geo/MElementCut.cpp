@@ -135,7 +135,7 @@ void MPolyhedron::writeMSH(FILE *fp, double version, bool binary, int num,
   if(!binary){
     fprintf(fp, "%d %d", num ? num : numE, type);
     if(version < 2.0)
-      fprintf(fp, " %d %d %d", abs(physical), elementary, n);
+      fprintf(fp, " %d %d", abs(physical), elementary);
     else
       fprintf(fp, " 3 %d %d %d", abs(physical), elementary, partE);
   }
@@ -337,7 +337,7 @@ void MPolygon::writeMSH(FILE *fp, double version, bool binary, int num,
   if(!binary){
     fprintf(fp, "%d %d", num ? num : numE, type);
     if(version < 2.0)
-      fprintf(fp, " %d %d %d", abs(physical), elementary, n);
+      fprintf(fp, " %d %d", abs(physical), elementary);
     else
       fprintf(fp, " 3 %d %d %d", abs(physical), elementary, partE);
   }
