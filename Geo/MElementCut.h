@@ -26,41 +26,7 @@ class MPolyhedron : public MElement {
   void _init();
  public:
   MPolyhedron(std::vector<MVertex*> v, int num=0, int part=0)
-    : MElement(num, part), _owner(false), _orig(0)
-  {
-    /*_parts.push_back(new MTetrahedron(v[0], v[1], v[2], v[3]));
-    for(unsigned int i = 4; i < v.size(); i++) {
-      unsigned int k;
-      double xyz[3] = {v[i]->x(), v[i]->y(), v[i]->z()};
-      for(k = 0; k < _parts.size(); k++) {
-        double uvw[3]; _parts[k]->xyz2uvw(xyz,uvw);
-        if(_parts[k]->isInside(uvw[0],uvw[1],uvw[2])) break;
-      }
-      if(k < _parts.size()) {
-        MTetrahedron tmp = *(_parts[k]);
-        delete _parts[k];
-        _parts.erase(_parts.begin() + k);
-        for(int t = 0; t < 4; t++) {
-          MTetrahedron *tet = new MTetrahedron(tmp.getFace(t).getVertex(0), tmp.getFace(t).getVertex(1),
-                                             tmp.getFace(t).getVertex(2), v[i]);
-          if(tet->getVolume() != 0) _parts.push_back(tet);
-          else delete tet;
-        }
-      }
-      else {
-        double dmin = 0.; int tet, face;
-        for(k = 0; k < _parts.size(); k++) {
-          for(int f = 0; f < 4; f++) {
-            double dist = v[i]->distance(_parts[k]->getFace(f).getVertex(0))
-                        + v[i]->distance(_parts[k]->getFace(f).getVertex(1))
-                        + v[i]->distance(_parts[k]->getFace(f).getVertex(2));
-            if(dmin == 0 || dist < dmin) {dmin = dist; tet = k; face = f;}
-          }
-        }
-        //_parts.push_back(new MTetrahedron());
-      }
-    }*/
-  }
+    : MElement(num, part), _owner(false), _orig(0) {}
   MPolyhedron(std::vector<MTetrahedron*> vT, int num=0, int part=0)
     : MElement(num, part), _owner(false), _orig(0)
   {
@@ -87,8 +53,8 @@ class MPolyhedron : public MElement {
   virtual int getNumVolumeVertices() const { return _innerVertices.size(); }
   virtual MVertex *getVertex(int num)
   {
-    return (num < _vertices.size()) ? _vertices[num] :
-                                      _innerVertices[num - _vertices.size()];
+    return (num < (int)_vertices.size()) ? 
+      _vertices[num] : _innerVertices[num - _vertices.size()];
   }
   virtual int getNumEdges() { return _edges.size(); }
   virtual MEdge getEdge(int num) { return _edges[num]; }
@@ -156,9 +122,9 @@ class MPolyhedron : public MElement {
   }
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
                         int num=0, int elementary=1, int physical=1);
-  virtual MElement *getFather() const { return _orig; }
-  virtual int getNumParts() const { return _parts.size(); }
-  virtual MElement *getPart(int i) const { return _parts[i]; }
+  virtual MElement *getParent() const { return _orig; }
+  virtual int getNumChildren() const { return _parts.size(); }
+  virtual MElement *getChild(int i) const { return _parts[i]; }
 };
 
 class MPolygon : public MElement {
@@ -212,8 +178,8 @@ class MPolygon : public MElement {
   virtual int getNumFaceVertices() const { return _innerVertices.size(); }
   virtual MVertex *getVertex(int num)
   {
-    return (num < _vertices.size()) ? _vertices[num] :
-                                      _innerVertices[num - _vertices.size()];
+    return (num < (int)_vertices.size()) ? 
+      _vertices[num] : _innerVertices[num - _vertices.size()];
   }
   virtual int getNumEdges() { return _vertices.size(); }
   virtual MEdge getEdge(int num)
@@ -272,9 +238,9 @@ class MPolygon : public MElement {
   }
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
                         int num=0, int elementary=1, int physical=1);
-  virtual MElement *getFather() const { return _orig; }
-  virtual int getNumParts() const { return _parts.size(); }
-  virtual MElement *getPart(int i) const { return _parts[i]; }
+  virtual MElement *getParent() const { return _orig; }
+  virtual int getNumChildren() const { return _parts.size(); }
+  virtual MElement *getChild(int i) const { return _parts[i]; }
 };
 
 class MTriangleBorder : public MTriangle {

@@ -140,6 +140,11 @@ class MElement
     v.resize(0);
   }
 
+  // get parent and children for hierarchial grids
+  virtual MElement *getParent() const { return 0; }
+  virtual int getNumChildren() const { return 0; }
+  virtual MElement *getChild(int i) const { return 0; }
+
   //get the type of the element
   virtual int getType() const = 0;
 
