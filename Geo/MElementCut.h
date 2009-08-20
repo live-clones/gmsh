@@ -156,6 +156,7 @@ class MPolyhedron : public MElement {
   }
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
                         int num=0, int elementary=1, int physical=1);
+  virtual MElement *getFather() const { return _orig; }
   virtual int getNumParts() const { return _parts.size(); }
   virtual MElement *getPart(int i) const { return _parts[i]; }
 };
@@ -271,6 +272,7 @@ class MPolygon : public MElement {
   }
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
                         int num=0, int elementary=1, int physical=1);
+  virtual MElement *getFather() const { return _orig; }
   virtual int getNumParts() const { return _parts.size(); }
   virtual MElement *getPart(int i) const { return _parts[i]; }
 };
