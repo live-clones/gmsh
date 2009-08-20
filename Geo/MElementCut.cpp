@@ -91,13 +91,25 @@ void MPolyhedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
     int nptsi;
     IntPt *ptsi;
     _parts[i]->getIntegrationPoints(pOrder, &nptsi, &ptsi);
+    double uvw[4][3];
+    for(int j = 0; j < 4; j++) {
+      double xyz[3] = {_parts[i]->getVertex(j)->x(), _parts[i]->getVertex(j)->y(),
+                       _parts[i]->getVertex(j)->z()};
+      _orig->xyz2uvw(xyz, uvw[j]);
+    }
+    MVertex v0(uvw[0][0], uvw[0][1], uvw[0][2]);
+    MVertex v1(uvw[1][0], uvw[1][1], uvw[1][2]);
+    MVertex v2(uvw[2][0], uvw[2][1], uvw[2][2]);
+    MVertex v3(uvw[3][0], uvw[3][1], uvw[3][2]);
+    MTetrahedron tt(&v0, &v1, &v2, &v3);
+    
     for(int ip = 0; ip < nptsi; ip++){
       const double u = ptsi[ip].pt[0];
       const double v = ptsi[ip].pt[1];
       const double w = ptsi[ip].pt[2];
       const double weight = ptsi[ip].weight;
-      const double detJ = _parts[i]->getJacobian(u, v, w, jac);
-      SPoint3 p; _parts[i]->pnt(u, v, w, p);
+      const double detJ = tt.getJacobian(u, v, w, jac);
+      SPoint3 p; tt.pnt(u, v, w, p);
       (*pts[*npts + ip]).pt[0] = p.x();
       (*pts[*npts + ip]).pt[1] = p.y();
       (*pts[*npts + ip]).pt[2] = p.z();
@@ -182,7 +194,6 @@ void MPolygon::_initVertices()
   edges.erase(ite);
 
   while(edges.size() > 1) {
-    ite = edges.begin() ;
     for(ite = edges.begin(); ite != edges.end(); ite++) {
       if(ite->getVertex(0) == _vertices.back()) {
         _vertices.push_back(ite->getVertex(1));
@@ -284,13 +295,23 @@ void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
     int nptsi;
     IntPt *ptsi;
     _parts[i]->getIntegrationPoints(pOrder, &nptsi, &ptsi);
+    double uvw[3][3];
+    for(int j = 0; j < 3; j++) {
+      double xyz[3] = {_parts[i]->getVertex(j)->x(), _parts[i]->getVertex(j)->y(),
+                       _parts[i]->getVertex(j)->z()};
+      _orig->xyz2uvw(xyz, uvw[j]);
+    }
+    MVertex v0(uvw[0][0], uvw[0][1], uvw[0][2]);
+    MVertex v1(uvw[1][0], uvw[1][1], uvw[1][2]);
+    MVertex v2(uvw[2][0], uvw[2][1], uvw[2][2]);
+    MTriangle tt(&v0, &v1, &v2);
     for(int ip = 0; ip < nptsi; ip++){
       const double u = ptsi[ip].pt[0];
       const double v = ptsi[ip].pt[1];
       const double w = ptsi[ip].pt[2];
       const double weight = ptsi[ip].weight;
-      const double detJ = _parts[i]->getJacobian(u, v, w, jac);
-      SPoint3 p; _parts[i]->pnt(u, v, w, p);
+      const double detJ = tt.getJacobian(u, v, w, jac);
+      SPoint3 p; tt.pnt(u, v, w, p);
       (*pts[*npts + ip]).pt[0] = p.x();
       (*pts[*npts + ip]).pt[1] = p.y();
       (*pts[*npts + ip]).pt[2] = p.z();
