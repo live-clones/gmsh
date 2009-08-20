@@ -12,7 +12,7 @@
 
 void (*GMSH_Plugin::draw)(void*) = 0;
 
-void GMSH_Plugin::setDrawFunction(void (*fct)(void *context))
+void GMSH_Plugin::setDrawFunction(void (*fct)(void *))
 {
 #if defined(HAVE_FLTK)
   draw = fct;

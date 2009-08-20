@@ -156,6 +156,8 @@ class MPolyhedron : public MElement {
   }
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
                         int num=0, int elementary=1, int physical=1);
+  virtual int getNumParts() const { return _parts.size(); }
+  virtual MElement *getPart(int i) const { _parts[i]; }
 };
 
 class MPolygon : public MElement {
@@ -269,6 +271,8 @@ class MPolygon : public MElement {
   }
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
                         int num=0, int elementary=1, int physical=1);
+  virtual int getNumParts() const { return _parts.size(); }
+  virtual MElement *getPart(int i) const { _parts[i]; }
 };
 
 class MTriangleBorder : public MTriangle {
