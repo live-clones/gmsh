@@ -761,6 +761,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   for(unsigned int i = 0; i < gmEntities.size(); i++) {
     for(unsigned int j = 0; j < gmEntities[i]->getNumMeshElements(); j++) {
       MElement *e = gmEntities[i]->getMeshElement(j);
+      e->setVolumePositive();
       elementCutMesh (e, ls, gmEntities[i], gm, numEle,
                       vertexMap, newVertices, elements, border, physicals, entityCut);
       cutGM->getMeshPartitions().insert(e->getPartition());
