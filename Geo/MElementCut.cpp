@@ -382,10 +382,11 @@ int getElementVertexNum (DI_Point p, MElement *e)
 void assignPhysicals(GModel *GM, std::vector<int> gePhysicals, int reg, int dim,
                      std::map<int, std::map<int, std::string> > physicals[4])
 {
-  for(unsigned int i = 0; i < gePhysicals.size(); i++)
-    if(gePhysicals[i] && (!physicals[dim].count(reg) ||
-                          !physicals[dim][reg].count(gePhysicals[i])))
-      physicals[dim][reg][gePhysicals[i]] = GM->getPhysicalName(dim, gePhysicals[i]);
+  for(unsigned int i = 0; i < gePhysicals.size(); i++){
+    int phys = gePhysicals[i];
+    if(phys && (!physicals[dim].count(reg) || !physicals[dim][reg].count(phys)))
+      physicals[dim][reg][phys] = GM->getPhysicalName(dim, phys);
+  }
 }
 
 bool equalV(MVertex *v, DI_Point p)

@@ -769,8 +769,7 @@ if(UNIX)
   # (on Mac for example "make package; make package_source" would lead
   # to huge file lists getting generated due to the 'Applications'
   # symlink in the bundle)
-  set(CPACK_INSTALL_COMMANDS 
-      "${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/_CPack_Packages")
+  set(CPACK_INSTALL_COMMANDS "rm -rf ${CMAKE_BINARY_DIR}/_CPack_Packages")
 endif(UNIX)
 
 if(APPLE)
