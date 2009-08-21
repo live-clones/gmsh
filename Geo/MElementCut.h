@@ -144,6 +144,7 @@ class MPolygon : public MElement {
   std::vector<MTriangle*> _parts;
   std::vector<MVertex*> _vertices;
   std::vector<MVertex*> _innerVertices;
+  std::vector<MEdge> _edges;
   void _initVertices();
  public:
   MPolygon(std::vector<MVertex*> v, int num=0, int part=0)
@@ -191,11 +192,8 @@ class MPolygon : public MElement {
     return (num < (int)_vertices.size()) ? 
       _vertices[num] : _innerVertices[num - _vertices.size()];
   }
-  virtual int getNumEdges() { return _vertices.size(); }
-  virtual MEdge getEdge(int num)
-  {
-    return MEdge(_vertices[num], _vertices[(num + 1) % _vertices.size()]);
-  }
+  virtual int getNumEdges() { return _edges.size(); }
+  virtual MEdge getEdge(int num) { return _edges[num]; }
   virtual int getNumEdgesRep() { return getNumEdges(); }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n) 
   {
@@ -205,8 +203,8 @@ class MPolygon : public MElement {
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(2);
-    v[0] = _vertices[num];
-    v[1] = _vertices[(num + 1) % _vertices.size()];
+    v[0] = _edges[num].getVertex(0);
+    v[1] = _edges[num].getVertex(1);
   }
   virtual int getNumFaces() { return 1; }
   virtual MFace getFace(int num) { return MFace(_vertices); }

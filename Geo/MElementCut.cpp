@@ -17,6 +17,8 @@
 
 void MPolyhedron::_init()
 {
+  if(_parts.size() == 0) return;
+
   for(unsigned int i = 0; i < _parts.size(); i++) {
     if(_parts[i]->getVolume() * _parts[0]->getVolume() < 0)
       _parts[i]->revert();
@@ -52,7 +54,7 @@ void MPolyhedron::_init()
 
   if(_parts.size() >= 4) {
     for(unsigned int i = 0; i < _faces.size(); i++) {
-      for(int j = 0; j < 6; j++) {
+      for(int j = 0; j < 3; j++) {
         int k;
         for(k = _edges.size() - 1; k >= 0; k--)
           if(_faces[i].getEdge(j) == _edges[k])
@@ -60,7 +62,7 @@ void MPolyhedron::_init()
         if(k < 0)
           _edges.push_back(_faces[i].getEdge(j));
       }
-      for(int j = 0; j < 4; j++) {
+      for(int j = 0; j < 3; j++) {
         int k;
         for(k = _vertices.size() - 1; k >= 0; k--)
           if(_faces[i].getVertex(j) == _vertices[k])
@@ -70,6 +72,15 @@ void MPolyhedron::_init()
       }
     }
   }
+
+  // innerVertices
+  for(unsigned int i = 0; i < _parts.size(); i++) {
+    for(int j = 0; j < 4; j++) {
+      if(std::find(_vertices.begin(), _vertices.end(), _parts[i]->getVertex(j)) == _vertices.end())
+        _innerVertices.push_back(_parts[i]->getVertex(j));
+    }
+  }
+  
 }
 
 bool MPolyhedron::isInside(double u, double v, double w)
@@ -173,24 +184,31 @@ void MPolygon::_initVertices()
 {
   if(_parts.size() == 0) return;
 
-  std::vector<MEdge> edges;
   for(unsigned int i = 0; i < _parts.size(); i++) {
     for(int j = 0; j < 3; j++) {
       int k;
-      for(k = edges.size() - 1; k >= 0; k--)
-        if(_parts[i]->getEdge(j) == edges[k])
+      for(k = _edges.size() - 1; k >= 0; k--)
+        if(_parts[i]->getEdge(j) == _edges[k])
           break;
       if(k < 0)
-        edges.push_back(_parts[i]->getEdge(j));
+        _edges.push_back(_parts[i]->getEdge(j));
       else
-        edges.erase(edges.begin() + k);
+        _edges.erase(_edges.begin() + k);
     }
   }
 
-  /*_vertices.push_back(edges.back().getVertex(0));
-  _vertices.push_back(edges.back().getVertex(1));
-  edges.pop_back();*/
-  std::vector<MEdge>::iterator ite = edges.begin();
+  for(unsigned int i = 0; i < _edges.size(); i++) {
+    for(int j = 0; j < 2; j++) {
+      int k;
+      for(k = _vertices.size() - 1; k >= 0; k--)
+        if(_edges[i].getVertex(j) == _vertices[k])
+          break;
+      if(k < 0)
+        _vertices.push_back(_edges[i].getVertex(j));
+    }
+  }
+
+  /*std::vector<MEdge>::iterator ite = edges.begin();
   MVertex *vINIT = ite->getVertex(0);
   _vertices.push_back(ite->getVertex(0));
   _vertices.push_back(ite->getVertex(1));
@@ -199,85 +217,45 @@ void MPolygon::_initVertices()
   while(edges.size() > 1) {
     for(ite = edges.begin(); ite != edges.end(); ite++) {
       if(ite->getVertex(0) == _vertices.back()) {
-        _vertices.push_back(ite->getVertex(1));
-        edges.erase(ite);
+        if(ite->getVertex(1) != vINIT) {
+          _vertices.push_back(ite->getVertex(1));
+          edges.erase(ite);
+        }
+        else {
+          edges.erase(ite);
+          ite = edges.begin();
+          vINIT = ite->getVertex(0);
+          _vertices.push_back(ite->getVertex(0));
+          _vertices.push_back(ite->getVertex(1));
+          edges.erase(ite);
+        }
         break;
       }
       else if(ite->getVertex(1) == _vertices.back()) {
-        _vertices.push_back(ite->getVertex(0));
-        edges.erase(ite);
+        if(ite->getVertex(0) != vINIT) {
+          _vertices.push_back(ite->getVertex(0));
+          edges.erase(ite);
+        }
+        else {
+          edges.erase(ite);
+          ite = edges.begin();
+          vINIT = ite->getVertex(0);
+          _vertices.push_back(ite->getVertex(0));
+          _vertices.push_back(ite->getVertex(1));
+          edges.erase(ite);
+        }
         break;
       }
     }
-    /*for(int k = edges.size() - 1; k >= 0; k--) {
-      if(edges[k].getVertex(0) == _vertices.back()){
-        _vertices.push_back(edges[k].getVertex(1));
-        edges.erase(edges.begin() + k);
-        break;
-      }
-      if(edges[k].getVertex(1) == _vertices.back()){
-        _vertices.push_back(edges[k].getVertex(0));
-        edges.erase(edges.begin() + k);
-        break;
-      } printf("no common summit k=%d\n",k);
-    }*/
-  }
+  }*/
 
+  // innerVertices
   for(unsigned int i = 0; i < _parts.size(); i++) {
     for(int j = 0; j < 3; j++) {
       if(std::find(_vertices.begin(), _vertices.end(), _parts[i]->getVertex(j)) == _vertices.end())
         _innerVertices.push_back(_parts[i]->getVertex(j));
     }
   }
-
-  /*std::vector<MEdge> edges;
-  for(unsigned int i = 0; i < _parts.size(); i++) {
-    for(int j = 0; j < 3; j++) {
-      if(std::find(edges.begin(), edges.end(), _parts[i]->getEdge(j)) == edges.end())
-        edges.push_back(_parts[i]->getEdge(j));
-      else
-        edges.erase(std::find(edges.begin(), edges.end(), _parts[i]->getEdge(j)));
-    }
-  }
-
-  std::vector<MEdge>::iterator ite = edges.begin();
-  MVertex *vINIT = ite->getVertex(0);
-  _vertices.push_back(ite->getVertex(0));
-  _vertices.push_back(ite->getVertex(1));
-  edges.erase(ite);
-
-  while (!edges.empty()){
-    ite = edges.begin() ;
-    while (ite != edges.end()){
-      MVertex *vB = ite->getVertex(0);
-      if( vB == _vertices.back()){
-        MVertex *vE = ite->getVertex(1);
-        if (vE != vINIT) _vertices.push_back(vE);
-        edges.erase(ite);
-      }
-      else if( ite->getVertex(1) == _vertices.back()){
-        MVertex *vE = ite->getVertex(0);
-        if (vE != vINIT) _vertices.push_back(vE);
-        edges.erase(ite);
-      }
-      else ite++;
-    }
-  }*/
-
-  /*while(edges.size() > 1) {
-    for(ite = edges.begin(); ite != edges.end(); ite++) {
-      if(ite->getVertex(0) == _vertices.back()) {
-        _vertices.push_back(ite->getVertex(1));
-        edges.erase(ite);
-        break;
-      }
-      else if(ite->getVertex(1) == _vertices.back()) {
-        _vertices.push_back(ite->getVertex(0));
-        edges.erase(ite);
-        break;
-      }
-    }
-  }*/
 }
 bool MPolygon::isInside(double u, double v, double w)
 {
@@ -678,6 +656,7 @@ static void elementCutMesh(MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
         assignPhysicals(GM, gePhysicals, reg, 2, physicals);
         MPolygon *p2 = new MPolygon(poly[1], copy, false, ++numEle, ePart);
         elements[8][elementary].push_back(p2);
+        assignPhysicals(GM, gePhysicals, elementary * -1, 2, physicals);
         assignPhysicals(GM, gePhysicals, elementary, 2, physicals);
 
         for (unsigned int i = 0; i < boundLines.size(); i++){
@@ -850,7 +829,6 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   for(unsigned int i = 0; i < newVertices.size(); i++) {
     vertexMap[newVertices[i]->getNum()] = newVertices[i];
   }
-  printf("numbering vertices finished : %d vertices \n", (int)vertexMap.size());
 
   return cutGM;
 #else
