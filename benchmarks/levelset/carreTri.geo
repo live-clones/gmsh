@@ -27,13 +27,16 @@ Physical Line(400) = {4};
 
 Mesh 2;
 
+Merge "level.med";
+
 Levelset Plane (1) = {0,-1,0,0.22};
 Levelset Plane (2) = {-1,0,0,0.5};
 Levelset Sphere (3) = {{0,0,0},0.75};
 Levelset Ellipsoid (4) = { {0,0,0}, {1,0,0}, 0.55, 0.55, 0.75 };
 Levelset Intersection (10) = {1,3};
+Levelset PostView (11) = 0;
 
-Levelset CutMesh {10};
+Levelset CutMesh {11};
 
 Physical Surface(1000) = {6};
 Physical Surface(2000) = {7};

@@ -14,6 +14,8 @@
 
 #include "DILevelset.h"
 #include "mathEvaluator.h"
+#include "PView.h"
+#include "OctreePost.h"
 
 class gLevelsetMathEval: public gLevelsetPrimitive
 {
@@ -36,7 +38,34 @@ public:
     values[1] = y;
     values[2] = z;
     if(_expr->eval(values, res)) return res[0];
-    return 0.;
+    return 1.;
+  }
+  int type() const { return UNKNOWN; }
+};
+
+class gLevelsetPostView : public gLevelsetPrimitive
+{
+  int _viewIndex;
+  OctreePost *_octree;
+public:
+  gLevelsetPostView(int index, int &tag) : _viewIndex(index), gLevelsetPrimitive(tag)
+  {
+    if(_viewIndex >= 0 && _viewIndex < PView::list.size()){
+      PView *view = PView::list[_viewIndex];
+      _octree = new OctreePost(view);
+    }
+    else{
+      Msg::Error("Unknown View[%d] in PostView levelset", _viewIndex);
+      _octree = 0;
+    }
+  }
+  ~gLevelsetPostView(){ if(_octree) delete _octree; }
+  virtual double operator () (const double &x, const double &y, const double &z) const
+  {
+    if(!_octree) return 1.;
+    double val = 1.;
+    _octree->searchScalar(x, y, z, &val, 0);
+    return val;
   }
   int type() const { return UNKNOWN; }
 };
