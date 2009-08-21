@@ -312,11 +312,11 @@ class GModel
   // build a new GModel by cutting the elements crossed by the levelset ls
   GModel *buildCutGModel(gLevelset *ls);
 
-  // Gmsh native CAD format
-  int importGEOInternals();
-  // read is static, since it can create multiple models
+  // Gmsh native CAD format (readGEO is static, since it can create
+  // multiple models)
   static int readGEO(const std::string &name);
   int writeGEO(const std::string &name, bool printLabels=true);
+  int importGEOInternals();
 
   // Fourier model
   int readFourier();
