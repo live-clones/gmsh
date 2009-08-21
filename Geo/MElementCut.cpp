@@ -373,8 +373,9 @@ void MPolygon::writeMSH(FILE *fp, double version, bool binary, int num,
 int getElementVertexNum (DI_Point p, MElement *e)
 {
   for(int i = 0; i < e->getNumVertices(); i++)
-    if(p.x() == e->getVertex(i)->x() && p.y() == e->getVertex(i)->y() &&
-       p.z() == e->getVertex(i)->z())
+    if(fabs(p.x() - e->getVertex(i)->x()) < 1.e-12 && 
+       fabs(p.y() - e->getVertex(i)->y()) < 1.e-12 &&
+       fabs(p.z() - e->getVertex(i)->z()) < 1.e-12)
       return e->getVertex(i)->getNum();
   return -1;
 }
@@ -395,13 +396,28 @@ bool equalV(MVertex *v, DI_Point p)
           fabs(v->z() - p.z()) < 1.e-15);
 }
 
-static void elementCutMesh (MElement *e, gLevelset *ls, GEntity *ge, GModel *GM, int &numEle,
-                     std::map<int, MVertex*> &vertexMap,
-                     std::vector<MVertex*> &newVertices,
-                     std::map<int, std::vector<MElement*> > elements[10],
-                     std::map<int, std::vector<MElement*> > border[2],
-                     std::map<int, std::map<int, std::string> > physicals[4],
-                     std::map<int, std::vector<GEntity*> > &entityCut)
+static int getElementaryTag(double ls, int elementary, std::map<int, int> &newtags)
+{
+  if(ls < 0){
+    if(newtags.count(elementary))
+      return newtags[elementary];
+    else{
+      int reg = ++newtags[0];
+      newtags[elementary] = reg;
+      return reg;
+    }
+  }
+  return elementary;
+}
+
+static void elementCutMesh(MElement *e, gLevelset *ls, GEntity *ge, GModel *GM, 
+                           int &numEle, std::map<int, MVertex*> &vertexMap,
+                           std::vector<MVertex*> &newVertices,
+                           std::map<int, std::vector<MElement*> > elements[10],
+                           std::map<int, std::vector<MElement*> > border[2],
+                           std::map<int, std::map<int, std::string> > physicals[4],
+                           std::map<int, std::vector<GEntity*> > &entityCut,
+                           std::map<int, int> newtags[4])
 {
   int elementary = ge->tag();
   int eType = e->getTypeForMSH();
@@ -501,7 +517,7 @@ static void elementCutMesh (MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
          (eType == MSH_PRI_6 && subTetras.size() > 3) ||
          (eType == MSH_PYR_5 && subTetras.size() > 2)) {
         std::vector<MTetrahedron*> poly[2];
-
+        
 	for (unsigned int i = 0; i < subTetras.size(); i++){
           MVertex *mv[4] = {NULL, NULL, NULL, NULL};
           for(int j = 0; j < 4; j++){
@@ -512,7 +528,7 @@ static void elementCutMesh (MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
                 if(equalV(newVertices[k], subTetras[i].pt(j))) break;
               if(k == newVertices.size()) {
                 mv[j] = new MVertex(subTetras[i].x(j), subTetras[i].y(j),
-                                    subTetras[i].z(j), 0, numV);
+                                    subTetras[i].z(j), 0);
                 newVertices.push_back(mv[j]);
               }
               else mv[j] = newVertices[k];
@@ -534,8 +550,9 @@ static void elementCutMesh (MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
             poly[1].push_back(mt);
         }
         MPolyhedron *p1 = new MPolyhedron(poly[0], copy, true, ++numEle, ePart);
-        elements[9][elementary * -1].push_back(p1);
-        assignPhysicals(GM, gePhysicals, elementary * -1, 3, physicals);
+        int reg = getElementaryTag(-1, elementary, newtags[3]);
+        elements[9][reg].push_back(p1);
+        assignPhysicals(GM, gePhysicals, reg, 3, physicals);
         MPolyhedron *p2 = new MPolyhedron(poly[1], copy, false, ++numEle, ePart);
         elements[9][elementary].push_back(p2);
         assignPhysicals(GM, gePhysicals, elementary, 3, physicals);
@@ -550,7 +567,7 @@ static void elementCutMesh (MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
                 if(equalV(newVertices[k], surfTriangles[i].pt(j))) break;
               if(k == newVertices.size()) {
                 mv[j] = new MVertex(surfTriangles[i].x(j), surfTriangles[i].y(j),
-                                    surfTriangles[i].z(j), 0, numV);
+                                    surfTriangles[i].z(j), 0);
                 newVertices.push_back(mv[j]);
               }
               else mv[j] = newVertices[k];
@@ -571,9 +588,9 @@ static void elementCutMesh (MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
           entityCut[surfTriangles[i].lsTag()].push_back(ge);
         }
       }
-
+      
       else { // no cut
-        int reg = subTetras[0].lsTag() * elementary;
+        int reg = getElementaryTag(subTetras[0].lsTag(), elementary, newtags[3]);
         if(eType == MSH_TET_4)
           elements[4][reg].push_back(copy);
         else if(eType == MSH_HEX_8)
@@ -582,7 +599,7 @@ static void elementCutMesh (MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
           elements[6][reg].push_back(copy);
         else if(eType == MSH_PYR_5)
           elements[7][reg].push_back(copy);
-
+        
         assignPhysicals(GM, gePhysicals, reg, 3, physicals);
       }
       
@@ -630,7 +647,7 @@ static void elementCutMesh (MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
                 if(equalV(newVertices[k], subTriangles[i].pt(j))) break;
               if(k == newVertices.size()) {
                 mv[j] = new MVertex(subTriangles[i].x(j), subTriangles[i].y(j),
-                                    subTriangles[i].z(j), 0, numV);
+                                    subTriangles[i].z(j), 0);
                 newVertices.push_back(mv[j]);
               }
               else mv[j] = newVertices[k];
@@ -652,8 +669,9 @@ static void elementCutMesh (MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
             poly[1].push_back(mt);
         }
         MPolygon *p1 = new MPolygon(poly[0], copy, true, ++numEle, ePart);
-        elements[8][elementary * -1].push_back(p1);
-        assignPhysicals(GM, gePhysicals, elementary * -1, 2, physicals);
+        int reg = getElementaryTag(-1, elementary, newtags[2]);
+        elements[8][reg].push_back(p1);
+        assignPhysicals(GM, gePhysicals, reg, 2, physicals);
         MPolygon *p2 = new MPolygon(poly[1], copy, false, ++numEle, ePart);
         elements[8][elementary].push_back(p2);
         assignPhysicals(GM, gePhysicals, elementary, 2, physicals);
@@ -668,7 +686,7 @@ static void elementCutMesh (MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
                 if(equalV(newVertices[k], boundLines[i].pt(j))) break;
               if(k == newVertices.size()) {
                 mv[j] = new MVertex(boundLines[i].x(j), boundLines[i].y(j),
-                                    boundLines[i].z(j), 0, numV);
+                                    boundLines[i].z(j), 0);
                 newVertices.push_back(mv[j]);
               }
               else mv[j] = newVertices[k];
@@ -690,7 +708,7 @@ static void elementCutMesh (MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
       }
 
       else { // no cut
-        int reg = subTriangles[0].lsTag() * elementary;
+        int reg = getElementaryTag(subTriangles[0].lsTag(), elementary, newtags[2]);
         if(eType == MSH_TRI_3)
           elements[2][reg].push_back(copy);
         else if(eType == MSH_QUA_4)
@@ -719,7 +737,7 @@ static void elementCutMesh (MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
               for(k = 0; k < newVertices.size(); k++)
                 if(equalV(newVertices[k], lines[i].pt(j))) break;
               if(k == newVertices.size()) {
-                mv[j] = new MVertex(lines[i].x(j), lines[i].y(j), lines[i].z(j), 0, numV);
+                mv[j] = new MVertex(lines[i].x(j), lines[i].y(j), lines[i].z(j), 0);
                 newVertices.push_back(mv[j]);
               }
               else mv[j] = newVertices[k];
@@ -734,14 +752,13 @@ static void elementCutMesh (MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
             }
           }
           MLine *ml = new MLine(mv[0], mv[1], ++numEle, ePart);
-          int reg = lines[i].lsTag() * elementary;
+          int reg = getElementaryTag(lines[i].lsTag(), elementary, newtags[1]);
           elements[1][reg].push_back(ml);
           assignPhysicals(GM, gePhysicals, reg, 1, physicals);
         }
       }
-
       else { // no cut
-        int reg = lines[0].lsTag() * elementary;
+        int reg = getElementaryTag(lines[0].lsTag(), elementary, newtags[1]);
         elements[1][reg].push_back(copy);
         assignPhysicals(GM, gePhysicals, reg, 1, physicals);
       }
@@ -751,7 +768,7 @@ static void elementCutMesh (MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
     {
       DI_Point P(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z());
       P.computeLs(*ls);
-      int reg = (int)(P.lsTag() * elementary);
+      int reg = getElementaryTag(P.lsTag(), elementary, newtags[0]);
       elements[0][reg].push_back(copy);
       assignPhysicals(GM, gePhysicals, reg, 0, physicals);
     }
@@ -770,7 +787,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
                      std::map<int, std::map<int, std::string> > physicals[4])
 {
 #if defined(HAVE_DINTEGRATION)
-  GModel *cutGM = new GModel;
+  GModel *cutGM = new GModel(gm->getName() + "_cut");
 
   std::map<int, std::vector<MElement*> > border[2];
   std::vector<MVertex*> newVertices;
@@ -780,12 +797,16 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   gm->getEntities(gmEntities);
   int numEle = gm->getNumMeshElements();
 
+  std::map<int, int> newtags[4];
+  for(int i = 0; i < 4; i++)
+    newtags[i][0] = gm->getMaxElementaryNumber(i);
+    
   for(unsigned int i = 0; i < gmEntities.size(); i++) {
     for(unsigned int j = 0; j < gmEntities[i]->getNumMeshElements(); j++) {
       MElement *e = gmEntities[i]->getMeshElement(j);
       e->setVolumePositive();
-      elementCutMesh (e, ls, gmEntities[i], gm, numEle,
-                      vertexMap, newVertices, elements, border, physicals, entityCut);
+      elementCutMesh(e, ls, gmEntities[i], gm, numEle, vertexMap, newVertices, 
+                     elements, border, physicals, entityCut, newtags);
       cutGM->getMeshPartitions().insert(e->getPartition());
     }
   }
@@ -822,12 +843,13 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   }
 
   // number the new vertices and add in vertexMap
-  std::map<int, MVertex* >::iterator itend = vertexMap.end(); itend--;
-  int num = itend->first;
+  //std::map<int, MVertex* >::iterator itend = vertexMap.end(); itend--;
+  //int num = itend->first;
   for(unsigned int i = 0; i < newVertices.size(); i++) {
-    newVertices[i]->setNum(++num);
-    vertexMap[num] = newVertices[i];
-  }printf("numbering vertices finished : %d vertices \n", (int)vertexMap.size());
+    //newVertices[i]->setNum(++num);
+    vertexMap[newVertices[i]->getNum()] = newVertices[i];
+  }
+  printf("numbering vertices finished : %d vertices \n", (int)vertexMap.size());
 
   return cutGM;
 #else

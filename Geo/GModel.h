@@ -196,6 +196,10 @@ class GModel
   // fill a vector containing all the entities in the model
   void getEntities(std::vector<GEntity*> &entities);
 
+  // return the highest number associated with an elementary entity of
+  // a given dimension
+  int getMaxElementaryNumber(int dim);
+
   // check if there are no physical entities in the model
   bool noPhysicalGroups();
 
@@ -206,8 +210,9 @@ class GModel
   void deletePhysicalGroups();
   void deletePhysicalGroup(int dim, int num);
 
-  // return the highest number associated with a physical entity
-  int getMaxPhysicalNumber();
+  // return the highest number associated with a physical entity of a
+  // given dimension
+  int getMaxPhysicalNumber(int dim);
 
   // elementary/physical name iterator
   typedef std::map<std::pair<int, int>, std::string>::iterator piter;

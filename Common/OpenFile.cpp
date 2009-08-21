@@ -363,7 +363,10 @@ int MergeFile(std::string fileName, bool warnIfMissing)
     }
 #endif
     else {
-      status = GModel::current()->readGEO(fileName);
+      // don't use readGEO here (ParseFile is allowed to change the
+      // current model)
+      ParseFile(fileName, true);
+      status = GModel::current()->importGEOInternals();
     }
   }
 

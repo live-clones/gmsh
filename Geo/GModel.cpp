@@ -232,6 +232,17 @@ void GModel::getEntities(std::vector<GEntity*> &entities)
   entities.insert(entities.end(), regions.begin(), regions.end());
 }
 
+int GModel::getMaxElementaryNumber(int dim)
+{
+  std::vector<GEntity*> entities;
+  getEntities(entities);
+  int num = 0;
+  for(unsigned int i = 0; i < entities.size(); i++)
+    if(entities[i]->dim() == dim)
+      num = std::max(num, std::abs(entities[i]->tag()));
+  return num;
+}
+
 bool GModel::noPhysicalGroups()
 {
   std::vector<GEntity*> entities;
@@ -280,14 +291,15 @@ void GModel::deletePhysicalGroup(int dim, int num)
   }
 }
 
-int GModel::getMaxPhysicalNumber()
+int GModel::getMaxPhysicalNumber(int dim)
 {
   std::vector<GEntity*> entities;
   getEntities(entities);
   int num = 0;
   for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->physicals.size(); j++)
-      num = std::max(num, std::abs(entities[i]->physicals[j]));
+    if(entities[i]->dim() == dim)
+      for(unsigned int j = 0; j < entities[i]->physicals.size(); j++)
+        num = std::max(num, std::abs(entities[i]->physicals[j]));
   return num;
 }
 
@@ -300,7 +312,7 @@ int GModel::setPhysicalName(std::string name, int dim, int number)
     ++it;
   }
   // if no number is given, find the next available one
-  if(!number) number = getMaxPhysicalNumber() + 1;
+  if(!number) number = getMaxPhysicalNumber(dim) + 1;
   physicalNames[std::pair<int, int>(dim, number)] = name;
   return number;
 }
@@ -589,7 +601,7 @@ int GModel::indexMeshVertices(bool all)
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
         for(int k = 0; k < entities[i]->getMeshElement(j)->getNumVertices(); k++)
           entities[i]->getMeshElement(j)->getVertex(k)->setIndex(0);
-
+  
   // renumber all the mesh vertices tagged with 0
   int numVertices = 0;
   for(unsigned int i = 0; i < entities.size(); i++)
@@ -703,13 +715,14 @@ void GModel::_storeElementsInEntities(std::map<int, std::vector<MElement*> > &ma
 template<class T>
 static void _associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &elements)
 {
-  for(unsigned int i = 0; i < elements.size(); i++)
+  for(unsigned int i = 0; i < elements.size(); i++){
     for(int j = 0; j < elements[i]->getNumVertices(); j++){
       if (!elements[i]->getVertex(j)->onWhat() ||
           elements[i]->getVertex(j)->onWhat()->dim() > ge->dim()){
         elements[i]->getVertex(j)->setEntity(ge);
       }
     }
+  }
 }
 
 void GModel::_associateEntityWithMeshVertices()

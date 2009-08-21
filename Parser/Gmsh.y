@@ -1740,7 +1740,8 @@ LevelSet :
       else
         yymsg(0, "Wrong levelset definition (%d)", $4);
     }
-  | tLevelset tPlane '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ',' RecursiveListOfDouble '}' tEND
+  | tLevelset tPlane '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ',' 
+                                               RecursiveListOfDouble '}' tEND
     {
       if(List_Nbr($12) == 0){
         int t = (int)$4;
@@ -1758,7 +1759,8 @@ LevelSet :
       else
         yymsg(0, "Wrong levelset definition (%d)", $4);
     }
-  | tLevelset tPlane '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ',' VExpr ',' RecursiveListOfDouble '}' tEND
+  | tLevelset tPlane '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ',' VExpr ',' 
+                                               RecursiveListOfDouble '}' tEND
     {
       if(List_Nbr($14) == 0){
         int t = (int)$4;
@@ -1879,13 +1881,14 @@ LevelSet :
         int t = (int)$4;
         GModel *GM = GModel::current();
         GM->buildCutGModel(FindLevelSet(t)->ls);
-	GM->destroy();
+        GM->setVisibility(0);
       }
       else
         yymsg(0, "Wrong levelset definition");
       Free($2);
     }
-  | tLevelset tSTRING '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ',' RecursiveListOfDouble '}' tEND
+  | tLevelset tSTRING '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ',' 
+                                                RecursiveListOfDouble '}' tEND
     {
       if(!strcmp($2, "Cylinder") && List_Nbr($12) == 1){
         int t = (int)$4;
@@ -1976,7 +1979,8 @@ LevelSet :
             List_Read($12, i, &d[i]);
           double pt[3] = {$8[0], $8[1], $8[2]};
           double dir[3] = {$10[0], $10[1], $10[2]};
-          gLevelset *ls = new gLevelsetGeneralQuadric(pt, dir, d[0], d[1], d[2], d[3], d[4], t);
+          gLevelset *ls = new gLevelsetGeneralQuadric(pt, dir, d[0], d[1], 
+                                                      d[2], d[3], d[4], t);
           LevelSet *l = Create_LevelSet(ls->getTag(), ls);
           Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
         }
@@ -1985,7 +1989,7 @@ LevelSet :
         yymsg(0, "Wrong levelset definition (%d)", $4);
       Free($2);
     }
-;
+  ;
 
 //  D E L E T E
 

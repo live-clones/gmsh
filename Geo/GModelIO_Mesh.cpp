@@ -317,7 +317,7 @@ int GModel::readMSH(const std::string &name)
               // ignore any other tags for now
             }
             if(!(numVertices = MElement::getInfoMSH(type))) {
-              if(type != MSH_POLYG_ && type !=MSH_POLYH_) return 0;
+              if(type != MSH_POLYG_ && type != MSH_POLYH_) return 0;
               fscanf(fp, "%d", &numVertices);
             }
           }
