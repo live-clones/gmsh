@@ -19,10 +19,10 @@ Line Loop(5) = {1,2,3,4} ;
 Plane Surface(6) = {5} ;
 //Recombine Surface{6};
 
-//Physical Line(100) = {1};
-//Physical Line(200) = {2};
-//Physical Line(300) = {3};
-//Physical Line(400) = {4};
+Physical Line(100) = {1};
+Physical Line(200) = {2};
+Physical Line(300) = {3};
+Physical Line(400) = {4};
 //Physical Surface(1000) = {6};
 
 Mesh 2;

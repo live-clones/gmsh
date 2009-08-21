@@ -3,11 +3,10 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include "GmshConfig.h"
 #include "GModel.h"
 #include "MElement.h"
 #include "MElementCut.h"
-
-//#define HAVE_DINTEGRATION
 
 #if defined(HAVE_DINTEGRATION)
 #include "DILevelset.h"
@@ -72,6 +71,7 @@ void MPolyhedron::_init()
     }
   }
 }
+
 bool MPolyhedron::isInside(double u, double v, double w)
 {
   double ksi[3] = {u, v, w};
@@ -83,6 +83,7 @@ bool MPolyhedron::isInside(double u, double v, double w)
   }
   return false;
 }
+
 void MPolyhedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
 {
   *npts = 0;
@@ -93,7 +94,8 @@ void MPolyhedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
     _parts[i]->getIntegrationPoints(pOrder, &nptsi, &ptsi);
     double uvw[4][3];
     for(int j = 0; j < 4; j++) {
-      double xyz[3] = {_parts[i]->getVertex(j)->x(), _parts[i]->getVertex(j)->y(),
+      double xyz[3] = {_parts[i]->getVertex(j)->x(),
+                       _parts[i]->getVertex(j)->y(),
                        _parts[i]->getVertex(j)->z()};
       _orig->xyz2uvw(xyz, uvw[j]);
     }
@@ -118,8 +120,9 @@ void MPolyhedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
     *npts += nptsi;
   }
 }
+
 void MPolyhedron::writeMSH(FILE *fp, double version, bool binary, int num, 
-                        int elementary, int physical)
+                           int elementary, int physical)
 {
   int type = getTypeForMSH();
 
@@ -287,6 +290,7 @@ bool MPolygon::isInside(double u, double v, double w)
   }
   return false; 
 }
+
 void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
 {
   *npts = 0;
@@ -320,6 +324,7 @@ void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
     *npts += nptsi;
   }
 }
+
 void MPolygon::writeMSH(FILE *fp, double version, bool binary, int num, 
                         int elementary, int physical)
 {
@@ -370,30 +375,29 @@ void MPolygon::writeMSH(FILE *fp, double version, bool binary, int num,
 
 #if defined(HAVE_DINTEGRATION)
 
-int getElementVertexNum (DI_Point p, MElement *e)
+static bool equalV(MVertex *v, DI_Point p)
+{
+  return (fabs(v->x() - p.x()) < 1.e-15 && 
+          fabs(v->y() - p.y()) < 1.e-15 &&
+          fabs(v->z() - p.z()) < 1.e-15);
+}
+
+static int getElementVertexNum(DI_Point p, MElement *e)
 {
   for(int i = 0; i < e->getNumVertices(); i++)
-    if(fabs(p.x() - e->getVertex(i)->x()) < 1.e-12 && 
-       fabs(p.y() - e->getVertex(i)->y()) < 1.e-12 &&
-       fabs(p.z() - e->getVertex(i)->z()) < 1.e-12)
+    if(equalV(e->getVertex(i), p))
       return e->getVertex(i)->getNum();
   return -1;
 }
 
-void assignPhysicals(GModel *GM, std::vector<int> gePhysicals, int reg, int dim,
-                     std::map<int, std::map<int, std::string> > physicals[4])
+static void assignPhysicals(GModel *GM, std::vector<int> gePhysicals, int reg, int dim,
+                            std::map<int, std::map<int, std::string> > physicals[4])
 {
   for(unsigned int i = 0; i < gePhysicals.size(); i++){
     int phys = gePhysicals[i];
     if(phys && (!physicals[dim].count(reg) || !physicals[dim][reg].count(phys)))
       physicals[dim][reg][phys] = GM->getPhysicalName(dim, phys);
   }
-}
-
-bool equalV(MVertex *v, DI_Point p)
-{
-  return (fabs(v->x() - p.x()) < 1.e-15 && fabs(v->y() - p.y()) < 1.e-15 &&
-          fabs(v->z() - p.z()) < 1.e-15);
 }
 
 static int getElementaryTag(double ls, int elementary, std::map<int, int> &newtags)
@@ -775,7 +779,7 @@ static void elementCutMesh(MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
     break;
   default :
     Msg::Error("This type of element cannot be cut.");
-    throw;
+    return;
   }
 }
 
@@ -788,6 +792,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
 {
 #if defined(HAVE_DINTEGRATION)
   GModel *cutGM = new GModel(gm->getName() + "_cut");
+  cutGM->setFileName(cutGM->getName());
 
   std::map<int, std::vector<MElement*> > border[2];
   std::vector<MVertex*> newVertices;
@@ -842,11 +847,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
       assignPhysicals(gm, itge->second[j]->physicals, reg, 2, physicals);
   }
 
-  // number the new vertices and add in vertexMap
-  //std::map<int, MVertex* >::iterator itend = vertexMap.end(); itend--;
-  //int num = itend->first;
   for(unsigned int i = 0; i < newVertices.size(); i++) {
-    //newVertices[i]->setNum(++num);
     vertexMap[newVertices[i]->getNum()] = newVertices[i];
   }
   printf("numbering vertices finished : %d vertices \n", (int)vertexMap.size());

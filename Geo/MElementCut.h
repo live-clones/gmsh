@@ -6,6 +6,7 @@
 #ifndef _MELEMENTCUT_H_
 #define _MELEMENTCUT_H_
 
+#include "GmshMessage.h"
 #include "MElement.h"
 #include "MTetrahedron.h"
 #include "MTriangle.h"
@@ -26,7 +27,16 @@ class MPolyhedron : public MElement {
   void _init();
  public:
   MPolyhedron(std::vector<MVertex*> v, int num=0, int part=0)
-    : MElement(num, part), _owner(false), _orig(0) {}
+    : MElement(num, part), _owner(false), _orig(0) 
+  {
+    if(v.size() % 4){
+      Msg::Error("Got %d vertices for polyhedron", (int)v.size());
+      return;
+    }
+    for(unsigned int i = 0; i < v.size(); i += 4)
+      _parts.push_back(new MTetrahedron(v[i], v[i + 1], v[i + 2], v[i + 3]));
+    _init();
+  }
   MPolyhedron(std::vector<MTetrahedron*> vT, int num=0, int part=0)
     : MElement(num, part), _owner(false), _orig(0)
   {
