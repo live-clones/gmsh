@@ -314,7 +314,8 @@ class GModel
 
   // Gmsh native CAD format
   int importGEOInternals();
-  int readGEO(const std::string &name);
+  // read is static, since it can create multiple models
+  static int readGEO(const std::string &name);
   int writeGEO(const std::string &name, bool printLabels=true);
 
   // Fourier model
