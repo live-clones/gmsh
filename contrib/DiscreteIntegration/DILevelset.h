@@ -8,6 +8,7 @@
 
 
 // PRIMITIVE LEVELSET
+#define UNKNOWN      0
 #define SPHERE       1
 #define PLANE        2
 #define GENCYLINDER  3

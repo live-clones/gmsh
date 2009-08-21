@@ -30,9 +30,9 @@
 #include "OS.h"
 #include "CreateFile.h"
 #include "gmshSurface.h"
+#include "gmshLevelset.h"
 #include "Field.h"
 #include "BackgroundMesh.h"
-#include "DILevelset.h"
 #if !defined(HAVE_NO_POST)
 #include "PView.h"
 #include "PViewDataList.h"
@@ -1723,6 +1723,7 @@ ListOfShapes :
 LevelSet :
     tLevelset tPlane '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
+#if defined(HAVE_DINTEGRATION)
       if(List_Nbr($7) == 4){
         int t = (int)$4;
         if(FindLevelSet(t)){
@@ -1739,10 +1740,12 @@ LevelSet :
       }
       else
         yymsg(0, "Wrong levelset definition (%d)", $4);
+#endif
     }
   | tLevelset tPlane '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ',' 
                                                RecursiveListOfDouble '}' tEND
     {
+#if defined(HAVE_DINTEGRATION)
       if(List_Nbr($12) == 0){
         int t = (int)$4;
         if(FindLevelSet(t)){
@@ -1758,10 +1761,12 @@ LevelSet :
       }
       else
         yymsg(0, "Wrong levelset definition (%d)", $4);
+#endif
     }
   | tLevelset tPlane '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ',' VExpr ',' 
                                                RecursiveListOfDouble '}' tEND
     {
+#if defined(HAVE_DINTEGRATION)
       if(List_Nbr($14) == 0){
         int t = (int)$4;
         if(FindLevelSet(t)){
@@ -1778,9 +1783,11 @@ LevelSet :
       }
       else
         yymsg(0, "Wrong levelset definition (%d)", $4);
+#endif
     }
   | tLevelset tSphere '(' FExpr ')' tAFFECT '{' VExpr ',' RecursiveListOfDouble '}' tEND
     {
+#if defined(HAVE_DINTEGRATION)
       if(List_Nbr($10) == 1){
         int t = (int)$4;
         if(FindLevelSet(t)){
@@ -1796,9 +1803,11 @@ LevelSet :
       }
       else
         yymsg(0, "Wrong levelset definition (%d)", $4);
+#endif
     }
   | tLevelset tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
+#if defined(HAVE_DINTEGRATION)
       if(!strcmp($2, "Union")){
         int t = (int)$4;
         if(FindLevelSet(t)){
@@ -1874,9 +1883,30 @@ LevelSet :
       else
         yymsg(0, "Wrong levelset definition (%d)", $4);
       Free($2);
+#endif
+    }
+  | tLevelset tSTRING '(' FExpr ')' tAFFECT tBIGSTR tEND
+    {
+#if defined(HAVE_DINTEGRATION)
+      if(!strcmp($2, "MathEval")){
+        int t = (int)$4;
+        if(FindLevelSet(t)){
+	  yymsg(0, "Levelset %d already exists", t);
+        }
+        else {
+          gLevelset *ls = new gLevelsetMathEval($7, t);
+          LevelSet *l = Create_LevelSet(ls->getTag(), ls);
+          Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
+        }
+      }
+      else
+        yymsg(0, "Wrong levelset definition");
+      Free($2); Free($7);
+#endif
     }
   | tLevelset tSTRING '{' FExpr '}' tEND
     {
+#if defined(HAVE_DINTEGRATION)
       if(!strcmp($2, "CutMesh")){
         int t = (int)$4;
         GModel *GM = GModel::current();
@@ -1886,10 +1916,12 @@ LevelSet :
       else
         yymsg(0, "Wrong levelset definition");
       Free($2);
+#endif
     }
   | tLevelset tSTRING '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ',' 
                                                 RecursiveListOfDouble '}' tEND
     {
+#if defined(HAVE_DINTEGRATION)
       if(!strcmp($2, "Cylinder") && List_Nbr($12) == 1){
         int t = (int)$4;
         if(FindLevelSet(t)){
@@ -1988,6 +2020,7 @@ LevelSet :
       else
         yymsg(0, "Wrong levelset definition (%d)", $4);
       Free($2);
+#endif
     }
   ;
 

@@ -13,7 +13,7 @@
 #include "TreeUtils.h"
 #include "SPoint2.h"
 #include "ExtrudeParams.h"
-#include "DILevelset.h"
+#include "gmshLevelset.h"
 
 #define MSH_POINT              100
 #define MSH_POINT_BND_LAYER    101
