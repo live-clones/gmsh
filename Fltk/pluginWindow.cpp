@@ -266,6 +266,7 @@ pluginWindow::pluginWindow(int deltaFontSize)
 
   Fl_Button *b = new Fl_Button(WB + L1, height - WB - BH, L2, BH, "New view");
   b->callback(plugin_create_new_view_cb);
+  b->tooltip("Create new post-processing dataset based on current mesh");
 
   for(std::map<std::string, GMSH_Plugin*>::iterator it = PluginManager::
         instance()->begin(); it != PluginManager::instance()->end(); ++it) {

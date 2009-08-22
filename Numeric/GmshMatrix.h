@@ -7,6 +7,7 @@
 #define _GMSH_MATRIX_H_
 
 #include <math.h>
+#include <stdio.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 
@@ -60,15 +61,15 @@ class gmshVector
     for(int i = 0; i < _r; ++i) s += _data[i]*other._data[i];
     return s;
   }
-  void print(const char * name="") const {
-    printf("Printing vector %s:\n",name);
+  void print(const char * name="") const 
+  {
+    printf("Printing vector %s:\n", name);
     printf("  ");
     for(int I = 0; I < size(); I++){
-      printf("%12.5E ",(*this)(I));
+      printf("%12.5E ", (*this)(I));
     }
     printf("\n");
   }
-
 };
 
 template <class scalar>
@@ -261,14 +262,15 @@ class gmshMatrix
   }
 #endif
   ;
-  void print(const char * name="") const {
+  void print(const char * name="") const 
+  {
     printf("Printing matrix %s:\n",name);
     int ni = size1();
     int nj = size2();
     for(int I = 0; I < ni; I++){
       printf("  ");
       for(int J = 0; J < nj; J++){
-        printf("%12.5E ",(*this)(I, J));
+        printf("%12.5E ", (*this)(I, J));
       }
       printf("\n");
     }

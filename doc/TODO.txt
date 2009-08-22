@@ -1,8 +1,8 @@
-$Id: TODO.txt,v 1.31 2009-08-17 14:27:17 geuzaine Exp $
+$Id: TODO.txt,v 1.32 2009-08-22 09:16:47 geuzaine Exp $
 
 ********************************************************************
 
-add <, >, <=, >= in MathEx
+add <, >, <=, >= in MathEvaluator
 
 ********************************************************************
 
@@ -77,13 +77,6 @@ single associated scalar/vector or tensor value.
 
 ********************************************************************
 
-clarify physical names/ids : physical names are directly mapped to
-integers, without the notion of dimension -> hence, some physical are
-impossible to name (e.g. if Physical Line(1)={..} and Physical
-Surface(1)={...});
-
-********************************************************************
-
 Read all the components from postpro datasets, even if > 9. Provide a
 "interpretation" option allowing to select which components to draw
 and to force their interpretation as scalar, vector or tensor
@@ -100,6 +93,10 @@ fix tetgen for non manifold geometries: with a single surface
 connected to a volume and tetgen modifies the volume boundary mesh, we
 get hanging nodes
 
+Precompute non-connected volumes and apply algo to each non-connected
+aggregate. This will improve mesh quality and speed for close
+non-connected objects.
+
 Also: we need to fix the 1D mesh in all cases!
 
 ********************************************************************
@@ -108,26 +105,12 @@ Add list of recently loaded files in the GUI
 
 ********************************************************************
 
-add cleanup fct to remove duplicate elements in
-GModel->checkMeshCoherence
-
-********************************************************************
-
-3D Delaunay: precompute non-connected volumes and apply algo to each
-non-connected aggregate. This will improve mesh quality and speed for
-close non-connected objects.
-
-********************************************************************
-
-interface duplicate entity removal from opencascade
+add cleanup fct to remove duplicate elements (same spirit as GModel
+::removeDuplicateVertices)
 
 ********************************************************************
 
 add support for Patran mesh files
-
-********************************************************************
-
-interface GModel in surface creation in the parser
 
 ********************************************************************
 
@@ -144,10 +127,6 @@ us to do symmetries and periodic meshes
 ********************************************************************
 
 introduce Right/Left/Alternate for extruded meshes
-
-********************************************************************
-
-re-implement STL remeshing
 
 ********************************************************************
 
@@ -228,10 +207,6 @@ strategy
 ********************************************************************
 
 add/restore Parametric curve type using MathEval
-
-********************************************************************
-
-add ternary operator and <,>,<=,>=,== tests in MathEval
 
 ********************************************************************
 
