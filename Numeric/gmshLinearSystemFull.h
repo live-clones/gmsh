@@ -90,18 +90,18 @@ class gmshLinearSystemFull : public gmshLinearSystem<scalar> {
 	  Ni.insert(j);
 	}
       }
-      if (std::abs(offDiag+diag) > 1.e-10 && std::abs(offDiag) > 1.e-10 ) convex= false;
+      if (fabs(offDiag+diag) > 1.e-10 && fabs(offDiag) > 1.e-10 ) convex= false;
      
       if (convex == false){
 	nbNonConvex+=1;
 	printf("*** WARNING NON CONVEX LINE !!!!!\n");
-	printf("*** i=%d : diag=%g offDiag=%g diff=%g convex=%s size Ni=%d\n", i , diag, offDiag,std::abs(offDiag+diag), (convex)?"true":"false", Ni.size());
+	printf("*** i=%d : diag=%g offDiag=%g diff=%g convex=%s size Ni=%d\n", i , diag, offDiag, fabs(offDiag+diag), (convex)?"true":"false", Ni.size());
 	for (std::set<int>::iterator it = Ni.begin(); it != Ni.end(); ++it)   (*_a)(i, *it) = -1.0;
 	(*_a)(i, i) = Ni.size();
       }
     }
 
-    printf("nonConvex=%d total=%d ratio=%g\n ",nbNonConvex, _b->size(), nbNonConvex/_b->size());
+    printf("nonConvex=%d total=%d ratio=%g\n ",nbNonConvex, _b->size(), nbNonConvex/(double)_b->size());
     //_a->print("myMatrix AFTER !!! ");
 
     return 1;

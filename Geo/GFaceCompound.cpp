@@ -180,7 +180,7 @@ static void computeCGKernelPolygon(std::map<MVertex*,SPoint3> &coordinates, std:
             c=(y4-y3)/(x4-x3);
             b=y1-a*x1;
             d=y3-c*x3;
-            if (std::abs(a-c) > 1.e-5 && x2!=x1 && x4 !=x3 && jnext != i){
+            if (fabs(a-c) > 1.e-5 && x2!=x1 && x4 !=x3 && jnext != i){
                 x=(d-b)/(a-c);
                 y=a*x+b;
                 bool exist= false;

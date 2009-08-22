@@ -149,6 +149,7 @@ class gmshLinearSystemCSRGmm : public gmshLinearSystemCSR<scalar> {
 #else
   {
     Msg::Error("Gmm++ is not available in this version of Gmsh");
+    return 0;
   }
 #endif
 
