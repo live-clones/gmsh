@@ -12,15 +12,15 @@
 
 int main(int argc, char *argv[])
 {
-  CTX::instance()->terminal = CTX::instance()->noPopup = 1;
-
   if(argc < 2){
+    CTX::instance()->terminal = 1;
     PrintUsage(argv[0]);
     exit(0);
   }
 
   new GModel();
   GmshInitialize(argc, argv);
+  CTX::instance()->terminal = CTX::instance()->noPopup = 1;
   GmshBatch();
   GmshFinalize();
 
