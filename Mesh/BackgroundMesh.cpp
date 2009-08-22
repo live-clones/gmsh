@@ -152,6 +152,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V,
   double l3 = MAX_LC;
   if(CTX::instance()->mesh.lcFromCurvature && ge->dim() < 3)
     l3 = LC_MVertex_CURV(ge, U, V);
+
   // lc from fields
   double l4 = MAX_LC;
   FieldManager *fields = GModel::current()->getFields();
@@ -160,7 +161,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V,
     if(f) l4 = (*f)(X, Y, Z, ge);
   }
 
-  // take the minimum, then contrain by lcMin and lcMax
+  // take the minimum, then constrain by lcMin and lcMax
   double lc = std::min(std::min(std::min(l1, l2), l3), l4);
   lc = std::max(lc, CTX::instance()->mesh.lcMin);
   lc = std::min(lc, CTX::instance()->mesh.lcMax);
@@ -189,12 +190,12 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
     l2 = LC_MVertex_PNTS(ge, U, V);
   
   // lc from curvature
-  double l3 =MAX_LC;
+  double l3 = MAX_LC;
   if(CTX::instance()->mesh.lcFromCurvature && ge->dim() < 3)
     l3 = LC_MVertex_CURV(ge, U, V);
 
   // lc from fields
-  SMetric3 l4 (MAX_LC);
+  SMetric3 l4(MAX_LC);
   FieldManager *fields = GModel::current()->getFields();
   if(fields->background_field > 0){
     Field *f = fields->get(fields->background_field);
@@ -208,7 +209,6 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
   
   // take the minimum, then constrain by lcMin and lcMax
   double lc = std::min(std::min(l1, l2), l3);
-
   lc = std::max(lc, CTX::instance()->mesh.lcMin);
   lc = std::min(lc, CTX::instance()->mesh.lcMax);
 
@@ -217,12 +217,11 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
                lc, CTX::instance()->mesh.lcMin, CTX::instance()->mesh.lcMax);
      lc = l1;
   }
-  SMetric3 LC(lc);
-  return intersection (l4,LC);
 
+  SMetric3 LC(lc);
+  return intersection (l4, LC);
   //  return lc * CTX::instance()->mesh.lcFactor;
 }
-
 
 bool Extend1dMeshIn2dSurfaces()
 {
