@@ -460,9 +460,11 @@ Default value: @code{0}
 @end table
 
 @item Plugin(GSHHS)
-Plugin(GSHHS) read different kind of contour lines data and write a .geo file on the surface of a sphere (the Earth).
+Plugin(GSHHS) read different kind of contour lines data
+and write a .geo file on the surface of a sphere (the Earth).
 The principal application is to load GSHHS data
- (see http://www.soest.hawaii.edu/wessel/gshhs/gshhs.html).
+ (see
+http://www.soest.hawaii.edu/wessel/gshhs/gshhs.html).
 Valid values for "Format" are ):
  -"gshhs" : open GSHHS file
  -"loops2" : import 2D contour lines in simple text format :
@@ -472,17 +474,28 @@ Valid values for "Format" are ):
    ...    ...
    NB_POINTS_IN_SECOND_LOOP SECOND_LOOP_IS_CLOSED
    ...
-   (LOOP_IS_CLOSED specify if this coast line describe a closed curve (0=no, 1=yes).
-In the case of "loops2" format, you can specify the the coordinate system used in the input file with the"Coordinate" option, valid values are
+   (LOOP_IS_CLOSED specify if this coast line describe a closed curve
+   (0=no, 1=yes).
+In the case of "loops2" format, you can specify the the coordinate
+system used in the input file with the "Coordinate" option, valid
+values are
  -"lonlat" for longitude-latidute radian,
  -"lonlat_degrees" for longitude-latitude degrees,
- -"UTM" for universal transverse mercartor ("UTMZone" option should be specified)
+ -"UTM" for universal transverse mercartor ("UTMZone" option should
+  be specified)
  -"cartesian" for full 3D coordinates
-"radius" specify the earth radius.
-If the "iField" option is set, consecutive points closer than the value of the field iField (in meters) will not be added.
-If "MinStraitsFactor" >0 and if a field iField is provided, coastlines closer than MinStraitsFactor*field(IField) are merged and inner corners which form an angle < pi/3 are removed.
-The output is always in stereographic coordinates, if the "WritePolarSphere" option is not 0, a sphere is added to the geo file.
-WARNING : this plugin is still experimental and need polishing and error-handling. In particular, it will probably crash if an inexistant field id is given or if the input/output cannot be open.
+ -"radius" specify the earth radius.
+If the "iField" option is set, consecutive points closer than the
+value of the field iField (in meters) will not be added.
+If "MinStraitsFactor" >0 and if a field iField is provided, coastlines
+closer than MinStraitsFactor*field(IField) are merged and inner corners
+ which form an angle < pi/3 are removed.
+The output is always in stereographic coordinates, if the "WritePolarSphere"
+option is not 0, a sphere is added to the geo file.
+WARNING : this plugin is still experimental and need polishing and
+error-handling. In particular, it will probably crash if an inexistant
+field id is given or if the input/output cannot be open.
+
 String options:
 @table @code
 @item InFileName
