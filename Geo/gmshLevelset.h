@@ -48,9 +48,9 @@ class gLevelsetPostView : public gLevelsetPrimitive
   int _viewIndex;
   OctreePost *_octree;
 public:
-  gLevelsetPostView(int index, int &tag) : _viewIndex(index), gLevelsetPrimitive(tag)
+  gLevelsetPostView(int index, int &tag) : gLevelsetPrimitive(tag), _viewIndex(index)
   {
-    if(_viewIndex >= 0 && _viewIndex < PView::list.size()){
+    if(_viewIndex >= 0 && _viewIndex < (int)PView::list.size()){
       PView *view = PView::list[_viewIndex];
       _octree = new OctreePost(view);
     }
