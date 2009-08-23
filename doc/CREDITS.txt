@@ -8,22 +8,19 @@
                   Jean-Francois Remacle
           <jean-francois.remacle at uclouvain.be>
 
-Major code contributions to Gmsh have been provided by Nicolas Tardieu
-(help with Netgen integration), Stephen Guzik (CGNS and partitioner
-integration), Pascale Noyret (MED integration) and Jonathan Lambrechts
-(Fields).
-
-Other code contributors include: David Colignon for new colormaps and
-lots of testing and bug reports; Patrick Dular for transfinite mesh
-bug fixes; Laurent Stainier for the eigenvalue solvers and for help
-with the MacOS port and the tensor display code; Pierre Badel for help
-with root finding and minimization routines; Marc Ume for the original
-list code; Matt Gundry for the Plot3d mesh format; Jozef Vesely for
-help with the Tetgen integration; Koen Hillewaert for high order
-element mappings and other improvements; Jacques Lechelle for the
-DIFFPACK mesh format; Ruth Sabariego for pyramids; Gaetan Bricteux for
-Gauss integration routines; Emilie Marchandise for edge compounds;
-Mark van Doesburg for OpenCascade face connection code.
+Code contributions to Gmsh have been provided by David Colignon
+(colormaps), Emilie Marchandise (compound geometrical entities),
+Gaetan Bricteux (Gauss integration and levelsets), Jacques Lechelle
+(DIFFPACK mesh format), Jonathan Lambrechts (fields), Jozef Vesely
+(Tetgen), Koen Hillewaert (high order elements), Laurent Stainier
+(eigenvalue solvers, tensor display and MacOS bits), Marc Ume
+(original list code), Mark van Doesburg (OpenCascade face connection),
+Matt Gundry (Plot3d mesh format), Matti Pellikka (Homology), Nicolas
+Tardieu (Netgen), Pascale Noyret (MED mesh format), Pierre Badel (root
+finding and minimization), Ruth Sabariego (pyramids), Stephen Guzik
+(CGNS and partitioners). See comments in the sources for more
+information. If we forgot to list your contributions please send us an
+email!
 
 The AVL tree code (Common/avl.*) and the YUV image code
 (Graphics/gl2yuv.*) are copyright (C) 1988-1993, 1995 The Regents of
@@ -71,9 +68,18 @@ National Laboratories under US Department of Energy contract
 DE-AC04-76DP00789 and is copyrighted by Sandia Corporation: check the
 configuration options.
 
-This version of Gmsh may contain code (in the contrib/MathEval
-subdirectory) based on GNU libmatheval, copyright (C) 1999, 2002, 2003
-Free Software Foundation, Inc: check the configuration options.
+This version of Gmsh may contain code (in the contrib/Fl_Tree
+subdirectory), copyright (C) 2009 Greg Ercolano: check the
+configuration options.
+
+This version of Gmsh may contain code (in the contrib/gmm
+subdirectory) copyright (C) 2002-2008 Yves Renard: check the
+configuration options.
+
+This version of Gmsh may contain code (in the contrib/MathEx
+subdirectory) based in part on the work of the SSCILIB Library,
+copyright (C) 2000-2003 Sadao Massago: check the configuration
+options.
 
 This version of Gmsh may contain code (in the contrib/Metis
 subdirectory) written by George Karypis (karypis at cs.umn.edu),
@@ -92,18 +98,10 @@ This version of Gmsh may contain code (in the contrib/Tetgen
 subdirectory) copyright (C) 2002-2007 Hang Si: check the configuration
 options.
 
-This version of Gmsh may contain code (in the contrib/TreeBrowser
-subdirectory), copyright (C) 2002 Jason Bryan, Ohio Supercomputer
-Center, Ohio State University: check the configuration options.
-
-This version of Gmsh may contain code (in the contrib/gmm
-subdirectory) copyright (C) 2002-2008 Yves Renard: check the
-configuration options.
-
-Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher and
-others for the Fast Light Tool Kit on which Gmsh's GUI is based. See
-http://www.fltk.org for more info on this excellent object-oriented,
-cross-platform toolkit.
+Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher, Greg
+Ercolano and others for the Fast Light Tool Kit on which Gmsh's GUI is
+based. See http://www.fltk.org for more info on this excellent
+object-oriented, cross-platform toolkit.
 
 Special thanks also to EDF for funding the OpenCascade and MED
 integration.
@@ -112,9 +110,9 @@ Thanks to the following folks who have contributed by providing fresh
 ideas on theoretical or programming topics, who have sent patches,
 requests for changes or improvements, or who gave us access to exotic
 machines for testing Gmsh: Juan Abanto, Olivier Adam, Guillaume
-Alleon, Eric Bechet, Laurent Champaney, Pascal Dupuis, Philippe
-Geuzaine, Johan Gyselinck, Francois Henrotte, Benoit Meys, Nicolas
-Moes, Osamu Nakamura, Chad Schmutzer, Jean-Luc Fl'ejou, Xavier
+Alleon, Eric Bechet, Laurent Champaney, Pascal Dupuis, Patrick Dular,
+Philippe Geuzaine, Johan Gyselinck, Francois Henrotte, Benoit Meys,
+Nicolas Moes, Osamu Nakamura, Chad Schmutzer, Jean-Luc Fl'ejou, Xavier
 Dardenne, Christophe Prud'homme, Sebastien Clerc, Jose Miguel Pasini,
 Philippe Lussou, Jacques Kools, Bayram Yenikaya, Peter Hornby, Krishna
 Mohan Gundu, Christopher Stott, Timmy Schumacher, Carl Osterwisch,
@@ -122,4 +120,5 @@ Bruno Frackowiak, Philip Kelleners, Romuald Conty, Renaud Sizaire,
 Michel Benhamou, Tom De Vuyst, Kris Van den Abeele, Simon Vun, Simon
 Corbin, Thomas De-Soza, Marcus Drosson, Antoine Dechaume, Jose Paulo
 Moitinho de Almeida, Thomas Pinchard, Corrado Chisari, Axel Hackbarth,
-Peter Wainwright, Jiri Hnidek, Thierry Thomas, Konstantinos Poulios.
+Peter Wainwright, Jiri Hnidek, Thierry Thomas, Konstantinos Poulios,
+Laurent Van Miegroet.

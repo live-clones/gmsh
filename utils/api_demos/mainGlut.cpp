@@ -14,7 +14,7 @@
 
 drawContext *ctx = 0;
 
-// reimplement functions in Fltk/Draw.h
+// Gmsh redefinitions (implement all functions from Graphics/Draw.h)
 void Draw(){ ctx->draw3d(); ctx->draw2d(); }
 void DrawCurrentOpenglWindow(bool make_current){}
 int GetFontIndex(const char *fontname){ return 0; }
@@ -35,6 +35,7 @@ void DrawString(const char *str)
     glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, str[i]);
 }
 
+// GLUT callbacks
 void display()
 {
   glViewport(ctx->viewport[0], ctx->viewport[1],
