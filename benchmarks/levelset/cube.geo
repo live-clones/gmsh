@@ -26,4 +26,4 @@ Levelset Intersection (10) = {1,2,3};
 Levelset Intersection (11) = {5,6};
 Levelset Cut (12) = {3,7};
 
-Levelset CutMesh {10};
+Levelset CutMesh {1};
