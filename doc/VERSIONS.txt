@@ -1,4 +1,6 @@
-$Id: VERSIONS.txt,v 1.50 2009-08-22 10:58:47 geuzaine Exp $
+$Id: VERSIONS.txt,v 1.51 2009-08-24 19:40:13 geuzaine Exp $
+
+2.4.1 (?): small bug fixes.
 
 2.4.0 (Aug 22, 2009): switched build system to CMake; optionally copy
 transfinite mesh contraints during geometry transformations; bumped

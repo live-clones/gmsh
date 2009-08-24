@@ -44,7 +44,7 @@ option(ENABLE_TETGEN_NEW "Enable experimental version of Tetgen" OFF)
 
 set(GMSH_MAJOR_VERSION 2)
 set(GMSH_MINOR_VERSION 4)
-set(GMSH_PATCH_VERSION 0)
+set(GMSH_PATCH_VERSION 1)
 set(GMSH_EXTRA_VERSION "" CACHE STRING "Gmsh extra version string")
 
 set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
