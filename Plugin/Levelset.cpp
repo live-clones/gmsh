@@ -291,6 +291,32 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
     // Remove identical nodes (this can happen if an edge actually
     // belongs to the zero levelset, i.e., if levels[] * levels[] == 0)
     if(np > 1) removeIdenticalNodes(&np, numComp, xp, yp, zp, valp, ep);
+
+    // if there are no cuts and we extract the volume, save the full
+    // element if it is on the correct side of the levelset
+    if(np <= 1 && _extractVolume){
+      bool add = true;
+      for(int nod = 0; nod < nsn; nod++){
+        if((_extractVolume < 0. && levels[n[nod]] > 0.) ||
+           (_extractVolume > 0. && levels[n[nod]] < 0.)){
+          add = false;
+          break;
+        }
+      }
+      if(add){
+        double xp[12], yp[12], zp[12], valp[12][9];
+        for(int nod = 0; nod < nsn; nod++){
+          xp[nod] = x[n[nod]];
+          yp[nod] = y[n[nod]];
+          zp[nod] = z[n[nod]];
+          for(int comp = 0; comp < numComp; comp++)
+            wdata->getValue(wstep, ent, ele, nod, comp, valp[n[nod]][comp]);
+        }
+        _addElement(step, nsn, nse, numComp, xp, yp, zp, valp, out);
+      }
+      continue;
+    }
+
     if(numEdges > 4 && np < 3) // 3D input should only lead to 2D output
       continue;
     else if(numEdges > 1 && np < 2) // 2D input should only lead to 1D output
@@ -364,30 +390,6 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
     }
 
     _addElement(step, np, numEdges, numComp, xp, yp, zp, valp, out);
-  }
-
-  if(_extractVolume){
-    // if we compute isovolumes, add full elements that are completely
-    // on one side
-    bool add = true;
-    for(int nod = 0; nod < numNodes; nod++){
-      if((_extractVolume < 0. && levels[nod] > 0.) ||
-         (_extractVolume > 0. && levels[nod] < 0.)){
-        add = false;
-        break;
-      }
-    }
-    if(add){
-      double xp[12], yp[12], zp[12], valp[12][9];
-      for(int nod = 0; nod < numNodes; nod++){
-        xp[nod] = x[nod];
-        yp[nod] = y[nod];
-        zp[nod] = z[nod];
-        for(int comp = 0; comp < numComp; comp++)
-          wdata->getValue(wstep, ent, ele, nod, comp, valp[nod][comp]);
-      }
-      _addElement(step, numNodes, numEdges, numComp, xp, yp, zp, valp, out);
-    }
   }
 }
 
