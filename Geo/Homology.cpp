@@ -77,7 +77,11 @@ void Homology::findGenerators(std::string fileName){
   
   Msg::Info("Reducing Cell Complex...");
   double t1 = Cpu();
+  //_cellComplex->printEuler();
   int omitted = _cellComplex->reduceComplex(_omit);
+  //_cellComplex->printEuler();
+  
+  _cellComplex->emptyTrash();
   
   if(getCombine()){
     _cellComplex->combine(3);
@@ -87,6 +91,9 @@ void Homology::findGenerators(std::string fileName){
     _cellComplex->combine(1);
   }
   _cellComplex->checkCoherence();
+  //_cellComplex->printEuler();
+  
+  _cellComplex->emptyTrash();
   
   double t2 = Cpu();
   Msg::Info("Cell Complex reduction complete (%g s).", t2 - t1);
@@ -130,7 +137,7 @@ void Homology::findGenerators(std::string fileName){
   Msg::Info("H1 = %d", HRank[1]);
   Msg::Info("H2 = %d", HRank[2]);
   Msg::Info("H3 = %d", HRank[3]);
-  if(omitted != 0) Msg::Info("Computation of generators in %d highest dimensions was omitted.", _omit);
+  if(omitted != 0) Msg::Info("The computation of generators in %d highest dimensions was omitted.", _omit);
   
   Msg::Info("Wrote results to %s.", fileName.c_str());
   
@@ -144,13 +151,15 @@ void Homology::findGenerators(std::string fileName){
   return;
 }
 
-void Homology::findThickCuts(std::string fileName){
+void Homology::findDualGenerators(std::string fileName){
   
   //for(int i = 0; i < 4; i++) { printf("Dim %d: \n", i); _cellComplex->printComplex(i); }
   
   Msg::Info("Reducing Cell Complex...");
   double t1 = Cpu();
   int omitted = _cellComplex->coreduceComplex(_omit);
+  _cellComplex->emptyTrash();
+  
   /*
   _cellComplex->makeDualComplex();
   int omitted = _cellComplex->reduceComplex(_omit);
@@ -167,6 +176,8 @@ void Homology::findThickCuts(std::string fileName){
     _cellComplex->cocombine(1);
     _cellComplex->cocombine(2);
   }
+  
+  _cellComplex->emptyTrash();
   
   _cellComplex->checkCoherence();
   double t2 = Cpu();
@@ -200,12 +211,12 @@ void Homology::findThickCuts(std::string fileName){
       convert(i, generator);
       convert(dim-j, dimension);
       
-      std::string name = dimension + "D Thick cut " + generator;
+      std::string name = dimension + "D Dual generator " + generator;
       Chain* chain = new Chain(_cellComplex->getCells(j), chains->getCoeffVector(j,i), _cellComplex, name, chains->getTorsion(j,i));
       chain->writeChainMSH(fileName);
       if(chain->getSize() != 0){
         HRank[dim-j] = HRank[dim-j] + 1;
-        if(chain->getTorsion() != 1) Msg::Warning("%dD Thick cut %d has torsion coefficient %d!", j, i, chain->getTorsion());
+        if(chain->getTorsion() != 1) Msg::Warning("%dD Dual generator %d has torsion coefficient %d!", j, i, chain->getTorsion());
       }
       delete chain;
             
@@ -217,7 +228,7 @@ void Homology::findThickCuts(std::string fileName){
   Msg::Info("H1 = %d", HRank[1]);
   Msg::Info("H2 = %d", HRank[2]);
   Msg::Info("H3 = %d", HRank[3]);
-  if(omitted != 0) Msg::Info("Computation of %d highest dimension thick cuts was omitted.", _omit);
+  if(omitted != 0) Msg::Info("The computation of %d highest dimension dual generators was omitted.", _omit);
   
   Msg::Info("Wrote results to %s.", fileName.c_str());
   
@@ -230,4 +241,21 @@ void Homology::findThickCuts(std::string fileName){
   
   return;
 }
+
+void Homology::computeBettiNumbers(){
+  
+  Msg::Info("Running coreduction...");
+  double t1 = Cpu();
+  _cellComplex->computeBettiNumbers();
+  double t2 = Cpu();
+  Msg::Info("Betti number computation complete (%g s).", t2- t1);
+
+  Msg::Info("b0 = %d \n", _cellComplex->getBettiNumber(0));
+  Msg::Info("b1 = %d \n", _cellComplex->getBettiNumber(1));
+  Msg::Info("b2 = %d \n", _cellComplex->getBettiNumber(2));
+  Msg::Info("b3 = %d \n", _cellComplex->getBettiNumber(3));
+  
+  return;
+}
+  
 #endif

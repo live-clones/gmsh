@@ -21,8 +21,9 @@ StringXNumber HomologyComputationOptions_Number[] = {
   {GMSH_FULLRC, "PhysicalGroupForSubdomain1", NULL, 0.},
   {GMSH_FULLRC, "PhysicalGroupForSubdomain2", NULL, 0.},
   {GMSH_FULLRC, "ComputeGenerators", NULL, 1.},
-  {GMSH_FULLRC, "ComputeThickCuts", NULL, 0.},
-  {GMSH_FULLRC, "OmitDimensions", NULL, 1.},
+  {GMSH_FULLRC, "ComputeDualGenerators", NULL, 0.},
+  {GMSH_FULLRC, "ComputeBettiNumbers", NULL, 0.},
+  //{GMSH_FULLRC, "OmitDimensions", NULL, 1.},
   //{GMSH_FULLRC, "CombineCells", NULL, 1.},
 };
 
@@ -84,7 +85,8 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
 
   int gens = (int)HomologyComputationOptions_Number[4].def;
   int cuts = (int)HomologyComputationOptions_Number[5].def;
-  int omit = (int)HomologyComputationOptions_Number[6].def;
+  int betti = (int)HomologyComputationOptions_Number[6].def;
+  //int omit = (int)HomologyComputationOptions_Number[6].def;
   //int combine = (int)HomologyComputationOptions_Number[7].def;
   
 
@@ -92,19 +94,22 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   
   Homology* homology = new Homology(m, domain, subdomain);
   //if(combine == 0) homology->setCombine(false); 
-  homology->setOmit(omit);
+  homology->setOmit(1);
   
   //if(swap == 1) homology->swapSubdomain();
   
-  if(gens == 1 && cuts != 1) {
+  if(gens == 1 && cuts != 1 && betti != 1) {
     homology->findGenerators(fileName);
     GmshMergeFile(fileName);
   }
-  else if(cuts == 1 && gens != 1) {
-    homology->findThickCuts(fileName);
+  else if(cuts == 1 && gens != 1 && betti != 1) {
+    homology->findDualGenerators(fileName);
     GmshMergeFile(fileName);
   }
-  else Msg::Error("Choose either generators or thick cuts to compute.");
+  else if(cuts != 1 && gens != 1 && betti == 1) {
+    homology->computeBettiNumbers();
+  }
+  else Msg::Error("Choose either generators, dual generators or Betti numbers to compute.");
   
   delete homology; 
   

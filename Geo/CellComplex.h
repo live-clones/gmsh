@@ -18,6 +18,10 @@
 #include "MPoint.h"
 #include "MLine.h"
 #include "MTriangle.h"
+#include "MQuadrangle.h"
+#include "MHexahedron.h"
+#include "MPrism.h"
+#include "MPyramid.h"
 #include "MTetrahedron.h"
 #include "GModel.h"
 #include "GEntity.h"
@@ -58,9 +62,10 @@ class Cell
    
   public:
    Cell(){
-     
      _bdSize = 0;
      _cbdSize = 0;
+     _combined = false;
+     _index = 0;
    }
    virtual ~Cell(){}
    
@@ -80,7 +85,7 @@ class Cell
    // returns 1 or -1 if lower dimensional cell tau is on the boundary of this cell
    // otherwise returns 0
    // implementation will vary depending on cell type
-   virtual int kappa(Cell* tau) const = 0;
+   //virtual int kappa(Cell* tau) const = 0;
    
    // true if this cell has given vertex
    virtual bool hasVertex(int vertex) const = 0;
@@ -233,7 +238,7 @@ class Cell
    virtual int getNumCells() {return 1;}
    
    bool operator==(const Cell& c2){
-
+     
      if(this->getNumVertices() != c2.getNumVertices()){
        return false;
      }
@@ -243,12 +248,14 @@ class Cell
        }
      }
      return true;
-
+     
+     //return (this->getTag() == c2.getTag());
      
      
    }
    
    bool operator<(const Cell& c2) const {
+     
      if(this->getNumVertices() != c2.getNumVertices()){
        return (this->getNumVertices() < c2.getNumVertices());
      }
@@ -257,8 +264,11 @@ class Cell
        else if (this->getSortedVertex(i) > c2.getSortedVertex(i)) return false;
      }
      return false;
+     
+     //return (this->getTag() < c2.getTag());
    }
    
+   virtual int kappa(Cell* tau) const;
    
 };
 
@@ -268,15 +278,12 @@ class Simplex : public Cell
 { 
    
  public:
-   Simplex() : Cell() {
-     _combined = false;
-     _index = 0;
-   }
+   Simplex() : Cell() {}
    ~Simplex(){}  
   
    // kappa for simplices
    // checks whether lower dimensional simplex tau is on the boundary of this cell
-   virtual int kappa(Cell* tau) const; 
+   //virtual int kappa(Cell* tau) const; 
    
 };
 
@@ -348,7 +355,7 @@ class OneSimplex : public Simplex, public MLine
      v[0] = _v[num];
    }
    
-   //int kappa(Cell* tau) const;
+   int kappa(Cell* tau) const;
    
    void printCell() const { printf("Cell dimension: %d, Vertices: %d %d, in subdomain: %d \n", getDim(), _v[0]->getNum(), _v[1]->getNum(), _inSubdomain); }
 };
@@ -397,7 +404,53 @@ class TwoSimplex : public Simplex, public MTriangle
    void printCell() const { printf("Cell dimension: %d, Vertices: %d %d %d, in subdomain: %d\n", getDim(), _v[0]->getNum(), _v[1]->getNum(), _v[2]->getNum(), _inSubdomain); }
 };
 
-// Three simplex cell type.
+// Quadrangle cell type.
+class CQuadrangle : public Cell, public MQuadrangle
+{
+  private:
+
+   int _vs[4];
+   
+  public:
+
+   CQuadrangle(std::vector<MVertex*> v, int tag=0, bool subdomain=false, bool boundary=false, int num=0, int part=0)
+     : MQuadrangle(v, num, part){
+       _tag = tag;
+       _inSubdomain = subdomain;
+       _onDomainBoundary = boundary;
+       _vs[0] = v.at(0)->getNum();
+       _vs[1] = v.at(1)->getNum();
+       _vs[2] = v.at(2)->getNum();
+       _vs[3] = v.at(3)->getNum();
+       std::sort(_vs, _vs+3);
+     }
+   
+   ~CQuadrangle(){}
+   
+   int getDim() const { return 2; }
+   int getNum() { return MQuadrangle::getNum(); }
+   int getNumVertices() const { return 4; }
+   int getNumFacets() const { return 4; }
+   MVertex* getVertex(int vertex) const {return _v[vertex]; }
+   int getSortedVertex(int vertex) const {return _vs[vertex]; }
+   bool hasVertex(int vertex) const {return 
+       (_v[0]->getNum() == vertex || _v[1]->getNum() == vertex || _v[2]->getNum() == vertex || _v[3]->getNum() == vertex); } 
+   
+   std::vector<MVertex*> getVertexVector() const { 
+     return std::vector<MVertex*>(_v, _v + sizeof(_v)/sizeof(MVertex*) ); }
+   std::vector<int> getSortedVertexVector() const {
+     return std::vector<int>(_vs, _vs + sizeof(_vs)/sizeof(int) ); 
+   }
+   
+   void getFacetVertices(const int num, std::vector<MVertex*> &v) const {
+     MQuadrangle::getEdgeVertices(num, v);
+   }
+   
+   void printCell() const { printf("Cell dimension: %d, Vertices: %d %d %d, in subdomain: %d\n", getDim(), _v[0]->getNum(), _v[1]->getNum(), _v[2]->getNum(), _v[3]->getNum(), _inSubdomain); }
+};
+
+
+// ThreeSimplex cell type.
 class ThreeSimplex : public Simplex, public MTetrahedron
 {
   private:
@@ -438,6 +491,142 @@ class ThreeSimplex : public Simplex, public MTetrahedron
    virtual void printCell() const { printf("Cell dimension: %d, Vertices: %d %d %d %d, in subdomain: %d \n", getDim(), _v[0]->getNum(), _v[1]->getNum(), _v[2]->getNum(), _v[3]->getNum(), _inSubdomain); }
 };
 
+// Hexahedron cell type.
+class CHexahedron : public Cell, public MHexahedron
+{
+  private:
+   int _vs[8];
+      
+  public:
+   CHexahedron(std::vector<MVertex*> v, int tag=0, bool subdomain=false, bool boundary=false, int num=0, int part=0)
+     : MHexahedron(v, num, part){
+       _tag = tag;
+       _inSubdomain = subdomain;
+       _onDomainBoundary = boundary;
+       _vs[0] = v.at(0)->getNum();
+       _vs[1] = v.at(1)->getNum();
+       _vs[2] = v.at(2)->getNum();
+       _vs[3] = v.at(3)->getNum();
+       _vs[4] = v.at(4)->getNum();
+       _vs[5] = v.at(5)->getNum();
+       _vs[6] = v.at(6)->getNum();
+       _vs[7] = v.at(7)->getNum();
+       std::sort(_vs, _vs+8);
+     }
+   
+   ~CHexahedron(){}
+   
+   int getDim() const { return 3; }
+   int getNum() { return MHexahedron::getNum(); }
+   int getNumVertices() const { return 8; }
+   int getNumFacets() const { return 6; }
+   MVertex* getVertex(int vertex) const {return _v[vertex]; }
+   int getSortedVertex(int vertex) const {return _vs[vertex]; }
+   bool hasVertex(int vertex) const {return 
+       (_v[0]->getNum() == vertex || _v[1]->getNum() == vertex || _v[2]->getNum() == vertex || _v[3]->getNum() == vertex ||
+        _v[4]->getNum() == vertex || _v[5]->getNum() == vertex || _v[6]->getNum() == vertex || _v[7]->getNum() == vertex ); }
+   std::vector<MVertex*> getVertexVector() const { 
+     return std::vector<MVertex*>(_v, _v + sizeof(_v)/sizeof(MVertex*) ); }
+   std::vector<int> getSortedVertexVector() const {
+     return std::vector<int>(_vs, _vs + sizeof(_vs)/sizeof(int) ); }
+   
+   void getFacetVertices(const int num, std::vector<MVertex*> &v) const {
+     MHexahedron::getFaceVertices(num, v);
+   }
+   
+   virtual void printCell() const { printf("Cell dimension: %d, Vertices: %d %d %d %d %d %d %d %d, in subdomain: %d \n", getDim(), _v[0]->getNum(), _v[1]->getNum(), _v[2]->getNum(), _v[3]->getNum(), _v[4]->getNum(), _v[5]->getNum(), _v[6]->getNum(), _v[7]->getNum(), _inSubdomain); }
+};
+
+
+// Prism cell type.
+class CPrism : public Cell, public MPrism
+{
+  private:
+   int _vs[6];
+      
+  public:
+   CPrism(std::vector<MVertex*> v, int tag=0, bool subdomain=false, bool boundary=false, int num=0, int part=0)
+     : MPrism(v, num, part){
+       _tag = tag;
+       _inSubdomain = subdomain;
+       _onDomainBoundary = boundary;
+       _vs[0] = v.at(0)->getNum();
+       _vs[1] = v.at(1)->getNum();
+       _vs[2] = v.at(2)->getNum();
+       _vs[3] = v.at(3)->getNum();
+       _vs[4] = v.at(4)->getNum();
+       _vs[5] = v.at(5)->getNum();
+       std::sort(_vs, _vs+6);
+     }
+   
+   ~CPrism(){}
+   
+   int getDim() const { return 3; }
+   int getNum() { return MPrism::getNum(); }
+   int getNumVertices() const { return 6; }
+   int getNumFacets() const { return 5; }
+   MVertex* getVertex(int vertex) const {return _v[vertex]; }
+   int getSortedVertex(int vertex) const {return _vs[vertex]; }
+   bool hasVertex(int vertex) const {return 
+       (_v[0]->getNum() == vertex || _v[1]->getNum() == vertex || _v[2]->getNum() == vertex || _v[3]->getNum() == vertex ||
+       _v[4]->getNum() == vertex || _v[5]->getNum() == vertex); }
+   std::vector<MVertex*> getVertexVector() const { 
+     return std::vector<MVertex*>(_v, _v + sizeof(_v)/sizeof(MVertex*) ); }
+   std::vector<int> getSortedVertexVector() const {
+     return std::vector<int>(_vs, _vs + sizeof(_vs)/sizeof(int) ); }
+   
+   void getFacetVertices(const int num, std::vector<MVertex*> &v) const {
+     MPrism::getFaceVertices(num, v);
+   }
+   
+   virtual void printCell() const { printf("Cell dimension: %d, Vertices: %d %d %d %d %d %d, in subdomain: %d \n", getDim(), _v[0]->getNum(), _v[1]->getNum(), _v[2]->getNum(), _v[3]->getNum(), _v[4]->getNum(), _v[5]->getNum(),  _inSubdomain); }
+};
+
+
+// Pyramid cell type.
+class CPyramid : public Cell, public MPyramid
+{
+  private:
+   int _vs[5];
+      
+  public:
+   CPyramid(std::vector<MVertex*> v, int tag=0, bool subdomain=false, bool boundary=false, int num=0, int part=0)
+     : MPyramid(v, num, part){
+       _tag = tag;
+       _inSubdomain = subdomain;
+       _onDomainBoundary = boundary;
+       _vs[0] = v.at(0)->getNum();
+       _vs[1] = v.at(1)->getNum();
+       _vs[2] = v.at(2)->getNum();
+       _vs[3] = v.at(3)->getNum();
+       _vs[4] = v.at(4)->getNum();
+       std::sort(_vs, _vs+5);
+     }
+   
+   ~CPyramid(){}
+   
+   int getDim() const { return 3; }
+   int getNum() { return MPyramid::getNum(); }
+   int getNumVertices() const { return 5; }
+   int getNumFacets() const { return 5; }
+   MVertex* getVertex(int vertex) const {return _v[vertex]; }
+   int getSortedVertex(int vertex) const {return _vs[vertex]; }
+   bool hasVertex(int vertex) const {return 
+       (_v[0]->getNum() == vertex || _v[1]->getNum() == vertex || _v[2]->getNum() == vertex || _v[3]->getNum() == vertex ||
+        _v[4]->getNum() == vertex); }
+   std::vector<MVertex*> getVertexVector() const { 
+     return std::vector<MVertex*>(_v, _v + sizeof(_v)/sizeof(MVertex*) ); }
+   std::vector<int> getSortedVertexVector() const {
+     return std::vector<int>(_vs, _vs + sizeof(_vs)/sizeof(int) ); }
+   
+   void getFacetVertices(const int num, std::vector<MVertex*> &v) const {
+     MPyramid::getFaceVertices(num, v);
+   }
+   
+   virtual void printCell() const { printf("Cell dimension: %d, Vertices: %d %d %d %d %d, in subdomain: %d \n", getDim(), _v[0]->getNum(), _v[1]->getNum(), _v[2]->getNum(), _v[3]->getNum(), _v[4]->getNum(), _inSubdomain); }
+};
+
+
 // Ordering for the cells.
 class Less_Cell{
   public:
@@ -459,6 +648,10 @@ class Less_Cell{
      }
           
      return false;
+     
+     
+     //return (c1->getTag() < c2->getTag());
+     
    }
 };
 
@@ -466,6 +659,8 @@ class Less_Cell{
 class Equal_Cell{
   public:
    bool operator ()(const Cell* c1, const Cell* c2){
+     
+     
      if(c1->getNumVertices() != c2->getNumVertices()){
        return false;
      }
@@ -475,6 +670,9 @@ class Equal_Cell{
        }
      }
      return true;
+     
+     //return (c1->getTag() == c2->getTag());
+      
    }
 };
 
@@ -595,7 +793,13 @@ class CombinedCell : public Cell{
 
    }
   
-   ~CombinedCell(){} 
+   ~CombinedCell(){
+     std::list< std::pair<int, Cell*> > cells = getCells();
+     for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
+       Cell* cell2 = (*it).second;
+       delete cell2;
+     }
+   } 
    
    int getNum() { return _num; }
    int getNumVertices() const { return _v.size(); } 
@@ -650,7 +854,9 @@ class CellComplex
    std::set<Cell*, Less_Cell>  _cells[4];
    
    // storage for cell pointers to delete them
-   std::set<Cell*, Less_Cell>  _cells2[4];
+   //std::set<Cell*, Less_Cell>  _cells2[4];
+   std::list<Cell*> _trash;
+   
    
    //std::set<Cell*, Less_Cell>  _originalCells[4];
    
@@ -675,7 +881,7 @@ class CellComplex
    void insert_cells(bool subdomain, bool boundary);
    
    // remove a cell from this cell complex
-   void removeCell(Cell* cell);
+   void removeCell(Cell* cell, bool other=true);
    void insertCell(Cell* cell);
    
   public:
@@ -722,23 +928,33 @@ class CellComplex
    
    CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> subdomain );
    CellComplex(){}
-   ~CellComplex(){ 
+   ~CellComplex(){
      for(int i = 0; i < 4; i++){
        
        for(citer cit = _cells[i].begin(); cit != _cells[i].end(); cit++){
          Cell* cell = *cit;
-         if(cell->isCombined()) delete cell;
+         delete cell;
+         //if(cell->isCombined()) delete cell;    
        }
        _cells[i].clear();
+       /*
        for(citer cit = _cells2[i].begin(); cit != _cells2[i].end(); cit++){
          Cell* cell = *cit;
          delete cell;
        }
         _cells2[i].clear();
+       */
      }
-     
+     emptyTrash();
    }
 
+   void emptyTrash(){
+     for(std::list<Cell*>::iterator cit  = _trash.begin(); cit != _trash.end(); cit++){
+       Cell* cell = *cit;
+       delete cell;
+     }
+     _trash.clear();
+   }
    
    // get the number of certain dimensional cells
    int getSize(int dim){ return _cells[dim].size(); }
@@ -768,7 +984,7 @@ class CellComplex
    bool inSameDomain(Cell* c1, Cell* c2) const { return 
        ( (!c1->inSubdomain() && !c2->inSubdomain()) || (c1->inSubdomain() && c2->inSubdomain()) ); }
      
-   
+
    // useful functions for (co)reduction of cell complex
    int reduceComplex(int omit = 0);
    int coreduceComplex(int omit = 0);
@@ -798,6 +1014,11 @@ class CellComplex
    // check whether all boundary cells of a cell has this cell as coboundary cell and vice versa
    // also check whether all (co)boundary cells of a cell belong to this cell complex
    bool checkCoherence();
+   
+   int eulerCharacteristic(){
+     return getSize(0) - getSize(1) + getSize(2) - getSize(3);
+   }
+   void printEuler(){ printf("Euler characteristic: %d. \n", eulerCharacteristic()); }
    
    // change roles of boundaries and coboundaries of the cells in this cell complex
    // equivalent to transposing boundary operator matrices

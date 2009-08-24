@@ -40,8 +40,9 @@ class Homology
    bool setCombine(bool combine) { _combine = combine; return _combine; }
    
    void findGenerators(std::string fileName);
-   void findThickCuts(std::string fileName);
-      
+   void findDualGenerators(std::string fileName);
+   void computeBettiNumbers();
+   
    void swapSubdomain() { _cellComplex->swapSubdomain(); }
 
    int getOmit() {return _omit; }
