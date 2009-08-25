@@ -331,7 +331,7 @@ class GModel
   int writeOCCSTEP(const std::string &name);
   int importOCCShape(const void *shape);
   int applyOCCMeshConstraints(const void *constraints);
-  void addShape (char *, std::vector<double> &, char *);
+  void addShape(std::string name, std::vector<double> &p, std::string op);
 
   // Gmsh mesh file format
   int readMSH(const std::string &name);

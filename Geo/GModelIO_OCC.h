@@ -60,9 +60,6 @@ class OCC_Internals {
   void Torus(const SPoint3 &bottom_center, const SVector3 &dir, double R1, double R2, 
 	     double angle,  const BooleanOperator &op);
   void applyBooleanOperator(TopoDS_Shape tool, const BooleanOperator &op);
-  void updateShape (char *name, 
-		    std::vector<double> &par, 
-		    char *op);
 };
 
 #endif

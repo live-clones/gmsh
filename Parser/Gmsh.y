@@ -1553,16 +1553,18 @@ Shape :
     }
 
   | tOCCShape '(' tBIGSTR ',' ListOfDouble ',' tBIGSTR ')' tEND
-  {
+    {
 #if defined(HAVE_OCC)
-    std::vector<double> data;
-    for (int i=0 ; i<List_Nbr($5) ; i++){
-      double d; List_Read ($5,i,&d);
-      data.push_back(d);
-    }
-    GModel::current()->addShape($3,data,$7);
+      std::vector<double> data;
+      for (int i = 0 ; i < List_Nbr($5); i++){
+        double d; List_Read($5, i, &d);
+        data.push_back(d);
+      }
+      GModel::current()->addShape($3, data, $7);
+      Free($3); Free($7);
+      List_Delete($5);
 #endif
-  }
+    }
 
   | tPhysical tVolume 
     {

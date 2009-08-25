@@ -398,7 +398,6 @@ void OCC_Internals::writeSTEP(const char *fn)
     status = writer.Write( (char*) fn) ;
 }
 
-
 void OCC_Internals::loadIGES(const char *fn)
 {
   IGESControl_Reader reader;
@@ -487,26 +486,27 @@ static void addSimpleShapes(TopoDS_Shape theShape, TopTools_ListOfShape &theList
     }
   }
 }
-void GModel::addShape (char *name, 
-			  std::vector<double> &p, 
-			  char *op){
+
+void GModel::addShape(std::string name, std::vector<double> &p, 
+                      std::string op)
+{
   if (!_occ_internals)
-    _occ_internals = new  OCC_Internals;
+    _occ_internals = new OCC_Internals;
   
   OCC_Internals::BooleanOperator o = OCC_Internals::Intersection;
-  if (!strcmp(op,"Cut")) o = OCC_Internals::Cut;
-  else if (!strcmp(op,"Section")) o = OCC_Internals::Section;
-  else if (!strcmp(op,"Fuse") || !strcmp(op,"Union")) o = OCC_Internals::Fuse;
-  else if (!strcmp(op,"Intersection")) o = OCC_Internals::Intersection;
+  if(op == "Cut") o = OCC_Internals::Cut;
+  else if(op == "Section") o = OCC_Internals::Section;
+  else if(op == "Fuse" || op == "Union") o = OCC_Internals::Fuse;
+  else if(op == "Intersection") o = OCC_Internals::Intersection;
   
-  if (!strcmp(name,"Sphere")){
+  if (name == "Sphere"){
     if (p.size() != 4){
       Msg::Error("4 parameters have to be defined for a sphere");
       return;
     }
     _occ_internals->Sphere(SPoint3(p[0],p[1],p[2]),p[3],o);
   }
-  else if (!strcmp(name,"Cylinder")){
+  else if (name == "Cylinder"){
     if (p.size() != 8){
       Msg::Error("8 parameters have to be defined for a Cylinder");
       return;
@@ -514,7 +514,7 @@ void GModel::addShape (char *name,
     _occ_internals->Cylinder(SPoint3(p[0],p[1],p[2]),
     			     SVector3(p[3],p[4],p[5]),p[6],p[7],o);
   }
-  else if (!strcmp(name,"Torus")){
+  else if (name == "Torus"){
     if (p.size() == 8){
       _occ_internals->Torus(SPoint3(p[0],p[1],p[2]),
 			    SVector3(p[3],p[4],p[5]),p[6],p[7],o);
@@ -528,7 +528,7 @@ void GModel::addShape (char *name,
       return;
     }
   }
-  else if (!strcmp(name,"Cone")){
+  else if (name == "Cone"){
     if (p.size() != 9){
       Msg::Error("9 parameters have to be defined for a Cone");
       return;
@@ -536,7 +536,7 @@ void GModel::addShape (char *name,
     _occ_internals->Cone(SPoint3(p[0],p[1],p[2]),
 			 SVector3(p[3],p[4],p[5]),p[6],p[7],p[8],o);
   }
-  else if (!strcmp(name,"Box")){
+  else if (name == "Box"){
     if (p.size() != 6){
       Msg::Error("6 parameters have to be defined for a Box");
       return;
@@ -554,7 +554,6 @@ void GModel::addShape (char *name,
 TopoDS_Shape  GlueFaces (const TopoDS_Shape& theShape,
 			 const Standard_Real theTolerance)
 {
-
   Msg::Error("glue !");
   return theShape;
 
@@ -785,7 +784,6 @@ void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool, const BooleanOperato
 void OCC_Internals::Sphere(const SPoint3 &center, const double &radius,
                            const BooleanOperator &op)
 {
-  // build a sphere
   gp_Pnt aP(center.x(), center.y(), center.z());  
   TopoDS_Shape aShape = BRepPrimAPI_MakeSphere(aP, radius).Shape(); 
   // either add it to the current shape, or use it as a tool and remove the
@@ -796,10 +794,9 @@ void OCC_Internals::Sphere(const SPoint3 &center, const double &radius,
 void OCC_Internals::Cylinder(const SPoint3 &p, const SVector3 &d, double R, double H,
 			     const BooleanOperator &op)
 {
-  // build a sphere
-  gp_Pnt aP(p.x(),p.y(),p.z());
-  gp_Vec aV(d.x(),d.y(),d.z());
-  gp_Ax2 anAxes (aP, aV);
+  gp_Pnt aP(p.x(), p.y(), p.z());
+  gp_Vec aV(d.x(), d.y(), d.z());
+  gp_Ax2 anAxes(aP, aV);
   BRepPrimAPI_MakeCylinder MC (anAxes, R, H);
   MC.Build();
   if (!MC.IsDone()) {
@@ -814,7 +811,6 @@ void OCC_Internals::Cylinder(const SPoint3 &p, const SVector3 &d, double R, doub
 void OCC_Internals::Torus(const SPoint3 &p, const SVector3 &d, double R1, double R2,
 			  const BooleanOperator &op)
 {
-  // build a sphere
   gp_Pnt aP(p.x(),p.y(),p.z());
   gp_Vec aV(d.x(),d.y(),d.z());
   gp_Ax2 anAxes (aP, aV);
@@ -830,13 +826,12 @@ void OCC_Internals::Torus(const SPoint3 &p, const SVector3 &d, double R1, double
 }
 
 void OCC_Internals::Torus(const SPoint3 &p, const SVector3 &d, double R1, double R2, 
-			  double angle,  const BooleanOperator &op)
+			  double angle, const BooleanOperator &op)
 {
-  // build a sphere
-  gp_Pnt aP(p.x(),p.y(),p.z());
-  gp_Vec aV(d.x(),d.y(),d.z());
-  gp_Ax2 anAxes (aP, aV);
-  BRepPrimAPI_MakeTorus MC (anAxes, R1, R2, angle);
+  gp_Pnt aP(p.x(), p.y(), p.z());
+  gp_Vec aV(d.x(), d.y(), d.z());
+  gp_Ax2 anAxes(aP, aV);
+  BRepPrimAPI_MakeTorus MC(anAxes, R1, R2, angle);
   MC.Build();
   if (!MC.IsDone()) {
     Msg::Error("Cylinder can't be computed from the given parameters");
@@ -847,14 +842,13 @@ void OCC_Internals::Torus(const SPoint3 &p, const SVector3 &d, double R1, double
   applyBooleanOperator(aShape, op);
 }
 
-void OCC_Internals::Cone(const SPoint3 &p, const SVector3 &d, double R1, double R2, double H,
-			  const BooleanOperator &op)
+void OCC_Internals::Cone(const SPoint3 &p, const SVector3 &d, double R1, 
+                         double R2, double H, const BooleanOperator &op)
 {
-  // build a cone
-  gp_Pnt aP(p.x(),p.y(),p.z());
-  gp_Vec aV(d.x(),d.y(),d.z());
-  gp_Ax2 anAxes (aP, aV);
-  BRepPrimAPI_MakeCone MC (anAxes, R1, R2,H);
+  gp_Pnt aP(p.x(), p.y(), p.z());
+  gp_Vec aV(d.x(), d.y(), d.z());
+  gp_Ax2 anAxes(aP, aV);
+  BRepPrimAPI_MakeCone MC(anAxes, R1, R2,H);
   MC.Build();
   if (!MC.IsDone()) {
     Msg::Error("Cone can't be computed from the given parameters");
@@ -865,13 +859,12 @@ void OCC_Internals::Cone(const SPoint3 &p, const SVector3 &d, double R1, double 
   applyBooleanOperator(aShape, op);
 }
 
-
 void OCC_Internals::Box(const SPoint3 &p1, const SPoint3 &p2,
 			const BooleanOperator &op)
 {
-  gp_Pnt P1(p1.x(),p1.y(),p1.z());
-  gp_Pnt P2(p2.x(),p2.y(),p2.z());
-  BRepPrimAPI_MakeBox MB (P1,P2);
+  gp_Pnt P1(p1.x(), p1.y(), p1.z());
+  gp_Pnt P2(p2.x(), p2.y(), p2.z());
+  BRepPrimAPI_MakeBox MB(P1, P2);
   MB.Build();
   if (!MB.IsDone()) {
     Msg::Error("Box can not be computed from the given point");
@@ -880,7 +873,6 @@ void OCC_Internals::Box(const SPoint3 &p1, const SPoint3 &p2,
   TopoDS_Shape  aShape = MB.Shape();
   applyBooleanOperator(aShape, op);
 }
-
 
 void GModel::_deleteOCCInternals()
 {
@@ -1108,12 +1100,11 @@ int GModel::applyOCCMeshConstraints(const void *constraints)
   return 0;
 }
 
-void GModel::updateShape (char *name, 
-			  std::vector<double> &parameters, 
-			  char *op){
+void GModel::addShape(std::string name, std::vector<double> &p, 
+                      std::string op)
+{
   Msg::Error("Gmsh must be compiled with OpenCascade support to apply "
              "Boolean Operators On Solids");
 }
-
 
 #endif
