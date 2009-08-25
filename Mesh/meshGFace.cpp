@@ -1371,6 +1371,7 @@ void deMeshGFace::operator() (GFace *gf)
 }
 
 const int debugSurface = -1;//-100;
+//const int debugSurface = -100;
 
 void meshGFace::operator() (GFace *gf)
 {

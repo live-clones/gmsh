@@ -111,6 +111,7 @@ Call                    return tCall;
 CreateTopology          return tCreateTopology;
 
 Delete                  return tDelete;
+Degenerated             return tDegenerated;
 Dilate                  return tDilate;
 Draw                    return tDraw;
 
@@ -162,6 +163,7 @@ MPI_Size                return tMPI_Size;
 Nurbs			return tNurbs;
 
 Order			return tOrder;
+OCCShape  	        return tOCCShape;
 
 Physical                return tPhysical;
 Pi                      return tPi;

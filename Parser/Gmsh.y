@@ -93,7 +93,7 @@ void FixRelativePath(const char *in, char *out);
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound
-%token tUsing tPlugin
+%token tUsing tPlugin tDegenerated tOCCShape
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset
 %token tLoop tRecombine tSmoother tSplit tDelete tCoherence tIntersect
 %token tLayers tHole tAlias tAliasWithOptions
@@ -1070,6 +1070,28 @@ Shape :
       $$.Type = MSH_SEGM_LINE;
       $$.Num = num;
     }
+  | tDegenerated tLine ListOfDouble tEND
+    {
+      for (int i = 0; i < List_Nbr($3); i++){
+	double dnum;
+	List_Read($3, i, &dnum);
+	int num = (int) fabs(dnum);
+	Curve *c = FindCurve(num);
+	if (c){
+	  c->degenerated = true;
+	}
+	else{
+	  GEdge *ge = GModel::current()->getEdgeByTag(num);
+	  if (!ge){
+	    yymsg(0, "Curve %d does not exist", num);
+	  }
+	  else{
+	    ge->setTooSmall(true);
+	  }
+	}
+      }
+    }
+
   | tSpline '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
@@ -1529,6 +1551,19 @@ Shape :
       $$.Type = MSH_VOLUME;
       $$.Num = num;
     }
+
+  | tOCCShape '(' tBIGSTR ',' ListOfDouble ',' tBIGSTR ')' tEND
+  {
+#if defined(HAVE_OCC)
+    std::vector<double> data;
+    for (int i=0 ; i<List_Nbr($5) ; i++){
+      double d; List_Read ($5,i,&d);
+      data.push_back(d);
+    }
+    GModel::current()->addShape($3,data,$7);
+#endif
+  }
+
   | tPhysical tVolume 
     {
       curPhysDim = 3;
@@ -1549,6 +1584,7 @@ Shape :
       $$.Type = MSH_PHYSICAL_VOLUME;
       $$.Num = num;
     }
+
 ;
 
 //  T R A N S F O R M

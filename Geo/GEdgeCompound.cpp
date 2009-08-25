@@ -12,17 +12,24 @@
 #include "GEdgeCompound.h"
 #include "Numeric.h"
 
+GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound, std::vector<int> &orientation)
+  : GEdge(m, tag, 0 , 0), _compound(compound), _orientation(orientation)
+{
+  int N = _compound.size();
+  v0 = _orientation[0] ?   _compound[0]->getBeginVertex() :     _compound[0]->getEndVertex();
+  v1 = _orientation[N-1] ? _compound[N-1]->getEndVertex() :   _compound[N-1]->getBeginVertex();
+  v0->addEdge(this);
+  v1->addEdge(this);
+
+  for (unsigned int i=0;i<_compound.size();i++)
+    _compound[i]->setCompound(this);
+
+  parametrize();
+}
+
 GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound)
   : GEdge(m, tag, 0 , 0), _compound(compound)
 {
-
-//   for (std::vector<GEdge*>::iterator it = compound.begin(); it != compound.end(); ++it){
-//     if (!(*it)) {
-//       Msg::Error("Incorrect edge in compound line %d\n", tag);
-//       Msg::Exit(1);
-//     }
-//   }
-
   orderEdges ();
   int N = _compound.size();
   v0 = _orientation[0] ?   _compound[0]->getBeginVertex() :     _compound[0]->getEndVertex();
@@ -30,8 +37,12 @@ GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound)
   v0->addEdge(this);
   v1->addEdge(this);
 
+  for (unsigned int i=0;i<_compound.size();i++)
+    _compound[i]->setCompound(this);
+
   parametrize();
 }
+
 
 void GEdgeCompound::orderEdges()
 {
@@ -39,7 +50,6 @@ void GEdgeCompound::orderEdges()
   std::list<GEdge*> edges ;  
 
   for (unsigned int i=0;i<_compound.size();i++){
-    _compound[i]->setCompound(this);
     edges.push_back(_compound[i]);
   }
 

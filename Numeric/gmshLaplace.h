@@ -16,7 +16,8 @@
 class gmshLaplaceTerm : public gmshNodalFemTerm<double> {
  protected:
   const gmshFunction<double> *_diffusivity;
-  const int _iField ;
+  const int _iField;
+  int _iFieldB ;
  public:
   virtual int sizeOfR(MElement *e) const { return e->getNumVertices(); }
   virtual int sizeOfC(MElement *e) const { return e->getNumVertices(); }
@@ -26,9 +27,18 @@ class gmshLaplaceTerm : public gmshNodalFemTerm<double> {
     *iCompR = 0;
     *iFieldR = _iField;
   }
+  void getLocalDofC(MElement *e, int iRow, MVertex **vR, int *iCompR, int *iFieldR) const
+  {
+    *vR = e->getVertex(iRow);
+    *iCompR = 0;
+    *iFieldR = _iFieldB;
+  }
  public:
-  gmshLaplaceTerm(GModel *gm, gmshFunction<double> *diffusivity, int iField = 0) : 
-    gmshNodalFemTerm<double>(gm), _diffusivity(diffusivity), _iField(iField){}
+  gmshLaplaceTerm(GModel *gm, gmshFunction<double> *diffusivity, int iField = 0, int iFieldB=-1) : 
+    gmshNodalFemTerm<double>(gm), _diffusivity(diffusivity), _iField(iField)
+    {
+      _iFieldB = (iFieldB==-1) ? _iField : iFieldB;
+    }
   virtual void elementMatrix(MElement *e, gmshMatrix<double> &m) const;
 };
 

@@ -110,6 +110,7 @@ class Curve{
  public:
   int Num;
   int Typ;
+  bool degenerated;
   char Visible;
   int Method;
   int nbPointsTransfinite;

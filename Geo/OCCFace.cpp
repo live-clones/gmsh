@@ -294,6 +294,9 @@ surface_params OCCFace::getSurfaceParams() const
   case GEntity::Cylinder:
     p.radius = Handle(Geom_CylindricalSurface)::DownCast(occface)->Radius();
     break;
+  case GEntity::Sphere:
+    p.radius = Handle(Geom_SphericalSurface)::DownCast(occface)->Radius();
+    break;
   default:
     break;
   }

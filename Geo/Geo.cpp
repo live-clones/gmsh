@@ -255,7 +255,9 @@ void End_Curve(Curve *c)
       } 
     }
   }
-
+  
+  c->degenerated = false;
+  
   if(c->Typ == MSH_SEGM_CIRC || c->Typ == MSH_SEGM_CIRC_INV ||
      c->Typ == MSH_SEGM_ELLI || c->Typ == MSH_SEGM_ELLI_INV) {
 

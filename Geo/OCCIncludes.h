@@ -104,10 +104,16 @@ using std::iostream;
 #include "TopoDS_Compound.hxx"
 #include "TopoDS_Iterator.hxx"
 #include "BRepPrimAPI_MakeSphere.hxx"
+#include "BRepPrimAPI_MakeBox.hxx"
+#include "BRepPrimAPI_MakeCylinder.hxx"
+#include "BRepPrimAPI_MakeCone.hxx"
+#include "BRepPrimAPI_MakeTorus.hxx"
 #include "TopTools_ListIteratorOfListOfShape.hxx"
 #include "Precision.hxx"
 #include "BRepAlgoAPI_Common.hxx"
 #include "BRepAlgoAPI_Cut.hxx"
+#include "BRepAlgoAPI_Section.hxx"
+#include "BRepAlgoAPI_Fuse.hxx"
 #endif
 
 #if defined(WIN32)

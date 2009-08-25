@@ -529,6 +529,43 @@ void splitEdgePassUnsorted(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
   }
 }
 
+/*
+  A test for spheres
+*/
+
+static void midpointsphere (GFace *gf,
+			    double u1, 
+			    double v1, 
+			    double u2, 
+			    double v2, double &u12, double &v12, double r){
+  GPoint p1 = gf->point(u1,v1);
+  GPoint p2 = gf->point(u2,v2);
+  double guess [2] = {0.5*(u1+u2),0.5*(v1+v2)};
+  u12 = guess[0];
+  v12 = guess[1];
+
+  double d = sqrt((p1.x()-p2.x())*(p1.x()-p2.x())+
+		  (p1.y()-p2.y())*(p1.y()-p2.y())+
+		  (p1.z()-p2.z())*(p1.z()-p2.z()));
+  
+  if (d > r/3){
+    return;
+  }
+  const double X = 0.5*(p1.x() + p2.x());  
+  const double Y = 0.5*(p1.y() + p2.y());  
+  const double Z = 0.5*(p1.z() + p2.z());  
+  
+  GPoint proj = gf->closestPoint(SPoint3(X,Y,Z),guess);
+  if (proj.succeeded()){
+    u12 = proj.u();
+    v12 = proj.v();
+  }
+
+  return;
+  printf("%g %g -- %g %g -- %g %g -- %g %g\n",u1,v1,u2,v2,u12,v12,0.5*(u1+u2),0.5*(v1+v2));
+}
+
+
 void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
 { 
   std::list<BDS_Edge*>::iterator it = m.edges.begin();
@@ -550,11 +587,19 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
     BDS_Edge *e = edges[i].second;
     if (!e->deleted){
       const double coord = 0.5;
-	    //  const double coord = computeEdgeMiddleCoord((*it)->p1, (*it)->p2, gf,
-	    //                                      m.scalingU, m.scalingV);
+      //const double coord = computeEdgeMiddleCoord((*it)->p1, (*it)->p2, gf,
+      //                                          m.scalingU, m.scalingV);
       BDS_Point *mid ;
-      double U = coord * e->p1->u + (1 - coord) * e->p2->u;
-      double V = coord * e->p1->v + (1 - coord) * e->p2->v;
+
+      double U,V;
+      if (0 && gf->geomType() == GEntity::Sphere){
+	midpointsphere(gf,e->p1->u,e->p1->v,e->p2->u,e->p2->v,U,V,
+		       gf-> getSurfaceParams().radius);
+      }
+      else{
+	U = coord * e->p1->u + (1 - coord) * e->p2->u;
+	V = coord * e->p1->v + (1 - coord) * e->p2->v;
+      }
 
       GPoint gpp = gf->point(m.scalingU*U,m.scalingV*V);
       if (gpp.succeeded()){  

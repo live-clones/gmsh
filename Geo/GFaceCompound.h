@@ -50,6 +50,7 @@ class GFaceCompound : public GFace {
  protected:
   std::list<GFace*> _compound;
   std::list<GEdge*> _U0, _U1, _V0, _V1;
+  std::list<std::list<GEdge*> > _interior_loops;
   mutable int nbT;
   mutable GFaceCompoundTriangle *_gfct;
   mutable Octree *oct;
@@ -59,12 +60,15 @@ class GFaceCompound : public GFace {
   mutable std::map<MVertex*,SVector3> _normals;
   void buildOct() const ;
   void parametrize() const ;
+  void parametrize_conformal() const ;
   void parametrize(iterationStep) const ;
   bool checkOrientation() const;
   void one2OneMap() const;
   bool checkCavity(std::vector<MElement*> &vTri) const;
   void computeNormals () const;
   void getBoundingEdges();
+  void getUniqueEdges(std::set<GEdge*> & _unique); 
+  void computeALoop(std::set<GEdge*> & _unique, std::list<GEdge*> &);
   void getTriangle(double u, double v, GFaceCompoundTriangle **lt, 
                    double &_u, double &_v) const;
   virtual double curvature(MTriangle *t, double u, double v) const;

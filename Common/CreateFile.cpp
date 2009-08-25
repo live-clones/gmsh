@@ -54,6 +54,11 @@ int GuessFileFormatFromFileName(std::string fileName)
   else if(ext == ".svg")  return FORMAT_SVG;
   else if(ext == ".ppm")  return FORMAT_PPM;
   else if(ext == ".yuv")  return FORMAT_YUV;
+  else if(ext == ".brep")  return FORMAT_BREP;
+  else if(ext == ".step")  return FORMAT_STEP;
+  else if(ext == ".stp")  return FORMAT_STEP;
+  else if(ext == ".iges")  return FORMAT_IGES;
+  else if(ext == ".igs")  return FORMAT_IGES;
   else                           return -1;
 }
 
@@ -86,6 +91,9 @@ std::string GetDefaultFileName(int format)
   case FORMAT_SVG:  name += ".svg"; break;
   case FORMAT_PPM:  name += ".ppm"; break;
   case FORMAT_YUV:  name += ".yuv"; break;
+  case FORMAT_BREP:  name += ".brep"; break;
+  case FORMAT_IGES:  name += ".iges"; break;
+  case FORMAT_STEP:  name += ".step"; break;
   default: break;
   }
   return name;
@@ -235,6 +243,14 @@ void CreateOutputFile(std::string fileName, int format)
   case FORMAT_GEO:
     GModel::current()->writeGEO(fileName, CTX::instance()->print.geoLabels);
     break;
+#if defined(HAVE_OCC)
+  case FORMAT_BREP:
+    GModel::current()->writeOCCBREP(fileName);
+    break;
+  case FORMAT_STEP:
+    GModel::current()->writeOCCSTEP(fileName);
+    break;
+#endif
 
 #if defined(HAVE_FLTK)
   case FORMAT_PPM:

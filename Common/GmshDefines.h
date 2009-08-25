@@ -37,6 +37,9 @@
 #define FORMAT_CGNS          32
 #define FORMAT_MED           33
 #define FORMAT_DIFF          34
+#define FORMAT_BREP          35
+#define FORMAT_STEP          36
+#define FORMAT_IGES          37
 
 // Element types
 #define TYPE_PNT 1

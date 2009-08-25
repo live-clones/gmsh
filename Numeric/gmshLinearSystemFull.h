@@ -67,7 +67,8 @@ class gmshLinearSystemFull : public gmshLinearSystem<scalar> {
   }
   virtual int systemSolve() 
   {
-    _a->lu_solve(*_b, *_x);
+    if (_b->size())
+      _a->lu_solve(*_b, *_x);
     // _x->print("********* mySol");
     return 1;
   }
