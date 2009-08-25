@@ -889,6 +889,22 @@ int GModel::readOCCBREP(const std::string &fn)
   return 1;
 }
 
+int GModel::readOCCSTEP(const std::string &fn)
+{
+  _occ_internals = new OCC_Internals;
+  _occ_internals->loadSTEP(fn.c_str());
+  _occ_internals->buildGModel(this);
+  return 1;
+}
+
+int GModel::readOCCIGES(const std::string &fn)
+{
+  _occ_internals = new OCC_Internals;
+  _occ_internals->loadIGES(fn.c_str());
+  _occ_internals->buildGModel(this);
+  return 1;
+}
+
 int GModel::writeOCCBREP(const std::string &fn)
 {
   if (!_occ_internals){
@@ -911,22 +927,6 @@ int GModel::writeOCCSTEP(const std::string &fn)
   return 1;
 }
 
-int GModel::readOCCIGES(const std::string &fn)
-{
-  _occ_internals = new OCC_Internals;
-  _occ_internals->loadIGES(fn.c_str());
-  _occ_internals->buildGModel(this);
-  return 1;
-}
-
-int GModel::readOCCSTEP(const std::string &fn)
-{
-  _occ_internals = new OCC_Internals;
-  _occ_internals->loadSTEP(fn.c_str());
-  _occ_internals->buildGModel(this);
-  return 1;
-}
-
 int GModel::importOCCShape(const void *shape)
 {
   _occ_internals = new OCC_Internals;
@@ -937,37 +937,32 @@ int GModel::importOCCShape(const void *shape)
   return 1;
 }
 
-int GModel::applyOCCMeshConstraints(const void *constraints)
-{
 #if defined(HAVE_OCC_MESH_CONSTRAINTS)
 
-  // FIXME !!!!!!!!!!!!!!!!
-  // COMPUTE 1D MESH AUTOMATICALLY WHEN NO CONSTRAINTS ARE APPLIED
-  // ON SOME GEDGES !!!!!!!!!!!!!!!!!!
-  MeshGmsh_Constrain *meshConstraints = (MeshGmsh_Constrain*)constraints;
-  
-  // apply mesh constraints on model vertices
-  MeshGmsh_DataMapOfShapeOfVertexConstrain vertexConstraints;
-  meshConstraints->GetVertexConstrain(vertexConstraints);
-  for(GModel::viter it = firstVertex(); it != lastVertex(); ++it){
+static void _applyOCCMeshConstraintsOnVertices
+  (GModel *m, MeshGmsh_DataMapOfShapeOfVertexConstrain &constraints)
+{ 
+  for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it){
     GVertex *gv = *it;
     if(gv->getNativeType() != GEntity::OpenCascadeModel) continue;
     TopoDS_Shape *s = (TopoDS_Shape*)gv->getNativePtr();
-    if(vertexConstraints.IsBound(*s)) {
+    if(constraints.IsBound(*s)) {
       Msg::Debug("Found mesh contraints on vertex %d", gv->tag());
-      const MeshGmsh_VertexConstrain &c(vertexConstraints.Find(*s));
-      // characteristic length constraint
+      const MeshGmsh_VertexConstrain &c(constraints.Find(*s));
+
+      // 1) characteristic length constraint
       double lc = c.GetSize();
       if(lc >= 0.){
         Msg::Debug("... setting mesh size = %g", lc);
         gv->setPrescribedMeshSizeAtVertex(lc);
       }
-      // embedding constraint
+
+      // 2) embedding constraint
       if(c.IsEmbedded() && !c.GetFace().IsNull()){
         TopoDS_Shape shape = c.GetFace();
         Standard_Integer nodeNum;
         c.GetNodeNumber(nodeNum);
-        for(GModel::fiter it2 = firstFace(); it2 != lastFace(); ++it2){
+        for(GModel::fiter it2 = m->firstFace(); it2 != m->lastFace(); ++it2){
           GFace *gf = *it2;
           if(gf->getNativeType() != GEntity::OpenCascadeModel) continue;
           TopoDS_Shape *shape2 = (TopoDS_Shape*)gf->getNativePtr();
@@ -980,18 +975,20 @@ int GModel::applyOCCMeshConstraints(const void *constraints)
       }
     }
   }
+}
 
-  // apply mesh constraints on model edges
-  MeshGmsh_DataMapOfShapeOfEdgeConstrain edgeConstraints;
-  meshConstraints->GetEdgeConstrain(edgeConstraints);
-  for(GModel::eiter it = firstEdge(); it != lastEdge(); ++it){
+static void _applyOCCMeshConstraintsOnEdges
+  (GModel *m, MeshGmsh_DataMapOfShapeOfEdgeConstrain &constraints)
+{
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
     GEdge *ge = *it;
     if(ge->getNativeType() != GEntity::OpenCascadeModel) continue;
     TopoDS_Shape *s = (TopoDS_Shape*)ge->getNativePtr();
-    if(edgeConstraints.IsBound(*s)) {
+    if(constraints.IsBound(*s)) {
       Msg::Debug("Found mesh contraints on edge %d", ge->tag());
-      const MeshGmsh_EdgeConstrain &c(edgeConstraints.Find(*s));
-      // prescribed mesh constraint
+      const MeshGmsh_EdgeConstrain &c(constraints.Find(*s));
+
+      // 1) prescribed mesh constraint
       if(c.IsMeshImposed()){
         TColStd_SequenceOfInteger nodeNum;
         c.GetNodesNumber(nodeNum);
@@ -1035,10 +1032,11 @@ int GModel::applyOCCMeshConstraints(const void *constraints)
           }
         }
       }
-      // embedding constraint
+
+      // 2) embedding constraint
       if(c.IsEmbedded() && !c.GetFace().IsNull()){
         TopoDS_Shape shape = c.GetFace();
-        for(GModel::fiter it2 = firstFace(); it2 != lastFace(); ++it2){
+        for(GModel::fiter it2 = m->firstFace(); it2 != m->lastFace(); ++it2){
           GFace *gf = *it2;
           if(gf->getNativeType() != GEntity::OpenCascadeModel) continue;
           TopoDS_Shape *shape2 = (TopoDS_Shape*)gf->getNativePtr();
@@ -1053,6 +1051,27 @@ int GModel::applyOCCMeshConstraints(const void *constraints)
       }
     }
   }
+
+  // FIXME: compute better characteristic length for all edges with no
+  // imposed mesh? Or mesh those edges directly (here?)
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
+    // ...
+  }  
+}
+#endif
+
+int GModel::applyOCCMeshConstraints(const void *constraints)
+{
+#if defined(HAVE_OCC_MESH_CONSTRAINTS)
+  MeshGmsh_Constrain *c = (MeshGmsh_Constrain*)constraints;
+
+  MeshGmsh_DataMapOfShapeOfVertexConstrain vertexConstraints;
+  c->GetVertexConstrain(vertexConstraints);
+  _applyOCCMeshConstraintsOnVertices(vertexConstraints);
+
+  MeshGmsh_DataMapOfShapeOfEdgeConstrain edgeConstraints;
+  c->GetEdgeConstrain(edgeConstraints);
+  _applyOCCMeshConstraintsOnEdges(edgeConstraints);
   return 1;
 #else
   return 0;
@@ -1063,6 +1082,13 @@ int GModel::applyOCCMeshConstraints(const void *constraints)
 
 void GModel::_deleteOCCInternals()
 {
+}
+
+int GModel::readOCCBREP(const std::string &fn)
+{
+  Msg::Error("Gmsh must be compiled with OpenCascade support to load '%s'",
+             fn.c_str());
+  return 0;
 }
 
 int GModel::readOCCSTEP(const std::string &fn)
@@ -1079,9 +1105,16 @@ int GModel::readOCCIGES(const std::string &fn)
   return 0;
 }
 
-int GModel::readOCCBREP(const std::string &fn)
+int GModel::writeOCCBREP(const std::string &fn)
 {
-  Msg::Error("Gmsh must be compiled with OpenCascade support to load '%s'",
+  Msg::Error("Gmsh must be compiled with OpenCascade support to write '%s'",
+             fn.c_str());
+  return 0;
+}
+
+int GModel::writeOCCSTEP(const std::string &fn)
+{
+  Msg::Error("Gmsh must be compiled with OpenCascade support to write '%s'",
              fn.c_str());
   return 0;
 }

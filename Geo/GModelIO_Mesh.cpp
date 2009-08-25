@@ -29,8 +29,6 @@
 #include "GEdgeCompound.h"
 #include "GFaceCompound.h"
 
-#include <iostream> // DBG
-
 void GModel::_storePhysicalTagsInEntities(int dim,
                                           std::map<int, std::map<int, std::string> > &map)
 {

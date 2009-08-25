@@ -54,10 +54,10 @@ int GuessFileFormatFromFileName(std::string fileName)
   else if(ext == ".svg")  return FORMAT_SVG;
   else if(ext == ".ppm")  return FORMAT_PPM;
   else if(ext == ".yuv")  return FORMAT_YUV;
-  else if(ext == ".brep")  return FORMAT_BREP;
-  else if(ext == ".step")  return FORMAT_STEP;
+  else if(ext == ".brep") return FORMAT_BREP;
+  else if(ext == ".step") return FORMAT_STEP;
   else if(ext == ".stp")  return FORMAT_STEP;
-  else if(ext == ".iges")  return FORMAT_IGES;
+  else if(ext == ".iges") return FORMAT_IGES;
   else if(ext == ".igs")  return FORMAT_IGES;
   else                           return -1;
 }
