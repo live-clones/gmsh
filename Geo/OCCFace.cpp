@@ -50,7 +50,7 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
           occe->setTrimmed(this);
         }
       }
-    }      
+    }
     
     GEdgeLoop el(l_wire);
     for(GEdgeLoop::citer it = el.begin(); it != el.end(); ++it){

@@ -82,10 +82,6 @@ class MElement
   // get the vertices
   virtual int getNumVertices() const = 0;
   virtual MVertex *getVertex(int num) = 0;
-  virtual void getCoordinates(int num, double c[3]) const
-  {
-    c[0] = 0.; c[1] = 0.; c[2] = 0.;
-  }
 
   // get the vertex using the I-deas UNV ordering
   virtual MVertex *getVertexUNV(int num){ return getVertex(num); }
