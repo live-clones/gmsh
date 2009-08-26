@@ -649,7 +649,7 @@ void GModel::addOCCFillet(std::vector<int> & edgesToFillet,
 
   for (int i=0;i<edgesToFillet.size();++i){
     GEdge *ge = getEdgeByTag(edgesToFillet[i]);
-    if (ge->getNativeType() == GEntity::OpenCascadeModel){
+    if (ge && ge->getNativeType() == GEntity::OpenCascadeModel){
       toto.push_back(*(TopoDS_Edge*)ge->getNativePtr());
     }  
   }
