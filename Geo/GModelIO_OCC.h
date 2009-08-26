@@ -48,7 +48,6 @@ class OCC_Internals {
   void buildLists();
   void removeAllDuplicates(const double &tolerance);
 
-  void Cone(const SPoint3 &p1, const SPoint3 &p2, const BooleanOperator &op);
   void Box(const SPoint3 &p1, const SPoint3 &p2, const BooleanOperator &op);
   void Sphere(const SPoint3 &center, const double &radius, const BooleanOperator &op);
   void Cylinder(const SPoint3 &bottom_center, const SVector3 &dir, double R, double H,
