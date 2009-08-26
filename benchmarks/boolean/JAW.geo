@@ -12,5 +12,3 @@ EndFor
 OCCShape("Sphere",{H-X,H/2,Z/2,R},"Fuse");
 OCCShape("Torus",{L,H/2,Z/2,0,0,1,2*R,R/2},"Fuse");
 
-
-OCCShape("End",{},"none");
