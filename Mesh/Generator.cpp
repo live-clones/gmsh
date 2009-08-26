@@ -409,23 +409,10 @@ static void Mesh2D(GModel *m)
   // and curve meshes) is global as it depends on a smooth normal
   // field generated from the surface mesh of the source surfaces
   if(!Mesh2DWithBoundaryLayers(m)){
-
-    std::vector<GFace*> blob;
-    for(GModel::fiter it = m->firstFace() ; it!=m->lastFace(); ++it){
-      blob.push_back(*it);
-    }    
-
-
-    meshGFace mesher;
-#pragma omp parallel for schedule(dynamic) 
-    for(int i=0; i<blob.size();i++){
-      mesher(blob[i]);
-    }    
-#pragma omp barrier
-
-      //    std::for_each(m->firstFace(), m->lastFace(), meshGFace());        
+    std::for_each(m->firstFace(), m->lastFace(), meshGFace());
     int nIter = 0;
     while(1){
+      meshGFace mesher;
       int nbPending = 0;
       for(GModel::fiter it = m->firstFace() ; it!=m->lastFace(); ++it){
         if ((*it)->meshStatistics.status == GFace::PENDING){
