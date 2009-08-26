@@ -319,7 +319,7 @@ int GModel::readMSH(const std::string &name)
               fscanf(fp, "%d", &numVertices);
             }
           }
-          int indices[60];
+          int *indices = new int[numVertices];
           for(int j = 0; j < numVertices; j++) fscanf(fp, "%d", &indices[j]);
           std::vector<MVertex*> vertices;
           if(vertexVector.size()){
@@ -332,6 +332,7 @@ int GModel::readMSH(const std::string &name)
                            vertices, elements, physicals);
           if(numElements > 100000) 
             Msg::ProgressMeter(i + 1, numElements, "Reading elements");
+          delete [] indices;
         }
       }
       else{

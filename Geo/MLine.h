@@ -37,6 +37,11 @@ class MLine : public MElement {
   virtual int getDim(){ return 1; }
   virtual int getNumVertices() const { return 2; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
+  virtual void getCoordinates (int num, double c[3]) const {
+    c[0] = _v[num]->x();
+    c[1] = _v[num]->y();
+    c[2] = _v[num]->z();
+  }
   virtual int getNumEdges(){ return 1; }
   virtual MEdge getEdge(int num){ return MEdge(_v[0], _v[1]); }
   virtual int getNumEdgesRep(){ return 1; }

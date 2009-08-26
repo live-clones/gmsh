@@ -263,6 +263,28 @@ class MTriangleBorder : public MTriangle {
   }
   ~MTriangleBorder() {}
   MPolyhedron* getDomain(int i) const { return _domains[i]; }
+  virtual MElement *getParent() const { return _domains[0]->getParent(); }
+  virtual const gmshFunctionSpace* getFunctionSpace(int order=-1) const 
+  {
+    return getParent()->getFunctionSpace(order);
+  }
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
+  {
+    getParent()->getShapeFunctions(u, v, w, s, o);
+  }
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
+  {
+    getParent()->getGradShapeFunctions(u, v, w, s, o);
+  }
+  virtual void xyz2uvw(double xyz[3], double uvw[3])
+  {
+    getParent()->xyz2uvw(xyz,uvw);
+  }
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
+  virtual int getNumIntegrationPointsToAllocate (int pOrder)
+  {
+    return getNGQTPts(pOrder);
+  }
 };
 
 class MLineBorder : public MLine {
@@ -277,6 +299,28 @@ class MLineBorder : public MLine {
   }
   ~MLineBorder() {}
   MPolygon* getDomain(int i) const { return _domains[i]; }
+  virtual MElement *getParent() const { return _domains[0]->getParent(); }
+  virtual const gmshFunctionSpace* getFunctionSpace(int order=-1) const 
+  {
+    return getParent()->getFunctionSpace(order);
+  }
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
+  {
+    getParent()->getShapeFunctions(u, v, w, s, o);
+  }
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
+  {
+    getParent()->getGradShapeFunctions(u, v, w, s, o);
+  }
+  virtual void xyz2uvw(double xyz[3], double uvw[3])
+  {
+    getParent()->xyz2uvw(xyz,uvw);
+  }
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
+  virtual int getNumIntegrationPointsToAllocate (int pOrder)
+  {
+    return pOrder / 2 + 1;
+  }
 };
 
 GModel *buildCutMesh(GModel *gm, gLevelset *ls,

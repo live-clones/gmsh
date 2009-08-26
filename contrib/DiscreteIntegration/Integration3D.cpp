@@ -184,7 +184,7 @@ int commonV (int &s11, int &s12, int &s21, int &s22) {
   if(s11 == s21 || s11 == s22) return s11;
   if(s12 == s21 || s12 == s22) return s12;
   printf("no common summit, %d,%d,%d,%d\n", s11, s12, s21, s22);
-  throw;
+  return 0;
 }
 
 double adjustLs (double ls) {
@@ -218,7 +218,6 @@ int minimum(double *x, double *y, double *z, const int num) {
   for(int i = 1; i < county; i++) if(z[INDy[i]] < zm) zm = z[INDy[i]];
   std::vector<int> INDz(county); int countz = 0;
   for(int i = 0; i < county; i++) if(z[INDy[i]] == zm) INDz[countz++] = INDy[i];
-  assert (countz == 1);
   return INDz[0];
 }
 
@@ -410,38 +409,37 @@ int bestQuality (const DI_Point &p0, const DI_Point &p1, const DI_Point &p2,
     }
   }
 
-  assert(cut > -1);
   if(cut == 0) {
     t1 = DI_Tetra(p0, p1, p2, p5);
     t2 = DI_Tetra(p0, p1, p5, p3);
     t3 = DI_Tetra(p1, p5, p3, p4);
     return 1;
   }
-  if(cut == 1) {
+  else if(cut == 1) {
     t1 = DI_Tetra(p0, p1, p2, p5);
     t2 = DI_Tetra(p0, p1, p5, p4);
     t3 = DI_Tetra(p0, p4, p5, p3);
     return 2;
   }
-  if(cut == 2) {
+  else if(cut == 2) {
     t1 = DI_Tetra(p0, p1, p2, p4);
     t2 = DI_Tetra(p0, p4, p2, p5);
     t3 = DI_Tetra(p0, p4, p5, p3);
     return 3;
   }
-  if(cut == 3) {
+  else if(cut == 3) {
     t1 = DI_Tetra(p0, p1, p2, p4);
     t2 = DI_Tetra(p0, p4, p2, p3);
     t3 = DI_Tetra(p2, p3, p4, p5);
     return 4;
   }
-  if(cut == 4) {
+  else if(cut == 4) {
     t1 = DI_Tetra(p0, p1, p2, p3);
     t2 = DI_Tetra(p1, p2, p3, p4);
     t3 = DI_Tetra(p2, p3, p4, p5);
     return 5;
   }
-  else { //cut == 5
+  else if(cut == 5) {
     t1 = DI_Tetra(p0, p1, p2, p3);
     t2 = DI_Tetra(p1, p2, p3, p5);
     t3 = DI_Tetra(p1, p5, p3, p4);
@@ -480,9 +478,11 @@ DI_Point quadMidNode(const DI_Point &p1, const DI_Point &p2, const DI_Point &pf,
   double v1f[3]; vec(p1, pf, v1f);
   double nf[3]; cross(v12, v1f, nf);
   double bisector[3]; cross(nf, v12, bisector);
-  double normB = norm(bisector);  assert (normB != 0);
-  for (int i = 0; i < 3; i++)
-    bisector[i] = bisector[i] / normB;
+  double normB = norm(bisector);
+  if(normB) {
+    for (int i = 0; i < 3; i++)
+      bisector[i] = bisector[i] / normB;
+  }
   // raise the length of bisector if needed .........
   DI_Point pt(midEN.x() + bisector[0], midEN.y() + bisector[1], midEN.z() + bisector[2]);
   pt.addLs(e);
@@ -548,13 +548,12 @@ void DI_IntegrationPoint::computeLs (const DI_Element *e, const std::vector<cons
       Ls.push_back(ls);
     }
   }
-  assert (Ls.size() == 1);
   setLs(Ls.back());
 }
 
 // DI_CuttingPoint methods -----------------------------------------------------------------------------------------------------
 void DI_CuttingPoint::chooseLs (const gLevelset *Lsi) {
-  assert(Ls.size() > 1);
+  if(Ls.size() < 2) return;
   double ls1 = Ls[Ls.size() - 2], ls2 = Ls[Ls.size() - 1];
   double ls = Lsi->choose(ls1, ls2);
   Ls.pop_back(); Ls.pop_back();
@@ -588,7 +587,10 @@ DI_Element::DI_Element(const DI_Element &cp) : lsTag_(cp.lsTag()), polOrder_(cp.
   if(mid_) delete mid_;
 }*/
 DI_Element & DI_Element::operator= (const DI_Element &rhs){
-  assert (type() == rhs.type());
+  if(type() != rhs.type()) {
+    printf("Error : try to assign element of different type!\n");
+    return *this;
+  }
   if(this != &rhs) {
     for(int i = 0; i < nbVert(); i++) {
       delete pts_[i];
@@ -659,14 +661,16 @@ void DI_Element::addLs (const double *ls) {
     mid_[i]->addLs(ls[nbVert()+i]);
 }
 void DI_Element::addLs (const DI_Element *e) {
-  assert(e->sizeLs() > 0);
+  if(e->sizeLs() < 1) return;
   for(int i = 0; i < nbVert(); i++)
     pts_[i]->addLs(e);
   for(int i = 0; i < nbMid(); i++)
     mid_[i]->addLs(e);
 }
 void DI_Element::addLs (const DI_Element *e, const gLevelset &Ls) {
-  assert (type() == e->type());
+  if(type() != e->type()) {
+    printf("Error : addLs with element of different type\n");
+  }
   for(int j = 0; j < nbVert(); ++j) {
     double ls = Ls(e->x(j), e->y(j), e->z(j));
     pts_[j]->addLs(adjustLs(ls));
@@ -683,7 +687,7 @@ void DI_Element::addLs (const DI_Element *e, const gLevelset &Ls) {
 }
 void DI_Element::chooseLs (const gLevelset *Lsi) {
   if(sizeLs() < 2)
-    printf("chooseLs with element size < 2 : typeEl=%d\n", type());
+    printf("chooseLs with element ls size < 2 : typeEl=%d\n", type());
   for(int i = 0; i < nbVert(); i++)
     pts_[i]->chooseLs(Lsi);
   for(int i = 0; i < nbMid(); i++)
@@ -696,7 +700,7 @@ void DI_Element::clearLs() {
     (mid_[i]->Ls).clear();
 }
 bool DI_Element::addQuadEdge (int edge, DI_Point *xm, const DI_Element *e, const std::vector<const gLevelset *> RPNi) {
-  /*if(edge >= nbEdg()) {printf("wrong number (%d) for quadratic edge for a ", edge); print(); throw;}
+  /*if(edge >= nbEdg()) {printf("wrong number (%d) for quadratic edge for a ", edge); print(); return false;}
   int s1, s2; vert(edge, s1, s2);
   bool quad0 = isQuad();
   if(!quad0) quad(e, RPNi);
@@ -753,7 +757,7 @@ bool DI_Element::contain (const DI_Point &p) const {
     }
     return true;
   default :
-    throw;
+    return false;
   }
 }
 bool DI_Element::contain (const DI_Element *e) const {
@@ -912,10 +916,10 @@ void DI_Element::computeLsTagDom(const DI_Element *e, const std::vector<const gL
     if(mid.isInsideDomain())
       {setLsTag(1); return;}
   }
-  printf("Unable to determine the sign of the element : \n");
+  printf("Error : Unable to determine the sign of the element : \n");
   printf("Parent element : "); e->printls();
   printf("Element : "); printls();
-  throw;
+  return;
 }
 // set the lsTag to -1 if the element is not on the border of the domain
 void DI_Element::computeLsTagBound(std::vector<DI_Hexa> &hexas, std::vector<DI_Tetra> &tetras){
@@ -1611,7 +1615,8 @@ void DI_Triangle::selfSplit (const DI_Element *e, const std::vector<const gLevel
       break;
     }
     default:
-      throw;
+      printf("Error : %d edge(s) cut in the triangle (ls : %g %g %g)\n",
+             COUNT, pt(0).ls(), pt(1).ls(), pt(2).ls());
   }
 }
 
@@ -1963,8 +1968,8 @@ void DI_Tetra::selfSplit (const DI_Element *e, const std::vector<const gLevelset
       break;
     }
     default:
-      printf("Error : %d edge(s) cut (ls : %g %g %g %g)\n", COUNT, pt(0).ls(), pt(1).ls(), pt(2).ls(), pt(3).ls());
-      throw;
+      printf("Error : %d edge(s) cut in the tetrahedron (ls : %g %g %g %g)\n",
+             COUNT, pt(0).ls(), pt(1).ls(), pt(2).ls(), pt(3).ls());
   }
 }
 
@@ -2091,7 +2096,6 @@ void DI_Line::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
   }
 
   for(int l = 0; l < (int)ll_subLines.size(); l++) {
-    assert(ll_subLines[l].sizeLs() == 1);
     ll_subLines[l].computeLsTagDom(&ll, RPN);
     DI_Line ll_subLn = ll_subLines[l];
     mappingEl(&ll_subLn);
@@ -2099,7 +2103,6 @@ void DI_Line::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
     lines.push_back(ll_subLn);
   }
   for(int p = 0; p < (int)ll_cp.size(); p++) {
-    assert (ll_cp[p].sizeLs() == 1);
     if(ll_cp[p].ls() != 0) continue;
     mappingCP(ll_cp[p]);
     bool isIn = false;
@@ -2265,7 +2268,6 @@ void DI_Triangle::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip
   //printf("tt = "); tt.printls();
 
   for(int q = 0; q < (int)tt_subQuads.size(); q++) {
-    assert(tt_subQuads[q].sizeLs() == 1);
     tt_subQuads[q].computeLsTagDom(&tt, RPN);
     DI_Quad tt_subQ = tt_subQuads[q];
     mappingEl(&tt_subQ);
@@ -2273,7 +2275,6 @@ void DI_Triangle::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip
     subQuads.push_back(tt_subQ);
   }
   for(int t = 0; t < (int)tt_subTriangles.size(); t++) {
-    assert(tt_subTriangles[t].sizeLs() == 1);
     tt_subTriangles[t].computeLsTagDom(&tt, RPN);
     DI_Triangle tt_subTr = tt_subTriangles[t];
     mappingEl(&tt_subTr);
@@ -2281,7 +2282,6 @@ void DI_Triangle::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip
     subTriangles.push_back(tt_subTr);
   }
   for(int l = 0; l < (int)tt_surfLines.size(); l++) {
-    assert(tt_surfLines[l].sizeLs() == 1);
     tt_surfLines[l].computeLsTagBound(tt_subQuads, tt_subTriangles);  //tt_surfLines[l].printls();
     if(tt_surfLines[l].lsTag() == -1) continue;
     DI_Line tt_surfLn = tt_surfLines[l];
@@ -2290,7 +2290,6 @@ void DI_Triangle::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip
     surfLines.push_back(tt_surfLn);
   }
   for(int p = 0; p < (int)tt_cp.size(); p++) {
-    assert (tt_cp[p].sizeLs() == 1);
     if(tt_cp[p].ls() != 0) continue;
     mappingCP(tt_cp[p]);
     bool isIn = false;
@@ -2468,7 +2467,6 @@ void DI_Quad::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
   }*/
 
   for(int q = 0; q < (int)qq_subQuads.size(); q++) {
-    assert(qq_subQuads[q].sizeLs() == 1);
     qq_subQuads[q].computeLsTagDom(&qq, RPN);
     DI_Quad qq_subQ = qq_subQuads[q];
     mappingEl(&qq_subQ);
@@ -2476,7 +2474,6 @@ void DI_Quad::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
     subQuads.push_back(qq_subQ);
   }
   for(int t = 0; t < (int)qq_subTriangles.size(); t++) {
-    assert(qq_subTriangles[t].sizeLs() == 1);
     qq_subTriangles[t].computeLsTagDom(&qq, RPN);
     DI_Triangle qq_subTr = qq_subTriangles[t];
     mappingEl(&qq_subTr);  //qq_subTr.printls();
@@ -2484,7 +2481,6 @@ void DI_Quad::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
     subTriangles.push_back(qq_subTr);
   }
   for(int l = 0; l < (int)qq_surfLines.size(); l++) {
-    assert(qq_surfLines[l].sizeLs() == 1);
     qq_surfLines[l].computeLsTagBound(qq_subQuads, qq_subTriangles);
     if(qq_surfLines[l].lsTag() == -1) continue;  //FIXME
     DI_Line qq_surfLn = qq_surfLines[l];
@@ -2493,7 +2489,6 @@ void DI_Quad::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
     surfLines.push_back(qq_surfLn);
   }
   for(int p = 0; p < (int)qq_cp.size(); p++) {
-    assert (qq_cp[p].sizeLs() == 1);
     if(qq_cp[p].ls() != 0) continue;
     mappingCP(qq_cp[p]);
     bool isIn = false;
@@ -2660,7 +2655,6 @@ void DI_Tetra::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
     QError[i].print(this);
 
   for(int t = 0; t < (int)tt_subTetras.size(); t++) {
-    assert(tt_subTetras[t].sizeLs() == 1);
     tt_subTetras[t].computeLsTagDom(&tt, RPN);
     DI_Tetra tt_subT = tt_subTetras[t];
     mappingEl(&tt_subT);
@@ -2668,7 +2662,6 @@ void DI_Tetra::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
     subTetras.push_back(tt_subT);
   }
   for(int q = 0; q < (int)tt_surfQuads.size(); q++) {
-    assert(tt_surfQuads[q].sizeLs() == 1);
     tt_surfQuads[q].computeLsTagBound(tt_subHexas, tt_subTetras);
     if(tt_surfQuads[q].lsTag() == -1) continue;
     DI_Quad tt_surfQ = tt_surfQuads[q];
@@ -2677,7 +2670,6 @@ void DI_Tetra::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
     surfQuads.push_back(tt_surfQ);
   }
   for(int t = 0; t < (int)tt_surfTriangles.size(); t++) {
-    assert(tt_surfTriangles[t].sizeLs() == 1);
     tt_surfTriangles[t].computeLsTagBound(tt_subHexas, tt_subTetras);
     if(tt_surfTriangles[t].lsTag() == -1) continue;
     DI_Triangle tt_surfTr = tt_surfTriangles[t];
@@ -2686,7 +2678,6 @@ void DI_Tetra::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
     surfTriangles.push_back(tt_surfTriangles[t]);
   }
   for(int p = 0; p < (int)tt_cp.size(); p++) {
-    assert (tt_cp[p].sizeLs() == 1);
     if(tt_cp[p].ls() != 0) continue;
     mappingCP(tt_cp[p]);
     bool isIn = false;
@@ -2901,7 +2892,6 @@ void DI_Hexa::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
     QError[i].print(this);
 
   for(int h = 0; h < (int)hh_subHexas.size(); h++) {
-    assert (hh_subHexas[h].sizeLs() == 1);
     hh_subHexas[h].computeLsTagDom(&hh, RPN);
     DI_Hexa hh_subH = hh_subHexas[h];
     mappingEl(&hh_subH);
@@ -2909,7 +2899,6 @@ void DI_Hexa::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
     subHexas.push_back(hh_subH);
   }
   for(int t = 0; t < (int)hh_subTetras.size(); t++) {
-    assert (hh_subTetras[t].sizeLs() == 1);
     hh_subTetras[t].computeLsTagDom(&hh, RPN);
     DI_Tetra hh_subT = hh_subTetras[t];
     mappingEl(&hh_subT);
@@ -2917,7 +2906,6 @@ void DI_Hexa::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
     subTetras.push_back(hh_subT);
   }
   for(int q = 0; q < (int)hh_surfQuads.size(); q++) {
-    assert(hh_surfQuads[q].sizeLs() == 1);
     hh_surfQuads[q].computeLsTagBound(hh_subHexas, hh_subTetras);
     if(hh_surfQuads[q].lsTag() == -1) continue;
     DI_Quad hh_surfQ = hh_surfQuads[q];
@@ -2926,7 +2914,6 @@ void DI_Hexa::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
     surfQuads.push_back(hh_surfQ);
   }
   for(int t = 0; t < (int)hh_surfTriangles.size(); t++) {
-    assert (hh_surfTriangles[t].sizeLs() == 1);
     hh_surfTriangles[t].computeLsTagBound(hh_subHexas, hh_subTetras);
     if(hh_surfTriangles[t].lsTag() == -1) continue;
     DI_Triangle hh_surfTr = hh_surfTriangles[t];
@@ -2935,7 +2922,6 @@ void DI_Hexa::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
     surfTriangles.push_back(hh_surfTr);
   }
   for(int l = 0; l < (int)hh_frontLines.size(); l++) {
-    assert(hh_frontLines[l].sizeLs() == 1);
     hh_frontLines[l].computeLsTagBound(hh_surfQuads, hh_surfTriangles);
     if(hh_frontLines[l].lsTag() == -1) continue;
     DI_Line hh_frontLn = hh_frontLines[l];
@@ -2944,7 +2930,6 @@ void DI_Hexa::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
     frontLines.push_back(hh_frontLn);
   }
   for(int p = 0; p < (int)hh_cp.size(); p++) {
-    assert (hh_cp[p].sizeLs() == 1);
     if(hh_cp[p].ls() != 0) continue; // returns only the cutting points with ls==0
     mappingCP(hh_cp[p]);
     bool isIn = false;
@@ -2986,7 +2971,8 @@ void DI_Hexa::cut (const DI_Element *e, const std::vector<const gLevelset *> RPN
   else{
     if(on == 4){ // the level set is zero on a face of the hex
       // assert the nodes are in the same plane
-      if(!isPlanar(pt(ze[0]), pt(ze[1]), pt(ze[2]), pt(ze[3]))) { printf("THE FOUR NODES WITH ZERO LS ARE NOT PLANAR"); throw;}
+      if(!isPlanar(pt(ze[0]), pt(ze[1]), pt(ze[2]), pt(ze[3]))) {
+        printf("Error : The 4 nodes with zero levelset are not planar!\n"); return;}
       // order the 4 nodes
       if(!ordered4Nodes(pt(ze[0]), pt(ze[1]), pt(ze[2]), pt(ze[3]))) swap(ze[2], ze[3]);
       // add the quad twice if the face belongs to 2 hexas => remove it later!

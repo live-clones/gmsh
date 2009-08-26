@@ -3,7 +3,6 @@
 
 #include <cmath>
 #include <vector>
-#include <cassert>
 #include <stdio.h>
 
 
@@ -80,7 +79,7 @@ public:
   gLevelsetPrimitive(int &tag) {
     if (tag < 1) {
       printf("Tag of the levelset (%d) must be greater than 0.\n", tag);
-      throw;
+      tag = std::fabs(tag);
     }
     tag_ = tag++;
   }
@@ -88,7 +87,7 @@ public:
   std::vector<const gLevelset *> getChildren() const { std::vector<const gLevelset *> p; return p; }
   double choose (double d1, double d2) const {
     printf("Cannot use function \"choose\" with a primitive!\n");
-    throw;
+    return d1;
   }
   virtual int type() const = 0;
   bool isPrimitive() const {return true;}

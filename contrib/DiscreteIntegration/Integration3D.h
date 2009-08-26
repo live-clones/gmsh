@@ -3,7 +3,6 @@
 
 #include <list>
 #include <vector>
-#include <cassert>
 #include <cmath>
 #include "DILevelset.h"
 
@@ -164,7 +163,7 @@ static inline double TetraVol(double x1, double y1, double z1, double x2, double
   double vol = ((x2 - x1) * ((y3 - y1) * (z4 - z1) - (y4 - y1) * (z3 - z1))
               - (x3 - x1) * ((y2 - y1) * (z4 - z1) - (y4 - y1) * (z2 - z1))
               + (x4 - x1) * ((y2 - y1) * (z3 - z1) - (y3 - y1) * (z2 - z1))) / 6.;
-  if(vol < 0) {printf("TET HAS NEGATIVE VOLUME = %g\n", vol); throw;}
+  if(vol < 0) {printf("TET HAS NEGATIVE VOLUME = %g\n", vol);}
   return vol;
 }
 static inline double TetraVol(const DI_Point p1, const DI_Point p2,
@@ -849,7 +848,8 @@ public:
     if(i == 1) return p21_;
     if(i == 2) return p12_;
     if(i == 3) return p22_;
-    throw;
+    printf("DI_QualError::pt only accept indices from 0 to 3!\n");
+    DI_Point p; return p;
   }
   void print(const DI_Element *e) const{
     DI_Point pt1 = p11_, pt2 = p12_, pt3 = p21_, pt4 = p22_;
