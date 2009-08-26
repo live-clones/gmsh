@@ -545,15 +545,23 @@ void GModel::addShape(std::string name, std::vector<double> &p,
       _occ_internals->Box(SPoint3(p[0],p[1],p[2]),
                           SPoint3(p[3],p[4],p[5]),o);
     }
-    else{
-      // we should that at the end, a test now !!
-      _occ_internals->buildLists();
-      _occ_internals->buildGModel(this);
+    else if (name=="Fillet"){
+      std::vector<int> edges;
+      for (int i=0;i<p.size()-1;i++)edges.push_back((int)p[i]);
+      addOCCFillet(edges,p[p.size()-1]);
     }
+    else{
+      return;
+    }
+    destroy();
+    _occ_internals->buildLists();
+    _occ_internals->buildGModel(this);
   }
   catch(Standard_Failure &err){
     Msg::Error("%s", err.GetMessageString());
   }
+
+
 }
 
 TopoDS_Shape  GlueFaces (const TopoDS_Shape& theShape,
@@ -603,6 +611,51 @@ TopoDS_Shape  GlueFaces (const TopoDS_Shape& theShape,
 
 //   return aRes;
 }
+
+void OCC_Internals::Fillet(std::vector<TopoDS_Edge> & edgesToFillet,
+			   double Radius){
+
+  // create a tool for fillet
+  BRepFilletAPI_MakeFillet fill (shape);
+  for (int i=0;i<edgesToFillet.size();++i){
+    fill.Add(edgesToFillet[i]);
+  }
+  for (int i = 1; i <= fill.NbContours(); i++) {
+    fill.SetRadius(Radius, i, 1);
+  }
+  fill.Build();
+  if (!fill.IsDone()) {
+    Msg::Error("Fillet can't be computed on the given shape with the given radius");
+    return;
+  }
+  shape = fill.Shape();
+
+  if (shape.IsNull()) return;
+
+  // Check shape validity
+  BRepCheck_Analyzer ana (shape, false);
+  if (!ana.IsValid()) {
+    Msg::Error("Fillet algorithm have produced an invalid shape result");
+  }
+
+
+}
+
+
+void GModel::addOCCFillet(std::vector<int> & edgesToFillet,
+			  double &Radius)
+{
+  std::vector<TopoDS_Edge> toto;
+
+  for (int i=0;i<edgesToFillet.size();++i){
+    GEdge *ge = getEdgeByTag(edgesToFillet[i]);
+    if (ge->getNativeType() == GEntity::OpenCascadeModel){
+      toto.push_back(*(TopoDS_Edge*)ge->getNativePtr());
+    }  
+  }
+  _occ_internals->Fillet(toto,Radius);
+}
+
 
 void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool, const BooleanOperator &op)
 {
@@ -822,7 +875,7 @@ void OCC_Internals::Torus(const SPoint3 &p, const SVector3 &d, double R1, double
   BRepPrimAPI_MakeTorus MC (anAxes, R1, R2);
   MC.Build();
   if (!MC.IsDone()) {
-    Msg::Error("Cylinder can't be computed from the given parameters");
+    Msg::Error("Torus can't be computed from the given parameters");
     return;
   }
   TopoDS_Shape aShape = MC.Shape();
@@ -839,7 +892,7 @@ void OCC_Internals::Torus(const SPoint3 &p, const SVector3 &d, double R1, double
   BRepPrimAPI_MakeTorus MC(anAxes, R1, R2, angle);
   MC.Build();
   if (!MC.IsDone()) {
-    Msg::Error("Cylinder can't be computed from the given parameters");
+    Msg::Error("Torus can't be computed from the given parameters");
     return;
   }
   TopoDS_Shape aShape = MC.Shape();
@@ -1143,6 +1196,11 @@ void GModel::addShape(std::string name, std::vector<double> &p,
 {
   Msg::Error("Gmsh must be compiled with OpenCascade support to apply "
              "Boolean Operators On Solids");
+}
+
+void GModel:: addOCCFillet(std::vector<int> & , double &){
+  Msg::Error("Gmsh must be compiled with OpenCascade support to apply "
+             "the Fillet operator");
 }
 
 #endif

@@ -58,6 +58,7 @@ class OCC_Internals {
 	     const BooleanOperator &op);
   void Torus(const SPoint3 &bottom_center, const SVector3 &dir, double R1, double R2, 
 	     double angle,  const BooleanOperator &op);
+  void Fillet(std::vector<TopoDS_Edge> &shapes, double radius);
   void applyBooleanOperator(TopoDS_Shape tool, const BooleanOperator &op);
 };
 

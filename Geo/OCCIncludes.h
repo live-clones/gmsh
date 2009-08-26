@@ -114,6 +114,7 @@ using std::iostream;
 #include "BRepAlgoAPI_Cut.hxx"
 #include "BRepAlgoAPI_Section.hxx"
 #include "BRepAlgoAPI_Fuse.hxx"
+#include "BRepFilletAPI_MakeFillet.hxx"
 #endif
 
 #if defined(WIN32)
