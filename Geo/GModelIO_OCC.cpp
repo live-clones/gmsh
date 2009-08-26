@@ -1072,11 +1072,11 @@ int GModel::applyOCCMeshConstraints(const void *constraints)
 
   MeshGmsh_DataMapOfShapeOfVertexConstrain vertexConstraints;
   c->GetVertexConstrain(vertexConstraints);
-  _applyOCCMeshConstraintsOnVertices(vertexConstraints);
+  _applyOCCMeshConstraintsOnVertices(this,vertexConstraints);
 
   MeshGmsh_DataMapOfShapeOfEdgeConstrain edgeConstraints;
   c->GetEdgeConstrain(edgeConstraints);
-  _applyOCCMeshConstraintsOnEdges(edgeConstraints);
+  _applyOCCMeshConstraintsOnEdges(this,edgeConstraints);
   return 1;
 #else
   return 0;
