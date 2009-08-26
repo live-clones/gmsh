@@ -357,8 +357,7 @@ void MTriangleBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) c
 {
   double uvw[3][3];
   for(int j = 0; j < 3; j++) {
-    MVertex *v = getVertex(j);
-    double xyz[3] = {v->x(), v->y(), v->z()};
+    double xyz[3] = {_v[j]->x(), _v[j]->y(), _v[j]->z()};
     getParent()->xyz2uvw(xyz, uvw[j]);
   }
   MVertex v0(uvw[0][0], uvw[0][1], uvw[0][2]);
@@ -387,8 +386,7 @@ void MLineBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
 {
   double uvw[2][3];
   for(int j = 0; j < 2; j++) {
-    MVertex *v = getVertex(j);
-    double xyz[3] = {v->x(), v->y(), v->z()};
+    double xyz[3] = {_v[j]->x(), _v[j]->y(), _v[j]->z()};
     getParent()->xyz2uvw(xyz, uvw[j]);
   }
   MVertex v0(uvw[0][0], uvw[0][1], uvw[0][2]);
