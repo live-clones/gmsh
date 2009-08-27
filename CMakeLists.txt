@@ -611,10 +611,6 @@ list(APPEND EXTERNAL_INCLUDES ${CMAKE_INCLUDE_PATH} ${ENV_CMAKE_INCLUDE_PATH})
 list(APPEND EXTERNAL_INCLUDES ${CMAKE_PREFIX_PATH} ${ENV_CMAKE_PREFIX_PATH})
 foreach(DIR ${CMAKE_PREFIX_PATH} ${ENV_CMAKE_PREFIX_PATH})
   list(APPEND EXTERNAL_INCLUDES ${DIR}/include)
-  list(APPEND EXTERNAL_LIBPATH ${DIR}/lib)
-  if(MKL_PATH)
-    list(APPEND EXTERNAL_LIBPATH ${DIR}/${MKL_PATH})
-  endif(MKL_PATH)
 endforeach(DIR)
 
 if(EXTERNAL_INCLUDES)
@@ -647,7 +643,6 @@ if(MSVC)
 endif(MSVC)
 
 # shared lib target: we don't build it by default either
-link_directories(${EXTERNAL_LIBPATH})
 add_library(shared SHARED EXCLUDE_FROM_ALL ${GMSH_SRC})
 set_target_properties(shared PROPERTIES OUTPUT_NAME Gmsh)
 if(HAVE_LAPACK AND LAPACK_FLAGS)
