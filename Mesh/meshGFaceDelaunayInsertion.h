@@ -18,20 +18,18 @@ class BDS_Mesh;
 class BDS_Point;
 
 void buildMetric(GFace *gf, double *uv, double *metric);
-int inCircumCircleAniso(GFace *gf, double *p1, double *p2, double *p3, double *p4,
-                        double *metric);
-int inCircumCircleAniso(GFace *gf, MTriangle *base, const double *uv, const double *metric,
-                        const std::vector<double> &Us, const std::vector<double> &Vs);
-void circumCenterMetric(double *pa, double *pb, double *pc,
-                        const double *metric,
+int inCircumCircleAniso(GFace *gf, double *p1, double *p2, double *p3, 
+                        double *p4, double *metric);
+int inCircumCircleAniso(GFace *gf, MTriangle *base, const double *uv, 
+                        const double *metric, const std::vector<double> &Us,
+                        const std::vector<double> &Vs);
+void circumCenterMetric(double *pa, double *pb, double *pc, const double *metric,
                         double *x, double &Radius2);
-void circumCenterMetric(MTriangle *base,
-                        const double *metric,
-                        const std::vector<double> &Us,
+void circumCenterMetric(MTriangle *base, const double *metric,
+                        const std::vector<double> &Us, 
                         const std::vector<double> &Vs,
                         double *x, double &Radius2);
-bool circumCenterMetricInTriangle(MTriangle *base,
-                                  const double *metric,
+bool circumCenterMetricInTriangle(MTriangle *base, const double *metric,
                                   const std::vector<double> &Us,
                                   const std::vector<double> &Vs);
 bool invMapUV(MTriangle *t, double *p,

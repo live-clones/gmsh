@@ -23,7 +23,7 @@ void computeElementShapes(GFace *gf, BDS_Mesh &m, double &worst, double &avg,
 void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT, 
                        const bool computeNodalSizeField);
 void gmshOptimizeMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT, 
-                         std::map<BDS_Point*,MVertex*> *recover_map=0);
+                         std::map<BDS_Point*,MVertex*> *recoverMap=0);
 void gmshDelaunayizeBDS(GFace *gf, BDS_Mesh &m, int &nb_swap);
 void gmshCollapseSmallEdges(GModel &gm);
 BDS_Mesh *gmsh2BDS(std::list<GFace*> &l);
