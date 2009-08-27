@@ -1310,7 +1310,6 @@ void orientMeshGFace::operator()(GFace *gf)
 {
   gf->model()->setCurrentMeshEntity(gf);
 
-  return;
   if(gf->geomType() == GEntity::ProjectionFace) return;
   if(gf->geomType() == GEntity::CompoundSurface)return;
   // in old versions we did not reorient transfinite surface meshes;
