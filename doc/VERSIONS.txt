@@ -1,7 +1,7 @@
-$Id: VERSIONS.txt,v 1.52 2009-08-27 23:57:35 geuzaine Exp $
+$Id: VERSIONS.txt,v 1.53 2009-08-27 23:58:24 geuzaine Exp $
 
-2.4.1 (?): small bug fixes (orientation of mesh with Delaunay and
-frontal).
+2.4.1 (?): fixed orientation of surface meshes; made meshing
+algorithms thread-safe; small bug fixes.
 
 2.4.0 (Aug 22, 2009): switched build system to CMake; optionally copy
 transfinite mesh contraints during geometry transformations; bumped
