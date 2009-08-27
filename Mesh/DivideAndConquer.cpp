@@ -6,7 +6,7 @@
 // Triangulation using a divide and conquer algorithm
 //
 // The main idea is to be able to merge two Delaunay triangulations
-// into a single one (see the 'merge' function). Points are then
+// into a single one (see the 'Merge' function). Points are then
 // separated into two groups, then each group into two, ... until
 // having 1, 2 or 3 points (the triangulation is then trivial).
 //
@@ -24,14 +24,9 @@
 #define Pred(x) ((x)->prev)
 #define Succ(x) ((x)->next)
 
-static PointRecord *pPointArray;
-
-static int Insert(PointNumero a, PointNumero b);
-static int Delete(PointNumero a, PointNumero b);
-
-static PointNumero Predecessor(PointNumero a, PointNumero b)
+PointNumero DocRecord::Predecessor(PointNumero a, PointNumero b)
 {
-  DListPeek p = pPointArray[a].adjacent;
+  DListPeek p = points[a].adjacent;
   if(p == NULL)
     return -1;
 
@@ -39,14 +34,14 @@ static PointNumero Predecessor(PointNumero a, PointNumero b)
     if(p->point_num == b)
       return Pred(p)->point_num;
     p = Pred(p);
-  } while(p != pPointArray[a].adjacent);
+  } while(p != points[a].adjacent);
 
   return -1;
 }
 
-static PointNumero Successor(PointNumero a, PointNumero b)
+PointNumero DocRecord::Successor(PointNumero a, PointNumero b)
 {
-  DListPeek p = pPointArray[a].adjacent;
+  DListPeek p = points[a].adjacent;
   if(p == NULL)
     return -1;
 
@@ -54,14 +49,14 @@ static PointNumero Successor(PointNumero a, PointNumero b)
     if(p->point_num == b)
       return Succ(p)->point_num;
     p = Succ(p);
-  } while(p != pPointArray[a].adjacent);
+  } while(p != points[a].adjacent);
 
   return -1;
 }
 
-static int FixFirst(PointNumero x, PointNumero f)
+int DocRecord::FixFirst(PointNumero x, PointNumero f)
 {
-  DListPeek p = pPointArray[x].adjacent;
+  DListPeek p = points[x].adjacent;
   if(p == NULL)
     return 0;
 
@@ -69,7 +64,7 @@ static int FixFirst(PointNumero x, PointNumero f)
   DListPeek copy = p;
   do {
     if(p->point_num == f) {
-      pPointArray[x].adjacent = p;
+      points[x].adjacent = p;
       out = 1;
     }
     else
@@ -78,16 +73,16 @@ static int FixFirst(PointNumero x, PointNumero f)
   return out;
 }
 
-static PointNumero First(PointNumero x)
+PointNumero DocRecord::First(PointNumero x)
 {
-  return (pPointArray[x].adjacent)->point_num;
+  return (points[x].adjacent)->point_num;
 }
 
-static int IsLeftOf(PointNumero x, PointNumero y, PointNumero check)
+int DocRecord::IsLeftOf(PointNumero x, PointNumero y, PointNumero check)
 {
-  double pa[2] = {(double)pPointArray[x].where.h, (double)pPointArray[x].where.v};
-  double pb[2] = {(double)pPointArray[y].where.h, (double)pPointArray[y].where.v};
-  double pc[2] = {(double)pPointArray[check].where.h, (double)pPointArray[check].where.v};
+  double pa[2] = {(double)points[x].where.h, (double)points[x].where.v};
+  double pb[2] = {(double)points[y].where.h, (double)points[y].where.v};
+  double pc[2] = {(double)points[check].where.h, (double)points[check].where.v};
 
   // we use robust predicates here
   double result = gmsh::orient2d(pa, pb, pc);
@@ -95,12 +90,12 @@ static int IsLeftOf(PointNumero x, PointNumero y, PointNumero check)
   return result > 0;
 }
 
-static int IsRightOf(PointNumero x, PointNumero y, PointNumero check)
+int DocRecord::IsRightOf(PointNumero x, PointNumero y, PointNumero check)
 {
   return IsLeftOf(y, x, check);
 }
 
-static Segment LowerCommonTangent(DT vl, DT vr)
+Segment DocRecord::LowerCommonTangent(DT vl, DT vr)
 {
   PointNumero x, y, z, z1, z2, temp;
   Segment s;
@@ -129,7 +124,7 @@ static Segment LowerCommonTangent(DT vl, DT vr)
   }
 }
 
-static Segment UpperCommonTangent(DT vl, DT vr)
+Segment DocRecord::UpperCommonTangent(DT vl, DT vr)
 {
   PointNumero x, y, z, z1, z2, temp;
   Segment s;
@@ -159,7 +154,7 @@ static Segment UpperCommonTangent(DT vl, DT vr)
 }
 
 // return 1 if the point k is NOT in the circumcircle of triangle  hij
-static int Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k)
+int DocRecord::Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k)
 {
   if((h == i) && (h == j) && (h == k)) {
     Msg::Error("Identical points in triangulation: increase element size "
@@ -167,10 +162,10 @@ static int Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k)
     return 0;
   }
   
-  double pa[2] = {(double)pPointArray[h].where.h, (double)pPointArray[h].where.v};
-  double pb[2] = {(double)pPointArray[i].where.h, (double)pPointArray[i].where.v};
-  double pc[2] = {(double)pPointArray[j].where.h, (double)pPointArray[j].where.v};
-  double pd[2] = {(double)pPointArray[k].where.h, (double)pPointArray[k].where.v};
+  double pa[2] = {(double)points[h].where.h, (double)points[h].where.v};
+  double pb[2] = {(double)points[i].where.h, (double)points[i].where.v};
+  double pc[2] = {(double)points[j].where.h, (double)points[j].where.v};
+  double pd[2] = {(double)points[k].where.h, (double)points[k].where.v};
 
   // we use robust predicates here  
   double result = gmsh::incircle(pa, pb, pc, pd) * gmsh::orient2d(pa, pb, pc);
@@ -178,7 +173,7 @@ static int Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k)
   return (result < 0) ? 1 : 0;
 }
 
-static int merge(DT vl, DT vr)
+int DocRecord::Merge(DT vl, DT vr)
 {
   Segment bt, ut;
   int a, b, out;
@@ -265,7 +260,7 @@ static int merge(DT vl, DT vr)
   return 1;
 }
 
-static DT recur_trig(PointNumero left, PointNumero right)
+DT DocRecord::RecurTrig(PointNumero left, PointNumero right)
 {
   int n, m;
   DT dt;
@@ -303,7 +298,7 @@ static DT recur_trig(PointNumero left, PointNumero right)
 
   default: // plus de trois points : cas recursif
     m = (left + right) >> 1;
-    if(!merge(recur_trig(left, m), recur_trig(m + 1, right)))
+    if(!Merge(RecurTrig(left, m), RecurTrig(m + 1, right)))
       break;
   }
   return dt;
@@ -323,17 +318,16 @@ static int comparePoints(const void *i, const void *j)
 }
 
 // this fonction builds the delaunay triangulation for a window
-static int BuildDelaunay(DocRecord *doc)
+int DocRecord::BuildDelaunay()
 {
-  pPointArray = doc->points;
-  qsort(doc->points, doc->numPoints, sizeof(PointRecord), comparePoints);
-  recur_trig(0, doc->numPoints - 1);
+  qsort(points, numPoints, sizeof(PointRecord), comparePoints);
+  RecurTrig(0, numPoints - 1);
   return 1;
 }
 
 // This routine insert the point 'newPoint' in the list dlist,
 // respecting the clock-wise orientation
-static int DListInsert(DListRecord **dlist, DPoint center, PointNumero newPoint)
+int DocRecord::DListInsert(DListRecord **dlist, DPoint center, PointNumero newPoint)
 {
   DListRecord *p, *newp;
   double alpha1, alpha, beta, xx, yy;
@@ -363,20 +357,20 @@ static int DListInsert(DListRecord **dlist, DPoint center, PointNumero newPoint)
   first = p->point_num;
 
   // first, compute polar coord. of the first point
-  yy = (double)(pPointArray[first].where.v - center.v);
-  xx = (double)(pPointArray[first].where.h - center.h);
+  yy = (double)(points[first].where.v - center.v);
+  xx = (double)(points[first].where.h - center.h);
   alpha1 = atan2(yy, xx);
 
   // compute polar coord of the point to insert
-  yy = (double)(pPointArray[newPoint].where.v - center.v);
-  xx = (double)(pPointArray[newPoint].where.h - center.h);
+  yy = (double)(points[newPoint].where.v - center.v);
+  xx = (double)(points[newPoint].where.h - center.h);
   beta = atan2(yy, xx) - alpha1;
   if(beta <= 0)
     beta += 2. * M_PI;
 
   do {
-    yy = (double)(pPointArray[Succ(p)->point_num].where.v - center.v);
-    xx = (double)(pPointArray[Succ(p)->point_num].where.h - center.h);
+    yy = (double)(points[Succ(p)->point_num].where.v - center.v);
+    xx = (double)(points[Succ(p)->point_num].where.h - center.h);
     alpha = atan2(yy, xx) - alpha1;
     if(alpha <= 1.e-15)
       alpha += 2. * M_PI;
@@ -396,14 +390,14 @@ static int DListInsert(DListRecord **dlist, DPoint center, PointNumero newPoint)
 
 // This routine inserts the point 'a' in the adjency list of 'b' and
 // the point 'b' in the adjency list of 'a'
-static int Insert(PointNumero a, PointNumero b)
+int DocRecord::Insert(PointNumero a, PointNumero b)
 {
-  int rslt = DListInsert(&pPointArray[a].adjacent, pPointArray[a].where, b);
-  rslt &= DListInsert(&pPointArray[b].adjacent, pPointArray[b].where, a);
+  int rslt = DListInsert(&points[a].adjacent, points[a].where, b);
+  rslt &= DListInsert(&points[b].adjacent, points[b].where, a);
   return rslt;
 }
 
-static int DListDelete(DListPeek *dlist, PointNumero oldPoint)
+int DocRecord::DListDelete(DListPeek *dlist, PointNumero oldPoint)
 {
   DListPeek p;
 
@@ -437,20 +431,20 @@ static int DListDelete(DListPeek *dlist, PointNumero oldPoint)
 
 // This routine removes the point 'a' in the adjency list of 'b' and
 // the point 'b' in the adjency list of 'a'
-static int Delete(PointNumero a, PointNumero b)
+int DocRecord::Delete(PointNumero a, PointNumero b)
 {
-  int rslt = DListDelete(&pPointArray[a].adjacent, b);
-  rslt &= DListDelete(&pPointArray[b].adjacent, a);
+  int rslt = DListDelete(&points[a].adjacent, b);
+  rslt &= DListDelete(&points[b].adjacent, a);
   return rslt;
 }
 
 // compte les points sur le polygone convexe
-static int CountPointsOnHull(int n, PointRecord *pPointArray)
+int DocRecord::CountPointsOnHull(int n)
 {
   PointNumero p, p2, temp;
   int i;
 
-  if(pPointArray[0].adjacent == NULL)
+  if(points[0].adjacent == NULL)
     return 0;
   i = 1;
   p = 0;
@@ -464,7 +458,7 @@ static int CountPointsOnHull(int n, PointRecord *pPointArray)
   return (i <= n) ? i : -1;
 }
 
-static PointNumero *ConvertDlistToArray(DListPeek *dlist, int *n)
+PointNumero *DocRecord::ConvertDlistToArray(DListPeek *dlist, int *n)
 {
   DListPeek p, temp;
   int i, max = 0;
@@ -492,30 +486,27 @@ static PointNumero *ConvertDlistToArray(DListPeek *dlist, int *n)
 }
 
 // Convertir les listes d'adjacence en triangles
-static int ConvertDListToTriangles(DocRecord *doc)
+int DocRecord::ConvertDListToTriangles()
 {
-  // on suppose que n >= 3. gPointArray est suppose OK.
+  // on suppose que n >= 3. points est suppose OK.
 
-  //  STriangle *striangle;
-  int n, i, j;
+  int n = numPoints, i, j;
   int count = 0, count2 = 0;
   PointNumero aa, bb, cc;
-  PointRecord *gPointArray = doc->points;
 
-  n = doc->numPoints;
   STriangle *striangle = (STriangle *) Malloc(n * sizeof(STriangle));
 
-  count2 = CountPointsOnHull(n, doc->points);
+  count2 = CountPointsOnHull(n);
 
   // nombre de triangles que l'on doit obtenir
   count2 = 2 * (n - 1) - count2;
 
-  doc->triangles = (Triangle *) Malloc(2 * count2 * sizeof(Triangle));
+  triangles = (Triangle *) Malloc(2 * count2 * sizeof(Triangle));
 
   for(i = 0; i < n; i++) {
     // on cree une liste de points connectes au point i (t) + nombre
     // de points (t_length)
-    striangle[i].t = ConvertDlistToArray(&gPointArray[i].adjacent,
+    striangle[i].t = ConvertDlistToArray(&points[i].adjacent,
                                          &striangle[i].t_length);
   }
 
@@ -528,38 +519,42 @@ static int ConvertDListToTriangles(DocRecord *doc)
         aa = i;
         bb = striangle[i].t[j];
         cc = striangle[i].t[j + 1];
-        doc->triangles[count].a = aa;
-        doc->triangles[count].b = bb;
-        doc->triangles[count].c = cc;
+        triangles[count].a = aa;
+        triangles[count].b = bb;
+        triangles[count].c = cc;
         count++;
       }
     }
   }
-  doc->numTriangles = count2;
-  doc->striangle = striangle;
+  numTriangles = count2;
+
+  for(int i = 0; i < n; i++)
+    Free(striangle[i].t);
+  Free(striangle);
+
   return 1;
 }
 
-//  Cette routine efface toutes les listes d'adjacence du pPointArray
-static void RemoveAllDList(int n, PointRecord *pPointArray)
+//  Cette routine efface toutes les listes d'adjacence de points
+void DocRecord::RemoveAllDList()
 {
   int i;
   DListPeek p, temp;
 
-  for(i = 0; i < n; i++)
-    if(pPointArray[i].adjacent != NULL) {
-      p = pPointArray[i].adjacent;
+  for(i = 0; i < numPoints; i++)
+    if(points[i].adjacent != NULL) {
+      p = points[i].adjacent;
       do {
         temp = p;
         p = Pred(p);
         Free(temp);
-      } while(p != pPointArray[i].adjacent);
-      pPointArray[i].adjacent = NULL;
+      } while(p != points[i].adjacent);
+      points[i].adjacent = NULL;
     }
 }
 
 DocRecord::DocRecord(int n) 
-  : numPoints(n), points(NULL), numTriangles(0), triangles(NULL), striangle(0)
+  : numPoints(n), points(NULL), numTriangles(0), triangles(NULL)
 {
   if(numPoints)
     points = (PointRecord*)Malloc(numPoints * sizeof(PointRecord));
@@ -567,32 +562,15 @@ DocRecord::DocRecord(int n)
 
 DocRecord::~DocRecord()
 {
-  Free(points);
-  Free(triangles);
-  if (striangle){
-    for(int i = 0; i < numPoints; i++)
-      Free(striangle[i].t);
-    Free(striangle);
-  }
+  if(points) Free(points);
+  if(triangles) Free(triangles);
 }
 
 void DocRecord::MakeMeshWithPoints()
 {
   if(numPoints < 3) return;
-  BuildDelaunay(this);
-  ConvertDListToTriangles(this);
-  RemoveAllDList(numPoints, points);
-  for(int i = 0; i < numPoints; i++)
-    Free(striangle[i].t);
-  Free(striangle);
-  striangle = 0;
-}
-
-void DocRecord::MakeVoronoi(){
-  if(numPoints < 3) return;
-  BuildDelaunay(this);
-  //  TagPointsOnHull(this);
-  ConvertDListToTriangles(this);
-  RemoveAllDList(numPoints, points);  
+  BuildDelaunay();
+  ConvertDListToTriangles();
+  RemoveAllDList();
 }
 

@@ -44,20 +44,38 @@ typedef struct{
   PointNumero a, b, c;
 }Triangle;
 
-
 class DocRecord{
+ private:
+  PointNumero Predecessor(PointNumero a, PointNumero b);
+  PointNumero Successor(PointNumero a, PointNumero b);
+  int FixFirst(PointNumero x, PointNumero f);
+  PointNumero First(PointNumero x);
+  int IsLeftOf(PointNumero x, PointNumero y, PointNumero check);
+  int IsRightOf(PointNumero x, PointNumero y, PointNumero check);
+  Segment LowerCommonTangent(DT vl, DT vr);
+  Segment UpperCommonTangent(DT vl, DT vr);
+  int Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k);
+  int Merge(DT vl, DT vr);
+  DT RecurTrig(PointNumero left, PointNumero right);
+  int BuildDelaunay();
+  int DListInsert(DListRecord **dlist, DPoint center, PointNumero newPoint);
+  int Insert(PointNumero a, PointNumero b);
+  int DListDelete(DListPeek *dlist, PointNumero oldPoint);
+  int Delete(PointNumero a, PointNumero b);
+  int CountPointsOnHull(int n);
+  PointNumero *ConvertDlistToArray(DListPeek *dlist, int *n);
+  int ConvertDListToTriangles();
+  void RemoveAllDList();
  public:
   int numPoints;        // number of points
   PointRecord *points;  // points to triangulate
   int numTriangles;     // number of triangles
   Triangle *triangles;  // 2D results
-  STriangle *striangle; // connected points
   DocRecord(int n);
-  double & x(int i){ return points[i].where.v; } 
-  double & y(int i){ return points[i].where.h; } 
+  double &x(int i){ return points[i].where.v; } 
+  double &y(int i){ return points[i].where.h; } 
   ~DocRecord();
   void MakeMeshWithPoints();
-  void MakeVoronoi();
 };
 
 #endif
