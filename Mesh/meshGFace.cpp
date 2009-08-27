@@ -368,6 +368,11 @@ static bool recover_medge_old(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
 
+// FIXME: to make the algorithm thread-safe, we need to change the way
+// we renumber the boundary vertices (and the associated u/v reparam):
+// using setIndex leads to unpredicatbel results if meshing
+// concurrently two surfaces that share a common edge!
+
 static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, 
                                 bool repairSelfIntersecting1dMesh, bool debug = true)
 {
