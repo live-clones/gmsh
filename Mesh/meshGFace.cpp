@@ -91,51 +91,54 @@ static void remeshUnrecoveredEdges(std::map<MVertex*, BDS_Point*> &recoverMapInv
     for(int i = 0; i < N; i++){
       MVertex *v1 = itr->ge->lines[i]->getVertex(0);
       MVertex *v2 = itr->ge->lines[i]->getVertex(1);
-      BDS_Point *pp1 = recoverMapInv[v1];
-      BDS_Point *pp2 = recoverMapInv[v2];
-      if((pp1->iD == p1 && pp2->iD == p2) || (pp1->iD == p2 && pp2->iD == p1)){
-        double t1;
-        double lc1 = -1;
-        if(v1->onWhat() == g1) t1 = bb.low();
-        else if(v1->onWhat() == g2) t1 = bb.high();
-        else {
-          MEdgeVertex *ev1 = (MEdgeVertex*)v1;
-          lc1 = ev1->getLc();
-          v1->getParameter(0, t1);
+      if(recoverMapInv.count(v1) && recoverMapInv.count(v2)){
+        BDS_Point *pp1 = recoverMapInv[v1];
+        BDS_Point *pp2 = recoverMapInv[v2];
+        if((pp1->iD == p1 && pp2->iD == p2) || (pp1->iD == p2 && pp2->iD == p1)){
+          double t1;
+          double lc1 = -1;
+          if(v1->onWhat() == g1) t1 = bb.low();
+          else if(v1->onWhat() == g2) t1 = bb.high();
+          else {
+            MEdgeVertex *ev1 = (MEdgeVertex*)v1;
+            lc1 = ev1->getLc();
+            v1->getParameter(0, t1);
+          }
+          double t2;
+          double lc2 = -1;
+          if(v2->onWhat() == g1) t2 = bb.low();
+          else if(v2->onWhat() == g2) t2 = bb.high();
+          else {
+            MEdgeVertex *ev2 = (MEdgeVertex*)v2;
+            lc2 = ev2->getLc();
+            v2->getParameter(0, t2);
+          }
+          
+          // periodic
+          if(v1->onWhat() == g1 && v1->onWhat() == g2)
+            t1 = fabs(t2-bb.low()) < fabs(t2-bb.high()) ? bb.low() : bb.high();
+          if(v2->onWhat() == g1 && v2->onWhat() == g2)
+            t2 = fabs(t1-bb.low()) < fabs(t1-bb.high()) ? bb.low() : bb.high();
+          
+          if(lc1 == -1)
+            lc1 = BGM_MeshSize(v1->onWhat(), 0, 0, v1->x(), v1->y(), v1->z());
+          if(lc2 == -1)
+            lc2 = BGM_MeshSize(v2->onWhat(), 0, 0, v2->x(), v2->y(), v2->z());
+          // should be better, i.e. equidistant
+          double t = 0.5 * (t2 + t1);
+          double lc = 0.5 * (lc1 + lc2);
+          GPoint V = itr->ge->point(t);
+          MEdgeVertex * newv = new MEdgeVertex(V.x(), V.y(), V.z(), itr->ge, t, lc);
+          newLines.push_back(new MLine(v1, newv));
+          newLines.push_back(new MLine(newv, v2));
+          delete itr->ge->lines[i];
         }
-        double t2;
-        double lc2 = -1;
-        if(v2->onWhat() == g1) t2 = bb.low();
-        else if(v2->onWhat() == g2) t2 = bb.high();
         else {
-          MEdgeVertex *ev2 = (MEdgeVertex*)v2;
-          lc2 = ev2->getLc();
-          v2->getParameter(0, t2);
+          newLines.push_back(itr->ge->lines[i]);
         }
-        
-        // periodic
-        if(v1->onWhat() == g1 && v1->onWhat() == g2)
-          t1 = fabs(t2-bb.low()) < fabs(t2-bb.high()) ? bb.low() : bb.high();
-        if(v2->onWhat() == g1 && v2->onWhat() == g2)
-          t2 = fabs(t1-bb.low()) < fabs(t1-bb.high()) ? bb.low() : bb.high();
-        
-        if(lc1 == -1)
-          lc1 = BGM_MeshSize(v1->onWhat(), 0, 0, v1->x(), v1->y(), v1->z());
-        if(lc2 == -1)
-          lc2 = BGM_MeshSize(v2->onWhat(), 0, 0, v2->x(), v2->y(), v2->z());
-        // should be better, i.e. equidistant
-        double t = 0.5 * (t2 + t1);
-        double lc = 0.5 * (lc1 + lc2);
-        GPoint V = itr->ge->point(t);
-        MEdgeVertex * newv = new MEdgeVertex(V.x(), V.y(), V.z(), itr->ge, t, lc);
-        newLines.push_back(new MLine(v1, newv));
-        newLines.push_back(new MLine(newv, v2));
-        delete itr->ge->lines[i];
-      }
-      else {
-        newLines.push_back(itr->ge->lines[i]);
       }
     }
+
     itr->ge->lines = newLines;
     itr->ge->mesh_vertices.clear();
     N = itr->ge->lines.size();
