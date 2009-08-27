@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h> // for abs()
 #include <vector>
 
 // PRIMITIVE LEVELSET
@@ -78,7 +79,7 @@ public:
   gLevelsetPrimitive(int &tag) {
     if (tag < 1) {
       printf("Tag of the levelset (%d) must be greater than 0.\n", tag);
-      tag = std::abs(tag);
+      tag = abs(tag);
     }
     tag_ = tag++;
   }
