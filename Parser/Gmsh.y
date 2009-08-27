@@ -63,7 +63,7 @@ static int yylinenoImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static double LoopControlVariablesTab[MAX_RECUR_LOOPS][3];
 static char *LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
 
-void yyerror(char *s);
+void yyerror(const char *s);
 void yymsg(int level, const char *fmt, ...);
 void skip_until(const char *skip, const char *until);
 int PrintListOfDouble(char *format, List_T *list, char *buffer);
@@ -3923,7 +3923,7 @@ void FixRelativePath(const char *in, char *out)
   }
 }
 
-void yyerror(char *s)
+void yyerror(const char *s)
 {
   Msg::Error("'%s', line %d : %s (%s)", gmsh_yyname.c_str(), gmsh_yylineno - 1,
              s, gmsh_yytext);
