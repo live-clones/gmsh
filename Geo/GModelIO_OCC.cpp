@@ -551,7 +551,7 @@ void GModel::addShape(std::string name, std::vector<double> &p,
         return;
       }
       std::vector<TopoDS_Edge> edges;
-      for (int i = 0; i < p.size() - 1; i++){
+      for (unsigned int i = 0; i < p.size() - 1; i++){
         GEdge *ge = getEdgeByTag((int)p[i]);
         if (ge && ge->getNativeType() == GEntity::OpenCascadeModel){
           edges.push_back(*(TopoDS_Edge*)ge->getNativePtr());
@@ -899,7 +899,7 @@ void OCC_Internals::Fillet(std::vector<TopoDS_Edge> &edgesToFillet,
 
   // create a tool for fillet
   BRepFilletAPI_MakeFillet fill(shape);
-  for (int i = 0; i < edgesToFillet.size(); ++i){
+  for (unsigned int i = 0; i < edgesToFillet.size(); ++i){
     fill.Add(edgesToFillet[i]);
   }
   for (int i = 1; i <= fill.NbContours(); i++){
