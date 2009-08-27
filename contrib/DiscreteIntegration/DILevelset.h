@@ -1,7 +1,7 @@
 #ifndef _gLEVELSET_H_
 #define _gLEVELSET_H_
 
-#include <cmath>
+#include <math.h>
 #include <vector>
 #include <stdio.h>
 
@@ -79,7 +79,7 @@ public:
   gLevelsetPrimitive(int &tag) {
     if (tag < 1) {
       printf("Tag of the levelset (%d) must be greater than 0.\n", tag);
-      tag = std::fabs(tag);
+      tag = fabs(tag);
     }
     tag_ = tag++;
   }
