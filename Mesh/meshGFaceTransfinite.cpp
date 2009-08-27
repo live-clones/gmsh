@@ -80,6 +80,58 @@ void findTransfiniteCorners(GFace *gf, std::vector<MVertex*> &corners)
   }
 }
 
+static void computeEdgeLoops(const GFace *gf, std::vector<MVertex*> &all_mvertices,
+                             std::vector<int> &indices)
+{
+  std::list<GEdge*> edges = gf->edges();
+  std::list<int> ori = gf->orientations();
+  std::list<GEdge*>::iterator it = edges.begin();
+  std::list<int>::iterator ito = ori.begin();
+
+  indices.push_back(0);
+  GVertex *start = ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
+  GVertex *v_end = ((*ito) != 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
+  all_mvertices.push_back(start->mesh_vertices[0]);
+  if(*ito == 1)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+      all_mvertices.push_back((*it)->mesh_vertices[i]);
+  else
+    for(int i = (*it)->mesh_vertices.size() - 1; i >= 0; i--)
+      all_mvertices.push_back((*it)->mesh_vertices[i]);
+  
+  GVertex *v_start = start;
+  while(1){
+    ++it;
+    ++ito;
+    if(v_end == start){
+      indices.push_back(all_mvertices.size());
+      if(it == edges.end ()) break;
+      start = ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
+      v_end = ((*ito) != 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
+      v_start = start;
+    }
+    else{
+      if(it == edges.end ()){
+        Msg::Error("Something wrong in edge loop computation");
+        return;
+      }
+      v_start = ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
+      if(v_start != v_end){
+        Msg::Error("Something wrong in edge loop computation");
+        return;
+      }
+      v_end = ((*ito) != 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
+    }
+    all_mvertices.push_back(v_start->mesh_vertices[0]);
+    if(*ito == 1)
+      for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+        all_mvertices.push_back((*it)->mesh_vertices[i]);
+    else
+      for(int i = (*it)->mesh_vertices.size()-1; i >= 0; i--)
+        all_mvertices.push_back((*it)->mesh_vertices[i]);
+  }
+}
+
 int MeshTransfiniteSurface(GFace *gf)
 {
   if(gf->meshAttributes.Method != MESH_TRANSFINITE) return 0;
