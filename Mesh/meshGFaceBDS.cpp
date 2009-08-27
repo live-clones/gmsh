@@ -664,25 +664,30 @@ void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q)
 }
 
 void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT, 
-                       const bool computeNodalSizeField)
+                       const bool computeNodalSizeField,
+                       std::map<MVertex*, BDS_Point*> *recoverMapInv)
 {
   int IT = 0;
   int MAXNP = m.MAXPOINTNUMBER;
 
   // classify correctly the embedded vertices use a negative model
   // face number to avoid mesh motion
-  std::list<GVertex*> emb_vertx = gf->embeddedVertices();
-  std::list<GVertex*>::iterator itvx = emb_vertx.begin();
-  while(itvx != emb_vertx.end()){
-    MVertex *v = *((*itvx)->mesh_vertices.begin());
-    BDS_Point *p = m.find_point(v->getIndex());
-    m.add_geom (-1, 2);
-    p->g = m.get_geom(-1,2);
-    p->lc() = (*itvx)->prescribedMeshSizeAtVertex();
-    p->lcBGM() = (*itvx)->prescribedMeshSizeAtVertex();
-    ++itvx;
+  if(recoverMapInv){
+    std::list<GVertex*> emb_vertx = gf->embeddedVertices();
+    std::list<GVertex*>::iterator itvx = emb_vertx.begin();
+    while(itvx != emb_vertx.end()){
+      MVertex *v = *((*itvx)->mesh_vertices.begin());
+      if(recoverMapInv->count(v)){
+        BDS_Point *p = (*recoverMapInv)[v];
+        m.add_geom(-1, 2);
+        p->g = m.get_geom(-1, 2);
+        p->lc() = (*itvx)->prescribedMeshSizeAtVertex();
+        p->lcBGM() = (*itvx)->prescribedMeshSizeAtVertex();
+        ++itvx;
+      }
+    }
   }
- 
+
   // If asked, compute nodal size field using 1D Mesh
   if (computeNodalSizeField){
     std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
@@ -790,7 +795,7 @@ void allowAppearanceofEdge (BDS_Point *p1, BDS_Point *p2)
 {
 }
 
-void invalidEdgesPeriodic(BDS_Mesh &m, std::map<BDS_Point*,MVertex*> *recoverMap,
+void invalidEdgesPeriodic(BDS_Mesh &m, std::map<BDS_Point*, MVertex*> *recoverMap,
                           std::set<BDS_Edge*> &toSplit)
 {
   // first look for degenerated vertices
@@ -799,10 +804,9 @@ void invalidEdgesPeriodic(BDS_Mesh &m, std::map<BDS_Point*,MVertex*> *recoverMap
   while (it != m.edges.end()){
     BDS_Edge *e = *it;
     if (!e->deleted && e->numfaces() == 1){
-      std::map<BDS_Point*,MVertex*>::iterator itp1 = recoverMap->find(e->p1);
-      std::map<BDS_Point*,MVertex*>::iterator itp2 = recoverMap->find(e->p2);    
-      if (itp1 != recoverMap->end() && 
-          itp2 != recoverMap->end() && 
+      std::map<BDS_Point*, MVertex*>::iterator itp1 = recoverMap->find(e->p1);
+      std::map<BDS_Point*, MVertex*>::iterator itp2 = recoverMap->find(e->p2);    
+      if (itp1 != recoverMap->end() && itp2 != recoverMap->end() && 
           itp1->second == itp2->second){
         degenerated.insert(itp1->second);
       }
@@ -816,13 +820,13 @@ void invalidEdgesPeriodic(BDS_Mesh &m, std::map<BDS_Point*,MVertex*> *recoverMap
   while (it != m.edges.end()){
     BDS_Edge *e = *it;
     if (!e->deleted && e->numfaces() == 2){
-      std::map<BDS_Point*,MVertex*>::iterator itp1 = recoverMap->find(e->p1);
-      std::map<BDS_Point*,MVertex*>::iterator itp2 = recoverMap->find(e->p2);    
+      std::map<BDS_Point*, MVertex*>::iterator itp1 = recoverMap->find(e->p1);
+      std::map<BDS_Point*, MVertex*>::iterator itp2 = recoverMap->find(e->p2);    
       if (itp1 != recoverMap->end() && 
           itp2 != recoverMap->end() && 
           itp1->second == itp2->second) toSplit.insert(e);
       else if (itp1 != recoverMap->end() && itp2 == recoverMap->end()){
-        std::pair<MVertex*,BDS_Point*> a ( itp1->second, e->p2 );
+        std::pair<MVertex*, BDS_Point*> a(itp1->second, e->p2);
         std::map<std::pair<MVertex*, BDS_Point*>, BDS_Edge*>::iterator itf = 
           touchPeriodic.find(a);
         if (itf == touchPeriodic.end()) touchPeriodic[a] = e;
@@ -831,9 +835,9 @@ void invalidEdgesPeriodic(BDS_Mesh &m, std::map<BDS_Point*,MVertex*> *recoverMap
         }
       }    
       else if (itp1 == recoverMap->end() && itp2 != recoverMap->end()){
-        std::pair<MVertex*,BDS_Point*> a(itp2->second, e->p1);
+        std::pair<MVertex*, BDS_Point*> a(itp2->second, e->p1);
         std::map<std::pair<MVertex*, BDS_Point*>, BDS_Edge*>::iterator itf =
-          touchPeriodic.find (a);
+          touchPeriodic.find(a);
         if (itf == touchPeriodic.end()) touchPeriodic[a] = e;
         else if (degenerated.find(itp2->second) == degenerated.end()){
           toSplit.insert(e); toSplit.insert(itf->second);
@@ -852,7 +856,7 @@ void invalidEdgesPeriodic(BDS_Mesh &m, std::map<BDS_Point*,MVertex*> *recoverMap
 // if p1 p2 exists and it is internal, split it
 
 int gmshSolveInvalidPeriodic(GFace *gf, BDS_Mesh &m, 
-                             std::map<BDS_Point*,MVertex*> *recoverMap)
+                             std::map<BDS_Point*, MVertex*> *recoverMap)
 {
   std::set<BDS_Edge*> toSplit;
   invalidEdgesPeriodic(m, recoverMap, toSplit);

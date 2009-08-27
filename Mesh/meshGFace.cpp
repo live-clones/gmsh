@@ -573,9 +573,11 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
 
   // start mesh generation
   if(!AlgoDelaunay2D(gf)){
-    gmshRefineMeshBDS(gf,*m, CTX::instance()->mesh.refineSteps, true);
+    gmshRefineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true,
+                      &recoverMapInv);
     gmshOptimizeMeshBDS(gf, *m, 2);
-    gmshRefineMeshBDS (gf,*m, CTX::instance()->mesh.refineSteps, false);
+    gmshRefineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, false,
+                      &recoverMapInv);
     gmshOptimizeMeshBDS(gf, *m, 2);
   }
 
