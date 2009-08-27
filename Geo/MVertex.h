@@ -43,18 +43,7 @@ class MVertex{
   GEntity *_ge;
 
  public :
-  MVertex(double x, double y, double z, GEntity *ge=0, int num=0) 
-    : _visible(1), _order(1), _x(x), _y(y), _z(z), _ge(ge)
-  {
-    if(num){
-      _num = num;
-      _globalNum = std::max(_globalNum, _num);
-    }
-    else{
-      _num = ++_globalNum;
-    }
-    _index = num;
-  }
+  MVertex(double x, double y, double z, GEntity *ge=0, int num=0);
   virtual ~MVertex(){}
 
   // get/reset the global node number
@@ -84,11 +73,7 @@ class MVertex{
 
   // get/set the number
   inline int getNum() const { return _num; }
-  inline void setNum(int num) 
-  { 
-    _num = num; 
-    _globalNum = std::max(_globalNum, _num);
-  }
+  void setNum(int num);
 
   // get/set the index
   inline int getIndex() const { return _index; }

@@ -29,6 +29,21 @@ int MElement::_globalNum = 0;
 double MElement::_isInsideTolerance = 1.e-6;
 double MElementLessThanLexicographic::tolerance = 1.e-6;
 
+MElement::MElement(int num, int part) : _visible(1) 
+{
+#pragma omp critical
+  {
+    if(num){
+      _num = num;
+      _globalNum = std::max(_globalNum, _num);
+    }
+    else{
+      _num = ++_globalNum;
+    }
+    _partition = (short)part; 
+  }
+}
+
 void MElement::_getEdgeRep(MVertex *v0, MVertex *v1, 
                            double *x, double *y, double *z, SVector3 *n, 
                            int faceIndex)

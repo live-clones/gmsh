@@ -26,6 +26,31 @@ bool MVertexLessThanLexicographic::operator()(const MVertex *v1, const MVertex *
   return false;
 }
 
+MVertex::MVertex(double x, double y, double z, GEntity *ge, int num)
+  : _visible(1), _order(1), _x(x), _y(y), _z(z), _ge(ge)
+{
+#pragma omp critical
+  {
+    if(num){
+      _num = num;
+      _globalNum = std::max(_globalNum, _num);
+    }
+    else{
+      _num = ++_globalNum;
+    }
+    _index = num;
+  }
+}
+
+void MVertex::setNum(int num)
+{ 
+#pragma omp critical
+  {
+    _num = num; 
+    _globalNum = std::max(_globalNum, _num);
+  }
+}
+
 void MVertex::writeMSH(FILE *fp, bool binary, bool saveParametric, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
