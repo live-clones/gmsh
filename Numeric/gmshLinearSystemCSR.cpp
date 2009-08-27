@@ -3,11 +3,12 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "gmshLinearSystemCSR.h"
-#include <stdlib.h>
-#include <string.h>
 
 #define SWAP(a,b)  temp=(a);(a)=(b);(b)=temp;
 #define SWAPI(a,b) tempi=(a);(a)=(b);(b)=tempi;

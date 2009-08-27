@@ -7,6 +7,7 @@
 //   Jonathan Lambrechts
 //
 
+#include <stdlib.h>
 #include <list>
 #include <math.h>
 #include <fstream>

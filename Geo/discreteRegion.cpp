@@ -21,6 +21,5 @@ void discreteRegion::setBoundFaces()
   for(GModel::fiter face = model()->firstFace(); face != model()->lastFace(); face++){
     l_faces.push_back(*face);
     (*face)->addRegion(this);
-    printf("face %d \n", (*face)->tag());
   }
 }
