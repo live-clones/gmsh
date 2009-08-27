@@ -120,7 +120,7 @@ geomTresholdVertexEquivalence::geomTresholdVertexEquivalence(GModel *g)
       std::list<GEdge*> ed = g->edges();
       for (std::list<GEdge*>::iterator ite = ed.begin() ; ite != ed.end() ; ++ite){
 	std::vector<MLine*> newl;
-	for (int i=0;i<(*ite)->lines.size();++i){
+	for (unsigned int i = 0; i < (*ite)->lines.size(); ++i){
 	  MLine *l = (*ite)->lines[i];
 	  MVertex *v1 = l->getVertex(0);
 	  MVertex *v2 = l->getVertex(1);

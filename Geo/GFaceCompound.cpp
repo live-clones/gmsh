@@ -838,7 +838,7 @@ void GFaceCompound::parametrize_conformal() const
   gmshLinearSystemGmm<double> lsys;
   //gmshLinearSystemCSRGmm<double> lsys;
   lsys.setPrec(1.e-15);
-  lsys.setGmres(1.);
+  lsys.setGmres(1);
   if(Msg::GetVerbosity() == 99) lsys.setNoisy(2);
 #else
   gmshLinearSystemFull<double> lsys;
