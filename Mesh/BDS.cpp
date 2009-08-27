@@ -1076,10 +1076,10 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p)
   // printf("collapsing an edge :");
   // print_edge(e);
 
-  static BDS_Point *pt[3][1024];
-  static BDS_GeomEntity *gs[1024];
-  static int ept[2][1024];
-  static BDS_GeomEntity *egs[1024]; 
+  BDS_Point *pt[3][1024];
+  BDS_GeomEntity *gs[1024];
+  int ept[2][1024];
+  BDS_GeomEntity *egs[1024]; 
   int nt = 0;
   {
     p->getTriangles(t);
