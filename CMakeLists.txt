@@ -119,6 +119,23 @@ macro(append_gmsh_src DIRECTORY_NAME SRC_FILES)
   set(GMSH_SRC ${GMSH_SRC};${LIST} PARENT_SCOPE)
 endmacro(append_gmsh_src)
 
+macro(find_all_libraries VARNAME REQUIRED_LIBRARIES SUFFIX)
+  set(${VARNAME})
+  list(LENGTH ${REQUIRED_LIBRARIES} NUM_REQUIRED_LIBRARIES)
+  foreach(LIB ${REQUIRED_LIBRARIES})
+    find_library(FOUND_LIB ${LIB} PATH_SUFFIXES ${SUFFIX})
+    if(FOUND_LIB)
+      list(APPEND ${VARNAME} ${FOUND_LIB})
+    endif(FOUND_LIB)
+    set(FOUND_LIB FOUND_LIB-NOTFOUND CACHE INTERNAL "")
+    # unset(FOUND_LIB CACHE) # cleaner, but only available in cmake >= 2.6.4
+  endforeach(LIB)
+  list(LENGTH ${VARNAME} NUM_FOUND_LIBRARIES)
+  if(NUM_FOUND_LIBRARIES NOTEQUAL NUM_REQUIRED_LIBRARIES)
+    set(${VARNAME})
+  endif(NUM_FOUND_LIBRARIES NOTEQUAL NUM_REQUIRED_LIBRARIES)
+endmacro(find_all_libraries)
+
 if(ENABLE_BLAS_LAPACK)
   if(MSVC)
     # on Windows with Visual C++ try really hard to find blas/lapack
@@ -132,39 +149,56 @@ if(ENABLE_BLAS_LAPACK)
     else(CMAKE_SIZEOF_VOID_P EQUAL 8)
       set(MKL_PATH ia32/lib)
     endif(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    find_library(LIBGUIDE libguide PATH_SUFFIXES ${MKL_PATH})
-    find_library(MKL_C mkl_c PATH_SUFFIXES ${MKL_PATH})
-    find_library(MKL_INTEL_C mkl_intel_c PATH_SUFFIXES ${MKL_PATH})
-    find_library(MKL_INTEL_THREAD mkl_intel_thread PATH_SUFFIXES ${MKL_PATH})
-    find_library(MKL_CORE mkl_core PATH_SUFFIXES ${MKL_PATH})
-    if(LIBGUIDE AND MKL_C AND MKL_INTEL_C AND MKL_INTEL_THREAD AND MKL_CORE)
-      set(LAPACK_LIBRARIES ${LIBGUIDE} ${MKL_C} ${MKL_INTEL_C} 
-          ${MKL_INTEL_THREAD} ${MKL_CORE})
+    set(MSVC_MKL_REQUIRED libguide mkl_c mkl_intel_c mkl_intel_thread mkl_core)
+    find_all_libraries(MSVC_MKL_LIBRARIES ${MSVC_MKL_REQUIRED} ${MKL_PATH})
+    if(MSVC_MKL_LIBRARIES)
+      set(LAPACK_LIBRARIES ${MKL_MSVC_LIBRARIES})
       set(HAVE_BLAS TRUE)
       set(HAVE_LAPACK TRUE)
       list(APPEND CONFIG_OPTIONS "IntelBlas" "IntelLapack")
-    endif(LIBGUIDE AND MKL_C AND MKL_INTEL_C AND MKL_INTEL_THREAD AND MKL_CORE)
+    endif(MSVC_MKL_LIBRARIES)
     if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
-      find_library(REF_LAPACK lapack)
-      find_library(REF_BLAS blas)
-      find_library(REF_G2C g2c)
-      find_library(REF_GCC gcc)
-      if(REF_LAPACK AND REF_BLAS AND REF_G2C AND REF_GCC)
-        set(LAPACK_LIBRARIES ${REF_LAPACK} ${REF_BLAS} ${REF_G2C} ${REF_GCC})
+      set(MSVC_REF_REQUIRED lapack blas g2c gcc)
+      find_all_libraries(MSVC_REF_LIBRARIES ${MSVC_REF_REQUIRED} "")
+      if(MSVC_REF_LIBRARIES)
+        set(LAPACK_LIBRARIES ${MSVC_REF_LIBRARIES})
         set(HAVE_BLAS TRUE)
         set(HAVE_LAPACK TRUE)
         list(APPEND CONFIG_OPTIONS "RefBlas" "RefLapack")
-      endif(REF_LAPACK AND REF_BLAS AND REF_G2C AND REF_GCC)
+      endif(MSVC_REF_LIBRARIES)
     endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    # on Linux also try to find the Intel MKL without a Fortran
+    # compiler
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+      set(MKL_PATH lib/em64t)
+    else(CMAKE_SIZEOF_VOID_P EQUAL 8)
+      set(MKL_PATH lib/32)
+    endif(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(LINUX_MKL_REQUIRED guide mkl_gf_lp64 iomp5 mkl_gnu_thread mkl_core)
+    find_all_libraries(LINUX_MKL_LIBRARIES ${LINUX_MKL_REQUIRED} ${MKL_PATH})
+    if(LINUX_MKL_LIBRARIES)
+      set(LAPACK_LIBRARIES ${LINUX_MKL_LIBRARIES})
+      set(HAVE_BLAS TRUE)
+      set(HAVE_LAPACK TRUE)
+      list(APPEND CONFIG_OPTIONS "IntelBlas" "IntelLapack")
+    endif(LINUX_MKL_LIBRARIES)
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+    # on SunOS we know blas and lapack are available in sunperf
+    set(HAVE_BLAS TRUE)
+    set(HAVE_LAPACK TRUE)
+    list(APPEND CONFIG_OPTIONS "Blas" "Lapack")
+    set(LAPACK_FLAGS -library=sunperf)
   elseif(APPLE)
-    # on Mac we know blas and lapack are available, so don't force users
-    # to install a Fortran compiler
+    # on Mac we also know that blas and lapack are available
     set(LAPACK_LIBRARIES "-llapack -lblas")
     set(HAVE_BLAS TRUE)
     set(HAVE_LAPACK TRUE)
     list(APPEND CONFIG_OPTIONS "Blas" "Lapack")
   endif(MSVC)
   if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
+    # if we haven't found blas and lapack without using the standard
+    # cmake tests, do it (this requires a working Fortran compiler)
     enable_language(Fortran)
     find_package(BLAS)
     if(BLAS_FOUND)
@@ -581,6 +615,10 @@ list(APPEND EXTERNAL_INCLUDES ${CMAKE_INCLUDE_PATH} ${ENV_CMAKE_INCLUDE_PATH})
 list(APPEND EXTERNAL_INCLUDES ${CMAKE_PREFIX_PATH} ${ENV_CMAKE_PREFIX_PATH})
 foreach(DIR ${CMAKE_PREFIX_PATH} ${ENV_CMAKE_PREFIX_PATH})
   list(APPEND EXTERNAL_INCLUDES ${DIR}/include)
+  list(APPEND EXTERNAL_LIBPATH ${DIR}/lib)
+  if(MKL_PATH)
+    list(APPEND EXTERNAL_LIBPATH ${DIR}/${MKL_PATH})
+  endif(MKL_PATH)
 endforeach(DIR)
 
 if(EXTERNAL_INCLUDES)
@@ -595,14 +633,14 @@ include_directories(Common Fltk Geo Graphics Mesh Numeric Parser Plugin
   contrib/Tetgen contrib/Fl_Tree contrib/gmm contrib/kbipack
   ${EXTERNAL_INCLUDES} ${CMAKE_BINARY_DIR}/Common)
 
-# we don't build the lib by default (we could then create the gmsh
-# target by linking with it) because doing so slows down the
-# compile/link development a lot: running ranlib+ar on a large static
-# lib every time we recompile is frustratingly slow. Instead, we build
-# the gmsh target directly from the object files. This is much faster
-# but has one side effect: when we actually want to build the lib we
-# need to recompile everything (the first time--it's a separate
-# target)
+# static lib target: we don't build it by default (we could then
+# create the gmsh target by linking with it) because doing so slows
+# down the compile/link development a lot: running ranlib+ar on a
+# large static lib every time we recompile is frustratingly
+# slow. Instead, we build the gmsh target directly from the object
+# files. This is much faster but has one side effect: when we actually
+# want to build the lib we need to recompile everything (the first
+# time--it's a separate target)
 add_library(lib STATIC EXCLUDE_FROM_ALL ${GMSH_SRC})
 set_target_properties(lib PROPERTIES OUTPUT_NAME Gmsh)
 if(MSVC)
@@ -612,6 +650,16 @@ if(MSVC)
   endif(ENABLE_OOFELIE)
 endif(MSVC)
 
+# shared lib target: we don't build it by default either
+link_directories(${EXTERNAL_LIBPATH})
+add_library(shared SHARED EXCLUDE_FROM_ALL ${GMSH_SRC})
+set_target_properties(shared PROPERTIES OUTPUT_NAME Gmsh)
+if(HAVE_LAPACK AND LAPACK_FLAGS)
+  set_target_properties(shared PROPERTIES LINK_FLAGS ${LAPACK_FLAGS})
+endif(HAVE_LAPACK AND LAPACK_FLAGS)
+target_link_libraries(shared ${EXTERNAL_LIBRARIES} ${LAPACK_LIBRARIES})
+
+# binary targets
 if(HAVE_FLTK)
   add_executable(gmsh WIN32 Fltk/Main.cpp ${GMSH_SRC})
   target_link_libraries(gmsh ${FLTK_LIBRARIES} ${EXTERNAL_LIBRARIES} 
