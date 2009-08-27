@@ -91,9 +91,11 @@ static void remeshUnrecoveredEdges(std::map<MVertex*, BDS_Point*> &recoverMapInv
     for(int i = 0; i < N; i++){
       MVertex *v1 = itr->ge->lines[i]->getVertex(0);
       MVertex *v2 = itr->ge->lines[i]->getVertex(1);
-      if(recoverMapInv.count(v1) && recoverMapInv.count(v2)){
-        BDS_Point *pp1 = recoverMapInv[v1];
-        BDS_Point *pp2 = recoverMapInv[v2];
+      std::map<MVertex*, BDS_Point*>::iterator itp1 = recoverMapInv.find(v1);
+      std::map<MVertex*, BDS_Point*>::iterator itp2 = recoverMapInv.find(v2);
+      if(itp1 != recoverMapInv.end() && itp2 != recoverMapInv.end()){
+        BDS_Point *pp1 = itp1->second;
+        BDS_Point *pp2 = itp2->second;
         if((pp1->iD == p1 && pp2->iD == p2) || (pp1->iD == p2 && pp2->iD == p1)){
           double t1;
           double lc1 = -1;
@@ -189,36 +191,44 @@ static bool recover_medge(BDS_Mesh *m, GEdge *ge,
   for(unsigned int i = 0; i < ge->lines.size(); i++){
     MVertex *vstart = ge->lines[i]->getVertex(0);
     MVertex *vend = ge->lines[i]->getVertex(1);
-    BDS_Point *pstart = recoverMapInv[vstart];
-    BDS_Point *pend = recoverMapInv[vend];
-    if(pass_ == 1) 
-      e2r->insert(EdgeToRecover(pstart->iD, pend->iD, ge));
-    else{
-      BDS_Edge *e = m->recover_edge(pstart->iD, pend->iD, e2r, not_recovered);
-      if(e) e->g = g;
-      // else {
-      //   Msg::Error("Unable to recover an edge %g %g && %g %g (%d/%d)",
-      //              vstart->x(), vstart->y(), vend->x(), vend->y(), i, 
-      //              ge->mesh_vertices.size());
-      //   return false;
-      // }
+    std::map<MVertex*, BDS_Point*>::iterator itpstart = recoverMapInv.find(vstart);
+    std::map<MVertex*, BDS_Point*>::iterator itpend = recoverMapInv.find(vend);
+    if(itpstart != recoverMapInv.end() && itpend != recoverMapInv.end()){
+      BDS_Point *pstart = itpstart->second;
+      BDS_Point *pend = itpend->second;
+      if(pass_ == 1) 
+        e2r->insert(EdgeToRecover(pstart->iD, pend->iD, ge));
+      else{
+        BDS_Edge *e = m->recover_edge(pstart->iD, pend->iD, e2r, not_recovered);
+        if(e) e->g = g;
+        // else {
+        //   Msg::Error("Unable to recover an edge %g %g && %g %g (%d/%d)",
+        //              vstart->x(), vstart->y(), vend->x(), vend->y(), i, 
+        //              ge->mesh_vertices.size());
+        //   return false;
+        // }
+      }
     }
   }
 
   if(pass_ == 2 && ge->getBeginVertex()){
     MVertex *vstart = *(ge->getBeginVertex()->mesh_vertices.begin());
     MVertex *vend = *(ge->getEndVertex()->mesh_vertices.begin());    
-    BDS_Point *pstart = recoverMapInv[vstart];
-    BDS_Point *pend = recoverMapInv[vend];
-    if(!pstart->g){
-      m->add_geom(pstart->iD, 0);
-      BDS_GeomEntity *g0 = m->get_geom(pstart->iD, 0);
-      pstart->g = g0;
-    }
-    if(!pend->g){
-      m->add_geom(pend->iD, 0);
-      BDS_GeomEntity *g0 = m->get_geom(pend->iD, 0);
-      pend->g = g0;
+    std::map<MVertex*, BDS_Point*>::iterator itpstart = recoverMapInv.find(vstart);
+    std::map<MVertex*, BDS_Point*>::iterator itpend = recoverMapInv.find(vend);
+    if(itpstart != recoverMapInv.end() && itpend != recoverMapInv.end()){
+      BDS_Point *pstart = itpstart->second;
+      BDS_Point *pend = itpend->second;
+      if(!pstart->g){
+        m->add_geom(pstart->iD, 0);
+        BDS_GeomEntity *g0 = m->get_geom(pstart->iD, 0);
+        pstart->g = g0;
+      }
+      if(!pend->g){
+        m->add_geom(pend->iD, 0);
+        BDS_GeomEntity *g0 = m->get_geom(pend->iD, 0);
+        pend->g = g0;
+      }
     }
   }
 
@@ -509,8 +519,9 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
                edgesToRecover.size());
     for(int i = 0; i < doc.numPoints; i++){
       BDS_Point *pp = (BDS_Point*)doc.points[i].data;
-      if(recoverMap.count(pp)){
-        MVertex *here = recoverMap[pp];
+      std::map<BDS_Point*, MVertex*>::iterator itv = recoverMap.find(pp);
+      if(itv != recoverMap.end()){
+        MVertex *here = itv->second;
         GEntity *ge = here->onWhat();
         if(ge->dim() == 0){
           pp->lcBGM() = BGM_MeshSize(ge, 0, 0, here->x(), here->y(), here->z());

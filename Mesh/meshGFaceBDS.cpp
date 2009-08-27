@@ -677,8 +677,9 @@ void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     std::list<GVertex*>::iterator itvx = emb_vertx.begin();
     while(itvx != emb_vertx.end()){
       MVertex *v = *((*itvx)->mesh_vertices.begin());
-      if(recoverMapInv->count(v)){
-        BDS_Point *p = (*recoverMapInv)[v];
+      std::map<MVertex*, BDS_Point*>::iterator itp = recoverMapInv->find(v);
+      if(itp != recoverMapInv->end()){
+        BDS_Point *p = itp->second;
         m.add_geom(-1, 2);
         p->g = m.get_geom(-1, 2);
         p->lc() = (*itvx)->prescribedMeshSizeAtVertex();
@@ -720,9 +721,9 @@ void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
 
   while (1){
     // we count the number of local mesh modifs.
-    int nb_split =0;
-    int nb_smooth  = 0 ;
-    int nb_collaps =0;
+    int nb_split = 0;
+    int nb_smooth = 0;
+    int nb_collaps = 0;
     int nb_swap = 0;
 
     // split long edges
