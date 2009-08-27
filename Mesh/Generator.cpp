@@ -410,7 +410,7 @@ static void Mesh2D(GModel *m)
   // field generated from the surface mesh of the source surfaces
   if(!Mesh2DWithBoundaryLayers(m)){
 
-#if 1
+#if 0
     std::for_each(m->firstFace(), m->lastFace(), meshGFace());
 #else 
     // test openmp

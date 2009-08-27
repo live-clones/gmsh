@@ -32,9 +32,7 @@ static bool isActive(MTri3 *t, double limit_, int &active)
   return false;
 }
 
-
-bool circumCenterMetricInTriangle(MTriangle *base, 
-                                  const double *metric,
+bool circumCenterMetricInTriangle(MTriangle *base, const double *metric,
                                   const std::vector<double> &Us,
                                   const std::vector<double> &Vs)
 {
@@ -44,8 +42,7 @@ bool circumCenterMetricInTriangle(MTriangle *base,
 }
 
 void circumCenterMetric(double *pa, double *pb, double *pc,
-                        const double *metric,
-                        double *x, double &Radius2) 
+                        const double *metric, double *x, double &Radius2) 
 {
   // d = (u2-u1) M (u2-u1) = u2 M u2 + u1 M u1 - 2 u2 M u1 
   double sys[2][2];
@@ -114,10 +111,7 @@ void circumCenterMetricXYZ(double *p1, double *p2, double *p3, SMetric3 & metric
   res[2] = p1[2] + resP[0] * vx[2] + resP[1] * vy[2];
 }
 
-
-
-void circumCenterMetric(MTriangle *base, 
-                        const double *metric,
+void circumCenterMetric(MTriangle *base, const double *metric,
                         const std::vector<double> &Us,
                         const std::vector<double> &Vs,
                         double *x, double &Radius2) 
@@ -172,7 +166,6 @@ void buildMetric(GFace *gf, double *uv, SMetric3 & m, double *metric)
   metric[2] = dot(x2, der.second());
 } 
 
-
 int inCircumCircleAniso(GFace *gf, double *p1, double *p2, double *p3, 
                         double *uv, double *metric) 
 {
@@ -212,13 +205,17 @@ int inCircumCircleAniso(GFace *gf, MTriangle *base,
   return d2 < Radius2;  
 }
 
-MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric) : deleted(false), base(t)//,done(0)
+MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric) 
+  : deleted(false), base(t)//,done(0)
 {
   neigh[0] = neigh[1] = neigh[2] = 0;
   double center[3];
-  double pa[3] = {base->getVertex(0)->x(), base->getVertex(0)->y(), base->getVertex(0)->z()};
-  double pb[3] = {base->getVertex(1)->x(), base->getVertex(1)->y(), base->getVertex(1)->z()};
-  double pc[3] = {base->getVertex(2)->x(), base->getVertex(2)->y(), base->getVertex(2)->z()};
+  double pa[3] =
+    {base->getVertex(0)->x(), base->getVertex(0)->y(), base->getVertex(0)->z()};
+  double pb[3] =
+    {base->getVertex(1)->x(), base->getVertex(1)->y(), base->getVertex(1)->z()};
+  double pc[3] =
+    {base->getVertex(2)->x(), base->getVertex(2)->y(), base->getVertex(2)->z()};
 
   // compute the circumradius of the triangle
   
@@ -238,9 +235,12 @@ MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric) : deleted(false), base(t
 
 int MTri3::inCircumCircle(const double *p) const
 {
-  double pa[3] = {base->getVertex(0)->x(), base->getVertex(0)->y(), base->getVertex(0)->z()};
-  double pb[3] = {base->getVertex(1)->x(), base->getVertex(1)->y(), base->getVertex(1)->z()};
-  double pc[3] = {base->getVertex(2)->x(), base->getVertex(2)->y(), base->getVertex(2)->z()};
+  double pa[3] =
+    {base->getVertex(0)->x(), base->getVertex(0)->y(), base->getVertex(0)->z()};
+  double pb[3] =
+    {base->getVertex(1)->x(), base->getVertex(1)->y(), base->getVertex(1)->z()};
+  double pc[3] =
+    {base->getVertex(2)->x(), base->getVertex(2)->y(), base->getVertex(2)->z()};
   double fourth[3];
   fourthPoint(pa, pb, pc, fourth);
 
@@ -260,7 +260,8 @@ int inCircumCircle(MTriangle *base,
   double pc[2] = {Us[base->getVertex(2)->getNum()],
                   Vs[base->getVertex(2)->getNum()]};
 
-  double result = gmsh::incircle(pa, pb, pc, (double*)param) * gmsh::orient2d(pa, pb, pc);  
+  double result = 
+    gmsh::incircle(pa, pb, pc, (double*)param) * gmsh::orient2d(pa, pb, pc);  
   return (result > 0) ? 1 : 0;  
 }
 
@@ -323,10 +324,10 @@ void recurFindCavity(std::list<edgeXface> &shell, std::list<MTri3*> &cavity,
   }
 }
 
-void recurFindCavityAniso (GFace *gf,
-                           std::list<edgeXface> &shell, std::list<MTri3*> &cavity, 
-                           double *metric, double *param,  MTri3 *t,
-                           std::vector<double> &Us, std::vector<double> &Vs)
+void recurFindCavityAniso(GFace *gf,
+                          std::list<edgeXface> &shell, std::list<MTri3*> &cavity, 
+                          double *metric, double *param,  MTri3 *t,
+                          std::vector<double> &Us, std::vector<double> &Vs)
 {
   t->setDeleted(true);
   // the cavity that has to be removed
@@ -627,8 +628,9 @@ static void insertAPoint(GFace *gf,
     Us.push_back(center[0]);
     Vs.push_back(center[1]);
     
-    if (!p.succeeded() || !insertVertex(gf, v, center, worst, AllTris,ActiveTris, vSizes, vSizesBGM,vMetricsBGM, 
-                                        Us, Vs, metric) ) {
+    if (!p.succeeded() || !insertVertex
+        (gf, v, center, worst, AllTris,ActiveTris, vSizes, vSizesBGM,vMetricsBGM, 
+         Us, Vs, metric) ) {
       //      Msg::Debug("2D Delaunay : a cavity is not star shaped");
       AllTris.erase(it);
       worst->forceRadius(-1);
@@ -661,7 +663,8 @@ void gmshBowyerWatson(GFace *gf)
   std::vector<double> vSizes, vSizesBGM, Us, Vs;
   std::vector<SMetric3> vMetricsBGM;
 
-  buildMeshGenerationDataStructures(gf, AllTris, vSizes, vSizesBGM, vMetricsBGM,Us, Vs);
+  buildMeshGenerationDataStructures
+    (gf, AllTris, vSizes, vSizesBGM, vMetricsBGM,Us, Vs);
 
   // _printTris ("before.pos", AllTris, Us,Vs);
   int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, Us, Vs, vSizes, vSizesBGM);
@@ -700,8 +703,8 @@ void gmshBowyerWatson(GFace *gf)
       else
         buildMetric(gf, pa,  metric);
       circumCenterMetric(worst->tri(), metric, Us, Vs, center, r2);       
-      insertAPoint(gf, AllTris.begin(), center, metric, Us, Vs, vSizes, vSizesBGM, vMetricsBGM,
-                   AllTris);
+      insertAPoint(gf, AllTris.begin(), center, metric, Us, Vs, vSizes, 
+                   vSizesBGM, vMetricsBGM, AllTris);
     }
     //     if(ITER % 10== 0){
     //       char name[245];
@@ -720,11 +723,12 @@ void gmshBowyerWatson(GFace *gf)
   The point isertion is done on the Voronoi Edges
 */
 
-static double length_metric ( const double p[2], const double q[2], const double metric[3])
+static double length_metric(const double p[2], const double q[2], 
+                            const double metric[3])
 {
-  return sqrt (   (p[0]-q[0]) * metric [0] * (p[0]-q[0]) +
-                2*(p[0]-q[0]) * metric [1] * (p[1]-q[1]) +
-                  (p[1]-q[1]) * metric [2] * (p[1]-q[1]) );
+  return sqrt (     (p[0]-q[0]) * metric [0] * (p[0]-q[0]) +
+                2 * (p[0]-q[0]) * metric [1] * (p[1]-q[1]) +
+                    (p[1]-q[1]) * metric [2] * (p[1]-q[1]) );
 }
 
 /*
@@ -751,7 +755,8 @@ static double length_metric ( const double p[2], const double q[2], const double
      
 */
 
-void testTensor(){
+void testTensor()
+{
   SMetric3 t(1.0);  
   t(0,0) = 1;
   t(1,0) = .2;
@@ -775,7 +780,8 @@ void gmshBowyerWatsonFrontal(GFace *gf)
 
   //testTensor();
 
-  buildMeshGenerationDataStructures(gf, AllTris, vSizes, vSizesBGM, vMetricsBGM,Us, Vs);
+  buildMeshGenerationDataStructures
+    (gf, AllTris, vSizes, vSizesBGM, vMetricsBGM,Us, Vs);
 
   // delaunise the initial mesh
   int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, Us, Vs, vSizes, vSizesBGM);
@@ -840,20 +846,23 @@ void gmshBowyerWatsonFrontal(GFace *gf)
       
       const double p = 0.5 * length_metric(P, Q, metric); // / RATIO;
       const double q = length_metric (center, midpoint, metric);
-      const double rhoM1 = 0.5 * (vSizes[base->getVertex(ip1)->getNum()] + 
-                                  vSizes[base->getVertex(ip2)->getNum()] ) / sqrt(3.);// * RATIO;
-      const double rhoM2 = 0.5 * (vSizesBGM[base->getVertex(ip1)->getNum()] + 
-                                  vSizesBGM[base->getVertex(ip2)->getNum()] ) / sqrt(3.);// * RATIO;
+      const double rhoM1 = 0.5 * 
+        (vSizes[base->getVertex(ip1)->getNum()] + 
+         vSizes[base->getVertex(ip2)->getNum()] ) / sqrt(3.);// * RATIO;
+      const double rhoM2 = 0.5 * 
+        (vSizesBGM[base->getVertex(ip1)->getNum()] + 
+         vSizesBGM[base->getVertex(ip2)->getNum()] ) / sqrt(3.);// * RATIO;
       const double rhoM  = Extend1dMeshIn2dSurfaces() ? std::min(rhoM1, rhoM2) : rhoM2;
-      // const double rhoM = 0.5 * (vSizes[base->getVertex(ip1)->getNum()] + 
-      //                            vSizes[base->getVertex(ip2)->getNum()] ) / sqrt(3.);// * RATIO;
+      // const double rhoM = 0.5 * 
+      //   (vSizes[base->getVertex(ip1)->getNum()] + 
+      //    vSizes[base->getVertex(ip2)->getNum()] ) / sqrt(3.);// * RATIO;
       
       const double rhoM_hat = std::min(std::max(rhoM, p), (p * p + q * q) / (2 * q));
       const double d = (rhoM_hat + sqrt (rhoM_hat * rhoM_hat - p * p)) / RATIO;
       
       double newPoint[2] = {midpoint[0] + d * dir[0], midpoint[1] + d * dir[1]};
-      insertAPoint(gf, AllTris.end(), newPoint, metric, Us, Vs, vSizes, vSizesBGM, vMetricsBGM,
-                   AllTris, &ActiveTris, worst);
+      insertAPoint(gf, AllTris.end(), newPoint, metric, Us, Vs, vSizes,
+                   vSizesBGM, vMetricsBGM, AllTris, &ActiveTris, worst);
     } 
 //     if(ITER % 1000== 0){
 //       char name[245];
