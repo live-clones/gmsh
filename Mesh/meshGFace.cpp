@@ -302,7 +302,6 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
   m->scalingV = 1;
 
   std::vector<BDS_Point*> points(all_vertices.size());
-  std::vector<MVertex*> indexed_vertices(all_vertices.size());
   SBoundingBox3d bbox;
   int count = 0;
   for(std::set<MVertex*>::iterator it = all_vertices.begin(); 
