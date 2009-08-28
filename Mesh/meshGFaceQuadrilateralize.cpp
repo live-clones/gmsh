@@ -400,10 +400,10 @@ BDS_Edge *gmshEdgeFront::findOptimalEdge(BDS_Point *p, BDS_Point *avoid)
           if(!f->e4){
             BDS_Point *target = f->oppositeVertex(e);
             // ONLY WORKS IN 2D for now !!!!!!!!!!!!!!!!!!!
-            Intersect_Edges_2d(e->p1->X,e->p1->Y,
-                               e->p2->X,e->p2->Y,
-                               p->X,p->Y,
-                               p->X+n.x(),p->Y + n.y(),x);
+            Intersect_Edges_2d(e->p1->X, e->p1->Y,
+                               e->p2->X, e->p2->Y,
+                               p->X, p->Y,
+                               p->X + n.x(), p->Y + n.y(), x);
             if(x[0] >= 0 && x[0] <= 1){
               SVector3 d(target->X-p->X,target->Y-p->Y,target->Z-p->Z);
               d.normalize();

@@ -79,7 +79,7 @@ void outputScalarField(std::list<BDS_Face*> t, const char *iii, int param, GFace
 }
 
 BDS_Vector::BDS_Vector(const BDS_Point &p2, const BDS_Point &p1)
-  :x(p2.X - p1.X), y(p2.Y - p1.Y), z(p2.Z - p1.Z)
+  : x(p2.X - p1.X), y(p2.Y - p1.Y), z(p2.Z - p1.Z)
 {
 }
 
@@ -303,20 +303,20 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2
             std::set<EdgeToRecover>::iterator itr2 = 
               e2r->find(EdgeToRecover(num1, num2, 0));
             Msg::Debug("edge %d %d on model edge %d cannot be recovered because"
-                " it intersects %d %d on model edge %d", num1, num2, itr2->ge->tag(),
-                e->p1->iD, e->p2->iD, itr1->ge->tag());
+                       " it intersects %d %d on model edge %d", num1, num2, itr2->ge->tag(),
+                       e->p1->iD, e->p2->iD, itr1->ge->tag());
             // now throw a class that contains the diagnostic
             not_recovered->insert(EdgeToRecover(num1, num2, itr2->ge));
             not_recovered->insert(EdgeToRecover(e->p1->iD, e->p2->iD, itr1->ge));
             selfIntersection = true;
           }
-          if (e->numfaces() != e->numTriangles())return 0;
+          if (e->numfaces() != e->numTriangles()) return 0;
           intersected.push_back(e);       
         }
       ++it;
     }
 
-    if (selfIntersection)return 0;
+    if (selfIntersection) return 0;
 
 //   if(ix > 300){
 //     Msg::Warning("edge %d %d cannot be recovered after %d iterations, trying again",
@@ -564,11 +564,11 @@ void BDS_Mesh::cleanup()
 
 BDS_Mesh::~BDS_Mesh()
 {
-   DESTROOOY(geom.begin(), geom.end());
-   DESTROOOY(points.begin(), points.end());
-   cleanup();
-   DESTROOOY(edges.begin(), edges.end());
-   DESTROOOY(triangles.begin(), triangles.end());
+  DESTROOOY(geom.begin(), geom.end());
+  DESTROOOY(points.begin(), points.end());
+  cleanup();
+  DESTROOOY(edges.begin(), edges.end());
+  DESTROOOY(triangles.begin(), triangles.end());
 }
 
 bool BDS_Mesh::split_face(BDS_Face *f, BDS_Point *mid)
