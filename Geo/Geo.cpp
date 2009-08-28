@@ -1236,10 +1236,16 @@ void VisibilityShape(int Type, int Num, int Mode)
 
   switch (Type) {
   case MSH_POINT:
+  case MSH_POINT_FROM_GMODEL:
     if((v = FindPoint(Num)))
       v->Visible = Mode;
-    else
-      Msg::Warning("Unknown point %d (use '*' to hide/show all points)", Num);
+    else{
+      GVertex *gv = GModel::current()->getVertexByTag(Num);
+      if(gv)
+        gv->setVisibility(Mode);
+      else
+        Msg::Warning("Unknown point %d (use '*' to hide/show all points)", Num);
+    }
     break;
   case MSH_SEGM_LINE:
   case MSH_SEGM_SPLN:
@@ -1251,26 +1257,44 @@ void VisibilityShape(int Type, int Num, int Mode)
   case MSH_SEGM_ELLI_INV:
   case MSH_SEGM_NURBS:
   case MSH_SEGM_DISCRETE:
+  case MSH_SEGM_FROM_GMODEL:
     if((c = FindCurve(Num)))
       c->Visible = Mode;
-    else
-      Msg::Warning("Unknown line %d (use '*' to hide/show all lines)", Num);
+    else{
+      GEdge *ge = GModel::current()->getEdgeByTag(Num);
+      if(ge)
+        ge->setVisibility(Mode);
+      else
+        Msg::Warning("Unknown line %d (use '*' to hide/show all lines)", Num);
+    }
     break;
   case MSH_SURF_TRIC:
   case MSH_SURF_REGL:
   case MSH_SURF_PLAN:
   case MSH_SURF_DISCRETE:
+  case MSH_SURF_FROM_GMODEL:
     if((s = FindSurface(Num)))
       s->Visible = Mode;
-    else
-      Msg::Warning("Unknown surface %d (use '*' to hide/show all surfaces)", Num);
+    else{
+      GFace *gf = GModel::current()->getFaceByTag(Num);
+      if(gf)
+        gf->setVisibility(Mode);
+      else
+        Msg::Warning("Unknown surface %d (use '*' to hide/show all surfaces)", Num);
+    }
     break;
   case MSH_VOLUME:
   case MSH_VOLUME_DISCRETE:
+  case MSH_VOLUME_FROM_GMODEL:
     if((V = FindVolume(Num)))
       V->Visible = Mode;
-    else
-      Msg::Warning("Unknown volume %d (use '*' to hide/show all volumes)", Num);
+    else{
+      GRegion *gr = GModel::current()->getRegionByTag(Num);
+      if(gr)
+        gr->setVisibility(Mode);
+      else
+        Msg::Warning("Unknown volume %d (use '*' to hide/show all volumes)", Num);
+    }
     break;
   default:
     break;
@@ -1289,10 +1313,30 @@ void VisibilityShape(char *str, int Type, int Mode)
 
   if(!strcmp(str, "all") || !strcmp(str, "*")) {
     switch (Type) {
-    case 0: Tree_Action(GModel::current()->getGEOInternals()->Points, vis_nod); break;
-    case 1: Tree_Action(GModel::current()->getGEOInternals()->Curves, vis_cur); break;
-    case 2: Tree_Action(GModel::current()->getGEOInternals()->Surfaces, vis_sur); break;
-    case 3: Tree_Action(GModel::current()->getGEOInternals()->Volumes, vis_vol); break;
+    case 0:
+      Tree_Action(GModel::current()->getGEOInternals()->Points, vis_nod); 
+      for(GModel::viter it = GModel::current()->firstVertex(); 
+          it != GModel::current()->lastVertex(); it++)
+        (*it)->setVisibility(Mode);
+      break;
+    case 1: 
+      Tree_Action(GModel::current()->getGEOInternals()->Curves, vis_cur);
+      for(GModel::eiter it = GModel::current()->firstEdge(); 
+          it != GModel::current()->lastEdge(); it++)
+        (*it)->setVisibility(Mode);
+      break;
+    case 2: 
+      Tree_Action(GModel::current()->getGEOInternals()->Surfaces, vis_sur); 
+      for(GModel::fiter it = GModel::current()->firstFace(); 
+          it != GModel::current()->lastFace(); it++)
+        (*it)->setVisibility(Mode);
+      break;
+    case 3:
+      Tree_Action(GModel::current()->getGEOInternals()->Volumes, vis_vol); 
+      for(GModel::riter it = GModel::current()->firstRegion(); 
+          it != GModel::current()->lastRegion(); it++)
+        (*it)->setVisibility(Mode);
+      break;
     }
   }
   else {
