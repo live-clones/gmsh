@@ -363,7 +363,13 @@ static void PrintMesh2dStatistics(GModel *m)
   int nTotT = 0, nTotE = 0, nTotGoodLength = 0, nTotGoodQuality = 0;
   int nUnmeshed = 0, numFaces = 0;
 
-  Msg::Info("2D Mesh Statistics :");
+  if(CTX::instance()->createAppendMeshStatReport == 1){
+    fprintf(statreport, "2D stats\tname\t\t#faces\t\t#fail\t\t"
+            "#t\t\tQavg\t\tQbest\t\tQworst\t\t#Q>90\t\t#Q>90/#t\t"
+            "#e\t\ttau\t\t#Egood\t\t#Egood/#e\tCPU\n");
+    if(m->empty()) return;
+  }
+
   for(GModel::fiter it = m->firstFace() ; it != m->lastFace(); ++it){
     worst = std::min((*it)->meshStatistics.worst_element_shape, worst);
     best = std::max((*it)->meshStatistics.best_element_shape, best);
@@ -378,12 +384,6 @@ static void PrintMesh2dStatistics(GModel *m)
     nTotGoodLength += (*it)->meshStatistics.nbGoodLength;
     nTotGoodQuality += (*it)->meshStatistics.nbGoodQuality;
     numFaces++;
-  }
-
-  if(CTX::instance()->createAppendMeshStatReport == 1){
-    fprintf(statreport, "2D stats\tname\t\t#faces\t\t#fail\t\t"
-            "#t\t\tQavg\t\tQbest\t\tQworst\t\t#Q>90\t\t#Q>90/#t\t"
-            "#e\t\ttau\t\t#Egood\t\t#Egood/#e\tCPU\n");
   }
 
   fprintf(statreport,"\t%16s\t%d\t\t%d\t\t", m->getName().c_str(), numFaces, nUnmeshed);
