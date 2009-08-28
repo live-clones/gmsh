@@ -4358,6 +4358,11 @@ optional: create the associated widget in @file{Fltk/optionWindow.cpp};
 @c * valgrind --leak-check=yes --show-reachable=yes gmsh file.geo -3
 @c * purify
 @c * memprof
+@c
+@c Notes on thread-safety
+@c   All the operations in the Gmsh library are not thread safe.
+@c   For example, the MeshAdapt algorithm is, while the Delaunay/Frontal
+@c   are not.
 
 
 @c -------------------------------------------------------------------------

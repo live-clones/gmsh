@@ -26,6 +26,7 @@
 
 #include <cstring>
 #include <iostream>  // DBG
+#include <cstdio>
 #include <map>
 #include <string>
 #include <vector>
