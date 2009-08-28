@@ -799,12 +799,12 @@ int edgeCollapsePass(double minLC, GFace *gf, std::set<MTri3*,compareTri3Ptr> &a
 
 extern double angle3Points(MVertex *p1, MVertex *p2, MVertex *p3);
 
-struct recombine_triangle
+struct RecombineTriangle
 {
   MElement *t1, *t2;
   double angle;
   MVertex *n1, *n2, *n3, *n4;
-  recombine_triangle(const MEdge &me, MElement *_t1, MElement *_t2)
+  RecombineTriangle(const MEdge &me, MElement *_t1, MElement *_t2)
     : t1(_t1), t2(_t2)
   {
     n1 = me.getVertex(0);
@@ -826,7 +826,7 @@ struct recombine_triangle
     angle = std::max(fabs(90. - a3),angle);
     angle = std::max(fabs(90. - a4),angle);    
   }
-  bool operator < (const recombine_triangle &other) const
+  bool operator < (const RecombineTriangle &other) const
   {
     return angle < other.angle;
   }
@@ -854,20 +854,20 @@ static void _gmshRecombineIntoQuads(GFace *gf)
   e2t_cont adj;
   buildEdgeToElement(gf->triangles, adj);
 
-  std::set<recombine_triangle> pairs;
+  std::set<RecombineTriangle> pairs;
   for (e2t_cont::iterator it = adj.begin(); it!= adj.end(); ++it){
     if (it->second.second && 
         it->second.first->getNumVertices() == 3 &&  
         it->second.second->getNumVertices() == 3 &&
         (emb_edgeverts.find(it->first.getVertex(0)) == emb_edgeverts.end() ||
          emb_edgeverts.find(it->first.getVertex(1)) == emb_edgeverts.end()))
-      pairs.insert(recombine_triangle(it->first,
-                                      it->second.first,
-                                      it->second.second));
+      pairs.insert(RecombineTriangle(it->first,
+                                     it->second.first,
+                                     it->second.second));
   }
 
   std::set<MElement*> touched;
-  std::set<recombine_triangle>::iterator itp = pairs.begin();
+  std::set<RecombineTriangle>::iterator itp = pairs.begin();
   while(itp != pairs.end()){
     // recombine if difference between max quad angle and right
     // angle is smaller than tol

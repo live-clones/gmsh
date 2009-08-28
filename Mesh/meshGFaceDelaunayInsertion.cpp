@@ -723,8 +723,8 @@ void gmshBowyerWatson(GFace *gf)
   The point isertion is done on the Voronoi Edges
 */
 
-static double length_metric(const double p[2], const double q[2], 
-                            const double metric[3])
+static double lengthMetric(const double p[2], const double q[2], 
+                           const double metric[3])
 {
   return sqrt (     (p[0]-q[0]) * metric [0] * (p[0]-q[0]) +
                 2 * (p[0]-q[0]) * metric [1] * (p[1]-q[1]) +
@@ -844,8 +844,8 @@ void gmshBowyerWatsonFrontal(GFace *gf)
                                 2 * dir[1] * dir[0] * metric[1] +
                                 dir[1] * dir[1] * metric[2]);    
       
-      const double p = 0.5 * length_metric(P, Q, metric); // / RATIO;
-      const double q = length_metric (center, midpoint, metric);
+      const double p = 0.5 * lengthMetric(P, Q, metric); // / RATIO;
+      const double q = lengthMetric(center, midpoint, metric);
       const double rhoM1 = 0.5 * 
         (vSizes[base->getVertex(ip1)->getNum()] + 
          vSizes[base->getVertex(ip2)->getNum()] ) / sqrt(3.);// * RATIO;

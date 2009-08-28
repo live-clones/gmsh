@@ -47,7 +47,7 @@ void fourthPoint(double *p1, double *p2, double *p3, double *p4)
   p4[2] = c[2] + R * vz[2];
 }
 
-static bool noseam(GFace *gf)
+static bool noSeam(GFace *gf)
 {
   std::list<GEdge*> edges = gf->edges();
   std::list<GEdge*>::iterator it = edges.begin();
@@ -150,16 +150,16 @@ static void remeshUnrecoveredEdges(std::map<MVertex*, BDS_Point*> &recoverMapInv
   }
 }
 
-static bool AlgoDelaunay2D(GFace *gf)
+static bool algoDelaunay2D(GFace *gf)
 {
-  if(noseam(gf) && (CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY || 
+  if(noSeam(gf) && (CTX::instance()->mesh.algo2d == ALGO_2D_DELAUNAY || 
                     CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL))
     return true;
   return false;
 }
 
-void computeElementShapes(GFace *gf, double &worst, double &avg, double &best,
-                          int &nT, int &greaterThan)
+static void computeElementShapes(GFace *gf, double &worst, double &avg, 
+                                 double &best, int &nT, int &greaterThan)
 {
   worst = 1.e22;
   avg = 0.0;
@@ -177,13 +177,13 @@ void computeElementShapes(GFace *gf, double &worst, double &avg, double &best,
   avg /= nT;
 }
 
-static bool recover_medge(BDS_Mesh *m, GEdge *ge, 
-                          std::map<MVertex*, BDS_Point*> &recoverMapInv,
-                          std::set<EdgeToRecover> *e2r,
-                          std::set<EdgeToRecover> *not_recovered, int pass_)
+static bool recoverEdge(BDS_Mesh *m, GEdge *ge, 
+                        std::map<MVertex*, BDS_Point*> &recoverMapInv,
+                        std::set<EdgeToRecover> *e2r,
+                        std::set<EdgeToRecover> *notRecovered, int pass)
 {
   BDS_GeomEntity *g = 0;
-  if(pass_ == 2){
+  if(pass == 2){
     m->add_geom(ge->tag(), 1);
     g = m->get_geom(ge->tag(), 1);
   }
@@ -196,10 +196,10 @@ static bool recover_medge(BDS_Mesh *m, GEdge *ge,
     if(itpstart != recoverMapInv.end() && itpend != recoverMapInv.end()){
       BDS_Point *pstart = itpstart->second;
       BDS_Point *pend = itpend->second;
-      if(pass_ == 1) 
+      if(pass == 1) 
         e2r->insert(EdgeToRecover(pstart->iD, pend->iD, ge));
       else{
-        BDS_Edge *e = m->recover_edge(pstart->iD, pend->iD, e2r, not_recovered);
+        BDS_Edge *e = m->recover_edge(pstart->iD, pend->iD, e2r, notRecovered);
         if(e) e->g = g;
         // else {
         //   Msg::Error("Unable to recover an edge %g %g && %g %g (%d/%d)",
@@ -211,7 +211,7 @@ static bool recover_medge(BDS_Mesh *m, GEdge *ge,
     }
   }
 
-  if(pass_ == 2 && ge->getBeginVertex()){
+  if(pass == 2 && ge->getBeginVertex()){
     MVertex *vstart = *(ge->getBeginVertex()->mesh_vertices.begin());
     MVertex *vend = *(ge->getEndVertex()->mesh_vertices.begin());    
     std::map<MVertex*, BDS_Point*>::iterator itpstart = recoverMapInv.find(vstart);
@@ -408,14 +408,14 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
     it = edges.begin();
     while(it != edges.end()){
       if(!(*it)->isMeshDegenerated())
-        recover_medge
+        recoverEdge
           (m, *it, recoverMapInv, &edgesToRecover, &edgesNotRecovered, 1);
       ++it;
     }
     it = emb_edges.begin();
     while(it != emb_edges.end()){
       if(!(*it)->isMeshDegenerated())
-        recover_medge
+        recoverEdge
           (m, *it, recoverMapInv, &edgesToRecover, &edgesNotRecovered, 1);
       ++it;
     }
@@ -426,7 +426,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
     it = edges.begin();
     while(it != edges.end()){
       if(!(*it)->isMeshDegenerated()){
-        recover_medge
+        recoverEdge
           (m, *it, recoverMapInv, &edgesToRecover, &edgesNotRecovered, 2);
       }
       ++it;
@@ -509,7 +509,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
     it = emb_edges.begin();
     while(it != emb_edges.end()){
       if(!(*it)->isMeshDegenerated())
-        recover_medge
+        recoverEdge
           (m, *it, recoverMapInv, &edgesToRecover, &edgesNotRecovered, 2);
       ++it;
     }
@@ -586,7 +586,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
   Msg::Debug("Starting to add internal points");
 
   // start mesh generation
-  if(!AlgoDelaunay2D(gf)){
+  if(!algoDelaunay2D(gf)){
     gmshRefineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true,
                       &recoverMapInv);
     gmshOptimizeMeshBDS(gf, *m, 2);
@@ -645,7 +645,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
   // the delaunay algo is based directly on internal gmsh structures
   // BDS mesh is passed in order not to recompute local coordinates of
   // vertices
-  if(AlgoDelaunay2D(gf)){
+  if(algoDelaunay2D(gf)){
      if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
       gmshBowyerWatsonFrontal(gf);
     else
@@ -1131,7 +1131,7 @@ static bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
   }
 
   // start mesh generation
-  if(!AlgoDelaunay2D(gf)){
+  if(!algoDelaunay2D(gf)){
     gmshRefineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true);
     gmshOptimizeMeshBDS(gf, *m, 2);
     gmshRefineMeshBDS (gf, *m, -CTX::instance()->mesh.refineSteps, false);
@@ -1147,7 +1147,7 @@ static bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
   
   // fill the small gmsh structures
   {
-    std::set<BDS_Point*,PointLessThan>::iterator itp = m->points.begin();
+    std::set<BDS_Point*, PointLessThan>::iterator itp = m->points.begin();
     while (itp != m->points.end()){
       BDS_Point *p = *itp;
       if(recoverMap.find(p) == recoverMap.end()){
@@ -1194,7 +1194,7 @@ static bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
     outputScalarField(m->triangles, name, 1);
   }
   
-  if(AlgoDelaunay2D(gf)){
+  if(algoDelaunay2D(gf)){
     if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
       gmshBowyerWatsonFrontal(gf);
     else
@@ -1254,7 +1254,7 @@ void meshGFace::operator() (GFace *gf)
   if(MeshExtrudedSurface(gf)) return;
 
   const char *algo = "Unknown";
-  if(AlgoDelaunay2D(gf))
+  if(algoDelaunay2D(gf))
     algo = (CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL) ? 
       "Frontal" : "Delaunay";
   else if(CTX::instance()->mesh.algo2d == ALGO_2D_MESHADAPT_OLD)
@@ -1270,7 +1270,7 @@ void meshGFace::operator() (GFace *gf)
   Msg::Debug("Computing edge loops");
 
   Msg::Debug("Generating the mesh");
-  if(noseam(gf) || gf->getNativeType() == GEntity::GmshModel || 
+  if(noSeam(gf) || gf->getNativeType() == GEntity::GmshModel || 
      gf->edgeLoops.empty()){
     gmsh2DMeshGenerator(gf, 0, repairSelfIntersecting1dMesh,
                         debugSurface >= 0 || debugSurface == -100);

@@ -18,8 +18,6 @@ class BDS_Mesh;
 
 void computeMeshSizeFieldAccuracy(GFace *gf, BDS_Mesh &m, double &avg, 
                                   double &max_e, double &min_e, int &nE, int &GS);
-void computeElementShapes(GFace *gf, BDS_Mesh &m, double &worst, double &avg, 
-                          double &best, int &nT, int &nbGQ);
 void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT, 
                        const bool computeNodalSizeField,
                        std::map<MVertex*, BDS_Point*> *recoverMapInv=0);

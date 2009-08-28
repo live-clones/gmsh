@@ -214,29 +214,6 @@ void computeMeshSizeFieldAccuracy(GFace *gf, BDS_Mesh &m, double &avg,
   }
 }
 
-void computeElementShapes(GFace *gf, BDS_Mesh &m, double &worst, double &avg, 
-                          double &best, int &nT, int &nbGQ)
-{
-  std::list<BDS_Face*>::iterator it = m.triangles.begin();
-  worst = 1.e22;
-  avg = 0.0;
-  best = 0.0;
-  nT = 0;
-  nbGQ = 0;
-  while (it!= m.triangles.end()){
-    if (!(*it)->deleted){
-      double q  = qmTriangle(*it, QMTRI_RHO);
-      if (q > .9) nbGQ++;
-      avg += q;
-      worst = std::min(worst, q);
-      best = std::max(best, q);
-      nT++;
-    }
-    ++it;
-  }
-  avg /= nT;
-}
-
 // SWAP TESTS i.e. tell if swap should be done
 
 bool edgeSwapTestAngle(BDS_Edge *e, double min_cos)
