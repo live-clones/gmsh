@@ -2429,3 +2429,4 @@ Field[2].LcMax = 0.1;
 
 Background Field = 2;
 
+//Mesh.CharacteristicLengthExtendFromBoundary=0;
