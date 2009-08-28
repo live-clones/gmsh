@@ -135,9 +135,12 @@ static void remeshUnrecoveredEdges(std::map<MVertex*, BDS_Point*> &recoverMapInv
           newLines.push_back(new MLine(newv, v2));
           delete itr->ge->lines[i];
         }
-        else {
+        else{
           newLines.push_back(itr->ge->lines[i]);
         }
+      }
+      else {
+        newLines.push_back(itr->ge->lines[i]);
       }
     }
 
