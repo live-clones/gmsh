@@ -18,7 +18,7 @@ A GRegionCompound is a model region that is the compound of model regions.
 It is assumed that all the regions of the compound have been meshed
 first and that all the faces of the compound region are compound surfaces.
 
-The compound can therefore be re-meshed using any surface mesh
+The compound can therefore be re-meshed using any volume mesh
 generator of gmsh!
 */
 
@@ -35,9 +35,8 @@ class GRegionCompound : public GRegion {
   void * getNativePtr() const { return 0; }
 
  protected:
- std::vector<GRegion*> _compound;
-void getBoundingFaces();
-
+  std::vector<GRegion*> _compound;
+  void getBoundingFaces();
 };
 
 #endif

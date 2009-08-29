@@ -675,104 +675,104 @@ void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool, const BooleanOperato
           if (isOnlySolids)
             theNewShape = GlueFaces(C, Precision::Confusion());
           else
-	    theNewShape = C;
+            theNewShape = C;
         }
-	shape = theNewShape;
+        shape = theNewShape;
       }
       break;
     case OCC_Internals::Cut :
       {
         TopoDS_Shape theNewShape;       
-	BRep_Builder B;
-	TopoDS_Compound C;
-	B.MakeCompound(C);
-	
-	TopTools_ListOfShape listShapes, listTools;
-	addSimpleShapes(shape, listShapes);
-	addSimpleShapes(tool, listTools);
-	
-	Standard_Boolean isCompound = (listShapes.Extent() > 1);
-	
-	TopTools_ListIteratorOfListOfShape itSub1 (listShapes);
-	for (; itSub1.More(); itSub1.Next()) {
-	  TopoDS_Shape aCut = itSub1.Value();
-	  // tools
-	  TopTools_ListIteratorOfListOfShape itSub2 (listTools);
-	  for (; itSub2.More(); itSub2.Next()) {
-	    TopoDS_Shape aTool = itSub2.Value();
-	    BRepAlgoAPI_Cut BO (aCut, aTool);
-	    if (!BO.IsDone()) {
-	      Msg::Error("Cut operation can not be performed on the given shapes");
-	      return;
-	    }
-	    aCut = BO.Shape();
-	  }
-	  if (isCompound) {
-	    if (aCut.ShapeType() == TopAbs_COMPOUND) {
-	      TopoDS_Iterator aCompIter (aCut);
-	      for (; aCompIter.More(); aCompIter.Next()) {
-		B.Add(C, aCompIter.Value());
-	      }
-	    }
-	    else {
-	      B.Add(C, aCut);
-	    }
-	  }
-	  else
-	    theNewShape = aCut;
-	}
-	
-	if (isCompound) {
-	  TopTools_ListOfShape listShapeC;
-	  addSimpleShapes(C, listShapeC);
-	  TopTools_ListIteratorOfListOfShape itSubC (listShapeC);
-	  bool isOnlySolids = true;
-	  for (; itSubC.More(); itSubC.Next()) {
-	    TopoDS_Shape aValueC = itSubC.Value();
-	    if (aValueC.ShapeType() != TopAbs_SOLID) isOnlySolids = false;
-	  }
-	  if (isOnlySolids)
-	    theNewShape = GlueFaces(C, Precision::Confusion());
-	  else
-	    theNewShape = C;
-	}
-	shape = theNewShape;
+        BRep_Builder B;
+        TopoDS_Compound C;
+        B.MakeCompound(C);
+        
+        TopTools_ListOfShape listShapes, listTools;
+        addSimpleShapes(shape, listShapes);
+        addSimpleShapes(tool, listTools);
+        
+        Standard_Boolean isCompound = (listShapes.Extent() > 1);
+        
+        TopTools_ListIteratorOfListOfShape itSub1 (listShapes);
+        for (; itSub1.More(); itSub1.Next()) {
+          TopoDS_Shape aCut = itSub1.Value();
+          // tools
+          TopTools_ListIteratorOfListOfShape itSub2 (listTools);
+          for (; itSub2.More(); itSub2.Next()) {
+            TopoDS_Shape aTool = itSub2.Value();
+            BRepAlgoAPI_Cut BO (aCut, aTool);
+            if (!BO.IsDone()) {
+              Msg::Error("Cut operation can not be performed on the given shapes");
+              return;
+            }
+            aCut = BO.Shape();
+          }
+          if (isCompound) {
+            if (aCut.ShapeType() == TopAbs_COMPOUND) {
+              TopoDS_Iterator aCompIter (aCut);
+              for (; aCompIter.More(); aCompIter.Next()) {
+                B.Add(C, aCompIter.Value());
+              }
+            }
+            else {
+              B.Add(C, aCut);
+            }
+          }
+          else
+            theNewShape = aCut;
+        }
+        
+        if (isCompound) {
+          TopTools_ListOfShape listShapeC;
+          addSimpleShapes(C, listShapeC);
+          TopTools_ListIteratorOfListOfShape itSubC (listShapeC);
+          bool isOnlySolids = true;
+          for (; itSubC.More(); itSubC.Next()) {
+            TopoDS_Shape aValueC = itSubC.Value();
+            if (aValueC.ShapeType() != TopAbs_SOLID) isOnlySolids = false;
+          }
+          if (isOnlySolids)
+            theNewShape = GlueFaces(C, Precision::Confusion());
+          else
+            theNewShape = C;
+        }
+        shape = theNewShape;
       }      
       break;
     case OCC_Internals::Fuse :
       {
-	BRepAlgoAPI_Fuse BO (tool, shape);
-	if (!BO.IsDone()) {
-	  Msg::Error("Fuse operation can not be performed on the given shapes");
-	}
-	shape = BO.Shape();
+        BRepAlgoAPI_Fuse BO (tool, shape);
+        if (!BO.IsDone()) {
+          Msg::Error("Fuse operation can not be performed on the given shapes");
+        }
+        shape = BO.Shape();
       }
       break;
     case OCC_Internals::Section :
       {
-	TopoDS_Shape theNewShape;
-	BRep_Builder B;
-	TopoDS_Compound C;
-	B.MakeCompound(C);
+        TopoDS_Shape theNewShape;
+        BRep_Builder B;
+        TopoDS_Compound C;
+        B.MakeCompound(C);
 
-	TopTools_ListOfShape listShapes, listTools;
-	addSimpleShapes(shape, listShapes);
-	addSimpleShapes(tool, listTools);
-	
-	Standard_Boolean isCompound = (listShapes.Extent() > 1);
-	TopTools_ListIteratorOfListOfShape itSub1 (listShapes);
-	for (; itSub1.More(); itSub1.Next()) {
-	  TopoDS_Shape aValue1 = itSub1.Value();
-	  TopTools_ListIteratorOfListOfShape itSub2 (listTools);
-	  for (; itSub2.More(); itSub2.Next()) {
-	    TopoDS_Shape aValue2 = itSub2.Value();
-	    BRepAlgoAPI_Section BO (aValue1, aValue2, Standard_False);
-	    BO.Approximation(Standard_True);
-	    BO.Build();
-	    if (!BO.IsDone()) {
-	      Msg::Error("Section operation can not be performed on the given shapes");
-	      return;
-	    }
+        TopTools_ListOfShape listShapes, listTools;
+        addSimpleShapes(shape, listShapes);
+        addSimpleShapes(tool, listTools);
+        
+        Standard_Boolean isCompound = (listShapes.Extent() > 1);
+        TopTools_ListIteratorOfListOfShape itSub1 (listShapes);
+        for (; itSub1.More(); itSub1.Next()) {
+          TopoDS_Shape aValue1 = itSub1.Value();
+          TopTools_ListIteratorOfListOfShape itSub2 (listTools);
+          for (; itSub2.More(); itSub2.Next()) {
+            TopoDS_Shape aValue2 = itSub2.Value();
+            BRepAlgoAPI_Section BO (aValue1, aValue2, Standard_False);
+            BO.Approximation(Standard_True);
+            BO.Build();
+            if (!BO.IsDone()) {
+              Msg::Error("Section operation can not be performed on the given shapes");
+              return;
+            }
           if (isCompound) {
             TopoDS_Shape aStepResult = BO.Shape();
             if (aStepResult.ShapeType() == TopAbs_COMPOUND) {
@@ -787,11 +787,11 @@ void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool, const BooleanOperato
           }
           else
             theNewShape = BO.Shape();
-	  }
-	}	
-	if (isCompound)
-	  theNewShape = C;
-	shape = theNewShape;
+          }
+        }       
+        if (isCompound)
+          theNewShape = C;
+        shape = theNewShape;
       }
       break;
     default :
@@ -812,7 +812,7 @@ void OCC_Internals::Sphere(const SPoint3 &center, const double &radius,
 }
 
 void OCC_Internals::Cylinder(const SPoint3 &p, const SVector3 &d, double R, double H,
-			     const BooleanOperator &op)
+                             const BooleanOperator &op)
 {
   gp_Pnt aP(p.x(), p.y(), p.z());
   gp_Vec aV(d.x(), d.y(), d.z());
@@ -829,7 +829,7 @@ void OCC_Internals::Cylinder(const SPoint3 &p, const SVector3 &d, double R, doub
 }
 
 void OCC_Internals::Torus(const SPoint3 &p, const SVector3 &d, double R1, double R2,
-			  const BooleanOperator &op)
+                          const BooleanOperator &op)
 {
   gp_Pnt aP(p.x(),p.y(),p.z());
   gp_Vec aV(d.x(),d.y(),d.z());
@@ -846,7 +846,7 @@ void OCC_Internals::Torus(const SPoint3 &p, const SVector3 &d, double R1, double
 }
 
 void OCC_Internals::Torus(const SPoint3 &p, const SVector3 &d, double R1, double R2, 
-			  double angle, const BooleanOperator &op)
+                          double angle, const BooleanOperator &op)
 {
   gp_Pnt aP(p.x(), p.y(), p.z());
   gp_Vec aV(d.x(), d.y(), d.z());
@@ -880,7 +880,7 @@ void OCC_Internals::Cone(const SPoint3 &p, const SVector3 &d, double R1,
 }
 
 void OCC_Internals::Box(const SPoint3 &p1, const SPoint3 &p2,
-			const BooleanOperator &op)
+                        const BooleanOperator &op)
 {
   gp_Pnt P1(p1.x(), p1.y(), p1.z());
   gp_Pnt P2(p2.x(), p2.y(), p2.z());
@@ -895,7 +895,7 @@ void OCC_Internals::Box(const SPoint3 &p1, const SPoint3 &p2,
 }
 
 void OCC_Internals::Fillet(std::vector<TopoDS_Edge> &edgesToFillet,
-			   double Radius){
+                           double Radius){
 
   // create a tool for fillet
   BRepFilletAPI_MakeFillet fill(shape);

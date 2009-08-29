@@ -1,6 +1,6 @@
-$Id: VERSIONS.txt,v 1.55 2009-08-28 17:23:54 geuzaine Exp $
+$Id: VERSIONS.txt,v 1.56 2009-08-29 12:13:15 geuzaine Exp $
 
-2.4.1 (Aug 29): fixed surface mesh orientation bug introduced in
+2.4.1 (Aug 31, 2009): fixed surface mesh orientation bug introduced in
 2.4.0; 2D meshing code refactoring and small bug fixes.
 
 2.4.0 (Aug 22, 2009): switched build system to CMake; optionally copy

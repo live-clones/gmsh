@@ -54,12 +54,12 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
   in.pointlist = new REAL[in.numberofpoints * 3];
   in.pointmarkerlist = NULL;
 
-  std::set<MVertex*>::iterator itv =  allBoundingVertices.begin();
+  std::set<MVertex*>::iterator itv = allBoundingVertices.begin();
   int I = 1;
   while(itv != allBoundingVertices.end()){
-    in.pointlist[(I-1)*3 + 0] = (*itv)->x();
-    in.pointlist[(I-1)*3 + 1] = (*itv)->y();
-    in.pointlist[(I-1)*3 + 2] = (*itv)->z();
+    in.pointlist[(I - 1) * 3 + 0] = (*itv)->x();
+    in.pointlist[(I - 1) * 3 + 1] = (*itv)->y();
+    in.pointlist[(I - 1) * 3 + 2] = (*itv)->z();
     (*itv)->setIndex(I++);
     numberedV.push_back(*itv);
     ++itv;
@@ -106,11 +106,10 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
 void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out, 
                         std::vector<MVertex*> &numberedV)
 {
-  // Improvement has to be done here :
-  // tetgen splits some of the existing edges of the 
-  // mesh. If those edges are classified on some
-  // model faces, new points SHOULD be classified
-  // on the model face and get the right set of parametric coordinates.
+  // improvement has to be done here : tetgen splits some of the
+  // existing edges of the mesh. If those edges are classified on some
+  // model faces, new points SHOULD be classified on the model face
+  // and get the right set of parametric coordinates.
 
   for(int i = numberedV.size(); i < out.numberofpoints; i++){
     MVertex *v = new MVertex(out.pointlist[i * 3 + 0],
@@ -148,7 +147,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
   // re-create the triangular meshes FIXME: this can lead to hanging
   // nodes for non manifold geometries (single surface connected to
   // volume)
-  for (int i = 0; i < out.numberoftrifaces; i++){
+  for(int i = 0; i < out.numberoftrifaces; i++){
     MVertex *v[3];
     v[0] = numberedV[out.trifacelist[i * 3 + 0] - 1];
     v[1] = numberedV[out.trifacelist[i * 3 + 1] - 1];
@@ -169,7 +168,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
         guess[1] += vv;
         Count++;
       }
-      else if (v[j]->onWhat()->dim() == 1){
+      else if(v[j]->onWhat()->dim() == 1){
         GEdge *ge = (GEdge*)v[j]->onWhat();
         double UU;
         v[j]->getParameter(0, UU);
@@ -179,7 +178,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
         guess[1] += param.y();
         Count++;
       }
-      else if (v[j]->onWhat()->dim() == 0){
+      else if(v[j]->onWhat()->dim() == 0){
         SPoint2 param;
         GVertex *gv = (GVertex*)v[j]->onWhat();
         param = gv->reparamOnFace(gf,1);
@@ -188,7 +187,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
         Count++;
       }
     }
-    if (Count != 0){
+    if(Count != 0){
       guess[0] /= Count;
       guess[1] /= Count;
     }
@@ -200,13 +199,13 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
                      v[j]->onWhat()->mesh_vertices.end(),
                      v[j]));
         MVertex *v1b;
-        if (CTX::instance()->mesh.order > 1 && 
-            CTX::instance()->mesh.secondOrderExperimental){
+        if(CTX::instance()->mesh.order > 1 && 
+           CTX::instance()->mesh.secondOrderExperimental){
           // parametric coordinates should be set for the vertex !
           // (this is not 100 % safe yet, so we reserve that operation
           // for high order meshes)
           GPoint gp = gf->closestPoint(SPoint3(v[j]->x(), v[j]->y(), v[j]->z()),guess);
-          if (gp.g()){
+          if(gp.g()){
             v1b = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
           }
           else{
@@ -284,7 +283,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
       try{
         tetrahedralize(opts, &in, &out);
         Msg::Info("%d faces self-intersect", out.numberoftrifaces);
-        for (int i = 0; i < out.numberoftrifaces; i++){
+        for(int i = 0; i < out.numberoftrifaces; i++){
           Msg::Info("face (%d %d %d) on model face %d",
                     numberedV[out.trifacelist[i * 3 + 0] - 1]->getNum(),
                     numberedV[out.trifacelist[i * 3 + 1] - 1]->getNum(),
@@ -435,7 +434,7 @@ void deMeshGRegion::operator() (GRegion *gr)
 }
 
 int intersect_line_triangle(double X[3], double Y[3], double Z[3] , 
-                            double P[3], double N[3] )
+                            double P[3], double N[3])
 {
   double mat[3][3], det;
   double b[3], res[3];
@@ -480,7 +479,7 @@ int intersect_line_triangle(double X[3], double Y[3], double Z[3] ,
 
 void setRand(double r[6])
 {
-  for (int i=0;i<6;i++)
+  for(int i = 0; i < 6; i++)
     r[i] = 0.0001 * ((double)rand() / (double)RAND_MAX);
 }
 
@@ -500,9 +499,11 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
       double X[3] = {t->getVertex(0)->x(), t->getVertex(1)->x(), t->getVertex(2)->x()};
       double Y[3] = {t->getVertex(0)->y(), t->getVertex(1)->y(), t->getVertex(2)->y()};
       double Z[3] = {t->getVertex(0)->z(), t->getVertex(1)->z(), t->getVertex(2)->z()};
-      double P[3] = {(X[0]+X[1]+X[2])/3., (Y[0]+Y[1]+Y[2])/3., (Z[0]+Z[1]+Z[2])/3.};
-      double v1[3] = {X[0]-X[1], Y[0]-Y[1], Z[0]-Z[1]};
-      double v2[3] = {X[2]-X[1], Y[2]-Y[1], Z[2]-Z[1]};
+      double P[3] = {(X[0] + X[1] + X[2]) / 3., 
+                     (Y[0] + Y[1] + Y[2]) / 3.,
+                     (Z[0] + Z[1] + Z[2]) / 3.};
+      double v1[3] = {X[0] - X[1], Y[0] - Y[1], Z[0] - Z[1]};
+      double v2[3] = {X[2] - X[1], Y[2] - Y[1], Z[2] - Z[1]};
       double N[3];
       prodve(v1, v2, N);
       norme(v1);
@@ -540,7 +541,7 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
     else{
       if(nb_intersect % 2 == 1){ 
         // odd nb of intersections: the normal points inside the region 
-        for (unsigned int i = 0; i < gf->triangles.size(); i++){
+        for(unsigned int i = 0; i < gf->triangles.size(); i++){
           gf->triangles[i]->revert();
         }
       }
@@ -577,7 +578,6 @@ void meshGRegion::operator() (GRegion *gr)
   
   std::list<GFace*> faces = gr->faces();
 
-
   // sanity check
   for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
     if((*it)->quadrangles.size()){
@@ -586,26 +586,21 @@ void meshGRegion::operator() (GRegion *gr)
     }
   }
 
-  //replace discreteFaces by their compounds
-  if (gr->geomType() == GEntity::CompoundVolume){
+  // replace discreteFaces by their compounds
+  if(gr->geomType() == GEntity::CompoundVolume){
     std::set<GFace*> mySet;
     std::list<GFace*>::iterator it = faces.begin();
     while(it != faces.end()){
-      if ((*it)->getCompound()){
+      if((*it)->getCompound())
         mySet.insert((*it)->getCompound());
-        printf("compound face %d found in face %d\n",(*it)->getCompound()->tag(), (*it)->tag());
-      }
       else 
         mySet.insert(*it);
       ++it;
     }
-    printf("replacing %d edges by %d in the GFaceCompound %d\n",
-           (int)faces.size(), (int)mySet.size(), gr->tag());
     faces.clear();
     faces.insert(faces.begin(), mySet.begin(), mySet.end());
     gr->set(faces);
   }
-
 
   std::list<GFace*> myface = gr->faces();
 
@@ -621,7 +616,7 @@ void meshGRegion::operator() (GRegion *gr)
     meshNormalsPointOutOfTheRegion(gr);
     std::vector<MVertex*> numberedV;
     Ng_Mesh *ngmesh = buildNetgenStructure(gr, false, numberedV);
-    NgAddOn_GenerateVolumeMesh(ngmesh, CTX::instance()->lc); // does not optimize
+    NgAddOn_GenerateVolumeMesh(ngmesh, CTX::instance()->lc);
     TransferVolumeMesh(gr, ngmesh, numberedV);
     Ng_DeleteMesh(ngmesh);
     Ng_Exit();
@@ -737,8 +732,8 @@ GEdge *findInEdgeSearchStructure(MVertex *p1, MVertex *p2, const es_cont &search
       ++it){
     MLine *l = it->second.first;
     GEdge *ge = it->second.second;
-    if ((l->getVertex(0) == p1 || l->getVertex(0) == p2) &&
-        (l->getVertex(1) == p1 || l->getVertex(1) == p2)) 
+    if((l->getVertex(0) == p1 || l->getVertex(0) == p2) &&
+       (l->getVertex(1) == p1 || l->getVertex(1) == p2)) 
       return ge;
   }
   return 0;

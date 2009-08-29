@@ -51,13 +51,13 @@ class OCC_Internals {
   void Box(const SPoint3 &p1, const SPoint3 &p2, const BooleanOperator &op);
   void Sphere(const SPoint3 &center, const double &radius, const BooleanOperator &op);
   void Cylinder(const SPoint3 &bottom_center, const SVector3 &dir, double R, double H,
-		const BooleanOperator &op);
+                const BooleanOperator &op);
   void Cone(const SPoint3 &bottom_center, const SVector3 &dir, double R1, double R2, 
-	     double H,  const BooleanOperator &op);
+             double H,  const BooleanOperator &op);
   void Torus(const SPoint3 &bottom_center, const SVector3 &dir, double R1, double R2, 
-	     const BooleanOperator &op);
+             const BooleanOperator &op);
   void Torus(const SPoint3 &bottom_center, const SVector3 &dir, double R1, double R2, 
-	     double angle,  const BooleanOperator &op);
+             double angle,  const BooleanOperator &op);
   void Fillet(std::vector<TopoDS_Edge> &shapes, double radius);
   void applyBooleanOperator(TopoDS_Shape tool, const BooleanOperator &op);
 };

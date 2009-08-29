@@ -18,8 +18,8 @@
 
 static void setLcsInit(MTriangle *t, std::map<MVertex*, double> &vSizes)
 {
-  for (int i = 0; i < 3; i++){
-    for (int j = i + 1; j < 3; j++){
+  for(int i = 0; i < 3; i++){
+    for(int j = i + 1; j < 3; j++){
       MVertex *vi = t->getVertex(i);
       MVertex *vj = t->getVertex(j);
       vSizes[vi] = -1;
@@ -30,8 +30,8 @@ static void setLcsInit(MTriangle *t, std::map<MVertex*, double> &vSizes)
 
 static void setLcs(MTriangle *t, std::map<MVertex*, double> &vSizes)
 {
-  for (int i = 0; i < 3; i++){
-    for (int j = i + 1; j < 3; j++){
+  for(int i = 0; i < 3; i++){
+    for(int j = i + 1; j < 3; j++){
       MVertex *vi = t->getVertex(i);
       MVertex *vj = t->getVertex(j);
       double dx = vi->x() - vj->x();
@@ -40,8 +40,8 @@ static void setLcs(MTriangle *t, std::map<MVertex*, double> &vSizes)
       double l = sqrt(dx * dx + dy * dy + dz * dz);
       std::map<MVertex*,double>::iterator iti = vSizes.find(vi);          
       std::map<MVertex*,double>::iterator itj = vSizes.find(vj);          
-      if (iti->second < 0 || iti->second > l) iti->second = l;
-      if (itj->second < 0 || itj->second > l) itj->second = l;
+      if(iti->second < 0 || iti->second > l) iti->second = l;
+      if(itj->second < 0 || itj->second > l) itj->second = l;
     }
   }
 }
@@ -57,10 +57,10 @@ void buildMeshGenerationDataStructures(GFace *gf,
   std::map<MVertex*, double> vSizesMap;
   std::list<GEdge*> edges = gf->edges();
 
-  for (unsigned int i = 0;i < gf->triangles.size(); i++)
+  for(unsigned int i = 0;i < gf->triangles.size(); i++)
     setLcsInit(gf->triangles[i], vSizesMap);
 
-  for (unsigned int i = 0;i < gf->triangles.size(); i++)
+  for(unsigned int i = 0;i < gf->triangles.size(); i++)
     setLcs(gf->triangles[i], vSizesMap);
 
   // take care of embedded vertices
@@ -75,7 +75,7 @@ void buildMeshGenerationDataStructures(GFace *gf,
   }
 
   int NUM = 0;
-  for (std::map<MVertex*, double>::iterator it = vSizesMap.begin();
+  for(std::map<MVertex*, double>::iterator it = vSizesMap.begin();
        it != vSizesMap.end(); ++it){
     // FIXME: this vertex-stored indexing makes the optimization
     // routines not thread-safe (we cannot concurrently optimize two
@@ -103,9 +103,9 @@ void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
                            std::vector<double> &Us, std::vector<double> &Vs)
 {
   while (1) {
-    if (AllTris.begin() == AllTris.end()) break;
+    if(AllTris.begin() == AllTris.end()) break;
     MTri3 *worst = *AllTris.begin();
-    if (worst->isDeleted())
+    if(worst->isDeleted())
       delete worst->tri();
     else
       gf->triangles.push_back(worst->tri());
@@ -139,12 +139,12 @@ void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
 template <class T>
 void buildVertexToElement(std::vector<T*> &eles, v2t_cont &adj)
 {
-  for (unsigned int i = 0; i < eles.size(); i++){
+  for(unsigned int i = 0; i < eles.size(); i++){
     T *t = eles[i];
-    for (int j = 0; j < t->getNumVertices(); j++){
+    for(int j = 0; j < t->getNumVertices(); j++){
       MVertex *v = t->getVertex(j);
       v2t_cont :: iterator it = adj.find(v);
-      if (it == adj.end()){
+      if(it == adj.end()){
         std::vector<MElement*> one;
         one.push_back(t);
         adj[v] = one;
@@ -165,12 +165,12 @@ void buildVertexToTriangle(std::vector<MTriangle*> &eles, v2t_cont &adj)
 template <class T>
 void buildEdgeToElement(std::vector<T*> &elements, e2t_cont &adj)
 {
-  for (unsigned int i = 0; i < elements.size(); i++){
+  for(unsigned int i = 0; i < elements.size(); i++){
     T *t = elements[i];
-    for (int j = 0; j < t->getNumEdges(); j++){
+    for(int j = 0; j < t->getNumEdges(); j++){
       MEdge e = t->getEdge(j);
       e2t_cont::iterator it = adj.find(e);
-      if (it == adj.end()){
+      if(it == adj.end()){
         std::pair<MElement*, MElement*> one = std::make_pair(t, (MElement*)0);
         adj[e] = one;
       }
@@ -196,7 +196,7 @@ void buildEdgeToTriangle(std::vector<MTriangle*> &tris, e2t_cont &adj)
 
 void parametricCoordinates(MElement *t, GFace *gf, double u[4], double v[4])
 {
-  for (int j = 0; j < t->getNumVertices(); j++){
+  for(int j = 0; j < t->getNumVertices(); j++){
     MVertex *ver = t->getVertex(j);
     SPoint2 param;
     reparamMeshVertexOnFace(ver, gf, param);
@@ -211,13 +211,13 @@ void laplaceSmoothing(GFace *gf)
   buildVertexToElement(gf->triangles, adj);
   buildVertexToElement(gf->quadrangles, adj);
 
-  for (int i = 0; i < 5; i++){
+  for(int i = 0; i < 5; i++){
     v2t_cont :: iterator it = adj.begin();
     while (it != adj.end()){
       MVertex *ver= it->first;
       GEntity *ge = ver->onWhat();
       // this vertex in internal to the face
-      if (ge->dim() == 2){
+      if(ge->dim() == 2){
         double initu,initv;
         ver->getParameter(0, initu);
         ver->getParameter(1, initv);
@@ -225,22 +225,22 @@ void laplaceSmoothing(GFace *gf)
         double cu = 0, cv = 0;
         double pu[4], pv[4];
         double fact  = 0.0;
-        for (unsigned int i = 0; i < lt.size(); i++){
+        for(unsigned int i = 0; i < lt.size(); i++){
           parametricCoordinates(lt[i], gf, pu, pv);
           cu += (pu[0] + pu[1] + pu[2]);
           cv += (pv[0] + pv[1] + pv[2]);
-          if (lt[i]->getNumVertices() == 4){
+          if(lt[i]->getNumVertices() == 4){
             cu += pu[3];
             cv += pv[3];
           }         
           fact += lt[i]->getNumVertices();
           // have to test validity !
         }
-        if (fact != 0.0){
+        if(fact != 0.0){
           ver->setParameter(0, cu / fact);
           ver->setParameter(1, cv / fact);
           GPoint pt = gf->point(SPoint2(cu / fact, cv / fact));
-          if (pt.succeeded()){
+          if(pt.succeeded()){
             ver->x() = pt.x();
             ver->y() = pt.y();
             ver->z() = pt.z();
@@ -269,18 +269,18 @@ bool gmshEdgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalE
                   const std::vector<double> &vSizes, const std::vector<double> &vSizesBGM)
 {
   MTri3 *t2 = t1->getNeigh(iLocalEdge);
-  if (!t2) return false;
+  if(!t2) return false;
 
   MVertex *v1 = t1->tri()->getVertex(iLocalEdge == 0 ? 2 : iLocalEdge - 1);
   MVertex *v2 = t1->tri()->getVertex((iLocalEdge) % 3);
   MVertex *v3 = t1->tri()->getVertex((iLocalEdge + 1) % 3);
   MVertex *v4 = 0;
-  for (int i = 0; i < 3; i++)
-    if (t2->tri()->getVertex(i) != v1 && t2->tri()->getVertex(i) != v2)
+  for(int i = 0; i < 3; i++)
+    if(t2->tri()->getVertex(i) != v1 && t2->tri()->getVertex(i) != v2)
       v4 = t2->tri()->getVertex(i);
   
   swapquad sq (v1, v2, v3, v4);
-  if (configs.find(sq) != configs.end()) return false;
+  if(configs.find(sq) != configs.end()) return false;
   configs.insert(sq);
 
   const double volumeRef = surfaceTriangleUV(v1, v2, v3, Us, Vs) + 
@@ -291,7 +291,7 @@ bool gmshEdgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalE
   const double v1b = surfaceTriangleUV(v2, v3, v4, Us, Vs);
   const double v2b = surfaceTriangleUV(v4, v3, v1, Us, Vs);
   const double volume = v1b + v2b;
-  if (fabs(volume - volumeRef) > 1.e-10 * (volume + volumeRef) || 
+  if(fabs(volume - volumeRef) > 1.e-10 * (volume + volumeRef) || 
       v1b < 1.e-8 * (volume + volumeRef) ||
       v2b < 1.e-8 * (volume + volumeRef)){
     delete t1b;
@@ -306,7 +306,7 @@ bool gmshEdgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalE
                                             qmTriangle(t2->tri(), QMTRI_RHO));
       const double triQuality = std::min(qmTriangle(t1b, QMTRI_RHO),
                                          qmTriangle(t2b, QMTRI_RHO));
-      if (triQuality < triQualityRef){
+      if(triQuality < triQualityRef){
         delete t1b;
         delete t2b;
         return false;
@@ -322,7 +322,7 @@ bool gmshEdgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalE
       double uv4[2] ={Us[v4->getIndex()], Vs[v4->getIndex()]};
       double metric[3];
       buildMetric(gf, edgeCenter, metric);
-      if (!inCircumCircleAniso(gf, t1->tri(), uv4, metric, Us, Vs)){
+      if(!inCircumCircleAniso(gf, t1->tri(), uv4, metric, Us, Vs)){
         delete t1b;
         delete t2b;
         return false;
@@ -344,7 +344,7 @@ bool gmshEdgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalE
         (avg1[1]-gp1.y()) + (avg1[2] - gp1.z()) * (avg1[2] - gp1.z());
       double d2 = (avg2[0] - gp2.x()) * (avg2[0] - gp2.x()) + (avg2[1] - gp2.y()) *
         (avg2[1] - gp2.y()) + (avg2[2] - gp2.z()) * (avg2[2] - gp2.z());
-      if (d1 < d2){
+      if(d1 < d2){
         delete t1b;
         delete t2b;
         return false;
@@ -358,21 +358,21 @@ bool gmshEdgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalE
 
   std::list<MTri3*> cavity;
   for(int i = 0; i < 3; i++){    
-    if (t1->getNeigh(i) && t1->getNeigh(i) != t2){      
+    if(t1->getNeigh(i) && t1->getNeigh(i) != t2){      
       bool found = false;
-      for (std::list<MTri3*>::iterator it = cavity.begin(); it != cavity.end(); it++){
-        if (*it == t1->getNeigh(i)) found = true;
+      for(std::list<MTri3*>::iterator it = cavity.begin(); it != cavity.end(); it++){
+        if(*it == t1->getNeigh(i)) found = true;
       }
-      if (!found)cavity.push_back(t1->getNeigh(i));
+      if(!found)cavity.push_back(t1->getNeigh(i));
     }
   }
   for(int i = 0; i < 3; i++){    
-    if (t2->getNeigh(i) && t2->getNeigh(i) != t1){      
+    if(t2->getNeigh(i) && t2->getNeigh(i) != t1){      
       bool found = false;
-      for (std::list<MTri3*>::iterator it = cavity.begin(); it != cavity.end(); it++){
-        if (*it == t2->getNeigh(i)) found = true;
+      for(std::list<MTri3*>::iterator it = cavity.begin(); it != cavity.end(); it++){
+        if(*it == t2->getNeigh(i)) found = true;
       }
-      if (!found)cavity.push_back(t2->getNeigh(i));
+      if(!found)cavity.push_back(t2->getNeigh(i));
     }
   }
   double lc1 = 0.3333333333 * (vSizes[t1b->getVertex(0)->getIndex()] +
@@ -421,7 +421,7 @@ inline double computeEdgeAdimLength(MVertex *v1, MVertex *v2, GFace *f,
   const double dy2 = v2->y() - GP.y();
   const double dz2 = v2->z() - GP.z();
   const double l2 = sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2);
-  if (Extend1dMeshIn2dSurfaces())
+  if(Extend1dMeshIn2dSurfaces())
     return 2 * (l1 + l2) / (std::min(vSizes[v1->getIndex()], vSizesBGM[v1->getIndex()]) +
                             std::min(vSizes[v2->getIndex()], vSizesBGM[v2->getIndex()]));
   return 2 * (l1 + l2) / (vSizesBGM[v1->getIndex()] + vSizesBGM[v2->getIndex()]);
@@ -433,7 +433,7 @@ bool gmshEdgeSplit(const double lMax, MTri3 *t1, GFace *gf, int iLocalEdge,
                    std::vector<double> &vSizes, std::vector<double> &vSizesBGM)
 {
   MTri3 *t2 = t1->getNeigh(iLocalEdge);
-  if (!t2) return false;
+  if(!t2) return false;
 
   MVertex *v1 = t1->tri()->getVertex(iLocalEdge == 0 ? 2 : iLocalEdge - 1);
   MVertex *v2 = t1->tri()->getVertex(iLocalEdge % 3);
@@ -441,12 +441,12 @@ bool gmshEdgeSplit(const double lMax, MTri3 *t1, GFace *gf, int iLocalEdge,
                          (Vs[v1->getIndex()] + Vs[v2->getIndex()]) * .5};
  
   double al = computeEdgeAdimLength(v1, v2, gf,Us, Vs, vSizes, vSizesBGM);
-  if (al <= lMax) return false;
+  if(al <= lMax) return false;
 
   MVertex *v3 = t1->tri()->getVertex((iLocalEdge + 1) % 3);
   MVertex *v4 = 0;
-  for (int i = 0; i < 3; i++)
-    if (t2->tri()->getVertex(i) != v1 && t2->tri()->getVertex(i) != v2)
+  for(int i = 0; i < 3; i++)
+    if(t2->tri()->getVertex(i) != v1 && t2->tri()->getVertex(i) != v2)
       v4 = t2->tri()->getVertex(i);
 
   GPoint p = gf->point(edgeCenter[0], edgeCenter[1]);
@@ -468,7 +468,7 @@ bool gmshEdgeSplit(const double lMax, MTri3 *t1, GFace *gf, int iLocalEdge,
                                    qmTriangle(t2b, QMTRI_RHO)),
                           qmTriangle(t3b, QMTRI_RHO)), 
                  qmTriangle(t4b, QMTRI_RHO));
-      if (triQuality < triQualityRef){
+      if(triQuality < triQualityRef){
         delete t1b;
         delete t2b;
         delete t3b;
@@ -497,21 +497,21 @@ bool gmshEdgeSplit(const double lMax, MTri3 *t1, GFace *gf, int iLocalEdge,
 
   std::list<MTri3*> cavity;
   for(int i = 0; i < 3; i++){    
-    if (t1->getNeigh(i) && t1->getNeigh(i) != t2){      
+    if(t1->getNeigh(i) && t1->getNeigh(i) != t2){      
       bool found = false;
-      for (std::list<MTri3*>::iterator it = cavity.begin();it != cavity.end(); it++){
-        if (*it == t1->getNeigh(i)) found = true;
+      for(std::list<MTri3*>::iterator it = cavity.begin();it != cavity.end(); it++){
+        if(*it == t1->getNeigh(i)) found = true;
       }
-      if (!found) cavity.push_back(t1->getNeigh(i));
+      if(!found) cavity.push_back(t1->getNeigh(i));
     }
   }
   for(int i = 0; i < 3; i++){
-    if (t2->getNeigh(i) && t2->getNeigh(i) != t1){      
+    if(t2->getNeigh(i) && t2->getNeigh(i) != t1){      
       bool found = false;
-      for (std::list<MTri3*>::iterator it = cavity.begin(); it != cavity.end(); it++){
-        if (*it == t2->getNeigh(i))found = true;
+      for(std::list<MTri3*>::iterator it = cavity.begin(); it != cavity.end(); it++){
+        if(*it == t2->getNeigh(i))found = true;
       }
-      if (!found) cavity.push_back(t2->getNeigh(i));
+      if(!found) cavity.push_back(t2->getNeigh(i));
     }
   }
   double lc1 = 0.3333333333 * (vSizes[t1b->getVertex(0)->getIndex()] +
@@ -562,8 +562,8 @@ void computeNeighboringTrisOfACavity(const std::vector<MTri3*> &cavity,
                                      std::vector<MTri3*> &outside)
 {
   outside.clear();
-  for (unsigned int i = 0; i < cavity.size(); i++){
-    for (int j = 0; j < 3; j++){
+  for(unsigned int i = 0; i < cavity.size(); i++){
+    for(int j = 0; j < 3; j++){
       MTri3 * neigh = cavity[i]->getNeigh(j);
       if(neigh){
         bool found = false;
@@ -574,7 +574,7 @@ void computeNeighboringTrisOfACavity(const std::vector<MTri3*> &cavity,
           }
         }
         if(!found){
-          for (unsigned int k = 0; k < cavity.size(); k++){
+          for(unsigned int k = 0; k < cavity.size(); k++){
             if(cavity[k] == neigh){
               found = true;
             }
@@ -601,25 +601,25 @@ bool gmshBuildVertexCavity(MTri3 *t, int iLocalVertex, MVertex **v1,
 
   while (1){
     int iEdge = -1;
-    for (int i = 0; i < 3; i++){
+    for(int i = 0; i < 3; i++){
       MVertex *v2  = t->tri()->getVertex((i + 2) % 3);
       MVertex *v3  = t->tri()->getVertex(i);
-      if ((v2 == *v1 && v3 == lastinring) ||
+      if((v2 == *v1 && v3 == lastinring) ||
           (v2 == lastinring && v3 == *v1)){
         iEdge = i;
         t = t->getNeigh(i);
-        if (t == cavity[0]) {
+        if(t == cavity[0]) {
           computeNeighboringTrisOfACavity(cavity, outside);
           return true;
         }
-        if (!t) return false;
-        if (t->isDeleted()){ 
+        if(!t) return false;
+        if(t->isDeleted()){ 
           Msg::Error("Impossible to build vertex cavity");
           return false;
         }  
         cavity.push_back(t);
-        for (int j = 0; j < 3; j++){
-          if (t->tri()->getVertex(j) !=lastinring && t->tri()->getVertex(j) != *v1){
+        for(int j = 0; j < 3; j++){
+          if(t->tri()->getVertex(j) !=lastinring && t->tri()->getVertex(j) != *v1){
             lastinring = t->tri()->getVertex(j);
             ring.push_back(lastinring);
             j = 100;
@@ -628,7 +628,7 @@ bool gmshBuildVertexCavity(MTri3 *t, int iLocalVertex, MVertex **v1,
         break;
       }
     }
-    if (iEdge == -1) {
+    if(iEdge == -1) {
       Msg::Error("Impossible to build vertex cavity");
       return false;
     }
@@ -645,13 +645,13 @@ bool gmshVertexCollapse(const double lMin, MTri3 *t1, GFace *gf,
   std::vector<MTri3*> outside;
   std::vector<MVertex*> ring;
 
-  if (!gmshBuildVertexCavity(t1, iLocalVertex, &v, cavity, outside, ring)) return false;
+  if(!gmshBuildVertexCavity(t1, iLocalVertex, &v, cavity, outside, ring)) return false;
   
   double l_min = lMin;
   int iMin = -1;
-  for (unsigned int i = 0; i < ring.size(); i++){
+  for(unsigned int i = 0; i < ring.size(); i++){
     double l = computeEdgeAdimLength(v, ring[i], gf, Us, Vs, vSizes, vSizesBGM);
-    if (l < l_min){
+    if(l < l_min){
       iMin = i;
     }
   }
@@ -698,22 +698,22 @@ bool gmshVertexCollapse(const double lMin, MTri3 *t1, GFace *gf,
   return true;
 }
 
-int edgeSwapPass (GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
-                  const gmshSwapCriterion &cr,
-                  const std::vector<double> &Us, const std::vector<double> &Vs,
-                  const std::vector<double> &vSizes, const std::vector<double> &vSizesBGM)
+int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
+                 const gmshSwapCriterion &cr,
+                 const std::vector<double> &Us, const std::vector<double> &Vs,
+                 const std::vector<double> &vSizes, const std::vector<double> &vSizesBGM)
 {
   typedef std::set<MTri3*, compareTri3Ptr> CONTAINER;
 
   int nbSwapTot = 0;
   std::set<swapquad> configs;
-  for (int iter = 0; iter < 1200; iter++){
+  for(int iter = 0; iter < 1200; iter++){
     int nbSwap = 0;
     std::vector<MTri3*> newTris;
-    for (CONTAINER::iterator it = allTris.begin(); it != allTris.end(); ++it){
-      if (!(*it)->isDeleted()){
-        for (int i = 0; i < 3; i++){
-          if (gmshEdgeSwap(configs, *it, gf, i, newTris, cr, Us, Vs, vSizes, vSizesBGM)){
+    for(CONTAINER::iterator it = allTris.begin(); it != allTris.end(); ++it){
+      if(!(*it)->isDeleted()){
+        for(int i = 0; i < 3; i++){
+          if(gmshEdgeSwap(configs, *it, gf, i, newTris, cr, Us, Vs, vSizes, vSizesBGM)){
             nbSwap++;
             break;
           }
@@ -724,12 +724,12 @@ int edgeSwapPass (GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
         CONTAINER::iterator itb = it;
         ++it;
         allTris.erase(itb);
-        if (it == allTris.end()) break;
+        if(it == allTris.end()) break;
       }
     }
     allTris.insert(newTris.begin(), newTris.end());
     nbSwapTot += nbSwap;
-    if (nbSwap == 0) break;
+    if(nbSwap == 0) break;
   }  
   return nbSwapTot;
 }
@@ -744,10 +744,10 @@ int edgeSplitPass(double maxLC, GFace *gf, std::set<MTri3*,compareTri3Ptr> &allT
 
   int nbSplit = 0;
   
-  for (CONTAINER::iterator it = allTris.begin(); it != allTris.end(); ++it){
-    if (!(*it)->isDeleted()){
-      for (int i = 0; i < 3; i++){
-        if (gmshEdgeSplit(maxLC, *it, gf, i, newTris, cr, Us, Vs, vSizes, vSizesBGM)) {
+  for(CONTAINER::iterator it = allTris.begin(); it != allTris.end(); ++it){
+    if(!(*it)->isDeleted()){
+      for(int i = 0; i < 3; i++){
+        if(gmshEdgeSplit(maxLC, *it, gf, i, newTris, cr, Us, Vs, vSizes, vSizesBGM)) {
           nbSplit++;
           break;
         }
@@ -758,7 +758,7 @@ int edgeSplitPass(double maxLC, GFace *gf, std::set<MTri3*,compareTri3Ptr> &allT
        delete *it;
        ++it;
        allTris.erase(itb);
-       if (it == allTris.end()) break;
+       if(it == allTris.end()) break;
      }
   }  
   printf("B %d %d tris ", (int)allTris.size(), (int)newTris.size());
@@ -776,10 +776,10 @@ int edgeCollapsePass(double minLC, GFace *gf, std::set<MTri3*,compareTri3Ptr> &a
 
   int nbCollapse = 0;
   
-  for (CONTAINER::reverse_iterator it = allTris.rbegin(); it != allTris.rend(); ++it){
-    if (!(*it)->isDeleted()){
-      for (int i = 0; i < 3; i++){
-        if (gmshVertexCollapse(minLC, *it, gf, i, newTris, Us, Vs, vSizes, vSizesBGM)) {
+  for(CONTAINER::reverse_iterator it = allTris.rbegin(); it != allTris.rend(); ++it){
+    if(!(*it)->isDeleted()){
+      for(int i = 0; i < 3; i++){
+        if(gmshVertexCollapse(minLC, *it, gf, i, newTris, Us, Vs, vSizes, vSizesBGM)) {
           nbCollapse++;
           break;
         }
@@ -790,9 +790,9 @@ int edgeCollapsePass(double minLC, GFace *gf, std::set<MTri3*,compareTri3Ptr> &a
 //        delete *it;
 //        ++it;
 //        allTris.rerase(itb);
-//         if (it == allTris.rend())break;
+//         if(it == allTris.rend())break;
 //      }
-//     if (nbCollapse == 114)break;
+//     if(nbCollapse == 114)break;
   }  
   printf("B %d %d tris ", (int)allTris.size(), (int)newTris.size());
   allTris.insert(newTris.begin(),newTris.end());
@@ -813,12 +813,12 @@ struct RecombineTriangle
     n1 = me.getVertex(0);
     n2 = me.getVertex(1);
     
-    if (t1->getVertex(0) != n1 && t1->getVertex(0) != n2) n3 = t1->getVertex(0);
-    else if (t1->getVertex(1) != n1 && t1->getVertex(1) != n2) n3 = t1->getVertex(1);
-    else if (t1->getVertex(2) != n1 && t1->getVertex(2) != n2) n3 = t1->getVertex(2);
-    if (t2->getVertex(0) != n1 && t2->getVertex(0) != n2) n4 = t2->getVertex(0);
-    else if (t2->getVertex(1) != n1 && t2->getVertex(1) != n2) n4 = t2->getVertex(1);
-    else if (t2->getVertex(2) != n1 && t2->getVertex(2) != n2) n4 = t2->getVertex(2);
+    if(t1->getVertex(0) != n1 && t1->getVertex(0) != n2) n3 = t1->getVertex(0);
+    else if(t1->getVertex(1) != n1 && t1->getVertex(1) != n2) n3 = t1->getVertex(1);
+    else if(t1->getVertex(2) != n1 && t1->getVertex(2) != n2) n3 = t1->getVertex(2);
+    if(t2->getVertex(0) != n1 && t2->getVertex(0) != n2) n4 = t2->getVertex(0);
+    else if(t2->getVertex(1) != n1 && t2->getVertex(1) != n2) n4 = t2->getVertex(1);
+    else if(t2->getVertex(2) != n1 && t2->getVertex(2) != n2) n4 = t2->getVertex(2);
 
     double a1 = 180 * angle3Points(n1, n4, n2) / M_PI;
     double a2 = 180 * angle3Points(n4, n2, n3) / M_PI;
@@ -858,8 +858,8 @@ static void _gmshRecombineIntoQuads(GFace *gf)
   buildEdgeToElement(gf->triangles, adj);
 
   std::set<RecombineTriangle> pairs;
-  for (e2t_cont::iterator it = adj.begin(); it!= adj.end(); ++it){
-    if (it->second.second && 
+  for(e2t_cont::iterator it = adj.begin(); it!= adj.end(); ++it){
+    if(it->second.second && 
         it->second.first->getNumVertices() == 3 &&  
         it->second.second->getNumVertices() == 3 &&
         (emb_edgeverts.find(it->first.getVertex(0)) == emb_edgeverts.end() ||
@@ -877,7 +877,7 @@ static void _gmshRecombineIntoQuads(GFace *gf)
     if(itp->angle < gf->meshAttributes.recombineAngle){
       MElement *t1 = itp->t1;
       MElement *t2 = itp->t2;
-      if (touched.find(t1) == touched.end() &&
+      if(touched.find(t1) == touched.end() &&
           touched.find(t2) == touched.end()){
         touched.insert(t1);
         touched.insert(t2);
@@ -904,8 +904,8 @@ static void _gmshRecombineIntoQuads(GFace *gf)
   }
 
   std::vector<MTriangle*> triangles2;
-  for (unsigned int i = 0; i < gf->triangles.size(); i++){
-    if (touched.find(gf->triangles[i]) == touched.end()){
+  for(unsigned int i = 0; i < gf->triangles.size(); i++){
+    if(touched.find(gf->triangles[i]) == touched.end()){
       triangles2.push_back(gf->triangles[i]);
     }
     else {

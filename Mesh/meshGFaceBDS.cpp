@@ -61,7 +61,7 @@ inline double computeEdgeLinearLength_new(BDS_Point *p1, BDS_Point *p2,  GFace *
   for (int i = 1; i < nbSb; i++){
     double xi = (double)i / nbSb;
     GP[i-1] = f->point(SPoint2(((1-xi) * p1->u + xi * p2->u) * SCALINGU,
-			       ((1-xi) * p1->v + xi * p2->v) * SCALINGV));
+                               ((1-xi) * p1->v + xi * p2->v) * SCALINGV));
     if (!GP[i-1].succeeded())
       return computeEdgeLinearLength(p1,p2);
   }
@@ -108,7 +108,7 @@ inline double computeEdgeMiddleCoord_new(BDS_Point *p1, BDS_Point *p2, GFace *f,
     if (LPLUS > L*.5){
       double XIMINUS, LPLUS, LMINUS;
       if (i==1){
-	XIMINUS=0;
+        XIMINUS=0;
       }
       return  XIMINUS +  (LPLUS - L*.5)/(LPLUS-LMINUS)/(nbSb-1);
     }
@@ -462,7 +462,7 @@ void splitEdgePassUnsorted(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
       if ((*it)->numfaces() == 2 && (lone > MAXE_)){
         const double coord = 0.5;
         //const double coord = computeEdgeMiddleCoord((*it)->p1, (*it)->p2, gf,
-	//                                                    m.scalingU, m.scalingV);
+        //                                                    m.scalingU, m.scalingV);
         BDS_Point *mid;
 
         GPoint gpp = gf->point
@@ -499,8 +499,8 @@ static void midpointsphere(GFace *gf, double u1, double v1, double u2,
   v12 = guess[1];
 
   double d = sqrt((p1.x() - p2.x()) * (p1.x() - p2.x()) +
-		  (p1.y() - p2.y()) * (p1.y() - p2.y()) +
-		  (p1.z() - p2.z()) * (p1.z() - p2.z()));
+                  (p1.y() - p2.y()) * (p1.y() - p2.y()) +
+                  (p1.z() - p2.z()) * (p1.z() - p2.z()));
   
   if (d > r/3){
     return;
@@ -547,12 +547,12 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
 
       double U, V;
       if (0 && gf->geomType() == GEntity::Sphere){
-	midpointsphere(gf,e->p1->u,e->p1->v,e->p2->u,e->p2->v,U,V,
-		       gf-> getSurfaceParams().radius);
+        midpointsphere(gf,e->p1->u,e->p1->v,e->p2->u,e->p2->v,U,V,
+                       gf-> getSurfaceParams().radius);
       }
       else{
-	U = coord * e->p1->u + (1 - coord) * e->p2->u;
-	V = coord * e->p1->v + (1 - coord) * e->p2->v;
+        U = coord * e->p1->u + (1 - coord) * e->p2->u;
+        V = coord * e->p1->v + (1 - coord) * e->p2->v;
       }
 
       GPoint gpp = gf->point(m.scalingU*U,m.scalingV*V);

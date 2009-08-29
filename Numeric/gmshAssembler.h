@@ -124,20 +124,20 @@ class gmshAssembler {
       std::map<gmshDofKey, int>::iterator 
         itC = numbering.find(gmshDofKey(vC, iCompC, iFieldC));
       typename std::map<gmshDofKey, scalar>::iterator 
-	itFF = fixedFULL.find(gmshDofKey(vR, iCompR, iFieldR));
+        itFF = fixedFULL.find(gmshDofKey(vR, iCompR, iFieldR));
       if (itC != numbering.end() && itFF ==  fixedFULL.end()){
         lsys->addToMatrix(itR->second, itC->second, val);
       }
       else if (itFF != fixedFULL.end()){
-	//printf("RHS = %g,  ligne=%d \n",  itFF->second, itR->second);
-	lsys->addToMatrix(itR->second,itR->second, 1. );
-	lsys->addToRightHandSide(itR->second, itFF->second);
+        //printf("RHS = %g,  ligne=%d \n",  itFF->second, itR->second);
+        lsys->addToMatrix(itR->second,itR->second, 1. );
+        lsys->addToRightHandSide(itR->second, itFF->second);
       }
       else {
         typename std::map<gmshDofKey, scalar>::iterator 
           itF = fixed.find(gmshDofKey(vC, iCompC, iFieldC));
         if (itF != fixed.end()){
-	  //printf("RHS = val%g itF=%g \n", val, itF->second);
+          //printf("RHS = val%g itF=%g \n", val, itF->second);
           lsys->addToRightHandSide(itR->second, -val*itF->second);
         }
         else{

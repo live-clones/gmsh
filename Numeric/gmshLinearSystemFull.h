@@ -85,20 +85,20 @@ class gmshLinearSystemFull : public gmshLinearSystem<scalar> {
       bool convex = true;
       std::set<int> Ni;
       for(int j = 0; j < _b->size(); j++){
-	if ( (j !=i) &&  (*_a)(i, j)  > 0.0 ) convex = false;
-	if (  j !=i && (*_a)(i, j) != 0.0){
-	  offDiag += (*_a)(i, j);
-	  Ni.insert(j);
-	}
+        if ( (j !=i) &&  (*_a)(i, j)  > 0.0 ) convex = false;
+        if (  j !=i && (*_a)(i, j) != 0.0){
+          offDiag += (*_a)(i, j);
+          Ni.insert(j);
+        }
       }
       if (fabs(offDiag+diag) > 1.e-10 && fabs(offDiag) > 1.e-10 ) convex= false;
      
       if (convex == false){
-	nbNonConvex+=1;
-	printf("*** WARNING NON CONVEX LINE !!!!!\n");
-	printf("*** i=%d : diag=%g offDiag=%g diff=%g convex=%s size Ni=%d\n", i , diag, offDiag, fabs(offDiag+diag), (convex)?"true":"false", Ni.size());
-	for (std::set<int>::iterator it = Ni.begin(); it != Ni.end(); ++it)   (*_a)(i, *it) = -1.0;
-	(*_a)(i, i) = Ni.size();
+        nbNonConvex+=1;
+        printf("*** WARNING NON CONVEX LINE !!!!!\n");
+        printf("*** i=%d : diag=%g offDiag=%g diff=%g convex=%s size Ni=%d\n", i , diag, offDiag, fabs(offDiag+diag), (convex)?"true":"false", Ni.size());
+        for (std::set<int>::iterator it = Ni.begin(); it != Ni.end(); ++it)   (*_a)(i, *it) = -1.0;
+        (*_a)(i, i) = Ni.size();
       }
     }
 

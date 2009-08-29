@@ -289,11 +289,11 @@ int gmshLinearSystemCSRGmm<double>::systemSolve()
 {
   if (!sorted)
     sortColumns(_b->size(),
-		CSRList_Nbr(a_),
-		(INDEX_TYPE *) ptr_->array,
-		(INDEX_TYPE *) jptr_->array, 
-		(INDEX_TYPE *) ai_->array, 
-		(double*) a_->array);
+                CSRList_Nbr(a_),
+                (INDEX_TYPE *) ptr_->array,
+                (INDEX_TYPE *) jptr_->array, 
+                (INDEX_TYPE *) ai_->array, 
+                (double*) a_->array);
   sorted = true;
 
   gmm::csr_matrix_ref<double*,INDEX_TYPE *,INDEX_TYPE *, 0>  
@@ -318,11 +318,11 @@ int gmshLinearSystemCSRGmm<double>::checkSystem()
 {
   if(!sorted)
     sortColumns(_b->size(),
-		CSRList_Nbr(a_),
-		(INDEX_TYPE *) ptr_->array,
-		(INDEX_TYPE *) jptr_->array, 
-		(INDEX_TYPE *) ai_->array, 
-		(double*) a_->array);
+                CSRList_Nbr(a_),
+                (INDEX_TYPE *) ptr_->array,
+                (INDEX_TYPE *) jptr_->array, 
+                (INDEX_TYPE *) ai_->array, 
+                (double*) a_->array);
   sorted = true;
 
   printf("Coucou check system \n");
@@ -341,11 +341,11 @@ int gmshLinearSystemCSRTaucs<double>::systemSolve()
 {
   if(!sorted)
     sortColumns(_b->size(),
-		CSRList_Nbr(a_),
-		(INDEX_TYPE *) ptr_->array,
-		(INDEX_TYPE *) jptr_->array, 
-		(INDEX_TYPE *) ai_->array, 
-		(double*) a_->array);
+                CSRList_Nbr(a_),
+                (INDEX_TYPE *) ptr_->array,
+                (INDEX_TYPE *) jptr_->array, 
+                (INDEX_TYPE *) ai_->array, 
+                (double*) a_->array);
   sorted = true;
 
   taucs_ccs_matrix myVeryCuteTaucsMatrix;

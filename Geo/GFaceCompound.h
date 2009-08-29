@@ -31,22 +31,21 @@ generator of gmsh!
 */
 
 class  GFaceCompoundTriangle {
-public:
+ public:
   SPoint3 p1, p2, p3;
   SPoint2 gfp1, gfp2, gfp3;
   SPoint3 v1, v2, v3;
   GFace *gf;
   MTriangle *tri;
-  GFaceCompoundTriangle () : gf(0), tri(0)
-  {}
-} ;
+  GFaceCompoundTriangle() : gf(0), tri(0) {}
+};
 
 class Octree;
 
 class GFaceCompound : public GFace {
  public:
   typedef enum {ITERU=0,ITERV=1,ITERD=2} iterationStep;
-  void computeNormals (std::map<MVertex*,SVector3> &normals) const;
+  void computeNormals(std::map<MVertex*, SVector3> &normals) const;
  protected:
   std::list<GFace*> _compound;
   std::list<GEdge*> _U0, _U1, _V0, _V1;
@@ -56,8 +55,8 @@ class GFaceCompound : public GFace {
   mutable Octree *oct;
   mutable v2t_cont adjv;
   mutable bool mapv2Tri;
-  mutable std::map<MVertex*,SPoint3> coordinates;
-  mutable std::map<MVertex*,SVector3> _normals;
+  mutable std::map<MVertex*, SPoint3> coordinates;
+  mutable std::map<MVertex*, SVector3> _normals;
   void buildOct() const ;
   void parametrize() const ;
   void parametrize_conformal() const ;
@@ -74,8 +73,7 @@ class GFaceCompound : public GFace {
   virtual double curvature(MTriangle *t, double u, double v) const;
   void printStuff() const;
   bool trivial() const ;
-
-public:
+ public:
   typedef enum {UNITCIRCLE, SQUARE} typeOfIsomorphism;
   GFaceCompound(GModel *m, int tag, 
                 std::list<GFace*> &compound,
@@ -84,7 +82,8 @@ public:
                 std::list<GEdge*> &V0,
                 std::list<GEdge*> &V1);
   virtual ~GFaceCompound();
-  Range<double> parBounds(int i) const { return trivial() ? (*(_compound.begin()))->parBounds(i) : Range<double>(-1, 1); } 
+  Range<double> parBounds(int i) const 
+  { return trivial() ? (*(_compound.begin()))->parBounds(i) : Range<double>(-1, 1); }
   virtual GPoint point(double par1, double par2) const; 
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &, SVector3 *, SVector3 *, SVector3 *) const; 
@@ -95,7 +94,7 @@ public:
   virtual bool buildRepresentationCross(){ return false; }
   virtual double curvatureMax(const SPoint2 &param) const;
   virtual int genusGeom ();
-private:
+ private:
   typeOfIsomorphism _type;
 };
 

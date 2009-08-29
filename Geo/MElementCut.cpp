@@ -529,37 +529,37 @@ static void elementCutMesh(MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
       std::vector<DI_IntegrationPoint> ipS;
 
       if(eType == MSH_TET_4) {
-	DI_Tetra T(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
-		   e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
-		   e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
-		   e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z());
-	T.cut(*ls, ipV, ipS, cp, integOrder, integOrder, integOrder,
+        DI_Tetra T(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
+                   e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
+                   e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
+                   e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z());
+        T.cut(*ls, ipV, ipS, cp, integOrder, integOrder, integOrder,
               subTetras, surfQuads, surfTriangles);
       }
       else if(eType == MSH_HEX_8){
-	DI_Hexa H(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
-		  e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
-		  e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
-		  e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z(),
-		  e->getVertex(4)->x(), e->getVertex(4)->y(), e->getVertex(4)->z(),
-		  e->getVertex(5)->x(), e->getVertex(5)->y(), e->getVertex(5)->z(),
-		  e->getVertex(6)->x(), e->getVertex(6)->y(), e->getVertex(6)->z(),
-		  e->getVertex(7)->x(), e->getVertex(7)->y(), e->getVertex(7)->z());
-	H.cut(*ls, ipV, ipS, cp, integOrder, integOrder, integOrder, integOrder,
+        DI_Hexa H(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
+                  e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
+                  e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
+                  e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z(),
+                  e->getVertex(4)->x(), e->getVertex(4)->y(), e->getVertex(4)->z(),
+                  e->getVertex(5)->x(), e->getVertex(5)->y(), e->getVertex(5)->z(),
+                  e->getVertex(6)->x(), e->getVertex(6)->y(), e->getVertex(6)->z(),
+                  e->getVertex(7)->x(), e->getVertex(7)->y(), e->getVertex(7)->z());
+        H.cut(*ls, ipV, ipS, cp, integOrder, integOrder, integOrder, integOrder,
               subHexas, subTetras, surfQuads, surfTriangles, boundLines);
       }
       else if(eType == MSH_PRI_6){
         DI_Tetra T1(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
-		    e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
-		    e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
+                    e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
+                    e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
                     e->getVertex(5)->x(), e->getVertex(5)->y(), e->getVertex(5)->z());
         DI_Tetra T2(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
-		    e->getVertex(4)->x(), e->getVertex(4)->y(), e->getVertex(4)->z(),
-		    e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
+                    e->getVertex(4)->x(), e->getVertex(4)->y(), e->getVertex(4)->z(),
+                    e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
                     e->getVertex(5)->x(), e->getVertex(5)->y(), e->getVertex(5)->z());
         DI_Tetra T3(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
-		    e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z(),
-		    e->getVertex(4)->x(), e->getVertex(4)->y(), e->getVertex(4)->z(),
+                    e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z(),
+                    e->getVertex(4)->x(), e->getVertex(4)->y(), e->getVertex(4)->z(),
                     e->getVertex(5)->x(), e->getVertex(5)->y(), e->getVertex(5)->z());
         T1.cut(*ls, ipV, ipS, cp, integOrder, integOrder, integOrder,
                subTetras, surfQuads, surfTriangles);
@@ -570,13 +570,13 @@ static void elementCutMesh(MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
       }
       else if(eType == MSH_PYR_5){
         DI_Tetra T1(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
-		    e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
-		    e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
-		    e->getVertex(4)->x(), e->getVertex(4)->y(), e->getVertex(4)->z());
+                    e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
+                    e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
+                    e->getVertex(4)->x(), e->getVertex(4)->y(), e->getVertex(4)->z());
         DI_Tetra T2(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
                     e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
-		    e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z(),
-		    e->getVertex(4)->x(), e->getVertex(4)->y(), e->getVertex(4)->z());
+                    e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z(),
+                    e->getVertex(4)->x(), e->getVertex(4)->y(), e->getVertex(4)->z());
         T1.cut(*ls, ipV, ipS, cp, integOrder, integOrder, integOrder,
                subTetras, surfQuads, surfTriangles);
         T2.cut(*ls, ipV, ipS, cp, integOrder, integOrder, integOrder,
@@ -586,9 +586,9 @@ static void elementCutMesh(MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
         for(int i = 0; i < e->getNumChildren(); i++) {
           MTetrahedron *t = (MTetrahedron*) e->getChild(i);
           DI_Tetra Tet(t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
-		       t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
-		       t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
-		       t->getVertex(3)->x(), t->getVertex(3)->y(), t->getVertex(3)->z());
+                       t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
+                       t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
+                       t->getVertex(3)->x(), t->getVertex(3)->y(), t->getVertex(3)->z());
           Tet.cut(*ls, ipV, ipS, cp, integOrder, integOrder, integOrder,
                   subTetras, surfQuads, surfTriangles);
         }
@@ -602,7 +602,7 @@ static void elementCutMesh(MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
          (eType == MSH_POLYH_ && subTetras.size() > e->getNumChildren())) {
         std::vector<MTetrahedron*> poly[2];
         
-	for (unsigned int i = 0; i < subTetras.size(); i++){
+        for (unsigned int i = 0; i < subTetras.size(); i++){
           MVertex *mv[4] = {NULL, NULL, NULL, NULL};
           for(int j = 0; j < 4; j++){
             int numV = getElementVertexNum(subTetras[i].pt(j), e);
@@ -708,26 +708,26 @@ static void elementCutMesh(MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
       std::vector<DI_IntegrationPoint> ipS;
 
       if(eType == MSH_TRI_3) {
-	DI_Triangle T(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
-		      e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
-		      e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z());
-	T.cut(*ls, ipV, ipS, cp, integOrder, integOrder, integOrder,
+        DI_Triangle T(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
+                      e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
+                      e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z());
+        T.cut(*ls, ipV, ipS, cp, integOrder, integOrder, integOrder,
               subQuads, subTriangles, boundLines);
       }
       else if(eType == MSH_QUA_4){
-	DI_Quad Q(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
-		  e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
-		  e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
-		  e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z());
-	Q.cut(*ls, ipV, ipS, cp, integOrder,integOrder,integOrder,
+        DI_Quad Q(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
+                  e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
+                  e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
+                  e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z());
+        Q.cut(*ls, ipV, ipS, cp, integOrder,integOrder,integOrder,
               subQuads, subTriangles, boundLines);
       }
       else if(eType == MSH_POLYG_){
         for(int i = 0; i < e->getNumChildren(); i++) {
           MTriangle *t = (MTriangle*) e->getChild(i);
           DI_Triangle Tri(t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
-		          t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
-		          t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z());
+                          t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
+                          t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z());
           Tri.cut(*ls, ipV, ipS, cp, integOrder, integOrder, integOrder,
                   subQuads, subTriangles, boundLines);
         }
@@ -739,7 +739,7 @@ static void elementCutMesh(MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
          (eType == MSH_POLYG_ && subTriangles.size() > e->getNumChildren())) {
         std::vector<MTriangle*> poly[2];
 
-	for (unsigned int i = 0; i < subTriangles.size(); i++){
+        for (unsigned int i = 0; i < subTriangles.size(); i++){
           MVertex *mv[3] = {NULL, NULL, NULL};
           for(int j = 0; j < 3; j++){
             int numV = getElementVertexNum(subTriangles[i].pt(j), e);
@@ -831,11 +831,11 @@ static void elementCutMesh(MElement *e, gLevelset *ls, GEntity *ge, GModel *GM,
       int integOrder = 1;
       std::vector<DI_IntegrationPoint> ip;
       DI_Line L(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z(),
-		e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z());
+                e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z());
       L.cut(*ls, ip, cp, integOrder, lines);
 
       if(lines.size() > 1) {
-	for (unsigned int i = 0; i < lines.size(); i++){
+        for (unsigned int i = 0; i < lines.size(); i++){
           MVertex *mv[2] = {NULL, NULL};
           for(int j = 0; j < 2; j++){
             int numV = getElementVertexNum(lines[i].pt(j), e);

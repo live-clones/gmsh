@@ -9,9 +9,7 @@
 #include "GFace.h"
 #include "GEdge.h"
 
-/*
-A GEdgeCompound is a model edge that is the compound of model edges.
-*/
+// A GEdgeCompound is a model edge that is the compound of model edges.
 
 class GEdgeCompound : public GEdge {
  protected:
@@ -24,7 +22,8 @@ public:
   void getLocalParameter(const double &t, int &iEdge, double & tLoc) const;
   void getCompoundParameter(GEdge *ge, const double &tLoc, double &t) const;
   GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound);
-  GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound, std::vector<int> &orientation); // confidence in the input
+  GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound, 
+                std::vector<int> &orientation); // confidence in the input
   virtual ~GEdgeCompound();
   Range<double> parBounds(int i) const;
   virtual GPoint point(double par) const; 

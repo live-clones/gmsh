@@ -119,27 +119,27 @@ geomTresholdVertexEquivalence::geomTresholdVertexEquivalence(GModel *g)
       g->mesh_vertices.push_back(other);
       std::list<GEdge*> ed = g->edges();
       for (std::list<GEdge*>::iterator ite = ed.begin() ; ite != ed.end() ; ++ite){
-	std::vector<MLine*> newl;
-	for (unsigned int i = 0; i < (*ite)->lines.size(); ++i){
-	  MLine *l = (*ite)->lines[i];
-	  MVertex *v1 = l->getVertex(0);
-	  MVertex *v2 = l->getVertex(1);
-	  if (v1 == v && v2 != other){	
-	    delete l;	    
-	    l = new MLine(other,v2);
-	    newl.push_back(l);
-	  }	  
-	  else if (v1 != other && v2 == v){	
-	    delete l;	    
-	    l = new MLine(v1,other);
-	    newl.push_back(l);
-	  }	  
-	  else if (v1 != v && v2 != v)	
-	    newl.push_back(l);	  
-	  else 
-	    delete l;
-	}
-	(*ite)->lines = newl;
+        std::vector<MLine*> newl;
+        for (unsigned int i = 0; i < (*ite)->lines.size(); ++i){
+          MLine *l = (*ite)->lines[i];
+          MVertex *v1 = l->getVertex(0);
+          MVertex *v2 = l->getVertex(1);
+          if (v1 == v && v2 != other){  
+            delete l;       
+            l = new MLine(other,v2);
+            newl.push_back(l);
+          }       
+          else if (v1 != other && v2 == v){     
+            delete l;       
+            l = new MLine(v1,other);
+            newl.push_back(l);
+          }       
+          else if (v1 != v && v2 != v)  
+            newl.push_back(l);    
+          else 
+            delete l;
+        }
+        (*ite)->lines = newl;
       }       
     }
   }
