@@ -170,7 +170,7 @@ BDS_Point *BDS_Mesh::add_point(int num, double u, double v, GFace *gf)
 BDS_Point *BDS_Mesh::find_point(int p)
 {
   BDS_Point P(p);
-  std::set < BDS_Point *, PointLessThan >::iterator it = points.find(&P);
+  std::set<BDS_Point *, PointLessThan>::iterator it = points.find(&P);
   if(it != points.end())
     return (BDS_Point*)(*it);
   else
@@ -331,7 +331,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2
         outputScalarField(triangles, "debugp.pos", 1);
         outputScalarField(triangles, "debugr.pos", 0);
         Msg::Debug("edge %d %d cannot be recovered at all, look at debugp.pos "
-            "and debugr.pos", num1, num2);
+                   "and debugr.pos", num1, num2);
         return 0;
       }
       return eee;
@@ -503,7 +503,7 @@ void BDS_Edge::oppositeof(BDS_Point *oface[2]) const
 BDS_GeomEntity *BDS_Mesh::get_geom(int p1, int p2)
 {
   BDS_GeomEntity ge(p1, p2);
-  std::set < BDS_GeomEntity *, GeomLessThan >::iterator it = geom.find(&ge);
+  std::set<BDS_GeomEntity *, GeomLessThan >::iterator it = geom.find(&ge);
   if(it == geom.end()) return 0;
   return (BDS_GeomEntity*)(*it);
 }
@@ -528,7 +528,7 @@ void recur_tag(BDS_Face *t, BDS_GeomEntity *g)
 double PointLessThanLexicographic::t = 0;
 double BDS_Vector::t = 0;
 
-template < class IT > void DESTROOOY(IT beg, IT end)
+template <class IT> void DESTROOOY(IT beg, IT end)
 {
   while(beg != end) {
     delete *beg;
@@ -1177,8 +1177,8 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
 
   std::list<BDS_Face*> ts;
   p->getTriangles(ts);
-  std::list < BDS_Edge * >::iterator ited  = p->edges.begin();
-  std::list < BDS_Edge * >::iterator itede = p->edges.end();
+  std::list<BDS_Edge *>::iterator ited = p->edges.begin();
+  std::list<BDS_Edge *>::iterator itede = p->edges.end();
 
   double sTot = 0;
   while(ited != itede) {

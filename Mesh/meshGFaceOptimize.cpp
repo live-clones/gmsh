@@ -34,9 +34,9 @@ static void setLcs(MTriangle *t, std::map<MVertex*, double> &vSizes)
     for (int j = i + 1; j < 3; j++){
       MVertex *vi = t->getVertex(i);
       MVertex *vj = t->getVertex(j);
-      double dx = vi->x()-vj->x();
-      double dy = vi->y()-vj->y();
-      double dz = vi->z()-vj->z();
+      double dx = vi->x() - vj->x();
+      double dy = vi->y() - vj->y();
+      double dz = vi->z() - vj->z();
       double l = sqrt(dx * dx + dy * dy + dz * dz);
       std::map<MVertex*,double>::iterator iti = vSizes.find(vi);          
       std::map<MVertex*,double>::iterator itj = vSizes.find(vj);          
@@ -77,7 +77,10 @@ void buildMeshGenerationDataStructures(GFace *gf,
   int NUM = 0;
   for (std::map<MVertex*, double>::iterator it = vSizesMap.begin();
        it != vSizesMap.end(); ++it){
-    it->first->setNum(NUM++);
+    // FIXME: this vertex-stored indexing makes the optimization
+    // routines not thread-safe (we cannot concurrently optimize two
+    // surfaces that share an edge)
+    it->first->setIndex(NUM++);
     vSizes.push_back(it->second);
     vSizesBGM.push_back(it->second);
     vMetricsBGM.push_back(SMetric3(it->second));
@@ -87,9 +90,9 @@ void buildMeshGenerationDataStructures(GFace *gf,
     Vs.push_back(param[1]);
   }
   for(unsigned int i = 0; i < gf->triangles.size(); i++){
-    double lc = 0.3333333333 * (vSizes[gf->triangles[i]->getVertex(0)->getNum()] +
-                                vSizes[gf->triangles[i]->getVertex(1)->getNum()] +
-                                vSizes[gf->triangles[i]->getVertex(2)->getNum()]);
+    double lc = 0.3333333333 * (vSizes[gf->triangles[i]->getVertex(0)->getIndex()] +
+                                vSizes[gf->triangles[i]->getVertex(1)->getIndex()] +
+                                vSizes[gf->triangles[i]->getVertex(2)->getIndex()]);
     AllTris.insert(new MTri3(gf->triangles[i], lc));
   }
   gf->triangles.clear();
@@ -118,15 +121,15 @@ void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
     double n1[3], n2[3];
     MTriangle *t = gf->triangles[0];
     MVertex *v0 = t->getVertex(0), *v1 = t->getVertex(1), *v2 = t->getVertex(2);
-    normal3points(Us[v0->getNum()], Vs[v0->getNum()], 0.,
-                  Us[v1->getNum()], Vs[v1->getNum()], 0.,
-                  Us[v2->getNum()], Vs[v2->getNum()], 0., n1);
+    normal3points(Us[v0->getIndex()], Vs[v0->getIndex()], 0.,
+                  Us[v1->getIndex()], Vs[v1->getIndex()], 0.,
+                  Us[v2->getIndex()], Vs[v2->getIndex()], 0., n1);
     for(unsigned int j = 1; j < gf->triangles.size(); j++){
       t = gf->triangles[j];
       v0 = t->getVertex(0); v1 = t->getVertex(1); v2 = t->getVertex(2);
-      normal3points(Us[v0->getNum()], Vs[v0->getNum()], 0.,
-                    Us[v1->getNum()], Vs[v1->getNum()], 0.,
-                    Us[v2->getNum()], Vs[v2->getNum()], 0., n2);
+      normal3points(Us[v0->getIndex()], Vs[v0->getIndex()], 0.,
+                    Us[v1->getIndex()], Vs[v1->getIndex()], 0.,
+                    Us[v2->getIndex()], Vs[v2->getIndex()], 0., n2);
       double pp; prosca(n1, n2, &pp);
       if(pp < 0) t->revert();
     }
@@ -253,10 +256,10 @@ double surfaceTriangleUV(MVertex *v1, MVertex *v2, MVertex *v3,
                          const std::vector<double> &Us,
                          const std::vector<double> &Vs)
 {
-  const double v12[2] = {Us[v2->getNum()] - Us[v1->getNum()],
-                         Vs[v2->getNum()] - Vs[v1->getNum()]};
-  const double v13[2] = {Us[v3->getNum()] - Us[v1->getNum()],
-                         Vs[v3->getNum()] - Vs[v1->getNum()]};
+  const double v12[2] = {Us[v2->getIndex()] - Us[v1->getIndex()],
+                         Vs[v2->getIndex()] - Vs[v1->getIndex()]};
+  const double v13[2] = {Us[v3->getIndex()] - Us[v1->getIndex()],
+                         Vs[v3->getIndex()] - Vs[v1->getIndex()]};
   return 0.5 * fabs (v12[0] * v13[1] - v12[1] * v13[0]);
 }
 
@@ -312,11 +315,11 @@ bool gmshEdgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalE
     }
   case SWCR_DEL:
     {
-      double edgeCenter[2] ={(Us[v1->getNum()] + Us[v2->getNum()] + Us[v3->getNum()] + 
-                              Us[v4->getNum()]) * .25,
-                             (Vs[v1->getNum()] + Vs[v2->getNum()] + Vs[v3->getNum()] + 
-                              Vs[v4->getNum()]) * .25};
-      double uv4[2] ={Us[v4->getNum()], Vs[v4->getNum()]};
+      double edgeCenter[2] ={(Us[v1->getIndex()] + Us[v2->getIndex()] + Us[v3->getIndex()] + 
+                              Us[v4->getIndex()]) * .25,
+                             (Vs[v1->getIndex()] + Vs[v2->getIndex()] + Vs[v3->getIndex()] + 
+                              Vs[v4->getIndex()]) * .25};
+      double uv4[2] ={Us[v4->getIndex()], Vs[v4->getIndex()]};
       double metric[3];
       buildMetric(gf, edgeCenter, metric);
       if (!inCircumCircleAniso(gf, t1->tri(), uv4, metric, Us, Vs)){
@@ -333,10 +336,10 @@ bool gmshEdgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalE
       double avg2[3] = {(v3->x() + v4->x()) *.5,(v3->y() + v4->y()) *.5,
                         (v3->z() + v4->z()) *.5};
       
-      GPoint gp1 = gf->point(SPoint2((Us[v1->getNum()] + Us[v2->getNum()]) * .5,
-                                     (Vs[v1->getNum()] + Vs[v2->getNum()]) * .5));
-      GPoint gp2 = gf->point(SPoint2((Us[v3->getNum()] + Us[v4->getNum()]) * .5,
-                                     (Vs[v3->getNum()] + Vs[v4->getNum()]) * .5));
+      GPoint gp1 = gf->point(SPoint2((Us[v1->getIndex()] + Us[v2->getIndex()]) * .5,
+                                     (Vs[v1->getIndex()] + Vs[v2->getIndex()]) * .5));
+      GPoint gp2 = gf->point(SPoint2((Us[v3->getIndex()] + Us[v4->getIndex()]) * .5,
+                                     (Vs[v3->getIndex()] + Vs[v4->getIndex()]) * .5));
       double d1 = (avg1[0] - gp1.x()) * (avg1[0] - gp1.x()) + (avg1[1] - gp1.y()) * 
         (avg1[1]-gp1.y()) + (avg1[2] - gp1.z()) * (avg1[2] - gp1.z());
       double d2 = (avg2[0] - gp2.x()) * (avg2[0] - gp2.x()) + (avg2[1] - gp2.y()) *
@@ -372,18 +375,18 @@ bool gmshEdgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalE
       if (!found)cavity.push_back(t2->getNeigh(i));
     }
   }
-  double lc1 = 0.3333333333 * (vSizes[t1b->getVertex(0)->getNum()] +
-                               vSizes[t1b->getVertex(1)->getNum()] +
-                               vSizes[t1b->getVertex(2)->getNum()]);
-  double lcBGM1 = 0.3333333333 * (vSizesBGM[t1b->getVertex(0)->getNum()] +
-                                  vSizesBGM[t1b->getVertex(1)->getNum()] +
-                                  vSizesBGM[t1b->getVertex(2)->getNum()]);
-  double lc2 = 0.3333333333 * (vSizes[t2b->getVertex(0)->getNum()] +
-                               vSizes[t2b->getVertex(1)->getNum()] +
-                               vSizes[t2b->getVertex(2)->getNum()]);
-  double lcBGM2 = 0.3333333333 * (vSizesBGM[t2b->getVertex(0)->getNum()] +
-                                  vSizesBGM[t2b->getVertex(1)->getNum()] +
-                                  vSizesBGM[t2b->getVertex(2)->getNum()]);
+  double lc1 = 0.3333333333 * (vSizes[t1b->getVertex(0)->getIndex()] +
+                               vSizes[t1b->getVertex(1)->getIndex()] +
+                               vSizes[t1b->getVertex(2)->getIndex()]);
+  double lcBGM1 = 0.3333333333 * (vSizesBGM[t1b->getVertex(0)->getIndex()] +
+                                  vSizesBGM[t1b->getVertex(1)->getIndex()] +
+                                  vSizesBGM[t1b->getVertex(2)->getIndex()]);
+  double lc2 = 0.3333333333 * (vSizes[t2b->getVertex(0)->getIndex()] +
+                               vSizes[t2b->getVertex(1)->getIndex()] +
+                               vSizes[t2b->getVertex(2)->getIndex()]);
+  double lcBGM2 = 0.3333333333 * (vSizesBGM[t2b->getVertex(0)->getIndex()] +
+                                  vSizesBGM[t2b->getVertex(1)->getIndex()] +
+                                  vSizesBGM[t2b->getVertex(2)->getIndex()]);
   MTri3 *t1b3 = new MTri3(t1b, Extend1dMeshIn2dSurfaces() ? 
                           std::min(lc1, lcBGM1) : lcBGM1);
   MTri3 *t2b3 = new MTri3(t2b, Extend1dMeshIn2dSurfaces() ?
@@ -406,8 +409,8 @@ inline double computeEdgeAdimLength(MVertex *v1, MVertex *v2, GFace *f,
                                     const std::vector<double> &vSizes ,
                                     const std::vector<double> &vSizesBGM)
 {  
-  const double edgeCenter[2] ={(Us[v1->getNum()] + Us[v2->getNum()]) * .5,
-                               (Vs[v1->getNum()] + Vs[v2->getNum()]) * .5};
+  const double edgeCenter[2] ={(Us[v1->getIndex()] + Us[v2->getIndex()]) * .5,
+                               (Vs[v1->getIndex()] + Vs[v2->getIndex()]) * .5};
   GPoint GP = f->point (edgeCenter[0], edgeCenter[1]);
   
   const double dx1 = v1->x() - GP.x();
@@ -419,9 +422,9 @@ inline double computeEdgeAdimLength(MVertex *v1, MVertex *v2, GFace *f,
   const double dz2 = v2->z() - GP.z();
   const double l2 = sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2);
   if (Extend1dMeshIn2dSurfaces())
-    return 2 * (l1 + l2) / (std::min(vSizes[v1->getNum()], vSizesBGM[v1->getNum()]) +
-                            std::min(vSizes[v2->getNum()], vSizesBGM[v2->getNum()]));
-  return 2 * (l1 + l2) / (vSizesBGM[v1->getNum()] + vSizesBGM[v2->getNum()]);
+    return 2 * (l1 + l2) / (std::min(vSizes[v1->getIndex()], vSizesBGM[v1->getIndex()]) +
+                            std::min(vSizes[v2->getIndex()], vSizesBGM[v2->getIndex()]));
+  return 2 * (l1 + l2) / (vSizesBGM[v1->getIndex()] + vSizesBGM[v2->getIndex()]);
 }
 
 bool gmshEdgeSplit(const double lMax, MTri3 *t1, GFace *gf, int iLocalEdge,
@@ -434,8 +437,8 @@ bool gmshEdgeSplit(const double lMax, MTri3 *t1, GFace *gf, int iLocalEdge,
 
   MVertex *v1 = t1->tri()->getVertex(iLocalEdge == 0 ? 2 : iLocalEdge - 1);
   MVertex *v2 = t1->tri()->getVertex(iLocalEdge % 3);
-  double edgeCenter[2] ={(Us[v1->getNum()] + Us[v2->getNum()]) * .5,
-                         (Vs[v1->getNum()] + Vs[v2->getNum()]) * .5};
+  double edgeCenter[2] ={(Us[v1->getIndex()] + Us[v2->getIndex()]) * .5,
+                         (Vs[v1->getIndex()] + Vs[v2->getIndex()]) * .5};
  
   double al = computeEdgeAdimLength(v1, v2, gf,Us, Vs, vSizes, vSizesBGM);
   if (al <= lMax) return false;
@@ -483,8 +486,8 @@ bool gmshEdgeSplit(const double lMax, MTri3 *t1, GFace *gf, int iLocalEdge,
   }
 
   gf->mesh_vertices.push_back(vnew);
-  vnew->setNum(Us.size());
-  double lcN = 0.5 * (vSizes [v1->getNum()] + vSizes [v2->getNum()] );
+  vnew->setIndex(Us.size());
+  double lcN = 0.5 * (vSizes[v1->getIndex()] + vSizes[v2->getIndex()] );
   double lcBGM =  BGM_MeshSize(gf, edgeCenter[0], edgeCenter[1], p.x(), p.y(), p.z());
   
   vSizesBGM.push_back(lcBGM);
@@ -511,30 +514,30 @@ bool gmshEdgeSplit(const double lMax, MTri3 *t1, GFace *gf, int iLocalEdge,
       if (!found) cavity.push_back(t2->getNeigh(i));
     }
   }
-  double lc1 = 0.3333333333 * (vSizes[t1b->getVertex(0)->getNum()] +
-                               vSizes[t1b->getVertex(1)->getNum()] +
-                               vSizes[t1b->getVertex(2)->getNum()]);
-  double lcBGM1 = 0.3333333333 * (vSizesBGM[t1b->getVertex(0)->getNum()] +
-                                  vSizesBGM[t1b->getVertex(1)->getNum()] +
-                                  vSizesBGM[t1b->getVertex(2)->getNum()]);
-  double lc2 = 0.3333333333 * (vSizes[t2b->getVertex(0)->getNum()] +
-                               vSizes[t2b->getVertex(1)->getNum()] +
-                               vSizes[t2b->getVertex(2)->getNum()]);
-  double lcBGM2 = 0.3333333333 * (vSizesBGM[t2b->getVertex(0)->getNum()] +
-                                  vSizesBGM[t2b->getVertex(1)->getNum()] +
-                                  vSizesBGM[t2b->getVertex(2)->getNum()]);
-  double lc3 = 0.3333333333 * (vSizes[t3b->getVertex(0)->getNum()] +
-                               vSizes[t3b->getVertex(1)->getNum()] +
-                               vSizes[t3b->getVertex(2)->getNum()]);
-  double lcBGM3 = 0.3333333333 * (vSizesBGM[t3b->getVertex(0)->getNum()] +
-                                  vSizesBGM[t3b->getVertex(1)->getNum()] +
-                                  vSizesBGM[t3b->getVertex(2)->getNum()]);
-  double lc4 = 0.3333333333 * (vSizes[t4b->getVertex(0)->getNum()] +
-                               vSizes[t4b->getVertex(1)->getNum()] +
-                               vSizes[t4b->getVertex(2)->getNum()]);
-  double lcBGM4 = 0.3333333333 * (vSizesBGM[t4b->getVertex(0)->getNum()] +
-                                  vSizesBGM[t4b->getVertex(1)->getNum()] +
-                                  vSizesBGM[t4b->getVertex(2)->getNum()]);
+  double lc1 = 0.3333333333 * (vSizes[t1b->getVertex(0)->getIndex()] +
+                               vSizes[t1b->getVertex(1)->getIndex()] +
+                               vSizes[t1b->getVertex(2)->getIndex()]);
+  double lcBGM1 = 0.3333333333 * (vSizesBGM[t1b->getVertex(0)->getIndex()] +
+                                  vSizesBGM[t1b->getVertex(1)->getIndex()] +
+                                  vSizesBGM[t1b->getVertex(2)->getIndex()]);
+  double lc2 = 0.3333333333 * (vSizes[t2b->getVertex(0)->getIndex()] +
+                               vSizes[t2b->getVertex(1)->getIndex()] +
+                               vSizes[t2b->getVertex(2)->getIndex()]);
+  double lcBGM2 = 0.3333333333 * (vSizesBGM[t2b->getVertex(0)->getIndex()] +
+                                  vSizesBGM[t2b->getVertex(1)->getIndex()] +
+                                  vSizesBGM[t2b->getVertex(2)->getIndex()]);
+  double lc3 = 0.3333333333 * (vSizes[t3b->getVertex(0)->getIndex()] +
+                               vSizes[t3b->getVertex(1)->getIndex()] +
+                               vSizes[t3b->getVertex(2)->getIndex()]);
+  double lcBGM3 = 0.3333333333 * (vSizesBGM[t3b->getVertex(0)->getIndex()] +
+                                  vSizesBGM[t3b->getVertex(1)->getIndex()] +
+                                  vSizesBGM[t3b->getVertex(2)->getIndex()]);
+  double lc4 = 0.3333333333 * (vSizes[t4b->getVertex(0)->getIndex()] +
+                               vSizes[t4b->getVertex(1)->getIndex()] +
+                               vSizes[t4b->getVertex(2)->getIndex()]);
+  double lcBGM4 = 0.3333333333 * (vSizesBGM[t4b->getVertex(0)->getIndex()] +
+                                  vSizesBGM[t4b->getVertex(1)->getIndex()] +
+                                  vSizesBGM[t4b->getVertex(2)->getIndex()]);
   MTri3 *t1b3 = new MTri3(t1b, Extend1dMeshIn2dSurfaces() ? std::min(lc1, lcBGM1) : lcBGM1);
   MTri3 *t2b3 = new MTri3(t2b, Extend1dMeshIn2dSurfaces() ? std::min(lc2, lcBGM2) : lcBGM2);
   MTri3 *t3b3 = new MTri3(t3b, Extend1dMeshIn2dSurfaces() ? std::min(lc3, lcBGM3) : lcBGM3);
@@ -678,14 +681,14 @@ bool gmshVertexCollapse(const double lMin, MTri3 *t1, GFace *gf,
     MVertex *v1 = ring[(iMin + 1 + i) % ring.size()];
     MVertex *v2 = ring[(iMin + 1 + i + 1) % ring.size()];
     MTriangle *t = new MTriangle(v1,v2,ring[iMin]);
-    double lc = 0.3333333333 * (vSizes[t->getVertex(0)->getNum()] +
-                                vSizes[t->getVertex(1)->getNum()] +
-                                vSizes[t->getVertex(2)->getNum()]);
-    double lcBGM = 0.3333333333 * (vSizesBGM[t->getVertex(0)->getNum()] +
-                                   vSizesBGM[t->getVertex(1)->getNum()] +
-                                   vSizesBGM[t->getVertex(2)->getNum()]);
+    double lc = 0.3333333333 * (vSizes[t->getVertex(0)->getIndex()] +
+                                vSizes[t->getVertex(1)->getIndex()] +
+                                vSizes[t->getVertex(2)->getIndex()]);
+    double lcBGM = 0.3333333333 * (vSizesBGM[t->getVertex(0)->getIndex()] +
+                                   vSizesBGM[t->getVertex(1)->getIndex()] +
+                                   vSizesBGM[t->getVertex(2)->getIndex()]);
     MTri3 *t3 = new MTri3(t, Extend1dMeshIn2dSurfaces() ? std::min(lc, lcBGM) : lcBGM); 
-    // printf("Creation %p = %d %d %d\n",t3,v1->getNum(),v2->getNum(),ring[iMin]->getNum());
+    // printf("Creation %p = %d %d %d\n",t3,v1->getIndex(),v2->getIndex(),ring[iMin]->getIndex());
     outside.push_back(t3);
     newTris.push_back(t3);
   }

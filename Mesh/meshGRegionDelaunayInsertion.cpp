@@ -722,7 +722,7 @@ void insertVerticesInRegion (GRegion *gr)
       setLcs(gr->tetrahedra[i], vSizesMap);
     for(std::map<MVertex*, double>::iterator it = vSizesMap.begin(); 
         it != vSizesMap.end(); ++it){
-      it->first->setNum(NUM++);
+      it->first->setIndex(NUM++);
       vSizes.push_back(it->second);
       vSizesBGM.push_back(it->second);
     }
@@ -799,12 +799,12 @@ void insertVerticesInRegion (GRegion *gr)
       worst->tet()->xyz2uvw(center, uvw);
       if(worst->tet()->isInside(uvw[0], uvw[1], uvw[2])){
         MVertex *v = new MVertex(center[0], center[1], center[2], worst->onWhat());
-        v->setNum(NUM++);
+        v->setIndex(NUM++);
         double lc1 = 
-          (1 - uvw[0] - uvw[1] - uvw[2]) * vSizes[worst->tet()->getVertex(0)->getNum()] +
-          uvw[0] * vSizes[worst->tet()->getVertex(1)->getNum()] +
-          uvw[1] * vSizes[worst->tet()->getVertex(2)->getNum()] +
-          uvw[2] * vSizes[worst->tet()->getVertex(3)->getNum()];
+          (1 - uvw[0] - uvw[1] - uvw[2]) * vSizes[worst->tet()->getVertex(0)->getIndex()] +
+          uvw[0] * vSizes[worst->tet()->getVertex(1)->getIndex()] +
+          uvw[1] * vSizes[worst->tet()->getVertex(2)->getIndex()] +
+          uvw[2] * vSizes[worst->tet()->getVertex(3)->getIndex()];
         double lc = BGM_MeshSize(gr, 0, 0, center[0], center[1], center[2]);
         // double lc = std::min(lc1, BGM_MeshSize(gr, 0, 0, center[0], center[1], center[2]));
         vSizes.push_back(lc1);

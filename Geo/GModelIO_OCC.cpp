@@ -1015,7 +1015,7 @@ static void _applyOCCMeshConstraintsOnVertices
           TopoDS_Shape *shape2 = (TopoDS_Shape*)gf->getNativePtr();
           if(shape.IsSame(*shape2)){
             Msg::Debug("... embedding vertex %d in face %d", nodeNum, gf->tag());
-            gv->mesh_vertices[0]->setNum(nodeNum);
+            gv->mesh_vertices[0]->forceNum(nodeNum);
             gf->addEmbeddedVertex(gv);
           }
         }
@@ -1057,8 +1057,8 @@ static void _applyOCCMeshConstraintsOnEdges
           int numbeg = nodeNum.Value(invert ? n : 1);
           int numend = nodeNum.Value(invert ? 1 : n);
           Msg::Debug("... beg=%d end=%d", numbeg, numend);
-          ge->getBeginVertex()->mesh_vertices[0]->setNum(numbeg);
-          ge->getEndVertex()->mesh_vertices[0]->setNum(numend);
+          ge->getBeginVertex()->mesh_vertices[0]->forceNum(numbeg);
+          ge->getEndVertex()->mesh_vertices[0]->forceNum(numend);
           // set the mesh on the edge
           for(int i = 2; i < n; i++){
             int num = nodeNum.Value(invert ? n - i + 1 : i);
@@ -1066,8 +1066,7 @@ static void _applyOCCMeshConstraintsOnEdges
             GPoint p = ge->point(u);
             Msg::Debug("... adding mesh vertex num=%d u=%g xyz=(%g,%g,%g)",
                        num, u, p.x(), p.y(), p.z());
-            MEdgeVertex *v = new MEdgeVertex(p.x(), p.y(), p.z(), ge, u);
-            v->setNum(num);
+            MEdgeVertex *v = new MEdgeVertex(p.x(), p.y(), p.z(), ge, u, -1., num);
             ge->mesh_vertices.push_back(v);
           }
           for(unsigned int i = 0; i < ge->mesh_vertices.size() + 1; i++){

@@ -27,13 +27,13 @@ class MVertex{
  protected:
   // the maximum vertex id number in the mesh
   static int _globalNum;
-  // the id number of the vertex (this number is unique and is
-  // guaranteed never to change once a mesh has been generated)
+  // the immutable id number of the vertex (this number is unique and
+  // is guaranteed never to change once a vertex has been created)
   int _num;
-  // a vertex index, used for example when saving a mesh (this index
-  // is not necessarily unique, can change after mesh renumbering,
-  // ...). By convention, vertices with negative indices are not
-  // saved
+  // a vertex index, used for example during mesh generation or when
+  // saving a mesh (this index is not necessarily unique, can change
+  // after mesh renumbering, etc.). By convention, vertices with
+  // negative indices are not saved
   int _index;
   // a visibility and polynomial order flags
   char _visible, _order;
@@ -71,9 +71,11 @@ class MVertex{
   inline GEntity* onWhat() const { return _ge; }
   inline void setEntity(GEntity *ge) { _ge = ge; }
 
-  // get/set the number
+  // get the immutable vertex number
   inline int getNum() const { return _num; }
-  void setNum(int num);
+
+  // force the immutable number (this should normally never be used)
+  void forceNum(int num);
 
   // get/set the index
   inline int getIndex() const { return _index; }

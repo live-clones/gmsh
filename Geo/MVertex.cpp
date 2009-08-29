@@ -42,7 +42,7 @@ MVertex::MVertex(double x, double y, double z, GEntity *ge, int num)
   }
 }
 
-void MVertex::setNum(int num)
+void MVertex::forceNum(int num)
 { 
 #pragma omp critical
   {

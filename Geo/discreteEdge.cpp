@@ -218,10 +218,10 @@ void discreteEdge::parametrize()
     if (_orientation[i] == 1 ) vR = lines[i]->getVertex(1);
     else vR = lines[i]->getVertex(0);
     int param = i+1;
-    MVertex *vNEW = new MEdgeVertex(vR->x(),vR->y(),vR->z(), this, param);
+    MVertex *vNEW = new MEdgeVertex(vR->x(),vR->y(),vR->z(), this, param, 
+                                    -1., vR->getNum());
     old2new.insert(std::make_pair(vR,vNEW));
     newVertices.push_back(vNEW);
-    vNEW->setNum(vR->getNum());
     newLines.push_back(new MLine(vL, vNEW));
     _orientation[i] = 1;
     vL = vNEW;

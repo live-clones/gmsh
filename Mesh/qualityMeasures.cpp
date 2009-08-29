@@ -175,7 +175,6 @@ double qmTet(const double &x1, const double &y1, const double &z1,
   }
 }
 
-
 double mesh_functional_distorsion(MTriangle *t, double u, double v)
 {
   // compute uncurved element jacobian d_u x and d_v x
@@ -208,7 +207,6 @@ double mesh_functional_distorsion(MTriangle *t, double u, double v)
   return det;
 }
 
-
 double mesh_functional_distorsion_p2(MTriangle *t)
 {
   double d = mesh_functional_distorsion(t,0.,0.);
@@ -219,8 +217,6 @@ double mesh_functional_distorsion_p2(MTriangle *t)
   d = std::min(d,mesh_functional_distorsion(t,.5,0.5));
   return d;
 }
-
-
 
 double qmDistorsionOfMapping (MTriangle *e)
 {
@@ -253,49 +249,47 @@ static double mesh_functional_distorsion(MTetrahedron *t, double u, double v, do
 {
   // compute uncurved element jacobian d_u x and d_v x
   double mat[3][3];  
-  t->getPrimaryJacobian(u,v,w, mat);
+  t->getPrimaryJacobian(u, v, w, mat);
   
   const double det1 = det3x3(mat);
 
    //const double det1 = t->getJacobian(u,v,w,mat);
   // const double det1 = det3x3(mat);
-  t->getJacobian(u,v,w,mat);
+  t->getJacobian(u, v, w, mat);
   const double detN = det3x3(mat);
   // const double detN = det3x3(mat);
 
   //  printf("%g %g %g = %g %g\n",u,v,w,det1,detN);
 
   if (det1 == 0 || detN == 0) return 0;
-  double dist = std::min(detN/det1, det1/detN); 
+  double dist = std::min(detN / det1, det1 / detN); 
   return dist;
 }
 
-
-double qmDistorsionOfMapping (MTetrahedron *e)
+double qmDistorsionOfMapping(MTetrahedron *e)
 {
-  if (e->getPolynomialOrder() == 1)return 1.0;
+  if (e->getPolynomialOrder() == 1) return 1.0;
   IntPt *pts;
   int npts;
-  e->getIntegrationPoints(e->getPolynomialOrder(),&npts, &pts);
+  e->getIntegrationPoints(e->getPolynomialOrder(), &npts, &pts);
   double dmin;
-  for (int i=0;i<npts;i++){
+  for (int i = 0; i < npts; i++){
     const double u = pts[i].pt[0];
     const double v = pts[i].pt[1];
     const double w = pts[i].pt[2];
-    const double di  = mesh_functional_distorsion (e,u,v,w);
-    dmin = (i==0)? di : std::min(dmin,di);
+    const double di  = mesh_functional_distorsion(e, u, v, w);
+    dmin = (i == 0) ? di : std::min(dmin, di);
   }
   
   const gmshMatrix<double>& points = e->getFunctionSpace()->points;
 
-  for (int i=0;i<e->getNumPrimaryVertices();i++) {
-    const double u = points(i,0);
-    const double v = points(i,1);
-    const double w = points(i,2);
-    const double di  = mesh_functional_distorsion (e,u,v,w);
-    dmin = std::min(dmin,di);
+  for (int i = 0; i < e->getNumPrimaryVertices(); i++) {
+    const double u = points(i, 0);
+    const double v = points(i, 1);
+    const double w = points(i, 2);
+    const double di  = mesh_functional_distorsion(e, u, v, w);
+    dmin = std::min(dmin, di);
   }
-  //  printf("DMIN = %g\n\n",dmin);
 
   return dmin;
 }

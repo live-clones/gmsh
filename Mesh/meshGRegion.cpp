@@ -60,7 +60,7 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
     in.pointlist[(I-1)*3 + 0] = (*itv)->x();
     in.pointlist[(I-1)*3 + 1] = (*itv)->y();
     in.pointlist[(I-1)*3 + 2] = (*itv)->z();
-    (*itv)->setNum(I++);
+    (*itv)->setIndex(I++);
     numberedV.push_back(*itv);
     ++itv;
   }
@@ -93,9 +93,9 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
       tetgenio::init(p);
       p->numberofvertices = 3;
       p->vertexlist = new int[p->numberofvertices];
-      p->vertexlist[0] = t->getVertex(0)->getNum();
-      p->vertexlist[1] = t->getVertex(1)->getNum();
-      p->vertexlist[2] = t->getVertex(2)->getNum();
+      p->vertexlist[0] = t->getVertex(0)->getIndex();
+      p->vertexlist[1] = t->getVertex(1)->getIndex();
+      p->vertexlist[2] = t->getVertex(2)->getIndex();
       in.facetmarkerlist[I] = gf->tag();
       ++I;
     }
@@ -155,7 +155,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
     v[2] = numberedV[out.trifacelist[i * 3 + 2] - 1];
     GFace *gf = gr->model()->getFaceByTag(out.trifacemarkerlist[i]);
 
-    double guess[2] = {0,0};
+    double guess[2] = {0, 0};
     int Count = 0;
     for(int j = 0; j < 3; j++){   
       if(!v[j]->onWhat()){
@@ -163,8 +163,8 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
       }
       else if(v[j]->onWhat()->dim() == 2){
         double uu,vv;
-        v[j]->getParameter(0,uu);
-        v[j]->getParameter(1,vv);
+        v[j]->getParameter(0, uu);
+        v[j]->getParameter(1, vv);
         guess[0] += uu;
         guess[1] += vv;
         Count++;
@@ -175,22 +175,22 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
         v[j]->getParameter(0, UU);
         SPoint2 param;
         param = ge->reparamOnFace(gf, UU, 1);
-        guess[0]+=param.x();
-        guess[1]+=param.y();
+        guess[0] += param.x();
+        guess[1] += param.y();
         Count++;
       }
       else if (v[j]->onWhat()->dim() == 0){
         SPoint2 param;
         GVertex *gv = (GVertex*)v[j]->onWhat();
         param = gv->reparamOnFace(gf,1);
-        guess[0]+=param.x();
-        guess[1]+=param.y();
+        guess[0] += param.x();
+        guess[1] += param.y();
         Count++;
       }
     }
     if (Count != 0){
-      guess[0]/=Count;
-      guess[1]/=Count;
+      guess[0] /= Count;
+      guess[1] /= Count;
     }
 
     for(int j = 0; j < 3; j++){   
@@ -202,28 +202,21 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
         MVertex *v1b;
         if (CTX::instance()->mesh.order > 1 && 
             CTX::instance()->mesh.secondOrderExperimental){
-          // PARAMETRIC COORDINATES SHOULD BE SET for the vertex !!!!!!!!!!!!!
-          // This is not 100 % safe yet, so we reserve that operation for high order
-          // meshes.
-          //      Msg::Debug("A new point has been inserted in mesh face %d by the 3D mesher, guess %g %g",gf->tag(),guess[0],guess[1]);
-          GPoint gp = gf->closestPoint (SPoint3(v[j]->x(), v[j]->y(), v[j]->z()),guess);
-
-          // To be safe, we should ensure that this mesh motion does not lead to an invalid mesh !!!!
-          //v1b = new MVertex(gp.x(),gp.y(),gp.z(),gf);
-          if (gp.g() ){
-            //v1b = new MFaceVertex(v[j]->x(), v[j]->y(), v[j]->z(),gf,gp.u(),gp.v());
-            v1b = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
-            //      Msg::Info("The point has been projected back to the surface (%g %g %g) -> (%g %g %g)",
-            //        v[j]->x(), v[j]->y(), v[j]->z(),gp.x(),gp.y(),gp.z());
+          // parametric coordinates should be set for the vertex !
+          // (this is not 100 % safe yet, so we reserve that operation
+          // for high order meshes)
+          GPoint gp = gf->closestPoint(SPoint3(v[j]->x(), v[j]->y(), v[j]->z()),guess);
+          if (gp.g()){
+            v1b = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
           }
           else{
-            v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(),gf);        
+            v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf);
             Msg::Warning("The point was not projected back to the surface (%g %g %g)", 
                          v[j]->x(), v[j]->y(), v[j]->z());
           }
         }
         else{
-          v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(),gf);
+          v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf);
         }
 
         gf->mesh_vertices.push_back(v1b);
@@ -348,7 +341,7 @@ Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
     tmp[0] = (*itv)->x();
     tmp[1] = (*itv)->y();
     tmp[2] = (*itv)->z();
-    (*itv)->setNum(I++);
+    (*itv)->setIndex(I++);
     numberedV.push_back(*itv);
     Ng_AddPoint(ngmesh, tmp);
     ++itv;
@@ -360,7 +353,7 @@ Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
       tmp[0] = gr->mesh_vertices[i]->x();
       tmp[1] = gr->mesh_vertices[i]->y();
       tmp[2] = gr->mesh_vertices[i]->z();
-      gr->mesh_vertices[i]->setNum(I++);
+      gr->mesh_vertices[i]->setIndex(I++);
       Ng_AddPoint(ngmesh, tmp);
     }
   }
@@ -372,9 +365,9 @@ Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
     for(unsigned int i = 0; i< gf->triangles.size(); i++){
       MTriangle *t = gf->triangles[i];
       int tmp[3];
-      tmp[0] = t->getVertex(0)->getNum();
-      tmp[1] = t->getVertex(1)->getNum();
-      tmp[2] = t->getVertex(2)->getNum();
+      tmp[0] = t->getVertex(0)->getIndex();
+      tmp[1] = t->getVertex(1)->getIndex();
+      tmp[2] = t->getVertex(2)->getIndex();
       Ng_AddSurfaceElement(ngmesh, NG_TRIG, tmp);
     }
     ++it;
@@ -386,10 +379,10 @@ Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
       // netgen expects tet with negative volume
       if(t->getVolumeSign() > 0) t->revert();
       int tmp[4];
-      tmp[0] = t->getVertex(0)->getNum();
-      tmp[1] = t->getVertex(1)->getNum();
-      tmp[2] = t->getVertex(2)->getNum();
-      tmp[3] = t->getVertex(3)->getNum();
+      tmp[0] = t->getVertex(0)->getIndex();
+      tmp[1] = t->getVertex(1)->getIndex();
+      tmp[2] = t->getVertex(2)->getIndex();
+      tmp[3] = t->getVertex(3)->getIndex();
       Ng_AddVolumeElement(ngmesh, NG_TET, tmp);
     }
   }
