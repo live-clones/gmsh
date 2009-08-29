@@ -1051,7 +1051,7 @@ static void _applyOCCMeshConstraintsOnEdges
         }
         else{
           // set the mesh as immutable
-          ge->meshAttributes.Method == MESH_NONE;
+          ge->meshAttributes.Method = MESH_NONE;
           // set the correct tags on the boundary vertices
           bool invert = (nodePar.Value(1) > nodePar.Value(n));
           int numbeg = nodeNum.Value(invert ? n : 1);
@@ -1098,11 +1098,27 @@ static void _applyOCCMeshConstraintsOnEdges
     }
   }
 
-  // FIXME: compute better characteristic length for all edges with no
-  // imposed mesh? Or mesh those edges directly (here?)
+  // set better characteristic length for all edges with no imposed
+  // mesh
+  int num_ele = 0;
+  double lc_avg = 0.;
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
-    // ...
-  }  
+    GEdge *ge = *it;
+    for(unsigned int i = 0; i < ge->lines.size(); i++)
+      lc_avg += ge->lines[i]->getVertex(0)->distance(ge->lines[i]->getVertex(1));
+    num_ele += ge->lines.size();
+  }
+  if(num_ele) lc_avg /= (double)num_ele;
+  if(lc_avg){
+    Msg::Debug("Setting default char length to %g", lc_avg);
+    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
+      GEdge *ge = *it;
+      if(ge->meshAttributes.Method == MESH_NONE){
+        ge->getBeginVertex()->setPrescribedMeshSizeAtVertex(lc_avg);
+        ge->getEndVertex()->setPrescribedMeshSizeAtVertex(lc_avg);
+      }
+    }
+  }
 }
 #endif
 
