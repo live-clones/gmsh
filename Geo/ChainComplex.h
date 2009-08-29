@@ -8,12 +8,15 @@
 #ifndef _CHAINCOMPLEX_H_
 #define _CHAINCOMPLEX_H_
 
-#include <stdio.h>
+#include "GmshConfig.h"
+
+#if defined(HAVE_KBIPACK)
+
+#include <cstdio>
 #include <string>
 #include <algorithm>
 #include <set>
 #include <queue>
-#include "GmshConfig.h"
 #include "MElement.h"
 #include "GModel.h"
 #include "GEntity.h"
@@ -21,8 +24,6 @@
 #include "GFace.h"
 #include "GVertex.h"
 #include "CellComplex.h"
-
-#if defined(HAVE_KBIPACK)
 
 #include "gmp.h"
 extern "C" {

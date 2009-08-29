@@ -8,12 +8,15 @@
 #ifndef _CELLCOMPLEX_H_
 #define _CELLCOMPLEX_H_
 
+#include "GmshConfig.h"
+
+#if defined(HAVE_KBIPACK)
+
 #include <stdio.h>
 #include <string>
 #include <algorithm>
 #include <set>
 #include <queue>
-#include "GmshConfig.h"
 #include "MElement.h"
 #include "MPoint.h"
 #include "MLine.h"
@@ -28,8 +31,6 @@
 #include "GRegion.h"
 #include "GFace.h"
 #include "GVertex.h"
-
-#if defined(HAVE_KBIPACK)
 
 // Abstract class representing an elemtary cell of a cell complex.
 class Cell
