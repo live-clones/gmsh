@@ -749,8 +749,8 @@ void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
 
     IT++;
     Msg::Debug(" iter %3d minL %8.3f/%8.3f maxL %8.3f/%8.3f : "
-        "%6d splits, %6d swaps, %6d collapses, %6d moves",
-        IT, minL, minE, maxL, maxE, nb_split, nb_swap, nb_collaps, nb_smooth);
+               "%6d splits, %6d swaps, %6d collapses, %6d moves",
+               IT, minL, minE, maxL, maxE, nb_split, nb_swap, nb_collaps, nb_smooth);
     if (nb_split == 0 && nb_collaps == 0) break;
 
   }  
@@ -794,7 +794,7 @@ void invalidEdgesPeriodic(BDS_Mesh &m, std::map<BDS_Point*, MVertex*> *recoverMa
 
   toSplit.clear();
   it = m.edges.begin();
-  std::map< std::pair < MVertex*, BDS_Point*> , BDS_Edge *> touchPeriodic;
+  std::map<std::pair<MVertex*, BDS_Point*>, BDS_Edge *> touchPeriodic;
   while (it != m.edges.end()){
     BDS_Edge *e = *it;
     if (!e->deleted && e->numfaces() == 2){

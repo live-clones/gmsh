@@ -29,19 +29,23 @@
 
 #define SQU(a)      ((a)*(a))
 
-int optimalLocationPN_ (GFace *gf, const MEdge &me, MTriangle *t1, MTriangle *t2,gmshHighOrderSmoother *s);
+int optimalLocationPN_(GFace *gf, const MEdge &me, MTriangle *t1, MTriangle *t2,
+                       gmshHighOrderSmoother *s);
 static int _gmshSwapHighOrderTriangles(GFace *gf);
-static int _gmshSwapHighOrderTriangles(GFace *gf,edgeContainer&,faceContainer&, gmshHighOrderSmoother *s);
+static int _gmshSwapHighOrderTriangles(GFace *gf, edgeContainer&, faceContainer&,
+                                       gmshHighOrderSmoother *s);
 static int _gmshFindOptimalLocationsP2(GFace *gf, gmshHighOrderSmoother *s);
-static int _gmshFindOptimalLocationsPN(GFace *gf,gmshHighOrderSmoother *s);
+static int _gmshFindOptimalLocationsPN(GFace *gf, gmshHighOrderSmoother *s);
 
-static double shapeMeasure (MElement *e) {
+static double shapeMeasure(MElement *e)
+{
   const double d1 = e->distoShapeMeasure();
   //const double d2 = e->gammaShapeMeasure();
   return d1;
 }
 
-void gmshHighOrderSmoother::moveTo (MVertex *v,  const std::map<MVertex*,SVector3> &m) const
+void gmshHighOrderSmoother::moveTo(MVertex *v,  
+                                   const std::map<MVertex*, SVector3> &m) const
 {
   std::map<MVertex*,SVector3>::const_iterator it = m.find(v);
   if (it != m.end()){
@@ -51,38 +55,38 @@ void gmshHighOrderSmoother::moveTo (MVertex *v,  const std::map<MVertex*,SVector
   }
 } 
 
-void gmshHighOrderSmoother::moveToStraightSidedLocation (MVertex *v) const
+void gmshHighOrderSmoother::moveToStraightSidedLocation(MVertex *v) const
 {
-  moveTo ( v, _straightSidedLocation);
+  moveTo( v, _straightSidedLocation);
 }
 
-void gmshHighOrderSmoother::moveToTargetLocation (MVertex *v) const
+void gmshHighOrderSmoother::moveToTargetLocation(MVertex *v) const
 {
-  moveTo ( v, _targetLocation);
+  moveTo( v, _targetLocation);
 }
 
-void gmshHighOrderSmoother::moveToStraightSidedLocation (MElement *e) const
+void gmshHighOrderSmoother::moveToStraightSidedLocation(MElement *e) const
 {
-  for (int i=0;i<e->getNumVertices();i++)
+  for(int i = 0; i < e->getNumVertices(); i++)
     moveToStraightSidedLocation(e->getVertex(i));
 }
 
-void gmshHighOrderSmoother::moveToTargetLocation (MElement *e) const
+void gmshHighOrderSmoother::moveToTargetLocation(MElement *e) const
 {
-  for (int i=0;i<e->getNumVertices();i++)
+  for(int i = 0; i < e->getNumVertices(); i++)
     moveToTargetLocation(e->getVertex(i));
 }
 
-void gmshHighOrderSmoother::updateTargetLocation (MVertex*v, const SPoint3 &p3, const SPoint2 &p2)
+void gmshHighOrderSmoother::updateTargetLocation(MVertex*v, const SPoint3 &p3, 
+                                                 const SPoint2 &p2)
 {
   v->x() = p3.x();
   v->y() = p3.y();
   v->z() = p3.z();
   v->setParameter(0,p2.x());
   v->setParameter(1,p2.y());
-  _targetLocation[v] = SVector3(p3.x(),p3.y(),p3.z());
+  _targetLocation[v] = SVector3(p3.x(), p3.y(), p3.z());
 }
-
 
 struct p2data{
   GFace *gf;
@@ -90,15 +94,17 @@ struct p2data{
   MVertex *n12;
   gmshMatrix<double> *m1,*m2;
   gmshHighOrderSmoother *s;
-  p2data (GFace *_gf,MTriangle *_t1,MTriangle *_t2,MVertex *_n12,gmshHighOrderSmoother *_s)
-    : gf(_gf),t1(_t1),t2(_t2),n12(_n12),s(_s){
-    gmshElasticityTerm el(0,1.e3,.3333);
+  p2data(GFace *_gf, MTriangle *_t1, MTriangle *_t2, MVertex *_n12, 
+         gmshHighOrderSmoother *_s)
+    : gf(_gf), t1(_t1), t2(_t2), n12(_n12), s(_s)
+  {
+    gmshElasticityTerm el(0, 1.e3, .3333);
     s->moveToStraightSidedLocation(t1);
     s->moveToStraightSidedLocation(t2);
-    m1 = new  gmshMatrix<double>(3*t1->getNumVertices(),
-                                 3*t1->getNumVertices());
-    m2 = new  gmshMatrix<double>(3*t2->getNumVertices(),
-                                 3*t2->getNumVertices()); 
+    m1 = new  gmshMatrix<double>(3 * t1->getNumVertices(),
+                                 3 * t1->getNumVertices());
+    m2 = new  gmshMatrix<double>(3 * t2->getNumVertices(),
+                                 3 * t2->getNumVertices()); 
     el.elementMatrix(t1,*m1);
     el.elementMatrix(t2,*m2);
     s->moveToTargetLocation(t1);
@@ -116,16 +122,17 @@ struct pNdata{
   const std::vector<MVertex*> &n;
   gmshMatrix<double> *m1,*m2;
   gmshHighOrderSmoother *s;
-  pNdata (GFace *_gf,MTriangle *_t1,MTriangle *_t2,const std::vector<MVertex*> &_n,gmshHighOrderSmoother *_s)
-    : gf(_gf),t1(_t1),t2(_t2),n(_n),s(_s)
+  pNdata(GFace *_gf,MTriangle *_t1,MTriangle *_t2, const std::vector<MVertex*> &_n,
+         gmshHighOrderSmoother *_s)
+    : gf(_gf), t1(_t1), t2(_t2), n(_n), s(_s)
   {
-    gmshElasticityTerm el(0,1.e3,.3333);
+    gmshElasticityTerm el(0, 1.e3, .3333);
     s->moveToStraightSidedLocation(t1);
     s->moveToStraightSidedLocation(t2);
-    m1 = new  gmshMatrix<double>(3*t1->getNumVertices(),
-                                 3*t1->getNumVertices());
-    m2 = new  gmshMatrix<double>(3*t2->getNumVertices(),
-                                 3*t2->getNumVertices()); 
+    m1 = new  gmshMatrix<double>(3 * t1->getNumVertices(),
+                                 3 * t1->getNumVertices());
+    m2 = new  gmshMatrix<double>(3 * t2->getNumVertices(),
+                                 3 * t2->getNumVertices()); 
     el.elementMatrix(t1,*m1);
     el.elementMatrix(t2,*m2);
     s->moveToTargetLocation(t1);
@@ -137,11 +144,10 @@ struct pNdata{
   }
 };
 
-
-static double _DeformationEnergy (MElement *e, 
-                                  gmshMatrix<double> *K,
-                                  gmshHighOrderSmoother *s){
-
+static double _DeformationEnergy(MElement *e, 
+                                 gmshMatrix<double> *K,
+                                 gmshHighOrderSmoother *s)
+{
   int N = e->getNumVertices();
   gmshVector<double> Kdx(N*3),dx(N*3);
 
@@ -154,37 +160,34 @@ static double _DeformationEnergy (MElement *e,
     dx(i+N)    = disp.y();
     dx(i+2*N)  = disp.z();
     if (0 && (fabs(disp.x())>1.e-12 ||fabs(disp.y())>1.e-12))
-            printf("%6d (%12.5E %12.5E %12.5E -- %12.5E %12.5E %12.5E -- %12.5E %12.5E %12.5E)\n",
-               e->getVertex(i)->getNum(),
-               disp.x(),disp.y(),disp.z(),
-               str.x(),str.y(),str.z(),e->getVertex(i)->x(),e->getVertex(i)->y(),
-               e->getVertex(i)->z());
-  }  
+      printf("%6d (%12.5E %12.5E %12.5E -- %12.5E %12.5E %12.5E -- %12.5E %12.5E %12.5E)\n",
+             e->getVertex(i)->getNum(),
+             disp.x(),disp.y(),disp.z(),
+             str.x(),str.y(),str.z(),e->getVertex(i)->x(),e->getVertex(i)->y(),
+             e->getVertex(i)->z());
+  }
 
-  K->mult(dx,Kdx);
+  K->mult(dx, Kdx);
   const double E = Kdx * dx;
   return E;
 }
 
-static double _DeformationEnergy (p2data *p){
-  
-  //  printf("DEFEN \n");
-
-  return 
-    _DeformationEnergy (p->t1,p->m1,p->s) + 
-    _DeformationEnergy (p->t2,p->m2,p->s);
+static double _DeformationEnergy(p2data *p)
+{
+  return _DeformationEnergy(p->t1, p->m1, p->s) + 
+    _DeformationEnergy(p->t2, p->m2, p->s);
 }
 
-static double _DeformationEnergy (pNdata *p){
-
-  return _DeformationEnergy (p->t1,p->m1,p->s) + 
-    _DeformationEnergy (p->t2,p->m2,p->s);
+static double _DeformationEnergy(pNdata *p)
+{
+  return _DeformationEnergy(p->t1, p->m1, p->s) + 
+    _DeformationEnergy(p->t2, p->m2, p->s);
 }
 
-
-static double _function_p2tB (gmshVector<double> &x, void *data){
+static double _function_p2tB(gmshVector<double> &x, void *data)
+{
   p2data *p = (p2data*)data;
-  GPoint gp12 = p->gf->point(SPoint2(x(0),x(1)));
+  GPoint gp12 = p->gf->point(SPoint2(x(0), x(1)));
   double xx = p->n12->x();
   double yy = p->n12->y();
   double zz = p->n12->z();
@@ -193,41 +196,37 @@ static double _function_p2tB (gmshVector<double> &x, void *data){
   p->n12->z() = gp12.z();
 
   double E = _DeformationEnergy(p);
-  //  printf("%12.5E %12.5E -- %12.5E %12.5E => %12.5E %12.5E E %12.5E\n",x(0),x(1),xx,yy,gp12.x(),gp12.y(),E);
-
   p->n12->x() = xx;
   p->n12->y() = yy;
   p->n12->z() = zz;  
   return E;
 }
 
-
-
-static double _function_p2t (gmshVector<double> &x, void *data){
+static double _function_p2t(gmshVector<double> &x, void *data)
+{
   p2data *p = (p2data*)data;
-  GPoint gp12 = p->gf->point(SPoint2(x(0),x(1)));
-  //  printf("%g %g = %g %g\n",x(0),x(1),gp12.x(),gp12.y());
+  GPoint gp12 = p->gf->point(SPoint2(x(0), x(1)));
   double xx = p->n12->x();
   double yy = p->n12->y();
   double zz = p->n12->z();
   p->n12->x() = gp12.x();
   p->n12->y() = gp12.y();
   p->n12->z() = gp12.z();
-  double q = std::min(shapeMeasure(p->t1),shapeMeasure(p->t2));      
+  double q = std::min(shapeMeasure(p->t1), shapeMeasure(p->t2));      
   p->n12->x() = xx;
   p->n12->y() = yy;
   p->n12->z() = zz;  
   return -q;
 }
 
-static double _function_pNt (gmshVector<double> &x, void *data){
+static double _function_pNt(gmshVector<double> &x, void *data)
+{
   pNdata *p = (pNdata*)data;
   static double xx[256];
   static double yy[256];
   static double zz[256];
-  for (unsigned int i=0;i<p->n.size();i++){
-    GPoint gp12 = p->gf->point(SPoint2(x(2*i),x(2*i+1)));
-    //  printf("%g %g = %g %g\n",x(0),x(1),gp12.x(),gp12.y());
+  for (unsigned int i = 0; i < p->n.size(); i++){
+    GPoint gp12 = p->gf->point(SPoint2(x(2 * i), x(2 * i + 1)));
     xx[i] = p->n[i]->x();
     yy[i] = p->n[i]->y();
     zz[i] = p->n[i]->z();
@@ -235,8 +234,8 @@ static double _function_pNt (gmshVector<double> &x, void *data){
     p->n[i]->y() = gp12.y();
     p->n[i]->z() = gp12.z();
   }
-  double q = std::min(shapeMeasure(p->t1),shapeMeasure(p->t2));      
-  for (unsigned int i=0;i<p->n.size();i++){
+  double q = std::min(shapeMeasure(p->t1), shapeMeasure(p->t2));      
+  for (unsigned int i = 0; i < p->n.size(); i++){
     p->n[i]->x() = xx[i];
     p->n[i]->y() = yy[i];
     p->n[i]->z() = zz[i];
@@ -244,14 +243,14 @@ static double _function_pNt (gmshVector<double> &x, void *data){
   return -q;
 }
 
-static double _function_pNtB (gmshVector<double> &x, void *data){
+static double _function_pNtB(gmshVector<double> &x, void *data)
+{
   pNdata *p = (pNdata*)data;
   static double xx[256];
   static double yy[256];
   static double zz[256];
-  for (unsigned int i=0;i<p->n.size();i++){
-    GPoint gp12 = p->gf->point(SPoint2(x(2*i),x(2*i+1)));
-    //  printf("%g %g = %g %g\n",x(0),x(1),gp12.x(),gp12.y());
+  for (unsigned int i = 0; i < p->n.size(); i++){
+    GPoint gp12 = p->gf->point(SPoint2(x(2 * i), x(2 * i + 1)));
     xx[i] = p->n[i]->x();
     yy[i] = p->n[i]->y();
     zz[i] = p->n[i]->z();
@@ -260,19 +259,17 @@ static double _function_pNtB (gmshVector<double> &x, void *data){
     p->n[i]->z() = gp12.z();
   }
   double E = _DeformationEnergy(p);
-  for (unsigned int i=0;i<p->n.size();i++){
+  for (unsigned int i = 0; i < p->n.size(); i++){
     p->n[i]->x() = xx[i];
     p->n[i]->y() = yy[i];
     p->n[i]->z() = zz[i];
   }  
-  //  printf("E(%g,%g) = %g\n",x(0),x(1),E);
   return E;
 }
 
-
-void getDistordedElements(const std::vector<MElement*>  & v, 
+void getDistordedElements(const std::vector<MElement*> &v,
                           const double & threshold,
-                          std::vector<MElement*>  & d,
+                          std::vector<MElement*> &d,
                           double &minD)
 {
   d.clear();
@@ -285,9 +282,9 @@ void getDistordedElements(const std::vector<MElement*>  & v,
   }
 }
 
-void addOneLayer(const std::vector<MElement*>  & v, 
-                 std::vector<MElement*>  & d ,
-                 std::vector<MElement*>  & layer )
+void addOneLayer(const std::vector<MElement*> &v, 
+                 std::vector<MElement*> &d,
+                 std::vector<MElement*> &layer)
 {
   std::set<MVertex*> all;
   for (unsigned int i = 0; i < d.size(); i++){
@@ -297,7 +294,6 @@ void addOneLayer(const std::vector<MElement*>  & v,
       all.insert(e->getVertex(j));
     }
   }
-
   layer.clear();
 
   std::sort(d.begin(), d.end());
@@ -342,68 +338,62 @@ void gmshHighOrderSmoother::smooth(GRegion *gr)
   smooth(v);
 }
 
-// Use elastic solver to move the nodes
-
-// compute the stiffness matrix of an element
-// that correspond to the deformation of a
-// straight sided element to a curvilinear one
-
-
-
-
+// Use elastic solver to move the nodes: compute the stiffness matrix
+// of an element that correspond to the deformation of a straight
+// sided element to a curvilinear one
 
 void gmshHighOrderSmoother::optimize(GFace * gf, 
                                      edgeContainer &edgeVertices,
-                                     faceContainer &faceVertices){
-
-  //  if (gf->geomType() != GEntity::Plane)return;
+                                     faceContainer &faceVertices)
+{
+  //  if (gf->geomType() != GEntity::Plane) return;
 
   while (1) {
     // relocate the vertices using elliptic smoother
     //    smooth(gf);
-    //    for (int i=0;i<20;i++){
-    //    _gmshFindOptimalLocationsPN(gf,this);
-      //      _gmshFindOptimalLocationsPN(gf,this);
-      //    }
+    //    for (int i = 0; i < 20; i++){
+    //      _gmshFindOptimalLocationsPN(gf,this);
+    //      _gmshFindOptimalLocationsPN(gf,this);
+    //    }
     // then try to swap for better configurations  
 
-    smooth(gf,true);
+    smooth(gf, true);
     //int nbSwap = 
         _gmshSwapHighOrderTriangles(gf,edgeVertices,faceVertices,this);
-    //smooth(gf,true);
-    //    smooth(gf,true);
-    //    smooth(gf,true);
-    //    smooth(gf,true);
+    // smooth(gf,true);
+    // smooth(gf,true);
+    // smooth(gf,true);
+    // smooth(gf,true);
     break;
 
-    //    printf("%d %g\n",nbSwap,_MIDDLE);
     // if the smoothing procedure has been able to
     // move the nodes to their right location, break !
     //    break;
     if (_MIDDLE == 1.0) break;
-    //    if (!nbSwap){
-    //      printf("Cannot move thet nodes to their optimal location, splits have to be added\n");
-    //      break;
-    //    }
+    // if (!nbSwap){
+    //   printf("Cannot move thet nodes to their optimal location, "
+    //          "splits have to be added\n");
+    //   break;
+    // }
   }
 }
 
-
-void gmshHighOrderSmoother::computeMetricVector (GFace *gf, 
-                                                 MElement *e, 
-                                                 gmshMatrix<double> &J,
-                                                 gmshMatrix<double> &JT,
-                                                 gmshVector<double> &D){
+void gmshHighOrderSmoother::computeMetricVector(GFace *gf, 
+                                                MElement *e, 
+                                                gmshMatrix<double> &J,
+                                                gmshMatrix<double> &JT,
+                                                gmshVector<double> &D)
+{
   int nbNodes = e->getNumVertices();
   for (int j = 0; j < nbNodes; j++){
     SPoint2 param;
     reparamMeshVertexOnFace(e->getVertex(j), gf, param);  
     Pair<SVector3,SVector3> der = gf->firstDer(param);    
     int XJ = j;
-    int YJ = j+nbNodes;
-    int ZJ = j+2*nbNodes;
+    int YJ = j + nbNodes;
+    int ZJ = j + 2 * nbNodes;
     int UJ = j;
-    int VJ = j+nbNodes;
+    int VJ = j + nbNodes;
     J(XJ,UJ) = der.first().x();
     J(YJ,UJ) = der.first().y();
     J(ZJ,UJ) = der.first().z();
@@ -426,8 +416,7 @@ void gmshHighOrderSmoother::computeMetricVector (GFace *gf,
   } 
 }
 
-
-void gmshHighOrderSmoother::smooth_metric ( std::vector<MElement*>  & all, GFace *gf)
+void gmshHighOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
 {
   gmshLinearSystemGmm<double> *lsys = new gmshLinearSystemGmm<double>;
   lsys->setNoisy(1);
@@ -436,35 +425,31 @@ void gmshHighOrderSmoother::smooth_metric ( std::vector<MElement*>  & all, GFace
   gmshAssembler<double> myAssembler(lsys);
   gmshElasticityTerm El(0, 1.0, .333, getTag());
   
-  std::vector<MElement*> layer,v;
+  std::vector<MElement*> layer, v;
 
   double minD;
 
-  getDistordedElements ( all, .6, v,minD);
+  getDistordedElements(all, .6, v,minD);
 
-  Msg::Debug("%d elements / %d distorted  min Disto = %g",all.size(),v.size(), minD);
+  Msg::Debug("%d elements / %d distorted  min Disto = %g", all.size(), v.size(), minD);
 
   if (!v.size()) return;
 
   const int nbLayers = 2;
-  for (int i=0;i<nbLayers;i++){
-    addOneLayer ( all, v, layer);
-    v.insert(v.end(),layer.begin(),layer.end());
+  for (int i = 0; i < nbLayers; i++){
+    addOneLayer(all, v, layer);
+    v.insert(v.end(), layer.begin(), layer.end());
   }
 
-  // 3 -> .4
   Msg::Debug("%d elements after adding %d layers", (int)v.size(), nbLayers);
 
   addOneLayer(all, v, layer);
-
-  //  printf("%d elements in the next layer\n",layer.size());
 
   std::set<MVertex*>::iterator it;
   std::map<MVertex*,SVector3>::iterator its;
   std::map<MVertex*,SVector3>::iterator itpresent;
   std::map<MVertex*,SVector3>::iterator ittarget;
   std::set<MVertex*> verticesToMove;
-
 
   for (unsigned int i = 0; i < layer.size(); i++){
     for (int j = 0; j < layer[i]->getNumVertices(); j++){
@@ -474,26 +459,26 @@ void gmshHighOrderSmoother::smooth_metric ( std::vector<MElement*>  & all, GFace
     }
   }
 
-  //  printf("%d vertices \n", _displ.size());
+  // printf("%d vertices \n", _displ.size());
 
   for (unsigned int i = 0; i < v.size(); i++){
     for (int j = 0; j < v[i]->getNumVertices(); j++){
       MVertex *vert = v[i]->getVertex(j);
-      //      printf("%d %d %d v\n",i,j,v[i]->getNumVertices());
+      // printf("%d %d %d v\n", i, j, v[i]->getNumVertices());
       its = _straightSidedLocation.find(vert);
       if (its == _straightSidedLocation.end()){
         _straightSidedLocation[vert] = 
-          SVector3(vert->x(),vert->y(),vert->z());     
+          SVector3(vert->x(), vert->y(), vert->z());     
         _targetLocation[vert] = 
-          SVector3(vert->x(),vert->y(),vert->z());     
+          SVector3(vert->x(), vert->y(), vert->z());     
       }
       else{
         vert->x() = its->second.x();
         vert->y() = its->second.y();
         vert->z() = its->second.z();
         if (vert->onWhat()->dim() < _dim){
-          myAssembler.fixVertex ( vert , 0 , getTag() , 0);
-          myAssembler.fixVertex ( vert , 1 , getTag() , 0);
+          myAssembler.fixVertex(vert, 0, getTag(), 0);
+          myAssembler.fixVertex(vert, 1, getTag(), 0);
         }
       }
     }
@@ -508,21 +493,20 @@ void gmshHighOrderSmoother::smooth_metric ( std::vector<MElement*>  & all, GFace
       verticesToMove.insert(vert);
     } 
   }
-
   
-  double dx0 = smooth_metric_ ( v, gf, myAssembler, verticesToMove,El);
+  double dx0 = smooth_metric_(v, gf, myAssembler, verticesToMove, El);
   double dx = dx0;
-  printf(" dx0 = %12.5E\n",dx0);
+  printf(" dx0 = %12.5E\n", dx0);
   int iter = 0;
   while(1){
-    double dx2 = smooth_metric_ ( v,gf, myAssembler, verticesToMove,El);
-    printf(" dx2  = %12.5E\n",dx2);
-    if (fabs(dx2-dx) < 1.e-4 * dx0)break;
+    double dx2 = smooth_metric_(v, gf, myAssembler, verticesToMove, El);
+    printf(" dx2  = %12.5E\n", dx2);
+    if (fabs(dx2 - dx) < 1.e-4 * dx0)break;
     if (iter++ > 2)break;
     dx = dx2;
   }
 
-  for (it = verticesToMove.begin()  ; it != verticesToMove.end() ; ++it){
+  for (it = verticesToMove.begin(); it != verticesToMove.end(); ++it){
     SPoint2 param;
     reparamMeshVertexOnFace(*it, gf, param);  
     GPoint gp = gf->point(param);    
@@ -530,7 +514,7 @@ void gmshHighOrderSmoother::smooth_metric ( std::vector<MElement*>  & all, GFace
       (*it)->x() = gp.x();
       (*it)->y() = gp.y();
       (*it)->z() = gp.z();
-      _targetLocation[*it] = SVector3(gp.x(),gp.y(),gp.z());
+      _targetLocation[*it] = SVector3(gp.x(), gp.y(), gp.z());
     }
     else{
       SVector3 p =  _targetLocation[(*it)];
@@ -542,39 +526,35 @@ void gmshHighOrderSmoother::smooth_metric ( std::vector<MElement*>  & all, GFace
   delete lsys;
 }
 
-
-double gmshHighOrderSmoother::smooth_metric_ ( std::vector<MElement*>  & v, 
-                                               GFace *gf, 
-                                               gmshAssembler<double> &myAssembler,
-                                               std::set<MVertex*> &verticesToMove,
-                                               gmshElasticityTerm &El)
+double gmshHighOrderSmoother::smooth_metric_(std::vector<MElement*>  & v, 
+                                             GFace *gf, 
+                                             gmshAssembler<double> &myAssembler,
+                                             std::set<MVertex*> &verticesToMove,
+                                             gmshElasticityTerm &El)
 {
-  //  Msg::Info("%d vertices FIXED %d NUMBERED", myAssembler.sizeOfF()
-  //        , myAssembler.sizeOfR());
-
   std::set<MVertex*>::iterator it;
 
   if (myAssembler.sizeOfR()){
 
-    for (unsigned int i=0;i<v.size();i++){
+    for (unsigned int i = 0; i < v.size(); i++){
       MElement *e = v[i];            
       int nbNodes = e->getNumVertices();
-      const int n2 = 2*nbNodes;
-      const int n3 = 3*nbNodes;
+      const int n2 = 2 * nbNodes;
+      const int n3 = 3 * nbNodes;
 
-      gmshMatrix<double> K33 (n3,n3);
-      gmshMatrix<double> K22 (n2,n2);
-      gmshMatrix<double> J32 (n3,n2);
-      gmshMatrix<double> J23 (n2,n3);
-      gmshVector<double> D3  (n3);
-      gmshVector<double> R2  (n2);
-      gmshMatrix<double> J23K33 (n2,n3);
+      gmshMatrix<double> K33(n3, n3);
+      gmshMatrix<double> K22(n2, n2);
+      gmshMatrix<double> J32(n3, n2);
+      gmshMatrix<double> J23(n2, n3);
+      gmshVector<double> D3(n3);
+      gmshVector<double> R2(n2);
+      gmshMatrix<double> J23K33(n2, n3);
       K33.set_all(0.0);
-      El.elementMatrix(e,K33);
-      computeMetricVector (gf,e,J32,J23,D3);
-      J23K33.gemm(J23,K33,1,0);      
-      K22.gemm(J23K33,J32,1,0);      
-      J23K33.mult(D3,R2);
+      El.elementMatrix(e, K33);
+      computeMetricVector(gf, e, J32, J23, D3);
+      J23K33.gemm(J23, K33, 1, 0);
+      K22.gemm(J23K33, J32, 1, 0);
+      J23K33.mult(D3, R2);
       for (int j = 0; j < n2; j++){
         MVertex *vR;
         int iCompR, iFieldR;
@@ -585,27 +565,25 @@ double gmshHighOrderSmoother::smooth_metric_ ( std::vector<MElement*>  & v,
           int iCompC, iFieldC;
           El.getLocalDofC(e, k, &vC, &iCompC, &iFieldC);
           myAssembler.assemble(vR, iCompR, iFieldR, 
-                         vC, iCompC, iFieldC, 
-                         K22(j, k));
+                               vC, iCompC, iFieldC, 
+                               K22(j, k));
         }
       }
     }
-    // solve the system
     myAssembler.systemSolve();
   }
   
-
   double dx = 0.0;
-  for (it = verticesToMove.begin()  ; it != verticesToMove.end() ; ++it){
+  for (it = verticesToMove.begin(); it != verticesToMove.end(); ++it){
     if ((*it)->onWhat()->dim() == 2){
       SPoint2 param;
       reparamMeshVertexOnFace((*it), gf, param);  
-      SPoint2 dparam (myAssembler.getDofValue ((*it), 0 ,getTag()),
-                      myAssembler.getDofValue ((*it), 1 ,getTag()));
+      SPoint2 dparam (myAssembler.getDofValue((*it), 0, getTag()),
+                      myAssembler.getDofValue((*it), 1, getTag()));
       SPoint2 newp = param+dparam;
-      dx += newp.x()*newp.x()+newp.y()*newp.y();
-      (*it)->setParameter(0,newp.x());
-      (*it)->setParameter(1,newp.y());
+      dx += newp.x() * newp.x() + newp.y() * newp.y();
+      (*it)->setParameter(0, newp.x());
+      (*it)->setParameter(1, newp.y());
     }
   }
   
@@ -614,8 +592,7 @@ double gmshHighOrderSmoother::smooth_metric_ ( std::vector<MElement*>  & v,
   return dx;
 }
 
-
-void gmshHighOrderSmoother::smooth ( std::vector<MElement*>  & all)
+void gmshHighOrderSmoother::smooth(std::vector<MElement*> &all)
 {
   gmshLinearSystemCSRGmm<double> *lsys = new gmshLinearSystemCSRGmm<double>;
   lsys->setNoisy(1);
@@ -624,23 +601,22 @@ void gmshHighOrderSmoother::smooth ( std::vector<MElement*>  & all)
   gmshAssembler<double> myAssembler(lsys);
   gmshElasticityTerm El(0, 1.0, .333, getTag());
   
-  std::vector<MElement*> layer,v;
-
+  std::vector<MElement*> layer, v;
   double minD;
 
-  getDistordedElements ( all, .5, v,minD);
+  getDistordedElements(all, .5, v, minD);
 
-  Msg::Debug("%d elements / %d distorted  min Disto = %g\n",all.size(),v.size(), minD);
+  Msg::Debug("%d elements / %d distorted  min Disto = %g\n",
+             all.size(), v.size(), minD);
 
   if (!v.size()) return;
 
   const int nbLayers = 1;
-  for (int i=0;i<nbLayers;i++){
-    addOneLayer ( all, v, layer);
-    v.insert(v.end(),layer.begin(),layer.end());
+  for (int i = 0; i < nbLayers; i++){
+    addOneLayer(all, v, layer);
+    v.insert(v.end(), layer.begin(), layer.end());
   }
 
-  // 3 -> .4
   Msg::Debug("%d elements after adding %d layers\n", (int)v.size(), nbLayers);
 
   addOneLayer(all, v, layer);
@@ -666,25 +642,25 @@ void gmshHighOrderSmoother::smooth ( std::vector<MElement*>  & all)
   for (unsigned int i = 0; i < v.size(); i++){
     for (int j = 0; j < v[i]->getNumVertices(); j++){
       MVertex *vert = v[i]->getVertex(j);
-      //      printf("%d %d %d v\n",i,j,v[i]->getNumVertices());
+      // printf("%d %d %d v\n",i,j,v[i]->getNumVertices());
       its = _straightSidedLocation.find(vert);
       itt = _targetLocation.find(vert);
       if (its != _straightSidedLocation.end() && vert->onWhat()->dim() < _dim){
-        myAssembler.fixVertex ( vert , 0 , getTag() , vert->x()-its->second.x());
-        myAssembler.fixVertex ( vert , 1 , getTag() , vert->y()-its->second.y());
-        myAssembler.fixVertex ( vert , 2 , getTag() , vert->z()-its->second.z());
+        myAssembler.fixVertex(vert, 0, getTag(), vert->x()-its->second.x());
+        myAssembler.fixVertex(vert, 1, getTag(), vert->y()-its->second.y());
+        myAssembler.fixVertex(vert, 2, getTag(), vert->z()-its->second.z());
       }
       // ensure we do not touch any vertex that is on the boundary
       else if (vert->onWhat()->dim() < _dim){
-        myAssembler.fixVertex ( vert , 0 , getTag() , 0);
-        myAssembler.fixVertex ( vert , 1 , getTag() , 0);
-        myAssembler.fixVertex ( vert , 2 , getTag() , 0);
+        myAssembler.fixVertex(vert, 0, getTag(), 0);
+        myAssembler.fixVertex(vert, 1, getTag(), 0);
+        myAssembler.fixVertex(vert, 2, getTag(), 0);
       }
     }
   }
 
   for (unsigned int i = 0; i < v.size(); i++)
-    moveToStraightSidedLocation (v[i]);    
+    moveToStraightSidedLocation(v[i]);
   
   // number the other DOFs
   for (unsigned int i = 0; i < v.size(); i++){
@@ -694,7 +670,7 @@ void gmshHighOrderSmoother::smooth ( std::vector<MElement*>  & all)
       myAssembler.numberVertex(vert, 1, getTag());
       myAssembler.numberVertex(vert, 2, getTag());
       // gather all vertices that are supposed to move
-      verticesToMove[vert] = SVector3(0.0,0.0,0.0);
+      verticesToMove[vert] = SVector3(0.0, 0.0, 0.0);
     } 
   }
 
@@ -705,16 +681,16 @@ void gmshHighOrderSmoother::smooth ( std::vector<MElement*>  & all)
 
     // assembly of the elasticity term on the
     // set of elements
-    El.addToMatrix(myAssembler,v); 
+    El.addToMatrix(myAssembler, v);
     
     // solve the system
     lsys->systemSolve();
   }
   
-  for (it = verticesToMove.begin()  ; it != verticesToMove.end() ; ++it){
-    it->first->x() += myAssembler.getDofValue (it->first, 0 ,getTag());  
-    it->first->y() += myAssembler.getDofValue (it->first, 1 ,getTag());  
-    it->first->z() += myAssembler.getDofValue (it->first, 2 ,getTag());  
+  for (it = verticesToMove.begin(); it != verticesToMove.end(); ++it){
+    it->first->x() += myAssembler.getDofValue(it->first, 0, getTag());
+    it->first->y() += myAssembler.getDofValue(it->first, 1, getTag());
+    it->first->z() += myAssembler.getDofValue(it->first, 2, getTag());
   }
 
   // delete matrices and vectors
@@ -746,10 +722,10 @@ void gmshHighOrderSmoother::smooth ( std::vector<MElement*>  & all)
   to place the point.
 */
 
-
-static void getNodesP2 (const MEdge &me, MTriangle *t1, MTriangle *t2,
-                        MVertex * &n1,MVertex * &n2,MVertex * &n3,MVertex * &n4,
-                        MVertex * &n12,MVertex * &n14,MVertex * &n24,MVertex * &n23,MVertex * &n13){
+static void getNodesP2(const MEdge &me, MTriangle *t1, MTriangle *t2,
+                       MVertex * &n1,MVertex * &n2,MVertex * &n3,MVertex * &n4,
+                       MVertex * &n12,MVertex * &n14,MVertex * &n24,MVertex * &n23,
+                       MVertex * &n13){
 
   n1 = me.getVertex(0);
   n2 = me.getVertex(1);    
@@ -848,8 +824,6 @@ static void getNodesPN (const MEdge &me, MTriangle *t1, MTriangle *t2,
   }
 }
 
-
-
 static double surfaceTriangleUV(SPoint2 &v1, SPoint2 &v2, SPoint2 &v3)           
 {
   const double v12[2] = {v2.x() - v1.x(),v2.y() - v1.y()};
@@ -868,8 +842,8 @@ struct swap_triangles_p2
   MVertex *n12, *n13, *n23, *n14, *n24;
   MVertex *n34;
 
-
-  double evalConfiguration (GFace *gf, SPoint2 & p) const {
+  double evalConfiguration (GFace *gf, SPoint2 & p) const
+  {
     GPoint gp34 = gf->point(p);
     MFaceVertex _test (gp34.x(),gp34.y(),gp34.z(),gf,p.x(),p.y());        
     std::vector<MVertex *>vv;
@@ -885,9 +859,9 @@ struct swap_triangles_p2
 
   MVertex *optimalLocation (GFace *gf, 
                             SPoint2 &p3,
-                            SPoint2 &p4) const {
+                            SPoint2 &p4) const
+  {
     SPoint2 p34_linear = (p3+p4)*.5;
-    
     
     GPoint gp34 = gf->point(p34_linear);
     MFaceVertex *_test = new MFaceVertex (gp34.x(),gp34.y(),gp34.z(),
@@ -906,15 +880,12 @@ struct swap_triangles_p2
     return _test;
   }
 
-
   swap_triangles_p2(const MEdge &me, MTriangle *_t1, MTriangle *_t2, GFace *gf)
     : t1(_t1), t2(_t2),n1(0),n2(0),n3(0),n12(0),n13(0), n23(0), n14(0), n24(0),n34(0)
   {
-    
     const double qold1 = shapeMeasure(t1);
     const double qold2 = shapeMeasure(t2);
 
-    //printf("%p %p %p %p %p %p %p %p %p\n",n1,n2,n3,n4,n12,n23,n13,n24,n14);
     getNodesP2 (me,t1,t2,n1,n2,n3,n4,n12,n14,n24,n23,n13);
     SPoint2 p1,p2,p3,p4,p13,p24,p23,p14;
     reparamMeshEdgeOnFace(n1,n2,gf,p1,p2);
@@ -927,7 +898,6 @@ struct swap_triangles_p2
 
     n34 = optimalLocation (gf,p3,p4);
 
-
     std::vector<MVertex *>vv;
     vv.push_back(n13);vv.push_back(n34);vv.push_back(n14);
     t3 = new MTriangleN (n1,n3,n4,vv,2,t1->getNum(),t1->getPartition());
@@ -938,16 +908,15 @@ struct swap_triangles_p2
     const double qnew1 = shapeMeasure(t3);
     const double qnew2 = shapeMeasure(t4);
 
-
     quality_new = std::min(qnew1,qnew2);
     quality_old = std::min(qold1,qold2);
-    //    printf("old %g linear %g transfinite %g\n",quality_old,quality_new_linear,quality_new_transfinite);
   }
   bool operator < (const swap_triangles_p2 &other) const
   {
     return  other.quality_new - other.quality_old < quality_new - quality_old;
   }
-  void print() const{
+  void print() const
+  {
     printf("%g <--- %g\n",quality_new,quality_old);
     printf("%d %d %d %d %d %d\n",t1->getVertex(0)->getNum(),t1->getVertex(1)->getNum(),t1->getVertex(2)->getNum(),
            t1->getVertex(3)->getNum(),t1->getVertex(4)->getNum(),t1->getVertex(5)->getNum());
@@ -1024,13 +993,11 @@ struct swap_triangles_pN
   }
 };
 
-
-
-static int optimalLocationP2_ (GFace *gf, 
-                               const MEdge &me,
-                               MTriangle *t1, MTriangle *t2, 
-                               gmshHighOrderSmoother *s){
-
+static int optimalLocationP2_(GFace *gf, 
+                              const MEdge &me,
+                              MTriangle *t1, MTriangle *t2, 
+                              gmshHighOrderSmoother *s)
+{
   double qini = std::min(shapeMeasure(t1),shapeMeasure(t2));
 
   if (qini > 0.6) return 0;
@@ -1071,7 +1038,9 @@ static int optimalLocationP2_ (GFace *gf,
   return 1;
 }
 
-int optimalLocationPN_ (GFace *gf, const MEdge &me, MTriangle *t1, MTriangle *t2,gmshHighOrderSmoother *s){
+int optimalLocationPN_ (GFace *gf, const MEdge &me, MTriangle *t1, MTriangle *t2,
+                        gmshHighOrderSmoother *s)
+{
   // if quality is sufficient, do nothing (this is an expensive
   //  optimization process)
   double qopt = std::min(shapeMeasure(t1),shapeMeasure(t2));
@@ -1093,7 +1062,6 @@ int optimalLocationPN_ (GFace *gf, const MEdge &me, MTriangle *t1, MTriangle *t2
       }
     }
   }
-  
 
   for (int i=3+NE;i<N;i++){
     toOptimize.push_back(t1->getVertex(i));
@@ -1125,7 +1093,6 @@ int optimalLocationPN_ (GFace *gf, const MEdge &me, MTriangle *t1, MTriangle *t2
   }
   return 1;
 }
-
 
 static int _gmshFindOptimalLocationsP2(GFace *gf, gmshHighOrderSmoother *s)
 {
@@ -1282,8 +1249,7 @@ static int _gmshSwapHighOrderTriangles(GFace *gf)
     }
     ++itp;
   }
-  
-  
+    
   for (unsigned int i = 0; i < gf->mesh_vertices.size(); i++){
     if (v_removed.find(gf->mesh_vertices[i]) == v_removed.end()){
       mesh_vertices2.push_back(gf->mesh_vertices[i]);
@@ -1309,7 +1275,8 @@ static int _gmshSwapHighOrderTriangles(GFace *gf)
 
 void  gmshHighOrderSmoother::swap(GFace *gf, 
                                   edgeContainer &edgeVertices,
-                                  faceContainer &faceVertices){
+                                  faceContainer &faceVertices)
+{
   //  _gmshSwapHighOrderTriangles(gf);
   _gmshSwapHighOrderTriangles(gf,edgeVertices,faceVertices,this);
   //_gmshSwapHighOrderTriangles(gf);
@@ -1317,12 +1284,15 @@ void  gmshHighOrderSmoother::swap(GFace *gf,
   //  _gmshSwapHighOrderTriangles(gf);
 }
 
-void  gmshHighOrderSmoother::smooth_p2point(GFace *gf){
+void  gmshHighOrderSmoother::smooth_p2point(GFace *gf)
+{
   _gmshFindOptimalLocationsP2(gf,this);
   //_gmshFindOptimalLocationsP2(gf);
   //_gmshFindOptimalLocationsP2(gf);
 }
-void  gmshHighOrderSmoother::smooth_pNpoint(GFace *gf){
+
+void  gmshHighOrderSmoother::smooth_pNpoint(GFace *gf)
+{
   _gmshFindOptimalLocationsPN(gf,this);
 }
 
