@@ -782,12 +782,6 @@ void GFaceCompound::parametrize_conformal() const
     return;
   }
 
-  for(unsigned int i = 0; i < ordered.size(); i++){
-    MVertex *v = ordered[i];
-    //    printf("coucou\n");
-    const double theta = 2 * M_PI * coords[i];
-    //    myAssembler.fixVertex(v, 0, 1, cos(theta));
-  }
   {
     MVertex *v1 = ordered[0];
     MVertex *v2 = ordered[1];
