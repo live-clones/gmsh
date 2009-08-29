@@ -1,4 +1,4 @@
-Mesh.CharacteristicLengthFactor=0.2;
+Mesh.CharacteristicLengthFactor=0.05;
 
 Merge "PelvisARTHUR_CLASS.msh";
 CreateTopology;
