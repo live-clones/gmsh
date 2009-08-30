@@ -44,10 +44,9 @@ class MTri3
   MTri3 *neigh[3];
 
  public :
-  //  char done;
-  bool isDeleted () const { return deleted; }
-  void forceRadius (double r){ circum_radius = r; }
-  double getRadius () const { return circum_radius; }
+  bool isDeleted() const { return deleted; }
+  void forceRadius(double r) { circum_radius = r; }
+  double getRadius() const { return circum_radius; }
 
   MTri3(MTriangle *t, double lc, SMetric3 *m = 0);
   inline MTriangle *tri() const { return base; }
@@ -63,29 +62,29 @@ class MTri3
   {
     return inCircumCircle(v->x(), v->y());
   }
-  inline void setDeleted (bool d){ deleted = d; }
+  inline void setDeleted(bool d){ deleted = d; }
   inline bool assertNeigh() const
   {
-    if (deleted) return true;
-    for (int i = 0; i < 3; i++)
-      if (neigh[i] && (neigh[i]->isNeigh(this) == false)) return false;
+    if(deleted) return true;
+    for(int i = 0; i < 3; i++)
+      if(neigh[i] && (neigh[i]->isNeigh(this) == false)) return false;
     return true;
   }
   inline bool isNeigh(const MTri3 *t) const
   {
-    for (int i = 0; i < 3; i++)
-      if (neigh[i] == t) return true;
+    for(int i = 0; i < 3; i++)
+      if(neigh[i] == t) return true;
     return false;
   }
 };
 
 class compareTri3Ptr
 {
-public:
+ public:
   inline bool operator () (const MTri3 *a, const MTri3 *b)  const
   {
-    if (a->getRadius() > b->getRadius()) return true;
-    if (a->getRadius() < b->getRadius()) return false;
+    if(a->getRadius() > b->getRadius()) return true;
+    if(a->getRadius() < b->getRadius()) return false;
     return a<b;
   }
 };
@@ -109,9 +108,9 @@ struct edgeXface
   }
   inline bool operator < ( const edgeXface &other) const
   {
-    if (v[0] < other.v[0]) return true;
-    if (v[0] > other.v[0]) return false;
-    if (v[1] < other.v[1]) return true;
+    if(v[0] < other.v[0]) return true;
+    if(v[0] > other.v[0]) return false;
+    if(v[1] < other.v[1]) return true;
     return false;
   }
 };

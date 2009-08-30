@@ -27,7 +27,6 @@ static bool isActive(MTri3 *t, double limit_, int &active)
   for (active = 0; active < 3; active++){
     MTri3 *neigh = t->getNeigh(active);
     if (!neigh || neigh->getRadius() < limit_) return true;
-    //if (!neigh || neigh->done) return true;
   }
   return false;
 }
@@ -91,9 +90,9 @@ void circumCenterMetricXYZ(double *p1, double *p2, double *p3, SMetric3 & metric
   double resP[2];
 
   gmshMatrix<double> T(3,3);
-  for (int i=0;i<3;i++)T(0,i) = vx[i];
-  for (int i=0;i<3;i++)T(1,i) = vy[i];
-  for (int i=0;i<3;i++)T(2,i) = vz[i];
+  for (int i = 0; i < 3; i++)T(0,i) = vx[i];
+  for (int i = 0; i < 3; i++)T(1,i) = vy[i];
+  for (int i = 0; i < 3; i++)T(2,i) = vz[i];
   SMetric3 tra = metric.transform(T);
   double mm[3] = {tra(0,0),tra(0,1),tra(1,1)};
 
@@ -142,24 +141,24 @@ void buildMetric(GFace *gf, double *uv, SMetric3 & m, double *metric)
 {
   Pair<SVector3, SVector3> der = gf->firstDer(SPoint2(uv[0], uv[1]));
   
-  SVector3 x1 (m(0,0) * der.first().x() +
-               m(1,0) * der.first().y() +
-               m(2,0) * der.first().z(),
-               m(0,1) * der.first().x() +
-               m(1,1) * der.first().y() +
-               m(2,1) * der.first().z(),
-               m(0,2) * der.first().x() +
-               m(1,2) * der.first().y() +
-               m(2,2) * der.first().z());
-  SVector3 x2 (m(0,0) * der.second().x() +
-               m(1,0) * der.second().y() +
-               m(2,0) * der.second().z(),
-               m(0,1) * der.second().x() +
-               m(1,1) * der.second().y() +
-               m(2,1) * der.second().z(),
-               m(0,2) * der.second().x() +
-               m(1,2) * der.second().y() +
-               m(2,2) * der.second().z());
+  SVector3 x1(m(0,0) * der.first().x() +
+              m(1,0) * der.first().y() +
+              m(2,0) * der.first().z(),
+              m(0,1) * der.first().x() +
+              m(1,1) * der.first().y() +
+              m(2,1) * der.first().z(),
+              m(0,2) * der.first().x() +
+              m(1,2) * der.first().y() +
+              m(2,2) * der.first().z());
+  SVector3 x2(m(0,0) * der.second().x() +
+              m(1,0) * der.second().y() +
+              m(2,0) * der.second().z(),
+              m(0,1) * der.second().x() +
+              m(1,1) * der.second().y() +
+              m(2,1) * der.second().z(),
+              m(0,2) * der.second().x() +
+              m(1,2) * der.second().y() +
+              m(2,2) * der.second().z());
 
   metric[0] = dot(x1, der.first());
   metric[1] = dot(x2, der.first());
@@ -208,7 +207,7 @@ int inCircumCircleAniso(GFace *gf, MTriangle *base,
 }
 
 MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric) 
-  : deleted(false), base(t)//,done(0)
+  : deleted(false), base(t)
 {
   neigh[0] = neigh[1] = neigh[2] = 0;
   double center[3];
@@ -308,8 +307,8 @@ void recurFindCavity(std::list<edgeXface> &shell, std::list<MTri3*> &cavity,
                      std::vector<double> &Us, std::vector<double> &Vs)
 {
   t->setDeleted(true);
-  // the cavity that has to be removed
-  // because it violates delaunay criterion
+  // the cavity that has to be removed because it violates delaunay
+  // criterion
   cavity.push_back(t);
 
   for (int i = 0; i < 3; i++){
@@ -332,8 +331,8 @@ void recurFindCavityAniso(GFace *gf,
                           std::vector<double> &Us, std::vector<double> &Vs)
 {
   t->setDeleted(true);
-  // the cavity that has to be removed
-  // because it violates delaunay criterion
+  // the cavity that has to be removed because it violates delaunay
+  // criterion
   cavity.push_back(t);
 
   for (int i = 0; i < 3; i++){
@@ -573,18 +572,16 @@ void _printTris(char *name, std::set<MTri3*, compareTri3Ptr> &AllTris,
   fclose (ff);
 }
 
-static void insertAPoint(GFace *gf,
-                         std::set<MTri3*,compareTri3Ptr>::iterator it, 
-                         double center[2],
-                         double metric[3], 
-                         std::vector<double> &Us, 
-                         std::vector<double> &Vs,
+static void insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it,
+                         double center[2], double metric[3], 
+                         std::vector<double> &Us, std::vector<double> &Vs,
                          std::vector<double> &vSizes, 
                          std::vector<double> &vSizesBGM,
                          std::vector<SMetric3> &vMetricsBGM,
                          std::set<MTri3*,compareTri3Ptr> &AllTris,
-                         std::set<MTri3*,compareTri3Ptr> * ActiveTris = 0,
-                         MTri3 *worst = 0){
+                         std::set<MTri3*,compareTri3Ptr> *ActiveTris = 0,
+                         MTri3 *worst = 0)
+{
   if (worst){
     it = AllTris.find(worst);
     if (worst != *it){
@@ -622,18 +619,18 @@ static void insertAPoint(GFace *gf,
     double lc1 = ((1. - uv[0] - uv[1]) * vSizes[ptin->tri()->getVertex(0)->getIndex()] + 
                   uv[0] * vSizes[ptin->tri()->getVertex(1)->getIndex()] + 
                   uv[1] * vSizes[ptin->tri()->getVertex(2)->getIndex()]); 
-    double lc = BGM_MeshSize(gf,center[0],center[1],p.x(),p.y(),p.z());
-    //SMetric3 metr = BGM_MeshMetric(gf,center[0],center[1],p.x(),p.y(),p.z());
-    //    vMetricsBGM.push_back(metr);
+    double lc = BGM_MeshSize(gf, center[0], center[1], p.x(), p.y(), p.z());
+    //SMetric3 metr = BGM_MeshMetric(gf, center[0], center[1], p.x(), p.y(), p.z());
+    //                               vMetricsBGM.push_back(metr);
     vSizesBGM.push_back(lc);
     vSizes.push_back(lc1);
     Us.push_back(center[0]);
     Vs.push_back(center[1]);
     
-    if (!p.succeeded() || !insertVertex
-        (gf, v, center, worst, AllTris,ActiveTris, vSizes, vSizesBGM,vMetricsBGM, 
-         Us, Vs, metric) ) {
-      //      Msg::Debug("2D Delaunay : a cavity is not star shaped");
+    if(!p.succeeded() || !insertVertex
+       (gf, v, center, worst, AllTris,ActiveTris, vSizes, vSizesBGM,vMetricsBGM, 
+        Us, Vs, metric) ) {
+      // Msg::Debug("2D Delaunay : a cavity is not star shaped");
       AllTris.erase(it);
       worst->forceRadius(-1);
       AllTris.insert(worst);                    
@@ -803,7 +800,7 @@ void gmshBowyerWatsonFrontal(GFace *gf)
     if (!ActiveTris.size())break;
     MTri3 *worst = (*ActiveTris.begin());
     ActiveTris.erase(ActiveTris.begin());
-    //    printf("active_tris.size = %d\n",ActiveTris.size());
+    // printf("active_tris.size = %d\n",ActiveTris.size());
 
     if (!worst->isDeleted() && isActive(worst, LIMIT_, active_edge) && 
         worst->getRadius() > LIMIT_){
