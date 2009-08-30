@@ -9,7 +9,6 @@
 #include "GmshDefines.h"
 #include "GModel.h"
 #include "GmshMessage.h"
-#include "Draw.h"
 #include "Generator.h"
 #include "Context.h"
 #include "Options.h"
@@ -28,6 +27,7 @@
 
 #if defined(HAVE_FLTK)
 #include <FL/Fl_Tooltip.H>
+#include "drawContext.h"
 #include "FlGui.h"
 #include "Solvers.h"
 #include "menuWindow.h"
@@ -1010,10 +1010,10 @@ std::string opt_general_graphics_font(OPT_ARGS_STR)
   if(action & GMSH_SET)
     CTX::instance()->glFont = val;
 #if defined(HAVE_FLTK)
-  int index = GetFontIndex(CTX::instance()->glFont.c_str());
+  int index = drawContext::global()->getFontIndex(CTX::instance()->glFont.c_str());
   if(action & GMSH_SET){
-    CTX::instance()->glFont = GetFontName(index);
-    CTX::instance()->glFontEnum = GetFontEnum(index);
+    CTX::instance()->glFont = drawContext::global()->getFontName(index);
+    CTX::instance()->glFontEnum = drawContext::global()->getFontEnum(index);
   }
   if(FlGui::available() && (action & GMSH_GUI)){
     FlGui::instance()->options->general.choice[1]->value(index);

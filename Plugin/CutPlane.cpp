@@ -9,7 +9,6 @@
 
 #if defined(HAVE_FLTK)
 #include "drawContext.h"
-#include "Draw.h"
 #endif
 
 int GMSH_CutPlanePlugin::iview = 0;

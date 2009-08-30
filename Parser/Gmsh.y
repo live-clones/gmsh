@@ -19,7 +19,6 @@
 #include "Geo.h"
 #include "GeoInterpolation.h"
 #include "Generator.h"
-#include "Draw.h"
 #include "Options.h"
 #include "Colors.h"
 #include "Parser.h"
@@ -33,10 +32,15 @@
 #include "gmshLevelset.h"
 #include "Field.h"
 #include "BackgroundMesh.h"
+
 #if !defined(HAVE_NO_POST)
 #include "PView.h"
 #include "PViewDataList.h"
 #include "PluginManager.h"
+#endif
+
+#if defined(HAVE_FLTK)
+#include "drawContext.h"
 #endif
 
 // Global parser variables
@@ -98,7 +102,7 @@ void FixRelativePath(const char *in, char *out);
 %token tLoop tRecombine tSmoother tSplit tDelete tCoherence tIntersect
 %token tLayers tHole tAlias tAliasWithOptions
 %token tText2D tText3D tInterpolationScheme  tTime tCombine
-%token tBSpline tBezier tNurbs tOrder tKnots
+%token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
 %token tField tReturn tCall tFunction tShow tHide tGetValue
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
@@ -1206,7 +1210,7 @@ Shape :
       $$.Type = MSH_SEGM_BEZIER;
       $$.Num = num;
     }
-  | tNurbs  '(' FExpr ')' tAFFECT ListOfDouble tKnots ListOfDouble tOrder FExpr tEND
+  | tNurbs  '(' FExpr ')' tAFFECT ListOfDouble tNurbsKnots ListOfDouble tNurbsOrder FExpr tEND
     {
       int num = (int)$3;
       if(List_Nbr($6) + (int)$10 + 1 != List_Nbr($8)){
@@ -2361,7 +2365,7 @@ Command :
    | tDraw tEND
     {
 #if defined(HAVE_FLTK)
-      Draw();
+      drawContext::global()->draw();
 #endif
     }
    | tCreateTopology tEND

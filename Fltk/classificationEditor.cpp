@@ -9,7 +9,7 @@
 #include "classificationEditor.h"
 #include "paletteWindow.h"
 #include "Numeric.h"
-#include "Draw.h"
+#include "drawContext.h"
 #include "Options.h"
 #include "Context.h"
 #include "GmshMessage.h"
@@ -55,7 +55,7 @@ static void class_selectgface_cb(Fl_Widget *w, void *data)
 
   while(1) {
     CTX::instance()->mesh.changed = ENT_ALL;
-    Draw();
+    drawContext::global()->draw();
 
     Msg::StatusBar(3, false, "Select Model Face\n"
                    "[Press 'e' to end selection or 'q' to abort]");
@@ -82,7 +82,7 @@ static void class_selectgface_cb(Fl_Widget *w, void *data)
     }
   } 
   CTX::instance()->mesh.changed = ENT_ALL;
-  Draw();  
+  drawContext::global()->draw();  
   Msg::StatusBar(3, false, "");
 }
 
@@ -95,7 +95,7 @@ static void class_deleteedge_cb(Fl_Widget *w, void *data)
   
   while(1) {
     CTX::instance()->mesh.changed = ENT_ALL;
-    Draw();
+    drawContext::global()->draw();
 
     Msg::StatusBar(3, false, "Select Elements\n"
                    "[Press 'e' to end selection or 'q' to abort]");
@@ -143,7 +143,7 @@ static void class_deleteedge_cb(Fl_Widget *w, void *data)
   
   CTX::instance()->mesh.changed = ENT_ALL;
   CTX::instance()->pickElements = 0;
-  Draw();  
+  drawContext::global()->draw();  
   Msg::StatusBar(3, false, "");
 }
 
@@ -160,7 +160,7 @@ static void class_save_cb(Fl_Widget *w, void *data)
   CTX::instance()->mesh.changed = ENT_ALL;
   CTX::instance()->pickElements = 0;
   NoElementsSelectedMode(e);
-  Draw();  
+  drawContext::global()->draw();  
   Msg::StatusBar(3, false, "");
 }
 
@@ -176,7 +176,7 @@ static void class_clear_cb(Fl_Widget *w, void *data)
   CTX::instance()->mesh.changed = ENT_ALL;
   CTX::instance()->pickElements = 0;
   NoElementsSelectedMode(e);
-  Draw();  
+  drawContext::global()->draw();  
   Msg::StatusBar(3, false, "");
 }
 
@@ -469,7 +469,7 @@ static void class_color_cb(Fl_Widget* w, void* data)
   printf("before drawing \n");
   
   CTX::instance()->mesh.changed = ENT_ALL;
-  Draw();  
+  drawContext::global()->draw();  
   Msg::StatusBar(3, false, "");
 }
 
@@ -502,14 +502,14 @@ static void updateedges_cb(Fl_Widget* w, void* data)
   }
   
   CTX::instance()->mesh.changed = ENT_ALL;
-  Draw();   
+  drawContext::global()->draw();   
 }
 
 static void class_hide_cb(Fl_Widget *w, void *data)
 {
   CTX::instance()->hideUnselected = !CTX::instance()->hideUnselected;
   CTX::instance()->mesh.changed = ENT_ALL;
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
@@ -538,7 +538,7 @@ static void class_select_cb(Fl_Widget *w, void *data)
 
   while(1) {
     CTX::instance()->mesh.changed = ENT_ALL;
-    Draw();
+    drawContext::global()->draw();
 
     Msg::StatusBar(3, false, "Select Elements\n"
                    "[Press 'e' to end selection or 'q' to abort]");
@@ -579,7 +579,7 @@ static void class_select_cb(Fl_Widget *w, void *data)
 
   CTX::instance()->mesh.changed = ENT_ALL;
   CTX::instance()->pickElements = 0;
-  Draw();  
+  drawContext::global()->draw();  
   Msg::StatusBar(3, false, "");
 }
 

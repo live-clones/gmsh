@@ -31,7 +31,7 @@
 #if defined(HAVE_FLTK)
 #include <FL/fl_ask.H>
 #include "FlGui.h"
-#include "Draw.h"
+#include "drawContext.h"
 #endif
 
 #define SQU(a)      ((a)*(a))
@@ -468,7 +468,7 @@ void OpenProjectMacFinder(const char *fileName)
   }
   else{
     OpenProject(fileName);
-    Draw();
+    drawContext::global()->draw();
   }
 #endif
 }

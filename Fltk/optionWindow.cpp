@@ -15,7 +15,7 @@
 #include "paletteWindow.h"
 #include "menuWindow.h"
 #include "extraDialogs.h"
-#include "Draw.h"
+#include "drawContext.h"
 #include "Options.h"
 #include "Solvers.h"
 #include "GModel.h"
@@ -113,7 +113,7 @@ static void color_cb(Fl_Widget *w, void *data)
   uchar b = CTX::instance()->unpackBlue(fct(0, GMSH_GET, 0));
   if(fl_color_chooser("Color Chooser", r, g, b))
     fct(0, GMSH_SET | GMSH_GUI, CTX::instance()->packColor(r, g, b, 255));
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void view_color_cb(Fl_Widget *w, void *data)
@@ -129,7 +129,7 @@ static void view_color_cb(Fl_Widget *w, void *data)
   if(fl_color_chooser("Color Chooser", r, g, b))
     fct(FlGui::instance()->options->view.index, 
         GMSH_SET | GMSH_GUI, CTX::instance()->packColor(r, g, b, 255));
-  Draw();
+  drawContext::global()->draw();
 }
 
 void options_cb(Fl_Widget *w, void *data)
@@ -159,7 +159,7 @@ static void options_restore_defaults_cb(Fl_Widget *w, void *data)
   InitOptionsGUI(0);
   if(FlGui::instance()->menu->module->value() == 3) // hack to refresh the buttons
     FlGui::instance()->menu->setContext(menu_post, 0);
-  Draw();
+  drawContext::global()->draw();
 }
 
 void general_options_cb(Fl_Widget *w, void *data)
@@ -171,7 +171,7 @@ static void general_options_color_scheme_cb(Fl_Widget *w, void *data)
 {
   opt_general_color_scheme
     (0, GMSH_SET, FlGui::instance()->options->general.choice[3]->value());
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
@@ -199,7 +199,7 @@ static void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
     opt_general_rotation_center2(0, GMSH_SET|GMSH_GUI, pc.z());
   }
   GModel::current()->setSelection(0);
-  Draw();
+  drawContext::global()->draw();
   Msg::StatusBar(3, false, "");
 }
 
@@ -308,7 +308,7 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
 
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
-  Draw();
+  drawContext::global()->draw();
   CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
   CTX::instance()->drawRotationCenter = 0;
 }
@@ -322,7 +322,7 @@ static void general_arrow_param_cb(Fl_Widget *w, void *data)
     opt_general_arrow_head_radius(0, GMSH_SET, a);
     opt_general_arrow_stem_length(0, GMSH_SET, b);
     opt_general_arrow_stem_radius(0, GMSH_SET, c);
-    Draw();
+    drawContext::global()->draw();
   }
 }
 
@@ -380,7 +380,7 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
-  Draw();
+  drawContext::global()->draw();
   CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
 }
 
@@ -454,7 +454,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
 
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
-  Draw();
+  drawContext::global()->draw();
   CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
 }
 
@@ -477,7 +477,7 @@ static void solver_options_ok_cb(Fl_Widget *w, void *data)
 
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
-  Draw();
+  drawContext::global()->draw();
   CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
 }
 
@@ -501,7 +501,7 @@ static void post_options_ok_cb(Fl_Widget *w, void *data)
 
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
-  Draw();
+  drawContext::global()->draw();
   CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
 }
 
@@ -528,7 +528,7 @@ static void view_options_timestep_cb(Fl_Widget *w, void *data)
                           opt_view_timestep(i, GMSH_GET, 0) + 1);
     }
   }
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void view_options_ok_cb(Fl_Widget *w, void *data)
@@ -1111,7 +1111,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
 
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
-  Draw();
+  drawContext::global()->draw();
   CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
 }
 

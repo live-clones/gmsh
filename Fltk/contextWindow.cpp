@@ -6,7 +6,7 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Return_Button.H>
 #include "FlGui.h"
-#include "Draw.h"
+#include "drawContext.h"
 #include "contextWindow.h"
 #include "paletteWindow.h"
 #include "GModel.h"
@@ -32,7 +32,7 @@ static void con_geometry_define_point_cb(Fl_Widget *w, void *data)
   FlGui::instance()->resetVisibility();
   GModel::current()->setSelection(0);
   SetBoundingBox();
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void con_geometry_snap_cb(Fl_Widget *w, void *data)

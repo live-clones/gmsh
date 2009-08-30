@@ -8,7 +8,6 @@
 #include "GmshConfig.h"
 #include "StringUtils.h"
 #include "Context.h"
-#include "Draw.h"
 #include "Plugin.h"
 #include "PluginManager.h"
 #include "CutMap.h"

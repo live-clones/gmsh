@@ -22,7 +22,7 @@
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "Options.h"
-#include "Draw.h"
+#include "drawContext.h"
 #include "GModel.h"
 #include "Context.h"
 
@@ -87,7 +87,7 @@ int arrow_editor(const char *title, double &a, double &b, double &c)
 static void persp_change_factor(Fl_Widget* w, void* data)
 {
   opt_general_clip_factor(0, GMSH_SET|GMSH_GUI, ((Fl_Slider*)w)->value());
-  Draw();
+  drawContext::global()->draw();
 }
 
 class Release_Slider : public Fl_Slider {
@@ -152,7 +152,7 @@ static void model_switch_cb(Fl_Widget* w, void *data)
   CTX::instance()->mesh.changed = ENT_ALL;
   FlGui::instance()->setGraphicTitle(GModel::current()->getFileName());
   FlGui::instance()->resetVisibility();
-  Draw();
+  drawContext::global()->draw();
 }
 
 int model_chooser()

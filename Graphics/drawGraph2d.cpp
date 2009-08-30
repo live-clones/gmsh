@@ -4,7 +4,6 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "drawContext.h"
-#include "Draw.h"
 #include "PView.h"
 #include "PViewOptions.h"
 #include "PViewData.h"
@@ -150,8 +149,12 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   if(!opt->axes) return;
 
   char label[1024];
-  double font_h = GetStringHeight() ? GetStringHeight() : 1; // total font height
-  double font_a = font_h - GetStringDescent(); // height above ref. point
+  
+  // total font height
+  double font_h = drawContext::global()->getStringHeight() ?
+    drawContext::global()->getStringHeight() : 1;
+  // height above ref. point
+  double font_a = font_h - drawContext::global()->getStringDescent();
 
   const double tic = 5.;
 
@@ -246,8 +249,8 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     int nb = opt->axesTics[0];
     if(opt->axes){
       sprintf(label, opt->axesFormat[0].c_str(), - M_PI * 1.e-4);
-      if((nb - 1) * GetStringWidth(label) > width)
-        nb = (int)(width / GetStringWidth(label)) + 1;
+      if((nb - 1) * drawContext::global()->getStringWidth(label) > width)
+        nb = (int)(width / drawContext::global()->getStringWidth(label)) + 1;
     }
     if(nb == 1) nb++;
     
@@ -418,13 +421,14 @@ void drawContext::drawGraph2d()
   }
   if(graphs.empty()) return;
 
-  SetFont(CTX::instance()->glFontEnum, CTX::instance()->glFontSize);
-  double xsep = 0., ysep = 5 * GetStringHeight();
+  drawContext::global()->setFont(CTX::instance()->glFontEnum,
+                                 CTX::instance()->glFontSize);
+  double xsep = 0., ysep = 5 * drawContext::global()->getStringHeight();
   char label[1024];
   for(unsigned int i = 0; i < graphs.size(); i++){
     PViewOptions *opt = graphs[i]->getOptions();
     sprintf(label, opt->format.c_str(), -M_PI * 1.e-4);
-    xsep = std::max(xsep, GetStringWidth(label));
+    xsep = std::max(xsep, drawContext::global()->getStringWidth(label));
   }
   
   for(unsigned int i = 0; i < graphs.size(); i++){

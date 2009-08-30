@@ -9,10 +9,21 @@
 #include "QGui.h"
 #include "graphicWindow.h"
 
+class drawContextQt : public drawContextGlobal{
+ public:
+  void draw()
+  {
+    drawContext *ctx = QGui::instance()->getDrawContext();
+    ctx->draw3d();
+    ctx->draw2d();
+  }
+};
+
 QGui::QGui(int argc, char **argv)
 {
   _graphicWindow = new graphicWindow();
   _graphicWindow->show();
+  drawContext::setGlobal(new drawContextQt);
 }
 
 QGui *QGui::_instance = 0;

@@ -2,7 +2,6 @@
 #include <QtOpenGL>
 #include <math.h>
 #include "GLWidget.h"
-#include "Draw.h"
 
 GLWidget::GLWidget(QWidget *parent)
   : QGLWidget(parent)

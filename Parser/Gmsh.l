@@ -146,7 +146,7 @@ If                      return tIf;
 Intersect               return tIntersect;
 INTERPOLATION_SCHEME    return tInterpolationScheme;
 
-Knots			return tKnots;
+Knots			return tNurbsKnots;
 
 Length                  return tLength;
 Line                    return tLine;
@@ -162,7 +162,7 @@ MPI_Size                return tMPI_Size;
 
 Nurbs			return tNurbs;
 
-Order			return tOrder;
+Order			return tNurbsOrder;
 OCCShape  	        return tOCCShape;
 
 Physical                return tPhysical;

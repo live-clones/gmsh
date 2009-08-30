@@ -72,8 +72,27 @@ class drawTransformScaled : public drawTransform {
   }
 };
 
+// global drawing functions, which need to be redefined for each
+// widget toolkit (FLTK, Qt, etc.)
+class drawContextGlobal {
+ public:
+  virtual void draw(){}
+  virtual void drawCurrentOpenglWindow(bool make_current){}
+  virtual int getFontIndex(const char *fontname){ return 0; }
+  virtual int getFontEnum(int index){ return 0; }
+  virtual const char *getFontName(int index){ return "Helvetica"; }
+  virtual int getFontAlign(const char *alignstr){ return 0; }
+  virtual int getFontSize(){ return 12; }
+  virtual void setFont(int fontid, int fontsize){}
+  virtual double getStringWidth(const char *str){ return 1.; }
+  virtual int getStringHeight(){ return 12; }
+  virtual int getStringDescent(){ return 3; }
+  virtual void drawString(const char *str){}
+};
+
 class drawContext {
  private:
+  static drawContextGlobal *_global;
   drawTransform *_transform;
   GLUquadricObj *_quadric;
   GLuint _displayLists;
@@ -99,6 +118,8 @@ class drawContext {
  public:
   drawContext(drawTransform *transform=0);
   ~drawContext();
+  static void setGlobal(drawContextGlobal *global){ _global = global; }
+  static drawContextGlobal *global();
   void setTransform(drawTransform *transform){ _transform = transform; }
   drawTransform *getTransform(){ return _transform; }
   void transform(double &x, double &y, double &z)

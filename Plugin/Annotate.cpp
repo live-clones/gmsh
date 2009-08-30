@@ -11,7 +11,6 @@
 #if defined(HAVE_FLTK)
 #include <FL/gl.h>
 #include "drawContext.h"
-#include "Draw.h"
 #endif
 
 StringXNumber AnnotateOptions_Number[] = {
@@ -41,8 +40,10 @@ static double getStyle()
 {
   int fontsize = (int)AnnotateOptions_Number[4].def, font = 0, align = 0;
 #if defined(HAVE_FLTK)
-  font = GetFontIndex(AnnotateOptions_String[1].def.c_str());
-  align = GetFontAlign(AnnotateOptions_String[2].def.c_str());
+  font = drawContext::global()->getFontIndex
+    (AnnotateOptions_String[1].def.c_str());
+  align = drawContext::global()->getFontAlign
+    (AnnotateOptions_String[2].def.c_str());
 #endif
   return (double)((align<<16)|(font<<8)|(fontsize));
 }

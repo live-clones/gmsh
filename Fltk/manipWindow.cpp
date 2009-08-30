@@ -6,7 +6,6 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
 #include "FlGui.h"
-#include "Draw.h"
 #include "manipWindow.h"
 #include "paletteWindow.h"
 #include "graphicWindow.h"
@@ -31,7 +30,7 @@ static void manip_update_cb(Fl_Widget *w, void *data)
   ctx->s[1] = FlGui::instance()->manip->value[7]->value();
   ctx->s[2] = FlGui::instance()->manip->value[8]->value();
   ctx->setQuaternionFromEulerAngles();
-  Draw();
+  drawContext::global()->draw();
 }
 
 manipWindow::manipWindow(int deltaFontSize)

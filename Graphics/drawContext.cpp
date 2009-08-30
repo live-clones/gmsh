@@ -20,6 +20,8 @@
 #include <FL/Fl_PNG_Image.H>
 #endif
 
+drawContextGlobal *drawContext::_global = 0;
+
 drawContext::drawContext(drawTransform *transform) 
   : _transform(transform)
 {
@@ -50,6 +52,12 @@ drawContext::~drawContext()
 {
   if(_quadric) gluDeleteQuadric(_quadric);
   if(_displayLists) glDeleteLists(_displayLists, 2);
+}
+
+drawContextGlobal *drawContext::global()
+{ 
+  if(!_global) _global = new drawContextGlobal(); // create dummy default
+  return _global; 
 }
 
 void drawContext::createQuadricsAndDisplayLists()

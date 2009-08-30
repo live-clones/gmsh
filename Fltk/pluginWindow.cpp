@@ -12,7 +12,7 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Scroll.H>
 #include "FlGui.h"
-#include "Draw.h"
+#include "drawContext.h"
 #include "pluginWindow.h"
 #include "paletteWindow.h"
 #include "PView.h"
@@ -143,7 +143,7 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
 
   FlGui::instance()->updateViews();
   GMSH_Plugin::draw = 0;
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void plugin_create_new_view_cb(Fl_Widget *w, void *data)
@@ -164,7 +164,7 @@ static void plugin_create_new_view_cb(Fl_Widget *w, void *data)
   PView *view = new PView("New view", "NodeData", GModel::current(), d);
   view->setChanged(true);
   FlGui::instance()->updateViews();
-  Draw();
+  drawContext::global()->draw();
 }
 
 void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,

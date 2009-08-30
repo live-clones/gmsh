@@ -6,7 +6,7 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Return_Button.H>
 #include "FlGui.h"
-#include "Draw.h"
+#include "drawContext.h"
 #include "clippingWindow.h"
 #include "paletteWindow.h"
 #include "GmshDefines.h"
@@ -123,7 +123,7 @@ static void clip_update_cb(Fl_Widget *w, void *data)
   CTX::instance()->drawBBox = 1;
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
-  Draw();
+  drawContext::global()->draw();
   CTX::instance()->drawBBox = old;
   CTX::instance()->post.draw = CTX::instance()->mesh.draw = 1;
 }
@@ -156,7 +156,7 @@ static void clip_reset_cb(Fl_Widget *w, void *data)
   }
 
   FlGui::instance()->clipping->resetBrowser();
-  Draw();
+  drawContext::global()->draw();
 }
 
 clippingWindow::clippingWindow(int deltaFontSize)

@@ -13,7 +13,7 @@
 #include <FL/Fl_Return_Button.H>
 #include "GmshConfig.h"
 #include "FlGui.h"
-#include "Draw.h"
+#include "drawContext.h"
 #include "visibilityWindow.h"
 #include "paletteWindow.h"
 #include "contextWindow.h"
@@ -335,7 +335,7 @@ static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
     for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++)
       if(VisibilityList::instance()->getVisibility(i))
         FlGui::instance()->visibility->browser->select(i + 1);
-    Draw();
+    drawContext::global()->draw();
   }
 }
 
@@ -676,7 +676,7 @@ static void visibility_tree_apply_cb(Fl_Widget *w, void *data)
     _recur_update_selected(n);
   }
   FlGui::instance()->visibility->tree->redraw();
-  Draw();
+  drawContext::global()->draw();
 }
 
 class treeBrowser : public Fl_Tree{
@@ -923,7 +923,7 @@ static void visibility_number_cb(Fl_Widget *w, void *data)
   int pos = FlGui::instance()->visibility->browser->position();
   visibility_cb(NULL, (void*)"redraw_only");
   FlGui::instance()->visibility->browser->position(pos);
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void visibility_interactive_cb(Fl_Widget *w, void *data)
@@ -999,7 +999,7 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
     for(int i = 1; i <= 5; i++) // elements, points, lines, surfaces, volumes
       _set_visibility_by_number(i, -1, 1, false);
     CTX::instance()->mesh.changed = ENT_ALL;
-    Draw();  
+    drawContext::global()->draw();  
     return;
   }
   else
@@ -1014,7 +1014,7 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
   while(1) {
     if(what == ENT_ALL) 
       CTX::instance()->mesh.changed = ENT_ALL;
-    Draw();
+    drawContext::global()->draw();
     Msg::StatusBar(3, false, "Select %s\n[Press %s'q' to abort]", 
                    str.c_str(), mode ? "" : "'u' to undo or ");
 
@@ -1038,7 +1038,7 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
 
   CTX::instance()->mesh.changed = ENT_ALL;
   CTX::instance()->pickElements = 0;
-  Draw();  
+  drawContext::global()->draw();  
   Msg::StatusBar(3, false, "");
 }
 
@@ -1071,7 +1071,7 @@ static void visibility_per_window_cb(Fl_Widget *w, void *data)
     for(int i = 0; i < FlGui::instance()->visibility->per_window->size(); i++)
       FlGui::instance()->visibility->per_window->select(i + 1);
   }
-  Draw();
+  drawContext::global()->draw();
 }
 
 visibilityWindow::visibilityWindow(int deltaFontSize)

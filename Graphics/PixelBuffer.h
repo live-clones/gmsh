@@ -9,7 +9,7 @@
 #include <string.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
-#include "Draw.h"
+#include "drawContext.h"
 
 #if defined(WIN32)
 #include <windows.h>
@@ -96,7 +96,7 @@ class PixelBuffer{
   void fill(int offscreen)
   {
     if(!offscreen){
-      DrawCurrentOpenglWindow(true);
+      drawContext::global()->drawCurrentOpenglWindow(true);
       glFinish();
       glPixelStorei(GL_PACK_ALIGNMENT, 1);
       glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -116,7 +116,7 @@ class PixelBuffer{
       if(!OSMesaMakeCurrent(ctx, (void*)_pixels, GL_UNSIGNED_BYTE, _width, _height)){
         Msg::Error("OSMesaMakeCurrent failed");
       }
-      DrawCurrentOpenglWindow(false);
+      drawContext::global()->drawCurrentOpenglWindow(false);
       glFinish();
       OSMesaDestroyContext(ctx);
 #else

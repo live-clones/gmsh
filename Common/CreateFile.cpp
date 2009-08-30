@@ -14,7 +14,7 @@
 #if defined(HAVE_FLTK)
 #include <FL/gl.h>
 #include "FlGui.h"
-#include "Draw.h"
+#include "drawContext.h"
 #include "graphicWindow.h"
 #include "gl2ps.h"
 #include "gl2gif.h"
@@ -420,6 +420,6 @@ void CreateOutputFile(std::string fileName, int format)
   CTX::instance()->printing = 0;
 
 #if defined(HAVE_FLTK)
-  Draw();
+  drawContext::global()->draw();
 #endif
 }

@@ -24,7 +24,6 @@
 #include "FlGui.h"
 #include "CreateFile.h"
 #include "Options.h"
-#include "Draw.h"
 #include "GModel.h"
 #include "Context.h"
 

@@ -14,7 +14,7 @@
 #include "fileDialogs.h"
 #include "GModelIO_Fourier.h"
 #include "MElement.h"
-#include "Draw.h"
+#include "drawContext.h"
 #include "Options.h"
 #include "StringUtils.h"
 #include "fourierFace.h"
@@ -160,7 +160,7 @@ static void update_cb(Fl_Widget *w, void *data)
     e->uv()->set(u, v, dist, f);
   }
 
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void browse_cb(Fl_Widget *w, void *data)
@@ -278,7 +278,7 @@ static void select_cb(Fl_Widget *w, void *data)
 
   while(1) {
     CTX::instance()->mesh.changed = ENT_ALL;
-    Draw();
+    drawContext::global()->draw();
 
     if(ele.size() || ent.size())
       Msg::StatusBar(3, false, "Select %s\n[Press 'e' to end selection, 'u' to undo" 
@@ -352,7 +352,7 @@ static void select_cb(Fl_Widget *w, void *data)
 
   CTX::instance()->mesh.changed = ENT_ALL;
   CTX::instance()->pickElements = 0;
-  Draw();  
+  drawContext::global()->draw();  
   Msg::StatusBar(3, false, "");
 }
 
@@ -411,7 +411,7 @@ static void proj_hide_cb(Fl_Widget *w, void *data)
 {
   CTX::instance()->hideUnselected = !CTX::instance()->hideUnselected;
   CTX::instance()->mesh.changed = ENT_ALL;
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void save_selection_cb(Fl_Widget *w, void *data)
@@ -612,7 +612,7 @@ static void compute_cb(Fl_Widget *w, void *data)
   }
   printf("nPatches = %d\n",m->getFMInternals()->current()->GetGroup(0)->
          GetBlendGroup()->GetNumPatches());
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void delete_fourier(GFace *gf)
@@ -702,7 +702,7 @@ static void action_cb(Fl_Widget *w, void *data)
     }
   }
   
-  Draw();
+  drawContext::global()->draw();
 }
 
 uvPlot::uvPlot(int x, int y, int w, int h, const char *l)

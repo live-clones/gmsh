@@ -11,7 +11,6 @@
 #include <FL/fl_draw.H>
 #include "colorbarWindow.h"   
 #include "ColorTable.h"
-#include "Draw.h"
 #include "Context.h"
 
 #define EPS 1.e-10

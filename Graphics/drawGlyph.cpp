@@ -5,7 +5,6 @@
 
 #include <string.h>
 #include "drawContext.h"
-#include "Draw.h"
 #include "GmshDefines.h"
 #include "Numeric.h"
 #include "StringUtils.h"
@@ -27,9 +26,9 @@ void drawContext::drawString(std::string s, std::string &font_name, int font_enu
       GLdouble pos[4];
       glGetDoublev(GL_CURRENT_RASTER_POSITION, pos);
       double x[3], w[3] = {pos[0], pos[1], pos[2]};
-      SetFont(font_enum, font_size);
-      double width = GetStringWidth(s.c_str());
-      double height = GetStringHeight();
+      drawContext::global()->setFont(font_enum, font_size);
+      double width = drawContext::global()->getStringWidth(s.c_str());
+      double height = drawContext::global()->getStringHeight();
       switch(align){
       case 1: w[0] -= width/2.;                     break; // bottom center
       case 2: w[0] -= width;                        break; // bottom right
@@ -47,8 +46,8 @@ void drawContext::drawString(std::string s, std::string &font_name, int font_enu
   }
   
   if(!CTX::instance()->printing){
-    SetFont(font_enum, font_size);
-    DrawString(s.c_str());
+    drawContext::global()->setFont(font_enum, font_size);
+    drawContext::global()->drawString(s.c_str());
   }
   else{
     if(CTX::instance()->print.format == FORMAT_TEX){
@@ -76,8 +75,8 @@ void drawContext::drawString(std::string s, std::string &font_name, int font_enu
       gl2psText(s.c_str(), font_name.c_str(), font_size);
     }
     else{
-      SetFont(font_enum, font_size);
-      DrawString(s.c_str());
+      drawContext::global()->setFont(font_enum, font_size);
+      drawContext::global()->drawString(s.c_str());
     }
   }
 }
@@ -111,8 +110,8 @@ void drawContext::drawString(std::string s, double style)
     int size = (bits & 0xff);
     int font = (bits>>8 & 0xff);
     int align = (bits>>16 & 0xff);
-    int font_enum = GetFontEnum(font);
-    std::string font_name = GetFontName(font);
+    int font_enum = drawContext::global()->getFontEnum(font);
+    std::string font_name = drawContext::global()->getFontName(font);
     if(!size) size = CTX::instance()->glFontSize;
     drawString(s, font_name, font_enum, size, align);
   }

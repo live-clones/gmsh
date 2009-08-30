@@ -129,8 +129,8 @@
      tBSpline = 345,
      tBezier = 346,
      tNurbs = 347,
-     tOrder = 348,
-     tKnots = 349,
+     tNurbsOrder = 348,
+     tNurbsKnots = 349,
      tColor = 350,
      tColorTable = 351,
      tFor = 352,
@@ -255,8 +255,8 @@
 #define tBSpline 345
 #define tBezier 346
 #define tNurbs 347
-#define tOrder 348
-#define tKnots 349
+#define tNurbsOrder 348
+#define tNurbsKnots 349
 #define tColor 350
 #define tColorTable 351
 #define tFor 352
@@ -294,7 +294,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 74 "Gmsh.y"
+#line 78 "Gmsh.y"
 {
   char *c;
   int i;

@@ -16,7 +16,7 @@
 #include <FL/Fl_Value_Input.H>
 #include <FL/fl_draw.H>
 #include "FlGui.h"
-#include "Draw.h"
+#include "drawContext.h"
 #include "fieldWindow.h"
 #include "paletteWindow.h"
 #include "fileDialogs.h"
@@ -75,7 +75,7 @@ static void field_put_on_view_cb(Fl_Widget *w, void *data)
   else if(mb->value() - 1 < (int)PView::list.size())
     field->putOnView(PView::list[mb->value() - 1]);
   FlGui::instance()->updateViews();
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void field_select_file_cb(Fl_Widget *w, void *data)

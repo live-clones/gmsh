@@ -14,26 +14,22 @@
 
 drawContext *ctx = 0;
 
-// Gmsh redefinitions (implement all functions from Graphics/Draw.h)
-void Draw(){ ctx->draw3d(); ctx->draw2d(); }
-void DrawCurrentOpenglWindow(bool make_current){}
-int GetFontIndex(const char *fontname){ return 0; }
-int GetFontEnum(int index){ return 0; }
-const char *GetFontName(int index){ return "Helvetica"; }
-int GetFontAlign(const char *alignstr){ return 0; }
-int GetFontSize(){ return 18; }
-void SetFont(int fontid, int fontsize){}
-double GetStringWidth(const char *str)
-{ 
-  return glutBitmapLength(GLUT_BITMAP_HELVETICA_18, (const unsigned char*)str);
-}
-int GetStringHeight(){ return 18; }
-int GetStringDescent(){ return 6; }
-void DrawString(const char *str)
-{
-  for (int i = 0; i < strlen(str); i++)
-    glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, str[i]);
-}
+class drawContextGlut : public drawContextGlobal{
+ public:
+  void draw(){ ctx->draw3d(); ctx->draw2d(); }
+  const char *getFontName(int index){ return "Helvetica"; }
+  int getFontSize(){ return 18; }
+  double getStringWidth(const char *str)
+  {
+    return glutBitmapLength(GLUT_BITMAP_HELVETICA_18, (const unsigned char*)str);
+  }
+  int getStringHeight(){ return 18; }
+  int getStringDescent(){ return 6; }
+  void drawString(const char *str){
+    for (int i = 0; i < strlen(str); i++) 
+      glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, str[i]); 
+  }
+};
 
 // GLUT callbacks
 void display()
@@ -41,7 +37,7 @@ void display()
   glViewport(ctx->viewport[0], ctx->viewport[1],
              ctx->viewport[2], ctx->viewport[3]);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-  Draw();
+  drawContext::global()->draw();
   glutSwapBuffers(); 
 }
 
@@ -106,6 +102,7 @@ int main(int argc, char **argv)
   for(int i = 1; i < argc; i++) GmshMergeFile(argv[i]);
 
   ctx = new drawContext();
+  drawContext::setGlobal(new drawContextGlut);
 
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);

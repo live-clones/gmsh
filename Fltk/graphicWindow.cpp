@@ -14,7 +14,6 @@
 #include "messageWindow.h"
 #include "manipWindow.h"
 #include "extraDialogs.h"
-#include "Draw.h"
 #include "PView.h"
 #include "PViewData.h"
 #include "OS.h"
@@ -182,7 +181,7 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
       ctx->setQuaternionFromEulerAngles();
     }
   }
-  Draw();
+  drawContext::global()->draw();
   FlGui::instance()->manip->update();
 }
 
@@ -204,7 +203,7 @@ void status_options_cb(Fl_Widget *w, void *data)
     else{
       perspective_editor();
     }
-    Draw();
+    drawContext::global()->draw();
   }
   else if(!strcmp(str, "S")){ // mouse selection
     if(CTX::instance()->mouseSelection){
@@ -250,7 +249,7 @@ void status_play_manual(int time, int step)
         opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
     }
   }
-  Draw();
+  drawContext::global()->draw();
   busy = false;
 }
 
@@ -288,7 +287,7 @@ static void status_rewind_cb(Fl_Widget *w, void *data)
     for(unsigned int i = 0; i < PView::list.size(); i++)
       opt_view_visible(i, GMSH_SET | GMSH_GUI, !i);
   }
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void status_stepbackward_cb(Fl_Widget *w, void *data)

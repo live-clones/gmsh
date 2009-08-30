@@ -8,7 +8,7 @@
 #include "GmshMessage.h"
 #include "FlGui.h"
 #include "menuWindow.h"
-#include "Draw.h"
+#include "drawContext.h"
 #include "Context.h"
 #include "Options.h"
 #include "Parser.h"
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
   }
 
   // Draw the scene
-  Draw();
+  drawContext::global()->draw();
 
   // Listen to external solvers
   if(CTX::instance()->solver.listen) Solver(-1, NULL);

@@ -11,7 +11,6 @@
 #if defined(HAVE_FLTK)
 #include <FL/gl.h>
 #include "drawContext.h"
-#include "Draw.h"
 #endif
 
 int GMSH_ProbePlugin::iview = 0;

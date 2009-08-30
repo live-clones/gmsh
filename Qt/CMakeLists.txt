@@ -5,7 +5,6 @@
 
 set(SRC
   QGui.cpp
-  Draw.cpp
   GLWidget.cpp
   graphicWindow.cpp
 )

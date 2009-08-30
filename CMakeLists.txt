@@ -742,9 +742,10 @@ else(WIN32)
 endif(WIN32)
 
 # mark targets as optional so we can install them separately if needed
-# (e.g. "make lib" followed by "make install/fast")
+# (e.g. "make lib" or "make shared" followed by "make install/fast")
 install(TARGETS gmsh RUNTIME DESTINATION ${GMSH_BIN} OPTIONAL)
 install(TARGETS lib ARCHIVE DESTINATION lib OPTIONAL)
+install(TARGETS shared LIBRARY DESTINATION lib OPTIONAL)
 install(FILES ${GMSH_API} DESTINATION include/gmsh)
 install(FILES ${WELCOME_FILE} DESTINATION ${GMSH_DOC} RENAME README.txt)
 install(FILES ${LICENSE_FILE} DESTINATION ${GMSH_DOC})

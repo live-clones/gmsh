@@ -13,7 +13,6 @@
 #if defined(HAVE_FLTK)
 #include <FL/gl.h>
 #include "drawContext.h"
-#include "Draw.h"
 #endif
 
 StringXNumber StreamLinesOptions_Number[] = {

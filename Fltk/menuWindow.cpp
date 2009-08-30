@@ -11,7 +11,6 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "FlGui.h"
-#include "Draw.h"
 #include "menuWindow.h"
 #include "mainWindow.h"
 #include "graphicWindow.h"
@@ -71,7 +70,7 @@ static void file_new_cb(Fl_Widget *w, void *data)
     fprintf(fp, "// Gmsh project created on %s", ctime(&now));
     fclose(fp);
     OpenProject(name);
-    Draw();
+    drawContext::global()->draw();
   }
 }
 
@@ -121,7 +120,7 @@ static void file_open_cb(Fl_Widget *w, void *data)
   int n = PView::list.size();
   if(file_chooser(0, 0, "Open", input_formats)) {
     OpenProject(file_chooser_get_name(1));
-    Draw();
+    drawContext::global()->draw();
   }
   if(n != (int)PView::list.size())
     FlGui::instance()->menu->setContext(menu_post, 0);
@@ -134,7 +133,7 @@ static void file_merge_cb(Fl_Widget *w, void *data)
   if(f) {
     for(int i = 1; i <= f; i++)
       MergeFile(file_chooser_get_name(i));
-    Draw();
+    drawContext::global()->draw();
   }
   if(n != (int)PView::list.size())
     FlGui::instance()->menu->setContext(menu_post, 0);
@@ -143,7 +142,7 @@ static void file_merge_cb(Fl_Widget *w, void *data)
 static void file_clear_cb(Fl_Widget *w, void *data)
 {
   ClearProject();
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void file_window_cb(Fl_Widget *w, void *data)
@@ -338,7 +337,7 @@ static void file_rename_cb(Fl_Widget *w, void *data)
     rename(GModel::current()->getFileName().c_str(), name.c_str());
     ClearProject();
     OpenProject(name);
-    Draw();
+    drawContext::global()->draw();
   }
 }
 
@@ -546,7 +545,7 @@ void geometry_reload_cb(Fl_Widget *w, void *data)
   std::string fileName = GModel::current()->getFileName();
   ClearProject();
   OpenProject(fileName);
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void geometry_elementary_add_cb(Fl_Widget *w, void *data)
@@ -557,7 +556,7 @@ static void geometry_elementary_add_cb(Fl_Widget *w, void *data)
 static void add_new_point()
 {
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  Draw();
+  drawContext::global()->draw();
 
   FlGui::instance()->geoContext->show(1);
 
@@ -576,7 +575,7 @@ static void add_new_point()
                 FlGui::instance()->geoContext->input[4]->value(),
                 FlGui::instance()->geoContext->input[5]->value());
       FlGui::instance()->resetVisibility();
-      Draw();
+      drawContext::global()->draw();
     }
     if(ib == 'q'){
       for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
@@ -595,7 +594,7 @@ static void add_new_multiline(std::string type)
 {
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
-  Draw();
+  drawContext::global()->draw();
 
   std::vector<int> p;
   while(1) {
@@ -612,7 +611,7 @@ static void add_new_multiline(std::string type)
         FlGui::instance()->selectedVertices[i]->setSelection(1);
         p.push_back(FlGui::instance()->selectedVertices[i]->tag());
       }
-      Draw();
+      drawContext::global()->draw();
     }
     if(ib == 'r') {
       Msg::Warning("Entity de-selection not supported yet during multi-line creation");
@@ -622,20 +621,20 @@ static void add_new_multiline(std::string type)
         add_multline(type, p, GModel::current()->getFileName());
       FlGui::instance()->resetVisibility();
       GModel::current()->setSelection(0);
-      Draw();
+      drawContext::global()->draw();
       p.clear();
     }
     if(ib == 'u') {
       if(p.size()){
         GVertex *gv = GModel::current()->getVertexByTag(p.back());
         if(gv) gv->setSelection(0);
-        Draw();
+        drawContext::global()->draw();
         p.pop_back();
       }
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
-      Draw();
+      drawContext::global()->draw();
       break;
     }
   }
@@ -647,7 +646,7 @@ static void add_new_line()
 {
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
-  Draw();
+  drawContext::global()->draw();
 
   std::vector<int> p;
   while(1) {
@@ -660,7 +659,7 @@ static void add_new_line()
     char ib = FlGui::instance()->selectEntity(ENT_POINT);
     if(ib == 'l') {
       FlGui::instance()->selectedVertices[0]->setSelection(1);
-      Draw();
+      drawContext::global()->draw();
       p.push_back(FlGui::instance()->selectedVertices[0]->tag());
     }
     if(ib == 'r') {
@@ -670,20 +669,20 @@ static void add_new_line()
       if(p.size()){
         GVertex *gv = GModel::current()->getVertexByTag(p.back());
         if(gv) gv->setSelection(0);
-        Draw();
+        drawContext::global()->draw();
         p.pop_back();
       }
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
-      Draw();
+      drawContext::global()->draw();
       break;
     }
     if(p.size() == 2) {
       add_multline("Line", p, GModel::current()->getFileName());
       FlGui::instance()->resetVisibility();
       GModel::current()->setSelection(0);
-      Draw();
+      drawContext::global()->draw();
       p.clear();
     }
   }
@@ -695,7 +694,7 @@ static void add_new_circle()
 {
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
-  Draw();
+  drawContext::global()->draw();
 
   std::vector<int> p;
   while(1) {
@@ -711,7 +710,7 @@ static void add_new_circle()
     char ib = FlGui::instance()->selectEntity(ENT_POINT);
     if(ib == 'l') {
       FlGui::instance()->selectedVertices[0]->setSelection(1);
-      Draw();
+      drawContext::global()->draw();
       p.push_back(FlGui::instance()->selectedVertices[0]->tag());
     }
     if(ib == 'r') {
@@ -721,20 +720,20 @@ static void add_new_circle()
       if(p.size()){
         GVertex *gv = GModel::current()->getVertexByTag(p.back());
         if(gv) gv->setSelection(0);
-        Draw();
+        drawContext::global()->draw();
         p.pop_back();
       }
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
-      Draw();
+      drawContext::global()->draw();
       break;
     }
     if(p.size() == 3) {
       add_circ(p[0], p[1], p[2], GModel::current()->getFileName()); // begin, center, end
       FlGui::instance()->resetVisibility();
       GModel::current()->setSelection(0);
-      Draw();
+      drawContext::global()->draw();
       p.clear();
     }
   }
@@ -746,7 +745,7 @@ static void add_new_ellipse()
 {
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
-  Draw();
+  drawContext::global()->draw();
 
   std::vector<int> p;
   while(1) {
@@ -765,7 +764,7 @@ static void add_new_ellipse()
     char ib = FlGui::instance()->selectEntity(ENT_POINT);
     if(ib == 'l') {
       FlGui::instance()->selectedVertices[0]->setSelection(1);
-      Draw();
+      drawContext::global()->draw();
       p.push_back(FlGui::instance()->selectedVertices[0]->tag());
     }
     if(ib == 'r') {
@@ -775,20 +774,20 @@ static void add_new_ellipse()
       if(p.size()){
         GVertex *gv = GModel::current()->getVertexByTag(p.back());
         if(gv) gv->setSelection(0);
-        Draw();
+        drawContext::global()->draw();
         p.pop_back();
       }
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
-      Draw();
+      drawContext::global()->draw();
       break;
     }
     if(p.size() == 4) {
       add_ell(p[0], p[1], p[2], p[3], GModel::current()->getFileName());
       FlGui::instance()->resetVisibility();
       GModel::current()->setSelection(0);
-      Draw();
+      drawContext::global()->draw();
       p.clear();
     }
   }
@@ -821,7 +820,7 @@ static int select_contour(int type, int num, List_T * List)
     break;
   }
 
-  Draw();
+  drawContext::global()->draw();
   return k;
 }
 
@@ -840,7 +839,7 @@ static void add_new_surface_volume(int mode)
     opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
     opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   }
-  Draw();
+  drawContext::global()->draw();
 
   while(1) {
     List_Reset(List1);
@@ -867,7 +866,7 @@ static void add_new_surface_volume(int mode)
       char ib = FlGui::instance()->selectEntity(type);
       if(ib == 'q') {
         GModel::current()->setSelection(0);
-        Draw();
+        drawContext::global()->draw();
         goto stopall;
       }
       if(ib == 'u') {
@@ -883,7 +882,7 @@ static void add_new_surface_volume(int mode)
             if(gf) gf->setSelection(0);
           }
           List_Pop(List1);
-          Draw();
+          drawContext::global()->draw();
         }
       }
       if(ib == 'r') {
@@ -914,12 +913,12 @@ static void add_new_surface_volume(int mode)
             ib = FlGui::instance()->selectEntity(type);
             if(ib == 'q') {
               GModel::current()->setSelection(0);
-              Draw();
+              drawContext::global()->draw();
               goto stopall;
             }
             if(ib == 'e') {
               GModel::current()->setSelection(0);
-              Draw();
+              drawContext::global()->draw();
               List_Reset(List1);
               break;
             }
@@ -936,7 +935,7 @@ static void add_new_surface_volume(int mode)
                   if(gf) gf->setSelection(0);
                 }
                 List_Pop(List1);
-                Draw();
+                drawContext::global()->draw();
               }
             }
             if(ib == 'l') {
@@ -973,7 +972,7 @@ static void add_new_surface_volume(int mode)
             }
             FlGui::instance()->resetVisibility();
             GModel::current()->setSelection(0);
-            Draw();
+            drawContext::global()->draw();
             break;
           }
         } // if select_contour
@@ -1023,7 +1022,7 @@ static void geometry_elementary_add_new_cb(Fl_Widget *w, void *data)
 static void split_selection()
 {
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
-  Draw();
+  drawContext::global()->draw();
   Msg::StatusBar(3, false, "Select a line to split\n"
                  "[Press 'q' to abort]");
   GEdge* edge_to_split = 0;
@@ -1043,7 +1042,7 @@ static void split_selection()
   Msg::StatusBar(3, false, "Select break points\n"
                  "[Press 'e' to end selection or 'q' to abort]");
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  Draw();
+  drawContext::global()->draw();
   while(1){
     char ib = FlGui::instance()->selectEntity(ENT_POINT);
     if(ib == 'q')
@@ -1062,7 +1061,7 @@ static void split_selection()
   Msg::StatusBar(3, false, "");
   FlGui::instance()->resetVisibility();
   GModel::current()->setSelection(0);
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void action_point_line_surface_volume(int action, int mode, const char *what)
@@ -1099,7 +1098,7 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
     FlGui::instance()->meshContext->show(0);
   }
 
-  Draw();
+  drawContext::global()->draw();
     
   List_T *List1 = List_Create(5, 5, sizeof(int));
   while(1) {
@@ -1151,7 +1150,7 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
         }
         break;
       }
-      Draw();
+      drawContext::global()->draw();
     }
     if(ib == 'r') {
       // we don't use List_Suppress in order to keep the original
@@ -1192,7 +1191,7 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
         }
         break;
       }
-      Draw();
+      drawContext::global()->draw();
     }
     if(ib == 'u') {
       if(List_Nbr(List1)) {
@@ -1214,7 +1213,7 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
           GRegion *gr = GModel::current()->getRegionByTag(num);
           if(gr) gr->setSelection(0);
         }
-        Draw();
+        drawContext::global()->draw();
         List_Pop(List1);
       }
     }
@@ -1292,12 +1291,12 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
         FlGui::instance()->resetVisibility();
         GModel::current()->setSelection(0);
         if(action <= 6) SetBoundingBox();
-        Draw();
+        drawContext::global()->draw();
       }
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
-      Draw();
+      drawContext::global()->draw();
       break;
     }
   }
@@ -1470,21 +1469,21 @@ static void mesh_define_cb(Fl_Widget *w, void *data)
 void mesh_1d_cb(Fl_Widget *w, void *data)
 {
   GModel::current()->mesh(1);
-  Draw();
+  drawContext::global()->draw();
   Msg::StatusBar(2, false, " ");
 }
 
 void mesh_2d_cb(Fl_Widget *w, void *data)
 {
   GModel::current()->mesh(2);
-  Draw();
+  drawContext::global()->draw();
   Msg::StatusBar(2, false, " ");
 }
 
 void mesh_3d_cb(Fl_Widget *w, void *data)
 {
   GModel::current()->mesh(3);
-  Draw();
+  drawContext::global()->draw();
   Msg::StatusBar(2, false, " ");
 }
 
@@ -1522,7 +1521,7 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
 
   while(1) {
     CTX::instance()->mesh.changed = ENT_ALL;
-    Draw();
+    drawContext::global()->draw();
 
     if(ele.size() || ent.size())
       Msg::StatusBar(3, false, "Select %s\n"
@@ -1612,7 +1611,7 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
 
   CTX::instance()->mesh.changed = ENT_ALL;
   CTX::instance()->pickElements = 0;
-  Draw();  
+  drawContext::global()->draw();
   Msg::StatusBar(3, false, "");
 }
 
@@ -1620,7 +1619,7 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
 {
   CTX::instance()->pickElements = 1;
   CTX::instance()->mesh.changed = ENT_ALL;
-  Draw();
+  drawContext::global()->draw();
 
   while(1) {
     Msg::StatusBar(3, false, "Select element\n[Press 'q' to abort]");
@@ -1652,7 +1651,7 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
         Msg::Direct("  Eta: %g", ele->etaShapeMeasure());
         Msg::Direct("  Disto: %g", ele->distoShapeMeasure());
         CTX::instance()->mesh.changed = ENT_ALL;
-        Draw();
+        drawContext::global()->draw();
         FlGui::instance()->messages->show();
       }
     }
@@ -1664,7 +1663,7 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
 
   CTX::instance()->pickElements = 0;
   CTX::instance()->mesh.changed = ENT_ALL;
-  Draw();
+  drawContext::global()->draw();
   Msg::StatusBar(3, false, "");
 }
 
@@ -1676,7 +1675,7 @@ static void mesh_degree_cb(Fl_Widget *w, void *data)
   else
     SetOrder1(GModel::current());
   CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
-  Draw();
+  drawContext::global()->draw();
   Msg::StatusBar(2, false, " ");
 }
 
@@ -1690,7 +1689,7 @@ static void mesh_optimize_cb(Fl_Widget *w, void *data)
   OptimizeMesh(GModel::current());
   CTX::instance()->lock = 0;
   CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
-  Draw();
+  drawContext::global()->draw();
   Msg::StatusBar(2, false, " ");
 }
 
@@ -1698,7 +1697,7 @@ static void mesh_refine_cb(Fl_Widget *w, void *data)
 {
   RefineMesh(GModel::current(), CTX::instance()->mesh.secondOrderLinear);
   CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
-  Draw();
+  drawContext::global()->draw();
   Msg::StatusBar(2, false, " ");
 }
 
@@ -1712,7 +1711,7 @@ static void mesh_optimize_netgen_cb(Fl_Widget *w, void *data)
   OptimizeMeshNetgen(GModel::current());
   CTX::instance()->lock = 0;
   CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
-  Draw();
+  drawContext::global()->draw();
   Msg::StatusBar(2, false, " ");
 }
 
@@ -1744,7 +1743,7 @@ static void add_transfinite(int dim)
   case 2: opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1); break;
   case 3: opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1); break;
   }
-  Draw();
+  drawContext::global()->draw();
 
   std::vector<int> p;
   char ib;
@@ -1782,7 +1781,7 @@ static void add_transfinite(int dim)
                        FlGui::instance()->meshContext->input[1]->value());
       }
       GModel::current()->setSelection(0);
-      Draw();
+      drawContext::global()->draw();
       p.clear();
     }
     if(ib == 'u') {
@@ -1790,14 +1789,14 @@ static void add_transfinite(int dim)
         if(p.size()){
           GEdge *ge = GModel::current()->getEdgeByTag(p.back());
           if(ge) ge->setSelection(0);
-          Draw();
+          drawContext::global()->draw();
           p.pop_back();
         }
       }
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
-      Draw();
+      drawContext::global()->draw();
       break;
     }
     if(ib == 'r') {
@@ -1811,18 +1810,18 @@ static void add_transfinite(int dim)
           FlGui::instance()->selectedEdges[i]->setSelection(1);
           p.push_back(FlGui::instance()->selectedEdges[i]->tag());
         }
-        Draw();
+        drawContext::global()->draw();
         break;
       case 2:
       case 3:
         if(dim == 2){
           FlGui::instance()->selectedFaces[0]->setSelection(1);
-          Draw();
+          drawContext::global()->draw();
           p.push_back(FlGui::instance()->selectedFaces[0]->tag());
         }
         else{
           FlGui::instance()->selectedRegions[0]->setSelection(1);
-          Draw();
+          drawContext::global()->draw();
           p.push_back(FlGui::instance()->selectedRegions[0]->tag());
         }
         while(1) {
@@ -1836,14 +1835,14 @@ static void add_transfinite(int dim)
           ib = FlGui::instance()->selectEntity(ENT_POINT);
           if(ib == 'l') {
             FlGui::instance()->selectedVertices[0]->setSelection(1);
-            Draw();
+            drawContext::global()->draw();
             p.push_back(FlGui::instance()->selectedVertices[0]->tag());
           }
           if(ib == 'u') {
             if(p.size() > 1){
               GVertex *gv = GModel::current()->getVertexByTag(p.back());
               if(gv) gv->setSelection(0);
-              Draw();
+              drawContext::global()->draw();
               p.pop_back();
             }
           }
@@ -1868,13 +1867,13 @@ static void add_transfinite(int dim)
               break;
             }
             GModel::current()->setSelection(0);
-            Draw();
+            drawContext::global()->draw();
             p.clear();
             break;
           }
           if(ib == 'q') {
             GModel::current()->setSelection(0);
-            Draw();
+            drawContext::global()->draw();
             goto stopall;
           }
         }
@@ -1909,7 +1908,7 @@ static void view_toggle_cb(Fl_Widget *w, void *data)
   int num = (int)(long)data;
   opt_view_visible(num, GMSH_SET,
                    FlGui::instance()->menu->toggle[num]->value());
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void view_reload(int index)
@@ -1946,14 +1945,14 @@ static void view_reload(int index)
 static void view_reload_cb(Fl_Widget *w, void *data)
 {
   view_reload((int)(long)data);
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void view_reload_all_cb(Fl_Widget *w, void *data)
 {
   for(unsigned int i = 0; i < PView::list.size(); i++)
     view_reload(i);
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void view_reload_visible_cb(Fl_Widget *w, void *data)
@@ -1961,7 +1960,7 @@ static void view_reload_visible_cb(Fl_Widget *w, void *data)
   for(unsigned int i = 0; i < PView::list.size(); i++)
     if(opt_view_visible(i, GMSH_GET, 0))
       view_reload(i);
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void view_remove_other_cb(Fl_Widget *w, void *data)
@@ -1970,7 +1969,7 @@ static void view_remove_other_cb(Fl_Widget *w, void *data)
   for(int i = PView::list.size() - 1; i >= 0; i--)
     if(i != (long)data) delete PView::list[i];
   FlGui::instance()->updateViews();
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void view_remove_all_cb(Fl_Widget *w, void *data)
@@ -1978,7 +1977,7 @@ static void view_remove_all_cb(Fl_Widget *w, void *data)
   if(PView::list.empty()) return;
   while(PView::list.size()) delete PView::list[0];
   FlGui::instance()->updateViews();
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void view_remove_visible_cb(Fl_Widget *w, void *data)
@@ -1987,7 +1986,7 @@ static void view_remove_visible_cb(Fl_Widget *w, void *data)
   for(int i = PView::list.size() - 1; i >= 0; i--)
     if(opt_view_visible(i, GMSH_GET, 0)) delete PView::list[i];
   FlGui::instance()->updateViews();
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void view_remove_invisible_cb(Fl_Widget *w, void *data)
@@ -1996,7 +1995,7 @@ static void view_remove_invisible_cb(Fl_Widget *w, void *data)
   for(int i = PView::list.size() - 1; i >= 0; i--)
     if(!opt_view_visible(i, GMSH_GET, 0)) delete PView::list[i];
   FlGui::instance()->updateViews();
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void view_remove_empty_cb(Fl_Widget *w, void *data)
@@ -2005,14 +2004,14 @@ static void view_remove_empty_cb(Fl_Widget *w, void *data)
   for(int i = PView::list.size() - 1; i >= 0; i--)
     if(PView::list[i]->getData()->empty()) delete PView::list[i];
   FlGui::instance()->updateViews();
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void view_remove_cb(Fl_Widget *w, void *data)
 {
   delete PView::list[(int)(long)data];
   FlGui::instance()->updateViews();
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void view_save_as(int index, const char *title, int format)
@@ -2071,56 +2070,56 @@ static void view_alias_cb(Fl_Widget *w, void *data)
 {
   new PView(PView::list[(int)(long)data], false);
   FlGui::instance()->updateViews();
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void view_alias_with_options_cb(Fl_Widget *w, void *data)
 {
   new PView(PView::list[(int)(long)data], true);
   FlGui::instance()->updateViews();
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void view_combine_space_all_cb(Fl_Widget *w, void *data)
 {
   PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig);
   FlGui::instance()->updateViews();
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void view_combine_space_visible_cb(Fl_Widget *w, void *data)
 {
   PView::combine(false, 0, CTX::instance()->post.combineRemoveOrig);
   FlGui::instance()->updateViews();
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void view_combine_space_by_name_cb(Fl_Widget *w, void *data)
 {
   PView::combine(false, 2, CTX::instance()->post.combineRemoveOrig);
   FlGui::instance()->updateViews();
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void view_combine_time_all_cb(Fl_Widget *w, void *data)
 {
   PView::combine(true, 1, CTX::instance()->post.combineRemoveOrig);
   FlGui::instance()->updateViews();
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void view_combine_time_visible_cb(Fl_Widget *w, void *data)
 {
   PView::combine(true, 0, CTX::instance()->post.combineRemoveOrig);
   FlGui::instance()->updateViews();
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void view_combine_time_by_name_cb(Fl_Widget *w, void *data)
 {
   PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
   FlGui::instance()->updateViews();
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void view_all_visible_cb(Fl_Widget *w, void *data)
@@ -2129,7 +2128,7 @@ static void view_all_visible_cb(Fl_Widget *w, void *data)
     opt_view_visible(i, GMSH_SET | GMSH_GUI, 
                      (long)data < 0 ? !opt_view_visible(i, GMSH_GET, 0) :
                      (long)data > 0 ? 1 : 0);
-  Draw();
+  drawContext::global()->draw();
 }
 
 static void view_applybgmesh_cb(Fl_Widget *w, void *data)

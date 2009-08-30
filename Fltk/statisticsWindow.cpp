@@ -7,7 +7,7 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
 #include "FlGui.h"
-#include "Draw.h"
+#include "drawContext.h"
 #include "statisticsWindow.h"
 #include "paletteWindow.h"
 #include "GModel.h"
@@ -71,7 +71,7 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
   }
 
   FlGui::instance()->updateViews();
-  Draw();
+  drawContext::global()->draw();
 }
 
 statisticsWindow::statisticsWindow(int deltaFontSize)

@@ -14,7 +14,7 @@
 #include "GmshSocket.h"
 #include "OpenFile.h"
 #include "PView.h"
-#include "Draw.h"
+#include "drawContext.h"
 #include "Context.h"
 #include "OS.h"
 
@@ -253,14 +253,14 @@ int Solver(int num, const char *args)
           if(num < 0 || (num >= 0 && SINFO[num].merge_views)) {
             int n = PView::list.size();
             MergeFile(message);
-            Draw();
+            drawContext::global()->draw();
             if(n != (int)PView::list.size()) 
               FlGui::instance()->menu->setContext(menu_post, 0);
           }
           break;
         case GmshServer::CLIENT_PARSE_STRING:
           ParseString(message);
-          Draw();
+          drawContext::global()->draw();
           break;
         case GmshServer::CLIENT_INFO:
           Msg::Direct("%-8.8s: %s", num >= 0 ? SINFO[num].name.c_str() : "Client",

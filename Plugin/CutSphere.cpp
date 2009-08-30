@@ -10,7 +10,6 @@
 
 #if defined(HAVE_FLTK)
 #include "drawContext.h"
-#include "Draw.h"
 #endif
 
 StringXNumber CutSphereOptions_Number[] = {

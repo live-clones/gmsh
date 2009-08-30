@@ -24,7 +24,7 @@
 #include "FlGui.h"
 #include "paletteWindow.h"
 #include "GModel.h"
-#include "Draw.h"
+#include "drawContext.h"
 #include "Options.h"
 #include "meshPartition.h"
 #include "Context.h"
@@ -323,7 +323,7 @@ void partition_partition_cb(Fl_Widget *widget, void *data)
     opt_mesh_zone_definition(0, GMSH_SET, 1.);  // Define zone by partition
     opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 3.);
     CTX::instance()->mesh.changed = ENT_ALL;
-    Draw();
+    drawContext::global()->draw();
   }
 }
 

@@ -13,7 +13,6 @@
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "MElement.h"
-#include "Draw.h"
 #include "Numeric.h"
 #include "FlGui.h"
 #include "VertexArray.h"
@@ -35,7 +34,7 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &cl
   tmp.recenter(ctx);
 
   ctx->initPosition();
-  Draw();
+  drawContext::global()->draw();
   FlGui::instance()->manip->update();
 }
 
@@ -64,22 +63,23 @@ void openglWindow::drawScreenMessage()
     return;
 
   glColor4ubv((GLubyte *) & CTX::instance()->color.text);
-  SetFont(CTX::instance()->glFontEnum, CTX::instance()->glFontSize);
-  double h = GetStringHeight();
+  drawContext::global()->setFont(CTX::instance()->glFontEnum, 
+                                 CTX::instance()->glFontSize);
+  double h = drawContext::global()->getStringHeight();
   
   if(screenMessage[0].size()){
     const char *txt = screenMessage[0].c_str();
-    double w = GetStringWidth(txt);
+    double w = drawContext::global()->getStringWidth(txt);
     glRasterPos2d(_ctx->viewport[2] / 2. - w / 2., 
                   _ctx->viewport[3] - 1.2 * h);
-    DrawString(txt);
+    drawContext::global()->drawString(txt);
   }
   if(screenMessage[1].size()){
     const char *txt = screenMessage[1].c_str();
-    double w = GetStringWidth(txt);
+    double w = drawContext::global()->getStringWidth(txt);
     glRasterPos2d(_ctx->viewport[2] / 2. - w / 2.,
                   _ctx->viewport[3] - 2.4 * h);
-    DrawString(txt);
+    drawContext::global()->drawString(txt);
   }
 }
 
