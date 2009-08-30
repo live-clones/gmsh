@@ -122,7 +122,7 @@ class GFace : public GEntity
   // geometry and the mesh. Both approaches should give the same result ;-)
   // by default, genus is ZERO
   int poincareMesh ();
-  int genusMesh () {return (poincareMesh() + edgeLoops.size() - 2)/2;}
+  int genusMesh () { return (poincareMesh() + edgeLoops.size() - 2) / 2; }
   virtual int genusGeom ();
 
   // return the point on the face corresponding to the given parameter
@@ -228,7 +228,6 @@ class GFace : public GEntity
   // compound
   void setCompound(GFaceCompound *gfc) { compound = gfc; }
   GFaceCompound *getCompound() const { return compound; }
-
 
   struct {
     // do we recombine the triangles of the mesh?

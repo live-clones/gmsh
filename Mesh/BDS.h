@@ -211,7 +211,7 @@ class BDS_Edge
   }
   inline BDS_Face * otherFace(const BDS_Face *f) const
   {
-    if(numfaces()!=2) {
+    if(numfaces() != 2) {
       Msg::Fatal("otherFace wrong, ony %d faces attached to edge %d %d",
                  numfaces(), p1->iD, p2->iD);
       return 0;

@@ -592,7 +592,7 @@ static Vertex InterpolateExtrudedSurface(Surface *s, double u, double v)
 
 Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
 {
-  if( derivee == 1 ) {
+  if(derivee == 1) {
     double eps = 1.e-6;
     Vertex D[4];
     if(u_v == 1) {
@@ -619,8 +619,7 @@ Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
                   (D[1].Pos.Y - D[0].Pos.Y) / eps,
                   (D[1].Pos.Z - D[0].Pos.Z) / eps);
   }
-
-  else if ( derivee == 2 ) {
+  else if (derivee == 2) {
     double eps = 1.e-6;
     Vertex D[2];
     if(u_v == 1) { // dudu
@@ -689,4 +688,3 @@ Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
     return Vertex(0., 0., 0.);
   }
 }
-

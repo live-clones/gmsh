@@ -75,12 +75,9 @@ class GFaceCompound : public GFace {
   bool trivial() const ;
  public:
   typedef enum {UNITCIRCLE, SQUARE} typeOfIsomorphism;
-  GFaceCompound(GModel *m, int tag, 
-                std::list<GFace*> &compound,
-                std::list<GEdge*> &U0,
-                std::list<GEdge*> &U1,
-                std::list<GEdge*> &V0,
-                std::list<GEdge*> &V1);
+  GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
+                std::list<GEdge*> &U0, std::list<GEdge*> &U1,
+                std::list<GEdge*> &V0, std::list<GEdge*> &V1);
   virtual ~GFaceCompound();
   Range<double> parBounds(int i) const 
   { return trivial() ? (*(_compound.begin()))->parBounds(i) : Range<double>(-1, 1); }

@@ -52,13 +52,8 @@ class GPoint
     double dz = Z - p.z();
     return sqrt(dx * dx + dy * dy + dz * dz);
   }
-  bool succeeded () const{
-    return success;
-  }
-  bool setNoSuccess (){
-    success = false;
-    return success;
-  }
+  bool succeeded() const{ return success; }
+  bool setNoSuccess(){ success = false; return success; }
 };
 
 #endif

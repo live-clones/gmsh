@@ -176,10 +176,11 @@ static void myPolygon(std::vector<MElement*> &vTri, std::vector<MVertex*> &vPoly
 
 }
 
-bool GFaceCompound::trivial() const {
-  if (_compound.size() == 1 && 
-      (*(_compound.begin()))->getNativeType()==GEntity::OpenCascadeModel &&
-      (*(_compound.begin()))->geomType() != GEntity::DiscreteSurface ){
+bool GFaceCompound::trivial() const
+{
+  if(_compound.size() == 1 && 
+     (*(_compound.begin()))->getNativeType() == GEntity::OpenCascadeModel &&
+     (*(_compound.begin()))->geomType() != GEntity::DiscreteSurface){
     return true;
   }
   return false;

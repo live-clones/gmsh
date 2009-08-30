@@ -112,9 +112,9 @@ if(MSVC)
   set(GMSH_CONFIG_PRAGMAS "#pragma warning(disable:4800)")
 endif(MSVC)
 
-macro(append_gmsh_src DIRECTORY_NAME SRC_FILES)
-  foreach(FILE ${SRC_FILES})
-    list(APPEND LIST ${DIRECTORY_NAME}/${FILE})
+macro(append_gmsh_src DIRNAME FILES)
+  foreach(FILE ${FILES})
+    list(APPEND LIST ${DIRNAME}/${FILE})
   endforeach(FILE)
   set(GMSH_SRC ${GMSH_SRC};${LIST} PARENT_SCOPE)
 endmacro(append_gmsh_src)
@@ -625,7 +625,7 @@ include_directories(Common Fltk Geo Graphics Mesh Numeric Parser Plugin
   contrib/Tetgen contrib/Fl_Tree contrib/gmm contrib/kbipack
   ${EXTERNAL_INCLUDES} ${CMAKE_BINARY_DIR}/Common)
 
-# static lib target: we don't build it by default (we could then
+# static library target: we don't build it by default (we could then
 # create the gmsh target by linking with it) because doing so slows
 # down the compile/link development a lot: running ranlib+ar on a
 # large static lib every time we recompile is frustratingly
@@ -642,13 +642,21 @@ if(MSVC)
   endif(ENABLE_OOFELIE)
 endif(MSVC)
 
-# shared lib target: we don't build it by default either
+# shared library target: we don't build it by default either
 add_library(shared SHARED EXCLUDE_FROM_ALL ${GMSH_SRC})
 set_target_properties(shared PROPERTIES OUTPUT_NAME Gmsh)
 if(HAVE_LAPACK AND LAPACK_FLAGS)
   set_target_properties(shared PROPERTIES LINK_FLAGS ${LAPACK_FLAGS})
 endif(HAVE_LAPACK AND LAPACK_FLAGS)
-target_link_libraries(shared ${EXTERNAL_LIBRARIES} ${LAPACK_LIBRARIES})
+if(HAVE_FLTK)
+  target_link_libraries(shared ${FLTK_LIBRARIES} ${EXTERNAL_LIBRARIES} 
+                        ${OPENGL_LIBRARIES} ${LAPACK_LIBRARIES})
+elseif(ENABLE_GRAPHICS)
+  target_link_libraries(shared ${EXTERNAL_LIBRARIES} ${OPENGL_LIBRARIES}
+                        ${LAPACK_LIBRARIES})
+else(HAVE_FLTK)
+  target_link_libraries(shared ${EXTERNAL_LIBRARIES} ${LAPACK_LIBRARIES})
+endif(HAVE_FLTK)
 
 # binary targets
 if(HAVE_FLTK)
@@ -776,10 +784,12 @@ endif(TEXI2PDF)
 if(MAKEINFO AND TEXI2PDF)
   add_custom_target(doc COMMAND ${CMAKE_COMMAND} -E tar zcf 
                     ${CMAKE_BINARY_DIR}/gmsh-${GMSH_VERSION}-doc.tgz
-                    FAQ.txt CREDITS.txt VERSIONS.txt gmsh.1
-                    texinfo/gmsh.info texinfo/gmsh.txt texinfo/gmsh.html 
-                    texinfo/gmsh.pdf DEPENDS ${TEX_DIR}/gmsh.info 
-                    ${TEX_DIR}/gmsh.txt ${TEX_DIR}/gmsh.html ${TEX_DIR}/gmsh.pdf
+                    CREDITS.txt FAQ.txt LICENSE.txt VERSIONS.txt gmsh.1
+                    texinfo/gmsh.html texinfo/gmsh.info texinfo/gmsh.pdf
+                    texinfo/gmsh.txt
+                    COMMAND ${CMAKE_COMMAND} -E remove ${TEX_OBJ}
+                    DEPENDS ${TEX_DIR}/gmsh.info ${TEX_DIR}/gmsh.txt 
+                    ${TEX_DIR}/gmsh.html ${TEX_DIR}/gmsh.pdf
                     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/doc)
 endif(MAKEINFO AND TEXI2PDF)
 
@@ -857,7 +867,5 @@ message("")
 message("Run 'ccmake ${CMAKE_SOURCE_DIR}' to fine-tune the configuration.")
 message("")
 
-mark_as_advanced(BISON ENABLE_GRAPHICS FLEX GMP_LIB GMSH_EXTRA_VERSION 
-                 HDF5_LIB LIBGUIDE MAKEINFO MED_LIB MKL_C MKL_CORE MKL_INTEL_C
-                 MKL_INTEL_THREAD OCC_INC REF_BLAS REF_G2C REF_GCC REF_LAPACK 
-                 SZ_LIB TAUCS_LIB TEXI2PDF)
+mark_as_advanced(BISON FLEX GMP_LIB GMSH_EXTRA_VERSION HDF5_LIB MAKEINFO 
+                 MED_LIB OCC_INC SZ_LIB TAUCS_LIB TEXI2PDF)

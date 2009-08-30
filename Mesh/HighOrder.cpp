@@ -701,16 +701,13 @@ static void setHighOrder(GEdge *ge, edgeContainer &edgeVertices, bool linear,
   ge->deleteVertexArrays();
 }
 
-MTriangle* setHighOrder(MTriangle *t,
-                        GFace *gf, 
+MTriangle* setHighOrder(MTriangle *t, GFace *gf, 
                         edgeContainer &edgeVertices, 
                         faceContainer &faceVertices, 
-                        bool linear, 
-                        bool incomplete,
-                        int nPts, 
+                        bool linear, bool incomplete, int nPts, 
                         gmshHighOrderSmoother *displ2D,
-                        gmshHighOrderSmoother *displ3D){
-
+                        gmshHighOrderSmoother *displ3D)
+{
   std::vector<MVertex*> ve, vf;
   getEdgeVertices(gf, t, ve, edgeVertices, linear, nPts, displ2D, displ3D);
   if(nPts == 1){
@@ -723,16 +720,16 @@ MTriangle* setHighOrder(MTriangle *t,
                             ve, nPts + 1);
     }
     else{
-      //      MTriangleN incpl(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-      //      ve, nPts + 1);
       if (displ2D && gf->geomType() == GEntity::Plane){
         MTriangle incpl(t->getVertex(0), t->getVertex(1), t->getVertex(2));
-        getFaceVertices(gf, &incpl, t, vf, faceVertices, linear, nPts, displ2D, displ3D);
+        getFaceVertices(gf, &incpl, t, vf, faceVertices, linear, nPts, displ2D, 
+                        displ3D);
       }
       else{
-            MTriangleN incpl(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                             ve, nPts + 1);
-            getFaceVertices(gf, &incpl, t, vf, faceVertices, linear, nPts, displ2D, displ3D);
+        MTriangleN incpl(t->getVertex(0), t->getVertex(1), t->getVertex(2),
+                         ve, nPts + 1);
+        getFaceVertices(gf, &incpl, t, vf, faceVertices, linear, nPts, displ2D, 
+                        displ3D);
       }
       ve.insert(ve.end(), vf.begin(), vf.end());
       return new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
@@ -740,7 +737,6 @@ MTriangle* setHighOrder(MTriangle *t,
     }
   }  
 }
-
 
 static void setHighOrder(GFace *gf, edgeContainer &edgeVertices, 
                          faceContainer &faceVertices, bool linear, bool incomplete,
@@ -956,7 +952,8 @@ void SetOrder1(GModel *m)
     removeHighOrderVertices(*it);
 }
 
-static void checkHighOrderTriangles(const char* cc, GModel *m, std::vector<MElement*> &bad, double &minJGlob)
+static void checkHighOrderTriangles(const char* cc, GModel *m, 
+                                    std::vector<MElement*> &bad, double &minJGlob)
 {
   bad.clear();
   minJGlob = 1.0;
@@ -976,12 +973,17 @@ static void checkHighOrderTriangles(const char* cc, GModel *m, std::vector<MElem
       else if (disto < 0.2) nbfair++;
     }
   }
-  if (minJGlob > 0) Msg::Info("%s : Worst Triangle Smoothness %g Gamma %g NbFair = %d", cc,minJGlob, minGGlob,nbfair );
-  else Msg::Warning("%s : Worst Triangle Smoothness %g (%d negative jacobians) Worst Gamma %g Avg Smoothness %g",cc, minJGlob, bad.size(),minGGlob,avg/(count?count:1));
+  if (minJGlob > 0) 
+    Msg::Info("%s : Worst Triangle Smoothness %g Gamma %g NbFair = %d", 
+              cc, minJGlob, minGGlob,nbfair );
+  else
+    Msg::Warning("%s : Worst Triangle Smoothness %g (%d negative jacobians) "
+                 "Worst Gamma %g Avg Smoothness %g", cc, minJGlob, bad.size(),
+                 minGGlob, avg / (count ? count : 1));
 }
 
-
-static void checkHighOrderTetrahedron(const char* cc,GModel *m, std::vector<MElement*> &bad, double &minJGlob)
+static void checkHighOrderTetrahedron(const char* cc, GModel *m, 
+                                      std::vector<MElement*> &bad, double &minJGlob)
 {
   bad.clear();
   minJGlob = 1.0;
@@ -1001,10 +1003,14 @@ static void checkHighOrderTetrahedron(const char* cc,GModel *m, std::vector<MEle
       else if (disto < 0.2) nbfair++;
     }
   }
-  if (minJGlob > 0) Msg::Info("%s : Worst Tetrahedron Smoothness %g Gamma %g NbFair = %d", cc, minJGlob, minGGlob,nbfair );
-  else Msg::Warning("%s : Worst Tetrahedron Smoothness %g (%d negative jacobians) Worst Gamma %g Avg Smoothness %g", cc, minJGlob, bad.size(),minGGlob,avg/(count?count:1));
+  if (minJGlob > 0)
+    Msg::Info("%s : Worst Tetrahedron Smoothness %g Gamma %g NbFair = %d", 
+              cc, minJGlob, minGGlob, nbfair);
+  else 
+    Msg::Warning("%s : Worst Tetrahedron Smoothness %g (%d negative jacobians) "
+                 "Worst Gamma %g Avg Smoothness %g", cc, minJGlob, bad.size(),
+                 minGGlob, avg / (count ? count : 1));
 }
-
 
 extern double mesh_functional_distorsion(MTriangle *t, double u, double v);
 
