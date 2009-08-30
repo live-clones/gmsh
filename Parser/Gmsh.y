@@ -1922,6 +1922,7 @@ LevelSet :
           Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
         }
       }
+#if !defined(HAVE_NO_POST)
       else if(!strcmp($2, "PostView")){
         int t = (int)$4;
         if(FindLevelSet(t)){
@@ -1936,6 +1937,7 @@ LevelSet :
           }
         }
       }
+#endif
       else
         yymsg(0, "Wrong levelset definition (%d)", $4);
       Free($2);

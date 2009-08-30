@@ -14,8 +14,6 @@
 
 #include "DILevelset.h"
 #include "mathEvaluator.h"
-#include "PView.h"
-#include "OctreePost.h"
 
 class gLevelsetMathEval: public gLevelsetPrimitive
 {
@@ -43,6 +41,11 @@ public:
   int type() const { return UNKNOWN; }
 };
 
+#if !defined(HAVE_NO_POST)
+
+#include "PView.h"
+#include "OctreePost.h"
+
 class gLevelsetPostView : public gLevelsetPrimitive
 {
   int _viewIndex;
@@ -69,6 +72,8 @@ public:
   }
   int type() const { return UNKNOWN; }
 };
+
+#endif
 
 #endif
 
