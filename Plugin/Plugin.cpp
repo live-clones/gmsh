@@ -8,7 +8,9 @@
 #include "GmshConfig.h"
 #include "Plugin.h"
 #include "Context.h"
+#if defined(HAVE_FLTK)
 #include "drawContext.h"
+#endif
 
 void (*GMSH_Plugin::draw)(void*) = 0;
 
