@@ -10,7 +10,6 @@
 #include "GModel.h"
 #include "Numeric.h"
 #include "HighOrder.h"
-                      
 #include "Context.h"
 #include "OpenFile.h"
 #include "CommandLine.h"

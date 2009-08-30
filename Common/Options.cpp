@@ -27,7 +27,6 @@
 
 #if defined(HAVE_FLTK)
 #include <FL/Fl_Tooltip.H>
-#include "drawContext.h"
 #include "FlGui.h"
 #include "Solvers.h"
 #include "menuWindow.h"

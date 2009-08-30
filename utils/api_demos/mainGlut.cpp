@@ -25,7 +25,8 @@ class drawContextGlut : public drawContextGlobal{
   }
   int getStringHeight(){ return 18; }
   int getStringDescent(){ return 6; }
-  void drawString(const char *str){
+  void drawString(const char *str)
+  {
     for (int i = 0; i < strlen(str); i++) 
       glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, str[i]); 
   }
