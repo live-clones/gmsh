@@ -52,7 +52,7 @@ class Msg {
   static void SetVerbosity(int val){ _verbosity = val; }
   static int GetVerbosity(){ return _verbosity; }
   static std::string GetLaunchDate(){ return _launchDate; }
-  static std::string GetCommandLine(){ return _commandLine; }
+  static std::string GetCommandLineArgs(){ return _commandLine; }
   static void Fatal(const char *fmt, ...);
   static void Error(const char *fmt, ...);
   static void Warning(const char *fmt, ...);

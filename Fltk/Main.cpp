@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
   Msg::Info("Packager       : %s", GetGmshPackager());
   Msg::Info("Home directory : %s", CTX::instance()->homeDir.c_str());
   Msg::Info("Launch date    : %s", Msg::GetLaunchDate().c_str());
-  Msg::Info("Command line   : %s", Msg::GetCommandLine().c_str());
+  Msg::Info("Command line   : %s", Msg::GetCommandLineArgs().c_str());
   Msg::Info("-------------------------------------------------------");
 
   // Display the GUI immediately to have a quick "a la Windows" launch time
