@@ -7,6 +7,7 @@
 #include <string.h>
 #include "GmshConfig.h"
 #include "Context.h"
+
 #if defined(HAVE_FLTK)
 #include <FL/Fl.H>
 #endif

@@ -8,8 +8,7 @@
 #include "Annotate.h"
 #include "Context.h"
 
-#if defined(HAVE_FLTK)
-#include <FL/gl.h>
+#if defined(HAVE_OPENGL)
 #include "drawContext.h"
 #endif
 
@@ -39,7 +38,7 @@ extern "C"
 static double getStyle()
 {
   int fontsize = (int)AnnotateOptions_Number[4].def, font = 0, align = 0;
-#if defined(HAVE_FLTK)
+#if defined(HAVE_OPENGL)
   font = drawContext::global()->getFontIndex
     (AnnotateOptions_String[1].def.c_str());
   align = drawContext::global()->getFontAlign
@@ -50,7 +49,7 @@ static double getStyle()
 
 void GMSH_AnnotatePlugin::draw(void *context)
 {
-#if defined(HAVE_FLTK)
+#if defined(HAVE_OPENGL)
   double X = AnnotateOptions_Number[0].def;
   double Y = AnnotateOptions_Number[1].def;
   double Z = AnnotateOptions_Number[2].def;

@@ -34,6 +34,7 @@
 #cmakedefine HAVE_NO_VSNPRINTF
 #cmakedefine HAVE_OCC
 #cmakedefine HAVE_OCC_MESH_CONSTRAINTS
+#cmakedefine HAVE_OPENGL
 #cmakedefine HAVE_OSMESA
 #cmakedefine HAVE_QT
 #cmakedefine HAVE_TAUCS

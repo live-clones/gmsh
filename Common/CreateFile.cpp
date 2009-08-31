@@ -11,8 +11,11 @@
 #include "Context.h"
 #include "Options.h"
 
+#if defined(HAVE_OPENGL)
+#include "drawContext.h"
+#endif
+
 #if defined(HAVE_FLTK)
-#include <FL/gl.h>
 #include "FlGui.h"
 #include "graphicWindow.h"
 #include "gl2ps.h"
@@ -418,7 +421,7 @@ void CreateOutputFile(std::string fileName, int format)
   CTX::instance()->print.format = oldformat;
   CTX::instance()->printing = 0;
 
-#if defined(HAVE_FLTK)
+#if defined(HAVE_OPENGL)
   drawContext::global()->draw();
 #endif
 }

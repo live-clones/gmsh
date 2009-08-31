@@ -8,8 +8,7 @@
 #include "Context.h"
 #include "OctreePost.h"
 
-#if defined(HAVE_FLTK)
-#include <FL/gl.h>
+#if defined(HAVE_OPENGL)
 #include "drawContext.h"
 #endif
 
@@ -32,7 +31,7 @@ extern "C"
 
 void GMSH_ProbePlugin::draw(void *context)
 {
-#if defined(HAVE_FLTK)
+#if defined(HAVE_OPENGL)
   int num = (int)ProbeOptions_Number[3].def;
   if(num < 0) num = iview;
   if(num >= 0 && num < (int)PView::list.size()){

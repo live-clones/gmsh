@@ -350,6 +350,8 @@ if(HAVE_FLTK OR HAVE_QT OR ENABLE_GRAPHICS)
   endif(HAVE_LIBZ)
   find_package(OpenGL REQUIRED)
   add_subdirectory(Graphics)
+  set(HAVE_OPENGL TRUE)
+  list(APPEND CONFIG_OPTIONS "OpenGL")
 endif(HAVE_FLTK OR HAVE_QT OR ENABLE_GRAPHICS)
 
 if(ENABLE_ANN)
@@ -651,7 +653,7 @@ endif(HAVE_LAPACK AND LAPACK_FLAGS)
 if(HAVE_FLTK)
   target_link_libraries(shared ${FLTK_LIBRARIES} ${EXTERNAL_LIBRARIES} 
                         ${OPENGL_LIBRARIES} ${LAPACK_LIBRARIES})
-elseif(ENABLE_GRAPHICS)
+elseif(HAVE_OPENGL)
   target_link_libraries(shared ${EXTERNAL_LIBRARIES} ${OPENGL_LIBRARIES}
                         ${LAPACK_LIBRARIES})
 else(HAVE_FLTK)
@@ -668,6 +670,10 @@ elseif(HAVE_QT)
   add_executable(gmsh WIN32 Qt/Main.cpp ${GMSH_SRC} ${GMSH_MOC_SRC})
   target_link_libraries(gmsh ${QT_LIBRARIES} ${EXTERNAL_LIBRARIES}
                         ${OPENGL_LIBRARIES} ${LAPACK_LIBRARIES})
+elseif(HAVE_OPENGL)
+  add_executable(gmsh Common/Main.cpp ${GMSH_SRC})
+  target_link_libraries(gmsh ${EXTERNAL_LIBRARIES} ${OPENGL_LIBRARIES}
+                        ${LAPACK_LIBRARIES})
 else(HAVE_FLTK)
   add_executable(gmsh Common/Main.cpp ${GMSH_SRC})
   target_link_libraries(gmsh ${EXTERNAL_LIBRARIES} ${LAPACK_LIBRARIES})

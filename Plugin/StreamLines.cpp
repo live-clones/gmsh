@@ -10,8 +10,7 @@
 #include "Context.h"
 #include "PViewOptions.h"
 
-#if defined(HAVE_FLTK)
-#include <FL/gl.h>
+#if defined(HAVE_OPENGL)
 #include "drawContext.h"
 #endif
 
@@ -44,7 +43,7 @@ extern "C"
 
 void GMSH_StreamLinesPlugin::draw(void *context)
 {
-#if defined(HAVE_FLTK)
+#if defined(HAVE_OPENGL)
   glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
   drawContext *ctx = (drawContext*)context;
   double p[3];

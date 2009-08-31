@@ -3,7 +3,6 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include <FL/gl.h>
 #include "openglWindow.h"
 #include "graphicWindow.h"
 #include "manipWindow.h"

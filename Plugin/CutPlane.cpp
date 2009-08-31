@@ -7,7 +7,7 @@
 #include "CutPlane.h"
 #include "Context.h"
 
-#if defined(HAVE_FLTK)
+#if defined(HAVE_OPENGL)
 #include "drawContext.h"
 #endif
 
@@ -34,7 +34,7 @@ extern "C"
 
 void GMSH_CutPlanePlugin::draw(void *context)
 {
-#if defined(HAVE_FLTK)
+#if defined(HAVE_OPENGL)
   int num = (int)CutPlaneOptions_Number[7].def;
   drawContext *ctx = (drawContext*)context;
   if(num < 0) num = iview;

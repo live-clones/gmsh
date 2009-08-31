@@ -10,8 +10,7 @@
 #include "Context.h"
 #include "mathEvaluator.h"
 
-#if defined(HAVE_FLTK)
-#include <FL/gl.h>
+#if defined(HAVE_OPENGL)
 #include "drawContext.h"
 #endif
 
@@ -81,7 +80,7 @@ int GMSH_CutParametricPlugin::fillXYZ()
 
 void GMSH_CutParametricPlugin::draw(void *context)
 {
-#if defined(HAVE_FLTK)
+#if defined(HAVE_OPENGL)
   if(recompute){
     fillXYZ();
     recompute = 0;

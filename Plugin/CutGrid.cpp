@@ -8,8 +8,7 @@
 #include "CutGrid.h"
 #include "Context.h"
 
-#if defined(HAVE_FLTK)
-#include <FL/gl.h>
+#if defined(HAVE_OPENGL)
 #include "drawContext.h"
 #endif
 
@@ -39,7 +38,7 @@ extern "C"
 
 void GMSH_CutGridPlugin::draw(void *context)
 {
-#if defined(HAVE_FLTK)
+#if defined(HAVE_OPENGL)
   glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
   double p[3];
 

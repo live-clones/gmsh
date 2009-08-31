@@ -39,7 +39,7 @@
 #include "PluginManager.h"
 #endif
 
-#if defined(HAVE_FLTK)
+#if defined(HAVE_OPENGL)
 #include "drawContext.h"
 #endif
 
@@ -2224,7 +2224,6 @@ Command :
 	Msg::StatusBar(2, true, "Read '%s'", tmpstring);
       }
       else if(!strcmp($1, "Print")){
-#if defined(HAVE_FLTK)
 	// make sure we have the latest data from GEO_Internals in GModel
 	// (fixes bug where we would have no geometry in the picture if
 	// the print command is in the same file as the geometry)
@@ -2232,15 +2231,12 @@ Command :
 	char tmpstring[1024];
 	FixRelativePath($2, tmpstring);
 	CreateOutputFile(tmpstring, CTX::instance()->print.format);
-#endif
       }
       else if(!strcmp($1, "Save")){
-#if defined(HAVE_FLTK)
 	GModel::current()->importGEOInternals();
 	char tmpstring[1024];
 	FixRelativePath($2, tmpstring);
 	CreateOutputFile(tmpstring, CTX::instance()->mesh.format);
-#endif
       }
       else if(!strcmp($1, "Merge") || !strcmp($1, "MergeWithBoundingBox")){
 	// MergeWithBoundingBox is deprecated
@@ -2366,7 +2362,7 @@ Command :
     } 
    | tDraw tEND
     {
-#if defined(HAVE_FLTK)
+#if defined(HAVE_OPENGL)
       drawContext::global()->draw();
 #endif
     }

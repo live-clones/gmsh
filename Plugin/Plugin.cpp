@@ -8,7 +8,8 @@
 #include "GmshConfig.h"
 #include "Plugin.h"
 #include "Context.h"
-#if defined(HAVE_FLTK)
+
+#if defined(HAVE_OPENGL)
 #include "drawContext.h"
 #endif
 
@@ -16,7 +17,7 @@ void (*GMSH_Plugin::draw)(void*) = 0;
 
 void GMSH_Plugin::setDrawFunction(void (*fct)(void *))
 {
-#if defined(HAVE_FLTK)
+#if defined(HAVE_OPENGL)
   draw = fct;
   int old = CTX::instance()->drawBBox;
   CTX::instance()->drawBBox = 1;

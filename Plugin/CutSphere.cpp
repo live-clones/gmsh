@@ -8,7 +8,7 @@
 #include "CutSphere.h"
 #include "Context.h"
 
-#if defined(HAVE_FLTK)
+#if defined(HAVE_OPENGL)
 #include "drawContext.h"
 #endif
 
@@ -32,7 +32,7 @@ extern "C"
 
 void GMSH_CutSpherePlugin::draw(void *context)
 {
-#if defined(HAVE_FLTK)
+#if defined(HAVE_OPENGL)
   GLint mode[2];
   glGetIntegerv(GL_POLYGON_MODE, mode);
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
