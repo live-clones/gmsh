@@ -2415,6 +2415,7 @@ contextItem menu_mesh[] = {
 #if defined(HAVE_FOURIER_MODEL)
   {"Reparameterize",   (Fl_Callback *)mesh_parameterize_cb} , 
 #endif
+  //not polished enough for public release
   {"Reclassify",   (Fl_Callback *)mesh_classify_cb} , 
   {"Save",         (Fl_Callback *)mesh_save_cb} ,
   {""} 
