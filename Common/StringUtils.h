@@ -14,6 +14,7 @@ void SwapBytes(char *array, int size, int n);
 std::string ExtractDoubleQuotedString(const char *str, int len);
 std::string SanitizeTeXString(const char *in, int equation);
 std::string FixWindowsPath(const char *in);
+std::string FixRelativePath(std::string reference, std::string in);
 std::vector<std::string> SplitFileName(std::string fileName);
 std::vector<std::string> SplitWhiteSpace(std::string in, unsigned int len);
 void ReplaceMultiFormat(const char *in, const char *val, char *out);

@@ -73,6 +73,21 @@ std::string FixWindowsPath(const char *in)
 #endif
 }
 
+std::string FixRelativePath(std::string reference, std::string in)
+{
+  if(in.empty()) return "";
+
+  if(in[0] == '/' || in[0] == '\\' || (in.size() > 2 && in[1] == ':')){
+    // do nothing: 'in' is an absolute path
+    return in;
+  }
+  else{
+    // append 'in' to the path of the parent file
+    std::vector<std::string> split = SplitFileName(reference);
+    return split[0] + in;
+  }
+}
+
 std::vector<std::string> SplitFileName(std::string fileName)
 {
   // returns [path, baseName, extension]

@@ -24,27 +24,33 @@
 
 void solver_cb(Fl_Widget *w, void *data)
 {
-  static int init = 0, first[MAX_NUM_SOLVERS];
   int num = (int)(long)data;
 
-  if(!init) {
-    for(int i = 0; i < MAX_NUM_SOLVERS; i++)
-      first[i] = 1;
-    init = 1;
+  std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
+
+  // if the input file field is empty, fill it with a name guessed
+  // from the current model name (only if this file actually exists)
+  if(!strlen(FlGui::instance()->solver[num]->input[0]->value())){
+    std::string inputFile = split[0] + split[1] + SINFO[num].extension;
+    if(!StatFile(inputFile))
+      FlGui::instance()->solver[num]->input[0]->value(inputFile.c_str());
   }
-  if(first[num]) {
-    first[num] = 0;
-    std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
-    std::string file = split[0] + split[1] + SINFO[num].extension;
-    FlGui::instance()->solver[num]->input[0]->value(file.c_str());
+
+  // if the mesh file field is empty, fill it with a name guessed with
+  // from the current model name
+  if(!strlen(FlGui::instance()->solver[num]->input[1]->value())){
+    std::string meshFile = split[0] + split[1] + ".msh";
+    FlGui::instance()->solver[num]->input[1]->value(meshFile.c_str());
   }
+
   // show the window before calling Solver() to avoid race condition on
   // Windows (if the message window pops up die to an error, the window
   // callbacks get messed up)
   FlGui::instance()->solver[num]->win->show();
 
-  if(SINFO[num].nboptions) {
-    std::string file = FixWindowsPath(FlGui::instance()->solver[num]->input[0]->value());
+  std::string inputFile(FlGui::instance()->solver[num]->input[0]->value());
+  if(SINFO[num].nboptions && inputFile.size()) {
+    std::string file = FixWindowsPath(inputFile.c_str());
     char tmp[256], tmp2[256];
     sprintf(tmp, "\"%s\"", file.c_str());
     sprintf(tmp2, SINFO[num].name_command.c_str(), tmp);
@@ -129,7 +135,7 @@ static void solver_command_cb(Fl_Widget *w, void *data)
       return;
     }
     int val = FlGui::instance()->solver[num]->choice[usedopts]->value();
-    if(val < (int)SINFO[num].option[usedopts].size())
+    if(val >= 0 && val < (int)SINFO[num].option[usedopts].size())
       sprintf(command, SINFO[num].button_command[idx].c_str(), 
               SINFO[num].option[usedopts][val].c_str());
     else{

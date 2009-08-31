@@ -7,14 +7,19 @@
 #include <stdlib.h>
 #include "GmshConfig.h"
 #include "GmshDefines.h"
-#include "GModel.h"
 #include "GmshMessage.h"
+#include "StringUtils.h"
+#include "GModel.h"
 #include "Generator.h"
 #include "Context.h"
 #include "Options.h"
 #include "DefaultOptions.h"
 #include "Field.h"
 #include "BackgroundMesh.h"
+
+#if !defined(HAVE_NO_PARSER)
+#include "Parser.h"
+#endif
 
 #if !defined(HAVE_NO_POST)
 #include "PView.h"
@@ -1146,6 +1151,50 @@ std::string opt_solver_help4(OPT_ARGS_STR)
   return opt_solver_help(4, action, val);
 }
 
+std::string opt_solver_input_name(OPT_ARGS_STR)
+{
+#if defined(HAVE_FLTK)
+  if(action & GMSH_SET){
+#if !defined(HAVE_NO_PARSER)
+    SINFO[num].input_name = FixRelativePath(gmsh_yyname, val);
+#else
+    SINFO[num].input_name = val;
+#endif
+  }
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->solver[num]->input[0]->value
+      (SINFO[num].input_name.c_str());
+  return SINFO[num].input_name;
+#else
+  return "undefined";
+#endif
+}
+
+std::string opt_solver_input_name0(OPT_ARGS_STR)
+{
+  return opt_solver_input_name(0, action, val);
+}
+
+std::string opt_solver_input_name1(OPT_ARGS_STR)
+{
+  return opt_solver_input_name(1, action, val);
+}
+
+std::string opt_solver_input_name2(OPT_ARGS_STR)
+{
+  return opt_solver_input_name(2, action, val);
+}
+
+std::string opt_solver_input_name3(OPT_ARGS_STR)
+{
+  return opt_solver_input_name(3, action, val);
+}
+
+std::string opt_solver_input_name4(OPT_ARGS_STR)
+{
+  return opt_solver_input_name(4, action, val);
+}
+
 std::string opt_solver_extension(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
@@ -1185,8 +1234,16 @@ std::string opt_solver_extension4(OPT_ARGS_STR)
 std::string opt_solver_mesh_name(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
-  if(action & GMSH_SET)
+  if(action & GMSH_SET){
+#if !defined(HAVE_NO_PARSER)
+    SINFO[num].mesh_name = FixRelativePath(gmsh_yyname, val);
+#else
     SINFO[num].mesh_name = val;
+#endif
+  }
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->solver[num]->input[1]->value
+      (SINFO[num].mesh_name.c_str());
   return SINFO[num].mesh_name;
 #else
   return "undefined";
@@ -1223,9 +1280,6 @@ std::string opt_solver_mesh_command(OPT_ARGS_STR)
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
     SINFO[num].mesh_command = val;
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->solver[num]->input[1]->value
-      (SINFO[num].mesh_name.c_str());
   return SINFO[num].mesh_command;
 #else
   return "undefined";

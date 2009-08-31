@@ -13,6 +13,7 @@
 #include "MallocUtils.h"
 #include "ListUtils.h"
 #include "TreeUtils.h"
+#include "StringUtils.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "GModel.h"
@@ -72,7 +73,6 @@ void yymsg(int level, const char *fmt, ...);
 void skip_until(const char *skip, const char *until);
 int PrintListOfDouble(char *format, List_T *list, char *buffer);
 gmshMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
-void FixRelativePath(const char *in, char *out);
 %}
 
 %union {
@@ -191,11 +191,10 @@ Printf :
     }
   | tPrintf '(' tBIGSTR ')' SendToFile StringExprVar tEND
     {
-      char tmpstring[1024];
-      FixRelativePath($6, tmpstring);
-      FILE *fp = fopen(tmpstring, $5);
+      std::string tmp = FixRelativePath(gmsh_yyname, $6);
+      FILE *fp = fopen(tmp.c_str(), $5);
       if(!fp){
-	yymsg(0, "Unable to open file '%s'", tmpstring);
+	yymsg(0, "Unable to open file '%s'", tmp.c_str());
       }
       else{
 	fprintf(fp, "%s\n", $3);
@@ -226,11 +225,10 @@ Printf :
       else if(i > 0)
 	yymsg(0, "%d extra argument%s in Printf", i, (i > 1) ? "s" : "");
       else{
-	char tmpstring2[1024];
-	FixRelativePath($8, tmpstring2);
-	FILE *fp = fopen(tmpstring2, $7);
+        std::string tmp = FixRelativePath(gmsh_yyname, $8);
+	FILE *fp = fopen(tmp.c_str(), $7);
 	if(!fp){
-	  yymsg(0, "Unable to open file '%s'", tmpstring2);
+	  yymsg(0, "Unable to open file '%s'", tmp.c_str());
 	}
 	else{
 	  fprintf(fp, "%s\n", tmpstring);
@@ -2209,8 +2207,7 @@ Command :
     tSTRING StringExpr tEND
     {
       if(!strcmp($1, "Include")){
-	char tmpstring[1024];
-	FixRelativePath($2, tmpstring);
+        std::string tmp = FixRelativePath(gmsh_yyname, $2);
 	// Warning: we *don't* close included files (to allow user
 	// functions in these files). If you need to include many many
 	// files and don't have functions in the files, use "Merge"
@@ -2218,31 +2215,28 @@ Command :
 	// open simultaneously. The right solution would be of course
 	// to modify FunctionManager to reopen the files instead of
 	// using the FILE pointer, but hey, I'm lazy...
-	Msg::StatusBar(2, true, "Reading '%s'", tmpstring);
-	ParseFile(tmpstring, false, true);
+	Msg::StatusBar(2, true, "Reading '%s'", tmp.c_str());
+	ParseFile(tmp, false, true);
 	SetBoundingBox();
-	Msg::StatusBar(2, true, "Read '%s'", tmpstring);
+	Msg::StatusBar(2, true, "Read '%s'", tmp.c_str());
       }
       else if(!strcmp($1, "Print")){
 	// make sure we have the latest data from GEO_Internals in GModel
 	// (fixes bug where we would have no geometry in the picture if
 	// the print command is in the same file as the geometry)
 	GModel::current()->importGEOInternals();
-	char tmpstring[1024];
-	FixRelativePath($2, tmpstring);
-	CreateOutputFile(tmpstring, CTX::instance()->print.format);
+        std::string tmp = FixRelativePath(gmsh_yyname, $2);
+	CreateOutputFile(tmp, CTX::instance()->print.format);
       }
       else if(!strcmp($1, "Save")){
 	GModel::current()->importGEOInternals();
-	char tmpstring[1024];
-	FixRelativePath($2, tmpstring);
-	CreateOutputFile(tmpstring, CTX::instance()->mesh.format);
+        std::string tmp = FixRelativePath(gmsh_yyname, $2);
+	CreateOutputFile(tmp, CTX::instance()->mesh.format);
       }
       else if(!strcmp($1, "Merge") || !strcmp($1, "MergeWithBoundingBox")){
 	// MergeWithBoundingBox is deprecated
-	char tmpstring[1024];
-	FixRelativePath($2, tmpstring);
-	MergeFile(tmpstring, true);
+        std::string tmp = FixRelativePath(gmsh_yyname, $2);
+	MergeFile(tmp, true);
       }
       else if(!strcmp($1, "System"))
 	SystemCall($2);
@@ -2256,9 +2250,8 @@ Command :
       if(!strcmp($1, "Save") && !strcmp($2, "View")){
 	int index = (int)$4;
 	if(index >= 0 && index < (int)PView::list.size()){
-	  char tmpstring[1024];
-	  FixRelativePath($6, tmpstring);
-	  PView::list[index]->write(tmpstring, CTX::instance()->post.fileFormat);
+          std::string tmp = FixRelativePath(gmsh_yyname, $6);
+	  PView::list[index]->write(tmp, CTX::instance()->post.fileFormat);
 	}
 	else
 	  yymsg(0, "Unknown view %d", index);
@@ -3906,23 +3899,6 @@ gmshMatrix<double> ListOfListOfDouble2Matrix(List_T *list)
     List_Delete(*(List_T**)List_Pointer(list, i));
   List_Delete(list);
   return mat;
-}
-
-void FixRelativePath(const char *in, char *out)
-{
-  if(in[0] == '/' || in[0] == '\\' || (strlen(in)>2 && in[1] == ':')){
-    // do nothing: 'in' is an absolute path
-    strcpy(out, in);
-  }
-  else{
-    // append 'in' to the path of the parent file
-    strcpy(out, gmsh_yyname.c_str());
-    int i = strlen(out) - 1 ;
-    while(i >= 0 && gmsh_yyname.c_str()[i] != '/' && 
-          gmsh_yyname.c_str()[i] != '\\') i-- ;
-    out[i+1] = '\0';
-    strcat(out, in);
-  }
 }
 
 void yyerror(const char *s)

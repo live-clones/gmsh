@@ -15,7 +15,7 @@
 class GmshServer;
 
 typedef struct{
-  std::string name, extension, executable_name;
+  std::string name, input_name, extension, executable_name;
   std::string mesh_name, mesh_command;
   std::string socket_command;
   std::string name_command;
