@@ -13,7 +13,7 @@ class discreteRegion : public GRegion {
  public:
   discreteRegion(GModel *model, int num);
   virtual ~discreteRegion() {}
-  virtual GeomType geomType() const {  return DiscreteVolume; }
+  virtual GeomType geomType() const { return DiscreteVolume; }
   void setBoundFaces();
 };
 

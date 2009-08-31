@@ -104,9 +104,7 @@ class GModel
 
   // the set of all used mesh partition numbers
   std::set<int> meshPartitions;
-
   int partitionSize[2];
-  std::map<int, GEdge*> mesh2Topo;
 
  public:
   GModel(std::string name="");
@@ -155,7 +153,8 @@ class GModel
   int getNumEdges() const { return edges.size(); }
   int getNumVertices() const { return vertices.size(); }
 
-  // quickly check if the model is empty (contains no entities)
+  // quickly check if the model is empty (i.e., if it contains no
+  // entities)
   bool empty() const;
 
   // region, face, edge and vertex iterators
@@ -174,7 +173,7 @@ class GModel
   eiter lastEdge() { return edges.end(); }
   viter lastVertex() { return vertices.end(); }
 
-  // find the entity with the given tag.
+  // find the entity with the given tag
   GRegion *getRegionByTag(int n) const;
   GFace *getFaceByTag(int n) const;
   GEdge *getEdgeByTag(int n) const;

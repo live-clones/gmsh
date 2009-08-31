@@ -18,7 +18,7 @@ discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
   meshStatistics.status = GFace::DONE;    
 }
 
-void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge > &map_edges)
+void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge> &map_edges)
 {
   // find the boundary edges
   std::list<MEdge> bound_edges;
@@ -43,7 +43,7 @@ void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge > &map_
     if (itmap == map_edges.end()){
       std::vector<int> tagFaces; 
       tagFaces.push_back(tag());
-      map_edges.insert(std::make_pair(*itv, tagFaces));   
+      map_edges.insert(std::make_pair(*itv, tagFaces));
     }
     else{
       std::vector<int> tagFaces = itmap->second;
