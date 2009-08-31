@@ -82,7 +82,7 @@ std::string FixRelativePath(std::string reference, std::string in)
     return in;
   }
   else{
-    // append 'in' to the path of the parent file
+    // append 'in' to the path of the reference file
     std::vector<std::string> split = SplitFileName(reference);
     return split[0] + in;
   }

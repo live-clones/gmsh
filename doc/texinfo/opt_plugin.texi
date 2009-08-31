@@ -585,10 +585,10 @@ Default value: @code{0}
 Default value: @code{0}
 @item ComputeGenerators
 Default value: @code{1}
-@item ComputeThickCuts
+@item ComputeDualGenerators
 Default value: @code{0}
-@item OmitDimensions
-Default value: @code{1}
+@item ComputeBettiNumbers
+Default value: @code{0}
 @end table
 
 @item Plugin(Integrate)

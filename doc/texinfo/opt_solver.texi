@@ -28,6 +28,11 @@ System command to launch solver 0 (should not contain the `&' character)@*
 Default value: @code{"getdp"}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Solver.InputName0
+Default input file name for solver 0@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Solver.Extension0
 Default file name extension for solver 0@*
 Default value: @code{".pro"}@*
@@ -145,6 +150,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Solver.Executable1
 System command to launch solver 1 (should not contain the `&' character)@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.InputName1
+Default input file name for solver 1@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -268,6 +278,11 @@ System command to launch solver 2 (should not contain the `&' character)@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Solver.InputName2
+Default input file name for solver 2@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Solver.Extension2
 Default file name extension for solver 2@*
 Default value: @code{""}@*
@@ -388,6 +403,11 @@ System command to launch solver 3 (should not contain the `&' character)@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Solver.InputName3
+Default input file name for solver 3@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Solver.Extension3
 Default file name extension for solver 3@*
 Default value: @code{""}@*
@@ -505,6 +525,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Solver.Executable4
 System command to launch solver 4 (should not contain the `&' character)@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.InputName4
+Default input file name for solver 4@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
