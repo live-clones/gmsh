@@ -496,12 +496,14 @@ static void _add_region(GRegion *gr, Fl_Tree *tree, std::string path)
 }
 
 static void _add_physical_group(int dim, int num, std::vector<GEntity*> &ge,
+				std::map<int, std::string> &oldLabels, 
                                 Fl_Tree *tree, std::string path)
 {
   if(ge.empty()) return;
-  std::string name;
-  if(ge[0]->model()->getPhysicalName(dim, num).size())
-    name += std::string(" <<") + ge[0]->model()->getPhysicalName(dim, num) + ">>";
+  std::string name = ge[0]->model()->getPhysicalName(dim, num);
+  if(name.empty() && oldLabels.count(num)) name = oldLabels[num];
+  if(name.size()) name = std::string(" <<") + name + ">>";
+
   Fl_Tree_Item *n;
   std::ostringstream group;
   group << path;
@@ -591,10 +593,17 @@ static void _rebuild_tree_browser(bool force)
 
     std::map<int, std::vector<GEntity*> > groups[4];
     m->getPhysicalGroups(groups);
+    std::map<int, std::string> oldLabels;
+#if !defined(HAVE_NO_PARSER)
+    for(std::map<std::string, std::vector<double> >::iterator it = gmsh_yysymbols.begin();
+        it != gmsh_yysymbols.end(); ++it)
+      for(unsigned int i = 0; i < it->second.size(); i++)
+        oldLabels[(int)it->second[i]] = it->first;
+#endif
     for(int i = 3; i >= 0; i--)
       for(std::map<int, std::vector<GEntity*> >::iterator it = groups[i].begin();
           it != groups[i].end(); it++)
-        _add_physical_group(i, it->first, it->second,
+        _add_physical_group(i, it->first, it->second, oldLabels,
                             FlGui::instance()->visibility->tree, physical);
   }
 
