@@ -33,13 +33,6 @@
 #include "PView.h"
 #endif
 
-#if !defined(GMSH_EXTRA_VERSION)
-#error
-#error Common/GmshVersion.h is not up-to-date.
-#error Please run 'make tag'.
-#error
-#endif
-
 int GetGmshMajorVersion(){ return GMSH_MAJOR_VERSION; }
 int GetGmshMinorVersion(){ return GMSH_MINOR_VERSION; }
 int GetGmshPatchVersion(){ return GMSH_PATCH_VERSION; }
