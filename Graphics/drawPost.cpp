@@ -23,7 +23,7 @@
 
 // we only really draw first order elements (high order ones should
 // always be subdivided in adaptiveView beforehand)
-#define NMAX 35 // SHOULD BE 8!
+#define NMAX 8
 
 static void saturate(int nb, double val[NMAX][9], double vmin, double vmax, 
                      int i0=0, int i1=1, int i2=2, int i3=3, 
