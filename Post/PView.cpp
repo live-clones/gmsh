@@ -223,9 +223,20 @@ void PView::combine(bool time, int how, bool remove)
       PView *p = new PView();
       PViewData *data = p->getData();
       bool res = time ? data->combineTime(nds[i]): data->combineSpace(nds[i]);
-      if(res)
+      if(res){
         for(unsigned int j = 0; j < nds[i].indices.size(); j++)
           rm.insert(list[nds[i].indices[j]]);
+
+        PViewOptions *opt = p->getOptions();
+        if(opt->adaptVisualizationGrid){
+          // the (empty) adaptive data created in PView() must be
+          // recreated, since we added some data
+          data->destroyAdaptiveData();
+          data->initAdaptiveData
+            (opt->timeStep, opt->maxRecursionLevel, opt->targetError);
+        }
+
+      }
       else
         delete p;
     }
