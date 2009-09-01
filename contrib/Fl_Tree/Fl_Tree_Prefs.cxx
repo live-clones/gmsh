@@ -113,7 +113,12 @@ Fl_Tree_Prefs::Fl_Tree_Prefs() {
     // Let fltk's current 'scheme' affect defaults
     if ( Fl::scheme() ) {
 	if ( strcmp(Fl::scheme(), "gtk+") == 0 ) {
-	    _selectbox = _FL_GTK_THIN_UP_BOX;
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1) && (FL_PATCH_VERSION < 9)
+          // GMSH PATCH for fltk < 1.1.9 compat
+          _selectbox = FL_FLAT_BOX;
+#else
+          _selectbox = _FL_GTK_THIN_UP_BOX;
+#endif
 	} else if ( strcmp(Fl::scheme(), "plastic") == 0 ) {
 	    _selectbox = _FL_PLASTIC_THIN_UP_BOX;
 	}
