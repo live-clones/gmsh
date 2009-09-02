@@ -9,6 +9,7 @@
 #include "SVector3.h"
 #include "GmshMatrix.h"
 #include "Numeric.h"
+
 // concrete class for symmetric positive definite 3x3 matrix
 class SMetric3 {
  protected:

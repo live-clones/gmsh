@@ -56,7 +56,7 @@ set(GMSH_API
   ${CMAKE_BINARY_DIR}/Common/GmshConfig.h 
   ${CMAKE_BINARY_DIR}/Common/GmshVersion.h
   Common/Gmsh.h Common/GmshDefines.h Common/GmshMessage.h Common/VertexArray.h
-  Numeric/Gauss.h Numeric/FunctionSpace.h Numeric/GmshMatrix.h
+  Numeric/Numeric.h Numeric/Gauss.h Numeric/FunctionSpace.h Numeric/GmshMatrix.h
     Numeric/gmshAssembler.h Numeric/gmshTermOfFormulation.h 
     Numeric/gmshLaplace.h Numeric/gmshElasticity.h Numeric/gmshLinearSystem.h
     Numeric/gmshLinearSystemGmm.h Numeric/gmshLinearSystemFull.h 
@@ -68,8 +68,10 @@ set(GMSH_API
     Geo/MQuadrangle.h Geo/MTetrahedron.h Geo/MHexahedron.h Geo/MPrism.h 
     Geo/MPyramid.h Geo/MElementCut.h Geo/discreteVertex.h Geo/discreteEdge.h
     Geo/discreteFace.h Geo/discreteRegion.h Geo/SPoint2.h Geo/SPoint3.h
-    Geo/SVector3.h Geo/SBoundingBox3d.h Geo/Pair.h Geo/Range.h 
+    Geo/SVector3.h Geo/STensor3.h Geo/SBoundingBox3d.h Geo/Pair.h Geo/Range.h 
     Geo/SOrientedBoundingBox.h Geo/CellComplex.h Geo/ChainComplex.h
+  Mesh/meshGEdge.h Mesh/meshGFace.h Mesh/meshGFaceOptimize.h 
+    Mesh/meshGFaceDelaunayInsertion.h
   Post/PView.h Post/PViewData.h Plugin/PluginManager.h
   Graphics/drawContext.h
   contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h 
