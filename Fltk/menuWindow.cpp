@@ -47,6 +47,7 @@
 #include "GeoStringInterface.h"
 #include "Options.h"
 #include "Context.h"
+#include "GmshSocket.h"
 
 static void file_new_cb(Fl_Widget *w, void *data)
 {
@@ -143,6 +144,45 @@ static void file_clear_cb(Fl_Widget *w, void *data)
 {
   ClearProject();
   drawContext::global()->draw();
+}
+
+static void file_remote_cb(Fl_Widget *w, void *data)
+{
+  std::string str((const char*)data);
+
+  if(str == "connect"){
+    Msg::Info("Starting remote Gmsh");
+    if(SINFO[MAX_NUM_SOLVERS].server){
+      Msg::Info("A server is already running, trying to stop it first");
+      SINFO[MAX_NUM_SOLVERS].server->SendString(GmshSocket::STOP, "DISCONNECTING!");
+    }
+    SINFO[MAX_NUM_SOLVERS].name = "Gmsh Daemon";
+    SINFO[MAX_NUM_SOLVERS].executable_name = "./gmsh";
+    SINFO[MAX_NUM_SOLVERS].socket_command = "-socket %s";
+    SINFO[MAX_NUM_SOLVERS].nboptions = 0;
+    SINFO[MAX_NUM_SOLVERS].client_server = 1;
+    SINFO[MAX_NUM_SOLVERS].popup_messages = 1;
+    SINFO[MAX_NUM_SOLVERS].merge_views = 1;
+    Solver(MAX_NUM_SOLVERS, "");
+  }
+  else if(str == "disconnect"){
+    if(SINFO[MAX_NUM_SOLVERS].server){
+      Msg::Info("Stopping remote Gmsh");
+      SINFO[MAX_NUM_SOLVERS].server->SendString(GmshSocket::STOP, "DISCONNECTING!");
+    }
+    else{
+      Msg::Warning("Cannot disconnect remote Gmsh: server not running");
+    }
+  }
+  else if(str == "test"){
+    if(SINFO[MAX_NUM_SOLVERS].server){
+      Msg::Info("Testing remote Gmsh daemon");
+      SINFO[MAX_NUM_SOLVERS].server->SendString(9999, "GENERATE A VIEW!");
+    }
+    else{
+      Msg::Warning("Cannot test remote Gmsh: must be connected first!");
+    }
+  }
 }
 
 static void file_window_cb(Fl_Widget *w, void *data)
@@ -2197,6 +2237,11 @@ static Fl_Menu_Item sysbar_table[] = {
       {"Vertically",   0, (Fl_Callback *)file_window_cb, (void*)"split_v"},
       {"Clear",        0, (Fl_Callback *)file_window_cb, (void*)"split_u"},
       {0},
+#if 0 // test remote gmsh daemon
+    {"Connect...",  0, (Fl_Callback *)file_remote_cb, (void*)"connect"},
+    {"Test remote!",  0, (Fl_Callback *)file_remote_cb, (void*)"test"},
+    {"Disconnect",  0, (Fl_Callback *)file_remote_cb, (void*)"disconnect", FL_MENU_DIVIDER},
+#endif
     {"Rename...",  FL_META+'r', (Fl_Callback *)file_rename_cb, 0},
     {"Save As...", FL_META+'s', (Fl_Callback *)file_save_as_cb, 0},
     {"Save Mesh",  FL_META+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0},

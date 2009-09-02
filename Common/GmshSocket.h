@@ -40,20 +40,20 @@ class GmshSocket{
   // receive data from a machine with a different byte ordering, and
   // we swap the bytes in the payload)
   enum MessageType{ 
-    CLIENT_START        = 1,
-    CLIENT_STOP         = 2,
-    CLIENT_INFO         = 10,
-    CLIENT_WARNING      = 11,
-    CLIENT_ERROR        = 12,
-    CLIENT_PROGRESS     = 13,
-    CLIENT_MERGE_FILE   = 20, // old name: CLIENT_VIEW
-    CLIENT_PARSE_STRING = 21,
-    CLIENT_SPEED_TEST   = 30,
-    CLIENT_OPTION_1     = 100,
-    CLIENT_OPTION_2     = 101,
-    CLIENT_OPTION_3     = 102,
-    CLIENT_OPTION_4     = 103,
-    CLIENT_OPTION_5     = 104};
+    START        = 1,
+    STOP         = 2,
+    INFO         = 10,
+    WARNING      = 11,
+    ERROR        = 12,
+    PROGRESS     = 13,
+    MERGE_FILE   = 20,
+    PARSE_STRING = 21,
+    SPEED_TEST   = 30,
+    OPTION_1     = 100,
+    OPTION_2     = 101,
+    OPTION_3     = 102,
+    OPTION_4     = 103,
+    OPTION_5     = 104};
  protected:
   // the socket descriptor
   int _sock;
@@ -181,6 +181,10 @@ class GmshSocket{
     closesocket(s);
 #endif
   }
+  void ShutdownSocket(int s)
+  {
+    shutdown(s, SHUT_RDWR);
+  }
 };
 
 class GmshClient : public GmshSocket {
@@ -189,8 +193,8 @@ class GmshClient : public GmshSocket {
   ~GmshClient(){}
   int Connect(const char *sockname)
   {
-    // slight delay to be sure that the socket is bound by the
-    // server before we attempt to connect to it...
+    // slight delay to make sure that the socket is bound by the
+    // server before we attempt to connect to it
     _Sleep(100);
 
     if(strstr(sockname, "/") || strstr(sockname, "\\") || !strstr(sockname, ":")){
@@ -257,23 +261,21 @@ class GmshClient : public GmshSocket {
 #else
     sprintf(tmp, "%d", _getpid());
 #endif
-    SendString(CLIENT_START, tmp);
+    SendString(START, tmp);
   }
-  void Stop(){ SendString(CLIENT_STOP, "Goodbye!"); }
-  void Info(const char *str){ SendString(CLIENT_INFO, str); }
-  void Warning(const char *str){ SendString(CLIENT_WARNING, str); }
-  void Error(const char *str){ SendString(CLIENT_ERROR, str); }
-  void Progress(const char *str){ SendString(CLIENT_PROGRESS, str); }
-  // deprecated: use MergeFile instead
-  void View(const char *str){ SendString(CLIENT_MERGE_FILE, str); }
-  void MergeFile(const char *str){ SendString(CLIENT_MERGE_FILE, str); }
-  void ParseString(const char *str){ SendString(CLIENT_PARSE_STRING, str); }
-  void SpeedTest(const char *str){ SendString(CLIENT_SPEED_TEST, str); }
+  void Stop(){ SendString(STOP, "Goodbye!"); }
+  void Info(const char *str){ SendString(INFO, str); }
+  void Warning(const char *str){ SendString(WARNING, str); }
+  void Error(const char *str){ SendString(ERROR, str); }
+  void Progress(const char *str){ SendString(PROGRESS, str); }
+  void MergeFile(const char *str){ SendString(MERGE_FILE, str); }
+  void ParseString(const char *str){ SendString(PARSE_STRING, str); }
+  void SpeedTest(const char *str){ SendString(SPEED_TEST, str); }
   void Option(int num, const char *str)
   {
     if(num < 1) num = 1;
     if(num > 5) num = 5;
-    SendString(CLIENT_OPTION_1 + num - 1, str);
+    SendString(OPTION_1 + num - 1, str);
   }
   void Disconnect(){ CloseSocket(_sock); }
 };
@@ -394,12 +396,13 @@ class GmshServer : public GmshSocket{
       return -5;  // Error: Socket accept failed
     return _sock;
   }
-  int StopClient()
+  int Shutdown()
   {
 #if !defined(WIN32) || defined(__CYGWIN__)
     if(_portno < 0)
       unlink(_sockname);
 #endif
+    ShutdownSocket(_sock);
     CloseSocket(_sock);
     return 0;
   }

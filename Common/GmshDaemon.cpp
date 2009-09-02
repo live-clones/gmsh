@@ -17,33 +17,47 @@ int GmshDaemon(std::string socket)
     return 1;
   }
   client.Start();
-  
+
+  // read large data file,
+  // initialize mpi job,
+  // then wait for commands to execute:
   while(1){
-    // wait (at most 10ms) until data is available to read
-    if(!client.Select(0, 10000)){
+    // wait at most 1 second for data
+    if(!client.Select(1, 0)){
       int type, length;
       if(client.ReceiveHeader(&type, &length)){
-        Msg::Info("Received header: type=%d length=%d", type, length);
-        char *msg = new char[length];
+        char *msg = new char[length + 1];
         if(client.ReceiveString(length, msg)){
-          Msg::Info("received string: %s", msg);
-          Msg::Info("replying by sending post data");
           std::ostringstream tmp;
-          tmp<<"View \"test\" {\n";
-          for(int i= 0; i < 100; i++){
-            for(int j= 0; j < 100; j++){
-              tmp << "SQ("<<i<<","<<j<<",0, "<<i+1<<","<<j<<",0, "
+          tmp << "Hello! I've received msg type=" << type << " len=" << length
+              << " str=" << msg;
+          client.Info(tmp.str().c_str());
+          if(type == GmshSocket::STOP){
+            client.Info("Stopping connection!");
+            delete [] msg;
+            break;
+          }
+          else{
+            std::ostringstream v;
+            v << "View \"test\" {\n";
+            for(int i= 0; i < 100; i++){
+              for(int j= 0; j < 100; j++){
+                v << "SQ("<<i<<","<<j<<",0, "<<i+1<<","<<j<<",0, "
                   <<i+1<<","<<j+1<<",0, "<<i<<","<<j+1<<",0){"
                   <<i+j<<","<<i+j<<","<<i+j<<","<<i+j<<"};\n";
+              }
             }
+            v << "};BoundingBox;\n";
+            client.ParseString(v.str().c_str());
           }
-          tmp<<"};BoundingBox;\n";
-          client.ParseString(tmp.str().c_str());
         }
         delete [] msg;
-        //printf("stopping connection!\n");
-        //break;
       }
+    }
+    else{
+      // ping the server so we automatically crash of it goes down :-)
+      printf("printf ping!\n");
+      client.Info("Ping!");
     }
   }
 

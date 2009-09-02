@@ -30,8 +30,9 @@ typedef struct{
   GmshServer *server;
 } SolverInfo ;
 
-extern SolverInfo SINFO[MAX_NUM_SOLVERS];
+extern SolverInfo SINFO[MAX_NUM_SOLVERS + 1];
 
+std::string GetSocketName(int num);
 int Solver(int num, const char *args);
 
 #endif

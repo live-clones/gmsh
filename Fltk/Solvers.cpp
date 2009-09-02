@@ -5,6 +5,7 @@
 
 #include <string.h>
 #include <string>
+#include <sstream>
 #include "FlGui.h"
 #include "solverWindow.h"
 #include "menuWindow.h"
@@ -18,7 +19,7 @@
 #include "Context.h"
 #include "OS.h"
 
-SolverInfo SINFO[MAX_NUM_SOLVERS];
+SolverInfo SINFO[MAX_NUM_SOLVERS + 1];
 
 class myGmshServer : public GmshServer{
  public:
@@ -64,6 +65,26 @@ class myGmshServer : public GmshServer{
   }
 };
 
+std::string GetSocketName(int num)
+{
+  std::string sockname;
+  if(!strstr(CTX::instance()->solver.socketName.c_str(), ":")){
+    // Unix socket
+    std::ostringstream tmp;
+    tmp << CTX::instance()->homeDir << CTX::instance()->solver.socketName;
+    if(num >= 0) tmp << "-" << num;
+    sockname = FixWindowsPath(tmp.str().c_str());
+  }
+  else{
+    // TCP/IP socket
+    sockname = CTX::instance()->solver.socketName;
+    // if only the port is given, prepend the host name
+    if(sockname.size() && sockname[0] == ':')
+      sockname = GetHostName() + sockname;
+  }
+  return sockname;
+}
+
 // This routine either launches a solver and waits for some answer (if
 // num >= 0), or simply waits for messages (if num < 0)
 
@@ -95,25 +116,7 @@ int Solver(int num, const char *args)
     prog = command = "";
   }
 
-  if(!strstr(CTX::instance()->solver.socketName.c_str(), ":")){
-    // Unix socket
-    char tmp[1024];
-    if(num >= 0)
-      sprintf(tmp, "%s%s-%d", CTX::instance()->homeDir.c_str(), 
-              CTX::instance()->solver.socketName.c_str(),
-              num);
-    else
-      sprintf(tmp, "%s%s", CTX::instance()->homeDir.c_str(), 
-              CTX::instance()->solver.socketName.c_str());
-    sockname = FixWindowsPath(tmp);
-  }
-  else{
-    // TCP/IP socket
-    sockname = CTX::instance()->solver.socketName;
-    // if only the port is given, prepend the host name
-    if(sockname.size() && sockname[0] == ':')
-      sockname = GetHostName() + sockname;
-  }
+  sockname = GetSocketName(num);
 
   if(num >= 0){
     std::string tmp2 = "\"" + sockname + "\"";
@@ -147,7 +150,7 @@ int Solver(int num, const char *args)
       break;
     case -6:
       Msg::Info("Stopped listening for solver connections");
-      server->StopClient();
+      server->Shutdown();
       break;
     case -7:
       Msg::Error("Unix sockets not available on Windows without Cygwin");
@@ -190,26 +193,26 @@ int Solver(int num, const char *args)
       char *message = new char[length + 1];
       if(server->ReceiveString(length, message)){
         switch (type) {
-        case GmshServer::CLIENT_START:
+        case GmshSocket::START:
           if(num >= 0){
             SINFO[num].pid = atoi(message);
             SINFO[num].server = server;
           }
           break;
-        case GmshServer::CLIENT_STOP:
+        case GmshSocket::STOP:
           stop = 1;
           if(num >= 0){
             SINFO[num].pid = -1;
             SINFO[num].server = 0;
           }
           break;
-        case GmshServer::CLIENT_PROGRESS:
+        case GmshSocket::PROGRESS:
           if(num >= 0)
             Msg::StatusBar(2, false, "%s %s", SINFO[num].name.c_str(), message);
           else
             Msg::StatusBar(2, false, "%s", message);
           break;
-        case GmshServer::CLIENT_OPTION_1:
+        case GmshSocket::OPTION_1:
           if(initOption[0]){
             SINFO[num].option[0].clear();
             initOption[0] = false;
@@ -217,7 +220,7 @@ int Solver(int num, const char *args)
           if(num >= 0)
             SINFO[num].option[0].push_back(message);
           break;
-        case GmshServer::CLIENT_OPTION_2:
+        case GmshSocket::OPTION_2:
           if(initOption[1]){
             SINFO[num].option[1].clear();
             initOption[1] = false;
@@ -225,7 +228,7 @@ int Solver(int num, const char *args)
           if(num >= 0)
             SINFO[num].option[1].push_back(message);
           break;
-        case GmshServer::CLIENT_OPTION_3:
+        case GmshSocket::OPTION_3:
           if(initOption[2]){
             SINFO[num].option[2].clear();
             initOption[2] = false;
@@ -233,7 +236,7 @@ int Solver(int num, const char *args)
           if(num >= 0)
             SINFO[num].option[2].push_back(message);
           break;
-        case GmshServer::CLIENT_OPTION_4:
+        case GmshSocket::OPTION_4:
           if(initOption[3]){
             SINFO[num].option[3].clear();
             initOption[3] = false;
@@ -241,7 +244,7 @@ int Solver(int num, const char *args)
           if(num >= 0)
             SINFO[num].option[3].push_back(message);
           break;
-        case GmshServer::CLIENT_OPTION_5:
+        case GmshSocket::OPTION_5:
           if(initOption[4]){
             SINFO[num].option[4].clear();
             initOption[4] = false;
@@ -249,7 +252,7 @@ int Solver(int num, const char *args)
           if(num >= 0)
             SINFO[num].option[4].push_back(message);
           break;
-        case GmshServer::CLIENT_MERGE_FILE:
+        case GmshSocket::MERGE_FILE:
           if(num < 0 || (num >= 0 && SINFO[num].merge_views)) {
             int n = PView::list.size();
             MergeFile(message);
@@ -258,23 +261,23 @@ int Solver(int num, const char *args)
               FlGui::instance()->menu->setContext(menu_post, 0);
           }
           break;
-        case GmshServer::CLIENT_PARSE_STRING:
+        case GmshSocket::PARSE_STRING:
           ParseString(message);
           drawContext::global()->draw();
           break;
-        case GmshServer::CLIENT_INFO:
+        case GmshSocket::INFO:
           Msg::Direct("%-8.8s: %s", num >= 0 ? SINFO[num].name.c_str() : "Client",
                       message);
           break;
-        case GmshServer::CLIENT_WARNING:
+        case GmshSocket::WARNING:
           Msg::Direct(2, "%-8.8s: %s", num >= 0 ? SINFO[num].name.c_str() : "Client",
                       message);
           break;
-        case GmshServer::CLIENT_ERROR:
+        case GmshSocket::ERROR:
           Msg::Direct(1, "%-8.8s: %s", num >= 0 ? SINFO[num].name.c_str() : "Client",
                       message);
           break;
-        case GmshServer::CLIENT_SPEED_TEST:
+        case GmshSocket::SPEED_TEST:
           Msg::Info("got %d Mb message in %g seconds", 
                     strlen(message) / 1024 / 1024, GetTimeInSeconds() - timer);
           break;
@@ -311,7 +314,7 @@ int Solver(int num, const char *args)
     }
   }
   
-  server->StopClient();
+  server->Shutdown();
 
   if(num >= 0){
     Msg::StatusBar(2, false, "");
