@@ -13,7 +13,7 @@ set(SRC
   StreamLines.cpp CutGrid.cpp
   Transform.cpp
     LongitudeLatitude.cpp
-  Triangulate.cpp
+  Triangulate.cpp Tetrahedralize.cpp
   Warp.cpp SphericalRaise.cpp
   Skin.cpp GSHHS.cpp 
   Extract.cpp ExtractElements.cpp ExtractEdges.cpp

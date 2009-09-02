@@ -91,11 +91,11 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
       int numComp = data1->getNumComponents(0, ent, ele);
       double x, y, z;
       data1->getNode(0, ent, ele, 0, x, y, z);
-      PointData *v = new PointData(x, y, z, numComp * numSteps);
+      PointData *p = new PointData(x, y, z, numComp * numSteps);
       for(int step = 0; step < numSteps; step++)
         for(int comp = 0; comp < numComp; comp++)
-          data1->getValue(step, ent, ele, 0, comp, v->v[3 + numComp * step + comp]);
-      points.push_back(v);
+          data1->getValue(step, ent, ele, 0, comp, p->v[3 + numComp * step + comp]);
+      points.push_back(p);
     }
   }
 

@@ -33,6 +33,7 @@
 #include "Transform.h"
 #include "LongitudeLatitude.h"
 #include "Triangulate.h"
+#include "Tetrahedralize.h"
 #include "Warp.h"
 #include "SphericalRaise.h"
 #include "Eigenvectors.h"
@@ -202,6 +203,10 @@ void PluginManager::registerDefaultPlugins()
                       ("FieldView", GMSH_RegisterFieldViewPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Triangulate", GMSH_RegisterTriangulatePlugin()));
+#if defined(HAVE_TETGEN)
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("Tetrahedralize", GMSH_RegisterTetrahedralizePlugin()));
+#endif
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("GSHHS", GMSH_RegisterGSHHSPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
