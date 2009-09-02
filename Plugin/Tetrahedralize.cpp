@@ -91,7 +91,11 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
     return v1;
   }
 
-#if defined(HAVE_TETGEN)
+#if !defined(HAVE_TETGEN)
+  Msg::Error("Gmsh has to be compiled with Tetgen support to run "
+             "Plugin(Tetrahedralize)");
+  return v1;
+#else
   // fill tetgen structure
   tetgenio in, out;
   in.mesh_dim = 3;
@@ -150,10 +154,6 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
         for(int comp = 0; comp < numComp; comp++) 
           vec->push_back(p[nod]->v[3 + numComp * step + comp]);
   }
-#else
-  Msg::Error("Gmsh has to be compiled with Tetgen support to run "
-             "Plugin(Tetrahedralize)");
-#endif
 
   for(int i = 0; i < data1->getNumTimeSteps(); i++)
     data2->Time.push_back(data1->getTime(i));
@@ -162,4 +162,5 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
   data2->finalize();
 
   return v2;
+#endif
 }
