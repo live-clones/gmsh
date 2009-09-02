@@ -2237,7 +2237,7 @@ static Fl_Menu_Item sysbar_table[] = {
       {"Vertically",   0, (Fl_Callback *)file_window_cb, (void*)"split_v"},
       {"Clear",        0, (Fl_Callback *)file_window_cb, (void*)"split_u"},
       {0},
-#if 1 // test remote gmsh daemon
+#if 0 // test remote gmsh daemon
     {"Connect...",  0, (Fl_Callback *)file_remote_cb, (void*)"connect"},
     {"Test remote!",  0, (Fl_Callback *)file_remote_cb, (void*)"test"},
     {"Disconnect",  0, (Fl_Callback *)file_remote_cb, (void*)"disconnect", FL_MENU_DIVIDER},
