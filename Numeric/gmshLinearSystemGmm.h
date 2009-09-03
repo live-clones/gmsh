@@ -111,6 +111,7 @@ public :
   virtual void zeroRightHandSide() {}
   virtual int systemSolve() { return 0; }
   void setPrec(double p){}
+  virtual void clear(){}
   void setNoisy(int n){}
   void setGmres(int n){}
 };

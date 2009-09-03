@@ -14,6 +14,8 @@ struct meshPartitionOptions
                                         // 2 - METIS
   int num_partitions;
 
+  bool createPartitionBoundaries;
+
 //--Chaco
 
   int global_method;                    // 1 - Multilevel-KL
@@ -97,6 +99,7 @@ struct meshPartitionOptions
     algorithm = 1;
     edge_matching = 3;
     refine_algorithm = 3;
+    createPartitionBoundaries = false;//true;
   }
 
 };
