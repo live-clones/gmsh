@@ -1378,7 +1378,6 @@ int GModel::readMESH(const std::string &name)
 
   std::vector<MVertex*> vertexVector;
   std::map<int, std::vector<MElement*> > elements[4];
-  std::vector<MVertex*> corners,ridges;
 
   while(!feof(fp)) {
     if(!fgets(buffer, 256, fp)) break;
@@ -1430,36 +1429,6 @@ int GModel::readMESH(const std::string &name)
           std::vector<MVertex*> vertices;
           if(!getVertices(3, n, vertexVector, vertices)) return 0;
           elements[0][cl].push_back(new MTriangle(vertices));
-        }
-      }
-      else if(!strcmp(str, "Corners")){
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
-        int nbe;
-        sscanf(buffer, "%d", &nbe);
-        Msg::Info("%d corners", nbe);
-        for(int i = 0; i < nbe; i++) {
-          if(!fgets(buffer, sizeof(buffer), fp)) break;
-          int  n[1];
-          sscanf(buffer, "%d", &n[0]);
-          for(int j = 0; j < 1; j++) n[j]--;
-          // std::vector<MVertex*> vertices;
-          // if(!getVertices(1, n, vertexVector, vertices)) return 0;
-          // corners.push_back(vertices[0]);
-        }
-      }
-      else if(!strcmp(str, "Ridges")){
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
-        int nbe;
-        sscanf(buffer, "%d", &nbe);
-        Msg::Info("%d ridges", nbe);
-        for(int i = 0; i < nbe; i++) {
-          if(!fgets(buffer, sizeof(buffer), fp)) break;
-          int  n[1];
-          sscanf(buffer, "%d", &n[0]);
-          for(int j = 0; j < 1; j++) n[j]--;
-          // std::vector<MVertex*> vertices;
-          // if(!getVertices(1, n, vertexVector, vertices)) return 0;
-          // ridges.push_back(vertices[0]);
         }
       }
       else if(!strcmp(str, "Quadrilaterals")) {
@@ -1529,7 +1498,12 @@ int GModel::writeMESH(const std::string &name, int elementTagType,
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++) 
       entities[i]->mesh_vertices[j]->writeMESH(fp, scalingFactor);
   
-  int numTriangles = 0, numQuadrangles = 0, numTetrahedra = 0;
+  int numEdges = 0, numTriangles = 0, numQuadrangles = 0, numTetrahedra = 0;
+  for(eiter it = firstEdge(); it != lastEdge(); ++it){
+    if(saveAll || (*it)->physicals.size()){
+      numEdges += (*it)->lines.size();
+    }
+  }
   for(fiter it = firstFace(); it != lastFace(); ++it){
     if(saveAll || (*it)->physicals.size()){
       numTriangles += (*it)->triangles.size();
@@ -1542,6 +1516,18 @@ int GModel::writeMESH(const std::string &name, int elementTagType,
     }
   }
 
+  if(numEdges){
+    fprintf(fp, " Edges\n");
+    fprintf(fp, " %d\n", numEdges);
+    for(eiter it = firstEdge(); it != lastEdge(); ++it){
+      int numPhys = (*it)->physicals.size();
+      if(saveAll || numPhys){
+        for(unsigned int i = 0; i < (*it)->lines.size(); i++)
+          (*it)->lines[i]->writeMESH(fp, elementTagType, (*it)->tag(), 
+                                     numPhys ? (*it)->physicals[0] : 0);
+      }
+    }
+  }
   if(numTriangles){
     fprintf(fp, " Triangles\n");
     fprintf(fp, " %d\n", numTriangles);
