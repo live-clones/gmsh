@@ -496,6 +496,7 @@ GFaceCompound::~GFaceCompound()
     Octree_Delete(oct);
     delete [] _gfct;
   }
+  if (_lsys)delete _lsys;
 }
 
 static bool orderVertices(const std::list<GEdge*> &e, std::vector<MVertex*> &l,
