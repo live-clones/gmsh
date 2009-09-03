@@ -16,6 +16,7 @@ class gmshLinearSystem {
   virtual ~gmshLinearSystem (){}
   virtual bool isAllocated() const = 0;
   virtual void allocate(int nbRows) = 0;
+  virtual void clear() = 0;
   virtual void addToMatrix(int _row, int _col, scalar val) = 0;
   virtual scalar getFromMatrix(int _row, int _col) const = 0;
   virtual void addToRightHandSide(int _row, scalar val) = 0;

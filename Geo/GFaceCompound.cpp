@@ -457,9 +457,23 @@ void GFaceCompound::computeALoop(std::set<GEdge*> &_unique, std::list<GEdge*> &l
 
 GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 			     std::list<GEdge*> &U0, std::list<GEdge*> &V0,
-			     std::list<GEdge*> &U1, std::list<GEdge*> &V1)
-  : GFace(m, tag), _compound(compound), _U0(U0), _U1(U1), _V0(V0), _V1(V1), oct(0)
+			     std::list<GEdge*> &U1, std::list<GEdge*> &V1,
+			     gmshLinearSystem<double> * lsys)
+  : GFace(m, tag), _compound(compound), _U0(U0), _U1(U1), _V0(V0), _V1(V1), oct(0),
+    _lsys(lsys)
 {
+
+#ifdef HAVE_GMM
+  if (!_lsys) {
+    gmshLinearSystemGmm<double> *_lsysb = new gmshLinearSystemGmm<double>;
+    //gmshLinearSystemCSRGmm<double> lsys;
+    _lsysb->setPrec(1.e-15);
+    if(Msg::GetVerbosity() == 99) _lsysb->setNoisy(2);
+    _lsys = _lsysb;
+  }
+#else
+  _lsys = new gmshLinearSystemFull<double>;
+#endif
 
   for(std::list<GFace*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
     if(!(*it)){
@@ -651,15 +665,7 @@ void GFaceCompound::parametrize(iterationStep step) const
 {
   Msg::Info("Parametrizing Surface %d coordinate (ITER %d)", tag(), step); 
   
-#ifdef HAVE_GMM
-  gmshLinearSystemGmm<double> lsys;
-  //gmshLinearSystemCSRGmm<double> lsys;
-  lsys.setPrec(1.e-15);
-  if(Msg::GetVerbosity() == 99) lsys.setNoisy(2);
-#else
-  gmshLinearSystemFull<double> lsys;
-#endif
-  gmshAssembler<double> myAssembler(&lsys);
+  gmshAssembler<double> myAssembler(_lsys);
 
   gmshFunction<double> ONE(1.0);
 
@@ -728,7 +734,7 @@ void GFaceCompound::parametrize(iterationStep step) const
   }
  
   Msg::Debug("Assembly done");
-  lsys.systemSolve();
+  _lsys->systemSolve();
   Msg::Debug("System solved");
 
 
@@ -755,8 +761,8 @@ void GFaceCompound::parametrize(iterationStep step) const
     else{
       itf->second[step]= value;
     }
-
   }
+  _lsys->clear();
 }
 
 void GFaceCompound::parametrize_conformal() const
@@ -765,16 +771,8 @@ void GFaceCompound::parametrize_conformal() const
 
   Msg::Info("Parametrizing Surface %d", tag()); 
   
-#ifdef HAVE_GMM
-  gmshLinearSystemGmm<double> lsys;
-  //gmshLinearSystemCSRGmm<double> lsys;
-  lsys.setPrec(1.e-15);
-  lsys.setGmres(1);
-  if(Msg::GetVerbosity() == 99) lsys.setNoisy(2);
-#else
-  gmshLinearSystemFull<double> lsys;
-#endif
-  gmshAssembler<double> myAssembler(&lsys);
+  gmshAssembler<double> myAssembler(_lsys);
+
   std::vector<MVertex*> ordered;
   std::vector<double> coords;  
   bool success = orderVertices(_U0, ordered, coords);
@@ -863,7 +861,7 @@ void GFaceCompound::parametrize_conformal() const
   }
  
   Msg::Debug("Assembly done");
-  lsys.systemSolve();
+  _lsys->systemSolve();
   Msg::Debug("System solved");
 
   it = _compound.begin();
@@ -884,10 +882,10 @@ void GFaceCompound::parametrize_conformal() const
     coordinates[v] = SPoint3(value1,value2,0.0);
   }
 
-  //  checkOrientation();
-  
+  //  checkOrientation();  
   computeNormals();
   buildOct();
+  _lsys->clear();
 }
 
 void GFaceCompound::computeNormals(std::map<MVertex*,SVector3> &normals) const

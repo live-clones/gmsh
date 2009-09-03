@@ -13,6 +13,10 @@
 #include "meshPartition.h"
 #include "meshPartitionObjects.h"
 #include "meshPartitionOptions.h"
+#include "MTriangle.h"
+#include "MQuadrangle.h"
+#include "MElementCut.h"
+#include "partitionEdge.h"
 
 //--Prototype for Chaco interface
 
@@ -642,6 +646,87 @@ struct MatchBoElemToGrVertex
     }
   }
 };
+
+template <class ITERATOR>
+void fillit_ ( std::multimap<MEdge,MElement*,Less_Edge> &edgeToElement,
+	       ITERATOR it_beg, ITERATOR it_end){
+  for (ITERATOR IT = it_beg; IT != it_end ; ++IT){
+    MElement *el = *IT;
+    for(int j=0;j < el->getNumEdges();j++) {
+      MEdge e = el->getEdge(j);
+      edgeToElement.insert(std::make_pair(e,el));
+    }// for every edge of the elem
+  }// for every elem of the face
+}
+
+template <class ITERATOR>
+void fillit_ ( std::multimap<MVertex*,MElement*> &vertexToElement,
+	       ITERATOR it_beg, ITERATOR it_end){
+  for (ITERATOR IT = it_beg; IT != it_end ; ++IT){
+    MElement *el = *IT;
+    for(int j=0;j < el->getNumVertices();j++) {
+      MVertex* e = el->getVertex(j);
+      vertexToElement.insert(std::make_pair(e,el));
+    }// for every edge of the elem
+  }// for every elem of the face
+}
+
+
+void assignPartitionBoundary (GModel *model,
+			      MEdge &me,
+			      std::set<partitionEdge*, Less_partitionEdge> &pedges,
+			      std::vector<MElement*> &v){
+
+  std::vector<int> v2;
+  v2.push_back(v[0]->getPartition());
+  for (int i=1;i<v.size();i++){
+    bool found = false;
+    for (int j=0;j<v2.size();j++){
+      if (v[i]->getPartition() == v2[j]){
+	found = true;
+	break;
+      }
+    }
+    if (!found)v2.push_back(v[i]->getPartition());
+  }
+  if (v2.size() < 2)return;
+  
+  partitionEdge pe  (model, 1, 0, 0, v2);
+  std::set<partitionEdge*, Less_partitionEdge>::iterator it = pedges.find(&pe);
+  partitionEdge *ppe;
+  if (it == pedges.end()){
+    ppe = new  partitionEdge(model, -pedges.size()-1, 0, 0, v2);
+    pedges.insert (ppe);
+    model->add(ppe);
+  }
+  else ppe = *it;
+  ppe->lines.push_back(new MLine (me.getVertex(0),me.getVertex(1)));
+}
+
+int CreatePartitionBoundaries (GModel *model) {
+  std::multimap<MEdge,MElement*,Less_Edge> edgeToElement;
+  std::set<partitionEdge*, Less_partitionEdge> pedges;
+  for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it){
+    fillit_ ( edgeToElement,(*it)->triangles.begin(),(*it)->triangles.end());
+    fillit_ ( edgeToElement,(*it)->quadrangles.begin(),(*it)->quadrangles.end());
+    fillit_ ( edgeToElement,(*it)->polygons.begin(),(*it)->polygons.end());
+  }
+
+  {
+    std::multimap<MEdge,MElement*,Less_Edge>::iterator it = edgeToElement.begin();
+    Equal_Edge oper;
+    while ( it != edgeToElement.end() ){
+      MEdge e = it->first;
+      std::vector<MElement*> voe;
+      do {
+	voe.push_back(it->second);
+	++it;
+      }while (! oper (e,it->first));
+      assignPartitionBoundary (model,e,pedges,voe);
+    }
+  }
+}
+
 
 
 /*******************************************************************************

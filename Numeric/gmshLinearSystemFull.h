@@ -24,18 +24,25 @@ class gmshLinearSystemFull : public gmshLinearSystem<scalar> {
   virtual bool isAllocated() const { return _a != 0; }
   virtual void allocate(int _nbRows)
   {
-    if(_a) delete _a;
-    if(_x) delete _x;
-    if(_b) delete _b;
+    clear();
     _a = new gmshMatrix<scalar>(_nbRows, _nbRows);
     _b = new gmshVector<scalar>(_nbRows);
     _x = new gmshVector<scalar>(_nbRows);
   }
+
   virtual ~gmshLinearSystemFull()
   {
-    delete _a;
-    delete _b;
-    delete _x;
+    clear();
+  }
+
+  virtual void clear()
+  {
+    if(_a){
+      delete _a;
+      delete _b;
+      delete _x;
+    }
+    _a = 0;
   }
   virtual void addToMatrix(int _row, int _col, scalar _val)
   {

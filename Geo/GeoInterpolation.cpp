@@ -188,7 +188,7 @@ static void basisFuns(double u, int i, int deg, float *U, double *N)
 
 static Vertex InterpolateNurbs(Curve *Curve, double u, int derivee)
 {
-  static double Nb[1000];
+  double Nb[1000];
   int span = findSpan(u, Curve->degre, List_Nbr(Curve->Control_Points), Curve->k);
   basisFuns(u, span, Curve->degre, Curve->k, Nb);
   Vertex p;

@@ -37,6 +37,10 @@ class gmshLinearSystemCSR : public gmshLinearSystem<scalar> {
   : sorted(false), a_(0) {}
   virtual bool isAllocated() const { return a_ != 0; }
   virtual void allocate(int) ;
+  virtual void clear()
+  {
+    allocate(0);
+  }
   virtual ~gmshLinearSystemCSR()
   {
     allocate(0);

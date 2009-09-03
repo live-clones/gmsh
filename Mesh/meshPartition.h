@@ -25,5 +25,6 @@ int MakeGraph(GModel *const model, Graph &graph,
               BoElemGrVec *const boElemGrVec = 0);
 int PartitionGraph(Graph &graph, meshPartitionOptions &options);
 int PartitionMesh(GModel *const model, meshPartitionOptions &options);
+int CreatePartitionBoundaries (GModel *model);
 
 #endif

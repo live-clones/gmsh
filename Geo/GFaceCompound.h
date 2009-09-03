@@ -12,6 +12,7 @@
 #include "GEdge.h"
 #include "GEdgeCompound.h"
 #include "meshGFaceOptimize.h"
+#include "gmshLinearSystem.h"
 
 /*
 A GFaceCompound is a model face that is the compound of model faces.
@@ -73,11 +74,13 @@ class GFaceCompound : public GFace {
   virtual double curvature(MTriangle *t, double u, double v) const;
   void printStuff() const;
   bool trivial() const ;
+  gmshLinearSystem <double> *_lsys;
  public:
   typedef enum {UNITCIRCLE, SQUARE} typeOfIsomorphism;
   GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
                 std::list<GEdge*> &U0, std::list<GEdge*> &U1,
-                std::list<GEdge*> &V0, std::list<GEdge*> &V1);
+                std::list<GEdge*> &V0, std::list<GEdge*> &V1,
+		gmshLinearSystem<double>* lsys =0);
   virtual ~GFaceCompound();
   Range<double> parBounds(int i) const 
   { return trivial() ? (*(_compound.begin()))->parBounds(i) : Range<double>(-1, 1); }
