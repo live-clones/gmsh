@@ -42,7 +42,7 @@ class MVertex{
   // the geometrical entity the vertex is associated with
   GEntity *_ge;
 
- public :
+ public:
   MVertex(double x, double y, double z, GEntity *ge=0, int num=0);
   virtual ~MVertex(){}
 
@@ -113,7 +113,7 @@ class MVertex{
 class MEdgeVertex : public MVertex{
  protected:
   double _u, _lc;
- public :
+ public:
   MEdgeVertex(double x, double y, double z, GEntity *ge, double u, double lc = -1.0,
               int num = 0) 
     : MVertex(x, y, z, ge,num), _u(u), _lc(lc)

@@ -303,12 +303,12 @@ void MElement::xyz2uvw(double xyz[3], double uvw[3])
     }
     double inv[3][3];
     inv3x3(jac, inv);
-    double un = uvw[0] +
-      inv[0][0] * (xyz[0] - xn) + inv[1][0] * (xyz[1] - yn) + inv[2][0] * (xyz[2] - zn);
-    double vn = uvw[1] +
-      inv[0][1] * (xyz[0] - xn) + inv[1][1] * (xyz[1] - yn) + inv[2][1] * (xyz[2] - zn) ;
-    double wn = uvw[2] +
-      inv[0][2] * (xyz[0] - xn) + inv[1][2] * (xyz[1] - yn) + inv[2][2] * (xyz[2] - zn) ;
+    double un = uvw[0] + inv[0][0] * (xyz[0] - xn) + 
+      inv[1][0] * (xyz[1] - yn) + inv[2][0] * (xyz[2] - zn);
+    double vn = uvw[1] + inv[0][1] * (xyz[0] - xn) +
+      inv[1][1] * (xyz[1] - yn) + inv[2][1] * (xyz[2] - zn);
+    double wn = uvw[2] + inv[0][2] * (xyz[0] - xn) +
+      inv[1][2] * (xyz[1] - yn) + inv[2][2] * (xyz[2] - zn);
     error = sqrt(SQU(un - uvw[0]) + SQU(vn - uvw[1]) + SQU(wn - uvw[2]));
     uvw[0] = un;
     uvw[1] = vn;
