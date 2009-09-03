@@ -101,7 +101,7 @@ class GEntity {
     DiscreteVolume, 
     CompoundVolume,
     PartitionVertex,
-    PartitionEdge,
+    PartitionCurve,
     PartitionSurface
   };
 
@@ -144,9 +144,9 @@ class GEntity {
       "Volume",
       "Discrete volume", 
       "Compound Volume",
-      "Partition Vertex",
-      "Partition Edge",
-      "Partition Surface"
+      "Partition vertex",
+      "Partition curve",
+      "Partition surface"
     };
     unsigned int type = (unsigned int)geomType();
     if(type >= sizeof(name) / sizeof(name[0]))

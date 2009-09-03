@@ -99,7 +99,7 @@ struct meshPartitionOptions
     algorithm = 1;
     edge_matching = 3;
     refine_algorithm = 3;
-    createPartitionBoundaries = false;//true;
+    createPartitionBoundaries = true;
   }
 
 };

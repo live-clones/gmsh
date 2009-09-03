@@ -95,6 +95,7 @@ class drawGEdge {
   {
     if(!e->getVisibility()) return;
     if(e->geomType() == GEntity::DiscreteCurve) return;
+    if(e->geomType() == GEntity::PartitionCurve) return;
     if(e->geomType() == GEntity::BoundaryLayerCurve) return;
     
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 
