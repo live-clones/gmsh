@@ -458,22 +458,22 @@ void GFaceCompound::computeALoop(std::set<GEdge*> &_unique, std::list<GEdge*> &l
 GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 			     std::list<GEdge*> &U0, std::list<GEdge*> &V0,
 			     std::list<GEdge*> &U1, std::list<GEdge*> &V1,
-			     gmshLinearSystem<double> * lsys)
+			     gmshLinearSystem<double> *lsys)
   : GFace(m, tag), _compound(compound), _U0(U0), _U1(U1), _V0(V0), _V1(V1), oct(0),
     _lsys(lsys)
 {
 
-#ifdef HAVE_GMM
   if (!_lsys) {
+#if defined(HAVE_GMM)
     gmshLinearSystemGmm<double> *_lsysb = new gmshLinearSystemGmm<double>;
     //gmshLinearSystemCSRGmm<double> lsys;
     _lsysb->setPrec(1.e-15);
     if(Msg::GetVerbosity() == 99) _lsysb->setNoisy(2);
     _lsys = _lsysb;
-  }
 #else
-  _lsys = new gmshLinearSystemFull<double>;
+    _lsys = new gmshLinearSystemFull<double>;
 #endif
+  }
 
   for(std::list<GFace*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
     if(!(*it)){
