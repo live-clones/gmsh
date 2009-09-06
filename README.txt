@@ -19,8 +19,8 @@ Build Gmsh using CMake's graphical user interface
 -------------------------------------------------
 
 * Launch CMake and fill-in the two top input fields (telling where the
-  Gmsh source is located and where you want the Gmsh binary to be
-  created).
+  Gmsh source directory is located and where you want the Gmsh binary
+  to be created).
 
 * Click on "Add entry" and define the variable CMAKE_PREFIX_PATH, of
   type "PATH", pointing to the location(s) of any external package(s)

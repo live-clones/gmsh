@@ -26,23 +26,30 @@ class myGmshServer : public GmshServer{
   myGmshServer() : GmshServer() {}
   ~myGmshServer() {}
   int SystemCall(const char *str){ return ::SystemCall(str); }
-  int NonBlockingWait(int socket, int num, double waitint)
+  int NonBlockingWait(int socket, int num, double waitint, double timeout)
   { 
-    // This routine polls the socket at least every 'waitint' seconds and
-    // returns 0 if data is available or 1 if there was en error or if the
-    // process was killed. Otherwise it just tends to current GUI events
-    // (this is easier to manage than non-blocking IO, and simpler than
-    // using the "real" solution, i.e., threads. Another possibility would
+    // This routine polls the socket at least every 'waitint' seconds,
+    // and for at most timout seconds (or indefinitely if
+    // timeout==0). The routine returns 0 as soon as data is available
+    // and 1 if there was en error or if the process was
+    // killed. Otherwise it just tends to current GUI events (this is
+    // easier to manage than non-blocking IO, and simpler than using
+    // the "real" solution, i.e., threads. Another possibility would
     // be to use Fl::add_fd())
+    double start = GetTimeInSeconds();
     while(1){
-      if((num >= 0 && SINFO[num].pid < 0) || (num < 0 && !CTX::instance()->solver.listen)){
-        // process has been killed or we stopped listening
-        return 1;
+      if(timeout > 0 && GetTimeInSeconds() - start > timeout) {
+        return 2; // timout
+      }
+
+      if((num >= 0 && SINFO[num].pid < 0) ||
+         (num < 0 && !CTX::instance()->solver.listen)){
+        return 1; // process has been killed or we stopped listening
       }
 
       // check if there is data (call select with a zero timeout to
       // return immediately, i.e., do polling)
-      int ret = Select(socket, 0, 0);
+      int ret = Select(0, 0, socket);
 
       if(ret == 0){ 
         // nothing available: wait at most waitint seconds, and in the
@@ -50,8 +57,7 @@ class myGmshServer : public GmshServer{
         FlGui::instance()->wait(waitint);
       }
       else if(ret > 0){ 
-        // data is there
-        return 0;
+        return 0; // data is there!
       }
       else{ 
         // an error happened
@@ -73,7 +79,7 @@ std::string GetSocketName(int num)
     std::ostringstream tmp;
     tmp << CTX::instance()->homeDir << CTX::instance()->solver.socketName;
     if(num >= 0) tmp << "-" << num;
-    sockname = FixWindowsPath(tmp.str().c_str());
+    sockname = FixWindowsPath(tmp.str());
   }
   else{
     // TCP/IP socket
@@ -97,19 +103,21 @@ int Solver(int num, const char *args)
   GmshServer *server = new myGmshServer;
 
   if(num >= 0){
-    prog = FixWindowsPath(SINFO[num].executable_name.c_str());
+    prog = FixWindowsPath(SINFO[num].executable_name);
     if(!SINFO[num].client_server) {
       command = prog + " " + args;
 #if !defined(WIN32)
       command += " &";
 #endif
-      server->StartClient(command.c_str());
+      server->Start(num, command.c_str(), 0, 0.);
+      delete server;
       return 1;
     }
   }
   else{
     if(!CTX::instance()->solver.listen){
       Msg::Info("Stopped listening for solver connections");
+      delete server;
       return 0;
     }
     // we don't know who will (maybe) contact us
@@ -128,50 +136,30 @@ int Solver(int num, const char *args)
 #endif
   }
 
-  int sock = server->StartClient(command.c_str(), sockname.c_str());
-
-  if(sock < 0) {
-    switch (sock) {
-    case -1:
-      Msg::Error("Couldn't create socket '%s'", sockname.c_str());
-      break;
-    case -2:
-      Msg::Error("Couldn't bind socket to name '%s'", sockname.c_str());
-      break;
-    case -3:
-      Msg::Error("Socket listen failed on '%s'", sockname.c_str());
-      break;
-    case -4:
-      Msg::Error("Socket listen timeout on '%s'", sockname.c_str());
-      Msg::Error("Is '%s' correctly installed?", prog.c_str());
-      break;
-    case -5:
-      Msg::Error("Socket accept failed on '%s'", sockname.c_str());
-      break;
-    case -6:
-      Msg::Info("Stopped listening for solver connections");
-      server->Shutdown();
-      break;
-    case -7:
-      Msg::Error("Unix sockets not available on Windows without Cygwin");
-      Msg::Error("Use TCP/IP sockets instead");
-      break;
-    case -8:
-      Msg::Error("Could not initialize Windows sockets");
-      break;
-    }
-    if(num >= 0){
-      for(int i = 0; i < SINFO[num].nboptions; i++)
-        FlGui::instance()->solver[num]->choice[i]->clear();
-    }
-    return 0;
-  }
-
   if(num >= 0){
     SINFO[num].pid = 0;
     SINFO[num].server = 0;
   }
   bool initOption[5] = {true, true, true, true, true};
+
+  int sock;
+  try{
+    sock = server->Start(num, command.c_str(), sockname.c_str(), 5.);
+  }
+  catch(const char *err){
+    Msg::Error("%s (on socket '%s')", err, sockname.c_str());
+    sock = -1;
+  }
+
+  if(sock < 0){
+    if(num >= 0){
+      for(int i = 0; i < SINFO[num].nboptions; i++)
+        FlGui::instance()->solver[num]->choice[i]->clear();
+    }
+    server->Shutdown();
+    delete server;
+    return 0;
+  }
 
   Msg::StatusBar(2, false, "Running '%s'", prog.c_str());
 
@@ -182,7 +170,7 @@ int Solver(int num, const char *args)
     if(stop || (num >= 0 && SINFO[num].pid < 0))
       break;
 
-    stop = server->NonBlockingWait(sock, num, 0.1);
+    stop = server->NonBlockingWait(sock, num, 0.1, 0.);
 
     if(stop || (num >= 0 && SINFO[num].pid < 0))
       break;
@@ -312,16 +300,19 @@ int Solver(int num, const char *args)
         FlGui::instance()->solver[num]->choice[i]->value(0);
       }
     }
+
+    // only necessary in case of error
+    SINFO[num].server = 0;
   }
-  
+
   server->Shutdown();
+  delete server;
 
   if(num >= 0){
     Msg::StatusBar(2, false, "");
   }
   else{
     Msg::Info("Client disconnected: starting new connection");
-    delete server;
     goto new_connection;
   }
 

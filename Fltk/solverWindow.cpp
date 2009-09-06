@@ -50,7 +50,7 @@ void solver_cb(Fl_Widget *w, void *data)
 
   std::string inputFile(FlGui::instance()->solver[num]->input[0]->value());
   if(SINFO[num].nboptions && inputFile.size()) {
-    std::string file = FixWindowsPath(inputFile.c_str());
+    std::string file = FixWindowsPath(inputFile);
     char tmp[256], tmp2[256];
     sprintf(tmp, "\"%s\"", file.c_str());
     sprintf(tmp2, SINFO[num].name_command.c_str(), tmp);
@@ -70,7 +70,7 @@ static void solver_file_open_cb(Fl_Widget *w, void *data)
   if(file_chooser(0, 0, "Choose", tmp)) {
     FlGui::instance()->solver[num]->input[0]->value(file_chooser_get_name(1).c_str());
     if(SINFO[num].nboptions) {
-      std::string file = FixWindowsPath(file_chooser_get_name(1).c_str());
+      std::string file = FixWindowsPath(file_chooser_get_name(1));
       sprintf(tmp, "\"%s\"", file.c_str());
       sprintf(tmp2, SINFO[num].name_command.c_str(), tmp);
       sprintf(tmp, "%s %s", SINFO[num].option_command.c_str(), tmp2);
@@ -82,7 +82,7 @@ static void solver_file_open_cb(Fl_Widget *w, void *data)
 static void solver_file_edit_cb(Fl_Widget *w, void *data)
 {
   int num = (int)(long)data;
-  std::string prog = FixWindowsPath(CTX::instance()->editor.c_str());
+  std::string prog = FixWindowsPath(CTX::instance()->editor);
   std::string file = FixWindowsPath(FlGui::instance()->solver[num]->input[0]->value());
   char cmd[1024];
   ReplaceMultiFormat(prog.c_str(), file.c_str(), cmd);
@@ -139,7 +139,6 @@ static void solver_command_cb(Fl_Widget *w, void *data)
       sprintf(command, SINFO[num].button_command[idx].c_str(), 
               SINFO[num].option[usedopts][val].c_str());
     else{
-      Msg::Warning("Invalid choice (%d) for option %d", val, usedopts);
       strcpy(command, "");
     }
   }

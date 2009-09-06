@@ -125,17 +125,18 @@ class GmshSocket{
   // seconds and microseconds == 0 we check for available data and
   // return immediately, i.e., we do polling). Returns 0 when data is
   // available.
-  int Select(int socket, int seconds, int microseconds)
+  int Select(int seconds, int microseconds, int socket=-1)
   {
+    int s = (socket < 0) ? _sock : socket;
     struct timeval tv;
     tv.tv_sec = seconds;
     tv.tv_usec = microseconds;
     fd_set rfds;
     FD_ZERO(&rfds);
-    FD_SET(socket, &rfds);
+    FD_SET(s, &rfds);
     // select checks all IO descriptors between 0 and its first arg,
     // minus 1... hence the +1 below
-    return select(socket + 1, &rfds, NULL, NULL, &tv);
+    return select(s + 1, &rfds, NULL, NULL, &tv);
   }
   void SendString(int type, const char *str)
   {
@@ -145,6 +146,19 @@ class GmshSocket{
     _SendData(&len, sizeof(int));
     // send body
     _SendData(str, len);
+  }
+  void Info(const char *str){ SendString(INFO, str); }
+  void Warning(const char *str){ SendString(WARNING, str); }
+  void Error(const char *str){ SendString(ERROR, str); }
+  void Progress(const char *str){ SendString(PROGRESS, str); }
+  void MergeFile(const char *str){ SendString(MERGE_FILE, str); }
+  void ParseString(const char *str){ SendString(PARSE_STRING, str); }
+  void SpeedTest(const char *str){ SendString(SPEED_TEST, str); }
+  void Option(int num, const char *str)
+  {
+    if(num < 1) num = 1;
+    if(num > 5) num = 5;
+    SendString(OPTION_1 + num - 1, str);
   }
   int ReceiveHeader(int *type, int *len)
   {
@@ -201,8 +215,7 @@ class GmshClient : public GmshSocket {
 #if !defined(WIN32) || defined(__CYGWIN__)
       // UNIX socket (testing ":" is not enough with Windows paths)
       _sock = socket(PF_UNIX, SOCK_STREAM, 0);
-      if(_sock < 0)
-        return -1;  // Error: Couldn't create socket
+      if(_sock < 0) return -1;
       // try to connect socket to given name
       struct sockaddr_un addr_un;
       memset((char *) &addr_un, 0, sizeof(addr_un));
@@ -220,8 +233,7 @@ class GmshClient : public GmshSocket {
     else{
       // TCP/IP socket
       _sock = socket(AF_INET, SOCK_STREAM, 0);
-      if(_sock < 0)
-        return -1; // Error: Couldn't create socket
+      if(_sock < 0) return -1;
       // try to connect socket to host:port
       const char *port = strstr(sockname, ":");
       int portno = atoi(port + 1);
@@ -233,7 +245,7 @@ class GmshClient : public GmshSocket {
       struct hostent *server;
       if(!(server = gethostbyname(remote))){
         CloseSocket(_sock);
-        return -3; // Error: No such host
+        return -3; // no such host
       }
       struct sockaddr_in addr_in;
       memset((char *) &addr_in, 0, sizeof(addr_in));
@@ -247,11 +259,7 @@ class GmshClient : public GmshSocket {
       }
     }
     CloseSocket(_sock);
-    return -2; // Error: Couldn't connect
-  }
-  int Select(int seconds, int microseconds)
-  {
-    return GmshSocket::Select(_sock, seconds, microseconds);
+    return -2; // couldn't connect
   }
   void Start()
   {
@@ -264,19 +272,6 @@ class GmshClient : public GmshSocket {
     SendString(START, tmp);
   }
   void Stop(){ SendString(STOP, "Goodbye!"); }
-  void Info(const char *str){ SendString(INFO, str); }
-  void Warning(const char *str){ SendString(WARNING, str); }
-  void Error(const char *str){ SendString(ERROR, str); }
-  void Progress(const char *str){ SendString(PROGRESS, str); }
-  void MergeFile(const char *str){ SendString(MERGE_FILE, str); }
-  void ParseString(const char *str){ SendString(PARSE_STRING, str); }
-  void SpeedTest(const char *str){ SendString(SPEED_TEST, str); }
-  void Option(int num, const char *str)
-  {
-    if(num < 1) num = 1;
-    if(num > 5) num = 5;
-    SendString(OPTION_1 + num - 1, str);
-  }
   void Disconnect(){ CloseSocket(_sock); }
 };
 
@@ -287,10 +282,9 @@ class GmshServer : public GmshSocket{
   GmshServer() : GmshSocket(), _portno(-1) {}
   virtual ~GmshServer(){}
   virtual int SystemCall(const char *str) = 0;
-  virtual int NonBlockingWait(int socket, int num, double waitint) = 0;
-  int StartClient(const char *command, const char *sockname=0, int timeout=5)
+  virtual int NonBlockingWait(int socket, int num, double waitint, double timeout) = 0;
+  int Start(int num, const char *command, const char *sockname, double timeout)
   {
-    bool justwait = (!command || !strlen(command));
     _sockname = sockname;
 
     // no socket? launch the command directly
@@ -308,8 +302,7 @@ class GmshServer : public GmshSocket{
       unlink(_sockname);
       // create a socket
       tmpsock = socket(PF_UNIX, SOCK_STREAM, 0);
-      if(tmpsock < 0)
-        return -1;  // Error: Couldn't create socket
+      if(tmpsock < 0) throw "Couldn't create socket";
       // bind the socket to its name
       struct sockaddr_un addr_un;
       memset((char *) &addr_un, 0, sizeof(addr_un));
@@ -317,12 +310,12 @@ class GmshServer : public GmshSocket{
       addr_un.sun_family = AF_UNIX;
       if(bind(tmpsock, (struct sockaddr *)&addr_un, sizeof(addr_un)) < 0){
         CloseSocket(tmpsock);
-        return -2;  // Error: Couldn't bind socket to name
+        throw "Couldn't bind socket to name";
       }
       // change permissions on the socket name in case it has to be rm'd later
       chmod(_sockname, 0666);
 #else
-      return -7; // Unix sockets not available on Windows
+      throw "Unix sockets not available on Windows";
 #endif
     }
     else{
@@ -336,7 +329,7 @@ class GmshServer : public GmshSocket{
 #else
       if(tmpsock == INVALID_SOCKET)
 #endif
-        return -1;  // Error: Couldn't create socket
+        throw "Couldn't create socket";
       // bind the socket to its name
       struct sockaddr_in addr_in;
       memset((char *) &addr_in, 0, sizeof(addr_in));
@@ -345,33 +338,33 @@ class GmshServer : public GmshSocket{
       addr_in.sin_port = htons(_portno);
       if(bind(tmpsock, (struct sockaddr *)&addr_in, sizeof(addr_in)) < 0){
         CloseSocket(tmpsock);
-        return -2;  // Error: Couldn't bind socket to name
+        throw "Couldn't bind socket to name";
       }
     }
 
-    if(!justwait)
+    if(command && strlen(command)){
       SystemCall(command); // Start the solver
-    
+    }
+    else{
+      timeout = 0.; // no command launched: don't set a timeout
+    }
+
     // listen on socket (queue up to 20 connections before having
     // them automatically rejected)
     if(listen(tmpsock, 20)){
       CloseSocket(tmpsock);
-      return -3;  // Error: Socket listen failed
+      throw "Socket listen failed";
     }
     
-    if(justwait){
-      // wait indefinitely until we get data
-      if(NonBlockingWait(tmpsock, -1, 0.5)){
-        CloseSocket(tmpsock);
-        return -6; // not an actual error: we just stopped listening
+    // wait until we get data
+    int ret = NonBlockingWait(tmpsock, num, 0.5, timeout);
+    if(ret){
+      CloseSocket(tmpsock);
+      if(ret == 2){
+        throw "Socket listening timeout";
       }
-    }
-    else{
-      // Wait at most timeout seconds for data, issue error if no
-      // connection in that amount of time
-      if(!Select(tmpsock, timeout, 0)){
-        CloseSocket(tmpsock);
-        return -4;  // Error: Socket listening timeout
+      else{
+        return -1; // stopped listening
       }
     }
 
@@ -381,8 +374,6 @@ class GmshServer : public GmshSocket{
       struct sockaddr_un from_un;
       socklen_t len = sizeof(from_un);
       _sock = accept(tmpsock, (struct sockaddr *)&from_un, &len);
-#else
-      _sock = -7; // Unix sockets not available on Windows
 #endif
     }
     else{
@@ -393,7 +384,7 @@ class GmshServer : public GmshSocket{
     CloseSocket(tmpsock);
 
     if(_sock < 0)
-      return -5;  // Error: Socket accept failed
+      throw "Socket accept failed";
     return _sock;
   }
   int Shutdown()

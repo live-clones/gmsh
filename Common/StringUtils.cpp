@@ -62,14 +62,14 @@ std::string SanitizeTeXString(const char *in, int equation)
   return out;
 }
 
-std::string FixWindowsPath(const char *in)
+std::string FixWindowsPath(std::string in)
 {
 #if defined(__CYGWIN__)
   char tmp[1024];
-  cygwin_conv_to_win32_path(in, tmp);
+  cygwin_conv_to_win32_path(in.c_str(), tmp);
   return std::string(tmp);
 #else
-  return std::string(in);
+  return in;
 #endif
 }
 
@@ -111,6 +111,21 @@ std::vector<std::string> SplitWhiteSpace(std::string in, unsigned int len)
     out.back() += in[i];
     if(out.back().size() > len && in[i] == ' ')
       out.resize(out.size() + 1);
+  }
+  return out;
+}
+
+std::string ReplacePercentS(std::string in, std::string val)
+{
+  std::string out;
+  for(unsigned int i = 0; i < in.size(); i++){
+    if(in[i] == '%' && i + 1 < in.size() && in[i + 1] == 's'){
+      out += val;
+      i++;
+    }
+    else{
+      out += in[i];
+    }
   }
   return out;
 }

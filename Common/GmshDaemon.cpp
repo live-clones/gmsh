@@ -17,6 +17,7 @@ int GmshDaemon(std::string socket)
     return 1;
   }
   client.Start();
+  client.Info("Server sucessfully started. Listening...");
 
   // read large data file,
   // initialize mpi job,

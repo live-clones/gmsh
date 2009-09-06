@@ -150,37 +150,38 @@ static void file_remote_cb(Fl_Widget *w, void *data)
 {
   std::string str((const char*)data);
 
-  if(str == "connect"){
-    Msg::Info("Starting remote Gmsh");
+  if(str == "start"){
+    Msg::Info("Starting remote Gmsh server");
     if(SINFO[MAX_NUM_SOLVERS].server){
-      Msg::Info("A server is already running, trying to stop it first");
-      SINFO[MAX_NUM_SOLVERS].server->SendString(GmshSocket::STOP, "DISCONNECTING!");
+      Msg::Error("A server is already running");
     }
-    SINFO[MAX_NUM_SOLVERS].name = "Gmsh Daemon";
-    SINFO[MAX_NUM_SOLVERS].executable_name = "./gmsh";
-    SINFO[MAX_NUM_SOLVERS].socket_command = "-socket %s";
-    SINFO[MAX_NUM_SOLVERS].nboptions = 0;
-    SINFO[MAX_NUM_SOLVERS].client_server = 1;
-    SINFO[MAX_NUM_SOLVERS].popup_messages = 1;
-    SINFO[MAX_NUM_SOLVERS].merge_views = 1;
-    Solver(MAX_NUM_SOLVERS, "");
+    else{
+      SINFO[MAX_NUM_SOLVERS].name = "Gmsh Server";
+      SINFO[MAX_NUM_SOLVERS].executable_name = "./gmsh";
+      SINFO[MAX_NUM_SOLVERS].socket_command = "-socket %s";
+      SINFO[MAX_NUM_SOLVERS].nboptions = 0;
+      SINFO[MAX_NUM_SOLVERS].client_server = 1;
+      SINFO[MAX_NUM_SOLVERS].popup_messages = 1;
+      SINFO[MAX_NUM_SOLVERS].merge_views = 1;
+      Solver(MAX_NUM_SOLVERS, "");
+    }
   }
-  else if(str == "disconnect"){
+  else if(str == "stop"){
     if(SINFO[MAX_NUM_SOLVERS].server){
-      Msg::Info("Stopping remote Gmsh");
+      Msg::Info("Stopping remote Gmsh server");
       SINFO[MAX_NUM_SOLVERS].server->SendString(GmshSocket::STOP, "DISCONNECTING!");
     }
     else{
-      Msg::Warning("Cannot disconnect remote Gmsh: server not running");
+      Msg::Error("Cannot stop remote Gmsh: server not running");
     }
   }
   else if(str == "test"){
     if(SINFO[MAX_NUM_SOLVERS].server){
-      Msg::Info("Testing remote Gmsh daemon");
+      Msg::Info("Testing remote Gmsh server");
       SINFO[MAX_NUM_SOLVERS].server->SendString(9999, "GENERATE A VIEW!");
     }
     else{
-      Msg::Warning("Cannot test remote Gmsh: must be connected first!");
+      Msg::Error("Cannot test remote Gmsh: server not running");
     }
   }
 }
@@ -520,7 +521,7 @@ static void help_command_line_cb(Fl_Widget *w, void *data)
 
 static void help_online_cb(Fl_Widget *w, void *data)
 {
-  std::string prog = FixWindowsPath(CTX::instance()->webBrowser.c_str());
+  std::string prog = FixWindowsPath(CTX::instance()->webBrowser);
   char cmd[1024];
   ReplaceMultiFormat(prog.c_str(), "http://geuz.org/gmsh/doc/texinfo/", cmd);
   SystemCall(cmd);
@@ -573,8 +574,8 @@ static void geometry_physical_cb(Fl_Widget *w, void *data)
 
 static void geometry_edit_cb(Fl_Widget *w, void *data)
 {
-  std::string prog = FixWindowsPath(CTX::instance()->editor.c_str());
-  std::string file = FixWindowsPath(GModel::current()->getFileName().c_str());
+  std::string prog = FixWindowsPath(CTX::instance()->editor);
+  std::string file = FixWindowsPath(GModel::current()->getFileName());
   char cmd[1024];
   ReplaceMultiFormat(prog.c_str(), file.c_str(), cmd);
   SystemCall(cmd);
@@ -2237,10 +2238,10 @@ static Fl_Menu_Item sysbar_table[] = {
       {"Vertically",   0, (Fl_Callback *)file_window_cb, (void*)"split_v"},
       {"Clear",        0, (Fl_Callback *)file_window_cb, (void*)"split_u"},
       {0},
-#if 0 // test remote gmsh daemon
-    {"Connect...",  0, (Fl_Callback *)file_remote_cb, (void*)"connect"},
-    {"Test remote!",  0, (Fl_Callback *)file_remote_cb, (void*)"test"},
-    {"Disconnect",  0, (Fl_Callback *)file_remote_cb, (void*)"disconnect", FL_MENU_DIVIDER},
+#if 1 // test remote Gmsh server
+    {"Start server...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
+    {"Test server!",  0, (Fl_Callback *)file_remote_cb, (void*)"test"},
+    {"Stop server",  0, (Fl_Callback *)file_remote_cb, (void*)"stop", FL_MENU_DIVIDER},
 #endif
     {"Rename...",  FL_META+'r', (Fl_Callback *)file_rename_cb, 0},
     {"Save As...", FL_META+'s', (Fl_Callback *)file_save_as_cb, 0},
