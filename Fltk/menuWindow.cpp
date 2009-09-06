@@ -165,7 +165,8 @@ static void file_remote_cb(Fl_Widget *w, void *data)
   else if(str == "stop"){
     if(GmshRemote::get(99)->getServer()){
       Msg::Info("Stopping remote Gmsh server");
-      GmshRemote::get(99)->getServer()->SendString(GmshSocket::STOP, "DISCONNECTING!");
+      GmshRemote::get(99)->getServer()->SendString
+	(GmshSocket::GMSH_STOP, "DISCONNECTING!");
     }
     else{
       Msg::Error("Cannot stop remote Gmsh: server not running");

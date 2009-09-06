@@ -40,20 +40,20 @@ class GmshSocket{
   // receive data from a machine with a different byte ordering, and
   // we swap the bytes in the payload)
   enum MessageType{ 
-    START        = 1,
-    STOP         = 2,
-    INFO         = 10,
-    WARNING      = 11,
-    ERROR        = 12,
-    PROGRESS     = 13,
-    MERGE_FILE   = 20,
-    PARSE_STRING = 21,
-    SPEED_TEST   = 30,
-    OPTION_1     = 100,
-    OPTION_2     = 101,
-    OPTION_3     = 102,
-    OPTION_4     = 103,
-    OPTION_5     = 104};
+    GMSH_START        = 1,
+    GMSH_STOP         = 2,
+    GMSH_INFO         = 10,
+    GMSH_WARNING      = 11,
+    GMSH_ERROR        = 12,
+    GMSH_PROGRESS     = 13,
+    GMSH_MERGE_FILE   = 20,
+    GMSH_PARSE_STRING = 21,
+    GMSH_SPEED_TEST   = 30,
+    GMSH_OPTION_1     = 100,
+    GMSH_OPTION_2     = 101,
+    GMSH_OPTION_3     = 102,
+    GMSH_OPTION_4     = 103,
+    GMSH_OPTION_5     = 104};
  protected:
   // the socket descriptor
   int _sock;
@@ -147,18 +147,18 @@ class GmshSocket{
     // send body
     _SendData(str, len);
   }
-  void Info(const char *str){ SendString(INFO, str); }
-  void Warning(const char *str){ SendString(WARNING, str); }
-  void Error(const char *str){ SendString(ERROR, str); }
-  void Progress(const char *str){ SendString(PROGRESS, str); }
-  void MergeFile(const char *str){ SendString(MERGE_FILE, str); }
-  void ParseString(const char *str){ SendString(PARSE_STRING, str); }
-  void SpeedTest(const char *str){ SendString(SPEED_TEST, str); }
+  void Info(const char *str){ SendString(GMSH_INFO, str); }
+  void Warning(const char *str){ SendString(GMSH_WARNING, str); }
+  void Error(const char *str){ SendString(GMSH_ERROR, str); }
+  void Progress(const char *str){ SendString(GMSH_PROGRESS, str); }
+  void MergeFile(const char *str){ SendString(GMSH_MERGE_FILE, str); }
+  void ParseString(const char *str){ SendString(GMSH_PARSE_STRING, str); }
+  void SpeedTest(const char *str){ SendString(GMSH_SPEED_TEST, str); }
   void Option(int num, const char *str)
   {
     if(num < 1) num = 1;
     if(num > 5) num = 5;
-    SendString(OPTION_1 + num - 1, str);
+    SendString(GMSH_OPTION_1 + num - 1, str);
   }
   int ReceiveHeader(int *type, int *len)
   {
@@ -197,7 +197,9 @@ class GmshSocket{
   }
   void ShutdownSocket(int s)
   {
+#if !defined(WIN32) || defined(__CYGWIN__)
     shutdown(s, SHUT_RDWR);
+#endif
   }
 };
 
@@ -269,9 +271,9 @@ class GmshClient : public GmshSocket {
 #else
     sprintf(tmp, "%d", _getpid());
 #endif
-    SendString(START, tmp);
+    SendString(GMSH_START, tmp);
   }
-  void Stop(){ SendString(STOP, "Goodbye!"); }
+  void Stop(){ SendString(GMSH_STOP, "Goodbye!"); }
   void Disconnect(){ CloseSocket(_sock); }
 };
 
