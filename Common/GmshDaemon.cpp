@@ -33,7 +33,7 @@ int GmshDaemon(std::string socket)
           tmp << "Hello! I've received msg type=" << type << " len=" << length
               << " str=" << msg;
           client.Info(tmp.str().c_str());
-          if(type == GmshSocket::STOP){
+          if(type == GmshSocket::GMSH_STOP){
             client.Info("Stopping connection!");
             delete [] msg;
             break;
