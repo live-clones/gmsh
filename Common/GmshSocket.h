@@ -282,17 +282,11 @@ class GmshServer : public GmshSocket{
   GmshServer() : GmshSocket(), _portno(-1) {}
   virtual ~GmshServer(){}
   virtual int SystemCall(const char *str) = 0;
-  virtual int NonBlockingWait(int socket, int num, double waitint, double timeout) = 0;
-  int Start(int num, const char *command, const char *sockname, double timeout)
+  virtual int NonBlockingWait(int socket, double waitint, double timeout) = 0;
+  int Start(const char *command, const char *sockname, double timeout)
   {
+    if(!sockname) throw "Invalid (null) socket name";
     _sockname = sockname;
-
-    // no socket? launch the command directly
-    if(!_sockname) {
-      SystemCall(command);
-      return 1;
-    }
-
     int tmpsock;
     if(strstr(_sockname, "/") || strstr(_sockname, "\\") || !strstr(_sockname, ":")){
       // UNIX socket (testing ":" is not enough with Windows paths)
@@ -357,7 +351,7 @@ class GmshServer : public GmshSocket{
     }
     
     // wait until we get data
-    int ret = NonBlockingWait(tmpsock, num, 0.5, timeout);
+    int ret = NonBlockingWait(tmpsock, 0.5, timeout);
     if(ret){
       CloseSocket(tmpsock);
       if(ret == 2){

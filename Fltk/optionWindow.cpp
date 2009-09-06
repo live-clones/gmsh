@@ -10,6 +10,7 @@
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
+#include "GmshRemote.h"
 #include "FlGui.h"
 #include "optionWindow.h"
 #include "paletteWindow.h"
@@ -17,7 +18,6 @@
 #include "extraDialogs.h"
 #include "drawContext.h"
 #include "Options.h"
-#include "Solvers.h"
 #include "GModel.h"
 #include "MElement.h"
 #include "PView.h"
@@ -471,7 +471,7 @@ static void solver_options_ok_cb(Fl_Widget *w, void *data)
   int old_listen = (int)opt_solver_listen(0, GMSH_GET, o->solver.butt[0]->value());
   opt_solver_listen(0, GMSH_SET, o->solver.butt[0]->value());
   if(!old_listen && o->solver.butt[0]->value())
-    Solver(-1, 0);
+    GmshRemote::get(-1)->run("");
 
   opt_solver_socket_name(0, GMSH_SET, o->solver.input[0]->value());
 

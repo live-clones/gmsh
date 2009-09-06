@@ -6,6 +6,7 @@
 #include <string>
 #include "Gmsh.h"
 #include "GmshMessage.h"
+#include "GmshRemote.h"
 #include "FlGui.h"
 #include "menuWindow.h"
 #include "drawContext.h"
@@ -14,7 +15,6 @@
 #include "Parser.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
-#include "Solvers.h"
 #include "PluginManager.h"
 #include "GModel.h"
 #include "Field.h"
@@ -115,7 +115,8 @@ int main(int argc, char *argv[])
   drawContext::global()->draw();
 
   // Listen to external solvers
-  if(CTX::instance()->solver.listen) Solver(-1, NULL);
+  if(CTX::instance()->solver.listen)
+    GmshRemote::get(-1)->run("");
 
   // loop
   return FlGui::instance()->run();

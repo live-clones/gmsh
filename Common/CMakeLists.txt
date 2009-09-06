@@ -6,6 +6,7 @@
 set(SRC
   Gmsh.cpp
     GmshMessage.cpp
+    GmshRemote.cpp
     GmshDaemon.cpp
   Context.cpp
   Options.cpp

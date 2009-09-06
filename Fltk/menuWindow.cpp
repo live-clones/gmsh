@@ -10,6 +10,8 @@
 #include <FL/fl_ask.H>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "GmshRemote.h"
+#include "GmshSocket.h"
 #include "FlGui.h"
 #include "menuWindow.h"
 #include "mainWindow.h"
@@ -30,7 +32,6 @@
 #include "projectionEditor.h"
 #include "classificationEditor.h"
 #include "Options.h"
-#include "Solvers.h"
 #include "CommandLine.h"
 #include "Generator.h"
 #include "HighOrder.h"
@@ -47,7 +48,6 @@
 #include "GeoStringInterface.h"
 #include "Options.h"
 #include "Context.h"
-#include "GmshSocket.h"
 
 static void file_new_cb(Fl_Widget *w, void *data)
 {
@@ -152,33 +152,29 @@ static void file_remote_cb(Fl_Widget *w, void *data)
 
   if(str == "start"){
     Msg::Info("Starting remote Gmsh server");
-    if(SINFO[MAX_NUM_SOLVERS].server){
+    if(GmshRemote::get(99)->getServer()){
       Msg::Error("A server is already running");
     }
     else{
-      SINFO[MAX_NUM_SOLVERS].name = "Gmsh Server";
-      SINFO[MAX_NUM_SOLVERS].executable_name = "./gmsh";
-      SINFO[MAX_NUM_SOLVERS].socket_command = "-socket %s";
-      SINFO[MAX_NUM_SOLVERS].nboptions = 0;
-      SINFO[MAX_NUM_SOLVERS].client_server = 1;
-      SINFO[MAX_NUM_SOLVERS].popup_messages = 1;
-      SINFO[MAX_NUM_SOLVERS].merge_views = 1;
-      Solver(MAX_NUM_SOLVERS, "");
+      GmshRemote::get(99)->name = "Gmsh server";
+      GmshRemote::get(99)->executable = "./gmsh";
+      GmshRemote::get(99)->socketSwitch = "-socket %s";
+      GmshRemote::get(99)->run("");
     }
   }
   else if(str == "stop"){
-    if(SINFO[MAX_NUM_SOLVERS].server){
+    if(GmshRemote::get(99)->getServer()){
       Msg::Info("Stopping remote Gmsh server");
-      SINFO[MAX_NUM_SOLVERS].server->SendString(GmshSocket::STOP, "DISCONNECTING!");
+      GmshRemote::get(99)->getServer()->SendString(GmshSocket::STOP, "DISCONNECTING!");
     }
     else{
       Msg::Error("Cannot stop remote Gmsh: server not running");
     }
   }
   else if(str == "test"){
-    if(SINFO[MAX_NUM_SOLVERS].server){
+    if(GmshRemote::get(99)->getServer()){
       Msg::Info("Testing remote Gmsh server");
-      SINFO[MAX_NUM_SOLVERS].server->SendString(9999, "GENERATE A VIEW!");
+      GmshRemote::get(99)->getServer()->SendString(9999, "GENERATE A VIEW!");
     }
     else{
       Msg::Error("Cannot test remote Gmsh: server not running");
@@ -522,9 +518,7 @@ static void help_command_line_cb(Fl_Widget *w, void *data)
 static void help_online_cb(Fl_Widget *w, void *data)
 {
   std::string prog = FixWindowsPath(CTX::instance()->webBrowser);
-  char cmd[1024];
-  ReplaceMultiFormat(prog.c_str(), "http://geuz.org/gmsh/doc/texinfo/", cmd);
-  SystemCall(cmd);
+  SystemCall(ReplacePercentS(prog, "http://geuz.org/gmsh/doc/texinfo/"));
 }
 
 static void help_about_cb(Fl_Widget *w, void *data)
@@ -576,9 +570,7 @@ static void geometry_edit_cb(Fl_Widget *w, void *data)
 {
   std::string prog = FixWindowsPath(CTX::instance()->editor);
   std::string file = FixWindowsPath(GModel::current()->getFileName());
-  char cmd[1024];
-  ReplaceMultiFormat(prog.c_str(), file.c_str(), cmd);
-  SystemCall(cmd);
+  SystemCall(ReplacePercentS(prog, file));
 }
 
 void geometry_reload_cb(Fl_Widget *w, void *data)

@@ -25,7 +25,6 @@ set(SRC
     projectionEditor.cpp
     classificationEditor.cpp
     partitionDialog.cpp
-  Solvers.cpp
 )
 
 append_gmsh_src(Fltk "${SRC}")

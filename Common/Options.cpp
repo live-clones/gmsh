@@ -8,6 +8,7 @@
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
+#include "GmshRemote.h"
 #include "StringUtils.h"
 #include "GModel.h"
 #include "Generator.h"
@@ -33,7 +34,6 @@
 #if defined(HAVE_FLTK)
 #include <FL/Fl_Tooltip.H>
 #include "FlGui.h"
-#include "Solvers.h"
 #include "menuWindow.h"
 #include "graphicWindow.h"
 #include "optionWindow.h"
@@ -1040,15 +1040,13 @@ std::string opt_solver_socket_name(OPT_ARGS_STR)
 
 std::string opt_solver_name(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].name = val;
+    GmshRemote::get(num)->name = val;
+#if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->solver[num]->win->label(SINFO[num].name.c_str());
-  return SINFO[num].name;
-#else
-  return "undefined";
+    FlGui::instance()->solver[num]->win->label(GmshRemote::get(num)->name.c_str());
 #endif
+  return GmshRemote::get(num)->name;
 }
 
 std::string opt_solver_name0(OPT_ARGS_STR)
@@ -1078,16 +1076,14 @@ std::string opt_solver_name4(OPT_ARGS_STR)
 
 std::string opt_solver_executable(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].executable_name = val;
+    GmshRemote::get(num)->executable = val;
+#if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->solver[num]->input[2]->value
-      (SINFO[num].executable_name.c_str());
-  return SINFO[num].executable_name;
-#else
-  return "undefined";
+      (GmshRemote::get(num)->executable.c_str());
 #endif
+  return GmshRemote::get(num)->executable;
 }
 
 std::string opt_solver_executable0(OPT_ARGS_STR)
@@ -1117,13 +1113,9 @@ std::string opt_solver_executable4(OPT_ARGS_STR)
 
 std::string opt_solver_help(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].help = val;
-  return SINFO[num].help;
-#else
-  return "undefined";
-#endif
+    GmshRemote::get(num)->help = val;
+  return GmshRemote::get(num)->help;
 }
 
 std::string opt_solver_help0(OPT_ARGS_STR)
@@ -1153,21 +1145,19 @@ std::string opt_solver_help4(OPT_ARGS_STR)
 
 std::string opt_solver_input_name(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET){
 #if !defined(HAVE_NO_PARSER)
-    SINFO[num].input_name = FixRelativePath(gmsh_yyname, val);
+    GmshRemote::get(num)->inputFileName = FixRelativePath(gmsh_yyname, val);
 #else
-    SINFO[num].input_name = val;
+    GmshRemote::get(num)->inputFileName = val;
 #endif
   }
+#if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->solver[num]->input[0]->value
-      (SINFO[num].input_name.c_str());
-  return SINFO[num].input_name;
-#else
-  return "undefined";
+      (GmshRemote::get(num)->inputFileName.c_str());
 #endif
+  return GmshRemote::get(num)->inputFileName;
 }
 
 std::string opt_solver_input_name0(OPT_ARGS_STR)
@@ -1197,13 +1187,9 @@ std::string opt_solver_input_name4(OPT_ARGS_STR)
 
 std::string opt_solver_extension(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].extension = val;
-  return SINFO[num].extension;
-#else
-  return "undefined";
-#endif
+    GmshRemote::get(num)->inputFileExtension = val;
+  return GmshRemote::get(num)->inputFileExtension;
 }
 
 std::string opt_solver_extension0(OPT_ARGS_STR)
@@ -1233,21 +1219,19 @@ std::string opt_solver_extension4(OPT_ARGS_STR)
 
 std::string opt_solver_mesh_name(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET){
 #if !defined(HAVE_NO_PARSER)
-    SINFO[num].mesh_name = FixRelativePath(gmsh_yyname, val);
+    GmshRemote::get(num)->meshFileName = FixRelativePath(gmsh_yyname, val);
 #else
-    SINFO[num].mesh_name = val;
+    GmshRemote::get(num)->meshFileName = val;
 #endif
   }
+#if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->solver[num]->input[1]->value
-      (SINFO[num].mesh_name.c_str());
-  return SINFO[num].mesh_name;
-#else
-  return "undefined";
+      (GmshRemote::get(num)->meshFileName.c_str());
 #endif
+  return GmshRemote::get(num)->meshFileName;
 }
 
 std::string opt_solver_mesh_name0(OPT_ARGS_STR)
@@ -1277,13 +1261,9 @@ std::string opt_solver_mesh_name4(OPT_ARGS_STR)
 
 std::string opt_solver_mesh_command(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].mesh_command = val;
-  return SINFO[num].mesh_command;
-#else
-  return "undefined";
-#endif
+    GmshRemote::get(num)->meshFileSwitch = val;
+  return GmshRemote::get(num)->meshFileSwitch;
 }
 
 std::string opt_solver_mesh_command0(OPT_ARGS_STR)
@@ -1313,13 +1293,9 @@ std::string opt_solver_mesh_command4(OPT_ARGS_STR)
 
 std::string opt_solver_socket_command(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].socket_command = val;
-  return SINFO[num].socket_command;
-#else
-  return "undefined";
-#endif
+    GmshRemote::get(num)->socketSwitch = val;
+  return GmshRemote::get(num)->socketSwitch;
 }
 
 std::string opt_solver_socket_command0(OPT_ARGS_STR)
@@ -1349,13 +1325,9 @@ std::string opt_solver_socket_command4(OPT_ARGS_STR)
 
 std::string opt_solver_name_command(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].name_command = val;
-  return SINFO[num].name_command;
-#else
-  return "undefined";
-#endif
+    GmshRemote::get(num)->inputFileSwitch = val;
+  return GmshRemote::get(num)->inputFileSwitch;
 }
 
 std::string opt_solver_name_command0(OPT_ARGS_STR)
@@ -1385,13 +1357,9 @@ std::string opt_solver_name_command4(OPT_ARGS_STR)
 
 std::string opt_solver_option_command(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].option_command = val;
-  return SINFO[num].option_command;
-#else
-  return "undefined";
-#endif
+    GmshRemote::get(num)->optionSwitch = val;
+  return GmshRemote::get(num)->optionSwitch;
 }
 
 std::string opt_solver_option_command0(OPT_ARGS_STR)
@@ -1421,13 +1389,9 @@ std::string opt_solver_option_command4(OPT_ARGS_STR)
 
 std::string opt_solver_first_option(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].option_name[0] = val;
-  return SINFO[num].option_name[0];
-#else
-  return "undefined";
-#endif
+    GmshRemote::get(num)->optionName[0] = val;
+  return GmshRemote::get(num)->optionName[0];
 }
 
 std::string opt_solver_first_option0(OPT_ARGS_STR)
@@ -1457,13 +1421,9 @@ std::string opt_solver_first_option4(OPT_ARGS_STR)
 
 std::string opt_solver_second_option(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].option_name[1] = val;
-  return SINFO[num].option_name[1];
-#else
-  return "undefined";
-#endif
+    GmshRemote::get(num)->optionName[1] = val;
+  return GmshRemote::get(num)->optionName[1];
 }
 
 std::string opt_solver_second_option0(OPT_ARGS_STR)
@@ -1493,13 +1453,9 @@ std::string opt_solver_second_option4(OPT_ARGS_STR)
 
 std::string opt_solver_third_option(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].option_name[2] = val;
-  return SINFO[num].option_name[2];
-#else
-  return "undefined";
-#endif
+    GmshRemote::get(num)->optionName[2] = val;
+  return GmshRemote::get(num)->optionName[2];
 }
 
 std::string opt_solver_third_option0(OPT_ARGS_STR)
@@ -1529,13 +1485,9 @@ std::string opt_solver_third_option4(OPT_ARGS_STR)
 
 std::string opt_solver_fourth_option(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].option_name[3] = val;
-  return SINFO[num].option_name[3];
-#else
-  return "undefined";
-#endif
+    GmshRemote::get(num)->optionName[3] = val;
+  return GmshRemote::get(num)->optionName[3];
 }
 
 std::string opt_solver_fourth_option0(OPT_ARGS_STR)
@@ -1565,13 +1517,9 @@ std::string opt_solver_fourth_option4(OPT_ARGS_STR)
 
 std::string opt_solver_fifth_option(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].option_name[4] = val;
-  return SINFO[num].option_name[4];
-#else
-  return "undefined";
-#endif
+    GmshRemote::get(num)->optionName[4] = val;
+  return GmshRemote::get(num)->optionName[4];
 }
 
 std::string opt_solver_fifth_option0(OPT_ARGS_STR)
@@ -1601,13 +1549,9 @@ std::string opt_solver_fifth_option4(OPT_ARGS_STR)
 
 std::string opt_solver_first_button(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].button_name[0] = val;
-  return SINFO[num].button_name[0];
-#else
-  return "undefined";
-#endif
+    GmshRemote::get(num)->buttonName[0] = val;
+  return GmshRemote::get(num)->buttonName[0];
 }
 
 std::string opt_solver_first_button0(OPT_ARGS_STR)
@@ -1637,13 +1581,9 @@ std::string opt_solver_first_button4(OPT_ARGS_STR)
 
 std::string opt_solver_first_button_command(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].button_command[0] = val;
-  return SINFO[num].button_command[0];
-#else
-  return "undefined";
-#endif
+    GmshRemote::get(num)->buttonSwitch[0] = val;
+  return GmshRemote::get(num)->buttonSwitch[0];
 }
 
 std::string opt_solver_first_button_command0(OPT_ARGS_STR)
@@ -1673,13 +1613,9 @@ std::string opt_solver_first_button_command4(OPT_ARGS_STR)
 
 std::string opt_solver_second_button(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].button_name[1] = val;
-  return SINFO[num].button_name[1];
-#else
-  return "undefined";
-#endif
+    GmshRemote::get(num)->buttonName[1] = val;
+  return GmshRemote::get(num)->buttonName[1];
 }
 
 std::string opt_solver_second_button0(OPT_ARGS_STR)
@@ -1709,13 +1645,9 @@ std::string opt_solver_second_button4(OPT_ARGS_STR)
 
 std::string opt_solver_second_button_command(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].button_command[1] = val;
-  return SINFO[num].button_command[1];
-#else
-  return "undefined";
-#endif
+    GmshRemote::get(num)->buttonSwitch[1] = val;
+  return GmshRemote::get(num)->buttonSwitch[1];
 }
 
 std::string opt_solver_second_button_command0(OPT_ARGS_STR)
@@ -1745,13 +1677,9 @@ std::string opt_solver_second_button_command4(OPT_ARGS_STR)
 
 std::string opt_solver_third_button(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].button_name[2] = val;
-  return SINFO[num].button_name[2];
-#else
-  return "undefined";
-#endif
+    GmshRemote::get(num)->buttonName[2] = val;
+  return GmshRemote::get(num)->buttonName[2];
 }
 
 std::string opt_solver_third_button0(OPT_ARGS_STR)
@@ -1781,13 +1709,9 @@ std::string opt_solver_third_button4(OPT_ARGS_STR)
 
 std::string opt_solver_third_button_command(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].button_command[2] = val;
-  return SINFO[num].button_command[2];
-#else
-  return "undefined";
-#endif
+    GmshRemote::get(num)->buttonSwitch[2] = val;
+  return GmshRemote::get(num)->buttonSwitch[2];
 }
 
 std::string opt_solver_third_button_command0(OPT_ARGS_STR)
@@ -1817,13 +1741,9 @@ std::string opt_solver_third_button_command4(OPT_ARGS_STR)
 
 std::string opt_solver_fourth_button(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].button_name[3] = val;
-  return SINFO[num].button_name[3];
-#else
-  return "undefined";
-#endif
+    GmshRemote::get(num)->buttonName[3] = val;
+  return GmshRemote::get(num)->buttonName[3];
 }
 
 std::string opt_solver_fourth_button0(OPT_ARGS_STR)
@@ -1853,13 +1773,9 @@ std::string opt_solver_fourth_button4(OPT_ARGS_STR)
 
 std::string opt_solver_fourth_button_command(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].button_command[3] = val;
-  return SINFO[num].button_command[3];
-#else
-  return "undefined";
-#endif
+    GmshRemote::get(num)->buttonSwitch[3] = val;
+  return GmshRemote::get(num)->buttonSwitch[3];
 }
 
 std::string opt_solver_fourth_button_command0(OPT_ARGS_STR)
@@ -1889,13 +1805,9 @@ std::string opt_solver_fourth_button_command4(OPT_ARGS_STR)
 
 std::string opt_solver_fifth_button(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].button_name[4] = val;
-  return SINFO[num].button_name[4];
-#else
-  return "undefined";
-#endif
+    GmshRemote::get(num)->buttonName[4] = val;
+  return GmshRemote::get(num)->buttonName[4];
 }
 
 std::string opt_solver_fifth_button0(OPT_ARGS_STR)
@@ -1925,13 +1837,9 @@ std::string opt_solver_fifth_button4(OPT_ARGS_STR)
 
 std::string opt_solver_fifth_button_command(OPT_ARGS_STR)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].button_command[4] = val;
-  return SINFO[num].button_command[4];
-#else
-  return "undefined";
-#endif
+    GmshRemote::get(num)->buttonSwitch[4] = val;
+  return GmshRemote::get(num)->buttonSwitch[4];
 }
 
 std::string opt_solver_fifth_button_command0(OPT_ARGS_STR)
@@ -6000,19 +5908,17 @@ double opt_solver_plugins(OPT_ARGS_NUM)
 
 double opt_solver_client_server(OPT_ARGS_NUM)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].client_server = (int)val;
+    GmshRemote::get(num)->clientServer = (bool)val;
+#if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)){
-    if(SINFO[num].client_server)
+    if(GmshRemote::get(num)->clientServer)
       ((Fl_Menu_Item*)FlGui::instance()->solver[num]->menu->menu())[0].set();
     else
       ((Fl_Menu_Item*)FlGui::instance()->solver[num]->menu->menu())[0].clear();
   }
-  return SINFO[num].client_server;
-#else
-  return 0.;
 #endif
+  return GmshRemote::get(num)->clientServer ? 1 : 0;
 }
 
 double opt_solver_client_server0(OPT_ARGS_NUM)
@@ -6042,19 +5948,17 @@ double opt_solver_client_server4(OPT_ARGS_NUM)
 
 double opt_solver_popup_messages(OPT_ARGS_NUM)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].popup_messages = (int)val;
+    GmshRemote::get(num)->popupMessages = (bool)val;
+#if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)){
-    if(SINFO[num].popup_messages)
+    if(GmshRemote::get(num)->popupMessages)
       ((Fl_Menu_Item*)FlGui::instance()->solver[num]->menu->menu())[1].set();
     else
       ((Fl_Menu_Item*)FlGui::instance()->solver[num]->menu->menu())[1].clear();
   }
-  return SINFO[num].popup_messages;
-#else
-  return 1.;
 #endif
+  return GmshRemote::get(num)->popupMessages ? 1 : 0;
 }
 
 double opt_solver_popup_messages0(OPT_ARGS_NUM)
@@ -6084,19 +5988,17 @@ double opt_solver_popup_messages4(OPT_ARGS_NUM)
 
 double opt_solver_merge_views(OPT_ARGS_NUM)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET)
-    SINFO[num].merge_views = (int)val;
+    GmshRemote::get(num)->mergeViews = (bool)val;
+#if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)){
-    if(SINFO[num].merge_views)
+    if(GmshRemote::get(num)->mergeViews)
       ((Fl_Menu_Item*)FlGui::instance()->solver[num]->menu->menu())[2].set();
     else
       ((Fl_Menu_Item*)FlGui::instance()->solver[num]->menu->menu())[2].clear();
   }
-  return SINFO[num].merge_views;
-#else
-  return 1.;
 #endif
+  return GmshRemote::get(num)->mergeViews ? 1 : 0;
 }
 
 double opt_solver_merge_views0(OPT_ARGS_NUM)

@@ -8,19 +8,260 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Browser.H>
+#include "GmshMessage.h"
+#include "GmshRemote.h"
+#include "GmshSocket.h"
 #include "GModel.h"
+#include "PView.h"
+#include "OpenFile.h"
+#include "drawContext.h"
 #include "FlGui.h"
+#include "menuWindow.h"
 #include "solverWindow.h"
 #include "paletteWindow.h"
-#include "optionWindow.h"
 #include "messageWindow.h"
 #include "fileDialogs.h"
-#include "GmshMessage.h"
-#include "Solvers.h"
 #include "StringUtils.h"
 #include "Options.h"
 #include "OS.h"
 #include "Context.h"
+
+class FlGmshServer : public GmshServer{
+ private:
+  GmshRemote *_remote;
+ public:
+  FlGmshServer(GmshRemote *remote) : _remote(remote), GmshServer() {}
+  ~FlGmshServer() {}
+  int SystemCall(const char *str)
+  { 
+    return ::SystemCall(str); 
+  }
+  int NonBlockingWait(int socket, double waitint, double timeout)
+  { 
+    // This routine polls the socket at least every 'waitint' seconds,
+    // and for at most timout seconds (or indefinitely if timeout ==
+    // 0). The routine returns 0 as soon as data is available and 1 if
+    // there was en error or if the process was killed. Otherwise it
+    // just tends to current GUI events. This is easier to manage than
+    // non-blocking IO, and simpler than using threads. Another
+    // possibility would be to use Fl::add_fd().
+    double start = GetTimeInSeconds();
+    while(1){
+      if(timeout > 0 && GetTimeInSeconds() - start > timeout)
+        return 2; // timout
+
+      if((_remote->executable.size() && _remote->getPid() < 0) ||
+         (_remote->executable.empty() && !CTX::instance()->solver.listen))
+        return 1; // process has been killed or we stopped listening
+
+      // check if there is data (call select with a zero timeout to
+      // return immediately, i.e., do polling)
+      int ret = Select(0, 0, socket);
+
+      if(ret == 0){ 
+        // nothing available: wait at most waitint seconds, and in the
+        // meantime respond to FLTK events
+        FlGui::instance()->wait(waitint);
+      }
+      else if(ret > 0){ 
+        return 0; // data is there!
+      }
+      else{ 
+        // an error happened
+        _remote->setPid(-1);
+        _remote->setServer(0);
+        return 1;
+      }
+    }
+  }
+};
+
+void GmshRemote::run(std::string args)
+{
+ new_connection:
+  
+  std::string prog = FixWindowsPath(executable);
+  
+  if(!clientServer) {
+    std::string command = prog + " " + args;
+#if !defined(WIN32)
+    command += " &";
+#endif
+    SystemCall(command);
+    return;
+  }
+
+  _pid = 0;
+  _server = 0;
+  FlGmshServer *server = new FlGmshServer(this);
+ 
+  std::string sockname = getSocketName();
+  std::string command;
+
+  if(prog.size()){
+    command = prog + " " + args + " " + ReplacePercentS
+      (socketSwitch, std::string("\"") + sockname + "\"");
+#if !defined(WIN32)
+    command += " &";
+#endif
+  }
+  
+  int sock;
+  try{
+    sock = server->Start(command.c_str(), sockname.c_str(), 5.);
+  }
+  catch(const char *err){
+    Msg::Error("%s (on socket '%s')", err, sockname.c_str());
+    sock = -1;
+  }
+  
+  if(sock < 0){
+    server->Shutdown();
+    delete server;
+    return;
+  }
+  
+  Msg::Info("Running '%s'...", name.c_str());
+
+  bool initOption[5] = {true, true, true, true, true};  
+  while(1) {
+
+    if((prog.size() && _pid < 0) || 
+       (prog.empty() && !CTX::instance()->solver.listen)) break;
+    
+    int stop = server->NonBlockingWait(sock, 0.1, 0.);
+    
+    if(stop || (prog.size() && _pid < 0) || 
+       (prog.empty() && !CTX::instance()->solver.listen)) break;
+    
+    int type, length;
+    if(server->ReceiveHeader(&type, &length)){
+      double timer = GetTimeInSeconds();
+      char *message = new char[length + 1];
+      if(server->ReceiveString(length, message)){
+        switch (type) {
+        case GmshSocket::START:
+          _pid = atoi(message);
+          _server = server;
+          break;
+        case GmshSocket::STOP:
+          _pid = -1;
+          _server = 0;
+          break;
+        case GmshSocket::PROGRESS:
+          Msg::StatusBar(2, false, "%s %s", name.c_str(), message);
+          break;
+        case GmshSocket::OPTION_1:
+          if(initOption[0]){
+            optionValue[0].clear();
+            initOption[0] = false;
+          }
+          optionValue[0].push_back(message);
+          break;
+        case GmshSocket::OPTION_2:
+          if(initOption[1]){
+            optionValue[1].clear();
+            initOption[1] = false;
+          }
+          optionValue[1].push_back(message);
+          break;
+        case GmshSocket::OPTION_3:
+          if(initOption[2]){
+            optionValue[2].clear();
+            initOption[2] = false;
+          }
+          optionValue[2].push_back(message);
+          break;
+        case GmshSocket::OPTION_4:
+          if(initOption[3]){
+            optionValue[3].clear();
+            initOption[3] = false;
+          }
+          optionValue[3].push_back(message);
+          break;
+        case GmshSocket::OPTION_5:
+          if(initOption[4]){
+            optionValue[4].clear();
+            initOption[4] = false;
+          }
+          optionValue[4].push_back(message);
+          break;
+        case GmshSocket::MERGE_FILE:
+          if(mergeViews) {
+            int n = PView::list.size();
+            MergeFile(message);
+            drawContext::global()->draw();
+            if(n != (int)PView::list.size()) 
+              FlGui::instance()->menu->setContext(menu_post, 0);
+          }
+          break;
+        case GmshSocket::PARSE_STRING:
+          ParseString(message);
+          drawContext::global()->draw();
+          break;
+        case GmshSocket::INFO:
+          Msg::Direct("%-8.8s: %s", name.c_str(), message);
+          break;
+        case GmshSocket::WARNING:
+          Msg::Direct(2, "%-8.8s: %s", name.c_str(), message);
+          break;
+        case GmshSocket::ERROR:
+          Msg::Direct(1, "%-8.8s: %s", name.c_str(), message);
+          break;
+        case GmshSocket::SPEED_TEST:
+          Msg::Info("got %d Mb message in %g seconds", strlen(message) 
+                    / 1024 / 1024, GetTimeInSeconds() - timer);
+          break;
+        default:
+          Msg::Warning("Unknown message type");
+          Msg::Direct("%-8.8s: %s", name.c_str(), message);
+          break;
+        }
+        FlGui::instance()->check();
+      }
+      else{
+        Msg::Warning("Failed to receive message body on socket: aborting");
+        break;
+      }
+      delete [] message;
+    }
+    else{
+      // didn't get any header, just abort
+      break;
+    }
+  }
+  
+  if(!initOption[0] || !initOption[1] || !initOption[2] || !initOption[3] ||
+     !initOption[4]){ // some options have been changed
+    // find solver num
+    int num = 0;
+    for(std::map<int, GmshRemote*>::iterator it = _all.begin(); 
+        it != _all.end(); it++){
+      if(this == it->second) break;
+      num++;
+    }
+    if(num >= 0 && num < 5){
+      for(unsigned int i = 0; i < optionName.size(); i++) {
+        if(optionName[i].empty()) break;
+        FlGui::instance()->solver[num]->choice[i]->clear();
+        for(unsigned int j = 0; j < optionValue[i].size(); j++)
+          FlGui::instance()->solver[num]->choice[i]->add(optionValue[i][j].c_str());
+        FlGui::instance()->solver[num]->choice[i]->value(0);
+      }
+    }
+  }
+  
+  _server = 0;
+  server->Shutdown();
+  delete server;
+
+  Msg::Info("...done running '%s'", name.c_str());
+
+  if(prog.empty()){
+    Msg::Info("Client disconnected: starting new connection");
+    goto new_connection;
+  }
+}
 
 void solver_cb(Fl_Widget *w, void *data)
 {
@@ -31,9 +272,12 @@ void solver_cb(Fl_Widget *w, void *data)
   // if the input file field is empty, fill it with a name guessed
   // from the current model name (only if this file actually exists)
   if(!strlen(FlGui::instance()->solver[num]->input[0]->value())){
-    std::string inputFile = split[0] + split[1] + SINFO[num].extension;
-    if(!StatFile(inputFile))
+    std::string inputFile = split[0] + split[1] + 
+      GmshRemote::get(num)->inputFileExtension;
+    if(!StatFile(inputFile)){
       FlGui::instance()->solver[num]->input[0]->value(inputFile.c_str());
+      GmshRemote::get(num)->inputFileName = inputFile;
+    }
   }
 
   // if the mesh file field is empty, fill it with a name guessed with
@@ -41,131 +285,20 @@ void solver_cb(Fl_Widget *w, void *data)
   if(!strlen(FlGui::instance()->solver[num]->input[1]->value())){
     std::string meshFile = split[0] + split[1] + ".msh";
     FlGui::instance()->solver[num]->input[1]->value(meshFile.c_str());
+    GmshRemote::get(num)->meshFileName = meshFile;
   }
 
   // show the window before calling Solver() to avoid race condition on
-  // Windows (if the message window pops up die to an error, the window
+  // Windows (if the message window pops up due to an error, the window
   // callbacks get messed up)
   FlGui::instance()->solver[num]->win->show();
 
-  std::string inputFile(FlGui::instance()->solver[num]->input[0]->value());
-  if(SINFO[num].nboptions && inputFile.size()) {
-    std::string file = FixWindowsPath(inputFile);
-    char tmp[256], tmp2[256];
-    sprintf(tmp, "\"%s\"", file.c_str());
-    sprintf(tmp2, SINFO[num].name_command.c_str(), tmp);
-    sprintf(tmp, "%s %s", SINFO[num].option_command.c_str(), tmp2);
-    Solver(num, tmp);
-  }
-}
-
-static void solver_file_open_cb(Fl_Widget *w, void *data)
-{
-  char tmp[256], tmp2[256];
-  int num = (int)(long)data;
-  sprintf(tmp, "*%s", SINFO[num].extension.c_str());
-
-  // We allow to create the .pro file... Or should we add a "New file"
-  // button?
-  if(file_chooser(0, 0, "Choose", tmp)) {
-    FlGui::instance()->solver[num]->input[0]->value(file_chooser_get_name(1).c_str());
-    if(SINFO[num].nboptions) {
-      std::string file = FixWindowsPath(file_chooser_get_name(1));
-      sprintf(tmp, "\"%s\"", file.c_str());
-      sprintf(tmp2, SINFO[num].name_command.c_str(), tmp);
-      sprintf(tmp, "%s %s", SINFO[num].option_command.c_str(), tmp2);
-      Solver(num, tmp);
-    }
-  }
-}
-
-static void solver_file_edit_cb(Fl_Widget *w, void *data)
-{
-  int num = (int)(long)data;
-  std::string prog = FixWindowsPath(CTX::instance()->editor);
-  std::string file = FixWindowsPath(FlGui::instance()->solver[num]->input[0]->value());
-  char cmd[1024];
-  ReplaceMultiFormat(prog.c_str(), file.c_str(), cmd);
-  SystemCall(cmd);
-}
-
-static void solver_choose_mesh_cb(Fl_Widget *w, void *data)
-{
-  int num = (int)(long)data;
-  if(file_chooser(0, 0, "Choose", "*"))
-    FlGui::instance()->solver[num]->input[1]->value(file_chooser_get_name(1).c_str());
-}
-
-static int nbs(const char *str)
-{
-  int i, nb = 0;
-  for(i = 0; i < (int)strlen(str) - 1; i++) {
-    if(str[i] == '%' && str[i + 1] == 's') {
-      nb++;
-      i++;
-    }
-  }
-  return nb;
-}
-
-static void solver_command_cb(Fl_Widget *w, void *data)
-{
-  char tmp[256], mesh[256], arg[512], command[256];
-  int num = ((int *)data)[0];
-  int idx = ((int *)data)[1];
-  int usedopts = 0;
-
-  if(SINFO[num].popup_messages)
-    FlGui::instance()->messages->show(true);
-
-  if(strlen(FlGui::instance()->solver[num]->input[1]->value())) {
-    std::string m = FixWindowsPath(FlGui::instance()->solver[num]->input[1]->value());
-    sprintf(tmp, "\"%s\"", m.c_str());
-    sprintf(mesh, SINFO[num].mesh_command.c_str(), tmp);
-  }
-  else {
-    strcpy(mesh, "");
-  }
-
-  if(nbs(SINFO[num].button_command[idx].c_str())) {
-    for(int i = 0; i < idx; i++)
-      usedopts += nbs(SINFO[num].button_command[i].c_str());
-    if(usedopts > SINFO[num].nboptions) {
-      Msg::Error("Missing options to execute command");
-      return;
-    }
-    int val = FlGui::instance()->solver[num]->choice[usedopts]->value();
-    if(val >= 0 && val < (int)SINFO[num].option[usedopts].size())
-      sprintf(command, SINFO[num].button_command[idx].c_str(), 
-              SINFO[num].option[usedopts][val].c_str());
-    else{
-      strcpy(command, "");
-    }
-  }
-  else {
-    strcpy(command, SINFO[num].button_command[idx].c_str());
-  }
-
-  std::string c = FixWindowsPath(FlGui::instance()->solver[num]->input[0]->value());
-  sprintf(arg, "\"%s\"", c.c_str());
-  sprintf(tmp, SINFO[num].name_command.c_str(), arg);
-  sprintf(arg, "%s %s %s", tmp, mesh, command);
-  Solver(num, arg);
-}
-
-static void solver_kill_cb(Fl_Widget *w, void *data)
-{
-  int num = (int)(long)data;
-  if(SINFO[num].pid > 0) {
-    if(KillProcess(SINFO[num].pid))
-      Msg::Info("Killed %s pid %d", SINFO[num].name.c_str(), SINFO[num].pid);
-  }
-  SINFO[num].pid = -1;
+  GmshRemote::get(num)->runToGetOptions();
 }
 
 static void solver_ok_cb(Fl_Widget *w, void *data)
 {
-  int retry = 0, num = (int)(long)data;
+  int num = (int)(long)data;
 
   opt_solver_client_server
     (num, GMSH_SET, FlGui::instance()->solver[num]->menu->menu()[0].value() ? 1 : 0);
@@ -174,39 +307,118 @@ static void solver_ok_cb(Fl_Widget *w, void *data)
   opt_solver_merge_views
     (num, GMSH_SET, FlGui::instance()->solver[num]->menu->menu()[2].value() ? 1 : 0);
 
-  const char *exe = FlGui::instance()->solver[num]->input[2]->value();
-  if(strcmp(opt_solver_executable(num, GMSH_GET, "").c_str(), exe))
-    retry = 1;
+  opt_solver_mesh_name
+    (num, GMSH_SET, FlGui::instance()->solver[num]->input[1]->value());
+
+  bool retry = false;
+
+  std::string input = FlGui::instance()->solver[num]->input[0]->value();
+  if(opt_solver_input_name(num, GMSH_GET, "") != input) retry = true;
+  opt_solver_input_name(num, GMSH_SET, input);
+
+  std::string exe = FlGui::instance()->solver[num]->input[2]->value();
+  if(opt_solver_executable(num, GMSH_GET, "") != exe) retry = true;
   opt_solver_executable(num, GMSH_SET, exe);
-  if(retry)
-    solver_cb(0, data);
+
+  if(retry) solver_cb(0, data);
 }
 
 static void solver_choose_executable_cb(Fl_Widget *w, void *data)
 {
   int num = (int)(long)data;
-  if(file_chooser(0, 0, "Choose",
+  std::string pattern = "*";
 #if defined(WIN32)
-                  "*.exe"
-#else
-                  "*"
+  pattern += ".exe";
 #endif
-                  )){
+
+  if(file_chooser(0, 0, "Choose", pattern.c_str())){
     FlGui::instance()->solver[num]->input[2]->value(file_chooser_get_name(1).c_str());
     solver_ok_cb(w, data);
   }
+}
+
+static void solver_file_open_cb(Fl_Widget *w, void *data)
+{
+  int num = (int)(long)data;
+  std::string pattern = "*" + GmshRemote::get(num)->inputFileExtension;
+
+  if(file_chooser(0, 0, "Choose", pattern.c_str())) {
+    FlGui::instance()->solver[num]->input[0]->value(file_chooser_get_name(1).c_str());
+    solver_ok_cb(w, data);
+  }
+}
+
+static void solver_file_edit_cb(Fl_Widget *w, void *data)
+{
+  int num = (int)(long)data;
+  std::string prog = FixWindowsPath(CTX::instance()->editor);
+  std::string file = FixWindowsPath(FlGui::instance()->solver[num]->input[0]->value());
+  SystemCall(ReplacePercentS(prog, file));
+}
+
+static void solver_choose_mesh_cb(Fl_Widget *w, void *data)
+{
+  int num = (int)(long)data;
+  if(file_chooser(0, 0, "Choose", "*.msh")){
+    FlGui::instance()->solver[num]->input[1]->value(file_chooser_get_name(1).c_str());
+    solver_ok_cb(w, data);
+  }
+}
+
+static int numPercentS(std::string &in)
+{
+  int n = 0;
+  for(int i = 0; i < in.size() - 1; i++) {
+    if(in[i] == '%' && in[i + 1] == 's') {
+      i++;
+      n++;
+    }
+  }
+  return n;
+}
+
+static void solver_command_cb(Fl_Widget *w, void *data)
+{
+  int num = ((int *)data)[0];
+  int idx = ((int *)data)[1];
+
+  if(GmshRemote::get(num)->popupMessages)
+    FlGui::instance()->messages->show(true);
+
+  GmshRemote::get(num)->inputFileName =
+    FlGui::instance()->solver[num]->input[0]->value();
+
+  GmshRemote::get(num)->meshFileName = 
+    FlGui::instance()->solver[num]->input[1]->value();
+
+  int optionIndex = 0;
+  for(int i = 0; i < idx; i++)
+    optionIndex += numPercentS(GmshRemote::get(num)->buttonSwitch[i]);
+
+  int optionChoice = FlGui::instance()->solver[num]->choice[optionIndex]->value();
+  GmshRemote::get(num)->runCommand(idx, optionIndex, optionChoice);
+}
+
+static void solver_kill_cb(Fl_Widget *w, void *data)
+{
+  int num = (int)(long)data;
+  GmshRemote::get(num)->kill();
 }
 
 solverWindow::solverWindow(int solverIndex, int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  for(int i = 0; i < MAX_NUM_SOLVER_OPTIONS; i++)
-    if(SINFO[solverIndex].option_name[i].size())
-      SINFO[solverIndex].nboptions = i + 1;
+  int numOptions = GmshRemote::get(solverIndex)->optionName.size();
+  for(int i = 0; i < GmshRemote::get(solverIndex)->optionName.size(); i++){
+    if(GmshRemote::get(solverIndex)->optionName[i].empty()){
+      numOptions = i;
+      break;
+    }
+  }
 
   int width = 32 * FL_NORMAL_SIZE;
-  int height = (5 + SINFO[solverIndex].nboptions) * BH + 5 * WB;
+  int height = (5 + numOptions) * BH + 5 * WB;
   int BBS = (width - 9 * WB) / 6;
   int LL = width - (int)(2.75 * BBS);
   
@@ -238,14 +450,19 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
       Fl_Button *b4 = new Fl_Button
         (2 * WB, 2 * WB + 2 * BH, BBS, BH, "Edit");
       b4->callback(solver_file_edit_cb, (void *)solverIndex);
+
       input[0] = new Fl_Input
         (2 * WB + BBS, 2 * WB + 2 * BH, LL - BBS, BH, "Input file");
+      input[0]->callback(solver_ok_cb, (void *)solverIndex);
+
       Fl_Button *b3 = new Fl_Button
         (width - 2 * WB - BBS, 2 * WB + 2 * BH, BBS, BH, "Choose");
       b3->callback(solver_file_open_cb, (void *)solverIndex);
 
       input[1] = new Fl_Input
         (2 * WB, 2 * WB + 3 * BH, LL, BH, "Mesh file");
+      input[1]->callback(solver_ok_cb, (void *)solverIndex);
+
       Fl_Button *b5 = new Fl_Button
         (width - 2 * WB - BBS, 2 * WB + 3 * BH, BBS, BH, "Choose");
       b5->callback(solver_choose_mesh_cb, (void *)solverIndex);
@@ -254,29 +471,28 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
         input[i]->align(FL_ALIGN_RIGHT);
       }
 
-      for(int i = 0; i < SINFO[solverIndex].nboptions; i++) {
+      for(int i = 0; i < numOptions; i++) {
         choice[i] = new Fl_Choice
-          (2 * WB, 2 * WB + (4 + i) * BH, LL, BH, SINFO[solverIndex].option_name[i].c_str());
+          (2 * WB, 2 * WB + (4 + i) * BH, LL, BH, 
+           GmshRemote::get(solverIndex)->optionName[i].c_str());
         choice[i]->align(FL_ALIGN_RIGHT);
       }
 
-      static int arg[MAX_NUM_SOLVERS][5][2];
-      for(int i = 0; i < 5; i++) {
-        if(SINFO[solverIndex].button_name[i].size()) {
+      static int arg[5][5][2];
+      for(int i = 0; i < GmshRemote::get(solverIndex)->buttonName.size(); i++) {
+        if(GmshRemote::get(solverIndex)->buttonName[i].size()){
           arg[solverIndex][i][0] = solverIndex;
           arg[solverIndex][i][1] = i;
           command[i] = new Fl_Button
-            ((2 + i) * WB + i * BBS, 3 * WB + (4 + SINFO[solverIndex].nboptions) * BH,
-             BBS, BH, SINFO[solverIndex].button_name[i].c_str());
-          command[i]->callback
-            (solver_command_cb, (void *)arg[solverIndex][i]);
+            ((2 + i) * WB + i * BBS, 3 * WB + (4 + numOptions) * BH,
+             BBS, BH, GmshRemote::get(solverIndex)->buttonName[i].c_str());
+          command[i]->callback(solver_command_cb, (void *)arg[solverIndex][i]);
         }
       }
 
       {
         Fl_Button *b = new Fl_Button
-          (width - 2 * WB - BBS, 3 * WB + (4 + SINFO[solverIndex].nboptions) * BH,
-           BBS, BH, "Kill");
+          (width - 2 * WB - BBS, 3 * WB + (4 + numOptions) * BH, BBS, BH, "Kill");
         b->callback(solver_kill_cb, (void *)solverIndex);
       }
      
@@ -289,16 +505,19 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
       Fl_Browser *o = new Fl_Browser
         (2 * WB, 2 * WB + 1 * BH, width - 4 * WB, height - 4 * WB - BH);
       o->add(" ");
-      add_multiline_in_browser(o, "@c@b@.", SINFO[solverIndex].name.c_str(), false);
+      add_multiline_in_browser
+        (o, "@c@b@.", GmshRemote::get(solverIndex)->name.c_str(), false);
       o->add(" ");
-      add_multiline_in_browser(o, "@c@. ", SINFO[solverIndex].help.c_str(), false);
+      add_multiline_in_browser
+        (o, "@c@. ", GmshRemote::get(solverIndex)->help.c_str(), false);
 
       g->end();
     }
     o->end();
   }
 
-  win->position(CTX::instance()->solverPosition[0], CTX::instance()->solverPosition[1]);
+  win->position
+    (CTX::instance()->solverPosition[0], CTX::instance()->solverPosition[1]);
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;

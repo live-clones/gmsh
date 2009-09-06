@@ -18,17 +18,13 @@
 static void help_license_cb(Fl_Widget *w, void *data)
 {
   std::string prog = FixWindowsPath(CTX::instance()->webBrowser);
-  char cmd[1024];
-  ReplaceMultiFormat(prog.c_str(), "http://geuz.org/gmsh/doc/LICENSE.txt", cmd);
-  SystemCall(cmd);
+  SystemCall(ReplacePercentS(prog, "http://geuz.org/gmsh/doc/LICENSE.txt"));
 }
 
 static void help_credits_cb(Fl_Widget *w, void *data)
 {
   std::string prog = FixWindowsPath(CTX::instance()->webBrowser);
-  char cmd[1024];
-  ReplaceMultiFormat(prog.c_str(), "http://geuz.org/gmsh/doc/CREDITS.txt", cmd);
-  SystemCall(cmd);
+  SystemCall(ReplacePercentS(prog, "http://geuz.org/gmsh/doc/CREDITS.txt"));
 }
 
 static void help_hide_cb(Fl_Widget *w, void *data)

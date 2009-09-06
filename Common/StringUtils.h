@@ -18,6 +18,5 @@ std::string FixRelativePath(std::string reference, std::string in);
 std::vector<std::string> SplitFileName(std::string fileName);
 std::vector<std::string> SplitWhiteSpace(std::string in, unsigned int len);
 std::string ReplacePercentS(std::string in, std::string val);
-void ReplaceMultiFormat(const char *in, const char *val, char *out);
 
 #endif

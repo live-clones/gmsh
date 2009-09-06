@@ -32,7 +32,6 @@
 #include "GModel.h"
 #include "MElement.h"
 #include "PView.h"
-#include "Solvers.h"
 #include "Field.h"
 #include "Plugin.h"
 #include "PluginManager.h"
@@ -264,7 +263,7 @@ FlGui::FlGui(int argc, char **argv)
   geoContext = new geometryContextWindow(CTX::instance()->deltaFontSize);
   meshContext = new meshContextWindow(CTX::instance()->deltaFontSize);
   about = new aboutWindow();
-  for(int i = 0; i < MAX_NUM_SOLVERS; i++)
+  for(int i = 0; i < 5; i++)
     solver.push_back(new solverWindow(i, CTX::instance()->deltaFontSize));
 
   // init solver plugin stuff
