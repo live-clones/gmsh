@@ -22,7 +22,9 @@ int GmshDaemon(std::string socket)
   // read large data file,
   // initialize mpi job,
   // then wait for commands to execute:
+  bool stop = false;
   while(1){
+    if(stop) break;
     // wait at most 1 second for data
     if(!client.Select(1, 0)){
       int type, length;
@@ -33,23 +35,34 @@ int GmshDaemon(std::string socket)
           tmp << "Hello! I've received msg type=" << type << " len=" << length
               << " str=" << msg;
           client.Info(tmp.str().c_str());
-          if(type == GmshSocket::GMSH_STOP){
-            client.Info("Stopping connection!");
-            delete [] msg;
-            break;
-          }
-          else{
-            std::ostringstream v;
-            v << "View \"test\" {\n";
-            for(int i= 0; i < 100; i++){
-              for(int j= 0; j < 100; j++){
-                v << "SQ("<<i<<","<<j<<",0, "<<i+1<<","<<j<<",0, "
-                  <<i+1<<","<<j+1<<",0, "<<i<<","<<j+1<<",0){"
-                  <<i+j<<","<<i+j<<","<<i+j<<","<<i+j<<"};\n";
-              }
+          switch(type){
+          case GmshSocket::GMSH_STOP:
+            {
+              client.Info("Stopping connection!");
+              stop = true;
             }
-            v << "};BoundingBox;\n";
-            client.ParseString(v.str().c_str());
+            break;
+          case GmshSocket::GMSH_SPEED_TEST:
+            {
+              std::string huge(500000000, 'a');
+              client.SpeedTest(huge.c_str());
+            }
+            break;
+          default:
+            {
+              std::ostringstream v;
+              v << "View \"test\" {\n";
+              for(int i = 0; i < 100; i++){
+                for(int j = 0; j < 100; j++){
+                  v << "SQ("<<i<<","<<j<<",0, "<<i+1<<","<<j<<",0, "
+                    <<i+1<<","<<j+1<<",0, "<<i<<","<<j+1<<",0){"
+                    <<i+j<<","<<i+j<<","<<i+j<<","<<i+j<<"};\n";
+                }
+              }
+              v << "};BoundingBox;\n";
+              client.ParseString(v.str().c_str());
+            }
+            break;
           }
         }
         delete [] msg;

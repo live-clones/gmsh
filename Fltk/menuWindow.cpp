@@ -156,7 +156,7 @@ static void file_remote_cb(Fl_Widget *w, void *data)
       Msg::Error("A server is already running");
     }
     else{
-      GmshRemote::get(99)->name = "Gmsh server";
+      GmshRemote::get(99)->name = "Remote";
       GmshRemote::get(99)->executable = "./gmsh";
       GmshRemote::get(99)->socketSwitch = "-socket %s";
       GmshRemote::get(99)->run("");
@@ -166,7 +166,7 @@ static void file_remote_cb(Fl_Widget *w, void *data)
     if(GmshRemote::get(99)->getServer()){
       Msg::Info("Stopping remote Gmsh server");
       GmshRemote::get(99)->getServer()->SendString
-	(GmshSocket::GMSH_STOP, "DISCONNECTING!");
+	(GmshSocket::GMSH_STOP, "Disconnect!");
     }
     else{
       Msg::Error("Cannot stop remote Gmsh: server not running");
@@ -175,7 +175,8 @@ static void file_remote_cb(Fl_Widget *w, void *data)
   else if(str == "test"){
     if(GmshRemote::get(99)->getServer()){
       Msg::Info("Testing remote Gmsh server");
-      GmshRemote::get(99)->getServer()->SendString(9999, "GENERATE A VIEW!");
+      GmshRemote::get(99)->getServer()->SendString
+        (GmshSocket::GMSH_SPEED_TEST, "Send me a huge amount of data!");
     }
     else{
       Msg::Error("Cannot test remote Gmsh: server not running");
