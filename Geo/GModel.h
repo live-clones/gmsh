@@ -18,6 +18,15 @@
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
 
+class Octree;
+class FM_Internals;
+class GEO_Internals;
+class OCC_Internals;
+class smooth_normals;
+class FieldManager;
+class CGNSOptions;
+class gLevelset;
+
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel
 {
