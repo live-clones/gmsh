@@ -37,7 +37,8 @@ class GmshRemote {
   // "Post")
   std::vector<std::string> buttonName;
   // the command line switches associated with the buttons (e.g. "-pre
-  // %s", "-cal", "-pos %s")
+  // %s", "-cal", "-pos %s"); each %s will consume one of the options,
+  // in the order the buttons are defined
   std::vector<std::string> buttonSwitch;
   // the name of the options that can be passed to the remote program
   // (e.g. "Resolution", "PostOperation")
