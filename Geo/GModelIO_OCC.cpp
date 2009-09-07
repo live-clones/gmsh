@@ -16,6 +16,10 @@
 #include "OpenFile.h"
 #include "OCC_Connect.h"
 
+<<<<<<< GModelIO_OCC.cpp
+
+=======
+>>>>>>> 1.78
 #if defined(HAVE_OCC)
 
 void OCC_Internals::buildLists()
@@ -978,6 +982,10 @@ int GModel::importOCCShape(const void *shape)
   return 1;
 }
 
+<<<<<<< GModelIO_OCC.cpp
+
+=======
+>>>>>>> 1.78
 #else
 
 void GModel::_deleteOCCInternals()

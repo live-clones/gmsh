@@ -18,17 +18,26 @@
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
 
-class Octree;
-class FM_Internals;
-class GEO_Internals;
-class OCC_Internals;
-class smooth_normals;
-class FieldManager;
-class CGNSOptions;
-class gLevelset;
+#include "GmshDefines.h"
+class Standard_EXPORT Octree;
+#include "GmshDefines.h"
+class Standard_EXPORT FM_Internals;
+#include "GmshDefines.h"
+class Standard_EXPORT GEO_Internals;
+#include "GmshDefines.h"
+class Standard_EXPORT OCC_Internals;
+#include "GmshDefines.h"
+class Standard_EXPORT smooth_normals;
+#include "GmshDefines.h"
+class Standard_EXPORT FieldManager;
+#include "GmshDefines.h"
+class Standard_EXPORT CGNSOptions;
+#include "GmshDefines.h"
+class Standard_EXPORT gLevelset;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
-class GModel
+#include "GmshDefines.h"
+class Standard_EXPORT GModel
 {
  private:
   // the name of the model
