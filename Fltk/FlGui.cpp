@@ -263,7 +263,7 @@ FlGui::FlGui(int argc, char **argv)
   geoContext = new geometryContextWindow(CTX::instance()->deltaFontSize);
   meshContext = new meshContextWindow(CTX::instance()->deltaFontSize);
   about = new aboutWindow();
-  for(int i = 0; i < 5; i++)
+  for(int i = 0; i < NB_SOLVER_MAX; i++)
     solver.push_back(new solverWindow(i, CTX::instance()->deltaFontSize));
 
   // init solver plugin stuff

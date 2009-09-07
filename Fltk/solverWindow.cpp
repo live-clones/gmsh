@@ -152,39 +152,18 @@ void GmshRemote::run(std::string args)
           Msg::StatusBar(2, false, "%s %s", name.c_str(), message);
           break;
         case GmshSocket::GMSH_OPTION_1:
-          if(initOption[0]){
-            optionValue[0].clear();
-            initOption[0] = false;
-          }
-          optionValue[0].push_back(message);
-          break;
         case GmshSocket::GMSH_OPTION_2:
-          if(initOption[1]){
-            optionValue[1].clear();
-            initOption[1] = false;
-          }
-          optionValue[1].push_back(message);
-          break;
         case GmshSocket::GMSH_OPTION_3:
-          if(initOption[2]){
-            optionValue[2].clear();
-            initOption[2] = false;
-          }
-          optionValue[2].push_back(message);
-          break;
         case GmshSocket::GMSH_OPTION_4:
-          if(initOption[3]){
-            optionValue[3].clear();
-            initOption[3] = false;
-          }
-          optionValue[3].push_back(message);
-          break;
         case GmshSocket::GMSH_OPTION_5:
-          if(initOption[4]){
-            optionValue[4].clear();
-            initOption[4] = false;
+          {
+            int i = (int)type - (int)GmshSocket::GMSH_OPTION_1;
+            if(initOption[i]){
+              optionValue[i].clear();
+              initOption[i] = false;
+            }
+            optionValue[i].push_back(message);
           }
-          optionValue[4].push_back(message);
           break;
         case GmshSocket::GMSH_MERGE_FILE:
           if(mergeViews) {
@@ -240,7 +219,7 @@ void GmshRemote::run(std::string args)
       if(this == it->second) break;
       num++;
     }
-    if(num >= 0 && num < 5){
+    if(num >= 0 && num < NB_SOLVER_MAX){
       for(unsigned int i = 0; i < optionName.size(); i++) {
         if(optionName[i].empty()) break;
         FlGui::instance()->solver[num]->choice[i]->clear();
@@ -478,7 +457,7 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
         choice[i]->align(FL_ALIGN_RIGHT);
       }
 
-      static int arg[5][5][2];
+      static int arg[NB_SOLVER_MAX][5][2];
       for(unsigned int i = 0; i < GmshRemote::get(solverIndex)->buttonName.size(); i++) {
         if(GmshRemote::get(solverIndex)->buttonName[i].size()){
           arg[solverIndex][i][0] = solverIndex;

@@ -13,6 +13,7 @@
 #define GMSH_WINDOW_BOX FL_FLAT_BOX
 #define NB_BUTT_SCROLL 25
 #define NB_HISTORY_MAX 1000
+#define NB_SOLVER_MAX 5
 #define IW (10 * FL_NORMAL_SIZE)    // input field width
 #define BB (7 * FL_NORMAL_SIZE)     // width of a button with internal label
 #define BH (2 * FL_NORMAL_SIZE + 1) // button height
