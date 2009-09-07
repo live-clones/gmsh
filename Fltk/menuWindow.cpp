@@ -157,9 +157,13 @@ static void file_remote_cb(Fl_Widget *w, void *data)
     }
     else{
       GmshRemote::get(99)->name = "Remote";
-      GmshRemote::get(99)->executable = "./gmsh";
       GmshRemote::get(99)->socketSwitch = "-socket %s";
-      GmshRemote::get(99)->run("");
+      const char *exe = fl_input
+        ("Remote command:", "ssh ace25 /Users/geuzaine/src/gmsh/bin/gmsh");
+      if(exe){
+        GmshRemote::get(99)->executable = exe;
+        GmshRemote::get(99)->run("");
+      }
     }
   }
   else if(str == "stop"){
@@ -172,7 +176,17 @@ static void file_remote_cb(Fl_Widget *w, void *data)
       Msg::Error("Cannot stop remote Gmsh: server not running");
     }
   }
-  else if(str == "test"){
+  else if(str == "test1"){
+    if(GmshRemote::get(99)->getServer()){
+      Msg::Info("Testing remote Gmsh server");
+      GmshRemote::get(99)->getServer()->SendString
+        (GmshSocket::GMSH_PARSE_STRING, "Send me a view to parse");
+    }
+    else{
+      Msg::Error("Cannot test remote Gmsh: server not running");
+    }
+  }
+  else if(str == "test2"){
     if(GmshRemote::get(99)->getServer()){
       Msg::Info("Testing remote Gmsh server");
       GmshRemote::get(99)->getServer()->SendString
@@ -2234,7 +2248,10 @@ static Fl_Menu_Item sysbar_table[] = {
       {0},
 #if 1 // test remote Gmsh server
     {"Start server...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
-    {"Test server!",  0, (Fl_Callback *)file_remote_cb, (void*)"test"},
+    {"Test server",  0, 0, 0, FL_SUBMENU},
+      {"Send small parsed view",  0, (Fl_Callback *)file_remote_cb, (void*)"test1"},
+      {"Send large dummy data",  0, (Fl_Callback *)file_remote_cb, (void*)"test2"},
+      {0},
     {"Stop server",  0, (Fl_Callback *)file_remote_cb, (void*)"stop", FL_MENU_DIVIDER},
 #endif
     {"Rename...",  FL_META+'r', (Fl_Callback *)file_rename_cb, 0},

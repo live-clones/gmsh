@@ -48,12 +48,12 @@ int GmshDaemon(std::string socket)
               client.SpeedTest(huge.c_str());
             }
             break;
-          default:
+          case GmshSocket::GMSH_PARSE_STRING:
             {
               std::ostringstream v;
               v << "View \"test\" {\n";
-              for(int i = 0; i < 100; i++){
-                for(int j = 0; j < 100; j++){
+              for(int i = 0; i < 200; i++){
+                for(int j = 0; j < 200; j++){
                   v << "SQ("<<i<<","<<j<<",0, "<<i+1<<","<<j<<",0, "
                     <<i+1<<","<<j+1<<",0, "<<i<<","<<j+1<<",0){"
                     <<i+j<<","<<i+j<<","<<i+j<<","<<i+j<<"};\n";
