@@ -3,6 +3,7 @@
 
 #include <list>
 #include <vector>
+#include <map>
 #include <cmath>
 #include "DILevelset.h"
 
@@ -44,8 +45,8 @@ class DI_Point
   DI_Point & operator=(const DI_Point & rhs);
   // destructor
   ~DI_Point () {Ls.clear();}
-  // add a levelset value into the vector Ls
-  inline void addLs (const double ls) {Ls.push_back(ls);}
+  // add a levelset value (adjusted to 0 if ls<ZERO_LS_TOL) into the vector Ls
+  inline void addLs (const double ls);
   // add a levelset value evaluated into the element e
   inline void addLs (const DI_Element *e);
   // choose the value of the levelset among the last two levelset values of Ls,
@@ -228,6 +229,8 @@ class DI_Element
   virtual double refIntegral() const = 0;
   // add a levelset value to each point
   void addLs (const double *ls);
+  // add the levelset value to each point from the map with each primitive value
+  void addLs (int primTag, std::map<int, double> nodeLs[8]);
   // evaluate the levelset value at each point and add it to each point
   void addLs (const DI_Element *e);
   // add the level set at each vertex of the real element e (same type as this)
@@ -413,7 +416,7 @@ class DI_Line : public DI_Element
   double detJ (const double &xP, const double &yP, const double &zP) const;
   bool cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
             std::vector<DI_CuttingPoint> &cp, const int polynomialOrderL,
-            std::vector<DI_Line> &subLines, int recurLevel = 0) const;
+            std::vector<DI_Line> &subLines, int recurLevel = 0, std::map<int, double> nodeLs[2] = NULL) const;
   void cut(const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
            std::vector<DI_Line> &subLines, std::vector<DI_CuttingPoint> &cp) const;
   void selfSplit (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
@@ -500,7 +503,7 @@ class DI_Triangle : public DI_Element
             std::vector<DI_IntegrationPoint> &ipS, std::vector<DI_CuttingPoint> &cp,
             const int polynomialOrderQ, const int polynomialOrderTr, const int polynomialOrderL,
             std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
-            std::vector<DI_Line> &surfLines, int recurLevel = 0) const;
+            std::vector<DI_Line> &surfLines, int recurLevel = 0, std::map<int, double> nodeLs[3] = NULL) const;
   void cut (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
             std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
             std::vector<DI_Line> &surfLines, std::vector<DI_CuttingPoint> &cp) const;
@@ -598,7 +601,7 @@ class DI_Quad : public DI_Element
             std::vector<DI_IntegrationPoint> &ipS, std::vector<DI_CuttingPoint> &cp,
             const int polynomialOrderQ, const int polynomialOrderTr, const int polynomialOrderL,
             std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
-            std::vector<DI_Line> &surfLines, int recurLevel = 0) const;
+            std::vector<DI_Line> &surfLines, int recurLevel = 0, std::map<int, double> nodeLs[4] = NULL) const;
   void cut (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
             std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
             std::vector<DI_Line> &surfLines, std::vector<DI_CuttingPoint> &cp) const;
@@ -693,7 +696,7 @@ class DI_Tetra : public DI_Element
             std::vector<DI_IntegrationPoint> &ipS, std::vector<DI_CuttingPoint> &cp,
             const int polynomialOrderT, const int polynomialOrderQ, const int polynomialOrderTr,
             std::vector<DI_Tetra> &subTetras, std::vector<DI_Quad> &surfQuads,
-            std::vector<DI_Triangle> &surfTriangles, int recurLevel = 0) const;
+            std::vector<DI_Triangle> &surfTriangles, int recurLevel = 0, std::map<int, double> nodeLs[4] = NULL) const;
   void cut (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
             std::vector<DI_Tetra> &subTetras, std::vector<DI_Quad> &surfQuads,
             std::vector<DI_Triangle> &surfTriangles, std::vector<DI_CuttingPoint> &cp,
@@ -824,7 +827,7 @@ class DI_Hexa : public DI_Element
             const int polynomialOrderQ, const int polynomialOrderTr,
             std::vector<DI_Hexa> &notCutHexas, std::vector<DI_Tetra> &subTetras,
             std::vector<DI_Quad> &surfQuads, std::vector<DI_Triangle> &surfTriangles,
-            std::vector<DI_Line> &frontLines, int recurLevel = 0) const;
+            std::vector<DI_Line> &frontLines, int recurLevel = 0, std::map<int, double> nodeLs[8] = NULL) const;
   void cut (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
             std::vector<DI_Hexa> &unCutHexas, std::vector<DI_Tetra> &subTetras,
             std::vector<DI_Quad> &surfQuads, std::vector<DI_Triangle> &surfTriangles,

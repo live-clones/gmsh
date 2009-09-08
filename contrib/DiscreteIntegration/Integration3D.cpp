@@ -498,7 +498,7 @@ DI_Point quadMidNode(const DI_Point &p1, const DI_Point &p2, const DI_Point &pf,
 
 // DI_Point methods ----------------------------------------------------------------------------------------------
 DI_Point::DI_Point (double x, double y, double z, gLevelset &ls) : x_(x), y_(y), z_(z) {
-  Ls.push_back(adjustLs(ls(x, y, z)));
+  addLs(ls(x, y, z));
 }
 DI_Point & DI_Point::operator= (const DI_Point &rhs) {
   if(this != &rhs){
@@ -506,8 +506,11 @@ DI_Point & DI_Point::operator= (const DI_Point &rhs) {
   }
   return *this;
 }
+void DI_Point::addLs (const double ls) {
+  Ls.push_back(adjustLs(ls));
+}
 void DI_Point::addLs (const DI_Element *e) {
-  Ls.push_back(e->evalLs(x_, y_, z_));
+  addLs(e->evalLs(x_, y_, z_));
 }
 void DI_Point::chooseLs (const gLevelset *Lsi) {
   if(Ls.size() < 2) return;
@@ -528,8 +531,7 @@ void DI_Point::computeLs (const DI_Element *e, const std::vector<const gLevelset
 }
 void DI_Point::computeLs (const gLevelset &ls) {
   Ls.clear();
-  double l = ls(x_, y_, z_);
-  Ls.push_back(adjustLs(l));
+  addLs(ls(x_, y_, z_));
 }
 bool DI_Point::equal(const DI_Point &p) const {
   return (fabs(x() - p.x()) < EQUALITY_TOL && fabs(y() - p.y()) < EQUALITY_TOL && fabs(z() - p.z()) < EQUALITY_TOL);
@@ -660,6 +662,10 @@ void DI_Element::addLs (const double *ls) {
   for(int i = 0; i < nbMid(); i++)
     mid_[i]->addLs(ls[nbVert()+i]);
 }
+void DI_Element::addLs (int primTag, std::map<int, double> nodeLs[8]) { printf("p");
+  for(int i = 0; i < nbVert(); i++)
+    pts_[i]->addLs(nodeLs[i][primTag]);
+}
 void DI_Element::addLs (const DI_Element *e) {
   if(e->sizeLs() < 1) return;
   for(int i = 0; i < nbVert(); i++)
@@ -667,13 +673,13 @@ void DI_Element::addLs (const DI_Element *e) {
   for(int i = 0; i < nbMid(); i++)
     mid_[i]->addLs(e);
 }
-void DI_Element::addLs (const DI_Element *e, const gLevelset &Ls) {
+void DI_Element::addLs (const DI_Element *e, const gLevelset &Ls) { printf("e");
   if(type() != e->type()) {
     printf("Error : addLs with element of different type\n");
   }
   for(int j = 0; j < nbVert(); ++j) {
     double ls = Ls(e->x(j), e->y(j), e->z(j));
-    pts_[j]->addLs(adjustLs(ls));
+    pts_[j]->addLs(ls);
   }
   for(int j = 0; j < nbMid(); ++j) {
     std::vector<int> s(nbVert()); int n;
@@ -682,7 +688,7 @@ void DI_Element::addLs (const DI_Element *e, const gLevelset &Ls) {
     for(int k = 0; k < n; k++){
       xc += e->x(s[k]); yc += e->y(s[k]); zc += e->z(s[k]); }
     double ls = Ls(xc/n, yc/n, zc/n);
-    mid_[j]->addLs(adjustLs(ls));
+    mid_[j]->addLs(ls);
   }
 }
 void DI_Element::chooseLs (const gLevelset *Lsi) {
@@ -2045,7 +2051,7 @@ void DI_Hexa::getRefIntegrationPoints ( const int polynomialOrder , std::vector<
 // cut a line into sublines along the levelset curve
 bool DI_Line::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
                    std::vector<DI_CuttingPoint> &cp, const int polynomialOrder,
-                   std::vector<DI_Line> &lines, int recurLevel) const
+                   std::vector<DI_Line> &lines, int recurLevel, std::map<int, double> nodeLs[2]) const
 {
   //printf(" "); print();
   std::vector<const gLevelset *> RPN, RPNi;
@@ -2057,7 +2063,7 @@ bool DI_Line::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
   std::vector<DI_CuttingPoint> ll_cp;
 
   RecurElement re(&ll);
-  bool signChange = re.cut(recurLevel, this, Ls);
+  bool signChange = re.cut(recurLevel, this, Ls, -1., nodeLs);
   re.pushSubLines(ll_subLines);
 
   if(signChange){
@@ -2065,7 +2071,8 @@ bool DI_Line::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        ll.addLs(this, *Lsi);
+        if(nodeLs && nodeLs[0].count(Lsi->getTag())) ll.addLs(Lsi->getTag(), nodeLs);
+        else ll.addLs(this, *Lsi);
         int nbSubLn = ll_subLines.size();
         int nbCP = ll_cp.size();
         for(int i = 0; i < nbSubLn; i++) ll_subLines[i].addLs(&ll);
@@ -2090,8 +2097,10 @@ bool DI_Line::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
     for(int l = 0; l < (int)RPN.size(); l++) {
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
-      if(Lsi->isPrimitive())
-        ll.addLs(this, *Lsi);
+      if(Lsi->isPrimitive()) {
+        if(nodeLs && nodeLs[0].count(Lsi->getTag())) ll.addLs(Lsi->getTag(), nodeLs);
+        else ll.addLs(this, *Lsi);
+      }
     }
   }
 
@@ -2138,7 +2147,7 @@ bool DI_Triangle::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip
                        std::vector<DI_IntegrationPoint> &ipS, std::vector<DI_CuttingPoint> &cp,
                        const int polynomialOrderQ, const int polynomialOrderTr, const int polynomialOrderL,
                        std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
-                       std::vector<DI_Line> &surfLines, int recurLevel) const
+                       std::vector<DI_Line> &surfLines, int recurLevel, std::map<int, double> nodeLs[3]) const
 {
   //printf(" ");print();
   std::vector<const gLevelset *> RPN, RPNi;
@@ -2152,7 +2161,7 @@ bool DI_Triangle::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip
   std::vector<DI_CuttingPoint> tt_cp;
 
   RecurElement re(&tt);
-  bool signChange = re.cut(recurLevel, this, Ls);
+  bool signChange = re.cut(recurLevel, this, Ls, -1., nodeLs);
   re.pushSubTriangles(tt_subTriangles);
 
   if(signChange){
@@ -2160,7 +2169,8 @@ bool DI_Triangle::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip
       const gLevelset *Lsi = RPN[l]; //printf("LS(0,0)=%g LS(1,1)=%g\n",(*Lsi)(0,0,0),(*Lsi)(1,1,0));
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        tt.addLs(this, *Lsi);
+        if(nodeLs && nodeLs[0].count(Lsi->getTag())) tt.addLs(Lsi->getTag(), nodeLs);
+        else tt.addLs(this, *Lsi);
         int nbSubQ = tt_subQuads.size(), nbSubQ1 = nbSubQ;
         int nbSubTr = tt_subTriangles.size(), nbSubTr1 = nbSubTr;
         int nbSurfLn = tt_surfLines.size(), nbSurfLn1 = nbSurfLn;
@@ -2237,8 +2247,10 @@ bool DI_Triangle::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip
     for(int l = 0; l < (int)RPN.size(); l++) {
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
-      if(Lsi->isPrimitive())
-        tt.addLs(this, *Lsi);
+      if(Lsi->isPrimitive()) {
+        if(nodeLs && nodeLs[0].count(Lsi->getTag())) tt.addLs(Lsi->getTag(), nodeLs);
+        else tt.addLs(this, *Lsi);
+      }
     }
   }
 
@@ -2259,7 +2271,7 @@ bool DI_Triangle::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip
       DI_Point vP[3];
       for(int i = 0; i < 3; i++) {
         double ls = Ls(x(i), y(i), z(i));
-        vP[i] = DI_Point(tt.x(i), tt.y(i), tt.z(i), adjustLs(ls));
+        vP[i] = DI_Point(tt.x(i), tt.y(i), tt.z(i), ls);
       }
       DI_Triangle trt(vP[0], vP[1], vP[2]); // reference triangle
       tt_subTriangles.push_back(trt);
@@ -2329,7 +2341,7 @@ bool DI_Quad::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
                    std::vector<DI_IntegrationPoint> &ipS, std::vector<DI_CuttingPoint> &cp,
                    const int polynomialOrderQ, const int polynomialOrderTr, const int polynomialOrderL,
                    std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
-                   std::vector<DI_Line> &surfLines, int recurLevel) const
+                   std::vector<DI_Line> &surfLines, int recurLevel, std::map<int, double> nodeLs[4]) const
 {
   printf(" "); printls();
   std::vector<const gLevelset *> RPN, RPNi;
@@ -2343,7 +2355,7 @@ bool DI_Quad::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
   std::vector<DI_CuttingPoint> qq_cp;
 
   RecurElement re(&qq);
-  bool signChange = re.cut(recurLevel, this, Ls, 1.e-5);
+  bool signChange = re.cut(recurLevel, this, Ls, -1., nodeLs);
   re.pushSubQuads(qq_subQuads);
 
   if(signChange) {
@@ -2351,7 +2363,8 @@ bool DI_Quad::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        qq.addLs(this, *Lsi);
+        if(nodeLs && nodeLs[0].count(Lsi->getTag())) qq.addLs(Lsi->getTag(), nodeLs);
+        else qq.addLs(this, *Lsi);
         int nbSubQ = qq_subQuads.size(), nbSubQ1 = nbSubQ;
         int nbSubTr = qq_subTriangles.size(), nbSubTr1 = nbSubTr;
         int nbSurfLn = qq_surfLines.size(), nbSurfLn1 = nbSurfLn;
@@ -2432,8 +2445,10 @@ bool DI_Quad::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
     for(int l = 0; l < (int)RPN.size(); l++) {
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
-      if(Lsi->isPrimitive())
-        qq.addLs(this, *Lsi);
+      if(Lsi->isPrimitive()) {
+        if(nodeLs && nodeLs[0].count(Lsi->getTag())) qq.addLs(Lsi->getTag(), nodeLs);
+        else qq.addLs(this, *Lsi);
+      }
     }
   }
 
@@ -2451,7 +2466,7 @@ bool DI_Quad::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
       DI_Point vP[4];
       for(int i = 0; i < 4; i++) {
         double ls = Ls(x(i), y(i), z(i));
-        vP[i] = DI_Point(qq.x(i), qq.y(i), qq.z(i), adjustLs(ls));
+        vP[i] = DI_Point(qq.x(i), qq.y(i), qq.z(i), ls);
       }
       DI_Quad qt(vP[0], vP[1], vP[2], vP[3]); // reference quad
       qq_subQuads.push_back(qt);
@@ -2532,7 +2547,7 @@ bool DI_Tetra::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
                     std::vector<DI_IntegrationPoint> &ipS, std::vector<DI_CuttingPoint> &cp,
                     const int polynomialOrderT, const int polynomialOrderQ, const int polynomialOrderTr,
                     std::vector<DI_Tetra> &subTetras, std::vector<DI_Quad> &surfQuads,
-                    std::vector<DI_Triangle> &surfTriangles, int recurLevel) const
+                    std::vector<DI_Triangle> &surfTriangles, int recurLevel, std::map<int, double> nodeLs[4]) const
 {
   //printf(" ");print();
   std::vector<const gLevelset *> RPN, RPNi;
@@ -2549,7 +2564,7 @@ bool DI_Tetra::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
   std::vector<DI_QualError> QError;
 
   RecurElement re(&tt);
-  bool signChange = re.cut(recurLevel, this, Ls);
+  bool signChange = re.cut(recurLevel, this, Ls, -1., nodeLs);
   re.pushSubTetras(tt_subTetras);
 
   if(signChange) {
@@ -2557,7 +2572,8 @@ bool DI_Tetra::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        tt.addLs(this, *Lsi);
+        if(nodeLs && nodeLs[0].count(Lsi->getTag())) tt.addLs(Lsi->getTag(), nodeLs);
+        else tt.addLs(this, *Lsi);
         int nbSubT = tt_subTetras.size(), nbSubT1 = nbSubT;
         int nbSurfQ = tt_surfQuads.size();
         int nbSurfTr = tt_surfTriangles.size(), nbSurfTr1 = nbSurfTr;
@@ -2617,8 +2633,10 @@ bool DI_Tetra::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
     for(int l = 0; l < (int)RPN.size(); l++) {
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
-      if(Lsi->isPrimitive())
-        tt.addLs(this, *Lsi);
+      if(Lsi->isPrimitive()) {
+        if(nodeLs && nodeLs[0].count(Lsi->getTag())) tt.addLs(Lsi->getTag(), nodeLs);
+        else tt.addLs(this, *Lsi);
+      }
     }
   }
 
@@ -2637,7 +2655,7 @@ bool DI_Tetra::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
       DI_Point vP[4];
       for(int i = 0; i < 4; i++) {
         double ls = Ls(x(i), y(i), z(i));
-        vP[i] = DI_Point(tt.x(i), tt.y(i), tt.z(i), adjustLs(ls));
+        vP[i] = DI_Point(tt.x(i), tt.y(i), tt.z(i), ls);
       }
       DI_Tetra tet(vP[0], vP[1], vP[2], vP[3]); // reference tetra
       tt_subTetras.push_back(tet);
@@ -2713,7 +2731,7 @@ bool DI_Hexa::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
                    const int polynomialOrderQ, const int polynomialOrderTr,
                    std::vector<DI_Hexa> &subHexas, std::vector<DI_Tetra> &subTetras,
                    std::vector<DI_Quad> &surfQuads, std::vector<DI_Triangle> &surfTriangles,
-                   std::vector<DI_Line> &frontLines, int recurLevel) const
+                   std::vector<DI_Line> &frontLines, int recurLevel, std::map<int, double> nodeLs[8]) const
 {
   printf(" "); print();
 
@@ -2730,7 +2748,7 @@ bool DI_Hexa::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
   std::vector<DI_QualError> QError;
 
   RecurElement re(&hh);
-  bool signChange = re.cut(recurLevel, this, Ls);
+  bool signChange = re.cut(recurLevel, this, Ls, -1., nodeLs);
   re.pushSubHexas(hh_subHexas);
 
   if(signChange){
@@ -2738,7 +2756,8 @@ bool DI_Hexa::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        hh.addLs(this, *Lsi);
+        if(nodeLs && nodeLs[0].count(Lsi->getTag())) hh.addLs(Lsi->getTag(), nodeLs);
+        else hh.addLs(this, *Lsi);
         int nbSubH = hh_subHexas.size();
         int nbSubT = hh_subTetras.size(), nbSubT1 = nbSubT;
         int nbSurfQ = hh_surfQuads.size(), nbSurfQ1 = nbSurfQ;
@@ -2852,8 +2871,10 @@ bool DI_Hexa::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
     for(int l = 0; l < (int)RPN.size(); l++) {
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
-      if(Lsi->isPrimitive())
-        hh.addLs(this, *Lsi);
+      if(Lsi->isPrimitive()) {
+        if(nodeLs && nodeLs[0].count(Lsi->getTag())) hh.addLs(Lsi->getTag(), nodeLs);
+        else hh.addLs(this, *Lsi);
+      }
     }
   }
 
@@ -2875,7 +2896,7 @@ bool DI_Hexa::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
       DI_Point vP[8];
       for(int i = 0; i < 8; i++) {
         double ls = Ls(x(i), y(i), z(i));
-        vP[i] = DI_Point(hh.x(i), hh.y(i), hh.z(i), adjustLs(ls));
+        vP[i] = DI_Point(hh.x(i), hh.y(i), hh.z(i), ls);
       }
       DI_Hexa hex(vP[0], vP[1], vP[2], vP[3], vP[4], vP[5], vP[6], vP[7]); // reference hexa
       hh_subHexas.push_back(hex);
