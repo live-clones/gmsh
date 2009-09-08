@@ -2188,6 +2188,8 @@ static void view_applybgmesh_cb(Fl_Widget *w, void *data)
   }
 }
 
+#define TEST_SERVER
+
 // The static menus (we cannot use the 'g', 'm' 's' and 'p' mnemonics
 // since they are already defined as global shortcuts)
 static Fl_Menu_Item bar_table[] = {
@@ -2202,6 +2204,14 @@ static Fl_Menu_Item bar_table[] = {
       {"Vertically",   0, (Fl_Callback *)file_window_cb, (void*)"split_v"},
       {"Clear",        0, (Fl_Callback *)file_window_cb, (void*)"split_u"},
       {0},
+#if defined(TEST_SERVER)
+    {"Start server...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
+    {"Test server",  0, 0, 0, FL_SUBMENU},
+      {"Send small parsed view",  0, (Fl_Callback *)file_remote_cb, (void*)"test1"},
+      {"Send large dummy data",  0, (Fl_Callback *)file_remote_cb, (void*)"test2"},
+      {0},
+    {"Stop server",  0, (Fl_Callback *)file_remote_cb, (void*)"stop", FL_MENU_DIVIDER},
+#endif
     {"&Rename...",  FL_CTRL+'r', (Fl_Callback *)file_rename_cb, 0},
     {"Save &As...", FL_CTRL+'s', (Fl_Callback *)file_save_as_cb, 0},
     {"Sa&ve Mesh",  FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0},
@@ -2246,7 +2256,7 @@ static Fl_Menu_Item sysbar_table[] = {
       {"Vertically",   0, (Fl_Callback *)file_window_cb, (void*)"split_v"},
       {"Clear",        0, (Fl_Callback *)file_window_cb, (void*)"split_u"},
       {0},
-#if 1 // test remote Gmsh server
+#if defined(TEST_SERVER)
     {"Start server...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
     {"Test server",  0, 0, 0, FL_SUBMENU},
       {"Send small parsed view",  0, (Fl_Callback *)file_remote_cb, (void*)"test1"},
