@@ -263,7 +263,11 @@ class MTriangleBorder : public MTriangle {
   }
   ~MTriangleBorder() {}
   MPolyhedron* getDomain(int i) const { return _domains[i]; }
-  virtual MElement *getParent() const { return _domains[0]->getParent(); }
+  virtual MElement *getParent() const {
+    if(_domains[0]) return _domains[0]->getParent();
+    if(_domains[1]) return _domains[1]->getParent();
+    return NULL;
+  }
   virtual const gmshFunctionSpace* getFunctionSpace(int order=-1) const 
   {
     return getParent()->getFunctionSpace(order);
@@ -299,7 +303,11 @@ class MLineBorder : public MLine {
   }
   ~MLineBorder() {}
   MPolygon* getDomain(int i) const { return _domains[i]; }
-  virtual MElement *getParent() const { return _domains[0]->getParent(); }
+  virtual MElement *getParent() const {
+    if(_domains[0]) return _domains[0]->getParent();
+    if(_domains[1]) return _domains[1]->getParent();
+    return NULL;
+  }
   virtual const gmshFunctionSpace* getFunctionSpace(int order=-1) const 
   {
     return getParent()->getFunctionSpace(order);

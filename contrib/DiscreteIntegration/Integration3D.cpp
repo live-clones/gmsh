@@ -1485,7 +1485,7 @@ void DI_Hexa::getGradShapeFunctions (const double u, const double v, const doubl
 // ----------------------------------------------------------------------------
 
 // Split a reference line cut by a level set into sublines
-void DI_Line::selfSplit (const DI_Element *e, const std::vector<const gLevelset *> RPNi,
+void DI_Line::selfSplit (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
                           std::vector<DI_Line> &subLines, std::vector<DI_CuttingPoint> &cuttingPoints) const
 {
   if (!isCrossed(pt(0), pt(1))) {
@@ -1514,7 +1514,7 @@ void DI_Triangle::splitIntoSubTriangles (std::vector<DI_Triangle> &subTriangles)
   subTriangles.push_back(DI_Triangle(pt(2), p02, p12)); // 2-02-12
 }
 // Split a reference triangle cut by a level set into subtriangles
-void DI_Triangle::selfSplit (const DI_Element *e, const std::vector<const gLevelset *> RPNi,
+void DI_Triangle::selfSplit (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
                              std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
                              std::vector<DI_Line> &surfLines, std::vector<DI_CuttingPoint> &cuttingPoints) const
 {
@@ -1628,7 +1628,7 @@ void DI_Quad::splitIntoTriangles(std::vector<DI_Triangle> &triangles) const
 }
 
 // Split a reference tetrahedron cut by a level set (defined in a hex) into sub tetrahedra and create triangles on the surface of the level set
-void DI_Tetra::selfSplit (const DI_Element *e, const std::vector<const gLevelset *> RPNi,
+void DI_Tetra::selfSplit (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
                        std::vector<DI_Tetra> &subTetras, std::vector<DI_Triangle> &surfTriangles,
                        std::vector<DI_CuttingPoint> &cuttingPoints, std::vector<DI_QualError> &QError) const
 {
@@ -2043,7 +2043,7 @@ void DI_Hexa::getRefIntegrationPoints ( const int polynomialOrder , std::vector<
 // -----------------------------------------------------------------------------
 
 // cut a line into sublines along the levelset curve
-void DI_Line::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
+bool DI_Line::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
                    std::vector<DI_CuttingPoint> &cp, const int polynomialOrder,
                    std::vector<DI_Line> &lines, int recurLevel) const
 {
@@ -2062,7 +2062,7 @@ void DI_Line::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
 
   if(signChange){
     for(int l = 0; l < (int)RPN.size(); l++) {
-      const gLevelset *Lsi = RPN[l]; //printf("LS(0,0)=%g LS(1,1)=%g\n",(*Lsi)(0,0,0),(*Lsi)(1,1,0));
+      const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
         ll.addLs(this, *Lsi);
@@ -2110,10 +2110,11 @@ void DI_Line::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
       if(cp[i].equal(ll_cp[p])) {isIn = true; break;}
     if(!isIn) cp.push_back(ll_cp[p]);
   }
+  return signChange;
 }
 
 // cut a line into sublines along one levelset primitive
-void DI_Line::cut(const DI_Element *e, const std::vector<const gLevelset *> RPNi,
+void DI_Line::cut(const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
            std::vector<DI_Line> &subLines, std::vector<DI_CuttingPoint> &cp) const
 {
   // check if the line is cut by the level set
@@ -2133,7 +2134,7 @@ void DI_Line::cut(const DI_Element *e, const std::vector<const gLevelset *> RPNi
 }
 
 // cut a triangle into subtriangles along the levelset curve
-void DI_Triangle::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
+bool DI_Triangle::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
                        std::vector<DI_IntegrationPoint> &ipS, std::vector<DI_CuttingPoint> &cp,
                        const int polynomialOrderQ, const int polynomialOrderTr, const int polynomialOrderL,
                        std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
@@ -2152,7 +2153,7 @@ void DI_Triangle::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip
 
   RecurElement re(&tt);
   bool signChange = re.cut(recurLevel, this, Ls);
-  re.pushSubTriangles(tt_subTriangles); //for(int i=0;i<(int)tt_subTriangles.size(); i++) tt_subTriangles[i].print();
+  re.pushSubTriangles(tt_subTriangles);
 
   if(signChange){
     for(int l = 0; l < (int)RPN.size(); l++) {
@@ -2265,8 +2266,6 @@ void DI_Triangle::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip
     }
   }*/
 
-  //printf("tt = "); tt.printls();
-
   for(int q = 0; q < (int)tt_subQuads.size(); q++) {
     tt_subQuads[q].computeLsTagDom(&tt, RPN);
     DI_Quad tt_subQ = tt_subQuads[q];
@@ -2282,10 +2281,10 @@ void DI_Triangle::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip
     subTriangles.push_back(tt_subTr);
   }
   for(int l = 0; l < (int)tt_surfLines.size(); l++) {
-    tt_surfLines[l].computeLsTagBound(tt_subQuads, tt_subTriangles);  //tt_surfLines[l].printls();
+    tt_surfLines[l].computeLsTagBound(tt_subQuads, tt_subTriangles);
     if(tt_surfLines[l].lsTag() == -1) continue;
     DI_Line tt_surfLn = tt_surfLines[l];
-    mappingEl(&tt_surfLn);                      //tt_surfLn.printls();
+    mappingEl(&tt_surfLn);
     tt_surfLn.integrationPoints(polynomialOrderL, &tt_surfLines[l], &tt, RPN, ipS);
     surfLines.push_back(tt_surfLn);
   }
@@ -2297,10 +2296,11 @@ void DI_Triangle::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip
       if(cp[i].equal(tt_cp[p])) {isIn = true; break;}
     if(!isIn) cp.push_back(tt_cp[p]);
   }
+  return signChange;
 }
 
 // cut a triangle into subtriangles along one levelset primitive
-void DI_Triangle::cut (const DI_Element *e, const std::vector<const gLevelset *> RPNi,
+void DI_Triangle::cut (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
                     std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
                     std::vector<DI_Line> &surfLines, std::vector<DI_CuttingPoint> &cp) const
 {
@@ -2325,7 +2325,7 @@ void DI_Triangle::cut (const DI_Element *e, const std::vector<const gLevelset *>
 }
 
 // cut a quadrangle into subtriangles along the levelset curve
-void DI_Quad::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
+bool DI_Quad::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
                    std::vector<DI_IntegrationPoint> &ipS, std::vector<DI_CuttingPoint> &cp,
                    const int polynomialOrderQ, const int polynomialOrderTr, const int polynomialOrderL,
                    std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
@@ -2345,14 +2345,6 @@ void DI_Quad::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
   RecurElement re(&qq);
   bool signChange = re.cut(recurLevel, this, Ls, 1.e-5);
   re.pushSubQuads(qq_subQuads);
-
-  qq.addLs(this, Ls); printf("qq:"); qq.printls();
-  for(int i = 0; i < (int)qq_subQuads.size(); i++) {
-    qq_subQuads[i].addLs(&qq);
-    printf("qi:"); qq_subQuads[i].printls();
-    qq_subQuads[i].clearLs();
-  }
-  qq.clearLs();
 
   if(signChange) {
     for(int l = 0; l < (int)RPN.size(); l++) {
@@ -2496,10 +2488,11 @@ void DI_Quad::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
       if(cp[i].equal(qq_cp[p])) {isIn = true; break;}
     if(!isIn) cp.push_back(qq_cp[p]);
   }
+  return signChange;
 }
 
 // cut a quadrangle into subtriangles along the levelset curve
-void DI_Quad::cut (const DI_Element *e, const std::vector<const gLevelset *> RPNi,
+void DI_Quad::cut (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
                 std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
                 std::vector<DI_Line> &surfLines, std::vector<DI_CuttingPoint> &cp) const
 {
@@ -2535,7 +2528,7 @@ void DI_Quad::cut (const DI_Element *e, const std::vector<const gLevelset *> RPN
 }
 
 // cut a tetrahedron into subtetrahedra along the levelset surface
-void DI_Tetra::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
+bool DI_Tetra::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
                     std::vector<DI_IntegrationPoint> &ipS, std::vector<DI_CuttingPoint> &cp,
                     const int polynomialOrderT, const int polynomialOrderQ, const int polynomialOrderTr,
                     std::vector<DI_Tetra> &subTetras, std::vector<DI_Quad> &surfQuads,
@@ -2685,10 +2678,11 @@ void DI_Tetra::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
       if(cp[i].equal(tt_cp[p])) {isIn = true; break;}
     if(!isIn) cp.push_back(tt_cp[p]);
   }
+  return signChange;
 }
 
 // cut a tetrahedron into subtetrahedra along the levelset surface
-void DI_Tetra::cut (const DI_Element *e, const std::vector<const gLevelset *> RPNi,
+void DI_Tetra::cut (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
                  std::vector<DI_Tetra> &subTetras, std::vector<DI_Quad> &surfQuads,
                  std::vector<DI_Triangle> &surfTriangles, std::vector<DI_CuttingPoint> &cp,
                  std::vector<DI_QualError> &QError) const
@@ -2713,7 +2707,7 @@ void DI_Tetra::cut (const DI_Element *e, const std::vector<const gLevelset *> RP
 }
 
 // cut a hex into subtetras along the levelset surface
-void DI_Hexa::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
+bool DI_Hexa::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
                    std::vector<DI_IntegrationPoint> &ipS, std::vector<DI_CuttingPoint> &cp,
                    const int polynomialOrderH, const int polynomialOrderT,
                    const int polynomialOrderQ, const int polynomialOrderTr,
@@ -2937,10 +2931,11 @@ void DI_Hexa::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
       if(cp[i].equal(hh_cp[p])) {isIn = true; break;}
     if(!isIn) cp.push_back(hh_cp[p]);
   }
+  return signChange;
 }
 
 // cut a hex into subtetras along the levelset surface
-void DI_Hexa::cut (const DI_Element *e, const std::vector<const gLevelset *> RPNi,
+void DI_Hexa::cut (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
                    std::vector<DI_Hexa> &Hexas, std::vector<DI_Tetra> &subTetras,
                    std::vector<DI_Quad> &surfQuads, std::vector<DI_Triangle> &surfTriangles,
                    std::vector<DI_CuttingPoint> &cp, std::vector<DI_QualError> &QError) const

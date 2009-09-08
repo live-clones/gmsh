@@ -411,12 +411,12 @@ class DI_Line : public DI_Element
   void getGradShapeFunctions (const double u, const double v, const double w,
                               double s[][3], int order = -1) const;
   double detJ (const double &xP, const double &yP, const double &zP) const;
-  void cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
+  bool cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
             std::vector<DI_CuttingPoint> &cp, const int polynomialOrderL,
             std::vector<DI_Line> &subLines, int recurLevel = 0) const;
-  void cut(const DI_Element *e, const std::vector<const gLevelset *> RPNi,
+  void cut(const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
            std::vector<DI_Line> &subLines, std::vector<DI_CuttingPoint> &cp) const;
-  void selfSplit (const DI_Element *e, const std::vector<const gLevelset *> RPNi,
+  void selfSplit (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
                   std::vector<DI_Line> &subLines, std::vector<DI_CuttingPoint> &cuttingPoints) const;
   inline double length() const {return integral_;}
 };
@@ -496,16 +496,16 @@ class DI_Triangle : public DI_Element
   void getGradShapeFunctions (const double u, const double v, const double w,
                               double s[][3], int order = -1) const;
   double detJ (const double &xP, const double &yP, const double &zP) const;
-  void cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
+  bool cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
             std::vector<DI_IntegrationPoint> &ipS, std::vector<DI_CuttingPoint> &cp,
             const int polynomialOrderQ, const int polynomialOrderTr, const int polynomialOrderL,
             std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
             std::vector<DI_Line> &surfLines, int recurLevel = 0) const;
-  void cut (const DI_Element *e, const std::vector<const gLevelset *> RPNi,
+  void cut (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
             std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
             std::vector<DI_Line> &surfLines, std::vector<DI_CuttingPoint> &cp) const;
   void splitIntoSubTriangles (std::vector<DI_Triangle> &triangles) const;
-  void selfSplit (const DI_Element *e, const std::vector<const gLevelset *> RPNi,
+  void selfSplit (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
                   std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
                   std::vector<DI_Line> &surfLines, std::vector<DI_CuttingPoint> &cuttingPoints) const;
   double quality () const;
@@ -594,12 +594,12 @@ class DI_Quad : public DI_Element
   void getGradShapeFunctions (const double u, const double v, const double w,
                               double s[][3], int order = -1) const;
   double detJ (const double &xP, const double &yP, const double &zP) const;
-  void cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
+  bool cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
             std::vector<DI_IntegrationPoint> &ipS, std::vector<DI_CuttingPoint> &cp,
             const int polynomialOrderQ, const int polynomialOrderTr, const int polynomialOrderL,
             std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
             std::vector<DI_Line> &surfLines, int recurLevel = 0) const;
-  void cut (const DI_Element *e, const std::vector<const gLevelset *> RPNi,
+  void cut (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
             std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
             std::vector<DI_Line> &surfLines, std::vector<DI_CuttingPoint> &cp) const;
   void splitIntoTriangles (std::vector<DI_Triangle> &triangles) const;
@@ -689,16 +689,16 @@ class DI_Tetra : public DI_Element
   void getGradShapeFunctions (const double u, const double v, const double w,
                               double s[][3], int order = -1) const;
   double detJ (const double &xP, const double &yP, const double &zP) const;
-  void cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
+  bool cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
             std::vector<DI_IntegrationPoint> &ipS, std::vector<DI_CuttingPoint> &cp,
             const int polynomialOrderT, const int polynomialOrderQ, const int polynomialOrderTr,
             std::vector<DI_Tetra> &subTetras, std::vector<DI_Quad> &surfQuads,
             std::vector<DI_Triangle> &surfTriangles, int recurLevel = 0) const;
-  void cut (const DI_Element *e, const std::vector<const gLevelset *> RPNi,
+  void cut (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
             std::vector<DI_Tetra> &subTetras, std::vector<DI_Quad> &surfQuads,
             std::vector<DI_Triangle> &surfTriangles, std::vector<DI_CuttingPoint> &cp,
             std::vector<DI_QualError> &QE) const;
-  void selfSplit ( const DI_Element *e, const std::vector<const gLevelset *> RPNi,
+  void selfSplit ( const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
                    std::vector<DI_Tetra> &subTetras, std::vector<DI_Triangle> &surfTriangles,
                    std::vector<DI_CuttingPoint> &cuttingPoints, std::vector<DI_QualError> &QE) const;
   double quality () const;
@@ -818,14 +818,14 @@ class DI_Hexa : public DI_Element
   void getGradShapeFunctions (const double u, const double v, const double w,
                               double s[][3], int order = -1) const;
   double detJ (const double &xP, const double &yP, const double &zP) const;
-  void cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
+  bool cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
             std::vector<DI_IntegrationPoint> &ipS, std::vector<DI_CuttingPoint> &cp,
             const int polynomialOrderH, const int polynomialOrderT,
             const int polynomialOrderQ, const int polynomialOrderTr,
             std::vector<DI_Hexa> &notCutHexas, std::vector<DI_Tetra> &subTetras,
             std::vector<DI_Quad> &surfQuads, std::vector<DI_Triangle> &surfTriangles,
             std::vector<DI_Line> &frontLines, int recurLevel = 0) const;
-  void cut (const DI_Element *e, const std::vector<const gLevelset *> RPNi,
+  void cut (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
             std::vector<DI_Hexa> &unCutHexas, std::vector<DI_Tetra> &subTetras,
             std::vector<DI_Quad> &surfQuads, std::vector<DI_Triangle> &surfTriangles,
             std::vector<DI_CuttingPoint> &cp, std::vector<DI_QualError> &QE) const;
