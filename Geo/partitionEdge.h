@@ -27,16 +27,16 @@ class partitionEdge : public discreteEdge {
 
 struct Less_partitionEdge : 
   public std::binary_function<partitionEdge*, partitionEdge*, bool> {
-  bool operator()(const partitionEdge* e1, const partitionEdge* e2) const{
-    if (e1->_partitions.size() < e2->_partitions.size())return true; 
-    if (e1->_partitions.size() > e2->_partitions.size())return false;
-    for (int i=0;i<e1->_partitions.size();i++){
-      if (e1->_partitions[i] < e2->_partitions[i])return true; 
-      if (e1->_partitions[i] > e2->_partitions[i])return false;      
+  bool operator()(const partitionEdge* e1, const partitionEdge* e2) const
+  {
+    if (e1->_partitions.size() < e2->_partitions.size()) return true; 
+    if (e1->_partitions.size() > e2->_partitions.size()) return false;
+    for (unsigned int i = 0; i < e1->_partitions.size(); i++){
+      if (e1->_partitions[i] < e2->_partitions[i]) return true; 
+      if (e1->_partitions[i] > e2->_partitions[i]) return false;      
     }
     return false;
   }
 };
-
 
 #endif

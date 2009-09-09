@@ -25,16 +25,16 @@ class partitionVertex : public discreteVertex {
 
 struct Less_partitionVertex : 
   public std::binary_function<partitionVertex*, partitionVertex*, bool> {
-  bool operator()(const partitionVertex* e1, const partitionVertex* e2) const{
-    if (e1->_partitions.size() < e2->_partitions.size())return true; 
-    if (e1->_partitions.size() > e2->_partitions.size())return false;
-    for (int i=0;i<e1->_partitions.size();i++){
-      if (e1->_partitions[i] < e2->_partitions[i])return true; 
-      if (e1->_partitions[i] > e2->_partitions[i])return false;      
+  bool operator()(const partitionVertex* e1, const partitionVertex* e2) const
+  {
+    if (e1->_partitions.size() < e2->_partitions.size()) return true; 
+    if (e1->_partitions.size() > e2->_partitions.size()) return false;
+    for (unsigned int i = 0; i < e1->_partitions.size(); i++){
+      if (e1->_partitions[i] < e2->_partitions[i]) return true; 
+      if (e1->_partitions[i] > e2->_partitions[i]) return false;      
     }
     return false;
   }
 };
-
 
 #endif

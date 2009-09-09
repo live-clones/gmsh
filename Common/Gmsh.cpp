@@ -66,6 +66,7 @@ int GmshSetBoundingBox(double xmin, double xmax,
                        double zmin, double zmax)
 {
   SetBoundingBox(xmin, xmax, ymin, ymax, zmin, zmax);
+  return 1;
 }
 
 int GmshSetOption(std::string category, std::string name, std::string value, int index)
