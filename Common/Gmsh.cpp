@@ -61,6 +61,13 @@ int GmshSetMessageHandler(GmshMessage *callback)
   return 1;
 }
 
+int GmshSetBoundingBox(double xmin, double xmax,
+                       double ymin, double ymax, 
+                       double zmin, double zmax)
+{
+  SetBoundingBox(xmin, xmax, ymin, ymax, zmin, zmax);
+}
+
 int GmshSetOption(std::string category, std::string name, std::string value, int index)
 {
   return StringOption(GMSH_SET, category.c_str(), index, name.c_str(), value);
