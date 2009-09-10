@@ -7,6 +7,7 @@ set(SRC
   Numeric.cpp
     GmshMatrix.cpp
     gmshLaplace.cpp
+  gmshCrossConf.cpp
     gmshConvexCombination.cpp
       gmshHelmholtz.cpp
       gmshElasticity.cpp

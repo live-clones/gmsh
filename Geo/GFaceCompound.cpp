@@ -11,6 +11,7 @@
 #include "Octree.h"
 #include "gmshAssembler.h"
 #include "gmshLaplace.h"
+#include "gmshCrossConf.h"
 #include "gmshConvexCombination.h"
 #include "gmshLinearSystemGmm.h"
 #include "gmshLinearSystemCSR.h"
@@ -322,8 +323,12 @@ void GFaceCompound::parametrize() const
 
   if(!oct){
     coordinates.clear(); 
-    parametrize(ITERU);
-    parametrize(ITERV);
+    
+    //parametrize(ITERU);
+    //parametrize(ITERV);
+
+    parametrize_conformal();
+
     //    checkOrientation();
     computeNormals();
     buildOct();
@@ -468,6 +473,7 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
     gmshLinearSystemGmm<double> *_lsysb = new gmshLinearSystemGmm<double>;
     //gmshLinearSystemCSRGmm<double> lsys;
     _lsysb->setPrec(1.e-15);
+    _lsysb->setGmres(1);
     if(Msg::GetVerbosity() == 99) _lsysb->setNoisy(2);
     _lsys = _lsysb;
 #else
@@ -784,7 +790,7 @@ void GFaceCompound::parametrize_conformal() const
 
   {
     MVertex *v1 = ordered[0];
-    MVertex *v2 = ordered[1];
+    MVertex *v2 = ordered[ordered.size()/2];
     myAssembler.fixVertex(v1, 0, 1, 0);
     myAssembler.fixVertex(v1, 0, 2, 0);
     myAssembler.fixVertex(v2, 0, 1, 1);
@@ -804,60 +810,20 @@ void GFaceCompound::parametrize_conformal() const
     }    
   }    
 
-#if 0
-  Msg::Debug("Creating term %d dofs numbered %d fixed",
-             myAssembler.sizeOfR(), myAssembler.sizeOfF());
-  for(unsigned int i = 0; i < ordered.size(); i++){
-    MVertex *v1 = ordered[i];
-    MVertex *v2 = ordered[(i+1)%ordered.size()];
-    myAssembler.assemble(v1,0,2,v1,0,1, 0.5);
-    myAssembler.assemble(v1,0,2,v2,0,1, 0.5);
-    myAssembler.assemble(v2,0,2,v1,0,1,-0.5);
-    myAssembler.assemble(v2,0,2,v2,0,1,-0.5);
-    myAssembler.assemble(v1,0,1,v1,0,2, 0.5);
-    myAssembler.assemble(v1,0,1,v2,0,2, 0.5);
-    myAssembler.assemble(v2,0,1,v1,0,2,-0.5);
-    myAssembler.assemble(v2,0,1,v2,0,2,-0.5);
-  }
-  // internal BC's
-  for(std::list<std::list<GEdge*> >::const_iterator itc = _interior_loops.begin();
-      itc != _interior_loops.end(); ++itc){
-    success = orderVertices(*itc, ordered, coords);
-    if(!success){
-      Msg::Error("Could not order vertices on boundary");
-      return;
-    } 
-    for(unsigned int i = 0; i < ordered.size(); i++){
-      MVertex *v1 = ordered[i];
-      MVertex *v2 = ordered[(i+1)%ordered.size()];
-      myAssembler.assemble(v1,0,2,v1,0,1, 0.5);
-      myAssembler.assemble(v1,0,2,v2,0,1, 0.5);
-      myAssembler.assemble(v2,0,2,v1,0,1,-0.5);
-      myAssembler.assemble(v2,0,2,v2,0,1,-0.5);      
-      myAssembler.assemble(v1,0,1,v1,0,2, 0.5);
-      myAssembler.assemble(v1,0,1,v2,0,2, 0.5);
-      myAssembler.assemble(v2,0,1,v1,0,2,-0.5);
-      myAssembler.assemble(v2,0,1,v2,0,2,-0.5);      
-    }
-  }
-#endif
-  
-  //gmshConvexCombinationTerm laplace(model(), &ONE, 1);
   gmshFunction<double>  ONE(1.0);
-  gmshFunction<double> P5(  .5);
-  gmshFunction<double> M5(-0.5);
+  gmshFunction<double> MONE(-1.0 );
   gmshLaplaceTerm laplace1(model(), &ONE, 1);
   gmshLaplaceTerm laplace2(model(), &ONE, 2);
-  gmshLaplaceTerm laplace12(model(), &M5, 1 , 2);
-  gmshLaplaceTerm laplace21(model(), &P5, 2 , 1);
+  gmshCrossConfTerm cross12(model(), &MONE, 1 , 2);
+  gmshCrossConfTerm cross21(model(), &ONE, 2 , 1);
   it = _compound.begin();
   for( ; it != _compound.end() ; ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *t = (*it)->triangles[i];
       laplace1.addToMatrix(myAssembler, t);
       laplace2.addToMatrix(myAssembler, t);
-      laplace12.addToMatrix(myAssembler, t);
-      laplace21.addToMatrix(myAssembler, t);
+      cross12.addToMatrix(myAssembler, t);
+      cross21.addToMatrix(myAssembler, t);
     }
   }
  
@@ -1145,7 +1111,7 @@ void GFaceCompound::getTriangle(double u, double v,
 
 void GFaceCompound::buildOct() const
 {
-  //  printStuff();
+  printStuff();
 
   SBoundingBox3d bb;
   int count = 0;

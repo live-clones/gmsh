@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _GMSH_LAPLACE_H_
-#define _GMSH_LAPLACE_H_
+#ifndef _GMSH_CROSSCONF_H_
+#define _GMSH_CROSSCONF_H_
 
 #include "gmshTermOfFormulation.h"
 #include "gmshFunction.h"
@@ -13,7 +13,7 @@
 #include "MElement.h"
 #include "GmshMatrix.h"
 
-class gmshLaplaceTerm : public gmshNodalFemTerm<double> {
+class gmshCrossConfTerm : public gmshNodalFemTerm<double> {
  protected:
   const gmshFunction<double> *_diffusivity;
   const int _iField;
@@ -34,7 +34,7 @@ class gmshLaplaceTerm : public gmshNodalFemTerm<double> {
     *iFieldR = _iFieldB;
   }
  public:
-  gmshLaplaceTerm(GModel *gm, gmshFunction<double> *diffusivity, int iField = 0, int iFieldB=-1) : 
+  gmshCrossConfTerm(GModel *gm, gmshFunction<double> *diffusivity, int iField = 0, int iFieldB=-1) : 
     gmshNodalFemTerm<double>(gm), _diffusivity(diffusivity), _iField(iField)
     {
       _iFieldB = (iFieldB==-1) ? _iField : iFieldB;
@@ -42,6 +42,13 @@ class gmshLaplaceTerm : public gmshNodalFemTerm<double> {
   virtual void elementMatrix(MElement *e, gmshMatrix<double> &m) const;
 };
 
+class gmshCrossConfTerm2DParametric : gmshCrossConfTerm {
+  GFace *_gf;
+ public:
+  gmshCrossConfTerm2DParametric(GFace *gf, gmshFunction<double> *diffusivity, int iField = 0) : 
+    gmshCrossConfTerm(gf->model(), diffusivity, iField), _gf(gf) {}
+  virtual void elementMatrix(MElement *e, gmshMatrix<double> &m) const;
+};
 
 
 #endif
