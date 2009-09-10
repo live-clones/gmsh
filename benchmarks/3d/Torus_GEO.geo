@@ -1,5 +1,4 @@
-Mesh.CharacteristicLengthFactor=0.2;
-
+Mesh.CharacteristicLengthFactor=1.0;
 
 Merge "Torus2_CLASS.msh"; 
 CreateTopology;
