@@ -826,20 +826,15 @@ int CreatePartitionBoundaries(GModel *model)
   std::set<partitionFace*, Less_partitionFace> pfaces;
 
   // assign partition faces
-  {
-    std::multimap<MFace,MElement*,Less_Face> faceToElement;
-    if (meshDim == 3){
-      for(GModel::riter it = model->firstRegion(); it != model->lastRegion(); ++it){
-	fillit_ ( faceToElement,(*it)->tetrahedra.begin(),(*it)->tetrahedra.end());
-	fillit_ ( faceToElement,(*it)->hexahedra.begin(),(*it)->hexahedra.end());
-	fillit_ ( faceToElement,(*it)->prisms.begin(),(*it)->prisms.end());
-	fillit_ ( faceToElement,(*it)->pyramids.begin(),(*it)->pyramids.end());
-	fillit_ ( faceToElement,(*it)->polyhedra.begin(),(*it)->polyhedra.end());
-      }    
-    }
-    
-    //  printf("%d edges to elements\n",edgeToElement.size());
-    
+  if (meshDim == 3){
+    std::multimap<MFace,MElement*,Less_Face> faceToElement;    
+    for(GModel::riter it = model->firstRegion(); it != model->lastRegion(); ++it){
+      fillit_ ( faceToElement,(*it)->tetrahedra.begin(),(*it)->tetrahedra.end());
+      fillit_ ( faceToElement,(*it)->hexahedra.begin(),(*it)->hexahedra.end());
+      fillit_ ( faceToElement,(*it)->prisms.begin(),(*it)->prisms.end());
+      fillit_ ( faceToElement,(*it)->pyramids.begin(),(*it)->pyramids.end());
+      fillit_ ( faceToElement,(*it)->polyhedra.begin(),(*it)->polyhedra.end());
+    }    
     {
       std::multimap<MFace,MElement*,Less_Face>::iterator it = faceToElement.begin();
       Equal_Face oper;
@@ -857,7 +852,7 @@ int CreatePartitionBoundaries(GModel *model)
   }
   
   // assign partition edges
-  {
+  if (meshDim > 1){
     std::multimap<MEdge,MElement*,Less_Edge> edgeToElement;
     if (meshDim == 2){
       for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it){
@@ -875,9 +870,6 @@ int CreatePartitionBoundaries(GModel *model)
 	fillit_ ( edgeToElement,(*it)->polyhedra.begin(),(*it)->polyhedra.end());
       }    
     }
-    
-    //  printf("%d edges to elements\n",edgeToElement.size());
-    
     {
       std::multimap<MEdge,MElement*,Less_Edge>::iterator it = edgeToElement.begin();
       Equal_Edge oper;
@@ -895,7 +887,7 @@ int CreatePartitionBoundaries(GModel *model)
   }
 
   // make partition vertices
-  {
+  if (meshDim > 1){
     std::multimap<MVertex*,MElement*> vertexToElement;
     if (meshDim == 2){
       for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it){

@@ -381,6 +381,7 @@ class drawGFace {
   {
     if(!f->getVisibility()) return;
      if(f->geomType() == GEntity::DiscreteSurface) return;
+     if(f->geomType() == GEntity::PartitionSurface) return;
     if(f->geomType() == GEntity::BoundaryLayerSurface) return;
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT && 

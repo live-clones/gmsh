@@ -161,7 +161,7 @@ static double _computeDeterminantAndRegularize(MElement *ele, double jac[3][3])
     } 
   case 1: 
     {
-      dJ = sqrt(SQU(jac[0][0]) + SQU(jac[1][0]) + SQU(jac[2][0]));
+      dJ = sqrt(SQU(jac[0][0]) + SQU(jac[0][1]) + SQU(jac[0][2]));
 
       // regularize matrix
       double a[3], b[3], c[3];
