@@ -114,7 +114,7 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
     return v1;
   }
 
-  if(points.size() != out.numberofpoints){
+  if(out.numberofpoints != (int)points.size()){
     Msg::Error("Tetrahedralization added points (%d -> %d): aborting",
                points.size(), out.numberofpoints);
     return v1;

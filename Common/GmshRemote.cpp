@@ -60,17 +60,17 @@ void GmshRemote::runCommand(int commandIndex, int optionIndex, int optionChoice)
   std::string meshArg = meshFileName.empty() ? "" : ReplacePercentS
     (meshFileSwitch, std::string("\"") + FixWindowsPath(meshFileName) + "\"");
 
-  if(commandIndex < 0 || commandIndex >= buttonSwitch.size()){
+  if(commandIndex < 0 || commandIndex >= (int)buttonSwitch.size()){
     Msg::Error("Wrong command index");
     return;
   }
 
-  if(optionIndex < 0 || optionIndex >= optionValue.size()){
+  if(optionIndex < 0 || optionIndex >= (int)optionValue.size()){
     Msg::Error("Wrong option index");
     return;
   }
 
-  if(optionChoice < 0 || optionChoice >= optionValue[optionIndex].size()){
+  if(optionChoice < 0 || optionChoice >= (int)optionValue[optionIndex].size()){
     Msg::Error("Wrong option choice");
     return;
   }
