@@ -46,7 +46,10 @@
 #include "FiniteElement.h"
 #include "HomologyComputation.h"
 
-#if !defined(HAVE_NO_DLL)
+// for testing purposes only :-)
+#undef HAVE_DLOPEN
+
+#if defined(HAVE_DLOPEN)
 #include <dlfcn.h>
 #endif
 
@@ -241,7 +244,7 @@ void PluginManager::registerDefaultPlugins()
 
 void PluginManager::addPlugin(std::string fileName)
 {
-#if defined(HAVE_NO_DLL) || !defined(HAVE_FLTK)
+#if !defined(HAVE_DLOPEN) || !defined(HAVE_FLTK)
   Msg::Warning("No dynamic plugin loading on this platform");
 #else
   Msg::Info("Opening Plugin '%s'", fileName.c_str());

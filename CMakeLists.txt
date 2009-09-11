@@ -545,9 +545,6 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   endif(HAVE_OCC)
 endif(CMAKE_SIZEOF_VOID_P EQUAL 8)
 
-set(HAVE_NO_DLL TRUE)
-list(APPEND CONFIG_OPTIONS "NoDll")
-
 include(CheckFunctionExists)
 check_function_exists(vsnprintf HAVE_VSNPRINTF)
 if(NOT HAVE_VSNPRINTF)
