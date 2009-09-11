@@ -451,7 +451,7 @@ double Msg::GetValue(const char *text, double defaultval)
   if(FlGui::available()){
     char defaultstr[256];
     sprintf(defaultstr, "%.16g", defaultval);
-    const char *ret = fl_input(text, defaultstr);
+    const char *ret = fl_input(text, "%s", defaultstr);
     if(!ret)
       return defaultval;
     else
@@ -469,7 +469,7 @@ double Msg::GetValue(const char *text, double defaultval)
 }
 
 bool Msg::GetBinaryAnswer(const char *question, const char *yes, 
-                              const char *no, bool defaultval)
+                          const char *no, bool defaultval)
 {
   // if a callback is given let's assume we don't want to be bothered
   // with interactive stuff
@@ -477,7 +477,7 @@ bool Msg::GetBinaryAnswer(const char *question, const char *yes,
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(fl_choice(question, no, yes, NULL))
+    if(fl_choice(question, no, yes, NULL, ""))
       return true;
     else
       return false;

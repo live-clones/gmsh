@@ -1425,7 +1425,7 @@ class drawPView {
 
     if(opt->rangeType == PViewOptions::Custom){
        opt->tmpMin = opt->customMin;
-      opt->tmpMax = opt->customMax;
+       opt->tmpMax = opt->customMax;
     }
     else if(opt->rangeType == PViewOptions::PerTimeStep){
       opt->tmpMin = data->getMin(opt->timeStep);

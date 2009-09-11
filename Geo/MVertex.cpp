@@ -130,7 +130,7 @@ void MVertex::writeUNV(FILE *fp, double scalingFactor)
   sprintf(tmp, "%25.16E%25.16E%25.16E\n", x() * scalingFactor, 
           y() * scalingFactor, z() * scalingFactor);
   for(unsigned int i = 0; i < strlen(tmp); i++) if(tmp[i] == 'E') tmp[i] = 'D';
-  fprintf(fp, tmp);
+  fprintf(fp, "%s", tmp);
 }
 
 void MVertex::writeVTK(FILE *fp, bool binary, double scalingFactor, bool bigEndian)

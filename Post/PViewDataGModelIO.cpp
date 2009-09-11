@@ -503,7 +503,7 @@ bool PViewDataGModel::writeMED(std::string fileName)
       for(int k = 0; k < numComp; k++)
         val[i * numComp + k] = _steps[step]->getData(indices[i])[k];
     if(MEDchampEcr(fid, meshName, fieldName, (unsigned char*)&val[0], 
-                   MED_FULL_INTERLACE, numNodes, MED_NOGAUSS, MED_ALL,
+                   MED_FULL_INTERLACE, numNodes, (char*)MED_NOGAUSS, MED_ALL,
                    profileName, MED_COMPACT, MED_NOEUD, MED_NONE, (med_int)step,
                    (char*)"unknown", time, MED_NONOR) < 0) {
       Msg::Error("Could not write MED field");
