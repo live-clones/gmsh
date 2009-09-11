@@ -64,10 +64,10 @@ void create_png(FILE *file, PixelBuffer *buffer, int quality)
   time_t now;
   time(&now);
   png_text text_ptr[10];  
-  text_ptr[0].key = "Creator";
-  text_ptr[0].text = "Gmsh";
+  text_ptr[0].key = (char*)"Creator";
+  text_ptr[0].text = (char*)"Gmsh";
   text_ptr[0].compression = PNG_TEXT_COMPRESSION_NONE;
-  text_ptr[1].key = "Date";
+  text_ptr[1].key = (char*)"Date";
   text_ptr[1].text = ctime(&now);
   text_ptr[1].compression = PNG_TEXT_COMPRESSION_NONE;
   png_set_text(png_ptr, info_ptr, text_ptr, 2);
