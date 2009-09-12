@@ -4,7 +4,7 @@
 # bugs and problems to <gmsh@geuz.org>.
 
 set(SRC
-  PView.cpp PViewIO.cpp
+  PView.cpp PViewIO.cpp PViewVertexArrays.cpp
     PViewData.cpp PViewDataIO.cpp
       PViewDataList.cpp PViewDataListIO.cpp
       PViewDataGModel.cpp PViewDataGModelIO.cpp

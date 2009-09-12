@@ -112,8 +112,19 @@ class PView{
   // vertex arrays to draw the elements efficiently
   VertexArray *va_points, *va_lines, *va_triangles, *va_vectors;
 
+  // fill the vertex arrays, given the current option and data
+  void fillVertexArrays();
+
   // smoothed normals
   smooth_normals *normals;
 };
+
+// this is the maximum number of nodes of elements we actually *draw*
+// (high order elements are always subdivided before drawing)
+#define PVIEW_NMAX 8
+
+void changeCoordinates(PView *p, int ient, int iele,
+                       int numNodes, int type, int numComp, 
+                       double xyz[PVIEW_NMAX][3], double val[PVIEW_NMAX][9]);
 
 #endif
