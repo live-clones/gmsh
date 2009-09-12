@@ -28,7 +28,12 @@ double PViewOptions::getScaleValue(int iso, int numIso, double min, double max)
   if(numIso == 1) return (min + max) / 2.;
   
   if(scaleType == Linear){
-    return min + iso * (max - min) / (numIso - 1.);
+    // treat min/max separately to avoid numerical errors (important
+    // not to miss first/last discrete iso on piece-wise constant
+    // datasets)
+    if(iso == 0) return min;
+    else if(iso == numIso - 1) return max;
+    else return min + iso * (max - min) / (numIso - 1.);
   }
   else if(scaleType == Logarithmic){
     // should translate scale instead, with smallest val an option!

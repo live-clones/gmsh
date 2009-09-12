@@ -398,8 +398,8 @@ if(ENABLE_METIS)
   add_subdirectory(contrib/Metis)
   set(HAVE_METIS TRUE)
   list(APPEND CONFIG_OPTIONS "Metis")
-  message("WARNING: By including Metis you have to comply with Metis' "
-          "special licensing requirements stated in contrib/Metis/README.")
+  message("WARNING: By including Metis you have to comply with Metis' special "
+          "licensing requirements stated in contrib/Metis/README.txt.")
 endif(ENABLE_METIS)
 
 if(ENABLE_NETGEN)
