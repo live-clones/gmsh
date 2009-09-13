@@ -193,6 +193,7 @@ void GmshRemote::run(std::string args)
           break;
         case GmshSocket::GMSH_VERTEX_ARRAY:
           PView::fillVertexArray(length, message);
+          drawContext::global()->draw();
           break;
         default:
           Msg::Warning("Unknown message type");

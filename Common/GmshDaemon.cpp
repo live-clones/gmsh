@@ -8,6 +8,7 @@
 #include "OS.h"
 #include "GmshSocket.h"
 #include "PView.h"
+#include "PViewOptions.h"
 #include "VertexArray.h"
 
 int GmshDaemon(std::string socket)
@@ -49,6 +50,7 @@ int GmshDaemon(std::string socket)
               // create and send a vertex array
               if(PView::list.size()){
                 PView *view = PView::list[0];
+                view->getOptions()->intervalsType = PViewOptions::Iso;
                 view->fillVertexArrays();
                 int len;
                 char *ss = view->va_triangles->toChar(view->getNum(), len);
