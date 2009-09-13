@@ -1100,7 +1100,7 @@ class initPView {
     p->va_triangles->finalize();
     p->va_vectors->finalize();
 
-    Msg::Info("Rendering %d vertices", p->va_points->getNumVertices() + 
+    Msg::Info("%d vertices in vertex arrays", p->va_points->getNumVertices() + 
               p->va_lines->getNumVertices() + p->va_triangles->getNumVertices() + 
               p->va_vectors->getNumVertices());
 
@@ -1116,18 +1116,17 @@ void PView::fillVertexArrays()
 
 void PView::fillVertexArray(int length, const char *bytes)
 {
-  int is = sizeof(int), num, numVerticesPerElement;
+  int is = sizeof(int);
 
   if(length < 2 * is){
     Msg::Error("Too few bytes to create vertex array: %d", length);
     return;
   }
   
-  memcpy(&num, &bytes[0], is);
-  memcpy(&numVerticesPerElement, &bytes[is], is);
+  int num; memcpy(&num, &bytes[0], is);
+  int type; memcpy(&type, &bytes[is], is);
 
-  Msg::Info("Filling vertex array (type %d) in view num %d",
-            numVerticesPerElement, num);
+  Msg::Info("Filling vertex array (type %d) in view num %d", type, num);
 
   PView *view;
   if(num >= 0 && num < (int)list.size()){
@@ -1138,29 +1137,27 @@ void PView::fillVertexArray(int length, const char *bytes)
     view = new PView(new PViewDataRemote);
   }
 
-  VertexArray *va;
-  switch(numVerticesPerElement){
+  switch(type){
   case 1: 
     if(view->va_points) delete view->va_points; 
     view->va_points = new VertexArray(1, 100);
-    va = view->va_points;
+    view->va_points->fromChar(bytes);
     break;
   case 2: 
     if(view->va_lines) delete view->va_lines; 
     view->va_lines = new VertexArray(2, 100);
-    va = view->va_lines;
+    view->va_lines->fromChar(bytes);
     break;
   case 3:
     if(view->va_triangles) delete view->va_triangles;
     view->va_triangles = new VertexArray(3, 100);
-    va = view->va_triangles;
+    view->va_triangles->fromChar(bytes);
     break;
   default: 
-    Msg::Error("Cannot fill vertex array of type %d", numVerticesPerElement);
+    Msg::Error("Cannot fill vertex array of type %d", type);
     return;
   }
 
-  va->fromChar(bytes);
   view->setChanged(false);
   view->getData()->setDirty(false);
 }
