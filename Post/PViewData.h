@@ -86,44 +86,44 @@ class PViewData {
   virtual int getNumPyramids(int step=-1){ return 0; }
 
   // return the number of geometrical entities in the view
-  virtual int getNumEntities(int step=-1) = 0;
+  virtual int getNumEntities(int step=-1){ return 0; }
 
   // return the number of elements in the ent-th entity, or the total
   // number of elements if ent < 0
-  virtual int getNumElements(int step=-1, int ent=-1) = 0;
+  virtual int getNumElements(int step=-1, int ent=-1){ return 0; }
 
   // return the geometrical dimension of the ele-th element in the
   // ent-th entity
-  virtual int getDimension(int step, int ent, int ele) = 0;
+  virtual int getDimension(int step, int ent, int ele){ return 0; }
 
   // return the number of nodes of the ele-th element in the ent-th
   // entity
-  virtual int getNumNodes(int step, int ent, int ele) = 0;
+  virtual int getNumNodes(int step, int ent, int ele){ return 0; }
 
   // get/set the coordinates and tag of the nod-th node from the
   // ele-th element in the ent-th entity (if the node has a tag,
   // getNode returns it)
   virtual int getNode(int step, int ent, int ele, int nod, 
-                      double &x, double &y, double &z) = 0;
+                      double &x, double &y, double &z){ return 0; }
   virtual void setNode(int step, int ent, int ele, int nod,
                        double x, double y, double z);
   virtual void tagNode(int step, int ent, int ele, int nod, int tag){}
 
   // return the number of componts available for the ele-th element in
   // the ent-th entity
-  virtual int getNumComponents(int step, int ent, int ele) = 0;
+  virtual int getNumComponents(int step, int ent, int ele){ return 0; }
 
   // return the number of values available for the ele-th element in
   // the ent-th entity
-  virtual int getNumValues(int step, int ent, int ele) = 0;
+  virtual int getNumValues(int step, int ent, int ele){ return 0; }
 
   // get the idx'th value for the ele-th element in the ent-th entity
-  virtual void getValue(int step, int ent, int ele, int idx, double &val) = 0;
+  virtual void getValue(int step, int ent, int ele, int idx, double &val){}
 
   // gets/set the comp-th component (at the step-th time step)
   // associated with the node-th node from the ele-th element in the
   // ent-th entity
-  virtual void getValue(int step, int ent, int ele, int nod, int comp, double &val) = 0;
+  virtual void getValue(int step, int ent, int ele, int nod, int comp, double &val){}
   virtual void setValue(int step, int ent, int ele, int nod, int comp, double val);
 
   // return a scalar value (same as value for scalars, norm for
@@ -133,10 +133,10 @@ class PViewData {
 
   // return the number of edges of the ele-th element in the ent-th
   // entity
-  virtual int getNumEdges(int step, int ent, int ele) = 0;
+  virtual int getNumEdges(int step, int ent, int ele){ return 0; }
 
   // return the type of the ele-th element in the ent-th entity
-  virtual int getType(int step, int ent, int ele) = 0;
+  virtual int getType(int step, int ent, int ele){ return 0; }
 
   // return the number of 2D/3D strings in the view
   virtual int getNumStrings2D(){ return 0; }

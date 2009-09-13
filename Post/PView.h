@@ -115,6 +115,9 @@ class PView{
   // fill the vertex arrays, given the current option and data
   void fillVertexArrays();
 
+  // fill a vertex array using a raw stream of bytes
+  static void fillVertexArray(int length, const char *data);
+
   // smoothed normals
   smooth_normals *normals;
 };

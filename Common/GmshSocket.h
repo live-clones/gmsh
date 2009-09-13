@@ -48,6 +48,7 @@ class GmshSocket{
     GMSH_PROGRESS     = 13,
     GMSH_MERGE_FILE   = 20,
     GMSH_PARSE_STRING = 21,
+    GMSH_VERTEX_ARRAY = 22,
     GMSH_SPEED_TEST   = 30,
     GMSH_OPTION_1     = 100,
     GMSH_OPTION_2     = 101,
@@ -138,14 +139,17 @@ class GmshSocket{
     // minus 1... hence the +1 below
     return select(s + 1, &rfds, NULL, NULL, &tv);
   }
-  void SendString(int type, const char *str)
+  void SendMessage(int type, int length, const void *msg)
   {
     // send header (type + length)
     _SendData(&type, sizeof(int));
-    int len = strlen(str);
-    _SendData(&len, sizeof(int));
+    _SendData(&length, sizeof(int));
     // send body
-    _SendData(str, len);
+    _SendData(msg, length);
+  }
+  void SendString(int type, const char *str)
+  {
+    SendMessage(type, strlen(str), str);
   }
   void Info(const char *str){ SendString(GMSH_INFO, str); }
   void Warning(const char *str){ SendString(GMSH_WARNING, str); }

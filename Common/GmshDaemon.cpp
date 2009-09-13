@@ -7,6 +7,8 @@
 #include "GmshMessage.h"
 #include "OS.h"
 #include "GmshSocket.h"
+#include "PView.h"
+#include "VertexArray.h"
 
 int GmshDaemon(std::string socket)
 {
@@ -40,6 +42,19 @@ int GmshDaemon(std::string socket)
             {
               client.Info("Stopping connection!");
               stop = true;
+            }
+            break;
+          case GmshSocket::GMSH_VERTEX_ARRAY:
+            {
+              // create and send a vertex array
+              if(PView::list.size()){
+                PView *view = PView::list[0];
+                view->fillVertexArrays();
+                int len;
+                char *ss = view->va_triangles->toChar(view->getNum(), len);
+                client.SendMessage(GmshSocket::GMSH_VERTEX_ARRAY, len, ss);
+                delete [] ss;
+              }
             }
             break;
           case GmshSocket::GMSH_SPEED_TEST:

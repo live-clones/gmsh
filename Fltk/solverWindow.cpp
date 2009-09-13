@@ -191,6 +191,9 @@ void GmshRemote::run(std::string args)
           Msg::Info("got %d Mb message in %g seconds", strlen(message) 
                     / 1024 / 1024, GetTimeInSeconds() - timer);
           break;
+        case GmshSocket::GMSH_VERTEX_ARRAY:
+          PView::fillVertexArray(length, message);
+          break;
         default:
           Msg::Warning("Unknown message type");
           Msg::Direct("%-8.8s: %s", name.c_str(), message);

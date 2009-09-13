@@ -4,6 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <algorithm>
+#include "GmshMessage.h"
 #include "VertexArray.h"
 #include "Context.h"
 #include "Numeric.h"
@@ -213,4 +214,64 @@ int VertexArray::getMemoryUsage()
   int bytes = _vertices.size() * sizeof(float) + _normals.size() * sizeof(char) +
     _colors.size() * sizeof(unsigned char);
   return bytes / 1024 / 1024;
+}
+
+char *VertexArray::toChar(int num, int &len)
+{
+  int vn = _vertices.size(), nn = _normals.size(), cn = _colors.size();
+  int vs = vn * sizeof(float), ns = nn * sizeof(char), cs = cn * sizeof(unsigned char);
+  int is = sizeof(int);
+
+  FILE *fp = fopen("toChar.txt", "w");
+  for(unsigned int i = 0; i < _vertices.size(); i++)
+    fprintf(fp, "toChar vertex %d = %f\n", i, _vertices[i]);
+  fclose(fp);
+
+  len = 5 * is + vs + ns + cs;
+  char *data = new char[len];
+  int index = 0;
+  memcpy(&data[index], &num, is); index += is;
+  memcpy(&data[index], &_numVerticesPerElement, is); index += is;
+  memcpy(&data[index], &vn, is); index += is;
+  memcpy(&data[index], &_vertices[0], vs); index + vs;
+  memcpy(&data[index], &nn, is); index += is;
+  memcpy(&data[index], &_normals[0], ns); index += ns;
+  memcpy(&data[index], &cn, is); index += is;
+  memcpy(&data[index], &_colors[0], cs); index += cs;
+  return data;
+}
+
+void VertexArray::fromChar(const char *data, bool swap)
+{
+  if(swap){
+    Msg::Error("Byte swapping not implemented in VertexArray::fromChar");
+    return;
+  }
+  int is = sizeof(int), index = 0;
+
+  int num; memcpy(&num, &data[index], is); index += is;
+  int tmp; memcpy(&tmp, &data[index], is); index += is;
+  if(tmp != _numVerticesPerElement){
+    Msg::Error("Incompatible raw data for vertex array (%d != %d)",
+               tmp, _numVerticesPerElement);
+    return;
+  }
+
+  int vn; memcpy(&vn, &data[index], is); index += is;
+  _vertices.resize(vn); int vs = vn * sizeof(float);
+  memcpy(&_vertices[0], &data[index], vs); index += vs;
+
+  int nn; memcpy(&nn, &data[index], is); index += is;
+  _normals.resize(nn); int ns = nn * sizeof(char); 
+  memcpy(&_normals[0], &data[index], ns); index += ns;
+
+  int cn; memcpy(&cn, &data[index], is); index += is;
+  _colors.resize(cn); int cs = cn * sizeof(unsigned char); 
+  memcpy(&_colors[0], &data[index], cs); index += cs;
+
+
+  FILE *fp = fopen("fromChar.txt", "w");
+  for(unsigned int i = 0; i < _vertices.size(); i++)
+    fprintf(fp, "from char vertex %d = %f\n", i, _vertices[i]);
+  fclose(fp);
 }

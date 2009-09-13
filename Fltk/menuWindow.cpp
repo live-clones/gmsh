@@ -159,7 +159,9 @@ static void file_remote_cb(Fl_Widget *w, void *data)
       GmshRemote::get(99)->name = "Remote";
       GmshRemote::get(99)->socketSwitch = "-socket %s";
       const char *exe = fl_input
-        ("Remote command:", "ssh ace25 /Users/geuzaine/src/gmsh/bin/gmsh");
+        ("Command:", 
+         //"ssh ace25 /Users/geuzaine/src/gmsh/bin/gmsh");
+         "./gmsh ../tutorial/view3.pos");
       if(exe){
         GmshRemote::get(99)->executable = exe;
         GmshRemote::get(99)->run("");
@@ -191,6 +193,16 @@ static void file_remote_cb(Fl_Widget *w, void *data)
       Msg::Info("Testing remote Gmsh server");
       GmshRemote::get(99)->getServer()->SendString
         (GmshSocket::GMSH_SPEED_TEST, "Send me a huge amount of data!");
+    }
+    else{
+      Msg::Error("Cannot test remote Gmsh: server not running");
+    }
+  }
+  else if(str == "test3"){
+    if(GmshRemote::get(99)->getServer()){
+      Msg::Info("Testing remote Gmsh server");
+      GmshRemote::get(99)->getServer()->SendString
+        (GmshSocket::GMSH_VERTEX_ARRAY, "Send me a vertex array!");
     }
     else{
       Msg::Error("Cannot test remote Gmsh: server not running");
@@ -2209,6 +2221,7 @@ static Fl_Menu_Item bar_table[] = {
     {"Test server",  0, 0, 0, FL_SUBMENU},
       {"Send small parsed view",  0, (Fl_Callback *)file_remote_cb, (void*)"test1"},
       {"Send large dummy data",  0, (Fl_Callback *)file_remote_cb, (void*)"test2"},
+      {"Send a vertex array",  0, (Fl_Callback *)file_remote_cb, (void*)"test3"},
       {0},
     {"Stop server",  0, (Fl_Callback *)file_remote_cb, (void*)"stop", FL_MENU_DIVIDER},
 #endif
@@ -2261,6 +2274,7 @@ static Fl_Menu_Item sysbar_table[] = {
     {"Test server",  0, 0, 0, FL_SUBMENU},
       {"Send small parsed view",  0, (Fl_Callback *)file_remote_cb, (void*)"test1"},
       {"Send large dummy data",  0, (Fl_Callback *)file_remote_cb, (void*)"test2"},
+      {"Send a vertex array",  0, (Fl_Callback *)file_remote_cb, (void*)"test3"},
       {0},
     {"Stop server",  0, (Fl_Callback *)file_remote_cb, (void*)"stop", FL_MENU_DIVIDER},
 #endif

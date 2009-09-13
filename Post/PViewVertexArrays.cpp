@@ -9,6 +9,7 @@
 #include "PView.h"
 #include "PViewOptions.h"
 #include "PViewData.h"
+#include "PViewDataRemote.h"
 #include "Numeric.h"
 #include "VertexArray.h"
 #include "SmoothData.h"
@@ -1110,4 +1111,55 @@ void PView::fillVertexArrays()
 {
   initPView init;
   init(this);
+}
+
+void PView::fillVertexArray(int length, const char *bytes)
+{
+  int is = sizeof(int), num, numVerticesPerElement;
+
+  if(length < 2 * is){
+    Msg::Error("Too few bytes to create vertex array: %d", length);
+    return;
+  }
+  
+  memcpy(&num, &bytes[0], is);
+  memcpy(&numVerticesPerElement, &bytes[is], is);
+
+  Msg::Info("Filling vertex array (type %d) in view num %d",
+            numVerticesPerElement, num);
+
+  PView *view;
+  if(num >= 0 && num < (int)list.size()){
+    view = PView::list[num];
+  }
+  else{
+    Msg::Info("View num %d does not exist: creating new view");
+    view = new PView(new PViewDataRemote);
+  }
+
+  VertexArray *va;
+  switch(numVerticesPerElement){
+  case 1: 
+    if(view->va_points) delete view->va_points; 
+    view->va_points = new VertexArray(1, 100);
+    va = view->va_points;
+    break;
+  case 2: 
+    if(view->va_lines) delete view->va_lines; 
+    view->va_lines = new VertexArray(2, 100);
+    va = view->va_lines;
+    break;
+  case 3:
+    if(view->va_triangles) delete view->va_triangles;
+    view->va_triangles = new VertexArray(3, 100);
+    va = view->va_triangles;
+    break;
+  default: 
+    Msg::Error("Cannot fill vertex array of type %d", numVerticesPerElement);
+    return;
+  }
+
+  va->fromChar(bytes);
+  view->setChanged(false);
+  view->getData()->setDirty(false);
 }

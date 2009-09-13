@@ -161,6 +161,10 @@ class VertexArray{
   void sort(double x, double y, double z);
   // estimate the size of the vertex array in megabytes
   int getMemoryUsage();
+  // serialize the vertex array into a string (for sending over the
+  // network)
+  char *toChar(int num, int &len);
+  void fromChar(const char *data, bool swap=false);
 };
 
 #endif
