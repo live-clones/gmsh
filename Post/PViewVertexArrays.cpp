@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <string.h>
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "Iso.h"
