@@ -104,6 +104,12 @@ int GmshMergeFile(std::string fileName)
   return MergeFile(fileName, true);
 }
 
+int GmshWriteFile(std::string fileName)
+{
+  CreateOutputFile(fileName, FORMAT_AUTO);
+  return 1;
+}
+
 int GmshFinalize()
 {
   return 1;

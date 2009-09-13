@@ -21,6 +21,7 @@ int GmshGetOption(std::string category, std::string name, std::string &value, in
 int GmshGetOption(std::string category, std::string name, double &value, int index=0);
 int GmshGetOption(std::string category, std::string name, unsigned int &value, int index=0);
 int GmshMergeFile(std::string fileName);
+int GmshWriteFile(std::string fileName);
 int GmshFinalize();
 int GmshBatch();
 
