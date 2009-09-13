@@ -223,18 +223,13 @@ char *VertexArray::toChar(int num, int &len)
   int vs = vn * sizeof(float), ns = nn * sizeof(char), cs = cn * sizeof(unsigned char);
   int is = sizeof(int);
 
-  FILE *fp = fopen("toChar.txt", "w");
-  for(unsigned int i = 0; i < _vertices.size(); i++)
-    fprintf(fp, "toChar vertex %d = %f\n", i, _vertices[i]);
-  fclose(fp);
-
   len = 5 * is + vs + ns + cs;
   char *data = new char[len];
   int index = 0;
   memcpy(&data[index], &num, is); index += is;
   memcpy(&data[index], &_numVerticesPerElement, is); index += is;
   memcpy(&data[index], &vn, is); index += is;
-  memcpy(&data[index], &_vertices[0], vs); index + vs;
+  memcpy(&data[index], &_vertices[0], vs); index += vs;
   memcpy(&data[index], &nn, is); index += is;
   memcpy(&data[index], &_normals[0], ns); index += ns;
   memcpy(&data[index], &cn, is); index += is;
@@ -269,10 +264,4 @@ void VertexArray::fromChar(const char *data, bool swap)
   int cn; memcpy(&cn, &data[index], is); index += is;
   _colors.resize(cn); int cs = cn * sizeof(unsigned char); 
   memcpy(&_colors[0], &data[index], cs); index += cs;
-
-
-  FILE *fp = fopen("fromChar.txt", "w");
-  for(unsigned int i = 0; i < _vertices.size(); i++)
-    fprintf(fp, "from char vertex %d = %f\n", i, _vertices[i]);
-  fclose(fp);
 }

@@ -80,8 +80,8 @@ class GmshSocket{
     int remaining = bytes;
     do {
       int len = recv(_sock, buf + sofar, remaining, 0);
-      if(len <= 0)
-        return 0;
+      if(len == 0) break; // we're done!
+      if(len < 0) return -1; // error
       sofar += len;
       remaining -= len;
     } while(remaining > 0);
