@@ -9,6 +9,7 @@
 #include "GmshSocket.h"
 #include "PView.h"
 #include "PViewOptions.h"
+#include "PViewData.h"
 #include "VertexArray.h"
 
 int GmshDaemon(std::string socket)
@@ -52,8 +53,12 @@ int GmshDaemon(std::string socket)
                 PView *view = PView::list[0];
                 view->getOptions()->intervalsType = PViewOptions::Iso;
                 view->fillVertexArrays();
+                PViewData *data = view->getData();
+                
                 int len;
-                char *ss = view->va_triangles->toChar(view->getNum(), 3, len);
+                char *ss = view->va_triangles->toChar
+                  (view->getNum(), 3, data->getMin(), data->getMax(), 
+                   data->getTime(0), data->getBoundingBox(), len);
                 client.SendMessage(GmshSocket::GMSH_VERTEX_ARRAY, len, ss);
                 delete [] ss;
               }

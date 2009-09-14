@@ -15,6 +15,7 @@
 #include "VertexArray.h"
 #include "SmoothData.h"
 #include "Context.h"
+#include "OpenFile.h"
 #include "mathEvaluator.h"
 
 static void saturate(int nb, double val[PVIEW_NMAX][9], double vmin, double vmax, 
@@ -1116,20 +1117,25 @@ void PView::fillVertexArrays()
 
 void PView::fillVertexArray(int length, const char *bytes)
 {
-  int is = sizeof(int);
+  int is = sizeof(int), ds = sizeof(double);
 
   if(length < 2 * is){
     Msg::Error("Too few bytes to create vertex array: %d", length);
     return;
   }
   
-  int num; memcpy(&num, &bytes[0], is);
-  int type; memcpy(&type, &bytes[is], is);
-
-  // we should also serialize the following info
-  //   min, max
-  //   time value
-  //   bounding box
+  int index = 0;
+  int num; memcpy(&num, &bytes[index], is); index += is;
+  int type; memcpy(&type, &bytes[index], is); index += is;
+  double min; memcpy(&min, &bytes[index], ds); index += ds;
+  double max; memcpy(&max, &bytes[index], ds); index += ds;
+  double time; memcpy(&time, &bytes[index], ds); index += ds;
+  double xmin; memcpy(&xmin, &bytes[index], ds); index += ds;
+  double ymin; memcpy(&ymin, &bytes[index], ds); index += ds;
+  double zmin; memcpy(&zmin, &bytes[index], ds); index += ds;
+  double xmax; memcpy(&xmax, &bytes[index], ds); index += ds;
+  double ymax; memcpy(&ymax, &bytes[index], ds); index += ds;
+  double zmax; memcpy(&zmax, &bytes[index], ds); index += ds;
   
   Msg::Info("Filling vertex array (type %d) in view num %d", type, num);
 
@@ -1139,7 +1145,10 @@ void PView::fillVertexArray(int length, const char *bytes)
   }
   else{
     Msg::Info("View num %d does not exist: creating new view");
-    view = new PView(new PViewDataRemote);
+    view = new PView
+      (new PViewDataRemote(min, max, time, SBoundingBox3d(xmin, ymin, zmin,
+                                                          xmax, ymax, zmax)));
+    SetBoundingBox();
   }
 
   switch(type){

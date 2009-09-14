@@ -9,6 +9,7 @@
 #include <vector>
 #include <set>
 #include "SVector3.h"
+#include "SBoundingBox3d.h"
 
 class MElement;
 
@@ -163,8 +164,9 @@ class VertexArray{
   int getMemoryUsage();
   // serialize the vertex array into a string (for sending over the
   // network)
-  char *toChar(int num, int type, int &len);
-  void fromChar(const char *data, bool swap=false);
+  char *toChar(int num, int type, double min, double max, double time,
+               SBoundingBox3d bbox, int &len);
+  void fromChar(const char *bytes);
 };
 
 #endif

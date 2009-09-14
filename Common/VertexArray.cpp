@@ -217,46 +217,67 @@ int VertexArray::getMemoryUsage()
   return bytes / 1024 / 1024;
 }
 
-char *VertexArray::toChar(int num, int type, int &len)
+char *VertexArray::toChar(int num, int type, double min, double max, double time,
+                          SBoundingBox3d bbox, int &len)
 {
   int vn = _vertices.size(), nn = _normals.size(), cn = _colors.size();
   int vs = vn * sizeof(float), ns = nn * sizeof(char), cs = cn * sizeof(unsigned char);
-  int is = sizeof(int);
+  int is = sizeof(int), ds = sizeof(double);
+  double xmin = bbox.min().x(), ymin = bbox.min().y(), zmin = bbox.min().z();
+  double xmax = bbox.max().x(), ymax = bbox.max().y(), zmax = bbox.max().z();
 
-  len = 5 * is + vs + ns + cs;
-  char *data = new char[len];
+  len = 5 * is + 9 * ds + vs + ns + cs;
+  char *bytes = new char[len];
   int index = 0;
-  memcpy(&data[index], &num, is); index += is;
-  memcpy(&data[index], &type, is); index += is;
-  memcpy(&data[index], &vn, is); index += is;
-  memcpy(&data[index], &_vertices[0], vs); index += vs;
-  memcpy(&data[index], &nn, is); index += is;
-  memcpy(&data[index], &_normals[0], ns); index += ns;
-  memcpy(&data[index], &cn, is); index += is;
-  memcpy(&data[index], &_colors[0], cs); index += cs;
-  return data;
+  memcpy(&bytes[index], &num, is); index += is;
+  memcpy(&bytes[index], &type, is); index += is;
+  memcpy(&bytes[index], &min, ds); index += ds;
+  memcpy(&bytes[index], &max, ds); index += ds;
+  memcpy(&bytes[index], &time, ds); index += ds;
+  memcpy(&bytes[index], &xmin, ds); index += ds;
+  memcpy(&bytes[index], &ymin, ds); index += ds;
+  memcpy(&bytes[index], &zmin, ds); index += ds;
+  memcpy(&bytes[index], &xmax, ds); index += ds;
+  memcpy(&bytes[index], &ymax, ds); index += ds;
+  memcpy(&bytes[index], &zmax, ds); index += ds;
+  memcpy(&bytes[index], &vn, is); index += is;
+  memcpy(&bytes[index], &_vertices[0], vs); index += vs;
+  memcpy(&bytes[index], &nn, is); index += is;
+  memcpy(&bytes[index], &_normals[0], ns); index += ns;
+  memcpy(&bytes[index], &cn, is); index += is;
+  memcpy(&bytes[index], &_colors[0], cs); index += cs;
+  return bytes;
 }
 
-void VertexArray::fromChar(const char *data, bool swap)
+void VertexArray::fromChar(const char *bytes)
 {
-  if(swap){
-    Msg::Error("Byte swapping not implemented in VertexArray::fromChar");
-    return;
-  }
-  int is = sizeof(int), index = 0;
+  int is = sizeof(int), ds = sizeof(double), index = 0;
 
-  int num; memcpy(&num, &data[index], is); index += is;
-  int type; memcpy(&type, &data[index], is); index += is;
+  int num; memcpy(&num, &bytes[index], is); index += is;
 
-  int vn; memcpy(&vn, &data[index], is); index += is;
+  if(num > 65535)
+    Msg::Error("Should swap data in vertex array stream");
+
+  int type; memcpy(&type, &bytes[index], is); index += is;
+  double min; memcpy(&min, &bytes[index], ds); index += ds;
+  double max; memcpy(&max, &bytes[index], ds); index += ds;
+  double time; memcpy(&time, &bytes[index], ds); index += ds;
+  double xmin; memcpy(&xmin, &bytes[index], ds); index += ds;
+  double ymin; memcpy(&ymin, &bytes[index], ds); index += ds;
+  double zmin; memcpy(&zmin, &bytes[index], ds); index += ds;
+  double xmax; memcpy(&xmax, &bytes[index], ds); index += ds;
+  double ymax; memcpy(&ymax, &bytes[index], ds); index += ds;
+  double zmax; memcpy(&zmax, &bytes[index], ds); index += ds;
+
+  int vn; memcpy(&vn, &bytes[index], is); index += is;
   _vertices.resize(vn); int vs = vn * sizeof(float);
-  memcpy(&_vertices[0], &data[index], vs); index += vs;
+  memcpy(&_vertices[0], &bytes[index], vs); index += vs;
 
-  int nn; memcpy(&nn, &data[index], is); index += is;
+  int nn; memcpy(&nn, &bytes[index], is); index += is;
   _normals.resize(nn); int ns = nn * sizeof(char); 
-  memcpy(&_normals[0], &data[index], ns); index += ns;
+  memcpy(&_normals[0], &bytes[index], ns); index += ns;
 
-  int cn; memcpy(&cn, &data[index], is); index += is;
+  int cn; memcpy(&cn, &bytes[index], is); index += is;
   _colors.resize(cn); int cs = cn * sizeof(unsigned char); 
-  memcpy(&_colors[0], &data[index], cs); index += cs;
+  memcpy(&_colors[0], &bytes[index], cs); index += cs;
 }

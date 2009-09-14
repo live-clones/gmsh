@@ -21,10 +21,10 @@ class PViewDataRemote : public PViewData {
   SBoundingBox3d _bbox;
   std::vector<double> _time;
  public:
-  PViewDataRemote() : _numTimeSteps(1), _min(0.), _max(2.2)
+  PViewDataRemote(double min, double max, double time, SBoundingBox3d bbox)
+    : _numTimeSteps(1), _min(min), _max(max), _bbox(bbox)
   {
-    _bbox += SPoint3(-1, -1, -1);
-    _bbox += SPoint3(1, 1, 1);
+    _time.push_back(time);
   }
   ~PViewDataRemote(){}
   bool finalize(){}
@@ -32,6 +32,25 @@ class PViewDataRemote : public PViewData {
   double getMin(int step=-1){ return _min; }
   double getMax(int step=-1){ return _max; }
   SBoundingBox3d getBoundingBox(int step=-1){ return _bbox; }
+  double getTime(int step)
+  {
+    if(step >= 0 && step < _time.size()) return _time[step];
+    return 0.; 
+  }
+  int getNumElements(int step=-1, int ent=-1)
+  { 
+    // hack so that it does not retrn 0
+    return -1; 
+  }
+  
+  void setMin(double min){ _min = min; }
+  void setMax(double max){ _min = max; }
+  void setBoundingBox(SBoundingBox3d bbox){ _bbox = bbox; }
+  void setTime(int step, double time)
+  {
+    if(step >= _time.size()) _time.resize(step + 1);
+    _time[step] = time;
+  }
 };
 
 #endif
