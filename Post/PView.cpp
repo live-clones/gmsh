@@ -98,8 +98,18 @@ PView::PView(std::string name, std::string type,
              double time)
 {
   _init();
-  PViewDataGModel *d = new PViewDataGModel
-    ((type == "NodeData") ? PViewDataGModel::NodeData : PViewDataGModel::ElementData);
+  PViewDataGModel::DataType t;
+  if(type == "NodeData")
+    t = PViewDataGModel::NodeData;
+  else if(type == "ElementData")
+    t = PViewDataGModel::ElementData;
+  else if(type == "ElementNodeData")
+    t = PViewDataGModel::ElementNodeData;
+  else{
+    Msg::Error("Unknown type of view to create '%s'", type.c_str());
+    return;
+  }
+  PViewDataGModel *d = new PViewDataGModel(t);
   d->addData(model, data, 0, time, 1);
   d->setName(name);
   d->setFileName(name + ".msh");
