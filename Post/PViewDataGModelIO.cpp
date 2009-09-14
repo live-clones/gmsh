@@ -112,14 +112,8 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary)
     return false;
   }
 
-  //  if(_type != NodeData){
-  //    Msg::Error("Can only export node-based datasets for now");
-  //    return false;
-  //  }
-
   GModel *model = _steps[0]->getModel();
 
-  //binary = true;
   if(!model->writeMSH(fileName, 2.0, binary, true)) return false;
 
   // append data
@@ -130,15 +124,15 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary)
   }
 
   for(unsigned int step = 0; step < _steps.size(); step++){
-    int numNodes = 0, numComp = _steps[step]->getNumComponents();
+    int numEnt = 0, numComp = _steps[step]->getNumComponents();
     for(int i = 0; i < _steps[step]->getNumData(); i++)
-      if(_steps[step]->getData(i)) numNodes++;
-    if(numNodes){
-      if (_type == NodeData){
+      if(_steps[step]->getData(i)) numEnt++;
+    if(numEnt){
+      if(_type == NodeData){
         fprintf(fp, "$NodeData\n");
         fprintf(fp, "1\n\"%s\"\n", getName().c_str());
         fprintf(fp, "1\n%.16g\n", _steps[step]->getTime());
-        fprintf(fp, "3\n%d\n%d\n%d\n", step, numComp, numNodes);
+        fprintf(fp, "3\n%d\n%d\n%d\n", step, numComp, numEnt);
         for(int i = 0; i < _steps[step]->getNumData(); i++){
           if(_steps[step]->getData(i)){
             MVertex *v = _steps[step]->getModel()->getMeshVertexByTag(i);
@@ -163,18 +157,31 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary)
         fprintf(fp, "$EndNodeData\n");
       }
       else{
-        fprintf(fp, "$ElementData\n");
+        int mult = 1;
+        if(_type == ElementNodeData){
+          fprintf(fp, "$ElementNodeData\n");
+          mult = 1; // FIXME
+        }
+        else
+          fprintf(fp, "$ElementData\n");
         fprintf(fp, "1\n\"%s\"\n", getName().c_str());
         fprintf(fp, "1\n%.16g\n", _steps[step]->getTime());
-        fprintf(fp, "3\n%d\n%d\n%d\n", step, numComp, numNodes);
+        fprintf(fp, "3\n%d\n%d\n%d\n", step, numComp, numEnt);
         for(int i = 0; i < _steps[step]->getNumData(); i++){
           if(_steps[step]->getData(i)){
+            // FIXME 
+            // MElement *e = model->getMeshElementByTag(i);
+            // if(!e){
+            //   
+            // }
+            // int num = e->getNum();
+            int num = i;
             if(binary){
-              fwrite(&i, sizeof(int), 1, fp);
+              fwrite(&num, sizeof(int), 1, fp);
               fwrite(_steps[step]->getData(i), sizeof(double), numComp, fp);
             }
             else{
-              fprintf(fp, "%d", i);
+              fprintf(fp, "%d", num);
               for(int k = 0; k < numComp; k++)
                 fprintf(fp, " %.16g", _steps[step]->getData(i)[k]);
               fprintf(fp, "\n");
@@ -182,7 +189,10 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary)
           }
         }
         if(binary) fprintf(fp, "\n");
-        fprintf(fp, "$EndElementData\n");
+        if(_type == ElementNodeData)
+          fprintf(fp, "$EndElementNodeData\n");
+        else
+          fprintf(fp, "$EndElementData\n");
       }
     }
   }

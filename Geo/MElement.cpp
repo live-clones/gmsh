@@ -411,7 +411,6 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
   for(int i = 0; i < n; i++)
     verts[i] = getVertex(i)->getIndex();
 
-
   if(!binary){
     for(int i = 0; i < n; i++)
       fprintf(fp, " %d", verts[i]);

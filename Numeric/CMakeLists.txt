@@ -23,6 +23,7 @@ set(SRC
       GaussLegendreSimplex.cpp
     GmshPredicates.cpp
   mathEvaluator.cpp
+  Iso.cpp
 )
 
 append_gmsh_src(Numeric "${SRC}")

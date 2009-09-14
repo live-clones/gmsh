@@ -5,7 +5,6 @@
 
 set(SRC
   Trackball.cpp 
-  Iso.cpp 
   ReadImg.cpp 
   drawContext.cpp 
   drawMesh.cpp 
