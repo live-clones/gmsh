@@ -157,11 +157,8 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary)
         fprintf(fp, "$EndNodeData\n");
       }
       else{
-        int mult = 1;
-        if(_type == ElementNodeData){
+        if(_type == ElementNodeData)
           fprintf(fp, "$ElementNodeData\n");
-          mult = 1; // FIXME
-        }
         else
           fprintf(fp, "$ElementData\n");
         fprintf(fp, "1\n\"%s\"\n", getName().c_str());
@@ -169,20 +166,26 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary)
         fprintf(fp, "3\n%d\n%d\n%d\n", step, numComp, numEnt);
         for(int i = 0; i < _steps[step]->getNumData(); i++){
           if(_steps[step]->getData(i)){
-            // FIXME 
-            // MElement *e = model->getMeshElementByTag(i);
-            // if(!e){
-            //   
-            // }
-            // int num = e->getNum();
-            int num = i;
+            MElement *e = model->getMeshElementByTag(i);
+            if(!e){
+              Msg::Error("Unknown element %d in data", i);
+              return false;
+            }
+            int mult = 1;
+            if(_type == ElementNodeData)
+              mult = e->getNumVertices();
+            int num = e->getNum();
             if(binary){
               fwrite(&num, sizeof(int), 1, fp);
-              fwrite(_steps[step]->getData(i), sizeof(double), numComp, fp);
+              if(_type == ElementNodeData)
+                fwrite(&mult, sizeof(int), 1, fp);
+              fwrite(_steps[step]->getData(i), sizeof(double), numComp * mult, fp);
             }
             else{
               fprintf(fp, "%d", num);
-              for(int k = 0; k < numComp; k++)
+              if(_type == ElementNodeData)
+                fprintf(fp, " %d", mult);
+              for(int k = 0; k < numComp * mult; k++)
                 fprintf(fp, " %.16g", _steps[step]->getData(i)[k]);
               fprintf(fp, "\n");
             }

@@ -116,6 +116,8 @@ void GModel::destroyMeshCaches()
 {
   _vertexVectorCache.clear();
   _vertexMapCache.clear();
+  _elementVectorCache.clear();
+  _elementMapCache.clear();
   if(_octree) Octree_Delete(_octree);
   _octree = 0;
 }
@@ -543,6 +545,40 @@ void GModel::getMeshVerticesForPhysicalGroup(int dim, int num, std::vector<MVert
     }
   }
   v.insert(v.begin(), sv.begin(), sv.end());
+}
+
+MElement *GModel::getMeshElementByTag(int n)
+{
+  if(_elementVectorCache.empty() && _elementMapCache.empty()){
+    Msg::Debug("Rebuilding mesh element cache");
+    _elementVectorCache.clear();
+    _elementMapCache.clear();
+    bool dense = (getNumMeshElements() == MElement::getGlobalNumber());
+    std::vector<GEntity*> entities;
+    getEntities(entities);
+    if(dense){
+      Msg::Debug("Good: we have a dense element numbering in the cache");
+      // numbering starts at 1
+      _elementVectorCache.resize(MElement::getGlobalNumber() + 1);
+      for(unsigned int i = 0; i < entities.size(); i++)
+        for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+          MElement *e = entities[i]->getMeshElement(j);
+          _elementVectorCache[e->getNum()] = e;
+        }
+    }
+    else{
+      for(unsigned int i = 0; i < entities.size(); i++)
+        for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+          MElement *e = entities[i]->getMeshElement(j);
+          _elementMapCache[e->getNum()] = e;
+        }
+    }
+  }
+
+  if(n < (int)_elementVectorCache.size())
+    return _elementVectorCache[n];
+  else
+    return _elementMapCache[n];
 }
 
 template <class T>

@@ -46,6 +46,7 @@ class MElement
   virtual ~MElement(){}
 
   // reset the global node number
+  static int getGlobalNumber(){ return _globalNum; }
   static void resetGlobalNumber(){ _globalNum = 0; }
 
   // set/get the tolerance for isInside() test

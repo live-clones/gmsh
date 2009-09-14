@@ -40,10 +40,12 @@ class GModel
   // the visibility flag
   char _visible;
 
-  // vertex cache to speed-up direct access by vertex number (used for
-  // post-processing I/O)
+  // vertex and element caches to speed-up direct access by tag (only
+  // used for post-processing I/O)
   std::vector<MVertex*> _vertexVectorCache;
   std::map<int, MVertex*> _vertexMapCache;
+  std::vector<MElement*> _elementVectorCache;
+  std::map<int, MElement*> _elementMapCache;
 
   // an octree for fast mesh element lookup
   Octree *_octree;
@@ -255,6 +257,9 @@ class GModel
 
   // access a mesh element by coordinates (using an octree search)
   MElement *getMeshElementByCoord(SPoint3 &p);
+
+  // access a mesh element by tag, using the element cache
+  MElement *getMeshElementByTag(int n);
 
   // return the total number of vertices in the mesh
   int getNumMeshVertices();
