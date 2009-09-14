@@ -53,7 +53,7 @@ int GmshDaemon(std::string socket)
                 view->getOptions()->intervalsType = PViewOptions::Iso;
                 view->fillVertexArrays();
                 int len;
-                char *ss = view->va_triangles->toChar(view->getNum(), len);
+                char *ss = view->va_triangles->toChar(view->getNum(), 3, len);
                 client.SendMessage(GmshSocket::GMSH_VERTEX_ARRAY, len, ss);
                 delete [] ss;
               }

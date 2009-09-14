@@ -163,7 +163,7 @@ class VertexArray{
   int getMemoryUsage();
   // serialize the vertex array into a string (for sending over the
   // network)
-  char *toChar(int num, int &len);
+  char *toChar(int num, int type, int &len);
   void fromChar(const char *data, bool swap=false);
 };
 

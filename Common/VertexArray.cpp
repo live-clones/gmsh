@@ -217,7 +217,7 @@ int VertexArray::getMemoryUsage()
   return bytes / 1024 / 1024;
 }
 
-char *VertexArray::toChar(int num, int &len)
+char *VertexArray::toChar(int num, int type, int &len)
 {
   int vn = _vertices.size(), nn = _normals.size(), cn = _colors.size();
   int vs = vn * sizeof(float), ns = nn * sizeof(char), cs = cn * sizeof(unsigned char);
@@ -227,7 +227,7 @@ char *VertexArray::toChar(int num, int &len)
   char *data = new char[len];
   int index = 0;
   memcpy(&data[index], &num, is); index += is;
-  memcpy(&data[index], &_numVerticesPerElement, is); index += is;
+  memcpy(&data[index], &type, is); index += is;
   memcpy(&data[index], &vn, is); index += is;
   memcpy(&data[index], &_vertices[0], vs); index += vs;
   memcpy(&data[index], &nn, is); index += is;
@@ -246,12 +246,7 @@ void VertexArray::fromChar(const char *data, bool swap)
   int is = sizeof(int), index = 0;
 
   int num; memcpy(&num, &data[index], is); index += is;
-  int tmp; memcpy(&tmp, &data[index], is); index += is;
-  if(tmp != _numVerticesPerElement){
-    Msg::Error("Incompatible raw data for vertex array (%d != %d)",
-               tmp, _numVerticesPerElement);
-    return;
-  }
+  int type; memcpy(&type, &data[index], is); index += is;
 
   int vn; memcpy(&vn, &data[index], is); index += is;
   _vertices.resize(vn); int vs = vn * sizeof(float);

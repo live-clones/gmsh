@@ -1126,6 +1126,11 @@ void PView::fillVertexArray(int length, const char *bytes)
   int num; memcpy(&num, &bytes[0], is);
   int type; memcpy(&type, &bytes[is], is);
 
+  // we should also serialize the following info
+  //   min, max
+  //   time value
+  //   bounding box
+  
   Msg::Info("Filling vertex array (type %d) in view num %d", type, num);
 
   PView *view;
@@ -1152,6 +1157,11 @@ void PView::fillVertexArray(int length, const char *bytes)
     if(view->va_triangles) delete view->va_triangles;
     view->va_triangles = new VertexArray(3, 100);
     view->va_triangles->fromChar(bytes);
+    break;
+  case 4:
+    if(view->va_vectors) delete view->va_vectors;
+    view->va_vectors = new VertexArray(2, 100);
+    view->va_vectors->fromChar(bytes);
     break;
   default: 
     Msg::Error("Cannot fill vertex array of type %d", type);
