@@ -8,6 +8,7 @@ set(SRC
     GmshMatrix.cpp
     gmshLaplace.cpp
   gmshCrossConf.cpp
+  gmshDistance.cpp
     gmshConvexCombination.cpp
       gmshHelmholtz.cpp
       gmshElasticity.cpp

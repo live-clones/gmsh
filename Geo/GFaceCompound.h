@@ -61,6 +61,7 @@ class GFaceCompound : public GFace {
   void buildOct() const ;
   void parametrize() const ;
   void parametrize_conformal() const ;
+  void compute_distance() const ;
   void parametrize(iterationStep) const ;
   bool checkOrientation() const;
   void one2OneMap() const;

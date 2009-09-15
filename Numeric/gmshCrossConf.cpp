@@ -40,16 +40,17 @@ void gmshCrossConfTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
     }
 
     SVector3 N (jac[2][0],jac[2][1],jac[2][2]);
+    //printf("nx=%g, ny=%g, nz=%g norm =%g\n", N[0], N[1], N[2], sqrt(N[0]*N[0]+N[1]*N[1]+N[2]*N[2] ));
 
     for (int j = 0; j < nbNodes; j++){
       for (int k = 0; k <= j; k++){
-        m(j, k) += 1.0*dot(crossprod(Grads[j],Grads[k]),N) * weight * detJ * _diff;
+        m(j, k) += dot(crossprod(Grads[j],Grads[k]),N) * weight * detJ * _diff;
       }
     }
   }
 
   for (int j = 0; j < nbNodes; j++)
     for (int k = 0; k < j; k++)
-      m(k, j) = -1.0*m(j, k);
+      m(k, j) = -1.*m(j, k);
 }
 

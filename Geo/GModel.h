@@ -307,6 +307,9 @@ class GModel
   // create topology from mesh
   void createTopologyFromMesh();
 
+  // compute distance function
+  void computeDistanceFunction();
+
   // a container for smooth normals
   smooth_normals *normals;
 

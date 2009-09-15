@@ -93,7 +93,7 @@ gmshMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
 %token tFmod tModulo tHypot 
 %token tPrintf tSprintf tStrCat tStrPrefix tStrRelative
-%token tBoundingBox tDraw tToday tSyncModel tCreateTopology
+%token tBoundingBox tDraw tToday tSyncModel tCreateTopology tDistanceFunction
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound
@@ -2363,6 +2363,7 @@ Command :
     {
        GModel::current()->createTopologyFromMesh();
     }
+
 ;
 
 // L O O P  

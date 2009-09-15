@@ -977,6 +977,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
 
 void GModel::createTopologyFromMesh()
 {
+
   std::vector<GEntity*> entities;
   getEntities(entities);
 
