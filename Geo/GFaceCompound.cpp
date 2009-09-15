@@ -329,8 +329,8 @@ void GFaceCompound::parametrize() const
     
     //Laplace parametrization
     //-----------------
-    parametrize(ITERU);
-    parametrize(ITERV);
+    //parametrize(ITERU);
+    //parametrize(ITERV);
 
     //Conformal map parametrization
     //----------------- 
@@ -338,7 +338,7 @@ void GFaceCompound::parametrize() const
 
     //Distance function
     //-----------------
-    //compute_distance();
+    compute_distance();
 
     //checkOrientation();
     computeNormals();
