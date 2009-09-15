@@ -45,7 +45,7 @@ class gmshLinearSystemCSR : public gmshLinearSystem<scalar> {
   {
     allocate(0);
   }
-  void addToMatrix ( int il, int ic, double val) 
+  virtual void addToMatrix ( int il, int ic, double val) 
   {
     //    if (sorted)throw;
 

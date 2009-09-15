@@ -4,7 +4,9 @@
 # bugs and problems to <gmsh@geuz.org>.
 
 set(SRC
-  dofManager.cpp
+  linearSystemCSR.cpp
+  linearSystemTAUCS.cpp
+  elasticityTerm.cpp
 )
 
 append_gmsh_src(Solver "${SRC}")

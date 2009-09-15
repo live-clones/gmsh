@@ -38,6 +38,7 @@ option(ENABLE_OSMESA "Use OSMesa for offscreen rendering" OFF)
 option(ENABLE_PARSER "Build the GEO file parser" ON)
 option(ENABLE_POST "Build the post-processing module" ON)
 option(ENABLE_QT "Build QT GUI" OFF)
+option(ENABLE_SOLVER "Build Gmsh with the gsolver finite element library" OFF)
 option(ENABLE_TAUCS "Enable Taucs linear algebra solver" ON)
 option(ENABLE_TETGEN "Enable Tetgen mesh generator" ON)
 option(ENABLE_TETGEN_NEW "Enable experimental version of Tetgen" OFF)
@@ -59,7 +60,7 @@ set(GMSH_API
     Numeric/gmshAssembler.h Numeric/gmshTermOfFormulation.h 
     Numeric/gmshLaplace.h Numeric/gmshElasticity.h Numeric/gmshLinearSystem.h
     Numeric/gmshLinearSystemGmm.h Numeric/gmshLinearSystemFull.h 
-    Numeric/gmshFunction.h
+    Numeric/gmshLinearSystemCSR.h Numeric/gmshFunction.h
   Geo/GModel.h Geo/GEntity.h Geo/GPoint.h Geo/GVertex.h Geo/GEdge.h 
     Geo/GFace.h Geo/GRegion.h Geo/GEdgeLoop.h Geo/GEdgeCompound.h 
     Geo/GFaceCompound.h Geo/GRegionCompound.h Geo/MVertex.h Geo/MEdge.h 
@@ -482,6 +483,12 @@ if(ENABLE_TAUCS)
     list(APPEND EXTERNAL_LIBRARIES ${TAUCS_LIB})
   endif(TAUCS_LIB)
 endif(ENABLE_TAUCS)
+
+if(ENABLE_SOLVER)
+  add_subdirectory(Solver)
+  set(HAVE_GSOLVER TRUE)
+  list(APPEND CONFIG_OPTIONS "gsolver")
+endif(ENABLE_NETGEN)
 
 if(ENABLE_OCC)
   if(WIN32)
