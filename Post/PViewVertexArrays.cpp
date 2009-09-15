@@ -1119,7 +1119,7 @@ void PView::fillVertexArray(int length, const char *bytes)
 {
   int is = sizeof(int), ds = sizeof(double);
 
-  if(length < 2 * is){
+  if(length < 2 * is + 9 * ds){
     Msg::Error("Too few bytes to create vertex array: %d", length);
     return;
   }

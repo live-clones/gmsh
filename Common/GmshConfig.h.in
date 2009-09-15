@@ -36,6 +36,7 @@
 #cmakedefine HAVE_OPENGL
 #cmakedefine HAVE_OSMESA
 #cmakedefine HAVE_QT
+#cmakedefine HAVE_SOLVER
 #cmakedefine HAVE_TAUCS
 #cmakedefine HAVE_TETGEN
 

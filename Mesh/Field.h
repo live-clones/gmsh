@@ -61,15 +61,15 @@ class FieldOption {
 
 class Field {
  public:
+  Field() {}
+  virtual ~Field() {}
   int id;
   std::map<std::string, FieldOption *> options;
-  virtual double   operator() (double x, double y, double z, GEntity *ge=0) = 0;
+  virtual double operator() (double x, double y, double z, GEntity *ge=0) = 0;
   // start of the anisotropic field implementation
   virtual void operator() (double x, double y, double z, SMetric3 &, GEntity *ge=0){throw;}
   virtual bool isotropic () const {return true;}
-  virtual ~Field() {}
   bool update_needed;
-  Field();
   virtual const char *getName() = 0;
 #if !defined(HAVE_NO_POST)
   void putOnView(PView * view, int comp = -1);

@@ -1388,10 +1388,6 @@ FieldManager::FieldManager()
   background_field = -1;
 }
 
-Field::Field()
-{
-}
-
 #if !defined(HAVE_NO_POST)
 void Field::putOnNewView()
 {
