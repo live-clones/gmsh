@@ -7,6 +7,7 @@ set(SRC
   linearSystemCSR.cpp
   linearSystemTAUCS.cpp
   elasticityTerm.cpp
+  elasticitySolver.cpp
 )
 
 append_gmsh_src(Solver "${SRC}")

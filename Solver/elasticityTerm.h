@@ -32,7 +32,7 @@ namespace gsolver {
 		  Dof::createTypeWithTwoInts(iCompR, _iField));
     }
   public:
-    elasticityTerm(GModel *gm, double E, double nu, int iField = 1) : 
+    elasticityTerm(GModel *gm, double E, double nu, int iField) : 
       femTerm<double,double>(gm), _E(E), _nu(nu), _iField(iField){}
     void setVector(const SVector3 &f) {_volumeForce = f;}
     void elementMatrix(MElement *e, gmshMatrix<double> &m) const;

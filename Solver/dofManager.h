@@ -31,7 +31,7 @@ namespace gsolver {
       i1 = t % 10000;
       i2 = t / 10000;
     }
-    bool operator < ( const Dof & other){
+    bool operator < ( const Dof & other) const{
       if (_entity < other._entity)return true;
       if (_entity > other._entity)return false;
       if (_type < other._type)return true;
@@ -61,19 +61,19 @@ namespace gsolver {
     std::map<Dof, dataVec> fixed, initial;
     
     // numbering of unknown dof blocks
-    std::map<Dof, long int> unknown;
+    std::map<Dof, int> unknown;
     
     // associatations
     std::map<Dof, Dof> associatedWith;
     
     // linearSystems
-    std::map<std::string, linearSystem<dataMat>* > _linearSystems;
+    std::map<const std::string, linearSystem<dataMat>* > _linearSystems;
     linearSystem<dataMat>* _current;  
     
   private:
   public:
     dofManager(linearSystem<dataMat> *l) : _current(l){
-      _linearSystems.push_back(l);
+      _linearSystems["default"]= l;
     }
     inline void fixDof(long int ent, int type, const dataVec & value)
     {
@@ -110,9 +110,9 @@ namespace gsolver {
       }
       return dataVec(0.0);
     }
-    inline dataVec getVertexValue(MVertex *v, int iComp, int iField) const
+    inline dataVec getDofValue(MVertex *v, int iComp, int iField) const
     {
-      getDofValue(v->getNum(), Dof::createTypeWithTwoInts(iComp,iField ));
+      return getDofValue(v->getNum(), Dof::createTypeWithTwoInts(iComp,iField ));
     }
     
     inline void assemble(const Dof &R, const Dof &C, const dataMat &value)
@@ -139,9 +139,9 @@ namespace gsolver {
       assemble (Dof(entR,typeR),Dof(entC,typeC), value);
     }
     
-    inline void assembleVertex(MVertex *vR, int iCompR, int iFieldR,
-			       MVertex *vC, int iCompC, int iFieldC,
-			       const dataMat &value){
+    inline void assemble(MVertex *vR, int iCompR, int iFieldR,
+			 MVertex *vC, int iCompC, int iFieldC,
+			 const dataMat &value){
       assemble (vR->getNum(), Dof::createTypeWithTwoInts(iCompR,iFieldR),
 		vC->getNum(), Dof::createTypeWithTwoInts(iCompC,iFieldC),
 		value);
@@ -157,8 +157,13 @@ namespace gsolver {
     }
     inline void assemble(int entR, int typeR, const dataMat &value)
     {
-      assemble(Dof(entR,typeR));
+      assemble(Dof(entR,typeR),value);
     }
+    inline void assemble(MVertex *vR, int iCompR, int iFieldR,
+			 const dataMat &value){
+      assemble (vR->getNum(), Dof::createTypeWithTwoInts(iCompR,iFieldR),
+		value);
+    } 
     int sizeOfR() const { return unknown.size(); }
     int sizeOfF() const { return fixed.size(); }
     void systemSolve(){

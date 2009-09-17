@@ -86,7 +86,7 @@ namespace gsolver {
 			int dim,
 			int comp,
 			int field,
-			const gmshFunction<dataVec> &e,
+			const gmshFunction<dataVec> &fct,
 			dofManager<dataVec,dataMat> &dm)
     {
       std::map<int, std::vector<GEntity*> > groups[4];
@@ -128,7 +128,7 @@ namespace gsolver {
 	gmshVector<dataVec> V (nbR);
 	elementVector (e, V);
 	// assembly
-	for (int j=0;j<nbR;j++)dm.assemble(getLocalDofR(e,j),V[j]);
+	for (int j=0;j<nbR;j++)dm.assemble(getLocalDofR(e,j),V(j));
       }
     }
   }; // end of class definition
