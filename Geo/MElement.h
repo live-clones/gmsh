@@ -132,9 +132,11 @@ class MElement
   }
 
   // get parent and children for hierarchial grids
-  virtual MElement *getParent() const { return 0; }
+  virtual MElement *getParent() const { return NULL; }
+  virtual void setParent(MElement *p) {}
   virtual int getNumChildren() const { return 0; }
-  virtual MElement *getChild(int i) const { return 0; }
+  virtual MElement *getChild(int i) const { return NULL; }
+  virtual bool ownsParent() const { return false; }
 
   //get the type of the element
   virtual int getType() const = 0;
@@ -216,7 +218,7 @@ class MElement
 
   // IO routines
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
-                        int num=0, int elementary=1, int physical=1);
+                        int num=0, int elementary=1, int physical=1, int parentNum=0);
   virtual void writePOS(FILE *fp, bool printElementary, bool printElementNumber, 
                         bool printGamma, bool printEta, bool printRho, 
                         bool printDisto,double scalingFactor=1.0, int elementary=1);

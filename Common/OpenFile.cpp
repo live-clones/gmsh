@@ -235,7 +235,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
   }
 
   char header[256];
-  fgets(header, sizeof(header), fp);
+  if(!fgets(header, sizeof(header), fp)) return 0;
   fclose(fp);
 
   Msg::StatusBar(2, true, "Reading '%s'", fileName.c_str());

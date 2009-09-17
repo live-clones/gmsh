@@ -662,7 +662,7 @@ void DI_Element::addLs (const double *ls) {
   for(int i = 0; i < nbMid(); i++)
     mid_[i]->addLs(ls[nbVert()+i]);
 }
-void DI_Element::addLs (int primTag, std::map<int, double> nodeLs[8]) { printf("p");
+void DI_Element::addLs (int primTag, std::map<int, double> nodeLs[8]) {
   for(int i = 0; i < nbVert(); i++)
     pts_[i]->addLs(nodeLs[i][primTag]);
 }
@@ -673,7 +673,7 @@ void DI_Element::addLs (const DI_Element *e) {
   for(int i = 0; i < nbMid(); i++)
     mid_[i]->addLs(e);
 }
-void DI_Element::addLs (const DI_Element *e, const gLevelset &Ls) { printf("e");
+void DI_Element::addLs (const DI_Element *e, const gLevelset &Ls) {
   if(type() != e->type()) {
     printf("Error : addLs with element of different type\n");
   }

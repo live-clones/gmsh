@@ -382,7 +382,7 @@ double MElement::interpolateDiv(double val[], double u, double v, double w, int 
 }
 
 void MElement::writeMSH(FILE *fp, double version, bool binary, int num, 
-                        int elementary, int physical)
+                        int elementary, int physical, int parentNum)
 {
   int type = getTypeForMSH();
 

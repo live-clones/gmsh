@@ -26,8 +26,9 @@ class MPolyhedron : public MElement {
   std::vector<MFace> _faces;
   void _init();
  public:
-  MPolyhedron(std::vector<MVertex*> v, int num=0, int part=0)
-    : MElement(num, part), _owner(false), _orig(0) 
+  MPolyhedron(std::vector<MVertex*> v, int num = 0, int part = 0,
+              bool owner = false, MElement* orig = NULL)
+    : MElement(num, part), _owner(owner), _orig(orig)
   {
     if(v.size() % 4){
       Msg::Error("Got %d vertices for polyhedron", (int)v.size());
@@ -37,14 +38,8 @@ class MPolyhedron : public MElement {
       _parts.push_back(new MTetrahedron(v[i], v[i + 1], v[i + 2], v[i + 3]));
     _init();
   }
-  MPolyhedron(std::vector<MTetrahedron*> vT, int num=0, int part=0)
-    : MElement(num, part), _owner(false), _orig(0)
-  {
-    for(unsigned int i = 0; i < vT.size(); i++)
-      _parts.push_back(vT[i]);
-    _init();
-  }
-  MPolyhedron(std::vector<MTetrahedron*> vT, MElement* orig, bool owner, int num=0, int part=0)
+  MPolyhedron(std::vector<MTetrahedron*> vT, int num = 0, int part = 0,
+              bool owner = false, MElement* orig = NULL)
     : MElement(num, part), _owner(owner), _orig(orig)
   {
     for(unsigned int i = 0; i < vT.size(); i++)
@@ -131,10 +126,12 @@ class MPolyhedron : public MElement {
     return _parts.size() * getNGQTetPts(pOrder);
   }
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
-                        int num=0, int elementary=1, int physical=1);
+                        int num=0, int elementary=1, int physical=1, int parentNum=0);
   virtual MElement *getParent() const { return _orig; }
+  virtual void setParent(MElement *p) { _orig = p; }
   virtual int getNumChildren() const { return _parts.size(); }
   virtual MElement *getChild(int i) const { return _parts[i]; }
+  virtual bool ownsParent() const { return _owner; }
 };
 
 class MPolygon : public MElement {
@@ -147,34 +144,22 @@ class MPolygon : public MElement {
   std::vector<MEdge> _edges;
   void _initVertices();
  public:
-  MPolygon(std::vector<MVertex*> v, int num=0, int part=0)
-    : MElement(num, part), _owner(false), _orig(0)
+  MPolygon(std::vector<MVertex*> v, int num = 0, int part = 0,
+           bool owner = false, MElement* orig = NULL)
+    : MElement(num, part), _owner(owner), _orig(orig)
   {
     for(unsigned int i = 0; i < v.size() / 3; i++)
       _parts.push_back(new MTriangle(v[i * 3], v[i * 3 + 1], v[i * 3 + 2]));
     _initVertices();
   }
-  MPolygon(std::vector<MElement*> vT, int num=0, int part=0)
-    : MElement(num, part), _owner(false), _orig(0)
+  MPolygon(std::vector<MTriangle*> vT, int num = 0, int part = 0,
+           bool owner = false, MElement* orig = NULL)
+    : MElement(num, part), _owner(owner), _orig(orig)
   {
     for(unsigned int i = 0; i < vT.size(); i++){
       MTriangle *t = (MTriangle*) vT[i];
       _parts.push_back(t);
     }
-    _initVertices();
-  }
-  MPolygon(std::vector<MTriangle*> vT, int num=0, int part=0)
-    : MElement(num, part), _owner(false), _orig(0)
-  {
-    for(unsigned int i = 0; i < vT.size(); i++)
-      _parts.push_back(vT[i]);
-    _initVertices();
-  }
-  MPolygon(std::vector<MTriangle*> vT, MElement* orig, bool owner, int num=0, int part=0)
-    : MElement(num, part), _owner(owner), _orig(orig)
-  {
-    for(unsigned int i = 0; i < vT.size(); i++)
-      _parts.push_back(vT[i]);
     _initVertices();
   }
   ~MPolygon() 
@@ -245,10 +230,12 @@ class MPolygon : public MElement {
     return _parts.size() * getNGQTPts(pOrder);
   }
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
-                        int num=0, int elementary=1, int physical=1);
+                        int num=0, int elementary=1, int physical=1, int parentNum=0);
   virtual MElement *getParent() const { return _orig; }
+  virtual void setParent(MElement *p) { _orig = p; }
   virtual int getNumChildren() const { return _parts.size(); }
   virtual MElement *getChild(int i) const { return _parts[i]; }
+  virtual bool ownsParent() const { return _owner; }
 };
 
 class MTriangleBorder : public MTriangle {
