@@ -56,7 +56,7 @@ public:
     }
   };
   class reader_gshhs : public reader{
-    /*  $Id: GSHHS.cpp,v 1.32 2009-08-15 12:58:51 geuzaine Exp $
+    /*  $Id: GSHHS.cpp,v 1.33 2009-09-17 07:56:14 remacle Exp $
      *
      * Include file defining structures used in gshhs.c
      *
@@ -827,7 +827,7 @@ public:
       if(ip - first_point_in_loop > 3) {
         loop_buff<<"LoopStart"<<il<<" = IP + "<< first_point_in_loop<<";\n";
         loop_buff<<"LoopEnd"<<il<<" = IP + "<< ip - 1<<";\n";
-        loop_buff << "Spline ( IL + " << il++ << " ) = { IP + " <<
+        loop_buff << "BSpline ( IL + " << il++ << " ) = { IP + " <<
           first_point_in_loop << " : IP + " << ip - 1 ;
         if(closed) loop_buff<< ", IP + " << first_point_in_loop;
         loop_buff<< " };\n";
