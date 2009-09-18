@@ -4,6 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <vector>
+#include <stdlib.h>
 #include "GModel.h"
 #include "discreteFace.h"
 #include "DivideAndConquer.h"

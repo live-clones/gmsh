@@ -27,7 +27,7 @@ class PViewDataRemote : public PViewData {
     _time.push_back(time);
   }
   ~PViewDataRemote(){}
-  bool finalize(){}
+  bool finalize(){ return false;}
   int getNumTimeSteps(){ return _numTimeSteps; }
   double getMin(int step=-1){ return _min; }
   double getMax(int step=-1){ return _max; }
