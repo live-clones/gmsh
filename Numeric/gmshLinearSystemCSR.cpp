@@ -334,32 +334,3 @@ int gmshLinearSystemCSRGmm<double>::checkSystem()
 }
 #endif
 
-#if defined(HAVE_TAUCS)
-#include "taucs.h"
-template<>
-int gmshLinearSystemCSRTaucs<double>::systemSolve()
-{
-  if(!sorted)
-    sortColumns(_b->size(),
-                CSRList_Nbr(a_),
-                (INDEX_TYPE *) ptr_->array,
-                (INDEX_TYPE *) jptr_->array, 
-                (INDEX_TYPE *) ai_->array, 
-                (double*) a_->array);
-  sorted = true;
-
-  taucs_ccs_matrix myVeryCuteTaucsMatrix;
-  myVeryCuteTaucsMatrix.n = myVeryCuteTaucsMatrix.m =  _b->size();
-  myVeryCuteTaucsMatrix.rowind = (INDEX_TYPE*)jptr_->array;
-  myVeryCuteTaucsMatrix.colptr = (INDEX_TYPE*)ai_->array;
-  myVeryCuteTaucsMatrix.values.d = (double*) a_->array;
-  char* options[] = { "taucs.factor.LLT=true", NULL };  
-  int result = taucs_linsolve(&myVeryCuteTaucsMatrix, 
-                              NULL, 1, &(*_x)[0],&(*_b)[0],
-                              options,NULL);                         
-  if (result != TAUCS_SUCCESS){
-    Msg::Error("Taucs Was Not Successfull");
-  }  
-  return 1;
-}
-#endif

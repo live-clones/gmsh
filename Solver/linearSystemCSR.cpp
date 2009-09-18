@@ -13,6 +13,7 @@
 #define SWAP(a,b)  temp=(a);(a)=(b);(b)=temp;
 #define SWAPI(a,b) tempi=(a);(a)=(b);(b)=tempi;
 namespace gsolver {
+
   void *CSRMalloc(size_t size)
   {
     void *ptr;
@@ -74,7 +75,7 @@ namespace gsolver {
     }
   }
   
-  void CSRList_Add(CSRList_T *liste, void *data)
+  void CSRList_Add(gsolver::CSRList_T *liste, void *data)
   {
     liste->n++;
     

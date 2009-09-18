@@ -24,7 +24,7 @@ namespace gsolver {
 		   scalar *a);
   
   template<>
-  int linearSystemCSRTaucs_<double>::systemSolve()
+  int linearSystemCSRTaucs<double>::systemSolve()
   {
     if(!sorted){
       sortColumns(_b->size(),
@@ -46,6 +46,7 @@ namespace gsolver {
     myVeryCuteTaucsMatrix.flags = TAUCS_SYMMETRIC | TAUCS_LOWER | TAUCS_DOUBLE; 
     
     char* options[] = { "taucs.factor.LLT=true", NULL };  
+    Msg::Info("TAUCS solves %d unknowns", _b->size());
     int result = taucs_linsolve(&myVeryCuteTaucsMatrix, 
 				NULL, 
 				1, 

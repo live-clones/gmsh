@@ -73,7 +73,7 @@ namespace gsolver {
   private:
   public:
     dofManager(linearSystem<dataMat> *l) : _current(l){
-      _linearSystems["default"]= l;
+      _linearSystems["A"]= l;
     }
     inline void fixDof(long int ent, int type, const dataVec & value)
     {

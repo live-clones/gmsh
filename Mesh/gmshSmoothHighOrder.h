@@ -10,13 +10,13 @@
 #include <vector>
 #include "SVector3.h"
 #include "GmshMatrix.h"
+#include "dofManager.h"
+#include "elasticityTerm.h"
 
 class MVertex;
 class MElement;
 class GFace;
 class GRegion;
-template<class T> class gmshAssembler;
-class gmshElasticityTerm;
 
 class gmshHighOrderSmoother 
 {
@@ -38,9 +38,9 @@ public:
   }  
   void smooth ( std::vector<MElement*> & );
   double smooth_metric_ ( std::vector<MElement*> &, GFace *gf,
-                          gmshAssembler<double> &myAssembler,
+                          gsolver::dofManager<double,double> &myAssembler,
                           std::set<MVertex*> &verticesToMove,
-                          gmshElasticityTerm &El);
+                          gsolver::elasticityTerm &El);
   void smooth_metric ( std::vector<MElement*> &, GFace *gf );
   void smooth ( GFace* , bool metric = false);
   void smooth_p2point ( GFace* );

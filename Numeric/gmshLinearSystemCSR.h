@@ -159,23 +159,4 @@ class gmshLinearSystemCSRGmm : public gmshLinearSystemCSR<scalar> {
 
 };
 
-template <class scalar>
-class gmshLinearSystemCSRTaucs : public gmshLinearSystemCSR<scalar> {
- private:
- public:
-  gmshLinearSystemCSRTaucs()
-    {}
-  virtual ~gmshLinearSystemCSRTaucs()
-    {}
-  virtual int systemSolve() 
-#if defined(HAVE_TAUCS)
-    ;
-#else
-  {
-    Msg::Error("Taucs is not available in this version of Gmsh");
-    return 0;
-  }
-#endif
-};
-
 #endif

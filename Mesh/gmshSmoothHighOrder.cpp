@@ -17,15 +17,14 @@
 #include "HighOrder.h"
 #include "meshGFaceOptimize.h"
 #include "gmshSmoothHighOrder.h"
-#include "gmshAssembler.h"
-#include "gmshLaplace.h"
-#include "gmshElasticity.h"
-#include "gmshLinearSystemGmm.h"
-#include "gmshLinearSystemCSR.h"
 #include "GFace.h"
 #include "GRegion.h"
 #include "Context.h"
 #include "Numeric.h"
+#include "dofManager.h"
+#include "elasticityTerm.h"
+#include "linearSystemTAUCS.h"
+#include "linearSystemGMM.h"
 
 #define SQU(a)      ((a)*(a))
 
@@ -42,6 +41,17 @@ static double shapeMeasure(MElement *e)
   const double d1 = e->distoShapeMeasure();
   //const double d2 = e->gammaShapeMeasure();
   return d1;
+}
+
+double angle3Points(MVertex *p1, MVertex *p2, MVertex *p3)
+{
+  SVector3 a(p1->x() - p2->x(), p1->y() - p2->y(), p1->z() - p2->z());
+  SVector3 b(p3->x() - p2->x(), p3->y() - p2->y(), p3->z() - p2->z());
+  SVector3 c = crossprod(a, b);
+  double sinA = c.norm();
+  double cosA = dot(a, b);
+  //  printf("%d %d %d -> %g %g\n",p1->iD,p2->iD,p3->iD,cosA,sinA);
+  return atan2 (sinA, cosA);  
 }
 
 void gmshHighOrderSmoother::moveTo(MVertex *v,  
@@ -98,7 +108,7 @@ struct p2data{
          gmshHighOrderSmoother *_s)
     : gf(_gf), t1(_t1), t2(_t2), n12(_n12), s(_s)
   {
-    gmshElasticityTerm el(0, 1.e3, .3333);
+    gsolver::elasticityTerm el(0, 1.e3, .3333,1);
     s->moveToStraightSidedLocation(t1);
     s->moveToStraightSidedLocation(t2);
     m1 = new  gmshMatrix<double>(3 * t1->getNumVertices(),
@@ -126,7 +136,7 @@ struct pNdata{
          gmshHighOrderSmoother *_s)
     : gf(_gf), t1(_t1), t2(_t2), n(_n), s(_s)
   {
-    gmshElasticityTerm el(0, 1.e3, .3333);
+    gsolver::elasticityTerm el(0, 1.e3, .3333,1);
     s->moveToStraightSidedLocation(t1);
     s->moveToStraightSidedLocation(t2);
     m1 = new  gmshMatrix<double>(3 * t1->getNumVertices(),
@@ -418,12 +428,16 @@ void gmshHighOrderSmoother::computeMetricVector(GFace *gf,
 
 void gmshHighOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
 {
-  gmshLinearSystemGmm<double> *lsys = new gmshLinearSystemGmm<double>;
+#ifdef HAVE_TAUCS__
+  gsolver::linearSystemCSRTaucs<double> *lsys = new gsolver::linearSystemCSRTaucs<double>;
+#else
+  gsolver::linearSystemCSRGmm<double> *lsys = new gsolver::linearSystemCSRGmm<double>;
   lsys->setNoisy(1);
   lsys->setGmres(1);
-  lsys->setPrec(1.e-9);
-  gmshAssembler<double> myAssembler(lsys);
-  gmshElasticityTerm El(0, 1.0, .333, getTag());
+  lsys->setPrec(5.e-8);
+#endif
+  gsolver::dofManager<double,double> myAssembler(lsys);
+  gsolver::elasticityTerm El(0, 1.0, .333, getTag());
   
   std::vector<MElement*> layer, v;
 
@@ -528,9 +542,9 @@ void gmshHighOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *
 
 double gmshHighOrderSmoother::smooth_metric_(std::vector<MElement*>  & v, 
                                              GFace *gf, 
-                                             gmshAssembler<double> &myAssembler,
+                                             gsolver::dofManager<double,double> &myAssembler,
                                              std::set<MVertex*> &verticesToMove,
-                                             gmshElasticityTerm &El)
+                                             gsolver::elasticityTerm &El)
 {
   std::set<MVertex*>::iterator it;
 
@@ -558,15 +572,13 @@ double gmshHighOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
       for (int j = 0; j < n2; j++){
         MVertex *vR;
         int iCompR, iFieldR;
-        El.getLocalDofR(e, j, &vR, &iCompR, &iFieldR);
-        myAssembler.assemble(vR, iCompR, iFieldR,-R2(j));
+	gsolver::Dof RDOF = El.getLocalDofR(e, j);
+        myAssembler.assemble(RDOF,-R2(j));
         for (int k = 0; k < n2; k++){
           MVertex *vC;
           int iCompC, iFieldC;
-          El.getLocalDofC(e, k, &vC, &iCompC, &iFieldC);
-          myAssembler.assemble(vR, iCompR, iFieldR, 
-                               vC, iCompC, iFieldC, 
-                               K22(j, k));
+          gsolver::Dof CDOF = El.getLocalDofC(e, k);
+          myAssembler.assemble(RDOF,CDOF,K22(j, k));
         }
       }
     }
@@ -594,12 +606,16 @@ double gmshHighOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
 
 void gmshHighOrderSmoother::smooth(std::vector<MElement*> &all)
 {
-  gmshLinearSystemCSRGmm<double> *lsys = new gmshLinearSystemCSRGmm<double>;
+#ifdef HAVE_TAUCS
+  gsolver::linearSystemCSRTaucs<double> *lsys = new gsolver::linearSystemCSRTaucs<double>;
+#else
+  gsolver::linearSystemCSRGmm<double> *lsys = new gsolver::linearSystemCSRGmm<double>;
   lsys->setNoisy(1);
   lsys->setGmres(1);
   lsys->setPrec(5.e-8);
-  gmshAssembler<double> myAssembler(lsys);
-  gmshElasticityTerm El(0, 1.0, .333, getTag());
+#endif
+  gsolver::dofManager<double,double> myAssembler(lsys);
+  gsolver::elasticityTerm El(0, 1.0, .333, getTag());
   
   std::vector<MElement*> layer, v;
   double minD;
@@ -681,7 +697,8 @@ void gmshHighOrderSmoother::smooth(std::vector<MElement*> &all)
 
     // assembly of the elasticity term on the
     // set of elements
-    El.addToMatrix(myAssembler, v);
+    for (int i=0;i<v.size();i++)
+      El.addToMatrix(myAssembler, v[i]);
     
     // solve the system
     lsys->systemSolve();
@@ -1297,557 +1314,3 @@ void  gmshHighOrderSmoother::smooth_pNpoint(GFace *gf)
 }
 
 
-////////////////////////////////////////////////////////////////////////////////
-// OLD STUFF : STILL USED ?
-////////////////////////////////////////////////////////////////////////////////
-
-bool straightLine(std::vector<MVertex*> &l, MVertex *n1, MVertex *n2)
-{
-  // x = a * t + b
-  // x1 = b
-  // x2 = a + b
-  for(unsigned int i = 0; i < l.size(); i++){
-    MVertex *v = l[i];
-    double b = n1->x();
-    double a = n2->x() - b;
-    double t = (v->x() - b) / a;
-    double by = n1->y();
-    double ay = n2->y() - by;
-    double y = ay * t + by;
-    if(fabs(y-v->y()) > 1.e-07 * CTX::instance()->lc){
-      return false;      
-    }
-  }
-  return true;
-}
-
-void getMinMaxJac (MTriangle *t, double &minJ, double &maxJ)
-{
-  double mat[2][3];  
-  int n = 3;
-  t->getPrimaryJacobian(0, 0, 0, mat);
-   //t->getJacobian(0, 0, 0, mat);
-  double v1[3] = {mat[0][0], mat[0][1], mat[0][2]};
-  double v2[3] = {mat[1][0], mat[1][1], mat[1][2]};
-  double normal1[3], normal[3];
-  prodve(v1, v2, normal1);
-  double nn = sqrt(SQU(normal1[0]) + SQU(normal1[1]) + SQU(normal1[2]));
-  for(int i = 0; i < n; i++){
-    for(int k = 0; k < n - i; k++){
-      t->getJacobian((double)i / (n - 1), (double)k / (n - 1), 0, mat);
-      double v1b[3] = {mat[0][0], mat[0][1], mat[0][2]};
-      double v2b[3] = {mat[1][0], mat[1][1], mat[1][2]};
-      prodve(v1b, v2b, normal);
-      double sign; 
-      prosca(normal1, normal, &sign);
-      double det = norm3(normal) * (sign > 0 ? 1. : -1.) / nn;
-      minJ = std::min(1. / det, std::min(det, minJ));
-      maxJ = std::max(det, maxJ);
-    }
-  }
-}
-
-struct smoothVertexDataHO{
-  MVertex *v;
-  GFace *gf;
-  std::vector<MTriangle*> ts;
-}; 
-
-struct smoothVertexDataHON{
-  std::vector<MVertex*> v;
-  GFace *gf;
-  std::vector<MTriangle*> ts;
-}; 
-
-double smoothing_objective_function_HighOrder(double U, double V, MVertex *v, 
-                                              std::vector<MTriangle*> &ts, GFace *gf)
-{
-  GPoint gp = gf->point(U, V);
-  const double oldX = v->x();
-  const double oldY = v->y();
-  const double oldZ = v->z();
-
-  v->x() = gp.x();
-  v->y() = gp.y();
-  v->z() = gp.z();
-
-  double minJ =  1.e22;
-  double maxJ = -1.e22;
-  for (unsigned int i = 0; i < ts.size(); i++){
-    getMinMaxJac (ts[i], minJ, maxJ);
-  }
-  v->x() = oldX;
-  v->y() = oldY;
-  v->z() = oldZ;
-  
-  return -minJ;
-}
-
-
-void deriv_smoothing_objective_function_HighOrder(double U, double V, 
-                                                  double &F, double &dFdU,
-                                                  double &dFdV, void *data)
-{
-  smoothVertexDataHO *svd = (smoothVertexDataHO*)data;
-  MVertex *v = svd->v;
-  const double LARGE = -1.e5;
-  const double SMALL = 1./LARGE;
-  F   = smoothing_objective_function_HighOrder(U, V, v, svd->ts, svd->gf);
-  double F_U = smoothing_objective_function_HighOrder(U + SMALL, V, v, svd->ts, svd->gf);
-  double F_V = smoothing_objective_function_HighOrder(U, V + SMALL, v, svd->ts, svd->gf);
-  dFdU = (F_U - F) * LARGE;
-  dFdV = (F_V - F) * LARGE;
-}
-
-double smooth_obj_HighOrder(double U, double V, void *data)
-{
-  smoothVertexDataHO *svd = (smoothVertexDataHO*)data;
-  return  smoothing_objective_function_HighOrder(U, V, svd->v, svd->ts, svd->gf); 
-}
-
-double smooth_obj_HighOrderN(double *uv, void *data)
-{
-  smoothVertexDataHON *svd = (smoothVertexDataHON*)data;
-  double oldX[10],oldY[10],oldZ[10];
-  for (unsigned int i = 0; i < svd->v.size(); i++){
-    GPoint gp = svd->gf->point(uv[2 * i], uv[2 * i + 1]);
-    oldX[i] = svd->v[i]->x();
-    oldY[i] = svd->v[i]->y();
-    oldZ[i] = svd->v[i]->z();
-    svd->v[i]->x() = gp.x();
-    svd->v[i]->y() = gp.y();
-    svd->v[i]->z() = gp.z();
-  }
-  double minJ =  1.e22;
-  double maxJ = -1.e22;
-  for(unsigned int i = 0; i < svd->ts.size(); i++){
-    getMinMaxJac (svd->ts[i], minJ, maxJ);
-  }
-  for(unsigned int i = 0; i < svd->v.size(); i++){
-    svd->v[i]->x() = oldX[i];
-    svd->v[i]->y() = oldY[i];
-    svd->v[i]->z() = oldZ[i];
-  }
-  return -minJ;
-}
-
-void deriv_smoothing_objective_function_HighOrderN(double *uv, double *dF, 
-                                                   double &F, void *data)
-{
-  const double LARGE = -1.e2;
-  const double SMALL = 1. / LARGE;
-  smoothVertexDataHON *svd = (smoothVertexDataHON*)data;
-  F = smooth_obj_HighOrderN(uv, data);
-  for (unsigned int i = 0; i < svd->v.size(); i++){
-    uv[i] += SMALL;
-    dF[i] = (smooth_obj_HighOrderN(uv, data) - F) * LARGE;
-    uv[i] -= SMALL;
-  }
-}
-
-void optimizeNodeLocations(GFace *gf, smoothVertexDataHON &vdN, double eps = .2)
-{
-  if(!vdN.v.size()) return;
-  double uv[20];
-  for (unsigned int i = 0; i < vdN.v.size(); i++){
-    if (!vdN.v[i]->getParameter(0, uv[2 * i])){
-      Msg::Error("Node location optimization failed");
-      return;
-    }
-    if (!vdN.v[i]->getParameter(1, uv[2 * i + 1])){
-      Msg::Error("Node location optimization failed");
-      return;
-    }
-  }
-
-  double F = -smooth_obj_HighOrderN(uv, &vdN);
-  if (F < eps){
-    Msg::Error("Fletcher-Reeves minimizer routine must be reimplemented");
-    // double val = 0.;
-    //minimize_N(2 * vdN.v.size(), smooth_obj_HighOrderN, 
-    //          deriv_smoothing_objective_function_HighOrderN, 
-    //          &vdN, 1, uv, val);
-    double Fafter = -smooth_obj_HighOrderN(uv, &vdN);
-    printf("%12.5E %12.5E\n", F, Fafter);
-    if (F < Fafter){
-      for (unsigned int i = 0; i < vdN.v.size(); i++){
-        vdN.v[i]->setParameter(0, uv[2 * i]);
-        vdN.v[i]->setParameter(1, uv[2 * i + 1]);
-        GPoint gp = gf->point(uv[2 * i], uv[2 * i + 1]);
-        vdN.v[i]->x() = gp.x();
-        vdN.v[i]->y() = gp.y();
-        vdN.v[i]->z() = gp.z();
-      }
-    }     
-  }
-}
-
-double angle3Points(MVertex *p1, MVertex *p2, MVertex *p3)
-{
-  SVector3 a(p1->x() - p2->x(), p1->y() - p2->y(), p1->z() - p2->z());
-  SVector3 b(p3->x() - p2->x(), p3->y() - p2->y(), p3->z() - p2->z());
-  SVector3 c = crossprod(a, b);
-  double sinA = c.norm();
-  double cosA = dot(a, b);
-  //  printf("%d %d %d -> %g %g\n",p1->iD,p2->iD,p3->iD,cosA,sinA);
-  return atan2 (sinA, cosA);  
-}
-
-// A curvilinear edge smooth and swap
-
-typedef std::map<std::pair<MVertex*, MVertex*>, std::vector<MElement*> > edge2tris;
-
-void localHarmonicMapping(GModel *gm, 
-                          MTriangle *t1 , 
-                          MTriangle *t2,
-                          MVertex *n1,
-                          MVertex *n2,
-                          MVertex *n3,
-                          MVertex *n4,
-//                        SPoint2 &np1,
-//                        SPoint2 &np2,
-//                        SPoint2 &np3,
-//                        SPoint2 &np4,
-                          std::vector<MVertex*> &e1,
-                          std::vector<MVertex*> &e2,
-                          std::vector<MVertex*> &e3,
-                          std::vector<MVertex*> &e4,
-//                        std::vector<SPoint2> &ep1,
-//                        std::vector<SPoint2> &ep2,
-//                        std::vector<SPoint2> &ep3,
-//                        std::vector<SPoint2> &ep4
-                          std::vector<MVertex*> &e) {
-  
-  gmshLinearSystemGmm<double> *lsys = new gmshLinearSystemGmm<double>;
-  gmshAssembler<double> myAssembler(lsys);
-  gmshFunction<double> f(1.0);
-  gmshLaplaceTerm Laplace(gm, &f, 0);
-  
-  myAssembler.fixVertex ( n1 , 0 , 0 , -1.0);
-  myAssembler.fixVertex ( n2 , 0 , 0 , -1.0);
-  myAssembler.fixVertex ( n3 , 0 , 0 ,  1.0);
-  myAssembler.fixVertex ( n4 , 0 , 0 ,  1.0);
-  for (unsigned int i = 0; i < e1.size(); i++) myAssembler.fixVertex(e1[i], 0, 0, -1.0);
-  for (unsigned int i = 0; i < e3.size(); i++) myAssembler.fixVertex(e3[i], 0, 0,  1.0);
-  Laplace.addToMatrix(myAssembler,t1); 
-  Laplace.addToMatrix(myAssembler,t2);   
-  lsys->systemSolve();
-
-  gmshLinearSystemGmm<double> *lsys1 = new gmshLinearSystemGmm<double>;
-  gmshAssembler<double> myAssembler1(lsys1);
-  gmshLaplaceTerm Laplace1(gm, &f, 1);
-  
-  myAssembler1.fixVertex ( n2 , 0 , 1 , -1.0);
-  myAssembler1.fixVertex ( n3 , 0 , 1 , -1.0);
-  myAssembler1.fixVertex ( n4 , 0 , 1 ,  1.0);
-  myAssembler1.fixVertex ( n1 , 0 , 1 ,  1.0);
-  for (unsigned int i = 0; i < e2.size(); i++) myAssembler1.fixVertex(e2[i], 0, 1, -1.0);
-  for (unsigned int i = 0; i < e4.size(); i++) myAssembler1.fixVertex(e4[i], 0, 1,  1.0);  
-  Laplace1.addToMatrix(myAssembler1,t1); 
-  Laplace1.addToMatrix(myAssembler1,t2);   
-  lsys1->systemSolve();
-
-  // now we have the stable high order harmonic mapping 
-  // we have to find points locations of vertices in e
-  // that have coordinates (\xi, \xi) 
-
-  // this can be done by evaluating the 
-
-  for (unsigned int i = 0; i < e.size();  i++){
-    MVertex *v = e[i];
-    const double U =  myAssembler.getDofValue  (v, 0 ,0);
-    const double V =  myAssembler1.getDofValue (v, 0 ,1);
-    printf("point %g %g -> %g %g\n",v->x(),v->y(),U,V);
-    // we are in t1
-    //if (U >= V){
-    //const double ut = U;
-    //}
-  }
-
-
-  delete lsys ;  
-  delete lsys1;  
-}
-
-void optimizeHighOrderMeshInternalNodes(GFace *gf)
-{
-  for(unsigned int i = 0; i < gf->triangles.size(); i++){
-    MTriangle *t = gf->triangles[i];
-    smoothVertexDataHON vdN;
-    int start = t->getNumVertices() - t->getNumFaceVertices();
-    for (int j=start;j<t->getNumVertices();j++)
-      vdN.v.push_back(t->getVertex(j));
-    vdN.gf = gf;
-    vdN.ts.push_back(t);
-    optimizeNodeLocations(gf, vdN, .9);
-  }
-}
-
-bool optimizeHighOrderMesh(GFace *gf, edgeContainer &edgeVertices)
-{
-  v2t_cont adjv;
-  buildVertexToTriangle(gf->triangles, adjv);
-
-  typedef std::map<std::pair<MVertex*, MVertex*>, std::vector<MElement*> > edge2tris;
-  edge2tris e2t;
-  for(unsigned int i = 0; i < gf->triangles.size(); i++){
-    MTriangle *t = gf->triangles[i];
-    for(int j = 0; j < t->getNumEdges(); j++){
-      MEdge edge = t->getEdge(j);
-      std::pair<MVertex*, MVertex*> p(edge.getMinVertex(), edge.getMaxVertex());
-      e2t[p].push_back(t);
-    }
-  }
-
-  for(edge2tris::iterator it = e2t.begin(); it != e2t.end(); ++it){
-    std::pair<MVertex*, MVertex*> edge = it->first;
-    std::vector<MVertex*> e;
-    std::vector<MElement*> triangles = it->second;
-    if(triangles.size() == 2){
-      MVertex *n2 = edge.first; 
-      MVertex *n4 = edge.second;
-      MTriangle *t1 = (MTriangle*)triangles[0];
-      MTriangle *t2 = (MTriangle*)triangles[1];
-      if(n2 < n4)
-        e = edgeVertices[std::make_pair<MVertex*, MVertex*> (n2, n4)];
-      else
-        e = edgeVertices[std::make_pair<MVertex*, MVertex*> (n4, n2)];
-
-      if (e.size() < 5){
-        smoothVertexDataHON vdN;
-        vdN.v = e;
-        vdN.gf = gf;
-        vdN.ts.clear();
-        vdN.ts.push_back(t1);
-        vdN.ts.push_back(t2);   
-        optimizeNodeLocations(gf, vdN);
-      }
-    }
-  }
-
-  return true;
-}
-
-static void parametricCoordinates(MVertex *v, GFace *gf, double &uu, double &vv)
-{
-  SPoint2 param;
-  reparamMeshVertexOnFace(v, gf, param);
-  uu = param[0];
-  vv = param[1];
-}
-
-static void getParametricCoordnates ( GFace *gf, 
-                                      std::vector<MVertex*> &e,
-                                      std::vector<SPoint2> &param)
-{
-  param.clear();
-  for (unsigned int i = 0; i < e.size(); i++){
-    double U,V;
-    parametricCoordinates(e[i] , gf, U, V); 
-    param.push_back(SPoint2(U,V));
-  }
-}
-
-static void curvilinearEdgeSwap (GFace *gf, 
-                                 //                              int nPts,
-                                 edgeContainer &edgeVertices,
-                                 edge2tris::iterator &it,
-                                 edge2tris &e2t)
-{
-  std::pair<MVertex*, MVertex*> edge = it->first;
-  std::vector<MElement*> triangles   = it->second;
-  if(triangles.size() == 2){
-      MVertex *n2 = edge.first; 
-      MVertex *n4 = edge.second;
-      MTriangle *t1 = (MTriangle*)triangles[0];
-      MTriangle *t2 = (MTriangle*)triangles[1];
-      MVertex *n1 = t1->getOtherVertex(n2, n4);
-      MVertex *n3 = t2->getOtherVertex(n2, n4);
-      std::vector<MVertex*> e1 = edgeVertices[std::make_pair<MVertex*, MVertex*>(std::min(n1, n2),std::max(n1, n2))];
-      std::vector<MVertex*> e2 = edgeVertices[std::make_pair<MVertex*, MVertex*>(std::min(n2, n3),std::max(n2, n3))];
-      std::vector<MVertex*> e3 = edgeVertices[std::make_pair<MVertex*, MVertex*>(std::min(n3, n4),std::max(n3, n4))];
-      std::vector<MVertex*> e4 = edgeVertices[std::make_pair<MVertex*, MVertex*>(std::min(n4, n1),std::max(n4, n1))];
-      std::vector<MVertex*> e  = edgeVertices[std::make_pair<MVertex*, MVertex*>(std::min(n2, n4),std::max(n2, n4))];
-      //      std::vector<MVertex*> enew; 
-      //      MLine temp (n1,n3);
-      // should not add the nodes n the GFace here
-      //      getEdgeVertices(gf,&temp, enew, false, nPts);
-      // get the parametric coordinates of the 
-      std::vector<SPoint2> ep1;  getParametricCoordnates (gf,e1,ep1);
-      std::vector<SPoint2> ep2;  getParametricCoordnates (gf,e2,ep2);
-      std::vector<SPoint2> ep3;  getParametricCoordnates (gf,e3,ep3);
-      std::vector<SPoint2> ep4;  getParametricCoordnates (gf,e4,ep4);
-      std::vector<SPoint2> ep;  getParametricCoordnates (gf,e ,ep );
-      //      std::vector<SPoint2> epnew;  getParametricCoordnates (gf,enew,epnew);      
-      localHarmonicMapping(gf->model(),t1,t2,n1,n2,n3,n4,e1,e2,e3,e4,e); 
-  }
-}
-
-bool smoothInternalEdgesb(GFace *gf, edgeContainer &edgeVertices)
-{
-  typedef std::map<std::pair<MVertex*, MVertex*>, std::vector<MElement*> > edge2tris;
-  edge2tris e2t;
-  for(unsigned int i = 0; i < gf->triangles.size(); i++){
-    MTriangle *t = gf->triangles[i];
-    for(int j = 0; j < t->getNumEdges(); j++){
-      MEdge edge = t->getEdge(j);
-      std::pair<MVertex*, MVertex*> p(edge.getMinVertex(), edge.getMaxVertex());
-      e2t[p].push_back(t);
-    }
-  }
-
-  for(edge2tris::iterator it = e2t.begin(); it != e2t.end(); ++it){
-    curvilinearEdgeSwap (gf,edgeVertices,it,e2t);
-  }
-  return true;
-}
-
-bool smoothInternalEdges(GFace *gf, edgeContainer &edgeVertices)
-{
-  typedef std::map<std::pair<MVertex*, MVertex*>, std::vector<MElement*> > edge2tris;
-  edge2tris e2t;
-  for(unsigned int i = 0; i < gf->triangles.size(); i++){
-    MTriangle *t = gf->triangles[i];
-    for(int j = 0; j < t->getNumEdges(); j++){
-      MEdge edge = t->getEdge(j);
-      std::pair<MVertex*, MVertex*> p(edge.getMinVertex(), edge.getMaxVertex());
-      e2t[p].push_back(t);
-    }
-  }
-
-  bool success = false;
-
-  const int NBST = 10;
-
-  for(edge2tris::iterator it = e2t.begin(); it != e2t.end(); ++it){
-    std::pair<MVertex*, MVertex*> edge = it->first;
-    std::vector<MVertex*> e1, e2, e3, e4, e;
-    std::vector<MElement*> triangles = it->second;
-    if(triangles.size() == 2){
-      MVertex *n2 = edge.first; 
-      MVertex *n4 = edge.second;
-      MTriangle *t1 = (MTriangle*)triangles[0];
-      MTriangle *t2 = (MTriangle*)triangles[1];
-      MVertex *n1 = t1->getOtherVertex(n2, n4);
-      MVertex *n3 = t2->getOtherVertex(n2, n4);
-      
-      double ang1 = angle3Points(n1,n2,n3);
-      double ang2 = angle3Points(n2,n3,n4);
-      double ang3 = angle3Points(n3,n4,n1);
-      double ang4 = angle3Points(n4,n1,n2);
-      const double angleLimit = 3*M_PI/4.;
-
-      if (ang1 < angleLimit && ang2 < angleLimit && ang3 < angleLimit && ang4 < angleLimit){
-        if(n1 < n2)
-          e1 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n1, n2)];
-        else
-          e1 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n2, n1)];
-        if(n2 < n3)
-          e2 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n2, n3)];
-        else
-          e2 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n3, n2)];
-        if(n3 < n4)
-          e3 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n3, n4)];
-        else
-          e3 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n4, n3)];
-        if(n4 < n1)
-          e4 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n4, n1)];
-        else
-          e4 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n1, n4)];
-        if(n2 < n4)
-          e = edgeVertices[std::make_pair<MVertex*, MVertex*>(n2, n4)];
-        else
-          e = edgeVertices[std::make_pair<MVertex*, MVertex*>(n4, n2)];
-        
-        if((!straightLine(e1, n1, n2) || !straightLine(e2, n2, n3) ||
-            !straightLine(e3, n3, n4) || !straightLine(e4, n4, n1))){
-          
-          double Unew[NBST][10],Vnew[NBST][10];
-          double Xold[10],Yold[10],Zold[10];
-          
-          for(unsigned int i = 0; i < e.size(); i++){
-            Xold[i] = e[i]->x();
-            Yold[i] = e[i]->y();
-            Zold[i] = e[i]->z();
-          }
-          
-          double minJ = 1.e22;
-          double maxJ = -1.e22;       
-          getMinMaxJac (t1, minJ, maxJ);
-          getMinMaxJac (t2, minJ, maxJ);
-          int kopt = -1; 
-          for (int k=0;k<NBST;k++){
-            double relax = (k+1)/(double)NBST;
-            for(unsigned int i = 0; i < e.size(); i++){
-              double v = (double)(i + 1) / (e.size() + 1);
-              double u = 1. - v;
-              MVertex *vert  = (n2 < n4) ? e[i] : e[e.size() - i - 1];
-              MVertex *vert1 = (n1 < n2) ? e1[e1.size() - i - 1] : e1[i];
-              MVertex *vert3 = (n3 < n4) ? e3[i] : e3[e3.size() - i - 1];
-              MVertex *vert4 = (n4 < n1) ? e4[e4.size() - i - 1] : e4[i];
-              MVertex *vert2 = (n2 < n3) ? e2[i] : e2[e2.size() - i - 1];           
-              double U1,V1,U2,V2,U3,V3,U4,V4,U,V,nU1,nV1,nU2,nV2,nU3,nV3,nU4,nV4;
-              parametricCoordinates(vert , gf, U, V);
-              parametricCoordinates(vert1, gf, U1, V1);
-              parametricCoordinates(vert2, gf, U2, V2);
-              parametricCoordinates(vert3, gf, U3, V3);
-              parametricCoordinates(vert4, gf, U4, V4);
-              parametricCoordinates(n1, gf, nU1, nV1);
-              parametricCoordinates(n2, gf, nU2, nV2);
-              parametricCoordinates(n3, gf, nU3, nV3);
-              parametricCoordinates(n4, gf, nU4, nV4);
-              
-              Unew[k][i] = U + relax * ((1.-u) * U4 + u * U2 +
-                                        (1.-v) * U1 + v * U3 -
-                                        ((1.-u)*(1.-v) * nU1 
-                                         + u * (1.-v) * nU2 
-                                         + u * v * nU3 
-                                         + (1.-u) * v * nU4) - U);
-              Vnew[k][i] = V + relax * ((1.-u) * V4 + u * V2 +
-                                        (1.-v) * V1 + v * V3 -
-                                        ((1.-u)*(1.-v) * nV1 
-                                         + u * (1.-v) * nV2 
-                                         + u * v * nV3 
-                                         + (1.-u) * v * nV4) - V);
-              GPoint gp = gf->point(Unew[k][i],Vnew[k][i]);
-              vert->x() = gp.x();
-              vert->y() = gp.y();
-              vert->z() = gp.z();
-            }
-            double minJloc = 1.e22;
-            double maxJloc = -1.e22;          
-            getMinMaxJac(t1, minJloc, maxJloc);
-            getMinMaxJac(t2, minJloc, maxJloc);
-            //    printf("relax = %g min %g max %g\n",relax,minJloc,maxJloc);
-            
-            if (minJloc > minJ){
-              kopt = k;
-              minJ = minJloc;
-            }
-          }
-          //    kopt = 1;
-          if (kopt == -1){
-            for(unsigned int i = 0; i < e.size(); i++){
-              e[i]->x() = Xold[i];
-              e[i]->y() = Yold[i];
-              e[i]->z() = Zold[i];
-            }      
-          }
-          else{
-            success = true;
-            for(unsigned int i = 0; i < e.size(); i++){
-              MVertex *vert  = (n2 < n4) ? e[i] : e[e.size() - i - 1];
-              vert->setParameter(0,Unew[kopt][i]);
-              vert->setParameter(1,Vnew[kopt][i]);
-              GPoint gp = gf->point(Unew[kopt][i],Vnew[kopt][i]);
-              vert->x() = gp.x();
-              vert->y() = gp.y();
-              vert->z() = gp.z();
-            }      
-          }
-        }
-      }
-    }
-  }    
-  return success;
-}

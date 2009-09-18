@@ -74,6 +74,7 @@ set(GMSH_API
     Mesh/meshGFaceDelaunayInsertion.h
   Post/PView.h Post/PViewData.h Plugin/PluginManager.h
   Graphics/drawContext.h
+  Solver/dofManager.h Solver/elasticityTerm.h Solver/termOfFormulation.h 
   contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h 
     contrib/kbipack/gmp_blas.h
   contrib/DiscreteIntegration/DILevelset.h)
@@ -476,19 +477,21 @@ if(ENABLE_MED OR ENABLE_CGNS)
 endif(ENABLE_MED OR ENABLE_CGNS)
 
 if(ENABLE_TAUCS)
-  find_library(TAUCS_LIB taucs)
+  find_library(TAUCS_LIB taucs PATHS ENV CASROOT 
+               PATH_SUFFIXES lib)
   if(TAUCS_LIB)
+   find_path(TAUCS_INC "taucs.h" PATHS ENV CASROOT PATH_SUFFIXES src 
+              include)
+   if(TAUCS_INC)
     set(HAVE_TAUCS TRUE)
     list(APPEND CONFIG_OPTIONS "Taucs")
     list(APPEND EXTERNAL_LIBRARIES ${TAUCS_LIB})
+    list(APPEND EXTERNAL_INCLUDES ${TAUCS_INC})
+   endif(TAUCS_INC)
   endif(TAUCS_LIB)
 endif(ENABLE_TAUCS)
 
-if(ENABLE_SOLVER)
-  add_subdirectory(Solver)
-  set(HAVE_SOLVER TRUE)
-  list(APPEND CONFIG_OPTIONS "Solver")
-endif(ENABLE_SOLVER)
+add_subdirectory(Solver)
 
 if(ENABLE_OCC)
   if(WIN32)
@@ -621,7 +624,7 @@ if(EXTERNAL_INCLUDES)
 endif(EXTERNAL_INCLUDES)
 
 # we could specify include dirs more selectively, but this is simpler
-include_directories(Common Fltk Geo Graphics Mesh Numeric Parser Plugin
+include_directories(Common Fltk Geo Graphics Mesh Solver Numeric Parser Plugin
   Post Qt contrib/ANN/include contrib/Chaco/main contrib/DiscreteIntegration
   contrib/MathEx contrib/Metis contrib/NativeFileChooser contrib/Netgen 
   contrib/Netgen/libsrc/include contrib/Netgen/libsrc/interface
