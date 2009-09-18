@@ -4693,6 +4693,18 @@ double opt_mesh_optimize_netgen(OPT_ARGS_NUM)
 #endif
   return CTX::instance()->mesh.optimizeNetgen;
 }
+double opt_mesh_remove_4_triangles(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.remove4triangles = (int)val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->mesh.butt[25]->value
+      (CTX::instance()->mesh.remove4triangles);
+#endif
+  return CTX::instance()->mesh.remove4triangles;
+  
+}
 
 double opt_mesh_refine_steps(OPT_ARGS_NUM)
 {

@@ -205,6 +205,128 @@ void parametricCoordinates(MElement *t, GFace *gf, double u[4], double v[4])
   }
 }
 
+double surfaceTriangleUV(MElement *t,GFace *gf){
+  double u[4],v[4];
+  parametricCoordinates(t,gf,u,v);
+  return 0.5*fabs((u[1]-u[0])*(v[2]-v[0])-(u[2]-u[0])*(v[1]-v[0]));
+}
+
+double surfaceTriangleUV(MVertex *v1, MVertex *v2, MVertex *v3,           
+                         const std::vector<double> &Us,
+                         const std::vector<double> &Vs)
+{
+  const double v12[2] = {Us[v2->getIndex()] - Us[v1->getIndex()],
+                         Vs[v2->getIndex()] - Vs[v1->getIndex()]};
+  const double v13[2] = {Us[v3->getIndex()] - Us[v1->getIndex()],
+                         Vs[v3->getIndex()] - Vs[v1->getIndex()]};
+  return 0.5 * fabs (v12[0] * v13[1] - v12[1] * v13[0]);
+}
+
+int _removeFourTrianglesNodes(GFace *gf,bool replace_by_quads)
+{
+
+  v2t_cont adj;
+  buildVertexToElement(gf->triangles,adj);
+  v2t_cont :: iterator it = adj.begin();
+  int n=0;
+  std::set<MElement*> touched;
+  while (it != adj.end()) {
+    bool skip=false;
+    double surfaceRef=0;
+    if(it->second.size()==4) {
+      const std::vector<MElement*> &lt = it->second;
+      MVertex* edges[4][2];
+      for(int i=0;i<4;i++) {
+        if(touched.find(lt[i])!=touched.end() || lt[i]->getNumVertices()!=3){
+          skip=true;
+          break;
+        }
+        int j;
+
+        surfaceRef+=surfaceTriangleUV(lt[i],gf);
+        for(j=0;j<3;j++) {
+          if(lt[i]->getVertex(j)==it->first) {
+            edges[i][0] = lt[i]->getVertex((j+1)%3);
+            edges[i][1] = lt[i]->getVertex((j+2)%3);
+            break;
+          }
+        }
+        if(j==3)
+          throw;
+      }
+      if(skip){
+        it++;
+        continue;
+      }
+
+      for(int i=1;i<3;i++) {
+        for(int j=i+1;j<4;j++) {
+          if(edges[j][0]==edges[i-1][1]){
+            MVertex *buf[2]={edges[i][0],edges[i][1]};
+            edges[i][0]=edges[j][0];
+            edges[i][1]=edges[j][1];
+            edges[j][0]=buf[0];
+            edges[j][1]=buf[1];
+            break;
+          }
+        }
+      }
+      if(edges[0][1]==edges[1][0] && edges[1][1]==edges[2][0] && edges[2][1] == edges[3][0] && edges[3][1]==edges[0][0]) {
+        if(replace_by_quads){
+          gf->quadrangles.push_back(new MQuadrangle(edges[0][0],edges[1][0],edges[2][0],edges[3][0]));
+        }else{
+          MTriangle *newt[4];
+          double surf[4],qual[4];
+          for(int i=0;i<4;i++){
+            newt[i] = new MTriangle(edges[i][0],edges[(i+1)%4][0],edges[(i+2)%4][0]);
+            surf[i]=surfaceTriangleUV(newt[i],gf);
+            qual[i]=qmTriangle(newt[i],QMTRI_RHO);
+          }
+          double q02=(fabs((surf[0]+surf[2]-surfaceRef)/surfaceRef)<1e-8) ? std::min(qual[0],qual[2]) : -1;
+          double q13=(fabs((surf[1]+surf[3]-surfaceRef)/surfaceRef)<1e-8) ? std::min(qual[1],qual[3]) : -1;
+          if(q02>q13 && q02 >0) {
+            delete newt[1];
+            delete newt[3];
+            gf->triangles.push_back(newt[0]);
+            gf->triangles.push_back(newt[2]);
+          } else if (q13 >0) {
+            delete newt[0];
+            delete newt[2];
+            gf->triangles.push_back(newt[1]);
+            gf->triangles.push_back(newt[3]);
+          } else {
+            it++;
+            throw;
+            continue;
+          }
+        }
+        for(int i=0;i<4;i++) {
+          touched.insert(lt[i]);
+        }
+        n++;
+      }
+    }
+    it++;
+  }
+  std::vector<MTriangle*> triangles2;
+  for(unsigned int i = 0; i < gf->triangles.size(); i++){
+    if(touched.find(gf->triangles[i]) == touched.end()){
+      triangles2.push_back(gf->triangles[i]);
+    }
+    else {
+      delete gf->triangles[i];
+    }    
+  } 
+  gf->triangles = triangles2;
+  Msg::Debug("%i four-triangles vertices removed",n);
+  return n;
+}
+
+void removeFourTrianglesNodes(GFace *gf,bool replace_by_quads)
+{
+  while(_removeFourTrianglesNodes(gf,replace_by_quads));
+}
+
 void laplaceSmoothing(GFace *gf)
 {
   v2t_cont adj;
@@ -252,16 +374,6 @@ void laplaceSmoothing(GFace *gf)
   }
 }
 
-double surfaceTriangleUV(MVertex *v1, MVertex *v2, MVertex *v3,           
-                         const std::vector<double> &Us,
-                         const std::vector<double> &Vs)
-{
-  const double v12[2] = {Us[v2->getIndex()] - Us[v1->getIndex()],
-                         Vs[v2->getIndex()] - Vs[v1->getIndex()]};
-  const double v13[2] = {Us[v3->getIndex()] - Us[v1->getIndex()],
-                         Vs[v3->getIndex()] - Vs[v1->getIndex()]};
-  return 0.5 * fabs (v12[0] * v13[1] - v12[1] * v13[0]);
-}
 
 bool gmshEdgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
                   std::vector<MTri3*> &newTris, const gmshSwapCriterion &cr,               

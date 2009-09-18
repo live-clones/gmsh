@@ -41,6 +41,7 @@ int edgeSplitPass(double maxLC, GFace *gf,
                   std::vector<double> &Vs,
                   std::vector<double> &vSizes ,
                   std::vector<double> &vSizesBGM);
+void removeFourTrianglesNodes(GFace *gf, bool replace_by_quads);
 int edgeCollapsePass(double minLC, GFace *gf, 
                      std::set<MTri3*, compareTri3Ptr> &allTris,
                      std::vector<double> &Us,

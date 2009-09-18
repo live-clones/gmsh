@@ -663,6 +663,8 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
     sprintf(name, "param%d.pos", gf->tag());
     outputScalarField(m->triangles, name,1);
   }
+  if(CTX::instance()->mesh.remove4triangles)
+    removeFourTrianglesNodes(gf,false);
 
   // delete the mesh
   delete m;

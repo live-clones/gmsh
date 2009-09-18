@@ -1166,6 +1166,8 @@ StringXNumber MeshOptions_Number[] = {
     "RandomFactor * size(triangle)/size(model) approaches machine accuracy)" },
   { F|O, "RefineSteps" , opt_mesh_refine_steps , 10 ,
     "Number of refinement steps in the MeshAdapt-based 2D algorithms" }, 
+  { F|O, "Remove4Triangles" , opt_mesh_remove_4_triangles , 0 ,
+    "Try to remove nodes surrounded by 4 triangles in 2D triangular meshes" }, 
   { F|O, "ReverseAllNormals" , opt_mesh_reverse_all_normals , 0. , 
     "Reverse all the mesh normals (for display)" },
 

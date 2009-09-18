@@ -400,6 +400,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_lc_extend_from_boundary(0, GMSH_SET, o->mesh.butt[16]->value());
   opt_mesh_optimize(0, GMSH_SET, o->mesh.butt[2]->value());
   opt_mesh_optimize_netgen(0, GMSH_SET, o->mesh.butt[24]->value());
+  opt_mesh_remove_4_triangles(0,GMSH_SET, o->mesh.butt[25]->value());
   opt_mesh_order(0, GMSH_SET, o->mesh.value[3]->value());
   opt_mesh_smooth_internal_edges(0, GMSH_SET, o->mesh.butt[3]->value());
   opt_mesh_second_order_incomplete(0, GMSH_SET, o->mesh.butt[4]->value());
@@ -1985,6 +1986,11 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Optimize high order mesh (2D-plane only)");
       mesh.butt[3]->type(FL_TOGGLE_BUTTON);
       mesh.butt[3]->callback(mesh_options_ok_cb);
+      
+      mesh.butt[25] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Try to remove 4 triangles nodes");
+      mesh.butt[25]->type(FL_TOGGLE_BUTTON);
+      mesh.butt[25]->callback(mesh_options_ok_cb);
 
       o->end();
     }
