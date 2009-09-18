@@ -701,6 +701,8 @@ endif(BISON AND FLEX)
 if(UNIX)
   add_custom_target(purge COMMAND ${CMAKE_SOURCE_DIR}/utils/misc/purge.sh
                     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+  add_custom_target(etags COMMAND etags `find . -name *.cpp -o -name *.h -o -name *.y`
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endif(UNIX)
 
 set(WELCOME_FILE ${CMAKE_SOURCE_DIR}/doc/WELCOME.txt)

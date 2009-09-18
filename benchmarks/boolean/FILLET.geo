@@ -13,3 +13,4 @@ OCCShape("Cone",{0.99*L/2,H/2,-Z,0,0,1,.3*R,2*R,3*Z},"Fuse");
 OCCShape("Fillet",{1,R},"none");
 OCCShape("Fillet",{83,R/8},"none");
 OCCShape("Cone",{0.99*L,H/2,-Z,0,0,1,3*R,.2*R,3*Z},"Cut");
+*/
