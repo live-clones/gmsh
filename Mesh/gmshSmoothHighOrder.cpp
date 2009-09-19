@@ -102,7 +102,7 @@ struct p2data{
   GFace *gf;
   MTriangle *t1,*t2;
   MVertex *n12;
-  gmshMatrix<double> *m1,*m2;
+  fullMatrix<double> *m1,*m2;
   gmshHighOrderSmoother *s;
   p2data(GFace *_gf, MTriangle *_t1, MTriangle *_t2, MVertex *_n12, 
          gmshHighOrderSmoother *_s)
@@ -111,9 +111,9 @@ struct p2data{
     elasticityTerm el(0, 1.e3, .3333,1);
     s->moveToStraightSidedLocation(t1);
     s->moveToStraightSidedLocation(t2);
-    m1 = new  gmshMatrix<double>(3 * t1->getNumVertices(),
+    m1 = new  fullMatrix<double>(3 * t1->getNumVertices(),
                                  3 * t1->getNumVertices());
-    m2 = new  gmshMatrix<double>(3 * t2->getNumVertices(),
+    m2 = new  fullMatrix<double>(3 * t2->getNumVertices(),
                                  3 * t2->getNumVertices()); 
     el.elementMatrix(t1,*m1);
     el.elementMatrix(t2,*m2);
@@ -130,7 +130,7 @@ struct pNdata{
   GFace *gf;
   MTriangle *t1,*t2;
   const std::vector<MVertex*> &n;
-  gmshMatrix<double> *m1,*m2;
+  fullMatrix<double> *m1,*m2;
   gmshHighOrderSmoother *s;
   pNdata(GFace *_gf,MTriangle *_t1,MTriangle *_t2, const std::vector<MVertex*> &_n,
          gmshHighOrderSmoother *_s)
@@ -139,9 +139,9 @@ struct pNdata{
     elasticityTerm el(0, 1.e3, .3333,1);
     s->moveToStraightSidedLocation(t1);
     s->moveToStraightSidedLocation(t2);
-    m1 = new  gmshMatrix<double>(3 * t1->getNumVertices(),
+    m1 = new  fullMatrix<double>(3 * t1->getNumVertices(),
                                  3 * t1->getNumVertices());
-    m2 = new  gmshMatrix<double>(3 * t2->getNumVertices(),
+    m2 = new  fullMatrix<double>(3 * t2->getNumVertices(),
                                  3 * t2->getNumVertices()); 
     el.elementMatrix(t1,*m1);
     el.elementMatrix(t2,*m2);
@@ -155,11 +155,11 @@ struct pNdata{
 };
 
 static double _DeformationEnergy(MElement *e, 
-                                 gmshMatrix<double> *K,
+                                 fullMatrix<double> *K,
                                  gmshHighOrderSmoother *s)
 {
   int N = e->getNumVertices();
-  gmshVector<double> Kdx(N*3),dx(N*3);
+  fullVector<double> Kdx(N*3),dx(N*3);
 
   dx.scale(0.0);
   Kdx.scale(0.0);
@@ -194,7 +194,7 @@ static double _DeformationEnergy(pNdata *p)
     _DeformationEnergy(p->t2, p->m2, p->s);
 }
 
-static double _function_p2tB(gmshVector<double> &x, void *data)
+static double _function_p2tB(fullVector<double> &x, void *data)
 {
   p2data *p = (p2data*)data;
   GPoint gp12 = p->gf->point(SPoint2(x(0), x(1)));
@@ -212,7 +212,7 @@ static double _function_p2tB(gmshVector<double> &x, void *data)
   return E;
 }
 
-static double _function_p2t(gmshVector<double> &x, void *data)
+static double _function_p2t(fullVector<double> &x, void *data)
 {
   p2data *p = (p2data*)data;
   GPoint gp12 = p->gf->point(SPoint2(x(0), x(1)));
@@ -229,7 +229,7 @@ static double _function_p2t(gmshVector<double> &x, void *data)
   return -q;
 }
 
-static double _function_pNt(gmshVector<double> &x, void *data)
+static double _function_pNt(fullVector<double> &x, void *data)
 {
   pNdata *p = (pNdata*)data;
   static double xx[256];
@@ -253,7 +253,7 @@ static double _function_pNt(gmshVector<double> &x, void *data)
   return -q;
 }
 
-static double _function_pNtB(gmshVector<double> &x, void *data)
+static double _function_pNtB(fullVector<double> &x, void *data)
 {
   pNdata *p = (pNdata*)data;
   static double xx[256];
@@ -390,9 +390,9 @@ void gmshHighOrderSmoother::optimize(GFace * gf,
 
 void gmshHighOrderSmoother::computeMetricVector(GFace *gf, 
                                                 MElement *e, 
-                                                gmshMatrix<double> &J,
-                                                gmshMatrix<double> &JT,
-                                                gmshVector<double> &D)
+                                                fullMatrix<double> &J,
+                                                fullMatrix<double> &JT,
+                                                fullVector<double> &D)
 {
   int nbNodes = e->getNumVertices();
   for (int j = 0; j < nbNodes; j++){
@@ -556,13 +556,13 @@ double gmshHighOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
       const int n2 = 2 * nbNodes;
       const int n3 = 3 * nbNodes;
 
-      gmshMatrix<double> K33(n3, n3);
-      gmshMatrix<double> K22(n2, n2);
-      gmshMatrix<double> J32(n3, n2);
-      gmshMatrix<double> J23(n2, n3);
-      gmshVector<double> D3(n3);
-      gmshVector<double> R2(n2);
-      gmshMatrix<double> J23K33(n2, n3);
+      fullMatrix<double> K33(n3, n3);
+      fullMatrix<double> K22(n2, n2);
+      fullMatrix<double> J32(n3, n2);
+      fullMatrix<double> J23(n2, n3);
+      fullVector<double> D3(n3);
+      fullVector<double> R2(n2);
+      fullMatrix<double> J23K33(n2, n3);
       K33.set_all(0.0);
       El.elementMatrix(e, K33);
       computeMetricVector(gf, e, J32, J23, D3);
@@ -890,7 +890,7 @@ struct swap_triangles_p2
     vv.push_back(_test);vv.push_back(n23);vv.push_back(n24);
     MTriangleN t4_test (n4,n3,n2,vv,2,t2->getNum(),t2->getPartition());
     p2data data(gf,&t3_test,&t4_test,_test,0);
-    gmshVector<double> pp(2);
+    fullVector<double> pp(2);
     pp(0) = p34_linear.x();
     pp(1) = p34_linear.y();
     minimize_grad_fd (_function_p2tB, pp, &data);
@@ -1028,7 +1028,7 @@ static int optimalLocationP2_(GFace *gf,
   SPoint2 p34_linear = (p1+p2)*.5;
   SPoint2 dirt = p4-p3;
 
-  gmshVector<double> pp(2);
+  fullVector<double> pp(2);
   pp(0) = p12.x();
   pp(1) = p12.y();
   p2data data(gf,t1,t2,n12,s);
@@ -1085,7 +1085,7 @@ int optimalLocationPN_ (GFace *gf, const MEdge &me, MTriangle *t1, MTriangle *t2
     toOptimize.push_back(t2->getVertex(i));
   }
 
-  gmshVector<double> pp(2*toOptimize.size());
+  fullVector<double> pp(2*toOptimize.size());
   for (unsigned int i=0;i<toOptimize.size();i++){
     SPoint2 pt;
     reparamMeshVertexOnFace(toOptimize[i],gf,pt);

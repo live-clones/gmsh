@@ -340,7 +340,7 @@
 #include <time.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
-#include "GmshMatrix.h"
+#include "fullMatrix.h"
 #include "MallocUtils.h"
 #include "ListUtils.h"
 #include "TreeUtils.h"
@@ -403,7 +403,7 @@ void yyerror(const char *s);
 void yymsg(int level, const char *fmt, ...);
 void skip_until(const char *skip, const char *until);
 int PrintListOfDouble(char *format, List_T *list, char *buffer);
-gmshMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
+fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 
 
 /* Enabling traces.  */
@@ -8728,7 +8728,7 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer)
   return 0;
 }
 
-gmshMatrix<double> ListOfListOfDouble2Matrix(List_T *list)
+fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list)
 {
   int M = List_Nbr(list);
   int N = 0;
@@ -8736,7 +8736,7 @@ gmshMatrix<double> ListOfListOfDouble2Matrix(List_T *list)
     List_T *line = *(List_T**)List_Pointer_Fast(list, i);
     N = std::max(N, List_Nbr(line));
   }
-  gmshMatrix<double> mat(M, N);
+  fullMatrix<double> mat(M, N);
   for(int i = 0; i < M; i++){
     List_T *line = *(List_T**)List_Pointer_Fast(list, i);
     for(int j = 0; j < List_Nbr(line); j++){

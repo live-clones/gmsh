@@ -7,7 +7,6 @@
 #include <time.h>
 #include "GmshConfig.h"
 #include "GmshDefines.h"
-#include "GmshPredicates.h"
 #include "GModel.h"
 #include "GmshMessage.h"
 #include "OpenFile.h"
@@ -18,6 +17,7 @@
 #include "Generator.h"
 #include "Field.h"
 #include "Context.h"
+#include "robustPredicates.h"
 #include "meshPartition.h"
 #include "GmshDaemon.h"
 
@@ -49,7 +49,7 @@ int GmshInitialize(int argc, char **argv)
 #endif
 
   // Initialize robust predicates
-  gmsh::exactinit();
+  robustPredicates::exactinit();
 
   if(dummy) delete dummy;
   return 1;

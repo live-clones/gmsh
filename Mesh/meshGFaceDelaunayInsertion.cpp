@@ -7,7 +7,7 @@
 #include <map>
 #include <algorithm>
 #include "GmshMessage.h"
-#include "GmshPredicates.h"
+#include "robustPredicates.h"
 #include "BackgroundMesh.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "meshGFaceOptimize.h"
@@ -89,7 +89,7 @@ void circumCenterMetricXYZ(double *p1, double *p2, double *p3, SMetric3 & metric
   double p3P[2]; prosca(v2, vx, &p3P[0]); prosca(v2, vy, &p3P[1]);
   double resP[2];
 
-  gmshMatrix<double> T(3,3);
+  fullMatrix<double> T(3,3);
   for (int i = 0; i < 3; i++)T(0,i) = vx[i];
   for (int i = 0; i < 3; i++)T(1,i) = vy[i];
   for (int i = 0; i < 3; i++)T(2,i) = vz[i];
@@ -245,8 +245,8 @@ int MTri3::inCircumCircle(const double *p) const
   double fourth[3];
   fourthPoint(pa, pb, pc, fourth);
 
-  double result = gmsh::insphere(pa, pb, pc, fourth, (double*)p) * 
-    gmsh::orient3d(pa, pb, pc,fourth);  
+  double result = robustPredicates::insphere(pa, pb, pc, fourth, (double*)p) * 
+    robustPredicates::orient3d(pa, pb, pc,fourth);  
   return (result > 0) ? 1 : 0;  
 }
 
@@ -261,8 +261,8 @@ int inCircumCircle(MTriangle *base,
   double pc[2] = {Us[base->getVertex(2)->getIndex()],
                   Vs[base->getVertex(2)->getIndex()]};
 
-  double result = 
-    gmsh::incircle(pa, pb, pc, (double*)param) * gmsh::orient2d(pa, pb, pc);  
+  double result = robustPredicates::incircle(pa, pb, pc, (double*)param) * 
+    robustPredicates::orient2d(pa, pb, pc);  
   return (result > 0) ? 1 : 0;  
 }
 
@@ -761,8 +761,8 @@ void testTensor()
   t(1,0) = .2;
   t(1,1) = 2;
   t(2,2) = 3;
-  gmshMatrix<double> m(3,3);
-  gmshVector<double> v(3);
+  fullMatrix<double> m(3,3);
+  fullVector<double> v(3);
   t.eig(m,v);
   printf("%12.5E %12.5E %12.5E \n",v(0),v(1),v(2));
   printf("%12.5E %12.5E %12.5E \n",m(0,0),m(1,0),m(2,0));

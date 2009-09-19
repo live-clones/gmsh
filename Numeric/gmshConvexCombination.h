@@ -11,7 +11,7 @@
 #include "Gmsh.h"
 #include "GModel.h"
 #include "MElement.h"
-#include "GmshMatrix.h"
+#include "fullMatrix.h"
 
 class gmshConvexCombinationTerm : public gmshNodalFemTerm<double> {
  protected:
@@ -29,7 +29,7 @@ class gmshConvexCombinationTerm : public gmshNodalFemTerm<double> {
  public:
   gmshConvexCombinationTerm(GModel *gm, gmshFunction<double> *diffusivity, int iField = 0) : 
     gmshNodalFemTerm<double>(gm), _diffusivity(diffusivity), _iField(iField){}
-  virtual void elementMatrix(MElement *e, gmshMatrix<double> &m) const;
+  virtual void elementMatrix(MElement *e, fullMatrix<double> &m) const;
 };
 
 

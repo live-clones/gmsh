@@ -12,7 +12,7 @@
 #include "Gmsh.h"
 #include "GModel.h"
 #include "MElement.h"
-#include "GmshMatrix.h"
+#include "fullMatrix.h"
 #include "Numeric.h"
 
 // \nabla \cdot k \nabla U + a U 
@@ -39,7 +39,7 @@ class helmoltzTerm : public femTerm<scalar,scalar> {
                gmshFunction<scalar> *k, 
                gmshFunction<scalar> *a) : 
     femTerm<scalar,scalar>(gm), _k(k), _a(a), _iFieldR(iFieldR), _iFieldC(iFieldC){}
-  virtual void elementMatrix(MElement *e, gmshMatrix<scalar> &m) const
+  virtual void elementMatrix(MElement *e, fullMatrix<scalar> &m) const
   {
     // compute integration rule
     const int integrationOrder = (_a) ? 2 * e->getPolynomialOrder() : 

@@ -12,24 +12,24 @@
 
 #include "GmshMessage.h"
 #include "gmshLinearSystem.h"
-#include "GmshMatrix.h"
+#include "fullMatrix.h"
 #include <stdlib.h>
 #include <set>
 
 template <class scalar>
 class gmshLinearSystemFull : public gmshLinearSystem<scalar> {
  private:
-  gmshMatrix<scalar> *_a;
-  gmshVector<scalar> *_b, *_x;
+  fullMatrix<scalar> *_a;
+  fullVector<scalar> *_b, *_x;
  public :
   gmshLinearSystemFull() : _a(0), _b(0), _x(0){}
   virtual bool isAllocated() const { return _a != 0; }
   virtual void allocate(int _nbRows)
   {
     clear();
-    _a = new gmshMatrix<scalar>(_nbRows, _nbRows);
-    _b = new gmshVector<scalar>(_nbRows);
-    _x = new gmshVector<scalar>(_nbRows);
+    _a = new fullMatrix<scalar>(_nbRows, _nbRows);
+    _b = new fullVector<scalar>(_nbRows);
+    _x = new fullVector<scalar>(_nbRows);
   }
 
   virtual ~gmshLinearSystemFull()

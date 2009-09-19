@@ -8,7 +8,7 @@
 #include "gmshDistance.h"
 #include "Numeric.h"
 
-void gmshDistanceTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
+void gmshDistanceTerm::elementMatrix(MElement *e, fullMatrix<double> &m) const
 {
   int nbNodes = e->getNumVertices();
   int integrationOrder = 2 * (e->getPolynomialOrder() - 1);
@@ -58,7 +58,7 @@ void gmshDistanceTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
 }
 
 
-void gmshDistanceTerm::elementVector(MElement *e, gmshVector<double> &m) const{
+void gmshDistanceTerm::elementVector(MElement *e, fullVector<double> &m) const{
 
  int nbNodes = e->getNumVertices();
   int integrationOrder = 2 * e->getPolynomialOrder();

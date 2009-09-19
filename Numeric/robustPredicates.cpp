@@ -123,7 +123,7 @@
 #include <fpu_control.h>
 #endif /* LINUX */
 
-namespace gmsh
+namespace robustPredicates
 {
 
 /* On some machines, the exact arithmetic routines might be defeated by the  */
@@ -4176,4 +4176,4 @@ REAL insphere(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe)
   return insphereadapt(pa, pb, pc, pd, pe, permanent);
 }
 
-} // namespace gmsh
+} // namespace robustPredicates

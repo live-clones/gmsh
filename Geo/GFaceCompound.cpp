@@ -4,6 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "GmshConfig.h"
+#include "GmshDefines.h"
 #include "GFaceCompound.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -19,9 +20,8 @@
 #include "gmshLinearSystemGmm.h"
 #include "gmshLinearSystemCSR.h"
 #include "gmshLinearSystemFull.h"
-#include "FunctionSpace.h"
-#include "GmshDefines.h"
-#include "GmshPredicates.h"
+#include "functionSpace.h"
+#include "robustPredicates.h"
 #include "meshGFaceOptimize.h"
 #include "MElementCut.h"
 #include "GEntity.h"
@@ -44,7 +44,7 @@ static void computeCGKernelPolygon(std::map<MVertex*,SPoint3> &coordinates,
   // place at CG KERNEL polygon
 
   int nbPts = cavV.size();
-  gmshMatrix<double> u(100,2);
+  fullMatrix<double> u(100,2);
   int i = 0;
   for(std::vector<MVertex*>::iterator it = cavV.begin(); it != cavV.end(); it++){
     SPoint3 vsp = coordinates[*it];
@@ -205,7 +205,7 @@ bool GFaceCompound::checkOrientation() const
       double p1[2] = {v1[0],v1[1]};
       double p2[2] = {v2[0],v2[1]};
       double p3[2] = {v3[0],v3[1]};
-      a_new = gmsh::orient2d(p1, p2, p3);
+      a_new = robustPredicates::orient2d(p1, p2, p3);
       if(iter == 0) a_old=a_new;
       if(a_new*a_old < 0.){
 	oriented = false;
@@ -247,7 +247,7 @@ bool GFaceCompound::checkCavity(std::vector<MElement*> &vTri) const
     double p2[2] = {v2[0],v2[1]};
     double p3[2] = {v3[0],v3[1]};
     //printf("p1=(%g %g) p2=(%g %g) p3=(%g %g)\n",v1[0],v1[1], v2[0],v2[1], v3[0],v3[1] );
-    a_new = gmsh::orient2d(p1, p2, p3);
+    a_new = robustPredicates::orient2d(p1, p2, p3);
     if(i == 0) a_old=a_new;
     if(a_new*a_old < 0.)   badCavity = true;
     a_old = a_new;
@@ -303,7 +303,7 @@ void GFaceCompound::one2OneMap() const
 //        double p1[2] = {v1[0],v1[1]};
 //        double p2[2] = {v2[0],v2[1]};
 //        double p3[2] = {v3[0],v3[1]};
-//        double a_new = gmsh::orient2d(p1, p2, p3);
+//        double a_new = robustPredicates::orient2d(p1, p2, p3);
 //        MVertex *e1=t->getVertex(0);	MVertex *e2=t->getVertex(1);	MVertex *e3=t->getVertex(2);
 //        printf("Point(%d)={%g, %g, 0}; \n ",e1->getNum(), v1[0],v1[1] );
 //        printf("Point(%d)={%g, %g, 0}; \n ",e2->getNum(), v2[0],v2[1] );

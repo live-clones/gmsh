@@ -9,7 +9,7 @@
 #include "MTriangle.h"
 #include "MTetrahedron.h"
 #include "Numeric.h"
-#include "FunctionSpace.h"
+#include "functionSpace.h"
 #include "GmshMessage.h"
 
 double qmTriangle(const BDS_Point *p1, const BDS_Point *p2, const BDS_Point *p3, 
@@ -234,7 +234,7 @@ double qmDistorsionOfMapping (MTriangle *e)
     const double di  = mesh_functional_distorsion (e, u, v);
     dmin = (i == 0)? di : std::min(dmin, di);
   }
-  const gmshMatrix<double>& points = e->getFunctionSpace()->points;
+  const fullMatrix<double>& points = e->getFunctionSpace()->points;
 
   for (int i = 0; i < e->getNumPrimaryVertices(); i++) {
     const double u = points(i, 0);
@@ -281,7 +281,7 @@ double qmDistorsionOfMapping(MTetrahedron *e)
     dmin = (i == 0) ? di : std::min(dmin, di);
   }
   
-  const gmshMatrix<double>& points = e->getFunctionSpace()->points;
+  const fullMatrix<double>& points = e->getFunctionSpace()->points;
 
   for (int i = 0; i < e->getNumPrimaryVertices(); i++) {
     const double u = points(i, 0);

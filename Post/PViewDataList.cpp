@@ -6,7 +6,7 @@
 #include "PViewDataList.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
-#include "FunctionSpace.h"
+#include "functionSpace.h"
 #include "Numeric.h"
 #include "SmoothData.h"
 #include "Context.h"
@@ -148,7 +148,7 @@ void PViewDataList::_stat(std::vector<double> &list, int nbcomp, int nbelm,
   int nbval = nbcomp * nbnod;
 
   if(haveInterpolationMatrices()){
-    std::vector<gmshMatrix<double>*> im;
+    std::vector<fullMatrix<double>*> im;
     int nim = getInterpolationMatrices(type, im);
     if(nim == 4)
       nbnod = im[2]->size1();
@@ -201,7 +201,7 @@ void PViewDataList::_setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg,
                              std::vector<double> &list, int nblist)
 {
   if(haveInterpolationMatrices()){
-    std::vector<gmshMatrix<double>*> im;
+    std::vector<fullMatrix<double>*> im;
     if(getInterpolationMatrices(type, im) == 4)
       nbnod = im[2]->size1();
   }
@@ -529,11 +529,11 @@ bool PViewDataList::combineSpace(nameData &nd)
     }
 
     // copy interpolation marices
-    for(std::map<int, std::vector<gmshMatrix<double>*> >::iterator it = 
+    for(std::map<int, std::vector<fullMatrix<double>*> >::iterator it = 
           l->_interpolation.begin(); it != l->_interpolation.end(); it++)
       if(_interpolation[it->first].empty())
         for(unsigned int i = 0; i < it->second.size(); i++)
-          _interpolation[it->first].push_back(new gmshMatrix<double>(*it->second[i]));
+          _interpolation[it->first].push_back(new fullMatrix<double>(*it->second[i]));
 
     // merge elememts
     dVecMerge(l->SP, SP); NbSP += l->NbSP; dVecMerge(l->VP, VP); NbVP += l->NbVP;
@@ -624,11 +624,11 @@ bool PViewDataList::combineTime(nameData &nd)
   }
   NbT2 = data[0]->NbT2;
   NbT3 = data[0]->NbT3;
-  for(std::map<int, std::vector<gmshMatrix<double>*> >::iterator it = 
+  for(std::map<int, std::vector<fullMatrix<double>*> >::iterator it = 
         data[0]->_interpolation.begin(); it != data[0]->_interpolation.end(); it++)
     if(_interpolation[it->first].empty())
       for(unsigned int i = 0; i < it->second.size(); i++)
-        _interpolation[it->first].push_back(new gmshMatrix<double>(*it->second[i]));
+        _interpolation[it->first].push_back(new fullMatrix<double>(*it->second[i]));
   
   // merge values for all element types
   for(int i = 0; i < 24; i++){
@@ -784,7 +784,7 @@ void PViewDataList::setOrder2(int type)
   case TYPE_PRI: typeMSH = MSH_PRI_18; break;
   case TYPE_PYR: typeMSH = MSH_PYR_14; break;
   }
-  const gmshFunctionSpace *fs = &gmshFunctionSpaces::find(typeMSH);
+  const functionSpace *fs = &functionSpaces::find(typeMSH);
   if(!fs){
     Msg::Error("Could not find function space for element type %d", typeMSH);
     return;

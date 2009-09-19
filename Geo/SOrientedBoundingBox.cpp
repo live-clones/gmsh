@@ -11,7 +11,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include "SOrientedBoundingBox.h"
-#include "GmshMatrix.h"
+#include "fullMatrix.h"
 #include "DivideAndConquer.h"
 #include "SBoundingBox3d.h"
 
@@ -198,7 +198,7 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
 {
   int num_vertices = vertices.size();
   // First organize the data
-  gmshMatrix<double> data(3,num_vertices);
+  fullMatrix<double> data(3,num_vertices);
   int tmp = 0;
   for (int i = 0; i < num_vertices; i++) {
     bool okay = true;
@@ -220,7 +220,7 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
   num_vertices = tmp;
 
   // Compute the empirical means
-  gmshVector<double> mean(3);
+  fullVector<double> mean(3);
   for (int i = 0; i < 3; i++) {
     mean(i) = 0;
     for (int j = 0; j < num_vertices; j++) {
@@ -230,7 +230,7 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
   }
 
   // Get the deviation from the mean
-  gmshMatrix<double> B(3,num_vertices);
+  fullMatrix<double> B(3,num_vertices);
   for (int i = 0; i < 3; i++) {
     for (int j = 0; j < num_vertices; j++) {
       B(i,j) = data(i,j) - mean(i);
@@ -238,7 +238,7 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
   }
 
   // Compute the covariance matrix
-  gmshMatrix<double> covariance(3,3);
+  fullMatrix<double> covariance(3,3);
   B.mult(B.transpose(), covariance);
   covariance.scale(1./(num_vertices-1));
   /*
@@ -254,18 +254,18 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
     }
   }
 
-  gmshMatrix<double> left_eigv(3,3);
-  gmshMatrix<double> right_eigv(3,3);
-  gmshVector<double> real_eig(3);
-  gmshVector<double> img_eig(3);
+  fullMatrix<double> left_eigv(3,3);
+  fullMatrix<double> right_eigv(3,3);
+  fullVector<double> real_eig(3);
+  fullVector<double> img_eig(3);
   covariance.eig(left_eigv, real_eig, img_eig, right_eigv,true);
 
   // Now, project the data in the new basis.
-  gmshMatrix<double> projected(3,num_vertices);
+  fullMatrix<double> projected(3,num_vertices);
   left_eigv.transpose().mult(data,projected);
   // Get the size of the box in the new direction
-  gmshVector<double> mins(3);
-  gmshVector<double> maxs(3);
+  fullVector<double> mins(3);
+  fullVector<double> maxs(3);
   for (int i = 0; i < 3; i++) {
     mins(i) = DBL_MAX;
     maxs(i) = -DBL_MAX;
@@ -359,10 +359,10 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
   // Now, examinate all the directions given by the edges of the convex hull
   // to find the one that lets us build the least-area bounding rectangle for then
   // points.
-  gmshVector<double> axis(2);
+  fullVector<double> axis(2);
   axis(0) = 1;
   axis(1) = 0;
-  gmshVector<double> axis2(2);
+  fullVector<double> axis2(2);
   axis2(0) = 0;
   axis2(1) = 1;
   SOrientedBoundingRectangle least_rectangle;
@@ -373,7 +373,7 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
 
   for (std::vector<Segment>::iterator seg = convex_hull.begin(); seg != convex_hull.end(); seg++) {
 
-    gmshVector<double> segment(2);
+    fullVector<double> segment(2);
     //segment(0) = record.points[(*seg).from].where.h - record.points[(*seg).to].where.h;
     //segment(1) = record.points[(*seg).from].where.v - record.points[(*seg).to].where.v;
     segment(0) = points[(*seg).from]->x() - points[(*seg).to]->x();
@@ -384,7 +384,7 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
     double sine = axis(1)*segment(0) - segment(1)*axis(0);
     //double sine = axis(0)*segment(1) - segment(0)*axis(1);
 
-    gmshMatrix<double> rotation(2,2);
+    fullMatrix<double> rotation(2,2);
 
     rotation(0,0) = cosine; rotation(0,1) =   sine;
     rotation(1,0) =  -sine; rotation(1,1) = cosine;
@@ -395,12 +395,12 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
     double min_y = DBL_MAX;
 
     for (int i = 0; i < record.numPoints; i++) {
-      gmshVector<double> pnt(2);
+      fullVector<double> pnt(2);
       //pnt(0) = record.points[i].where.h;
       //pnt(1) = record.points[i].where.v;
       pnt(0) = points[i]->x();
       pnt(1) = points[i]->y();
-      gmshVector<double> rot_pnt(2);
+      fullVector<double> rot_pnt(2);
       rotation.mult(pnt,rot_pnt);
       if (rot_pnt(0) < min_x) min_x = rot_pnt(0);
       if (rot_pnt(0) > max_x) max_x = rot_pnt(0);
@@ -409,19 +409,19 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
     }
 
 /**/
-    gmshVector<double> center_rot(2);
-    gmshVector<double> center_before_rot(2);
+    fullVector<double> center_rot(2);
+    fullVector<double> center_before_rot(2);
     center_before_rot(0) = (max_x+min_x)/2.0;
     center_before_rot(1) = (max_y+min_y)/2.0;
-    gmshMatrix<double> rotation_inv(2,2);
+    fullMatrix<double> rotation_inv(2,2);
 
     rotation_inv(0,0) = cosine; rotation_inv(0,1) =  -sine;
     rotation_inv(1,0) =   sine; rotation_inv(1,1) = cosine;
 
     rotation_inv.mult(center_before_rot,center_rot);
 
-    gmshVector<double> axis_rot1(2);
-    gmshVector<double> axis_rot2(2);
+    fullVector<double> axis_rot1(2);
+    fullVector<double> axis_rot2(2);
 
     rotation_inv.mult(axis,axis_rot1);
     rotation_inv.mult(axis2,axis_rot2);

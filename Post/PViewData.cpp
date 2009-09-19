@@ -16,7 +16,7 @@ PViewData::PViewData()
 PViewData::~PViewData()
 {
   if(_adaptive) delete _adaptive;
-  for(std::map<int, std::vector<gmshMatrix<double>*> >::iterator it = _interpolation.begin();
+  for(std::map<int, std::vector<fullMatrix<double>*> >::iterator it = _interpolation.begin();
       it != _interpolation.end(); it++)
     for(unsigned int i = 0; i < it->second.size(); i++)
       delete it->second[i];
@@ -73,28 +73,28 @@ void PViewData::setValue(int step, int ent, int ele, int nod, int comp, double v
 }
 
 void PViewData::setInterpolationMatrices(int type, 
-                                         const gmshMatrix<double> &coefVal,
-                                         const gmshMatrix<double> &expVal)
+                                         const fullMatrix<double> &coefVal,
+                                         const fullMatrix<double> &expVal)
 {
   if(!type || _interpolation[type].size()) return;
-  _interpolation[type].push_back(new gmshMatrix<double>(coefVal));
-  _interpolation[type].push_back(new gmshMatrix<double>(expVal));
+  _interpolation[type].push_back(new fullMatrix<double>(coefVal));
+  _interpolation[type].push_back(new fullMatrix<double>(expVal));
 }
 
 void PViewData::setInterpolationMatrices(int type, 
-                                         const gmshMatrix<double> &coefVal,
-                                         const gmshMatrix<double> &expVal, 
-                                         const gmshMatrix<double> &coefGeo,
-                                         const gmshMatrix<double> &expGeo)
+                                         const fullMatrix<double> &coefVal,
+                                         const fullMatrix<double> &expVal, 
+                                         const fullMatrix<double> &coefGeo,
+                                         const fullMatrix<double> &expGeo)
 {
   if(!type || _interpolation[type].size()) return;
-  _interpolation[type].push_back(new gmshMatrix<double>(coefVal));
-  _interpolation[type].push_back(new gmshMatrix<double>(expVal));
-  _interpolation[type].push_back(new gmshMatrix<double>(coefGeo));
-  _interpolation[type].push_back(new gmshMatrix<double>(expGeo));
+  _interpolation[type].push_back(new fullMatrix<double>(coefVal));
+  _interpolation[type].push_back(new fullMatrix<double>(expVal));
+  _interpolation[type].push_back(new fullMatrix<double>(coefGeo));
+  _interpolation[type].push_back(new fullMatrix<double>(expGeo));
 }
 
-int PViewData::getInterpolationMatrices(int type, std::vector<gmshMatrix<double>*> &p)
+int PViewData::getInterpolationMatrices(int type, std::vector<fullMatrix<double>*> &p)
 {
   if(_interpolation.count(type)){
     p = _interpolation[type];

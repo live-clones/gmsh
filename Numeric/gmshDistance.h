@@ -13,7 +13,7 @@
 #include "Gmsh.h"
 #include "GModel.h"
 #include "MElement.h"
-#include "GmshMatrix.h"
+#include "fullMatrix.h"
 
 class gmshDistanceTerm : public gmshNodalFemTerm<double> {
  protected:
@@ -41,8 +41,8 @@ class gmshDistanceTerm : public gmshNodalFemTerm<double> {
     {
       _iFieldB = (iFieldB==-1) ? _iField : iFieldB;
     }
-  void elementMatrix(MElement *e, gmshMatrix<double> &m) const;
-  void elementVector(MElement *e, gmshVector<double> &m) const;
+  void elementMatrix(MElement *e, fullMatrix<double> &m) const;
+  void elementVector(MElement *e, fullVector<double> &m) const;
 
 };
 

@@ -3,11 +3,11 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _GMSH_PREDICATES_H_
-#define _GMSH_PREDICATES_H_
+#ifndef _ROBUST_PREDICATES_H_
+#define _ROBUST_PREDICATES_H_
 
 // namespace necessary to avoid conflicts with predicates used by Tetgen
-namespace gmsh{
+namespace robustPredicates{
 double exactinit();
 double incircle(double *pa, double *pb, double *pc, double *pd);
 double insphere(double *pa, double *pb, double *pc, double *pd, double *pe);

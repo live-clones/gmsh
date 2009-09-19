@@ -8,7 +8,7 @@
 #include "gmshProjection.h"
 #include "Numeric.h"
 
-void gmshProjectionTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
+void gmshProjectionTerm::elementMatrix(MElement *e, fullMatrix<double> &m) const
 {
   int nbNodes = e->getNumVertices();
   int integrationOrder = 2 * e->getPolynomialOrder();

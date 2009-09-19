@@ -50,9 +50,9 @@ static void cleanElement()
   T::allPoints.clear();
 }
 
-static void computeShapeFunctions(gmshMatrix<double> *coeffs, gmshMatrix<double> *eexps,
-                                  double u, double v, double w, gmshVector<double> *sf,
-                                  gmshVector<double> *tmp)
+static void computeShapeFunctions(fullMatrix<double> *coeffs, fullMatrix<double> *eexps,
+                                  double u, double v, double w, fullVector<double> *sf,
+                                  fullVector<double> *tmp)
 {
   for(int i = 0; i < eexps->size1(); i++) {
     (*tmp)(i) = pow(u, (*eexps)(i, 0));
@@ -830,7 +830,7 @@ void adaptivePrism::recurError(adaptivePrism *p, double AVG, double tol)
 }
 
 template <class T>
-adaptiveElements<T>::adaptiveElements(std::vector<gmshMatrix<double>*> &p)
+adaptiveElements<T>::adaptiveElements(std::vector<fullMatrix<double>*> &p)
   : _coeffsVal(0), _eexpsVal(0), _interpolVal(0),
     _coeffsGeom(0), _eexpsGeom(0), _interpolGeom(0)
 {
@@ -864,15 +864,15 @@ void adaptiveElements<T>::init(int level)
   int numNodes = _coeffsGeom ? _coeffsGeom->size1() : T::numNodes;
   
   if(_interpolVal) delete _interpolVal;
-  _interpolVal = new gmshMatrix<double>(T::allPoints.size(), numVals);
+  _interpolVal = new fullMatrix<double>(T::allPoints.size(), numVals);
   
   if(_interpolGeom) delete _interpolGeom;
-  _interpolGeom = new gmshMatrix<double>(T::allPoints.size(), numNodes);
+  _interpolGeom = new fullMatrix<double>(T::allPoints.size(), numNodes);
   
-  gmshVector<double> sfv(numVals), *tmpv = 0;
-  gmshVector<double> sfg(numNodes), *tmpg = 0;
-  if(_eexpsVal) tmpv = new gmshVector<double>(_eexpsVal->size1());
-  if(_eexpsGeom) tmpg = new gmshVector<double>(_eexpsGeom->size1());
+  fullVector<double> sfv(numVals), *tmpv = 0;
+  fullVector<double> sfg(numNodes), *tmpg = 0;
+  if(_eexpsVal) tmpv = new fullVector<double>(_eexpsVal->size1());
+  if(_eexpsGeom) tmpg = new fullVector<double>(_eexpsGeom->size1());
 
   int i = 0;
   for(std::set<adaptivePoint>::iterator it = T::allPoints.begin(); 
@@ -937,7 +937,7 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
   double t1 = GetTimeInSeconds();
 #endif
   
-  gmshVector<double> val(numVals), res(numPoints);
+  fullVector<double> val(numVals), res(numPoints);
   if(numComp == 1){
     for(int i = 0; i < numVals; i++)
       val(i) = values[i].v[0];
@@ -957,10 +957,10 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
   }
   if(onlyComputeMinMax) return;
   
-  gmshMatrix<double> *resxyz = 0;
+  fullMatrix<double> *resxyz = 0;
   if(numComp == 3){
-    gmshMatrix<double> valxyz(numVals, 3);
-    resxyz = new gmshMatrix<double>(numPoints, 3);
+    fullMatrix<double> valxyz(numVals, 3);
+    resxyz = new fullMatrix<double>(numPoints, 3);
     for(int i = 0; i < numVals; i++){
       valxyz(i, 0) = values[i].v[0];
       valxyz(i, 1) = values[i].v[1];
@@ -976,7 +976,7 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
     return;
   }
   
-  gmshMatrix<double> xyz(numNodes, 3), XYZ(numPoints, 3);
+  fullMatrix<double> xyz(numNodes, 3), XYZ(numPoints, 3);
   for(int i = 0; i < numNodes; i++){
     xyz(i, 0) = coords[i].c[0];
     xyz(i, 1) = coords[i].c[1];
@@ -1134,7 +1134,7 @@ adaptiveData::adaptiveData(PViewData *data)
     _tetrahedra(0), _hexahedra(0), _prisms(0)
 {
   _outData = new PViewDataList();
-  std::vector<gmshMatrix<double>*> p;
+  std::vector<fullMatrix<double>*> p;
   if(_inData->getNumLines()){
     _inData->getInterpolationMatrices(TYPE_LIN, p);
     _lines = new adaptiveElements<adaptiveLine>(p);

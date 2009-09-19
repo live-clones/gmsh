@@ -13,7 +13,7 @@
 #include "MQuadrangle.h"
 #include "MElementCut.h"
 #include "VertexArray.h"
-#include "GmshMatrix.h"
+#include "fullMatrix.h"
 #include "Numeric.h"
 #include "EigSolve.h"
 #include "GaussLegendre1D.h"
@@ -351,8 +351,8 @@ void GFace::computeMeanPlane(const std::vector<SPoint3> &points)
   ym /= (double)ndata;
   zm /= (double)ndata;
 
-  gmshMatrix<double> U(ndata, na), V(na, na);
-  gmshVector<double> sigma(na);
+  fullMatrix<double> U(ndata, na), V(na, na);
+  fullVector<double> sigma(na);
   for(int i = 0; i < ndata; i++) {
     U(i, 0) = points[i].x() - xm;
     U(i, 1) = points[i].y() - ym;

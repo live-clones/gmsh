@@ -13,7 +13,7 @@
 #include "Gmsh.h"
 #include "GModel.h"
 #include "MElement.h"
-#include "GmshMatrix.h"
+#include "fullMatrix.h"
 
 class gmshLaplaceTerm : public gmshNodalFemTerm<double> {
  protected:
@@ -41,7 +41,7 @@ class gmshLaplaceTerm : public gmshNodalFemTerm<double> {
     {
       _iFieldB = (iFieldB==-1) ? _iField : iFieldB;
     }
-  virtual void elementMatrix(MElement *e, gmshMatrix<double> &m) const;
+  virtual void elementMatrix(MElement *e, fullMatrix<double> &m) const;
 };
 
 

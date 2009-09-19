@@ -9,7 +9,7 @@
 #include "Numeric.h"
 
 void gmshHelmholtzTerm::elementMatrix(MElement *e, 
-                                      gmshMatrix<std::complex<double> > &m) const
+                                      fullMatrix<std::complex<double> > &m) const
 {
   int nbNodes = e->getNumVertices();
   int integrationOrder = 2 * e->getPolynomialOrder();

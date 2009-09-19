@@ -511,8 +511,8 @@ void invert_singular_matrix3x3(double MM[3][3], double II[3][3])
     }
   }
 
-  gmshMatrix<double> M(3, 3), V(3, 3);
-  gmshVector<double> W(3);
+  fullMatrix<double> M(3, 3), V(3, 3);
+  fullVector<double> W(3);
   for(i = 1; i <= n; i++){
     for(j = 1; j <= n; j++){
       M(i - 1, j - 1) = MM[i - 1][j - 1];
@@ -536,15 +536,15 @@ void invert_singular_matrix3x3(double MM[3][3], double II[3][3])
   }
 }
 
-bool newton_fd(void (*func)(gmshVector<double> &, gmshVector<double> &, void *),
-               gmshVector<double> &x, void *data, double relax, double tolx)
+bool newton_fd(void (*func)(fullVector<double> &, fullVector<double> &, void *),
+               fullVector<double> &x, void *data, double relax, double tolx)
 {
   const int MAXIT = 50;
   const double EPS = 1.e-4;
   const int N = x.size();
   
-  gmshMatrix<double> J(N, N);
-  gmshVector<double> f(N), feps(N), dx(N);
+  fullMatrix<double> J(N, N);
+  fullVector<double> f(N), feps(N), dx(N);
   
   for (int iter = 0; iter < MAXIT; iter++){
      func(x, f, data);
@@ -588,9 +588,9 @@ f(x+a*d) = f(x) + f'(x) (
 
 */
 
-void gmshLineSearch(double (*func)(gmshVector<double> &, void *), void* data, 
-                    gmshVector<double> &x, gmshVector<double> &p,  
-                    gmshVector<double> &g, double &f, 
+void gmshLineSearch(double (*func)(fullVector<double> &, void *), void* data, 
+                    fullVector<double> &x, fullVector<double> &p,  
+                    fullVector<double> &g, double &f, 
                     double stpmax, int &check)
 {
   int i;
@@ -599,7 +599,7 @@ void gmshLineSearch(double (*func)(gmshVector<double> &, void *), void* data,
   const double ALF = 1.0e-4;
   const double TOLX = 1.0e-9;
 
-  gmshVector<double> xold(x);
+  fullVector<double> xold(x);
   const double fold = (*func)(xold,data);
   
   check=0;
@@ -659,15 +659,15 @@ void gmshLineSearch(double (*func)(gmshVector<double> &, void *), void* data,
   }
 }
 
-double minimize_grad_fd (double (*func)(gmshVector<double> &, void *),
-                       gmshVector<double> &x, void *data)
+double minimize_grad_fd (double (*func)(fullVector<double> &, void *),
+                       fullVector<double> &x, void *data)
 {
   const int MAXIT = 3;
   const double EPS = 1.e-4;
   const int N = x.size();
   
-  gmshVector<double> grad(N);
-  gmshVector<double> dir(N);
+  fullVector<double> grad(N);
+  fullVector<double> dir(N);
   double f,feps,finit;
 
   for (int iter = 0; iter < MAXIT; iter++){

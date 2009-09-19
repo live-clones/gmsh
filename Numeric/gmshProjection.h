@@ -13,7 +13,7 @@
 #include "Gmsh.h"
 #include "GModel.h"
 #include "MElement.h"
-#include "GmshMatrix.h"
+#include "fullMatrix.h"
 
 class gmshProjectionTerm : public gmshNodalFemTerm<double> {
  private:
@@ -30,7 +30,7 @@ class gmshProjectionTerm : public gmshNodalFemTerm<double> {
  public:
   gmshProjectionTerm(GModel *gm, int iField = 0) : 
     gmshNodalFemTerm<double>(gm), _iField(iField){}
-  virtual void elementMatrix(MElement *e, gmshMatrix<double> &m) const;
+  virtual void elementMatrix(MElement *e, fullMatrix<double> &m) const;
 };
 
 #endif

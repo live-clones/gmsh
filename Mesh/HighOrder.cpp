@@ -20,8 +20,8 @@
 #include "OS.h"
 #include "Numeric.h"
 #include "Context.h"
-#include "GmshMatrix.h"
-#include "FunctionSpace.h"
+#include "fullMatrix.h"
+#include "functionSpace.h"
 
 #define SQU(a)      ((a)*(a))
 
@@ -46,7 +46,7 @@ static bool mappingIsInvertible(MTetrahedron *e)
     if (det0 * detN <= 0.) return false;
   }
 
-  const gmshMatrix<double> &points = e->getFunctionSpace()->points;
+  const fullMatrix<double> &points = e->getFunctionSpace()->points;
 
   for (int i = 0; i < e->getNumPrimaryVertices(); i++) {
     const double u = points(i,0);
@@ -68,7 +68,7 @@ static double mylength(GEdge *ge, int i, double *u)
   return ge->length(u[i], u[i+1], 10);
 }
 
-static void myresid(int N, GEdge *ge, double *u, gmshVector<double> &r)
+static void myresid(int N, GEdge *ge, double *u, fullVector<double> &r)
 {
   double L[100];
   for (int i = 0; i < N - 1; i++) L[i] = mylength(ge, i, u);
@@ -95,10 +95,10 @@ static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N,
 
   // create the tangent matrix
   const int M = N - 2;
-  gmshMatrix<double> J(M, M);
-  gmshVector<double> DU(M);
-  gmshVector<double> R(M);
-  gmshVector<double> Rp(M);
+  fullMatrix<double> J(M, M);
+  fullVector<double> DU(M);
+  fullVector<double> R(M);
+  fullVector<double> Rp(M);
   
   int iter = 1;
 
@@ -140,7 +140,7 @@ static double mylength(GFace *gf, int i, double *u, double *v)
   return gf->length(SPoint2(u[i], v[i]), SPoint2(u[i + 1], v[i + 1]), 10);
 }
 
-static void myresid(int N, GFace *gf, double *u, double *v, gmshVector<double> &r)
+static void myresid(int N, GFace *gf, double *u, double *v, fullVector<double> &r)
 {
   double L[100];
   for (int i = 0; i < N - 1; i++) L[i] = mylength(gf, i, u, v);  
@@ -174,10 +174,10 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
 
   // create the tangent matrix
   const int M = N - 2;
-  gmshMatrix<double> J(M, M);
-  gmshVector<double> DU(M);
-  gmshVector<double> R(M);
-  gmshVector<double> Rp(M);
+  fullMatrix<double> J(M, M);
+  fullVector<double> DU(M);
+  fullVector<double> R(M);
+  fullVector<double> Rp(M);
   
   int iter = 1;
 
@@ -409,20 +409,20 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
      gf->geomType() == GEntity::BoundaryLayerSurface)
     linear = true;
 
-  gmshMatrix<double> points;
+  fullMatrix<double> points;
   int start = 0;
 
   switch (nPts){
   case 2 :
-    points = gmshFunctionSpaces::find(MSH_TRI_10).points;
+    points = functionSpaces::find(MSH_TRI_10).points;
     start = 9;
     break;
   case 3 :
-    points = gmshFunctionSpaces::find(MSH_TRI_15).points;
+    points = functionSpaces::find(MSH_TRI_15).points;
     start = 12;
     break;
   case 4 :
-    points = gmshFunctionSpaces::find(MSH_TRI_21).points;
+    points = functionSpaces::find(MSH_TRI_21).points;
     start = 15;
     break;
   default :  
@@ -559,20 +559,20 @@ static void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &v
                             faceContainer &faceVertices, edgeContainer &edgeVertices,
                             bool linear, int nPts = 1)
 {
-  gmshMatrix<double> points;
+  fullMatrix<double> points;
   int start = 0;
   
   switch (nPts){
   case 2 :
-    points = gmshFunctionSpaces::find(MSH_TRI_10).points;
+    points = functionSpaces::find(MSH_TRI_10).points;
     start = 9;
     break;
   case 3 :
-    points = gmshFunctionSpaces::find(MSH_TRI_15).points;
+    points = functionSpaces::find(MSH_TRI_15).points;
     start = 12;
     break;
   case 4 :
-    points = gmshFunctionSpaces::find(MSH_TRI_21).points;
+    points = functionSpaces::find(MSH_TRI_21).points;
     start = 15;
     break;
   default :  
@@ -652,16 +652,16 @@ static void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &v
 static void getRegionVertices(GRegion *gr, MElement *incomplete, MElement *ele, 
                               std::vector<MVertex*> &vr, bool linear, int nPts = 1)
 {
-  gmshMatrix<double> points;
+  fullMatrix<double> points;
   int start = 0;
 
   switch (nPts){
   case 3 :
-    points = gmshFunctionSpaces::find(MSH_TET_35).points;
+    points = functionSpaces::find(MSH_TET_35).points;
     start = 34;
     break;
   case 4 :
-    points = gmshFunctionSpaces::find(MSH_TET_56).points;
+    points = functionSpaces::find(MSH_TET_56).points;
     start = 52;
     break;
   default :  

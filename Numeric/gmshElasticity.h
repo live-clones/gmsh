@@ -12,7 +12,7 @@
 #include "Gmsh.h"
 #include "GModel.h"
 #include "MElement.h"
-#include "GmshMatrix.h"
+#include "fullMatrix.h"
 
 class gmshElasticityTerm : public gmshNodalFemTerm<double> {
  protected:
@@ -33,8 +33,8 @@ class gmshElasticityTerm : public gmshNodalFemTerm<double> {
  gmshElasticityTerm(GModel *gm, double E, double nu, int iField = 1) : 
   gmshNodalFemTerm<double>(gm), _E(E), _nu(nu), _iField(iField){}
   void setVector(const SVector3 &f) {_f = f;}
-  void elementMatrix(MElement *e, gmshMatrix<double> &m) const;
-  void elementVector(MElement *e, gmshVector<double> &m) const;
+  void elementMatrix(MElement *e, fullMatrix<double> &m) const;
+  void elementVector(MElement *e, fullVector<double> &m) const;
 };
 
 #endif

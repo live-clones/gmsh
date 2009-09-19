@@ -10,7 +10,7 @@
 #include <vector>
 #include <map>
 #include "SBoundingBox3d.h"
-#include "GmshMatrix.h"
+#include "fullMatrix.h"
 
 #define VAL_INF 1.e200
 
@@ -34,7 +34,7 @@ class PViewData {
   // adaptive visualization data
   adaptiveData *_adaptive;
   // interpolation matrices, indexed by the type of element
-  std::map<int, std::vector<gmshMatrix<double>*> > _interpolation;
+  std::map<int, std::vector<fullMatrix<double>*> > _interpolation;
 
  public:
   PViewData();
@@ -180,14 +180,14 @@ class PViewData {
 
   // set/get the interpolation matrices for elements with type "type"
   void setInterpolationMatrices(int type, 
-                                const gmshMatrix<double> &coefVal,
-                                const gmshMatrix<double> &expVal);
+                                const fullMatrix<double> &coefVal,
+                                const fullMatrix<double> &expVal);
   void setInterpolationMatrices(int type, 
-                                const gmshMatrix<double> &coefVal,
-                                const gmshMatrix<double> &expVal,
-                                const gmshMatrix<double> &coefGeo, 
-                                const gmshMatrix<double> &expGeo);
-  int getInterpolationMatrices(int type, std::vector<gmshMatrix<double>*> &p);
+                                const fullMatrix<double> &coefVal,
+                                const fullMatrix<double> &expVal,
+                                const fullMatrix<double> &coefGeo, 
+                                const fullMatrix<double> &expGeo);
+  int getInterpolationMatrices(int type, std::vector<fullMatrix<double>*> &p);
   inline bool haveInterpolationMatrices(){ return !_interpolation.empty(); }
 
   // smooth the data in the view (makes it C0)

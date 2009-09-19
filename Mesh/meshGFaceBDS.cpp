@@ -5,7 +5,7 @@
 
 #include <stdlib.h>
 #include "GmshMessage.h"
-#include "GmshPredicates.h"
+#include "robustPredicates.h"
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
 #include "BackgroundMesh.h"
@@ -319,8 +319,8 @@ bool edgeSwapTestDelaunay(BDS_Edge *e, GFace *gf)
   double op2x[3] = {op[1]->X, op[1]->Y, op[1]->Z};
   double fourth[3];
   fourthPoint(p1x, p2x, op1x, fourth);
-  double result = gmsh::insphere(p1x, p2x, op1x, fourth, op2x) * 
-    gmsh::orient3d(p1x, p2x, op1x, fourth);  
+  double result = robustPredicates::insphere(p1x, p2x, op1x, fourth, op2x) * 
+    robustPredicates::orient3d(p1x, p2x, op1x, fourth);  
   return result > 0.;
 }
 

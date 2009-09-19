@@ -9,7 +9,7 @@
 #include <map>
 #include <vector>
 #include "SVector3.h"
-#include "GmshMatrix.h"
+#include "fullMatrix.h"
 #include "dofManager.h"
 #include "elasticityTerm.h"
 
@@ -56,9 +56,9 @@ public:
                 faceContainer &faceVertices);
   void computeMetricVector(GFace *gf, 
                            MElement *e, 
-                           gmshMatrix<double> &J,
-                           gmshMatrix<double> &JT,
-                           gmshVector<double> &D);
+                           fullMatrix<double> &J,
+                           fullMatrix<double> &JT,
+                           fullVector<double> &D);
   void moveToStraightSidedLocation(MVertex *) const;
   void moveToTargetLocation(MVertex *) const;
   void moveToStraightSidedLocation(MElement *) const;

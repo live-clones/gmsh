@@ -10,7 +10,7 @@
 #include "Gmsh.h"
 #include "GModel.h"
 #include "MElement.h"
-#include "GmshMatrix.h"
+#include "fullMatrix.h"
 
 class elasticityTerm : public femTerm<double,double> {
  protected:
@@ -34,8 +34,8 @@ class elasticityTerm : public femTerm<double,double> {
   elasticityTerm(GModel *gm, double E, double nu, int iField) : 
     femTerm<double,double>(gm), _E(E), _nu(nu), _iField(iField){}
   void setVector(const SVector3 &f) {_volumeForce = f;}
-  void elementMatrix(MElement *e, gmshMatrix<double> &m) const;
-  void elementVector(MElement *e, gmshVector<double> &m) const;
+  void elementMatrix(MElement *e, fullMatrix<double> &m) const;
+  void elementVector(MElement *e, fullVector<double> &m) const;
 };
 
 #endif

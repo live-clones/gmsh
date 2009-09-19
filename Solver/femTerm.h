@@ -9,7 +9,7 @@
 #include <math.h>
 #include <map>
 #include <vector>
-#include "GmshMatrix.h"
+#include "fullMatrix.h"
 #include "gmshFunction.h"
 #include "dofManager.h"
 #include "GModel.h"
@@ -37,8 +37,8 @@ class femTerm {
  public:
   femTerm(GModel *gm) : _gm(gm) {}
   virtual ~femTerm (){}
-  virtual void elementMatrix(MElement *e, gmshMatrix<dataMat> &m) const = 0;
-  virtual void elementVector(MElement *e, gmshVector<dataVec> &m) const 
+  virtual void elementMatrix(MElement *e, fullMatrix<dataMat> &m) const = 0;
+  virtual void elementVector(MElement *e, fullVector<dataVec> &m) const 
   {
     m.scale(0.0);
   }
@@ -53,12 +53,12 @@ class femTerm {
   {
     const int nbR = sizeOfR(e);
     const int nbC = sizeOfC(e);
-    gmshMatrix<dataMat> localMatrix(nbR, nbC);
+    fullMatrix<dataMat> localMatrix(nbR, nbC);
     elementMatrix(e, localMatrix);
     addToMatrix(dm, localMatrix, e);
   }
   void addToMatrix(dofManager<dataVec,dataMat> &dm, 
-                   gmshMatrix<dataMat> &localMatrix, 
+                   fullMatrix<dataMat> &localMatrix, 
                    MElement *e) const
   {
     const int nbR = localMatrix.size1();
@@ -122,7 +122,7 @@ class femTerm {
     for(unsigned int i = 0; i < ge->getNumMeshElements(); i++){
       MElement *e = ge->getMeshElement (i);
       int nbR = sizeOfR(e);
-      gmshVector<dataVec> V (nbR);
+      fullVector<dataVec> V (nbR);
       elementVector (e, V);
       // assembly
       for (int j=0;j<nbR;j++)dm.assemble(getLocalDofR(e,j),V(j));

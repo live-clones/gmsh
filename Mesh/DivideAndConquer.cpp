@@ -16,9 +16,9 @@
 // value to avoid 3 aligned points or 4 cocyclical points!
 
 #include "GmshMessage.h"
-#include "GmshPredicates.h"
-#include "Numeric.h"
 #include "DivideAndConquer.h"
+#include "Numeric.h"
+#include "robustPredicates.h"
 #include "MallocUtils.h"
 
 #define Pred(x) ((x)->prev)
@@ -85,7 +85,7 @@ int DocRecord::IsLeftOf(PointNumero x, PointNumero y, PointNumero check)
   double pc[2] = {(double)points[check].where.h, (double)points[check].where.v};
 
   // we use robust predicates here
-  double result = gmsh::orient2d(pa, pb, pc);
+  double result = robustPredicates::orient2d(pa, pb, pc);
 
   return result > 0;
 }
@@ -168,7 +168,8 @@ int DocRecord::Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k)
   double pd[2] = {(double)points[k].where.h, (double)points[k].where.v};
 
   // we use robust predicates here  
-  double result = gmsh::incircle(pa, pb, pc, pd) * gmsh::orient2d(pa, pb, pc);
+  double result = robustPredicates::incircle(pa, pb, pc, pd) * 
+    robustPredicates::orient2d(pa, pb, pc);
   
   return (result < 0) ? 1 : 0;
 }

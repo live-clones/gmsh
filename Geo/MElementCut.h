@@ -103,7 +103,7 @@ class MPolyhedron : public MElement {
     return vol;
   }
   virtual int getVolumeSign() { return (getVolume() >= 0) ? 1 : -1; }
-  virtual const gmshFunctionSpace* getFunctionSpace(int order=-1) const 
+  virtual const functionSpace* getFunctionSpace(int order=-1) const 
   {
     return _orig->getFunctionSpace(order);
   }
@@ -207,7 +207,7 @@ class MPolygon : public MElement {
   }
   virtual int getType() const { return TYPE_POLYG; }
   virtual int getTypeForMSH() const { return MSH_POLYG_; }
-  virtual const gmshFunctionSpace* getFunctionSpace(int order=-1) const 
+  virtual const functionSpace* getFunctionSpace(int order=-1) const 
   {
     return _orig->getFunctionSpace(order);
   }
@@ -255,7 +255,7 @@ class MTriangleBorder : public MTriangle {
     if(_domains[1]) return _domains[1]->getParent();
     return NULL;
   }
-  virtual const gmshFunctionSpace* getFunctionSpace(int order=-1) const 
+  virtual const functionSpace* getFunctionSpace(int order=-1) const 
   {
     return getParent()->getFunctionSpace(order);
   }
@@ -295,7 +295,7 @@ class MLineBorder : public MLine {
     if(_domains[1]) return _domains[1]->getParent();
     return NULL;
   }
-  virtual const gmshFunctionSpace* getFunctionSpace(int order=-1) const 
+  virtual const functionSpace* getFunctionSpace(int order=-1) const 
   {
     return getParent()->getFunctionSpace(order);
   }

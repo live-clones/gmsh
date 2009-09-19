@@ -129,7 +129,7 @@ class MTetrahedron : public MElement {
   virtual double distoShapeMeasure();
   virtual double etaShapeMeasure();
   void xyz2uvw(double xyz[3], double uvw[3]);
-  virtual const gmshFunctionSpace* getFunctionSpace(int o=-1) const;
+  virtual const functionSpace* getFunctionSpace(int o=-1) const;
   virtual bool isInside(double u, double v, double w)
   {
     double tol = _isInsideTolerance;

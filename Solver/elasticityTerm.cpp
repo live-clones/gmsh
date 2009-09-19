@@ -6,7 +6,7 @@
 #include "elasticityTerm.h"
 #include "Numeric.h"
 
-void elasticityTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
+void elasticityTerm::elementMatrix(MElement *e, fullMatrix<double> &m) const
 {
   int nbNodes = e->getNumVertices();
   int integrationOrder = 3 * (e->getPolynomialOrder() - 1) ;
@@ -31,10 +31,10 @@ void elasticityTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
       {  0,   0,   0,    0, C44,   0}, 
       {  0,   0,   0,    0,   0, C44} };
   
-  gmshMatrix<double> H(6, 6);
-  gmshMatrix<double> B(6, 3 * nbNodes);
-  gmshMatrix<double> BTH(3 * nbNodes, 6);
-  gmshMatrix<double> BT(3 * nbNodes, 6);
+  fullMatrix<double> H(6, 6);
+  fullMatrix<double> B(6, 3 * nbNodes);
+  fullMatrix<double> BTH(3 * nbNodes, 6);
+  fullMatrix<double> BT(3 * nbNodes, 6);
   for (int i = 0; i < 6; i++)
     for (int j = 0; j < 6; j++)
       H(i, j) = C[i][j];
@@ -75,7 +75,7 @@ void elasticityTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
   } 
 }
 
-void elasticityTerm::elementVector(MElement *e, gmshVector<double> &m) const
+void elasticityTerm::elementVector(MElement *e, fullVector<double> &m) const
 {
   int nbNodes = e->getNumVertices();
   int integrationOrder = 2 * e->getPolynomialOrder();

@@ -6,7 +6,7 @@
 #include <math.h>
 #include <stdio.h>
 #include "GmshMessage.h"
-#include "GmshPredicates.h"
+#include "robustPredicates.h"
 #include "Numeric.h"
 #include "BDS.h"
 #include "GFace.h"
@@ -210,10 +210,10 @@ int Intersect_Edges_2d(double x1, double y1, double x2, double y2,
 //   double q1[2] = {x3,y3};
 //   double q2[2] = {x4,y4};
   
-//   double rp1 = gmsh::orient2d(p1, p2, q1);
-//   double rp2 = gmsh::orient2d(p1, p2, q2);
-//   double rq1 = gmsh::orient2d(q1, q2, p1);
-//   double rq2 = gmsh::orient2d(q1, q2, p2);
+//   double rp1 = robustPredicates::orient2d(p1, p2, q1);
+//   double rp2 = robustPredicates::orient2d(p1, p2, q2);
+//   double rq1 = robustPredicates::orient2d(q1, q2, p1);
+//   double rq2 = robustPredicates::orient2d(q1, q2, p2);
 
 //   if(rp1*rp2<=0 && rq1*rq2<=0){
 // //      printf("p1 %22.15E %22.15E %22.15E %22.15E \n",x1,y1,x2,y2);
@@ -731,8 +731,8 @@ bool BDS_SwapEdgeTestQuality::operator () (BDS_Point *_p1, BDS_Point *_p2,
     double op1[2] = {_q1->u,_q1->v};
     double op2[2] = {_q2->u,_q2->v};
     
-    double ori_t1 = gmsh::orient2d(op1, p1, op2);
-    double ori_t2 = gmsh::orient2d(op1, op2, p2);
+    double ori_t1 = robustPredicates::orient2d(op1, p1, op2);
+    double ori_t2 = robustPredicates::orient2d(op1, op2, p2);
     
     // printf("%d %d %d %d %g %g\n",_p1->iD,_p2->iD,_q1->iD,_q2->iD,ori_t1,ori_t2);
     return (ori_t1 * ori_t2 > 0); // the quadrangle was strictly convex !
@@ -978,8 +978,8 @@ static bool test_move_point_parametric_quad(BDS_Point *p, double u, double v, BD
   double pc[2] = {pts[2]->u, pts[2]->v};
   double pd[2] = {pts[3]->u, pts[3]->v};
 
-  double ori_init1 = gmsh::orient2d(pa, pb, pc);
-  double ori_init2 = gmsh::orient2d(pc, pd, pa);
+  double ori_init1 = robustPredicates::orient2d(pa, pb, pc);
+  double ori_init2 = robustPredicates::orient2d(pc, pd, pa);
 
   if(p == pts[0]){ 
     pa[0] = u; 
@@ -1002,8 +1002,8 @@ static bool test_move_point_parametric_quad(BDS_Point *p, double u, double v, BD
     return false;
   }
   
-  double ori_final1 = gmsh::orient2d(pa, pb, pc);
-  double ori_final2 = gmsh::orient2d(pc, pd, pa);
+  double ori_final1 = robustPredicates::orient2d(pa, pb, pc);
+  double ori_final2 = robustPredicates::orient2d(pc, pd, pa);
   // allow to move a point when a triangle was flat
   return (ori_init1 * ori_final1 > 0) && (ori_init2 * ori_final2 > 0);
 }
@@ -1026,7 +1026,7 @@ static bool test_move_point_parametric_triangle(BDS_Point *p, double u, double v
 
   if(area_init == 0.0) return true;
 
-  double ori_init = gmsh::orient2d(pa, pb, pc);
+  double ori_init = robustPredicates::orient2d(pa, pb, pc);
 
   if(p == pts[0]){ 
     pa[0] = u; 
@@ -1048,7 +1048,7 @@ static bool test_move_point_parametric_triangle(BDS_Point *p, double u, double v
   
   double area_final = fabs(a[0] * b[1] - a[1] * b[0]);
   if(area_final < 0.1 * area_init) return false;
-  double ori_final = gmsh::orient2d(pa, pb, pc);
+  double ori_final = robustPredicates::orient2d(pa, pb, pc);
   // allow to move a point when a triangle was flat
   return ori_init * ori_final > 0;
 }

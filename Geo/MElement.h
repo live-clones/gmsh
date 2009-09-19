@@ -10,11 +10,11 @@
 #include <algorithm>
 #include <string>
 #include "GmshDefines.h"
+#include "GmshMessage.h"
 #include "MVertex.h"
 #include "MEdge.h"
 #include "MFace.h"
-#include "GmshMessage.h"
-#include "FunctionSpace.h"
+#include "functionSpace.h"
 #include "Gauss.h"
 
 class GFace;
@@ -167,7 +167,7 @@ class MElement
   virtual std::string getInfoString();
 
   // get the function space for the element
-  virtual const gmshFunctionSpace* getFunctionSpace(int order=-1) const { return 0; }
+  virtual const functionSpace* getFunctionSpace(int order=-1) const { return 0; }
   
   // return the interpolating nodal shape functions evaluated at point
   // (u,v,w) in parametric coordinates (if order == -1, use the

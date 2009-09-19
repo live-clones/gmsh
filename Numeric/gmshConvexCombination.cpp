@@ -8,7 +8,7 @@
 #include "gmshConvexCombination.h"
 #include "Numeric.h"
 
-void gmshConvexCombinationTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
+void gmshConvexCombinationTerm::elementMatrix(MElement *e, fullMatrix<double> &m) const
 {
   m.set_all(0.);
   int nbNodes = e->getNumVertices();

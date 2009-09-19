@@ -11,7 +11,7 @@
 #include <math.h>
 #include <map>
 #include <vector>
-#include "GmshMatrix.h"
+#include "fullMatrix.h"
 #include "gmshFunction.h"
 #include "gmshAssembler.h"
 #include "GModel.h"
@@ -48,8 +48,8 @@ class gmshNodalFemTerm : public gmshTermOfFormulation<scalar> {
  public:
   gmshNodalFemTerm(GModel *gm) : gmshTermOfFormulation<scalar>(gm) {}
   virtual ~gmshNodalFemTerm (){}
-  virtual void elementMatrix(MElement *e, gmshMatrix<scalar> &m) const = 0;
-  virtual void elementVector(MElement *e, gmshVector<scalar> &m) const {
+  virtual void elementMatrix(MElement *e, fullMatrix<scalar> &m) const = 0;
+  virtual void elementVector(MElement *e, fullVector<scalar> &m) const {
     m.scale(0.0);
   }
   void addToMatrix(gmshAssembler<scalar> &lsys) const
@@ -77,7 +77,7 @@ class gmshNodalFemTerm : public gmshTermOfFormulation<scalar> {
   {
     const int nbR = sizeOfR(e);
     const int nbC = sizeOfC(e);
-    gmshMatrix<scalar> localMatrix(nbR, nbC);
+    fullMatrix<scalar> localMatrix(nbR, nbC);
     elementMatrix(e, localMatrix);
     addToMatrix(lsys, localMatrix, e);
   }
@@ -86,7 +86,7 @@ class gmshNodalFemTerm : public gmshTermOfFormulation<scalar> {
     for (unsigned int i = 0; i < v.size(); i++)
       addToMatrix(lsys, v[i]);
   }
-  void addToMatrix(gmshAssembler<scalar> &lsys, gmshMatrix<scalar> &localMatrix, 
+  void addToMatrix(gmshAssembler<scalar> &lsys, fullMatrix<scalar> &localMatrix, 
                    MElement *e) const
   {
     const int nbR = sizeOfR(e);
@@ -173,7 +173,7 @@ class gmshNodalFemTerm : public gmshTermOfFormulation<scalar> {
     for(unsigned int i = 0; i < ge->getNumMeshElements(); i++){
       MElement *e = ge->getMeshElement (i);
       int nbR = sizeOfR(e);
-      gmshVector<scalar> V (nbR);
+      fullVector<scalar> V (nbR);
       elementVector (e, V);
       // assembly
       for (int j=0;j<nbR;j++){

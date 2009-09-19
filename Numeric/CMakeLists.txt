@@ -5,26 +5,26 @@
 
 set(SRC
   Numeric.cpp
-    GmshMatrix.cpp
-    gmshLaplace.cpp
-  gmshCrossConf.cpp
-  gmshDistance.cpp
-    gmshConvexCombination.cpp
-      gmshHelmholtz.cpp
-      gmshElasticity.cpp
-      gmshProjection.cpp
-      gmshLinearSystemCSR.cpp
+    fullMatrix.cpp
     EigSolve.cpp
-    FunctionSpace.cpp
-    GaussQuadratureLin.cpp
-      GaussQuadratureTri.cpp
-      GaussQuadratureQuad.cpp
-      GaussQuadratureTet.cpp
-      GaussQuadratureHex.cpp
-      GaussLegendreSimplex.cpp
-    GmshPredicates.cpp
+    functionSpace.cpp
+  GaussQuadratureLin.cpp
+    GaussQuadratureTri.cpp
+    GaussQuadratureQuad.cpp
+    GaussQuadratureTet.cpp
+    GaussQuadratureHex.cpp
+    GaussLegendreSimplex.cpp
+  robustPredicates.cpp
   mathEvaluator.cpp
   Iso.cpp
+  gmshLaplace.cpp
+    gmshCrossConf.cpp
+    gmshDistance.cpp
+    gmshConvexCombination.cpp
+    gmshHelmholtz.cpp
+    gmshElasticity.cpp
+    gmshProjection.cpp
+    gmshLinearSystemCSR.cpp
 )
 
 append_gmsh_src(Numeric "${SRC}")

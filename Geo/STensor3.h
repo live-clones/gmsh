@@ -7,7 +7,7 @@
 #define _STENSOR3_H_
 
 #include "SVector3.h"
-#include "GmshMatrix.h"
+#include "fullMatrix.h"
 #include "Numeric.h"
 
 // concrete class for symmetric positive definite 3x3 matrix
@@ -21,14 +21,14 @@ class SMetric3 {
     static int _index[3][3] = {{0,1,3},{1,2,4},{3,4,5}};
     return _index[i][j];
   }
-  void getMat (gmshMatrix<double> & mat) const{
+  void getMat (fullMatrix<double> & mat) const{
     for (int i=0;i<3;i++){
       for (int j=0;j<3;j++){
         mat(i,j) = _val[getIndex(i,j)];                      
       }
     }
   }
-  void setMat (const gmshMatrix<double> & mat){
+  void setMat (const fullMatrix<double> & mat){
     for (int i=0;i<3;i++)
       for (int j=i;j<3;j++)
         _val[getIndex(i,j)] = mat(i,j);                      
@@ -71,13 +71,13 @@ class SMetric3 {
       // where the elements of diag are l_i = h_i^-2
       // and the rows of e are the UNIT and ORTHOGONAL directions
 
-      gmshMatrix<double> e(3,3);
+      fullMatrix<double> e(3,3);
       e(0,0) = t1(0); e(0,1) = t1(1); e(0,2) = t1(2);
       e(1,0) = t2(0); e(1,1) = t2(1); e(1,2) = t2(2);
       e(2,0) = t3(0); e(2,1) = t3(1); e(2,2) = t3(2);
       e.invertInPlace();
     
-      gmshMatrix<double> tmp(3,3);
+      fullMatrix<double> tmp(3,3);
       tmp(0,0) = l1 * e(0,0);
       tmp(0,1) = l2 * e(0,1);
       tmp(0,2) = l3 * e(0,2);
@@ -104,7 +104,7 @@ class SMetric3 {
     return _val[getIndex(i,j)];
   }  
   SMetric3 invert () const {
-    gmshMatrix<double> m(3,3);
+    fullMatrix<double> m(3,3);
     getMat(m);
     m.invertInPlace();
     SMetric3 ithis;
@@ -125,26 +125,26 @@ class SMetric3 {
     return *this;
   }
   SMetric3& operator *= (const SMetric3 &other) {
-    gmshMatrix<double> m1(3,3),m2(3,3),m3(3,3);
+    fullMatrix<double> m1(3,3),m2(3,3),m3(3,3);
     getMat(m1);
     other.getMat(m2);
     m1.mult(m2,m3);
     setMat(m3);
     return *this;
   }
-  SMetric3 transform (gmshMatrix<double> &V){
-    gmshMatrix<double> m(3,3);
+  SMetric3 transform (fullMatrix<double> &V){
+    fullMatrix<double> m(3,3);
     getMat(m);
-    gmshMatrix<double> result(3,3),temp(3,3);
+    fullMatrix<double> result(3,3),temp(3,3);
     V.transpose().mult(m,temp);
     temp.mult(V,result);
     SMetric3 a; a.setMat(result);
     return a;    
   }
   // s: true if eigenvalues are sorted (from min to max of the REAL part)
-  void eig (gmshMatrix<double> &V, gmshVector<double> &S, bool s=false) const {
-    gmshMatrix<double> me(3,3),right(3,3);
-    gmshVector<double> im(3);
+  void eig (fullMatrix<double> &V, fullVector<double> &S, bool s=false) const {
+    fullMatrix<double> me(3,3),right(3,3);
+    fullVector<double> im(3);
     getMat(me);
     me.eig(V,S,im,right,s);
   }

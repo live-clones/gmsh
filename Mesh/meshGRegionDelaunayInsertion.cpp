@@ -7,7 +7,7 @@
 #include <map>
 #include <algorithm>
 #include "GmshMessage.h"
-#include "GmshPredicates.h"
+#include "robustPredicates.h"
 #include "OS.h"
 #include "BackgroundMesh.h"
 #include "meshGRegion.h"
@@ -32,8 +32,8 @@ int MTet4::inCircumSphere(const double *p) const
   double pd[3] = {base->getVertex(3)->x(),
                   base->getVertex(3)->y(),
                   base->getVertex(3)->z()};
-  double result = 
-    gmsh::insphere(pa, pb, pc, pd, (double*)p) * gmsh::orient3d(pa, pb, pc, pd);
+  double result = robustPredicates::insphere(pa, pb, pc, pd, (double*)p) * 
+    robustPredicates::orient3d(pa, pb, pc, pd);
   return (result > 0) ? 1 : 0;
 }
 

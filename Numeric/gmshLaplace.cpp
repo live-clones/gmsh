@@ -8,7 +8,7 @@
 #include "gmshLaplace.h"
 #include "Numeric.h"
 
-void gmshLaplaceTerm::elementMatrix(MElement *e, gmshMatrix<double> &m) const
+void gmshLaplaceTerm::elementMatrix(MElement *e, fullMatrix<double> &m) const
 {
   int nbNodes = e->getNumVertices();
   int integrationOrder = 2 * (e->getPolynomialOrder() - 1);

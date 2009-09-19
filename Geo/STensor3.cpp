@@ -12,8 +12,8 @@ void SMetric3::print (const char *s) const
 SMetric3 intersection (const SMetric3 &m1, const SMetric3 &m2)
 {
   SMetric3 im1 = m1.invert();
-  gmshMatrix<double> V(3,3);
-  gmshVector<double> S(3);
+  fullMatrix<double> V(3,3);
+  fullVector<double> S(3);
   im1 *= m2;
   im1.eig(V,S,true);
   SVector3 v0(V(0,0),V(1,0),V(2,0));

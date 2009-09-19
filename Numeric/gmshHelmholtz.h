@@ -14,7 +14,7 @@
 #include "Gmsh.h"
 #include "GModel.h"
 #include "MElement.h"
-#include "GmshMatrix.h"
+#include "fullMatrix.h"
 
 class gmshHelmholtzTerm : public gmshNodalFemTerm<std::complex<double> > {
  private:
@@ -33,7 +33,7 @@ class gmshHelmholtzTerm : public gmshNodalFemTerm<std::complex<double> > {
   gmshHelmholtzTerm(GModel *gm, gmshFunction<std::complex<double> > *waveNumber, 
                     int iField = 0) 
   : gmshNodalFemTerm<std::complex<double> >(gm), _waveNumber(waveNumber), _iField(iField){}
-  virtual void elementMatrix(MElement *e, gmshMatrix<std::complex<double> > &m) const;
+  virtual void elementMatrix(MElement *e, fullMatrix<std::complex<double> > &m) const;
 };
 
 #endif

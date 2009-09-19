@@ -26,7 +26,7 @@ class GMSH_CutPlanePlugin : public GMSH_LevelsetPlugin
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  
   PView *execute(PView *);
-  virtual bool geometricalFilter(gmshMatrix<double> *) const;
+  virtual bool geometricalFilter(fullMatrix<double> *) const;
 
   static double callbackA(int, int, double);
   static double callbackB(int, int, double);
