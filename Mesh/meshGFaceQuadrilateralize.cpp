@@ -13,7 +13,7 @@
 #include "BDS.h"
 #include "SVector3.h"
 
-class gmshEdgeFront {
+class edgeFront {
  public:
   typedef std::set<BDS_Edge *>::const_iterator eiter;
  private:
@@ -26,7 +26,7 @@ class gmshEdgeFront {
   std::set<BDS_Edge*> stat[5];
   eiter begin() { return edges.begin(); }
   eiter end() { return edges.end(); }
-  gmshEdgeFront(BDS_Mesh *_m, GFace *_gf) : m(_m), gf(_gf) {}
+  edgeFront(BDS_Mesh *_m, GFace *_gf) : m(_m), gf(_gf) {}
   // initiate edges in the front i.e.
   // take all edges that have one neighbor 
   // and all edges that have a quad and a triangle 
@@ -74,7 +74,7 @@ class gmshEdgeFront {
   BDS_Edge *findOptimalEdge(BDS_Point *p, BDS_Point *avoid);
 };
 
-void gmshEdgeFront::updateStatus(BDS_Edge *e)
+void edgeFront::updateStatus(BDS_Edge *e)
 {
   for(int i = 0; i < 5; i++){
     std::set<BDS_Edge*>::iterator it = stat[i].find(e);
@@ -114,8 +114,8 @@ void recur_empty_cavity(BDS_Face *f,
   }
 }
 
-void gmshEdgeFront::emptyCavity(BDS_Edge *bottom, BDS_Edge *top, BDS_Edge *left, 
-                                BDS_Edge *right)
+void edgeFront::emptyCavity(BDS_Edge *bottom, BDS_Edge *top, BDS_Edge *left, 
+                            BDS_Edge *right)
 {
   // not optimal for now, will be improved further away
   BDS_Face *f = 0;
@@ -140,7 +140,7 @@ void gmshEdgeFront::emptyCavity(BDS_Edge *bottom, BDS_Edge *top, BDS_Edge *left,
 }
 
 
-SVector3 gmshEdgeFront::normal(BDS_Edge*e) const
+SVector3 edgeFront::normal(BDS_Edge*e) const
 {
   BDS_Face *t = e->faces(0);
   if(e->numfaces() == 2 && e->faces(1)->numEdges() == 3)t=e->faces(1);
@@ -180,7 +180,7 @@ SVector3 gmshEdgeFront::normal(BDS_Edge*e) const
   return n;
 }
 
-void gmshEdgeFront::getFrontEdges(BDS_Point *p, std::vector<eiter> & fe) const
+void edgeFront::getFrontEdges(BDS_Point *p, std::vector<eiter> & fe) const
 {
   for(std::list<BDS_Edge*>::iterator itp = p->edges.begin(); 
       itp != p->edges.end(); ++ itp){
@@ -190,7 +190,7 @@ void gmshEdgeFront::getFrontEdges(BDS_Point *p, std::vector<eiter> & fe) const
   }
 }
 
-void gmshEdgeFront::getFrontEdges(BDS_Point *p, eiter & it1, eiter & it2) const
+void edgeFront::getFrontEdges(BDS_Point *p, eiter & it1, eiter & it2) const
 {
   int count = 0;
   for(std::list<BDS_Edge*>::iterator itp = p->edges.begin(); 
@@ -207,7 +207,7 @@ void gmshEdgeFront::getFrontEdges(BDS_Point *p, eiter & it1, eiter & it2) const
   Msg::Error("point %d is in the front but has only %d edges\n",p->iD,count);
 }
 
-void gmshEdgeFront::initiate()
+void edgeFront::initiate()
 {
   edges.clear();
   for(int i = 0; i < 5; i++) stat[i].clear();
@@ -236,7 +236,7 @@ double angle3Points(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3)
   return atan2(sinA, cosA);
 }
 
-int gmshEdgeFront::computeStatus(BDS_Edge *e) const
+int edgeFront::computeStatus(BDS_Edge *e) const
 {
   eiter it11, it12, it21,it22;
   getFrontEdges(e->p1, it11, it12);  
@@ -264,7 +264,7 @@ int gmshEdgeFront::computeStatus(BDS_Edge *e) const
   return 3;
 }
 
-bool gmshEdgeFront::formQuad(BDS_Edge *e, BDS_Edge *left, BDS_Edge *right)
+bool edgeFront::formQuad(BDS_Edge *e, BDS_Edge *left, BDS_Edge *right)
 {
 
   printf("e (%d,%d), l(%d,%d), r(%d,%d)\n",
@@ -355,7 +355,7 @@ bool gmshEdgeFront::formQuad(BDS_Edge *e, BDS_Edge *left, BDS_Edge *right)
   return true;
 }
 
-BDS_Edge *gmshEdgeFront::findOptimalEdge(BDS_Point *p, BDS_Point *avoid)
+BDS_Edge *edgeFront::findOptimalEdge(BDS_Point *p, BDS_Point *avoid)
 {
   eiter it1, it2;
   getFrontEdges(p, it1, it2);
@@ -444,7 +444,7 @@ BDS_Edge *gmshEdgeFront::findOptimalEdge(BDS_Point *p, BDS_Point *avoid)
   return 0;
 }
 
-bool gmshEdgeFront::emptyFront(int tag)
+bool edgeFront::emptyFront(int tag)
 {
   // front edges tagged "tag" is empty
   if(stat[tag].size() == 0) return true;
@@ -540,7 +540,7 @@ int gmshQMorph(GFace *gf)
   BDS_Mesh *pm = gmsh2BDS(l);
 
   // create the front
-  gmshEdgeFront front(pm,gf);
+  edgeFront front(pm,gf);
   front.initiate();
   
   int ITER = 1;

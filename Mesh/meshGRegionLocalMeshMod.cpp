@@ -50,12 +50,9 @@ void computeNeighboringTetsOfACavity(const std::vector<MTet4*> &cavity,
   }
 }
                    
-bool gmshBuildEdgeCavity(MTet4 *t, 
-                         int iLocalEdge, 
-                         MVertex **v1,MVertex **v2,
-                         std::vector<MTet4*> &cavity,
-                         std::vector<MTet4*> &outside,
-                         std::vector<MVertex*> &ring)
+bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
+                     std::vector<MTet4*> &cavity, std::vector<MTet4*> &outside,
+                     std::vector<MVertex*> &ring)
 {
   cavity.clear();
   ring.clear();
@@ -211,7 +208,7 @@ bool edgeSwap(std::vector<MTet4 *> &newTets,
   std::vector<MVertex*> ring;
   MVertex *v1, *v2;
 
-  bool closed = gmshBuildEdgeCavity(tet, iLocalEdge, &v1, &v2, cavity, outside, ring);
+  bool closed = buildEdgeCavity(tet, iLocalEdge, &v1, &v2, cavity, outside, ring);
 
   if (!closed) return false;
   
@@ -317,7 +314,7 @@ bool edgeSplit(std::vector<MTet4 *> &newTets, MTet4 *tet, MVertex *newVertex,
   std::vector<MVertex*> ring;
   MVertex *v1, *v2;
 
-  bool closed = gmshBuildEdgeCavity(tet, iLocalEdge, &v1, &v2, cavity, outside, ring);
+  bool closed = buildEdgeCavity(tet, iLocalEdge, &v1, &v2, cavity, outside, ring);
   if (!closed) return false;
   
   for(unsigned int j = 0; j < ring.size(); j++){
@@ -431,9 +428,7 @@ bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *t1, int iLocalFace,
   return true;
 }
 
-void gmshBuildVertexCavity_recur(MTet4 *t, 
-                                 MVertex *v, 
-                                 std::vector<MTet4*> &cavity)
+void buildVertexCavity_recur(MTet4 *t, MVertex *v, std::vector<MTet4*> &cavity)
 {
   // if (recur > 20)printf("oufti %d\n",recur);
   if(t->isDeleted()){
@@ -462,7 +457,7 @@ void gmshBuildVertexCavity_recur(MTet4 *t,
       }
       if(!found){
         cavity.push_back(neigh);
-        gmshBuildVertexCavity_recur(neigh, v, cavity);
+        buildVertexCavity_recur(neigh, v, cavity);
       }
     }
   }
@@ -485,7 +480,7 @@ bool sliverRemoval(std::vector<MTet4*> &newTets, MTet4 *t,
   int nbSwappable = 0;
   int iSwappable = 0;
   for (int i = 0; i < 6; i++){
-     isClosed[i] = gmshBuildEdgeCavity(t, i, &v1, &v2, cavity, outside, ring);    
+     isClosed[i] = buildEdgeCavity(t, i, &v1, &v2, cavity, outside, ring);    
      if (isClosed[i]){
        nbSwappable++;
        iSwappable = i;
@@ -567,7 +562,7 @@ bool collapseVertex(std::vector<MTet4 *> &newTets,
   std::vector<MTet4*> cavity_v;
   std::vector<MTet4*> outside;
   cavity_v.push_back(t);
-  gmshBuildVertexCavity_recur(t, v, cavity_v);
+  buildVertexCavity_recur(t, v, cavity_v);
 
   std::vector<MTet4*> toDelete;
   std::vector<MTet4*> toUpdate;
@@ -651,7 +646,7 @@ bool smoothVertex(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
 
   std::vector<MTet4*> cavity;
   cavity.push_back(t);
-  gmshBuildVertexCavity_recur(t, t->tet()->getVertex(iVertex), cavity);
+  buildVertexCavity_recur(t, t->tet()->getVertex(iVertex), cavity);
   
   double xcg = 0, ycg = 0, zcg = 0;
   double vTot = 0;
@@ -777,7 +772,7 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
   vd.ts.push_back(t);
   vd.v = t->tet()->getVertex(iVertex);
   vd.LC = 1.0; // WRONG
-  gmshBuildVertexCavity_recur(t, t->tet()->getVertex(iVertex), vd.ts);
+  buildVertexCavity_recur(t, t->tet()->getVertex(iVertex), vd.ts);
 
   double xyzopti[3] = {vd.v->x(), vd.v->y(), vd.v->z()};
 

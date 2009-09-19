@@ -241,9 +241,9 @@ static bool recoverEdge(BDS_Mesh *m, GEdge *ge,
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
 
-static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, 
-                                bool repairSelfIntersecting1dMesh,
-                                bool debug = true)
+static bool meshGenerator(GFace *gf, int RECUR_ITER, 
+                          bool repairSelfIntersecting1dMesh,
+                          bool debug = true)
 {
   BDS_GeomEntity CLASS_F(1, 2);
   std::map<BDS_Point*, MVertex*> recoverMap;
@@ -473,7 +473,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
       // delete the mesh
       delete m;
       if(RECUR_ITER < 10 && facesToRemesh.size() == 0)
-        return gmsh2DMeshGenerator
+        return meshGenerator
           (gf, RECUR_ITER + 1, repairSelfIntersecting1dMesh, debug);
       return false;
     }
@@ -650,9 +650,9 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
   // vertices
   if(algoDelaunay2D(gf)){
      if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
-      gmshBowyerWatsonFrontal(gf);
+      bowyerWatsonFrontal(gf);
     else
-      gmshBowyerWatson(gf);
+      bowyerWatson(gf);
     for(int i = 0; i < CTX::instance()->mesh.nbSmoothing; i++) 
       laplaceSmoothing(gf);
   }
@@ -924,7 +924,7 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
   return true;
 }
 
-static bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
+static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 {
   std::map<BDS_Point*, MVertex*> recoverMap;
 
@@ -1201,9 +1201,9 @@ static bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
   
   if(algoDelaunay2D(gf)){
     if(CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL)
-      gmshBowyerWatsonFrontal(gf);
+      bowyerWatsonFrontal(gf);
     else
-      gmshBowyerWatson(gf);
+      bowyerWatson(gf);
     for(int i = 0; i < CTX::instance()->mesh.nbSmoothing; i++) 
       laplaceSmoothing(gf);
   }
@@ -1277,11 +1277,11 @@ void meshGFace::operator() (GFace *gf)
   Msg::Debug("Generating the mesh");
   if(noSeam(gf) || gf->getNativeType() == GEntity::GmshModel || 
      gf->edgeLoops.empty()){
-    gmsh2DMeshGenerator(gf, 0, repairSelfIntersecting1dMesh,
-                        debugSurface >= 0 || debugSurface == -100);
+    meshGenerator(gf, 0, repairSelfIntersecting1dMesh,
+                  debugSurface >= 0 || debugSurface == -100);
   }
   else{
-    if(!gmsh2DMeshGeneratorPeriodic
+    if(!meshGeneratorPeriodic
        (gf, debugSurface >= 0 || debugSurface == -100))
       Msg::Error("Impossible to mesh face %d", gf->tag());
   }

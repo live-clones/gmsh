@@ -656,7 +656,7 @@ static void insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
   }
 }
 
-void gmshBowyerWatson(GFace *gf)
+void bowyerWatson(GFace *gf)
 {
   std::set<MTri3*,compareTri3Ptr> AllTris;
   std::vector<double> vSizes, vSizesBGM, Us, Vs;
@@ -770,7 +770,7 @@ void testTensor()
   printf("%12.5E %12.5E %12.5E \n",m(0,2),m(1,2),m(2,2));
 }
 
-void gmshBowyerWatsonFrontal(GFace *gf)
+void bowyerWatsonFrontal(GFace *gf)
 {
   std::set<MTri3*,compareTri3Ptr> AllTris;
   std::set<MTri3*,compareTri3Ptr> ActiveTris;

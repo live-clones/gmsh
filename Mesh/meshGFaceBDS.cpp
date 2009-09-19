@@ -833,8 +833,8 @@ void invalidEdgesPeriodic(BDS_Mesh &m, std::map<BDS_Point*, MVertex*> *recoverMa
 // if not do not allow p1 v and p2 v, split them
 // if p1 p2 exists and it is internal, split it
 
-int gmshSolveInvalidPeriodic(GFace *gf, BDS_Mesh &m, 
-                             std::map<BDS_Point*, MVertex*> *recoverMap)
+int solveInvalidPeriodic(GFace *gf, BDS_Mesh &m, 
+                         std::map<BDS_Point*, MVertex*> *recoverMap)
 {
   std::set<BDS_Edge*> toSplit;
   invalidEdgesPeriodic(m, recoverMap, toSplit);
@@ -887,7 +887,7 @@ void optimizeMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   }
   
   if (recoverMap){
-    while(gmshSolveInvalidPeriodic(gf, m, recoverMap)){
+    while(solveInvalidPeriodic(gf, m, recoverMap)){
     }  
   }
 }
