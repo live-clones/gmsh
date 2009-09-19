@@ -139,7 +139,8 @@ class dofManager{
   }
   inline void assemble(MVertex *vR, int iCompR, int iFieldR,
                        MVertex *vC, int iCompC, int iFieldC,
-                       const dataMat &value){
+                       const dataMat &value)
+  {
     assemble(vR->getNum(), Dof::createTypeWithTwoInts(iCompR, iFieldR),
              vC->getNum(), Dof::createTypeWithTwoInts(iCompC, iFieldC),
              value);
@@ -157,7 +158,8 @@ class dofManager{
     assemble(Dof(entR, typeR), value);
   }
   inline void assemble(MVertex *vR, int iCompR, int iFieldR,
-                       const dataMat &value){
+                       const dataMat &value)
+  {
     assemble(vR->getNum(), Dof::createTypeWithTwoInts(iCompR, iFieldR), value);
   } 
   int sizeOfR() const { return unknown.size(); }

@@ -52,10 +52,12 @@ class elasticitySolver{
   void setMesh(const std::string &meshFileName);  
   virtual void solve();  
   void readInputFile(const std::string &meshFileName);
-  //  PView * buildDisplacementView (const std::string &postFileName);
-  //  PView * buildVonMisesView(const std::string &postFileName);
-  //  std::pair<PView *, PView*> buildErrorEstimateView (const std::string &errorFileName, double, int);
-  //  std::pair<PView *, PView*> buildErrorEstimateView (const std::string &errorFileName, const gmshElasticityData &ref, double, int);
+  // PView *buildDisplacementView(const std::string &postFileName);
+  // PView *buildVonMisesView(const std::string &postFileName);
+  // std::pair<PView *, PView*> buildErrorEstimateView
+  //   (const std::string &errorFileName, double, int);
+  // std::pair<PView *, PView*> buildErrorEstimateView
+  //   (const std::string &errorFileName, const gmshElasticityData &ref, double, int);
 };
 
 #endif

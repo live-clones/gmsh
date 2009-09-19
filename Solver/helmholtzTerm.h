@@ -17,7 +17,7 @@
 
 // \nabla \cdot k \nabla U + a U 
 template<class scalar>
-class helmoltzTerm : public femTerm<scalar,scalar> {
+class helmoltzTerm : public femTerm<scalar, scalar> {
  protected:
   const gmshFunction<scalar> *_k, *_a;
   const int _iFieldR;
@@ -80,9 +80,9 @@ class helmoltzTerm : public femTerm<scalar,scalar> {
       }
       for (int j = 0; j < nbNodes; j++){
         for (int k = 0; k <= j; k++){
-          m(j, k) += (K* (Grads[j][0] * Grads[k][0] +
-                          Grads[j][1] * Grads[k][1] +
-                          Grads[j][2] * Grads[k][2]) + A * sf[j] * sf[k]) * 
+          m(j, k) += (K * (Grads[j][0] * Grads[k][0] +
+                           Grads[j][1] * Grads[k][1] +
+                           Grads[j][2] * Grads[k][2]) + A * sf[j] * sf[k]) * 
             weightDetJ;
         }
       }

@@ -20,11 +20,9 @@ class laplaceTerm : public helmholtzTerm<scalar> {
     _k = ONE;
   }
   laplaceTerm(GModel *gm, int iFieldR, gmshFunction<scalar> *k) : 
-    helmholtzTerm<scalar>(gm, iFieldR, iFieldR, k, 0), ONE(0)
-  {}
+    helmholtzTerm<scalar>(gm, iFieldR, iFieldR, k, 0), ONE(0) {}
   laplaceTerm(GModel *gm, int iFieldR, int iFieldC, gmshFunction<scalar> *k) : 
-    helmholtzTerm<scalar>(gm, iFieldR, iFieldC, k, 0), ONE(0)
-  {}
+    helmholtzTerm<scalar>(gm, iFieldR, iFieldC, k, 0), ONE(0) {}
   virtual ~laplaceTerm()
   {
     if(ONE) delete ONE;

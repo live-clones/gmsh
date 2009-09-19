@@ -143,7 +143,8 @@ void elasticitySolver::solve()
        it != nodalDisplacements.end(); ++it){
     MVertex *v = pModel->getMeshVertexByTag(it->first.first);
     pAssembler-> fixVertex(v , it->first.second, _tag, it->second);    
-    printf("-- Fixing node %3d comp %1d to %8.5f\n", it->first.first, it->first.second, it->second);
+    printf("-- Fixing node %3d comp %1d to %8.5f\n", 
+           it->first.first, it->first.second, it->second);
   }
   
   for (std::map<std::pair<int, int>, double>::iterator it = edgeDisplacements.begin();
@@ -151,7 +152,8 @@ void elasticitySolver::solve()
     elasticityTerm El(pModel, 1, 1, _tag);
     El.dirichletNodalBC(it->first.first, 1, it->first.second, _tag, 
                         gmshFunction<double>(it->second), *pAssembler);
-    printf("-- Fixing edge %3d comp %1d to %8.5f\n", it->first.first, it->first.second, it->second);
+    printf("-- Fixing edge %3d comp %1d to %8.5f\n", 
+           it->first.first, it->first.second, it->second);
   }
   
   for (std::map<std::pair<int, int>, double>::iterator it = faceDisplacements.begin();
@@ -159,7 +161,8 @@ void elasticitySolver::solve()
     elasticityTerm El(pModel, 1, 1, _tag);
     El.dirichletNodalBC(it->first.first, 2, it->first.second, _tag, 
                         gmshFunction<double>(it->second), *pAssembler);
-    printf("-- Fixing face %3d comp %1d to %8.5f\n", it->first.first, it->first.second, it->second);
+    printf("-- Fixing face %3d comp %1d to %8.5f\n", 
+           it->first.first, it->first.second, it->second);
   }
   
   // we number the nodes : when a node is numbered, it cannot be numbered
@@ -189,7 +192,8 @@ void elasticitySolver::solve()
       pAssembler-> assemble(ent[i]->mesh_vertices[0] , 0, _tag, f.x());
       pAssembler-> assemble(ent[i]->mesh_vertices[0] , 1, _tag, f.y());
       pAssembler-> assemble(ent[i]->mesh_vertices[0] , 2, _tag, f.z());
-      printf("-- Force on node %3d(%3d) : %8.5f %8.5f %8.5f\n", ent[i]->mesh_vertices[0]->getNum(), iVertex, f.x(), f.y(), f.z());
+      printf("-- Force on node %3d(%3d) : %8.5f %8.5f %8.5f\n", 
+             ent[i]->mesh_vertices[0]->getNum(), iVertex, f.x(), f.y(), f.z());
     }
   }
 
