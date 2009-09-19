@@ -400,8 +400,8 @@ static void file_rename_cb(Fl_Widget *w, void *data)
           goto test;
     }
     rename(GModel::current()->getFileName().c_str(), name.c_str());
-    ClearProject();
-    OpenProject(name);
+    GModel::current()->setFileName(name);
+    FlGui::instance()->setGraphicTitle(GModel::current()->getFileName());
     drawContext::global()->draw();
   }
 }
@@ -604,7 +604,6 @@ static void geometry_edit_cb(Fl_Widget *w, void *data)
 void geometry_reload_cb(Fl_Widget *w, void *data)
 {
   std::string fileName = GModel::current()->getFileName();
-  ClearProject();
   OpenProject(fileName);
   drawContext::global()->draw();
 }
