@@ -16,7 +16,7 @@
 #include "MPyramid.h"
 #include "HighOrder.h"
 #include "meshGFaceOptimize.h"
-#include "gmshSmoothHighOrder.h"
+#include "highOrderSmoother.h"
 #include "GFace.h"
 #include "GRegion.h"
 #include "Context.h"
@@ -29,12 +29,12 @@
 #define SQU(a)      ((a)*(a))
 
 int optimalLocationPN_(GFace *gf, const MEdge &me, MTriangle *t1, MTriangle *t2,
-                       gmshHighOrderSmoother *s);
-static int _gmshSwapHighOrderTriangles(GFace *gf);
-static int _gmshSwapHighOrderTriangles(GFace *gf, edgeContainer&, faceContainer&,
-                                       gmshHighOrderSmoother *s);
-static int _gmshFindOptimalLocationsP2(GFace *gf, gmshHighOrderSmoother *s);
-static int _gmshFindOptimalLocationsPN(GFace *gf, gmshHighOrderSmoother *s);
+                       highOrderSmoother *s);
+static int swapHighOrderTriangles(GFace *gf);
+static int swapHighOrderTriangles(GFace *gf, edgeContainer&, faceContainer&,
+                                       highOrderSmoother *s);
+static int findOptimalLocationsP2(GFace *gf, highOrderSmoother *s);
+static int findOptimalLocationsPN(GFace *gf, highOrderSmoother *s);
 
 static double shapeMeasure(MElement *e)
 {
@@ -54,7 +54,7 @@ double angle3Points(MVertex *p1, MVertex *p2, MVertex *p3)
   return atan2 (sinA, cosA);  
 }
 
-void gmshHighOrderSmoother::moveTo(MVertex *v,  
+void highOrderSmoother::moveTo(MVertex *v,  
                                    const std::map<MVertex*, SVector3> &m) const
 {
   std::map<MVertex*,SVector3>::const_iterator it = m.find(v);
@@ -65,29 +65,29 @@ void gmshHighOrderSmoother::moveTo(MVertex *v,
   }
 } 
 
-void gmshHighOrderSmoother::moveToStraightSidedLocation(MVertex *v) const
+void highOrderSmoother::moveToStraightSidedLocation(MVertex *v) const
 {
   moveTo( v, _straightSidedLocation);
 }
 
-void gmshHighOrderSmoother::moveToTargetLocation(MVertex *v) const
+void highOrderSmoother::moveToTargetLocation(MVertex *v) const
 {
   moveTo( v, _targetLocation);
 }
 
-void gmshHighOrderSmoother::moveToStraightSidedLocation(MElement *e) const
+void highOrderSmoother::moveToStraightSidedLocation(MElement *e) const
 {
   for(int i = 0; i < e->getNumVertices(); i++)
     moveToStraightSidedLocation(e->getVertex(i));
 }
 
-void gmshHighOrderSmoother::moveToTargetLocation(MElement *e) const
+void highOrderSmoother::moveToTargetLocation(MElement *e) const
 {
   for(int i = 0; i < e->getNumVertices(); i++)
     moveToTargetLocation(e->getVertex(i));
 }
 
-void gmshHighOrderSmoother::updateTargetLocation(MVertex*v, const SPoint3 &p3, 
+void highOrderSmoother::updateTargetLocation(MVertex*v, const SPoint3 &p3, 
                                                  const SPoint2 &p2)
 {
   v->x() = p3.x();
@@ -103,9 +103,9 @@ struct p2data{
   MTriangle *t1,*t2;
   MVertex *n12;
   fullMatrix<double> *m1,*m2;
-  gmshHighOrderSmoother *s;
+  highOrderSmoother *s;
   p2data(GFace *_gf, MTriangle *_t1, MTriangle *_t2, MVertex *_n12, 
-         gmshHighOrderSmoother *_s)
+         highOrderSmoother *_s)
     : gf(_gf), t1(_t1), t2(_t2), n12(_n12), s(_s)
   {
     elasticityTerm el(0, 1.e3, .3333,1);
@@ -131,9 +131,9 @@ struct pNdata{
   MTriangle *t1,*t2;
   const std::vector<MVertex*> &n;
   fullMatrix<double> *m1,*m2;
-  gmshHighOrderSmoother *s;
+  highOrderSmoother *s;
   pNdata(GFace *_gf,MTriangle *_t1,MTriangle *_t2, const std::vector<MVertex*> &_n,
-         gmshHighOrderSmoother *_s)
+         highOrderSmoother *_s)
     : gf(_gf), t1(_t1), t2(_t2), n(_n), s(_s)
   {
     elasticityTerm el(0, 1.e3, .3333,1);
@@ -156,7 +156,7 @@ struct pNdata{
 
 static double _DeformationEnergy(MElement *e, 
                                  fullMatrix<double> *K,
-                                 gmshHighOrderSmoother *s)
+                                 highOrderSmoother *s)
 {
   int N = e->getNumVertices();
   fullVector<double> Kdx(N*3),dx(N*3);
@@ -325,7 +325,7 @@ void addOneLayer(const std::vector<MElement*> &v,
   }
 }
 
-void gmshHighOrderSmoother::smooth(GFace *gf, bool metric)
+void highOrderSmoother::smooth(GFace *gf, bool metric)
 {
   std::vector<MElement*> v;
 
@@ -337,7 +337,7 @@ void gmshHighOrderSmoother::smooth(GFace *gf, bool metric)
   else smooth(v);
 }
 
-void gmshHighOrderSmoother::smooth(GRegion *gr)
+void highOrderSmoother::smooth(GRegion *gr)
 {
   std::vector<MElement*> v;
   v.insert(v.begin(), gr->tetrahedra.begin(),gr->tetrahedra.end());
@@ -352,7 +352,7 @@ void gmshHighOrderSmoother::smooth(GRegion *gr)
 // of an element that correspond to the deformation of a straight
 // sided element to a curvilinear one
 
-void gmshHighOrderSmoother::optimize(GFace * gf, 
+void highOrderSmoother::optimize(GFace * gf, 
                                      edgeContainer &edgeVertices,
                                      faceContainer &faceVertices)
 {
@@ -362,14 +362,14 @@ void gmshHighOrderSmoother::optimize(GFace * gf,
     // relocate the vertices using elliptic smoother
     //    smooth(gf);
     //    for (int i = 0; i < 20; i++){
-    //      _gmshFindOptimalLocationsPN(gf,this);
-    //      _gmshFindOptimalLocationsPN(gf,this);
+    //      findOptimalLocationsPN(gf,this);
+    //      findOptimalLocationsPN(gf,this);
     //    }
     // then try to swap for better configurations  
 
     smooth(gf, true);
     //int nbSwap = 
-        _gmshSwapHighOrderTriangles(gf,edgeVertices,faceVertices,this);
+        swapHighOrderTriangles(gf,edgeVertices,faceVertices,this);
     // smooth(gf,true);
     // smooth(gf,true);
     // smooth(gf,true);
@@ -388,7 +388,7 @@ void gmshHighOrderSmoother::optimize(GFace * gf,
   }
 }
 
-void gmshHighOrderSmoother::computeMetricVector(GFace *gf, 
+void highOrderSmoother::computeMetricVector(GFace *gf, 
                                                 MElement *e, 
                                                 fullMatrix<double> &J,
                                                 fullMatrix<double> &JT,
@@ -426,7 +426,7 @@ void gmshHighOrderSmoother::computeMetricVector(GFace *gf,
   } 
 }
 
-void gmshHighOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
+void highOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
 {
 #ifdef HAVE_TAUCS__
   linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
@@ -540,7 +540,7 @@ void gmshHighOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *
   delete lsys;
 }
 
-double gmshHighOrderSmoother::smooth_metric_(std::vector<MElement*>  & v, 
+double highOrderSmoother::smooth_metric_(std::vector<MElement*>  & v, 
                                              GFace *gf, 
                                              dofManager<double,double> &myAssembler,
                                              std::set<MVertex*> &verticesToMove,
@@ -604,7 +604,7 @@ double gmshHighOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
   return dx;
 }
 
-void gmshHighOrderSmoother::smooth(std::vector<MElement*> &all)
+void highOrderSmoother::smooth(std::vector<MElement*> &all)
 {
 #ifdef HAVE_TAUCS
   linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
@@ -962,12 +962,12 @@ struct swap_triangles_pN
   std::vector<MVertex*> n123, n124, n134, n234;
   edgeContainer &edgeVertices;
   faceContainer &faceVertices;
-  gmshHighOrderSmoother *s;
+  highOrderSmoother *s;
 
   swap_triangles_pN(const MEdge &me, MTriangle *_t1, MTriangle *_t2, GFace *gf,
                     edgeContainer &_edgeVertices,
                     faceContainer &_faceVertices,
-                    gmshHighOrderSmoother *_s)
+                    highOrderSmoother *_s)
     : t1(_t1), t2(_t2),edgeVertices(_edgeVertices),faceVertices(_faceVertices),s(_s)
   {
 
@@ -1013,7 +1013,7 @@ struct swap_triangles_pN
 static int optimalLocationP2_(GFace *gf, 
                               const MEdge &me,
                               MTriangle *t1, MTriangle *t2, 
-                              gmshHighOrderSmoother *s)
+                              highOrderSmoother *s)
 {
   double qini = std::min(shapeMeasure(t1),shapeMeasure(t2));
 
@@ -1056,7 +1056,7 @@ static int optimalLocationP2_(GFace *gf,
 }
 
 int optimalLocationPN_ (GFace *gf, const MEdge &me, MTriangle *t1, MTriangle *t2,
-                        gmshHighOrderSmoother *s)
+                        highOrderSmoother *s)
 {
   // if quality is sufficient, do nothing (this is an expensive
   //  optimization process)
@@ -1111,7 +1111,7 @@ int optimalLocationPN_ (GFace *gf, const MEdge &me, MTriangle *t1, MTriangle *t2
   return 1;
 }
 
-static int _gmshFindOptimalLocationsP2(GFace *gf, gmshHighOrderSmoother *s)
+static int findOptimalLocationsP2(GFace *gf, highOrderSmoother *s)
 {
   e2t_cont adj;
   buildEdgeToTriangle(gf->triangles, adj);
@@ -1124,7 +1124,7 @@ static int _gmshFindOptimalLocationsP2(GFace *gf, gmshHighOrderSmoother *s)
   return N;
 }
 
-static int _gmshFindOptimalLocationsPN(GFace *gf,gmshHighOrderSmoother *s)
+static int findOptimalLocationsPN(GFace *gf,highOrderSmoother *s)
 {
   printf("coucou1\n");
   e2t_cont adj;
@@ -1141,10 +1141,10 @@ static int _gmshFindOptimalLocationsPN(GFace *gf,gmshHighOrderSmoother *s)
   return N;
 }
 
-static int _gmshSwapHighOrderTriangles(GFace *gf, 
-                                       edgeContainer &edgeVertices,
-                                       faceContainer &faceVertices,
-                                       gmshHighOrderSmoother *s)
+static int swapHighOrderTriangles(GFace *gf, 
+                                  edgeContainer &edgeVertices,
+                                  faceContainer &faceVertices,
+                                  highOrderSmoother *s)
 {
   e2t_cont adj;
   buildEdgeToTriangle(gf->triangles, adj);
@@ -1214,7 +1214,7 @@ static int _gmshSwapHighOrderTriangles(GFace *gf,
   return nbSwap;
 }
 
-static int _gmshSwapHighOrderTriangles(GFace *gf)
+static int swapHighOrderTriangles(GFace *gf)
 {
   e2t_cont adj;
   buildEdgeToTriangle(gf->triangles, adj);
@@ -1290,27 +1290,27 @@ static int _gmshSwapHighOrderTriangles(GFace *gf)
   return nbSwap;
 }
 
-void  gmshHighOrderSmoother::swap(GFace *gf, 
+void  highOrderSmoother::swap(GFace *gf, 
                                   edgeContainer &edgeVertices,
                                   faceContainer &faceVertices)
 {
-  //  _gmshSwapHighOrderTriangles(gf);
-  _gmshSwapHighOrderTriangles(gf,edgeVertices,faceVertices,this);
-  //_gmshSwapHighOrderTriangles(gf);
-  //_gmshSwapHighOrderTriangles(gf);
-  //  _gmshSwapHighOrderTriangles(gf);
+  // swapHighOrderTriangles(gf);
+  swapHighOrderTriangles(gf,edgeVertices,faceVertices,this);
+  // swapHighOrderTriangles(gf);
+  // swapHighOrderTriangles(gf);
+  // swapHighOrderTriangles(gf);
 }
 
-void  gmshHighOrderSmoother::smooth_p2point(GFace *gf)
+void  highOrderSmoother::smooth_p2point(GFace *gf)
 {
-  _gmshFindOptimalLocationsP2(gf,this);
-  //_gmshFindOptimalLocationsP2(gf);
-  //_gmshFindOptimalLocationsP2(gf);
+  findOptimalLocationsP2(gf,this);
+  // findOptimalLocationsP2(gf);
+  // findOptimalLocationsP2(gf);
 }
 
-void  gmshHighOrderSmoother::smooth_pNpoint(GFace *gf)
+void  highOrderSmoother::smooth_pNpoint(GFace *gf)
 {
-  _gmshFindOptimalLocationsPN(gf,this);
+  findOptimalLocationsPN(gf,this);
 }
 
 

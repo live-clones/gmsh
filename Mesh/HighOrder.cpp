@@ -8,7 +8,7 @@
 //
 
 #include "HighOrder.h"
-#include "gmshSmoothHighOrder.h"
+#include "highOrderSmoother.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -227,8 +227,8 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
 
 static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
                             edgeContainer &edgeVertices, bool linear,
-                            int nPts = 1, gmshHighOrderSmoother *displ2D = 0,
-                            gmshHighOrderSmoother *displ3D = 0)
+                            int nPts = 1, highOrderSmoother *displ2D = 0,
+                            highOrderSmoother *displ3D = 0)
 {
   if(ge->geomType() == GEntity::DiscreteCurve ||
      ge->geomType() == GEntity::BoundaryLayerCurve)
@@ -311,8 +311,8 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
 static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
                             edgeContainer &edgeVertices, bool linear,
                             int nPts = 1, 
-                            gmshHighOrderSmoother *displ2D = 0,
-                            gmshHighOrderSmoother *displ3D = 0)
+                            highOrderSmoother *displ2D = 0,
+                            highOrderSmoother *displ3D = 0)
 {
   if(gf->geomType() == GEntity::DiscreteSurface ||
      gf->geomType() == GEntity::BoundaryLayerSurface)
@@ -370,8 +370,8 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
 
 static void getEdgeVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &ve,
                             edgeContainer &edgeVertices, bool linear,
-                            int nPts = 1, gmshHighOrderSmoother *displ2D = 0,
-                            gmshHighOrderSmoother *displ3D = 0)
+                            int nPts = 1, highOrderSmoother *displ2D = 0,
+                            highOrderSmoother *displ3D = 0)
 {
   for(int i = 0; i < ele->getNumEdges(); i++){
     MEdge edge = ele->getEdge(i);
@@ -402,8 +402,8 @@ static void getEdgeVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &v
 
 static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele, 
                             std::vector<MVertex*> &vf, faceContainer &faceVertices, 
-                            bool linear, int nPts = 1, gmshHighOrderSmoother *displ2D = 0,
-                            gmshHighOrderSmoother *displ3D = 0)
+                            bool linear, int nPts = 1, highOrderSmoother *displ2D = 0,
+                            highOrderSmoother *displ3D = 0)
 {
   if(gf->geomType() == GEntity::DiscreteSurface ||
      gf->geomType() == GEntity::BoundaryLayerSurface)
@@ -683,8 +683,8 @@ static void getRegionVertices(GRegion *gr, MElement *incomplete, MElement *ele,
 }
 
 static void setHighOrder(GEdge *ge, edgeContainer &edgeVertices, bool linear, 
-                         int nbPts = 1, gmshHighOrderSmoother *displ2D = 0,
-                         gmshHighOrderSmoother *displ3D = 0)
+                         int nbPts = 1, highOrderSmoother *displ2D = 0,
+                         highOrderSmoother *displ3D = 0)
 {
   std::vector<MLine*> lines2;
   for(unsigned int i = 0; i < ge->lines.size(); i++){
@@ -705,8 +705,8 @@ MTriangle* setHighOrder(MTriangle *t, GFace *gf,
                         edgeContainer &edgeVertices, 
                         faceContainer &faceVertices, 
                         bool linear, bool incomplete, int nPts, 
-                        gmshHighOrderSmoother *displ2D,
-                        gmshHighOrderSmoother *displ3D)
+                        highOrderSmoother *displ2D,
+                        highOrderSmoother *displ3D)
 {
   std::vector<MVertex*> ve, vf;
   getEdgeVertices(gf, t, ve, edgeVertices, linear, nPts, displ2D, displ3D);
@@ -740,8 +740,8 @@ MTriangle* setHighOrder(MTriangle *t, GFace *gf,
 
 static void setHighOrder(GFace *gf, edgeContainer &edgeVertices, 
                          faceContainer &faceVertices, bool linear, bool incomplete,
-                         int nPts = 1, gmshHighOrderSmoother *displ2D = 0,
-                         gmshHighOrderSmoother *displ3D = 0)
+                         int nPts = 1, highOrderSmoother *displ2D = 0,
+                         highOrderSmoother *displ3D = 0)
 {
   std::vector<MTriangle*> triangles2;
   for(unsigned int i = 0; i < gf->triangles.size(); i++){
@@ -777,8 +777,8 @@ static void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
 
 static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices, 
                          faceContainer &faceVertices, bool linear, bool incomplete,
-                         int nPts = 1, gmshHighOrderSmoother *displ2D = 0,
-                         gmshHighOrderSmoother *displ3D = 0)
+                         int nPts = 1, highOrderSmoother *displ2D = 0,
+                         highOrderSmoother *displ3D = 0)
 {
   int nbCorr = 0;
   
@@ -1089,11 +1089,11 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   // first, make sure to remove any existsing second order vertices/elements
   SetOrder1(m);    
 
-  gmshHighOrderSmoother *displ2D = 0; 
-  gmshHighOrderSmoother *displ3D = 0; 
+  highOrderSmoother *displ2D = 0; 
+  highOrderSmoother *displ3D = 0; 
   if(CTX::instance()->mesh.smoothInternalEdges){
-    displ2D = new gmshHighOrderSmoother(2);
-    displ3D = new gmshHighOrderSmoother(3);
+    displ2D = new highOrderSmoother(2);
+    displ3D = new highOrderSmoother(3);
   }
 
   // then create new second order vertices/elements

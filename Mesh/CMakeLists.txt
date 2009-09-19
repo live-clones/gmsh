@@ -6,7 +6,6 @@
 set(SRC
   Generator.cpp
   Field.cpp
-    gmshSmoothHighOrder.cpp 
     meshGEdge.cpp 
     meshGEdgeExtruded.cpp 
     meshGFace.cpp 
@@ -28,6 +27,7 @@ set(SRC
     BoundaryLayers.cpp 
     BDS.cpp 
     HighOrder.cpp 
+      highOrderSmoother.cpp 
     meshPartition.cpp 
     meshRefine.cpp
 )

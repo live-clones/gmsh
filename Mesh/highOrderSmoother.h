@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _GMSH_SMOOTH_HIGHORDER_H_
-#define _GMSH_SMOOTH_HIGHORDER_H_
+#ifndef _HIGH_ORDER_SMOOTHER_H_
+#define _HIGH_ORDER_SMOOTHER_H_
 
 #include <map>
 #include <vector>
@@ -18,7 +18,7 @@ class MElement;
 class GFace;
 class GRegion;
 
-class gmshHighOrderSmoother 
+class highOrderSmoother 
 {
   const int _tag;
   std::map<MVertex*,SVector3> _straightSidedLocation;
@@ -32,7 +32,7 @@ class gmshHighOrderSmoother
   double _MIDDLE;
   void moveTo(MVertex *v, const std::map<MVertex*,SVector3> &) const;
 public:  
-  gmshHighOrderSmoother(int dim) : _tag(111), _dim(dim) {_clean();}
+  highOrderSmoother(int dim) : _tag(111), _dim(dim) {_clean();}
   void add(MVertex * v, const SVector3 &d ) {
     _straightSidedLocation[v] = d;
     _targetLocation[v]        = SPoint3(v->x(),v->y(),v->z());
