@@ -1,4 +1,4 @@
-FLAGS = -g -O2
+FLAGS = -g -O2 ${CXXFLAGS}
 INC = -I/usr/local/include -I.
 GMSH = -L/usr/local/lib -lGmsh
 GLUT = -framework OpenGL -framework GLUT -framework Cocoa -framework ApplicationServices
