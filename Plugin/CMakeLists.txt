@@ -27,4 +27,5 @@ set(SRC
   HomologyComputation.cpp
 )
 
-append_gmsh_src(Plugin "${SRC}")
+file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Plugin *.h) 
+append_gmsh_src(Plugin "${SRC};${HDR}")

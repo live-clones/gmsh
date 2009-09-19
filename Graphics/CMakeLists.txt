@@ -22,4 +22,5 @@ set(SRC
   gl2yuv.cpp
 )
 
-append_gmsh_src(Graphics "${SRC}")
+file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Graphics *.h) 
+append_gmsh_src(Graphics "${SRC};${HDR}")

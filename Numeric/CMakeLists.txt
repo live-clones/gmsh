@@ -27,4 +27,5 @@ set(SRC
     gmshLinearSystemCSR.cpp
 )
 
-append_gmsh_src(Numeric "${SRC}")
+file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Numeric *.h) 
+append_gmsh_src(Numeric "${SRC};${HDR}")

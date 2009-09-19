@@ -32,5 +32,5 @@ set(SRC
     meshRefine.cpp
 )
 
-append_gmsh_src(Mesh "${SRC}")
-
+file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Mesh *.h) 
+append_gmsh_src(Mesh "${SRC};${HDR}")

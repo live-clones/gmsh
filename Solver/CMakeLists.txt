@@ -10,4 +10,5 @@ set(SRC
   elasticitySolver.cpp
 )
 
-append_gmsh_src(Solver "${SRC}")
+file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Solver *.h) 
+append_gmsh_src(Solver "${SRC};${HDR}")

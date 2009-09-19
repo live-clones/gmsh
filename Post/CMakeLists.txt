@@ -14,4 +14,5 @@ set(SRC
   ColorTable.cpp
 )
 
-append_gmsh_src(Post "${SRC}")
+file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Post *.h) 
+append_gmsh_src(Post "${SRC};${HDR}")

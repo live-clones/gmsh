@@ -24,4 +24,5 @@ set(SRC
   MallocUtils.cpp
 )
 
-append_gmsh_src(Common "${SRC}")
+file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Common *.h) 
+append_gmsh_src(Common "${SRC};${HDR}")
