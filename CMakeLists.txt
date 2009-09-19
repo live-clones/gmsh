@@ -55,11 +55,8 @@ set(GMSH_API
   ${CMAKE_BINARY_DIR}/Common/GmshConfig.h 
   ${CMAKE_BINARY_DIR}/Common/GmshVersion.h
   Common/Gmsh.h Common/GmshDefines.h Common/GmshMessage.h Common/VertexArray.h
-  Numeric/Numeric.h Numeric/Gauss.h Numeric/FunctionSpace.h Numeric/GmshMatrix.h
-    Numeric/gmshAssembler.h Numeric/gmshTermOfFormulation.h 
-    Numeric/gmshLaplace.h Numeric/gmshElasticity.h Numeric/gmshLinearSystem.h
-    Numeric/gmshLinearSystemGmm.h Numeric/gmshLinearSystemFull.h 
-    Numeric/gmshLinearSystemCSR.h Numeric/gmshFunction.h
+  Numeric/Numeric.h Numeric/Gauss.h Numeric/functionSpace.h Numeric/fullMatrix.h
+    Numeric/simpleFunction.h
   Geo/GModel.h Geo/GEntity.h Geo/GPoint.h Geo/GVertex.h Geo/GEdge.h 
     Geo/GFace.h Geo/GRegion.h Geo/GEdgeLoop.h Geo/GEdgeCompound.h 
     Geo/GFaceCompound.h Geo/GRegionCompound.h Geo/MVertex.h Geo/MEdge.h 
@@ -73,7 +70,11 @@ set(GMSH_API
     Mesh/meshGFaceDelaunayInsertion.h
   Post/PView.h Post/PViewData.h Plugin/PluginManager.h
   Graphics/drawContext.h
-  Solver/dofManager.h Solver/elasticityTerm.h Solver/termOfFormulation.h 
+  Solver/dofManager.h Solver/elasticityTerm.h Solver/femTerm.h 
+    Numeric/gmshAssembler.h Numeric/gmshTermOfFormulation.h 
+    Numeric/gmshLaplace.h Numeric/gmshElasticity.h Numeric/gmshLinearSystem.h
+    Numeric/gmshLinearSystemGmm.h Numeric/gmshLinearSystemFull.h 
+    Numeric/gmshLinearSystemCSR.h 
   contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h 
     contrib/kbipack/gmp_blas.h
   contrib/DiscreteIntegration/DILevelset.h)
