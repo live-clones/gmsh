@@ -1,3 +1,5 @@
+// THIS FILE WILL BE REMOVED AS SOON AS THE NEW SOLVER INTERFACE IS READY
+
 // Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all

@@ -108,7 +108,7 @@ struct p2data{
          gmshHighOrderSmoother *_s)
     : gf(_gf), t1(_t1), t2(_t2), n12(_n12), s(_s)
   {
-    gsolver::elasticityTerm el(0, 1.e3, .3333,1);
+    elasticityTerm el(0, 1.e3, .3333,1);
     s->moveToStraightSidedLocation(t1);
     s->moveToStraightSidedLocation(t2);
     m1 = new  gmshMatrix<double>(3 * t1->getNumVertices(),
@@ -136,7 +136,7 @@ struct pNdata{
          gmshHighOrderSmoother *_s)
     : gf(_gf), t1(_t1), t2(_t2), n(_n), s(_s)
   {
-    gsolver::elasticityTerm el(0, 1.e3, .3333,1);
+    elasticityTerm el(0, 1.e3, .3333,1);
     s->moveToStraightSidedLocation(t1);
     s->moveToStraightSidedLocation(t2);
     m1 = new  gmshMatrix<double>(3 * t1->getNumVertices(),
@@ -429,15 +429,15 @@ void gmshHighOrderSmoother::computeMetricVector(GFace *gf,
 void gmshHighOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
 {
 #ifdef HAVE_TAUCS__
-  gsolver::linearSystemCSRTaucs<double> *lsys = new gsolver::linearSystemCSRTaucs<double>;
+  linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
 #else
-  gsolver::linearSystemCSRGmm<double> *lsys = new gsolver::linearSystemCSRGmm<double>;
+  linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
   lsys->setNoisy(1);
   lsys->setGmres(1);
   lsys->setPrec(5.e-8);
 #endif
-  gsolver::dofManager<double,double> myAssembler(lsys);
-  gsolver::elasticityTerm El(0, 1.0, .333, getTag());
+  dofManager<double,double> myAssembler(lsys);
+  elasticityTerm El(0, 1.0, .333, getTag());
   
   std::vector<MElement*> layer, v;
 
@@ -542,9 +542,9 @@ void gmshHighOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *
 
 double gmshHighOrderSmoother::smooth_metric_(std::vector<MElement*>  & v, 
                                              GFace *gf, 
-                                             gsolver::dofManager<double,double> &myAssembler,
+                                             dofManager<double,double> &myAssembler,
                                              std::set<MVertex*> &verticesToMove,
-                                             gsolver::elasticityTerm &El)
+                                             elasticityTerm &El)
 {
   std::set<MVertex*>::iterator it;
 
@@ -572,12 +572,12 @@ double gmshHighOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
       for (int j = 0; j < n2; j++){
         MVertex *vR;
         int iCompR, iFieldR;
-	gsolver::Dof RDOF = El.getLocalDofR(e, j);
+	Dof RDOF = El.getLocalDofR(e, j);
         myAssembler.assemble(RDOF,-R2(j));
         for (int k = 0; k < n2; k++){
           MVertex *vC;
           int iCompC, iFieldC;
-          gsolver::Dof CDOF = El.getLocalDofC(e, k);
+          Dof CDOF = El.getLocalDofC(e, k);
           myAssembler.assemble(RDOF,CDOF,K22(j, k));
         }
       }
@@ -607,15 +607,15 @@ double gmshHighOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
 void gmshHighOrderSmoother::smooth(std::vector<MElement*> &all)
 {
 #ifdef HAVE_TAUCS
-  gsolver::linearSystemCSRTaucs<double> *lsys = new gsolver::linearSystemCSRTaucs<double>;
+  linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
 #else
-  gsolver::linearSystemCSRGmm<double> *lsys = new gsolver::linearSystemCSRGmm<double>;
+  linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
   lsys->setNoisy(1);
   lsys->setGmres(1);
   lsys->setPrec(5.e-8);
 #endif
-  gsolver::dofManager<double,double> myAssembler(lsys);
-  gsolver::elasticityTerm El(0, 1.0, .333, getTag());
+  dofManager<double,double> myAssembler(lsys);
+  elasticityTerm El(0, 1.0, .333, getTag());
   
   std::vector<MElement*> layer, v;
   double minD;

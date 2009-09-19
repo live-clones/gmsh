@@ -8,27 +8,22 @@
 
 #include "linearSystemCSR.h"
 
-namespace gsolver {
-  template <class scalar>
-    class linearSystemCSRTaucs : public linearSystemCSR<scalar> {
-  private:
-  public:
-    linearSystemCSRTaucs()
-      {}
-    virtual ~linearSystemCSRTaucs()
-      {}
-    virtual void addToMatrix ( int il, int ic, double val) {
-      if (il <= ic)
-	linearSystemCSR<scalar>::addToMatrix(il,ic,val);
-    }
-
-    virtual int systemSolve() 
+template <class scalar>
+class linearSystemCSRTaucs : public linearSystemCSR<scalar> {
+ public:
+  linearSystemCSRTaucs(){}
+  virtual ~linearSystemCSRTaucs(){}
+  virtual void addToMatrix(int il, int ic, double val)
+  {
+    if (il <= ic)
+      linearSystemCSR<scalar>::addToMatrix(il,ic,val);
+  }
+  virtual int systemSolve() 
 #if defined(HAVE_TAUCS)
-;
+    ;
 #else
-    {throw;}
+  { throw; }
 #endif
-  };
-}
+};
 
 #endif

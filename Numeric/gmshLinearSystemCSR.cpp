@@ -1,3 +1,5 @@
+// THIS FILE WILL BE REMOVED AS SOON AS THE NEW SOLVER INTERFACE IS READY
+
 // Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
@@ -13,7 +15,7 @@
 #define SWAP(a,b)  temp=(a);(a)=(b);(b)=temp;
 #define SWAPI(a,b) tempi=(a);(a)=(b);(b)=tempi;
 
-void *CSRMalloc(size_t size)
+static void *CSRMalloc(size_t size)
 {
   void *ptr;
   if (!size) return(NULL);
@@ -21,14 +23,14 @@ void *CSRMalloc(size_t size)
   return(ptr);
 }
 
-void *CSRRealloc(void *ptr, size_t size)
+static void *CSRRealloc(void *ptr, size_t size)
 {
   if (!size) return(NULL);
   ptr = realloc(ptr,size);
   return(ptr);
 }
 
-void CSRList_Realloc(CSRList_T *liste,int n)
+static void CSRList_Realloc(CSRList_T *liste,int n)
 {
   char* temp;
   if (n <= 0) return;
@@ -46,7 +48,7 @@ void CSRList_Realloc(CSRList_T *liste,int n)
 }
 
 
-CSRList_T *CSRList_Create(int n, int incr, int size)
+static CSRList_T *CSRList_Create(int n, int incr, int size)
 {
   CSRList_T *liste;
 
@@ -66,26 +68,12 @@ CSRList_T *CSRList_Create(int n, int incr, int size)
   return(liste);
 }
 
-void CSRList_Delete(CSRList_T *liste)
+static void CSRList_Delete(CSRList_T *liste)
 {
   if (liste != 0) {
     free(liste->array);
     free(liste);
   }
-}
-
-void CSRList_Add(CSRList_T *liste, void *data)
-{
-  liste->n++;
-
-  CSRList_Realloc(liste,liste->n);
-  liste->isorder = 0;
-  memcpy(&liste->array[(liste->n - 1) * liste->size],data,liste->size);
-}
-
-int CSRList_Nbr(CSRList_T *liste)
-{
-  return(liste->n);
 }
 
 template<>
@@ -153,7 +141,7 @@ static int cmpij(INDEX_TYPE ai,INDEX_TYPE aj,INDEX_TYPE bi,INDEX_TYPE bj)
 }
 
 template <class scalar>
-void _sort2_xkws(unsigned long n, double arr[], INDEX_TYPE ai[], INDEX_TYPE aj[])
+static void _sort2_xkws(unsigned long n, double arr[], INDEX_TYPE ai[], INDEX_TYPE aj[])
 {
   unsigned long i,ir=n,j,k,l=1;
   int *istack,jstack=0;
@@ -245,12 +233,12 @@ void _sort2_xkws(unsigned long n, double arr[], INDEX_TYPE ai[], INDEX_TYPE aj[]
 }
 
 template <class scalar>
-void sortColumns(int NbLines, 
-                 int nnz, 
-                 INDEX_TYPE *ptr, 
-                 INDEX_TYPE *jptr, 
-                 INDEX_TYPE *ai, 
-                 scalar *a)
+static void sortColumns(int NbLines, 
+                        int nnz, 
+                        INDEX_TYPE *ptr, 
+                        INDEX_TYPE *jptr, 
+                        INDEX_TYPE *ai, 
+                        scalar *a)
 {
   // replace pointers by lines
   int *count = new int [NbLines];

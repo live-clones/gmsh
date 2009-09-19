@@ -1,3 +1,5 @@
+// THIS FILE WILL BE REMOVED AS SOON AS THE NEW SOLVER INTERFACE IS READY
+
 // Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
@@ -10,20 +12,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "gmshLinearSystem.h"
-
-typedef int INDEX_TYPE ;
-
-typedef struct {
-  int nmax;
-  int size;
-  int incr;
-  int n;
-  int isorder;
-  char *array;
-} CSRList_T;
-
-void CSRList_Add(CSRList_T *liste, void *data);
-int  CSRList_Nbr(CSRList_T *liste);
+#include "linearSystemCSR.h"
 
 template <class scalar>
 class gmshLinearSystemCSR : public gmshLinearSystem<scalar> {
