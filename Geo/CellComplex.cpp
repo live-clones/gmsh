@@ -102,7 +102,7 @@ CellComplex::CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> su
   int tag = 1;
   for(int i = 0; i < 4; i++){
     for(citer cit = firstCell(i); cit != lastCell(i); cit++){
-      Cell* cell = *cit;
+      //Cell* cell = *cit;
       //cell->setTag(tag);
       tag++;
     }

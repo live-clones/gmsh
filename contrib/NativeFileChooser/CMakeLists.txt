@@ -7,4 +7,5 @@ set(SRC
   Fl_Native_File_Chooser.cxx
 )
 
-append_gmsh_src(contrib/NativeFileChooser "${SRC}")
+file(GLOB_RECURSE HDR RELATIVE ${CMAKE_SOURCE_DIR}/contrib/NativeFileChooser *.H)
+append_gmsh_src(contrib/NativeFileChooser "${SRC};${HDR}")

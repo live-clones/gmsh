@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _GMSH_MATRIX_H_
-#define _GMSH_MATRIX_H_
+#ifndef _FULL_MATRIX_H_
+#define _FULL_MATRIX_H_
 
 #include <math.h>
 #include <stdio.h>

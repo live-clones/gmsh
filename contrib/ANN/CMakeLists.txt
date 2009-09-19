@@ -20,4 +20,5 @@ set(SRC
   src/perf.cpp
 )
 
-append_gmsh_src(contrib/ANN "${SRC}")
+file(GLOB_RECURSE HDR RELATIVE ${CMAKE_SOURCE_DIR}/contrib/ANN *.h)
+append_gmsh_src(contrib/ANN "${SRC};${HDR}")

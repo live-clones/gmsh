@@ -9,4 +9,5 @@ set(SRC
   recurCut.cpp
 )
 
-append_gmsh_src(contrib/DiscreteIntegration "${SRC}")
+file(GLOB_RECURSE HDR RELATIVE ${CMAKE_SOURCE_DIR}/contrib/DiscreteIntegration *.h)
+append_gmsh_src(contrib/DiscreteIntegration "${SRC};${HDR}")

@@ -447,7 +447,9 @@ class CQuadrangle : public Cell, public MQuadrangle
      MQuadrangle::getEdgeVertices(num, v);
    }
    
-   void printCell() const { printf("Cell dimension: %d, Vertices: %d %d %d, in subdomain: %d\n", getDim(), _v[0]->getNum(), _v[1]->getNum(), _v[2]->getNum(), _v[3]->getNum(), _inSubdomain); }
+   void printCell() const { printf("Cell dimension: %d, Vertices: %d %d %d %d, in subdomain: %d\n", 
+                                    getDim(), _v[0]->getNum(), _v[1]->getNum(), _v[2]->getNum(), 
+                                    _v[3]->getNum(), _inSubdomain); }
 };
 
 

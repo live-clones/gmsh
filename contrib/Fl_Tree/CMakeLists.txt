@@ -10,4 +10,5 @@ set(SRC
   Fl_Tree_Prefs.cxx
 )
 
-append_gmsh_src(contrib/Fl_Tree "${SRC}")
+file(GLOB_RECURSE HDR RELATIVE ${CMAKE_SOURCE_DIR}/contrib/Fl_Tree *.H)
+append_gmsh_src(contrib/Fl_Tree "${SRC};${HDR}")

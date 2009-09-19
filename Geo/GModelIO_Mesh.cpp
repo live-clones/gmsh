@@ -596,7 +596,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     if(n) elements[(*it)->quadrangles[0]->getTypeForMSH()] += n;
     n = p * (*it)->polygons.size();
     if(n) elements[(*it)->polygons[0]->getTypeForMSH()] += n;
-    for(int i = 0; i < (*it)->polygons.size(); i++)
+    for(unsigned int i = 0; i < (*it)->polygons.size(); i++)
       if((*it)->polygons[i]->ownsParent()) {
         parents[0][(*it)->polygons[i]->getParent()] = (*it);
         numParents += p;
@@ -614,7 +614,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     if(n) elements[(*it)->pyramids[0]->getTypeForMSH()] += n;
     n = p * (*it)->polyhedra.size();
     if(n) elements[(*it)->polyhedra[0]->getTypeForMSH()] += n;
-    for(int i = 0; i < (*it)->polyhedra.size(); i++)
+    for(unsigned int i = 0; i < (*it)->polyhedra.size(); i++)
       if((*it)->polyhedra[i]->ownsParent()) {
         parents[1][(*it)->polyhedra[i]->getParent()] = (*it);
         numParents += p;

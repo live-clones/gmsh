@@ -38,4 +38,5 @@ set(SRC
   ${opt}/bfgs.cpp ${opt}/linsearch.cpp ${opt}/linopt.cpp
 )
 
-append_gmsh_src(contrib/Netgen "${SRC}")
+file(GLOB_RECURSE HDR RELATIVE ${CMAKE_SOURCE_DIR}/contrib/Netgen *.h)
+append_gmsh_src(contrib/Netgen "${SRC};${HDR}")

@@ -33,7 +33,7 @@ class elasticityTerm : public femTerm<double, double> {
   public:
   elasticityTerm(GModel *gm, double E, double nu, int iField) : 
     femTerm<double, double>(gm), _E(E), _nu(nu), _iField(iField) {}
-  void setVector(const SVector3 &f) {_volumeForce = f;}
+  void setVector(const SVector3 &f) { _volumeForce = f; }
   void elementMatrix(MElement *e, fullMatrix<double> &m) const;
   void elementVector(MElement *e, fullVector<double> &m) const;
 };

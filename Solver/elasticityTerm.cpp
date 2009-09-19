@@ -95,9 +95,9 @@ void elasticityTerm::elementVector(MElement *e, fullVector<double> &m) const
     const double detJ = e->getJacobian(u, v, w, jac);
     e->getShapeFunctions(u, v, w, ff);
     for (int j = 0; j < nbNodes; j++){
-      m(j)           += _volumeForce.x() *ff[j] * weight * detJ *.5;
-      m(j+nbNodes)   += _volumeForce.y() *ff[j] * weight * detJ *.5;
-      m(j+2*nbNodes) += _volumeForce.z() *ff[j] * weight * detJ *.5;
+      m(j) += _volumeForce.x() *ff[j] * weight * detJ *.5;
+      m(j + nbNodes) += _volumeForce.y() *ff[j] * weight * detJ *.5;
+      m(j + 2 * nbNodes) += _volumeForce.z() *ff[j] * weight * detJ *.5;
     }
   } 
 }

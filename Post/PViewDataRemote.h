@@ -34,7 +34,7 @@ class PViewDataRemote : public PViewData {
   SBoundingBox3d getBoundingBox(int step=-1){ return _bbox; }
   double getTime(int step)
   {
-    if(step >= 0 && step < _time.size()) return _time[step];
+    if(step >= 0 && step < (int)_time.size()) return _time[step];
     return 0.; 
   }
   int getNumElements(int step=-1, int ent=-1)
@@ -48,7 +48,7 @@ class PViewDataRemote : public PViewData {
   void setBoundingBox(SBoundingBox3d bbox){ _bbox = bbox; }
   void setTime(int step, double time)
   {
-    if(step >= _time.size()) _time.resize(step + 1);
+    if(step >= (int)_time.size()) _time.resize(step + 1);
     _time[step] = time;
   }
 };

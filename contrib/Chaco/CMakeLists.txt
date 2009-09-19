@@ -88,4 +88,5 @@ set(SRC
   util/vecscale.c 
 )
 
-append_gmsh_src(contrib/Chaco "${SRC}")
+file(GLOB_RECURSE HDR RELATIVE ${CMAKE_SOURCE_DIR}/contrib/Chaco *.h)
+append_gmsh_src(contrib/Chaco "${SRC};${HDR}")

@@ -10,4 +10,5 @@ set(SRC
   gmp_blas.c
 )
 
-append_gmsh_src(contrib/kbipack "${SRC}")
+file(GLOB_RECURSE HDR RELATIVE ${CMAKE_SOURCE_DIR}/contrib/kbipack *.h)
+append_gmsh_src(contrib/kbipack "${SRC};${HDR}")
