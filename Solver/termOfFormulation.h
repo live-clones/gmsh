@@ -32,7 +32,7 @@ namespace gsolver {
     virtual Dof getLocalDofR(MElement *e, int iRow) const = 0;
     // default behavior : symmetric
     virtual Dof getLocalDofC(MElement *e, int iCol) const
-    {getLocalDofR(e, iCol);}
+    { return getLocalDofR(e, iCol); }
   public:
     femTerm(GModel *gm) : _gm(gm) {}
     virtual ~femTerm (){}
