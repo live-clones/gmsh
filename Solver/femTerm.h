@@ -10,7 +10,7 @@
 #include <map>
 #include <vector>
 #include "fullMatrix.h"
-#include "gmshFunction.h"
+#include "simpleFunction.h"
 #include "dofManager.h"
 #include "GModel.h"
 #include "MElement.h"
@@ -72,7 +72,7 @@ class femTerm {
     }
   }
   void dirichletNodalBC(int physical, int dim, int comp, int field,
-                        const gmshFunction<dataVec> &e,
+                        const simpleFunction<dataVec> &e,
                         dofManager<dataVec,dataMat> &dm)
   {
     std::vector<MVertex *> v;
@@ -82,7 +82,7 @@ class femTerm {
       dm.fixVertex(v[i], comp, field, e(v[i]->x(), v[i]->y(), v[i]->z()));
   }
   void neumannNodalBC(int physical, int dim, int comp,int field,
-                      const gmshFunction<dataVec> &fct,
+                      const simpleFunction<dataVec> &fct,
                       dofManager<dataVec,dataMat> &dm)
   {
     std::map<int, std::vector<GEntity*> > groups[4];

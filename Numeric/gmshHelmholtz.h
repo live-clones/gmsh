@@ -10,7 +10,7 @@
 
 #include <complex>
 #include "gmshTermOfFormulation.h"
-#include "gmshFunction.h"
+#include "simpleFunction.h"
 #include "Gmsh.h"
 #include "GModel.h"
 #include "MElement.h"
@@ -18,7 +18,7 @@
 
 class gmshHelmholtzTerm : public gmshNodalFemTerm<std::complex<double> > {
  private:
-  const gmshFunction<std::complex<double> > *_waveNumber;
+  const simpleFunction<std::complex<double> > *_waveNumber;
   const int _iField ;
  protected:
   virtual int sizeOfR(MElement *e) const { return e->getNumVertices(); }
@@ -30,7 +30,7 @@ class gmshHelmholtzTerm : public gmshNodalFemTerm<std::complex<double> > {
     *iFieldR = _iField;
   }
  public:
-  gmshHelmholtzTerm(GModel *gm, gmshFunction<std::complex<double> > *waveNumber, 
+  gmshHelmholtzTerm(GModel *gm, simpleFunction<std::complex<double> > *waveNumber, 
                     int iField = 0) 
   : gmshNodalFemTerm<std::complex<double> >(gm), _waveNumber(waveNumber), _iField(iField){}
   virtual void elementMatrix(MElement *e, fullMatrix<std::complex<double> > &m) const;

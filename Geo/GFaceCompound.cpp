@@ -700,7 +700,7 @@ void GFaceCompound::parametrize(iterationStep step) const
   Msg::Info("Parametrizing Surface %d coordinate (ITER %d)", tag(), step); 
   
   gmshAssembler<double> myAssembler(_lsys);
-  gmshFunction<double> ONE(1.0);
+  simpleFunction<double> ONE(1.0);
 
   if(_type == UNITCIRCLE){
     // maps the boundary onto a circle
@@ -849,8 +849,8 @@ void GFaceCompound::parametrize_conformal() const
     }    
   }    
 
-  gmshFunction<double> ONE(1.0);
-  gmshFunction<double> MONE(-1.0 );
+  simpleFunction<double> ONE(1.0);
+  simpleFunction<double> MONE(-1.0 );
   gmshLaplaceTerm laplace1(model(), &ONE, 1);
   gmshLaplaceTerm laplace2(model(), &ONE, 2);
   gmshCrossConfTerm cross12(model(), &ONE, 1 , 2);
@@ -900,7 +900,7 @@ void GFaceCompound::compute_distance() const
   double L  = norm(SVector3(bbox.max(), bbox.min())); 
   //printf("L=%g \n", L);
   double mu = L/28;
-  gmshFunction<double>  DIFF(mu*mu);
+  simpleFunction<double>  DIFF(mu*mu);
   gmshAssembler<double> myAssembler(_lsys);
   gmshDistanceTerm distance(model(), &DIFF, 1);
 

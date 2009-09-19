@@ -8,7 +8,7 @@
 
 #include <assert.h>
 #include "femTerm.h"
-#include "gmshFunction.h"
+#include "simpleFunction.h"
 #include "Gmsh.h"
 #include "GModel.h"
 #include "MElement.h"
@@ -19,7 +19,7 @@
 template<class scalar>
 class helmoltzTerm : public femTerm<scalar, scalar> {
  protected:
-  const gmshFunction<scalar> *_k, *_a;
+  const simpleFunction<scalar> *_k, *_a;
   const int _iFieldR;
   int _iFieldC ;
  public:
@@ -36,8 +36,8 @@ class helmoltzTerm : public femTerm<scalar, scalar> {
   }
   public:
   helmoltzTerm(GModel *gm, int iFieldR, int iFieldC, 
-               gmshFunction<scalar> *k, 
-               gmshFunction<scalar> *a) : 
+               simpleFunction<scalar> *k, 
+               simpleFunction<scalar> *a) : 
     femTerm<scalar,scalar>(gm), _k(k), _a(a), _iFieldR(iFieldR), _iFieldC(iFieldC){}
   virtual void elementMatrix(MElement *e, fullMatrix<scalar> &m) const
   {

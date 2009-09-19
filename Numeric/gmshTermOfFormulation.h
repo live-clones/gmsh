@@ -12,7 +12,7 @@
 #include <map>
 #include <vector>
 #include "fullMatrix.h"
-#include "gmshFunction.h"
+#include "simpleFunction.h"
 #include "gmshAssembler.h"
 #include "GModel.h"
 #include "MElement.h"
@@ -107,7 +107,7 @@ class gmshNodalFemTerm : public gmshTermOfFormulation<scalar> {
                     int dim,
                     int comp,
                     int field,
-                    const gmshFunction<scalar> &e,
+                    const simpleFunction<scalar> &e,
                     gmshAssembler<scalar> &lsys)
   {
     std::vector<MVertex *> v;
@@ -120,7 +120,7 @@ class gmshNodalFemTerm : public gmshTermOfFormulation<scalar> {
                   int dim,
                   int comp,
                   int field,
-                  const gmshFunction<scalar> &fct,
+                  const simpleFunction<scalar> &fct,
                   gmshAssembler<scalar> &lsys)
   {
     std::map<int, std::vector<GEntity*> > groups[4];

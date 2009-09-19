@@ -151,7 +151,7 @@ void elasticitySolver::solve()
        it != edgeDisplacements.end(); ++it){
     elasticityTerm El(pModel, 1, 1, _tag);
     El.dirichletNodalBC(it->first.first, 1, it->first.second, _tag, 
-                        gmshFunction<double>(it->second), *pAssembler);
+                        simpleFunction<double>(it->second), *pAssembler);
     printf("-- Fixing edge %3d comp %1d to %8.5f\n", 
            it->first.first, it->first.second, it->second);
   }
@@ -160,7 +160,7 @@ void elasticitySolver::solve()
        it != faceDisplacements.end(); ++it){
     elasticityTerm El(pModel, 1, 1, _tag);
     El.dirichletNodalBC(it->first.first, 2, it->first.second, _tag, 
-                        gmshFunction<double>(it->second), *pAssembler);
+                        simpleFunction<double>(it->second), *pAssembler);
     printf("-- Fixing face %3d comp %1d to %8.5f\n", 
            it->first.first, it->first.second, it->second);
   }
@@ -203,9 +203,9 @@ void elasticitySolver::solve()
     elasticityTerm El(pModel, 1, 1, _tag);
     int iEdge = it->first;
     SVector3 f = it->second;
-    El.neumannNodalBC(iEdge, 1, 0, _tag, gmshFunction<double>(f.x()), *pAssembler);
-    El.neumannNodalBC(iEdge, 1, 1, _tag, gmshFunction<double>(f.y()), *pAssembler);
-    El.neumannNodalBC(iEdge, 1, 2, _tag, gmshFunction<double>(f.z()), *pAssembler);
+    El.neumannNodalBC(iEdge, 1, 0, _tag, simpleFunction<double>(f.x()), *pAssembler);
+    El.neumannNodalBC(iEdge, 1, 1, _tag, simpleFunction<double>(f.y()), *pAssembler);
+    El.neumannNodalBC(iEdge, 1, 2, _tag, simpleFunction<double>(f.z()), *pAssembler);
     printf("-- Force on edge %3d : %8.5f %8.5f %8.5f\n", iEdge, f.x(), f.y(), f.z());
   }
 
@@ -215,9 +215,9 @@ void elasticitySolver::solve()
     elasticityTerm El(pModel, 1, 1, _tag);
     int iFace = it->first;
     SVector3 f = it->second;
-    El.neumannNodalBC(iFace, 2, 0, _tag, gmshFunction<double>(f.x()), *pAssembler);
-    El.neumannNodalBC(iFace, 2, 1, _tag, gmshFunction<double>(f.y()), *pAssembler);
-    El.neumannNodalBC(iFace, 2, 2, _tag, gmshFunction<double>(f.z()), *pAssembler);
+    El.neumannNodalBC(iFace, 2, 0, _tag, simpleFunction<double>(f.x()), *pAssembler);
+    El.neumannNodalBC(iFace, 2, 1, _tag, simpleFunction<double>(f.y()), *pAssembler);
+    El.neumannNodalBC(iFace, 2, 2, _tag, simpleFunction<double>(f.z()), *pAssembler);
     printf("-- Force on face %3d : %8.5f %8.5f %8.5f\n", iFace, f.x(), f.y(), f.z());
   }
   

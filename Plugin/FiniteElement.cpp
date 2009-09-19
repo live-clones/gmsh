@@ -68,7 +68,7 @@ StringXString *GMSH_FiniteElementPlugin::getOptionStr(int iopt)
 }
 
 template<class scalar>
-class gmshMathEvalFunction : public gmshFunction<scalar> {
+class gmshMathEvalFunction : public simpleFunction<scalar> {
  private:
   std::string _str;
   mathEvaluator *_f;

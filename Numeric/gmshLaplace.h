@@ -9,7 +9,7 @@
 #define _GMSH_LAPLACE_H_
 
 #include "gmshTermOfFormulation.h"
-#include "gmshFunction.h"
+#include "simpleFunction.h"
 #include "Gmsh.h"
 #include "GModel.h"
 #include "MElement.h"
@@ -17,7 +17,7 @@
 
 class gmshLaplaceTerm : public gmshNodalFemTerm<double> {
  protected:
-  const gmshFunction<double> *_diffusivity;
+  const simpleFunction<double> *_diffusivity;
   const int _iField;
   int _iFieldB ;
  public:
@@ -36,7 +36,7 @@ class gmshLaplaceTerm : public gmshNodalFemTerm<double> {
     *iFieldR = _iFieldB;
   }
  public:
-  gmshLaplaceTerm(GModel *gm, gmshFunction<double> *diffusivity, int iField = 0, int iFieldB=-1) : 
+  gmshLaplaceTerm(GModel *gm, simpleFunction<double> *diffusivity, int iField = 0, int iFieldB=-1) : 
     gmshNodalFemTerm<double>(gm), _diffusivity(diffusivity), _iField(iField)
     {
       _iFieldB = (iFieldB==-1) ? _iField : iFieldB;

@@ -9,7 +9,7 @@
 #define _GMSH_PROJECTION_H_
 
 #include "gmshTermOfFormulation.h"
-#include "gmshFunction.h"
+#include "simpleFunction.h"
 #include "Gmsh.h"
 #include "GModel.h"
 #include "MElement.h"

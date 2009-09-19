@@ -7,7 +7,7 @@
 #define _GMSH_CONVEX_H_
 
 #include "gmshTermOfFormulation.h"
-#include "gmshFunction.h"
+#include "simpleFunction.h"
 #include "Gmsh.h"
 #include "GModel.h"
 #include "MElement.h"
@@ -15,7 +15,7 @@
 
 class gmshConvexCombinationTerm : public gmshNodalFemTerm<double> {
  protected:
-  const gmshFunction<double> *_diffusivity;
+  const simpleFunction<double> *_diffusivity;
   const int _iField ;
  public:
   virtual int sizeOfR(MElement *e) const { return e->getNumVertices(); }
@@ -27,7 +27,7 @@ class gmshConvexCombinationTerm : public gmshNodalFemTerm<double> {
     *iFieldR = _iField;
   }
  public:
-  gmshConvexCombinationTerm(GModel *gm, gmshFunction<double> *diffusivity, int iField = 0) : 
+  gmshConvexCombinationTerm(GModel *gm, simpleFunction<double> *diffusivity, int iField = 0) : 
     gmshNodalFemTerm<double>(gm), _diffusivity(diffusivity), _iField(iField){}
   virtual void elementMatrix(MElement *e, fullMatrix<double> &m) const;
 };
