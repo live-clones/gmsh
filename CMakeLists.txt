@@ -631,7 +631,7 @@ include_directories(Common Fltk Geo Graphics Mesh Solver Numeric Parser Plugin
   contrib/Tetgen contrib/Fl_Tree contrib/gmm contrib/kbipack
   ${EXTERNAL_INCLUDES} ${CMAKE_BINARY_DIR}/Common)
 
-# create group sources for easier navigation in IDEs
+# group sources for easier navigation in IDEs
 foreach(DIR ${GMSH_DIRS})
   source_group(${DIR} REGULAR_EXPRESSION ${DIR}/.*)
 endforeach(DIR)
