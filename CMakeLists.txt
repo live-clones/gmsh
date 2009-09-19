@@ -227,6 +227,7 @@ add_subdirectory(Common)
 add_subdirectory(Numeric)
 add_subdirectory(Geo)
 add_subdirectory(Mesh)
+add_subdirectory(Solver)
 
 if(ENABLE_POST)
   add_subdirectory(Post)
@@ -477,21 +478,17 @@ if(ENABLE_MED OR ENABLE_CGNS)
 endif(ENABLE_MED OR ENABLE_CGNS)
 
 if(ENABLE_TAUCS)
-  find_library(TAUCS_LIB taucs PATHS ENV CASROOT 
-               PATH_SUFFIXES lib)
+  find_library(TAUCS_LIB taucs)
   if(TAUCS_LIB)
-   find_path(TAUCS_INC "taucs.h" PATHS ENV CASROOT PATH_SUFFIXES src 
-              include)
-   if(TAUCS_INC)
-    set(HAVE_TAUCS TRUE)
-    list(APPEND CONFIG_OPTIONS "Taucs")
-    list(APPEND EXTERNAL_LIBRARIES ${TAUCS_LIB})
-    list(APPEND EXTERNAL_INCLUDES ${TAUCS_INC})
-   endif(TAUCS_INC)
+    find_path(TAUCS_INC "taucs.h" PATH_SUFFIXES src include)
+    if(TAUCS_INC)
+      set(HAVE_TAUCS TRUE)
+      list(APPEND CONFIG_OPTIONS "Taucs")
+      list(APPEND EXTERNAL_LIBRARIES ${TAUCS_LIB})
+      list(APPEND EXTERNAL_INCLUDES ${TAUCS_INC})
+    endif(TAUCS_INC)
   endif(TAUCS_LIB)
 endif(ENABLE_TAUCS)
-
-add_subdirectory(Solver)
 
 if(ENABLE_OCC)
   if(WIN32)
@@ -707,9 +704,14 @@ if(BISON AND FLEX)
 endif(BISON AND FLEX)
 
 if(UNIX)
-  add_custom_target(purge COMMAND ${CMAKE_SOURCE_DIR}/utils/misc/purge.sh
+  # cannot use cmake's file search functions here (they would only
+  # find files existing at configuration time)
+  add_custom_target(purge 
+                    COMMAND rm -f `find . -name *~ -o -name *~~`
+                    COMMAND rm -f `find . -name .DS_Store -o -name debug?.pos`
                     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-  add_custom_target(etags COMMAND etags `find . -name *.cpp -o -name *.h -o -name *.y`
+  add_custom_target(etags 
+                    COMMAND etags `find . -name *.cpp -o -name *.h -o -name *.y`
                     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endif(UNIX)
 
