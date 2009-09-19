@@ -11,27 +11,27 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 
-template <class scalar> class gmshMatrix;
+template <class scalar> class fullMatrix;
 
 template <class scalar>
-class gmshVector
+class fullVector
 {
  private:
   int _r;
   scalar *_data;
-  friend class gmshMatrix<scalar>;
+  friend class fullMatrix<scalar>;
  public:
-  gmshVector(int r) : _r(r)
+  fullVector(int r) : _r(r)
   {
     _data = new scalar[_r];
     scale(0.);
   }
-  gmshVector(const gmshVector<scalar> &other) : _r(other._r)
+  fullVector(const fullVector<scalar> &other) : _r(other._r)
   {
     _data = new scalar[_r];
     for(int i = 0; i < _r; ++i) _data[i] = other._data[i];
   }
-  ~gmshVector() { if(_data) delete [] _data; }
+  ~fullVector() { if(_data) delete [] _data; }
   inline scalar operator () (int i) const
   {
     return _data[i];
@@ -55,7 +55,7 @@ class gmshVector
       for(int i = 0; i < _r; ++i) _data[i] *= s;
   }
 
-  inline scalar operator *(const gmshVector<scalar> & other)
+  inline scalar operator *(const fullVector<scalar> & other)
   {
     scalar s = 0.0;
     for(int i = 0; i < _r; ++i) s += _data[i]*other._data[i];
@@ -73,27 +73,27 @@ class gmshVector
 };
 
 template <class scalar>
-class gmshMatrix
+class fullMatrix
 {
  private:
   int _r, _c;
   scalar *_data;
  public:
-  gmshMatrix(int r, int c) : _r(r), _c(c)
+  fullMatrix(int r, int c) : _r(r), _c(c)
   {
     _data = new scalar[_r * _c];
     scale(0.);
   }
-  gmshMatrix(const gmshMatrix<scalar> &other) : _r(other._r), _c(other._c)
+  fullMatrix(const fullMatrix<scalar> &other) : _r(other._r), _c(other._c)
   {
     _data = new scalar[_r * _c];
     gM_memcpy(other);
   }
-  gmshMatrix() : _r(0), _c(0), _data(0) {}
-  ~gmshMatrix() { if(_data) delete [] _data; }
+  fullMatrix() : _r(0), _c(0), _data(0) {}
+  ~fullMatrix() { if(_data) delete [] _data; }
   inline int size1() const { return _r; }
   inline int size2() const { return _c; }
-  gmshMatrix<scalar> & operator = (const gmshMatrix<scalar> &other)
+  fullMatrix<scalar> & operator = (const fullMatrix<scalar> &other)
   {
     if(this != &other){
       _r = other._r; 
@@ -103,7 +103,7 @@ class gmshMatrix
     }
     return *this;
   }
-  void gM_memcpy(const gmshMatrix<scalar> &other)
+  void gM_memcpy(const fullMatrix<scalar> &other)
   {
     for(int i = 0; i < _r * _c; ++i) _data[i] = other._data[i];
   }
@@ -115,14 +115,14 @@ class gmshMatrix
   {
     return _data[i + _r * j];
   }
-  void copy(const gmshMatrix<scalar> &a, int i0, int ni, int j0, int nj, 
+  void copy(const fullMatrix<scalar> &a, int i0, int ni, int j0, int nj, 
             int desti0, int destj0)
   {
     for(int i = i0, desti = desti0; i < i0 + ni; i++, desti++)
       for(int j = j0, destj = destj0; j < j0 + nj; j++, destj++)
         (*this)(desti, destj) = a(i, j);
   }
-  void mult(const gmshMatrix<scalar> &b, gmshMatrix<scalar> &c)
+  void mult(const fullMatrix<scalar> &b, fullMatrix<scalar> &c)
 #if !defined(HAVE_BLAS)
   {
     c.scale(0.);
@@ -133,11 +133,11 @@ class gmshMatrix
   }
 #endif
   ;
-  void gemm(gmshMatrix<scalar> &a, gmshMatrix<scalar> &b, 
+  void gemm(fullMatrix<scalar> &a, fullMatrix<scalar> &b, 
             scalar alpha=1., scalar beta=1.)
 #if !defined(HAVE_BLAS)
   {
-    gmshMatrix<scalar> temp(a.size1(), b.size2());
+    fullMatrix<scalar> temp(a.size1(), b.size2());
     a.mult(b, temp);
     temp.scale(alpha);
     scale(beta);
@@ -160,13 +160,13 @@ class gmshMatrix
   {
     for(int i = 0; i < _r * _c; ++i) _data[i] += a;
   }
-  inline void add(const gmshMatrix<scalar> &m) 
+  inline void add(const fullMatrix<scalar> &m) 
   {
     for(int i = 0; i < size1(); i++)
       for(int j = 0; j < size2(); j++)
         (*this)(i, j) += m(i, j);
   }
-  void mult(const gmshVector<scalar> &x, gmshVector<scalar> &y)
+  void mult(const fullVector<scalar> &x, fullVector<scalar> &y)
 #if !defined(HAVE_BLAS)
   {
     y.scale(0.);
@@ -176,9 +176,9 @@ class gmshMatrix
   }
 #endif
   ;
-  inline gmshMatrix<scalar> transpose()
+  inline fullMatrix<scalar> transpose()
   {
-    gmshMatrix<scalar> T(size2(), size1());
+    fullMatrix<scalar> T(size2(), size1());
     for(int i = 0; i < size1(); i++)
       for(int j = 0; j < size2(); j++)
         T(j, i) = (*this)(i, j);
@@ -197,7 +197,7 @@ class gmshMatrix
         _data[j + _r * i] = t;
       }
   }
-  bool lu_solve(const gmshVector<scalar> &rhs, gmshVector<scalar> &result)
+  bool lu_solve(const fullVector<scalar> &rhs, fullVector<scalar> &result)
 #if !defined(HAVE_LAPACK)
   {
     Msg::Error("LU factorization requires LAPACK");
@@ -213,10 +213,10 @@ class gmshMatrix
   }
 #endif
   ;
-  bool eig(gmshMatrix<scalar> &VL, // left eigenvectors 
-           gmshVector<double> &DR, // Real part of eigenvalues
-           gmshVector<double> &DI, // Im part of eigen
-           gmshMatrix<scalar> &VR,
+  bool eig(fullMatrix<scalar> &VL, // left eigenvectors 
+           fullVector<double> &DR, // Real part of eigenvalues
+           fullVector<double> &DI, // Im part of eigen
+           fullMatrix<scalar> &VR,
            bool sortRealPart=false) // if true: sorted from min 'DR' to max 'DR'
 #if !defined(HAVE_LAPACK)
   {
@@ -225,7 +225,7 @@ class gmshMatrix
   }
 #endif
   ;
-  bool invert(gmshMatrix<scalar> &result)
+  bool invert(fullMatrix<scalar> &result)
 #if !defined(HAVE_LAPACK)
   {
     Msg::Error("LU factorization requires LAPACK");
@@ -233,11 +233,11 @@ class gmshMatrix
   }
 #endif
   ;
-  gmshMatrix<scalar> cofactor(int i, int j) const 
+  fullMatrix<scalar> cofactor(int i, int j) const 
   {
     int ni = size1();
     int nj = size2();
-    gmshMatrix<scalar> cof(ni - 1, nj - 1);
+    fullMatrix<scalar> cof(ni - 1, nj - 1);
     for(int I = 0; I < ni; I++){
       for(int J = 0; J < nj; J++){
         if(J != j && I != i)
@@ -254,7 +254,7 @@ class gmshMatrix
   }
 #endif
   ;
-  bool svd(gmshMatrix<scalar> &V, gmshVector<scalar> &S)
+  bool svd(fullMatrix<scalar> &V, fullVector<scalar> &S)
 #if !defined(HAVE_LAPACK)
   {
     Msg::Error("Singular value decomposition requires LAPACK");

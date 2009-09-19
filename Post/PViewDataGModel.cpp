@@ -93,7 +93,7 @@ bool PViewDataGModel::finalize()
 void PViewDataGModel::_addInterpolationMatricesForElement(MElement *e)
 {
   int type = e->getType();
-  const gmshFunctionSpace *fs = e->getFunctionSpace();
+  const functionSpace *fs = e->getFunctionSpace();
   if(fs){
     if(e->getPolynomialOrder() > 1)
       setInterpolationMatrices(type, fs->coefficients, fs->monomials,

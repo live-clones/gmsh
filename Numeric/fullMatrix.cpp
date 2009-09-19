@@ -6,7 +6,7 @@
 #include <complex>
 #include <string.h>
 #include "GmshConfig.h"
-#include "GmshMatrix.h"
+#include "fullMatrix.h"
 #include "GmshMessage.h"
 
 //#if defined(_MSC_VER)
@@ -39,7 +39,7 @@ extern "C" {
 }
 
 template<> 
-void gmshMatrix<double>::mult(const gmshMatrix<double> &b, gmshMatrix<double> &c)
+void fullMatrix<double>::mult(const fullMatrix<double> &b, fullMatrix<double> &c)
 {
   int M = c.size1(), N = c.size2(), K = _c;
   int LDA = _r, LDB = b.size1(), LDC = c.size1();
@@ -49,8 +49,8 @@ void gmshMatrix<double>::mult(const gmshMatrix<double> &b, gmshMatrix<double> &c
 }
 
 template<> 
-void gmshMatrix<std::complex<double> >::mult(const gmshMatrix<std::complex<double> > &b, 
-                                             gmshMatrix<std::complex<double> > &c)
+void fullMatrix<std::complex<double> >::mult(const fullMatrix<std::complex<double> > &b, 
+                                             fullMatrix<std::complex<double> > &c)
 {
   int M = c.size1(), N = c.size2(), K = _c;
   int LDA = _r, LDB = b.size1(), LDC = c.size1();
@@ -60,7 +60,7 @@ void gmshMatrix<std::complex<double> >::mult(const gmshMatrix<std::complex<doubl
 }
 
 template<> 
-void gmshMatrix<double>::gemm(gmshMatrix<double> &a, gmshMatrix<double> &b, 
+void fullMatrix<double>::gemm(fullMatrix<double> &a, fullMatrix<double> &b, 
                               double alpha, double beta)
 {
   int M = size1(), N = size2(), K = a.size2();
@@ -70,8 +70,8 @@ void gmshMatrix<double>::gemm(gmshMatrix<double> &a, gmshMatrix<double> &b,
 }
 
 template<> 
-void gmshMatrix<std::complex<double> >::gemm(gmshMatrix<std::complex<double> > &a, 
-                                             gmshMatrix<std::complex<double> > &b, 
+void fullMatrix<std::complex<double> >::gemm(fullMatrix<std::complex<double> > &a, 
+                                             fullMatrix<std::complex<double> > &b, 
                                              std::complex<double> alpha, 
                                              std::complex<double> beta)
 {
@@ -82,7 +82,7 @@ void gmshMatrix<std::complex<double> >::gemm(gmshMatrix<std::complex<double> > &
 }
 
 template<> 
-void gmshMatrix<double>::mult(const gmshVector<double> &x, gmshVector<double> &y)
+void fullMatrix<double>::mult(const fullVector<double> &x, fullVector<double> &y)
 {
   int M = _r, N = _c, LDA = _r, INCX = 1, INCY = 1;
   double alpha = 1., beta = 0.;
@@ -91,8 +91,8 @@ void gmshMatrix<double>::mult(const gmshVector<double> &x, gmshVector<double> &y
 }
 
 template<> 
-void gmshMatrix<std::complex<double> >::mult(const gmshVector<std::complex<double> > &x, 
-                                             gmshVector<std::complex<double> > &y)
+void fullMatrix<std::complex<double> >::mult(const fullVector<std::complex<double> > &x, 
+                                             fullVector<std::complex<double> > &y)
 {
   int M = _r, N = _c, LDA = _r, INCX = 1, INCY = 1;
   std::complex<double> alpha = 1., beta = 0.;
@@ -123,7 +123,7 @@ extern "C" {
 }
 
 template<> 
-bool gmshMatrix<double>::invertInPlace()
+bool fullMatrix<double>::invertInPlace()
 {
   int N = size1(), nrhs = N, lda = N, ldb = N, info;
   int *ipiv = new int[N];
@@ -148,8 +148,8 @@ bool gmshMatrix<double>::invertInPlace()
 
 
 template<> 
-bool gmshMatrix<double>::eig(gmshMatrix<double> &VL, gmshVector<double> &DR,
-                             gmshVector<double> &DI, gmshMatrix<double> &VR,
+bool fullMatrix<double>::eig(fullMatrix<double> &VL, fullVector<double> &DR,
+                             fullVector<double> &DI, fullMatrix<double> &VR,
                              bool sortRealPart)
 {
   int N = size1(), info;
@@ -193,7 +193,7 @@ bool gmshMatrix<double>::eig(gmshMatrix<double> &VL, gmshVector<double> &DR,
 }
 
 template<> 
-bool gmshMatrix<double>::lu_solve(const gmshVector<double> &rhs, gmshVector<double> &result)
+bool fullMatrix<double>::lu_solve(const fullVector<double> &rhs, fullVector<double> &result)
 {
   int N = size1(), nrhs = 1, lda = N, ldb = N, info;
   int *ipiv = new int[N];
@@ -209,7 +209,7 @@ bool gmshMatrix<double>::lu_solve(const gmshVector<double> &rhs, gmshVector<doub
 }
 
 template<>
-bool gmshMatrix<double>::invert(gmshMatrix<double> &result)
+bool fullMatrix<double>::invert(fullMatrix<double> &result)
 {
   int M = size1(), N = size2(), lda = size1(), info;
   int *ipiv = new int[std::min(M, N)];
@@ -231,9 +231,9 @@ bool gmshMatrix<double>::invert(gmshMatrix<double> &result)
 }
 
 template<> 
-double gmshMatrix<double>::determinant() const
+double fullMatrix<double>::determinant() const
 {
-  gmshMatrix<double> tmp(*this);
+  fullMatrix<double> tmp(*this);
   int M = size1(), N = size2(), lda = size1(), info;
   int *ipiv = new int[std::min(M, N)];
   F77NAME(dgetrf)(&M, &N, tmp._data, &lda, ipiv, &info);
@@ -253,12 +253,12 @@ double gmshMatrix<double>::determinant() const
 }
 
 template<> 
-bool gmshMatrix<double>::svd(gmshMatrix<double> &V, gmshVector<double> &S)
+bool fullMatrix<double>::svd(fullMatrix<double> &V, fullVector<double> &S)
 {
-  gmshMatrix<double> VT(V.size2(), V.size1());
+  fullMatrix<double> VT(V.size2(), V.size1());
   int M = size1(), N = size2(), LDA = size1(), LDVT = VT.size1(), info;
   int LWORK = std::max(3 * std::min(M, N) + std::max(M, N), 5 * std::min(M, N));
-  gmshVector<double> WORK(LWORK);
+  fullVector<double> WORK(LWORK);
   F77NAME(dgesvd)("O", "A", &M, &N, _data, &LDA, S._data, _data, &LDA,
                   VT._data, &LDVT, WORK._data, &LWORK, &info);
   V = VT.transpose();
