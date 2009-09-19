@@ -119,6 +119,7 @@ macro(append_gmsh_src DIRNAME FILES)
     list(APPEND LIST ${DIRNAME}/${FILE})
   endforeach(FILE)
   set(GMSH_SRC ${GMSH_SRC};${LIST} PARENT_SCOPE)
+  set(GMSH_DIRS ${GMSH_DIRS};${DIRNAME} PARENT_SCOPE)
 endmacro(append_gmsh_src)
 
 macro(find_all_libraries VARNAME LISTNAME SUFFIX)
@@ -629,6 +630,11 @@ include_directories(Common Fltk Geo Graphics Mesh Solver Numeric Parser Plugin
   contrib/Netgen/libsrc/include contrib/Netgen/libsrc/interface
   contrib/Tetgen contrib/Fl_Tree contrib/gmm contrib/kbipack
   ${EXTERNAL_INCLUDES} ${CMAKE_BINARY_DIR}/Common)
+
+# create group sources for easier navigation in IDEs
+foreach(DIR ${GMSH_DIRS})
+  source_group(${DIR} REGULAR_EXPRESSION ${DIR}/.*)
+endforeach(DIR)
 
 # static library target: we don't build it by default (we could then
 # create the gmsh target by linking with it) because doing so slows
