@@ -84,14 +84,14 @@ class dofManager{
   }
   inline void numberDof(long int ent, int type)
   {
-      Dof key(ent, type);
-      if(fixed.find(key) != fixed.end()) return;
-      // if (constraints.find(key) != constraints.end()) return;
-      std::map<Dof, int> :: iterator it = unknown.find(key);
-      if (it == unknown.end()){
-	unsigned int size = unknown.size();
-	unknown[key] = size;
-      }
+    Dof key(ent, type);
+    if(fixed.find(key) != fixed.end()) return;
+    // if (constraints.find(key) != constraints.end()) return;
+    std::map<Dof, int> :: iterator it = unknown.find(key);
+    if (it == unknown.end()){
+      unsigned int size = unknown.size();
+      unknown[key] = size;
+    }
   }
   inline void numberVertex(MVertex*v, int iComp, int iField)
   {
