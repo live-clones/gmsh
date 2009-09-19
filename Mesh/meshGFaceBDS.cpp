@@ -425,7 +425,7 @@ void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap)
   }  
 }
 
-void gmshDelaunayizeBDS(GFace *gf, BDS_Mesh &m, int &nb_swap)
+void delaunayizeBDS(GFace *gf, BDS_Mesh &m, int &nb_swap)
 {
   nb_swap = 0;
   std::set<swapquad> configs;
@@ -640,9 +640,9 @@ void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q)
   }
 }
 
-void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT, 
-                       const bool computeNodalSizeField,
-                       std::map<MVertex*, BDS_Point*> *recoverMapInv)
+void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT, 
+                   const bool computeNodalSizeField,
+                   std::map<MVertex*, BDS_Point*> *recoverMapInv)
 {
   int IT = 0;
   int MAXNP = m.MAXPOINTNUMBER;
@@ -862,11 +862,11 @@ int gmshSolveInvalidPeriodic(GFace *gf, BDS_Mesh &m,
   return toSplit.size();
 }
 
-void gmshOptimizeMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT, 
-                         std::map<BDS_Point*,MVertex*> *recoverMap=0)
+void optimizeMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT, 
+                     std::map<BDS_Point*,MVertex*> *recoverMap=0)
 {
   int nb_swap;
-  gmshDelaunayizeBDS(gf, m, nb_swap);
+  delaunayizeBDS(gf, m, nb_swap);
 
   for (int ITER = 0; ITER < 3; ITER++){
     for (int KK = 0; KK < 4; KK++){
@@ -898,7 +898,7 @@ void delaunayPointInsertionBDS(GFace *gf, BDS_Mesh &m, BDS_Point *v, BDS_Face *f
 {
   m.split_face(f, v);
   int nb_swap = 0;
-  gmshDelaunayizeBDS(gf, m, nb_swap);
+  delaunayizeBDS(gf, m, nb_swap);
 }
 
 // build the BDS from a list of GFace
@@ -936,7 +936,7 @@ BDS_Mesh *gmsh2BDS(std::list<GFace*> &l)
   return m;
 }
 
-void gmshCollapseSmallEdges(GModel &gm)
+void collapseSmallEdges(GModel &gm)
 {
   return;
   // gm.renumberMeshVertices(true);

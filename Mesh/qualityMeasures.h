@@ -13,31 +13,31 @@ class MTriangle;
 class MTetrahedron;
 class MElement;
 
-enum gmshQualityMeasure4Triangle {QMTRI_RHO, QMTRI_COND};
-enum gmshQualityMeasure4Tet{QMTET_1, QMTET_2, QMTET_3, QMTET_ONE, QMTET_COND};
+enum qualityMeasure4Triangle {QMTRI_RHO, QMTRI_COND};
+enum qualityMeasure4Tet{QMTET_1, QMTET_2, QMTET_3, QMTET_ONE, QMTET_COND};
 
 double qmDistorsionOfMapping (MTriangle *e);
 double qmDistorsionOfMapping (MTetrahedron *e);
 
-double qmTriangle(MTriangle *f, const gmshQualityMeasure4Triangle &cr); 
-double qmTriangle(BDS_Face *f, const gmshQualityMeasure4Triangle &cr); 
+double qmTriangle(MTriangle *f, const qualityMeasure4Triangle &cr); 
+double qmTriangle(BDS_Face *f, const qualityMeasure4Triangle &cr); 
 double qmTriangle(const BDS_Point *p1, const BDS_Point *p2, const BDS_Point *p3, 
-                  const gmshQualityMeasure4Triangle &cr); 
+                  const qualityMeasure4Triangle &cr); 
 double qmTriangle(const MVertex *v1, const MVertex *v2, const MVertex *v3, 
-                  const gmshQualityMeasure4Triangle &cr);
+                  const qualityMeasure4Triangle &cr);
 double qmTriangle(const double *d1, const double *d2, const double *d3, 
-                  const gmshQualityMeasure4Triangle &cr);
+                  const qualityMeasure4Triangle &cr);
 double qmTriangle(const double &x1, const double &y1, const double &z1, 
                   const double &x2, const double &y2, const double &z2, 
                   const double &x3, const double &y3, const double &z3, 
-                  const gmshQualityMeasure4Triangle &cr);
-double qmTet(MTetrahedron *t, const gmshQualityMeasure4Tet &cr, double *volume = 0);
+                  const qualityMeasure4Triangle &cr);
+double qmTet(MTetrahedron *t, const qualityMeasure4Tet &cr, double *volume = 0);
 double qmTet(const MVertex *v1, const MVertex *v2, const MVertex *v3, 
-             const MVertex *v4, const gmshQualityMeasure4Tet &cr, double *volume = 0);
+             const MVertex *v4, const qualityMeasure4Tet &cr, double *volume = 0);
 double qmTet(const double &x1, const double &y1, const double &z1, 
              const double &x2, const double &y2, const double &z2, 
              const double &x3, const double &y3, const double &z3, 
              const double &x4, const double &y4, const double &z4, 
-             const gmshQualityMeasure4Tet &cr, double *volume = 0);
+             const qualityMeasure4Tet &cr, double *volume = 0);
 
 #endif

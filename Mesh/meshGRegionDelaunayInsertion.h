@@ -66,7 +66,7 @@ class MTet4
   {
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
   }
-  MTet4(MTetrahedron *t, const gmshQualityMeasure4Tet &qm) 
+  MTet4(MTetrahedron *t, const qualityMeasure4Tet &qm) 
     : deleted(false), base(t), gr(0)
   {
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
@@ -256,6 +256,6 @@ class MTet4Factory
   container &getAllTets(){ return allTets; }
 };
 
-void gmshOptimizeMesh(GRegion *gr, const gmshQualityMeasure4Tet &qm);
+void optimizeMesh(GRegion *gr, const qualityMeasure4Tet &qm);
 
 #endif

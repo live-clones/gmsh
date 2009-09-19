@@ -584,18 +584,18 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
   int nb_swap;
   //outputScalarField(m->triangles, "beforeswop.pos",1);
   Msg::Debug("Delaunizing the initial mesh");
-  gmshDelaunayizeBDS(gf, *m, nb_swap);
+  delaunayizeBDS(gf, *m, nb_swap);
   //outputScalarField(m->triangles, "afterswop.pos",0);
   Msg::Debug("Starting to add internal points");
 
   // start mesh generation
   if(!algoDelaunay2D(gf)){
-    gmshRefineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true,
-                      &recoverMapInv);
-    gmshOptimizeMeshBDS(gf, *m, 2);
-    gmshRefineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, false,
-                      &recoverMapInv);
-    gmshOptimizeMeshBDS(gf, *m, 2);
+    refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true,
+                  &recoverMapInv);
+    optimizeMeshBDS(gf, *m, 2);
+    refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, false,
+                  &recoverMapInv);
+    optimizeMeshBDS(gf, *m, 2);
   }
 
   computeMeshSizeFieldAccuracy(gf, *m, gf->meshStatistics.efficiency_index,
@@ -670,7 +670,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER,
   delete m;
 
   if(gf->meshAttributes.recombine)
-    gmshRecombineIntoQuads(gf);
+    recombineIntoQuads(gf);
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
                        gf->meshStatistics.average_element_shape,
@@ -1137,10 +1137,10 @@ static bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
 
   // start mesh generation
   if(!algoDelaunay2D(gf)){
-    gmshRefineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true);
-    gmshOptimizeMeshBDS(gf, *m, 2);
-    gmshRefineMeshBDS (gf, *m, -CTX::instance()->mesh.refineSteps, false);
-    gmshOptimizeMeshBDS(gf, *m, 2, &recoverMap);
+    refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true);
+    optimizeMeshBDS(gf, *m, 2);
+    refineMeshBDS(gf, *m, -CTX::instance()->mesh.refineSteps, false);
+    optimizeMeshBDS(gf, *m, 2, &recoverMap);
     // compute mesh statistics
     computeMeshSizeFieldAccuracy(gf, *m, gf->meshStatistics.efficiency_index,
                                  gf->meshStatistics.longest_edge_length,
@@ -1212,7 +1212,7 @@ static bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
   delete m;
 
   if(gf->meshAttributes.recombine)
-    gmshRecombineIntoQuads(gf);
+    recombineIntoQuads(gf);
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
                        gf->meshStatistics.average_element_shape,

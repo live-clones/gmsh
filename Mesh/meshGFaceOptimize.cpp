@@ -375,10 +375,10 @@ void laplaceSmoothing(GFace *gf)
 }
 
 
-bool gmshEdgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
-                  std::vector<MTri3*> &newTris, const gmshSwapCriterion &cr,               
-                  const std::vector<double> &Us, const std::vector<double> &Vs,
-                  const std::vector<double> &vSizes, const std::vector<double> &vSizesBGM)
+bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
+              std::vector<MTri3*> &newTris, const swapCriterion &cr,               
+              const std::vector<double> &Us, const std::vector<double> &Vs,
+              const std::vector<double> &vSizes, const std::vector<double> &vSizesBGM)
 {
   MTri3 *t2 = t1->getNeigh(iLocalEdge);
   if(!t2) return false;
@@ -539,10 +539,10 @@ inline double computeEdgeAdimLength(MVertex *v1, MVertex *v2, GFace *f,
   return 2 * (l1 + l2) / (vSizesBGM[v1->getIndex()] + vSizesBGM[v2->getIndex()]);
 }
 
-bool gmshEdgeSplit(const double lMax, MTri3 *t1, GFace *gf, int iLocalEdge,
-                   std::vector<MTri3*> &newTris, const gmshSplitCriterion &cr,             
-                   std::vector<double> &Us, std::vector<double> &Vs,
-                   std::vector<double> &vSizes, std::vector<double> &vSizesBGM)
+bool edgeSplit(const double lMax, MTri3 *t1, GFace *gf, int iLocalEdge,
+               std::vector<MTri3*> &newTris, const splitCriterion &cr,             
+               std::vector<double> &Us, std::vector<double> &Vs,
+               std::vector<double> &vSizes, std::vector<double> &vSizesBGM)
 {
   MTri3 *t2 = t1->getNeigh(iLocalEdge);
   if(!t2) return false;
@@ -698,9 +698,9 @@ void computeNeighboringTrisOfACavity(const std::vector<MTri3*> &cavity,
   }
 }
         
-bool gmshBuildVertexCavity(MTri3 *t, int iLocalVertex, MVertex **v1,
-                           std::vector<MTri3*> &cavity, std::vector<MTri3*> &outside,
-                           std::vector<MVertex*> &ring)
+bool buildVertexCavity(MTri3 *t, int iLocalVertex, MVertex **v1,
+                       std::vector<MTri3*> &cavity, std::vector<MTri3*> &outside,
+                       std::vector<MVertex*> &ring)
 {
   cavity.clear();
   ring.clear();
@@ -747,17 +747,17 @@ bool gmshBuildVertexCavity(MTri3 *t, int iLocalVertex, MVertex **v1,
   }
 }
 
-bool gmshVertexCollapse(const double lMin, MTri3 *t1, GFace *gf,
-                        int iLocalVertex, std::vector<MTri3*> &newTris,
-                        std::vector<double> &Us, std::vector<double> &Vs,
-                        std::vector<double> &vSizes, std::vector<double> &vSizesBGM)
+bool vertexCollapse(const double lMin, MTri3 *t1, GFace *gf,
+                    int iLocalVertex, std::vector<MTri3*> &newTris,
+                    std::vector<double> &Us, std::vector<double> &Vs,
+                    std::vector<double> &vSizes, std::vector<double> &vSizesBGM)
 {
   MVertex *v;
   std::vector<MTri3*> cavity;
   std::vector<MTri3*> outside;
   std::vector<MVertex*> ring;
 
-  if(!gmshBuildVertexCavity(t1, iLocalVertex, &v, cavity, outside, ring)) return false;
+  if(!buildVertexCavity(t1, iLocalVertex, &v, cavity, outside, ring)) return false;
   
   double l_min = lMin;
   int iMin = -1;
@@ -811,7 +811,7 @@ bool gmshVertexCollapse(const double lMin, MTri3 *t1, GFace *gf,
 }
 
 int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
-                 const gmshSwapCriterion &cr,
+                 const swapCriterion &cr,
                  const std::vector<double> &Us, const std::vector<double> &Vs,
                  const std::vector<double> &vSizes, const std::vector<double> &vSizesBGM)
 {
@@ -825,7 +825,7 @@ int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
     for(CONTAINER::iterator it = allTris.begin(); it != allTris.end(); ++it){
       if(!(*it)->isDeleted()){
         for(int i = 0; i < 3; i++){
-          if(gmshEdgeSwap(configs, *it, gf, i, newTris, cr, Us, Vs, vSizes, vSizesBGM)){
+          if(edgeSwap(configs, *it, gf, i, newTris, cr, Us, Vs, vSizes, vSizesBGM)){
             nbSwap++;
             break;
           }
@@ -847,7 +847,7 @@ int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
 }
 
 int edgeSplitPass(double maxLC, GFace *gf, std::set<MTri3*,compareTri3Ptr> &allTris,
-                  const gmshSplitCriterion &cr,
+                  const splitCriterion &cr,
                   std::vector<double> &Us, std::vector<double> &Vs,
                   std::vector<double> &vSizes, std::vector<double> &vSizesBGM)
 {
@@ -859,7 +859,7 @@ int edgeSplitPass(double maxLC, GFace *gf, std::set<MTri3*,compareTri3Ptr> &allT
   for(CONTAINER::iterator it = allTris.begin(); it != allTris.end(); ++it){
     if(!(*it)->isDeleted()){
       for(int i = 0; i < 3; i++){
-        if(gmshEdgeSplit(maxLC, *it, gf, i, newTris, cr, Us, Vs, vSizes, vSizesBGM)) {
+        if(edgeSplit(maxLC, *it, gf, i, newTris, cr, Us, Vs, vSizes, vSizesBGM)) {
           nbSplit++;
           break;
         }
@@ -891,7 +891,7 @@ int edgeCollapsePass(double minLC, GFace *gf, std::set<MTri3*,compareTri3Ptr> &a
   for(CONTAINER::reverse_iterator it = allTris.rbegin(); it != allTris.rend(); ++it){
     if(!(*it)->isDeleted()){
       for(int i = 0; i < 3; i++){
-        if(gmshVertexCollapse(minLC, *it, gf, i, newTris, Us, Vs, vSizes, vSizesBGM)) {
+        if(vertexCollapse(minLC, *it, gf, i, newTris, Us, Vs, vSizes, vSizesBGM)) {
           nbCollapse++;
           break;
         }
@@ -947,7 +947,7 @@ struct RecombineTriangle
   }
 };
 
-static void _gmshRecombineIntoQuads(GFace *gf)
+static void _recombineIntoQuads(GFace *gf)
 {
   std::set<MVertex*> emb_edgeverts;
   {
@@ -1027,12 +1027,12 @@ static void _gmshRecombineIntoQuads(GFace *gf)
   gf->triangles = triangles2;
 }
 
-void gmshRecombineIntoQuads(GFace *gf)
+void recombineIntoQuads(GFace *gf)
 {
-  _gmshRecombineIntoQuads(gf);
+  _recombineIntoQuads(gf);
   laplaceSmoothing(gf);
-  _gmshRecombineIntoQuads(gf);
+  _recombineIntoQuads(gf);
   laplaceSmoothing(gf);
-  _gmshRecombineIntoQuads(gf);
+  _recombineIntoQuads(gf);
   laplaceSmoothing(gf);
 }

@@ -348,7 +348,7 @@ void recur_classify(MTet4 *t, std::list<MTet4*> &theRegion,
 
 void adaptMeshGRegion::operator () (GRegion *gr)
 {
-  const gmshQualityMeasure4Tet qm = QMTET_2;
+  const qualityMeasure4Tet qm = QMTET_2;
 
   typedef std::list<MTet4 *> CONTAINER ;
   CONTAINER allTets;
@@ -405,7 +405,7 @@ void adaptMeshGRegion::operator () (GRegion *gr)
       if (!(*it)->isDeleted()){
         for (int i = 0; i < 4; i++){
           for (int j = 0; j < 4; j++){
-            if (gmshCollapseVertex(newTets, *it, i, j, QMTET_2)){
+            if (collapseVertex(newTets, *it, i, j, QMTET_2)){
               nbCollapse++; i = j = 10;
             }
           }
@@ -420,7 +420,7 @@ void adaptMeshGRegion::operator () (GRegion *gr)
         double qq = (*it)->getQuality();
         if (qq < qMin){
           for (int i = 0; i < 4; i++){
-            if (gmshFaceSwap(newTets, *it, i, qm)){
+            if (faceSwap(newTets, *it, i, qm)){
               nbFSwap++;
               break;
             }
@@ -437,7 +437,7 @@ void adaptMeshGRegion::operator () (GRegion *gr)
         double qq = (*it)->getQuality();
         if (qq < qMin)
           for (int i = 0; i < 6; i++){
-            if (gmshEdgeSwap(newTets, *it, i, qm)) {
+            if (edgeSwap(newTets, *it, i, qm)) {
               nbESwap++;
               break; 
             }
@@ -472,7 +472,7 @@ void adaptMeshGRegion::operator () (GRegion *gr)
         double qq = (*it)->getQuality();
         if (qq < qMin)
           for (int i = 0; i < 4; i++){
-            if (gmshSmoothVertex(*it, i, qm)) nbReloc++;
+            if (smoothVertex(*it, i, qm)) nbReloc++;
           }
       }
     }
@@ -529,7 +529,7 @@ void adaptMeshGRegion::operator () (GRegion *gr)
 }
 
 //template <class CONTAINER, class DATA> 
-void gmshOptimizeMesh(GRegion *gr, const gmshQualityMeasure4Tet &qm)
+void optimizeMesh(GRegion *gr, const qualityMeasure4Tet &qm)
 {
   typedef std::list<MTet4 *> CONTAINER ;
   CONTAINER allTets;
@@ -589,7 +589,7 @@ void gmshOptimizeMesh(GRegion *gr, const gmshQualityMeasure4Tet &qm)
         double qq = (*it)->getQuality();
         if (qq < qMin){
           for (int i = 0; i < 4; i++){
-            if (gmshFaceSwap(newTets, *it, i, qm)){
+            if (faceSwap(newTets, *it, i, qm)){
               nbFSwap++;
               break;
             }
@@ -606,7 +606,7 @@ void gmshOptimizeMesh(GRegion *gr, const gmshQualityMeasure4Tet &qm)
         double qq = (*it)->getQuality();
         if (qq < qMin)
           for (int i = 0; i < 6; i++){
-            if (gmshEdgeSwap(newTets, *it, i, qm)) {
+            if (edgeSwap(newTets, *it, i, qm)) {
               nbESwap++;
               break;
             }
@@ -627,7 +627,7 @@ void gmshOptimizeMesh(GRegion *gr, const gmshQualityMeasure4Tet &qm)
       int nbSliversWeCanDoSomething = 0;
       for(unsigned int i = 0; i < illegals.size(); i++)
         if(!(illegals[i]->isDeleted())){
-          if(gmshSliverRemoval(newTets, illegals[i], qm))
+          if(sliverRemoval(newTets, illegals[i], qm))
             nbSliversWeCanDoSomething++;
           nbSlivers++;
         }
@@ -655,7 +655,7 @@ void gmshOptimizeMesh(GRegion *gr, const gmshQualityMeasure4Tet &qm)
         double qq = (*it)->getQuality();
         if (qq < qMin)
           for (int i = 0; i < 4; i++){
-            if (gmshSmoothVertex(*it, i, qm)) nbReloc++;
+            if (smoothVertex(*it, i, qm)) nbReloc++;
           }
       }
     }

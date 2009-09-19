@@ -13,25 +13,25 @@
 #include "GmshMessage.h"
 
 double qmTriangle(const BDS_Point *p1, const BDS_Point *p2, const BDS_Point *p3, 
-                  const gmshQualityMeasure4Triangle &cr)
+                  const qualityMeasure4Triangle &cr)
 {
   return qmTriangle(p1->X, p1->Y, p1->Z, p2->X, p2->Y, p2->Z, p3->X, p3->Y, p3->Z, cr);
 }
 
-double qmTriangle(BDS_Face *t, const gmshQualityMeasure4Triangle &cr)
+double qmTriangle(BDS_Face *t, const qualityMeasure4Triangle &cr)
 {
   BDS_Point *n[4];
   t->getNodes(n);
   return qmTriangle(n[0], n[1], n[2], cr);
 }
 
-double qmTriangle(MTriangle*t, const gmshQualityMeasure4Triangle &cr)
+double qmTriangle(MTriangle*t, const qualityMeasure4Triangle &cr)
 {
   return qmTriangle(t->getVertex(0), t->getVertex(1), t->getVertex(2), cr);
 }
 
 double qmTriangle(const MVertex *v1, const MVertex *v2, const MVertex *v3, 
-                  const gmshQualityMeasure4Triangle &cr)
+                  const qualityMeasure4Triangle &cr)
 {
   return qmTriangle(v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z(),
                     v3->x(), v3->y(), v3->z(), cr);
@@ -43,7 +43,7 @@ double qmTriangle(const MVertex *v1, const MVertex *v2, const MVertex *v3,
 double qmTriangle(const double &xa, const double &ya, const double &za, 
                   const double &xb, const double &yb, const double &zb, 
                   const double &xc, const double &yc, const double &zc, 
-                  const gmshQualityMeasure4Triangle &cr)
+                  const qualityMeasure4Triangle &cr)
 {
   double quality;
   switch(cr){
@@ -86,14 +86,14 @@ double qmTriangle(const double &xa, const double &ya, const double &za,
   return quality;
 }
 
-double qmTet(MTetrahedron *t, const gmshQualityMeasure4Tet &cr, double *volume)
+double qmTet(MTetrahedron *t, const qualityMeasure4Tet &cr, double *volume)
 {
   return qmTet(t->getVertex(0), t->getVertex(1), t->getVertex(2), t->getVertex(3),
                cr, volume);
 }
 
 double qmTet(const MVertex *v1, const MVertex *v2, const MVertex *v3,
-             const MVertex *v4, const gmshQualityMeasure4Tet &cr, double *volume)
+             const MVertex *v4, const qualityMeasure4Tet &cr, double *volume)
 {
   return qmTet(v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z(), 
                v3->x(), v3->y(), v3->z(), v4->x(), v4->y(), v4->z(), cr, volume);
@@ -103,7 +103,7 @@ double qmTet(const double &x1, const double &y1, const double &z1,
              const double &x2, const double &y2, const double &z2, 
              const double &x3, const double &y3, const double &z3, 
              const double &x4, const double &y4, const double &z4, 
-             const gmshQualityMeasure4Tet &cr, double *volume)
+             const qualityMeasure4Tet &cr, double *volume)
 {
   switch(cr){
   case QMTET_ONE:

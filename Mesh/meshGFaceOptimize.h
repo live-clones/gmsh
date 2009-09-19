@@ -24,19 +24,19 @@ void buildEdgeToTriangle(std::vector<MTriangle*> &, e2t_cont &adj);
 void laplaceSmoothing(GFace *gf);
 void edgeSwappingLawson(GFace *gf);
 
-enum gmshSwapCriterion {SWCR_DEL, SWCR_QUAL, SWCR_NORM, SWCR_CLOSE};
-enum gmshSplitCriterion {SPCR_CLOSE, SPCR_QUAL, SPCR_ALLWAYS};
+enum swapCriterion {SWCR_DEL, SWCR_QUAL, SWCR_NORM, SWCR_CLOSE};
+enum splitCriterion {SPCR_CLOSE, SPCR_QUAL, SPCR_ALLWAYS};
 
 int edgeSwapPass(GFace *gf, 
                  std::set<MTri3*, compareTri3Ptr> &allTris, 
-                 const gmshSwapCriterion &cr,
+                 const swapCriterion &cr,
                  const std::vector<double> &Us, 
                  const std::vector<double> &Vs,
                  const std::vector<double> &vSizes, 
                  const std::vector<double> &vSizesBGM);
 int edgeSplitPass(double maxLC, GFace *gf, 
                   std::set<MTri3*, compareTri3Ptr> &allTris,
-                  const gmshSplitCriterion &cr,   
+                  const splitCriterion &cr,   
                   std::vector<double> &Us,
                   std::vector<double> &Vs,
                   std::vector<double> &vSizes ,
@@ -57,7 +57,7 @@ void buildMeshGenerationDataStructures(GFace *gf,
                                        std::vector<double> &Vs);
 void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
                            std::vector<double> &Us, std::vector<double> &Vs);
-void gmshRecombineIntoQuads(GFace *gf);
+void recombineIntoQuads(GFace *gf);
 
 struct swapquad{
   int v[4];

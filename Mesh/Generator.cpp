@@ -425,7 +425,7 @@ static void Mesh2D(GModel *m)
     }
   }
   
-  // gmshCollapseSmallEdges (*m);
+  // collapseSmallEdges(*m);
 
   double t2 = Cpu();
   CTX::instance()->meshTimer[1] = t2 - t1;

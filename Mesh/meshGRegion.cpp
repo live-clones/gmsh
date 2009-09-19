@@ -665,7 +665,7 @@ void optimizeMeshGRegionGmsh::operator() (GRegion *gr)
   if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) return;
   
   Msg::StatusBar(2, true, "Optimizing volume %d", gr->tag());
-  gmshOptimizeMesh(gr, QMTET_2);  
+  optimizeMesh(gr, QMTET_2);  
 }
 
 bool buildFaceSearchStructure(GModel *model, fs_cont &search)
