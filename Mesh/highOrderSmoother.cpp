@@ -100,9 +100,9 @@ void highOrderSmoother::updateTargetLocation(MVertex*v, const SPoint3 &p3,
 
 struct p2data{
   GFace *gf;
-  MTriangle *t1,*t2;
+  MTriangle *t1, *t2;
   MVertex *n12;
-  fullMatrix<double> *m1,*m2;
+  fullMatrix<double> *m1, *m2;
   highOrderSmoother *s;
   p2data(GFace *_gf, MTriangle *_t1, MTriangle *_t2, MVertex *_n12, 
          highOrderSmoother *_s)
@@ -111,16 +111,18 @@ struct p2data{
     elasticityTerm el(0, 1.e3, .3333,1);
     s->moveToStraightSidedLocation(t1);
     s->moveToStraightSidedLocation(t2);
-    m1 = new  fullMatrix<double>(3 * t1->getNumVertices(),
-                                 3 * t1->getNumVertices());
-    m2 = new  fullMatrix<double>(3 * t2->getNumVertices(),
-                                 3 * t2->getNumVertices()); 
-    el.elementMatrix(t1,*m1);
-    el.elementMatrix(t2,*m2);
+    m1 = new fullMatrix<double>(3 * t1->getNumVertices(),
+                                3 * t1->getNumVertices());
+    m2 = new fullMatrix<double>(3 * t2->getNumVertices(),
+                                3 * t2->getNumVertices()); 
+    SElement se1(t1), se2(t2);
+    el.elementMatrix(&se1, *m1);
+    el.elementMatrix(&se2, *m2);
     s->moveToTargetLocation(t1);
     s->moveToTargetLocation(t2);
   }
-  ~p2data(){
+  ~p2data()
+  {
     delete m1;
     delete m2;
   }
@@ -143,12 +145,14 @@ struct pNdata{
                                  3 * t1->getNumVertices());
     m2 = new  fullMatrix<double>(3 * t2->getNumVertices(),
                                  3 * t2->getNumVertices()); 
-    el.elementMatrix(t1,*m1);
-    el.elementMatrix(t2,*m2);
+    SElement se1(t1), se2(t2);
+    el.elementMatrix(&se1, *m1);
+    el.elementMatrix(&se2, *m2);
     s->moveToTargetLocation(t1);
     s->moveToTargetLocation(t2);
   }
-  ~pNdata(){
+  ~pNdata()
+  {
     delete m1;
     delete m2;
   }
@@ -551,7 +555,7 @@ double highOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
   if (myAssembler.sizeOfR()){
 
     for (unsigned int i = 0; i < v.size(); i++){
-      MElement *e = v[i];            
+      MElement *e = v[i];
       int nbNodes = e->getNumVertices();
       const int n2 = 2 * nbNodes;
       const int n3 = 3 * nbNodes;
@@ -564,21 +568,18 @@ double highOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
       fullVector<double> R2(n2);
       fullMatrix<double> J23K33(n2, n3);
       K33.set_all(0.0);
-      El.elementMatrix(e, K33);
+      SElement se(e);
+      El.elementMatrix(&se, K33);
       computeMetricVector(gf, e, J32, J23, D3);
       J23K33.gemm(J23, K33, 1, 0);
       K22.gemm(J23K33, J32, 1, 0);
       J23K33.mult(D3, R2);
       for (int j = 0; j < n2; j++){
-        MVertex *vR;
-        int iCompR, iFieldR;
-	Dof RDOF = El.getLocalDofR(e, j);
-        myAssembler.assemble(RDOF,-R2(j));
+	Dof RDOF = El.getLocalDofR(&se, j);
+        myAssembler.assemble(RDOF, -R2(j));
         for (int k = 0; k < n2; k++){
-          MVertex *vC;
-          int iCompC, iFieldC;
-          Dof CDOF = El.getLocalDofC(e, k);
-          myAssembler.assemble(RDOF,CDOF,K22(j, k));
+          Dof CDOF = El.getLocalDofC(&se, k);
+          myAssembler.assemble(RDOF, CDOF, K22(j, k));
         }
       }
     }
@@ -697,9 +698,10 @@ void highOrderSmoother::smooth(std::vector<MElement*> &all)
 
     // assembly of the elasticity term on the
     // set of elements
-    for (int i=0;i<v.size();i++)
-      El.addToMatrix(myAssembler, v[i]);
-    
+    for (int i = 0; i < v.size(); i++){
+      SElement se(v[i]);
+      El.addToMatrix(myAssembler, &se);
+    }
     // solve the system
     lsys->systemSolve();
   }

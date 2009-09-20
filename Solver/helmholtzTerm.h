@@ -11,7 +11,7 @@
 #include "simpleFunction.h"
 #include "Gmsh.h"
 #include "GModel.h"
-#include "MElement.h"
+#include "SElement.h"
 #include "fullMatrix.h"
 #include "Numeric.h"
 
@@ -28,18 +28,25 @@ class helmoltzTerm : public femTerm<scalar, scalar> {
     : femTerm<scalar,scalar>(gm), _k(k), _a(a), _iFieldR(iFieldR), 
       _iFieldC(iFieldC) {}
   // one dof per vertex (nodal fem)
-  virtual int sizeOfR(MElement *e) const { return e->getNumVertices(); }
-  virtual int sizeOfC(MElement *e) const { return e->getNumVertices(); }
-  Dof getLocalDofR(MElement *e, int iRow) const
-  {
-    return Dof(e->getVertex(iRow)->getNum(), _iFieldR);
+  virtual int sizeOfR(SElement *se) const 
+  { 
+    return se->getMeshElement()->getNumVertices(); 
   }
-  Dof getLocalDofC(MElement *e, int iRow) const
-  {
-    return Dof(e->getVertex(iRow)->getNum(), _iFieldC);
+  virtual int sizeOfC(SElement *se) const 
+  { 
+    return se->getMeshElement()->getNumVertices(); 
   }
-  virtual void elementMatrix(MElement *e, fullMatrix<scalar> &m) const
+  Dof getLocalDofR(SElement *se, int iRow) const
   {
+    return Dof(se->getMeshElement()->getVertex(iRow)->getNum(), _iFieldR);
+  }
+  Dof getLocalDofC(SElement *se, int iRow) const
+  {
+    return Dof(se->getMeshElement()->getVertex(iRow)->getNum(), _iFieldC);
+  }
+  virtual void elementMatrix(SElement *se, fullMatrix<scalar> &m) const
+  {
+    MElement *e = se->getMeshElement();
     // compute integration rule
     const int integrationOrder = (_a) ? 2 * e->getPolynomialOrder() : 
       2 * (e->getPolynomialOrder() - 1);

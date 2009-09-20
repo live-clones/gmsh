@@ -13,7 +13,7 @@
 #include "simpleFunction.h"
 #include "dofManager.h"
 #include "GModel.h"
-#include "MElement.h"
+#include "SElement.h"
 
 // a nodal finite element term : variables are always defined at nodes
 // of the mesh
@@ -25,20 +25,20 @@ class femTerm {
   femTerm(GModel *gm) : _gm(gm) {}
   virtual ~femTerm(){}
   // return the number of columns of the element matrix
-  virtual int sizeOfC(MElement*) const = 0;
+  virtual int sizeOfC(SElement *se) const = 0;
   // return the number of rows of the element matrix
-  virtual int sizeOfR(MElement*) const = 0;
+  virtual int sizeOfR(SElement *se) const = 0;
   // in a given element, return the dof associated to a given row (column)
   // of the local element matrix
-  virtual Dof getLocalDofR(MElement *e, int iRow) const = 0;
+  virtual Dof getLocalDofR(SElement *se, int iRow) const = 0;
   // default behavior: symmetric
-  virtual Dof getLocalDofC(MElement *e, int iCol) const
+  virtual Dof getLocalDofC(SElement *se, int iCol) const
   { 
-    return getLocalDofR(e, iCol); 
+    return getLocalDofR(se, iCol); 
   }
   // compute the elementary matrix
-  virtual void elementMatrix(MElement *e, fullMatrix<dataMat> &m) const = 0;
-  virtual void elementVector(MElement *e, fullVector<dataVec> &m) const 
+  virtual void elementMatrix(SElement *se, fullMatrix<dataMat> &m) const = 0;
+  virtual void elementVector(SElement *se, fullVector<dataVec> &m) const 
   {
     m.scale(0.0);
   }
@@ -47,29 +47,29 @@ class femTerm {
   void addToMatrix(dofManager<dataVec, dataMat> &dm, GEntity *ge) const
   {
     for(unsigned int i = 0; i < ge->getNumMeshElements(); i++){
-      MElement *e = ge->getMeshElement(i);
-      addToMatrix(dm, e);
+      SElement se(ge->getMeshElement(i));
+      addToMatrix(dm, &se);
     }
   }
   // add the contribution from a single element to the dof manager
-  void addToMatrix(dofManager<dataVec, dataMat> &dm, MElement *e) const
+  void addToMatrix(dofManager<dataVec, dataMat> &dm, SElement *se) const
   {
-    const int nbR = sizeOfR(e);
-    const int nbC = sizeOfC(e);
+    const int nbR = sizeOfR(se);
+    const int nbC = sizeOfC(se);
     fullMatrix<dataMat> localMatrix(nbR, nbC);
-    elementMatrix(e, localMatrix);
-    addToMatrix(dm, localMatrix, e);
+    elementMatrix(se, localMatrix);
+    addToMatrix(dm, localMatrix, se);
   }
   void addToMatrix(dofManager<dataVec, dataMat> &dm, 
                    fullMatrix<dataMat> &localMatrix, 
-                   MElement *e) const
+                   SElement *se) const
   {
     const int nbR = localMatrix.size1();
     const int nbC = localMatrix.size2();
     for (int j = 0; j < nbR; j++){
-      Dof R = getLocalDofR(e, j);
+      Dof R = getLocalDofR(se, j);
       for (int k = 0; k < nbC; k++){
-        Dof C = getLocalDofC(e, k);
+        Dof C = getLocalDofC(se, k);
         dm.assemble(R, C, localMatrix(j, k));
       }
     }
@@ -120,15 +120,15 @@ class femTerm {
       }
     }
   }
-  void addToRightHandSide(dofManager<dataVec,dataMat> &dm, GEntity *ge) const 
+  void addToRightHandSide(dofManager<dataVec, dataMat> &dm, GEntity *ge) const 
   {
     for(unsigned int i = 0; i < ge->getNumMeshElements(); i++){
-      MElement *e = ge->getMeshElement(i);
-      int nbR = sizeOfR(e);
+      SElement se(ge->getMeshElement(i));
+      int nbR = sizeOfR(&se);
       fullVector<dataVec> V(nbR);
-      elementVector(e, V);
+      elementVector(&se, V);
       // assembly
-      for (int j = 0; j < nbR; j++) dm.assemble(getLocalDofR(e, j), V(j));
+      for (int j = 0; j < nbR; j++) dm.assemble(getLocalDofR(&se, j), V(j));
     }
   }
 };

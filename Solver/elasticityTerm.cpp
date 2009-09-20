@@ -6,8 +6,9 @@
 #include "elasticityTerm.h"
 #include "Numeric.h"
 
-void elasticityTerm::elementMatrix(MElement *e, fullMatrix<double> &m) const
+void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
 {
+  MElement *e = se->getMeshElement();
   int nbNodes = e->getNumVertices();
   int integrationOrder = 3 * (e->getPolynomialOrder() - 1) ;
   int npts;
@@ -75,8 +76,9 @@ void elasticityTerm::elementMatrix(MElement *e, fullMatrix<double> &m) const
   } 
 }
 
-void elasticityTerm::elementVector(MElement *e, fullVector<double> &m) const
+void elasticityTerm::elementVector(SElement *se, fullVector<double> &m) const
 {
+  MElement *e = se->getMeshElement();
   int nbNodes = e->getNumVertices();
   int integrationOrder = 2 * e->getPolynomialOrder();
   int npts;

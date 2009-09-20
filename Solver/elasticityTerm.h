@@ -9,7 +9,7 @@
 #include "femTerm.h"
 #include "Gmsh.h"
 #include "GModel.h"
-#include "MElement.h"
+#include "SElement.h"
 #include "fullMatrix.h"
 
 class elasticityTerm : public femTerm<double, double> {
@@ -19,12 +19,19 @@ class elasticityTerm : public femTerm<double, double> {
   SVector3 _volumeForce;
  public:
   // element matrix size : 3 dofs per vertex
-  virtual int sizeOfR(MElement *e) const { return 3 * e->getNumVertices(); }
-  virtual int sizeOfC(MElement *e) const { return 3 * e->getNumVertices(); }
+  virtual int sizeOfR(SElement *se) const 
+  {
+    return 3 * se->getMeshElement()->getNumVertices(); 
+  }
+  virtual int sizeOfC(SElement *se) const 
+  { 
+    return 3 * se->getMeshElement()->getNumVertices(); 
+  }
   // order dofs in the local matrix :
   // dx1, dx2 ... dxn, dy1, ..., dyn, dz1, ... dzn 
-  Dof getLocalDofR(MElement *e, int iRow) const 
+  Dof getLocalDofR(SElement *se, int iRow) const 
   {
+    MElement *e = se->getMeshElement();
     int iCompR = iRow / e->getNumVertices();
     int ithLocalVertex = iRow % e->getNumVertices();
     return Dof(e->getVertex(ithLocalVertex)->getNum(),
@@ -34,8 +41,8 @@ class elasticityTerm : public femTerm<double, double> {
   elasticityTerm(GModel *gm, double E, double nu, int iField) : 
     femTerm<double, double>(gm), _E(E), _nu(nu), _iField(iField) {}
   void setVector(const SVector3 &f) { _volumeForce = f; }
-  void elementMatrix(MElement *e, fullMatrix<double> &m) const;
-  void elementVector(MElement *e, fullVector<double> &m) const;
+  void elementMatrix(SElement *se, fullMatrix<double> &m) const;
+  void elementVector(SElement *se, fullVector<double> &m) const;
 };
 
 #endif
