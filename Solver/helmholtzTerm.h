@@ -25,8 +25,8 @@ class helmoltzTerm : public femTerm<scalar, scalar> {
  public:
   helmoltzTerm(GModel *gm, int iFieldR, int iFieldC, simpleFunction<scalar> *k,
                simpleFunction<scalar> *a) 
-    : femTerm<scalar,scalar>(gm), _k(k), _a(a), _iFieldR(iFieldR), 
-      _iFieldC(iFieldC) {}
+    : femTerm<scalar, scalar>(gm), _iFieldR(iFieldR), _iFieldC(iFieldC),
+      _k(k), _a(a) {}
   // one dof per vertex (nodal fem)
   virtual int sizeOfR(SElement *se) const 
   { 
