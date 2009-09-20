@@ -30,7 +30,7 @@ class Dof{
     i1 = t % 10000;
     i2 = t / 10000;
   }
-  bool operator < ( const Dof & other) const
+  bool operator < (const Dof &other) const
   {
     if(_entity < other._entity) return true;
     if(_entity > other._entity) return false;
@@ -74,13 +74,13 @@ class dofManager{
    
   public:
   dofManager(linearSystem<dataMat> *l) : _current(l) { _linearSystems["A"] = l; }
-  inline void fixDof(long int ent, int type, const dataVec & value)
+  inline void fixDof(long int ent, int type, const dataVec &value)
   {
     fixed[Dof(ent, type)] = value;
   }
-  inline void fixVertex(MVertex*v, int iComp, int iField, const dataVec & value)
+  inline void fixVertex(MVertex*v, int iComp, int iField, const dataVec &value)
   {
-    fixDof(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField ), value);
+    fixDof(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField), value);
   }
   inline void numberDof(long int ent, int type)
   {
