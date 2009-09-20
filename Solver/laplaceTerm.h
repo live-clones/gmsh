@@ -12,8 +12,8 @@
 template<class scalar>
 class laplaceTerm : public helmholtzTerm<scalar> {
  public:
-  laplaceTerm(GModel *gm, int iFieldR, simpleFunction<scalar> *k)
-    : helmholtzTerm<scalar>(gm, iFieldR, iFieldR, k, 0) {}
+  laplaceTerm(GModel *gm, int iField, simpleFunction<scalar> *k)
+    : helmholtzTerm<scalar>(gm, iField, iField, k, 0) {}
 };
 
 #endif

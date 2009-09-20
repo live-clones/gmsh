@@ -10,9 +10,9 @@
 
 class distanceTerm : public helmholtzTerm<double> {
  public:
-  distanceTerm(GModel *gm, int iFieldR, int iFieldC, 
-               simpleFunction<double> *k, simpleFunction<double> *a)
-    : helmholtzTerm<double>(gm, iFieldR, iFieldC, k, a) {}
+  distanceTerm(GModel *gm, int iField, simpleFunction<double> *k,
+               simpleFunction<double> *a)
+    : helmholtzTerm<double>(gm, iField, iField, k, a) {}
   void elementVector(SElement *se, fullVector<double> &m) const
   {
     MElement *e = se->getMeshElement();
