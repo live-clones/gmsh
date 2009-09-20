@@ -43,7 +43,6 @@
 #include "Probe.h"
 #include "FieldView.h"
 #include "GSHHS.h"
-#include "FiniteElement.h"
 #include "HomologyComputation.h"
 
 // for testing purposes only :-)
@@ -216,8 +215,6 @@ void PluginManager::registerDefaultPlugins()
                       ("Evaluate", GMSH_RegisterEvaluatePlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("CutParametric", GMSH_RegisterCutParametricPlugin()));
-    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
-                      ("FiniteElement", GMSH_RegisterFiniteElementPlugin()));
 #if defined(HAVE_KBIPACK)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("HomologyComputation", GMSH_RegisterHomologyComputationPlugin()));

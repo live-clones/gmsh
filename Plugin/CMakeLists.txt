@@ -23,7 +23,6 @@ set(SRC
   Annotate.cpp Remove.cpp
   Probe.cpp
   HarmonicToTime.cpp ModulusPhase.cpp
-  FiniteElement.cpp
   HomologyComputation.cpp
 )
 

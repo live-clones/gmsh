@@ -57,9 +57,7 @@ class elasticitySolver{
   // std::pair<PView *, PView*> buildErrorEstimateView
   //   (const std::string &errorFileName, double, int);
   // std::pair<PView *, PView*> buildErrorEstimateView
-  //   (const std::string &errorFileName, const gmshElasticityData &ref, double, int);
+  //   (const std::string &errorFileName, const elasticityData &ref, double, int);
 };
 
 #endif
-  
-  

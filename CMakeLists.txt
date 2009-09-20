@@ -70,9 +70,9 @@ set(GMSH_API
     Mesh/meshGFaceDelaunayInsertion.h
   Post/PView.h Post/PViewData.h Plugin/PluginManager.h
   Graphics/drawContext.h
-  Solver/dofManager.h Solver/elasticityTerm.h Solver/femTerm.h 
+  Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h Solver/elasticityTerm.h
     Numeric/gmshAssembler.h Numeric/gmshTermOfFormulation.h 
-    Numeric/gmshLaplace.h Numeric/gmshElasticity.h Numeric/gmshLinearSystem.h
+    Numeric/gmshLaplace.h Numeric/gmshLinearSystem.h
     Numeric/gmshLinearSystemGmm.h Numeric/gmshLinearSystemFull.h 
     Numeric/gmshLinearSystemCSR.h 
   contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h 
