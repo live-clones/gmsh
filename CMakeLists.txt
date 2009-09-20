@@ -709,7 +709,6 @@ if(UNIX)
   # find files existing at configuration time)
   add_custom_target(purge 
                     COMMAND rm -f `find . -name *~ -o -name *~~`
-                    COMMAND rm -f `find . -name .DS_Store -o -name debug?.pos`
                     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
   add_custom_target(etags 
                     COMMAND etags `find . -name *.cpp -o -name *.h -o -name *.y`
