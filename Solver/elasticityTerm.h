@@ -37,9 +37,9 @@ class elasticityTerm : public femTerm<double, double> {
     return Dof(e->getVertex(ithLocalVertex)->getNum(),
                Dof::createTypeWithTwoInts(iCompR, _iField));
   }
-  public:
-  elasticityTerm(GModel *gm, double E, double nu, int iField) : 
-    femTerm<double, double>(gm), _E(E), _nu(nu), _iField(iField) {}
+ public:
+  elasticityTerm(GModel *gm, double E, double nu, int iField)
+    : femTerm<double, double>(gm), _E(E), _nu(nu), _iField(iField) {}
   void setVector(const SVector3 &f) { _volumeForce = f; }
   void elementMatrix(SElement *se, fullMatrix<double> &m) const;
   void elementVector(SElement *se, fullVector<double> &m) const;
