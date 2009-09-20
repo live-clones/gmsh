@@ -65,9 +65,6 @@ float char2float(char c);
 void eigenvalue(double mat[3][3], double re[3]);
 void FindCubicRoots(const double coeff[4], double re[3], double im[3]);
 void eigsort(double d[3]);
-double InterpolateIso(double *X, double *Y, double *Z, 
-                      double *Val, double V, int I1, int I2, 
-                      double *XI, double *YI ,double *ZI);
 void gradSimplex(double *x, double *y, double *z, double *v, double *grad);
 double ComputeVonMises(double *val);
 double ComputeScalarRep(int numComp, double *val);

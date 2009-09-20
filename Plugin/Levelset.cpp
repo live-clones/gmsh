@@ -6,6 +6,7 @@
 #include "Levelset.h"
 #include "MakeSimplex.h"
 #include "Numeric.h"
+#include "Iso.h"
 #include "adaptiveData.h"
 #include "GmshDefines.h"
 

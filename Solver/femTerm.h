@@ -22,6 +22,8 @@ class femTerm {
  protected:
   GModel *_gm;
  public:
+  femTerm(GModel *gm) : _gm(gm) {}
+  virtual ~femTerm (){}
   // return the number of columns of the element matrix
   virtual int sizeOfC(MElement*) const = 0;
   // return the number of rows of the element matrix
@@ -29,27 +31,28 @@ class femTerm {
   // in a given element, return the dof associated to a given row (column)
   // of the local element matrix
   virtual Dof getLocalDofR(MElement *e, int iRow) const = 0;
-  // default behavior : symmetric
+  // default behavior: symmetric
   virtual Dof getLocalDofC(MElement *e, int iCol) const
   { 
     return getLocalDofR(e, iCol); 
   }
- public:
-  femTerm(GModel *gm) : _gm(gm) {}
-  virtual ~femTerm (){}
+  // compute the elementary matrix
   virtual void elementMatrix(MElement *e, fullMatrix<dataMat> &m) const = 0;
   virtual void elementVector(MElement *e, fullVector<dataVec> &m) const 
   {
     m.scale(0.0);
   }
-  void addToMatrix(dofManager<dataVec,dataMat> &dm, GEntity *ge) const
+  // add the contribution from all the elements in the entity ge to
+  // the dof manager
+  void addToMatrix(dofManager<dataVec, dataMat> &dm, GEntity *ge) const
   {
     for(unsigned int i = 0; i < ge->getNumMeshElements(); i++){
       MElement *e = ge->getMeshElement(i);
       addToMatrix(dm, e);
     }
   }
-  void addToMatrix(dofManager<dataVec,dataMat> &dm, MElement *e) const
+  // add the contribution from a single element to the dof manager
+  void addToMatrix(dofManager<dataVec, dataMat> &dm, MElement *e) const
   {
     const int nbR = sizeOfR(e);
     const int nbC = sizeOfC(e);
@@ -57,7 +60,7 @@ class femTerm {
     elementMatrix(e, localMatrix);
     addToMatrix(dm, localMatrix, e);
   }
-  void addToMatrix(dofManager<dataVec,dataMat> &dm, 
+  void addToMatrix(dofManager<dataVec, dataMat> &dm, 
                    fullMatrix<dataMat> &localMatrix, 
                    MElement *e) const
   {
@@ -67,7 +70,7 @@ class femTerm {
       Dof R = getLocalDofR(e, j);
       for (int k = 0; k < nbC; k++){
         Dof C = getLocalDofC(e, k);
-        dm.assemble(R,C, localMatrix(j, k));
+        dm.assemble(R, C, localMatrix(j, k));
       }
     }
   }
@@ -83,7 +86,7 @@ class femTerm {
   }
   void neumannNodalBC(int physical, int dim, int comp,int field,
                       const simpleFunction<dataVec> &fct,
-                      dofManager<dataVec,dataMat> &dm)
+                      dofManager<dataVec, dataMat> &dm)
   {
     std::map<int, std::vector<GEntity*> > groups[4];
     GModel *m = _gm;
@@ -120,12 +123,12 @@ class femTerm {
   void addToRightHandSide(dofManager<dataVec,dataMat> &dm, GEntity *ge) const 
   {
     for(unsigned int i = 0; i < ge->getNumMeshElements(); i++){
-      MElement *e = ge->getMeshElement (i);
+      MElement *e = ge->getMeshElement(i);
       int nbR = sizeOfR(e);
-      fullVector<dataVec> V (nbR);
-      elementVector (e, V);
+      fullVector<dataVec> V(nbR);
+      elementVector(e, V);
       // assembly
-      for (int j=0;j<nbR;j++)dm.assemble(getLocalDofR(e,j),V(j));
+      for (int j = 0; j < nbR; j++) dm.assemble(getLocalDofR(e, j), V(j));
     }
   }
 };

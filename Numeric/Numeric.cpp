@@ -337,25 +337,6 @@ float char2float(char c)
   else return f;
 }
 
-double InterpolateIso(double *X, double *Y, double *Z,
-                      double *Val, double V, int I1, int I2,
-                      double *XI, double *YI, double *ZI)
-{
-  if(Val[I1] == Val[I2]) {
-    *XI = X[I1];
-    *YI = Y[I1];
-    *ZI = Z[I1];
-    return 0;
-  }
-  else {
-    double coef = (V - Val[I1]) / (Val[I2] - Val[I1]);
-    *XI = coef * (X[I2] - X[I1]) + X[I1];
-    *YI = coef * (Y[I2] - Y[I1]) + Y[I1];
-    *ZI = coef * (Z[I2] - Z[I1]) + Z[I1];
-    return coef;
-  }
-}
-
 void gradSimplex(double *x, double *y, double *z, double *v, double *grad)
 {
   // p = p1 * (1-u-v-w) + p2 u + p3 v + p4 w

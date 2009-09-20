@@ -23,6 +23,10 @@ class helmoltzTerm : public femTerm<scalar, scalar> {
   const int _iFieldR;
   int _iFieldC ;
  public:
+  helmoltzTerm(GModel *gm, int iFieldR, int iFieldC, simpleFunction<scalar> *k,
+               simpleFunction<scalar> *a) 
+    : femTerm<scalar,scalar>(gm), _k(k), _a(a), _iFieldR(iFieldR), 
+      _iFieldC(iFieldC) {}
   // one dof per vertex (nodal fem)
   virtual int sizeOfR(MElement *e) const { return e->getNumVertices(); }
   virtual int sizeOfC(MElement *e) const { return e->getNumVertices(); }
@@ -34,11 +38,6 @@ class helmoltzTerm : public femTerm<scalar, scalar> {
   {
     return Dof(e->getVertex(iRow)->getNum(), _iFieldC);
   }
-  public:
-  helmoltzTerm(GModel *gm, int iFieldR, int iFieldC, 
-               simpleFunction<scalar> *k, 
-               simpleFunction<scalar> *a) : 
-    femTerm<scalar,scalar>(gm), _k(k), _a(a), _iFieldR(iFieldR), _iFieldC(iFieldC){}
   virtual void elementMatrix(MElement *e, fullMatrix<scalar> &m) const
   {
     // compute integration rule

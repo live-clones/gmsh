@@ -60,7 +60,7 @@ void elasticitySolver::setMesh(const std::string &meshFileName)
 
 void elasticitySolver::readInputFile(const std::string &fn)
 {
-  FILE *f = fopen (fn.c_str(),"r");
+  FILE *f = fopen(fn.c_str(), "r");
   char what[256];
   while(!feof(f)){
     fscanf(f, "%s", what);
@@ -142,7 +142,7 @@ void elasticitySolver::solve()
   for (std::map<std::pair<int, int>, double>::iterator it = nodalDisplacements.begin();
        it != nodalDisplacements.end(); ++it){
     MVertex *v = pModel->getMeshVertexByTag(it->first.first);
-    pAssembler-> fixVertex(v , it->first.second, _tag, it->second);    
+    pAssembler->fixVertex(v , it->first.second, _tag, it->second);    
     printf("-- Fixing node %3d comp %1d to %8.5f\n", 
            it->first.first, it->first.second, it->second);
   }
@@ -172,11 +172,11 @@ void elasticitySolver::solve()
     int physical = it->first;
     std::vector<MVertex *> v;     
     pModel->getMeshVerticesForPhysicalGroup(_dim, physical, v);
-    printf("Physical %d, dim: %d, nb vert: %d\n", physical, _dim, v.size());
+    printf("Physical %d, dim: %d, nb vert: %d\n", physical, _dim, (int)v.size());
     for (unsigned int i = 0; i < v.size(); i++){  
-      pAssembler->numberVertex (v[i], 0, _tag);  
-      pAssembler->numberVertex (v[i], 1, _tag);  
-      pAssembler->numberVertex (v[i], 2, _tag);  
+      pAssembler->numberVertex(v[i], 0, _tag);  
+      pAssembler->numberVertex(v[i], 1, _tag);  
+      pAssembler->numberVertex(v[i], 2, _tag);  
     }
   }
   
@@ -189,9 +189,9 @@ void elasticitySolver::solve()
     SVector3 f = it->second;
     std::vector<GEntity*> ent = groups[0][iVertex];
     for (unsigned int i = 0; i < ent.size(); i++){      
-      pAssembler-> assemble(ent[i]->mesh_vertices[0] , 0, _tag, f.x());
-      pAssembler-> assemble(ent[i]->mesh_vertices[0] , 1, _tag, f.y());
-      pAssembler-> assemble(ent[i]->mesh_vertices[0] , 2, _tag, f.z());
+      pAssembler->assemble(ent[i]->mesh_vertices[0], 0, _tag, f.x());
+      pAssembler->assemble(ent[i]->mesh_vertices[0], 1, _tag, f.y());
+      pAssembler->assemble(ent[i]->mesh_vertices[0], 2, _tag, f.z());
       printf("-- Force on node %3d(%3d) : %8.5f %8.5f %8.5f\n", 
              ent[i]->mesh_vertices[0]->getNum(), iVertex, f.x(), f.y(), f.z());
     }
@@ -236,7 +236,7 @@ void elasticitySolver::solve()
   }
   
   // assembling the stifness matrix
-  for (std::map<int, std::pair<double, double> > :: iterator it = elasticConstants.begin();
+  for (std::map<int, std::pair<double, double> >::iterator it = elasticConstants.begin();
        it != elasticConstants.end() ; it++){
     int physical = it->first;
     double E = it->second.first;

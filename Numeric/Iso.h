@@ -6,6 +6,10 @@
 #ifndef _ISO_H_
 #define _ISO_H_
 
+double InterpolateIso(double *X, double *Y, double *Z, 
+                      double *Val, double V, int I1, int I2, 
+                      double *XI, double *YI ,double *ZI);
+
 int IsoLine(double *X, double *Y, double *Z, double *Val, double V,
             double *Xp, double *Yp, double *Zp);
 
