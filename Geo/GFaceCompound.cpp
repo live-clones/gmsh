@@ -757,7 +757,7 @@ void GFaceCompound::parametrize(iterationStep step) const
              myAssembler.sizeOfR(), myAssembler.sizeOfF());
   
   //convexCombinationTerm laplace(model(), 1, &ONE);
-  laplaceTerm<double> laplace(model(), 1, &ONE);
+  laplaceTerm laplace(model(), 1, &ONE);
   it = _compound.begin();
   for( ; it != _compound.end() ; ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
@@ -851,8 +851,8 @@ void GFaceCompound::parametrize_conformal() const
 
   simpleFunction<double> ONE(1.0);
   simpleFunction<double> MONE(-1.0 );
-  laplaceTerm<double> laplace1(model(), 1, &ONE);
-  laplaceTerm<double> laplace2(model(), 2, &ONE);
+  laplaceTerm laplace1(model(), 1, &ONE);
+  laplaceTerm laplace2(model(), 2, &ONE);
   crossConfTerm cross12(model(), 1, 2, &ONE);
   crossConfTerm cross21(model(), 2, 1, &MONE);
   it = _compound.begin();
@@ -1214,7 +1214,7 @@ void GFaceCompound::getTriangle(double u, double v,
 
 void GFaceCompound::buildOct() const
 {
-  printStuff();
+  //printStuff();
 
   SBoundingBox3d bb;
   int count = 0;

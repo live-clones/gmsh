@@ -9,11 +9,10 @@
 #include "helmholtzTerm.h"
 
 // \nabla \cdot k \nabla U 
-template<class scalar>
-class laplaceTerm : public helmholtzTerm<scalar> {
+class laplaceTerm : public helmholtzTerm<double> {
  public:
-  laplaceTerm(GModel *gm, int iField, simpleFunction<scalar> *k)
-    : helmholtzTerm<scalar>(gm, iField, iField, k, 0) {}
+  laplaceTerm(GModel *gm, int iField, simpleFunction<double> *k)
+    : helmholtzTerm<double>(gm, iField, iField, k, 0) {}
 };
 
 #endif
