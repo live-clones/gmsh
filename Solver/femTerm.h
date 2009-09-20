@@ -23,7 +23,7 @@ class femTerm {
   GModel *_gm;
  public:
   femTerm(GModel *gm) : _gm(gm) {}
-  virtual ~femTerm (){}
+  virtual ~femTerm(){}
   // return the number of columns of the element matrix
   virtual int sizeOfC(MElement*) const = 0;
   // return the number of rows of the element matrix
