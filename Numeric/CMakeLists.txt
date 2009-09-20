@@ -21,9 +21,7 @@ set(SRC
     gmshCrossConf.cpp
     gmshDistance.cpp
     gmshConvexCombination.cpp
-    gmshHelmholtz.cpp
     gmshElasticity.cpp
-    gmshProjection.cpp
     gmshLinearSystemCSR.cpp
 )
 
