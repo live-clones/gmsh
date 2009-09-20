@@ -901,7 +901,7 @@ void GFaceCompound::compute_distance() const
   double mu = L / 28;
   simpleFunction<double> DIFF(mu * mu), ONE(1.0);
   dofManager<double, double> myAssembler(_lsys);
-  distanceTerm distance(model(), 1, 1, &DIFF, &ONE);
+  distanceTerm distance(model(), 1, &DIFF, &ONE);
 
   std::vector<MVertex*> ordered;
   boundVertices(_U0, ordered);
