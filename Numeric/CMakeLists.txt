@@ -17,11 +17,6 @@ set(SRC
   robustPredicates.cpp
   mathEvaluator.cpp
   Iso.cpp
-  gmshLaplace.cpp
-    gmshCrossConf.cpp
-    gmshDistance.cpp
-    gmshConvexCombination.cpp
-    gmshLinearSystemCSR.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Numeric *.h) 

@@ -10,23 +10,23 @@
 #include "MTriangle.h"
 #include "Numeric.h"
 #include "Octree.h"
-#include "gmshAssembler.h"
-#include "gmshLaplace.h"
-#include "gmshDistance.h"
 #include "SBoundingBox3d.h"
 #include "SPoint3.h"
-#include "gmshCrossConf.h"
-#include "gmshConvexCombination.h"
-#include "gmshLinearSystemGmm.h"
-#include "gmshLinearSystemCSR.h"
-#include "gmshLinearSystemFull.h"
 #include "functionSpace.h"
 #include "robustPredicates.h"
 #include "meshGFaceOptimize.h"
 #include "MElementCut.h"
 #include "GEntity.h"
+#include "dofManager.h"
+#include "laplaceTerm.h"
+#include "distanceTerm.h"
+#include "crossConfTerm.h"
+#include "convexCombinationTerm.h"
+#include "linearSystemGmm.h"
+#include "linearSystemCSR.h"
+#include "linearSystemFull.h"
 
-static void fixEdgeToValue(GEdge *ed, double value, gmshAssembler<double> &myAssembler)
+static void fixEdgeToValue(GEdge *ed, double value, dofManager<double, double> &myAssembler)
 {
   myAssembler.fixVertex(ed->getBeginVertex()->mesh_vertices[0], 0, 1, value);
   myAssembler.fixVertex(ed->getEndVertex()->mesh_vertices[0], 0, 1, value);
@@ -64,7 +64,7 @@ static void computeCGKernelPolygon(std::map<MVertex*,SPoint3> &coordinates,
       double x1, x2, y1, y2; 
       x1 = u(i, 0); y1 = u(i, 1);
       x2 = u(next, 0); y2 = u(next, 1);
-      for( int j = i + 2; j < nbPts; j++){
+      for(int j = i + 2; j < nbPts; j++){
         int jnext = j + 1;
         if(j == nbPts - 1) jnext = 0; 
         double x3, x4, y3, y4, x,y;
@@ -161,11 +161,11 @@ static void myPolygon(std::vector<MElement*> &vTri, std::vector<MVertex*> &vPoly
      while(ite != ePoly.end()){
        MVertex *vB = ite->getVertex(0);
        MVertex *vE = ite->getVertex(1);
-       if( vB == vPoly.back()){
+       if(vB == vPoly.back()){
 	 if(vE != vINIT) vPoly.push_back(vE);
 	 ePoly.erase(ite);
        }
-       else if( vE == vPoly.back()){
+       else if(vE == vPoly.back()){
 	 if(vB != vINIT) vPoly.push_back(vB);
 	 ePoly.erase(ite);
        }
@@ -356,7 +356,7 @@ void GFaceCompound::getBoundingEdges()
   
   //in case the bounding edges are explicitely given
   if(_U0.size()){
-    std::list<GEdge*> :: const_iterator it = _U0.begin();
+    std::list<GEdge*>::const_iterator it = _U0.begin();
     for( ; it != _U0.end() ; ++it){
       l_edges.push_back(*it);
       (*it)->addFace(this);
@@ -377,10 +377,10 @@ void GFaceCompound::getBoundingEdges()
     (*itf)->addFace(this);
   }
 
-  computeALoop(_unique,_U0);  
+  computeALoop(_unique, _U0);
   while(!_unique.empty()){    
-    computeALoop(_unique,_U1);
-    printf("%d in unique\n",_unique.size());
+    computeALoop(_unique, _U1);
+    printf("%d in unique\n", (int)_unique.size());
     _interior_loops.push_back(_U1);
   }  
 }
@@ -393,7 +393,7 @@ void GFaceCompound::getUniqueEdges(std::set<GEdge*> &_unique)
   std::list<GFace*>::iterator it = _compound.begin();
   for( ; it != _compound.end(); ++it){
     std::list<GEdge*> ed = (*it)->edges();
-    std::list<GEdge*> :: iterator ite = ed.begin();
+    std::list<GEdge*>::iterator ite = ed.begin();
     for( ; ite != ed.end(); ++ite){
       _touched.insert(*ite);
     }    
@@ -401,7 +401,7 @@ void GFaceCompound::getUniqueEdges(std::set<GEdge*> &_unique)
   it = _compound.begin();
   for( ; it != _compound.end(); ++it){
     std::list<GEdge*> ed = (*it)->edges();
-    std::list<GEdge*> :: iterator ite = ed.begin();
+    std::list<GEdge*>::iterator ite = ed.begin();
     for( ; ite != ed.end() ; ++ite){
       if(!(*ite)->degenerate(0) && _touched.count(*ite) == 1) {	
 	_unique.insert(*ite);      }
@@ -474,21 +474,21 @@ void GFaceCompound::computeALoop(std::set<GEdge*> &_unique, std::list<GEdge*> &l
 GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 			     std::list<GEdge*> &U0, std::list<GEdge*> &V0,
 			     std::list<GEdge*> &U1, std::list<GEdge*> &V1,
-			     gmshLinearSystem<double> *lsys)
+			     linearSystem<double> *lsys)
   : GFace(m, tag), _compound(compound), _U0(U0), _U1(U1), _V0(V0), _V1(V1), oct(0),
     _lsys(lsys)
 {
 
   if (!_lsys) {
 #if defined(HAVE_GMM)
-    gmshLinearSystemGmm<double> *_lsysb = new gmshLinearSystemGmm<double>;
-    //gmshLinearSystemCSRGmm<double> lsys;
+    linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
+    //linearSystemCSRGmm<double> lsys;
     _lsysb->setPrec(1.e-15);
     _lsysb->setGmres(1);
     if(Msg::GetVerbosity() == 99) _lsysb->setNoisy(2);
     _lsys = _lsysb;
 #else
-    _lsys = new gmshLinearSystemFull<double>;
+    _lsys = new linearSystemFull<double>;
 #endif
   }
 
@@ -699,7 +699,7 @@ void GFaceCompound::parametrize(iterationStep step) const
 {
   Msg::Info("Parametrizing Surface %d coordinate (ITER %d)", tag(), step); 
   
-  gmshAssembler<double> myAssembler(_lsys);
+  dofManager<double, double> myAssembler(_lsys);
   simpleFunction<double> ONE(1.0);
 
   if(_type == UNITCIRCLE){
@@ -721,7 +721,7 @@ void GFaceCompound::parametrize(iterationStep step) const
   }
   else if(_type == SQUARE){
     if(step == ITERU){
-      std::list<GEdge*> :: const_iterator it = _U0.begin();
+      std::list<GEdge*>::const_iterator it = _U0.begin();
       for( ; it != _U0.end(); ++it){
 	fixEdgeToValue(*it, 0.0, myAssembler);
       }
@@ -731,7 +731,7 @@ void GFaceCompound::parametrize(iterationStep step) const
       }
     }
     else if(step == ITERV){
-      std::list<GEdge*> :: const_iterator it = _V0.begin();
+      std::list<GEdge*>::const_iterator it = _V0.begin();
       for( ; it != _V0.end(); ++it){
 	fixEdgeToValue(*it, 0.0, myAssembler);
       }
@@ -756,13 +756,13 @@ void GFaceCompound::parametrize(iterationStep step) const
   Msg::Debug("Creating term %d dofs numbered %d fixed",
              myAssembler.sizeOfR(), myAssembler.sizeOfF());
   
-  //gmshConvexCombinationTerm laplace(model(), &ONE, 1);
-  gmshLaplaceTerm laplace(model(), &ONE, 1);
+  //convexCombinationTerm laplace(model(), 1, &ONE);
+  laplaceTerm<double> laplace(model(), 1, &ONE);
   it = _compound.begin();
   for( ; it != _compound.end() ; ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-      MTriangle *t = (*it)->triangles[i];
-      laplace.addToMatrix(myAssembler, t);
+      SElement se((*it)->triangles[i]);
+      laplace.addToMatrix(myAssembler, &se);
     }
   }
  
@@ -772,7 +772,7 @@ void GFaceCompound::parametrize(iterationStep step) const
 
 
   it = _compound.begin();
-  std::set<MVertex *>allNodes;
+  std::set<MVertex *> allNodes;
   for( ; it != _compound.end() ; ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *t = (*it)->triangles[i];
@@ -784,10 +784,10 @@ void GFaceCompound::parametrize(iterationStep step) const
   
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
     MVertex *v = *itv;
-    double value = myAssembler.getDofValue(v,0,1);
+    double value = myAssembler.getDofValue(v, 0, 1);
     std::map<MVertex*,SPoint3>::iterator itf = coordinates.find(v);
     if(itf == coordinates.end()){
-      SPoint3 p(0,0,0);
+      SPoint3 p(0, 0, 0);
       p[step] = value;
       coordinates[v] = p;
     }
@@ -804,7 +804,7 @@ void GFaceCompound::parametrize_conformal() const
 
   Msg::Info("Parametrizing Surface %d", tag()); 
   
-  gmshAssembler<double> myAssembler(_lsys);
+  dofManager<double, double> myAssembler(_lsys);
 
   std::vector<MVertex*> ordered;
   std::vector<double> coords;  
@@ -851,18 +851,18 @@ void GFaceCompound::parametrize_conformal() const
 
   simpleFunction<double> ONE(1.0);
   simpleFunction<double> MONE(-1.0 );
-  gmshLaplaceTerm laplace1(model(), &ONE, 1);
-  gmshLaplaceTerm laplace2(model(), &ONE, 2);
-  gmshCrossConfTerm cross12(model(), &ONE, 1 , 2);
-  gmshCrossConfTerm cross21(model(), &MONE, 2 , 1);
+  laplaceTerm<double> laplace1(model(), 1, &ONE);
+  laplaceTerm<double> laplace2(model(), 2, &ONE);
+  crossConfTerm cross12(model(), 1, 2, &ONE);
+  crossConfTerm cross21(model(), 2, 1, &MONE);
   it = _compound.begin();
   for( ; it != _compound.end() ; ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-      MTriangle *t = (*it)->triangles[i];
-      laplace1.addToMatrix(myAssembler, t);
-      laplace2.addToMatrix(myAssembler, t);
-      cross12.addToMatrix(myAssembler, t);
-      cross21.addToMatrix(myAssembler, t);
+      SElement se((*it)->triangles[i]);
+      laplace1.addToMatrix(myAssembler, &se);
+      laplace2.addToMatrix(myAssembler, &se);
+      cross12.addToMatrix(myAssembler, &se);
+      cross21.addToMatrix(myAssembler, &se);
     }
   }
  
@@ -897,14 +897,13 @@ void GFaceCompound::parametrize_conformal() const
 void GFaceCompound::compute_distance() const
 {
   SBoundingBox3d bbox = GModel::current()->bounds();
-  double L  = norm(SVector3(bbox.max(), bbox.min())); 
-  //printf("L=%g \n", L);
-  double mu = L/28;
-  simpleFunction<double>  DIFF(mu*mu);
-  gmshAssembler<double> myAssembler(_lsys);
-  gmshDistanceTerm distance(model(), &DIFF, 1);
+  double L = norm(SVector3(bbox.max(), bbox.min())); 
+  double mu = L / 28;
+  simpleFunction<double> DIFF(mu * mu), ONE(1.0);
+  dofManager<double, double> myAssembler(_lsys);
+  distanceTerm distance(model(), 1, 1, &DIFF, &ONE);
 
-  std::vector<MVertex*> ordered; 
+  std::vector<MVertex*> ordered;
   boundVertices(_U0, ordered);
   for(unsigned int i = 0; i < ordered.size(); i++)
      myAssembler.fixVertex(ordered[i], 0, 1, 0.0);
@@ -922,10 +921,10 @@ void GFaceCompound::compute_distance() const
   it = _compound.begin();
   for( ; it != _compound.end() ; ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-      MTriangle *t = (*it)->triangles[i];
-      distance.addToMatrix(myAssembler, t);
+      SElement se((*it)->triangles[i]);
+      distance.addToMatrix(myAssembler, &se);
     }
-    distance.addToRightHandSide(myAssembler,*it);
+    distance.addToRightHandSide(myAssembler, *it);
   }
 
   Msg::Info("Distance Computation: Assembly done");
@@ -945,9 +944,9 @@ void GFaceCompound::compute_distance() const
   
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
     MVertex *v = *itv;
-    double value =  std::min(0.9999, myAssembler.getDofValue(v,0,1));
-    double dist = -mu*log(1.- value);
-    coordinates[v] = SPoint3(dist,0.0,0.0);
+    double value =  std::min(0.9999, myAssembler.getDofValue(v, 0, 1));
+    double dist = -mu * log(1. - value);
+    coordinates[v] = SPoint3(dist, 0.0, 0.0);
   }
 
   _lsys->clear();
@@ -957,7 +956,6 @@ void GFaceCompound::compute_distance() const
   printf("--> Write distance function in file: XYZU-*.pos\n");
   printf("--> Exit\n");
   exit(1);
-
 }
 
 void GFaceCompound::computeNormals(std::map<MVertex*,SVector3> &normals) const
@@ -1220,7 +1218,7 @@ void GFaceCompound::buildOct() const
 
   SBoundingBox3d bb;
   int count = 0;
-  std::list<GFace*> :: const_iterator it = _compound.begin();
+  std::list<GFace*>::const_iterator it = _compound.begin();
   
   for( ; it != _compound.end() ; ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
@@ -1280,7 +1278,7 @@ void GFaceCompound::buildOct() const
 
 int GFaceCompound::genusGeom()
 {
- std::list<GFace*> :: const_iterator it = _compound.begin();
+ std::list<GFace*>::const_iterator it = _compound.begin();
   std::set<MEdge, Less_Edge> es;
  std::set<MVertex*> vs;
  int N = 0;
@@ -1299,7 +1297,7 @@ int GFaceCompound::genusGeom()
 
 void GFaceCompound::printStuff() const
 {
-  std::list<GFace*> :: const_iterator it = _compound.begin();
+  std::list<GFace*>::const_iterator it = _compound.begin();
 
   char name1[256], name2[256], name3[256];
   char name4[256], name5[256], name6[256];

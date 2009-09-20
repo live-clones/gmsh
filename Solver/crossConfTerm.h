@@ -36,11 +36,11 @@ class crossConfTerm : public femTerm<double, double> {
   {
     return Dof(se->getMeshElement()->getVertex(iRow)->getNum(), _iFieldR);
   }
-  void getLocalDofC(SElement *se, int iRow) const
+  Dof getLocalDofC(SElement *se, int iRow) const
   {
     return Dof(se->getMeshElement()->getVertex(iRow)->getNum(), _iFieldC);
   }
-  virtual void elementMatrix(SElement *e, fullMatrix<double> &m) const
+  virtual void elementMatrix(SElement *se, fullMatrix<double> &m) const
   {
     MElement *e = se->getMeshElement();
     int nbNodes = e->getNumVertices();
@@ -82,7 +82,7 @@ class crossConfTerm : public femTerm<double, double> {
     }
     for (int j = 0; j < nbNodes; j++)
       for (int k = 0; k < j; k++)
-        m(k, j) = -1.*m(j, k);    
+        m(k, j) = -1. * m(j, k);
   }
 };
 

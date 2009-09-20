@@ -68,13 +68,10 @@ set(GMSH_API
     Geo/SOrientedBoundingBox.h Geo/CellComplex.h Geo/ChainComplex.h
   Mesh/meshGEdge.h Mesh/meshGFace.h Mesh/meshGFaceOptimize.h 
     Mesh/meshGFaceDelaunayInsertion.h
+  Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h Solver/elasticityTerm.h
+    Solver/linearSystem.h Solver/linearSystemGmm.h Solver/linearSystemFull.h 
   Post/PView.h Post/PViewData.h Plugin/PluginManager.h
   Graphics/drawContext.h
-  Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h Solver/elasticityTerm.h
-    Numeric/gmshAssembler.h Numeric/gmshTermOfFormulation.h 
-    Numeric/gmshLaplace.h Numeric/gmshLinearSystem.h
-    Numeric/gmshLinearSystemGmm.h Numeric/gmshLinearSystemFull.h 
-    Numeric/gmshLinearSystemCSR.h 
   contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h 
     contrib/kbipack/gmp_blas.h
   contrib/DiscreteIntegration/DILevelset.h)

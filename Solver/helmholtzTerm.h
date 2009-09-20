@@ -17,14 +17,14 @@
 
 // \nabla \cdot k \nabla U + a U 
 template<class scalar>
-class helmoltzTerm : public femTerm<scalar, scalar> {
+class helmholtzTerm : public femTerm<scalar, scalar> {
  protected:
   const simpleFunction<scalar> *_k, *_a;
   const int _iFieldR;
   int _iFieldC ;
  public:
-  helmoltzTerm(GModel *gm, int iFieldR, int iFieldC, simpleFunction<scalar> *k,
-               simpleFunction<scalar> *a) 
+  helmholtzTerm(GModel *gm, int iFieldR, int iFieldC, simpleFunction<scalar> *k,
+                simpleFunction<scalar> *a) 
     : femTerm<scalar, scalar>(gm), _iFieldR(iFieldR), _iFieldC(iFieldC),
       _k(k), _a(a) {}
   // one dof per vertex (nodal fem)
@@ -38,11 +38,13 @@ class helmoltzTerm : public femTerm<scalar, scalar> {
   }
   Dof getLocalDofR(SElement *se, int iRow) const
   {
-    return Dof(se->getMeshElement()->getVertex(iRow)->getNum(), _iFieldR);
+    return Dof(se->getMeshElement()->getVertex(iRow)->getNum(), 
+               Dof::createTypeWithTwoInts(0, _iFieldR));
   }
   Dof getLocalDofC(SElement *se, int iRow) const
   {
-    return Dof(se->getMeshElement()->getVertex(iRow)->getNum(), _iFieldC);
+    return Dof(se->getMeshElement()->getVertex(iRow)->getNum(),
+               Dof::createTypeWithTwoInts(0, _iFieldC));
   }
   virtual void elementMatrix(SElement *se, fullMatrix<scalar> &m) const
   {
@@ -50,7 +52,7 @@ class helmoltzTerm : public femTerm<scalar, scalar> {
     // compute integration rule
     const int integrationOrder = (_a) ? 2 * e->getPolynomialOrder() : 
       2 * (e->getPolynomialOrder() - 1);
-    int npts;IntPt *GP;
+    int npts; IntPt *GP;
     e->getIntegrationPoints(integrationOrder, &npts, &GP);
     // get the number of nodes
     const int nbNodes = e->getNumVertices();

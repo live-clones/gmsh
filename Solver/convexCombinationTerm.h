@@ -28,7 +28,7 @@ class convexCombinationTerm : public femTerm<double, double> {
   { 
     return se->getMeshElement()->getNumVertices();
   }
-  void getLocalDofR(SElement *se, int iRow) const
+  Dof getLocalDofR(SElement *se, int iRow) const
   {
     return Dof(se->getMeshElement()->getVertex(iRow)->getNum(), _iField);
   }
