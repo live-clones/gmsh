@@ -616,7 +616,7 @@ void meshGRegion::operator() (GRegion *gr)
     meshNormalsPointOutOfTheRegion(gr);
     std::vector<MVertex*> numberedV;
     Ng_Mesh *ngmesh = buildNetgenStructure(gr, false, numberedV);
-    NgAddOn_GenerateVolumeMesh(ngmesh, CTX::instance()->lc);
+    NgAddOn_GenerateVolumeMesh(ngmesh, CTX::instance()->mesh.lcMax);
     TransferVolumeMesh(gr, ngmesh, numberedV);
     Ng_DeleteMesh(ngmesh);
     Ng_Exit();
@@ -646,7 +646,7 @@ void optimizeMeshGRegionNetgen::operator() (GRegion *gr)
   deMeshGRegion dem;
   dem(gr);
   // optimize mesh
-  NgAddOn_OptimizeVolumeMesh(ngmesh, CTX::instance()->lc);
+  NgAddOn_OptimizeVolumeMesh(ngmesh, CTX::instance()->mesh.lcMax);
   TransferVolumeMesh(gr, ngmesh, numberedV);
   Ng_DeleteMesh(ngmesh);
   Ng_Exit();
