@@ -81,7 +81,7 @@ void MPolyhedron::_init()
         _innerVertices.push_back(_parts[i]->getVertex(j));
     }
   }
-  
+
 }
 
 bool MPolyhedron::isInside(double u, double v, double w)
@@ -116,7 +116,7 @@ void MPolyhedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
     MVertex v2(uvw[2][0], uvw[2][1], uvw[2][2]);
     MVertex v3(uvw[3][0], uvw[3][1], uvw[3][2]);
     MTetrahedron tt(&v0, &v1, &v2, &v3);
-    
+
     for(int ip = 0; ip < nptsi; ip++){
       const double u = ptsi[ip].pt[0];
       const double v = ptsi[ip].pt[1];
@@ -133,7 +133,7 @@ void MPolyhedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
   }
 }
 
-void MPolyhedron::writeMSH(FILE *fp, double version, bool binary, int num, 
+void MPolyhedron::writeMSH(FILE *fp, double version, bool binary, int num,
                            int elementary, int physical, int parentNum)
 {
   int type = getTypeForMSH();
@@ -272,7 +272,7 @@ bool MPolygon::isInside(double u, double v, double w)
     if(_parts[i]->isInside(uvw[0],uvw[1],uvw[2]))
       return true;
   }
-  return false; 
+  return false;
 }
 
 void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
@@ -309,7 +309,7 @@ void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
   }
 }
 
-void MPolygon::writeMSH(FILE *fp, double version, bool binary, int num, 
+void MPolygon::writeMSH(FILE *fp, double version, bool binary, int num,
                         int elementary, int physical, int parentNum)
 {
   int type = getTypeForMSH();
@@ -421,14 +421,14 @@ void MLineBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
 
 #if defined(HAVE_DINTEGRATION)
 
-static bool equalV(MVertex *v, DI_Point p)
+static bool equalV(MVertex *v, const DI_Point &p)
 {
-  return (fabs(v->x() - p.x()) < 1.e-15 && 
+  return (fabs(v->x() - p.x()) < 1.e-15 &&
           fabs(v->y() - p.y()) < 1.e-15 &&
           fabs(v->z() - p.z()) < 1.e-15);
 }
 
-static int getElementVertexNum(DI_Point p, MElement *e)
+static int getElementVertexNum(DI_Point &p, MElement *e)
 {
   for(int i = 0; i < e->getNumVertices(); i++)
     if(equalV(e->getVertex(i), p))
@@ -475,7 +475,7 @@ static int getBorderTag(int lsTag, int count, int &elementaryMax, std::map<int, 
 }
 
 static void elementCutMesh(MElement *e, gLevelset *ls,
-                           std::map<int, std::map<int, double> > &verticesLs, 
+                           std::map<int, std::map<int, double> > &verticesLs,
                            GEntity *ge, GModel *GM, int &numEle, std::map<int, MVertex*> &vertexMap,
                            std::vector<MVertex*> &newVertices,
                            std::map<int, std::vector<MElement*> > elements[10],
@@ -636,7 +636,7 @@ static void elementCutMesh(MElement *e, gLevelset *ls,
       MPolyhedron *p1 = NULL, *p2 = NULL;
       if(isCut) {
         std::vector<MTetrahedron*> poly[2];
-        
+
         for (unsigned int i = nbTe; i < tetras.size(); i++){
           MVertex *mv[4] = {NULL, NULL, NULL, NULL};
           for(int j = 0; j < 4; j++){
@@ -679,7 +679,7 @@ static void elementCutMesh(MElement *e, gLevelset *ls,
           elements[9][elementary].push_back(p2);
           assignPhysicals(GM, gePhysicals, elementary, 3, physicals);
         }
-      } 
+      }
       else { // no cut
         int reg = getElementaryTag(tetras[nbTe].lsTag(), elementary, newtags[3]);
         if(eType == MSH_TET_4)
@@ -925,7 +925,7 @@ static void elementCutMesh(MElement *e, gLevelset *ls,
 
 #endif
 
-GModel *buildCutMesh(GModel *gm, gLevelset *ls, 
+GModel *buildCutMesh(GModel *gm, gLevelset *ls,
                      std::map<int, std::vector<MElement*> > elements[10],
                      std::map<int, MVertex*> &vertexMap,
                      std::map<int, std::map<int, std::string> > physicals[4])
@@ -968,7 +968,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
     for(unsigned int j = 0; j < gmEntities[i]->getNumMeshElements(); j++) {
       MElement *e = gmEntities[i]->getMeshElement(j);
       e->setVolumePositive();
-      elementCutMesh(e, ls, verticesLs, gmEntities[i], gm, numEle, vertexMap, newVertices, 
+      elementCutMesh(e, ls, verticesLs, gmEntities[i], gm, numEle, vertexMap, newVertices,
                      elements, physicals, borderTags, newtags, cp, lines, triangles, quads, tetras, hexas);
       cutGM->getMeshPartitions().insert(e->getPartition());
     }

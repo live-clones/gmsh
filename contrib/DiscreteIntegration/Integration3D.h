@@ -137,7 +137,7 @@ static inline double LineLength(double x1, double y1, double z1, double x2, doub
 {
   return sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) + (z1 - z2) * (z1 - z2));
 }
-static inline double LineLength (const DI_Point p1, const DI_Point p2)
+static inline double LineLength (const DI_Point &p1, const DI_Point &p2)
 {
   return LineLength(p1.x(), p1.y(), p1.z(), p2.x(), p2.y(), p2.z());
 }
@@ -152,7 +152,7 @@ static inline double TriSurf(double x1, double y1, double z1, double x2, double 
                   + (z1 * (x2 - x3) - z2 * (x1 - x3) + z3 * (x1 - x2)) *
                     (z1 * (x2 - x3) - z2 * (x1 - x3) + z3 * (x1 - x2)));
 }
-static inline double TriSurf (const DI_Point p1, const DI_Point p2, const DI_Point p3)
+static inline double TriSurf (const DI_Point &p1, const DI_Point &p2, const DI_Point &p3)
 {
   return TriSurf(p1.x(), p1.y(), p1.z(), p2.x(), p2.y(), p2.z(), p3.x(), p3.y(), p3.z());
 }
@@ -167,8 +167,8 @@ static inline double TetraVol(double x1, double y1, double z1, double x2, double
   if(vol < 0) {printf("TET HAS NEGATIVE VOLUME = %g\n", vol);}
   return vol;
 }
-static inline double TetraVol(const DI_Point p1, const DI_Point p2,
-                              const DI_Point p3, const DI_Point p4)
+static inline double TetraVol(const DI_Point &p1, const DI_Point &p2,
+                              const DI_Point &p3, const DI_Point &p4)
 {
   return TetraVol (p1.x(), p1.y(), p1.z(), p2.x(), p2.y(), p2.z(),
                    p3.x(), p3.y(), p3.z(), p4.x(), p4.y(), p4.z());
@@ -273,9 +273,9 @@ class DI_Element
   void getCuttingPoints (const DI_Element *e, const std::vector<const gLevelset *> RPNi,
                          std::vector<DI_CuttingPoint> &cp) const;
   // return the ith point
-  inline DI_Point pt (int i) const {return i < nbVert() ? *pts_[i] : *mid_[i - nbVert()];}
+  inline DI_Point & pt (int i) const {return i < nbVert() ? *pts_[i] : *mid_[i - nbVert()];}
   // return the ith middle point
-  inline DI_Point mid (int i) const {return *mid_[i];}
+  inline DI_Point & mid (int i) const {return *mid_[i];}
   // return the coordinates of the ith point
   inline double x (int i) const {return i < nbVert() ? pts_[i]->x() : mid_[i - nbVert()]->x();}
   inline double y (int i) const {return i < nbVert() ? pts_[i]->y() : mid_[i - nbVert()]->y();}
@@ -322,7 +322,7 @@ class DI_CuttingPoint
   double xl_, yl_, zl_;
   std::vector<double> Ls;
  public:
-  DI_CuttingPoint (const DI_Point pt)
+  DI_CuttingPoint (const DI_Point &pt)
     : x_(pt.x()), y_(pt.y()), z_(pt.z()), xl_(pt.x()), yl_(pt.y()), zl_(pt.z()), Ls(pt.Ls) { }
   inline void addLocC (double xl, double yl, double zl) {xl_ = xl; yl_ = yl; zl_ = zl;}
   inline void move (double x, double y, double z) {x_ = x; y_ = y; z_ = z;}
@@ -377,7 +377,7 @@ class DI_Line : public DI_Element
     pts_[1] = new DI_Point(x1, y1, z1);
     integral_ = length;
   }
-  DI_Line (const DI_Point pt0, const DI_Point pt1, const int tag = -1)
+  DI_Line (const DI_Point &pt0, const DI_Point &pt1, const int tag = -1)
   {
     lsTag_ = tag;
     pts_ = new DI_Point*[2];
@@ -454,7 +454,7 @@ class DI_Triangle : public DI_Element
     pts_[2] = new DI_Point(x2, y2, z2);
     integral_ = surface;
   }
-  DI_Triangle (const DI_Point pt0, const DI_Point pt1, const DI_Point pt2, const int tag = -1)
+  DI_Triangle (const DI_Point &pt0, const DI_Point &pt1, const DI_Point &pt2, const int tag = -1)
   {
     lsTag_ = tag;
     pts_ = new DI_Point*[3];
@@ -548,7 +548,7 @@ class DI_Quad : public DI_Element
     pts_[3] = new DI_Point(x3, y3, z3);
     integral_ = surf;
   }
-  DI_Quad (const DI_Point pt0, const DI_Point pt1, const DI_Point pt2, const DI_Point pt3,
+  DI_Quad (const DI_Point &pt0, const DI_Point &pt1, const DI_Point &pt2, const DI_Point &pt3,
            const int tag = -1)
   {
     lsTag_ = tag;
@@ -644,7 +644,7 @@ class DI_Tetra : public DI_Element
     pts_[3] = new DI_Point(x3, y3, z3);
     integral_ = vol;
   }
-  DI_Tetra (const DI_Point pt0, const DI_Point pt1, const DI_Point pt2, const DI_Point pt3)
+  DI_Tetra (const DI_Point &pt0, const DI_Point &pt1, const DI_Point &pt2, const DI_Point &pt3)
   {
     pts_ = new DI_Point*[4];
     pts_[0] = new DI_Point(pt0);
@@ -756,8 +756,8 @@ class DI_Hexa : public DI_Element
     pts_[6] = new DI_Point(x6, y6, z6); pts_[7] = new DI_Point(x7, y7, z7);
     integral_ = vol;
   }
-  DI_Hexa (const DI_Point pt0, const DI_Point pt1, const DI_Point pt2, const DI_Point pt3,
-           const DI_Point pt4, const DI_Point pt5, const DI_Point pt6, const DI_Point pt7) {
+  DI_Hexa (const DI_Point &pt0, const DI_Point &pt1, const DI_Point &pt2, const DI_Point &pt3,
+           const DI_Point &pt4, const DI_Point &pt5, const DI_Point &pt6, const DI_Point &pt7) {
     pts_ = new DI_Point*[8];
     pts_[0] = new DI_Point(pt0);    pts_[1] = new DI_Point(pt1);
     pts_[2] = new DI_Point(pt2);    pts_[3] = new DI_Point(pt3);
