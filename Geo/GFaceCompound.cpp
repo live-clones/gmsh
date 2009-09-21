@@ -22,7 +22,7 @@
 #include "distanceTerm.h"
 #include "crossConfTerm.h"
 #include "convexCombinationTerm.h"
-#include "linearSystemGmm.h"
+#include "linearSystemGMM.h"
 #include "linearSystemCSR.h"
 #include "linearSystemFull.h"
 

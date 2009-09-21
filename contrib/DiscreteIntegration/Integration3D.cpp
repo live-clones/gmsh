@@ -2064,7 +2064,7 @@ bool DI_Line::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
 
   RecurElement re(&ll);
   bool signChange = re.cut(recurLevel, this, Ls, -1., nodeLs);
-  re.pushSubLines(ll_subLines);
+  pushSubElements(&re, ll_subLines);
 
   if(signChange){
     for(int l = 0; l < (int)RPN.size(); l++) {
@@ -2162,7 +2162,7 @@ bool DI_Triangle::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip
 
   RecurElement re(&tt);
   bool signChange = re.cut(recurLevel, this, Ls, -1., nodeLs);
-  re.pushSubTriangles(tt_subTriangles);
+  pushSubElements(&re, tt_subTriangles);
 
   if(signChange){
     for(int l = 0; l < (int)RPN.size(); l++) {
@@ -2356,7 +2356,7 @@ bool DI_Quad::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
 
   RecurElement re(&qq);
   bool signChange = re.cut(recurLevel, this, Ls, -1., nodeLs);
-  re.pushSubQuads(qq_subQuads);
+  pushSubElements(&re, qq_subQuads);
 
   if(signChange) {
     for(int l = 0; l < (int)RPN.size(); l++) {
@@ -2565,7 +2565,7 @@ bool DI_Tetra::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
 
   RecurElement re(&tt);
   bool signChange = re.cut(recurLevel, this, Ls, -1., nodeLs);
-  re.pushSubTetras(tt_subTetras);
+  pushSubElements(&re, tt_subTetras);
 
   if(signChange) {
     for(int l = 0; l < (int)RPN.size(); l++) {
@@ -2749,7 +2749,7 @@ bool DI_Hexa::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
 
   RecurElement re(&hh);
   bool signChange = re.cut(recurLevel, this, Ls, -1., nodeLs);
-  re.pushSubHexas(hh_subHexas);
+  pushSubElements(&re, hh_subHexas);
 
   if(signChange){
     for(int l = 0; l < (int)RPN.size(); l++) {

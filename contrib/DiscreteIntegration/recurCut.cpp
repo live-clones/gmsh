@@ -364,63 +364,6 @@ bool RecurElement::cut(int maxlevel, const DI_Element *e, const gLevelset &LS, d
   return iC;
 }
 
-void RecurElement::pushSubLines (std::vector<DI_Line> &v)
-{
-  if(type() != DI_LIN) return;
-  if(visible)
-    v.push_back(DI_Line(*((DI_Line*)el)));
-  if(sub[0]){
-    for (int i = 0; i < nbSub(); i++)
-      sub[i]->pushSubLines(v);
-  }
-}
-
-void RecurElement::pushSubTriangles (std::vector<DI_Triangle> &v)
-{
-  if(type() != DI_TRI) return;
-  if(visible)
-    v.push_back(DI_Triangle(*((DI_Triangle*)el)));
-  if(sub[0]){
-    for (int i = 0; i < nbSub(); i++)
-      sub[i]->pushSubTriangles(v);
-  }
-}
-
-void RecurElement::pushSubQuads (std::vector<DI_Quad> &v)
-{
-  if(type() != DI_QUA) return;
-  if(visible)
-    v.push_back(DI_Quad(*((DI_Quad*)el)));
-  if(sub[0]){
-    for (int i = 0; i < nbSub(); i++)
-      sub[i]->pushSubQuads(v);
-  }
-}
-
-void RecurElement::pushSubTetras (std::vector<DI_Tetra> &v)
-{
-  if(type() != DI_TET) return;
-  if(visible)
-    v.push_back(DI_Tetra(*((DI_Tetra*)el)));
-  if(sub[0]){
-    for (int i = 0; i < nbSub(); i++)
-      sub[i]->pushSubTetras(v);
-  }
-}
-
-void RecurElement::pushSubHexas (std::vector<DI_Hexa> &v)
-{
-  if(type() != DI_HEX) return;
-  if(visible)
-    v.push_back(DI_Hexa(*((DI_Hexa*)el)));
-  if(sub[0]){
-    for (int i = 0; i < nbSub(); i++)
-      sub[i]->pushSubHexas(v);
-  }
-}
-
-
-
 
 /*
 //----------------------------------------------------------------------------------------------

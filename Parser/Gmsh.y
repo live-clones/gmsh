@@ -9,7 +9,7 @@
 #include <time.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
-#include "GmshMatrix.h"
+#include "fullMatrix.h"
 #include "MallocUtils.h"
 #include "ListUtils.h"
 #include "TreeUtils.h"
@@ -72,7 +72,7 @@ void yyerror(const char *s);
 void yymsg(int level, const char *fmt, ...);
 void skip_until(const char *skip, const char *until);
 int PrintListOfDouble(char *format, List_T *list, char *buffer);
-gmshMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
+fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 %}
 
 %union {
@@ -1916,6 +1916,22 @@ LevelSet :
             else vl.push_back(pl->ls);
           }
           gLevelset *ls = new gLevelsetCrack(vl);
+          LevelSet *l = Create_LevelSet(t, ls);
+          Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
+        }
+      }
+      else if(!strcmp($2, "Reverse")){
+        int t = (int)$4;
+        if(FindLevelSet(t)){
+	  yymsg(0, "Levelset %d already exists", t);
+        }
+        else {
+          double d;
+          List_Read($7, 0, &d);
+          LevelSet *pl = FindLevelSet((int)d);
+          gLevelset *ls = NULL;
+          if(!pl) yymsg(0, "Levelset Reverse %d : unknown levelset %d", t, (int)d);
+          else ls = new gLevelsetReverse(pl->ls);
           LevelSet *l = Create_LevelSet(t, ls);
           Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
         }
@@ -3879,7 +3895,7 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer)
   return 0;
 }
 
-gmshMatrix<double> ListOfListOfDouble2Matrix(List_T *list)
+fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list)
 {
   int M = List_Nbr(list);
   int N = 0;
@@ -3887,7 +3903,7 @@ gmshMatrix<double> ListOfListOfDouble2Matrix(List_T *list)
     List_T *line = *(List_T**)List_Pointer_Fast(list, i);
     N = std::max(N, List_Nbr(line));
   }
-  gmshMatrix<double> mat(M, N);
+  fullMatrix<double> mat(M, N);
   for(int i = 0; i < M; i++){
     List_T *line = *(List_T**)List_Pointer_Fast(list, i);
     for(int j = 0; j < List_Nbr(line); j++){

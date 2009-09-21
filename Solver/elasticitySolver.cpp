@@ -63,60 +63,60 @@ void elasticitySolver::readInputFile(const std::string &fn)
   FILE *f = fopen(fn.c_str(), "r");
   char what[256];
   while(!feof(f)){
-    fscanf(f, "%s", what);
+    if(fscanf(f, "%s", what) != 1) return;
     // printf("%s\n", what);
     if (!strcmp(what,"ElasticMaterial")){
       double E, nu;
       int physical;
-      fscanf(f, "%d %lf %lf", &physical, &E, &nu);
+      if(fscanf(f, "%d %lf %lf", &physical, &E, &nu) != 3) return;
       elasticConstants[physical] = std::make_pair(E, nu);    
     }
     else if (!strcmp(what, "NodalDisplacement")){
       double val;
       int node, comp;
-      fscanf(f, "%d %d %lf", &node, &comp, &val);
+      if(fscanf(f, "%d %d %lf", &node, &comp, &val) != 3) return;
       nodalDisplacements[ std::make_pair(node, comp) ] = val;    
     }
     else if (!strcmp(what, "EdgeDisplacement")){
       double val;
       int edge, comp;
-      fscanf(f, "%d %d %lf", &edge, &comp, &val);
+      if(fscanf(f, "%d %d %lf", &edge, &comp, &val) != 3) return;
       edgeDisplacements[ std::make_pair(edge, comp) ] = val;    
     }
     else if (!strcmp(what, "FaceDisplacement")){
       double val;
       int face, comp;
-      fscanf(f, "%d %d %lf", &face, &comp, &val);
+      if(fscanf(f, "%d %d %lf", &face, &comp, &val) != 3) return;
       faceDisplacements[ std::make_pair(face, comp) ] = val;    
     }
     else if (!strcmp(what, "NodalForce")){
       double val1, val2, val3;
       int node;
-      fscanf(f, "%d %lf %lf %lf", &node, &val1, &val2, &val3);
+      if(fscanf(f, "%d %lf %lf %lf", &node, &val1, &val2, &val3) != 4) return;
       nodalForces[node] = SVector3(val1, val2, val3);    
     }
     else if (!strcmp(what, "LineForce")){
       double val1, val2, val3;
       int node;
-      fscanf(f, "%d %lf %lf %lf", &node, &val1, &val2, &val3);
+      if(fscanf(f, "%d %lf %lf %lf", &node, &val1, &val2, &val3) != 4) return;
       //printf("%d %lf %lf %lf\n", node, val1, val2, val3);
       lineForces[node] = SVector3(val1, val2, val3);    
     }
     else if (!strcmp(what, "FaceForce")){
       double val1, val2, val3;
       int face;
-      fscanf(f, "%d %lf %lf %lf", &face, &val1, &val2, &val3);
+      if(fscanf(f, "%d %lf %lf %lf", &face, &val1, &val2, &val3) != 4) return;
       faceForces[face] = SVector3(val1, val2, val3);    
     }
     else if (!strcmp(what, "VolumeForce")){
       double val1, val2, val3;
       int volume;
-      fscanf(f, "%d %lf %lf %lf", &volume, &val1, &val2, &val3);
+      if(fscanf(f, "%d %lf %lf %lf", &volume, &val1, &val2, &val3) != 4) return;
       volumeForces[volume] = SVector3(val1, val2, val3);    
     }
     else if (!strcmp(what, "MeshFile")){
       char name[245];
-      fscanf(f, "%s", name);
+      if(fscanf(f, "%s", name) != 1) return;
       setMesh(name);
     }
   }
