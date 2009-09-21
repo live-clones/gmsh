@@ -91,19 +91,19 @@ void GmshRemote::run(std::string args)
     return;
   }
 
-  // find solver num
-  int solverNum = 0;
+  // find solver index
+  int num = 0;
   for(std::map<int, GmshRemote*>::iterator it = _all.begin(); 
       it != _all.end(); it++){
     if(this == it->second) break;
-    solverNum++;
+    num++;
   }
 
   // make command buttons inactive while running
-  if(solverNum >= 0 && solverNum < NB_SOLVER_MAX){
+  if(num >= 0 && num < NB_SOLVER_MAX){
     for(unsigned int i = 0; i < buttonName.size(); i++)
       if(buttonName[i].size())
-        FlGui::instance()->solver[solverNum]->command[i]->deactivate();
+        FlGui::instance()->solver[num]->command[i]->deactivate();
   }
   
   _pid = 0;
@@ -134,9 +134,11 @@ void GmshRemote::run(std::string args)
     server->Shutdown();
     delete server;
     // reactivate buttons  
-    for(unsigned int i = 0; i < buttonName.size(); i++)
-      if(buttonName[i].size())
-        FlGui::instance()->solver[solverNum]->command[i]->activate();
+    if(num >= 0 && num < NB_SOLVER_MAX){
+      for(unsigned int i = 0; i < buttonName.size(); i++)
+        if(buttonName[i].size())
+          FlGui::instance()->solver[num]->command[i]->activate();
+    }
     return;
   }
 
@@ -233,22 +235,22 @@ void GmshRemote::run(std::string args)
     }
   }
 
-  if(solverNum >= 0 && solverNum < NB_SOLVER_MAX){
+  if(num >= 0 && num < NB_SOLVER_MAX){
     // some options have been changed: refill the menus
     if(!initOption[0] || !initOption[1] || !initOption[2] || !initOption[3] ||
        !initOption[4]){
       for(unsigned int i = 0; i < optionName.size(); i++) {
         if(optionName[i].empty()) break;
-        FlGui::instance()->solver[solverNum]->choice[i]->clear();
+        FlGui::instance()->solver[num]->choice[i]->clear();
         for(unsigned int j = 0; j < optionValue[i].size(); j++)
-          FlGui::instance()->solver[solverNum]->choice[i]->add(optionValue[i][j].c_str());
-        FlGui::instance()->solver[solverNum]->choice[i]->value(0);
+          FlGui::instance()->solver[num]->choice[i]->add(optionValue[i][j].c_str());
+        FlGui::instance()->solver[num]->choice[i]->value(0);
       }
     }
     // reactivate buttons  
     for(unsigned int i = 0; i < buttonName.size(); i++)
       if(buttonName[i].size())
-        FlGui::instance()->solver[solverNum]->command[i]->activate();
+        FlGui::instance()->solver[num]->command[i]->activate();
   }
   
   _server = 0;
@@ -405,13 +407,13 @@ static void solver_kill_cb(Fl_Widget *w, void *data)
   GmshRemote::get(num)->kill();
 }
 
-solverWindow::solverWindow(int solverIndex, int deltaFontSize)
+solverWindow::solverWindow(int num, int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int numOptions = GmshRemote::get(solverIndex)->optionName.size();
-  for(unsigned int i = 0; i < GmshRemote::get(solverIndex)->optionName.size(); i++){
-    if(GmshRemote::get(solverIndex)->optionName[i].empty()){
+  int numOptions = GmshRemote::get(num)->optionName.size();
+  for(unsigned int i = 0; i < GmshRemote::get(num)->optionName.size(); i++){
+    if(GmshRemote::get(num)->optionName[i].empty()){
       numOptions = i;
       break;
     }
@@ -437,35 +439,35 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
       menu->add("Client-server", 0, 0, 0, FL_MENU_TOGGLE);
       menu->add("Pop-up messages",  0, 0, 0, FL_MENU_TOGGLE);
       menu->add("Auto-load results", 0, 0, 0, FL_MENU_TOGGLE);
-      menu->callback(solver_ok_cb, (void *)solverIndex);
+      menu->callback(solver_ok_cb, (void *)num);
 
       input[2] = new Fl_Input
         (2 * WB + BBS / 2, 2 * WB + 1 * BH, LL - BBS / 2, BH, "Command");
-      input[2]->callback(solver_ok_cb, (void *)solverIndex);
+      input[2]->callback(solver_ok_cb, (void *)num);
 
       Fl_Button *b1 = new Fl_Button
         (width - 2 * WB - BBS, 2 * WB + 1 * BH, BBS, BH, "Choose");
-      b1->callback(solver_choose_executable_cb, (void *)solverIndex);
+      b1->callback(solver_choose_executable_cb, (void *)num);
 
       Fl_Button *b4 = new Fl_Button
         (2 * WB, 2 * WB + 2 * BH, BBS, BH, "Edit");
-      b4->callback(solver_file_edit_cb, (void *)solverIndex);
+      b4->callback(solver_file_edit_cb, (void *)num);
 
       input[0] = new Fl_Input
         (2 * WB + BBS, 2 * WB + 2 * BH, LL - BBS, BH, "Input file");
-      input[0]->callback(solver_ok_cb, (void *)solverIndex);
+      input[0]->callback(solver_ok_cb, (void *)num);
 
       Fl_Button *b3 = new Fl_Button
         (width - 2 * WB - BBS, 2 * WB + 2 * BH, BBS, BH, "Choose");
-      b3->callback(solver_file_open_cb, (void *)solverIndex);
+      b3->callback(solver_file_open_cb, (void *)num);
 
       input[1] = new Fl_Input
         (2 * WB, 2 * WB + 3 * BH, LL, BH, "Mesh file");
-      input[1]->callback(solver_ok_cb, (void *)solverIndex);
+      input[1]->callback(solver_ok_cb, (void *)num);
 
       Fl_Button *b5 = new Fl_Button
         (width - 2 * WB - BBS, 2 * WB + 3 * BH, BBS, BH, "Choose");
-      b5->callback(solver_choose_mesh_cb, (void *)solverIndex);
+      b5->callback(solver_choose_mesh_cb, (void *)num);
 
       for(int i = 0; i < 3; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
@@ -474,26 +476,26 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
       for(int i = 0; i < numOptions; i++) {
         choice[i] = new Fl_Choice
           (2 * WB, 2 * WB + (4 + i) * BH, LL, BH, 
-           GmshRemote::get(solverIndex)->optionName[i].c_str());
+           GmshRemote::get(num)->optionName[i].c_str());
         choice[i]->align(FL_ALIGN_RIGHT);
       }
 
       static int arg[NB_SOLVER_MAX][5][2];
-      for(unsigned int i = 0; i < GmshRemote::get(solverIndex)->buttonName.size(); i++) {
-        if(GmshRemote::get(solverIndex)->buttonName[i].size()){
-          arg[solverIndex][i][0] = solverIndex;
-          arg[solverIndex][i][1] = i;
+      for(unsigned int i = 0; i < GmshRemote::get(num)->buttonName.size(); i++) {
+        if(GmshRemote::get(num)->buttonName[i].size()){
+          arg[num][i][0] = num;
+          arg[num][i][1] = i;
           command[i] = new Fl_Button
             ((2 + i) * WB + i * BBS, 3 * WB + (4 + numOptions) * BH,
-             BBS, BH, GmshRemote::get(solverIndex)->buttonName[i].c_str());
-          command[i]->callback(solver_command_cb, (void *)arg[solverIndex][i]);
+             BBS, BH, GmshRemote::get(num)->buttonName[i].c_str());
+          command[i]->callback(solver_command_cb, (void *)arg[num][i]);
         }
       }
 
       {
         Fl_Button *b = new Fl_Button
           (width - 2 * WB - BBS, 3 * WB + (4 + numOptions) * BH, BBS, BH, "Kill");
-        b->callback(solver_kill_cb, (void *)solverIndex);
+        b->callback(solver_kill_cb, (void *)num);
       }
      
       g->end();
@@ -506,10 +508,10 @@ solverWindow::solverWindow(int solverIndex, int deltaFontSize)
         (2 * WB, 2 * WB + 1 * BH, width - 4 * WB, height - 4 * WB - BH);
       o->add(" ");
       add_multiline_in_browser
-        (o, "@c@b@.", GmshRemote::get(solverIndex)->name.c_str(), false);
+        (o, "@c@b@.", GmshRemote::get(num)->name.c_str(), false);
       o->add(" ");
       add_multiline_in_browser
-        (o, "@c@. ", GmshRemote::get(solverIndex)->help.c_str(), false);
+        (o, "@c@. ", GmshRemote::get(num)->help.c_str(), false);
 
       g->end();
     }
