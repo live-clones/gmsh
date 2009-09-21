@@ -1,6 +1,6 @@
-$Id: VERSIONS.txt,v 1.60 2009-09-06 21:09:29 geuzaine Exp $
+$Id: VERSIONS.txt,v 1.61 2009-09-21 17:38:55 geuzaine Exp $
 
-2.4.2 (?): solver code refactoring.
+2.4.2 (Sep 21, 2009): solver code refactoring.
 
 2.4.1 (Sep 1, 2009): fixed surface mesh orientation bug introduced in
 2.4.0; mesh and graphics code refactoring, small usability
