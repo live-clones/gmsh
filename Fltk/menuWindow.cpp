@@ -2199,7 +2199,7 @@ static void view_applybgmesh_cb(Fl_Widget *w, void *data)
   }
 }
 
-#define TEST_SERVER
+//#define TEST_SERVER
 
 // The static menus (we cannot use the 'g', 'm' 's' and 'p' mnemonics
 // since they are already defined as global shortcuts)
@@ -2484,7 +2484,7 @@ contextItem menu_mesh[] = {
   {"3D",           (Fl_Callback *)mesh_3d_cb} , 
   {"First order",  (Fl_Callback *)mesh_degree_cb, (void*)1 } , 
   {"Second order", (Fl_Callback *)mesh_degree_cb, (void*)2 } , 
-  {"Refine",       (Fl_Callback *)mesh_refine_cb} ,
+  {"Refine by splitting", (Fl_Callback *)mesh_refine_cb} ,
   {"Optimize",     (Fl_Callback *)mesh_optimize_cb} , 
 #if defined(HAVE_NETGEN)
   {"Optimize (Netgen)", (Fl_Callback *)mesh_optimize_netgen_cb} , 

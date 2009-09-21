@@ -81,87 +81,88 @@
      tToday = 297,
      tSyncModel = 298,
      tCreateTopology = 299,
-     tPoint = 300,
-     tCircle = 301,
-     tEllipse = 302,
-     tLine = 303,
-     tSphere = 304,
-     tPolarSphere = 305,
-     tSurface = 306,
-     tSpline = 307,
-     tVolume = 308,
-     tCharacteristic = 309,
-     tLength = 310,
-     tParametric = 311,
-     tElliptic = 312,
-     tPlane = 313,
-     tRuled = 314,
-     tTransfinite = 315,
-     tComplex = 316,
-     tPhysical = 317,
-     tCompound = 318,
-     tUsing = 319,
-     tPlugin = 320,
-     tDegenerated = 321,
-     tOCCShape = 322,
-     tRotate = 323,
-     tTranslate = 324,
-     tSymmetry = 325,
-     tDilate = 326,
-     tExtrude = 327,
-     tLevelset = 328,
-     tLoop = 329,
-     tRecombine = 330,
-     tSmoother = 331,
-     tSplit = 332,
-     tDelete = 333,
-     tCoherence = 334,
-     tIntersect = 335,
-     tLayers = 336,
-     tHole = 337,
-     tAlias = 338,
-     tAliasWithOptions = 339,
-     tText2D = 340,
-     tText3D = 341,
-     tInterpolationScheme = 342,
-     tTime = 343,
-     tCombine = 344,
-     tBSpline = 345,
-     tBezier = 346,
-     tNurbs = 347,
-     tNurbsOrder = 348,
-     tNurbsKnots = 349,
-     tColor = 350,
-     tColorTable = 351,
-     tFor = 352,
-     tIn = 353,
-     tEndFor = 354,
-     tIf = 355,
-     tEndIf = 356,
-     tExit = 357,
-     tField = 358,
-     tReturn = 359,
-     tCall = 360,
-     tFunction = 361,
-     tShow = 362,
-     tHide = 363,
-     tGetValue = 364,
-     tGMSH_MAJOR_VERSION = 365,
-     tGMSH_MINOR_VERSION = 366,
-     tGMSH_PATCH_VERSION = 367,
-     tAFFECTDIVIDE = 368,
-     tAFFECTTIMES = 369,
-     tAFFECTMINUS = 370,
-     tAFFECTPLUS = 371,
-     tOR = 372,
-     tAND = 373,
-     tNOTEQUAL = 374,
-     tEQUAL = 375,
-     tGREATEROREQUAL = 376,
-     tLESSOREQUAL = 377,
-     UNARYPREC = 378,
-     tMINUSMINUS = 379,
-     tPLUSPLUS = 380
+     tDistanceFunction = 300,
+     tPoint = 301,
+     tCircle = 302,
+     tEllipse = 303,
+     tLine = 304,
+     tSphere = 305,
+     tPolarSphere = 306,
+     tSurface = 307,
+     tSpline = 308,
+     tVolume = 309,
+     tCharacteristic = 310,
+     tLength = 311,
+     tParametric = 312,
+     tElliptic = 313,
+     tPlane = 314,
+     tRuled = 315,
+     tTransfinite = 316,
+     tComplex = 317,
+     tPhysical = 318,
+     tCompound = 319,
+     tUsing = 320,
+     tPlugin = 321,
+     tDegenerated = 322,
+     tOCCShape = 323,
+     tRotate = 324,
+     tTranslate = 325,
+     tSymmetry = 326,
+     tDilate = 327,
+     tExtrude = 328,
+     tLevelset = 329,
+     tLoop = 330,
+     tRecombine = 331,
+     tSmoother = 332,
+     tSplit = 333,
+     tDelete = 334,
+     tCoherence = 335,
+     tIntersect = 336,
+     tLayers = 337,
+     tHole = 338,
+     tAlias = 339,
+     tAliasWithOptions = 340,
+     tText2D = 341,
+     tText3D = 342,
+     tInterpolationScheme = 343,
+     tTime = 344,
+     tCombine = 345,
+     tBSpline = 346,
+     tBezier = 347,
+     tNurbs = 348,
+     tNurbsOrder = 349,
+     tNurbsKnots = 350,
+     tColor = 351,
+     tColorTable = 352,
+     tFor = 353,
+     tIn = 354,
+     tEndFor = 355,
+     tIf = 356,
+     tEndIf = 357,
+     tExit = 358,
+     tField = 359,
+     tReturn = 360,
+     tCall = 361,
+     tFunction = 362,
+     tShow = 363,
+     tHide = 364,
+     tGetValue = 365,
+     tGMSH_MAJOR_VERSION = 366,
+     tGMSH_MINOR_VERSION = 367,
+     tGMSH_PATCH_VERSION = 368,
+     tAFFECTDIVIDE = 369,
+     tAFFECTTIMES = 370,
+     tAFFECTMINUS = 371,
+     tAFFECTPLUS = 372,
+     tOR = 373,
+     tAND = 374,
+     tNOTEQUAL = 375,
+     tEQUAL = 376,
+     tGREATEROREQUAL = 377,
+     tLESSOREQUAL = 378,
+     UNARYPREC = 379,
+     tMINUSMINUS = 380,
+     tPLUSPLUS = 381
    };
 #endif
 /* Tokens.  */
@@ -207,87 +208,88 @@
 #define tToday 297
 #define tSyncModel 298
 #define tCreateTopology 299
-#define tPoint 300
-#define tCircle 301
-#define tEllipse 302
-#define tLine 303
-#define tSphere 304
-#define tPolarSphere 305
-#define tSurface 306
-#define tSpline 307
-#define tVolume 308
-#define tCharacteristic 309
-#define tLength 310
-#define tParametric 311
-#define tElliptic 312
-#define tPlane 313
-#define tRuled 314
-#define tTransfinite 315
-#define tComplex 316
-#define tPhysical 317
-#define tCompound 318
-#define tUsing 319
-#define tPlugin 320
-#define tDegenerated 321
-#define tOCCShape 322
-#define tRotate 323
-#define tTranslate 324
-#define tSymmetry 325
-#define tDilate 326
-#define tExtrude 327
-#define tLevelset 328
-#define tLoop 329
-#define tRecombine 330
-#define tSmoother 331
-#define tSplit 332
-#define tDelete 333
-#define tCoherence 334
-#define tIntersect 335
-#define tLayers 336
-#define tHole 337
-#define tAlias 338
-#define tAliasWithOptions 339
-#define tText2D 340
-#define tText3D 341
-#define tInterpolationScheme 342
-#define tTime 343
-#define tCombine 344
-#define tBSpline 345
-#define tBezier 346
-#define tNurbs 347
-#define tNurbsOrder 348
-#define tNurbsKnots 349
-#define tColor 350
-#define tColorTable 351
-#define tFor 352
-#define tIn 353
-#define tEndFor 354
-#define tIf 355
-#define tEndIf 356
-#define tExit 357
-#define tField 358
-#define tReturn 359
-#define tCall 360
-#define tFunction 361
-#define tShow 362
-#define tHide 363
-#define tGetValue 364
-#define tGMSH_MAJOR_VERSION 365
-#define tGMSH_MINOR_VERSION 366
-#define tGMSH_PATCH_VERSION 367
-#define tAFFECTDIVIDE 368
-#define tAFFECTTIMES 369
-#define tAFFECTMINUS 370
-#define tAFFECTPLUS 371
-#define tOR 372
-#define tAND 373
-#define tNOTEQUAL 374
-#define tEQUAL 375
-#define tGREATEROREQUAL 376
-#define tLESSOREQUAL 377
-#define UNARYPREC 378
-#define tMINUSMINUS 379
-#define tPLUSPLUS 380
+#define tDistanceFunction 300
+#define tPoint 301
+#define tCircle 302
+#define tEllipse 303
+#define tLine 304
+#define tSphere 305
+#define tPolarSphere 306
+#define tSurface 307
+#define tSpline 308
+#define tVolume 309
+#define tCharacteristic 310
+#define tLength 311
+#define tParametric 312
+#define tElliptic 313
+#define tPlane 314
+#define tRuled 315
+#define tTransfinite 316
+#define tComplex 317
+#define tPhysical 318
+#define tCompound 319
+#define tUsing 320
+#define tPlugin 321
+#define tDegenerated 322
+#define tOCCShape 323
+#define tRotate 324
+#define tTranslate 325
+#define tSymmetry 326
+#define tDilate 327
+#define tExtrude 328
+#define tLevelset 329
+#define tLoop 330
+#define tRecombine 331
+#define tSmoother 332
+#define tSplit 333
+#define tDelete 334
+#define tCoherence 335
+#define tIntersect 336
+#define tLayers 337
+#define tHole 338
+#define tAlias 339
+#define tAliasWithOptions 340
+#define tText2D 341
+#define tText3D 342
+#define tInterpolationScheme 343
+#define tTime 344
+#define tCombine 345
+#define tBSpline 346
+#define tBezier 347
+#define tNurbs 348
+#define tNurbsOrder 349
+#define tNurbsKnots 350
+#define tColor 351
+#define tColorTable 352
+#define tFor 353
+#define tIn 354
+#define tEndFor 355
+#define tIf 356
+#define tEndIf 357
+#define tExit 358
+#define tField 359
+#define tReturn 360
+#define tCall 361
+#define tFunction 362
+#define tShow 363
+#define tHide 364
+#define tGetValue 365
+#define tGMSH_MAJOR_VERSION 366
+#define tGMSH_MINOR_VERSION 367
+#define tGMSH_PATCH_VERSION 368
+#define tAFFECTDIVIDE 369
+#define tAFFECTTIMES 370
+#define tAFFECTMINUS 371
+#define tAFFECTPLUS 372
+#define tOR 373
+#define tAND 374
+#define tNOTEQUAL 375
+#define tEQUAL 376
+#define tGREATEROREQUAL 377
+#define tLESSOREQUAL 378
+#define UNARYPREC 379
+#define tMINUSMINUS 380
+#define tPLUSPLUS 381
 
 
 
@@ -305,7 +307,7 @@ typedef union YYSTYPE
   List_T *l;
 }
 /* Line 1529 of yacc.c.  */
-#line 309 "Gmsh.tab.hpp"
+#line 311 "Gmsh.tab.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

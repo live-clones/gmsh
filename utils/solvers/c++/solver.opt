@@ -1,5 +1,6 @@
 Solver.Name1 = "My C++ Solver";
-Solver.Executable1 = "solver.exe";
+Solver.Executable1 = "./solver.exe";
+Solver.InputName1 = "dummy";
 Solver.OptionCommand1 = "-options";
 Solver.FirstOption1 = "My options";
 Solver.FirstButton1 = "Run !";

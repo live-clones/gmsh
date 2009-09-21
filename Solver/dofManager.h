@@ -70,9 +70,9 @@ class dofManager{
     
   // linearSystems
   std::map<const std::string, linearSystem<dataMat>* > _linearSystems;
-  linearSystem<dataMat>* _current;  
+  linearSystem<dataMat>* _current;
    
-  public:
+ public:
   dofManager(linearSystem<dataMat> *l) : _current(l) { _linearSystems["A"] = l; }
   inline void fixDof(long int ent, int type, const dataVec &value)
   {

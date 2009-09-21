@@ -57,7 +57,7 @@ class helmholtzTerm : public femTerm<scalar, scalar> {
     // get the number of nodes
     const int nbNodes = e->getNumVertices();
     // assume a maximum of 100 nodes
-    assert (nbNodes < 100);
+    assert(nbNodes < 100);
     double jac[3][3];
     double invjac[3][3];
     double Grads[100][3], grads[100][3];  

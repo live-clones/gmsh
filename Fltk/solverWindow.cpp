@@ -91,6 +91,21 @@ void GmshRemote::run(std::string args)
     return;
   }
 
+  // find solver num
+  int solverNum = 0;
+  for(std::map<int, GmshRemote*>::iterator it = _all.begin(); 
+      it != _all.end(); it++){
+    if(this == it->second) break;
+    solverNum++;
+  }
+
+  // make command buttons inactive while running
+  if(solverNum >= 0 && solverNum < NB_SOLVER_MAX){
+    for(unsigned int i = 0; i < buttonName.size(); i++)
+      if(buttonName[i].size())
+        FlGui::instance()->solver[solverNum]->command[i]->deactivate();
+  }
+  
   _pid = 0;
   _server = 0;
   FlGmshServer *server = new FlGmshServer(this);
@@ -118,9 +133,13 @@ void GmshRemote::run(std::string args)
   if(sock < 0){
     server->Shutdown();
     delete server;
+    // reactivate buttons  
+    for(unsigned int i = 0; i < buttonName.size(); i++)
+      if(buttonName[i].size())
+        FlGui::instance()->solver[solverNum]->command[i]->activate();
     return;
   }
-  
+
   Msg::Info("Running '%s'...", name.c_str());
 
   bool initOption[5] = {true, true, true, true, true};  
@@ -213,25 +232,23 @@ void GmshRemote::run(std::string args)
       break;
     }
   }
-  
-  if(!initOption[0] || !initOption[1] || !initOption[2] || !initOption[3] ||
-     !initOption[4]){ // some options have been changed
-    // find solver num
-    int num = 0;
-    for(std::map<int, GmshRemote*>::iterator it = _all.begin(); 
-        it != _all.end(); it++){
-      if(this == it->second) break;
-      num++;
-    }
-    if(num >= 0 && num < NB_SOLVER_MAX){
+
+  if(solverNum >= 0 && solverNum < NB_SOLVER_MAX){
+    // some options have been changed: refill the menus
+    if(!initOption[0] || !initOption[1] || !initOption[2] || !initOption[3] ||
+       !initOption[4]){
       for(unsigned int i = 0; i < optionName.size(); i++) {
         if(optionName[i].empty()) break;
-        FlGui::instance()->solver[num]->choice[i]->clear();
+        FlGui::instance()->solver[solverNum]->choice[i]->clear();
         for(unsigned int j = 0; j < optionValue[i].size(); j++)
-          FlGui::instance()->solver[num]->choice[i]->add(optionValue[i][j].c_str());
-        FlGui::instance()->solver[num]->choice[i]->value(0);
+          FlGui::instance()->solver[solverNum]->choice[i]->add(optionValue[i][j].c_str());
+        FlGui::instance()->solver[solverNum]->choice[i]->value(0);
       }
     }
+    // reactivate buttons  
+    for(unsigned int i = 0; i < buttonName.size(); i++)
+      if(buttonName[i].size())
+        FlGui::instance()->solver[solverNum]->command[i]->activate();
   }
   
   _server = 0;
