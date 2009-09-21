@@ -698,7 +698,7 @@ void highOrderSmoother::smooth(std::vector<MElement*> &all)
 
     // assembly of the elasticity term on the
     // set of elements
-    for (int i = 0; i < v.size(); i++){
+    for (unsigned int i = 0; i < v.size(); i++){
       SElement se(v[i]);
       El.addToMatrix(myAssembler, &se);
     }

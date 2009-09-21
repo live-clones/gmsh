@@ -723,7 +723,7 @@ static void elementCutMesh(MElement *e, gLevelset *ls,
         MTriangle *tri;
         if(p1 || p2) tri = new MTriangleBorder(mv[0], mv[1], mv[2], p1, p2, ++numEle, ePart);
         else tri = new MTriangle(mv[0], mv[1], mv[2], ++numEle, ePart);
-        double lsT = triangles[i].lsTag();
+        int lsT = triangles[i].lsTag();
         int c = elements[2].count(lsT) + elements[3].count(lsT);
         // suppose that the surfaces have been cut before the volumes!
         int reg = getBorderTag(lsT, c, newtags[2][0], borderTags[1]);

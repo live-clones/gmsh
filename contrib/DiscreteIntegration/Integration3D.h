@@ -74,7 +74,7 @@ class DI_Point
   inline bool isInsideDomain  () const {return Ls.back() < 0.;}
   inline bool isOutsideDomain () const {return Ls.back() > 0.;}
   inline bool isOnBorder      () const {return Ls.back() == 0.;}
-  inline double lsTag() const {
+  inline int lsTag() const {
     if(isInsideDomain()) return 1;
     if(isOutsideDomain()) return -1;
     return 0;
