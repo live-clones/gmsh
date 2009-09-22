@@ -2199,7 +2199,7 @@ static void view_applybgmesh_cb(Fl_Widget *w, void *data)
   }
 }
 
-//#define TEST_SERVER
+#define TEST_SERVER
 
 // The static menus (we cannot use the 'g', 'm' 's' and 'p' mnemonics
 // since they are already defined as global shortcuts)

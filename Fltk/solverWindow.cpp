@@ -91,12 +91,14 @@ void GmshRemote::run(std::string args)
     return;
   }
 
-  // find solver index
-  int num = 0;
+  // find solver num
+  int num = -1;
   for(std::map<int, GmshRemote*>::iterator it = _all.begin(); 
       it != _all.end(); it++){
-    if(this == it->second) break;
-    num++;
+    if(this == it->second){
+      num = it->first;
+      break;
+    }
   }
 
   // make command buttons inactive while running
