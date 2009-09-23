@@ -50,7 +50,7 @@ class FlGmshServer : public GmshServer{
       if(timeout > 0 && GetTimeInSeconds() - start > timeout)
         return 2; // timout
 
-      if((_remote->executable.size() && _remote->getPid() < 0) ||
+      if(_remote->getPid() < 0 || 
          (_remote->executable.empty() && !CTX::instance()->solver.listen))
         return 1; // process has been killed or we stopped listening
 
@@ -147,13 +147,13 @@ void GmshRemote::run(std::string args)
   bool initOption[5] = {true, true, true, true, true};  
   while(1) {
 
-    if((prog.size() && _pid < 0) || 
-       (prog.empty() && !CTX::instance()->solver.listen)) break;
+    if(_pid < 0 || (prog.empty() && !CTX::instance()->solver.listen))
+      break;
     
     int stop = server->NonBlockingWait(sock, 0.1, 0.);
     
-    if(stop || (prog.size() && _pid < 0) || 
-       (prog.empty() && !CTX::instance()->solver.listen)) break;
+    if(stop || _pid < 0 || (prog.empty() && !CTX::instance()->solver.listen))
+      break;
     
     int type, length;
     if(server->ReceiveHeader(&type, &length)){
