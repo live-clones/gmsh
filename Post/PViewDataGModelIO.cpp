@@ -174,6 +174,9 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary)
             int mult = 1;
             if(_type == ElementNodeData)
               mult = e->getNumVertices();
+            // Warning: this will not work if the mesh we just saved
+            // above changed the renumbering of the elements (which is
+            // usually the case)...
             int num = e->getNum();
             if(binary){
               fwrite(&num, sizeof(int), 1, fp);

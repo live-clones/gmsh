@@ -70,13 +70,18 @@ void GmshRemote::runCommand(int commandIndex, int optionIndex, int optionChoice)
     return;
   }
 
-  if(optionChoice < 0 || optionChoice >= (int)optionValue[optionIndex].size()){
-    Msg::Error("Wrong option choice");
-    return;
+  std::string commandArg;
+  if(optionValue[optionIndex].size()){
+    if(optionChoice < 0 || optionChoice >= (int)optionValue[optionIndex].size()){
+      Msg::Error("Wrong option choice");
+      return;
+    }
+    commandArg = ReplacePercentS
+      (buttonSwitch[commandIndex], optionValue[optionIndex][optionChoice]);
   }
-
-  std::string commandArg = ReplacePercentS
-    (buttonSwitch[commandIndex], optionValue[optionIndex][optionChoice]);
+  else{ // no options
+    commandArg = buttonSwitch[commandIndex];
+  }
 
   run(inputArg + " " + meshArg + " " + commandArg);
 }
