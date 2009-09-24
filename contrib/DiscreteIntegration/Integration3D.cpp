@@ -222,7 +222,7 @@ int minimum(double *x, double *y, double *z, const int num) {
 }
 
 // Return the quality of a triangle
-double qualityTri(const DI_Point &p0, const DI_Point p1, const DI_Point &p2) {
+double qualityTri(const DI_Point &p0, const DI_Point &p1, const DI_Point &p2) {
   double a = distance(p0, p1);
   double b = distance(p0, p2);
   double c = distance(p1, p2);

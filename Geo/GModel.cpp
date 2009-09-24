@@ -27,6 +27,7 @@
 #include "Field.h"
 #include "Generator.h"
 #include "Context.h"
+#include "OS.h"
 
 std::vector<GModel*> GModel::list;
 int GModel::_current = -1;
@@ -1192,6 +1193,9 @@ GModel *GModel::buildCutGModel(gLevelset *ls)
   std::map<int, std::map<int, std::string> > physicals[4];
   std::map<int, MVertex*> vertexMap;
 
+  Msg::Info("Cutting mesh...");
+  double t1 = Cpu();
+
   GModel *cutGM = buildCutMesh(this, ls, elements, vertexMap, physicals);
 
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
@@ -1204,6 +1208,9 @@ GModel *GModel::buildCutGModel(gLevelset *ls)
   for(int i = 0; i < 4; i++)
     cutGM->_storePhysicalTagsInEntities(i, physicals[i]);
 
+  double t2 = Cpu();
+
+  Msg::Info("Mesh cutting complete (%g s)", t2 - t1);
   return cutGM;
 }
 
