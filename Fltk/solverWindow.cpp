@@ -156,88 +156,88 @@ void GmshRemote::run(std::string args)
       break;
     
     int type, length;
-    if(server->ReceiveHeader(&type, &length)){
-      double timer = GetTimeInSeconds();
-      char *message = new char[length + 1];
-      if(server->ReceiveString(length, message)){
-        switch (type) {
-        case GmshSocket::GMSH_START:
-          _pid = atoi(message);
-          _server = server;
-          break;
-        case GmshSocket::GMSH_STOP:
-          _pid = -1;
-          _server = 0;
-          break;
-        case GmshSocket::GMSH_PROGRESS:
-          Msg::StatusBar(2, false, "%s %s", name.c_str(), message);
-          break;
-        case GmshSocket::GMSH_OPTION_1:
-        case GmshSocket::GMSH_OPTION_2:
-        case GmshSocket::GMSH_OPTION_3:
-        case GmshSocket::GMSH_OPTION_4:
-        case GmshSocket::GMSH_OPTION_5:
-          {
-            int i = (int)type - (int)GmshSocket::GMSH_OPTION_1;
-            if(initOption[i]){
-              optionValue[i].clear();
-              initOption[i] = false;
-            }
-            optionValue[i].push_back(message);
-          }
-          break;
-        case GmshSocket::GMSH_MERGE_FILE:
-          if(mergeViews) {
-            int n = PView::list.size();
-            MergeFile(message);
-            drawContext::global()->draw();
-            if(n != (int)PView::list.size()) 
-              FlGui::instance()->menu->setContext(menu_post, 0);
-          }
-          break;
-        case GmshSocket::GMSH_PARSE_STRING:
-          ParseString(message);
-          drawContext::global()->draw();
-          break;
-        case GmshSocket::GMSH_INFO:
-          Msg::Direct("%-8.8s: %s", name.c_str(), message);
-          break;
-        case GmshSocket::GMSH_WARNING:
-          Msg::Direct(2, "%-8.8s: %s", name.c_str(), message);
-          break;
-        case GmshSocket::GMSH_ERROR:
-          Msg::Direct(1, "%-8.8s: %s", name.c_str(), message);
-          break;
-        case GmshSocket::GMSH_SPEED_TEST:
-          Msg::Info("got %d Mb message in %g seconds", strlen(message) 
-                    / 1024 / 1024, GetTimeInSeconds() - timer);
-          break;
-        case GmshSocket::GMSH_VERTEX_ARRAY:
-          {
-            int n = PView::list.size();
-            PView::fillVertexArray(this, length, message);
-            drawContext::global()->draw();
-            if(n != (int)PView::list.size())
-              FlGui::instance()->updateViews();
-          }
-          break;
-        default:
-          Msg::Warning("Unknown message type");
-          Msg::Direct("%-8.8s: %s", name.c_str(), message);
-          break;
-        }
-        FlGui::instance()->check();
-      }
-      else{
-        Msg::Warning("Failed to receive message body on socket: aborting");
-        break;
-      }
-      delete [] message;
-    }
-    else{
-      // didn't get any header, just abort
+    if(!server->ReceiveHeader(&type, &length)){
+      Msg::Error("Did not receive message header: stopping server");
       break;
     }
+
+    double timer = GetTimeInSeconds();
+    
+    char *message = new char[length + 1];
+    if(!server->ReceiveString(length, message)){
+      Msg::Error("Did not receive message body: stopping server");
+      delete [] message;
+      break;
+    }
+
+    switch (type) {
+    case GmshSocket::GMSH_START:
+      _pid = atoi(message);
+      _server = server;
+      break;
+    case GmshSocket::GMSH_STOP:
+      _pid = -1;
+      _server = 0;
+      break;
+    case GmshSocket::GMSH_PROGRESS:
+      Msg::StatusBar(2, false, "%s %s", name.c_str(), message);
+      break;
+    case GmshSocket::GMSH_OPTION_1:
+    case GmshSocket::GMSH_OPTION_2:
+    case GmshSocket::GMSH_OPTION_3:
+    case GmshSocket::GMSH_OPTION_4:
+    case GmshSocket::GMSH_OPTION_5:
+      {
+        int i = (int)type - (int)GmshSocket::GMSH_OPTION_1;
+        if(initOption[i]){
+          optionValue[i].clear();
+          initOption[i] = false;
+        }
+        optionValue[i].push_back(message);
+      }
+      break;
+    case GmshSocket::GMSH_MERGE_FILE:
+      if(mergeViews) {
+        int n = PView::list.size();
+        MergeFile(message);
+        drawContext::global()->draw();
+        if(n != (int)PView::list.size()) 
+          FlGui::instance()->menu->setContext(menu_post, 0);
+      }
+      break;
+    case GmshSocket::GMSH_PARSE_STRING:
+      ParseString(message);
+      drawContext::global()->draw();
+      break;
+    case GmshSocket::GMSH_INFO:
+      Msg::Direct("%-8.8s: %s", name.c_str(), message);
+      break;
+    case GmshSocket::GMSH_WARNING:
+      Msg::Direct(2, "%-8.8s: %s", name.c_str(), message);
+      break;
+    case GmshSocket::GMSH_ERROR:
+      Msg::Direct(1, "%-8.8s: %s", name.c_str(), message);
+      break;
+    case GmshSocket::GMSH_SPEED_TEST:
+      Msg::Info("got %d Mb message in %g seconds",
+                length / 1024 / 1024, GetTimeInSeconds() - timer);
+      break;
+    case GmshSocket::GMSH_VERTEX_ARRAY:
+      {
+        int n = PView::list.size();
+        PView::fillVertexArray(this, length, message);
+        drawContext::global()->draw();
+        if(n != (int)PView::list.size())
+          FlGui::instance()->updateViews();
+      }
+      break;
+    default:
+      Msg::Warning("Received unknown message type (%d)", type);
+      break;
+    }
+
+    delete [] message;
+    FlGui::instance()->check();
   }
 
   if(window){
