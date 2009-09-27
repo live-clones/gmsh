@@ -247,7 +247,6 @@ struct _connectionChooser{
   Fl_Double_Window *window;
   Fl_Input *input;
   ConnectionBrowser *browser;
-  Fl_Box *box;
   Fl_Return_Button *ok;
   Fl_Button *cancel;
 };
@@ -264,20 +263,25 @@ std::string connectionChooser()
 {
   if(!chooser){
     chooser = new _connectionChooser;
-    int h = 4 * WB + 10 * BH, w = 4 * BB + 2 * WB;
+    int h = 4 * WB + 12 * BH, w = 4 * BB + 2 * WB;
     chooser->window = new Fl_Double_Window(w, h);
     chooser->window->set_modal();
-    chooser->input = new Fl_Input(WB, WB, w - 2 * WB, BH);
+    chooser->window->label("Start Remote Gmsh");
+    Fl_Box *b1 = new Fl_Box(WB, WB, w, BH, "Command:");
+    b1->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
+    chooser->input = new Fl_Input(WB, WB + BH, w - 2 * WB, BH);
+    Fl_Box *b2 = new Fl_Box(WB, 2 * WB + 2 * BH, w, BH, "History:");
+    b2->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
     chooser->browser = new ConnectionBrowser
-      (WB, 2 * WB + BH, w - 2 * WB, h - 2 * BH - 4 * WB);
+      (WB, 2 * WB + 3 * BH, w - 2 * WB, h - 4 * BH - 4 * WB);
     chooser->browser->callback(select_cb);
     chooser->cancel = new Fl_Button
       (w - 2 * WB - 2 * BB, h - WB - BH, BB, BH, "Cancel");
     chooser->ok = new Fl_Return_Button
       (w - WB - BB, h - WB - BH, BB, BH, "Run");
-    chooser->box = new Fl_Box(WB, h - WB - BB, WB, WB);
-    chooser->box->hide();
-    chooser->window->resizable(chooser->box);
+    Fl_Box *b3 = new Fl_Box(WB, h - WB - BB, WB, WB);
+    b3->hide();
+    chooser->window->resizable(b3);
   }
 
   Fl_Preferences prefs(Fl_Preferences::USER, "fltk.org", "gmsh");
