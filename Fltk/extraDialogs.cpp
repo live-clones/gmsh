@@ -16,6 +16,7 @@
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Hold_Browser.H>
 #include <FL/Fl_Box.H>
+#include <FL/fl_ask.H>
 #include "FlGui.h"
 #include "paletteWindow.h"
 #include "GmshDefines.h"
@@ -28,7 +29,7 @@
 
 // Arrow editor
 
-int arrow_editor(const char *title, double &a, double &b, double &c)
+int arrowEditor(const char *title, double &a, double &b, double &c)
 {
   struct _editor{
     Fl_Window *window;
@@ -106,7 +107,7 @@ public:
     : Fl_Slider(x, y, w, h, l) {}
 };
 
-int perspective_editor()
+int perspectiveEditor()
 {
   struct _editor{
     Fl_Menu_Window *window;
@@ -155,7 +156,7 @@ static void model_switch_cb(Fl_Widget* w, void *data)
   drawContext::global()->draw();
 }
 
-int model_chooser()
+int modelChooser()
 {
   struct _menu{
     Fl_Menu_Window *window;
@@ -192,4 +193,17 @@ int model_chooser()
     menu->window->show(); // fix ordering
   menu->window->show();
   return 0;
+}
+
+// Connection chooser
+
+std::string connectionChooser()
+{
+  const char *exe = fl_input
+    ("Command:", 
+     //"ssh ace25 /Users/geuzaine/src/gmsh/bin/gmsh");
+     "./gmsh ../tutorial/view3.pos");
+
+  if(exe) return std::string(exe);
+  return "";
 }

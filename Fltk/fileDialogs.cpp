@@ -75,7 +75,7 @@ static fileChooser *fc = 0;
 
 #endif
 
-int file_chooser(int multi, int create, const char *message,
+int fileChooser(int multi, int create, const char *message,
                  const char *filter, const char *fname)
 {
   static char thefilter[1024] = "";
@@ -139,7 +139,7 @@ int file_chooser(int multi, int create, const char *message,
 #endif
 }
 
-std::string file_chooser_get_name(int num)
+std::string fileChooserGetName(int num)
 {
   if(!fc) return "";
 #if defined(HAVE_NATIVE_FILE_CHOOSER)
@@ -149,13 +149,13 @@ std::string file_chooser_get_name(int num)
 #endif
 }
 
-int file_chooser_get_filter()
+int fileChooserGetFilter()
 {
   if(!fc) return 0;
   return fc->filter_value();
 }
 
-void file_chooser_get_position(int *x, int *y)
+void fileChooserGetPosition(int *x, int *y)
 {
   if(!fc) return;
 #if !defined(HAVE_NATIVE_FILE_CHOOSER)
@@ -166,17 +166,17 @@ void file_chooser_get_position(int *x, int *y)
 
 // Generic save bitmap dialog
 
-int generic_bitmap_dialog(const char *name, const char *title, int format)
+int genericBitmapFileDialog(const char *name, const char *title, int format)
 {
-  struct _generic_bitmap_dialog{
+  struct _genericBitmapFileDialog{
     Fl_Window *window;
     Fl_Check_Button *b[2];
     Fl_Button *ok, *cancel;
   };
-  static _generic_bitmap_dialog *dialog = NULL;
+  static _genericBitmapFileDialog *dialog = NULL;
 
   if(!dialog){
-    dialog = new _generic_bitmap_dialog;
+    dialog = new _genericBitmapFileDialog;
     int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
@@ -221,17 +221,17 @@ int generic_bitmap_dialog(const char *name, const char *title, int format)
 
 // TeX dialog
 
-int latex_dialog(const char *name)
+int latexFileDialog(const char *name)
 {
-  struct _latex_dialog{
+  struct _latexFileDialog{
     Fl_Window *window;
     Fl_Check_Button *b;
     Fl_Button *ok, *cancel;
   };
-  static _latex_dialog *dialog = NULL;
+  static _latexFileDialog *dialog = NULL;
   
   if(!dialog){
-    dialog = new _latex_dialog;
+    dialog = new _latexFileDialog;
     int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "LaTeX Options");
     dialog->window->box(GMSH_WINDOW_BOX);
@@ -270,18 +270,18 @@ int latex_dialog(const char *name)
 
 // Save jpeg dialog
 
-int jpeg_dialog(const char *name)
+int jpegFileDialog(const char *name)
 {
-  struct _jpeg_dialog{
+  struct _jpegFileDialog{
     Fl_Window *window;
     Fl_Value_Slider *s[2];
     Fl_Check_Button *b[2];
     Fl_Button *ok, *cancel;
   };
-  static _jpeg_dialog *dialog = NULL;
+  static _jpegFileDialog *dialog = NULL;
 
   if(!dialog){
-    dialog = new _jpeg_dialog;
+    dialog = new _jpegFileDialog;
     int h = 3 * WB + 5 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "JPEG Options");
     dialog->window->box(GMSH_WINDOW_BOX);
@@ -341,17 +341,17 @@ int jpeg_dialog(const char *name)
 
 // Save gif dialog
 
-int gif_dialog(const char *name)
+int gifFileDialog(const char *name)
 {
-  struct _gif_dialog{
+  struct _gifFileDialog{
     Fl_Window *window;
     Fl_Check_Button *b[6];
     Fl_Button *ok, *cancel;
   };
-  static _gif_dialog *dialog = NULL;
+  static _gifFileDialog *dialog = NULL;
 
   if(!dialog){
-    dialog = new _gif_dialog;
+    dialog = new _gifFileDialog;
     int h = 3 * WB + 7 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "GIF Options");
     dialog->window->box(GMSH_WINDOW_BOX);
@@ -448,15 +448,15 @@ static void activate_gl2ps_choices(int format, int quality, Fl_Check_Button *b[5
   }
 }
 
-int gl2ps_dialog(const char *name, const char *title, int format)
+int gl2psFileDialog(const char *name, const char *title, int format)
 {
-  struct _gl2ps_dialog{
+  struct _gl2psFileDialog{
     Fl_Window *window;
     Fl_Check_Button *b[6];
     Fl_Choice *c;
     Fl_Button *ok, *cancel;
   };
-  static _gl2ps_dialog *dialog = NULL;
+  static _gl2psFileDialog *dialog = NULL;
 
   static Fl_Menu_Item sortmenu[] = {
     {"Raster image", 0, 0, 0},
@@ -467,7 +467,7 @@ int gl2ps_dialog(const char *name, const char *title, int format)
   };
 
   if(!dialog){
-    dialog = new _gl2ps_dialog;
+    dialog = new _gl2psFileDialog;
     int h = 3 * WB + 8 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
@@ -541,17 +541,17 @@ int gl2ps_dialog(const char *name, const char *title, int format)
 
 // Save options dialog
 
-int options_dialog(const char *name)
+int optionsFileDialog(const char *name)
 {
-  struct _options_dialog{
+  struct _optionsFileDialog{
     Fl_Window *window;
     Fl_Check_Button *b[2];
     Fl_Button *ok, *cancel;
   };
-  static _options_dialog *dialog = NULL;
+  static _optionsFileDialog *dialog = NULL;
 
   if(!dialog){
-    dialog = new _options_dialog;
+    dialog = new _optionsFileDialog;
     int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "Options");
     dialog->window->box(GMSH_WINDOW_BOX);
@@ -595,17 +595,17 @@ int options_dialog(const char *name)
 
 // geo dialog
 
-int geo_dialog(const char *name)
+int geoFileDialog(const char *name)
 {
-  struct _geo_dialog{
+  struct _geoFileDialog{
     Fl_Window *window;
     Fl_Check_Button *b;
     Fl_Button *ok, *cancel;
   };
-  static _geo_dialog *dialog = NULL;
+  static _geoFileDialog *dialog = NULL;
 
   if(!dialog){
-    dialog = new _geo_dialog;
+    dialog = new _geoFileDialog;
     int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "GEO Options");
     dialog->window->box(GMSH_WINDOW_BOX);
@@ -642,19 +642,19 @@ int geo_dialog(const char *name)
   return 0;
 }
 
-int pos_dialog(const char *name)
+int posFileDialog(const char *name)
 {
-  struct _pos_dialog{
+  struct _posFileDialog{
     Fl_Window *window;
     Fl_Check_Button *b[7];
     Fl_Button *ok, *cancel;
   };
-  static _pos_dialog *dialog = NULL;
+  static _posFileDialog *dialog = NULL;
 
   int BBB = BB + 9; // labels too long
 
   if(!dialog){
-    dialog = new _pos_dialog;
+    dialog = new _posFileDialog;
     int h = 3 * WB + 8 * BH, w = 2 * BBB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "POS Options");
     dialog->window->box(GMSH_WINDOW_BOX);
@@ -717,16 +717,16 @@ int pos_dialog(const char *name)
 
 // Save msh dialog
 
-int msh_dialog(const char *name)
+int mshFileDialog(const char *name)
 {
-  struct _msh_dialog{
+  struct _mshFileDialog{
     Fl_Window *window;
     Fl_Check_Button *b;
     Fl_Check_Button *p;
     Fl_Choice *c;
     Fl_Button *ok, *cancel;
   };
-  static _msh_dialog *dialog = NULL;
+  static _mshFileDialog *dialog = NULL;
 
   static Fl_Menu_Item formatmenu[] = {
     {"Version 1.0", 0, 0, 0},
@@ -738,7 +738,7 @@ int msh_dialog(const char *name)
   int BBB = BB + 9; // labels too long
 
   if(!dialog){
-    dialog = new _msh_dialog;
+    dialog = new _mshFileDialog;
     int h = 3 * WB + 4 * BH, w = 2 * BBB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "MSH Options");
     dialog->window->box(GMSH_WINDOW_BOX);
@@ -790,19 +790,19 @@ int msh_dialog(const char *name)
 
 // unv mesh dialog
 
-int unv_dialog(const char *name)
+int unvFileDialog(const char *name)
 {
-  struct _unv_dialog{
+  struct _unvFileDialog{
     Fl_Window *window;
     Fl_Check_Button *b[2];
     Fl_Button *ok, *cancel;
   };
-  static _unv_dialog *dialog = NULL;
+  static _unvFileDialog *dialog = NULL;
 
   int BBB = BB + 9; // labels too long
 
   if(!dialog){
-    dialog = new _unv_dialog;
+    dialog = new _unvFileDialog;
     int h = 3 * WB + 3 * BH, w = 2 * BBB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "UNV Options");
     dialog->window->box(GMSH_WINDOW_BOX);
@@ -847,15 +847,15 @@ int unv_dialog(const char *name)
 
 // Save bdf dialog
 
-int bdf_dialog(const char *name)
+int bdfFileDialog(const char *name)
 {
-  struct _bdf_dialog{
+  struct _bdfFileDialog{
     Fl_Window *window;
     Fl_Choice *c, *d;
     Fl_Check_Button *b;
     Fl_Button *ok, *cancel;
   };
-  static _bdf_dialog *dialog = NULL;
+  static _bdfFileDialog *dialog = NULL;
 
   static Fl_Menu_Item formatmenu[] = {
     {"Free field", 0, 0, 0},
@@ -874,7 +874,7 @@ int bdf_dialog(const char *name)
   int BBB = BB + 16; // labels too long
 
   if(!dialog){
-    dialog = new _bdf_dialog;
+    dialog = new _bdfFileDialog;
     int h = 3 * WB + 4 * BH, w = 2 * BBB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "BDF Options");
     dialog->window->box(GMSH_WINDOW_BOX);
@@ -925,16 +925,16 @@ int bdf_dialog(const char *name)
 
 // Generic mesh dialog
 
-int generic_mesh_dialog(const char *name, const char *title, int format,
+int genericMeshFileDialog(const char *name, const char *title, int format,
                         bool binary_support, bool element_tag_support)
 {
-  struct _generic_mesh_dialog{
+  struct _genericMeshFileDialog{
     Fl_Window *window;
     Fl_Choice *c, *d;
     Fl_Check_Button *b;
     Fl_Button *ok, *cancel;
   };
-  static _generic_mesh_dialog *dialog = NULL;
+  static _genericMeshFileDialog *dialog = NULL;
 
   static Fl_Menu_Item formatmenu[] = {
     {"ASCII", 0, 0, 0},
@@ -952,7 +952,7 @@ int generic_mesh_dialog(const char *name, const char *title, int format,
   int BBB = BB + 16; // labels too long
 
   if(!dialog){
-    dialog = new _generic_mesh_dialog;
+    dialog = new _genericMeshFileDialog;
     int h = 3 * WB + 4 * BH, w = 2 * BBB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
@@ -1191,7 +1191,7 @@ void cgnsw_cancel_cb(Fl_Widget *widget, void *data)
   dlg->status = 0;
 }
 
-int cgns_write_dialog(const char *filename)
+int cgnsFileDialog(const char *filename)
 {
   static CGNSWriteDialog dlg;
   dlg.filename = filename;
@@ -1426,7 +1426,7 @@ int cgns_write_dialog(const char *filename)
 
 #else
 
-int cgns_write_dialog(const char *filename)
+int cgnsFileDialog(const char *filename)
 {
   CreateOutputFile(filename, FORMAT_CGNS);
   return 1;

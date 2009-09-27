@@ -144,7 +144,7 @@ void GmshRemote::run(std::string args)
 
   Msg::Info("Running '%s'...", name.c_str());
 
-  bool initOption[5] = {true, true, true, true, true};  
+  bool initOption[5] = {false, false, false, false, false};  
   while(1) {
 
     if(_pid < 0 || (prog.empty() && !CTX::instance()->solver.listen))
@@ -179,9 +179,6 @@ void GmshRemote::run(std::string args)
       _pid = -1;
       _server = 0;
       break;
-    case GmshSocket::GMSH_PROGRESS:
-      Msg::StatusBar(2, false, "%s %s", name.c_str(), message);
-      break;
     case GmshSocket::GMSH_OPTION_1:
     case GmshSocket::GMSH_OPTION_2:
     case GmshSocket::GMSH_OPTION_3:
@@ -189,9 +186,9 @@ void GmshRemote::run(std::string args)
     case GmshSocket::GMSH_OPTION_5:
       {
         int i = (int)type - (int)GmshSocket::GMSH_OPTION_1;
-        if(initOption[i]){
+        if(!initOption[i]){
           optionValue[i].clear();
-          initOption[i] = false;
+          initOption[i] = true;
         }
         optionValue[i].push_back(message);
       }
@@ -208,6 +205,9 @@ void GmshRemote::run(std::string args)
     case GmshSocket::GMSH_PARSE_STRING:
       ParseString(message);
       drawContext::global()->draw();
+      break;
+    case GmshSocket::GMSH_PROGRESS:
+      Msg::StatusBar(2, false, "%s %s", name.c_str(), message);
       break;
     case GmshSocket::GMSH_INFO:
       Msg::Direct("%-8.8s: %s", name.c_str(), message);
@@ -242,8 +242,8 @@ void GmshRemote::run(std::string args)
 
   if(window){
     // some options have been changed: refill the menus
-    if(!initOption[0] || !initOption[1] || !initOption[2] || 
-       !initOption[3] || !initOption[4]){
+    if(initOption[0] || initOption[1] || initOption[2] || 
+       initOption[3] || initOption[4]){
       for(unsigned int i = 0; i < window->choice.size(); i++) {
         int old = window->choice[i]->value();
         window->choice[i]->clear();
@@ -340,8 +340,8 @@ static void solver_choose_executable_cb(Fl_Widget *w, void *data)
   pattern += ".exe";
 #endif
 
-  if(file_chooser(0, 0, "Choose", pattern.c_str())){
-    FlGui::instance()->solver[num]->input[2]->value(file_chooser_get_name(1).c_str());
+  if(fileChooser(0, 0, "Choose", pattern.c_str())){
+    FlGui::instance()->solver[num]->input[2]->value(fileChooserGetName(1).c_str());
     solver_ok_cb(w, data);
   }
 }
@@ -351,8 +351,8 @@ static void solver_file_open_cb(Fl_Widget *w, void *data)
   int num = (int)(long)data;
   std::string pattern = "*" + GmshRemote::get(num)->inputFileExtension;
 
-  if(file_chooser(0, 0, "Choose", pattern.c_str())) {
-    FlGui::instance()->solver[num]->input[0]->value(file_chooser_get_name(1).c_str());
+  if(fileChooser(0, 0, "Choose", pattern.c_str())) {
+    FlGui::instance()->solver[num]->input[0]->value(fileChooserGetName(1).c_str());
     solver_ok_cb(w, data);
   }
 }
@@ -368,8 +368,8 @@ static void solver_file_edit_cb(Fl_Widget *w, void *data)
 static void solver_choose_mesh_cb(Fl_Widget *w, void *data)
 {
   int num = (int)(long)data;
-  if(file_chooser(0, 0, "Choose", "*.msh")){
-    FlGui::instance()->solver[num]->input[1]->value(file_chooser_get_name(1).c_str());
+  if(fileChooser(0, 0, "Choose", "*.msh")){
+    FlGui::instance()->solver[num]->input[1]->value(fileChooserGetName(1).c_str());
     solver_ok_cb(w, data);
   }
 }

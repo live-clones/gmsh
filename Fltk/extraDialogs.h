@@ -6,8 +6,11 @@
 #ifndef _EXTRA_DIALOGS_H_
 #define _EXTRA_DIALOGS_H_
 
-int arrow_editor(const char *title, double &a, double &b, double &c);
-int perspective_editor();
-int model_chooser();
+#include <string>
+
+int arrowEditor(const char *title, double &a, double &b, double &c);
+int perspectiveEditor();
+int modelChooser();
+std::string connectionChooser();
 
 #endif

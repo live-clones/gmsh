@@ -767,8 +767,8 @@ void FlGui::storeCurrentWindowsInfo()
   CTX::instance()->ctxPosition[1] = meshContext->win->y();
   CTX::instance()->solverPosition[0] = solver[0]->win->x();
   CTX::instance()->solverPosition[1] = solver[0]->win->y();
-  file_chooser_get_position(&CTX::instance()->fileChooserPosition[0],
-                            &CTX::instance()->fileChooserPosition[1]);
+  fileChooserGetPosition(&CTX::instance()->fileChooserPosition[0],
+                         &CTX::instance()->fileChooserPosition[1]);
 }
 
 void FlGui::callForSolverPlugin(int dim)

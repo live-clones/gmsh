@@ -318,7 +318,7 @@ static void general_arrow_param_cb(Fl_Widget *w, void *data)
   double a = opt_general_arrow_head_radius(0, GMSH_GET, 0);
   double b = opt_general_arrow_stem_length(0, GMSH_GET, 0);
   double c = opt_general_arrow_stem_radius(0, GMSH_GET, 0);
-  while(arrow_editor("Arrow Editor", a, b, c)){
+  while(arrowEditor("Arrow Editor", a, b, c)){
     opt_general_arrow_head_radius(0, GMSH_SET, a);
     opt_general_arrow_stem_length(0, GMSH_SET, b);
     opt_general_arrow_stem_radius(0, GMSH_SET, c);

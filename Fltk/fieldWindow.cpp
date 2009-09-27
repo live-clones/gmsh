@@ -81,9 +81,9 @@ static void field_put_on_view_cb(Fl_Widget *w, void *data)
 static void field_select_file_cb(Fl_Widget *w, void *data)
 {
   Fl_Input *input = (Fl_Input*)data;
-  int ret = file_chooser(0, 0, "File selection", "", input->value());
+  int ret = fileChooser(0, 0, "File selection", "", input->value());
   if(ret){
-    input->value(file_chooser_get_name(0).c_str());
+    input->value(fileChooserGetName(0).c_str());
     input->set_changed();
   }
 }

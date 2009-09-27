@@ -8,25 +8,25 @@
 
 #include <string>
 
-int file_chooser(int multi, int create, const char *message,
-                 const char *pat, const char *fname=NULL);
-std::string file_chooser_get_name(int num);
-int file_chooser_get_filter();
-void file_chooser_get_position(int *x, int *y);
+int fileChooser(int multi, int create, const char *message,
+                const char *pat, const char *fname=NULL);
+std::string fileChooserGetName(int num);
+int fileChooserGetFilter();
+void fileChooserGetPosition(int *x, int *y);
 
-int jpeg_dialog(const char *filename);
-int gif_dialog(const char *filename);
-int geo_dialog(const char *filename);
-int generic_bitmap_dialog(const char *filename, const char *title, int format);
-int generic_mesh_dialog(const char *filename, const char *title, int format,
-                        bool binary_support, bool element_tag_support);
-int gl2ps_dialog(const char *filename, const char *title, int format);
-int options_dialog(const char *filename);
-int pos_dialog(const char *filename);
-int msh_dialog(const char *filename);
-int unv_dialog(const char *filename);
-int bdf_dialog(const char *filename);
-int latex_dialog(const char *filename);
-int cgns_write_dialog(const char *filename);
+int jpegFileDialog(const char *filename);
+int gifFileDialog(const char *filename);
+int geoFileDialog(const char *filename);
+int genericBitmapFileDialog(const char *filename, const char *title, int format);
+int genericMeshFileDialog(const char *filename, const char *title, int format,
+                          bool binary_support, bool element_tag_support);
+int gl2psFileDialog(const char *filename, const char *title, int format);
+int optionsFileDialog(const char *filename);
+int posFileDialog(const char *filename);
+int mshFileDialog(const char *filename);
+int unvFileDialog(const char *filename);
+int bdfFileDialog(const char *filename);
+int latexFileDialog(const char *filename);
+int cgnsFileDialog(const char *filename);
 
 #endif

@@ -189,7 +189,7 @@ void status_options_cb(Fl_Widget *w, void *data)
 {
   const char *str = (const char*)data;
   if(!strcmp(str, "model")){ // model selection
-    model_chooser();
+    modelChooser();
   }
   else if(!strcmp(str, "?")){ // display options
     PrintOptions(0, GMSH_FULLRC, 0, 1, NULL);
@@ -201,7 +201,7 @@ void status_options_cb(Fl_Widget *w, void *data)
                                !opt_general_orthographic(0, GMSH_GET, 0));
     }
     else{
-      perspective_editor();
+      perspectiveEditor();
     }
     drawContext::global()->draw();
   }

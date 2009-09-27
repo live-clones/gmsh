@@ -417,10 +417,10 @@ static void proj_hide_cb(Fl_Widget *w, void *data)
 static void save_selection_cb(Fl_Widget *w, void *data)
 {
   projectionEditor *e = (projectionEditor*)data;
-  if(file_chooser(0, 1, "Save Selection", "*.{geo,msh}")){
-    FILE *fp = fopen(file_chooser_get_name(1).c_str(), "w");
+  if(fileChooser(0, 1, "Save Selection", "*.{geo,msh}")){
+    FILE *fp = fopen(fileChooserGetName(1).c_str(), "w");
     if(!fp){
-      Msg::Error("Unable to open file `%s'", file_chooser_get_name(1).c_str());
+      Msg::Error("Unable to open file `%s'", fileChooserGetName(1).c_str());
       return;
     }
     std::vector<GEntity*> &ent(e->getEntities());
@@ -457,10 +457,10 @@ static void save_selection_cb(Fl_Widget *w, void *data)
 static void load_projection_cb(Fl_Widget *w, void *data)
 {
   projectionEditor *e = (projectionEditor*)data;
-  if(file_chooser(0, 0, "Load Projection", "*.pro")){
-    FILE *fp = fopen(file_chooser_get_name(1).c_str(), "r");
+  if(fileChooser(0, 0, "Load Projection", "*.pro")){
+    FILE *fp = fopen(fileChooserGetName(1).c_str(), "r");
     if(!fp){
-      Msg::Error("Unable to open file `%s'", file_chooser_get_name(1).c_str());
+      Msg::Error("Unable to open file `%s'", fileChooserGetName(1).c_str());
       return;
     }
     int num;
@@ -501,8 +501,8 @@ static void save_projection_cb(Fl_Widget *w, void *data)
   projection *p = e->getCurrentProjection();
   if(p){
     FM::ProjectionSurface *ps = (FM::ProjectionSurface*)p->face->getNativePtr();
-    if(file_chooser(0, 1, "Save Projection", "*.pro")){
-      std::string name = file_chooser_get_name(1);
+    if(fileChooser(0, 1, "Save Projection", "*.pro")){
+      std::string name = fileChooserGetName(1);
       FILE *fp = fopen(name.c_str(), "w");
       if(!fp){
         Msg::Error("Unable to open file `%s'", name.c_str());
@@ -687,10 +687,10 @@ static void action_cb(Fl_Widget *w, void *data)
       delete_fourier(faces[i]);
   }
   else{
-    if(file_chooser(0, 1, "Save Fourier Model", "*.fm")){
-      FILE *fp = fopen(file_chooser_get_name(1).c_str(), "w");
+    if(fileChooser(0, 1, "Save Fourier Model", "*.fm")){
+      FILE *fp = fopen(fileChooserGetName(1).c_str(), "w");
       if(!fp){
-        Msg::Error("Unable to open file `%s'", file_chooser_get_name(1).c_str());
+        Msg::Error("Unable to open file `%s'", fileChooserGetName(1).c_str());
         return;
       }
       fprintf(fp, "%d\n", (int)faces.size());

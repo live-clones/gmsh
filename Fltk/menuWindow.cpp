@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <time.h>
 #include <FL/Fl_Box.H>
-#include <FL/fl_ask.H>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GmshRemote.h"
@@ -28,6 +27,7 @@
 #include "solverWindow.h"
 #include "aboutWindow.h"
 #include "fileDialogs.h"
+#include "extraDialogs.h"
 #include "partitionDialog.h"
 #include "projectionEditor.h"
 #include "classificationEditor.h"
@@ -52,8 +52,8 @@
 static void file_new_cb(Fl_Widget *w, void *data)
 {
  test:
-  if(file_chooser(0, 1, "New", "*")) {
-    std::string name = file_chooser_get_name(1);
+  if(fileChooser(0, 1, "New", "*")) {
+    std::string name = fileChooserGetName(1);
     if(!StatFile(name)){
       if(fl_choice("File '%s' already exists.\n\nDo you want to erase it?",
                    "Cancel", "Erase", 0, name.c_str()))
@@ -119,8 +119,8 @@ static const char *input_formats =
 static void file_open_cb(Fl_Widget *w, void *data)
 {
   int n = PView::list.size();
-  if(file_chooser(0, 0, "Open", input_formats)) {
-    OpenProject(file_chooser_get_name(1));
+  if(fileChooser(0, 0, "Open", input_formats)) {
+    OpenProject(fileChooserGetName(1));
     drawContext::global()->draw();
   }
   if(n != (int)PView::list.size())
@@ -130,10 +130,10 @@ static void file_open_cb(Fl_Widget *w, void *data)
 static void file_merge_cb(Fl_Widget *w, void *data)
 {
   int n = PView::list.size();
-  int f = file_chooser(1, 0, "Merge", input_formats);
+  int f = fileChooser(1, 0, "Merge", input_formats);
   if(f) {
     for(int i = 1; i <= f; i++)
-      MergeFile(file_chooser_get_name(i));
+      MergeFile(fileChooserGetName(i));
     drawContext::global()->draw();
   }
   if(n != (int)PView::list.size())
@@ -158,14 +158,9 @@ static void file_remote_cb(Fl_Widget *w, void *data)
     else{
       GmshRemote::get(99)->name = "Remote";
       GmshRemote::get(99)->socketSwitch = "-socket %s";
-      const char *exe = fl_input
-        ("Command:", 
-         //"ssh ace25 /Users/geuzaine/src/gmsh/bin/gmsh");
-         "./gmsh ../tutorial/view3.pos");
-      if(exe){
-        GmshRemote::get(99)->executable = exe;
+      GmshRemote::get(99)->executable = connectionChooser();
+      if(GmshRemote::get(99)->executable.size())
         GmshRemote::get(99)->run("");
-      }
     }
   }
   else if(str == "stop"){
@@ -202,43 +197,43 @@ static void file_window_cb(Fl_Widget *w, void *data)
   }
 }
 
-static int _save_msh(const char *name){ return msh_dialog(name); }
-static int _save_pos(const char *name){ return pos_dialog(name); }
-static int _save_options(const char *name){ return options_dialog(name); }
-static int _save_geo(const char *name){ return geo_dialog(name); }
-static int _save_cgns(const char *name){ return cgns_write_dialog(name); }
-static int _save_unv(const char *name){ return unv_dialog(name); }
-static int _save_vtk(const char *name){ return generic_mesh_dialog
+static int _save_msh(const char *name){ return mshFileDialog(name); }
+static int _save_pos(const char *name){ return posFileDialog(name); }
+static int _save_options(const char *name){ return optionsFileDialog(name); }
+static int _save_geo(const char *name){ return geoFileDialog(name); }
+static int _save_cgns(const char *name){ return cgnsFileDialog(name); }
+static int _save_unv(const char *name){ return unvFileDialog(name); }
+static int _save_vtk(const char *name){ return genericMeshFileDialog
     (name, "VTK Options", FORMAT_VTK, true, false); }
-static int _save_diff(const char *name){ return generic_mesh_dialog
+static int _save_diff(const char *name){ return genericMeshFileDialog
     (name, "Diffpack Options", FORMAT_DIFF, true, false); }
-static int _save_med(const char *name){ return generic_mesh_dialog
+static int _save_med(const char *name){ return genericMeshFileDialog
     (name, "MED Options", FORMAT_MED, false, false); }
-static int _save_mesh(const char *name){ return generic_mesh_dialog
+static int _save_mesh(const char *name){ return genericMeshFileDialog
     (name, "MESH Options", FORMAT_MESH, false, true); }
-static int _save_bdf(const char *name){ return bdf_dialog(name); }
-static int _save_p3d(const char *name){ return generic_mesh_dialog
+static int _save_bdf(const char *name){ return bdfFileDialog(name); }
+static int _save_p3d(const char *name){ return genericMeshFileDialog
     (name, "P3D Options", FORMAT_P3D, false, false); }
-static int _save_stl(const char *name){ return generic_mesh_dialog
+static int _save_stl(const char *name){ return genericMeshFileDialog
     (name, "STL Options", FORMAT_STL, true, false); }
-static int _save_vrml(const char *name){ return generic_mesh_dialog
+static int _save_vrml(const char *name){ return genericMeshFileDialog
     (name, "VRML Options", FORMAT_VRML, false, false); }
-static int _save_eps(const char *name){ return gl2ps_dialog
+static int _save_eps(const char *name){ return gl2psFileDialog
     (name, "EPS Options", FORMAT_EPS); }
-static int _save_gif(const char *name){ return gif_dialog(name); }
-static int _save_jpeg(const char *name){ return jpeg_dialog(name); }
-static int _save_tex(const char *name){ return latex_dialog(name); }
-static int _save_pdf(const char *name){ return gl2ps_dialog
+static int _save_gif(const char *name){ return gifFileDialog(name); }
+static int _save_jpeg(const char *name){ return jpegFileDialog(name); }
+static int _save_tex(const char *name){ return latexFileDialog(name); }
+static int _save_pdf(const char *name){ return gl2psFileDialog
     (name, "PDF Options", FORMAT_PDF); }
-static int _save_png(const char *name){ return generic_bitmap_dialog
+static int _save_png(const char *name){ return genericBitmapFileDialog
     (name, "PNG Options", FORMAT_PNG); }
-static int _save_ps(const char *name){ return gl2ps_dialog
+static int _save_ps(const char *name){ return gl2psFileDialog
     (name, "PS Options", FORMAT_PS); }
-static int _save_ppm(const char *name){ return generic_bitmap_dialog
+static int _save_ppm(const char *name){ return genericBitmapFileDialog
     (name, "PPM Options", FORMAT_PPM); }
-static int _save_svg(const char *name){ return gl2ps_dialog
+static int _save_svg(const char *name){ return gl2psFileDialog
     (name, "SVG Options", FORMAT_SVG); }
-static int _save_yuv(const char *name){ return generic_bitmap_dialog
+static int _save_yuv(const char *name){ return genericBitmapFileDialog
     (name, "YUV Options", FORMAT_YUV); }
 
 static int _save_auto(const char *name)
@@ -328,15 +323,15 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
   }
 
  test:
-  if(file_chooser(0, 1, "Save As", pat)) {
-    std::string name = file_chooser_get_name(1);
+  if(fileChooser(0, 1, "Save As", pat)) {
+    std::string name = fileChooserGetName(1);
     if(CTX::instance()->confirmOverwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
                       "Cancel", "Replace", 0, name.c_str()))
           goto test;
     }
-    int i = file_chooser_get_filter();
+    int i = fileChooserGetFilter();
     if(i >= 0 && i < nbformats){
       if(!formats[i].func(name.c_str())) goto test;
     }
@@ -360,8 +355,8 @@ static void file_options_save_cb(Fl_Widget *w, void *data)
 static void file_rename_cb(Fl_Widget *w, void *data)
 {
  test:
-  if(file_chooser(0, 1, "Rename", "*", GModel::current()->getFileName().c_str())) {
-    std::string name = file_chooser_get_name(1);
+  if(fileChooser(0, 1, "Rename", "*", GModel::current()->getFileName().c_str())) {
+    std::string name = fileChooserGetName(1);
     if(CTX::instance()->confirmOverwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
@@ -2048,8 +2043,8 @@ static void view_save_as(int index, const char *title, int format)
   PView *view = PView::list[index];
   
  test:
-  if(file_chooser(0, 1, title, "*", view->getData()->getFileName().c_str())){
-    std::string name = file_chooser_get_name(1);
+  if(fileChooser(0, 1, title, "*", view->getData()->getFileName().c_str())){
+    std::string name = fileChooserGetName(1);
     if(CTX::instance()->confirmOverwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
@@ -2185,8 +2180,8 @@ static Fl_Menu_Item bar_table[] = {
       {"Clear",        0, (Fl_Callback *)file_window_cb, (void*)"split_u"},
       {0},
 #if defined(TEST_SERVER)
-    {"Start remote...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
-    {"Stop remote",  0, (Fl_Callback *)file_remote_cb, (void*)"stop", FL_MENU_DIVIDER},
+    {"Start Remote Gmsh...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
+    {"Stop Remote Gmsh",  0, (Fl_Callback *)file_remote_cb, (void*)"stop", FL_MENU_DIVIDER},
 #endif
     {"&Rename...",  FL_CTRL+'r', (Fl_Callback *)file_rename_cb, 0},
     {"Save &As...", FL_CTRL+'s', (Fl_Callback *)file_save_as_cb, 0},
@@ -2233,8 +2228,8 @@ static Fl_Menu_Item sysbar_table[] = {
       {"Clear",        0, (Fl_Callback *)file_window_cb, (void*)"split_u"},
       {0},
 #if defined(TEST_SERVER)
-    {"Start remote...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
-    {"Stop remote",  0, (Fl_Callback *)file_remote_cb, (void*)"stop", FL_MENU_DIVIDER},
+    {"Start Remote Gmsh...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
+    {"Stop Remote Gmsh",  0, (Fl_Callback *)file_remote_cb, (void*)"stop", FL_MENU_DIVIDER},
 #endif
     {"Rename...",  FL_META+'r', (Fl_Callback *)file_rename_cb, 0},
     {"Save As...", FL_META+'s', (Fl_Callback *)file_save_as_cb, 0},
