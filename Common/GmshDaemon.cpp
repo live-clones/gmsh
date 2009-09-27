@@ -14,6 +14,7 @@
 
 static void computeAndSendVertexArrays(GmshClient &client)
 {
+  client.Info("Sending vertex arrays");
   for(unsigned int i = 0; i < PView::list.size(); i++){
     PView *p = PView::list[i];
     p->fillVertexArrays();
@@ -42,41 +43,41 @@ int GmshDaemon(std::string socket)
     return 1;
   }
   client.Start();
-  client.Info("Server sucessfully started. Listening...");
+  client.Info("Remote Gmsh sucessfully started");
 
   computeAndSendVertexArrays(client);
 
+  client.Info("Remote Gmsh is listening...");
   while(1){
-    // stop the server if we have no communications for 60 seconds
+    // stop if we have no communications for 60 seconds
     int ret = client.Select(60, 0);
     if(!ret){
-      client.Info("Timout: stopping server...");
+      client.Info("Timout: stopping remote Gmsh...");
       break;
     }
     else if(ret < 0){
-      client.Error("Error on select: stopping server...");
+      client.Error("Error on select: stopping remote Gmsh...");
       break;
     }
 
     int type, length;
     if(!client.ReceiveHeader(&type, &length)){
-      client.Error("Did not receive message header: stopping server...");
+      client.Error("Did not receive message header: stopping remote Gmsh...");
       break;
     }
       
     char *msg = new char[length + 1];
     if(!client.ReceiveString(length, msg)){
-      client.Error("Did not receive message body: stopping server...");
+      client.Error("Did not receive message body: stopping remote Gmsh...");
       delete [] msg;
       break;
     }
 
     if(type == GmshSocket::GMSH_STOP){
-      client.Info("Stopping server");
+      client.Info("Stopping remote Gmsh...");
       break;
     }
     else if(type == GmshSocket::GMSH_VERTEX_ARRAY){
-      client.Info("Sending vertex arrays");
       computeAndSendVertexArrays(client);
     }
     else if(type == GmshSocket::GMSH_SPEED_TEST){
@@ -89,6 +90,7 @@ int GmshDaemon(std::string socket)
     }
   }
 
+  client.Info("Remote Gmsh is stopped");
   client.Stop();
   client.Disconnect();
 
