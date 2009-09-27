@@ -8,6 +8,9 @@
 
 #include <vector>
 #include <string>
+#include "GmshMessage.h"
+#include "GmshRemote.h"
+#include "GmshSocket.h"
 #include "PViewData.h"
 #include "SBoundingBox3d.h"
 
@@ -20,9 +23,11 @@ class PViewDataRemote : public PViewData {
   std::vector<double> _timeStepMin, _timeStepMax;
   SBoundingBox3d _bbox;
   std::vector<double> _time;
+  GmshRemote *_remote;
  public:
-  PViewDataRemote(double min, double max, double time, SBoundingBox3d bbox)
-    : _numTimeSteps(1), _min(min), _max(max), _bbox(bbox)
+  PViewDataRemote(GmshRemote *remote, double min, double max, double time,
+                  SBoundingBox3d &bbox)
+    : _remote(remote), _numTimeSteps(1), _min(min), _max(max), _bbox(bbox)
   {
     _time.push_back(time);
   }
@@ -41,8 +46,7 @@ class PViewDataRemote : public PViewData {
   { 
     // hack so that it does not retrn 0
     return -1; 
-  }
-  
+  }  
   void setMin(double min){ _min = min; }
   void setMax(double max){ _min = max; }
   void setBoundingBox(SBoundingBox3d bbox){ _bbox = bbox; }
@@ -50,6 +54,18 @@ class PViewDataRemote : public PViewData {
   {
     if(step >= (int)_time.size()) _time.resize(step + 1);
     _time[step] = time;
+  }
+  int fillRemoteVertexArrays()
+  {
+    GmshServer *server = _remote->getServer();
+    if(!server){
+      Msg::Error("Remote server not running: please start server");
+      return 1;
+    }
+    setDirty(true);
+    // server->SendString(GmshSocket::GMSH_PARSER_STRING, options);
+    server->SendString(GmshSocket::GMSH_VERTEX_ARRAY, "Send the vertex arrays!");
+    return 1;
   }
 };
 

@@ -213,8 +213,13 @@ void GmshRemote::run(std::string args)
                     / 1024 / 1024, GetTimeInSeconds() - timer);
           break;
         case GmshSocket::GMSH_VERTEX_ARRAY:
-          PView::fillVertexArray(length, message);
-          drawContext::global()->draw();
+          {
+            int n = PView::list.size();
+            PView::fillVertexArray(this, length, message);
+            drawContext::global()->draw();
+            if(n != (int)PView::list.size())
+              FlGui::instance()->updateViews();
+          }
           break;
         default:
           Msg::Warning("Unknown message type");

@@ -170,42 +170,11 @@ static void file_remote_cb(Fl_Widget *w, void *data)
   }
   else if(str == "stop"){
     if(GmshRemote::get(99)->getServer()){
-      Msg::Info("Stopping remote Gmsh server");
       GmshRemote::get(99)->getServer()->SendString
 	(GmshSocket::GMSH_STOP, "Disconnect!");
     }
     else{
       Msg::Error("Cannot stop remote Gmsh: server not running");
-    }
-  }
-  else if(str == "test1"){
-    if(GmshRemote::get(99)->getServer()){
-      Msg::Info("Testing remote Gmsh server");
-      GmshRemote::get(99)->getServer()->SendString
-        (GmshSocket::GMSH_PARSE_STRING, "Send me a view to parse");
-    }
-    else{
-      Msg::Error("Cannot test remote Gmsh: server not running");
-    }
-  }
-  else if(str == "test2"){
-    if(GmshRemote::get(99)->getServer()){
-      Msg::Info("Testing remote Gmsh server");
-      GmshRemote::get(99)->getServer()->SendString
-        (GmshSocket::GMSH_SPEED_TEST, "Send me a huge amount of data!");
-    }
-    else{
-      Msg::Error("Cannot test remote Gmsh: server not running");
-    }
-  }
-  else if(str == "test3"){
-    if(GmshRemote::get(99)->getServer()){
-      Msg::Info("Testing remote Gmsh server");
-      GmshRemote::get(99)->getServer()->SendString
-        (GmshSocket::GMSH_VERTEX_ARRAY, "Send me a vertex array!");
-    }
-    else{
-      Msg::Error("Cannot test remote Gmsh: server not running");
     }
   }
 }
@@ -2216,13 +2185,8 @@ static Fl_Menu_Item bar_table[] = {
       {"Clear",        0, (Fl_Callback *)file_window_cb, (void*)"split_u"},
       {0},
 #if defined(TEST_SERVER)
-    {"Start server...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
-    {"Test server",  0, 0, 0, FL_SUBMENU},
-      {"Send small parsed view",  0, (Fl_Callback *)file_remote_cb, (void*)"test1"},
-      {"Send large dummy data",  0, (Fl_Callback *)file_remote_cb, (void*)"test2"},
-      {"Send a vertex array",  0, (Fl_Callback *)file_remote_cb, (void*)"test3"},
-      {0},
-    {"Stop server",  0, (Fl_Callback *)file_remote_cb, (void*)"stop", FL_MENU_DIVIDER},
+    {"Start remote...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
+    {"Stop remote",  0, (Fl_Callback *)file_remote_cb, (void*)"stop", FL_MENU_DIVIDER},
 #endif
     {"&Rename...",  FL_CTRL+'r', (Fl_Callback *)file_rename_cb, 0},
     {"Save &As...", FL_CTRL+'s', (Fl_Callback *)file_save_as_cb, 0},
@@ -2269,13 +2233,8 @@ static Fl_Menu_Item sysbar_table[] = {
       {"Clear",        0, (Fl_Callback *)file_window_cb, (void*)"split_u"},
       {0},
 #if defined(TEST_SERVER)
-    {"Start server...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
-    {"Test server",  0, 0, 0, FL_SUBMENU},
-      {"Send small parsed view",  0, (Fl_Callback *)file_remote_cb, (void*)"test1"},
-      {"Send large dummy data",  0, (Fl_Callback *)file_remote_cb, (void*)"test2"},
-      {"Send a vertex array",  0, (Fl_Callback *)file_remote_cb, (void*)"test3"},
-      {0},
-    {"Stop server",  0, (Fl_Callback *)file_remote_cb, (void*)"stop", FL_MENU_DIVIDER},
+    {"Start remote...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
+    {"Stop remote",  0, (Fl_Callback *)file_remote_cb, (void*)"stop", FL_MENU_DIVIDER},
 #endif
     {"Rename...",  FL_META+'r', (Fl_Callback *)file_rename_cb, 0},
     {"Save As...", FL_META+'s', (Fl_Callback *)file_save_as_cb, 0},

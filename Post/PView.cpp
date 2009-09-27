@@ -17,9 +17,15 @@
 int PView::_globalNum = 0;
 std::vector<PView*> PView::list;
 
-void PView::_init()
+void PView::_init(int num)
 {
-  _num = ++_globalNum;
+  if(num){
+    _num = num;
+    _globalNum = std::max(_globalNum, _num);
+  }
+  else{
+    _num = ++_globalNum;
+  }
   _changed = true;
   _aliasOf = 0;
   _eye = SPoint3(0., 0., 0.);
@@ -29,9 +35,9 @@ void PView::_init()
   for(unsigned int i = 0; i < list.size(); i++) list[i]->setIndex(i);
 }
 
-PView::PView()
+PView::PView(int num)
 {
-  _init();
+  _init(num);
   _data = new PViewDataList();
   _options = new PViewOptions(PViewOptions::reference);
   if(_options->adaptVisualizationGrid)
@@ -39,9 +45,9 @@ PView::PView()
                             _options->targetError);
 }
 
-PView::PView(PViewData *data)
+PView::PView(PViewData *data, int num)
 {
-  _init();
+  _init(num);
   _data = data;
   _options = new PViewOptions(PViewOptions::reference);
   if(_options->adaptVisualizationGrid)
@@ -260,6 +266,17 @@ PView *PView::getViewByName(std::string name, int timeStep, int partition)
 {
   for(unsigned int i = 0; i < list.size(); i++){
     if(list[i]->getData()->getName() == name &&
+       ((timeStep < 0 || !list[i]->getData()->hasTimeStep(timeStep)) ||
+        (partition < 0 || !list[i]->getData()->hasPartition(partition))))
+      return list[i];
+  }
+  return 0;
+}
+
+PView *PView::getViewByNum(int num, int timeStep, int partition)
+{
+  for(unsigned int i = 0; i < list.size(); i++){
+    if(list[i]->getNum() == num &&
        ((timeStep < 0 || !list[i]->getData()->hasTimeStep(timeStep)) ||
         (partition < 0 || !list[i]->getData()->hasPartition(partition))))
       return list[i];

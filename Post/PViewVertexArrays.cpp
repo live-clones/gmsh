@@ -6,6 +6,7 @@
 #include <string.h>
 #include "GmshMessage.h"
 #include "GmshDefines.h"
+#include "GmshRemote.h"
 #include "Iso.h"
 #include "PView.h"
 #include "PViewOptions.h"
@@ -1066,6 +1067,7 @@ class initPView {
 
     if(data->getDirty() || !data->getNumTimeSteps() || !p->getChanged()) return;
     if(!opt->visible || opt->type != PViewOptions::Plot3D) return;
+    if(data->fillRemoteVertexArrays()) return;
 
     if(opt->useGenRaise) opt->createGeneralRaise();
 
@@ -1115,7 +1117,7 @@ void PView::fillVertexArrays()
   init(this);
 }
 
-void PView::fillVertexArray(int length, const char *bytes)
+void PView::fillVertexArray(GmshRemote *remote, int length, const char *bytes)
 {
   int is = sizeof(int), ds = sizeof(double);
 
@@ -1137,46 +1139,44 @@ void PView::fillVertexArray(int length, const char *bytes)
   double ymax; memcpy(&ymax, &bytes[index], ds); index += ds;
   double zmax; memcpy(&zmax, &bytes[index], ds); index += ds;
   
-  Msg::Info("Filling vertex array (type %d) in view num %d", type, num);
+  Msg::Debug("Filling vertex array (type %d) in view num %d", type, num);
 
-  PView *view;
-  if(num >= 0 && num < (int)list.size()){
-    view = PView::list[num];
-  }
-  else{
-    Msg::Info("View num %d does not exist: creating new view");
-    view = new PView
-      (new PViewDataRemote(min, max, time, SBoundingBox3d(xmin, ymin, zmin,
-                                                          xmax, ymax, zmax)));
+  PView *p = PView::getViewByNum(num);
+  if(!p){
+    Msg::Info("View num %d does not exist: creating new view", num);
+    SBoundingBox3d bb(xmin, ymin, zmin, xmax, ymax, zmax);
+    PViewData *data = new PViewDataRemote(remote, min, max, time, bb);
+    data->setName("Remote");
+    p = new PView(data, num);
     SetBoundingBox();
   }
 
   switch(type){
-  case 1: 
-    if(view->va_points) delete view->va_points; 
-    view->va_points = new VertexArray(1, 100);
-    view->va_points->fromChar(bytes);
+  case 1:
+    if(p->va_points) delete p->va_points; 
+    p->va_points = new VertexArray(1, 100);
+    p->va_points->fromChar(bytes);
     break;
   case 2: 
-    if(view->va_lines) delete view->va_lines; 
-    view->va_lines = new VertexArray(2, 100);
-    view->va_lines->fromChar(bytes);
+    if(p->va_lines) delete p->va_lines; 
+    p->va_lines = new VertexArray(2, 100);
+    p->va_lines->fromChar(bytes);
     break;
   case 3:
-    if(view->va_triangles) delete view->va_triangles;
-    view->va_triangles = new VertexArray(3, 100);
-    view->va_triangles->fromChar(bytes);
+    if(p->va_triangles) delete p->va_triangles;
+    p->va_triangles = new VertexArray(3, 100);
+    p->va_triangles->fromChar(bytes);
     break;
   case 4:
-    if(view->va_vectors) delete view->va_vectors;
-    view->va_vectors = new VertexArray(2, 100);
-    view->va_vectors->fromChar(bytes);
+    if(p->va_vectors) delete p->va_vectors;
+    p->va_vectors = new VertexArray(2, 100);
+    p->va_vectors->fromChar(bytes);
     break;
   default: 
     Msg::Error("Cannot fill vertex array of type %d", type);
     return;
   }
 
-  view->setChanged(false);
-  view->getData()->setDirty(false);
+  p->setChanged(false);
+  p->getData()->setDirty(false);
 }

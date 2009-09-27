@@ -611,13 +611,13 @@ void PrintOptions(int num, int level, int diff, int help, const char *filename)
 
   PrintOptionCategory(level, diff, help, "Post-processing options (strings)", file);
   PrintStringOptions(num, level, diff, help, PostProcessingOptions_String,
-                      "PostProcessing.", file);
+                     "PostProcessing.", file);
   PrintOptionCategory(level, diff, help, "Post-processing options (numbers)", file);
   PrintNumberOptions(num, level, diff, help, PostProcessingOptions_Number,
-                      "PostProcessing.", file);
+                     "PostProcessing.", file);
   PrintOptionCategory(level, diff, help, "Post-processing options (colors)", file);
   PrintColorOptions(num, level, diff, help, PostProcessingOptions_Color,
-                     "PostProcessing.", file);
+                    "PostProcessing.", file);
 
   if(level & GMSH_FULLRC) {
 #if !defined(HAVE_NO_POST)

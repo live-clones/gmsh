@@ -12,6 +12,27 @@
 #include "PViewData.h"
 #include "VertexArray.h"
 
+static void computeAndSendVertexArrays(GmshClient &client)
+{
+  for(unsigned int i = 0; i < PView::list.size(); i++){
+    PView *p = PView::list[i];
+    p->fillVertexArrays();
+    PViewData *data = p->getData();
+    VertexArray *va[4] = 
+      {p->va_points, p->va_lines, p->va_triangles, p->va_vectors};
+    for(int type = 0; type < 4; type++){
+      if(va[type] && va[type]->getNumVertices()){
+        int len;
+        char *str = va[type]->toChar
+          (p->getNum(), type + 1, data->getMin(), data->getMax(),
+           data->getTime(0), data->getBoundingBox(), len);
+        client.SendMessage(GmshSocket::GMSH_VERTEX_ARRAY, len, str);
+        delete [] str;
+      }
+    }
+  }
+}
+
 int GmshDaemon(std::string socket)
 {
   GmshClient client;
@@ -23,7 +44,7 @@ int GmshDaemon(std::string socket)
   client.Start();
   client.Info("Server sucessfully started. Listening...");
 
-  // initialize mpi job, then wait for commands to execute...
+  computeAndSendVertexArrays(client);
 
   while(1){
     // stop the server if we have no communications for 60 seconds
@@ -50,49 +71,21 @@ int GmshDaemon(std::string socket)
       break;
     }
 
-    std::ostringstream tmp;
-    tmp << "Hello! I've received msg type=" << type << " len=" << length
-        << " str=" << msg;
-    client.Info(tmp.str().c_str());
-
     if(type == GmshSocket::GMSH_STOP){
-      client.Info("Stopping connection!");
+      client.Info("Stopping server");
       break;
     }
     else if(type == GmshSocket::GMSH_VERTEX_ARRAY){
-      // create and send a vertex array
-      if(PView::list.size()){
-        PView *view = PView::list[0];
-        view->getOptions()->intervalsType = PViewOptions::Iso;
-        view->fillVertexArrays();
-        PViewData *data = view->getData();
-        int len;
-        char *ss = view->va_triangles->toChar
-          (view->getNum(), 3, data->getMin(), data->getMax(), 
-           data->getTime(0), data->getBoundingBox(), len);
-        client.SendMessage(GmshSocket::GMSH_VERTEX_ARRAY, len, ss);
-        delete [] ss;
-      }
+      client.Info("Sending vertex arrays");
+      computeAndSendVertexArrays(client);
     }
     else if(type == GmshSocket::GMSH_SPEED_TEST){
+      client.Info("Sending huge array");
       std::string huge(500000000, 'a');
       client.SpeedTest(huge.c_str());
     }
-    else if(type == GmshSocket::GMSH_PARSE_STRING){
-      std::ostringstream v;
-      v << "View \"test\" {\n";
-      for(int i = 0; i < 200; i++){
-        for(int j = 0; j < 200; j++){
-          v << "SQ("<<i<<","<<j<<",0, "<<i+1<<","<<j<<",0, "
-            <<i+1<<","<<j+1<<",0, "<<i<<","<<j+1<<",0){"
-            <<i+j<<","<<i+j<<","<<i+j<<","<<i+j<<"};\n";
-        }
-      }
-      v << "};BoundingBox;\n";
-      client.ParseString(v.str().c_str());
-    }
     else{
-      client.Error("Unknown message type: ignoring...");
+      client.Error("Ignoring unknown message");
     }
   }
 

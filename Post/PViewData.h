@@ -196,6 +196,9 @@ class PViewData {
   // combine time steps or elements from multiple datasets
   virtual bool combineTime(nameData &nd);
   virtual bool combineSpace(nameData &nd);
+  
+  // ask to fill vertex arrays remotely
+  virtual int fillRemoteVertexArrays(){ return 0; }
 
   // I/O routines
   virtual bool writeSTL(std::string fileName);
