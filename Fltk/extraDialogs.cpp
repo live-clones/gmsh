@@ -16,7 +16,10 @@
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Hold_Browser.H>
 #include <FL/Fl_Box.H>
+#include <FL/Fl_Input.H>
+#include <FL/Fl_Double_Window.H>
 #include <FL/fl_ask.H>
+#include <FL/Fl_Preferences.H>
 #include "FlGui.h"
 #include "paletteWindow.h"
 #include "GmshDefines.h"
@@ -36,7 +39,7 @@ int arrowEditor(const char *title, double &a, double &b, double &c)
     Fl_Value_Slider *sa, *sb, *sc;
     Fl_Button *apply, *cancel;
   };
-  static _editor *editor = NULL;
+  static _editor *editor = 0;
 
   if(!editor){
     editor = new _editor;
@@ -92,7 +95,8 @@ static void persp_change_factor(Fl_Widget* w, void* data)
 }
 
 class Release_Slider : public Fl_Slider {
-  int handle(int event){ 
+  int handle(int event)
+  {
     switch (event) {
     case FL_RELEASE: 
       if(window())
@@ -113,7 +117,7 @@ int perspectiveEditor()
     Fl_Menu_Window *window;
     Release_Slider *sa;
   };
-  static _editor *editor = NULL;
+  static _editor *editor = 0;
 
   if(!editor){
     editor = new _editor;
@@ -163,7 +167,7 @@ int modelChooser()
     Fl_Hold_Browser *browser;
     Fl_Check_Button *butt;
   };
-  static _menu *menu = NULL;
+  static _menu *menu = 0;
 
   const int WW = 200;
 
@@ -197,13 +201,126 @@ int modelChooser()
 
 // Connection chooser
 
+class ConnectionBrowser : public Fl_Hold_Browser {
+  int handle(int event)
+  { 
+    switch (event) {
+    case FL_SHORTCUT:
+    case FL_KEYBOARD:
+      if(Fl::test_shortcut(FL_Delete) || Fl::test_shortcut(FL_BackSpace)){
+        int i = value();
+        if(i){
+          remove(i);
+          if(i <= size())
+            select(i);
+          else if(i > 1)
+            select(i - 1);
+        }
+        return 1;
+      }
+      break;
+    }
+    return Fl_Hold_Browser::handle(event);
+  };
+ public:
+  ConnectionBrowser(int x, int y, int w, int h, const char *l=0)
+    : Fl_Hold_Browser(x, y, w, h, l) {}
+  void save(Fl_Preferences &prefs)
+  {
+    std::set<std::string> uniq;
+    for(int i = 0; i < size(); i++) uniq.insert(text(i + 1));
+    char name[256];
+    int j = 0;
+    for(std::set<std::string>::iterator it = uniq.begin(); it != uniq.end(); it++){
+      sprintf(name, "connection%02d", j++);
+      prefs.set(name, it->c_str());
+    }
+    for(int i = j; i < 100; i++){
+      sprintf(name, "connection%02d", i);
+      if(prefs.entryExists(name))
+        prefs.deleteEntry(name);
+    }
+  }
+};
+
+struct _connectionChooser{
+  Fl_Double_Window *window;
+  Fl_Input *input;
+  ConnectionBrowser *browser;
+  Fl_Box *box;
+  Fl_Return_Button *ok;
+  Fl_Button *cancel;
+};
+
+static _connectionChooser *chooser = 0;
+
+static void select_cb(Fl_Widget* w, void *data)
+{
+  int i = chooser->browser->value();
+  if(i) chooser->input->value(chooser->browser->text(i));
+}
+
 std::string connectionChooser()
 {
-  const char *exe = fl_input
-    ("Command:", 
-     //"ssh ace25 /Users/geuzaine/src/gmsh/bin/gmsh");
-     "./gmsh ../tutorial/view3.pos");
+  if(!chooser){
+    chooser = new _connectionChooser;
+    int h = 4 * WB + 10 * BH, w = 4 * BB + 2 * WB;
+    chooser->window = new Fl_Double_Window(w, h);
+    chooser->window->set_modal();
+    chooser->input = new Fl_Input(WB, WB, w - 2 * WB, BH);
+    chooser->browser = new ConnectionBrowser
+      (WB, 2 * WB + BH, w - 2 * WB, h - 2 * BH - 4 * WB);
+    chooser->browser->callback(select_cb);
+    chooser->cancel = new Fl_Button
+      (w - 2 * WB - 2 * BB, h - WB - BH, BB, BH, "Cancel");
+    chooser->ok = new Fl_Return_Button
+      (w - WB - BB, h - WB - BH, BB, BH, "Run");
+    chooser->box = new Fl_Box(WB, h - WB - BB, WB, WB);
+    chooser->box->hide();
+    chooser->window->resizable(chooser->box);
+  }
 
-  if(exe) return std::string(exe);
+  Fl_Preferences prefs(Fl_Preferences::USER, "fltk.org", "gmsh");
+
+  int old = chooser->browser->value();
+  chooser->browser->clear();
+  for (int i = 0; i < 100; i ++) {
+    char name[256], value[1024];
+    sprintf(name, "connection%02d", i);
+    if(prefs.entryExists(name)){
+      prefs.get(name, value, "", sizeof(value));
+      chooser->browser->add(value);
+    }
+  }
+  int n = chooser->browser->size();
+  if(n){
+    if(old > 0 && old <= n)
+      chooser->input->value(chooser->browser->text(old));
+    else
+      chooser->input->value(chooser->browser->text(n));
+  }
+  else
+    chooser->input->value("./gmsh ../tutorial/view3.pos");
+  
+  chooser->window->show();
+
+  while(chooser->window->shown()){
+    Fl::wait();
+    for (;;) {
+      Fl_Widget* o = Fl::readqueue();
+      if (!o) break;
+      if (o == chooser->ok) {
+        chooser->browser->add(chooser->input->value());
+        chooser->browser->save(prefs);
+        chooser->window->hide();
+        return chooser->input->value();
+      }
+      if (o == chooser->window || o == chooser->cancel){
+        chooser->browser->save(prefs);
+        chooser->window->hide();
+        return "";
+      }
+    }
+  }
   return "";
 }
