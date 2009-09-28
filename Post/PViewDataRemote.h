@@ -13,6 +13,9 @@
 #include "GmshSocket.h"
 #include "PViewData.h"
 #include "SBoundingBox3d.h"
+#include "Options.h"
+#include "StringUtils.h"
+#include "Context.h"
 
 // The container for a remote dataset (does not contain any actual
 // data!)
@@ -64,7 +67,11 @@ class PViewDataRemote : public PViewData {
       return 1;
     }
     setDirty(true);
-    // server->SendString(GmshSocket::GMSH_PARSER_STRING, options);
+    std::string fileName = CTX::instance()->homeDir + CTX::instance()->tmpFileName;
+    // FIXME: until we rewrite the option code and allow nice serialization ;-)
+    PrintOptions(0, GMSH_FULLRC, 1, 0, fileName.c_str());
+    std::string options = ConvertFileToString(fileName);
+    server->SendString(GmshSocket::GMSH_PARSE_STRING, options.c_str());
     server->SendString(GmshSocket::GMSH_VERTEX_ARRAY, "Send the vertex arrays!");
     return 1;
   }

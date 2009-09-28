@@ -129,3 +129,14 @@ std::string ReplacePercentS(std::string in, std::string val)
   }
   return out;
 }
+
+std::string ConvertFileToString(std::string fileName)
+{
+  FILE *fp = fopen(fileName.c_str(), "r");
+  if(!fp) return "";
+  std::string out;
+  char str[256];
+  while(!feof(fp) && fgets(str, sizeof(str), fp)) out += str;
+  fclose(fp);
+  return out;
+}

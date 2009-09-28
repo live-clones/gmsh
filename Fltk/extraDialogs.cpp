@@ -7,6 +7,7 @@
 //   Stephen Guzik
 //
 
+#include <stdio.h>
 #include <FL/Fl_Value_Slider.H>
 #include <FL/Fl_Menu_Window.H>
 #include <FL/Fl_Select_Browser.H>
@@ -211,10 +212,8 @@ class ConnectionBrowser : public Fl_Hold_Browser {
         int i = value();
         if(i){
           remove(i);
-          if(i <= size())
-            select(i);
-          else if(i > 1)
-            select(i - 1);
+          if(i <= size()) select(i);
+          else if(i > 1) select(i - 1);
         }
         return 1;
       }
@@ -227,17 +226,12 @@ class ConnectionBrowser : public Fl_Hold_Browser {
     : Fl_Hold_Browser(x, y, w, h, l) {}
   void save(Fl_Preferences &prefs)
   {
-    std::set<std::string> uniq;
-    for(int i = 0; i < size(); i++) uniq.insert(text(i + 1));
-    char name[256];
-    int j = 0;
-    for(std::set<std::string>::iterator it = uniq.begin(); it != uniq.end(); it++){
-      sprintf(name, "connection%02d", j++);
-      prefs.set(name, it->c_str());
-    }
-    for(int i = j; i < 100; i++){
+    for(int i = 0; i < 100; i++){
+      char name[256];
       sprintf(name, "connection%02d", i);
-      if(prefs.entryExists(name))
+      if(i < size())
+        prefs.set(name, text(i + 1));
+      else if(prefs.entryExists(name)) 
         prefs.deleteEntry(name);
     }
   }
@@ -288,7 +282,7 @@ std::string connectionChooser()
 
   int old = chooser->browser->value();
   chooser->browser->clear();
-  for (int i = 0; i < 100; i ++) {
+  for (int i = 0; i < 100; i++) {
     char name[256], value[1024];
     sprintf(name, "connection%02d", i);
     if(prefs.entryExists(name)){
@@ -301,7 +295,7 @@ std::string connectionChooser()
     if(old > 0 && old <= n)
       chooser->input->value(chooser->browser->text(old));
     else
-      chooser->input->value(chooser->browser->text(n));
+      chooser->input->value(chooser->browser->text(1));
   }
   else
     chooser->input->value("./gmsh ../tutorial/view3.pos");
@@ -314,7 +308,19 @@ std::string connectionChooser()
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == chooser->ok) {
-        chooser->browser->add(chooser->input->value());
+        if(strlen(chooser->input->value())){
+          // insert choosen value at the top of the history if it's not
+          // already present
+          bool found = false;
+          for(int i = 0; i < chooser->browser->size(); i++){
+            if(!strcmp(chooser->input->value(), chooser->browser->text(i + 1))){
+              found = true;
+              break;
+            }
+          }
+          if(!found)
+            chooser->browser->insert(1, chooser->input->value());
+        }
         chooser->browser->save(prefs);
         chooser->window->hide();
         return chooser->input->value();
