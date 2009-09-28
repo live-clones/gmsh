@@ -198,6 +198,7 @@ class PViewData {
   virtual bool combineSpace(nameData &nd);
   
   // ask to fill vertex arrays remotely
+  virtual bool isRemote(){ return false; }
   virtual int fillRemoteVertexArrays(){ return 0; }
 
   // I/O routines

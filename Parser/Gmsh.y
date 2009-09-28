@@ -2130,10 +2130,7 @@ Delete :
   | tDelete tSTRING tEND
     {
       if(!strcmp($2, "Meshes") || !strcmp($2, "All")){
-        for(unsigned int i = 0; i < GModel::list.size(); i++){
-          GModel::list[i]->destroy();
-          GModel::list[i]->getGEOInternals()->destroy();
-        }
+        ClearProject();
       }
       else if(!strcmp($2, "Model")){
 	GModel::current()->destroy();

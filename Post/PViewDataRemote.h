@@ -55,6 +55,7 @@ class PViewDataRemote : public PViewData {
     if(step >= (int)_time.size()) _time.resize(step + 1);
     _time[step] = time;
   }
+  bool isRemote(){ return true; }
   int fillRemoteVertexArrays()
   {
     GmshServer *server = _remote->getServer();

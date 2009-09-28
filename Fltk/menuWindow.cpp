@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <FL/Fl_Box.H>
+#include <FL/fl_ask.H>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GmshRemote.h"
@@ -148,28 +149,42 @@ static void file_clear_cb(Fl_Widget *w, void *data)
 
 static void file_remote_cb(Fl_Widget *w, void *data)
 {
+  GmshServer *server = GmshRemote::get(99)->getServer();
+
   std::string str((const char*)data);
 
   if(str == "start"){
-    Msg::Info("Starting remote Gmsh server");
-    if(GmshRemote::get(99)->getServer()){
+    if(server){
       Msg::Error("A server is already running");
+      return;
     }
-    else{
-      GmshRemote::get(99)->name = "Remote";
-      GmshRemote::get(99)->socketSwitch = "-socket %s";
-      GmshRemote::get(99)->executable = connectionChooser();
-      if(GmshRemote::get(99)->executable.size())
-        GmshRemote::get(99)->run("");
-    }
+    GmshRemote::get(99)->name = "Remote";
+    GmshRemote::get(99)->socketSwitch = "-socket %s";
+    GmshRemote::get(99)->executable = connectionChooser();
+    if(GmshRemote::get(99)->executable.size())
+      GmshRemote::get(99)->run("");
   }
-  else if(str == "stop"){
-    if(GmshRemote::get(99)->getServer()){
-      GmshRemote::get(99)->getServer()->SendString
-	(GmshSocket::GMSH_STOP, "Disconnect!");
+  else{
+    if(!server){
+      Msg::Error("Cannot %s: server not running", str.c_str());
+      return;
     }
-    else{
-      Msg::Error("Cannot stop remote Gmsh: server not running");
+    if(str == "stop"){
+      server->SendString(GmshSocket::GMSH_STOP, "Disconnect!");
+    }
+    else if(str == "merge"){
+      const char *file = fl_input("File:", "~/data/res00.pos");
+      if(file) server->SendString(GmshSocket::GMSH_MERGE_FILE, file);
+    }
+    else if(str == "clear"){
+      server->SendString(GmshSocket::GMSH_PARSE_STRING, "Delete All;");
+      for(int i = PView::list.size() - 1; i >= 0; i--)
+        if(PView::list[i]->getData()->isRemote()) delete PView::list[i];
+      FlGui::instance()->updateViews();
+      drawContext::global()->draw();
+    }
+    else if(str == "test"){
+      server->SendString(GmshSocket::GMSH_SPEED_TEST, "Test connection speed");
     }
   }
 }
@@ -2163,8 +2178,6 @@ static void view_applybgmesh_cb(Fl_Widget *w, void *data)
   }
 }
 
-#define TEST_SERVER
-
 // The static menus (we cannot use the 'g', 'm' 's' and 'p' mnemonics
 // since they are already defined as global shortcuts)
 static Fl_Menu_Item bar_table[] = {
@@ -2173,16 +2186,19 @@ static Fl_Menu_Item bar_table[] = {
     {"&Open...",    FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
     {"M&erge...",   FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)file_merge_cb, 0},
     {"&Clear",      0, (Fl_Callback *)file_clear_cb, 0, FL_MENU_DIVIDER},
+    {"Remote", 0, 0, 0, FL_MENU_DIVIDER | FL_SUBMENU},
+      {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
+      {"Merge...",  0, (Fl_Callback *)file_remote_cb, (void*)"merge"},
+      {"Clear",     0, (Fl_Callback *)file_remote_cb, (void*)"clear"},
+      {"Test Connection Speed", 0, (Fl_Callback *)file_remote_cb, (void*)"test"},
+      {"Stop",      0, (Fl_Callback *)file_remote_cb, (void*)"stop"},
+      {0},
     {"New Window", 0, (Fl_Callback *)file_window_cb, (void*)"new"},
     {"Split Window", 0, 0, 0, FL_MENU_DIVIDER | FL_SUBMENU},
       {"Horizontally", 0, (Fl_Callback *)file_window_cb, (void*)"split_h"},
       {"Vertically",   0, (Fl_Callback *)file_window_cb, (void*)"split_v"},
       {"Clear",        0, (Fl_Callback *)file_window_cb, (void*)"split_u"},
       {0},
-#if defined(TEST_SERVER)
-    {"Start Remote Gmsh...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
-    {"Stop Remote Gmsh",  0, (Fl_Callback *)file_remote_cb, (void*)"stop", FL_MENU_DIVIDER},
-#endif
     {"&Rename...",  FL_CTRL+'r', (Fl_Callback *)file_rename_cb, 0},
     {"Save &As...", FL_CTRL+'s', (Fl_Callback *)file_save_as_cb, 0},
     {"Sa&ve Mesh",  FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0},
@@ -2221,16 +2237,19 @@ static Fl_Menu_Item sysbar_table[] = {
     {"Open...",    FL_META+'o', (Fl_Callback *)file_open_cb, 0},
     {"Merge...",   FL_META+FL_SHIFT+'o', (Fl_Callback *)file_merge_cb, 0},
     {"Clear",      0, (Fl_Callback *)file_clear_cb, 0, FL_MENU_DIVIDER},
+    {"Remote", 0, 0, 0, FL_MENU_DIVIDER | FL_SUBMENU},
+      {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
+      {"Merge...",  0, (Fl_Callback *)file_remote_cb, (void*)"merge"},
+      {"Clear",     0, (Fl_Callback *)file_remote_cb, (void*)"clear"},
+      {"Test Connection Speed", 0, (Fl_Callback *)file_remote_cb, (void*)"test"},
+      {"Stop",      0, (Fl_Callback *)file_remote_cb, (void*)"stop"},
+      {0},
     {"New Window", 0, (Fl_Callback *)file_window_cb, (void*)"new"},
     {"Split Window", 0, 0, 0, FL_MENU_DIVIDER | FL_SUBMENU},
       {"Horizontally", 0, (Fl_Callback *)file_window_cb, (void*)"split_h"},
       {"Vertically",   0, (Fl_Callback *)file_window_cb, (void*)"split_v"},
       {"Clear",        0, (Fl_Callback *)file_window_cb, (void*)"split_u"},
       {0},
-#if defined(TEST_SERVER)
-    {"Start Remote Gmsh...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
-    {"Stop Remote Gmsh",  0, (Fl_Callback *)file_remote_cb, (void*)"stop", FL_MENU_DIVIDER},
-#endif
     {"Rename...",  FL_META+'r', (Fl_Callback *)file_rename_cb, 0},
     {"Save As...", FL_META+'s', (Fl_Callback *)file_save_as_cb, 0},
     {"Save Mesh",  FL_META+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0},

@@ -5,8 +5,9 @@
 
 #include <sstream>
 #include "GmshMessage.h"
-#include "OS.h"
 #include "GmshSocket.h"
+#include "OpenFile.h"
+#include "OS.h"
 #include "PView.h"
 #include "PViewOptions.h"
 #include "PViewData.h"
@@ -80,6 +81,14 @@ int GmshDaemon(std::string socket)
     else if(type == GmshSocket::GMSH_VERTEX_ARRAY){
       computeAndSendVertexArrays(client);
     }
+    else if(type == GmshSocket::GMSH_MERGE_FILE){
+      MergeFile(msg);
+      computeAndSendVertexArrays(client);
+    }
+    else if(type == GmshSocket::GMSH_PARSE_STRING){
+      ParseString(msg);
+      computeAndSendVertexArrays(client);
+    }
     else if(type == GmshSocket::GMSH_SPEED_TEST){
       client.Info("Sending huge array");
       std::string huge(500000000, 'a');
@@ -88,6 +97,8 @@ int GmshDaemon(std::string socket)
     else{
       client.Error("Ignoring unknown message");
     }
+    
+    delete [] msg;
   }
 
   client.Info("Remote Gmsh is stopped");
