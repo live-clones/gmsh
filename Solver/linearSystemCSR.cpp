@@ -245,12 +245,12 @@ static void _sort2_xkws(unsigned long n, double arr[], INDEX_TYPE ai[], INDEX_TY
 }
 
 template <class scalar>
-static void sortColumns(int NbLines, 
-                        int nnz, 
-                        INDEX_TYPE *ptr, 
-                        INDEX_TYPE *jptr, 
-                        INDEX_TYPE *ai, 
-                        scalar *a)
+void sortColumns_(int NbLines, 
+		  int nnz, 
+		  INDEX_TYPE *ptr, 
+		  INDEX_TYPE *jptr, 
+		  INDEX_TYPE *ai, 
+		  scalar *a)
 {
   // replace pointers by lines
   int *count = new int [NbLines];
@@ -290,7 +290,7 @@ template<>
 int linearSystemCSRGmm<double>::systemSolve()
 {
   if (!sorted)
-    sortColumns(_b->size(),
+    sortColumns_(_b->size(),
                 CSRList_Nbr(a_),
                 (INDEX_TYPE *) ptr_->array,
                 (INDEX_TYPE *) jptr_->array, 

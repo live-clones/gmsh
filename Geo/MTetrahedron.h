@@ -89,6 +89,7 @@ class MTetrahedron : public MElement {
                  _v[faces_tetra(num, 1)],
                  _v[faces_tetra(num, 2)]);
   }
+  virtual void getFaceInfo (const MFace & face, int &ithFace, int &sign, int &rot)const; 
   virtual int getNumFacesRep(){ return 4; }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 

@@ -14,7 +14,7 @@ extern "C" {
 }
 
 template <class scalar>
-void sortColumns(int NbLines, 
+void sortColumns_(int NbLines, 
                  int nnz, 
                  INDEX_TYPE *ptr, 
                  INDEX_TYPE *jptr, 
@@ -25,7 +25,7 @@ template<>
 int linearSystemCSRTaucs<double>::systemSolve()
 {
   if(!sorted){
-    sortColumns(_b->size(),
+    sortColumns_(_b->size(),
                 CSRList_Nbr(a_),
                 (INDEX_TYPE *) ptr_->array,
                 (INDEX_TYPE *) jptr_->array, 

@@ -90,7 +90,7 @@ class DI_Point
 // --------------------------------------------------------------------------------------------------
 class DI_IntegrationPoint
 {
-  // coordiantes
+  // coordinates
   double x_, y_, z_;
   // local coordinates
   double xl_, yl_, zl_;

@@ -71,6 +71,19 @@ class MTriangle : public MElement {
   {
     return MEdge(_v[edges_tri(num, 0)], _v[edges_tri(num, 1)]);
   }
+  virtual void getEdgeInfo (const MEdge & edge, int &ithEdge, int &sign) const {
+    for (ithEdge=0;ithEdge<3;ithEdge++){
+      const MVertex *v0 = _v[edges_tri(ithEdge, 0)];
+      const MVertex *v1 = _v[edges_tri(ithEdge, 1)];
+      if (v0 == edge.getVertex(0) && v1 == edge.getVertex(1)){
+	sign = 1; return;
+      }
+      if (v1 == edge.getVertex(0) && v0 == edge.getVertex(1)){
+	sign = -1; return;
+      }
+    }
+    throw;
+  }
   virtual int getNumEdgesRep(){ return 3; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 

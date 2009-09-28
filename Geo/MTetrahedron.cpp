@@ -231,3 +231,30 @@ void MTetrahedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) cons
   *npts = getNGQTetPts(pOrder);
   *pts = getGQTetPts(pOrder);
 }
+void MTetrahedron::getFaceInfo (const MFace & face, int &ithFace, int &sign, int &rot)const{
+  for (ithFace=0;ithFace<4;ithFace++){
+    MVertex *v0 = _v[faces_tetra(ithFace,0)];
+    MVertex *v1 = _v[faces_tetra(ithFace,1)];
+    MVertex *v2 = _v[faces_tetra(ithFace,2)];
+
+    if (v0 == face.getVertex(0) && v1 == face.getVertex(1) && v2 == face.getVertex(2)){
+      sign = 1; rot = 0; return;
+    }
+    if (v0 == face.getVertex(1) && v1 == face.getVertex(2) && v2 == face.getVertex(0)){
+      sign = 1; rot = 1; return;
+    }
+    if (v0 == face.getVertex(2) && v1 == face.getVertex(0) && v2 == face.getVertex(1)){
+      sign = 1; rot = 2; return;
+    }
+    if (v0 == face.getVertex(0) && v1 == face.getVertex(2) && v2 == face.getVertex(1)){
+      sign = -1; rot = 0; return;
+    }
+    if (v0 == face.getVertex(1) && v1 == face.getVertex(0) && v2 == face.getVertex(2)){
+      sign = -1; rot = 1; return;
+    }
+    if (v0 == face.getVertex(2) && v1 == face.getVertex(1) && v2 == face.getVertex(0)){
+      sign = -1; rot = 2; return;
+    }
+  }
+  throw;
+}

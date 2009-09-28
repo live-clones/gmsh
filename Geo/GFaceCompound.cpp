@@ -23,6 +23,7 @@
 #include "crossConfTerm.h"
 #include "convexCombinationTerm.h"
 #include "linearSystemGMM.h"
+#include "linearSystemTAUCS.h"
 #include "linearSystemCSR.h"
 #include "linearSystemFull.h"
 
@@ -481,12 +482,9 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 
   if (!_lsys) {
 #if defined(HAVE_GMM)
-    linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
-    //linearSystemCSRGmm<double> lsys;
-    _lsysb->setPrec(1.e-15);
+    linearSystemGmm<double> * _lsysb = new linearSystemGmm<double>;
     _lsysb->setGmres(1);
-    if(Msg::GetVerbosity() == 99) _lsysb->setNoisy(2);
-    _lsys = _lsysb;
+    _lsys=_lsysb;
 #else
     _lsys = new linearSystemFull<double>;
 #endif

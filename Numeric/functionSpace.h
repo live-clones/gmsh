@@ -8,13 +8,27 @@
 
 #include <math.h>
 #include <map>
+#include <vector>
 #include "fullMatrix.h"
 
+// presently thos function spaces are only for simplices
+// should be extended to other elements like quads and hexes
 struct functionSpace 
 {
+  typedef  std::vector<std::vector<int> > clCont;
+  clCont faceClosure;
+  clCont edgeClosure;
   fullMatrix<double> points;
   fullMatrix<double> monomials;
   fullMatrix<double> coefficients;
+  // for a given face/edge, with both a sign and a rotation,
+  // give an ordered list of nodes on this face/edge
+  std::vector<int> & getFaceClosure (int iFace, int iSign, int iRot){
+    return faceClosure[iFace+4*(iSign==1?0:1)+8*iRot];
+  }
+  inline std::vector<int> & getEdgeClosure (int iEdge, int iSign){
+    return edgeClosure[iSign == 1 ? iEdge : 3+iEdge];
+  }
   inline void evaluateMonomials(double u, double v, double w, double p[]) const 
   {
     for (int j = 0; j < monomials.size1(); j++) {

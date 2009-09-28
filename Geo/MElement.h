@@ -106,6 +106,9 @@ class MElement
   // get the edges
   virtual int getNumEdges() = 0;
   virtual MEdge getEdge(int num) = 0;
+  // give an MEdge as input and get its local number and sign
+  virtual void getEdgeInfo (const MEdge & edge, int &ithEdge, int &sign) const 
+  {throw;}
 
   // get an edge representation for drawing
   virtual int getNumEdgesRep() = 0;
@@ -120,6 +123,9 @@ class MElement
   // get the faces
   virtual int getNumFaces() = 0;
   virtual MFace getFace(int num) = 0;
+  // give an MFace as input and get its local number, sign and rotation
+  virtual void getFaceInfo (const MFace & face, int &ithFace, int &sign, int &rot)const 
+  {throw;}
 
   // get a face representation for drawing
   virtual int getNumFacesRep() = 0;

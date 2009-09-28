@@ -870,8 +870,10 @@ void bowyerWatsonFrontal(GFace *gf)
 //     }
   }
 
-  // char name[245];
-  // sprintf(name,"frontal%d.pos", gf->tag());
-  // _printTris (name, AllTris, Us, Vs);
+  char name[245];
+  sprintf(name,"frontal%d-real.pos", gf->tag());
+  _printTris (name, AllTris, Us, Vs,false);
+  sprintf(name,"frontal%d-param.pos", gf->tag());
+  _printTris (name, AllTris, Us, Vs,true);
   transferDataStructure(gf, AllTris, Us, Vs); 
 } 
