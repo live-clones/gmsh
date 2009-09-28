@@ -1640,11 +1640,12 @@ int GModel::writeVisualFEA(const std::string &name, int elementTagType,
   getEntities(entities);
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++) 
-      fprintf(fp,"%d %g %g %g\n",entities[i]->mesh_vertices[j]->getNum(),
-	      entities[i]->mesh_vertices[j]->x()*scalingFactor,
-	      entities[i]->mesh_vertices[j]->y()*scalingFactor,
-	      entities[i]->mesh_vertices[j]->z()*scalingFactor);  
-  int iElement = 0;
+      if (entities[i]->mesh_vertices[j]->getIndex() >= 0)
+	fprintf(fp,"%d %g %g %g\n",entities[i]->mesh_vertices[j]->getIndex(),
+		entities[i]->mesh_vertices[j]->x()*scalingFactor,
+		entities[i]->mesh_vertices[j]->y()*scalingFactor,
+		entities[i]->mesh_vertices[j]->z()*scalingFactor);  
+  int iElement = 1;
   for(fiter it = firstFace(); it != lastFace(); ++it){
     int numPhys = (*it)->physicals.size();
     if(saveAll || numPhys){
