@@ -54,7 +54,7 @@ void PrintUsage(const char *name)
   Msg::Direct("Geometry options:");
   Msg::Direct("  -0                    Output unrolled geometry, then exit");
   Msg::Direct("  -tol float            Set geometrical tolerance");
-  Msg::Direct("  -match int            Match geometries and meshes if int != 0");
+  Msg::Direct("  -match                Match geometries and meshes");
   Msg::Direct("Mesh options:");
   Msg::Direct("  -1, -2, -3            Perform 1D, 2D or 3D mesh generation, then exit");
   Msg::Direct("  -refine               Perform uniform mesh refinement, then exit");
@@ -291,10 +291,7 @@ void GetOptions(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "match")) {
         i++;
-        if(argv[1])
-          CTX::instance()->geom.matchGeomAndMesh = atoi(argv[i++]);
-        else
-          Msg::Fatal("Missing number");
+        CTX::instance()->geom.matchGeomAndMesh = 1;
       }
       else if(!strcmp(argv[i] + 1, "scale")) {
         i++;

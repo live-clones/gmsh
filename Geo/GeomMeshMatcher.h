@@ -20,13 +20,13 @@
 
 class GeomMeshMatcher {
  private:
-  std::vector<Pair<GVertex*, GVertex*> > *matchVertices(GModel *m1, GModel *m2);
+  std::vector<Pair<GVertex*, GVertex*> > *matchVertices(GModel *m1, GModel *m2, bool& ok);
   std::vector<Pair<GEdge*, GEdge*> > *matchEdges
-  (GModel* m1, GModel* m2, std::vector<Pair<GVertex*, GVertex*> > *coresp_v);
+    (GModel* m1, GModel* m2, std::vector<Pair<GVertex*, GVertex*> > *coresp_v, bool& ok);
   std::vector<Pair<GFace*, GFace*> > *matchFaces
-  (GModel* m1, GModel* m2,  std::vector<Pair<GEdge*,GEdge*> > *coresp_e);
+    (GModel* m1, GModel* m2,  std::vector<Pair<GEdge*,GEdge*> > *coresp_e, bool& ok);
   std::vector<Pair<GRegion*, GRegion*> > *matchRegions
-  (GModel *m1, GModel *m2, std::vector<Pair<GFace*,GFace*> > *coresp_f);
+    (GModel *m1, GModel *m2, std::vector<Pair<GFace*,GFace*> > *coresp_f, bool& ok);
   static GeomMeshMatcher *_gmm_instance;
   GeomMeshMatcher() {}
   ~GeomMeshMatcher() {}

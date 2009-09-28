@@ -335,10 +335,11 @@ int MergeFile(std::string fileName, bool warnIfMissing)
 
       // MATCHER
       if(CTX::instance()->geom.matchGeomAndMesh  && !GModel::current()->empty() ) {
+        GModel* current_mod = GModel::current();
         GModel* tmp_model = new GModel();
         tmp_model->readMSH(fileName);
-        //tmp_model->scaleMesh(1000);
-        int match_status = GeomMeshMatcher::instance()->match(GModel::current(), tmp_model);
+        int match_status = GeomMeshMatcher::instance()->match(current_mod, tmp_model);
+
         if (match_status)
           fileName = "out.msh";
         delete tmp_model;
