@@ -40,7 +40,7 @@ static Fl_Native_File_Chooser *fc = 0;
 #include <FL/Fl_Window.H>
 #include <FL/Fl_File_Input.H>
 
-class fileChooser : public Fl_File_Chooser {
+class flFileChooser : public Fl_File_Chooser {
   // we derive our own so we can set its position (The original file
   // chooser doesn't expose its window to the world, so we need to use
   // a cheap hack to get to it. Even worse is the hack used to get the
@@ -49,7 +49,7 @@ class fileChooser : public Fl_File_Chooser {
   Fl_Window *_win;
   Fl_File_Input *_in;
  public:
-  fileChooser(const char *d, const char *p, int t, const char *title)
+  flFileChooser(const char *d, const char *p, int t, const char *title)
     : Fl_File_Chooser(d, p, t, title) 
   { 
     _win = dynamic_cast<Fl_Window*>(newButton->parent()->parent()); 
@@ -71,12 +71,12 @@ class fileChooser : public Fl_File_Chooser {
   int y(){ if(_win) return _win->y(); else return 100; }
 };
 
-static fileChooser *fc = 0;
+static flFileChooser *fc = 0;
 
 #endif
 
 int fileChooser(int multi, int create, const char *message,
-                 const char *filter, const char *fname)
+                const char *filter, const char *fname)
 {
   static char thefilter[1024] = "";
   static int thefilterindex = 0;
@@ -114,8 +114,8 @@ int fileChooser(int multi, int create, const char *message,
   Fl_File_Chooser::show_label = "Format:";
   Fl_File_Chooser::all_files_label = "All files (*)";
   if(!fc) {
-    fc = new fileChooser(getenv("PWD") ? "." : CTX::instance()->homeDir.c_str(), 
-                         thefilter, Fl_File_Chooser::SINGLE, message);
+    fc = new flFileChooser(getenv("PWD") ? "." : CTX::instance()->homeDir.c_str(), 
+                           thefilter, Fl_File_Chooser::SINGLE, message);
     fc->position(CTX::instance()->fileChooserPosition[0], 
                  CTX::instance()->fileChooserPosition[1]);
   }
