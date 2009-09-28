@@ -309,17 +309,14 @@ std::string connectionChooser()
       if (!o) break;
       if (o == chooser->ok) {
         if(strlen(chooser->input->value())){
-          // insert choosen value at the top of the history if it's not
-          // already present
-          bool found = false;
+          // insert choosen value at the top of the history
           for(int i = 0; i < chooser->browser->size(); i++){
             if(!strcmp(chooser->input->value(), chooser->browser->text(i + 1))){
-              found = true;
+              chooser->browser->remove(i + 1);
               break;
             }
           }
-          if(!found)
-            chooser->browser->insert(1, chooser->input->value());
+          chooser->browser->insert(1, chooser->input->value());
         }
         chooser->browser->save(prefs);
         chooser->window->hide();
