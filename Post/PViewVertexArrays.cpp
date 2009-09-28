@@ -1067,6 +1067,9 @@ class initPView {
 
     if(data->getDirty() || !data->getNumTimeSteps() || !p->getChanged()) return;
     if(!opt->visible || opt->type != PViewOptions::Plot3D) return;
+
+    p->deleteVertexArrays();
+
     if(data->fillRemoteVertexArrays()) return;
 
     if(opt->useGenRaise) opt->createGeneralRaise();
@@ -1086,7 +1089,6 @@ class initPView {
       opt->tmpMax = data->getMax();
     }
 
-    p->deleteVertexArrays();
     p->va_points = new VertexArray(1, _estimateNumPoints(p));
     p->va_lines = new VertexArray(2, _estimateNumLines(p));
     p->va_triangles = new VertexArray(3, _estimateNumTriangles(p));

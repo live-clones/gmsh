@@ -69,7 +69,7 @@ class PViewDataRemote : public PViewData {
     setDirty(true);
     std::string fileName = CTX::instance()->homeDir + CTX::instance()->tmpFileName;
     // FIXME: until we rewrite the option code and allow nice serialization ;-)
-    PrintOptions(0, GMSH_FULLRC, 1, 0, fileName.c_str());
+    PrintOptions(0, GMSH_FULLRC, 0, 0, fileName.c_str());
     std::string options = ConvertFileToString(fileName);
     server->SendString(GmshSocket::GMSH_PARSE_STRING, options.c_str());
     server->SendString(GmshSocket::GMSH_VERTEX_ARRAY, "Send the vertex arrays!");
