@@ -241,11 +241,11 @@ char *VertexArray::toChar(int num, int type, double min, double max, double time
   memcpy(&bytes[index], &ymax, ds); index += ds;
   memcpy(&bytes[index], &zmax, ds); index += ds;
   memcpy(&bytes[index], &vn, is); index += is;
-  memcpy(&bytes[index], &_vertices[0], vs); index += vs;
+  if(vs){ memcpy(&bytes[index], &_vertices[0], vs); index += vs; }
   memcpy(&bytes[index], &nn, is); index += is;
-  memcpy(&bytes[index], &_normals[0], ns); index += ns;
+  if(ns){ memcpy(&bytes[index], &_normals[0], ns); index += ns; }
   memcpy(&bytes[index], &cn, is); index += is;
-  memcpy(&bytes[index], &_colors[0], cs); index += cs;
+  if(cs){ memcpy(&bytes[index], &_colors[0], cs); index += cs; }
   return bytes;
 }
 
@@ -270,14 +270,20 @@ void VertexArray::fromChar(const char *bytes)
   double zmax; memcpy(&zmax, &bytes[index], ds); index += ds;
 
   int vn; memcpy(&vn, &bytes[index], is); index += is;
-  _vertices.resize(vn); int vs = vn * sizeof(float);
-  memcpy(&_vertices[0], &bytes[index], vs); index += vs;
+  if(vn){
+    _vertices.resize(vn); int vs = vn * sizeof(float);
+    memcpy(&_vertices[0], &bytes[index], vs); index += vs;
+  }
 
   int nn; memcpy(&nn, &bytes[index], is); index += is;
-  _normals.resize(nn); int ns = nn * sizeof(char); 
-  memcpy(&_normals[0], &bytes[index], ns); index += ns;
+  if(nn){
+    _normals.resize(nn); int ns = nn * sizeof(char); 
+    memcpy(&_normals[0], &bytes[index], ns); index += ns;
+  }
 
   int cn; memcpy(&cn, &bytes[index], is); index += is;
-  _colors.resize(cn); int cs = cn * sizeof(unsigned char); 
-  memcpy(&_colors[0], &bytes[index], cs); index += cs;
+  if(cn){
+    _colors.resize(cn); int cs = cn * sizeof(unsigned char); 
+    memcpy(&_colors[0], &bytes[index], cs); index += cs;
+  }
 }

@@ -71,8 +71,7 @@ class PViewDataRemote : public PViewData {
     // FIXME: until we rewrite the option code and allow nice serialization ;-)
     PrintOptions(0, GMSH_FULLRC, 0, 0, fileName.c_str());
     std::string options = ConvertFileToString(fileName);
-    server->SendString(GmshSocket::GMSH_PARSE_STRING, options.c_str());
-    server->SendString(GmshSocket::GMSH_VERTEX_ARRAY, "Send the vertex arrays!");
+    server->SendString(GmshSocket::GMSH_VERTEX_ARRAY, options.c_str());
     return 1;
   }
 };

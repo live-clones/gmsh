@@ -12,9 +12,11 @@
 #include "PViewOptions.h"
 #include "PViewData.h"
 #include "VertexArray.h"
+#include "Context.h"
 
 static void computeAndSendVertexArrays(GmshClient &client)
 {
+  CTX::instance()->terminal = 1; // debug
   client.Info("Sending vertex arrays");
   for(unsigned int i = 0; i < PView::list.size(); i++){
     PView *p = PView::list[i];
@@ -23,7 +25,7 @@ static void computeAndSendVertexArrays(GmshClient &client)
     VertexArray *va[4] = 
       {p->va_points, p->va_lines, p->va_triangles, p->va_vectors};
     for(int type = 0; type < 4; type++){
-      if(va[type] && va[type]->getNumVertices()){
+      if(va[type]){
         int len;
         char *str = va[type]->toChar
           (p->getNum(), type + 1, data->getMin(), data->getMax(),
@@ -79,6 +81,7 @@ int GmshDaemon(std::string socket)
       break;
     }
     else if(type == GmshSocket::GMSH_VERTEX_ARRAY){
+      ParseString(msg);
       computeAndSendVertexArrays(client);
     }
     else if(type == GmshSocket::GMSH_MERGE_FILE){
@@ -87,7 +90,6 @@ int GmshDaemon(std::string socket)
     }
     else if(type == GmshSocket::GMSH_PARSE_STRING){
       ParseString(msg);
-      computeAndSendVertexArrays(client);
     }
     else if(type == GmshSocket::GMSH_SPEED_TEST){
       client.Info("Sending huge array");
