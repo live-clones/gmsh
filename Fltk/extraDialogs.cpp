@@ -8,6 +8,7 @@
 //
 
 #include <stdio.h>
+#include <string.h>
 #include <FL/Fl_Value_Slider.H>
 #include <FL/Fl_Menu_Window.H>
 #include <FL/Fl_Select_Browser.H>
