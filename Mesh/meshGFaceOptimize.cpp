@@ -296,7 +296,6 @@ int _removeFourTrianglesNodes(GFace *gf,bool replace_by_quads)
             gf->triangles.push_back(newt[3]);
           } else {
             it++;
-            throw;
             continue;
           }
         }
