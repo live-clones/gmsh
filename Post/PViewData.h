@@ -199,7 +199,7 @@ class PViewData {
   
   // ask to fill vertex arrays remotely
   virtual bool isRemote(){ return false; }
-  virtual int fillRemoteVertexArrays(){ return 0; }
+  virtual int fillRemoteVertexArrays(std::string &options){ return 0; }
 
   // I/O routines
   virtual bool writeSTL(std::string fileName);

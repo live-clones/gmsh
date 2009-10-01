@@ -217,22 +217,26 @@ int VertexArray::getMemoryUsage()
   return bytes / 1024 / 1024;
 }
 
-char *VertexArray::toChar(int num, int type, double min, double max, double time,
-                          SBoundingBox3d bbox, int &len)
+char *VertexArray::toChar(int num, std::string name, int type, double min, double max, 
+                          int numsteps, double time, SBoundingBox3d bbox, int &len)
 {
   int vn = _vertices.size(), nn = _normals.size(), cn = _colors.size();
   int vs = vn * sizeof(float), ns = nn * sizeof(char), cs = cn * sizeof(unsigned char);
   int is = sizeof(int), ds = sizeof(double);
+  int ss = name.size();
   double xmin = bbox.min().x(), ymin = bbox.min().y(), zmin = bbox.min().z();
   double xmax = bbox.max().x(), ymax = bbox.max().y(), zmax = bbox.max().z();
 
-  len = 5 * is + 9 * ds + vs + ns + cs;
+  len = ss + 7 * is + 9 * ds + vs + ns + cs;
   char *bytes = new char[len];
   int index = 0;
   memcpy(&bytes[index], &num, is); index += is;
+  memcpy(&bytes[index], &ss, is); index += is;
+  memcpy(&bytes[index], name.c_str(), ss); index += ss;
   memcpy(&bytes[index], &type, is); index += is;
   memcpy(&bytes[index], &min, ds); index += ds;
   memcpy(&bytes[index], &max, ds); index += ds;
+  memcpy(&bytes[index], &numsteps, is); index += is;
   memcpy(&bytes[index], &time, ds); index += ds;
   memcpy(&bytes[index], &xmin, ds); index += ds;
   memcpy(&bytes[index], &ymin, ds); index += ds;
@@ -258,9 +262,16 @@ void VertexArray::fromChar(const char *bytes)
   if(num > 65535)
     Msg::Error("Should swap data in vertex array stream");
 
+  int ss; memcpy(&ss, &bytes[index], is); index += is;
+  if(ss){
+    std::vector<char> name(ss); 
+    memcpy(&name[0], &bytes[index], ss); index += ss;
+  }
+
   int type; memcpy(&type, &bytes[index], is); index += is;
   double min; memcpy(&min, &bytes[index], ds); index += ds;
   double max; memcpy(&max, &bytes[index], ds); index += ds;
+  int numsteps; memcpy(&numsteps, &bytes[index], is); index += is;
   double time; memcpy(&time, &bytes[index], ds); index += ds;
   double xmin; memcpy(&xmin, &bytes[index], ds); index += ds;
   double ymin; memcpy(&ymin, &bytes[index], ds); index += ds;

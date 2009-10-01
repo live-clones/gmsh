@@ -83,6 +83,8 @@ class GMSH_PostPlugin : public GMSH_Plugin
   // view is simply modified, else, a new view is added in the view
   // list
   virtual PView *execute(PView *) = 0;
+  // excute on a remote dataset
+  virtual PView *executeRemote(PView *);
   // get the view given an index and a default value
   virtual PView *getView(int index, PView *view);
   // get the data in list format

@@ -6,7 +6,7 @@
 #include <string>
 #include "Gmsh.h"
 #include "GmshMessage.h"
-#include "GmshRemote.h"
+#include "ConnectionManager.h"
 #include "FlGui.h"
 #include "menuWindow.h"
 #include "drawContext.h"
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 
   // Listen to external solvers
   if(CTX::instance()->solver.listen)
-    GmshRemote::get(-1)->run("");
+    ConnectionManager::get(-1)->run("");
 
   // loop
   return FlGui::instance()->run();

@@ -27,7 +27,9 @@
  * library in the file named "COPYING.GL2PS"; if not, I will be glad
  * to provide one.
  *
- * For the latest info about gl2ps, see http://www.geuz.org/gl2ps/.
+ * For the latest info about gl2ps and a full list of contributors,
+ * see http://www.geuz.org/gl2ps/.
+ *
  * Please report all bugs and problems to <gl2ps@geuz.org>.
  */
 
@@ -78,7 +80,7 @@
 
 #define GL2PS_MAJOR_VERSION 1
 #define GL2PS_MINOR_VERSION 3
-#define GL2PS_PATCH_VERSION 3
+#define GL2PS_PATCH_VERSION 4
 #define GL2PS_EXTRA_VERSION "-cvs"
 
 #define GL2PS_VERSION (GL2PS_MAJOR_VERSION + \

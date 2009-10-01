@@ -10,8 +10,8 @@
 #include <FL/fl_ask.H>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
-#include "GmshRemote.h"
 #include "GmshSocket.h"
+#include "ConnectionManager.h"
 #include "FlGui.h"
 #include "menuWindow.h"
 #include "mainWindow.h"
@@ -149,20 +149,20 @@ static void file_clear_cb(Fl_Widget *w, void *data)
 
 static void file_remote_cb(Fl_Widget *w, void *data)
 {
-  GmshServer *server = GmshRemote::get(99)->getServer();
+  GmshServer *server = ConnectionManager::get(99)->getServer();
 
   std::string str((const char*)data);
 
   if(str == "start"){
     if(server){
-      Msg::Error("A server is already running");
+      Msg::Error("Cannot start: server is already running");
       return;
     }
-    GmshRemote::get(99)->name = "Remote";
-    GmshRemote::get(99)->socketSwitch = "-socket %s";
-    GmshRemote::get(99)->executable = connectionChooser();
-    if(GmshRemote::get(99)->executable.size())
-      GmshRemote::get(99)->run("");
+    ConnectionManager::get(99)->name = "Remote";
+    ConnectionManager::get(99)->socketSwitch = "-socket %s";
+    ConnectionManager::get(99)->executable = connectionChooser();
+    if(ConnectionManager::get(99)->executable.size())
+      ConnectionManager::get(99)->run("");
   }
   else{
     if(!server){
@@ -173,7 +173,7 @@ static void file_remote_cb(Fl_Widget *w, void *data)
       server->SendString(GmshSocket::GMSH_STOP, "Disconnect!");
     }
     else if(str == "merge"){
-      const char *file = fl_input("File:", "~/data/res00.pos");
+      const char *file = fl_input("Merge", "/tmp/data.pos");
       if(file) server->SendString(GmshSocket::GMSH_MERGE_FILE, file);
     }
     else if(str == "clear"){
@@ -184,7 +184,7 @@ static void file_remote_cb(Fl_Widget *w, void *data)
       drawContext::global()->draw();
     }
     else if(str == "test"){
-      server->SendString(GmshSocket::GMSH_SPEED_TEST, "Test connection speed");
+      server->SendString(GmshSocket::GMSH_SPEED_TEST, "Speed test");
     }
   }
 }
@@ -2190,7 +2190,6 @@ static Fl_Menu_Item bar_table[] = {
       {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
       {"Merge...",  0, (Fl_Callback *)file_remote_cb, (void*)"merge"},
       {"Clear",     0, (Fl_Callback *)file_remote_cb, (void*)"clear"},
-      {"Test Connection Speed", 0, (Fl_Callback *)file_remote_cb, (void*)"test"},
       {"Stop",      0, (Fl_Callback *)file_remote_cb, (void*)"stop"},
       {0},
     {"New Window", 0, (Fl_Callback *)file_window_cb, (void*)"new"},
@@ -2241,7 +2240,6 @@ static Fl_Menu_Item sysbar_table[] = {
       {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
       {"Merge...",  0, (Fl_Callback *)file_remote_cb, (void*)"merge"},
       {"Clear",     0, (Fl_Callback *)file_remote_cb, (void*)"clear"},
-      {"Test Connection Speed", 0, (Fl_Callback *)file_remote_cb, (void*)"test"},
       {"Stop",      0, (Fl_Callback *)file_remote_cb, (void*)"stop"},
       {0},
     {"New Window", 0, (Fl_Callback *)file_window_cb, (void*)"new"},

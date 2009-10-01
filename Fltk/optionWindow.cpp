@@ -10,7 +10,7 @@
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
-#include "GmshRemote.h"
+#include "ConnectionManager.h"
 #include "FlGui.h"
 #include "optionWindow.h"
 #include "paletteWindow.h"
@@ -472,7 +472,7 @@ static void solver_options_ok_cb(Fl_Widget *w, void *data)
   int old_listen = (int)opt_solver_listen(0, GMSH_GET, o->solver.butt[0]->value());
   opt_solver_listen(0, GMSH_SET, o->solver.butt[0]->value());
   if(!old_listen && o->solver.butt[0]->value())
-    GmshRemote::get(-1)->run("");
+    ConnectionManager::get(-1)->run("");
 
   opt_solver_socket_name(0, GMSH_SET, o->solver.input[0]->value());
 
@@ -3260,7 +3260,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_timestep(index, GMSH_GUI, 0);
   opt_view_show_time(index, GMSH_GUI, 0);
 
-  if(data->getNumVectors() || data->getNumTensors())
+  if(data->getNumVectors() || data->getNumTensors() || data->isRemote())
     view.vector->activate();
   else
     view.vector->deactivate();

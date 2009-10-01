@@ -180,7 +180,7 @@ void PView::setOptions(PViewOptions *val)
 
 PViewData *PView::getData(bool useAdaptiveIfAvailable)
 { 
-  if(useAdaptiveIfAvailable && _data->isAdaptive())
+  if(useAdaptiveIfAvailable && _data->isAdaptive() && !_data->isRemote())
     return _data->getAdaptiveData()->getData();
   else
     return _data;

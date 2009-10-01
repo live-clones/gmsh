@@ -7,6 +7,7 @@
 #include <time.h>
 #include "GmshConfig.h"
 #include "GmshDefines.h"
+#include "GmshRemote.h"
 #include "GModel.h"
 #include "GmshMessage.h"
 #include "OpenFile.h"
@@ -19,7 +20,6 @@
 #include "Context.h"
 #include "robustPredicates.h"
 #include "meshPartition.h"
-#include "GmshDaemon.h"
 
 #if !defined(HAVE_NO_POST)
 #include "PluginManager.h"
@@ -139,7 +139,7 @@ int GmshBatch()
 #endif
 
   if(CTX::instance()->batch == -3){
-    GmshDaemon(CTX::instance()->solver.socketName);
+    GmshRemote(CTX::instance()->solver.socketName);
   }
   else if(CTX::instance()->batch == -2){
     GModel::current()->checkMeshCoherence(CTX::instance()->geom.tolerance);

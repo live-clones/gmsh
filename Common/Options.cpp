@@ -8,7 +8,7 @@
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
-#include "GmshRemote.h"
+#include "ConnectionManager.h"
 #include "StringUtils.h"
 #include "GModel.h"
 #include "Generator.h"
@@ -1041,12 +1041,12 @@ std::string opt_solver_socket_name(OPT_ARGS_STR)
 std::string opt_solver_name(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->name = val;
+    ConnectionManager::get(num)->name = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->solver[num]->win->label(GmshRemote::get(num)->name.c_str());
+    FlGui::instance()->solver[num]->win->label(ConnectionManager::get(num)->name.c_str());
 #endif
-  return GmshRemote::get(num)->name;
+  return ConnectionManager::get(num)->name;
 }
 
 std::string opt_solver_name0(OPT_ARGS_STR)
@@ -1077,13 +1077,13 @@ std::string opt_solver_name4(OPT_ARGS_STR)
 std::string opt_solver_executable(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->executable = val;
+    ConnectionManager::get(num)->executable = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->solver[num]->input[2]->value
-      (GmshRemote::get(num)->executable.c_str());
+      (ConnectionManager::get(num)->executable.c_str());
 #endif
-  return GmshRemote::get(num)->executable;
+  return ConnectionManager::get(num)->executable;
 }
 
 std::string opt_solver_executable0(OPT_ARGS_STR)
@@ -1114,8 +1114,8 @@ std::string opt_solver_executable4(OPT_ARGS_STR)
 std::string opt_solver_help(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->help = val;
-  return GmshRemote::get(num)->help;
+    ConnectionManager::get(num)->help = val;
+  return ConnectionManager::get(num)->help;
 }
 
 std::string opt_solver_help0(OPT_ARGS_STR)
@@ -1147,17 +1147,17 @@ std::string opt_solver_input_name(OPT_ARGS_STR)
 {
   if(action & GMSH_SET){
 #if !defined(HAVE_NO_PARSER)
-    GmshRemote::get(num)->inputFileName = FixRelativePath(gmsh_yyname, val);
+    ConnectionManager::get(num)->inputFileName = FixRelativePath(gmsh_yyname, val);
 #else
-    GmshRemote::get(num)->inputFileName = val;
+    ConnectionManager::get(num)->inputFileName = val;
 #endif
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->solver[num]->input[0]->value
-      (GmshRemote::get(num)->inputFileName.c_str());
+      (ConnectionManager::get(num)->inputFileName.c_str());
 #endif
-  return GmshRemote::get(num)->inputFileName;
+  return ConnectionManager::get(num)->inputFileName;
 }
 
 std::string opt_solver_input_name0(OPT_ARGS_STR)
@@ -1188,8 +1188,8 @@ std::string opt_solver_input_name4(OPT_ARGS_STR)
 std::string opt_solver_extension(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->inputFileExtension = val;
-  return GmshRemote::get(num)->inputFileExtension;
+    ConnectionManager::get(num)->inputFileExtension = val;
+  return ConnectionManager::get(num)->inputFileExtension;
 }
 
 std::string opt_solver_extension0(OPT_ARGS_STR)
@@ -1221,17 +1221,17 @@ std::string opt_solver_mesh_name(OPT_ARGS_STR)
 {
   if(action & GMSH_SET){
 #if !defined(HAVE_NO_PARSER)
-    GmshRemote::get(num)->meshFileName = FixRelativePath(gmsh_yyname, val);
+    ConnectionManager::get(num)->meshFileName = FixRelativePath(gmsh_yyname, val);
 #else
-    GmshRemote::get(num)->meshFileName = val;
+    ConnectionManager::get(num)->meshFileName = val;
 #endif
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->solver[num]->input[1]->value
-      (GmshRemote::get(num)->meshFileName.c_str());
+      (ConnectionManager::get(num)->meshFileName.c_str());
 #endif
-  return GmshRemote::get(num)->meshFileName;
+  return ConnectionManager::get(num)->meshFileName;
 }
 
 std::string opt_solver_mesh_name0(OPT_ARGS_STR)
@@ -1262,8 +1262,8 @@ std::string opt_solver_mesh_name4(OPT_ARGS_STR)
 std::string opt_solver_mesh_command(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->meshFileSwitch = val;
-  return GmshRemote::get(num)->meshFileSwitch;
+    ConnectionManager::get(num)->meshFileSwitch = val;
+  return ConnectionManager::get(num)->meshFileSwitch;
 }
 
 std::string opt_solver_mesh_command0(OPT_ARGS_STR)
@@ -1294,8 +1294,8 @@ std::string opt_solver_mesh_command4(OPT_ARGS_STR)
 std::string opt_solver_socket_command(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->socketSwitch = val;
-  return GmshRemote::get(num)->socketSwitch;
+    ConnectionManager::get(num)->socketSwitch = val;
+  return ConnectionManager::get(num)->socketSwitch;
 }
 
 std::string opt_solver_socket_command0(OPT_ARGS_STR)
@@ -1326,8 +1326,8 @@ std::string opt_solver_socket_command4(OPT_ARGS_STR)
 std::string opt_solver_name_command(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->inputFileSwitch = val;
-  return GmshRemote::get(num)->inputFileSwitch;
+    ConnectionManager::get(num)->inputFileSwitch = val;
+  return ConnectionManager::get(num)->inputFileSwitch;
 }
 
 std::string opt_solver_name_command0(OPT_ARGS_STR)
@@ -1358,8 +1358,8 @@ std::string opt_solver_name_command4(OPT_ARGS_STR)
 std::string opt_solver_option_command(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->optionSwitch = val;
-  return GmshRemote::get(num)->optionSwitch;
+    ConnectionManager::get(num)->optionSwitch = val;
+  return ConnectionManager::get(num)->optionSwitch;
 }
 
 std::string opt_solver_option_command0(OPT_ARGS_STR)
@@ -1390,8 +1390,8 @@ std::string opt_solver_option_command4(OPT_ARGS_STR)
 std::string opt_solver_first_option(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->optionName[0] = val;
-  return GmshRemote::get(num)->optionName[0];
+    ConnectionManager::get(num)->optionName[0] = val;
+  return ConnectionManager::get(num)->optionName[0];
 }
 
 std::string opt_solver_first_option0(OPT_ARGS_STR)
@@ -1422,8 +1422,8 @@ std::string opt_solver_first_option4(OPT_ARGS_STR)
 std::string opt_solver_second_option(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->optionName[1] = val;
-  return GmshRemote::get(num)->optionName[1];
+    ConnectionManager::get(num)->optionName[1] = val;
+  return ConnectionManager::get(num)->optionName[1];
 }
 
 std::string opt_solver_second_option0(OPT_ARGS_STR)
@@ -1454,8 +1454,8 @@ std::string opt_solver_second_option4(OPT_ARGS_STR)
 std::string opt_solver_third_option(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->optionName[2] = val;
-  return GmshRemote::get(num)->optionName[2];
+    ConnectionManager::get(num)->optionName[2] = val;
+  return ConnectionManager::get(num)->optionName[2];
 }
 
 std::string opt_solver_third_option0(OPT_ARGS_STR)
@@ -1486,8 +1486,8 @@ std::string opt_solver_third_option4(OPT_ARGS_STR)
 std::string opt_solver_fourth_option(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->optionName[3] = val;
-  return GmshRemote::get(num)->optionName[3];
+    ConnectionManager::get(num)->optionName[3] = val;
+  return ConnectionManager::get(num)->optionName[3];
 }
 
 std::string opt_solver_fourth_option0(OPT_ARGS_STR)
@@ -1518,8 +1518,8 @@ std::string opt_solver_fourth_option4(OPT_ARGS_STR)
 std::string opt_solver_fifth_option(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->optionName[4] = val;
-  return GmshRemote::get(num)->optionName[4];
+    ConnectionManager::get(num)->optionName[4] = val;
+  return ConnectionManager::get(num)->optionName[4];
 }
 
 std::string opt_solver_fifth_option0(OPT_ARGS_STR)
@@ -1550,8 +1550,8 @@ std::string opt_solver_fifth_option4(OPT_ARGS_STR)
 std::string opt_solver_first_button(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->buttonName[0] = val;
-  return GmshRemote::get(num)->buttonName[0];
+    ConnectionManager::get(num)->buttonName[0] = val;
+  return ConnectionManager::get(num)->buttonName[0];
 }
 
 std::string opt_solver_first_button0(OPT_ARGS_STR)
@@ -1582,8 +1582,8 @@ std::string opt_solver_first_button4(OPT_ARGS_STR)
 std::string opt_solver_first_button_command(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->buttonSwitch[0] = val;
-  return GmshRemote::get(num)->buttonSwitch[0];
+    ConnectionManager::get(num)->buttonSwitch[0] = val;
+  return ConnectionManager::get(num)->buttonSwitch[0];
 }
 
 std::string opt_solver_first_button_command0(OPT_ARGS_STR)
@@ -1614,8 +1614,8 @@ std::string opt_solver_first_button_command4(OPT_ARGS_STR)
 std::string opt_solver_second_button(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->buttonName[1] = val;
-  return GmshRemote::get(num)->buttonName[1];
+    ConnectionManager::get(num)->buttonName[1] = val;
+  return ConnectionManager::get(num)->buttonName[1];
 }
 
 std::string opt_solver_second_button0(OPT_ARGS_STR)
@@ -1646,8 +1646,8 @@ std::string opt_solver_second_button4(OPT_ARGS_STR)
 std::string opt_solver_second_button_command(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->buttonSwitch[1] = val;
-  return GmshRemote::get(num)->buttonSwitch[1];
+    ConnectionManager::get(num)->buttonSwitch[1] = val;
+  return ConnectionManager::get(num)->buttonSwitch[1];
 }
 
 std::string opt_solver_second_button_command0(OPT_ARGS_STR)
@@ -1678,8 +1678,8 @@ std::string opt_solver_second_button_command4(OPT_ARGS_STR)
 std::string opt_solver_third_button(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->buttonName[2] = val;
-  return GmshRemote::get(num)->buttonName[2];
+    ConnectionManager::get(num)->buttonName[2] = val;
+  return ConnectionManager::get(num)->buttonName[2];
 }
 
 std::string opt_solver_third_button0(OPT_ARGS_STR)
@@ -1710,8 +1710,8 @@ std::string opt_solver_third_button4(OPT_ARGS_STR)
 std::string opt_solver_third_button_command(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->buttonSwitch[2] = val;
-  return GmshRemote::get(num)->buttonSwitch[2];
+    ConnectionManager::get(num)->buttonSwitch[2] = val;
+  return ConnectionManager::get(num)->buttonSwitch[2];
 }
 
 std::string opt_solver_third_button_command0(OPT_ARGS_STR)
@@ -1742,8 +1742,8 @@ std::string opt_solver_third_button_command4(OPT_ARGS_STR)
 std::string opt_solver_fourth_button(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->buttonName[3] = val;
-  return GmshRemote::get(num)->buttonName[3];
+    ConnectionManager::get(num)->buttonName[3] = val;
+  return ConnectionManager::get(num)->buttonName[3];
 }
 
 std::string opt_solver_fourth_button0(OPT_ARGS_STR)
@@ -1774,8 +1774,8 @@ std::string opt_solver_fourth_button4(OPT_ARGS_STR)
 std::string opt_solver_fourth_button_command(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->buttonSwitch[3] = val;
-  return GmshRemote::get(num)->buttonSwitch[3];
+    ConnectionManager::get(num)->buttonSwitch[3] = val;
+  return ConnectionManager::get(num)->buttonSwitch[3];
 }
 
 std::string opt_solver_fourth_button_command0(OPT_ARGS_STR)
@@ -1806,8 +1806,8 @@ std::string opt_solver_fourth_button_command4(OPT_ARGS_STR)
 std::string opt_solver_fifth_button(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->buttonName[4] = val;
-  return GmshRemote::get(num)->buttonName[4];
+    ConnectionManager::get(num)->buttonName[4] = val;
+  return ConnectionManager::get(num)->buttonName[4];
 }
 
 std::string opt_solver_fifth_button0(OPT_ARGS_STR)
@@ -1838,8 +1838,8 @@ std::string opt_solver_fifth_button4(OPT_ARGS_STR)
 std::string opt_solver_fifth_button_command(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->buttonSwitch[4] = val;
-  return GmshRemote::get(num)->buttonSwitch[4];
+    ConnectionManager::get(num)->buttonSwitch[4] = val;
+  return ConnectionManager::get(num)->buttonSwitch[4];
 }
 
 std::string opt_solver_fifth_button_command0(OPT_ARGS_STR)
@@ -5921,16 +5921,16 @@ double opt_solver_plugins(OPT_ARGS_NUM)
 double opt_solver_client_server(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->clientServer = (bool)val;
+    ConnectionManager::get(num)->clientServer = (bool)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)){
-    if(GmshRemote::get(num)->clientServer)
+    if(ConnectionManager::get(num)->clientServer)
       ((Fl_Menu_Item*)FlGui::instance()->solver[num]->menu->menu())[0].set();
     else
       ((Fl_Menu_Item*)FlGui::instance()->solver[num]->menu->menu())[0].clear();
   }
 #endif
-  return GmshRemote::get(num)->clientServer ? 1 : 0;
+  return ConnectionManager::get(num)->clientServer ? 1 : 0;
 }
 
 double opt_solver_client_server0(OPT_ARGS_NUM)
@@ -5961,16 +5961,16 @@ double opt_solver_client_server4(OPT_ARGS_NUM)
 double opt_solver_popup_messages(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->popupMessages = (bool)val;
+    ConnectionManager::get(num)->popupMessages = (bool)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)){
-    if(GmshRemote::get(num)->popupMessages)
+    if(ConnectionManager::get(num)->popupMessages)
       ((Fl_Menu_Item*)FlGui::instance()->solver[num]->menu->menu())[1].set();
     else
       ((Fl_Menu_Item*)FlGui::instance()->solver[num]->menu->menu())[1].clear();
   }
 #endif
-  return GmshRemote::get(num)->popupMessages ? 1 : 0;
+  return ConnectionManager::get(num)->popupMessages ? 1 : 0;
 }
 
 double opt_solver_popup_messages0(OPT_ARGS_NUM)
@@ -6001,16 +6001,16 @@ double opt_solver_popup_messages4(OPT_ARGS_NUM)
 double opt_solver_merge_views(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    GmshRemote::get(num)->mergeViews = (bool)val;
+    ConnectionManager::get(num)->mergeViews = (bool)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)){
-    if(GmshRemote::get(num)->mergeViews)
+    if(ConnectionManager::get(num)->mergeViews)
       ((Fl_Menu_Item*)FlGui::instance()->solver[num]->menu->menu())[2].set();
     else
       ((Fl_Menu_Item*)FlGui::instance()->solver[num]->menu->menu())[2].clear();
   }
 #endif
-  return GmshRemote::get(num)->mergeViews ? 1 : 0;
+  return ConnectionManager::get(num)->mergeViews ? 1 : 0;
 }
 
 double opt_solver_merge_views0(OPT_ARGS_NUM)

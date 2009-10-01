@@ -225,17 +225,6 @@ class ConnectionBrowser : public Fl_Hold_Browser {
  public:
   ConnectionBrowser(int x, int y, int w, int h, const char *l=0)
     : Fl_Hold_Browser(x, y, w, h, l) {}
-  void save(Fl_Preferences &prefs)
-  {
-    for(int i = 0; i < 100; i++){
-      char name[256];
-      sprintf(name, "connection%02d", i);
-      if(i < size())
-        prefs.set(name, text(i + 1));
-      else if(prefs.entryExists(name)) 
-        prefs.deleteEntry(name);
-    }
-  }
 };
 
 struct _connectionChooser{
@@ -244,6 +233,21 @@ struct _connectionChooser{
   ConnectionBrowser *browser;
   Fl_Return_Button *ok;
   Fl_Button *cancel;
+  void save(Fl_Preferences &prefs)
+  {
+    for(int i = 0; i < 100; i++){
+      char name[256];
+      sprintf(name, "connection%02d", i);
+      if(i < browser->size())
+        prefs.set(name, browser->text(i + 1));
+      else if(prefs.entryExists(name)) 
+        prefs.deleteEntry(name);
+    }
+    prefs.set("connectionPositionX", window->x());
+    prefs.set("connectionPositionY", window->y());
+    prefs.set("connectionWidth", window->w());
+    prefs.set("connectionHeight", window->h());
+  }
 };
 
 static _connectionChooser *chooser = 0;
@@ -256,12 +260,13 @@ static void select_cb(Fl_Widget* w, void *data)
 
 std::string connectionChooser()
 {
+  int x = 100, y = 100, h = 4 * WB + 10 * BH, w = 3 * BB + 2 * WB;
+
   if(!chooser){
     chooser = new _connectionChooser;
-    int h = 4 * WB + 12 * BH, w = 4 * BB + 2 * WB;
     chooser->window = new Fl_Double_Window(w, h);
     chooser->window->set_modal();
-    chooser->window->label("Start Remote Gmsh");
+    chooser->window->label("Remote Start");
     Fl_Box *b1 = new Fl_Box(WB, WB, w, BH, "Command:");
     b1->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
     chooser->input = new Fl_Input(WB, WB + BH, w - 2 * WB, BH);
@@ -280,6 +285,11 @@ std::string connectionChooser()
   }
 
   Fl_Preferences prefs(Fl_Preferences::USER, "fltk.org", "gmsh");
+  prefs.get("connectionPositionX", x, x);
+  prefs.get("connectionPositionY", y, y);
+  prefs.get("connectionWidth", w, w);
+  prefs.get("connectionHeight", h, h);
+  chooser->window->resize(x, y, w, h);
 
   int old = chooser->browser->value();
   chooser->browser->clear();
@@ -319,12 +329,12 @@ std::string connectionChooser()
           }
           chooser->browser->insert(1, chooser->input->value());
         }
-        chooser->browser->save(prefs);
+        chooser->save(prefs);
         chooser->window->hide();
         return chooser->input->value();
       }
       if (o == chooser->window || o == chooser->cancel){
-        chooser->browser->save(prefs);
+        chooser->save(prefs);
         chooser->window->hide();
         return "";
       }

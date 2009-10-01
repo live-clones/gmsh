@@ -6,7 +6,7 @@
 #include <string.h>
 #include "GmshMessage.h"
 #include "GmshDefines.h"
-#include "GmshRemote.h"
+#include "ConnectionManager.h"
 #include "Iso.h"
 #include "PView.h"
 #include "PViewOptions.h"
@@ -18,6 +18,8 @@
 #include "Context.h"
 #include "OpenFile.h"
 #include "mathEvaluator.h"
+#include "Options.h"
+#include "StringUtils.h"
 
 static void saturate(int nb, double val[PVIEW_NMAX][9], double vmin, double vmax, 
                      int i0=0, int i1=1, int i2=2, int i3=3, 
@@ -1070,7 +1072,14 @@ class initPView {
 
     p->deleteVertexArrays();
 
-    if(data->fillRemoteVertexArrays()) return;
+    if(data->isRemote()){
+      // FIXME: need to rewrite option code and add nice serialization
+      std::string fileName = CTX::instance()->homeDir + CTX::instance()->tmpFileName;
+      PrintOptions(0, GMSH_FULLRC, 0, 0, fileName.c_str());
+      std::string options = ConvertFileToString(fileName);
+      data->fillRemoteVertexArrays(options);
+      return;
+    }
 
     if(opt->useGenRaise) opt->createGeneralRaise();
 
@@ -1119,20 +1128,29 @@ void PView::fillVertexArrays()
   init(this);
 }
 
-void PView::fillVertexArray(GmshRemote *remote, int length, const char *bytes)
+void PView::fillVertexArray(ConnectionManager *remote, int length, const char *bytes)
 {
   int is = sizeof(int), ds = sizeof(double);
 
-  if(length < 2 * is + 9 * ds){
+  if(length < 4 * is + 9 * ds){
     Msg::Error("Too few bytes to create vertex array: %d", length);
     return;
   }
   
+  std::string name;
+
   int index = 0;
   int num; memcpy(&num, &bytes[index], is); index += is;
+  int ss; memcpy(&ss, &bytes[index], is); index += is;
+  if(ss){
+    std::vector<char> n(ss);
+    memcpy(&n[0], &bytes[index], ss); index += ss;
+    for(unsigned int i = 0; i < n.size(); i++) name += n[i];
+  }
   int type; memcpy(&type, &bytes[index], is); index += is;
   double min; memcpy(&min, &bytes[index], ds); index += ds;
   double max; memcpy(&max, &bytes[index], ds); index += ds;
+  int numsteps; memcpy(&numsteps, &bytes[index], is); index += is;
   double time; memcpy(&time, &bytes[index], ds); index += ds;
   double xmin; memcpy(&xmin, &bytes[index], ds); index += ds;
   double ymin; memcpy(&ymin, &bytes[index], ds); index += ds;
@@ -1143,15 +1161,26 @@ void PView::fillVertexArray(GmshRemote *remote, int length, const char *bytes)
   
   Msg::Debug("Filling vertex array (type %d) in view num %d", type, num);
 
+  SBoundingBox3d bbox(xmin, ymin, zmin, xmax, ymax, zmax);
+
   PView *p = PView::getViewByNum(num);
   if(!p){
     Msg::Info("View num %d does not exist: creating new view", num);
-    SBoundingBox3d bb(xmin, ymin, zmin, xmax, ymax, zmax);
-    PViewData *data = new PViewDataRemote(remote, min, max, time, bb);
-    data->setName("Remote");
+    PViewData *data = new PViewDataRemote(remote, min, max, numsteps, time, bbox);
+    data->setName(name + " (remote)");
     p = new PView(data, num);
     SetBoundingBox();
   }
+  else{
+    PViewDataRemote *data = dynamic_cast<PViewDataRemote*>(p->getData());
+    if(data){
+      data->setMin(min);
+      data->setMax(max);
+      data->setTime(time);
+    }
+  }
+
+  p->getOptions()->tmpBBox += bbox;
 
   switch(type){
   case 1:

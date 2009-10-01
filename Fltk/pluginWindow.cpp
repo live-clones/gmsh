@@ -127,8 +127,13 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
     if(FlGui::instance()->plugins->view_browser->selected(i)) {
       no_view_selected = false;
       try{
-        if(i - 1 >= 0 && i - 1 < (int)PView::list.size())
-          p->execute(PView::list[i - 1]);
+        if(i - 1 >= 0 && i - 1 < (int)PView::list.size()){
+          PView *view = PView::list[i - 1];
+          if(view->getData()->isRemote())
+            p->executeRemote(view);
+          else
+            p->execute(view);
+        }
         else
           p->execute(0);
       }

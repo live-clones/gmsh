@@ -5,9 +5,8 @@
 
 set(SRC
   Gmsh.cpp
-    GmshMessage.cpp
     GmshRemote.cpp
-    GmshDaemon.cpp
+    GmshMessage.cpp
   Context.cpp
   Options.cpp
   CommandLine.cpp
@@ -22,6 +21,7 @@ set(SRC
   ListUtils.cpp
   TreeUtils.cpp avl.cpp
   MallocUtils.cpp
+  ConnectionManager.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Common *.h) 

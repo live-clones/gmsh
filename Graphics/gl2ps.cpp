@@ -27,31 +27,9 @@
  * library in the file named "COPYING.GL2PS"; if not, I will be glad
  * to provide one.
  *
- * Contributors:
- *   Michael Sweet <mike@easysw.com>
- *   Marc Ume <marc.ume@digitalgraphics.be>
- *   Jean-Francois Remacle <remacle@gce.ucl.ac.be>
- *   Bart Kaptein <B.L.Kaptein@lumc.nl>
- *   Quy Nguyen-Dai <quy@nguyendai.org>
- *   Sam Buss <sbuss@ucsd.edu>
- *   Shane Hill <Shane.Hill@dsto.defence.gov.au>
- *   Romain Boman <r_boman@yahoo.fr>
- *   Rouben Rostamian <rostamian@umbc.edu>
- *   Diego Santa Cruz <Diego.SantaCruz@epfl.ch>
- *   Shahzad Muzaffar <Shahzad.Muzaffar@cern.ch>
- *   Lassi Tuura <lassi.tuura@cern.ch>
- *   Guy Barrand <barrand@lal.in2p3.fr>
- *   Prabhu Ramachandran <prabhu@aero.iitm.ernet.in>
- *   Micha Bieber <bieber@traits.de>
- *   Olivier Couet <couet@mail.cern.ch>
- *   Shai Ayal <shaiay@gmail.com>
- *   Fabian Wenzel <wenzel@tu-harburg.de>
- *   Ian D. Gay <gay@sfu.ca>
- *   Cosmin Truta <cosmin@cs.toronto.edu>
- *   Baiju Devani <b.devani@gmail.com>
- *   Alexander Danilov <danilov@lanl.gov>
+ * For the latest info about gl2ps and a full list of contributors,
+ * see http://www.geuz.org/gl2ps/.
  *
- * For the latest info about gl2ps, see http://www.geuz.org/gl2ps/.
  * Please report all bugs and problems to <gl2ps@geuz.org>.
  */
 

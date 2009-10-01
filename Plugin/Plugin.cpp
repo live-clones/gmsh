@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <sstream>
 #include <stdio.h>
 #include <string.h>
 #include "GmshConfig.h"
@@ -36,6 +37,38 @@ void GMSH_Plugin::catchErrorMessage(char *errorMessage) const
 {
   std::string str = getName() + "failed...";
   strcpy(errorMessage, str.c_str());
+}
+
+PView *GMSH_PostPlugin::executeRemote(PView *view)
+{
+  int j = -1, remoteIndex = -1;
+  for(unsigned int i = 0; i < PView::list.size(); i++){
+    if(PView::list[i]->getData()->isRemote()) j++;
+    if(PView::list[i]->getNum() == view->getNum()){
+      remoteIndex = j;
+      break;
+    }
+  }
+  if(remoteIndex < 0){
+    Msg::Error("Unable to determine index of remote view");
+    return view;
+  }
+  
+  for(int i = 0; i < getNbOptions(); i++)
+    if(getOption(i)->str == "iView") getOption(i)->def = remoteIndex;
+  
+  std::ostringstream sstream;
+  for(int i = 0; i < getNbOptionsStr(); i++)
+    sstream << "Plugin(" << getName() << ")." << getOptionStr(i)->str 
+            <<  "= \"" << getOptionStr(i)->def << "\";\n";
+  for(int i = 0; i < getNbOptions(); i++)
+    sstream << "Plugin(" << getName() << ")." << getOption(i)->str 
+            << "=" << getOption(i)->def << ";\n";
+  sstream << "Plugin(" << getName() << ").Run;\n";
+  
+  std::string options = sstream.str();
+  view->getData()->fillRemoteVertexArrays(options);
+  return view;
 }
 
 PView *GMSH_PostPlugin::getView(int index, PView *view)

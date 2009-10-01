@@ -9,8 +9,8 @@
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Browser.H>
 #include "GmshMessage.h"
-#include "GmshRemote.h"
 #include "GmshSocket.h"
+#include "ConnectionManager.h"
 #include "GModel.h"
 #include "PView.h"
 #include "OpenFile.h"
@@ -28,9 +28,9 @@
 
 class FlGmshServer : public GmshServer{
  private:
-  GmshRemote *_remote;
+  ConnectionManager *_remote;
  public:
-  FlGmshServer(GmshRemote *remote) : _remote(remote), GmshServer() {}
+  FlGmshServer(ConnectionManager *remote) : _remote(remote), GmshServer() {}
   ~FlGmshServer() {}
   int SystemCall(const char *str)
   { 
@@ -76,7 +76,7 @@ class FlGmshServer : public GmshServer{
   }
 };
 
-void GmshRemote::run(std::string args)
+void ConnectionManager::run(std::string args)
 {
  new_connection:
   
@@ -93,7 +93,7 @@ void GmshRemote::run(std::string args)
 
   // find associated solver window if there is one
   solverWindow *window = 0;
-  for(std::map<int, GmshRemote*>::iterator it = _all.begin(); 
+  for(std::map<int, ConnectionManager*>::iterator it = _all.begin(); 
       it != _all.end(); it++){
     if(this == it->second){
       if(it->first >= 0 && it->first < NB_SOLVER_MAX){
@@ -142,7 +142,7 @@ void GmshRemote::run(std::string args)
     return;
   }
 
-  Msg::Info("Running '%s'...", name.c_str());
+  Msg::StatusBar(2, true, "Running '%s'...", name.c_str());
 
   bool initOption[5] = {false, false, false, false, false};  
   while(1) {
@@ -226,9 +226,9 @@ void GmshRemote::run(std::string args)
       {
         int n = PView::list.size();
         PView::fillVertexArray(this, length, message);
-        drawContext::global()->draw();
         if(n != (int)PView::list.size())
           FlGui::instance()->updateViews();
+        drawContext::global()->draw();
       }
       break;
     default:
@@ -264,7 +264,7 @@ void GmshRemote::run(std::string args)
   server->Shutdown();
   delete server;
 
-  Msg::Info("...done running '%s'", name.c_str());
+  Msg::StatusBar(2, true, "Done running '%s'", name.c_str());
 
   if(prog.empty()){
     Msg::Info("Client disconnected: starting new connection");
@@ -282,10 +282,10 @@ void solver_cb(Fl_Widget *w, void *data)
   // from the current model name (only if this file actually exists)
   if(!strlen(FlGui::instance()->solver[num]->input[0]->value())){
     std::string inputFile = split[0] + split[1] + 
-      GmshRemote::get(num)->inputFileExtension;
+      ConnectionManager::get(num)->inputFileExtension;
     if(!StatFile(inputFile)){
       FlGui::instance()->solver[num]->input[0]->value(inputFile.c_str());
-      GmshRemote::get(num)->inputFileName = inputFile;
+      ConnectionManager::get(num)->inputFileName = inputFile;
     }
   }
 
@@ -294,7 +294,7 @@ void solver_cb(Fl_Widget *w, void *data)
   if(!strlen(FlGui::instance()->solver[num]->input[1]->value())){
     std::string meshFile = split[0] + split[1] + ".msh";
     FlGui::instance()->solver[num]->input[1]->value(meshFile.c_str());
-    GmshRemote::get(num)->meshFileName = meshFile;
+    ConnectionManager::get(num)->meshFileName = meshFile;
   }
 
   // show the window before calling Solver() to avoid race condition on
@@ -302,7 +302,7 @@ void solver_cb(Fl_Widget *w, void *data)
   // callbacks get messed up)
   FlGui::instance()->solver[num]->win->show();
 
-  GmshRemote::get(num)->runToGetOptions();
+  ConnectionManager::get(num)->runToGetOptions();
 }
 
 static void solver_ok_cb(Fl_Widget *w, void *data)
@@ -349,7 +349,7 @@ static void solver_choose_executable_cb(Fl_Widget *w, void *data)
 static void solver_file_open_cb(Fl_Widget *w, void *data)
 {
   int num = (int)(long)data;
-  std::string pattern = "*" + GmshRemote::get(num)->inputFileExtension;
+  std::string pattern = "*" + ConnectionManager::get(num)->inputFileExtension;
 
   if(fileChooser(0, 0, "Choose", pattern.c_str())) {
     FlGui::instance()->solver[num]->input[0]->value(fileChooserGetName(1).c_str());
@@ -391,38 +391,38 @@ static void solver_command_cb(Fl_Widget *w, void *data)
   int num = ((int *)data)[0];
   int idx = ((int *)data)[1];
 
-  if(GmshRemote::get(num)->popupMessages)
+  if(ConnectionManager::get(num)->popupMessages)
     FlGui::instance()->messages->show(true);
 
-  GmshRemote::get(num)->inputFileName =
+  ConnectionManager::get(num)->inputFileName =
     FlGui::instance()->solver[num]->input[0]->value();
 
-  GmshRemote::get(num)->meshFileName = 
+  ConnectionManager::get(num)->meshFileName = 
     FlGui::instance()->solver[num]->input[1]->value();
 
   int optionIndex = 0;
   for(int i = 0; i < idx; i++)
-    optionIndex += numPercentS(GmshRemote::get(num)->buttonSwitch[i]);
+    optionIndex += numPercentS(ConnectionManager::get(num)->buttonSwitch[i]);
 
   int optionChoice = 0;
   if(optionIndex >= 0 && optionIndex < FlGui::instance()->solver[num]->choice.size())
     optionChoice = FlGui::instance()->solver[num]->choice[optionIndex]->value();
-  GmshRemote::get(num)->runCommand(idx, optionIndex, optionChoice);
+  ConnectionManager::get(num)->runCommand(idx, optionIndex, optionChoice);
 }
 
 static void solver_kill_cb(Fl_Widget *w, void *data)
 {
   int num = (int)(long)data;
-  GmshRemote::get(num)->kill();
+  ConnectionManager::get(num)->kill();
 }
 
 solverWindow::solverWindow(int num, int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int numOptions = GmshRemote::get(num)->optionName.size();
-  for(unsigned int i = 0; i < GmshRemote::get(num)->optionName.size(); i++){
-    if(GmshRemote::get(num)->optionName[i].empty()){
+  int numOptions = ConnectionManager::get(num)->optionName.size();
+  for(unsigned int i = 0; i < ConnectionManager::get(num)->optionName.size(); i++){
+    if(ConnectionManager::get(num)->optionName[i].empty()){
       numOptions = i;
       break;
     }
@@ -485,21 +485,21 @@ solverWindow::solverWindow(int num, int deltaFontSize)
       for(int i = 0; i < numOptions; i++) {
         Fl_Choice *c = new Fl_Choice
           (2 * WB, 2 * WB + (4 + i) * BH, LL, BH, 
-           GmshRemote::get(num)->optionName[i].c_str());
+           ConnectionManager::get(num)->optionName[i].c_str());
         c->align(FL_ALIGN_RIGHT);
         choice.push_back(c);
       }
 
       static int arg[NB_SOLVER_MAX][5][2];
-      command.resize(GmshRemote::get(num)->buttonName.size());
+      command.resize(ConnectionManager::get(num)->buttonName.size());
       for(unsigned int i = 0; i < command.size(); i++) {
         arg[num][i][0] = num;
         arg[num][i][1] = i;
         command[i] = new Fl_Button
           ((2 + i) * WB + i * BBS, 3 * WB + (4 + numOptions) * BH,
-           BBS, BH, GmshRemote::get(num)->buttonName[i].c_str());
+           BBS, BH, ConnectionManager::get(num)->buttonName[i].c_str());
         command[i]->callback(solver_command_cb, (void *)arg[num][i]);
-        if(GmshRemote::get(num)->buttonName[i].empty())
+        if(ConnectionManager::get(num)->buttonName[i].empty())
           command[i]->hide();
       }
 
@@ -519,10 +519,10 @@ solverWindow::solverWindow(int num, int deltaFontSize)
         (2 * WB, 2 * WB + 1 * BH, width - 4 * WB, height - 4 * WB - BH);
       o->add(" ");
       add_multiline_in_browser
-        (o, "@c@b@.", GmshRemote::get(num)->name.c_str(), false);
+        (o, "@c@b@.", ConnectionManager::get(num)->name.c_str(), false);
       o->add(" ");
       add_multiline_in_browser
-        (o, "@c@. ", GmshRemote::get(num)->help.c_str(), false);
+        (o, "@c@. ", ConnectionManager::get(num)->help.c_str(), false);
 
       g->end();
     }

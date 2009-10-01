@@ -164,8 +164,8 @@ class VertexArray{
   int getMemoryUsage();
   // serialize the vertex array into a string (for sending over the
   // network)
-  char *toChar(int num, int type, double min, double max, double time,
-               SBoundingBox3d bbox, int &len);
+  char *toChar(int num, std::string name, int type, double min, double max, 
+               int numsteps, double time, SBoundingBox3d bbox, int &len);
   void fromChar(const char *bytes);
 };
 

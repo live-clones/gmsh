@@ -17,7 +17,7 @@ class VertexArray;
 class smooth_normals;
 class GModel;
 class GMSH_PostPlugin;
-class GmshRemote;
+class ConnectionManager;
 
 // A post-processing view.
 class PView{
@@ -118,7 +118,8 @@ class PView{
   void fillVertexArrays();
 
   // fill a vertex array using a raw stream of bytes
-  static void fillVertexArray(GmshRemote *remote, int length, const char *data);
+  static void fillVertexArray(ConnectionManager *remote, int length, 
+                              const char *data);
 
   // smoothed normals
   smooth_normals *normals;
