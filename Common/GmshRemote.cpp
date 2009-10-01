@@ -54,8 +54,8 @@ int GmshRemote(std::string socket)
 
   client.Info("Remote Gmsh is listening...");
   while(1){
-    // stop if we have no communications for 60 seconds
-    int ret = client.Select(60, 0);
+    // stop if we have no communications for 5 minutes
+    int ret = client.Select(300, 0);
     if(!ret){
       client.Info("Timout: stopping remote Gmsh...");
       break;
