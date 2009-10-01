@@ -139,7 +139,7 @@ int GmshBatch()
 #endif
 
   if(CTX::instance()->batch == -3){
-    GmshRemote(CTX::instance()->solver.socketName);
+    GmshRemote();
   }
   else if(CTX::instance()->batch == -2){
     GModel::current()->checkMeshCoherence(CTX::instance()->geom.tolerance);
@@ -166,6 +166,8 @@ int GmshBatch()
   std::string currtime = ctime(&now);
   currtime.resize(currtime.size() - 1);
   Msg::Info("Stopped on %s", currtime.c_str());
+
+  Msg::FinalizeClient();
 
   return 1;
 }

@@ -10,6 +10,8 @@
 #include <string>
 #include <stdarg.h>
 
+class GmshClient;
+
 // the external message handler
 class GmshMessage{
  public:
@@ -36,6 +38,8 @@ class Msg {
   static GmshMessage *_callback;
   // command-line and startup time
   static std::string _commandLine, _launchDate;
+  // communication with Gmsh when run remotely
+  static GmshClient *_client;
  public:
   Msg() {}
   static void Init(int argc, char **argv);
@@ -72,6 +76,9 @@ class Msg {
   static double GetValue(const char *text, double defaultval);
   static bool GetBinaryAnswer(const char *question, const char *yes, 
                               const char *no,  bool defaultval=true);
+  static void InitClient(std::string sockname);
+  static GmshClient *GetClient(){ return _client; }
+  static void FinalizeClient();
 };
 
 #endif

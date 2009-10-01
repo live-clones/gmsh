@@ -9,6 +9,7 @@
 #include <time.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "GmshSocket.h"
 #include "Gmsh.h"
 #include "Options.h"
 #include "Context.h"
@@ -36,6 +37,7 @@ int Msg::_errorCount = 0;
 GmshMessage *Msg::_callback = 0;
 std::string Msg::_commandLine;
 std::string Msg::_launchDate;
+GmshClient *Msg::_client = 0;
 
 #if defined(HAVE_NO_VSNPRINTF)
 static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
@@ -118,6 +120,7 @@ void Msg::Fatal(const char *fmt, ...)
   va_end(args);
 
   if(_callback) (*_callback)("Fatal", str);
+  if(_client) _client->Error(str);
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
@@ -158,6 +161,7 @@ void Msg::Error(const char *fmt, ...)
   va_end(args);
 
   if(_callback) (*_callback)("Error", str);
+  if(_client) _client->Error(str);
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
@@ -190,6 +194,7 @@ void Msg::Warning(const char *fmt, ...)
   va_end(args);
 
   if(_callback) (*_callback)("Warning", str);
+  if(_client) _client->Warning(str);
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
@@ -216,6 +221,7 @@ void Msg::Info(const char *fmt, ...)
   va_end(args);
 
   if(_callback) (*_callback)("Info", str);
+  if(_client) _client->Info(str);
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
@@ -255,6 +261,7 @@ void Msg::Direct(int level, const char *fmt, ...)
   va_end(args);
 
   if(_callback) (*_callback)("Direct", str);
+  if(_client) _client->Info(str);
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
@@ -288,6 +295,7 @@ void Msg::StatusBar(int num, bool log, const char *fmt, ...)
   va_end(args);
 
   if(_callback && log) (*_callback)("Info", str);
+  if(_client && log) _client->Info(str);
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
@@ -318,6 +326,7 @@ void Msg::Debug(const char *fmt, ...)
   va_end(args);
 
   if(_callback) (*_callback)("Debug", str);
+  if(_client) _client->Info(str);
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
@@ -498,6 +507,29 @@ bool Msg::GetBinaryAnswer(const char *question, const char *yes,
   }
 }
 
+void Msg::InitClient(std::string sockname)
+{
+  if(_client) delete _client;
+  _client = new GmshClient();
+  if(_client->Connect(sockname.c_str()) < 0){
+    Msg::Error("Unable to connect to server on %s", sockname.c_str());
+    delete _client;
+    _client = 0;
+  }
+  else
+    _client->Start();
+}
+
+void Msg::FinalizeClient()
+{
+  if(_client){
+    _client->Stop();
+    _client->Disconnect();
+    delete _client;
+  }
+  _client = 0;
+}
+
 void Msg::Barrier()
 {
 #if defined(HAVE_MPI)
@@ -520,3 +552,4 @@ int Msg::GetMaxThreads(){ return 1; }
 int Msg::GetThreadNum(){ return 0; }
 
 #endif
+

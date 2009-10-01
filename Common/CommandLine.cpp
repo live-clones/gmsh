@@ -129,7 +129,7 @@ void GetOptions(int argc, char *argv[])
       if(!strcmp(argv[i] + 1, "socket")) {
         i++;        
         if(argv[i])
-          CTX::instance()->solver.socketName = argv[i++];
+          Msg::InitClient(argv[i++]);
         else
           Msg::Fatal("Missing string");
         CTX::instance()->batch = -3;

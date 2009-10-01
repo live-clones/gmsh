@@ -8,7 +8,7 @@
 
 #include <string>
 
-int GmshRemote(std::string socket);
+int GmshRemote();
 
 #endif
 

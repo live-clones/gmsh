@@ -1114,9 +1114,11 @@ class initPView {
     p->va_triangles->finalize();
     p->va_vectors->finalize();
 
-    Msg::Info("%d vertices in vertex arrays", p->va_points->getNumVertices() + 
+    Msg::Info("%d vertices in vertex arrays (%g Mb)", p->va_points->getNumVertices() + 
               p->va_lines->getNumVertices() + p->va_triangles->getNumVertices() + 
-              p->va_vectors->getNumVertices());
+              p->va_vectors->getNumVertices(), p->va_points->getMemoryInMb() +
+              p->va_lines->getMemoryInMb() + p->va_triangles->getMemoryInMb() + 
+              p->va_vectors->getMemoryInMb());
 
     p->setChanged(false);
   }

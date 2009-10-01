@@ -1,3 +1,8 @@
+// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+
 #include <sstream>
 #include "GmshMessage.h"
 #include "GmshSocket.h"
@@ -7,12 +12,9 @@
 #include "PViewOptions.h"
 #include "PViewData.h"
 #include "VertexArray.h"
-#include "Context.h"
 
-static void computeAndSendVertexArrays(GmshClient &client)
+static void computeAndSendVertexArrays(GmshClient *client)
 {
-  CTX::instance()->terminal = 1; // debug
-  client.Info("Sending vertex arrays");
   for(unsigned int i = 0; i < PView::list.size(); i++){
     PView *p = PView::list[i];
     p->fillVertexArrays();
@@ -32,54 +34,48 @@ static void computeAndSendVertexArrays(GmshClient &client)
           (p->getNum(), data->getName(), type + 1, min, max, 
            data->getNumTimeSteps(), data->getTime(opt->timeStep),
            data->getBoundingBox(), len);
-        client.SendMessage(GmshSocket::GMSH_VERTEX_ARRAY, len, str);
+        client->SendMessage(GmshSocket::GMSH_VERTEX_ARRAY, len, str);
         delete [] str;
       }
     }
   }
 }
 
-int GmshRemote(std::string socket)
+int GmshRemote()
 {
-  GmshClient client;
-
-  if(client.Connect(socket.c_str()) < 0){
-    Msg::Error("Unable to connect to server on %s", socket.c_str());
-    return 1;
-  }
-  client.Start();
-  client.Info("Remote Gmsh sucessfully started");
+  GmshClient *client = Msg::GetClient();
+  
+  if(!client) return 0;
 
   computeAndSendVertexArrays(client);
 
-  client.Info("Remote Gmsh is listening...");
   while(1){
     // stop if we have no communications for 5 minutes
-    int ret = client.Select(300, 0);
+    int ret = client->Select(300, 0);
     if(!ret){
-      client.Info("Timout: stopping remote Gmsh...");
+      client->Info("Timout: stopping remote Gmsh...");
       break;
     }
     else if(ret < 0){
-      client.Error("Error on select: stopping remote Gmsh...");
+      client->Error("Error on select: stopping remote Gmsh...");
       break;
     }
 
     int type, length;
-    if(!client.ReceiveHeader(&type, &length)){
-      client.Error("Did not receive message header: stopping remote Gmsh...");
+    if(!client->ReceiveHeader(&type, &length)){
+      client->Error("Did not receive message header: stopping remote Gmsh...");
       break;
     }
       
     char *msg = new char[length + 1];
-    if(!client.ReceiveString(length, msg)){
-      client.Error("Did not receive message body: stopping remote Gmsh...");
+    if(!client->ReceiveString(length, msg)){
+      client->Error("Did not receive message body: stopping remote Gmsh...");
       delete [] msg;
       break;
     }
 
     if(type == GmshSocket::GMSH_STOP){
-      client.Info("Stopping remote Gmsh...");
+      client->Info("Stopping remote Gmsh...");
       break;
     }
     else if(type == GmshSocket::GMSH_VERTEX_ARRAY){
@@ -94,20 +90,16 @@ int GmshRemote(std::string socket)
       ParseString(msg);
     }
     else if(type == GmshSocket::GMSH_SPEED_TEST){
-      client.Info("Sending huge array");
+      client->Info("Sending huge array");
       std::string huge(500000000, 'a');
-      client.SpeedTest(huge.c_str());
+      client->SpeedTest(huge.c_str());
     }
     else{
-      client.Error("Ignoring unknown message");
+      client->Error("Ignoring unknown message");
     }
     
     delete [] msg;
   }
-
-  client.Info("Remote Gmsh is stopped");
-  client.Stop();
-  client.Disconnect();
 
   return 0;
 }
