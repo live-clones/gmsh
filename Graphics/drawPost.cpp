@@ -324,9 +324,11 @@ class drawPView {
       }
       else{
         // real translucent blending (requires back-to-front traversal)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // glBlendEquation(GL_FUNC_ADD);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        // glBlendEquation(GL_FUNC_ADD);
         glEnable(GL_BLEND);
-        if(eyeChanged(_ctx, p)){
+        if(p->va_triangles && p->va_triangles->getNumVertices() && 
+           eyeChanged(_ctx, p)){
           Msg::Debug("Sorting View[%d] for transparency", p->getIndex());
           p->va_triangles->sort(p->getEye().x(), p->getEye().y(), p->getEye().z());
         }
@@ -356,8 +358,9 @@ class drawPView {
     // draw the "pseudo" vertex arrays for vectors
     drawVectorArray(_ctx, p, p->va_vectors);
 
-    // to avoid looping over elements we should also store these
-    // glyphs in "pseudo" vertex arrays
+    // to avoid looping over elements (and to enable drawing glyphs
+    // for remote views) we should also store these glyphs in "pseudo"
+    // vertex arrays
     drawGlyphs(_ctx, p);
 
     // draw the 3D strings
