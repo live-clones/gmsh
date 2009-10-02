@@ -477,7 +477,7 @@ int GModel::readMSH(const std::string &name)
 
 static void writeElementHeaderMSH(bool binary, FILE *fp, std::map<int,int> &elements,
                                   int t1, int t2=0, int t3=0, int t4=0, 
-                                  int t5=0, int t6=0, int t7=0, int t8=0)
+                                  int t5=0, int t6=0, int t7=0, int t8=0, int t9=0)
 {
   if(!binary) return;
 
@@ -513,6 +513,10 @@ static void writeElementHeaderMSH(bool binary, FILE *fp, std::map<int,int> &elem
   }
   else if(t8 && elements.count(t8)){
     data[0] = t8;  data[1] = elements[t8];  data[2] = numTags;
+    fwrite(data, sizeof(int), 3, fp);
+  }
+  else if(t9 && elements.count(t9)){
+    data[0] = t9;  data[1] = elements[t9];  data[2] = numTags;
     fwrite(data, sizeof(int), 3, fp);
   }
 }
@@ -704,7 +708,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, (*it)->triangles, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
-  writeElementHeaderMSH(binary, fp, elements, MSH_QUA_4, MSH_QUA_9, MSH_QUA_8);
+  writeElementHeaderMSH(binary, fp, elements, MSH_QUA_4, MSH_QUA_9, MSH_QUA_8, MSH_QUA_16, MSH_QUA_25, MSH_QUA_36,MSH_QUA_12,MSH_QUA_16I,MSH_QUA_20);
   for(itP = parents[0].begin(); itP != parents[0].end(); itP++)
     if(itP->first->getType() == TYPE_QUA) {
       writeElementsMSH(fp, itP->first, saveAll, version, binary, num,

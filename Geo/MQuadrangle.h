@@ -115,23 +115,10 @@ class MQuadrangle : public MElement {
   virtual const char *getStringForPOS() const { return "SQ"; }
   virtual const char *getStringForBDF() const { return "CQUAD4"; }
   virtual const char *getStringForDIFF() const { return "ElmB4n2D"; }
+  virtual const functionSpace* getFunctionSpace(int o=-1) const;
   virtual void revert() 
   {
     MVertex *tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;
-  }
-  virtual void getShapeFunctions(double u, double v, double w, double s[], int o) 
-  {
-    s[0] = (1. - u) * (1. - v) * 0.25;
-    s[1] = (1. + u) * (1. - v) * 0.25;
-    s[2] = (1. + u) * (1. + v) * 0.25;
-    s[3] = (1. - u) * (1. + v) * 0.25;
-  }
-  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o) 
-  {
-    s[0][0] = -0.25 * (1. - v); s[0][1] = -0.25 * (1. - u); s[0][2] = 0.;
-    s[1][0] =  0.25 * (1. - v); s[1][1] = -0.25 * (1. + u); s[1][2] = 0.;
-    s[2][0] =  0.25 * (1. + v); s[2][1] =  0.25 * (1. + u); s[2][2] = 0.;
-    s[3][0] = -0.25 * (1. + v); s[3][1] =  0.25 * (1. - u); s[3][2] = 0.;
   }
   virtual bool isInside(double u, double v, double w)
   {
@@ -203,32 +190,16 @@ class MQuadrangle8 : public MQuadrangle {
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices() const { return 4; }
-  virtual int getNumEdgesRep(){ return 8; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
-  { 
-    static const int e[8][2] = {
-      {0, 4}, {4, 1},
-      {1, 5}, {5, 2},
-      {2, 6}, {6, 3},
-      {3, 7}, {7, 0}
-    };
-    _getEdgeRep(getVertex(e[num][0]), getVertex(e[num][1]), x, y, z, n, 0);
-  }
+  virtual int getNumEdgesRep();
+  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);
     MQuadrangle::_getEdgeVertices(num, v);
     v[2] = _vs[num];
   }
-  virtual int getNumFacesRep(){ return 6; }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
-  { 
-    static const int f[6][3] = {
-      {0, 4, 7}, {1, 5, 4}, {2, 6, 5}, {3, 7, 6}, {4, 5, 6}, {4, 6, 7}
-    };
-    _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-                x, y, z, n);
-  }
+  virtual int getNumFacesRep();
+  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(8);
@@ -292,33 +263,16 @@ class MQuadrangle9 : public MQuadrangle {
   }
   virtual int getNumEdgeVertices() const { return 4; }
   virtual int getNumFaceVertices() const { return 1; }
-  virtual int getNumEdgesRep(){ return 8; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
-  { 
-    static const int e[8][2] = {
-      {0, 4}, {4, 1},
-      {1, 5}, {5, 2},
-      {2, 6}, {6, 3},
-      {3, 7}, {7, 0}
-    };
-    _getEdgeRep(getVertex(e[num][0]), getVertex(e[num][1]), x, y, z, n, 0);
-  }
+  virtual int getNumEdgesRep();
+  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);
     MQuadrangle::getEdgeVertices(num, v);
     v[2] = _vs[num];
   }
-  virtual int getNumFacesRep(){ return 8; }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
-  { 
-    static const int f[8][4] = {
-      {0, 4, 8}, {0, 8, 7}, {1, 5, 8}, {1, 8, 4}, 
-      {2, 6, 8}, {2, 8, 5}, {3, 7, 8}, {3, 8, 6}
-    };
-    _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-                x, y, z, n);
-  }
+  virtual int getNumFacesRep();
+  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(9);
@@ -338,6 +292,129 @@ class MQuadrangle9 : public MQuadrangle {
     tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;
     tmp = _vs[0]; _vs[0] = _vs[3]; _vs[3] = tmp;
     tmp = _vs[1]; _vs[1] = _vs[2]; _vs[2] = tmp;
+  }
+};
+
+/*
+ * MQuadrangle 
+ *
+ *   3--3+3E-...--4+2E--2
+ *   |                  |    E = order - 1;
+ *   |                  |    N = total number of vertices
+ * 4+3E                3+2E   
+ *   |                  |    Interior vertex numbers
+ *  ...  4+4e to N-1   ...    for edge 0 <= i <= 3: 4+i*E to 3+(i+1)*E
+ *   |                  |     in volume           : 4+4*E to N-1
+ * 3+4E                4+E
+ *   |                  |  
+ *   |                  |
+ *   0---4--...---3+E---1
+ *
+ */
+class MQuadrangleN : public MQuadrangle {
+ protected:
+  std::vector<MVertex *> _vs;
+  const char _order;
+ public:
+  MQuadrangleN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
+             std::vector<MVertex*> &v, char order, int num=0, int part=0) 
+    : MQuadrangle(v0, v1, v2, v3, num, part), _vs(v), _order(order)
+  {
+    for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
+  }
+  MQuadrangleN(std::vector<MVertex*> &v, char order, int num=0, int part=0) 
+    : MQuadrangle(v[0], v[1], v[2], v[3], num, part), _order(order)
+  {
+    for(unsigned int i = 4; i < v.size(); i++) _vs.push_back(v[i]);
+    for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
+  }
+  ~MQuadrangleN(){}
+  virtual int getPolynomialOrder() const { return _order; }
+  virtual int getNumVertices() const {return 4 + _vs.size(); }
+  virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
+  virtual int getNumFaceVertices() const 
+  {
+    if( _order>1 && _vs.size()+4==(_order+1)*(_order+1))
+      return (_order-1)*(_order-1);
+    else
+      return 0;
+  }
+  virtual int getNumEdgeVertices() const { return 4 * (_order - 1); }
+  virtual int getNumEdgesRep();
+  virtual int getNumFacesRep();
+  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
+  {
+    v.resize(_order + 1);
+    MQuadrangle::_getEdgeVertices(num, v);
+    int j = 2;
+    const int ie = (num + 1) * (_order - 1);
+    for(int i = num * (_order-1); i != ie; ++i)
+      v[j++] = _vs[i];
+  }
+  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
+  {
+    v.resize(4 + _vs.size());
+    MQuadrangle::_getFaceVertices(v);
+    for(unsigned int i = 0; i != _vs.size(); ++i) v[i + 4] = _vs[i];
+  }
+  virtual int getTypeForMSH() const
+  {
+    if(_order==2 && _vs.size()+4==8) return MSH_QUA_8;
+    if(_order==3 && _vs.size()+4==12) return MSH_QUA_12;
+    if(_order==3 && _vs.size()+4==16) return MSH_QUA_16;
+    if(_order==4 && _vs.size()+4==16) return MSH_QUA_16I;
+    if(_order==4 && _vs.size()+4==25) return MSH_QUA_25;
+    if(_order==5 && _vs.size()+4==20) return MSH_QUA_20;
+    if(_order==5 && _vs.size()+4==36) return MSH_QUA_36;
+    return 0;
+  }
+  virtual void revert() 
+  {
+    MVertex *tmp;
+    tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;
+    std::vector<MVertex*> inv;
+    inv.insert(inv.begin(), _vs.rbegin(), _vs.rend());
+    _vs = inv;
+  }
+};
+
+template <class T> 
+void inline sort2(T &a, T &b){
+  if(b<a){
+    T t=b;
+    b=a;
+    a=t;
+  }
+}
+
+template <class T> 
+void sort4(T *t[3])
+{
+  sort2<T*>(t[0],t[1]);
+  sort2<T*>(t[2],t[3]);
+  sort2<T*>(t[0],t[2]);
+  sort2<T*>(t[1],t[3]);
+  sort2<T*>(t[1],t[2]);
+}
+
+struct compareMQuadrangleLexicographic
+{
+  bool operator () (MQuadrangle *t1, MQuadrangle *t2) const
+  {
+    MVertex *_v1[] = {t1->getVertex(0), t1->getVertex(1), t1->getVertex(2), t1->getVertex(3)};
+    MVertex *_v2[] = {t2->getVertex(0), t2->getVertex(1), t2->getVertex(2), t2->getVertex(3)};
+    sort4(_v1);
+    sort4(_v2);
+    if(_v1[0] < _v2[0]) return true;
+    if(_v1[0] > _v2[0]) return false;
+    if(_v1[1] < _v2[1]) return true;
+    if(_v1[1] > _v2[1]) return false;
+    if(_v1[2] < _v2[2]) return true;
+    if(_v1[2] > _v2[2]) return false;
+    if(_v1[3] < _v1[3]) return true;
+    return false;
   }
 };
 

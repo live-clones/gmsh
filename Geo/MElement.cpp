@@ -684,7 +684,13 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_TRI_21 : if(name) *name = "Triangle 21";     return 3 + 12 + 6;
   case MSH_QUA_4  : if(name) *name = "Quadrilateral 4"; return 4;
   case MSH_QUA_8  : if(name) *name = "Quadrilateral 8"; return 4 + 4;
-  case MSH_QUA_9  : if(name) *name = "Quadrilateral 9"; return 4 + 4 + 1;
+  case MSH_QUA_9  : if(name) *name = "Quadrilateral 9"; return 9;
+  case MSH_QUA_16  : if(name) *name = "Quadrilateral 16"; return 16;
+  case MSH_QUA_25  : if(name) *name = "Quadrilateral 25"; return 25;
+  case MSH_QUA_36  : if(name) *name = "Quadrilateral 36"; return 36;
+  case MSH_QUA_12 : if(name) *name = "Quadrilateral 12"; return 12;
+  case MSH_QUA_16I : if(name) *name = "Quadrilateral 16I"; return 16;
+  case MSH_QUA_20 : if(name) *name = "Quadrilateral 20"; return 20;
   case MSH_POLYG_ : if(name) *name = "Polygon";         return 0;
   case MSH_TET_4  : if(name) *name = "Tetrahedron 4";   return 4;
   case MSH_TET_10 : if(name) *name = "Tetrahedron 10";  return 4 + 6;
@@ -731,6 +737,9 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_QUA_4:  return new MQuadrangle(v, num, part);
   case MSH_QUA_8:  return new MQuadrangle8(v, num, part);
   case MSH_QUA_9:  return new MQuadrangle9(v, num, part);
+  case MSH_QUA_16:  return new MQuadrangleN(v, 3, num, part);
+  case MSH_QUA_25:  return new MQuadrangleN(v, 4, num, part);
+  case MSH_QUA_36:  return new MQuadrangleN(v, 5, num, part);
   case MSH_POLYG_: return new MPolygon(v, num, part);
   case MSH_TET_4:  return new MTetrahedron(v, num, part);
   case MSH_TET_10: return new MTetrahedron10(v, num, part);

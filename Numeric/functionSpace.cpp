@@ -72,6 +72,83 @@ static fullMatrix<double> generatePascalSerendipityTriangle(int order)
   return monomials;
 }
 
+// generate all monomials xi^m * eta^n with n and m <= order
+static fullMatrix<double> generatePascalQuad(int order)
+{
+
+  fullMatrix<double> monomials( (order+1)*(order+1), 2);
+  int index = 0;
+  for (int p = 0; p <= order; p++) {
+    for(int i = 0; i < p; i++, index++) {
+      monomials(index, 0) = p;
+      monomials(index, 1) = i;
+    }
+    for(int i = 0; i <= p; i++, index++) {
+      monomials(index, 0) = p-i;
+      monomials(index, 1) = p;
+    }
+  }
+  return monomials;
+}  
+/*
+00 10 20 30 40 ⋯
+01 11 21 31 41 ⋯
+02 12
+03 13
+04 14
+⋮  ⋮
+*/
+static fullMatrix<double> generatePascalQuadSerendip(int order)
+{
+  fullMatrix<double> monomials( (order)*4, 2);
+  monomials(0,0)=0.;
+  monomials(0,1)=0.;
+  monomials(1,0)=1.;
+  monomials(1,1)=0.;
+  monomials(2,0)=0.;
+  monomials(2,1)=1.;
+  monomials(3,0)=1.;
+  monomials(3,1)=1.;
+  int index = 4;
+  for (int p = 2; p <= order; p++) {
+    monomials(index, 0) = p;
+    monomials(index, 1) = 0;
+    index++;
+    monomials(index, 0) = 0;
+    monomials(index, 1) = p;
+    index++;
+    monomials(index, 0) = p;
+    monomials(index, 1) = 1;
+    index++;
+    monomials(index, 0) = 1;
+    monomials(index, 1) = p;
+    index++;
+  }
+  return monomials;
+}
+
+/*static fullMatrix<double> generatePascalQuadSerendip(int order)
+{
+
+  fullMatrix<double> monomials( order*4, 2);
+  int index = 0;
+  for (int p = 0; p < order; p++) {
+    monomials(p, 0) = p;
+    monomials(p, 1) = 0;
+
+    monomials(p+order, 0) = order;
+    monomials(p+order, 1) = p;
+
+    monomials(p+3*order, 0) = order-p;
+    monomials(p+3*order, 1) = order;
+
+    monomials(p+2*order, 0) = 0;
+    monomials(p+2*order, 1) = order-p;
+  }
+  monomials.print();
+  return monomials;
+}*/
+
 // generate the monomials subspace of all monomials of order exactly == p
 
 static fullMatrix<double> generateMonomialSubspace(int dim, int p)
@@ -152,6 +229,8 @@ static fullMatrix<double> generatePascalTetrahedron(int order)
 
   return monomials;
 }  
+
+
 
 static int nbdoftriangle(int order) { return (order + 1) * (order + 2) / 2; }
 //static int nbdoftriangleserendip(int order) { return 3 * order; }
@@ -517,6 +596,47 @@ static fullMatrix<double> gmshGeneratePointsTriangle(int order, bool serendip)
   return point;  
 }
 
+static fullMatrix<double> gmshGeneratePointsQuad(int order, bool serendip) 
+{
+  int nbPoints = serendip ? order*4 : (order+1)*(order+1);
+  fullMatrix<double> point(nbPoints, 2);
+  
+  double dd = 1. / order;
+
+  if (order > 0) {
+    point(0, 0) = -1;
+    point(0, 1) = -1;
+    point(1, 0) = 1;
+    point(1, 1) = -1;
+    point(2, 0) = 1;
+    point(2, 1) = 1;
+    point(3, 0) = -1;
+    point(3, 1) = 1;
+    
+    if (order > 1) {
+      int index = 4;
+      const static int edges[4][2]={{0,1},{1,2},{2,3},{3,0}};
+      for (int iedge=0; iedge<4; iedge++) {
+        int p0 = edges[iedge][0];
+        int p1 = edges[iedge][1];
+        for (int i = 1; i < order; i++, index++) {
+          point(index, 0) = point(p0, 0) + i*(point(p1,0)-point(p0,0))/order;
+          point(index, 1) = point(p0, 1) + i*(point(p1,1)-point(p0,1))/order;
+        }
+      }
+      if (order > 2 && !serendip) {
+        fullMatrix<double> inner = gmshGeneratePointsQuad(order - 2, false);
+        inner.scale(1. - 2./order);
+        point.copy(inner, 0, nbPoints - index, 0, 2, index, 0);
+      }
+    }
+  } else {
+    point(0, 0) = 0;
+    point(0, 1) = 0;
+  }
+  return point;  
+}
+
 static fullMatrix<double> generateLagrangeMonomialCoefficients
   (const fullMatrix<double>& monomial, const fullMatrix<double>& point) 
 {
@@ -746,6 +866,42 @@ const functionSpace &functionSpaces::find(int tag)
     F.monomials = generatePascalTetrahedron(5);
     F.points =    gmshGeneratePointsTetrahedron(5, false);
     generate3dFaceClosure (F.faceClosure,5);
+    break;
+  case MSH_QUA_4 :
+    F.monomials = generatePascalQuad(1);
+    F.points =    gmshGeneratePointsQuad(1,false);
+    break;
+  case MSH_QUA_9 :
+    F.monomials = generatePascalQuad(2);
+    F.points =    gmshGeneratePointsQuad(2,false);
+    break;
+  case MSH_QUA_16 :
+    F.monomials = generatePascalQuad(3);
+    F.points =    gmshGeneratePointsQuad(3,false);
+    break;
+  case MSH_QUA_25 :
+    F.monomials = generatePascalQuad(4);
+    F.points =    gmshGeneratePointsQuad(4,false);
+    break;
+  case MSH_QUA_36 :
+    F.monomials = generatePascalQuad(5);
+    F.points =    gmshGeneratePointsQuad(5,false);
+    break;
+  case MSH_QUA_8 :
+    F.monomials = generatePascalQuadSerendip(2);
+    F.points =    gmshGeneratePointsQuad(2,true);
+    break;
+  case MSH_QUA_12 :
+    F.monomials = generatePascalQuadSerendip(3);
+    F.points =    gmshGeneratePointsQuad(3,true);
+    break;
+  case MSH_QUA_16I :
+    F.monomials = generatePascalQuadSerendip(4);
+    F.points =    gmshGeneratePointsQuad(4,true);
+    break;
+  case MSH_QUA_20 :
+    F.monomials = generatePascalQuadSerendip(5);
+    F.points =    gmshGeneratePointsQuad(5,true);
     break;
   default :
     Msg::Error("Unknown function space %d: reverting to TET_4", tag);

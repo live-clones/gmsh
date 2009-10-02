@@ -90,6 +90,13 @@
 #define MSH_TET_52 33
 #define MSH_POLYG_ 34
 #define MSH_POLYH_ 35
+#define MSH_QUA_16 36
+#define MSH_QUA_25 37
+#define MSH_QUA_36 38
+#define MSH_QUA_12 39
+#define MSH_QUA_16I 40
+#define MSH_QUA_20 41
+
 
 #define MSH_NUM_TYPE 35
 
