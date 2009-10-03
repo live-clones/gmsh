@@ -604,6 +604,18 @@ void MElement::writeMESH(FILE *fp, int elementTagType, int elementary,
           (elementTagType == 2) ? physical : elementary);
 }
 
+void MElement::writeFEA(FILE *fp, int elementTagType, int num, int elementary, 
+                        int physical)
+{
+  int numVert = getNumVertices();
+  setVolumePositive();
+  fprintf(fp, "%d %d %d", num, (elementTagType == 3) ? _partition : 
+          (elementTagType == 2) ? physical : elementary, numVert);
+  for(int i = 0; i < numVert; i++)
+    fprintf(fp, " %d", getVertex(i)->getIndex());
+  fprintf(fp, "\n");
+}
+
 void MElement::writeBDF(FILE *fp, int format, int elementTagType, int elementary,
                         int physical)
 {

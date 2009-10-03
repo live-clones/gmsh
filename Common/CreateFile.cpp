@@ -38,7 +38,7 @@ int GuessFileFormatFromFileName(std::string fileName)
   else if(ext == ".stl")  return FORMAT_STL;
   else if(ext == ".cgns") return FORMAT_CGNS;
   else if(ext == ".med")  return FORMAT_MED;
-  else if(ext == ".fea")  return FORMAT_VISUALFEA;
+  else if(ext == ".fea")  return FORMAT_FEA;
   else if(ext == ".mesh") return FORMAT_MESH;
   else if(ext == ".bdf")  return FORMAT_BDF;
   else if(ext == ".diff") return FORMAT_DIFF;
@@ -79,7 +79,7 @@ std::string GetDefaultFileName(int format)
   case FORMAT_STL:  name += ".stl"; break;
   case FORMAT_CGNS: name += ".cgns"; break;
   case FORMAT_MED:  name += ".med"; break;
-  case FORMAT_VISUALFEA: name += ".fea"; break;
+  case FORMAT_FEA:  name += ".fea"; break;
   case FORMAT_MESH: name += ".mesh"; break;
   case FORMAT_BDF:  name += ".bdf"; break;
   case FORMAT_DIFF: name += ".diff"; break;
@@ -95,9 +95,9 @@ std::string GetDefaultFileName(int format)
   case FORMAT_SVG:  name += ".svg"; break;
   case FORMAT_PPM:  name += ".ppm"; break;
   case FORMAT_YUV:  name += ".yuv"; break;
-  case FORMAT_BREP:  name += ".brep"; break;
-  case FORMAT_IGES:  name += ".iges"; break;
-  case FORMAT_STEP:  name += ".step"; break;
+  case FORMAT_BREP: name += ".brep"; break;
+  case FORMAT_IGES: name += ".iges"; break;
+  case FORMAT_STEP: name += ".step"; break;
   default: break;
   }
   return name;
@@ -207,8 +207,8 @@ void CreateOutputFile(std::string fileName, int format)
        CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
-  case FORMAT_VISUALFEA:
-    GModel::current()->writeVisualFEA
+  case FORMAT_FEA:
+    GModel::current()->writeFEA
       (fileName, CTX::instance()->mesh.saveElementTagType, 
        CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;

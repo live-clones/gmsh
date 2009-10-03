@@ -1610,98 +1610,6 @@ int GModel::readMESH(const std::string &name)
   return 1;
 }
 
-
-int GModel::writeVisualFEA(const std::string &name, int elementTagType, 
-			   bool saveAll, double scalingFactor)
-{
-  FILE *fp = fopen(name.c_str(), "w");
-  if(!fp){
-    Msg::Error("Unable to open file '%s'", name.c_str());
-    return 0;
-  }
-
-  if(noPhysicalGroups()) saveAll = true;
-
-  int numVertices = indexMeshVertices(saveAll);
-  int numHexahedra = 0, numTriangles = 0, numQuadrangles = 0, numTetrahedra = 0;
-  for(fiter it = firstFace(); it != lastFace(); ++it){
-    if(saveAll || (*it)->physicals.size()){
-      numTriangles += (*it)->triangles.size();
-      numQuadrangles += (*it)->quadrangles.size();
-    }
-  }
-  for(riter it = firstRegion(); it != lastRegion(); ++it){
-    if(saveAll || (*it)->physicals.size()){
-      numTetrahedra += (*it)->tetrahedra.size();
-      numHexahedra += (*it)->hexahedra.size();
-    }
-  }
-
-  fprintf(fp,"33\n");
-  fprintf(fp,"%d %d %d\n", numVertices, numTriangles+numQuadrangles, numTetrahedra+numHexahedra);
-  
-  std::vector<GEntity*> entities;
-  getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++) 
-      if (entities[i]->mesh_vertices[j]->getIndex() >= 0)
-	fprintf(fp,"%d %g %g %g\n",entities[i]->mesh_vertices[j]->getIndex(),
-		entities[i]->mesh_vertices[j]->x()*scalingFactor,
-		entities[i]->mesh_vertices[j]->y()*scalingFactor,
-		entities[i]->mesh_vertices[j]->z()*scalingFactor);  
-  int iElement = 1;
-  for(fiter it = firstFace(); it != lastFace(); ++it){
-    int numPhys = (*it)->physicals.size();
-    if(saveAll || numPhys){
-      for(unsigned int i = 0; i < (*it)->triangles.size(); i++){
-	MTriangle *t = (*it)->triangles[i];
-	fprintf(fp,"%d %d 3 %d %d %d\n",iElement++,(*it)->tag(),
-		t->getVertex(0)->getNum(),
-		t->getVertex(1)->getNum(),
-		t->getVertex(2)->getNum());
-      }
-      for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++){
-	MQuadrangle *t = (*it)->quadrangles[i];
-	fprintf(fp,"%d %d 4 %d %d %d\n",iElement++,(*it)->tag(),
-		t->getVertex(0)->getNum(),
-		t->getVertex(1)->getNum(),
-		t->getVertex(2)->getNum(),
-		t->getVertex(3)->getNum());
-      }
-    }
-  }
-
-  for(riter it = firstRegion(); it != lastRegion(); ++it){
-    int numPhys = (*it)->physicals.size();
-    if(saveAll || numPhys){
-      for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++){
-	MTetrahedron *t = (*it)->tetrahedra[i];
-	fprintf(fp,"%d %d 3 %d %d %d\n",iElement++,(*it)->tag(),
-		t->getVertex(0)->getNum(),
-		t->getVertex(1)->getNum(),
-		t->getVertex(2)->getNum(),
-		t->getVertex(3)->getNum());
-      }
-      for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++){
-	MHexahedron *t = (*it)->hexahedra[i];
-	fprintf(fp,"%d %d 3 %d %d %d\n",iElement++,(*it)->tag(),
-		t->getVertex(0)->getNum(),
-		t->getVertex(1)->getNum(),
-		t->getVertex(2)->getNum(),
-		t->getVertex(3)->getNum(),
-		t->getVertex(4)->getNum(),
-		t->getVertex(5)->getNum(),
-		t->getVertex(6)->getNum(),
-		t->getVertex(7)->getNum());
-      }
-    }
-  }
-  
-  fclose(fp);
-  return 1;
-}
-
-
 int GModel::writeMESH(const std::string &name, int elementTagType, 
                       bool saveAll, double scalingFactor)
 {
@@ -1795,6 +1703,65 @@ int GModel::writeMESH(const std::string &name, int elementTagType,
   }
 
   fprintf(fp, " End\n");
+  
+  fclose(fp);
+  return 1;
+}
+
+int GModel::writeFEA(const std::string &name, int elementTagType, 
+                     bool saveAll, double scalingFactor)
+{
+  FILE *fp = fopen(name.c_str(), "w");
+  if(!fp){
+    Msg::Error("Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+
+  if(noPhysicalGroups()) saveAll = true;
+
+  int numVertices = indexMeshVertices(saveAll), num2D = 0, num3D = 0;
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    if(saveAll || (*it)->physicals.size()) 
+      num2D += (*it)->getNumMeshElements();
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    if(saveAll || (*it)->physicals.size())
+      num3D += (*it)->getNumMeshElements();
+
+  fprintf(fp,"33\n");
+  if(num2D && num3D)
+    fprintf(fp,"%d %d %d\n", numVertices, num2D, num3D);
+  else
+    fprintf(fp,"%d %d\n", numVertices, num2D ? num2D : num3D);
+  
+  std::vector<GEntity*> entities;
+  getEntities(entities);
+
+  for(unsigned int i = 0; i < entities.size(); i++)
+    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++) 
+      if(entities[i]->mesh_vertices[j]->getIndex() >= 0)
+	fprintf(fp,"%d %g %g %g\n", entities[i]->mesh_vertices[j]->getIndex(),
+		entities[i]->mesh_vertices[j]->x() * scalingFactor,
+		entities[i]->mesh_vertices[j]->y() * scalingFactor,
+		entities[i]->mesh_vertices[j]->z() * scalingFactor);  
+
+  int iElement = 1;
+  for(fiter it = firstFace(); it != lastFace(); ++it){
+    int numPhys = (*it)->physicals.size();
+    if(saveAll || numPhys)
+      for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++)
+        (*it)->getMeshElement(i)->writeFEA
+          (fp, elementTagType, iElement++, (*it)->tag(), 
+           numPhys ? (*it)->physicals[0] : 0);
+  }
+
+  for(riter it = firstRegion(); it != lastRegion(); ++it){
+    int numPhys = (*it)->physicals.size();
+    if(saveAll || numPhys)
+      for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++)
+        (*it)->getMeshElement(i)->writeFEA
+          (fp, elementTagType, iElement++, (*it)->tag(), 
+           numPhys ? (*it)->physicals[0] : 0);
+  }
   
   fclose(fp);
   return 1;

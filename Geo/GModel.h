@@ -344,9 +344,9 @@ class GModel
   int writeMSH(const std::string &name, double version=1.0, bool binary=false,
                bool saveAll=false, bool saveParametric=false, double scalingFactor=1.0);
 
-  // VisualFEA file format
-  int writeVisualFEA(const std::string &name, int elementTagType, 
-		     bool saveAll, double scalingFactor);
+  // Visual FEA file format
+  int writeFEA(const std::string &name, int elementTagType, 
+               bool saveAll, double scalingFactor);
 
   // mesh statistics (saved as a Gmsh post-processing view)
   int writePOS(const std::string &name, bool printElementary,

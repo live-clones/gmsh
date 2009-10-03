@@ -451,9 +451,9 @@ void GetOptions(int argc, char *argv[])
             CTX::instance()->mesh.format = FORMAT_DIFF;
           else if(!strcmp(argv[i], "med"))
             CTX::instance()->mesh.format = FORMAT_MED;
-           else if(!strcmp(argv[i], "fea"))
-            CTX::instance()->mesh.format = FORMAT_VISUALFEA;
-         else
+          else if(!strcmp(argv[i], "fea"))
+            CTX::instance()->mesh.format = FORMAT_FEA;
+          else
             Msg::Fatal("Unknown mesh format");
           i++;
         }
