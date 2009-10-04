@@ -54,14 +54,13 @@ class fullVector
     else 
       for(int i = 0; i < _r; ++i) _data[i] *= s;
   }
-
-  inline scalar operator *(const fullVector<scalar> & other)
+  inline scalar operator *(const fullVector<scalar> &other)
   {
-    scalar s = 0.0;
-    for(int i = 0; i < _r; ++i) s += _data[i]*other._data[i];
+    scalar s = 0.;
+    for(int i = 0; i < _r; ++i) s += _data[i] * other._data[i];
     return s;
   }
-  void print(const char * name="") const 
+  void print(const char *name="") const 
   {
     printf("Printing vector %s:\n", name);
     printf("  ");
@@ -87,7 +86,7 @@ class fullMatrix
   fullMatrix(const fullMatrix<scalar> &other) : _r(other._r), _c(other._c)
   {
     _data = new scalar[_r * _c];
-    gM_memcpy(other);
+    for(int i = 0; i < _r * _c; ++i) _data[i] = other._data[i];
   }
   fullMatrix() : _r(0), _c(0), _data(0) {}
   ~fullMatrix() { if(_data) delete [] _data; }
@@ -99,13 +98,9 @@ class fullMatrix
       _r = other._r; 
       _c = other._c;
       _data = new scalar[_r * _c];
-      gM_memcpy(other);
+      for(int i = 0; i < _r * _c; ++i) _data[i] = other._data[i];
     }
     return *this;
-  }
-  void gM_memcpy(const fullMatrix<scalar> &other)
-  {
-    for(int i = 0; i < _r * _c; ++i) _data[i] = other._data[i];
   }
   inline scalar operator () (int i, int j) const
   {
@@ -186,8 +181,8 @@ class fullMatrix
   }
   inline void transposeInPlace()
   {
-    if ( size1() != size2() ) {
-      Msg::Error("Not a square matrix (size1: %d, size2: %d)",size1(),size2());
+    if(size1() != size2()){
+      Msg::Error("Not a square matrix (size1: %d, size2: %d)", size1(), size2());
     }
     scalar t;
     for(int i = 0; i < size1(); i++)
@@ -262,9 +257,9 @@ class fullMatrix
   }
 #endif
   ;
-  void print(const char * name="") const 
+  void print(const char *name="") const 
   {
-    printf("Printing matrix %s:\n",name);
+    printf("Printing matrix %s:\n", name);
     int ni = size1();
     int nj = size2();
     for(int I = 0; I < ni; I++){
