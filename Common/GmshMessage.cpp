@@ -19,6 +19,10 @@
 #include <mpi.h>
 #endif
 
+#if defined(HAVE_PETSC)
+#include <petsc.h>
+#endif
+
 #if defined(HAVE_FLTK)
 #include <FL/fl_ask.H>
 #include "FlGui.h"
@@ -63,6 +67,9 @@ void Msg::Init(int argc, char **argv)
   MPI_Comm_size(MPI_COMM_WORLD, &_commSize);
   MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
 #endif
+#if defined(HAVE_PETSC)
+  PetscInitialize(&argc, &argv, PETSC_NULL, PETSC_NULL);
+#endif
   time_t now;
   time(&now);
   _launchDate = ctime(&now);
@@ -84,6 +91,9 @@ void Msg::Exit(int level)
   // this calls the annoying "report this crash to the mothership"
   // window... so just exit!
   if(level){
+#if defined(HAVE_PETSC)
+    PetscFinalize();
+#endif
 #if defined(HAVE_MPI)
     MPI_Finalize();
 #endif
