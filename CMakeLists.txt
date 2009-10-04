@@ -506,22 +506,28 @@ if(ENABLE_PETSC)
     message(STATUS "Found PETSc 3")
     set(HAVE_PETSC TRUE)
     list(APPEND CONFIG_OPTIONS "PETSc")
-    file(STRINGS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/conf/petscvariables VARS NEWLINE_CONSUME)
-    # append include directories
+    file(STRINGS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/conf/petscvariables 
+         PETSC_VARIABLES NEWLINE_CONSUME)
+    # find include directories
     list(APPEND EXTERNAL_INCLUDES ${ENV_PETSC_DIR}/include)
     list(APPEND EXTERNAL_INCLUDES ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/include)
-    string(REGEX MATCH "PACKAGES_INCLUDES = [-_/\\.a-zA-Z0-9 ]*" PETSC_PACKAGES_INC ${VARS})
-    string(REPLACE "PACKAGES_INCLUDES = " "" PETSC_PACKAGES_INC ${PETSC_PACKAGES_INC})
-    string(REPLACE "-I" "" PETSC_PACKAGES_INC ${PETSC_PACKAGES_INC})
-    string(REPLACE " " ";" PETSC_PACKAGES_INC ${PETSC_PACKAGES_INC})
-    foreach(VAR ${PETSC_PACKAGES_INC})
+    string(REGEX MATCH "PACKAGES_INCLUDES = [-_/\\.a-zA-Z0-9 ]*" 
+           PETSC_PACKAGES_INCLUDES ${PETSC_VARIABLES})
+    string(REPLACE "PACKAGES_INCLUDES = " "" PETSC_PACKAGES_INCLUDES
+           ${PETSC_PACKAGES_INCLUDES})
+    string(REPLACE "-I" "" PETSC_PACKAGES_INCLUDES ${PETSC_PACKAGES_INCLUDES})
+    string(REPLACE " " ";" PETSC_PACKAGES_INCLUDES ${PETSC_PACKAGES_INCLUDES})
+    foreach(VAR ${PETSC_PACKAGES_INCLUDES})
       list(APPEND EXTERNAL_INCLUDES ${VAR})
     endforeach(VAR)
-    # append libraries
+    # find libraries
     set(PETSC_LIBS_REQUIRED petscksp petscdm petscmat petscvec petsc)
-    find_all_libraries(PETSC_LIBS PETSC_LIBS_REQUIRED ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib "")
-    string(REGEX MATCH "PACKAGES_LIBS = [-_/\\.a-zA-Z0-9 ]*" PETSC_PACKAGES_LIBS ${VARS})
-    string(REPLACE "PACKAGES_LIBS = " "" PETSC_PACKAGES_LIBS ${PETSC_PACKAGES_LIBS})
+    find_all_libraries(PETSC_LIBS PETSC_LIBS_REQUIRED 
+                       ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib "")
+    string(REGEX MATCH "PACKAGES_LIBS = [-_/\\.a-zA-Z0-9 ]*" PETSC_PACKAGES_LIBS
+           ${PETSC_VARIABLES})
+    string(REPLACE "PACKAGES_LIBS = " "" PETSC_PACKAGES_LIBS
+           ${PETSC_PACKAGES_LIBS})
     list(APPEND EXTERNAL_LIBRARIES ${PETSC_LIBS} "${PETSC_PACKAGES_LIBS}")
   endif(EXISTS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/conf/petscvariables)
 endif(ENABLE_PETSC)
