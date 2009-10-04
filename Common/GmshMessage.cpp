@@ -99,7 +99,7 @@ void Msg::Exit(int level)
 #endif
     exit(level);
   }
-  
+
 #if defined(HAVE_FLTK)
   // if we exit cleanly (level==0) and we are in full GUI mode, save
   // the persistent info to disk
@@ -113,6 +113,9 @@ void Msg::Exit(int level)
   }
 #endif
 
+#if defined(HAVE_PETSC)
+  PetscFinalize();
+#endif
 #if defined(HAVE_MPI)
   MPI_Finalize();
 #endif
@@ -373,12 +376,15 @@ void Msg::ProgressMeter(int n, int N, const char *fmt, ...)
     sprintf(str2, "(%d %%)", _progressMeterCurrent);
     strcat(str, str2);
 
+    if(_client) _client->Progress(str);
+
 #if defined(HAVE_FLTK)
     if(FlGui::available()){
       if(_verbosity > 3) FlGui::instance()->setStatus(str, 1);
       FlGui::instance()->check();
     }
 #endif
+
     if(CTX::instance()->terminal){
       fprintf(stdout, "%s                     \r", str);
       fflush(stdout);
@@ -389,11 +395,14 @@ void Msg::ProgressMeter(int n, int N, const char *fmt, ...)
   }
 
   if(n > N - 1){
+    if(_client) _client->Progress("Done!");
+
 #if defined(HAVE_FLTK)
     if(FlGui::available()){
       if(_verbosity > 3) FlGui::instance()->setStatus("", 1);
     }
 #endif
+
     if(CTX::instance()->terminal){
       fprintf(stdout, "Done!                                              \r");
       fflush(stdout);
