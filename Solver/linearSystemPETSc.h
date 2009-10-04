@@ -167,9 +167,9 @@ class linearSystemPETSc : public linearSystem<scalar> {
 #else
 
 template <class scalar>
-class linearSystemPetsc : public linearSystem<scalar> {
+class linearSystemPETSc : public linearSystem<scalar> {
  public :
-  linearSystemGmm()
+  linearSystemPETSc()
   {
     Msg::Error("PETSc is not available in this version of Gmsh");
   }
