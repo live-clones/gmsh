@@ -49,7 +49,6 @@
 template <class scalar>
 class linearSystemPETSc : public linearSystem<scalar> {
  private:
-  int _e;
   bool _isAllocated;
   Mat _a;
   Vec _b, _x;
