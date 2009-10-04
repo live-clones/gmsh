@@ -29,12 +29,12 @@ class linearSystemCSR : public linearSystem<scalar> {
  protected:
   bool sorted;
   char *something;
-  CSRList_T *a_,*ai_,*ptr_,*jptr_; 
+  CSRList_T *_a, *_ai, *_ptr, *_jptr; 
   std::vector<scalar> *_b, *_x;
  public:
   linearSystemCSR()
-    : sorted(false), a_(0) {}
-  virtual bool isAllocated() const { return a_ != 0; }
+    : sorted(false), _a(0) {}
+  virtual bool isAllocated() const { return _a != 0; }
   virtual void allocate(int) ;
   virtual void clear()
   {
@@ -44,70 +44,67 @@ class linearSystemCSR : public linearSystem<scalar> {
   {
     allocate(0);
   }
-  virtual void addToMatrix ( int il, int ic, double val) 
+  virtual void addToMatrix(int il, int ic, double val) 
   {
-    //    if (sorted)throw;
+    INDEX_TYPE  *jptr  = (INDEX_TYPE*) _jptr->array;
+    INDEX_TYPE  *ptr   = (INDEX_TYPE*) _ptr->array;
+    INDEX_TYPE  *ai    = (INDEX_TYPE*) _ai->array;
+    scalar      *a     = ( scalar * ) _a->array;
     
-    INDEX_TYPE  *jptr  = (INDEX_TYPE*) jptr_->array;
-    INDEX_TYPE  *ptr   = (INDEX_TYPE*) ptr_->array;
-    INDEX_TYPE  *ai    = (INDEX_TYPE*) ai_->array;
-    scalar      *a     = ( scalar * ) a_->array;
-    
-    INDEX_TYPE  position_ = jptr[il];
+    INDEX_TYPE  position = jptr[il];
     
     if(something[il]) {
       while(1){
-        if(ai[position_] == ic){
-          a[position_] += val;
-          //      if (il == 0)    printf("FOUND %d %d %d\n",il,ic,position_);
+        if(ai[position] == ic){
+          a[position] += val;
           return;
         }
-        if (ptr[position_] == 0)break;
-        position_ = ptr[position_];
+        if (ptr[position] == 0) break;
+        position = ptr[position];
       }
     }  
     
     INDEX_TYPE zero = 0;
-    CSRList_Add (a_, &val);
-    CSRList_Add (ai_, &ic);
-    CSRList_Add (ptr_, &zero);
+    CSRList_Add(_a, &val);
+    CSRList_Add(_ai, &ic);
+    CSRList_Add(_ptr, &zero);
     // The pointers may have been modified
     // if there has been a reallocation in CSRList_Add  
     
-    ptr = (INDEX_TYPE*) ptr_->array;
-    ai  = (INDEX_TYPE*) ai_->array;
-    a   = (scalar*) a_->array;
+    ptr = (INDEX_TYPE*) _ptr->array;
+    ai  = (INDEX_TYPE*) _ai->array;
+    a   = (scalar*) _a->array;
     
-    INDEX_TYPE n = CSRList_Nbr(a_) - 1;
+    INDEX_TYPE n = CSRList_Nbr(_a) - 1;
     
     if(!something[il]) {
       jptr[il] = n;
       something[il] = 1;      
     }
-    else ptr[position_] = n;
+    else ptr[position] = n;
   }
-  
-  virtual scalar getFromMatrix (int _row, int _col) const
+  virtual scalar getFromMatrix (int row, int col) const
   {
-    throw;
+    Msg::Error("getFromMatrix not implemented for CSR");
+    return 0;
   }
-  virtual void addToRightHandSide(int _row, scalar _val) 
+  virtual void addToRightHandSide(int row, scalar val) 
   {
-    if(_val != 0.0) (*_b)[_row] += _val;
+    if(val != 0.0) (*_b)[row] += val;
   }
-  virtual scalar getFromRightHandSide(int _row) const 
+  virtual scalar getFromRightHandSide(int row) const 
   {
-    return (*_b)[_row];
+    return (*_b)[row];
   }
-  virtual scalar getFromSolution(int _row) const
+  virtual scalar getFromSolution(int row) const
   {
-    return (*_x)[_row];
+    return (*_x)[row];
   }
   virtual void zeroMatrix()
   {
-    int N=CSRList_Nbr(a_);
-    scalar *a = (scalar*) a_->array;
-    for (int i=0;i<N;i++)a[i]=0;
+    int N = CSRList_Nbr(_a);
+    scalar *a = (scalar*) _a->array;
+    for (int i = 0; i < N; i++) a[i] = 0;
   }
   virtual void zeroRightHandSide() 
   {
@@ -121,22 +118,19 @@ class linearSystemCSRGmm : public linearSystemCSR<scalar> {
   double _prec;
   int _noisy, _gmres;
  public:
-  linearSystemCSRGmm()
-    : _prec(1.e-8), _noisy(0), _gmres(0) {}
-  virtual ~linearSystemCSRGmm()
-  {}
+  linearSystemCSRGmm() : _prec(1.e-8), _noisy(0), _gmres(0) {}
+  virtual ~linearSystemCSRGmm(){}
   void setPrec(double p){ _prec = p; }
   void setNoisy(int n){ _noisy = n; }
   void setGmres(int n){ _gmres = n; }
   virtual int systemSolve() 
-#if defined(HAVE_GMM)
-    ;
-#else
+#if !defined(HAVE_GMM)
   {
     Msg::Error("Gmm++ is not available in this version of Gmsh");
     return 0;
   }
 #endif
+  ;
 };
 
 #endif

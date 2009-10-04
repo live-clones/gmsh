@@ -28,9 +28,9 @@ static void *CSRRealloc(void *ptr, size_t size)
   return(ptr);
 }
 
-static void CSRList_Realloc(CSRList_T *liste,int n)
+static void CSRList_Realloc(CSRList_T *liste, int n)
 {
-  char* temp;
+  char *temp;
   if (n <= 0) return;
   if (liste->array == NULL) {
     liste->nmax = ((n - 1) / liste->incr + 1) * liste->incr;
@@ -44,7 +44,6 @@ static void CSRList_Realloc(CSRList_T *liste,int n)
     }
   }
 }
-
 
 static CSRList_T *CSRList_Create(int n, int incr, int size)
 {
@@ -77,10 +76,9 @@ static void CSRList_Delete(CSRList_T *liste)
 void CSRList_Add(CSRList_T *liste, void *data)
 {
   liste->n++;
-  
   CSRList_Realloc(liste,liste->n);
   liste->isorder = 0;
-  memcpy(&liste->array[(liste->n - 1) * liste->size],data,liste->size);
+  memcpy(&liste->array[(liste->n - 1) * liste->size], data, liste->size);
 }
 
 int CSRList_Nbr(CSRList_T *liste)
@@ -89,43 +87,43 @@ int CSRList_Nbr(CSRList_T *liste)
 }
 
 template<>
-void linearSystemCSR<double>::allocate(int _nbRows)
+void linearSystemCSR<double>::allocate(int nbRows)
 {
-  if(a_) {
-    CSRList_Delete(a_);
-    CSRList_Delete(ai_);
-    CSRList_Delete(ptr_);
-    CSRList_Delete(jptr_);
+  if(_a) {
+    CSRList_Delete(_a);
+    CSRList_Delete(_ai);
+    CSRList_Delete(_ptr);
+    CSRList_Delete(_jptr);
     delete _x;
     delete _b;
     delete something;
   }
   
-  if(_nbRows == 0){
-    a_ = 0; 
-    ai_ = 0; 
-    ptr_ = 0; 
-    jptr_ = 0; 
+  if(nbRows == 0){
+    _a = 0; 
+    _ai = 0; 
+    _ptr = 0; 
+    _jptr = 0; 
     _b = 0;
     _x = 0;
     something = 0;
     return;
   }
   
-  a_    = CSRList_Create (_nbRows, _nbRows, sizeof(double));
-  ai_   = CSRList_Create (_nbRows, _nbRows, sizeof(INDEX_TYPE));
-  ptr_  = CSRList_Create (_nbRows, _nbRows, sizeof(INDEX_TYPE));
-  jptr_ = CSRList_Create (_nbRows+1, _nbRows, sizeof(INDEX_TYPE));
+  _a    = CSRList_Create(nbRows, nbRows, sizeof(double));
+  _ai   = CSRList_Create(nbRows, nbRows, sizeof(INDEX_TYPE));
+  _ptr  = CSRList_Create(nbRows, nbRows, sizeof(INDEX_TYPE));
+  _jptr = CSRList_Create(nbRows + 1, nbRows, sizeof(INDEX_TYPE));
   
-  something = new char[_nbRows];
+  something = new char[nbRows];
   
-  for (int i=0;i<_nbRows;i++)something[i] = 0;
+  for (int i = 0; i < nbRows; i++) something[i] = 0;
   
-  _b = new std::vector<double>(_nbRows);
-  _x = new std::vector<double>(_nbRows);
+  _b = new std::vector<double>(nbRows);
+  _x = new std::vector<double>(nbRows);
 }
 
-const int NSTACK   = 50;
+const int NSTACK = 50;
 const unsigned int M_sort2  = 7;
 
 static void free_ivector(int *v, long nl, long nh)
@@ -253,7 +251,7 @@ void sortColumns_(int NbLines,
 		  scalar *a)
 {
   // replace pointers by lines
-  int *count = new int [NbLines];
+  int *count = new int[NbLines];
   
   for(int i=0;i<NbLines;i++){
     count[i] = 0;
@@ -291,16 +289,16 @@ int linearSystemCSRGmm<double>::systemSolve()
 {
   if (!sorted)
     sortColumns_(_b->size(),
-                CSRList_Nbr(a_),
-                (INDEX_TYPE *) ptr_->array,
-                (INDEX_TYPE *) jptr_->array, 
-                (INDEX_TYPE *) ai_->array, 
-                (double*) a_->array);
+                CSRList_Nbr(_a),
+                (INDEX_TYPE *) _ptr->array,
+                (INDEX_TYPE *) _jptr->array, 
+                (INDEX_TYPE *) _ai->array, 
+                (double*) _a->array);
   sorted = true;
   
   gmm::csr_matrix_ref<double*,INDEX_TYPE *,INDEX_TYPE *, 0>  
-    ref((double*)a_->array, (INDEX_TYPE *) ai_->array,
-        (INDEX_TYPE *)jptr_->array, _b->size(), _b->size());
+    ref((double*)_a->array, (INDEX_TYPE *) _ai->array,
+        (INDEX_TYPE *)_jptr->array, _b->size(), _b->size());
   gmm::csr_matrix<double,0> M;
   M.init_with(ref);
   
@@ -313,4 +311,3 @@ int linearSystemCSRGmm<double>::systemSolve()
 }
 
 #endif
-

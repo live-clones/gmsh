@@ -1179,10 +1179,11 @@ void PView::fillVertexArray(ConnectionManager *remote, int length, const char *b
       data->setMin(min);
       data->setMax(max);
       data->setTime(time);
+      data->setBoundingBox(bbox);
     }
   }
-
-  p->getOptions()->tmpBBox += bbox;
+  // not perfect (does not take transformations into account)
+  p->getOptions()->tmpBBox = bbox;
 
   switch(type){
   case 1:

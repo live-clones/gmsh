@@ -39,7 +39,7 @@ class PViewDataRemote : public PViewData {
   int getNumElements(int step=-1, int ent=-1){ return -1; }  
   void setMin(double min){ _min = min; }
   void setMax(double max){ _max = max; }
-  void setBoundingBox(SBoundingBox3d bbox){ _bbox = bbox; }
+  void setBoundingBox(SBoundingBox3d &bbox){ _bbox = bbox; }
   void setTime(double time){ _time = time; }
   bool isRemote(){ return true; }
   int fillRemoteVertexArrays(std::string &options)

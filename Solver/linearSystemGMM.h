@@ -26,12 +26,12 @@ class linearSystemGmm : public linearSystem<scalar> {
   linearSystemGmm()
     : _a(0), _b(0), _x(0), _prec(1.e-8), _noisy(0), _gmres(0) {}
   virtual bool isAllocated() const { return _a != 0; }
-  virtual void allocate(int _nbRows)
+  virtual void allocate(int nbRows)
   {
     clear();
-    _a = new gmm::row_matrix< gmm::wsvector<scalar> >(_nbRows, _nbRows);
-    _b = new std::vector<scalar>(_nbRows);
-    _x = new std::vector<scalar>(_nbRows);
+    _a = new gmm::row_matrix< gmm::wsvector<scalar> >(nbRows, nbRows);
+    _b = new std::vector<scalar>(nbRows);
+    _x = new std::vector<scalar>(nbRows);
   }
   virtual ~linearSystemGmm()
   {
@@ -46,25 +46,25 @@ class linearSystemGmm : public linearSystem<scalar> {
     }
     _a = 0;
   }
-  virtual void  addToMatrix(int _row, int _col, scalar _val) 
+  virtual void  addToMatrix(int row, int col, scalar val) 
   {
-    if(_val != 0.0) (*_a)(_row, _col) += _val;
+    if(val != 0.0) (*_a)(row, col) += val;
   }
-  virtual scalar getFromMatrix (int _row, int _col) const
+  virtual scalar getFromMatrix (int row, int col) const
   {
-    return (*_a)(_row, _col);
+    return (*_a)(row, col);
   }
-  virtual void addToRightHandSide(int _row, scalar _val) 
+  virtual void addToRightHandSide(int row, scalar val) 
   {
-    if(_val != 0.0) (*_b)[_row] += _val;
+    if(val != 0.0) (*_b)[row] += val;
   }
-  virtual scalar getFromRightHandSide(int _row) const 
+  virtual scalar getFromRightHandSide(int row) const 
   {
-    return (*_b)[_row];
+    return (*_b)[row];
   }
-  virtual scalar getFromSolution(int _row) const
+  virtual scalar getFromSolution(int row) const
   {
-    return (*_x)[_row];
+    return (*_x)[row];
   }
   virtual void zeroMatrix()
   {
@@ -100,11 +100,11 @@ class linearSystemGmm : public linearSystem<scalar> {
   }
   virtual bool isAllocated() const { return false; }
   virtual void allocate(int nbRows) {}
-  virtual void addToMatrix(int _row, int _col, scalar val) {}
-  virtual scalar getFromMatrix(int _row, int _col) const { return 0.; }
-  virtual void addToRightHandSide(int _row, scalar val) {}
-  virtual scalar getFromRightHandSide(int _row) const { return 0.; }
-  virtual scalar getFromSolution(int _row) const { return 0.; }
+  virtual void addToMatrix(int row, int col, scalar val) {}
+  virtual scalar getFromMatrix(int row, int col) const { return 0.; }
+  virtual void addToRightHandSide(int row, scalar val) {}
+  virtual scalar getFromRightHandSide(int row) const { return 0.; }
+  virtual scalar getFromSolution(int row) const { return 0.; }
   virtual void zeroMatrix() {}
   virtual void zeroRightHandSide() {}
   virtual int systemSolve() { return 0; }

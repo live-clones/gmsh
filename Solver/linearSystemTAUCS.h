@@ -16,14 +16,16 @@ class linearSystemCSRTaucs : public linearSystemCSR<scalar> {
   virtual void addToMatrix(int il, int ic, double val)
   {
     if (il <= ic)
-      linearSystemCSR<scalar>::addToMatrix(il,ic,val);
+      linearSystemCSR<scalar>::addToMatrix(il, ic, val);
   }
   virtual int systemSolve() 
-#if defined(HAVE_TAUCS)
-    ;
-#else
-  { throw; }
+#if !defined(HAVE_TAUCS)
+  {
+    Msg::Error("TAUCS is not available in this version of Gmsh");
+    return 0;
+  }
 #endif
+  ;
 };
 
 #endif

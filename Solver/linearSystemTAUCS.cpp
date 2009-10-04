@@ -26,21 +26,21 @@ int linearSystemCSRTaucs<double>::systemSolve()
 {
   if(!sorted){
     sortColumns_(_b->size(),
-                CSRList_Nbr(a_),
-                (INDEX_TYPE *) ptr_->array,
-                (INDEX_TYPE *) jptr_->array, 
-                (INDEX_TYPE *) ai_->array, 
-                (double*) a_->array);
+                CSRList_Nbr(_a),
+                (INDEX_TYPE *) _ptr->array,
+                (INDEX_TYPE *) _jptr->array, 
+                (INDEX_TYPE *) _ai->array, 
+                (double*) _a->array);
   }
   sorted = true;
   
   taucs_ccs_matrix myVeryCuteTaucsMatrix;
-  myVeryCuteTaucsMatrix.n = myVeryCuteTaucsMatrix.m =  _b->size();
-  //myVeryCuteTaucsMatrix.rowind = (INDEX_TYPE*)ptr_->array;
-  //myVeryCuteTaucsMatrix.colptr = (INDEX_TYPE*)ai_->array;
-  myVeryCuteTaucsMatrix.rowind = (INDEX_TYPE*)ai_->array;
-  myVeryCuteTaucsMatrix.colptr = (INDEX_TYPE*)jptr_->array;
-  myVeryCuteTaucsMatrix.values.d = (double*) a_->array;
+  myVeryCuteTaucsMatrix.n = myVeryCuteTaucsMatrix.m = _b->size();
+  //myVeryCuteTaucsMatrix.rowind = (INDEX_TYPE*)_ptr->array;
+  //myVeryCuteTaucsMatrix.colptr = (INDEX_TYPE*)_ai->array;
+  myVeryCuteTaucsMatrix.rowind = (INDEX_TYPE*)_ai->array;
+  myVeryCuteTaucsMatrix.colptr = (INDEX_TYPE*)_jptr->array;
+  myVeryCuteTaucsMatrix.values.d = (double*)_a->array;
   myVeryCuteTaucsMatrix.flags = TAUCS_SYMMETRIC | TAUCS_LOWER | TAUCS_DOUBLE; 
   
   char* options[] = { "taucs.factor.LLT=true", NULL };  

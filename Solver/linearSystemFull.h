@@ -22,12 +22,12 @@ class linearSystemFull : public linearSystem<scalar> {
  public :
   linearSystemFull() : _a(0), _b(0), _x(0){}
   virtual bool isAllocated() const { return _a != 0; }
-  virtual void allocate(int _nbRows)
+  virtual void allocate(int nbRows)
   {
     clear();
-    _a = new fullMatrix<scalar>(_nbRows, _nbRows);
-    _b = new fullVector<scalar>(_nbRows);
-    _x = new fullVector<scalar>(_nbRows);
+    _a = new fullMatrix<scalar>(nbRows, nbRows);
+    _b = new fullVector<scalar>(nbRows);
+    _x = new fullVector<scalar>(nbRows);
   }
   virtual ~linearSystemFull()
   {
@@ -42,25 +42,25 @@ class linearSystemFull : public linearSystem<scalar> {
     }
     _a = 0;
   }
-  virtual void addToMatrix(int _row, int _col, scalar _val)
+  virtual void addToMatrix(int row, int col, scalar val)
   {
-    if(_val != 0.0) (*_a)(_row, _col) += _val;
+    if(val != 0.0) (*_a)(row, col) += val;
   }
-  virtual scalar getFromMatrix(int _row, int _col) const
+  virtual scalar getFromMatrix(int row, int col) const
   {
-    return (*_a)(_row, _col);
+    return (*_a)(row, col);
   }
-  virtual void addToRightHandSide(int _row, scalar _val)
+  virtual void addToRightHandSide(int row, scalar val)
   {
-    if(_val != 0.0) (*_b)(_row) += _val;
+    if(val != 0.0) (*_b)(row) += val;
   }
-  virtual scalar getFromRightHandSide(int _row) const 
+  virtual scalar getFromRightHandSide(int row) const 
   {
-    return (*_b)(_row);
+    return (*_b)(row);
   }
-  virtual scalar getFromSolution(int _row) const 
+  virtual scalar getFromSolution(int row) const 
   {
-    return (*_x)(_row);
+    return (*_x)(row);
   }
   virtual void zeroMatrix() 
   {
@@ -74,7 +74,6 @@ class linearSystemFull : public linearSystem<scalar> {
   {
     if (_b->size())
       _a->lu_solve(*_b, *_x);
-    // _x->print("********* mySol");
     return 1;
   }
 };
