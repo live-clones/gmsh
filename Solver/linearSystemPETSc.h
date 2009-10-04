@@ -8,13 +8,11 @@
 
 // Interface to PETSc 3.x
 
-// Options for PETSc can be provided on the command line, or in the file
-// ~/.petscrc. 
+// Options for PETSc can be provided on the command line, or in the
+// file ~/.petscrc. By default, we use the following options (GMRES
+// with ILU(6) preconditioner and RCMK renumbering):
 //
-// By default, we use the following options (GMRES iterative solver,
-// 1.e-8 relative tolerance with ILU(6) preconditioner and RCMK
-// renumbering):
-//
+//   -ksp_type gmres
 //   -pc_type ilu
 //   -pc_factor_levels 6
 //   -pc_factor_mat_ordering rcm
@@ -24,7 +22,6 @@
 //
 //   -ksp_gmres_restart 100
 //   -ksp_monitor
-//   ...
 //
 // To use a direct solver (a sparse lu) instead of an iterative
 // solver, use
@@ -32,9 +29,8 @@
 //   -ksp_type preonly
 //   -pc_type lu
 //
-// When PETSc is compiled with external solvers (UMFPACK, SuperLU,
-// etc.), they can be accessed simply by changing the matrix type. For
-// example, with umfpack:
+// When PETSc is compiled with external direct solvers (UMFPACK,
+// SuperLU, etc.), they can be selected like this:
 //
 //   -pc_factor_mat_solver_package umfpack
 
