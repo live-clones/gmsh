@@ -10,8 +10,19 @@
 #include <string>
 #include "SVector3.h"
 #include "dofManager.h"
+#include "simpleFunction.h"
 
 class GModel;
+class PView;
+class groupOfElements;
+
+struct elasticField {
+  int _tag; // tag for the dofManager
+  groupOfElements *g; // support for this field
+  simpleFunction<double> *_enrichment; // XFEM enrichment
+  double _E,_nu; // specific elastic datas (should be somewhere else)
+  elasticField () : g(0),_enrichment(0){}
+};
 
 // an elastic solver ...
 class elasticitySolver{
@@ -20,7 +31,7 @@ class elasticitySolver{
   int _dim, _tag;
   dofManager<double, double> *pAssembler;
   // young modulus and poisson coefficient per physical
-  std::map<int, std::pair<double, double> > elasticConstants;
+  std::vector<elasticField > elasticFields;
   // imposed nodal forces
   std::map<int, SVector3> nodalForces;
   // imposed line forces
@@ -45,14 +56,14 @@ class elasticitySolver{
   {
     nodalDisplacements[std::make_pair(iNode, dir)] = val;
   }
-  void addElasticConstants(double e, double nu, int physical)
-  {
-    elasticConstants[physical] = std::make_pair(e, nu);
-  }
+  //  void addElasticConstants(double e, double nu, int physical)
+  //  {
+  //    elasticConstants[physical] = std::make_pair(e, nu);
+  //  }
   void setMesh(const std::string &meshFileName);  
   virtual void solve();  
   void readInputFile(const std::string &meshFileName);
-  // PView *buildDisplacementView(const std::string &postFileName);
+  PView *buildDisplacementView(const std::string &postFileName);
   // PView *buildVonMisesView(const std::string &postFileName);
   // std::pair<PView *, PView*> buildErrorEstimateView
   //   (const std::string &errorFileName, double, int);

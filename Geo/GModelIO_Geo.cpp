@@ -172,8 +172,10 @@ int GModel::importGEOInternals()
       }
       GFace *gf = getFaceByTag(abs(p->Num));
       if (!gf){
-        GFaceCompound *gf = new GFaceCompound(this, p->Num, f_compound, 
-                                              b[0], b[1], b[2], b[3]);
+        GFaceCompound *gf = new GFaceCompound(this, abs(p->Num), f_compound, 
+                                              b[0], b[1], b[2], b[3],0,
+					      p->Num > 0 ? GFaceCompound::HARMONIC :
+					      GFaceCompound::CONFORMAL);
         add(gf);
       }
       else

@@ -4,12 +4,48 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string.h>
+#include "GmshConfig.h"
 #include "elasticityTerm.h"
 #include "MTriangle.h"
 #include "MTetrahedron.h"
 #include "elasticitySolver.h"
 #include "linearSystemTAUCS.h"
+#include "linearSystemGMM.h"
 #include "Numeric.h"
+#include "PView.h"
+#include "PViewData.h"
+
+PView* elasticitySolver::buildDisplacementView  (const std::string &postFileName){
+  std::map<int, std::vector<double> > data;
+  std::set<MVertex*> v;
+  for (int i=0;i<elasticFields.size();++i){
+    groupOfElements::elementContainer::const_iterator it = elasticFields[i].g->begin();
+    for ( ; it != elasticFields[i].g->end() ; ++it ){
+      SElement se(*it);
+      for (int j=0;j<se.getNumNodalShapeFunctions();++j){
+	v.insert(se.getVertex(j));
+      }
+    }
+  }
+
+  std::set<MVertex*>::iterator it = v.begin();
+  for ( ; it!=v.end();++it){
+    std::vector<double> d;
+    d.push_back(0);d.push_back(0);d.push_back(0);
+    for (int i=0;i<elasticFields.size();++i){
+      const double E = (elasticFields[i]._enrichment) ? (*elasticFields[i]._enrichment)((*it)->x(),(*it)->y(),(*it)->z()) : 1.0;	
+      //      printf("%g %d \n",pAssembler->getDofValue(*it,0,elasticFields[i]._tag),elasticFields[i]._tag);
+      d[0] += pAssembler->getDofValue(*it,0,elasticFields[i]._tag)  * E;
+      d[1] += pAssembler->getDofValue(*it,1,elasticFields[i]._tag)  * E;
+      d[2] += pAssembler->getDofValue(*it,2,elasticFields[i]._tag)  * E;
+    }
+    data[(*it)->getNum()] = d;
+  }
+
+  PView *pv = new PView (postFileName, "NodeData", pModel, data, 0.0);
+  return pv;  
+}
+
 
 static double vonMises(dofManager<double,double> *a, MElement *e, 
                        double u, double v, double w, 
@@ -65,11 +101,21 @@ void elasticitySolver::readInputFile(const std::string &fn)
   while(!feof(f)){
     if(fscanf(f, "%s", what) != 1) return;
     // printf("%s\n", what);
-    if (!strcmp(what,"ElasticMaterial")){
-      double E, nu;
+    if (!strcmp(what,"ElasticDomain")){
+      elasticField field;
       int physical;
-      if(fscanf(f, "%d %lf %lf", &physical, &E, &nu) != 3) return;
-      elasticConstants[physical] = std::make_pair(E, nu);    
+      if(fscanf(f, "%d %lf %lf", &physical, &field._E, &field._nu) != 3) return;
+      field._tag = _tag;
+      //      printf("E %g nu %g\n",field._E,field._nu);
+      field.g = new groupOfElements (_dim, physical);
+      elasticFields.push_back(field);
+    }
+    else if (!strcmp(what,"Void")){
+      //      elasticField field;
+      //      create enrichment ...
+      //      create the group ...
+      //      assign a tag
+      //      elasticFields.push_back(field);
     }
     else if (!strcmp(what, "NodalDisplacement")){
       double val;
@@ -128,7 +174,8 @@ void elasticitySolver::solve()
 #ifdef HAVE_TAUCS
   linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
 #else
-  linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
+  linearSystemGmm<double> *lsys = new linearSystemGmm<double>;
+  lsys->setNoisy(2);
 #endif
   pAssembler = new dofManager<double, double>(lsys);
   
@@ -167,16 +214,15 @@ void elasticitySolver::solve()
   
   // we number the nodes : when a node is numbered, it cannot be numbered
   // again with another number. so we loop over elements
-  for (std::map<int, std::pair<double, double> >::iterator it = elasticConstants.begin();
-       it != elasticConstants.end() ; it++){
-    int physical = it->first;
-    std::vector<MVertex *> v;     
-    pModel->getMeshVerticesForPhysicalGroup(_dim, physical, v);
-    printf("Physical %d, dim: %d, nb vert: %d\n", physical, _dim, (int)v.size());
-    for (unsigned int i = 0; i < v.size(); i++){  
-      pAssembler->numberVertex(v[i], 0, _tag);  
-      pAssembler->numberVertex(v[i], 1, _tag);  
-      pAssembler->numberVertex(v[i], 2, _tag);  
+  for (int i=0;i<elasticFields.size();++i){
+    groupOfElements::elementContainer::const_iterator it = elasticFields[i].g->begin();
+    for ( ; it != elasticFields[i].g->end() ; ++it ){
+      SElement se(*it);
+      for (int j=0;j<se.getNumNodalShapeFunctions();++j){
+	pAssembler->numberVertex(se.getVertex(j), 0, elasticFields[i]._tag);  
+	pAssembler->numberVertex(se.getVertex(j), 1, elasticFields[i]._tag);  
+	pAssembler->numberVertex(se.getVertex(j), 2, elasticFields[i]._tag);  	
+      }
     }
   }
   
@@ -231,22 +277,27 @@ void elasticitySolver::solve()
     printf("-- Force on volume %3d : %8.5f %8.5f %8.5f\n", iVolume, f.x(), f.y(), f.z());
     std::vector<GEntity*> ent = groups[_dim][iVolume];
     for (unsigned int i = 0; i < ent.size(); i++){
-      El.addToRightHandSide(*pAssembler, ent[i]);
+      //   to do
+      //      El.addToRightHandSide(*pAssembler, ent[i]);
     }
   }
   
   // assembling the stifness matrix
-  for (std::map<int, std::pair<double, double> >::iterator it = elasticConstants.begin();
-       it != elasticConstants.end() ; it++){
-    int physical = it->first;
-    double E = it->second.first;
-    double nu = it->second.second;
-    elasticityTerm El(0, E, nu, _tag);
-    std::vector<GEntity*> ent = groups[_dim][physical];
-    for (unsigned int i = 0; i < ent.size(); i++){
-      El.addToMatrix(*pAssembler, ent[i]);
+  for (int i=0;i<elasticFields.size();i++){
+    SElement::setShapeEnrichement(elasticFields[i]._enrichment);
+    for (int j=0;j<elasticFields.size();j++){
+      elasticityTerm El(0, elasticFields[i]._E, elasticFields[i]._nu,
+			elasticFields[i]._tag,elasticFields[j]._tag);
+      SElement::setTestEnrichement(elasticFields[j]._enrichment);
+      //      printf("%d %d\n",elasticFields[i]._tag,elasticFields[j]._tag);
+      El.addToMatrix(*pAssembler,*elasticFields[i].g, *elasticFields[j].g);      
     }
   }
+
+  //  for (int i=0;i<pAssembler->sizeOfR();i++){
+    //    printf("%g ",lsys->getFromRightHandSide(i));
+  //  }
+  //  printf("\n");
 
   // solving
   lsys->systemSolve();

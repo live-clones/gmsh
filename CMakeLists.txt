@@ -71,6 +71,7 @@ set(GMSH_API
     Mesh/meshGFaceDelaunayInsertion.h
   Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h Solver/elasticityTerm.h
     Solver/linearSystem.h Solver/linearSystemGMM.h Solver/linearSystemFull.h 
+  Solver/elasticitySolver.h 
   Post/PView.h Post/PViewData.h Plugin/PluginManager.h
   Graphics/drawContext.h
   contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h 
@@ -487,11 +488,12 @@ if(ENABLE_MED OR ENABLE_CGNS)
 endif(ENABLE_MED OR ENABLE_CGNS)
 
 if(ENABLE_TAUCS)
-  find_library(TAUCS_LIB taucs)
+  find_library(TAUCS_LIB taucs PATHS ENV CASROOT PATH_SUFFIXES lib)
   if(TAUCS_LIB)
     find_path(TAUCS_INC "taucs.h" PATH_SUFFIXES src include)
     if(TAUCS_INC)
       set(HAVE_TAUCS TRUE)
+      add_definitions(-DTAUCS_CILK)
       list(APPEND CONFIG_OPTIONS "Taucs")
       list(APPEND EXTERNAL_LIBRARIES ${TAUCS_LIB})
       list(APPEND EXTERNAL_INCLUDES ${TAUCS_INC})

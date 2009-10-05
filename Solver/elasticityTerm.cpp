@@ -6,16 +6,20 @@
 #include "elasticityTerm.h"
 #include "Numeric.h"
 
+// The SElement (Solver element) that has been sent to the function
+// contains 2 enrichments, that can enrich both shape and test functions   
+
 void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
 {
   MElement *e = se->getMeshElement();
-  int nbNodes = e->getNumVertices();
+  int nbNodes = se->getNumNodalShapeFunctions();
   int integrationOrder = 3 * (e->getPolynomialOrder() - 1) ;
   int npts;
   IntPt *GP;
   double jac[3][3];
   double invjac[3][3];
-  double Grads[256][3], grads[100][3];
+  double Grads[100][3];
+  double GradsT[100][3];
   e->getIntegrationPoints(integrationOrder, &npts, &GP);
   
   m.set_all(0.);
@@ -46,34 +50,62 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
     const double w = GP[i].pt[2];
     const double weight = GP[i].weight;
     const double detJ = e->getJacobian(u, v, w, jac);
-    e->getGradShapeFunctions(u, v, w, grads);
     inv3x3(jac, invjac);
+    se->gradNodalShapeFunctions(u, v, w, invjac,Grads);
+
     B.set_all(0.);
     BT.set_all(0.);
-    for (int j = 0; j < nbNodes; j++){
-      Grads[j][0] = invjac[0][0] * grads[j][0] + invjac[0][1] * grads[j][1] + 
-        invjac[0][2] * grads[j][2];
-      Grads[j][1] = invjac[1][0] * grads[j][0] + invjac[1][1] * grads[j][1] + 
-        invjac[1][2] * grads[j][2];
-      Grads[j][2] = invjac[2][0] * grads[j][0] + invjac[2][1] * grads[j][1] + 
-        invjac[2][2] * grads[j][2];
-      
-      BT(j, 0) = B(0, j) = Grads[j][0];
-      BT(j, 3) = B(3, j) = Grads[j][1];
-      BT(j, 4) = B(4, j) = Grads[j][2];
-      
-      BT(j + nbNodes, 1) = B(1, j + nbNodes) = Grads[j][1];
-      BT(j + nbNodes, 3) = B(3, j + nbNodes) = Grads[j][0];
-      BT(j + nbNodes, 5) = B(5, j + nbNodes) = Grads[j][2];
-      
-      BT(j + 2 * nbNodes, 2) = B(2, j + 2 * nbNodes) = Grads[j][2];
-      BT(j + 2 * nbNodes, 4) = B(4, j + 2 * nbNodes) = Grads[j][0];
-      BT(j + 2 * nbNodes, 5) = B(5, j + 2 * nbNodes) = Grads[j][1];
+    
+    if (se->getShapeEnrichement() == se->getTestEnrichement()){
+      for (int j = 0; j < nbNodes; j++){
+
+	//	printf(" GR(j) = %12.5E,%12.5E,%12.5E\n", Grads[j][0],Grads[j][1],Grads[j][2]);
+
+	BT(j, 0) = B(0, j) = Grads[j][0];
+	BT(j, 3) = B(3, j) = Grads[j][1];
+	BT(j, 4) = B(4, j) = Grads[j][2];
+	
+	BT(j + nbNodes, 1) = B(1, j + nbNodes) = Grads[j][1];
+	BT(j + nbNodes, 3) = B(3, j + nbNodes) = Grads[j][0];
+	BT(j + nbNodes, 5) = B(5, j + nbNodes) = Grads[j][2];
+	
+	BT(j + 2 * nbNodes, 2) = B(2, j + 2 * nbNodes) = Grads[j][2];
+	BT(j + 2 * nbNodes, 4) = B(4, j + 2 * nbNodes) = Grads[j][0];
+	BT(j + 2 * nbNodes, 5) = B(5, j + 2 * nbNodes) = Grads[j][1];
+      }
     }
+    else{
+      printf("coucou AAAAAAAAAAAAARGH \n");
+      se->gradNodalTestFunctions (u, v, w, invjac,GradsT);
+      for (int j = 0; j < nbNodes; j++){
+	BT(j, 0) = Grads[j][0]; B(0, j) = GradsT[j][0];
+	BT(j, 3) = Grads[j][1]; B(3, j) = GradsT[j][1];
+	BT(j, 4) = Grads[j][2]; B(4, j) = GradsT[j][2];
+	
+	BT(j + nbNodes, 1) = Grads[j][1]; B(1, j + nbNodes) = GradsT[j][1];
+	BT(j + nbNodes, 3) = Grads[j][0]; B(3, j + nbNodes) = GradsT[j][0];
+	BT(j + nbNodes, 5) = Grads[j][2]; B(5, j + nbNodes) = GradsT[j][2];
+	
+	BT(j + 2 * nbNodes, 2) = Grads[j][2]; B(2, j + 2 * nbNodes) = GradsT[j][2];
+	BT(j + 2 * nbNodes, 4) = Grads[j][0]; B(4, j + 2 * nbNodes) = GradsT[j][0];
+	BT(j + 2 * nbNodes, 5) = Grads[j][1]; B(5, j + 2 * nbNodes) = GradsT[j][1];
+      }
+    }
+
     BTH.set_all(0.);
     BTH.gemm(BT, H); 
     m.gemm(BTH, B, weight * detJ, 1.);
-  } 
+  }
+  return;
+  for (int i=0;i<3 * nbNodes;i++){
+    for (int j=0;j<3 * nbNodes;j++){
+      printf("%g ",m(i,j));
+    }
+    printf("\n");
+  }
+    printf("\n");
+    printf("\n");
+    
 }
 
 void elasticityTerm::elementVector(SElement *se, fullVector<double> &m) const
@@ -95,7 +127,7 @@ void elasticityTerm::elementVector(SElement *se, fullVector<double> &m) const
     const double w = GP[i].pt[2];
     const double weight = GP[i].weight;
     const double detJ = e->getJacobian(u, v, w, jac);
-    e->getShapeFunctions(u, v, w, ff);
+    se->nodalTestFunctions(u, v, w, ff);
     for (int j = 0; j < nbNodes; j++){
       m(j) += _volumeForce.x() *ff[j] * weight * detJ *.5;
       m(j + nbNodes) += _volumeForce.y() *ff[j] * weight * detJ *.5;

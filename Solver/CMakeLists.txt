@@ -6,8 +6,10 @@
 set(SRC
   linearSystemCSR.cpp
   linearSystemTAUCS.cpp
+  groupOfElements.cpp
   elasticityTerm.cpp
   elasticitySolver.cpp
+  SElement.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Solver *.h) 

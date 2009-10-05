@@ -4,6 +4,10 @@ GMSH = -L/usr/local/lib -lGmsh
 GLUT = -framework OpenGL -framework GLUT -framework Cocoa -framework ApplicationServices
 #GLUT = -lGLUT -lGLU -lGL -lX11
 
+mainElasticity: mainElasticity.cpp
+	g++ ${FLAGS} -o mainElasticity ${INC} mainElasticity.cpp\
+          ${GMSH} -llapack -lblas -lm -L/Users/remacle/SOURCES/gmsh/contrib/taucs/lib -ltaucs
+
 mainSimple: mainSimple.cpp
 	g++ ${FLAGS} -o mainSimple ${INC} mainSimple.cpp\
           ${GMSH} -llapack -lblas -lm

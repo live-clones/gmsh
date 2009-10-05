@@ -46,6 +46,8 @@ class Octree;
 class GFaceCompound : public GFace {
  public:
   typedef enum {ITERU=0,ITERV=1,ITERD=2} iterationStep;
+  typedef enum {HARMONIC=1,CONFORMAL=2} typeOfMapping;
+  typedef enum {UNITCIRCLE, SQUARE} typeOfIsomorphism;
   void computeNormals(std::map<MVertex*, SVector3> &normals) const;
  protected:
   std::list<GFace*> _compound;
@@ -77,11 +79,11 @@ class GFaceCompound : public GFace {
   bool trivial() const ;
   linearSystem <double> *_lsys;
  public:
-  typedef enum {UNITCIRCLE, SQUARE} typeOfIsomorphism;
   GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
                 std::list<GEdge*> &U0, std::list<GEdge*> &U1,
                 std::list<GEdge*> &V0, std::list<GEdge*> &V1,
-		linearSystem<double>* lsys =0);
+		linearSystem<double>* lsys =0,
+		typeOfMapping typ = HARMONIC);
   virtual ~GFaceCompound();
   Range<double> parBounds(int i) const 
   { return trivial() ? (*(_compound.begin()))->parBounds(i) : Range<double>(-1, 1); }
@@ -97,6 +99,7 @@ class GFaceCompound : public GFace {
   virtual int genusGeom ();
  private:
   typeOfIsomorphism _type;
+  typeOfMapping _mapping;
 };
 
 #endif

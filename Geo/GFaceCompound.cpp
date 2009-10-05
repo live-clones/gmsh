@@ -331,13 +331,15 @@ void GFaceCompound::parametrize() const
     
     //Laplace parametrization
     //-----------------
-    parametrize(ITERU);
-    parametrize(ITERV);
-
+    if (_mapping == HARMONIC){
+      parametrize(ITERU);
+      parametrize(ITERV);
+    }
     //Conformal map parametrization
     //----------------- 
-    //parametrize_conformal();
-
+    else if (_mapping == CONFORMAL){
+      parametrize_conformal();
+    }
     //Distance function
     //-----------------
     //compute_distance();
@@ -476,9 +478,9 @@ void GFaceCompound::computeALoop(std::set<GEdge*> &_unique, std::list<GEdge*> &l
 GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 			     std::list<GEdge*> &U0, std::list<GEdge*> &V0,
 			     std::list<GEdge*> &U1, std::list<GEdge*> &V1,
-			     linearSystem<double> *lsys)
+			     linearSystem<double> *lsys, typeOfMapping mpg)
   : GFace(m, tag), _compound(compound), _U0(U0), _U1(U1), _V0(V0), _V1(V1), oct(0),
-    _lsys(lsys)
+    _lsys(lsys),_mapping(mpg)
 {
 
   if (!_lsys) {
@@ -925,7 +927,8 @@ void GFaceCompound::compute_distance() const
       SElement se((*it)->triangles[i]);
       distance.addToMatrix(myAssembler, &se);
     }
-    distance.addToRightHandSide(myAssembler, *it);
+    groupOfElements g(*it);
+    distance.addToRightHandSide(myAssembler, g);
   }
 
   Msg::Info("Distance Computation: Assembly done");

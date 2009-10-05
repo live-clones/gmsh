@@ -14,6 +14,7 @@
 #include "dofManager.h"
 #include "GModel.h"
 #include "SElement.h"
+#include "groupOfElements.h"
 
 // a nodal finite element term : variables are always defined at nodes
 // of the mesh
@@ -42,15 +43,23 @@ class femTerm {
   {
     m.scale(0.0);
   }
-  // add the contribution from all the elements in the entity ge to
-  // the dof manager
-  void addToMatrix(dofManager<dataVec, dataMat> &dm, GEntity *ge) const
+
+  // add the contribution from all the elements in the intersection
+  // of two element groups L and C
+  void addToMatrix(dofManager<dataVec, dataMat> &dm, 
+		   groupOfElements &L, 
+		   groupOfElements &C) const
   {
-    for(unsigned int i = 0; i < ge->getNumMeshElements(); i++){
-      SElement se(ge->getMeshElement(i));
-      addToMatrix(dm, &se);
+    groupOfElements::elementContainer::const_iterator it = L.begin();
+    for ( ; it != L.end() ; ++it){
+      MElement *eL = *it;
+      if ( &C == &L || C.find(eL) ){
+	SElement se(eL);
+	addToMatrix(dm, &se);
+      }
     }
   }
+
   // add the contribution from a single element to the dof manager
   void addToMatrix(dofManager<dataVec, dataMat> &dm, SElement *se) const
   {
@@ -120,10 +129,13 @@ class femTerm {
       }
     }
   }
-  void addToRightHandSide(dofManager<dataVec, dataMat> &dm, GEntity *ge) const 
+
+  void addToRightHandSide(dofManager<dataVec, dataMat> &dm, groupOfElements &C) const 
   {
-    for(unsigned int i = 0; i < ge->getNumMeshElements(); i++){
-      SElement se(ge->getMeshElement(i));
+    groupOfElements::elementContainer::const_iterator it = C.begin();
+    for ( ; it != C.end() ; ++it){
+      MElement *eL = *it;
+      SElement se(eL);
       int nbR = sizeOfR(&se);
       fullVector<dataVec> V(nbR);
       elementVector(&se, V);
