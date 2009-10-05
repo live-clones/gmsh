@@ -21,4 +21,3 @@ cd ${GMSH}/bin && make package >> ${LOG} 2>&1
 echo "BUILD END: `date`" >> ${LOG}
 scp -C ${GMSH}/bin/gmsh-*.tar.gz ${WEB_BIN}/gmsh-nightly-Linux.tgz
 scp -C ${LOG} ${WEB_BIN}/
-

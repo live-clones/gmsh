@@ -20,5 +20,3 @@ cd ${GMSH}/bin && make package -j 4 >> ${LOG} 2>&1
 echo "BUILD END: `date`" >> ${LOG}
 scp -C ${GMSH}/bin/gmsh-*.dmg ${WEB_BIN}/gmsh-nightly-MacOSX.dmg
 scp -C ${LOG} ${WEB_BIN}/
-
-
