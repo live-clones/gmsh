@@ -394,12 +394,6 @@ static void solver_command_cb(Fl_Widget *w, void *data)
   if(ConnectionManager::get(num)->popupMessages)
     FlGui::instance()->messages->show(true);
 
-  ConnectionManager::get(num)->inputFileName =
-    FlGui::instance()->solver[num]->input[0]->value();
-
-  ConnectionManager::get(num)->meshFileName = 
-    FlGui::instance()->solver[num]->input[1]->value();
-
   int optionIndex = 0;
   for(int i = 0; i < idx; i++)
     optionIndex += numPercentS(ConnectionManager::get(num)->buttonSwitch[i]);
@@ -407,6 +401,7 @@ static void solver_command_cb(Fl_Widget *w, void *data)
   int optionChoice = 0;
   if(optionIndex >= 0 && optionIndex < FlGui::instance()->solver[num]->choice.size())
     optionChoice = FlGui::instance()->solver[num]->choice[optionIndex]->value();
+
   ConnectionManager::get(num)->runCommand(idx, optionIndex, optionChoice);
 }
 
