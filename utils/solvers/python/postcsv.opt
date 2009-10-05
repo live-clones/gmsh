@@ -6,6 +6,7 @@ indexed, comma-separated-value results into Gmsh.
 Carl Osterwisch <osterwischc@asme.org>
 January 2005";
 Solver.Executable1 = "./postcsv.py";
+Solver.InputName1 = "dummy";
 Solver.Extension1 = ".csv";
 Solver.MeshName1 = "";
 Solver.MeshCommand1 = "--mesh=%s";

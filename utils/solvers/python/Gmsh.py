@@ -32,7 +32,6 @@ INFO         = 10
 WARNING      = 11
 ERROR        = 12
 PROGRESS     = 13
-VIEW         = 20 # deprecated: use MERGE_FILE instead
 MERGE_FILE   = 20
 PARSE_STRING = 21
 OPTION       = 100

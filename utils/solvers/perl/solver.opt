@@ -4,6 +4,7 @@ Solver.Name1 = "My Perl solver";
 Solver.Help1 = "A simple perl example of the client/server
 solver implementation in Gmsh...";
 Solver.Executable1 = "./solver.pl";
+Solver.InputName1 = "dummy";
 Solver.SocketCommand1 = "-socket %s";
 Solver.NameCommand1 = "%s";
 Solver.OptionCommand1 = "-options";
