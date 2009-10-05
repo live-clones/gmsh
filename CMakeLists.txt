@@ -511,7 +511,7 @@ if(ENABLE_PETSC)
     # find include directories
     list(APPEND EXTERNAL_INCLUDES ${ENV_PETSC_DIR}/include)
     list(APPEND EXTERNAL_INCLUDES ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/include)
-    string(REGEX MATCH "PACKAGES_INCLUDES = [-_/\\.a-zA-Z0-9 ]*" 
+    string(REGEX MATCH "PACKAGES_INCLUDES = [-_/\\.,a-zA-Z0-9 ]*" 
            PETSC_PACKAGES_INCLUDES ${PETSC_VARIABLES})
     string(REPLACE "PACKAGES_INCLUDES = " "" PETSC_PACKAGES_INCLUDES
            ${PETSC_PACKAGES_INCLUDES})
@@ -524,7 +524,7 @@ if(ENABLE_PETSC)
     set(PETSC_LIBS_REQUIRED petscksp petscdm petscmat petscvec petsc)
     find_all_libraries(PETSC_LIBS PETSC_LIBS_REQUIRED 
                        ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib "")
-    string(REGEX MATCH "PACKAGES_LIBS = [-_/\\.a-zA-Z0-9 ]*" PETSC_PACKAGES_LIBS
+    string(REGEX MATCH "PACKAGES_LIBS = [-_/\\.,a-zA-Z0-9 ]*" PETSC_PACKAGES_LIBS
            ${PETSC_VARIABLES})
     string(REPLACE "PACKAGES_LIBS = " "" PETSC_PACKAGES_LIBS
            ${PETSC_PACKAGES_LIBS})
