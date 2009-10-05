@@ -488,7 +488,7 @@ if(ENABLE_MED OR ENABLE_CGNS)
 endif(ENABLE_MED OR ENABLE_CGNS)
 
 if(ENABLE_TAUCS)
-  find_library(TAUCS_LIB taucs PATHS ENV CASROOT PATH_SUFFIXES lib)
+  find_library(TAUCS_LIB taucs PATH_SUFFIXES lib)
   if(TAUCS_LIB)
     find_path(TAUCS_INC "taucs.h" PATH_SUFFIXES src include)
     if(TAUCS_INC)
