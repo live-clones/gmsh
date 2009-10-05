@@ -4,6 +4,7 @@ Solver.Name1 = "My C solver";
 Solver.Help1 = "A simple example of the client/server 
 solver implementation in Gmsh...";
 Solver.Executable1 = "./solver.exe";
+Solver.InputName1 = "dummy";
 Solver.SocketCommand1 = "-socket %s";
 Solver.NameCommand1 = "%s";
 Solver.OptionCommand1 = "-options";

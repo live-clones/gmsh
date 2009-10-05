@@ -82,6 +82,9 @@ int main(int argc, char *argv[])
         if(argv[i])
           option = argv[i++];
       }
+      else{
+        i++;
+      }
     }
     else
       name = argv[i++];
@@ -99,81 +102,73 @@ int main(int argc, char *argv[])
      line option: */
 
   s = Gmsh_Connect(socket);
-  switch (s) {
 
-    /* 3.1. If the socket is <0, issue an error... */
-
-  case -1:
-    printf("Couldn't create socket %s\n", socket);
-    break;
-  case -2:
+  if(s < 0) {
     printf("Couldn't connect to socket %s\n", socket);
-    break;
-  default:
-
-    /* 3.2. ...otherwise, send the GMSH_CLIENT_START command (together
-       with the process ID of the solver), check if a problem name was
-       specified, and decide what to do according to the 'what'
-       variable: */
-
-    sprintf(tmp, "%d", getpid());
-    Gmsh_SendString(s, GMSH_CLIENT_START, tmp);
-    if(!name) {
-      Gmsh_SendString(s, GMSH_CLIENT_ERROR, "Missing file name");
-      Gmsh_Disconnect(s);
-      exit(1);
-    }
-    switch (what) {
-
-      /* 3.2.1. If what==options, the solver sends the valid options
-         (here for the first option): */
-
-    case options:
-      Gmsh_SendString(s, GMSH_CLIENT_OPTION_1, "Val1");
-      Gmsh_SendString(s, GMSH_CLIENT_OPTION_1, "Val2");
-      Gmsh_SendString(s, GMSH_CLIENT_OPTION_1, "Val3");
-      break;
-
-      /* 3.2.2. If what==run, the solver runs the chosen option,
-         updates the progress message, issues some information data,
-         produces a post-processing map and asks Gmsh to merge it: */
-
-    case run:
-      sprintf(tmp, "Running %s with option %s...", name, option);
-      Gmsh_SendString(s, GMSH_CLIENT_INFO, tmp);
-      for(i = 0; i < 10; i++) {
-        sprintf(tmp, "%d %% complete", 10*i);
-        Gmsh_SendString(s, GMSH_CLIENT_PROGRESS, tmp);
-	/* Fake some cpu-intensive calculation during 100ms: */
-#if !defined(WIN32) || defined(__CYGWIN__)
-	usleep(100 * 1000);
-#else
-	Sleep(100);
-#endif
-      }
-      sprintf(tmp, "Done with %s!", name);
-      Gmsh_SendString(s, GMSH_CLIENT_INFO, tmp);
-      file = fopen("solver.pos", "wb");
-      if(!file) {
-        Gmsh_SendString(s, GMSH_CLIENT_ERROR, "Unable to open output file");
-      }
-      else {
-        fprintf(file, "View \"%s\"{\n", option);
-	fprintf(file, "ST(0,0,0,1,0,0,0,1,0){0,1,2};\n");
-        fprintf(file, "};\n");
-        fclose(file);
-        Gmsh_SendString(s, GMSH_CLIENT_MERGE_FILE, "solver.pos");
-      }
-      break;
-    }
-
-    /* 3.3. We can now disconnect the solver from Gmsh: */
-
-    Gmsh_SendString(s, GMSH_CLIENT_STOP, "Goodbye!");
-    Gmsh_Disconnect(s);
-    break;
+    exit(1);
   }
 
-  /* 4. That's it! */
+  /* 4. Send the GMSH_CLIENT_START command (together with the process
+     ID of the solver), check if a problem name was specified, and
+     decide what to do according to the 'what' variable: */
+
+  sprintf(tmp, "%d", getpid());
+  Gmsh_SendString(s, GMSH_CLIENT_START, tmp);
+
+  if(!name) {
+    Gmsh_SendString(s, GMSH_CLIENT_ERROR, "Missing file name");
+    Gmsh_Disconnect(s);
+    exit(1);
+  }
+
+  switch (what) {
+
+    /* 4.1. If what==options, the solver sends the valid options (here
+       for the first option): */
+    
+  case options:
+    Gmsh_SendString(s, GMSH_CLIENT_OPTION_1, "Val1");
+    Gmsh_SendString(s, GMSH_CLIENT_OPTION_1, "Val2");
+    Gmsh_SendString(s, GMSH_CLIENT_OPTION_1, "Val3");
+    break;
+    
+    /* 4.2. If what==run, the solver runs the chosen option, updates
+       the progress message, issues some information data, produces a
+       post-processing map and asks Gmsh to merge it: */
+
+  case run:
+    sprintf(tmp, "Running %s with option %s...", name, option);
+    Gmsh_SendString(s, GMSH_CLIENT_INFO, tmp);
+    for(i = 0; i < 10; i++) {
+      sprintf(tmp, "%d %% complete", 10 * i);
+      Gmsh_SendString(s, GMSH_CLIENT_PROGRESS, tmp);
+      /* Fake some cpu-intensive calculation during 100ms: */
+#if !defined(WIN32) || defined(__CYGWIN__)
+      usleep(100 * 1000);
+#else
+      Sleep(100);
+#endif
+    }
+    sprintf(tmp, "Done with %s!", name);
+    Gmsh_SendString(s, GMSH_CLIENT_INFO, tmp);
+    file = fopen("solver.pos", "wb");
+    if(!file) {
+      Gmsh_SendString(s, GMSH_CLIENT_ERROR, "Unable to open output file");
+    }
+    else {
+      fprintf(file, "View \"%s\"{\n", option);
+      fprintf(file, "ST(0,0,0,1,0,0,0,1,0){0,1,2};\n");
+      fprintf(file, "};\n");
+      fclose(file);
+      Gmsh_SendString(s, GMSH_CLIENT_MERGE_FILE, "solver.pos");
+    }
+    break;
+  }
+  
+  /* 5. We can now disconnect the solver from Gmsh: */
+  
+  Gmsh_SendString(s, GMSH_CLIENT_STOP, "Goodbye!");
+  Gmsh_Disconnect(s);
+  
   return 0;
 }

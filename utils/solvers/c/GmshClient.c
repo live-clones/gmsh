@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+ * Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -32,12 +32,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef _AIX
+#if defined(_AIX)
 #include <strings.h>
 #endif
 
 #if !defined(WIN32) || defined(__CYGWIN__)
-
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -46,22 +45,19 @@
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <netdb.h>
-
-#else /* pure windows */
-
+#else
 #include <winsock.h>
 #include <process.h>
-
 #endif
 
 /* private functions */
 
-static void Socket_SendData(int socket, void *buffer, int bytes)
+static void Socket_SendData(int socket, const void *buffer, int bytes)
 {
   ssize_t len;
   int sofar, remaining;
-  char *buf;
-  buf = (char *)buffer;
+  const char *buf;
+  buf = (const char *)buffer;
   sofar = 0;
   remaining = bytes;
   do {
@@ -71,7 +67,7 @@ static void Socket_SendData(int socket, void *buffer, int bytes)
   } while(remaining > 0);
 }
 
-static void Socket_Idle(int ms)
+static void Socket_Sleep(int ms)
 {
 #if !defined(WIN32) || defined(__CYGWIN__)
     usleep(1000 * ms);
@@ -80,9 +76,18 @@ static void Socket_Idle(int ms)
 #endif
 }
 
+static void Socket_Close(int s)
+{
+#if !defined(WIN32) || defined(__CYGWIN__)
+  close(s);
+#else
+  closesocket(s);
+#endif
+}
+
 /* public interface */
 
-int Gmsh_Connect(char *sockname)
+int Gmsh_Connect(const char *sockname)
 {
 #if !defined(WIN32) || defined(__CYGWIN__)
   struct sockaddr_un addr_un;
@@ -106,25 +111,10 @@ int Gmsh_Connect(char *sockname)
 
   /* slight delay to be sure that the socket is bound by the
      server before we attempt to connect to it... */
-  Socket_Idle(100);
+  Socket_Sleep(100);
 
   if(strstr(sockname, "/") || strstr(sockname, "\\") || !strstr(sockname, ":")){
     /* UNIX socket (testing ":" is not enough with Windows paths) */
-    portno = -1;
-  }
-  else{
-    /* INET socket */
-    port = strstr(sockname, ":");
-    portno = atoi(port+1);
-    remotelen = strlen(sockname) - strlen(port);
-    if(remotelen > 0)
-      strncpy(remote, sockname, remotelen);
-    remote[remotelen] = '\0';
-  }
-
-  /* create socket */
-
-  if(portno < 0){
 #if !defined(WIN32) || defined(__CYGWIN__)
     sock = socket(PF_UNIX, SOCK_STREAM, 0);
     if(sock < 0)
@@ -136,7 +126,7 @@ int Gmsh_Connect(char *sockname)
     for(tries = 0; tries < 5; tries++) {
       if(connect(sock, (struct sockaddr *)&addr_un, sizeof(addr_un)) >= 0)
 	return sock;
-      Socket_Idle(100);
+      Socket_Sleep(100);
     }
 #else
     /* Unix sockets are not available on Windows without Cygwin */
@@ -144,11 +134,20 @@ int Gmsh_Connect(char *sockname)
 #endif
   }
   else{
+    /* TCP/IP socket */
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if(sock < 0)
       return -1; /* Error: Couldn't create socket */
-    if(!(server = gethostbyname(remote)))
+    port = strstr(sockname, ":");
+    portno = atoi(port+1);
+    remotelen = strlen(sockname) - strlen(port);
+    if(remotelen > 0)
+      strncpy(remote, sockname, remotelen);
+    remote[remotelen] = '\0';
+    if(!(server = gethostbyname(remote))){
+      Socket_Close(sock);
       return -3; /* Error: No such host */
+    }
     /* try to connect socket to given name */
     memset((char *) &addr_in, 0, sizeof(addr_in));
     addr_in.sin_family = AF_INET;
@@ -157,14 +156,14 @@ int Gmsh_Connect(char *sockname)
     for(tries = 0; tries < 5; tries++) {
       if(connect(sock, (struct sockaddr *)&addr_in, sizeof(addr_in)) >= 0)
 	return sock;
-      Socket_Idle(100);
+      Socket_Sleep(100);
     }
   }
-
+  Socket_Close(sock);
   return -2; /* Error: Couldn't connect */
 }
 
-void Gmsh_SendString(int socket, int type, char str[])
+void Gmsh_SendString(int socket, int type, const char *str)
 {
   int len = strlen(str);
   Socket_SendData(socket, &type, sizeof(int));
@@ -174,10 +173,8 @@ void Gmsh_SendString(int socket, int type, char str[])
 
 void Gmsh_Disconnect(int sock)
 {
-#if !defined(WIN32) || defined(__CYGWIN__)
-  close(sock);
-#else
-  closesocket(sock);
+  Socket_Close(sock);
+#if defined(WIN32) && !defined(__CYGWIN__)
   WSACleanup();
 #endif
 }
