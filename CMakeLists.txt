@@ -30,10 +30,10 @@ option(ENABLE_KBIPACK "Enable Kbipack for homology solver" ON)
 option(ENABLE_MATHEX "Enable MathEx expression parser" ON)
 option(ENABLE_MED "Enable MED mesh and post-processing file formats" ON)
 option(ENABLE_METIS "Enable Metis mesh partitioner" ON)
+option(ENABLE_MSVC_STATIC_RUNTIME "Use static Visual C++ runtime" OFF)
 option(ENABLE_NATIVE_FILE_CHOOSER "Enable native file chooser in GUI" ON)
 option(ENABLE_NETGEN "Enable Netgen mesh generator" ON)
 option(ENABLE_OCC "Enable OpenCASCADE geometrical models" ON)
-option(ENABLE_OOFELIE "Set compiler options to match oofelie settings" OFF)
 option(ENABLE_OSMESA "Use OSMesa for offscreen rendering" OFF)
 option(ENABLE_PARSER "Build the GEO file parser" ON)
 option(ENABLE_PETSC "Enable PETSc linear algebra solvers" ON)
@@ -112,6 +112,17 @@ if(MSVC)
   # remove really annoying (and stupid, and wrong) warning about
   # bool/int cast performance in Visual C++
   set(GMSH_CONFIG_PRAGMAS "#pragma warning(disable:4800)")
+  if(ENABLE_MSVC_STATIC_RUNTIME)
+    foreach(VAR
+            CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
+            CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO
+            CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
+            CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO)
+      if(${VAR} MATCHES "/MD")
+        string(REGEX REPLACE "/MD" "/MT" ${VAR} "${${VAR}}")
+      endif(${VAR} MATCHES "/MD")
+    endforeach(VAR)
+  endif(ENABLE_MSVC_STATIC_RUNTIME)
 endif(MSVC)
 
 macro(append_gmsh_src DIRNAME FILES)
@@ -513,8 +524,8 @@ if(ENABLE_PETSC)
     # find include directories
     list(APPEND EXTERNAL_INCLUDES ${ENV_PETSC_DIR}/include)
     list(APPEND EXTERNAL_INCLUDES ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/include)
-    string(REGEX MATCH "PACKAGES_INCLUDES = [-_/\\.:,a-zA-Z0-9 ]*" 
-           PETSC_PACKAGES_INCLUDES ${PETSC_VARIABLES})
+    string(REGEX MATCH "PACKAGES_INCLUDES = [^\n\r]*" PETSC_PACKAGES_INCLUDES
+           ${PETSC_VARIABLES})
     string(REPLACE "PACKAGES_INCLUDES = " "" PETSC_PACKAGES_INCLUDES
            ${PETSC_PACKAGES_INCLUDES})
     string(REPLACE "-I" "" PETSC_PACKAGES_INCLUDES ${PETSC_PACKAGES_INCLUDES})
@@ -526,7 +537,7 @@ if(ENABLE_PETSC)
     set(PETSC_LIBS_REQUIRED petscksp petscdm petscmat petscvec petsc)
     find_all_libraries(PETSC_LIBS PETSC_LIBS_REQUIRED 
                        ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib "")
-    string(REGEX MATCH "PACKAGES_LIBS = [-_/\\.:,a-zA-Z0-9 ]*" PETSC_PACKAGES_LIBS
+    string(REGEX MATCH "PACKAGES_LIBS = [^\n\r]*" PETSC_PACKAGES_LIBS
            ${PETSC_VARIABLES})
     string(REPLACE "PACKAGES_LIBS = " "" PETSC_PACKAGES_LIBS
            ${PETSC_PACKAGES_LIBS})
@@ -684,9 +695,6 @@ add_library(lib STATIC EXCLUDE_FROM_ALL ${GMSH_SRC})
 set_target_properties(lib PROPERTIES OUTPUT_NAME Gmsh)
 if(MSVC)
   SET_TARGET_PROPERTIES(lib PROPERTIES DEBUG_POSTFIX d) 
-  if(ENABLE_OOFELIE)
-    include(${CMAKE_SOURCE_DIR}/utils/misc/withOOFELIE.cmake)
-  endif(ENABLE_OOFELIE)
 endif(MSVC)
 
 # shared library target: we don't build it by default either

@@ -155,7 +155,7 @@ static void file_remote_cb(Fl_Widget *w, void *data)
 
   if(str == "start"){
     if(server){
-      Msg::Error("Cannot start: server is already running");
+      Msg::Error("Cannot start: remote Gmsh is already running");
       return;
     }
     ConnectionManager::get(99)->name = "Remote";
@@ -166,7 +166,7 @@ static void file_remote_cb(Fl_Widget *w, void *data)
   }
   else{
     if(!server){
-      Msg::Error("Cannot %s: server not running", str.c_str());
+      Msg::Error("Cannot %s: remote Gmsh not running", str.c_str());
       return;
     }
     if(str == "stop"){
