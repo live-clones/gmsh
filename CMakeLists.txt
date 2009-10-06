@@ -698,7 +698,10 @@ endforeach(DIR)
 add_library(lib STATIC EXCLUDE_FROM_ALL ${GMSH_SRC})
 set_target_properties(lib PROPERTIES OUTPUT_NAME Gmsh)
 if(MSVC)
-  SET_TARGET_PROPERTIES(lib PROPERTIES DEBUG_POSTFIX d) 
+  set_target_properties(lib PROPERTIES DEBUG_POSTFIX d) 
+  if(ENABLE_MSVC_STATIC_RUNTIME)
+    set_target_properties(lib PROPERTIES LINK_FLAGS_RELEASE "/nodefaultlib:LIBCMT")
+  endif(ENABLE_MSVC_STATIC_RUNTIME)
 endif(MSVC)
 
 # shared library target: we don't build it by default either
