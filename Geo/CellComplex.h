@@ -54,6 +54,7 @@ class Cell
    int _tag;
    int _index; 
    
+   bool _immune;
       
    // cells on the boundary and on the coboundary of thhis cell
    std::list< std::pair<int, Cell*> > _boundary;
@@ -67,6 +68,7 @@ class Cell
      _cbdSize = 0;
      _combined = false;
      _index = 0;
+     _immune = false;
    }
    virtual ~Cell(){}
    
@@ -76,7 +78,9 @@ class Cell
    virtual int getIndex() const { return _index; };
    virtual void setIndex(int index) { _index = index; };
    virtual int getNum() { return -1; }
-
+   virtual void setImmune(bool immune) { _immune = immune; };
+   virtual bool getImmune() const { return _immune; };
+   
    // get the number of vertices this cell has
    virtual int getNumVertices() const = 0;
    virtual MVertex* getVertex(int vertex) const = 0; //{return _vertices.at(vertex);}
@@ -860,6 +864,7 @@ class CellComplex
    //std::set<Cell*, Less_Cell>  _cells2[4];
    std::list<Cell*> _trash;
    
+   std::vector< std::set<Cell*, Less_Cell> > _store;
    
    //std::set<Cell*, Less_Cell>  _originalCells[4];
    
@@ -890,10 +895,10 @@ class CellComplex
   public:
    // reduction of this cell complex
    // removes reduction pairs of cell of dimension dim and dim-1
-   int reduction(int dim);
+   int reduction(int dim, int omitted=0);
   private:
    // queued coreduction presented in Mrozek's paper
-   int coreduction(Cell* generator);
+   int coreduction(Cell* generator, int omitted=0);
  
    
   public: 
@@ -1022,6 +1027,20 @@ class CellComplex
      return getSize(0) - getSize(1) + getSize(2) - getSize(3);
    }
    void printEuler(){ printf("Euler characteristic: %d. \n", eulerCharacteristic()); }
+   
+   int getNumOmitted() { return _store.size(); };
+   std::set<Cell*, Less_Cell> getOmitted(int i) { return _store.at(i); }
+   
+   void setImmuneCell(int num){
+     for(int i = 0; i < 4; i++){
+       for(citer cit = firstCell(i); cit != lastCell(i); cit++){
+         Cell* cell = *cit;
+         if(cell->getNum() == num) cell->setImmune(true);
+       }
+     }
+     
+   }
+     
    
    // change roles of boundaries and coboundaries of the cells in this cell complex
    // equivalent to transposing boundary operator matrices

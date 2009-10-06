@@ -150,19 +150,22 @@
      tGMSH_MAJOR_VERSION = 366,
      tGMSH_MINOR_VERSION = 367,
      tGMSH_PATCH_VERSION = 368,
-     tAFFECTDIVIDE = 369,
-     tAFFECTTIMES = 370,
-     tAFFECTMINUS = 371,
-     tAFFECTPLUS = 372,
-     tOR = 373,
-     tAND = 374,
-     tNOTEQUAL = 375,
-     tEQUAL = 376,
-     tGREATEROREQUAL = 377,
-     tLESSOREQUAL = 378,
-     UNARYPREC = 379,
-     tMINUSMINUS = 380,
-     tPLUSPLUS = 381
+     tHomRank = 369,
+     tHomGen = 370,
+     tHomCut = 371,
+     tAFFECTDIVIDE = 372,
+     tAFFECTTIMES = 373,
+     tAFFECTMINUS = 374,
+     tAFFECTPLUS = 375,
+     tOR = 376,
+     tAND = 377,
+     tNOTEQUAL = 378,
+     tEQUAL = 379,
+     tGREATEROREQUAL = 380,
+     tLESSOREQUAL = 381,
+     UNARYPREC = 382,
+     tMINUSMINUS = 383,
+     tPLUSPLUS = 384
    };
 #endif
 /* Tokens.  */
@@ -277,26 +280,29 @@
 #define tGMSH_MAJOR_VERSION 366
 #define tGMSH_MINOR_VERSION 367
 #define tGMSH_PATCH_VERSION 368
-#define tAFFECTDIVIDE 369
-#define tAFFECTTIMES 370
-#define tAFFECTMINUS 371
-#define tAFFECTPLUS 372
-#define tOR 373
-#define tAND 374
-#define tNOTEQUAL 375
-#define tEQUAL 376
-#define tGREATEROREQUAL 377
-#define tLESSOREQUAL 378
-#define UNARYPREC 379
-#define tMINUSMINUS 380
-#define tPLUSPLUS 381
+#define tHomRank 369
+#define tHomGen 370
+#define tHomCut 371
+#define tAFFECTDIVIDE 372
+#define tAFFECTTIMES 373
+#define tAFFECTMINUS 374
+#define tAFFECTPLUS 375
+#define tOR 376
+#define tAND 377
+#define tNOTEQUAL 378
+#define tEQUAL 379
+#define tGREATEROREQUAL 380
+#define tLESSOREQUAL 381
+#define UNARYPREC 382
+#define tMINUSMINUS 383
+#define tPLUSPLUS 384
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 78 "Gmsh.y"
+#line 82 "Gmsh.y"
 {
   char *c;
   int i;
@@ -306,8 +312,8 @@ typedef union YYSTYPE
   Shape s;
   List_T *l;
 }
-/* Line 1529 of yacc.c.  */
-#line 311 "Gmsh.tab.hpp"
+/* Line 1489 of yacc.c.  */
+#line 317 "Gmsh.tab.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

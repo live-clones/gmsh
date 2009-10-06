@@ -209,6 +209,10 @@ Using                   return tUsing;
 
 Volume                  return tVolume;
 
+HomRank                 return tHomRank;
+HomGen                  return tHomGen;
+HomCut                  return tHomCut;
+
 {digit}+ |
 {digit}+"."{digit}*({exp})? |
 {digit}*"."{digit}+({exp})? |

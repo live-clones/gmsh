@@ -44,6 +44,10 @@
 #include "drawContext.h"
 #endif
 
+#if defined(HAVE_KBIPACK)
+#include "Homology.h"
+#endif
+
 // Global parser variables
 std::string gmsh_yyname;
 int gmsh_yyerrorstate = 0;
@@ -106,6 +110,8 @@ fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
 %token tField tReturn tCall tFunction tShow tHide tGetValue
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
+%token tHomRank tHomGen tHomCut
+
 
 %type <d> FExpr FExpr_Single 
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
@@ -170,6 +176,7 @@ GeoFormatItem :
   | Loop        { return 1; }
   | Command     { return 1; }
   | LevelSet    { return 1; }
+  | Homology    { return 1; }
 ;
 
 SendToFile :
@@ -3239,6 +3246,105 @@ Coherence :
     }
 ;
 
+
+//  H O M O L O G Y
+Homology : 
+
+    tHomRank ListOfDouble ',' ListOfDouble tEND
+    {
+    #if defined(HAVE_KBIPACK)
+    List_T *temp = ListOfDouble2ListOfInt($2);
+    std::vector<int> domain;
+    
+    for (unsigned int i = 0; i < List_Nbr(temp); i++){
+      int item = 0;
+      List_Read(temp, i, &item);
+      domain.push_back(item);
+    }
+    List_Delete($2);
+    List_Delete(temp);
+    
+    List_T *temp2 = ListOfDouble2ListOfInt($4);
+    std::vector<int> subdomain;
+    for (unsigned int i = 0; i < List_Nbr(temp2); i++){
+      int item = 0;
+      List_Read(temp2, i, &item);
+      subdomain.push_back(item);
+    }
+    List_Delete($4);
+    List_Delete(temp2);
+    
+    
+    Homology* homology = new Homology(GModel::current(), domain, subdomain);
+    homology->computeBettiNumbers();
+    delete homology;  
+    #endif
+    }
+    
+  | tHomGen '(' StringExprVar ')' tAFFECT ListOfDouble ',' ListOfDouble tEND
+    {
+    #if defined(HAVE_KBIPACK)
+    List_T *temp = ListOfDouble2ListOfInt($6);
+    std::vector<int> domain;
+    
+    for (unsigned int i = 0; i < List_Nbr(temp); i++){
+      int item = 0;
+      List_Read(temp, i, &item);
+      domain.push_back(item);
+    }
+    List_Delete($6);
+    List_Delete(temp);
+    
+    List_T *temp2 = ListOfDouble2ListOfInt($8);
+    std::vector<int> subdomain;
+    for (unsigned int i = 0; i < List_Nbr(temp2); i++){
+      int item = 0;
+      List_Read(temp2, i, &item);
+      subdomain.push_back(item);
+    }
+    List_Delete($8);
+    List_Delete(temp2);
+    
+    std::string fileName = $3;
+    
+    Homology* homology = new Homology(GModel::current(), domain, subdomain);
+    homology->findGenerators(fileName);
+    delete homology;
+    #endif
+    }
+    
+  | tHomCut '(' StringExprVar ')' tAFFECT ListOfDouble ',' ListOfDouble tEND
+    {
+    #if defined(HAVE_KBIPACK)
+        List_T *temp = ListOfDouble2ListOfInt($6);
+    std::vector<int> domain;
+    
+    for (unsigned int i = 0; i < List_Nbr(temp); i++){
+      int item = 0;
+      List_Read(temp, i, &item);
+      domain.push_back(item);
+    }
+    List_Delete($6);
+    List_Delete(temp);
+    
+    List_T *temp2 = ListOfDouble2ListOfInt($8);
+    std::vector<int> subdomain;
+    for (unsigned int i = 0; i < List_Nbr(temp2); i++){
+      int item = 0;
+      List_Read(temp2, i, &item);
+      subdomain.push_back(item);
+    }
+    List_Delete($8);
+    List_Delete(temp2);
+    
+    std::string fileName = $3;
+    
+    Homology* homology = new Homology(GModel::current(), domain, subdomain);
+    homology->findDualGenerators(fileName);
+    delete homology;
+    #endif
+    }
+;
 
 //  G E N E R A L
 

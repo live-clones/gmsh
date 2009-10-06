@@ -114,12 +114,12 @@ void Homology::findGenerators(std::string fileName){
   int HRank[4];
   for(int j = 0; j < 4; j++){
     HRank[j] = 0;
+    std::string dimension;
+    convert(j, dimension);
     for(int i = 1; i <= chains->getBasisSize(j); i++){
       
       std::string generator;
-      std::string dimension;
       convert(i, generator);
-      convert(j, dimension);
       
       std::string name = dimension + "D Generator " + generator;
       Chain* chain = new Chain(_cellComplex->getCells(j), chains->getCoeffVector(j,i), _cellComplex, name, chains->getTorsion(j,i));
@@ -130,6 +130,21 @@ void Homology::findGenerators(std::string fileName){
       }
       delete chain;
     }
+    if(j == _cellComplex->getDim() && _cellComplex->getNumOmitted() > 0){
+      for(int i = 0; i < _cellComplex->getNumOmitted(); i++){
+        std::string generator;
+        convert(i+1, generator);
+        std::string name = dimension + "D Generator " + generator;
+        std::vector<int> coeffs (_cellComplex->getOmitted(i).size(),1);
+        Chain* chain = new Chain(_cellComplex->getOmitted(i), coeffs, _cellComplex, name, 1);
+        chain->writeChainMSH(fileName);
+        if(chain->getSize() != 0) HRank[j] = HRank[j] + 1;
+        delete chain;
+        
+      }
+    }
+    
+    
   }
   
   Msg::Info("Ranks of homology groups for primal cell complex:");
@@ -140,6 +155,7 @@ void Homology::findGenerators(std::string fileName){
   if(omitted != 0) Msg::Info("The computation of generators in %d highest dimensions was omitted.", _omit);
   
   Msg::Info("Wrote results to %s.", fileName.c_str());
+  printf("Wrote results to %s. \n", fileName.c_str());
   
   delete chains;
   
@@ -204,12 +220,13 @@ void Homology::findDualGenerators(std::string fileName){
   int HRank[4];
   for(int i = 0; i < 4; i++) HRank[i] = 0;
   for(int j = 3; j > -1; j--){
+    std::string dimension;
+    convert(dim-j, dimension);
+
     for(int i = 1; i <= chains->getBasisSize(j); i++){
       
       std::string generator;
-      std::string dimension;
       convert(i, generator);
-      convert(dim-j, dimension);
       
       std::string name = dimension + "D Dual generator " + generator;
       Chain* chain = new Chain(_cellComplex->getCells(j), chains->getCoeffVector(j,i), _cellComplex, name, chains->getTorsion(j,i));
@@ -221,6 +238,23 @@ void Homology::findDualGenerators(std::string fileName){
       delete chain;
             
     }
+    
+    
+    if(j == 0 && _cellComplex->getNumOmitted() > 0){
+      for(int i = 0; i < _cellComplex->getNumOmitted(); i++){
+        std::string generator;
+        convert(i+1, generator);
+        std::string name = dimension + "D Dual generator " + generator;
+        std::vector<int> coeffs (_cellComplex->getOmitted(i).size(),1);
+        Chain* chain = new Chain(_cellComplex->getOmitted(i), coeffs, _cellComplex, name, 1);
+        chain->writeChainMSH(fileName);
+        if(chain->getSize() != 0) HRank[dim-j] = HRank[dim-j] + 1;
+        delete chain;
+        
+      }
+    }
+    
+    
   }
    
   Msg::Info("Ranks of homology groups for dual cell complex:");
@@ -231,6 +265,7 @@ void Homology::findDualGenerators(std::string fileName){
   if(omitted != 0) Msg::Info("The computation of %d highest dimension dual generators was omitted.", _omit);
   
   Msg::Info("Wrote results to %s.", fileName.c_str());
+  printf("Wrote results to %s. \n", fileName.c_str());
   
   delete chains;
   
