@@ -408,68 +408,68 @@ static yyconst flex_int16_t yy_accept[645] =
        27,   30,  148,  148,  148,  148,  148,  148,  148,  148,
       148,  148,  148,  148,  148,  148,  148,  148,  148,  148,
       148,  148,  148,  148,  148,  148,  148,  148,  148,  148,
-      148,  148,  148,  148,  148,  148,   86,   85,  148,  148,
+      148,  148,  148,  148,  148,  148,   89,   88,  148,  148,
 
       148,  148,  148,  148,  148,  148,  148,  148,  148,  148,
-      104,  148,  148,  148,  148,  148,  148,  148,  148,  148,
-      148,  148,  148,  148,  148,  148,  131,  132,  148,  148,
+      107,  148,  148,  148,  148,  148,  148,  148,  148,  148,
+      148,  148,  148,  148,  148,  148,  134,  135,  148,  148,
       148,  148,  148,  148,  148,   23,   22,    0,  145,    0,
         0,  147,  148,  148,  148,  148,  148,  148,  148,  148,
       148,  148,  148,  148,  148,  148,  148,  148,  148,   49,
       148,  148,  148,  148,  148,  148,  148,  148,  148,   63,
       148,  148,  148,  148,  148,   76,  148,  148,  148,  148,
       148,  148,  148,  148,  148,  148,  148,  148,  148,  148,
-       93,  148,  148,  148,  148,  148,  148,  148,  148,  148,
+       96,  148,  148,  148,  148,  148,  148,  148,  148,  148,
 
       148,  148,  148,  148,  148,  148,  148,  148,  148,  148,
-      118,  148,  148,  148,  148,  148,  148,  148,  148,  148,
-      148,  137,  148,  148,  148,  148,  148,    0,  146,    0,
+      121,  148,  148,  148,  148,  148,  148,  148,  148,  148,
+      148,  140,  148,  148,  148,  148,  148,    0,  146,    0,
         0,  145,   31,  148,  148,  148,  148,   35,   37,  148,
       148,  148,   57,  148,   44,  148,  148,  148,  148,  148,
       148,  148,   48,  148,  148,  148,  148,   62,  148,  148,
       148,  148,   71,  148,   72,  148,  148,   75,  148,  148,
       148,   82,   83,  148,  148,  148,  148,  148,  148,  148,
-      148,  148,  148,   91,  148,   92,  148,  148,  148,  148,
-      148,  148,  148,  148,  148,  148,  148,  148,  114,  148,
+      148,  148,  148,   94,  148,   95,  148,  148,  148,  148,
+      148,  148,  148,  148,  148,  148,  148,  148,  117,  148,
 
-      148,  148,  148,  128,  119,  148,  148,  148,  148,  117,
-      148,  148,  148,  148,  148,  148,  133,  136,  148,  148,
+      148,  148,  148,  131,  122,  148,  148,  148,  148,  120,
+      148,  148,  148,  148,  148,  148,  136,  139,  148,  148,
       148,  148,   10,   15,    9,    8,  148,   12,   14,    0,
       145,   33,  148,  148,  148,   39,  148,  148,  148,  148,
       148,  148,  148,   52,  148,  148,  148,  148,  148,  148,
       148,  148,  148,  148,   69,  148,  148,   73,   74,  148,
-      148,  148,  148,  148,  148,   84,  148,  148,   89,  148,
-      148,  148,   94,  148,  148,  148,  100,  148,  101,  148,
-      148,  105,  148,  106,  148,  148,  148,  148,  148,  113,
-      148,  148,  148,  122,  148,  148,  148,  148,  148,  148,
+      148,  148,  148,  148,  148,   87,  148,  148,   92,  148,
+      148,  148,   97,  148,  148,  148,  103,  148,  104,  148,
+      148,  108,  148,  109,  148,  148,  148,  148,  148,  116,
+      148,  148,  148,  125,  148,  148,  148,  148,  148,  148,
 
-      148,  138,  148,  139,  148,   11,  148,   13,  148,   32,
+      148,  141,  148,  142,  148,   11,  148,   13,  148,   32,
        36,   38,  148,   41,  148,  148,  148,   45,  148,  148,
       148,  148,  148,  148,  148,  148,   59,   61,  148,  148,
-       68,  148,  148,  148,  148,  148,  148,  143,  142,  148,
-      148,  148,   95,   90,  148,  148,  148,   97,  148,  148,
-      148,  110,  148,  109,  148,  115,  112,  148,  120,  121,
-      148,  125,  148,  148,  148,  148,  148,  148,  148,  140,
+       68,  148,  148,  148,  148,  148,  148,   86,   85,  148,
+      148,  148,   98,   93,  148,  148,  148,  100,  148,  148,
+      148,  113,  148,  112,  148,  118,  115,  148,  123,  124,
+      148,  128,  148,  148,  148,  148,  148,  148,  148,  143,
         7,  148,   40,   42,  148,  148,  148,  148,  148,   47,
        51,  148,  148,  148,  148,   65,  148,  148,  148,   66,
-      148,  148,  148,  148,  148,  141,  148,  148,  148,  148,
+      148,  148,  148,  148,  148,   84,  148,  148,  148,  148,
 
-      148,  148,  148,  148,  148,  148,  148,  124,  148,  148,
-      123,  148,  148,  148,  148,  148,  148,  148,  148,  148,
+      148,  148,  148,  148,  148,  148,  148,  127,  148,  148,
+      126,  148,  148,  148,  148,  148,  148,  148,  148,  148,
       148,   54,  148,  148,  148,   64,   67,  148,   77,  148,
-      148,  148,   78,  148,  148,   96,   98,   99,  102,  148,
-      103,  148,  148,  116,  148,  148,  129,  148,  148,  148,
+      148,  148,   78,  148,  148,   99,  101,  102,  105,  148,
+      106,  148,  148,  119,  148,  148,  132,  148,  148,  148,
       148,  148,  148,  148,   46,  148,  148,  148,  148,   70,
-      148,  148,  148,  148,   87,  148,  148,  111,  126,  148,
-      130,  148,  135,  148,  148,   56,  148,   53,  148,  148,
-      148,  148,  148,  148,  148,  107,  148,  148,  148,  148,
-       43,  148,   55,  148,   60,  148,  148,  148,  148,  108,
+      148,  148,  148,  148,   90,  148,  148,  114,  129,  148,
+      133,  148,  138,  148,  148,   56,  148,   53,  148,  148,
+      148,  148,  148,  148,  148,  110,  148,  148,  148,  148,
+       43,  148,   55,  148,   60,  148,  148,  148,  148,  111,
 
-      127,  134,  148,  148,  148,  148,  148,  148,  148,  148,
+      130,  137,  148,  148,  148,  148,  148,  148,  148,  148,
       148,  148,  148,  148,  148,  148,  148,   50,   58,  148,
       148,  148,  148,  148,  148,  148,  148,  148,   34,  148,
       148,  148,  148,  148,  148,  148,  148,   79,   80,   81,
-      148,  148,   88,    0
+      148,  148,   91,    0
     } ;
 
 static yyconst flex_int32_t yy_ec[256] =
@@ -1604,327 +1604,327 @@ return tHole;
 case 84:
 YY_RULE_SETUP
 #line 142 "Gmsh.l"
-return tHypot;
+return tHomRank;
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 144 "Gmsh.l"
-return tIn;
+#line 143 "Gmsh.l"
+return tHomGen;
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 145 "Gmsh.l"
-return tIf;
+#line 144 "Gmsh.l"
+return tHomCut;
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 146 "Gmsh.l"
-return tIntersect;
+#line 145 "Gmsh.l"
+return tHypot;
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
 #line 147 "Gmsh.l"
-return tInterpolationScheme;
+return tIn;
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 149 "Gmsh.l"
-return tNurbsKnots;
+#line 148 "Gmsh.l"
+return tIf;
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 151 "Gmsh.l"
-return tLength;
+#line 149 "Gmsh.l"
+return tIntersect;
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 152 "Gmsh.l"
-return tLine;
+#line 150 "Gmsh.l"
+return tInterpolationScheme;
 	YY_BREAK
 case 92:
 YY_RULE_SETUP
-#line 153 "Gmsh.l"
-return tLoop;
+#line 152 "Gmsh.l"
+return tNurbsKnots;
 	YY_BREAK
 case 93:
 YY_RULE_SETUP
 #line 154 "Gmsh.l"
-return tLog;
+return tLength;
 	YY_BREAK
 case 94:
 YY_RULE_SETUP
 #line 155 "Gmsh.l"
-return tLog10;
+return tLine;
 	YY_BREAK
 case 95:
 YY_RULE_SETUP
 #line 156 "Gmsh.l"
-return tLayers;
+return tLoop;
 	YY_BREAK
 case 96:
 YY_RULE_SETUP
 #line 157 "Gmsh.l"
-return tLevelset;
+return tLog;
 	YY_BREAK
 case 97:
 YY_RULE_SETUP
-#line 159 "Gmsh.l"
-return tModulo;
+#line 158 "Gmsh.l"
+return tLog10;
 	YY_BREAK
 case 98:
 YY_RULE_SETUP
-#line 160 "Gmsh.l"
-return tMPI_Rank;
+#line 159 "Gmsh.l"
+return tLayers;
 	YY_BREAK
 case 99:
 YY_RULE_SETUP
-#line 161 "Gmsh.l"
-return tMPI_Size;
+#line 160 "Gmsh.l"
+return tLevelset;
 	YY_BREAK
 case 100:
 YY_RULE_SETUP
-#line 163 "Gmsh.l"
-return tNurbs;
+#line 162 "Gmsh.l"
+return tModulo;
 	YY_BREAK
 case 101:
 YY_RULE_SETUP
-#line 165 "Gmsh.l"
-return tNurbsOrder;
+#line 163 "Gmsh.l"
+return tMPI_Rank;
 	YY_BREAK
 case 102:
 YY_RULE_SETUP
-#line 166 "Gmsh.l"
-return tOCCShape;
+#line 164 "Gmsh.l"
+return tMPI_Size;
 	YY_BREAK
 case 103:
 YY_RULE_SETUP
-#line 168 "Gmsh.l"
-return tPhysical;
+#line 166 "Gmsh.l"
+return tNurbs;
 	YY_BREAK
 case 104:
 YY_RULE_SETUP
-#line 169 "Gmsh.l"
-return tPi;
+#line 168 "Gmsh.l"
+return tNurbsOrder;
 	YY_BREAK
 case 105:
 YY_RULE_SETUP
-#line 170 "Gmsh.l"
-return tPlane;
+#line 169 "Gmsh.l"
+return tOCCShape;
 	YY_BREAK
 case 106:
 YY_RULE_SETUP
 #line 171 "Gmsh.l"
-return tPoint;
+return tPhysical;
 	YY_BREAK
 case 107:
 YY_RULE_SETUP
 #line 172 "Gmsh.l"
-return tParametric;
+return tPi;
 	YY_BREAK
 case 108:
 YY_RULE_SETUP
 #line 173 "Gmsh.l"
-return tPolarSphere;
+return tPlane;
 	YY_BREAK
 case 109:
 YY_RULE_SETUP
 #line 174 "Gmsh.l"
-return tPrintf;
+return tPoint;
 	YY_BREAK
 case 110:
 YY_RULE_SETUP
 #line 175 "Gmsh.l"
-return tPlugin;
+return tParametric;
 	YY_BREAK
 case 111:
 YY_RULE_SETUP
-#line 177 "Gmsh.l"
-return tRecombine;
+#line 176 "Gmsh.l"
+return tPolarSphere;
 	YY_BREAK
 case 112:
 YY_RULE_SETUP
-#line 178 "Gmsh.l"
-return tRotate;
+#line 177 "Gmsh.l"
+return tPrintf;
 	YY_BREAK
 case 113:
 YY_RULE_SETUP
-#line 179 "Gmsh.l"
-return tRuled;
+#line 178 "Gmsh.l"
+return tPlugin;
 	YY_BREAK
 case 114:
 YY_RULE_SETUP
 #line 180 "Gmsh.l"
-return tRand;
+return tRecombine;
 	YY_BREAK
 case 115:
 YY_RULE_SETUP
 #line 181 "Gmsh.l"
-return tReturn;
+return tRotate;
 	YY_BREAK
 case 116:
 YY_RULE_SETUP
-#line 183 "Gmsh.l"
-return tSmoother;
+#line 182 "Gmsh.l"
+return tRuled;
 	YY_BREAK
 case 117:
 YY_RULE_SETUP
-#line 184 "Gmsh.l"
-return tSqrt;
+#line 183 "Gmsh.l"
+return tRand;
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
-#line 185 "Gmsh.l"
-return tSin;
+#line 184 "Gmsh.l"
+return tReturn;
 	YY_BREAK
 case 119:
 YY_RULE_SETUP
 #line 186 "Gmsh.l"
-return tSinh;
+return tSmoother;
 	YY_BREAK
 case 120:
 YY_RULE_SETUP
 #line 187 "Gmsh.l"
-return tSphere;
+return tSqrt;
 	YY_BREAK
 case 121:
 YY_RULE_SETUP
 #line 188 "Gmsh.l"
-return tSpline;
+return tSin;
 	YY_BREAK
 case 122:
 YY_RULE_SETUP
 #line 189 "Gmsh.l"
-return tSplit;
+return tSinh;
 	YY_BREAK
 case 123:
 YY_RULE_SETUP
 #line 190 "Gmsh.l"
-return tSurface;
+return tSphere;
 	YY_BREAK
 case 124:
 YY_RULE_SETUP
 #line 191 "Gmsh.l"
-return tSprintf;
+return tSpline;
 	YY_BREAK
 case 125:
 YY_RULE_SETUP
 #line 192 "Gmsh.l"
-return tStrCat;
+return tSplit;
 	YY_BREAK
 case 126:
 YY_RULE_SETUP
 #line 193 "Gmsh.l"
-return tStrPrefix;
+return tSurface;
 	YY_BREAK
 case 127:
 YY_RULE_SETUP
 #line 194 "Gmsh.l"
-return tStrRelative;
+return tSprintf;
 	YY_BREAK
 case 128:
 YY_RULE_SETUP
 #line 195 "Gmsh.l"
-return tShow;
+return tStrCat;
 	YY_BREAK
 case 129:
 YY_RULE_SETUP
 #line 196 "Gmsh.l"
-return tSymmetry;
+return tStrPrefix;
 	YY_BREAK
 case 130:
 YY_RULE_SETUP
 #line 197 "Gmsh.l"
-return tSyncModel;
+return tStrRelative;
 	YY_BREAK
 case 131:
 YY_RULE_SETUP
-#line 199 "Gmsh.l"
-return tText2D;
+#line 198 "Gmsh.l"
+return tShow;
 	YY_BREAK
 case 132:
 YY_RULE_SETUP
-#line 200 "Gmsh.l"
-return tText3D;
+#line 199 "Gmsh.l"
+return tSymmetry;
 	YY_BREAK
 case 133:
 YY_RULE_SETUP
-#line 201 "Gmsh.l"
-return tTime;
+#line 200 "Gmsh.l"
+return tSyncModel;
 	YY_BREAK
 case 134:
 YY_RULE_SETUP
 #line 202 "Gmsh.l"
-return tTransfinite;
+return tText2D;
 	YY_BREAK
 case 135:
 YY_RULE_SETUP
 #line 203 "Gmsh.l"
-return tTranslate;
+return tText3D;
 	YY_BREAK
 case 136:
 YY_RULE_SETUP
 #line 204 "Gmsh.l"
-return tTanh;
+return tTime;
 	YY_BREAK
 case 137:
 YY_RULE_SETUP
 #line 205 "Gmsh.l"
-return tTan;
+return tTransfinite;
 	YY_BREAK
 case 138:
 YY_RULE_SETUP
 #line 206 "Gmsh.l"
-return tToday;
+return tTranslate;
 	YY_BREAK
 case 139:
 YY_RULE_SETUP
-#line 208 "Gmsh.l"
-return tUsing;
+#line 207 "Gmsh.l"
+return tTanh;
 	YY_BREAK
 case 140:
 YY_RULE_SETUP
-#line 210 "Gmsh.l"
-return tVolume;
+#line 208 "Gmsh.l"
+return tTan;
 	YY_BREAK
 case 141:
 YY_RULE_SETUP
-#line 212 "Gmsh.l"
-return tHomRank;
+#line 209 "Gmsh.l"
+return tToday;
 	YY_BREAK
 case 142:
 YY_RULE_SETUP
-#line 213 "Gmsh.l"
-return tHomGen;
+#line 211 "Gmsh.l"
+return tUsing;
 	YY_BREAK
 case 143:
 YY_RULE_SETUP
-#line 214 "Gmsh.l"
-return tHomCut;
+#line 213 "Gmsh.l"
+return tVolume;
 	YY_BREAK
 case 144:
-#line 217 "Gmsh.l"
+#line 216 "Gmsh.l"
 case 145:
-#line 218 "Gmsh.l"
+#line 217 "Gmsh.l"
 case 146:
-#line 219 "Gmsh.l"
+#line 218 "Gmsh.l"
 case 147:
 YY_RULE_SETUP
-#line 219 "Gmsh.l"
+#line 218 "Gmsh.l"
 { gmsh_yylval.d = atof((char *)gmsh_yytext); return tDOUBLE; }
 	YY_BREAK
 case 148:
 YY_RULE_SETUP
-#line 221 "Gmsh.l"
+#line 220 "Gmsh.l"
 { gmsh_yylval.c = strsave((char*)gmsh_yytext); return tSTRING; }
 	YY_BREAK
 case 149:
 YY_RULE_SETUP
-#line 223 "Gmsh.l"
+#line 222 "Gmsh.l"
 return gmsh_yytext[0];
 	YY_BREAK
 case 150:
 YY_RULE_SETUP
-#line 225 "Gmsh.l"
+#line 224 "Gmsh.l"
 ECHO;
 	YY_BREAK
 #line 1931 "Gmsh.yy.cpp"
@@ -2925,7 +2925,7 @@ void gmsh_yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 225 "Gmsh.l"
+#line 224 "Gmsh.l"
 
 
 

@@ -3248,12 +3248,13 @@ Coherence :
 
 
 //  H O M O L O G Y
+
 Homology : 
 
-    tHomRank ListOfDouble ',' ListOfDouble tEND
+    tHomRank '{' ListOfDouble ',' ListOfDouble '}' tEND
     {
-    #if defined(HAVE_KBIPACK)
-    List_T *temp = ListOfDouble2ListOfInt($2);
+    
+    List_T *temp = ListOfDouble2ListOfInt($3);
     std::vector<int> domain;
     
     for (unsigned int i = 0; i < List_Nbr(temp); i++){
@@ -3261,30 +3262,31 @@ Homology :
       List_Read(temp, i, &item);
       domain.push_back(item);
     }
-    List_Delete($2);
+    List_Delete($3);
     List_Delete(temp);
     
-    List_T *temp2 = ListOfDouble2ListOfInt($4);
+    List_T *temp2 = ListOfDouble2ListOfInt($5);
     std::vector<int> subdomain;
     for (unsigned int i = 0; i < List_Nbr(temp2); i++){
       int item = 0;
       List_Read(temp2, i, &item);
       subdomain.push_back(item);
     }
-    List_Delete($4);
+    List_Delete($5);
     List_Delete(temp2);
     
-    
+    #if defined(HAVE_KBIPACK)
     Homology* homology = new Homology(GModel::current(), domain, subdomain);
     homology->computeBettiNumbers();
-    delete homology;  
+    delete homology;
+    #else
+    yymsg(0, "Gmsh needs to be configured with option Kbipack to use homology computation.");    
     #endif
     }
     
-  | tHomGen '(' StringExprVar ')' tAFFECT ListOfDouble ',' ListOfDouble tEND
+  | tHomGen '(' StringExprVar ')' tAFFECT '{' ListOfDouble ',' ListOfDouble '}' tEND
     {
-    #if defined(HAVE_KBIPACK)
-    List_T *temp = ListOfDouble2ListOfInt($6);
+    List_T *temp = ListOfDouble2ListOfInt($7);
     std::vector<int> domain;
     
     for (unsigned int i = 0; i < List_Nbr(temp); i++){
@@ -3292,31 +3294,33 @@ Homology :
       List_Read(temp, i, &item);
       domain.push_back(item);
     }
-    List_Delete($6);
+    List_Delete($7);
     List_Delete(temp);
     
-    List_T *temp2 = ListOfDouble2ListOfInt($8);
+    List_T *temp2 = ListOfDouble2ListOfInt($9);
     std::vector<int> subdomain;
     for (unsigned int i = 0; i < List_Nbr(temp2); i++){
       int item = 0;
       List_Read(temp2, i, &item);
       subdomain.push_back(item);
     }
-    List_Delete($8);
+    List_Delete($9);
     List_Delete(temp2);
     
     std::string fileName = $3;
     
+    #if defined(HAVE_KBIPACK)
     Homology* homology = new Homology(GModel::current(), domain, subdomain);
     homology->findGenerators(fileName);
     delete homology;
+    #else
+    yymsg(0, "Gmsh needs to be configured with option Kbipack to use homology computation.");
     #endif
     }
     
-  | tHomCut '(' StringExprVar ')' tAFFECT ListOfDouble ',' ListOfDouble tEND
+  | tHomCut '(' StringExprVar ')' tAFFECT '{' ListOfDouble ',' ListOfDouble '}' tEND
     {
-    #if defined(HAVE_KBIPACK)
-        List_T *temp = ListOfDouble2ListOfInt($6);
+    List_T *temp = ListOfDouble2ListOfInt($7);
     std::vector<int> domain;
     
     for (unsigned int i = 0; i < List_Nbr(temp); i++){
@@ -3324,24 +3328,27 @@ Homology :
       List_Read(temp, i, &item);
       domain.push_back(item);
     }
-    List_Delete($6);
+    List_Delete($7);
     List_Delete(temp);
     
-    List_T *temp2 = ListOfDouble2ListOfInt($8);
+    List_T *temp2 = ListOfDouble2ListOfInt($9);
     std::vector<int> subdomain;
     for (unsigned int i = 0; i < List_Nbr(temp2); i++){
       int item = 0;
       List_Read(temp2, i, &item);
       subdomain.push_back(item);
     }
-    List_Delete($8);
+    List_Delete($9);
     List_Delete(temp2);
     
     std::string fileName = $3;
     
+    #if defined(HAVE_KBIPACK)
     Homology* homology = new Homology(GModel::current(), domain, subdomain);
     homology->findDualGenerators(fileName);
     delete homology;
+    #else
+    yymsg(0, "Gmsh needs to be configured with option Kbipack to use homology computation.");
     #endif
     }
 ;

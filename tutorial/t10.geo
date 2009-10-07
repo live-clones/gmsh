@@ -129,14 +129,14 @@ Mesh 3;
 
 // Find generators of relative homology spaces of the domain modulo the four terminals.
 // Save the generator chains to t10_homgen_1.msh.
-HomGen("t10_homgen.msh") = {69}, {70, 71, 72, 73};
+HomGen("t10_homgen.msh") = {{69}, {70, 71, 72, 73}};
 
 // Find the corresponding cuts.
-// Save the cuts chains to t10_homcut_1.msh.
-HomCut("t10_homcut.msh") = {69}, {70, 71, 72, 73};
+// Save the cut chains to t10_homcut_1.msh.
+HomCut("t10_homcut.msh") = {{69}, {70, 71, 72, 73}};
 
-// Only find and print the ranks of the relative homology spaces (betti numbers).
-HomRank {69},{70, 71, 72, 73};
+// Only find and print the ranks of the relative homology spaces (Betti numbers).
+HomRank {{69},{70, 71, 72, 73}};
 
 // Hide mesh elements
 Mesh.Points = 0;
@@ -150,8 +150,8 @@ Merge "t10_homcut.msh";
 
 
 // More examples (uncomment):
-//  HomGen("t10_homgen.msh") = {69}, {}; Merge "t10_homgen.msh";
-//  HomGen("t10_homgen.msh") = {69}, {74}; Merge "t10_homgen.msh";
-//  HomGen("t10_homgen.msh") = {69}, {75}; Merge "t10_homgen.msh";
+//  HomGen("t10_homgen.msh") = {{69}, {}}; Merge "t10_homgen.msh";
+//  HomGen("t10_homgen.msh") = {{69}, {74}}; Merge "t10_homgen.msh";
+//  HomGen("t10_homgen.msh") = {{69}, {75}}; Merge "t10_homgen.msh";
 
 

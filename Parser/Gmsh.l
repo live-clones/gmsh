@@ -139,6 +139,9 @@ GMSH_PATCH_VERSION      return tGMSH_PATCH_VERSION;
 
 Hide                    return tHide;
 Hole                    return tHole;
+HomRank                 return tHomRank;
+HomGen                  return tHomGen;
+HomCut                  return tHomCut;
 Hypot                   return tHypot;
 
 In                      return tIn;
@@ -208,10 +211,6 @@ Today                   return tToday;
 Using                   return tUsing;
 
 Volume                  return tVolume;
-
-HomRank                 return tHomRank;
-HomGen                  return tHomGen;
-HomCut                  return tHomCut;
 
 {digit}+ |
 {digit}+"."{digit}*({exp})? |
