@@ -998,81 +998,6 @@ int GFace::genusGeom()
   return nSeams - single_seams.size();
 }
 
-class IntSPoint2LessThan{
- public:
-  bool operator()(const std::pair<int, SPoint2> &v1,
-                  const std::pair<int, SPoint2> &v2) const
-  {
-    return v1.second < v2.second;
-  }
-};
-
-static int addSTLVertex(std::set<std::pair<int, SPoint2>, IntSPoint2LessThan> &all,
-                        std::vector<SPoint2> &vertices, SPoint2 p)
-{
-  std::pair<int, SPoint2> tmp(0, p);
-  std::set<std::pair<int, SPoint2>, IntSPoint2LessThan>::iterator it = all.find(tmp);
-  if(it == all.end()){
-    vertices.push_back(p);
-    int index = vertices.size() - 1;
-    all.insert(std::pair<int, SPoint2>(index, p));
-    return index;
-  }
-  return it->first;
-}
-
-static void recurSTLTriangle(GFace *gf, double maxDist, 
-                             std::set<std::pair<int, SPoint2>, IntSPoint2LessThan> &all, 
-                             std::vector<SPoint2> &vertices,
-                             std::vector<int> &triangles, int v0, int v1, int v2)
-{
-  SPoint2 &p0(vertices[v0]); GPoint gp0 = gf->point(p0);
-  SPoint2 &p1(vertices[v1]); GPoint gp1 = gf->point(p1);
-  SPoint2 &p2(vertices[v2]); GPoint gp2 = gf->point(p2);
-  int v01 = addSTLVertex(all, vertices, (p0 + p1) * 0.5);
-  int v12 = addSTLVertex(all, vertices, (p1 + p2) * 0.5);
-  int v20 = addSTLVertex(all, vertices, (p2 + p0) * 0.5);
-  SPoint2 &p01(vertices[v01]); GPoint gp01 = gf->point(p01);
-  SPoint2 &p12(vertices[v12]); GPoint gp12 = gf->point(p12);
-  SPoint2 &p20(vertices[v20]); GPoint gp20 = gf->point(p20);
-  
-  if(gp0.distance(gp01) > maxDist || 
-     gp01.distance(gp20) > maxDist ||
-     gp20.distance(gp0) > maxDist){
-    recurSTLTriangle(gf, maxDist, all, vertices, triangles, v0, v01, v20);
-  }
-  else{
-    triangles.push_back(v0); triangles.push_back(v01); triangles.push_back(v20);
-  }
-
-  if(gp1.distance(gp12) > maxDist || 
-     gp12.distance(gp01) > maxDist ||
-     gp01.distance(gp1) > maxDist){
-    recurSTLTriangle(gf, maxDist, all, vertices, triangles, v1, v12, v01);
-  }
-  else{
-    triangles.push_back(v1); triangles.push_back(v12); triangles.push_back(v01);
-  }
-
-  if(gp2.distance(gp20) > maxDist || 
-     gp20.distance(gp12) > maxDist ||
-     gp12.distance(gp2) > maxDist){
-    recurSTLTriangle(gf, maxDist, all, vertices, triangles, v2, v20, v12);
-  }
-  else{
-    triangles.push_back(v2); triangles.push_back(v20); triangles.push_back(v12);
-  }
-
-  if(gp01.distance(gp12) > maxDist || 
-     gp12.distance(gp20) > maxDist ||
-     gp20.distance(gp01) > maxDist){
-    recurSTLTriangle(gf, maxDist, all, vertices, triangles, v01, v12, v20);
-  }
-  else{
-    triangles.push_back(v01); triangles.push_back(v12); triangles.push_back(v20);
-  }
-}
-
 bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
                            std::vector<SVector3> *normals)
 {
@@ -1083,33 +1008,25 @@ bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
   
   if(!points) return false;
 
-  // FIXME: this is too complicated -- we should just split the
-  // triangles in one step (i.e., assume thay are mostly flat) and not
-  // worry about duplicate vertices on the triangle edges)
+  for(unsigned int i = 0; i < stl_triangles.size(); i += 3){
+    SPoint2 &p0(stl_vertices[stl_triangles[i]]);
+    SPoint2 &p1(stl_vertices[stl_triangles[i + 1]]);
+    SPoint2 &p2(stl_vertices[stl_triangles[i + 2]]);
 
-  std::set<std::pair<int, SPoint2>, IntSPoint2LessThan> all_vertices;
-  for(unsigned int i = 0; i < stl_vertices.size(); i++)
-    all_vertices.insert(std::pair<int, SPoint2>(i, stl_vertices[i]));
-
-  std::vector<SPoint2> new_vertices;
-  new_vertices.insert(new_vertices.begin(), stl_vertices.begin(), 
-                      stl_vertices.end());
-
-  std::vector<int> new_triangles;
-  new_triangles.insert(new_triangles.begin(), stl_triangles.begin(), 
-                       stl_triangles.end());
-
-  for(unsigned int i = 0; i < stl_triangles.size(); i += 3)
-    recurSTLTriangle(this, maxDist, all_vertices, new_vertices, new_triangles,
-                     stl_triangles[i], stl_triangles[i + 1], stl_triangles[i + 2]);
-
-  for(unsigned int i = 0; i < new_vertices.size(); i++){
-    GPoint p(point(new_vertices[i]));
-    points->push_back(SPoint3(p.x(), p.y(), p.z()));
+    GPoint gp0 = point(p0);
+    GPoint gp1 = point(p1);
+    GPoint gp2 = point(p2);
+    double maxEdge = std::max(gp0.distance(gp1),
+                              std::max(gp1.distance(gp2), gp2.distance(gp0)));
+    int N = maxEdge / maxDist;
+    for(double u = 0.; u < 1.; u += 1. / N){
+      for(double v = 0.; v < 1 - u; v += 1. / N){
+        SPoint2 p = p0 * (1. - u - v) + p1 * u + p2 * v;
+        GPoint gp(point(p));
+        points->push_back(SPoint3(gp.x(), gp.y(), gp.z())); 
+        if(normals) normals->push_back(normal(p));
+      }
+    }
   }
-
-  if(normals){
-    for(unsigned int i = 0; i < new_vertices.size(); i++)
-      normals->push_back(normal(new_vertices[i]));
-  }
+  return true;
 }
