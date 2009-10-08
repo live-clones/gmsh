@@ -303,13 +303,15 @@ surface_params OCCFace::getSurfaceParams() const
   return p;
 }
 
-bool OCCFace::buildSTLTriangulation()
+bool OCCFace::buildSTLTriangulation(bool force)
 {
   if(va_geom_triangles){
-    delete va_geom_triangles;
-    va_geom_triangles = 0;
+    if(force)
+      delete va_geom_triangles;
+    else
+      return true;
   }
-  
+
   TopLoc_Location loc;
   int p1, p2, p3;
   Bnd_Box aBox;

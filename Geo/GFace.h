@@ -194,8 +194,9 @@ class GFace : public GEntity
   virtual bool buildRepresentationCross();
 
   // build a STL triangulation and fills the vertex array
-  // va_geom_triangles
-  virtual bool buildSTLTriangulation();
+  // va_geom_triangles (or do nothing if it already exists, unless
+  // force=true)
+  virtual bool buildSTLTriangulation(bool force=false);
 
   // recompute the mean plane of the surface from a list of points
   void computeMeanPlane(const std::vector<MVertex*> &points);
@@ -228,6 +229,11 @@ class GFace : public GEntity
   // compound
   void setCompound(GFaceCompound *gfc) { compound = gfc; }
   GFaceCompound *getCompound() const { return compound; }
+
+  // add points (and optionalluy normals) in vectors so that two
+  // points are at most maxDist apart
+  void fillPointCloud(double maxDist, std::vector<SPoint3> *points,
+                      std::vector<SVector3> *normals);
 
   struct {
     // do we recombine the triangles of the mesh?

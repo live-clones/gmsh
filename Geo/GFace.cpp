@@ -867,18 +867,23 @@ struct graphics_point{
   SVector3 n;
 };
 
-bool GFace::buildSTLTriangulation()
+bool GFace::buildSTLTriangulation(bool force)
 {
   // Build a simple triangulation for surfaces which we know are not
   // trimmed
   if(geomType() != ParametricSurface && geomType() != ProjectionFace)
     return false;
 
-  const int nu = 64, nv = 64;
-  graphics_point p[nu][nv];
+  if(va_geom_triangles){
+    if(force)
+      delete va_geom_triangles;
+    else
+      return true;
+  }
 
-  if(va_geom_triangles) delete va_geom_triangles;
+  const int nu = 64, nv = 64;
   va_geom_triangles = new VertexArray(3, 2 * (nu - 1) * (nv - 1));
+  graphics_point p[nu][nv];
 
   Range<double> ubounds = parBounds(0);
   Range<double> vbounds = parBounds(1);
@@ -986,9 +991,31 @@ int GFace::genusGeom()
     if ((*it)->isSeam(this)){
       nSeams++;
       std::set<GEdge*>::iterator it2 = single_seams.find(*it);
-      if (it2 != single_seams.end())single_seams.erase(it2);
+      if (it2 != single_seams.end()) single_seams.erase(it2);
       else single_seams.insert(*it);
     }
   }
   return nSeams - single_seams.size();
+}
+
+void GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
+                           std::vector<SVector3> *normals)
+{
+  if(!buildSTLTriangulation()){
+    Msg::Error("No STL triangulation available to fill point cloud");
+    return;
+  }
+
+  bool computePoints = points ? true : false;
+  bool computeNormals = normals ? true : false;
+  if(!computePoints && !computeNormals) return;
+  /*
+  int N = va_geom_triangles->getNumVertices();
+  for (int i = 0; i < N; i += 3) {
+    SPoint3 p((va_geom_triangles->getVertexArray(3 * i))[0],
+              (va_geom_triangles->getVertexArray(3 * i))[1],
+              (va_geom_triangles->getVertexArray(3 * i))[2]);
+  }
+  */
+  
 }
