@@ -312,62 +312,65 @@ bool OCCFace::buildSTLTriangulation(bool force)
       return true;
   }
 
-  TopLoc_Location loc;
-  int p1, p2, p3;
+  stl_vertices.clear();
+  stl_triangles.clear();
+  
   Bnd_Box aBox;
-  Standard_Boolean bWithShare = Standard_False;
-  Standard_Real aDiscret, aXmin, aYmin, aZmin, aXmax, aYmax, aZmax;
-  Standard_Real dX, dY, dZ, dMax, aCoeff;     
   BRepBndLib::Add(s, aBox);
+  Standard_Real aXmin, aYmin, aZmin, aXmax, aYmax, aZmax;
   aBox.Get(aXmin, aYmin, aZmin, aXmax, aYmax, aZmax);
-   
-  dX = aXmax-aXmin;
-  dY = aYmax-aYmin;
-  dZ = aZmax-aZmin;
-  dMax = dX;
-  if(dY > dMax) {
-    dMax = dY;
-  }
-  if(dZ > dMax) {
-    dMax = dZ;
-  }
-
-  aCoeff = 0.01;
-  aDiscret = aCoeff * dMax;
-  BRepMesh_FastDiscret aMesher(aDiscret, 0.5, aBox, bWithShare, Standard_True,
+  Standard_Real dX = aXmax - aXmin;
+  Standard_Real dY = aYmax - aYmin;
+  Standard_Real dZ = aZmax - aZmin;
+  Standard_Real dMax = dX;
+  if(dY > dMax) dMax = dY;
+  if(dZ > dMax) dMax = dZ;
+  Standard_Real aCoeff = 0.01;
+  Standard_Real aDiscret = aCoeff * dMax;
+  BRepMesh_FastDiscret aMesher(aDiscret, 0.5, aBox, Standard_False, Standard_True,
                                Standard_False, Standard_True);
   aMesher.Add(s);
+  TopLoc_Location loc;
   Handle(Poly_Triangulation) triangulation = BRep_Tool::Triangulation(s, loc);
-  if (triangulation.IsNull()){
+  if(triangulation.IsNull()){
     Msg::Warning("OCC STL triangulation failed");
     return false;
   }
-  
-  int ntriangles = triangulation->NbTriangles();
-  if(!triangulation->HasUVNodes()) return false;
+  if(!triangulation->HasUVNodes()){
+    Msg::Warning("OCC STL triangulation has no u,v coordinates");
+    return false;
+  }
 
-  va_geom_triangles = new VertexArray(3, ntriangles);
-  
+  for(int i = 1; i <= triangulation->NbNodes(); i++){
+    gp_Pnt2d p = (triangulation->UVNodes())(i);
+    stl_vertices.push_back(SPoint2(p.X(), p.Y()));
+  }
+
+  for(int i = 1; i <= triangulation->NbTriangles(); i++){
+    Poly_Triangle triangle = (triangulation->Triangles())(i);
+    int p1, p2, p3;
+    triangle.Get(p1, p2, p3);
+    stl_triangles.push_back(p1 - 1);
+    stl_triangles.push_back(p2 - 1);
+    stl_triangles.push_back(p3 - 1);
+  }
+
+  va_geom_triangles = new VertexArray(3, stl_triangles.size() / 3);
   unsigned int c = CTX::instance()->color.geom.surface;
   unsigned int col[4] = {c, c, c, c};
-  for (int j = 1; j <= ntriangles; j++){
-    Poly_Triangle triangle = (triangulation->Triangles())(j);
-    triangle.Get(p1, p2, p3);
-    gp_Pnt2d x1 = (triangulation->UVNodes())(p1);
-    gp_Pnt2d x2 = (triangulation->UVNodes())(p2);
-    gp_Pnt2d x3 = (triangulation->UVNodes())(p3);
-    GPoint gp1 = point(x1.X(), x1.Y());
-    GPoint gp2 = point(x2.X(), x2.Y());
-    GPoint gp3 = point(x3.X(), x3.Y());
-    SVector3 n[3];
-    n[0] = normal(SPoint2(x1.X(), x1.Y()));
-    n[1] = normal(SPoint2(x2.X(), x2.Y()));
-    n[2] = normal(SPoint2(x3.X(), x3.Y()));
+  for (unsigned int i = 0; i < stl_triangles.size(); i += 3){
+    SPoint2 &p1(stl_vertices[stl_triangles[i]]);
+    SPoint2 &p2(stl_vertices[stl_triangles[i + 1]]);
+    SPoint2 &p3(stl_vertices[stl_triangles[i + 2]]);
+    GPoint gp1 = GFace::point(p1);
+    GPoint gp2 = GFace::point(p2);
+    GPoint gp3 = GFace::point(p3);
     double x[3] = {gp1.x(), gp2.x(), gp3.x()};
     double y[3] = {gp1.y(), gp2.y(), gp3.y()};
     double z[3] = {gp1.z(), gp2.z(), gp3.z()};
+    SVector3 n[3] = {normal(p1), normal(p2), normal(p3)};
     va_geom_triangles->add(x, y, z, n, col);
-  }  
+  }
   va_geom_triangles->finalize();
   return true;
 }

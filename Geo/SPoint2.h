@@ -30,6 +30,13 @@ class SPoint2 {
   void operator*=(double mult);
   SPoint2 operator*(double mult);
   operator double *() { return P; }
+  bool operator < (const SPoint2  &other) const
+  {
+    if(other.P[0] < P[0]) return true;
+    if(other.P[0] > P[0]) return false;
+    if(other.P[1] < P[1]) return true;
+    return false;
+  }
 };
 
 inline SPoint2 operator + (const SPoint2 &a, const SPoint2 &b)

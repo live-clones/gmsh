@@ -232,8 +232,8 @@ class GFace : public GEntity
 
   // add points (and optionalluy normals) in vectors so that two
   // points are at most maxDist apart
-  void fillPointCloud(double maxDist, std::vector<SPoint3> *points,
-                      std::vector<SVector3> *normals);
+  bool fillPointCloud(double maxDist, std::vector<SPoint3> *points,
+                      std::vector<SVector3> *normals=0);
 
   struct {
     // do we recombine the triangles of the mesh?
@@ -267,7 +267,12 @@ class GFace : public GEntity
   // of start/end points
   std::vector<SPoint3> cross;
 
-  // a vertex array containing an STL representation of the surface
+  // the STL mesh
+  std::vector<SPoint2> stl_vertices;
+  std::vector<int> stl_triangles;
+
+  // a vertex array containing a geometrical representation of the
+  // surface
   VertexArray *va_geom_triangles;
 
   // a array for accessing the transfinite vertices using a pair of
