@@ -17,6 +17,9 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain, std::vector<i
   _combine = true;
   _omit = 1;
   
+  _domain = physicalDomain;
+  _subdomain = physicalSubdomain;
+  
   Msg::Info("Creating a Cell Complex...");
   double t1 = Cpu();
   
@@ -121,12 +124,12 @@ void Homology::findGenerators(std::string fileName){
       std::string generator;
       convert(i, generator);
       
-      std::string name = dimension + "D Generator " + generator;
+      std::string name = "H" + dimension + getDomainString()  + generator;
       Chain* chain = new Chain(_cellComplex->getCells(j), chains->getCoeffVector(j,i), _cellComplex, name, chains->getTorsion(j,i));
       chain->writeChainMSH(fileName);
       if(chain->getSize() != 0) {
         HRank[j] = HRank[j] + 1;
-        if(chain->getTorsion() != 1) Msg::Warning("%dD Generator %d has torsion coefficient %d!", j, i, chain->getTorsion());
+        if(chain->getTorsion() != 1) Msg::Warning("H%d %d has torsion coefficient %d!", j, i, chain->getTorsion());
       }
       delete chain;
     }
@@ -134,7 +137,7 @@ void Homology::findGenerators(std::string fileName){
       for(int i = 0; i < _cellComplex->getNumOmitted(); i++){
         std::string generator;
         convert(i+1, generator);
-        std::string name = dimension + "D Generator " + generator;
+        std::string name = "H" + dimension + getDomainString() + generator;
         std::vector<int> coeffs (_cellComplex->getOmitted(i).size(),1);
         Chain* chain = new Chain(_cellComplex->getOmitted(i), coeffs, _cellComplex, name, 1);
         chain->writeChainMSH(fileName);
@@ -228,12 +231,12 @@ void Homology::findDualGenerators(std::string fileName){
       std::string generator;
       convert(i, generator);
       
-      std::string name = dimension + "D Dual generator " + generator;
+      std::string name = "H" + dimension + "*" + getDomainString() + generator;
       Chain* chain = new Chain(_cellComplex->getCells(j), chains->getCoeffVector(j,i), _cellComplex, name, chains->getTorsion(j,i));
       chain->writeChainMSH(fileName);
       if(chain->getSize() != 0){
         HRank[dim-j] = HRank[dim-j] + 1;
-        if(chain->getTorsion() != 1) Msg::Warning("%dD Dual generator %d has torsion coefficient %d!", j, i, chain->getTorsion());
+        if(chain->getTorsion() != 1) Msg::Warning("H%d* %d has torsion coefficient %d!", dim-j, i, chain->getTorsion());
       }
       delete chain;
             
@@ -244,7 +247,7 @@ void Homology::findDualGenerators(std::string fileName){
       for(int i = 0; i < _cellComplex->getNumOmitted(); i++){
         std::string generator;
         convert(i+1, generator);
-        std::string name = dimension + "D Dual generator " + generator;
+        std::string name = "H" + dimension + "*" + getDomainString() + generator;
         std::vector<int> coeffs (_cellComplex->getOmitted(i).size(),1);
         Chain* chain = new Chain(_cellComplex->getOmitted(i), coeffs, _cellComplex, name, 1);
         chain->writeChainMSH(fileName);
@@ -258,10 +261,10 @@ void Homology::findDualGenerators(std::string fileName){
   }
    
   Msg::Info("Ranks of homology groups for dual cell complex:");
-  Msg::Info("H0 = %d", HRank[0]);
-  Msg::Info("H1 = %d", HRank[1]);
-  Msg::Info("H2 = %d", HRank[2]);
-  Msg::Info("H3 = %d", HRank[3]);
+  Msg::Info("H0* = %d", HRank[0]);
+  Msg::Info("H1* = %d", HRank[1]);
+  Msg::Info("H2* = %d", HRank[2]);
+  Msg::Info("H3* = %d", HRank[3]);
   if(omitted != 0) Msg::Info("The computation of %d highest dimension dual generators was omitted.", _omit);
   
   Msg::Info("Wrote results to %s.", fileName.c_str());
@@ -269,10 +272,10 @@ void Homology::findDualGenerators(std::string fileName){
   
   delete chains;
   
-  printf("H0 = %d \n", HRank[0]);
-  printf("H1 = %d \n", HRank[1]);
-  printf("H2 = %d \n", HRank[2]);
-  printf("H3 = %d \n", HRank[3]);
+  printf("H0* = %d \n", HRank[0]);
+  printf("H1* = %d \n", HRank[1]);
+  printf("H2* = %d \n", HRank[2]);
+  printf("H3* = %d \n", HRank[3]);
   
   return;
 }
@@ -285,10 +288,10 @@ void Homology::computeBettiNumbers(){
   double t2 = Cpu();
   Msg::Info("Betti number computation complete (%g s).", t2- t1);
 
-  Msg::Info("b0 = %d \n", _cellComplex->getBettiNumber(0));
-  Msg::Info("b1 = %d \n", _cellComplex->getBettiNumber(1));
-  Msg::Info("b2 = %d \n", _cellComplex->getBettiNumber(2));
-  Msg::Info("b3 = %d \n", _cellComplex->getBettiNumber(3));
+  Msg::Info("H0 = %d \n", _cellComplex->getBettiNumber(0));
+  Msg::Info("H1 = %d \n", _cellComplex->getBettiNumber(1));
+  Msg::Info("H2 = %d \n", _cellComplex->getBettiNumber(2));
+  Msg::Info("H3 = %d \n", _cellComplex->getBettiNumber(3));
   
   return;
 }

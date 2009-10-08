@@ -516,8 +516,7 @@ int CellComplex::reduceComplex(int omit){
   _store.clear();
   if(omit > getDim()) omit = getDim();
   
-  
-  
+    
   CellComplex::removeSubdomain();
   //std::set<Cell*, Less_Cell> generatorCells;
   
@@ -577,7 +576,13 @@ void CellComplex::removeSubdomain(){
         //cit = firstCell(i);
       }
     }
-        
+    for(citer cit = firstCell(i); cit != lastCell(i); cit++){
+      Cell* cell = *cit;
+      if(cell->inSubdomain()) {
+        removeCell(cell);
+        cit = firstCell(i);
+      }
+    }
   }
   return;
 }
@@ -651,7 +656,7 @@ void CellComplex::computeBettiNumbers(){
       coreduction(cell);
     }
   }
-  printf("Cell complex Betti numbers: \n b0 = %d \n b1 = %d \n b2 = %d \n b3 = %d \n",
+  printf("Cell complex Betti numbers: \nH0 = %d \nH1 = %d \nH2 = %d \nH3 = %d \n",
          getBettiNumber(0), getBettiNumber(1), getBettiNumber(2), getBettiNumber(3));
   
   return;
@@ -875,7 +880,7 @@ int CellComplex::writeComplexMSH(const std::string &name){
   
   
   
-  fprintf(fp, "$MeshFormat\n2.0 0 8\n$EndMeshFormat\n");
+  fprintf(fp, "$MeshFormat\n2.1 0 8\n$EndMeshFormat\n");
   
   fprintf(fp, "$Nodes\n");
   

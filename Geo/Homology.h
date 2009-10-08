@@ -31,6 +31,9 @@ class Homology
    bool _combine;
    int _omit;
    
+   std::vector<int> _domain;
+   std::vector<int> _subdomain;
+   
   public:
    
    Homology(GModel* model, std::vector<int> physicalDomain, std::vector<int> physicalSubdomain);
@@ -41,6 +44,7 @@ class Homology
    
    void findGenerators(std::string fileName);
    void findDualGenerators(std::string fileName);
+
    void computeBettiNumbers();
    
    void swapSubdomain() { _cellComplex->swapSubdomain(); }
@@ -49,7 +53,7 @@ class Homology
    void setOmit(int omit) {
      if(omit == 0) _omit = 0;
      else _omit = 1;
-      
+        
      /*
      if(omit > _cellComplex->getDim() || omit < 0) {
        Msg::Error("Invalid number of dimensions to omit. Must be between 0 - %d.", _cellComplex->getDim());
@@ -60,6 +64,38 @@ class Homology
      */ 
      
    }
+   
+   std::string getDomainString() {
+     
+     std::string domainString = "({";
+     for(unsigned int i = 0; i < _domain.size(); i++){
+       std::string temp = "";
+       convert(_domain.at(i),temp);
+       domainString += temp;
+       if (_domain.size()-1 > i){ 
+         domainString += ", ";
+       }
+     }
+     domainString += "}";
+     
+     if(!_subdomain.empty()){
+       domainString += ", {";
+       
+       for(unsigned int i = 0; i < _subdomain.size(); i++){
+         std::string temp = "";
+         convert(_subdomain.at(i),temp);
+         domainString += temp;
+         if (_subdomain.size()-1 > i){
+           domainString += ", ";
+         }
+       } 
+       domainString += "}";
+       
+     }
+   domainString += ") ";
+   return domainString;
+   }
+   
 };
 
 #endif
