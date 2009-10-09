@@ -75,24 +75,13 @@ class femTerm {
   {
     const int nbR = localMatrix.size1();
     const int nbC = localMatrix.size2();
-/*    
-		for (int j = 0; j < nbR; j++)
-		{
+    for (int j = 0; j < nbR; j++){
       Dof R = getLocalDofR(se, j);
-      for (int k = 0; k < nbC; k++)
-			{
+      for (int k = 0; k < nbC; k++){
         Dof C = getLocalDofC(se, k);
         dm.assemble(R, C, localMatrix(j, k));
       }
     }
-*/		
-		std::vector<Dof> tabR(nbR);
-		std::vector<Dof> tabC(nbC);
-		for (int R = 0; R < nbR; ++R)
-      tabR[R]=getLocalDofR(se, R);
-		for (int C = 0; C < nbC; ++C)
-      tabC[C]=getLocalDofC(se, C);
-		dm.assemble(tabR,tabC,localMatrix);
   }
   void dirichletNodalBC(int physical, int dim, int comp, int field,
                         const simpleFunction<dataVec> &e,

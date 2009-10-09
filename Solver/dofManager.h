@@ -11,8 +11,6 @@
 #include <map>
 #include "MVertex.h"
 #include "linearSystem.h"
-#include "fullMatrix.h"
-
 
 class Dof{
  private:
@@ -20,7 +18,6 @@ class Dof{
   long int _entity; // "i": node, edge, group, etc.
   int _type; // "f": basis function type index, etc.
  public:
-  Dof(void) {} // eric
   Dof(long int entity, int type) : _entity(entity), _type(type) {}
   inline long int getEntity() const { return _entity; }
   inline int getType() const { return _type; }
@@ -136,43 +133,6 @@ class dofManager{
       }
     }
   }
-
-  inline void assemble(const std::vector<Dof> &dofsR ,const std::vector<Dof> &dofsC, const fullMatrix<dataMat> &localMatrix)
-  {
-    if (!_current->isAllocated()) _current->allocate(unknown.size());
-    const int nbR = localMatrix.size1();
-    const int nbC = localMatrix.size2();
-    std::vector<int> tabR(nbR);
-    std::vector<int> tabC(nbC);
-    for (int R=0;R<nbR;++R)
-    {
-      std::map<Dof, int>::iterator it = unknown.find(dofsR[R]);
-      if (it != unknown.end()) tabR[R]=it->second; else tabR[R]=-1;
-    }
-    for (int C=0;C<nbC;++C)
-    {
-      std::map<Dof, int>::iterator it = unknown.find(dofsC[C]);
-      if (it != unknown.end()) tabC[C]=it->second; else tabC[C]=-1;
-    }
-    
-    for (int R=0;R<nbR;++R) {
-      for (int C=0;C<nbC;++C) {
-        if (tabR[R] != -1) {
-          if (tabC[C] !=-1) {
-            _current->addToMatrix(tabR[R], tabC[C], localMatrix(R,C));
-          }
-          else {
-            typename std::map<Dof,  dataVec>::iterator itFixed = fixed.find(dofsC[C]);
-            if (itFixed != fixed.end()) {
-              _current->addToRightHandSide(R, -localMatrix(R,C) * itFixed->second);
-            }
-          }
-        }
-      }
-    }
-  }
-
-
   inline void assemble(int entR, int typeR, int entC, int typeC, const dataMat &value)
   {
     assemble(Dof(entR, typeR), Dof(entC, typeC), value);
