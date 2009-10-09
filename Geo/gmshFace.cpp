@@ -6,11 +6,15 @@
 #include <stdlib.h>
 #include "GModel.h"
 #include "gmshFace.h"
+#include "meshGFace.h"
+#include "meshGEdge.h"
 #include "Geo.h"
 #include "GeoInterpolation.h"
 #include "Numeric.h"
 #include "GmshMessage.h"
 #include "Context.h"
+#include "MTriangle.h"
+#include "VertexArray.h"
 
 gmshFace::gmshFace(GModel *m, Surface *face)
   : GFace(m, face->Num), s(face)
@@ -317,4 +321,76 @@ bool gmshFace::containsPoint(const SPoint3 &pt) const
   }
 
   return false;
+}
+
+bool gmshFace::buildSTLTriangulation(bool force){
+
+  return false;
+  /*
+  if(va_geom_triangles){
+    if(force)
+      delete va_geom_triangles;
+    else
+      return true;
+  }
+  
+  stl_vertices.clear();
+  stl_triangles.clear();
+
+  contextMeshOptions _temp = CTX::instance()->mesh;
+
+  CTX::instance()->mesh.lcFromPoints = 0;
+  CTX::instance()->mesh.lcFromCurvature = 1;
+  CTX::instance()->mesh.lcExtendFromBoundary = 0;
+  CTX::instance()->mesh.scalingFactor = 1;
+  CTX::instance()->mesh.lcFactor = 1;
+  CTX::instance()->mesh.order = 1;
+  CTX::instance()->mesh.lcIntegrationPrecision = 1.e-5;
+  std::for_each(l_edges.begin(), l_edges.end(), meshGEdge(true));
+  meshGFace mesher (false,true);
+  mesher(this);
+  printf("%d triangles face %d\n",triangles_stl.size(),tag());
+  CTX::instance()->mesh = _temp;  
+
+  std::map<MVertex*,int> _v;
+  int COUNT =0;
+  for (int j = 0; j < triangles_stl.size(); j++){
+    int C[3];
+    for (int i=0;i<3;i++){
+      std::map<MVertex*,int>::iterator it = 
+	_v.find(triangles_stl[j]->getVertex(j));
+      if (it != _v.end()){
+	stl_triangles.push_back(COUNT);
+	_v[triangles_stl[j]->getVertex(j)] = COUNT++;
+      }
+      else stl_triangles.push_back(it->second);
+    }    
+  }
+  std::map<MVertex*,int>::iterator itv = _v.begin();
+  for ( ; itv != _v.end() ; ++itv){
+    MVertex *v = itv->first;
+    SPoint2 param;
+    reparamMeshVertexOnFace(v, this, param);
+    stl_vertices.push_back(param);
+  }
+  
+  va_geom_triangles = new VertexArray(3, stl_triangles.size() / 3);
+  unsigned int c = CTX::instance()->color.geom.surface;
+  unsigned int col[4] = {c, c, c, c};
+  for (unsigned int i = 0; i < stl_triangles.size(); i += 3){
+    SPoint2 &p1(stl_vertices[stl_triangles[i]]);
+    SPoint2 &p2(stl_vertices[stl_triangles[i + 1]]);
+    SPoint2 &p3(stl_vertices[stl_triangles[i + 2]]);
+    GPoint gp1 = GFace::point(p1);
+    GPoint gp2 = GFace::point(p2);
+    GPoint gp3 = GFace::point(p3);
+    double x[3] = {gp1.x(), gp2.x(), gp3.x()};
+    double y[3] = {gp1.y(), gp2.y(), gp3.y()};
+    double z[3] = {gp1.z(), gp2.z(), gp3.z()};
+    SVector3 n[3] = {normal(p1), normal(p2), normal(p3)};
+    va_geom_triangles->add(x, y, z, n, col);
+  }
+  va_geom_triangles->finalize();
+  return true;
+  */
 }

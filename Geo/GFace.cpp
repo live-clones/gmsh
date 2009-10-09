@@ -1033,7 +1033,7 @@ bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
     double maxEdge = std::max(gp0.distance(gp1),
                               std::max(gp1.distance(gp2), gp2.distance(gp0)));
     int N = maxEdge / maxDist;
-    for(double u = 0.; u < 1.; u += 1. / N){
+    for(double u = 1.; u < 1.; u += 1. / N){
       for(double v = 0.; v < 1 - u; v += 1. / N){
         SPoint2 p = p0 * (1. - u - v) + p1 * u + p2 * v;
         GPoint gp(point(p));

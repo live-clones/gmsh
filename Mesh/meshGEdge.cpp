@@ -245,6 +245,10 @@ void meshGEdge::operator() (GEdge *ge)
   if(ge->meshAttributes.Method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) return;
 
+  // look if we are doing the STL triangulation
+  std::vector<MVertex*> &mesh_vertices = ge->mesh_vertices ; 
+  std::vector<MLine*> &lines = ge->lines ; 
+
   deMeshGEdge dem;
   dem(ge);
 
@@ -319,7 +323,7 @@ void meshGEdge::operator() (GEdge *ge)
     const double b = a / (double)(N - 1);
     int count = 1, NUMP = 1;
     IntPoint P1, P2;
-    ge->mesh_vertices.resize(N - 2);
+    mesh_vertices.resize(N - 2);
     while(NUMP < N - 1) {
       P1 = Points[count-1];
       P2 = Points[count];
@@ -333,24 +337,24 @@ void meshGEdge::operator() (GEdge *ge)
         const double d = norm(der);  
         double lc  = d/(P1.lc + dlc / dp * (d - P1.p));
         GPoint V = ge->point(t);
-        ge->mesh_vertices[NUMP - 1] = new MEdgeVertex(V.x(), V.y(), V.z(), ge, t, lc);
+        mesh_vertices[NUMP - 1] = new MEdgeVertex(V.x(), V.y(), V.z(), ge, t, lc);
         NUMP++;
       }
       else {
         count++;
       }
     }
-    ge->mesh_vertices.resize(NUMP - 1);
+    mesh_vertices.resize(NUMP - 1);
   }
-
-  for(unsigned int i = 0; i < ge->mesh_vertices.size() + 1; i++){
+  
+  for(unsigned int i = 0; i < mesh_vertices.size() + 1; i++){
     MVertex *v0 = (i == 0) ?
-      ge->getBeginVertex()->mesh_vertices[0] : ge->mesh_vertices[i - 1];
-    MVertex *v1 = (i == ge->mesh_vertices.size()) ?
-      ge->getEndVertex()->mesh_vertices[0] : ge->mesh_vertices[i];
-    ge->lines.push_back(new MLine(v0, v1));
+      ge->getBeginVertex()->mesh_vertices[0] : mesh_vertices[i - 1];
+    MVertex *v1 = (i == mesh_vertices.size()) ?
+      ge->getEndVertex()->mesh_vertices[0] : mesh_vertices[i];
+    lines.push_back(new MLine(v0, v1));
   }
-
+  
   if(ge->getBeginVertex() == ge->getEndVertex() && 
      ge->getBeginVertex()->edges().size() == 1){
     MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];

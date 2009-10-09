@@ -96,7 +96,7 @@ void linearSystemCSR<double>::allocate(int nbRows)
     CSRList_Delete(_jptr);
     delete _x;
     delete _b;
-    delete something;
+    delete[] something;
   }
   
   if(nbRows == 0){
@@ -106,6 +106,7 @@ void linearSystemCSR<double>::allocate(int nbRows)
     _jptr = 0; 
     _b = 0;
     _x = 0;
+    sorted = false;
     something = 0;
     return;
   }

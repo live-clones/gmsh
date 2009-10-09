@@ -13,6 +13,42 @@
 
 // The interface-independent context.
 
+struct contextMeshOptions {
+  int draw, changed, light, lightTwoSide, lightLines, pointType;
+  int points, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms, pyramids;
+  int surfacesEdges, surfacesFaces, volumesEdges, volumesFaces, numSubEdges;
+  int pointsNum, linesNum, surfacesNum, volumesNum;
+  int optimize, optimizeNetgen, refineSteps, qualityType, labelType, remove4triangles;
+  double normals, tangents, explode, angleSmoothNormals, allowSwapEdgeAngle;
+  double mshFileVersion, labelFrequency, pointSize, lineWidth;
+  double qualityInf, qualitySup, radiusInf, radiusSup;
+  double scalingFactor, lcFactor, randFactor, lcIntegrationPrecision;
+  double lcMin, lcMax, toleranceEdgeLength;
+  int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
+  int dual, voronoi, drawSkinOnly, colorCarousel;
+  int format, nbSmoothing, algo2d, algo3d, algoSubdivide;
+  int order, secondOrderLinear, secondOrderIncomplete;
+  int secondOrderExperimental, meshOnlyVisible;
+  int smoothInternalEdges, minCircPoints, minCurvPoints;
+  int saveAll, saveGroupsOfNodes, binary, bdfFieldFormat, saveParametric;
+  int smoothNormals, reverseAllNormals, zoneDefinition, clip;
+  int saveElementTagType;  
+};
+
+struct contextGeometryOptions {
+  int draw, light, lightTwoSide, points, lines, surfaces, volumes;
+  int pointsNum, linesNum, surfacesNum, volumesNum;
+  double pointSize, lineWidth, selectedPointSize, selectedLineWidth;
+  int pointType, lineType, surfaceType, numSubEdges;
+  int oldCircle, extrudeSplinePoints, extrudeReturnLateral, oldNewreg;
+  double normals, tangents, scalingFactor;
+  int autoCoherence, highlightOrphans, clip, useTransform;
+  double tolerance, snap[3], transform[3][3], offset[3];
+  int occFixSmallEdges, occFixSmallFaces, occSewFaces, occConnectFaces;
+  int copyMeshingMethod, exactExtrusion;
+  int matchGeomAndMesh;
+};
+
 class CTX {
  private:
   static CTX *_instance;
@@ -147,41 +183,9 @@ class CTX {
   // is ready)
   double tmpRotation[3], tmpTranslation[3], tmpScale[3], tmpQuaternion[4];
   // geometry options 
-  struct{
-    int draw, light, lightTwoSide, points, lines, surfaces, volumes;
-    int pointsNum, linesNum, surfacesNum, volumesNum;
-    double pointSize, lineWidth, selectedPointSize, selectedLineWidth;
-    int pointType, lineType, surfaceType, numSubEdges;
-    int oldCircle, extrudeSplinePoints, extrudeReturnLateral, oldNewreg;
-    double normals, tangents, scalingFactor;
-    int autoCoherence, highlightOrphans, clip, useTransform;
-    double tolerance, snap[3], transform[3][3], offset[3];
-    int occFixSmallEdges, occFixSmallFaces, occSewFaces, occConnectFaces;
-    int copyMeshingMethod, exactExtrusion;
-    int matchGeomAndMesh;
-  } geom;
+  contextGeometryOptions geom;
   // mesh options 
-  struct {
-    int draw, changed, light, lightTwoSide, lightLines, pointType;
-    int points, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms, pyramids;
-    int surfacesEdges, surfacesFaces, volumesEdges, volumesFaces, numSubEdges;
-    int pointsNum, linesNum, surfacesNum, volumesNum;
-    int optimize, optimizeNetgen, refineSteps, qualityType, labelType, remove4triangles;
-    double normals, tangents, explode, angleSmoothNormals, allowSwapEdgeAngle;
-    double mshFileVersion, labelFrequency, pointSize, lineWidth;
-    double qualityInf, qualitySup, radiusInf, radiusSup;
-    double scalingFactor, lcFactor, randFactor, lcIntegrationPrecision;
-    double lcMin, lcMax, toleranceEdgeLength;
-    int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
-    int dual, voronoi, drawSkinOnly, colorCarousel;
-    int format, nbSmoothing, algo2d, algo3d, algoSubdivide;
-    int order, secondOrderLinear, secondOrderIncomplete;
-    int secondOrderExperimental, meshOnlyVisible;
-    int smoothInternalEdges, minCircPoints, minCurvPoints;
-    int saveAll, saveGroupsOfNodes, binary, bdfFieldFormat, saveParametric;
-    int smoothNormals, reverseAllNormals, zoneDefinition, clip;
-    int saveElementTagType;
-  } mesh;
+  contextMeshOptions mesh;
   // FIXME: putting these in the mesh struct (where they belong) causes 
   // an LNK1179 error ("duplicate COMDAT") with MSVC...
   meshPartitionOptions partitionOptions;

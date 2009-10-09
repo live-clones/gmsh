@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include "linearSystemTAUCS.h"
 
 #if defined(HAVE_TAUCS)
@@ -44,7 +45,7 @@ int linearSystemCSRTaucs<double>::systemSolve()
   myVeryCuteTaucsMatrix.flags = TAUCS_SYMMETRIC | TAUCS_LOWER | TAUCS_DOUBLE; 
   
   char* options[] = { "taucs.factor.LLT=true", NULL };  
-  Msg::Info("TAUCS solves %d unknowns", _b->size());
+  clock_t t1 = clock();
   int result = taucs_linsolve(&myVeryCuteTaucsMatrix, 
                               NULL, 
                               1, 
@@ -52,6 +53,8 @@ int linearSystemCSRTaucs<double>::systemSolve()
                               &(*_b)[0],
                               options,
                               NULL);                         
+  clock_t t2 = clock();
+  Msg::Info("TAUCS has solved %d unknowns in %8.3f seconds", _b->size(),(double)(t2-t1)/CLOCKS_PER_SEC);
   if (result != TAUCS_SUCCESS){
     Msg::Error("Taucs Was Not Successfull %d",result);
   }  

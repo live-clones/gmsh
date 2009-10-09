@@ -17,6 +17,7 @@ set(SRC
   robustPredicates.cpp
   mathEvaluator.cpp
   Iso.cpp
+  cartesian.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Numeric *.h) 

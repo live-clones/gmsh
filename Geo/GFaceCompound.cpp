@@ -486,6 +486,8 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   if (!_lsys) {
 #if defined(HAVE_PETSC)
     _lsys = new linearSystemPETSc<double>;
+#elif defined(HAVE_TAUCS)
+    _lsys = new linearSystemCSRTaucs<double>;
 #elif defined(HAVE_GMM)
     linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
     _lsysb->setGmres(1);
@@ -760,6 +762,7 @@ void GFaceCompound::parametrize(iterationStep step) const
              myAssembler.sizeOfR(), myAssembler.sizeOfF());
   
   //convexCombinationTerm laplace(model(), 1, &ONE);
+  clock_t t1 = clock();  
   laplaceTerm laplace(model(), 1, &ONE);
   it = _compound.begin();
   for( ; it != _compound.end() ; ++it){
@@ -768,8 +771,8 @@ void GFaceCompound::parametrize(iterationStep step) const
       laplace.addToMatrix(myAssembler, &se);
     }
   }
- 
-  Msg::Debug("Assembly done");
+  clock_t t2 = clock();
+  Msg::Debug("Assembly done in %8.3f seconds",(double)(t2-t1)/CLOCKS_PER_SEC);
   _lsys->systemSolve();
   Msg::Debug("System solved");
 
@@ -1218,7 +1221,7 @@ void GFaceCompound::getTriangle(double u, double v,
 
 void GFaceCompound::buildOct() const
 {
-  //printStuff();
+  printStuff();
 
   SBoundingBox3d bb;
   int count = 0;

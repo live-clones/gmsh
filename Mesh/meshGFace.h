@@ -16,13 +16,14 @@ class MVertex;
 class meshGFace {
   const bool repairSelfIntersecting1dMesh;
  public :
-  meshGFace (bool r = true) : repairSelfIntersecting1dMesh(r) {}
+  meshGFace (bool r = true, bool s = false) : repairSelfIntersecting1dMesh(r){}
   void operator () (GFace *);
 };
 
 // Destroy the mesh of the face
 class deMeshGFace {
  public :
+  deMeshGFace (bool s = false){}
   void operator () (GFace *);
 };
 

@@ -58,6 +58,7 @@ class SOrientedBoundingBox {
   ~SOrientedBoundingBox(){}
 
   SVector3 getCenter(){ return center; }
+  const SVector3 &getCenter() const{ return center; }
   double getCenterX(){ return center[0]; }
   double getCenterY(){ return center[1]; }
   double getCenterZ(){ return center[2]; }

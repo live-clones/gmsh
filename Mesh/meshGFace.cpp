@@ -271,13 +271,13 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   std::list<GEdge*>::iterator it = edges.begin();
   while(it != edges.end()){
    if((*it)->isSeam(gf)) return false;
-    if(!(*it)->isMeshDegenerated()){
-      for(unsigned int i = 0; i< (*it)->lines.size(); i++){
-        all_vertices.insert((*it)->lines[i]->getVertex(0));
-        all_vertices.insert((*it)->lines[i]->getVertex(1));
-      }      
-    }
-    ++it;
+   if(!(*it)->isMeshDegenerated()){
+     for(unsigned int i = 0; i< (*it)->lines.size(); i++){
+       all_vertices.insert((*it)->lines[i]->getVertex(0));
+       all_vertices.insert((*it)->lines[i]->getVertex(1));
+     }
+   }
+   ++it;
   }
 
   std::list<GEdge*> emb_edges = gf->embeddedEdges();
@@ -285,7 +285,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   while(it != emb_edges.end()){
     if(!(*it)->isMeshDegenerated()){
       all_vertices.insert((*it)->mesh_vertices.begin(),
-                          (*it)->mesh_vertices.end() );
+			  (*it)->mesh_vertices.end() );      
       all_vertices.insert((*it)->getBeginVertex()->mesh_vertices.begin(),
                           (*it)->getBeginVertex()->mesh_vertices.end());
       all_vertices.insert((*it)->getEndVertex()->mesh_vertices.begin(),
@@ -597,12 +597,11 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
                   &recoverMapInv);
     optimizeMeshBDS(gf, *m, 2);
   }
-
   computeMeshSizeFieldAccuracy(gf, *m, gf->meshStatistics.efficiency_index,
-                               gf->meshStatistics.longest_edge_length,
-                               gf->meshStatistics.smallest_edge_length,
-                               gf->meshStatistics.nbEdge,
-                               gf->meshStatistics.nbGoodLength);
+			       gf->meshStatistics.longest_edge_length,
+			       gf->meshStatistics.smallest_edge_length,
+			       gf->meshStatistics.nbEdge,
+			       gf->meshStatistics.nbGoodLength);
   gf->meshStatistics.status = GFace::DONE;
 
   // fill the small gmsh structures
@@ -634,7 +633,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
           // may be created, for example on a sphere that contains one
           // pole
           if(v1 != v2 && v1 != v3 && v2 != v3)
-            gf->triangles.push_back(new MTriangle(v1, v2, v3));
+	    gf->triangles.push_back(new MTriangle(v1, v2, v3));
         }
         else{
           MVertex *v4 = recoverMap[n[3]];
@@ -671,12 +670,11 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   if(gf->meshAttributes.recombine)
     recombineIntoQuads(gf);
-
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
-                       gf->meshStatistics.average_element_shape,
-                       gf->meshStatistics.best_element_shape,
-                       gf->meshStatistics.nbTriangle,
-                       gf->meshStatistics.nbGoodQuality);
+		       gf->meshStatistics.average_element_shape,
+		       gf->meshStatistics.best_element_shape,
+		       gf->meshStatistics.nbTriangle,
+		       gf->meshStatistics.nbGoodQuality);
   return true;
 }
 
@@ -1227,6 +1225,7 @@ void deMeshGFace::operator() (GFace *gf)
   if(gf->geomType() == GEntity::DiscreteSurface) return;
 
   gf->deleteMesh();
+ 
   gf->deleteVertexArrays();
   gf->model()->destroyMeshCaches();
 

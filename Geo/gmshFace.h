@@ -15,6 +15,7 @@ class gmshFace : public GFace {
   bool isSphere;
   SPoint3 center;
   double radius;
+  bool buildSTLTriangulation(bool force);
  public:
   gmshFace(GModel *m, Surface *face);
   virtual ~gmshFace(){}
