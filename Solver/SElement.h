@@ -11,6 +11,10 @@
 
 // A solver element.
 
+// FIXME: this will change in the future (the base SElement should no
+// contain anything except the MElement). More advanced solvers will
+// derive and/or add containers for additional storage
+
 class SElement
 {
  private:

@@ -1,5 +1,22 @@
 #include "SElement.h"
 
+// FIXME: this will change in the future (the base SElement should no
+// contain anything except the MElement). More advanced solvers will
+// derive and/or add containers for additional storage
+
+/*
+class SFunctionSpace{
+
+}
+
+class SFunctionSpaceXFEM : class SFunctionSpace{
+
+}
+
+etc.
+
+ */
+
 simpleFunction<double> * SElement::_enrichement_s = 0,* SElement::_enrichement_t = 0;
 
 void SElement::gradNodalFunctions ( double u, double v, double w, double invjac[3][3],double Grads[][3],
