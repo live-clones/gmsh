@@ -178,12 +178,9 @@ SOrientedBoundingBox GFace::getOBB()
       }
     } 
     else if(buildSTLTriangulation()) {
-      int N = va_geom_triangles->getNumVertices();
-      for (int i = 0; i < N; i++) {
-        SPoint3 p((va_geom_triangles->getVertexArray(3 * i))[0],
-                  (va_geom_triangles->getVertexArray(3 * i))[1],
-                  (va_geom_triangles->getVertexArray(3 * i))[2]);
-        vertices.push_back(p);
+      for (unsigned int i = 0; i < stl_vertices.size(); i++){
+        GPoint p = point(stl_vertices[i]);
+        vertices.push_back(SPoint3(p.x(), p.y(), p.z()));
       }
     }
     else {
@@ -789,10 +786,16 @@ SVector3 GFace::normal(const SPoint2 &param) const
   return n;
 }
 
-bool GFace::buildRepresentationCross()
+bool GFace::buildRepresentationCross(bool force)
 {
+  if(cross.size()){
+    if(force)
+      cross.clear();
+    else
+      return true;
+  }
+
   if(geomType() != Plane){
-    // don't try again
     cross.clear();
     cross.push_back(SPoint3(0., 0., 0.));
     return false;
@@ -804,7 +807,6 @@ bool GFace::buildRepresentationCross()
     GEdge *ge = *it;
     if(ge->geomType() == GEntity::DiscreteCurve ||
        ge->geomType() == GEntity::BoundaryLayerCurve){
-      // don't try again
       cross.clear();
       cross.push_back(SPoint3(0., 0., 0.));
       return false;
@@ -853,8 +855,8 @@ bool GFace::buildRepresentationCross()
     }
     if(end_line) cross.push_back(pt_last_inside);
   }
-  // if we couldn't determine a cross, add a dummy point so that
-  // we won't try again
+  // if we couldn't determine a cross, add a dummy point so that we
+  // won't try again unless we force the recomputation
   if(!cross.size()){
     cross.push_back(SPoint3(0., 0., 0.));
     return false;
@@ -862,18 +864,52 @@ bool GFace::buildRepresentationCross()
   return true;
 }
 
-struct graphics_point{
-  double xyz[3];
-  SVector3 n;
-};
-
 bool GFace::buildSTLTriangulation(bool force)
 {
+  if(stl_triangles.size()){
+    if(force){
+      stl_vertices.clear();
+      stl_triangles.clear();
+    }
+    else
+      return true;
+  }
+
   // Build a simple triangulation for surfaces which we know are not
   // trimmed
-  if(geomType() != ParametricSurface && geomType() != ProjectionFace)
-    return false;
+  if(geomType() == ParametricSurface || geomType() == ProjectionFace){
+    const int nu = 64, nv = 64;
+    Range<double> ubounds = parBounds(0);
+    Range<double> vbounds = parBounds(1);
+    double umin = ubounds.low(), umax = ubounds.high();
+    double vmin = vbounds.low(), vmax = vbounds.high();
+    for(int i = 0; i < nu; i++){
+      for(int j = 0; j < nv; j++){
+        double u = umin + (double)i / (double)(nu - 1) * (umax - umin);
+        double v = vmin + (double)j / (double)(nv - 1) * (vmax - vmin);
+        stl_vertices.push_back(SPoint2(u, v));
+      }
+    }
+    for(int i = 0; i < nu - 1; i++){
+      for(int j = 0; j < nv - 1; j++){
+        stl_triangles.push_back(i * nv + j);
+        stl_triangles.push_back((i + 1) * nv + j);
+        stl_triangles.push_back((i + 1) * nv + j + 1);
+        stl_triangles.push_back(i * nv + j);
+        stl_triangles.push_back((i + 1) * nv + j + 1);
+        stl_triangles.push_back(i * nv + j + 1);
+      }
+    }
+    return true;
+  }
+  
+  // build STL for general surfaces here
 
+  return false;
+}
+
+bool GFace::fillVertexArray(bool force)
+{
   if(va_geom_triangles){
     if(force)
       delete va_geom_triangles;
@@ -881,48 +917,26 @@ bool GFace::buildSTLTriangulation(bool force)
       return true;
   }
 
-  const int nu = 64, nv = 64;
-  va_geom_triangles = new VertexArray(3, 2 * (nu - 1) * (nv - 1));
-  graphics_point p[nu][nv];
+  if(!buildSTLTriangulation(force)) return false;
+  if(stl_triangles.empty()) return false;
 
-  Range<double> ubounds = parBounds(0);
-  Range<double> vbounds = parBounds(1);
-  double umin = ubounds.low(), umax = ubounds.high();
-  double vmin = vbounds.low(), vmax = vbounds.high();
-
-  for(int i = 0; i < nu; i++){
-    for(int j = 0; j < nv; j++){
-      double u = umin + (double)i / (double)(nu - 1) * (umax - umin);
-      double v = vmin + (double)j / (double)(nv - 1) * (vmax - vmin);
-      GPoint gp = point(u, v);
-      p[i][j].xyz[0] = gp.x();
-      p[i][j].xyz[1] = gp.y();
-      p[i][j].xyz[2] = gp.z();
-      p[i][j].n = normal(SPoint2(u, v));
-    }
-  }
-
-  // i,j+1 *---* i+1,j+1
-  //       | / |
-  //   i,j *---* i+1,j
+  va_geom_triangles = new VertexArray(3, stl_triangles.size() / 3);
   unsigned int c = CTX::instance()->color.geom.surface;
   unsigned int col[4] = {c, c, c, c};
-  for(int i = 0; i < nu - 1; i++){
-    for(int j = 0; j < nv - 1; j++){
-      double x1[3] = {p[i][j].xyz[0], p[i + 1][j].xyz[0], p[i + 1][j + 1].xyz[0]};
-      double y1[3] = {p[i][j].xyz[1], p[i + 1][j].xyz[1], p[i + 1][j + 1].xyz[1]};
-      double z1[3] = {p[i][j].xyz[2], p[i + 1][j].xyz[2], p[i + 1][j + 1].xyz[2]};
-      SVector3 n1[3] = {p[i][j].n, p[i + 1][j].n, p[i + 1][j + 1].n};
-      va_geom_triangles->add(x1, y1, z1, n1, col);
-      double x2[3] = {p[i][j].xyz[0], p[i + 1][j + 1].xyz[0], p[i][j + 1].xyz[0]};
-      double y2[3] = {p[i][j].xyz[1], p[i + 1][j + 1].xyz[1], p[i][j + 1].xyz[1]};
-      double z2[3] = {p[i][j].xyz[2], p[i + 1][j + 1].xyz[2], p[i][j + 1].xyz[2]};
-      SVector3 n2[3] = {p[i][j].n, p[i + 1][j + 1].n, p[i][j + 1].n};
-      va_geom_triangles->add(x2, y2, z2, n2, col);
-    }
+  for (unsigned int i = 0; i < stl_triangles.size(); i += 3){
+    SPoint2 &p1(stl_vertices[stl_triangles[i]]);
+    SPoint2 &p2(stl_vertices[stl_triangles[i + 1]]);
+    SPoint2 &p3(stl_vertices[stl_triangles[i + 2]]);
+    GPoint gp1 = point(p1);
+    GPoint gp2 = point(p2);
+    GPoint gp3 = point(p3);
+    double x[3] = {gp1.x(), gp2.x(), gp3.x()};
+    double y[3] = {gp1.y(), gp2.y(), gp3.y()};
+    double z[3] = {gp1.z(), gp2.z(), gp3.z()};
+    SVector3 n[3] = {normal(p1), normal(p2), normal(p3)};
+    va_geom_triangles->add(x, y, z, n, col);
   }
   va_geom_triangles->finalize();
-  return true;
 }
 
 // by default we assume that straight lines are geodesics

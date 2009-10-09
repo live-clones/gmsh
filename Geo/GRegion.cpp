@@ -152,14 +152,11 @@ SOrientedBoundingBox GRegion::getOBB()
         }
       } 
       else if ((*b_face)->buildSTLTriangulation()) {
-        int N = (*b_face)->va_geom_triangles->getNumVertices();
-        for(int i = 0; i < N; i++) {
-          SPoint3 p(((*b_face)->va_geom_triangles->getVertexArray(3*i))[0],
-                    ((*b_face)->va_geom_triangles->getVertexArray(3*i))[1],
-                    ((*b_face)->va_geom_triangles->getVertexArray(3*i))[2]);
-          vertices.push_back(p);          
-        }
-      } 
+        for (unsigned int i = 0; i < (*b_face)->stl_vertices.size(); i++){
+          GPoint p = (*b_face)->point((*b_face)->stl_vertices[i]);
+          vertices.push_back(SPoint3(p.x(), p.y(), p.z()));
+        } 
+      }
       else {
         int N = 10;
         std::list<GEdge*> b_edges = (*b_face)->edges();

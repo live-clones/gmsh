@@ -11,7 +11,6 @@
 #include "OCCEdge.h"
 #include "OCCFace.h"
 #include "Numeric.h"
-#include "VertexArray.h"
 #include "Context.h"
 
 #if defined(HAVE_OCC)
@@ -84,7 +83,6 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
   umax += fabs(du) / 100.0;
   vmax += fabs(dv) / 100.0;
   occface = BRep_Tool::Surface(s);
-  if(!CTX::instance()->batch) buildSTLTriangulation();
 }
 
 Range<double> OCCFace::parBounds(int i) const
@@ -305,16 +303,15 @@ surface_params OCCFace::getSurfaceParams() const
 
 bool OCCFace::buildSTLTriangulation(bool force)
 {
-  if(va_geom_triangles){
-    if(force)
-      delete va_geom_triangles;
+  if(stl_triangles.size()){
+    if(force){
+      stl_vertices.clear();
+      stl_triangles.clear();
+    }
     else
       return true;
   }
 
-  stl_vertices.clear();
-  stl_triangles.clear();
-  
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
   Standard_Real aXmin, aYmin, aZmin, aXmax, aYmax, aZmax;
@@ -355,23 +352,6 @@ bool OCCFace::buildSTLTriangulation(bool force)
     stl_triangles.push_back(p3 - 1);
   }
 
-  va_geom_triangles = new VertexArray(3, stl_triangles.size() / 3);
-  unsigned int c = CTX::instance()->color.geom.surface;
-  unsigned int col[4] = {c, c, c, c};
-  for (unsigned int i = 0; i < stl_triangles.size(); i += 3){
-    SPoint2 &p1(stl_vertices[stl_triangles[i]]);
-    SPoint2 &p2(stl_vertices[stl_triangles[i + 1]]);
-    SPoint2 &p3(stl_vertices[stl_triangles[i + 2]]);
-    GPoint gp1 = GFace::point(p1);
-    GPoint gp2 = GFace::point(p2);
-    GPoint gp3 = GFace::point(p3);
-    double x[3] = {gp1.x(), gp2.x(), gp3.x()};
-    double y[3] = {gp1.y(), gp2.y(), gp3.y()};
-    double z[3] = {gp1.z(), gp2.z(), gp3.z()};
-    SVector3 n[3] = {normal(p1), normal(p2), normal(p3)};
-    va_geom_triangles->add(x, y, z, n, col);
-  }
-  va_geom_triangles->finalize();
   return true;
 }
 

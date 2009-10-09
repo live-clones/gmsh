@@ -94,7 +94,6 @@ class GFaceCompound : public GFace {
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return 0; }
   virtual SPoint2 getCoordinates(MVertex *v) const;
-  virtual bool buildRepresentationCross(){ return false; }
   virtual double curvatureMax(const SPoint2 &param) const;
   virtual int genusGeom ();
  private:

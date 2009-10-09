@@ -236,7 +236,18 @@ class drawGFace {
   }
   void _drawParametricGFace(GFace *f)
   {
-    if (f->geomType() == GEntity::CompoundSurface)return;
+    if (f->geomType() == GEntity::CompoundSurface) return;
+
+    if(CTX::instance()->geom.surfaceType > 0){
+      // avoid reentrant calls
+      static bool busy = false;
+      if(!busy) {
+        busy = true;
+        f->fillVertexArray(f->geomType() == GEntity::ProjectionFace);
+        busy = false;
+      }
+    }
+
     Range<double> ubounds = f->parBounds(0);
     Range<double> vbounds = f->parBounds(1);
     const double uav = 0.5 * (ubounds.high() + ubounds.low());
@@ -307,20 +318,27 @@ class drawGFace {
   }
   void _drawPlaneGFace(GFace *f)
   {
+    if(CTX::instance()->geom.surfaceType > 0){
+      // avoid reentrant calls
+      static bool busy = false;
+      if(!busy) {
+        busy = true; 
+        f->fillVertexArray();
+        busy = false;
+      }
+    }
+
     if(!CTX::instance()->geom.surfaceType || !f->va_geom_triangles ||
        CTX::instance()->geom.surfacesNum || CTX::instance()->geom.normals){
-      // We create data here and the routine is not designed to be
-      // reentrant, so we must lock it to avoid race conditions when
-      // redraw events are fired in rapid succession
+      // avoid reentrant calls
       static bool busy = false;
-      if(f->cross.empty() && !busy) {
+      if(!busy) {
         busy = true; 
         f->buildRepresentationCross();
         busy = false;
       }
     }
 
-    //FIXME: cleanup buildGraphicsRep
     if(CTX::instance()->geom.surfaces) {
       if(CTX::instance()->geom.surfaceType > 0 && f->va_geom_triangles){
         _drawVertexArray(f->va_geom_triangles, CTX::instance()->geom.light, 

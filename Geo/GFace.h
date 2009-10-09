@@ -191,12 +191,14 @@ class GFace : public GEntity
   virtual void writeGEO(FILE *fp);
 
   // fill the crude representation cross
-  virtual bool buildRepresentationCross();
+  virtual bool buildRepresentationCross(bool force=false);
 
-  // build a STL triangulation and fills the vertex array
-  // va_geom_triangles (or do nothing if it already exists, unless
-  // force=true)
+  // build an STL triangulation (or do nothing if it already exists,
+  // unless force=true)
   virtual bool buildSTLTriangulation(bool force=false);
+
+  // fill the vertex array using an STL triangulation
+  bool fillVertexArray(bool force=false);
 
   // recompute the mean plane of the surface from a list of points
   void computeMeanPlane(const std::vector<MVertex*> &points);
