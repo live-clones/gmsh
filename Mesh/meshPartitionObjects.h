@@ -29,6 +29,7 @@ class GrVertex
  public:
   const int index;                      // This is the creation index, *not* the
                                         // index in 'adjncy'
+  int dualWeight;
  private:
   unsigned short size;
   unsigned short sizeC;                 // Complete size (all possible 'grEdge')
@@ -86,6 +87,8 @@ class Graph
   std::vector<int> adjncy;              // Connectivity between graph vertex
                                         // xadj[i] and its neighbour graph
                                         // vertices.
+  std::vector<int> vwgts;               // Weights assigned for each 
+                                        // vertex
   std::vector<int> section;             // For separate partitioning of
                                         // different parts of the mesh
   std::vector<int> partition;           // The partitions output from the
@@ -128,6 +131,7 @@ class Graph
     totalGrVert = _totalGrVert;
     xadj.resize(_totalGrVert + 1);
     adjncy.reserve(2*totalGrEdge);
+    vwgts.resize(_totalGrVert);
     partition.resize(_totalGrVert);
     element.resize(_totalGrVert);
     c2w = new int[_totalGrVert];
@@ -137,6 +141,7 @@ class Graph
   {
     const int i = numGrVert++;
     xadj[i] = adjncy.size();
+    vwgts[i-1]=(int)(1.0);
     grVertMapIt->second.write(adjncy);
     element[i] = grVertMapIt->first;
     // Translated vertex numbers start from 1
@@ -154,6 +159,7 @@ class Graph
       Msg::Warning("Internal error - Graph vertices are missing");
     }
     xadj[numGrVert] = adjncy.size();
+    vwgts[numGrVert-1]=(int)(1.0);
     const int nAdj = adjncy.size();
     for(int i = 0; i != nAdj; ++i) adjncy[i] = c2w[adjncy[i]];
     delete[] c2w;

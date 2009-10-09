@@ -30,6 +30,7 @@ discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
 
 void discreteEdge::createTopo()
 {
+
   if(!createdTopo){ 
     orderMLines();
     setBoundVertices();
@@ -121,6 +122,17 @@ void discreteEdge::orderMLines()
 
   //lines is now a list of ordered MLines
   lines = _m;
+  
+  //mesh_vertices
+  mesh_vertices.clear();
+  for (unsigned int i = 0; i < lines.size(); ++i){
+    MVertex *v1 = lines[i]->getVertex(0);
+    MVertex *v2 = lines[i]->getVertex(1);
+    if (std::find(mesh_vertices.begin(), mesh_vertices.end(), v1) ==  mesh_vertices.end()) mesh_vertices.push_back(v1);
+    if (std::find(mesh_vertices.begin(), mesh_vertices.end(), v2) ==  mesh_vertices.end()) mesh_vertices.push_back(v2);
+    v1->setEntity(this);
+    v2->setEntity(this);
+  }
 
   //special case reverse orientation
   if (lines.size() < 2) return;
@@ -129,6 +141,7 @@ void discreteEdge::orderMLines()
     printf("coucou here \n");
     for (unsigned int i = 0; i < lines.size(); i++) _orientation[i] = !_orientation[i];
   }
+
 }
 
 void discreteEdge::setBoundVertices()
@@ -149,21 +162,35 @@ void discreteEdge::setBoundVertices()
         }
       }
       if(!existVertex){
-        GVertex *gvB = new discreteVertex(model(),vE->getNum());
+        GVertex *gvB = new discreteVertex(model(), model()->maxVertexNum()+1); 
         bound_vertices.push_back(gvB);
         vE->setEntity(gvB);
         gvB->mesh_vertices.push_back(vE);
         gvB->points.push_back(new MPoint(gvB->mesh_vertices.back()));
         model()->add(gvB);
       }
-      std::vector<MVertex*>::iterator itve = std::find(mesh_vertices.begin(), 
-                                                       mesh_vertices.end(), vE);
+      std::vector<MVertex*>::iterator itve = std::find(mesh_vertices.begin(), mesh_vertices.end(), vE);
       if (itve != mesh_vertices.end()) mesh_vertices.erase(itve);
+
+      for(GModel::eiter edge = model()->firstEdge(); edge != model()->lastEdge(); edge++){
+	std::vector<MVertex*>::iterator itve = std::find((*edge)->mesh_vertices.begin(), (*edge)->mesh_vertices.end(), vE);
+	if (itve != (*edge)->mesh_vertices.end()) (*edge)->mesh_vertices.erase(itve);
+      }
+      for(GModel::fiter face = model()->firstFace(); face != model()->lastFace(); face++){
+	std::vector<MVertex*>::iterator itve = std::find((*face)->mesh_vertices.begin(), (*face)->mesh_vertices.end(), vE);
+	if (itve != (*face)->mesh_vertices.end()) (*face)->mesh_vertices.erase(itve);
+      }
+      for(GModel::riter reg = model()->firstRegion(); reg != model()->lastRegion(); reg++){
+	std::vector<MVertex*>::iterator itve = std::find((*reg)->mesh_vertices.begin(), (*reg)->mesh_vertices.end(), vE);
+	if (itve != (*reg)->mesh_vertices.end()) (*reg)->mesh_vertices.erase(itve);
+      }
+
     }
     v0 = bound_vertices[0];
     v1 = bound_vertices[1];
   }
   else if (boundv.size() == 0){
+    //printf("closed loop for discrete Edge =%d \n", this->tag());
     GVertex* bound_vertex;
     std::vector<MLine*>::const_iterator it = lines.begin();
     MVertex* vE = (*it)->getVertex(0);
@@ -172,25 +199,41 @@ void discreteEdge::setBoundVertices()
       if ((*point)->mesh_vertices[0]->getNum() == vE->getNum()){
         bound_vertex = (*point);
         existVertex = true;
+	//printf("vertex exist (%g,%g,%g)\n", vE->x(), vE->y(), vE->z());
         break;
       }
     }
     if(!existVertex){
-      GVertex *gvB = new discreteVertex(model(),vE->getNum());
+      GVertex *gvB = new discreteVertex(model(), model()->maxVertexNum()+1);
       bound_vertex = gvB;
+      vE->setEntity(gvB);
       gvB->mesh_vertices.push_back(vE);
       gvB->points.push_back(new MPoint(gvB->mesh_vertices.back()));
       model()->add(gvB);
     }
-    std::vector<MVertex*>::iterator itve = std::find(mesh_vertices.begin(), 
-                                                     mesh_vertices.end(), vE);
-    if (itve != mesh_vertices.end()) mesh_vertices.erase(itve);
+    std::vector<MVertex*>::iterator itve = std::find(mesh_vertices.begin(),mesh_vertices.end(), vE);
+    if (itve != mesh_vertices.end())  mesh_vertices.erase(itve);
+   
+    for(GModel::eiter edge = model()->firstEdge(); edge != model()->lastEdge(); edge++){
+      std::vector<MVertex*>::iterator itve = std::find((*edge)->mesh_vertices.begin(), (*edge)->mesh_vertices.end(), vE);
+      if (itve != (*edge)->mesh_vertices.end()) (*edge)->mesh_vertices.erase(itve);
+    }
+    for(GModel::fiter face = model()->firstFace(); face != model()->lastFace(); face++){
+      std::vector<MVertex*>::iterator itve = std::find((*face)->mesh_vertices.begin(), (*face)->mesh_vertices.end(), vE);
+      if (itve != (*face)->mesh_vertices.end()) (*face)->mesh_vertices.erase(itve);
+    }
+    for(GModel::riter reg = model()->firstRegion(); reg != model()->lastRegion(); reg++){
+      std::vector<MVertex*>::iterator itve = std::find((*reg)->mesh_vertices.begin(), (*reg)->mesh_vertices.end(), vE);
+      if (itve != (*reg)->mesh_vertices.end()) (*reg)->mesh_vertices.erase(itve);
+    }
+
     v0 = bound_vertex;
     v1 = bound_vertex;
   }
 
   v0->addEdge(this);
   v1->addEdge(this);
+
 }
 
 /*
@@ -218,8 +261,7 @@ void discreteEdge::parametrize()
     if (_orientation[i] == 1 ) vR = lines[i]->getVertex(1);
     else vR = lines[i]->getVertex(0);
     int param = i+1;
-    MVertex *vNEW = new MEdgeVertex(vR->x(),vR->y(),vR->z(), this, param, 
-                                    -1., vR->getNum());
+    MVertex *vNEW = new MEdgeVertex(vR->x(),vR->y(),vR->z(), this, param, -1., vR->getNum());
     old2new.insert(std::make_pair(vR,vNEW));
     newVertices.push_back(vNEW);
     newLines.push_back(new MLine(vL, vNEW));
@@ -231,6 +273,7 @@ void discreteEdge::parametrize()
   _orientation[i] = 1;
 
   mesh_vertices = newVertices;
+
   deleteVertexArrays();
   lines.clear();
   lines = newLines;

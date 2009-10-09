@@ -27,6 +27,13 @@
 #include "linearSystemCSR.h"
 #include "linearSystemFull.h"
 #include "linearSystemPETSc.h"
+#include "meshPartitionOptions.h"
+#include "meshPartition.h"
+#include "CreateFile.h"
+#include "Context.h"
+#include "meshGFace.h"
+#include "meshGEdge.h"
+#include "discreteFace.h"
 
 static void fixEdgeToValue(GEdge *ed, double value, dofManager<double, double> &myAssembler)
 {
@@ -194,6 +201,10 @@ bool GFaceCompound::trivial() const
 
 bool GFaceCompound::checkOrientation() const
 {
+
+  //Only check orientation for stl files (1 patch)
+  if(_compound.size() > 1.0) return true;
+
   std::list<GFace*>::const_iterator it = _compound.begin();
   double a_old = 0, a_new;
   bool oriented = true;
@@ -292,8 +303,8 @@ void GFaceCompound::one2OneMap() const
       
 //      printf("Kernel CG: ucg=%g vcg=%g \n", u_cg, v_cg);
 //      bool testbadCavity = checkCavity(vTri);
-//      if(testbadCavity == true ) printf("**** New cavity is KO \n");
-//      else  printf("-- New cavity is OK \n"); 
+//      if(testbadCavity == true ) printf("**** New cavity is KOÂ \n");
+//      else  printf("-- New cavity is OKÂ \n"); 
 
 //      for(int i=0; i<  vTri.size(); i++){
 //        MTriangle *t = (MTriangle*) vTri[i];
@@ -327,6 +338,7 @@ void GFaceCompound::parametrize() const
   if(trivial()) return;
 
   if(!oct){
+
     coordinates.clear(); 
     
     //Laplace parametrization
@@ -344,10 +356,9 @@ void GFaceCompound::parametrize() const
     //-----------------
     //compute_distance();
 
-    //checkOrientation();
-    computeNormals();
     buildOct();
-
+    checkOrientation();
+    computeNormals();
   }
 }
 
@@ -357,9 +368,13 @@ void GFaceCompound::getBoundingEdges()
   for(std::list<GFace*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
     (*it)->setCompound(this);
   }
-  
-  //in case the bounding edges are explicitely given
+
+  std::set<GEdge*> _unique;
+  getUniqueEdges(_unique);
+  std::set<GEdge*>::iterator itf = _unique.begin(); 
+
   if(_U0.size()){
+    //in case the bounding edges are explicitely given
     std::list<GEdge*>::const_iterator it = _U0.begin();
     for( ; it != _U0.end() ; ++it){
       l_edges.push_back(*it);
@@ -370,23 +385,22 @@ void GFaceCompound::getBoundingEdges()
       l_edges.push_back(*it);
       (*it)->addFace(this);
     }
-    return;
+    std::list<GEdge*> loop;
+    computeALoop(_unique, loop);
+    while(!_unique.empty())  computeALoop(_unique,loop);
   }
-  
-  std::set<GEdge*> _unique;
-  getUniqueEdges(_unique);
-  std::set<GEdge*>::iterator itf = _unique.begin();
-  for( ; itf != _unique.end(); ++itf){
-    l_edges.push_back(*itf);
-    (*itf)->addFace(this);
+  else{
+    //in case the bounding edges are NOT explicitely given
+    for( ; itf != _unique.end(); ++itf){
+      l_edges.push_back(*itf);
+      (*itf)->addFace(this);
+    }
+    computeALoop(_unique, _U0);
+    while(!_unique.empty())  computeALoop(_unique,_U1);
   }
 
-  computeALoop(_unique, _U0);
-  while(!_unique.empty()){    
-    computeALoop(_unique, _U1);
-    printf("%d in unique\n", (int)_unique.size());
-    _interior_loops.push_back(_U1);
-  }  
+ return;
+
 }
 
 void GFaceCompound::getUniqueEdges(std::set<GEdge*> &_unique) 
@@ -418,10 +432,12 @@ void GFaceCompound::getUniqueEdges(std::set<GEdge*> &_unique)
     (*itf)->addFace(this);
   }
 }
-
 void GFaceCompound::computeALoop(std::set<GEdge*> &_unique, std::list<GEdge*> &loop) 
 {
   std::list<GEdge*> _loop;
+
+  if (_unique.empty()) return;
+
   while(!_unique.empty()) {
     std::set<GEdge*>::iterator it = _unique.begin();
     GVertex *vB = (*it)->getBeginVertex();
@@ -472,7 +488,11 @@ void GFaceCompound::computeALoop(std::set<GEdge*> &_unique, std::list<GEdge*> &l
     if(found == true) break;
     
   } 
+  
   loop = _loop;
+  _interior_loops.push_back(loop);
+  return;
+
 }
 
 GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
@@ -503,7 +523,7 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
       Msg::Exit(1);
     }
   }
-
+  
   getBoundingEdges();
   if(!_U0.size()) _type = UNITCIRCLE;
   else if(!_V1.size()) _type = UNITCIRCLE;
@@ -821,7 +841,7 @@ void GFaceCompound::parametrize_conformal() const
   }
 
   MVertex *v1 = ordered[0];
-  MVertex *v2;
+  MVertex *v2 = ordered[1];
 //   if (!_interior_loops.empty()){
 //     std::vector<MVertex*> ordered2;
 //     bool success2 = orderVertices(_U1, ordered2, coords);
@@ -831,8 +851,6 @@ void GFaceCompound::parametrize_conformal() const
 //     v2 = ordered[1];
 //   //v2 = ordered[ordered.size()/2];
 //   }
-
-  v2 = ordered[1];
    
   //printf("Pinned vertex  %g %g %g / %g %g %g \n", v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z());
   //exit(1);
@@ -894,7 +912,7 @@ void GFaceCompound::parametrize_conformal() const
     coordinates[v] = SPoint3(value1,value2,0.0);
   }
 
-  //  checkOrientation();  
+  checkOrientation();  
   computeNormals();
   buildOct();
   _lsys->clear();
@@ -904,10 +922,10 @@ void GFaceCompound::compute_distance() const
 {
   SBoundingBox3d bbox = GModel::current()->bounds();
   double L = norm(SVector3(bbox.max(), bbox.min())); 
-  double mu = L / 28;
-  simpleFunction<double> DIFF(mu * mu), ONE(1.0);
+  double mu = L/28;
+  simpleFunction<double> DIFF(mu * mu), MONE(1.0);
   dofManager<double, double> myAssembler(_lsys);
-  distanceTerm distance(model(), 1, &DIFF, &ONE);
+  distanceTerm distance(model(), 1, &DIFF, &MONE);
 
   std::vector<MVertex*> ordered;
   boundVertices(_U0, ordered);
@@ -1282,32 +1300,145 @@ void GFaceCompound::buildOct() const
   nbT = count;
   Octree_Arrange(oct);
 }
+//Verify topological conditions for computing the harmonic map
+bool GFaceCompound::checkTopology() 
+{
+  
+  bool correctTopo = true;
 
-int GFaceCompound::genusGeom()
+  int Nb = _interior_loops.size();
+  int G  = genusGeom() ;
+  if( G != 0 || Nb < 1) correctTopo = false;
+
+  if (!correctTopo){
+    
+    Msg::Info("--> Wrong topology: Genus=%d and N boundary=%d", G, Nb);
+
+    //Partition the mesh and createTopology fror new faces
+    //-----------------------------------------------------
+    meshPartitionOptions options;
+    int N = std::max(G+1, 2);
+    options =  CTX::instance()->partitionOptions;
+    options.num_partitions = N;
+    options.partitioner = 2; //METIS
+    options.algorithm =  1 ;
+    int ier = PartitionMesh(GModel::current(), options);
+    int numv = GModel::current()->maxVertexNum() + 1;
+    int nume = GModel::current()->maxEdgeNum() + 1;
+    int numf = GModel::current()->maxFaceNum() + 1;
+    CreateTopologyFromPartition(GModel::current(), this, N);
+    GModel::current()->createTopologyFromMesh();
+
+    //Remesh new faces (Compound Lines and Compound Surfaces)
+    //-----------------------------------------------------
+
+    discreteFace *gdf = new discreteFace(GModel::current(), numf+2*N);
+    GModel::current()->add(gdf);
+    //printf("*** Remesh face %d in new discreteFace =%d\n", this->tag(), gdf->tag());
+
+    int numEdges = GModel::current()->maxEdgeNum() - nume + 1;
+    //printf("*** Created %d discretEdges \n", numEdges);
+    for (int i=0; i < numEdges; i++){
+      std::vector<GEdge*>e_compound;
+      GEdge *pe = GModel::current()->getEdgeByTag(nume+i);//partition edge
+      int num_gec = GModel::current()->maxEdgeNum() + 1;
+      e_compound.push_back(pe); 
+      printf("*** Remeshing discreteEdge %d with CompoundLine %d\n", pe->tag(), num_gec);
+      GEdge *gec = new GEdgeCompound(GModel::current(), num_gec, e_compound);
+      
+      meshGEdge mge;
+      mge(gec);//meshing 1D
+
+      GModel::current()->remove(pe);
+      //GModel::current()->add(gec);
+    }
+
+    int numVert = GModel::current()->maxVertexNum() - numv + 1;
+    printf("*** Created %d discreteVert \n", numVert);
+    for (int i=0; i < numEdges; i++){
+      GVertex *pv = GModel::current()->getVertexByTag(numv+i);//partition vertex
+      GModel::current()->remove(pv);
+    }
+
+    std::list<GEdge*> b[4];
+    std::set<MVertex*> all_vertices;
+    for (int i=0; i < N; i++){
+      std::list<GFace*>f_compound;
+      GFace *pf = GModel::current()->getFaceByTag(numf+i);//partition face
+      int num_gfc = numf + N + i ;
+      f_compound.push_back(pf); 
+
+      printf("*** Remeshing discreteFace %d with CompoundSurface %d\n", pf->tag(), num_gfc);
+      GFace *gfc = new GFaceCompound(GModel::current(), num_gfc, f_compound, 
+					    b[0], b[1], b[2], b[3]);
+      meshGFace mgf;
+      mgf(gfc);//meshing 2D
+
+      for (int j=0; j < gfc->triangles.size(); j++){
+ 	MTriangle *t =  gfc->triangles[j];
+ 	MVertex *v1 = t->getVertex(0);
+ 	MVertex *v2 = t->getVertex(1);
+ 	MVertex *v3 = t->getVertex(2);
+ 	gdf->triangles.push_back(new MTriangle(v1, v2, v3));
+ 	all_vertices.insert(v1); 
+ 	all_vertices.insert(v2);
+ 	all_vertices.insert(v3);
+      }
+  
+      GModel::current()->remove(pf);
+      //GModel::current()->add(gfc);
+  }
+
+    //Put new mesh in a new discreteFace
+    //-----------------------------------------------------
+    for(std::set<MVertex*>::iterator it = all_vertices.begin(); it != all_vertices.end(); ++it){
+      gdf->mesh_vertices.push_back(*it);
+    }
+
+    printf("*** Mesh of surface %d done by assembly remeshed faces\n", this->tag());
+    gdf->setTag(this->tag());
+    meshStatistics.status = GFace::DONE; 
+
+     //CreateOutputFile(CTX::instance()->outputFileName, CTX::instance()->mesh.format);
+     //Msg::Exit(1);
+
+  }
+  
+  return correctTopo;
+
+}
+
+int GFaceCompound::genusGeom() const
 {
  std::list<GFace*>::const_iterator it = _compound.begin();
-  std::set<MEdge, Less_Edge> es;
+ std::set<MEdge, Less_Edge> es;
  std::set<MVertex*> vs;
  int N = 0;
  for( ; it != _compound.end() ; ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       N++;
       MTriangle *e = (*it)->triangles[i];
-      for(int j = 0; j < e->getNumVertices(); j++) vs.insert(e->getVertex(j));
-      for(int j = 0; j < e->getNumEdges(); j++) es.insert(e->getEdge(j));
+      for(int j = 0; j < e->getNumVertices(); j++){
+	  vs.insert(e->getVertex(j));
+      }
+      for(int j = 0; j < e->getNumEdges(); j++){
+	  es.insert(e->getEdge(j));
+      }
     }
  }
- int poincare = vs.size() - es.size() + N;// = 2g + 2 - b
+ int poincare = vs.size() - es.size() + N; 
 
- return (poincare - 2 + edgeLoops.size())/2;
+ return (int)(-poincare + 2 - _interior_loops.size())/2;
+
 }
 
 void GFaceCompound::printStuff() const
 {
   std::list<GFace*>::const_iterator it = _compound.begin();
 
-  char name1[256], name2[256], name3[256];
+  char name0[256], name1[256], name2[256], name3[256];
   char name4[256], name5[256], name6[256];
+  sprintf(name0, "UVAREA-%d.pos", (*it)->tag());
   sprintf(name1, "UVX-%d.pos", (*it)->tag());
   sprintf(name2, "UVY-%d.pos", (*it)->tag());
   sprintf(name3, "UVZ-%d.pos", (*it)->tag()); 
@@ -1322,6 +1453,7 @@ void GFaceCompound::printStuff() const
 //  sprintf(name5, "XYZV.pos");
 //  sprintf(name6, "XYZC.pos");
 
+  FILE * uva = fopen(name0,"w");
   FILE * uvx = fopen(name1,"w");
   FILE * uvy = fopen(name2,"w");
   FILE * uvz = fopen(name3,"w");
@@ -1329,6 +1461,7 @@ void GFaceCompound::printStuff() const
   FILE * xyzv = fopen(name5,"w");
   FILE * xyzc = fopen(name6,"w");
 
+  fprintf(uva,"View \"\"{\n");
   fprintf(uvx,"View \"\"{\n");
   fprintf(uvy,"View \"\"{\n");
   fprintf(uvz,"View \"\"{\n");
@@ -1373,6 +1506,20 @@ void GFaceCompound::printStuff() const
 	      it0->second.z(),it1->second.z(),it2->second.z());
               //K1, K2, K3);
       
+      double p0[3] = {t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z()}; 
+      double p1[3] = {t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z()};
+      double p2[3] = {t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z()};
+      double a_3D = fabs(triangle_area(p0, p1, p2));
+      double q0[3] = {it0->second.x(), it0->second.y(), 0.0}; 
+      double q1[3] = {it1->second.x(), it1->second.y(), 0.0};
+      double q2[3] = {it2->second.x(), it2->second.y(), 0.0};
+      double a_2D = fabs(triangle_area(q0, q1, q2));
+      double area = a_3D/a_2D;
+      fprintf(uva,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+	      it0->second.x(), it0->second.y(), 0.0,
+	      it1->second.x(), it1->second.y(), 0.0,
+	      it2->second.x(), it2->second.y(), 0.0,
+	      area, area, area);     
       fprintf(uvx,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 	      it0->second.x(), it0->second.y(), 0.0,
 	      it1->second.x(), it1->second.y(), 0.0,
@@ -1390,6 +1537,8 @@ void GFaceCompound::printStuff() const
 	      t->getVertex(0)->z(), t->getVertex(1)->z(), t->getVertex(2)->z());
     }
   }
+  fprintf(uva,"};\n");
+  fclose(uva);
   fprintf(uvx,"};\n");
   fclose(uvx);
   fprintf(uvy,"};\n");

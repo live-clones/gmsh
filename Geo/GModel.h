@@ -154,6 +154,9 @@ class GModel
   int getNumFaces() const { return faces.size(); }
   int getNumEdges() const { return edges.size(); }
   int getNumVertices() const { return vertices.size(); }
+  int maxVertexNum();
+  int maxEdgeNum();
+  int maxFaceNum();
 
   // quickly check if the model is empty (i.e., if it contains no
   // entities)

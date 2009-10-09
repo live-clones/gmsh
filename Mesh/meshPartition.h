@@ -7,6 +7,8 @@
 #define _PARTITION_H_
 
 #include <vector>
+#include "partitionEdge.h"
+#include "GFaceCompound.h"
 
 struct meshPartitionOptions;
 struct BoElemGr;
@@ -26,5 +28,7 @@ int MakeGraph(GModel *const model, Graph &graph,
 int PartitionGraph(Graph &graph, meshPartitionOptions &options);
 int PartitionMesh(GModel *const model, meshPartitionOptions &options);
 int CreatePartitionBoundaries (GModel *model);
+void splitBoundaryEdges(GModel *model,  std::set<partitionEdge*, Less_partitionEdge> &newEdges);
+void CreateTopologyFromPartition(GModel *model, GFaceCompound *gf, int num_parts);
 
 #endif

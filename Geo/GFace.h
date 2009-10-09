@@ -124,6 +124,7 @@ class GFace : public GEntity
   int poincareMesh ();
   int genusMesh () { return (poincareMesh() + edgeLoops.size() - 2) / 2; }
   virtual int genusGeom ();
+  virtual bool checkTopology() = 0 ;
 
   // return the point on the face corresponding to the given parameter
   virtual GPoint point(double par1, double par2) const = 0;

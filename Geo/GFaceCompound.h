@@ -95,7 +95,9 @@ class GFaceCompound : public GFace {
   void * getNativePtr() const { return 0; }
   virtual SPoint2 getCoordinates(MVertex *v) const;
   virtual double curvatureMax(const SPoint2 &param) const;
-  virtual int genusGeom ();
+  virtual int genusGeom () const;
+  virtual bool checkTopology();
+  virtual std::list<GFace*> getCompounds() {return _compound;};
  private:
   typeOfIsomorphism _type;
   typeOfMapping _mapping;

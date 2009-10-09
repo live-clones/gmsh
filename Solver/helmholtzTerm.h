@@ -15,7 +15,7 @@
 #include "fullMatrix.h"
 #include "Numeric.h"
 
-// \nabla \cdot k \nabla U + a U 
+// \nabla \cdot k \nabla U - a U 
 template<class scalar>
 class helmholtzTerm : public femTerm<scalar, scalar> {
  protected:

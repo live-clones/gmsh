@@ -1,4 +1,4 @@
-Mesh.CharacteristicLengthFactor=0.5;
+Mesh.CharacteristicLengthFactor=0.1;
 
 Merge "implant_CLASS.msh";
 CreateTopology;
@@ -6,7 +6,6 @@ CreateTopology;
 Compound Line(20)={3};
 Compound Surface(100)={2} Boundary {{}};
 Compound Surface(200)={3} Boundary {{}};
-
 
 //Compound Line(20)={6};
 //Compound Line(30)={7};

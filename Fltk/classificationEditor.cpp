@@ -196,29 +196,6 @@ static void class_ok_cb(Fl_Widget *w, void *data)
   Msg::StatusBar(3, false, "");
 }
 
-static int maxEdgeNum()
-{
-  GModel::eiter it = GModel::current()->firstEdge();
-  GModel::eiter ite = GModel::current()->lastEdge();
-  int MAXX = 0;
-  while(it != ite){
-    MAXX = std::max(MAXX, (*it)->tag());
-    ++it;
-  }
-  return MAXX;
-}
-
-static int maxFaceNum()
-{
-  GModel::fiter it =  GModel::current()->firstFace();
-  GModel::fiter ite = GModel::current()->lastFace();
-  int MAXX = 0;
-  while(it != ite){
-    MAXX = std::max(MAXX, (*it)->tag());
-    ++it;
-  }
-  return MAXX;
-}
 
 struct compareMLinePtr 
 {
@@ -263,7 +240,7 @@ static GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
   std::map<std::pair<int, int>, GEdge*>::iterator it = 
     newEdges.find(std::make_pair<int, int>(i1, i2));
   if(it == newEdges.end()){
-    discreteEdge *temporary = new discreteEdge(GModel::current(), maxEdgeNum() + 1, 0, 0);
+    discreteEdge *temporary = new discreteEdge(GModel::current(), GModel::current()->maxEdgeNum() + 1, 0, 0);
     printf("add new edge gf1=%d gf2=%d \n", t1, t2);
     GModel::current()->add(temporary);
     newEdges[std::make_pair<int, int>(i1, i2)] = temporary;
@@ -343,7 +320,7 @@ static void class_color_cb(Fl_Widget* w, void* data)
     std::list<MTri3*> ::iterator it = tris.begin();
     while(it != tris.end()){
       if(!(*it)->isDeleted()){
-        discreteFace *temporary = new discreteFace(GModel::current(), maxFaceNum() + 1);
+        discreteFace *temporary = new discreteFace(GModel::current(), GModel::current()->maxFaceNum() + 1);
         recurClassify(*it, temporary, lines, reverse);
         GModel::current()->add(temporary);
       }
@@ -372,7 +349,7 @@ static void class_color_cb(Fl_Widget* w, void* data)
     for (std::map<std::pair<int, int>, GEdge*>::iterator it = newEdges.begin() ; it != newEdges.end() ; ++it){
 
       GEdge *ge = it->second;
-      printf("NEW edge with tag  = %d \n", ge->tag());
+      //printf("NEW edge with tag  = %d \n", ge->tag());
 
       std::list<MLine*> segments;
       for (unsigned int i = 0; i < ge->lines.size(); i++){
@@ -381,25 +358,20 @@ static void class_color_cb(Fl_Widget* w, void* data)
 
       //for each actual GEdge
       while (!segments.empty()) {
-
         std::vector<MLine*> myLines;
         std::list<MLine*>::iterator it = segments.begin();
-
         MVertex *vB = (*it)->getVertex(0);
         MVertex *vE = (*it)->getVertex(1);
         myLines.push_back(*it);
         segments.erase(it);
         it++;
-
         //printf("***candidate mline %d %d of size %d \n", vB->getNum(), vE->getNum(), segments.size());
 
         for (int i=0; i<2; i++) {
-
           for (std::list<MLine*>::iterator it = segments.begin() ; it != segments.end(); ++it){ 
             MVertex *v1 = (*it)->getVertex(0);
             MVertex *v2 = (*it)->getVertex(1);
             //printf("mline %d %d \n", v1->getNum(), v2->getNum());
-            
             std::list<MLine*>::iterator itp;
             if ( v1 == vE  ){
               //printf("->push back this mline \n");
@@ -419,39 +391,22 @@ static void class_color_cb(Fl_Widget* w, void* data)
               vE = v1;
               i=-1;
             }
-
             if (it == segments.end()) break;
-
           }
-
           if (vB == vE) break;
-
           if (segments.empty()) break;
-
           //printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
           MVertex *temp = vB;
           vB = vE;
           vE = temp;
           //printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
-
         }
-        
-//      printf("************ CANDIDATE NEW EDGE \n");
-//      for (std::vector<MLine*>::iterator it = myLines.begin() ; it != myLines.end() ; ++it){
-//        MVertex *v1 = (*it)->getVertex(0);
-//        MVertex *v2 = (*it)->getVertex(1);
-//        printf("Line %d %d \n", v1->getNum(), v2->getNum());
-//      }
-        GEdge *newGe = new discreteEdge(GModel::current(), maxEdgeNum() + 1, 0, 0);
+        GEdge *newGe = new discreteEdge(GModel::current(), GModel::current()->maxEdgeNum() + 1, 0, 0);
         newGe->lines.insert(newGe->lines.end(), myLines.begin(), myLines.end());
         GModel::current()->add(newGe);
-        printf("create new edge with tag =%d\n", maxEdgeNum());
-        
       }//end for each actual GEdge
-
     }
-
-    printf("end new edge with tag \n");
+    //printf("end new edge with tag \n");
 
     for (std::map<std::pair<int, int>, GEdge*>::iterator it = newEdges.begin() ; it != newEdges.end() ; ++it){
       GEdge *ge = it->second;
@@ -716,9 +671,9 @@ classificationEditor::classificationEditor()
   // saved for the ones that have been saved by the user
   // and that will be used for next step
 
-  temporary = new discreteEdge(GModel::current(), maxEdgeNum() + 1, 0, 0);
+  temporary = new discreteEdge(GModel::current(), GModel::current()->maxEdgeNum() + 1, 0, 0);
   GModel::current()->add(temporary);
-  saved = new discreteEdge(GModel::current(), maxEdgeNum() + 1, 0, 0);
+  saved = new discreteEdge(GModel::current(), GModel::current()->maxEdgeNum() + 1, 0, 0);
   GModel::current()->add(saved);
   
   _window->end();

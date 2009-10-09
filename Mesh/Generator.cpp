@@ -409,7 +409,12 @@ static void Mesh2D(GModel *m)
   // and curve meshes) is global as it depends on a smooth normal
   // field generated from the surface mesh of the source surfaces
   if(!Mesh2DWithBoundaryLayers(m)){
-    std::for_each(m->firstFace(), m->lastFace(), meshGFace());
+    //std::for_each(m->firstFace(), m->lastFace(), meshGFace());
+    std::set<GFace*> actualFaces;
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
+      actualFaces.insert(*it);
+    }
+    std::for_each(actualFaces.begin(), actualFaces.end(), meshGFace());
     int nIter = 0;
     while(1){
       meshGFace mesher;

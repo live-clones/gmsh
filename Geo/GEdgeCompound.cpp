@@ -25,7 +25,15 @@ GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound,
   for (unsigned int i = 0; i < _compound.size(); i++)
     _compound[i]->setCompound(this);
 
-  parametrize();
+  for(std::vector<GEdge*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
+    if(!(*it)){
+      Msg::Error("Incorrect edge in compound edge %d\n", tag);
+      Msg::Exit(1);
+    }
+  }
+
+ parametrize();
+
 }
 
 GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound)

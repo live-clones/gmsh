@@ -252,6 +252,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   // replace edges by their compounds
   if(gf->geomType() == GEntity::CompoundSurface){
+    bool correct = gf->checkTopology();
+    if (!correct) return true;
     std::set<GEdge*> mySet;
     std::list<GEdge*>::iterator it = edges.begin();
     while(it != edges.end()){

@@ -24,6 +24,9 @@
 #include "partitionVertex.h"
 #include "partitionEdge.h"
 #include "partitionFace.h"
+#include "discreteEdge.h"
+#include "discreteFace.h"
+#include "GFaceCompound.h"
 
 //--Prototype for Chaco interface
 
@@ -136,8 +139,8 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options)
 
   model->recomputeMeshPartitions();
 
-  //  if (options.createPartitionBoundaries)
-  CreatePartitionBoundaries (model);
+  if (options.createPartitionBoundaries)
+    CreatePartitionBoundaries (model);
 
   Msg::Info("Partitioning complete");
   Msg::StatusBar(1, false, "Mesh");
@@ -247,11 +250,18 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
           metisOptions[2] = 1;
           metisOptions[3] = options.refine_algorithm;
           metisOptions[4] = 0;
-          METIS_PartGraphKway
+	  METIS_PartGraphKway
             (&n, &graph.xadj[graph.section[iSec]],
              &graph.adjncy[graph.section[iSec]], NULL, NULL, &wgtflag, &numflag,
              &options.num_partitions, metisOptions, &edgeCut,
              &graph.partition[graph.section[iSec]]);
+// 	  printf("METIS with weights\n");
+// 	  wgtflag = 2;
+//           METIS_PartGraphKway
+//             (&n, &graph.xadj[graph.section[iSec]],
+//              &graph.adjncy[graph.section[iSec]], &graph.vwgts[graph.section[iSec]], NULL, &wgtflag, &numflag,
+//              &options.num_partitions, metisOptions, &edgeCut,
+//              &graph.partition[graph.section[iSec]]);
           break;
         }
       }
@@ -724,7 +734,7 @@ void assignPartitionBoundary(GModel *model,
     ppe = new  partitionFace(model, -(int)pfaces.size()-1, v2);
     pfaces.insert (ppe);
     model->add(ppe);
-    printf("created partitionFace %d (", ppe->tag());
+    printf("*** Created partitionFace %d (", ppe->tag());
     for (unsigned int i = 0; i < v2.size(); ++i) printf("%d ", v2[i]);
     printf(")\n");
   }
@@ -765,12 +775,78 @@ void assignPartitionBoundary(GModel *model,
     ppe = new  partitionEdge(model, -(int)pedges.size()-1, 0, 0, v2);
     pedges.insert (ppe);
     model->add(ppe);
-    printf("created partitionEdge %d (", ppe->tag());
+    printf("*** Create partitionEdge %d (", ppe->tag());
     for (unsigned int i = 0; i < v2.size(); ++i) printf("%d ", v2[i]);
     printf(")\n");
   }
   else ppe = *it;
   ppe->lines.push_back(new MLine (me.getVertex(0),me.getVertex(1)));
+}
+
+void  splitBoundaryEdges(GModel *model,  std::set<partitionEdge*, Less_partitionEdge> &newEdges)
+{
+
+  for (std::set<partitionEdge*, Less_partitionEdge>::iterator it = newEdges.begin() ; it != newEdges.end() ; ++it){
+
+    int nbSplit = 0;
+    partitionEdge *ge = *it;
+    std::list<MLine*> segments;
+    for (unsigned int i = 0; i < ge->lines.size(); i++){
+      segments.push_back(ge->lines[i]);
+    }
+    
+    while (!segments.empty()) {
+      std::vector<MLine*> myLines;
+      std::list<MLine*>::iterator it = segments.begin();
+      MVertex *vB = (*it)->getVertex(0);
+      MVertex *vE = (*it)->getVertex(1);
+      myLines.push_back(*it);
+      segments.erase(it);
+      it++;
+      for (int i=0; i<2; i++) {
+	for (std::list<MLine*>::iterator it = segments.begin() ; it != segments.end(); ++it){ 
+	  MVertex *v1 = (*it)->getVertex(0);
+	  MVertex *v2 = (*it)->getVertex(1);
+	  std::list<MLine*>::iterator itp;
+	  if ( v1 == vE  ){
+	    myLines.push_back(*it);
+	    itp = it;
+	    it++;
+	    segments.erase(itp);
+	    vE = v2;
+	    i = -1;
+	  }
+	  else if ( v2 == vE){
+	    myLines.push_back(*it);
+	    itp = it;
+	    it++;
+	    segments.erase(itp);
+	    vE = v1;
+	    i=-1;
+	  }
+	  if (it == segments.end()) break;
+	}
+	if (vB == vE) break;
+	if (segments.empty()) break;
+	MVertex *temp = vB;
+	vB = vE;
+	vE = temp;
+      }
+      if (nbSplit == 0 && segments.empty()) break; 
+      int numEdge = model->maxEdgeNum() + 1;
+      discreteEdge *newGe = new discreteEdge(model, numEdge, 0, 0);
+      newGe->lines.insert(newGe->lines.end(), myLines.begin(), myLines.end());
+      model->add(newGe);
+      newGe->orderMLines(); //this creates also mesh_vertices
+
+      nbSplit++;
+      printf("*** split partitionEdge with tag =%d\n", numEdge);      
+    }
+    if (nbSplit > 0) model->remove(ge);
+  }
+  
+  return;
+
 }
 
 void assignPartitionBoundary(GModel *model,
@@ -809,7 +885,7 @@ void assignPartitionBoundary(GModel *model,
     ppv = new  partitionVertex(model, -(int)pvertices.size()-1,v2);
     pvertices.insert (ppv);
     model->add(ppv);
-    printf("created partitionVertex %d (", ppv->tag());
+    printf("*** created partitionVertex %d (", ppv->tag());
     for (unsigned int i = 0; i < v2.size(); ++i) printf("%d ", v2[i]);
     printf(")\n");
   }
@@ -883,6 +959,7 @@ int CreatePartitionBoundaries(GModel *model)
 	}while (oper (e,it->first));
 	assignPartitionBoundary (model,e,pedges,voe,pfaces);
       }
+      //splitBoundaryEdges(model,pedges);
     }
   }
 
@@ -921,6 +998,55 @@ int CreatePartitionBoundaries(GModel *model)
   }
 
   return 1;
+}
+
+void CreateTopologyFromPartition(GModel *model, GFaceCompound *gf, int N)
+{
+
+  printf("---> CreateTopologyFromPartition for Compound Face %d \n", gf->tag());
+  // Compound is partitioned in N discrete faces
+  //--------------------------------------------
+  std::vector<discreteFace*> discreteFaces;
+  std::vector<std::set<MVertex*> > allNodes;
+  int numMax = model->maxFaceNum() + 1;
+  for( int i =0; i < N;  i++){
+    //printf("*** Created discreteFace %d \n", numMax+i);
+    discreteFace *face = new discreteFace(model, numMax+i);
+    discreteFaces.push_back(face);
+    model->add(face);    
+    std::set<MVertex*> mySet;
+    allNodes.push_back(mySet);
+  }
+
+  std::list<GFace*> _compound =  gf->getCompounds();
+  std::list<GFace*>::iterator it = _compound.begin();
+
+  for( ; it != _compound.end() ; ++it){
+    for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+      MTriangle *e = (*it)->triangles[i];
+      int part = e->getPartition();
+      for(int j = 0; j < 3; j++){
+	MVertex *v0 = e->getVertex(j);
+	if (v0->onWhat()->dim() == 2) allNodes[part-1].insert(v0);
+      }
+      discreteFaces[part-1]->triangles.push_back(new MTriangle(e->getVertex(0),e->getVertex(1),e->getVertex(2)));     
+    }
+  }
+
+ for( int i =0; i < N;  i++){
+     GFace *face = model->getFaceByTag(numMax+i);
+     for (std::set<MVertex*>::iterator it = allNodes[i].begin(); it != allNodes[i].end(); it++){ 
+       face->mesh_vertices.push_back(*it);
+     }
+ }
+
+ //remove the discrete face that is not topologically correct
+ //for(it = _compound.begin() ; it != _compound.end() ; ++it){
+ //  model->remove(*it); 
+ //}
+ 
+ return;
+
 }
   
 /*******************************************************************************
