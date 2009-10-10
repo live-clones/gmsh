@@ -121,10 +121,10 @@ class GFace : public GEntity
   // surface. This topological constant can be computed using both the
   // geometry and the mesh. Both approaches should give the same result ;-)
   // by default, genus is ZERO
-  int poincareMesh ();
-  int genusMesh () { return (poincareMesh() + edgeLoops.size() - 2) / 2; }
-  virtual int genusGeom ();
-  virtual bool checkTopology() = 0 ;
+  int poincareMesh();
+  int genusMesh() { return (poincareMesh() + edgeLoops.size() - 2) / 2; }
+  virtual int genusGeom();
+  virtual bool checkTopology(){ return true; }
 
   // return the point on the face corresponding to the given parameter
   virtual GPoint point(double par1, double par2) const = 0;

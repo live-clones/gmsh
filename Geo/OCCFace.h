@@ -40,7 +40,6 @@ class OCCFace : public GFace {
   virtual double curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
                             double *curvMax, double *curvMin) const;
   surface_params getSurfaceParams() const;
-  virtual bool checkTopology() {return true;};
 };
 
 #endif

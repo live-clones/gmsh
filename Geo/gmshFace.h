@@ -33,7 +33,6 @@ class gmshFace : public GFace {
   void *getNativePtr() const { return s; }
   virtual SPoint2 parFromPoint(const SPoint3 &) const;
   virtual void resetMeshAttributes();
-  virtual bool checkTopology() {return true;};
 };
 
 #endif
