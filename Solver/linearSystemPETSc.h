@@ -139,7 +139,6 @@ class linearSystemPETSc : public linearSystem<scalar> {
     _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
     _try(VecAssemblyBegin(_b));
     _try(VecAssemblyEnd(_b));
-    printf("after final assembly\n");
     KSP ksp;
     _try(KSPCreate(PETSC_COMM_WORLD, &ksp));
     _try(KSPSetOperators(ksp, _a, _a, DIFFERENT_NONZERO_PATTERN));
