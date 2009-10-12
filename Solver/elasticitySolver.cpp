@@ -11,7 +11,10 @@
 #include "elasticitySolver.h"
 #include "linearSystemTAUCS.h"
 #include "linearSystemGMM.h"
+#include "linearSystemPETSc.h"
 #include "Numeric.h"
+
+#if !defined(HAVE_NO_POST)
 #include "PView.h"
 #include "PViewData.h"
 
@@ -45,6 +48,14 @@ PView* elasticitySolver::buildDisplacementView  (const std::string &postFileName
   PView *pv = new PView (postFileName, "NodeData", pModel, data, 0.0);
   return pv;  
 }
+
+#else
+PView* elasticitySolver::buildDisplacementView  (const std::string &postFileName)
+{
+  Msg::Error("Post-pro module not available");
+  return 0;
+}
+#endif
 
 
 static double vonMises(dofManager<double,double> *a, MElement *e, 
@@ -171,8 +182,10 @@ void elasticitySolver::readInputFile(const std::string &fn)
   
 void elasticitySolver::solve()
 {
-#ifdef HAVE_TAUCS
+#if defined(HAVE_TAUCS)
   linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
+#elif defined(HAVE_PETSC)
+  linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
 #else
   linearSystemGmm<double> *lsys = new linearSystemGmm<double>;
   lsys->setNoisy(2);
@@ -294,6 +307,7 @@ void elasticitySolver::solve()
     }
   }
 
+  printf("-- done assembling!\n");
   //  for (int i=0;i<pAssembler->sizeOfR();i++){
     //    printf("%g ",lsys->getFromRightHandSide(i));
   //  }

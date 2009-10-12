@@ -24,10 +24,13 @@
 #include "gmshSurface.h"
 #include "Octree.h"
 #include "SmoothData.h"
-#include "Field.h"
-#include "Generator.h"
 #include "Context.h"
 #include "OS.h"
+
+#if !defined(HAVE_NO_MESH)
+#include "Field.h"
+#include "Generator.h"
+#endif
 
 std::vector<GModel*> GModel::list;
 int GModel::_current = -1;
@@ -41,7 +44,9 @@ GModel::GModel(std::string name)
   list.push_back(this);
   // at the moment we always create (at least an empty) GEO model
   _createGEOInternals();
+#if !defined(HAVE_NO_MESH)
   _fields = new FieldManager();
+#endif
 }
 
 GModel::~GModel()
@@ -51,7 +56,9 @@ GModel::~GModel()
   destroy();
   _deleteGEOInternals();
   _deleteOCCInternals();
+#if !defined(HAVE_NO_MESH)
   delete _fields;
+#endif
 }
 
 GModel *GModel::current(int index)
@@ -109,7 +116,9 @@ void GModel::destroy()
   if(normals) delete normals;
   normals = 0;
 
+#if !defined(HAVE_NO_MESH)
   _fields->reset();
+#endif
   gmshSurface::reset();
 }
 
@@ -406,8 +415,13 @@ SBoundingBox3d GModel::bounds()
 
 int GModel::mesh(int dimension)
 {
+#if !defined(HAVE_NO_MESH)
   GenerateMesh(this, dimension);
   return true;
+#else
+  Msg::Error("Mesh module not compiled");
+  return false;
+#endif
 }
 
 int GModel::getMeshStatus(bool countDiscrete)

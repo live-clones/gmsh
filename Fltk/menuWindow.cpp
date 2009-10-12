@@ -34,13 +34,10 @@
 #include "classificationEditor.h"
 #include "Options.h"
 #include "CommandLine.h"
-#include "Generator.h"
-#include "HighOrder.h"
 #include "GModel.h"
 #include "PView.h"
 #include "PViewData.h"
 #include "PViewOptions.h"
-#include "Field.h"
 #include "OS.h"
 #include "StringUtils.h"
 #include "OpenFile.h"
@@ -49,6 +46,9 @@
 #include "GeoStringInterface.h"
 #include "Options.h"
 #include "Context.h"
+#include "Generator.h"
+#include "HighOrder.h"
+#include "Field.h"
 
 static void file_new_cb(Fl_Widget *w, void *data)
 {

@@ -17,6 +17,7 @@ set(SRC
   robustPredicates.cpp
   mathEvaluator.cpp
   Iso.cpp
+  DivideAndConquer.cpp
   cartesian.cpp
 )
 

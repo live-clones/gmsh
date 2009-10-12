@@ -21,7 +21,6 @@ set(SRC
     meshGRegionExtruded.cpp 
     meshGRegionCarveHole.cpp 
     meshGRegionLocalMeshMod.cpp
-    DivideAndConquer.cpp 
     BackgroundMesh.cpp 
     qualityMeasures.cpp 
     BoundaryLayers.cpp 

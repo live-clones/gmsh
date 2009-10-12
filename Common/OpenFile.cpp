@@ -9,7 +9,6 @@
 #include "Geo.h"
 #include "GModel.h"
 #include "Numeric.h"
-#include "HighOrder.h"
 #include "Context.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
@@ -20,6 +19,10 @@
 
 #if !defined(HAVE_NO_PARSER)
 #include "Parser.h"
+#endif
+
+#if !defined(HAVE_NO_MESH)
+#include "HighOrder.h"
 #endif
 
 #if !defined(HAVE_NO_POST)
@@ -350,10 +353,12 @@ int MergeFile(std::string fileName, bool warnIfMissing)
 #if !defined(HAVE_NO_POST)
       if(status > 1) status = PView::readMSH(fileName);
 #endif
+#if !defined(HAVE_NO_MESH)
       if(CTX::instance()->mesh.order > 1) 
         SetOrderN(GModel::current(), CTX::instance()->mesh.order,
                   CTX::instance()->mesh.secondOrderLinear, 
                   CTX::instance()->mesh.secondOrderIncomplete);
+#endif
     }
 #if !defined(HAVE_NO_POST)
     else if(!strncmp(header, "$PostFormat", 11) || 

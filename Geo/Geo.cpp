@@ -10,8 +10,11 @@
 #include "Geo.h"
 #include "GModel.h"
 #include "GeoInterpolation.h"
-#include "Field.h"
 #include "Context.h"
+
+#if !defined(HAVE_NO_MESH)
+#include "Field.h"
+#endif
 
 #define SQU(a)      ((a)*(a))
 
@@ -722,7 +725,11 @@ int NEWVOLUME(void)
 
 int NEWFIELD(void)
 {
+#if !defined(HAVE_NO_MESH)
   return (GModel::current()->getFields()->maxId() + 1);
+#else
+  return 0;
+#endif
 }
 
 int NEWPHYSICAL(void)

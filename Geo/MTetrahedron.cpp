@@ -6,41 +6,64 @@
 #include "MTetrahedron.h"
 #include "Numeric.h"
 #include "Context.h"
+
+#if !defined(HAVE_NO_MESH)
 #include "qualityMeasures.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "meshGRegionDelaunayInsertion.h"
+#endif
 
 #define SQU(a)      ((a)*(a))
 
 SPoint3 MTetrahedron::circumcenter()
 {
-  MTet4 t(this,0);
+#if !defined(HAVE_NO_MESH)
+  MTet4 t(this, 0);
   double res[3];
   t.circumcenter(res);
-  return SPoint3(res[0],res[1],res[2]);
+  return SPoint3(res[0], res[1], res[2]);
+#else
+  return SPoint3(0., 0., 0.);
+#endif
 }
 
 double MTetrahedron::distoShapeMeasure()
 {
+#if !defined(HAVE_NO_MESH)
   return qmDistorsionOfMapping(this);
+#else
+  return 0.;
+#endif
 }
 
 double MTetrahedronN::distoShapeMeasure()
 {
+#if !defined(HAVE_NO_MESH)
   _disto = qmDistorsionOfMapping(this);
+#else
+  _disto = 0.;
+#endif
   return _disto;
 }
 
 double MTetrahedron::gammaShapeMeasure()
 {
+#if !defined(HAVE_NO_MESH)
   double vol;
   return qmTet(this, QMTET_2, &vol);
+#else
+  return 0.;
+#endif
 }
 
 double MTetrahedron::etaShapeMeasure()
 {
+#if !defined(HAVE_NO_MESH)
   double vol;
   return qmTet(this, QMTET_3, &vol);
+#else
+  return 0.;
+#endif
 }
 
 double MTetrahedron::getVolume()

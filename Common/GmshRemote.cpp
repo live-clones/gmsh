@@ -8,13 +8,17 @@
 #include "GmshSocket.h"
 #include "OpenFile.h"
 #include "OS.h"
+#include "VertexArray.h"
+
+#if !defined(HAVE_NO_POST)
 #include "PView.h"
 #include "PViewOptions.h"
 #include "PViewData.h"
-#include "VertexArray.h"
+#endif
 
 static void computeAndSendVertexArrays(GmshClient *client)
 {
+#if !defined(HAVE_NO_POST)
   for(unsigned int i = 0; i < PView::list.size(); i++){
     PView *p = PView::list[i];
     p->fillVertexArrays();
@@ -39,6 +43,7 @@ static void computeAndSendVertexArrays(GmshClient *client)
       }
     }
   }
+#endif
 }
 
 int GmshRemote()

@@ -19,7 +19,6 @@
 #include "GModel.h"
 #include "Geo.h"
 #include "GeoInterpolation.h"
-#include "Generator.h"
 #include "Options.h"
 #include "Colors.h"
 #include "Parser.h"
@@ -31,8 +30,12 @@
 #include "CreateFile.h"
 #include "gmshSurface.h"
 #include "gmshLevelset.h"
+
+#if !defined(HAVE_NO_MESH)
+#include "Generator.h"
 #include "Field.h"
 #include "BackgroundMesh.h"
+#endif
 
 #if !defined(HAVE_NO_POST)
 #include "PView.h"
@@ -845,19 +848,24 @@ Affectation :
 
   | tSTRING tField tAFFECT FExpr tEND
     {
+#if !defined(HAVE_NO_MESH)
       if(!strcmp($1,"Background"))
 	GModel::current()->getFields()->background_field = (int)$4;
       else
 	yymsg(0, "Unknown command %s Field", $1);
+#endif
     }
   | tField '[' FExpr ']' tAFFECT tSTRING tEND
     {
+#if !defined(HAVE_NO_MESH)
       if(!GModel::current()->getFields()->newField((int)$3, $6))
 	yymsg(0, "Cannot create field %i of type '%s'", (int)$3, $6);
+#endif
       Free($6);
     }
   | tField '[' FExpr ']' '.' tSTRING  tAFFECT FExpr tEND
     {
+#if !defined(HAVE_NO_MESH)
       Field *field = GModel::current()->getFields()->get((int)$3);
       if(field){
 	FieldOption *option = field->options[$6];
@@ -874,10 +882,12 @@ Affectation :
       }
       else
 	yymsg(0, "No field with id %i", (int)$3);
+#endif
       Free($6);
     }
   | tField '[' FExpr ']' '.' tSTRING  tAFFECT StringExpr tEND
     {
+#if !defined(HAVE_NO_MESH)
       Field *field = GModel::current()->getFields()->get((int)$3);
       if(field){
 	FieldOption *option = field->options[$6];
@@ -894,11 +904,13 @@ Affectation :
       }
       else 
 	yymsg(0, "No field with id %i", (int)$3);
+#endif
       Free($6);
       Free($8);
     }
   | tField '[' FExpr ']' '.' tSTRING  tAFFECT '{' RecursiveListOfDouble '}' tEND
     {
+#if !defined(HAVE_NO_MESH)
       Field *field = GModel::current()->getFields()->get((int)$3);
       if(field){
 	FieldOption *option = field->options[$6];
@@ -917,6 +929,7 @@ Affectation :
       }
       else 
 	yymsg(0, "No field with id %i", (int)$3);
+#endif
       Free($6);
       List_Delete($9);
     }
@@ -2117,7 +2130,9 @@ Delete :
     }
   | tDelete tField '[' FExpr ']' tEND
     {
+#if !defined(HAVE_NO_MESH)
       GModel::current()->getFields()->deleteField((int)$4);
+#endif
     }
   | tDelete tSTRING '[' FExpr ']' tEND
     {
@@ -2283,7 +2298,7 @@ Command :
     }
   | tSTRING tSTRING tSTRING '[' FExpr ']' tEND
     {
-#if !defined(HAVE_NO_POST)
+#if !defined(HAVE_NO_POST) && !defined(HAVE_NO_MESH)
       if(!strcmp($1, "Background") && !strcmp($2, "Mesh")  && !strcmp($3, "View")){
 	int index = (int)$5;
 	if(index >= 0 && index < (int)PView::list.size())

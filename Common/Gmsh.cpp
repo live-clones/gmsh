@@ -6,20 +6,23 @@
 #include <string>
 #include <time.h>
 #include "GmshConfig.h"
+#include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "GmshRemote.h"
 #include "GModel.h"
-#include "GmshMessage.h"
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "Options.h"
 #include "CommandLine.h"
 #include "OS.h"
-#include "Generator.h"
-#include "Field.h"
 #include "Context.h"
 #include "robustPredicates.h"
+
+#if !defined(HAVE_NO_MESH)
+#include "Generator.h"
+#include "Field.h"
 #include "meshPartition.h"
+#endif
 
 #if !defined(HAVE_NO_POST)
 #include "PluginManager.h"
@@ -128,7 +131,7 @@ int GmshBatch()
       MergeFile(CTX::instance()->files[i]);
   }
 
-#if !defined(HAVE_NO_POST)
+#if !defined(HAVE_NO_POST) && !defined(HAVE_NO_MESH)
   if(!CTX::instance()->bgmFileName.empty()) {
     MergeFile(CTX::instance()->bgmFileName);
     if(PView::list.size())
@@ -148,6 +151,7 @@ int GmshBatch()
     CreateOutputFile(CTX::instance()->outputFileName, FORMAT_GEO);
   }
   else if(CTX::instance()->batch > 0){
+#if !defined(HAVE_NO_MESH)
     if(CTX::instance()->batch < 4)
       GModel::current()->mesh(CTX::instance()->batch);
     else if(CTX::instance()->batch == 4)
@@ -157,6 +161,7 @@ int GmshBatch()
 #if defined(HAVE_CHACO) || defined(HAVE_METIS)
     if(CTX::instance()->batchAfterMesh == 1)
       PartitionMesh(GModel::current(), CTX::instance()->partitionOptions);
+#endif
 #endif
     CreateOutputFile(CTX::instance()->outputFileName, CTX::instance()->mesh.format);
   }

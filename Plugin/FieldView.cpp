@@ -4,8 +4,11 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "FieldView.h"
-#include "Field.h"
 #include "GModel.h"
+
+#if !defined(HAVE_NO_MESH)
+#include "Field.h"
+#endif
 
 StringXNumber FieldViewOptions_Number[] = {
   {GMSH_FULLRC, "Component", NULL, -1.},
@@ -38,6 +41,7 @@ StringXNumber *GMSH_FieldViewPlugin::getOption(int iopt)
 
 PView *GMSH_FieldViewPlugin::execute(PView *v)
 {
+#if !defined(HAVE_NO_MESH)
   //int comp = (int)FieldViewOptions_Number[0].def;
   int iView = (int)FieldViewOptions_Number[1].def;
   int iField = (int)FieldViewOptions_Number[2].def;
@@ -50,4 +54,8 @@ PView *GMSH_FieldViewPlugin::execute(PView *v)
   if(!v1) return v;
   field->putOnView(v1);
   return v1;
+#else
+  Msg::Error("FieldView plugin requires the mesh module");
+  return v;
+#endif
 }

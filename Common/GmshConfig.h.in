@@ -27,6 +27,7 @@
 #cmakedefine HAVE_MPI
 #cmakedefine HAVE_NATIVE_FILE_CHOOSER
 #cmakedefine HAVE_NETGEN
+#cmakedefine HAVE_NO_MESH
 #cmakedefine HAVE_NO_PARSER
 #cmakedefine HAVE_NO_POST
 #cmakedefine HAVE_NO_SOCKLEN_T

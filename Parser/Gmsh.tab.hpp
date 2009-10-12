@@ -302,7 +302,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 82 "Gmsh.y"
+#line 85 "Gmsh.y"
 {
   char *c;
   int i;
@@ -312,7 +312,7 @@ typedef union YYSTYPE
   Shape s;
   List_T *l;
 }
-/* Line 1489 of yacc.c.  */
+/* Line 1529 of yacc.c.  */
 #line 317 "Gmsh.tab.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

@@ -6,7 +6,10 @@
 #include "MTriangle.h"
 #include "Numeric.h"
 #include "Context.h"
+
+#if !defined(HAVE_NO_MESH)
 #include "qualityMeasures.h"
+#endif
 
 #define SQU(a)      ((a)*(a))
 
@@ -22,12 +25,20 @@ SPoint3 MTriangle::circumcenter()
 
 double MTriangle::distoShapeMeasure()
 {
+#if !defined(HAVE_NO_MESH)
   return qmDistorsionOfMapping(this);
+#else
+  return 0.;
+#endif
 }
 
 double MTriangle::gammaShapeMeasure()
 {
+#if !defined(HAVE_NO_MESH)
   return qmTriangle(this, QMTRI_RHO);
+#else
+  return 0.;
+#endif
 }
 
 const functionSpace* MTriangle::getFunctionSpace(int o) const

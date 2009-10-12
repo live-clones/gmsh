@@ -2,12 +2,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "Field.h"
 #include <sstream>
 #include <fstream>
 #include "SPoint2.h"
 #include "GSHHS.h"
 #include "GModel.h"
+
+#if !defined(HAVE_NO_MESH)
+#include "Field.h"
+#else
+class Field {
+ public:
+  virtual double operator() (double x, double y, double z){ return 0.; }
+};
+#endif
 
 class GMSH_GSHHSPlugin : public GMSH_PostPlugin
 {
@@ -56,7 +64,7 @@ public:
     }
   };
   class reader_gshhs : public reader{
-    /*  $Id: GSHHS.cpp,v 1.33 2009-09-17 07:56:14 remacle Exp $
+    /*  $Id: GSHHS.cpp,v 1.34 2009-10-12 15:46:20 geuzaine Exp $
      *
      * Include file defining structures used in gshhs.c
      *
@@ -990,6 +998,7 @@ PView *GMSH_GSHHSPlugin::execute(PView * v)
     return NULL;
   }
   Field *field = NULL;
+#if !defined(HAVE_NO_MESH)
   if (iField != -1) {
     field = GModel::current()->getFields()->get(iField);
     if(!field){
@@ -997,6 +1006,7 @@ PView *GMSH_GSHHSPlugin::execute(PView * v)
       return NULL;
     }
   }
+#endif
   SPoint3 p;
   reader *read=0;
   if(format == "loops2") {
