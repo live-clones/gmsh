@@ -17,7 +17,7 @@ endif(DEFINED CMAKE_BUILD_TYPE)
 project(gmsh CXX C)
 
 option(ENABLE_ANN "Enable ANN to compute Approximate Nearest Neighbors" ON)
-option(ENABLE_ARC "Enable ARC-related projects" OFF)
+option(ENABLE_ARC "Enable ARC-related binary targets" OFF)
 option(ENABLE_BLAS_LAPACK "Use BLAS/Lapack for basic linear algebra" ON)
 option(ENABLE_CGNS "Enable CGNS mesh export" OFF)
 option(ENABLE_CHACO "Enable Chaco mesh partitioner" ON)
@@ -686,6 +686,19 @@ if(EXTERNAL_INCLUDES)
   list(REMOVE_DUPLICATES EXTERNAL_INCLUDES)
 endif(EXTERNAL_INCLUDES)
 
+if(HAVE_FLTK)
+  set(LINK_LIBRARIES ${FLTK_LIBRARIES} ${EXTERNAL_LIBRARIES} 
+                     ${OPENGL_LIBRARIES} ${LAPACK_LIBRARIES})
+elseif(HAVE_QT)
+  set(LINK_LIBRARIES ${QT_LIBRARIES} ${EXTERNAL_LIBRARIES}
+                     ${OPENGL_LIBRARIES} ${LAPACK_LIBRARIES})
+elseif(HAVE_OPENGL)
+  set(LINK_LIBRARIES ${EXTERNAL_LIBRARIES} ${OPENGL_LIBRARIES}
+                     ${LAPACK_LIBRARIES})
+else(HAVE_FLTK)
+  set(LINK_LIBRARIES ${EXTERNAL_LIBRARIES} ${LAPACK_LIBRARIES})
+endif(HAVE_FLTK)
+
 # we could specify include dirs more selectively, but this is simpler
 include_directories(Common Fltk Geo Graphics Mesh Solver Numeric Parser Plugin
   Post Qt contrib/ANN/include contrib/Chaco/main contrib/DiscreteIntegration
@@ -722,38 +735,20 @@ set_target_properties(shared PROPERTIES OUTPUT_NAME Gmsh)
 if(HAVE_LAPACK AND LAPACK_FLAGS)
   set_target_properties(shared PROPERTIES LINK_FLAGS ${LAPACK_FLAGS})
 endif(HAVE_LAPACK AND LAPACK_FLAGS)
-if(HAVE_FLTK)
-  target_link_libraries(shared ${FLTK_LIBRARIES} ${EXTERNAL_LIBRARIES} 
-                        ${OPENGL_LIBRARIES} ${LAPACK_LIBRARIES})
-elseif(HAVE_OPENGL)
-  target_link_libraries(shared ${EXTERNAL_LIBRARIES} ${OPENGL_LIBRARIES}
-                        ${LAPACK_LIBRARIES})
-else(HAVE_FLTK)
-  target_link_libraries(shared ${EXTERNAL_LIBRARIES} ${LAPACK_LIBRARIES})
-endif(HAVE_FLTK)
+target_link_libraries(shared ${LINK_LIBRARIES})
 
 # binary targets
 if(HAVE_FLTK)
   add_executable(gmsh WIN32 Fltk/Main.cpp ${GMSH_SRC})
-  target_link_libraries(gmsh ${FLTK_LIBRARIES} ${EXTERNAL_LIBRARIES} 
-                        ${OPENGL_LIBRARIES} ${LAPACK_LIBRARIES})
 elseif(HAVE_QT)
   qt4_wrap_cpp(GMSH_MOC_SRC ${GMSH_MOC_HDR})
   add_executable(gmsh WIN32 Qt/Main.cpp ${GMSH_SRC} ${GMSH_MOC_SRC})
-  target_link_libraries(gmsh ${QT_LIBRARIES} ${EXTERNAL_LIBRARIES}
-                        ${OPENGL_LIBRARIES} ${LAPACK_LIBRARIES})
 elseif(HAVE_OPENGL)
   add_executable(gmsh Common/Main.cpp ${GMSH_SRC})
-  target_link_libraries(gmsh ${EXTERNAL_LIBRARIES} ${OPENGL_LIBRARIES}
-                        ${LAPACK_LIBRARIES})
 else(HAVE_FLTK)
   add_executable(gmsh Common/Main.cpp ${GMSH_SRC})
-  target_link_libraries(gmsh ${EXTERNAL_LIBRARIES} ${LAPACK_LIBRARIES})
 endif(HAVE_FLTK)
-
-if(ENABLE_ARC)
-  include(contrib/arc/CMakeLists.txt)
-endif(ENABLE_ARC)
+target_link_libraries(gmsh ${LINK_LIBRARIES})
 
 # increase stack to 16Mb on Windows to avoid overflows in recursive
 # tet classification for large 3D Delaunay grids
@@ -763,6 +758,11 @@ if(CYGWIN)
 elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS "/STACK:16777216")
 endif(CYGWIN)
+
+# contrib binary targets
+if(ENABLE_ARC)
+  include(contrib/arc/CMakeLists.txt)
+endif(ENABLE_ARC)
 
 find_program(BISON bison)
 find_program(FLEX flex)
