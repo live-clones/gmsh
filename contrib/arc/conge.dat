@@ -1,0 +1,7 @@
+MeshFile conge.msh
+ElasticDomain 7 200.e9 0.3
+EdgeDisplacement 8 0 0
+EdgeDisplacement 8 1 0
+EdgeDisplacement 8 2 0
+LineForce 9 100e6 0 0
+VolumeForce 7  0 -100.e-3  0 
