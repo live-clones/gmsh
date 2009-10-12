@@ -14,7 +14,6 @@
 #include "SPoint3.h"
 #include "functionSpace.h"
 #include "robustPredicates.h"
-#include "meshGFaceOptimize.h"
 #include "MElementCut.h"
 #include "GEntity.h"
 #include "dofManager.h"
@@ -27,13 +26,17 @@
 #include "linearSystemCSR.h"
 #include "linearSystemFull.h"
 #include "linearSystemPETSc.h"
-#include "meshPartitionOptions.h"
-#include "meshPartition.h"
 #include "CreateFile.h"
 #include "Context.h"
-#include "meshGFace.h"
-#include "meshGEdge.h"
 #include "discreteFace.h"
+
+#if !defined(HAVE_NO_MESH)
+#include "meshGFace.h"
+#include "meshGFaceOptimize.h"
+#include "meshGEdge.h"
+#include "meshPartitionOptions.h"
+#include "meshPartition.h"
+#endif
 
 static void fixEdgeToValue(GEdge *ed, double value, dofManager<double, double> &myAssembler)
 {
@@ -271,6 +274,7 @@ bool GFaceCompound::checkCavity(std::vector<MElement*> &vTri) const
 
 void GFaceCompound::one2OneMap() const
 {
+#if !defined(HAVE_NO_MESH)
   if(!mapv2Tri){
     std::vector<MTriangle*> allTri;
     std::list<GFace*>::const_iterator it = _compound.begin();
@@ -331,6 +335,7 @@ void GFaceCompound::one2OneMap() const
       
     }
   }
+#endif
 }
 
 void GFaceCompound::parametrize() const
@@ -1303,7 +1308,8 @@ void GFaceCompound::buildOct() const
 //Verify topological conditions for computing the harmonic map
 bool GFaceCompound::checkTopology() 
 {
-  
+#if !defined(HAVE_NO_MESH) && (defined(HAVE_CHACO) || defined(HAVE_METIS))
+
   bool correctTopo = true;
 
   int Nb = _interior_loops.size();
@@ -1405,7 +1411,9 @@ bool GFaceCompound::checkTopology()
   }
   
   return correctTopo;
-
+#else
+  return false;
+#endif
 }
 
 int GFaceCompound::genusGeom() const
