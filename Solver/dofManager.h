@@ -11,6 +11,7 @@
 #include <map>
 #include "MVertex.h"
 #include "linearSystem.h"
+#include "fullMatrix.h"
 
 class Dof{
  private:
