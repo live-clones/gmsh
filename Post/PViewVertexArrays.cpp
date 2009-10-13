@@ -948,7 +948,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
         }
         continue;
       }
-      if(numComp > 9){
+      if((numComp > 9 && !opt->forceNumComponents) || opt->forceNumComponents > 9){
         if(numCompError != numComp){
           numCompError = numComp;
           Msg::Error("You should never draw views with > 9 values per node: use");
