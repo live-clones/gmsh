@@ -798,6 +798,7 @@ void PrintOptionsDoc()
   fprintf(file, "@end ftable\n");
   fclose(file);
 
+#if !defined(HAVE_NO_MESH)
   file = fopen("opt_fields.texi", "w");
   if(!file) {
     Msg::Error("Unable to open file 'opt_fields.texi'");
@@ -828,6 +829,7 @@ void PrintOptionsDoc()
   }
   fprintf(file, "@end ftable\n");
   fclose(file);
+#endif
   
 #endif
 }

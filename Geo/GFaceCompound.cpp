@@ -508,10 +508,10 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 {
 
   if (!_lsys) {
-#if defined(HAVE_PETSC)
-    _lsys = new linearSystemPETSc<double>;
-#elif defined(HAVE_TAUCS)
+#if defined(HAVE_TAUCS)
     _lsys = new linearSystemCSRTaucs<double>;
+#elif defined(HAVE_PETSC)
+    _lsys = new linearSystemPETSc<double>;
 #elif defined(HAVE_GMM)
     linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
     _lsysb->setGmres(1);
