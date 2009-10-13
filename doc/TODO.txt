@@ -1,4 +1,4 @@
-$Id: TODO.txt,v 1.32 2009-08-22 09:16:47 geuzaine Exp $
+$Id: TODO.txt,v 1.33 2009-10-13 19:25:34 geuzaine Exp $
 
 ********************************************************************
 
@@ -74,12 +74,6 @@ array or display list for each; select glyph in Point/Vector/Tensor
 display dialog. define number of values to transform glyph (quaternion
 + scale{x,y,z}?). Definition: Glyph = drawable rigid object with a
 single associated scalar/vector or tensor value.
-
-********************************************************************
-
-Read all the components from postpro datasets, even if > 9. Provide a
-"interpretation" option allowing to select which components to draw
-and to force their interpretation as scalar, vector or tensor
 
 ********************************************************************
 

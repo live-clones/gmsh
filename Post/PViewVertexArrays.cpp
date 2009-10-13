@@ -958,9 +958,21 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
       }
       for(int j = 0; j < numNodes; j++){
         data->getNode(opt->timeStep, ent, i, j, xyz[j][0], xyz[j][1], xyz[j][2]);
-        for(int k = 0; k < numComp; k++)
-          data->getValue(opt->timeStep, ent, i, j, k, val[j][k]);
+        if(opt->forceNumComponents){
+          for(int k = 0; k < opt->forceNumComponents; k++){
+            int comp = opt->componentMap[k];
+            if(comp >= 0 && comp < numComp)
+              data->getValue(opt->timeStep, ent, i, j, comp, val[j][k]);
+            else
+              val[j][k] = 0.;
+          }
+        }
+        else
+          for(int k = 0; k < numComp; k++)
+            data->getValue(opt->timeStep, ent, i, j, k, val[j][k]);
       }
+      if(opt->forceNumComponents) numComp = opt->forceNumComponents;
+
       changeCoordinates(p, ent, i, numNodes, type, numComp, xyz, val);
       int dim = data->getDimension(opt->timeStep, ent, i);
       if(!isElementVisible(opt, dim, numNodes, xyz)) continue;

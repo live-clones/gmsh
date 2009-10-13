@@ -69,7 +69,7 @@ class optionWindow{
   } post;
   struct{
     int index;
-    Fl_Group *group, *range, *vector;
+    Fl_Group *group, *range;
     Fl_Check_Button *butt[100];
     Fl_Value_Input *value[100];
     Fl_Input *input[100];

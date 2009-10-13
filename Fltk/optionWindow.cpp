@@ -2885,9 +2885,6 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[62]->callback(view_options_ok_cb);
 
       {
-        view.vector = new Fl_Group
-          (L + 2 * WB, 2 * WB + 6 * BH, width - 2 * WB, 4 * BH, 0);
-
         static Fl_Menu_Item menu_vectype[] = {
           {"Line", 0, 0, 0},
           {"Arrow", 0, 0, 0},
@@ -2932,8 +2929,6 @@ optionWindow::optionWindow(int deltaFontSize)
         view.choice[10]->align(FL_ALIGN_RIGHT);
         view.choice[10]->add("Self");
         view.choice[10]->callback(view_options_ok_cb);
-
-        view.vector->end();
       }
 
       static Fl_Menu_Item menu_vecloc[] = {
@@ -3259,11 +3254,6 @@ void optionWindow::updateViewGroup(int index)
   view.value[50]->maximum(data->getNumTimeSteps() - 1);
   opt_view_timestep(index, GMSH_GUI, 0);
   opt_view_show_time(index, GMSH_GUI, 0);
-
-  if(data->getNumVectors() || data->getNumTensors() || data->isRemote())
-    view.vector->activate();
-  else
-    view.vector->deactivate();
 
   opt_view_point_size(index, GMSH_GUI, 0);
   opt_view_point_type(index, GMSH_GUI, 0);

@@ -8150,6 +8150,44 @@ double opt_view_clip(OPT_ARGS_NUM)
 #endif
 }
 
+double opt_view_force_num_components(OPT_ARGS_NUM)
+{
+#if !defined(HAVE_NO_POST)
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    opt->forceNumComponents = (int)val;
+    if(view) view->setChanged(true);
+  }
+  return opt->forceNumComponents;
+#else
+  return 0.;
+#endif
+}
+
+static double ovcm(OPT_ARGS_NUM, int nn)
+{
+#if !defined(HAVE_NO_POST)
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    opt->componentMap[nn] = (int)val;
+    if(view) view->setChanged(true);
+  }
+  return opt->componentMap[nn];
+#else
+  return 0.;
+#endif
+}
+
+double opt_view_component_map0(OPT_ARGS_NUM){ return ovcm(num, action, val, 0); }
+double opt_view_component_map1(OPT_ARGS_NUM){ return ovcm(num, action, val, 1); }
+double opt_view_component_map2(OPT_ARGS_NUM){ return ovcm(num, action, val, 2); }
+double opt_view_component_map3(OPT_ARGS_NUM){ return ovcm(num, action, val, 3); }
+double opt_view_component_map4(OPT_ARGS_NUM){ return ovcm(num, action, val, 4); }
+double opt_view_component_map5(OPT_ARGS_NUM){ return ovcm(num, action, val, 5); }
+double opt_view_component_map6(OPT_ARGS_NUM){ return ovcm(num, action, val, 6); }
+double opt_view_component_map7(OPT_ARGS_NUM){ return ovcm(num, action, val, 7); }
+double opt_view_component_map8(OPT_ARGS_NUM){ return ovcm(num, action, val, 8); }
+
 double opt_print_format(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

@@ -88,6 +88,7 @@ class PViewOptions {
   int adaptVisualizationGrid, maxRecursionLevel;
   double targetError;
   int clip; // status of clip planes (bit array)
+  int forceNumComponents, componentMap[9];
   struct{
     unsigned int point, line, triangle, quadrangle;
     unsigned int tetrahedron, hexahedron, prism, pyramid;
