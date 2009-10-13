@@ -8158,6 +8158,18 @@ double opt_view_force_num_components(OPT_ARGS_NUM)
     opt->forceNumComponents = (int)val;
     if(view) view->setChanged(true);
   }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)){
+    if(opt->forceNumComponents == 1)
+      FlGui::instance()->options->view.choice[14]->value(1);
+    else if(opt->forceNumComponents == 3)
+      FlGui::instance()->options->view.choice[14]->value(2);
+    else if(opt->forceNumComponents == 9)
+      FlGui::instance()->options->view.choice[14]->value(3);
+    else
+      FlGui::instance()->options->view.choice[14]->value(0);
+  }
+#endif
   return opt->forceNumComponents;
 #else
   return 0.;

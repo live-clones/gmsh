@@ -568,6 +568,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double external_view = opt_view_external_view(current, GMSH_GET, 0);
   double gen_raise_view = opt_view_gen_raise_view(current, GMSH_GET, 0);
   double show_time = opt_view_show_time(current, GMSH_GET, 0);
+  double force_num_components = opt_view_force_num_components(current, GMSH_GET, 0);
 
   double type = opt_view_type(current, GMSH_GET, 0);
   double saturate_values = opt_view_saturate_values(current, GMSH_GET, 0);
@@ -720,10 +721,17 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       val = o->view.choice[12]->value();
       if(force || (val != show_time))
         opt_view_show_time(i, GMSH_SET, val);
-      
+
       val = o->view.choice[13]->value() + 1;
       if(force || (val != type))
         opt_view_type(i, GMSH_SET, val);
+
+      val = 
+        (o->view.choice[14]->value() == 1) ? 1 :
+        (o->view.choice[14]->value() == 2) ? 3 : 
+        (o->view.choice[14]->value() == 3) ? 9 : 0;
+      if(force || (val != force_num_components))
+        opt_view_force_num_components(i, GMSH_SET, val);
 
       // view_butts
 
@@ -2735,6 +2743,19 @@ optionWindow::optionWindow(int deltaFontSize)
       view.menu[0]->menu(menu_view_field_types);
       view.menu[0]->callback(view_options_ok_cb);
 
+      static Fl_Menu_Item menu_force_field_type[] = {
+        {"None", 0, 0, 0},
+        {"Scalar", 0, 0, 0},
+        {"Vector", 0, 0, 0},
+        {"Tensor", 0, 0, 0},
+        {0}
+      };
+      view.choice[14] = new Fl_Choice
+        (L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Forced field type");
+      view.choice[14]->menu(menu_force_field_type);
+      view.choice[14]->align(FL_ALIGN_RIGHT);
+      view.choice[14]->callback(view_options_ok_cb);
+
       o->end();
     }
     {
@@ -3254,6 +3275,7 @@ void optionWindow::updateViewGroup(int index)
   view.value[50]->maximum(data->getNumTimeSteps() - 1);
   opt_view_timestep(index, GMSH_GUI, 0);
   opt_view_show_time(index, GMSH_GUI, 0);
+  opt_view_force_num_components(index, GMSH_GUI, 0);
 
   opt_view_point_size(index, GMSH_GUI, 0);
   opt_view_point_type(index, GMSH_GUI, 0);
