@@ -479,7 +479,7 @@ double Msg::GetValue(const char *text, double defaultval)
   if(FlGui::available()){
     char defaultstr[256];
     sprintf(defaultstr, "%.16g", defaultval);
-    const char *ret = fl_input(text, "%s", defaultstr);
+    const char *ret = fl_input(text, defaultstr, "");
     if(!ret)
       return defaultval;
     else
