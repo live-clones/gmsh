@@ -23,8 +23,7 @@
 #include "Numeric.h"
 #include "dofManager.h"
 #include "elasticityTerm.h"
-#include "linearSystemTAUCS.h"
-#include "linearSystemGMM.h"
+#include "linearSystemCSR.h"
 
 #define SQU(a)      ((a)*(a))
 

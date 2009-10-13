@@ -9,9 +9,9 @@
 #include "MTriangle.h"
 #include "MTetrahedron.h"
 #include "elasticitySolver.h"
-#include "linearSystemTAUCS.h"
-#include "linearSystemGMM.h"
+#include "linearSystemCSR.h"
 #include "linearSystemPETSc.h"
+#include "linearSystemGMM.h"
 #include "Numeric.h"
 
 #if !defined(HAVE_NO_POST)

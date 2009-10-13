@@ -5,7 +5,6 @@
 
 set(SRC
   linearSystemCSR.cpp
-  linearSystemTAUCS.cpp
   groupOfElements.cpp
   elasticityTerm.cpp
   elasticitySolver.cpp

@@ -22,7 +22,6 @@
 #include "crossConfTerm.h"
 #include "convexCombinationTerm.h"
 #include "linearSystemGMM.h"
-#include "linearSystemTAUCS.h"
 #include "linearSystemCSR.h"
 #include "linearSystemFull.h"
 #include "linearSystemPETSc.h"
