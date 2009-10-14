@@ -87,6 +87,8 @@ template<class T1,class T2> class TermBilinear  // terme associe a un "element" 
 class FormBilinear {};   // Renvoie des matrices élémentaires (ff) 
                   // Accessoirement stocke des pointeurs vers les termes pour chaque element
                   // Doit etre initialisée AVANT toute opération (pour l'allocation)
+                  // en principe ce truc ne devrait pas ^etre reimplemente
+                  // il devrait donc dependre d'un parametre template TermBilinear
 
 class FormLinear{}; // renvoie des vecteurs élémentaires
               // on devrait pouvoir construire une forme lin à partir d'une forme bilin pour les pb "matrix free"
