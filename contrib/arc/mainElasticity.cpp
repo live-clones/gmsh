@@ -2,7 +2,7 @@
 #include "elasticitySolver.h"
 #include "PView.h"
 #include "PViewData.h"
-
+#include "highlevel.h"
 int main (int argc, char* argv[]){
   
   if (argc != 2){
