@@ -8,9 +8,11 @@
 
 #include <vector>
 #include <set>
+#include "GFaceCompound.h"
 
 class GFace;
 class MVertex;
+class GFaceCompound;
 
 // Create the mesh of the face
 class meshGFace {
@@ -43,5 +45,6 @@ void findTransfiniteCorners(GFace *gf, std::vector<MVertex*> &corners);
 int MeshTransfiniteSurface(GFace *gf);
 int MeshExtrudedSurface(GFace *gf, std::set<std::pair<MVertex*, MVertex*> > 
                         *constrainedEdges=0);
+void partitionAndRemesh(GFaceCompound *gf);
 
 #endif

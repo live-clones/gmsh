@@ -124,7 +124,8 @@ class GFace : public GEntity
   int poincareMesh();
   int genusMesh() { return (poincareMesh() + edgeLoops.size() - 2) / 2; }
   virtual int genusGeom();
-  virtual bool checkTopology(){ return true; }
+  virtual bool checkTopology() const { return true; }
+  virtual bool checkAspectRatio() const { return true; }
 
   // return the point on the face corresponding to the given parameter
   virtual GPoint point(double par1, double par2) const = 0;
@@ -259,7 +260,7 @@ class GFace : public GEntity
 
   typedef enum {PENDING, DONE, FAILED} meshGenerationStatus;
   struct {
-    meshGenerationStatus status;
+    mutable meshGenerationStatus status;
     double worst_element_shape, best_element_shape, average_element_shape;
     double smallest_edge_length, longest_edge_length, efficiency_index;
     int nbEdge, nbTriangle;

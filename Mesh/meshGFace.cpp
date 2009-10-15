@@ -30,6 +30,9 @@
 #include "Field.h"
 #include "OS.h"
 #include "HighOrder.h"
+#include "meshGEdge.h"
+#include "meshPartitionOptions.h"
+#include "meshPartition.h"
 
 void fourthPoint(double *p1, double *p2, double *p3, double *p4)
 {
@@ -253,7 +256,10 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   // replace edges by their compounds
   if(gf->geomType() == GEntity::CompoundSurface){
     bool correct = gf->checkTopology();
-    if (!correct) return true;
+    if (!correct){
+      partitionAndRemesh((GFaceCompound*) gf);
+      return true;
+    }
     std::set<GEdge*> mySet;
     std::list<GEdge*>::iterator it = edges.begin();
     while(it != edges.end()){
@@ -327,7 +333,12 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
     MVertex *here = *it;
     GEntity *ge = here->onWhat();
     SPoint2 param;
-    reparamMeshVertexOnFace(here, gf, param);
+    bool paramOK = true;
+    paramOK = reparamMeshVertexOnFace(here, gf, param);
+    if(gf->geomType() == GEntity::CompoundSurface &&  !paramOK ){
+      partitionAndRemesh((GFaceCompound*)gf);
+      return true;
+    }
     BDS_Point *pp = m->add_point(count, param[0], param[1], gf);
     m->add_geom(ge->tag(), ge->dim());
     BDS_GeomEntity *g = m->get_geom(ge->tag(), ge->dim());
@@ -679,6 +690,9 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
 		       gf->meshStatistics.nbGoodQuality);
   return true;
 }
+
+
+
 
 // this function buils a list of vertices (BDS) that are consecutive
 // in one given edge loop. We take care of periodic surfaces. In the
@@ -1293,6 +1307,122 @@ void meshGFace::operator() (GFace *gf)
              gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
 }
 
+void partitionAndRemesh(GFaceCompound *gf)
+{
+
+#if !defined(HAVE_NO_MESH) && (defined(HAVE_CHACO) || defined(HAVE_METIS))
+
+  //Partition the mesh and createTopology for new faces
+  //-----------------------------------------------------
+  int N = gf->nbSplit;
+  meshPartitionOptions options;
+  options =  CTX::instance()->partitionOptions;
+  options.num_partitions = N;
+  options.partitioner = 2; //METIS
+  options.algorithm =  1 ;
+  int ier = PartitionMesh(gf->model(), options);
+  int numv = gf->model()->maxVertexNum() + 1;
+  int nume = gf->model()->maxEdgeNum() + 1;
+  int numf = gf->model()->maxFaceNum() + 1;
+  std::vector<discreteFace*> pFaces;
+  createPartitionFaces(gf->model(), gf, N, pFaces);
+  gf->model()->createTopologyFromMesh(); //Faces(pFaces);
+  //gf->model()->createTopologyFromFaces(pFaces);
+
+  //CreateOutputFile(CTX::instance()->outputFileName, CTX::instance()->mesh.format);
+  //Msg::Exit(1);
+  
+  //Remesh new faces (Compound Lines and Compound Surfaces)
+  //-----------------------------------------------------
+  
+  int numEdges = gf->model()->maxEdgeNum() - nume + 1;
+  printf("*** Created %d discretEdges \n", numEdges);
+  for (int i=0; i < numEdges; i++){
+    std::vector<GEdge*>e_compound;
+    GEdge *pe = gf->model()->getEdgeByTag(nume+i);//partition edge
+    int num_gec = gf->model()->maxEdgeNum() + 1;
+    e_compound.push_back(pe); 
+    printf("*** Remeshing discreteEdge %d with CompoundLine %d\n", pe->tag(), num_gec);
+    GEdge *gec = new GEdgeCompound(gf->model(), num_gec, e_compound);
+    
+    meshGEdge mge;
+    mge(gec);//meshing 1D
+    
+    gf->model()->remove(pe); 
+  }
+  
+  int numVert = gf->model()->maxVertexNum() - numv + 1;
+  printf("*** Created %d discreteVert \n", numVert);
+  for (int i=0; i < numEdges; i++){
+    GVertex *pv = gf->model()->getVertexByTag(numv+i);//partition vertex
+    gf->model()->remove(pv);
+  }
+  
+  std::list<GEdge*> b[4];
+  std::set<MVertex*> allNod;
+  
+  for (int i=0; i < N; i++){
+    std::list<GFace*> f_compound;
+    GFace *pf = gf->model()->getFaceByTag(numf+i);//partition face
+    //discreteFace *pf = pFaces[i];//partition face
+    int num_gfc = numf + N + i ;
+    f_compound.push_back(pf); 
+    
+    printf("*** Remeshing discreteFace %d with CompoundSurface %d\n", pf->tag(), num_gfc);
+    GFace *gfc = new GFaceCompound(gf->model(), num_gfc, f_compound,b[0], b[1], b[2], b[3]);
+    meshGFace mgf;
+    mgf(gfc);//meshing 2D
+      
+      for(unsigned int j = 0; j < gfc->triangles.size(); ++j){
+	MTriangle *t = gfc->triangles[j];
+	std::vector<MVertex *> v(3);
+	for(int k = 0; k < 3; k++){
+	  v[k] = t->getVertex(k); 
+	  allNod.insert(v[k]);
+	}
+ 	gf->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+      }
+       
+      gf->model()->remove(pf);
+  }
+
+    //Put new mesh in a new discreteFace
+    //-----------------------------------------------------
+    for(std::set<MVertex*>::iterator it = allNod.begin(); it != allNod.end(); ++it){
+      gf->mesh_vertices.push_back(*it);
+    }
+
+    //Remove mesh_vertices that belong to l_edges
+    //-----------------------------------------------------
+    std::list<GEdge*> l_edges = gf->edges();
+    for( std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); it++){
+      printf("boundary edge of face %d =%d size=%d\n", gf->tag(),(*it)->tag(), l_edges.size());
+      std::vector<MVertex*> edge_vertices = (*it)->mesh_vertices;
+      std::vector<MVertex*>::const_iterator itv = edge_vertices.begin();
+       for(; itv != edge_vertices.end(); itv++){
+	 std::vector<MVertex*>::iterator itve = std::find(gf->mesh_vertices.begin(), gf->mesh_vertices.end(), *itv);
+	 if (itve != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itve);
+       }
+       MVertex *vB = (*it)->getBeginVertex()->mesh_vertices[0];
+       std::vector<MVertex*>::iterator itvB = std::find(gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vB);
+       if (itvB != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvB);
+       MVertex *vE = (*it)->getEndVertex()->mesh_vertices[0];
+       std::vector<MVertex*>::iterator itvE = std::find(gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vE);
+       if (itvE != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvE);
+    }
+
+    printf("*** Mesh of surface %d done by assembly remeshed faces\n", gf->tag());
+    gf->meshStatistics.status = GFace::DONE; 
+
+
+
+#else
+  return;
+#endif
+
+}
+
+
 template<class T>
 static bool shouldRevert(MEdge &reference, std::vector<T*> &elements)
 {
@@ -1369,3 +1499,5 @@ void orientMeshGFace::operator()(GFace *gf)
     }
   }
 }
+
+

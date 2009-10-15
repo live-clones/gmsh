@@ -1,13 +1,13 @@
 Mesh.CharacteristicLengthFactor=0.2;
 
-Merge "PelvisKO.msh"; //ARTHUR_CLASS.msh";
+Merge "PelvisARTHUR_CLASS.msh";
 CreateTopology;
 
 Surface Loop(1002)={2,3};
 Volume(1003)={1002};
 
 Compound Line(10)={4};
-//Compound Line(20)={5};
+Compound Line(20)={5};
 
 Compound Surface(200)={2};
 Compound Surface(400)={3};

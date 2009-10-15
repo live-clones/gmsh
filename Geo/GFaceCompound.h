@@ -56,11 +56,13 @@ class GFaceCompound : public GFace {
   mutable int nbT;
   mutable GFaceCompoundTriangle *_gfct;
   mutable Octree *oct;
+  mutable std::set<MVertex*> allNodes;
   mutable v2t_cont adjv;
   mutable bool mapv2Tri;
   mutable std::map<MVertex*, SPoint3> coordinates;
   mutable std::map<MVertex*, SVector3> _normals;
   void buildOct() const ;
+  void buildAllNodes() const;
   void parametrize() const ;
   void parametrize_conformal() const ;
   void compute_distance() const ;
@@ -68,6 +70,7 @@ class GFaceCompound : public GFace {
   bool checkOrientation() const;
   void one2OneMap() const;
   bool checkCavity(std::vector<MElement*> &vTri) const;
+  bool checkAspectRatio() const;
   void computeNormals () const;
   void getBoundingEdges();
   void getUniqueEdges(std::set<GEdge*> & _unique); 
@@ -96,8 +99,11 @@ class GFaceCompound : public GFace {
   virtual SPoint2 getCoordinates(MVertex *v) const;
   virtual double curvatureMax(const SPoint2 &param) const;
   virtual int genusGeom () const;
-  virtual bool checkTopology();
-  virtual std::list<GFace*> getCompounds() {return _compound;};
+  virtual bool checkTopology() const;
+  virtual std::list<GFace*> getCompounds() const {return _compound;};
+  mutable int nbSplit;
+  mutable bool _checkedAR;
+  mutable bool _paramOK;
  private:
   typeOfIsomorphism _type;
   typeOfMapping _mapping;

@@ -417,6 +417,7 @@ void partition_dialog()
   static Fl_Menu_Item metisAlgMenu[] = {
     {"Recursive", 0, 0, 0},
     {"K-way", 0, 0, 0},
+    {"Nodal weight", 0, 0, 0},
     {0}
   };
 

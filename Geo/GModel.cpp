@@ -806,7 +806,7 @@ template<class T>
 static void _associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &elements)
 {
   for(unsigned int i = 0; i < elements.size(); i++){
-    for(int j = 0; j < elements[i]->getNumVertices(); j++){
+    for(int j = 0; j < elements[i]->getNumVertices(); j++){ 
       if (!elements[i]->getVertex(j)->onWhat() ||
           elements[i]->getVertex(j)->onWhat()->dim() > ge->dim()){
         elements[i]->getVertex(j)->setEntity(ge);
@@ -1028,39 +1028,37 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
   return diff;
 }
 
+
 void GModel::createTopologyFromMesh()
 {
 
-  std::vector<GEntity*> entities;
-  getEntities(entities);
+  // for each discreteRegion, create topology
+  std::vector<discreteRegion*> discreteRegions;
+  for(riter it = firstRegion(); it != lastRegion(); it++)
+    if((*it)->geomType() == GEntity::DiscreteVolume)
+      discreteRegions.push_back((discreteRegion*) *it);
 
+  for (std::vector<discreteRegion*>::iterator it = discreteRegions.begin(); 
+       it != discreteRegions.end(); it++)
+    (*it)->setBoundFaces();
+
+  //for each discreteFace, createTopology
+ std::vector<discreteFace*> discreteFaces;
+  for(fiter it = firstFace(); it != lastFace(); it++)
+    if((*it)->geomType() == GEntity::DiscreteSurface)
+      discreteFaces.push_back((discreteFace*) *it);
+
+  createTopologyFromFaces(discreteFaces);
+
+}
+
+void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discreteFaces)
+{
 
   std::vector<discreteEdge*> discreteEdges;
   for(eiter it = firstEdge(); it != lastEdge(); it++)
     if((*it)->geomType() == GEntity::DiscreteCurve)
       discreteEdges.push_back((discreteEdge*) *it);
-  
-  std::vector<discreteFace*> discreteFaces;
-  for(fiter it = firstFace(); it != lastFace(); it++)
-    if((*it)->geomType() == GEntity::DiscreteSurface)
-      discreteFaces.push_back((discreteFace*) *it);
-    
-
-  std::vector<discreteRegion*> discreteRegions;
-  for(riter it = firstRegion(); it != lastRegion(); it++)
-    if((*it)->geomType() == GEntity::DiscreteVolume)
-      discreteRegions.push_back((discreteRegion*) *it);
-    
-  Msg::Debug("Creating topology from mesh:");
-  Msg::Debug("%d discrete edges",  discreteEdges.size());
-  Msg::Debug("%d discrete faces",  discreteFaces.size());
-  Msg::Debug("%d discrete regions", discreteRegions.size());
-
-  // for each discreteRegion, create topology
-  for (std::vector<discreteRegion*>::iterator it = discreteRegions.begin(); it != discreteRegions.end(); it++)
-    (*it)->setBoundFaces();
-
-  // for each discreteFace, create topology and if needed create discreteEdges
   int initSizeEdges = discreteEdges.size();
 
   // find boundary edges of each face and put them in a map_edges that
@@ -1077,6 +1075,7 @@ void GModel::createTopologyFromMesh()
   std::map<int, std::vector<int> > face2Edges;
 
   while (!map_edges.empty()){
+
     std::vector<MEdge> myEdges;
     std::vector<int> tagFaces = map_edges.begin()->second;
     myEdges.push_back(map_edges.begin()->first);
@@ -1097,8 +1096,8 @@ void GModel::createTopologyFromMesh()
     // the candidate discrete Edge does contain any of those; if not,
     // create discreteEdges and create a map face2Edges that associate
     // for each face the boundary discrete Edges
+    std::vector<int> tagEdges;
     if (initSizeEdges != 0){
-      std::vector<int> tagEdges;
       if (myEdges.size() == 1){
         for (std::vector<discreteEdge*>::iterator it = discreteEdges.begin();
              it != discreteEdges.end(); it++){
@@ -1135,10 +1134,11 @@ void GModel::createTopologyFromMesh()
           allEdges.insert(allEdges.begin(), tagEdges.begin(), tagEdges.end());
           it->second = allEdges;
         }
-        face2Edges.insert(std::make_pair(*itFace, tagEdges));
+	if (!tagEdges.empty())
+	  face2Edges.insert(std::make_pair(*itFace, tagEdges));
       }
     }
-    else{
+    if (tagEdges.empty()){
       // for each actual GEdge
       int num = maxEdgeNum()+1;
       while (!myEdges.empty()) {
@@ -1233,6 +1233,7 @@ void GModel::createTopologyFromMesh()
     (*it)->createTopo();
     (*it)->parametrize();
   }
+
 
 }
 

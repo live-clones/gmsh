@@ -57,6 +57,7 @@ struct meshPartitionOptions
   int algorithm;
                                         // 1 - Recursive
                                         // 2 - K-way
+                                        // 3 - Nodal weight
   int edge_matching;                    // 1 - Random matching
                                         // 2 - Heavy-edge matching
                                         // 3 - Sorted heavy-edge matching
@@ -65,6 +66,9 @@ struct meshPartitionOptions
                                         // 3 - Random boundary refinement (with
                                         //     minimization of connectivity
                                         //     along sub-domains)
+
+//--NODAL WEIGHT
+  std::vector<int> nodalWeights;
 
 //--Constructor
 

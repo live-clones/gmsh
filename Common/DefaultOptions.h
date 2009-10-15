@@ -1091,7 +1091,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "MeshOnlyVisible" , opt_mesh_mesh_only_visible, 0. ,
     "Mesh only visible entities (experimental: use with caution!)" },
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
-    "METIS partitioning algorithm (1=Recursive, 2=K-way)" },
+    "METIS partitioning algorithm (1=Recursive, 2=K-way, 3=Nodal weight)" },
   { F|O, "MetisEdgeMatching" , opt_mesh_partition_metis_edge_matching, 3. ,
     "(Adv. METIS): Determines the matching type (1=Random, 2=Heavy-Edge, "
     "3=Sorted Heavy-Edge)" },

@@ -147,6 +147,15 @@ class Graph
     // Translated vertex numbers start from 1
     c2w[grVertMapIt->second.index] = i + 1;
   }
+  void fillWeights(std::vector<int> wgts)
+  {
+    int num = 0;
+    for(std::vector<int>::iterator it = wgts.begin(); it != wgts.end(); it++){
+      vwgts[num]= 1.0; //*it;
+       num++;
+    }
+  }
+
   void markSection() { section.push_back(numGrVert); }
   // Returns the next index for a graph vertex
   int getNextIndex() { return cIndex++; }

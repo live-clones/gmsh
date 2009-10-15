@@ -29,13 +29,13 @@
 #include "Context.h"
 #include "discreteFace.h"
 
-#if !defined(HAVE_NO_MESH)
-#include "meshGFace.h"
-#include "meshGFaceOptimize.h"
-#include "meshGEdge.h"
-#include "meshPartitionOptions.h"
-#include "meshPartition.h"
-#endif
+// #if !defined(HAVE_NO_MESH)
+// #include "meshGFace.h"
+// #include "meshGFaceOptimize.h"
+// #include "meshGEdge.h"
+// #include "meshPartitionOptions.h"
+// #include "meshPartition.h"
+// #endif
 
 static void fixEdgeToValue(GEdge *ed, double value, dofManager<double, double> &myAssembler)
 {
@@ -201,6 +201,9 @@ bool GFaceCompound::trivial() const
   return false;
 }
 
+//check if the discrete harmonic map is correct
+//by checking that all the mapped triangles have
+//the same normal orientation
 bool GFaceCompound::checkOrientation() const
 {
 
@@ -360,8 +363,9 @@ void GFaceCompound::parametrize() const
     //-----------------
     //compute_distance();
 
-    buildOct();
     checkOrientation();
+
+    buildOct();
     computeNormals();
   }
 }
@@ -375,7 +379,8 @@ void GFaceCompound::getBoundingEdges()
 
   std::set<GEdge*> _unique;
   getUniqueEdges(_unique);
-  std::set<GEdge*>::iterator itf = _unique.begin(); 
+ 
+  l_edges.clear();
 
   if(_U0.size()){
     //in case the bounding edges are explicitely given
@@ -395,6 +400,7 @@ void GFaceCompound::getBoundingEdges()
   }
   else{
     //in case the bounding edges are NOT explicitely given
+    std::set<GEdge*>::iterator itf = _unique.begin(); 
     for( ; itf != _unique.end(); ++itf){
       l_edges.push_back(*itf);
       (*itf)->addFace(this);
@@ -403,7 +409,7 @@ void GFaceCompound::getBoundingEdges()
     while(!_unique.empty())  computeALoop(_unique,_U1);
   }
 
- return;
+  return;
 
 }
 
@@ -430,11 +436,6 @@ void GFaceCompound::getUniqueEdges(std::set<GEdge*> &_unique)
     }    
   }    
 
-  std::set<GEdge*>::iterator itf = _unique.begin();
-  for( ; itf != _unique.end(); ++itf){
-    l_edges.push_back(*itf);
-    (*itf)->addFace(this);
-  }
 }
 void GFaceCompound::computeALoop(std::set<GEdge*> &_unique, std::list<GEdge*> &loop) 
 {
@@ -520,6 +521,9 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
     _lsys = new linearSystemFull<double>;
 #endif
   }
+  nbSplit = 0;
+  _checkedAR = false;
+  _paramOK  = false;
 
   for(std::list<GFace*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
     if(!(*it)){
@@ -801,16 +805,7 @@ void GFaceCompound::parametrize(iterationStep step) const
   Msg::Debug("System solved");
 
 
-  it = _compound.begin();
-  std::set<MVertex *> allNodes;
-  for( ; it != _compound.end() ; ++it){
-    for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-      MTriangle *t = (*it)->triangles[i];
-      for(int j = 0; j < 3; j++){
-	allNodes.insert(t->getVertex(j));
-      }
-    }
-  }
+  if(allNodes.empty()) buildAllNodes();
   
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
     MVertex *v = *itv;
@@ -924,7 +919,7 @@ void GFaceCompound::parametrize_conformal() const
 
 void GFaceCompound::compute_distance() const
 {
-  SBoundingBox3d bbox = GModel::current()->bounds();
+  SBoundingBox3d bbox = model()->bounds();
   double L = norm(SVector3(bbox.max(), bbox.min())); 
   double mu = L/28;
   simpleFunction<double> DIFF(mu * mu), MONE(1.0);
@@ -1305,10 +1300,8 @@ void GFaceCompound::buildOct() const
   Octree_Arrange(oct);
 }
 //Verify topological conditions for computing the harmonic map
-bool GFaceCompound::checkTopology() 
+bool GFaceCompound::checkTopology() const
 {
-#if !defined(HAVE_NO_MESH) && (defined(HAVE_CHACO) || defined(HAVE_METIS))
-
   bool correctTopo = true;
 
   int Nb = _interior_loops.size();
@@ -1316,103 +1309,77 @@ bool GFaceCompound::checkTopology()
   if( G != 0 || Nb < 1) correctTopo = false;
 
   if (!correctTopo){
-    
     Msg::Info("--> Wrong topology: Genus=%d and N boundary=%d", G, Nb);
-
-    //Partition the mesh and createTopology fror new faces
-    //-----------------------------------------------------
-    meshPartitionOptions options;
-    int N = std::max(G+1, 2);
-    options =  CTX::instance()->partitionOptions;
-    options.num_partitions = N;
-    options.partitioner = 2; //METIS
-    options.algorithm =  1 ;
-    int ier = PartitionMesh(GModel::current(), options);
-    int numv = GModel::current()->maxVertexNum() + 1;
-    int nume = GModel::current()->maxEdgeNum() + 1;
-    int numf = GModel::current()->maxFaceNum() + 1;
-    CreateTopologyFromPartition(GModel::current(), this, N);
-    GModel::current()->createTopologyFromMesh();
-
-    //Remesh new faces (Compound Lines and Compound Surfaces)
-    //-----------------------------------------------------
-
-    discreteFace *gdf = new discreteFace(GModel::current(), numf+2*N);
-    GModel::current()->add(gdf);
-    //printf("*** Remesh face %d in new discreteFace =%d\n", this->tag(), gdf->tag());
-
-    int numEdges = GModel::current()->maxEdgeNum() - nume + 1;
-    //printf("*** Created %d discretEdges \n", numEdges);
-    for (int i=0; i < numEdges; i++){
-      std::vector<GEdge*>e_compound;
-      GEdge *pe = GModel::current()->getEdgeByTag(nume+i);//partition edge
-      int num_gec = GModel::current()->maxEdgeNum() + 1;
-      e_compound.push_back(pe); 
-      printf("*** Remeshing discreteEdge %d with CompoundLine %d\n", pe->tag(), num_gec);
-      GEdge *gec = new GEdgeCompound(GModel::current(), num_gec, e_compound);
-      
-      meshGEdge mge;
-      mge(gec);//meshing 1D
-
-      GModel::current()->remove(pe);
-      //GModel::current()->add(gec);
-    }
-
-    int numVert = GModel::current()->maxVertexNum() - numv + 1;
-    printf("*** Created %d discreteVert \n", numVert);
-    for (int i=0; i < numEdges; i++){
-      GVertex *pv = GModel::current()->getVertexByTag(numv+i);//partition vertex
-      GModel::current()->remove(pv);
-    }
-
-    std::list<GEdge*> b[4];
-    std::set<MVertex*> all_vertices;
-    for (int i=0; i < N; i++){
-      std::list<GFace*>f_compound;
-      GFace *pf = GModel::current()->getFaceByTag(numf+i);//partition face
-      int num_gfc = numf + N + i ;
-      f_compound.push_back(pf); 
-
-      printf("*** Remeshing discreteFace %d with CompoundSurface %d\n", pf->tag(), num_gfc);
-      GFace *gfc = new GFaceCompound(GModel::current(), num_gfc, f_compound, 
-					    b[0], b[1], b[2], b[3]);
-      meshGFace mgf;
-      mgf(gfc);//meshing 2D
-
-      for (int j=0; j < gfc->triangles.size(); j++){
- 	MTriangle *t =  gfc->triangles[j];
- 	MVertex *v1 = t->getVertex(0);
- 	MVertex *v2 = t->getVertex(1);
- 	MVertex *v3 = t->getVertex(2);
- 	gdf->triangles.push_back(new MTriangle(v1, v2, v3));
- 	all_vertices.insert(v1); 
- 	all_vertices.insert(v2);
- 	all_vertices.insert(v3);
-      }
-  
-      GModel::current()->remove(pf);
-      //GModel::current()->add(gfc);
+    nbSplit = std::max(G+1, 2);
   }
+  else
+    Msg::Info("Correct topology: Genus=%d and N boundary=%d", G, Nb);
 
-    //Put new mesh in a new discreteFace
-    //-----------------------------------------------------
-    for(std::set<MVertex*>::iterator it = all_vertices.begin(); it != all_vertices.end(); ++it){
-      gdf->mesh_vertices.push_back(*it);
-    }
-
-    printf("*** Mesh of surface %d done by assembly remeshed faces\n", this->tag());
-    gdf->setTag(this->tag());
-    meshStatistics.status = GFace::DONE; 
-
-     //CreateOutputFile(CTX::instance()->outputFileName, CTX::instance()->mesh.format);
-     //Msg::Exit(1);
-
-  }
-  
   return correctTopo;
-#else
-  return false;
-#endif
+}
+
+bool GFaceCompound::checkAspectRatio() const
+{
+
+  parametrize();
+
+  if (!_checkedAR){
+
+    bool paramOK = true;
+    if(allNodes.empty()) buildAllNodes();
+    
+    double areaMax;
+    std::list<GFace*>::const_iterator it = _compound.begin();
+    for( ; it != _compound.end() ; ++it){
+      for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+	MTriangle *t = (*it)->triangles[i];
+	std::map<MVertex*,SPoint3>::const_iterator it0 = coordinates.find(t->getVertex(0));
+	std::map<MVertex*,SPoint3>::const_iterator it1 = coordinates.find(t->getVertex(1));
+	std::map<MVertex*,SPoint3>::const_iterator it2 = coordinates.find(t->getVertex(2));
+	double p0[3] = {t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z()}; 
+	double p1[3] = {t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z()};
+	double p2[3] = {t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z()};
+	double a_3D = fabs(triangle_area(p0, p1, p2));
+	double q0[3] = {it0->second.x(), it0->second.y(), 0.0}; 
+	double q1[3] = {it1->second.x(), it1->second.y(), 0.0};
+	double q2[3] = {it2->second.x(), it2->second.y(), 0.0};
+	double a_2D = fabs(triangle_area(q0, q1, q2));
+	areaMax = std::max(areaMax,1./a_2D);
+      }
+    }
+    
+    if (areaMax > 1.e12) {
+      nbSplit = 2;
+      printf("--> Geometrical aspect ratio too high (1/area_2D=%g)\n", areaMax);
+      printf("--> Partition geometry in N=%d parts\n", nbSplit);
+      paramOK = false;
+    }
+    else {
+      Msg::Info("Geometrical aspect ratio (1/area_2D=%g)", areaMax);
+      paramOK = true;
+    }
+    
+    _checkedAR = true;
+    _paramOK = paramOK;
+   }
+
+  return _paramOK;
+
+}
+
+void GFaceCompound::buildAllNodes() const
+{
+
+ std::list<GFace*>::const_iterator it = _compound.begin();
+  for( ; it != _compound.end() ; ++it){
+    for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+      MTriangle *t = (*it)->triangles[i];
+      for(int j = 0; j < 3; j++){
+	allNodes.insert(t->getVertex(j));
+      }
+    }
+  }
+
 }
 
 int GFaceCompound::genusGeom() const

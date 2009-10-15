@@ -29,6 +29,7 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options);
 int PartitionMesh(GModel *const model, meshPartitionOptions &options);
 int CreatePartitionBoundaries (GModel *model);
 void splitBoundaryEdges(GModel *model,  std::set<partitionEdge*, Less_partitionEdge> &newEdges);
-void CreateTopologyFromPartition(GModel *model, GFaceCompound *gf, int num_parts);
+void createPartitionFaces(GModel *model, GFaceCompound * gf, int num_parts, 
+			  std::vector<discreteFace*> &pFaces);
 
 #endif

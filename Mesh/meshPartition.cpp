@@ -255,13 +255,21 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
              &graph.adjncy[graph.section[iSec]], NULL, NULL, &wgtflag, &numflag,
              &options.num_partitions, metisOptions, &edgeCut,
              &graph.partition[graph.section[iSec]]);
-// 	  printf("METIS with weights\n");
-// 	  wgtflag = 2;
-//           METIS_PartGraphKway
-//             (&n, &graph.xadj[graph.section[iSec]],
-//              &graph.adjncy[graph.section[iSec]], &graph.vwgts[graph.section[iSec]], NULL, &wgtflag, &numflag,
-//              &options.num_partitions, metisOptions, &edgeCut,
-//              &graph.partition[graph.section[iSec]]);
+	  break;
+	case 3:  // Nodal weight
+	  printf("METIS with weights\n");
+          metisOptions[0] = 1;
+          metisOptions[1] = options.edge_matching;
+          metisOptions[2] = 1;
+          metisOptions[3] = 1;
+          metisOptions[4] = 0;
+	  wgtflag = 2;
+	  graph.fillWeights(options.nodalWeights);
+          METIS_PartGraphKway
+            (&n, &graph.xadj[graph.section[iSec]],
+             &graph.adjncy[graph.section[iSec]], &graph.vwgts[graph.section[iSec]], NULL, &wgtflag, &numflag,
+             &options.num_partitions, metisOptions, &edgeCut,
+             &graph.partition[graph.section[iSec]]);
           break;
         }
       }
@@ -1000,20 +1008,22 @@ int CreatePartitionBoundaries(GModel *model)
   return 1;
 }
 
-void CreateTopologyFromPartition(GModel *model, GFaceCompound *gf, int N)
+void createPartitionFaces(GModel *model, GFaceCompound *gf, int N, 
+			  std::vector<discreteFace*> &discrFaces)
 {
 
   printf("---> CreateTopologyFromPartition for Compound Face %d \n", gf->tag());
+  std::vector<discreteFace*> discreteFaces;//delete this
+
   // Compound is partitioned in N discrete faces
   //--------------------------------------------
-  std::vector<discreteFace*> discreteFaces;
   std::vector<std::set<MVertex*> > allNodes;
   int numMax = model->maxFaceNum() + 1;
   for( int i =0; i < N;  i++){
     //printf("*** Created discreteFace %d \n", numMax+i);
     discreteFace *face = new discreteFace(model, numMax+i);
     discreteFaces.push_back(face);
-    model->add(face);    
+    model->add(face);//delete this    
     std::set<MVertex*> mySet;
     allNodes.push_back(mySet);
   }
@@ -1027,24 +1037,18 @@ void CreateTopologyFromPartition(GModel *model, GFaceCompound *gf, int N)
       int part = e->getPartition();
       for(int j = 0; j < 3; j++){
 	MVertex *v0 = e->getVertex(j);
-	if (v0->onWhat()->dim() == 2) allNodes[part-1].insert(v0);
+	allNodes[part-1].insert(v0);
       }
       discreteFaces[part-1]->triangles.push_back(new MTriangle(e->getVertex(0),e->getVertex(1),e->getVertex(2)));     
     }
   }
 
- for( int i =0; i < N;  i++){
-     GFace *face = model->getFaceByTag(numMax+i);
-     for (std::set<MVertex*>::iterator it = allNodes[i].begin(); it != allNodes[i].end(); it++){ 
-       face->mesh_vertices.push_back(*it);
-     }
+  for( int i =0; i < N;  i++){
+    for (std::set<MVertex*>::iterator it = allNodes[i].begin(); it != allNodes[i].end(); it++){ 
+      discreteFaces[i]->mesh_vertices.push_back(*it);
+    }
  }
 
- //remove the discrete face that is not topologically correct
- //for(it = _compound.begin() ; it != _compound.end() ; ++it){
- //  model->remove(*it); 
- //}
- 
  return;
 
 }

@@ -17,6 +17,7 @@
 #include "GRegion.h"
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
+#include "discreteFace.h"
 
 class Octree;
 class FM_Internals;
@@ -26,6 +27,7 @@ class smooth_normals;
 class FieldManager;
 class CGNSOptions;
 class gLevelset;
+class discreteFace;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel
@@ -309,6 +311,7 @@ class GModel
 
   // create topology from mesh
   void createTopologyFromMesh();
+  void createTopologyFromFaces(std::vector<discreteFace*> &pFaces);
 
   // compute distance function
   void computeDistanceFunction();
