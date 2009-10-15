@@ -1470,7 +1470,7 @@ StringXNumber ViewOptions_Number[] = {
   { F,   "MinZ" , opt_view_zmin , 0. , 
     "Minimum view coordinate along the Z-axis (read-only)" }, 
 
-  { F|O, "NbIso" , opt_view_nb_iso , 15. ,
+  { F|O, "NbIso" , opt_view_nb_iso , 10. ,
     "Number of intervals" },
   { F,   "NbTimeStep" , opt_view_nb_timestep , 1. ,
     "Number of time steps in the view (do not change this!)" },
