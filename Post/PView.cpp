@@ -58,7 +58,15 @@ PView::PView(PViewData *data, int num)
 PView::PView(PView *ref, bool copyOptions)
 {
   _init();
-  _aliasOf = ref->getNum();
+
+  if(ref->getAliasOf()){ // alias of an alias
+    PView *orig = getViewByNum(ref->getAliasOf());
+    if(orig) _aliasOf = orig->getNum();
+    else Msg::Error("Could not find original view for alias");
+  }
+  else
+    _aliasOf = ref->getNum();
+
   _data = ref->getData();
   if(copyOptions)
     _options = new PViewOptions(*ref->getOptions());
