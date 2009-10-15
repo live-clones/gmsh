@@ -644,6 +644,15 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double axes_ymax = opt_view_axes_ymax(current, GMSH_GET, 0);
   double axes_zmax = opt_view_axes_zmax(current, GMSH_GET, 0);
   double gen_raise_factor = opt_view_gen_raise_factor(current, GMSH_GET, 0);
+  double component_map0 = opt_view_component_map0(current, GMSH_GET, 0);
+  double component_map1 = opt_view_component_map1(current, GMSH_GET, 0);
+  double component_map2 = opt_view_component_map2(current, GMSH_GET, 0);
+  double component_map3 = opt_view_component_map3(current, GMSH_GET, 0);
+  double component_map4 = opt_view_component_map4(current, GMSH_GET, 0);
+  double component_map5 = opt_view_component_map5(current, GMSH_GET, 0);
+  double component_map6 = opt_view_component_map6(current, GMSH_GET, 0);
+  double component_map7 = opt_view_component_map7(current, GMSH_GET, 0);
+  double component_map8 = opt_view_component_map8(current, GMSH_GET, 0);
 
   std::string name = opt_view_name(current, GMSH_GET, "");
   std::string format = opt_view_format(current, GMSH_GET, "");
@@ -1028,6 +1037,50 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       val = o->view.value[5]->value();
       if(force || (val != axes_tics2))
         opt_view_axes_tics2(i, GMSH_SET, val);
+
+      val = o->view.value[70]->value();
+      if(force || (val != component_map0))
+        opt_view_component_map0(i, GMSH_SET, val);
+
+      val = o->view.value[70]->value();
+      if(force || (val != component_map0))
+        opt_view_component_map0(i, GMSH_SET, val);
+
+      val = o->view.value[70]->value();
+      if(force || (val != component_map0))
+        opt_view_component_map0(i, GMSH_SET, val);
+
+      val = o->view.value[71]->value();
+      if(force || (val != component_map1))
+        opt_view_component_map1(i, GMSH_SET, val);
+
+      val = o->view.value[72]->value();
+      if(force || (val != component_map2))
+        opt_view_component_map2(i, GMSH_SET, val);
+
+      val = o->view.value[73]->value();
+      if(force || (val != component_map3))
+        opt_view_component_map3(i, GMSH_SET, val);
+
+      val = o->view.value[74]->value();
+      if(force || (val != component_map4))
+        opt_view_component_map4(i, GMSH_SET, val);
+
+      val = o->view.value[75]->value();
+      if(force || (val != component_map5))
+        opt_view_component_map5(i, GMSH_SET, val);
+
+      val = o->view.value[76]->value();
+      if(force || (val != component_map6))
+        opt_view_component_map6(i, GMSH_SET, val);
+
+      val = o->view.value[77]->value();
+      if(force || (val != component_map7))
+        opt_view_component_map7(i, GMSH_SET, val);
+
+      val = o->view.value[78]->value();
+      if(force || (val != component_map8))
+        opt_view_component_map8(i, GMSH_SET, val);
 
       // view_inputs
 
@@ -2744,17 +2797,28 @@ optionWindow::optionWindow(int deltaFontSize)
       view.menu[0]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item menu_force_field_type[] = {
-        {"None", 0, 0, 0},
-        {"Scalar", 0, 0, 0},
-        {"Vector", 0, 0, 0},
-        {"Tensor", 0, 0, 0},
+        {"Original Field", 0, 0, 0},
+        {"Force Scalar", 0, 0, 0},
+        {"Force Vector", 0, 0, 0},
+        {"Force Tensor", 0, 0, 0},
         {0}
       };
       view.choice[14] = new Fl_Choice
-        (L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Forced field type");
+        (L + 2 * WB, 2 * WB + 10 * BH, IW, BH);
       view.choice[14]->menu(menu_force_field_type);
       view.choice[14]->align(FL_ALIGN_RIGHT);
       view.choice[14]->callback(view_options_ok_cb);
+
+      for(int i = 0; i < 9; i++){
+        int W = width - 5 * WB - IW;
+        int w = W / 9;
+        view.value[70 + i] = new Fl_Value_Input
+          (L + 3 * WB + IW + i * w, 2 * WB + 10 * BH, w, BH);
+        view.value[70 + i]->minimum(0);
+        view.value[70 + i]->maximum(9);
+        view.value[70 + i]->step(1);
+        view.value[70 + i]->callback(view_options_ok_cb);
+      }
 
       o->end();
     }
@@ -3276,6 +3340,15 @@ void optionWindow::updateViewGroup(int index)
   opt_view_timestep(index, GMSH_GUI, 0);
   opt_view_show_time(index, GMSH_GUI, 0);
   opt_view_force_num_components(index, GMSH_GUI, 0);
+  opt_view_component_map0(index, GMSH_GUI, 0);
+  opt_view_component_map1(index, GMSH_GUI, 0);
+  opt_view_component_map2(index, GMSH_GUI, 0);
+  opt_view_component_map3(index, GMSH_GUI, 0);
+  opt_view_component_map4(index, GMSH_GUI, 0);
+  opt_view_component_map5(index, GMSH_GUI, 0);
+  opt_view_component_map6(index, GMSH_GUI, 0);
+  opt_view_component_map7(index, GMSH_GUI, 0);
+  opt_view_component_map8(index, GMSH_GUI, 0);
 
   opt_view_point_size(index, GMSH_GUI, 0);
   opt_view_point_type(index, GMSH_GUI, 0);

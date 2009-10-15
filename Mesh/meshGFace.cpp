@@ -1309,17 +1309,15 @@ void meshGFace::operator() (GFace *gf)
 
 void partitionAndRemesh(GFaceCompound *gf)
 {
-
-#if !defined(HAVE_NO_MESH) && (defined(HAVE_CHACO) || defined(HAVE_METIS))
-
+#if defined(HAVE_CHACO) || defined(HAVE_METIS)
   //Partition the mesh and createTopology for new faces
   //-----------------------------------------------------
   int N = gf->nbSplit;
   meshPartitionOptions options;
-  options =  CTX::instance()->partitionOptions;
+  options = CTX::instance()->partitionOptions;
   options.num_partitions = N;
   options.partitioner = 2; //METIS
-  options.algorithm =  1 ;
+  options.algorithm = 1;
   int ier = PartitionMesh(gf->model(), options);
   int numv = gf->model()->maxVertexNum() + 1;
   int nume = gf->model()->maxEdgeNum() + 1;
@@ -1413,13 +1411,7 @@ void partitionAndRemesh(GFaceCompound *gf)
 
     printf("*** Mesh of surface %d done by assembly remeshed faces\n", gf->tag());
     gf->meshStatistics.status = GFace::DONE; 
-
-
-
-#else
-  return;
 #endif
-
 }
 
 
@@ -1499,5 +1491,3 @@ void orientMeshGFace::operator()(GFace *gf)
     }
   }
 }
-
-

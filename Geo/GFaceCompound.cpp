@@ -29,14 +29,6 @@
 #include "Context.h"
 #include "discreteFace.h"
 
-// #if !defined(HAVE_NO_MESH)
-// #include "meshGFace.h"
-// #include "meshGFaceOptimize.h"
-// #include "meshGEdge.h"
-// #include "meshPartitionOptions.h"
-// #include "meshPartition.h"
-// #endif
-
 static void fixEdgeToValue(GEdge *ed, double value, dofManager<double, double> &myAssembler)
 {
   myAssembler.fixVertex(ed->getBeginVertex()->mesh_vertices[0], 0, 1, value);

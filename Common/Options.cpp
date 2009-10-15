@@ -8184,6 +8184,12 @@ static double ovcm(OPT_ARGS_NUM, int nn)
     opt->componentMap[nn] = (int)val;
     if(view) view->setChanged(true);
   }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)){
+    FlGui::instance()->options->view.value[70 + nn]->value
+      (opt->componentMap[nn]);
+  }
+#endif
   return opt->componentMap[nn];
 #else
   return 0.;
