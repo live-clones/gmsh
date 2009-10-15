@@ -62,7 +62,10 @@ PView::PView(PView *ref, bool copyOptions)
   if(ref->getAliasOf()){ // alias of an alias
     PView *orig = getViewByNum(ref->getAliasOf());
     if(orig) _aliasOf = orig->getNum();
-    else Msg::Error("Could not find original view for alias");
+    else{
+      Msg::Warning("Original view for alias does not exist anymore");
+      _aliasOf = ref->getNum();
+    }
   }
   else
     _aliasOf = ref->getNum();
