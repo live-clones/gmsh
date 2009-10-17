@@ -4243,27 +4243,25 @@ questions}, for more information.
 Stable releases and nightly source snapshots are available from
 @uref{http://www.geuz.org/gmsh/src/}.
 
-If you have an account on cvs.geuz.org you can also access the CVS
+If you have a subversion account on geuz.org you can also access the SVN
 repository directly:
 
 @enumerate
 @item
-Set the variable CVS_RSH to ssh ('export CVS_RSH=ssh' with bash, or
-'setenv CVS_RSH ssh' with tcsh)
-@item
-The first time you want to download the latest full source by CVS, type:
+The first time you want to download the latest full source, type:
 
 @example
-cvs -d username@@cvs.geuz.org:/cvsroot checkout gmsh
+svn co https://geuz.org/svn/gmsh/trunk gmsh
 @end example
 
-where username is your login on cvs.geuz.org
+You will be asked to accept the security certificate and to provide your
+username and password.
 @item
 To update your local version to the latest and greatest, go in the gmsh
 directory and type:
 
 @example
-cvs update -dPA
+svn update
 @end example
 
 @item
@@ -4271,7 +4269,7 @@ To commit your changes to the central repository, go in the gmsh
 directory and type:
 
 @example
-cvs commit
+svn commit
 @end example
 
 @end enumerate
