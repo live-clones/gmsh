@@ -3391,23 +3391,39 @@ static int gl2psPrintPDFLineWidth(GLfloat lw)
 
 static void gl2psPutPDFText(GL2PSstring *text, int cnt, GLfloat x, GLfloat y)
 {
-  gl2ps->streamlength += 
-    gl2psPrintf("BT\n"
-                "/F%d %d Tf\n"
-                "%f %f Td\n"
-                "(%s) Tj\n"
-                "ET\n", 
-                cnt, text->fontsize, x, y, text->str);  
+  GLfloat rad, crad, srad;
+  
+  if(text->angle == 0.0F){
+    gl2ps->streamlength += gl2psPrintf
+      ("BT\n"
+       "/F%d %d Tf\n"
+       "%f %f Td\n"
+       "(%s) Tj\n"
+       "ET\n", 
+       cnt, text->fontsize, x, y, text->str);
+  }
+  else{
+    rad = M_PI * text->angle / 180.0F;
+    srad = (GLfloat)sin(rad);
+    crad = (GLfloat)cos(rad);
+    gl2ps->streamlength += gl2psPrintf
+      ("BT\n"
+       "/F%d %d Tf\n"
+       "%f %f %f %f %f %f Tm\n"
+       "(%s) Tj\n"
+       "ET\n",
+       cnt, text->fontsize, crad, srad, -srad, crad, x, y, text->str);
+  }
 }
 
 static void gl2psPutPDFImage(GL2PSimage *image, int cnt, GLfloat x, GLfloat y)
 {
-  gl2ps->streamlength += 
-    gl2psPrintf("q\n"
-                "%d 0 0 %d %f %f cm\n"
-                "/Im%d Do\n"
-                "Q\n",
-                (int)image->width, (int)image->height, x, y, cnt);
+  gl2ps->streamlength += gl2psPrintf
+    ("q\n"
+     "%d 0 0 %d %f %f cm\n"
+     "/Im%d Do\n"
+     "Q\n",
+     (int)image->width, (int)image->height, x, y, cnt);
 }
 
 static void gl2psPDFstacksInit(void)
