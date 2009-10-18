@@ -132,5 +132,7 @@ class PView{
 void changeCoordinates(PView *p, int ient, int iele,
                        int numNodes, int type, int numComp, 
                        double xyz[PVIEW_NMAX][3], double val[PVIEW_NMAX][9]);
+bool isElementVisible(PViewOptions *opt, int dim, int numNodes, 
+                      double xyz[PVIEW_NMAX][3]);
 
 #endif

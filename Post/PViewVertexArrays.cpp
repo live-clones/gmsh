@@ -265,8 +265,8 @@ static double intersectClipPlane(int clip, int numNodes, double xyz[PVIEW_NMAX][
   return val;
 }
 
-static bool isElementVisible(PViewOptions *opt, int dim, int numNodes, 
-                             double xyz[PVIEW_NMAX][3])
+bool isElementVisible(PViewOptions *opt, int dim, int numNodes, 
+                      double xyz[PVIEW_NMAX][3])
 {
   if(!CTX::instance()->clipWholeElements) return true;
   bool hidden = false;

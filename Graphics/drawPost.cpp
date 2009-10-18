@@ -256,6 +256,7 @@ static void drawGlyphs(drawContext *ctx, PView *p)
           data->getValue(opt->timeStep, ent, i, j, k, val[j][k]);
       }
       changeCoordinates(p, ent, i, numNodes, type, numComp, xyz, val);
+      if(!isElementVisible(opt, dim, numNodes, xyz)) continue;
       if(opt->intervalsType == PViewOptions::Numeric)
         drawNumberGlyphs(ctx, p, numNodes, numComp, xyz, val);
       if(dim == 2 && opt->normals)
