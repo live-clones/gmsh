@@ -13,11 +13,14 @@
 #define highlevel_H
 
 #include <vector>
+#include <complex>
 
 #include "dofManager.h"
+#include "SVector3.h"
 
-class entity{};
-class Vector{};
+
+
+typedef SVector3 Vector;
 class Tensor2{};
 class Tensor4{};
 
@@ -29,6 +32,14 @@ template<> struct TensorialTraits<double>
   typedef Vector GradType;
   typedef Tensor2 HessType;
 };
+
+template<> struct TensorialTraits<std::complex<double> >
+{
+  typedef std::complex<double> ValType;
+  typedef Vector GradType;
+  typedef Tensor2 HessType;
+};
+
 
 template<> struct TensorialTraits<Vector>
 {
@@ -43,15 +54,15 @@ template<class T> class Function  // Fonction au sens EF du terme.
 {
 public:
   virtual ~Function(){}
-  virtual void GetVal (double uvw[],entity *e, T& Val)const =0;
-  virtual void GetGrad(double uvw[],entity *e,typename TensorialTraits<T>::GradType &Grad) const =0;
-  virtual void GetHess(double uvw[],entity *e,typename TensorialTraits<T>::HessType &Hess)const =0;
+  virtual void GetVal (double uvw[],MElement *e, T& Val)const =0;
+  virtual void GetGrad(double uvw[],MElement *e,typename TensorialTraits<T>::GradType &Grad) const =0;
+  virtual void GetHess(double uvw[],MElement *e,typename TensorialTraits<T>::HessType &Hess)const =0;
 };
 
 class SpaceBase // renvoie des clefs de dofs
 {
 public:
-  virtual void getDofs(entity *e,std::vector<Dof> &vecD)=0;
+  virtual void getDofs(MElement *e,std::vector<Dof> &vecD)=0;
 };
 
 template<class T> class Space : public SpaceBase // renvoie des clefs de dofs et des fonctions de formes
@@ -59,7 +70,7 @@ template<class T> class Space : public SpaceBase // renvoie des clefs de dofs et
 public: 
   Space(){};
   virtual ~Space(){};
-  virtual void getDofsandSFs(entity *e,std::vector<std::pair< Dof, Function<T>* > > &vecDFF) {}
+  virtual void getDofsandSFs(MElement *e,std::vector<std::pair< Dof, Function<T>* > > &vecDFF) {}
   virtual void getSFs(std::vector<std::pair< Dof, Function<T>* > > &vecDFF)=0;
 };
 
@@ -80,7 +91,9 @@ template<class T1,class T2> class TermBilinear  // terme associe a un "element" 
             // on peut utiliser des membres statiques pour ce qui est constant pour tous les instances
 {
   TermBilinear();
-  virtual double getTerm(double uvw[],entity &e,Function<T1> &SF,Function<T2> &TF) = 0;
+  virtual double getTerm(double uvw[],MElement &e,Function<T1> &SF,Function<T2> &TF) = 0;
+  virtual void Update(double uvw[],MElement &e,Function<T1> &SF,Function<T2> &TF) = 0;
+// toute fonctios utiles . prevoir un algorithme 
 };
 
 
@@ -89,6 +102,7 @@ class FormBilinear {};   // Renvoie des matrices élémentaires (ff)
                   // Doit etre initialisée AVANT toute opération (pour l'allocation)
                   // en principe ce truc ne devrait pas ^etre reimplemente
                   // il devrait donc dependre d'un parametre template TermBilinear
+                  // elle sait "integrer" dans un elemeent
 
 class FormLinear{}; // renvoie des vecteurs élémentaires
               // on devrait pouvoir construire une forme lin à partir d'une forme bilin pour les pb "matrix free"
