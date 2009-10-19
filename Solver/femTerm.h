@@ -75,23 +75,40 @@ class femTerm {
   {
     const int nbR = localMatrix.size1();
     const int nbC = localMatrix.size2();
-    std::vector<Dof> R,C;
-    for (int j = 0; j < nbR; j++)
-      R.push_back(getLocalDofR(se, j));
-    for (int k = 0; k < nbC; k++)
-      C.push_back(getLocalDofC(se, k));
-
+    std::vector<Dof> R,C; // better use default consdtructors and reserve the right amount of space to avoid reallocation
+    R.reserve(nbR);
+    C.reserve(nbC);
+    bool sym=true;
+    if (nbR == nbC)
+    {
+      for (int j = 0; j < nbR; j++)
+      { 
+        Dof r(getLocalDofR(se, j));
+        Dof c(getLocalDofC(se, j));
+        R.push_back(r);
+        C.push_back(c);
+        if (!(r==c)) sym=false;
+      }
+    }
+    else
+    {
+      sym=false;
+      for (int j = 0; j < nbR; j++)
+        R.push_back(getLocalDofR(se, j));
+      for (int k = 0; k < nbC; k++)
+        C.push_back(getLocalDofC(se, k));
+    }
 /*     for (int i = 0; i < nbC; i++) */
 /*       for (int j = 0; j < nbR; j++) */
 /* 	dm.assemble(getLocalDofR(se, i), getLocalDofC(se, j), localMatrix(i,j)); */
 /*     return; */
     
-    bool sym = true;
-    if (nbR == nbC){
-      for (int i=0;i<nbR;i++)
-	if (!(C[i] == R[i]))sym = false;
-    }
-    else sym = false;
+    
+//    if (nbR == nbC){
+//      for (int i=0;i<nbR;i++)
+//	if (!(C[i] == R[i]))sym = false;
+//    }
+//    else sym = false;
     if (!sym)
       dm.assemble(R, C, localMatrix);
     else
