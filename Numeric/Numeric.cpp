@@ -718,18 +718,25 @@ void signedDistancesPointsTriangle (std::vector<double>&distances,
   SVector3 t3 = p3-p2;
   SVector3 n = crossprod(t1,t2);
   n.normalize();
+
   double mat[3][3] = {{t1.x(),t2.x(),-n.x()},
 		      {t1.y(),t2.y(),-n.y()},
 		      {t1.z(),t2.z(),-n.z()}};
   double inv[3][3];
-  inv3x3(mat,inv);
+  double det = inv3x3(mat,inv);
   
+  distances.clear();
+  distances.resize(pts.size());
+
+  for (int i=0; i<pts.size();i++)
+    distances[i] = 1.e22;
+
+  if (det = 0.0)return;
+
   const double n2t1 = dot(t1,t1);
   const double n2t2 = dot(t2,t3);
   const double n2t3 = dot(t3,t3);
 
-  distances.clear();
-  distances.resize(pts.size());
 
   double u,v,d;
   for (int i=0; i<pts.size();i++){
@@ -739,7 +746,7 @@ void signedDistancesPointsTriangle (std::vector<double>&distances,
     v = (inv[1][0] * pp1.x() + inv[1][1] * pp1.y() + inv[1][2] * pp1.z());
     d = (inv[2][0] * pp1.x() + inv[2][1] * pp1.y() + inv[2][2] * pp1.z());
     double sign = (d>0) ? 1.0 : -1.0;
-    if (d == 0) sign = 1.e22;
+    if (d == 0) sign = 1.e10;
     
     if (u >= 0 && v >=0 && 1.-u-v >= 0.0){
       distances[i] = d;
@@ -749,7 +756,7 @@ void signedDistancesPointsTriangle (std::vector<double>&distances,
       const double t13 = dot(pp1,t2) / n2t2;
       SVector3 pp2 = p - p2;
       const double t23 = dot(pp2,t3) / n2t3;
-      d = 1.e22;
+      d = 1.e10;
       bool found = false;
       if (t12 >=0 && t12 <= 1.0){
 	d = sign * std::min(fabs(d),p.distance(p1+(p2-p1)*t12));            

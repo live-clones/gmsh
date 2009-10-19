@@ -1321,11 +1321,16 @@ void GFaceCompound::buildOct() const
 //Verify topological conditions for computing the harmonic map
 bool GFaceCompound::checkTopology() const
 {
+  // FIXME!!! I think those things are wrong with cross-patch reparametrization
+  if ((*(_compound.begin()))->geomType() != GEntity::DiscreteSurface)return true;
+  
   bool correctTopo = true;
 
   int Nb = _interior_loops.size();
   int G  = genusGeom() ;
   if( G != 0 || Nb < 1) correctTopo = false;
+
+  //  printf("%d %d\n",Nb,G);
 
   if (!correctTopo){
     Msg::Info("--> Wrong topology: Genus=%d and N boundary=%d", G, Nb);

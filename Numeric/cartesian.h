@@ -63,7 +63,7 @@ private:
   }  
 
   typename std::map<INDEXTYPE,scalar>::const_iterator begin() const {return _nodal_values.begin();}
-  typename std::map<INDEXTYPE,scalar>::const_iterator ens() const {return _nodal_values.endn();}
+  typename std::map<INDEXTYPE,scalar>::const_iterator end() const {return _nodal_values.end();}
 
   // add that in the ann search tool
   void insert_point (double x, double y, double z){
@@ -72,19 +72,27 @@ private:
   // compute distance
   double distance (double x, double y, double z) const;
   
+  // set the value
+  void setValue(INDEXTYPE i, scalar s){
+    _nodal_values[i] = s;
+  }
   inline INDEXTYPE index_of_element (double x, double y, double z) const{
     
     // P = P_0 + xi * _vdx + eta * _vdy + zeta *vdz
     // DP = P-P_0 * _vdx = xi
     SVector3 DP (x-_X,y-_Y,z-_Z);
 
-    const double xi   = dot(DP,_xiAxis);
-    const double eta  = dot(DP,_etaAxis);
-    const double zeta = dot(DP,_zetaAxis);
-    
-    const int i = xi/_dxi * _Nxi;
-    const int j = eta/_deta * _Neta;
-    const int k = zeta/_dzeta * _Nzeta;
+    double xi   = dot(DP,_xiAxis);
+    double eta  = dot(DP,_etaAxis);
+    double zeta = dot(DP,_zetaAxis);    
+
+    int i = xi/_dxi * _Nxi;
+    int j = eta/_deta * _Neta;
+    int k = zeta/_dzeta * _Nzeta;
+
+    if (i < 0) i = 0;if (i >= _Nxi) i = _Nxi-1;
+    if (j < 0) j = 0;if (j >= _Neta) j = _Neta-1;
+    if (k < 0) k = 0;if (k >= _Nzeta) k = _Nzeta-1;
 
     return element_index(i,j,k);
   }
@@ -179,7 +187,8 @@ private:
       typename std::map<INDEXTYPE,scalar>::const_iterator it = _nodal_values.begin();
       for ( ; it!=_nodal_values.end();++it){
 	SPoint3 p = coordinates_of_node(it->first);
-	fprintf(f,"%d %g\n",it->first,distance(p.x(),p.y(),p.z()));
+	//	fprintf(f,"%d %g\n",it->first,distance(p.x(),p.y(),p.z()));
+	fprintf(f,"%d %g\n",it->first,it->second);
       }    
       fprintf(f,"$EndNodeData\n");
     }
