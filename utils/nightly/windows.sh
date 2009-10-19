@@ -8,10 +8,10 @@ CMAKE=cmake
 rm -f ${LOG}
 rm -rf ${GMSH}/bin
 echo "BUILD BEGIN: `date`" > ${LOG}
-cd ${GMSH} && export CVS_RSH=ssh && cvs update -dPA >> ${LOG} 2>&1
+cd ${GMSH} && svn update >> ${LOG} 2>&1
 mkdir ${GMSH}/bin
 cd ${GMSH}/bin && \
-  ${CMAKE} -DGMSH_EXTRA_VERSION:string="-cvs"\
+  ${CMAKE} -DGMSH_EXTRA_VERSION:string="-svn"\
            -DCMAKE_PREFIX_PATH:path="/usr/local;/usr/local/opencascade"\
            -DCMAKE_CXX_FLAGS:string="-mno-cygwin"\
            -DCMAKE_C_FLAGS:string="-mno-cygwin"\
