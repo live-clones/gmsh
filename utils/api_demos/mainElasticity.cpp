@@ -12,6 +12,7 @@ int main (int argc, char* argv[]){
   
   // globals are still present in Gmsh
   GmshInitialize(argc, argv);
+  GmshSetOption("General","Terminal",1.);
   
   // instanciate a solver
   elasticitySolver mySolver (1000);
@@ -20,7 +21,7 @@ int main (int argc, char* argv[]){
   mySolver.readInputFile(argv[1]);
   
   // solve the problem
-  mySolver.solve();
+  mySolver.solve(); printf("problem solved\n");
 
   PView *pv = mySolver.buildDisplacementView("displacement");
   pv->getData()->writeMSH("disp.msh", false);

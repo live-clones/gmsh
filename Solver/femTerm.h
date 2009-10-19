@@ -24,7 +24,7 @@ class femTerm {
   GModel *_gm;
  public:
   femTerm(GModel *gm) : _gm(gm) {}
-  virtual ~femTerm(){}
+  virtual ~femTerm() {}
   // return the number of columns of the element matrix
   virtual int sizeOfC(SElement *se) const = 0;
   // return the number of rows of the element matrix
@@ -34,28 +34,28 @@ class femTerm {
   virtual Dof getLocalDofR(SElement *se, int iRow) const = 0;
   // default behavior: symmetric
   virtual Dof getLocalDofC(SElement *se, int iCol) const
-  { 
-    return getLocalDofR(se, iCol); 
+  {
+    return getLocalDofR(se, iCol);
   }
   // compute the elementary matrix
   virtual void elementMatrix(SElement *se, fullMatrix<dataMat> &m) const = 0;
-  virtual void elementVector(SElement *se, fullVector<dataVec> &m) const 
+  virtual void elementVector(SElement *se, fullVector<dataVec> &m) const
   {
     m.scale(0.0);
   }
 
   // add the contribution from all the elements in the intersection
   // of two element groups L and C
-  void addToMatrix(dofManager<dataVec, dataMat> &dm, 
-		   groupOfElements &L, 
-		   groupOfElements &C) const
+  void addToMatrix(dofManager<dataVec, dataMat> &dm,
+                   groupOfElements &L,
+                   groupOfElements &C) const
   {
     groupOfElements::elementContainer::const_iterator it = L.begin();
     for ( ; it != L.end() ; ++it){
       MElement *eL = *it;
-      if ( &C == &L || C.find(eL) ){
-	SElement se(eL);
-	addToMatrix(dm, &se);
+      if (&C == &L || C.find(eL)){
+        SElement se(eL);
+        addToMatrix(dm, &se);
       }
     }
   }
@@ -69,8 +69,8 @@ class femTerm {
     elementMatrix(se, localMatrix);
     addToMatrix(dm, localMatrix, se);
   }
-  void addToMatrix(dofManager<dataVec, dataMat> &dm, 
-                   fullMatrix<dataMat> &localMatrix, 
+  void addToMatrix(dofManager<dataVec, dataMat> &dm,
+                   fullMatrix<dataMat> &localMatrix,
                    SElement *se) const
   {
     const int nbR = localMatrix.size1();
@@ -116,7 +116,7 @@ class femTerm {
   }
   void dirichletNodalBC(int physical, int dim, int comp, int field,
                         const simpleFunction<dataVec> &e,
-                        dofManager<dataVec,dataMat> &dm)
+                        dofManager<dataVec, dataMat> &dm)
   {
     std::vector<MVertex *> v;
     GModel *m = _gm;
@@ -124,14 +124,14 @@ class femTerm {
     for (unsigned int i = 0; i < v.size(); i++)
       dm.fixVertex(v[i], comp, field, e(v[i]->x(), v[i]->y(), v[i]->z()));
   }
-  void neumannNodalBC(int physical, int dim, int comp,int field,
+  void neumannNodalBC(int physical, int dim, int comp, int field,
                       const simpleFunction<dataVec> &fct,
                       dofManager<dataVec, dataMat> &dm)
   {
     std::map<int, std::vector<GEntity*> > groups[4];
     GModel *m = _gm;
     m->getPhysicalGroups(groups);
-    std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].find(physical);  
+    std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].find(physical);
     if (it == groups[dim].end()) return;
     double jac[3][3];
     double sf[256];
@@ -143,7 +143,7 @@ class femTerm {
         int nbNodes = e->getNumVertices();
         int npts;
         IntPt *GP;
-        e->getIntegrationPoints(integrationOrder, &npts, &GP);  
+        e->getIntegrationPoints(integrationOrder, &npts, &GP);
         for (int ip = 0; ip < npts; ip++){
           const double u = GP[ip].pt[0];
           const double v = GP[ip].pt[1];
@@ -161,10 +161,10 @@ class femTerm {
     }
   }
 
-  void addToRightHandSide(dofManager<dataVec, dataMat> &dm, groupOfElements &C) const 
+  void addToRightHandSide(dofManager<dataVec, dataMat> &dm, groupOfElements &C) const
   {
     groupOfElements::elementContainer::const_iterator it = C.begin();
-    for ( ; it != C.end() ; ++it){
+    for ( ; it != C.end(); ++it){
       MElement *eL = *it;
       SElement se(eL);
       int nbR = sizeOfR(&se);

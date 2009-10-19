@@ -18,20 +18,20 @@ class elasticityTerm : public femTerm<double, double> {
   int _iFieldR, _iFieldC;
   SVector3 _volumeForce;
  public:
-  void setFieldC(int i){_iFieldC = i;} 
-  void setFieldR(int i){_iFieldR = i;} 
+  void setFieldC(int i){_iFieldC = i;}
+  void setFieldR(int i){_iFieldR = i;}
   // element matrix size : 3 dofs per vertex
-  virtual int sizeOfR(SElement *se) const 
+  virtual int sizeOfR(SElement *se) const
   {
-    return 3 * se->getMeshElement()->getNumVertices(); 
+    return 3 * se->getMeshElement()->getNumVertices();
   }
-  virtual int sizeOfC(SElement *se) const 
-  { 
-    return 3 * se->getMeshElement()->getNumVertices(); 
+  virtual int sizeOfC(SElement *se) const
+  {
+    return 3 * se->getMeshElement()->getNumVertices();
   }
   // order dofs in the local matrix :
   // dx1, dx2 ... dxn, dy1, ..., dyn, dz1, ... dzn 
-  Dof getLocalDofR(SElement *se, int iRow) const 
+  Dof getLocalDofR(SElement *se, int iRow) const
   {
     MElement *e = se->getMeshElement();
     int iCompR = iRow / e->getNumVertices();
@@ -39,7 +39,7 @@ class elasticityTerm : public femTerm<double, double> {
     return Dof(e->getVertex(ithLocalVertex)->getNum(),
                Dof::createTypeWithTwoInts(iCompR, _iFieldR));
   }
-  Dof getLocalDofC(SElement *se, int iCol) const 
+  Dof getLocalDofC(SElement *se, int iCol) const
   {
     MElement *e = se->getMeshElement();
     int iCompC = iCol / e->getNumVertices();

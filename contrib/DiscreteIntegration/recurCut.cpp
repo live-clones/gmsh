@@ -37,13 +37,13 @@ void recurCut(RecurElement *re, int maxlevel, int level)
     RecurElement *re0 = new RecurElement(&DI_Triangle(p1, p12, p13));
     recurCut(re0, maxlevel, level);
     re->sub[0] = re0; re0->super = re;
-    RecurElement *re1 = new RecurElement(&DI_Triangle(p2, p12, p23));
+    RecurElement *re1 = new RecurElement(&DI_Triangle(p2, p23, p12));
     recurCut(re1, maxlevel, level);
     re->sub[1] = re1; re1->super = re;
     RecurElement *re2 = new RecurElement(&DI_Triangle(p3, p13, p23));
     recurCut(re2, maxlevel, level);
     re->sub[2] = re2; re2->super = re;
-    RecurElement *re3 = new RecurElement(&DI_Triangle(p12, p13, p23));
+    RecurElement *re3 = new RecurElement(&DI_Triangle(p12, p23, p13));
     recurCut(re3, maxlevel, level);
     re->sub[3] = re3; re3->super = re;
   }
@@ -87,22 +87,22 @@ void recurCut(RecurElement *re, int maxlevel, int level)
     RecurElement *re0 = new RecurElement(&DI_Tetra(p1, p12, p13, p14));
     recurCut(re0, maxlevel, level);
     re->sub[0] = re0; re0->super = re;
-    RecurElement *re1 = new RecurElement(&DI_Tetra(p2, p12, p23, p24));
+    RecurElement *re1 = new RecurElement(&DI_Tetra(p2, p23, p12, p24));
     recurCut(re1, maxlevel, level);
     re->sub[1] = re1; re1->super = re;
     RecurElement *re2 = new RecurElement(&DI_Tetra(p3, p13, p23, p34));
     recurCut(re2, maxlevel, level);
     re->sub[2] = re2; re2->super = re;
-    RecurElement *re3 = new RecurElement(&DI_Tetra(p4, p14, p24, p34));
+    RecurElement *re3 = new RecurElement(&DI_Tetra(p4, p14, p34, p24));
     recurCut(re3, maxlevel, level);
     re->sub[3] = re3; re3->super = re;
     RecurElement *re4 = new RecurElement(&DI_Tetra(p12, p14, p24, p34));
     recurCut(re4, maxlevel, level);
     re->sub[4] = re4; re4->super = re;
-    RecurElement *re5 = new RecurElement(&DI_Tetra(p12, p23, p24, p34));
+    RecurElement *re5 = new RecurElement(&DI_Tetra(p12, p23, p34, p24));
     recurCut(re5, maxlevel, level);
     re->sub[5] = re5; re5->super = re;
-    RecurElement *re6 = new RecurElement(&DI_Tetra(p12, p13, p23, p34));
+    RecurElement *re6 = new RecurElement(&DI_Tetra(p12, p13, p34, p23));
     recurCut(re6, maxlevel, level);
     re->sub[6] = re6; re6->super = re;
     RecurElement *re7 = new RecurElement(&DI_Tetra(p12, p13, p14, p34));
@@ -140,25 +140,25 @@ void recurCut(RecurElement *re, int maxlevel, int level)
     RecurElement *re0 = new RecurElement(&DI_Hexa(p1, p12, p1234, p14, p15, p1256, p12345678, p1458));
     recurCut(re0, maxlevel, level);
     re->sub[0] = re0; re0->super = re;
-    RecurElement *re1 = new RecurElement(&DI_Hexa(p2, p23, p1234, p12, p26, p2367, p12345678, p1256));
+    RecurElement *re1 = new RecurElement(&DI_Hexa(p12, p2, p23, p1234, p1256, p26, p2367, p12345678));
     recurCut(re1, maxlevel, level);
     re->sub[1] = re1; re1->super = re;
-    RecurElement *re2 = new RecurElement(&DI_Hexa(p3, p34, p1234, p23, p37, p3478, p12345678, p2367));
+    RecurElement *re2 = new RecurElement(&DI_Hexa(p1234, p23, p3, p34, p12345678, p2367, p37, p3478));
     recurCut(re2, maxlevel, level);
     re->sub[2] = re2; re2->super = re;
-    RecurElement *re3 = new RecurElement(&DI_Hexa(p4, p14, p1234, p34, p48, p1458, p12345678, p3478));
+    RecurElement *re3 = new RecurElement(&DI_Hexa(p14, p1234, p34, p4, p1458, p12345678, p3478, p48));
     recurCut(re3, maxlevel, level);
     re->sub[3] = re3; re3->super = re;
-    RecurElement *re4 = new RecurElement(&DI_Hexa(p5, p58, p5678, p56, p15, p1458, p12345678, p1256));
+    RecurElement *re4 = new RecurElement(&DI_Hexa(p15, p1256, p12345678, p1458, p5, p56, p5678, p58));
     recurCut(re4, maxlevel, level);
     re->sub[4] = re4; re4->super = re;
-    RecurElement *re5 = new RecurElement(&DI_Hexa(p6, p56, p5678, p67, p26, p1256, p12345678, p2367));
+    RecurElement *re5 = new RecurElement(&DI_Hexa(p1256, p26, p2367, p12345678, p56, p6, p67, p5678));
     recurCut(re5, maxlevel, level);
     re->sub[5] = re5; re5->super = re;
-    RecurElement *re6 = new RecurElement(&DI_Hexa(p7, p67, p5678, p78, p37, p2367, p12345678, p3478));
+    RecurElement *re6 = new RecurElement(&DI_Hexa(p12345678, p2367, p37, p3478, p5678, p67, p7, p78));
     recurCut(re6, maxlevel, level);
     re->sub[6] = re6; re6->super = re;
-    RecurElement *re7 = new RecurElement(&DI_Hexa(p8, p78, p5678, p58, p48, p3478, p12345678, p1458));
+    RecurElement *re7 = new RecurElement(&DI_Hexa(p1458, p12345678, p3478, p48, p58, p5678, p78, p8));
     recurCut(re7, maxlevel, level);
     re->sub[7] = re7; re7->super = re;
   }
@@ -186,7 +186,7 @@ bool signChange (RecurElement *re, const DI_Element *e, const std::vector<const 
     else {
       for(unsigned int p = 0; p < cp.size(); p++)
         cp[p].chooseLs(Lsi);
-      re->el->chooseLs(Lsi);
+      if (re->super) re->el->chooseLs(Lsi);
     }
   }
   re->el->clearLs();

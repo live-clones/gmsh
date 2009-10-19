@@ -7,7 +7,7 @@ OCC = /Users/remacle/SOURCES/opencascade/lib/libTKSTEP.a /Users/remacle/SOURCES/
 
 mainElasticity: mainElasticity.cpp
 	g++ ${FLAGS} -o mainElasticity ${INC} mainElasticity.cpp\
-          ${GMSH} -llapack -lblas -lm -L/Users/remacle/SOURCES/gmsh/contrib/taucs/lib -ltaucs
+          ${GMSH} -llapack -lblas -lm -lmetis -L/home/gaetan/develop/gmsh/contrib/taucs/lib/linux -ltaucs
 
 mainCartesian: mainCartesian.cpp
 	g++ ${FLAGS} -o mainCartesian ${INC} mainCartesian.cpp\
@@ -31,7 +31,7 @@ mainPost: mainPost.cpp
 
 mainLevelset: mainLevelset.cpp
 	g++ ${FLAGS} -o mainLevelset ${INC} mainLevelset.cpp\
-          ${GMSH} -llapack -lblas
+          ${GMSH} -llapack -lblas -lm -lmetis -L/home/gaetan/develop/gmsh/contrib/taucs/lib/linux -ltaucs
 
 clean:
 	rm -rf mainSimple mainAntTweakBar mainGlut mainPost mainLevelset\

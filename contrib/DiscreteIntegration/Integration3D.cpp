@@ -63,12 +63,14 @@ inline double distance(const DI_CuttingPoint &p1, const DI_CuttingPoint &p2) {
 inline DI_Point middle (const DI_Point &p1, const DI_Point &p2) {
   return DI_Point ((p1.x() + p2.x()) / 2, (p1.y() + p2.y()) / 2, (p1.z() + p2.z()) / 2);
 }
-inline DI_Point middle (const DI_Point &p1, const DI_Point &p2, const DI_Element *e, const std::vector<const gLevelset *> RPNi) {
+inline DI_Point middle (const DI_Point &p1, const DI_Point &p2,
+                        const DI_Element *e, const std::vector<const gLevelset *> RPNi) {
   return DI_Point ((p1.x() + p2.x()) / 2, (p1.y() + p2.y()) / 2, (p1.z() + p2.z()) / 2, e, RPNi);
 }
 
 // barycentre
-inline DI_Point barycenter (const DI_Element *el, const DI_Element *e, const std::vector<const gLevelset *> RPN) {
+inline DI_Point barycenter (const DI_Element *el,
+                            const DI_Element *e, const std::vector<const gLevelset *> RPN) {
   double x[3] = {0., 0., 0.};
   int n;
   for (n = 0; n < el->nbVert(); n++) {
@@ -233,7 +235,8 @@ double qualityTri(const DI_Point &p0, const DI_Point &p1, const DI_Point &p2) {
 }
 
 // Return the best quality for a quad cut into 2 triangles
-int bestQuality(const DI_Point &p1, const DI_Point &p2, const DI_Point &p3, const DI_Point &p4, DI_Triangle &t1, DI_Triangle &t2) {
+int bestQuality(const DI_Point &p1, const DI_Point &p2, const DI_Point &p3, const DI_Point &p4,
+                DI_Triangle &t1, DI_Triangle &t2) {
   int cut = 0;
   double qual11 = qualityTri(p1, p2, p3);
   double qual12 = qualityTri(p1, p3, p4);
@@ -448,7 +451,8 @@ int bestQuality (const DI_Point &p0, const DI_Point &p1, const DI_Point &p2,
 }
 
 // computes the intersection between a level set and a linear edge
-DI_Point Newton(const DI_Point &p1, const DI_Point &p2, const DI_Element *e, const std::vector<const gLevelset *> RPNi) {
+DI_Point Newton(const DI_Point &p1, const DI_Point &p2,
+                const DI_Element *e, const std::vector<const gLevelset *> RPNi) {
   double eps = -p1.ls() / (p2.ls() - p1.ls());
   DI_Point p(p1.x() + eps * (p2.x() - p1.x()), p1.y() + eps * (p2.y() - p1.y()), p1.z() + eps * (p2.z() - p1.z()));
   double pls = e->evalLs(p.x(), p.y(), p.z());
@@ -468,8 +472,10 @@ DI_Point Newton(const DI_Point &p1, const DI_Point &p2, const DI_Element *e, con
   return p;
 }
 
-// compute the position of the middle of a quadratic edge (intersection between the bisector of the linear edge and the levelset)
-DI_Point quadMidNode(const DI_Point &p1, const DI_Point &p2, const DI_Point &pf, const DI_Element *e, const std::vector<const gLevelset *> RPNi) {
+// compute the position of the middle of a quadratic edge
+//(intersection between the bisector of the linear edge and the levelset)
+DI_Point quadMidNode(const DI_Point &p1, const DI_Point &p2, const DI_Point &pf,
+                     const DI_Element *e, const std::vector<const gLevelset *> RPNi) {
   // middle of the edge between the 2 cutting points
   DI_Point midEN((p1.x() + p2.x()) / 2., (p1.y() + p2.y()) / 2., (p1.z() + p2.z()) / 2.);
   midEN.addLs(e);
@@ -493,10 +499,10 @@ DI_Point quadMidNode(const DI_Point &p1, const DI_Point &p2, const DI_Point &pf,
   return Newton(midEN, pt, e, RPNi);
 }
 
-// --------------------------------------------------------------------------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
 
-// DI_Point methods ----------------------------------------------------------------------------------------------
+// DI_Point methods -------------------------------------------------------------------------------
 DI_Point::DI_Point (double x, double y, double z, gLevelset &ls) : x_(x), y_(y), z_(z) {
   addLs(ls(x, y, z));
 }
@@ -537,7 +543,7 @@ bool DI_Point::equal(const DI_Point &p) const {
   return (fabs(x() - p.x()) < EQUALITY_TOL && fabs(y() - p.y()) < EQUALITY_TOL && fabs(z() - p.z()) < EQUALITY_TOL);
 }
 
-// DI_IntegrationPoint methods -----------------------------------------------------------------------------------------------------
+// DI_IntegrationPoint methods --------------------------------------------------------------------
 void DI_IntegrationPoint::computeLs (const DI_Element *e, const std::vector<const gLevelset*> RPN) {
   int prim = 0; std::vector<double> Ls;
   for(int l = 0; l < (int)RPN.size(); l++) {
@@ -553,7 +559,7 @@ void DI_IntegrationPoint::computeLs (const DI_Element *e, const std::vector<cons
   setLs(Ls.back());
 }
 
-// DI_CuttingPoint methods -----------------------------------------------------------------------------------------------------
+// DI_CuttingPoint methods ------------------------------------------------------------------------
 void DI_CuttingPoint::chooseLs (const gLevelset *Lsi) {
   if(Ls.size() < 2) return;
   double ls1 = Ls[Ls.size() - 2], ls2 = Ls[Ls.size() - 1];
@@ -565,8 +571,9 @@ bool DI_CuttingPoint::equal (const DI_CuttingPoint &p) const {
   return (fabs(x() - p.x()) < EQUALITY_TOL && fabs(y() - p.y()) < EQUALITY_TOL && fabs(z() - p.z()) < EQUALITY_TOL);
 }
 
-// DI_Element methods ------------------------------------------------------------------------------------------------
-DI_Element::DI_Element(const DI_Element &cp) : lsTag_(cp.lsTag()), polOrder_(cp.getPolynomialOrder()), integral_(cp.integral()) {
+// DI_Element methods -----------------------------------------------------------------------------
+DI_Element::DI_Element(const DI_Element &cp) : lsTag_(cp.lsTag()), polOrder_(cp.getPolynomialOrder()),
+                                               integral_(cp.integral()) {
   //printf("constructeur de copie d'element %d : ",cp.type()); cout << &cp << "->" << this << endl;
   pts_ = new DI_Point* [cp.nbVert()];
   for(int i = 0; i < cp.nbVert(); i++)
@@ -705,7 +712,8 @@ void DI_Element::clearLs() {
   for(int i = 0; i < nbMid(); i++)
     (mid_[i]->Ls).clear();
 }
-bool DI_Element::addQuadEdge (int edge, DI_Point *xm, const DI_Element *e, const std::vector<const gLevelset *> RPNi) {
+bool DI_Element::addQuadEdge (int edge, DI_Point *xm,
+                              const DI_Element *e, const std::vector<const gLevelset *> RPNi) {
   /*if(edge >= nbEdg()) {printf("wrong number (%d) for quadratic edge for a ", edge); print(); return false;}
   int s1, s2; vert(edge, s1, s2);
   bool quad0 = isQuad();
@@ -800,8 +808,9 @@ void DI_Element::mappingEl (DI_Element *el) const {
   }
   el->computeIntegral();
 }
-void DI_Element::integrationPoints (const int polynomialOrder, const DI_Element *loc, const DI_Element *e,
-                                 const std::vector<const gLevelset *> RPN, std::vector<DI_IntegrationPoint> &ip) const {
+void DI_Element::integrationPoints (const int polynomialOrder, const DI_Element *loc,
+                                    const DI_Element *e, const std::vector<const gLevelset *> RPN,
+                                    std::vector<DI_IntegrationPoint> &ip) const {
   std::vector<DI_IntegrationPoint> ip_ref;
   getRefIntegrationPoints(polynomialOrder, ip_ref);
   for (int j = 0; j < (int)ip_ref.size(); j++) {
@@ -819,7 +828,8 @@ void DI_Element::integrationPoints (const int polynomialOrder, const DI_Element 
     ip.push_back(ip_ref[j]);
   }
 }
-void DI_Element::getCuttingPoints (const DI_Element *e, const std::vector<const gLevelset *> RPNi, std::vector<DI_CuttingPoint> &cp) const {
+void DI_Element::getCuttingPoints (const DI_Element *e, const std::vector<const gLevelset *> RPNi,
+                                   std::vector<DI_CuttingPoint> &cp) const {
   int s1, s2;
   for(int i = 0; i < nbEdg(); i++){
     vert(i, s1, s2);
@@ -1009,7 +1019,7 @@ void DI_Element::printls() const {
   printf("tag=%d\n", lsTag());
 }
 
-// DI_Line methods -----------------------------------------------------------------------------------------------------------
+// DI_Line methods --------------------------------------------------------------------------------
 void DI_Line::computeIntegral() {
   switch (getPolynomialOrder()) {
   case 1 :
@@ -1055,19 +1065,8 @@ void DI_Line::getGradShapeFunctions (const double u, const double v, const doubl
     printf("Order %d line function space not implemented ", order); print();
   }
 }
-/*double ln_detJ1 (const double &x, const double &x0, const double &x1) {
-  return (-x0 + x1) / 2.; // detJ is constant in a linear line
-}
-double ln_detJ2 (const double &x, const double &x0, const double &x1, const double &x2) {
-  return x0 * (2. * x - 1.) / 2. + x1 * (2. * x + 1.) / 2. + x2 * (-2. * x);
-}
-double DI_Line::detJ (const double &xP, const double &yP, const double &zP) const {
-  assert(yP == 0 && zP == 0 && y(0) == 0 && y(1) == 0 && y2(0) == 0 && z(0) == 0 && z(1) == 0 && z2(0) == 0);
-  if(!isQuad()) return ln_detJ1(xP, x(0), x(1));
-  return ln_detJ2(xP, x(0), x(1), x2(0));
-}*/
 
-// DI_Triangle methods -----------------------------------------------------------------------------------------------------------
+// DI_Triangle methods ----------------------------------------------------------------------------
 void DI_Triangle::computeIntegral() {
   switch (getPolynomialOrder()) {
   case 1 :
@@ -1102,7 +1101,8 @@ void DI_Triangle::getShapeFunctions (double u, double v, double w, double s[], i
     printf("Order %d triangle function space not implemented ", order); print();
   }
 }
-void DI_Triangle::getGradShapeFunctions (const double u, const double v, const double w, double s[][3], int ord) const {
+void DI_Triangle::getGradShapeFunctions (const double u, const double v, const double w,
+                                         double s[][3], int ord) const {
   int order = (ord == -1) ? getPolynomialOrder() : ord;
   switch (order) {
   case 1 :
@@ -1137,24 +1137,8 @@ void DI_Triangle::getGradShapeFunctions (const double u, const double v, const d
 double DI_Triangle::quality() const {
   return qualityTri(pt(0), pt(1), pt(2));
 }
-/*double tr_detJ1 (const double &x, const double &y,
-                 const double &x0, const double &y0, const double &x1, const double &y1, const double &x2, const double &y2) {
-  return (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0); // detJ is constant in a linear triangle
-}
-double tr_detJ2 (const double &x, const double &y,
-                 const double &x0, const double &y0, const double &x1, const double &y1, const double &x2, const double &y2,
-                 const double &x3, const double &y3, const double &x4, const double &y4, const double &x5, const double &y5) {
-  return (x0*(-3.+4.*x+4.*y)+x1*(4.*x-1.)+x3*4.*(1.-2.*x-y)+x4*4.*y-x5*4.*y) * (y0*(-3.+4.*x+4.*y)+y2*(4.*y-1.)-y3*4.*x+y4*4.*x+y5*4.*(1.-x-2.*y))
-        -(x0*(-3.+4.*x+4.*y)+x2*(4.*y-1.)-x3*4.*x+x4*4.*x+x5*4.*(1.-x-2.*y)) * (y0*(-3.+4.*x+4.*y)+y1*(4.*x-1.)+y3*4.*(1.-2.*x-y)+y4*4.*y-y5*4.*y);
-}
-double DI_Triangle::detJ (const double &xP, const double &yP, const double &zP) const {
-  if(!(z(0) == 0 && z(1) == 0 && z(2) == 0 && z2(0) == 0 && z2(1) == 0 && z2(2) == 0)) print();
-  assert(zP == 0 && z(0) == 0 && z(1) == 0 && z(2) == 0 && z2(0) == 0 && z2(1) == 0 && z2(2) == 0);
-  if(!isQuad()) return tr_detJ1(xP, yP, x(0), y(0), x(1), y(1), x(2), y(2));
-  return tr_detJ2(xP, yP, x(0), y(0), x(1), y(1), x(2), y(2), x2(0), y2(0), x2(1), y2(1), x2(2), y2(2));
-}*/
 
-// DI_Quad methods -------------------------------------------------------------------------------------------------------------------
+// DI_Quad methods --------------------------------------------------------------------------------
 void DI_Quad::computeIntegral() {
   switch (getPolynomialOrder()) {
   case 1 :
@@ -1236,32 +1220,8 @@ void DI_Quad::getGradShapeFunctions (const double u, const double v, const doubl
     printf("Order %d quadrangle function space not implemented ", order); print();
   }
 }
-/*double q_detJ1 (const double &x, const double &y,
-                const double &x0, const double &y0, const double &x1, const double &y1,
-                const double &x2, const double &y2, const double &x3, const double &y3) {
-  return (x0*(-1.+y)+x1*(1.-y)+x2*(1.+y)+x3*(-1.-y))*(y0*(x-1.)+y1*(-1.-x)+y2*(1.+x)+y3*(1.-x))/16.
-        -(x0*(x-1.)+x1*(-1.-x)+x2*(1.+x)+x3*(1.-x))*(y0*(-1.+y)+y1*(1.-y)+y2*(1.+y)+y3*(-1.-y))/16.;
-}
-double q_detJ2 (const double &x, const double &y,
-                const double &x0, const double &y0, const double &x1, const double &y1, const double &x2, const double &y2,
-                const double &x3, const double &y3, const double &x4, const double &y4, const double &x5, const double &y5,
-                const double &x6, const double &y6, const double &x7, const double &y7, const double &x8, const double &y8) {
-  return (x0*y*(1-y)*(1-2*x)-x1*y*(1-y)*(1+2*x)+x2*y*(1+y)*(1+2*x)-x3*y*(1+y)*(1-2*x)+
-          x4*4*y*(1-y)*x+x5*2*(1-y)*(1+y)*(1+2*x)-x6*4*y*(1+y)*x-x7*2*(1-y)*(1+y)*(1-2*x)-x8*8*(1-y)*(1+y)*x)
-        *(y0*x*(1-x)*(1-2*y)-y1*x*(1+x)*(1-2*y)+y2*x*(1+x)*(1+2*y)-y3*x*(1-x)*(1+2*y)-
-          y4*2*(1-x)*(1+x)*(1-2*y)-y5*4*x*(1+x)*y+y6*2*(1-x)*(1+x)*(1+2*y)+y7*4*x*(1-x)*y-y8*8*(1-x)*(1+x)*y)/16.
-        -(x0*x*(1-x)*(1-2*y)-x1*x*(1+x)*(1-2*y)+x2*x*(1+x)*(1+2*y)-x3*x*(1-x)*(1+2*y)-
-          x4*2*(1-x)*(1+x)*(1-2*y)-x5*4*x*(1+x)*y+x6*2*(1-x)*(1+x)*(1+2*y)+x7*4*x*(1-x)*y-x8*8*(1-x)*(1+x)*y)
-        *(y0*y*(1-y)*(1-2*x)-y1*y*(1-y)*(1+2*x)+y2*y*(1+y)*(1+2*x)-y3*y*(1+y)*(1-2*x)+
-          y4*4*y*(1-y)*x+y5*2*(1-y)*(1+y)*(1+2*x)-y6*4*y*(1+y)*x-y7*2*(1-y)*(1+y)*(1-2*x)-y8*8*(1-y)*(1+y)*x)/16.;
-}
-double DI_Quad::detJ (const double &xP, const double &yP, const double &zP) const {
-  assert (zP == 0 && z(0) == 0 && z(1) == 0 && z(2) == 0 && z(3) == 0 && z2(0) == 0 && z2(1) == 0 && z2(2) == 0 && z2(3) == 0 && z2(4) == 0);
-  if(!isQuad()) return q_detJ1(xP, yP, x(0), y(0), x(1), y(1), x(2), y(2), x(3), y(3));
-  return q_detJ2(xP, yP, x(0), y(0), x(1), y(1), x(2), y(2), x(3), y(3), x2(0), y2(0), x2(1), y2(1), x2(2), y2(2), x2(3), y2(3), x2(4), y2(4));
-}*/
 
-// DI_Tetra methods ----------------------------------------------------------------------------------------------------------------------
+// DI_Tetra methods -------------------------------------------------------------------------------
 void DI_Tetra::computeIntegral() {
     integral_ = TetraVol(pt(0), pt(1), pt(2), pt(3));
 }
@@ -1339,44 +1299,7 @@ double DI_Tetra::quality() const {
   return qualityTet(x(0), y(0), z(0), x(1), y(1), z(1), x(2), y(2), z(2), x(3), y(3), z(3));
 }
 
-/*double tet_detJ1 (const double &x, const double &y, const double &z,
-                  const double &x0, const double &y0, const double &z0, const double &x1, const double &y1, const double &z1,
-                  const double &x2, const double &y2, const double &z2, const double &x3, const double &y3, const double &z3) {
-  return det3(x1-x0, x2-x0, x3-x0, y1-y0, y2-y0, y3-y0, z1-z0, z2-z0, z3-z0); // detJ is constant in a linear tetrahedron
-}
-double tet_detJ2 (const double &x, const double &y, const double &z,
-                  const double &x0, const double &y0, const double &z0, const double &x1, const double &y1, const double &z1,
-                  const double &x2, const double &y2, const double &z2, const double &x3, const double &y3, const double &z3,
-                  const double &x4, const double &y4, const double &z4, const double &x5, const double &y5, const double &z5,
-                  const double &x6, const double &y6, const double &z6, const double &x7, const double &y7, const double &z7,
-                  const double &x8, const double &y8, const double &z8, const double &x9, const double &y9, const double &z9) {
-  return det3(x0*(-3+4*x+4*y+4*z)+x1*(4*x-1)+x4*4*(1-2*x-y-z)-x5*4*y-x6*4*z+x7*4*y+x9*4*z,
-              x0*(-3+4*x+4*y+4*z)+x2*(4*y-1)-x4*4*x+x5*4*(1-x-2*y-z)-x6*4*z+x7*4*x+x8*4*z,
-              x0*(-3+4*x+4*y+4*z)+x3*(4*z-1)-x4*4*x-x5*4*y+x6*4*(1-x-y-2*z)+x8*4*y+x9*4*x,
-              y0*(-3+4*x+4*y+4*z)+y1*(4*x-1)+y4*4*(1-2*x-y-z)-y5*4*y-y6*4*z+y7*4*y+y9*4*z,
-              y0*(-3+4*x+4*y+4*z)+y2*(4*y-1)-y4*4*x+y5*4*(1-x-2*y-z)-y6*4*z+y7*4*x+y8*4*z,
-              y0*(-3+4*x+4*y+4*z)+y3*(4*z-1)-y4*4*x-y5*4*y+y6*4*(1-x-y-2*z)+y8*4*y+y9*4*x,
-              z0*(-3+4*x+4*y+4*z)+z1*(4*x-1)+z4*4*(1-2*x-y-z)-z5*4*y-z6*4*z+z7*4*y+z9*4*z,
-              z0*(-3+4*x+4*y+4*z)+z2*(4*y-1)-z4*4*x+z5*4*(1-x-2*y-z)-z6*4*z+z7*4*x+z8*4*z,
-              z0*(-3+4*x+4*y+4*z)+z3*(4*z-1)-z4*4*x-z5*4*y+z6*4*(1-x-y-2*z)+z8*4*y+z9*4*x);
-}
-double DI_Tetra::detJ (const double &xP, const double &yP, const double &zP) const {
-  if(!isQuad())  return tet_detJ1(xP, yP, zP, x(0), y(0), z(0), x(1), y(1), z(1), x(2), y(2), z(2), x(3), y(3), z(3));
-  return tet_detJ2(xP, yP, zP, x(0), y(0), z(0), x(1), y(1), z(1), x(2), y(2), z(2), x(3), y(3), z(3),
-                   x2(0), y2(0), z2(0), x2(1), y2(1), z2(1), x2(2), y2(2), z2(2), x2(3), y2(3), z2(3), x2(4), y2(4), z2(4), x2(5), y2(5), z2(5));
-}*/
-/*void DI_Tetra::quad(const DI_Element *e, const std::vector<const gLevelset *> RPNi) {
-  mid_ = new DI_Point*[6];
-  mid_[0] = new DI_Point((x(0)+x(1))/2., (y(0)+y(1))/2., (z(0)+z(1))/2., e, RPNi);
-  mid_[1] = new DI_Point((x(0)+x(2))/2., (y(0)+y(2))/2., (z(0)+z(2))/2., e, RPNi);
-  mid_[2] = new DI_Point((x(0)+x(3))/2., (y(0)+y(3))/2., (z(0)+z(3))/2., e, RPNi);
-  mid_[3] = new DI_Point((x(1)+x(2))/2., (y(1)+y(2))/2., (z(1)+z(2))/2., e, RPNi);
-  mid_[4] = new DI_Point((x(2)+x(3))/2., (y(2)+y(3))/2., (z(2)+z(3))/2., e, RPNi);
-  mid_[5] = new DI_Point((x(3)+x(1))/2., (y(3)+y(1))/2., (z(3)+z(1))/2., e, RPNi);
-  quad_ = true;
-}*/
-
-// Hexahedron methods ------------------------------------------------------------------------------------------------------------
+// Hexahedron methods -----------------------------------------------------------------------------
 void DI_Hexa::computeIntegral() {
     integral_ = TetraVol(pt(0), pt(1), pt(3), pt(4)) + TetraVol(pt(1), pt(4), pt(5), pt(7))
               + TetraVol(pt(1), pt(3), pt(4), pt(7)) + TetraVol(pt(2), pt(5), pt(6), pt(7))
@@ -1461,30 +1384,6 @@ void DI_Hexa::getGradShapeFunctions (const double u, const double v, const doubl
     printf("Order %d hexahedron function space not implemented ", order); print();
   }
 }
-/*void DI_Hexa::quad(const DI_Element *e, const std::vector<const gLevelset *> RPNi) {
-  mid_ = new DI_Point*[19];
-  mid_[0] = new DI_Point((x(0)+x(1))/2., (y(0)+y(1))/2., (z(0)+z(1))/2., e, RPNi);
-  mid_[1] = new DI_Point((x(1)+x(2))/2., (y(1)+y(2))/2., (z(1)+z(2))/2., e, RPNi);
-  mid_[2] = new DI_Point((x(2)+x(3))/2., (y(2)+y(3))/2., (z(2)+z(3))/2., e, RPNi);
-  mid_[3] = new DI_Point((x(3)+x(0))/2., (y(3)+y(0))/2., (z(3)+z(0))/2., e, RPNi);
-  mid_[4] = new DI_Point((x(0)+x(4))/2., (y(0)+y(4))/2., (z(0)+z(4))/2., e, RPNi);
-  mid_[5] = new DI_Point((x(1)+x(5))/2., (y(1)+y(5))/2., (z(1)+z(5))/2., e, RPNi);
-  mid_[6] = new DI_Point((x(2)+x(6))/2., (y(2)+y(6))/2., (z(2)+z(6))/2., e, RPNi);
-  mid_[7] = new DI_Point((x(3)+x(7))/2., (y(3)+y(7))/2., (z(3)+z(7))/2., e, RPNi);
-  mid_[8] = new DI_Point((x(4)+x(5))/2., (y(4)+y(5))/2., (z(4)+z(5))/2., e, RPNi);
-  mid_[9] = new DI_Point((x(5)+x(6))/2., (y(5)+y(6))/2., (z(5)+z(6))/2., e, RPNi);
-  mid_[10] = new DI_Point((x(6)+x(7))/2., (y(6)+y(7))/2., (z(6)+z(7))/2., e, RPNi);
-  mid_[11] = new DI_Point((x(7)+x(4))/2., (y(7)+y(4))/2., (z(7)+z(4))/2., e, RPNi);
-  mid_[12] = new DI_Point((x(0)+x(1)+x(2)+x(3))/4., (y(0)+y(1)+y(2)+y(3))/4., (z(0)+z(1)+z(2)+z(3))/4., e, RPNi);
-  mid_[13] = new DI_Point((x(0)+x(1)+x(4)+x(5))/4., (y(0)+y(1)+y(4)+y(5))/4., (z(0)+z(1)+z(4)+z(5))/4., e, RPNi);
-  mid_[14] = new DI_Point((x(1)+x(2)+x(5)+x(6))/4., (y(1)+y(2)+y(5)+y(6))/4., (z(1)+z(2)+z(5)+z(6))/4., e, RPNi);
-  mid_[15] = new DI_Point((x(2)+x(3)+x(6)+x(7))/4., (y(2)+y(3)+y(6)+y(7))/4., (z(2)+z(3)+z(6)+z(7))/4., e, RPNi);
-  mid_[16] = new DI_Point((x(0)+x(3)+x(4)+x(7))/4., (y(0)+y(3)+y(4)+y(7))/4., (z(0)+z(3)+z(4)+z(7))/4., e, RPNi);
-  mid_[17] = new DI_Point((x(4)+x(5)+x(6)+x(7))/4., (y(4)+y(5)+y(6)+y(7))/4., (z(4)+z(5)+z(6)+z(7))/4., e, RPNi);
-  mid_[18] = new DI_Point((x(0)+x(1)+x(2)+x(3)+x(4)+x(5)+x(6)+x(7))/8., (y(0)+y(1)+y(2)+y(3)+y(4)+y(5)+y(6)+y(7))/8.,
-                       (z(0)+z(1)+z(2)+z(3)+z(4)+z(5)+z(6)+z(7))/8., e, RPNi);
-  quad_ = true;
-}*/
 
 // ----------------------------------------------------------------------------
 // -------------------------- SPLITTING ---------------------------------------
@@ -1633,7 +1532,8 @@ void DI_Quad::splitIntoTriangles(std::vector<DI_Triangle> &triangles) const
   triangles.push_back(DI_Triangle(pt(1), pt(2), pt(3), lsTag())); // 123
 }
 
-// Split a reference tetrahedron cut by a level set (defined in a hex) into sub tetrahedra and create triangles on the surface of the level set
+// Split a reference tetrahedron cut by a level set (defined in a hex) into sub tetrahedra
+// and create triangles on the surface of the level set
 void DI_Tetra::selfSplit (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
                        std::vector<DI_Tetra> &subTetras, std::vector<DI_Triangle> &surfTriangles,
                        std::vector<DI_CuttingPoint> &cuttingPoints, std::vector<DI_QualError> &QError) const
@@ -1662,7 +1562,8 @@ void DI_Tetra::selfSplit (const DI_Element *e, const std::vector<const gLevelset
   int COUNT = 0;       // number of edges cut
   int IND[4];        // ids of edges cut
 
-  int tab [6][4] = {{0, 1, 2, 3}, {0, 2, 3, 1}, {0, 3, 1, 2}, {1, 2, 0, 3}, {2, 3, 0, 1}, {3, 1, 0, 2}}; // edges nodes and opposite edges nodes
+  // edges nodes and opposite edges nodes
+  int tab [6][4] = {{0, 1, 2, 3}, {0, 2, 3, 1}, {0, 3, 1, 2}, {1, 2, 0, 3}, {2, 3, 0, 1}, {3, 1, 0, 2}};
 
   // compute the intersections between the edges of the tetra and the level set.
   for(int i = 0; i < 6; i++){
@@ -2738,7 +2639,8 @@ bool DI_Hexa::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
   std::vector<const gLevelset *> RPN, RPNi;
   Ls.getRPN(RPN);
 
-  DI_Hexa hh(-1, -1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1, -1, -1, 1, 1, -1, 1, 1, 1, 1, -1, 1, 1, 8.); // reference hexa
+ // reference hexa
+  DI_Hexa hh(-1, -1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1, -1, -1, 1, 1, -1, 1, 1, 1, 1, -1, 1, 1, 8.);
   std::vector<DI_Hexa> hh_subHexas;
   std::vector<DI_Tetra> hh_subTetras;
   std::vector<DI_Quad> hh_surfQuads;

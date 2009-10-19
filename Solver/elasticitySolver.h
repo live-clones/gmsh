@@ -20,8 +20,8 @@ struct elasticField {
   int _tag; // tag for the dofManager
   groupOfElements *g; // support for this field
   simpleFunction<double> *_enrichment; // XFEM enrichment
-  double _E,_nu; // specific elastic datas (should be somewhere else)
-  elasticField () : g(0),_enrichment(0){}
+  double _E, _nu; // specific elastic datas (should be somewhere else)
+  elasticField () : g(0), _enrichment(0){}
 };
 
 // an elastic solver ...
@@ -31,7 +31,7 @@ class elasticitySolver{
   int _dim, _tag;
   dofManager<double, double> *pAssembler;
   // young modulus and poisson coefficient per physical
-  std::vector<elasticField > elasticFields;
+  std::vector<elasticField> elasticFields;
   // imposed nodal forces
   std::map<int, SVector3> nodalForces;
   // imposed line forces
@@ -49,10 +49,10 @@ class elasticitySolver{
  public:
   elasticitySolver(int tag) : _tag(tag) {}
   void addNodalForces (int iNode, const SVector3 &f)
-  { 
+  {
     nodalForces[iNode] = f;
   }
-  void addNodalDisplacement(int iNode, int dir, double val) 
+  void addNodalDisplacement(int iNode, int dir, double val)
   {
     nodalDisplacements[std::make_pair(iNode, dir)] = val;
   }
@@ -60,8 +60,8 @@ class elasticitySolver{
   //  {
   //    elasticConstants[physical] = std::make_pair(e, nu);
   //  }
-  void setMesh(const std::string &meshFileName);  
-  virtual void solve();  
+  void setMesh(const std::string &meshFileName);
+  virtual void solve();
   void readInputFile(const std::string &meshFileName);
   PView *buildDisplacementView(const std::string &postFileName);
   // PView *buildVonMisesView(const std::string &postFileName);
