@@ -193,7 +193,7 @@ void MTriangle6::getFaceRep(int num, double *x, double *y, double *z, SVector3 *
   _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
 }
 
-void MTriangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
+void MTriangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   *npts = getNGQTPts(pOrder);
   *pts = getGQTPts(pOrder);

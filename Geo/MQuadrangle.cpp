@@ -153,7 +153,7 @@ void MQuadrangle9::getFaceRep(int num, double *x, double *y, double *z, SVector3
   _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
 }
 
-void MQuadrangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
+void MQuadrangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   *npts = getNGQQPts(pOrder);
   *pts = getGQQPts(pOrder);

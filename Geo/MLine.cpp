@@ -23,7 +23,7 @@ const functionSpace* MLine::getFunctionSpace(int o) const
   return 0;
 }
 
-void MLine::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
+void MLine::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   static IntPt GQL[100]; 
   double *t, *w;

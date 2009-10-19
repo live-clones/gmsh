@@ -171,7 +171,7 @@ class MHexahedron : public MElement {
       return false;
     return true;
   }
-  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
  private:
   int edges_hexa(const int edge, const int vert) const
   {

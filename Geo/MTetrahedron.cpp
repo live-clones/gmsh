@@ -249,7 +249,7 @@ void MTetrahedron10::getFaceRep(int num, double *x, double *y, double *z, SVecto
   _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
 }
 
-void MTetrahedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
+void MTetrahedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   *npts = getNGQTetPts(pOrder);
   *pts = getGQTetPts(pOrder);

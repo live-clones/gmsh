@@ -129,7 +129,7 @@ class MTriangle : public MElement {
       return false; 
     return true;
   }
-  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual SPoint3 circumcenter();
  private:
   int edges_tri(const int edge, const int vert) const

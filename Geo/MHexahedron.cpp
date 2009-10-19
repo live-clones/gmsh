@@ -21,7 +21,7 @@ int MHexahedron::getVolumeSign()
   return sign(det3x3(mat));
 }
 
-void MHexahedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
+void MHexahedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   *npts = getNGQHPts(pOrder);
   *pts = getGQHPts(pOrder);

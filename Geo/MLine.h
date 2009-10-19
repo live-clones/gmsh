@@ -71,7 +71,7 @@ class MLine : public MElement {
       return false;
     return true;
   }
-  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 };
 
 /*

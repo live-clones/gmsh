@@ -19,6 +19,7 @@ class MPolyhedron : public MElement {
  protected:
   bool _owner;
   MElement* _orig;
+  IntPt *_intpt;
   std::vector<MTetrahedron*> _parts;
   std::vector<MVertex*> _vertices;
   std::vector<MVertex*> _innerVertices;
@@ -28,7 +29,7 @@ class MPolyhedron : public MElement {
  public:
   MPolyhedron(std::vector<MVertex*> v, int num = 0, int part = 0,
               bool owner = false, MElement* orig = NULL)
-    : MElement(num, part), _owner(owner), _orig(orig)
+    : MElement(num, part), _owner(owner), _orig(orig), _intpt(0)
   {
     if(v.size() % 4){
       Msg::Error("Got %d vertices for polyhedron", (int)v.size());
@@ -40,7 +41,7 @@ class MPolyhedron : public MElement {
   }
   MPolyhedron(std::vector<MTetrahedron*> vT, int num = 0, int part = 0,
               bool owner = false, MElement* orig = NULL)
-    : MElement(num, part), _owner(owner), _orig(orig)
+    : MElement(num, part), _owner(owner), _orig(orig), _intpt(0)
   {
     for(unsigned int i = 0; i < vT.size(); i++)
       _parts.push_back(vT[i]);
@@ -52,6 +53,7 @@ class MPolyhedron : public MElement {
       delete _orig;
     for(unsigned int i = 0; i < _parts.size(); i++)
       delete _parts[i];
+    if(_intpt) delete [] _intpt;
   }
   virtual int getDim() { return 3; }
   virtual int getNumVertices() const { return _vertices.size() + _innerVertices.size(); }
@@ -120,11 +122,7 @@ class MPolyhedron : public MElement {
     _orig->xyz2uvw(xyz,uvw);
   }
   virtual bool isInside(double u, double v, double w);
-  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
-  virtual int getNumIntegrationPointsToAllocate (int pOrder)
-  {
-    return _parts.size() * getNGQTetPts(pOrder);
-  }
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
                         int num=0, int elementary=1, int physical=1, int parentNum=0);
   virtual MElement *getParent() const { return _orig; }
@@ -138,6 +136,7 @@ class MPolygon : public MElement {
  protected:
   bool _owner;
   MElement* _orig;
+  IntPt *_intpt;
   std::vector<MTriangle*> _parts;
   std::vector<MVertex*> _vertices;
   std::vector<MVertex*> _innerVertices;
@@ -146,7 +145,7 @@ class MPolygon : public MElement {
  public:
   MPolygon(std::vector<MVertex*> v, int num = 0, int part = 0,
            bool owner = false, MElement* orig = NULL)
-    : MElement(num, part), _owner(owner), _orig(orig)
+    : MElement(num, part), _owner(owner), _orig(orig), _intpt(0)
   {
     for(unsigned int i = 0; i < v.size() / 3; i++)
       _parts.push_back(new MTriangle(v[i * 3], v[i * 3 + 1], v[i * 3 + 2]));
@@ -154,7 +153,7 @@ class MPolygon : public MElement {
   }
   MPolygon(std::vector<MTriangle*> vT, int num = 0, int part = 0,
            bool owner = false, MElement* orig = NULL)
-    : MElement(num, part), _owner(owner), _orig(orig)
+    : MElement(num, part), _owner(owner), _orig(orig), _intpt(0)
   {
     for(unsigned int i = 0; i < vT.size(); i++){
       MTriangle *t = (MTriangle*) vT[i];
@@ -168,6 +167,7 @@ class MPolygon : public MElement {
       delete _orig;
     for(unsigned int i = 0; i < _parts.size(); i++)
       delete _parts[i];
+    if(_intpt) delete [] _intpt;
   }
   virtual int getDim(){ return 2; }
   virtual int getNumVertices() const { return _vertices.size() + _innerVertices.size(); }
@@ -224,11 +224,7 @@ class MPolygon : public MElement {
     _orig->xyz2uvw(xyz,uvw);
   }
   virtual bool isInside(double u, double v, double w);
-  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
-  virtual int getNumIntegrationPointsToAllocate (int pOrder)
-  {
-    return _parts.size() * getNGQTPts(pOrder);
-  }
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
                         int num=0, int elementary=1, int physical=1, int parentNum=0);
   virtual MElement *getParent() const { return _orig; }
@@ -271,11 +267,7 @@ class MTriangleBorder : public MTriangle {
   {
     getParent()->xyz2uvw(xyz,uvw);
   }
-  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
-  virtual int getNumIntegrationPointsToAllocate (int pOrder)
-  {
-    return getNGQTPts(pOrder);
-  }
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 };
 
 class MLineBorder : public MLine {
@@ -311,11 +303,7 @@ class MLineBorder : public MLine {
   {
     getParent()->xyz2uvw(xyz,uvw);
   }
-  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
-  virtual int getNumIntegrationPointsToAllocate (int pOrder)
-  {
-    return pOrder / 2 + 1;
-  }
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 };
 
 GModel *buildCutMesh(GModel *gm, gLevelset *ls,

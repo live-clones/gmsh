@@ -96,10 +96,12 @@ bool MPolyhedron::isInside(double u, double v, double w)
   return false;
 }
 
-void MPolyhedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
+void MPolyhedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   *npts = 0;
   double jac[3][3];
+  if(_intpt) delete [] _intpt;
+  _intpt = new IntPt[getNGQTetPts(pOrder) * _parts.size()];
   for(unsigned int i = 0; i < _parts.size(); i++) {
     int nptsi;
     IntPt *ptsi;
@@ -124,13 +126,14 @@ void MPolyhedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
       const double weight = ptsi[ip].weight;
       const double detJ = tt.getJacobian(u, v, w, jac);
       SPoint3 p; tt.pnt(u, v, w, p);
-      (*pts[*npts + ip]).pt[0] = p.x();
-      (*pts[*npts + ip]).pt[1] = p.y();
-      (*pts[*npts + ip]).pt[2] = p.z();
-      (*pts[*npts + ip]).weight = detJ * weight;
+      _intpt[*npts + ip].pt[0] = p.x();
+      _intpt[*npts + ip].pt[1] = p.y();
+      _intpt[*npts + ip].pt[2] = p.z();
+      _intpt[*npts + ip].weight = detJ * weight;
     }
     *npts += nptsi;
   }
+  *pts = _intpt;
 }
 
 void MPolyhedron::writeMSH(FILE *fp, double version, bool binary, int num,
@@ -275,10 +278,12 @@ bool MPolygon::isInside(double u, double v, double w)
   return false;
 }
 
-void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
+void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   *npts = 0;
   double jac[3][3];
+  if(_intpt) delete [] _intpt;
+  _intpt = new IntPt[getNGQTPts(pOrder) * _parts.size()];
   for(unsigned int i = 0; i < _parts.size(); i++) {
     int nptsi;
     IntPt *ptsi;
@@ -300,13 +305,14 @@ void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
       const double weight = ptsi[ip].weight;
       const double detJ = tt.getJacobian(u, v, w, jac);
       SPoint3 p; tt.pnt(u, v, w, p);
-      (*pts[*npts + ip]).pt[0] = p.x();
-      (*pts[*npts + ip]).pt[1] = p.y();
-      (*pts[*npts + ip]).pt[2] = p.z();
-      (*pts[*npts + ip]).weight = detJ * weight;
+      _intpt[*npts + ip].pt[0] = p.x();
+      _intpt[*npts + ip].pt[1] = p.y();
+      _intpt[*npts + ip].pt[2] = p.z();
+      _intpt[*npts + ip].weight = detJ * weight;
     }
     *npts += nptsi;
   }
+  *pts = _intpt;
 }
 
 void MPolygon::writeMSH(FILE *fp, double version, bool binary, int num,
@@ -362,7 +368,7 @@ void MPolygon::writeMSH(FILE *fp, double version, bool binary, int num,
 
 //----------------------------------- MTriangleBorder ------------------------------
 
-void MTriangleBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
+void MTriangleBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   double uvw[3][3];
   for(int j = 0; j < 3; j++) {
@@ -391,7 +397,7 @@ void MTriangleBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) c
 
 //-------------------------------------- MLineBorder ------------------------------
 
-void MLineBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
+void MLineBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   double uvw[2][3];
   for(int j = 0; j < 2; j++) {

@@ -216,8 +216,7 @@ class MElement
                         int order=-1);
 
   // integration routines
-  virtual int getNumIntegrationPointsToAllocate(int pOrder) const { return 0; }
-  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   {
     Msg::Error("No integration points defined for this type of element");
   }
