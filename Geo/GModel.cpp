@@ -723,7 +723,7 @@ void GModel::recomputeMeshPartitions()
   for(unsigned int i = 0; i < entities.size(); i++){
     for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
       int part = entities[i]->getMeshElement(j)->getPartition();
-      if(part) meshPartitions.insert(part);
+      if(part)	meshPartitions.insert(part);
     }
   }
 }
@@ -1056,9 +1056,10 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discreteFaces)
 {
 
   std::vector<discreteEdge*> discreteEdges;
-  for(eiter it = firstEdge(); it != lastEdge(); it++)
+  for(eiter it = firstEdge(); it != lastEdge(); it++){
     if((*it)->geomType() == GEntity::DiscreteCurve)
       discreteEdges.push_back((discreteEdge*) *it);
+  }
   int initSizeEdges = discreteEdges.size();
 
   // find boundary edges of each face and put them in a map_edges that
@@ -1075,7 +1076,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discreteFaces)
   std::map<int, std::vector<int> > face2Edges;
 
   while (!map_edges.empty()){
-
+ 
     std::vector<MEdge> myEdges;
     std::vector<int> tagFaces = map_edges.begin()->second;
     myEdges.push_back(map_edges.begin()->first);
@@ -1111,18 +1112,20 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discreteFaces)
         }
       }
       else {
+	//TODO EMI: check if edge correct by comparing two sets of MEdges
         for(unsigned int i = 0; i < myEdges.size(); i++){
           if (myEdges[i].getVertex(0)->onWhat()->dim() == 1) {
-            int tagEdge = myEdges[i].getVertex(0)->onWhat()->tag();
+	    GEntity *ge = myEdges[i].getVertex(0)->onWhat();
+            int tagEdge = ge->tag();
             std::vector<int>::iterator itv = std::find(tagEdges.begin(), 
                                                        tagEdges.end(), tagEdge);
-            if (itv == tagEdges.end())
+	    int nbElems = ge->getNumMeshElements();
+            if (itv == tagEdges.end() )// && myEdges.size() == nbElems)
               tagEdges.push_back(tagEdge);
           }
         }
       }
-      for (std::vector<int>::iterator itFace = tagFaces.begin(); 
-           itFace != tagFaces.end(); itFace++) {
+      for (std::vector<int>::iterator itFace = tagFaces.begin(); itFace != tagFaces.end(); itFace++) {
         std::map<int, std::vector<int> >::iterator it = face2Edges.find(*itFace);
         if (it == face2Edges.end()){
           std::vector<int> allEdges;
@@ -1180,6 +1183,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discreteFaces)
         }
 
         discreteEdge *e = new discreteEdge(this, num, 0, 0);
+	printf("create new discrete edge =%d \n", num);
         add(e);
         discreteEdges.push_back(e);
 
@@ -1221,6 +1225,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discreteFaces)
 
   // set boundary edges for each face
   for (std::vector<discreteFace*>::iterator it = discreteFaces.begin(); it != discreteFaces.end(); it++){
+    //printf("set boundary edge for face =%d \n", (*it)->tag());
     std::map<int, std::vector<int> >::iterator ite = face2Edges.find((*it)->tag());
     if (ite != face2Edges.end()){
       std::vector<int> myEdges = ite->second;

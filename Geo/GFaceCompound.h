@@ -100,6 +100,7 @@ class GFaceCompound : public GFace {
   virtual double curvatureMax(const SPoint2 &param) const;
   virtual int genusGeom () const;
   virtual bool checkTopology() const;
+  void partitionFaceCM();
   virtual std::list<GFace*> getCompounds() const {return _compound;};
   mutable int nbSplit;
   mutable bool _checkedAR;

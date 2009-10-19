@@ -1009,18 +1009,17 @@ int CreatePartitionBoundaries(GModel *model)
 }
 
 void createPartitionFaces(GModel *model, GFaceCompound *gf, int N, 
-			  std::vector<discreteFace*> &discrFaces)
+			  std::vector<discreteFace*> &discreteFaces)
 {
 
   printf("---> CreateTopologyFromPartition for Compound Face %d \n", gf->tag());
-  std::vector<discreteFace*> discreteFaces;//delete this
-
+ 
   // Compound is partitioned in N discrete faces
   //--------------------------------------------
   std::vector<std::set<MVertex*> > allNodes;
   int numMax = model->maxFaceNum() + 1;
   for( int i =0; i < N;  i++){
-    //printf("*** Created discreteFace %d \n", numMax+i);
+    printf("*** Created discreteFace %d \n", numMax+i);
     discreteFace *face = new discreteFace(model, numMax+i);
     discreteFaces.push_back(face);
     model->add(face);//delete this    

@@ -33,6 +33,8 @@
 #include "meshGEdge.h"
 #include "meshPartitionOptions.h"
 #include "meshPartition.h"
+#include "CreateFile.h"
+#include "Context.h"
 
 void fourthPoint(double *p1, double *p2, double *p3, double *p4)
 {
@@ -243,7 +245,6 @@ static bool recoverEdge(BDS_Mesh *m, GEdge *ge,
 
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
-
 static bool meshGenerator(GFace *gf, int RECUR_ITER, 
                           bool repairSelfIntersecting1dMesh,
                           bool debug = true)
@@ -257,7 +258,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   if(gf->geomType() == GEntity::CompoundSurface){
     bool correct = gf->checkTopology();
     if (!correct){
-      partitionAndRemesh((GFaceCompound*) gf);
+      partitionAndRemesh((GFaceCompound*) gf, 1);
       return true;
     }
     std::set<GEdge*> mySet;
@@ -336,7 +337,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
     bool paramOK = true;
     paramOK = reparamMeshVertexOnFace(here, gf, param);
     if(gf->geomType() == GEntity::CompoundSurface &&  !paramOK ){
-      partitionAndRemesh((GFaceCompound*)gf);
+      partitionAndRemesh((GFaceCompound*)gf, 2);
       return true;
     }
     BDS_Point *pp = m->add_point(count, param[0], param[1], gf);
@@ -1307,9 +1308,18 @@ void meshGFace::operator() (GFace *gf)
              gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
 }
 
-void partitionAndRemesh(GFaceCompound *gf)
+void partitionAndRemesh(GFaceCompound *gf, int algo)
 {
+
 #if defined(HAVE_CHACO) || defined(HAVE_METIS)
+
+  //Create list of faces to partition
+  //----------------------------------
+//   std::list<GFace*> cFaces = gf->getCompounds();
+//   GModel *tmp_model = new GModel();
+//   for(std::list<GFace*>::iterator it = cFaces.begin(); it != cFaces.end(); it++)
+//     tmp_model->add(*it);
+
   //Partition the mesh and createTopology for new faces
   //-----------------------------------------------------
   int N = gf->nbSplit;
@@ -1317,38 +1327,40 @@ void partitionAndRemesh(GFaceCompound *gf)
   options = CTX::instance()->partitionOptions;
   options.num_partitions = N;
   options.partitioner = 2; //METIS
-  options.algorithm = 1;
-  int ier = PartitionMesh(gf->model(), options);
+  options.algorithm =  1 ;
+
+  //if (algo == 1)
+  PartitionMesh(gf->model(), options);
+//   else if (algo ==2)
+//     gf->partitionFaceCM();
+
   int numv = gf->model()->maxVertexNum() + 1;
   int nume = gf->model()->maxEdgeNum() + 1;
   int numf = gf->model()->maxFaceNum() + 1;
   std::vector<discreteFace*> pFaces;
   createPartitionFaces(gf->model(), gf, N, pFaces);
-  gf->model()->createTopologyFromMesh(); //Faces(pFaces);
-  //gf->model()->createTopologyFromFaces(pFaces);
 
-  //CreateOutputFile(CTX::instance()->outputFileName, CTX::instance()->mesh.format);
-  //Msg::Exit(1);
-  
+  gf->model()->createTopologyFromFaces(pFaces);
+
   //Remesh new faces (Compound Lines and Compound Surfaces)
   //-----------------------------------------------------
   
+  //Remeshing discrete Edges
   int numEdges = gf->model()->maxEdgeNum() - nume + 1;
-  printf("*** Created %d discretEdges \n", numEdges);
+  printf("*** Created %d discreteEdges \n", numEdges);
   for (int i=0; i < numEdges; i++){
     std::vector<GEdge*>e_compound;
     GEdge *pe = gf->model()->getEdgeByTag(nume+i);//partition edge
     int num_gec = gf->model()->maxEdgeNum() + 1;
     e_compound.push_back(pe); 
     printf("*** Remeshing discreteEdge %d with CompoundLine %d\n", pe->tag(), num_gec);
-    GEdge *gec = new GEdgeCompound(gf->model(), num_gec, e_compound);
-    
+    GEdge *gec = new GEdgeCompound(gf->model(), num_gec, e_compound);    
     meshGEdge mge;
     mge(gec);//meshing 1D
-    
     gf->model()->remove(pe); 
   }
   
+  //Removing discrete Vertex
   int numVert = gf->model()->maxVertexNum() - numv + 1;
   printf("*** Created %d discreteVert \n", numVert);
   for (int i=0; i < numEdges; i++){
@@ -1356,13 +1368,13 @@ void partitionAndRemesh(GFaceCompound *gf)
     gf->model()->remove(pv);
   }
   
+  //Remeshing discrete Face
   std::list<GEdge*> b[4];
-  std::set<MVertex*> allNod;
-  
+  std::set<MVertex*> allNod; 
   for (int i=0; i < N; i++){
     std::list<GFace*> f_compound;
     GFace *pf = gf->model()->getFaceByTag(numf+i);//partition face
-    //discreteFace *pf = pFaces[i];//partition face
+    //GFace *pf = pFaces[i];//partition face
     int num_gfc = numf + N + i ;
     f_compound.push_back(pf); 
     
@@ -1371,17 +1383,18 @@ void partitionAndRemesh(GFaceCompound *gf)
     meshGFace mgf;
     mgf(gfc);//meshing 2D
       
-      for(unsigned int j = 0; j < gfc->triangles.size(); ++j){
-	MTriangle *t = gfc->triangles[j];
-	std::vector<MVertex *> v(3);
-	for(int k = 0; k < 3; k++){
-	  v[k] = t->getVertex(k); 
-	  allNod.insert(v[k]);
-	}
- 	gf->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+    for(unsigned int j = 0; j < gfc->triangles.size(); ++j){
+      MTriangle *t = gfc->triangles[j];
+      std::vector<MVertex *> v(3);
+      for(int k = 0; k < 3; k++){
+	v[k] = t->getVertex(k); 
+	allNod.insert(v[k]);
       }
+      gf->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+    }
        
-      gf->model()->remove(pf);
+    gf->model()->remove(pf);
+
   }
 
     //Put new mesh in a new discreteFace
@@ -1411,6 +1424,16 @@ void partitionAndRemesh(GFaceCompound *gf)
 
     printf("*** Mesh of surface %d done by assembly remeshed faces\n", gf->tag());
     gf->meshStatistics.status = GFace::DONE; 
+
+//    for(std::list<GFace*>::iterator it = cFaces.begin(); it != cFaces.end(); it++)
+//      tmp_model->remove(*it);
+//    delete tmp_model;
+
+  //CreateOutputFile("toto.msh", CTX::instance()->mesh.format);
+  //Msg::Exit(1);
+
+#else
+  return;
 #endif
 }
 

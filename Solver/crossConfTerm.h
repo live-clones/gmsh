@@ -34,11 +34,13 @@ class crossConfTerm : public femTerm<double, double> {
   }
   Dof getLocalDofR(SElement *se, int iRow) const
   {
-    return Dof(se->getMeshElement()->getVertex(iRow)->getNum(), _iFieldR);
+     return Dof(se->getMeshElement()->getVertex(iRow)->getNum(), 
+               Dof::createTypeWithTwoInts(0, _iFieldR));
   }
   Dof getLocalDofC(SElement *se, int iRow) const
   {
-    return Dof(se->getMeshElement()->getVertex(iRow)->getNum(), _iFieldC);
+    return Dof(se->getMeshElement()->getVertex(iRow)->getNum(),
+               Dof::createTypeWithTwoInts(0, _iFieldC));
   }
   virtual void elementMatrix(SElement *se, fullMatrix<double> &m) const
   {
@@ -82,7 +84,7 @@ class crossConfTerm : public femTerm<double, double> {
     }
     for (int j = 0; j < nbNodes; j++)
       for (int k = 0; k < j; k++)
-        m(k, j) = -1. * m(j, k);
+        m(k, j) = -1.* m(j, k);
   }
 };
 

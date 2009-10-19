@@ -29,6 +29,7 @@
 #include "Context.h"
 #include "discreteFace.h"
 
+
 static void fixEdgeToValue(GEdge *ed, double value, dofManager<double, double> &myAssembler)
 {
   myAssembler.fixVertex(ed->getBeginVertex()->mesh_vertices[0], 0, 1, value);
@@ -193,6 +194,55 @@ bool GFaceCompound::trivial() const
   return false;
 }
 
+void GFaceCompound::partitionFaceCM() 
+{
+
+  double CMu = 0.0;
+  double sumArea = 0.0;
+  
+  std::list<GFace*>::const_iterator it = _compound.begin();
+  for( ; it != _compound.end() ; ++it){
+    for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+      MTriangle *t = (*it)->triangles[i];
+      std::map<MVertex*,SPoint3>::const_iterator it0 = coordinates.find(t->getVertex(0));
+      std::map<MVertex*,SPoint3>::const_iterator it1 = coordinates.find(t->getVertex(1));
+      std::map<MVertex*,SPoint3>::const_iterator it2 = coordinates.find(t->getVertex(2));
+      double q0[3] = {it0->second.x(), it0->second.y(), 0.0}; 
+      double q1[3] = {it1->second.x(), it1->second.y(), 0.0};
+      double q2[3] = {it2->second.x(), it2->second.y(), 0.0};
+      double area = 1/fabs(triangle_area(q0, q1, q2));
+      double cg_u = (q0[0]+q1[0]+q2[0])/3.;
+      CMu += cg_u*area;
+      sumArea += area;
+    }
+    CMu /= sumArea;
+  }
+
+  //printf("min size partition =%d \n", (int)allNodes.size()/2);
+  model()->setMinPartitionSize((int)allNodes.size()/2);
+  model()->setMaxPartitionSize((int)allNodes.size()/2+1);
+
+  it = _compound.begin();
+  for( ; it != _compound.end() ; ++it){
+    for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+      MTriangle *t = (*it)->triangles[i];
+      std::map<MVertex*,SPoint3>::const_iterator it0 = coordinates.find(t->getVertex(0));
+      std::map<MVertex*,SPoint3>::const_iterator it1 = coordinates.find(t->getVertex(1));
+      std::map<MVertex*,SPoint3>::const_iterator it2 = coordinates.find(t->getVertex(2));
+      double cg_u = (it0->second.x()+it1->second.x()+it2->second.x())/3.;
+      if (cg_u <= CMu)t->setPartition(1);
+      else t->setPartition(2);
+    }
+  }
+
+  model()->recomputeMeshPartitions();
+
+  CreateOutputFile("toto.msh", CTX::instance()->mesh.format);
+  Msg::Exit(1);
+ 
+  return;
+}
+
 //check if the discrete harmonic map is correct
 //by checking that all the mapped triangles have
 //the same normal orientation
@@ -339,25 +389,29 @@ void GFaceCompound::parametrize() const
   if(!oct){
 
     coordinates.clear(); 
+
+    if(allNodes.empty()) buildAllNodes();
     
     //Laplace parametrization
     //-----------------
     if (_mapping == HARMONIC){
+      Msg::Info("Parametrizing surface %d with 'harmonic map'", tag());
       parametrize(ITERU);
       parametrize(ITERV);
     }
     //Conformal map parametrization
     //----------------- 
     else if (_mapping == CONFORMAL){
+      Msg::Info("Parametrizing surface %d with 'conformal map'", tag());
       parametrize_conformal();
     }
     //Distance function
     //-----------------
     //compute_distance();
-
+    
     checkOrientation();
-
     buildOct();
+   
     computeNormals();
   }
 }
@@ -722,8 +776,7 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
 
 void GFaceCompound::parametrize(iterationStep step) const
 {
-  Msg::Info("Parametrizing Surface %d coordinate (ITER %d)", tag(), step); 
-  
+   
   dofManager<double, double> myAssembler(_lsys);
   simpleFunction<double> ONE(1.0);
 
@@ -796,13 +849,10 @@ void GFaceCompound::parametrize(iterationStep step) const
   _lsys->systemSolve();
   Msg::Debug("System solved");
 
-
-  if(allNodes.empty()) buildAllNodes();
-  
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
     MVertex *v = *itv;
     double value = myAssembler.getDofValue(v, 0, 1);
-    std::map<MVertex*,SPoint3>::iterator itf = coordinates.find(v);
+   std::map<MVertex*,SPoint3>::iterator itf = coordinates.find(v);    
     if(itf == coordinates.end()){
       SPoint3 p(0, 0, 0);
       p[step] = value;
@@ -812,15 +862,14 @@ void GFaceCompound::parametrize(iterationStep step) const
       itf->second[step]= value;
     }
   }
+
   _lsys->clear();
+
 }
 
 void GFaceCompound::parametrize_conformal() const
 {
-  if(oct) return;
 
-  Msg::Info("Parametrizing Surface %d", tag()); 
-  
   dofManager<double, double> myAssembler(_lsys);
 
   std::vector<MVertex*> ordered;
@@ -885,28 +934,17 @@ void GFaceCompound::parametrize_conformal() const
   _lsys->systemSolve();
   Msg::Debug("System solved");
 
-  it = _compound.begin();
-  std::set<MVertex *>allNodes;
-  for( ; it != _compound.end() ; ++it){
-    for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-      MTriangle *t = (*it)->triangles[i];
-      for(int j = 0; j < 3; j++){
-	allNodes.insert(t->getVertex(j));
-      }
-    }
-  }
-  
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
     MVertex *v = *itv;
     double value1 = myAssembler.getDofValue(v,0,1);
     double value2 = myAssembler.getDofValue(v,0,2);
     coordinates[v] = SPoint3(value1,value2,0.0);
   }
+  // printStuff();
+  //exit(1);
 
-  checkOrientation();  
-  computeNormals();
-  buildOct();
   _lsys->clear();
+
 }
 
 void GFaceCompound::compute_distance() const
@@ -946,18 +984,7 @@ void GFaceCompound::compute_distance() const
   Msg::Info("Distance Computation: Assembly done");
   _lsys->systemSolve();
   Msg::Info("Distance Computation: System solved");
-
-  it = _compound.begin();
-  std::set<MVertex *>allNodes;
-  for( ; it != _compound.end() ; ++it){
-    for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-      MTriangle *t = (*it)->triangles[i];
-      for(int j = 0; j < 3; j++){
-	allNodes.insert(t->getVertex(j));
-      }
-    }
-  }
-  
+ 
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
     MVertex *v = *itv;
     double value =  std::min(0.9999, myAssembler.getDofValue(v, 0, 1));
@@ -1314,7 +1341,7 @@ bool GFaceCompound::checkAspectRatio() const
 {
 
   parametrize();
-
+ 
   if (!_checkedAR){
 
     bool paramOK = true;
@@ -1325,12 +1352,16 @@ bool GFaceCompound::checkAspectRatio() const
     for( ; it != _compound.end() ; ++it){
       for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
 	MTriangle *t = (*it)->triangles[i];
-	std::map<MVertex*,SPoint3>::const_iterator it0 = coordinates.find(t->getVertex(0));
-	std::map<MVertex*,SPoint3>::const_iterator it1 = coordinates.find(t->getVertex(1));
-	std::map<MVertex*,SPoint3>::const_iterator it2 = coordinates.find(t->getVertex(2));
-	double p0[3] = {t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z()}; 
-	double p1[3] = {t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z()};
-	double p2[3] = {t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z()};
+	std::vector<MVertex *> v(3);
+	for(int k = 0; k < 3; k++){
+	  v[k] = t->getVertex(k); 
+	}
+	std::map<MVertex*,SPoint3>::const_iterator it0 = coordinates.find(v[0]);
+	std::map<MVertex*,SPoint3>::const_iterator it1 = coordinates.find(v[1]);
+	std::map<MVertex*,SPoint3>::const_iterator it2 = coordinates.find(v[2]);
+	double p0[3] = {v[0]->x(), v[0]->y(), v[0]->z()}; 
+	double p1[3] = {v[1]->x(), v[1]->y(), v[1]->z()};
+	double p2[3] = {v[2]->x(), v[2]->y(), v[2]->z()};
 	double a_3D = fabs(triangle_area(p0, p1, p2));
 	double q0[3] = {it0->second.x(), it0->second.y(), 0.0}; 
 	double q1[3] = {it1->second.x(), it1->second.y(), 0.0};
@@ -1340,7 +1371,7 @@ bool GFaceCompound::checkAspectRatio() const
       }
     }
     
-    if (areaMax > 1.e12) {
+    if (areaMax > 1.e15) {
       nbSplit = 2;
       printf("--> Geometrical aspect ratio too high (1/area_2D=%g)\n", areaMax);
       printf("--> Partition geometry in N=%d parts\n", nbSplit);
@@ -1350,7 +1381,7 @@ bool GFaceCompound::checkAspectRatio() const
       Msg::Info("Geometrical aspect ratio (1/area_2D=%g)", areaMax);
       paramOK = true;
     }
-    
+   
     _checkedAR = true;
     _paramOK = paramOK;
    }

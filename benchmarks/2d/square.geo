@@ -11,5 +11,5 @@ Line(4) = {1, 2};
 Line Loop(5) = {1, 2, 3, 4};
 Plane Surface(10) = {5};
 
-Compound Surface(11)={10};
+Compound Surface(-11)={10};
 
