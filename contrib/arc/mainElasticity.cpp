@@ -21,7 +21,7 @@ int main (int argc, char* argv[])
   fnl.func();
   fnl.func2();
   
-  
+  SpaceLagrange<double> L(123);
 
   // globals are still present in Gmsh
   GmshInitialize(argc, argv);

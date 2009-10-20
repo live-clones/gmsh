@@ -31,20 +31,24 @@ template<class T> struct TensorialTraits
   typedef T ValType;
   typedef T GradType[3];
   typedef T HessType[3][3];
+  static const int nb_basis_vectors=1; // par défaut considéré comme un scalaire
 };
 
-/*template<> struct TensorialTraits<double>
+template<> struct TensorialTraits<double>
 {
   typedef double ValType;
   typedef Vector GradType;
   typedef Tensor2 HessType;
+  static const int nb_basis_vectors=1; // scalaire
 };
 
+/*
 template<> struct TensorialTraits<Vector>
 {
   typedef Vector ValType;
   typedef Tensor2 GradType;
   typedef Tensor3 HessType;
+  static const int nb_basis_vectors=3; // trois vecteurs de base linéairement indépendants.
 };
 */
 
@@ -61,7 +65,7 @@ public:
 class SpaceBase // renvoie des clefs de dofs
 {
 public:
-  virtual void getDofs(MElement *e,std::vector<Dof> &vecD){};//=0;
+  virtual void getDofs(MElement *e,std::vector<Dof> &vecD)=0;
 };
 
 template<class T> class Space : public SpaceBase // renvoie des clefs de dofs et des fonctions de formes
@@ -71,6 +75,32 @@ public:
   virtual ~Space(){};
   virtual void getDofsandSFs(MElement *e,std::vector<std::pair< Dof, Function<T>* > > &vecDFF) {}
   virtual void getSFs(std::vector<std::pair< Dof, Function<T>* > > &vecDFF){};//=0;
+};
+
+
+template<class T> class SpaceLagrange : public Space<T> //  approximation Lagrange ...
+{
+private:
+  int _iField;
+  Dof getLocalDof(MElement *e, int i) const
+  {
+    int iComp = i / e->getNumVertices();
+    int ithLocalVertex = i % e->getNumVertices();
+    return Dof(e->getVertex(ithLocalVertex)->getNum(),
+                Dof::createTypeWithTwoInts(iComp, _iField));
+  }
+
+public: 
+  SpaceLagrange(int iField):_iField(iField){};
+  virtual ~SpaceLagrange(){};
+  virtual void getDofsandSFs(MElement *e,std::vector<std::pair< Dof, Function<T>* > > &vecDFF){}
+  virtual void getSFs(std::vector<std::pair< Dof, Function<T>* > > &vecDFF){};//=0;
+  virtual void getDofs(MElement *e,std::vector<Dof> &vecD)
+  {
+    int ndofs= e->getNumVertices()*TensorialTraits<T>::nb_basis_vectors;
+    for (int i=0;i<ndofs;++i)
+    vecD.push_back(getLocalDof(e,i));
+  }
 };
 
 
