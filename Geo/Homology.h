@@ -30,7 +30,7 @@ class Homology
    
    bool _combine;
    int _omit;
-   
+
    std::vector<int> _domain;
    std::vector<int> _subdomain;
    

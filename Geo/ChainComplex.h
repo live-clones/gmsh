@@ -133,7 +133,7 @@ class Chain{
    
   private:
    // cells and their coefficients in this chain
-   std::vector< std::pair <Cell*, int> > _cells;
+   std::map< Cell*, int, Less_Cell > _cells;
    // name of the chain (optional)
    std::string _name;
    // cell complex this chain belongs to
@@ -141,28 +141,137 @@ class Chain{
    
    int _torsion;
    
+   int _dim;
+   
+   std::pair<Cell*, int> findRemainingBoundary(Cell* b, Cell* c1, Cell* c2, Cell* c3=NULL);
+   Cell* findCommonCbdCell(Cell* c1, Cell* c2, Cell* c3=NULL);
+   int findOrientation(Cell* b, Cell* c);
+   
   public:
    Chain(){}
    Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, CellComplex* cellComplex, std::string name="Chain", int torsion=0);
+   Chain(Chain* chain){ 
+     _cells = chain->getCells();
+     _torsion = chain->getTorsion();
+     _name = chain->getName();
+     _cellComplex = chain->getCellComplex();
+     _dim = chain->getDim();
+   }
    ~Chain(){}
    
+   typedef std::map<Cell*, int, Less_Cell>::iterator citer;
+   
    // get i:th cell of this chain
-   Cell* getCell(int i) { return _cells.at(i).first; }
+   //Cell* getCell(int i) { return _cells.at(i).first; }
    // get coeffcient of i:th cell of this chain
-   int getCoeff(int i) { return _cells.at(i).second; }
+   //int getCoeff(int i) { return _cells.at(i).second; }
+   
+   
+   
+   void removeCell(Cell* cell, int coeff) {
+     citer it = _cells.find(cell);
+     if(it != _cells.end()){
+       //int coeff2 = (*it).second;
+       //(*it).second = coeff2 - coeff;
+       (*it).second = 0;
+       //printf("removed %d, %d :", cell->getNum(), coeff); cell->printCell();
+       //_cells.erase(it);
+       //if((*it).second == 0) _cells.erase(it);
+     }
+     return;
+   }
+   void addCell(Cell* cell, int coeff) {
+     citer it = _cells.find(cell);
+     /*
+     if(it != _cells.end()){
+       int coeff2 = (*it).second;
+       (*it).second = coeff2 + coeff;
+       //if((*it).second == 0) _cells.erase(it);
+     }
+     else{*/
+       //printf("added %d, %d :", cell->getNum(), coeff); cell->printCell();
+       _cells.insert( std::make_pair( cell, coeff));
+       //cell->setImmune(true);
+       //cell->clearBoundary();
+       //cell->clearCoboundary();
+       //_cellComplex->insertCell(cell);
+     if(!_cellComplex->hasCell(cell)){
+       _cellComplex->insertCell(cell);
+     }
+     
+     //}
+     return;
+   }
+   /*
+   void insertCells(){
+     for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
+       Cell* cell = (*cit).first;
+       std::vector<Cell*> cells;
+       if(!_cellComplex->hasCell(cell)){
+         _cellComplex->insertCell(cell);
+       }
+       
+     }
+     return;
+   }
+   */
+   
+   bool hasCell(Cell* c){
+     citer it = _cells.find(c);
+     if(it != _cells.end() && (*it).second != 0) return true;
+     return false;
+   }
+   Cell* findCell(Cell* c){
+     citer it = _cells.find(c);
+     if(it != _cells.end() && (*it).second != 0) return (*it).first;
+     return NULL;
+   }
+   int getCoeff(Cell* c){
+     citer it = _cells.find(c);
+     if(it != _cells.end()) return (*it).second;
+     return 0;
+   }
+     
+   
+   
    
    int getTorsion() {return _torsion;}
+   int getDim() {return _dim;}
+   CellComplex* getCellComplex() {return _cellComplex;}
+   std::map<Cell*, int, Less_Cell>  getCells() {return _cells;}
+   
+   void eraseNullCells(){
+     for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
+       if( (*cit).second == 0){
+         _cells.erase(cit);
+         ++cit;
+       }
+     }
+     for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
+       if( (*cit).second == 0){
+         _cells.erase(cit);
+         cit = _cells.begin(); 
+       }
+     }
+     
+     
+     return;
+   }
    
    // number of cells in this chain 
-   int getSize() { return _cells.size(); }
+   int getSize() { 
+     //eraseNullCells();
+     return _cells.size();
+   }
    
    int getNumCells() {
-     int count = 0;
-     for(std::vector< std::pair <Cell*, int> >::iterator it = _cells.begin(); it != _cells.end(); it++){
-       Cell* cell = (*it).first;
-       count = count + cell->getNumCells();
-     }
-     return count;
+     //int count = 0;
+     //for(std::vector< std::pair <Cell*, int> >::iterator it = _cells.begin(); it != _cells.end(); it++){
+     //  Cell* cell = (*it).first;
+     //  count = count + cell->getNumCells();
+     //}
+     //return count;
+     return _cells.size();
    }
    
    
@@ -170,13 +279,16 @@ class Chain{
    std::string getName() { return _name; }
    void setName(std::string name) { _name=name; }
 
-   // append this chain to a 2.0 MSH ASCII file as $ElementData
+   void smoothenChain();
+   
+   // append this chain to a 2.1 MSH ASCII file as $ElementData
    int writeChainMSH(const std::string &name);
    
-   void getData(std::map<int, std::vector<double> >& data);
-   
+   //void getData(std::map<int, std::vector<double> >& data);
+     
 };
-
+   
 #endif
-
+   
 #endif
+   

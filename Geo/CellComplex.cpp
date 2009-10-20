@@ -106,7 +106,7 @@ CellComplex::CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> su
       //cell->setTag(tag);
       tag++;
     }
-    //_cells2[i] = _cells[i];
+    _ocells[i] = _cells[i];
     _betti[i] = 0;
     if(getSize(i) > _dim) _dim = i;
   }
@@ -116,7 +116,7 @@ CellComplex::CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> su
 
 void CellComplex::insert_cells(bool subdomain, bool boundary){
 
-  // works only for simplcial meshes at the moment!
+  // works only for simplicial meshes at the moment!
   
   std::vector<GEntity*> domain;
   
@@ -200,13 +200,17 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
           if(!subdomain && !boundary){
             int ori = cell->kappa(oldCell);
             oldCell->addCoboundaryCell( ori, cell );
+            oldCell->addOrgCbdCell( ori, cell );
             cell->addBoundaryCell( ori, oldCell);
+            cell->addOrgBdCell( ori, oldCell);
           }
         }
         else if(!subdomain && !boundary) {
           int ori = cell->kappa(newCell);
           cell->addBoundaryCell( ori, newCell );
+          cell->addOrgBdCell( ori, newCell );
           newCell->addCoboundaryCell( ori, cell);
+          newCell->addOrgCbdCell( ori, cell);
         }
       }
     }
@@ -215,7 +219,7 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
 }
 
 void CellComplex::insertCell(Cell* cell){
-  _cells[cell->getDim()].insert(cell);
+  _ecells.insert(cell);
 }
 
 /*
@@ -290,22 +294,22 @@ int OneSimplex::kappa(Cell* tau) const{
 
 void CellComplex::removeCell(Cell* cell, bool other){
   
-  std::list< std::pair< int, Cell*> > coboundary = cell->getOrientedCoboundary();
-  std::list< std::pair< int, Cell*> > boundary = cell->getOrientedBoundary();
+  std::map<Cell*, int, Less_Cell > coboundary = cell->getOrientedCoboundary();
+  std::map<Cell*, int, Less_Cell > boundary = cell->getOrientedBoundary();
   //std::list<Cell*> boundary = cell->getBoundary();
   //std::list<Cell*> coboundary = cell->getCoboundary();
   
-  for(std::list< std::pair< int, Cell*> >::iterator it = coboundary.begin(); it != coboundary.end(); it++){
+  for(std::map<Cell*, int, Less_Cell>::iterator it = coboundary.begin(); it != coboundary.end(); it++){
   //for(std::list<Cell*>::iterator it = coboundary.begin(); it != coboundary.end(); it++){
-    Cell* cbdCell = (*it).second;
+    Cell* cbdCell = (*it).first;
     //Cell* cbdCell = *it;
     cbdCell->removeBoundaryCell(cell, other);
   }
   
   
-  for(std::list< std::pair< int, Cell*> >::iterator it = boundary.begin(); it != boundary.end(); it++){
+  for(std::map<Cell*, int, Less_Cell>::iterator it = boundary.begin(); it != boundary.end(); it++){
   //for(std::list<Cell*>::iterator it = boundary.begin(); it != boundary.end(); it++){
-    Cell* bdCell = (*it).second;
+    Cell* bdCell = (*it).first;
     //Cell* bdCell = *it;
     bdCell->removeCoboundaryCell(cell, other);
   }
@@ -673,7 +677,7 @@ int CellComplex::cocombine(int dim){
   std::queue<Cell*> Q;
   std::set<Cell*, Less_Cell> Qset;
   std::list<Cell*> cbd_c;
-  std::list< std::pair< int, Cell*> > bd_c;
+  std::map<Cell*, int, Less_Cell > bd_c;
   int count = 0;
   
   for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
@@ -687,32 +691,36 @@ int CellComplex::cocombine(int dim){
       Q.pop();
       
       bd_c = s->getOrientedBoundary();
+      if(s->getBoundarySize() == 2){
       
-      if(s->getBoundarySize() == 2 && !(*(bd_c.front().second) == *(bd_c.back().second)) 
-         && inSameDomain(s, bd_c.front().second) && inSameDomain(s, bd_c.back().second)
-         && bd_c.front().second->getNumVertices() < getSize(dim) // heuristics for mammoth cell birth control
-         && bd_c.back().second->getNumVertices() < getSize(dim)){
+        std::map<Cell*, int, Less_Cell>::iterator it = bd_c.begin();
+        int or1 = (*it).second;
+        Cell* c1 = (*it).first;
+        it++;
+        int or2 = (*it).second;
+        Cell* c2 = (*it).first;
         
-        int or1 = bd_c.front().first;
-        int or2 = bd_c.back().first;
-        Cell* c1 = bd_c.front().second;
-        Cell* c2 = bd_c.back().second;
-        
-        removeCell(s);
-        _trash.push_back(s);
-        
-        cbd_c = c1->getCoboundary();
-        enqueueCells(cbd_c, Q, Qset);
-        cbd_c = c2->getCoboundary();
-        enqueueCells(cbd_c, Q, Qset);
+        if(!(*c1 == *c2) 
+           && inSameDomain(s, c1) && inSameDomain(s, c2)
+           && c1->getNumVertices() < getSize(dim) // heuristics for mammoth cell birth control
+           && c2->getNumVertices() < getSize(dim)){
+                  
+          removeCell(s);
+          _trash.push_back(s);
           
-        CombinedCell* newCell = new CombinedCell(c1, c2, (or1 != or2), true );
-        removeCell(c1);
-        removeCell(c2);
-        _cells[dim].insert(newCell);
+          cbd_c = c1->getCoboundary();
+          enqueueCells(cbd_c, Q, Qset);
+          cbd_c = c2->getCoboundary();
+          enqueueCells(cbd_c, Q, Qset);
           
-        cit = firstCell(dim);
-        count++;
+          CombinedCell* newCell = new CombinedCell(c1, c2, (or1 != or2), true );
+          removeCell(c1);
+          removeCell(c2);
+          _cells[dim].insert(newCell);
+          
+          cit = firstCell(dim);
+          count++;
+        }
       }
       removeCellQset(s, Qset);
       
@@ -735,7 +743,7 @@ int CellComplex::combine(int dim){
   
   std::queue<Cell*> Q;
   std::set<Cell*, Less_Cell> Qset;
-  std::list< std::pair<int, Cell*> > cbd_c;
+  std::map<Cell*, int, Less_Cell> cbd_c;
   std::list<Cell*> bd_c;
   int count = 0;
   
@@ -748,33 +756,37 @@ int CellComplex::combine(int dim){
 
       Cell* s = Q.front();
       Q.pop(); 
-      
       cbd_c = s->getOrientedCoboundary();
-        
-      if(s->getCoboundarySize() == 2 && !(*(cbd_c.front().second) == *(cbd_c.back().second)) 
-         && inSameDomain(s, cbd_c.front().second) && inSameDomain(s, cbd_c.back().second)
-         && cbd_c.front().second->getNumVertices() < getSize(dim) // heuristics for mammoth cell birth control
-         && cbd_c.back().second->getNumVertices() < getSize(dim)){
-        int or1 = cbd_c.front().first;
-        int or2 = cbd_c.back().first;
-        Cell* c1 = cbd_c.front().second;
-        Cell* c2 = cbd_c.back().second;
+
+      if(s->getCoboundarySize() == 2){
+        std::map<Cell*, int, Less_Cell>::iterator it = cbd_c.begin();
+        int or1 = (*it).second;
+        Cell* c1 = (*it).first;
+        it++;
+        int or2 = (*it).second;
+        Cell* c2 = (*it).first;
+
+        if(!(*c1 == *c2) 
+           && inSameDomain(s, c1) && inSameDomain(s, c2)
+           && c1->getNumVertices() < getSize(dim) // heuristics for mammoth cell birth control
+           && c2->getNumVertices() < getSize(dim)){
+
+          removeCell(s);
+          _trash.push_back(s);
           
-        removeCell(s);
-        _trash.push_back(s);
-        
-        bd_c = c1->getBoundary();
-        enqueueCells(bd_c, Q, Qset);
-        bd_c = c2->getBoundary();
-        enqueueCells(bd_c, Q, Qset);
-        
-        CombinedCell* newCell = new CombinedCell(c1, c2, (or1 != or2) );
-        removeCell(c1);
-        removeCell(c2);
-        std::pair<citer, bool> insertInfo =  _cells[dim].insert(newCell);
-        if(!insertInfo.second) printf("Warning: Combined cell not inserted! \n");
-        cit = firstCell(dim);
-        count++;
+          bd_c = c1->getBoundary();
+          enqueueCells(bd_c, Q, Qset);
+          bd_c = c2->getBoundary();
+          enqueueCells(bd_c, Q, Qset);
+          
+          CombinedCell* newCell = new CombinedCell(c1, c2, (or1 != or2) );
+          removeCell(c1);
+          removeCell(c2);
+          std::pair<citer, bool> insertInfo =  _cells[dim].insert(newCell);
+          if(!insertInfo.second) printf("Warning: Combined cell not inserted! \n");
+          cit = firstCell(dim);
+          count++;
+        }
       }
       removeCellQset(s, Qset);
       
@@ -905,7 +917,8 @@ int CellComplex::writeComplexMSH(const std::string &name){
   for(int i = 0; i < _store.size(); i++){    
     count = count + _store.at(i).size();
   }
-      
+  count = count + _ecells.size();
+  
   fprintf(fp, "%d\n", count);
 
   int partition = 0;
@@ -979,6 +992,26 @@ int CellComplex::writeComplexMSH(const std::string &name){
     }
   }
   
+  for(citer cit = _ecells.begin(); cit != _ecells.end(); cit++){
+    Cell* cell = *cit;
+    if(cell->inSubdomain()) partition = 3;
+    else if(cell->onDomainBoundary()) partition = 2;
+    else partition = 1;
+    if(cell->getDim() == 0) fprintf(fp, "%d %d %d %d %d %d %d\n", cell->getNum(), 15, 3, 0, 0, partition, cell->getVertex(0)->getNum());
+    if(cell->getDim() == 1) fprintf(fp, "%d %d %d %d %d %d %d %d\n", cell->getNum(), 1, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum());
+    if(cell->getDim() == 2){
+      if(cell->getNumVertices() == 3) fprintf(fp, "%d %d %d %d %d %d %d %d %d\n", cell->getNum(), 2, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum());
+      else if (cell->getNumVertices() == 4)  fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), 3, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
+    }
+    if(cell->getDim() == 3){
+      if(cell->getNumVertices() == 4) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), 4, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
+      if(cell->getNumVertices() == 8) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), 12, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(), cell->getVertex(4)->getNum(), cell->getVertex(5)->getNum(), cell->getVertex(6)->getNum(), cell->getVertex(7)->getNum() );
+      if(cell->getNumVertices() == 6) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), 13, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(),cell->getVertex(4)->getNum(), cell->getVertex(5)->getNum());
+      if(cell->getNumVertices() == 5) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), 14, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(), cell->getVertex(4)->getNum());
+    }  
+  }
+  
+  
   
   fprintf(fp, "$EndElements\n");
   
@@ -1003,10 +1036,10 @@ bool CellComplex::checkCoherence(){
   for(int i = 0; i < 4; i++){
     for(citer cit = firstCell(i); cit != lastCell(i); cit++){
       Cell* cell = *cit;
-      std::list< std::pair<int, Cell*> > boundary = cell->getOrientedBoundary();
-      for(std::list< std::pair<int, Cell* > >::iterator it = boundary.begin(); it != boundary.end(); it++){
-        Cell* bdCell = (*it).second;
-        int ori = (*it).first;
+      std::map<Cell*, int, Less_Cell> boundary = cell->getOrientedBoundary();
+      for(std::map<Cell*, int, Less_Cell>::iterator it = boundary.begin(); it != boundary.end(); it++){
+        Cell* bdCell = (*it).first;
+        int ori = (*it).second;
         citer cit = _cells[bdCell->getDim()].find(bdCell);
         if(cit == lastCell(bdCell->getDim())){ 
           printf("Warning! Boundary cell not in cell complex! Boundary removed. \n");
@@ -1026,10 +1059,10 @@ bool CellComplex::checkCoherence(){
         }
         
       }
-      std::list< std::pair<int, Cell*> > coboundary = cell->getOrientedCoboundary();
-      for(std::list< std::pair<int, Cell* > >::iterator it = coboundary.begin(); it != coboundary.end(); it++){
-        Cell* cbdCell = (*it).second;
-        int ori = (*it).first;
+      std::map<Cell*, int, Less_Cell> coboundary = cell->getOrientedCoboundary();
+      for(std::map<Cell*, int, Less_Cell>::iterator it = coboundary.begin(); it != coboundary.end(); it++){
+        Cell* cbdCell = (*it).first;
+        int ori = (*it).second;
         citer cit = _cells[cbdCell->getDim()].find(cbdCell);
         if(cit == lastCell(cbdCell->getDim())){ 
           printf("Warning! Coboundary cell not in cell complex! Coboundary removed. \n");
@@ -1055,4 +1088,24 @@ bool CellComplex::checkCoherence(){
   return coherent;
 }
 
+
+bool Less_Cell::operator()(const Cell* c1, const Cell* c2) const {
+  
+  //cells with fever vertices first
+    
+  if(c1->getNumVertices() != c2->getNumVertices()){
+    return (c1->getNumVertices() < c2->getNumVertices());
+  }
+  
+  
+  
+  //"natural number" -like ordering (the number of a vertice corresponds a digit)
+  
+  for(int i=0; i < c1->getNumVertices();i++){
+    if(c1->getSortedVertex(i) < c2->getSortedVertex(i)) return true;
+    else if (c1->getSortedVertex(i) > c2->getSortedVertex(i)) return false;
+  }
+  
+  return false;
+}
 #endif

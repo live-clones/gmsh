@@ -32,6 +32,14 @@
 #include "GFace.h"
 #include "GVertex.h"
 
+class Cell;
+
+// Ordering of the cells
+class Less_Cell{
+  public:
+   bool operator()(const Cell* c1, const Cell* c2) const;
+};
+
 // Abstract class representing an elemtary cell of a cell complex.
 class Cell
 {  
@@ -56,11 +64,15 @@ class Cell
    
    bool _immune;
       
-   // cells on the boundary and on the coboundary of thhis cell
-   std::list< std::pair<int, Cell*> > _boundary;
-   std::list< std::pair<int, Cell*> > _coboundary;
+   // cells on the boundary and on the coboundary of this cell
+   std::map< Cell*, int, Less_Cell > _boundary;
+   std::map< Cell*, int, Less_Cell > _coboundary;
    int _bdSize;
    int _cbdSize;
+   
+   // original boundary and coboundary before the reduction of the cell complex
+   std::map<Cell*, int, Less_Cell > _obd;
+   std::map<Cell*, int, Less_Cell > _ocbd;
    
   public:
    Cell(){
@@ -94,24 +106,27 @@ class Cell
    
    // true if this cell has given vertex
    virtual bool hasVertex(int vertex) const = 0;
-  
+
+   // (co)boundary cell iterator
+   typedef std::map<Cell*, int, Less_Cell>::iterator biter;
+   
    virtual int getBoundarySize() { return _bdSize; }
    virtual int getCoboundarySize() { return _cbdSize; }
    
-   virtual std::list< std::pair<int, Cell*> > getOrientedBoundary() { return _boundary; }
+   virtual std::map<Cell*, int, Less_Cell > getOrientedBoundary() { return _boundary; }
    virtual std::list< Cell* > getBoundary() {
      std::list<Cell*> boundary;
-     for( std::list< std::pair<int, Cell*> >::iterator it= _boundary.begin();it!= _boundary.end();it++){
-       Cell* cell = (*it).second;
+     for( biter it= _boundary.begin(); it != _boundary.end();it++){
+       Cell* cell = (*it).first;
        boundary.push_back(cell);
      }
      return boundary;
    }
-   virtual std::list<std::pair<int, Cell*> >getOrientedCoboundary() { return _coboundary; }
+   virtual std::map<Cell*, int, Less_Cell > getOrientedCoboundary() { return _coboundary; }
    virtual std::list< Cell* > getCoboundary() {
      std::list<Cell*> coboundary;
-     for( std::list< std::pair<int, Cell*> >::iterator it= _coboundary.begin();it!= _coboundary.end();it++){
-       Cell* cell = (*it).second;
+     for( biter it= _coboundary.begin();it!= _coboundary.end();it++){
+       Cell* cell = (*it).first;
        coboundary.push_back(cell);
      }
      return coboundary;
@@ -119,6 +134,18 @@ class Cell
    
    virtual bool addBoundaryCell(int orientation, Cell* cell) {
      _bdSize++;
+     biter it = _boundary.find(cell);
+     if(it != _boundary.end()){
+       (*it).second = (*it).second + orientation;
+       if((*it).second == 0) {
+         _boundary.erase(it); _bdSize--;
+         (*it).first->removeCoboundaryCell(this,false);
+         return false;
+       }
+       return true;
+     }
+     _boundary.insert( std::make_pair(cell, orientation ) );
+     /*
      for(std::list< std::pair<int, Cell*> >::iterator it = _boundary.begin(); it != _boundary.end(); it++){
        Cell* cell2 = (*it).second;
        if(*cell2 == *cell) {
@@ -132,28 +159,36 @@ class Cell
        }
      }
      _boundary.push_back( std::make_pair(orientation, cell ) );
+     */
      return true;
    }
    
    virtual bool addCoboundaryCell(int orientation, Cell* cell) {
      _cbdSize++;
-     for(std::list< std::pair<int, Cell*> >::iterator it = _coboundary.begin(); it != _coboundary.end(); it++){
-       Cell* cell2 = (*it).second;
-       if(*cell2 == *cell) {
-         (*it).first = (*it).first + orientation;
-         if((*it).first == 0){ 
-           _coboundary.erase(it); _cbdSize--;
-           cell2->removeBoundaryCell(this,false);
-           return false;
-         }
-         return true;
+     biter it = _coboundary.find(cell);
+     if(it != _coboundary.end()){
+       (*it).second = (*it).second + orientation;
+       if((*it).second == 0) {
+         _coboundary.erase(it); _cbdSize--;
+         (*it).first->removeBoundaryCell(this,false);
+         return false;
        }
+       return true;
      }
-     _coboundary.push_back( std::make_pair(orientation, cell) );
+     _coboundary.insert( std::make_pair(cell, orientation ) );
      return true;
    }
    
    virtual int removeBoundaryCell(Cell* cell, bool other=true) {
+     biter it = _boundary.find(cell);
+     if(it != _boundary.end()){
+       _boundary.erase(it);
+       if(other) (*it).first->removeCoboundaryCell(this, false);
+       _bdSize--;
+       return (*it).second;
+     }
+       
+     /*
      for(std::list< std::pair<int, Cell*> >::iterator it = _boundary.begin(); it != _boundary.end(); it++){
        Cell* cell2 = (*it).second;
        int ori = (*it).first;
@@ -164,35 +199,51 @@ class Cell
          return ori;
        }
      }
+     */
+      
      return 0;
    }
    virtual int removeCoboundaryCell(Cell* cell, bool other=true) {
-     for(std::list< std::pair<int, Cell*> >::iterator it = _coboundary.begin(); it != _coboundary.end(); it++){
-       Cell* cell2 = (*it).second;
-       int ori = (*it).first;
-       if(*cell2 == *cell)  {
-         _coboundary.erase(it); 
-         if(other) cell2->removeBoundaryCell(this, false); 
-         _cbdSize--;
-         return ori;
-       }
+     biter it = _coboundary.find(cell);
+     if(it != _coboundary.end()){
+       _coboundary.erase(it);
+       if(other) (*it).first->removeBoundaryCell(this, false);
+       _cbdSize--;
+       return (*it).second;
      }
      return 0;
    }
    
-   virtual bool hasBoundary(Cell* cell){
-     for(std::list< std::pair<int, Cell*> >::iterator it = _boundary.begin(); it != _boundary.end(); it++){
-       Cell* cell2 = (*it).second;
-       if(*cell2 == *cell) return true;
+   virtual bool hasBoundary(Cell* cell, bool org=false){
+     if(!org){
+       /*
+       for(std::list< std::pair<int, Cell*> >::iterator it = _boundary.begin(); it != _boundary.end(); it++){
+         Cell* cell2 = (*it).second;
+         if(*cell2 == *cell) return true;
+       }
+       return false;
+       */
+       biter it = _boundary.find(cell);
+       if(it != _boundary.end()) return true;
+       return false;
      }
-     return false;
+     else{
+       biter it = _obd.find(cell);
+       if(it != _obd.end()) return true;
+       return false;
+     }
    }
-   virtual bool hasCoboundary(Cell* cell){
-     for(std::list< std::pair<int, Cell*> >::iterator it = _coboundary.begin(); it != _coboundary.end(); it++){
-       Cell* cell2 = (*it).second;
-       if(*cell2 == *cell) return true;
+   virtual bool hasCoboundary(Cell* cell, bool org=false){
+     if(!org){
+       biter it = _coboundary.find(cell);
+       if(it != _coboundary.end()) return true;
+       return false;
      }
-     return false;
+     else{
+       biter it = _ocbd.find(cell);
+       if(it != _ocbd.end()) return true;
+       return false;
+     } 
    }
    
    
@@ -200,7 +251,7 @@ class Cell
    virtual void clearCoboundary() { _coboundary.clear(); }
    
    virtual void makeDualCell(){ 
-     std::list< std::pair<int, Cell*> > temp = _boundary;
+     std::map<Cell*, int, Less_Cell > temp = _boundary;
      _boundary = _coboundary;
      _coboundary = temp;
      _dim = 3-_dim;
@@ -208,21 +259,43 @@ class Cell
    }
    
    virtual void printBoundary() {  
-     for(std::list< std::pair<int, Cell*> >::iterator it = _boundary.begin(); it != _boundary.end(); it++){
-       printf("Boundary cell orientation: %d ", (*it).first);
-       Cell* cell2 = (*it).second;
+     for(biter it = _boundary.begin(); it != _boundary.end(); it++){
+       printf("Boundary cell orientation: %d ", (*it).second);
+       Cell* cell2 = (*it).first;
        cell2->printCell();
      }
      if(_boundary.empty()) printf("Cell boundary is empty. \n");
    }
    virtual void printCoboundary() {
-     for(std::list< std::pair<int, Cell*> >::iterator it = _coboundary.begin(); it != _coboundary.end(); it++){
-       printf("Coboundary cell orientation: %d, ", (*it).first);
-       Cell* cell2 = (*it).second;
+     for(biter it = _coboundary.begin(); it != _coboundary.end(); it++){
+       printf("Coboundary cell orientation: %d, ", (*it).second);
+       Cell* cell2 = (*it).first;
        cell2->printCell();
        if(_coboundary.empty()) printf("Cell coboundary is empty. \n");
      }
    }
+   
+   virtual void addOrgBdCell(int orientation, Cell* cell) { _obd.insert( std::make_pair(cell, orientation ) ); };
+   virtual void addOrgCbdCell(int orientation, Cell* cell) { _ocbd.insert( std::make_pair(cell, orientation ) ); };
+   virtual std::map<Cell*, int, Less_Cell > getOrgBd() { return _obd; }
+   virtual std::map<Cell*, int, Less_Cell > getOrgCbd() { return _ocbd; }
+   virtual void printOrgBd() {
+     for(biter it = _obd.begin(); it != _obd.end(); it++){
+       printf("Boundary cell orientation: %d ", (*it).second);
+       Cell* cell2 = (*it).first;
+       cell2->printCell();
+     }
+     if(_obd.empty()) printf("Cell boundary is empty. \n");
+   }
+   virtual void printOrgCbd() {
+     for(biter it = _ocbd.begin(); it != _ocbd.end(); it++){
+       printf("Coboundary cell orientation: %d, ", (*it).second);
+       Cell* cell2 = (*it).first;
+       cell2->printCell();
+       if(_ocbd.empty()) printf("Cell coboundary is empty. \n");
+     }
+   }
+   
    
    
    
@@ -632,8 +705,7 @@ class CPyramid : public Cell, public MPyramid
    
    virtual void printCell() const { printf("Cell dimension: %d, Vertices: %d %d %d %d %d, in subdomain: %d \n", getDim(), _v[0]->getNum(), _v[1]->getNum(), _v[2]->getNum(), _v[3]->getNum(), _v[4]->getNum(), _inSubdomain); }
 };
-
-
+/*
 // Ordering for the cells.
 class Less_Cell{
   public:
@@ -661,6 +733,7 @@ class Less_Cell{
      
    }
 };
+*/
 
 
 class Equal_Cell{
@@ -692,6 +765,7 @@ class Less_MVertex{
    }
 };
 
+// A cell that is a combination of cells of same dimension
 class CombinedCell : public Cell{
  
   private:
@@ -740,28 +814,32 @@ class CombinedCell : public Cell{
      
      
      //_boundary = c1->getOrientedBoundary();
-     std::list< std::pair<int, Cell*> > c1Boundary = c1->getOrientedBoundary();
-     std::list< std::pair<int, Cell*> > c2Boundary = c2->getOrientedBoundary();
+     std::map< Cell*, int, Less_Cell > c1Boundary = c1->getOrientedBoundary();
+     std::map< Cell*, int, Less_Cell > c2Boundary = c2->getOrientedBoundary();
      
      
-     for(std::list< std::pair<int, Cell*> >::iterator it = c1Boundary.begin(); it != c1Boundary.end(); it++){
-       Cell* cell = (*it).second;
-       int ori = (*it).first;
+     for(std::map<Cell*, int, Less_Cell>::iterator it = c1Boundary.begin(); it != c1Boundary.end(); it++){
+       Cell* cell = (*it).first;
+       int ori = (*it).second;
        cell->removeCoboundaryCell(c1); 
        if(this->addBoundaryCell(ori, cell)) cell->addCoboundaryCell(ori, this);
      }
-     for(std::list< std::pair<int, Cell*> >::iterator it = c2Boundary.begin(); it != c2Boundary.end(); it++){
-       Cell* cell = (*it).second;
-       if(!orMatch) (*it).first = -1*(*it).first;
-       int ori = (*it).first;
+     for(std::map<Cell*, int, Less_Cell >::iterator it = c2Boundary.begin(); it != c2Boundary.end(); it++){
+       Cell* cell = (*it).first;
+       if(!orMatch) (*it).second = -1*(*it).second;
+       int ori = (*it).second;
        cell->removeCoboundaryCell(c2);
        //if(this->addBoundaryCell(ori, cell)) cell->addCoboundaryCell(ori, this);       
        if(co){
+         std::map<Cell*, int, Less_Cell >::iterator it2 = c1Boundary.find(cell);
          bool old = false;
+         if(it2 != c1Boundary.end()) old = true;
+         /*
          for(std::list< std::pair<int, Cell* > >::iterator it2 = c1Boundary.begin(); it2 != c1Boundary.end(); it2++){
            Cell* cell2 = (*it2).second;
            if(*cell2 == *cell) old = true;
          }
+         */
          if(!old){  if(this->addBoundaryCell(ori, cell)) cell->addCoboundaryCell(ori, this); }
        }
        else{
@@ -770,27 +848,31 @@ class CombinedCell : public Cell{
      }
      
      //_coboundary = c1->getOrientedCoboundary();
-     std::list< std::pair<int, Cell*> > c1Coboundary = c1->getOrientedCoboundary();
-     std::list< std::pair<int, Cell*> > c2Coboundary = c2->getOrientedCoboundary();
+     std::map<Cell*, int, Less_Cell > c1Coboundary = c1->getOrientedCoboundary();
+     std::map<Cell*, int, Less_Cell > c2Coboundary = c2->getOrientedCoboundary();
      
-     for(std::list< std::pair<int, Cell*> >::iterator it = c1Coboundary.begin(); it != c1Coboundary.end(); it++){
-       Cell* cell = (*it).second;
-       int ori = (*it).first;
+     for(std::map<Cell*, int, Less_Cell>::iterator it = c1Coboundary.begin(); it != c1Coboundary.end(); it++){
+       Cell* cell = (*it).first;
+       int ori = (*it).second;
        cell->removeBoundaryCell(c1); 
        if(this->addCoboundaryCell(ori, cell)) cell->addBoundaryCell(ori, this);
      }
-     for(std::list< std::pair<int, Cell*> >::iterator it = c2Coboundary.begin(); it != c2Coboundary.end(); it++){
-       Cell* cell = (*it).second;
-       if(!orMatch) (*it).first = -1*(*it).first;
-       int ori = (*it).first;
+     for(std::map<Cell*, int, Less_Cell>::iterator it = c2Coboundary.begin(); it != c2Coboundary.end(); it++){
+       Cell* cell = (*it).first;
+       if(!orMatch) (*it).second = -1*(*it).second;
+       int ori = (*it).second;
        cell->removeBoundaryCell(c2);
        //if(this->addCoboundaryCell(ori, cell)) cell->addBoundaryCell(ori, this);       
        if(!co){
+         std::map<Cell*, int, Less_Cell >::iterator it2 = c1Coboundary.find(cell);
          bool old = false;
+         if(it2 != c1Coboundary.end()) old = true;
+         /*
          for(std::list< std::pair<int, Cell* > >::iterator it2 = c1Coboundary.begin(); it2 != c1Coboundary.end(); it2++){
            Cell* cell2 = (*it2).second;
            if(*cell2 == *cell) old = true;
          }
+         */
          if(!old) { if(this->addCoboundaryCell(ori, cell)) cell->addBoundaryCell(ori, this); }
        }
        else {
@@ -865,8 +947,10 @@ class CellComplex
    std::list<Cell*> _trash;
    
    std::vector< std::set<Cell*, Less_Cell> > _store;
+   std::set<Cell*, Less_Cell> _ecells;
    
-   //std::set<Cell*, Less_Cell>  _originalCells[4];
+   
+   std::set<Cell*, Less_Cell>  _ocells[4];
    
    // Betti numbers of this cell complex (ranks of homology groups)
    int _betti[4];
@@ -890,9 +974,9 @@ class CellComplex
    
    // remove a cell from this cell complex
    void removeCell(Cell* cell, bool other=true);
+  public: 
    void insertCell(Cell* cell);
    
-  public:
    // reduction of this cell complex
    // removes reduction pairs of cell of dimension dim and dim-1
    int reduction(int dim, int omitted=0);
@@ -938,22 +1022,23 @@ class CellComplex
    CellComplex(){}
    ~CellComplex(){
      for(int i = 0; i < 4; i++){
-       
+       /*
        for(citer cit = _cells[i].begin(); cit != _cells[i].end(); cit++){
          Cell* cell = *cit;
          delete cell;
          //if(cell->isCombined()) delete cell;    
        }
+       */
        _cells[i].clear();
-       /*
-       for(citer cit = _cells2[i].begin(); cit != _cells2[i].end(); cit++){
+       
+       for(citer cit = _ocells[i].begin(); cit != _ocells[i].end(); cit++){
          Cell* cell = *cit;
          delete cell;
        }
-        _cells2[i].clear();
-       */
+        _ocells[i].clear();
+       
      }
-     emptyTrash();
+     //emptyTrash();
    }
 
    void emptyTrash(){
@@ -966,20 +1051,32 @@ class CellComplex
    
    // get the number of certain dimensional cells
    int getSize(int dim){ return _cells[dim].size(); }
+   int getOrgSize(int dim){ return _ocells[dim].size(); }
    
    int getDim() {return _dim; } 
    
    std::set<Cell*, Less_Cell> getCells(int dim){ return _cells[dim]; }
-      
+   std::set<Cell*, Less_Cell> getOrgCells(int dim){ return _ocells[dim]; }
+   
    // iterators to the first and last cells of certain dimension
    citer firstCell(int dim) {return _cells[dim].begin(); }
    citer lastCell(int dim) {return _cells[dim].end(); }
-  
+   citer firstOrgCell(int dim) {return _ocells[dim].begin(); }
+   citer lastOrgCell(int dim) {return _ocells[dim].end(); }
+   
+   
    // true if cell complex has given cell
-   bool hasCell(Cell* cell){
-     citer cit = _cells[cell->getDim()].find(cell);
-     if( cit == lastCell(cell->getDim()) ) return false;
-     else return true;
+   bool hasCell(Cell* cell, bool org=false){
+     if(!org){
+       citer cit = _cells[cell->getDim()].find(cell);
+       if( cit == lastCell(cell->getDim()) ) return false;
+       else return true;
+     }
+     else{
+       citer cit = _ocells[cell->getDim()].find(cell);
+       if( cit == lastOrgCell(cell->getDim()) ) return false;
+       else return true;
+     }
    }
      
 

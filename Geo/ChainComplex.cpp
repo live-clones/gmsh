@@ -6,6 +6,7 @@
 // Contributed by Matti Pellikka.
 
 #include "ChainComplex.h"
+#include "OS.h"
 
 #if defined(HAVE_KBIPACK)
 
@@ -71,9 +72,9 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
       for( std::set<Cell*, Less_Cell>::iterator cit = cellComplex->firstCell(dim); cit != cellComplex->lastCell(dim); cit++){
         Cell* cell = *cit;
         if(!cell->inSubdomain()){
-          std::list< std::pair<int,Cell*> >bdCell = cell->getOrientedBoundary();
-          for(std::list< std::pair<int, Cell*> >::iterator it = bdCell.begin(); it != bdCell.end(); it++){
-            Cell* bdCell = (*it).second;
+          std::map<Cell*, int, Less_Cell> bdCell = cell->getOrientedBoundary();
+          for(std::map<Cell*, int, Less_Cell>::iterator it = bdCell.begin(); it != bdCell.end(); it++){
+            Cell* bdCell = (*it).first;
             if(!bdCell->inSubdomain()){
               int old_elem = 0;
               //printf("cell1: %d, cell2: %d \n", bdCell->getIndex(), cell->getIndex());
@@ -84,11 +85,11 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
               else{
                 gmp_matrix_get_elem(elem, bdCell->getIndex(), cell->getIndex(), _HMatrix[dim]);
                 old_elem = mpz_get_si(elem);
-                mpz_set_si(elem, old_elem + (*it).first);
-                if( (old_elem + (*it).first) > 1 || (old_elem + (*it).first) < -1 ){
-                  printf("Warning: Invalid incidence index: %d! HMatrix: %d.", (old_elem + (*it).first), dim);
-                  printf(" Set to %d. \n", (old_elem + (*it).first) % 2);
-                  mpz_set_si(elem, (old_elem + (*it).first) % 2);
+                mpz_set_si(elem, old_elem + (*it).second);
+                if( (old_elem + (*it).second) > 1 || (old_elem + (*it).second) < -1 ){
+                  printf("Warning: Invalid incidence index: %d! HMatrix: %d.", (old_elem + (*it).second), dim);
+                  printf(" Set to %d. \n", (old_elem + (*it).second) % 2);
+                  mpz_set_si(elem, (old_elem + (*it).second) % 2);
                 }
                 gmp_matrix_set_elem(elem, bdCell->getIndex(), cell->getIndex(), _HMatrix[dim]);
               }
@@ -459,8 +460,17 @@ Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, CellComp
   int i = 0;
   for(std::set<Cell*, Less_Cell>::iterator cit = cells.begin(); cit != cells.end(); cit++){
     Cell* cell = *cit;
+    _dim = cell->getDim();
     if(!cell->inSubdomain() && (int)coeffs.size() > i){
-      if(coeffs.at(i) != 0) _cells.push_back( std::make_pair(cell, coeffs.at(i)) );
+      if(coeffs.at(i) != 0){
+        std::list< std::pair<int, Cell*> > subCells = cell->getCells();
+        for(std::list< std::pair<int, Cell*> >::iterator it = subCells.begin(); it != subCells.end(); it++){
+          Cell* subCell = (*it).second;
+          int coeff = (*it).first;
+          _cells.insert( std::make_pair(subCell, coeffs.at(i)*coeff));
+        }
+        //_cells.push_back( std::make_pair(cell, coeffs.at(i)) );
+      }
       i++;
     }
     
@@ -471,8 +481,193 @@ Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, CellComp
   
 }
 
-int Chain::writeChainMSH(const std::string &name){
+Cell* Chain::findCommonCbdCell(Cell* c1, Cell* c2, Cell* c3){
+  /*
+  c1->printCell();
+  c1->printOrgCbd();
+  c2->printOrgCbd();
+  c2->printCell();
+  printf("------ \n");
+  */
+  
+  std::map< Cell*, int, Less_Cell > c1Cbd = c1->getOrgCbd();
+  for(std::map< Cell*, int, Less_Cell >::iterator it = c1Cbd.begin(); it != c1Cbd.end(); it++){
+    Cell* c1CbdCell = (*it).first;
+    if(c3 == NULL){ 
+      if(c2->hasCoboundary(c1CbdCell, true)) return c1CbdCell;
+    }
+    else{
+      if(c2->hasCoboundary(c1CbdCell, true) && c3->hasCoboundary(c1CbdCell, true)) return c1CbdCell;
+    }
+  }
+  
+  return NULL;
+   
+}
 
+std::pair<Cell*, int> Chain::findRemainingBoundary(Cell* b, Cell* c1, Cell* c2, Cell* c3){
+  std::map<Cell*, int, Less_Cell> bBd = b->getOrgBd();
+  for(std::map<Cell*, int, Less_Cell >::iterator it = bBd.begin(); it != bBd.end(); it++){
+    Cell* bBdCell = (*it).first;
+    if(c3 == NULL) {
+      if( !(*bBdCell == *c1) && !(*bBdCell == *c2)) return *it;
+    }
+    else{
+      if( !(*bBdCell == *c1) && !(*bBdCell == *c2) && !(*bBdCell == *c3) ) return *it;
+    }
+  }
+  
+  return std::make_pair(b, 0);
+}
+
+int Chain::findOrientation(Cell* b, Cell* c){
+  std::map< Cell*, int, Less_Cell > bBd = b->getOrgBd();
+  std::map< Cell*, int, Less_Cell >::iterator it = bBd.find(c);
+  if(it != bBd.end()) return (*it).second;
+  return 0;
+}
+
+void Chain::smoothenChain(){  
+  
+  int start = getSize();
+  double t1 = Cpu();
+  
+  if(getDim() == 1){
+    for(citer i = _cells.begin(); i != _cells.end(); i++){
+      Cell* c1 = (*i).first;
+      int c1c = (*i).second;
+      
+      for(citer j = _cells.begin(); j != _cells.end(); j++){
+        Cell* c2 = (*j).first;
+        int c2c = (*j).second;
+        if ( !(*c2 == *c1) && (c1c == 1 || c1c == -1) && (c2c == 1 || c2c == -1)){
+          
+          Cell* b = findCommonCbdCell(c1, c2);
+          if(b != NULL){
+          
+            std::pair<Cell*, int> c3p = std::make_pair(b, 0);
+            c3p = findRemainingBoundary(b, c1, c2);
+            int c1o = findOrientation(b, c1);
+            int c2o = findOrientation(b, c2);
+            
+            int temp1 = c1c - c1o;
+            int temp2 = c2c - c2o;
+            
+            if(c3p.second != 0 && !c3p.first->inSubdomain()) {
+              
+              Cell* c3 = c3p.first;
+              int c3o = c3p.second;
+              
+              int c3c = -c3o;
+              if(temp1 != 0) c3c= c3c*-1;
+              
+              this->removeCell(c1, c1c);
+              this->removeCell(c2, c2c);
+              this->addCell(c3, c3c);
+              c1c = (*i).second;
+              c2c = (*j).second;
+              
+            }
+          }
+        }
+      }
+    }
+  }
+  /*
+  else if(getDim() == 2){
+    for(citer i = _cells.begin(); i != _cells.end(); i++){
+      Cell* c1 = (*i).first;
+      int c1c = (*i).second;
+      
+      /*
+      int c1o = 0;
+      
+      Cell* c2 = NULL;
+      int c2c = 0;
+      int c2o = 0;
+      
+      Cell* c3 = NULL;
+      int c3c = 0;
+      int c3o = 0;
+      
+      std::map<Cell*, int, Less_Cell> c1Cbd c1->getOrgCbd();
+      for(citer cit = c1Cbd.begin(); cit != c1Cbd.end(); cit++){
+        Cell* c1CbdCell = (*cit).first;
+        std::map<Cell*, int, Less_Cell> c1CbdBd c1CbdCell->getOrgBd();
+        
+        for(citer cit2 = c1CbdBd.begin(); cit2 != c1CbdBd.end(); cit2++){
+          Cell* c1CbdBdCell = (*cit2).first;
+          int c1CbdBdCellc = (*cit2).first;
+          int count = 0;
+          int coeff = getCoeff(c1CbdBdCell);
+          if(coeff != 0 && !(*c1CbdBdCell == *c1)){
+            count++;
+            if(count == 0) { c2 = coeff; c2o=c1CbdBdCellc; }
+            if(count == 1) { c3 = coeff; c3o=c1CbdBdCellc; }
+            if(count == 2) break;    
+          }
+        }
+        
+      }
+      
+      
+      
+      for(citer j = _cells.begin(); j != _cells.end(); j++){
+        Cell* c2 = (*j).first;
+        int c2c = (*j).second;
+        
+        for(citer k = _cells.begin(); k != _cells.end(); k++){
+          Cell* c3 = (*k).first;
+          int c3c = (*k).second;
+          
+          if ( !(*c2 == *c1) && !(*c1 == *c3) && !(*c2 == *c3) && (c1c == 1 || c1c == -1) && (c2c == 1 || c2c == -1) && (c3c == 1 || c3c == -1)){
+            
+            Cell* b = findCommonCbdCell(c1, c2, c3);
+            if(b != NULL){
+              
+              std::pair<Cell*, int> c4p = std::make_pair(b, 0);
+              c4p = findRemainingBoundary(b, c1, c2, c3);
+              int c1o = findOrientation(b, c1);
+              int c2o = findOrientation(b, c2);
+              int c3o = findOrientation(b, c3);
+              
+              int temp1 = c1c - c1o;
+              int temp2 = c2c - c2o;
+              int temp3 = c3c - c3o;
+              
+              if(c4p.second != 0 && !c4p.first->inSubdomain()) {
+                
+                Cell* c4 = c4p.first;
+                int c4o = c4p.second;
+                
+                int c4c = -c4o;
+                if(temp1 != 0) c4c= c4c*-1;
+                
+                this->removeCell(c1, c1c);
+                this->removeCell(c2, c2c);
+                this->removeCell(c3, c3c);
+                this->addCell(c4, c4c);
+                c1c = (*i).second;
+                c2c = (*j).second;
+                c3c = (*k).second;
+              }
+            }
+          }
+        }
+      }
+      
+    }
+  }*/
+  
+  eraseNullCells();
+  double t2 = Cpu();
+  printf("Smoothened a %d-chain from %d cells to %d cells (%g s). \n", getDim(), start, getSize(), t2-t1);
+  return;
+}
+
+  
+int Chain::writeChainMSH(const std::string &name){
+  
   //_cellComplex->writeComplexMSH(name);
   
   if(getSize() == 0) return 0;
@@ -483,7 +678,7 @@ int Chain::writeChainMSH(const std::string &name){
         printf("Unable to open file.");
         return 0;
   }
-
+ 
   fprintf(fp, "\n$ElementData\n");
   
   fprintf(fp, "1 \n");
@@ -493,17 +688,21 @@ int Chain::writeChainMSH(const std::string &name){
   fprintf(fp, "4 \n");
   fprintf(fp, "0 \n");
   fprintf(fp, "1 \n");
-  fprintf(fp, "%d \n", getNumCells());
+  fprintf(fp, "%d \n", getSize());
   fprintf(fp, "0 \n");
   
-  std::list< std::pair<int, Cell*> > cells;
-  for(int i = 0; i < getSize(); i++){
-    Cell* cell = getCell(i);
-    cells = cell->getCells();
+  //std::list< std::pair<int, Cell*> > cells;
+  for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
+    Cell* cell = (*cit).first;
+    int coeff = (*cit).second;
+    fprintf(fp, "%d %d \n", cell->getNum(), coeff );
+    /*
+    cells = cell->getCells();    
     for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
       Cell* cell2 = (*it).second;
-      fprintf(fp, "%d %d \n", cell2->getNum(), getCoeff(i)*(*it).first );
+     fprintf(fp, "%d %d \n", cell2->getNum(), getCoeff(i)*(*it).first );
     }
+    */
   }
   
   fprintf(fp, "$EndElementData\n");
@@ -514,13 +713,15 @@ int Chain::writeChainMSH(const std::string &name){
   
 }
 
+/*
 void Chain::getData(std::map<int, std::vector<double> > & data){
   
   if(getSize() == 0) return;
   
-  std::list< std::pair<int, Cell*> > cells;
+  //std::list< std::pair<int, Cell*> > cells;
   for(int i = 0; i < getSize(); i++){
     Cell* cell = getCell(i);
+    /*
     cells = cell->getCells();
     for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
       Cell* cell2 = (*it).second;
@@ -531,6 +732,12 @@ void Chain::getData(std::map<int, std::vector<double> > & data){
       //printf("%d, %d, \n", cell2->getNum(), (int)coeff.at(0));
       
     }
+    
+    std::vector<double> coeff;
+    coeff.push_back(getCoeff(i));
+    std::pair<int, std::vector<double> >  dataPair = std::make_pair(cell->getTag(), coeff);
+    data.insert(dataPair);
+    
   }
   
   //for(std::map<int, std::vector<double> >::iterator it = data.begin(); it != data.end(); it++){
@@ -539,5 +746,6 @@ void Chain::getData(std::map<int, std::vector<double> > & data){
   
   return; 
 }
+*/
 
 #endif
