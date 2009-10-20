@@ -128,7 +128,7 @@ void Homology::findGenerators(std::string fileName){
       
       std::string name = "H" + dimension + getDomainString()  + generator;
       Chain* chain = new Chain(_cellComplex->getCells(j), chains->getCoeffVector(j,i), _cellComplex, name, chains->getTorsion(j,i));
-      Chain* chain2 = new Chain(chain);
+      //Chain* chain2 = new Chain(chain);
       //printf("chain %d \n", i);
       t1 = Cpu();
       int start = chain->getSize();
@@ -140,7 +140,7 @@ void Homology::findGenerators(std::string fileName){
         if(chain->getTorsion() != 1) Msg::Warning("H%d %d has torsion coefficient %d!", j, i, chain->getTorsion());
       }
       chainVector.push_back(chain);
-      chainVector.push_back(chain2);
+      //chainVector.push_back(chain2);
       //delete chain;
     }
     if(j == _cellComplex->getDim() && _cellComplex->getNumOmitted() > 0){
