@@ -1,5 +1,14 @@
 $Id: TODO.txt,v 1.34 2009-10-18 19:41:04 geuzaine Exp $
 
+We have no While() loop in the parser, and we cannot emulate it with
+For because we don't recompite the For args after each iteration:
+
+step = 1.0;
+For k In {0:100:step}
+Printf("step = %f   k = %f", step, k );
+step = step + 10;
+EndFor
+
 ********************************************************************
 
 fix artefacts when moving the mouse over an animation
