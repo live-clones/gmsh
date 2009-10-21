@@ -517,7 +517,9 @@ shortcomings...
 @cindex E-mail, authors
 
 If you think you have found a bug in Gmsh, you can report it by
-electronic mail to the Gmsh mailing list at @email{gmsh@@geuz.org}.
+electronic mail to the Gmsh mailing list at @email{gmsh@@geuz.org}, or
+file it directly into our bug tracking system at
+@url{https://geuz.org/trac/gmsh/report} (login: gmsh, password: gmsh).
 Please send as precise a description of the problem as you can,
 including sample input files that produce the bug. Don't forget to
 mention both the version of Gmsh and the version of your operation
