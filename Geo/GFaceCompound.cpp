@@ -120,7 +120,7 @@ static void computeCGKernelPolygon(std::map<MVertex*,SPoint3> &coordinates,
     vcg/=nbFinal;
   }
   else{
-    Msg::Info("----> No Kernel for polygon:  place point at CG polygon.");
+    Msg::Debug("----> No Kernel for polygon:  place point at CG polygon.");
     //place at CG polygon
     for(std::vector<MVertex*>::iterator it = cavV.begin() ; it != cavV.end() ; ++it){
       SPoint3 vsp = coordinates[*it];
@@ -246,11 +246,11 @@ void GFaceCompound::partitionFaceCM()
 //check if the discrete harmonic map is correct
 //by checking that all the mapped triangles have
 //the same normal orientation
-bool GFaceCompound::checkOrientation() const
+bool GFaceCompound::checkOrientation(int iter) const
 {
 
   //Only check orientation for stl files (1 patch)
-  if(_compound.size() > 1.0) return true;
+  //  if(_compound.size() > 1.0) return true;
 
   std::list<GFace*>::const_iterator it = _compound.begin();
   double a_old = 0, a_new;
@@ -278,14 +278,14 @@ bool GFaceCompound::checkOrientation() const
     }    
   }  
 
-  if(!oriented ){
-    Msg::Info("*** Could not compute reparametrization with the harmonic map.");
-    Msg::Info("*** Force One-2-One Map.");
+  if(!oriented && iter < 10){
+    if (iter == 0)Msg::Warning("*** Parametrization is NOT 1 to 1 : applying cavity checks.");
+    Msg::Warning("*** Cavity Check - iter %d -",iter);
     one2OneMap();
-    checkOrientation();
+    return checkOrientation(iter+1);
   }
-  else{
-    Msg::Info("Harmonic mapping successfully computed ...");
+  else if (iter < 10){
+    Msg::Info("Parametrization is 1 to 1 :-)");
   }
 
   return oriented;
@@ -316,6 +316,21 @@ bool GFaceCompound::checkCavity(std::vector<MElement*> &vTri) const
   return badCavity;
 }
 
+static bool closedCavity(MVertex *v, std::vector<MElement*> &vTri){
+  std::set<MVertex *> vs;
+  for (int i=0;i<vTri.size();i++){
+    MElement *t = vTri[i];
+    for (int j=0;j<t->getNumVertices();j++){
+      MVertex *vv = t->getVertex(j);
+      if (vv != v){
+	if (vs.find(vv) == vs.end())vs.insert(vv);
+	else vs.erase(vv);
+      }
+    }    
+  }
+  return vs.empty();
+}
+
 void GFaceCompound::one2OneMap() const
 {
 #if !defined(HAVE_NO_MESH)
@@ -335,12 +350,12 @@ void GFaceCompound::one2OneMap() const
     
     std::vector<MVertex*> cavV;
     std::vector<MElement*> vTri = it->second;
-    bool badCavity = checkCavity(vTri);
+    bool badCavity = closedCavity(v,vTri) ? checkCavity(vTri) : false;
     
     if(badCavity){
-      Msg::Info("Wrong cavity around vertex %d (onwhat=%d).",
+      Msg::Debug("Wrong cavity around vertex %d (onwhat=%d).",
                 v->getNum(),  v->onWhat()->dim());
-      Msg::Info("--> Place vertex at center of gravity of %d-Polygon kernel." ,
+      Msg::Debug("--> Place vertex at center of gravity of %d-Polygon kernel." ,
                 vTri.size());
       
       double u_cg, v_cg;
@@ -396,8 +411,8 @@ void GFaceCompound::parametrize() const
     //-----------------
     if (_mapping == HARMONIC){
       Msg::Info("Parametrizing surface %d with 'harmonic map'", tag());
-      parametrize(ITERU);
-      parametrize(ITERV);
+      parametrize(ITERU,HARMONIC);
+      parametrize(ITERV,HARMONIC);
     }
     //Conformal map parametrization
     //----------------- 
@@ -409,7 +424,12 @@ void GFaceCompound::parametrize() const
     //-----------------
     //compute_distance();
     
-    checkOrientation();
+    if (!checkOrientation(0)){
+      Msg::Info("Parametrization failed using standard techniques : moving to convex combination");
+      coordinates.clear(); 
+      parametrize(ITERU,CONVEXCOMBINATION);
+      parametrize(ITERV,CONVEXCOMBINATION);
+    }
     buildOct();
    
     computeNormals();
@@ -774,7 +794,7 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
   return SPoint2(0, 0);
 }
 
-void GFaceCompound::parametrize(iterationStep step) const
+void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
 {
    
   dofManager<double, double> myAssembler(_lsys);
@@ -834,16 +854,30 @@ void GFaceCompound::parametrize(iterationStep step) const
   Msg::Debug("Creating term %d dofs numbered %d fixed",
              myAssembler.sizeOfR(), myAssembler.sizeOfF());
   
-  //convexCombinationTerm laplace(model(), 1, &ONE);
   clock_t t1 = clock();  
-  laplaceTerm laplace(model(), 1, &ONE);
-  it = _compound.begin();
-  for( ; it != _compound.end() ; ++it){
-    for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-      SElement se((*it)->triangles[i]);
-      laplace.addToMatrix(myAssembler, &se);
+  
+  if (tom == CONVEXCOMBINATION){
+    convexCombinationTerm laplace(model(), 1, &ONE);
+    it = _compound.begin();
+    for( ; it != _compound.end() ; ++it){
+      for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+	SElement se((*it)->triangles[i]);
+	laplace.addToMatrix(myAssembler, &se);
+      }
     }
   }
+  else {
+    laplaceTerm laplace(model(), 1, &ONE);
+    it = _compound.begin();
+    for( ; it != _compound.end() ; ++it){
+      for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+	SElement se((*it)->triangles[i]);
+	laplace.addToMatrix(myAssembler, &se);
+      }
+    }
+  }
+
+
   clock_t t2 = clock();
   Msg::Debug("Assembly done in %8.3f seconds",(double)(t2-t1)/CLOCKS_PER_SEC);
   _lsys->systemSolve();
@@ -1333,7 +1367,7 @@ bool GFaceCompound::checkTopology() const
   //  printf("%d %d\n",Nb,G);
 
   if (!correctTopo){
-    Msg::Info("--> Wrong topology: Genus=%d and N boundary=%d", G, Nb);
+    Msg::Warning("--> Wrong topology: Genus=%d and N boundary=%d", G, Nb);
     nbSplit = std::max(G+1, 2);
   }
   else
@@ -1383,7 +1417,7 @@ bool GFaceCompound::checkAspectRatio() const
       paramOK = false;
     }
     else {
-      Msg::Info("Geometrical aspect ratio (1/area_2D=%g)", areaMax);
+      Msg::Warning("Geometrical aspect ratio (1/area_2D=%g)", areaMax);
       paramOK = true;
     }
    

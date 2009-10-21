@@ -46,7 +46,7 @@ class Octree;
 class GFaceCompound : public GFace {
  public:
   typedef enum {ITERU=0,ITERV=1,ITERD=2} iterationStep;
-  typedef enum {HARMONIC=1,CONFORMAL=2} typeOfMapping;
+  typedef enum {HARMONIC=1,CONFORMAL=2, CONVEXCOMBINATION=3} typeOfMapping;
   typedef enum {UNITCIRCLE, SQUARE} typeOfIsomorphism;
   void computeNormals(std::map<MVertex*, SVector3> &normals) const;
  protected:
@@ -66,8 +66,8 @@ class GFaceCompound : public GFace {
   void parametrize() const ;
   void parametrize_conformal() const ;
   void compute_distance() const ;
-  void parametrize(iterationStep) const ;
-  bool checkOrientation() const;
+  void parametrize(iterationStep,typeOfMapping) const ;
+  bool checkOrientation(int iter) const;
   void one2OneMap() const;
   bool checkCavity(std::vector<MElement*> &vTri) const;
   bool checkAspectRatio() const;
