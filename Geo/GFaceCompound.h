@@ -62,11 +62,10 @@ class GFaceCompound : public GFace {
   mutable std::map<MVertex*, SPoint3> coordinates;
   mutable std::map<MVertex*, SVector3> _normals;
   void buildOct() const ;
-  void buildAllNodes() const;
-  void parametrize() const ;
+  void buildAllNodes() const; 
+  void parametrize(iterationStep,typeOfMapping) const ;
   void parametrize_conformal() const ;
   void compute_distance() const ;
-  void parametrize(iterationStep,typeOfMapping) const ;
   bool checkOrientation(int iter) const;
   void one2OneMap() const;
   bool checkCavity(std::vector<MElement*> &vTri) const;
@@ -81,6 +80,7 @@ class GFaceCompound : public GFace {
   void printStuff() const;
   bool trivial() const ;
   linearSystem <double> *_lsys;
+  SBoundingBox3d bound_U0() const;
  public:
   GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
                 std::list<GEdge*> &U0, std::list<GEdge*> &U1,
@@ -100,11 +100,10 @@ class GFaceCompound : public GFace {
   virtual double curvatureMax(const SPoint2 &param) const;
   virtual int genusGeom () const;
   virtual bool checkTopology() const;
+  bool parametrize() const ;
   void partitionFaceCM();
   virtual std::list<GFace*> getCompounds() const {return _compound;};
   mutable int nbSplit;
-  mutable bool _checkedAR;
-  mutable bool _paramOK;
  private:
   typeOfIsomorphism _type;
   typeOfMapping _mapping;

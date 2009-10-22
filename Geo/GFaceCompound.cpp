@@ -256,7 +256,7 @@ bool GFaceCompound::checkOrientation(int iter) const
   double a_old = 0, a_new;
   bool oriented = true;
   for( ; it != _compound.end(); ++it){
-    int iter = 0;
+    int count = 0;
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *t = (*it)->triangles[i];
       SPoint3 v1 = coordinates[t->getVertex(0)];
@@ -266,7 +266,7 @@ bool GFaceCompound::checkOrientation(int iter) const
       double p2[2] = {v2[0],v2[1]};
       double p3[2] = {v3[0],v3[1]};
       a_new = robustPredicates::orient2d(p1, p2, p3);
-      if(iter == 0) a_old=a_new;
+      if(count == 0) a_old=a_new;
       if(a_new*a_old < 0.){
 	oriented = false;
 	break;
@@ -274,7 +274,7 @@ bool GFaceCompound::checkOrientation(int iter) const
       else{
 	a_old = a_new;
       }
-      iter ++;
+      count ++;
     }    
   }  
 
@@ -397,43 +397,52 @@ void GFaceCompound::one2OneMap() const
 #endif
 }
 
-void GFaceCompound::parametrize() const
+bool GFaceCompound::parametrize() const
 {
-  if(trivial()) return;
+  
+  bool paramOK = true;
 
-  if(!oct){
+  if(trivial()) return paramOK;
 
-    coordinates.clear(); 
-
-    if(allNodes.empty()) buildAllNodes();
-    
-    //Laplace parametrization
-    //-----------------
-    if (_mapping == HARMONIC){
-      Msg::Info("Parametrizing surface %d with 'harmonic map'", tag());
-      parametrize(ITERU,HARMONIC);
-      parametrize(ITERV,HARMONIC);
-    }
-    //Conformal map parametrization
-    //----------------- 
-    else if (_mapping == CONFORMAL){
-      Msg::Info("Parametrizing surface %d with 'conformal map'", tag());
-      parametrize_conformal();
-    }
-    //Distance function
-    //-----------------
-    //compute_distance();
-    
-    if (!checkOrientation(0)){
-      Msg::Info("Parametrization failed using standard techniques : moving to convex combination");
-      coordinates.clear(); 
-      parametrize(ITERU,CONVEXCOMBINATION);
-      parametrize(ITERV,CONVEXCOMBINATION);
-    }
-    buildOct();
-   
-    computeNormals();
+  coordinates.clear(); 
+  
+  if(allNodes.empty()) buildAllNodes();
+  
+  //Laplace parametrization
+  //-----------------
+  if (_mapping == HARMONIC){
+    Msg::Info("Parametrizing surface %d with 'harmonic map'", tag());
+    parametrize(ITERU,HARMONIC);
+    parametrize(ITERV,HARMONIC);
   }
+  //Conformal map parametrization
+  //----------------- 
+  else if (_mapping == CONFORMAL){
+    Msg::Info("Parametrizing surface %d with 'conformal map'", tag());
+    parametrize_conformal();
+  }
+  //Distance function
+  //-----------------
+  //compute_distance();
+
+  buildOct();  
+
+  if (!checkAspectRatio()){
+    paramOK = false;
+    return paramOK;
+  }
+  
+  if (!checkOrientation(0)){
+    Msg::Info("Parametrization failed using standard techniques : moving to convex combination");
+    coordinates.clear(); 
+    parametrize(ITERU,CONVEXCOMBINATION);
+    parametrize(ITERV,CONVEXCOMBINATION);
+  }
+
+  computeNormals();  
+
+  return paramOK;
+
 }
 
 void GFaceCompound::getBoundingEdges()
@@ -477,6 +486,16 @@ void GFaceCompound::getBoundingEdges()
 
   return;
 
+}
+SBoundingBox3d GFaceCompound::bound_U0() const
+{
+
+  SBoundingBox3d res;
+  std::list<GEdge*>::const_iterator it = _U0.begin();
+  for(; it != _U0.end(); it++)
+    res += (*it)->bounds();
+
+  return res;
 }
 
 void GFaceCompound::getUniqueEdges(std::set<GEdge*> &_unique) 
@@ -588,8 +607,6 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 #endif
   }
   nbSplit = 0;
-  _checkedAR = false;
-  _paramOK  = false;
 
   for(std::list<GFace*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
     if(!(*it)){
@@ -703,7 +720,6 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
     return param;
   }
   
-  parametrize() ; 
   std::map<MVertex*,SPoint3>::iterator it = coordinates.find(v);
 
   if(it != coordinates.end()){
@@ -983,7 +999,7 @@ void GFaceCompound::parametrize_conformal() const
 
 void GFaceCompound::compute_distance() const
 {
-  SBoundingBox3d bbox = model()->bounds();
+  SBoundingBox3d bbox = bounds();
   double L = norm(SVector3(bbox.max(), bbox.min())); 
   double mu = L/28;
   simpleFunction<double> DIFF(mu * mu), MONE(1.0);
@@ -1072,7 +1088,6 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
     return (*(_compound.begin()))->curvatureMax(param);
   }
 
-  parametrize();
   double U, V;
   GFaceCompoundTriangle *lt;
   getTriangle(param.x(), param.y(), &lt, U,V);  
@@ -1104,7 +1119,6 @@ GPoint GFaceCompound::point(double par1, double par2) const
     return (*(_compound.begin()))->point(par1,par2);
   }
 
-  parametrize();
   double U,V;
   double par[2] = {par1,par2};
   GFaceCompoundTriangle *lt;
@@ -1179,7 +1193,6 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
     return (*(_compound.begin()))->firstDer(param);
   }
 
-  parametrize();
   double U, V;
   GFaceCompoundTriangle *lt;
   getTriangle(param.x(), param.y(), &lt, U,V);
@@ -1258,7 +1271,6 @@ void GFaceCompound::getTriangle(double u, double v,
                                 GFaceCompoundTriangle **lt,
                                 double &_u, double &_v) const
 {
-  parametrize();
   
   double uv[3] = {u, v, 0};
   *lt = (GFaceCompoundTriangle*)Octree_Search(uv, oct);
@@ -1356,7 +1368,7 @@ void GFaceCompound::buildOct() const
 bool GFaceCompound::checkTopology() const
 {
   // FIXME!!! I think those things are wrong with cross-patch reparametrization
-  if ((*(_compound.begin()))->geomType() != GEntity::DiscreteSurface)return true;
+  //if ((*(_compound.begin()))->geomType() != GEntity::DiscreteSurface)return true;
   
   bool correctTopo = true;
 
@@ -1364,11 +1376,10 @@ bool GFaceCompound::checkTopology() const
   int G  = genusGeom() ;
   if( G != 0 || Nb < 1) correctTopo = false;
 
-  //  printf("%d %d\n",Nb,G);
-
   if (!correctTopo){
-    Msg::Warning("--> Wrong topology: Genus=%d and N boundary=%d", G, Nb);
+    Msg::Warning("Wrong topology: Genus=%d and N boundary=%d", G, Nb);
     nbSplit = std::max(G+1, 2);
+    Msg::Info("Split surface %d in %d parts with Metis", tag(), nbSplit);
   }
   else
     Msg::Info("Correct topology: Genus=%d and N boundary=%d", G, Nb);
@@ -1379,53 +1390,50 @@ bool GFaceCompound::checkTopology() const
 bool GFaceCompound::checkAspectRatio() const
 {
 
-  parametrize();
- 
-  if (!_checkedAR){
-
-    bool paramOK = true;
-    if(allNodes.empty()) buildAllNodes();
-    
-    double areaMax;
-    std::list<GFace*>::const_iterator it = _compound.begin();
-    for( ; it != _compound.end() ; ++it){
-      for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-	MTriangle *t = (*it)->triangles[i];
-	std::vector<MVertex *> v(3);
-	for(int k = 0; k < 3; k++){
-	  v[k] = t->getVertex(k); 
-	}
-	std::map<MVertex*,SPoint3>::const_iterator it0 = coordinates.find(v[0]);
-	std::map<MVertex*,SPoint3>::const_iterator it1 = coordinates.find(v[1]);
-	std::map<MVertex*,SPoint3>::const_iterator it2 = coordinates.find(v[2]);
-	double p0[3] = {v[0]->x(), v[0]->y(), v[0]->z()}; 
-	double p1[3] = {v[1]->x(), v[1]->y(), v[1]->z()};
-	double p2[3] = {v[2]->x(), v[2]->y(), v[2]->z()};
-	double a_3D = fabs(triangle_area(p0, p1, p2));
-	double q0[3] = {it0->second.x(), it0->second.y(), 0.0}; 
-	double q1[3] = {it1->second.x(), it1->second.y(), 0.0};
-	double q2[3] = {it2->second.x(), it2->second.y(), 0.0};
-	double a_2D = fabs(triangle_area(q0, q1, q2));
-	areaMax = std::max(areaMax,1./a_2D);
+  bool paramOK = true;
+  if(allNodes.empty()) buildAllNodes();
+  
+  double areaMax = 0.0;
+  std::list<GFace*>::const_iterator it = _compound.begin();
+  for( ; it != _compound.end() ; ++it){
+    for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+      MTriangle *t = (*it)->triangles[i];
+      std::vector<MVertex *> v(3);
+      for(int k = 0; k < 3; k++){
+	v[k] = t->getVertex(k); 
       }
+      std::map<MVertex*,SPoint3>::const_iterator it0 = coordinates.find(v[0]);
+      std::map<MVertex*,SPoint3>::const_iterator it1 = coordinates.find(v[1]);
+      std::map<MVertex*,SPoint3>::const_iterator it2 = coordinates.find(v[2]);
+      double p0[3] = {v[0]->x(), v[0]->y(), v[0]->z()}; 
+      double p1[3] = {v[1]->x(), v[1]->y(), v[1]->z()};
+      double p2[3] = {v[2]->x(), v[2]->y(), v[2]->z()};
+      double a_3D = fabs(triangle_area(p0, p1, p2));
+      double q0[3] = {it0->second.x(), it0->second.y(), 0.0}; 
+      double q1[3] = {it1->second.x(), it1->second.y(), 0.0};
+      double q2[3] = {it2->second.x(), it2->second.y(), 0.0};
+      double a_2D = fabs(triangle_area(q0, q1, q2));     
+      areaMax = std::max(areaMax,1./a_2D);
+      //printf("a3D/a2D=%g, AreaMax=%g\n", a_3D/a_2D, areaMax);
     }
-    
-    if (areaMax > 1.e15) {
-      nbSplit = 2;
-      printf("--> Geometrical aspect ratio too high (1/area_2D=%g)\n", areaMax);
-      printf("--> Partition geometry in N=%d parts\n", nbSplit);
-      paramOK = false;
-    }
-    else {
-      Msg::Warning("Geometrical aspect ratio (1/area_2D=%g)", areaMax);
-      paramOK = true;
-    }
-   
-    _checkedAR = true;
-    _paramOK = paramOK;
-   }
-
-  return _paramOK;
+  }
+  
+  if (areaMax > 1.e15 ) {
+    Msg::Warning("Geometrical aspect ratio too high (1/area_2D=%g)", areaMax);
+    SBoundingBox3d bboxH = bounds();
+    SBoundingBox3d bboxD = bound_U0();
+    int H = norm(SVector3(bboxH.max(), bboxH.min())); 
+    int D = norm(SVector3(bboxD.max(), bboxD.min()));
+    nbSplit = std::max((int)floor(.25*H/D),2); 
+    Msg::Warning("Partition geometry in N=%d parts", nbSplit);
+    paramOK = false;
+  }
+  else {
+    Msg::Info("Geometrical aspect ratio (1/area_2D=%g)", areaMax);
+    paramOK = true;
+  }
+  
+  return paramOK;
 
 }
 

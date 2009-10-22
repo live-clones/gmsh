@@ -410,11 +410,17 @@ static void Mesh2D(GModel *m)
   // field generated from the surface mesh of the source surfaces
   if(!Mesh2DWithBoundaryLayers(m)){
     //std::for_each(m->firstFace(), m->lastFace(), meshGFace());
-    std::set<GFace*> actualFaces;
+    std::set<GFace*> classFaces;
+    std::set<GFace*> compFaces;
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
-      actualFaces.insert(*it);
+      if ((*it)->geomType() != GEntity::CompoundSurface)
+	classFaces.insert(*it);
+      else
+	compFaces.insert(*it);
     }
-    std::for_each(actualFaces.begin(), actualFaces.end(), meshGFace());
+    std::for_each(classFaces.begin(), classFaces.end(), meshGFace());
+    std::for_each(compFaces.begin(), compFaces.end(), meshGFace());
+
     int nIter = 0;
     while(1){
       meshGFace mesher;

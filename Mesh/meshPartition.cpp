@@ -99,6 +99,20 @@ void MakeGraphDIM(const EntIter begin, const EntIter end,
  *   (elements with DIM-1) on the boundary and write a partition index to them.
  *
  ******************************************************************************/
+int PartitionMeshFace( std::list<GFace*> &cFaces, meshPartitionOptions &options)
+{
+   
+   GModel *tmp_model = new GModel();
+   for(std::list<GFace*>::iterator it = cFaces.begin(); it != cFaces.end(); it++)
+       tmp_model->add(*it);
+
+   PartitionMesh(tmp_model,options); 
+
+   for(std::list<GFace*>::iterator it = cFaces.begin(); it != cFaces.end(); it++)
+     tmp_model->remove(*it);
+   delete tmp_model;
+
+}
 
 int PartitionMesh(GModel *const model, meshPartitionOptions &options)
 {
@@ -1012,7 +1026,6 @@ void createPartitionFaces(GModel *model, GFaceCompound *gf, int N,
 			  std::vector<discreteFace*> &discreteFaces)
 {
 
-  printf("---> CreateTopologyFromPartition for Compound Face %d \n", gf->tag());
  
   // Compound is partitioned in N discrete faces
   //--------------------------------------------

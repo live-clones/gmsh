@@ -328,10 +328,6 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
 bool reparamMeshVertexOnFace(const MVertex *v, const GFace *gf, SPoint2 &param)
 {
 
-  if (gf->geomType() == GEntity::CompoundSurface){
-    if(!gf->checkAspectRatio()) return false;
-  }
-
   if (gf->geomType() == GEntity::CompoundSurface &&
       v->onWhat()->dim() < 2){
     GFaceCompound *gfc = (GFaceCompound*) gf;
