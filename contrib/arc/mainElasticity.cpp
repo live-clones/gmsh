@@ -11,18 +11,17 @@ int main (int argc, char* argv[])
     return -1;
   } 
 
-  
-  FormBilinear<TermBilinearMeca> f;
-  f.func();
-  f.func2();
-
-
-  FormBilinear<TermBilinearMecaNL> fnl;
-  fnl.func();
-  fnl.func2();
-  
+  MElement *e;
+  const double uvw[3]={0.,0.,0.};
   SpaceLagrange<double> L(123);
+  FormBilinear<TermBilinearMeca,SpaceLagrange<double>,SpaceLagrange<double> > f(L,L);
+  f.func();
+  f.Accumulate(e,uvw);
 
+
+  FormBilinear<TermBilinearMecaNL,SpaceLagrange<double>,SpaceLagrange<double> > fnl(L,L);
+  fnl.func();
+    
   // globals are still present in Gmsh
   GmshInitialize(argc, argv);
   
