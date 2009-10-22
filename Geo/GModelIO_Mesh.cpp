@@ -871,12 +871,9 @@ int GModel::readSTL(const std::string &name, double tolerance)
   char buffer[256];
   if(!fgets(buffer, sizeof(buffer), fp)) return 0;
 
-  // workaround for stupid tools which use "solid" to start their
-  // binary files
-  if(!strncmp(buffer, "solid 3D-DOCTOR", 15)) buffer[0] = 'z';
-  if(!strncmp(buffer, "solid binary STL from Solid Edge", 32)) buffer[0] = 'z';
+  bool binary = strncmp(buffer, "solid", 5);
 
-  if(!strncmp(buffer, "solid", 5)){
+  if(!binary){
     // ASCII STL
     points.resize(1);
     while(!feof(fp)) {
@@ -909,9 +906,20 @@ int GModel::readSTL(const std::string &name, double tolerance)
       if(!fgets(buffer, sizeof(buffer), fp)) break;
     }
   }
-  else{
-    // Binary STL
-    Msg::Info("Mesh is in binary format");
+
+  bool empty = true;
+  for(unsigned int i = 0; i < points.size(); i++){
+    if(points[i].size()){
+      empty = false;
+      break;
+    }
+  }
+  if(empty) points.clear();
+
+  // try binary read even with wrong header if file is empty
+  if(binary || empty){
+    if(binary) Msg::Info("Mesh is in binary format");
+    else Msg::Info("Empty ASCII file or bad ASCII header: trying binary read");
     rewind(fp);
     while(!feof(fp)) {
       char header[80];

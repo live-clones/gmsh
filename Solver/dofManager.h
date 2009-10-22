@@ -137,7 +137,6 @@ class dofManager{
       }
     }
   }
-
   inline void assemble(std::vector<Dof> &R, std::vector<Dof> &C, fullMatrix<dataMat> &m)
   {
     if (!_current->isAllocated()) _current->allocate(unknown.size());
@@ -170,7 +169,6 @@ class dofManager{
       }
     }
   }
-
   inline void assemble(std::vector<Dof> &R, fullMatrix<dataMat> &m)
   {
     if (!_current->isAllocated()) _current->allocate(unknown.size());
@@ -199,7 +197,6 @@ class dofManager{
       }
     }
   }
-
   inline void assemble(int entR, int typeR, int entC, int typeC, const dataMat &value)
   {
     assemble(Dof(entR, typeR), Dof(entC, typeC), value);
@@ -237,6 +234,10 @@ class dofManager{
     _current->zeroMatrix();
     _current->zeroRightHandSide();
   }  
+  linearSystem<dataMat> *getLinearSystem(std::string &name)
+  {
+    return _linearSystems[name];
+  }
 };
 
 #endif

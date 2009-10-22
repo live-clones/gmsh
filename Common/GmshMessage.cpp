@@ -23,6 +23,10 @@
 #include <petsc.h>
 #endif
 
+#if defined(HAVE_SLEPC)
+#include <slepc.h>
+#endif
+
 #if defined(HAVE_FLTK)
 #include <FL/fl_ask.H>
 #include "FlGui.h"
@@ -70,6 +74,9 @@ void Msg::Init(int argc, char **argv)
 #if defined(HAVE_PETSC)
   PetscInitialize(&argc, &argv, PETSC_NULL, PETSC_NULL);
 #endif
+#if defined(HAVE_SLEPC)
+  SlepcInitialize(&argc, &argv, PETSC_NULL, PETSC_NULL);
+#endif
   time_t now;
   time(&now);
   _launchDate = ctime(&now);
@@ -91,6 +98,9 @@ void Msg::Exit(int level)
   // this calls the annoying "report this crash to the mothership"
   // window... so just exit!
   if(level){
+#if defined(HAVE_SLEPC)
+    SlepcFinalize();
+#endif
 #if defined(HAVE_PETSC)
     PetscFinalize();
 #endif
@@ -113,6 +123,9 @@ void Msg::Exit(int level)
   }
 #endif
 
+#if defined(HAVE_SLEPC)
+  SlepcFinalize();
+#endif
 #if defined(HAVE_PETSC)
   PetscFinalize();
 #endif
