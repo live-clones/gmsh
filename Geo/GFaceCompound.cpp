@@ -1398,7 +1398,9 @@ bool GFaceCompound::checkAspectRatio() const
   bool paramOK = true;
   if(allNodes.empty()) buildAllNodes();
   
+  double limit =  1.e15 ;
   double areaMax = 0.0;
+  int nb = 0;
   std::list<GFace*>::const_iterator it = _compound.begin();
   for( ; it != _compound.end() ; ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
@@ -1417,25 +1419,26 @@ bool GFaceCompound::checkAspectRatio() const
       double q0[3] = {it0->second.x(), it0->second.y(), 0.0}; 
       double q1[3] = {it1->second.x(), it1->second.y(), 0.0};
       double q2[3] = {it2->second.x(), it2->second.y(), 0.0};
-      double a_2D = fabs(triangle_area(q0, q1, q2));     
+      double a_2D = fabs(triangle_area(q0, q1, q2));   
+      if (1/a_2D > limit) nb++;
       areaMax = std::max(areaMax,1./a_2D);
       //printf("a3D/a2D=%g, AreaMax=%g\n", a_3D/a_2D, areaMax);
     }
   }
   
-  if (areaMax > 1.e15 ) {
+  if (areaMax > limit && nb > 10) {
     Msg::Warning("Geometrical aspect ratio too high (1/area_2D=%g)", areaMax);
     SBoundingBox3d bboxH = bounds();
     SBoundingBox3d bboxD = bound_U0();
     double H = norm(SVector3(bboxH.max(), bboxH.min())); 
     double D = norm(SVector3(bboxD.max(), bboxD.min()));
     nbSplit = std::max((int)floor(.25*H/D),2); 
-    printf("H=%g, D=%g  H/4D=\n", H, D, nbSplit);
+    //printf("H=%g, D=%g  H/4D=%d nbSplit=%d\n", H, D, (int)floor(.25*H/D), nbSplit);
     Msg::Info("Partition geometry in N=%d parts", nbSplit);
     paramOK = false;
   }
   else {
-    Msg::Info("Geometrical aspect ratio (1/area_2D=%g)", areaMax);
+    Msg::Info("Geometrical aspect ratio is OK :-)", areaMax);
     paramOK = true;
   }
   

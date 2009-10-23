@@ -163,7 +163,7 @@ void discreteEdge::setBoundVertices()
       }
       if(!existVertex){
         GVertex *gvB = new discreteVertex(model(), model()->maxVertexNum()+1);      
-	printf("*** Created discreteVertex %d\n", gvB->tag());
+	//printf("*** Created discreteVertex %d\n", gvB->tag());
         bound_vertices.push_back(gvB);
         vE->setEntity(gvB);
         gvB->mesh_vertices.push_back(vE);
@@ -206,7 +206,7 @@ void discreteEdge::setBoundVertices()
     }
     if(!existVertex){
       GVertex *gvB = new discreteVertex(model(), model()->maxVertexNum()+1);
-      printf("*** Created discreteVertex %d\n", gvB->tag());
+      //printf("*** Created discreteVertex %d\n", gvB->tag());
       bound_vertex = gvB;
       vE->setEntity(gvB);
       gvB->mesh_vertices.push_back(vE);

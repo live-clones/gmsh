@@ -191,7 +191,6 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
         }
       }
       // Ensure num_partitions reflects values used by Chaco
-      printf("global =%d archi=%d ndims_tot=%d mesh dim=%d\n", options.global_method, options.architecture, options.ndims_tot, options.mesh_dims[0]);
       switch(options.architecture) {
       case 0:
         options.num_partitions = 1 << options.ndims_tot;
@@ -207,7 +206,6 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
           options.mesh_dims[0]*options.mesh_dims[1]*options.mesh_dims[2];
         break;
       }
-      printf("partition in %d parts \n", options.num_partitions);
       try {
         const int iSec = 0;
         ier = interface
