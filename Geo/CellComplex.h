@@ -99,6 +99,17 @@ class Cell
    virtual int getSortedVertex(int vertex) const = 0; 
    virtual std::vector<MVertex*> getVertexVector() const = 0;
    
+   virtual void restoreCell(){
+     _boundary = _obd;
+     _coboundary = _ocbd;
+     _bdSize = _boundary.size();
+     _cbdSize = _coboundary.size();
+     _combined = false;
+     _index = 0;
+     _immune = false;
+     
+   }
+   
    // returns 1 or -1 if lower dimensional cell tau is on the boundary of this cell
    // otherwise returns 0
    // implementation will vary depending on cell type
@@ -986,6 +997,7 @@ class CellComplex
  
    
   public: 
+   /*
    CellComplex(  std::vector<GEntity*> domain, std::vector<GEntity*> subdomain, std::set<Cell*, Less_Cell> cells ) {
      _domain = domain;
      _subdomain = subdomain;
@@ -994,41 +1006,29 @@ class CellComplex
        _cells[cell->getDim()].insert(cell);
      }
    }
-   /*
+   
+   
    CellComplex(CellComplex* cellComplex){
      
-     _domain = cellComplex->_domain;
-     _subdomain = cellComplex->_subdomain;
-     _boundary = cellComplex->_boundary;
-     _domainVertices = cellComplex->_domainVertices;
+     _domain = cellComplex->getDomain();
+     _subdomain = cellComplex->getSubdomain;
+     _boundary = cellComplex->getBoundary;
+     _domainVertices = cellComplex->getDomainVertices;
      
      for(int i = 0; i < 4; i++){
-       _betti[i] = cellComplex->_betti[i];
-       
-       for(citer cit = cellComplex->_cells[i].begin(); cit != cellComplex->_cells[i].end(); cit++){
-         Cell* cell = *cit;
-         if(i == 0) _cells[i].insert(new ZeroSimplex(*cell));
-         
-       }
-       
-       _originalCells[i] = _cells[i];
+       _betti[i] = cellComplex->getBetti(i);
+       _cells[i] = ocells[i];
+       _ocells[i] = ocells[i];
      }
      
-     _dim = cellComplex->_dim;
-     
-   }*/
+     _dim = cellComplex->getDim();
+   }
+   */
    
    CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> subdomain );
    CellComplex(){}
    ~CellComplex(){
      for(int i = 0; i < 4; i++){
-       /*
-       for(citer cit = _cells[i].begin(); cit != _cells[i].end(); cit++){
-         Cell* cell = *cit;
-         delete cell;
-         //if(cell->isCombined()) delete cell;    
-       }
-       */
        _cells[i].clear();
        
        for(citer cit = _ocells[i].begin(); cit != _ocells[i].end(); cit++){
@@ -1041,6 +1041,7 @@ class CellComplex
      //emptyTrash();
    }
 
+   
    void emptyTrash(){
      for(std::list<Cell*>::iterator cit  = _trash.begin(); cit != _trash.end(); cit++){
        Cell* cell = *cit;
@@ -1049,6 +1050,20 @@ class CellComplex
      _trash.clear();
    }
    
+   void restoreComplex(){
+     for(int i = 0; i < 4; i++){
+       _betti[i] = 0;
+       _cells[i] = _ocells[i];
+       for(citer cit = firstCell(i); cit != lastCell(i); cit++){
+         Cell* cell = *cit;
+         cell->restoreCell();
+       }
+     }
+     _store.clear();
+     _ecells.clear();
+     _trash.clear();
+   }
+     
    // get the number of certain dimensional cells
    int getSize(int dim){ return _cells[dim].size(); }
    int getOrgSize(int dim){ return _ocells[dim].size(); }
@@ -1091,8 +1106,8 @@ class CellComplex
      
 
    // useful functions for (co)reduction of cell complex
-   int reduceComplex(int omit = 0);
-   int coreduceComplex(int omit = 0);
+   int reduceComplex();
+   int coreduceComplex();
    
    
    // add every volume, face and edge its missing boundary cells

@@ -94,7 +94,7 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   
   Homology* homology = new Homology(m, domain, subdomain);
   //if(combine == 0) homology->setCombine(false); 
-  homology->setOmit(1);
+  //homology->setOmit(1);
   
   //if(swap == 1) homology->swapSubdomain();
   

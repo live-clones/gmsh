@@ -527,145 +527,344 @@ int Chain::findOrientation(Cell* b, Cell* c){
   return 0;
 }
 
+std::map<Cell*, int, Less_Cell> Chain::getBdCellsInChain(Cell* cell){
+  
+  std::map<Cell*, int, Less_Cell> cells;
+  std::map<Cell*, int, Less_Cell> boundary = cell->getOrgBd();
+  for(citer cit = boundary.begin(); cit != boundary.end(); cit++){
+    Cell* BdCell = (*cit).first;
+    int BdCellO = (*cit).second;
+    if(hasCell(BdCell) || BdCell->inSubdomain() ) cells.insert( std::make_pair(BdCell, BdCellO) );
+  }
+  
+  return cells;
+}
+
+bool Chain::removeBoundary( std::pair<Cell*, int> cell ){
+  
+  Cell* c1 = cell.first;
+  int c1c = cell.second;
+  if(c1c == 0) return false;
+  
+  std::map<Cell*, int, Less_Cell> c1Cbd = c1->getOrgCbd();
+  for(citer cit = c1Cbd.begin(); cit != c1Cbd.end(); cit++){
+    Cell* c1CbdCell = (*cit).first;
+    
+    std::map<Cell*, int, Less_Cell> cells = getBdCellsInChain(c1CbdCell);
+    
+    if( (getDim() == 1 && cells.size() == 3) || (getDim() == 2 && cells.size() == 4)){
+      for(citer cit2 = cells.begin(); cit2 != cells.end(); cit2++){
+        Cell* cell = (*cit2).first;
+        removeCell(cell);
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+bool Chain::straightenChain( std::pair<Cell*, int> cell ){
+  
+  Cell* c1 = cell.first;
+  int c1c = cell.second;
+  if(c1c == 0 || c1->getImmune()) return false;
+  
+  int c1o = 0;
+  
+  Cell* c2 = NULL;
+  int c2c = 0;
+  int c2o = 0;
+  
+  Cell* c3 = NULL;
+  int c3c = 0;
+  int c3o = 0;
+  
+  Cell* b = NULL;
+  
+  std::map<Cell*, int, Less_Cell> c1Cbd = c1->getOrgCbd();
+  for(citer cit = c1Cbd.begin(); cit != c1Cbd.end(); cit++){
+    Cell* c1CbdCell = (*cit).first;
+    c1o = (*cit).second;
+    
+    /*
+    std::map<Cell*, int, Less_Cell> cells = getBdCellsInChain(c1CbdCell);
+    if((getDim() == 1 && cells.size() != 2) || (getDim() == 2 && cells.size() != 3) ) break;
+    else if( getDim() == 1 && cells.size() == 2){
+      
+    }
+    else if( getDim() == 2 && cells.size() == 3){
+      
+    }
+    */
+    
+    
+    std::map<Cell*, int, Less_Cell> c1CbdBd = c1CbdCell->getOrgBd();
+    int count = 0;
+    for(citer cit2 = c1CbdBd.begin(); cit2 != c1CbdBd.end(); cit2++){
+      Cell* c1CbdBdCell = (*cit2).first;
+      int c1CbdBdCellO = (*cit2).second;
+      int coeff = getCoeff(c1CbdBdCell);
+      if( (coeff != 0 || c1CbdBdCell->inSubdomain() ) && !(*c1CbdBdCell == *c1) && !c1CbdBdCell->getImmune()){
+        if(c1->getDim() == 1){
+          count++;
+          c2 = c1CbdBdCell; c2c = coeff; c2o = c1CbdBdCellO; 
+          b = c1CbdCell; break;
+        }
+        else if(c1->getDim() == 2){
+          count++;
+          if(count == 1) { c2 = c1CbdBdCell; c2c = coeff; c2o = c1CbdBdCellO; }
+          else if(count == 2) { c3 = c1CbdBdCell; c3c = coeff; c3o = c1CbdBdCellO; b = c1CbdCell; break;}
+        }
+      }
+    }
+    
+    if (b != NULL) break;
+  }
+  
+  if(c1->getDim() == 1 && 
+     b != NULL && c2 != NULL && !(*c2 == *c1)){
+    
+    int temp1 = c1c - c1o;
+    
+    std::pair<Cell*, int> c4p = std::make_pair(b, 0);
+    c4p = findRemainingBoundary(b, c1, c2);
+    Cell* c4 = c4p.first;
+    int c4o = c4p.second;
+    
+    if(c4o != 0 && !c2->getImmune() && !c4->getImmune()
+       && ( hasCell(c1) || c1->inSubdomain() ) && (hasCell(c2) || c2->inSubdomain() ) && !hasCell(c4) ){
+        
+      int c4c = -c4o;
+      if(temp1 != 0) c4c= c4c*-1;
+      
+      this->removeCell(c1);
+      this->removeCell(c2);
+      c1->setImmune(false);
+      c2->setImmune(false);
+      c4->setImmune(false);
+      if(!c4->inSubdomain()) this->addCell(c4, c4c);
+      return true;
+    }
+  }
+  
+  else if(c1->getDim() == 2 &&
+          b != NULL && c2 != NULL && c3 != NULL && !(*c2 == *c1) && !(*c1 == *c3) && !(*c2 == *c3)){
+    
+    int temp1 = c1c - c1o;
+    
+    std::pair<Cell*, int> c4p = std::make_pair(b, 0);
+    c4p = findRemainingBoundary(b, c1, c2, c3);
+    Cell* c4 = c4p.first;
+    int c4o = c4p.second;
+    
+    if(c4o != 0 && !c2->getImmune() && !c3->getImmune() && !c4->getImmune() 
+       && (hasCell(c1) || c1->inSubdomain()) && (hasCell(c2) || c2->inSubdomain()) 
+       && (hasCell(c3) || c3->inSubdomain()) && !hasCell(c4)) {
+      
+      int c4c = -c4o;
+      if(temp1 != 0) c4c= c4c*-1;
+        
+      this->removeCell(c1);
+      this->removeCell(c2);
+      this->removeCell(c3);
+      c1->setImmune(false);
+      c2->setImmune(false);
+      c3->setImmune(false);
+      c4->setImmune(false);
+      if(!c4->inSubdomain()) this->addCell(c4, c4c);
+      return true;
+    }
+    
+  }
+  return false;
+}
+
+bool Chain::bendChain( std::pair<Cell*, int> cell ){
+  
+  Cell* c1 = cell.first;
+  int c1c = cell.second;
+  if(c1c == 0 || c1->getImmune()) return false;
+  int c1o = 0;
+  
+  Cell* c2 = NULL;
+  int c2c = 0;
+  int c2o = 0;
+  
+  Cell* c3 = NULL;
+  int c3c = 0;
+  int c3o = 0;
+  
+  Cell* b = NULL;
+  
+  std::map<Cell*, int, Less_Cell> c1Cbd = c1->getOrgCbd();
+  for(citer cit = c1Cbd.begin(); cit != c1Cbd.end(); cit++){
+    Cell* c1CbdCell = (*cit).first;
+    c1o = (*cit).second;
+    std::map<Cell*, int, Less_Cell> c1CbdBd = c1CbdCell->getOrgBd();
+    
+    int count = 0;
+    for(citer cit2 = c1CbdBd.begin(); cit2 != c1CbdBd.end(); cit2++){
+      Cell* c1CbdBdCell = (*cit2).first;
+      int c1CbdBdCellO = (*cit2).second;
+      if(!hasCell(c1CbdBdCell) && !c1CbdBdCell->getImmune() ){
+        count++;
+        if(count == 1) { c2 = c1CbdBdCell; c2o = c1CbdBdCellO; }
+        else if(count == 2) { c3 = c1CbdBdCell; c3o = c1CbdBdCellO; b = c1CbdCell; break;}
+      }
+    }
+    
+    if (b != NULL) break;
+    else c2 = NULL;
+  }
+  
+  if(c1->getDim() == 2 &&
+     b != NULL && c2 != NULL && c3 != NULL && !(*c2 == *c1) && !(*c1 == *c3) && !(*c2 == *c3) &&
+     (c1c == 1 || c1c == -1) && !c2->getImmune() && !c3->getImmune() ){
+    
+    std::pair<Cell*, int> c4p = std::make_pair(b, 0);
+    c4p = findRemainingBoundary(b, c1, c2, c3);
+    int c4c = getCoeff(c4p.first);
+    Cell* c4 = c4p.first;
+    
+    int temp1 = c1c - c1o;
+    
+    if(c4p.second != 0 && c4c != 0 && !c2->inSubdomain() && !c3->inSubdomain() 
+       && hasCell(c1) && hasCell(c4) && !hasCell(c2) && !hasCell(c3)) {
+      
+      c2c = -c2o;
+      c3c = -c3o;
+      if(temp1 != 0) c2c= c2c*-1;
+      if(temp1 != 0) c3c= c3c*-1;
+      
+      this->removeCell(c1);
+      this->removeCell(c4);
+      this->addCell(c2, c2c);
+      this->addCell(c3, c3c);
+      c1->setImmune(false);
+      c2->setImmune(true);
+      c3->setImmune(false);
+      c4->setImmune(false);
+      return true;
+    }
+    
+  }
+  
+  else if(c1->getDim() == 1 &&
+     b != NULL && c2 != NULL && c3 != NULL && !(*c2 == *c1) && !(*c1 == *c3) && !(*c2 == *c3) &&
+     (c1c == 1 || c1c == -1) && !c2->getImmune() && !c3->getImmune() ){
+    
+    int temp1 = c1c - c1o;
+    
+    if(!c2->inSubdomain() && !c3->inSubdomain() && hasCell(c1) && !hasCell(c2) && !hasCell(c3)) {
+      
+      //printf("c2: %d, c3; %d \n", getCoeff(c2), getCoeff(c3));
+      
+      c2c = -c2o;
+      c3c = -c3o;
+      if(temp1 != 0) c2c= c2c*-1;
+      if(temp1 != 0) c3c= c3c*-1;
+      
+      this->removeCell(c1);
+      this->addCell(c2, c2c);
+      this->addCell(c3, c3c);
+      c1->setImmune(false);
+      c2->setImmune(true);
+      c3->setImmune(false);
+      return true;
+    }
+    
+  }
+  
+  
+  return false;
+}
+
 void Chain::smoothenChain(){  
   
   int start = getSize();
   double t1 = Cpu();
-  
-  if(getDim() == 1){
-    for(citer i = _cells.begin(); i != _cells.end(); i++){
-      Cell* c1 = (*i).first;
-      int c1c = (*i).second;
-      
-      for(citer j = _cells.begin(); j != _cells.end(); j++){
-        Cell* c2 = (*j).first;
-        int c2c = (*j).second;
-        if ( !(*c2 == *c1) && (c1c == 1 || c1c == -1) && (c2c == 1 || c2c == -1)){
-          
-          Cell* b = findCommonCbdCell(c1, c2);
-          if(b != NULL){
-          
-            std::pair<Cell*, int> c3p = std::make_pair(b, 0);
-            c3p = findRemainingBoundary(b, c1, c2);
-            int c1o = findOrientation(b, c1);
-            int c2o = findOrientation(b, c2);
-            
-            int temp1 = c1c - c1o;
-            int temp2 = c2c - c2o;
-            
-            if(c3p.second != 0 && !c3p.first->inSubdomain()) {
-              
-              Cell* c3 = c3p.first;
-              int c3o = c3p.second;
-              
-              int c3c = -c3o;
-              if(temp1 != 0) c3c= c3c*-1;
-              
-              this->removeCell(c1, c1c);
-              this->removeCell(c2, c2c);
-              this->addCell(c3, c3c);
-              c1c = (*i).second;
-              c2c = (*j).second;
-              
-            }
-          }
-        }
-      }
+  const int MAXROUNDS = 2;
+
+  bool smoothened = true;
+  int round = 0;
+  while(smoothened){
+    round++;
+    smoothened = false;
+    for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
+      if(straightenChain(*cit)) { smoothened = true; }
+      if(removeBoundary(*cit)) { smoothened = true; }
     }
+    if(round > MAXROUNDS) smoothened = false;
   }
-  /*
-  else if(getDim() == 2){
-    for(citer i = _cells.begin(); i != _cells.end(); i++){
-      Cell* c1 = (*i).first;
-      int c1c = (*i).second;
-      
-      /*
-      int c1o = 0;
-      
-      Cell* c2 = NULL;
-      int c2c = 0;
-      int c2o = 0;
-      
-      Cell* c3 = NULL;
-      int c3c = 0;
-      int c3o = 0;
-      
-      std::map<Cell*, int, Less_Cell> c1Cbd c1->getOrgCbd();
-      for(citer cit = c1Cbd.begin(); cit != c1Cbd.end(); cit++){
-        Cell* c1CbdCell = (*cit).first;
-        std::map<Cell*, int, Less_Cell> c1CbdBd c1CbdCell->getOrgBd();
-        
-        for(citer cit2 = c1CbdBd.begin(); cit2 != c1CbdBd.end(); cit2++){
-          Cell* c1CbdBdCell = (*cit2).first;
-          int c1CbdBdCellc = (*cit2).first;
-          int count = 0;
-          int coeff = getCoeff(c1CbdBdCell);
-          if(coeff != 0 && !(*c1CbdBdCell == *c1)){
-            count++;
-            if(count == 0) { c2 = coeff; c2o=c1CbdBdCellc; }
-            if(count == 1) { c3 = coeff; c3o=c1CbdBdCellc; }
-            if(count == 2) break;    
-          }
-        }
-        
-      }
-      
-      
-      
-      for(citer j = _cells.begin(); j != _cells.end(); j++){
-        Cell* c2 = (*j).first;
-        int c2c = (*j).second;
-        
-        for(citer k = _cells.begin(); k != _cells.end(); k++){
-          Cell* c3 = (*k).first;
-          int c3c = (*k).second;
-          
-          if ( !(*c2 == *c1) && !(*c1 == *c3) && !(*c2 == *c3) && (c1c == 1 || c1c == -1) && (c2c == 1 || c2c == -1) && (c3c == 1 || c3c == -1)){
-            
-            Cell* b = findCommonCbdCell(c1, c2, c3);
-            if(b != NULL){
-              
-              std::pair<Cell*, int> c4p = std::make_pair(b, 0);
-              c4p = findRemainingBoundary(b, c1, c2, c3);
-              int c1o = findOrientation(b, c1);
-              int c2o = findOrientation(b, c2);
-              int c3o = findOrientation(b, c3);
-              
-              int temp1 = c1c - c1o;
-              int temp2 = c2c - c2o;
-              int temp3 = c3c - c3o;
-              
-              if(c4p.second != 0 && !c4p.first->inSubdomain()) {
-                
-                Cell* c4 = c4p.first;
-                int c4o = c4p.second;
-                
-                int c4c = -c4o;
-                if(temp1 != 0) c4c= c4c*-1;
-                
-                this->removeCell(c1, c1c);
-                this->removeCell(c2, c2c);
-                this->removeCell(c3, c3c);
-                this->addCell(c4, c4c);
-                c1c = (*i).second;
-                c2c = (*j).second;
-                c3c = (*k).second;
-              }
-            }
-          }
-        }
-      }
-      
-    }
-  }*/
+  eraseNullCells(); 
   
+  if(getDim() == 2){
+  Chain* bestChain = new Chain(this);
+  int before = getSize();
+  deImmuneCells();
+  srand ( time(NULL) );
+  int n = 0;
+  while( n < 10){
+    double t = 1;
+    while(t>0){
+      double tt = 1;
+
+      for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
+        int random = rand() % 100 + 1;
+        double r = random*t; 
+        //printf("random: %d, t: %d \n", random, t);
+        if(r > 80) { 
+          bendChain(*cit);
+          //printf("random: %d, t: %g, random*t: %g.\n", random, t, r);
+          //cit = _cells.begin(); 
+          //tt = tt - 0.1;
+          //if(tt <= 0) tt = 0;
+        }
+      }
+      eraseNullCells();
+
+      smoothened = true;
+      round = 0;
+      while(smoothened){
+        round++;
+        smoothened = false;
+        for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
+          if(straightenChain(*cit)){smoothened = true;}
+          if(removeBoundary(*cit)) { smoothened = true; }
+        }
+        if(round > MAXROUNDS) smoothened = false;
+      }
+      eraseNullCells();
+      if(this->getSize() < bestChain->getSize()) bestChain = this;
+      t = t - 0.1;
+    }
+    deImmuneCells();
+    n=n+1;
+  }
+
+  
+  deImmuneCells();
+  smoothened = true;
+  round = 0;
+  while(smoothened){
+    round++;
+    smoothened = false;
+    for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
+      if(straightenChain(*cit)){smoothened = true;}
+      if(removeBoundary(*cit)) { smoothened = true; }
+    }
+    if(round > MAXROUNDS) smoothened = false;
+  }
   eraseNullCells();
+  if(this->getSize() < bestChain->getSize()) bestChain = this;
+  printf("%d-chain simulated annealing removed %d cells. \n", getDim(), before - getSize());  
+  }
   double t2 = Cpu();
-  printf("Smoothened a %d-chain from %d cells to %d cells (%g s). \n", getDim(), start, getSize(), t2-t1);
+  printf("Smoothened a %d-chain from %d cells to %d cells (%g s).\n", getDim(), start, getSize(), t2-t1);
   return;
 }
 
-  
+
 int Chain::writeChainMSH(const std::string &name){
   
   //_cellComplex->writeComplexMSH(name);

@@ -506,7 +506,7 @@ int CellComplex::reduction(int dim){
 }
 */
   
-int CellComplex::reduceComplex(int omit){
+int CellComplex::reduceComplex(){
   
   double t1 = Cpu();
   
@@ -518,7 +518,7 @@ int CellComplex::reduceComplex(int omit){
     
   int omitted = 0;
   _store.clear();
-  if(omit > getDim()) omit = getDim();
+  //if(omit > getDim()) omit = getDim();
   
     
   CellComplex::removeSubdomain();
@@ -592,7 +592,7 @@ void CellComplex::removeSubdomain(){
 }
 
 
-int CellComplex::coreduceComplex(int omit){
+int CellComplex::coreduceComplex(){
 
   printf("Cell complex before coreduction: %d volumes, %d faces, %d edges and %d vertices.\n",
          getSize(3), getSize(2), getSize(1), getSize(0));
@@ -669,6 +669,7 @@ void CellComplex::computeBettiNumbers(){
 
 int CellComplex::cocombine(int dim){
  
+  double t1 = Cpu();
   printf("Cell complex before cocombining: %d volumes, %d faces, %d edges and %d vertices.\n",
          getSize(3), getSize(2), getSize(1), getSize(0));
     
@@ -726,9 +727,9 @@ int CellComplex::cocombine(int dim){
       
     }
   }
-  
-  printf("Cell complex after cocombining: %d volumes, %d faces, %d edges and %d vertices.\n",
-         getSize(3), getSize(2), getSize(1), getSize(0));
+  double t2 = Cpu();
+  printf("Cell complex after cocombining: %d volumes, %d faces, %d edges and %d vertices (%g s).\n",
+         getSize(3), getSize(2), getSize(1), getSize(0), t2-t1);
   
   return count;
 }

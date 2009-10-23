@@ -146,6 +146,10 @@ class Chain{
    std::pair<Cell*, int> findRemainingBoundary(Cell* b, Cell* c1, Cell* c2, Cell* c3=NULL);
    Cell* findCommonCbdCell(Cell* c1, Cell* c2, Cell* c3=NULL);
    int findOrientation(Cell* b, Cell* c);
+   bool straightenChain( std::pair<Cell*, int> cell);
+   bool bendChain( std::pair<Cell*, int> cell);
+   bool removeBoundary( std::pair<Cell*, int> cell);
+   std::map<Cell*, int, Less_Cell>  getBdCellsInChain(Cell* cell);
    
   public:
    Chain(){}
@@ -168,38 +172,21 @@ class Chain{
    
    
    
-   void removeCell(Cell* cell, int coeff) {
+   void removeCell(Cell* cell) {
      citer it = _cells.find(cell);
      if(it != _cells.end()){
-       //int coeff2 = (*it).second;
-       //(*it).second = coeff2 - coeff;
        (*it).second = 0;
-       //printf("removed %d, %d :", cell->getNum(), coeff); cell->printCell();
-       //_cells.erase(it);
-       //if((*it).second == 0) _cells.erase(it);
      }
      return;
    }
    void addCell(Cell* cell, int coeff) {
-     citer it = _cells.find(cell);
-     /*
-     if(it != _cells.end()){
-       int coeff2 = (*it).second;
-       (*it).second = coeff2 + coeff;
-       //if((*it).second == 0) _cells.erase(it);
-     }
-     else{*/
-       //printf("added %d, %d :", cell->getNum(), coeff); cell->printCell();
-       _cells.insert( std::make_pair( cell, coeff));
-       //cell->setImmune(true);
-       //cell->clearBoundary();
-       //cell->clearCoboundary();
-       //_cellComplex->insertCell(cell);
+     std::pair<citer,bool> insert = _cells.insert( std::make_pair( cell, coeff));
+     if(!insert.second && (*insert.first).second == 0) (*insert.first).second = coeff; 
+     else if (!insert.second && (*insert.first).second != 0) printf("Error: invalid chain smoothening add! \n");
+      
      if(!_cellComplex->hasCell(cell)){
        _cellComplex->insertCell(cell);
      }
-     
-     //}
      return;
    }
    /*
@@ -221,6 +208,7 @@ class Chain{
      if(it != _cells.end() && (*it).second != 0) return true;
      return false;
    }
+   
    Cell* findCell(Cell* c){
      citer it = _cells.find(c);
      if(it != _cells.end() && (*it).second != 0) return (*it).first;
@@ -243,6 +231,8 @@ class Chain{
    void eraseNullCells(){
      for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
        if( (*cit).second == 0){
+         //cit++;
+         //_cells.erase(--cit);
          _cells.erase(cit);
          ++cit;
        }
@@ -252,10 +242,15 @@ class Chain{
          _cells.erase(cit);
          cit = _cells.begin(); 
        }
-     }
-     
-     
+     }  
      return;
+   }
+   
+   void deImmuneCells(){
+     for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
+       Cell* cell = (*cit).first;
+       cell->setImmune(false);
+     }
    }
    
    // number of cells in this chain 

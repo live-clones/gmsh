@@ -14,8 +14,6 @@
 Homology::Homology(GModel* model, std::vector<int> physicalDomain, std::vector<int> physicalSubdomain){
   
   _model = model;
-  _combine = true;
-  _omit = 1;
   
   _domain = physicalDomain;
   _subdomain = physicalSubdomain;
@@ -81,18 +79,18 @@ void Homology::findGenerators(std::string fileName){
   Msg::Info("Reducing Cell Complex...");
   double t1 = Cpu();
   //_cellComplex->printEuler();
-  int omitted = _cellComplex->reduceComplex(_omit);
+  int omitted = _cellComplex->reduceComplex();
   //_cellComplex->printEuler();
   
   //_cellComplex->emptyTrash();
   
-  if(getCombine()){
-    _cellComplex->combine(3);
-    _cellComplex->reduction(2);
-    _cellComplex->combine(2);
-    _cellComplex->reduction(1);
-    _cellComplex->combine(1);
-  }
+ 
+  _cellComplex->combine(3);
+  _cellComplex->reduction(2);
+  _cellComplex->combine(2);
+  _cellComplex->reduction(1);
+  _cellComplex->combine(1);
+  
   _cellComplex->checkCoherence();
   //_cellComplex->printEuler();
   
@@ -128,7 +126,7 @@ void Homology::findGenerators(std::string fileName){
       
       std::string name = "H" + dimension + getDomainString()  + generator;
       Chain* chain = new Chain(_cellComplex->getCells(j), chains->getCoeffVector(j,i), _cellComplex, name, chains->getTorsion(j,i));
-      //Chain* chain2 = new Chain(chain);
+      Chain* chain2 = new Chain(chain);
       //printf("chain %d \n", i);
       t1 = Cpu();
       int start = chain->getSize();
@@ -140,7 +138,7 @@ void Homology::findGenerators(std::string fileName){
         if(chain->getTorsion() != 1) Msg::Warning("H%d %d has torsion coefficient %d!", j, i, chain->getTorsion());
       }
       chainVector.push_back(chain);
-      //chainVector.push_back(chain2);
+      chainVector.push_back(chain2);
       //delete chain;
     }
     if(j == _cellComplex->getDim() && _cellComplex->getNumOmitted() > 0){
@@ -174,7 +172,7 @@ void Homology::findGenerators(std::string fileName){
   Msg::Info("H1 = %d", HRank[1]);
   Msg::Info("H2 = %d", HRank[2]);
   Msg::Info("H3 = %d", HRank[3]);
-  if(omitted != 0) Msg::Info("The computation of generators in %d highest dimensions was omitted.", _omit);
+  if(omitted != 0) Msg::Info("The computation of generators in %d highest dimensions was omitted.", omitted);
   
   Msg::Info("Wrote results to %s.", fileName.c_str());
   printf("Wrote results to %s. \n", fileName.c_str());
@@ -195,7 +193,7 @@ void Homology::findDualGenerators(std::string fileName){
   
   Msg::Info("Reducing Cell Complex...");
   double t1 = Cpu();
-  int omitted = _cellComplex->coreduceComplex(_omit);
+  int omitted = _cellComplex->coreduceComplex();
   //_cellComplex->emptyTrash();
   
   /*
@@ -209,11 +207,11 @@ void Homology::findDualGenerators(std::string fileName){
   _cellComplex->makeDualComplex();
   */
   
-  if(getCombine()){
-    _cellComplex->cocombine(0);
-    _cellComplex->cocombine(1);
-    _cellComplex->cocombine(2);
-  }
+
+  _cellComplex->cocombine(0);
+  _cellComplex->cocombine(1);
+  _cellComplex->cocombine(2);
+  
   
   //_cellComplex->emptyTrash();
   
@@ -284,7 +282,7 @@ void Homology::findDualGenerators(std::string fileName){
   Msg::Info("H1* = %d", HRank[1]);
   Msg::Info("H2* = %d", HRank[2]);
   Msg::Info("H3* = %d", HRank[3]);
-  if(omitted != 0) Msg::Info("The computation of %d highest dimension dual generators was omitted.", _omit);
+  if(omitted != 0) Msg::Info("The computation of %d highest dimension dual generators was omitted.", omitted);
   
   Msg::Info("Wrote results to %s.", fileName.c_str());
   printf("Wrote results to %s. \n", fileName.c_str());

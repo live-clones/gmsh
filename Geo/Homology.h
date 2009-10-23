@@ -27,9 +27,6 @@ class Homology
   private:
    CellComplex* _cellComplex;
    GModel* _model;
-   
-   bool _combine;
-   int _omit;
 
    std::vector<int> _domain;
    std::vector<int> _subdomain;
@@ -39,9 +36,6 @@ class Homology
    Homology(GModel* model, std::vector<int> physicalDomain, std::vector<int> physicalSubdomain);
    ~Homology(){ delete _cellComplex; }
    
-   bool getCombine() { return _combine; }
-   bool setCombine(bool combine) { _combine = combine; return _combine; }
-   
    void findGenerators(std::string fileName);
    void findDualGenerators(std::string fileName);
 
@@ -49,22 +43,6 @@ class Homology
    
    void swapSubdomain() { _cellComplex->swapSubdomain(); }
 
-   int getOmit() {return _omit; }
-   void setOmit(int omit) {
-     if(omit == 0) _omit = 0;
-     else _omit = 1;
-        
-     /*
-     if(omit > _cellComplex->getDim() || omit < 0) {
-       Msg::Error("Invalid number of dimensions to omit. Must be between 0 - %d.", _cellComplex->getDim());
-       Msg::Warning("Set to omit 1 dimension.");
-       _omit = 1;
-     }
-     else _omit = omit;
-     */ 
-     
-   }
-   
    std::string getDomainString() {
      
      std::string domainString = "({";
