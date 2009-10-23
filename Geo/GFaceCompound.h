@@ -101,6 +101,7 @@ class GFaceCompound : public GFace {
   virtual int genusGeom () const;
   virtual bool checkTopology() const;
   bool parametrize() const ;
+  void coherenceNormals();
   void partitionFaceCM();
   virtual std::list<GFace*> getCompounds() const {return _compound;};
   mutable int nbSplit;

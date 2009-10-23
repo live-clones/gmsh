@@ -1446,6 +1446,57 @@ bool GFaceCompound::checkAspectRatio() const
 
 }
 
+void GFaceCompound::coherenceNormals()
+{
+
+  std::map<MEdge, std::set<MTriangle*>, Less_Edge > edge2tris;
+  for(int i=0; i< triangles.size(); i++){
+    MTriangle *t = triangles[i];
+    for (int j=0; j<3; j++){
+      MEdge me = t->getEdge(j);
+      std::map<MEdge, std::set<MTriangle*>, Less_Edge >::iterator it = edge2tris.find(me);
+      if (it == edge2tris.end()) {
+	std::set<MTriangle*> mySet;
+	mySet.insert(t);
+	edge2tris.insert(std::make_pair(me, mySet));
+      }
+      else{
+	std::set<MTriangle*> mySet = it->second;
+	mySet.insert(t);
+	it->second = mySet;
+      }
+    }
+  }
+  
+  std::set<MTriangle* > touched;
+  int iE, si, iE2, si2;
+  touched.insert(triangles[0]);
+  while(touched.size() != triangles.size()){
+    for(int i = 0; i< triangles.size(); i++){
+      MTriangle *t = triangles[i];
+      std::set<MTriangle*>::iterator it2 = touched.find(t);
+      if(it2 != touched.end()){
+	for (int j=0; j<3; j++){
+	  MEdge me = t->getEdge(j);
+	  t->getEdgeInfo(me, iE,si);
+	  std::map<MEdge, std::set<MTriangle*>, Less_Edge >::iterator it = edge2tris.find(me);
+	  std::set<MTriangle*> mySet = it->second;
+	  for(std::set<MTriangle*>::iterator itt = mySet.begin(); itt != mySet.end(); itt++){
+	    if (*itt != t){
+	      (*itt)->getEdgeInfo(me,iE2,si2);
+	      if(si == si2)  (*itt)->revert();
+	      touched.insert(*itt);
+	    }
+	  }
+	}
+      }
+    }
+  }
+
+  return;
+
+}
+
 void GFaceCompound::buildAllNodes() const
 {
 
