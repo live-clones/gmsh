@@ -1710,13 +1710,22 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
   Msg::StatusBar(3, false, "");
 }
 
+static void mesh_change_order_cb(Fl_Widget *w, void *data)
+{
+  FlGui::instance()->menu->setContext(menu_mesh_degree, 0);
+}
+
+
 static void mesh_degree_cb(Fl_Widget *w, void *data)
 {
   if((long)data == 2)
     SetOrderN(GModel::current(), 2, CTX::instance()->mesh.secondOrderLinear, 
               CTX::instance()->mesh.secondOrderIncomplete);
-  else
+  else if ((long)data == 1)
     SetOrder1(GModel::current());
+  else // For now, use the same options as for second order meshes
+    SetOrderN(GModel::current(), (long)data, CTX::instance()->mesh.secondOrderLinear, 
+              CTX::instance()->mesh.secondOrderIncomplete);
   CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();
   Msg::StatusBar(2, false, " ");
@@ -2461,8 +2470,7 @@ contextItem menu_mesh[] = {
   {"1D",           (Fl_Callback *)mesh_1d_cb} ,
   {"2D",           (Fl_Callback *)mesh_2d_cb} , 
   {"3D",           (Fl_Callback *)mesh_3d_cb} , 
-  {"First order",  (Fl_Callback *)mesh_degree_cb, (void*)1 } , 
-  {"Second order", (Fl_Callback *)mesh_degree_cb, (void*)2 } , 
+  {"Set order",  (Fl_Callback *)mesh_change_order_cb} , 
   {"Refine by splitting", (Fl_Callback *)mesh_refine_cb} ,
   {"Optimize",     (Fl_Callback *)mesh_optimize_cb} , 
 #if defined(HAVE_NETGEN)
@@ -2500,6 +2508,15 @@ contextItem menu_mesh[] = {
     {"Lines",    (Fl_Callback *)mesh_delete_parts_cb, (void*)"lines"} ,
     {"Surfaces", (Fl_Callback *)mesh_delete_parts_cb, (void*)"surfaces"} ,
     {"Volumes",  (Fl_Callback *)mesh_delete_parts_cb, (void*)"volumes"} ,
+    {""} 
+  };  
+  contextItem menu_mesh_degree[] = {
+    {"1Mesh> Set order"} ,
+    {"1",  (Fl_Callback *)mesh_degree_cb, (void*)1},
+    {"2",  (Fl_Callback *)mesh_degree_cb, (void*)2},
+    {"3",  (Fl_Callback *)mesh_degree_cb, (void*)3},
+    {"4",  (Fl_Callback *)mesh_degree_cb, (void*)4},
+    {"5",  (Fl_Callback *)mesh_degree_cb, (void*)5},
     {""} 
   };  
 

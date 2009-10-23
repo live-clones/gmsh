@@ -49,7 +49,8 @@ extern contextItem menu_mesh[];
 extern    contextItem menu_mesh_edit[]; 
 extern        contextItem menu_mesh_delete[]; 
 extern    contextItem menu_mesh_define[]; 
-extern        contextItem menu_mesh_define_transfinite[]; 
+extern        contextItem menu_mesh_define_transfinite[];
+extern    contextItem menu_mesh_degree[];
 extern contextItem menu_solver[]; 
 extern contextItem menu_post[]; 
 
