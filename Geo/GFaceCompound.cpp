@@ -1427,9 +1427,10 @@ bool GFaceCompound::checkAspectRatio() const
     Msg::Warning("Geometrical aspect ratio too high (1/area_2D=%g)", areaMax);
     SBoundingBox3d bboxH = bounds();
     SBoundingBox3d bboxD = bound_U0();
-    int H = norm(SVector3(bboxH.max(), bboxH.min())); 
-    int D = norm(SVector3(bboxD.max(), bboxD.min()));
+    double H = norm(SVector3(bboxH.max(), bboxH.min())); 
+    double D = norm(SVector3(bboxD.max(), bboxD.min()));
     nbSplit = std::max((int)floor(.25*H/D),2); 
+    printf("H=%g, D=%g  H/4D=\n", H, D, nbSplit);
     Msg::Info("Partition geometry in N=%d parts", nbSplit);
     paramOK = false;
   }
