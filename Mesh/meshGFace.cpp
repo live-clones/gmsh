@@ -1344,12 +1344,14 @@ void partitionAndRemesh(GFaceCompound *gf)
   meshPartitionOptions options;
   options = CTX::instance()->partitionOptions;
   options.num_partitions = NF;
-  options.partitioner = 2; //METIS
-  options.algorithm =  1 ;
+  options.partitioner = 1;//1 CHACO //2 METIS
+  if ( options.partitioner == 1){
+    options.global_method = 2;// 1 Multilevel-KL 2 Spectral
+    options.mesh_dims[0] = NF;
+  }
 
   std::list<GFace*> cFaces =  gf->getCompounds();
   PartitionMeshFace(cFaces, options);
-  //PartitionMesh(gf->model(), options);
   
   int numv = gf->model()->maxVertexNum() + 1;
   int nume = gf->model()->maxEdgeNum() + 1;
@@ -1359,10 +1361,8 @@ void partitionAndRemesh(GFaceCompound *gf)
 
   gf->model()->createTopologyFromFaces(pFaces);
 
- //  if(nume > 1){
-//     CreateOutputFile("toto.msh", CTX::instance()->mesh.format);
-//     Msg::Exit(1);
-//   }
+  //CreateOutputFile("toto.msh", CTX::instance()->mesh.format);
+  //Msg::Exit(1);
 
   //Remesh new faces (Compound Lines and Compound Surfaces)
   //-----------------------------------------------------
@@ -1455,10 +1455,6 @@ void partitionAndRemesh(GFaceCompound *gf)
 
   Msg::Info("*** Mesh of surface %d done by assembly remeshed faces", gf->tag());
   gf->meshStatistics.status = GFace::DONE; 
-
-  //    for(std::list<GFace*>::iterator it = cFaces.begin(); it != cFaces.end(); it++)
-  //      tmp_model->remove(*it);
-  //    delete tmp_model;
 
   //CreateOutputFile("toto.msh", CTX::instance()->mesh.format);
   //Msg::Exit(1);

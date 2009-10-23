@@ -248,9 +248,11 @@ void GFaceCompound::partitionFaceCM()
 //the same normal orientation
 bool GFaceCompound::checkOrientation(int iter) const
 {
-
+ 
   //Only check orientation for stl files (1 patch)
   //  if(_compound.size() > 1.0) return true;
+
+  //return true; 
 
   std::list<GFace*>::const_iterator it = _compound.begin();
   double a_old = 0, a_new;
@@ -262,12 +264,12 @@ bool GFaceCompound::checkOrientation(int iter) const
       SPoint3 v1 = coordinates[t->getVertex(0)];
       SPoint3 v2 = coordinates[t->getVertex(1)];
       SPoint3 v3 = coordinates[t->getVertex(2)];
-      double p1[2] = {v1[0],v1[1]};
-      double p2[2] = {v2[0],v2[1]};
-      double p3[2] = {v3[0],v3[1]};
-      a_new = robustPredicates::orient2d(p1, p2, p3);
-      if(count == 0) a_old=a_new;
-      if(a_new*a_old < 0.){
+      double p0[2] = {v1[0],v1[1]};
+      double p1[2] = {v2[0],v2[1]};
+      double p2[2] = {v3[0],v3[1]};
+      a_new = robustPredicates::orient2d(p0, p1, p2);
+      if(count == 0) a_old=a_new;   
+      if(a_new*a_old < 0. && fabs(a_new) > 1.e10){
 	oriented = false;
 	break;
       }
@@ -294,6 +296,7 @@ bool GFaceCompound::checkOrientation(int iter) const
 
 bool GFaceCompound::checkCavity(std::vector<MElement*> &vTri) const
 {
+
   bool badCavity = false;
   
   unsigned int nbV = vTri.size();
@@ -530,6 +533,7 @@ void GFaceCompound::computeALoop(std::set<GEdge*> &_unique, std::list<GEdge*> &l
 
   while(!_unique.empty()) {
     std::set<GEdge*>::iterator it = _unique.begin();
+    //printf("for face %d bound edge =%d\n", tag(), (*it)->tag());
     GVertex *vB = (*it)->getBeginVertex();
     GVertex *vE = (*it)->getEndVertex();
     _loop.push_back(*it);
@@ -581,6 +585,7 @@ void GFaceCompound::computeALoop(std::set<GEdge*> &_unique, std::list<GEdge*> &l
   
   loop = _loop;
   _interior_loops.push_back(loop);
+
   return;
 
 }
@@ -1425,7 +1430,7 @@ bool GFaceCompound::checkAspectRatio() const
     int H = norm(SVector3(bboxH.max(), bboxH.min())); 
     int D = norm(SVector3(bboxD.max(), bboxD.min()));
     nbSplit = std::max((int)floor(.25*H/D),2); 
-    Msg::Warning("Partition geometry in N=%d parts", nbSplit);
+    Msg::Info("Partition geometry in N=%d parts", nbSplit);
     paramOK = false;
   }
   else {
