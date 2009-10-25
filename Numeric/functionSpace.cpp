@@ -191,7 +191,7 @@ static fullMatrix<double> generatePascalSerendipityTetrahedron(int order)
     4 * std::max(0, (order - 2) * (order - 1) / 2);
   fullMatrix<double> monomials(nbMonomials, 3);
 
-  monomials.set_all(0);
+  monomials.setAll(0);
   int index = 1;
   for (int p = 1; p < order; p++) {
     for (int i = 0; i < 3; i++) {

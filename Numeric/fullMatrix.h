@@ -146,7 +146,7 @@ class fullMatrix
   }
 #endif
   ;
-  inline void set_all(const scalar &m) 
+  inline void setAll(const scalar &m) 
   {
     for(int i = 0; i < _r * _c; i++) _data[i] = m;
   }
@@ -198,7 +198,7 @@ class fullMatrix
         _data[j + _r * i] = t;
       }
   }
-  bool lu_solve(const fullVector<scalar> &rhs, fullVector<scalar> &result)
+  bool luSolve(const fullVector<scalar> &rhs, fullVector<scalar> &result)
 #if !defined(HAVE_LAPACK)
   {
     Msg::Error("LU factorization requires LAPACK");
@@ -214,11 +214,9 @@ class fullMatrix
   }
 #endif
   ;
-  bool eig(fullMatrix<scalar> &VL, // left eigenvectors 
-           fullVector<double> &DR, // Real part of eigenvalues
-           fullVector<double> &DI, // Im part of eigen
-           fullMatrix<scalar> &VR,
-           bool sortRealPart=false) // if true: sorted from min 'DR' to max 'DR'
+  bool eig(fullVector<double> &eigenValReal, fullVector<double> &eigenValImag,
+           fullMatrix<scalar> &leftEigenVect, fullMatrix<scalar> &rightEigenVect,
+           bool sortRealPart=false)
 #if !defined(HAVE_LAPACK)
   {
     Msg::Error("Eigenvalue computations requires LAPACK");

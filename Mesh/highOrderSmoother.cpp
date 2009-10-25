@@ -566,7 +566,7 @@ double highOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
       fullVector<double> D3(n3);
       fullVector<double> R2(n2);
       fullMatrix<double> J23K33(n2, n3);
-      K33.set_all(0.0);
+      K33.setAll(0.0);
       SElement se(e);
       El.elementMatrix(&se, K33);
       computeMetricVector(gf, e, J32, J23, D3);

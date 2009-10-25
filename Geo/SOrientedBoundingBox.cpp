@@ -258,7 +258,7 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
   fullMatrix<double> right_eigv(3,3);
   fullVector<double> real_eig(3);
   fullVector<double> img_eig(3);
-  covariance.eig(left_eigv, real_eig, img_eig, right_eigv,true);
+  covariance.eig(real_eig, img_eig, left_eigv, right_eigv,true);
 
   // Now, project the data in the new basis.
   fullMatrix<double> projected(3,num_vertices);

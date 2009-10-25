@@ -105,21 +105,17 @@ void fullMatrix<std::complex<double> >::mult(const fullVector<std::complex<doubl
 #if defined(HAVE_LAPACK)
 
 extern "C" {
-  void F77NAME(dgesv)(int *N, int *nrhs, double *A, int *lda, int *ipiv, 
+  void F77NAME(dgesv)(int *N, int *nrhs, double *A, int *lda, int *ipiv,
                       double *b, int *ldb, int *info);
   void F77NAME(dgetrf)(int *M, int *N, double *A, int *lda, int *ipiv, int *info);
-  void F77NAME(dgetri)(int *M, double *A, int *lda, int *ipiv, double *work, int *lwork, 
-                       int *info);
+  void F77NAME(dgetri)(int *M, double *A, int *lda, int *ipiv, double *work, 
+                       int *lwork, int *info);
   void F77NAME(dgesvd)(const char* jobu, const char *jobvt, int *M, int *N,
                        double *A, int *lda, double *S, double* U, int *ldu,
                        double *VT, int *ldvt, double *work, int *lwork, int *info);
-  void F77NAME(dgeev)(const char *jobvl, const char *jobvr, 
-                      int *n, double *a, int *lda, 
-                      double *wr, double *wi, 
-                      double *vl, int *ldvl, 
-                      double *vr, int *ldvr, 
-                      double *work, int *lwork,
-                      int *info); 
+  void F77NAME(dgeev)(const char *jobvl, const char *jobvr, int *n, double *a,
+                      int *lda, double *wr, double *wi, double *vl, int *ldvl, 
+                      double *vr, int *ldvr, double *work, int *lwork, int *info);
 }
 
 template<> 
@@ -148,17 +144,15 @@ bool fullMatrix<double>::invertInPlace()
 
 
 template<> 
-bool fullMatrix<double>::eig(fullMatrix<double> &VL, fullVector<double> &DR,
-                             fullVector<double> &DI, fullMatrix<double> &VR,
+bool fullMatrix<double>::eig(fullVector<double> &DR, fullVector<double> &DI,
+                             fullMatrix<double> &VL, fullMatrix<double> &VR,
                              bool sortRealPart)
 {
   int N = size1(), info;
-  int LWORK = 10 * N;
-  double *work = new double[LWORK];
-
+  int lwork = 10 * N;
+  double *work = new double[lwork];
   F77NAME(dgeev)("V", "V", &N, _data, &N, DR._data, DI._data,
-                 VL._data, &N, VR._data, &N, work, &LWORK, &info);
-  
+                 VL._data, &N, VR._data, &N, work, &lwork, &info);
   delete [] work;
 
   if(info > 0)
@@ -166,25 +160,25 @@ bool fullMatrix<double>::eig(fullMatrix<double> &VL, fullVector<double> &DR,
   else if(info < 0)
     Msg::Error("Wrong %d-th argument in eig", -info);
 
-  if (sortRealPart) {
+  if(sortRealPart) {
     double tmp[8];
     // do permutations
-    for (int i = 0; i < size1() - 1; i++) {
+    for(int i = 0; i < size1() - 1; i++) {
       int minR = i;
-      for (int j = i + 1; j < size1(); j++) 
-        if (fabs(DR(j)) < fabs(DR(minR))) minR = j;
-      if ( minR != i ){
+      for(int j = i + 1; j < size1(); j++)
+        if(fabs(DR(j)) < fabs(DR(minR))) minR = j;
+      if(minR != i){
         tmp[0] = DR(i); tmp[1] = DI(i);
-        tmp[2] = VL(0,i); tmp[3] = VL(1,i); tmp[4] = VL(2,i);
-        tmp[5] = VR(0,i); tmp[6] = VR(1,i); tmp[7] = VR(2,i);
+        tmp[2] = VL(0, i); tmp[3] = VL(1, i); tmp[4] = VL(2, i);
+        tmp[5] = VR(0, i); tmp[6] = VR(1, i); tmp[7] = VR(2, i);
         
         DR(i) = DR(minR); DI(i) = DI(minR);
-        VL(0,i) = VL(0,minR); VL(1,i) = VL(1,minR); VL(2,i) = VL(2,minR);
-        VR(0,i) = VR(0,minR); VR(1,i) = VR(1,minR); VR(2,i) = VR(2,minR);
+        VL(0,i) = VL(0, minR); VL(1, i) = VL(1, minR); VL(2, i) = VL(2, minR);
+        VR(0,i) = VR(0, minR); VR(1, i) = VR(1, minR); VR(2, i) = VR(2, minR);
         
         DR(minR) = tmp[0]; DI(minR) = tmp[1];
-        VL(0,minR) = tmp[2]; VL(1,minR) = tmp[3]; VL(2,minR) = tmp[4];
-        VR(0,minR) = tmp[5]; VR(1,minR) = tmp[6]; VR(2,minR) = tmp[7];
+        VL(0, minR) = tmp[2]; VL(1, minR) = tmp[3]; VL(2, minR) = tmp[4];
+        VR(0, minR) = tmp[5]; VR(1, minR) = tmp[6]; VR(2, minR) = tmp[7];
       }
     }
   }
@@ -193,7 +187,7 @@ bool fullMatrix<double>::eig(fullMatrix<double> &VL, fullVector<double> &DR,
 }
 
 template<> 
-bool fullMatrix<double>::lu_solve(const fullVector<double> &rhs, fullVector<double> &result)
+bool fullMatrix<double>::luSolve(const fullVector<double> &rhs, fullVector<double> &result)
 {
   int N = size1(), nrhs = 1, lda = N, ldb = N, info;
   int *ipiv = new int[N];
@@ -257,10 +251,10 @@ bool fullMatrix<double>::svd(fullMatrix<double> &V, fullVector<double> &S)
 {
   fullMatrix<double> VT(V.size2(), V.size1());
   int M = size1(), N = size2(), LDA = size1(), LDVT = VT.size1(), info;
-  int LWORK = std::max(3 * std::min(M, N) + std::max(M, N), 5 * std::min(M, N));
-  fullVector<double> WORK(LWORK);
+  int lwork = std::max(3 * std::min(M, N) + std::max(M, N), 5 * std::min(M, N));
+  fullVector<double> WORK(lwork);
   F77NAME(dgesvd)("O", "A", &M, &N, _data, &LDA, S._data, _data, &LDA,
-                  VT._data, &LDVT, WORK._data, &LWORK, &info);
+                  VT._data, &LDVT, WORK._data, &lwork, &info);
   V = VT.transpose();
   if(info == 0) return true;
   if(info > 0)

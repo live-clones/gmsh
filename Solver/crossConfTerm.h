@@ -55,7 +55,7 @@ class crossConfTerm : public femTerm<double, double> {
     double grads[256][3];
     e->getIntegrationPoints(integrationOrder, &npts, &GP);
   
-    m.set_all(0.);
+    m.setAll(0.);
     
     for (int i = 0; i < npts; i++){
       const double u = GP[i].pt[0];

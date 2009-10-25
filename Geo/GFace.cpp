@@ -15,7 +15,6 @@
 #include "VertexArray.h"
 #include "fullMatrix.h"
 #include "Numeric.h"
-#include "EigSolve.h"
 #include "GaussLegendre1D.h"
 #include "Context.h"
 
@@ -641,33 +640,33 @@ void GFace::getMetricEigenVectors(const SPoint2 &param,
   inv_form1[1][0] = inv_form1[0][1] = -1 * inv_det_form1 * form1[0][1];
 
   // N = (inverse of form1) X (form2)
-  double N[4]; // { N00 N01 N10 N11 }
-  N[0] = inv_form1[0][0] * form2[0][0] + inv_form1[0][1] * form2[1][0];
-  N[1] = inv_form1[0][0] * form2[0][1] + inv_form1[0][1] * form2[1][1];
-  N[2] = inv_form1[1][0] * form2[0][0] + inv_form1[1][1] * form2[1][0];
-  N[3] = inv_form1[1][0] * form2[0][1] + inv_form1[1][1] * form2[1][1];
+  fullMatrix<double> N(2, 2);
+  N(0, 0) = inv_form1[0][0] * form2[0][0] + inv_form1[0][1] * form2[1][0];
+  N(0, 1) = inv_form1[0][0] * form2[0][1] + inv_form1[0][1] * form2[1][1];
+  N(1, 0) = inv_form1[1][0] * form2[0][0] + inv_form1[1][1] * form2[1][0];
+  N(1, 1) = inv_form1[1][0] * form2[0][1] + inv_form1[1][1] * form2[1][1];
   
   // eigen values and vectors of N
-  int work1[2];
-  double work2[2];
-  double eigValI[2];
-  if (EigSolve(2, 2, N, eigVal, eigValI, eigVec, work1, work2) != 1) {
-    Msg::Error("Problem in eigen vectors computation");
-    Msg::Error(" N: %f %f %f %f", N[0], N[1], N[2], N[3]);
-    Msg::Error(" * Eigen values:");
-    Msg::Error("   %f + i * %f,  %f + i * %f",
-               eigVal[0], eigValI[0], eigVal[1], eigValI[1]);
-    Msg::Error(" * Eigen vectors (trust it only if eigen values are real):");
-    Msg::Error("   ( %f, %f ), ( %f, %f )",
-               eigVec[0], eigVec[2], eigVec[1], eigVec[3]);
+  fullMatrix<double> vl(2, 2), vr(2, 2);
+  fullVector<double> dr(2), di(2);
+  if(N.eig(dr, di, vl, vr, true)){
+    eigVal[0] = fabs(dr(0));
+    eigVal[1] = fabs(dr(1));
+    eigVec[0] = vr(0, 0);
+    eigVec[1] = vr(1, 0);
+    eigVec[2] = vr(0, 1);
+    eigVec[3] = vr(1, 1);
   }
-  if (fabs(eigValI[0]) > 1.e-12 || fabs(eigValI[1]) > 1.e-12) {
+  else{
+    Msg::Error("Problem in eigen vectors computation");
+    Msg::Error(" N = [ %f %f ]", N(0, 0), N(0, 1));
+    Msg::Error("     [ %f %f ]", N(1, 0), N(1, 1));
+    for(int i = 0; i < 2; i++) eigVal[i] = 0.;
+    for(int i = 0; i < 4; i++) eigVec[i] = 0.;
+  }
+  if (fabs(di(0)) > 1.e-12 || fabs(di(1)) > 1.e-12) {
     Msg::Error("Found imaginary eigenvalues");
   }
-
-  eigVal[0] = fabs(eigVal[0]);
-  eigVal[1] = fabs(eigVal[1]);
-  EigSort(2, eigVal, eigValI, eigVec);
 }
 
 void GFace::XYZtoUV(const double X, const double Y, const double Z,

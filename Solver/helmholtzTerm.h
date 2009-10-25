@@ -63,7 +63,7 @@ class helmholtzTerm : public femTerm<scalar, scalar> {
     double Grads[100][3], grads[100][3];  
     double sf[100];
     // set the local matrix to 0 
-    m.set_all(0.);
+    m.setAll(0.);
     // loop over integration points
     for (int i = 0; i < npts; i++){
       // compute stuff at this point

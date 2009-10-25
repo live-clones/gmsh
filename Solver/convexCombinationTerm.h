@@ -39,7 +39,7 @@ class convexCombinationTerm : public femTerm<double,double> {
   {
 
     MElement *e = se->getMeshElement();
-    m.set_all(0.);
+    m.setAll(0.);
     const int nbNodes = e->getNumVertices();
     const double _diff = 1.0;
     for (int j = 0; j < nbNodes; j++){

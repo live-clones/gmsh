@@ -118,7 +118,7 @@ static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N,
     if (M == 1)
       DU(0) = R(0) / J(0, 0);
     else
-      J.lu_solve(R, DU);
+      J.luSolve(R, DU);
     
     for (int i = 0; i < M; i++){
       u[i+1] -= underRelax*DU(i);
@@ -204,7 +204,7 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
     if (M == 1)
       DU(0) = R(0) / J(0, 0);
     else
-      J.lu_solve(R, DU);
+      J.luSolve(R, DU);
     
     for (int i = 0; i < M; i++){
       t[i + 1] -= DU(i);

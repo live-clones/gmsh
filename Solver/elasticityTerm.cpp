@@ -22,7 +22,7 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
   double GradsT[100][3];
   e->getIntegrationPoints(integrationOrder, &npts, &GP);
 
-  m.set_all(0.);
+  m.setAll(0.);
 
   double FACT = _E / (1 + _nu);
   double C11 = FACT * (1 - _nu) / (1 - 2 * _nu);
@@ -53,8 +53,8 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
     inv3x3(jac, invjac);
     se->gradNodalShapeFunctions(u, v, w, invjac,Grads);
 
-    B.set_all(0.);
-    BT.set_all(0.);
+    B.setAll(0.);
+    BT.setAll(0.);
 
     if (se->getShapeEnrichement() == se->getTestEnrichement()){
       for (int j = 0; j < nbNodes; j++){
@@ -92,7 +92,7 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
       }
     }
 
-    BTH.set_all(0.);
+    BTH.setAll(0.);
     BTH.gemm(BT, H);
     m.gemm(BTH, B, weight * detJ, 1.);
   }

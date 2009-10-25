@@ -8,7 +8,6 @@ void SMetric3::print (const char *s) const
          (*this)(0,1),(*this)(0,2),(*this)(1,2));
 }
 
-
 SMetric3 intersection (const SMetric3 &m1, const SMetric3 &m2)
 {
   SMetric3 im1 = m1.invert();
@@ -77,4 +76,3 @@ SMetric3 interpolation (const SMetric3 &m1,
   im1 += im4;
   return im1.invert();
 }
-

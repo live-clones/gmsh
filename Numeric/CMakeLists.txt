@@ -6,7 +6,6 @@
 set(SRC
   Numeric.cpp
     fullMatrix.cpp
-    EigSolve.cpp
     functionSpace.cpp
   GaussQuadratureLin.cpp
     GaussQuadratureTri.cpp

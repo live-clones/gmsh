@@ -64,7 +64,7 @@ class linearSystemFull : public linearSystem<scalar> {
   }
   virtual void zeroMatrix() 
   {
-    _a->set_all(0.);
+    _a->setAll(0.);
   }
   virtual void zeroRightHandSide()
   {
@@ -73,7 +73,7 @@ class linearSystemFull : public linearSystem<scalar> {
   virtual int systemSolve() 
   {
     if (_b->size())
-      _a->lu_solve(*_b, *_x);
+      _a->luSolve(*_b, *_x);
     return 1;
   }
 };

@@ -5,7 +5,7 @@
 
 #include "Eigenvectors.h"
 #include "Numeric.h"
-#include "EigSolve.h"
+#include "fullMatrix.h"
 #include "GmshDefines.h"
 
 StringXNumber EigenvectorsOptions_Number[] = {
@@ -91,7 +91,8 @@ PView *GMSH_EigenvectorsPlugin::execute(PView *v)
   PViewDataList *dmax = getDataList(max);
 
   int nbcomplex = 0;
-
+  fullMatrix<double> mat(3, 3), vl(3, 3), vr(3, 3);
+  fullVector<double> dr(3), di(3);
   for(int ent = 0; ent < data1->getNumEntities(0); ent++){
     for(int ele = 0; ele < data1->getNumElements(0, ent); ele++){
       if(data1->skipElement(0, ent, ele)) continue;
@@ -115,21 +116,21 @@ PView *GMSH_EigenvectorsPlugin::execute(PView *v)
       }
       for(int step = 0; step < data1->getNumTimeSteps(); step++){
         for(int nod = 0; nod < numNodes; nod++){
-          double val[9];
-          for(int comp = 0; comp < numComp; comp++)
-            data1->getValue(step, ent, ele, nod, comp, val[comp]);
-          double wr[3], wi[3], B[9];
-          if(!EigSolve3x3(val, wr, wi, B))
-            Msg::Error("Eigensolver failed to converge");
-          nbcomplex += nonzero(wi); 
-          if(!scale) wr[0] = wr[1] = wr[2] = 1.;
-          for(int i = 0; i < 3; i++){
-            double res;
-            // wrong if there are complex eigenvals (B contains both
-            // real and imag parts: cf. explanation in EigSolve.cpp)
-            res = wr[0] * B[i]; outmin->push_back(res);
-            res = wr[1] * B[3 + i]; outmid->push_back(res);
-            res = wr[2] * B[6 + i]; outmax->push_back(res);
+          for(int i = 0; i < 3; i++)
+            for(int j = 0; j < 3; j++)
+              data1->getValue(step, ent, ele, nod, 3 * i + j, mat(i, j));
+          if(mat.eig(dr, di, vl, vr, true)){
+            if(!scale) dr(0) = dr(1) = dr(2) = 1.;
+            for(int i = 0; i < 3; i++){
+              double res;
+              res = dr(0) * vr(i, 0); outmin->push_back(res);
+              res = dr(1) * vr(i, 1); outmid->push_back(res);
+              res = dr(2) * vr(i, 2); outmax->push_back(res);
+            }
+            if(di(0) || di(1) || di(2)) nbcomplex++;
+          }
+          else{
+            Msg::Error("Could not compute eigenvalues/vectors");
           }
         }
       }
@@ -137,8 +138,7 @@ PView *GMSH_EigenvectorsPlugin::execute(PView *v)
   }
 
   if(nbcomplex)
-    Msg::Error("%d tensors have complex eigenvalues/eigenvectors", 
-               nbcomplex);
+    Msg::Error("%d tensors have complex eigenvalues", nbcomplex);
   
   for(int i = 0; i < data1->getNumTimeSteps(); i++){
     double time = data1->getTime(i);
