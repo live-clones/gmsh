@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _EIGEN_SOLVE_H_
-#define _EIGEN_SOLVE_H_
+#ifndef _EIGEN_SOLVER_H_
+#define _EIGEN_SOLVER_H_
 
 #include <string>
 #include <complex>
