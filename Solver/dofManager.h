@@ -73,7 +73,7 @@ class dofManager{
   std::map<Dof, Dof> associatedWith;
     
   // linearSystems
-  std::map<const std::string, linearSystem<dataMat>* > _linearSystems;
+  std::map<const std::string, linearSystem<dataMat>*> _linearSystems;
   linearSystem<dataMat>* _current;
    
  public:
@@ -236,7 +236,12 @@ class dofManager{
   }  
   linearSystem<dataMat> *getLinearSystem(std::string &name)
   {
-    return _linearSystems[name];
+    typename std::map<const std::string, linearSystem<dataMat>*>::iterator it =
+      _linearSystems.find(name);
+    if(it != _linearSystems.end())
+      return it->second;
+    else
+      return 0;
   }
 };
 

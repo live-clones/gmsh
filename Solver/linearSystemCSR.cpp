@@ -6,10 +6,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "linearSystemCSR.h"
+#include "OS.h"
 
 #define SWAP(a, b)  temp = (a); (a) = (b); (b) = temp;
 #define SWAPI(a, b) tempi = (a); (a) = (b); (b) = tempi;
@@ -343,7 +343,7 @@ int linearSystemCSRTaucs<double>::systemSolve()
   myVeryCuteTaucsMatrix.flags = TAUCS_SYMMETRIC | TAUCS_LOWER | TAUCS_DOUBLE;
 
   char* options[] = { "taucs.factor.LLT=true", NULL };
-  clock_t t1 = clock();
+  double t1 = Cpu();
   int result = taucs_linsolve(&myVeryCuteTaucsMatrix,
                               NULL,
                               1,
@@ -351,9 +351,8 @@ int linearSystemCSRTaucs<double>::systemSolve()
                               &(*_b)[0],
                               options,
                               NULL);
-  clock_t t2 = clock();
-  Msg::Info("TAUCS has solved %d unknowns in %8.3f seconds",
-            _b->size(), (double)(t2 - t1) / CLOCKS_PER_SEC);
+  double t2 = Cpu();
+  Msg::Info("TAUCS has solved %d unknowns in %8.3f seconds", _b->size(), t2 - t1);
   if (result != TAUCS_SUCCESS){
     Msg::Error("Taucs Was Not Successfull %d", result);
   }
