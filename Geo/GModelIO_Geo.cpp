@@ -161,8 +161,7 @@ int GModel::importGEOInternals()
       int i = 0;
       List_T *bnd;
       std::list<GEdge*> b[4];
-      while((bnd = p->Boundaries[i])){
-        if (i > 3)break;
+      while(i < 4 && (bnd = p->Boundaries[i])){
         for(int j = 0; j < List_Nbr(bnd); j++){
           int ie;
           List_Read(bnd, j, &ie);

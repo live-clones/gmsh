@@ -9,6 +9,7 @@
 #include "MLine.h"
 #include "MTriangle.h"
 #include "Numeric.h"
+#include "OS.h"
 #include "Octree.h"
 #include "SBoundingBox3d.h"
 #include "SPoint3.h"
@@ -28,7 +29,7 @@
 #include "CreateFile.h"
 #include "Context.h"
 #include "discreteFace.h"
-
+#include "eigenSolve.h"
 
 static void fixEdgeToValue(GEdge *ed, double value, dofManager<double, double> &myAssembler)
 {
@@ -538,7 +539,6 @@ void GFaceCompound::computeALoop(std::set<GEdge*> &_unique, std::list<GEdge*> &l
     GVertex *vE = (*it)->getEndVertex();
     _loop.push_back(*it);
     _unique.erase(it);
-    it++;
     
     bool found = false;
     for(int i = 0; i < 2; i++) {           
@@ -580,7 +580,8 @@ void GFaceCompound::computeALoop(std::set<GEdge*> &_unique, std::list<GEdge*> &l
     }
 
     if(found == true) break;
-    
+
+    it++;    
   } 
   
   loop = _loop;
@@ -599,10 +600,10 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 {
 
   if (!_lsys) {
-#if defined(HAVE_TAUCS)
-    _lsys = new linearSystemCSRTaucs<double>;
-#elif defined(HAVE_PETSC)
+#if defined(HAVE_PETSC)
     _lsys = new linearSystemPETSc<double>;
+#elif defined(HAVE_TAUCS)
+    _lsys = new linearSystemCSRTaucs<double>;
 #elif defined(HAVE_GMM)
     linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
     _lsysb->setGmres(1);
@@ -875,7 +876,7 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
   Msg::Debug("Creating term %d dofs numbered %d fixed",
              myAssembler.sizeOfR(), myAssembler.sizeOfF());
   
-  clock_t t1 = clock();  
+  double t1 = Cpu();  
   
   if (tom == CONVEXCOMBINATION){
     convexCombinationTerm laplace(model(), 1, &ONE);
@@ -899,8 +900,8 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
   }
 
 
-  clock_t t2 = clock();
-  Msg::Debug("Assembly done in %8.3f seconds",(double)(t2-t1)/CLOCKS_PER_SEC);
+  double t2 = Cpu();
+  Msg::Debug("Assembly done in %8.3f seconds", t2 - t1);
   _lsys->systemSolve();
   Msg::Debug("System solved");
 
