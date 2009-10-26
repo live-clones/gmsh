@@ -26,7 +26,7 @@ class eigenSolver{
  public:
   eigenSolver(dofManager<double, double> *manager, std::string A, 
               std::string B="");
-  void solve();
+  void solve(int numEigenValues=0, std::string which="");
   int getNumEigenValues(){ return _eigenValues.size(); }
   std::complex<double> getEigenValue(int num){ return _eigenValues[num]; }
   std::vector<std::complex<double> > &getEigenVector(int num){ return _eigenVectors[num]; }
@@ -40,7 +40,10 @@ class eigenSolver{
  public:
   eigenSolver(dofManager<double, double> *manager, std::string A, 
               std::string B=""){}
-  void solve(){ Msg::Error("Eigen solver requires SLEPc"); }
+  void solve(int numEigenValues=0, std::string which="")
+  {
+    Msg::Error("Eigen solver requires SLEPc");
+  }
   int getNumEigenValues(){ return 0.; }
   std::complex<double> getEigenValue(int num){ return 0.; }
   std::vector<std::complex<double> > &getEigenVector(int num){ return _dummy; }

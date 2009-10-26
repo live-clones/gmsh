@@ -22,7 +22,7 @@ eigenSolver::eigenSolver(dofManager<double, double> *manager, std::string A,
   }
 }
 
-void eigenSolver::solve()
+void eigenSolver::solve(int numEigenValues, std::string which)
 {
   if(!_A) return;
   Mat A = _A->getMatrix();
@@ -33,41 +33,47 @@ void eigenSolver::solve()
   PetscInt N, M;
   _try(MatGetSize(A, &N, &M));
 
-  // treatment of a generalized eigenvalue problem A x - \lambda B x = 0
+  // generalized eigenvalue problem A x - \lambda B x = 0
   EPS eps;
   _try(EPSCreate(PETSC_COMM_WORLD, &eps));
   _try(EPSSetOperators(eps, A, B));
-  // FIXME: check if hermitian (EPS_HEP or EPS_GHEP)
-  //_try(EPSSetProblemType(eps, _B ? EPS_GNHEP : EPS_NHEP));
-  _try(EPSSetProblemType(eps, _B ? EPS_GHEP : EPS_HEP));
+  bool hermitian = false; // FIXME
+  if(hermitian)
+    _try(EPSSetProblemType(eps, _B ? EPS_GHEP : EPS_HEP));
+  else
+    _try(EPSSetProblemType(eps, _B ? EPS_GNHEP : EPS_NHEP));
 
-  // set options
-  //_try(EPSSetWhichEigenpairs(eps, EPS_LARGEST_MAGNITUDE));
-  //_try(EPSSetWhichEigenpairs(eps, EPS_SMALLEST_REAL));
-  _try(EPSSetTarget(eps, 0.)); // find eigenvalues close to given target
-  PetscInt nev = 2; // number of eigenvalues to compute
-  PetscInt mpd = nev; // max dim allowed for the projected problem
-  PetscInt ncv = nev + mpd; // max dim of the subspace to be used by the solver
-  _try(EPSSetDimensions(eps, nev, ncv, mpd));
-  //_try(EPSSetType(eps, EPSPOWER));
+  // set some default options
+  _try(EPSSetDimensions(eps, 5, PETSC_DECIDE, PETSC_DECIDE));
 
-  // override options at runtime, petsc-style
+  // override these options at runtime, petsc-style
   _try(EPSSetFromOptions(eps));
+
+  // force options specified directly as arguments
+  if(numEigenValues)
+    _try(EPSSetDimensions(eps, numEigenValues, PETSC_DECIDE, PETSC_DECIDE));
+  if(which == "smallest")
+    _try(EPSSetWhichEigenpairs(eps, EPS_SMALLEST_MAGNITUDE));
+  else if(which == "largest")
+    _try(EPSSetWhichEigenpairs(eps, EPS_LARGEST_MAGNITUDE));
 
   // print info
   const EPSType type;
   _try(EPSGetType(eps, &type));
   Msg::Info("SLEPc solution method: %s", type);
-  _try(EPSGetDimensions(eps, &nev, &ncv, &mpd));
+  PetscInt nev;
+  _try(EPSGetDimensions(eps, &nev, PETSC_NULL, PETSC_NULL));
   Msg::Info("SLEPc number of requested eigenvalues: %d", nev);
   PetscReal tol;
   PetscInt maxit;
   _try(EPSGetTolerances(eps, &tol, &maxit));
   Msg::Info("SLEPc stopping condition: tol=%g, maxit=%d", tol, maxit);
- 	
+
+  // solve
   Msg::Info("SLEPc solving...");
   _try(EPSSolve(eps));
 
+  // check convergence
   int its;
   _try(EPSGetIterationNumber(eps, &its));
   EPSConvergedReason reason;
@@ -75,7 +81,7 @@ void eigenSolver::solve()
   if(reason == EPS_CONVERGED_TOL)
     Msg::Info("SLEPc converged in %d iterations", its);
   else if(reason == EPS_DIVERGED_ITS)
-    Msg::Error("SLEPc did not converge in %d iterations", its);
+    Msg::Error("SLEPc diverged after %d iterations", its);
   else if(reason == EPS_DIVERGED_BREAKDOWN)
     Msg::Error("SLEPc generic breakdown in method");
   else if(reason == EPS_DIVERGED_NONSYMMETRIC)
@@ -86,20 +92,15 @@ void eigenSolver::solve()
   _try(EPSGetConverged(eps, &nconv));
   Msg::Info("SLEPc number of converged eigenpairs: %d", nconv);
 
-  // if number of converged solutions is greated than requested
-  // discarded surplus solutions
+  // ignore additional eigenvalues if we get more than what we asked
   if(nconv > nev) nconv = nev;
-  // if number of converged solutions is less than requested display
-  // only converged solutions
-  if(nconv < nev) nev = nconv;
 
   Vec xr, xi;
   _try(MatGetVecs(A, PETSC_NULL, &xr));
   _try(MatGetVecs(A, PETSC_NULL, &xi));
   Msg::Info("         Re[EigenValue]          Im[EigenValue]"
             "          Relative error");
-  for (int i = nconv - 1; i > nconv - nev - 1; i--){
-    std::vector<std::complex<double> > ev(N);
+  for (int i = 0; i < nconv; i++){
     PetscScalar kr, ki;
     _try(EPSGetEigenpair(eps, i, &kr, &ki, xr, xi));
     PetscReal error;
@@ -111,15 +112,15 @@ void eigenSolver::solve()
     PetscReal re = kr;
     PetscReal im = ki;
 #endif
-    // Output eigenvalues and relative error (= ||Ax - eig*Bx||/||eig*x||)
-    Msg::Info("EIG %03d %s%.16e %s%.16e  %3.6e", (nconv - i), 
-              (re < 0) ? "" : " ", re, (im < 0) ? "" : " ", im, error);
-    _eigenValues.push_back(std::complex<double>(re, im));
+    Msg::Info("EIG %03d %s%.16e %s%.16e  %3.6e", 
+              i, (re < 0) ? "" : " ", re, (im < 0) ? "" : " ", im, error);
 
-    // Output eigenvector
+    // store eigenvalues and eigenvectors
+    _eigenValues.push_back(std::complex<double>(re, im));
     PetscScalar *tmpr, *tmpi;
     _try(VecGetArray(xr, &tmpr));
     _try(VecGetArray(xi, &tmpi));
+    std::vector<std::complex<double> > ev(N);
     for(int i = 0; i < N; i++){
 #if defined(PETSC_USE_COMPLEX)
       ev[i] = tmpr[i];
@@ -130,7 +131,7 @@ void eigenSolver::solve()
     _eigenVectors.push_back(ev);
   }
   
-  // Free work space
+  // cleanup
   _try(EPSDestroy(eps));
   _try(VecDestroy(xr));
   _try(VecDestroy(xi));
