@@ -9,7 +9,7 @@ set(SRC
   elasticityTerm.cpp
   elasticitySolver.cpp
   SElement.cpp
-  eigenSolve.cpp
+  eigenSolver.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Solver *.h) 

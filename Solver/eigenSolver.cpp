@@ -3,14 +3,14 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include "eigenSolve.h"
+#include "eigenSolver.h"
 
 #if defined(HAVE_SLEPC)
 
 #include <slepceps.h>
 
-eigenSolve::eigenSolve(dofManager<double, double> *manager, std::string A, 
-                       std::string B) : _A(0), _B(0)
+eigenSolver::eigenSolver(dofManager<double, double> *manager, std::string A, 
+                         std::string B) : _A(0), _B(0)
 {
   if(A.size()){
     _A = dynamic_cast<linearSystemPETSc<double>*>(manager->getLinearSystem(A));
@@ -22,7 +22,7 @@ eigenSolve::eigenSolve(dofManager<double, double> *manager, std::string A,
   }
 }
 
-void eigenSolve::solve()
+void eigenSolver::solve()
 {
   if(!_A) return;
   Mat A = _A->getMatrix();
@@ -38,16 +38,18 @@ void eigenSolve::solve()
   _try(EPSCreate(PETSC_COMM_WORLD, &eps));
   _try(EPSSetOperators(eps, A, B));
   // FIXME: check if hermitian (EPS_HEP or EPS_GHEP)
-  _try(EPSSetProblemType(eps, _B ? EPS_GNHEP : EPS_NHEP));
+  //_try(EPSSetProblemType(eps, _B ? EPS_GNHEP : EPS_NHEP));
+  _try(EPSSetProblemType(eps, _B ? EPS_GHEP : EPS_HEP));
 
   // set options
-  _try(EPSSetWhichEigenpairs(eps, EPS_LARGEST_MAGNITUDE));
-  //_try(EPSSetWhichEigenpairs(eps, EPS_SMALLEST_MAGNITUDE));
-  //_try(EPSSetTarget(eps, 2.)); // find eigenvalues close to given target
+  //_try(EPSSetWhichEigenpairs(eps, EPS_LARGEST_MAGNITUDE));
+  //_try(EPSSetWhichEigenpairs(eps, EPS_SMALLEST_REAL));
+  _try(EPSSetTarget(eps, 0.)); // find eigenvalues close to given target
   PetscInt nev = 2; // number of eigenvalues to compute
   PetscInt mpd = nev; // max dim allowed for the projected problem
   PetscInt ncv = nev + mpd; // max dim of the subspace to be used by the solver
   _try(EPSSetDimensions(eps, nev, ncv, mpd));
+  //_try(EPSSetType(eps, EPSPOWER));
 
   // override options at runtime, petsc-style
   _try(EPSSetFromOptions(eps));
@@ -98,7 +100,6 @@ void eigenSolve::solve()
             "          Relative error");
   for (int i = nconv - 1; i > nconv - nev - 1; i--){
     std::vector<std::complex<double> > ev(N);
-
     PetscScalar kr, ki;
     _try(EPSGetEigenpair(eps, i, &kr, &ki, xr, xi));
     PetscReal error;
@@ -119,9 +120,13 @@ void eigenSolve::solve()
     PetscScalar *tmpr, *tmpi;
     _try(VecGetArray(xr, &tmpr));
     _try(VecGetArray(xi, &tmpi));
-    for(int i = 0; i < N; i++)
-      ev[i] = std::complex<double>(PetscRealPart(tmpr[i]), 
-                                   PetscRealPart(tmpi[i]));
+    for(int i = 0; i < N; i++){
+#if defined(PETSC_USE_COMPLEX)
+      ev[i] = tmpr[i];
+#else
+      ev[i] = std::complex<double>(tmpr[i], tmpi[i]);
+#endif
+    }
     _eigenVectors.push_back(ev);
   }
   

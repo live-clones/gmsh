@@ -29,7 +29,7 @@
 #include "CreateFile.h"
 #include "Context.h"
 #include "discreteFace.h"
-#include "eigenSolve.h"
+#include "eigenSolver.h"
 
 static void fixEdgeToValue(GEdge *ed, double value, dofManager<double, double> &myAssembler)
 {
