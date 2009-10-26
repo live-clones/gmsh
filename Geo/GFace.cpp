@@ -653,8 +653,8 @@ void GFace::getMetricEigenVectors(const SPoint2 &param,
     eigVal[0] = fabs(dr(0));
     eigVal[1] = fabs(dr(1));
     eigVec[0] = vr(0, 0);
-    eigVec[1] = vr(1, 0);
-    eigVec[2] = vr(0, 1);
+    eigVec[2] = vr(1, 0);
+    eigVec[1] = vr(0, 1);
     eigVec[3] = vr(1, 1);
   }
   else{

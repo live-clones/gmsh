@@ -142,6 +142,40 @@ bool fullMatrix<double>::invertInPlace()
   return false;
 }
 
+static void swap(double *a, int inca, double *b, int incb, int n)
+{
+  double tmp;
+  for (int i = 0; i < n; i++, a += inca, b += incb) {
+    tmp = (*a);
+    (*a) = (*b);
+    (*b) = tmp;
+  }
+}
+
+static void eigSort(int n, double *wr, double *wi, double *VL, double *VR)
+{
+  // Sort the eigenvalues/vectors in ascending order according to
+  // their real part. Warning: this will screw up the ordering if we
+  // have coplex eigenvalues.
+  for (int i = 0; i < n - 1; i++){
+    int k = i;
+    double ek = wr[i];
+    // search for something to swap
+    for (int j = i + 1; j < n; j++){
+      const double ej = wr[j];
+      if(ej < ek){
+        k = j;
+        ek = ej;
+      }
+    }
+    if (k != i){
+      swap(&wr[i], 1, &wr[k], 1, 1);
+      swap(&wi[i], 1, &wi[k], 1, 1);
+      swap(&VL[n * i], 1, &VL[n * k], 1, n);
+      swap(&VR[n * i], 1, &VR[n * k], 1, n);
+    }
+  }
+}
 
 template<> 
 bool fullMatrix<double>::eig(fullVector<double> &DR, fullVector<double> &DI,
@@ -159,29 +193,8 @@ bool fullMatrix<double>::eig(fullVector<double> &DR, fullVector<double> &DI,
     Msg::Error("QR Algorithm failed to compute all the eigenvalues", info, info);
   else if(info < 0)
     Msg::Error("Wrong %d-th argument in eig", -info);
-
-  if(sortRealPart) {
-    double tmp[8];
-    // do permutations
-    for(int i = 0; i < size1() - 1; i++) {
-      int minR = i;
-      for(int j = i + 1; j < size1(); j++)
-        if(fabs(DR(j)) < fabs(DR(minR))) minR = j;
-      if(minR != i){
-        tmp[0] = DR(i); tmp[1] = DI(i);
-        tmp[2] = VL(0, i); tmp[3] = VL(1, i); tmp[4] = VL(2, i);
-        tmp[5] = VR(0, i); tmp[6] = VR(1, i); tmp[7] = VR(2, i);
-        
-        DR(i) = DR(minR); DI(i) = DI(minR);
-        VL(0,i) = VL(0, minR); VL(1, i) = VL(1, minR); VL(2, i) = VL(2, minR);
-        VR(0,i) = VR(0, minR); VR(1, i) = VR(1, minR); VR(2, i) = VR(2, minR);
-        
-        DR(minR) = tmp[0]; DI(minR) = tmp[1];
-        VL(0, minR) = tmp[2]; VL(1, minR) = tmp[3]; VL(2, minR) = tmp[4];
-        VR(0, minR) = tmp[5]; VR(1, minR) = tmp[6]; VR(2, minR) = tmp[7];
-      }
-    }
-  }
+  else if(sortRealPart) 
+    eigSort(N, DR._data, DI._data, VL._data, VR._data);
   
   return true;
 }
