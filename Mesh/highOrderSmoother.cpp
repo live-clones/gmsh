@@ -431,7 +431,7 @@ void highOrderSmoother::computeMetricVector(GFace *gf,
 
 void highOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
 {
-#ifdef HAVE_TAUCS__
+#ifdef HAVE_TAUCS
   linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
 #else
   linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;

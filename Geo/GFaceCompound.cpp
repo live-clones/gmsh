@@ -270,7 +270,7 @@ bool GFaceCompound::checkOrientation(int iter) const
       double p2[2] = {v3[0],v3[1]};
       a_new = robustPredicates::orient2d(p0, p1, p2);
       if(count == 0) a_old=a_new;   
-      if(a_new*a_old < 0. && fabs(a_new) > 1.e10){
+      if(a_new*a_old < 0.){// && fabs(a_new) > 1.e10){
 	oriented = false;
 	break;
       }
@@ -1395,6 +1395,9 @@ bool GFaceCompound::checkTopology() const
 
 bool GFaceCompound::checkAspectRatio() const
 {
+
+  if ((*(_compound.begin()))->geomType() != GEntity::DiscreteSurface)
+    return true;
 
   bool paramOK = true;
   if(allNodes.empty()) buildAllNodes();
