@@ -189,17 +189,13 @@ int commonV (int &s11, int &s12, int &s21, int &s22) {
   return 0;
 }
 
-double adjustLs (double ls) {
-  return fabs(ls) < ZERO_LS_TOL ? 0. : ls;
+inline double adjustLs (double ls) {
+  return (fabs(ls) < ZERO_LS_TOL) ? 0. : ls;
 }
-bool isCrossed (double ls1, double ls2) {
+inline bool isCrossed (const DI_Point &p1, const DI_Point &p2) {
+  double ls1 = p1.ls(), ls2 = p2.ls();
   if(ls1 * ls2 >= 0.) return false;
-  if (fabs(ls1) < ZERO_LS_TOL || fabs(ls2) < ZERO_LS_TOL) return false;
   return true;
-}
-bool isCrossed (const DI_Point &p1, const DI_Point &p2) {
-  double v1 = p1.ls(), v2 = p2.ls();
-  return isCrossed (v1, v2);
 }
 
 // return the index of the point with minimum x,y and z
@@ -523,14 +519,14 @@ void DI_Point::chooseLs (const gLevelset *Lsi) {
   double ls1 = Ls[Ls.size() - 2], ls2 = Ls[Ls.size() - 1];
   double ls = Lsi->choose(ls1, ls2);
   Ls.pop_back(); Ls.pop_back();
-  Ls.push_back(ls);
+  addLs(ls);
 }
 void DI_Point::computeLs (const DI_Element *e, const std::vector<const gLevelset*> RPNi) {
   int prim = 0; Ls.clear();
   if(e->sizeLs() == 0) return;
   for(int l = 0; l < (int)RPNi.size(); l++) {
     if (RPNi[l]->isPrimitive())
-      Ls.push_back(e->evalLs(x_, y_, z_, prim++));
+      addLs(e->evalLs(x_, y_, z_, prim++));
     else
       chooseLs(RPNi[l]);
   }
@@ -548,24 +544,35 @@ void DI_IntegrationPoint::computeLs (const DI_Element *e, const std::vector<cons
   int prim = 0; std::vector<double> Ls;
   for(int l = 0; l < (int)RPN.size(); l++) {
     if(RPN[l]->isPrimitive())
-      Ls.push_back(e->evalLs(x_, y_, z_, prim++));
+      Ls.push_back(adjustLs(e->evalLs(x_, y_, z_, prim++)));
     else {
       double ls1 = Ls[Ls.size() - 2], ls2 = Ls[Ls.size() - 1];
       double ls = RPN[l]->choose(ls1, ls2);
       Ls.pop_back(); Ls.pop_back();
-      Ls.push_back(ls);
+      Ls.push_back(adjustLs(ls));
     }
   }
   setLs(Ls.back());
 }
 
 // DI_CuttingPoint methods ------------------------------------------------------------------------
+DI_CuttingPoint::DI_CuttingPoint(const DI_Point &pt) : x_(pt.x()), y_(pt.y()), z_(pt.z()),
+                                                       xl_(pt.x()), yl_(pt.y()), zl_(pt.z()) {
+  for(int i = 0; i < pt.sizeLs(); i++)
+    addLs(pt.ls(i));
+}
+void DI_CuttingPoint::addLs (const double ls) {
+  Ls.push_back(adjustLs(ls));
+}
+void DI_CuttingPoint::addLs (const DI_Element *e) {
+  addLs(e->evalLs(x_, y_, z_));
+}
 void DI_CuttingPoint::chooseLs (const gLevelset *Lsi) {
   if(Ls.size() < 2) return;
   double ls1 = Ls[Ls.size() - 2], ls2 = Ls[Ls.size() - 1];
   double ls = Lsi->choose(ls1, ls2);
   Ls.pop_back(); Ls.pop_back();
-  Ls.push_back(ls);
+  addLs(ls);
 }
 bool DI_CuttingPoint::equal (const DI_CuttingPoint &p) const {
   return (fabs(x() - p.x()) < EQUALITY_TOL && fabs(y() - p.y()) < EQUALITY_TOL && fabs(z() - p.z()) < EQUALITY_TOL);
@@ -622,6 +629,9 @@ DI_Element & DI_Element::operator= (const DI_Element &rhs){
   return *this;
 }
 void DI_Element::setPolynomialOrder (int o) {
+  if(polOrder_ == o) return;
+  for(int i = 0; i < nbMid(); i++)
+    delete mid_[i];
   polOrder_ = o;
   switch (o) {
   case 1 :
@@ -642,6 +652,7 @@ void DI_Element::setPolynomialOrder (int o) {
   }
 }
 void DI_Element::setPolynomialOrder (int o, const DI_Element *e, const std::vector<const gLevelset *> RPNi) {
+  if(polOrder_ == o) return;
   for(int i = 0; i < nbMid(); i++)
     delete mid_[i];
   polOrder_ = o;
@@ -669,10 +680,6 @@ void DI_Element::addLs (const double *ls) {
   for(int i = 0; i < nbMid(); i++)
     mid_[i]->addLs(ls[nbVert()+i]);
 }
-void DI_Element::addLs (int primTag, std::map<int, double> nodeLs[8]) {
-  for(int i = 0; i < nbVert(); i++)
-    pts_[i]->addLs(nodeLs[i][primTag]);
-}
 void DI_Element::addLs (const DI_Element *e) {
   if(e->sizeLs() < 1) return;
   for(int i = 0; i < nbVert(); i++)
@@ -698,6 +705,24 @@ void DI_Element::addLs (const DI_Element *e, const gLevelset &Ls) {
     mid_[j]->addLs(ls);
   }
 }
+void DI_Element::addLs (const DI_Element *e, const gLevelset &Ls, std::map<int, double> nodeLs[]) {
+  int primTag = Ls.getTag();
+  if(!nodeLs || !nodeLs[0].count(primTag)) {
+    addLs(e, Ls);
+    return;
+  }
+  for(int i = 0; i < nbVert(); i++)
+    pts_[i]->addLs(nodeLs[i][primTag]);
+  for(int j = 0; j < nbMid(); ++j) {
+    std::vector<int> s(nbVert()); int n;
+    e->midV(j, &s[0], n);
+    double xc = 0, yc = 0, zc = 0;
+    for(int k = 0; k < n; k++){
+      xc += e->x(s[k]); yc += e->y(s[k]); zc += e->z(s[k]); }
+    double ls = Ls(xc/n, yc/n, zc/n);
+    mid_[j]->addLs(ls);
+  }
+}
 void DI_Element::chooseLs (const gLevelset *Lsi) {
   if(sizeLs() < 2)
     printf("chooseLs with element ls size < 2 : typeEl=%d\n", type());
@@ -708,20 +733,21 @@ void DI_Element::chooseLs (const gLevelset *Lsi) {
 }
 void DI_Element::clearLs() {
   for(int i = 0; i < nbVert(); i++)
-    (pts_[i]->Ls).clear();
+    pts_[i]->clearLs();
   for(int i = 0; i < nbMid(); i++)
-    (mid_[i]->Ls).clear();
+    mid_[i]->clearLs();
 }
 bool DI_Element::addQuadEdge (int edge, DI_Point *xm,
                               const DI_Element *e, const std::vector<const gLevelset *> RPNi) {
-  /*if(edge >= nbEdg()) {printf("wrong number (%d) for quadratic edge for a ", edge); print(); return false;}
+  if(edge >= nbEdg()) {printf("wrong number (%d) for quadratic edge for a ", edge); print(); return false;}
   int s1, s2; vert(edge, s1, s2);
-  bool quad0 = isQuad();
-  if(!quad0) quad(e, RPNi);
+  int order0 = getPolynomialOrder();
+  if(order0 == 1) setPolynomialOrder(2, e, RPNi);
   double dist = distance(mid(edge), *xm);
   double sideLength = distance(pt(s1), pt(s2));
   if (dist / sideLength < 1.e-5) {
-    if(!quad0) lin(); printf("dist=%.20f, sideLength=%g, d/sL=%g => do not add quad edge\n", dist, sideLength, dist/sideLength);
+    if(order0 == 1) setPolynomialOrder(1);
+    printf("dist=%.20f, sideLength=%g, d/sL=%g => do not add quad edge\n", dist, sideLength, dist/sideLength);
     return true; // do not add the quadratic edge if xm is very close from the middle of the edge
   }
   DI_Point *p0 = mid_[edge];
@@ -729,12 +755,12 @@ bool DI_Element::addQuadEdge (int edge, DI_Point *xm,
   // check if the quadratic edge will produce a twist in the element (detJ<0)
   if(!testDetJ()){
     // reinitialize quad edges if the element was not quad at the begining
-    if(!quad0) lin();
+    if(order0 == 1) setPolynomialOrder(1);
     else mid_[edge]->move(p0->x(), p0->y(), p0->z());//mid_[edge] = p0;
     printf("detJ<0 when trying to add a quadratic edge in "); print();
     return false;
   }
-  computeIntegral();*/
+  computeIntegral();
   return true;
 }
 bool DI_Element::contain (const DI_Point &p) const {
@@ -863,9 +889,7 @@ double DI_Element::evalLs (const double u, const double v, const double w, int i
 }
 bool DI_Element::testDetJ() const {
   double detJ0 = detJ(x(0), y(0), z(0));
-  for(int i = 1; i < nbVert(); i++)
-    if(detJ0 * detJ(x(i), y(i), z(i)) < 0.) return false;
-  for(int i = nbVert(); i < nbVert() + nbMid(); i++)
+  for(int i = 1; i < nbVert() + nbMid(); i++)
     if(detJ0 * detJ(x(i), y(i), z(i)) < 0.) return false;
   return true;
 }
@@ -889,7 +913,7 @@ double DI_Element::detJ (const double u, const double v, const double w) const {
       J[2][0] += x(i) * s[i][2]; J[2][1] += y(i) * s[i][2]; J[2][2] += z(i) * s[i][2];
 //      delete [] s[i];
     }
-	delete [] s;
+    delete [] s;
     return det3(J[0][0], J[0][1], J[0][2], J[1][0], J[1][1], J[1][2], J[2][0], J[2][1], J[2][2]);
   case 2 :
     for(int i = 0; i < nbVert() + nbMid(); i++) {
@@ -909,6 +933,7 @@ double DI_Element::detJ (const double u, const double v, const double w) const {
     delete [] s;
     return sqrt(sq2(J[0][0]) + sq2(J[0][1]) + sq2(J[0][2])); // allways > 0 !!!!
   default :
+    delete [] s;
     return 1.;
   }
 }
@@ -1423,12 +1448,12 @@ void DI_Triangle::selfSplit (const DI_Element *e, const std::vector<const gLevel
                              std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
                              std::vector<DI_Line> &surfLines, std::vector<DI_CuttingPoint> &cuttingPoints) const
 {
-  bool quadT = false; // if true, use quadratic sub triangles
+  bool quadT = (e->getPolynomialOrder() == 2) ? true : false; // if true, use quadratic sub triangles
   int LStag = RPNi.back()->getTag();
 
   int nbZe = 0, ze[2];
   for(int i = 0; i < 3; i++)
-    if(fabs(pt(i).ls()) < ZERO_LS_TOL)
+    if(pt(i).isOnBorder())
       ze[nbZe++] = i;
   for(int i = 0; i < nbZe; i++)
     cuttingPoints.push_back(DI_CuttingPoint(pt(ze[i])));
@@ -1538,12 +1563,12 @@ void DI_Tetra::selfSplit (const DI_Element *e, const std::vector<const gLevelset
                        std::vector<DI_Tetra> &subTetras, std::vector<DI_Triangle> &surfTriangles,
                        std::vector<DI_CuttingPoint> &cuttingPoints, std::vector<DI_QualError> &QError) const
 {
-  bool quadT = false; // use of quadratic surf triangles and quadratic sub tetrahedra
+  bool quadT = (e->getPolynomialOrder() == 2) ? true : false; // use of quadratic surf triangles and quadratic sub tetrahedra
   int tag = RPNi.back()->getTag();
 
   int nbZe = 0, ze[3];
   for(int i = 0; i < 4; i++)
-    if(fabs(pt(i).ls()) < ZERO_LS_TOL)
+    if(pt(i).isOnBorder())
       ze[nbZe++] = i;
   for(int i = 0; i < nbZe; i++)
     cuttingPoints.push_back(DI_CuttingPoint(pt(ze[i]))); // !! we add these points several times => remove later
@@ -1972,8 +1997,7 @@ bool DI_Line::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        if(nodeLs && nodeLs[0].count(Lsi->getTag())) ll.addLs(Lsi->getTag(), nodeLs);
-        else ll.addLs(this, *Lsi);
+        ll.addLs(this, *Lsi, nodeLs);
         int nbSubLn = ll_subLines.size();
         int nbCP = ll_cp.size();
         for(int i = 0; i < nbSubLn; i++) ll_subLines[i].addLs(&ll);
@@ -1999,8 +2023,7 @@ bool DI_Line::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        if(nodeLs && nodeLs[0].count(Lsi->getTag())) ll.addLs(Lsi->getTag(), nodeLs);
-        else ll.addLs(this, *Lsi);
+        ll.addLs(this, *Lsi, nodeLs);
       }
     }
   }
@@ -2030,7 +2053,7 @@ void DI_Line::cut(const DI_Element *e, const std::vector<const gLevelset *> &RPN
   // check if the line is cut by the level set
   int on = 0, pos = 0, neg = 0, ze[2];
   for (int i = 0; i < 2; i++){
-    if(fabs(pt(i).ls()) < ZERO_LS_TOL) ze[on++] = i;
+    if(pt(i).isOnBorder()) ze[on++] = i;
     else if (pt(i).ls() > 0.) pos++;
     else neg++;
   }
@@ -2070,8 +2093,7 @@ bool DI_Triangle::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip
       const gLevelset *Lsi = RPN[l]; //printf("LS(0,0)=%g LS(1,1)=%g\n",(*Lsi)(0,0,0),(*Lsi)(1,1,0));
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        if(nodeLs && nodeLs[0].count(Lsi->getTag())) tt.addLs(Lsi->getTag(), nodeLs);
-        else tt.addLs(this, *Lsi);
+        tt.addLs(this, *Lsi, nodeLs);
         int nbSubQ = tt_subQuads.size(), nbSubQ1 = nbSubQ;
         int nbSubTr = tt_subTriangles.size(), nbSubTr1 = nbSubTr;
         int nbSurfLn = tt_surfLines.size(), nbSurfLn1 = nbSurfLn;
@@ -2081,7 +2103,7 @@ bool DI_Triangle::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip
         for(int i = 0; i < nbSurfLn; i++) tt_surfLines[i].addLs(&tt);
         for(int i = 0; i < nbCP; i++) tt_cp[i].addLs(&tt);
         int ze[3], cz = 0;
-        for (int i = 0; i < 3; i++) if(fabs(tt.ls(i)) < ZERO_LS_TOL) ze[cz++] = i;
+        for (int i = 0; i < 3; i++) if(tt.pt(i).isOnBorder()) ze[cz++] = i;
 
         for(int q = 0; q < nbSubQ; q++) {
           nbSubQ1 = tt_subQuads.size();
@@ -2149,35 +2171,10 @@ bool DI_Triangle::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        if(nodeLs && nodeLs[0].count(Lsi->getTag())) tt.addLs(Lsi->getTag(), nodeLs);
-        else tt.addLs(this, *Lsi);
+        tt.addLs(this, *Lsi, nodeLs);
       }
     }
   }
-
-  //if !changeSign => no cut => clear vectors / triangles.push_back(tt)
-  /*if(tt_cp.size() == 1) {
-    tt_cp.clear();
-  }
-  if(tt_cp.size() > 1) {
-    bool changeSign = false;
-    double sign0 = tt_cp[0].ls();
-    for(int i = 1; i < (int)tt_cp.size(); i++)
-      if(sign0*tt_cp[i].ls() <= 0) {changeSign = true; break;}
-    if(!changeSign) { //print();
-      tt_subTriangles.clear();
-      tt_subQuads.clear();
-      tt_surfLines.clear();
-      tt_cp.clear();
-      DI_Point vP[3];
-      for(int i = 0; i < 3; i++) {
-        double ls = Ls(x(i), y(i), z(i));
-        vP[i] = DI_Point(tt.x(i), tt.y(i), tt.z(i), ls);
-      }
-      DI_Triangle trt(vP[0], vP[1], vP[2]); // reference triangle
-      tt_subTriangles.push_back(trt);
-    }
-  }*/
 
   for(int q = 0; q < (int)tt_subQuads.size(); q++) {
     tt_subQuads[q].computeLsTagDom(&tt, RPN);
@@ -2220,7 +2217,7 @@ void DI_Triangle::cut (const DI_Element *e, const std::vector<const gLevelset *>
   // check if the triangle is cut by the level set
   int on = 0, pos = 0, neg = 0, ze[3];
   for (int i = 0; i < 3; i++){
-    if(fabs(pt(i).ls()) < ZERO_LS_TOL) ze[on++] = i;
+    if(pt(i).isOnBorder()) ze[on++] = i;
     else if (pt(i).ls() > 0.) pos++;
     else neg++;
   }
@@ -2264,8 +2261,7 @@ bool DI_Quad::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        if(nodeLs && nodeLs[0].count(Lsi->getTag())) qq.addLs(Lsi->getTag(), nodeLs);
-        else qq.addLs(this, *Lsi);
+        qq.addLs(this, *Lsi, nodeLs);
         int nbSubQ = qq_subQuads.size(), nbSubQ1 = nbSubQ;
         int nbSubTr = qq_subTriangles.size(), nbSubTr1 = nbSubTr;
         int nbSurfLn = qq_surfLines.size(), nbSurfLn1 = nbSurfLn;
@@ -2276,7 +2272,7 @@ bool DI_Quad::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
         for(int i = 0; i < nbCP; i++) qq_cp[i].addLs(&qq);
         int pos = 0, neg = 0, ze[2], cz = 0;
         for (int i = 0; i < 4; i++){
-          if(fabs(qq.ls(i)) < ZERO_LS_TOL) ze[cz++] = i;
+          if(qq.pt(i).isOnBorder()) ze[cz++] = i;
           else if (qq.ls(i) > 0.) pos++;
           else neg++;
         }
@@ -2347,32 +2343,10 @@ bool DI_Quad::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        if(nodeLs && nodeLs[0].count(Lsi->getTag())) qq.addLs(Lsi->getTag(), nodeLs);
-        else qq.addLs(this, *Lsi);
+        qq.addLs(this, *Lsi, nodeLs);
       }
     }
   }
-
-  /*//if !changeSign => clear vectors / quads.push_back(qq)
-  if(qq_cp.size() > 1) {
-    bool changeSign = false;
-    double sign0 = qq_cp[0].ls();
-    for(int i = 1; i < (int)qq_cp.size(); i++)
-      if(sign0 * qq_cp[i].ls() <= 0) {changeSign = true; break;}
-    if(!changeSign) {
-      qq_subTriangles.clear();
-      qq_subQuads.clear();
-      qq_surfLines.clear();
-      qq_cp.clear();
-      DI_Point vP[4];
-      for(int i = 0; i < 4; i++) {
-        double ls = Ls(x(i), y(i), z(i));
-        vP[i] = DI_Point(qq.x(i), qq.y(i), qq.z(i), ls);
-      }
-      DI_Quad qt(vP[0], vP[1], vP[2], vP[3]); // reference quad
-      qq_subQuads.push_back(qt);
-    }
-  }*/
 
   for(int q = 0; q < (int)qq_subQuads.size(); q++) {
     qq_subQuads[q].computeLsTagDom(&qq, RPN);
@@ -2415,7 +2389,7 @@ void DI_Quad::cut (const DI_Element *e, const std::vector<const gLevelset *> &RP
   // check if the quadrangle is cut by the level set
   int on = 0, pos = 0, neg = 0, ze[4];
   for (int i = 0; i < 4; i++){
-    if(fabs(pt(i).ls()) < ZERO_LS_TOL) ze[on++] = i;
+    if(pt(i).isOnBorder()) ze[on++] = i;
     else if (pt(i).ls() > 0.) pos++;
     else neg++;
   }
@@ -2473,8 +2447,7 @@ bool DI_Tetra::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        if(nodeLs && nodeLs[0].count(Lsi->getTag())) tt.addLs(Lsi->getTag(), nodeLs);
-        else tt.addLs(this, *Lsi);
+        tt.addLs(this, *Lsi, nodeLs);
         int nbSubT = tt_subTetras.size(), nbSubT1 = nbSubT;
         int nbSurfQ = tt_surfQuads.size();
         int nbSurfTr = tt_surfTriangles.size(), nbSurfTr1 = nbSurfTr;
@@ -2484,7 +2457,7 @@ bool DI_Tetra::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
         for(int i = 0; i < nbSurfTr; i++) tt_surfTriangles[i].addLs(&tt);
         for(int i = 0; i < nbCP; i++) tt_cp[i].addLs(&tt);
         int ze[3], cz = 0;
-        for (int i = 0; i < 4; i++) if(fabs(tt.ls(i)) < ZERO_LS_TOL) ze[cz++] = i;
+        for (int i = 0; i < 4; i++) if(tt.pt(i).isOnBorder()) ze[cz++] = i;
 
         for(int t = 0; t < nbSubT; t++) {
           nbSurfTr1 = tt_surfTriangles.size();
@@ -2535,33 +2508,10 @@ bool DI_Tetra::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        if(nodeLs && nodeLs[0].count(Lsi->getTag())) tt.addLs(Lsi->getTag(), nodeLs);
-        else tt.addLs(this, *Lsi);
+        tt.addLs(this, *Lsi, nodeLs);
       }
     }
   }
-
-  /*//if !changeSign => clear vectors / tetras.push_back(tt)
-  if(tt_cp.size() > 1) {
-    bool changeSign = false;
-    double sign0 = tt_cp[0].ls();
-    for(int i = 1; i < (int)tt_cp.size(); i++)
-      if(sign0 * tt_cp[i].ls() <= 0) {changeSign = true; break;}
-    if(!changeSign) {
-      tt_subTetras.clear();
-      tt_surfQuads.clear();
-      tt_surfTriangles.clear();
-      tt_cp.clear();
-      QError.clear();
-      DI_Point vP[4];
-      for(int i = 0; i < 4; i++) {
-        double ls = Ls(x(i), y(i), z(i));
-        vP[i] = DI_Point(tt.x(i), tt.y(i), tt.z(i), ls);
-      }
-      DI_Tetra tet(vP[0], vP[1], vP[2], vP[3]); // reference tetra
-      tt_subTetras.push_back(tet);
-    }
-  }*/
 
   for(int i = 0; i < (int)QError.size(); i++)
     QError[i].print(this);
@@ -2609,7 +2559,7 @@ void DI_Tetra::cut (const DI_Element *e, const std::vector<const gLevelset *> &R
   // check if the tetra is cut by the level set
   int on = 0, pos = 0, neg = 0, ze[4];
   for (int i = 0; i < 4; i++){
-    if(fabs(pt(i).ls()) < ZERO_LS_TOL) ze[on++] = i;
+    if(pt(i).isOnBorder()) ze[on++] = i;
     else if (pt(i).ls() > 0.) pos++;
     else neg++;
   }
@@ -2658,8 +2608,7 @@ bool DI_Hexa::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        if(nodeLs && nodeLs[0].count(Lsi->getTag())) hh.addLs(Lsi->getTag(), nodeLs);
-        else hh.addLs(this, *Lsi);
+        hh.addLs(this, *Lsi, nodeLs);
         int nbSubH = hh_subHexas.size();
         int nbSubT = hh_subTetras.size(), nbSubT1 = nbSubT;
         int nbSurfQ = hh_surfQuads.size(), nbSurfQ1 = nbSurfQ;
@@ -2674,7 +2623,7 @@ bool DI_Hexa::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
         for(int i = 0; i < nbCP; i++) hh_cp[i].addLs(&hh);
         int pos = 0, neg = 0, ze[4], cz = 0;
         for (int i = 0; i < 8; i++){
-          if(fabs(hh.ls(i)) < ZERO_LS_TOL) ze[cz++] = i;
+          if(hh.pt(i).isOnBorder()) ze[cz++] = i;
           else if (hh.ls(i) > 0.) pos++;
           else neg++;
         }
@@ -2774,36 +2723,10 @@ bool DI_Hexa::cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
       const gLevelset *Lsi = RPN[l];
       RPNi.push_back(Lsi);
       if(Lsi->isPrimitive()) {
-        if(nodeLs && nodeLs[0].count(Lsi->getTag())) hh.addLs(Lsi->getTag(), nodeLs);
-        else hh.addLs(this, *Lsi);
+        hh.addLs(this, *Lsi, nodeLs);
       }
     }
   }
-
-  /*//if the sign does not change and !=0 in the hexa => returns only a hexa
-  if(hh_cp.size() > 1) {
-    bool changeSign = false;
-    double sign0 = hh_cp[0].ls();
-    for(int i = 1; i < (int)hh_cp.size(); i++)
-      if(sign0*hh_cp[i].ls() <= 0)
-        {changeSign = true; break;}
-    if(!changeSign) {
-      hh_subHexas.clear();
-      hh_subTetras.clear();
-      hh_surfQuads.clear();
-      hh_surfTriangles.clear();
-      hh_frontLines.clear();
-      hh_cp.clear();
-      QError.clear();
-      DI_Point vP[8];
-      for(int i = 0; i < 8; i++) {
-        double ls = Ls(x(i), y(i), z(i));
-        vP[i] = DI_Point(hh.x(i), hh.y(i), hh.z(i), ls);
-      }
-      DI_Hexa hex(vP[0], vP[1], vP[2], vP[3], vP[4], vP[5], vP[6], vP[7]); // reference hexa
-      hh_subHexas.push_back(hex);
-    }
-  }*/
 
   for(int i = 0; i < (int)QError.size(); i++)
     QError[i].print(this);
@@ -2866,7 +2789,7 @@ void DI_Hexa::cut (const DI_Element *e, const std::vector<const gLevelset *> &RP
   // check if the hex is cut by the level set
   int on = 0, pos = 0, neg = 0, ze[8];
   for (int i = 0; i < 8; i++){
-    if(fabs(pt(i).ls()) < ZERO_LS_TOL) ze[on++] = i;
+    if(pt(i).isOnBorder()) ze[on++] = i;
     else if (pt(i).ls() > 0.) pos++;
     else neg++;
   }

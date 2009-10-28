@@ -30,14 +30,14 @@ class DI_Point
 {
   // coordinates of the point
   double x_, y_, z_;
- public :
   // vector containing the levelset values of the point
   std::vector<double> Ls;
+ public :
   // constructors
   DI_Point () : x_(0), y_(0), z_(0) {}
   DI_Point (double x, double y, double z) : x_(x), y_(y), z_(z) {}
   DI_Point (double x, double y, double z, gLevelset &ls);
-  DI_Point (double x, double y, double z, const double ls) : x_(x), y_(y), z_(z) {Ls.push_back(ls);}
+  DI_Point (double x, double y, double z, const double ls) : x_(x), y_(y), z_(z) {addLs(ls);}
   DI_Point (double x, double y, double z, const DI_Element *e,
             const std::vector<const gLevelset *> RPNi) : x_(x), y_(y), z_(z) {computeLs(e, RPNi);}
   DI_Point(const DI_Point &p) : x_(p.x()), y_(p.y()), z_(p.z()) {Ls.clear(); Ls = p.Ls;}
@@ -46,9 +46,9 @@ class DI_Point
   // destructor
   ~DI_Point () {Ls.clear();}
   // add a levelset value (adjusted to 0 if ls<ZERO_LS_TOL) into the vector Ls
-  inline void addLs (const double ls);
+  void addLs (const double ls);
   // add a levelset value evaluated into the element e
-  inline void addLs (const DI_Element *e);
+  void addLs (const DI_Element *e);
   // choose the value of the levelset among the last two levelset values of Ls,
   // delete the last two values and add the chosen one
   void chooseLs (const gLevelset *Lsi);
@@ -57,7 +57,7 @@ class DI_Point
   // clear Ls and add the levelset value computed with ls
   void computeLs (const gLevelset &ls);
   // remove the last value in Ls and add ls
-  inline void changeLs (const double ls) {Ls.pop_back(); Ls.push_back(ls);}
+  inline void changeLs (const double ls) {Ls.pop_back(); addLs(ls);}
   // change the coordinates
   inline void move (double x, double y, double z) {x_ = x; y_ = y; z_ = z;}
   // return true if the coordinates of this and p are equal (with a tolerance)
@@ -70,6 +70,10 @@ class DI_Point
   inline double ls() const {return Ls.back();}
   // return the ith value of Ls
   inline double ls(int i) const {return Ls[i];}
+  // return the size of the vector of ls values
+  inline int sizeLs() const {return Ls.size();}
+  // clear the values in Ls
+  inline void clearLs() {Ls.clear();}
   // return the position of the point with respect to the domain depending on the last value in Ls
   inline bool isInsideDomain  () const {return Ls.back() < 0.;}
   inline bool isOutsideDomain () const {return Ls.back() > 0.;}
@@ -80,7 +84,7 @@ class DI_Point
     return 0;
   }
   // print the coordiantes
-  void print() const {printf("Point (%g,%g,%g)\n", x_, y_, z_);}
+  inline void print() const {printf("Point (%g,%g,%g)\n", x_, y_, z_);}
   void printls() const {
     printf("Point (%g,%g,%g) ls=(", x_, y_, z_);
     for(int i = 0; i < (int)Ls.size(); i++) printf("%g,", Ls[i]);
@@ -229,13 +233,13 @@ class DI_Element
   virtual double refIntegral() const = 0;
   // add a levelset value to each point
   void addLs (const double *ls);
-  // add the levelset value to each point from the map with each primitive value
-  void addLs (int primTag, std::map<int, double> nodeLs[8]);
   // evaluate the levelset value at each point and add it to each point
   void addLs (const DI_Element *e);
-  // add the level set at each vertex of the real element e (same type as this)
+  // compute the level set at each vertex of the real element e (same type as this)
+  // or take i from the map if exist
   // and add it to the vertices
   void addLs (const DI_Element *e, const gLevelset &Ls);
+  void addLs (const DI_Element *e, const gLevelset &Ls, std::map<int, double> nodeLs[]);
   // clear the levelset of the vertices
   void clearLs();
   // compute the levelset values at the mid edge points and add a quadratic edge,
@@ -286,7 +290,7 @@ class DI_Element
   inline double ls (int i, int j) const {
     return i < nbVert() ? pts_[i]->ls(j) : mid_[i - nbVert()]->ls(j);}
   // return the number of levelset values of the points
-  inline int sizeLs() const {return pts_[0]->Ls.size();}
+  inline int sizeLs() const {return pts_[0]->sizeLs();}
   // return the interpolating nodal shape functions evaluated at point (u,v,w)
   // in parametric coordinates (if order = -1, use the polynomial order of the element)
   virtual void getShapeFunctions (double u, double v, double w, double s[], int order = -1) const = 0;
@@ -322,12 +326,11 @@ class DI_CuttingPoint
   double xl_, yl_, zl_;
   std::vector<double> Ls;
  public:
-  DI_CuttingPoint (const DI_Point &pt)
-    : x_(pt.x()), y_(pt.y()), z_(pt.z()), xl_(pt.x()), yl_(pt.y()), zl_(pt.z()), Ls(pt.Ls) { }
+  DI_CuttingPoint (const DI_Point &pt);
   inline void addLocC (double xl, double yl, double zl) {xl_ = xl; yl_ = yl; zl_ = zl;}
   inline void move (double x, double y, double z) {x_ = x; y_ = y; z_ = z;}
-  inline void addLs (const DI_Element *e) { Ls.push_back(e->evalLs(x_, y_, z_));}
-  inline void addLs (double ls) {Ls.push_back(ls);}
+  void addLs (const double ls);
+  void addLs (const DI_Element *e);
   inline double x () const {return x_;}
   inline double y () const {return y_;}
   inline double z () const {return z_;}
@@ -337,13 +340,13 @@ class DI_CuttingPoint
   inline double ls() const {return Ls.back();}
   inline double ls(int i) const {return Ls[i];}
   // return the position of the point with respect to the domain depending on the last value in Ls
-  bool isInsideDomain  () const {return Ls.back() < 0.;}
-  bool isOutsideDomain () const {return Ls.back() > 0.;}
-  bool isOnBorder () const {return Ls.back() == 0.;}
+  inline bool isInsideDomain  () const {return Ls.back() < 0.;}
+  inline bool isOutsideDomain () const {return Ls.back() > 0.;}
+  inline bool isOnBorder () const {return Ls.back() == 0.;}
   inline int sizeLs() const {return Ls.size();}
   void chooseLs (const gLevelset *Lsi);
   bool equal (const DI_CuttingPoint &p) const;
-  void print() const {
+  inline void print() const {
     printf("CP : x=(%g,%g,%g) xl=(%g,%g,%g)\n", x_, y_, z_, xl_, yl_, zl_);
   }
   void printls() const {

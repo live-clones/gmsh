@@ -452,30 +452,43 @@ static void assignPhysicals(GModel *GM, std::vector<int> gePhysicals, int reg, i
   }
 }
 
-static int getElementaryTag(double ls, int elementary, std::map<int, int> &newtags)
+static int getElementaryTag(int lsTag, int elementary, std::map<int, int> &newElemTags)
 {
-  if(ls < 0){
-    if(newtags.count(elementary))
-      return newtags[elementary];
+  if(lsTag < 0){
+    if(newElemTags.count(elementary))
+      return newElemTags[elementary];
     else{
-      int reg = ++newtags[0];
-      newtags[elementary] = reg;
+      int reg = ++newElemTags[0];
+      newElemTags[elementary] = reg;
       return reg;
     }
   }
   return elementary;
 }
+static void getPhysicalTag(int lsTag, const std::vector<int> &physicals, std::vector<int> &phys2, std::map<int, int> &newPhysTags)
+{
+  phys2.clear();
+  for(unsigned int i = 0; i < physicals.size(); i++){
+    int phys = physicals[i];
+    if(lsTag < 0){
+      if(!newPhysTags.count(phys))
+        newPhysTags[phys] = ++newPhysTags[0];
+      phys = newPhysTags[phys];
+    }
+    phys2.push_back(phys);
+  }
+}
 
-static int getBorderTag(int lsTag, int count, int &elementaryMax, std::map<int, int> &borderTags)
+static int getBorderTag(int lsTag, int count, int &maxTag, std::map<int, int> &borderTags)
 {
   if(borderTags.count(lsTag))
     return borderTags[lsTag];
   if(count) {
-    int reg = ++elementaryMax;
-    borderTags[lsTag] = reg;
-    return reg;
+    int tag = ++maxTag;
+    borderTags[lsTag] = tag;
+    return tag;
   }
-  elementaryMax = std::max(elementaryMax, lsTag);
+  maxTag = std::max(maxTag, lsTag);
   borderTags[lsTag] = lsTag;
   return lsTag;
 }
@@ -486,8 +499,10 @@ static void elementCutMesh(MElement *e, gLevelset *ls,
                            std::vector<MVertex*> &newVertices,
                            std::map<int, std::vector<MElement*> > elements[10],
                            std::map<int, std::map<int, std::string> > physicals[4],
-                           std::map<int, int> borderTags[2],
-                           std::map<int, int> newtags[4],
+                           std::map<int, int> newElemTags[4],
+                           std::map<int, int> newPhysTags[4],
+                           std::map<int, int> borderElemTags[2],
+                           std::map<int, int> borderPhysTags[2],
                            std::vector<DI_CuttingPoint> &cp,
                            std::vector<DI_Line> &lines,
                            std::vector<DI_Triangle> &triangles,
@@ -676,9 +691,11 @@ static void elementCutMesh(MElement *e, gLevelset *ls,
         }
         if(poly[0].size()) {
           p1 = new MPolyhedron(poly[0], ++numEle, ePart, true, copy);
-          int reg = getElementaryTag(-1, elementary, newtags[3]);
+          int reg = getElementaryTag(-1, elementary, newElemTags[3]);
+          std::vector<int> phys;
+          getPhysicalTag(-1, gePhysicals, phys, newPhysTags[3]);
           elements[9][reg].push_back(p1);
-          assignPhysicals(GM, gePhysicals, reg, 3, physicals);
+          assignPhysicals(GM, phys, reg, 3, physicals);
         }
         if(poly[1].size()) {
           p2 = new MPolyhedron(poly[1], ++numEle, ePart, false, copy);
@@ -687,7 +704,9 @@ static void elementCutMesh(MElement *e, gLevelset *ls,
         }
       }
       else { // no cut
-        int reg = getElementaryTag(tetras[nbTe].lsTag(), elementary, newtags[3]);
+        int reg = getElementaryTag(tetras[nbTe].lsTag(), elementary, newElemTags[3]);
+        std::vector<int> phys;
+        getPhysicalTag(tetras[nbTe].lsTag(), gePhysicals, phys, newPhysTags[3]);
         if(eType == MSH_TET_4)
           elements[4][reg].push_back(copy);
         else if(eType == MSH_HEX_8)
@@ -698,7 +717,7 @@ static void elementCutMesh(MElement *e, gLevelset *ls,
           elements[7][reg].push_back(copy);
         else if(eType == MSH_POLYH_)
           elements[9][reg].push_back(copy);
-        assignPhysicals(GM, gePhysicals, reg, 3, physicals);
+        assignPhysicals(GM, phys, reg, 3, physicals);
       }
 
       for (unsigned int i = nbTr; i < triangles.size(); i++){
@@ -732,9 +751,11 @@ static void elementCutMesh(MElement *e, gLevelset *ls,
         int lsT = triangles[i].lsTag();
         int c = elements[2].count(lsT) + elements[3].count(lsT);
         // suppose that the surfaces have been cut before the volumes!
-        int reg = getBorderTag(lsT, c, newtags[2][0], borderTags[1]);
+        int reg = getBorderTag(lsT, c, newElemTags[2][0], borderElemTags[1]);
+        int physTag = getBorderTag(lsT, c, newPhysTags[2][0], borderPhysTags[1]);
+        std::vector<int> phys; phys.push_back(physTag);
         elements[2][reg].push_back(tri);
-        assignPhysicals(GM, gePhysicals, reg, 2, physicals);
+        assignPhysicals(GM, phys, reg, 2, physicals);
       }
     }
     break;
@@ -812,9 +833,11 @@ static void elementCutMesh(MElement *e, gLevelset *ls,
         }
         if(poly[0].size()) {
           p1 = new MPolygon(poly[0], ++numEle, ePart, true, copy);
-          int reg = getElementaryTag(-1, elementary, newtags[2]);
+          int reg = getElementaryTag(-1, elementary, newElemTags[2]);
+          std::vector<int> phys;
+          getPhysicalTag(-1, gePhysicals, phys, newPhysTags[2]);
           elements[8][reg].push_back(p1);
-          assignPhysicals(GM, gePhysicals, reg, 2, physicals);
+          assignPhysicals(GM, phys, reg, 2, physicals);
         }
         if(poly[1].size()) {
           p2 = new MPolygon(poly[1], ++numEle, ePart, false, copy);
@@ -823,14 +846,16 @@ static void elementCutMesh(MElement *e, gLevelset *ls,
         }
       }
       else { // no cut
-        int reg = getElementaryTag(triangles[nbTr].lsTag(), elementary, newtags[2]);
+        int reg = getElementaryTag(triangles[nbTr].lsTag(), elementary, newElemTags[2]);
+        std::vector<int> phys;
+        getPhysicalTag(triangles[nbTr].lsTag(), gePhysicals, phys, newPhysTags[2]);
         if(eType == MSH_TRI_3)
           elements[2][reg].push_back(copy);
         else if(eType == MSH_QUA_4)
           elements[3][reg].push_back(copy);
         else if(eType == MSH_POLYG_)
           elements[8][reg].push_back(copy);
-        assignPhysicals(GM, gePhysicals, reg, 2, physicals);
+        assignPhysicals(GM, phys, reg, 2, physicals);
       }
 
       for (unsigned int i = nbL; i < lines.size(); i++){
@@ -861,11 +886,14 @@ static void elementCutMesh(MElement *e, gLevelset *ls,
         MLine *lin;
         if(p1 || p2) lin = new MLineBorder(mv[0], mv[1], p1, p2, ++numEle, ePart);
         else lin = new MLine(mv[0], mv[1], ++numEle, ePart);
-        int c = elements[1].count(lines[i].lsTag());
+        int lsL = lines[i].lsTag();
+        int c = elements[1].count(lsL);
         // suppose that the lines have been cut before the surfaces!
-        int reg = getBorderTag(lines[i].lsTag(), c, newtags[1][0], borderTags[0]);
+        int reg = getBorderTag(lsL, c, newElemTags[1][0], borderElemTags[0]);
+        int physTag = getBorderTag(lsL, c, newPhysTags[1][0], borderPhysTags[0]);
+        std::vector<int> phys; phys.push_back(physTag);
         elements[1][reg].push_back(lin);
-        assignPhysicals(GM, gePhysicals, reg, 1, physicals);
+        assignPhysicals(GM, phys, reg, 1, physicals);
       }
     }
     break;
@@ -902,15 +930,19 @@ static void elementCutMesh(MElement *e, gLevelset *ls,
             }
           }
           MLine *ml = new MLine(mv[0], mv[1], ++numEle, ePart);
-          int reg = getElementaryTag(lines[i].lsTag(), elementary, newtags[1]);
+          int reg = getElementaryTag(lines[i].lsTag(), elementary, newElemTags[1]);
+          std::vector<int> phys;
+          getPhysicalTag(lines[i].lsTag(), gePhysicals, phys, newPhysTags[1]);
           elements[1][reg].push_back(ml);
-          assignPhysicals(GM, gePhysicals, reg, 1, physicals);
+          assignPhysicals(GM, phys, reg, 1, physicals);
         }
       }
       else { // no cut
-        int reg = getElementaryTag(lines[nbL].lsTag(), elementary, newtags[1]);
+        int reg = getElementaryTag(lines[nbL].lsTag(), elementary, newElemTags[1]);
+        std::vector<int> phys;
+        getPhysicalTag(lines[nbL].lsTag(), gePhysicals, phys, newPhysTags[1]);
         elements[1][reg].push_back(copy);
-        assignPhysicals(GM, gePhysicals, reg, 1, physicals);
+        assignPhysicals(GM, phys, reg, 1, physicals);
       }
     }
     break;
@@ -918,9 +950,11 @@ static void elementCutMesh(MElement *e, gLevelset *ls,
     {
       DI_Point P(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z());
       P.computeLs(*ls);
-      int reg = getElementaryTag(P.lsTag(), elementary, newtags[0]);
+      int reg = getElementaryTag(P.lsTag(), elementary, newElemTags[0]);
+      std::vector<int> phys;
+      getPhysicalTag(P.lsTag(), gePhysicals, phys, newPhysTags[0]);
       elements[0][reg].push_back(copy);
-      assignPhysicals(GM, gePhysicals, reg, 0, physicals);
+      assignPhysicals(GM, phys, reg, 0, physicals);
     }
     break;
   default :
@@ -946,11 +980,14 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   gm->getEntities(gmEntities);
   int numEle = gm->getNumMeshElements();
 
-  std::map<int, int> newtags[4];
-  for(int i = 0; i < 4; i++)
-    newtags[i][0] = gm->getMaxElementaryNumber(i);
-  std::map<int, int> borderTags[2];
-
+  std::map<int, int> newElemTags[4];
+  std::map<int, int> newPhysTags[4];
+  for(int d = 0; d < 4; d++){
+    newElemTags[d][0] = gm->getMaxElementaryNumber(d);
+    newPhysTags[d][0] = gm->getMaxPhysicalNumber(d);
+  }
+  std::map<int, int> borderElemTags[2];
+  std::map<int, int> borderPhysTags[2];
 
   std::vector<const gLevelset *> primitives;
   ls->getPrimitives(primitives);
@@ -975,7 +1012,8 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
       MElement *e = gmEntities[i]->getMeshElement(j);
       e->setVolumePositive();
       elementCutMesh(e, ls, verticesLs, gmEntities[i], gm, numEle, vertexMap, newVertices,
-                     elements, physicals, borderTags, newtags, cp, lines, triangles, quads, tetras, hexas);
+                     elements, physicals, newElemTags, newPhysTags, borderElemTags, borderPhysTags,
+                     cp, lines, triangles, quads, tetras, hexas);
       cutGM->getMeshPartitions().insert(e->getPartition());
     }
     cp.clear(); lines.clear(); triangles.clear(); quads.clear(); tetras.clear(); hexas.clear();

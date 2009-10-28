@@ -176,8 +176,7 @@ bool signChange (RecurElement *re, const DI_Element *e, const std::vector<const 
     const gLevelset *Lsi = RPN[l];
     RPNi.push_back(Lsi);
     if(Lsi->isPrimitive()) {
-      if(nodeLs && nodeLs[0].count(Lsi->getTag())) elem->addLs(Lsi->getTag(), nodeLs);
-      else elem->addLs(e, *Lsi);
+      elem->addLs(e, *Lsi, nodeLs);
       for(unsigned int i = 0; i < cp.size(); i++)
         cp[i].addLs(elem);
       if (re->super) re->el->addLs(elem);
