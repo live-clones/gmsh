@@ -204,6 +204,7 @@ class GmshSocket{
     }
     return 0;
   }
+  // str should be allocated with size (len+1)
   int ReceiveString(int len, char *str)
   {
     if(_ReceiveData(str, len) == len) {

@@ -141,7 +141,7 @@ class Graph
   {
     const int i = numGrVert++;
     xadj[i] = adjncy.size();
-    vwgts[i-1]=(int)(1.0);
+    vwgts[i-1] = 1;
     grVertMapIt->second.write(adjncy);
     element[i] = grVertMapIt->first;
     // Translated vertex numbers start from 1
@@ -151,7 +151,7 @@ class Graph
   {
     int num = 0;
     for(std::vector<int>::iterator it = wgts.begin(); it != wgts.end(); it++){
-      vwgts[num]= 1.0; //*it;
+      vwgts[num]= 1; //*it;
        num++;
     }
   }

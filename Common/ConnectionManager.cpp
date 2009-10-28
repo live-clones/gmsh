@@ -25,6 +25,9 @@ ConnectionManager::ConnectionManager()
 
 std::string ConnectionManager::getSocketName()
 {
+  // FIXME: this should be changed to incorporate info about the
+  // connection number (i.e. the integer in the _all map) so that we
+  // can have several connections active at the same time
   std::string sockname;
   if(!strstr(CTX::instance()->solver.socketName.c_str(), ":")){
     // Unix socket

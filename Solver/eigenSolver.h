@@ -44,7 +44,7 @@ class eigenSolver{
   {
     Msg::Error("Eigen solver requires SLEPc");
   }
-  int getNumEigenValues(){ return 0.; }
+  int getNumEigenValues(){ return 0; }
   std::complex<double> getEigenValue(int num){ return 0.; }
   std::vector<std::complex<double> > &getEigenVector(int num){ return _dummy; }
 };

@@ -67,9 +67,10 @@ class ConnectionManager {
   // a pointer to the server when the remote program is running, or 0
   // when stopped
   GmshServer *_server;
-  // a static map of all available remote programs: ints 0, 1, ... 4
-  // are reserved for the main solver menu; int -1 is used when
-  // permanently listening for incoming connections
+  // a static map of all available remote programs: values 0, 1, 2, 3,
+  // 4 are reserved for the main solver menu; -1 is used when
+  // permanently listening for incoming connections; 99 is used for
+  // remote Gmsh
   static std::map<int, ConnectionManager*> _all;
  public:
   ConnectionManager();
