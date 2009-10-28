@@ -101,17 +101,16 @@ void MakeGraphDIM(const EntIter begin, const EntIter end,
  ******************************************************************************/
 int PartitionMeshFace( std::list<GFace*> &cFaces, meshPartitionOptions &options)
 {
-   
-   GModel *tmp_model = new GModel();
-   for(std::list<GFace*>::iterator it = cFaces.begin(); it != cFaces.end(); it++)
-       tmp_model->add(*it);
-
-   PartitionMesh(tmp_model,options); 
-
-   for(std::list<GFace*>::iterator it = cFaces.begin(); it != cFaces.end(); it++)
-     tmp_model->remove(*it);
-   delete tmp_model;
-
+  GModel *tmp_model = new GModel();
+  for(std::list<GFace*>::iterator it = cFaces.begin(); it != cFaces.end(); it++)
+    tmp_model->add(*it);
+  
+  PartitionMesh(tmp_model,options); 
+  
+  for(std::list<GFace*>::iterator it = cFaces.begin(); it != cFaces.end(); it++)
+    tmp_model->remove(*it);
+  delete tmp_model;
+  return 1;
 }
 
 int PartitionMesh(GModel *const model, meshPartitionOptions &options)
