@@ -73,7 +73,7 @@ static int ImbricatedLoop = 0;
 static fpos_t yyposImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static int yylinenoImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static double LoopControlVariablesTab[MAX_RECUR_LOOPS][3];
-static char *LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
+static const char *LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
 
 void yyerror(const char *s);
 void yymsg(int level, const char *fmt, ...);
@@ -2483,20 +2483,22 @@ Loop :
 	ImbricatedLoop = 0;
       }
       else{
+	double step = LoopControlVariablesTab[ImbricatedLoop - 1][2];
+        const char *name = LoopControlVariablesNameTab[ImbricatedLoop - 1];
+        if(name){
+          if(!gmsh_yysymbols.count(name))
+            yymsg(0, "Unknown loop variable");
+          else{
+            gmsh_yysymbols[name][0] += step;
+            LoopControlVariablesTab[ImbricatedLoop - 1][0] = gmsh_yysymbols[name][0];
+          }
+        }
+        else{
+          LoopControlVariablesTab[ImbricatedLoop - 1][0] += step;
+        }
 	double x0 = LoopControlVariablesTab[ImbricatedLoop - 1][0];
 	double x1 = LoopControlVariablesTab[ImbricatedLoop - 1][1];
-	double step = LoopControlVariablesTab[ImbricatedLoop - 1][2];
-	int do_next = (step > 0.) ? (x0 + step <= x1) : (x0 + step >= x1);
-	if(do_next){
-	  LoopControlVariablesTab[ImbricatedLoop - 1][0] +=
-	    LoopControlVariablesTab[ImbricatedLoop - 1][2];
-	  if(LoopControlVariablesNameTab[ImbricatedLoop - 1]){
-	    if(!gmsh_yysymbols.count(LoopControlVariablesNameTab[ImbricatedLoop - 1]))
-	      yymsg(0, "Unknown loop variable");
-	    else
-	      gmsh_yysymbols[LoopControlVariablesNameTab[ImbricatedLoop - 1]][0] +=
-		LoopControlVariablesTab[ImbricatedLoop - 1][2];
-	  }
+        if((step > 0. && x0 <= x1) || (step < 0. && x0 >= x1)){
 	  fsetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop - 1]);
 	  gmsh_yylineno = yylinenoImbricatedLoopsTab[ImbricatedLoop - 1];
 	}
