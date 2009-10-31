@@ -118,30 +118,6 @@ extern "C" {
                       double *vr, int *ldvr, double *work, int *lwork, int *info);
 }
 
-template<> 
-bool fullMatrix<double>::invertInPlace()
-{
-  int N = size1(), nrhs = N, lda = N, ldb = N, info;
-  int *ipiv = new int[N];
-  double * invA = new double[N*N];
-
-  for (int i = 0; i < N * N; i++) invA[i] = 0.;
-  for (int i = 0; i < N; i++) invA[i * N + i] = 1.;
-
-  F77NAME(dgesv)(&N, &nrhs, _data, &lda, ipiv, invA, &ldb, &info);
-  memcpy(_data, invA, N * N * sizeof(double));
-
-  delete [] invA;
-  delete [] ipiv;
-
-  if(info == 0) return true;
-  if(info > 0)
-    Msg::Error("U(%d,%d)=0 in matrix inversion", info, info);
-  else
-    Msg::Error("Wrong %d-th argument in matrix inversion", -info);
-  return false;
-}
-
 static void swap(double *a, int inca, double *b, int incb, int n)
 {
   double tmp;
@@ -231,6 +207,30 @@ bool fullMatrix<double>::invert(fullMatrix<double> &result)
   delete [] ipiv;
   if(info == 0) return true;
   else if(info > 0)
+    Msg::Error("U(%d,%d)=0 in matrix inversion", info, info);
+  else
+    Msg::Error("Wrong %d-th argument in matrix inversion", -info);
+  return false;
+}
+
+template<> 
+bool fullMatrix<double>::invertInPlace()
+{
+  int N = size1(), nrhs = N, lda = N, ldb = N, info;
+  int *ipiv = new int[N];
+  double * invA = new double[N*N];
+
+  for (int i = 0; i < N * N; i++) invA[i] = 0.;
+  for (int i = 0; i < N; i++) invA[i * N + i] = 1.;
+
+  F77NAME(dgesv)(&N, &nrhs, _data, &lda, ipiv, invA, &ldb, &info);
+  memcpy(_data, invA, N * N * sizeof(double));
+
+  delete [] invA;
+  delete [] ipiv;
+
+  if(info == 0) return true;
+  if(info > 0)
     Msg::Error("U(%d,%d)=0 in matrix inversion", info, info);
   else
     Msg::Error("Wrong %d-th argument in matrix inversion", -info);
