@@ -7479,7 +7479,7 @@ yyreduce:
     List_T *temp = ListOfDouble2ListOfInt((yyvsp[(3) - (7)].l));
     std::vector<int> domain;
     
-    for (unsigned int i = 0; i < List_Nbr(temp); i++){
+    for (int i = 0; i < List_Nbr(temp); i++){
       int item = 0;
       List_Read(temp, i, &item);
       domain.push_back(item);
@@ -7489,7 +7489,7 @@ yyreduce:
     
     List_T *temp2 = ListOfDouble2ListOfInt((yyvsp[(5) - (7)].l));
     std::vector<int> subdomain;
-    for (unsigned int i = 0; i < List_Nbr(temp2); i++){
+    for (int i = 0; i < List_Nbr(temp2); i++){
       int item = 0;
       List_Read(temp2, i, &item);
       subdomain.push_back(item);
@@ -7513,7 +7513,7 @@ yyreduce:
     List_T *temp = ListOfDouble2ListOfInt((yyvsp[(7) - (11)].l));
     std::vector<int> domain;
     
-    for (unsigned int i = 0; i < List_Nbr(temp); i++){
+    for (int i = 0; i < List_Nbr(temp); i++){
       int item = 0;
       List_Read(temp, i, &item);
       domain.push_back(item);
@@ -7523,7 +7523,7 @@ yyreduce:
     
     List_T *temp2 = ListOfDouble2ListOfInt((yyvsp[(9) - (11)].l));
     std::vector<int> subdomain;
-    for (unsigned int i = 0; i < List_Nbr(temp2); i++){
+    for (int i = 0; i < List_Nbr(temp2); i++){
       int item = 0;
       List_Read(temp2, i, &item);
       subdomain.push_back(item);
@@ -7549,7 +7549,7 @@ yyreduce:
     List_T *temp = ListOfDouble2ListOfInt((yyvsp[(7) - (11)].l));
     std::vector<int> domain;
     
-    for (unsigned int i = 0; i < List_Nbr(temp); i++){
+    for (int i = 0; i < List_Nbr(temp); i++){
       int item = 0;
       List_Read(temp, i, &item);
       domain.push_back(item);
@@ -7559,7 +7559,7 @@ yyreduce:
     
     List_T *temp2 = ListOfDouble2ListOfInt((yyvsp[(9) - (11)].l));
     std::vector<int> subdomain;
-    for (unsigned int i = 0; i < List_Nbr(temp2); i++){
+    for (int i = 0; i < List_Nbr(temp2); i++){
       int item = 0;
       List_Read(temp2, i, &item);
       subdomain.push_back(item);
