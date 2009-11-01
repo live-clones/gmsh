@@ -446,12 +446,7 @@ void drawContext::drawPost()
 
   if(!CTX::instance()->post.draw) return;
 
-  static bool busy = false;
-  if(!busy){
-    busy = true;
-    for(unsigned int i = 0; i < PView::list.size(); i++)
-      PView::list[i]->fillVertexArrays();
-    std::for_each(PView::list.begin(), PView::list.end(), drawPView(this));
-    busy = false;
-  }
+  for(unsigned int i = 0; i < PView::list.size(); i++)
+    PView::list[i]->fillVertexArrays();
+  std::for_each(PView::list.begin(), PView::list.end(), drawPView(this));
 }

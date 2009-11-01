@@ -107,13 +107,14 @@ void openglWindow::drawBorder()
 
 void openglWindow::draw()
 {
-  static int locked = 0;
-  if(locked)
-    return;
-  else
-    locked = 1;
+  // some drawing routines can create data (STL triangulations, etc.):
+  // make sure that we don't fire draw() while we are already drawing
+  // (e.g. du to an impromptu Fl::check())
+  static bool busy = false;
+  if(busy) return;
+  busy = true;
 
-  Msg::Debug("openglWindow->draw()");
+  Msg::Debug("openglWindow::draw()");
 
   _ctx->viewport[0] = 0;
   _ctx->viewport[1] = 0;
@@ -197,7 +198,7 @@ void openglWindow::draw()
     drawBorder();
   }
 
-  locked = 0;
+  busy = false;
 }
 
 openglWindow *openglWindow::_lastHandled = 0;
@@ -512,7 +513,18 @@ bool openglWindow::processSelectionBuffer(int type, bool multipleSelection,
   int eles = (meshSelection && CTX::instance()->pickElements) ? 
     4 * m->getNumMeshElements() : 0;
   int size = 7 * (m->getNumVertices() + m->getNumEdges() + m->getNumFaces() + 
-                  m->getNumRegions() + eles) + 1000 ;
+                  m->getNumRegions() + eles);
+
+  if(!size) return false; // we won't get any hits: the model is empty!
+
+  size += 1000; // security
+
+  // some drawing routines can create data (STL triangulations, etc.):
+  // make sure that we don't fire redraw while we are already drawing
+  // (e.g. du to an impromptu Fl::check())
+  static bool busy = false;
+  if(busy) return false;
+  busy = true;
 
   make_current();
   GLuint *selectionBuffer = new GLuint[size];
@@ -531,6 +543,8 @@ bool openglWindow::processSelectionBuffer(int type, bool multipleSelection,
 
   GLint numhits = glRenderMode(GL_RENDER);
   _ctx->render_mode = drawContext::GMSH_RENDER;
+
+  busy = false;
 
   if(!numhits){ // no hits
     delete [] selectionBuffer;

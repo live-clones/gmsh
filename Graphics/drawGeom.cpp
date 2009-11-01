@@ -238,15 +238,8 @@ class drawGFace {
   {
     if (f->geomType() == GEntity::CompoundSurface) return;
 
-    if(CTX::instance()->geom.surfaceType > 0){
-      // avoid reentrant calls
-      static bool busy = false;
-      if(!busy) {
-        busy = true;
-        f->fillVertexArray(f->geomType() == GEntity::ProjectionFace);
-        busy = false;
-      }
-    }
+    if(CTX::instance()->geom.surfaceType > 0)
+      f->fillVertexArray(f->geomType() == GEntity::ProjectionFace);
 
     Range<double> ubounds = f->parBounds(0);
     Range<double> vbounds = f->parBounds(1);
@@ -318,26 +311,12 @@ class drawGFace {
   }
   void _drawPlaneGFace(GFace *f)
   {
-    if(CTX::instance()->geom.surfaceType > 0){
-      // avoid reentrant calls
-      static bool busy = false;
-      if(!busy) {
-        busy = true; 
-        f->fillVertexArray();
-        busy = false;
-      }
-    }
+    if(CTX::instance()->geom.surfaceType > 0)
+      f->fillVertexArray();
 
     if(!CTX::instance()->geom.surfaceType || !f->va_geom_triangles ||
-       CTX::instance()->geom.surfacesNum || CTX::instance()->geom.normals){
-      // avoid reentrant calls
-      static bool busy = false;
-      if(!busy) {
-        busy = true; 
-        f->buildRepresentationCross();
-        busy = false;
-      }
-    }
+       CTX::instance()->geom.surfacesNum || CTX::instance()->geom.normals)
+      f->buildRepresentationCross();
 
     if(CTX::instance()->geom.surfaces) {
       if(CTX::instance()->geom.surfaceType > 0 && f->va_geom_triangles){

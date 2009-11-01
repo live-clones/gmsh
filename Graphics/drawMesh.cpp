@@ -1008,48 +1008,42 @@ void drawContext::drawMesh()
         glDisable((GLenum)(GL_CLIP_PLANE0 + i));
   }
 
-  static bool busy = false;
-  if(!busy){
-    busy = true;
-
-    for(unsigned int i = 0; i < GModel::list.size(); i++){
-      GModel *m = GModel::list[i];
-      if(m->getVisibility()){
-        int status = m->getMeshStatus();
-        if(CTX::instance()->mesh.changed) {
-          Msg::Debug("Mesh has changed: reinitializing drawing data",
-                     CTX::instance()->mesh.changed);
-          if(status >= 1 && CTX::instance()->mesh.changed & ENT_LINE)
-            std::for_each(m->firstEdge(), m->lastEdge(), initMeshGEdge());
-          if(status >= 2 && CTX::instance()->mesh.changed & ENT_SURFACE){
-            if(m->normals) delete m->normals;
-            m->normals = new smooth_normals(CTX::instance()->mesh.angleSmoothNormals);
-            if(CTX::instance()->mesh.smoothNormals)
-              std::for_each(m->firstFace(), m->lastFace(), initSmoothNormalsGFace());
-            std::for_each(m->firstFace(), m->lastFace(), initMeshGFace());
-          }
-          if(status >= 3 && CTX::instance()->mesh.changed & ENT_VOLUME)
-            std::for_each(m->firstRegion(), m->lastRegion(), initMeshGRegion());
+  for(unsigned int i = 0; i < GModel::list.size(); i++){
+    GModel *m = GModel::list[i];
+    if(m->getVisibility()){
+      int status = m->getMeshStatus();
+      if(CTX::instance()->mesh.changed) {
+        Msg::Debug("Mesh has changed: reinitializing drawing data",
+                   CTX::instance()->mesh.changed);
+        if(status >= 1 && CTX::instance()->mesh.changed & ENT_LINE)
+          std::for_each(m->firstEdge(), m->lastEdge(), initMeshGEdge());
+        if(status >= 2 && CTX::instance()->mesh.changed & ENT_SURFACE){
+          if(m->normals) delete m->normals;
+          m->normals = new smooth_normals(CTX::instance()->mesh.angleSmoothNormals);
+          if(CTX::instance()->mesh.smoothNormals)
+            std::for_each(m->firstFace(), m->lastFace(), initSmoothNormalsGFace());
+          std::for_each(m->firstFace(), m->lastFace(), initMeshGFace());
         }
-        if(isVisible(m)){
-          if(status >= 0)
-            std::for_each(m->firstVertex(), m->lastVertex(), drawMeshGVertex(this));
-          if(status >= 1)
-            std::for_each(m->firstEdge(), m->lastEdge(), drawMeshGEdge(this));
-          if(status >= 2){
-            beginFakeTransparency();
-            std::for_each(m->firstFace(), m->lastFace(), drawMeshGFace(this));
-            endFakeTransparency();
-          }
-          if(status >= 3)
-            std::for_each(m->firstRegion(), m->lastRegion(), drawMeshGRegion(this));
+        if(status >= 3 && CTX::instance()->mesh.changed & ENT_VOLUME)
+          std::for_each(m->firstRegion(), m->lastRegion(), initMeshGRegion());
+      }
+      if(isVisible(m)){
+        if(status >= 0)
+          std::for_each(m->firstVertex(), m->lastVertex(), drawMeshGVertex(this));
+        if(status >= 1)
+          std::for_each(m->firstEdge(), m->lastEdge(), drawMeshGEdge(this));
+        if(status >= 2){
+          beginFakeTransparency();
+          std::for_each(m->firstFace(), m->lastFace(), drawMeshGFace(this));
+          endFakeTransparency();
         }
+        if(status >= 3)
+          std::for_each(m->firstRegion(), m->lastRegion(), drawMeshGRegion(this));
       }
     }
-
-    CTX::instance()->mesh.changed = 0;
-    busy = false;
   }
+  
+  CTX::instance()->mesh.changed = 0;
 
   for(int i = 0; i < 6; i++)
     glDisable((GLenum)(GL_CLIP_PLANE0 + i));
