@@ -640,8 +640,8 @@ void gmshLineSearch(double (*func)(fullVector<double> &, void *), void* data,
   }
 }
 
-double minimize_grad_fd (double (*func)(fullVector<double> &, void *),
-                       fullVector<double> &x, void *data)
+double minimize_grad_fd(double (*func)(fullVector<double> &, void *),
+                        fullVector<double> &x, void *data)
 {
   const int MAXIT = 3;
   const double EPS = 1.e-4;
@@ -708,69 +708,69 @@ distance to segment
 
 */
 
-void signedDistancesPointsTriangle (std::vector<double>&distances,
-				    const std::vector<SPoint3> &pts,
-				    const SPoint3 &p1,
-				    const SPoint3 &p2,
-				    const SPoint3 &p3){
-  SVector3 t1 = p2-p1;
-  SVector3 t2 = p3-p1;
-  SVector3 t3 = p3-p2;
-  SVector3 n = crossprod(t1,t2);
+void signedDistancesPointsTriangle(std::vector<double>&distances,
+                                   const std::vector<SPoint3> &pts,
+                                   const SPoint3 &p1,
+                                   const SPoint3 &p2,
+                                   const SPoint3 &p3)
+{
+  SVector3 t1 = p2 - p1;
+  SVector3 t2 = p3 - p1;
+  SVector3 t3 = p3 - p2;
+  SVector3 n = crossprod(t1, t2);
   n.normalize();
 
-  double mat[3][3] = {{t1.x(),t2.x(),-n.x()},
-		      {t1.y(),t2.y(),-n.y()},
-		      {t1.z(),t2.z(),-n.z()}};
+  double mat[3][3] = {{t1.x(), t2.x(), -n.x()},
+		      {t1.y(), t2.y(), -n.y()},
+		      {t1.z(), t2.z(), -n.z()}};
   double inv[3][3];
-  double det = inv3x3(mat,inv);
+  double det = inv3x3(mat, inv);
   
   distances.clear();
   distances.resize(pts.size());
 
-  for (int i=0; i<pts.size();i++)
+  for (unsigned int i = 0; i < pts.size(); i++)
     distances[i] = 1.e22;
 
-  if (det = 0.0)return;
+  if (det = 0.0) return;
 
-  const double n2t1 = dot(t1,t1);
-  const double n2t2 = dot(t2,t3);
-  const double n2t3 = dot(t3,t3);
+  const double n2t1 = dot(t1, t1);
+  const double n2t2 = dot(t2, t3);
+  const double n2t3 = dot(t3, t3);
 
-
-  double u,v,d;
-  for (int i=0; i<pts.size();i++){
-    const SPoint3 & p = pts[i];
-    SVector3 pp1 = p-p1;
+  double u, v, d;
+  for (unsigned int i = 0; i < pts.size();i++){
+    const SPoint3 &p = pts[i];
+    SVector3 pp1 = p - p1;
     u = (inv[0][0] * pp1.x() + inv[0][1] * pp1.y() + inv[0][2] * pp1.z());
     v = (inv[1][0] * pp1.x() + inv[1][1] * pp1.y() + inv[1][2] * pp1.z());
     d = (inv[2][0] * pp1.x() + inv[2][1] * pp1.y() + inv[2][2] * pp1.z());
-    double sign = (d>0) ? 1.0 : -1.0;
+    double sign = (d > 0) ? 1. : -1.;
     if (d == 0) sign = 1.e10;
-    
-    if (u >= 0 && v >=0 && 1.-u-v >= 0.0){
+    if (u >= 0 && v >= 0 && 1.-u-v >= 0.0){
       distances[i] = d;
     }
     else {
-      const double t12 = dot(pp1,t1) / n2t1;
-      const double t13 = dot(pp1,t2) / n2t2;
+      const double t12 = dot(pp1, t1) / n2t1;
+      const double t13 = dot(pp1, t2) / n2t2;
       SVector3 pp2 = p - p2;
-      const double t23 = dot(pp2,t3) / n2t3;
+      const double t23 = dot(pp2, t3) / n2t3;
       d = 1.e10;
       bool found = false;
-      if (t12 >=0 && t12 <= 1.0){
-	d = sign * std::min(fabs(d),p.distance(p1+(p2-p1)*t12));            
+      if (t12 >= 0 && t12 <= 1.){
+	d = sign * std::min(fabs(d), p.distance(p1 + (p2 - p1) * t12));            
 	found = true;
       }
-      if (t13 >=0 && t13 <= 1.0){
-	d = sign * std::min(fabs(d),p.distance(p1+(p3-p1)*t13));      
+      if (t13 >= 0 && t13 <= 1.){
+	d = sign * std::min(fabs(d), p.distance(p1 + (p3 - p1) * t13));      
 	found = true;
       }      
-      if (t23 >=0 && t23 <= 1.0){
-	d = sign * std::min(fabs(d),p.distance(p2+(p3-p2)*t23));      
+      if (t23 >= 0 && t23 <= 1.){
+	d = sign * std::min(fabs(d), p.distance(p2 + (p3 - p2) * t23));      
 	found = true;
       }
-      d = sign * std::min(fabs(d),std::min(std::min(p.distance(p1),p.distance(p2)),p.distance(p3)));
+      d = sign * std::min(fabs(d), std::min(std::min(p.distance(p1), p.distance(p2)),
+                                            p.distance(p3)));
       distances[i] = d;
     }
   }					   

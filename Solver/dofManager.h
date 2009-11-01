@@ -141,23 +141,23 @@ class dofManager{
   {
     if (!_current->isAllocated()) _current->allocate(unknown.size());
 
-    std::vector<int>    NR(R.size()), NC(C.size());
+    std::vector<int> NR(R.size()), NC(C.size());
 
-    for (int i=0; i<R.size(); i++){
+    for (unsigned int i = 0; i < R.size(); i++){
       std::map<Dof, int>::iterator itR = unknown.find(R[i]);
       if (itR != unknown.end()) NR[i] = itR->second;
       else NR[i] = -1;
     }
-    for (int i=0; i< C.size(); i++){
+    for (unsigned int i = 0; i < C.size(); i++){
       std::map<Dof, int>::iterator itC = unknown.find(C[i]);
       if (itC != unknown.end()) NC[i] = itC->second;
       else NC[i] = -1;
     }
-    for (int i=0; i<R.size(); i++){
+    for (unsigned int i = 0; i < R.size(); i++){
       if (NR[i] != -1){
-	for (int j=0; j<C.size(); j++){
+	for (unsigned int j = 0; j < C.size(); j++){
 	  if (NC[j] != -1){
-	    _current->addToMatrix(NR[i], NC[j], m(i,j));
+	    _current->addToMatrix(NR[i], NC[j], m(i, j));
 	  }
 	  else{
 	    typename std::map<Dof,  dataVec>::iterator itFixed = fixed.find(C[j]);
@@ -175,22 +175,22 @@ class dofManager{
 
     std::vector<int> NR(R.size());
 
-    for (int i=0; i<R.size(); i++){
+    for (unsigned int i = 0; i < R.size(); i++){
       std::map<Dof, int>::iterator itR = unknown.find(R[i]);
       if (itR != unknown.end()) NR[i] = itR->second;
       else NR[i] = -1;
     }
 
-    for (int i=0; i<R.size(); i++){
+    for (unsigned int i = 0; i < R.size(); i++){
       if (NR[i] != -1){
-	for (int j=0; j<R.size(); j++){
+	for (unsigned int j = 0; j < R.size(); j++){
 	  if (NR[j] != -1){
-	    _current->addToMatrix(NR[i], NR[j], m(i,j));
+	    _current->addToMatrix(NR[i], NR[j], m(i, j));
 	  }
 	  else{
 	    typename std::map<Dof,  dataVec>::iterator itFixed = fixed.find(R[j]);
 	    if (itFixed != fixed.end()){
-	      _current->addToRightHandSide(NR[i], -m(i,j) * itFixed->second);
+	      _current->addToRightHandSide(NR[i], -m(i, j) * itFixed->second);
 	    }
 	  }
 	}

@@ -1104,7 +1104,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
     for (std::vector<discreteEdge*>::iterator itE = discEdges.begin(); itE != discEdges.end(); itE++){
 
       bool candidate = true;
-      for (int i=0; i < (*itE)->getNumMeshElements(); i++){
+      for (unsigned int i = 0; i < (*itE)->getNumMeshElements(); i++){
 	MEdge me = (*itE)->getMeshElement(i)->getEdge(0);
 	if (std::find(myEdges.begin(), myEdges.end(), me) ==  myEdges.end()){
 	  candidate = false;
@@ -1117,7 +1117,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
 	std::vector<int> tagEdges;
 	tagEdges.push_back((*itE)->tag());
 	//printf("push back edge %d\n", (*itE)->tag());
-	for (int i=0; i < (*itE)->getNumMeshElements(); i++){
+	for (unsigned int i = 0; i < (*itE)->getNumMeshElements(); i++){
 	  MEdge me = (*itE)->getMeshElement(i)->getEdge(0);
 	  std::vector<MEdge>::iterator itME = std::find(myEdges.begin(), myEdges.end(), me);
 	  myEdges.erase(itME);

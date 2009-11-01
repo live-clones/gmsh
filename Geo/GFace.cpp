@@ -936,6 +936,7 @@ bool GFace::fillVertexArray(bool force)
     va_geom_triangles->add(x, y, z, n, col);
   }
   va_geom_triangles->finalize();
+  return true;
 }
 
 // by default we assume that straight lines are geodesics

@@ -3403,7 +3403,7 @@ static void gl2psPutPDFText(GL2PSstring *text, int cnt, GLfloat x, GLfloat y)
        cnt, text->fontsize, x, y, text->str);
   }
   else{
-    rad = M_PI * text->angle / 180.0F;
+    rad = (GLfloat)M_PI * text->angle / 180.0F;
     srad = (GLfloat)sin(rad);
     crad = (GLfloat)cos(rad);
     gl2ps->streamlength += gl2psPrintf

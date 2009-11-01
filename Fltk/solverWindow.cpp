@@ -399,7 +399,7 @@ static void solver_command_cb(Fl_Widget *w, void *data)
     optionIndex += numPercentS(ConnectionManager::get(num)->buttonSwitch[i]);
 
   int optionChoice = 0;
-  if(optionIndex >= 0 && optionIndex < FlGui::instance()->solver[num]->choice.size())
+  if(optionIndex >= 0 && optionIndex < (int)FlGui::instance()->solver[num]->choice.size())
     optionChoice = FlGui::instance()->solver[num]->choice[optionIndex]->value();
 
   ConnectionManager::get(num)->runCommand(idx, optionIndex, optionChoice);

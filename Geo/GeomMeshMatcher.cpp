@@ -230,7 +230,7 @@ GeomMeshMatcher::matchEdges(GModel* m1, GModel* m2,
       }
 
 
-      for (int i = 0; i < choice->getNumMeshElements(); i++) {
+      for (unsigned int i = 0; i < choice->getNumMeshElements(); i++) {
         for (int j = 0; j < choice->getMeshElement(i)->getNumVertices(); j++) {
 	  MVertex* v = choice->getMeshElement(i)->getVertex(j);
           double param = ((GEdge*) *entity1)->parFromPoint(v->point());
@@ -315,7 +315,7 @@ GeomMeshMatcher:: matchFaces(GModel* m1, GModel* m2,
     choice->setTag(((GFace*) *entity1)->tag());
     num_matched_faces++;
     
-    for (int i = 0; i < choice->getNumMeshElements(); i++) {
+    for (unsigned int i = 0; i < choice->getNumMeshElements(); i++) {
       MVertex* v1 = choice->getMeshElement(i)->getVertex(0);
       MVertex* v2 = choice->getMeshElement(i)->getVertex(1);
       SPoint2 param1 = ((GFace*) *entity1)->parFromPoint(v1->point());

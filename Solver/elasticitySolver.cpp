@@ -21,7 +21,7 @@
 PView* elasticitySolver::buildDisplacementView (const std::string &postFileName){
   std::map<int, std::vector<double> > data;
   std::set<MVertex*> v;
-  for (int i = 0; i < elasticFields.size(); ++i){
+  for (unsigned int i = 0; i < elasticFields.size(); ++i){
     groupOfElements::elementContainer::const_iterator it = elasticFields[i].g->begin();
     for ( ; it != elasticFields[i].g->end(); ++it){
       SElement se(*it);
@@ -35,7 +35,7 @@ PView* elasticitySolver::buildDisplacementView (const std::string &postFileName)
   for ( ; it != v.end(); ++it){
     std::vector<double> d;
     d.push_back(0); d.push_back(0); d.push_back(0);
-    for (int i = 0; i < elasticFields.size(); ++i){
+    for (unsigned int i = 0; i < elasticFields.size(); ++i){
       const double E = (elasticFields[i]._enrichment) ?
                        (*elasticFields[i]._enrichment)((*it)->x(), (*it)->y(), (*it)->z()) : 1.0;	
       //      printf("%g %d \n",pAssembler->getDofValue(*it,0,elasticFields[i]._tag),elasticFields[i]._tag);
@@ -232,7 +232,7 @@ void elasticitySolver::solve()
 
   // we number the nodes : when a node is numbered, it cannot be numbered
   // again with another number. so we loop over elements
-  for (int i = 0; i < elasticFields.size(); ++i){
+  for (unsigned int i = 0; i < elasticFields.size(); ++i){
     groupOfElements::elementContainer::const_iterator it = elasticFields[i].g->begin();
     for ( ; it != elasticFields[i].g->end(); ++it){
       SElement se(*it);
@@ -301,9 +301,9 @@ void elasticitySolver::solve()
   }
 
   // assembling the stifness matrix
-  for (int i = 0; i < elasticFields.size(); i++){
+  for (unsigned int i = 0; i < elasticFields.size(); i++){
     SElement::setShapeEnrichement(elasticFields[i]._enrichment);
-    for (int j = 0; j < elasticFields.size(); j++){
+    for (unsigned int j = 0; j < elasticFields.size(); j++){
       elasticityTerm El(0, elasticFields[i]._E, elasticFields[i]._nu,
                         elasticFields[i]._tag, elasticFields[j]._tag);
       SElement::setTestEnrichement(elasticFields[j]._enrichment);
