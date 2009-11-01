@@ -19,7 +19,7 @@ double cartesianBox<double>::distance (double x, double y, double z) const{
     _ann->dist = new ANNdist[2];
     if(_points.size())
       _ann->zeronodes = annAllocPts(_points.size(), 4);
-    for (int i=0;i<_points.size();i++){
+    for (unsigned int i = 0; i < _points.size(); i++){
       _ann->zeronodes[i][0] = _points[i].x(); 
       _ann->zeronodes[i][1] = _points[i].y(); 
       _ann->zeronodes[i][2] = _points[i].z(); 
