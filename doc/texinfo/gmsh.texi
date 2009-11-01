@@ -272,7 +272,57 @@ Frequently asked questions
 @cindex Copyright
 @cindex License
 
-@include copying.texi
+@cindex Web site
+@cindex Internet address
+@cindex Mailing list
+@cindex Download
+
+Gmsh is ``free software''; this means that everyone is free to use it and
+to redistribute it on a free basis. Gmsh is not in the public domain; it is
+copyrighted and there are restrictions on its distribution, but these
+restrictions are designed to permit everything that a good cooperating
+citizen would want to do.  What is not allowed is to try to prevent others
+from further sharing any version of Gmsh that they might get from you.
+
+Specifically, we want to make sure that you have the right to give away
+copies of Gmsh, that you receive source code or else can get it if you want
+it, that you can change Gmsh or use pieces of Gmsh in new free programs,
+and that you know you can do these things.
+
+To make sure that everyone has such rights, we have to forbid you to deprive
+anyone else of these rights.  For example, if you distribute copies of
+Gmsh, you must give the recipients all the rights that you have.  You must
+make sure that they, too, receive or can get the source code.  And you must
+tell them their rights.
+
+Also, for our own protection, we must make certain that everyone finds out
+that there is no warranty for Gmsh.  If Gmsh is modified by someone else
+and passed on, we want their recipients to know that what they have is not
+what we distributed, so that any problems introduced by others will not
+reflect on our reputation.
+
+The precise conditions of the license for Gmsh are found in the General
+Public License that accompanies the source code (@pxref{License}). Further
+information about this license is available from the GNU Project webpage
+@uref{http://www.gnu.org/copyleft/gpl-faq.html}.  Detailed copyright
+information can be found in @ref{Copyright and credits}.
+
+The source code and various pre-compiled versions of Gmsh (for Unix, Windows
+and Mac OS) can be downloaded from the webpage @uref{http://geuz.org/gmsh/}.
+
+If you use Gmsh, we would appreciate that you mention it in your
+work. References, as well as the latest news about Gmsh development, are
+always available on @uref{http://geuz.org/gmsh/}. Please send all
+Gmsh-related questions to the public Gmsh mailing list at
+@email{gmsh@@geuz.org}.
+
+@sp 2
+
+If you want to integrate Gmsh into a closed-source software, or want to sell
+a modified closed-source version of Gmsh, please contact one of the
+authors. You can purchase a version of Gmsh under a different license, with
+``no strings attached'' (for example allowing you to take parts of Gmsh and
+integrate them into your own proprietary code).
 
 @c =========================================================================
 @c Overview
@@ -773,7 +823,112 @@ For the list of all command-line options, see @ref{Command-line options}.
 @cindex Command-line options
 @cindex Options, command-line
 
-@include command_line.texi
+@noindent Geometry options:
+
+@ftable @code
+@item -0
+Parse all input files, output unrolled geometry, and exit. 
+@item -tol float
+Set geometrical tolerance
+@end ftable
+
+@sp 1 
+
+@noindent Mesh options:
+
+@ftable @code
+@item -1, -2, -3
+Perform 1D, 2D or 3D mesh generation, then exit
+@item -part int
+Partition the mesh after batch mesh generation.
+@item -saveall
+Save all elements (discard physical group definitions)
+@item -o file
+Specify mesh output file name
+@item -format string
+Set output mesh format (msh, msh1, msh2, unv, vrml, stl, mesh, bdf, p3d, cgns, med)
+@item -bin
+Use binary format when available
+@item -algo string
+Select mesh algorithm (meshadapt, del2d, front2d, del3d, front3d)
+@item -smooth int
+Set number of mesh smoothing steps
+@item -optimize[_netgen]
+Optimize quality of tetrahedral elements
+@item -order int
+Set the order of the generated elements (1, 2)
+@item -clscale float
+Set characteristic length scaling factor
+@item -clmin float
+Set minimum characteristic length
+@item -clmax float
+Set maximum characteristic length
+@item -clcurv
+Compute characteristic lengths from curvatures
+@item -rand float
+Set random perturbation factor
+@item -bgm file
+Load background mesh from file
+@end ftable
+
+@sp 1 
+
+@noindent Post-processing options:
+
+@ftable @code
+@item -noview
+Hide all views on startup
+@item -link int
+Select link mode between views (0, 1, 2, 3, 4)
+@item -combine
+Combine views having identical names into multi-time-step views
+@end ftable
+
+@sp 1 
+
+@noindent Display options:
+
+@ftable @code
+@item -nodb
+Disable double buffering
+@item -fontsize int
+Specify the font size for the GUI
+@item -theme string
+Specify FLTK GUI theme
+@item -display string
+Specify display
+@end ftable
+
+@sp 1
+
+@noindent Other options:
+
+@ftable @code
+@item -
+Parse input files, then exit
+@item -a, -g, -m, -s, -p
+Start in automatic, geometry, mesh, solver or post-processing mode
+@item -pid
+Print pid on stdout
+@item -listen
+Always listen to incoming connection requests.
+@item -v int
+Set verbosity level
+@item -nopopup
+Don't popup dialog windows in scripts
+@item -string "string"
+Parse option string at startup
+@item -option file
+Parse option file at startup
+@item -convert files
+Convert files into latest binary formats, then exit
+@item -version
+Show version number
+@item -info
+Show detailed version information
+@item -help
+Show this message
+@end ftable
 
 @c -------------------------------------------------------------------------
 @c Mouse actions
@@ -850,7 +1005,169 @@ Pop-up menu on post-processing view button
 (On Mac Ctrl is replaced by Cmd (the `Apple key') in the shortcuts
 below.)
 
-@include shortcuts.texi
+@table @kbd
+
+@item Left arrow
+Go to previous time step 
+@item Right arrow
+Go to next time step 
+@item Up arrow
+Make previous view visible 
+@item Down arrow
+Make next view visible 
+
+@sp 1 @c ----------------------------------------------
+
+@item <
+Go back to previous context
+@item >
+Go forward to next context
+@item 0
+Reload project file
+@item 1 or F1
+Mesh lines
+@item 2 or F2
+Mesh surfaces
+@item 3 or F3
+Mesh volumes
+@item Escape
+Cancel lasso zoom/selection, toggle mouse selection ON/OFF
+
+@sp 1 @c ----------------------------------------------
+
+@item g
+Go to geometry module
+@item m
+Go to mesh module
+@item p
+Go to post-processing module
+@item s
+Go to solver module
+
+@sp 1 @c ----------------------------------------------
+
+@item Shift+a
+Bring all windows to front
+@item Shift+g
+Show geometry options
+@item Shift+m
+Show mesh options
+@item Shift+o
+Show general options 
+@item Shift+p
+Show post-processing options
+@item Shift+s
+Show solver options 
+@item Shift+u
+Show post-processing view plugins
+@item Shift+w
+Show post-processing view options
+
+@sp 1 @c ----------------------------------------------
+
+@item Ctrl+i
+Show statistics window 
+@item Ctrl+l
+Show message console
+@item Ctrl+n
+Create new project file 
+@item Ctrl+o
+Open project file
+@item Ctrl+q
+Quit
+@item Ctrl+r
+Rename project file
+@item Ctrl+s
+Save file
+
+@sp 1 @c ----------------------------------------------
+
+@item Shift+Ctrl+c
+Show clipping plane window
+@item Shift+Ctrl+m
+Show manipulator window 
+@item Shift+Ctrl+n
+Show option window 
+@item Shift+Ctrl+o
+Merge file(s)
+@item Shift+Ctrl+s
+Save mesh in default format
+@item Shift+Ctrl+u
+Show plugin window
+@item Shift+Ctrl+v
+Show visibility window
+
+@sp 1 @c ----------------------------------------------
+
+@item Alt+a
+Loop through axes modes
+@item Alt+b
+Hide/show bounding boxes
+@item Alt+c
+Loop through predefined color schemes
+@item Alt+e
+Hide/Show element outlines for visible post-processing views
+@item Alt+f
+Change redraw mode (fast/full) 
+@item Alt+h
+Hide/show all post-processing views 
+@item Alt+i
+Hide/show all post-processing view scales
+@item Alt+l
+Hide/show geometry lines
+@item Alt+m
+Toggle visibility of all mesh entities
+@item Alt+n
+Hide/show all post-processing view annotations
+@item Alt+o
+Change projection mode (orthographic/perspective)
+@item Alt+p
+Hide/show geometry points
+@item Alt+r
+Loop through range modes for visible post-processing views
+@item Alt+s
+Hide/show geometry surfaces
+@item Alt+t
+Loop through interval modes for visible post-processing views
+@item Alt+v
+Hide/show geometry volumes
+@item Alt+w
+Enable/disable all lighting
+@item Alt+x
+Set X view 
+@item Alt+y
+Set Y view 
+@item Alt+z
+Set Z view 
+
+@sp 1 @c ----------------------------------------------
+
+@item Alt+Shift+a
+Hide/show small axes 
+@item Alt+Shift+b
+Hide/show mesh volume faces
+@item Alt+Shift+d
+Hide/show mesh surface faces
+@item Alt+Shift+l
+Hide/show mesh lines
+@item Alt+Shift+o
+Adjust projection parameters
+@item Alt+Shift+p
+Hide/show mesh points
+@item Alt+Shift+s
+Hide/show mesh surface edges
+@item Alt+Shift+v
+Hide/show mesh volume edges
+@item Alt+Shift+w
+Reverse all mesh normals
+@item Alt+Shift+x
+Set -X view 
+@item Alt+Shift+y
+Set -Y view 
+@item Alt+Shift+z
+Set -Z view 
+
+@end table
 
 @c =========================================================================
 @c General tools
