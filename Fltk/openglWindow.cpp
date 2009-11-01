@@ -38,12 +38,11 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &cl
 }
 
 openglWindow::openglWindow(int x, int y, int w, int h, const char *l)
-  : Fl_Gl_Window(x, y, w, h, l)
+  : Fl_Gl_Window(x, y, w, h, l), _lock(false),
+    _selection(ENT_NONE), _trySelection(0)
 {
   _ctx = new drawContext();
   for(int i = 0; i < 3; i++) _point[i] = 0.;
-  _selection = ENT_NONE;
-  _trySelection = 0;
   for(int i = 0; i < 4; i++) _trySelectionXYWH[i] = 0;
   _lassoXY[0] = _lassoXY[1] = 0;
 
@@ -110,9 +109,8 @@ void openglWindow::draw()
   // some drawing routines can create data (STL triangulations, etc.):
   // make sure that we don't fire draw() while we are already drawing
   // (e.g. du to an impromptu Fl::check())
-  static bool busy = false;
-  if(busy) return;
-  busy = true;
+  if(_lock) return;
+  _lock = true;
 
   Msg::Debug("openglWindow::draw()");
 
@@ -198,7 +196,7 @@ void openglWindow::draw()
     drawBorder();
   }
 
-  busy = false;
+  _lock = false;
 }
 
 openglWindow *openglWindow::_lastHandled = 0;
@@ -522,9 +520,8 @@ bool openglWindow::processSelectionBuffer(int type, bool multipleSelection,
   // some drawing routines can create data (STL triangulations, etc.):
   // make sure that we don't fire redraw while we are already drawing
   // (e.g. du to an impromptu Fl::check())
-  static bool busy = false;
-  if(busy) return false;
-  busy = true;
+  if(_lock) return false;
+  _lock = true;
 
   make_current();
   GLuint *selectionBuffer = new GLuint[size];
@@ -544,7 +541,7 @@ bool openglWindow::processSelectionBuffer(int type, bool multipleSelection,
   GLint numhits = glRenderMode(GL_RENDER);
   _ctx->render_mode = drawContext::GMSH_RENDER;
 
-  busy = false;
+  _lock = false;
 
   if(!numhits){ // no hits
     delete [] selectionBuffer;

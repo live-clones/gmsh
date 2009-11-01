@@ -22,6 +22,7 @@ class openglWindow : public Fl_Gl_Window {
  private:
   static openglWindow *_lastHandled;
   static void _setLastHandled(openglWindow*);
+  bool _lock;
   mousePosition _click, _curr, _prev;
   drawContext *_ctx;
   double _point[3];
