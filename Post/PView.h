@@ -119,7 +119,7 @@ class PView{
 
   // fill a vertex array using a raw stream of bytes
   static void fillVertexArray(ConnectionManager *remote, int length, 
-                              const char *data);
+                              const char *data, int swap);
 
   // smoothed normals
   smooth_normals *normals;

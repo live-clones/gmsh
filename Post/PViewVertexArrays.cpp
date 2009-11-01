@@ -1142,12 +1142,18 @@ void PView::fillVertexArrays()
   init(this);
 }
 
-void PView::fillVertexArray(ConnectionManager *remote, int length, const char *bytes)
+void PView::fillVertexArray(ConnectionManager *remote, int length, 
+                            const char *bytes, int swap)
 {
   int is = sizeof(int), ds = sizeof(double);
 
   if(length < 4 * is + 9 * ds){
     Msg::Error("Too few bytes to create vertex array: %d", length);
+    return;
+  }
+
+  if(swap){
+    Msg::Error("Should swap bytes in vertex array--not implemented yet");
     return;
   }
   
@@ -1201,22 +1207,22 @@ void PView::fillVertexArray(ConnectionManager *remote, int length, const char *b
   case 1:
     if(p->va_points) delete p->va_points; 
     p->va_points = new VertexArray(1, 100);
-    p->va_points->fromChar(bytes);
+    p->va_points->fromChar(bytes, swap);
     break;
   case 2: 
     if(p->va_lines) delete p->va_lines; 
     p->va_lines = new VertexArray(2, 100);
-    p->va_lines->fromChar(bytes);
+    p->va_lines->fromChar(bytes, swap);
     break;
   case 3:
     if(p->va_triangles) delete p->va_triangles;
     p->va_triangles = new VertexArray(3, 100);
-    p->va_triangles->fromChar(bytes);
+    p->va_triangles->fromChar(bytes, swap);
     break;
   case 4:
     if(p->va_vectors) delete p->va_vectors;
     p->va_vectors = new VertexArray(2, 100);
-    p->va_vectors->fromChar(bytes);
+    p->va_vectors->fromChar(bytes, swap);
     break;
   default: 
     Msg::Error("Cannot fill vertex array of type %d", type);

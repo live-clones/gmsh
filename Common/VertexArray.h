@@ -166,7 +166,7 @@ class VertexArray{
   // network)
   char *toChar(int num, std::string name, int type, double min, double max, 
                int numsteps, double time, SBoundingBox3d bbox, int &len);
-  void fromChar(const char *bytes);
+  void fromChar(const char *bytes, int swap);
 };
 
 #endif

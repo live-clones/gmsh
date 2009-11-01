@@ -185,25 +185,26 @@ class GmshSocket{
     if(num > 5) num = 5;
     SendString(GMSH_OPTION_1 + num - 1, str);
   }
-  int ReceiveHeader(int *type, int *len)
+  int ReceiveHeader(int *type, int *len, int *swap)
   {
-    bool swap = false;
+    *swap = 0;
     if(_ReceiveData(type, sizeof(int))){
       if(*type < 0) return 0;
       if(*type > 65535){ 
         // the data comes from a machine with different endianness and
         // we must swap the bytes
-        swap = true;
+        *swap = 1;
         _SwapBytes((char*)type, sizeof(int), 1);
       }
       if(_ReceiveData(len, sizeof(int))){
         if(*len < 0) return 0;
-        if(swap) _SwapBytes((char*)len, sizeof(int), 1);
+        if(*swap) _SwapBytes((char*)len, sizeof(int), 1);
         return 1;
       }
     }
     return 0;
   }
+  // str should be allocated with size (len+1)
   int ReceiveString(int len, char *str)
   {
     if(_ReceiveData(str, len) == len) {

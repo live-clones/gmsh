@@ -252,14 +252,13 @@ char *VertexArray::toChar(int num, std::string name, int type, double min, doubl
   return bytes;
 }
 
-void VertexArray::fromChar(const char *bytes)
+void VertexArray::fromChar(const char *bytes, int swap)
 {
+  // FIXME deal with swap
+
   int is = sizeof(int), ds = sizeof(double), index = 0;
 
   int num; memcpy(&num, &bytes[index], is); index += is;
-
-  if(num > 65535)
-    Msg::Error("Should swap data in vertex array stream");
 
   int ss; memcpy(&ss, &bytes[index], is); index += is;
   if(ss){

@@ -66,8 +66,8 @@ int GmshRemote()
       break;
     }
 
-    int type, length;
-    if(!client->ReceiveHeader(&type, &length)){
+    int type, length, swap;
+    if(!client->ReceiveHeader(&type, &length, &swap)){
       client->Error("Did not receive message header: stopping remote Gmsh...");
       break;
     }

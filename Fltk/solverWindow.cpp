@@ -155,8 +155,8 @@ void ConnectionManager::run(std::string args)
     if(stop || _pid < 0 || (prog.empty() && !CTX::instance()->solver.listen))
       break;
     
-    int type, length;
-    if(!server->ReceiveHeader(&type, &length)){
+    int type, length, swap;
+    if(!server->ReceiveHeader(&type, &length, &swap)){
       Msg::Error("Did not receive message header: stopping server");
       break;
     }
@@ -225,7 +225,7 @@ void ConnectionManager::run(std::string args)
     case GmshSocket::GMSH_VERTEX_ARRAY:
       {
         int n = PView::list.size();
-        PView::fillVertexArray(this, length, message);
+        PView::fillVertexArray(this, length, message, swap);
         if(n != (int)PView::list.size())
           FlGui::instance()->updateViews();
         drawContext::global()->draw();
