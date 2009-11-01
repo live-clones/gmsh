@@ -240,7 +240,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MetisAlgorithm
-METIS partitioning algorithm (1=Recursive, 2=K-way)@*
+METIS partitioning algorithm (1=Recursive, 2=K-way, 3=Nodal weight)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -402,6 +402,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.RefineSteps
 Number of refinement steps in the MeshAdapt-based 2D algorithms@*
 Default value: @code{10}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Remove4Triangles
+Try to remove nodes surrounded by 4 triangles in 2D triangular meshes@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ReverseAllNormals

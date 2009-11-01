@@ -427,38 +427,6 @@ Default value: @code{-1}
 Default value: @code{-1}
 @end table
 
-@item Plugin(FiniteElement)
-Plugin(FiniteElement) solves simple PDEs
-using the finite element method. This is only
-intended as a demonstration tool: it is NOT
-intended for general use.
-Plugin(FiniteElement) creates a new view.
-
-String options:
-@table @code
-@item Equation
-Default value: @code{"Projection"}
-@item Parameter
-Default value: @code{"Sin(x*y)"}
-@item Gamma1BC
-Default value: @code{""}
-@item Gamma2BC
-Default value: @code{""}
-@end table
-Numeric options:
-@table @code
-@item Omega
-Default value: @code{1}
-@item Gamma1
-Default value: @code{0}
-@item Gamma1Value
-Default value: @code{0}
-@item Gamma2
-Default value: @code{0}
-@item Gamma2Value
-Default value: @code{0}
-@end table
-
 @item Plugin(GSHHS)
 Plugin(GSHHS) read different kind of contour lines data
 and write a .geo file on the surface of a sphere (the Earth).
@@ -856,6 +824,19 @@ Default value: @code{0.1}
 Default value: @code{0}
 @item dView
 Default value: @code{-1}
+@item iView
+Default value: @code{-1}
+@end table
+
+@item Plugin(Tetrahedralize)
+Plugin(Tetrahedralize) tetrahedralizes the points in the
+view `iView'. If `iView' < 0, the plugin is run on
+the current view.
+
+Plugin(Tetrahedralize) creates one new view.
+
+Numeric options:
+@table @code
 @item iView
 Default value: @code{-1}
 @end table

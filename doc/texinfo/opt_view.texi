@@ -259,6 +259,51 @@ Swap the min/max values in the colormap?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.ComponentMap0
+Forced component 0 (if View.ForceComponents > 0)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ComponentMap1
+Forced component 1 (if View.ForceComponents > 0)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ComponentMap2
+Forced component 2 (if View.ForceComponents > 0)@*
+Default value: @code{2}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ComponentMap3
+Forced component 3 (if View.ForceComponents > 0)@*
+Default value: @code{3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ComponentMap4
+Forced component 4 (if View.ForceComponents > 0)@*
+Default value: @code{4}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ComponentMap5
+Forced component 5 (if View.ForceComponents > 0)@*
+Default value: @code{5}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ComponentMap6
+Forced component 6 (if View.ForceComponents > 0)@*
+Default value: @code{6}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ComponentMap7
+Forced component 7 (if View.ForceComponents > 0)@*
+Default value: @code{7}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ComponentMap8
+Forced component 8 (if View.ForceComponents > 0)@*
+Default value: @code{8}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.CustomMax
 User-defined maximum value to be displayed@*
 Default value: @code{0}@*
@@ -351,6 +396,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.FakeTransparency
 Use fake transparency (cheaper than the real thing, but incorrect)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ForceNumComponents
+Force number of components to display (see View.ComponentMapN for mapping)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -451,7 +501,7 @@ Saved in: @code{-}
 
 @item View.NbIso
 Number of intervals@*
-Default value: @code{15}@*
+Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.NbTimeStep
