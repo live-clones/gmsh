@@ -322,9 +322,9 @@ bool GFaceCompound::checkCavity(std::vector<MElement*> &vTri) const
 
 static bool closedCavity(MVertex *v, std::vector<MElement*> &vTri){
   std::set<MVertex *> vs;
-  for (int i=0;i<vTri.size();i++){
+  for (unsigned int i = 0; i < vTri.size(); i++){
     MElement *t = vTri[i];
-    for (int j=0;j<t->getNumVertices();j++){
+    for (int j = 0; j < t->getNumVertices(); j++){
       MVertex *vv = t->getVertex(j);
       if (vv != v){
 	if (vs.find(vv) == vs.end())vs.insert(vv);
@@ -1454,9 +1454,9 @@ void GFaceCompound::coherenceNormals()
 {
 
   std::map<MEdge, std::set<MTriangle*>, Less_Edge > edge2tris;
-  for(int i=0; i< triangles.size(); i++){
+  for(unsigned int i = 0; i < triangles.size(); i++){
     MTriangle *t = triangles[i];
-    for (int j=0; j<3; j++){
+    for (int j = 0; j < 3; j++){
       MEdge me = t->getEdge(j);
       std::map<MEdge, std::set<MTriangle*>, Less_Edge >::iterator it = edge2tris.find(me);
       if (it == edge2tris.end()) {
@@ -1476,11 +1476,11 @@ void GFaceCompound::coherenceNormals()
   int iE, si, iE2, si2;
   touched.insert(triangles[0]);
   while(touched.size() != triangles.size()){
-    for(int i = 0; i< triangles.size(); i++){
+    for(unsigned int i = 0; i < triangles.size(); i++){
       MTriangle *t = triangles[i];
       std::set<MTriangle*>::iterator it2 = touched.find(t);
       if(it2 != touched.end()){
-	for (int j=0; j<3; j++){
+	for (int j = 0; j < 3; j++){
 	  MEdge me = t->getEdge(j);
 	  t->getEdgeInfo(me, iE,si);
 	  std::map<MEdge, std::set<MTriangle*>, Less_Edge >::iterator it = edge2tris.find(me);
