@@ -12,7 +12,8 @@ public:
 };
 
 template <>
-double cartesianBox<double>::distance (double x, double y, double z) const{
+double cartesianBox<double>::distance (double x, double y, double z) const
+{
   if (!_ann){
     _ann = new hiddenANN;
     _ann->index = new ANNidx[2];
@@ -43,9 +44,9 @@ double cartesianBox<double>::distance (double x, double y, double z) const{
 }
 #else
 template <>
-double cartesianBox<double>::distance (double x, double y, double z) const{
+double cartesianBox<double>::distance (double x, double y, double z) const
+{
   printf("youpiiie\n");
   return 0.0;
 }
 #endif
-
