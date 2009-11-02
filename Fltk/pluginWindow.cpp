@@ -107,6 +107,8 @@ static void plugin_browser_cb(Fl_Widget *w, void *data)
 static void add_scripting(GMSH_PostPlugin *p, PView *view)
 {
   if(!FlGui::instance()->plugins->record->value()) return;
+
+  std::string fileName;
   int oldIndex = -1;
   if(view){
     for(int i = 0; i < p->getNbOptions(); i++){
@@ -115,9 +117,12 @@ static void add_scripting(GMSH_PostPlugin *p, PView *view)
         p->getOption(i)->def = view->getIndex();
       }
     }
+    fileName = view->getData()->getFileName();
   }
+  else
+    fileName = GModel::current()->getFileName();
 
-  std::string fileName = GModel::current()->getFileName() + ".opt";
+  fileName +=  + ".opt";
   FILE *fp = fopen(fileName.c_str(), "a");
   if(!fp){
     Msg::Error("Could not open file '%s'", fileName.c_str());

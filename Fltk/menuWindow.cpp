@@ -1991,9 +1991,6 @@ static void view_reload(int index)
       p->setChanged(true);
       FlGui::instance()->updateViews();
     }
-
-  if(!StatFile(p->getData()->getFileName() + ".opt"))
-    MergeFile(p->getData()->getFileName() + ".opt");
   }
 }
 

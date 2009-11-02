@@ -383,6 +383,11 @@ int MergeFile(std::string fileName, bool warnIfMissing)
 
   if(!status) Msg::Error("Error loading '%s'", fileName.c_str());
   Msg::StatusBar(2, true, "Read '%s'", fileName.c_str());
+
+  // merge the associated option file if there is one
+  if(!StatFile(fileName + ".opt"))
+    MergeFile(fileName + ".opt");
+
   return status;
 }
 
@@ -444,10 +449,6 @@ void OpenProject(std::string fileName)
 
   // merge the file
   MergeFile(fileName);
-
-  // merge the associated option file if there is one
-  if(!StatFile(fileName + ".opt"))
-    MergeFile(fileName + ".opt");
 
   CTX::instance()->lock = 0;
 
