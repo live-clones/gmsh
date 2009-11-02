@@ -33,6 +33,7 @@ Plugin(CutPlane).A = 0 ;
 Plugin(CutPlane).B = 0.2 ; 
 Plugin(CutPlane).C = 1 ; 
 Plugin(CutPlane).D = 0 ; 
+Plugin(CutPlane).iView = 0 ;
 Plugin(CutPlane).Run ; 
 
 // Add a title
@@ -46,6 +47,7 @@ Plugin(Annotate).Y = 50 ;
 Plugin(Annotate).Font = "Times-BoldItalic" ; 
 Plugin(Annotate).FontSize = 28 ; 
 Plugin(Annotate).Align = "Center" ; 
+Plugin(Annotate).iView = 0 ;
 Plugin(Annotate).Run ; 
 
 Plugin(Annotate).Text = "(and a small subtitle)" ; 
