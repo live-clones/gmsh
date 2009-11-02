@@ -230,8 +230,6 @@ static fullMatrix<double> generatePascalTetrahedron(int order)
   return monomials;
 }  
 
-
-
 static int nbdoftriangle(int order) { return (order + 1) * (order + 2) / 2; }
 //static int nbdoftriangleserendip(int order) { return 3 * order; }
 
