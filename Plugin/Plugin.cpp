@@ -78,7 +78,7 @@ PView *GMSH_PostPlugin::executeRemote(PView *view)
 PView *GMSH_PostPlugin::getView(int index, PView *view)
 {
   if(index < 0)
-    index = view ? view->getIndex() : 0;
+    index = view ? view->getIndex() : PView::list.size() - 1;
 
   if(index >= 0 && index < (int)PView::list.size()){
     return PView::list[index];

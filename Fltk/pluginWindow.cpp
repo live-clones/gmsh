@@ -109,16 +109,8 @@ static void add_scripting(GMSH_PostPlugin *p, PView *view)
   if(!FlGui::instance()->plugins->record->value()) return;
 
   std::string fileName;
-  int oldIndex = -1;
-  if(view){
-    for(int i = 0; i < p->getNbOptions(); i++){
-      if(p->getOption(i)->str == "iView") {
-        oldIndex = p->getOption(i)->def;
-        p->getOption(i)->def = view->getIndex();
-      }
-    }
+  if(view)
     fileName = view->getData()->getFileName();
-  }
   else
     fileName = GModel::current()->getFileName();
 
@@ -130,14 +122,6 @@ static void add_scripting(GMSH_PostPlugin *p, PView *view)
   else{
     fprintf(fp, "%s", p->serialize().c_str());
     fclose(fp);
-  }
-
-  if(view && oldIndex != -1){
-    for(int i = 0; i < p->getNbOptions(); i++){
-      if(p->getOption(i)->str == "iView"){
-        p->getOption(i)->def = oldIndex;
-      }
-    }
   }
 }
 
