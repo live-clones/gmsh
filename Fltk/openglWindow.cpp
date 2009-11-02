@@ -107,8 +107,10 @@ void openglWindow::drawBorder()
 void openglWindow::draw()
 {
   // some drawing routines can create data (STL triangulations, etc.):
-  // make sure that we don't fire draw() while we are already drawing
-  // (e.g. du to an impromptu Fl::check())
+  // make sure that we don't fire draw() while we are already drawing,
+  // e.g. due to an impromptu Fl::check(). The same lock is also used in 
+  // processSelectionBuffer to guarantee that we don't mix GL_RENDER and
+  // GL_SELECT rendering passes.
   if(_lock) return;
   _lock = true;
 
@@ -517,9 +519,9 @@ bool openglWindow::processSelectionBuffer(int type, bool multipleSelection,
 
   size += 1000; // security
 
-  // some drawing routines can create data (STL triangulations, etc.):
-  // make sure that we don't fire redraw while we are already drawing
-  // (e.g. du to an impromptu Fl::check())
+  // same lock as in draw() to prevent firing up a GL_SELECT rendering pass
+  // while a GL_RENDER pass is happening (due to the asynchronus nature of
+  // Fl::check()s
   if(_lock) return false;
   _lock = true;
 
