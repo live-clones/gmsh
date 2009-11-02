@@ -9,6 +9,7 @@
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Hold_Browser.H>
 #include <FL/Fl_Multi_Browser.H>
+#include <FL/Fl_Check_Button.H>
 
 class GMSH_Plugin;
 
@@ -17,6 +18,7 @@ class pluginWindow{
   Fl_Window *win;
   Fl_Hold_Browser *browser;
   Fl_Multi_Browser *view_browser;
+  Fl_Check_Button *record;
   void _createDialogBox(GMSH_Plugin *p, int x, int y, int width, int height);
  public:
   pluginWindow(int deltaFontSize=0);

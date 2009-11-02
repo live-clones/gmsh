@@ -39,6 +39,19 @@ void GMSH_Plugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, str.c_str());
 }
 
+std::string GMSH_Plugin::serialize()
+{
+  std::ostringstream sstream;
+  for(int i = 0; i < getNbOptionsStr(); i++)
+    sstream << "Plugin(" << getName() << ")." << getOptionStr(i)->str 
+            <<  "= \"" << getOptionStr(i)->def << "\";\n";
+  for(int i = 0; i < getNbOptions(); i++)
+    sstream << "Plugin(" << getName() << ")." << getOption(i)->str 
+            << "=" << getOption(i)->def << ";\n";
+  sstream << "Plugin(" << getName() << ").Run;\n";
+  return sstream.str();
+}
+
 PView *GMSH_PostPlugin::executeRemote(PView *view)
 {
   int j = -1, remoteIndex = -1;
@@ -57,16 +70,7 @@ PView *GMSH_PostPlugin::executeRemote(PView *view)
   for(int i = 0; i < getNbOptions(); i++)
     if(getOption(i)->str == "iView") getOption(i)->def = remoteIndex;
   
-  std::ostringstream sstream;
-  for(int i = 0; i < getNbOptionsStr(); i++)
-    sstream << "Plugin(" << getName() << ")." << getOptionStr(i)->str 
-            <<  "= \"" << getOptionStr(i)->def << "\";\n";
-  for(int i = 0; i < getNbOptions(); i++)
-    sstream << "Plugin(" << getName() << ")." << getOption(i)->str 
-            << "=" << getOption(i)->def << ";\n";
-  sstream << "Plugin(" << getName() << ").Run;\n";
-  
-  std::string options = sstream.str();
+  std::string options = serialize();
   view->getData()->fillRemoteVertexArrays(options);
   return view;
 }

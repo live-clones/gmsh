@@ -62,6 +62,9 @@ class GMSH_Plugin
   virtual int getNbOptionsStr() const = 0;
   virtual StringXString *getOptionStr(int iopt) = 0;
 
+  // serialize plugin options into a string
+  std::string serialize();
+
   // run the plugin
   virtual void run() = 0;
 
@@ -78,6 +81,7 @@ class GMSH_PostPlugin : public GMSH_Plugin
   inline GMSH_PLUGIN_TYPE getType() const { return GMSH_Plugin::GMSH_POST_PLUGIN; }
   virtual int getNbOptionsStr() const { return 0; }
   virtual StringXString *getOptionStr(int iopt) { return NULL; }
+  // run the plugin
   virtual void run(){ execute(0); }
   // if the returned pointer is the same as the argument, then the
   // view is simply modified, else, a new view is added in the view

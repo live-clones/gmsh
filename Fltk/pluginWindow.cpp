@@ -21,6 +21,7 @@
 #include "GModel.h"
 #include "MVertex.h"
 #include "Context.h"
+#include "GeoStringInterface.h"
 
 #define MAX_PLUGIN_OPTIONS 50
 class PluginDialogBox{
@@ -103,6 +104,38 @@ static void plugin_browser_cb(Fl_Widget *w, void *data)
   p->dialogBox->group->show();
 }
 
+static void add_scripting(GMSH_PostPlugin *p, PView *view)
+{
+  if(!FlGui::instance()->plugins->record->value()) return;
+  int oldIndex = -1;
+  if(view){
+    for(int i = 0; i < p->getNbOptions(); i++){
+      if(p->getOption(i)->str == "iView") {
+        oldIndex = p->getOption(i)->def;
+        p->getOption(i)->def = view->getIndex();
+      }
+    }
+  }
+
+  std::string fileName = GModel::current()->getFileName() + ".opt";
+  FILE *fp = fopen(fileName.c_str(), "a");
+  if(!fp){
+    Msg::Error("Could not open file '%s'", fileName.c_str());
+  }
+  else{
+    fprintf(fp, "%s", p->serialize().c_str());
+    fclose(fp);
+  }
+
+  if(view && oldIndex != -1){
+    for(int i = 0; i < p->getNbOptions(); i++){
+      if(p->getOption(i)->str == "iView"){
+        p->getOption(i)->def = oldIndex;
+      }
+    }
+  }
+}
+
 static void plugin_run_cb(Fl_Widget *w, void *data)
 {
   GMSH_PostPlugin *p = (GMSH_PostPlugin*)data;
@@ -131,11 +164,15 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
           PView *view = PView::list[i - 1];
           if(view->getData()->isRemote())
             p->executeRemote(view);
-          else
+          else{
             p->execute(view);
+            add_scripting(p, view);
+          }
         }
-        else
+        else{
           p->execute(0);
+          add_scripting(p, 0);
+        }
       }
       catch(GMSH_Plugin * err) {
         char tmp[256];
@@ -287,6 +324,11 @@ pluginWindow::pluginWindow(int deltaFontSize)
       }
     }
   }
+
+  record = new Fl_Check_Button
+    (L1 + L2 + 3 * WB, height - BH - 2 * WB, BB, BH, "Record");
+  record->type(FL_TOGGLE_BUTTON);
+  record->tooltip("Append scripting command to file options when plugin is run");
   
   Fl_Box *resize_box = new Fl_Box(3*WB + L1+L2, WB, WB, height - 2 * WB);
   win->resizable(resize_box);
