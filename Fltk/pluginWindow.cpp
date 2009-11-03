@@ -122,7 +122,7 @@ static void add_scripting(GMSH_PostPlugin *p, PView *view)
   else
     fileName = GModel::current()->getFileName();
 
-  fileName +=  + ".opt";
+  fileName += ".opt";
   FILE *fp = fopen(fileName.c_str(), "a");
   if(!fp){
     Msg::Error("Could not open file '%s'", fileName.c_str());
