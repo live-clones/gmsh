@@ -33,7 +33,7 @@ class cartesianBox {
   std::set<int> _active;
   double _X, _Y, _Z, _dxi, _deta, _dzeta;
   SVector3 _xiAxis, _etaAxis, _zetaAxis;
-  std::map<int,scalar> _nodalValues;
+  typename std::map<int, scalar> _nodalValues;
   std::vector<SVector3> _normals;
   std::vector<SPoint3> _points;
  public:
@@ -58,8 +58,8 @@ class cartesianBox {
     _zetaAxis.normalize();
   }  
 
-  typename std::map<int,scalar>::const_iterator begin() const { return _nodalValues.begin(); }
-  typename std::map<int,scalar>::const_iterator end() const { return _nodalValues.end(); }
+  typename std::map<int, scalar>::const_iterator begin() const { return _nodalValues.begin(); }
+  typename std::map<int, scalar>::const_iterator end() const { return _nodalValues.end(); }
 
   // add that in the ann search tool
   void insert_point (double x, double y, double z)
@@ -154,7 +154,7 @@ class cartesianBox {
     fprintf(f,"$MeshFormat\n2.1 0 8\n$EndMeshFormat\n");
     {
       fprintf(f,"$Nodes\n%d\n",_nodalValues.size());
-      typename std::map<int,scalar>::const_iterator it = _nodalValues.begin();
+      typename std::map<int, scalar>::const_iterator it = _nodalValues.begin();
       for ( ; it!=_nodalValues.end();++it){
 	SPoint3 p = coordinates_of_node(it->first);
 	fprintf(f,"%d %g %g %g\n",it->first,p.x(),p.y(),p.z());
