@@ -13,13 +13,13 @@ class dgFace;
 class dgTerm{
  public:
   virtual ~dgTerm () {}
-  virtual void operator () (const dgElement &, fullMatrix<double> &fcx) const = 0;
+  virtual void operator () (const dgElement &, fullMatrix<double> fcx[]) const = 0;
 };
 
 class dgFaceTerm{
  public:
   virtual ~dgFaceTerm () {}
-  virtual void operator () (const dgFace &, fullMatrix<double> &fcx) const = 0;
+  virtual void operator () (const dgFace &, fullMatrix<double> fcx[]) const = 0;
 };
 
 class dgConservationLaw {

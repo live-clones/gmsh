@@ -18,6 +18,13 @@ class MFace;
 class MEdge;
 class functionSpace;
 
+class dgElement {
+  MElement *_element;
+  double *_detJ;
+public:
+  dgElement (MElement *e, double *detJ);
+};
+
 class dgGroupOfElements {
   // N elements in the group
   std::vector<MElement*> _elements;
@@ -37,12 +44,30 @@ class dgGroupOfElements {
   fullMatrix<double> *_redistributionFluxes[3];
   // redistribution for the source term
   fullMatrix<double> *_redistributionSource;
+  // the solution for this group (not owned)
+  fullMatrix<double> *_solution;
+  // the residual for this group (not owned)
+  fullMatrix<double> *_residual;
+  // dimension of the parametric space and of the real space
+  // may be different if the domain is a surface in 3D (manifold)
+  int dimUVW, dimXYZ;
   // forbid the copy 
   //  dgGroupOfElements (const dgGroupOfElements &e, int order) {}
   //  dgGroupOfElements & operator = (const dgGroupOfElements &e) {}
 public:
   dgGroupOfElements (const std::vector<MElement*> &e, int);
   virtual ~dgGroupOfElements ();
+  inline dgElement getDGElement(int i) const;
+  inline int getNbElements() const {return _elements.size();}
+  inline int getNbNodes() const {return _collocation.size1();}
+  inline int getNbIntegrationPoints() const {return _collocation.size2();}
+  inline int getDimUVW () const {return dimUVW;}
+  inline int getDimXYZ () const {return dimXYZ;}
+  inline const fullMatrix<double> & getCollocationMatrix () const {return *_collocation;}
+  inline const fullMatrix<double> & getRedistributionMatrix (int i) const {return *_redistribution[i];}
+  inline const fullMatrix<double> & getSolution () const {return *_solution;}
+  inline const fullMatrix<double> & getResidual () const {return *_solution;}
+  inline double getDetJ (int iElement, int iGaussPoint) 
 };
 
 /*class dgFace {
