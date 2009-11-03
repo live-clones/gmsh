@@ -14,15 +14,17 @@
   have the right sizes)
 */
 class MElement;
+class MFace;
+class MEdge;
 class functionSpace;
 
 class dgGroupOfElements {
+  // N elements in the group
+  std::vector<MElement*> _elements;
   // the ONLY function space that is used to 
   // inerpolated the fields (may be different to the 
   // one of the elements)
   const functionSpace &_fs;
-  // N elements in the group
-  std::vector<MElement*> _elements;
   // Ni integration points, matrix of size Ni x 4 (u,v,w,weight)
   fullMatrix<double> *_integration;
   // collocation matrix that maps vertices to integration points.
@@ -32,7 +34,7 @@ class dgGroupOfElements {
   // redistribution of the fluxes to vertices multiplied by
   // the gradient of shape functions (in parametric space)
   // for both diffusive and convective fluxes
-  fullMatrix<double> *_redistribution[3];
+  fullMatrix<double> *_redistributionFluxes[3];
   // redistribution for the source term
   fullMatrix<double> *_redistributionSource;
   // forbid the copy 
@@ -43,7 +45,7 @@ public:
   virtual ~dgGroupOfElements ();
 };
 
-class dgFace {
+/*class dgFace {
   int nbGaussPoints;
   MElement *_left, *_right;
   MElement *_face;
@@ -53,11 +55,14 @@ class dgFace {
 public:
   dgFace ();
 };
-
+*/
 class dgGroupOfFaces {
+  void createFaceElements (const std::vector<MFace> &topo_faces);
+  void createEdgeElements (const std::vector<MEdge> &topo_faces);
+  void computeFaceNormals();
   // Two functionSpaces for left and right elements
   // the group has always the same types for left and right
-  const functionSpace &_fsLeft,&_fsRight, &_fsFace;
+  const functionSpace *_fsLeft,*_fsRight, *_fsFace;
   // N elements in the group
   std::vector<MElement*> _left, _right, _faces;
   // Ni integration points, matrix of size Ni x 3 (u,v,weight)
@@ -67,11 +72,11 @@ class dgGroupOfFaces {
   // is characterized by a single integer which is the combination
   // this closure is for the interpolation that MAY BE DIFFERENT THAN THE
   // GEOMETRICAL CLOSURE !!!
-  std::vector<std::vector<int> * > _closuresLeft; 
-  std::vector<std::vector<int> * > _closuresRight; 
-  // normals at integration points 
+  std::vector<const std::vector<int> * > _closuresLeft; 
+  std::vector<const std::vector<int> * > _closuresRight; 
+  // normals at integration points  (N*Ni) x 3
   fullMatrix<double> *_normals;
-  // detJac at integration points
+  // detJac at integration points (N*Ni) x 1
   fullMatrix<double> *_detJac;
   // collocation matrices \psi_i (GP_j) 
   fullMatrix<double> *_collocationLeft, *_collocationRight;
@@ -83,7 +88,10 @@ public:
 		  const std::vector<MElement*> &l, 
 		  const std::vector<MElement*> &r,
 		  int pOrder);
-  dgFace operator () (int iFace) const;
+  dgGroupOfFaces (const std::vector<MEdge> &edges, 		  
+		  const std::vector<MElement*> &l, 
+		  const std::vector<MElement*> &r,
+		  int pOrder);
   virtual ~dgGroupOfFaces ();
 };
 
