@@ -200,7 +200,6 @@ bool GFaceCompound::trivial() const
 
 void GFaceCompound::partitionFaceCM() 
 {
-
   double CMu = 0.0;
   double sumArea = 0.0;
   
