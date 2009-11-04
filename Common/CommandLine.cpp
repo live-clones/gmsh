@@ -29,7 +29,7 @@
 #endif
 #endif
 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
 #include "PView.h"
 #endif
 
@@ -114,7 +114,7 @@ void GetOptions(int argc, char *argv[])
   int terminal = CTX::instance()->terminal;
   CTX::instance()->terminal = 1;
 
-#if !defined(HAVE_NO_PARSER)
+#if defined(HAVE_PARSER)
   // Parse session and option files
   ParseFile(CTX::instance()->homeDir + CTX::instance()->sessionFileName, true);
   ParseFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName, true);
@@ -263,11 +263,11 @@ void GetOptions(int argc, char *argv[])
         CTX::instance()->batch = 1;
         while(i < argc) {
           std::string fileName = std::string(argv[i]) + "_new";
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
           unsigned int n = PView::list.size();
 #endif
           OpenProject(argv[i]);
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
           // convert post-processing views to latest binary format
           for(unsigned int j = n; j < PView::list.size(); j++)
             PView::list[j]->write(fileName, 1, (j == n) ? false : true);

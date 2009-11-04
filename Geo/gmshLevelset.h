@@ -41,7 +41,7 @@ public:
   int type() const { return UNKNOWN; }
 };
 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
 
 #include "PView.h"
 #include "OctreePost.h"

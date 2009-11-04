@@ -8,7 +8,12 @@
 
 #include <list>
 #include <map>
+#include "GmshConfig.h"
+#include "GmshMessage.h"
 #include "GFace.h"
+
+#if defined(HAVE_SOLVER)
+
 #include "GEdge.h"
 #include "GEdgeCompound.h"
 #include "meshGFaceOptimize.h"
@@ -63,9 +68,9 @@ class GFaceCompound : public GFace {
   mutable std::map<MVertex*, SVector3> _normals;
   void buildOct() const ;
   void buildAllNodes() const; 
-  void parametrize(iterationStep,typeOfMapping) const ;
-  void parametrize_conformal() const ;
-  void compute_distance() const ;
+  void parametrize(iterationStep, typeOfMapping) const;
+  void parametrize_conformal() const;
+  void compute_distance() const;
   bool checkOrientation(int iter) const;
   void one2OneMap() const;
   bool checkCavity(std::vector<MElement*> &vTri) const;
@@ -109,5 +114,33 @@ class GFaceCompound : public GFace {
   typeOfIsomorphism _type;
   typeOfMapping _mapping;
 };
+
+#else
+
+template<class scalar> class linearSystem;
+class GFaceCompound : public GFace {
+ public:
+  typedef enum {HARMONIC=1,CONFORMAL=2, CONVEXCOMBINATION=3} typeOfMapping;
+  GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
+                std::list<GEdge*> &U0, std::list<GEdge*> &U1,
+                std::list<GEdge*> &V0, std::list<GEdge*> &V1,
+		linearSystem<double>* lsys = 0,
+		typeOfMapping typ = HARMONIC) : GFace(m, tag)
+  {
+    Msg::Error("Gmsh has to be compiled with solver support to use GFaceCompounds");
+  }
+  virtual ~GFaceCompound() {}
+  virtual GPoint point(double par1, double par2) const { return GPoint(); }
+  virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const
+  {
+    return Pair<SVector3, SVector3>(SVector3(0,0,0), SVector3(0,0,0));
+  }
+  virtual void secondDer(const SPoint2 &param, 
+                         SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const{}
+  virtual SPoint2 getCoordinates(MVertex *v) const { return SPoint2(); }
+  void parametrize() const {}
+};
+
+#endif
 
 #endif

@@ -7,6 +7,10 @@
 //   Koen Hillewaert
 //
 
+#include "GmshConfig.h"
+
+#if defined(HAVE_SOLVER)
+
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -35,22 +39,13 @@ static int swapHighOrderTriangles(GFace *gf, edgeContainer&, faceContainer&,
 static int findOptimalLocationsP2(GFace *gf, highOrderSmoother *s);
 static int findOptimalLocationsPN(GFace *gf, highOrderSmoother *s);
 
+extern double angle3Points(MVertex *p1, MVertex *p2, MVertex *p3);
+
 static double shapeMeasure(MElement *e)
 {
   const double d1 = e->distoShapeMeasure();
   //const double d2 = e->gammaShapeMeasure();
   return d1;
-}
-
-double angle3Points(MVertex *p1, MVertex *p2, MVertex *p3)
-{
-  SVector3 a(p1->x() - p2->x(), p1->y() - p2->y(), p1->z() - p2->z());
-  SVector3 b(p3->x() - p2->x(), p3->y() - p2->y(), p3->z() - p2->z());
-  SVector3 c = crossprod(a, b);
-  double sinA = c.norm();
-  double cosA = dot(a, b);
-  //  printf("%d %d %d -> %g %g\n",p1->iD,p2->iD,p3->iD,cosA,sinA);
-  return atan2 (sinA, cosA);  
 }
 
 void highOrderSmoother::moveTo(MVertex *v,  
@@ -1314,4 +1309,5 @@ void  highOrderSmoother::smooth_pNpoint(GFace *gf)
   findOptimalLocationsPN(gf,this);
 }
 
+#endif
 

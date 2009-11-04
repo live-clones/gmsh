@@ -14,7 +14,7 @@
 #include "linearSystemGMM.h"
 #include "Numeric.h"
 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
 

@@ -17,15 +17,15 @@
 #include "StringUtils.h"
 #include "GeomMeshMatcher.h"
 
-#if !defined(HAVE_NO_PARSER)
+#if defined(HAVE_PARSER)
 #include "Parser.h"
 #endif
 
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
 #include "HighOrder.h"
 #endif
 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
 #endif
@@ -94,7 +94,7 @@ void SetBoundingBox()
 
   SBoundingBox3d bb = GModel::current()->bounds();
   
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
   if(bb.empty()) {
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(!PView::list[i]->getData()->getBoundingBox().empty())
@@ -144,7 +144,7 @@ void AddToTemporaryBoundingBox(double x, double y, double z)
 
 int ParseFile(std::string fileName, bool close, bool warnIfMissing)
 {
-#if defined(HAVE_NO_PARSER)
+#if !defined(HAVE_PARSER)
   Msg::Error("Gmsh parser is not compiled in this version");
   return 0;
 #else
@@ -158,7 +158,7 @@ int ParseFile(std::string fileName, bool close, bool warnIfMissing)
     return 0;
   }
 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
   int numViewsBefore = PView::list.size();
 #endif
 
@@ -191,7 +191,7 @@ int ParseFile(std::string fileName, bool close, bool warnIfMissing)
   gmsh_yylineno = old_yylineno;
   gmsh_yyviewindex = old_yyviewindex;
 
-#if defined(HAVE_FLTK) && !defined(HAVE_NO_POST)
+#if defined(HAVE_FLTK) && defined(HAVE_POST)
   if(FlGui::available() && numViewsBefore != (int)PView::list.size())
     FlGui::instance()->updateViews();
 #endif
@@ -265,7 +265,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
 
   CTX::instance()->geom.draw = 0; // don't try to draw the model while reading
 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
   int numViewsBefore = PView::list.size();
 #endif
 
@@ -298,7 +298,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
   else if(ext == ".med" || ext == ".MED" || ext == ".mmed" || ext == ".MMED" ||
           ext == ".rmed" || ext == ".RMED"){
     status = GModel::readMED(fileName);
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
     if(status > 1) status = PView::readMED(fileName);
 #endif
   }
@@ -350,17 +350,17 @@ int MergeFile(std::string fileName, bool warnIfMissing)
       // MATCHER END
 
       status = GModel::current()->readMSH(fileName);
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       if(status > 1) status = PView::readMSH(fileName);
 #endif
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
       if(CTX::instance()->mesh.order > 1) 
         SetOrderN(GModel::current(), CTX::instance()->mesh.order,
                   CTX::instance()->mesh.secondOrderLinear, 
                   CTX::instance()->mesh.secondOrderIncomplete);
 #endif
     }
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
     else if(!strncmp(header, "$PostFormat", 11) || 
             !strncmp(header, "$View", 5)) {
       status = PView::readPOS(fileName);
@@ -376,7 +376,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
   CTX::instance()->geom.draw = 1;
   CTX::instance()->mesh.changed = ENT_ALL;
 
-#if defined(HAVE_FLTK) && !defined(HAVE_NO_POST)
+#if defined(HAVE_FLTK) && defined(HAVE_POST)
   if(FlGui::available() && numViewsBefore != (int)PView::list.size())
     FlGui::instance()->updateViews();
 #endif
@@ -393,11 +393,11 @@ int MergeFile(std::string fileName, bool warnIfMissing)
 
 void ClearProject()
 {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
   for(int i = PView::list.size() - 1; i >= 0; i--)
     delete PView::list[i];
 #endif
-#if !defined(HAVE_NO_PARSER)
+#if defined(HAVE_PARSER)
   gmsh_yysymbols.clear();
 #endif
   for(int i = GModel::list.size() - 1; i >= 0; i--)
@@ -436,7 +436,7 @@ void OpenProject(std::string fileName)
     // if the current model is not empty make it invisible, clear the
     // parser variables and add a new model
     GModel::current()->setVisibility(0);
-#if !defined(HAVE_NO_PARSER)
+#if defined(HAVE_PARSER)
     gmsh_yysymbols.clear();
 #endif
     new GModel();

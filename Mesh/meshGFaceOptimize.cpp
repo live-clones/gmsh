@@ -911,7 +911,16 @@ int edgeCollapsePass(double minLC, GFace *gf, std::set<MTri3*,compareTri3Ptr> &a
   return nbCollapse;
 }
 
-extern double angle3Points(MVertex *p1, MVertex *p2, MVertex *p3);
+double angle3Points(MVertex *p1, MVertex *p2, MVertex *p3)
+{
+  SVector3 a(p1->x() - p2->x(), p1->y() - p2->y(), p1->z() - p2->z());
+  SVector3 b(p3->x() - p2->x(), p3->y() - p2->y(), p3->z() - p2->z());
+  SVector3 c = crossprod(a, b);
+  double sinA = c.norm();
+  double cosA = dot(a, b);
+  //  printf("%d %d %d -> %g %g\n",p1->iD,p2->iD,p3->iD,cosA,sinA);
+  return atan2 (sinA, cosA);  
+}
 
 struct RecombineTriangle
 {

@@ -27,7 +27,7 @@
 #include "Context.h"
 #include "OS.h"
 
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
 #include "Field.h"
 #include "Generator.h"
 #endif
@@ -44,7 +44,7 @@ GModel::GModel(std::string name)
   list.push_back(this);
   // at the moment we always create (at least an empty) GEO model
   _createGEOInternals();
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
   _fields = new FieldManager();
 #endif
 }
@@ -56,7 +56,7 @@ GModel::~GModel()
   destroy();
   _deleteGEOInternals();
   _deleteOCCInternals();
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
   delete _fields;
 #endif
 }
@@ -116,7 +116,7 @@ void GModel::destroy()
   if(normals) delete normals;
   normals = 0;
 
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
   _fields->reset();
 #endif
   gmshSurface::reset();
@@ -415,7 +415,7 @@ SBoundingBox3d GModel::bounds()
 
 int GModel::mesh(int dimension)
 {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
   GenerateMesh(this, dimension);
   return true;
 #else

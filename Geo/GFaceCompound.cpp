@@ -4,6 +4,9 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "GmshConfig.h"
+
+#if defined(HAVE_SOLVER)
+
 #include "GmshDefines.h"
 #include "GFaceCompound.h"
 #include "MLine.h"
@@ -337,7 +340,7 @@ static bool closedCavity(MVertex *v, std::vector<MElement*> &vTri){
 
 void GFaceCompound::one2OneMap() const
 {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
   if(!mapv2Tri){
     std::vector<MTriangle*> allTri;
     std::list<GFace*>::const_iterator it = _compound.begin();
@@ -1660,3 +1663,5 @@ void GFaceCompound::printStuff() const
   fprintf(xyzc,"};\n");
   fclose(xyzc);
 }
+
+#endif

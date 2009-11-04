@@ -12,7 +12,7 @@
 #include "GeoInterpolation.h"
 #include "Context.h"
 
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
 #include "Field.h"
 #endif
 
@@ -725,7 +725,7 @@ int NEWVOLUME(void)
 
 int NEWFIELD(void)
 {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
   return (GModel::current()->getFields()->maxId() + 1);
 #else
   return 0;

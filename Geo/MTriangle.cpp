@@ -7,7 +7,7 @@
 #include "Numeric.h"
 #include "Context.h"
 
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
 #include "qualityMeasures.h"
 #endif
 
@@ -25,7 +25,7 @@ SPoint3 MTriangle::circumcenter()
 
 double MTriangle::distoShapeMeasure()
 {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
   return qmDistorsionOfMapping(this);
 #else
   return 0.;
@@ -34,7 +34,7 @@ double MTriangle::distoShapeMeasure()
 
 double MTriangle::gammaShapeMeasure()
 {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
   return qmTriangle(this, QMTRI_RHO);
 #else
   return 0.;

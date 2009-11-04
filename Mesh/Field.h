@@ -12,7 +12,7 @@
 #include "GmshConfig.h"
 #include "STensor3.h"
 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
 #include "PView.h"
 #endif
 
@@ -71,7 +71,7 @@ class Field {
   virtual bool isotropic () const {return true;}
   bool update_needed;
   virtual const char *getName() = 0;
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
   void putOnView(PView * view, int comp = -1);
   void putOnNewView();
 #endif

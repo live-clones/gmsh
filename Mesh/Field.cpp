@@ -23,7 +23,7 @@
 #include "Numeric.h"
 #include "mathEvaluator.h"
 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
 #include "OctreePost.h"
 #include "PViewDataList.h"
 #include "MVertex.h"
@@ -1056,7 +1056,7 @@ class ParametricField : public Field
   }
 };
 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
 class PostViewField : public Field
 {
   OctreePost *octree;
@@ -1368,7 +1368,7 @@ FieldManager::FieldManager()
   map_type_name["Box"] = new FieldFactoryT<BoxField>();
   map_type_name["Cylinder"] = new FieldFactoryT<CylinderField>();
   map_type_name["LonLat"] = new FieldFactoryT<LonLatField>();
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
   map_type_name["PostView"] = new FieldFactoryT<PostViewField>();
 #endif
   map_type_name["Gradient"] = new FieldFactoryT<GradientField>();
@@ -1388,7 +1388,7 @@ FieldManager::FieldManager()
   background_field = -1;
 }
 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
 void Field::putOnNewView()
 {
   if(GModel::current()->getMeshStatus() < 1){

@@ -8,6 +8,11 @@
 
 #include <map>
 #include <vector>
+#include "GmshConfig.h"
+#include "GmshMessage.h"
+
+#if defined(HAVE_SOLVER)
+
 #include "SVector3.h"
 #include "fullMatrix.h"
 #include "dofManager.h"
@@ -83,5 +88,23 @@ public:
      }
   }
 };
+
+#else
+
+class highOrderSmoother 
+{
+ public:
+  highOrderSmoother(int dim) 
+  {
+    Msg::Error("Gmsh has to be compiled with solver support to use highOrderSmoother");
+  }
+  void add(MVertex * v, const SVector3 &d ){}  
+  void smooth(GRegion*){}
+  void optimize(GFace *, 
+                edgeContainer &edgeVertices,
+                faceContainer &faceVertices){}
+};
+
+#endif
 
 #endif

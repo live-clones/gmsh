@@ -8,7 +8,7 @@
 #include "GSHHS.h"
 #include "GModel.h"
 
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
 #include "Field.h"
 #else
 class Field {
@@ -998,7 +998,7 @@ PView *GMSH_GSHHSPlugin::execute(PView * v)
     return NULL;
   }
   Field *field = NULL;
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
   if (iField != -1) {
     field = GModel::current()->getFields()->get(iField);
     if(!field){

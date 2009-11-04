@@ -10,7 +10,7 @@
 #include "OS.h"
 #include "VertexArray.h"
 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewOptions.h"
 #include "PViewData.h"
@@ -18,7 +18,7 @@
 
 static void computeAndSendVertexArrays(GmshClient *client)
 {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
   for(unsigned int i = 0; i < PView::list.size(); i++){
     PView *p = PView::list[i];
     p->fillVertexArrays();

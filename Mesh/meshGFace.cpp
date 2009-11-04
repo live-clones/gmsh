@@ -1293,9 +1293,8 @@ void meshGFace::operator() (GFace *gf)
 
 bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge*> &edges)
 {
-
   bool isMeshed = false;
-  
+#if defined(HAVE_SOLVER)  
   //Check Topology
   bool correctTopo = gf->checkTopology();
   if (!correctTopo){
@@ -1330,13 +1329,12 @@ bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge*> &edges)
   edges.insert(edges.begin(), mySet.begin(), mySet.end());
   
   return isMeshed;
-
+#endif
 }
 
 void partitionAndRemesh(GFaceCompound *gf)
 {
-
-#if defined(HAVE_CHACO) || defined(HAVE_METIS)
+#if defined(HAVE_SOLVER) && (defined(HAVE_CHACO) || defined(HAVE_METIS))
 
   //Partition the mesh and createTopology for new faces
   //-----------------------------------------------------
@@ -1459,12 +1457,8 @@ void partitionAndRemesh(GFaceCompound *gf)
 
   //CreateOutputFile("toto.msh", CTX::instance()->mesh.format);
   //Msg::Exit(1);
-
-#else
-  return;
 #endif
 }
-
 
 template<class T>
 static bool shouldRevert(MEdge &reference, std::vector<T*> &elements)

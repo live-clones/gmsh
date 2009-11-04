@@ -18,13 +18,13 @@
 #include "Context.h"
 #include "robustPredicates.h"
 
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
 #include "Generator.h"
 #include "Field.h"
 #include "meshPartition.h"
 #endif
 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
 #include "PluginManager.h"
 #endif
 
@@ -46,7 +46,7 @@ int GmshInitialize(int argc, char **argv)
   // Make sure we have enough resources (stack)
   CheckResources();
   
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
   // Initialize the default plugins
   PluginManager::instance()->registerDefaultPlugins();
 #endif
@@ -131,7 +131,7 @@ int GmshBatch()
       MergeFile(CTX::instance()->files[i]);
   }
 
-#if !defined(HAVE_NO_POST) && !defined(HAVE_NO_MESH)
+#if defined(HAVE_POST) && defined(HAVE_MESH)
   if(!CTX::instance()->bgmFileName.empty()) {
     MergeFile(CTX::instance()->bgmFileName);
     if(PView::list.size())
@@ -151,7 +151,7 @@ int GmshBatch()
     CreateOutputFile(CTX::instance()->outputFileName, FORMAT_GEO);
   }
   else if(CTX::instance()->batch > 0){
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
     if(CTX::instance()->batch < 4)
       GModel::current()->mesh(CTX::instance()->batch);
     else if(CTX::instance()->batch == 4)

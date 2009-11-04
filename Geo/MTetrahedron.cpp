@@ -7,7 +7,7 @@
 #include "Numeric.h"
 #include "Context.h"
 
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
 #include "qualityMeasures.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "meshGRegionDelaunayInsertion.h"
@@ -17,7 +17,7 @@
 
 SPoint3 MTetrahedron::circumcenter()
 {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
   MTet4 t(this, 0);
   double res[3];
   t.circumcenter(res);
@@ -29,7 +29,7 @@ SPoint3 MTetrahedron::circumcenter()
 
 double MTetrahedron::distoShapeMeasure()
 {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
   return qmDistorsionOfMapping(this);
 #else
   return 0.;
@@ -38,7 +38,7 @@ double MTetrahedron::distoShapeMeasure()
 
 double MTetrahedronN::distoShapeMeasure()
 {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
   _disto = qmDistorsionOfMapping(this);
 #else
   _disto = 0.;
@@ -48,7 +48,7 @@ double MTetrahedronN::distoShapeMeasure()
 
 double MTetrahedron::gammaShapeMeasure()
 {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
   double vol;
   return qmTet(this, QMTET_2, &vol);
 #else
@@ -58,7 +58,7 @@ double MTetrahedron::gammaShapeMeasure()
 
 double MTetrahedron::etaShapeMeasure()
 {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
   double vol;
   return qmTet(this, QMTET_3, &vol);
 #else

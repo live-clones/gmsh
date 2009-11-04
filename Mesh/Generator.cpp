@@ -26,7 +26,7 @@
 #include "HighOrder.h"
 #include "Generator.h"
 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
 #endif
@@ -279,7 +279,7 @@ void GetStatistics(double stat[50], double quality[4][100])
     stat[48] = distoMax;
   }
 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
   stat[26] = PView::list.size();
   for(unsigned int i = 0; i < PView::list.size(); i++) {
     PViewData *data = PView::list[i]->getData(true);

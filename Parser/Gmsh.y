@@ -31,13 +31,13 @@
 #include "gmshSurface.h"
 #include "gmshLevelset.h"
 
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
 #include "Generator.h"
 #include "Field.h"
 #include "BackgroundMesh.h"
 #endif
 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewDataList.h"
 #include "PluginManager.h"
@@ -59,7 +59,7 @@ std::map<std::string, std::vector<double> > gmsh_yysymbols;
 
 // Static parser variables (accessible only in this file)
 static std::map<std::string, std::string > gmsh_yystringsymbols;
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
 static PViewDataList *ViewData;
 #endif
 static std::vector<double> ViewCoord;
@@ -256,7 +256,7 @@ Printf :
 View :
     tSTRING tBIGSTR '{' Views '}' tEND
     { 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       if(!strcmp($1, "View") && ViewData->finalize()){
 	ViewData->setName($2);
 	ViewData->setFileName(gmsh_yyname);
@@ -270,7 +270,7 @@ View :
     }
   | tAlias tSTRING '[' FExpr ']' tEND
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       if(!strcmp($2, "View")){
 	int index = (int)$4;
 	if(index >= 0 && index < (int)PView::list.size())
@@ -281,7 +281,7 @@ View :
     }
   | tAliasWithOptions tSTRING '[' FExpr ']' tEND
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       if(!strcmp($2, "View")){
 	int index = (int)$4;
 	if(index >= 0 && index < (int)PView::list.size())
@@ -295,7 +295,7 @@ View :
 Views :
     // nothing
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       ViewData = new PViewDataList(); 
 #endif
     }
@@ -323,7 +323,7 @@ ElementValues :
 Element : 
     tSTRING 
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       if(!strncmp($1, "SP", 2)){
 	ViewValueList = &ViewData->SP; ViewNumList = &ViewData->NbSP;
       }
@@ -427,7 +427,7 @@ Element :
     }
     '(' ElementCoords ')'
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       if(ViewValueList){
 	for(int i = 0; i < 3; i++)
 	  for(unsigned int j = 0; j < ViewCoord.size() / 3; j++) 
@@ -437,7 +437,7 @@ Element :
     }
     '{' ElementValues '}' tEND
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       if(ViewValueList) (*ViewNumList)++;
 #endif
     }
@@ -446,14 +446,14 @@ Element :
 Text2DValues :
     StringExprVar
     { 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       for(int i = 0; i < (int)strlen($1) + 1; i++) ViewData->T2C.push_back($1[i]);
 #endif
       Free($1);
     }
   | Text2DValues ',' StringExprVar
     { 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       for(int i = 0; i < (int)strlen($3) + 1; i++) ViewData->T2C.push_back($3[i]);
 #endif
       Free($3);
@@ -463,7 +463,7 @@ Text2DValues :
 Text2D : 
     tText2D '(' FExpr ',' FExpr ',' FExpr ')'
     { 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       ViewData->T2D.push_back($3); 
       ViewData->T2D.push_back($5);
       ViewData->T2D.push_back($7); 
@@ -472,7 +472,7 @@ Text2D :
     }
     '{' Text2DValues '}' tEND
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       ViewData->NbT2++;
 #endif
     }
@@ -481,14 +481,14 @@ Text2D :
 Text3DValues :
     StringExprVar
     { 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       for(int i = 0; i < (int)strlen($1) + 1; i++) ViewData->T3C.push_back($1[i]);
 #endif
       Free($1);
     }
   | Text3DValues ',' StringExprVar
     { 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       for(int i = 0; i < (int)strlen($3) + 1; i++) ViewData->T3C.push_back($3[i]);
 #endif
       Free($3);
@@ -498,7 +498,7 @@ Text3DValues :
 Text3D : 
     tText3D '(' FExpr ',' FExpr ',' FExpr ',' FExpr ')'
     { 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       ViewData->T3D.push_back($3); ViewData->T3D.push_back($5);
       ViewData->T3D.push_back($7); ViewData->T3D.push_back($9);
       ViewData->T3D.push_back(ViewData->T3C.size()); 
@@ -506,7 +506,7 @@ Text3D :
     }
     '{' Text3DValues '}' tEND
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       ViewData->NbT3++;
 #endif
     }
@@ -516,7 +516,7 @@ InterpolationMatrix :
     tInterpolationScheme '{' RecursiveListOfListOfDouble '}' 
                          '{' RecursiveListOfListOfDouble '}'  tEND
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       int type = 
 	(ViewData->NbSL || ViewData->NbVL) ? TYPE_LIN : 
 	(ViewData->NbST || ViewData->NbVT) ? TYPE_TRI : 
@@ -535,7 +535,7 @@ InterpolationMatrix :
                          '{' RecursiveListOfListOfDouble '}'  
                          '{' RecursiveListOfListOfDouble '}'  tEND
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       int type = 
 	(ViewData->NbSL || ViewData->NbVL) ? TYPE_LIN : 
 	(ViewData->NbST || ViewData->NbVT) ? TYPE_TRI : 
@@ -554,7 +554,7 @@ InterpolationMatrix :
 Time :
     tTime 
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       ViewValueList = &ViewData->Time;
 #endif
     }
@@ -848,7 +848,7 @@ Affectation :
 
   | tSTRING tField tAFFECT FExpr tEND
     {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
       if(!strcmp($1,"Background"))
 	GModel::current()->getFields()->background_field = (int)$4;
       else
@@ -857,7 +857,7 @@ Affectation :
     }
   | tField '[' FExpr ']' tAFFECT tSTRING tEND
     {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
       if(!GModel::current()->getFields()->newField((int)$3, $6))
 	yymsg(0, "Cannot create field %i of type '%s'", (int)$3, $6);
 #endif
@@ -865,7 +865,7 @@ Affectation :
     }
   | tField '[' FExpr ']' '.' tSTRING  tAFFECT FExpr tEND
     {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
       Field *field = GModel::current()->getFields()->get((int)$3);
       if(field){
 	FieldOption *option = field->options[$6];
@@ -887,7 +887,7 @@ Affectation :
     }
   | tField '[' FExpr ']' '.' tSTRING  tAFFECT StringExpr tEND
     {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
       Field *field = GModel::current()->getFields()->get((int)$3);
       if(field){
 	FieldOption *option = field->options[$6];
@@ -910,7 +910,7 @@ Affectation :
     }
   | tField '[' FExpr ']' '.' tSTRING  tAFFECT '{' RecursiveListOfDouble '}' tEND
     {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
       Field *field = GModel::current()->getFields()->get((int)$3);
       if(field){
 	FieldOption *option = field->options[$6];
@@ -938,7 +938,7 @@ Affectation :
 
   | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT FExpr tEND 
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       try {
 	PluginManager::instance()->setPluginOption($3, $6, $8); 
       }
@@ -950,7 +950,7 @@ Affectation :
     }
   | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT StringExpr tEND 
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       try {
 	PluginManager::instance()->setPluginOption($3, $6, $8); 
       }
@@ -1956,7 +1956,7 @@ LevelSet :
           Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
         }
       }
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       else if(!strcmp($2, "PostView")){
         int t = (int)$4;
         if(FindLevelSet(t)){
@@ -2130,13 +2130,13 @@ Delete :
     }
   | tDelete tField '[' FExpr ']' tEND
     {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
       GModel::current()->getFields()->deleteField((int)$4);
 #endif
     }
   | tDelete tSTRING '[' FExpr ']' tEND
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       if(!strcmp($2, "View")){
 	int index = (int)$4;
 	if(index >= 0 && index < (int)PView::list.size())
@@ -2175,7 +2175,7 @@ Delete :
     }
   | tDelete tSTRING tSTRING tEND
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       if(!strcmp($2, "Empty") && !strcmp($3, "Views")){
 	for(int i = PView::list.size() - 1; i >= 0; i--)
 	  if(PView::list[i]->getData()->empty()) delete PView::list[i];
@@ -2281,7 +2281,7 @@ Command :
     } 
   | tSTRING tSTRING '[' FExpr ']' StringExprVar tEND
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       if(!strcmp($1, "Save") && !strcmp($2, "View")){
 	int index = (int)$4;
 	if(index >= 0 && index < (int)PView::list.size()){
@@ -2298,7 +2298,7 @@ Command :
     }
   | tSTRING tSTRING tSTRING '[' FExpr ']' tEND
     {
-#if !defined(HAVE_NO_POST) && !defined(HAVE_NO_MESH)
+#if defined(HAVE_POST) && defined(HAVE_MESH)
       if(!strcmp($1, "Background") && !strcmp($2, "Mesh")  && !strcmp($3, "View")){
 	int index = (int)$5;
 	if(index >= 0 && index < (int)PView::list.size())
@@ -2332,7 +2332,7 @@ Command :
     }
    | tPlugin '(' tSTRING ')' '.' tSTRING tEND
      {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
        try {
 	 PluginManager::instance()->action($3, $6, 0);
        }
@@ -2344,7 +2344,7 @@ Command :
      }
    | tCombine tSTRING tEND
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       if(!strcmp($2, "ElementsFromAllViews"))
 	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig);
       else if(!strcmp($2, "ElementsFromVisibleViews"))

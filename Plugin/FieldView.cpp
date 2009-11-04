@@ -6,7 +6,7 @@
 #include "FieldView.h"
 #include "GModel.h"
 
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
 #include "Field.h"
 #endif
 
@@ -41,7 +41,7 @@ StringXNumber *GMSH_FieldViewPlugin::getOption(int iopt)
 
 PView *GMSH_FieldViewPlugin::execute(PView *v)
 {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
   //int comp = (int)FieldViewOptions_Number[0].def;
   int iView = (int)FieldViewOptions_Number[1].def;
   int iField = (int)FieldViewOptions_Number[2].def;

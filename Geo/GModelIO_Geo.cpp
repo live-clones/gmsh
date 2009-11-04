@@ -20,7 +20,7 @@
 #include "gmshRegion.h"
 #include "Field.h"
 
-#if !defined(HAVE_NO_PARSER)
+#if defined(HAVE_PARSER)
 #include "Parser.h"
 #endif
 
@@ -291,7 +291,7 @@ int GModel::writeGEO(const std::string &name, bool printLabels)
     (*it)->writeGEO(fp);
 
   std::map<int, std::string> labels;
-#if !defined(HAVE_NO_PARSER)
+#if defined(HAVE_PARSER)
   // get "old-style" labels from parser
   for(std::map<std::string, std::vector<double> >::iterator it = gmsh_yysymbols.begin();
       it != gmsh_yysymbols.end(); ++it)

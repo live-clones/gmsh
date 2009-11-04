@@ -1024,8 +1024,7 @@ int CreatePartitionBoundaries(GModel *model)
 void createPartitionFaces(GModel *model, GFaceCompound *gf, int N, 
 			  std::vector<discreteFace*> &discreteFaces)
 {
-
- 
+#if defined(HAVE_SOLVER)
   // Compound is partitioned in N discrete faces
   //--------------------------------------------
   std::vector<std::set<MVertex*> > allNodes;
@@ -1059,9 +1058,7 @@ void createPartitionFaces(GModel *model, GFaceCompound *gf, int N,
       discreteFaces[i]->mesh_vertices.push_back(*it);
     }
  }
-
- return;
-
+#endif
 }
   
 /*******************************************************************************

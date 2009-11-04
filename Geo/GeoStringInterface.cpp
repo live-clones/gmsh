@@ -15,15 +15,13 @@
 #include "Context.h"
 #include "GModel.h"
 
-#if !defined(HAVE_NO_PARSER)
+#if defined(HAVE_PARSER)
 #include "Parser.h"
 #endif
 
 void add_infile(std::string text, std::string fileName, bool deleted_something)
 {
-#if defined(HAVE_NO_PARSER)
-  Msg::Error("GEO file creation not available without Gmsh parser");
-#else
+#if defined(HAVE_PARSER)
   std::string tmpFileName = CTX::instance()->homeDir + CTX::instance()->tmpFileName;
   FILE *gmsh_yyin_old = gmsh_yyin;
   if(!(gmsh_yyin = fopen(tmpFileName.c_str(), "w"))) {
@@ -75,6 +73,8 @@ void add_infile(std::string text, std::string fileName, bool deleted_something)
 
   fprintf(fp, "%s\n", text.c_str());
   fclose(fp);
+#else
+  Msg::Error("GEO file creation not available without Gmsh parser");
 #endif
 }
 

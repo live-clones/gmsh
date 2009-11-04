@@ -370,13 +370,13 @@
 #include "gmshSurface.h"
 #include "gmshLevelset.h"
 
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
 #include "Generator.h"
 #include "Field.h"
 #include "BackgroundMesh.h"
 #endif
 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewDataList.h"
 #include "PluginManager.h"
@@ -398,7 +398,7 @@ std::map<std::string, std::vector<double> > gmsh_yysymbols;
 
 // Static parser variables (accessible only in this file)
 static std::map<std::string, std::string > gmsh_yystringsymbols;
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
 static PViewDataList *ViewData;
 #endif
 static std::vector<double> ViewCoord;
@@ -3999,7 +3999,7 @@ yyreduce:
   case 28:
 #line 258 "Gmsh.y"
     { 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       if(!strcmp((yyvsp[(1) - (6)].c), "View") && ViewData->finalize()){
 	ViewData->setName((yyvsp[(2) - (6)].c));
 	ViewData->setFileName(gmsh_yyname);
@@ -4016,7 +4016,7 @@ yyreduce:
   case 29:
 #line 272 "Gmsh.y"
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       if(!strcmp((yyvsp[(2) - (6)].c), "View")){
 	int index = (int)(yyvsp[(4) - (6)].d);
 	if(index >= 0 && index < (int)PView::list.size())
@@ -4030,7 +4030,7 @@ yyreduce:
   case 30:
 #line 283 "Gmsh.y"
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       if(!strcmp((yyvsp[(2) - (6)].c), "View")){
 	int index = (int)(yyvsp[(4) - (6)].d);
 	if(index >= 0 && index < (int)PView::list.size())
@@ -4044,7 +4044,7 @@ yyreduce:
   case 31:
 #line 297 "Gmsh.y"
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       ViewData = new PViewDataList(); 
 #endif
     ;}
@@ -4073,7 +4073,7 @@ yyreduce:
   case 41:
 #line 325 "Gmsh.y"
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       if(!strncmp((yyvsp[(1) - (1)].c), "SP", 2)){
 	ViewValueList = &ViewData->SP; ViewNumList = &ViewData->NbSP;
       }
@@ -4180,7 +4180,7 @@ yyreduce:
   case 42:
 #line 429 "Gmsh.y"
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       if(ViewValueList){
 	for(int i = 0; i < 3; i++)
 	  for(unsigned int j = 0; j < ViewCoord.size() / 3; j++) 
@@ -4193,7 +4193,7 @@ yyreduce:
   case 43:
 #line 439 "Gmsh.y"
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       if(ViewValueList) (*ViewNumList)++;
 #endif
     ;}
@@ -4202,7 +4202,7 @@ yyreduce:
   case 44:
 #line 448 "Gmsh.y"
     { 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       for(int i = 0; i < (int)strlen((yyvsp[(1) - (1)].c)) + 1; i++) ViewData->T2C.push_back((yyvsp[(1) - (1)].c)[i]);
 #endif
       Free((yyvsp[(1) - (1)].c));
@@ -4212,7 +4212,7 @@ yyreduce:
   case 45:
 #line 455 "Gmsh.y"
     { 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       for(int i = 0; i < (int)strlen((yyvsp[(3) - (3)].c)) + 1; i++) ViewData->T2C.push_back((yyvsp[(3) - (3)].c)[i]);
 #endif
       Free((yyvsp[(3) - (3)].c));
@@ -4222,7 +4222,7 @@ yyreduce:
   case 46:
 #line 465 "Gmsh.y"
     { 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       ViewData->T2D.push_back((yyvsp[(3) - (8)].d)); 
       ViewData->T2D.push_back((yyvsp[(5) - (8)].d));
       ViewData->T2D.push_back((yyvsp[(7) - (8)].d)); 
@@ -4234,7 +4234,7 @@ yyreduce:
   case 47:
 #line 474 "Gmsh.y"
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       ViewData->NbT2++;
 #endif
     ;}
@@ -4243,7 +4243,7 @@ yyreduce:
   case 48:
 #line 483 "Gmsh.y"
     { 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       for(int i = 0; i < (int)strlen((yyvsp[(1) - (1)].c)) + 1; i++) ViewData->T3C.push_back((yyvsp[(1) - (1)].c)[i]);
 #endif
       Free((yyvsp[(1) - (1)].c));
@@ -4253,7 +4253,7 @@ yyreduce:
   case 49:
 #line 490 "Gmsh.y"
     { 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       for(int i = 0; i < (int)strlen((yyvsp[(3) - (3)].c)) + 1; i++) ViewData->T3C.push_back((yyvsp[(3) - (3)].c)[i]);
 #endif
       Free((yyvsp[(3) - (3)].c));
@@ -4263,7 +4263,7 @@ yyreduce:
   case 50:
 #line 500 "Gmsh.y"
     { 
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       ViewData->T3D.push_back((yyvsp[(3) - (10)].d)); ViewData->T3D.push_back((yyvsp[(5) - (10)].d));
       ViewData->T3D.push_back((yyvsp[(7) - (10)].d)); ViewData->T3D.push_back((yyvsp[(9) - (10)].d));
       ViewData->T3D.push_back(ViewData->T3C.size()); 
@@ -4274,7 +4274,7 @@ yyreduce:
   case 51:
 #line 508 "Gmsh.y"
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       ViewData->NbT3++;
 #endif
     ;}
@@ -4283,7 +4283,7 @@ yyreduce:
   case 52:
 #line 518 "Gmsh.y"
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       int type = 
 	(ViewData->NbSL || ViewData->NbVL) ? TYPE_LIN : 
 	(ViewData->NbST || ViewData->NbVT) ? TYPE_TRI : 
@@ -4302,7 +4302,7 @@ yyreduce:
   case 53:
 #line 537 "Gmsh.y"
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       int type = 
 	(ViewData->NbSL || ViewData->NbVL) ? TYPE_LIN : 
 	(ViewData->NbST || ViewData->NbVT) ? TYPE_TRI : 
@@ -4321,7 +4321,7 @@ yyreduce:
   case 54:
 #line 556 "Gmsh.y"
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       ViewValueList = &ViewData->Time;
 #endif
     ;}
@@ -4674,7 +4674,7 @@ yyreduce:
   case 81:
 #line 850 "Gmsh.y"
     {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
       if(!strcmp((yyvsp[(1) - (5)].c),"Background"))
 	GModel::current()->getFields()->background_field = (int)(yyvsp[(4) - (5)].d);
       else
@@ -4686,7 +4686,7 @@ yyreduce:
   case 82:
 #line 859 "Gmsh.y"
     {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
       if(!GModel::current()->getFields()->newField((int)(yyvsp[(3) - (7)].d), (yyvsp[(6) - (7)].c)))
 	yymsg(0, "Cannot create field %i of type '%s'", (int)(yyvsp[(3) - (7)].d), (yyvsp[(6) - (7)].c));
 #endif
@@ -4697,7 +4697,7 @@ yyreduce:
   case 83:
 #line 867 "Gmsh.y"
     {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
       Field *field = GModel::current()->getFields()->get((int)(yyvsp[(3) - (9)].d));
       if(field){
 	FieldOption *option = field->options[(yyvsp[(6) - (9)].c)];
@@ -4722,7 +4722,7 @@ yyreduce:
   case 84:
 #line 889 "Gmsh.y"
     {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
       Field *field = GModel::current()->getFields()->get((int)(yyvsp[(3) - (9)].d));
       if(field){
 	FieldOption *option = field->options[(yyvsp[(6) - (9)].c)];
@@ -4748,7 +4748,7 @@ yyreduce:
   case 85:
 #line 912 "Gmsh.y"
     {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
       Field *field = GModel::current()->getFields()->get((int)(yyvsp[(3) - (11)].d));
       if(field){
 	FieldOption *option = field->options[(yyvsp[(6) - (11)].c)];
@@ -4776,7 +4776,7 @@ yyreduce:
   case 86:
 #line 940 "Gmsh.y"
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       try {
 	PluginManager::instance()->setPluginOption((yyvsp[(3) - (9)].c), (yyvsp[(6) - (9)].c), (yyvsp[(8) - (9)].d)); 
       }
@@ -4791,7 +4791,7 @@ yyreduce:
   case 87:
 #line 952 "Gmsh.y"
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       try {
 	PluginManager::instance()->setPluginOption((yyvsp[(3) - (9)].c), (yyvsp[(6) - (9)].c), (yyvsp[(8) - (9)].c)); 
       }
@@ -5931,7 +5931,7 @@ yyreduce:
           Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
         }
       }
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       else if(!strcmp((yyvsp[(2) - (8)].c), "PostView")){
         int t = (int)(yyvsp[(4) - (8)].d);
         if(FindLevelSet(t)){
@@ -6114,7 +6114,7 @@ yyreduce:
   case 152:
 #line 2132 "Gmsh.y"
     {
-#if !defined(HAVE_NO_MESH)
+#if defined(HAVE_MESH)
       GModel::current()->getFields()->deleteField((int)(yyvsp[(4) - (6)].d));
 #endif
     ;}
@@ -6123,7 +6123,7 @@ yyreduce:
   case 153:
 #line 2138 "Gmsh.y"
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       if(!strcmp((yyvsp[(2) - (6)].c), "View")){
 	int index = (int)(yyvsp[(4) - (6)].d);
 	if(index >= 0 && index < (int)PView::list.size())
@@ -6168,7 +6168,7 @@ yyreduce:
   case 155:
 #line 2177 "Gmsh.y"
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       if(!strcmp((yyvsp[(2) - (4)].c), "Empty") && !strcmp((yyvsp[(3) - (4)].c), "Views")){
 	for(int i = PView::list.size() - 1; i >= 0; i--)
 	  if(PView::list[i]->getData()->empty()) delete PView::list[i];
@@ -6280,7 +6280,7 @@ yyreduce:
   case 162:
 #line 2283 "Gmsh.y"
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       if(!strcmp((yyvsp[(1) - (7)].c), "Save") && !strcmp((yyvsp[(2) - (7)].c), "View")){
 	int index = (int)(yyvsp[(4) - (7)].d);
 	if(index >= 0 && index < (int)PView::list.size()){
@@ -6300,7 +6300,7 @@ yyreduce:
   case 163:
 #line 2300 "Gmsh.y"
     {
-#if !defined(HAVE_NO_POST) && !defined(HAVE_NO_MESH)
+#if defined(HAVE_POST) && defined(HAVE_MESH)
       if(!strcmp((yyvsp[(1) - (7)].c), "Background") && !strcmp((yyvsp[(2) - (7)].c), "Mesh")  && !strcmp((yyvsp[(3) - (7)].c), "View")){
 	int index = (int)(yyvsp[(5) - (7)].d);
 	if(index >= 0 && index < (int)PView::list.size())
@@ -6340,7 +6340,7 @@ yyreduce:
   case 165:
 #line 2334 "Gmsh.y"
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
        try {
 	 PluginManager::instance()->action((yyvsp[(3) - (7)].c), (yyvsp[(6) - (7)].c), 0);
        }
@@ -6355,7 +6355,7 @@ yyreduce:
   case 166:
 #line 2346 "Gmsh.y"
     {
-#if !defined(HAVE_NO_POST)
+#if defined(HAVE_POST)
       if(!strcmp((yyvsp[(2) - (3)].c), "ElementsFromAllViews"))
 	PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig);
       else if(!strcmp((yyvsp[(2) - (3)].c), "ElementsFromVisibleViews"))

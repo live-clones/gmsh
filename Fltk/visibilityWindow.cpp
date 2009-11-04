@@ -28,7 +28,7 @@
 #include "Options.h"
 #include "Context.h"
 
-#if !defined(HAVE_NO_PARSER)
+#if defined(HAVE_PARSER)
 #include "Parser.h"
 #endif
 
@@ -179,7 +179,7 @@ class VisibilityList { // singleton
       delete _entities[i];
     _entities.clear();
     GModel *m = GModel::current();
-#if !defined(HAVE_NO_PARSER)
+#if defined(HAVE_PARSER)
     for(std::map<std::string, std::vector<double> >::iterator it = gmsh_yysymbols.begin();
         it != gmsh_yysymbols.end(); ++it)
       for(unsigned int i = 0; i < it->second.size(); i++)
@@ -594,7 +594,7 @@ static void _rebuild_tree_browser(bool force)
     std::map<int, std::vector<GEntity*> > groups[4];
     m->getPhysicalGroups(groups);
     std::map<int, std::string> oldLabels;
-#if !defined(HAVE_NO_PARSER)
+#if defined(HAVE_PARSER)
     for(std::map<std::string, std::vector<double> >::iterator it = gmsh_yysymbols.begin();
         it != gmsh_yysymbols.end(); ++it)
       for(unsigned int i = 0; i < it->second.size(); i++)
