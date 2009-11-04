@@ -35,8 +35,8 @@ void dgAlgorithm::residualVolume ( dofManager &dof, // the DOF manager (maybe us
     if (claw.diffusiveFlux()) (*claw.diffusiveFlux())(DGE,fDiff);
     
     for (int iUVW=0;iUVW<group.getDimUVW();iUVW++) {
-      // proxies should be done...
-      fullMatrix<double> fuvwe  = Fuvw[iUVW].linesProxy(iElement);
+      // proxy to the elementary values
+      fullMatrix<double> fuvwe(Fuvw[iUVW], iElement*claw.nbFields(),claw.nbFields());
       for (int iXYZ=0;iXYZ<group.getDimXYZ();iXYZ++) {
 	for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
 	  // get the right inv jacobian matrix dU/dX element
@@ -46,7 +46,7 @@ void dgAlgorithm::residualVolume ( dofManager &dof, // the DOF manager (maybe us
 	  const double factor = invJ * detJ;
 	  // compute fluxes in the reference coordinate system at this integration point
 	  for (int k=0;k<group.nbFields();k++) {
-	    fuvwe(i,k) += ( fConv[iXYZ](i,k) + fDiff[iXYZ](i,k)) * factor;
+	    fuvwe(iPt,k) += ( fConv[iXYZ](iPt,k) + fDiff[iXYZ](iPt,k)) * factor;
 	  }
 	}
       } 

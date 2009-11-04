@@ -20,9 +20,14 @@ class functionSpace;
 
 class dgElement {
   MElement *_element;
-  double *_detJ;
+  const fullMatrix<double> &_solution, &_detJ, &_integration;
 public:
-  dgElement (MElement *e, double *detJ);
+  dgElement (MElement *e, 
+	     const fullMatrix<double> &sol,
+	     const fullMatrix<double> &detJ,
+	     const fullMatrix<double> &integ)
+    : _element(e), _solution(sol), _detJ(detJ), _integration(integ)
+  {}
 };
 
 class dgGroupOfElements {
@@ -50,24 +55,31 @@ class dgGroupOfElements {
   fullMatrix<double> *_residual;
   // dimension of the parametric space and of the real space
   // may be different if the domain is a surface in 3D (manifold)
-  int dimUVW, dimXYZ;
+  int _dimUVW, _dimXYZ, _nbFields;
   // forbid the copy 
   //  dgGroupOfElements (const dgGroupOfElements &e, int order) {}
   //  dgGroupOfElements & operator = (const dgGroupOfElements &e) {}
 public:
-  dgGroupOfElements (const std::vector<MElement*> &e, int);
+  dgGroupOfElements (const std::vector<MElement*> &e, int pOrder);
   virtual ~dgGroupOfElements ();
-  inline dgElement getDGElement(int i) const;
+  inline dgElement getDGElement(int i) const {return dgElement(_elements[i], getSolution(i), getMapping(i), *_integration);}
   inline int getNbElements() const {return _elements.size();}
+  inline int getNbFields() const {return _nbFields;}
   inline int getNbNodes() const {return _collocation.size1();}
   inline int getNbIntegrationPoints() const {return _collocation.size2();}
-  inline int getDimUVW () const {return dimUVW;}
-  inline int getDimXYZ () const {return dimXYZ;}
+  inline int getDimUVW () const {return _dimUVW;}
+  inline int getDimXYZ () const {return _dimXYZ;}
   inline const fullMatrix<double> & getCollocationMatrix () const {return *_collocation;}
   inline const fullMatrix<double> & getRedistributionMatrix (int i) const {return *_redistribution[i];}
   inline const fullMatrix<double> & getSolution () const {return *_solution;}
+  // get a proxy on the solution for element iElement
+  inline fullMatrix<double> & getSolution (int iElement) const {return fullMatrix<double>(*_solution, iElement*_nbFields, _nbFields);}
   inline const fullMatrix<double> & getResidual () const {return *_solution;}
-  inline double getDetJ (int iElement, int iGaussPoint) 
+  // get a proxy on the residual for element iElement
+  inline fullMatrix<double> & getResidual (int iElement) const {return fullMatrix<double>(*_residual, iElement*_nbFields, _nbFields);}
+  inline double getDetJ (int iElement, int iGaussPoint) const {return (*_mapping)(iElement, 10*iGaussPoint + 9);}
+  inline double getInvJ (int iElement, int iGaussPoint, int i, int j) const {return (*_mapping)(iElement, 10*iGaussPoint + i + 3*j);}
+  inline fullMatrix<double> getMapping (int iElement) const {return fullMatrix<double>(*_mapping, iElement, 1);}
 };
 
 /*class dgFace {
