@@ -20,13 +20,14 @@ class functionSpace;
 
 class dgElement {
   MElement *_element;
-  const fullMatrix<double> &_solution, &_detJ, &_integration;
+  // solution at points
+  const fullMatrix<double> &_solution, &_integration, &_gradients;
 public:
-  dgElement (MElement *e, 
-	     const fullMatrix<double> &sol,
-	     const fullMatrix<double> &detJ,
-	     const fullMatrix<double> &integ)
-    : _element(e), _solution(sol), _detJ(detJ), _integration(integ)
+  dgElement (MElement *e, const fullMatrix<double> &sol, const fullMatrix<double> &integ)
+    : _element(e), _solution(sol), _integration(integ), _gradients(sol)
+  {}
+  dgElement (MElement *e, const fullMatrix<double> &sol, const fullMatrix<double> &grads, const fullMatrix<double> &integ)
+    : _element(e), _solution(sol), _integration(integ), _gradients(grad)
   {}
 };
 
@@ -49,6 +50,8 @@ class dgGroupOfElements {
   fullMatrix<double> *_redistributionFluxes[3];
   // redistribution for the source term
   fullMatrix<double> *_redistributionSource;
+  // the "finite element" gradient of the solution for this group (not owned)
+  fullMatrix<double> *_gradSolution;
   // the solution for this group (not owned)
   fullMatrix<double> *_solution;
   // the residual for this group (not owned)
@@ -62,16 +65,18 @@ class dgGroupOfElements {
 public:
   dgGroupOfElements (const std::vector<MElement*> &e, int pOrder);
   virtual ~dgGroupOfElements ();
-  inline dgElement getDGElement(int i) const {return dgElement(_elements[i], getSolution(i), getMapping(i), *_integration);}
   inline int getNbElements() const {return _elements.size();}
   inline int getNbFields() const {return _nbFields;}
   inline int getNbNodes() const {return _collocation.size1();}
   inline int getNbIntegrationPoints() const {return _collocation.size2();}
   inline int getDimUVW () const {return _dimUVW;}
   inline int getDimXYZ () const {return _dimXYZ;}
+  inline const MElement* getElement (int iElement) const {return _elements[iElement];}  
+  inline const fullMatrix<double> & getIntegrationPointsMatrix () const {return *_integration;}
   inline const fullMatrix<double> & getCollocationMatrix () const {return *_collocation;}
   inline const fullMatrix<double> & getRedistributionMatrix (int i) const {return *_redistribution[i];}
   inline const fullMatrix<double> & getSolution () const {return *_solution;}
+  inline const fullMatrix<double> & getGradientOfSolution () const {return *_gradSolution;}
   // get a proxy on the solution for element iElement
   inline fullMatrix<double> & getSolution (int iElement) const {return fullMatrix<double>(*_solution, iElement*_nbFields, _nbFields);}
   inline const fullMatrix<double> & getResidual () const {return *_solution;}
