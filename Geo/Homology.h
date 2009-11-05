@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 // 
-// Contributed by Matti Pellikka.
+// Contributed by Matti Pellikka <matti.pellikka@tut.fi>.
 
 #ifndef _HOMOLOGY_H_
 #define _HOMOLOGY_H_
@@ -36,15 +36,19 @@ class Homology
    Homology(GModel* model, std::vector<int> physicalDomain, std::vector<int> physicalSubdomain);
    ~Homology(){ delete _cellComplex; }
    
+   // Find the generators/duals of homology spaces, or just compute the ranks of homology spaces
    void findGenerators(std::string fileName);
    void findDualGenerators(std::string fileName);
-
    void computeBettiNumbers();
    
+   
    void swapSubdomain() { _cellComplex->swapSubdomain(); }
-
+   
+   // Restore the cell complex to its original state before cell reductions
+   void restoreHomology() { _cellComplex->restoreComplex(); }
+   
+   // Create a string describing the generator
    std::string getDomainString() {
-     
      std::string domainString = "({";
      for(unsigned int i = 0; i < _domain.size(); i++){
        std::string temp = "";

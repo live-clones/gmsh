@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 //
-// Contributed by Matti Pellikka.
+// Contributed by Matti Pellikka <matti.pellikka@tut.fi>.
 
 #include "CellComplex.h"
 #include "OS.h"
