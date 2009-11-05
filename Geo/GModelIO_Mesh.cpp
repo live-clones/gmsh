@@ -534,7 +534,7 @@ static void writeElementsMSH(FILE *fp, T *ele, bool saveAll,
 }
 
 template<class T>
-static void writeElementsMSH(FILE *fp, const std::vector<T*> &ele, bool saveAll,
+static void writeElementsMSH(FILE *fp, std::vector<T*> &ele, bool saveAll,
                              double version, bool binary, int &num, int elementary,
                              std::vector<int> &physicals)
 {
@@ -544,7 +544,7 @@ static void writeElementsMSH(FILE *fp, const std::vector<T*> &ele, bool saveAll,
 }
 
 template<class T>
-static void writeElementsMSH(FILE *fp, const std::vector<T*> &ele, bool saveAll,
+static void writeElementsMSH(FILE *fp, std::vector<T*> &ele, bool saveAll,
                              double version, bool binary, int &num, int elementary,
                              std::vector<int> &physicals, std::map<MElement *, int> &parentsNum)
 {
