@@ -75,21 +75,30 @@ template <class scalar>
 class fullMatrix
 {
  private:
+  bool _own_data; // should data be freed on delete ?
   int _r, _c;
   scalar *_data;
  public:
+  fullMatrix(fullMatrix<scalar> &original, int r_start, int r){
+    _r = r;
+    _c = original._c;
+    _own_data = false;
+    _data = original._data + r_start * _c;
+  }
   fullMatrix(int r, int c) : _r(r), _c(c)
   {
     _data = new scalar[_r * _c];
+    _own_data = true;
     scale(0.);
   }
   fullMatrix(const fullMatrix<scalar> &other) : _r(other._r), _c(other._c)
   {
     _data = new scalar[_r * _c];
+    _own_data=true;
     for(int i = 0; i < _r * _c; ++i) _data[i] = other._data[i];
   }
-  fullMatrix() : _r(0), _c(0), _data(0) {}
-  ~fullMatrix() { if(_data) delete [] _data; }
+  fullMatrix() : _own_data(false),_r(0), _c(0), _data(0) {}
+  ~fullMatrix() { if(_data && _own_data) delete [] _data; }
   inline int size1() const { return _r; }
   inline int size2() const { return _c; }
   fullMatrix<scalar> & operator = (const fullMatrix<scalar> &other)
