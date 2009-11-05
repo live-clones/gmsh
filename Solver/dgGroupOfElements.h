@@ -121,10 +121,12 @@ class dgGroupOfFaces {
   // detJac at integration points (N*Ni) x 1
   fullMatrix<double> *_detJac;
   // collocation matrices \psi_i (GP_j) 
-  fullMatrix<double> *_collocationLeft, *_collocationRight;
+  fullMatrix<double> *_collocation;
+  //fullMatrix<double> *_collocationLeft, *_collocationRight;
   // redistribution matrices \psi_i (GP_j) * weight_j
-  fullMatrix<double> *_redistributionLeft, *_redistributionRight;
-  
+  fullMatrix<double> *_redistribution;
+  //common part of the 3 constructors
+  void init();
 public:
   dgGroupOfFaces (const std::vector<MFace> &faces, 		  
 		  const std::vector<MElement*> &l, 

@@ -18,7 +18,7 @@ void dgAlgorithm::residualVolume ( dofManager &dof, // the DOF manager (maybe us
   fullMatrix<double> *gradientSolutionQP= 0;
   if (claw.diffusiveFlux()){
      gradientSolutionQP = new  fullMatrix<double> (group.getNbElements() * group.getNbFields() * 3, group.getNbIntegrationPoints());
-     group.getGradientOfSolution().mult ( group.getCollocationMatrix() , solutionQP); 
+     group.getGradientOfSolution().mult ( group.getCollocationMatrix() , *gradientSolutionQP); 
   }
   
 
@@ -40,7 +40,7 @@ void dgAlgorithm::residualVolume ( dofManager &dof, // the DOF manager (maybe us
     fullMatrix<double> solutionQPe (solutionQP, iElement*claw.nbFields(),claw.nbFields() );
     fullMatrix<double> *gradSolutionQPe;
     if (claw.diffusiveFlux()) gradSolutionQPe = new fullMatrix<double>(*gradSolutionQP, 3*iElement*claw.nbFields(),3*claw.nbFields() );      
-    else gradSolutionQPe = new fullMatrix<double>
+    else gradSolutionQPe = new fullMatrix<double>;
     dgElement DGE( group.getElement(iElement), solutionQPe, *gradSolutionQPe, group.getIntegrationPointsMatrix());
     // ----- 2.3.2 --- compute fluxes in XYZ coordinates
     if (claw.convectiveFlux()) (*claw.convectiveFlux())(DGE,fConv);

@@ -23,10 +23,10 @@ struct functionSpace
   fullMatrix<double> coefficients;
   // for a given face/edge, with both a sign and a rotation,
   // give an ordered list of nodes on this face/edge
-  std::vector<int> & getFaceClosure (int iFace, int iSign, int iRot){
+  inline const std::vector<int> & getFaceClosure (int iFace, int iSign, int iRot)const{
     return faceClosure[iFace+4*(iSign==1?0:1)+8*iRot];
   }
-  inline std::vector<int> & getEdgeClosure (int iEdge, int iSign){
+  inline const std::vector<int> & getEdgeClosure (int iEdge, int iSign) const{
     return edgeClosure[iSign == 1 ? iEdge : 3+iEdge];
   }
   inline void evaluateMonomials(double u, double v, double w, double p[]) const 

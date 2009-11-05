@@ -199,6 +199,21 @@ void dgGroupOfFaces::createEdgeElements (const std::vector<MEdge> &topo_edges){
     }
   }
 }
+void dgGroupOfFace::init() {
+  _fsFace = _faces[0]->getFunctionSpace (pOrder);
+  _integration=dgGetIntegrationRule (_faces[0],pOrder);
+  _redistribution = new fullMatrix<double> (_fsFace->coefficients.size1(),_integration->size1());
+  _collocation = new fullMatrix<double> (_fsFace->coefficients.size1(), _integration->size1());
+  double f[256];
+  for (int j=0;j<_integration->size1();j++) {
+    _fsFace->f((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), f);
+    const double weight = (*_integration)(j,3);
+    for (int k=0;k<_fs.coefficients.size1();k++){ 
+      (*_redistribution)(k,j) = f[j] * weight;
+      (*_collocation)(k,j) = f[k];
+    }
+  }
+}
 
 dgGroupOfFaces::dgGroupOfFaces (const std::vector<MFace> &topo_faces, 		  
 				const std::vector<MElement*> &l, 
@@ -207,8 +222,7 @@ dgGroupOfFaces::dgGroupOfFaces (const std::vector<MFace> &topo_faces,
         _fsLeft(_left[0]->getFunctionSpace (pOrder)), _fsRight (_right[0]->getFunctionSpace (pOrder))
 {
   createFaceElements (topo_faces);
-  _fsFace = _faces[0]->getFunctionSpace (pOrder);
-  dgGetIntegrationRule (_faces[0],pOrder);
+  init();
 }
 
 dgGroupOfFaces::dgGroupOfFaces (const std::vector<MEdge> &topo_edges, 		  
@@ -218,6 +232,5 @@ dgGroupOfFaces::dgGroupOfFaces (const std::vector<MEdge> &topo_edges,
         _fsLeft(_left[0]->getFunctionSpace (pOrder)), _fsRight (_right[0]->getFunctionSpace (pOrder))
 {
   createEdgeElements (topo_edges);
-  _fsFace = _faces[0]->getFunctionSpace (pOrder);
-  dgGetIntegrationRule (_faces[0],pOrder);
+  init();
 }
