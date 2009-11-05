@@ -11,6 +11,7 @@ set(SRC
   SElement.cpp
   eigenSolver.cpp
   dgGroupOfElements.cpp
+  dgAlgorithm.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Solver *.h) 

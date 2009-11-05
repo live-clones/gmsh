@@ -19,14 +19,14 @@ class MEdge;
 class functionSpace;
 
 class dgElement {
-  MElement *_element;
+  const MElement *_element;
   // solution at points
   const fullMatrix<double> &_solution, &_integration, &_gradients;
 public:
-  dgElement (MElement *e, const fullMatrix<double> &sol, const fullMatrix<double> &integ)
+  dgElement (const MElement *e, const fullMatrix<double> &sol, const fullMatrix<double> &integ)
     : _element(e), _solution(sol), _integration(integ), _gradients(sol)
   {}
-  dgElement (MElement *e, const fullMatrix<double> &sol, const fullMatrix<double> &grads, const fullMatrix<double> &integ)
+  dgElement (const MElement *e, const fullMatrix<double> &sol, const fullMatrix<double> &grads, const fullMatrix<double> &integ)
     : _element(e), _solution(sol), _integration(integ), _gradients(grads)
   {}
 };
@@ -76,11 +76,11 @@ public:
   inline const fullMatrix<double> & getCollocationMatrix () const {return *_collocation;}
   inline const fullMatrix<double> & getFluxRedistributionMatrix (int i) const {return *_redistributionFluxes[i];}
   inline const fullMatrix<double> & getSourceRedistributionMatrix () const {return *_redistributionSource;}
-  inline const fullMatrix<double> & getSolution () const {return *_solution;}
-  inline const fullMatrix<double> & getGradientOfSolution () const {return *_gradSolution;}
+  inline fullMatrix<double> & getSolution () const {return *_solution;}
+  inline fullMatrix<double> & getGradientOfSolution () const {return *_gradSolution;}
   // get a proxy on the solution for element iElement
   inline fullMatrix<double> getSolution (int iElement) const {return fullMatrix<double>(*_solution, iElement*_nbFields, _nbFields);}
-  inline const fullMatrix<double> & getResidual () const {return *_solution;}
+  inline fullMatrix<double> & getResidual () const {return *_solution;}
   // get a proxy on the residual for element iElement
   inline fullMatrix<double> getResidual (int iElement) const {return fullMatrix<double>(*_residual, iElement*_nbFields, _nbFields);}
   inline double getDetJ (int iElement, int iGaussPoint) const {return (*_mapping)(iElement, 10*iGaussPoint + 9);}

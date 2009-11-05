@@ -143,7 +143,7 @@ class fullMatrix
   }
 #endif
   ;
-  void gemm(fullMatrix<scalar> &a, fullMatrix<scalar> &b, 
+  void gemm(const fullMatrix<scalar> &a, const fullMatrix<scalar> &b, 
             scalar alpha=1., scalar beta=1.)
 #if !defined(HAVE_BLAS)
   {

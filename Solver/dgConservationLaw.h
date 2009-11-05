@@ -31,13 +31,13 @@ public:
 			 _riemannSolver(0),_maxConvectiveSpeed (0) {}
   ~dgConservationLaw () {}
 
-  int nbFields() const {return nbf;}
+  int nbFields() const {return _nbf;}
 
-  inline const dgTerm     * convectiveFlux () {return _convective;}
-  inline const dgTerm     * diffusiveFlux  () {return _diffusive;}
-  inline const dgTerm     * sourceTerm     () {return _source;}
-  inline const dgFaceTerm * riemannSolver  () {return _riemannSolver;}
-  inline const dgTerm     * maxConvectiveSpeed () {return _maxConvectiveSpeed;}
+  inline const dgTerm     * convectiveFlux () const {return _convective;}
+  inline const dgTerm     * diffusiveFlux  () const {return _diffusive;}
+  inline const dgTerm     * sourceTerm     () const {return _source;}
+  inline const dgFaceTerm * riemannSolver  () const {return _riemannSolver;}
+  inline const dgTerm     * maxConvectiveSpeed () const {return _maxConvectiveSpeed;}
 
 };
 

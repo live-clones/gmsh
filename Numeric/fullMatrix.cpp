@@ -60,7 +60,7 @@ void fullMatrix<std::complex<double> >::mult(const fullMatrix<std::complex<doubl
 }
 
 template<> 
-void fullMatrix<double>::gemm(fullMatrix<double> &a, fullMatrix<double> &b, 
+void fullMatrix<double>::gemm(const fullMatrix<double> &a, const fullMatrix<double> &b, 
                               double alpha, double beta)
 {
   int M = size1(), N = size2(), K = a.size2();
@@ -70,8 +70,8 @@ void fullMatrix<double>::gemm(fullMatrix<double> &a, fullMatrix<double> &b,
 }
 
 template<> 
-void fullMatrix<std::complex<double> >::gemm(fullMatrix<std::complex<double> > &a, 
-                                             fullMatrix<std::complex<double> > &b, 
+void fullMatrix<std::complex<double> >::gemm(const fullMatrix<std::complex<double> > &a, 
+                                             const fullMatrix<std::complex<double> > &b, 
                                              std::complex<double> alpha, 
                                              std::complex<double> beta)
 {
