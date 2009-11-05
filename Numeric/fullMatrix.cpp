@@ -39,7 +39,7 @@ extern "C" {
 }
 
 template<> 
-void fullMatrix<double>::mult(const fullMatrix<double> &b, fullMatrix<double> &c)
+void fullMatrix<double>::mult(const fullMatrix<double> &b, fullMatrix<double> &c)const
 {
   int M = c.size1(), N = c.size2(), K = _c;
   int LDA = _r, LDB = b.size1(), LDC = c.size1();
@@ -50,7 +50,7 @@ void fullMatrix<double>::mult(const fullMatrix<double> &b, fullMatrix<double> &c
 
 template<> 
 void fullMatrix<std::complex<double> >::mult(const fullMatrix<std::complex<double> > &b, 
-                                             fullMatrix<std::complex<double> > &c)
+                                             fullMatrix<std::complex<double> > &c)const
 {
   int M = c.size1(), N = c.size2(), K = _c;
   int LDA = _r, LDB = b.size1(), LDC = c.size1();

@@ -44,7 +44,8 @@ static fullMatrix<double> * dgGetFaceIntegrationRuleOnElement (
 dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e, int polyOrder)
   : _elements(e), 
     _fs(*_elements[0]->getFunctionSpace(polyOrder)),
-    _integration(dgGetIntegrationRule (_elements[0], polyOrder))
+    _integration(dgGetIntegrationRule (_elements[0], polyOrder)
+    )
 {
   // this is the biggest piece of data ... the mappings
   _mapping = new fullMatrix<double> (_elements.size(), 10 * _integration->size1());
@@ -56,7 +57,7 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e, int polyOr
 	e->getJacobian ((*_integration)(j,0),
 			(*_integration)(j,1),
 			(*_integration)(j,2),
-			ijac);
+			jac);
       detjac=inv3x3(jac,ijac);
       (*_mapping)(i,10*j + 0) = ijac[0][0]; 
       (*_mapping)(i,10*j + 1) = ijac[0][1]; 
@@ -77,10 +78,10 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e, int polyOr
   _redistributionFluxes[1] = new fullMatrix<double> (_fs.coefficients.size1(),_integration->size1());
   _redistributionFluxes[2] = new fullMatrix<double> (_fs.coefficients.size1(),_integration->size1());
   _redistributionSource = new fullMatrix<double> (_fs.coefficients.size1(),_integration->size1());
-  _collocation = new fullMatrix<double> (_fs.coefficients.size1(), _integration->size1());
+  _collocation = new fullMatrix<double> (_integration->size1(),_fs.coefficients.size1());
+  _imass = new fullMatrix<double> (_fs.coefficients.size1(),_fs.coefficients.size1()); 
 
   double g[256][3],f[256];
-  
   for (int j=0;j<_integration->size1();j++) {
     _fs.df((*_integration)(j,0),
 	   (*_integration)(j,1),
@@ -90,13 +91,17 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e, int polyOr
 	   (*_integration)(j,2), f);
     const double weight = (*_integration)(j,3);
     for (int k=0;k<_fs.coefficients.size1();k++){ 
-      (*_redistributionFluxes[0])(k,j) = g[j][0] * weight;
-      (*_redistributionFluxes[1])(k,j) = g[j][1] * weight;
-      (*_redistributionFluxes[2])(k,j) = g[j][2] * weight;
-      (*_redistributionSource)(k,j) = f[j] * weight;
-      (*_collocation)(k,j) = f[k];
+      (*_redistributionFluxes[0])(k,j) = g[k][0] * weight;
+      (*_redistributionFluxes[1])(k,j) = g[k][1] * weight;
+      (*_redistributionFluxes[2])(k,j) = g[k][2] * weight;
+      (*_redistributionSource)(k,j) = f[k] * weight;
+      (*_collocation)(j,k) = f[k];
+      for (int l=0;l<_fs.coefficients.size1();l++) { 
+        (*_imass)(k,l) += f[k]*f[l]*weight;
+      }
     }
   }
+  _imass->invertInPlace();
 }
 
 dgGroupOfElements::~dgGroupOfElements(){
@@ -107,6 +112,7 @@ dgGroupOfElements::~dgGroupOfElements(){
   delete _redistributionSource;
   delete _mapping;
   delete _collocation;
+  delete _imass;
 }
 
 // dgGroupOfFaces

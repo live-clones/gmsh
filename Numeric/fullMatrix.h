@@ -79,11 +79,11 @@ class fullMatrix
   int _r, _c;
   scalar *_data;
  public:
-  fullMatrix(fullMatrix<scalar> &original, int r_start, int r){
-    _r = r;
-    _c = original._c;
+  fullMatrix(fullMatrix<scalar> &original, int c_start, int c){
+    _c = c;
+    _r = original._r;
     _own_data = false;
-    _data = original._data + r_start * _c;
+    _data = original._data + c_start * _r;
   }
   fullMatrix(int r, int c) : _r(r), _c(c)
   {
@@ -132,7 +132,7 @@ class fullMatrix
       for(int j = j0, destj = destj0; j < j0 + nj; j++, destj++)
         (*this)(desti, destj) = a(i, j);
   }
-  void mult(const fullMatrix<scalar> &b, fullMatrix<scalar> &c)
+  void mult(const fullMatrix<scalar> &b, fullMatrix<scalar> &c)const
 #if !defined(HAVE_BLAS)
   {
     c.scale(0.);

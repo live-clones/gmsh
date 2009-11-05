@@ -9,9 +9,11 @@ class dgConservationLaw;
 
 class dgAlgorithm {
  public :
-  void residualVolume ( /*dofManager &dof,*/
-			const dgConservationLaw &law,
-			const dgGroupOfElements & group);
+   void residualVolume ( //dofManager &dof, // the DOF manager (maybe useless here)
+				   const dgConservationLaw &claw,   // the conservation law
+				   const dgGroupOfElements & group, 
+           const fullMatrix<double> &solution,
+           fullMatrix<double> &residual);
   void residualInterface ( /*dofManager &dof,*/
 			   const dgConservationLaw &law,
 			   const dgGroupOfFaces & group);

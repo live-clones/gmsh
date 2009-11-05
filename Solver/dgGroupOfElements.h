@@ -19,18 +19,23 @@ class MEdge;
 class functionSpace;
 
 class dgElement {
-  const MElement *_element;
+  MElement *_element;
   // solution at points
   const fullMatrix<double> &_solution, &_integration, &_gradients;
 public:
-  dgElement (const MElement *e, const fullMatrix<double> &sol, const fullMatrix<double> &integ)
+  dgElement (MElement *e, const fullMatrix<double> &sol, const fullMatrix<double> &integ)
     : _element(e), _solution(sol), _integration(integ), _gradients(sol)
   {}
-  dgElement (const MElement *e, const fullMatrix<double> &sol, const fullMatrix<double> &grads, const fullMatrix<double> &integ)
+  dgElement (MElement *e, const fullMatrix<double> &sol, const fullMatrix<double> &grads, const fullMatrix<double> &integ)
     : _element(e), _solution(sol), _integration(integ), _gradients(grads)
   {}
+  const fullMatrix<double> &solution() const { return _solution; }
+  const fullMatrix<double> &integration() const { return _integration; }
+  MElement *element() const { return _element;}
 };
 
+
+// store topological and geometrical data for 1 group for 1 discretisation
 class dgGroupOfElements {
   // N elements in the group
   std::vector<MElement*> _elements;
@@ -50,15 +55,10 @@ class dgGroupOfElements {
   fullMatrix<double> *_redistributionFluxes[3];
   // redistribution for the source term
   fullMatrix<double> *_redistributionSource;
-  // the "finite element" gradient of the solution for this group (not owned)
-  fullMatrix<double> *_gradSolution;
-  // the solution for this group (not owned)
-  fullMatrix<double> *_solution;
-  // the residual for this group (not owned)
-  fullMatrix<double> *_residual;
+  fullMatrix<double> *_imass;
   // dimension of the parametric space and of the real space
   // may be different if the domain is a surface in 3D (manifold)
-  int _dimUVW, _dimXYZ, _nbFields;
+  int _dimUVW, _dimXYZ;
   // forbid the copy 
   //  dgGroupOfElements (const dgGroupOfElements &e, int order) {}
   //  dgGroupOfElements & operator = (const dgGroupOfElements &e) {}
@@ -66,23 +66,16 @@ public:
   dgGroupOfElements (const std::vector<MElement*> &e, int pOrder);
   virtual ~dgGroupOfElements ();
   inline int getNbElements() const {return _elements.size();}
-  inline int getNbFields() const {return _nbFields;}
-  inline int getNbNodes() const {return _collocation->size1();}
-  inline int getNbIntegrationPoints() const {return _collocation->size2();}
+  inline int getNbNodes() const {return _collocation->size2();}
+  inline int getNbIntegrationPoints() const {return _collocation->size1();}
   inline int getDimUVW () const {return _dimUVW;}
   inline int getDimXYZ () const {return _dimXYZ;}
-  inline const MElement* getElement (int iElement) const {return _elements[iElement];}  
+  inline MElement* getElement (int iElement) const {return _elements[iElement];}  
   inline const fullMatrix<double> & getIntegrationPointsMatrix () const {return *_integration;}
   inline const fullMatrix<double> & getCollocationMatrix () const {return *_collocation;}
   inline const fullMatrix<double> & getFluxRedistributionMatrix (int i) const {return *_redistributionFluxes[i];}
   inline const fullMatrix<double> & getSourceRedistributionMatrix () const {return *_redistributionSource;}
-  inline fullMatrix<double> & getSolution () const {return *_solution;}
-  inline fullMatrix<double> & getGradientOfSolution () const {return *_gradSolution;}
-  // get a proxy on the solution for element iElement
-  inline fullMatrix<double> getSolution (int iElement) const {return fullMatrix<double>(*_solution, iElement*_nbFields, _nbFields);}
-  inline fullMatrix<double> & getResidual () const {return *_solution;}
-  // get a proxy on the residual for element iElement
-  inline fullMatrix<double> getResidual (int iElement) const {return fullMatrix<double>(*_residual, iElement*_nbFields, _nbFields);}
+  inline const fullMatrix<double> & getInverseMassMatrix () const {return *_imass;}
   inline double getDetJ (int iElement, int iGaussPoint) const {return (*_mapping)(iElement, 10*iGaussPoint + 9);}
   inline double getInvJ (int iElement, int iGaussPoint, int i, int j) const {return (*_mapping)(iElement, 10*iGaussPoint + i + 3*j);}
   inline fullMatrix<double> getMapping (int iElement) const {return fullMatrix<double>(*_mapping, iElement, 1);}
@@ -139,6 +132,7 @@ public:
 		  int pOrder);
   virtual ~dgGroupOfFaces ();
 };
+
 
 
 #endif

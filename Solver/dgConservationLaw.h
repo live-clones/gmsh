@@ -6,7 +6,7 @@
                     + \nabla \cdot (\vec{g}(u,\nabla u,forcings)  -> diffusive flux g
 		    + r(u,forcings)                       -> source term r
 */
-
+#include "fullMatrix.h"
 class dgElement; 
 class dgFace;
 
@@ -23,6 +23,7 @@ class dgFaceTerm{
 };
 
 class dgConservationLaw {
+  protected :
   int _nbf;
   dgTerm *_diffusive, *_convective, *_source, *_maxConvectiveSpeed;
   dgFaceTerm *_riemannSolver;
@@ -42,5 +43,6 @@ public:
 };
 
 
+dgConservationLaw *dgNewConservationLawAdvection();
 
 #endif
