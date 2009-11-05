@@ -1327,9 +1327,8 @@ bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge*> &edges)
   }
   edges.clear();
   edges.insert(edges.begin(), mySet.begin(), mySet.end());
-  
-  return isMeshed;
 #endif
+  return isMeshed;
 }
 
 void partitionAndRemesh(GFaceCompound *gf)
