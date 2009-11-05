@@ -234,3 +234,8 @@ dgGroupOfFaces::dgGroupOfFaces (const std::vector<MEdge> &topo_edges,
   createEdgeElements (topo_edges);
   init(pOrder);
 }
+
+dgGroupOfFaces::~dgGroupOfFaces()
+{
+  
+}
