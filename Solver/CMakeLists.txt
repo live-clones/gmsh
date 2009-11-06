@@ -10,6 +10,7 @@ set(SRC
   elasticitySolver.cpp
   SElement.cpp
   eigenSolver.cpp
+  multiscaleLaplace.cpp
   dgGroupOfElements.cpp
   dgAlgorithm.cpp
   dgConservationLawAdvection.cpp
