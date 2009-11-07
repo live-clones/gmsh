@@ -55,7 +55,7 @@ openglWindow::~openglWindow()
   delete _ctx; 
 }
 
-void openglWindow::drawScreenMessage()
+void openglWindow::_drawScreenMessage()
 {
   if(screenMessage[0].empty() && screenMessage[1].empty()) 
     return;
@@ -81,7 +81,7 @@ void openglWindow::drawScreenMessage()
   }
 }
 
-void openglWindow::drawBorder()
+void openglWindow::_drawBorder()
 {
   // draw thin border if the parent group has several children
   if(parent()->children() > 1){
@@ -109,7 +109,7 @@ void openglWindow::draw()
   // some drawing routines can create data (STL triangulations, etc.):
   // make sure that we don't fire draw() while we are already drawing,
   // e.g. due to an impromptu Fl::check(). The same lock is also used in 
-  // processSelectionBuffer to guarantee that we don't mix GL_RENDER and
+  // _processSelectionBuffer to guarantee that we don't mix GL_RENDER and
   // GL_SELECT rendering passes.
   if(_lock) return;
   _lock = true;
@@ -179,8 +179,8 @@ void openglWindow::draw()
     glVertex3d(_point[0], _point[1], _point[2]);
     glEnd();
     _ctx->draw2d();
-    drawScreenMessage();
-    drawBorder();
+    _drawScreenMessage();
+    _drawBorder();
     CTX::instance()->mesh.draw = 1;
     CTX::instance()->post.draw = 1;
   }
@@ -194,8 +194,8 @@ void openglWindow::draw()
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     _ctx->draw3d();
     _ctx->draw2d();
-    drawScreenMessage();
-    drawBorder();
+    _drawScreenMessage();
+    _drawBorder();
   }
 
   _lock = false;
@@ -430,10 +430,10 @@ int openglWindow::handle(int event)
         std::vector<GFace*> faces;
         std::vector<GRegion*> regions;
         std::vector<MElement*> elements;
-        bool res = processSelectionBuffer(_selection, false, 
-                                          CTX::instance()->mouseHoverMeshes, 
-                                          (int)_curr.win[0], (int)_curr.win[1], 5, 5,
-                                          vertices, edges, faces, regions, elements);
+        bool res = _processSelectionBuffer(_selection, false, 
+                                           CTX::instance()->mouseHoverMeshes, 
+                                           (int)_curr.win[0], (int)_curr.win[1], 5, 5,
+                                           vertices, edges, faces, regions, elements);
         if((_selection == ENT_ALL && res) ||
            (_selection == ENT_POINT && vertices.size()) ||
            (_selection == ENT_LINE && edges.size()) || 
@@ -493,13 +493,13 @@ static MElement *getElement(GEntity *e, int va_type, int index)
   return 0;
 }
 
-bool openglWindow::processSelectionBuffer(int type, bool multipleSelection,
-                                          bool meshSelection, int x, int y, int w, int h,
-                                          std::vector<GVertex*> &vertices,
-                                          std::vector<GEdge*> &edges,
-                                          std::vector<GFace*> &faces,
-                                          std::vector<GRegion*> &regions,
-                                          std::vector<MElement*> &elements)
+bool openglWindow::_processSelectionBuffer(int type, bool multipleSelection,
+                                           bool meshSelection, int x, int y, int w, int h,
+                                           std::vector<GVertex*> &vertices,
+                                           std::vector<GEdge*> &edges,
+                                           std::vector<GFace*> &faces,
+                                           std::vector<GRegion*> &regions,
+                                           std::vector<MElement*> &elements)
 {
   vertices.clear();
   edges.clear();
@@ -730,10 +730,10 @@ char openglWindow::selectEntity(int type,
         selectionMode = false;
         return 'c';
       }
-      else if(processSelectionBuffer(_selection, multi, true, _trySelectionXYWH[0],
-                                     _trySelectionXYWH[1], _trySelectionXYWH[2],
-                                     _trySelectionXYWH[3], vertices, edges, faces, 
-                                     regions, elements)){
+      else if(_processSelectionBuffer(_selection, multi, true, _trySelectionXYWH[0],
+                                      _trySelectionXYWH[1], _trySelectionXYWH[2],
+                                      _trySelectionXYWH[3], vertices, edges, faces, 
+                                      regions, elements)){
         _selection = ENT_NONE;
         selectionMode = false;
         if(add)

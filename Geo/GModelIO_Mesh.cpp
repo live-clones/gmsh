@@ -873,8 +873,8 @@ int GModel::readSTL(const std::string &name, double tolerance)
 
   bool binary = strncmp(buffer, "solid", 5);
 
+  // ASCII STL
   if(!binary){
-    // ASCII STL
     points.resize(1);
     while(!feof(fp)) {
       // "facet normal x y z" or "endsolid"
@@ -907,6 +907,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
     }
   }
 
+  // check if we could parse something
   bool empty = true;
   for(unsigned int i = 0; i < points.size(); i++){
     if(points[i].size()){
@@ -916,10 +917,11 @@ int GModel::readSTL(const std::string &name, double tolerance)
   }
   if(empty) points.clear();
 
-  // try binary read even with wrong header if file is empty
+  // binary STL (we also try to read in binary mode if the header told
+  // us the format was ASCII but we could not read any vertices)
   if(binary || empty){
     if(binary) Msg::Info("Mesh is in binary format");
-    else Msg::Info("Empty ASCII file or bad ASCII header: trying binary read");
+    else Msg::Info("Wrong ASCII header or empty file: trying binary read");
     rewind(fp);
     while(!feof(fp)) {
       char header[80];

@@ -28,16 +28,17 @@ class openglWindow : public Fl_Gl_Window {
   double _point[3];
   int _selection, _trySelection, _trySelectionXYWH[4];
   double _lassoXY[2];
-  void drawScreenMessage();
-  void drawBorder();
-  bool processSelectionBuffer(int type, 
-                              bool multipleSelection, bool meshSelection,
-                              int x, int y, int w, int h,
-                              std::vector<GVertex*> &vertices,
-                              std::vector<GEdge*> &edges,
-                              std::vector<GFace*> &faces,
-                              std::vector<GRegion*> &regions,
-                              std::vector<MElement*> &elements);
+  void _drawScreenMessage();
+  void _drawBorder();
+  bool _processSelectionBuffer(int type, 
+                               bool multipleSelection, bool meshSelection,
+                               int x, int y, int w, int h,
+                               std::vector<GVertex*> &vertices,
+                               std::vector<GEdge*> &edges,
+                               std::vector<GFace*> &faces,
+                               std::vector<GRegion*> &regions,
+                               std::vector<MElement*> &elements);
+ protected:
   void draw();
   int handle(int);
  public:
