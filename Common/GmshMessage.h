@@ -74,8 +74,8 @@ class Msg {
   static void ResetErrorCounter(){ _warningCount = 0; _errorCount = 0; }
   static void PrintErrorCounter(const char *title);
   static double GetValue(const char *text, double defaultval);
-  static bool GetBinaryAnswer(const char *question, const char *yes, 
-                              const char *no,  bool defaultval=true);
+  static int GetAnswer(const char *question, int defaultval, const char *zero, 
+                       const char *one, const char *two=0);
   static void InitClient(std::string sockname);
   static GmshClient *GetClient(){ return _client; }
   static void FinalizeClient();

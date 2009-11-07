@@ -308,12 +308,11 @@ static bool TooManyElements(GModel *m, int dim)
     sumAllLc += (*it)->prescribedMeshSizeAtVertex() * CTX::instance()->mesh.lcFactor;
   sumAllLc /= (double)m->getNumVertices();
   if(!sumAllLc || pow(CTX::instance()->lc / sumAllLc, dim) > 1.e10) 
-    return !Msg::GetBinaryAnswer
+    return !Msg::GetAnswer
       ("Your choice of characteristic lengths will likely produce a very\n"
        "large mesh. Do you really want to continue?\n\n"
        "(To disable this warning in the future, select `Enable expert mode'\n"
-       "in the option dialog.)",
-       "Continue", "Cancel");
+       "in the option dialog.)", 1, "Cancel", "Continue");
   return false;
 }
 
@@ -324,14 +323,13 @@ static bool CancelDelaunayHybrid(GModel *m)
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     n += (*it)->getNumMeshElements();
   if(n)
-    return !Msg::GetBinaryAnswer
+    return !Msg::GetAnswer
       ("You are trying to generate a mixed structured/unstructured grid using\n"
        "the 3D Delaunay algorithm. This algorithm cannot garantee that the\n"
        "final mesh will be conforming. You should probably use the 3D Frontal\n"
        "algorithm instead. Do you really want to continue?\n\n"
        "(To disable this warning in the future, select `Enable expert mode'\n"
-       "in the option dialog.)",
-       "Continue", "Cancel");
+       "in the option dialog.)", 1, "Cancel", "Continue");
   return false;
 }
 

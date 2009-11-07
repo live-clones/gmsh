@@ -509,33 +509,35 @@ double Msg::GetValue(const char *text, double defaultval)
     return atof(str);
 }
 
-bool Msg::GetBinaryAnswer(const char *question, const char *yes, 
-                          const char *no, bool defaultval)
+int Msg::GetAnswer(const char *question, int defaultval, const char *zero, 
+                   const char *one, const char *two)
 {
   // if a callback is given let's assume we don't want to be bothered
   // with interactive stuff
   if(CTX::instance()->noPopup || _callback) return defaultval;
 
 #if defined(HAVE_FLTK)
-  if(FlGui::available()){
-    if(fl_choice(question, no, yes, NULL, ""))
-      return true;
-    else
-      return false;
-  }
+  if(FlGui::available())
+    return fl_choice(question, zero, one, two, "");
 #endif
 
   while(1){
-    printf("%s\n\n[%s] or [%s]? (default=%s) ", question, yes, no, 
-           defaultval ? yes : no);
+    if(two)
+      printf("%s\n\n[%s], [%s] or [%s]? (default=%s) ", question, zero, one, two,
+             (defaultval == 2) ? two : defaultval ? one : zero);
+    else
+      printf("%s\n\n[%s] or [%s]? (default=%s) ", question, zero, one,
+             defaultval ? one : zero);
     char str[256];
     char *ret = fgets(str, sizeof(str), stdin);
     if(!ret || !strlen(str) || !strcmp(str, "\n"))
       return defaultval;
-    else if(!strcmp(str, yes))
-      return true;
-    else if(!strcmp(str, no))
-      return false;
+    else if(!strcmp(str, zero))
+      return 0;
+    else if(!strcmp(str, one))
+      return 1;
+    else if(two && !strcmp(str, two))
+      return 2;
   }
 }
 
