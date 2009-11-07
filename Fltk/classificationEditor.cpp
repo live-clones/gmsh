@@ -241,7 +241,7 @@ static GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
     newEdges.find(std::make_pair<int, int>(i1, i2));
   if(it == newEdges.end()){
     discreteEdge *temporary = new discreteEdge(GModel::current(), GModel::current()->maxEdgeNum() + 1, 0, 0);
-    printf("add new edge gf1=%d gf2=%d \n", t1, t2);
+    //printf("add new edge gf1=%d gf2=%d \n", t1, t2);
     GModel::current()->add(temporary);
     newEdges[std::make_pair<int, int>(i1, i2)] = temporary;
     return temporary;
@@ -420,8 +420,6 @@ static void class_color_cb(Fl_Widget* w, void* data)
       ++it;
     }
   }
-  
-  printf("before drawing \n");
   
   CTX::instance()->mesh.changed = ENT_ALL;
   drawContext::global()->draw();  

@@ -255,7 +255,7 @@ bool GFaceCompound::checkOrientation(int iter) const
   //Only check orientation for stl files (1 patch)
   //  if(_compound.size() > 1.0) return true;
 
-  //return true; 
+  return true; 
 
   std::list<GFace*>::const_iterator it = _compound.begin();
   double a_old = 0, a_new;
@@ -483,6 +483,7 @@ void GFaceCompound::getBoundingEdges()
     //in case the bounding edges are NOT explicitely given
     std::set<GEdge*>::iterator itf = _unique.begin(); 
     for( ; itf != _unique.end(); ++itf){
+      //printf("for Compound face %d add U0 bounding edge %d \n", tag(), (*itf)->tag());
       l_edges.push_back(*itf);
       (*itf)->addFace(this);
     }
@@ -503,6 +504,53 @@ SBoundingBox3d GFaceCompound::bound_U0() const
 
   return res;
 }
+SOrientedBoundingBox GFaceCompound::obb_bound_U0() const
+{
+
+ SOrientedBoundingBox res;
+ std::vector<SPoint3> vertices;
+
+
+std::list<GEdge*>::const_iterator it = _U0.begin();
+for(; it != _U0.end(); it++) {
+
+   if((*it)->getNumMeshVertices() > 0) {
+     int N = (*it)->getNumMeshVertices();
+     for (int i = 0; i < N; i++) {
+       MVertex* mv = (*it)->getMeshVertex(i);
+       vertices.push_back(mv->point());
+     }
+     // Don't forget to add the first and last vertices...
+     SPoint3 pt1((*it)->getBeginVertex()->x(),
+(*it)->getBeginVertex()->y(), (*it)->getBeginVertex()->z());
+     SPoint3 pt2((*it)->getEndVertex()->x(), (*it)->getEndVertex()->y(),
+(*it)->getEndVertex()->z());
+     vertices.push_back(pt1);
+     vertices.push_back(pt2);
+   } 
+   else if((*it)->geomType() != DiscreteCurve && (*it)->geomType() !=
+BoundaryLayerCurve){
+     Range<double> tr = (*it)->parBounds(0);
+     // N can be choosen arbitrarily, but 10 points seems reasonable
+     int N = 10;
+     for (int i = 0; i < N; i++) {
+       double t = tr.low() + (double)i / (double)(N - 1) * (tr.high() -
+tr.low());
+       GPoint p = (*it)->point(t);
+       SPoint3 pt(p.x(), p.y(), p.z());
+       vertices.push_back(pt);
+     }
+   } 
+   else {
+     SPoint3 dummy(0, 0, 0);
+     vertices.push_back(dummy);
+   }
+
+ }
+ res = SOrientedBoundingBox::buildOBB(vertices);
+ return res;
+}
+
 
 void GFaceCompound::getUniqueEdges(std::set<GEdge*> &_unique) 
 {
@@ -1387,7 +1435,7 @@ bool GFaceCompound::checkTopology() const
   if (!correctTopo){
     Msg::Warning("Wrong topology: Genus=%d and N boundary=%d", G, Nb);
     nbSplit = std::max(G+1, 2);
-    Msg::Info("Split surface %d in %d parts with Metis", tag(), nbSplit);
+    Msg::Info("Split surface %d in %d parts with Mesh partitioner", tag(), nbSplit);
   }
   else
     Msg::Info("Correct topology: Genus=%d and N boundary=%d", G, Nb);
@@ -1404,7 +1452,7 @@ bool GFaceCompound::checkAspectRatio() const
   bool paramOK = true;
   if(allNodes.empty()) buildAllNodes();
   
-  double limit =  1.e15 ;
+  double limit =  1.e17 ;
   double areaMax = 0.0;
   int nb = 0;
   std::list<GFace*>::const_iterator it = _compound.begin();
@@ -1435,11 +1483,12 @@ bool GFaceCompound::checkAspectRatio() const
   if (areaMax > limit && nb > 10) {
     Msg::Warning("Geometrical aspect ratio too high (1/area_2D=%g)", areaMax);
     SBoundingBox3d bboxH = bounds();
-    SBoundingBox3d bboxD = bound_U0();
+    SOrientedBoundingBox obboxD = obb_bound_U0();
     double H = norm(SVector3(bboxH.max(), bboxH.min())); 
-    double D = norm(SVector3(bboxD.max(), bboxD.min()));
-    nbSplit = std::max((int)floor(.25*H/D),2); 
-    //printf("H=%g, D=%g  H/4D=%d nbSplit=%d\n", H, D, (int)floor(.25*H/D), nbSplit);
+    double D = obboxD.getMaxSize();
+    int split =  (int)ceil(.3*H/D);
+    nbSplit = std::max(split,2); 
+    printf("H=%g, D=%g split=%d nbSplit=%d \n", H, D, split, nbSplit);
     Msg::Info("Partition geometry in N=%d parts", nbSplit);
     paramOK = false;
   }

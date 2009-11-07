@@ -47,6 +47,7 @@ void GRegionCompound::getBoundingFaces()
   
   std::set<GFace*>::iterator itf = _unique.begin();
   for ( ; itf != _unique.end(); ++itf){
+    printf("Compound Volume %d face %d \n", tag(), (*itf)->tag());
     l_faces.push_back(*itf);
     (*itf)->addRegion(this);
   }

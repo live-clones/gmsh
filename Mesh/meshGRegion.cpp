@@ -488,6 +488,9 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
   std::list<GFace*> faces = gr->faces();
   std::list<GFace*>::iterator it = faces.begin();
 
+  //for (std::list<GFace*>::iterator itb = faces.begin(); itb != faces.end(); itb ++)
+  //  printf("face=%d size =%d\n", (*itb)->tag(), faces.size());
+
   double rrr[6];
   setRand(rrr);
                    

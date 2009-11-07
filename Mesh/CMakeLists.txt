@@ -29,6 +29,7 @@ set(SRC
       highOrderSmoother.cpp 
     meshPartition.cpp 
     meshRefine.cpp
+    multiscalePartition.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Mesh *.h) 

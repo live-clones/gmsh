@@ -166,6 +166,8 @@ class GEdge : public GEntity {
   void setCompound(GEdgeCompound *gec) { compound = gec; }
   GEdgeCompound *getCompound() const { return compound; }
 
+
+
   struct {
     char Method;
     double coeffTransfinite;
@@ -178,6 +180,7 @@ class GEdge : public GEntity {
   } meshAttributes ;
 
   std::vector<MLine*> lines;
+
 };
 
 #endif

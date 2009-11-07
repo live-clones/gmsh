@@ -10,8 +10,8 @@
 
 discreteRegion::discreteRegion(GModel *model, int num) : GRegion(model, num)
 {
-  ::Volume *v = Create_Volume(num, MSH_VOLUME_DISCRETE);
-  Tree_Add(model->getGEOInternals()->Volumes, &v);
+  //::Volume *v = Create_Volume(num, MSH_VOLUME_DISCRETE);
+  //Tree_Add(model->getGEOInternals()->Volumes, &v);
 }
 
 void discreteRegion::setBoundFaces()
@@ -22,4 +22,5 @@ void discreteRegion::setBoundFaces()
     l_faces.push_back(*face);
     (*face)->addRegion(this);
   }
+
 }

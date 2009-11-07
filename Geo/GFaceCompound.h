@@ -86,6 +86,7 @@ class GFaceCompound : public GFace {
   bool trivial() const ;
   linearSystem <double> *_lsys;
   SBoundingBox3d bound_U0() const;
+  SOrientedBoundingBox obb_bound_U0() const;
  public:
   GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
                 std::list<GEdge*> &U0, std::list<GEdge*> &U1,

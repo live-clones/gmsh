@@ -1048,7 +1048,60 @@ void GModel::createTopologyFromMesh()
     if((*it)->geomType() == GEntity::DiscreteSurface)
       discFaces.push_back((discreteFace*) *it);
 
-  createTopologyFromFaces(discFaces);
+//EMI TODO
+//check for closed faces
+//  for (std::vector<discreteFace*>::iterator itf = discFaces.begin(); itf != discFaces.end(); itf++){
+
+//    std::list<MTriangles*> tris;
+//    for (unsigned int i = 0; i < (*itf)->trinagles.size(); i++){
+//      tris.push_back((*itf)->triangles[i]);
+//    }
+
+//    while (!tris.empty()) {
+//      for (int i=0; i<3; i++) {
+//        for (std::list<MTriangle*>::iterator it = tris.begin() ; it != segments.end(); ++it){ 
+// 	 MEdge *e0 = (*it)->getEdge(0);
+// 	 MEdge *e1 = (*it)->getEdge(1);
+// 	 MEdge *e2 = (*it)->getEdge(2);
+// 	 //printf("mline %d %d \n", v1->getNum(), v2->getNum());
+// 	 std::list<MTriangle*>::iterator itp;
+// 	 if ( v1 == vE  ){
+// 	   //printf("->push back this mline \n");
+// 	   myLines.push_back(*it);
+// 	   itp = it;
+// 	   it++;
+// 	   segments.erase(itp);
+// 	   vE = v2;
+// 	   i = -1;
+// 	 }
+// 	 else if ( v2 == vE){
+// 	   //printf("->push back this mline \n");
+// 	   myLines.push_back(*it);
+// 	   itp = it;
+// 	   it++;
+// 	   segments.erase(itp);
+// 	   vE = v1;
+// 	   i=-1;
+// 	 }
+// 	 if (it == segments.end()) break;
+//        }
+//        if (vB == vE) break;
+//        if (segments.empty()) break;
+//        //printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
+//        MVertex *temp = vB;
+//        vB = vE;
+//        vE = temp;
+//      }
+//      GFace *newGe = new discreteFace(GModel::current(), GModel::current()->maxFaceNum() + 1, 0, 0);
+//      newGe->lines.insert(newGe->lines.end(), myLines.begin(), myLines.end());
+//      GModel::current()->add(newGe);
+//    }
+//  }
+
+//  }
+
+ //create Topo Fro Faces
+ createTopologyFromFaces(discFaces);
 
 }
 
@@ -1116,7 +1169,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
 
 	std::vector<int> tagEdges;
 	tagEdges.push_back((*itE)->tag());
-	//printf("push back edge %d\n", (*itE)->tag());
+	//printf("Push back edge %d\n", (*itE)->tag());
 	for (unsigned int i = 0; i < (*itE)->getNumMeshElements(); i++){
 	  MEdge me = (*itE)->getMeshElement(i)->getEdge(0);
 	  std::vector<MEdge>::iterator itME = std::find(myEdges.begin(), myEdges.end(), me);
@@ -1177,7 +1230,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
       
       int numE = maxEdgeNum()+1;
       discreteEdge *e = new discreteEdge(this, numE, 0, 0);
-      //printf("*** Created discreteEdge %d \n", numE);
+      printf("*** Created discreteEdge %d \n", numE);
       add(e);
       discEdges.push_back(e);
       
@@ -1193,8 +1246,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
 	v1->setEntity(e);
       }
       e->mesh_vertices.insert(e->mesh_vertices.begin(), allV.begin(),allV.end());
-      
-     
+ 
       for (std::vector<int>::iterator itFace = tagFaces.begin(); itFace != tagFaces.end(); itFace++) {
 
 	//delete new mesh vertices of edge from adjacent faces

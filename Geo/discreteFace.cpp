@@ -20,12 +20,11 @@ discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
 
 void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge> &map_edges)
 {
+
   // find the boundary edges
   std::list<MEdge> bound_edges;
   for (unsigned int iFace = 0; iFace  < getNumMeshElements() ; iFace++) {
-    std::vector<MVertex*> fv;
     MElement *e = getMeshElement(iFace);
-    e->getFaceVertices(0, fv);
     for (int iEdge = 0; iEdge < e->getNumEdges(); iEdge++) {
       MEdge tmp_edge =  e->getEdge(iEdge);
       if (std::find(bound_edges.begin(), bound_edges.end(), tmp_edge) == 
@@ -35,7 +34,7 @@ void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge> &map_e
         bound_edges.erase(std::find(bound_edges.begin(), bound_edges.end(), tmp_edge));
     }
   }
- 
+
   // for the boundary edges, associate the tag of the current discrete face
   for (std::list<MEdge>::iterator itv = bound_edges.begin(); 
        itv != bound_edges.end(); ++itv){

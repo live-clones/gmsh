@@ -27,6 +27,9 @@
 #include "discreteEdge.h"
 #include "discreteFace.h"
 #include "GFaceCompound.h"
+#include "multiscalePartition.h"
+#include "Context.h"
+
 
 //--Prototype for Chaco interface
 
@@ -99,6 +102,70 @@ void MakeGraphDIM(const EntIter begin, const EntIter end,
  *   (elements with DIM-1) on the boundary and write a partition index to them.
  *
  ******************************************************************************/
+
+bool PartitionZeroGenus(std::list<GFace*> &cFaces, int &nbParts){
+
+   meshPartitionOptions options;
+   options = CTX::instance()->partitionOptions;
+   options.num_partitions = nbParts;
+   options.partitioner = 1;//1 CHACO //2 METIS
+   if ( options.partitioner == 1){
+     options.global_method = 2;// 1 Multilevel-KL 2 Spectral
+     options.mesh_dims[0] = nbParts;
+   }
+
+   std::vector<MElement *> elements;
+   for (std::list<GFace*>::iterator it = cFaces.begin(); it != cFaces.end(); it++)
+     for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++)
+       elements.push_back((*it)->getMeshElement(j));
+   
+   multiscalePartition *msp = new multiscalePartition(elements, options);
+   nbParts = msp->getNumberOfParts();
+
+}
+
+// bool PartitionZeroGenus(std::list<GFace*> &cFaces, int &nbParts){
+//   meshPartitionOptions options;
+//   options = CTX::instance()->partitionOptions;
+//   options.num_partitions = nbParts;
+//   options.partitioner = 1;//1 CHACO //2 METIS
+//   if ( options.partitioner == 1){
+//     options.global_method = 2;// 1 Multilevel-KL 2 Spectral
+//     options.mesh_dims[0] = nbParts;
+//   }
+//   PartitionMeshFace(cFaces, options);
+//   return true;  
+// }
+
+int PartitionMeshElements( std::vector<MElement*> &elements, meshPartitionOptions &options){
+
+ GModel *tmp_model = new GModel();
+ GFace *gf = new discreteFace(tmp_model, 1);
+ std::set<MVertex *> setv;
+ for (int i=0;i<elements.size();++i)
+   for (int j=0;j<elements[i]->getNumVertices();j++)
+     setv.insert(elements[i]->getVertex(j));
+ 
+ for (std::set<MVertex* >::iterator it = setv.begin(); it != setv.end(); it++)
+   gf->mesh_vertices.push_back(*it);
+
+ for (std::vector<MElement* >::iterator it = elements.begin(); it != elements.end(); it++){
+   if ((*it)->getType() == TYPE_TRI) 
+     gf->triangles.push_back((MTriangle*)(*it));
+   else if  ((*it)->getType() == TYPE_QUA) 
+     gf->quadrangles.push_back((MQuadrangle*)(*it));
+ }
+ tmp_model->add(gf);
+
+ PartitionMesh(tmp_model,options); 
+
+ tmp_model->remove(gf);
+ delete tmp_model;
+
+ return 1;
+
+}
+
 int PartitionMeshFace( std::list<GFace*> &cFaces, meshPartitionOptions &options)
 {
   GModel *tmp_model = new GModel();

@@ -1337,29 +1337,21 @@ void partitionAndRemesh(GFaceCompound *gf)
 
   //Partition the mesh and createTopology for new faces
   //-----------------------------------------------------
-  int NF = gf->nbSplit;
-  meshPartitionOptions options;
-  options = CTX::instance()->partitionOptions;
-  options.num_partitions = NF;
-  options.partitioner = 1;//1 CHACO //2 METIS
-  if ( options.partitioner == 1){
-    options.global_method = 2;// 1 Multilevel-KL 2 Spectral
-    options.mesh_dims[0] = NF;
-  }
-
-  std::list<GFace*> cFaces =  gf->getCompounds();
-  PartitionMeshFace(cFaces, options);
   
+  int NF = gf->nbSplit;
+  std::list<GFace*> cFaces = gf->getCompounds();
+  PartitionZeroGenus(cFaces, NF);
+
   int numv = gf->model()->maxVertexNum() + 1;
   int nume = gf->model()->maxEdgeNum() + 1;
   int numf = gf->model()->maxFaceNum() + 1;
   std::vector<discreteFace*> pFaces;
-  createPartitionFaces(gf->model(), gf, NF, pFaces);
-
+  createPartitionFaces(gf->model(), gf, NF, pFaces); //WARNING CREATE NB and not NF faces
+  
   gf->model()->createTopologyFromFaces(pFaces);
-
-  //CreateOutputFile("toto.msh", CTX::instance()->mesh.format);
-  //Msg::Exit(1);
+   
+   CreateOutputFile("toto.msh", CTX::instance()->mesh.format);
+   //Msg::Exit(1);
 
   //Remesh new faces (Compound Lines and Compound Surfaces)
   //-----------------------------------------------------
@@ -1448,6 +1440,23 @@ void partitionAndRemesh(GFaceCompound *gf)
     MVertex *vE = (*it)->getEndVertex()->mesh_vertices[0];
     std::vector<MVertex*>::iterator itvE = std::find(gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vE);
     if (itvE != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvE);
+
+    //if l_edge is a compond
+    if((*it)->getCompound()){
+      GEdgeCompound *gec = (*it)->getCompound();
+      std::vector<MVertex*> edge_vertices = gec->mesh_vertices;
+      std::vector<MVertex*>::const_iterator itv = edge_vertices.begin();
+      for(; itv != edge_vertices.end(); itv++){
+	std::vector<MVertex*>::iterator itve = std::find(gf->mesh_vertices.begin(), gf->mesh_vertices.end(), *itv);
+	if (itve != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itve);
+      }
+      MVertex *vB = (*it)->getBeginVertex()->mesh_vertices[0];
+      std::vector<MVertex*>::iterator itvB = std::find(gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vB);
+      if (itvB != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvB);
+      MVertex *vE = (*it)->getEndVertex()->mesh_vertices[0];
+      std::vector<MVertex*>::iterator itvE = std::find(gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vE);
+      if (itvE != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvE);
+    }
   }
 
   Msg::Info("*** Mesh of surface %d done by assembly remeshed faces", gf->tag());

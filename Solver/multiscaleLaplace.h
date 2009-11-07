@@ -26,7 +26,6 @@ public:
   multiscaleLaplace (std::vector<MElement *> &elements,
 		     std::vector<MVertex*> &boundaryNodes,
 		     std::vector<double> &linearAbscissa) ;
-  
-  
+    
 };
 #endif
