@@ -334,10 +334,10 @@ integrate them into your own proprietary code).
 @cindex Introduction
 @cindex Overview
 
-Gmsh is an automatic three-dimensional finite element mesh generator
-with built-in pre- and post-processing facilities. Its design goal is to
-provide a simple meshing tool for academic problems with parametric
-input and advanced visualization capabilities.
+Gmsh is a three-dimensional finite element grid generator with a
+build-in CAD engine and post-processor. Its design goal is to provide
+a fast, light and user-friendly meshing tool with parametric input and
+advanced visualization capabilities.
 
 Gmsh is built around four modules: geometry, mesh, solver and
 post-processing. All geometrical, mesh, solver and post-processing
@@ -437,8 +437,8 @@ External solvers can be interfaced with Gmsh through Unix or TCP/IP
 sockets, which permits to launch external computations and to collect
 and process the results directly from within Gmsh's post-processing
 module. The default solver interfaced with Gmsh is GetDP
-(@uref{http://www.geuz.org/getdp/}). Examples on how to interface
-solvers written in C, C++, Perl and Python are available in the source
+(@uref{http://geuz.org/getdp/}). Examples on how to interface solvers
+written in C, C++, Perl and Python are available in the source
 distribution (in the @file{utils/solvers/} directory).
 
 @c -------------------------------------------------------------------------
@@ -468,10 +468,7 @@ post-processing views through dynamically loadable plugins.
 @node What Gmsh is pretty good at, and what Gmsh is not so good at, Post-processing, Overview
 @section What Gmsh is pretty good at @dots{}
 
-Gmsh is a (relatively) small program, and was principally developed ``in
-academia, to solve academic problems''@dots{} Nevertheless, over the
-years, many people outside universities have found Gmsh useful in their
-day-to-day jobs. Here is a tentative list of what Gmsh does best:
+Here is a tentative list of what Gmsh does best:
 
 @itemize @bullet
 @item
@@ -484,12 +481,10 @@ parametrize these geometries. Gmsh's scripting language enables all
 commands and command arguments to depend on previous calculations (see
 @ref{Expressions}, and @ref{Geometry commands});
 @item
-import complex models in industry-standard formats like STEP or IGES
-(when Gmsh is built with OpenCascade support);
-@item
 generate 1D, 2D and 3D simplicial (i.e., using line segments, triangles
-and tetrahedra) finite element meshes (see @ref{Mesh module}, and
-@ref{Tutorial});
+and tetrahedra) finite element meshes for CAD models in their native
+format (without translations) when linked with the appropriate CAD
+kernel (see @ref{Mesh module});
 @item
 specify target element sizes accurately. Gmsh provides several
 mechanisms to control the size of the elements in the final mesh:
@@ -502,12 +497,12 @@ and @ref{Mesh commands});
 interact with external solvers. Gmsh provides C, C++, Perl and Python
 interfaces, and others can be easily added (@pxref{Solver module});
 @item
-visualize computational results in a great variety of ways. Gmsh can display
-scalar, vector and tensor datasets, and can perform various operations on
-the resulting post-processing views (@pxref{Post-processing module});
-@item
-export plots in many different formats: vector PostScript or encapsulated
-PostScript, LaTeX, PNG, JPEG, @dots{} (@pxref{General options list});
+visualize and export computational results in a great variety of
+ways. Gmsh can display scalar, vector and tensor datasets, perform
+various operations on the resulting post-processing views
+(@pxref{Post-processing module}), and export plots in many different
+formats: vector PostScript or encapsulated PostScript, LaTeX, PNG, JPEG,
+@dots{} (@pxref{General options list});
 @item
 generate complex animations (see @ref{General tools}, and @ref{t8.geo});
 @item
@@ -534,32 +529,35 @@ small but powerful GUI.
 @node and what Gmsh is not so good at, Bug reports, What Gmsh is pretty good at, Overview
 @section @dots{} and what Gmsh is not so good at
 
-Due to its historical background and limited developer manpower, Gmsh has
-also some (a lot of?) weaknesses:
+As of version 2.4, here are some known weaknesses of Gmsh:
 
 @itemize @bullet
 @item
-the BRep approach for describing geometries can become inconvenient for
-complex models;
-@item
-there is no support for Nurbs and only very limited support for trimmed
-surfaces in Gmsh's scripting language (however you can import STEP or
-IGES models with such features when Gmsh is built with OpenCascade
-support);
+the BRep approach for describing geometries can become
+inconvenient/inefficient for large models. For complex models, or if you
+want to use a solid-modeler approach, you should link Gmsh with an
+external CAD kernel and import native files directly. (The binary
+versions available on @uref{http://geuz.org/gmsh/} are linked with the
+free CAD kernel OpenCASCADE, which enables native BREP import as well as
+STEP and IGES import.)
 @item
 Gmsh is not a multi-bloc generator: all meshes produced by Gmsh are
 conforming in the sense of finite element meshes;
 @item
-Gmsh was designed to solve academic ``test cases'', not industrial-size
-problems. You may find that Gmsh is too slow for large problems (with
-thousands of geometric primitives, or millions of mesh/post-processing
-elements).
+Gmsh's user interface is only exposing a limited number of the available
+features, and many aspects of the interface could be enhanced
+(especially manipulators).
+@item
+Gmsh's scripting language is fairly limited, providing only very crude
+loop controls and user-defined functions, with no local variables.
+@item
+there is no global ``undo'' capability. You will often need to edit a
+text file to correct mistakes.
 @end itemize
 
 If you have the skills and some free time, feel free to join the
-project! We gladly accept any code contributions (@pxref{Information for
-developers}) to remedy the aforementioned (and all other)
-shortcomings...
+project: we gladly accept any code contributions (@pxref{Information for
+developers}) to remedy the aforementioned (and all other) shortcomings!
 
 @c -------------------------------------------------------------------------
 @c Bug reports
@@ -613,7 +611,7 @@ next chapter (@pxref{Running Gmsh on your system}) to learn how to
 launch Gmsh on your system, then go experiment with the GUI and the
 tutorial files (@pxref{Tutorial}) provided in the distribution.
 Screencasts that show how to use the GUI are available here:
-@uref{http://www.geuz.org/gmsh/screencasts/}.
+@uref{http://geuz.org/gmsh/screencasts/}.
 
 The aim of the reference manual is to explain everything you need to use
 Gmsh at the second level, i.e., using the built-in scripting language.
@@ -1536,7 +1534,7 @@ evaluation:
 A built-in function is composed of an identifier followed by a pair of
 parentheses containing an @var{expression-list} (the list of its
 arguments)@footnote{For compatibility with GetDP
-(@uref{http://www.geuz.org/getdp/}), parentheses can be replaced by brackets
+(@uref{http://geuz.org/getdp/}), parentheses can be replaced by brackets
 @code{[]}.}. Here is the list of the built-in functions currently
 implemented:
 
@@ -4362,7 +4360,7 @@ the @file{tutorial} directory of the Gmsh distribution.
 
 To learn how to run Gmsh on your computer, see @ref{Running Gmsh on your
 system}. Screencasts that show how to use the GUI are available on
-@uref{http://www.geuz.org/gmsh/screencasts/}.
+@uref{http://geuz.org/gmsh/screencasts/}.
 
 @menu
 * t1.geo::                      
@@ -4569,7 +4567,7 @@ questions}, for more information.
 @section Getting the source
 
 Stable releases and nightly source snapshots are available from
-@uref{http://www.geuz.org/gmsh/src/}.
+@uref{http://geuz.org/gmsh/src/}.
 
 If you have a subversion account on geuz.org you can also access the SVN
 repository directly:
