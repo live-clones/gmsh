@@ -4849,7 +4849,7 @@ library.
 @item What are the terms and conditions of use?
 
 Gmsh is distributed under the terms of the GNU General Public License,
-with an exception to allow for easier linking with external mesh
+with an exception to allow for easier linking with external
 libraries. See @ref{License} for more information.
 
 @item What does 'Gmsh' mean?
