@@ -2,8 +2,8 @@ This is Gmsh, an automatic three-dimensional finite element mesh
 generator with built-in pre- and post-processing facilities.
 
 Gmsh is distributed under the terms of the GNU General Public License,
-with an exception to allow for easier linking with external mesh
-generators. See doc/LICENSE.txt and doc/CREDITS.txt for more
+with an exception to allow for easier linking with external
+libraries. See doc/LICENSE.txt and doc/CREDITS.txt for more
 information.
 
 See the doc/ and tutorial/ directories for documentation. The
