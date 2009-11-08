@@ -4840,9 +4840,11 @@ optional: create the associated widget in @file{Fltk/optionWindow.cpp};
 @item What is Gmsh?
 
 Gmsh is an automatic three-dimensional finite element mesh generator
-with built-in pre- and post-processing facilities. Its design goal is
-to provide a simple meshing tool for academic problems with parametric
-input and advanced visualization capabilities.
+with built-in pre- and post-processing facilities. With Gmsh you can
+create or import 1D, 2D and 3D geometrical models, mesh them, launch
+external finite element solvers and visualize solutions. Gmsh can be
+used either as a stand-alone program (graphical or not) or as a C++
+library.
 
 @item What are the terms and conditions of use?
 
