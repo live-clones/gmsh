@@ -25,8 +25,7 @@ void add_infile(std::string text, std::string fileName, bool deleted_something)
   // make sure we don't add stuff in a non-geo file
   if(!CTX::instance()->expertMode) {
     std::vector<std::string> split = SplitFileName(fileName);
-    std::string ext = split[2];
-    if(ext.size() && ext != ".geo" && ext != ".GEO"){
+    if(split[2].size() && split[2] != ".geo" && split[2] != ".GEO"){
       std::ostringstream sstream;
       sstream << 
         "A scripting command is going to be appended to a non-`.geo' file.\n\n"
@@ -53,7 +52,7 @@ void add_infile(std::string text, std::string fileName, bool deleted_something)
           Msg::Error("Unable to open file '%s'", newFileName.c_str());
           return;
         }
-        fprintf(fp, "Merge \"%s\";\n%s\n", fileName.c_str(), text.c_str());
+        fprintf(fp, "Merge \"%s\";\n%s\n", (split[1] + split[2]).c_str(), text.c_str());
         fclose(fp);
         OpenProject(newFileName);
         return;
