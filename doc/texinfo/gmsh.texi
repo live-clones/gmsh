@@ -4569,8 +4569,7 @@ questions}, for more information.
 Stable releases and nightly source snapshots are available from
 @uref{http://geuz.org/gmsh/src/}.
 
-If you have a subversion account on geuz.org you can also access the SVN
-repository directly:
+You can also access the subversion repository directly:
 
 @enumerate
 @item
@@ -4581,7 +4580,8 @@ svn co https://geuz.org/svn/gmsh/trunk gmsh
 @end example
 
 You will be asked to accept the security certificate and to provide your
-username and password.
+username and password. (Use gmsh/gmsh for read-only access.)
+
 @item
 To update your local version to the latest and greatest, go in the gmsh
 directory and type:
@@ -4591,8 +4591,8 @@ svn update
 @end example
 
 @item
-To commit your changes to the central repository, go in the gmsh
-directory and type:
+If you have write access, to commit your changes to the central
+repository, go in the gmsh directory and type:
 
 @example
 svn commit
