@@ -28,12 +28,12 @@ void add_infile(std::string text, std::string fileName, bool deleted_something)
     if(split[2].size() && split[2] != ".geo" && split[2] != ".GEO"){
       std::ostringstream sstream;
       sstream << 
-        "A scripting command is going to be appended to a non-`.geo' file.\n\n"
-        "Are you sure you want to proceed?\n\n"
-        "(You probably want to create a new `.geo' file containing the command\n\n"
-        "Merge \"" << fileName << ";\n\n"
-        "and use that file instead. To disable this warning in the future, select\n"
-        "`Enable expert mode' in the option dialog.)";
+        "A scripting command is going to be appended to a non-`.geo' file. Are\n"
+        "you sure you want to proceed?\n\n"
+        "You probably want to create a new `.geo' file containing the command\n"
+        "`Merge \"" << split[1] + split[2] << "\";' and use that file instead.\n\n"
+        "(To disable this warning in the future, select `Enable expert mode'\n"
+        "in the option dialog.)";
       int ret = Msg::GetAnswer(sstream.str().c_str(), 2, "Cancel", "Proceed as is", 
                                "Create new `.geo' file");
       if(ret == 2){
