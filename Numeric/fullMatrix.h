@@ -91,6 +91,10 @@ class fullMatrix
     _own_data = true;
     scale(0.);
   }
+  fullMatrix(int r, int c, double *data) : _r(r), _c(c), _data(data),_own_data(false)
+  {
+    scale(0.);
+  }
   fullMatrix(const fullMatrix<scalar> &other) : _r(other._r), _c(other._c)
   {
     _data = new scalar[_r * _c];
@@ -106,12 +110,13 @@ class fullMatrix
     if(this != &other){
       _r = other._r; 
       _c = other._c;
-      if (_data) delete[] _data;
+      if (_data && _own_data) delete[] _data;
       if ((_r==0)||(_c==0))
         _data=0;
       else
       {
         _data = new scalar[_r * _c];
+        _own_data=true;
         for(int i = 0; i < _r * _c; ++i) _data[i] = other._data[i];
       }
     }

@@ -48,16 +48,24 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e, int polyOr
     )
 {
   // this is the biggest piece of data ... the mappings
-  _mapping = new fullMatrix<double> (_elements.size(), 10 * _integration->size1());
+  int nbNodes = _fs.coefficients.size1();
+  _redistributionFluxes[0] = new fullMatrix<double> (nbNodes,_integration->size1());
+  _redistributionFluxes[1] = new fullMatrix<double> (nbNodes,_integration->size1());
+  _redistributionFluxes[2] = new fullMatrix<double> (nbNodes,_integration->size1());
+  _redistributionSource = new fullMatrix<double> (nbNodes,_integration->size1());
+  _collocation = new fullMatrix<double> (_integration->size1(),nbNodes);
+  _mapping = new fullMatrix<double> (e.size(), 10 * _integration->size1());
+  _imass = new fullMatrix<double> (nbNodes,nbNodes*e.size()); 
+  double g[256][3],f[256];
   for (int i=0;i<_elements.size();i++){
     MElement *e = _elements[i];
+    fullMatrix<double> imass(*_imass,nbNodes*i,nbNodes);
     for (int j=0;j< _integration->size1() ; j++ ){
+      _fs.f((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), f);
       double jac[3][3],ijac[3][3],detjac;
       (*_mapping)(i,10*j + 9) =  
-	e->getJacobian ((*_integration)(j,0),
-			(*_integration)(j,1),
-			(*_integration)(j,2),
-			jac);
+        e->getJacobian ((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), jac);
+      const double weight = (*_integration)(j,3);
       detjac=inv3x3(jac,ijac);
       (*_mapping)(i,10*j + 0) = ijac[0][0]; 
       (*_mapping)(i,10*j + 1) = ijac[0][1]; 
@@ -69,19 +77,17 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e, int polyOr
       (*_mapping)(i,10*j + 7) = ijac[2][1]; 
       (*_mapping)(i,10*j + 8) = ijac[2][2]; 
       (*_mapping)(i,10*j + 9) = detjac; 
+      for (int k=0;k<_fs.coefficients.size1();k++){ 
+        for (int l=0;l<_fs.coefficients.size1();l++) { 
+          imass(k,l) += f[k]*f[l]*weight*detjac;
+        }
+      }
     }
+    imass.invertInPlace();
   }
   // redistribution matrix
   // quadrature weight x parametric gradients in quadrature points
 
-  _redistributionFluxes[0] = new fullMatrix<double> (_fs.coefficients.size1(),_integration->size1());
-  _redistributionFluxes[1] = new fullMatrix<double> (_fs.coefficients.size1(),_integration->size1());
-  _redistributionFluxes[2] = new fullMatrix<double> (_fs.coefficients.size1(),_integration->size1());
-  _redistributionSource = new fullMatrix<double> (_fs.coefficients.size1(),_integration->size1());
-  _collocation = new fullMatrix<double> (_integration->size1(),_fs.coefficients.size1());
-  _imass = new fullMatrix<double> (_fs.coefficients.size1(),_fs.coefficients.size1()); 
-
-  double g[256][3],f[256];
   for (int j=0;j<_integration->size1();j++) {
     _fs.df((*_integration)(j,0),
 	   (*_integration)(j,1),
@@ -96,12 +102,8 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e, int polyOr
       (*_redistributionFluxes[2])(k,j) = g[k][2] * weight;
       (*_redistributionSource)(k,j) = f[k] * weight;
       (*_collocation)(j,k) = f[k];
-      for (int l=0;l<_fs.coefficients.size1();l++) { 
-        (*_imass)(k,l) += f[k]*f[l]*weight;
-      }
     }
   }
-  _imass->invertInPlace();
 }
 
 dgGroupOfElements::~dgGroupOfElements(){
@@ -123,17 +125,17 @@ void dgGroupOfFaces::createFaceElements (const std::vector<MFace> &topo_faces){
   for (int i=0;i<topo_faces.size();i++){
     // compute closures for the interpolation
     int ithFace, sign, rot;
-    _left[i]->getFaceInfo (topo_faces[i], ithFace, sign, rot);
+    getElementLeft(i)->getFaceInfo (topo_faces[i], ithFace, sign, rot);
     _closuresLeft.push_back(&(_fsLeft->getFaceClosure(ithFace, sign, rot)));
-    _right[i]->getFaceInfo (topo_faces[i], ithFace, sign, rot);
+    getElementRight(i)->getFaceInfo (topo_faces[i], ithFace, sign, rot);
     _closuresRight.push_back(&(_fsRight->getFaceClosure(ithFace, sign, rot)));        
     // compute the face element that correspond to the geometrical closure
     // get the vertices of the face
     std::vector<MVertex*> _vertices;
-    const std::vector<int> & geomClosure = _right[i]->getFunctionSpace()->getFaceClosure(ithFace, sign, rot);
+    const std::vector<int> & geomClosure = getElementRight(i)->getFunctionSpace()->getFaceClosure(ithFace, sign, rot);
     for (int j=0; j<geomClosure.size() ; j++){
       int iNod = geomClosure[j];
-      MVertex *v = _left[i]->getVertex(iNod);
+      MVertex *v = getElementLeft(i)->getVertex(iNod);
       _vertices.push_back(v);
     }
     // triangular face
@@ -186,16 +188,16 @@ void dgGroupOfFaces::createEdgeElements (const std::vector<MEdge> &topo_edges){
   // compute all closures
   for (int i=0;i<topo_edges.size();i++){
     int ithEdge, sign;
-    _left[i]->getEdgeInfo (topo_edges[i], ithEdge, sign);
+    getElementLeft(i)->getEdgeInfo (topo_edges[i], ithEdge, sign);
     _closuresLeft.push_back(&(_fsLeft->getEdgeClosure(ithEdge, sign)));
-    _right[i]->getEdgeInfo (topo_edges[i], ithEdge, sign);
+    getElementRight(i)->getEdgeInfo (topo_edges[i], ithEdge, sign);
     _closuresRight.push_back(&(_fsRight->getEdgeClosure(ithEdge, sign)));    
     // get the vertices of the edge
-    const std::vector<int> & geomClosure = _right[i]->getFunctionSpace()->getEdgeClosure(ithEdge, sign);
+    const std::vector<int> & geomClosure = getElementRight(i)->getFunctionSpace()->getEdgeClosure(ithEdge, sign);
     std::vector<MVertex*> _vertices;
     for (int j=0; j<geomClosure.size() ; j++){
       int iNod = geomClosure[j];
-      MVertex *v = _left[i]->getVertex(iNod);
+      MVertex *v = getElementLeft(i)->getVertex(iNod);
       _vertices.push_back(v);
     }
     switch(_vertices.size()){
@@ -222,20 +224,22 @@ void dgGroupOfFaces::init(int pOrder) {
 }
 
 dgGroupOfFaces::dgGroupOfFaces (const std::vector<MFace> &topo_faces, 		  
-				const std::vector<MElement*> &l, 
-				const std::vector<MElement*> &r,
-				int pOrder) : _left(l), _right(r),
-        _fsLeft(_left[0]->getFunctionSpace (pOrder)), _fsRight (_right[0]->getFunctionSpace (pOrder))
+        const std::vector<dgGroupOfElements*> group_list,
+				const std::vector<std::pair<int,int> > &l, 
+				const std::vector<std::pair<int,int> > &r,
+				int pOrder) : _group_list(group_list),_left(l), _right(r),
+        _fsLeft(getElementLeft(0)->getFunctionSpace (pOrder)), _fsRight (getElementRight(0)->getFunctionSpace (pOrder))
 {
   createFaceElements (topo_faces);
   init(pOrder);
 }
 
 dgGroupOfFaces::dgGroupOfFaces (const std::vector<MEdge> &topo_edges, 		  
-				const std::vector<MElement*> &l, 
-				const std::vector<MElement*> &r,
-				int pOrder) : _left(l), _right(r),
-        _fsLeft(_left[0]->getFunctionSpace (pOrder)), _fsRight (_right[0]->getFunctionSpace (pOrder))
+        const std::vector<dgGroupOfElements*> group_list,
+				const std::vector<std::pair<int,int> > &l, 
+				const std::vector<std::pair<int,int> > &r,
+				int pOrder) : _group_list(group_list),_left(l), _right(r),
+        _fsLeft(getElementLeft(0)->getFunctionSpace (pOrder)), _fsRight (getElementRight(0)->getFunctionSpace (pOrder))
 {
   createEdgeElements (topo_edges);
   init(pOrder);

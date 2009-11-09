@@ -76,12 +76,11 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
     if (claw.sourceTerm()){
       fullMatrix<double> source(Source, iElement*claw.nbFields(),claw.nbFields());
       (*claw.sourceTerm())(DGE,&source); 
-      //we assume constant mass matrix and constant mapping for now
-      /*for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
+      for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
         const double detJ = group.getDetJ (iElement, iPt);
         for (int k=0;k<nbFields;k++)
           source(iPt,k) *= detJ;
-      }*/
+      }
     }
     delete gradSolutionQPe;
   }
@@ -93,4 +92,37 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
   if(claw.sourceTerm()){
     residual.gemm(group.getSourceRedistributionMatrix(),Source);
   }
+}
+
+void dgAlgorithm::residualInterface ( //dofManager &dof, // the DOF manager (maybe useless here)
+				   const dgConservationLaw &claw,   // the conservation law
+				   const dgGroupOfFaces &group, 
+           const fullMatrix<double> &solution, // solution !! at faces nodes
+           fullMatrix<double> &residual // residual !! at faces nodes
+           )
+{ 
+  int nbFields = claw.nbFields();
+  // ----- 1 ----  get the solution at quadrature points
+  fullMatrix<double> solutionQP (group.getNbIntegrationPoints(),group.getNbElements() * nbFields);
+  group.getCollocationMatrix().mult(solution, solutionQP); 
+  // ----- 2 ----  compute normal fluxes  at integration points
+  fullMatrix<double> NormalFluxQP ( group.getNbIntegrationPoints(), group.getNbElements()*nbFields*2);
+  for (int iFace=0 ; iFace<group.getNbElements() ;++iFace) {
+    // ----- 2.3.1 --- build a small object that contains elementary solution, jacobians, gmsh element
+    fullMatrix<double> solutionQPLeft (solutionQP, iFace*2*nbFields, nbFields );
+    fullMatrix<double> solutionQPRight (solutionQP, (iFace*2+1)*nbFields, nbFields );
+    fullMatrix<double> normalFluxQP (NormalFluxQP, iFace*2*nbFields, nbFields*2);
+    dgFace DGF( group.getFace(iFace), group.getElementLeft(iFace), group.getElementRight(iFace),
+                solutionQPLeft, solutionQPRight, group.getIntegrationPointsMatrix());
+    // ----- 2.3.2 --- compute fluxes
+    (*claw.riemannSolver())(DGF,&normalFluxQP);
+    for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
+      const double detJ = group.getDetJ (iFace, iPt);
+      for (int k=0;k<nbFields*2;k++) {
+        normalFluxQP(iPt,k) *= detJ;
+      }
+    }
+  }
+  // ----- 3 ---- do the redistribution at face nodes using BLAS3
+  residual.gemm(group.getRedistributionMatrix(),NormalFluxQP);
 }

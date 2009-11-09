@@ -8,26 +8,33 @@
 
 
 #include "MElement.h"
-void print (const char *filename, std::vector<MElement *> &els, double *v);
-std::vector<MElement *> get_all_tri(GModel *model);
-
+void print (const char *filename,const dgGroupOfElements &els, double *v);
+void buildGroupAllTri(GModel *model, int order, //in
+                         std::vector<dgGroupOfElements*> &elements, //out
+                         std::vector<dgGroupOfFaces*> &faces); //out
 
 int main(int argc, char **argv){
   GmshMergeFile("input/mesh1.msh");
-  std::vector<MElement *> all_tri=get_all_tri(GModel::current());
-  dgGroupOfElements group(all_tri,1);
-  fullMatrix<double> sol(3,all_tri.size());
-  fullMatrix<double> residu(3,all_tri.size());
+  std::vector<dgGroupOfElements*> elements;
+  std::vector<dgGroupOfFaces*> faces;
+  buildGroupAllTri(GModel::current(),1,elements,faces);
+  int nbNodes=elements[0]->getNbNodes();
+  fullMatrix<double> sol(nbNodes,elements[0]->getNbElements());
+  fullMatrix<double> residu(nbNodes,elements[0]->getNbElements());
   dgAlgorithm algo;
   dgConservationLaw *law = dgNewConservationLawAdvection();
-  algo.residualVolume(*law,group,sol,residu);
-  sol.gemm(group.getInverseMassMatrix(),residu);
-  print("test.pos",all_tri,&sol(0,0));
+  algo.residualVolume(*law,*elements[0],sol,residu);
+  for(int i=0;i<elements[0]->getNbElements();i++) {
+    fullMatrix<double> residuEl(residu,i,1);
+    fullMatrix<double> solEl(sol,i,1);
+    solEl.gemm(elements[0]->getInverseMassMatrix(i),residuEl);
+  }
+  print("test.pos",*elements[0],&sol(0,0));
 }
 
-
-
-std::vector<MElement *> get_all_tri(GModel *model){
+void buildGroupAllTri(GModel *model, int order, //in
+                         std::vector<dgGroupOfElements*> &elements, //out
+                         std::vector<dgGroupOfFaces*> &faces){ //out
   std::vector<GEntity*> entities;
   model->getEntities(entities);
   std::vector<MElement *> all_tri;
@@ -36,15 +43,14 @@ std::vector<MElement *> get_all_tri(GModel *model){
     for (int iel=0; iel<(*itent)->getNumMeshElements(); iel++)
       all_tri.push_back((*itent)->getMeshElement(iel));
   }
-  return all_tri;
+  elements.push_back(new dgGroupOfElements(all_tri,order));
 }
 
-void print (const char *filename, std::vector<MElement *> &els, double *v) {
+void print (const char *filename,const dgGroupOfElements &els, double *v) {
   FILE *file = fopen(filename,"w");
   fprintf(file,"View \"%s\" {\n", filename);
-  int i=0;
-  for(std::vector<MElement *>::iterator itel= els.begin();itel!=els.end();itel++){
-    MElement *el = *itel;
+  for(int iel=0;iel<els.getNbElements();iel++){
+    MElement *el = els.getElement(iel);
     fprintf(file,"ST (");
     for (int iv=0; iv<el->getNumVertices(); iv++) {
       MVertex *vertex = el->getVertex(iv);
@@ -53,7 +59,7 @@ void print (const char *filename, std::vector<MElement *> &els, double *v) {
     }
     fprintf(file,"{");
     for (int iv=0; iv<el->getNumVertices(); iv++)
-      fprintf(file,"%e%c ",v[i++],iv==el->getNumVertices()-1?'}':',');
+      fprintf(file,"%e%c ",*(v++),iv==el->getNumVertices()-1?'}':',');
     fprintf(file,";\n");
   }
   fprintf(file,"};");
