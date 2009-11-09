@@ -14,7 +14,6 @@
 #include "MElement.h"
 #include "Numeric.h"
 #include "FlGui.h"
-#include "VertexArray.h"
 #include "Context.h"
 
 static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &click2)
@@ -108,9 +107,9 @@ void openglWindow::draw()
 {
   // some drawing routines can create data (STL triangulations, etc.):
   // make sure that we don't fire draw() while we are already drawing,
-  // e.g. due to an impromptu Fl::check(). The same lock is also used in 
-  // _processSelectionBuffer to guarantee that we don't mix GL_RENDER and
-  // GL_SELECT rendering passes.
+  // e.g. due to an impromptu Fl::check(). The same lock is also used
+  // in _select to guarantee that we don't mix GL_RENDER and GL_SELECT
+  // rendering passes.
   if(_lock) return;
   _lock = true;
 
@@ -430,10 +429,9 @@ int openglWindow::handle(int event)
         std::vector<GFace*> faces;
         std::vector<GRegion*> regions;
         std::vector<MElement*> elements;
-        bool res = _processSelectionBuffer(_selection, false, 
-                                           CTX::instance()->mouseHoverMeshes, 
-                                           (int)_curr.win[0], (int)_curr.win[1], 5, 5,
-                                           vertices, edges, faces, regions, elements);
+        bool res = _select(_selection, false, CTX::instance()->mouseHoverMeshes, 
+                           (int)_curr.win[0], (int)_curr.win[1], 5, 5,
+                           vertices, edges, faces, regions, elements);
         if((_selection == ENT_ALL && res) ||
            (_selection == ENT_POINT && vertices.size()) ||
            (_selection == ENT_LINE && edges.size()) || 
@@ -461,220 +459,24 @@ int openglWindow::handle(int event)
   }
 }
 
-class hit{
- public:
-  GLuint type, ient, depth, type2, ient2;
-  hit(GLuint t, GLuint i, GLuint d, GLuint t2=0, GLuint i2=0) 
-    : type(t), ient(i), depth(d), type2(t2), ient2(i2) {}
-};
-
-class hitDepthLessThan{
- public:
-  bool operator()(const hit &h1, const hit &h2) const
-  {
-    return h1.depth < h2.depth;
-  }
-};
-
-// returns the element at a given position in a vertex array (element
-// pointers are not always stored: returning 0 is not an error)
-static MElement *getElement(GEntity *e, int va_type, int index)
+bool openglWindow::_select(int type, bool multiple, bool mesh, 
+                           int x, int y, int w, int h,
+                           std::vector<GVertex*> &vertices,
+                           std::vector<GEdge*> &edges,
+                           std::vector<GFace*> &faces,
+                           std::vector<GRegion*> &regions,
+                           std::vector<MElement*> &elements)
 {
-  switch(va_type){
-  case 2: 
-    if(e->va_lines && index < e->va_lines->getNumElementPointers())
-      return *e->va_lines->getElementPointerArray(index);
-    break;
-  case 3:
-    if(e->va_triangles && index < e->va_triangles->getNumElementPointers())
-      return *e->va_triangles->getElementPointerArray(index);
-    break;
-  }
-  return 0;
-}
-
-bool openglWindow::_processSelectionBuffer(int type, bool multipleSelection,
-                                           bool meshSelection, int x, int y, int w, int h,
-                                           std::vector<GVertex*> &vertices,
-                                           std::vector<GEdge*> &edges,
-                                           std::vector<GFace*> &faces,
-                                           std::vector<GRegion*> &regions,
-                                           std::vector<MElement*> &elements)
-{
-  vertices.clear();
-  edges.clear();
-  faces.clear();
-  regions.clear();
-  elements.clear();
-
-  // In our case the selection buffer size is equal to between 5 and 7
-  // times the maximum number of possible hits
-  GModel *m = GModel::current();
-  int eles = (meshSelection && CTX::instance()->pickElements) ? 
-    4 * m->getNumMeshElements() : 0;
-  int size = 7 * (m->getNumVertices() + m->getNumEdges() + m->getNumFaces() + 
-                  m->getNumRegions() + eles);
-
-  if(!size) return false; // we won't get any hits: the model is empty!
-
-  size += 1000; // security
-
   // same lock as in draw() to prevent firing up a GL_SELECT rendering pass
   // while a GL_RENDER pass is happening (due to the asynchronus nature of
   // Fl::check()s
   if(_lock) return false;
   _lock = true;
-
   make_current();
-  GLuint *selectionBuffer = new GLuint[size];
-  glSelectBuffer(size, selectionBuffer);
-
-  glRenderMode(GL_SELECT);
-  _ctx->render_mode = drawContext::GMSH_SELECT;
-
-  glInitNames();
-  glPushMatrix();
-  _ctx->initProjection(x, y, w, h);
-  _ctx->initPosition();
-  _ctx->drawGeom();
-  if(meshSelection) _ctx->drawMesh();
-  glPopMatrix();
-
-  GLint numhits = glRenderMode(GL_RENDER);
-  _ctx->render_mode = drawContext::GMSH_RENDER;
-
+  bool ret = _ctx->select(type, multiple, mesh, x, y, w, h, 
+                          vertices, edges, faces, regions, elements);
   _lock = false;
-
-  if(!numhits){ // no hits
-    delete [] selectionBuffer;
-    return false;
-  }
-  else if(numhits < 0){ // overflow
-    delete [] selectionBuffer;
-    Msg::Warning("Too many entities selected");
-    return false;
-  }
-
-  std::vector<hit> hits;
-  GLuint *ptr = selectionBuffer;
-  for(int i = 0; i < numhits; i++) {
-    // in Gmsh 'names' should always be 0, 2 or 4:
-    // * names == 0 means that there is nothing on the stack
-    // * if names == 2, the first name is the type of the entity 
-    //   (0 for point, 1 for edge, 2 for face or 3 for volume) and
-    //   the second is the entity number;
-    // * if names == 4, the first name is the type of the entity,
-    //   the second is the entity number, the third is the type
-    //   of vertex array (2 for line, 3 for triangle, 4 for quad)
-    //   and the fourth is the index of the element in the vertex
-    //   array
-    GLuint names = *ptr++; 
-    *ptr++; // mindepth
-    GLuint maxdepth = *ptr++;
-    if(names == 2){
-      GLuint depth = maxdepth;
-      GLuint type = *ptr++; 
-      GLuint ient = *ptr++;
-      hits.push_back(hit(type, ient, depth));
-    }
-    else if(names == 4){
-      GLuint depth = maxdepth;
-      GLuint type = *ptr++; 
-      GLuint ient = *ptr++;
-      GLuint type2 = *ptr++; 
-      GLuint ient2 = *ptr++;
-      hits.push_back(hit(type, ient, depth, type2, ient2));
-    }
-  }
-
-  delete [] selectionBuffer;
-  
-  if(!hits.size()){ // no entities
-    return false;
-  }
-
-  // sort hits to get closest entities first
-  std::sort(hits.begin(), hits.end(), hitDepthLessThan());
-
-  // filter result: if type == ENT_NONE, return the closest entity of
-  // "lowest dimension" (point < line < surface < volume). Otherwise,
-  // return the closest entity of type "type"
-  GLuint typmin = 10;
-  for(unsigned int i = 0; i < hits.size(); i++)
-    typmin = std::min(typmin, hits[i].type);
-
-  for(unsigned int i = 0; i < hits.size(); i++) {
-    if((type == ENT_ALL) ||
-       (type == ENT_NONE && hits[i].type == typmin) ||
-       (type == ENT_POINT && hits[i].type == 0) ||
-       (type == ENT_LINE && hits[i].type == 1) ||
-       (type == ENT_SURFACE && hits[i].type == 2) ||
-       (type == ENT_VOLUME && hits[i].type == 3)){
-      switch (hits[i].type) {
-      case 0:
-        {
-          GVertex *v = m->getVertexByTag(hits[i].ient);
-          if(!v){
-            Msg::Error("Problem in point selection processing");
-            return false;
-          }
-          vertices.push_back(v);
-          if(!multipleSelection) return true;
-        }
-        break;
-      case 1:
-        {
-          GEdge *e = m->getEdgeByTag(hits[i].ient);
-          if(!e){
-            Msg::Error("Problem in line selection processing");
-            return false;
-          }
-          if(hits[i].type2){
-            MElement *ele = getElement(e, hits[i].type2, hits[i].ient2);
-            if(ele) elements.push_back(ele);
-          }
-          edges.push_back(e);
-          if(!multipleSelection) return true;
-        }
-        break;
-      case 2:
-        {
-          GFace *f = m->getFaceByTag(hits[i].ient);
-          if(!f){
-            Msg::Error("Problem in surface selection processing");
-            return false;
-          }
-          if(hits[i].type2){
-            MElement *ele = getElement(f, hits[i].type2, hits[i].ient2);
-            if(ele) elements.push_back(ele);
-          }
-          faces.push_back(f);
-          if(!multipleSelection) return true;
-        }
-        break;
-      case 3:
-        {
-          GRegion *r = m->getRegionByTag(hits[i].ient);
-          if(!r){
-            Msg::Error("Problem in volume selection processing");
-            return false;
-          }
-          if(hits[i].type2){
-            MElement *ele = getElement(r, hits[i].type2, hits[i].ient2);
-            if(ele) elements.push_back(ele);
-          }
-          regions.push_back(r);
-          if(!multipleSelection) return true;
-        }
-        break;
-      }
-    }
-  }
-
-  if(vertices.size() || edges.size() || faces.size() || 
-     regions.size() || elements.size()) 
-    return true;
-  return false;
+  return ret;
 }
 
 char openglWindow::selectEntity(int type, 
@@ -730,10 +532,10 @@ char openglWindow::selectEntity(int type,
         selectionMode = false;
         return 'c';
       }
-      else if(_processSelectionBuffer(_selection, multi, true, _trySelectionXYWH[0],
-                                      _trySelectionXYWH[1], _trySelectionXYWH[2],
-                                      _trySelectionXYWH[3], vertices, edges, faces, 
-                                      regions, elements)){
+      else if(_select(_selection, multi, true, _trySelectionXYWH[0],
+                      _trySelectionXYWH[1], _trySelectionXYWH[2],
+                      _trySelectionXYWH[3], vertices, edges, faces, 
+                      regions, elements)){
         _selection = ENT_NONE;
         selectionMode = false;
         if(add)

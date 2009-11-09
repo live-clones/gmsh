@@ -14,7 +14,9 @@
 #include <gmsh/MElement.h>
 #include <gmsh/drawContext.h>
 
-drawContext *ctx = 0;
+static drawContext *ctx = 0;
+static mousePosition clickPos, prevPos;
+static int specialKey = 0;
 
 class drawContextTw : public drawContextGlobal{
  public:
@@ -70,9 +72,6 @@ void keyboard(unsigned char key, int x, int y)
   glutPostRedisplay();
 }
 
-static mousePosition clickPos, prevPos;
-static int specialKey = 0;
-
 void mouseMotion(int x, int y)
 {
   if(TwEventMouseMotionGLUT(x, y)) return;
@@ -106,6 +105,29 @@ void mouseMotion(int x, int y)
 
   prevPos.set(ctx, x, y);
   glutPostRedisplay();
+}
+
+void mousePassiveMotion(int x, int y)
+{
+  if(TwEventMouseMotionGLUT(x, y)) return;
+
+  std::vector<GVertex*> vertices;
+  std::vector<GEdge*> edges;
+  std::vector<GFace*> faces;
+  std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
+  bool ret = ctx->select(ENT_ALL, false, false, x, y, 5, 5,
+                         vertices, edges, faces, regions, elements);
+  if(ret){
+    GEntity *ge = 0;
+    if(vertices.size()) ge = vertices[0];
+    else if(edges.size()) ge = edges[0];
+    else if(faces.size()) ge = faces[0];
+    else if(regions.size()) ge = regions[0];
+    MElement *me = elements.size() ? elements[0] : 0;
+    printf("%s %s\n", ge ? ge->getInfoString().c_str() : "", 
+           me ? me->getInfoString().c_str() : "");
+  }
 }
 
 void mouseButton(int button, int state, int x, int y)
@@ -214,7 +236,7 @@ int main(int argc, char **argv)
   glutReshapeFunc(reshape);
   glutMouseFunc(mouseButton);
   glutMotionFunc(mouseMotion);
-  glutPassiveMotionFunc((GLUTmousemotionfun)TwEventMouseMotionGLUT);
+  glutPassiveMotionFunc(mousePassiveMotion);
   glutKeyboardFunc(keyboard);
   glutSpecialFunc((GLUTspecialfun)TwEventSpecialGLUT);
   TwGLUTModifiersFunc(glutGetModifiers);

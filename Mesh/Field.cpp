@@ -1217,11 +1217,11 @@ class AttractorField : public Field
     dist = new ANNdist[1];
     n_nodes_by_edge = 20;
     options["NodesList"] = new FieldOptionList
-      (nodes_id, "Indices of nodes in the geomtric model", &update_needed);
+      (nodes_id, "Indices of nodes in the geometric model", &update_needed);
     options["EdgesList"] = new FieldOptionList
       (edges_id, "Indices of curves in the geometric model", &update_needed);
     options["NNodesByEdge"] = new FieldOptionInt
-      (n_nodes_by_edge, "Number of nodes used to discetized each curve",
+      (n_nodes_by_edge, "Number of nodes used to discretized each curve",
        &update_needed);
     options["FacesList"] = new FieldOptionList
       (faces_id, "Indices of surfaces in the geometric model (Warning: might\n"

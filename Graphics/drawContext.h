@@ -27,6 +27,11 @@
 
 class PView;
 class GModel;
+class GVertex;
+class GEdge;
+class GFace;
+class GRegion;
+class MElement;
 
 class drawTransform {
  public:
@@ -164,6 +169,10 @@ class drawContext {
   void unproject(double x, double y, double p[3], double d[3]);
   void viewport2World(double win[3], double xyz[3]);
   void world2Viewport(double xyz[3], double win[3]);
+  bool select(int type, bool multiple, bool mesh, int x, int y, int w, int h, 
+              std::vector<GVertex*> &vertices, std::vector<GEdge*> &edges, 
+              std::vector<GFace*> &faces, std::vector<GRegion*> &regions,
+              std::vector<MElement*> &elements);
   int fix2dCoordinates(double *x, double *y);
   void draw3d();
   void draw2d();
