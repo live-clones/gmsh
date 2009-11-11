@@ -9,32 +9,34 @@
 
 #include "MElement.h"
 void print (const char *filename,const dgGroupOfElements &els, double *v);
-void buildGroupAllTri(GModel *model, int order, //in
-                         std::vector<dgGroupOfElements*> &elements, //out
-                         std::vector<dgGroupOfFaces*> &faces); //out
+std::vector<MElement *> getAllTri(GModel *model);
 
 int main(int argc, char **argv){
   GmshMergeFile("input/mesh1.msh");
-  std::vector<dgGroupOfElements*> elements;
-  std::vector<dgGroupOfFaces*> faces;
-  buildGroupAllTri(GModel::current(),1,elements,faces);
-  int nbNodes=elements[0]->getNbNodes();
-  fullMatrix<double> sol(nbNodes,elements[0]->getNbElements());
-  fullMatrix<double> residu(nbNodes,elements[0]->getNbElements());
+  std::vector<MElement *> allTri=getAllTri(GModel::current());
+  int order=1;
+  dgGroupOfElements elements(allTri,order);
+  dgGroupOfFaces faces(elements,order);
+  int nbNodes=elements.getNbNodes();
+  fullMatrix<double> sol(nbNodes,elements.getNbElements());
+  fullMatrix<double> solInterface(nbNodes,faces.getNbElements()*2);
+  fullMatrix<double> residu(nbNodes,elements.getNbElements());
+  fullMatrix<double> residuInterface(nbNodes,faces.getNbElements()*2);
   dgAlgorithm algo;
   dgConservationLaw *law = dgNewConservationLawAdvection();
-  algo.residualVolume(*law,*elements[0],sol,residu);
-  for(int i=0;i<elements[0]->getNbElements();i++) {
+  algo.residualVolume(*law,elements,sol,residu);
+  faces.mapToInterface(1, sol, sol, solInterface);
+  algo.residualInterface(*law,faces,solInterface,residuInterface);
+  faces.mapFromInterface(1, residuInterface, residu, residu);
+  for(int i=0;i<elements.getNbElements();i++) {
     fullMatrix<double> residuEl(residu,i,1);
     fullMatrix<double> solEl(sol,i,1);
-    solEl.gemm(elements[0]->getInverseMassMatrix(i),residuEl);
+    solEl.gemm(elements.getInverseMassMatrix(i),residuEl);
   }
-  print("test.pos",*elements[0],&sol(0,0));
+  print("test.pos",elements,&sol(0,0));
 }
 
-void buildGroupAllTri(GModel *model, int order, //in
-                         std::vector<dgGroupOfElements*> &elements, //out
-                         std::vector<dgGroupOfFaces*> &faces){ //out
+std::vector<MElement *> getAllTri(GModel *model){
   std::vector<GEntity*> entities;
   model->getEntities(entities);
   std::vector<MElement *> all_tri;
@@ -43,7 +45,7 @@ void buildGroupAllTri(GModel *model, int order, //in
     for (int iel=0; iel<(*itent)->getNumMeshElements(); iel++)
       all_tri.push_back((*itent)->getMeshElement(iel));
   }
-  elements.push_back(new dgGroupOfElements(all_tri,order));
+  return all_tri;
 }
 
 void print (const char *filename,const dgGroupOfElements &els, double *v) {

@@ -117,44 +117,7 @@ dgGroupOfElements::~dgGroupOfElements(){
   delete _imass;
 }
 
-// dgGroupOfFaces
-void dgGroupOfFaces::createFaceElements (const std::vector<MFace> &topo_faces){
-  
-  _faces.resize(topo_faces.size());
-  // compute all closures
-  for (int i=0;i<topo_faces.size();i++){
-    // compute closures for the interpolation
-    int ithFace, sign, rot;
-    getElementLeft(i)->getFaceInfo (topo_faces[i], ithFace, sign, rot);
-    _closuresLeft.push_back(&(_fsLeft->getFaceClosure(ithFace, sign, rot)));
-    getElementRight(i)->getFaceInfo (topo_faces[i], ithFace, sign, rot);
-    _closuresRight.push_back(&(_fsRight->getFaceClosure(ithFace, sign, rot)));        
-    // compute the face element that correspond to the geometrical closure
-    // get the vertices of the face
-    std::vector<MVertex*> _vertices;
-    const std::vector<int> & geomClosure = getElementRight(i)->getFunctionSpace()->getFaceClosure(ithFace, sign, rot);
-    for (int j=0; j<geomClosure.size() ; j++){
-      int iNod = geomClosure[j];
-      MVertex *v = getElementLeft(i)->getVertex(iNod);
-      _vertices.push_back(v);
-    }
-    // triangular face
-    if (topo_faces[i].getNumVertices() == 3){
-      switch(_vertices.size()){
-      case 3  : _faces.push_back(new MTriangle (_vertices) ); break;
-      case 6  : _faces.push_back(new MTriangle6 (_vertices) ); break;
-      case 10 : _faces.push_back(new MTriangleN (_vertices, 3) ); break;
-      case 15 : _faces.push_back(new MTriangleN (_vertices, 4) ); break;
-      case 21 : _faces.push_back(new MTriangleN (_vertices, 5) ); break;
-      default : throw;
-      }
-    }
-    // quad face 2 do
-    else throw;
-  }  
-}
 
-// dgGroupOfFaces
 void dgGroupOfFaces::computeFaceNormals () {
   double g[256][3];
   _normals = new fullMatrix<double> (_fsFace->points.size1()*_faces.size(),3);
@@ -182,31 +145,64 @@ void dgGroupOfFaces::computeFaceNormals () {
   }
 }
 
-void dgGroupOfFaces::createEdgeElements (const std::vector<MEdge> &topo_edges){
-  
-  _faces.resize(topo_edges.size());
+void dgGroupOfFaces::addFace(const MFace &topoFace, int iElLeft, int iElRight){
   // compute all closures
-  for (int i=0;i<topo_edges.size();i++){
-    int ithEdge, sign;
-    getElementLeft(i)->getEdgeInfo (topo_edges[i], ithEdge, sign);
-    _closuresLeft.push_back(&(_fsLeft->getEdgeClosure(ithEdge, sign)));
-    getElementRight(i)->getEdgeInfo (topo_edges[i], ithEdge, sign);
-    _closuresRight.push_back(&(_fsRight->getEdgeClosure(ithEdge, sign)));    
-    // get the vertices of the edge
-    const std::vector<int> & geomClosure = getElementRight(i)->getFunctionSpace()->getEdgeClosure(ithEdge, sign);
-    std::vector<MVertex*> _vertices;
-    for (int j=0; j<geomClosure.size() ; j++){
-      int iNod = geomClosure[j];
-      MVertex *v = getElementLeft(i)->getVertex(iNod);
-      _vertices.push_back(v);
-    }
-    switch(_vertices.size()){
-    case 2  : _faces.push_back(new MLine (_vertices) ); break;
-    case 3  : _faces.push_back(new MLine3 (_vertices) ); break;
-    default : _faces.push_back(new MLineN (_vertices) ); break;
+  // compute closures for the interpolation
+  _left.push_back(iElLeft);
+  _right.push_back(iElRight);
+  MElement &elRight = *_groupRight.getElement(iElRight);
+  MElement &elLeft = *_groupLeft.getElement(iElLeft);
+  int ithFace, sign, rot;
+  elLeft.getFaceInfo (topoFace, ithFace, sign, rot);
+  _closuresLeft.push_back(&(_fsLeft->getFaceClosure(ithFace, sign, rot)));
+  elRight.getFaceInfo (topoFace, ithFace, sign, rot);
+  _closuresRight.push_back(&(_fsRight->getFaceClosure(ithFace, sign, rot)));        
+  // compute the face element that correspond to the geometrical closure
+  // get the vertices of the face
+  std::vector<MVertex*> vertices;
+  for(int j=0;j<topoFace.getNumVertices();j++)
+    vertices.push_back(topoFace.getVertex(j));
+  const std::vector<int> & geomClosure = elRight.getFunctionSpace()->getFaceClosure(ithFace, sign, rot);
+  for (int j=0; j<geomClosure.size() ; j++)
+    vertices.push_back( elRight.getVertex(geomClosure[j]) );
+  // triangular face
+  if (topoFace.getNumVertices() == 3){
+    switch(vertices.size()){
+      case 3  : _faces.push_back(new MTriangle (vertices) ); break;
+      case 6  : _faces.push_back(new MTriangle6 (vertices) ); break;
+      case 10 : _faces.push_back(new MTriangleN (vertices, 3) ); break;
+      case 15 : _faces.push_back(new MTriangleN (vertices, 4) ); break;
+      case 21 : _faces.push_back(new MTriangleN (vertices, 5) ); break;
+      default : throw;
     }
   }
+  // quad face 2 do
+  else throw;
 }
+
+void dgGroupOfFaces::addEdge(const MEdge &topoEdge, int iElLeft, int iElRight){
+  _left.push_back(iElLeft);
+  _right.push_back(iElRight);
+  MElement &elRight = *_groupRight.getElement(iElRight);
+  MElement &elLeft = *_groupLeft.getElement(iElLeft);
+  int ithEdge, sign;
+  elLeft.getEdgeInfo (topoEdge, ithEdge, sign);
+  _closuresLeft.push_back(&(_fsLeft->getEdgeClosure(ithEdge, sign)));
+  elRight.getEdgeInfo (topoEdge, ithEdge, sign);
+  _closuresRight.push_back(&(_fsRight->getEdgeClosure(ithEdge, sign)));    
+  const std::vector<int> &geomClosure = elRight.getFunctionSpace()->getEdgeClosure(ithEdge, sign);
+  std::vector<MVertex*> vertices;
+  for(int j=0;j<topoEdge.getNumVertices();j++)
+    vertices.push_back(topoEdge.getVertex(j));
+  for (int j=0; j<geomClosure.size() ; j++)
+    vertices.push_back( elRight.getVertex(geomClosure[j]) );
+  switch(vertices.size()){
+    case 2  : _faces.push_back(new MLine (vertices) ); break;
+    case 3  : _faces.push_back(new MLine3 (vertices) ); break;
+    default : _faces.push_back(new MLineN (vertices) ); break;
+  }
+}
+
 void dgGroupOfFaces::init(int pOrder) {
   _fsFace = _faces[0]->getFunctionSpace (pOrder);
   _integration=dgGetIntegrationRule (_faces[0],pOrder);
@@ -223,29 +219,83 @@ void dgGroupOfFaces::init(int pOrder) {
   }
 }
 
-dgGroupOfFaces::dgGroupOfFaces (const std::vector<MFace> &topo_faces, 		  
-        const std::vector<dgGroupOfElements*> group_list,
-				const std::vector<std::pair<int,int> > &l, 
-				const std::vector<std::pair<int,int> > &r,
-				int pOrder) : _group_list(group_list),_left(l), _right(r),
-        _fsLeft(getElementLeft(0)->getFunctionSpace (pOrder)), _fsRight (getElementRight(0)->getFunctionSpace (pOrder))
-{
-  createFaceElements (topo_faces);
-  init(pOrder);
-}
-
-dgGroupOfFaces::dgGroupOfFaces (const std::vector<MEdge> &topo_edges, 		  
-        const std::vector<dgGroupOfElements*> group_list,
-				const std::vector<std::pair<int,int> > &l, 
-				const std::vector<std::pair<int,int> > &r,
-				int pOrder) : _group_list(group_list),_left(l), _right(r),
-        _fsLeft(getElementLeft(0)->getFunctionSpace (pOrder)), _fsRight (getElementRight(0)->getFunctionSpace (pOrder))
-{
-  createEdgeElements (topo_edges);
-  init(pOrder);
-}
-
 dgGroupOfFaces::~dgGroupOfFaces()
 {
   
+}
+
+dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, int pOrder):
+  _groupLeft(elGroup),_groupRight(elGroup)
+{
+  _fsLeft=_groupLeft.getElement(0)->getFunctionSpace(pOrder);
+  _fsRight=_groupRight.getElement(0)->getFunctionSpace(pOrder);
+  switch (_groupLeft.getElement(0)->getDim()) {
+    case 2 : {
+      std::map<MEdge,int,Less_Edge> edgeMap;
+      for(int i=0; i<elGroup.getNbElements(); i++){
+        MElement &el = *elGroup.getElement(i);
+        for (int j=0; j<el.getNumEdges(); j++){
+          MEdge edge = el.getEdge(j);
+          if(edgeMap.find(edge) == edgeMap.end()){
+            edgeMap[edge] = i;
+          }else{
+            addEdge(edge,edgeMap[edge],i);
+          }
+        }
+      }
+      break;
+    }
+    case 3 : {
+      std::map<MFace,int,Less_Face> faceMap;
+      for(int i=0; i<elGroup.getNbElements(); i++){
+        MElement &el = *elGroup.getElement(i);
+        for (int j=0; j<el.getNumFaces(); j++){
+          MFace face = el.getFace(j);
+          if(faceMap.find(face) == faceMap.end()){
+            faceMap[face] = i;
+          }else{
+            addFace(face,faceMap[face],i);
+          }
+        }
+      }
+      break;
+    }
+    default : throw;
+  }
+  init(pOrder);
+}
+
+void dgGroupOfFaces::mapToInterface ( int nFields,
+    const fullMatrix<double> &vLeft,
+    const fullMatrix<double> &vRight,
+    fullMatrix<double> &v)
+{
+  for(int i=0; i<getNbElements(); i++) {
+    const std::vector<int> &closureRight = *getClosureRight(i);
+    const std::vector<int> &closureLeft = *getClosureLeft(i);
+    for (int iField=0; iField<nFields; iField++){
+      for(size_t j =0; j < closureLeft.size(); j++)
+        v(j, i*2*nFields + iField) = vLeft(closureLeft[j], _left[i]*nFields + iField);
+      for(size_t j =0; j < closureRight.size(); j++)
+        v(j, (i*2+1)*nFields + iField) = vRight(closureRight[j], _right[i]*nFields + iField);
+    }
+  }
+}
+
+void dgGroupOfFaces::mapFromInterface ( int nFields,
+    const fullMatrix<double> &v,
+    fullMatrix<double> &vLeft,
+    fullMatrix<double> &vRight
+    )
+{
+  for(int i=0; i<getNbElements(); i++) {
+    const std::vector<int> &closureRight = *getClosureRight(i);
+    const std::vector<int> &closureLeft = *getClosureLeft(i);
+    for (int iField=0; iField<nFields; iField++){
+      for(size_t j =0; j < closureLeft.size(); j++)
+        vLeft(closureLeft[j], _left[i]*nFields + iField) = v(j, i*2*nFields + iField);
+      for(size_t j =0; j < closureRight.size(); j++)
+        vRight(closureRight[j], _right[i]*nFields + iField) = v(j, (i*2+1)*nFields + iField);
+    }
+  }
 }

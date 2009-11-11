@@ -126,3 +126,4 @@ void dgAlgorithm::residualInterface ( //dofManager &dof, // the DOF manager (may
   // ----- 3 ---- do the redistribution at face nodes using BLAS3
   residual.gemm(group.getRedistributionMatrix(),NormalFluxQP);
 }
+

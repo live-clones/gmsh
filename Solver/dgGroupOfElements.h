@@ -104,15 +104,15 @@ public:
 };
 
 class dgGroupOfFaces {
-  std::vector<dgGroupOfElements*> _group_list;
-  void createFaceElements (const std::vector<MFace> &topo_faces);
-  void createEdgeElements (const std::vector<MEdge> &topo_faces);
+  const dgGroupOfElements &_groupLeft,&_groupRight;
+  void addFace(const MFace &topoFace, int iElLeft, int iElRight);
+  void addEdge(const MEdge &topoEdge, int iElLeft, int iElRight);
   void computeFaceNormals();
   // Two functionSpaces for left and right elements
   // the group has always the same types for left and right
   const functionSpace *_fsLeft,*_fsRight, *_fsFace;
   // N elements in the group
-  std::vector<std::pair<int,int> >_left, _right;
+  std::vector<int>_left, _right;
   std::vector<MElement *>_faces;
   // Ni integration points, matrix of size Ni x 3 (u,v,weight)
   fullMatrix<double> *_integration;
@@ -135,21 +135,12 @@ class dgGroupOfFaces {
   //common part of the 3 constructors
   void init(int pOrder);
 public:
-  inline MElement* getElementLeft (int i) const {return _group_list[_left[i].first]->getElement(_left[i].second);}  
-  inline MElement* getElementRight (int i) const {return _group_list[_right[i].first]->getElement(_right[i].second);}  
+  inline MElement* getElementLeft (int i) const {return _groupLeft.getElement(_left[i]);}  
+  inline MElement* getElementRight (int i) const {return _groupRight.getElement(_right[i]);}  
   inline MElement* getFace (int iElement) const {return _faces[iElement];}  
   const std::vector<int> * getClosureLeft(int iFace) const{ return _closuresLeft[iFace];}
   const std::vector<int> * getClosureRight(int iFace) const{ return _closuresRight[iFace];}
-  dgGroupOfFaces (const std::vector<MFace> &faces, 		  
-      const std::vector<dgGroupOfElements*> group_list,
-		  const std::vector<std::pair<int,int> > &l, 
-		  const std::vector<std::pair<int,int> > &r,
-		  int pOrder);
-  dgGroupOfFaces (const std::vector<MEdge> &edges, 		  
-      const std::vector<dgGroupOfElements*> group_list,
-		  const std::vector<std::pair<int,int> > &l, 
-		  const std::vector<std::pair<int,int> > &r,
-		  int pOrder);
+  dgGroupOfFaces (const dgGroupOfElements &elements,int pOrder);
   virtual ~dgGroupOfFaces ();
   //this part is common with dgGroupOfElements, we should try polymorphism
   inline int getNbElements() const {return _faces.size();}
@@ -159,6 +150,9 @@ public:
   inline const fullMatrix<double> & getIntegrationPointsMatrix () const {return *_integration;}
   inline const fullMatrix<double> & getRedistributionMatrix () const {return *_redistribution;}
   inline double getDetJ (int iElement, int iGaussPoint) const {return (*_detJac)(iElement, iGaussPoint);}
+  //keep this outside the Algorithm because this is the only place where data overlap
+  void mapToInterface(int nFields, const fullMatrix<double> &vLeft, const fullMatrix<double> &vRight, fullMatrix<double> &v);
+  void mapFromInterface(int nFields, const fullMatrix<double> &v, fullMatrix<double> &vLeft, fullMatrix<double> &vRight);
 };
 
 
