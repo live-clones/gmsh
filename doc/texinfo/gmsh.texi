@@ -92,7 +92,7 @@ all copies.
 @c =========================================================================
 
 @ifnottex
-@node Top, Copying conditions, (dir), (dir)
+@node Top, Obtaining Gmsh, (dir), (dir)
 @top Gmsh
 
 Christophe Geuzaine and Jean-Fran@,{c}ois Remacle
@@ -107,6 +107,7 @@ for Gmsh @value{GMSH-VERSION} (@today{}).
 @c =========================================================================
 
 @menu
+* Obtaining Gmsh::              Where to get your copy of Gmsh
 * Copying conditions::          Terms and conditions of use
 * Overview::                    What is Gmsh?
 * How to read this manual?::    Which parts of this manual should you read (if any)?
@@ -262,19 +263,39 @@ Frequently asked questions
 @end menu
 
 @c =========================================================================
+@c Obtaining Gmsh
+@c =========================================================================
+
+@node Obtaining Gmsh, Copying conditions, Top, Top
+@unnumbered Obtaining Gmsh
+
+@cindex Web site
+@cindex Internet address
+@cindex Download
+
+The source code and various pre-compiled versions of Gmsh (for Unix,
+Windows and Mac OS) can be downloaded from @uref{http://geuz.org/gmsh/}.
+Gmsh is also directly available in pre-packaged form in various Linux
+and BSD distributions (Debian, Ubuntu, FreeBSD, ...).
+
+If you use Gmsh, we would appreciate that you mention it in your work by
+citing the following paper: ``C. Geuzaine and J.-F. Remacle, @emph{Gmsh:
+a three-dimensional finite element mesh generator with built-in pre- and
+post-processing facilities}. International Journal for Numerical Methods
+in Engineering, Volume 79, Issue 11, pages 1309-1331, 2009''.  A
+preprint of that paper as well as other references and the latest news
+about Gmsh development are available on
+@uref{http://geuz.org/gmsh/}. 
+
+@c =========================================================================
 @c Copying Conditions
 @c =========================================================================
 
-@node Copying conditions, Overview, Top, Top
+@node Copying conditions, Overview, Obtaining Gmsh, Top
 @unnumbered Copying conditions
 
 @cindex Copyright
 @cindex License
-
-@cindex Web site
-@cindex Internet address
-@cindex Mailing list
-@cindex Download
 
 Gmsh is ``free software''; this means that everyone is free to use it and
 to redistribute it on a free basis. Gmsh is not in the public domain; it is
@@ -306,22 +327,10 @@ information about this license is available from the GNU Project webpage
 @uref{http://www.gnu.org/copyleft/gpl-faq.html}.  Detailed copyright
 information can be found in @ref{Copyright and credits}.
 
-The source code and various pre-compiled versions of Gmsh (for Unix, Windows
-and Mac OS) can be downloaded from the webpage @uref{http://geuz.org/gmsh/}.
-
-If you use Gmsh, we would appreciate that you mention it in your
-work. References, as well as the latest news about Gmsh development, are
-always available on @uref{http://geuz.org/gmsh/}. Please send all
-Gmsh-related questions to the public Gmsh mailing list at
-@email{gmsh@@geuz.org}.
-
-@sp 1
-
-If you want to integrate Gmsh into a closed-source software, or want to sell
-a modified closed-source version of Gmsh, please contact one of the
-authors. You can purchase a version of Gmsh under a different license, with
-``no strings attached'' (for example allowing you to take parts of Gmsh and
-integrate them into your own proprietary code).
+If you want to integrate parts of Gmsh into a closed-source software, or
+want to sell a modified closed-source version of Gmsh, you will need to
+obtain a different license. Please @uref{http://geuz.org, contact us
+directly} for more information.
 
 @c =========================================================================
 @c Overview
@@ -570,15 +579,14 @@ developers}) to remedy the aforementioned (and all other) shortcomings!
 @cindex Authors, e-mail
 @cindex E-mail, authors
 
-If you think you have found a bug in Gmsh, you can report it by
-electronic mail to the Gmsh mailing list at @email{gmsh@@geuz.org}, or
-file it directly into our bug tracking system at
-@url{https://geuz.org/trac/gmsh/report} (login: gmsh, password: gmsh).
-Please send as precise a description of the problem as you can,
-including sample input files that produce the bug. Don't forget to
-mention both the version of Gmsh and the version of your operation
-system (@pxref{Command-line options} to see how to get this
-information).
+If you think you have found a bug in Gmsh, you can report it by email to
+the Gmsh mailing list at @email{gmsh@@geuz.org}, or file it directly
+into our bug tracking database at @url{https://geuz.org/trac/gmsh/report} 
+(login: gmsh, password: gmsh). Please send as precise a description of
+the problem as you can, including sample input files that produce the
+bug. Don't forget to mention both the version of Gmsh and the version of
+your operation system (@pxref{Command-line options} to see how to get
+this information).
 
 See @ref{Frequently asked questions}, and the bug tracking system to see
 which problems we already know about.
@@ -635,7 +643,11 @@ Application Programming Interface (API). No complete documentation of
 this API is available yet; a good starting point is @ref{Source code
 structure}, which gives a short introduction to Gmsh's internal source
 code structure. Then have a look e.g. at the examples in the
-@file{utils/api_demos/} directory in the source code.
+@file{utils/api_demos/} directory in the source code. Due to the many
+possible configuration options (and associated external dependencies),
+we currently do not distibute precompiled versions of the Gmsh
+library. To build the library see the instructions in the top-level
+@file{README.txt} file in the source distribution.
 
 @c -------------------------------------------------------------------------
 @c Syntactic rules used in the manual
@@ -4862,9 +4874,9 @@ In English people tend to pronounce `Gmsh' as ``gee-mesh''.
 @item Where can I find more information?
 
 @url{http://geuz.org/gmsh} is the primary location to obtain information
-about Gmsh. You will for example find the complete reference manual as
-well as a searchable archive of the Gmsh mailing list
-(@email{gmsh@@geuz.org}) on this web site.
+about Gmsh. There you will for example find the complete reference
+manual, a bug tracking database and a searchable archive of the Gmsh
+mailing list (@email{gmsh@@geuz.org}).
 @end enumerate
 
 @c -------------------------------------------------------------------------

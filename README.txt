@@ -86,19 +86,21 @@ Build Gmsh from the command line
   to build a version of Gmsh without the FLTK graphical interface.
 
 * You can keep multiple builds with different build options at the
-  same time. For example, you could configure a full release graphical
-  build in a "bin" subdirectory with
+  same time. For example, you could configure a debug graphical build
+  in a "bin" subdirectory with
 
     cd bin
-    cmake -DCMAKE_BUILD_TYPE=Release .. 
+    cmake -DCMAKE_BUILD_TYPE=Debug .. 
     make
     make install
 
-  and a stripped-down debug library build in a "lib" subdirectory with
+  and static and dynamic non-graphical release libraries in a "lib"
+  subdirectory with
 
     cd lib
-    cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_FLTK=0 -DENABLE_OCC=0 ..
+    cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_FLTK=0 -DENABLE_OCC=0 ..
     make lib
+    make shared
     make install/fast
 
 * To see a detailed compilation log use
