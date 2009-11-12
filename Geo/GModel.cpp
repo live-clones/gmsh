@@ -758,8 +758,9 @@ void GModel::_storeElementsInEntities(std::map<int, std::vector<MElement*> > &ma
           v = new discreteVertex(this, it->first);
           add(v);
         }
-        if(v->points.empty()) // CAD points already have one by default
-          _addElements(v->points, it->second);
+	Msg::Info("Tag : %i",it->first);
+        if(!v->points.empty()) v->points.clear();  // CAD points already have one by default
+	  _addElements(v->points, it->second);
       }
       break;
     case TYPE_LIN:

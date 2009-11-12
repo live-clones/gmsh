@@ -267,6 +267,8 @@ static void getAllParameters(MVertex *v, GFace *gf, std::vector<SPoint2> &params
     GEdge *ge = (GEdge*)v->onWhat();
     double UU;
     v->getParameter(0, UU);
+    if (UU == 0.0)
+      UU = ge->parFromPoint(v->point());
     params.push_back(ge->reparamOnFace(gf, UU, 1));
     if(ge->isSeam(gf))
       params.push_back(ge->reparamOnFace(gf, UU, -1));

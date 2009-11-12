@@ -45,6 +45,8 @@ class GEdge : public GEntity {
   GVertex *getBeginVertex() const { return v0; }
   GVertex *getEndVertex() const { return v1; }
 
+  void swapVertices() {GVertex* tmp=v0; v0=v1; v1=tmp;}
+
   // add/delete a face bounded by this edge
   void addFace(GFace *f);
   void delFace(GFace *f);
