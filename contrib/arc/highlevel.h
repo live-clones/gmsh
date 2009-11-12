@@ -60,16 +60,19 @@ template<class T> class Function  // Fonction au sens EF du terme.
 public:
 // typedef std::tr1::shared_ptr<Function<T> > FunctionPtr;
    virtual ~Function(){}
-  virtual void GetVal (double uvw[],MElement *e, T& Val)const=0;
-  virtual void GetGrad(double uvw[],MElement *e,typename TensorialTraits<T>::GradType &Grad) const =0;
-  virtual void GetHess(double uvw[],MElement *e,typename TensorialTraits<T>::HessType &Hess)const =0;
+  virtual void GetVal (double uvw[3],MElement *e, T& Val)const=0;
+  virtual void GetGrad(double uvw[3],MElement *e,typename TensorialTraits<T>::GradType &Grad) const =0;
+  virtual void GetHess(double uvw[3],MElement *e,typename TensorialTraits<T>::HessType &Hess)const =0;
+  virtual void GetVal (double uvw[][3],MElement *e, T Val[],int n) { for (int i=0;i<n;++i) GetVal(uvw[i],e,Val[i]); } // par defaut
+  virtual void GetGrad(double uvw[][3],MElement *e,typename TensorialTraits<T>::GradType Grad[],int n) const { for (int i=0;i<n;++i) GetGrad(uvw[i],e,Grad[i]); }
+  virtual void GetHess(double uvw[][3],MElement *e,typename TensorialTraits<T>::HessType Hess[],int n)const { for (int i=0;i<n;++i) GetHess(uvw[i],e,Hess[i]); }
 };
 
 
-class LagrangeShapeFunction: public Function<double>
+template<class T> class LagrangeShapeFunction: public Function<T>
 {
   public:
-  virtual void GetVal(double uvw[],MElement *e, double& Val)
+  virtual void GetVal(double uvw[],MElement *e, T& Val)
   {
 //    double s[100];
 //    _e->getShapeFunctions(uvw[0], uvw[1], uvw[2], s);
@@ -84,46 +87,54 @@ class LagrangeShapeFunction: public Function<double>
 
 class SpaceBase // renvoie des clefs des dofs
 {
+protected:
+int _iField;
 public:
-  virtual void getDofs(MElement *e,std::vector<Dof> &vecD)=0;
+  SpaceBase(int iField=0):_iField(iField){};
+  virtual ~SpaceBase(){};
+  virtual int getNumberDofs(MElement *e) const = 0 ; 
+  virtual void getDofs(MElement *e,const Dof *vecD) const {} //=0;
+  virtual int getId(void) const {return _iField;};
 };
 
 template<class T> class Space : public SpaceBase // renvoie des clefs de dofs et des fonctions de formes
 {
+ 
 public: 
-  Space(){};
+  Space(int iField=0):SpaceBase(iField){};
   virtual ~Space(){};
-  virtual void getDofsandSFs(MElement *e,std::vector<std::pair< Dof, Function<T>* > > &vecDFF)=0;
-  virtual void getSFs(std::vector<std::pair< Dof, Function<T>* > > &vecDFF)=0;
+  virtual void getDofsandSFs(MElement *e,const Dof *VecD, const Function<T>* vecDSF) {} //=0;
+  virtual void getSFs(const Function<T>* vecDSF) {} //=0;
 };
 
 
-template<class T> class SpaceLagrange : public Space<T> //  approximation Lagrange ...
+template<class T> class SpaceLagrange : public Space<T> //  Lagrange ... 1 dof / node / basis vector
 {
 private:
-  int _iField;
+ 
   Dof getLocalDof(MElement *e, int i) const
   {
     int iComp = i / e->getNumVertices();
     int ithLocalVertex = i % e->getNumVertices();
     return Dof(e->getVertex(ithLocalVertex)->getNum(),
-                Dof::createTypeWithTwoInts(iComp, _iField));
+                Dof::createTypeWithTwoInts(iComp,Space<T>::getId()));
   }
 
 public: 
-  SpaceLagrange(int iField):_iField(iField){};
+  SpaceLagrange(int iField=0):Space<T>(iField){};
   virtual ~SpaceLagrange(){};
   virtual void getDofsandSFs(MElement *e,std::vector<std::pair< Dof, Function<T>* > > &vecDFF){}
   virtual void getSFs(std::vector<std::pair< Dof, Function<T>* > > &vecDFF)
   {
     
   };
-  virtual void getDofs(MElement *e,std::vector<Dof> &vecD)
+  virtual void getDofs(MElement *e,std::vector<Dof> &vecD) const
   {
     int ndofs= e->getNumVertices()*TensorialTraits<T>::nb_basis_vectors;
     for (int i=0;i<ndofs;++i)
     vecD.push_back(getLocalDof(e,i));
   }
+  virtual int getNumberDofs(MElement *e) const {return 0;} 
 };
 
 
@@ -146,7 +157,7 @@ public:
   SpaceXfem(int iEnrich,Space<T>& SpaceBase):_iEnrich(iEnrich), _SpaceBase(SpaceBase){};
   virtual void getDofsandSFs(MElement *e,std::vector<std::pair< Dof, Function<T>* > > &vecDFF){}
   virtual void getSFs(std::vector<std::pair< Dof, Function<T>* > > &vecDFF){};
-  virtual void getDofs(MElement *e,std::vector<Dof> &vecD)
+  virtual void getDofs(MElement *e,std::vector<Dof> &vecD) const
   {
     _SpaceBase.getDofs(e,vecD);
   }
@@ -243,7 +254,14 @@ void Construct(FormZero &Z,Region &R,Integrator &I);
 void Assemble(FormZero &Z,Region &R,Assembler &A,Integrator &I);
 */
 
-template<class datamat, class T1,class T2> class TermBilinear  // terme associe a un "element" / pt de gauss (contribution élémentaire)
+class TermBilinearBase
+{
+public:
+  virtual void GetTerm(MElement *e) {}
+};
+
+
+template<class datamat, class T1,class T2> class TermBilinear : public TermBilinearBase  // terme associe a un "element" / pt de gauss (contribution élémentaire)
             // typiquement celui ci stoque ce qui doit etre stocke. C'est la base configurable du code
             // on doit associer cela a un allocateur qui renvoie un pointeur sur ce truc 
             // Soit tous les elements/pts de gauss ont le meme terme , allocateur unique (pas de stockage aux pts de
