@@ -572,11 +572,9 @@ int FlGui::testGlobalShortcuts(int event)
   }
   else if(Fl::test_shortcut(FL_ALT + 't')) {
     for(unsigned int i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0)){
-        double t = opt_view_intervals_type(i, GMSH_GET, 0) + 1;
-        if(t == 4) t++; // skip numeric
-        opt_view_intervals_type(i, GMSH_SET | GMSH_GUI, t);
-      }
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_intervals_type
+          (i, GMSH_SET | GMSH_GUI, opt_view_intervals_type(i, GMSH_GET, 0) + 1);
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'r')) {
