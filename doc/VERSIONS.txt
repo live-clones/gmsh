@@ -1,6 +1,6 @@
-?: new client/server visualization mode; compound geometrical
-entities; new option to force the type of views dynamically; bug
-fixes.
+2.4.3 (?): new client/server visualization mode; new option to force
+the type of views dynamically; small bug fixes and usability
+improvements.
 
 2.4.2 (Sep 21, 2009): solver code refactoring + better IDE
 integration.

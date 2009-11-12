@@ -22503,7 +22503,9 @@ void tetgenmesh::rearrangesubfaces(list* missingshlist, list* boundedgelist,
         }
       }
     } while (hitbdry < 2 && apex(spintet) != apex(starttet));
+#ifdef SELF_CHECK //GMSH
     assert(matchflag == true);
+#endif //GMSH
     tspivot(spintet, neighsh);
     if (neighsh.sh != dummysh) {
       printf("Error:  Invalid PLC.\n");
@@ -22511,7 +22513,8 @@ void tetgenmesh::rearrangesubfaces(list* missingshlist, list* boundedgelist,
              shellmark(neighsh), shellmark(shloop));
       printf("  It might be caused by a facet is defined more than once.\n");
       printf("  Hint:  Use -d switch to find all overlapping facets.\n");
-      exit(1);
+      terminatetetgen(1);
+      //GMSH exit(1);
     }
     // The side of 'spintet' is at which a new subface will be attached.
     adjustedgering(spintet, CCW);
