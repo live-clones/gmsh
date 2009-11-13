@@ -69,7 +69,9 @@ class DofAffineConstraint{
   typename dofTraits<T>::VecType shift;
 };
   
-// data=float, double, complex<double>, smallVec<double>, smallVec<complex<double> >...
+// A manager for degrees of freedoms, templated on the value of a dof
+// (what the functional returns): float, double, complex<double>,
+// fullVecor<double>, ...
 template <class T>
 class dofManager{
  private:
@@ -96,7 +98,7 @@ class dofManager{
     
   // linearSystems
   std::map<const std::string, linearSystem<dataMat>*> _linearSystems;
-  linearSystem<dataMat>* _current;
+  linearSystem<dataMat> *_current;
    
  public:
   dofManager(linearSystem<dataMat> *l) : _current(l) { _linearSystems["A"] = l; }
