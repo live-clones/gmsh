@@ -147,17 +147,17 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
 
 void CreateOutputFile(std::string fileName, int format)
 {
-
   if(fileName.empty())
     fileName = GetDefaultFileName(format);
 
-  int oldformat = CTX::instance()->print.format;
+  int oldFormat = CTX::instance()->print.format;
   CTX::instance()->print.format = format;
   CTX::instance()->printing = 1;
 
-  bool printEndMessage = true;
   if(format != FORMAT_AUTO) 
     Msg::StatusBar(2, true, "Writing '%s'", fileName.c_str());
+
+  bool printEndMessage = true;
 
   switch (format) {
 
@@ -254,14 +254,14 @@ void CreateOutputFile(std::string fileName, int format)
   case FORMAT_GEO:
     GModel::current()->writeGEO(fileName, CTX::instance()->print.geoLabels);
     break;
-#if defined(HAVE_OCC)
+
   case FORMAT_BREP:
     GModel::current()->writeOCCBREP(fileName);
     break;
+
   case FORMAT_STEP:
     GModel::current()->writeOCCSTEP(fileName);
     break;
-#endif
 
 #if defined(HAVE_FLTK)
   case FORMAT_PPM:
@@ -278,13 +278,13 @@ void CreateOutputFile(std::string fileName, int format)
         break;
       }
 
-      int old_gradient = CTX::instance()->bgGradient;
+      int oldGradient = CTX::instance()->bgGradient;
       if(format == FORMAT_GIF && CTX::instance()->print.gifTransparent)
         CTX::instance()->bgGradient = 0;
 
       PixelBuffer *buffer = GetCompositePixelBuffer(GL_RGB, GL_UNSIGNED_BYTE);
 
-      CTX::instance()->bgGradient = old_gradient;
+      CTX::instance()->bgGradient = oldGradient;
 
       if(format == FORMAT_PPM)
         create_ppm(fp, buffer);
@@ -327,7 +327,7 @@ void CreateOutputFile(std::string fileName, int format)
       GLint height = FlGui::instance()->getCurrentOpenglWindow()->h();
       GLint viewport[4] = {0, 0, width, height};
 
-      int old_gradient = CTX::instance()->bgGradient;
+      int oldGradient = CTX::instance()->bgGradient;
       if(!CTX::instance()->print.epsBackground) CTX::instance()->bgGradient = 0;
       
       PixelBuffer buffer(width, height, GL_RGB, GL_FLOAT);
@@ -382,7 +382,7 @@ void CreateOutputFile(std::string fileName, int format)
         res = gl2psEndPage();
       }
 
-      CTX::instance()->bgGradient = old_gradient;
+      CTX::instance()->bgGradient = oldGradient;
       fclose(fp);
     }
     break;
@@ -427,7 +427,7 @@ void CreateOutputFile(std::string fileName, int format)
 
   if(printEndMessage) Msg::StatusBar(2, true, "Wrote '%s'", fileName.c_str());
 
-  CTX::instance()->print.format = oldformat;
+  CTX::instance()->print.format = oldFormat;
   CTX::instance()->printing = 0;
 
 #if defined(HAVE_OPENGL)

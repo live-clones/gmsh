@@ -500,7 +500,7 @@ double Msg::GetValue(const char *text, double defaultval)
   }
 #endif
 
-  printf("%s (default=%.16g) ", text, defaultval);
+  printf("%s (default=%.16g): ", text, defaultval);
   char str[256];
   char *ret = fgets(str, sizeof(str), stdin);
   if(!ret || !strlen(str) || !strcmp(str, "\n"))
@@ -521,24 +521,18 @@ int Msg::GetAnswer(const char *question, int defaultval, const char *zero,
     return fl_choice(question, zero, one, two, "");
 #endif
 
-  while(1){
-    if(two)
-      printf("%s\n\n[%s], [%s] or [%s]? (default=%s) ", question, zero, one, two,
-             (defaultval == 2) ? two : defaultval ? one : zero);
-    else
-      printf("%s\n\n[%s] or [%s]? (default=%s) ", question, zero, one,
-             defaultval ? one : zero);
-    char str[256];
-    char *ret = fgets(str, sizeof(str), stdin);
-    if(!ret || !strlen(str) || !strcmp(str, "\n"))
-      return defaultval;
-    else if(!strcmp(str, zero))
-      return 0;
-    else if(!strcmp(str, one))
-      return 1;
-    else if(two && !strcmp(str, two))
-      return 2;
-  }
+  if(two)
+    printf("%s\n\n0=[%s] 1=[%s] 2=[%s] (default=%d): ", question,
+           zero, one, two, defaultval);
+  else
+    printf("%s\n\n0=[%s] 1=[%s] (default=%d): ", question,
+           zero, one, defaultval);
+  char str[256];
+  char *ret = fgets(str, sizeof(str), stdin);
+  if(!ret || !strlen(str) || !strcmp(str, "\n"))
+    return defaultval;
+  else
+    return atoi(ret);
 }
 
 void Msg::InitClient(std::string sockname)

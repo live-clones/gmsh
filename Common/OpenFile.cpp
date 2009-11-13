@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <sstream>
 #include <string.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -246,23 +247,21 @@ int MergeFile(std::string fileName, bool warnIfMissing)
   std::vector<std::string> split = SplitFileName(fileName);
   std::string noExt = split[0] + split[1], ext = split[2];
 
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) {
-    if(ext == ".gz") {
-      // the real solution would be to rewrite all our I/O functions in
-      // terms of gzFile, but until then, this is better than nothing
-      if(fl_choice("File '%s' is in gzip format.\n\nDo you want to uncompress it?", 
-                   "Cancel", "Uncompress", NULL, fileName.c_str())){
-        if(SystemCall(std::string("gunzip -c ") + fileName + " > " + noExt))
-          Msg::Error("Failed to uncompress `%s': check directory permissions", 
-                     fileName.c_str());
-        SetProjectName(noExt);
-        return MergeFile(noExt);
-      }
+  if(ext == ".gz") {
+    // the real solution would be to rewrite all our I/O functions in
+    // terms of gzFile, but until then, this is better than nothing
+    std::ostringstream sstream;
+    sstream << "File '"<< fileName << "' is in gzip format.\n\n"
+            << "Do you want to uncompress it?";
+    if(Msg::GetAnswer(sstream.str().c_str(), 0, "Cancel", "Uncompress")){
+      if(SystemCall(std::string("gunzip -c ") + fileName + " > " + noExt))
+        Msg::Error("Failed to uncompress `%s': check directory permissions", 
+                   fileName.c_str());
+      SetProjectName(noExt);
+      return MergeFile(noExt);
     }
   }
-#endif
-
+  
   CTX::instance()->geom.draw = 0; // don't try to draw the model while reading
 
 #if defined(HAVE_POST)
