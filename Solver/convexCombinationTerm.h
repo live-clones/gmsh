@@ -15,13 +15,13 @@
 #include "fullMatrix.h"
 #include "Numeric.h"
 
-class convexCombinationTerm : public femTerm<double,double> {
+class convexCombinationTerm : public femTerm<double> {
  protected:
   const simpleFunction<double> *_k;
   const int _iField;
  public:
   convexCombinationTerm(GModel *gm, int iField, simpleFunction<double> *k)
-    : femTerm<double,double>(gm), _iField(iField), _k(k) {}
+    : femTerm<double>(gm), _iField(iField), _k(k) {}
   virtual int sizeOfR(SElement *se) const
   {
     return se->getMeshElement()->getNumVertices();

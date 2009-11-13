@@ -44,7 +44,7 @@ public:
   }  
   void smooth(std::vector<MElement*> & );
   double smooth_metric_(std::vector<MElement*> &, GFace *gf,
-                        dofManager<double,double> &myAssembler,
+                        dofManager<double> &myAssembler,
                         std::set<MVertex*> &verticesToMove,
                         elasticityTerm &El);
   void smooth_metric(std::vector<MElement*> &, GFace *gf );

@@ -120,7 +120,7 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
   std::map<MVertex*,SPoint2> solution;
   // PARAMETRIZE ---------------------------------
   for (int step =0 ; step<2 ; step++){
-    dofManager<double, double> myAssembler(_lsys);
+    dofManager<double> myAssembler(_lsys);
     for(std::map<MVertex*,SPoint2>::iterator it = level.coordinates.begin();
 	it != level.coordinates.end(); ++it){
       MVertex *v = it->first;

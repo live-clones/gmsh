@@ -16,7 +16,7 @@
 class MElement;
 class MFace;
 class MEdge;
-class functionSpace;
+class polynomialBasis;
 
 class dgElement {
   MElement *_element;
@@ -42,7 +42,7 @@ class dgGroupOfElements {
   // the ONLY function space that is used to 
   // inerpolated the fields (may be different to the 
   // one of the elements)
-  const functionSpace &_fs;
+  const polynomialBasis &_fs;
   // Ni integration points, matrix of size Ni x 4 (u,v,w,weight)
   fullMatrix<double> *_integration;
   // collocation matrix that maps vertices to integration points.
@@ -108,9 +108,9 @@ class dgGroupOfFaces {
   void addFace(const MFace &topoFace, int iElLeft, int iElRight);
   void addEdge(const MEdge &topoEdge, int iElLeft, int iElRight);
   void computeFaceNormals();
-  // Two functionSpaces for left and right elements
+  // Two polynomialBases for left and right elements
   // the group has always the same types for left and right
-  const functionSpace *_fsLeft,*_fsRight, *_fsFace;
+  const polynomialBasis *_fsLeft,*_fsRight, *_fsFace;
   // N elements in the group
   std::vector<int>_left, _right;
   std::vector<MElement *>_faces;

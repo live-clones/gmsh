@@ -121,7 +121,7 @@ class MTriangle : public MElement {
   {
     MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
   }
-  virtual const functionSpace* getFunctionSpace(int o=-1) const;
+  virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
   virtual bool isInside(double u, double v, double w)
   {
     double tol = _isInsideTolerance;

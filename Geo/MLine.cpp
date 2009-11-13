@@ -8,16 +8,16 @@
 #include "Context.h"
 #include "qualityMeasures.h"
 
-const functionSpace* MLine::getFunctionSpace(int o) const
+const polynomialBasis* MLine::getFunctionSpace(int o) const
 {
   int order = (o == -1) ? getPolynomialOrder() : o;
   
   switch (order) {
-  case 1: return &functionSpaces::find(MSH_LIN_2);
-  case 2: return &functionSpaces::find(MSH_LIN_3);
-  case 3: return &functionSpaces::find(MSH_LIN_4);
-  case 4: return &functionSpaces::find(MSH_LIN_5);
-  case 5: return &functionSpaces::find(MSH_LIN_6);
+  case 1: return &polynomialBases::find(MSH_LIN_2);
+  case 2: return &polynomialBases::find(MSH_LIN_3);
+  case 3: return &polynomialBases::find(MSH_LIN_4);
+  case 4: return &polynomialBases::find(MSH_LIN_5);
+  case 5: return &polynomialBases::find(MSH_LIN_6);
   default: Msg::Error("Order %d line function space not implemented", order);
   }
   return 0;

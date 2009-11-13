@@ -29,7 +29,7 @@ class elasticitySolver{
  protected:
   GModel *pModel;
   int _dim, _tag;
-  dofManager<double, double> *pAssembler;
+  dofManager<double> *pAssembler;
   // young modulus and poisson coefficient per physical
   std::vector<elasticField> elasticFields;
   // imposed nodal forces

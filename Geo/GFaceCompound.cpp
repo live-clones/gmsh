@@ -16,7 +16,7 @@
 #include "Octree.h"
 #include "SBoundingBox3d.h"
 #include "SPoint3.h"
-#include "functionSpace.h"
+#include "polynomialBasis.h"
 #include "robustPredicates.h"
 #include "MElementCut.h"
 #include "GEntity.h"
@@ -34,7 +34,7 @@
 #include "discreteFace.h"
 #include "eigenSolver.h"
 
-static void fixEdgeToValue(GEdge *ed, double value, dofManager<double, double> &myAssembler)
+static void fixEdgeToValue(GEdge *ed, double value, dofManager<double> &myAssembler)
 {
   myAssembler.fixVertex(ed->getBeginVertex()->mesh_vertices[0], 0, 1, value);
   myAssembler.fixVertex(ed->getEndVertex()->mesh_vertices[0], 0, 1, value);
@@ -869,7 +869,7 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
 void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
 {
    
-  dofManager<double, double> myAssembler(_lsys);
+  dofManager<double> myAssembler(_lsys);
   simpleFunction<double> ONE(1.0);
 
   if(_type == UNITCIRCLE){
@@ -976,7 +976,7 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
 void GFaceCompound::parametrize_conformal() const
 {
 
-  dofManager<double, double> myAssembler(_lsys);
+  dofManager<double> myAssembler(_lsys);
 
   std::vector<MVertex*> ordered;
   std::vector<double> coords;  
@@ -1059,7 +1059,7 @@ void GFaceCompound::compute_distance() const
   double L = norm(SVector3(bbox.max(), bbox.min())); 
   double mu = L/28;
   simpleFunction<double> DIFF(mu * mu), MONE(1.0);
-  dofManager<double, double> myAssembler(_lsys);
+  dofManager<double> myAssembler(_lsys);
   distanceTerm distance(model(), 1, &DIFF, &MONE);
 
   std::vector<MVertex*> ordered;

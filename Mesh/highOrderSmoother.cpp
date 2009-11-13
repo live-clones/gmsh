@@ -434,7 +434,7 @@ void highOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
   lsys->setGmres(1);
   lsys->setPrec(5.e-8);
 #endif
-  dofManager<double,double> myAssembler(lsys);
+  dofManager<double> myAssembler(lsys);
   elasticityTerm El(0, 1.0, .333, getTag());
   
   std::vector<MElement*> layer, v;
@@ -540,7 +540,7 @@ void highOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
 
 double highOrderSmoother::smooth_metric_(std::vector<MElement*>  & v, 
                                              GFace *gf, 
-                                             dofManager<double,double> &myAssembler,
+                                             dofManager<double> &myAssembler,
                                              std::set<MVertex*> &verticesToMove,
                                              elasticityTerm &El)
 {
@@ -609,7 +609,7 @@ void highOrderSmoother::smooth(std::vector<MElement*> &all)
   lsys->setGmres(1);
   lsys->setPrec(5.e-8);
 #endif
-  dofManager<double,double> myAssembler(lsys);
+  dofManager<double> myAssembler(lsys);
   elasticityTerm El(0, 1.0, .333, getTag());
   
   std::vector<MElement*> layer, v;

@@ -83,7 +83,7 @@ void MTetrahedron::xyz2uvw(double xyz[3], double uvw[3])
   sys3x3(mat, b, uvw, &det);
 }
 
-const functionSpace* MTetrahedron::getFunctionSpace(int o) const
+const polynomialBasis* MTetrahedron::getFunctionSpace(int o) const
 {
   int order = (o == -1) ? getPolynomialOrder() : o;
 
@@ -91,21 +91,21 @@ const functionSpace* MTetrahedron::getFunctionSpace(int o) const
   
   if ((nv == 0) && (o == -1)) {
     switch (order) {
-    case 1: return &functionSpaces::find(MSH_TET_4);
-    case 2: return &functionSpaces::find(MSH_TET_10);
-    case 3: return &functionSpaces::find(MSH_TET_20);
-    case 4: return &functionSpaces::find(MSH_TET_34);
-    case 5: return &functionSpaces::find(MSH_TET_52);
+    case 1: return &polynomialBases::find(MSH_TET_4);
+    case 2: return &polynomialBases::find(MSH_TET_10);
+    case 3: return &polynomialBases::find(MSH_TET_20);
+    case 4: return &polynomialBases::find(MSH_TET_34);
+    case 5: return &polynomialBases::find(MSH_TET_52);
     default: Msg::Error("Order %d tetrahedron function space not implemented", order);
     }
   }
   else { 
     switch (order) {
-    case 1: return &functionSpaces::find(MSH_TET_4);
-    case 2: return &functionSpaces::find(MSH_TET_10);
-    case 3: return &functionSpaces::find(MSH_TET_20);
-    case 4: return &functionSpaces::find(MSH_TET_35);
-    case 5: return &functionSpaces::find(MSH_TET_56);
+    case 1: return &polynomialBases::find(MSH_TET_4);
+    case 2: return &polynomialBases::find(MSH_TET_10);
+    case 3: return &polynomialBases::find(MSH_TET_20);
+    case 4: return &polynomialBases::find(MSH_TET_35);
+    case 5: return &polynomialBases::find(MSH_TET_56);
     default: Msg::Error("Order %d tetrahedron function space not implemented", order);
     }
   }

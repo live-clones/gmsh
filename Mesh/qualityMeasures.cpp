@@ -9,7 +9,7 @@
 #include "MTriangle.h"
 #include "MTetrahedron.h"
 #include "Numeric.h"
-#include "functionSpace.h"
+#include "polynomialBasis.h"
 #include "GmshMessage.h"
 
 double qmTriangle(const BDS_Point *p1, const BDS_Point *p2, const BDS_Point *p3, 

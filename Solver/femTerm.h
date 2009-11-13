@@ -18,8 +18,11 @@
 
 // a nodal finite element term : variables are always defined at nodes
 // of the mesh
-template<class dataVec, class dataMat>
+template<class T>
 class femTerm {
+ private:
+  typedef typename dofTraits<T>::VecType dataVec;
+  typedef typename dofTraits<T>::MatType dataMat;
  protected:
   GModel *_gm;
  public:
@@ -46,7 +49,7 @@ class femTerm {
 
   // add the contribution from all the elements in the intersection
   // of two element groups L and C
-  void addToMatrix(dofManager<dataVec, dataMat> &dm,
+  void addToMatrix(dofManager<dataVec> &dm,
                    groupOfElements &L,
                    groupOfElements &C) const
   {
@@ -61,7 +64,7 @@ class femTerm {
   }
 
   // add the contribution from a single element to the dof manager
-  void addToMatrix(dofManager<dataVec, dataMat> &dm, SElement *se) const
+  void addToMatrix(dofManager<dataVec> &dm, SElement *se) const
   {
     const int nbR = sizeOfR(se);
     const int nbC = sizeOfC(se);
@@ -69,7 +72,7 @@ class femTerm {
     elementMatrix(se, localMatrix);
     addToMatrix(dm, localMatrix, se);
   }
-  void addToMatrix(dofManager<dataVec, dataMat> &dm,
+  void addToMatrix(dofManager<dataVec> &dm,
                    fullMatrix<dataMat> &localMatrix,
                    SElement *se) const
   {
@@ -116,7 +119,7 @@ class femTerm {
   }
   void dirichletNodalBC(int physical, int dim, int comp, int field,
                         const simpleFunction<dataVec> &e,
-                        dofManager<dataVec, dataMat> &dm)
+                        dofManager<dataVec> &dm)
   {
     std::vector<MVertex *> v;
     GModel *m = _gm;
@@ -126,7 +129,7 @@ class femTerm {
   }
   void neumannNodalBC(int physical, int dim, int comp, int field,
                       const simpleFunction<dataVec> &fct,
-                      dofManager<dataVec, dataMat> &dm)
+                      dofManager<dataVec> &dm)
   {
     std::map<int, std::vector<GEntity*> > groups[4];
     GModel *m = _gm;
@@ -161,7 +164,7 @@ class femTerm {
     }
   }
 
-  void addToRightHandSide(dofManager<dataVec, dataMat> &dm, groupOfElements &C) const
+  void addToRightHandSide(dofManager<dataVec> &dm, groupOfElements &C) const
   {
     groupOfElements::elementContainer::const_iterator it = C.begin();
     for ( ; it != C.end(); ++it){

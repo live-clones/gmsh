@@ -24,7 +24,7 @@ class eigenSolver{
   std::vector<std::vector<std::complex<double> > > _eigenVectors;
   void _try(int ierr) const { CHKERRABORT(PETSC_COMM_WORLD, ierr); }
  public:
-  eigenSolver(dofManager<double, double> *manager, std::string A, 
+  eigenSolver(dofManager<double> *manager, std::string A, 
               std::string B="");
   void solve(int numEigenValues=0, std::string which="");
   int getNumEigenValues(){ return _eigenValues.size(); }
@@ -38,7 +38,7 @@ class eigenSolver{
  private:
   std::vector<std::complex<double> > _dummy;
  public:
-  eigenSolver(dofManager<double, double> *manager, std::string A, 
+  eigenSolver(dofManager<double> *manager, std::string A, 
               std::string B=""){}
   void solve(int numEigenValues=0, std::string which="")
   {

@@ -9,7 +9,7 @@
 
 #include "GmshDefines.h"
 #include "GmshMessage.h"
-#include "functionSpace.h"
+#include "polynomialBasis.h"
 
 static fullMatrix<double> generate1DMonomials(int order)
 {
@@ -733,7 +733,7 @@ static void getFaceClosure(int iFace, int iSign, int iRotate, std::vector<int> &
   }
 } 
 
-static void generate3dFaceClosure(functionSpace::clCont &closure, int order)
+static void generate3dFaceClosure(polynomialBasis::clCont &closure, int order)
 {
   for (int iRotate = 0; iRotate < 3; iRotate++){
     for (int iSign = 1; iSign >= -1; iSign -= 2){
@@ -746,7 +746,7 @@ static void generate3dFaceClosure(functionSpace::clCont &closure, int order)
   }
 }
 
-static void generate2dEdgeClosure(functionSpace::clCont &closure, int order)
+static void generate2dEdgeClosure(polynomialBasis::clCont &closure, int order)
 {
   closure.clear();
   // first give edge nodes of the three edges in direct order
@@ -764,14 +764,14 @@ static void generate2dEdgeClosure(functionSpace::clCont &closure, int order)
   closure.push_back(c3); closure.push_back(c4); closure.push_back(c5);
 }
 
-std::map<int, functionSpace> functionSpaces::fs;
+std::map<int, polynomialBasis> polynomialBases::fs;
 
-const functionSpace &functionSpaces::find(int tag) 
+const polynomialBasis &polynomialBases::find(int tag) 
 {
-  std::map<int, functionSpace>::const_iterator it = fs.find(tag);
+  std::map<int, polynomialBasis>::const_iterator it = fs.find(tag);
   if (it != fs.end()) return it->second;
   
-  functionSpace F;
+  polynomialBasis F;
   
   switch (tag){
   case MSH_PNT:
@@ -801,77 +801,77 @@ const functionSpace &functionSpaces::find(int tag)
   case MSH_TRI_3 :
     F.monomials = generatePascalTriangle(1);
     F.points =    gmshGeneratePointsTriangle(1, false);
-    generate2dEdgeClosure (F.edgeClosure,1);
+    generate2dEdgeClosure(F.edgeClosure, 1);
     break;
   case MSH_TRI_6 :
     F.monomials = generatePascalTriangle(2);
     F.points =    gmshGeneratePointsTriangle(2, false);
-    generate2dEdgeClosure (F.edgeClosure,2);
+    generate2dEdgeClosure(F.edgeClosure, 2);
     break;
   case MSH_TRI_9 :
     F.monomials = generatePascalSerendipityTriangle(3);
     F.points =    gmshGeneratePointsTriangle(3, true);
-    generate2dEdgeClosure (F.edgeClosure,3);
+    generate2dEdgeClosure(F.edgeClosure, 3);
     break;
   case MSH_TRI_10 :
     F.monomials = generatePascalTriangle(3);
     F.points =    gmshGeneratePointsTriangle(3, false);
-    generate2dEdgeClosure (F.edgeClosure,3);
+    generate2dEdgeClosure(F.edgeClosure, 3);
     break;
   case MSH_TRI_12 :
     F.monomials = generatePascalSerendipityTriangle(4);
     F.points =    gmshGeneratePointsTriangle(4, true);
-    generate2dEdgeClosure (F.edgeClosure,4);
+    generate2dEdgeClosure(F.edgeClosure, 4);
     break;
   case MSH_TRI_15 :
     F.monomials = generatePascalTriangle(4);
     F.points =    gmshGeneratePointsTriangle(4, false);
-    generate2dEdgeClosure (F.edgeClosure,4);
+    generate2dEdgeClosure(F.edgeClosure, 4);
     break;
   case MSH_TRI_15I :
     F.monomials = generatePascalSerendipityTriangle(5);
     F.points =    gmshGeneratePointsTriangle(5, true);
-    generate2dEdgeClosure (F.edgeClosure,5);
+    generate2dEdgeClosure(F.edgeClosure, 5);
     break;
   case MSH_TRI_21 :
     F.monomials = generatePascalTriangle(5);
     F.points =    gmshGeneratePointsTriangle(5, false);
-    generate2dEdgeClosure (F.edgeClosure,5);
+    generate2dEdgeClosure(F.edgeClosure, 5);
     break;
   case MSH_TET_4 :
     F.monomials = generatePascalTetrahedron(1);
     F.points =    gmshGeneratePointsTetrahedron(1, false);
-    generate3dFaceClosure (F.faceClosure,1);
+    generate3dFaceClosure(F.faceClosure, 1);
     break;
   case MSH_TET_10 :
     F.monomials = generatePascalTetrahedron(2);
     F.points =    gmshGeneratePointsTetrahedron(2, false);
-    generate3dFaceClosure (F.faceClosure,2);
+    generate3dFaceClosure(F.faceClosure, 2);
     break;
   case MSH_TET_20 :
     F.monomials = generatePascalTetrahedron(3);
     F.points =    gmshGeneratePointsTetrahedron(3, false);
-    generate3dFaceClosure (F.faceClosure,3);
+    generate3dFaceClosure(F.faceClosure, 3);
     break;
   case MSH_TET_35 :
     F.monomials = generatePascalTetrahedron(4);
     F.points =    gmshGeneratePointsTetrahedron(4, false);
-    generate3dFaceClosure (F.faceClosure,4);
+    generate3dFaceClosure(F.faceClosure, 4);
     break;
   case MSH_TET_34 :
     F.monomials = generatePascalSerendipityTetrahedron(4);
     F.points =    gmshGeneratePointsTetrahedron(4, true);
-    generate3dFaceClosure (F.faceClosure,4);
+    generate3dFaceClosure(F.faceClosure, 4);
     break;
   case MSH_TET_52 :
     F.monomials = generatePascalSerendipityTetrahedron(5);
     F.points =    gmshGeneratePointsTetrahedron(5, true);
-    generate3dFaceClosure (F.faceClosure,5);
+    generate3dFaceClosure(F.faceClosure, 5);
     break;
   case MSH_TET_56 :
     F.monomials = generatePascalTetrahedron(5);
     F.points =    gmshGeneratePointsTetrahedron(5, false);
-    generate3dFaceClosure (F.faceClosure,5);
+    generate3dFaceClosure(F.faceClosure, 5);
     break;
   case MSH_QUA_4 :
     F.monomials = generatePascalQuad(1);
@@ -913,7 +913,7 @@ const functionSpace &functionSpaces::find(int tag)
     Msg::Error("Unknown function space %d: reverting to TET_4", tag);
     F.monomials = generatePascalTetrahedron(1);
     F.points =    gmshGeneratePointsTetrahedron(1, false);
-    generate3dFaceClosure (F.faceClosure,1);
+    generate3dFaceClosure(F.faceClosure, 1);
     break;
   }  
   F.coefficients = generateLagrangeMonomialCoefficients(F.monomials, F.points);
@@ -921,18 +921,18 @@ const functionSpace &functionSpaces::find(int tag)
   return fs[tag];
 }
 
-std::map<std::pair<int, int>, fullMatrix<double> > functionSpaces::injector;
+std::map<std::pair<int, int>, fullMatrix<double> > polynomialBases::injector;
 
-const fullMatrix<double> &functionSpaces::findInjector(int tag1, int tag2)
+const fullMatrix<double> &polynomialBases::findInjector(int tag1, int tag2)
 {
   std::pair<int,int> key(tag1,tag2);
   std::map<std::pair<int, int>, fullMatrix<double> >::const_iterator it = injector.find(key);
   if (it != injector.end()) return it->second;
 
-  const functionSpace& fs1 = find(tag1);
-  const functionSpace& fs2 = find(tag2);
+  const polynomialBasis& fs1 = find(tag1);
+  const polynomialBasis& fs2 = find(tag2);
 
-  fullMatrix<double> inj(fs1.points.size1(),fs2.points.size1());
+  fullMatrix<double> inj(fs1.points.size1(), fs2.points.size1());
   
   double sf[256];
   

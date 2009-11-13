@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <string>
+#include <complex>
 #include <map>
 #include "MVertex.h"
 #include "linearSystem.h"
@@ -43,21 +44,42 @@ class Dof{
   }
 };
 
-template<class dataVec, class dataMat>
+template<class T> struct dofTraits
+{
+  typedef T VecType;
+  typedef T MatType;
+};
+
+template<> struct dofTraits<fullVector<double> >
+{
+  typedef fullVector<double> VecType;
+  typedef fullMatrix<double> MatType;
+};
+
+template<> struct dofTraits<fullVector<std::complex<double> > >
+{
+  typedef fullVector<std::complex<double> > VecType;
+  typedef fullMatrix<std::complex<double> > MatType;
+};
+
+template<class T>
 class DofAffineConstraint{
  public:
-  std::vector<std::pair<Dof, dataMat> > linear;
-  dataVec shift;
+  std::vector<std::pair<Dof, typename dofTraits<T>::MatType> > linear;
+  typename dofTraits<T>::VecType shift;
 };
   
 // data=float, double, complex<double>, smallVec<double>, smallVec<complex<double> >...
-template <class dataVec, class dataMat>
+template <class T>
 class dofManager{
  private:
+  typedef typename dofTraits<T>::VecType dataVec;
+  typedef typename dofTraits<T>::MatType dataMat;
+
   // general affine constraint on sub-blocks, treated by adding
   // equations:
   //   dataMat * DofVec = \sum_i dataMat_i * DofVec_i + dataVec
-  std::map<std::pair<Dof, dataMat>, DofAffineConstraint<dataVec, dataMat> > constraints;
+  std::map<std::pair<Dof, dataMat>, DofAffineConstraint<dataVec> > constraints;
     
   // fixations on full blocks, treated by eliminating equations:
   //   DofVec = dataVec    

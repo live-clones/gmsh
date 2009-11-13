@@ -17,7 +17,7 @@
 
 // \nabla \cdot k \nabla U - a U 
 template<class scalar>
-class helmholtzTerm : public femTerm<scalar, scalar> {
+class helmholtzTerm : public femTerm<scalar> {
  protected:
   const simpleFunction<scalar> *_k, *_a;
   const int _iFieldR;
@@ -25,7 +25,7 @@ class helmholtzTerm : public femTerm<scalar, scalar> {
  public:
   helmholtzTerm(GModel *gm, int iFieldR, int iFieldC, simpleFunction<scalar> *k,
                 simpleFunction<scalar> *a) 
-    : femTerm<scalar, scalar>(gm), _iFieldR(iFieldR), _iFieldC(iFieldC),
+    : femTerm<scalar>(gm), _iFieldR(iFieldR), _iFieldC(iFieldC),
       _k(k), _a(a) {}
   // one dof per vertex (nodal fem)
   virtual int sizeOfR(SElement *se) const 

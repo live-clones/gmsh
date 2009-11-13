@@ -8,7 +8,7 @@
 #include "Context.h"
 #include "qualityMeasures.h"
 #define SQU(a)      ((a)*(a))
-const functionSpace* MQuadrangle::getFunctionSpace(int o) const
+const polynomialBasis* MQuadrangle::getFunctionSpace(int o) const
 {
   int order = (o == -1) ? getPolynomialOrder() : o;
 
@@ -16,19 +16,19 @@ const functionSpace* MQuadrangle::getFunctionSpace(int o) const
 
   if ((nf == 0) && (o == -1)) {
     switch (order) {
-      case 1: return &functionSpaces::find(MSH_QUA_4);
-      case 2: return &functionSpaces::find(MSH_QUA_8);
-      case 3: return &functionSpaces::find(MSH_QUA_12);
-      case 4: return &functionSpaces::find(MSH_QUA_16I);
-      case 5: return &functionSpaces::find(MSH_QUA_20);
+      case 1: return &polynomialBases::find(MSH_QUA_4);
+      case 2: return &polynomialBases::find(MSH_QUA_8);
+      case 3: return &polynomialBases::find(MSH_QUA_12);
+      case 4: return &polynomialBases::find(MSH_QUA_16I);
+      case 5: return &polynomialBases::find(MSH_QUA_20);
     }
   }
   switch (order) {
-    case 1: return &functionSpaces::find(MSH_QUA_4);
-    case 2: return &functionSpaces::find(MSH_QUA_9);
-    case 3: return &functionSpaces::find(MSH_QUA_16);
-    case 4: return &functionSpaces::find(MSH_QUA_25);
-    case 5: return &functionSpaces::find(MSH_QUA_36);
+    case 1: return &polynomialBases::find(MSH_QUA_4);
+    case 2: return &polynomialBases::find(MSH_QUA_9);
+    case 3: return &polynomialBases::find(MSH_QUA_16);
+    case 4: return &polynomialBases::find(MSH_QUA_25);
+    case 5: return &polynomialBases::find(MSH_QUA_36);
     default: Msg::Error("Order %d triangle function space not implemented", order);
   }
   return 0;

@@ -6,7 +6,7 @@
 set(SRC
   Numeric.cpp
     fullMatrix.cpp
-    functionSpace.cpp
+    polynomialBasis.cpp
   GaussQuadratureLin.cpp
     GaussQuadratureTri.cpp
     GaussQuadratureQuad.cpp

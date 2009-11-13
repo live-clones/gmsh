@@ -3,19 +3,19 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _FUNCTION_SPACE_H_
-#define _FUNCTION_SPACE_H_
+#ifndef _POLYNOMIAL_BASIS_H_
+#define _POLYNOMIAL_BASIS_H_
 
 #include <math.h>
 #include <map>
 #include <vector>
 #include "fullMatrix.h"
 
-// presently thos function spaces are only for simplices
-// should be extended to other elements like quads and hexes
-struct functionSpace 
+// presently those function spaces are only for simplices and quads;
+// should be extended to other elements like hexes
+struct polynomialBasis 
 {
-  typedef  std::vector<std::vector<int> > clCont;
+  typedef std::vector<std::vector<int> > clCont;
   clCont faceClosure;
   clCont edgeClosure;
   fullMatrix<double> points;
@@ -23,11 +23,13 @@ struct functionSpace
   fullMatrix<double> coefficients;
   // for a given face/edge, with both a sign and a rotation,
   // give an ordered list of nodes on this face/edge
-  inline const std::vector<int> & getFaceClosure (int iFace, int iSign, int iRot)const{
-    return faceClosure[iFace+4*(iSign==1?0:1)+8*iRot];
+  inline const std::vector<int> &getFaceClosure(int iFace, int iSign, int iRot) const
+  {
+    return faceClosure[iFace + 4 * (iSign == 1 ? 0 : 1) + 8 * iRot];
   }
-  inline const std::vector<int> & getEdgeClosure (int iEdge, int iSign) const{
-    return edgeClosure[iSign == 1 ? iEdge : 3+iEdge];
+  inline const std::vector<int> &getEdgeClosure(int iEdge, int iSign) const
+  {
+    return edgeClosure[iSign == 1 ? iEdge : 3 + iEdge];
   }
   inline void evaluateMonomials(double u, double v, double w, double p[]) const 
   {
@@ -108,13 +110,13 @@ struct functionSpace
   }
 };
 
-class functionSpaces 
+class polynomialBases
 {
  private:
-  static std::map<int, functionSpace> fs;
+  static std::map<int, polynomialBasis> fs;
   static std::map<std::pair<int, int>, fullMatrix<double> > injector;
  public :
-  static const functionSpace &find(int);
+  static const polynomialBasis &find(int);
   static const fullMatrix<double> &findInjector(int, int);
 };
 

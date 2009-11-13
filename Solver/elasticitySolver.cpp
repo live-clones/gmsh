@@ -59,7 +59,7 @@ PView* elasticitySolver::buildDisplacementView  (const std::string &postFileName
 #endif
 
 
-static double vonMises(dofManager<double,double> *a, MElement *e, 
+static double vonMises(dofManager<double> *a, MElement *e, 
                        double u, double v, double w, 
                        double E, double nu, int _tag)
 {
@@ -195,7 +195,7 @@ void elasticitySolver::solve()
   linearSystemGmm<double> *lsys = new linearSystemGmm<double>;
   lsys->setNoisy(2);
 #endif
-  pAssembler = new dofManager<double, double>(lsys);
+  pAssembler = new dofManager<double>(lsys);
 
   std::map<int, std::vector<GEntity*> > groups[4];
   pModel->getPhysicalGroups(groups);

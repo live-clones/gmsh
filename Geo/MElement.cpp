@@ -110,7 +110,7 @@ double MElement::rhoShapeMeasure()
 
 void MElement::getShapeFunctions(double u, double v, double w, double s[], int o)
 {
-  const functionSpace* fs = getFunctionSpace(o);
+  const polynomialBasis* fs = getFunctionSpace(o);
   if(fs) fs->f(u, v, w, s);
   else Msg::Error("Function space not implemented for this type of element");
 }
@@ -118,7 +118,7 @@ void MElement::getShapeFunctions(double u, double v, double w, double s[], int o
 void MElement::getGradShapeFunctions(double u, double v, double w, double s[][3], 
                                      int o)
 {
-  const functionSpace* fs = getFunctionSpace(o);
+  const polynomialBasis* fs = getFunctionSpace(o);
   if(fs) fs->df(u, v, w, s);
   else Msg::Error("Function space not implemented for this type of element");
 }

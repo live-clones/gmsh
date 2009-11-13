@@ -14,7 +14,7 @@
 #include "fullMatrix.h"
 #include "Numeric.h"
 
-class crossConfTerm : public femTerm<double, double> {
+class crossConfTerm : public femTerm<double> {
  protected:
   const simpleFunction<double> *_diffusivity;
   const int _iFieldR;
@@ -22,7 +22,7 @@ class crossConfTerm : public femTerm<double, double> {
  public:
   crossConfTerm(GModel *gm, int iFieldR, int iFieldC, 
                 simpleFunction<double> *diffusivity)
-    : femTerm<double, double>(gm), _iFieldR(iFieldR), _iFieldC(iFieldC), 
+    : femTerm<double>(gm), _iFieldR(iFieldR), _iFieldC(iFieldC), 
       _diffusivity(diffusivity) {}
   virtual int sizeOfR(SElement *se) const 
   {

@@ -6,7 +6,7 @@
 #include "PViewDataList.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
-#include "functionSpace.h"
+#include "polynomialBasis.h"
 #include "Numeric.h"
 #include "SmoothData.h"
 #include "Context.h"
@@ -784,7 +784,7 @@ void PViewDataList::setOrder2(int type)
   case TYPE_PRI: typeMSH = MSH_PRI_18; break;
   case TYPE_PYR: typeMSH = MSH_PYR_14; break;
   }
-  const functionSpace *fs = &functionSpaces::find(typeMSH);
+  const polynomialBasis *fs = &polynomialBases::find(typeMSH);
   if(!fs){
     Msg::Error("Could not find function space for element type %d", typeMSH);
     return;

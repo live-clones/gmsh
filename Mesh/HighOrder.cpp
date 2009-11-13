@@ -21,7 +21,7 @@
 #include "Numeric.h"
 #include "Context.h"
 #include "fullMatrix.h"
-#include "functionSpace.h"
+#include "polynomialBasis.h"
 
 #define SQU(a)      ((a)*(a))
 
@@ -521,15 +521,15 @@ static void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &v
   
   switch (nPts){
   case 2 :
-    points = functionSpaces::find(MSH_TRI_10).points;
+    points = polynomialBases::find(MSH_TRI_10).points;
     start = 9;
     break;
   case 3 :
-    points = functionSpaces::find(MSH_TRI_15).points;
+    points = polynomialBases::find(MSH_TRI_15).points;
     start = 12;
     break;
   case 4 :
-    points = functionSpaces::find(MSH_TRI_21).points;
+    points = polynomialBases::find(MSH_TRI_21).points;
     start = 15;
     break;
   default :  
@@ -614,11 +614,11 @@ static void getRegionVertices(GRegion *gr, MElement *incomplete, MElement *ele,
 
   switch (nPts){
   case 3 :
-    points = functionSpaces::find(MSH_TET_35).points;
+    points = polynomialBases::find(MSH_TET_35).points;
     start = 34;
     break;
   case 4 :
-    points = functionSpaces::find(MSH_TET_56).points;
+    points = polynomialBases::find(MSH_TET_56).points;
     start = 52;
     break;
   default :  

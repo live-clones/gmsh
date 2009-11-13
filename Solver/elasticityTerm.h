@@ -12,7 +12,7 @@
 #include "SElement.h"
 #include "fullMatrix.h"
 
-class elasticityTerm : public femTerm<double, double> {
+class elasticityTerm : public femTerm<double> {
  protected:
   double _E, _nu;
   int _iFieldR, _iFieldC;
@@ -49,9 +49,9 @@ class elasticityTerm : public femTerm<double, double> {
   }
  public:
  elasticityTerm(GModel *gm, double E, double nu, int fieldr, int fieldc)
-   : femTerm<double, double>(gm), _E(E), _nu(nu), _iFieldR(fieldr),_iFieldC(fieldc) {}
+   : femTerm<double>(gm), _E(E), _nu(nu), _iFieldR(fieldr),_iFieldC(fieldc) {}
  elasticityTerm(GModel *gm, double E, double nu, int fieldr)
-   : femTerm<double, double>(gm), _E(E), _nu(nu), _iFieldR(fieldr),_iFieldC(fieldr) {}
+   : femTerm<double>(gm), _E(E), _nu(nu), _iFieldR(fieldr),_iFieldC(fieldr) {}
   void setVector(const SVector3 &f) { _volumeForce = f; }
   void elementMatrix(SElement *se, fullMatrix<double> &m) const;
   void elementVector(SElement *se, fullVector<double> &m) const;

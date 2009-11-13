@@ -9,7 +9,7 @@
 
 #include <slepceps.h>
 
-eigenSolver::eigenSolver(dofManager<double, double> *manager, std::string A, 
+eigenSolver::eigenSolver(dofManager<double> *manager, std::string A, 
                          std::string B) : _A(0), _B(0)
 {
   if(A.size()){

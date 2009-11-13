@@ -1,6 +1,6 @@
 #include "dgGroupOfElements.h"
 #include "MElement.h"
-#include "functionSpace.h"
+#include "polynomialBasis.h"
 #include "Numeric.h"
 #include "MTriangle.h"
 #include "MLine.h"
@@ -20,9 +20,9 @@ static fullMatrix<double> * dgGetIntegrationRule (MElement *e, int p){
 }
 
 static fullMatrix<double> * dgGetFaceIntegrationRuleOnElement (
-      const functionSpace *fsFace,
+      const polynomialBasis *fsFace,
       const fullMatrix<double> &intgFace,
-      const functionSpace *fsElement,
+      const polynomialBasis *fsElement,
       const std::vector <int> *closure) {
   int npts=intgFace.size1();
   fullMatrix<double> *m = new fullMatrix<double> (npts, 4);
