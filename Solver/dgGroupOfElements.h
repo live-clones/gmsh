@@ -86,18 +86,19 @@ class dgFace {
   int nbGaussPoints;
   MElement *_left, *_right;
   MElement *_face;
-  double *_normals;
-  const fullMatrix<double> *_solutionRight, *_solutionLeft, *_integration;
+  const fullMatrix<double> *_solutionRight, *_solutionLeft, *_integration,*_normals;
 public:
   dgFace (MElement *face,MElement *left, MElement *right,
-    const fullMatrix<double> &solRight,
     const fullMatrix<double> &solLeft,
-    const fullMatrix<double> &integration
-    ) : _left(left), _right(right), _face(face),_solutionRight(&solRight),_solutionLeft(&solLeft),_integration(&integration)
+    const fullMatrix<double> &solRight,
+    const fullMatrix<double> &integration,
+    const fullMatrix<double> &normals
+    ) : _left(left), _right(right), _face(face),_solutionRight(&solRight),_solutionLeft(&solLeft),_integration(&integration),_normals(&normals)
   {}
   inline const fullMatrix<double> &solutionRight() const { return *_solutionRight; }
   inline const fullMatrix<double> &solutionLeft() const { return *_solutionLeft; }
   inline const fullMatrix<double> &integration() const { return *_integration; }
+  inline const fullMatrix<double> &normals() const { return *_normals; }
   inline MElement *left() const { return _left;}
   inline MElement *right() const { return _right;}
   inline MElement *face() const { return _face;}
@@ -140,6 +141,7 @@ public:
   inline MElement* getFace (int iElement) const {return _faces[iElement];}  
   const std::vector<int> * getClosureLeft(int iFace) const{ return _closuresLeft[iFace];}
   const std::vector<int> * getClosureRight(int iFace) const{ return _closuresRight[iFace];}
+  inline fullMatrix<double> getNormals (int iFace) const {return fullMatrix<double>(*_normals,iFace*getNbIntegrationPoints(),getNbIntegrationPoints());}
   dgGroupOfFaces (const dgGroupOfElements &elements,int pOrder);
   virtual ~dgGroupOfFaces ();
   //this part is common with dgGroupOfElements, we should try polymorphism
@@ -149,7 +151,7 @@ public:
   inline const fullMatrix<double> & getCollocationMatrix () const {return *_collocation;}
   inline const fullMatrix<double> & getIntegrationPointsMatrix () const {return *_integration;}
   inline const fullMatrix<double> & getRedistributionMatrix () const {return *_redistribution;}
-  inline double getDetJ (int iElement, int iGaussPoint) const {return (*_detJac)(iElement, iGaussPoint);}
+  inline double getDetJ (int iElement, int iGaussPoint) const {return (*_detJac)(iGaussPoint,iElement);}
   //keep this outside the Algorithm because this is the only place where data overlap
   void mapToInterface(int nFields, const fullMatrix<double> &vLeft, const fullMatrix<double> &vRight, fullMatrix<double> &v);
   void mapFromInterface(int nFields, const fullMatrix<double> &v, fullMatrix<double> &vLeft, fullMatrix<double> &vRight);

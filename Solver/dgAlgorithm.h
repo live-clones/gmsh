@@ -6,6 +6,7 @@
 class dgGroupOfElements;
 class dgGroupOfFaces;
 class dgConservationLaw;
+class dgTerm;
 
 class dgAlgorithm {
  public :
@@ -22,6 +23,10 @@ class dgAlgorithm {
   void residualBoundaryConditions ( /*dofManager &dof,*/
 				    const dgConservationLaw &law,
 				    const dgGroupOfElements & group);
+  void multAddInverseMassMatrix ( /*dofManager &dof,*/
+      const dgGroupOfElements & group,
+      fullMatrix<double> &residu,
+      fullMatrix<double> &sol);
 };
 
 

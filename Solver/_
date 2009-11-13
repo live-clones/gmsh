@@ -1,6 +1,6 @@
 #include "dgGroupOfElements.h"
 #include "MElement.h"
-#include "polynomialBasis.h"
+#include "functionSpace.h"
 #include "Numeric.h"
 #include "MTriangle.h"
 #include "MLine.h"
@@ -20,9 +20,9 @@ static fullMatrix<double> * dgGetIntegrationRule (MElement *e, int p){
 }
 
 static fullMatrix<double> * dgGetFaceIntegrationRuleOnElement (
-      const polynomialBasis *fsFace,
+      const functionSpace *fsFace,
       const fullMatrix<double> &intgFace,
-      const polynomialBasis *fsElement,
+      const functionSpace *fsElement,
       const std::vector <int> *closure) {
   int npts=intgFace.size1();
   fullMatrix<double> *m = new fullMatrix<double> (npts, 4);
@@ -31,8 +31,9 @@ static fullMatrix<double> * dgGetFaceIntegrationRuleOnElement (
     fsFace->f(intgFace(i,0),intgFace(i,1),intgFace(i,2),f);
     for(size_t j=0; j<closure->size();j++){
       int jNod=(*closure)[j];
-      for(int k=0;k<fsElement->points.size2();k++)
-        (*m)(i,k) += f[j] * fsElement->points(jNod,k);
+      (*m)(i,0) += f[j] * fsElement->points(jNod,0);
+      (*m)(i,1) += f[j] * fsElement->points(jNod,1);
+      (*m)(i,2) += f[j] * fsElement->points(jNod,2);
       (*m)(i,3) = intgFace(i,3);
     }
   }
@@ -125,23 +126,16 @@ void dgGroupOfFaces::computeFaceNormals () {
   for (size_t i=0; i<_faces.size();i++){
     const std::vector<int> &closure=*_closuresLeft[i];
     fullMatrix<double> *intLeft=dgGetFaceIntegrationRuleOnElement(_fsFace,*_integration,_fsLeft,&closure);
-    double jac[3][3],ijac[3][3];
     for (int j=0; j<intLeft->size1(); j++){
       _fsLeft->df((*intLeft)(j,0),(*intLeft)(j,1),(*intLeft)(j,2),g);
-      getElementLeft(i)->getJacobian ((*intLeft)(j,0), (*intLeft)(j,1), (*intLeft)(j,2), jac);
-      inv3x3(jac,ijac);
       double &nx=(*_normals)(0,index);
       double &ny=(*_normals)(1,index);
       double &nz=(*_normals)(2,index);
-      double nu=0,nv=0,nw=0;
       for (size_t k=0; k<closure.size(); k++){
-        nu += g[closure[k]][0];
-        nv += g[closure[k]][1];
-        nw += g[closure[k]][2];
+        nx += g[closure[k]][0];
+        ny += g[closure[k]][1];
+        nz += g[closure[k]][2];
       }
-      nx = nu*ijac[0][0]+nv*ijac[0][1]+nw*ijac[0][2];
-      ny = nu*ijac[1][0]+nv*ijac[1][1]+nw*ijac[1][2];
-      nz = nu*ijac[2][0]+nv*ijac[2][1]+nw*ijac[2][2];
       double norm = sqrt(nx*nx+ny*ny+nz*nz);
       nx/=norm;
       ny/=norm;
@@ -186,7 +180,7 @@ void dgGroupOfFaces::addFace(const MFace &topoFace, int iElLeft, int iElRight){
   // quad face 2 do
   else throw;
 }
-static std::vector<int> *fakeClosure2d(const polynomialBasis *fs, int ithEdge, int sign){
+static std::vector<int> *fakeClosure2d(const functionSpace *fs, int ithEdge, int sign){
   std::vector<int> closure;
   if(sign==1){
     closure.push_back(ithEdge);
@@ -212,12 +206,8 @@ void dgGroupOfFaces::addEdge(const MEdge &topoEdge, int iElLeft, int iElRight){
   _closuresRight.push_back(fakeClosure2d(_fsRight, ithEdge, sign));
   const std::vector<int> &geomClosure = elRight.getFunctionSpace()->getEdgeClosure(ithEdge, sign);
   std::vector<MVertex*> vertices;
-  if(sign==1)
-    for(int j=0;j<topoEdge.getNumVertices();j++)
-      vertices.push_back(topoEdge.getVertex(j));
-  else
-    for(int j=topoEdge.getNumVertices()-1;j>=0;j--)
-      vertices.push_back(topoEdge.getVertex(j));
+  for(int j=0;j<topoEdge.getNumVertices();j++)
+    vertices.push_back(topoEdge.getVertex(j));
   for (int j=0; j<geomClosure.size() ; j++)
     vertices.push_back( elRight.getVertex(geomClosure[j]) );
   switch(vertices.size()){
@@ -231,22 +221,24 @@ void dgGroupOfFaces::init(int pOrder) {
   _fsFace = _faces[0]->getFunctionSpace (pOrder);
   _integration=dgGetIntegrationRule (_faces[0],pOrder);
   _redistribution = new fullMatrix<double> (_fsFace->coefficients.size1(),_integration->size1());
-  _collocation = new fullMatrix<double> (_integration->size1(), _fsFace->coefficients.size1());
+  _collocation = new fullMatrix<double> (_fsFace->coefficients.size1(), _integration->size1());
   _detJac = new fullMatrix<double> (_integration->size1(), _faces.size());
   double f[256];
   for (int j=0;j<_integration->size1();j++) {
     _fsFace->f((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), f);
     const double weight = (*_integration)(j,3);
     for (int k=0;k<_fsFace->coefficients.size1();k++){ 
-      (*_redistribution)(k,j) = f[k] * weight;
-      (*_collocation)(j,k) = f[k];
+      (*_redistribution)(k,j) = f[j] * weight;
+      (*_collocation)(k,j) = f[k];
     }
   }
   for (int i=0;i<_faces.size();i++){
     MElement *f = _faces[i];
     for (int j=0;j< _integration->size1() ; j++ ){
-      double jac[3][3];
-      (*_detJac)(j,i)=f->getJacobian ((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), jac);
+      double jac[3][3],ijac[3][3],detjac;
+      f->getJacobian ((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), jac);
+      const double weight = (*_integration)(j,3);
+      (*_detJac)(j,i) = inv3x3(jac,ijac);
     }
   }
   computeFaceNormals();
@@ -254,9 +246,7 @@ void dgGroupOfFaces::init(int pOrder) {
 
 dgGroupOfFaces::~dgGroupOfFaces()
 {
-  delete _redistribution;
-  delete _collocation;
-  delete _detJac;
+  
 }
 
 dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, int pOrder):
@@ -309,13 +299,16 @@ void dgGroupOfFaces::mapToInterface ( int nFields,
     const std::vector<int> &closureRight = *getClosureRight(i);
     const std::vector<int> &closureLeft = *getClosureLeft(i);
     for (int iField=0; iField<nFields; iField++){
+    printf("closure size=%i\n",closureLeft.size());
       for(size_t j =0; j < closureLeft.size(); j++){
         v(j, i*2*nFields + iField) = vLeft(closureLeft[j], _left[i]*nFields + iField);
+        printf("vv=%e\n",v(j, i*2*nFields + iField));
       }
       for(size_t j =0; j < closureRight.size(); j++)
         v(j, (i*2+1)*nFields + iField) = vRight(closureRight[j], _right[i]*nFields + iField);
     }
   }
+  v.print();
 }
 
 void dgGroupOfFaces::mapFromInterface ( int nFields,
@@ -329,9 +322,9 @@ void dgGroupOfFaces::mapFromInterface ( int nFields,
     const std::vector<int> &closureLeft = *getClosureLeft(i);
     for (int iField=0; iField<nFields; iField++){
       for(size_t j =0; j < closureLeft.size(); j++)
-        vLeft(closureLeft[j], _left[i]*nFields + iField) += v(j, i*2*nFields + iField);
+        vLeft(closureLeft[j], _left[i]*nFields + iField) = v(j, i*2*nFields + iField);
       for(size_t j =0; j < closureRight.size(); j++)
-        vRight(closureRight[j], _right[i]*nFields + iField) += v(j, (i*2+1)*nFields + iField);
+        vRight(closureRight[j], _right[i]*nFields + iField) = v(j, (i*2+1)*nFields + iField);
     }
   }
 }

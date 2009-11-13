@@ -11,29 +11,70 @@
 void print (const char *filename,const dgGroupOfElements &els, double *v);
 std::vector<MElement *> getAllTri(GModel *model);
 
+class testSourceTerm : public dgTerm {
+  void operator () (const dgElement &el, fullMatrix<double> fcx[]) const{
+    const fullMatrix<double> &sol = el.solution();
+    const fullMatrix<double> &qp = el.integration();
+    SPoint3 p;
+    for(int i=0; i< sol.size1(); i++) {
+      el.element()->pnt(qp(i,0),qp(i,1),qp(i,2),p);
+      fcx[0](i,0)=exp(-(pow(p.x()-0.2,2)+pow(p.y(),2))*100);
+    }
+  }
+};
+
+class dgConservationLawInitialCondition : public dgConservationLaw {
+  public:
+  dgConservationLawInitialCondition() {
+    _nbf = 1;
+    _source = new testSourceTerm;
+  }
+  ~dgConservationLawInitialCondition() {
+    delete _source;
+  }
+};
+
 int main(int argc, char **argv){
   GmshMergeFile("input/mesh1.msh");
+  //GmshMergeFile("square2.msh");
   std::vector<MElement *> allTri=getAllTri(GModel::current());
   int order=1;
   dgGroupOfElements elements(allTri,order);
   dgGroupOfFaces faces(elements,order);
-  int nbNodes=elements.getNbNodes();
+  //dgGroupOfFaces faces(elements0,elements1,order);
+  int nbNodes = elements.getNbNodes();
   fullMatrix<double> sol(nbNodes,elements.getNbElements());
-  fullMatrix<double> solInterface(nbNodes,faces.getNbElements()*2);
   fullMatrix<double> residu(nbNodes,elements.getNbElements());
-  fullMatrix<double> residuInterface(nbNodes,faces.getNbElements()*2);
   dgAlgorithm algo;
-  dgConservationLaw *law = dgNewConservationLawAdvection();
-  algo.residualVolume(*law,elements,sol,residu);
-  faces.mapToInterface(1, sol, sol, solInterface);
-  algo.residualInterface(*law,faces,solInterface,residuInterface);
-  faces.mapFromInterface(1, residuInterface, residu, residu);
-  for(int i=0;i<elements.getNbElements();i++) {
-    fullMatrix<double> residuEl(residu,i,1);
-    fullMatrix<double> solEl(sol,i,1);
-    solEl.gemm(elements.getInverseMassMatrix(i),residuEl);
+  // initial condition
+  {
+    dgConservationLawInitialCondition initLaw;
+    algo.residualVolume(initLaw,elements,sol,residu);
+    algo.multAddInverseMassMatrix(elements,residu,sol);
   }
-  print("test.pos",elements,&sol(0,0));
+  print("init.pos",elements,&sol(0,0));
+  //advection
+  dgConservationLaw *law = dgNewConservationLawAdvection();
+  for(int iT=0; iT<1000; iT++) {
+    residu.scale(0);
+    algo.residualVolume(*law,elements,sol,residu);
+    { //interface term
+      fullMatrix<double> solInterface(faces.getNbNodes(),faces.getNbElements()*2);
+      fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements()*2);
+      faces.mapToInterface(1, sol, sol, solInterface);
+      algo.residualInterface(*law,faces,solInterface,residuInterface);
+      faces.mapFromInterface(1, residuInterface, residu, residu);
+    }
+    residu.scale(0.01);
+    algo.multAddInverseMassMatrix(elements,residu,sol);
+    if(iT%10==0){
+      char name[100];
+      sprintf(name,"test_%05i.pos",iT/10);
+      printf("%i\n",iT);
+      print(name,elements,&sol(0,0));
+    }
+  }
+  delete law;
 }
 
 std::vector<MElement *> getAllTri(GModel *model){
