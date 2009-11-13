@@ -39,6 +39,17 @@ void GEdge::deleteMesh()
   lines.clear();
 }
 
+void GEdge::reverse()
+{
+  GVertex* tmp=v0;
+  v0=v1;
+  v1=tmp;
+  for (std::vector<MLine*>::iterator line = lines.begin();
+       line != lines.end();
+       line++)
+    (*line)->revert();
+}
+
 unsigned int GEdge::getNumMeshElements()
 { 
   return lines.size();

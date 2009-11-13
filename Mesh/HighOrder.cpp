@@ -259,10 +259,9 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
           reparamOK &= reparamMeshVertexOnEdge(v1, ge, u1);
         if(reparamOK){
 	  if (u1 < u0) {
-	    ge->swapVertices();
-	    double tmp = u0;
-	    u0 = u1;
-	    u1 = tmp;
+	    ge->reverse();
+	    edge = ele->getEdge(i);
+	    double tmp = u0; u0 = u1; u1 = tmp;
 	  }
           double relax = 1.;
           while (1){
