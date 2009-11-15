@@ -980,13 +980,13 @@ void drawContext::drawMesh()
   // make sure to flag any model-dependent post-processing view as
   // changed if the underlying mesh has, before resetting the changed
   // flag
-  for(unsigned int i = 0; i < GModel::list.size(); i++){
-    GModel *m = GModel::list[i];
-    for(unsigned int j = 0; j < PView::list.size(); j++)
-      if(PView::list[j]->getData()->hasModel(m) && CTX::instance()->mesh.changed)
-        PView::list[j]->setChanged(true);
+  if(CTX::instance()->mesh.changed){
+    for(unsigned int i = 0; i < GModel::list.size(); i++)
+      for(unsigned int j = 0; j < PView::list.size(); j++)
+        if(PView::list[j]->getData()->hasModel(GModel::list[i]))
+          PView::list[j]->setChanged(true);
   }
-
+  
   glPointSize((float)CTX::instance()->mesh.pointSize);
   gl2psPointSize((float)(CTX::instance()->mesh.pointSize * 
                          CTX::instance()->print.epsPointSizeFactor));
