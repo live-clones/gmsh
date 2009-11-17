@@ -35,7 +35,7 @@ class dgConservationLawInitialCondition : public dgConservationLaw {
 };
 
 int main(int argc, char **argv){
-  GmshMergeFile("input/mesh1.msh");
+  GmshMergeFile("mesh1.msh");
   //GmshMergeFile("square2.msh");
   std::vector<MElement *> allTri=getAllTri(GModel::current());
   int order=1;

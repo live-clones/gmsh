@@ -973,3 +973,6 @@ message("")
 
 mark_as_advanced(BISON FLEX GMP_LIB GMSH_EXTRA_VERSION HDF5_LIB MAKEINFO 
                  MED_LIB OCC_INC SZ_LIB TAUCS_LIB TEXI2PDF)
+
+add_executable(gmshdg EXCLUDE_FROM_ALL Solver/dgMainTest.cpp ${GMSH_SRC})
+target_link_libraries(gmshdg ${LINK_LIBRARIES})
