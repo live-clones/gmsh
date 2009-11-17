@@ -749,19 +749,17 @@ static void generate3dFaceClosure(polynomialBasis::clCont &closure, int order)
 static void generate2dEdgeClosure(polynomialBasis::clCont &closure, int order)
 {
   closure.clear();
-  // first give edge nodes of the three edges in direct order
-  int index = 3;
-  std::vector<int> c0,c1,c2;
-  for (int i = 0; i < order - 1; i++, index++) c0.push_back(index);
-  for (int i = 0; i < order - 1; i++, index++) c1.push_back(index);
-  for (int i = 0; i < order - 1; i++, index++) c2.push_back(index);
-  closure.push_back(c0);closure.push_back(c1);closure.push_back(c2);
-  // then give edge nodes in reverse order
-  std::vector<int> c3,c4,c5;
-  for (int i = c0.size() - 1; i >= 0; i--) c3.push_back(c0[i]);
-  for (int i = c1.size() - 1; i >= 0; i--) c4.push_back(c1[i]);
-  for (int i = c2.size() - 1; i >= 0; i--) c5.push_back(c2[i]);
-  closure.push_back(c3); closure.push_back(c4); closure.push_back(c5);
+  closure.resize(6);
+  for (int j = 0; j < 3 ; j++){
+    closure[j].push_back(j);
+    closure[j].push_back((j+1)%3);
+    closure[3+j].push_back((j+1)%3);
+    closure[3+j].push_back(j);
+    for (int i=0; i < order-1; i++){
+      closure[j].push_back( 3 + (order-1)*j + i );
+      closure[3+j].push_back(3 + (order-1)*(j+1) -i -1);
+    }
+  }
 }
 
 std::map<int, polynomialBasis> polynomialBases::fs;

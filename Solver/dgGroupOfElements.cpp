@@ -4,6 +4,7 @@
 #include "Numeric.h"
 #include "MTriangle.h"
 #include "MLine.h"
+#include "GModel.h"
 
 static fullMatrix<double> * dgGetIntegrationRule (MElement *e, int p){
   int npts;
@@ -156,22 +157,24 @@ void dgGroupOfFaces::addFace(const MFace &topoFace, int iElLeft, int iElRight){
   // compute all closures
   // compute closures for the interpolation
   _left.push_back(iElLeft);
-  _right.push_back(iElRight);
-  MElement &elRight = *_groupRight.getElement(iElRight);
   MElement &elLeft = *_groupLeft.getElement(iElLeft);
   int ithFace, sign, rot;
   elLeft.getFaceInfo (topoFace, ithFace, sign, rot);
   _closuresLeft.push_back(&(_fsLeft->getFaceClosure(ithFace, sign, rot)));
-  elRight.getFaceInfo (topoFace, ithFace, sign, rot);
-  _closuresRight.push_back(&(_fsRight->getFaceClosure(ithFace, sign, rot)));        
+  const std::vector<int> & geomClosure = elLeft.getFunctionSpace()->getFaceClosure(ithFace, sign, rot);
+  if(iElRight>=0){
+    MElement &elRight = *_groupRight.getElement(iElRight);
+    _right.push_back(iElRight);
+    elRight.getFaceInfo (topoFace, ithFace, sign, rot);
+    _closuresRight.push_back(&(_fsRight->getFaceClosure(ithFace, sign, rot)));        
+  }
   // compute the face element that correspond to the geometrical closure
   // get the vertices of the face
   std::vector<MVertex*> vertices;
   for(int j=0;j<topoFace.getNumVertices();j++)
     vertices.push_back(topoFace.getVertex(j));
-  const std::vector<int> & geomClosure = elRight.getFunctionSpace()->getFaceClosure(ithFace, sign, rot);
   for (int j=0; j<geomClosure.size() ; j++)
-    vertices.push_back( elRight.getVertex(geomClosure[j]) );
+    vertices.push_back( elLeft.getVertex(geomClosure[j]) );
   // triangular face
   if (topoFace.getNumVertices() == 3){
     switch(vertices.size()){
@@ -186,31 +189,20 @@ void dgGroupOfFaces::addFace(const MFace &topoFace, int iElLeft, int iElRight){
   // quad face 2 do
   else throw;
 }
-static std::vector<int> *fakeClosure2d(const polynomialBasis *fs, int ithEdge, int sign){
-  std::vector<int> closure;
-  if(sign==1){
-    closure.push_back(ithEdge);
-    closure.push_back((ithEdge+1)%3);
-  }else{
-    closure.push_back((ithEdge+1)%3);
-    closure.push_back(ithEdge);
-  }
-  std::vector<int> closureHO = fs->getEdgeClosure(ithEdge, sign);
-  closure.insert(closure.end(),closureHO.begin(),closureHO.end());
-  return new std::vector<int>(closure);
-}
 
 void dgGroupOfFaces::addEdge(const MEdge &topoEdge, int iElLeft, int iElRight){
   _left.push_back(iElLeft);
-  _right.push_back(iElRight);
-  MElement &elRight = *_groupRight.getElement(iElRight);
   MElement &elLeft = *_groupLeft.getElement(iElLeft);
   int ithEdge, sign;
   elLeft.getEdgeInfo (topoEdge, ithEdge, sign);
-  _closuresLeft.push_back(fakeClosure2d(_fsLeft, ithEdge, sign));
-  elRight.getEdgeInfo (topoEdge, ithEdge, sign);
-  _closuresRight.push_back(fakeClosure2d(_fsRight, ithEdge, sign));
-  const std::vector<int> &geomClosure = elRight.getFunctionSpace()->getEdgeClosure(ithEdge, sign);
+  _closuresLeft.push_back(&_fsLeft->getEdgeClosure(ithEdge, sign));
+  const std::vector<int> &geomClosure = elLeft.getFunctionSpace()->getEdgeClosure(ithEdge, sign);
+  if(iElRight>=0){
+    _right.push_back(iElRight);
+    MElement &elRight = *_groupRight.getElement(iElRight);
+    elRight.getEdgeInfo (topoEdge, ithEdge, sign);
+    _closuresRight.push_back(&_fsRight->getEdgeClosure(ithEdge, sign));
+  }
   std::vector<MVertex*> vertices;
   if(sign==1)
     for(int j=0;j<topoEdge.getNumVertices();j++)
@@ -219,7 +211,7 @@ void dgGroupOfFaces::addEdge(const MEdge &topoEdge, int iElLeft, int iElRight){
     for(int j=topoEdge.getNumVertices()-1;j>=0;j--)
       vertices.push_back(topoEdge.getVertex(j));
   for (int j=0; j<geomClosure.size() ; j++)
-    vertices.push_back( elRight.getVertex(geomClosure[j]) );
+    vertices.push_back( elLeft.getVertex(geomClosure[j]) );
   switch(vertices.size()){
     case 2  : _faces.push_back(new MLine (vertices) ); break;
     case 3  : _faces.push_back(new MLine3 (vertices) ); break;
@@ -257,6 +249,42 @@ dgGroupOfFaces::~dgGroupOfFaces()
   delete _redistribution;
   delete _collocation;
   delete _detJac;
+}
+dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MEdge,Less_Edge> &boundaryEdges):
+  _groupLeft(elGroup),_groupRight(elGroup)
+{
+  _boundaryTag=boundaryTag;
+  if(boundaryTag=="")
+    throw;
+  _fsLeft=_groupLeft.getElement(0)->getFunctionSpace(pOrder);
+  _fsRight=NULL;
+  for(int i=0; i<elGroup.getNbElements(); i++){
+    MElement &el = *elGroup.getElement(i);
+    for (int j=0; j<el.getNumEdges(); j++){
+      MEdge edge = el.getEdge(j);
+      if(boundaryEdges.find(edge)!=boundaryEdges.end())
+        addEdge(edge,i,-1);
+    }
+  }
+  init(pOrder);
+}
+dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MFace,Less_Face> &boundaryFaces):
+  _groupLeft(elGroup),_groupRight(elGroup)
+{
+  _boundaryTag=boundaryTag;
+  if(boundaryTag=="")
+    throw;
+  _fsLeft=_groupLeft.getElement(0)->getFunctionSpace(pOrder);
+  _fsRight=NULL;
+  for(int i=0; i<elGroup.getNbElements(); i++){
+    MElement &el = *elGroup.getElement(i);
+    for (int j=0; j<el.getNumFaces(); j++){
+      MFace face = el.getFace(j);
+      if(boundaryFaces.find(face)!=boundaryFaces.end())
+        addFace(face,i,-1);
+    }
+  }
+  init(pOrder);
 }
 
 dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, int pOrder):
@@ -305,15 +333,27 @@ void dgGroupOfFaces::mapToInterface ( int nFields,
     const fullMatrix<double> &vRight,
     fullMatrix<double> &v)
 {
-  for(int i=0; i<getNbElements(); i++) {
-    const std::vector<int> &closureRight = *getClosureRight(i);
-    const std::vector<int> &closureLeft = *getClosureLeft(i);
-    for (int iField=0; iField<nFields; iField++){
-      for(size_t j =0; j < closureLeft.size(); j++){
-        v(j, i*2*nFields + iField) = vLeft(closureLeft[j], _left[i]*nFields + iField);
+  if(isBoundary()){
+    for(int i=0; i<getNbElements(); i++) {
+      const std::vector<int> &closureLeft = *getClosureLeft(i);
+      for (int iField=0; iField<nFields; iField++){
+        for(size_t j =0; j < closureLeft.size(); j++){
+          v(j, i*nFields + iField) = vLeft(closureLeft[j], _left[i]*nFields + iField);
+        }
       }
-      for(size_t j =0; j < closureRight.size(); j++)
-        v(j, (i*2+1)*nFields + iField) = vRight(closureRight[j], _right[i]*nFields + iField);
+    }
+    
+  }else{
+    for(int i=0; i<getNbElements(); i++) {
+      const std::vector<int> &closureRight = *getClosureRight(i);
+      const std::vector<int> &closureLeft = *getClosureLeft(i);
+      for (int iField=0; iField<nFields; iField++){
+        for(size_t j =0; j < closureLeft.size(); j++){
+          v(j, i*2*nFields + iField) = vLeft(closureLeft[j], _left[i]*nFields + iField);
+        }
+        for(size_t j =0; j < closureRight.size(); j++)
+          v(j, (i*2+1)*nFields + iField) = vRight(closureRight[j], _right[i]*nFields + iField);
+      }
     }
   }
 }
@@ -324,14 +364,25 @@ void dgGroupOfFaces::mapFromInterface ( int nFields,
     fullMatrix<double> &vRight
     )
 {
-  for(int i=0; i<getNbElements(); i++) {
-    const std::vector<int> &closureRight = *getClosureRight(i);
-    const std::vector<int> &closureLeft = *getClosureLeft(i);
-    for (int iField=0; iField<nFields; iField++){
-      for(size_t j =0; j < closureLeft.size(); j++)
-        vLeft(closureLeft[j], _left[i]*nFields + iField) += v(j, i*2*nFields + iField);
-      for(size_t j =0; j < closureRight.size(); j++)
-        vRight(closureRight[j], _right[i]*nFields + iField) += v(j, (i*2+1)*nFields + iField);
+  if(isBoundary()){
+    for(int i=0; i<getNbElements(); i++) {
+      const std::vector<int> &closureLeft = *getClosureLeft(i);
+      for (int iField=0; iField<nFields; iField++){
+        for(size_t j =0; j < closureLeft.size(); j++)
+          vLeft(closureLeft[j], _left[i]*nFields + iField) += v(j, i*nFields + iField);
+      }
+    }
+  }else{
+    for(int i=0; i<getNbElements(); i++) {
+      const std::vector<int> &closureRight = *getClosureRight(i);
+      const std::vector<int> &closureLeft = *getClosureLeft(i);
+      for (int iField=0; iField<nFields; iField++){
+        for(size_t j =0; j < closureLeft.size(); j++)
+          vLeft(closureLeft[j], _left[i]*nFields + iField) += v(j, i*2*nFields + iField);
+        for(size_t j =0; j < closureRight.size(); j++)
+          vRight(closureRight[j], _right[i]*nFields + iField) += v(j, (i*2+1)*nFields + iField);
+      }
     }
   }
 }
+

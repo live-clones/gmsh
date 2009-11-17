@@ -1,7 +1,11 @@
+#include <set>
 #include "dgAlgorithm.h"
 #include "dgGroupOfElements.h"
 #include "dgConservationLaw.h"
-
+#include "GEntity.h"
+#include "MElement.h"
+#include "GModel.h"
+#include "MEdge.h"
 /*
   compute 
     \int \vec{f} \cdot \grad \phi dv   
@@ -134,5 +138,126 @@ void dgAlgorithm::multAddInverseMassMatrix ( /*dofManager &dof,*/
     fullMatrix<double> residuEl(residu,i,1);
     fullMatrix<double> solEl(sol,i,1);
     solEl.gemm(group.getInverseMassMatrix(i),residuEl);
+  }
+}
+
+void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (maybe useless here)
+				   const dgConservationLaw &claw,   // the conservation law
+				   const dgGroupOfFaces &group, 
+           const fullMatrix<double> &solution, // solution !! at faces nodes
+           fullMatrix<double> &residual // residual !! at faces nodes
+           )
+{ 
+  int nbFields = claw.nbFields();
+  const dgBoundaryCondition *boundaryCondition = claw.boundaryCondition(group.getBoundaryTag());
+  // ----- 1 ----  get the solution at quadrature points
+  fullMatrix<double> solutionQP (group.getNbIntegrationPoints(),group.getNbElements() * nbFields);
+  group.getCollocationMatrix().mult(solution, solutionQP); 
+  // ----- 2 ----  compute normal fluxes  at integration points
+  fullMatrix<double> NormalFluxQP ( group.getNbIntegrationPoints(), group.getNbElements()*nbFields);
+  fullMatrix<double> solutionQPRight(group.getNbIntegrationPoints(), nbFields);
+  for (int iFace=0 ; iFace<group.getNbElements() ;++iFace) {
+    // ----- 2.3.1 --- build a small object that contains elementary solution, jacobians, gmsh element
+    fullMatrix<double> solutionQPLeft (solutionQP, iFace*nbFields, nbFields);
+    fullMatrix<double> normalFluxQP (NormalFluxQP, iFace*nbFields, nbFields);
+    dgFace DGF( group.getFace(iFace), group.getElementLeft(iFace), NULL,
+                solutionQPLeft, solutionQPRight, group.getIntegrationPointsMatrix(),group.getNormals(iFace));
+    // ----- 2.3.2 --- compute fluxes
+    switch (boundaryCondition->type()){
+      case dgBoundaryCondition::EXTERNAL_VALUES : {
+        (*boundaryCondition)(DGF, &solutionQPRight);
+        (*claw.riemannSolver())(DGF, &normalFluxQP);
+        break;
+      }
+      case dgBoundaryCondition::FLUX :{
+        (*boundaryCondition)(DGF, &normalFluxQP);
+      }
+      default :
+        throw;
+    }
+    for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
+      const double detJ = group.getDetJ (iFace, iPt);
+      for (int k=0;k<nbFields;k++)
+        normalFluxQP(iPt,k) *= detJ;
+    }
+  }
+  // ----- 3 ---- do the redistribution at face nodes using BLAS3
+  residual.gemm(group.getRedistributionMatrix(),NormalFluxQP);
+}
+
+void dgAlgorithm::buildGroups(GModel *model, int dim, int order,
+    std::vector<dgGroupOfElements*> &eGroups,
+    std::vector<dgGroupOfFaces*> &fGroups,
+    std::vector<dgGroupOfFaces*> &bGroups) 
+{
+  std::map<const std::string,std::set<MEdge, Less_Edge> > boundaryEdges;
+  std::map<const std::string,std::set<MFace, Less_Face> > boundaryFaces;
+  std::vector<GEntity*> entities;
+  model->getEntities(entities);
+  std::vector<MElement *> allElements;
+  for(unsigned int i = 0; i < entities.size(); i++){
+    GEntity *entity = entities[i];
+    if(entity->dim() == dim-1){
+      for(unsigned int j = 0; j < entity->physicals.size(); j++){
+        const std::string physicalName = model->getPhysicalName(entity->dim(), entity->physicals[j]);
+        for (int k = 0; k < entity->getNumMeshElements(); k++) {
+          MElement *element = entity->getMeshElement(k);
+          if(dim==2)
+            boundaryEdges[physicalName].insert( MEdge(element->getVertex(0), element->getVertex(1)) );
+          else
+            boundaryFaces[physicalName].insert( MFace(element->getVertex(0), element->getVertex(1),element->getVertex(2)) );
+        }
+      }
+    }else if(entity->dim() == dim){
+      for (int iel=0; iel<entity->getNumMeshElements(); iel++)
+        allElements.push_back(entity->getMeshElement(iel));
+    }
+  }
+  eGroups.push_back(new dgGroupOfElements(allElements,order));
+  fGroups.push_back(new dgGroupOfFaces(*eGroups[0],order));
+  if(dim==2){
+    std::map<const std::string, std::set<MEdge, Less_Edge> >::iterator mapIt;
+    for(mapIt=boundaryEdges.begin(); mapIt!=boundaryEdges.end(); mapIt++) {
+      bGroups.push_back(new dgGroupOfFaces(*eGroups[0],mapIt->first,order,mapIt->second));
+    }
+  }else if(dim=3){
+    std::map<const std::string, std::set<MFace, Less_Face> >::iterator mapIt;
+    for(mapIt=boundaryFaces.begin(); mapIt!=boundaryFaces.end(); mapIt++) {
+      bGroups.push_back(new dgGroupOfFaces(*eGroups[0],mapIt->first,order,mapIt->second));
+    }
+  }else throw;
+}
+
+// works only if there is only 1 group of element
+void dgAlgorithm::residual( const dgConservationLaw &claw,
+    std::vector<dgGroupOfElements*> &eGroups, //group of elements
+    std::vector<dgGroupOfFaces*> &fGroups,  // group of interfacs
+    std::vector<dgGroupOfFaces*> &bGroups, // group of boundaries
+    const fullMatrix<double> &solution, // solution
+    fullMatrix<double> &residu) // residual
+{
+  dgAlgorithm algo;
+  residu.scale(0);
+  //volume term
+  for(size_t i=0;i<eGroups.size() ; i++) {
+    algo.residualVolume(claw,*eGroups[i],solution,residu);
+  }
+  //interface term
+  for(size_t i=0;i<fGroups.size() ; i++) {
+    dgGroupOfFaces &faces = *fGroups[i];
+    fullMatrix<double> solInterface(faces.getNbNodes(),faces.getNbElements()*2);
+    fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements()*2);
+    faces.mapToInterface(1, solution, solution, solInterface);
+    algo.residualInterface(claw,faces,solInterface,residuInterface);
+    faces.mapFromInterface(1, residuInterface, residu, residu);
+  }
+  //boundaries
+  for(size_t i=0;i<bGroups.size() ; i++) {
+    dgGroupOfFaces &faces = *bGroups[i];
+    fullMatrix<double> solInterface(faces.getNbNodes(),faces.getNbElements());
+    fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements());
+    faces.mapToInterface(1, solution, solution, solInterface);
+    algo.residualBoundary(claw,faces,solInterface,residuInterface);
+    faces.mapFromInterface(1, residuInterface, residu, residu);
   }
 }

@@ -13,10 +13,11 @@
   we DO NOT store N, Ni or Nv (matrices and vectors 
   have the right sizes)
 */
+#include "MFace.h"
+#include "MEdge.h"
 class MElement;
-class MFace;
-class MEdge;
 class polynomialBasis;
+class GEntity;
 
 class dgElement {
   MElement *_element;
@@ -105,6 +106,8 @@ public:
 };
 
 class dgGroupOfFaces {
+  // only used if this is a group of boundary faces
+  std::string _boundaryTag;
   const dgGroupOfElements &_groupLeft,&_groupRight;
   void addFace(const MFace &topoFace, int iElLeft, int iElRight);
   void addEdge(const MEdge &topoEdge, int iElLeft, int iElRight);
@@ -143,7 +146,11 @@ public:
   const std::vector<int> * getClosureRight(int iFace) const{ return _closuresRight[iFace];}
   inline fullMatrix<double> getNormals (int iFace) const {return fullMatrix<double>(*_normals,iFace*getNbIntegrationPoints(),getNbIntegrationPoints());}
   dgGroupOfFaces (const dgGroupOfElements &elements,int pOrder);
+  dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MEdge,Less_Edge> &boundaryEdges);
+  dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MFace,Less_Face> &boundaryFaces);
   virtual ~dgGroupOfFaces ();
+  inline bool isBoundary() const {return !_boundaryTag.empty();}
+  inline const std::string getBoundaryTag() const {return _boundaryTag;}
   //this part is common with dgGroupOfElements, we should try polymorphism
   inline int getNbElements() const {return _faces.size();}
   inline int getNbNodes() const {return _collocation->size1();}
@@ -156,7 +163,6 @@ public:
   void mapToInterface(int nFields, const fullMatrix<double> &vLeft, const fullMatrix<double> &vRight, fullMatrix<double> &v);
   void mapFromInterface(int nFields, const fullMatrix<double> &v, fullMatrix<double> &vLeft, fullMatrix<double> &vRight);
 };
-
 
 
 #endif
