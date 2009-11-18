@@ -114,6 +114,8 @@ bool PartitionZeroGenus(std::list<GFace*> &cFaces, int &nbParts){
      options.mesh_dims[0] = nbParts;
    }
 
+//   PartitionMeshFace(cFaces, options);
+
    std::vector<MElement *> elements;
    for (std::list<GFace*>::iterator it = cFaces.begin(); it != cFaces.end(); it++)
      for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++)
@@ -123,19 +125,6 @@ bool PartitionZeroGenus(std::list<GFace*> &cFaces, int &nbParts){
    nbParts = msp->getNumberOfParts();
 
 }
-
-// bool PartitionZeroGenus(std::list<GFace*> &cFaces, int &nbParts){
-//   meshPartitionOptions options;
-//   options = CTX::instance()->partitionOptions;
-//   options.num_partitions = nbParts;
-//   options.partitioner = 1;//1 CHACO //2 METIS
-//   if ( options.partitioner == 1){
-//     options.global_method = 2;// 1 Multilevel-KL 2 Spectral
-//     options.mesh_dims[0] = nbParts;
-//   }
-//   PartitionMeshFace(cFaces, options);
-//   return true;  
-// }
 
 int PartitionMeshElements( std::vector<MElement*> &elements, meshPartitionOptions &options){
 
@@ -1097,7 +1086,7 @@ void createPartitionFaces(GModel *model, GFaceCompound *gf, int N,
   std::vector<std::set<MVertex*> > allNodes;
   int numMax = model->maxFaceNum() + 1;
   for( int i =0; i < N;  i++){
-    printf("*** Created discreteFace %d \n", numMax+i);
+    //printf("*** Created discreteFace %d \n", numMax+i);
     discreteFace *face = new discreteFace(model, numMax+i);
     discreteFaces.push_back(face);
     model->add(face);//delete this    

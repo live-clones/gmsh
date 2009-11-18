@@ -66,6 +66,7 @@ class GFaceCompound : public GFace {
   mutable bool mapv2Tri;
   mutable std::map<MVertex*, SPoint3> coordinates;
   mutable std::map<MVertex*, SVector3> _normals;
+  mutable std::list<MTriangle*> fillTris;
   void buildOct() const ;
   void buildAllNodes() const; 
   void parametrize(iterationStep, typeOfMapping) const;
@@ -85,9 +86,11 @@ class GFaceCompound : public GFace {
   void printStuff() const;
   bool trivial() const ;
   linearSystem <double> *_lsys;
-  SBoundingBox3d bound_U0() const;
-  SOrientedBoundingBox obb_bound_U0() const;
- public:
+  double getSizeBB(const std::list<GEdge* > &elist) const;
+  SBoundingBox3d boundEdges(const std::list<GEdge* > &elist) const;
+  SOrientedBoundingBox obb_boundEdges(const std::list<GEdge* > &elist) const;
+  void fillNeumannBCS() const;
+ public: 
   GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
                 std::list<GEdge*> &U0, std::list<GEdge*> &U1,
                 std::list<GEdge*> &V0, std::list<GEdge*> &V1,

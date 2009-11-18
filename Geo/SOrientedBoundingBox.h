@@ -64,6 +64,7 @@ class SOrientedBoundingBox {
   double getCenterZ(){ return center[2]; }
   SVector3 getSize(){ return size; }
   double getMaxSize();
+  double getMinSize();
 
   // valid values for axis are 0 (X-axis), 1 (Y-axis) or 2 (Z-axis)
   SVector3 getAxis(int axis);

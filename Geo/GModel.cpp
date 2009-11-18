@@ -1230,7 +1230,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
       
       int numE = maxEdgeNum()+1;
       discreteEdge *e = new discreteEdge(this, numE, 0, 0);
-      printf("*** Created discreteEdge %d \n", numE);
+      //printf("*** Created discreteEdge %d \n", numE);
       add(e);
       discEdges.push_back(e);
       

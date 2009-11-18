@@ -152,6 +152,11 @@ double SOrientedBoundingBox::getMaxSize()
   return (std::max(size[0], std::max(size[1], size[2])));
 }
 
+double SOrientedBoundingBox::getMinSize()
+{
+  return (std::min(size[0], std::min(size[1], size[2])));
+}
+
 SVector3 SOrientedBoundingBox::getAxis(int axis)
 {
   SVector3 ret;
