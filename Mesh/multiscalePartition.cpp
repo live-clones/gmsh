@@ -2,7 +2,7 @@
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "meshPartition.h"
-
+#include "MElement.h"
 
 static bool zeroGenus (std::vector<MElement *> &elements){
 
@@ -73,8 +73,7 @@ multiscalePartition::multiscalePartition (std::vector<MElement *> &elements,
 }
 
 void multiscalePartition::partition(partitionLevel & level){
-
-
+#if defined(HAVE_METIS) || defined(HAVE_CHACO)
   PartitionMeshElements(level.elements, options);
 
   std::vector<std::vector<MElement*> > regions(options.num_partitions);
@@ -102,7 +101,7 @@ void multiscalePartition::partition(partitionLevel & level){
 
 }
 
-
+#endif
 }
 
 int multiscalePartition::assembleAllPartitions(){
