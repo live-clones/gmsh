@@ -115,8 +115,11 @@ class ChainComplex{
    // Compute bases for the homology groups of this chain complex 
    void computeHomology(bool dual=false);
    
+   // get coefficient vector for dim-dimensional chain chainNumber 
    std::vector<int> getCoeffVector(int dim, int chainNumber);
+   // torsion coefficient for dim-dimensional chain chainNumber 
    int getTorsion(int dim, int chainNumber);
+   // get rank of homology group of dimension dim
    int getBasisSize(int dim) {  if(dim > -1 && dim < 5) return gmp_matrix_cols(_Hbasis[dim]); else return 0; } 
    
    int printMatrix(gmp_matrix* matrix){ 
@@ -139,6 +142,7 @@ class Chain{
    // cell complex this chain belongs to
    CellComplex* _cellComplex;
    
+   // torsion coefficient
    int _torsion;
    
    int _dim;

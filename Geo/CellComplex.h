@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 //
-// Contributed by Matti Pellikka.
+// Contributed by Matti Pellikka <matti.pellikka@tut.fi>.
 
 #ifndef _CELLCOMPLEX_H_
 #define _CELLCOMPLEX_H_
@@ -48,7 +48,7 @@ class Cell
    // cell dimension
    int _dim;
    
-   // whether this cell belongs to a subdomain
+   // whether this cell belongs to a subdomain, immutable
    // used in relative homology computation
    bool _inSubdomain;
    
@@ -58,19 +58,22 @@ class Cell
    // whether this cell a combinded cell of elemetary cells
    bool _combined; 
    
-   // unique tag for each cell
+   // unused
    int _tag;
+   
+   // mutable index for each cell
    int _index; 
    
+   // for some algorithms to omit this cell
    bool _immune;
       
-   // cells on the boundary and on the coboundary of this cell
+   // mutable list of cells on the boundary and on the coboundary of this cell
    std::map< Cell*, int, Less_Cell > _boundary;
    std::map< Cell*, int, Less_Cell > _coboundary;
    int _bdSize;
    int _cbdSize;
    
-   // original boundary and coboundary before the reduction of the cell complex
+   // immutable original boundary and coboundary before the reduction of the cell complex
    std::map<Cell*, int, Less_Cell > _obd;
    std::map<Cell*, int, Less_Cell > _ocbd;
    
@@ -99,6 +102,7 @@ class Cell
    virtual int getSortedVertex(int vertex) const = 0; 
    virtual std::vector<MVertex*> getVertexVector() const = 0;
    
+   // restores the cell information to its original state before reduction
    virtual void restoreCell(){
      _boundary = _obd;
      _coboundary = _ocbd;
@@ -110,19 +114,16 @@ class Cell
      
    }
    
-   // returns 1 or -1 if lower dimensional cell tau is on the boundary of this cell
-   // otherwise returns 0
-   // implementation will vary depending on cell type
-   //virtual int kappa(Cell* tau) const = 0;
-   
    // true if this cell has given vertex
    virtual bool hasVertex(int vertex) const = 0;
 
    // (co)boundary cell iterator
    typedef std::map<Cell*, int, Less_Cell>::iterator biter;
    
-   virtual int getBoundarySize() { return _bdSize; }
-   virtual int getCoboundarySize() { return _cbdSize; }
+   //virtual int getBoundarySize() { return _bdSize; }
+   //virtual int getCoboundarySize() { return _cbdSize; }
+   virtual int getBoundarySize() { return _boundary.size(); }
+   virtual int getCoboundarySize() { return _coboundary.size(); }
    
    virtual std::map<Cell*, int, Less_Cell > getOrientedBoundary() { return _boundary; }
    virtual std::list< Cell* > getBoundary() {
@@ -156,21 +157,6 @@ class Cell
        return true;
      }
      _boundary.insert( std::make_pair(cell, orientation ) );
-     /*
-     for(std::list< std::pair<int, Cell*> >::iterator it = _boundary.begin(); it != _boundary.end(); it++){
-       Cell* cell2 = (*it).second;
-       if(*cell2 == *cell) {
-         (*it).first = (*it).first + orientation;
-         if((*it).first == 0) { 
-           _boundary.erase(it); _bdSize--;
-           cell2->removeCoboundaryCell(this,false);
-           return false;
-         }
-         return true;
-       }
-     }
-     _boundary.push_back( std::make_pair(orientation, cell ) );
-     */
      return true;
    }
    
@@ -198,22 +184,11 @@ class Cell
        _bdSize--;
        return (*it).second;
      }
-       
-     /*
-     for(std::list< std::pair<int, Cell*> >::iterator it = _boundary.begin(); it != _boundary.end(); it++){
-       Cell* cell2 = (*it).second;
-       int ori = (*it).first;
-       if(*cell2 == *cell) {
-         _boundary.erase(it); 
-         if(other) cell2->removeCoboundaryCell(this, false); 
-         _bdSize--;
-         return ori;
-       }
-     }
-     */
       
      return 0;
    }
+   
+   
    virtual int removeCoboundaryCell(Cell* cell, bool other=true) {
      biter it = _coboundary.find(cell);
      if(it != _coboundary.end()){
@@ -225,15 +200,9 @@ class Cell
      return 0;
    }
    
+   // true if has given cell on (original) boundary
    virtual bool hasBoundary(Cell* cell, bool org=false){
      if(!org){
-       /*
-       for(std::list< std::pair<int, Cell*> >::iterator it = _boundary.begin(); it != _boundary.end(); it++){
-         Cell* cell2 = (*it).second;
-         if(*cell2 == *cell) return true;
-       }
-       return false;
-       */
        biter it = _boundary.find(cell);
        if(it != _boundary.end()) return true;
        return false;
@@ -244,6 +213,8 @@ class Cell
        return false;
      }
    }
+   
+   // true if has given cell on (original) boundary
    virtual bool hasCoboundary(Cell* cell, bool org=false){
      if(!org){
        biter it = _coboundary.find(cell);
@@ -261,6 +232,7 @@ class Cell
    virtual void clearBoundary() { _boundary.clear(); }
    virtual void clearCoboundary() { _coboundary.clear(); }
    
+   // algebraic dual of the cell
    virtual void makeDualCell(){ 
      std::map<Cell*, int, Less_Cell > temp = _boundary;
      _boundary = _coboundary;
@@ -305,13 +277,11 @@ class Cell
        cell2->printCell();
        if(_ocbd.empty()) printf("Cell coboundary is empty. \n");
      }
-   }
-   
-   
+   }  
    
    
    virtual bool inSubdomain() const { return _inSubdomain; }
-   virtual void setInSubdomain(bool subdomain)  { _inSubdomain = subdomain; }
+   //virtual void setInSubdomain(bool subdomain)  { _inSubdomain = subdomain; }
    
    virtual bool onDomainBoundary() const { return _onDomainBoundary; }
    virtual void setOnDomainBoundary(bool domainboundary)  { _onDomainBoundary = domainboundary; }
@@ -326,8 +296,8 @@ class Cell
    virtual std::list< std::pair<int, Cell*> > getCells() {  std::list< std::pair<int, Cell*> >cells; cells.push_back( std::make_pair(1, this)); return cells; }
    virtual int getNumCells() {return 1;}
    
-   bool operator==(const Cell& c2){
-     
+   
+   bool operator==(const Cell& c2){  
      if(this->getNumVertices() != c2.getNumVertices()){
        return false;
      }
@@ -337,10 +307,6 @@ class Cell
        }
      }
      return true;
-     
-     //return (this->getTag() == c2.getTag());
-     
-     
    }
    
    bool operator<(const Cell& c2) const {
@@ -353,10 +319,9 @@ class Cell
        else if (this->getSortedVertex(i) > c2.getSortedVertex(i)) return false;
      }
      return false;
-     
-     //return (this->getTag() < c2.getTag());
    }
    
+   // checks whether lower dimensional simplex tau is on the boundary of this cell
    virtual int kappa(Cell* tau) const;
    
 };
@@ -369,10 +334,6 @@ class Simplex : public Cell
  public:
    Simplex() : Cell() {}
    ~Simplex(){}  
-  
-   // kappa for simplices
-   // checks whether lower dimensional simplex tau is on the boundary of this cell
-   //virtual int kappa(Cell* tau) const; 
    
 };
 
@@ -409,6 +370,7 @@ class ZeroSimplex : public Simplex, public MPoint
 class OneSimplex : public Simplex, public MLine
 {
   private:
+   // sorted list of vertices
    int _vs[2];
   public:
    
@@ -453,7 +415,7 @@ class OneSimplex : public Simplex, public MLine
 class TwoSimplex : public Simplex, public MTriangle
 {
   private:
-
+   // sorted list of vertices
    int _vs[3];
    
   public:
@@ -497,7 +459,7 @@ class TwoSimplex : public Simplex, public MTriangle
 class CQuadrangle : public Cell, public MQuadrangle
 {
   private:
-
+   // sorted list of vertices
    int _vs[4];
    
   public:
@@ -545,6 +507,7 @@ class CQuadrangle : public Cell, public MQuadrangle
 class ThreeSimplex : public Simplex, public MTetrahedron
 {
   private:
+   // sorted list of vertices
    int _vs[4];
       
   public:
@@ -586,6 +549,7 @@ class ThreeSimplex : public Simplex, public MTetrahedron
 class CHexahedron : public Cell, public MHexahedron
 {
   private:
+   // sorted list of vertices
    int _vs[8];
       
   public:
@@ -633,6 +597,7 @@ class CHexahedron : public Cell, public MHexahedron
 class CPrism : public Cell, public MPrism
 {
   private:
+   // sorted list of vertices
    int _vs[6];
       
   public:
@@ -678,6 +643,7 @@ class CPrism : public Cell, public MPrism
 class CPyramid : public Cell, public MPyramid
 {
   private:
+   // sorted list of vertices
    int _vs[5];
       
   public:
@@ -716,57 +682,6 @@ class CPyramid : public Cell, public MPyramid
    
    virtual void printCell() const { printf("Cell dimension: %d, Vertices: %d %d %d %d %d, in subdomain: %d \n", getDim(), _v[0]->getNum(), _v[1]->getNum(), _v[2]->getNum(), _v[3]->getNum(), _v[4]->getNum(), _inSubdomain); }
 };
-/*
-// Ordering for the cells.
-class Less_Cell{
-  public:
-   bool operator()(const Cell* c1, const Cell* c2) const {
-     
-     // cells with fever vertices first
-     
-     if(c1->getNumVertices() != c2->getNumVertices()){
-       return (c1->getNumVertices() < c2->getNumVertices());
-     }
-     
-     
-     
-     // "natural number" -like ordering (the number of a vertice corresponds a digit)
-     
-     for(int i=0; i < c1->getNumVertices();i++){
-       if(c1->getSortedVertex(i) < c2->getSortedVertex(i)) return true;
-       else if (c1->getSortedVertex(i) > c2->getSortedVertex(i)) return false;
-     }
-          
-     return false;
-     
-     
-     //return (c1->getTag() < c2->getTag());
-     
-   }
-};
-*/
-
-
-class Equal_Cell{
-  public:
-   bool operator ()(const Cell* c1, const Cell* c2){
-     
-     
-     if(c1->getNumVertices() != c2->getNumVertices()){
-       return false;
-     }
-     for(int i=0; i < c1->getNumVertices();i++){
-       if(c1->getSortedVertex(i) != c2->getSortedVertex(i)){
-         return false;
-       }
-     }
-     return true;
-     
-     //return (c1->getTag() == c2->getTag());
-      
-   }
-};
-
 
 // Ordering for the finite element mesh vertices.
 class Less_MVertex{
@@ -780,8 +695,11 @@ class Less_MVertex{
 class CombinedCell : public Cell{
  
   private:
+   // vertices
    std::vector<MVertex*> _v;
+   // sorted list of all vertices
    std::vector<int> _vs;
+   // list of cells this cell is a combination of
    std::list< std::pair<int, Cell*> > _cells;
    int _num;
    
@@ -813,9 +731,11 @@ class CombinedCell : public Cell{
        if(!this->hasVertex(c2->getVertex(i)->getNum())) _v.push_back(c2->getVertex(i));
      }
      
+     // sorted vertices
      for(unsigned int i = 0; i < _v.size(); i++) _vs.push_back(_v.at(i)->getNum());
      std::sort(_vs.begin(), _vs.end());
      
+     // cells
      _cells = c1->getCells();
      std::list< std::pair<int, Cell*> > c2Cells = c2->getCells();
      for(std::list< std::pair<int, Cell*> >::iterator it = c2Cells.begin(); it != c2Cells.end(); it++){
@@ -823,11 +743,9 @@ class CombinedCell : public Cell{
        _cells.push_back(*it);
      }
      
-     
-     //_boundary = c1->getOrientedBoundary();
+     // boundary cells
      std::map< Cell*, int, Less_Cell > c1Boundary = c1->getOrientedBoundary();
      std::map< Cell*, int, Less_Cell > c2Boundary = c2->getOrientedBoundary();
-     
      
      for(std::map<Cell*, int, Less_Cell>::iterator it = c1Boundary.begin(); it != c1Boundary.end(); it++){
        Cell* cell = (*it).first;
@@ -839,18 +757,11 @@ class CombinedCell : public Cell{
        Cell* cell = (*it).first;
        if(!orMatch) (*it).second = -1*(*it).second;
        int ori = (*it).second;
-       cell->removeCoboundaryCell(c2);
-       //if(this->addBoundaryCell(ori, cell)) cell->addCoboundaryCell(ori, this);       
+       cell->removeCoboundaryCell(c2);    
        if(co){
          std::map<Cell*, int, Less_Cell >::iterator it2 = c1Boundary.find(cell);
          bool old = false;
          if(it2 != c1Boundary.end()) old = true;
-         /*
-         for(std::list< std::pair<int, Cell* > >::iterator it2 = c1Boundary.begin(); it2 != c1Boundary.end(); it2++){
-           Cell* cell2 = (*it2).second;
-           if(*cell2 == *cell) old = true;
-         }
-         */
          if(!old){  if(this->addBoundaryCell(ori, cell)) cell->addCoboundaryCell(ori, this); }
        }
        else{
@@ -858,7 +769,7 @@ class CombinedCell : public Cell{
        }
      }
      
-     //_coboundary = c1->getOrientedCoboundary();
+     // coboundary cells
      std::map<Cell*, int, Less_Cell > c1Coboundary = c1->getOrientedCoboundary();
      std::map<Cell*, int, Less_Cell > c2Coboundary = c2->getOrientedCoboundary();
      
@@ -872,18 +783,11 @@ class CombinedCell : public Cell{
        Cell* cell = (*it).first;
        if(!orMatch) (*it).second = -1*(*it).second;
        int ori = (*it).second;
-       cell->removeBoundaryCell(c2);
-       //if(this->addCoboundaryCell(ori, cell)) cell->addBoundaryCell(ori, this);       
+       cell->removeBoundaryCell(c2);    
        if(!co){
          std::map<Cell*, int, Less_Cell >::iterator it2 = c1Coboundary.find(cell);
          bool old = false;
          if(it2 != c1Coboundary.end()) old = true;
-         /*
-         for(std::list< std::pair<int, Cell* > >::iterator it2 = c1Coboundary.begin(); it2 != c1Coboundary.end(); it2++){
-           Cell* cell2 = (*it2).second;
-           if(*cell2 == *cell) old = true;
-         }
-         */
          if(!old) { if(this->addCoboundaryCell(ori, cell)) cell->addBoundaryCell(ori, this); }
        }
        else {
@@ -947,6 +851,7 @@ class CellComplex
    
    std::vector<GEntity*> _boundary;
    
+   // mesh vertices in this domain
    std::set<MVertex*, Less_MVertex> _domainVertices;
    
    // sorted containers of unique cells in this cell complex 
@@ -954,13 +859,13 @@ class CellComplex
    std::set<Cell*, Less_Cell>  _cells[4];
    
    // storage for cell pointers to delete them
-   //std::set<Cell*, Less_Cell>  _cells2[4];
    std::list<Cell*> _trash;
+   
    
    std::vector< std::set<Cell*, Less_Cell> > _store;
    std::set<Cell*, Less_Cell> _ecells;
    
-   
+   // original cells of this cell complex
    std::set<Cell*, Less_Cell>  _ocells[4];
    
    // Betti numbers of this cell complex (ranks of homology groups)
@@ -979,9 +884,10 @@ class CellComplex
    // remove cell from the queue set
    void removeCellQset(Cell*& cell, std::set<Cell*, Less_Cell>& Qset);
       
-   // insert cells into this cell complex
-   //virtual void insert_cells(bool subdomain, bool boundary);
+   // for constructor 
    void insert_cells(bool subdomain, bool boundary);
+   void find_boundary(std::vector<GEntity*>& domain, std::vector<GEntity*>& subdomain);
+   void find_vertices(std::vector<GEntity*>& domain, std::vector<GEntity*>& subdomain);
    
    // remove a cell from this cell complex
    void removeCell(Cell* cell, bool other=true);
@@ -997,17 +903,8 @@ class CellComplex
  
    
   public: 
+   
    /*
-   CellComplex(  std::vector<GEntity*> domain, std::vector<GEntity*> subdomain, std::set<Cell*, Less_Cell> cells ) {
-     _domain = domain;
-     _subdomain = subdomain;
-     for(citer cit = cells.begin(); cit != cells.end(); cit++){
-       Cell* cell = *cit;
-       _cells[cell->getDim()].insert(cell);
-     }
-   }
-   
-   
    CellComplex(CellComplex* cellComplex){
      
      _domain = cellComplex->getDomain();
@@ -1050,6 +947,7 @@ class CellComplex
      _trash.clear();
    }
    
+   // restore this cell complex to its original state
    void restoreComplex(){
      for(int i = 0; i < 4; i++){
        _betti[i] = 0;
@@ -1109,18 +1007,14 @@ class CellComplex
    int reduceComplex();
    int coreduceComplex();
    
-   
-   // add every volume, face and edge its missing boundary cells
-   // void repairComplex(int i=3);
-   // change non-subdomain cells to be in subdomain, subdomain cells to not to be in subdomain
-   void swapSubdomain();
+   // remove cells in subdomain from this cell complex
    void removeSubdomain();
    
    
    // print the vertices of cells of certain dimension
    void printComplex(int dim);
    
-   // write this cell complex in 2.0 MSH ASCII format
+   // write this cell complex in 2.1 MSH ASCII format
    int writeComplexMSH(const std::string &name); 
    
    // Cell combining for reduction and coreduction
@@ -1142,16 +1036,6 @@ class CellComplex
    
    int getNumOmitted() { return _store.size(); };
    std::set<Cell*, Less_Cell> getOmitted(int i) { return _store.at(i); }
-   
-   void setImmuneCell(int num){
-     for(int i = 0; i < 4; i++){
-       for(citer cit = firstCell(i); cit != lastCell(i); cit++){
-         Cell* cell = *cit;
-         if(cell->getNum() == num) cell->setImmune(true);
-       }
-     }
-     
-   }
      
    
    // change roles of boundaries and coboundaries of the cells in this cell complex

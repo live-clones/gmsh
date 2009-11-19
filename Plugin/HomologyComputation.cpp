@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 //
-// Contributed by Matti Pellikka
+// Contributed by Matti Pellikka <matti.pellikka@tut.fi>.
 
 #include <stdlib.h>
 #include "Gmsh.h"
@@ -23,8 +23,6 @@ StringXNumber HomologyComputationOptions_Number[] = {
   {GMSH_FULLRC, "ComputeGenerators", NULL, 1.},
   {GMSH_FULLRC, "ComputeDualGenerators", NULL, 0.},
   {GMSH_FULLRC, "ComputeBettiNumbers", NULL, 0.},
-  //{GMSH_FULLRC, "OmitDimensions", NULL, 1.},
-  //{GMSH_FULLRC, "CombineCells", NULL, 1.},
 };
 
 StringXString HomologyComputationOptions_String[] = {
@@ -86,15 +84,11 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   int gens = (int)HomologyComputationOptions_Number[4].def;
   int cuts = (int)HomologyComputationOptions_Number[5].def;
   int betti = (int)HomologyComputationOptions_Number[6].def;
-  //int omit = (int)HomologyComputationOptions_Number[6].def;
-  //int combine = (int)HomologyComputationOptions_Number[7].def;
   
 
   GModel *m = GModel::current();
   
   Homology* homology = new Homology(m, domain, subdomain);
-  //if(combine == 0) homology->setCombine(false); 
-  //homology->setOmit(1);
   
   //if(swap == 1) homology->swapSubdomain();
   

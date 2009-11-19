@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 //
-// Contributed by Matti Pellikka.
+// Contributed by Matti Pellikka <matti.pellikka@tut.fi>.
 
 #include "ChainComplex.h"
 #include "OS.h"
@@ -567,10 +567,15 @@ bool Chain::straightenChain( std::pair<Cell*, int> cell ){
   
   Cell* c1 = cell.first;
   int c1c = cell.second;
+  int c1o = 0;
   if(c1c == 0 || c1->getImmune()) return false;
   
+  if(cell.second == 0 || cell.first->getImmune()) return false;
+  /*
+  Cell* c1 = NULL;
+  int c1c = 0;
   int c1o = 0;
-  
+  */
   Cell* c2 = NULL;
   int c2c = 0;
   int c2o = 0;
@@ -581,16 +586,29 @@ bool Chain::straightenChain( std::pair<Cell*, int> cell ){
   
   Cell* b = NULL;
   
-  std::map<Cell*, int, Less_Cell> c1Cbd = c1->getOrgCbd();
+  std::map<Cell*, int, Less_Cell> c1Cbd = cell.first->getOrgCbd();
   for(citer cit = c1Cbd.begin(); cit != c1Cbd.end(); cit++){
     Cell* c1CbdCell = (*cit).first;
     c1o = (*cit).second;
     
     /*
     std::map<Cell*, int, Less_Cell> cells = getBdCellsInChain(c1CbdCell);
-    if((getDim() == 1 && cells.size() != 2) || (getDim() == 2 && cells.size() != 3) ) break;
-    else if( getDim() == 1 && cells.size() == 2){
+    //if((getDim() == 1 && cells.size() != 2) || (getDim() == 2 && cells.size() != 3) ) continue;
+    if( getDim() == 1 && cells.size() == 2){
       
+      citer cit2 = cells.end();
+      c1 = (*cit2).first;
+      //c1->printCell();
+      
+      c1c = getCoeff(c1);
+      c1o = (*cit2).second;
+      
+      cit2 = cells.begin();
+      c2 = (*cit2).first;
+      c2c = getCoeff(c2); 
+      c2o = (*cit2).second;
+      b = c1CbdCell;
+      printf("kakak4 \n");
     }
     else if( getDim() == 2 && cells.size() == 3){
       
@@ -619,6 +637,7 @@ bool Chain::straightenChain( std::pair<Cell*, int> cell ){
     }
     
     if (b != NULL) break;
+    
   }
   
   if(c1->getDim() == 1 && 
@@ -798,86 +817,11 @@ void Chain::smoothenChain(){
     if (useless > 5) break;
   }
   
-  
-  /*
-  const int MAXROUNDS = 2;
-  bool smoothened = true;
-  int round = 0;
-  while(smoothened){
-    round++;
-    smoothened = false;
-    for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
-      if(straightenChain(*cit)) { smoothened = true; }
-      if(removeBoundary(*cit)) { smoothened = true; }
-    }
-    if(round > MAXROUNDS) smoothened = false;
+  for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
+    straightenChain(*cit);
   }
-  eraseNullCells(); 
   
-   if(getDim() == 2){
-    Chain* bestChain = new Chain(this);
-    int before = getSize();
-    deImmuneCells();
-    srand ( time(NULL) );
-    int n = 0;
-    while( n < 10){
-      double t = 1;
-      while(t>0){
-        double tt = 1;
-        
-        for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
-          int random = rand() % 100 + 1;
-          double r = random*t; 
-          //printf("random: %d, t: %d \n", random, t);
-          if(r > 80) { 
-            bendChain(*cit);
-            //printf("random: %d, t: %g, random*t: %g.\n", random, t, r);
-            //cit = _cells.begin(); 
-            //tt = tt - 0.1;
-            //if(tt <= 0) tt = 0;
-          }
-        }
-        eraseNullCells();
-        
-        smoothened = true;
-        round = 0;
-        while(smoothened){
-          round++;
-          smoothened = false;
-          for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
-            if(straightenChain(*cit)){smoothened = true;}
-            if(removeBoundary(*cit)) { smoothened = true; }
-          }
-          if(round > MAXROUNDS) smoothened = false;
-        }
-        eraseNullCells();
-        if(this->getSize() < bestChain->getSize()) bestChain = this;
-        t = t - 0.1;
-      }
-      deImmuneCells();
-      n=n+1;
-    }
-    
-    
-    deImmuneCells();
-    smoothened = true;
-    round = 0;
-    while(smoothened){
-      round++;
-      smoothened = false;
-      for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
-        if(straightenChain(*cit)){smoothened = true;}
-        if(removeBoundary(*cit)) { smoothened = true; }
-      }
-      if(round > MAXROUNDS) smoothened = false;
-    }
-    
-    
-    eraseNullCells();
-    if(this->getSize() < bestChain->getSize()) bestChain = this;
-    printf("%d-chain simulated annealing removed %d cells. \n", getDim(), before - getSize());  
-  }
-  */
+ 
   double t2 = Cpu();
   printf("Smoothened a %d-chain from %d cells to %d cells (%g s).\n", getDim(), start, getSize(), t2-t1);
   return;

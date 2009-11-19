@@ -17,6 +17,58 @@ CellComplex::CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> su
   
   _dim = 0;
   
+  // find boundary elements
+  find_boundary(domain, subdomain);
+  
+  // insert cells into cell complex
+  // subdomain need to be inserted first!
+  insert_cells(true, true);
+  insert_cells(false, true);
+  insert_cells(false, false);
+
+  // find vertices in domain
+  find_vertices(domain, subdomain);
+  
+
+  //int tag = 1;
+  for(int i = 0; i < 4; i++){
+    /*
+    for(citer cit = firstCell(i); cit != lastCell(i); cit++){
+      Cell* cell = *cit;
+      cell->setTag(tag);
+      tag++;
+    }*/
+    _ocells[i] = _cells[i];
+    _betti[i] = 0;
+    if(getSize(i) > _dim) _dim = i;
+  }
+  
+  
+}
+
+void CellComplex::find_vertices(std::vector<GEntity*>& domain, std::vector<GEntity*>& subdomain){
+    // find mesh vertices in the domain
+  for(unsigned int j=0; j < domain.size(); j++) {  
+    for(unsigned int i=0; i < domain.at(j)->getNumMeshElements(); i++){
+      for(int k=0; k < domain.at(j)->getMeshElement(i)->getNumVertices(); k++){
+        MVertex* vertex = domain.at(j)->getMeshElement(i)->getVertex(k);
+        _domainVertices.insert(vertex);
+      }
+    }
+  }
+
+  for(unsigned int j=0; j < subdomain.size(); j++) {
+    for(unsigned int i=0; i < subdomain.at(j)->getNumMeshElements(); i++){
+      for(int k=0; k < subdomain.at(j)->getMeshElement(i)->getNumVertices(); k++){
+        MVertex* vertex = subdomain.at(j)->getMeshElement(i)->getVertex(k);
+        _domainVertices.insert(vertex);
+      }
+    }
+  } 
+}
+
+void CellComplex::find_boundary(std::vector<GEntity*>& domain, std::vector<GEntity*>& subdomain){
+
   // determine mesh entities on boundary of the domain
   bool duplicate = false;
   for(unsigned int j=0; j < _domain.size(); j++){
@@ -72,46 +124,6 @@ CellComplex::CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> su
       }
     }
   }
-  // insert cells into cell complex
-  // subdomain need to be inserted first!
-  insert_cells(true, true);
-  insert_cells(false, true);
-  insert_cells(false, false);
-
-  // find mesh vertices in the domain
-  for(unsigned int j=0; j < domain.size(); j++) {  
-    for(unsigned int i=0; i < domain.at(j)->getNumMeshElements(); i++){
-      for(int k=0; k < domain.at(j)->getMeshElement(i)->getNumVertices(); k++){
-        MVertex* vertex = domain.at(j)->getMeshElement(i)->getVertex(k);
-        _domainVertices.insert(vertex);
-      }
-    }
-  }
-
-  for(unsigned int j=0; j < subdomain.size(); j++) {
-    for(unsigned int i=0; i < subdomain.at(j)->getNumMeshElements(); i++){
-      for(int k=0; k < subdomain.at(j)->getMeshElement(i)->getNumVertices(); k++){
-        MVertex* vertex = subdomain.at(j)->getMeshElement(i)->getVertex(k);
-        _domainVertices.insert(vertex);
-      }
-    }
-  }
-  
-
-  // attach individual tags to cells
-  int tag = 1;
-  for(int i = 0; i < 4; i++){
-    for(citer cit = firstCell(i); cit != lastCell(i); cit++){
-      //Cell* cell = *cit;
-      //cell->setTag(tag);
-      tag++;
-    }
-    _ocells[i] = _cells[i];
-    _betti[i] = 0;
-    if(getSize(i) > _dim) _dim = i;
-  }
-  
-  
 }
 
 void CellComplex::insert_cells(bool subdomain, bool boundary){
@@ -852,6 +864,7 @@ int CellComplex::combine(int dim){
 }
 */
 
+/*
 void CellComplex::swapSubdomain(){
   
   for(int i = 0; i < 4; i++){
@@ -877,7 +890,7 @@ void CellComplex::swapSubdomain(){
   }
   
   return;
-}
+}*/
 
 
 int CellComplex::writeComplexMSH(const std::string &name){

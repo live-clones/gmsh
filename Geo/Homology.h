@@ -42,7 +42,7 @@ class Homology
    void computeBettiNumbers();
    
    
-   void swapSubdomain() { _cellComplex->swapSubdomain(); }
+   //void swapSubdomain() { _cellComplex->swapSubdomain(); }
    
    // Restore the cell complex to its original state before cell reductions
    void restoreHomology() { _cellComplex->restoreComplex(); }
