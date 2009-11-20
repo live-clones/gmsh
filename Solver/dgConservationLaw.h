@@ -9,6 +9,7 @@
 #include "fullMatrix.h"
 class dgElement; 
 class dgFace;
+class dataCacheDouble;
 
 class dgTerm{
  public:
@@ -30,6 +31,7 @@ public:
   virtual boundaryType  type() const =0;
 };
 
+class dataCacheMap;
 class dgConservationLaw {
   protected :
   int _nbf;
@@ -43,9 +45,10 @@ public:
 
   int nbFields() const {return _nbf;}
 
+  virtual dataCacheDouble *newSourceTerm(dataCacheMap &cacheMap)const { return NULL; }
+
   inline const dgTerm     * convectiveFlux () const {return _convective;}
   inline const dgTerm     * diffusiveFlux  () const {return _diffusive;}
-  inline const dgTerm     * sourceTerm     () const {return _source;}
   inline const dgFaceTerm * riemannSolver  () const {return _riemannSolver;}
   inline const dgTerm     * maxConvectiveSpeed () const {return _maxConvectiveSpeed;}
   inline const dgBoundaryCondition *boundaryCondition(const std::string tag) const {

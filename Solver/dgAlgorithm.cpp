@@ -6,6 +6,7 @@
 #include "MElement.h"
 #include "GModel.h"
 #include "MEdge.h"
+#include "function.h"
 /*
   compute 
     \int \vec{f} \cdot \grad \phi dv   
@@ -44,6 +45,11 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
   fullMatrix<double> Fuvw[3] = {fullMatrix<double> ( group.getNbIntegrationPoints(), group.getNbElements() * nbFields),
 				fullMatrix<double> (group.getNbIntegrationPoints(), group.getNbElements() * nbFields),
 				fullMatrix<double> (group.getNbIntegrationPoints(), group.getNbElements() * nbFields)};
+  dataCacheMap cacheMap;
+  dataCacheElement &cacheElement = cacheMap.getElement();
+  cacheMap.provideData("UVW").set(group.getIntegrationPointsMatrix());
+  dataCacheDouble *sourceTerm = claw.newSourceTerm(cacheMap);
+
   // ----- 2.3 --- iterate on elements
   for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {
     // ----- 2.3.1 --- build a small object that contains elementary solution, jacobians, gmsh element
@@ -52,6 +58,7 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
     if (claw.diffusiveFlux()) gradSolutionQPe = new fullMatrix<double>(*gradientSolutionQP, 3*iElement*nbFields,3*nbFields );      
     else gradSolutionQPe = new fullMatrix<double>;
     dgElement DGE( group.getElement(iElement), solutionQPe, *gradSolutionQPe, group.getIntegrationPointsMatrix());
+    cacheElement.set(group.getElement(iElement));
     if(claw.convectiveFlux() || claw.diffusiveFlux()) {
       // ----- 2.3.2 --- compute fluxes in XYZ coordinates
       if (claw.convectiveFlux()) (*claw.convectiveFlux())(DGE,fConv);
@@ -75,13 +82,13 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
         } 
       }
     }
-    if (claw.sourceTerm()){
+    if (sourceTerm){
       fullMatrix<double> source(Source, iElement*claw.nbFields(),claw.nbFields());
-      (*claw.sourceTerm())(DGE,&source); 
       for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
         const double detJ = group.getDetJ (iElement, iPt);
-        for (int k=0;k<nbFields;k++)
-          source(iPt,k) *= detJ;
+        for (int k=0;k<nbFields;k++){
+          source(iPt,k) = (*sourceTerm)(iPt,k)*detJ;
+        }
       }
     }
     delete gradSolutionQPe;
@@ -92,8 +99,9 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
       residual.gemm(group.getFluxRedistributionMatrix(iUVW),Fuvw[iUVW]);
     }
   }
-  if(claw.sourceTerm()){
+  if(sourceTerm){
     residual.gemm(group.getSourceRedistributionMatrix(),Source);
+    delete sourceTerm;
   }
 }
 

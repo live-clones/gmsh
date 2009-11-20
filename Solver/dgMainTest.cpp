@@ -5,31 +5,33 @@
 #include "dgAlgorithm.h"
 #include "dgConservationLaw.h"
 #include "Gmsh.h"
+#include "function.h"
 
 
 #include "MElement.h"
 void print (const char *filename,const dgGroupOfElements &els, double *v);
 
-class testSourceTerm : public dgTerm {
-  void operator () (const dgElement &el, fullMatrix<double> fcx[]) const{
-    const fullMatrix<double> &sol = el.solution();
-    const fullMatrix<double> &qp = el.integration();
-    SPoint3 p;
-    for(int i=0; i< sol.size1(); i++) {
-      el.element()->pnt(qp(i,0),qp(i,1),qp(i,2),p);
-      fcx[0](i,0)=exp(-(pow(p.x()-0.2,2)+pow(p.y()-0.3,2))*100);
-    }
-  }
-};
 
 class dgConservationLawInitialCondition : public dgConservationLaw {
+  class gaussian : public dataCacheDouble {
+    dataCacheDouble &xyz;
+    double _xc,_yc;
+    public:
+    gaussian(dataCacheMap &cacheMap,double xc, double yc):xyz(cacheMap.get("XYZ",this)),_xc(xc),_yc(yc){};
+    void _eval () { 
+      if(_value.size1() != xyz().size1())
+        _value=fullMatrix<double>(xyz().size1(),1);
+      for(int i=0; i< _value.size1(); i++) {
+        _value(i,0)=exp(-(pow(xyz(i,0)-_xc,2)+pow(xyz(i,1)-_yc,2))*100);
+      }
+    }
+  };
   public:
   dgConservationLawInitialCondition() {
     _nbf = 1;
-    _source = new testSourceTerm;
   }
-  ~dgConservationLawInitialCondition() {
-    delete _source;
+  dataCacheDouble *newSourceTerm(dataCacheMap &cacheMap)const {
+    return new gaussian(cacheMap,0.2,0.3);
   }
 };
 
@@ -42,6 +44,7 @@ int main(int argc, char **argv){
   int order=1;
   int dimension=2;
   dgAlgorithm algo;
+  function::registerAllFunctions();
   algo.buildGroups(GModel::current(),dimension,order,elementGroups,faceGroups,boundaryGroups);
 
   //for now, we suppose there is only one group of elements

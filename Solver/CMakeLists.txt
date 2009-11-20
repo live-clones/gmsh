@@ -14,6 +14,7 @@ set(SRC
   dgGroupOfElements.cpp
   dgAlgorithm.cpp
   dgConservationLawAdvection.cpp
+  function.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Solver *.h) 
