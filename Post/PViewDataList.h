@@ -1,3 +1,4 @@
+
 // Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
@@ -61,8 +62,11 @@ class PViewDataList : public PViewData {
   int getNumTimeSteps(){ return NbTimeStep; }
   double getTime(int step);
   double getMin(int step=-1);
+  void setMin(double min) {Min = min;}
   double getMax(int step=-1);
+  void setMax(double max) {Max = max;}
   SBoundingBox3d getBoundingBox(int step=-1){ return BBox; }
+  void setBoundingBox(SBoundingBox3d& box) {BBox = box;}
   int getNumScalars(int step=-1);
   int getNumVectors(int step=-1);
   int getNumTensors(int step=-1);

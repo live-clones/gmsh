@@ -60,9 +60,9 @@ class stepData{
   double getTime(){ return _time; }
   void setTime(double time){ _time = time; }
   double getMin(){ return _min; }
-  void setMin(double min ){ _min = min; }
+  double setMin(double min){ _min = min; }
   double getMax(){ return _max; }
-  void setMax(double max){ _max = max; }
+  double setMax(double max){ _max = max; }
   int getNumData()
   {
     if(!_data) return 0;
@@ -132,8 +132,11 @@ class PViewDataGModel : public PViewData {
   int getNumTimeSteps();
   double getTime(int step);
   double getMin(int step=-1);
+  void setMin(double min){ _min = min; }
   double getMax(int step=-1);
+  void setMax(double max){ _max = max; }
   SBoundingBox3d getBoundingBox(int step=-1);
+  void setBoundingBox(SBoundingBox3d& box){}
   int getNumScalars(int step=-1);
   int getNumVectors(int step=-1);
   int getNumTensors(int step=-1);

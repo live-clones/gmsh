@@ -296,3 +296,16 @@ void VertexArray::fromChar(const char *bytes, int swap)
     memcpy(&_colors[0], &bytes[index], cs); index += cs;
   }
 }
+
+void VertexArray::merge(VertexArray* arr) {
+  if(arr->getNumVertices() != 0) {
+    _vertices.insert(_vertices.end(),arr->firstVertex(),
+	     	     arr->lastVertex());
+    _normals.insert(_normals.end(),arr->firstNormal(),
+		    arr->lastNormal());
+    _colors.insert(_colors.end(),arr->firstColor(),
+		   arr->lastColor());
+    _elements.insert(_elements.end(),arr->firstElementPointer(),
+    		     arr->lastElementPointer());
+  }
+}

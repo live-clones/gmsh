@@ -183,6 +183,9 @@ static void file_remote_cb(Fl_Widget *w, void *data)
       FlGui::instance()->updateViews();
       drawContext::global()->draw();
     }
+    else if(str == "varrays"){
+      server->SendString(GmshSocket::GMSH_VERTEX_ARRAY, " ");
+    }
     else if(str == "test"){
       server->SendString(GmshSocket::GMSH_SPEED_TEST, "Speed test");
     }
@@ -2203,6 +2206,7 @@ static Fl_Menu_Item bar_table[] = {
       {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
       {"Merge...",  0, (Fl_Callback *)file_remote_cb, (void*)"merge"},
       {"Clear",     0, (Fl_Callback *)file_remote_cb, (void*)"clear"},
+      {"Get vertex arrays", 0, (Fl_Callback *)file_remote_cb, (void*)"varrays"},
       {"Stop",      0, (Fl_Callback *)file_remote_cb, (void*)"stop"},
       {0},
     {"New Window", 0, (Fl_Callback *)file_window_cb, (void*)"new"},

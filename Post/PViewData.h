@@ -65,12 +65,15 @@ class PViewData {
   // get the time value associated with the step-th time step
   virtual double getTime(int step){ return 0.; }
 
-  // get min/max for given step (global over all steps if step=-1)
+  // get/set min/max for given step (global over all steps if step=-1)
   virtual double getMin(int step=-1) = 0;
   virtual double getMax(int step=-1) = 0;
+  virtual void setMin(double min) = 0;
+  virtual void setMax(double max) = 0;
 
-  // get the bounding box
+  // get/set the bounding box
   virtual SBoundingBox3d getBoundingBox(int step=-1) = 0;
+  virtual void setBoundingBox(SBoundingBox3d& box) = 0;
 
   // get the number of elements of a given type, for a given step
   virtual int getNumScalars(int step=-1){ return 0; }
