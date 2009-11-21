@@ -467,7 +467,7 @@ bool GFaceCompound::parametrize() const
     Msg::Info("Parametrization failed using standard techniques : moving to convex combination");
     coordinates.clear(); 
     Octree_Delete(oct);
-    //fillNeumannBCS();
+    fillNeumannBCS();
     parametrize(ITERU,CONVEXCOMBINATION);
     parametrize(ITERV,CONVEXCOMBINATION);
     buildOct();
@@ -974,14 +974,14 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
       myAssembler.numberVertex(t->getVertex(2), 0, 1); 
     }    
   }
-//   if (tom == CONVEXCOMBINATION){
-//     for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 !=fillTris.end(); it2++ ){
-//       MTriangle *t = (*it2);
-//       myAssembler.numberVertex(t->getVertex(0), 0, 1);
-//       myAssembler.numberVertex(t->getVertex(1), 0, 1);
-//       myAssembler.numberVertex(t->getVertex(2), 0, 1); 
-//     }   
-//   }
+  if (tom == CONVEXCOMBINATION){
+    for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 !=fillTris.end(); it2++ ){
+      MTriangle *t = (*it2);
+      myAssembler.numberVertex(t->getVertex(0), 0, 1);
+      myAssembler.numberVertex(t->getVertex(1), 0, 1);
+      myAssembler.numberVertex(t->getVertex(2), 0, 1); 
+    }   
+  }
   
 
   Msg::Debug("Creating term %d dofs numbered %d fixed",
@@ -998,10 +998,10 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
 	laplace.addToMatrix(myAssembler, &se);
       }
     }
-//     for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 !=fillTris.end(); it2++ ){
-//       SElement se((*it2));
-//       laplace.addToMatrix(myAssembler, &se);
-//     }
+    for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 !=fillTris.end(); it2++ ){
+      SElement se((*it2));
+      laplace.addToMatrix(myAssembler, &se);
+    }
   }
   else {
     laplaceTerm laplace(model(), 1, &ONE);
