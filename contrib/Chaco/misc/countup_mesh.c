@@ -241,22 +241,22 @@ int       using_ewgts;		/* are edge weights being used? */
     }
     ncuts /= 2;
     nhops /= 2;
-    printf("\n");
-    printf("                            Total      Max/Set      Min/Set\n");
-    printf("                            -----      -------      -------\n");
-    printf("Set Size:             %11d  %11d  %11d\n",
+    Gmsh_printf("\n");
+    Gmsh_printf("                            Total      Max/Set      Min/Set\n");
+    Gmsh_printf("                            -----      -------      -------\n");
+    Gmsh_printf("Set Size:             %11d  %11d  %11d\n",
     	tot_size, max_size, min_size);
-    printf("Edge Cuts:            %11g  %11g  %11g\n",
+    Gmsh_printf("Edge Cuts:            %11g  %11g  %11g\n",
     	ncuts, maxcuts, mincuts);
-    printf("Mesh Hops:            %11g  %11g  %11g\n",
+    Gmsh_printf("Mesh Hops:            %11g  %11g  %11g\n",
     	nhops, maxhops, minhops);
-    printf("Boundary Vertices:    %11g  %11g  %11g\n",
+    Gmsh_printf("Boundary Vertices:    %11g  %11g  %11g\n",
     	total_bdyvtxs, maxbdy, minbdy);
-    printf("Boundary Vertex Hops: %11g  %11g  %11g\n",
+    Gmsh_printf("Boundary Vertex Hops: %11g  %11g  %11g\n",
     	bdyvtx_hops_tot, bdyvtx_hops_max, bdyvtx_hops_min);
-    printf("Adjacent Sets:        %11d  %11d  %11d\n",
+    Gmsh_printf("Adjacent Sets:        %11d  %11d  %11d\n",
     	total_neighbors, maxneighbors, minneighbors);
-    printf("Internal Vertices:    %11d  %11d  %11d\n\n",
+    Gmsh_printf("Internal Vertices:    %11d  %11d  %11d\n\n",
     	total_internal, max_internal, min_internal);
 
 

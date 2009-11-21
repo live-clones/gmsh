@@ -172,7 +172,7 @@ long      seed;			/* for random graph mutations */
     }
 
     if (PRINT_HEADERS) {
-        printf("\n\nStarting to partition ...\n\n");
+        Gmsh_printf("\n\nStarting to partition ...\n\n");
 	if (Output_File != NULL ) {
             fprintf(Output_File,
 	    "\n\nStarting to partition ... (residual, warning and error messages only)\n\n");

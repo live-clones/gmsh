@@ -7,7 +7,7 @@
 #include <cstring>
 #include "GmshMessage.h"
 
-// Overload the printf statements in Chaco to write using Msg::Direct in gmsh
+// Overload the printf statements in Chaco to write using Msg::Debug in gmsh
 
 extern "C" int Gmsh_printf(const char *fmt, ...)
 {
@@ -23,17 +23,17 @@ extern "C" int Gmsh_printf(const char *fmt, ...)
   char *p = std::strtok(str, "\n");
   if(p) {
     // If more than 1 leading '\n', print a blank line
-    if(p - str > 1) Msg::Direct(" ");
+    if(p - str > 1) Msg::Debug(" ");
     std::strcpy(buf, p);
-    Msg::Direct(buf);
+    Msg::Debug(buf);
     // New line for each interior '\n'
     while((p = std::strtok(NULL, "\n"))) {
       std::strcpy(buf, p);
-      Msg::Direct(buf);
+      Msg::Debug(buf);
     }
   }
   // If more than 1 trailing '\n', or only "\n" in the string, print a blank
   // line.
-  if(*last == '\n') Msg::Direct(" ");
+  if(*last == '\n') Msg::Debug(" ");
   return 0;
 }

@@ -467,7 +467,7 @@ bool GFaceCompound::parametrize() const
     Msg::Info("Parametrization failed using standard techniques : moving to convex combination");
     coordinates.clear(); 
     Octree_Delete(oct);
-    fillNeumannBCS();
+    //fillNeumannBCS();
     parametrize(ITERU,CONVEXCOMBINATION);
     parametrize(ITERV,CONVEXCOMBINATION);
     buildOct();
@@ -974,14 +974,14 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
       myAssembler.numberVertex(t->getVertex(2), 0, 1); 
     }    
   }
-  if (tom == CONVEXCOMBINATION){
-    for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 !=fillTris.end(); it2++ ){
-      MTriangle *t = (*it2);
-      myAssembler.numberVertex(t->getVertex(0), 0, 1);
-      myAssembler.numberVertex(t->getVertex(1), 0, 1);
-      myAssembler.numberVertex(t->getVertex(2), 0, 1); 
-    }   
-  }
+//   if (tom == CONVEXCOMBINATION){
+//     for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 !=fillTris.end(); it2++ ){
+//       MTriangle *t = (*it2);
+//       myAssembler.numberVertex(t->getVertex(0), 0, 1);
+//       myAssembler.numberVertex(t->getVertex(1), 0, 1);
+//       myAssembler.numberVertex(t->getVertex(2), 0, 1); 
+//     }   
+//   }
   
 
   Msg::Debug("Creating term %d dofs numbered %d fixed",
@@ -998,10 +998,10 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
 	laplace.addToMatrix(myAssembler, &se);
       }
     }
-    for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 !=fillTris.end(); it2++ ){
-      SElement se((*it2));
-      laplace.addToMatrix(myAssembler, &se);
-    }
+//     for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 !=fillTris.end(); it2++ ){
+//       SElement se((*it2));
+//       laplace.addToMatrix(myAssembler, &se);
+//     }
   }
   else {
     laplaceTerm laplace(model(), 1, &ONE);
@@ -1185,10 +1185,10 @@ void GFaceCompound::computeNormals() const
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *t = (*it)->triangles[i];
       t->getJacobian(0, 0, 0, J);
-      // SVector3 n (J[2][0],J[2][1],J[2][2]);
-      SVector3 d1(J[0][0], J[0][1], J[0][2]);
-      SVector3 d2(J[1][0], J[1][1], J[1][2]);
-      SVector3 n = crossprod(d1, d2);
+      SVector3 n (J[2][0],J[2][1],J[2][2]);
+      //SVector3 d1(J[0][0], J[0][1], J[0][2]);
+      //SVector3 d2(J[1][0], J[1][1], J[1][2]);
+      //SVector3 n = crossprod(d1, d2);
       n.normalize();
       for(int j = 0; j < 3; j++){
 	std::map<MVertex*, SVector3>::iterator itn = _normals.find(t->getVertex(j));
@@ -1253,7 +1253,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
     return lt->gf->point(pv.x(),pv.y());
   }
   
-  const bool LINEARMESH = false;
+  const bool LINEARMESH = true; //false
 
   if(LINEARMESH){
 
@@ -1285,7 +1285,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
     w32 = dot(lt->v2 - lt->v3, n3);
     w31 = dot(lt->v1 - lt->v3, n3);
     w13 = dot(lt->v3 - lt->v1, n1);
-    b210 = (2*lt->v1 + lt->v2 -w12*n1)*0.333; 
+    b210 = (2*lt->v1 + lt->v2-w12*n1)*0.333; 
     b120 = (2*lt->v2 + lt->v1-w21*n2)*0.333;
     b021 = (2*lt->v2 + lt->v3-w23*n2)*0.333;
     b012 = (2*lt->v3 + lt->v2-w32*n3)*0.333;
@@ -1515,7 +1515,7 @@ bool GFaceCompound::checkAspectRatio() const
   bool paramOK = true;
   if(allNodes.empty()) buildAllNodes();
   
-  double limit =  1.e15 ;
+  double limit =  1.e15;
   double areaMax = 0.0;
   int nb = 0;
   std::list<GFace*>::const_iterator it = _compound.begin();
@@ -1548,7 +1548,8 @@ bool GFaceCompound::checkAspectRatio() const
     SBoundingBox3d bboxH = bounds();
     double H = norm(SVector3(bboxH.max(), bboxH.min()));
     double D = getSizeBB(_U0);
-    int split =  (int)ceil(.7*H/D);
+    double eta = H/D;
+    int split =  (int)ceil(eta/3);
     nbSplit = std::max(split,2); 
     //printf("H=%g, D=%g split=%d nbSplit=%d \n", H, D, split, nbSplit);
     Msg::Info("Partition geometry in N=%d parts", nbSplit);
