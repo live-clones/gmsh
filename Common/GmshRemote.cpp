@@ -100,42 +100,22 @@ static void computeAndSendVertexArrays()
 }
 
 // Merge the vertex arrays
-void addToVertexArrays(const char* bytes, int len)
+static void addToVertexArrays(int length, const char* bytes, int swap)
 {
-  int is = sizeof(int), ds = sizeof(double);
-
   std::string name;
+  int num, type, numSteps;
+  double min, max, time, xmin, ymin, zmin, xmax, ymax, zmax;
+  int index = VertexArray::decodeHeader(length, bytes, swap, name, num, type, min, max,
+                                        numSteps, time, xmin, ymin, zmin, xmax, ymax, zmax);
 
-  int index = 0;
-  int num; memcpy(&num, &bytes[index], is); index += is;
-  int ss; memcpy(&ss, &bytes[index], is); index += is;
-  if(ss){
-    std::vector<char> n(ss);
-    memcpy(&n[0], &bytes[index], ss); index += ss;
-    for(unsigned int i = 0; i < n.size(); i++) name += n[i];
-  }
-  
-  int type; memcpy(&type, &bytes[index], is); index += is;
-  
-  PView *p = PView::list[num-1];
+  PView *p = PView::list[num - 1];
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
   
   VertexArray *varrays[4] = 
     {p->va_points, p->va_lines, p->va_triangles, p->va_vectors};
   
-  VertexArray *va = varrays[type-1];
-  
-  double min; memcpy(&min, &bytes[index], ds); index += ds;
-  double max; memcpy(&max, &bytes[index], ds); index += ds;
-  int numsteps; memcpy(&numsteps, &bytes[index], is); index += is;
-  double time; memcpy(&time, &bytes[index], ds); index += ds;
-  double xmin; memcpy(&xmin, &bytes[index], ds); index += ds;
-  double ymin; memcpy(&ymin, &bytes[index], ds); index += ds;
-  double zmin; memcpy(&zmin, &bytes[index], ds); index += ds;
-  double xmax; memcpy(&xmax, &bytes[index], ds); index += ds;
-  double ymax; memcpy(&ymax, &bytes[index], ds); index += ds;
-  double zmax; memcpy(&zmax, &bytes[index], ds); index += ds;
+  VertexArray *va = varrays[type - 1];
 
   if (data->getMin() > min) data->setMin(min);
   if (data->getMax() < max) data->setMax(max);
@@ -147,8 +127,8 @@ void addToVertexArrays(const char* bytes, int len)
   data->setBoundingBox(bb);
 
   if (type == 4) type = 2;
-  VertexArray* toAdd = new VertexArray(type,100);
-  toAdd->fromChar(bytes,0);
+  VertexArray* toAdd = new VertexArray(type, 100);
+  toAdd->fromChar(length, bytes, swap);
   va->merge(toAdd);
   delete toAdd;
 }
@@ -226,7 +206,7 @@ int GmshRemote()
 	    char str[len];
 	    MPI_Recv(str, len, MPI_CHAR, status.MPI_SOURCE,
 		     MPI_GMSH_VARRAY, MPI_COMM_WORLD, &status2);
-            addToVertexArrays(str,len);
+            addToVertexArrays(len, str, swap);
 	  }
 	}
 	computeAndSendVertexArrays(client, false);

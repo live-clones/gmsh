@@ -178,9 +178,14 @@ class VertexArray{
   // network)
   char *toChar(int num, std::string name, int type, double min, double max, 
                int numsteps, double time, SBoundingBox3d bbox, int &len);
-  void fromChar(const char *bytes, int swap);
+  void fromChar(int length, const char *bytes, int swap);
+  static int decodeHeader(int length, const char *bytes, int swap,
+                          std::string &name, int &num, int &type,
+                          double &min, double &max, int &numSteps, double &time,
+                          double &xmin, double &ymin, double &zmin, 
+                          double &xmax, double &ymax, double &zmax);
   // merge another vertex array into this one
-  void merge(VertexArray* arr);
+  void merge(VertexArray *va);
 };
 
 #endif

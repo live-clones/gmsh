@@ -252,32 +252,56 @@ char *VertexArray::toChar(int num, std::string name, int type, double min, doubl
   return bytes;
 }
 
-void VertexArray::fromChar(const char *bytes, int swap)
+int VertexArray::decodeHeader(int length, const char *bytes, int swap,
+                              std::string &name, int &num, int &type,
+                              double &min, double &max, int &numSteps, double &time,
+                              double &xmin, double &ymin, double &zmin, 
+                              double &xmax, double &ymax, double &zmax)
 {
-  // FIXME deal with swap
-
-  int is = sizeof(int), ds = sizeof(double), index = 0;
-
-  int num; memcpy(&num, &bytes[index], is); index += is;
-
+  int is = sizeof(int), ds = sizeof(double);
+  
+  if(length < 4 * is + 9 * ds){
+    Msg::Error("Too few bytes to create vertex array: %d", length);
+    return 0;
+  }
+  
+  if(swap){
+    Msg::Error("Should swap bytes in vertex array--not implemented yet");
+    return 0;
+  }
+  
+  int index = 0;
+  memcpy(&num, &bytes[index], is); index += is;
   int ss; memcpy(&ss, &bytes[index], is); index += is;
   if(ss){
-    std::vector<char> name(ss); 
-    memcpy(&name[0], &bytes[index], ss); index += ss;
+    std::vector<char> n(ss);
+    memcpy(&n[0], &bytes[index], ss); index += ss;
+    for(unsigned int i = 0; i < n.size(); i++) name += n[i];
   }
+  memcpy(&type, &bytes[index], is); index += is;
+  memcpy(&min, &bytes[index], ds); index += ds;
+  memcpy(&max, &bytes[index], ds); index += ds;
+  memcpy(&numSteps, &bytes[index], is); index += is;
+  memcpy(&time, &bytes[index], ds); index += ds;
+  memcpy(&xmin, &bytes[index], ds); index += ds;
+  memcpy(&ymin, &bytes[index], ds); index += ds;
+  memcpy(&zmin, &bytes[index], ds); index += ds;
+  memcpy(&xmax, &bytes[index], ds); index += ds;
+  memcpy(&ymax, &bytes[index], ds); index += ds;
+  memcpy(&zmax, &bytes[index], ds); index += ds;
+  return index;
+}
 
-  int type; memcpy(&type, &bytes[index], is); index += is;
-  double min; memcpy(&min, &bytes[index], ds); index += ds;
-  double max; memcpy(&max, &bytes[index], ds); index += ds;
-  int numsteps; memcpy(&numsteps, &bytes[index], is); index += is;
-  double time; memcpy(&time, &bytes[index], ds); index += ds;
-  double xmin; memcpy(&xmin, &bytes[index], ds); index += ds;
-  double ymin; memcpy(&ymin, &bytes[index], ds); index += ds;
-  double zmin; memcpy(&zmin, &bytes[index], ds); index += ds;
-  double xmax; memcpy(&xmax, &bytes[index], ds); index += ds;
-  double ymax; memcpy(&ymax, &bytes[index], ds); index += ds;
-  double zmax; memcpy(&zmax, &bytes[index], ds); index += ds;
+void VertexArray::fromChar(int length, const char *bytes, int swap)
+{
+  std::string name;
+  int num, type, numSteps;
+  double min, max, time, xmin, ymin, zmin, xmax, ymax, zmax;
+  int index = decodeHeader(length, bytes, swap, name, num, type, min, max,
+                           numSteps, time, xmin, ymin, zmin, xmax, ymax, zmax);
+  if(!index) return;
 
+  int is = sizeof(int);
   int vn; memcpy(&vn, &bytes[index], is); index += is;
   if(vn){
     _vertices.resize(vn); int vs = vn * sizeof(float);
@@ -297,15 +321,13 @@ void VertexArray::fromChar(const char *bytes, int swap)
   }
 }
 
-void VertexArray::merge(VertexArray* arr) {
-  if(arr->getNumVertices() != 0) {
-    _vertices.insert(_vertices.end(),arr->firstVertex(),
-	     	     arr->lastVertex());
-    _normals.insert(_normals.end(),arr->firstNormal(),
-		    arr->lastNormal());
-    _colors.insert(_colors.end(),arr->firstColor(),
-		   arr->lastColor());
-    _elements.insert(_elements.end(),arr->firstElementPointer(),
-    		     arr->lastElementPointer());
+void VertexArray::merge(VertexArray* va) 
+{
+  if(va->getNumVertices() != 0) {
+    _vertices.insert(_vertices.end(), va->firstVertex(), va->lastVertex());
+    _normals.insert(_normals.end(), va->firstNormal(), va->lastNormal());
+    _colors.insert(_colors.end(), va->firstColor(), va->lastColor());
+    _elements.insert(_elements.end(), va->firstElementPointer(),
+    		     va->lastElementPointer());
   }
 }

@@ -1145,39 +1145,12 @@ void PView::fillVertexArrays()
 void PView::fillVertexArray(ConnectionManager *remote, int length, 
                             const char *bytes, int swap)
 {
-  int is = sizeof(int), ds = sizeof(double);
-
-  if(length < 4 * is + 9 * ds){
-    Msg::Error("Too few bytes to create vertex array: %d", length);
-    return;
-  }
-
-  if(swap){
-    Msg::Error("Should swap bytes in vertex array--not implemented yet");
-    return;
-  }
-  
   std::string name;
-
-  int index = 0;
-  int num; memcpy(&num, &bytes[index], is); index += is;
-  int ss; memcpy(&ss, &bytes[index], is); index += is;
-  if(ss){
-    std::vector<char> n(ss);
-    memcpy(&n[0], &bytes[index], ss); index += ss;
-    for(unsigned int i = 0; i < n.size(); i++) name += n[i];
-  }
-  int type; memcpy(&type, &bytes[index], is); index += is;
-  double min; memcpy(&min, &bytes[index], ds); index += ds;
-  double max; memcpy(&max, &bytes[index], ds); index += ds;
-  int numsteps; memcpy(&numsteps, &bytes[index], is); index += is;
-  double time; memcpy(&time, &bytes[index], ds); index += ds;
-  double xmin; memcpy(&xmin, &bytes[index], ds); index += ds;
-  double ymin; memcpy(&ymin, &bytes[index], ds); index += ds;
-  double zmin; memcpy(&zmin, &bytes[index], ds); index += ds;
-  double xmax; memcpy(&xmax, &bytes[index], ds); index += ds;
-  double ymax; memcpy(&ymax, &bytes[index], ds); index += ds;
-  double zmax; memcpy(&zmax, &bytes[index], ds); index += ds;
+  int num, type, numSteps;
+  double min, max, time, xmin, ymin, zmin, xmax, ymax, zmax;
+  if(!VertexArray::decodeHeader(length, bytes, swap, name, num, type, min, max,
+                                numSteps, time, xmin, ymin, zmin, xmax, ymax, zmax))
+    return;
   
   Msg::Debug("Filling vertex array (type %d) in view num %d", type, num);
 
@@ -1186,7 +1159,7 @@ void PView::fillVertexArray(ConnectionManager *remote, int length,
   PView *p = PView::getViewByNum(num);
   if(!p){
     Msg::Info("View num %d does not exist: creating new view", num);
-    PViewData *data = new PViewDataRemote(remote, min, max, numsteps, time, bbox);
+    PViewData *data = new PViewDataRemote(remote, min, max, numSteps, time, bbox);
     data->setName(name + " (remote)");
     p = new PView(data, num);
     SetBoundingBox();
@@ -1207,22 +1180,22 @@ void PView::fillVertexArray(ConnectionManager *remote, int length,
   case 1:
     if(p->va_points) delete p->va_points; 
     p->va_points = new VertexArray(1, 100);
-    p->va_points->fromChar(bytes, swap);
+    p->va_points->fromChar(length, bytes, swap);
     break;
   case 2: 
     if(p->va_lines) delete p->va_lines; 
     p->va_lines = new VertexArray(2, 100);
-    p->va_lines->fromChar(bytes, swap);
+    p->va_lines->fromChar(length, bytes, swap);
     break;
   case 3:
     if(p->va_triangles) delete p->va_triangles;
     p->va_triangles = new VertexArray(3, 100);
-    p->va_triangles->fromChar(bytes, swap);
+    p->va_triangles->fromChar(length, bytes, swap);
     break;
   case 4:
     if(p->va_vectors) delete p->va_vectors;
     p->va_vectors = new VertexArray(2, 100);
-    p->va_vectors->fromChar(bytes, swap);
+    p->va_vectors->fromChar(length, bytes, swap);
     break;
   default: 
     Msg::Error("Cannot fill vertex array of type %d", type);
