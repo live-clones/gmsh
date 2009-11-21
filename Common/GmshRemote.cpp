@@ -20,6 +20,13 @@
 
 #if defined(HAVE_MPI)
 #include <mpi.h>
+#define MPI_GMSH_COMPUTE_VIEW  1
+#define MPI_GMSH_DATA_READY    2
+#define MPI_GMSH_VARRAY        3
+#define MPI_GMSH_VARRAY_LEN    4
+#define MPI_GMSH_SHUTDOWN      5
+#define MPI_GMSH_PARSE_STRING  6
+#define MPI_GMSH_MERGE_FILE    7
 #endif
 
 static void computeAndSendVertexArrays(GmshClient *client, bool compute=true)
@@ -93,8 +100,8 @@ static void computeAndSendVertexArrays()
 }
 
 // Merge the vertex arrays
-void addToVertexArrays(const char* bytes, int len) {
-
+void addToVertexArrays(const char* bytes, int len)
+{
   int is = sizeof(int), ds = sizeof(double);
 
   std::string name;
@@ -158,8 +165,8 @@ int GmshRemote()
   if(client && nbDaemon < 2) computeAndSendVertexArrays(client);
 
   while(1){
-    // On the node with MPI rank 0, communicate through a
-    // socket.
+
+    // on the node with MPI rank 0, communicate through a socket
     if (rank == 0) {
       // stop if we have no communications for 5 minutes
       int ret = client->Select(300, 0);
@@ -190,27 +197,27 @@ int GmshRemote()
 	break;
       }
       else if(type == GmshSocket::GMSH_VERTEX_ARRAY){
+#if !defined(HAVE_MPI)
+        ParseString(msg);
+        computeAndSendVertexArrays(client);
+#else
+        // FIXME should parse options on each node before computing varrays!
 
-#if defined(HAVE_MPI)
-	client->Info("Sending vertex arrays...");
-
-	// Tell every node to start computing
+	// tell every node to start computing
 	int mpi_msg = MPI_GMSH_COMPUTE_VIEW;
 	MPI_Bcast(&mpi_msg, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-	// Fill the arrays on the master node
+	// fill the arrays on the master node
 	for(unsigned int i = 0; i < PView::list.size(); i++)
           PView::list[i]->fillVertexArrays();
-
-	// Wait and send the data from every other node
-	for (int i = 0; i < nbDaemon-1; i++) {
+	// wait and send the data from every other node
+	for (int i = 0; i < nbDaemon - 1; i++) {
 	  int nbArrays;
 	  MPI_Status status;
 	  MPI_Recv(&nbArrays, 1, MPI_INT, MPI_ANY_SOURCE,
 		   MPI_GMSH_DATA_READY, MPI_COMM_WORLD, &status);
-
 	  int source = status.MPI_SOURCE;
-	  // Get each varray in turn, then add it to the varrays of the master node
+	  // get each varray in turn, then add it to the varrays of
+	  // the master node
 	  for (int j = 0; j < nbArrays; j++) {
 	    int len;
 	    MPI_Status status2;
@@ -219,22 +226,21 @@ int GmshRemote()
 	    char str[len];
 	    MPI_Recv(str, len, MPI_CHAR, status.MPI_SOURCE,
 		     MPI_GMSH_VARRAY, MPI_COMM_WORLD, &status2);
-            
-	    addToVertexArrays(str,len);
+            addToVertexArrays(str,len);
 	  }
 	}
-	computeAndSendVertexArrays(client,false);
+	computeAndSendVertexArrays(client, false);
 #endif
       }
       else if(type == GmshSocket::GMSH_MERGE_FILE){
 	MergeFile(msg);
-#if defined(HAVE_MPI)
+#if !defined(HAVE_MPI)
+	computeAndSendVertexArrays(client);
+#else
 	int mpi_msg = MPI_GMSH_MERGE_FILE;
 	MPI_Bcast(&mpi_msg, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	MPI_Bcast(&length, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	MPI_Bcast(msg, length, MPI_CHAR, 0, MPI_COMM_WORLD);
-#else
-	computeAndSendVertexArrays(client);
 #endif
       }
       else if(type == GmshSocket::GMSH_PARSE_STRING){
@@ -256,9 +262,9 @@ int GmshRemote()
       }
     
       delete [] msg;
-    } else {
+    } 
+    else { // if we're not on the master node (rank != 0) wait for him...
 #if defined(HAVE_MPI)
-      // If we're not on the master node, we wait for him...
       int mpi_msg; 
       MPI_Bcast(&mpi_msg, 1, MPI_INT, 0, MPI_COMM_WORLD);
       if (mpi_msg == MPI_GMSH_COMPUTE_VIEW)
@@ -280,7 +286,7 @@ int GmshRemote()
 	MergeFile(msg);
       }
 #endif
-    }// if (rank != 0)
+    }
   }
   
 #if defined(HAVE_MPI)
