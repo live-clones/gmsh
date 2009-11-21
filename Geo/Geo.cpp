@@ -1164,10 +1164,29 @@ void DeleteShape(int Type, int Num)
     DeleteVolume(Num);
     break;
   case MSH_POINT_FROM_GMODEL:
+    {
+      GVertex *gv = GModel::current()->getVertexByTag(Num);
+      if(gv) GModel::current()->remove(gv);
+    }
+    break;
   case MSH_SEGM_FROM_GMODEL:
+    {
+      GEdge *ge = GModel::current()->getEdgeByTag(Num);
+      if(ge) GModel::current()->remove(ge);
+    }
+    break;
   case MSH_SURF_FROM_GMODEL:
+    {
+      GFace *gf = GModel::current()->getFaceByTag(Num);
+      if(gf) GModel::current()->remove(gf);
+    }
+    break;
+
   case MSH_VOLUME_FROM_GMODEL:
-    Msg::Error("Deletion of external CAD entities is not implemented yet");
+    {
+      GRegion *gr = GModel::current()->getRegionByTag(Num);
+      if(gr) GModel::current()->remove(gr);
+    }
     break;
   default:
     Msg::Error("Impossible to delete entity %d (of type %d)", Num, Type);
