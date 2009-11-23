@@ -44,7 +44,7 @@ int main(int argc, char **argv){
   int order=1;
   int dimension=2;
   dgAlgorithm algo;
-  function::registerAllFunctions();
+  function::registerDefaultFunctions();
   algo.buildGroups(GModel::current(),dimension,order,elementGroups,faceGroups,boundaryGroups);
 
   //for now, we suppose there is only one group of elements
@@ -58,8 +58,21 @@ int main(int argc, char **argv){
     algo.multAddInverseMassMatrix(*elementGroups[0],residu,sol);
   }
   print("init.pos",*elementGroups[0],&sol(0,0));
+
   //advection
-  dgConservationLaw *law = dgNewConservationLawAdvection();
+  fullMatrix<double> advectionSpeed(3,1);
+  advectionSpeed(0,0)=0.15;
+  advectionSpeed(1,0)=0.05;
+  advectionSpeed(2,0)=0.;
+
+  function::add("advectionSpeed",function::newFunctionConstant(advectionSpeed));
+
+  dgConservationLaw *law = dgNewConservationLawAdvection("advectionSpeed");
+  law->addBoundaryCondition("Left",dgBoundaryCondition::new0OutCondition(*law));
+  law->addBoundaryCondition("Right",dgBoundaryCondition::new0OutCondition(*law));
+  law->addBoundaryCondition("Top",dgBoundaryCondition::new0FluxCondition(*law));
+  law->addBoundaryCondition("Bottom",dgBoundaryCondition::new0FluxCondition(*law));
+
   for(int iT=0; iT<1000; iT++) {
     algo.residual(*law,elementGroups,faceGroups,boundaryGroups,sol,residu);
     residu.scale(0.01);

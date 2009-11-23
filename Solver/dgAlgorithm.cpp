@@ -25,13 +25,7 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
   fullMatrix<double> solutionQP (group.getNbIntegrationPoints(),group.getNbElements() * nbFields);
   // ----- 1.2 --- multiply the solution by the collocation matrix
   group.getCollocationMatrix().mult(solution  , solutionQP); 
-  // ----- 1.3 --- if the conservation law is diffusive, compute the gradients too
-  fullMatrix<double> *gradientSolutionQP= 0;
-  if (claw.diffusiveFlux()){
-     gradientSolutionQP = new  fullMatrix<double> (group.getNbIntegrationPoints(), group.getNbElements() * nbFields * 3);
-     //group.getGradientOfSolution().mult ( group.getCollocationMatrix() , *gradientSolutionQP); 
-  }
-  
+
   // ----- 2 ----  compute all fluxes (diffusive and convective) at integration points
   // ----- 2.1 --- allocate elementary fluxes (compued in XYZ coordinates)
   fullMatrix<double> fConv[3] = {fullMatrix<double>( group.getNbIntegrationPoints(), nbFields ),
@@ -47,22 +41,30 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
 				fullMatrix<double> (group.getNbIntegrationPoints(), group.getNbElements() * nbFields)};
   dataCacheMap cacheMap;
   dataCacheElement &cacheElement = cacheMap.getElement();
+  // provided dataCache
   cacheMap.provideData("UVW").set(group.getIntegrationPointsMatrix());
+  dataCacheDouble &solutionQPe = cacheMap.provideData("Solution");
+  dataCacheDouble &gradSolutionQPe = cacheMap.provideData("gradSolution");
+  // needed dataCache
   dataCacheDouble *sourceTerm = claw.newSourceTerm(cacheMap);
+    // fluxes in  XYZ coordinates;
+  dataCacheDouble *convectiveFlux = claw.newConvectiveFlux(cacheMap);
+  dataCacheDouble *diffusiveFlux = claw.newDiffusiveFlux(cacheMap);
 
+  // compute the gradient of solution if necessary
+  fullMatrix<double> *gradientSolutionQP= 0;
+  if (gradSolutionQPe.somethingDependOnMe()) {
+    gradientSolutionQP = new  fullMatrix<double> (group.getNbIntegrationPoints(), group.getNbElements() * nbFields * 3);
+    //group.getGradientOfSolution().mult ( group.getCollocationMatrix() , *gradientSolutionQP); 
+  }
   // ----- 2.3 --- iterate on elements
   for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {
     // ----- 2.3.1 --- build a small object that contains elementary solution, jacobians, gmsh element
-    fullMatrix<double> solutionQPe (solutionQP, iElement*nbFields, nbFields );
-    fullMatrix<double> *gradSolutionQPe;
-    if (claw.diffusiveFlux()) gradSolutionQPe = new fullMatrix<double>(*gradientSolutionQP, 3*iElement*nbFields,3*nbFields );      
-    else gradSolutionQPe = new fullMatrix<double>;
-    dgElement DGE( group.getElement(iElement), solutionQPe, *gradSolutionQPe, group.getIntegrationPointsMatrix());
+    solutionQPe.set(fullMatrix<double>(solutionQP, iElement*nbFields, nbFields ));
+    if (gradSolutionQPe.somethingDependOnMe())
+      gradSolutionQPe.set(fullMatrix<double>(*gradientSolutionQP, 3*iElement*nbFields,3*nbFields ));
     cacheElement.set(group.getElement(iElement));
-    if(claw.convectiveFlux() || claw.diffusiveFlux()) {
-      // ----- 2.3.2 --- compute fluxes in XYZ coordinates
-      if (claw.convectiveFlux()) (*claw.convectiveFlux())(DGE,fConv);
-      if (claw.diffusiveFlux()) (*claw.diffusiveFlux())(DGE,fDiff);
+    if(convectiveFlux || diffusiveFlux) {
       // ----- 2.3.3 --- compute fluxes in UVW coordinates
       for (int iUVW=0;iUVW<group.getDimUVW();iUVW++) {
         // ----- 2.3.3.1 --- get a proxy on the big local flux matrix
@@ -76,8 +78,12 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
             const double detJ = group.getDetJ (iElement, iPt);
             const double factor = invJ * detJ;
             // compute fluxes in the reference coordinate system at this integration point
-            for (int k=0;k<nbFields;k++)
-              fuvwe(iPt,k) += ( fConv[iXYZ](iPt,k) + fDiff[iXYZ](iPt,k)) * factor;
+            for (int k=0;k<nbFields;k++){
+              if(convectiveFlux)
+                fuvwe(iPt,k) += ( (*convectiveFlux)(iPt,iXYZ*nbFields+k)) * factor;
+              if(diffusiveFlux)
+                fuvwe(iPt,k) += ( (*diffusiveFlux)(iPt,iXYZ*nbFields+k)) * factor;
+            }
           }
         } 
       }
@@ -91,13 +97,18 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
         }
       }
     }
-    delete gradSolutionQPe;
+    if(gradientSolutionQP)
+      delete gradientSolutionQP;
   }
   // ----- 3 ---- do the redistribution at nodes using as many BLAS3 operations as there are local coordinates
-  if(claw.convectiveFlux() || claw.diffusiveFlux()){
+  if(convectiveFlux || diffusiveFlux){
     for (int iUVW=0;iUVW<group.getDimUVW();iUVW++){
       residual.gemm(group.getFluxRedistributionMatrix(iUVW),Fuvw[iUVW]);
     }
+    if(convectiveFlux)
+      delete convectiveFlux;
+    if(diffusiveFlux)
+      delete diffusiveFlux;
   }
   if(sourceTerm){
     residual.gemm(group.getSourceRedistributionMatrix(),Source);
@@ -118,23 +129,34 @@ void dgAlgorithm::residualInterface ( //dofManager &dof, // the DOF manager (may
   group.getCollocationMatrix().mult(solution, solutionQP); 
   // ----- 2 ----  compute normal fluxes  at integration points
   fullMatrix<double> NormalFluxQP ( group.getNbIntegrationPoints(), group.getNbElements()*nbFields*2);
+  dataCacheMap cacheMapLeft, cacheMapRight;
+  // provided dataCache
+  cacheMapLeft.provideData("UVW").set(group.getIntegrationPointsMatrix());
+  dataCacheDouble &solutionQPLeft = cacheMapLeft.provideData("Solution");
+  dataCacheDouble &solutionQPRight = cacheMapRight.provideData("Solution");
+  dataCacheDouble &normals = cacheMapLeft.provideData("Normals");
+  dataCacheElement &cacheElementLeft = cacheMapLeft.getElement();
+  dataCacheElement &cacheElementRight = cacheMapRight.getElement();
+  // required data
+  dataCacheDouble *riemannSolver = claw.newRiemannSolver(cacheMapLeft,cacheMapRight);
   for (int iFace=0 ; iFace<group.getNbElements() ;++iFace) {
     // ----- 2.3.1 --- build a small object that contains elementary solution, jacobians, gmsh element
-    fullMatrix<double> solutionQPLeft (solutionQP, iFace*2*nbFields, nbFields );
-    fullMatrix<double> solutionQPRight (solutionQP, (iFace*2+1)*nbFields, nbFields );
-    fullMatrix<double> normalFluxQP (NormalFluxQP, iFace*2*nbFields, nbFields*2);
-    dgFace DGF( group.getFace(iFace), group.getElementLeft(iFace), group.getElementRight(iFace),
-                solutionQPLeft, solutionQPRight, group.getIntegrationPointsMatrix(),group.getNormals(iFace));
+    solutionQPLeft.set(fullMatrix<double>(solutionQP, iFace*2*nbFields, nbFields));
+    solutionQPRight.set(fullMatrix<double>(solutionQP, (iFace*2+1)*nbFields, nbFields));
+    normals.set(group.getNormals(iFace));
+    cacheElementLeft.set(group.getElementLeft(iFace));
+    cacheElementRight.set(group.getElementRight(iFace));
+    fullMatrix<double> normalFluxQP (NormalFluxQP, iFace*nbFields*2, nbFields*2);
     // ----- 2.3.2 --- compute fluxes
-    (*claw.riemannSolver())(DGF,&normalFluxQP);
     for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
       const double detJ = group.getDetJ (iFace, iPt);
       for (int k=0;k<nbFields*2;k++)
-        normalFluxQP(iPt,k) *= detJ;
+        normalFluxQP(iPt,k) = (*riemannSolver)(iPt,k)*detJ;
     }
   }
   // ----- 3 ---- do the redistribution at face nodes using BLAS3
   residual.gemm(group.getRedistributionMatrix(),NormalFluxQP);
+  delete riemannSolver;
 }
 
 void dgAlgorithm::multAddInverseMassMatrix ( /*dofManager &dof,*/
@@ -157,40 +179,39 @@ void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (mayb
            )
 { 
   int nbFields = claw.nbFields();
-  const dgBoundaryCondition *boundaryCondition = claw.boundaryCondition(group.getBoundaryTag());
+  const dgBoundaryCondition *boundaryCondition = claw.getBoundaryCondition(group.getBoundaryTag());
   // ----- 1 ----  get the solution at quadrature points
   fullMatrix<double> solutionQP (group.getNbIntegrationPoints(),group.getNbElements() * nbFields);
   group.getCollocationMatrix().mult(solution, solutionQP); 
   // ----- 2 ----  compute normal fluxes  at integration points
   fullMatrix<double> NormalFluxQP ( group.getNbIntegrationPoints(), group.getNbElements()*nbFields);
-  fullMatrix<double> solutionQPRight(group.getNbIntegrationPoints(), nbFields);
+
+  dataCacheMap cacheMapLeft;
+  // provided dataCache
+  cacheMapLeft.provideData("UVW").set(group.getIntegrationPointsMatrix());
+  dataCacheDouble &solutionQPLeft = cacheMapLeft.provideData("Solution");
+  dataCacheDouble &normals = cacheMapLeft.provideData("Normals");
+  dataCacheElement &cacheElementLeft = cacheMapLeft.getElement();
+  // required data
+  dataCacheDouble *boundaryTerm = boundaryCondition->newBoundaryTerm(cacheMapLeft);
+
   for (int iFace=0 ; iFace<group.getNbElements() ;++iFace) {
-    // ----- 2.3.1 --- build a small object that contains elementary solution, jacobians, gmsh element
-    fullMatrix<double> solutionQPLeft (solutionQP, iFace*nbFields, nbFields);
-    fullMatrix<double> normalFluxQP (NormalFluxQP, iFace*nbFields, nbFields);
-    dgFace DGF( group.getFace(iFace), group.getElementLeft(iFace), NULL,
-                solutionQPLeft, solutionQPRight, group.getIntegrationPointsMatrix(),group.getNormals(iFace));
+    // ----- 2.3.1 --- provide the data to the cacheMap
+    solutionQPLeft.set(fullMatrix<double>(solutionQP, iFace*nbFields, nbFields));
+    normals.set(group.getNormals(iFace));
+    cacheElementLeft.set(group.getElementLeft(iFace));
+
     // ----- 2.3.2 --- compute fluxes
-    switch (boundaryCondition->type()){
-      case dgBoundaryCondition::EXTERNAL_VALUES : {
-        (*boundaryCondition)(DGF, &solutionQPRight);
-        (*claw.riemannSolver())(DGF, &normalFluxQP);
-        break;
-      }
-      case dgBoundaryCondition::FLUX :{
-        (*boundaryCondition)(DGF, &normalFluxQP);
-      }
-      default :
-        throw;
-    }
+    fullMatrix<double> normalFluxQP (NormalFluxQP, iFace*nbFields, nbFields);
     for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
       const double detJ = group.getDetJ (iFace, iPt);
       for (int k=0;k<nbFields;k++)
-        normalFluxQP(iPt,k) *= detJ;
+        normalFluxQP(iPt,k) = (*boundaryTerm)(iPt,k)*detJ;
     }
   }
   // ----- 3 ---- do the redistribution at face nodes using BLAS3
   residual.gemm(group.getRedistributionMatrix(),NormalFluxQP);
+  delete boundaryTerm;
 }
 
 void dgAlgorithm::buildGroups(GModel *model, int dim, int order,

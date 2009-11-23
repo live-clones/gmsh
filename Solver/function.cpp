@@ -77,6 +77,7 @@ dataCacheMap::~dataCacheMap()
 
 // now some example of functions
 
+// get XYZ coordinates
 class functionXYZ : public function {
  private:
   class data : public dataCacheDouble{
@@ -107,8 +108,41 @@ class functionXYZ : public function {
   }
 };
 
+// constant values copied over each line
+class functionConstant : public function {
+ private :
+  class data : public dataCacheDouble {
+    const functionConstant *_function;
+    dataCacheDouble &_uvw;
+    public:
+    data(const functionConstant * function,dataCacheMap *m) :_uvw(m->get("UVW",this)){
+      _function = function;
+    }
+    void _eval() {
+      if(_value.size1()!=_uvw().size1()){
+        _value=fullMatrix<double>(_uvw().size1(),_function->_source.size1());
+      }
+      for(int i=0;i<_value.size1();i++)
+        for(int j=0;j<_function->_source.size1();j++)
+          _value(i,j)=_function->_source(j,0);
+    }
+  };
+  fullMatrix<double> _source;
+ public:
+  dataCacheDouble *newDataCache(dataCacheMap *m)
+  {
+    return new data(this,m);
+  }
+  functionConstant(const fullMatrix<double> &source){
+    _source = source;
+  }
+};
 
-void function::registerAllFunctions()
+function *function::newFunctionConstant(const fullMatrix<double> &source){
+  return new functionConstant(source);
+}
+
+void function::registerDefaultFunctions()
 {
   function::add("XYZ", new functionXYZ);
 }

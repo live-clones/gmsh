@@ -13,6 +13,7 @@ set(SRC
   multiscaleLaplace.cpp
   dgGroupOfElements.cpp
   dgAlgorithm.cpp
+  dgConservationLaw.cpp
   dgConservationLawAdvection.cpp
   function.cpp
 )

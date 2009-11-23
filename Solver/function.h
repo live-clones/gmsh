@@ -28,6 +28,10 @@ protected :
   void addMeAsDependencyOf (dataCache *newDep);
   dataCache() : _valid(false) {}
   virtual ~dataCache(){};
+public :
+  inline bool somethingDependOnMe() {
+    return !_dependOnMe.empty();
+  }
 };
 
 // A node in the dependency tree for which all the leafs depend on the
@@ -70,11 +74,14 @@ class function {
   static std::map<std::string, function*> _allFunctions;
   std::string _name;
  public:
-  static void registerAllFunctions();
+  static void registerDefaultFunctions();
   static bool add(const std::string functionName, function *f);
   static function *get(std::string functionName, bool acceptNull=false);
 
   virtual dataCacheDouble *newDataCache(dataCacheMap *m) =0;
+
+  //we need a parser for this
+  static function *newFunctionConstant(const fullMatrix<double> &source);
 };
 
 // A special node in the dependency tree for which all the leafs
@@ -97,15 +104,19 @@ class dataCacheMap {
   dataCacheElement _cacheElement;
   std::map<std::string, dataCacheDouble*> _cacheDoubleMap;
   class providedDataDouble : public dataCacheDouble
+  // for data provided by the algorithm and that does not have an _eval function
+  // (typically "UVW") this class is not stricly necessary, we could write
+  // a function for each case but I think it's more practical like this
   {
     void _eval() {throw;};
+    public:
+    providedDataDouble() {
+      _valid=true;
+    }
   };
  public:
   dataCacheDouble &get(const std::string &functionName, dataCache *caller=0);
   dataCacheElement &getElement(dataCache *caller=0);
-  // for data provided by the user and that does not have an _eval function
-  // (typically "UVW") this class is not stricly necessary, we could write
-  // a function for each case but I think it's more practical like this
   dataCacheDouble &provideData(std::string name);
   ~dataCacheMap();
 };

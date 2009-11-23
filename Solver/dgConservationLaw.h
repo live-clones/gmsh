@@ -7,59 +7,50 @@
 		    + r(u,forcings)                       -> source term r
 */
 #include "fullMatrix.h"
-class dgElement; 
-class dgFace;
 class dataCacheDouble;
+class dataCacheMap;
 
-class dgTerm{
- public:
-  virtual ~dgTerm () {}
-  virtual void operator () (const dgElement &, fullMatrix<double> fcx[]) const = 0;
-};
-
-class dgFaceTerm{
- public:
-  virtual ~dgFaceTerm () {}
-  virtual void operator () (const dgFace &, fullMatrix<double> fcx[]) const = 0;
-};
+class dgConservationLaw;
 
 class dgBoundaryCondition {
-public:
+ public:
   virtual ~dgBoundaryCondition () {}
-  typedef enum {FLUX=0,EXTERNAL_VALUES}boundaryType;
-  virtual void operator () (const dgFace&, fullMatrix<double> fcx[]) const = 0;
-  virtual boundaryType  type() const =0;
+  virtual dataCacheDouble *newBoundaryTerm(dataCacheMap &cacheMapLeft) const = 0;
+  //a generic boundary condition using the Riemann solver of the conservation Law
+  static dgBoundaryCondition *new0OutCondition(dgConservationLaw &claw);
+  static dgBoundaryCondition *new0FluxCondition(dgConservationLaw &claw);
 };
 
-class dataCacheMap;
 class dgConservationLaw {
-  protected :
-  int _nbf;
-  dgTerm *_diffusive, *_convective, *_source, *_maxConvectiveSpeed;
-  dgFaceTerm *_riemannSolver;
   std::map<const std::string,dgBoundaryCondition*> _boundaryConditions;
-public:
-  dgConservationLaw () : _diffusive(0), _convective(0), _source (0), 
-			 _riemannSolver(0),_maxConvectiveSpeed (0) {}
-  ~dgConservationLaw () {}
+ protected :
+  int _nbf;
+ public:
+  virtual ~dgConservationLaw () {}
 
   int nbFields() const {return _nbf;}
 
-  virtual dataCacheDouble *newSourceTerm(dataCacheMap &cacheMap)const { return NULL; }
+  virtual dataCacheDouble *newSourceTerm (dataCacheMap &cacheMap) const {return NULL;} 
+  virtual dataCacheDouble *newDiffusiveFlux (dataCacheMap &cacheMap) const {return NULL;} 
+  virtual dataCacheDouble *newConvectiveFlux (dataCacheMap &cacheMap) const {return NULL;}
+  virtual dataCacheDouble *newMaxConvectiveSpeed (dataCacheMap &cacheMap) const {return NULL;}
+  virtual dataCacheDouble *newRiemannSolver (dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight) const {return NULL;}
 
-  inline const dgTerm     * convectiveFlux () const {return _convective;}
-  inline const dgTerm     * diffusiveFlux  () const {return _diffusive;}
-  inline const dgFaceTerm * riemannSolver  () const {return _riemannSolver;}
-  inline const dgTerm     * maxConvectiveSpeed () const {return _maxConvectiveSpeed;}
-  inline const dgBoundaryCondition *boundaryCondition(const std::string tag) const {
+  inline const dgBoundaryCondition *getBoundaryCondition(const std::string tag) const {
     std::map<const std::string,dgBoundaryCondition*>::const_iterator it = _boundaryConditions.find(tag);
     if(it==_boundaryConditions.end())
       throw;
     return it->second;
   }
 
+  inline void addBoundaryCondition(const std::string tag, dgBoundaryCondition * condition) {
+    if(_boundaryConditions.find(tag)!=_boundaryConditions.end())
+      throw;
+    _boundaryConditions[tag]=condition;
+  }
+
 };
 
-dgConservationLaw *dgNewConservationLawAdvection();
+dgConservationLaw *dgNewConservationLawAdvection(const std::string vname);
 
 #endif
