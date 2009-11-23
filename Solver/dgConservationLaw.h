@@ -17,7 +17,7 @@ class dgBoundaryCondition {
   virtual ~dgBoundaryCondition () {}
   virtual dataCacheDouble *newBoundaryTerm(dataCacheMap &cacheMapLeft) const = 0;
   //a generic boundary condition using the Riemann solver of the conservation Law
-  static dgBoundaryCondition *new0OutCondition(dgConservationLaw &claw);
+  static dgBoundaryCondition *newOutsideValueCondition(dgConservationLaw &claw,const std::string outsideValueFunctionName);
   static dgBoundaryCondition *new0FluxCondition(dgConservationLaw &claw);
 };
 

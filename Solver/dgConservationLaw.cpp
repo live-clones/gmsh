@@ -1,17 +1,20 @@
 #include "dgConservationLaw.h"
 #include "function.h"
-class dgBoundaryCondition0Out : public dgBoundaryCondition {
+class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
   dgConservationLaw &_claw;
+  std::string _outsideValueFunctionName;
   class term : public dataCacheDouble {
     dataCacheMap cacheMapRight; // new cacheMap to  pass to the Riemann solver
     dataCacheDouble &solutionRight;
     dataCacheDouble &solutionLeft;
+    dataCacheDouble &outsideValue;
     dataCacheDouble *riemannSolver;
     dgConservationLaw &_claw;
     public:
-    term(dgConservationLaw &claw, dataCacheMap &cacheMapLeft):
+    term(dgConservationLaw &claw, dataCacheMap &cacheMapLeft,const std::string outsideValueFunctionName):
       solutionRight(cacheMapRight.provideData("Solution")),
       solutionLeft(cacheMapLeft.get("Solution",this)),
+      outsideValue(cacheMapLeft.get(outsideValueFunctionName,this)),
       _claw(claw)
     {
       riemannSolver=_claw.newRiemannSolver(cacheMapLeft,cacheMapRight);
@@ -20,18 +23,20 @@ class dgBoundaryCondition0Out : public dgBoundaryCondition {
     void _eval() {
       if(_value.size1()!=solutionLeft().size1()){
         //adjust sizes
-        solutionRight.set(fullMatrix<double>(solutionLeft().size1(),_claw.nbFields()));
         _value = fullMatrix<double>(solutionLeft().size1(),_claw.nbFields());
       }
+      solutionRight.set(outsideValue());
       for(int i=0;i<_value.size1(); i++)
         for(int j=0;j<_value.size2(); j++)
           _value(i,j) = (*riemannSolver)(i,j*2);
     }
   };
   public:
-  dgBoundaryCondition0Out(dgConservationLaw &claw): _claw(claw) {}
+  dgBoundaryConditionOutsideValue(dgConservationLaw &claw,const std::string outsideValueFunctionName): _claw(claw),
+    _outsideValueFunctionName(outsideValueFunctionName)
+  { }
   dataCacheDouble *newBoundaryTerm(dataCacheMap &cacheMapLeft) const {
-    return new term(_claw,cacheMapLeft);
+    return new term(_claw,cacheMapLeft,_outsideValueFunctionName);
   }
 };
 
@@ -56,8 +61,8 @@ class dgBoundaryCondition0Flux : public dgBoundaryCondition {
   }
 };
 
-dgBoundaryCondition *dgBoundaryCondition::new0OutCondition(dgConservationLaw &claw) {
-  return new dgBoundaryCondition0Out(claw);
+dgBoundaryCondition *dgBoundaryCondition::newOutsideValueCondition(dgConservationLaw &claw,const std::string outsideValueFunctionName) {
+  return new dgBoundaryConditionOutsideValue(claw,outsideValueFunctionName);
 }
 dgBoundaryCondition *dgBoundaryCondition::new0FluxCondition(dgConservationLaw &claw) {
   return new dgBoundaryCondition0Flux(claw);

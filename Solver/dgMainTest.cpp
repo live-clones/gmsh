@@ -59,17 +59,21 @@ int main(int argc, char **argv){
   }
   print("init.pos",*elementGroups[0],&sol(0,0));
 
-  //advection
+
   fullMatrix<double> advectionSpeed(3,1);
   advectionSpeed(0,0)=0.15;
   advectionSpeed(1,0)=0.05;
   advectionSpeed(2,0)=0.;
-
   function::add("advectionSpeed",function::newFunctionConstant(advectionSpeed));
 
   dgConservationLaw *law = dgNewConservationLawAdvection("advectionSpeed");
-  law->addBoundaryCondition("Left",dgBoundaryCondition::new0OutCondition(*law));
-  law->addBoundaryCondition("Right",dgBoundaryCondition::new0OutCondition(*law));
+
+  fullMatrix<double> outsideValue(1,1);
+  outsideValue(0,0)=0;
+  function::add("outsideValue",function::newFunctionConstant(outsideValue));
+  law->addBoundaryCondition("Left",dgBoundaryCondition::newOutsideValueCondition(*law,"outsideValue"));
+  law->addBoundaryCondition("Right",dgBoundaryCondition::newOutsideValueCondition(*law,"outsideValue"));
+
   law->addBoundaryCondition("Top",dgBoundaryCondition::new0FluxCondition(*law));
   law->addBoundaryCondition("Bottom",dgBoundaryCondition::new0FluxCondition(*law));
 
