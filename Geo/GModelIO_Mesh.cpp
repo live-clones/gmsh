@@ -574,7 +574,10 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   int numVertices = indexMeshVertices(saveAll);
   
   // binary format exists only in version 2
-  if(binary) version = 2.1;
+  if(version > 1 || binary) 
+    version = 2.1;
+  else
+    version = 1.0;
 
   // get the number of elements (we assume that all the elements in a
   // list have the same type, i.e., they are all of the same
@@ -692,7 +695,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     writeElementsMSH(fp, (*it)->points, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
 
-  writeElementHeaderMSH(binary, fp, elements, MSH_LIN_2, MSH_LIN_3, MSH_LIN_4, MSH_LIN_5);
+  writeElementHeaderMSH(binary, fp, elements, MSH_LIN_2, MSH_LIN_3, MSH_LIN_4,
+                        MSH_LIN_5);
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
    writeElementsMSH(fp, (*it)->lines, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
@@ -708,7 +712,9 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, (*it)->triangles, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
-  writeElementHeaderMSH(binary, fp, elements, MSH_QUA_4, MSH_QUA_9, MSH_QUA_8, MSH_QUA_16, MSH_QUA_25, MSH_QUA_36,MSH_QUA_12,MSH_QUA_16I,MSH_QUA_20);
+  writeElementHeaderMSH(binary, fp, elements, MSH_QUA_4, MSH_QUA_9, MSH_QUA_8, 
+                        MSH_QUA_16, MSH_QUA_25, MSH_QUA_36, MSH_QUA_12, MSH_QUA_16I,
+                        MSH_QUA_20);
   for(itP = parents[0].begin(); itP != parents[0].end(); itP++)
     if(itP->first->getType() == TYPE_QUA) {
       writeElementsMSH(fp, itP->first, saveAll, version, binary, num,

@@ -729,9 +729,9 @@ int mshFileDialog(const char *name)
   static _mshFileDialog *dialog = NULL;
 
   static Fl_Menu_Item formatmenu[] = {
-    {"Version 1.0", 0, 0, 0},
-    {"Version 2.0 ASCII", 0, 0, 0},
-    {"Version 2.0 Binary", 0, 0, 0},
+    {"Version 1", 0, 0, 0},
+    {"Version 2 ASCII", 0, 0, 0},
+    {"Version 2 Binary", 0, 0, 0},
     {0}
   };
 
@@ -771,7 +771,7 @@ int mshFileDialog(const char *name)
       if (!o) break;
       if (o == dialog->ok) {
         opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI, 
-                                  (dialog->c->value() == 0) ? 1.0 : 2.0);
+                                  (dialog->c->value() == 0) ? 1.0 : 2.1);
         opt_mesh_binary(0, GMSH_SET | GMSH_GUI, (dialog->c->value() == 2) ? 1 : 0);
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
         opt_mesh_save_parametric(0, GMSH_SET | GMSH_GUI, dialog->p->value() ? 1 : 0);
