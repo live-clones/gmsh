@@ -370,8 +370,9 @@ int GModel::setPhysicalName(std::string name, int dim, int number)
 
 std::string GModel::getPhysicalName(int dim, int number)
 {
-  if(physicalNames.count(std::pair<int, int>(dim, number)))
-    return physicalNames[std::pair<int, int>(dim, number)];
+  std::map<std::pair<int, int>, std::string>::iterator it = 
+    physicalNames.find(std::pair<int, int>(dim, number));
+  if(it != physicalNames.end()) return it->second;
   return "";
 }
 
@@ -386,8 +387,9 @@ int GModel::getPhysicalNumber(const int &dim, const std::string &name)
 
 std::string GModel::getElementaryName(int dim, int number)
 {
-  if(elementaryNames.count(std::pair<int, int>(dim, number)))
-    return elementaryNames[std::pair<int, int>(dim, number)];
+  std::map<std::pair<int, int>, std::string>::iterator it = 
+    elementaryNames.find(std::pair<int, int>(dim, number));
+  if(it != elementaryNames.end()) return it->second;
   return "";
 }
 
