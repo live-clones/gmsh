@@ -104,7 +104,7 @@ static double F_Lc(GEdge *ge, double t)
 
 }
 
-static double F_Transfinite(GEdge *ge, double t)
+static double F_Transfinite(GEdge *ge, double t_)
 {
   double length = ge->length();
   if(length == 0.0){
@@ -112,11 +112,16 @@ static double F_Transfinite(GEdge *ge, double t)
     return 1.;
   }
 
-  SVector3 der = ge->firstDer(t) ;
+  SVector3 der = ge->firstDer(t_) ;
   double d = norm(der);
   double coef = ge->meshAttributes.coeffTransfinite;
   int type = ge->meshAttributes.typeTransfinite;
   int nbpt = ge->meshAttributes.nbPointsTransfinite;
+
+  Range<double> bounds = ge->parBounds(0);
+  double t_begin = bounds.low();
+  double t_end = bounds.high();
+  double t = (t_ - t_begin)/(t_end-t_begin);
 
   double val;
 
@@ -281,7 +286,7 @@ void meshGEdge::operator() (GEdge *ge)
     N = 1;
   }
   else if(ge->meshAttributes.Method == MESH_TRANSFINITE){
-    a = Integration(ge, t_begin, t_end, F_Transfinite, Points, 1.e-8);
+    a = Integration(ge, t_begin, t_end, F_Transfinite, Points, CTX::instance()->mesh.lcIntegrationPrecision);
     N = ge->meshAttributes.nbPointsTransfinite;
   }
   else{
