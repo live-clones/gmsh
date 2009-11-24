@@ -34,13 +34,11 @@ class dgAlgorithm {
       std::vector<dgGroupOfFaces*> &bGroups, // group of boundaries
       const fullMatrix<double> &solution, // solution !! at faces nodes
       fullMatrix<double> &residual // residual !! at faces nodes
-      );
-	  
+      );	  
   void multAddInverseMassMatrix ( /*dofManager &dof,*/
       const dgGroupOfElements & group,
       fullMatrix<double> &residu,
       fullMatrix<double> &sol);
-
   void rungeKutta (
 	  const dgConservationLaw &claw,
       std::vector<dgGroupOfElements*> &eGroups, //group of elements
@@ -50,7 +48,6 @@ class dgAlgorithm {
       fullMatrix<double> &residu,
       fullMatrix<double> &sol,
 	  int orderRK=4);
-	  	  
   void buildGroups(GModel *model, int dim, int order,
       std::vector<dgGroupOfElements*> &eGroups,
       std::vector<dgGroupOfFaces*> &fGroups,

@@ -163,7 +163,6 @@ void dgAlgorithm::multAddInverseMassMatrix ( /*dofManager &dof,*/
           const dgGroupOfElements & group,
           fullMatrix<double> &residu,
           fullMatrix<double> &sol)
-		  
 {
   for(int i=0;i<group.getNbElements();i++) {
     fullMatrix<double> residuEl(residu,i,1);
@@ -172,14 +171,15 @@ void dgAlgorithm::multAddInverseMassMatrix ( /*dofManager &dof,*/
   }
 }
 
- void dgAlgorithm::rungeKutta (const dgConservationLaw &claw, // conservation law
-		  std::vector<dgGroupOfElements*> &eGroups, //group of elements
-		  std::vector<dgGroupOfFaces*> &fGroups,  // group of interfacs
-		  std::vector<dgGroupOfFaces*> &bGroups, // group of boundaries
-		  double h,		
-          fullMatrix<double> &residu,
-          fullMatrix<double> &sol,
-		  int orderRK)
+ void dgAlgorithm::rungeKutta (
+			const dgConservationLaw &claw,				// conservation law
+			std::vector<dgGroupOfElements*> &eGroups,	// group of elements
+			std::vector<dgGroupOfFaces*> &fGroups,		// group of interfacs
+			std::vector<dgGroupOfFaces*> &bGroups,		// group of boundaries
+			double h,									// time-step
+			fullMatrix<double> &residu,					
+			fullMatrix<double> &sol,					
+			int orderRK)								// order of RK integrator
 {
 
 
