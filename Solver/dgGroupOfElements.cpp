@@ -43,10 +43,10 @@ static fullMatrix<double> * dgGetFaceIntegrationRuleOnElement (
 
 dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e, int polyOrder)
   : _elements(e), 
-    _fs(*_elements[0]->getFunctionSpace(polyOrder)),
-    _integration(dgGetIntegrationRule (_elements[0], polyOrder)
-    )
+   _fs(*_elements[0]->getFunctionSpace(polyOrder)),
+   _integration(dgGetIntegrationRule (_elements[0], polyOrder))
 {
+
   _dimUVW = _dimXYZ = e[0]->getDim();
   // this is the biggest piece of data ... the mappings
   int nbNodes = _fs.coefficients.size1();

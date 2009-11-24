@@ -36,7 +36,7 @@ class dgConservationLawInitialCondition : public dgConservationLaw {
 };
 
 int main(int argc, char **argv){
-  GmshMergeFile("square1.msh");
+  GmshMergeFile("input/square1.msh");
   //we probably need a class to group those three ones
   std::vector<dgGroupOfElements*> elementGroups;
   std::vector<dgGroupOfFaces*> faceGroups;
@@ -57,7 +57,8 @@ int main(int argc, char **argv){
     algo.residualVolume(initLaw,*elementGroups[0],sol,residu);
     algo.multAddInverseMassMatrix(*elementGroups[0],residu,sol);
   }
-  print("init.pos",*elementGroups[0],&sol(0,0));
+ 
+ 
 
 
   fullMatrix<double> advectionSpeed(3,1);
@@ -77,17 +78,21 @@ int main(int argc, char **argv){
   law->addBoundaryCondition("Top",dgBoundaryCondition::new0FluxCondition(*law));
   law->addBoundaryCondition("Bottom",dgBoundaryCondition::new0FluxCondition(*law));
 
+  
+  
+ print("output/init.pos",*elementGroups[0],&sol(0,0));
   for(int iT=0; iT<1000; iT++) {
     algo.residual(*law,elementGroups,faceGroups,boundaryGroups,sol,residu);
-    residu.scale(0.01);
-    algo.multAddInverseMassMatrix(*elementGroups[0],residu,sol);
+	algo.rungeKutta(*law,elementGroups,faceGroups,boundaryGroups,0.01,residu,sol);
     if(iT%10==0){
-      char name[100];
-      sprintf(name,"test_%05i.pos",iT/10);
+      char name[10];
+      sprintf(name,"output/test_%05i.pos",iT/10);
       printf("%i\n",iT);
       print(name,*elementGroups[0],&sol(0,0));
+
     }
   }
+
   delete law;
 }
 

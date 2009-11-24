@@ -15,8 +15,8 @@
 void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe useless here)
 				   const dgConservationLaw &claw,   // the conservation law
 				   const dgGroupOfElements & group, 
-           const fullMatrix<double> &solution,
-           fullMatrix<double> &residual // the residual
+				   const fullMatrix<double> &solution,
+				   fullMatrix<double> &residual // the residual
            )
 { 
   // ----- 1 ----  get the solution at quadrature points
@@ -163,6 +163,7 @@ void dgAlgorithm::multAddInverseMassMatrix ( /*dofManager &dof,*/
           const dgGroupOfElements & group,
           fullMatrix<double> &residu,
           fullMatrix<double> &sol)
+		  
 {
   for(int i=0;i<group.getNbElements();i++) {
     fullMatrix<double> residuEl(residu,i,1);
@@ -170,6 +171,47 @@ void dgAlgorithm::multAddInverseMassMatrix ( /*dofManager &dof,*/
     solEl.gemm(group.getInverseMassMatrix(i),residuEl);
   }
 }
+
+ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw, // conservation law
+		  std::vector<dgGroupOfElements*> &eGroups, //group of elements
+		  std::vector<dgGroupOfFaces*> &fGroups,  // group of interfacs
+		  std::vector<dgGroupOfFaces*> &bGroups, // group of boundaries
+		  double h,		
+          fullMatrix<double> &residu,
+          fullMatrix<double> &sol,
+		  int orderRK)
+{
+
+
+// U_{n+1}=U_n+h*(SUM_i a_i*K_i)
+// K_i=M^(-1)R(U_n+b_i*K_{i-1})
+  
+  double a[4] = {h/6.0,h/3.0,h/3.0,h/6.0};
+  double b[4] = {0.,h/2.0,h/2.0,h};
+  	
+  fullMatrix<double> K(sol);
+  // Current updated solution
+  fullMatrix<double> Unp(sol);
+  
+  for(int j=0; j<orderRK;j++){
+	if(j!=0){
+		K.scale(b[j]);
+		K.add(sol);
+		}
+	this->residual(claw,eGroups,fGroups,bGroups,K,residu);
+	K.scale(0.);
+	for(int i=0;i<eGroups[0]->getNbElements();i++) {
+		fullMatrix<double> residuEl(residu,i,1);
+		fullMatrix<double> KEl(K,i,1);
+		(eGroups[0]->getInverseMassMatrix(i)).mult(residuEl,KEl);
+    }
+	
+	Unp.add(K,a[j]);
+  }
+  
+  sol=Unp;
+}
+
 
 void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (maybe useless here)
 				   const dgConservationLaw &claw,   // the conservation law
