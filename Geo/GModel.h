@@ -244,6 +244,10 @@ class GModel
   // "dim" and name "name". return -1 if not found
   int getPhysicalNumber(const int &dim, const std::string & name);
 
+  // get the name (if any) of a given elementary entity of dimension
+  // "dim" and id number "num"
+  std::string getElementaryName(int dim, int num);
+
   // set the selection flag on all entities
   void setSelection(int val);
 

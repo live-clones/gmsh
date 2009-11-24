@@ -384,6 +384,13 @@ int GModel::getPhysicalNumber(const int &dim, const std::string &name)
   return -1;
 }
 
+std::string GModel::getElementaryName(int dim, int number)
+{
+  if(elementaryNames.count(std::pair<int, int>(dim, number)))
+    return elementaryNames[std::pair<int, int>(dim, number)];
+  return "";
+}
+
 void GModel::setSelection(int val)
 {
   std::vector<GEntity*> entities;
