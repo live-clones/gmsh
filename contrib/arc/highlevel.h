@@ -21,6 +21,7 @@
 #include "SVector3.h"
 #include "MElement.h"
 #include "MVertex.h"
+#include "functionSpace.h"
 
 
 
@@ -28,6 +29,7 @@ typedef SVector3 Vector;
 class Tensor2{};
 class Tensor4{};
 
+/*
 template<class T> struct TensorialTraits
 {
   typedef T ValType;
@@ -44,14 +46,14 @@ template<> struct TensorialTraits<double>
   static const int nb_basis_vectors=1; // scalaire
 };
 
-/*
-template<> struct TensorialTraits<Vector>
-{
-  typedef Vector ValType;
-  typedef Tensor2 GradType;
-  typedef Tensor3 HessType;
-  static const int nb_basis_vectors=3; // trois vecteurs de base linéairement indépendants.
-};
+
+// template<> struct TensorialTraits<Vector>
+// {
+//   typedef Vector ValType;
+//   typedef Tensor2 GradType;
+//   typedef Tensor3 HessType;
+//   static const int nb_basis_vectors=3; // trois vecteurs de base linéairement indépendants.
+// };
 */
 
 template<class T> class Function  // Fonction au sens EF du terme.
@@ -84,7 +86,7 @@ template<class T> class LagrangeShapeFunction: public Function<T>
 
 
 
-
+/*
 class SpaceBase // renvoie des clefs des dofs
 {
 protected:
@@ -163,6 +165,9 @@ public:
   }
 };
 
+*/
+
+
 template<class T> class Field : public Function<T> // renvoie des valeurs de champ (ff*valeurs dofs), gradient , etc...
 {
 public: 
@@ -217,8 +222,8 @@ template <class Term,class SpaceL,class SpaceR> class FormBilinear : public Form
   void func2(void) { }
   void getDofs(MElement *e) 
   {
-    _spacel->getDofs(e,Dofsl);
-    _spacer->getDofs(e,Dofsr);
+    _spacel->getKeys(e,Dofsl);
+    _spacer->getKeys(e,Dofsr);
   };
   void getFuncs(MElement *e,const double uvw[3]) {};
   void getGradFuncs(MElement *e,const double uvw[3]) {};
