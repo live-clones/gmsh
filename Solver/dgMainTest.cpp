@@ -82,8 +82,7 @@ int main(int argc, char **argv){
   
  print("output/init.pos",*elementGroups[0],&sol(0,0));
   for(int iT=0; iT<100; iT++) {
-	algo.residual(*law,elementGroups,faceGroups,boundaryGroups,sol,residu);
-	algo.rungeKutta(*law,elementGroups,faceGroups,boundaryGroups,0.01,residu,sol);
+    algo.rungeKutta(*law,elementGroups,faceGroups,boundaryGroups,0.01,residu,sol);
     if(iT%10==0){
       char name[100];
       sprintf(name,"output/test_%05i.pos",iT/10);
