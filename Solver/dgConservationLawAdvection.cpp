@@ -16,7 +16,7 @@ class dgConservationLawAdvection : public dgConservationLaw {
       v(cacheMap.get(vFunctionName,this))
       {};
     void _eval () { 
-      if(_value.size1() !=sol().size1())
+      if(_value.size1() != sol().size1())
         _value=fullMatrix<double>(sol().size1(),3);
       for(int i=0; i< sol().size1(); i++) {
         _value(i,0) = sol(i,0)*v(i,0);

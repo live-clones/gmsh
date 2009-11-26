@@ -83,35 +83,12 @@ public:
   inline const fullMatrix<double> getMapping (int iElement) const {return fullMatrix<double>(*_mapping, iElement, 1);}
 };
 
-class dgFace {
-  int nbGaussPoints;
-  MElement *_left, *_right;
-  MElement *_face;
-  const fullMatrix<double> *_solutionRight, *_solutionLeft, *_integration,*_normals;
-public:
-  dgFace (MElement *face,MElement *left, MElement *right,
-    const fullMatrix<double> &solLeft,
-    const fullMatrix<double> &solRight,
-    const fullMatrix<double> &integration,
-    const fullMatrix<double> &normals
-    ) : _left(left), _right(right), _face(face),_solutionRight(&solRight),_solutionLeft(&solLeft),_integration(&integration),_normals(&normals)
-  {}
-  inline const fullMatrix<double> &solutionRight() const { return *_solutionRight; }
-  inline const fullMatrix<double> &solutionLeft() const { return *_solutionLeft; }
-  inline const fullMatrix<double> &integration() const { return *_integration; }
-  inline const fullMatrix<double> &normals() const { return *_normals; }
-  inline MElement *left() const { return _left;}
-  inline MElement *right() const { return _right;}
-  inline MElement *face() const { return _face;}
-};
-
 class dgGroupOfFaces {
   // only used if this is a group of boundary faces
   std::string _boundaryTag;
   const dgGroupOfElements &_groupLeft,&_groupRight;
   void addFace(const MFace &topoFace, int iElLeft, int iElRight);
   void addEdge(const MEdge &topoEdge, int iElLeft, int iElRight);
-  void computeFaceNormals();
   // Two polynomialBases for left and right elements
   // the group has always the same types for left and right
   const polynomialBasis *_fsLeft,*_fsRight, *_fsFace;
@@ -127,6 +104,10 @@ class dgGroupOfFaces {
   // GEOMETRICAL CLOSURE !!!
   std::vector<const std::vector<int> * > _closuresLeft; 
   std::vector<const std::vector<int> * > _closuresRight; 
+  // XYZ gradient of the shape functions of both elements on the integrations points of the face
+  // (iQP*3+iXYZ , iFace*NPsi+iPsi)
+  fullMatrix<double> *_dPsiLeftDxOnQP;
+  fullMatrix<double> *_dPsiRightDxOnQP;
   // normals at integration points  (N*Ni) x 3
   fullMatrix<double> *_normals;
   // detJac at integration points (N*Ni) x 1
@@ -139,6 +120,10 @@ class dgGroupOfFaces {
   //common part of the 3 constructors
   void init(int pOrder);
 public:
+  inline const dgGroupOfElements &getGroupLeft()const {return _groupLeft; }
+  inline const dgGroupOfElements &getGroupRight()const {return _groupRight; }
+  inline int getElementLeftId (int i) const {return _left[i];};
+  inline int getElementRightId (int i) const {return _right[i];};
   inline MElement* getElementLeft (int i) const {return _groupLeft.getElement(_left[i]);}  
   inline MElement* getElementRight (int i) const {return _groupRight.getElement(_right[i]);}  
   inline MElement* getFace (int iElement) const {return _faces[iElement];}  
@@ -151,6 +136,8 @@ public:
   virtual ~dgGroupOfFaces ();
   inline bool isBoundary() const {return !_boundaryTag.empty();}
   inline const std::string getBoundaryTag() const {return _boundaryTag;}
+  inline fullMatrix<double> & getDPsiLeftDxMatrix() const { return *_dPsiLeftDxOnQP;}
+  inline fullMatrix<double> & getDPsiRightDxMatrix() const { return *_dPsiRightDxOnQP;}
   //this part is common with dgGroupOfElements, we should try polymorphism
   inline int getNbElements() const {return _faces.size();}
   inline int getNbNodes() const {return _collocation->size1();}

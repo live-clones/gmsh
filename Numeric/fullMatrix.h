@@ -103,6 +103,14 @@ class fullMatrix
   }
   fullMatrix() : _own_data(false),_r(0), _c(0), _data(0) {}
   ~fullMatrix() { if(_data && _own_data) delete [] _data; }
+  void setAsProxy(fullMatrix<scalar> &original, int c_start, int c) {
+    if(_data && _own_data)
+      delete [] _data;
+    _c = c;
+    _r = original._r;
+    _own_data = false;
+    _data = original._data + c_start * _r;
+  }
   inline int size1() const { return _r; }
   inline int size2() const { return _c; }
   fullMatrix<scalar> & operator = (const fullMatrix<scalar> &other)

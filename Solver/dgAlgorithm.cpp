@@ -60,9 +60,9 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
   // ----- 2.3 --- iterate on elements
   for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {
     // ----- 2.3.1 --- build a small object that contains elementary solution, jacobians, gmsh element
-    solutionQPe.set(fullMatrix<double>(solutionQP, iElement*nbFields, nbFields ));
+    solutionQPe.setAsProxy(solutionQP, iElement*nbFields, nbFields );
     if (gradSolutionQPe.somethingDependOnMe())
-      gradSolutionQPe.set(fullMatrix<double>(*gradientSolutionQP, 3*iElement*nbFields,3*nbFields ));
+      gradSolutionQPe.setAsProxy(*gradientSolutionQP, 3*iElement*nbFields,3*nbFields );
     cacheElement.set(group.getElement(iElement));
     if(convectiveFlux || diffusiveFlux) {
       // ----- 2.3.3 --- compute fluxes in UVW coordinates
@@ -120,43 +120,97 @@ void dgAlgorithm::residualInterface ( //dofManager &dof, // the DOF manager (may
 				   const dgConservationLaw &claw,   // the conservation law
 				   const dgGroupOfFaces &group, 
            const fullMatrix<double> &solution, // solution !! at faces nodes
+           fullMatrix<double> &solutionLeft, 
+           fullMatrix<double> &solutionRight, 
            fullMatrix<double> &residual // residual !! at faces nodes
            )
 { 
+  // A) global operations before entering the loop over the faces
+  // A1 ) copy locally some references from the group for the sake of lisibility
   int nbFields = claw.nbFields();
+  int nbNodesLeft = group.getGroupLeft().getNbNodes();
+  int nbNodesRight = group.getGroupRight().getNbNodes();
+  int nbFaces = group.getNbElements();
+  //get matrices needed to compute the gradient on both sides
+  fullMatrix<double> &DPsiLeftDx = group.getDPsiLeftDxMatrix();
+  fullMatrix<double> &DPsiRightDx = group.getDPsiRightDxMatrix();
+
   // ----- 1 ----  get the solution at quadrature points
-  fullMatrix<double> solutionQP (group.getNbIntegrationPoints(),group.getNbElements() * nbFields*2);
+  fullMatrix<double> solutionQP (group.getNbIntegrationPoints(),nbFaces * nbFields*2);
   group.getCollocationMatrix().mult(solution, solutionQP); 
-  // ----- 2 ----  compute normal fluxes  at integration points
-  fullMatrix<double> NormalFluxQP ( group.getNbIntegrationPoints(), group.getNbElements()*nbFields*2);
+  // needed tocompute normal fluxes  at integration points
+  fullMatrix<double> NormalFluxQP ( group.getNbIntegrationPoints(), nbFaces*nbFields*2);
+
+  // create one dataCache for each side
   dataCacheMap cacheMapLeft, cacheMapRight;
-  // provided dataCache
-  cacheMapLeft.provideData("UVW").set(group.getIntegrationPointsMatrix());
-  dataCacheDouble &solutionQPLeft = cacheMapLeft.provideData("Solution");
-  dataCacheDouble &solutionQPRight = cacheMapRight.provideData("Solution");
+
+  // data this algorithm provide to the cache map (we can maybe move each data to a separate function but
+  // I think It's easier like this)
   dataCacheDouble &normals = cacheMapLeft.provideData("Normals");
   dataCacheElement &cacheElementLeft = cacheMapLeft.getElement();
   dataCacheElement &cacheElementRight = cacheMapRight.getElement();
-  // required data
+  cacheMapLeft.provideData("UVW").set(group.getIntegrationPointsMatrix());
+  dataCacheDouble &solutionQPLeft = cacheMapLeft.provideData("Solution");
+  dataCacheDouble &solutionQPRight = cacheMapRight.provideData("Solution");
+  dataCacheDouble &gradientSolutionLeft = cacheMapLeft.provideData("GradientSolution");
+  dataCacheDouble &gradientSolutionRight = cacheMapRight.provideData("GradientSolution");
+  //resize gradientSolutionLeft and Right
+  gradientSolutionLeft.set(fullMatrix<double>(group.getNbIntegrationPoints()*3,nbFields));
+  gradientSolutionRight.set(fullMatrix<double>(group.getNbIntegrationPoints()*3,nbFields));
+
+  // A2 ) ask the law to provide the fluxes (possibly NULL)
   dataCacheDouble *riemannSolver = claw.newRiemannSolver(cacheMapLeft,cacheMapRight);
-  for (int iFace=0 ; iFace<group.getNbElements() ;++iFace) {
-    // ----- 2.3.1 --- build a small object that contains elementary solution, jacobians, gmsh element
-    solutionQPLeft.set(fullMatrix<double>(solutionQP, iFace*2*nbFields, nbFields));
-    solutionQPRight.set(fullMatrix<double>(solutionQP, (iFace*2+1)*nbFields, nbFields));
-    normals.set(group.getNormals(iFace));
+  dataCacheDouble *diffusiveFluxLeft = claw.newDiffusiveFlux(cacheMapLeft);
+  dataCacheDouble *diffusiveFluxRight = claw.newDiffusiveFlux(cacheMapRight);
+
+  for (int iFace=0 ; iFace < nbFaces ; ++iFace) {
+    // B1 )  adjust the proxies for this element
+    //      NB  : the B1 section will almost completely disapear 
+    //      if we write a function (from the function class) for moving proxies across big matrices
+    // give the current elements to the dataCacheMap 
     cacheElementLeft.set(group.getElementLeft(iFace));
     cacheElementRight.set(group.getElementRight(iFace));
+    // proxies for the solution
+    solutionQPLeft.setAsProxy(solutionQP, iFace*2*nbFields, nbFields);
+    solutionQPRight.setAsProxy(solutionQP, (iFace*2+1)*nbFields, nbFields);
+    // this should be changed to use a proxy instead of copying the normals values
+    normals.set(group.getNormals(iFace));
+    // proxies needed to compute the gradient of the solution and the IP term
+    fullMatrix<double> dPsiLeftDx (DPsiLeftDx,iFace*nbNodesLeft,nbNodesLeft);
+    fullMatrix<double> dPsiRightDx (DPsiLeftDx,iFace*nbNodesRight,nbNodesRight);
+    fullMatrix<double> dofsLeft (solutionLeft, nbFields*group.getElementLeftId(iFace), nbFields);
+    fullMatrix<double> dofsRight (solutionRight, nbFields*group.getElementRightId(iFace), nbFields);
+    // proxies for the flux
     fullMatrix<double> normalFluxQP (NormalFluxQP, iFace*nbFields*2, nbFields*2);
-    // ----- 2.3.2 --- compute fluxes
+
+    // B2 ) compute the gradient of the solution
+    if(gradientSolutionLeft.somethingDependOnMe()){
+      dPsiLeftDx.mult(dofsLeft, gradientSolutionLeft.set());
+      dPsiRightDx.mult(dofsRight, gradientSolutionRight.set());
+    }
+
+    // B3 ) compute fluxes
+
+    //JF : here you can test (diffusiveFluxLeft!=NULL) to know if the law is diffusive
+    //you can access the values by (*diffusiveFluxLeft)(iQP*3+iXYZ, iField)
+    //use gradientSolutionLef(IQP*3+IXYZ, iField) and dPsiLeftDx(iQP*3+iXYZ, iPsi)
+
     for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
       const double detJ = group.getDetJ (iFace, iPt);
       for (int k=0;k<nbFields*2;k++)
         normalFluxQP(iPt,k) = (*riemannSolver)(iPt,k)*detJ;
     }
   }
-  // ----- 3 ---- do the redistribution at face nodes using BLAS3
+
+  // C ) redistribute the flux to the residual (at Faces nodes)
   residual.gemm(group.getRedistributionMatrix(),NormalFluxQP);
+
+  // D ) delete the dataCacheDouble provided by the law
   delete riemannSolver;
+  if(diffusiveFluxLeft) {
+    delete diffusiveFluxLeft;
+    delete diffusiveFluxRight;
+  }
 }
 
 void dgAlgorithm::multAddInverseMassMatrix ( /*dofManager &dof,*/
@@ -217,6 +271,7 @@ void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (mayb
 				   const dgConservationLaw &claw,   // the conservation law
 				   const dgGroupOfFaces &group, 
            const fullMatrix<double> &solution, // solution !! at faces nodes
+           fullMatrix<double> &solutionLeft, 
            fullMatrix<double> &residual // residual !! at faces nodes
            )
 { 
@@ -304,7 +359,7 @@ void dgAlgorithm::residual( const dgConservationLaw &claw,
     std::vector<dgGroupOfElements*> &eGroups, //group of elements
     std::vector<dgGroupOfFaces*> &fGroups,  // group of interfacs
     std::vector<dgGroupOfFaces*> &bGroups, // group of boundaries
-    const fullMatrix<double> &solution, // solution
+    fullMatrix<double> &solution, // solution
     fullMatrix<double> &residu) // residual
 {
   dgAlgorithm algo;
@@ -319,7 +374,7 @@ void dgAlgorithm::residual( const dgConservationLaw &claw,
     fullMatrix<double> solInterface(faces.getNbNodes(),faces.getNbElements()*2);
     fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements()*2);
     faces.mapToInterface(1, solution, solution, solInterface);
-    algo.residualInterface(claw,faces,solInterface,residuInterface);
+    algo.residualInterface(claw,faces,solInterface,solution,solution,residuInterface);
     faces.mapFromInterface(1, residuInterface, residu, residu);
   }
   //boundaries
@@ -328,7 +383,7 @@ void dgAlgorithm::residual( const dgConservationLaw &claw,
     fullMatrix<double> solInterface(faces.getNbNodes(),faces.getNbElements());
     fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements());
     faces.mapToInterface(1, solution, solution, solInterface);
-    algo.residualBoundary(claw,faces,solInterface,residuInterface);
+    algo.residualBoundary(claw,faces,solInterface,solution,residuInterface);
     faces.mapFromInterface(1, residuInterface, residu, residu);
   }
 }

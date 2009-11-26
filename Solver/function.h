@@ -48,6 +48,21 @@ class dataCacheDouble : public dataCache {
     _value=mat;
     _valid=true;
   }
+  // take care if you use this you must ensure that the value pointed to are not modified
+  // without further call to setAsProxy because the dependencies won't be invalidate
+  inline void setAsProxy(fullMatrix<double> &mat, int cShift, int c) {
+    _invalidateDependencies();
+    _value.setAsProxy(mat,cShift,c);
+    _valid=true;
+  }
+  // this function is needed to be able to pass the _value to functions like gemm or mult
+  // but you cannot keep the reference to the _value, you should always use the set function 
+  // to modify the _value
+  inline fullMatrix<double> &set() {
+    _invalidateDependencies();
+    _valid=true;
+    return _value;
+  }
   inline const double &operator () (int i, int j)
   {
     if(!_valid) {
