@@ -57,6 +57,8 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
     gradientSolutionQP = new  fullMatrix<double> (group.getNbIntegrationPoints(), group.getNbElements() * nbFields * 3);
     //group.getGradientOfSolution().mult ( group.getCollocationMatrix() , *gradientSolutionQP); 
   }
+  fullMatrix<double> fuvwe;
+  fullMatrix<double> source;
   // ----- 2.3 --- iterate on elements
   for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {
     // ----- 2.3.1 --- build a small object that contains elementary solution, jacobians, gmsh element
@@ -68,7 +70,7 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
       // ----- 2.3.3 --- compute fluxes in UVW coordinates
       for (int iUVW=0;iUVW<group.getDimUVW();iUVW++) {
         // ----- 2.3.3.1 --- get a proxy on the big local flux matrix
-        fullMatrix<double> fuvwe(Fuvw[iUVW], iElement*nbFields,nbFields);
+        fuvwe.setAsProxy(Fuvw[iUVW], iElement*nbFields,nbFields);
         // ----- 2.3.3.1 --- compute \vec{f}^{UVW} =\vec{f}^{XYZ} J^{-1} and multiply bt detJ
         for (int iXYZ=0;iXYZ<group.getDimXYZ();iXYZ++) {
           for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
@@ -89,7 +91,7 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
       }
     }
     if (sourceTerm){
-      fullMatrix<double> source(Source, iElement*claw.nbFields(),claw.nbFields());
+      source.setAsProxy(Source, iElement*claw.nbFields(),claw.nbFields());
       for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
         const double detJ = group.getDetJ (iElement, iPt);
         for (int k=0;k<nbFields;k++){
@@ -162,6 +164,7 @@ void dgAlgorithm::residualInterface ( //dofManager &dof, // the DOF manager (may
   dataCacheDouble *riemannSolver = claw.newRiemannSolver(cacheMapLeft,cacheMapRight);
   dataCacheDouble *diffusiveFluxLeft = claw.newDiffusiveFlux(cacheMapLeft);
   dataCacheDouble *diffusiveFluxRight = claw.newDiffusiveFlux(cacheMapRight);
+  fullMatrix<double> dPsiLeftDx,dPsiRightDx,dofsLeft,dofsRight,normalFluxQP;
 
   for (int iFace=0 ; iFace < nbFaces ; ++iFace) {
     // B1 )  adjust the proxies for this element
@@ -173,15 +176,14 @@ void dgAlgorithm::residualInterface ( //dofManager &dof, // the DOF manager (may
     // proxies for the solution
     solutionQPLeft.setAsProxy(solutionQP, iFace*2*nbFields, nbFields);
     solutionQPRight.setAsProxy(solutionQP, (iFace*2+1)*nbFields, nbFields);
-    // this should be changed to use a proxy instead of copying the normals values
-    normals.set(group.getNormals(iFace));
+    normals.setAsProxy(group.getNormals(), iFace*group.getNbIntegrationPoints(),group.getNbIntegrationPoints());
     // proxies needed to compute the gradient of the solution and the IP term
-    fullMatrix<double> dPsiLeftDx (DPsiLeftDx,iFace*nbNodesLeft,nbNodesLeft);
-    fullMatrix<double> dPsiRightDx (DPsiLeftDx,iFace*nbNodesRight,nbNodesRight);
-    fullMatrix<double> dofsLeft (solutionLeft, nbFields*group.getElementLeftId(iFace), nbFields);
-    fullMatrix<double> dofsRight (solutionRight, nbFields*group.getElementRightId(iFace), nbFields);
+    dPsiLeftDx.setAsProxy(DPsiLeftDx,iFace*nbNodesLeft,nbNodesLeft);
+    dPsiRightDx.setAsProxy(DPsiLeftDx,iFace*nbNodesRight,nbNodesRight);
+    dofsLeft.setAsProxy(solutionLeft, nbFields*group.getElementLeftId(iFace), nbFields);
+    dofsRight.setAsProxy(solutionRight, nbFields*group.getElementRightId(iFace), nbFields);
     // proxies for the flux
-    fullMatrix<double> normalFluxQP (NormalFluxQP, iFace*nbFields*2, nbFields*2);
+    normalFluxQP.setAsProxy(NormalFluxQP, iFace*nbFields*2, nbFields*2);
 
     // B2 ) compute the gradient of the solution
     if(gradientSolutionLeft.somethingDependOnMe()){
@@ -218,10 +220,14 @@ void dgAlgorithm::multAddInverseMassMatrix ( /*dofManager &dof,*/
           fullMatrix<double> &residu,
           fullMatrix<double> &sol)
 {
+  fullMatrix<double> residuEl;
+  fullMatrix<double> solEl;
+  fullMatrix<double> iMassEl;
   for(int i=0;i<group.getNbElements();i++) {
-    fullMatrix<double> residuEl(residu,i,1);
-    fullMatrix<double> solEl(sol,i,1);
-    solEl.gemm(group.getInverseMassMatrix(i),residuEl);
+    residuEl.setAsProxy(residu,i,1);
+    solEl.setAsProxy(sol,i,1);
+    iMassEl.setAsProxy(group.getInverseMassMatrix(),i*group.getNbNodes(),group.getNbNodes());
+    solEl.gemm(iMassEl,residuEl);
   }
 }
 
@@ -246,23 +252,26 @@ void dgAlgorithm::multAddInverseMassMatrix ( /*dofManager &dof,*/
   fullMatrix<double> K(sol);
   // Current updated solution
   fullMatrix<double> Unp(sol);
+  fullMatrix<double> residuEl, KEl;
+  fullMatrix<double> iMassEl;
+
+  int nbNodes=eGroups[0]->getNbNodes();
   
   for(int j=0; j<orderRK;j++){
-	if(j!=0){
-		K.scale(b[j]);
-		K.add(sol);
-		}
-	this->residual(claw,eGroups,fGroups,bGroups,K,residu);
-	K.scale(0.);
-	for(int i=0;i<eGroups[0]->getNbElements();i++) {
-		fullMatrix<double> residuEl(residu,i,1);
-		fullMatrix<double> KEl(K,i,1);
-		(eGroups[0]->getInverseMassMatrix(i)).mult(residuEl,KEl);
+    if(j!=0){
+      K.scale(b[j]);
+      K.add(sol);
+    
+    this->residual(claw,eGroups,fGroups,bGroups,K,residu);
+    K.scale(0.);
+    for(int i=0;i<eGroups[0]->getNbElements();i++) {
+      residuEl.setAsProxy(residu,i,1);
+      KEl.setAsProxy(K,i,1);
+      iMassEl.setAsProxy(eGroups[0]->getInverseMassMatrix(),i*nbNodes,nbNodes);
+      iMassEl.mult(residuEl,KEl);
     }
-	
-	Unp.add(K,a[j]);
+    Unp.add(K,a[j]);
   }
-  
   sol=Unp;
 }
 
@@ -291,15 +300,16 @@ void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (mayb
   dataCacheElement &cacheElementLeft = cacheMapLeft.getElement();
   // required data
   dataCacheDouble *boundaryTerm = boundaryCondition->newBoundaryTerm(cacheMapLeft);
+  fullMatrix<double> normalFluxQP;
 
   for (int iFace=0 ; iFace<group.getNbElements() ;++iFace) {
+    normalFluxQP.setAsProxy(NormalFluxQP, iFace*nbFields, nbFields);
     // ----- 2.3.1 --- provide the data to the cacheMap
-    solutionQPLeft.set(fullMatrix<double>(solutionQP, iFace*nbFields, nbFields));
-    normals.set(group.getNormals(iFace));
+    solutionQPLeft.setAsProxy(solutionQP, iFace*nbFields, nbFields);
+    normals.setAsProxy(group.getNormals(),iFace*group.getNbIntegrationPoints(),group.getNbIntegrationPoints());
     cacheElementLeft.set(group.getElementLeft(iFace));
 
     // ----- 2.3.2 --- compute fluxes
-    fullMatrix<double> normalFluxQP (NormalFluxQP, iFace*nbFields, nbFields);
     for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
       const double detJ = group.getDetJ (iFace, iPt);
       for (int k=0;k<nbFields;k++)

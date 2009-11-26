@@ -79,7 +79,7 @@ public:
   inline const fullMatrix<double> & getSourceRedistributionMatrix () const {return *_redistributionSource;}
   inline double getDetJ (int iElement, int iGaussPoint) const {return (*_mapping)(iElement, 10*iGaussPoint + 9);}
   inline double getInvJ (int iElement, int iGaussPoint, int i, int j) const {return (*_mapping)(iElement, 10*iGaussPoint + i + 3*j);}
-  inline fullMatrix<double> getInverseMassMatrix (int iElement) const {return fullMatrix<double>(*_imass,iElement*getNbNodes(),getNbNodes());}
+  inline fullMatrix<double> &getInverseMassMatrix () const {return *_imass;}
   inline const fullMatrix<double> getMapping (int iElement) const {return fullMatrix<double>(*_mapping, iElement, 1);}
 };
 
@@ -129,7 +129,7 @@ public:
   inline MElement* getFace (int iElement) const {return _faces[iElement];}  
   const std::vector<int> * getClosureLeft(int iFace) const{ return _closuresLeft[iFace];}
   const std::vector<int> * getClosureRight(int iFace) const{ return _closuresRight[iFace];}
-  inline fullMatrix<double> getNormals (int iFace) const {return fullMatrix<double>(*_normals,iFace*getNbIntegrationPoints(),getNbIntegrationPoints());}
+  inline fullMatrix<double> &getNormals () const {return *_normals;}
   dgGroupOfFaces (const dgGroupOfElements &elements,int pOrder);
   dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MEdge,Less_Edge> &boundaryEdges);
   dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MFace,Less_Face> &boundaryFaces);
