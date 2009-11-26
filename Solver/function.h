@@ -8,7 +8,25 @@
 class dataCacheMap;
 class MElement;
 
-// A class to store function data and cache it (by computing dependencies)
+// those classes manage complex function dependcies and keep their values in cache so that they are not recomputed when it is not necessary. To do this, we use three classes : function, dataCache and dataCacheMap. The workflow is :
+//
+// a) before parsing the input file : a few general function that are always available are created (xyz for example).
+//
+// b) while parsing the input file and during the initialisation of the conservationLaw : all user-defined instance of function are inserted in the function map. (for example an user can create a function named "wind" of the class functionMathex with parameter "0.1*sin(xyz(0)/1e6); 0"  and then give the string "wind" as parameter to it's conservation law to let the law know that this is the function to use as wind forcing)
+//
+// c) before starting to iterate over the element :
+// c1) the algorithm create a new dataCacheMap instance.
+// c2) The algo insert in the dataCacheMap the dataCache it will provide (ie the quadrature points, the solution value,...) 
+// c3) Then the algo give this dataCacheMap to the law and ask the source term of the law. This source term will be given as a dataCache, i.e. a cached value, a function to update it and a node in the dependency tree. In this example, to create this datacache two new dataCache will be required : one for the "wind" and one for "xyz". So, the source dataCache will ask the dataCacheMap for the dataCache called "wind". If this one does not already exist, the dataCacheMap will ask the function called "wind" to create it. In turn, the constructor of the dataCache associated with the "wind" will ask for the for the dataCache "xyz" wich will be created by the function "xyz" if it does not already exist and so on. The dataCacheMap contain also a special dataCache associated with the current element. During it's construction it's dataCache keep references to all the dataCache needed to compute it. When they request for the dataCache they need, the dataCacheMap is informed and the dependency tree is built. 
+//
+// d) When iterating over elements, for each element : the Algo will change the dataCache element so that it point to the current element. This will invalidate everything that depend on the current on the current element (in this case, xyz, wind (because it depends on xyz) and the source dataCache (because it depends on wind). So, in this case everything (exept the current element dataCache) is marked as invalid. Now the algo want to access the value of the 'source' dataCache this one is invalid, so it is recomputed. To recompute it, the value of the wind is accessed and it's value is recomputed, and so on. Now, if some other function access the wind or the position (xyz), they are already marked as valid and are not re-computed.
+//
+// e) after the loop over the elements the dataCacheMap is deleted and it delete all its dataCaches.
+//
+// NB) in the case of integration over faces, there is two dataCacheMap : one for the Right side and one for the left side i.e. two sets of cached values and two dependency trees. Some dataCache (ie the value of the flux) have dependencies in both tree. This is not a problem, the only difference with other dataCaches is that they are not owned by the dataCacheMap and have to be deleted manually.
+// 
+
+// a node in the dependency tree. The usefull field is _dependOnMe which is the set of every other nodes that depend on me. When the value of this node change all nodes depending on this one are marked as "invalid" and will be recomputed the next time their data are accessed. To be able to maintain _dependOnMe up to date when a new node is inserted in the tree, we need _iDependOn list. So we do not really store a tree but instead each node contain a complete list of all it's parents and all it's children (and the parents of the parents of ... of its parents and the children of the children of ... of it's children). This way invalidate all the dependencies of a node is really fast and does not involve a complex walk accross the tree structure.
 class dataCache {
   friend class dataCacheMap;
   // pointers to the "_valid" flag of all dataCache depending on me
@@ -34,8 +52,7 @@ public :
   }
 };
 
-// A node in the dependency tree for which all the leafs depend on the
-// given double value
+// dataCache when the value is a double 
 class dataCacheDouble : public dataCache {
  protected:
   fullMatrix<double> _value;
@@ -83,7 +100,8 @@ class dataCacheDouble : public dataCache {
   virtual ~dataCacheDouble(){};
 };
 
-// An abstract interface to functions
+// An abstract interface to functions 
+// more explanation at the head of this file
 class function {
  private:
   static std::map<std::string, function*> _allFunctions;
@@ -112,6 +130,7 @@ class dataCacheElement : public dataCache {
   inline MElement *operator () () { return _element; }
 };
 
+// more explanation at the head of this file
 class dataCacheMap {
  private:
   // keep track of the current element and all the dataCaches that
