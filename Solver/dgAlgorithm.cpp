@@ -243,12 +243,12 @@ void dgAlgorithm::multAddInverseMassMatrix ( /*dofManager &dof,*/
 {
 
 
-// U_{n+1}=U_n+h*(SUM_i a_i*K_i)
-// K_i=M^(-1)R(U_n+b_i*K_{i-1})
-  
+  // U_{n+1}=U_n+h*(SUM_i a_i*K_i)
+  // K_i=M^(-1)R(U_n+b_i*K_{i-1})
+
   double a[4] = {h/6.0,h/3.0,h/3.0,h/6.0};
   double b[4] = {0.,h/2.0,h/2.0,h};
-  	
+
   fullMatrix<double> K(sol);
   // Current updated solution
   fullMatrix<double> Unp(sol);
@@ -256,12 +256,12 @@ void dgAlgorithm::multAddInverseMassMatrix ( /*dofManager &dof,*/
   fullMatrix<double> iMassEl;
 
   int nbNodes=eGroups[0]->getNbNodes();
-  
+
   for(int j=0; j<orderRK;j++){
     if(j!=0){
       K.scale(b[j]);
       K.add(sol);
-    
+    }
     this->residual(claw,eGroups,fGroups,bGroups,K,residu);
     K.scale(0.);
     for(int i=0;i<eGroups[0]->getNbElements();i++) {
