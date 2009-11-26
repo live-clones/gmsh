@@ -34,8 +34,7 @@ static void computeAndSendVertexArrays(GmshClient *client, bool compute=true)
 #if defined(HAVE_POST)
   for(unsigned int i = 0; i < PView::list.size(); i++){
     PView *p = PView::list[i];
-    if (compute)
-      p->fillVertexArrays();
+    if(compute) p->fillVertexArrays();
     PViewData *data = p->getData();
     PViewOptions *opt = p->getOptions();
     double min = data->getMin(), max = data->getMax();
@@ -133,38 +132,40 @@ static void addToVertexArrays(int length, const char* bytes, int swap)
   delete toAdd;
 }
 
-static void gatherAndSendVertexArrays(GmshClient* client, bool swap) {
+static void gatherAndSendVertexArrays(GmshClient* client, bool swap)
+{
+#if defined(HAVE_POST) && defined(HAVE_MPI)
   int rank = Msg::GetCommRank();
   int nbDaemon = Msg::GetCommSize();
-	// tell every node to start computing
-	int mpi_msg = MPI_GMSH_COMPUTE_VIEW;
-	MPI_Bcast(&mpi_msg, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	// fill the arrays on the master node
-	for(unsigned int i = 0; i < PView::list.size(); i++)
-          PView::list[i]->fillVertexArrays();
-	// wait and send the data from every other node
-	for (int i = 0; i < nbDaemon - 1; i++) {
-	  int nbArrays;
-	  MPI_Status status;
-	  MPI_Recv(&nbArrays, 1, MPI_INT, MPI_ANY_SOURCE,
-		   MPI_GMSH_DATA_READY, MPI_COMM_WORLD, &status);
-	  int source = status.MPI_SOURCE;
-	  // get each varray in turn, then add it to the varrays of
-	  // the master node
-	  for (int j = 0; j < nbArrays; j++) {
-	    int len;
-	    MPI_Status status2;
-	    MPI_Recv(&len, 1, MPI_INT, status.MPI_SOURCE,
-		     MPI_GMSH_VARRAY_LEN, MPI_COMM_WORLD, &status2);
-	    char str[len];
-	    MPI_Recv(str, len, MPI_CHAR, status.MPI_SOURCE,
-		     MPI_GMSH_VARRAY, MPI_COMM_WORLD, &status2);
-            addToVertexArrays(len, str, swap);
-	  }
-	}
-	computeAndSendVertexArrays(client, false);
+  // tell every node to start computing
+  int mpi_msg = MPI_GMSH_COMPUTE_VIEW;
+  MPI_Bcast(&mpi_msg, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  // fill the arrays on the master node
+  for(unsigned int i = 0; i < PView::list.size(); i++)
+    PView::list[i]->fillVertexArrays();
+  // wait and send the data from every other node
+  for (int i = 0; i < nbDaemon - 1; i++) {
+    int nbArrays;
+    MPI_Status status;
+    MPI_Recv(&nbArrays, 1, MPI_INT, MPI_ANY_SOURCE,
+             MPI_GMSH_DATA_READY, MPI_COMM_WORLD, &status);
+    int source = status.MPI_SOURCE;
+    // get each varray in turn, then add it to the varrays of
+    // the master node
+    for (int j = 0; j < nbArrays; j++) {
+      int len;
+      MPI_Status status2;
+      MPI_Recv(&len, 1, MPI_INT, status.MPI_SOURCE,
+               MPI_GMSH_VARRAY_LEN, MPI_COMM_WORLD, &status2);
+      char str[len];
+      MPI_Recv(str, len, MPI_CHAR, status.MPI_SOURCE,
+               MPI_GMSH_VARRAY, MPI_COMM_WORLD, &status2);
+      addToVertexArrays(len, str, swap);
+    }
+  }
+  computeAndSendVertexArrays(client, false);
+#endif
 }
-
 
 int GmshRemote()
 {
@@ -175,8 +176,10 @@ int GmshRemote()
 
   if(!client && rank == 0) return 0;
 
-  if(client && nbDaemon < 2) computeAndSendVertexArrays(client);
-  else if(client && nbDaemon >= 2 && rank == 0) gatherAndSendVertexArrays(client,false);
+  if(client && nbDaemon < 2) 
+    computeAndSendVertexArrays(client);
+  else if(client && nbDaemon >= 2 && rank == 0) 
+    gatherAndSendVertexArrays(client, false);
 
   while(1){
 
@@ -212,7 +215,6 @@ int GmshRemote()
       }
       else if(type == GmshSocket::GMSH_VERTEX_ARRAY){
         ParseString(msg);
-
 #if !defined(HAVE_MPI)
         computeAndSendVertexArrays(client);
 #else
@@ -220,8 +222,7 @@ int GmshRemote()
 	MPI_Bcast(&mpi_msg, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	MPI_Bcast(&length, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	MPI_Bcast(msg, length, MPI_CHAR, 0, MPI_COMM_WORLD);
-
-	gatherAndSendVertexArrays(client,swap);
+	gatherAndSendVertexArrays(client, swap);
 #endif
       }
       else if(type == GmshSocket::GMSH_MERGE_FILE){
@@ -233,7 +234,7 @@ int GmshRemote()
 	MPI_Bcast(&mpi_msg, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	MPI_Bcast(&length, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	MPI_Bcast(msg, length, MPI_CHAR, 0, MPI_COMM_WORLD);
-	gatherAndSendVertexArrays(client,swap);
+	gatherAndSendVertexArrays(client, swap);
 #endif
       }
       else if(type == GmshSocket::GMSH_PARSE_STRING){
