@@ -180,8 +180,11 @@ class VectorLagrangeFunctionSpace : public ScalarToAnyFunctionSpace<SVector3> //
 
 
 
+
+
+
 template<class T>
-class ProductFunctionSpace : public FunctionSpace<T>
+class CompositeFunctionSpace : public FunctionSpace<T>
 {
  public: 
   typedef typename TensorialTraits<T>::ValType ValType;
@@ -194,15 +197,15 @@ class ProductFunctionSpace : public FunctionSpace<T>
  
   std::vector<FunctionSpace<T>* > _spaces;
  public:
-  template <class T1> ProductFunctionSpace(const T1& t) { _spaces.push_back(new T1(t));} 
-  template <class T1, class T2> ProductFunctionSpace(const T1& t1, const T2& t2)   
+  template <class T1> CompositeFunctionSpace(const T1& t) { _spaces.push_back(new T1(t));} 
+  template <class T1, class T2> CompositeFunctionSpace(const T1& t1, const T2& t2)   
   { _spaces.push_back(new T1(t1));
     _spaces.push_back(new T2(t2)); } 
-  template <class T1, class T2, class T3> ProductFunctionSpace(const T1& t1, const T2& t2, const T3& t3)   
+  template <class T1, class T2, class T3> CompositeFunctionSpace(const T1& t1, const T2& t2, const T3& t3)   
   { _spaces.push_back(new T1(t1));
     _spaces.push_back(new T2(t2)); 
     _spaces.push_back(new T3(t3)); } 
-  template <class T1, class T2, class T3, class T4> ProductFunctionSpace(const T1& t1, const T2& t2, const T3& t3, const T4& t4)   
+  template <class T1, class T2, class T3, class T4> CompositeFunctionSpace(const T1& t1, const T2& t2, const T3& t3, const T4& t4)   
   { _spaces.push_back(new T1(t1));
     _spaces.push_back(new T2(t2)); 
     _spaces.push_back(new T3(t3)); 
@@ -211,15 +214,19 @@ class ProductFunctionSpace : public FunctionSpace<T>
   {
     _spaces.push_back(new T(t));
   } 
+  ~CompositeFunctionSpace(void)
+  {
+    for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
+      delete (*it);
+  }
+
   virtual int f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals) {}
   virtual int gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads) {}
   virtual int getNumKeys(MElement *ele)
   {
     int ndofs=0;
     for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
-    {
       ndofs+=(*it)->getNumKeys(ele);
-    }
     return ndofs;
   }
   virtual int getKeys(MElement *ele, Dof *keys)
@@ -234,9 +241,7 @@ class ProductFunctionSpace : public FunctionSpace<T>
   virtual int getKeys(MElement *ele, std::vector<Dof> &keys)
   {
     for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
-    {
       (*it)->getKeys(ele,keys);
-    }
   }
 };
 
