@@ -59,8 +59,6 @@ template<> struct TensorialTraits<SVector3>
   typedef SVector3 CurlType;
 };
 
-
-
 template<class T>
 class FunctionSpace {
  protected:
@@ -71,7 +69,6 @@ class FunctionSpace {
   typedef typename TensorialTraits<T>::CurlType CurlType;*/
  
  public:
-
   virtual int f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)=0;
   virtual int gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)=0;
 //  virtual int gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads, STensor3 &invjac)=0;// on passe le jacobien que l'on veut ...
@@ -83,13 +80,9 @@ class FunctionSpace {
   virtual int getKeys(MElement *ele, std::vector<Dof> &keys)=0; 
 };
 
-
-
-
 class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
 {
-  
-protected:
+ protected:
   typedef TensorialTraits<double>::ValType ValType;
   typedef TensorialTraits<double>::GradType GradType;
   typedef TensorialTraits<double>::HessType HessType;
@@ -103,11 +96,10 @@ protected:
   {
 //    int iComp = i / ele->getNumVertices();
 //    int ithLocalVertex = i % ele->getNumVertices();
-    return Dof(ele->getVertex(i)->getNum(),_iField);
+    return Dof(ele->getVertex(i)->getNum(), _iField);
   }
 
-
-  public:
+ public:
   ScalarLagrangeFunctionSpace(int i=0):_iField(i) {}
   virtual int getId(void) const {return _iField;};
   virtual int f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)
