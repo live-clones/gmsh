@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <limits>
 #include <stdlib.h>
 #include <string.h>
 #include <map>
@@ -2942,8 +2943,8 @@ GModel *GModel::createGModel(std::map<int, MVertex*> &vertexMap,
   std::map<int, MVertex*>::const_iterator it = vertexMap.begin();
   std::map<int, MVertex*>::const_iterator end = vertexMap.end();
 	
-  int maxVertex = INT_MIN;
-  int minVertex = INT_MAX;
+  int maxVertex = std::numeric_limits<int>::min();
+  int minVertex = std::numeric_limits<int>::max();
   int num;
 	
   for(it; it != end; ++it){
@@ -2951,7 +2952,7 @@ GModel *GModel::createGModel(std::map<int, MVertex*> &vertexMap,
     minVertex = std::min(minVertex, num);
     maxVertex = std::max(maxVertex, num);
   }
-  if(minVertex == INT_MAX)
+  if(minVertex == std::numeric_limits<int>::max())
     Msg::Error("Could not determine the min index of vertices");
   
   // If the vertex numbering is dense, tranfer the map into a
