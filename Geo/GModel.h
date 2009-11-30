@@ -329,11 +329,16 @@ class GModel
   // build a new GModel by cutting the elements crossed by the levelset ls
   GModel *buildCutGModel(gLevelset *ls);
 	
-  // create GModel by importing mesh and vertices, vertexMap has a dim equal to the number 
-	// of vertices and all std::vector have a dim equal to the number of elements
-  static GModel *createGModel(std::map<int,MVertex*>& vertexMap, std::vector<int> &numElement,
-										std::vector<std::vector<int>> &vertexIndices,std::vector<int> &elementType,
-										std::vector<int> &physical,std::vector<int> &elementary,std::vector<int> &partition);
+  // create a GModel by importing a mesh (vertexMap has a dim equal to
+  // the number of vertices and all the other vectors have a dim equal
+  // to the number of elements)
+  static GModel *createGModel(std::map<int, MVertex*> &vertexMap,
+                              std::vector<int> &numElement,
+                              std::vector<std::vector<int> > &vertexIndices,
+                              std::vector<int> &elementType,
+                              std::vector<int> &physical, 
+                              std::vector<int> &elementary,
+                              std::vector<int> &partition);
 
   // Gmsh native CAD format (readGEO is static, since it can create
   // multiple models)

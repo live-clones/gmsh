@@ -2912,107 +2912,107 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   return 1;
 }
 
-GModel *
-GModel::createGModel(std::map<int,MVertex*>& vertexMap,  
-										 std::vector<int> &elementNum,
-										 std::vector<std::vector<int>> &vertexIndices,
-										 std::vector<int> &elementType,
-										 std::vector<int> &physical,
-										 std::vector<int> &elementary,
-										 std::vector<int> &partition)
+GModel *GModel::createGModel(std::map<int, MVertex*> &vertexMap,  
+                             std::vector<int> &elementNum,
+                             std::vector<std::vector<int> > &vertexIndices,
+                             std::vector<int> &elementType,
+                             std::vector<int> &physical,
+                             std::vector<int> &elementary,
+                             std::vector<int> &partition)
 {
+  GModel *gm = new GModel();
+  std::map<int, std::vector<MElement*> > elements[10];
+  std::map<int, std::map<int, std::string> > physicals[4];
+  std::vector<MVertex*> vertexVector;
+  
+  int numVertices = (int)vertexMap.size();
+  int numElement = (int)elementNum.size();
+  
+  if(numElement != (int)vertexIndices.size())
+    Msg::Error("Dimension in vertices numbers");
+  if(numElement != (int)elementType.size())
+    Msg::Error("Dimension in elementType numbers");
+  if(numElement != (int)physical.size())
+    Msg::Error("Dimension in physical numbers");
+  if(numElement != (int)elementary.size())
+    Msg::Error("Dimension in elementary numbers");
+  if(numElement != (int)partition.size())
+    Msg::Error("Dimension in partition numbers");
 
-	GModel *gm=new GModel();
-	std::map<int, std::vector<MElement*> > elements[10];
-	std::map<int, std::map<int, std::string> > physicals[4];
-	std::vector<MVertex*> vertexVector;
-
-	int numVertices=(int)vertexMap.size();
-	int numElement=(int)elementNum.size();
-
-	if(numElement!=(int)vertexIndices.size())
-		Msg::Error("Dimension in vertices numbers");
-	if(numElement!=(int)elementType.size())
-		Msg::Error("Dimension in elementType numbers");
-	if(numElement!=(int)physical.size())
-		Msg::Error("Dimension in physical numbers");
-	if(numElement!=(int)elementary.size())
-		Msg::Error("Dimension in elementary numbers");
-	if(numElement!=(int)partition.size())
-		Msg::Error("Dimension in partition numbers");
-
-	std::map<int,MVertex*>::const_iterator it=vertexMap.begin();
-	std::map<int,MVertex*>::const_iterator end=vertexMap.end();
+  std::map<int, MVertex*>::const_iterator it = vertexMap.begin();
+  std::map<int, MVertex*>::const_iterator end = vertexMap.end();
 	
-	int maxVertex=INT_MIN;
-	int minVertex=INT_MAX;
-	int num;
+  int maxVertex = INT_MIN;
+  int minVertex = INT_MAX;
+  int num;
 	
-	for(it;it!=end;++it){
-		num=it->first;
-		minVertex = std::min(minVertex, num);
-		maxVertex = std::max(maxVertex, num);
-	}
-	if(minVertex==INT_MAX)
-		Msg::Error("Could not determine the min index of vertices");
-	
-	// If the vertex numbering is dense, tranfer the map into a
-	// vector to speed up element creation
-	if((minVertex == 1 && maxVertex == numVertices) ||(minVertex == 0 && maxVertex == numVertices - 1)){
-			Msg::Info("Vertex numbering is dense");
-			vertexVector.resize(vertexMap.size() + 1);
-			if(minVertex == 1) 
-				vertexVector[0] = 0;
-			else
-				vertexVector[numVertices] = 0;
-			std::map<int, MVertex*>::const_iterator it = vertexMap.begin();
-			for(; it != vertexMap.end(); ++it)
-				vertexVector[it->first] = it->second;
-			vertexMap.clear();
-	}
-	
-	int *indices;
-	int nbVertices;
-	for(int i = 0; i < numElement; ++i){
-		num=elementNum[i];
-		std::vector<MVertex*> vertices;
-		nbVertices=(int)vertexIndices[i].size();
-		indices = &vertexIndices[i][0];
-
-		if(vertexVector.size()){
-			Msg::Error("Vertex not found aborting");
-			if(!getVertices(nbVertices, indices, vertexVector, vertices)){
-				delete gm;	return 0;
-			}
-		}
-		else{
-			Msg::Error("Vertex not found aborting");
-			if(!getVertices(nbVertices, indices, vertexMap, vertices)){
-				delete gm;	return 0;
-			}
-		}
-
-		createElementMSH(gm, num, elementType[i], physical[i], elementary[i],
+  for(it; it != end; ++it){
+    num = it->first;
+    minVertex = std::min(minVertex, num);
+    maxVertex = std::max(maxVertex, num);
+  }
+  if(minVertex == INT_MAX)
+    Msg::Error("Could not determine the min index of vertices");
+  
+  // If the vertex numbering is dense, tranfer the map into a
+  // vector to speed up element creation
+  if((minVertex == 1 && maxVertex == numVertices) ||
+     (minVertex == 0 && maxVertex == numVertices - 1)){
+    Msg::Info("Vertex numbering is dense");
+    vertexVector.resize(vertexMap.size() + 1);
+    if(minVertex == 1) 
+      vertexVector[0] = 0;
+    else
+      vertexVector[numVertices] = 0;
+    std::map<int, MVertex*>::const_iterator it = vertexMap.begin();
+    for(; it != vertexMap.end(); ++it)
+      vertexVector[it->first] = it->second;
+    vertexMap.clear();
+  }
+  
+  int *indices;
+  int nbVertices;
+  for(int i = 0; i < numElement; ++i){
+    num=elementNum[i];
+    std::vector<MVertex*> vertices;
+    nbVertices = (int)vertexIndices[i].size();
+    indices = &vertexIndices[i][0];
+    if(vertexVector.size()){
+      Msg::Error("Vertex not found aborting");
+      if(!getVertices(nbVertices, indices, vertexVector, vertices)){
+        delete gm;
+        return 0;
+      }
+    }
+    else{
+      Msg::Error("Vertex not found aborting");
+      if(!getVertices(nbVertices, indices, vertexMap, vertices)){
+        delete gm;
+        return 0;
+      }
+    }
+    
+    createElementMSH(gm, num, elementType[i], physical[i], elementary[i],
                      partition[i], vertices, elements, physicals);
-	}
-
+  }
+  
   // store the elements in their associated elementary entity. If the
   // entity does not exist, create a new (discrete) one.
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
     gm->_storeElementsInEntities(elements[i]);
-
+  
   // associate the correct geometrical entity with each mesh vertex
   gm->_associateEntityWithMeshVertices();
-
+  
   // store the vertices in their associated geometrical entity
   if(vertexVector.size())
-   gm->_storeVerticesInEntities(vertexVector);
+    gm->_storeVerticesInEntities(vertexVector);
   else
     gm->_storeVerticesInEntities(vertexMap);
-
+  
   // store the physical tags
   for(int i = 0; i < 4; i++)
     gm->_storePhysicalTagsInEntities(i, physicals[i]);
-	
-	return gm;
+  
+  return gm;
 }
