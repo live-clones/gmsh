@@ -60,9 +60,9 @@ class stepData{
   double getTime(){ return _time; }
   void setTime(double time){ _time = time; }
   double getMin(){ return _min; }
-  double setMin(double min){ _min = min; }
+  void setMin(double min){ _min = min; }
   double getMax(){ return _max; }
-  double setMax(double max){ _max = max; }
+  void setMax(double max){ _max = max; }
   int getNumData()
   {
     if(!_data) return 0;
