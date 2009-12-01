@@ -27,7 +27,7 @@ static int connected_bounds (std::vector<MEdge> &edges,  std::vector<std::vector
 {
 
   std::multimap<MVertex*,MEdge> v2e;
-  for (int i=0;i<edges.size();++i){
+  for (unsigned i=0;i<edges.size();++i){
     for (int j=0;j<edges[i].getNumVertices();j++){
       v2e.insert(std::make_pair(edges[i].getVertex(j),edges[i]));
     }
@@ -72,7 +72,7 @@ static int getGenus (std::vector<MElement *> &elements,
   int nbBounds = 0;
   std::vector<MEdge> bEdges;  
   for(unsigned int i = 0; i < elements.size(); i++){
-    for(unsigned int j = 0; j < elements[i]->getNumEdges(); j++){
+    for(int j = 0; j < elements[i]->getNumEdges(); j++){
       MEdge me =  elements[i]->getEdge(j);
       if(std::find(bEdges.begin(), bEdges.end(), me) == bEdges.end())
 	 bEdges.push_back(me);
@@ -118,10 +118,10 @@ static int getAspectRatio (std::vector<MElement *> &elements,
     D=1.;
   }
   else{
-    for (int i=0; i< boundaries.size(); i++){
+    for (unsigned i=0; i< boundaries.size(); i++){
       std::set<MVertex*> vb;
       std::vector<MEdge> iBound = boundaries[i];
-      for (int j=0; j< iBound.size(); j++){
+      for (unsigned j=0; j< iBound.size(); j++){
 	MEdge e = iBound[j];
 	vb.insert(e.getVertex(0));
 	vb.insert(e.getVertex(1));
@@ -152,7 +152,7 @@ static void getGenusAndRatio(std::vector<MElement *> &elements, int & genus, int
 static void partitionRegions (std::vector<MElement*> &elements, 
 			      std::vector<std::vector<MElement*> > &regions){
   
- for (int i=0;i<elements.size();++i){
+ for (unsigned i=0;i<elements.size();++i){
    MElement *e = elements[i];
    int part = e->getPartition();
    regions[part-1].push_back(e);
@@ -196,7 +196,7 @@ void multiscalePartition::partition(partitionLevel & level){
   partitionRegions(level.elements, regions);
   level.elements.clear();
 
-  for (int i=0;i< regions.size() ; i++){    
+  for (unsigned i=0;i< regions.size() ; i++){    
   
     partitionLevel *nextLevel = new partitionLevel;
     nextLevel->elements = regions[i];
@@ -232,10 +232,10 @@ int multiscalePartition::assembleAllPartitions(){
 
   int nbParts =  1;   
 
-  for (int i = 0; i< levels.size(); i++){
+  for (unsigned i = 0; i< levels.size(); i++){
     partitionLevel *iLevel = levels[i];
     if(iLevel->elements.size() > 0){
-      for (int j = 0; j < iLevel->elements.size(); j++){
+      for (unsigned j = 0; j < iLevel->elements.size(); j++){
 	MElement *e = iLevel->elements[j];
 	int part = e->getPartition();
 	e->setPartition(nbParts);
