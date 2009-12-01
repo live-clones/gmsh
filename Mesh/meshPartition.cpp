@@ -123,7 +123,7 @@ bool PartitionZeroGenus(std::list<GFace*> &cFaces, int &nbParts){
    
    multiscalePartition *msp = new multiscalePartition(elements, options);
    nbParts = msp->getNumberOfParts();
-
+	return true;
 }
 
 int PartitionMeshElements( std::vector<MElement*> &elements, meshPartitionOptions &options){
@@ -131,7 +131,7 @@ int PartitionMeshElements( std::vector<MElement*> &elements, meshPartitionOption
  GModel *tmp_model = new GModel();
  GFace *gf = new discreteFace(tmp_model, 1);
  std::set<MVertex *> setv;
- for (int i=0;i<elements.size();++i)
+ for (unsigned i=0;i<elements.size();++i)
    for (int j=0;j<elements[i]->getNumVertices();j++)
      setv.insert(elements[i]->getVertex(j));
  
