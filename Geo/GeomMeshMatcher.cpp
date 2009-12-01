@@ -109,8 +109,8 @@ GeomMeshMatcher::matchVertices(GModel* m1, GModel *m2, bool& ok)
 
         // We match the vertices if their coordinates are the same under the
         // specified tolerance.
-	double score = fmax(fabs(v1->x() - v2->x()),
-                             fmax(fabs(v1->y() - v2->y()),
+				double score = std::max(fabs(v1->x() - v2->x()),
+                             std::max(fabs(v1->y() - v2->y()),
                                   fabs(v1->z() - v2->z())));
         if (score < tol && score < best_score) {
 	  best_candidate = v2;
