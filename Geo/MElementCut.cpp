@@ -493,10 +493,12 @@ static int getBorderTag(int lsTag, int count, int &maxTag, std::map<int, int> &b
   return lsTag;
 }
 
+typedef std::set<MVertex*,MVertexLessThanLexicographic> newVerticesContainer ;
+
 static void elementCutMesh(MElement *e, gLevelset *ls,
                            std::map<int, std::map<int, double> > &verticesLs,
                            GEntity *ge, GModel *GM, int &numEle, std::map<int, MVertex*> &vertexMap,
-                           std::vector<MVertex*> &newVertices,
+			   newVerticesContainer &newVertices,
                            std::map<int, std::vector<MElement*> > elements[10],
                            std::map<int, std::map<int, std::string> > physicals[4],
                            std::map<int, int> newElemTags[4],
@@ -662,18 +664,13 @@ static void elementCutMesh(MElement *e, gLevelset *ls,
           MVertex *mv[4] = {NULL, NULL, NULL, NULL};
           for(int j = 0; j < 4; j++){
             int numV = getElementVertexNum(tetras[i].pt(j), e);
-            if(numV == -1) {
-              unsigned int k;
-              for(k = 0; k < newVertices.size(); k++)
-                if(equalV(newVertices[k], tetras[i].pt(j))) break;
-              if(k == newVertices.size()) {
-                mv[j] = new MVertex(tetras[i].x(j), tetras[i].y(j),
-                                    tetras[i].z(j), 0);
-                newVertices.push_back(mv[j]);
-              }
-              else mv[j] = newVertices[k];
-            }
-            else {
+	    if (numV == -1){
+	      MVertex *newv = new MVertex(tetras[i].x(j), tetras[i].y(j), tetras[i].z(j), 0);
+	      std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
+	      mv[j] = *(it.first);
+	      if (!it.second) delete newv;
+	    }
+	    else {
               std::map<int, MVertex*>::iterator it = vertexMap.find(numV);
               if(it == vertexMap.end()) {
                 mv[j] = new MVertex(tetras[i].x(j), tetras[i].y(j),
@@ -725,15 +722,10 @@ static void elementCutMesh(MElement *e, gLevelset *ls,
         for(int j = 0; j < 3; j++){
           int numV = getElementVertexNum(triangles[i].pt(j), e);
           if(numV == -1) {
-            unsigned int k;
-            for(k = 0; k < newVertices.size(); k++)
-              if(equalV(newVertices[k], triangles[i].pt(j))) break;
-            if(k == newVertices.size()) {
-              mv[j] = new MVertex(triangles[i].x(j), triangles[i].y(j),
-                                  triangles[i].z(j), 0);
-              newVertices.push_back(mv[j]);
-            }
-            else mv[j] = newVertices[k];
+	    MVertex *newv = new MVertex(triangles[i].x(j), triangles[i].y(j), triangles[i].z(j), 0);
+	    std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
+	    mv[j] = *(it.first);
+	    if (!it.second) delete newv;
           }
           else {
             std::map<int, MVertex*>::iterator it = vertexMap.find(numV);
@@ -805,15 +797,10 @@ static void elementCutMesh(MElement *e, gLevelset *ls,
           for(int j = 0; j < 3; j++){
             int numV = getElementVertexNum(triangles[i].pt(j), e);
             if(numV == -1) {
-              unsigned int k;
-              for(k = 0; k < newVertices.size(); k++)
-                if(equalV(newVertices[k], triangles[i].pt(j))) break;
-              if(k == newVertices.size()) {
-                mv[j] = new MVertex(triangles[i].x(j), triangles[i].y(j),
-                                    triangles[i].z(j), 0);
-                newVertices.push_back(mv[j]);
-              }
-              else mv[j] = newVertices[k];
+	      MVertex *newv = new MVertex(triangles[i].x(j), triangles[i].y(j), triangles[i].z(j), 0);
+	      std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
+	      mv[j] = *(it.first);
+	      if (!it.second) delete newv;
             }
             else {
               std::map<int, MVertex*>::iterator it = vertexMap.find(numV);
@@ -863,15 +850,10 @@ static void elementCutMesh(MElement *e, gLevelset *ls,
         for(int j = 0; j < 2; j++){
           int numV = getElementVertexNum(lines[i].pt(j), e);
           if(numV == -1) {
-            unsigned int k;
-            for(k = 0; k < newVertices.size(); k++)
-              if(equalV(newVertices[k], lines[i].pt(j))) break;
-            if(k == newVertices.size()) {
-              mv[j] = new MVertex(lines[i].x(j), lines[i].y(j),
-                                  lines[i].z(j), 0);
-              newVertices.push_back(mv[j]);
-            }
-            else mv[j] = newVertices[k];
+	    MVertex *newv = new MVertex(lines[i].x(j), lines[i].y(j), lines[i].z(j), 0);
+	    std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
+	    mv[j] = *(it.first);
+	    if (!it.second) delete newv;
           }
           else {
             std::map<int, MVertex*>::iterator it = vertexMap.find(numV);
@@ -911,14 +893,10 @@ static void elementCutMesh(MElement *e, gLevelset *ls,
           for(int j = 0; j < 2; j++){
             int numV = getElementVertexNum(lines[i].pt(j), e);
             if(numV == -1) {
-              unsigned int k;
-              for(k = 0; k < newVertices.size(); k++)
-                if(equalV(newVertices[k], lines[i].pt(j))) break;
-              if(k == newVertices.size()) {
-                mv[j] = new MVertex(lines[i].x(j), lines[i].y(j), lines[i].z(j), 0);
-                newVertices.push_back(mv[j]);
-              }
-              else mv[j] = newVertices[k];
+	      MVertex *newv = new MVertex(lines[i].x(j), lines[i].y(j), lines[i].z(j), 0);
+	      std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
+	      mv[j] = *(it.first);
+	      if (!it.second) delete newv;
             }
             else {
               std::map<int, MVertex*>::iterator it = vertexMap.find(numV);
@@ -974,7 +952,9 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   GModel *cutGM = new GModel(gm->getName() + "_cut");
   cutGM->setFileName(cutGM->getName());
 
-  std::vector<MVertex*> newVertices;
+  newVerticesContainer newVertices;
+  //  std::set<MVertex*, MVertexLessThanLexicographic> newVertices;
+
   std::vector<GEntity*> gmEntities;
 
   gm->getEntities(gmEntities);
@@ -1019,8 +999,8 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
     cp.clear(); lines.clear(); triangles.clear(); quads.clear(); tetras.clear(); hexas.clear();
   }
 
-  for(unsigned int i = 0; i < newVertices.size(); i++) {
-    vertexMap[newVertices[i]->getNum()] = newVertices[i];
+  for(newVerticesContainer::iterator it = newVertices.begin() ; it != newVertices.end(); ++it) {
+    vertexMap[(*it)->getNum()] = *it;
   }
 
   return cutGM;
