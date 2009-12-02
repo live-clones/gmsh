@@ -52,5 +52,8 @@ class dgConservationLaw {
 };
 
 dgConservationLaw *dgNewConservationLawAdvection(const std::string vname);
+dgConservationLaw *dgNewConservationLawShallowWater2d();
+dgConservationLaw *dgNewConservationLawWaveEquation();
+dgBoundaryCondition *dgNewBoundaryConditionWaveEquationWall();
 
 #endif
