@@ -55,8 +55,8 @@ class dgConservationLawWaveEquation : public dgConservationLaw {
         double pR = solR(i,0);
         double pL = solL(i,0);
 
-        double pRiemann =  0.5 * (pL+pR - (unR-unL)*(rho*c));
-        double unRiemann =  0.5 * (unL+unR - (pR-pL)/(rho*c));
+        double pRiemann =  0.5 * (pL+pR + (unL-unR)*(rho*c));
+        double unRiemann =  0.5 * (unL+unR + (pL-pR)/(rho*c));
 
         double Fp = -rho*c*c*unRiemann;
         double Fun = -pRiemann/rho;
