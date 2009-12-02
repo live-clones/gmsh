@@ -18,6 +18,7 @@ set(SRC
   dgConservationLawShallowWater2d.cpp
   dgConservationLawWaveEquation.cpp
   function.cpp
+  functionDerivator.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Solver *.h) 

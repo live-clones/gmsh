@@ -6,6 +6,7 @@
 #include "dgConservationLaw.h"
 #include "Gmsh.h"
 #include "function.h"
+#include "functionDerivator.h"
 
 
 #include "MElement.h"
@@ -53,19 +54,30 @@ int main(int argc, char **argv){
   dgConservationLaw *law = dgNewConservationLawWaveEquation();
   fullMatrix<double> sol(nbNodes,elementGroups[0]->getNbElements()*law->nbFields());
   fullMatrix<double> residu(nbNodes,elementGroups[0]->getNbElements()*law->nbFields());
+  /*{ // use this block to test functionDerivator
+    dgConservationLawInitialCondition initLaw;
+    dataCacheMap cacheMap;
+    dataCacheElement &cacheElement = cacheMap.getElement();
+    cacheMap.provideData("UVW").set(elementGroups[0]->getIntegrationPointsMatrix());
+    cacheElement.set(elementGroups[0]->getElement(0));
+    dataCacheDouble &xyz = cacheMap.get("XYZ");
+    dataCacheDouble *source = initLaw.newSourceTerm(cacheMap);
+    functionDerivator fd (*source, xyz, 1e-12);
+    xyz().print();
+    fd.compute();
+    exit(0);
+  }*/
   // initial condition
   {
     dgConservationLawInitialCondition initLaw;
     algo.residualVolume(initLaw,*elementGroups[0],sol,residu);
     algo.multAddInverseMassMatrix(*elementGroups[0],residu,sol);
   }
- 
 
   law->addBoundaryCondition("Left",dgNewBoundaryConditionWaveEquationWall());
   law->addBoundaryCondition("Right",dgNewBoundaryConditionWaveEquationWall());
   law->addBoundaryCondition("Top",dgNewBoundaryConditionWaveEquationWall());
   law->addBoundaryCondition("Bottom",dgNewBoundaryConditionWaveEquationWall());
-  
   
  print("output/p.pos",*elementGroups[0],&sol(0,0),0,3);
  print_vector("output/uv.pos",*elementGroups[0],&sol(0,0),1,3);
