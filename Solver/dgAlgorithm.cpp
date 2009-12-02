@@ -326,6 +326,7 @@ void dgAlgorithm::buildGroups(GModel *model, int dim, int order,
     std::vector<dgGroupOfFaces*> &fGroups,
     std::vector<dgGroupOfFaces*> &bGroups) 
 {
+  std::map<const std::string,std::set<MVertex*> > boundaryVertices;
   std::map<const std::string,std::set<MEdge, Less_Edge> > boundaryEdges;
   std::map<const std::string,std::set<MFace, Less_Face> > boundaryFaces;
   std::vector<GEntity*> entities;
@@ -338,10 +339,19 @@ void dgAlgorithm::buildGroups(GModel *model, int dim, int order,
         const std::string physicalName = model->getPhysicalName(entity->dim(), entity->physicals[j]);
         for (int k = 0; k < entity->getNumMeshElements(); k++) {
           MElement *element = entity->getMeshElement(k);
-          if(dim==2)
-            boundaryEdges[physicalName].insert( MEdge(element->getVertex(0), element->getVertex(1)) );
-          else
-            boundaryFaces[physicalName].insert( MFace(element->getVertex(0), element->getVertex(1),element->getVertex(2)) );
+          switch(dim) {
+            case 1:
+              boundaryVertices[physicalName].insert( element->getVertex(0) ); 
+              break;
+            case 2:
+              boundaryEdges[physicalName].insert( MEdge(element->getVertex(0), element->getVertex(1)) );
+            break;
+            case 3:
+              boundaryFaces[physicalName].insert( MFace(element->getVertex(0), element->getVertex(1),element->getVertex(2)) );
+            break;
+            default :
+            throw;
+          }
         }
       }
     }else if(entity->dim() == dim){
@@ -351,17 +361,30 @@ void dgAlgorithm::buildGroups(GModel *model, int dim, int order,
   }
   eGroups.push_back(new dgGroupOfElements(allElements,order));
   fGroups.push_back(new dgGroupOfFaces(*eGroups[0],order));
-  if(dim==2){
-    std::map<const std::string, std::set<MEdge, Less_Edge> >::iterator mapIt;
-    for(mapIt=boundaryEdges.begin(); mapIt!=boundaryEdges.end(); mapIt++) {
-      bGroups.push_back(new dgGroupOfFaces(*eGroups[0],mapIt->first,order,mapIt->second));
+  switch(dim) {
+    case 1 : {
+      std::map<const std::string, std::set<MVertex*> >::iterator mapIt;
+      /*for(mapIt=boundaryVertices.begin(); mapIt!=boundaryVertices.end(); mapIt++) {
+        bGroups.push_back(new dgGroupOfFaces(*eGroups[0],mapIt->first,order,mapIt->second));
+      }*/
+      throw;
+      break;
     }
-  }else if(dim=3){
-    std::map<const std::string, std::set<MFace, Less_Face> >::iterator mapIt;
-    for(mapIt=boundaryFaces.begin(); mapIt!=boundaryFaces.end(); mapIt++) {
-      bGroups.push_back(new dgGroupOfFaces(*eGroups[0],mapIt->first,order,mapIt->second));
+    case 2 : {
+      std::map<const std::string, std::set<MEdge, Less_Edge> >::iterator mapIt;
+      for(mapIt=boundaryEdges.begin(); mapIt!=boundaryEdges.end(); mapIt++) {
+        bGroups.push_back(new dgGroupOfFaces(*eGroups[0],mapIt->first,order,mapIt->second));
+      }
+      break;
     }
-  }else throw;
+    case 3 : {
+      std::map<const std::string, std::set<MFace, Less_Face> >::iterator mapIt;
+      for(mapIt=boundaryFaces.begin(); mapIt!=boundaryFaces.end(); mapIt++) {
+        bGroups.push_back(new dgGroupOfFaces(*eGroups[0],mapIt->first,order,mapIt->second));
+      }
+      break;
+    }
+  }
 }
 
 // works only if there is only 1 group of element
