@@ -15,7 +15,6 @@ cd ${GMSH}/bin && \
            -DCMAKE_PREFIX_PATH:path="/usr/local;/usr/local/opencascade"\
            -DCMAKE_CXX_FLAGS:string="-mno-cygwin"\
            -DCMAKE_C_FLAGS:string="-mno-cygwin"\
-           -DENABLE_KBIPACK:bool=FALSE\
            -DENABLE_PETSC:bool=FALSE\
   ${GMSH} >> ${LOG} 2>&1
 cd ${GMSH}/bin && make package >> ${LOG} 2>&1

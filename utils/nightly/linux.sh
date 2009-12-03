@@ -13,7 +13,6 @@ mkdir ${GMSH}/bin
 cd ${GMSH}/bin && \
   ${CMAKE} -DGMSH_EXTRA_VERSION:string="-svn"\
            -DCMAKE_PREFIX_PATH:path="/usr/local;/usr/local/opencascade"\
-           -DENABLE_KBIPACK:bool=FALSE\
            -DENABLE_PETSC:bool=FALSE\
            -DENABLE_NATIVE_FILE_CHOOSER:bool=FALSE\
   ${GMSH} >> ${LOG} 2>&1
