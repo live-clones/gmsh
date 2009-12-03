@@ -26,3 +26,5 @@ ${GMSH} Cone_1.brep -clscale 1 -2 -v 1 > /dev/null
 ${GMSH} Cylinder_1.brep -clscale 1 -2 -v 1 > /dev/null
 ${GMSH} Torus_1.brep -clscale 300 -2 -v 1 > /dev/null
 ${GMSH} A319.geo -clscale 3 -2 -v 1 > /dev/null
+${GMSH} capot.geo -clscale .2 -2 -saveall -v 1 > /dev/null
+${GMSH} bouda_.geo -clscale .2 -2 -saveall -v 1 > /dev/null

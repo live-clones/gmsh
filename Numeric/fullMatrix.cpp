@@ -277,4 +277,58 @@ bool fullMatrix<double>::svd(fullMatrix<double> &V, fullVector<double> &S)
   return false;
 }
 
+#if defined(HAVE_LUA)
+template<> 
+int fullMatrix<double>::gemm(lua_State *L)
+{
+#if defined(HAVE_BLAS)
+  int n = lua_gettop(L);  
+  if (n < 2)throw;
+  
+  fullMatrix<double> *a = Luna<fullMatrix<double> >::check(L,1);
+  fullMatrix<double> *b = Luna<fullMatrix<double> >::check(L,2);
+  
+  if(!a || !b)throw;
+  //  printf("%d %d\n",a->size1(),b->size1());
+  double alpha=1, beta=1;
+  if (n > 2) alpha = luaL_checknumber(L, 3);
+  if (n > 3) beta = luaL_checknumber(L, 4);
+  int M = size1(), N = size2(), K = a->size2();
+  int LDA = a->size1(), LDB = b->size1(), LDC = size1();
+  F77NAME(dgemm)("N", "N", &M, &N, &K, &alpha, a->_data, &LDA, b->_data, &LDB, 
+                 &beta, _data, &LDC);
+  return 0;
+#else
+  throw;
+  return 0;
+#endif
+}
+
+// define the name of the object that will be used in Lua
+template <>
+const char fullMatrix<double> ::className[] = "fullMatrix";
+template <>
+const char fullMatrix<float> ::className[] = "fullMatrixFloat";
+
+// Define the methods we will expose to Lua
+#define _method(class, name) {#name, &class::name}
+template <>
+Luna<fullMatrix<double> >::RegType fullMatrix<double>::methods[] = {
+  _method(fullMatrix<double> , size1),
+  _method(fullMatrix<double> , size2),
+  _method(fullMatrix<double> , get),
+  _method(fullMatrix<double> , set),
+  _method(fullMatrix<double> , gemm),
+  {0,0}
+};
+
+// this function has to be called in the main in order to register
+// the names defined above
+template<> 
+void fullMatrix<double>::Register (lua_State *L){
+  Luna<fullMatrix<double> >::Register(L);
+}
+#endif
+
+
 #endif

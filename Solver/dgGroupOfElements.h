@@ -84,6 +84,7 @@ public:
 };
 
 class dgGroupOfFaces {
+  // normals always point outside left to right
   // only used if this is a group of boundary faces
   std::string _boundaryTag;
   const dgGroupOfElements &_groupLeft,&_groupRight;
@@ -149,6 +150,7 @@ public:
   //keep this outside the Algorithm because this is the only place where data overlap
   void mapToInterface(int nFields, const fullMatrix<double> &vLeft, const fullMatrix<double> &vRight, fullMatrix<double> &v);
   void mapFromInterface(int nFields, const fullMatrix<double> &v, fullMatrix<double> &vLeft, fullMatrix<double> &vRight);
+  const polynomialBasis * getPolynomialBasis() const {return _fsFace;}
 };
 
 

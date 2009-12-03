@@ -4,7 +4,7 @@
 #include <vector>
 #include <map>
 #include "SPoint2.h"
-#include "linearSystemGMM.h"
+#include "linearSystem.h"
 
 class MElement;
 class MVertex;
@@ -12,20 +12,23 @@ class MVertex;
 struct multiscaleLaplaceLevel {
   SPoint2 center;
   double  scale;
+  double radius;
   int recur,region;
+  std::vector<multiscaleLaplaceLevel*> childeren;
   std::vector<MElement *> elements;
   std::map<MVertex*,SPoint2> coordinates;
+  std::vector<std::pair<SPoint2,multiscaleLaplaceLevel*> > cut;
 };
 
 class multiscaleLaplace{
   linearSystem<double> *_lsys;
-  std::vector<multiscaleLaplaceLevel*> levels;
-  void parametrize (multiscaleLaplaceLevel &);
-  
+  multiscaleLaplaceLevel* root;
+  void parametrize (multiscaleLaplaceLevel &);  
 public:
   multiscaleLaplace (std::vector<MElement *> &elements,
 		     std::vector<MVertex*> &boundaryNodes,
 		     std::vector<double> &linearAbscissa) ;
-    
+  void cut (std::vector<MElement *> &left, 
+	    std::vector<MElement *> &right);  
 };
 #endif

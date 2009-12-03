@@ -21,6 +21,7 @@
 #cmakedefine HAVE_LIBJPEG
 #cmakedefine HAVE_LIBPNG
 #cmakedefine HAVE_LIBZ
+#cmakedefine HAVE_LUA
 #cmakedefine HAVE_MATHEX
 #cmakedefine HAVE_MED
 #cmakedefine HAVE_MESH

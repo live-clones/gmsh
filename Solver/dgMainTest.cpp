@@ -57,9 +57,6 @@ int main(int argc, char **argv){
     algo.residualVolume(initLaw,*elementGroups[0],sol,residu);
     algo.multAddInverseMassMatrix(*elementGroups[0],residu,sol);
   }
- 
- 
-
 
   fullMatrix<double> advectionSpeed(3,1);
   advectionSpeed(0,0)=0.15;

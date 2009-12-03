@@ -28,6 +28,7 @@ option(ENABLE_FOURIER_MODEL "Enable Fourier geometrical models" OFF)
 option(ENABLE_GMM "Enable GMM linear algebra solvers" ON)
 option(ENABLE_GRAPHICS "Compile-in OpenGL graphics even if there is no GUI" OFF)
 option(ENABLE_KBIPACK "Enable Kbipack for homology solver" ON)
+option(ENABLE_LUA "Enable the Programming Language Lua " ON)
 option(ENABLE_MATHEX "Enable MathEx expression parser" ON)
 option(ENABLE_MED "Enable MED mesh and post-processing file formats" ON)
 option(ENABLE_MESH "Build the mesh module" ON)
@@ -75,7 +76,7 @@ set(GMSH_API
   Mesh/meshGEdge.h Mesh/meshGFace.h Mesh/meshGFaceOptimize.h 
     Mesh/meshGFaceDelaunayInsertion.h
   Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h Solver/elasticityTerm.h
-    Solver/linearSystem.h Solver/linearSystemGMM.h Solver/linearSystemFull.h 
+    Solver/linearSystem.h Solver/linearSystemGMM.h  Solver/linearSystemCSR.h Solver/linearSystemFull.h 
   Solver/elasticitySolver.h 
   Post/PView.h Post/PViewData.h Plugin/PluginManager.h
   Graphics/drawContext.h
@@ -547,6 +548,19 @@ if(ENABLE_TAUCS)
   endif(TAUCS_LIB)
 endif(ENABLE_TAUCS)
 
+if(ENABLE_LUA)
+  find_library(LUA_LIB lua PATH_SUFFIXES lib)
+  if(LUA_LIB)
+    find_path(LUA_INC "lua.h" PATH_SUFFIXES src include)
+    if(LUA_INC)
+      set(HAVE_LUA TRUE)
+      list(APPEND CONFIG_OPTIONS "Lua")
+      list(APPEND EXTERNAL_LIBRARIES ${LUA_LIB})
+      list(APPEND EXTERNAL_INCLUDES ${LUA_INC})
+    endif(LUA_INC)
+  endif(LUA_LIB)
+endif(ENABLE_LUA)
+
 if(ENABLE_PETSC)
   set(ENV_PETSC_DIR $ENV{PETSC_DIR})
   set(ENV_PETSC_ARCH $ENV{PETSC_ARCH})
@@ -989,13 +1003,16 @@ message("Run 'ccmake ${CMAKE_SOURCE_DIR}' to fine-tune the configuration.")
 message("")
 
 mark_as_advanced(BISON FLEX GMP_LIB GMSH_EXTRA_VERSION HDF5_LIB MAKEINFO 
-                 MED_LIB OCC_INC SZ_LIB TAUCS_LIB TEXI2PDF)
+                 MED_LIB OCC_INC SZ_LIB TAUCS_LIB LUA_LIB TEXI2PDF)
 
-add_executable(gmshdg EXCLUDE_FROM_ALL Solver/dgMainTest.cpp ${GMSH_SRC})
+add_executable(gmshdg  EXCLUDE_FROM_ALL Solver/dgMainTest.cpp ${GMSH_SRC})
+add_executable(gmshlua EXCLUDE_FROM_ALL Solver/dgMainLua.cpp ${GMSH_SRC})
 target_link_libraries(gmshdg ${LINK_LIBRARIES})
+target_link_libraries(gmshlua ${LINK_LIBRARIES})
 
 add_executable(gmshdgsw EXCLUDE_FROM_ALL Solver/dgMainShallowWater2d.cpp ${GMSH_SRC})
 target_link_libraries(gmshdgsw ${LINK_LIBRARIES})
 
 add_executable(gmshdgwave EXCLUDE_FROM_ALL Solver/dgMainWaveEquation.cpp ${GMSH_SRC})
 target_link_libraries(gmshdgwave ${LINK_LIBRARIES})
+

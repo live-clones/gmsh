@@ -33,6 +33,7 @@
 #include "Context.h"
 #include "discreteFace.h"
 #include "eigenSolver.h"
+#include "multiscaleLaplace.h"
 
 static void fixEdgeToValue(GEdge *ed, double value, dofManager<double> &myAssembler)
 {
@@ -934,6 +935,20 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
       return;
     }
 
+    // TEST -------------------------------------------------- 
+    if(step == ITERV){
+      std::vector<MElement*> _elements;
+      std::list<GFace*>::const_iterator it = _compound.begin();
+      for( ; it != _compound.end(); ++it){
+	for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+	  MTriangle *t = (*it)->triangles[i];
+	  _elements.push_back(t);
+	}   
+      }
+      //      multiscaleLaplace(_elements,ordered,coords);
+    }
+    // TEST -------------------------------------------------- 
+
     for(unsigned int i = 0; i < ordered.size(); i++){
       MVertex *v = ordered[i];
       const double theta = 2 * M_PI * coords[i];
@@ -1217,6 +1232,7 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
     SPoint2 pv = lt->gfp1*(1.-U-V) + lt->gfp2*U + lt->gfp3*V;
     return lt->gf->curvatureMax(pv);
   }
+  // emi fait qqch ici ...
   return 0.;
 }
 
@@ -1248,10 +1264,10 @@ GPoint GFaceCompound::point(double par1, double par2) const
     gp.setNoSuccess();
     return gp;
   }
-  if(lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface){
-    SPoint2 pv = lt->gfp1*(1.-U-V) + lt->gfp2*U + lt->gfp3*V;
-    return lt->gf->point(pv.x(),pv.y());
-  }
+  //  if(lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface){
+  //    SPoint2 pv = lt->gfp1*(1.-U-V) + lt->gfp2*U + lt->gfp3*V;
+  //    return lt->gf->point(pv.x(),pv.y());
+  //  }
   
   const bool LINEARMESH = true; //false
 

@@ -6,9 +6,17 @@ GLUT = -framework OpenGL -framework GLUT -framework Cocoa -framework Application
 OCC = -L/usr/local/opencascade/lib -L/Users/remacle/SOURCES/opencascade/lib -lTKSTEP -lTKSTEP209 -lTKSTEPAttr -lTKSTEPBase -lTKIGES -lTKXSBase -lTKOffset -lTKFeat -lTKFillet -lTKBool -lTKShHealing -lTKMesh -lTKHLR -lTKBO -lTKPrim -lTKTopAlgo -lTKGeomAlgo -lTKBRep -lTKGeomBase -lTKG3d -lTKG2d -lTKAdvTools -lTKMath -lTKernel
 TAUCS = -L/Users/remacle/SOURCES/gmsh/contrib/taucs/lib -L/home/gaetan/develop/gmsh/contrib/taucs/lib/linux -ltaucs
 
+mainLua: mainLua.cpp
+	g++ ${FLAGS} -I../../Geo/ -I../../lib/Common -I../../Common -DHAVE_LUA -o mainLua ${INC} mainLua.cpp\
+          ${GMSH} -llapack -lblas -lm ${TAUCS} ${OCC} -llua
+
 mainElasticity: mainElasticity.cpp
 	g++ ${FLAGS} -o mainElasticity ${INC} mainElasticity.cpp\
           ${GMSH} -llapack -lblas -lm -lmetis ${TAUCS}
+
+mainFDPlate: mainFDPlate.cpp
+	g++ ${FLAGS} -o mainFDPlate ${INC} mainFDPlate.cpp\
+          ${GMSH} -llapack -lblas -lm ${TAUCS} ${OCC}
 
 mainCartesian: mainCartesian.cpp
 	g++ ${FLAGS} -o mainCartesian ${INC} mainCartesian.cpp\

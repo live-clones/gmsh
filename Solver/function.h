@@ -8,7 +8,7 @@
 class dataCacheMap;
 class MElement;
 
-// those classes manage complex function dependcies and keep their values in cache so that they are not recomputed when it is not necessary. To do this, we use three classes : function, dataCache and dataCacheMap. The workflow is :
+// those classes manage complex function dependencies and keep their values in cache so that they are not recomputed when it is not necessary. To do this, we use three classes : function, dataCache and dataCacheMap. The workflow is :
 //
 // a) before parsing the input file : a few general function that are always available are created (xyz for example).
 //

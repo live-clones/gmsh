@@ -15,6 +15,7 @@ set(SRC
   dgAlgorithm.cpp
   dgConservationLaw.cpp
   dgConservationLawAdvection.cpp
+  dgSystemOfEquations.cpp
   dgConservationLawShallowWater2d.cpp
   dgConservationLawWaveEquation.cpp
   function.cpp

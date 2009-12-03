@@ -11,6 +11,17 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 
+#if defined(HAVE_LUA)
+// include lua stuff
+extern "C" {
+#include "lua.h"
+#include "lauxlib.h"
+#include "lualib.h"
+}
+// Use luna for c++ class member functions bindings
+#include "luna.h"
+#endif // HAVE LUA
+
 template <class scalar> class fullMatrix;
 
 template <class scalar>
@@ -79,6 +90,51 @@ class fullMatrix
   int _r, _c;
   scalar *_data;
  public:
+#if defined(HAVE_LUA)
+  static const char className[];
+  static Luna<fullMatrix<double> >::RegType methods[];
+  static void Register(lua_State *L);
+
+  fullMatrix(lua_State *L){
+    int n = lua_gettop(L);
+    if (n == 1){
+      fullMatrix<scalar> * _ud = (fullMatrix<scalar> *) lua_touserdata(L, 1);
+      _c = _ud->_c;
+      _r = _ud->_r;
+      _own_data = false;
+      _data = _ud->_data;
+      return;
+    }
+    if (n != 2)throw;
+    _r = luaL_checkint(L, 1);
+    _c = luaL_checkint(L, 2);
+    _data = new scalar[_r * _c];
+    _own_data = true;
+    scale(0.);
+  }
+  int size1(lua_State *L){
+    lua_pushinteger(L, _r); 
+    return 1;
+  }
+  int size2(lua_State *L){
+    lua_pushinteger(L, _c); 
+    return 1;
+  }
+  int get(lua_State *L){
+    int r = luaL_checkint(L, 1);
+    int c = luaL_checkint(L, 2);
+    lua_pushnumber(L, (*this)(r,c)); 
+    return 1;
+  }
+  int set(lua_State *L){
+    int r = luaL_checkint(L, 1);
+    int c = luaL_checkint(L, 2);
+    scalar val = luaL_checknumber(L, 3);
+    (*this)(r,c) = val; 
+    return 0;
+  }
+  int gemm(lua_State *L);
+#endif // HAVE LUA  
   fullMatrix(fullMatrix<scalar> &original, int c_start, int c){
     _c = c;
     _r = original._r;
