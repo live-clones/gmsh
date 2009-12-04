@@ -9,6 +9,7 @@
 #include "dofManager.h"
 #include "laplaceTerm.h"
 #include "linearSystemCSR.h"
+#include "linearSystemGmm.h"
 #include "linearSystemFull.h"
 #include "MTriangle.h"
 #include "robustPredicates.h"
