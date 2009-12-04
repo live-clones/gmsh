@@ -90,7 +90,7 @@ static int getGenus (std::vector<MElement *> &elements,
 }
 
 static int getAspectRatio (std::vector<MElement *> &elements, 
-			      std::vector<std::vector<MEdge> > &boundaries)
+			   std::vector<std::vector<MEdge> > &boundaries)
 { 
  
   std::set<MVertex*> vs;
@@ -109,9 +109,9 @@ static int getAspectRatio (std::vector<MElement *> &elements,
     bb +=pt;
   }
    
-//  obb =  SOrientedBoundingBox::buildOBB(vertices);
-//  double H = obbox.getMaxSize(); 
- double H = norm(SVector3(bb.max(), bb.min()));
+  //obbox =  SOrientedBoundingBox::buildOBB(vertices);
+  //double H = obbox.getMaxSize(); 
+  double H = norm(SVector3(bb.max(), bb.min()));
  
  double D = 0.0;
   if (boundaries.size() == 0){
@@ -243,11 +243,6 @@ int multiscalePartition::assembleAllPartitions(){
       nbParts++;
     }
   }
-
-  Msg::Info("-----------------------------------------------------------");
-  Msg::Info("Multiscale Partition SUCCESSFULLY PERFORMED : %d parts", nbParts-1);
-  Msg::Info("-----------------------------------------------------------");
- 
 
   return nbParts-1;
 

@@ -10,6 +10,7 @@
 #include "MTriangle.h"
 #include "MEdge.h"
 #include "Geo.h"
+#include "GFaceCompound.h"
 
 discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
 {
@@ -70,24 +71,66 @@ GPoint discreteFace::point(double par1, double par2) const
 
 SPoint2 discreteFace::parFromPoint(const SPoint3 &p) const
 {
-  Msg::Error("Cannot compute parametric coordinates on discrete face");
-  return SPoint2();
+
+  if (getCompound()){
+    printf("par from point in GFaceCompound %d \n", getCompound()->tag());
+    return getCompound()->parFromPoint(p);
+  }
+  else{
+    Msg::Error("Cannot compute parametric coordinates on discrete face");
+    return SPoint2();
+  }
 }
 
 SVector3 discreteFace::normal(const SPoint2 &param) const
 {
-  Msg::Error("Cannot evaluate normal on discrete face");
-  return SVector3();
+
+  if (getCompound()){
+    return getCompound()->normal(param);
+  }
+  else{
+    Msg::Error("Cannot evaluate normal on discrete face");
+    return SVector3();
+  }
+
+}
+
+double discreteFace::curvatureMax(const SPoint2 &param) const
+{
+
+  if (getCompound()){
+    return getCompound()->curvatureMax(param);
+  }
+  else{
+    Msg::Error("Cannot evaluate curvature on discrete face");
+    return false;
+  }
+
 }
 
 Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 {
-  Msg::Error("Cannot evaluate derivative on discrete face");
-  return Pair<SVector3, SVector3>();
+
+  if (getCompound()){
+    return getCompound()->firstDer(param);
+  }
+  else{
+    Msg::Error("Cannot evaluate derivative on discrete face");
+    return Pair<SVector3, SVector3>();
+  }
+
 }
 
 void discreteFace::secondDer(const SPoint2 &param, 
                              SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
 {
-  Msg::Error("Cannot evaluate derivative on discrete face");
+
+  if (getCompound()){
+    return getCompound()->secondDer(param, dudu, dvdv, dudv);
+  }
+  else{
+    Msg::Error("Cannot evaluate second derivative on discrete face");
+    return;
+  }
+
 }

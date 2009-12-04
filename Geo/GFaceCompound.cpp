@@ -431,9 +431,10 @@ void GFaceCompound::one2OneMap() const
 
 bool GFaceCompound::parametrize() const
 {
-  
+
   bool paramOK = true;
 
+  if(oct) return paramOK; 
   if(trivial()) return paramOK;
 
   coordinates.clear(); 
@@ -716,6 +717,7 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 #endif
   }
   nbSplit = 0;
+  checked = false;
 
   for(std::list<GFace*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
     if(!(*it)){
@@ -1218,6 +1220,9 @@ void GFaceCompound::computeNormals() const
 
 double GFaceCompound::curvatureMax(const SPoint2 &param) const
 {
+
+  if(!oct) parametrize();
+
   if(trivial()){
     return (*(_compound.begin()))->curvatureMax(param);
   }
@@ -1226,33 +1231,56 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
   GFaceCompoundTriangle *lt;
   getTriangle(param.x(), param.y(), &lt, U,V);  
   if(!lt){
-    return  0.0;
+    return  0.0;   
   }
   if(lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface){
     SPoint2 pv = lt->gfp1*(1.-U-V) + lt->gfp2*U + lt->gfp3*V;
     return lt->gf->curvatureMax(pv);
   }
-  // emi fait qqch ici ...
+  else if (lt->gf->geomType() == GEntity::DiscreteSurface) {
+    //printf("!!!! compute here curvatureMax \n");
+    double curv= 0.;
+    curv = curvature(lt->tri,U,V);
+    return curv;
+  }
   return 0.;
 }
 
 double GFaceCompound::curvature(MTriangle *t, double u, double v) const
 {
+
   SVector3 n1 = _normals[t->getVertex(0)];
   SVector3 n2 = _normals[t->getVertex(1)];
   SVector3 n3 = _normals[t->getVertex(2)];
   double val[9] = {n1.x(), n2.x(), n3.x(),
 		   n1.y(), n2.y(), n3.y(),
 		   n1.z(), n2.z(), n3.z()};
+
   return fabs(t->interpolateDiv(val, u, v, 0.0));
+
   return 0.;
+}
+
+SPoint2 GFaceCompound::parFromPoint(const SPoint3 &p) const
+{
+  if(!oct) parametrize();
+
+  std::map<SPoint3,SPoint3>::const_iterator it = _coordPoints.find(p);
+  SPoint3 sp = it->second;
+  printf("return u,v=%g %g \n", sp.x(), sp.y());
+
+  return SPoint2(sp.x(), sp.y());
+
 }
 
 GPoint GFaceCompound::point(double par1, double par2) const
 {
+
   if(trivial()){
     return (*(_compound.begin()))->point(par1,par2);
   }
+
+  if(!oct) parametrize();
 
   double U,V;
   double par[2] = {par1,par2};
@@ -1269,7 +1297,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
   //    return lt->gf->point(pv.x(),pv.y());
   //  }
   
-  const bool LINEARMESH = true; //false
+  const bool LINEARMESH = false; //false
 
   if(LINEARMESH){
 
@@ -1295,18 +1323,41 @@ GPoint GFaceCompound::point(double par1, double par2) const
     b300 = lt->v1;
     b030 = lt->v2;
     b003 = lt->v3;
-    w12 = dot(lt->v2 - lt->v1, n1);
-    w21 = dot(lt->v1 - lt->v2, n2);
-    w23 = dot(lt->v3 - lt->v2, n2);
-    w32 = dot(lt->v2 - lt->v3, n3);
-    w31 = dot(lt->v1 - lt->v3, n3);
-    w13 = dot(lt->v3 - lt->v1, n1);
-    b210 = (2*lt->v1 + lt->v2-w12*n1)*0.333; 
-    b120 = (2*lt->v2 + lt->v1-w21*n2)*0.333;
-    b021 = (2*lt->v2 + lt->v3-w23*n2)*0.333;
-    b012 = (2*lt->v3 + lt->v2-w32*n3)*0.333;
-    b102 = (2*lt->v3 + lt->v1-w31*n3)*0.333;
-    b201 = (2*lt->v1 + lt->v3-w13*n1)*0.333;
+
+//     w12 = dot(lt->v2 - lt->v1, n1);
+//     w21 = dot(lt->v1 - lt->v2, n2);
+//     w23 = dot(lt->v3 - lt->v2, n2);
+//     w32 = dot(lt->v2 - lt->v3, n3);
+//     w31 = dot(lt->v1 - lt->v3, n3);
+//     w13 = dot(lt->v3 - lt->v1, n1);
+//     b210 = (2*lt->v1 + lt->v2-w12*n1)*0.333; 
+//     b120 = (2*lt->v2 + lt->v1-w21*n2)*0.333;
+//     b021 = (2*lt->v2 + lt->v3-w23*n2)*0.333;
+//     b012 = (2*lt->v3 + lt->v2-w32*n3)*0.333;
+//     b102 = (2*lt->v3 + lt->v1-w31*n3)*0.333;
+//     b201 = (2*lt->v1 + lt->v3-w13*n1)*0.333;
+
+    //tagged PN trinagles (sigma=1)
+    double theta = 0.0;
+    SVector3 d1 = lt->v1+.33*(1-theta)*(lt->v2-lt->v1);
+    SVector3 d2 = lt->v2+.33*(1-theta)*(lt->v1-lt->v2);
+    SVector3 X1 = 1/norm(n1)*n1;
+    SVector3 X2 = 1/norm(n2)*n2;
+    b210 = d1 - dot(X1,d1-lt->v1)*X1;
+    b120 = d2 - dot(X2,d2-lt->v2)*X2;
+    SVector3 d3 = lt->v2+.33*(1-theta)*(lt->v3-lt->v2);
+    SVector3 d4 = lt->v3+.33*(1-theta)*(lt->v2-lt->v3);
+    SVector3 X3 = 1/norm(n2)*n2;
+    SVector3 X4 = 1/norm(n3)*n3;
+    b021 = d3 - dot(X3,d3-lt->v2)*X3;
+    b012 = d4 - dot(X4,d4-lt->v3)*X4;
+    SVector3 d5 = lt->v3+.33*(1-theta)*(lt->v1-lt->v3);
+    SVector3 d6 = lt->v1+.33*(1-theta)*(lt->v3-lt->v1);
+    SVector3 X5 = 1/norm(n3)*n3;
+    SVector3 X6 = 1/norm(n1)*n1;
+    b102 = d5 - dot(X5,d5-lt->v3)*X5;
+    b201 = d6 - dot(X6,d6-lt->v1)*X6;
+
     E=(b210+b120+b021+b012+b102+b201)*0.16667;
     VV=(lt->v1+lt->v2+lt->v3)*0.333;
     b111=E+(E-VV)*0.5;
@@ -1324,6 +1375,8 @@ GPoint GFaceCompound::point(double par1, double par2) const
 
 Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
 {
+  if(!oct) parametrize();
+
   if(trivial()){
     return (*(_compound.begin()))->firstDer(param);
   }
@@ -1351,7 +1404,56 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
 void GFaceCompound::secondDer(const SPoint2 &param, 
                               SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
 {
-  Msg::Error("Computation of the second derivatives not implemented for compound faces");
+
+  if(!oct) parametrize();
+
+  //use central differences
+
+  //EMI: TODO should take size of two or three triangles
+//   double eps = 1e+2;
+  
+//   double u  = param.x();
+//   double v = param.y();
+//   Pair<SVector3,SVector3> Der_u, Der_ueps, Der_v, Der_veps;
+  
+//   if(u - eps < 0.0) {
+//     Der_u = firstDer(SPoint2(u,v));
+//     Der_ueps = firstDer(SPoint2(u+eps,v));
+//   }
+//   else {
+//     Der_u = firstDer(SPoint2(u-eps,v));
+//     Der_ueps = firstDer(SPoint2(u,v));
+//   }
+  
+//   if(v - eps < 0.0) {
+//     Der_v = firstDer(SPoint2(u,v));
+//     Der_veps = firstDer(SPoint2(u,v+eps));
+//   }
+//   else {
+//     Der_v = firstDer(SPoint2(u,v-eps));
+//     Der_veps = firstDer(SPoint2(u,v));
+//   }
+  
+//   SVector3 dXdu_u =  Der_u.first();
+//   SVector3 dXdv_u =  Der_u.second();
+//   SVector3 dXdu_ueps =  Der_ueps.first();
+//   SVector3 dXdv_ueps =  Der_ueps.second();
+//   SVector3 dXdu_v =  Der_v.first();
+//   SVector3 dXdv_v =  Der_v.second();
+//   SVector3 dXdu_veps =  Der_veps.first();
+//   SVector3 dXdv_veps =  Der_veps.second();
+  
+//   double inveps = 1./eps;
+//   *dudu = inveps * (dXdu_u - dXdu_ueps) ;
+//   *dvdv = inveps * (dXdv_v - dXdv_veps) ;
+//   *dudv = inveps * (dXdu_v - dXdu_veps) ;
+
+  //printf("der second dudu = %g %g %g \n", dudu->x(),  dudu->y(),  dudu->z());
+  //printf("der second dvdv = %g %g %g \n", dvdv->x(),  dvdv->y(),  dvdv->z());
+  //printf("der second dudv = %g %g %g \n", dudv->x(),  dudv->y(),  dudv->z());
+  
+  Msg::Error("Computation of the second derivatives is not implemented for compound faces");
+  
 }
 
 static void GFaceCompoundBB(void *a, double*mmin, double*mmax)
@@ -1448,8 +1550,8 @@ void GFaceCompound::buildOct() const
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *t = (*it)->triangles[i];
       for(int j = 0; j < 3; j++){
-	std::map<MVertex*,SPoint3>::const_iterator itj = 
-	  coordinates.find(t->getVertex(j));
+	std::map<MVertex*,SPoint3>::const_iterator itj = coordinates.find(t->getVertex(j));
+	_coordPoints.insert(std::make_pair(t->getVertex(j)->point(), itj->second));
 	bb += SPoint3(itj->second.x(),itj->second.y(),0.0);
       }
       count++;
@@ -1506,32 +1608,33 @@ bool GFaceCompound::checkTopology() const
   //if ((*(_compound.begin()))->geomType() != GEntity::DiscreteSurface)return true;  
 
   bool correctTopo = true;
-
+  
   int Nb = _interior_loops.size();
   int G  = genusGeom() ;
   if( G != 0 || Nb < 1) correctTopo = false;
-
+  
   if (!correctTopo){
     Msg::Warning("Wrong topology: Genus=%d and N boundary=%d", G, Nb);
-    nbSplit = G+2; //std::max(G+2, 2);
+    nbSplit = G+2;//std::max(G+2, 2);
     Msg::Info("Split surface %d in %d parts with Mesh partitioner", tag(), nbSplit);
   }
   else
     Msg::Info("Correct topology: Genus=%d and N boundary=%d", G, Nb);
-
+  
   return correctTopo;
+
 }
 
 bool GFaceCompound::checkAspectRatio() const
 {
 
-  if ((*(_compound.begin()))->geomType() != GEntity::DiscreteSurface)
-    return true;
+  //if ((*(_compound.begin()))->geomType() != GEntity::DiscreteSurface)
+  //  return true;
 
   bool paramOK = true;
   if(allNodes.empty()) buildAllNodes();
   
-  double limit =  1.e15;
+  double limit =  1.e10;
   double areaMax = 0.0;
   int nb = 0;
   std::list<GFace*>::const_iterator it = _compound.begin();

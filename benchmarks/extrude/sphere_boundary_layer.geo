@@ -1,4 +1,5 @@
 lc = .2;
+
 Point(1) = {0.0,0.0,0.0,lc};
 Point(2) = {1,0.0,0.0,lc};
 Point(3) = {0,1,0.0,lc};
@@ -18,6 +19,7 @@ Circle(9) = {2,1,7};
 Circle(10) = {7,1,4};
 Circle(11) = {4,1,6};
 Circle(12) = {6,1,2};
+
 Line Loop(13) = {2,8,-10};
 Ruled Surface(14) = {13};
 Line Loop(15) = {10,3,7};
@@ -34,11 +36,13 @@ Line Loop(25) = {-7,4,9};
 Ruled Surface(26) = {25};
 Line Loop(27) = {-4,12,-6};
 Ruled Surface(28) = {27};
-Surface Loop(29) = {28,26,16,14,20,24,22,18};
-Volume(30) = {29};
 
 Extrude {
   Surface{14:28:2}; Layers{10, 0.1}; // Recombine; 
 }
+
+Surface Loop(29) = {28,26,16,14,20,24,22,18};
+Volume(30) = {29};
+
 
 Mesh.Algorithm3D = 4;

@@ -15,10 +15,11 @@ class discreteFace : public GFace {
  public:
   discreteFace(GModel *model, int num);
   virtual ~discreteFace() {}
-  virtual GPoint point(double par1, double par2) const;
-  virtual SPoint2 parFromPoint(const SPoint3 &p) const;
-  virtual SVector3 normal(const SPoint2 &param) const;
-  virtual GEntity::GeomType geomType() const { return DiscreteSurface; }
+  GPoint point(double par1, double par2) const;
+  SPoint2 parFromPoint(const SPoint3 &p) const;
+  SVector3 normal(const SPoint2 &param) const;
+  double curvatureMax(const SPoint2 &param) const;
+  GEntity::GeomType geomType() const { return DiscreteSurface; }
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &param, 
                          SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const;

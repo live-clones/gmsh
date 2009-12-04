@@ -375,6 +375,24 @@ void discreteEdge::computeNormals () const
   for ( ; itn != _normals.end(); ++itn){
     itn->second.normalize();
   }
+
+// //smooth normals
+//   smooth_normals *normals = 0;
+//   normals = new smooth_normals(180.);
+  
+//   for ( itn = _normals.begin();  itn != _normals.end(); ++itn){
+//     MVertex *v = itn->first;
+//     SVector3 n = itn->second;
+//     normals->add(v->x(),v->y(),v->z(),n.x(),n.y(),n.z());
+//   }
+//   for ( itn = _normals.begin();  itn != _normals.end(); ++itn){
+//     double nx,ny,nz;
+//     MVertex *v = itn->first;
+//     normals->get(v->x(),v->y(),v->z(),nx,ny,nz);
+//     itn->second = SVector3(nx,ny,nz);
+//   }
+//   delete normals;
+
 }
 
 void discreteEdge::getLocalParameter(const double &t, int &iLine,
@@ -400,7 +418,7 @@ GPoint discreteEdge::point(double par) const
   MVertex *vB = lines[iEdge]->getVertex(0);
   MVertex *vE = lines[iEdge]->getVertex(1);
 
-  const bool LINEARMESH = true; //false;
+  const bool LINEARMESH = false; //false; //false;
   
   if (LINEARMESH){
     //linear Lagrange mesh
@@ -423,10 +441,20 @@ GPoint discreteEdge::point(double par) const
 
     b300 = v1;
     b030 = v2;
+
     w12 = dot(v2 - v1, n1);
     w21 = dot(v1 - v2, n2);
     b210 = (2*v1 + v2 -w12*n1)*0.333; 
-    b120 = (2*v2 + v1-w21*n2)*0.333;
+    b120 = (2*v2 + v1 -w21*n2)*0.333;
+    
+//     //tagged PN trinagles (sigma=1)
+    double theta = 0.0;
+    SVector3 d1 = v1+.33*(1-theta)*(v2-v1);
+    SVector3 d2 = v2+.33*(1-theta)*(v1-v2);
+    SVector3 X1 = 1/norm(n1)*n1;
+    SVector3 X2 = 1/norm(n2)*n2;
+    b210 = d1 - dot(X1,d1-v1)*X1;
+    b120 = d2 - dot(X2,d2-v2)*X2;
 
     double U = tLoc;
     double W = 1-U;

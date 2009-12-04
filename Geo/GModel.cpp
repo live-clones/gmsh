@@ -1061,7 +1061,7 @@ void GModel::createTopologyFromMesh()
        it != discRegions.end(); it++)
     (*it)->setBoundFaces();
 
-  //for each discreteFace, createTopology
+ //for each discreteFace, createTopology
  std::vector<discreteFace*> discFaces;
   for(fiter it = firstFace(); it != lastFace(); it++)
     if((*it)->geomType() == GEntity::DiscreteSurface)
@@ -1119,7 +1119,7 @@ void GModel::createTopologyFromMesh()
 
 //  }
 
- //create Topo Fro Faces
+ //create Topo From Faces
  createTopologyFromFaces(discFaces);
 
 }

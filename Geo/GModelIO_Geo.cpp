@@ -143,10 +143,11 @@ int GModel::importGEOInternals()
          ge->physicals.end())
         ge->physicals.push_back(pnum);
     }
+
+
     // the physical is a compound i.e. we allow the meshes
     // not to conform internal MEdges of the compound
-    // the physical is a compound i.e. we allow the meshes
-    // not to conform internal MEdges of the compound
+
 
     if (p->Typ == MSH_PHYSICAL_LINE && p->Boundaries[0]){
       GEdge *ge = getEdgeByTag(abs(p->Num));

@@ -3395,6 +3395,7 @@ void setVolumeSurfaces(Volume *v, List_T *loops)
             List_Add(v->SurfacesByTag, &is);
           }
           else{
+	    printf("surface %d is not in GModel !\n", abs(is));
             Msg::Error("Unknown surface %d", is);
             return;
           }

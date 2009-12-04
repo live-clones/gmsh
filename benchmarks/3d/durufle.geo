@@ -1,5 +1,5 @@
 // fails only for lc=0.55 - otherwise works great!
-lc = 0.55;
+lc = 0.95;
 r = 2.0;
 e = 0.8;
 rb = r+e;

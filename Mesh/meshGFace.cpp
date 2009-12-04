@@ -1346,32 +1346,37 @@ void partitionAndRemesh(GFaceCompound *gf)
   int nume = gf->model()->maxEdgeNum() + 1;
   int numf = gf->model()->maxFaceNum() + 1;
   std::vector<discreteFace*> pFaces;
-  createPartitionFaces(gf->model(), gf, NF, pFaces); //WARNING CREATE NB and not NF faces
+  createPartitionFaces(gf->model(), gf, NF, pFaces); 
   
   gf->model()->createTopologyFromFaces(pFaces);
    
-   CreateOutputFile("toto.msh", CTX::instance()->mesh.format);
-   //Msg::Exit(1);
-
-  //Remesh new faces (Compound Lines and Compound Surfaces)
+  Msg::Info("-----------------------------------------------------------");
+  Msg::Info("Multiscale Partition SUCCESSFULLY PERFORMED : %d parts", NF);
+  CreateOutputFile("multiscalePARTS.msh", CTX::instance()->mesh.format);
+  Msg::Info("-----------------------------------------------------------");
+ 
+   //Remesh new faces (Compound Lines and Compound Surfaces)
   //-----------------------------------------------------
   
-  //Remeshing discrete Edges
+  Msg::Info("-----------------------------------------------------------");
+  Msg::Info("Parametrize Compounds");
+  Msg::Info("-----------------------------------------------------------");
+
+  //Parametrize Compound Lines
   int NE = gf->model()->maxEdgeNum() - nume + 1;
   for (int i=0; i < NE; i++){
     std::vector<GEdge*>e_compound;
     GEdge *pe = gf->model()->getEdgeByTag(nume+i);//partition edge
     e_compound.push_back(pe); 
     int num_gec = nume + NE + i ;
-    Msg::Info("*** Remeshing discreteEdge %d with CompoundLine %d", pe->tag(), num_gec);
-    GEdge *gec = new GEdgeCompound(gf->model(), num_gec, e_compound);
+    Msg::Info("Parametrize Compound Line (%d) = %d discrete edge", num_gec,  pe->tag() );
+    GEdgeCompound *gec = new GEdgeCompound(gf->model(), num_gec, e_compound);
     gf->model()->add(gec);
-    
-    meshGEdge mge;
-    mge(gec);//meshing 1D
+
+    gec->parametrize();
   }
 
-  //Remeshing discrete Face
+  //Parametrize Compound surfaces
   std::list<GEdge*> b[4];
   std::set<MVertex*> allNod; 
   for (int i=0; i < NF; i++){
@@ -1379,10 +1384,28 @@ void partitionAndRemesh(GFaceCompound *gf)
     GFace *pf =  gf->model()->getFaceByTag(numf+i);//partition face 
     int num_gfc = numf + NF + i ;
     f_compound.push_back(pf);     
-    Msg::Info("*** Remeshing discreteFace %d with CompoundSurface %d", pf->tag(), num_gfc);
-    GFace *gfc = new GFaceCompound(gf->model(), num_gfc, f_compound, b[0], b[1], b[2], b[3]);
+    Msg::Info("Parametrize Compound Surface (%d) = %d discrete face", num_gfc,  pf->tag() );
+    GFaceCompound *gfc = new GFaceCompound(gf->model(), num_gfc, f_compound, b[0], b[1], b[2], b[3]);
     gf->model()->add(gfc);
 
+    gfc->parametrize();
+  }
+
+  Msg::Info("-----------------------------------------------------------");
+  Msg::Info("Mesh Compounds");
+  Msg::Info("-----------------------------------------------------------");
+
+  //Mesh 1D and 2D
+  for (int i=0; i < NE; i++){
+    GEdge *gec = gf->model()->getEdgeByTag(nume + NE + i);
+     meshGEdge mge;
+     mge(gec);//meshing 1D
+  }
+
+  Msg::Info("*** Starting Mesh of surface %d ...", gf->tag());
+
+  for (int i=0; i < NF; i++){
+    GFace *gfc =  gf->model()->getFaceByTag(numf + NF + i );
     meshGFace mgf;
     mgf(gfc);//meshing 2D
       
@@ -1460,6 +1483,7 @@ void partitionAndRemesh(GFaceCompound *gf)
   }
 
   Msg::Info("*** Mesh of surface %d done by assembly remeshed faces", gf->tag());
+  Msg::Info("-----------------------------------------------------------");
   gf->coherenceNormals();
   gf->meshStatistics.status = GFace::DONE; 
 

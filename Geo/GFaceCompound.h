@@ -65,6 +65,7 @@ class GFaceCompound : public GFace {
   mutable v2t_cont adjv;
   mutable bool mapv2Tri;
   mutable std::map<MVertex*, SPoint3> coordinates;
+  mutable std::map<SPoint3,SPoint3 > _coordPoints;
   mutable std::map<MVertex*, SVector3> _normals;
   mutable std::list<MTriangle*> fillTris;
   void buildOct() const ;
@@ -100,6 +101,7 @@ class GFaceCompound : public GFace {
   Range<double> parBounds(int i) const 
   { return trivial() ? (*(_compound.begin()))->parBounds(i) : Range<double>(-1, 1); }
   virtual GPoint point(double par1, double par2) const; 
+  SPoint2 parFromPoint(const SPoint3 &p) const;
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &, SVector3 *, SVector3 *, SVector3 *) const; 
   virtual GEntity::GeomType geomType() const { return CompoundSurface; }
@@ -114,6 +116,7 @@ class GFaceCompound : public GFace {
   void partitionFaceCM();
   virtual std::list<GFace*> getCompounds() const {return _compound;};
   mutable int nbSplit;
+  mutable bool checked;
  private:
   typeOfIsomorphism _type;
   typeOfMapping _mapping;
@@ -134,12 +137,9 @@ class GFaceCompound : public GFace {
     Msg::Error("Gmsh has to be compiled with solver support to use GFaceCompounds");
   }
   virtual ~GFaceCompound() {}
-  virtual GPoint point(double par1, double par2) const { return GPoint(); }
-  virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const
-  {
-    return Pair<SVector3, SVector3>(SVector3(0,0,0), SVector3(0,0,0));
-  }
-  virtual void secondDer(const SPoint2 &param, 
+  GPoint point(double par1, double par2) const ; 
+  Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const; 
+  void secondDer(const SPoint2 &param, 
                          SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const{}
   virtual SPoint2 getCoordinates(MVertex *v) const { return SPoint2(); }
   void parametrize() const {}
