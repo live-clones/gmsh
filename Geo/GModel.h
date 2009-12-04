@@ -122,16 +122,7 @@ class GModel
   static GModel *current(int index=-1);
   
   // sets a model to current
-  static int setCurrent(GModel *m){
-    for (int i=0;i<list.size();i++){
-      if (list[i] ==m){
-	_current = i;
-	return i;
-      }
-    }
-  }
-  
-
+  static int setCurrent(GModel *m);
 
   // find a model by name
   static GModel *findByName(std::string name);

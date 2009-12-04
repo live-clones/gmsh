@@ -1,6 +1,9 @@
 #include "LuaBindings_Geo.h"
 #include "OpenFile.h"
 #include "CreateFile.h"
+
+#if defined(HAVE_LUA)
+
 // define the name of the object that will be used
 // in Lua
 
@@ -49,3 +52,5 @@ int LuaGModel::save(lua_State *L){
   GModel::setCurrent(temp);
   return 1;
 }
+
+#endif

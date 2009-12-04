@@ -72,6 +72,16 @@ GModel *GModel::current(int index)
   return list[_current];
 }
 
+int GModel::setCurrent(GModel *m)
+{
+  for (unsigned int i = 0; i < list.size(); i++){
+    if (list[i] == m){
+      _current = i;
+      return i;
+    }
+  }
+}
+
 GModel *GModel::findByName(std::string name)
 {
   // return last mesh with given name
