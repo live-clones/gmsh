@@ -11,7 +11,7 @@
 #include "linearSystemCSR.h"
 
 #ifdef HAVE_GMM
-#include "linearSystemGmm.h"
+#include "linearSystemGMM.h"
 #endif
 
 #include "linearSystemFull.h"

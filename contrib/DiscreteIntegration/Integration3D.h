@@ -3,6 +3,7 @@
 
 #include <list>
 #include <vector>
+#include <set>
 #include <map>
 #include <cmath>
 #include "DILevelset.h"
@@ -17,6 +18,7 @@
 class DI_Point;
 class DI_IntegrationPoint;
 class DI_CuttingPoint;
+class DI_PointLessThan;
 class DI_Element;
 class DI_Line;              // : public DI_Element
 class DI_Triangle;          // : public DI_Element
@@ -28,6 +30,7 @@ class DI_QualError;
 // --------------------------------------------------------------------------------------------------
 class DI_Point
 {
+ protected :
   // coordinates of the point
   double x_, y_, z_;
   // vector containing the levelset values of the point
@@ -36,15 +39,15 @@ class DI_Point
   // constructors
   DI_Point () : x_(0), y_(0), z_(0) {}
   DI_Point (double x, double y, double z) : x_(x), y_(y), z_(z) {}
-  DI_Point (double x, double y, double z, gLevelset &ls);
+  DI_Point (double x, double y, double z, gLevelset *ls);
   DI_Point (double x, double y, double z, const double ls) : x_(x), y_(y), z_(z) {addLs(ls);}
   DI_Point (double x, double y, double z, const DI_Element *e,
-            const std::vector<const gLevelset *> RPNi) : x_(x), y_(y), z_(z) {computeLs(e, RPNi);}
+            const std::vector<const gLevelset *> &RPNi) : x_(x), y_(y), z_(z) {computeLs(e, RPNi);}
   DI_Point(const DI_Point &p) : x_(p.x()), y_(p.y()), z_(p.z()) {Ls.clear(); Ls = p.Ls;}
   // assignment
   DI_Point & operator=(const DI_Point & rhs);
   // destructor
-  ~DI_Point () {Ls.clear();}
+  virtual ~DI_Point () {Ls.clear();}
   // add a levelset value (adjusted to 0 if ls<ZERO_LS_TOL) into the vector Ls
   void addLs (const double ls);
   // add a levelset value evaluated into the element e
@@ -53,15 +56,15 @@ class DI_Point
   // delete the last two values and add the chosen one
   void chooseLs (const gLevelset *Lsi);
   // clear Ls and add the levelset values computed with RPNi
-  void computeLs (const DI_Element *e, const std::vector<const gLevelset *> RPNi);
+  void computeLs (const DI_Element *e, const std::vector<const gLevelset *> &RPNi);
   // clear Ls and add the levelset value computed with ls
-  void computeLs (const gLevelset &ls);
+  void computeLs (const gLevelset *ls);
   // remove the last value in Ls and add ls
   inline void changeLs (const double ls) {Ls.pop_back(); addLs(ls);}
   // change the coordinates
   inline void move (double x, double y, double z) {x_ = x; y_ = y; z_ = z;}
   // return true if the coordinates of this and p are equal (with a tolerance)
-  bool equal(const DI_Point &p) const;
+  bool equal(const DI_Point *p) const;
   // return the coordinates
   inline double x () const {return x_;}
   inline double y () const {return y_;}
@@ -84,12 +87,13 @@ class DI_Point
     return 0;
   }
   // print the coordiantes
-  inline void print() const {printf("Point (%g,%g,%g)\n", x_, y_, z_);}
-  void printls() const {
+  virtual void print() const {printf("Point (%g,%g,%g)\n", x_, y_, z_);}
+  virtual void printls() const {
     printf("Point (%g,%g,%g) ls=(", x_, y_, z_);
     for(int i = 0; i < (int)Ls.size(); i++) printf("%g,", Ls[i]);
     printf(")\n");
   }
+  typedef std::set<DI_Point*,DI_PointLessThan> Container;
 };
 // --------------------------------------------------------------------------------------------------
 class DI_IntegrationPoint
@@ -111,7 +115,7 @@ class DI_IntegrationPoint
   // change the value of ls_
   inline void setLs (double lsT) {ls_ = lsT;}
   // clear Ls and add the levelset values computed with RPNi
-  void computeLs (const DI_Element *e, const std::vector<const gLevelset *> RPNi);
+  void computeLs (const DI_Element *e, const std::vector<const gLevelset *> &RPNi);
   // change the value of weight_
   inline void setWeight (double w) {weight_ = w;}
   // return the coordinates
@@ -136,14 +140,42 @@ class DI_IntegrationPoint
 };
 
 // --------------------------------------------------------------------------------------------------
+class DI_CuttingPoint : public DI_Point
+{
+  double xl_, yl_, zl_;
+ public:
+  DI_CuttingPoint (const DI_Point *pt);
+  inline void addLocC (double xl, double yl, double zl) {xl_ = xl; yl_ = yl; zl_ = zl;}
+  inline double xl() const {return xl_;}
+  inline double yl() const {return yl_;}
+  inline double zl() const {return zl_;}
+  void print() const {
+    printf("CP : x=(%g,%g,%g) xl=(%g,%g,%g)\n", x_, y_, z_, xl_, yl_, zl_);
+  }
+  void printls() const {
+    printf("CP : x=(%g,%g,%g) xl=(%g,%g,%g) ls=(", x_, y_, z_, xl_, yl_, zl_);
+    for(int i = 0; i < (int)Ls.size(); i++) printf("%g,", Ls[i]);
+    printf(")\n");
+  }
+};
+
+// --------------------------------------------------------------------------------------------------
+class DI_PointLessThan
+{
+ public:
+  static double tolerance;
+  bool operator()(const DI_Point *p1, const DI_Point *p2) const;
+};
+
+// --------------------------------------------------------------------------------------------------
 // compute the length of a line
 static inline double LineLength(double x1, double y1, double z1, double x2, double y2, double z2)
 {
   return sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) + (z1 - z2) * (z1 - z2));
 }
-static inline double LineLength (const DI_Point &p1, const DI_Point &p2)
+static inline double LineLength (const DI_Point *p1, const DI_Point *p2)
 {
-  return LineLength(p1.x(), p1.y(), p1.z(), p2.x(), p2.y(), p2.z());
+  return LineLength(p1->x(), p1->y(), p1->z(), p2->x(), p2->y(), p2->z());
 }
 // compute the surface of a triangle
 static inline double TriSurf(double x1, double y1, double z1, double x2, double y2, double z2,
@@ -156,9 +188,9 @@ static inline double TriSurf(double x1, double y1, double z1, double x2, double 
                   + (z1 * (x2 - x3) - z2 * (x1 - x3) + z3 * (x1 - x2)) *
                     (z1 * (x2 - x3) - z2 * (x1 - x3) + z3 * (x1 - x2)));
 }
-static inline double TriSurf (const DI_Point &p1, const DI_Point &p2, const DI_Point &p3)
+static inline double TriSurf (const DI_Point *p1, const DI_Point *p2, const DI_Point *p3)
 {
-  return TriSurf(p1.x(), p1.y(), p1.z(), p2.x(), p2.y(), p2.z(), p3.x(), p3.y(), p3.z());
+  return TriSurf(p1->x(), p1->y(), p1->z(), p2->x(), p2->y(), p2->z(), p3->x(), p3->y(), p3->z());
 }
 
 // compute the volume of a tetrahedron (base in ccw order to have positive volume)
@@ -171,11 +203,11 @@ static inline double TetraVol(double x1, double y1, double z1, double x2, double
   if(vol < 0) {printf("TET HAS NEGATIVE VOLUME = %g\n", vol);}
   return vol;
 }
-static inline double TetraVol(const DI_Point &p1, const DI_Point &p2,
-                              const DI_Point &p3, const DI_Point &p4)
+static inline double TetraVol(const DI_Point *p1, const DI_Point *p2,
+                              const DI_Point *p3, const DI_Point *p4)
 {
-  return TetraVol (p1.x(), p1.y(), p1.z(), p2.x(), p2.y(), p2.z(),
-                   p3.x(), p3.y(), p3.z(), p4.x(), p4.y(), p4.z());
+  return TetraVol (p1->x(), p1->y(), p1->z(), p2->x(), p2->y(), p2->z(),
+                   p3->x(), p3->y(), p3->z(), p4->x(), p4->y(), p4->z());
 }
 
 // --------------------------------------------------------------------------------------------------
@@ -216,7 +248,7 @@ class DI_Element
   int getPolynomialOrder() const {return polOrder_;}
   // set the polynomial order of the shape functions
   void setPolynomialOrder(int o);
-  void setPolynomialOrder(int o, const DI_Element *e, const std::vector<const gLevelset *> RPNi);
+  void setPolynomialOrder(int o, const DI_Element *e, const std::vector<const gLevelset *> &RPNi);
   // return tag
   int lsTag() const {return lsTag_;}
   // return the position of the point with respect to the domain depending on ls_
@@ -238,8 +270,8 @@ class DI_Element
   // compute the level set at each vertex of the real element e (same type as this)
   // or take i from the map if exist
   // and add it to the vertices
-  void addLs (const DI_Element *e, const gLevelset &Ls);
-  void addLs (const DI_Element *e, const gLevelset &Ls, std::map<int, double> nodeLs[]);
+  void addLs (const DI_Element *e, const gLevelset *Ls);
+  void addLs (const DI_Element *e, const gLevelset *Ls, int iLs, double **nodeLs);
   // clear the levelset of the vertices
   void clearLs();
   // compute the levelset values at the mid edge points and add a quadratic edge,
@@ -247,39 +279,39 @@ class DI_Element
   // if xm is too close from the middle of the edgeth edge, do not add the quadratic edge
   // if the new quadratic edge create a negative detJ, do not add the quadratic edge and return false
   bool addQuadEdge (int edge, DI_Point *xm, const DI_Element *e,
-                    const std::vector<const gLevelset *> RPNi);
+                    const std::vector<const gLevelset *> &RPNi);
   // return true if the point pt is inside the element
-  bool contain (const DI_Point &pt) const;
+  bool contain (const DI_Point *pt) const;
   // return true if the element e is inside the element
   // (works only for triangles and quadrangles for the moment)
   bool contain (const DI_Element *e) const;
   // choose the levelset for each point
   void chooseLs (const gLevelset *Lsi);
   // map the point pt with local coordinates from the reference element into the element
-  DI_Point mappingP (DI_Point &pt) const;
+  void mappingP (DI_Point *pt) const;
   // map the DI_IntegrationPoint in with local coordinates from the reference element into the element
-  DI_IntegrationPoint mappingIP (DI_IntegrationPoint &in) const;
+  void mappingIP (DI_IntegrationPoint *in) const;
   // map the DI_CuttingPoint cp with local coordinates from the reference element into the element
-  DI_CuttingPoint mappingCP (DI_CuttingPoint &cp) const;
+  void mappingCP (DI_CuttingPoint *cp) const;
   // map the DI_Element el with local coordinates from the reference element into the element
   void mappingEl (DI_Element *el) const;
   // push into ip the reference integration points to integrate exactly a polynom of order polOrder
   virtual void getRefIntegrationPoints (const int polOrder,
-                                        std::vector<DI_IntegrationPoint> &ip) const = 0;
+                                        std::vector<DI_IntegrationPoint *> &ip) const = 0;
   // push into ip the integration points to integrate exactly a polynom of order polOrder
   // over the element
-  // the local coordiantes of the integration points are computed with loc
+  // the local coordinates of the integration points are computed with loc
   // the levelset value at the integration points is computed with e and RPN
   void integrationPoints (const int polyOrder, const DI_Element *loc, const DI_Element *e,
-                          const std::vector<const gLevelset *> RPN,
-                          std::vector<DI_IntegrationPoint> &ip) const;
+                          const std::vector<const gLevelset *> &RPN,
+                          std::vector<DI_IntegrationPoint *> &ip) const;
   // compute the cutting points on the edges with the last ls in the element
-  void getCuttingPoints (const DI_Element *e, const std::vector<const gLevelset *> RPNi,
-                         std::vector<DI_CuttingPoint> &cp) const;
+  void getCuttingPoints (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
+                         std::vector<DI_CuttingPoint*> &cp) const;
   // return the ith point
-  inline DI_Point & pt (int i) const {return i < nbVert() ? *pts_[i] : *mid_[i - nbVert()];}
+  inline DI_Point* pt (int i) const {return i < nbVert() ? pts_[i] : mid_[i - nbVert()];}
   // return the ith middle point
-  inline DI_Point & mid (int i) const {return *mid_[i];}
+  inline DI_Point* mid (int i) const {return mid_[i];}
   // return the coordinates of the ith point
   inline double x (int i) const {return i < nbVert() ? pts_[i]->x() : mid_[i - nbVert()]->x();}
   inline double y (int i) const {return i < nbVert() ? pts_[i]->y() : mid_[i - nbVert()]->y();}
@@ -308,52 +340,22 @@ class DI_Element
   // compute DetJ at each point, return false if 2 values have opposite sign
   bool testDetJ() const;
   // set the lsTag to +1 if the element is inside the domain (compute in the reference element)
-  void computeLsTagDom(const DI_Element *e, const std::vector<const gLevelset *> RPN);
+  void computeLsTagDom(const DI_Element *e, const std::vector<const gLevelset *> &RPN);
   // set the lsTag to -1 if the element is not on the boundary of the final levelset
   // (compute in the reference element)
-  void computeLsTagBound(std::vector<DI_Hexa> &hexas, std::vector<DI_Tetra> &tetras);
-  void computeLsTagBound(std::vector<DI_Quad> &quads, std::vector<DI_Triangle> &triangles);
+  void computeLsTagBound(std::vector<DI_Hexa *> &hexas, std::vector<DI_Tetra *> &tetras);
+  void computeLsTagBound(std::vector<DI_Quad *> &quads, std::vector<DI_Triangle *> &triangles);
   // print the coordinates of the points of the element
   void print () const;
   // print the coordinates and the levelset values of the points of the element
   void printls () const;
 };
 
-// --------------------------------------------------------------------------------------------------
-class DI_CuttingPoint
+class DI_ElementLessThan
 {
-  double x_, y_, z_;
-  double xl_, yl_, zl_;
-  std::vector<double> Ls;
  public:
-  DI_CuttingPoint (const DI_Point &pt);
-  inline void addLocC (double xl, double yl, double zl) {xl_ = xl; yl_ = yl; zl_ = zl;}
-  inline void move (double x, double y, double z) {x_ = x; y_ = y; z_ = z;}
-  void addLs (const double ls);
-  void addLs (const DI_Element *e);
-  inline double x () const {return x_;}
-  inline double y () const {return y_;}
-  inline double z () const {return z_;}
-  inline double xl() const {return xl_;}
-  inline double yl() const {return yl_;}
-  inline double zl() const {return zl_;}
-  inline double ls() const {return Ls.back();}
-  inline double ls(int i) const {return Ls[i];}
-  // return the position of the point with respect to the domain depending on the last value in Ls
-  inline bool isInsideDomain  () const {return Ls.back() < 0.;}
-  inline bool isOutsideDomain () const {return Ls.back() > 0.;}
-  inline bool isOnBorder () const {return Ls.back() == 0.;}
-  inline int sizeLs() const {return Ls.size();}
-  void chooseLs (const gLevelset *Lsi);
-  bool equal (const DI_CuttingPoint &p) const;
-  inline void print() const {
-    printf("CP : x=(%g,%g,%g) xl=(%g,%g,%g)\n", x_, y_, z_, xl_, yl_, zl_);
-  }
-  void printls() const {
-    printf("CP : x=(%g,%g,%g) xl=(%g,%g,%g) ls=(", x_, y_, z_, xl_, yl_, zl_);
-    for(int i = 0; i < (int)Ls.size(); i++) printf("%g,", Ls[i]);
-    printf(")\n");
-  }
+  static double tolerance;
+  bool operator()(const DI_Element *v1, const DI_Element *v2) const;
 };
 
 // --------------------------------------------------------------------------------------------------
@@ -380,12 +382,12 @@ class DI_Line : public DI_Element
     pts_[1] = new DI_Point(x1, y1, z1);
     integral_ = length;
   }
-  DI_Line (const DI_Point &pt0, const DI_Point &pt1, const int tag = -1)
+  DI_Line (const DI_Point *pt0, const DI_Point *pt1, const int tag = -1)
   {
     lsTag_ = tag;
     pts_ = new DI_Point*[2];
-    pts_[0] = new DI_Point(pt0);
-    pts_[1] = new DI_Point(pt1);
+    pts_[0] = new DI_Point(*pt0);
+    pts_[1] = new DI_Point(*pt1);
     integral_ = LineLength(pt0, pt1);
   }
   ~DI_Line () {
@@ -407,7 +409,7 @@ class DI_Line : public DI_Element
   virtual void computeIntegral();
   virtual double refIntegral() const {return 2.;}
   virtual void getRefIntegrationPoints (const int polynomialOrder,
-                                        std::vector<DI_IntegrationPoint> &ipS) const;
+                                        std::vector<DI_IntegrationPoint *> &ipS) const;
   inline void vert(const int edge, int &s1, int &s2) const {
     s1 = 0; s2 = 1;}
   void midV (const int e, int *s, int &n) const {
@@ -417,13 +419,13 @@ class DI_Line : public DI_Element
   void getGradShapeFunctions (const double u, const double v, const double w,
                               double s[][3], int order = -1) const;
   double detJ (const double &xP, const double &yP, const double &zP) const;
-  bool cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
-            std::vector<DI_CuttingPoint> &cp, const int polynomialOrderL,
-            std::vector<DI_Line> &subLines, int recurLevel = 0, std::map<int, double> nodeLs[2] = NULL) const;
-  void cut(const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
-           std::vector<DI_Line> &subLines, std::vector<DI_CuttingPoint> &cp) const;
+  bool cut (std::vector<const gLevelset *> &LsRPN, std::vector<DI_IntegrationPoint *> &ip,
+            DI_Point::Container &cp, const int polynomialOrderL,
+            std::vector<DI_Line *> &subLines, int recurLevel = 0, double **nodeLs = NULL) const;
+  bool cut(const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
+           std::vector<DI_Line *> &subLines, std::vector<DI_CuttingPoint*> &cp);
   void selfSplit (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
-                  std::vector<DI_Line> &subLines, std::vector<DI_CuttingPoint> &cuttingPoints) const;
+                  std::vector<DI_Line *> &subLines, std::vector<DI_CuttingPoint*> &cuttingPoints) const;
   inline double length() const {return integral_;}
 };
 
@@ -457,13 +459,13 @@ class DI_Triangle : public DI_Element
     pts_[2] = new DI_Point(x2, y2, z2);
     integral_ = surface;
   }
-  DI_Triangle (const DI_Point &pt0, const DI_Point &pt1, const DI_Point &pt2, const int tag = -1)
+  DI_Triangle (const DI_Point *pt0, const DI_Point *pt1, const DI_Point *pt2, const int tag = -1)
   {
     lsTag_ = tag;
     pts_ = new DI_Point*[3];
-    pts_[0] = new DI_Point(pt0);
-    pts_[1] = new DI_Point(pt1);
-    pts_[2] = new DI_Point(pt2);
+    pts_[0] = new DI_Point(*pt0);
+    pts_[1] = new DI_Point(*pt1);
+    pts_[2] = new DI_Point(*pt2);
     integral_ = TriSurf(pt0,pt1,pt2);
   }
   ~DI_Triangle () {
@@ -485,7 +487,7 @@ class DI_Triangle : public DI_Element
   virtual void computeIntegral();
   virtual double refIntegral() const {return 0.5;}
   virtual void getRefIntegrationPoints (const int polynomialOrder,
-                                        std::vector<DI_IntegrationPoint> &ipS) const;
+                                        std::vector<DI_IntegrationPoint *> &ipS) const;
   inline void vert(const int edge, int &s1, int &s2) const {
     int v[3][2] = {{0, 1}, {1, 2}, {2, 0}};
     s1 = v[edge][0]; s2 = v[edge][1];
@@ -502,18 +504,18 @@ class DI_Triangle : public DI_Element
   void getGradShapeFunctions (const double u, const double v, const double w,
                               double s[][3], int order = -1) const;
   double detJ (const double &xP, const double &yP, const double &zP) const;
-  bool cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
-            std::vector<DI_IntegrationPoint> &ipS, std::vector<DI_CuttingPoint> &cp,
+  bool cut (std::vector<const gLevelset *> &LsRPN, std::vector<DI_IntegrationPoint *> &ip,
+            std::vector<DI_IntegrationPoint *> &ipS, DI_Point::Container &cp,
             const int polynomialOrderQ, const int polynomialOrderTr, const int polynomialOrderL,
-            std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
-            std::vector<DI_Line> &surfLines, int recurLevel = 0, std::map<int, double> nodeLs[3] = NULL) const;
-  void cut (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
-            std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
-            std::vector<DI_Line> &surfLines, std::vector<DI_CuttingPoint> &cp) const;
-  void splitIntoSubTriangles (std::vector<DI_Triangle> &triangles) const;
+            std::vector<DI_Quad *> &subQuads, std::vector<DI_Triangle *> &subTriangles,
+            std::vector<DI_Line *> &surfLines, int recurLevel = 0, double **nodeLs = NULL) const;
+  bool cut (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
+            std::vector<DI_Quad *> &subQuads, std::vector<DI_Triangle *> &subTriangles,
+            std::vector<DI_Line *> &surfLines, std::vector<DI_CuttingPoint*> &cp);
+  void splitIntoSubTriangles (std::vector<DI_Triangle *> &triangles) const;
   void selfSplit (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
-                  std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
-                  std::vector<DI_Line> &surfLines, std::vector<DI_CuttingPoint> &cuttingPoints) const;
+                  std::vector<DI_Quad *> &subQuads, std::vector<DI_Triangle *> &subTriangles,
+                  std::vector<DI_Line *> &surfLines, std::vector<DI_CuttingPoint*> &cuttingPoints) const;
   double quality () const;
   inline double surface() const {return integral_;}
 };
@@ -551,15 +553,15 @@ class DI_Quad : public DI_Element
     pts_[3] = new DI_Point(x3, y3, z3);
     integral_ = surf;
   }
-  DI_Quad (const DI_Point &pt0, const DI_Point &pt1, const DI_Point &pt2, const DI_Point &pt3,
+  DI_Quad (const DI_Point *pt0, const DI_Point *pt1, const DI_Point *pt2, const DI_Point *pt3,
            const int tag = -1)
   {
     lsTag_ = tag;
     pts_ = new DI_Point*[4];
-    pts_[0] = new DI_Point(pt0);
-    pts_[1] = new DI_Point(pt1);
-    pts_[2] = new DI_Point(pt2);
-    pts_[3] = new DI_Point(pt3);
+    pts_[0] = new DI_Point(*pt0);
+    pts_[1] = new DI_Point(*pt1);
+    pts_[2] = new DI_Point(*pt2);
+    pts_[3] = new DI_Point(*pt3);
     integral_ = TriSurf(pt0, pt1, pt2) + TriSurf(pt0, pt2, pt3);
   }
   ~DI_Quad () {
@@ -581,7 +583,7 @@ class DI_Quad : public DI_Element
   virtual void computeIntegral();
   virtual double refIntegral() const {return 4.;}
   virtual void getRefIntegrationPoints (const int polynomialOrder,
-                                        std::vector<DI_IntegrationPoint> &ipS) const;
+                                        std::vector<DI_IntegrationPoint *> &ipS) const;
   inline void vert(const int edge, int &s1, int &s2) const{
     int v[4][2] = {{0, 1}, {1, 2}, {2, 3}, {3, 0}};
     s1 = v[edge][0]; s2 = v[edge][1];
@@ -600,15 +602,15 @@ class DI_Quad : public DI_Element
   void getGradShapeFunctions (const double u, const double v, const double w,
                               double s[][3], int order = -1) const;
   double detJ (const double &xP, const double &yP, const double &zP) const;
-  bool cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
-            std::vector<DI_IntegrationPoint> &ipS, std::vector<DI_CuttingPoint> &cp,
+  bool cut (std::vector<const gLevelset *> &LsRPN, std::vector<DI_IntegrationPoint *> &ip,
+            std::vector<DI_IntegrationPoint *> &ipS, DI_Point::Container &cp,
             const int polynomialOrderQ, const int polynomialOrderTr, const int polynomialOrderL,
-            std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
-            std::vector<DI_Line> &surfLines, int recurLevel = 0, std::map<int, double> nodeLs[4] = NULL) const;
-  void cut (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
-            std::vector<DI_Quad> &subQuads, std::vector<DI_Triangle> &subTriangles,
-            std::vector<DI_Line> &surfLines, std::vector<DI_CuttingPoint> &cp) const;
-  void splitIntoTriangles (std::vector<DI_Triangle> &triangles) const;
+            std::vector<DI_Quad *> &subQuads, std::vector<DI_Triangle *> &subTriangles,
+            std::vector<DI_Line *> &surfLines, int recurLevel = 0, double **nodeLs = NULL) const;
+  bool cut (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
+            std::vector<DI_Quad *> &subQuads, std::vector<DI_Triangle *> &subTriangles,
+            std::vector<DI_Line *> &surfLines, std::vector<DI_CuttingPoint*> &cp);
+  void splitIntoTriangles (std::vector<DI_Triangle *> &triangles) const;
   inline double surface() const {return integral_;}
 };
 
@@ -647,13 +649,13 @@ class DI_Tetra : public DI_Element
     pts_[3] = new DI_Point(x3, y3, z3);
     integral_ = vol;
   }
-  DI_Tetra (const DI_Point &pt0, const DI_Point &pt1, const DI_Point &pt2, const DI_Point &pt3)
+  DI_Tetra (const DI_Point *pt0, const DI_Point *pt1, const DI_Point *pt2, const DI_Point *pt3)
   {
     pts_ = new DI_Point*[4];
-    pts_[0] = new DI_Point(pt0);
-    pts_[1] = new DI_Point(pt1);
-    pts_[2] = new DI_Point(pt2);
-    pts_[3] = new DI_Point(pt3);
+    pts_[0] = new DI_Point(*pt0);
+    pts_[1] = new DI_Point(*pt1);
+    pts_[2] = new DI_Point(*pt2);
+    pts_[3] = new DI_Point(*pt3);
     integral_ = TetraVol(pt0, pt1, pt2, pt3);
   }
   ~DI_Tetra () {
@@ -675,7 +677,7 @@ class DI_Tetra : public DI_Element
   virtual void computeIntegral();
   virtual double refIntegral() const {return 1. / 6.;}
   virtual void getRefIntegrationPoints (const int polynomialOrder,
-                                        std::vector<DI_IntegrationPoint> &ip) const;
+                                        std::vector<DI_IntegrationPoint *> &ip) const;
   inline void vert(const int edge, int &s1, int &s2) const {
     int v[6][2] = {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {2, 3}, {3, 1}};
     s1 = v[edge][0]; s2 = v[edge][1];
@@ -695,18 +697,18 @@ class DI_Tetra : public DI_Element
   void getGradShapeFunctions (const double u, const double v, const double w,
                               double s[][3], int order = -1) const;
   double detJ (const double &xP, const double &yP, const double &zP) const;
-  bool cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
-            std::vector<DI_IntegrationPoint> &ipS, std::vector<DI_CuttingPoint> &cp,
+  bool cut (std::vector<const gLevelset *> &LsRPN, std::vector<DI_IntegrationPoint *> &ip,
+            std::vector<DI_IntegrationPoint *> &ipS, DI_Point::Container &cp,
             const int polynomialOrderT, const int polynomialOrderQ, const int polynomialOrderTr,
-            std::vector<DI_Tetra> &subTetras, std::vector<DI_Quad> &surfQuads,
-            std::vector<DI_Triangle> &surfTriangles, int recurLevel = 0, std::map<int, double> nodeLs[4] = NULL) const;
-  void cut (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
-            std::vector<DI_Tetra> &subTetras, std::vector<DI_Quad> &surfQuads,
-            std::vector<DI_Triangle> &surfTriangles, std::vector<DI_CuttingPoint> &cp,
-            std::vector<DI_QualError> &QE) const;
+            std::vector<DI_Tetra *> &subTetras, std::vector<DI_Quad *> &surfQuads,
+            std::vector<DI_Triangle *> &surfTriangles, int recurLevel = 0, double **nodeLs = NULL) const;
+  bool cut (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
+            std::vector<DI_Tetra *> &subTetras, std::vector<DI_Quad *> &surfQuads,
+            std::vector<DI_Triangle *> &surfTriangles, std::vector<DI_CuttingPoint*> &cp,
+            std::vector<DI_QualError *> &QE);
   void selfSplit ( const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
-                   std::vector<DI_Tetra> &subTetras, std::vector<DI_Triangle> &surfTriangles,
-                   std::vector<DI_CuttingPoint> &cuttingPoints, std::vector<DI_QualError> &QE) const;
+                   std::vector<DI_Tetra *> &subTetras, std::vector<DI_Triangle *> &surfTriangles,
+                   std::vector<DI_CuttingPoint*> &cuttingPoints, std::vector<DI_QualError *> &QE) const;
   double quality () const;
   inline double volume() const {return integral_;}
 };
@@ -759,13 +761,13 @@ class DI_Hexa : public DI_Element
     pts_[6] = new DI_Point(x6, y6, z6); pts_[7] = new DI_Point(x7, y7, z7);
     integral_ = vol;
   }
-  DI_Hexa (const DI_Point &pt0, const DI_Point &pt1, const DI_Point &pt2, const DI_Point &pt3,
-           const DI_Point &pt4, const DI_Point &pt5, const DI_Point &pt6, const DI_Point &pt7) {
+  DI_Hexa (const DI_Point *pt0, const DI_Point *pt1, const DI_Point *pt2, const DI_Point *pt3,
+           const DI_Point *pt4, const DI_Point *pt5, const DI_Point *pt6, const DI_Point *pt7) {
     pts_ = new DI_Point*[8];
-    pts_[0] = new DI_Point(pt0);    pts_[1] = new DI_Point(pt1);
-    pts_[2] = new DI_Point(pt2);    pts_[3] = new DI_Point(pt3);
-    pts_[4] = new DI_Point(pt4);    pts_[5] = new DI_Point(pt5);
-    pts_[6] = new DI_Point(pt6);    pts_[7] = new DI_Point(pt7);
+    pts_[0] = new DI_Point(*pt0);    pts_[1] = new DI_Point(*pt1);
+    pts_[2] = new DI_Point(*pt2);    pts_[3] = new DI_Point(*pt3);
+    pts_[4] = new DI_Point(*pt4);    pts_[5] = new DI_Point(*pt5);
+    pts_[6] = new DI_Point(*pt6);    pts_[7] = new DI_Point(*pt7);
     integral_ = TetraVol(pt0, pt1, pt3, pt4) + TetraVol(pt1, pt4, pt5, pt7) +
                 TetraVol(pt1, pt3, pt4, pt7) + TetraVol(pt2, pt5, pt6, pt7) +
                 TetraVol(pt1, pt2, pt3, pt7) + TetraVol(pt1, pt5, pt2, pt7);
@@ -789,7 +791,7 @@ class DI_Hexa : public DI_Element
   virtual void computeIntegral();
   virtual double refIntegral() const {return 8.;}
   virtual void getRefIntegrationPoints (const int polynomialOrder,
-                                        std::vector<DI_IntegrationPoint> &ip) const;
+                                        std::vector<DI_IntegrationPoint *> &ip) const;
   inline void vert(const int edge, int &s1, int &s2) const {
     int v[12][2] = {{0, 1}, {1, 2}, {2, 3}, {3, 0}, {0, 4}, {1, 5},
                     {2, 6}, {3, 7}, {4, 5}, {5, 6}, {6, 7}, {7, 4}};
@@ -824,18 +826,18 @@ class DI_Hexa : public DI_Element
   void getGradShapeFunctions (const double u, const double v, const double w,
                               double s[][3], int order = -1) const;
   double detJ (const double &xP, const double &yP, const double &zP) const;
-  bool cut (const gLevelset &Ls, std::vector<DI_IntegrationPoint> &ip,
-            std::vector<DI_IntegrationPoint> &ipS, std::vector<DI_CuttingPoint> &cp,
+  bool cut (std::vector<const gLevelset *> &LsRPN, std::vector<DI_IntegrationPoint *> &ip,
+            std::vector<DI_IntegrationPoint *> &ipS, DI_Point::Container &cp,
             const int polynomialOrderH, const int polynomialOrderT,
             const int polynomialOrderQ, const int polynomialOrderTr,
-            std::vector<DI_Hexa> &notCutHexas, std::vector<DI_Tetra> &subTetras,
-            std::vector<DI_Quad> &surfQuads, std::vector<DI_Triangle> &surfTriangles,
-            std::vector<DI_Line> &frontLines, int recurLevel = 0, std::map<int, double> nodeLs[8] = NULL) const;
-  void cut (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
-            std::vector<DI_Hexa> &unCutHexas, std::vector<DI_Tetra> &subTetras,
-            std::vector<DI_Quad> &surfQuads, std::vector<DI_Triangle> &surfTriangles,
-            std::vector<DI_CuttingPoint> &cp, std::vector<DI_QualError> &QE) const;
-  void splitIntoTetras(std::vector<DI_Tetra> &tetras) const;
+            std::vector<DI_Hexa *> &notCutHexas, std::vector<DI_Tetra *> &subTetras,
+            std::vector<DI_Quad *> &surfQuads, std::vector<DI_Triangle *> &surfTriangles,
+            std::vector<DI_Line *> &frontLines, int recurLevel = 0, double **nodeLs = NULL) const;
+  bool cut (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
+            std::vector<DI_Hexa *> &unCutHexas, std::vector<DI_Tetra *> &subTetras,
+            std::vector<DI_Quad *> &surfQuads, std::vector<DI_Triangle *> &surfTriangles,
+            std::vector<DI_CuttingPoint*> &cp, std::vector<DI_QualError *> &QE);
+  void splitIntoTetras(std::vector<DI_Tetra *> &tetras) const;
   inline double volume() const {return integral_;}
 };
 
@@ -845,21 +847,31 @@ class DI_Hexa : public DI_Element
 // -------------------------------------------------------------------------------------------------
 class DI_QualError
 {
-  DI_Point p11_, p12_, p21_, p22_;
+  DI_Point **pts_;
 public:
-  DI_QualError (DI_Point p11, DI_Point p12, DI_Point p21, DI_Point p22)
-    : p11_(p11), p12_(p12), p21_(p21), p22_(p22) {}
-  inline DI_Point pt (int i) const {
-    if(i == 0) return p11_;
-    if(i == 1) return p21_;
-    if(i == 2) return p12_;
-    if(i == 3) return p22_;
+  DI_QualError (DI_Point *p11, DI_Point *p12, DI_Point *p21, DI_Point *p22) {
+    pts_ = new DI_Point*[4];
+    pts_[0] = new DI_Point(*p11);
+    pts_[1] = new DI_Point(*p12);
+    pts_[2] = new DI_Point(*p21);
+    pts_[3] = new DI_Point(*p22);
+  }
+  ~DI_QualError () {
+    for(int i = 0; i < 4; i++)
+      delete pts_[i];
+    if(pts_) delete[] pts_;
+  }
+  inline DI_Point* pt (int i) const {
+    if(i == 0) return pts_[0];
+    if(i == 1) return pts_[1];
+    if(i == 2) return pts_[2];
+    if(i == 3) return pts_[3];
     printf("DI_QualError::pt only accept indices from 0 to 3!\n");
-    DI_Point p; return p;
+    DI_Point* p = NULL; return p;
   }
   void print(const DI_Element *e) const{
-    DI_Point pt1 = p11_, pt2 = p12_, pt3 = p21_, pt4 = p22_;
-    e->mappingP(pt1); e->mappingP(pt2); e->mappingP(pt3); e->mappingP(pt4);
+    DI_Point pt1(*pts_[0]), pt2(*pts_[1]), pt3(*pts_[2]), pt4(*pts_[3]);
+    e->mappingP(&pt1); e->mappingP(&pt2); e->mappingP(&pt3); e->mappingP(&pt4);
     printf("Cannot assert best quality for the last face of the Prism \n");
     printf("=> edges (%g,%g,%g),(%g,%g,%g) and (%g,%g,%g),(%g,%g,%g) may cross in ",
     pt1.x(), pt1.y(), pt1.z(), pt2.x(), pt2.y(), pt2.z(),
