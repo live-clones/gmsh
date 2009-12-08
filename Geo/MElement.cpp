@@ -154,6 +154,7 @@ static double _computeDeterminantAndRegularize(MElement *ele, double jac[3][3])
 
   case 0:
     {
+      dJ = 1.0;
       jac[0][0] = jac[1][1] = jac[2][2] = 1.0;
       jac[0][1] = jac[1][0] = jac[2][0] = 0.0;
       jac[0][2] = jac[1][2] = jac[2][1] = 0.0;    
@@ -165,9 +166,9 @@ static double _computeDeterminantAndRegularize(MElement *ele, double jac[3][3])
 
       // regularize matrix
       double a[3], b[3], c[3];
-      a[0] = ele->getVertex(1)->x() - ele->getVertex(0)->x(); 
-      a[1] = ele->getVertex(1)->y() - ele->getVertex(0)->y();
-      a[2] = ele->getVertex(1)->z() - ele->getVertex(0)->z();     
+      a[0] = jac[0][0];
+      a[1] = jac[0][1];
+      a[2] = jac[0][2];
       if((fabs(a[0]) >= fabs(a[1]) && fabs(a[0]) >= fabs(a[2])) ||
          (fabs(a[1]) >= fabs(a[0]) && fabs(a[1]) >= fabs(a[2]))) {
         b[0] = a[1]; b[1] = -a[0]; b[2] = 0.;
@@ -175,7 +176,9 @@ static double _computeDeterminantAndRegularize(MElement *ele, double jac[3][3])
       else {
         b[0] = 0.; b[1] = a[2]; b[2] = -a[1];
       }
+      norme(b);
       prodve(a, b, c);
+      norme(c);
       jac[0][1] = b[0]; jac[1][1] = b[1]; jac[2][1] = b[2]; 
       jac[0][2] = c[0]; jac[1][2] = c[1]; jac[2][2] = c[2]; 
       break;

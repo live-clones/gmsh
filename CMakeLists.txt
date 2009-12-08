@@ -1016,3 +1016,5 @@ target_link_libraries(gmshdgsw ${LINK_LIBRARIES})
 add_executable(gmshdgwave EXCLUDE_FROM_ALL Solver/dgMainWaveEquation.cpp ${GMSH_SRC})
 target_link_libraries(gmshdgwave ${LINK_LIBRARIES})
 
+add_executable(gmshdgsam EXCLUDE_FROM_ALL Solver/dgMainSam.cpp ${GMSH_SRC})
+target_link_libraries(gmshdgsam ${LINK_LIBRARIES})

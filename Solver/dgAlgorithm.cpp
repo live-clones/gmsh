@@ -364,10 +364,9 @@ void dgAlgorithm::buildGroups(GModel *model, int dim, int order,
   switch(dim) {
     case 1 : {
       std::map<const std::string, std::set<MVertex*> >::iterator mapIt;
-      /*for(mapIt=boundaryVertices.begin(); mapIt!=boundaryVertices.end(); mapIt++) {
+      for(mapIt=boundaryVertices.begin(); mapIt!=boundaryVertices.end(); mapIt++) {
         bGroups.push_back(new dgGroupOfFaces(*eGroups[0],mapIt->first,order,mapIt->second));
-      }*/
-      throw;
+      }
       break;
     }
     case 2 : {

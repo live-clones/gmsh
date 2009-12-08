@@ -4,6 +4,7 @@
 #include "Numeric.h"
 #include "MTriangle.h"
 #include "MLine.h"
+#include "MPoint.h"
 #include "GModel.h"
 
 static fullMatrix<double> * dgGetIntegrationRule (MElement *e, int p){
@@ -68,16 +69,15 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e, int polyOr
         e->getJacobian ((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), jac);
       const double weight = (*_integration)(j,3);
       detjac=inv3x3(jac,ijac);
-      (*_mapping)(i,10*j + 0) = ijac[0][0]; 
-      (*_mapping)(i,10*j + 1) = ijac[0][1]; 
-      (*_mapping)(i,10*j + 2) = ijac[0][2]; 
-      (*_mapping)(i,10*j + 3) = ijac[1][0]; 
-      (*_mapping)(i,10*j + 4) = ijac[1][1]; 
-      (*_mapping)(i,10*j + 5) = ijac[1][2]; 
-      (*_mapping)(i,10*j + 6) = ijac[2][0]; 
-      (*_mapping)(i,10*j + 7) = ijac[2][1]; 
-      (*_mapping)(i,10*j + 8) = ijac[2][2]; 
-      (*_mapping)(i,10*j + 9) = detjac; 
+      (*_mapping)(i,10*j + 0) = ijac[0][0];
+      (*_mapping)(i,10*j + 1) = ijac[0][1];
+      (*_mapping)(i,10*j + 2) = ijac[0][2];
+      (*_mapping)(i,10*j + 3) = ijac[1][0];
+      (*_mapping)(i,10*j + 4) = ijac[1][1];
+      (*_mapping)(i,10*j + 5) = ijac[1][2];
+      (*_mapping)(i,10*j + 6) = ijac[2][0];
+      (*_mapping)(i,10*j + 7) = ijac[2][1];
+      (*_mapping)(i,10*j + 8) = ijac[2][2];
       for (int k=0;k<_fs.coefficients.size1();k++){ 
         for (int l=0;l<_fs.coefficients.size1();l++) { 
           imass(k,l) += f[k]*f[l]*weight*detjac;
@@ -129,8 +129,8 @@ void dgGroupOfFaces::addFace(const MFace &topoFace, int iElLeft, int iElRight){
   _closuresLeft.push_back(&(_fsLeft->getFaceClosure(ithFace, sign, rot)));
   const std::vector<int> & geomClosure = elLeft.getFunctionSpace()->getFaceClosure(ithFace, sign, rot);
   if(iElRight>=0){
-    MElement &elRight = *_groupRight.getElement(iElRight);
     _right.push_back(iElRight);
+    MElement &elRight = *_groupRight.getElement(iElRight);
     elRight.getFaceInfo (topoFace, ithFace, sign, rot);
     _closuresRight.push_back(&(_fsRight->getFaceClosure(ithFace, sign, rot)));        
   }
@@ -183,6 +183,21 @@ void dgGroupOfFaces::addEdge(const MEdge &topoEdge, int iElLeft, int iElRight){
     case 3  : _faces.push_back(new MLine3 (vertices) ); break;
     default : _faces.push_back(new MLineN (vertices) ); break;
   }
+}
+
+void dgGroupOfFaces::addVertex(MVertex *topoVertex, int iElLeft, int iElRight){
+  _left.push_back(iElLeft);
+  MElement &elLeft = *_groupLeft.getElement(iElLeft);
+  int ithVertex;
+  elLeft.getVertexInfo (topoVertex, ithVertex);
+  _closuresLeft.push_back(&_fsLeft->getVertexClosure(ithVertex));
+  if(iElRight>=0){
+    _right.push_back(iElRight);
+    MElement &elRight = *_groupRight.getElement(iElRight);
+    elRight.getVertexInfo (topoVertex, ithVertex);
+    _closuresRight.push_back(&_fsRight->getVertexClosure(ithVertex));
+  }
+  _faces.push_back(new MPoint(topoVertex) );
 }
 
 void dgGroupOfFaces::init(int pOrder) {
@@ -283,6 +298,26 @@ dgGroupOfFaces::~dgGroupOfFaces()
   delete _dPsiLeftDxOnQP;
   delete _dPsiRightDxOnQP;
 }
+
+dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MVertex*> &boundaryVertices):
+  _groupLeft(elGroup),_groupRight(elGroup)
+{
+  _boundaryTag=boundaryTag;
+  if(boundaryTag=="")
+    throw;
+  _fsLeft=_groupLeft.getElement(0)->getFunctionSpace(pOrder);
+  _fsRight=NULL;
+  for(int i=0; i<elGroup.getNbElements(); i++){
+    MElement &el = *elGroup.getElement(i);
+    for (int j=0; j<el.getNumVertices(); j++){
+      MVertex* vertex = el.getVertex(j);
+      if(boundaryVertices.find(vertex)!=boundaryVertices.end())
+        addVertex(vertex,i,-1);
+    }
+  }
+  init(pOrder);
+}
+
 dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MEdge,Less_Edge> &boundaryEdges):
   _groupLeft(elGroup),_groupRight(elGroup)
 {
@@ -301,6 +336,7 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string bo
   }
   init(pOrder);
 }
+
 dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MFace,Less_Face> &boundaryFaces):
   _groupLeft(elGroup),_groupRight(elGroup)
 {
@@ -326,6 +362,21 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, int pOrder):
   _fsLeft=_groupLeft.getElement(0)->getFunctionSpace(pOrder);
   _fsRight=_groupRight.getElement(0)->getFunctionSpace(pOrder);
   switch (_groupLeft.getElement(0)->getDim()) {
+    case 1 : {
+      std::map<MVertex*,int> vertexMap;
+      for(int i=0; i<elGroup.getNbElements(); i++){
+        MElement &el = *elGroup.getElement(i);
+        for (int j=0; j<el.getNumVertices(); j++){
+          MVertex* vertex = el.getVertex(j);
+          if(vertexMap.find(vertex) == vertexMap.end()){
+            vertexMap[vertex] = i;
+          }else{
+            addVertex(vertex,vertexMap[vertex],i);
+          }
+        }
+      }
+      break;
+    }
     case 2 : {
       std::map<MEdge,int,Less_Edge> edgeMap;
       for(int i=0; i<elGroup.getNbElements(); i++){

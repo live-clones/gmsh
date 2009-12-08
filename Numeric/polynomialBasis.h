@@ -18,6 +18,7 @@ struct polynomialBasis
   typedef std::vector<std::vector<int> > clCont;
   clCont faceClosure;
   clCont edgeClosure;
+  clCont vertexClosure;
   fullMatrix<double> points;
   fullMatrix<double> monomials;
   fullMatrix<double> coefficients;
@@ -30,6 +31,10 @@ struct polynomialBasis
   inline const std::vector<int> &getEdgeClosure(int iEdge, int iSign) const
   {
     return edgeClosure[iSign == 1 ? iEdge : 3 + iEdge];
+  }
+  inline const std::vector<int> &getVertexClosure(int iVertex) const
+  {
+    return vertexClosure[iVertex];
   }
   inline void evaluateMonomials(double u, double v, double w, double p[]) const 
   {

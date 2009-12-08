@@ -21,10 +21,13 @@ static fullMatrix<double> generate1DMonomials(int order)
 static fullMatrix<double> generate1DPoints(int order)
 {
   fullMatrix<double> line(order + 1, 1);
-  line(0, 0) = -1.;
-  line(1, 0) =  1.;
-  double dd = 2. / order;
-  for (int i = 2; i < order + 1; i++) line(i, 0) = -1. + dd * (i - 1);
+  line(0,0) = 0;
+  if (order > 0) {
+    line(0, 0) = -1.;
+    line(1, 0) =  1.;
+    double dd = 2. / order;
+    for (int i = 2; i < order + 1; i++) line(i, 0) = -1. + dd * (i - 1);
+  }
   return line;
 }
 
@@ -762,6 +765,14 @@ static void generate2dEdgeClosure(polynomialBasis::clCont &closure, int order)
   }
 }
 
+
+static void generate1dVertexClosure(polynomialBasis::clCont &closure)
+{
+  closure.clear();
+  closure.resize(2);
+  closure[0].push_back(0);
+  closure[1].push_back(1);
+  }
 std::map<int, polynomialBasis> polynomialBases::fs;
 
 const polynomialBasis &polynomialBases::find(int tag) 
@@ -779,22 +790,27 @@ const polynomialBasis &polynomialBases::find(int tag)
   case MSH_LIN_2 :
     F.monomials = generate1DMonomials(1);
     F.points    = generate1DPoints(1);
+    generate1dVertexClosure(F.vertexClosure);
     break;
   case MSH_LIN_3 :
     F.monomials = generate1DMonomials(2);
     F.points    = generate1DPoints(2);
+    generate1dVertexClosure(F.vertexClosure);
     break;
   case MSH_LIN_4:
     F.monomials = generate1DMonomials(3);
     F.points    = generate1DPoints(3);
+    generate1dVertexClosure(F.vertexClosure);
     break;
   case MSH_LIN_5:
     F.monomials = generate1DMonomials(4);
     F.points    = generate1DPoints(4);
+    generate1dVertexClosure(F.vertexClosure);
     break;
   case MSH_LIN_6:
     F.monomials = generate1DMonomials(5);
     F.points    = generate1DPoints(5);
+    generate1dVertexClosure(F.vertexClosure);
     break;  
   case MSH_TRI_3 :
     F.monomials = generatePascalTriangle(1);

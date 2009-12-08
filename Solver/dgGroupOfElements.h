@@ -90,6 +90,7 @@ class dgGroupOfFaces {
   const dgGroupOfElements &_groupLeft,&_groupRight;
   void addFace(const MFace &topoFace, int iElLeft, int iElRight);
   void addEdge(const MEdge &topoEdge, int iElLeft, int iElRight);
+  void addVertex(MVertex *topoVertex, int iElLeft, int iElRight);
   // Two polynomialBases for left and right elements
   // the group has always the same types for left and right
   const polynomialBasis *_fsLeft,*_fsRight, *_fsFace;
@@ -132,6 +133,7 @@ public:
   const std::vector<int> * getClosureRight(int iFace) const{ return _closuresRight[iFace];}
   inline fullMatrix<double> &getNormals () const {return *_normals;}
   dgGroupOfFaces (const dgGroupOfElements &elements,int pOrder);
+  dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MVertex*> &boundaryVertices);
   dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MEdge,Less_Edge> &boundaryEdges);
   dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MFace,Less_Face> &boundaryFaces);
   virtual ~dgGroupOfFaces ();
