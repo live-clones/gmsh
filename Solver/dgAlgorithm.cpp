@@ -17,7 +17,7 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
 				   const dgGroupOfElements & group, 
 				   const fullMatrix<double> &solution,
 				   fullMatrix<double> &residual // the residual
-           )
+				   )
 { 
   // ----- 1 ----  get the solution at quadrature points
   // ----- 1.1 --- allocate a matrix of size (nbFields * nbElements, nbQuadraturePoints) 
@@ -114,7 +114,8 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
   }
   if(sourceTerm){
     residual.gemm(group.getSourceRedistributionMatrix(),Source);
-    delete sourceTerm;
+    //    FIXME (JF) : for now TEST TEST
+    //    delete sourceTerm;
   }
 }
 
@@ -232,49 +233,52 @@ void dgAlgorithm::multAddInverseMassMatrix ( /*dofManager &dof,*/
   }
 }
 
- void dgAlgorithm::rungeKutta (
-			const dgConservationLaw &claw,				// conservation law
-			std::vector<dgGroupOfElements*> &eGroups,	// group of elements
-			std::vector<dgGroupOfFaces*> &fGroups,		// group of interfacs
-			std::vector<dgGroupOfFaces*> &bGroups,		// group of boundaries
-			double h,									// time-step
-			fullMatrix<double> &residu,					
-			fullMatrix<double> &sol,					
-			int orderRK)								// order of RK integrator
-{
+
+ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,				// conservation law
+			       std::vector<dgGroupOfElements*> &eGroups,	// group of elements
+			       std::vector<dgGroupOfFaces*> &fGroups,		// group of interfacs
+			       std::vector<dgGroupOfFaces*> &bGroups,		// group of boundaries
+			       double h,									// time-step
+			       std::vector<fullMatrix<double> *> &residu,					
+			       std::vector<fullMatrix<double> *> &sol,					
+			       int orderRK)								// order of RK integrator
+ {
   // U_{n+1}=U_n+h*(SUM_i a_i*K_i)
   // K_i=M^(-1)R(U_n+b_i*K_{i-1})
 
-  double a[4] = {h/6.0,h/3.0,h/3.0,h/6.0};
-  double b[4] = {0.,h/2.0,h/2.0,h};
+   /*
+     double a[4] = {h/6.0,h/3.0,h/3.0,h/6.0};
+     double b[4] = {0.,h/2.0,h/2.0,h};
+     
+     fullMatrix<double> K(sol);
+     // Current updated solution
+     fullMatrix<double> Unp(sol);
+     fullMatrix<double> residuEl, KEl;
+     fullMatrix<double> iMassEl;
+     
+     int nbNodes = eGroups[0]->getNbNodes();
+     int nbFields = sol.size2()/eGroups[0]->getNbElements(); 
+     
+     for(int j=0; j<orderRK;j++){
+     if(j!=0){
+     K.scale(b[j]);
+     K.add(sol);
+     }
+     this->residual(claw,eGroups,fGroups,bGroups,K,residu);
+     K.scale(0.);
+     for(int i=0;i<eGroups[0]->getNbElements();i++) {
+     residuEl.setAsProxy(residu,i*nbFields,nbFields);
+     KEl.setAsProxy(K,i*nbFields,nbFields);
+     iMassEl.setAsProxy(eGroups[0]->getInverseMassMatrix(),i*nbNodes,nbNodes);
+     iMassEl.mult(residuEl,KEl);
+     }
+     Unp.add(K,a[j]);
+     }
+     sol=Unp;
+     }
 
-  fullMatrix<double> K(sol);
-  // Current updated solution
-  fullMatrix<double> Unp(sol);
-  fullMatrix<double> residuEl, KEl;
-  fullMatrix<double> iMassEl;
-
-  int nbNodes = eGroups[0]->getNbNodes();
-  int nbFields = sol.size2()/eGroups[0]->getNbElements(); 
-
-  for(int j=0; j<orderRK;j++){
-    if(j!=0){
-      K.scale(b[j]);
-      K.add(sol);
-    }
-    this->residual(claw,eGroups,fGroups,bGroups,K,residu);
-    K.scale(0.);
-    for(int i=0;i<eGroups[0]->getNbElements();i++) {
-      residuEl.setAsProxy(residu,i*nbFields,nbFields);
-      KEl.setAsProxy(K,i*nbFields,nbFields);
-      iMassEl.setAsProxy(eGroups[0]->getInverseMassMatrix(),i*nbNodes,nbNodes);
-      iMassEl.mult(residuEl,KEl);
-    }
-    Unp.add(K,a[j]);
-  }
-  sol=Unp;
-}
-
+   */
+ }
 
 void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (maybe useless here)
 				   const dgConservationLaw &claw,   // the conservation law
@@ -386,37 +390,47 @@ void dgAlgorithm::buildGroups(GModel *model, int dim, int order,
   }
 }
 
-// works only if there is only 1 group of element
+// works for any number of groups 
 void dgAlgorithm::residual( const dgConservationLaw &claw,
-    std::vector<dgGroupOfElements*> &eGroups, //group of elements
-    std::vector<dgGroupOfFaces*> &fGroups,  // group of interfacs
-    std::vector<dgGroupOfFaces*> &bGroups, // group of boundaries
-    fullMatrix<double> &solution, // solution
-    fullMatrix<double> &residu) // residual
+			    std::vector<dgGroupOfElements*> &eGroups, //group of elements
+			    std::vector<dgGroupOfFaces*> &fGroups,  // group of interfacs
+			    std::vector<dgGroupOfFaces*> &bGroups, // group of boundaries
+			    std::vector<fullMatrix<double> *> &solution, // solution
+			    std::vector<fullMatrix<double> *> &residu) // residual
 {
   int nbFields=claw.nbFields();
-  dgAlgorithm algo;
-  residu.scale(0);
   //volume term
   for(size_t i=0;i<eGroups.size() ; i++) {
-    algo.residualVolume(claw,*eGroups[i],solution,residu);
+    residu[i]->scale(0);
+    residualVolume(claw,*eGroups[i],*solution[i],*residu[i]);
   }
   //interface term
   for(size_t i=0;i<fGroups.size() ; i++) {
     dgGroupOfFaces &faces = *fGroups[i];
+    int iGroupLeft = -1, iGroupRight = -1;
+    for(size_t j=0;j<eGroups.size() ; j++) {
+      if (eGroups[i] == &faces.getGroupLeft())iGroupLeft = j;
+      if (eGroups[i] == &faces.getGroupRight())iGroupRight= j;
+    }
+    
     fullMatrix<double> solInterface(faces.getNbNodes(),faces.getNbElements()*2*nbFields);
     fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements()*2*nbFields);
-    faces.mapToInterface(nbFields, solution, solution, solInterface);
-    algo.residualInterface(claw,faces,solInterface,solution,solution,residuInterface);
-    faces.mapFromInterface(nbFields, residuInterface, residu, residu);
+    faces.mapToInterface(nbFields, *solution[iGroupLeft], *solution[iGroupRight], solInterface);
+    residualInterface(claw,faces,solInterface,*solution[iGroupLeft], *solution[iGroupRight],residuInterface);
+    faces.mapFromInterface(nbFields, residuInterface, *residu[iGroupLeft], *residu[iGroupLeft]);
   }
   //boundaries
   for(size_t i=0;i<bGroups.size() ; i++) {
     dgGroupOfFaces &faces = *bGroups[i];
+    int iGroupLeft = -1, iGroupRight = -1;
+    for(size_t j=0;j<eGroups.size() ; j++) {
+      if (eGroups[i] == &faces.getGroupLeft())iGroupLeft = j;
+      if (eGroups[i] == &faces.getGroupRight())iGroupRight= j;
+    }
     fullMatrix<double> solInterface(faces.getNbNodes(),faces.getNbElements()*nbFields);
     fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements()*nbFields);
-    faces.mapToInterface(nbFields, solution, solution, solInterface);
-    algo.residualBoundary(claw,faces,solInterface,solution,residuInterface);
-    faces.mapFromInterface(nbFields, residuInterface, residu, residu);
+    faces.mapToInterface(nbFields, *solution[iGroupLeft], *solution[iGroupRight], solInterface);
+    residualBoundary(claw,faces,solInterface,*solution[iGroupLeft],residuInterface);
+    faces.mapFromInterface(nbFields, residuInterface, *residu[iGroupLeft], *residu[iGroupRight]);
   }
 }

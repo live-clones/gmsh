@@ -31,18 +31,19 @@ class dgSystemOfEquations {
   int _order;
   // dimension of the problem
   int _dimension;
-  // the solution
-  fullMatrix<double> *_solution;
-  // the right hand side (a temporary vector)
-  fullMatrix<double> *_rightHandSide;
+  // solution and righ hand sides as a large arrays of doubles
+  int _dataSize;
+  double * _solution;
+  double * _rightHandSide;
+  // proxis of the solution and of the right hand side for each group;
+  std::vector<fullMatrix<double> *> _solutionProxys;
+  std::vector<fullMatrix<double> *> _rightHandSideProxys;
   // groups of elements (volume terms)
   std::vector<dgGroupOfElements*> _elementGroups;
   // groups of faces (interface terms)
   std::vector<dgGroupOfFaces*> _faceGroups;
   // groups of faces (boundary conditions)
   std::vector<dgGroupOfFaces*> _boundaryGroups;
-  // sets up everything
-  void setup(GModel *gm, dgConservationLaw *claw, int order);
   dgSystemOfEquations(const dgSystemOfEquations &) {}
 public:
   // lua stuff
@@ -58,11 +59,15 @@ public:
   int setConservationLaw (lua_State *L); // set the conservationLaw
   int addBoundaryCondition (lua_State *L); // add a boundary condition : "physical name", "type", [options]
   int setup (lua_State *L); // setup the groups and allocate
+  int L2Projection (lua_State *L); // assign the solution to a given function
   dgSystemOfEquations(lua_State *L);
 #endif // HAVE LUA
-  dgSystemOfEquations(GModel *gm, dgConservationLaw *claw, int order);
+  inline const fullMatrix<double> getSolutionProxy (int iGroup, int iElement){
+    return fullMatrix<double> ( *_solutionProxys [iGroup] ,
+				iElement * _claw->nbFields(),_claw->nbFields());
+  }
+  void export_solution_as_is (const std::string &fileName);
   ~dgSystemOfEquations();
-  
 private:
 };
 

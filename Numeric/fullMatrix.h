@@ -135,6 +135,12 @@ class fullMatrix
   }
   int gemm(lua_State *L);
 #endif // HAVE LUA  
+  fullMatrix(scalar *original, int r, int c){
+    _r = r;
+    _c = c;
+    _own_data = false;
+    _data = original;
+  }
   fullMatrix(fullMatrix<scalar> &original, int c_start, int c){
     _c = c;
     _r = original._r;

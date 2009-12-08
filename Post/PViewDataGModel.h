@@ -185,7 +185,7 @@ class PViewDataGModel : public PViewData {
   // node or element number depending on the type of dataset; all the
   // vectors are supposed to have the same length)
   bool addData(GModel *model, std::map<int, std::vector<double> > &data,
-               int step, double time, int partition);
+               int step, double time, int partition, int numC);
 
   // I/O routines
   bool readMSH(std::string fileName, int fileIndex, FILE *fp, bool binary, 

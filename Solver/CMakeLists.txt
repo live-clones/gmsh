@@ -20,6 +20,7 @@ set(SRC
   dgConservationLawWaveEquation.cpp
   function.cpp
   functionDerivator.cpp
+  luaFunction.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Solver *.h) 

@@ -47,7 +47,7 @@ class DI_Point
   // assignment
   DI_Point & operator=(const DI_Point & rhs);
   // destructor
-  virtual ~DI_Point () {Ls.clear();}
+  virtual ~DI_Point () {}
   // add a levelset value (adjusted to 0 if ls<ZERO_LS_TOL) into the vector Ls
   void addLs (const double ls);
   // add a levelset value evaluated into the element e
@@ -218,6 +218,7 @@ class DI_Element
                     // domain elements : -1 = outside / +1 = inside
                     // interface elements : tag of the levelset that created the element
                     //                      -1 = out of the domain border
+  // DI_Point *pts_;  // vertices
   DI_Point **pts_;  // vertices
   DI_Point **mid_;  // middle vertices
   int polOrder_;    // polynomial order of the shape functions
@@ -624,8 +625,10 @@ class DI_Quad : public DI_Element
 
 class DI_Tetra : public DI_Element
 {
+  //DI_Point pts_[4];  // vertices
  public:
   DI_Tetra () {
+    //pts_ = new DI_Point [4];
     pts_ = new DI_Point*[4];
     for(int i = 0; i < 4; i++) pts_[i] = NULL;
   }
@@ -633,6 +636,7 @@ class DI_Tetra : public DI_Element
             double x2, double y2, double z2, double x3, double y3, double z3)
   {
     pts_ = new DI_Point*[4];
+    //pts_[0] = DI_Point(x0, y0, z0);
     pts_[0] = new DI_Point(x0, y0, z0);
     pts_[1] = new DI_Point(x1, y1, z1);
     pts_[2] = new DI_Point(x2, y2, z2);

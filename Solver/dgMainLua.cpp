@@ -2,8 +2,8 @@
 #include "Gmsh.h"
 #include "LuaBindings_Geo.h"
 #include "dgSystemOfEquations.h"
+#include "luaFunction.h"
 #include "function.h"
-
 void report_errors(lua_State *L, int status)
 {
   if ( status!=0 ) {
@@ -28,6 +28,7 @@ int main(int argc, char *argv[])
   dgSystemOfEquations::Register(L);
   fullMatrix<double>::Register(L);
   function::registerDefaultFunctions();
+  RegisterFunctions(L);
 
   int s = luaL_loadfile(L, argv[1]);
 

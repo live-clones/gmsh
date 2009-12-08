@@ -112,7 +112,7 @@ PView::PView(std::string xname, std::string yname,
 
 PView::PView(std::string name, std::string type, 
              GModel *model, std::map<int, std::vector<double> > &data,
-             double time)
+             double time, int numC)
 {
   _init();
   PViewDataGModel::DataType t;
@@ -127,7 +127,7 @@ PView::PView(std::string name, std::string type,
     return;
   }
   PViewDataGModel *d = new PViewDataGModel(t);
-  d->addData(model, data, 0, time, 1);
+  d->addData(model, data, 0, time, 1, numC);
   d->setName(name);
   d->setFileName(name + ".msh");
   _data = d;
@@ -138,10 +138,10 @@ PView::PView(std::string name, std::string type,
 }
 
 void PView::addStep(GModel *model, std::map<int, std::vector<double> > &data, 
-                    double time)
+                    double time, int numC)
 {
   PViewDataGModel *d = dynamic_cast<PViewDataGModel*>(_data);
-  if(d) d->addData(model, data, d->getNumTimeSteps(), time, 1);
+  if(d) d->addData(model, data, d->getNumTimeSteps(), time, 1, numC);
   else Msg::Error("Can only add step data to model-based datasets");
 }
 
