@@ -71,6 +71,14 @@ class fullVector
     for(int i = 0; i < _r; ++i) s += _data[i] * other._data[i];
     return s;
   }
+  // y <- y + alpha * x
+  void axpy(fullVector<scalar> &x, scalar alpha=1.)
+#if !defined(HAVE_BLAS)
+  {
+    for (int i=0;i<_r;i++) _data[i] += alpha * x._data[i];
+  }
+#endif
+  ;
   void print(const char *name="") const 
   {
     printf("Printing vector %s:\n", name);

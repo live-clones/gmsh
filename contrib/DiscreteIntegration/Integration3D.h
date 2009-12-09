@@ -43,11 +43,11 @@ class DI_Point
   DI_Point (double x, double y, double z, const double ls) : x_(x), y_(y), z_(z) {addLs(ls);}
   DI_Point (double x, double y, double z, const DI_Element *e,
             const std::vector<const gLevelset *> &RPNi) : x_(x), y_(y), z_(z) {computeLs(e, RPNi);}
-  DI_Point(const DI_Point &p) : x_(p.x()), y_(p.y()), z_(p.z()) {Ls.clear(); Ls = p.Ls;}
+  //  DI_Point(const DI_Point &p) : x_(p.x()), y_(p.y()), z_(p.z()) {Ls.clear(); Ls = p.Ls;}
   // assignment
   DI_Point & operator=(const DI_Point & rhs);
   // destructor
-  virtual ~DI_Point () {}
+  //  virtual ~DI_Point () {}
   // add a levelset value (adjusted to 0 if ls<ZERO_LS_TOL) into the vector Ls
   void addLs (const double ls);
   // add a levelset value evaluated into the element e

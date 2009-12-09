@@ -19,6 +19,18 @@ extern "C" {
 #include "luna.h"
 #endif // HAVE LUA
 
+struct dgDofContainer {
+private:
+  dgDofContainer (const dgDofContainer&);  
+public:
+  int _dataSize; // the full data size i.e. concerning all groups
+  fullVector<double> * _data; // the full data itself
+  std::vector<fullMatrix<double> *> _dataProxys; // proxys 
+  dgDofContainer (std::vector<dgGroupOfElements*> &groups, const dgConservationLaw &claw);
+  ~dgDofContainer ();  
+};
+
+
 class dgSystemOfEquations {
   // the mesh and the model
   GModel *_gm;
@@ -31,13 +43,9 @@ class dgSystemOfEquations {
   int _order;
   // dimension of the problem
   int _dimension;
-  // solution and righ hand sides as a large arrays of doubles
-  int _dataSize;
-  double * _solution;
-  double * _rightHandSide;
-  // proxis of the solution and of the right hand side for each group;
-  std::vector<fullMatrix<double> *> _solutionProxys;
-  std::vector<fullMatrix<double> *> _rightHandSideProxys;
+  // solution and righ hand sides
+  dgDofContainer *_solution;
+  dgDofContainer *_rightHandSide;
   // groups of elements (volume terms)
   std::vector<dgGroupOfElements*> _elementGroups;
   // groups of faces (interface terms)
@@ -51,19 +59,17 @@ public:
   static const char className[];
   static Luna<dgSystemOfEquations>::RegType methods[];
   static void Register(lua_State *L);
-  int computeRHS      (lua_State *L); // get the Right Hand
-  int getRHS      (lua_State *L); // get the Right Hand
-  int getSolution (lua_State *L); // get the Solution
   int exportSolution (lua_State *L); // export the solution
   int setOrder (lua_State *L); // set the polynomial order
   int setConservationLaw (lua_State *L); // set the conservationLaw
   int addBoundaryCondition (lua_State *L); // add a boundary condition : "physical name", "type", [options]
   int setup (lua_State *L); // setup the groups and allocate
   int L2Projection (lua_State *L); // assign the solution to a given function
+  int RK44 (lua_State *L); // assign the solution to a given function
   dgSystemOfEquations(lua_State *L);
 #endif // HAVE LUA
   inline const fullMatrix<double> getSolutionProxy (int iGroup, int iElement){
-    return fullMatrix<double> ( *_solutionProxys [iGroup] ,
+    return fullMatrix<double> ( *_solution->_dataProxys [iGroup] ,
 				iElement * _claw->nbFields(),_claw->nbFields());
   }
   void export_solution_as_is (const std::string &fileName);

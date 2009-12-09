@@ -36,6 +36,18 @@ extern "C" {
                       std::complex<double> *alpha, std::complex<double> *a, int *lda, 
                       std::complex<double> *x, int *incx, std::complex<double> *beta, 
                       std::complex<double> *y, int *incy);
+  void F77NAME(daxpy)(int *n, double *alpha, double *x, int *incx, double *y, int *incy );
+
+
+}
+
+template<> 
+void fullVector<double>::axpy(fullVector<double> &x,double alpha)
+{
+  //  for (int i=0;i<_r;i++) _data[i] += alpha * x._data[i];
+  //  return;
+  int M = _r, INCX = 1, INCY = 1;
+  F77NAME(daxpy)(&M, &alpha, x._data,&INCX, _data, &INCY);
 }
 
 template<> 

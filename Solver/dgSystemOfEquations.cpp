@@ -13,9 +13,7 @@ const char dgSystemOfEquations::className[] = "dgSystemOfEquations";
 // Define the methods we will expose to Lua
 #define _method(class, name) {#name, &class::name}
 Luna<dgSystemOfEquations>::RegType dgSystemOfEquations::methods[] = {
-   _method(dgSystemOfEquations, getRHS),
-   _method(dgSystemOfEquations, computeRHS),
-   _method(dgSystemOfEquations, getSolution),
+   _method(dgSystemOfEquations, RK44),
    _method(dgSystemOfEquations, exportSolution),
    _method(dgSystemOfEquations, setConservationLaw),
    _method(dgSystemOfEquations, setOrder),
@@ -56,6 +54,7 @@ dgSystemOfEquations::dgSystemOfEquations(lua_State *L){
   if (!obj)throw;
   _gm = obj->getGModel();
   _dimension = _gm->getNumRegions() ? 3 : 2;
+  _solution = 0;
 }
 
 // set the conservation law as a string (for now)
@@ -98,8 +97,8 @@ int dgSystemOfEquations::addBoundaryCondition (lua_State *L){
 int dgSystemOfEquations::L2Projection (lua_State *L){
   dgConservationLawL2Projection Law(std::string(luaL_checkstring(L, 1)),*_claw);
   for (int i=0;i<_elementGroups.size();i++){
-    _algo->residualVolume(Law,*_elementGroups[i],*_solutionProxys[i],*_rightHandSideProxys[i]);
-    _algo->multAddInverseMassMatrix(*_elementGroups[i],*_rightHandSideProxys[i],*_solutionProxys[i]);
+    _algo->residualVolume(Law,*_elementGroups[i],*_solution->_dataProxys[i],*_rightHandSide->_dataProxys[i]);
+    _algo->multAddInverseMassMatrix(*_elementGroups[i],*_rightHandSide->_dataProxys[i],*_solution->_dataProxys[i]);
   }
 }
 
@@ -113,60 +112,35 @@ int dgSystemOfEquations::setup(lua_State *L){
 		     _faceGroups,
 		     _boundaryGroups);
   // compute the total size of the soution
-  _dataSize = 0;
-  int nbFields = _claw->nbFields();
-  for (int i=0;i<_elementGroups.size();i++){
-    int nbNodes    = _elementGroups[i]->getNbNodes();
-    int nbElements = _elementGroups[i]->getNbElements();
-    _dataSize += nbNodes*nbFields*nbElements;
-  }
-  // allocate the big vectors
-  _solution      = new double [_dataSize];
-  _rightHandSide = new double [_dataSize];
-  // create proxys for each group
-  int offset = 0;
-  _solutionProxys.resize(_elementGroups.size());
-  _rightHandSideProxys.resize(_elementGroups.size());
-  for (int i=0;i<_elementGroups.size();i++){    
-    int nbNodes    = _elementGroups[i]->getNbNodes();
-    int nbElements = _elementGroups[i]->getNbElements();
-    _solutionProxys[i] = new fullMatrix<double> (&_solution[offset*sizeof(double)],nbNodes, nbFields*nbElements);
-    _rightHandSideProxys[i] = new fullMatrix<double> (&_rightHandSide[offset*sizeof(double)],nbNodes, nbFields*nbElements);
-    offset += nbNodes*nbFields*nbElements;
-  }
+  _solution = new dgDofContainer(_elementGroups,*_claw);
+  _rightHandSide = new dgDofContainer(_elementGroups,*_claw);
+  //  printf("aaaaaaaaaaaaa\n");
 }
 
 
-int dgSystemOfEquations::getSolution(lua_State *L){
-  lua_pushlightuserdata (L, _solution);
-  return 1;
-}
-
-int dgSystemOfEquations::computeRHS(lua_State *L){
-  _algo->residual(*_claw, _elementGroups, _faceGroups, _boundaryGroups, _solutionProxys, _rightHandSideProxys);
-  lua_pushlightuserdata (L, _solution);
-  return 1;
-}
-
-int dgSystemOfEquations::getRHS(lua_State *L){
-  lua_pushlightuserdata (L, _rightHandSide);
+int dgSystemOfEquations::RK44(lua_State *L){
+  double dt = luaL_checknumber(L, 1);
+  _algo->rungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups, dt,  *_solution, *_rightHandSide);
+  double normSolution = _solution->_data->norm();
+  lua_pushnumber (L, normSolution);
   return 1;
 }
 
 int dgSystemOfEquations::exportSolution(lua_State *L){
   std::string outputFile(luaL_checkstring(L, 1));
   export_solution_as_is(outputFile);
+  return 0;
 }
 #endif // HAVE_LUA
 
 dgSystemOfEquations::~dgSystemOfEquations(){
   for (int i=0;i<_elementGroups.size();i++){
-    delete _solutionProxys[i];
-    delete _rightHandSideProxys[i];
     delete _elementGroups[i];
   }
-  delete [] _solution;
-  delete [] _rightHandSide;
+  if (_solution){
+    delete _solution;
+    delete _rightHandSide;
+  }
 }
 
 void dgSystemOfEquations::export_solution_as_is (const std::string &name){
@@ -228,4 +202,32 @@ void dgSystemOfEquations::export_solution_as_is (const std::string &name){
   PView *pv = new PView (name, "ElementNodeData", _gm, data, 0.0, 1);
   pv->getData()->writeMSH(name+".msh", false); 
   delete pv;
+}
+
+dgDofContainer::dgDofContainer (std::vector<dgGroupOfElements*> &elementGroups, const dgConservationLaw &claw){
+  _dataSize = 0;
+  int nbFields = claw.nbFields();
+  for (int i=0;i<elementGroups.size();i++){
+    int nbNodes    = elementGroups[i]->getNbNodes();
+    int nbElements = elementGroups[i]->getNbElements();
+    _dataSize += nbNodes*nbFields*nbElements;
+  }
+  // allocate the big vectors
+  _data      = new fullVector<double>(_dataSize);
+  // create proxys for each group
+  int offset = 0;
+  _dataProxys.resize(elementGroups.size());
+  for (int i=0;i<elementGroups.size();i++){    
+    int nbNodes    = elementGroups[i]->getNbNodes();
+    int nbElements = elementGroups[i]->getNbElements();
+    _dataProxys[i] = new fullMatrix<double> (&(*_data)(offset*sizeof(double)),nbNodes, nbFields*nbElements);
+    offset += nbNodes*nbFields*nbElements;
+  }  
+  //  printf("datasize = %d\n",_dataSize);
+}
+
+dgDofContainer::~dgDofContainer (){
+  if (!_dataSize)return;
+  for (int i=0;i<_dataProxys.size();++i) delete _dataProxys[i];
+  delete _data;
 }

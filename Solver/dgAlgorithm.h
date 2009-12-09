@@ -7,6 +7,7 @@ class GModel;
 class dgGroupOfElements;
 class dgGroupOfFaces;
 class dgConservationLaw;
+class dgDofContainer;
 class dgTerm;
 
 class dgAlgorithm {
@@ -44,8 +45,8 @@ class dgAlgorithm {
 		   std::vector<dgGroupOfFaces*> &fGroups,  // group of interfacs
 		   std::vector<dgGroupOfFaces*> &bGroups, // group of boundaries
 		   double h,	
-		   std::vector<fullMatrix<double> *> &residu,
-		   std::vector<fullMatrix<double> *> &sol,
+		   dgDofContainer &residu,
+		   dgDofContainer &sol,
 		   int orderRK=4);
   static void multAddInverseMassMatrix ( /*dofManager &dof,*/
 					const dgGroupOfElements & group,
