@@ -520,7 +520,6 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
   MElement *copy = factory.create(eType, vmv, ++numEle, ePart);
 
   double **nodeLs = new double*[e->getNumPrimaryVertices()];
-  //  for(int i = 0; i < e->getNumPrimaryVertices(); i++) nodeLs[i] = new double[verticesLs.size2()];
 
   switch (eType) {
   case MSH_TET_4 :
@@ -534,10 +533,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
                    e->getVertex(1)->x(), e->getVertex(1)->y(), e->getVertex(1)->z(),
                    e->getVertex(2)->x(), e->getVertex(2)->y(), e->getVertex(2)->z(),
                    e->getVertex(3)->x(), e->getVertex(3)->y(), e->getVertex(3)->z());
-        for(int i = 0; i < 4; i++) {
-	  nodeLs[i] = &verticesLs(e->getVertex(i)->getIndex(),0);
-	  //for(int j = 0; j < verticesLs.size2(); j++)nodeLs(i,j) = verticesLs[j];	    
-	}
+        for(int i = 0; i < 4; i++) nodeLs[i] = &verticesLs(e->getVertex(i)->getIndex(),0);
         isCut = T.cut(RPN, ipV, ipS, cp, integOrder, integOrder, integOrder,
                       tetras, quads, triangles, 0, nodeLs);
       }
@@ -899,8 +895,6 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
     delete ipS[i];
   for(unsigned int i = 0; i < ipV.size(); i++)
     delete ipV[i];
-  //for(int i = 0; i < e->getNumPrimaryVertices(); i++)
-    //if(nodeLs[i]) delete [] nodeLs[i];
   delete [] nodeLs;
 }
 

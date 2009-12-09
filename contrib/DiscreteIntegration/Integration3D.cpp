@@ -578,46 +578,34 @@ bool DI_PointLessThan::operator()(const DI_Point *p1, const DI_Point *p2) const
 DI_Element::DI_Element(const DI_Element &cp) : lsTag_(cp.lsTag()), polOrder_(cp.getPolynomialOrder()),
                                                integral_(cp.integral()) {
   //printf("constructeur de copie d'element %d : ",cp.type()); cout << &cp << "->" << this << endl;
-  pts_ = new DI_Point* [cp.nbVert()];
+  pts_ = new DI_Point [cp.nbVert()];
   for(int i = 0; i < cp.nbVert(); i++)
-    pts_[i] = new DI_Point(*cp.pt(i));
+    pts_[i] = DI_Point(*cp.pt(i));
   if(cp.getPolynomialOrder() > 1) {
-    mid_ = new DI_Point* [cp.nbMid()];
+    mid_ = new DI_Point [cp.nbMid()];
     for(int i = 0; i < cp.nbMid(); i++)
-      mid_[i] = new DI_Point(*cp.mid(i));
+      mid_[i] = DI_Point(*cp.mid(i));
   }
   else
     mid_ = NULL;
 }
-/*DI_Element::~DI_Element() {
-  //printf("destructeur d'element %d : ",type()); cout << this << endl;
-  for(int i=0;i<nbVert();i++) //if(pts_[i])
-    delete pts_[i];
-  if(pts_) delete pts_;
-  for(int i=0;i<nbMid();i++)  //if(mid_[i])
-    delete mid_[i];
-  if(mid_) delete mid_;
-}*/
 DI_Element & DI_Element::operator= (const DI_Element &rhs){
   if(type() != rhs.type()) {
     printf("Error : try to assign element of different type!\n");
     return *this;
   }
   if(this != &rhs) {
+    delete [] pts_;
+    pts_ = new DI_Point[rhs.nbVert()];
     for(int i = 0; i < nbVert(); i++) {
-      delete pts_[i];
-      pts_[i] = new DI_Point(*rhs.pt(i));
-    }
-    for(int i = 0; i < nbMid(); i++) {
-      delete mid_[i];
-      //mid_[i] = NULL;
+      pts_[i] = DI_Point(*rhs.pt(i));
     }
     if(rhs.nbMid() > 0) {
       delete mid_;
-      mid_ = new DI_Point*[rhs.nbMid()];
+      mid_ = new DI_Point[rhs.nbMid()];
     }
     for(int i = 0; i < rhs.nbMid(); i++)
-      mid_[i] = new DI_Point(*rhs.mid(i));
+      mid_[i] = DI_Point(*rhs.mid(i));
     polOrder_ = rhs.getPolynomialOrder();
     integral_ = rhs.integral();
     lsTag_ = rhs.lsTag();
@@ -626,21 +614,20 @@ DI_Element & DI_Element::operator= (const DI_Element &rhs){
 }
 void DI_Element::setPolynomialOrder (int o) {
   if(polOrder_ == o) return;
-  for(int i = 0; i < nbMid(); i++)
-    delete mid_[i];
+  delete [] mid_;
   polOrder_ = o;
   switch (o) {
   case 1 :
     return;
   case 2 :
-    mid_ = new DI_Point*[nbMid()];
+    mid_ = new DI_Point[nbMid()];
     for(int i = 0; i < nbMid(); i++) {
       std::vector<int> s(nbVert()); int n;
       midV(i, &s[0], n);
       double xc = 0, yc = 0, zc = 0;
       for(int j = 0; j < n; j++){
         xc += x(s[j]); yc += y(s[j]); zc += z(s[j]); }
-      mid_[i] = new DI_Point(xc/n, yc/n, zc/n);
+      mid_[i] = DI_Point(xc/n, yc/n, zc/n);
     }
     return;
   default :
@@ -649,21 +636,20 @@ void DI_Element::setPolynomialOrder (int o) {
 }
 void DI_Element::setPolynomialOrder (int o, const DI_Element *e, const std::vector<const gLevelset *> &RPNi) {
   if(polOrder_ == o) return;
-  for(int i = 0; i < nbMid(); i++)
-    delete mid_[i];
+  delete [] mid_;
   polOrder_ = o;
   switch (o) {
   case 1 :
     return;
   case 2 :
-    mid_ = new DI_Point*[nbMid()];
+    mid_ = new DI_Point[nbMid()];
     for(int i = 0; i < nbMid(); i++) {
       std::vector<int> s(nbVert()); int n;
       midV(i, &s[0], n);
       double xc = 0, yc = 0, zc = 0;
       for(int j = 0; j < n; j++){
         xc += x(s[j]); yc += y(s[j]); zc += z(s[j]); }
-      mid_[i] = new DI_Point(xc/n, yc/n, zc/n, e, RPNi);
+      mid_[i] = DI_Point(xc/n, yc/n, zc/n, e, RPNi);
     }
     return;
   default :
@@ -672,16 +658,16 @@ void DI_Element::setPolynomialOrder (int o, const DI_Element *e, const std::vect
 }
 void DI_Element::addLs (const double *ls) {
   for(int i = 0; i < nbVert(); i++)
-    pts_[i]->addLs(ls[i]);
+    pts_[i].addLs(ls[i]);
   for(int i = 0; i < nbMid(); i++)
-    mid_[i]->addLs(ls[nbVert()+i]);
+    mid_[i].addLs(ls[nbVert()+i]);
 }
 void DI_Element::addLs (const DI_Element *e) {
   if(e->sizeLs() < 1) return;
   for(int i = 0; i < nbVert(); i++)
-    pts_[i]->addLs(e);
+    pts_[i].addLs(e);
   for(int i = 0; i < nbMid(); i++)
-    mid_[i]->addLs(e);
+    mid_[i].addLs(e);
 }
 void DI_Element::addLs (const DI_Element *e, const gLevelset *Ls) {
   if(type() != e->type()) {
@@ -689,7 +675,7 @@ void DI_Element::addLs (const DI_Element *e, const gLevelset *Ls) {
   }
   for(int j = 0; j < nbVert(); ++j) {
     double ls = (*Ls)(e->x(j), e->y(j), e->z(j));
-    pts_[j]->addLs(ls);
+    pts_[j].addLs(ls);
   }
   for(int j = 0; j < nbMid(); ++j) {
     std::vector<int> s(nbVert()); int n;
@@ -698,7 +684,7 @@ void DI_Element::addLs (const DI_Element *e, const gLevelset *Ls) {
     for(int k = 0; k < n; k++){
       xc += e->x(s[k]); yc += e->y(s[k]); zc += e->z(s[k]); }
     double ls = (*Ls)(xc/n, yc/n, zc/n);
-    mid_[j]->addLs(ls);
+    mid_[j].addLs(ls);
   }
 }
 void DI_Element::addLs (const DI_Element *e, const gLevelset *Ls, int iLs, double **nodeLs) {
@@ -707,7 +693,7 @@ void DI_Element::addLs (const DI_Element *e, const gLevelset *Ls, int iLs, doubl
     return;
   }
   for(int i = 0; i < nbVert(); i++)
-    pts_[i]->addLs(nodeLs[i][iLs]);
+    pts_[i].addLs(nodeLs[i][iLs]);
   for(int j = 0; j < nbMid(); ++j) {
     std::vector<int> s(nbVert()); int n;
     e->midV(j, &s[0], n);
@@ -715,22 +701,22 @@ void DI_Element::addLs (const DI_Element *e, const gLevelset *Ls, int iLs, doubl
     for(int k = 0; k < n; k++){
       xc += e->x(s[k]); yc += e->y(s[k]); zc += e->z(s[k]); }
     double ls = (*Ls)(xc/n, yc/n, zc/n);
-    mid_[j]->addLs(ls);
+    mid_[j].addLs(ls);
   }
 }
 void DI_Element::chooseLs (const gLevelset *Lsi) {
   if(sizeLs() < 2)
     printf("chooseLs with element ls size < 2 : typeEl=%d\n", type());
   for(int i = 0; i < nbVert(); i++)
-    pts_[i]->chooseLs(Lsi);
+    pts_[i].chooseLs(Lsi);
   for(int i = 0; i < nbMid(); i++)
-    mid_[i]->chooseLs(Lsi);
+    mid_[i].chooseLs(Lsi);
 }
 void DI_Element::clearLs() {
   for(int i = 0; i < nbVert(); i++)
-    pts_[i]->clearLs();
+    pts_[i].clearLs();
   for(int i = 0; i < nbMid(); i++)
-    mid_[i]->clearLs();
+    mid_[i].clearLs();
 }
 bool DI_Element::addQuadEdge (int edge, DI_Point *xm,
                               const DI_Element *e, const std::vector<const gLevelset *> &RPNi) {
@@ -745,13 +731,13 @@ bool DI_Element::addQuadEdge (int edge, DI_Point *xm,
     printf("dist=%.20f, sideLength=%g, d/sL=%g => do not add quad edge\n", dist, sideLength, dist/sideLength);
     return true; // do not add the quadratic edge if xm is very close from the middle of the edge
   }
-  DI_Point *p0 = mid_[edge];
-  mid_[edge]->move(xm->x(), xm->y(), xm->z());//mid_[edge] = xm;
+  DI_Point *p0 = &mid_[edge];
+  mid_[edge].move(xm->x(), xm->y(), xm->z());//mid_[edge] = xm;
   // check if the quadratic edge will produce a twist in the element (detJ<0)
   if(!testDetJ()){
     // reinitialize quad edges if the element was not quad at the begining
     if(order0 == 1) setPolynomialOrder(1);
-    else mid_[edge]->move(p0->x(), p0->y(), p0->z());//mid_[edge] = p0;
+    else mid_[edge].move(p0->x(), p0->y(), p0->z());//mid_[edge] = p0;
     printf("detJ<0 when trying to add a quadratic edge in "); print();
     return false;
   }
@@ -818,11 +804,11 @@ void DI_Element::mappingEl (DI_Element *el) const {
   double s[3];
   for (int i = 0; i < el->nbVert(); i++) {
     evalC(el->x(i), el->y(i), el->z(i), s);
-    el->pts_[i]->move(s[0], s[1], s[2]);
+    el->pts_[i].move(s[0], s[1], s[2]);
   }
   for(int i = el->nbVert(); i < el->nbVert() + el->nbMid(); i++) {
     evalC(el->x(i), el->y(i), el->z(i), s);
-    el->mid_[i - el->nbVert()]->move(s[0], s[1], s[2]);
+    el->mid_[i - el->nbVert()].move(s[0], s[1], s[2]);
   }
   el->computeIntegral();
 }

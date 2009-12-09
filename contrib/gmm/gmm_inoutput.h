@@ -158,7 +158,7 @@ namespace gmm {
       memset(Title, 0, sizeof Title); 
     }
     char *getline(char *buf) { 
-      fgets(buf, BUFSIZ, f); ++lcount;
+      if(fgets(buf, BUFSIZ, f) == NULL) return buf; ++lcount;
       int s = SECURE_NONCHAR_SSCANF(buf,"%*s");
       GMM_ASSERT1(s >= 0, "blank line in HB file at line " << lcount);
       return buf;

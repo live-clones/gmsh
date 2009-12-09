@@ -218,9 +218,8 @@ class DI_Element
                     // domain elements : -1 = outside / +1 = inside
                     // interface elements : tag of the levelset that created the element
                     //                      -1 = out of the domain border
-  // DI_Point *pts_;  // vertices
-  DI_Point **pts_;  // vertices
-  DI_Point **mid_;  // middle vertices
+  DI_Point *pts_;  // vertices
+  DI_Point *mid_;  // middle vertices
   int polOrder_;    // polynomial order of the shape functions
   double integral_; // surface for 2D elements, volume for 3D elements
  public:
@@ -230,7 +229,10 @@ class DI_Element
   // assignment
   DI_Element & operator= (const DI_Element &rhs);
   // destructor
-  virtual ~DI_Element(){}
+  virtual ~DI_Element(){
+    if(pts_) delete [] pts_;
+    if(mid_) delete [] mid_;
+  }
   // return type
   virtual int type() const = 0;
   // return the dimension of the element
@@ -310,20 +312,19 @@ class DI_Element
   void getCuttingPoints (const DI_Element *e, const std::vector<const gLevelset *> &RPNi,
                          std::vector<DI_CuttingPoint*> &cp) const;
   // return the ith point
-  inline DI_Point* pt (int i) const {return i < nbVert() ? pts_[i] : mid_[i - nbVert()];}
+  virtual DI_Point* pt (int i) const = 0;
   // return the ith middle point
-  inline DI_Point* mid (int i) const {return mid_[i];}
+  inline DI_Point* mid (int i) const {return &mid_[i];}
   // return the coordinates of the ith point
-  inline double x (int i) const {return i < nbVert() ? pts_[i]->x() : mid_[i - nbVert()]->x();}
-  inline double y (int i) const {return i < nbVert() ? pts_[i]->y() : mid_[i - nbVert()]->y();}
-  inline double z (int i) const {return i < nbVert() ? pts_[i]->z() : mid_[i - nbVert()]->z();}
+  virtual double x (int i) const = 0;
+  virtual double y (int i) const = 0;
+  virtual double z (int i) const = 0;
   // return the last levelset value of the ith point
-  inline double ls (int i) const {return i < nbVert() ? pts_[i]->ls() : mid_[i - nbVert()]->ls();}
+  virtual double ls (int i) const = 0;
   // return the jth levelset value of the ith point
-  inline double ls (int i, int j) const {
-    return i < nbVert() ? pts_[i]->ls(j) : mid_[i - nbVert()]->ls(j);}
+  virtual double ls (int i, int j) const = 0;
   // return the number of levelset values of the points
-  inline int sizeLs() const {return pts_[0]->sizeLs();}
+  inline int sizeLs() const {return pts_[0].sizeLs();}
   // return the interpolating nodal shape functions evaluated at point (u,v,w)
   // in parametric coordinates (if order = -1, use the polynomial order of the element)
   virtual void getShapeFunctions (double u, double v, double w, double s[], int order = -1) const = 0;
@@ -366,51 +367,51 @@ class DI_Line : public DI_Element
 {
  public:
   DI_Line () {
-    pts_ = new DI_Point*[2];
-    for(int i = 0; i < 2; i++) pts_[i] = NULL;
+    pts_ = new DI_Point[2];
   }
   DI_Line (double x0, double y0, double z0, double x1, double y1, double z1)
   {
-    pts_ = new DI_Point*[2];
-    pts_[0] = new DI_Point(x0, y0, z0);
-    pts_[1] = new DI_Point(x1, y1, z1);
+    pts_ = new DI_Point[2];
+    pts_[0] = DI_Point(x0, y0, z0);
+    pts_[1] = DI_Point(x1, y1, z1);
     integral_ = LineLength(x0, y0, z0, x1, y1, z1);
   }
   DI_Line (double x0, double y0, double z0, double x1, double y1, double z1, double length)
   {
-    pts_ = new DI_Point*[2];
-    pts_[0] = new DI_Point(x0, y0, z0);
-    pts_[1] = new DI_Point(x1, y1, z1);
+    pts_ = new DI_Point[2];
+    pts_[0] = DI_Point(x0, y0, z0);
+    pts_[1] = DI_Point(x1, y1, z1);
     integral_ = length;
   }
   DI_Line (const DI_Point *pt0, const DI_Point *pt1, const int tag = -1)
   {
     lsTag_ = tag;
-    pts_ = new DI_Point*[2];
-    pts_[0] = new DI_Point(*pt0);
-    pts_[1] = new DI_Point(*pt1);
+    pts_ = new DI_Point[2];
+    pts_[0] = DI_Point(*pt0);
+    pts_[1] = DI_Point(*pt1);
     integral_ = LineLength(pt0, pt1);
   }
-  ~DI_Line () {
-    for(int i = 0; i < 2; i++)
-      delete pts_[i];
-    if(pts_) delete[] pts_;
-  }
-  virtual int type() const {return DI_LIN;}
-  virtual int getDim() const {return 1;}
-  virtual int nbVert() const {return 2;}
-  virtual int nbMid() const {
+  inline int type() const {return DI_LIN;}
+  inline int getDim() const {return 1;}
+  inline int nbVert() const {return 2;}
+  inline int nbMid() const {
     switch(polOrder_) {
     case 1 : return 0;
     case 2 : return 1;
     default : return 0;
     }
   }
-  virtual int nbEdg() const {return 1;}
-  virtual void computeIntegral();
-  virtual double refIntegral() const {return 2.;}
-  virtual void getRefIntegrationPoints (const int polynomialOrder,
-                                        std::vector<DI_IntegrationPoint *> &ipS) const;
+  inline int nbEdg() const {return 1;}
+  void computeIntegral();
+  inline double refIntegral() const {return 2.;}
+  inline DI_Point* pt (int i) const {return i < 2 ? &pts_[i] : &mid_[i - 2];}
+  inline double x (int i) const {return i < 2 ? pts_[i].x() : mid_[i - 2].x();}
+  inline double y (int i) const {return i < 2 ? pts_[i].y() : mid_[i - 2].y();}
+  inline double z (int i) const {return i < 2 ? pts_[i].z() : mid_[i - 2].z();}
+  inline double ls (int i) const {return i < 2 ? pts_[i].ls() : mid_[i - 2].ls();}
+  inline double ls (int i, int j) const {return i < 2 ? pts_[i].ls(j) : mid_[i - 2].ls(j);}
+  void getRefIntegrationPoints (const int polynomialOrder,
+                                std::vector<DI_IntegrationPoint *> &ipS) const;
   inline void vert(const int edge, int &s1, int &s2) const {
     s1 = 0; s2 = 1;}
   void midV (const int e, int *s, int &n) const {
@@ -439,56 +440,56 @@ class DI_Triangle : public DI_Element
 {
  public:
   DI_Triangle () {
-    pts_ = new DI_Point*[3];
-    for(int i = 0; i < 3; i++) pts_[i] = NULL;
+    pts_ = new DI_Point[3];
   }
   DI_Triangle (double x0, double y0, double z0, double x1, double y1, double z1,
                double x2, double y2, double z2)
   {
-    pts_ = new DI_Point*[3];
-    pts_[0] = new DI_Point(x0, y0, z0);
-    pts_[1] = new DI_Point(x1, y1, z1);
-    pts_[2] = new DI_Point(x2, y2, z2);
+    pts_ = new DI_Point[3];
+    pts_[0] = DI_Point(x0, y0, z0);
+    pts_[1] = DI_Point(x1, y1, z1);
+    pts_[2] = DI_Point(x2, y2, z2);
     integral_ = TriSurf(x0, y0, z0, x1, y1, z1, x2, y2, z2);
   }
   DI_Triangle (double x0, double y0, double z0, double x1, double y1, double z1,
                double x2, double y2, double z2, double surface)
   {
-    pts_ = new DI_Point*[3];
-    pts_[0] = new DI_Point(x0, y0, z0);
-    pts_[1] = new DI_Point(x1, y1, z1);
-    pts_[2] = new DI_Point(x2, y2, z2);
+    pts_ = new DI_Point[3];
+    pts_[0] = DI_Point(x0, y0, z0);
+    pts_[1] = DI_Point(x1, y1, z1);
+    pts_[2] = DI_Point(x2, y2, z2);
     integral_ = surface;
   }
   DI_Triangle (const DI_Point *pt0, const DI_Point *pt1, const DI_Point *pt2, const int tag = -1)
   {
     lsTag_ = tag;
-    pts_ = new DI_Point*[3];
-    pts_[0] = new DI_Point(*pt0);
-    pts_[1] = new DI_Point(*pt1);
-    pts_[2] = new DI_Point(*pt2);
+    pts_ = new DI_Point[3];
+    pts_[0] = DI_Point(*pt0);
+    pts_[1] = DI_Point(*pt1);
+    pts_[2] = DI_Point(*pt2);
     integral_ = TriSurf(pt0,pt1,pt2);
   }
-  ~DI_Triangle () {
-    for(int i = 0; i < 3; i++)
-      delete pts_[i];
-    if(pts_) delete[] pts_;
-  }
-  virtual int type() const {return DI_TRI;}
-  virtual int getDim() const {return 2;}
-  virtual int nbVert() const {return 3;}
-  virtual int nbMid() const {
+  inline int type() const {return DI_TRI;}
+  inline int getDim() const {return 2;}
+  inline int nbVert() const {return 3;}
+  inline int nbMid() const {
     switch(polOrder_) {
     case 1 : return 0;
     case 2 : return 3;
     default : return 0;
     }
   }
-  virtual int nbEdg() const {return 3;}
-  virtual void computeIntegral();
-  virtual double refIntegral() const {return 0.5;}
-  virtual void getRefIntegrationPoints (const int polynomialOrder,
-                                        std::vector<DI_IntegrationPoint *> &ipS) const;
+  inline int nbEdg() const {return 3;}
+  void computeIntegral();
+  inline double refIntegral() const {return 0.5;}
+  inline DI_Point* pt (int i) const {return i < 3 ? &pts_[i] : &mid_[i - 3];}
+  inline double x (int i) const {return i < 3 ? pts_[i].x() : mid_[i - 3].x();}
+  inline double y (int i) const {return i < 3 ? pts_[i].y() : mid_[i - 3].y();}
+  inline double z (int i) const {return i < 3 ? pts_[i].z() : mid_[i - 3].z();}
+  inline double ls (int i) const {return i < 3 ? pts_[i].ls() : mid_[i - 3].ls();}
+  inline double ls (int i, int j) const {return i < 3 ? pts_[i].ls(j) : mid_[i - 3].ls(j);}
+  void getRefIntegrationPoints (const int polynomialOrder,
+                                std::vector<DI_IntegrationPoint *> &ipS) const;
   inline void vert(const int edge, int &s1, int &s2) const {
     int v[3][2] = {{0, 1}, {1, 2}, {2, 0}};
     s1 = v[edge][0]; s2 = v[edge][1];
@@ -530,60 +531,60 @@ class DI_Quad : public DI_Element
 {
  public:
   DI_Quad () {
-    pts_ = new DI_Point*[4];
-    for(int i = 0; i < 4; i++) pts_[i] = NULL;
+    pts_ = new DI_Point[4];
   }
   DI_Quad (double x0, double y0, double z0, double x1, double y1, double z1,
            double x2, double y2, double z2, double x3, double y3, double z3)
   {
-    pts_ = new DI_Point*[4];
-    pts_[0] = new DI_Point(x0, y0, z0);
-    pts_[1] = new DI_Point(x1, y1, z1);
-    pts_[2] = new DI_Point(x2, y2, z2);
-    pts_[3] = new DI_Point(x3, y3, z3);
+    pts_ = new DI_Point[4];
+    pts_[0] = DI_Point(x0, y0, z0);
+    pts_[1] = DI_Point(x1, y1, z1);
+    pts_[2] = DI_Point(x2, y2, z2);
+    pts_[3] = DI_Point(x3, y3, z3);
     integral_ = TriSurf(x0, y0, z0, x1, y1, z1, x2, y2, z2) +
                 TriSurf(x0, y0, z0, x2, y2, z2, x3, y3, z3);
   }
   DI_Quad (double x0, double y0, double z0, double x1, double y1, double z1,
            double x2, double y2, double z2, double x3, double y3, double z3, double surf)
   {
-    pts_ = new DI_Point*[4];
-    pts_[0] = new DI_Point(x0, y0, z0);
-    pts_[1] = new DI_Point(x1, y1, z1);
-    pts_[2] = new DI_Point(x2, y2, z2);
-    pts_[3] = new DI_Point(x3, y3, z3);
+    pts_ = new DI_Point[4];
+    pts_[0] = DI_Point(x0, y0, z0);
+    pts_[1] = DI_Point(x1, y1, z1);
+    pts_[2] = DI_Point(x2, y2, z2);
+    pts_[3] = DI_Point(x3, y3, z3);
     integral_ = surf;
   }
   DI_Quad (const DI_Point *pt0, const DI_Point *pt1, const DI_Point *pt2, const DI_Point *pt3,
            const int tag = -1)
   {
     lsTag_ = tag;
-    pts_ = new DI_Point*[4];
-    pts_[0] = new DI_Point(*pt0);
-    pts_[1] = new DI_Point(*pt1);
-    pts_[2] = new DI_Point(*pt2);
-    pts_[3] = new DI_Point(*pt3);
+    pts_ = new DI_Point[4];
+    pts_[0] = DI_Point(*pt0);
+    pts_[1] = DI_Point(*pt1);
+    pts_[2] = DI_Point(*pt2);
+    pts_[3] = DI_Point(*pt3);
     integral_ = TriSurf(pt0, pt1, pt2) + TriSurf(pt0, pt2, pt3);
   }
-  ~DI_Quad () {
-    for(int i = 0; i < 4; i++)
-      delete pts_[i];
-    if(pts_) delete[] pts_;
-  }
-  virtual int type() const {return DI_QUA;}
-  virtual int getDim() const {return 2;}
-  virtual int nbVert() const {return 4;}
-  virtual int nbMid() const {
+  inline int type() const {return DI_QUA;}
+  inline int getDim() const {return 2;}
+  inline int nbVert() const {return 4;}
+  inline int nbMid() const {
     switch(polOrder_) {
     case 1 : return 0;
     case 2 : return 5;
     default : return 0;
     }
   }
-  virtual int nbEdg() const {return 4;}
-  virtual void computeIntegral();
-  virtual double refIntegral() const {return 4.;}
-  virtual void getRefIntegrationPoints (const int polynomialOrder,
+  inline int nbEdg() const {return 4;}
+  void computeIntegral();
+  inline double refIntegral() const {return 4.;}
+  inline DI_Point* pt (int i) const {return i < 4 ? &pts_[i] : &mid_[i - 4];}
+  inline double x (int i) const {return i < 4 ? pts_[i].x() : mid_[i - 4].x();}
+  inline double y (int i) const {return i < 4 ? pts_[i].y() : mid_[i - 4].y();}
+  inline double z (int i) const {return i < 4 ? pts_[i].z() : mid_[i - 4].z();}
+  inline double ls (int i) const {return i < 4 ? pts_[i].ls() : mid_[i - 4].ls();}
+  inline double ls (int i, int j) const {return i < 4 ? pts_[i].ls(j) : mid_[i - 4].ls(j);}
+  void getRefIntegrationPoints (const int polynomialOrder,
                                         std::vector<DI_IntegrationPoint *> &ipS) const;
   inline void vert(const int edge, int &s1, int &s2) const{
     int v[4][2] = {{0, 1}, {1, 2}, {2, 3}, {3, 0}};
@@ -625,62 +626,59 @@ class DI_Quad : public DI_Element
 
 class DI_Tetra : public DI_Element
 {
-  //DI_Point pts_[4];  // vertices
  public:
   DI_Tetra () {
-    //pts_ = new DI_Point [4];
-    pts_ = new DI_Point*[4];
-    for(int i = 0; i < 4; i++) pts_[i] = NULL;
+    pts_ = new DI_Point[4];
   }
   DI_Tetra (double x0, double y0, double z0, double x1, double y1, double z1,
             double x2, double y2, double z2, double x3, double y3, double z3)
   {
-    pts_ = new DI_Point*[4];
-    //pts_[0] = DI_Point(x0, y0, z0);
-    pts_[0] = new DI_Point(x0, y0, z0);
-    pts_[1] = new DI_Point(x1, y1, z1);
-    pts_[2] = new DI_Point(x2, y2, z2);
-    pts_[3] = new DI_Point(x3, y3, z3);
+    pts_ = new DI_Point[4];
+    pts_[0] = DI_Point(x0, y0, z0);
+    pts_[1] = DI_Point(x1, y1, z1);
+    pts_[2] = DI_Point(x2, y2, z2);
+    pts_[3] = DI_Point(x3, y3, z3);
     integral_ = TetraVol(x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3);
   }
   DI_Tetra (double x0, double y0, double z0, double x1, double y1, double z1,
             double x2, double y2, double z2, double x3, double y3, double z3, double vol)
   {
-    pts_ = new DI_Point*[4];
-    pts_[0] = new DI_Point(x0, y0, z0);
-    pts_[1] = new DI_Point(x1, y1, z1);
-    pts_[2] = new DI_Point(x2, y2, z2);
-    pts_[3] = new DI_Point(x3, y3, z3);
+    pts_ = new DI_Point[4];
+    pts_[0] = DI_Point(x0, y0, z0);
+    pts_[1] = DI_Point(x1, y1, z1);
+    pts_[2] = DI_Point(x2, y2, z2);
+    pts_[3] = DI_Point(x3, y3, z3);
     integral_ = vol;
   }
   DI_Tetra (const DI_Point *pt0, const DI_Point *pt1, const DI_Point *pt2, const DI_Point *pt3)
   {
-    pts_ = new DI_Point*[4];
-    pts_[0] = new DI_Point(*pt0);
-    pts_[1] = new DI_Point(*pt1);
-    pts_[2] = new DI_Point(*pt2);
-    pts_[3] = new DI_Point(*pt3);
+    pts_ = new DI_Point[4];
+    pts_[0] = DI_Point(*pt0);
+    pts_[1] = DI_Point(*pt1);
+    pts_[2] = DI_Point(*pt2);
+    pts_[3] = DI_Point(*pt3);
     integral_ = TetraVol(pt0, pt1, pt2, pt3);
   }
-  ~DI_Tetra () {
-    for(int i = 0; i < 4; i++)
-      delete pts_[i];
-    if(pts_) delete[] pts_;
-  }
-  virtual int type() const {return DI_TET;}
-  virtual int getDim() const {return 3;}
-  virtual int nbVert() const {return 4;}
-  virtual int nbMid() const {
+  inline int type() const {return DI_TET;}
+  inline int getDim() const {return 3;}
+  inline int nbVert() const {return 4;}
+  inline int nbMid() const {
     switch(polOrder_) {
     case 1 : return 0;
     case 2 : return 6;
     default : return 0;
     }
   }
-  virtual int nbEdg() const {return 6;}
-  virtual void computeIntegral();
-  virtual double refIntegral() const {return 1. / 6.;}
-  virtual void getRefIntegrationPoints (const int polynomialOrder,
+  inline int nbEdg() const {return 6;}
+  void computeIntegral();
+  inline double refIntegral() const {return 1. / 6.;}
+  inline DI_Point* pt (int i) const {return i < 4 ? &pts_[i] : &mid_[i - 4];}
+  inline double x (int i) const {return i < 4 ? pts_[i].x() : mid_[i - 4].x();}
+  inline double y (int i) const {return i < 4 ? pts_[i].y() : mid_[i - 4].y();}
+  inline double z (int i) const {return i < 4 ? pts_[i].z() : mid_[i - 4].z();}
+  inline double ls (int i) const {return i < 4 ? pts_[i].ls() : mid_[i - 4].ls();}
+  inline double ls (int i, int j) const {return i < 4 ? pts_[i].ls(j) : mid_[i - 4].ls(j);}
+  inline void getRefIntegrationPoints (const int polynomialOrder,
                                         std::vector<DI_IntegrationPoint *> &ip) const;
   inline void vert(const int edge, int &s1, int &s2) const {
     int v[6][2] = {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {2, 3}, {3, 1}};
@@ -733,19 +731,18 @@ class DI_Hexa : public DI_Element
 {
  public:
   DI_Hexa () {
-    pts_ = new DI_Point*[8];
-    for(int i = 0; i < 8; i++) pts_[i] = NULL;
+    pts_ = new DI_Point[8];
   }
   DI_Hexa (double x0, double y0, double z0, double x1, double y1, double z1,
            double x2, double y2, double z2, double x3, double y3, double z3,
            double x4, double y4, double z4, double x5, double y5, double z5,
            double x6, double y6, double z6, double x7, double y7, double z7)
   {
-    pts_ = new DI_Point*[8];
-    pts_[0] = new DI_Point(x0, y0, z0); pts_[1] = new DI_Point(x1, y1, z1);
-    pts_[2] = new DI_Point(x2, y2, z2); pts_[3] = new DI_Point(x3, y3, z3);
-    pts_[4] = new DI_Point(x4, y4, z4); pts_[5] = new DI_Point(x5, y5, z5);
-    pts_[6] = new DI_Point(x6, y6, z6); pts_[7] = new DI_Point(x7, y7, z7);
+    pts_ = new DI_Point[8];
+    pts_[0] = DI_Point(x0, y0, z0); pts_[1] = DI_Point(x1, y1, z1);
+    pts_[2] = DI_Point(x2, y2, z2); pts_[3] = DI_Point(x3, y3, z3);
+    pts_[4] = DI_Point(x4, y4, z4); pts_[5] = DI_Point(x5, y5, z5);
+    pts_[6] = DI_Point(x6, y6, z6); pts_[7] = DI_Point(x7, y7, z7);
     integral_ = TetraVol(x0, y0, z0, x1, y1, z1, x3, y3, z3, x4, y4, z4) +
                 TetraVol(x1, y1, z1, x4, y4, z4, x5, y5, z5, x7, y7, z7) +
                 TetraVol(x1, y1, z1, x3, y3, z3, x4, y4, z4, x7, y7, z7) +
@@ -758,44 +755,45 @@ class DI_Hexa : public DI_Element
            double x4, double y4, double z4, double x5, double y5, double z5,
            double x6, double y6, double z6, double x7, double y7, double z7, double vol)
   {
-    pts_ = new DI_Point*[8];
-    pts_[0] = new DI_Point(x0, y0, z0); pts_[1] = new DI_Point(x1, y1, z1);
-    pts_[2] = new DI_Point(x2, y2, z2); pts_[3] = new DI_Point(x3, y3, z3);
-    pts_[4] = new DI_Point(x4, y4, z4); pts_[5] = new DI_Point(x5, y5, z5);
-    pts_[6] = new DI_Point(x6, y6, z6); pts_[7] = new DI_Point(x7, y7, z7);
+    pts_ = new DI_Point[8];
+    pts_[0] = DI_Point(x0, y0, z0); pts_[1] = DI_Point(x1, y1, z1);
+    pts_[2] = DI_Point(x2, y2, z2); pts_[3] = DI_Point(x3, y3, z3);
+    pts_[4] = DI_Point(x4, y4, z4); pts_[5] = DI_Point(x5, y5, z5);
+    pts_[6] = DI_Point(x6, y6, z6); pts_[7] = DI_Point(x7, y7, z7);
     integral_ = vol;
   }
   DI_Hexa (const DI_Point *pt0, const DI_Point *pt1, const DI_Point *pt2, const DI_Point *pt3,
            const DI_Point *pt4, const DI_Point *pt5, const DI_Point *pt6, const DI_Point *pt7) {
-    pts_ = new DI_Point*[8];
-    pts_[0] = new DI_Point(*pt0);    pts_[1] = new DI_Point(*pt1);
-    pts_[2] = new DI_Point(*pt2);    pts_[3] = new DI_Point(*pt3);
-    pts_[4] = new DI_Point(*pt4);    pts_[5] = new DI_Point(*pt5);
-    pts_[6] = new DI_Point(*pt6);    pts_[7] = new DI_Point(*pt7);
+    pts_ = new DI_Point[8];
+    pts_[0] = DI_Point(*pt0);    pts_[1] = DI_Point(*pt1);
+    pts_[2] = DI_Point(*pt2);    pts_[3] = DI_Point(*pt3);
+    pts_[4] = DI_Point(*pt4);    pts_[5] = DI_Point(*pt5);
+    pts_[6] = DI_Point(*pt6);    pts_[7] = DI_Point(*pt7);
     integral_ = TetraVol(pt0, pt1, pt3, pt4) + TetraVol(pt1, pt4, pt5, pt7) +
                 TetraVol(pt1, pt3, pt4, pt7) + TetraVol(pt2, pt5, pt6, pt7) +
                 TetraVol(pt1, pt2, pt3, pt7) + TetraVol(pt1, pt5, pt2, pt7);
   }
-  ~DI_Hexa () {
-    for(int i = 0; i < 8; i++)
-      delete pts_[i];
-    if(pts_) delete[] pts_;
-  }
-  virtual int type() const {return DI_HEX;}
-  virtual int getDim() const {return 3;}
-  virtual int nbVert() const {return 8;}
-  virtual int nbMid() const {
+  inline int type() const {return DI_HEX;}
+  inline int getDim() const {return 3;}
+  inline int nbVert() const {return 8;}
+  inline int nbMid() const {
     switch(polOrder_) {
     case 1 : return 0;
     case 2 : return 19;
     default : return 0;
     }
   }
-  virtual int nbEdg() const {return 12;}
-  virtual void computeIntegral();
-  virtual double refIntegral() const {return 8.;}
-  virtual void getRefIntegrationPoints (const int polynomialOrder,
-                                        std::vector<DI_IntegrationPoint *> &ip) const;
+  inline int nbEdg() const {return 12;}
+  void computeIntegral();
+  inline double refIntegral() const {return 8.;}
+  inline DI_Point* pt (int i) const {return i < 8 ? &pts_[i] : &mid_[i - 8];}
+  inline double x (int i) const {return i < 8 ? pts_[i].x() : mid_[i - 8].x();}
+  inline double y (int i) const {return i < 8 ? pts_[i].y() : mid_[i - 8].y();}
+  inline double z (int i) const {return i < 8 ? pts_[i].z() : mid_[i - 8].z();}
+  inline double ls (int i) const {return i < 8 ? pts_[i].ls() : mid_[i - 8].ls();}
+  inline double ls (int i, int j) const {return i < 8 ? pts_[i].ls(j) : mid_[i - 8].ls(j);}
+  void getRefIntegrationPoints (const int polynomialOrder,
+                                std::vector<DI_IntegrationPoint *> &ip) const;
   inline void vert(const int edge, int &s1, int &s2) const {
     int v[12][2] = {{0, 1}, {1, 2}, {2, 3}, {3, 0}, {0, 4}, {1, 5},
                     {2, 6}, {3, 7}, {4, 5}, {5, 6}, {6, 7}, {7, 4}};
@@ -851,30 +849,28 @@ class DI_Hexa : public DI_Element
 // -------------------------------------------------------------------------------------------------
 class DI_QualError
 {
-  DI_Point **pts_;
+  DI_Point *pts_;
 public:
   DI_QualError (DI_Point *p11, DI_Point *p12, DI_Point *p21, DI_Point *p22) {
-    pts_ = new DI_Point*[4];
-    pts_[0] = new DI_Point(*p11);
-    pts_[1] = new DI_Point(*p12);
-    pts_[2] = new DI_Point(*p21);
-    pts_[3] = new DI_Point(*p22);
+    pts_ = new DI_Point[4];
+    pts_[0] = DI_Point(*p11);
+    pts_[1] = DI_Point(*p12);
+    pts_[2] = DI_Point(*p21);
+    pts_[3] = DI_Point(*p22);
   }
   ~DI_QualError () {
-    for(int i = 0; i < 4; i++)
-      delete pts_[i];
     if(pts_) delete[] pts_;
   }
   inline DI_Point* pt (int i) const {
-    if(i == 0) return pts_[0];
-    if(i == 1) return pts_[1];
-    if(i == 2) return pts_[2];
-    if(i == 3) return pts_[3];
+    if(i == 0) return &pts_[0];
+    if(i == 1) return &pts_[1];
+    if(i == 2) return &pts_[2];
+    if(i == 3) return &pts_[3];
     printf("DI_QualError::pt only accept indices from 0 to 3!\n");
     DI_Point* p = NULL; return p;
   }
   void print(const DI_Element *e) const{
-    DI_Point pt1(*pts_[0]), pt2(*pts_[1]), pt3(*pts_[2]), pt4(*pts_[3]);
+    DI_Point pt1(pts_[0]), pt2(pts_[1]), pt3(pts_[2]), pt4(pts_[3]);
     e->mappingP(&pt1); e->mappingP(&pt2); e->mappingP(&pt3); e->mappingP(&pt4);
     printf("Cannot assert best quality for the last face of the Prism \n");
     printf("=> edges (%g,%g,%g),(%g,%g,%g) and (%g,%g,%g),(%g,%g,%g) may cross in ",
