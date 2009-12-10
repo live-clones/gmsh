@@ -120,7 +120,7 @@ class GModel
   // return the current model, and sets the current model index if
   // index >= 0
   static GModel *current(int index=-1);
-  
+
   // sets a model to current
   static int setCurrent(GModel *m);
 
@@ -251,6 +251,9 @@ class GModel
   // "dim" and id number "num"
   std::string getElementaryName(int dim, int num);
 
+  //get the highest dimension of the GModel
+  int getDim();
+
   // set the selection flag on all entities
   void setSelection(int val);
 
@@ -331,7 +334,7 @@ class GModel
 
   // build a new GModel by cutting the elements crossed by the levelset ls
   GModel *buildCutGModel(gLevelset *ls);
-	
+
   // create a GModel by importing a mesh (vertexMap has a dim equal to
   // the number of vertices and all the other vectors have a dim equal
   // to the number of elements)
@@ -339,7 +342,7 @@ class GModel
                               std::vector<int> &numElement,
                               std::vector<std::vector<int> > &vertexIndices,
                               std::vector<int> &elementType,
-                              std::vector<int> &physical, 
+                              std::vector<int> &physical,
                               std::vector<int> &elementary,
                               std::vector<int> &partition);
 
@@ -369,7 +372,7 @@ class GModel
                bool saveAll=false, bool saveParametric=false, double scalingFactor=1.0);
 
   // Visual FEA file format
-  int writeFEA(const std::string &name, int elementTagType, 
+  int writeFEA(const std::string &name, int elementTagType,
                bool saveAll, double scalingFactor);
 
   // mesh statistics (saved as a Gmsh post-processing view)
