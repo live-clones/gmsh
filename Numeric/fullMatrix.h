@@ -173,6 +173,20 @@ class fullMatrix
   }
   fullMatrix() : _own_data(false),_r(0), _c(0), _data(0) {}
   ~fullMatrix() { if(_data && _own_data) delete [] _data; }
+
+  bool resize(int r, int c) // data will be owned (same as constructor)
+  {
+    if ((r!=_r||c!=_c)||(!_own_data))
+    {
+      _r=r;_c=c;
+      if ((_own_data)&&(_data)) delete[] _data;
+      _data = new scalar[_r * _c];
+      _own_data = true;
+      return true;
+    }
+    return false; // no reallocation
+  }
+
   void setAsProxy(fullMatrix<scalar> &original, int c_start, int c) {
     if(_data && _own_data)
       delete [] _data;
