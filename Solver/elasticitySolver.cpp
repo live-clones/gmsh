@@ -14,7 +14,9 @@
 #include "linearSystemGMM.h"
 #include "Numeric.h"
 #include "functionSpace.h"
+#ifdef THIS_FILE_IS_MISSING
 #include "terms.h"
+#endif
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -464,6 +466,8 @@ void MyelasticitySolver::solve()
   {
     DummyfemTerm El(pModel);
 //    ElasticTerm<CompositeFunctionSpace<VectorLagrangeFunctionSpace::ValType>,CompositeFunctionSpace<VectorLagrangeFunctionSpace::ValType> > Eterm(P123,elasticFields[i]._E,elasticFields[i]._nu);
+throw;
+#ifdef DEBUG_ME_ELASTIC_TERM_IS_NOT_DEFINE_IT_IS_PROBABLY_IN_TERM_H_BUT_THIS_FILE_IS_NOT_IN_THE_SVN
     ElasticTerm<VectorLagrangeFunctionSpace,VectorLagrangeFunctionSpace> Eterm(P123,elasticFields[i]._E,elasticFields[i]._nu);
     fullMatrix<double> localMatrix(12,12);
     std::vector<Dof> R;R.reserve(100);
@@ -478,6 +482,7 @@ void MyelasticitySolver::solve()
       Eterm.get(e,npts,GP,localMatrix);
       El.addToMatrix(*pAssembler,localMatrix,R);
     }
+#endif
   }
 
   printf("-- done assembling!\n");
