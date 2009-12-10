@@ -203,7 +203,7 @@ void GFaceCompound::fillNeumannBCS() const
       double y=0.; 
       double z=0.;
       for (std::list<GEdge*>::iterator ite = loop.begin(); ite != loop.end(); ite++){
-	for (int k= 0; k< (*ite)->getNumMeshElements(); k++){
+	for (unsigned int k= 0; k< (*ite)->getNumMeshElements(); k++){
 	  MVertex *v0 = (*ite)->getMeshElement(k)->getVertex(0);
 	  MVertex *v1 = (*ite)->getMeshElement(k)->getVertex(1);
 	  x += .5*(v0->x() + v1->x()); 
@@ -217,7 +217,7 @@ void GFaceCompound::fillNeumannBCS() const
          
       //--- create new triangles
       for (std::list<GEdge*>::iterator ite = loop.begin(); ite != loop.end(); ite++){
-	for (int i= 0; i< (*ite)->getNumMeshElements(); i++){
+	for (unsigned int i= 0; i< (*ite)->getNumMeshElements(); i++){
 	  MVertex *v0 = (*ite)->getMeshElement(i)->getVertex(0);
 	  MVertex *v1 = (*ite)->getMeshElement(i)->getVertex(1);
 	  MTriangle *myTri  = new MTriangle(v0,v1, c); 
@@ -1318,7 +1318,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
     
     SVector3 b300,b030,b003;
     SVector3 b210,b120,b021,b012,b102,b201,E,VV,b111;
-    double  w12,w21,w23,w32,w31,w13;
+    //double  w12,w21,w23,w32,w31,w13;
 
     b300 = lt->v1;
     b030 = lt->v2;
