@@ -58,6 +58,8 @@ class dgGroupOfElements {
   fullMatrix<double> *_redistributionSource;
   // inverse mass matrix of all elements
   fullMatrix<double> *_imass;
+  //
+  fullMatrix<double> *_dPsiDx;
   // dimension of the parametric space and of the real space
   // may be different if the domain is a surface in 3D (manifold)
   int _dimUVW, _dimXYZ;
@@ -79,6 +81,7 @@ public:
   inline const fullMatrix<double> & getSourceRedistributionMatrix () const {return *_redistributionSource;}
   inline double getDetJ (int iElement, int iGaussPoint) const {return (*_mapping)(iElement, 10*iGaussPoint + 9);}
   inline double getInvJ (int iElement, int iGaussPoint, int i, int j) const {return (*_mapping)(iElement, 10*iGaussPoint + i + 3*j);}
+  inline fullMatrix<double> & getDPsiDx() const { return *_dPsiDx;}
   inline fullMatrix<double> &getInverseMassMatrix () const {return *_imass;}
   inline const fullMatrix<double> getMapping (int iElement) const {return fullMatrix<double>(*_mapping, iElement, 1);}
 };
@@ -104,8 +107,10 @@ class dgGroupOfFaces {
   // is characterized by a single integer which is the combination
   // this closure is for the interpolation that MAY BE DIFFERENT THAN THE
   // GEOMETRICAL CLOSURE !!!
-  std::vector<const std::vector<int> * > _closuresLeft; 
-  std::vector<const std::vector<int> * > _closuresRight; 
+  std::vector<std::vector<int> > _closuresLeft; 
+  std::vector<std::vector<int> > _closuresRight; 
+  std::vector<int> _closuresIdLeft; 
+  std::vector<int> _closuresIdRight; 
   // XYZ gradient of the shape functions of both elements on the integrations points of the face
   // (iQP*3+iXYZ , iFace*NPsi+iPsi)
   fullMatrix<double> *_dPsiLeftDxOnQP;
@@ -129,8 +134,8 @@ public:
   inline MElement* getElementLeft (int i) const {return _groupLeft.getElement(_left[i]);}  
   inline MElement* getElementRight (int i) const {return _groupRight.getElement(_right[i]);}  
   inline MElement* getFace (int iElement) const {return _faces[iElement];}  
-  const std::vector<int> * getClosureLeft(int iFace) const{ return _closuresLeft[iFace];}
-  const std::vector<int> * getClosureRight(int iFace) const{ return _closuresRight[iFace];}
+  const std::vector<int> &getClosureLeft(int iFace) const{ return _closuresLeft[_closuresIdLeft[iFace]];}
+  const std::vector<int> &getClosureRight(int iFace) const{ return _closuresRight[_closuresIdRight[iFace]];}
   inline fullMatrix<double> &getNormals () const {return *_normals;}
   dgGroupOfFaces (const dgGroupOfElements &elements,int pOrder);
   dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MVertex*> &boundaryVertices);

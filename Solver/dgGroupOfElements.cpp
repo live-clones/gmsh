@@ -50,20 +50,23 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e, int polyOr
 
   _dimUVW = _dimXYZ = e[0]->getDim();
   // this is the biggest piece of data ... the mappings
-  int nbNodes = _fs.coefficients.size1();
-  _redistributionFluxes[0] = new fullMatrix<double> (nbNodes,_integration->size1());
-  _redistributionFluxes[1] = new fullMatrix<double> (nbNodes,_integration->size1());
-  _redistributionFluxes[2] = new fullMatrix<double> (nbNodes,_integration->size1());
-  _redistributionSource = new fullMatrix<double> (nbNodes,_integration->size1());
-  _collocation = new fullMatrix<double> (_integration->size1(),nbNodes);
+  int nbPsi = _fs.coefficients.size1();
+  _redistributionFluxes[0] = new fullMatrix<double> (nbPsi,_integration->size1());
+  _redistributionFluxes[1] = new fullMatrix<double> (nbPsi,_integration->size1());
+  _redistributionFluxes[2] = new fullMatrix<double> (nbPsi,_integration->size1());
+  _redistributionSource = new fullMatrix<double> (nbPsi,_integration->size1());
+  _collocation = new fullMatrix<double> (_integration->size1(),nbPsi);
   _mapping = new fullMatrix<double> (e.size(), 10 * _integration->size1());
-  _imass = new fullMatrix<double> (nbNodes,nbNodes*e.size()); 
+  _imass = new fullMatrix<double> (nbPsi,nbPsi*e.size()); 
+  _dPsiDx = new fullMatrix<double> ( _integration->size1()*3,nbPsi*e.size());
   double g[256][3],f[256];
+
   for (int i=0;i<_elements.size();i++){
     MElement *e = _elements[i];
-    fullMatrix<double> imass(*_imass,nbNodes*i,nbNodes);
+    fullMatrix<double> imass(*_imass,nbPsi*i,nbPsi);
     for (int j=0;j< _integration->size1() ; j++ ){
       _fs.f((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), f);
+      _fs.df((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), g);
       double jac[3][3],ijac[3][3],detjac;
       (*_mapping)(i,10*j + 9) =  
         e->getJacobian ((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), jac);
@@ -78,10 +81,13 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e, int polyOr
       (*_mapping)(i,10*j + 6) = ijac[2][0];
       (*_mapping)(i,10*j + 7) = ijac[2][1];
       (*_mapping)(i,10*j + 8) = ijac[2][2];
-      for (int k=0;k<_fs.coefficients.size1();k++){ 
-        for (int l=0;l<_fs.coefficients.size1();l++) { 
+      for (int k=0;k<nbPsi;k++){ 
+        for (int l=0;l<nbPsi;l++) { 
           imass(k,l) += f[k]*f[l]*weight*detjac;
         }
+        (*_dPsiDx)(j*3  ,i*nbPsi+k) = g[k][0]*ijac[0][0]+g[k][1]*ijac[0][1]+g[k][2]*ijac[0][2];
+        (*_dPsiDx)(j*3+1,i*nbPsi+k) = g[k][0]*ijac[1][0]+g[k][1]*ijac[1][1]+g[k][2]*ijac[1][2];
+        (*_dPsiDx)(j*3+2,i*nbPsi+k) = g[k][0]*ijac[2][0]+g[k][1]*ijac[2][1]+g[k][2]*ijac[2][2];
       }
     }
     imass.invertInPlace();
@@ -113,6 +119,7 @@ dgGroupOfElements::~dgGroupOfElements(){
   delete _redistributionFluxes[1];
   delete _redistributionFluxes[2];
   delete _redistributionSource;
+  delete _dPsiDx;
   delete _mapping;
   delete _collocation;
   delete _imass;
@@ -126,19 +133,17 @@ void dgGroupOfFaces::addFace(const MFace &topoFace, int iElLeft, int iElRight){
   MElement &elLeft = *_groupLeft.getElement(iElLeft);
   int ithFace, sign, rot;
   elLeft.getFaceInfo (topoFace, ithFace, sign, rot);
-  _closuresLeft.push_back(&(_fsLeft->getFaceClosure(ithFace, sign, rot)));
-  const std::vector<int> & geomClosure = elLeft.getFunctionSpace()->getFaceClosure(ithFace, sign, rot);
+  _closuresIdLeft.push_back(_fsLeft->getFaceClosureId(ithFace, sign, rot));
   if(iElRight>=0){
     _right.push_back(iElRight);
     MElement &elRight = *_groupRight.getElement(iElRight);
     elRight.getFaceInfo (topoFace, ithFace, sign, rot);
-    _closuresRight.push_back(&(_fsRight->getFaceClosure(ithFace, sign, rot)));        
+    _closuresIdRight.push_back(_fsRight->getFaceClosureId(ithFace, sign, rot));        
   }
   // compute the face element that correspond to the geometrical closure
   // get the vertices of the face
   std::vector<MVertex*> vertices;
-  for(int j=0;j<topoFace.getNumVertices();j++)
-    vertices.push_back(topoFace.getVertex(j));
+  const std::vector<int> & geomClosure = elLeft.getFunctionSpace()->getFaceClosure(_closuresIdLeft.back());
   for (int j=0; j<geomClosure.size() ; j++)
     vertices.push_back( elLeft.getVertex(geomClosure[j]) );
   // triangular face
@@ -156,26 +161,19 @@ void dgGroupOfFaces::addFace(const MFace &topoFace, int iElLeft, int iElRight){
   else throw;
 }
 
-void dgGroupOfFaces::addEdge(const MEdge &topoEdge, int iElLeft, int iElRight){
+void dgGroupOfFaces::addEdge(const MEdge &topoEdge, int iElLeft, int iElRight) {
   _left.push_back(iElLeft);
   MElement &elLeft = *_groupLeft.getElement(iElLeft);
   int ithEdge, sign;
   elLeft.getEdgeInfo (topoEdge, ithEdge, sign);
-  _closuresLeft.push_back(&_fsLeft->getEdgeClosure(ithEdge, sign));
-  const std::vector<int> &geomClosure = elLeft.getFunctionSpace()->getEdgeClosure(ithEdge, sign);
-  if(iElRight>=0){
+  _closuresIdLeft.push_back(_fsLeft->getEdgeClosureId(ithEdge, sign));
+  if(iElRight>=0) {
     _right.push_back(iElRight);
-    MElement &elRight = *_groupRight.getElement(iElRight);
-    elRight.getEdgeInfo (topoEdge, ithEdge, sign);
-    _closuresRight.push_back(&_fsRight->getEdgeClosure(ithEdge, sign));
+    _groupRight.getElement(iElRight)->getEdgeInfo (topoEdge, ithEdge, sign);
+    _closuresIdRight.push_back(_fsRight->getEdgeClosureId(ithEdge,sign));
   }
   std::vector<MVertex*> vertices;
-  if(sign==1)
-    for(int j=0;j<topoEdge.getNumVertices();j++)
-      vertices.push_back(topoEdge.getVertex(j));
-  else
-    for(int j=topoEdge.getNumVertices()-1;j>=0;j--)
-      vertices.push_back(topoEdge.getVertex(j));
+  const std::vector<int> &geomClosure = elLeft.getFunctionSpace()->getEdgeClosure(_closuresIdLeft.back());
   for (int j=0; j<geomClosure.size() ; j++)
     vertices.push_back( elLeft.getVertex(geomClosure[j]) );
   switch(vertices.size()){
@@ -190,12 +188,12 @@ void dgGroupOfFaces::addVertex(MVertex *topoVertex, int iElLeft, int iElRight){
   MElement &elLeft = *_groupLeft.getElement(iElLeft);
   int ithVertex;
   elLeft.getVertexInfo (topoVertex, ithVertex);
-  _closuresLeft.push_back(&_fsLeft->getVertexClosure(ithVertex));
+  _closuresIdLeft.push_back(ithVertex);
   if(iElRight>=0){
     _right.push_back(iElRight);
     MElement &elRight = *_groupRight.getElement(iElRight);
     elRight.getVertexInfo (topoVertex, ithVertex);
-    _closuresRight.push_back(&_fsRight->getVertexClosure(ithVertex));
+    _closuresIdRight.push_back(ithVertex);
   }
   _faces.push_back(new MPoint(topoVertex) );
 }
@@ -219,7 +217,7 @@ void dgGroupOfFaces::init(int pOrder) {
     MElement *f = _faces[i];
     for (int j=0;j< _integration->size1() ; j++ ){
       double jac[3][3];
-      (*_detJac)(j,i)=f->getJacobian ((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), jac);
+      (*_detJac)(j,i) = f->getJacobian ((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), jac);
     }
   }
 
@@ -232,7 +230,7 @@ void dgGroupOfFaces::init(int pOrder) {
   }
   int index = 0;
   for (size_t i=0; i<_faces.size();i++){
-    const std::vector<int> &closureLeft=*_closuresLeft[i];
+    const std::vector<int> &closureLeft=getClosureLeft(i);
     fullMatrix<double> *intLeft=dgGetFaceIntegrationRuleOnElement(_fsFace,*_integration,_fsLeft,&closureLeft);
     double jac[3][3],ijac[3][3];
     for (int j=0; j<intLeft->size1(); j++){
@@ -269,7 +267,7 @@ void dgGroupOfFaces::init(int pOrder) {
     delete intLeft;
     // there is nothing on the right for boundary groups
     if(_fsRight){
-      fullMatrix<double> *intRight=dgGetFaceIntegrationRuleOnElement(_fsFace,*_integration,_fsRight,_closuresRight[i]);
+      fullMatrix<double> *intRight=dgGetFaceIntegrationRuleOnElement(_fsFace,*_integration,_fsRight,&getClosureRight(i));
       for (int j=0; j<intRight->size1(); j++){
         _fsRight->df((*intRight)(j,0),(*intRight)(j,1),(*intRight)(j,2),g);
         getElementRight(i)->getJacobian ((*intRight)(j,0), (*intRight)(j,1), (*intRight)(j,2), jac);
@@ -286,7 +284,6 @@ void dgGroupOfFaces::init(int pOrder) {
       delete intRight;
     }
   }
-
 }
 
 dgGroupOfFaces::~dgGroupOfFaces()
@@ -325,6 +322,7 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string bo
   if(boundaryTag=="")
     throw;
   _fsLeft=_groupLeft.getElement(0)->getFunctionSpace(pOrder);
+  _closuresLeft = _fsLeft->edgeClosure;
   _fsRight=NULL;
   for(int i=0; i<elGroup.getNbElements(); i++){
     MElement &el = *elGroup.getElement(i);
@@ -344,6 +342,7 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string bo
   if(boundaryTag=="")
     throw;
   _fsLeft=_groupLeft.getElement(0)->getFunctionSpace(pOrder);
+  _closuresLeft = _fsLeft->faceClosure;
   _fsRight=NULL;
   for(int i=0; i<elGroup.getNbElements(); i++){
     MElement &el = *elGroup.getElement(i);
@@ -379,6 +378,8 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, int pOrder):
     }
     case 2 : {
       std::map<MEdge,int,Less_Edge> edgeMap;
+      _closuresLeft = _fsLeft->edgeClosure;
+      _closuresRight = _fsRight->edgeClosure;
       for(int i=0; i<elGroup.getNbElements(); i++){
         MElement &el = *elGroup.getElement(i);
         for (int j=0; j<el.getNumEdges(); j++){
@@ -394,6 +395,8 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, int pOrder):
     }
     case 3 : {
       std::map<MFace,int,Less_Face> faceMap;
+      _closuresLeft = _fsLeft->faceClosure;
+      _closuresRight = _fsRight->faceClosure;
       for(int i=0; i<elGroup.getNbElements(); i++){
         MElement &el = *elGroup.getElement(i);
         for (int j=0; j<el.getNumFaces(); j++){
@@ -419,7 +422,7 @@ void dgGroupOfFaces::mapToInterface ( int nFields,
 {
   if(isBoundary()){
     for(int i=0; i<getNbElements(); i++) {
-      const std::vector<int> &closureLeft = *getClosureLeft(i);
+      const std::vector<int> &closureLeft = getClosureLeft(i);
       for (int iField=0; iField<nFields; iField++){
         for(size_t j =0; j < closureLeft.size(); j++){
           v(j, i*nFields + iField) = vLeft(closureLeft[j], _left[i]*nFields + iField);
@@ -429,8 +432,8 @@ void dgGroupOfFaces::mapToInterface ( int nFields,
     
   }else{
     for(int i=0; i<getNbElements(); i++) {
-      const std::vector<int> &closureRight = *getClosureRight(i);
-      const std::vector<int> &closureLeft = *getClosureLeft(i);
+      const std::vector<int> &closureRight = getClosureRight(i);
+      const std::vector<int> &closureLeft = getClosureLeft(i);
       for (int iField=0; iField<nFields; iField++){
         for(size_t j =0; j < closureLeft.size(); j++){
           v(j, i*2*nFields + iField) = vLeft(closureLeft[j], _left[i]*nFields + iField);
@@ -450,7 +453,7 @@ void dgGroupOfFaces::mapFromInterface ( int nFields,
 {
   if(isBoundary()){
     for(int i=0; i<getNbElements(); i++) {
-      const std::vector<int> &closureLeft = *getClosureLeft(i);
+      const std::vector<int> &closureLeft = getClosureLeft(i);
       for (int iField=0; iField<nFields; iField++){
         for(size_t j =0; j < closureLeft.size(); j++)
           vLeft(closureLeft[j], _left[i]*nFields + iField) += v(j, i*nFields + iField);
@@ -458,8 +461,8 @@ void dgGroupOfFaces::mapFromInterface ( int nFields,
     }
   }else{
     for(int i=0; i<getNbElements(); i++) {
-      const std::vector<int> &closureRight = *getClosureRight(i);
-      const std::vector<int> &closureLeft = *getClosureLeft(i);
+      const std::vector<int> &closureRight = getClosureRight(i);
+      const std::vector<int> &closureLeft = getClosureLeft(i);
       for (int iField=0; iField<nFields; iField++){
         for(size_t j =0; j < closureLeft.size(); j++)
           vLeft(closureLeft[j], _left[i]*nFields + iField) += v(j, i*2*nFields + iField);
