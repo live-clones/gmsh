@@ -40,7 +40,7 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
   fullMatrix<double> Fuvw[3] = {fullMatrix<double> ( group.getNbIntegrationPoints(), group.getNbElements() * nbFields),
 				fullMatrix<double> (group.getNbIntegrationPoints(), group.getNbElements() * nbFields),
 				fullMatrix<double> (group.getNbIntegrationPoints(), group.getNbElements() * nbFields)};
-  dataCacheMap cacheMap;
+  dataCacheMap cacheMap(group.getNbIntegrationPoints());
   dataCacheElement &cacheElement = cacheMap.getElement();
   // provided dataCache
   cacheMap.provideData("UVW").set(group.getIntegrationPointsMatrix());
@@ -146,7 +146,8 @@ void dgAlgorithm::residualInterface ( //dofManager &dof, // the DOF manager (may
   fullMatrix<double> NormalFluxQP ( group.getNbIntegrationPoints(), nbFaces*nbFields*2);
 
   // create one dataCache for each side
-  dataCacheMap cacheMapLeft, cacheMapRight;
+  dataCacheMap cacheMapLeft(group.getNbIntegrationPoints());
+  dataCacheMap cacheMapRight(group.getNbIntegrationPoints());
 
   // data this algorithm provide to the cache map (we can maybe move each data to a separate function but
   // I think It's easier like this)
@@ -310,7 +311,7 @@ void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (mayb
   // ----- 2 ----  compute normal fluxes  at integration points
   fullMatrix<double> NormalFluxQP ( group.getNbIntegrationPoints(), group.getNbElements()*nbFields);
 
-  dataCacheMap cacheMapLeft;
+  dataCacheMap cacheMapLeft(group.getNbIntegrationPoints());
   // provided dataCache
   cacheMapLeft.provideData("UVW").set(group.getIntegrationPointsMatrix());
   dataCacheDouble &solutionQPLeft = cacheMapLeft.provideData("Solution");

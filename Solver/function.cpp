@@ -85,11 +85,10 @@ class functionXYZ : public function {
     dataCacheElement &_element;
     dataCacheDouble &_uvw;
    public:
-    data(dataCacheMap *m) :
+    data(dataCacheMap *m) : 
+      dataCacheDouble(m->getNbEvaluationPoints(),3),
       _element(m->getElement(this)), _uvw(m->get("UVW", this))
-    {
-      _value = fullMatrix<double> (_uvw().size1(), 3);
-    }
+    {}
     void _eval()
     {
       for(int i = 0; i < _uvw().size1(); i++){
@@ -113,15 +112,12 @@ class functionConstant : public function {
  private :
   class data : public dataCacheDouble {
     const functionConstant *_function;
-    dataCacheDouble &_uvw;
     public:
-    data(const functionConstant * function,dataCacheMap *m) :_uvw(m->get("UVW",this)){
+    data(const functionConstant * function,dataCacheMap *m):
+      dataCacheDouble(m->getNbEvaluationPoints(),function->_source.size1()){
       _function = function;
     }
     void _eval() {
-      if(_value.size1()!=_uvw().size1()){
-        _value=fullMatrix<double>(_uvw().size1(),_function->_source.size1());
-      }
       for(int i=0;i<_value.size1();i++)
         for(int j=0;j<_function->_source.size1();j++)
           _value(i,j)=_function->_source(j,0);

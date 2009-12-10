@@ -12,30 +12,27 @@ class functionLua : public function {
   int _nbCol;
  private:
   class data : public dataCacheDouble{
-   private:    
-    dataCacheDouble &_uvw;
+    private:    
     const functionLua *_function;
     std::vector<dataCacheDouble *> _dependencies;
-   public:
-    data(const functionLua *f, dataCacheMap *m)
-      : _function(f),_uvw(m->get("UVW",this))
+    public:
+    data(const functionLua *f, dataCacheMap *m):
+      dataCacheDouble(m->getNbEvaluationPoints(),f->_nbCol),
+      _function(f)    
     {
       _dependencies.resize ( _function->_dependenciesName.size());
       for (int i=0;i<_function->_dependenciesName.size();i++)
-	 _dependencies[i] = &m->get(_function->_dependenciesName[i],this);
+        _dependencies[i] = &m->get(_function->_dependenciesName[i],this);
     }
     void _eval()
     {
-      if(_value.size1()!=_uvw().size1() || _value.size2() != _function->_nbCol){
-        _value=fullMatrix<double>(_uvw().size1(),_function->_nbCol);
-      }
       lua_getfield(_function->_L, LUA_GLOBALSINDEX, _function->_luaFunctionName.c_str());
       for (int i=0;i< _dependencies.size();i++){
-	const fullMatrix<double> *data = &(*_dependencies[i])();
-	lua_pushlightuserdata (_function->_L, (void*) data);
+        const fullMatrix<double> *data = &(*_dependencies[i])();
+        lua_pushlightuserdata (_function->_L, (void*) data);
       }
       lua_pushlightuserdata (_function->_L, &_value);
-      lua_call(_function->_L,_dependencies.size()+1,0);  /* call Lua function */      
+      lua_call(_function->_L,_dependencies.size()+1,0);  /* call Lua function */
     }
   };
  public:

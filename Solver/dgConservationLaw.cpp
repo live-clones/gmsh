@@ -4,10 +4,10 @@ class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
   dgConservationLaw &_claw;
   std::string _outsideValueFunctionName;
   class term : public dataCacheDouble {
-    dataCacheMap cacheMapRight; // new cacheMap to  pass to the Riemann solver
     dataCacheDouble &solutionRight;
     dataCacheDouble &solutionLeft;
     dataCacheDouble &outsideValue;
+    dataCacheMap cacheMapRight; // new cacheMap to  pass to the Riemann solver
     dataCacheDouble *riemannSolver;
     dgConservationLaw &_claw;
     public:
@@ -15,6 +15,7 @@ class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
       solutionRight(cacheMapRight.provideData("Solution")),
       solutionLeft(cacheMapLeft.get("Solution",this)),
       outsideValue(cacheMapLeft.get(outsideValueFunctionName,this)),
+      cacheMapRight(cacheMapLeft.getNbEvaluationPoints()),
       _claw(claw)
     {
       riemannSolver=_claw.newRiemannSolver(cacheMapLeft,cacheMapRight);
@@ -26,9 +27,11 @@ class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
         _value = fullMatrix<double>(solutionLeft().size1(),_claw.nbFields());
       }
       solutionRight.set(outsideValue());
-      for(int i=0;i<_value.size1(); i++)
-        for(int j=0;j<_value.size2(); j++)
-          _value(i,j) = (*riemannSolver)(i,j*2);
+      if(riemannSolver){
+        for(int i=0;i<_value.size1(); i++)
+          for(int j=0;j<_value.size2(); j++)
+            _value(i,j) = (*riemannSolver)(i,j*2);
+      }
     }
   };
   public:

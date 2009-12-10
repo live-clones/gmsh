@@ -97,6 +97,8 @@ class dataCacheDouble : public dataCache {
     }
     return _value;
   }
+  dataCacheDouble(){};
+  dataCacheDouble(int size1, int size2):_value(size1,size2){};
   virtual ~dataCacheDouble(){};
 };
 
@@ -133,6 +135,7 @@ class dataCacheElement : public dataCache {
 // more explanation at the head of this file
 class dataCacheMap {
  private:
+  int _nbEvaluationPoints;
   // keep track of the current element and all the dataCaches that
   // depend on it
   dataCacheElement _cacheElement;
@@ -140,7 +143,7 @@ class dataCacheMap {
   class providedDataDouble : public dataCacheDouble
   // for data provided by the algorithm and that does not have an _eval function
   // (typically "UVW") this class is not stricly necessary, we could write
-  // a function for each case but I think it's more practical like this
+  // a function for each case 
   {
     void _eval() {throw;};
     public:
@@ -152,6 +155,8 @@ class dataCacheMap {
   dataCacheDouble &get(const std::string &functionName, dataCache *caller=0);
   dataCacheElement &getElement(dataCache *caller=0);
   dataCacheDouble &provideData(std::string name);
+  dataCacheMap(int nbEvaluationPoints):_nbEvaluationPoints(nbEvaluationPoints){}
+  inline int getNbEvaluationPoints(){return _nbEvaluationPoints;}
   ~dataCacheMap();
 };
 #endif
