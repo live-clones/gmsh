@@ -74,8 +74,7 @@ static int newLuaFunction (lua_State *L){
 }
 
 static int newConstantFunction (lua_State *L){
-  fullMatrix<double> * _ud = (fullMatrix<double> *) lua_touserdata(L, 1);
-
+  fullMatrix<double> * _ud = Luna<fullMatrix<double> >::check(L, 1);
   int ITER = 1;
   std::string functionName = "ConstantFunction";
   while (function::get(functionName, true)){
@@ -91,7 +90,8 @@ static int newConstantFunction (lua_State *L){
 
 int RegisterFunctions (lua_State *L) {
   luaL_reg fcts[] = {{"lua",   newLuaFunction },
-		     {"constant",   newConstantFunction }};
+		     {"constant",   newConstantFunction },
+         {0,0}};
   luaL_register(L, "createFunction", fcts);  
 };
 

@@ -1005,16 +1005,8 @@ message("")
 mark_as_advanced(BISON FLEX GMP_LIB GMSH_EXTRA_VERSION HDF5_LIB MAKEINFO 
                  MED_LIB OCC_INC SZ_LIB TAUCS_LIB LUA_LIB TEXI2PDF)
 
-add_executable(gmshdg  EXCLUDE_FROM_ALL Solver/dgMainTest.cpp ${GMSH_SRC})
 add_executable(gmshlua EXCLUDE_FROM_ALL Solver/dgMainLua.cpp ${GMSH_SRC})
-target_link_libraries(gmshdg ${LINK_LIBRARIES})
 target_link_libraries(gmshlua ${LINK_LIBRARIES})
-
-add_executable(gmshdgsw EXCLUDE_FROM_ALL Solver/dgMainShallowWater2d.cpp ${GMSH_SRC})
-target_link_libraries(gmshdgsw ${LINK_LIBRARIES})
-
-add_executable(gmshdgwave EXCLUDE_FROM_ALL Solver/dgMainWaveEquation.cpp ${GMSH_SRC})
-target_link_libraries(gmshdgwave ${LINK_LIBRARIES})
 
 add_executable(gmshdgsam EXCLUDE_FROM_ALL Solver/dgMainSam.cpp ${GMSH_SRC})
 target_link_libraries(gmshdgsam ${LINK_LIBRARIES})

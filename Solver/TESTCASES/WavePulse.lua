@@ -39,7 +39,7 @@ DG:L2Projection(initialCondition)
 
 print'*** export ***'
 
-DG:exportSolution('solution_0')
+DG:exportSolution('output/solution_000')
 
 print'*** solve ***'
 
@@ -48,7 +48,7 @@ for i=1,1000 do
     norm = DG:RK44(dt)
     print('*** ITER ***',i,norm)
     if (i % 10 == 0) then 
-       AA = string.format("solution-%03d", i) 
+       AA = string.format("output/solution-%03d", i) 
        DG:exportSolution(AA) 
     end
 end

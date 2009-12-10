@@ -60,11 +60,16 @@ dgSystemOfEquations::dgSystemOfEquations(lua_State *L){
 // set the conservation law as a string (for now)
 int dgSystemOfEquations::setConservationLaw(lua_State *L){
   _claw = 0;  
+  //int argc = (int)luaL_checknumber(L,0);
   _cLawName = std::string (luaL_checkstring(L, 1));
   if (_cLawName == "WaveEquation")
     _claw = dgNewConservationLawWaveEquation();
-  else if  (_cLawName == "ShallowWater2d")
+  else if (_cLawName == "ShallowWater2d")
     _claw = dgNewConservationLawShallowWater2d(); 
+  else if (_cLawName == "AdvectionDiffusion"){
+    std::string advFunction = luaL_checkstring(L,2);
+    _claw = dgNewConservationLawAdvection(advFunction);
+  }
   if (!_claw)throw;
   return 0;
 }
@@ -78,7 +83,15 @@ int dgSystemOfEquations::setOrder(lua_State *L){
 int dgSystemOfEquations::addBoundaryCondition (lua_State *L){
   std::string physicalName(luaL_checkstring(L, 1));
   std::string bcName(luaL_checkstring(L, 2));
-  if (_cLawName == "WaveEquation"){
+  //generic boundary conditions
+  if (bcName == "0Flux"){
+    _claw->addBoundaryCondition(physicalName,dgBoundaryCondition::new0FluxCondition(*_claw));
+  }
+  else if (bcName == "OutsideValues"){
+    _claw->addBoundaryCondition(physicalName,dgBoundaryCondition::newOutsideValueCondition(*_claw,luaL_checkstring(L,3)));
+  }
+  //specific boundary conditions
+  else if (_cLawName == "WaveEquation"){
     if (bcName == "Wall"){
       _claw->addBoundaryCondition(physicalName,dgNewBoundaryConditionWaveEquationWall());
     }
@@ -100,6 +113,7 @@ int dgSystemOfEquations::L2Projection (lua_State *L){
     _algo->residualVolume(Law,*_elementGroups[i],*_solution->_dataProxys[i],*_rightHandSide->_dataProxys[i]);
     _algo->multAddInverseMassMatrix(*_elementGroups[i],*_rightHandSide->_dataProxys[i],*_solution->_dataProxys[i]);
   }
+  return 0;
 }
 
 // ok, we can setup the groups and create solution vectors
@@ -114,7 +128,6 @@ int dgSystemOfEquations::setup(lua_State *L){
   // compute the total size of the soution
   _solution = new dgDofContainer(_elementGroups,*_claw);
   _rightHandSide = new dgDofContainer(_elementGroups,*_claw);
-  //  printf("aaaaaaaaaaaaa\n");
 }
 
 
