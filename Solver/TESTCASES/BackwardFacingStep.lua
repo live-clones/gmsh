@@ -1,17 +1,20 @@
+MACH = 0.1;
+RHO  = 1.0;
+PRES = 1./(MACH*RHO*RHO*1.4*1.4) 
+V = 1.0 
+SOUND = V/MACH
+
 --[[ 
      Function for initial conditions
 --]]
-function initial_condition( x , f )
-  XYZ = fullMatrix(x)    
+function free_stream( x, f )
   FCT = fullMatrix(f)    
+  XYZ = fullMatrix(x)    
   for i=0,XYZ:size1()-1 do
-    X = XYZ:get(i,0) - .5
-    Y = XYZ:get(i,1) - .5
-    Z = XYZ:get(i,2)
-    VALUE = math.exp(-40*(X*X+Y*Y+Z*Z));   
-    FCT:set(i,0,VALUE) 
-    FCT:set(i,1,0.0) 
+    FCT:set(i,0,RHO) 
+    FCT:set(i,1,RHO*V) 
     FCT:set(i,2,0.0) 
+    FCT:set(i,3, 0.5*RHO*V*V+PRES/0.4) 
   end
 end
 
@@ -22,32 +25,38 @@ end
 order = 1
 print'*** Loading the mesh and the model ***'
 myModel   = GModel  ()
-myModel:load ('square.geo')
-myModel:load ('square.msh')
+myModel:load ('step.geo')
+myModel:load ('step.msh')
 print'*** Create a dg solver ***'
 DG = dgSystemOfEquations (myModel)
 DG:setOrder(order)
-DG:setConservationLaw('WaveEquation')
-DG:addBoundaryCondition('Border','Wall')
+DG:setConservationLaw('PerfectGas2d')
+DG:addBoundaryCondition('Walls','Wall')
+
+FS = createFunction.lua(4, 'free_stream', 'XYZ')
+
+DG:addBoundaryCondition('LeftRight','FreeStream',FS)
 DG:setup()
 
-initialCondition = createFunction.lua(3,'initial_condition','XYZ')
 
 print'*** setting the initial solution ***'
 
-DG:L2Projection(initialCondition)
+DG:L2Projection(FS)
 
 print'*** export ***'
 
-DG:exportSolution('output/solution_000')
+DG:exportSolution('solution_0')
 
 print'*** solve ***'
 
-dt = 0.005;
+LC = 0.1
+dt = .3*LC/(SOUND+V);
+print('DT=',dt)
+
 for i=1,1000 do
     norm = DG:RK44(dt)
     print('*** ITER ***',i,norm)
-    if (i % 10 == 0) then 
+    if (i % 20 == 0) then 
        DG:exportSolution(string.format("solution-%03d", i)) 
     end
 end

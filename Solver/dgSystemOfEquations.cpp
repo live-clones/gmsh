@@ -66,6 +66,8 @@ int dgSystemOfEquations::setConservationLaw(lua_State *L){
     _claw = dgNewConservationLawWaveEquation();
   else if (_cLawName == "ShallowWater2d")
     _claw = dgNewConservationLawShallowWater2d(); 
+  else if  (_cLawName == "PerfectGas2d")
+    _claw = dgNewPerfectGasLaw2d(); 
   else if (_cLawName == "AdvectionDiffusion"){
     std::string advFunction = luaL_checkstring(L,2);
     _claw = dgNewConservationLawAdvection(advFunction);
@@ -100,6 +102,17 @@ int dgSystemOfEquations::addBoundaryCondition (lua_State *L){
   else if (_cLawName == "ShallowWater2d"){
     if (bcName == "Wall"){
       _claw->addBoundaryCondition(physicalName,dgNewBoundaryConditionShallowWater2dWall());
+    }
+    else throw;
+  }
+  else if (_cLawName == "PerfectGas2d"){
+    if (bcName == "Wall"){
+      _claw->addBoundaryCondition(physicalName,dgNewBoundaryConditionPerfectGasLaw2dWall());
+    }
+    else if (bcName == "FreeStream"){
+      std::string freeStreamName(luaL_checkstring(L, 3));
+      _claw->addBoundaryCondition(physicalName,
+				  dgNewBoundaryConditionPerfectGasLaw2dFreeStream(freeStreamName));
     }
     else throw;
   }

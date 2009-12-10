@@ -418,6 +418,7 @@ void dgAlgorithm::residual( const dgConservationLaw &claw,
     residu[i]->scale(0);
     residualVolume(claw,*eGroups[i],*solution[i],*residu[i]);
   }
+  //  residu[0]->print("Volume");
   //interface term
   for(size_t i=0;i<fGroups.size() ; i++) {
     dgGroupOfFaces &faces = *fGroups[i];
@@ -433,6 +434,7 @@ void dgAlgorithm::residual( const dgConservationLaw &claw,
     residualInterface(claw,faces,solInterface,*solution[iGroupLeft], *solution[iGroupRight],residuInterface);
     faces.mapFromInterface(nbFields, residuInterface, *residu[iGroupLeft], *residu[iGroupLeft]);
   }
+  //  residu[0]->print("Interfaces");
   //boundaries
   for(size_t i=0;i<bGroups.size() ; i++) {
     dgGroupOfFaces &faces = *bGroups[i];
@@ -447,4 +449,5 @@ void dgAlgorithm::residual( const dgConservationLaw &claw,
     residualBoundary(claw,faces,solInterface,*solution[iGroupLeft],residuInterface);
     faces.mapFromInterface(nbFields, residuInterface, *residu[iGroupLeft], *residu[iGroupRight]);
   }
+  //  residu[0]->print("Boundaries");
 }
