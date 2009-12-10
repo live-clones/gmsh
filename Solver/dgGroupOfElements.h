@@ -111,6 +111,9 @@ class dgGroupOfFaces {
   std::vector<std::vector<int> > _closuresRight; 
   std::vector<int> _closuresIdLeft; 
   std::vector<int> _closuresIdRight; 
+  // face integration point in the coordinate of the left and right element (one fullMatrix per closure)
+  std::vector<fullMatrix<double> > _integrationPointsLeft;
+  std::vector<fullMatrix<double> > _integrationPointsRight;
   // XYZ gradient of the shape functions of both elements on the integrations points of the face
   // (iQP*3+iXYZ , iFace*NPsi+iPsi)
   fullMatrix<double> *_dPsiLeftDxOnQP;
@@ -134,8 +137,11 @@ public:
   inline MElement* getElementLeft (int i) const {return _groupLeft.getElement(_left[i]);}  
   inline MElement* getElementRight (int i) const {return _groupRight.getElement(_right[i]);}  
   inline MElement* getFace (int iElement) const {return _faces[iElement];}  
-  const std::vector<int> &getClosureLeft(int iFace) const{ return _closuresLeft[_closuresIdLeft[iFace]];}
-  const std::vector<int> &getClosureRight(int iFace) const{ return _closuresRight[_closuresIdRight[iFace]];}
+  inline const std::vector<int> &getClosureLeft(int iFace) const{ return _closuresLeft[_closuresIdLeft[iFace]];}
+  inline const std::vector<int> &getClosureRight(int iFace) const{ return _closuresRight[_closuresIdRight[iFace]];}
+  inline fullMatrix<double> &getIntegrationOnElementLeft(int iFace) { return _integrationPointsLeft[_closuresIdLeft[iFace]];}
+  inline fullMatrix<double> &getIntegrationOnElementRight(int iFace) { return _integrationPointsRight[_closuresIdRight[iFace]];}
+  
   inline fullMatrix<double> &getNormals () const {return *_normals;}
   dgGroupOfFaces (const dgGroupOfElements &elements,int pOrder);
   dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MVertex*> &boundaryVertices);

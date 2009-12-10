@@ -122,7 +122,7 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
 
 void dgAlgorithm::residualInterface ( //dofManager &dof, // the DOF manager (maybe useless here)
 				   const dgConservationLaw &claw,   // the conservation law
-				   const dgGroupOfFaces &group, 
+				   dgGroupOfFaces &group, 
 				   const fullMatrix<double> &solution, // solution !! at faces nodes
 				   fullMatrix<double> &solutionLeft, 
 				   fullMatrix<double> &solutionRight, 
@@ -154,7 +154,8 @@ void dgAlgorithm::residualInterface ( //dofManager &dof, // the DOF manager (may
   dataCacheDouble &normals = cacheMapLeft.provideData("Normals");
   dataCacheElement &cacheElementLeft = cacheMapLeft.getElement();
   dataCacheElement &cacheElementRight = cacheMapRight.getElement();
-  cacheMapLeft.provideData("UVW").set(group.getIntegrationPointsMatrix());
+  dataCacheDouble &uvwLeft = cacheMapLeft.provideData("UVW");
+  dataCacheDouble &uvwRight = cacheMapRight.provideData("UVW");
   dataCacheDouble &solutionQPLeft = cacheMapLeft.provideData("Solution");
   dataCacheDouble &solutionQPRight = cacheMapRight.provideData("Solution");
   dataCacheDouble &gradientSolutionLeft = cacheMapLeft.provideData("GradientSolution");
@@ -185,6 +186,8 @@ void dgAlgorithm::residualInterface ( //dofManager &dof, // the DOF manager (may
     dPsiRightDx.setAsProxy(DPsiLeftDx,iFace*nbNodesRight,nbNodesRight);
     dofsLeft.setAsProxy(solutionLeft, nbFields*group.getElementLeftId(iFace), nbFields);
     dofsRight.setAsProxy(solutionRight, nbFields*group.getElementRightId(iFace), nbFields);
+    uvwLeft.setAsProxy(group.getIntegrationOnElementLeft(iFace));
+    uvwRight.setAsProxy(group.getIntegrationOnElementRight(iFace));
     // proxies for the flux
     normalFluxQP.setAsProxy(NormalFluxQP, iFace*nbFields*2, nbFields*2);
 
@@ -297,7 +300,7 @@ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation l
 
 void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (maybe useless here)
 				   const dgConservationLaw &claw,   // the conservation law
-				   const dgGroupOfFaces &group, 
+				   dgGroupOfFaces &group, 
 				   const fullMatrix<double> &solution, // solution !! at faces nodes
 				   fullMatrix<double> &solutionLeft, 
 				   fullMatrix<double> &residual // residual !! at faces nodes
@@ -313,7 +316,7 @@ void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (mayb
 
   dataCacheMap cacheMapLeft(group.getNbIntegrationPoints());
   // provided dataCache
-  cacheMapLeft.provideData("UVW").set(group.getIntegrationPointsMatrix());
+  dataCacheDouble &uvw=cacheMapLeft.provideData("UVW");
   dataCacheDouble &solutionQPLeft = cacheMapLeft.provideData("Solution");
   dataCacheDouble &normals = cacheMapLeft.provideData("Normals");
   dataCacheElement &cacheElementLeft = cacheMapLeft.getElement();
@@ -326,6 +329,7 @@ void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (mayb
     // ----- 2.3.1 --- provide the data to the cacheMap
     solutionQPLeft.setAsProxy(solutionQP, iFace*nbFields, nbFields);
     normals.setAsProxy(group.getNormals(),iFace*group.getNbIntegrationPoints(),group.getNbIntegrationPoints());
+    uvw.setAsProxy(group.getIntegrationOnElementLeft(iFace));
     cacheElementLeft.set(group.getElementLeft(iFace));
 
     // ----- 2.3.2 --- compute fluxes

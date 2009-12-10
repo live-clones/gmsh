@@ -6,7 +6,6 @@ class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
   class term : public dataCacheDouble {
     dataCacheMap cacheMapRight; // new cacheMap to  pass to the Riemann solver
     dataCacheDouble &solutionRight;
-    dataCacheDouble &solutionLeft;
     dataCacheDouble &outsideValue;
     dataCacheDouble *riemannSolver;
     dgConservationLaw &_claw;
@@ -15,11 +14,11 @@ class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
       dataCacheDouble(cacheMapLeft.getNbEvaluationPoints(),claw.nbFields()),
       cacheMapRight(cacheMapLeft.getNbEvaluationPoints()),
       solutionRight(cacheMapRight.provideData("Solution")),
-      solutionLeft(cacheMapLeft.get("Solution",this)),
       outsideValue(cacheMapLeft.get(outsideValueFunctionName,this)),
       _claw(claw)
     {
       riemannSolver=_claw.newRiemannSolver(cacheMapLeft,cacheMapRight);
+      riemannSolver->addMeAsDependencyOf(this);
     }
 
     void _eval() {
@@ -43,15 +42,10 @@ class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
 class dgBoundaryCondition0Flux : public dgBoundaryCondition {
   dgConservationLaw &_claw;
   class term : public dataCacheDouble {
-    dataCacheDouble &UVW;
-    dgConservationLaw &_claw;
     public:
-    term(dgConservationLaw &claw,dataCacheMap &cacheMapLeft): UVW(cacheMapLeft.get("UVW",this)),_claw(claw) {}
+    term(dgConservationLaw &claw,dataCacheMap &cacheMapLeft):
+    dataCacheDouble(cacheMapLeft.getNbEvaluationPoints(),claw.nbFields()) {}
     void _eval() {
-      if(_value.size1()!=UVW().size1()){
-        //adjust sizes
-        _value = fullMatrix<double>(UVW().size1(),_claw.nbFields());
-      }
     }
   };
   public:

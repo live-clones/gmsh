@@ -19,14 +19,14 @@ class dgAlgorithm {
 			      fullMatrix<double> &residual);
   static void residualInterface ( //dofManager &dof, // the DOF manager (maybe useless here)
 				 const dgConservationLaw &claw,   // the conservation law
-				 const dgGroupOfFaces & group, 
+				 dgGroupOfFaces & group, 
 				 const fullMatrix<double> &solution, // ! at face nodes
 				 fullMatrix<double> &solutionRight,
 				 fullMatrix<double> &solutionLeft,
 				 fullMatrix<double> &residual); // ! at face nodes
   static void residualBoundary ( //dofManager &dof, // the DOF manager (maybe useless here)
 				const dgConservationLaw &claw,   // the conservation law
-				const dgGroupOfFaces &group, 
+				dgGroupOfFaces &group, 
 				const fullMatrix<double> &solution, // solution !! at faces nodes
 				fullMatrix<double> &solutionLeft,
 				fullMatrix<double> &residual // residual !! at faces nodes

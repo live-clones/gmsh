@@ -42,11 +42,11 @@ protected :
       it!=_dependOnMe.end(); it++)
         **it=false;
   }
-  // dataCacheMap is the only one supposed to call this
-  void addMeAsDependencyOf (dataCache *newDep);
   dataCache() : _valid(false) {}
   virtual ~dataCache(){};
 public :
+  // dataCacheMap is the only one supposed to call this
+  void addMeAsDependencyOf (dataCache *newDep);
   inline bool somethingDependOnMe() {
     return !_dependOnMe.empty();
   }
@@ -70,6 +70,13 @@ class dataCacheDouble : public dataCache {
   inline void setAsProxy(fullMatrix<double> &mat, int cShift, int c) {
     _invalidateDependencies();
     _value.setAsProxy(mat,cShift,c);
+    _valid=true;
+  }
+  // take care if you use this you must ensure that the value pointed to are not modified
+  // without further call to setAsProxy because the dependencies won't be invalidate
+  inline void setAsProxy(fullMatrix<double> &mat) {
+    _invalidateDependencies();
+    _value.setAsProxy(mat,0,mat.size2());
     _valid=true;
   }
   // this function is needed to be able to pass the _value to functions like gemm or mult

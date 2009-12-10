@@ -21,24 +21,24 @@ static fullMatrix<double> * dgGetIntegrationRule (MElement *e, int p){
   return m;
 }
 
-static fullMatrix<double> * dgGetFaceIntegrationRuleOnElement (
+static fullMatrix<double> dgGetFaceIntegrationRuleOnElement (
       const polynomialBasis *fsFace,
       const fullMatrix<double> &intgFace,
       const polynomialBasis *fsElement,
-      const std::vector <int> *closure) {
+      const std::vector <int> &closure) {
   int npts=intgFace.size1();
-  fullMatrix<double> *m = new fullMatrix<double> (npts, 4);
+  fullMatrix<double> intgElement(npts, 4);
   double f[256];
   for (int i=0;i<npts;i++){
     fsFace->f(intgFace(i,0),intgFace(i,1),intgFace(i,2),f);
-    for(size_t j=0; j<closure->size();j++){
-      int jNod=(*closure)[j];
+    for(size_t j=0; j<closure.size();j++){
+      int jNod=closure[j];
       for(int k=0;k<fsElement->points.size2();k++)
-        (*m)(i,k) += f[j] * fsElement->points(jNod,k);
-      (*m)(i,3) = intgFace(i,3);
+        intgElement(i,k) += f[j] * fsElement->points(jNod,k);
+      intgElement(i,3) = intgFace(i,3);
     }
   }
-  return m;
+  return intgElement;
 }
 
 
@@ -204,6 +204,10 @@ void dgGroupOfFaces::init(int pOrder) {
   _redistribution = new fullMatrix<double> (_fsFace->coefficients.size1(),_integration->size1());
   _collocation = new fullMatrix<double> (_integration->size1(), _fsFace->coefficients.size1());
   _detJac = new fullMatrix<double> (_integration->size1(), _faces.size());
+  for (size_t i=0; i<_closuresLeft.size(); i++)
+    _integrationPointsLeft.push_back(dgGetFaceIntegrationRuleOnElement(_fsFace,*_integration,_fsLeft,_closuresLeft[i]));
+  for (size_t i=0; i<_closuresRight.size(); i++)
+    _integrationPointsRight.push_back(dgGetFaceIntegrationRuleOnElement(_fsFace,*_integration,_fsRight,_closuresRight[i]));
   double f[256];
   for (int j=0;j<_integration->size1();j++) {
     _fsFace->f((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), f);
@@ -231,11 +235,11 @@ void dgGroupOfFaces::init(int pOrder) {
   int index = 0;
   for (size_t i=0; i<_faces.size();i++){
     const std::vector<int> &closureLeft=getClosureLeft(i);
-    fullMatrix<double> *intLeft=dgGetFaceIntegrationRuleOnElement(_fsFace,*_integration,_fsLeft,&closureLeft);
+    fullMatrix<double> &intLeft=_integrationPointsLeft[_closuresIdLeft[i]];
     double jac[3][3],ijac[3][3];
-    for (int j=0; j<intLeft->size1(); j++){
-      _fsLeft->df((*intLeft)(j,0),(*intLeft)(j,1),(*intLeft)(j,2),g);
-      getElementLeft(i)->getJacobian ((*intLeft)(j,0), (*intLeft)(j,1), (*intLeft)(j,2), jac);
+    for (int j=0; j<intLeft.size1(); j++){
+      _fsLeft->df((intLeft)(j,0),(intLeft)(j,1),(intLeft)(j,2),g);
+      getElementLeft(i)->getJacobian ((intLeft)(j,0), (intLeft)(j,1), (intLeft)(j,2), jac);
       inv3x3(jac,ijac);
       //compute dPsiLeftDxOnQP
       //(iPsi*3+iXYZ,iQP+iFace*NQP);
@@ -264,13 +268,12 @@ void dgGroupOfFaces::init(int pOrder) {
       nz/=norm;
       index++;
     }
-    delete intLeft;
     // there is nothing on the right for boundary groups
     if(_fsRight){
-      fullMatrix<double> *intRight=dgGetFaceIntegrationRuleOnElement(_fsFace,*_integration,_fsRight,&getClosureRight(i));
-      for (int j=0; j<intRight->size1(); j++){
-        _fsRight->df((*intRight)(j,0),(*intRight)(j,1),(*intRight)(j,2),g);
-        getElementRight(i)->getJacobian ((*intRight)(j,0), (*intRight)(j,1), (*intRight)(j,2), jac);
+      fullMatrix<double> &intRight=_integrationPointsLeft[_closuresIdRight[i]];
+      for (int j=0; j<intRight.size1(); j++){
+        _fsRight->df((intRight)(j,0),(intRight)(j,1),(intRight)(j,2),g);
+        getElementRight(i)->getJacobian ((intRight)(j,0), (intRight)(j,1), (intRight)(j,2), jac);
         inv3x3(jac,ijac);
         //compute dPsiRightDxOnQP
         // (iQP*3+iXYZ , iFace*NPsi+iPsi)
@@ -281,7 +284,6 @@ void dgGroupOfFaces::init(int pOrder) {
           (*_dPsiRightDxOnQP)(j*3+2,i*nPsi+iPsi) = g[iPsi][0]*ijac[2][0]+g[iPsi][1]*ijac[2][1]+g[iPsi][2]*ijac[2][2];
         }
       }
-      delete intRight;
     }
   }
 }
