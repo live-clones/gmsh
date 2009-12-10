@@ -8,6 +8,14 @@ void SMetric3::print (const char *s) const
          (*this)(0,1),(*this)(0,2),(*this)(1,2));
 }
 
+void STensor3::print (const char *s) const
+{
+  printf(" tensor %s : \n %12.5E %12.5E %12.5E \n %12.5E %12.5E %12.5E \n %12.5E %12.5E %12.5E \n",s,
+         (*this)(0,0),(*this)(0,1),(*this)(0,2),
+         (*this)(1,0),(*this)(1,1),(*this)(1,2),
+         (*this)(2,0),(*this)(2,1),(*this)(2,2));
+}
+
 SMetric3 intersection (const SMetric3 &m1, const SMetric3 &m2)
 {
   SMetric3 im1 = m1.invert();

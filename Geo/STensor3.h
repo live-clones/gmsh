@@ -174,4 +174,97 @@ SMetric3 interpolation (const SMetric3 &m1,
                         const double v,
                         const double w);
 
+
+// concrete class for general 3x3 matrix
+
+class STensor3 {
+ protected:
+  // 00 01 02 10 11 12 20 21 22 
+  double _val[9];
+ public:
+  inline int getIndex(int i, int j) const
+  {
+    static int _index[3][3] = {{0,1,2},{3,4,5},{6,7,8}};
+    return _index[i][j];
+  }
+  void getMat(fullMatrix<double> &mat) const
+  {
+    for (int i = 0; i < 3; i++){
+      for (int j = 0; j < 3; j++){
+        mat(i,j) = _val[getIndex(i, j)];                      
+      }
+    }
+  }
+  void setMat (const fullMatrix<double> & mat)
+  {
+    for (int i = 0; i < 3; i++)
+      for (int j = 0; j < 3; j++)
+        _val[getIndex(i, j)] = mat(i, j);
+  }
+  STensor3(const STensor3& other)
+  {
+    for (int i = 0; i < 9; i++) _val[i] = other._val[i];
+  }
+  // default constructor, identity 
+  STensor3(const double v = 1.0)
+  {
+    _val[0] = _val[4] = _val[8] = v;
+    _val[1] = _val[2] = _val[3] = 0.0;
+    _val[5] = _val[6] = _val[7] = 0.0;
+  }
+
+  inline double &operator()(int i, int j)
+  {
+    return _val[getIndex(i, j)];
+  }
+  inline double operator()(int i, int j) const
+  {
+    return _val[getIndex(i, j)];
+  }  
+  STensor3 invert () const
+  {
+    fullMatrix<double> m(3, 3);
+    getMat(m);
+    m.invertInPlace();
+    STensor3 ithis;
+    ithis.setMat(m);
+    return ithis;
+  }
+  STensor3 operator + (const STensor3 &other) const
+  {
+    STensor3 res(*this);
+    for (int i = 0; i < 9; i++) res._val[i] += other._val[i];
+    return res;
+  }
+  STensor3& operator += (const STensor3 &other)
+  {
+    for (int i = 0; i < 9; i++) _val[i] += other._val[i];
+    return *this;
+  }
+  STensor3& operator *= (const double &other) 
+  {
+    for (int i = 0; i < 9; i++) _val[i] *= other;
+    return *this;
+  }
+  STensor3& operator *= (const STensor3 &other) 
+  {
+    fullMatrix<double> m1(3, 3), m2(3, 3), m3(3, 3);
+    getMat(m1);
+    other.getMat(m2);
+    m1.mult(m2, m3);
+    setMat(m3);
+    return *this;
+  }
+  void print(const char *) const;
+};
+
+// tensor product
+inline void tensprod(const SVector3 &a, const SVector3 &b, STensor3 &c)
+{ 
+    for (int i = 0; i < 3; i++)
+      for (int j = 0; j < 3; j++)
+        c(i,j)=a(i)*b(j);
+}
+
+
 #endif
