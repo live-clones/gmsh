@@ -23,11 +23,11 @@ class Dof{
   Dof(long int entity, int type) : _entity(entity), _type(type) {}
   inline long int getEntity() const { return _entity; }
   inline int getType() const { return _type; }
-  static int createTypeWithTwoInts(int i1, int i2)
+  inline static int createTypeWithTwoInts(int i1, int i2)
   {
     return i1 + 10000 * i2;
   }
-  static void getTwoIntsFromType(int t, int &i1, int &i2)
+  inline static void getTwoIntsFromType(int t, int &i1, int &i2)
   {
     i1 = t % 10000;
     i2 = t / 10000;
@@ -50,18 +50,18 @@ template<class T> struct dofTraits
   typedef T MatType;
 };
 
-template<> struct dofTraits<fullVector<double> >
+template<class T> struct dofTraits<fullVector<T> >
 {
-  typedef fullVector<double> VecType;
-  typedef fullMatrix<double> MatType;
+  typedef fullVector<T> VecType;
+  typedef fullMatrix<T> MatType;
 };
-
+/*
 template<> struct dofTraits<fullVector<std::complex<double> > >
 {
   typedef fullVector<std::complex<double> > VecType;
   typedef fullMatrix<std::complex<double> > MatType;
 };
-
+*/
 template<class T>
 class DofAffineConstraint{
  public:

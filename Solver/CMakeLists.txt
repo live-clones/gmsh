@@ -21,6 +21,7 @@ set(SRC
   function.cpp
   functionDerivator.cpp
   luaFunction.cpp
+  functionSpace.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Solver *.h) 

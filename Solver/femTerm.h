@@ -179,4 +179,42 @@ class femTerm {
   }
 };
 
+
+
+class DummyfemTerm : public femTerm<double>
+{
+ public:
+  typedef dofTraits<double>::VecType dataVec;
+  typedef dofTraits<double>::MatType dataMat;
+  DummyfemTerm(GModel *gm) : femTerm<double>(gm) {}
+  virtual ~DummyfemTerm() {}
+ private : // i dont want to mess with this anymore
+  virtual int sizeOfC(SElement *se) const {return 0;}
+  virtual int sizeOfR(SElement *se) const {return 0;}
+  virtual Dof getLocalDofR(SElement *se, int iRow) const {return Dof(0,0);}
+  virtual Dof getLocalDofC(SElement *se, int iCol) const {return Dof(0,0);}
+  virtual void elementMatrix(SElement *se, fullMatrix<dataMat> &m) const {m.scale(0.);}
+  virtual void elementVector(SElement *se, fullVector<dataVec> &m) const {m.scale(0.);}
+ public:
+  void addToMatrix(dofManager<dataVec> &dm,
+                   fullMatrix<dataMat> &localMatrix,
+                   std::vector<Dof> R,std::vector<Dof> C) const
+  {
+      dm.assemble(R, C, localMatrix);
+  }
+
+
+  void addToMatrix(dofManager<dataVec> &dm,
+                   fullMatrix<dataMat> &localMatrix,
+                   std::vector<Dof> R) const // symmetric version.
+  {
+      dm.assemble(R, localMatrix);
+  }
+
+};
+
+
+
+
+
 #endif

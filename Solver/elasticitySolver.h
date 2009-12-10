@@ -63,12 +63,24 @@ class elasticitySolver{
   void setMesh(const std::string &meshFileName);
   virtual void solve();
   void readInputFile(const std::string &meshFileName);
-  PView *buildDisplacementView(const std::string &postFileName);
+  virtual PView *buildDisplacementView(const std::string &postFileName);
   // PView *buildVonMisesView(const std::string &postFileName);
   // std::pair<PView *, PView*> buildErrorEstimateView
   //   (const std::string &errorFileName, double, int);
   // std::pair<PView *, PView*> buildErrorEstimateView
   //   (const std::string &errorFileName, const elasticityData &ref, double, int);
 };
+
+
+
+// another elastic solver ...
+class MyelasticitySolver : public elasticitySolver
+{
+ public:
+  MyelasticitySolver(int tag) : elasticitySolver(tag) {}
+  virtual void solve();
+};
+
+
 
 #endif

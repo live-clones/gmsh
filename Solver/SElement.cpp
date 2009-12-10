@@ -42,7 +42,7 @@ void SElement::gradNodalFunctions (double u, double v, double w, double invjac[3
     _e->getShapeFunctions(u, v, w, sf);
     // FIXME : re-use sf for computing coordinates
     _e->pnt(u, v, w, p);
-    double E = (*_enrichement_s)(p.x(), p.y(), p.z());
+    double E = (*_enrichement)(p.x(), p.y(), p.z());
     double dEdx, dEdy, dEdz;
     _enrichement_s->gradient(p.x(), p.y(), p.z(), dEdx, dEdy, dEdz);
     for (int i = 0; i < N; i++){
@@ -62,7 +62,7 @@ void SElement::nodalFunctions (double u, double v, double w, double s[],
     SPoint3 p;
     // FIXME : re-use s for computing coordinates
     _e->pnt(u, v, w, p);
-    double E = (*_enrichement_s)(p.x(), p.y(), p.z());
+    double E = (*_enrichement)(p.x(), p.y(), p.z());
     for (int i = 0; i < N; i++){
       s[i] *= E;
     }

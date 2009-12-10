@@ -13,6 +13,8 @@
 #include "linearSystemPETSc.h"
 #include "linearSystemGMM.h"
 #include "Numeric.h"
+#include "functionSpace.h"
+#include "terms.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -321,3 +323,171 @@ void elasticitySolver::solve()
   // solving
   lsys->systemSolve();
 }
+
+
+
+
+void MyelasticitySolver::solve()
+{
+#if defined(HAVE_TAUCS)
+  linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
+#elif defined(HAVE_PETSC)
+  linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
+#else
+  linearSystemGmm<double> *lsys = new linearSystemGmm<double>;
+  lsys->setNoisy(2);
+#endif
+  pAssembler = new dofManager<double>(lsys);
+
+  std::map<int, std::vector<GEntity*> > groups[4];
+  pModel->getPhysicalGroups(groups);
+
+  // we first do all fixations. the behavior of the dofManager is to 
+  // give priority to fixations : when a dof is fixed, it cannot be
+  // numbered afterwards
+
+  for (std::map<std::pair<int, int>, double>::iterator it = nodalDisplacements.begin();
+       it != nodalDisplacements.end(); ++it){
+    MVertex *v = pModel->getMeshVertexByTag(it->first.first);
+    pAssembler->fixVertex(v, it->first.second, _tag, it->second);
+    printf("-- Fixing node %3d comp %1d to %8.5f\n",
+           it->first.first, it->first.second, it->second);
+  }
+
+  for (std::map<std::pair<int, int>, double>::iterator it = edgeDisplacements.begin();
+       it != edgeDisplacements.end(); ++it){
+    DummyfemTerm El(pModel);
+    El.dirichletNodalBC(it->first.first, 1, it->first.second, _tag,
+                        simpleFunction<double>(it->second), *pAssembler);
+    printf("-- Fixing edge %3d comp %1d to %8.5f\n",
+           it->first.first, it->first.second, it->second);
+  }
+
+  for (std::map<std::pair<int, int>, double>::iterator it = faceDisplacements.begin();
+       it != faceDisplacements.end(); ++it){
+    DummyfemTerm El(pModel);
+    El.dirichletNodalBC(it->first.first, 2, it->first.second, _tag,
+                        simpleFunction<double>(it->second), *pAssembler);
+    printf("-- Fixing face %3d comp %1d to %8.5f\n",
+           it->first.first, it->first.second, it->second);
+  }
+
+  // we number the nodes : when a node is numbered, it cannot be numbered
+  // again with another number. so we loop over elements
+  for (unsigned int i = 0; i < elasticFields.size(); ++i){
+    groupOfElements::elementContainer::const_iterator it = elasticFields[i].g->begin();
+    for ( ; it != elasticFields[i].g->end(); ++it){
+      SElement se(*it);
+      for (int j = 0; j < se.getNumNodalShapeFunctions(); ++j){
+        pAssembler->numberVertex(se.getVertex(j), 0, elasticFields[i]._tag);
+        pAssembler->numberVertex(se.getVertex(j), 1, elasticFields[i]._tag);
+        pAssembler->numberVertex(se.getVertex(j), 2, elasticFields[i]._tag);	
+      }
+    }
+  }
+
+  // Now we start the assembly process
+  // First build the force vector
+  // Nodes at geometrical vertices
+  for (std::map<int, SVector3 >::iterator it = nodalForces.begin();
+       it != nodalForces.end(); ++it){
+    int iVertex = it->first;
+    SVector3 f = it->second;
+    std::vector<GEntity*> ent = groups[0][iVertex];
+    for (unsigned int i = 0; i < ent.size(); i++){
+      pAssembler->assemble(ent[i]->mesh_vertices[0], 0, _tag, f.x());
+      pAssembler->assemble(ent[i]->mesh_vertices[0], 1, _tag, f.y());
+      pAssembler->assemble(ent[i]->mesh_vertices[0], 2, _tag, f.z());
+      printf("-- Force on node %3d(%3d) : %8.5f %8.5f %8.5f\n",
+             ent[i]->mesh_vertices[0]->getNum(), iVertex, f.x(), f.y(), f.z());
+    }
+  }
+
+  // line forces
+  for (std::map<int, SVector3 >::iterator it = lineForces.begin();
+       it != lineForces.end(); ++it){
+    DummyfemTerm El(pModel);
+    int iEdge = it->first;
+    SVector3 f = it->second;
+    El.neumannNodalBC(iEdge, 1, 0, _tag, simpleFunction<double>(f.x()), *pAssembler);
+    El.neumannNodalBC(iEdge, 1, 1, _tag, simpleFunction<double>(f.y()), *pAssembler);
+    El.neumannNodalBC(iEdge, 1, 2, _tag, simpleFunction<double>(f.z()), *pAssembler);
+    printf("-- Force on edge %3d : %8.5f %8.5f %8.5f\n", iEdge, f.x(), f.y(), f.z());
+  }
+
+  // face forces
+  for (std::map<int, SVector3 >::iterator it = faceForces.begin();
+       it != faceForces.end(); ++it){
+    DummyfemTerm El(pModel);
+    int iFace = it->first;
+    SVector3 f = it->second;
+    El.neumannNodalBC(iFace, 2, 0, _tag, simpleFunction<double>(f.x()), *pAssembler);
+    El.neumannNodalBC(iFace, 2, 1, _tag, simpleFunction<double>(f.y()), *pAssembler);
+    El.neumannNodalBC(iFace, 2, 2, _tag, simpleFunction<double>(f.z()), *pAssembler);
+    printf("-- Force on face %3d : %8.5f %8.5f %8.5f\n", iFace, f.x(), f.y(), f.z());
+  }
+
+  // volume forces
+  for (std::map<int, SVector3 >::iterator it = volumeForces.begin();
+       it != volumeForces.end(); ++it){
+    DummyfemTerm El(pModel);
+    int iVolume = it->first;
+    SVector3 f = it->second;
+//    El.setVector(f);
+    printf("-- Force on volume %3d : %8.5f %8.5f %8.5f\n", iVolume, f.x(), f.y(), f.z());
+    std::vector<GEntity*> ent = groups[_dim][iVolume];
+    for (unsigned int i = 0; i < ent.size(); i++){
+      //   to do
+      //      El.addToRightHandSide(*pAssembler, ent[i]);
+    }
+  }
+
+  // assembling the stifness matrix
+  for (unsigned int i = 0; i < elasticFields.size(); i++){
+    SElement::setShapeEnrichement(elasticFields[i]._enrichment);
+    for (unsigned int j = 0; j < elasticFields.size(); j++){
+      elasticityTerm El(0, elasticFields[i]._E, elasticFields[i]._nu,
+                        elasticFields[i]._tag, elasticFields[j]._tag);
+      SElement::setTestEnrichement(elasticFields[j]._enrichment);
+      //      printf("%d %d\n",elasticFields[i]._tag,elasticFields[j]._tag);
+      El.addToMatrix(*pAssembler, *elasticFields[i].g, *elasticFields[j].g);      
+    }
+  }
+
+/*  VectorLagrangeFunctionSpace L1(Dof::createTypeWithTwoInts(0,_tag),VectorLagrangeFunctionSpace::VECTOR_X);
+  VectorLagrangeFunctionSpace L2(Dof::createTypeWithTwoInts(1,_tag),VectorLagrangeFunctionSpace::VECTOR_Y);
+  VectorLagrangeFunctionSpace L3(Dof::createTypeWithTwoInts(2,_tag),VectorLagrangeFunctionSpace::VECTOR_Z);
+  CompositeFunctionSpace<VectorLagrangeFunctionSpace::ValType> P123(L1,L2,L3);*/
+  VectorLagrangeFunctionSpace P123(_tag,VectorLagrangeFunctionSpace::VECTOR_X,VectorLagrangeFunctionSpace::VECTOR_Y);
+
+  for (unsigned int i = 0; i < elasticFields.size(); i++)
+  {
+    DummyfemTerm El(pModel);
+//    ElasticTerm<CompositeFunctionSpace<VectorLagrangeFunctionSpace::ValType>,CompositeFunctionSpace<VectorLagrangeFunctionSpace::ValType> > Eterm(P123,elasticFields[i]._E,elasticFields[i]._nu);
+    ElasticTerm<VectorLagrangeFunctionSpace,VectorLagrangeFunctionSpace> Eterm(P123,elasticFields[i]._E,elasticFields[i]._nu);
+    fullMatrix<double> localMatrix(12,12);
+    std::vector<Dof> R;R.reserve(100);
+    for ( groupOfElements::elementContainer::const_iterator it = elasticFields[i].g->begin(); it != elasticFields[i].g->end() ; ++it)
+    {
+      MElement *e = *it;
+      R.clear();
+      int integrationOrder = 3 * (e->getPolynomialOrder() - 1) ;
+      int npts=0;
+      IntPt *GP;
+      e->getIntegrationPoints(integrationOrder, &npts, &GP);
+      Eterm.get(e,npts,GP,localMatrix);
+      El.addToMatrix(*pAssembler,localMatrix,R);
+    }
+  }
+
+  printf("-- done assembling!\n");
+  //  for (int i=0;i<pAssembler->sizeOfR();i++){
+    //    printf("%g ",lsys->getFromRightHandSide(i));
+  //  }
+  //  printf("\n");
+
+  // solving
+  lsys->systemSolve();
+}
+
+
