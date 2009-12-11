@@ -14,9 +14,7 @@
 #include "linearSystemGMM.h"
 #include "Numeric.h"
 #include "functionSpace.h"
-#ifdef THIS_FILE_IS_MISSING
 #include "terms.h"
-#endif
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -324,6 +322,7 @@ void elasticitySolver::solve()
 
   // solving
   lsys->systemSolve();
+  printf("-- done solving!\n");
 }
 
 
@@ -444,6 +443,7 @@ void MyelasticitySolver::solve()
     }
   }
 
+/*
   // assembling the stifness matrix
   for (unsigned int i = 0; i < elasticFields.size(); i++){
     SElement::setShapeEnrichement(elasticFields[i]._enrichment);
@@ -455,22 +455,15 @@ void MyelasticitySolver::solve()
       El.addToMatrix(*pAssembler, *elasticFields[i].g, *elasticFields[j].g);      
     }
   }
+*/
 
-/*  VectorLagrangeFunctionSpace L1(Dof::createTypeWithTwoInts(0,_tag),VectorLagrangeFunctionSpace::VECTOR_X);
-  VectorLagrangeFunctionSpace L2(Dof::createTypeWithTwoInts(1,_tag),VectorLagrangeFunctionSpace::VECTOR_Y);
-  VectorLagrangeFunctionSpace L3(Dof::createTypeWithTwoInts(2,_tag),VectorLagrangeFunctionSpace::VECTOR_Z);
-  CompositeFunctionSpace<VectorLagrangeFunctionSpace::ValType> P123(L1,L2,L3);*/
-  VectorLagrangeFunctionSpace P123(_tag,VectorLagrangeFunctionSpace::VECTOR_X,VectorLagrangeFunctionSpace::VECTOR_Y);
+  VectorLagrangeFunctionSpace P123(_tag);//,VectorLagrangeFunctionSpace::VECTOR_X,VectorLagrangeFunctionSpace::VECTOR_Y);
 
   for (unsigned int i = 0; i < elasticFields.size(); i++)
   {
-    DummyfemTerm El(pModel);
-//    ElasticTerm<CompositeFunctionSpace<VectorLagrangeFunctionSpace::ValType>,CompositeFunctionSpace<VectorLagrangeFunctionSpace::ValType> > Eterm(P123,elasticFields[i]._E,elasticFields[i]._nu);
-throw;
-#ifdef DEBUG_ME_ELASTIC_TERM_IS_NOT_DEFINE_IT_IS_PROBABLY_IN_TERM_H_BUT_THIS_FILE_IS_NOT_IN_THE_SVN
     ElasticTerm<VectorLagrangeFunctionSpace,VectorLagrangeFunctionSpace> Eterm(P123,elasticFields[i]._E,elasticFields[i]._nu);
-    fullMatrix<double> localMatrix(12,12);
-    std::vector<Dof> R;R.reserve(100);
+    fullMatrix<double> localMatrix;
+    std::vector<Dof> R;
     for ( groupOfElements::elementContainer::const_iterator it = elasticFields[i].g->begin(); it != elasticFields[i].g->end() ; ++it)
     {
       MElement *e = *it;
@@ -480,19 +473,11 @@ throw;
       IntPt *GP;
       e->getIntegrationPoints(integrationOrder, &npts, &GP);
       Eterm.get(e,npts,GP,localMatrix);
-      El.addToMatrix(*pAssembler,localMatrix,R);
+      P123.getKeys(e,R);
+      pAssembler->assemble(R, localMatrix);
     }
-#endif
   }
-
   printf("-- done assembling!\n");
-  //  for (int i=0;i<pAssembler->sizeOfR();i++){
-    //    printf("%g ",lsys->getFromRightHandSide(i));
-  //  }
-  //  printf("\n");
-
-  // solving
   lsys->systemSolve();
+  printf("-- done solving!\n");
 }
-
-

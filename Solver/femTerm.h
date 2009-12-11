@@ -101,22 +101,12 @@ class femTerm {
       for (int k = 0; k < nbC; k++)
         C.push_back(getLocalDofC(se, k));
     }
-/*     for (int i = 0; i < nbC; i++) */
-/*       for (int j = 0; j < nbR; j++) */
-/* 	dm.assemble(getLocalDofR(se, i), getLocalDofC(se, j), localMatrix(i,j)); */
-/*     return; */
-    
-    
-//    if (nbR == nbC){
-//      for (int i=0;i<nbR;i++)
-//	if (!(C[i] == R[i]))sym = false;
-//    }
-//    else sym = false;
     if (!sym)
       dm.assemble(R, C, localMatrix);
     else
       dm.assemble(R, localMatrix);
   }
+
   void dirichletNodalBC(int physical, int dim, int comp, int field,
                         const simpleFunction<dataVec> &e,
                         dofManager<dataVec> &dm)
@@ -127,6 +117,7 @@ class femTerm {
     for (unsigned int i = 0; i < v.size(); i++)
       dm.fixVertex(v[i], comp, field, e(v[i]->x(), v[i]->y(), v[i]->z()));
   }
+
   void neumannNodalBC(int physical, int dim, int comp, int field,
                       const simpleFunction<dataVec> &fct,
                       dofManager<dataVec> &dm)
@@ -195,22 +186,6 @@ class DummyfemTerm : public femTerm<double>
   virtual Dof getLocalDofC(SElement *se, int iCol) const {return Dof(0,0);}
   virtual void elementMatrix(SElement *se, fullMatrix<dataMat> &m) const {m.scale(0.);}
   virtual void elementVector(SElement *se, fullVector<dataVec> &m) const {m.scale(0.);}
- public:
-  void addToMatrix(dofManager<dataVec> &dm,
-                   fullMatrix<dataMat> &localMatrix,
-                   std::vector<Dof> R,std::vector<Dof> C) const
-  {
-      dm.assemble(R, C, localMatrix);
-  }
-
-
-  void addToMatrix(dofManager<dataVec> &dm,
-                   fullMatrix<dataMat> &localMatrix,
-                   std::vector<Dof> R) const // symmetric version.
-  {
-      dm.assemble(R, localMatrix);
-  }
-
 };
 
 

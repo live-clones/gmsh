@@ -59,19 +59,20 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
     if (se->getShapeEnrichement() == se->getTestEnrichement()){
       for (int j = 0; j < nbNodes; j++){
 
-        //printf(" GR(j) = %12.5E,%12.5E,%12.5E\n", Grads[j][0],Grads[j][1],Grads[j][2]);
+//        printf(" GR(j) = %12.5E,%12.5E,%12.5E\n", Grads[j][0],Grads[j][1],Grads[j][2]);
 
         BT(j, 0) = B(0, j) = Grads[j][0];
         BT(j, 3) = B(3, j) = Grads[j][1];
-        BT(j, 4) = B(4, j) = Grads[j][2];
+        BT(j, 5) = B(5, j) = Grads[j][2];
 
         BT(j + nbNodes, 1) = B(1, j + nbNodes) = Grads[j][1];
         BT(j + nbNodes, 3) = B(3, j + nbNodes) = Grads[j][0];
-        BT(j + nbNodes, 5) = B(5, j + nbNodes) = Grads[j][2];
+        BT(j + nbNodes, 4) = B(4, j + nbNodes) = Grads[j][2];
 
         BT(j + 2 * nbNodes, 2) = B(2, j + 2 * nbNodes) = Grads[j][2];
-        BT(j + 2 * nbNodes, 4) = B(4, j + 2 * nbNodes) = Grads[j][0];
-        BT(j + 2 * nbNodes, 5) = B(5, j + 2 * nbNodes) = Grads[j][1];
+        BT(j + 2 * nbNodes, 4) = B(4, j + 2 * nbNodes) = Grads[j][1];
+        BT(j + 2 * nbNodes, 5) = B(5, j + 2 * nbNodes) = Grads[j][0];
+        
       }
     }
     else{
@@ -80,15 +81,15 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
       for (int j = 0; j < nbNodes; j++){
         BT(j, 0) = Grads[j][0]; B(0, j) = GradsT[j][0];
         BT(j, 3) = Grads[j][1]; B(3, j) = GradsT[j][1];
-        BT(j, 4) = Grads[j][2]; B(4, j) = GradsT[j][2];
+        BT(j, 5) = Grads[j][2]; B(5, j) = GradsT[j][2];
 
         BT(j + nbNodes, 1) = Grads[j][1]; B(1, j + nbNodes) = GradsT[j][1];
         BT(j + nbNodes, 3) = Grads[j][0]; B(3, j + nbNodes) = GradsT[j][0];
-        BT(j + nbNodes, 5) = Grads[j][2]; B(5, j + nbNodes) = GradsT[j][2];
+        BT(j + nbNodes, 4) = Grads[j][2]; B(4, j + nbNodes) = GradsT[j][2];
 
         BT(j + 2 * nbNodes, 2) = Grads[j][2]; B(2, j + 2 * nbNodes) = GradsT[j][2];
-        BT(j + 2 * nbNodes, 4) = Grads[j][0]; B(4, j + 2 * nbNodes) = GradsT[j][0];
-        BT(j + 2 * nbNodes, 5) = Grads[j][1]; B(5, j + 2 * nbNodes) = GradsT[j][1];
+        BT(j + 2 * nbNodes, 4) = Grads[j][1]; B(4, j + 2 * nbNodes) = GradsT[j][1];
+        BT(j + 2 * nbNodes, 5) = Grads[j][0]; B(5, j + 2 * nbNodes) = GradsT[j][0];
       }
     }
 
@@ -97,14 +98,6 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
     m.gemm(BTH, B, weight * detJ, 1.);
   }
   return;
-  for (int i = 0; i < 3 * nbNodes; i++){
-    for (int j = 0; j < 3 * nbNodes; j++){
-      printf("%g ", m(i, j));
-    }
-    printf("\n");
-  }
-    printf("\n");
-    printf("\n");
 }
 
 void elasticityTerm::elementVector(SElement *se, fullVector<double> &m) const
