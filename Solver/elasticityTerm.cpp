@@ -72,7 +72,7 @@ void elasticityTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
         BT(j + 2 * nbNodes, 2) = B(2, j + 2 * nbNodes) = Grads[j][2];
         BT(j + 2 * nbNodes, 4) = B(4, j + 2 * nbNodes) = Grads[j][1];
         BT(j + 2 * nbNodes, 5) = B(5, j + 2 * nbNodes) = Grads[j][0];
-        
+       // JF mon cochon si tu savais le nombre de bugs qu'il y avait ici... 
       }
     }
     else{
