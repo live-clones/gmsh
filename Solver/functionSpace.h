@@ -315,15 +315,6 @@ class CompositeFunctionSpace : public FunctionSpace<T>
     return ndofs;
   }
 
-  virtual int getKeys(MElement *ele, Dof *keys)
-  {
-    Dof *kptr=keys;
-    for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
-    {
-      (*it)->getKeys(ele,kptr);
-      kptr+=(*it)->getNumKeys(ele);
-    }
-  }  
   virtual int getKeys(MElement *ele, std::vector<Dof> &keys)
   {
     for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
