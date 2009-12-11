@@ -289,6 +289,7 @@ bool fullMatrix<double>::svd(fullMatrix<double> &V, fullVector<double> &S)
   return false;
 }
 
+
 #if defined(HAVE_LUA)
 template<> 
 int fullMatrix<double>::gemm(lua_State *L)

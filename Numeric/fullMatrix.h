@@ -134,6 +134,7 @@ class fullMatrix
     lua_pushnumber(L, (*this)(r,c)); 
     return 1;
   }
+
   int set(lua_State *L){
     int r = luaL_checkint(L, 1);
     int c = luaL_checkint(L, 2);

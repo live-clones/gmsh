@@ -16,7 +16,7 @@
 void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe useless here)
 				   const dgConservationLaw &claw,   // the conservation law
 				   const dgGroupOfElements & group, 
-				   const fullMatrix<double> &solution,
+				   fullMatrix<double> &solution,
 				   fullMatrix<double> &residual // the residual
 				   )
 { 
@@ -45,27 +45,26 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
   // provided dataCache
   cacheMap.provideData("UVW").set(group.getIntegrationPointsMatrix());
   dataCacheDouble &solutionQPe = cacheMap.provideData("Solution");
-  dataCacheDouble &gradSolutionQPe = cacheMap.provideData("gradSolution");
+  dataCacheDouble &gradientSolutionQPe = cacheMap.provideData("SolutionGradient");
+  gradientSolutionQPe.set(fullMatrix<double>(group.getNbIntegrationPoints()*3,nbFields));
   // needed dataCache
   dataCacheDouble *sourceTerm = claw.newSourceTerm(cacheMap);
     // fluxes in  XYZ coordinates;
   dataCacheDouble *convectiveFlux = claw.newConvectiveFlux(cacheMap);
   dataCacheDouble *diffusiveFlux = claw.newDiffusiveFlux(cacheMap);
 
-  // compute the gradient of solution if necessary
-  fullMatrix<double> *gradientSolutionQP= 0;
-  if (gradSolutionQPe.somethingDependOnMe()) {
-    gradientSolutionQP = new  fullMatrix<double> (group.getNbIntegrationPoints(), group.getNbElements() * nbFields * 3);
-    //group.getGradientOfSolution().mult ( group.getCollocationMatrix() , *gradientSolutionQP); 
-  }
   fullMatrix<double> fuvwe;
   fullMatrix<double> source;
+  fullMatrix<double> dPsiDx,dofs;
   // ----- 2.3 --- iterate on elements
   for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {
     // ----- 2.3.1 --- build a small object that contains elementary solution, jacobians, gmsh element
     solutionQPe.setAsProxy(solutionQP, iElement*nbFields, nbFields );
-    if (gradSolutionQPe.somethingDependOnMe())
-      gradSolutionQPe.setAsProxy(*gradientSolutionQP, 3*iElement*nbFields,3*nbFields );
+    if(gradientSolutionQPe.somethingDependOnMe()){
+      dPsiDx.setAsProxy(group.getDPsiDx(),iElement*group.getNbNodes(),group.getNbNodes());
+      dofs.setAsProxy(solution, nbFields*iElement, nbFields);
+      dPsiDx.mult(dofs, gradientSolutionQPe.set());
+    }
     cacheElement.set(group.getElement(iElement));
     if(convectiveFlux || diffusiveFlux) {
       // ----- 2.3.3 --- compute fluxes in UVW coordinates
@@ -84,8 +83,9 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
             for (int k=0;k<nbFields;k++){
               if(convectiveFlux)
                 fuvwe(iPt,k) += ( (*convectiveFlux)(iPt,iXYZ*nbFields+k)) * factor;
-              if(diffusiveFlux)
+              if(diffusiveFlux){
                 fuvwe(iPt,k) += ( (*diffusiveFlux)(iPt,iXYZ*nbFields+k)) * factor;
+              }
             }
           }
         } 
@@ -100,8 +100,6 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
         }
       }
     }
-    if(gradientSolutionQP)
-      delete gradientSolutionQP;
   }
   // ----- 3 ---- do the redistribution at nodes using as many BLAS3 operations as there are local coordinates
   if(convectiveFlux || diffusiveFlux){
@@ -158,8 +156,8 @@ void dgAlgorithm::residualInterface ( //dofManager &dof, // the DOF manager (may
   dataCacheDouble &uvwRight = cacheMapRight.provideData("UVW");
   dataCacheDouble &solutionQPLeft = cacheMapLeft.provideData("Solution");
   dataCacheDouble &solutionQPRight = cacheMapRight.provideData("Solution");
-  dataCacheDouble &gradientSolutionLeft = cacheMapLeft.provideData("GradientSolution");
-  dataCacheDouble &gradientSolutionRight = cacheMapRight.provideData("GradientSolution");
+  dataCacheDouble &gradientSolutionLeft = cacheMapLeft.provideData("SolutionGradient");
+  dataCacheDouble &gradientSolutionRight = cacheMapRight.provideData("SolutionGradient");
   //resize gradientSolutionLeft and Right
   gradientSolutionLeft.set(fullMatrix<double>(group.getNbIntegrationPoints()*3,nbFields));
   gradientSolutionRight.set(fullMatrix<double>(group.getNbIntegrationPoints()*3,nbFields));
@@ -167,8 +165,13 @@ void dgAlgorithm::residualInterface ( //dofManager &dof, // the DOF manager (may
   // A2 ) ask the law to provide the fluxes (possibly NULL)
   dataCacheDouble *riemannSolver = claw.newRiemannSolver(cacheMapLeft,cacheMapRight);
   dataCacheDouble *diffusiveFluxLeft = claw.newDiffusiveFlux(cacheMapLeft);
+  dataCacheDouble *maximumDiffusivityLeft = claw.newMaximumDiffusivity(cacheMapLeft);
+  dataCacheDouble *maximumDiffusivityRight = claw.newMaximumDiffusivity(cacheMapRight);
   dataCacheDouble *diffusiveFluxRight = claw.newDiffusiveFlux(cacheMapRight);
   fullMatrix<double> dPsiLeftDx,dPsiRightDx,dofsLeft,dofsRight,normalFluxQP;
+
+  int p = group.getGroupLeft().getOrder();
+  int dim = group.getGroupLeft().getElement(0)->getDim();
 
   for (int iFace=0 ; iFace < nbFaces ; ++iFace) {
     // B1 )  adjust the proxies for this element
@@ -183,7 +186,7 @@ void dgAlgorithm::residualInterface ( //dofManager &dof, // the DOF manager (may
     normals.setAsProxy(group.getNormals(), iFace*group.getNbIntegrationPoints(),group.getNbIntegrationPoints());
     // proxies needed to compute the gradient of the solution and the IP term
     dPsiLeftDx.setAsProxy(DPsiLeftDx,iFace*nbNodesLeft,nbNodesLeft);
-    dPsiRightDx.setAsProxy(DPsiLeftDx,iFace*nbNodesRight,nbNodesRight);
+    dPsiRightDx.setAsProxy(DPsiRightDx,iFace*nbNodesRight,nbNodesRight);
     dofsLeft.setAsProxy(solutionLeft, nbFields*group.getElementLeftId(iFace), nbFields);
     dofsRight.setAsProxy(solutionRight, nbFields*group.getElementRightId(iFace), nbFields);
     uvwLeft.setAsProxy(group.getIntegrationOnElementLeft(iFace));
@@ -198,27 +201,44 @@ void dgAlgorithm::residualInterface ( //dofManager &dof, // the DOF manager (may
     }
 
     // B3 ) compute fluxes
-
-    //JF : here you can test (diffusiveFluxLeft!=NULL) to know if the law is diffusive
-    //you can access the values by (*diffusiveFluxLeft)(iQP*3+iXYZ, iField)
-    //use gradientSolutionLef(IQP*3+IXYZ, iField) and dPsiLeftDx(iQP*3+iXYZ, iPsi)
-
-    for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
-      const double detJ = group.getDetJ (iFace, iPt);
-      for (int k=0;k<nbFields*2;k++)
-        normalFluxQP(iPt,k) = (*riemannSolver)(iPt,k)*detJ;
+    if (diffusiveFluxLeft) {
+      for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
+        const double detJ = group.getDetJ (iFace, iPt);
+        //just for the lisibility :
+        const fullMatrix<double> &dfl = (*diffusiveFluxLeft)();
+        const fullMatrix<double> &dfr = (*diffusiveFluxRight)();
+        for (int k=0;k<nbFields;k++) { 
+          double meanNormalFlux =
+              ((dfl(iPt,k*3  )+dfr(iPt,k*3  )) * normals(0,iPt)
+              +(dfl(iPt,k*3+1)+dfr(iPt,k*3+1)) * normals(1,iPt)
+              +(dfl(iPt,k*3+2)+dfr(iPt,k*3+2)) * normals(2,iPt))/2;
+          double minl = std::min(group.getElementVolumeLeft(iFace),
+                                 group.getElementVolumeRight(iFace)
+                                )/group.getInterfaceSurface(iFace);
+          double nu = std::max((*maximumDiffusivityRight)(iPt,0),(*maximumDiffusivityLeft)(iPt,0));
+          double mu = (p+1)*(p+dim)/dim*nu/minl;
+          double solutionJumpPenalty = (solutionQPLeft(iPt,k)-solutionQPRight(iPt,k))/2*mu;
+          normalFluxQP(iPt,k) -= (meanNormalFlux+solutionJumpPenalty)*detJ;
+          normalFluxQP(iPt,k+nbFields) += (meanNormalFlux+solutionJumpPenalty)*detJ;
+        }
+      }
+    }
+    if (riemannSolver) {
+      for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
+        const double detJ = group.getDetJ (iFace, iPt);
+        for (int k=0;k<nbFields*2;k++)
+          normalFluxQP(iPt,k) += (*riemannSolver)(iPt,k)*detJ;
+      }
     }
   }
 
   // C ) redistribute the flux to the residual (at Faces nodes)
-  residual.gemm(group.getRedistributionMatrix(),NormalFluxQP);
+  if(riemannSolver || diffusiveFluxLeft)
+    residual.gemm(group.getRedistributionMatrix(),NormalFluxQP);
 
   // D ) delete the dataCacheDouble provided by the law
-  delete riemannSolver;
-  if(diffusiveFluxLeft) {
-    delete diffusiveFluxLeft;
-    delete diffusiveFluxRight;
-  }
+  if(riemannSolver)
+    delete riemannSolver;
 }
 
 void dgAlgorithm::multAddInverseMassMatrix ( /*dofManager &dof,*/

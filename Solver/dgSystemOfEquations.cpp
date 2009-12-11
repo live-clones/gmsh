@@ -69,8 +69,7 @@ int dgSystemOfEquations::setConservationLaw(lua_State *L){
   else if  (_cLawName == "PerfectGas2d")
     _claw = dgNewPerfectGasLaw2d(); 
   else if (_cLawName == "AdvectionDiffusion"){
-    std::string advFunction = luaL_checkstring(L,2);
-    _claw = dgNewConservationLawAdvection(advFunction);
+    _claw = dgNewConservationLawAdvection(luaL_checkstring(L,2),luaL_checkstring(L,3));
   }
   if (!_claw)throw;
   return 0;

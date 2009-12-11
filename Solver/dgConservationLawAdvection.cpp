@@ -6,7 +6,7 @@
 #include "function.h"
 
 class dgConservationLawAdvection : public dgConservationLaw {
-  std::string _vFunctionName;
+  std::string _vFunctionName,_nuFunctionName;
   class advection : public dataCacheDouble {
     dataCacheDouble &sol, &v;
     public:
@@ -46,23 +46,56 @@ class dgConservationLawAdvection : public dgConservationLaw {
       }
     }
   };
+  class diffusion : public dataCacheDouble {
+    dataCacheDouble &solgrad, &nu;
+    public:
+    diffusion(std::string nuFunctionName, dataCacheMap &cacheMap):
+      solgrad(cacheMap.get("SolutionGradient",this)),
+      nu(cacheMap.get(nuFunctionName,this))
+      {};
+    void _eval () { 
+      if(_value.size1() != solgrad().size1()/3)
+        _value=fullMatrix<double>(solgrad().size1()/3,3);
+      for(int i=0; i< solgrad().size1()/3; i++) {
+        _value(i,0) = -solgrad(i*3,0)*nu(i,0);
+        _value(i,1) = -solgrad(i*3+1,0)*nu(i,0);
+        _value(i,2) = -solgrad(i*3+1,0)*nu(i,0);
+      }
+    }
+  };
   public:
   dataCacheDouble *newConvectiveFlux( dataCacheMap &cacheMap) const {
-    return new advection(_vFunctionName,cacheMap);
+    if( !_vFunctionName.empty())
+      return new advection(_vFunctionName,cacheMap);
+    else
+      return NULL;
+  }
+  dataCacheDouble *newMaximumDiffusivity( dataCacheMap &cacheMap) const {
+    if( !_nuFunctionName.empty())
+      return &cacheMap.get(_nuFunctionName);
+    else
+      return NULL;
   }
   dataCacheDouble *newRiemannSolver( dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight) const {
-    return new riemann(_vFunctionName,cacheMapLeft, cacheMapRight);
+    if( !_vFunctionName.empty())
+      return new riemann(_vFunctionName,cacheMapLeft, cacheMapRight);
+    else
+     return NULL;
   }
   dataCacheDouble *newDiffusiveFlux( dataCacheMap &cacheMap) const {
-    return 0;
+    if( !_nuFunctionName.empty())
+      return new diffusion(_nuFunctionName,cacheMap);
+    else
+      return NULL;
   }
-  dgConservationLawAdvection(std::string vFunctionName) 
+  dgConservationLawAdvection(std::string vFunctionName, std::string nuFunctionName) 
   {
     _vFunctionName = vFunctionName;
+    _nuFunctionName = nuFunctionName;
     _nbf = 1;
   }
 };
 
-dgConservationLaw *dgNewConservationLawAdvection(std::string vFunctionName) {
-  return new dgConservationLawAdvection(vFunctionName);
+dgConservationLaw *dgNewConservationLawAdvection(std::string vFunctionName, std::string nuFunctionName) {
+  return new dgConservationLawAdvection(vFunctionName,nuFunctionName);
 }

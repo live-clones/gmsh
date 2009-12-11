@@ -15,7 +15,7 @@ class dgAlgorithm {
   static void residualVolume ( //dofManager &dof, // the DOF manager (maybe useless here)
 			      const dgConservationLaw &claw,   // the conservation law
 			      const dgGroupOfElements & group, 
-			      const fullMatrix<double> &solution,
+			      fullMatrix<double> &solution,
 			      fullMatrix<double> &residual);
   static void residualInterface ( //dofManager &dof, // the DOF manager (maybe useless here)
 				 const dgConservationLaw &claw,   // the conservation law

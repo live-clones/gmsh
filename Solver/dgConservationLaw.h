@@ -32,6 +32,8 @@ class dgConservationLaw {
 
   virtual dataCacheDouble *newSourceTerm (dataCacheMap &cacheMap) const {return NULL;} 
   virtual dataCacheDouble *newDiffusiveFlux (dataCacheMap &cacheMap) const {return NULL;} 
+  virtual dataCacheDouble *newDiffusiveInterfaceTerm (dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight) const {return NULL;} 
+  virtual dataCacheDouble *newMaximumDiffusivity (dataCacheMap &cacheMap) const {return NULL;} 
   virtual dataCacheDouble *newConvectiveFlux (dataCacheMap &cacheMap) const {return NULL;}
   virtual dataCacheDouble *newMaxConvectiveSpeed (dataCacheMap &cacheMap) const {return NULL;}
   virtual dataCacheDouble *newRiemannSolver (dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight) const {return NULL;}
@@ -51,7 +53,7 @@ class dgConservationLaw {
 
 };
 
-dgConservationLaw *dgNewConservationLawAdvection(const std::string vname);
+dgConservationLaw *dgNewConservationLawAdvection(const std::string vname,const std::string nuname);
 dgConservationLaw *dgNewConservationLawShallowWater2d();
 dgConservationLaw *dgNewConservationLawWaveEquation();
 dgConservationLaw *dgNewPerfectGasLaw2d();

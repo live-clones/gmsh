@@ -11,7 +11,11 @@ v=fullMatrix(3,1);
 v:set(0,0,0.15)
 v:set(1,0,0.05)
 v:set(2,0,0)
-dg:setConservationLaw('AdvectionDiffusion',createFunction.constant(v))
+-- diffusivity
+nu=fullMatrix(1,1);
+nu:set(0,0,0.001)
+
+dg:setConservationLaw('AdvectionDiffusion',createFunction.constant(v),createFunction.constant(nu))
 
 -- boundary condition
 outside=fullMatrix(1,1)

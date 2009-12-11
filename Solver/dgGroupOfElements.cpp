@@ -47,7 +47,7 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e, int polyOr
    _fs(*_elements[0]->getFunctionSpace(polyOrder)),
    _integration(dgGetIntegrationRule (_elements[0], polyOrder))
 {
-
+  _order=polyOrder;
   _dimUVW = _dimXYZ = e[0]->getDim();
   // this is the biggest piece of data ... the mappings
   int nbPsi = _fs.coefficients.size1();
@@ -59,6 +59,7 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e, int polyOr
   _mapping = new fullMatrix<double> (e.size(), 10 * _integration->size1());
   _imass = new fullMatrix<double> (nbPsi,nbPsi*e.size()); 
   _dPsiDx = new fullMatrix<double> ( _integration->size1()*3,nbPsi*e.size());
+  _elementVolume = new fullMatrix<double> (e.size(),1);
   double g[256][3],f[256];
 
   for (int i=0;i<_elements.size();i++){
@@ -70,6 +71,7 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e, int polyOr
       double jac[3][3],ijac[3][3],detjac;
       (*_mapping)(i,10*j + 9) =  
         e->getJacobian ((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), jac);
+      (*_elementVolume)(i,0) += (*_mapping)(i,10*j+9)*(*_integration)(j,3);
       const double weight = (*_integration)(j,3);
       detjac=inv3x3(jac,ijac);
       (*_mapping)(i,10*j + 0) = ijac[0][0];
@@ -123,6 +125,7 @@ dgGroupOfElements::~dgGroupOfElements(){
   delete _mapping;
   delete _collocation;
   delete _imass;
+  delete _elementVolume;
 }
 
 
@@ -204,6 +207,7 @@ void dgGroupOfFaces::init(int pOrder) {
   _redistribution = new fullMatrix<double> (_fsFace->coefficients.size1(),_integration->size1());
   _collocation = new fullMatrix<double> (_integration->size1(), _fsFace->coefficients.size1());
   _detJac = new fullMatrix<double> (_integration->size1(), _faces.size());
+  _interfaceSurface = new fullMatrix<double>(_faces.size(),1);
   for (size_t i=0; i<_closuresLeft.size(); i++)
     _integrationPointsLeft.push_back(dgGetFaceIntegrationRuleOnElement(_fsFace,*_integration,_fsLeft,_closuresLeft[i]));
   for (size_t i=0; i<_closuresRight.size(); i++)
@@ -222,6 +226,7 @@ void dgGroupOfFaces::init(int pOrder) {
     for (int j=0;j< _integration->size1() ; j++ ){
       double jac[3][3];
       (*_detJac)(j,i) = f->getJacobian ((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), jac);
+      (*_interfaceSurface)(i,0) += (*_integration)(j,3)*(*_detJac)(j,i);
     }
   }
 
@@ -296,6 +301,7 @@ dgGroupOfFaces::~dgGroupOfFaces()
   delete _normals;
   delete _dPsiLeftDxOnQP;
   delete _dPsiRightDxOnQP;
+  delete _interfaceSurface;
 }
 
 dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MVertex*> &boundaryVertices):

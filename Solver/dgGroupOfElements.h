@@ -63,6 +63,11 @@ class dgGroupOfElements {
   // dimension of the parametric space and of the real space
   // may be different if the domain is a surface in 3D (manifold)
   int _dimUVW, _dimXYZ;
+  // polynomial order of the interpolation
+  int _order;
+  //
+  // volume/surface/length of the element (sum_qp w_i detJ_i)
+  fullMatrix<double> *_elementVolume;
   // forbid the copy 
   //  dgGroupOfElements (const dgGroupOfElements &e, int order) {}
   //  dgGroupOfElements & operator = (const dgGroupOfElements &e) {}
@@ -79,11 +84,13 @@ public:
   inline const fullMatrix<double> & getCollocationMatrix () const {return *_collocation;}
   inline const fullMatrix<double> & getFluxRedistributionMatrix (int i) const {return *_redistributionFluxes[i];}
   inline const fullMatrix<double> & getSourceRedistributionMatrix () const {return *_redistributionSource;}
+  inline double getElementVolume (int iElement)const {return (*_elementVolume)(iElement,0);}
   inline double getDetJ (int iElement, int iGaussPoint) const {return (*_mapping)(iElement, 10*iGaussPoint + 9);}
   inline double getInvJ (int iElement, int iGaussPoint, int i, int j) const {return (*_mapping)(iElement, 10*iGaussPoint + i + 3*j);}
   inline fullMatrix<double> & getDPsiDx() const { return *_dPsiDx;}
   inline fullMatrix<double> &getInverseMassMatrix () const {return *_imass;}
   inline const fullMatrix<double> getMapping (int iElement) const {return fullMatrix<double>(*_mapping, iElement, 1);}
+  inline int getOrder() const {return _order;}
 };
 
 class dgGroupOfFaces {
@@ -127,6 +134,8 @@ class dgGroupOfFaces {
   //fullMatrix<double> *_collocationLeft, *_collocationRight;
   // redistribution matrices \psi_i (GP_j) * weight_j
   fullMatrix<double> *_redistribution;
+  // surface/length/1 of the interface element (sum_qp w_i detJ_i)
+  fullMatrix<double> *_interfaceSurface;
   //common part of the 3 constructors
   void init(int pOrder);
 public:
@@ -136,6 +145,8 @@ public:
   inline int getElementRightId (int i) const {return _right[i];};
   inline MElement* getElementLeft (int i) const {return _groupLeft.getElement(_left[i]);}  
   inline MElement* getElementRight (int i) const {return _groupRight.getElement(_right[i]);}  
+  inline double getElementVolumeLeft(int iFace) const {return _groupLeft.getElementVolume(_left[iFace]);}
+  inline double getElementVolumeRight(int iFace) const {return _groupRight.getElementVolume(_right[iFace]);}
   inline MElement* getFace (int iElement) const {return _faces[iElement];}  
   inline const std::vector<int> &getClosureLeft(int iFace) const{ return _closuresLeft[_closuresIdLeft[iFace]];}
   inline const std::vector<int> &getClosureRight(int iFace) const{ return _closuresRight[_closuresIdRight[iFace]];}
@@ -160,6 +171,7 @@ public:
   inline const fullMatrix<double> & getIntegrationPointsMatrix () const {return *_integration;}
   inline const fullMatrix<double> & getRedistributionMatrix () const {return *_redistribution;}
   inline double getDetJ (int iElement, int iGaussPoint) const {return (*_detJac)(iGaussPoint,iElement);}
+  inline double getInterfaceSurface (int iFace)const {return (*_interfaceSurface)(iFace,0);}
   //keep this outside the Algorithm because this is the only place where data overlap
   void mapToInterface(int nFields, const fullMatrix<double> &vLeft, const fullMatrix<double> &vRight, fullMatrix<double> &v);
   void mapFromInterface(int nFields, const fullMatrix<double> &v, fullMatrix<double> &vLeft, fullMatrix<double> &vRight);
