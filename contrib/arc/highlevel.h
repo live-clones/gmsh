@@ -167,14 +167,14 @@ public:
 
 */
 
-
+/*
 template<class T> class Field : public Function<T> // renvoie des valeurs de champ (ff*valeurs dofs), gradient , etc...
 {
 public: 
   Field(){};
   virtual ~Field(){};
 };
-
+*/
 
 
 class FormBilinearBase

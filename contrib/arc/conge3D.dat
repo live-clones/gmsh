@@ -4,4 +4,4 @@ FaceDisplacement 8 0 0
 FaceDisplacement 8 1 0
 FaceDisplacement 8 2 0
 FaceForce 9 100e6 0 0
-VolumeForce 7  0 -100.e-3  0 
+VolumeForce 7  0 -1.0e10 0 

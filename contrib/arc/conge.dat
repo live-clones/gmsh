@@ -4,4 +4,4 @@ EdgeDisplacement 8 0 0
 EdgeDisplacement 8 1 0
 EdgeDisplacement 8 2 0
 LineForce 9 100e6 0 0
-VolumeForce 7  0 -100.e-3  0 
+FaceForce 7  0 -1.0e10  0 
