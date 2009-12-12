@@ -106,7 +106,7 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
   {
     int ndofs= ele->getNumVertices();
     int curpos=vals.size();
-    vals.reserve(curpos+ndofs);
+    vals.resize(curpos+ndofs);
     ele->getShapeFunctions(u, v, w, &(vals[curpos]));
   }; 
   virtual int gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)

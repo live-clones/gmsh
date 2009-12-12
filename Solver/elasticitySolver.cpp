@@ -313,13 +313,15 @@ void elasticitySolver::solve()
       El.addToMatrix(*pAssembler, *elasticFields[i].g, *elasticFields[j].g);      
     }
   }
-
+/*
   printf("-- done assembling!\n");
-  //  for (int i=0;i<pAssembler->sizeOfR();i++){
-    //    printf("%g ",lsys->getFromRightHandSide(i));
-  //  }
-  //  printf("\n");
-
+    for (int i=0;i<pAssembler->sizeOfR();i++)
+    {
+        if (fabs(lsys->getFromRightHandSide(i))>0.000001)
+        printf("%g ",lsys->getFromRightHandSide(i));
+    }
+    printf("\n");
+*/
   // solving
   lsys->systemSolve();
   printf("-- done solving!\n");
@@ -404,60 +406,109 @@ void MyelasticitySolver::solve()
     }
   }
 
-  // line forces
-  for (std::map<int, SVector3 >::iterator it = lineForces.begin();
-       it != lineForces.end(); ++it){
-    DummyfemTerm El(pModel);
+  VectorLagrangeFunctionSpace P123(_tag);//,VectorLagrangeFunctionSpace::VECTOR_X,VectorLagrangeFunctionSpace::VECTOR_Y);
+
+  //line forces
+  for (std::map<int, SVector3 >::iterator it =lineForces.begin();
+       it != lineForces.end(); ++it)
+  {
     int iEdge = it->first;
     SVector3 f = it->second;
-    El.neumannNodalBC(iEdge, 1, 0, _tag, simpleFunction<double>(f.x()), *pAssembler);
-    El.neumannNodalBC(iEdge, 1, 1, _tag, simpleFunction<double>(f.y()), *pAssembler);
-    El.neumannNodalBC(iEdge, 1, 2, _tag, simpleFunction<double>(f.z()), *pAssembler);
+    LoadTerm<VectorLagrangeFunctionSpace> Lterm(P123,f);
     printf("-- Force on edge %3d : %8.5f %8.5f %8.5f\n", iEdge, f.x(), f.y(), f.z());
+    int dim=1;
+    std::map<int, std::vector<GEntity*> > groups[4];
+    pModel->getPhysicalGroups(groups);
+    fullVector<double> localVector;
+    std::vector<Dof> R;
+    std::map<int, std::vector<GEntity*> >::iterator itg = groups[dim].find(iEdge);
+    if (itg == groups[dim].end())  {printf(" Nonexistent edge\n");break;}
+    for (unsigned int i = 0; i < itg->second.size(); ++i)
+    {
+      GEntity *ge = itg->second[i];
+      for (unsigned int j = 0; j < ge->getNumMeshElements(); j++)
+      {
+        MElement *e = ge->getMeshElement(j);
+        int integrationOrder = 2 * e->getPolynomialOrder();
+        int npts;
+        IntPt *GP;
+        e->getIntegrationPoints(integrationOrder, &npts, &GP);
+        R.clear();
+        P123.getKeys(e,R);
+        Lterm.get(e,npts,GP,localVector);
+        pAssembler->assemble(R, localVector);
+      }
+    }
   }
 
-  // face forces
+
+//face forces
   for (std::map<int, SVector3 >::iterator it = faceForces.begin();
-       it != faceForces.end(); ++it){
-    DummyfemTerm El(pModel);
+       it != faceForces.end(); ++it)
+  {
     int iFace = it->first;
     SVector3 f = it->second;
-    El.neumannNodalBC(iFace, 2, 0, _tag, simpleFunction<double>(f.x()), *pAssembler);
-    El.neumannNodalBC(iFace, 2, 1, _tag, simpleFunction<double>(f.y()), *pAssembler);
-    El.neumannNodalBC(iFace, 2, 2, _tag, simpleFunction<double>(f.z()), *pAssembler);
+    LoadTerm<VectorLagrangeFunctionSpace> Lterm(P123,f);
     printf("-- Force on face %3d : %8.5f %8.5f %8.5f\n", iFace, f.x(), f.y(), f.z());
+    int dim=2;
+    std::map<int, std::vector<GEntity*> > groups[4];
+    pModel->getPhysicalGroups(groups);
+    fullVector<double> localVector;
+    std::vector<Dof> R;
+    std::map<int, std::vector<GEntity*> >::iterator itg = groups[dim].find(iFace);
+    if (itg == groups[dim].end())  {printf(" Nonexistent face\n");break;}
+    for (unsigned int i = 0; i < itg->second.size(); ++i)
+    {
+      GEntity *ge = itg->second[i];
+      for (unsigned int j = 0; j < ge->getNumMeshElements(); j++)
+      {
+        MElement *e = ge->getMeshElement(j);
+        int integrationOrder = 2 * e->getPolynomialOrder();
+        int npts;
+        IntPt *GP;
+        e->getIntegrationPoints(integrationOrder, &npts, &GP);
+        R.clear();
+        P123.getKeys(e,R);
+        Lterm.get(e,npts,GP,localVector);
+        pAssembler->assemble(R, localVector);
+      }
+    }
   }
 
-  // volume forces
+
+//volume forces
   for (std::map<int, SVector3 >::iterator it = volumeForces.begin();
-       it != volumeForces.end(); ++it){
-    DummyfemTerm El(pModel);
+       it != volumeForces.end(); ++it)
+  {
     int iVolume = it->first;
     SVector3 f = it->second;
-//    El.setVector(f);
+    LoadTerm<VectorLagrangeFunctionSpace> Lterm(P123,f);
     printf("-- Force on volume %3d : %8.5f %8.5f %8.5f\n", iVolume, f.x(), f.y(), f.z());
-    std::vector<GEntity*> ent = groups[_dim][iVolume];
-    for (unsigned int i = 0; i < ent.size(); i++){
-      //   to do
-      //      El.addToRightHandSide(*pAssembler, ent[i]);
+    int dim=3;
+    std::map<int, std::vector<GEntity*> > groups[4];
+    pModel->getPhysicalGroups(groups);
+    fullVector<double> localVector;
+    std::vector<Dof> R;
+    std::map<int, std::vector<GEntity*> >::iterator itg = groups[dim].find(iVolume);
+    if (itg == groups[dim].end()) {printf(" Nonexistent volume\n");break;}
+    for (unsigned int i = 0; i < itg->second.size(); ++i)
+    {
+      GEntity *ge = itg->second[i];
+      for (unsigned int j = 0; j < ge->getNumMeshElements(); j++)
+      {
+        MElement *e = ge->getMeshElement(j);
+        int integrationOrder = 2 * e->getPolynomialOrder();
+        int npts;
+        IntPt *GP;
+        e->getIntegrationPoints(integrationOrder, &npts, &GP);
+        R.clear();
+        P123.getKeys(e,R);
+        Lterm.get(e,npts,GP,localVector);
+        pAssembler->assemble(R, localVector);
+      }
     }
   }
 
-/*
-  // assembling the stifness matrix
-  for (unsigned int i = 0; i < elasticFields.size(); i++){
-    SElement::setShapeEnrichement(elasticFields[i]._enrichment);
-    for (unsigned int j = 0; j < elasticFields.size(); j++){
-      elasticityTerm El(0, elasticFields[i]._E, elasticFields[i]._nu,
-                        elasticFields[i]._tag, elasticFields[j]._tag);
-      SElement::setTestEnrichement(elasticFields[j]._enrichment);
-      //      printf("%d %d\n",elasticFields[i]._tag,elasticFields[j]._tag);
-      El.addToMatrix(*pAssembler, *elasticFields[i].g, *elasticFields[j].g);      
-    }
-  }
-*/
-
-  VectorLagrangeFunctionSpace P123(_tag);//,VectorLagrangeFunctionSpace::VECTOR_X,VectorLagrangeFunctionSpace::VECTOR_Y);
 
   for (unsigned int i = 0; i < elasticFields.size(); i++)
   {
@@ -477,6 +528,31 @@ void MyelasticitySolver::solve()
       pAssembler->assemble(R, localMatrix);
     }
   }
+
+
+/*
+
+  for (std::map<int, SVector3 >::iterator it = volumeForces.begin();it != volumeForces.end(); ++it)
+  {
+    int iVolume = it->first;
+    SVector3 f = it->second;
+    printf("-- Force on volume %3d : %8.5f %8.5f %8.5f\n", iVolume, f.x(), f.y(), f.z());
+    std::vector<GEntity*> ent = groups[_dim][iVolume];
+    for (unsigned int i = 0; i < ent.size(); i++)
+    {
+      //   to do
+      //      El.addToRightHandSide(*pAssembler, ent[i]);
+    }
+  }
+*/
+/*
+    for (int i=0;i<pAssembler->sizeOfR();i++)
+    {
+        if (fabs(lsys->getFromRightHandSide(i))>0.000001)
+        printf("%g ",lsys->getFromRightHandSide(i));
+    }
+    printf("\n");
+*/
   printf("-- done assembling!\n");
   lsys->systemSolve();
   printf("-- done solving!\n");

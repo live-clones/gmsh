@@ -179,48 +179,73 @@ class dofManager{
     }
     for (unsigned int i = 0; i < R.size(); i++){
       if (NR[i] != -1){
-	for (unsigned int j = 0; j < C.size(); j++){
-	  if (NC[j] != -1){
-	    _current->addToMatrix(NR[i], NC[j], m(i, j));
-	  }
-	  else{
-	    typename std::map<Dof,  dataVec>::iterator itFixed = fixed.find(C[j]);
-	    if (itFixed != fixed.end()){
-	      _current->addToRightHandSide(NR[i], -m(i,j) * itFixed->second);
-	    }
-	  }
-	}
+        for (unsigned int j = 0; j < C.size(); j++){
+          if (NC[j] != -1){
+            _current->addToMatrix(NR[i], NC[j], m(i, j));
+          }
+          else{
+            typename std::map<Dof,  dataVec>::iterator itFixed = fixed.find(C[j]);
+            if (itFixed != fixed.end()){
+              _current->addToRightHandSide(NR[i], -m(i,j) * itFixed->second);
+            }
+          }
+        }
       }
     }
   }
-  inline void assemble(std::vector<Dof> &R, fullMatrix<dataMat> &m)
+
+  inline void assemble(std::vector<Dof> &R, fullVector<dataMat> &m) // for linear forms
   {
     if (!_current->isAllocated()) _current->allocate(unknown.size());
-
     std::vector<int> NR(R.size());
-
-    for (unsigned int i = 0; i < R.size(); i++){
+    for (unsigned int i = 0; i < R.size(); i++)
+    {
       std::map<Dof, int>::iterator itR = unknown.find(R[i]);
       if (itR != unknown.end()) NR[i] = itR->second;
       else NR[i] = -1;
     }
-
-    for (unsigned int i = 0; i < R.size(); i++){
-      if (NR[i] != -1){
-	for (unsigned int j = 0; j < R.size(); j++){
-	  if (NR[j] != -1){
-	    _current->addToMatrix(NR[i], NR[j], m(i, j));
-	  }
-	  else{
-	    typename std::map<Dof,  dataVec>::iterator itFixed = fixed.find(R[j]);
-	    if (itFixed != fixed.end()){
-	      _current->addToRightHandSide(NR[i], -m(i, j) * itFixed->second);
-	    }
-	  }
-	}
+    for (unsigned int i = 0; i < R.size(); i++)
+    {
+      if (NR[i] != -1)
+      {
+        _current->addToRightHandSide(NR[i], m(i));
       }
     }
   }
+
+
+  inline void assemble(std::vector<Dof> &R, fullMatrix<dataMat> &m)
+  {
+    if (!_current->isAllocated()) _current->allocate(unknown.size());
+    std::vector<int> NR(R.size());
+    for (unsigned int i = 0; i < R.size(); i++)
+    {
+      std::map<Dof, int>::iterator itR = unknown.find(R[i]);
+      if (itR != unknown.end()) NR[i] = itR->second;
+      else NR[i] = -1;
+    }
+    for (unsigned int i = 0; i < R.size(); i++)
+    {
+      if (NR[i] != -1)
+      {
+        for (unsigned int j = 0; j < R.size(); j++)
+        {
+          if (NR[j] != -1)
+          {
+            _current->addToMatrix(NR[i], NR[j], m(i, j));
+          }
+          else
+          {
+            typename std::map<Dof,  dataVec>::iterator itFixed = fixed.find(R[j]);
+            if (itFixed != fixed.end()){
+              _current->addToRightHandSide(NR[i], -m(i, j) * itFixed->second);
+            }
+          }
+        }
+      }
+    }
+  }
+
   inline void assemble(int entR, int typeR, int entC, int typeC, const dataMat &value)
   {
     assemble(Dof(entR, typeR), Dof(entC, typeC), value);
