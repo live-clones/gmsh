@@ -32,17 +32,32 @@ class fullVector
   scalar *_data;
   friend class fullMatrix<scalar>;
  public:
+
   fullVector(int r) : _r(r)
   {
     _data = new scalar[_r];
     scale(0.);
   }
+  fullVector(void) : _r(0),_data(0) {}
   fullVector(const fullVector<scalar> &other) : _r(other._r)
   {
     _data = new scalar[_r];
     for(int i = 0; i < _r; ++i) _data[i] = other._data[i];
   }
   ~fullVector() { if(_data) delete [] _data; }
+
+  bool resize(int r)
+  { 
+    if ((_r<r))
+    {
+      if (_data) delete[] _data;
+      _r=r;
+      _data = new scalar[_r];
+      return true;
+    }
+    return false;
+  }
+
   inline scalar operator () (int i) const
   {
     return _data[i];
@@ -177,13 +192,17 @@ class fullMatrix
 
   bool resize(int r, int c) // data will be owned (same as constructor)
   {
-    if ((r!=_r||c!=_c)||(!_own_data))
+    if ((r*c>_r*_c)||(!_own_data))
     {
       _r=r;_c=c;
       if ((_own_data)&&(_data)) delete[] _data;
       _data = new scalar[_r * _c];
       _own_data = true;
       return true;
+    }
+    else
+    {
+      _r=r;_c=c;
     }
     return false; // no reallocation
   }
