@@ -513,38 +513,9 @@ void MyelasticitySolver::solve()
   for (unsigned int i = 0; i < elasticFields.size(); i++)
   {
     ElasticTerm<VectorLagrangeFunctionSpace,VectorLagrangeFunctionSpace> Eterm(P123,elasticFields[i]._E,elasticFields[i]._nu);
-    fullMatrix<double> localMatrix;
-    std::vector<Dof> R;
-    for ( groupOfElements::elementContainer::const_iterator it = elasticFields[i].g->begin(); it != elasticFields[i].g->end() ; ++it)
-    {
-      MElement *e = *it;
-      R.clear();
-      int integrationOrder = 3 * (e->getPolynomialOrder() - 1) ;
-      int npts=0;
-      IntPt *GP;
-      e->getIntegrationPoints(integrationOrder, &npts, &GP);
-      Eterm.get(e,npts,GP,localMatrix);
-      P123.getKeys(e,R);
-      pAssembler->assemble(R, localMatrix);
-    }
+    Assemble(Eterm,P123,elasticFields[i].g->begin(),elasticFields[i].g->end(),*pAssembler);
   }
 
-
-/*
-
-  for (std::map<int, SVector3 >::iterator it = volumeForces.begin();it != volumeForces.end(); ++it)
-  {
-    int iVolume = it->first;
-    SVector3 f = it->second;
-    printf("-- Force on volume %3d : %8.5f %8.5f %8.5f\n", iVolume, f.x(), f.y(), f.z());
-    std::vector<GEntity*> ent = groups[_dim][iVolume];
-    for (unsigned int i = 0; i < ent.size(); i++)
-    {
-      //   to do
-      //      El.addToRightHandSide(*pAssembler, ent[i]);
-    }
-  }
-*/
 /*
     for (int i=0;i<pAssembler->sizeOfR();i++)
     {

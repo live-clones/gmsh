@@ -259,5 +259,22 @@ template<class S1> class LoadTerm : public LinearTerm<S1>
 };
 
 
+template<class T,class S1, class I,class A> void Assemble(T& term,S1& space1,I itbegin,I itend,A& assembler) // symmetric
+{
+    fullMatrix<double> localMatrix;
+    std::vector<Dof> R;
+    for (I it = itbegin;it!=itend; ++it)
+    {
+      MElement *e = *it;
+      R.clear();
+      int integrationOrder = 3 * (e->getPolynomialOrder() - 1) ;
+      int npts=0;
+      IntPt *GP;
+      e->getIntegrationPoints(integrationOrder, &npts, &GP);
+      term.get(e,npts,GP,localMatrix);
+      space1.getKeys(e,R);
+      assembler.assemble(R, localMatrix);
+    }
+}
 
 #endif// _TERMS_H_
