@@ -15,6 +15,7 @@
 #include "Numeric.h"
 #include "functionSpace.h"
 #include "terms.h"
+#include "solverAlgorithms.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -417,10 +418,6 @@ void MyelasticitySolver::solve()
     LoadTerm<VectorLagrangeFunctionSpace> Lterm(P123,f);
     printf("-- Force on edge %3d : %8.5f %8.5f %8.5f\n", iEdge, f.x(), f.y(), f.z());
     int dim=1;
-    std::map<int, std::vector<GEntity*> > groups[4];
-    pModel->getPhysicalGroups(groups);
-    fullVector<double> localVector;
-    std::vector<Dof> R;
     std::map<int, std::vector<GEntity*> >::iterator itg = groups[dim].find(iEdge);
     if (itg == groups[dim].end())  {printf(" Nonexistent edge\n");break;}
     for (unsigned int i = 0; i < itg->second.size(); ++i)
@@ -429,14 +426,7 @@ void MyelasticitySolver::solve()
       for (unsigned int j = 0; j < ge->getNumMeshElements(); j++)
       {
         MElement *e = ge->getMeshElement(j);
-        int integrationOrder = 2 * e->getPolynomialOrder();
-        int npts;
-        IntPt *GP;
-        e->getIntegrationPoints(integrationOrder, &npts, &GP);
-        R.clear();
-        P123.getKeys(e,R);
-        Lterm.get(e,npts,GP,localVector);
-        pAssembler->assemble(R, localVector);
+        Assemble(Lterm,P123,e,*pAssembler);
       }
     }
   }
@@ -451,10 +441,6 @@ void MyelasticitySolver::solve()
     LoadTerm<VectorLagrangeFunctionSpace> Lterm(P123,f);
     printf("-- Force on face %3d : %8.5f %8.5f %8.5f\n", iFace, f.x(), f.y(), f.z());
     int dim=2;
-    std::map<int, std::vector<GEntity*> > groups[4];
-    pModel->getPhysicalGroups(groups);
-    fullVector<double> localVector;
-    std::vector<Dof> R;
     std::map<int, std::vector<GEntity*> >::iterator itg = groups[dim].find(iFace);
     if (itg == groups[dim].end())  {printf(" Nonexistent face\n");break;}
     for (unsigned int i = 0; i < itg->second.size(); ++i)
@@ -463,14 +449,7 @@ void MyelasticitySolver::solve()
       for (unsigned int j = 0; j < ge->getNumMeshElements(); j++)
       {
         MElement *e = ge->getMeshElement(j);
-        int integrationOrder = 2 * e->getPolynomialOrder();
-        int npts;
-        IntPt *GP;
-        e->getIntegrationPoints(integrationOrder, &npts, &GP);
-        R.clear();
-        P123.getKeys(e,R);
-        Lterm.get(e,npts,GP,localVector);
-        pAssembler->assemble(R, localVector);
+        Assemble(Lterm,P123,e,*pAssembler);
       }
     }
   }
@@ -485,10 +464,6 @@ void MyelasticitySolver::solve()
     LoadTerm<VectorLagrangeFunctionSpace> Lterm(P123,f);
     printf("-- Force on volume %3d : %8.5f %8.5f %8.5f\n", iVolume, f.x(), f.y(), f.z());
     int dim=3;
-    std::map<int, std::vector<GEntity*> > groups[4];
-    pModel->getPhysicalGroups(groups);
-    fullVector<double> localVector;
-    std::vector<Dof> R;
     std::map<int, std::vector<GEntity*> >::iterator itg = groups[dim].find(iVolume);
     if (itg == groups[dim].end()) {printf(" Nonexistent volume\n");break;}
     for (unsigned int i = 0; i < itg->second.size(); ++i)
@@ -497,14 +472,7 @@ void MyelasticitySolver::solve()
       for (unsigned int j = 0; j < ge->getNumMeshElements(); j++)
       {
         MElement *e = ge->getMeshElement(j);
-        int integrationOrder = 2 * e->getPolynomialOrder();
-        int npts;
-        IntPt *GP;
-        e->getIntegrationPoints(integrationOrder, &npts, &GP);
-        R.clear();
-        P123.getKeys(e,R);
-        Lterm.get(e,npts,GP,localVector);
-        pAssembler->assemble(R, localVector);
+        Assemble(Lterm,P123,e,*pAssembler);
       }
     }
   }

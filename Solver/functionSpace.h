@@ -61,8 +61,18 @@ template<> struct TensorialTraits<SVector3>
   typedef SVector3 CurlType;
 };
 
+
+
+class FunctionSpaceBase
+{
+ public:
+  virtual int getNumKeys(MElement *ele)=0; // if one needs the number of dofs
+  virtual int getKeys(MElement *ele, std::vector<Dof> &keys)=0; 
+};
+
 template<class T>
-class FunctionSpace {
+class FunctionSpace : public FunctionSpaceBase
+{
  protected:
   typedef typename TensorialTraits<T>::ValType ValType;
   typedef typename TensorialTraits<T>::GradType GradType;
