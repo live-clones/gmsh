@@ -2165,6 +2165,10 @@ Delete :
       else if(!strcmp($2, "Variables")){
 	gmsh_yysymbols.clear();
       }
+      else if(!strcmp($2, "Options")){
+        ReInitOptions(0);
+        InitOptionsGUI(0);
+      }
       else{
 	if(gmsh_yysymbols.count($2))
 	  gmsh_yysymbols.erase($2);

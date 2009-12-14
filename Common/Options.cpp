@@ -426,7 +426,11 @@ void ReInitOptions(int num)
 #if defined(HAVE_POST)
   std::vector<PView*> tmp = PView::list;
   PView::list.clear(); 
+#endif
+
   InitOptions(num);
+
+#if defined(HAVE_POST)
   PView::list = tmp; 
   for(unsigned int i = 0; i < PView::list.size(); i++)
     PView::list[i]->setOptions();
