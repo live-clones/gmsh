@@ -142,14 +142,6 @@ static void options_browser_cb(Fl_Widget *w, void *data)
   FlGui::instance()->options->showGroup(FlGui::instance()->options->browser->value());
 }
 
-void options_save_cb(Fl_Widget *w, void *data)
-{
-  std::string fileName = CTX::instance()->homeDir + CTX::instance()->optionsFileName;
-  Msg::StatusBar(2, true, "Writing '%s'", fileName.c_str());
-  PrintOptions(0, GMSH_OPTIONSRC, 1, 1, fileName.c_str());
-  Msg::StatusBar(2, true, "Wrote '%s'", fileName.c_str());
-}
-
 static void options_restore_defaults_cb(Fl_Widget *w, void *data)
 {
   // not sure if we have to remove the file...

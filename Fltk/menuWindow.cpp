@@ -365,9 +365,16 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
 
 static void file_options_save_cb(Fl_Widget *w, void *data)
 {
-  std::string fileName = GModel::current()->getFileName() + ".opt";
+  std::string str((const char*)data), fileName;
+  if(str == "file")
+    fileName = GModel::current()->getFileName() + ".opt";
+  else
+    fileName = CTX::instance()->homeDir + CTX::instance()->optionsFileName;
   Msg::StatusBar(2, true, "Writing '%s'", fileName.c_str());
-  PrintOptions(0, GMSH_FULLRC, 1, 0, fileName.c_str());
+  if(str == "file")
+    PrintOptions(0, GMSH_FULLRC, 1, 0, fileName.c_str());
+  else
+    PrintOptions(0, GMSH_OPTIONSRC, 1, 1, fileName.c_str());
   Msg::StatusBar(2, true, "Wrote '%s'", fileName.c_str());
 }
 
@@ -2215,8 +2222,8 @@ static Fl_Menu_Item bar_table[] = {
     {"Save &As...", FL_CTRL+'s', (Fl_Callback *)file_save_as_cb, 0},
     {"Sa&ve Mesh",  FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0},
     {"Save Options", 0, 0, 0, FL_SUBMENU | FL_MENU_DIVIDER},
-      {"For Current File", 0, (Fl_Callback *)file_options_save_cb, 0},
-      {"As Default", 0, (Fl_Callback *)options_save_cb, 0},
+      {"For Current File", 0, (Fl_Callback *)file_options_save_cb, (void*)"file"},
+      {"As Default", 0, (Fl_Callback *)file_options_save_cb, (void*)"default"},
       {0},
     {"&Quit",       FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
     {0},
@@ -2267,8 +2274,8 @@ static Fl_Menu_Item sysbar_table[] = {
     {"Save As...", FL_META+'s', (Fl_Callback *)file_save_as_cb, 0},
     {"Save Mesh",  FL_META+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0},
     {"Save Options", 0, 0, 0, FL_SUBMENU},
-      {"For Current File", 0, (Fl_Callback *)file_options_save_cb, 0},
-      {"As Default", 0, (Fl_Callback *)options_save_cb, 0},
+      {"For Current File", 0, (Fl_Callback *)file_options_save_cb, (void*)"file"},
+      {"As Default", 0, (Fl_Callback *)file_options_save_cb, (void*)"default"},
       {0},
     {0},
   {"Tools", 0, 0, 0, FL_SUBMENU},

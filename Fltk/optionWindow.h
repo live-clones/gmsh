@@ -92,7 +92,6 @@ class optionWindow{
 };
 
 void options_cb(Fl_Widget *w, void *data);
-void options_save_cb(Fl_Widget *w, void *data);
 void general_options_cb(Fl_Widget *w, void *data);
 void geometry_options_cb(Fl_Widget *w, void *data);
 void mesh_options_cb(Fl_Widget *w, void *data);

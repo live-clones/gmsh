@@ -144,7 +144,7 @@ static void eigSort(int n, double *wr, double *wi, double *VL, double *VR)
 {
   // Sort the eigenvalues/vectors in ascending order according to
   // their real part. Warning: this will screw up the ordering if we
-  // have coplex eigenvalues.
+  // have complex eigenvalues.
   for (int i = 0; i < n - 1; i++){
     int k = i;
     double ek = wr[i];
@@ -288,7 +288,6 @@ bool fullMatrix<double>::svd(fullMatrix<double> &V, fullVector<double> &S)
     Msg::Error("Wrong %d-th argument in SVD decomposition", -info);
   return false;
 }
-
 
 #if defined(HAVE_LUA)
 template<> 

@@ -1915,6 +1915,9 @@ Deletes all physical groups.
 @item Delete Variables;
 Deletes all the expressions.
 
+@item Delete Options;
+Deletes the current options and revert to the default values.
+
 @item Delete @var{string};
 Deletes the expression @var{string}.
 
