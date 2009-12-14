@@ -4,6 +4,8 @@
 #include "meshPartition.h"
 #include "MEdge.h"
 #include "MElement.h"
+#include "multiscaleLaplace.h"
+#include "Context.h"
 
 static void recur_connect (MVertex *v,
 			   std::multimap<MVertex*,MEdge> &v2e,
@@ -113,38 +115,33 @@ static int getAspectRatio (std::vector<MElement *> &elements,
   //double H = obbox.getMaxSize(); 
   double H = norm(SVector3(bb.max(), bb.min()));
  
- double D = 0.0;
-  if (boundaries.size() == 0){
-    D=1.;
-  }
-  else{
-    for (unsigned i=0; i< boundaries.size(); i++){
-      std::set<MVertex*> vb;
-      std::vector<MEdge> iBound = boundaries[i];
-      for (unsigned j=0; j< iBound.size(); j++){
-	MEdge e = iBound[j];
-	vb.insert(e.getVertex(0));
-	vb.insert(e.getVertex(1));
-      }
-      std::vector<SPoint3> vBounds;
-      for (std::set<MVertex* >::iterator it = vb.begin(); it != vb.end(); it++){
-	SPoint3 pt((*it)->x(),(*it)->y(), (*it)->z());
-	vBounds.push_back(pt);
-      }
-      SOrientedBoundingBox obboxD = SOrientedBoundingBox::buildOBB(vBounds);
-      D = std::max(D, obboxD.getMaxSize());
-    }
-  }
-  int eta = (int)ceil(H/D);
+ double D = H;
+ for (unsigned i=0; i< boundaries.size(); i++){
+   std::set<MVertex*> vb;
+   std::vector<MEdge> iBound = boundaries[i];
+   for (unsigned j=0; j< iBound.size(); j++){
+     MEdge e = iBound[j];
+     vb.insert(e.getVertex(0));
+     vb.insert(e.getVertex(1));
+   }
+   std::vector<SPoint3> vBounds;
+   for (std::set<MVertex* >::iterator it = vb.begin(); it != vb.end(); it++){
+     SPoint3 pt((*it)->x(),(*it)->y(), (*it)->z());
+     vBounds.push_back(pt);
+   }
+   SOrientedBoundingBox obboxD = SOrientedBoundingBox::buildOBB(vBounds);
+   D = std::min(D, obboxD.getMaxSize());
+ }
+ int AR = (int)ceil(H/D);
 
-  return eta;
+ return AR;
 
 }
-static void getGenusAndRatio(std::vector<MElement *> &elements, int & genus, int &eta){
+static void getGenusAndRatio(std::vector<MElement *> &elements, int & genus, int &AR){
 
   std::vector<std::vector<MEdge> > boundaries;
   genus = getGenus(elements, boundaries);  
-  eta = getAspectRatio(elements, boundaries);
+  AR = getAspectRatio(elements, boundaries);
 
   return;
 
@@ -162,11 +159,54 @@ static void partitionRegions (std::vector<MElement*> &elements,
 
 }
 
+static void printLevel ( std::vector<MElement *> &elements, int recur, int region){
 
-multiscalePartition::multiscalePartition (std::vector<MElement *> &elements, 
-					  meshPartitionOptions &_options){
+  char fn[256];
+  sprintf(fn, "part_%d_%d.msh", recur, region );
+  double version = 2.0;
+
+  std::set<MVertex*> vs;
+  for (int i=0;i<elements.size();i++){
+    for (int j=0;j<elements[i]->getNumVertices();j++){
+      vs.insert(elements[i]->getVertex(j));
+    }
+  }
+
+  bool binary = false;
+  FILE *fp = fopen (fn, "w");
+  fprintf(fp, "$MeshFormat\n");  
+  fprintf(fp, "%g %d %d\n", version, binary ? 1 : 0, (int)sizeof(double));
+  fprintf(fp, "$EndMeshFormat\n");  
+
+  fprintf(fp,"$Nodes\n%d\n",vs.size());
+  std::set<MVertex*> :: iterator it = vs.begin();
+  int index = 1;
+  for (; it != vs.end() ; ++it){
+    (*it)->setIndex(index++);
+    fprintf(fp,"%d %g %g %g\n",(*it)->getIndex(),
+	    (*it)->x(),(*it)->y(),(*it)->z());
+  }
+  fprintf(fp,"$EndNodes\n",elements.size());
   
-  options = _options;
+  fprintf(fp,"$Elements\n%d\n",elements.size());
+  for (int i=0;i<elements.size();i++){
+    elements[i]->writeMSH(fp,version);
+  }
+  fprintf(fp,"$EndElements\n%d\n",elements.size());
+  
+  fclose(fp);
+}
+
+multiscalePartition::multiscalePartition (std::vector<MElement *> &elements, int nbParts, typeOfPartition method)
+{
+  
+   options = CTX::instance()->partitionOptions;
+   options.num_partitions = nbParts;
+   options.partitioner = 1; //1 CHACO, 2 METIS
+   if ( options.partitioner == 1){
+     options.global_method = 2;// 1 Multilevel-KL, 2 Spectral
+     options.mesh_dims[0] = nbParts;
+   }
 
   partitionLevel *level = new partitionLevel;
   level->elements.insert(level->elements.begin(),elements.begin(),elements.end());
@@ -175,7 +215,7 @@ multiscalePartition::multiscalePartition (std::vector<MElement *> &elements,
 
   levels.push_back(level);
 
-  partition(*level);
+  partition(*level, nbParts, method);
 
   totalParts = assembleAllPartitions();
 
@@ -188,11 +228,19 @@ void multiscalePartition:: setNumberOfPartitions(int &nbParts)
    }
 }
 
-void multiscalePartition::partition(partitionLevel & level){
-#if defined(HAVE_METIS) || defined(HAVE_CHACO)
-  PartitionMeshElements(level.elements, options);
+void multiscalePartition::partition(partitionLevel & level, int nbParts, typeOfPartition method){
 
-  std::vector<std::vector<MElement*> > regions(options.num_partitions);
+#if defined(HAVE_METIS) || defined(HAVE_CHACO)
+
+  if (method == LAPLACIAN){
+    multiscaleLaplace multiLaplace(level.elements, level.recur);
+  }
+  else if (method == MULTILEVEL){
+    setNumberOfPartitions(nbParts);
+    PartitionMeshElements(level.elements, options);
+  }
+
+  std::vector<std::vector<MElement*> > regions(nbParts);
   partitionRegions(level.elements, regions);
   level.elements.clear();
 
@@ -204,23 +252,31 @@ void multiscalePartition::partition(partitionLevel & level){
     nextLevel->region = i;
 
     levels.push_back(nextLevel);
-    int genus, eta;
-    getGenusAndRatio(regions[i], genus, eta);
+    int genus, AR;
+    getGenusAndRatio(regions[i], genus, AR);
+
     if (genus < 0) {
       Msg::Error("Genus partition is negative G=%d!", genus);
       exit(1);
     }
-    if (genus != 0 || eta > 4 ){
-      int nbParts = std::max(genus+2, (int)eta/4);
-      setNumberOfPartitions(nbParts);
-      Msg::Info("Multiscale partition, level %d region %d  is %d-GENUS (ETA=%d) ---> partition %d parts",
-		nextLevel->recur,nextLevel->region, genus, eta, nbParts);
-      
-      partition(*nextLevel);
+  
+    printLevel (nextLevel->elements, nextLevel->recur,nextLevel->region);  
+
+    if (genus != 0 ){
+      int nbParts = 2; //std::max(genus+2,2);
+      Msg::Info("Multiscale part: level %d region %d  is %d-GENUS (AR=%d) ---> MULTILEVEL partition %d parts",
+		nextLevel->recur,nextLevel->region, genus, AR, nbParts);  
+      partition(*nextLevel, nbParts, MULTILEVEL);
     }
+     else if (genus == 0  &&  AR > 3 ){
+       int nbParts = 2;
+       Msg::Info("Multiscale part: level %d region %d  is ZERO-GENUS (AR=%d) ---> LAPLACIAN partition %d parts",
+ 		nextLevel->recur,nextLevel->region, AR, nbParts);  
+       partition(*nextLevel, nbParts, LAPLACIAN);
+     }
     else {
-      Msg::Info("Multiscale Partition, level %d, region %d is ZERO-GENUS (ETA=%d)", 
-		nextLevel->recur,nextLevel->region, eta);
+    Msg::Info("Multiscale part: level %d, region %d is ZERO-GENUS (AR=%d)", 
+		 nextLevel->recur,nextLevel->region, AR);
     }
      
 }

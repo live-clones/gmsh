@@ -2352,7 +2352,6 @@ static int Extrude_ProtudeSurface(int type, int is,
   Msg::Debug("Extrude Surface %d", is);
 
   chapeau = DuplicateSurface(ps, false);
-
   chapeau->Extrude = new ExtrudeParams(COPIED_ENTITY);
   chapeau->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
   chapeau->Extrude->geo.Source = is; // not ps->Num: we need the sign info

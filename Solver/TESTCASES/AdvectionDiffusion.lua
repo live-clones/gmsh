@@ -1,6 +1,6 @@
 model = GModel  ()
 model:load ('square.geo')
-model:load ('square.msh')
+model:mesh(2)
 dg = dgSystemOfEquations (model)
 dg:setOrder(5)
 
@@ -40,9 +40,9 @@ dg:L2Projection(createFunction.lua(1,'initial_condition','XYZ'))
 dg:exportSolution('output/Advection_00000')
 
 -- main loop
-for i=1,10000 do
+for i=1,10 do
   norm = dg:RK44(0.001)
-  if (i % 50 == 0) then 
+  if (i % 1 == 0) then 
     print('iter',i,norm)
     dg:exportSolution(string.format("output/Advection-%05d", i)) 
   end

@@ -351,6 +351,7 @@ class GModel
   static int readGEO(const std::string &name);
   int writeGEO(const std::string &name, bool printLabels=true);
   int importGEOInternals();
+  int exportDiscreteGEOInternals();
 
   // Fourier model
   int readFourier();

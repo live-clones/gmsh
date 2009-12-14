@@ -35,6 +35,7 @@
 #include "meshPartition.h"
 #include "CreateFile.h"
 #include "Context.h"
+#include "multiscalePartition.h"
 
 void fourthPoint(double *p1, double *p2, double *p3, double *p4)
 {
@@ -1285,8 +1286,6 @@ void meshGFace::operator() (GFace *gf)
       Msg::Error("Impossible to mesh face %d", gf->tag());
   }
 
-  // gmshQMorph(gf);
-  
   Msg::Debug("Type %d %d triangles generated, %d internal vertices",
              gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
 }
@@ -1295,7 +1294,7 @@ bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge*> &edges)
 {
   bool isMeshed = false;
 #if defined(HAVE_SOLVER)  
-  //Check Topology
+
   bool correctTopo = gf->checkTopology();
   if (!correctTopo){
     partitionAndRemesh((GFaceCompound*) gf);
@@ -1303,12 +1302,12 @@ bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge*> &edges)
     return isMeshed;
   }
   
-  //Parametrize
   bool correctParam = gf->parametrize();
+  
   if (!correctParam){
-    partitionAndRemesh((GFaceCompound*) gf);
-    isMeshed = true;
-    return isMeshed;
+   partitionAndRemesh((GFaceCompound*) gf);
+   isMeshed = true;
+   return isMeshed;
   }
   
   //Replace edges by their compounds
@@ -1316,11 +1315,9 @@ bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge*> &edges)
   std::list<GEdge*>::iterator it = edges.begin();
   while(it != edges.end()){
     if((*it)->getCompound()){
-      //printf("replace edge %d by %d\n", (*it)->tag(), (*it)->getCompound()->tag() );
       mySet.insert((*it)->getCompound());
     }
     else{ 
-      //printf("insert edge =%d \n", (*it)->tag());
       mySet.insert(*it);
     }
     ++it;
@@ -1338,10 +1335,21 @@ void partitionAndRemesh(GFaceCompound *gf)
   //Partition the mesh and createTopology for new faces
   //-----------------------------------------------------
   
-  int NF = gf->nbSplit;
   std::list<GFace*> cFaces = gf->getCompounds();
-  PartitionZeroGenus(cFaces, NF);
+  //PartitionMeshFace(cFaces, options);
 
+  std::vector<MElement *> elements;
+  for (std::list<GFace*>::iterator it = cFaces.begin(); it != cFaces.end(); it++)
+    for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++)
+      elements.push_back((*it)->getMeshElement(j));
+
+  typeOfPartition method;
+  if(gf->nbSplit > 0) method = MULTILEVEL;
+  else method = LAPLACIAN;
+  
+  multiscalePartition *msp = new multiscalePartition(elements, abs(gf->nbSplit), method);
+
+  int NF = msp->getNumberOfParts();
   int numv = gf->model()->maxVertexNum() + 1;
   int nume = gf->model()->maxEdgeNum() + 1;
   int numf = gf->model()->maxFaceNum() + 1;
@@ -1350,18 +1358,13 @@ void partitionAndRemesh(GFaceCompound *gf)
   
   gf->model()->createTopologyFromFaces(pFaces);
    
-  Msg::Info("-----------------------------------------------------------");
-  Msg::Info("Multiscale Partition SUCCESSFULLY PERFORMED : %d parts", NF);
+  Msg::Info("*** Multiscale Partition SUCCESSFULLY PERFORMED : %d parts", NF );
   CreateOutputFile("multiscalePARTS.msh", CTX::instance()->mesh.format);
-  Msg::Info("-----------------------------------------------------------");
  
-   //Remesh new faces (Compound Lines and Compound Surfaces)
+  //Remesh new faces (Compound Lines and Compound Surfaces)
   //-----------------------------------------------------
-  
-  Msg::Info("-----------------------------------------------------------");
-  Msg::Info("Parametrize Compounds");
-  Msg::Info("-----------------------------------------------------------");
-
+  Msg::Info("*** Parametrize Compounds:");
+ 
   //Parametrize Compound Lines
   int NE = gf->model()->maxEdgeNum() - nume + 1;
   for (int i=0; i < NE; i++){
@@ -1385,15 +1388,14 @@ void partitionAndRemesh(GFaceCompound *gf)
     int num_gfc = numf + NF + i ;
     f_compound.push_back(pf);     
     Msg::Info("Parametrize Compound Surface (%d) = %d discrete face", num_gfc,  pf->tag() );
-    GFaceCompound *gfc = new GFaceCompound(gf->model(), num_gfc, f_compound, b[0], b[1], b[2], b[3]);
+    GFaceCompound *gfc = new GFaceCompound(gf->model(), num_gfc, f_compound, 
+					   b[0], b[1], b[2], b[3], 0, gf->getTypeOfMapping() );
     gf->model()->add(gfc);
 
     gfc->parametrize();
   }
 
-  Msg::Info("-----------------------------------------------------------");
-  Msg::Info("Mesh Compounds");
-  Msg::Info("-----------------------------------------------------------");
+  Msg::Info("*** Mesh Compounds:");
 
   //Mesh 1D and 2D
   for (int i=0; i < NE; i++){

@@ -2,8 +2,12 @@
 order = 3
 model = GModel()
 model:load ('stommel_square.msh')
+print('load..')
+
 dg = dgSystemOfEquations (model)
 dg:setOrder (order)
+
+
 dg:setConservationLaw('ShallowWater2d')
 dg:addBoundaryCondition('Wall','Wall')
 dg:setup()

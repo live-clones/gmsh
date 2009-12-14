@@ -75,7 +75,6 @@ class GFaceCompound : public GFace {
   void compute_distance() const;
   bool checkOrientation(int iter) const;
   void one2OneMap() const;
-  bool checkCavity(std::vector<MElement*> &vTri) const;
   bool checkAspectRatio() const;
   void computeNormals () const;
   void getBoundingEdges();
@@ -87,6 +86,7 @@ class GFaceCompound : public GFace {
   void printStuff() const;
   bool trivial() const ;
   linearSystem <double> *_lsys;
+  double getSizeH() const;
   double getSizeBB(const std::list<GEdge* > &elist) const;
   SBoundingBox3d boundEdges(const std::list<GEdge* > &elist) const;
   SOrientedBoundingBox obb_boundEdges(const std::list<GEdge* > &elist) const;
@@ -101,6 +101,7 @@ class GFaceCompound : public GFace {
   Range<double> parBounds(int i) const 
   { return trivial() ? (*(_compound.begin()))->parBounds(i) : Range<double>(-1, 1); }
   virtual GPoint point(double par1, double par2) const; 
+  typeOfMapping getTypeOfMapping() { return _mapping;}
   SPoint2 parFromPoint(const SPoint3 &p) const;
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &, SVector3 *, SVector3 *, SVector3 *) const; 
@@ -113,10 +114,8 @@ class GFaceCompound : public GFace {
   virtual bool checkTopology() const;
   bool parametrize() const ;
   void coherenceNormals();
-  void partitionFaceCM();
   virtual std::list<GFace*> getCompounds() const {return _compound;};
   mutable int nbSplit;
-  mutable bool checked;
  private:
   typeOfIsomorphism _type;
   typeOfMapping _mapping;

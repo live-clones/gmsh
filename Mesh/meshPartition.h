@@ -18,6 +18,7 @@ class GFace;
 class Graph;
 
 typedef std::vector<BoElemGr> BoElemGrVec;
+typedef enum {LAPLACIAN= 0, MULTILEVEL=1} typeOfPartition;
 
 /*******************************************************************************
  *

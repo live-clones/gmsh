@@ -1,3 +1,6 @@
+Mesh.CharacteristicLengthFactor=0.15;
+
+
 L = 100;
 H = 30;
 Z = 10;
@@ -12,3 +15,5 @@ EndFor
 OCCShape("Sphere",{H-X,H/2,Z/2,R},"Fuse");
 OCCShape("Torus",{L,H/2,Z/2,0,0,1,2*R,R/2},"Fuse");
 
+
+Compound Surface(100) = {1 ... 26};

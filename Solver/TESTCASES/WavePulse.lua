@@ -22,12 +22,13 @@ end
 order = 5
 print'*** Loading the mesh and the model ***'
 myModel   = GModel  ()
-myModel:load ('square.geo')
-myModel:load ('square.msh')
+myModel:load ('box.geo')
+myModel:load ('box.msh')
 print'*** Create a dg solver ***'
 DG = dgSystemOfEquations (myModel)
 DG:setOrder(order)
 DG:setConservationLaw('WaveEquation')
+
 DG:addBoundaryCondition('Border','Wall')
 DG:setup()
 

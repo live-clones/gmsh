@@ -10,6 +10,7 @@
 #include <map>
 #include "linearSystemGMM.h"
 #include "meshPartitionOptions.h"
+#include "meshPartition.h"
 
 class MElement;
 struct meshPartitionOptions;
@@ -24,13 +25,12 @@ class multiscalePartition{
 
  private:
   std::vector<partitionLevel*> levels;
-  void partition(partitionLevel &level);
+  void partition(partitionLevel &level, int nbParts,  typeOfPartition method);
   int totalParts;
   meshPartitionOptions options;
 
  public:
-  multiscalePartition(std::vector<MElement *> &elements, 
-		      meshPartitionOptions &options);
+  multiscalePartition(std::vector<MElement *> &elements, int nbParts, typeOfPartition method);
   int assembleAllPartitions();
   void setNumberOfPartitions(int &nbParts);
   int getNumberOfParts(){return totalParts;}

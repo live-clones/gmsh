@@ -41,8 +41,76 @@ int GModel::readGEO(const std::string &name)
   return GModel::current()->importGEOInternals();
 }
 
+int GModel::exportDiscreteGEOInternals()
+{
+
+  _geo_internals = new GEO_Internals;
+
+  for(viter it = firstVertex(); it != lastVertex(); it++){
+    Vertex *v = Create_Vertex((*it)->tag(), (*it)->x(), (*it)->y(), (*it)->z(), (*it)->prescribedMeshSizeAtVertex(), 1.0);
+    Tree_Add(GModel::current()->getGEOInternals()->Points, &v);
+  }
+
+  for(eiter it = firstEdge(); it != lastEdge(); it++){
+    if((*it)->geomType() == GEntity::DiscreteCurve){
+      Curve *c = Create_Curve((*it)->tag(), MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0., 1.);
+      List_T *points = Tree2List(_geo_internals->Points);
+      GVertex *gvb = (*it)->getBeginVertex();
+      GVertex *gve = (*it)->getEndVertex();
+      c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
+      for(int i = 0; i < List_Nbr(points); i++) {
+	Vertex *v;
+ 	List_Read(points, i, &v);
+ 	if (v->Num == gvb->tag()) {
+ 	  List_Add(c->Control_Points, &v);
+ 	  c->beg = v;
+ 	}
+ 	if (v->Num == gve->tag()) {
+ 	  List_Add(c->Control_Points, &v);
+ 	  c->end = v;
+ 	}
+      }
+      Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
+      CreateReversedCurve(c);
+    }
+  }
+
+  for(fiter it = firstFace(); it != lastFace(); it++){
+    if((*it)->geomType() == GEntity::DiscreteSurface){
+      Surface *s = Create_Surface((*it)->tag(), MSH_SURF_DISCRETE);
+      std::list<GEdge*> edges = (*it)->edges();
+      s->Generatrices = List_Create(edges.size(), 1, sizeof(Curve *));
+      List_T *curves = Tree2List(_geo_internals->Curves);
+      Curve *c;
+      for(std::list<GEdge*>::iterator ite = edges.begin(); ite != edges.end(); ite++){
+	for(int i = 0; i < List_Nbr(curves); i++) {
+	  List_Read(curves, i, &c);
+	  if (c->Num == (*ite)->tag()) {
+	    List_Add(s->Generatrices, &c);
+	  }
+	}
+      }
+      Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
+    }
+  }
+
+  //create Volumes from discreteRegions
+  //TODO
+
+  Msg::Debug("Geo internal model has:");
+  List_T *points = Tree2List(_geo_internals->Points);
+  List_T *curves = Tree2List(_geo_internals->Curves);
+  List_T *surfaces = Tree2List(_geo_internals->Surfaces);  
+  Msg::Debug("%d Vertices", List_Nbr(points));
+  Msg::Debug("%d Edges", List_Nbr(curves));
+  Msg::Debug("%d Faces", List_Nbr(surfaces));
+
+  return 1;
+}
+
 int GModel::importGEOInternals()
 {
+
   if(Tree_Nbr(_geo_internals->Points)) {
     List_T *points = Tree2List(_geo_internals->Points);
     for(int i = 0; i < List_Nbr(points); i++){
@@ -193,7 +261,7 @@ int GModel::importGEOInternals()
    
   }
 
-  Msg::Debug("Gmsh model imported:");
+  Msg::Debug("Gmsh model (GModel) imported:");
   Msg::Debug("%d Vertices", vertices.size());
   Msg::Debug("%d Edges", edges.size());
   Msg::Debug("%d Faces", faces.size());

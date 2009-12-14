@@ -27,7 +27,6 @@
 #include "discreteEdge.h"
 #include "discreteFace.h"
 #include "GFaceCompound.h"
-#include "multiscalePartition.h"
 #include "Context.h"
 
 
@@ -103,28 +102,7 @@ void MakeGraphDIM(const EntIter begin, const EntIter end,
  *
  ******************************************************************************/
 
-bool PartitionZeroGenus(std::list<GFace*> &cFaces, int &nbParts){
 
-   meshPartitionOptions options;
-   options = CTX::instance()->partitionOptions;
-   options.num_partitions = nbParts;
-   options.partitioner = 1;//1 CHACO //2 METIS
-   if ( options.partitioner == 1){
-     options.global_method = 2;// 1 Multilevel-KL 2 Spectral
-     options.mesh_dims[0] = nbParts;
-   }
-
-//   PartitionMeshFace(cFaces, options);
-
-   std::vector<MElement *> elements;
-   for (std::list<GFace*>::iterator it = cFaces.begin(); it != cFaces.end(); it++)
-     for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++)
-       elements.push_back((*it)->getMeshElement(j));
-   
-   multiscalePartition *msp = new multiscalePartition(elements, options);
-   nbParts = msp->getNumberOfParts();
-	return true;
-}
 
 int PartitionMeshElements( std::vector<MElement*> &elements, meshPartitionOptions &options){
 

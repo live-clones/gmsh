@@ -1072,6 +1072,8 @@ void GModel::createTopologyFromMesh()
     if((*it)->geomType() == GEntity::DiscreteVolume)
       discRegions.push_back((discreteRegion*) *it);
 
+  //EMI-FIX in case of createTopology for Volumes
+  //all faces are set to the volume
   for (std::vector<discreteRegion*>::iterator it = discRegions.begin();
        it != discRegions.end(); it++)
     (*it)->setBoundFaces();
@@ -1137,10 +1139,14 @@ void GModel::createTopologyFromMesh()
  //create Topo From Faces
  createTopologyFromFaces(discFaces);
 
+ //create
+ exportDiscreteGEOInternals();
+
 }
 
 void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
 {
+ 
 
   std::vector<discreteEdge*> discEdges;
   for(eiter it = firstEdge(); it != lastEdge(); it++){
@@ -1154,7 +1160,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
   for (std::vector<discreteFace*>::iterator it = discFaces.begin(); it != discFaces.end(); it++)
     (*it)->findEdges(map_edges);
 
-  //return if no boundary edges (torus, sphere, ..)
+  //return if no boundary edges (torus, sphere, ...)
   if (map_edges.empty()) return;
 
   // create reverse map, for each face find set of MEdges that are
