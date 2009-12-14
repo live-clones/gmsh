@@ -126,7 +126,11 @@ void GetOptions(int argc, char *argv[])
 
     if(argv[i][0] == '-') {
 
-      if(!strcmp(argv[i] + 1, "socket")) {
+      if(!strcmp(argv[i] + 1, "")) {
+        CTX::instance()->batch = -99;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "socket")) {
         i++;        
         if(argv[i])
           Msg::InitClient(argv[i++]);
@@ -134,7 +138,7 @@ void GetOptions(int argc, char *argv[])
           Msg::Fatal("Missing string");
         CTX::instance()->batch = -3;
       }
-      else if(!strcmp(argv[i] + 1, "")) {
+      else if(!strcmp(argv[i] + 1, "check")) {
         CTX::instance()->batch = -2;
         i++;
       }
