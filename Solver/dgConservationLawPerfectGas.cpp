@@ -225,7 +225,7 @@ class dgPerfectGasLaw2d : public dgConservationLaw {
   }
   dgPerfectGasLaw2d() 
   {
-    _nbf = 4; // H U(=Hu) V(=Hv)
+    _nbf = 4; // \rho \rho u \rho v \rho e
   }
 };
 

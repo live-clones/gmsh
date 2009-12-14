@@ -55,10 +55,10 @@ class dgConservationLaw {
 
 dgConservationLaw *dgNewConservationLawAdvection(const std::string vname,const std::string nuname);
 dgConservationLaw *dgNewConservationLawShallowWater2d();
-dgConservationLaw *dgNewConservationLawWaveEquation();
+dgConservationLaw *dgNewConservationLawWaveEquation(int);
 dgConservationLaw *dgNewPerfectGasLaw2d();
 
-dgBoundaryCondition *dgNewBoundaryConditionWaveEquationWall();
+dgBoundaryCondition *dgNewBoundaryConditionWaveEquationWall(int);
 dgBoundaryCondition *dgNewBoundaryConditionShallowWater2dWall();
 dgBoundaryCondition *dgNewBoundaryConditionPerfectGasLaw2dWall();
 dgBoundaryCondition *dgNewBoundaryConditionPerfectGasLaw2dFreeStream(std::string&);

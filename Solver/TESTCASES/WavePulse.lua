@@ -19,7 +19,7 @@ end
      Example of a lua program driving the DG code
 --]]
 
-order = 1
+order = 5
 print'*** Loading the mesh and the model ***'
 myModel   = GModel  ()
 myModel:load ('square.geo')
@@ -43,7 +43,7 @@ DG:exportSolution('output/solution_000')
 
 print'*** solve ***'
 
-dt = 0.005;
+dt = 0.00125;
 for i=1,1000 do
     norm = DG:RK44(dt)
     print('*** ITER ***',i,norm)
