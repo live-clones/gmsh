@@ -572,7 +572,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
 
   // get the number of vertices and index the vertices in a continuous
   // sequence
-  int numVertices = indexMeshVertices(saveAll);
+  bool renumber = true; // FIXME
+  int numVertices = renumber ? indexMeshVertices(saveAll) : getNumMeshVertices();
   
   // binary format exists only in version 2
   if(version > 1 || binary) 
