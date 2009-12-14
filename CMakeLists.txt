@@ -1007,6 +1007,3 @@ mark_as_advanced(BISON FLEX GMP_LIB GMSH_EXTRA_VERSION HDF5_LIB MAKEINFO
 
 add_executable(gmshlua EXCLUDE_FROM_ALL Solver/dgMainLua.cpp ${GMSH_SRC})
 target_link_libraries(gmshlua ${LINK_LIBRARIES})
-
-add_executable(gmshdgsam EXCLUDE_FROM_ALL Solver/dgMainSam.cpp ${GMSH_SRC})
-target_link_libraries(gmshdgsam ${LINK_LIBRARIES})
