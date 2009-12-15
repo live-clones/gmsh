@@ -105,7 +105,7 @@ class ScalarTerm : public ScalarTermBase
 
 
 
-template<class S1,class S2> class ElasticTerm : public BilinearTerm<S1,S2> // non symmetric 
+template<class S1,class S2> class IsotropicElasticTerm : public BilinearTerm<S1,S2> // non symmetric 
 {
  protected : 
   double E,nu;
@@ -118,7 +118,7 @@ template<class S1,class S2> class ElasticTerm : public BilinearTerm<S1,S2> // no
       {  0,   0,   0,    0,   0, C44} };*/
 
  public : 
-  ElasticTerm(S1& space1_,S2& space2_,double E_,double nu_) : BilinearTerm<S1,S2>(space1_,space2_),E(E_),nu(nu_),H(6,6)
+  IsotropicElasticTerm(S1& space1_,S2& space2_,double E_,double nu_) : BilinearTerm<S1,S2>(space1_,space2_),E(E_),nu(nu_),H(6,6)
   {
     double FACT = E / (1 + nu);
     double C11 = FACT * (1 - nu) / (1 - 2 * nu);
@@ -176,7 +176,7 @@ template<class S1,class S2> class ElasticTerm : public BilinearTerm<S1,S2> // no
 
 
 
-template<class S1> class ElasticTerm<S1,S1> : public BilinearTerm<S1,S1> // symmetric
+template<class S1> class IsotropicElasticTerm<S1,S1> : public BilinearTerm<S1,S1> // symmetric
 {
  protected : 
   double E,nu;
@@ -189,7 +189,7 @@ template<class S1> class ElasticTerm<S1,S1> : public BilinearTerm<S1,S1> // symm
       {  0,   0,   0,    0,   0, C44} };*/
 
  public : 
-  ElasticTerm(S1& space1_,double E_,double nu_) : BilinearTerm<S1,S1>(space1_,space1_),E(E_),nu(nu_),H(6,6)
+  IsotropicElasticTerm(S1& space1_,double E_,double nu_) : BilinearTerm<S1,S1>(space1_,space1_),E(E_),nu(nu_),H(6,6)
   {
     double FACT = E / (1 + nu);
     double C11 = FACT * (1 - nu) / (1 - 2 * nu);
@@ -235,36 +235,12 @@ template<class S1> class ElasticTerm<S1,S1> : public BilinearTerm<S1,S1> // symm
 inline double dot(const double &a, const double &b)
 { return a*b; }
 
-template<class S1> class LoadTerm : public LinearTerm<S1>
-{
-  typename S1::ValType Load;
- public : 
-  LoadTerm(S1& space1_,typename S1::ValType Load_) :LinearTerm<S1>(space1_),Load(Load_) {};
-  virtual void get(MElement *ele,int npts,IntPt *GP,fullVector<double> &m)
-  {
-    double nbFF=LinearTerm<S1>::space1.getNumKeys(ele);
-    double jac[3][3];
-    m.resize(nbFF);
-    m.scale(0.);
-    for (int i = 0; i < npts; i++)
-    {
-      const double u = GP[i].pt[0];const double v = GP[i].pt[1];const double w = GP[i].pt[2];
-      const double weight = GP[i].weight;const double detJ = ele->getJacobian(u, v, w, jac);
-      std::vector<typename S1::ValType> Vals;
-      LinearTerm<S1>::space1.f(ele,u, v, w, Vals);
-      for (int j = 0; j < nbFF ; ++j)
-      {
-        m(j)+=dot(Vals[j],Load)*weight*detJ;
-      }
-    }
-  }
-};
 
-template<class S1> class LoadTermSF : public LinearTerm<S1>
+template<class S1> class LoadTerm : public LinearTerm<S1>
 {
   simpleFunction<typename S1::ValType> Load;
  public : 
-  LoadTermSF(S1& space1_,simpleFunction<typename S1::ValType> Load_) :LinearTerm<S1>(space1_),Load(Load_) {};
+  LoadTerm(S1& space1_,simpleFunction<typename S1::ValType> Load_) :LinearTerm<S1>(space1_),Load(Load_) {};
   virtual void get(MElement *ele,int npts,IntPt *GP,fullVector<double> &m)
   {
     double nbFF=LinearTerm<S1>::space1.getNumKeys(ele);

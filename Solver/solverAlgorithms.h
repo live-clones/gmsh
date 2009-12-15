@@ -19,7 +19,7 @@
 #include "terms.h"
 #include "quadratureRules.h"
 #include "MVertex.h"
-#include <iostream>
+
 
 template<class Iterator,class Assembler> void Assemble(BilinearTermBase &term,FunctionSpaceBase &space,Iterator itbegin,Iterator itend,QuadratureBase &integrator,Assembler &assembler) // symmetric
 {

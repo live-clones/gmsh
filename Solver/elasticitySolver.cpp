@@ -429,21 +429,21 @@ void MyelasticitySolver::solve()
 
   for (unsigned int i = 0; i < edgeNeu.size(); i++)
   {
-    LoadTermSF<VectorLagrangeFunctionSpace> Lterm(P123,edgeNeu[i]._f);
+    LoadTerm<VectorLagrangeFunctionSpace> Lterm(P123,edgeNeu[i]._f);
     Assemble(Lterm,P123,edgeNeu[i].g->begin(),edgeNeu[i].g->end(),Integ_Boundary,*pAssembler);
     printf("-- Force on edge %3d \n", edgeNeu[i]._tag);
   }
 
   for (unsigned int i = 0; i < faceNeu.size(); i++)
   {
-    LoadTermSF<VectorLagrangeFunctionSpace> Lterm(P123,faceNeu[i]._f);
+    LoadTerm<VectorLagrangeFunctionSpace> Lterm(P123,faceNeu[i]._f);
     Assemble(Lterm,P123,faceNeu[i].g->begin(),faceNeu[i].g->end(),Integ_Boundary,*pAssembler);
     printf("-- Force on face %3d \n", faceNeu[i]._tag);
   }
 
   for (unsigned int i = 0; i < volumeNeu.size(); i++)
   {
-    LoadTermSF<VectorLagrangeFunctionSpace> Lterm(P123,volumeNeu[i]._f);
+    LoadTerm<VectorLagrangeFunctionSpace> Lterm(P123,volumeNeu[i]._f);
     Assemble(Lterm,P123,volumeNeu[i].g->begin(),volumeNeu[i].g->end(),Integ_Boundary,*pAssembler);
     printf("-- Force on volume %3d \n", volumeNeu[i]._tag);
   }
@@ -451,7 +451,7 @@ void MyelasticitySolver::solve()
   GaussQuadrature Integ_Bulk(GaussQuadrature::GradGrad);
   for (unsigned int i = 0; i < elasticFields.size(); i++)
   {
-    ElasticTerm<VectorLagrangeFunctionSpace,VectorLagrangeFunctionSpace> Eterm(P123,elasticFields[i]._E,elasticFields[i]._nu);
+    IsotropicElasticTerm<VectorLagrangeFunctionSpace,VectorLagrangeFunctionSpace> Eterm(P123,elasticFields[i]._E,elasticFields[i]._nu);
     Assemble(Eterm,P123,elasticFields[i].g->begin(),elasticFields[i].g->end(),Integ_Bulk,*pAssembler);
   }
 
