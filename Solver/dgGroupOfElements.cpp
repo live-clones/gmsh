@@ -150,7 +150,6 @@ void dgGroupOfFaces::addFace(const MFace &topoFace, int iElLeft, int iElRight){
   for (int j=0; j<geomClosure.size() ; j++)
     vertices.push_back( elLeft.getVertex(geomClosure[j]) );
   // triangular face
-  printf("the topological face has %d vertices and the geometrical %d\n",topoFace.getNumVertices(),vertices.size());
   if (topoFace.getNumVertices() == 3){
     switch(vertices.size()){
       case 3  : _faces.push_back(new MTriangle (vertices) ); break;

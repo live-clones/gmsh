@@ -69,6 +69,7 @@ int GModel::exportDiscreteGEOInternals()
  	  List_Add(c->Control_Points, &v);
  	  c->end = v;
  	}
+	
       }
       Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
       CreateReversedCurve(c);

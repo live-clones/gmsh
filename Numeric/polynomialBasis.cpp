@@ -667,8 +667,9 @@ static fullMatrix<double> generateLagrangeMonomialCoefficients
 static void getFaceClosure(int iFace, int iSign, int iRotate, std::vector<int> &closure,
                            int order)
 {
+
   closure.clear();
-  closure.reserve((order + 1) * (order + 2) / 2);  
+  closure.resize((order + 1) * (order + 2) / 2);
   switch (order){
   case 0:
     closure[0] = 0;
@@ -734,10 +735,12 @@ static void getFaceClosure(int iFace, int iSign, int iRotate, std::vector<int> &
     }
     break;
   }
+
 } 
 
 static void generate3dFaceClosure(polynomialBasis::clCont &closure, int order)
 {
+
   for (int iRotate = 0; iRotate < 3; iRotate++){
     for (int iSign = 1; iSign >= -1; iSign -= 2){
       for (int iFace = 0; iFace < 4; iFace++){
