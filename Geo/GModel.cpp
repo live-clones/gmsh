@@ -27,6 +27,9 @@
 #include "Context.h"
 #include "OS.h"
 
+#include "OpenFile.h"
+#include "CreateFile.h"
+
 #if defined(HAVE_MESH)
 #include "Field.h"
 #include "Generator.h"
@@ -1360,3 +1363,30 @@ GModel *GModel::buildCutGModel(gLevelset *ls)
   return cutGM;
 }
 
+void GModel::load(std::string fileName){
+  GModel *temp = GModel::current();
+  GModel::setCurrent(this);
+  MergeFile(fileName.c_str());
+  GModel::setCurrent(temp);
+}
+
+void GModel::save(std::string fileName){
+  GModel *temp = GModel::current();
+  GModel::setCurrent(this);
+  int guess = GuessFileFormatFromFileName(fileName);
+  CreateOutputFile (fileName, guess);
+  GModel::setCurrent(temp);
+}
+
+#ifdef HAVE_LUA
+#include "Bindings.h"
+const char GModel::className[]="GModel";
+const char GModel::parentClassName[]="";
+methodBinding *GModel::methods[]={
+  new methodBindingTemplate<GModel,int,int>("mesh",&GModel::mesh),
+  new methodBindingTemplate<GModel,void,std::string>("load",&GModel::load),
+  new methodBindingTemplate<GModel,void,std::string>("save",&GModel::save),
+  0
+};
+constructorBinding *GModel::constructorMethod=new constructorBindingTemplate<GModel>();
+#endif

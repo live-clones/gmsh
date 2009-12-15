@@ -1,4 +1,4 @@
-#include "dgConservationLaw.h"
+#include "dgConservationLawPerfectGas.h"
 #include "function.h"
 
 const double GAMMA = 1.4;
@@ -127,107 +127,97 @@ static inline void _ROE2D (const double &_GAMMA,
     FLUX[k] = -lflux;
   }
 } 
+// perfect gas law, GAMMA is the only parameter
 
-class dgPerfectGasLaw2d : public dgConservationLaw {
-
-  // perfect gas law, GAMMA is the only parameter
-
-  class advection : public dataCacheDouble {
-    dataCacheDouble &sol;
+class dgPerfectGasLaw2d::advection : public dataCacheDouble {
+  dataCacheDouble &sol;
   public:
-    advection(dataCacheMap &cacheMap):
-      sol(cacheMap.get("Solution",this))
-    {};
-    void _eval () { 
-      const int nQP = sol().size1();      
-      if(_value.size1() != nQP)
-        _value=fullMatrix<double>(nQP,8);
-      const double GM1 = GAMMA - 1.0;
-      for (size_t k = 0 ; k < nQP; k++ ){
-	//	printf("%d %g %g %g %g\n",k,sol(k,0),sol(k,1),sol(k,2),sol(k,3));
-	const double invrho = 1./sol(k,0);
-	
-	const double q12 = sol(k,1)*sol(k,2)*invrho;
-	const double q11 = sol(k,1)*sol(k,1)*invrho;
-	const double q22 = sol(k,2)*sol(k,2)*invrho;
-	
-	const double p = GM1*sol(k,3) - 0.5*GM1*(q11+q22);
-	const double qq = invrho*(sol(k,3)+p);
-	
-	_value(k,0)   = sol(k,1);
-	_value(k,1) = q11+p;
-	_value(k,2) = q12;
-	_value(k,3) = sol(k,1)*qq;
+  advection(dataCacheMap &cacheMap):
+    sol(cacheMap.get("Solution",this))
+  {};
+  void _eval () { 
+    const int nQP = sol().size1();      
+    if(_value.size1() != nQP)
+      _value=fullMatrix<double>(nQP,8);
+    const double GM1 = GAMMA - 1.0;
+    for (size_t k = 0 ; k < nQP; k++ ){
+      //	printf("%d %g %g %g %g\n",k,sol(k,0),sol(k,1),sol(k,2),sol(k,3));
+      const double invrho = 1./sol(k,0);
 
-	_value(k,0+4) = sol(k,2);
-	_value(k,1+4) = q12;
-	_value(k,2+4) = q22+p;
-	_value(k,3+4) = sol(k,2)*qq;
+      const double q12 = sol(k,1)*sol(k,2)*invrho;
+      const double q11 = sol(k,1)*sol(k,1)*invrho;
+      const double q22 = sol(k,2)*sol(k,2)*invrho;
 
-	/*	_value(k,8) = 0;
-        _value(k,9) = 0;
-        _value(k,10) = 0;
-        _value(k,11) = 0;*/
-      }
+      const double p = GM1*sol(k,3) - 0.5*GM1*(q11+q22);
+      const double qq = invrho*(sol(k,3)+p);
+
+      _value(k,0)   = sol(k,1);
+      _value(k,1) = q11+p;
+      _value(k,2) = q12;
+      _value(k,3) = sol(k,1)*qq;
+
+      _value(k,0+4) = sol(k,2);
+      _value(k,1+4) = q12;
+      _value(k,2+4) = q22+p;
+      _value(k,3+4) = sol(k,2)*qq;
+
+      /*	_value(k,8) = 0;
+          _value(k,9) = 0;
+          _value(k,10) = 0;
+          _value(k,11) = 0;*/
     }
-  };
-  
-  class riemann : public dataCacheDouble {
-    dataCacheDouble &normals, &solL, &solR;
-    public:
-    riemann(dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight):
-      normals(cacheMapLeft.get("Normals", this)),
-      solL(cacheMapLeft.get("Solution", this)),
-      solR(cacheMapRight.get("Solution", this))
-      {};
-    void _eval () { 
-      int nQP = solL().size1();
-      if(_value.size1() != nQP)
-	_value = fullMatrix<double>(nQP,8);
-      
-      for(int i=0; i< nQP; i++) {
-	const double solLeft [4] = {solL(i,0),solL(i,1),solL(i,2),solL(i,3)};
-	const double solRight[4] = {solR(i,0),solR(i,1),solR(i,2),solR(i,3)};
-	double FLUX[4] ;
-	const double nx = normals(0,i);
-	const double ny = normals(1,i);
-	_ROE2D (GAMMA,nx,ny,solLeft,solRight,FLUX);
-	
-	/*
-	  printf("RSOLL %g %g %g %g\n",solLeft[0],solLeft[1],solLeft[2], solLeft[3]);
-	  printf("RSOLR %g %g %g %g\n",solRight[0],solRight[1],solRight[2], solRight[3]);
-	  printf("RN    %g %g\n",nx,ny);
-	  printf("RFLUX %g %g %g %g\n",FLUX[0],FLUX[1],FLUX[2],FLUX[3]);
-	*/
-	_value(i,0) = FLUX[0];
-	_value(i,1) = FLUX[1];
-	_value(i,2) = FLUX[2];
-	_value(i,3) = FLUX[3];
-	_value(i,4) = -_value(i,0);
-	_value(i,5) = -_value(i,1);
-	_value(i,6) = -_value(i,2);
-	_value(i,7) = -_value(i,3);
-      }
-    }
-  };
-  public:
-  dataCacheDouble *newConvectiveFlux( dataCacheMap &cacheMap) const {
-    return new advection(cacheMap);
-  }
-  dataCacheDouble *newRiemannSolver( dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight) const {
-    return new riemann(cacheMapLeft, cacheMapRight);
-  }
-  dataCacheDouble *newDiffusiveFlux( dataCacheMap &cacheMap) const {
-    return 0;
-  }
-  dataCacheDouble *newSourceTerm (dataCacheMap &cacheMap) const {
-    return 0;
-  }
-  dgPerfectGasLaw2d() 
-  {
-    _nbf = 4; // \rho \rho u \rho v \rho e
   }
 };
+
+class dgPerfectGasLaw2d::riemann : public dataCacheDouble {
+  dataCacheDouble &normals, &solL, &solR;
+  public:
+  riemann(dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight):
+    normals(cacheMapLeft.get("Normals", this)),
+    solL(cacheMapLeft.get("Solution", this)),
+    solR(cacheMapRight.get("Solution", this))
+  {};
+  void _eval () { 
+    int nQP = solL().size1();
+    if(_value.size1() != nQP)
+      _value = fullMatrix<double>(nQP,8);
+
+    for(int i=0; i< nQP; i++) {
+      const double solLeft [4] = {solL(i,0),solL(i,1),solL(i,2),solL(i,3)};
+      const double solRight[4] = {solR(i,0),solR(i,1),solR(i,2),solR(i,3)};
+      double FLUX[4] ;
+      const double nx = normals(0,i);
+      const double ny = normals(1,i);
+      _ROE2D (GAMMA,nx,ny,solLeft,solRight,FLUX);
+
+      _value(i,0) = FLUX[0];
+      _value(i,1) = FLUX[1];
+      _value(i,2) = FLUX[2];
+      _value(i,3) = FLUX[3];
+      _value(i,4) = -_value(i,0);
+      _value(i,5) = -_value(i,1);
+      _value(i,6) = -_value(i,2);
+      _value(i,7) = -_value(i,3);
+    }
+  }
+};
+dataCacheDouble *dgPerfectGasLaw2d::newConvectiveFlux( dataCacheMap &cacheMap) const {
+  return new advection(cacheMap);
+}
+dataCacheDouble *dgPerfectGasLaw2d::newRiemannSolver( dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight) const {
+  return new riemann(cacheMapLeft, cacheMapRight);
+}
+dataCacheDouble *dgPerfectGasLaw2d::newDiffusiveFlux( dataCacheMap &cacheMap) const {
+  return 0;
+}
+dataCacheDouble *dgPerfectGasLaw2d::newSourceTerm (dataCacheMap &cacheMap) const {
+  return 0;
+}
+dgPerfectGasLaw2d::dgPerfectGasLaw2d() 
+{
+  _nbf = 4; // \rho \rho u \rho v \rho e
+}
+
 
 class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
   class term : public dataCacheDouble {
@@ -268,7 +258,12 @@ class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
     return new term(cacheMapLeft);
   }
 };
+dgBoundaryCondition *dgPerfectGasLaw2d::newWallBoundary() const {
+  return new dgBoundaryConditionPerfectGasLaw2dWall();
+}
 
+#if 0 // JF : I commented this out as I think this equivalent to the generic OutsideValue condition
+can you confirm and remove it ?
 class dgBoundaryConditionPerfectGasLaw2dFreeStream : public dgBoundaryCondition {
   class term : public dataCacheDouble {
     dataCacheDouble &sol,&normals,&freeStream;
@@ -313,16 +308,13 @@ class dgBoundaryConditionPerfectGasLaw2dFreeStream : public dgBoundaryCondition 
     return new term(cacheMapLeft,_freeStreamName);
   }
 };
+#endif
 
+#include "Bindings.h"
+const char *dgPerfectGasLaw2d::className = "ConservationLawPerfectGas2d";
+const char *dgPerfectGasLaw2d::parentClassName = "ConservationLaw";
+methodBinding *dgPerfectGasLaw2d::methods[] ={
+  new methodBindingTemplate<const dgPerfectGasLaw2d,dgBoundaryCondition*>("newWallBoundary",&dgPerfectGasLaw2d::newWallBoundary),
+0};
+constructorBinding *dgPerfectGasLaw2d::constructorMethod=new constructorBindingTemplate<dgPerfectGasLaw2d>();
 
-dgBoundaryCondition *dgNewBoundaryConditionPerfectGasLaw2dWall() {
-  return new dgBoundaryConditionPerfectGasLaw2dWall();
-}
-
-dgBoundaryCondition *dgNewBoundaryConditionPerfectGasLaw2dFreeStream(std::string &freeStreamName) {
-  return new dgBoundaryConditionPerfectGasLaw2dFreeStream(freeStreamName);
-}
-
-dgConservationLaw *dgNewPerfectGasLaw2d() {
-  return new dgPerfectGasLaw2d();
-}

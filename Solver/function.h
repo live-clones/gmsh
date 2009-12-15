@@ -114,6 +114,7 @@ class dataCacheDouble : public dataCache {
 class function {
  private:
   static std::map<std::string, function*> _allFunctions;
+ protected:
   std::string _name;
  public:
   static void registerDefaultFunctions();
@@ -122,8 +123,13 @@ class function {
 
   virtual dataCacheDouble *newDataCache(dataCacheMap *m) =0;
 
-  //we need a parser for this
-  static function *newFunctionConstant(const fullMatrix<double> &source);
+  inline  std::string getName()const {return _name;}
+
+  static const char *className;
+  static const char *parentClassName;
+  static methodBinding *methods[];
+  static constructorBinding *constructorMethod;
+  virtual ~function(){};
 };
 
 // A special node in the dependency tree for which all the leafs
@@ -149,8 +155,7 @@ class dataCacheMap {
   std::map<std::string, dataCacheDouble*> _cacheDoubleMap;
   class providedDataDouble : public dataCacheDouble
   // for data provided by the algorithm and that does not have an _eval function
-  // (typically "UVW") this class is not stricly necessary, we could write
-  // a function for each case 
+  // (typically "UVW")
   {
     void _eval() {throw;};
     public:
@@ -165,5 +170,19 @@ class dataCacheMap {
   dataCacheMap(int nbEvaluationPoints):_nbEvaluationPoints(nbEvaluationPoints){}
   inline int getNbEvaluationPoints(){return _nbEvaluationPoints;}
   ~dataCacheMap();
+};
+class functionConstant : public function {
+  public:
+  class data ;
+  fullMatrix<double> _source;
+  dataCacheDouble *newDataCache(dataCacheMap *m);
+  functionConstant(const fullMatrix<double> *source);
+  static const char *className;
+  static const char *parentClassName;
+  static methodBinding *methods[];
+  static constructorBinding *constructorMethod;
+  ~functionConstant(){
+    printf("delete fc\n");
+  }
 };
 #endif

@@ -1,6 +1,7 @@
 #include "function.h"
 #include "SPoint3.h"
 #include "MElement.h"
+#include <sstream>
 
 // dataCache members
 
@@ -84,11 +85,13 @@ class functionXYZ : public function {
    private:
     dataCacheElement &_element;
     dataCacheDouble &_uvw;
+  int count;
    public:
     data(dataCacheMap *m) : 
       dataCacheDouble(m->getNbEvaluationPoints(),3),
       _element(m->getElement(this)), _uvw(m->get("UVW", this))
-    {}
+    {
+    }
     void _eval()
     {
       for(int i = 0; i < _uvw().size1(); i++){
@@ -99,6 +102,8 @@ class functionXYZ : public function {
         _value(i, 2) = p.z();
       }
     }
+    ~data(){
+    }
   };
  public:
   dataCacheDouble *newDataCache(dataCacheMap *m)
@@ -107,39 +112,52 @@ class functionXYZ : public function {
   }
 };
 
-// constant values copied over each line
-class functionConstant : public function {
- private :
-  class data : public dataCacheDouble {
-    const functionConstant *_function;
-    public:
-    data(const functionConstant * function,dataCacheMap *m):
-      dataCacheDouble(m->getNbEvaluationPoints(),function->_source.size1()){
-      _function = function;
-    }
-    void _eval() {
-      for(int i=0;i<_value.size1();i++)
-        for(int j=0;j<_function->_source.size1();j++)
-          _value(i,j)=_function->_source(j,0);
-    }
-  };
-  fullMatrix<double> _source;
- public:
-  dataCacheDouble *newDataCache(dataCacheMap *m)
-  {
-    return new data(this,m);
-  }
-  functionConstant(const fullMatrix<double> &source){
-    _source = source;
-  }
-};
 
-function *function::newFunctionConstant(const fullMatrix<double> &source){
-  return new functionConstant(source);
+// constant values copied over each line
+class functionConstant::data : public dataCacheDouble {
+ const functionConstant *_function;
+ public:
+ data(const functionConstant * function,dataCacheMap *m):
+   dataCacheDouble(m->getNbEvaluationPoints(),function->_source.size1()){
+     _function = function;
+   }
+ void _eval() {
+   for(int i=0;i<_value.size1();i++)
+     for(int j=0;j<_function->_source.size1();j++)
+       _value(i,j)=_function->_source(j,0);
+ }
+};
+dataCacheDouble *functionConstant::newDataCache(dataCacheMap *m)
+{
+ return new data(this,m);
 }
+functionConstant::functionConstant(const fullMatrix<double> *source){
+ _source = *source;
+  static int c=0;
+  std::ostringstream oss;
+  oss<<"FunctionConstant_"<<c++;
+  _name = oss.str();
+  function::add(_name,this);
+}
+
+#include "Bindings.h"
+const char *functionConstant::className="FunctionConstant";
+const char *functionConstant::parentClassName="Function";
+methodBinding *functionConstant::methods[]={0};
+constructorBinding *functionConstant::constructorMethod=new constructorBindingTemplate<functionConstant,fullMatrix<double>*>();
+
+
+
+
 
 void function::registerDefaultFunctions()
 {
   function::add("XYZ", new functionXYZ);
 }
+
+const char *function::className="Function";
+const char *function::parentClassName="";
+methodBinding *function::methods[]={new methodBindingTemplate<const function,std::string>("getName",&function::getName),
+0};
+constructorBinding *function::constructorMethod=0;
 

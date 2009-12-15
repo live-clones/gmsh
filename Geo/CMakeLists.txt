@@ -25,7 +25,6 @@ set(SRC
   findLinks.cpp
   SOrientedBoundingBox.cpp
   GeomMeshMatcher.cpp
-  LuaBindings_Geo.cpp
   MVertex.cpp
   MFace.cpp
   MElement.cpp

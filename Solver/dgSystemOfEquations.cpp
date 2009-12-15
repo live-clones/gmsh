@@ -1,135 +1,67 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "dgSystemOfEquations.h"
-#include "LuaBindings_Geo.h"
 #include "function.h"
 #include "MElement.h"
 #include "PView.h"
 #include "PViewData.h"
 
-#if defined(HAVE_LUA)
-// define the name of the object that will be used in Lua
-const char dgSystemOfEquations::className[] = "dgSystemOfEquations";
-// Define the methods we will expose to Lua
-#define _method(class, name) {#name, &class::name}
-Luna<dgSystemOfEquations>::RegType dgSystemOfEquations::methods[] = {
-   _method(dgSystemOfEquations, RK44),
-   _method(dgSystemOfEquations, exportSolution),
-   _method(dgSystemOfEquations, setConservationLaw),
-   _method(dgSystemOfEquations, setOrder),
-   _method(dgSystemOfEquations, setup),
-   _method(dgSystemOfEquations, addBoundaryCondition),
-   _method(dgSystemOfEquations, L2Projection),
-   {0,0}
-};
-
-// this function has to be called in the main in order to register
-// the names defined above
-void dgSystemOfEquations::Register (lua_State *L){
-  Luna<dgSystemOfEquations>::Register(L);
-}
 
 class dgConservationLawL2Projection : public dgConservationLaw {
   std::string _functionName;
 public:
-  dgConservationLawL2Projection(const std::string & functionName,
-				dgConservationLaw &_claw) :
+  dgConservationLawL2Projection(const std::string & functionName, dgConservationLaw &_claw) :
     _functionName(functionName)
   {
     _nbf =_claw.nbFields();
   }
   dataCacheDouble *newSourceTerm(dataCacheMap &cacheMap)const {
-    //return new gaussian(cacheMap,0.2,0.3);
     return &cacheMap.get(_functionName);
   }
 };
 
-
-// system of equations is build using a mesh
-dgSystemOfEquations::dgSystemOfEquations(lua_State *L){
-  // get the number of arguments
-  int n = lua_gettop(L);  
-  if (n < 1)throw;
-  LuaGModel *obj =Luna<LuaGModel>::check(L, 1);
-  if (!obj)throw;
-  _gm = obj->getGModel();
-  _dimension = _gm->getNumRegions() ? 3 : _gm->getNumFaces() ? 2 : 1;
+dgSystemOfEquations::dgSystemOfEquations(GModel *gm){
+  _gm=gm;
+  _dimension = _gm->getNumRegions() ? 3 : _gm->getNumFaces() ? 2 : 1 ;
   _solution = 0;
 }
 
-// set the conservation law as a string (for now)
-int dgSystemOfEquations::setConservationLaw(lua_State *L){
-  _claw = 0;  
-  //int argc = (int)luaL_checknumber(L,0);
-  _cLawName = std::string (luaL_checkstring(L, 1));
-  if (_cLawName == "WaveEquation")
-    _claw = dgNewConservationLawWaveEquation(_dimension);
-  else if (_cLawName == "ShallowWater2d")
-    _claw = dgNewConservationLawShallowWater2d(); 
-  else if  (_cLawName == "PerfectGas2d")
-    _claw = dgNewPerfectGasLaw2d(); 
-  else if (_cLawName == "AdvectionDiffusion"){
-    _claw = dgNewConservationLawAdvection(luaL_checkstring(L,2),luaL_checkstring(L,3));
-  }
-  if (!_claw)throw;
-  return 0;
-}
 
 // set the order of interpolation
-int dgSystemOfEquations::setOrder(lua_State *L){
-  _order = luaL_checkint(L, 1);
+void dgSystemOfEquations::setOrder(int o){
+  _order = o;
 }
 
 // add a boundary Condition
-int dgSystemOfEquations::addBoundaryCondition (lua_State *L){
-  std::string physicalName(luaL_checkstring(L, 1));
-  std::string bcName(luaL_checkstring(L, 2));
-  //generic boundary conditions
-  if (bcName == "0Flux"){
-    _claw->addBoundaryCondition(physicalName,dgBoundaryCondition::new0FluxCondition(*_claw));
-  }
-  else if (bcName == "OutsideValues"){
-    _claw->addBoundaryCondition(physicalName,dgBoundaryCondition::newOutsideValueCondition(*_claw,luaL_checkstring(L,3)));
-  }
-  //specific boundary conditions
-  else if (_cLawName == "WaveEquation"){
-    if (bcName == "Wall"){
-      _claw->addBoundaryCondition(physicalName,dgNewBoundaryConditionWaveEquationWall(_dimension));
-    }
-    else throw;
-  }
-  else if (_cLawName == "ShallowWater2d"){
-    if (bcName == "Wall"){
-      _claw->addBoundaryCondition(physicalName,dgNewBoundaryConditionShallowWater2dWall());
-    }
-    else throw;
-  }
-  else if (_cLawName == "PerfectGas2d"){
-    if (bcName == "Wall"){
-      _claw->addBoundaryCondition(physicalName,dgNewBoundaryConditionPerfectGasLaw2dWall());
-    }
-    else if (bcName == "FreeStream"){
-      std::string freeStreamName(luaL_checkstring(L, 3));
-      _claw->addBoundaryCondition(physicalName,
-				  dgNewBoundaryConditionPerfectGasLaw2dFreeStream(freeStreamName));
-    }
-    else throw;
-  }
-  else throw;
+void dgSystemOfEquations::setConservationLaw (dgConservationLaw *law){
+  _claw=law;
 }
 
+#ifdef HAVE_LUA
+#include "Bindings.h"
+const char dgSystemOfEquations::className[] = "dgSystemOfEquations";
+const char dgSystemOfEquations::parentClassName[] = "";
+constructorBinding *dgSystemOfEquations::constructorMethod = new constructorBindingTemplate<dgSystemOfEquations,GModel*>();
+methodBinding *dgSystemOfEquations::methods[]={
+  new methodBindingTemplate<dgSystemOfEquations,void,int>("setOrder",&dgSystemOfEquations::setOrder),
+  new methodBindingTemplate<dgSystemOfEquations,void,dgConservationLaw*>("setConservationLaw",&dgSystemOfEquations::setConservationLaw),
+  new methodBindingTemplate<dgSystemOfEquations,void>("setup",&dgSystemOfEquations::setup),
+  new methodBindingTemplate<dgSystemOfEquations,void,std::string>("exportSolution",&dgSystemOfEquations::exportSolution),
+  new methodBindingTemplate<dgSystemOfEquations,void,std::string>("L2Projection",&dgSystemOfEquations::L2Projection),
+  new methodBindingTemplate<dgSystemOfEquations,double,double>("RK44",&dgSystemOfEquations::RK44),
+ 0};
+
 // do a L2 projection
-int dgSystemOfEquations::L2Projection (lua_State *L){
-  dgConservationLawL2Projection Law(std::string(luaL_checkstring(L, 1)),*_claw);
+void dgSystemOfEquations::L2Projection (std::string functionName){
+  dgConservationLawL2Projection Law(functionName,*_claw);
   for (int i=0;i<_elementGroups.size();i++){
     _algo->residualVolume(Law,*_elementGroups[i],*_solution->_dataProxys[i],*_rightHandSide->_dataProxys[i]);
     _algo->multAddInverseMassMatrix(*_elementGroups[i],*_rightHandSide->_dataProxys[i],*_solution->_dataProxys[i]);
   }
-  return 0;
 }
 
 // ok, we can setup the groups and create solution vectors
-int dgSystemOfEquations::setup(lua_State *L){
+void dgSystemOfEquations::setup(){
   if (!_claw) throw;
   _algo->buildGroups(_gm,
 		     _dimension,
@@ -143,18 +75,13 @@ int dgSystemOfEquations::setup(lua_State *L){
 }
 
 
-int dgSystemOfEquations::RK44(lua_State *L){
-  double dt = luaL_checknumber(L, 1);
+double dgSystemOfEquations::RK44(double dt){
   _algo->rungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups, dt,  *_solution, *_rightHandSide);
-  double normSolution = _solution->_data->norm();
-  lua_pushnumber (L, normSolution);
-  return 1;
+  return _solution->_data->norm();
 }
 
-int dgSystemOfEquations::exportSolution(lua_State *L){
-  std::string outputFile(luaL_checkstring(L, 1));
+void dgSystemOfEquations::exportSolution(std::string outputFile){
   export_solution_as_is(outputFile);
-  return 0;
 }
 #endif // HAVE_LUA
 

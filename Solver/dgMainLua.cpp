@@ -1,9 +1,19 @@
 #include <iostream>
 #include "Gmsh.h"
-#include "LuaBindings_Geo.h"
+#include "Bindings.h"
 #include "dgSystemOfEquations.h"
 #include "luaFunction.h"
 #include "function.h"
+#include "dgGroupOfElements.h"
+#include "dgConservationLawShallowWater2d.h"
+#include "dgConservationLawAdvection.h"
+#include "dgConservationLawPerfectGas.h"
+#include "dgConservationLawWaveEquation.h"
+extern "C" {
+  #include "lua.h"
+  #include "lualib.h"
+  #include "lauxlib.h"
+}
 void report_errors(lua_State *L, int status)
 {
   if ( status!=0 ) {
@@ -18,17 +28,26 @@ int main(int argc, char *argv[])
   lua_State *L = lua_open();
   luaopen_base(L);
   luaopen_table(L);
+  luaopen_os(L);
   //luaopen_io(L);
   luaopen_string(L);
   luaopen_math(L);
   luaopen_debug(L);
 
-  // Register GModel bindings
-  LuaGModel::Register(L);
-  dgSystemOfEquations::Register(L);
-  fullMatrix<double>::Register(L);
+  // Register Lua bindings
+  classBinding<GModel>::Register(L);
+  classBinding<dgSystemOfEquations>::Register(L);
+  classBinding<dgBoundaryCondition>::Register(L);
+  classBinding<dgConservationLaw>::Register(L);
+  classBinding<dgConservationLawShallowWater2d>::Register(L);
+  classBinding<dgConservationLawAdvection>::Register(L);
+  classBinding<dgConservationLawWaveEquation>::Register(L);
+  classBinding<dgPerfectGasLaw2d>::Register(L);
+  classBinding<fullMatrix<double> >::Register(L);
+  classBinding<function>::Register(L);
+  classBinding<functionLua>::Register(L);
+  classBinding<functionConstant>::Register(L);
   function::registerDefaultFunctions();
-  RegisterFunctions(L);
 
   int s = luaL_loadfile(L, argv[1]);
 

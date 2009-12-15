@@ -9,6 +9,10 @@
 #include "fullMatrix.h"
 class dataCacheDouble;
 class dataCacheMap;
+#ifdef HAVE_LUA
+class constructorBinding;
+class methodBinding;
+#endif
 
 class dgConservationLaw;
 
@@ -16,9 +20,12 @@ class dgBoundaryCondition {
  public:
   virtual ~dgBoundaryCondition () {}
   virtual dataCacheDouble *newBoundaryTerm(dataCacheMap &cacheMapLeft) const = 0;
-  //a generic boundary condition using the Riemann solver of the conservation Law
-  static dgBoundaryCondition *newOutsideValueCondition(dgConservationLaw &claw,const std::string outsideValueFunctionName);
-  static dgBoundaryCondition *new0FluxCondition(dgConservationLaw &claw);
+#if defined(HAVE_LUA)
+  static const char className[];
+  static const char parentClassName[];
+  static methodBinding *methods[];
+  static constructorBinding *constructorMethod;
+#endif
 };
 
 class dgConservationLaw {
@@ -45,21 +52,26 @@ class dgConservationLaw {
     return it->second;
   }
 
-  inline void addBoundaryCondition(const std::string tag, dgBoundaryCondition * condition) {
+  void addBoundaryCondition(std::string tag, dgBoundaryCondition * condition) {
     if(_boundaryConditions.find(tag)!=_boundaryConditions.end())
       throw;
     _boundaryConditions[tag]=condition;
   }
 
+  //a generic boundary condition using the Riemann solver of the conservation Law
+  dgBoundaryCondition *newOutsideValueBoundary(std::string outsideValueFunctionName);
+  dgBoundaryCondition *new0FluxBoundary();
+
+  #ifdef HAVE_LUA
+  static const char className[];
+  static const char parentClassName[];
+  static methodBinding *methods[];
+  static constructorBinding *constructorMethod;
+  #endif
 };
 
-dgConservationLaw *dgNewConservationLawAdvection(const std::string vname,const std::string nuname);
-dgConservationLaw *dgNewConservationLawShallowWater2d();
-dgConservationLaw *dgNewConservationLawWaveEquation(int);
 dgConservationLaw *dgNewPerfectGasLaw2d();
 
-dgBoundaryCondition *dgNewBoundaryConditionWaveEquationWall(int);
-dgBoundaryCondition *dgNewBoundaryConditionShallowWater2dWall();
 dgBoundaryCondition *dgNewBoundaryConditionPerfectGasLaw2dWall();
 dgBoundaryCondition *dgNewBoundaryConditionPerfectGasLaw2dFreeStream(std::string&);
 

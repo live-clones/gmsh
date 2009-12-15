@@ -177,6 +177,4 @@ public:
   void mapFromInterface(int nFields, const fullMatrix<double> &v, fullMatrix<double> &vLeft, fullMatrix<double> &vRight);
   const polynomialBasis * getPolynomialBasis() const {return _fsFace;}
 };
-
-
 #endif

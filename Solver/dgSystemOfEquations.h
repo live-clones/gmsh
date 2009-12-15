@@ -8,17 +8,6 @@
 #include "dgConservationLaw.h"
 #include "Gmsh.h"
 
-#if defined(HAVE_LUA)
-// include lua stuff
-extern "C" {
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
-}
-// Use luna for c++ class member functions bindings
-#include "luna.h"
-#endif // HAVE LUA
-
 struct dgDofContainer {
 private:
   dgDofContainer (const dgDofContainer&);  
@@ -30,6 +19,8 @@ public:
   ~dgDofContainer ();  
 };
 
+class methodBinding;
+class constructorBinding;
 
 class dgSystemOfEquations {
   // the mesh and the model
@@ -54,20 +45,19 @@ class dgSystemOfEquations {
   std::vector<dgGroupOfFaces*> _boundaryGroups;
   dgSystemOfEquations(const dgSystemOfEquations &) {}
 public:
-  // lua stuff
-#if defined(HAVE_LUA)
+  void setOrder (int order); // set the polynomial order
+  void setConservationLaw (dgConservationLaw *law); // set the conservationLaw
+  dgSystemOfEquations(GModel *_gm);
+  void setup (); // setup the groups and allocate
+  void exportSolution (std::string filename); // export the solution
+  double RK44 (double dt); 
+  void L2Projection (std::string functionName); // assign the solution to a given function
+
   static const char className[];
-  static Luna<dgSystemOfEquations>::RegType methods[];
-  static void Register(lua_State *L);
-  int exportSolution (lua_State *L); // export the solution
-  int setOrder (lua_State *L); // set the polynomial order
-  int setConservationLaw (lua_State *L); // set the conservationLaw
-  int addBoundaryCondition (lua_State *L); // add a boundary condition : "physical name", "type", [options]
-  int setup (lua_State *L); // setup the groups and allocate
-  int L2Projection (lua_State *L); // assign the solution to a given function
-  int RK44 (lua_State *L); // assign the solution to a given function
-  dgSystemOfEquations(lua_State *L);
-#endif // HAVE LUA
+  static const char parentClassName[];
+  static methodBinding *methods[];
+  static constructorBinding *constructorMethod;
+
   inline const fullMatrix<double> getSolutionProxy (int iGroup, int iElement){
     return fullMatrix<double> ( *_solution->_dataProxys [iGroup] ,
 				iElement * _claw->nbFields(),_claw->nbFields());

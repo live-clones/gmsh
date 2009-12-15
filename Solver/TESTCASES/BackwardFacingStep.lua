@@ -7,9 +7,7 @@ SOUND = V/MACH
 --[[ 
      Function for initial conditions
 --]]
-function free_stream( x, f )
-  FCT = fullMatrix(f)    
-  XYZ = fullMatrix(x)    
+function free_stream( XYZ, FCT )
   for i=0,XYZ:size1()-1 do
     FCT:set(i,0,RHO) 
     FCT:set(i,1,RHO*V) 
@@ -30,12 +28,13 @@ myModel:load ('step.msh')
 print'*** Create a dg solver ***'
 DG = dgSystemOfEquations (myModel)
 DG:setOrder(order)
-DG:setConservationLaw('PerfectGas2d')
-DG:addBoundaryCondition('Walls','Wall')
+law=ConservationLawPerfectGas2d()
+DG:setConservationLaw(law)
+law:addBoundaryCondition('Walls',law:newWallBoundary())
 
-FS = createFunction.lua(4, 'free_stream', 'XYZ')
+FS = FunctionLua(4, 'free_stream', {'XYZ'}):getName()
 
-DG:addBoundaryCondition('LeftRight','FreeStream',FS)
+law:addBoundaryCondition('LeftRight',law:newOutsideValueBoundary(FS))
 DG:setup()
 
 
@@ -56,7 +55,7 @@ print('DT=',dt)
 for i=1,1000 do
     norm = DG:RK44(dt)
     print('*** ITER ***',i,norm)
-    if (i % 20 == 0) then 
+    if (i % 10 == 0) then 
        DG:exportSolution(string.format("solution-%03d", i)) 
     end
 end

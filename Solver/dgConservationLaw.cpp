@@ -26,7 +26,7 @@ class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
       if(riemannSolver){
         for(int i=0;i<_value.size1(); i++)
           for(int j=0;j<_value.size2(); j++)
-            _value(i,j) = (*riemannSolver)(i,j*2);
+            _value(i,j) = (*riemannSolver)(i,j);
       }
     }
   };
@@ -55,10 +55,23 @@ class dgBoundaryCondition0Flux : public dgBoundaryCondition {
   }
 };
 
-dgBoundaryCondition *dgBoundaryCondition::newOutsideValueCondition(dgConservationLaw &claw,const std::string outsideValueFunctionName) {
-  return new dgBoundaryConditionOutsideValue(claw,outsideValueFunctionName);
+dgBoundaryCondition *dgConservationLaw::newOutsideValueBoundary(const std::string outsideValueFunctionName) {
+  return new dgBoundaryConditionOutsideValue(*this,outsideValueFunctionName);
 }
-dgBoundaryCondition *dgBoundaryCondition::new0FluxCondition(dgConservationLaw &claw) {
-  return new dgBoundaryCondition0Flux(claw);
+dgBoundaryCondition *dgConservationLaw::new0FluxBoundary() {
+  return new dgBoundaryCondition0Flux(*this);
 }
 
+#include "Bindings.h"
+const char dgConservationLaw::className[]="ConservationLaw";
+const char  dgConservationLaw::parentClassName[]="";
+methodBinding * dgConservationLaw::methods[]={
+  new methodBindingTemplate<dgConservationLaw,void,std::string,dgBoundaryCondition*>("addBoundaryCondition",&dgConservationLaw::addBoundaryCondition),
+  new methodBindingTemplate<dgConservationLaw,dgBoundaryCondition*>("new0FluxBoundary",&dgConservationLaw::new0FluxBoundary),
+  new methodBindingTemplate<dgConservationLaw,dgBoundaryCondition*,std::string>("newOutsideValueBoundary",&dgConservationLaw::newOutsideValueBoundary),
+0};
+constructorBinding * dgConservationLaw::constructorMethod=NULL;
+const char dgBoundaryCondition::className[]="BoundaryCondition";
+const char  dgBoundaryCondition::parentClassName[]="";
+methodBinding * dgBoundaryCondition::methods[]={0};
+constructorBinding * dgBoundaryCondition::constructorMethod=NULL;
