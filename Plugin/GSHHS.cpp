@@ -118,7 +118,10 @@ public:
        * 4th byte:      source = (flag >> 24) & 255: Values: 0 = CIA WDBII, 1 = WVS
        */
       int west, east, south, north;     /* min/max extent in micro-degrees */
-      int area;                 /* Area of polygon in 1/10 km^2 */
+      int area;	/* Area of polygon in 1/10 km^2 */
+      int area_full;	/* Area of original full-resolution polygon in 1/10 km^2 */
+      int container;	/* Id of container polygon that encloses this polygon (-1 if none) */
+      int ancestor;	/* Id of ancestor polygon in the full resolution set that was the source of this polygon (-1 if none) */
     };
     GSHHS h;
     POINT p;
