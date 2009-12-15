@@ -44,8 +44,8 @@ dg:exportSolution('output/Adv1D_00000')
 
 -- main loop
 n = 5
-for i=1,100*n do
-  norm = dg:RK44(0.03)
+for i=1,50*n do
+  norm = dg:RK44(0.0325)
   if (i % n == 0) then 
     print('iter',i,norm)
     dg:exportSolution(string.format("output/Adv1D-%05d", i)) 
