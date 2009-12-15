@@ -49,7 +49,7 @@ for i=1,1000 do
     norm = DG:RK44(dt)
     print('*** ITER ***',i,norm)
     if (i % 10 == 0) then 
-       DG:exportSolution(string.format("solution-%03d", i)) 
+       DG:exportSolution(string.format("output/solution-%03d", i)) 
     end
 end
 

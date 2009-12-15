@@ -53,7 +53,7 @@ dgSystemOfEquations::dgSystemOfEquations(lua_State *L){
   LuaGModel *obj =Luna<LuaGModel>::check(L, 1);
   if (!obj)throw;
   _gm = obj->getGModel();
-  _dimension = _gm->getNumRegions() ? 3 : 2;
+  _dimension = _gm->getNumRegions() ? 3 : _gm->getNumFaces() ? 2 : 1;
   _solution = 0;
 }
 
@@ -194,7 +194,7 @@ void dgSystemOfEquations::export_solution_as_is (const std::string &name){
 	fullMatrix<double> sol = getSolutionProxy (i, iElement);      
 	fprintf(f,"%d %d",num,sol.size1());
 	for (int k=0;k<sol.size1();++k) {
-	  fprintf(f,"%12.5E ",sol(k,ICOMP));
+	  fprintf(f," %12.5E ",sol(k,ICOMP));
 	}
 	fprintf(f,"\n");
       }

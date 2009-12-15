@@ -278,7 +278,7 @@ void dgGroupOfFaces::init(int pOrder) {
     }
     // there is nothing on the right for boundary groups
     if(_fsRight){
-      fullMatrix<double> &intRight=_integrationPointsLeft[_closuresIdRight[i]];
+      fullMatrix<double> &intRight=_integrationPointsRight[_closuresIdRight[i]];
       for (int j=0; j<intRight.size1(); j++){
         _fsRight->df((intRight)(j,0),(intRight)(j,1),(intRight)(j,2),g);
         getElementRight(i)->getJacobian ((intRight)(j,0), (intRight)(j,1), (intRight)(j,2), jac);
@@ -314,6 +314,7 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string bo
   if(boundaryTag=="")
     throw;
   _fsLeft=_groupLeft.getElement(0)->getFunctionSpace(pOrder);
+  _closuresLeft = _fsLeft->vertexClosure;
   _fsRight=NULL;
   for(int i=0; i<elGroup.getNbElements(); i++){
     MElement &el = *elGroup.getElement(i);
@@ -374,6 +375,8 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, int pOrder):
   switch (_groupLeft.getElement(0)->getDim()) {
     case 1 : {
       std::map<MVertex*,int> vertexMap;
+      _closuresLeft = _fsLeft->vertexClosure;
+      _closuresRight = _fsRight->vertexClosure;
       for(int i=0; i<elGroup.getNbElements(); i++){
         MElement &el = *elGroup.getElement(i);
         for (int j=0; j<el.getNumVertices(); j++){
