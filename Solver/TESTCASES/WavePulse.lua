@@ -8,8 +8,8 @@ function initial_condition( _x , _f )
     X = xyz:get(i,0) - .5
     Y = xyz:get(i,1) - .5
     Z = xyz:get(i,2)
-    VALUE = math.exp(-40*(X*X+Y*Y+Z*Z));   
-    f:set(i,0,7) 
+    VALUE = math.exp(-40*(X*X+Y*Y+Z*Z)); 
+    f:set(i,0,VALUE) 
     f:set(i,1,0.0) 
     f:set(i,2,0.0) 
   end
@@ -21,8 +21,8 @@ end
 
 print'*** Loading the mesh and the model ***'
 myModel   = GModel  ()
-myModel:load('square.geo')
-myModel:mesh(2)
+myModel:load('box.geo')
+myModel:load('box.msh')
 
 print'*** Create a dg solver ***'
 DG = dgSystemOfEquations (myModel)
