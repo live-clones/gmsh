@@ -19,6 +19,7 @@
 #include <iterator>
 #include "Numeric.h"
 #include "functionSpace.h"
+#include "groupOfElements.h"
 
 
 // evaluation of a field ???
@@ -258,6 +259,33 @@ template<class S1> class LoadTerm : public LinearTerm<S1>
     }
   }
 };
+
+template<class S1> class LoadTermSF : public LinearTerm<S1>
+{
+  simpleFunction<typename S1::ValType> Load;
+ public : 
+  LoadTermSF(S1& space1_,simpleFunction<typename S1::ValType> Load_) :LinearTerm<S1>(space1_),Load(Load_) {};
+  virtual void get(MElement *ele,int npts,IntPt *GP,fullVector<double> &m)
+  {
+    double nbFF=LinearTerm<S1>::space1.getNumKeys(ele);
+    double jac[3][3];
+    m.resize(nbFF);
+    m.scale(0.);
+    for (int i = 0; i < npts; i++)
+    {
+      const double u = GP[i].pt[0];const double v = GP[i].pt[1];const double w = GP[i].pt[2];
+      const double weight = GP[i].weight;const double detJ = ele->getJacobian(u, v, w, jac);
+      std::vector<typename S1::ValType> Vals;
+      LinearTerm<S1>::space1.f(ele,u, v, w, Vals);
+      for (int j = 0; j < nbFF ; ++j)
+      {
+        m(j)+=dot(Vals[j],Load(u,v,w))*weight*detJ;
+      }
+    }
+  }
+};
+
+
 
 
 #endif// _TERMS_H_

@@ -74,10 +74,10 @@ class DofAffineConstraint{
 // fullVecor<double>, ...
 template <class T>
 class dofManager{
- private:
+ public:
   typedef typename dofTraits<T>::VecType dataVec;
   typedef typename dofTraits<T>::MatType dataMat;
-
+ private:
   // general affine constraint on sub-blocks, treated by adding
   // equations:
   //   dataMat * DofVec = \sum_i dataMat_i * DofVec_i + dataVec
@@ -102,6 +102,10 @@ class dofManager{
    
  public:
   dofManager(linearSystem<dataMat> *l) : _current(l) { _linearSystems["A"] = l; }
+  inline void fixDof(Dof key, const dataVec &value)
+  {
+    fixed[key] = value;
+  }
   inline void fixDof(long int ent, int type, const dataVec &value)
   {
     fixed[Dof(ent, type)] = value;
@@ -110,9 +114,8 @@ class dofManager{
   {
     fixDof(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField), value);
   }
-  inline void numberDof(long int ent, int type)
+  inline void numberDof(Dof key)
   {
-    Dof key(ent, type);
     if(fixed.find(key) != fixed.end()) return;
     // if (constraints.find(key) != constraints.end()) return;
     std::map<Dof, int> :: iterator it = unknown.find(key);
@@ -120,6 +123,10 @@ class dofManager{
       unsigned int size = unknown.size();
       unknown[key] = size;
     }
+  }
+  inline void numberDof(long int ent, int type)
+  {
+    numberDof(Dof(ent, type));
   }
   inline void numberVertex(MVertex*v, int iComp, int iField)
   {
