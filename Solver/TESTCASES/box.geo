@@ -17,8 +17,9 @@ Line(4) = {4,1};
 Line Loop(4) = {1,2,3,4};
 Plane Surface(5) = {4};
 
-Extrude {0, 0, 0.1} {
+num[]  = Extrude {0, 0, 0.1} {
   Surface{5};
 }
-Surface Loop(28) = {5, 14, 18, 22, 26, 27};
-Volume(29) = {28};
+
+Physical Surface(30) = {22, 14, 18, 27, 5, 26};
+Physical Volume(31) = {1};
