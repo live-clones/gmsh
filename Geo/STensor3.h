@@ -266,5 +266,14 @@ inline void tensprod(const SVector3 &a, const SVector3 &b, STensor3 &c)
         c(i,j)=a(i)*b(j);
 }
 
+inline double dot(const STensor3 &a, const STensor3 &b)
+{ 
+  double prod=0;  
+  for (int i = 0; i < 3; i++)
+    for (int j = 0; j < 3; j++)
+      prod+=a(i,j)*b(i,j);
+  return prod;
+}
+
 
 #endif
