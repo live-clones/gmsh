@@ -7,6 +7,8 @@
 #include <fullMatrix.h>
 class dataCacheMap;
 class MElement;
+class methodBinding;
+class constructorBinding;
 
 // those classes manage complex function dependencies and keep their values in cache so that they are not recomputed when it is not necessary. To do this, we use three classes : function, dataCache and dataCacheMap. The workflow is :
 //

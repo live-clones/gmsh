@@ -1,5 +1,68 @@
-#ifndef _LUNA_SIGNATURE_H_
-#define _LUNA_SIGNATURE_H_
+#ifndef _BINDINGS_H_
+#define _BINDINGS_H_
+
+#ifndef HAVE_LUA //no bindings
+
+class methodBinding{};
+class constructorBinding{};
+template <class objectType, class returnType=void, class arg0Type=void, class arg1Type=void, class arg2Type=void, class arg3Type=void>
+class methodBindingTemplate:public methodBinding {
+  typedef returnType (objectType::*callback)(arg0Type,arg1Type,arg2Type,arg3Type);
+  public:
+  methodBindingTemplate(const std::string luaname,callback f){}
+};
+template <class objectType, class returnType, class arg0Type, class arg1Type, class arg2Type>
+class methodBindingTemplate<objectType,returnType,arg0Type,arg1Type,arg2Type,void>:public methodBinding {
+  typedef returnType (objectType::*callback)(arg0Type,arg1Type,arg2Type);
+  public:
+  methodBindingTemplate(const std::string luaname,callback f){}
+};
+template <class objectType, class returnType, class arg0Type, class arg1Type>
+class methodBindingTemplate<objectType,returnType,arg0Type,arg1Type,void,void>:public methodBinding {
+  typedef returnType (objectType::*callback)(arg0Type,arg1Type);
+  public:
+  methodBindingTemplate(const std::string luaname,callback f){}
+};
+template <class objectType, class returnType, class arg0Type>
+class methodBindingTemplate<objectType,returnType,arg0Type,void,void,void>:public methodBinding {
+  typedef returnType (objectType::*callback)(arg0Type);
+  public:
+  methodBindingTemplate(const std::string luaname,callback f){}
+};
+template <class objectType, class returnType>
+class methodBindingTemplate<objectType,returnType,void,void,void,void>:public methodBinding {
+  typedef returnType (objectType::*callback)();
+  public:
+  methodBindingTemplate(const std::string luaname,callback f){}
+};
+template <class objectType, class arg0Type, class arg1Type, class arg2Type>
+class methodBindingTemplate<objectType,void,arg0Type,arg1Type,arg2Type,void>:public methodBinding {
+  typedef void (objectType::*callback)(arg0Type,arg1Type,arg2Type);
+  public:
+  methodBindingTemplate(const std::string luaname,callback f){}
+};
+template <class objectType, class arg0Type, class arg1Type>
+class methodBindingTemplate<objectType,void,arg0Type,arg1Type,void,void>:public methodBinding {
+  typedef void (objectType::*callback)(arg0Type,arg1Type);
+  public:
+  methodBindingTemplate(const std::string luaname,callback f){}
+};
+template <class objectType, class arg0Type>
+class methodBindingTemplate<objectType,void,arg0Type,void,void,void>:public methodBinding {
+  typedef void (objectType::*callback)(arg0Type);
+  public:
+  methodBindingTemplate(const std::string luaname,callback f){}
+};
+template <class objectType>
+class methodBindingTemplate<objectType,void,void,void,void,void>:public methodBinding {
+  typedef void (objectType::*callback)();
+  public:
+  methodBindingTemplate(const std::string luaname,callback f){}
+};
+template<class objectType, class arg0Type=void, class arg1Type=void, class arg2Type=void, class arg3Type=void>
+class constructorBindingTemplate:public constructorBinding {};
+
+#else // HAVE_LUA
 
 extern "C" {
 #include "lua.h"
@@ -7,9 +70,6 @@ extern "C" {
 }
 #include <vector>
 
-
-class binding {
-};
 
 class methodBinding {
   public:
@@ -25,6 +85,9 @@ class constructorBinding {
   virtual int call (lua_State *L)=0;
 };
 
+
+// this class is largely copied from luna
+// todo : add  reference to luna and check luna  licence
 template <typename T> class classBinding {
   typedef struct { T *pT; bool owned;} userdataType;
 public:
@@ -454,4 +517,5 @@ class constructorBindingTemplate<objectType,void,void,void,void>:public construc
     return 1;
   }
 };
+#endif
 #endif
