@@ -21,6 +21,7 @@
 #include "MVertex.h"
 
 
+
 template<class Iterator,class Assembler> void Assemble(BilinearTermBase &term,FunctionSpaceBase &space,Iterator itbegin,Iterator itend,QuadratureBase &integrator,Assembler &assembler) // symmetric
 {
   fullMatrix<typename Assembler::dataMat> localMatrix;
@@ -64,6 +65,20 @@ template<class Iterator,class Assembler> void Assemble(LinearTermBase &term,Func
   }
 }
 
+template<class Iterator,class Assembler> void Assemble(LinearTermBase &term,FunctionSpaceBase &space,Iterator itbegin,Iterator itend,Assembler &assembler)
+{
+  fullVector<typename Assembler::dataMat> localVector;
+  std::vector<Dof> R;
+  for (Iterator it = itbegin;it!=itend; ++it)
+  {
+    MVertex *v = *it;
+    R.clear();
+    term.get(v,localVector);
+    space.getKeys(v,R);
+    assembler.assemble(R, localVector);
+  }
+}
+
 template<class Assembler> void Assemble(LinearTermBase &term,FunctionSpaceBase &space,MElement *e,QuadratureBase &integrator,Assembler &assembler)
 {
   fullVector<typename Assembler::dataMat> localVector;
@@ -75,7 +90,6 @@ template<class Assembler> void Assemble(LinearTermBase &term,FunctionSpaceBase &
   assembler.assemble(R, localVector);
 }
 
-
 template<class Assembler> void FixDofs(Assembler &assembler,std::vector<Dof> &dofs,std::vector<typename Assembler::dataVec> &vals)
 {
   int nbff=dofs.size();
@@ -86,6 +100,12 @@ template<class Assembler> void FixDofs(Assembler &assembler,std::vector<Dof> &do
 }
 
 class FilterDof
+{
+ public:
+  virtual bool operator()(Dof key)=0;
+};
+
+class FilterDofTrivial
 {
  public:
   virtual bool operator()(Dof key) {return true;}
@@ -100,43 +120,60 @@ class FilterDofComponent :public FilterDof
   {
     int type=key.getType();
     int icomp,iphys;
-    Dof::getTwoIntsFromType(type, iphys, icomp);
+    Dof::getTwoIntsFromType(type, icomp, iphys);
     if (icomp==comp) return true;
     return false;
   }
 };
 
 
-template<class Iterator,class Assembler> void FixNodalDofs(FunctionSpaceBase &space,Iterator itbegin,Iterator itend,Assembler &assembler,simpleFunction<typename Assembler::dataVec> &fct,FilterDof filter)
+template<class Assembler> void FixNodalDofs(FunctionSpaceBase &space,MElement *e,Assembler &assembler,simpleFunction<typename Assembler::dataVec> &fct,FilterDof &filter)
 {
-  for (Iterator it=itbegin;it!=itend;++it)
+  std::vector<MVertex*> tabV;
+  int nv=e->getNumVertices();
+  std::vector<Dof> R;
+  space.getKeys(e,R);
+  tabV.reserve(nv);
+  for (int i=0;i<nv;++i) tabV.push_back(e->getVertex(i));
+  
+  for (std::vector<Dof>::iterator itd=R.begin();itd!=R.end();++itd)
   {
-    MElement *e=*it;
-    std::vector<MVertex*> tabV;
-    int nv=e->getNumVertices();
-    std::vector<Dof> R;
-    space.getKeys(e,R);
-    tabV.reserve(nv);
-    for (int i=0;i<nv;++i) tabV.push_back(e->getVertex(i));
-    
-    for (std::vector<Dof>::iterator itd=R.begin();itd!=R.end();++itd)
+    Dof key=*itd;
+    if (filter(key))
     {
-      Dof key=*itd;
-      if (filter(key))
+      for (int i=0;i<nv;++i)
       {
-        for (int i=0;i<nv;++i)
+        if (tabV[i]->getNum()==key.getEntity())
         {
-          if (tabV[i]->getNum()==key.getEntity())
-          {
-            assembler.fixDof(key, fct(tabV[i]->x(),tabV[i]->y(),tabV[i]->z()));
-            break;
-          }
+          assembler.fixDof(key, fct(tabV[i]->x(),tabV[i]->y(),tabV[i]->z()));
+          break;
         }
       }
     }
   }
 }
 
+template<class Assembler> void FixNodalDofs(FunctionSpaceBase &space,MVertex *v,Assembler &assembler,simpleFunction<typename Assembler::dataVec> &fct,FilterDof &filter)
+{
+  std::vector<Dof> R;
+  space.getKeys(v,R);
+  for (std::vector<Dof>::iterator itd=R.begin();itd!=R.end();++itd)
+  {
+    Dof key=*itd;
+    if (filter(key))
+    {
+      assembler.fixDof(key, fct(v->x(),v->y(),v->z()));
+    }
+  }
+}
+
+template<class Iterator,class Assembler> void FixNodalDofs(FunctionSpaceBase &space,Iterator itbegin,Iterator itend,Assembler &assembler,simpleFunction<typename Assembler::dataVec> &fct,FilterDof &filter)
+{
+  for (Iterator it=itbegin;it!=itend;++it)
+  {
+    FixNodalDofs(space,*it,assembler,fct,filter);
+  }
+}
 
 template<class Iterator,class Assembler> void NumberDofs(FunctionSpaceBase &space,Iterator itbegin,Iterator itend,Assembler &assembler)
 {

@@ -5,14 +5,12 @@
 
 #include <string.h>
 #include "GmshConfig.h"
-#include "elasticityTerm.h"
-#include "MTriangle.h"
-#include "MTetrahedron.h"
 #include "elasticitySolver.h"
 #include "linearSystemCSR.h"
 #include "linearSystemPETSc.h"
 #include "linearSystemGMM.h"
 #include "Numeric.h"
+#include "GModel.h"
 #include "functionSpace.h"
 #include "terms.h"
 #include "solverAlgorithms.h"
@@ -21,47 +19,198 @@
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
-
-PView* elasticitySolver::buildDisplacementView (const std::string &postFileName){
-  std::map<int, std::vector<double> > data;
-  std::set<MVertex*> v;
-  for (unsigned int i = 0; i < elasticFields.size(); ++i){
-    groupOfElements::elementContainer::const_iterator it = elasticFields[i].g->begin();
-    for ( ; it != elasticFields[i].g->end(); ++it){
-      SElement se(*it);
-      for (int j = 0; j < se.getNumNodalShapeFunctions(); ++j){
-        v.insert(se.getVertex(j));
-      }
-    }
-  }
-
-  std::set<MVertex*>::iterator it = v.begin();
-  for ( ; it != v.end(); ++it){
-    std::vector<double> d;
-    d.push_back(0); d.push_back(0); d.push_back(0);
-    for (unsigned int i = 0; i < elasticFields.size(); ++i){
-      const double E = (elasticFields[i]._enrichment) ?
-                       (*elasticFields[i]._enrichment)((*it)->x(), (*it)->y(), (*it)->z()) : 1.0;	
-      //      printf("%g %d \n",pAssembler->getDofValue(*it,0,elasticFields[i]._tag),elasticFields[i]._tag);
-      d[0] += pAssembler->getDofValue(*it, 0, elasticFields[i]._tag) * E;
-      d[1] += pAssembler->getDofValue(*it, 1, elasticFields[i]._tag) * E;
-      d[2] += pAssembler->getDofValue(*it, 2, elasticFields[i]._tag) * E;
-    }
-    data[(*it)->getNum()] = d;
-  }
-
-  PView *pv = new PView (postFileName, "NodeData", pModel, data, 0.0);
-  return pv;  
-}
-
-#else
-PView* elasticitySolver::buildDisplacementView  (const std::string &postFileName)
-{
-  Msg::Error("Post-pro module not available");
-  return 0;
-}
 #endif
 
+void elasticitySolver::setMesh(const std::string &meshFileName)
+{
+  pModel = new GModel();
+  pModel->readMSH(meshFileName.c_str());
+  _dim = pModel->getNumRegions() ? 3 : 2;
+  if (LagSpace) delete LagSpace;
+  if (_dim==3) LagSpace=new VectorLagrangeFunctionSpace(_tag);
+  if (_dim==2) LagSpace=new VectorLagrangeFunctionSpace(_tag,VectorLagrangeFunctionSpace::VECTOR_X,VectorLagrangeFunctionSpace::VECTOR_Y);
+
+}
+
+void elasticitySolver::readInputFile(const std::string &fn)
+{
+  FILE *f = fopen(fn.c_str(), "r");
+  char what[256];
+  while(!feof(f)){
+    if(fscanf(f, "%s", what) != 1) return;
+    if (!strcmp(what, "ElasticDomain")){
+      elasticField field;
+      int physical;
+      if(fscanf(f, "%d %lf %lf", &physical, &field._E, &field._nu) != 3) return;
+      field._tag = _tag;
+      field.g = new groupOfElements (_dim, physical);
+      elasticFields.push_back(field);
+    }
+    else if (!strcmp(what, "Void")){
+      //      elasticField field;
+      //      create enrichment ...
+      //      create the group ...
+      //      assign a tag
+      //      elasticFields.push_back(field);
+    }
+    else if (!strcmp(what, "NodeDisplacement")){
+      double val;
+      int node, comp;
+      if(fscanf(f, "%d %d %lf", &node, &comp, &val) != 3) return;
+      dirichletBC diri;
+      diri.g = new groupOfElements (0, node);
+      diri._f= simpleFunction<double>(val);
+      diri._comp=comp;
+      diri._tag=node;
+      diri.onWhat=BoundaryCondition::ON_VERTEX;
+      allDirichlet.push_back(diri);
+    }
+    else if (!strcmp(what, "EdgeDisplacement")){
+      double val;
+      int edge, comp;
+      if(fscanf(f, "%d %d %lf", &edge, &comp, &val) != 3) return;
+      dirichletBC diri;
+      diri.g = new groupOfElements (1, edge);
+      diri._f= simpleFunction<double>(val);
+      diri._comp=comp;
+      diri._tag=edge;
+      diri.onWhat=BoundaryCondition::ON_EDGE;
+      allDirichlet.push_back(diri);
+    }
+    else if (!strcmp(what, "FaceDisplacement")){
+      double val;
+      int face, comp;
+      if(fscanf(f, "%d %d %lf", &face, &comp, &val) != 3) return;
+      dirichletBC diri;
+      diri.g = new groupOfElements (2, face);
+      diri._f= simpleFunction<double>(val);
+      diri._comp=comp;
+      diri._tag=face;
+      diri.onWhat=BoundaryCondition::ON_FACE;
+      allDirichlet.push_back(diri);
+    }
+    else if (!strcmp(what, "NodeForce")){
+      double val1, val2, val3;
+      int node;
+      if(fscanf(f, "%d %lf %lf %lf", &node, &val1, &val2, &val3) != 4) return;
+      neumannBC neu;
+      neu.g = new groupOfElements (0, node);
+      neu._f= simpleFunction<SVector3>(SVector3(val1, val2, val3));
+      neu._tag=node;
+      neu.onWhat=BoundaryCondition::ON_VERTEX;
+      allNeumann.push_back(neu);  
+    }
+    else if (!strcmp(what, "EdgeForce")){
+      double val1, val2, val3;
+      int edge;
+      if(fscanf(f, "%d %lf %lf %lf", &edge, &val1, &val2, &val3) != 4) return;
+      neumannBC neu;
+      neu.g = new groupOfElements (1, edge);
+      neu._f= simpleFunction<SVector3>(SVector3(val1, val2, val3));
+      neu._tag=edge;
+      neu.onWhat=BoundaryCondition::ON_EDGE;
+      allNeumann.push_back(neu);  
+    }
+    else if (!strcmp(what, "FaceForce")){
+      double val1, val2, val3;
+      int face;
+      if(fscanf(f, "%d %lf %lf %lf", &face, &val1, &val2, &val3) != 4) return;
+      neumannBC neu;
+      neu.g = new groupOfElements (2, face);
+      neu._f= simpleFunction<SVector3>(SVector3(val1, val2, val3));
+      neu._tag=face;
+      neu.onWhat=BoundaryCondition::ON_FACE;
+      allNeumann.push_back(neu);  
+    }
+    else if (!strcmp(what, "VolumeForce")){
+      double val1, val2, val3;
+      int volume;
+      if(fscanf(f, "%d %lf %lf %lf", &volume, &val1, &val2, &val3) != 4) return;
+      neumannBC neu;
+      neu.g = new groupOfElements (3, volume);
+      neu._f= simpleFunction<SVector3>(SVector3(val1, val2, val3));
+      neu._tag=volume;
+      neu.onWhat=BoundaryCondition::ON_VOLUME;
+      allNeumann.push_back(neu);  
+    }
+    else if (!strcmp(what, "MeshFile")){
+      char name[245];
+      if(fscanf(f, "%s", name) != 1) return;
+      setMesh(name);
+    }
+    else {
+      Msg::Error("Invalid input : %s", what);
+//      return;
+    }
+  }
+  fclose(f);
+}
+
+void elasticitySolver::solve()
+{
+#if defined(HAVE_TAUCS)
+  linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
+#elif defined(HAVE_PETSC)
+  linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
+#else
+  linearSystemGmm<double> *lsys = new linearSystemGmm<double>;
+  lsys->setNoisy(2);
+#endif
+  if (pAssembler) delete pAssembler;
+  pAssembler = new dofManager<double>(lsys);
+
+  // we first do all fixations. the behavior of the dofManager is to 
+  // give priority to fixations : when a dof is fixed, it cannot be
+  // numbered afterwards
+
+
+  for (unsigned int i = 0; i < allDirichlet.size(); i++)
+  {
+    FilterDofComponent filter(allDirichlet[i]._comp);
+    if (allDirichlet[i].onWhat==BoundaryCondition::ON_VERTEX)
+      FixNodalDofs(*LagSpace,allDirichlet[i].g->vbegin(),allDirichlet[i].g->vend(),*pAssembler,allDirichlet[i]._f,filter);
+    else
+      FixNodalDofs(*LagSpace,allDirichlet[i].g->begin(),allDirichlet[i].g->end(),*pAssembler,allDirichlet[i]._f,filter);
+  }
+
+  // we number the dofs : when a dof is numbered, it cannot be numbered
+  // again with another number.
+  for (unsigned int i = 0; i < elasticFields.size(); ++i)
+  {
+    NumberDofs(*LagSpace, elasticFields[i].g->begin(), elasticFields[i].g->end(),*pAssembler);
+  }
+
+  // Now we start the assembly process
+  // First build the force vector
+
+  GaussQuadrature Integ_Boundary(GaussQuadrature::Val);
+
+  for (unsigned int i = 0; i < allNeumann.size(); i++)
+  {
+    LoadTerm<FunctionSpace<SVector3> > Lterm(*LagSpace,allNeumann[i]._f);
+    if (allNeumann[i].onWhat==BoundaryCondition::ON_VERTEX)
+      Assemble(Lterm,*LagSpace,allNeumann[i].g->vbegin(),allNeumann[i].g->vend(),*pAssembler);
+    else
+      Assemble(Lterm,*LagSpace,allNeumann[i].g->begin(),allNeumann[i].g->end(),Integ_Boundary,*pAssembler);
+  }
+
+// bulk material law
+
+  GaussQuadrature Integ_Bulk(GaussQuadrature::GradGrad);
+  for (unsigned int i = 0; i < elasticFields.size(); i++)
+  {
+    IsotropicElasticTerm<FunctionSpace<SVector3> ,FunctionSpace<SVector3> > Eterm(*LagSpace,elasticFields[i]._E,elasticFields[i]._nu);
+    Assemble(Eterm,*LagSpace,elasticFields[i].g->begin(),elasticFields[i].g->end(),Integ_Bulk,*pAssembler);
+  }
+
+  printf("-- done assembling!\n");
+  lsys->systemSolve();
+  printf("-- done solving!\n");
+}
+
+
+
+#if defined(HAVE_POST)
 
 static double vonMises(dofManager<double> *a, MElement *e, 
                        double u, double v, double w, 
@@ -103,359 +252,59 @@ static double vonMises(dofManager<double> *a, MElement *e,
   return ComputeVonMises(s);
 }
 
-void elasticitySolver::setMesh(const std::string &meshFileName)
+PView* elasticitySolver::buildDisplacementView (const std::string &postFileName)
 {
-  pModel = new GModel();
-  pModel->readMSH(meshFileName.c_str());
-  _dim = pModel->getNumRegions() ? 3 : 2;
-}
-
-void elasticitySolver::readInputFile(const std::string &fn)
-{
-  FILE *f = fopen(fn.c_str(), "r");
-  char what[256];
-  while(!feof(f)){
-    if(fscanf(f, "%s", what) != 1) return;
-    // printf("%s\n", what);
-    if (!strcmp(what, "ElasticDomain")){
-      elasticField field;
-      int physical;
-      if(fscanf(f, "%d %lf %lf", &physical, &field._E, &field._nu) != 3) return;
-      field._tag = _tag;
-      //      printf("E %g nu %g\n",field._E,field._nu);
-      field.g = new groupOfElements (_dim, physical);
-      elasticFields.push_back(field);
-    }
-    else if (!strcmp(what, "Void")){
-      //      elasticField field;
-      //      create enrichment ...
-      //      create the group ...
-      //      assign a tag
-      //      elasticFields.push_back(field);
-    }
-    else if (!strcmp(what, "NodalDisplacement")){
-      double val;
-      int node, comp;
-      if(fscanf(f, "%d %d %lf", &node, &comp, &val) != 3) return;
-      nodalDisplacements[ std::make_pair(node, comp) ] = val;
-    }
-    else if (!strcmp(what, "EdgeDisplacement")){
-      double val;
-      int edge, comp;
-      if(fscanf(f, "%d %d %lf", &edge, &comp, &val) != 3) return;
-      edgeDisplacements[ std::make_pair(edge, comp) ] = val;
-      dirichletBC diri;
-      diri.g = new groupOfElements (1, edge);
-      diri._f= simpleFunction<double>(val);
-      diri._comp=comp;
-      diri._tag=edge;
-      edgeDiri.push_back(diri);
-    }
-    else if (!strcmp(what, "FaceDisplacement")){
-      double val;
-      int face, comp;
-      if(fscanf(f, "%d %d %lf", &face, &comp, &val) != 3) return;
-      faceDisplacements[ std::make_pair(face, comp) ] = val;
-      dirichletBC diri;
-      diri.g = new groupOfElements (2, face);
-      diri._f= simpleFunction<double>(val);
-      diri._comp=comp;
-      diri._tag=face;
-      faceDiri.push_back(diri);    
-    }
-    else if (!strcmp(what, "NodalForce")){
-      double val1, val2, val3;
-      int node;
-      if(fscanf(f, "%d %lf %lf %lf", &node, &val1, &val2, &val3) != 4) return;
-      nodalForces[node] = SVector3(val1, val2, val3);    
-    }
-    else if (!strcmp(what, "LineForce")){
-      double val1, val2, val3;
-      int edge;
-      if(fscanf(f, "%d %lf %lf %lf", &edge, &val1, &val2, &val3) != 4) return;
-      //printf("%d %lf %lf %lf\n", node, val1, val2, val3);
-      lineForces[edge] = SVector3(val1, val2, val3); 
-      neumannBC neu;
-      neu.g = new groupOfElements (1, edge);
-      neu._f= simpleFunction<SVector3>(SVector3(val1, val2, val3));
-      neu._tag=edge;
-      edgeNeu.push_back(neu);
-    }
-    else if (!strcmp(what, "FaceForce")){
-      double val1, val2, val3;
-      int face;
-      if(fscanf(f, "%d %lf %lf %lf", &face, &val1, &val2, &val3) != 4) return;
-      faceForces[face] = SVector3(val1, val2, val3);
-      neumannBC neu;
-      neu.g = new groupOfElements (2, face);
-      neu._f= simpleFunction<SVector3>(SVector3(val1, val2, val3));
-      neu._tag=face;
-      edgeNeu.push_back(neu);
-    }
-    else if (!strcmp(what, "VolumeForce")){
-      double val1, val2, val3;
-      int volume;
-      if(fscanf(f, "%d %lf %lf %lf", &volume, &val1, &val2, &val3) != 4) return;
-      volumeForces[volume] = SVector3(val1, val2, val3);
-      neumannBC neu;
-      neu.g = new groupOfElements (3, volume);
-      neu._f= simpleFunction<SVector3>(SVector3(val1, val2, val3));
-      neu._tag=volume;
-      edgeNeu.push_back(neu);  
-    }
-    else if (!strcmp(what, "MeshFile")){
-      char name[245];
-      if(fscanf(f, "%s", name) != 1) return;
-      setMesh(name);
-    }
-    else {
-      Msg::Error("Invalid input : %s", what);
-      return;
-    }
-  }
-  fclose(f);
-}
-
-void elasticitySolver::solve()
-{
-#if defined(HAVE_TAUCS)
-  linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
-#elif defined(HAVE_PETSC)
-  linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
-#else
-  linearSystemGmm<double> *lsys = new linearSystemGmm<double>;
-  lsys->setNoisy(2);
-#endif
-  pAssembler = new dofManager<double>(lsys);
-
-  std::map<int, std::vector<GEntity*> > groups[4];
-  pModel->getPhysicalGroups(groups);
-
-  // we first do all fixations. the behavior of the dofManager is to 
-  // give priority to fixations : when a dof is fixed, it cannot be
-  // numbered afterwards
-
-  for (std::map<std::pair<int, int>, double>::iterator it = nodalDisplacements.begin();
-       it != nodalDisplacements.end(); ++it){
-    MVertex *v = pModel->getMeshVertexByTag(it->first.first);
-    pAssembler->fixVertex(v, it->first.second, _tag, it->second);
-    printf("-- Fixing node %3d comp %1d to %8.5f\n",
-           it->first.first, it->first.second, it->second);
-  }
-
-  for (std::map<std::pair<int, int>, double>::iterator it = edgeDisplacements.begin();
-       it != edgeDisplacements.end(); ++it){
-    elasticityTerm El(pModel, 1, 1, _tag);
-    El.dirichletNodalBC(it->first.first, 1, it->first.second, _tag,
-                        simpleFunction<double>(it->second), *pAssembler);
-    printf("-- Fixing edge %3d comp %1d to %8.5f\n",
-           it->first.first, it->first.second, it->second);
-  }
-
-  for (std::map<std::pair<int, int>, double>::iterator it = faceDisplacements.begin();
-       it != faceDisplacements.end(); ++it){
-    elasticityTerm El(pModel, 1, 1, _tag);
-    El.dirichletNodalBC(it->first.first, 2, it->first.second, _tag,
-                        simpleFunction<double>(it->second), *pAssembler);
-    printf("-- Fixing face %3d comp %1d to %8.5f\n",
-           it->first.first, it->first.second, it->second);
-  }
-
-  // we number the nodes : when a node is numbered, it cannot be numbered
-  // again with another number. so we loop over elements
-  for (unsigned int i = 0; i < elasticFields.size(); ++i){
-    groupOfElements::elementContainer::const_iterator it = elasticFields[i].g->begin();
-    for ( ; it != elasticFields[i].g->end(); ++it){
-      SElement se(*it);
-      for (int j = 0; j < se.getNumNodalShapeFunctions(); ++j){
-        pAssembler->numberVertex(se.getVertex(j), 0, elasticFields[i]._tag);
-        pAssembler->numberVertex(se.getVertex(j), 1, elasticFields[i]._tag);
-        pAssembler->numberVertex(se.getVertex(j), 2, elasticFields[i]._tag);	
-      }
-    }
-  }
-
-  // Now we start the assembly process
-  // First build the force vector
-  // Nodes at geometrical vertices
-  for (std::map<int, SVector3 >::iterator it = nodalForces.begin();
-       it != nodalForces.end(); ++it){
-    int iVertex = it->first;
-    SVector3 f = it->second;
-    std::vector<GEntity*> ent = groups[0][iVertex];
-    for (unsigned int i = 0; i < ent.size(); i++){
-      pAssembler->assemble(ent[i]->mesh_vertices[0], 0, _tag, f.x());
-      pAssembler->assemble(ent[i]->mesh_vertices[0], 1, _tag, f.y());
-      pAssembler->assemble(ent[i]->mesh_vertices[0], 2, _tag, f.z());
-      printf("-- Force on node %3d(%3d) : %8.5f %8.5f %8.5f\n",
-             ent[i]->mesh_vertices[0]->getNum(), iVertex, f.x(), f.y(), f.z());
-    }
-  }
-
-  // line forces
-  for (std::map<int, SVector3 >::iterator it = lineForces.begin();
-       it != lineForces.end(); ++it){
-    elasticityTerm El(pModel, 1, 1, _tag);
-    int iEdge = it->first;
-    SVector3 f = it->second;
-    El.neumannNodalBC(iEdge, 1, 0, _tag, simpleFunction<double>(f.x()), *pAssembler);
-    El.neumannNodalBC(iEdge, 1, 1, _tag, simpleFunction<double>(f.y()), *pAssembler);
-    El.neumannNodalBC(iEdge, 1, 2, _tag, simpleFunction<double>(f.z()), *pAssembler);
-    printf("-- Force on edge %3d : %8.5f %8.5f %8.5f\n", iEdge, f.x(), f.y(), f.z());
-  }
-
-  // face forces
-  for (std::map<int, SVector3 >::iterator it = faceForces.begin();
-       it != faceForces.end(); ++it){
-    elasticityTerm El(pModel, 1, 1, _tag);
-    int iFace = it->first;
-    SVector3 f = it->second;
-    El.neumannNodalBC(iFace, 2, 0, _tag, simpleFunction<double>(f.x()), *pAssembler);
-    El.neumannNodalBC(iFace, 2, 1, _tag, simpleFunction<double>(f.y()), *pAssembler);
-    El.neumannNodalBC(iFace, 2, 2, _tag, simpleFunction<double>(f.z()), *pAssembler);
-    printf("-- Force on face %3d : %8.5f %8.5f %8.5f\n", iFace, f.x(), f.y(), f.z());
-  }
-
-  // volume forces
-  for (std::map<int, SVector3 >::iterator it = volumeForces.begin();
-       it != volumeForces.end(); ++it){
-    elasticityTerm El(pModel, 1, 1, _tag);
-    int iVolume = it->first;
-    SVector3 f = it->second;
-    El.setVector(f);
-    printf("-- Force on volume %3d : %8.5f %8.5f %8.5f\n", iVolume, f.x(), f.y(), f.z());
-    std::vector<GEntity*> ent = groups[_dim][iVolume];
-    for (unsigned int i = 0; i < ent.size(); i++){
-      //   to do
-      //      El.addToRightHandSide(*pAssembler, ent[i]);
-    }
-  }
-
-  // assembling the stifness matrix
-  for (unsigned int i = 0; i < elasticFields.size(); i++){
-    SElement::setShapeEnrichement(elasticFields[i]._enrichment);
-    for (unsigned int j = 0; j < elasticFields.size(); j++){
-      elasticityTerm El(0, elasticFields[i]._E, elasticFields[i]._nu,
-                        elasticFields[i]._tag, elasticFields[j]._tag);
-      SElement::setTestEnrichement(elasticFields[j]._enrichment);
-      //      printf("%d %d\n",elasticFields[i]._tag,elasticFields[j]._tag);
-      El.addToMatrix(*pAssembler, *elasticFields[i].g, *elasticFields[j].g);      
-    }
-  }
-/*
-  printf("-- done assembling!\n");
-    for (int i=0;i<pAssembler->sizeOfR();i++)
-    {
-        if (fabs(lsys->getFromRightHandSide(i))>0.000001)
-        printf("%g ",lsys->getFromRightHandSide(i));
-    }
-    printf("\n");
-*/
-  // solving
-  lsys->systemSolve();
-  printf("-- done solving!\n");
-}
-
-
-
-
-void MyelasticitySolver::solve()
-{
-#if defined(HAVE_TAUCS)
-  linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
-#elif defined(HAVE_PETSC)
-  linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
-#else
-  linearSystemGmm<double> *lsys = new linearSystemGmm<double>;
-  lsys->setNoisy(2);
-#endif
-  pAssembler = new dofManager<double>(lsys);
-
-  std::map<int, std::vector<GEntity*> > groups[4];
-  pModel->getPhysicalGroups(groups);
-
-  // we first do all fixations. the behavior of the dofManager is to 
-  // give priority to fixations : when a dof is fixed, it cannot be
-  // numbered afterwards
-  VectorLagrangeFunctionSpace P123(_tag,VectorLagrangeFunctionSpace::VECTOR_X,VectorLagrangeFunctionSpace::VECTOR_Y);
-
-  for (std::map<std::pair<int, int>, double>::iterator it = nodalDisplacements.begin();
-       it != nodalDisplacements.end(); ++it){
-    MVertex *v = pModel->getMeshVertexByTag(it->first.first);
-    pAssembler->fixVertex(v, it->first.second, _tag, it->second);
-    printf("-- Fixing node %3d comp %1d to %8.5f\n",
-           it->first.first, it->first.second, it->second);
-  }
-
-
-  for (unsigned int i = 0; i < edgeDiri.size(); i++)
-  {
-    FixNodalDofs(P123,edgeDiri[i].g->begin(),edgeDiri[i].g->end(),*pAssembler,edgeDiri[i]._f,FilterDofComponent(edgeDiri[i]._comp));
-    printf("-- Fixing edge %3d comp %3d \n", edgeDiri[i]._tag, edgeDiri[i]._comp);
-  }
-
-  for (unsigned int i = 0; i < faceDiri.size(); i++)
-  {
-    FixNodalDofs(P123,faceDiri[i].g->begin(),faceDiri[i].g->end(),*pAssembler,faceDiri[i]._f,FilterDofComponent(faceDiri[i]._comp));
-    printf("-- Fixing face %3d comp %3d \n", faceDiri[i]._tag, faceDiri[i]._comp);
-  }
-
-  // we number the nodes : when a node is numbered, it cannot be numbered
-  // again with another number. so we loop over elements
+  std::set<MVertex*> v;
   for (unsigned int i = 0; i < elasticFields.size(); ++i)
   {
-    NumberDofs(P123, elasticFields[i].g->begin(), elasticFields[i].g->end(),*pAssembler);
-  }
-
-  // Now we start the assembly process
-  // First build the force vector
-  // Nodes at geometrical vertices
-  for (std::map<int, SVector3 >::iterator it = nodalForces.begin();
-       it != nodalForces.end(); ++it){
-    int iVertex = it->first;
-    SVector3 f = it->second;
-    std::vector<GEntity*> ent = groups[0][iVertex];
-    for (unsigned int i = 0; i < ent.size(); i++){
-      pAssembler->assemble(ent[i]->mesh_vertices[0], 0, _tag, f.x());
-      pAssembler->assemble(ent[i]->mesh_vertices[0], 1, _tag, f.y());
-      pAssembler->assemble(ent[i]->mesh_vertices[0], 2, _tag, f.z());
-      printf("-- Force on node %3d(%3d) : %8.5f %8.5f %8.5f\n",
-             ent[i]->mesh_vertices[0]->getNum(), iVertex, f.x(), f.y(), f.z());
+    for (groupOfElements::elementContainer::const_iterator it = elasticFields[i].g->begin(); it != elasticFields[i].g->end(); ++it)
+    {
+      MElement *e=*it;
+      for (int j = 0; j < e->getNumVertices(); ++j) v.insert(e->getVertex(j));
     }
   }
-
-
-  GaussQuadrature Integ_Boundary(GaussQuadrature::Val);
-
-  for (unsigned int i = 0; i < edgeNeu.size(); i++)
+  std::map<int, std::vector<double> > data;  
+  for ( std::set<MVertex*>::iterator it = v.begin(); it != v.end(); ++it)
   {
-    LoadTerm<VectorLagrangeFunctionSpace> Lterm(P123,edgeNeu[i]._f);
-    Assemble(Lterm,P123,edgeNeu[i].g->begin(),edgeNeu[i].g->end(),Integ_Boundary,*pAssembler);
-    printf("-- Force on edge %3d \n", edgeNeu[i]._tag);
+    SVector3 val(0,0,0);
+    for (unsigned int i = 0; i < elasticFields.size(); ++i)
+    {
+      std::vector<Dof> D;
+      std::vector<SVector3> SFVals;
+      std::vector<double> Vals;
+      LagSpace->getKeys(*it,D);
+      pAssembler->getDofValue(D,Vals);
+      LagSpace->f(*it,SFVals);
+      for (int i=0;i<D.size();++i)
+        val+=SFVals[i]*Vals[i];
+    }
+    std::vector<double> vec(3);vec[0]=val(0);vec[1]=val(1);vec[2]=val(2);
+    data[(*it)->getNum()]=vec;
   }
-
-  for (unsigned int i = 0; i < faceNeu.size(); i++)
-  {
-    LoadTerm<VectorLagrangeFunctionSpace> Lterm(P123,faceNeu[i]._f);
-    Assemble(Lterm,P123,faceNeu[i].g->begin(),faceNeu[i].g->end(),Integ_Boundary,*pAssembler);
-    printf("-- Force on face %3d \n", faceNeu[i]._tag);
-  }
-
-  for (unsigned int i = 0; i < volumeNeu.size(); i++)
-  {
-    LoadTerm<VectorLagrangeFunctionSpace> Lterm(P123,volumeNeu[i]._f);
-    Assemble(Lterm,P123,volumeNeu[i].g->begin(),volumeNeu[i].g->end(),Integ_Boundary,*pAssembler);
-    printf("-- Force on volume %3d \n", volumeNeu[i]._tag);
-  }
-
-  GaussQuadrature Integ_Bulk(GaussQuadrature::GradGrad);
-  for (unsigned int i = 0; i < elasticFields.size(); i++)
-  {
-    IsotropicElasticTerm<VectorLagrangeFunctionSpace,VectorLagrangeFunctionSpace> Eterm(P123,elasticFields[i]._E,elasticFields[i]._nu);
-    Assemble(Eterm,P123,elasticFields[i].g->begin(),elasticFields[i].g->end(),Integ_Bulk,*pAssembler);
-  }
-
-  printf("-- done assembling!\n");
-  lsys->systemSolve();
-  printf("-- done solving!\n");
+  PView *pv = new PView (postFileName, "NodeData", pModel, data, 0.0);
+  return pv;  
 }
+
+PView *elasticitySolver::buildVonMisesView(const std::string &postFileName)
+{
+  std::map<int, std::vector<double> > data;  
+  PView *pv = new PView (postFileName, "ElementData", pModel, data, 0.0);
+  return pv;  
+}
+
+
+#else
+PView* elasticitySolver::buildDisplacementView  (const std::string &postFileName)
+{
+  Msg::Error("Post-pro module not available");
+  return 0;
+}
+
+PView* elasticitySolver::buildVonMisesView(const std::string &postFileName)
+{
+  Msg::Error("Post-pro module not available");
+  return 0;
+}
+
+#endif
+

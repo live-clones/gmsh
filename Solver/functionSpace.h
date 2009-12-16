@@ -67,13 +67,15 @@ class FunctionSpaceBase
 {
  public:
   virtual int getNumKeys(MElement *ele)=0; // if one needs the number of dofs
-  virtual int getKeys(MElement *ele, std::vector<Dof> &keys)=0; 
+  virtual int getKeys(MElement *ele, std::vector<Dof> &keys)=0;
+  virtual int getNumKeys(MVertex *ver)=0; // if one needs the number of dofs
+  virtual int getKeys(MVertex *ver, std::vector<Dof> &keys)=0;
 };
 
 template<class T>
 class FunctionSpace : public FunctionSpaceBase
 {
- protected:
+ public:
   typedef typename TensorialTraits<T>::ValType ValType;
   typedef typename TensorialTraits<T>::GradType GradType;
 /*  typedef typename TensorialTraits<T>::HessType HessType;
@@ -81,6 +83,7 @@ class FunctionSpace : public FunctionSpaceBase
   typedef typename TensorialTraits<T>::CurlType CurlType;*/
  
  public:
+  virtual int f(MVertex *ver, std::vector<ValType> &vals) {} // used for neumann BC
   virtual int f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)=0;
   virtual int gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)=0;
 //  virtual groupOfElements* getSupport()=0;// probablement inutile
@@ -89,25 +92,23 @@ class FunctionSpace : public FunctionSpaceBase
   virtual int divf(MElement *ele, double u, double v, double w,std::vector<DivType> &divs);
   virtual int curlf(MElement *ele, double u, double v, double w,std::vector<CurlType> &curls);*/
   virtual int getNumKeys(MElement *ele)=0; // if one needs the number of dofs
-  virtual int getKeys(MElement *ele, std::vector<Dof> &keys)=0; 
+  virtual int getKeys(MElement *ele, std::vector<Dof> &keys)=0;
+  virtual int getNumKeys(MVertex *ver)=0; // if one needs the number of dofs
+  virtual int getKeys(MVertex *ver, std::vector<Dof> &keys)=0;
 };
 
 class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
 {
- protected:
+ public:
   typedef TensorialTraits<double>::ValType ValType;
   typedef TensorialTraits<double>::GradType GradType;
   typedef TensorialTraits<double>::HessType HessType;
   typedef TensorialTraits<double>::DivType DivType;
   typedef TensorialTraits<double>::CurlType CurlType;
+ protected:
   std::vector<basisFunction*> basisFunctions;
 
   int _iField; // field number (used to build dof keys)
-
-  Dof getLocalDof(MElement *ele, int i) const
-  {
-    return Dof(ele->getVertex(i)->getNum(), _iField);
-  }
 
  public:
   ScalarLagrangeFunctionSpace(int i=0):_iField(i) {}
@@ -118,7 +119,8 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
     int curpos=vals.size();
     vals.resize(curpos+ndofs);
     ele->getShapeFunctions(u, v, w, &(vals[curpos]));
-  }; 
+  };
+  virtual int f(MVertex *ver, std::vector<ValType> &vals) {vals.push_back(1.0);} // used for neumann BC
   virtual int gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
   {
     int ndofs= ele->getNumVertices();
@@ -143,8 +145,13 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
       int ndofs= ele->getNumVertices();
       keys.reserve(keys.size()+ndofs);
       for (int i=0;i<ndofs;++i)
-        keys.push_back(getLocalDof(ele,i));
+        getKeys(ele->getVertex(i),keys);
   }
+  virtual int getNumKeys(MVertex *ver) { return 1;}
+  virtual int getKeys(MVertex *ver, std::vector<Dof> &keys)
+  {
+    keys.push_back(Dof(ver->getNum(), _iField));
+  };
 };
 
 
@@ -180,6 +187,20 @@ public :
   }
 
   virtual ~ScalarToAnyFunctionSpace() {delete ScalarFS;}
+  virtual int f(MVertex *ver, std::vector<ValType> &vals)
+  {
+    std::vector<double> valsd;
+    ScalarFS->f(ver,valsd);
+    int nbdofs=valsd.size();
+    int nbcomp=comp.size();
+    int curpos=vals.size();
+    vals.reserve(curpos+nbcomp*nbdofs);
+    for (int j=0;j<nbcomp;++j)
+    {
+      for (int i=0;i<nbdofs;++i) vals.push_back(multipliers[j]*valsd[i]);
+    }
+  } // used for neumann BC
+
   virtual int f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)
   {
     std::vector<double> valsd;
@@ -236,14 +257,36 @@ public :
       }
     }
   }
+
+  virtual int getNumKeys(MVertex *ver) { return ScalarFS->getNumKeys(ver)*comp.size();}
+  virtual int getKeys(MVertex *ver, std::vector<Dof> &keys)
+  {
+    int nk=ScalarFS->getNumKeys(ver);
+    std::vector<Dof> bufk;
+    bufk.reserve(nk);
+    ScalarFS->getKeys(ver,bufk);
+    int nbdofs=bufk.size();
+    int nbcomp=comp.size();
+    int curpos=keys.size();
+    keys.reserve(curpos+nbcomp*nbdofs);
+    for (int j=0;j<nbcomp;++j)
+    {
+      for (int i=0;i<nk;++i)
+      {
+        int i1,i2;
+        Dof::getTwoIntsFromType(bufk[i].getType(), i1,i2);
+        keys.push_back(Dof(bufk[i].getEntity(),Dof::createTypeWithTwoInts(comp[j],i1)));
+      }
+    }
+  };
 };
 
 class VectorLagrangeFunctionSpace : public ScalarToAnyFunctionSpace<SVector3>
 {
+ protected:
+  static const SVector3 BasisVectors[3];
  public:
   enum Along { VECTOR_X=0, VECTOR_Y=1, VECTOR_Z=2 };
-  static const SVector3 BasisVectors[3];
-
   typedef TensorialTraits<SVector3>::ValType ValType;
   typedef TensorialTraits<SVector3>::GradType GradType;
   typedef TensorialTraits<SVector3>::HessType HessType;
@@ -305,6 +348,12 @@ class CompositeFunctionSpace : public FunctionSpace<T>
       delete (*it);
   }
 
+  virtual int f(MVertex *ver, std::vector<ValType> &vals)
+  {
+    for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
+      (*it)->f(ver,vals);
+  }
+
   virtual int f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals)
   {
     for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
@@ -330,11 +379,26 @@ class CompositeFunctionSpace : public FunctionSpace<T>
     for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
       (*it)->getKeys(ele,keys);
   }
+  
+  virtual int getNumKeys(MVertex *ver)
+  {
+    int ndofs=0;
+    for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
+      ndofs+=(*it)->getNumKeys(ver);
+    return ndofs;
+  }
+
+  virtual int getKeys(MVertex *ver, std::vector<Dof> &keys)
+  {
+    for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
+      (*it)->getKeys(ver,keys);
+  };
 };
 
 template<class T>
 class xFemFunctionSpace : public FunctionSpace<T>
 {
+ public:
   typedef typename TensorialTraits<T>::ValType ValType;
   typedef typename TensorialTraits<T>::GradType GradType;
   typedef typename TensorialTraits<T>::HessType HessType;
@@ -344,10 +408,14 @@ class xFemFunctionSpace : public FunctionSpace<T>
   FunctionSpace<T>* _spacebase;
 //  Function<double>* enrichment;
  public:
+  virtual int f(MVertex *ver, std::vector<ValType> &vals);
   virtual int f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals);
   virtual int gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads);
-  int getNumKeys(MElement *ele);
-  void getKeys(MElement *ele, std::vector<Dof> &keys);
+  virtual int getNumKeys(MElement *ele);
+  virtual void getKeys(MElement *ele, std::vector<Dof> &keys);
+  virtual int getNumKeys(MVertex *ver);
+  virtual int getKeys(MVertex *ver, std::vector<Dof> &keys);
+
 };
 
 
@@ -364,10 +432,13 @@ class FilteredFunctionSpace : public FunctionSpace<T>
   F &_filter;
   
  public:
+  virtual int f(MVertex *ver, std::vector<ValType> &vals);
   virtual int f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals);
   virtual int gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads);
-  int getNumKeys(MElement *ele);
-  void getKeys(MElement *ele, std::vector<Dof> &keys);
+  virtual int getNumKeys(MElement *ele);
+  virtual void getKeys(MElement *ele, std::vector<Dof> &keys);
+  virtual int getNumKeys(MVertex *ver);
+  virtual int getKeys(MVertex *ver, std::vector<Dof> &keys);
 };
 
 

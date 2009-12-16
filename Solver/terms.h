@@ -22,6 +22,7 @@
 #include "groupOfElements.h"
 
 
+
 // evaluation of a field ???
 template<class T>
 class Field {
@@ -80,6 +81,7 @@ class  LinearTermBase
 {
   public:
   virtual void get(MElement *ele,int npts,IntPt *GP,fullVector<double> &v) =0;
+  virtual void get(MVertex *v,fullVector<double> &m) =0;
 };
 
 template<class S1> class LinearTerm : public LinearTermBase
@@ -94,7 +96,7 @@ template<class S1> class LinearTerm : public LinearTermBase
 class  ScalarTermBase
 {
  public : 
-  virtual void get(MElement *ele,int npts,IntPt *GP,double &v) =0;
+  virtual void get(MElement *ele,int npts,IntPt *GP,double &val) =0;
 };
 
 class ScalarTerm : public ScalarTermBase
@@ -102,6 +104,60 @@ class ScalarTerm : public ScalarTermBase
  public : 
   virtual void get(MElement *ele,int npts,IntPt *GP,double &v) =0;
 };
+
+
+
+template<class S1,class S2> class LaplaceTerm : public BilinearTerm<S1,S2> 
+{
+ public : 
+  LaplaceTerm(S1& space1_,S2& space2_) : BilinearTerm<S1,S2>(space1_,space2_)
+  {}
+  
+  virtual void get(MElement *ele,int npts,IntPt *GP,fullMatrix<double> &m)
+  {
+    Msg::Error("LaplaceTerm<S1,S2> w/ S1!=S2 not implemented");
+  }
+  virtual void get(MVertex *v,fullMatrix<double> &m)
+  {
+    Msg::Error("LaplaceTerm<S1,S2> w/ S1!=S2 not implemented");
+  }
+}; // class
+
+
+
+template<class S1> class LaplaceTerm<S1,S1> : public BilinearTerm<S1,S1> // symmetric
+{
+ public : 
+  LaplaceTerm(S1& space1_) : BilinearTerm<S1,S1>(space1_,space1_)
+  {}
+  
+  virtual void get(MElement *ele,int npts,IntPt *GP,fullMatrix<double> &m)
+  {
+    int nbFF = BilinearTerm<S1,S1>::space1.getNumKeys(ele);
+    double jac[3][3];
+    m.resize(nbFF, nbFF);
+    m.setAll(0.);
+    for (int i = 0; i < npts; i++)
+    {
+      const double u = GP[i].pt[0]; const double v = GP[i].pt[1]; const double w = GP[i].pt[2];
+      const double weight = GP[i].weight; const double detJ = ele->getJacobian(u, v, w, jac);
+      std::vector<typename S1::GradType> Grads;
+      BilinearTerm<S1,S1>::space1.gradf(ele,u, v, w, Grads);
+      for (int j = 0; j < nbFF; j++)
+      {
+        for (int k = j; k < nbFF; k++)
+        {
+          double contrib=weight * detJ * dot(Grads[j],Grads[k]);
+          m(j,k)+=contrib;
+          if (j!=k) m(k,j)+=contrib;
+        }
+      }
+    }
+//    m.print("");
+//    exit(0);
+  }
+}; // class
+
 
 
 
@@ -238,9 +294,9 @@ inline double dot(const double &a, const double &b)
 
 template<class S1> class LoadTerm : public LinearTerm<S1>
 {
-  simpleFunction<typename S1::ValType> Load;
+  simpleFunction<typename S1::ValType> &Load;
  public : 
-  LoadTerm(S1& space1_,simpleFunction<typename S1::ValType> Load_) :LinearTerm<S1>(space1_),Load(Load_) {};
+  LoadTerm(S1& space1_,simpleFunction<typename S1::ValType> &Load_) :LinearTerm<S1>(space1_),Load(Load_) {};
   virtual void get(MElement *ele,int npts,IntPt *GP,fullVector<double> &m)
   {
     double nbFF=LinearTerm<S1>::space1.getNumKeys(ele);
@@ -253,10 +309,27 @@ template<class S1> class LoadTerm : public LinearTerm<S1>
       const double weight = GP[i].weight;const double detJ = ele->getJacobian(u, v, w, jac);
       std::vector<typename S1::ValType> Vals;
       LinearTerm<S1>::space1.f(ele,u, v, w, Vals);
+      SPoint3 p;
+      ele->pnt(u, v, w, p);
+      typename S1::ValType load=Load(p.x(),p.y(),p.z());
       for (int j = 0; j < nbFF ; ++j)
       {
-        m(j)+=dot(Vals[j],Load(u,v,w))*weight*detJ;
+        m(j)+=dot(Vals[j],load)*weight*detJ;
       }
+    }
+  }
+
+  virtual void get(MVertex *ver,fullVector<double> &m)
+  {
+    double nbFF=LinearTerm<S1>::space1.getNumKeys(ver);
+    double jac[3][3];
+    m.resize(nbFF);
+    std::vector<typename S1::ValType> Vals;
+    LinearTerm<S1>::space1.f(ver, Vals);
+    typename S1::ValType load=Load(ver->x(),ver->y(),ver->z());
+    for (int j = 0; j < nbFF ; ++j)
+    {
+      m(j)=dot(Vals[j],load);
     }
   }
 };

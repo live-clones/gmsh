@@ -132,6 +132,28 @@ class dofManager{
   {
     numberDof(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField));
   }
+
+  inline void getDofValue(std::vector<Dof> &keys,std::vector<dataVec> &Vals)
+  {
+    int ndofs=keys.size();
+    Vals.reserve(Vals.size()+ndofs);
+    for (int i=0;i<ndofs;++i) Vals.push_back(getDofValue(keys[i]));
+  }
+
+  inline dataVec getDofValue(Dof key) const
+  {
+    {
+      typename std::map<Dof, dataVec>::const_iterator it = fixed.find(key);
+      if (it != fixed.end()) return it->second;
+    }
+    {
+      std::map<Dof, int>::const_iterator it = unknown.find(key);
+      if (it != unknown.end())
+        return _current->getFromSolution(it->second);
+    }
+    return dataVec(0.0);
+  }
+
   inline dataVec getDofValue(int ent, int type) const
   {
     Dof key(ent, type);

@@ -11,6 +11,7 @@
 #include "SVector3.h"
 #include "dofManager.h"
 #include "simpleFunction.h"
+#include "functionSpace.h"
 
 class GModel;
 class PView;
@@ -24,84 +25,61 @@ struct elasticField {
   elasticField () : g(0), _enrichment(0),_tag(0){}
 };
 
-struct dirichletBC {
+struct BoundaryCondition
+{
+  enum location{UNDEF,ON_VERTEX,ON_EDGE,ON_FACE,ON_VOLUME};
+  location onWhat; // on vertices or elements
   int _tag; // tag for the dofManager
-  int _comp; // component
   groupOfElements *g; // support for this BC
-  simpleFunction<double> _f;
-  dirichletBC () : g(0),_comp(0),_tag(0){}
+  BoundaryCondition() : g(0),_tag(0),onWhat(UNDEF) {};
 };
 
-struct neumannBC {
-  int _tag; // tag for the dofManager
-  groupOfElements *g; // support for this BC
+struct dirichletBC : public BoundaryCondition
+{
+  int _comp; // component
+  simpleFunction<double> _f;
+  dirichletBC () :BoundaryCondition(),_comp(0),_f(0){}
+};
+
+struct neumannBC  : public BoundaryCondition
+{
   simpleFunction<SVector3> _f;
-  neumannBC () : g(0),_tag(0),_f(SVector3(0,0,0)){}
+  neumannBC () : BoundaryCondition(),_f(SVector3(0,0,0)){}
 };
 
 // an elastic solver ...
-class elasticitySolver{
+class elasticitySolver
+{
  protected:
   GModel *pModel;
   int _dim, _tag;
   dofManager<double> *pAssembler;
+  FunctionSpace<SVector3> *LagSpace;
+
   // young modulus and poisson coefficient per physical
   std::vector<elasticField> elasticFields;
-  // imposed nodal forces
-  std::map<int, SVector3> nodalForces;
-  // imposed line forces
-  std::map<int, SVector3> lineForces;
-  std::vector<neumannBC> edgeNeu;
-  // imposed face forces
-  std::map<int, SVector3> faceForces;
-  std::vector<neumannBC> faceNeu;
-  // imposed volume forces
-  std::map<int, SVector3> volumeForces;
-  std::vector<neumannBC> volumeNeu;
-  // imposed nodal displacements
-  std::map<std::pair<int,int>, double> nodalDisplacements;
-  // imposed edge displacements
-  std::map<std::pair<int,int>, double> edgeDisplacements;
-  std::vector<dirichletBC> edgeDiri;
-  // imposed face displacements
-  std::map<std::pair<int,int>, double> faceDisplacements;
-  std::vector<dirichletBC> faceDiri;
-//  std::vector<dirichletBC> faceDiri;
+  // neumann BC
+  std::vector<neumannBC> allNeumann;
+  // dirichlet BC
+  std::vector<dirichletBC> allDirichlet;
+  
  public:
-  elasticitySolver(int tag) : _tag(tag) {}
-  void addNodalForces (int iNode, const SVector3 &f)
+  elasticitySolver(int tag) : _tag(tag),LagSpace(0),pAssembler(0) {}
+  virtual ~elasticitySolver()
   {
-    nodalForces[iNode] = f;
+    if (LagSpace) delete LagSpace;
+    if (pAssembler) delete pAssembler;
   }
-  void addNodalDisplacement(int iNode, int dir, double val)
-  {
-    nodalDisplacements[std::make_pair(iNode, dir)] = val;
-  }
-  //  void addElasticConstants(double e, double nu, int physical)
-  //  {
-  //    elasticConstants[physical] = std::make_pair(e, nu);
-  //  }
+  void readInputFile(const std::string &meshFileName);
   void setMesh(const std::string &meshFileName);
   virtual void solve();
-  void readInputFile(const std::string &meshFileName);
   virtual PView *buildDisplacementView(const std::string &postFileName);
-  // PView *buildVonMisesView(const std::string &postFileName);
+  virtual PView *buildVonMisesView(const std::string &postFileName);
   // std::pair<PView *, PView*> buildErrorEstimateView
   //   (const std::string &errorFileName, double, int);
   // std::pair<PView *, PView*> buildErrorEstimateView
   //   (const std::string &errorFileName, const elasticityData &ref, double, int);
 };
-
-
-
-// another elastic solver ...
-class MyelasticitySolver : public elasticitySolver
-{
- public:
-  MyelasticitySolver(int tag) : elasticitySolver(tag) {}
-  virtual void solve();
-};
-
 
 
 #endif
