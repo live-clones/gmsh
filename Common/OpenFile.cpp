@@ -17,6 +17,7 @@
 #include "OS.h"
 #include "StringUtils.h"
 #include "GeomMeshMatcher.h"
+#include "LuaBindings.h"
 
 #if defined(HAVE_PARSER)
 #include "Parser.h"
@@ -328,6 +329,11 @@ int MergeFile(std::string fileName, bool warnIfMissing)
     status = read_png(fileName);
   }
 #endif
+#endif
+#if defined(HAVE_LUA)
+  else if(ext == ".lua" || ext == ".LUA") {
+    status = read_lua(fileName.c_str());
+  }
 #endif
   else {
     CTX::instance()->geom.draw = 1;
