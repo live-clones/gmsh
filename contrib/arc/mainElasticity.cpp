@@ -18,8 +18,8 @@ int main (int argc, char* argv[])
   // globals are still present in Gmsh
 
   // instanciate a solver
-  MyelasticitySolver mySolver (1000);
-  //elasticitySolver mySolver (1000);
+  elasticitySolver mySolver (1000);
+
   // read some input file
   mySolver.readInputFile(argv[1]);
 

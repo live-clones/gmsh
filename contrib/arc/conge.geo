@@ -83,6 +83,7 @@ Physical Line(9) = {11};
 Physical Line(10) = {10};
 Physical Line(8) = {1, 5};
 Physical Surface(7) = {24};
-
+Physical Point(20) = {2};
+Physical Point(21) = {11};
 // Physical Line(25) = {11, 12, 13, 14};
 
