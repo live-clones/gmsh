@@ -19,6 +19,8 @@ enum qualityMeasure4Tet{QMTET_1, QMTET_2, QMTET_3, QMTET_ONE, QMTET_COND};
 double qmDistorsionOfMapping (MTriangle *e);
 double qmDistorsionOfMapping (MTetrahedron *e);
 
+double qmTriangleAngles (MTriangle *e);
+
 double qmTriangle(MTriangle *f, const qualityMeasure4Triangle &cr); 
 double qmTriangle(BDS_Face *f, const qualityMeasure4Triangle &cr); 
 double qmTriangle(const BDS_Point *p1, const BDS_Point *p2, const BDS_Point *p3, 

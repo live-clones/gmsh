@@ -32,6 +32,15 @@ double MTriangle::distoShapeMeasure()
 #endif
 }
 
+double MTriangle::angleShapeMeasure()
+{
+#if defined(HAVE_MESH)
+  return qmTriangleAngles(this);
+#else
+  return 0.;
+#endif
+}
+
 double MTriangle::gammaShapeMeasure()
 {
 #if defined(HAVE_MESH)

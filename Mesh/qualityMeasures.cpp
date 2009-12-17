@@ -11,6 +11,7 @@
 #include "Numeric.h"
 #include "polynomialBasis.h"
 #include "GmshMessage.h"
+#include <limits>
 
 double qmTriangle(const BDS_Point *p1, const BDS_Point *p2, const BDS_Point *p3, 
                   const qualityMeasure4Triangle &cr)
@@ -292,4 +293,60 @@ double qmDistorsionOfMapping(MTetrahedron *e)
   }
 
   return dmin;
+}
+
+double qmTriangleAngles (MTriangle *e) {
+  double a = 100;
+  double worst_quality = std::numeric_limits<double>::max();
+  double mat[3][3];
+  double mat2[3][3];
+  double den = atan(a*(M_PI/9)) + atan(a*(2*M_PI/9 - (M_PI/9)));
+
+  // This matrix is used to "rotate" the triangle to get each vertex
+  // as the "origin" of the mapping in turn 
+  double rot[3][3];
+  rot[0][0]=-1; rot[0][1]=1; rot[0][2]=0;
+  rot[1][0]=-1; rot[1][1]=0; rot[1][2]=0;
+  rot[2][0]= 0; rot[2][1]=0; rot[2][2]=1;
+  double tmp[3][3];
+
+  for (int i = 0; i < e->getNumPrimaryVertices(); i++) {
+    const double u = i == 1 ? 1 : 0;
+    const double v = i == 2 ? 1 : 0;
+    const double w = 0;
+    e->getJacobian(u, v, w, mat);
+    e->getPrimaryJacobian(u,v,w,mat2);
+    for (int j = 0; j < i; j++) {
+      matmat(rot,mat,tmp);
+      memcpy(mat, tmp, sizeof(mat)); 
+    }
+    //get angle
+    double v1[3] = {mat[0][0],  mat[0][1],  mat[0][2] };
+    double v2[3] = {mat[1][0],  mat[1][1],  mat[1][2] };
+    double v3[3] = {mat2[0][0],  mat2[0][1],  mat2[0][2] };
+    double v4[3] = {mat2[1][0],  mat2[1][1],  mat2[1][2] };
+    norme(v1);
+    norme(v2);
+    norme(v3);
+    norme(v4);
+    double v12[3], v34[3];
+    prodve(v1,v2,v12);
+    prodve(v3,v4,v34);
+    norme(v12); 
+    norme(v34);
+    double orientation;
+    prosca(v12,v34,&orientation);
+
+    // If the if the triangle is "flipped" it's no good
+    if (orientation < 0)
+      return -std::numeric_limits<double>::max();
+
+    double c;
+    prosca(v1,v2,&c);
+    double x = acos(c)-M_PI/3;
+    double quality = (atan(a*(x+M_PI/9)) + atan(a*(2*M_PI/9 - (x+M_PI/9))))/den;
+    worst_quality = std::min(worst_quality, quality);
+  }
+
+  return worst_quality;
 }

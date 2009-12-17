@@ -29,6 +29,7 @@ inline void prosca(double a[3], double b[3], double *c)
   *c = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 void matvec(double mat[3][3], double vec[3], double res[3]);
+void matmat(double mat1[3][3], double mat2[3][3], double res[3][3]);
 inline double norm3(double a[3])
 {
   return sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);

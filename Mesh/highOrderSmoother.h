@@ -52,6 +52,9 @@ public:
   void smooth_p2point(GFace *);
   void smooth_pNpoint(GFace *);
   void smooth(GRegion*);
+  void smooth_cavity(std::vector<MElement*> &,
+		     std::vector<MElement*> &,
+		     GFace *gf);
   int getTag() const { return _tag; }
   void swap(GFace *, 
             edgeContainer &edgeVertices,

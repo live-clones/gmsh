@@ -52,6 +52,7 @@ class MTriangle : public MElement {
   virtual int getDim(){ return 2; }
   virtual double gammaShapeMeasure();
   virtual double distoShapeMeasure();
+  virtual double angleShapeMeasure();
   virtual int getNumVertices() const { return 3; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual MVertex *getVertexMED(int num)

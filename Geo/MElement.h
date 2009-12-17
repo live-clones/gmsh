@@ -159,6 +159,7 @@ class MElement
   virtual double gammaShapeMeasure(){ return 0.; }
   virtual double etaShapeMeasure(){ return 0.; }
   virtual double distoShapeMeasure(){ return 1.0; }
+  virtual double angleShapeMeasure() { return 1.0; }
 
   // compute the barycenter
   virtual SPoint3 barycenter();

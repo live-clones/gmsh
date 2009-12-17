@@ -102,8 +102,8 @@ static int getAspectRatio (std::vector<MElement *> &elements,
       vs.insert(e->getVertex(j));
     }
   }
- SBoundingBox3d bb;
- SOrientedBoundingBox obbox ;
+  SBoundingBox3d bb;
+  SOrientedBoundingBox obbox ;
   std::vector<SPoint3> vertices;
   for (std::set<MVertex* >::iterator it = vs.begin(); it != vs.end(); it++){
     SPoint3 pt((*it)->x(),(*it)->y(), (*it)->z());
