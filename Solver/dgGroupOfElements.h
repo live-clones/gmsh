@@ -165,7 +165,7 @@ public:
   inline fullMatrix<double> & getDPsiRightDxMatrix() const { return *_dPsiRightDxOnQP;}
   //this part is common with dgGroupOfElements, we should try polymorphism
   inline int getNbElements() const {return _faces.size();}
-  inline int getNbNodes() const {return _collocation->size1();}
+  inline int getNbNodes() const {return _collocation->size2();}
   inline int getNbIntegrationPoints() const {return _collocation->size1();}
   inline const fullMatrix<double> & getCollocationMatrix () const {return *_collocation;}
   inline const fullMatrix<double> & getIntegrationPointsMatrix () const {return *_integration;}

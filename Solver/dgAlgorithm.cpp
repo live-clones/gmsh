@@ -233,6 +233,7 @@ void dgAlgorithm::residualInterface ( //dofManager &dof, // the DOF manager (may
   }
 
   // C ) redistribute the flux to the residual (at Faces nodes)
+
   if(riemannSolver || diffusiveFluxLeft)
     residual.gemm(group.getRedistributionMatrix(),NormalFluxQP);
 
@@ -387,10 +388,10 @@ void dgAlgorithm::buildGroups(GModel *model, int dim, int order,
               boundaryVertices[physicalName].insert( element->getVertex(0) ); 
               break;
             case 2:
-              boundaryEdges[physicalName].insert( MEdge(element->getVertex(0), element->getVertex(1)) );
+              boundaryEdges[physicalName].insert( element->getEdge(0) );
             break;
             case 3:
-              boundaryFaces[physicalName].insert( MFace(element->getVertex(0), element->getVertex(1),element->getVertex(2)) );
+              boundaryFaces[physicalName].insert( element->getFace(0));
             break;
             default :
             throw;
@@ -403,7 +404,6 @@ void dgAlgorithm::buildGroups(GModel *model, int dim, int order,
     }
   }
   eGroups.push_back(new dgGroupOfElements(allElements,order));
-  fGroups.push_back(new dgGroupOfFaces(*eGroups[0],order));
   switch(dim) {
     case 1 : {
       std::map<const std::string, std::set<MVertex*> >::iterator mapIt;
@@ -427,6 +427,7 @@ void dgAlgorithm::buildGroups(GModel *model, int dim, int order,
       break;
     }
   }
+  fGroups.push_back(new dgGroupOfFaces(*eGroups[0],order));
 }
 
 // works for any number of groups 

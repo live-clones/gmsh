@@ -136,7 +136,8 @@ void dgGroupOfFaces::addFace(const MFace &topoFace, int iElLeft, int iElRight){
   MElement &elLeft = *_groupLeft.getElement(iElLeft);
   int ithFace, sign, rot;
   elLeft.getFaceInfo (topoFace, ithFace, sign, rot);
-  _closuresIdLeft.push_back(_fsLeft->getFaceClosureId(ithFace, sign, rot));
+  int closureIdLeft = _fsLeft->getFaceClosureId(ithFace, sign, rot);
+  _closuresIdLeft.push_back(closureIdLeft);
   if(iElRight>=0){
     _right.push_back(iElRight);
     MElement &elRight = *_groupRight.getElement(iElRight);
@@ -146,7 +147,7 @@ void dgGroupOfFaces::addFace(const MFace &topoFace, int iElLeft, int iElRight){
   // compute the face element that correspond to the geometrical closure
   // get the vertices of the face
   std::vector<MVertex*> vertices;
-  const std::vector<int> & geomClosure = elLeft.getFunctionSpace()->getFaceClosure(_closuresIdLeft.back());
+  const std::vector<int> & geomClosure = elLeft.getFunctionSpace()->getFaceClosure(closureIdLeft);
   for (int j=0; j<geomClosure.size() ; j++)
     vertices.push_back( elLeft.getVertex(geomClosure[j]) );
   // triangular face
@@ -234,7 +235,7 @@ void dgGroupOfFaces::init(int pOrder) {
 
   // compute data on quadrature points : normals and dPsidX
   double g[256][3];
-  _normals = new fullMatrix<double> (3,_fsFace->points.size1()*_faces.size());
+  _normals = new fullMatrix<double> (3,_integration->size1()*_faces.size());
   _dPsiLeftDxOnQP = new fullMatrix<double> ( _integration->size1()*3,_fsLeft->points.size1()*_faces.size());
   if(_fsRight){
     _dPsiRightDxOnQP = new fullMatrix<double> ( _integration->size1()*3,_fsRight->points.size1()*_faces.size());
@@ -262,9 +263,10 @@ void dgGroupOfFaces::init(int pOrder) {
       double &nz=(*_normals)(2,index);
       double nu=0,nv=0,nw=0;
       for (size_t k=0; k<closureLeft.size(); k++){
-        nu += g[closureLeft[k]][0];
-        nv += g[closureLeft[k]][1];
-        nw += g[closureLeft[k]][2];
+        int inode=closureLeft[k];
+        nu += g[inode][0];
+        nv += g[inode][1];
+        nw += g[inode][2];
       }
       nx = nu*ijac[0][0]+nv*ijac[0][1]+nw*ijac[0][2];
       ny = nu*ijac[1][0]+nv*ijac[1][1]+nw*ijac[1][2];

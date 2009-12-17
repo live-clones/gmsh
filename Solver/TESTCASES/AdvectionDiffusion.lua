@@ -10,7 +10,7 @@ vmodel[1]:load('')
 vmodel[2]:load('')
 
 dg = dgSystemOfEquations (model)
-dg:setOrder(5)
+dg:setOrder(1)
 
 -- conservation law
 
@@ -49,7 +49,7 @@ dg:exportSolution('output/Advection_00000')
 
 -- main loop
 for i=1,10000 do
-  norm = dg:RK44(0.001)
+  norm = dg:RK44(0.01)
   if (i % 1 == 0) then 
     print('iter',i,norm)
     dg:exportSolution(string.format("output/Advection-%05d", i)) 

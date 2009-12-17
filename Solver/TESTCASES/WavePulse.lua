@@ -22,7 +22,7 @@ myModel:load('square.msh')
 
 print'*** Create a dg solver ***'
 DG = dgSystemOfEquations (myModel)
-DG:setOrder(1)
+DG:setOrder(3)
 law=ConservationLawWaveEquation(2)
 DG:setConservationLaw(law)
 law:addBoundaryCondition('Border',law:newWallBoundary())
