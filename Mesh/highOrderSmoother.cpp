@@ -367,7 +367,7 @@ void highOrderSmoother::optimize(GFace * gf,
     //    }
     // then try to swap for better configurations  
 
-    //smooth(gf, true);
+    smooth(gf, true);
     //int nbSwap = 
         swapHighOrderTriangles(gf,edgeVertices,faceVertices,this);
     // smooth(gf,true);
