@@ -59,6 +59,6 @@ int read_lua(const char *filename)
   report_errors(L, s);
 
   lua_close(L);
-  return s;
+  return (s==0);
 }
 #endif
