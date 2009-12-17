@@ -12,6 +12,7 @@
 #include "polynomialBasis.h"
 #include "GmshMessage.h"
 #include <limits>
+#include <string.h>
 
 double qmTriangle(const BDS_Point *p1, const BDS_Point *p2, const BDS_Point *p3, 
                   const qualityMeasure4Triangle &cr)
