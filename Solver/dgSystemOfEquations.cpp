@@ -49,6 +49,7 @@ methodBinding *dgSystemOfEquations::methods[]={
   new methodBindingTemplate<dgSystemOfEquations,void,std::string>("exportSolution",&dgSystemOfEquations::exportSolution),
   new methodBindingTemplate<dgSystemOfEquations,void,std::string>("L2Projection",&dgSystemOfEquations::L2Projection),
   new methodBindingTemplate<dgSystemOfEquations,double,double>("RK44",&dgSystemOfEquations::RK44),
+  new methodBindingTemplate<dgSystemOfEquations,double,double>("multirateRK43",&dgSystemOfEquations::multirateRK43),
  0};
 
 // do a L2 projection
@@ -77,6 +78,12 @@ void dgSystemOfEquations::setup(){
 
 double dgSystemOfEquations::RK44(double dt){
   _algo->rungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups, dt,  *_solution, *_rightHandSide);
+  return _solution->_data->norm();
+}
+
+
+double dgSystemOfEquations::multirateRK43(double dt){
+  _algo->multirateRungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups, dt,  *_solution, *_rightHandSide);
   return _solution->_data->norm();
 }
 

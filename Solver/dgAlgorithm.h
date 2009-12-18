@@ -48,6 +48,15 @@ class dgAlgorithm {
 		   dgDofContainer &residu,
 		   dgDofContainer &sol,
 		   int orderRK=4);
+  void multirateRungeKutta (
+		   const dgConservationLaw &claw,
+		   std::vector<dgGroupOfElements*> &eGroups, //group of elements
+		   std::vector<dgGroupOfFaces*> &fGroups,  // group of interfacs
+		   std::vector<dgGroupOfFaces*> &bGroups, // group of boundaries
+		   double h,	
+		   dgDofContainer &residu,
+		   dgDofContainer &sol,
+		   int orderRK=3);
   static void multAddInverseMassMatrix ( /*dofManager &dof,*/
 					const dgGroupOfElements & group,
 					fullMatrix<double> &residu,

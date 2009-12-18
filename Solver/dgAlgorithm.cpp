@@ -319,6 +319,140 @@ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation l
    }
  }
 
+
+
+void dgAlgorithm::multirateRungeKutta (const dgConservationLaw &claw,			// conservation law
+			      std::vector<dgGroupOfElements*> &eGroups,	// group of elements
+			      std::vector<dgGroupOfFaces*> &fGroups,		// group of interfacs
+			      std::vector<dgGroupOfFaces*> &bGroups,		// group of boundaries
+			      double h,				        // time-step
+			      dgDofContainer &sol,
+			      dgDofContainer &resd,			       
+			      int orderRK)				        // order of RK integrator
+ {
+
+   // U_{n+1}=U_n+h*(SUM_i a_i*K_i)
+   // K_i=M^(-1)R(U_n+b_i*K_{i-1})
+   
+   int nStages=10;
+//  classical RK44
+//   double A[4][4]={
+//      {0, 0, 0, 0},
+//      {1.0/2.0, 0, 0 ,0},
+//      {0, 1.0/2.0, 0, 0},
+//      {0, 0, 1, 0}
+//   };
+//   double b[4]={1.0/6.0, 1.0/3.0, 1.0/3.0, 1.0/6.0};
+//   double c[4]={0, 1.0/2.0, 1.0/2.0, 1};
+
+// 3/8 RK44
+//   double A[4][4]={
+//      {0, 0, 0, 0},
+//      {1.0/3.0, 0, 0 ,0},
+//      {-1.0/3.0, 1.0, 0, 0},
+//      {1, -1, 1, 0}
+//   };
+//   double b[4]={1.0/8.0, 3.0/8.0, 3.0/8.0, 1.0/8.0};
+//   double c[4]={0, 1.0/3.0, 2.0/3.0, 1};
+
+// RK43 from Schlegel et al. JCAM 2009
+//   double A[4][4]={
+//      {0, 0, 0, 0},
+//      {1.0/2.0, 0, 0 ,0},
+//      {-1.0/6.0, 2.0/3.0, 0, 0},
+//      {1.0/3.0, -1.0/3.0, 1, 0}
+//   };
+//   double b[4]={1.0/6.0, 1.0/3.0, 1.0/3.0, 1.0/6.0};
+//   double c[4]={0, 1.0/2.0, 1.0/2.0, 1};
+   
+
+// Small step RK43
+   double A[10][10]={
+{0,         0,         0,         0,         0,         0,         0,         0,         0,         0},
+{1.0/4.0   ,0,         0,         0,         0,         0,         0,         0,         0,         0},
+{-1.0/12.0, 1.0/3.0,   0,         0,         0,         0,         0,         0,         0,         0},
+{1.0/6.0,   -1.0/6.0,  1.0/2.0,   0,         0,         0,         0,         0,         0,         0},
+{1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         0,         0,         0,         0,         0},
+{1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         0,         0,         0,         0,         0},
+{1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         1.0/4.0,   0,         0,         0,         0},
+{1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         -1.0/12.0, 1.0/3.0,   0,         0,         0},
+{1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         1.0/6.0,   -1.0/6.0,  1.0/2.0,   0,         0},
+{1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0, 0}
+   };
+   double b[10]={1.0/12.0, 1.0/6.0, 1.0/6.0,1.0/12.0,0,1.0/12.0, 1.0/6.0, 1.0/6.0,1.0/12.0,0};
+   double c[10]={0, 1.0/4.0, 1.0/4.0, 1.0/2.0, 1.0/2.0, 1.0/2.0, 3.0/4.0, 3.0/4.0, 1, 1 };
+
+// Big step RK43
+//   double A[10][10]={
+//{0,         0,         0,         0,         0,         0,         0,         0,         0,         0},
+//{1.0/4.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
+//{1.0/4.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
+//{1.0/2.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
+//{1.0/2.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
+//{-1.0/6.0,  0,         0,         0,         2.0/3.0,   0,         0,         0,         0,         0},
+//{1.0/12.0,  0,         0,         0,         1.0/6.0,   1.0/2.0,   0,         0,         0,         0},
+//{1.0/12.0,  0,         0,         0,         1.0/6.0,   1.0/2.0,   0,         0,         0,         0},
+//{1.0/3.0 ,  0,         0,         0,         -1.0/3.0,  1,         0,         0,         0,         0},
+//{1.0/3.0 ,  0,         0,         0,         -1.0/3.0,  1,         0,         0,         0,         0},
+//   };
+//   double b[10]={1.0/6.0, 0 , 0 , 0 , 1.0/3.0,1.0/3.0, 0 , 0 , 0 , 1.0/6.0};
+//   double c[10]={0, 1.0/4.0, 1.0/4.0, 1.0/2.0, 1.0/2.0, 1.0/2.0, 3.0/4.0, 3.0/4.0, 1, 1 };
+
+
+   // fullMatrix<double> K(sol);
+   // Current updated solution
+   // fullMatrix<double> Unp(sol);
+   fullMatrix<double> residuEl, KEl;
+   fullMatrix<double> iMassEl;
+   
+   int nbFields = claw.nbFields();
+   
+   dgDofContainer **K;
+   K=new dgDofContainer*[nStages];
+   for(int i=0;i<nStages;i++){
+     K[i]=new dgDofContainer(eGroups,claw);
+     K[i]->_data->scale(0.0);
+   }
+   dgDofContainer Unp (eGroups,claw);
+   dgDofContainer tmp (eGroups,claw);
+
+   Unp._data->scale(0.0);
+   Unp._data->axpy(*(sol._data));
+
+   for(int j=0; j<nStages;j++){
+     tmp._data->scale(0.0);
+     tmp._data->axpy(*(sol._data));
+     for(int k=0;k < eGroups.size();k++) {
+       for(int i=0;i<j;i++){
+         if(fabs(A[j][i])>1e-12){
+           tmp.getGroupProxy(k).add(K[i]->getGroupProxy(k),h*A[j][i]);
+         }
+       }
+     }
+     this->residual(claw,eGroups,fGroups,bGroups,tmp._dataProxys,resd._dataProxys);
+     for(int k=0;k < eGroups.size();k++) {
+       int nbNodes = eGroups[k]->getNbNodes();
+       for(int i=0;i<eGroups[k]->getNbElements();i++) {
+         residuEl.setAsProxy(*(resd._dataProxys[k]),i*nbFields,nbFields);
+         KEl.setAsProxy(*(K[j]->_dataProxys[k]),i*nbFields,nbFields);
+         iMassEl.setAsProxy(eGroups[k]->getInverseMassMatrix(),i*nbNodes,nbNodes);
+         iMassEl.mult(residuEl,KEl);
+       }
+       Unp.getGroupProxy(k).add(K[j]->getGroupProxy(k),h*b[j]);
+     }
+   }
+   
+   for (int i=0;i<sol._dataSize;i++){
+     //     printf("tempSol[%d] = %g\n",i,(*tempSol._data)(i));
+     //     memcp
+     (*sol._data)(i)=(*Unp._data)(i);
+   }
+   for(int i=0;i<nStages;i++){
+     delete K[i];
+   }
+   delete []K;
+ }
+
 void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (maybe useless here)
 				   const dgConservationLaw &claw,   // the conservation law
 				   dgGroupOfFaces &group, 

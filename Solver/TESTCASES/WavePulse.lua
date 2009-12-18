@@ -43,10 +43,10 @@ print'*** solve ***'
 dt = 0.00125;
 N  = 1000;
 for i=1,N do
-    norm = DG:RK44(dt)
+    norm = DG:multirateRK43(dt)
     print('*** ITER ***',i,norm)
     if (i % 10 == 0) then 
-       DG:exportSolution(string.format("output/solution-%03d", i)) 
+       DG:exportSolution(string.format("output/solution-%04d", i)) 
     end
 end
 

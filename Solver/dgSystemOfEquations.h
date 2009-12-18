@@ -13,8 +13,10 @@ private:
   dgDofContainer (const dgDofContainer&);  
 public:
   int _dataSize; // the full data size i.e. concerning all groups
-  fullVector<double> * _data; // the full data itself
   std::vector<fullMatrix<double> *> _dataProxys; // proxys 
+  fullVector<double> * _data; // the full data itself
+  inline int getDataSize(){return _dataSize;}
+  inline fullMatrix<double> &getGroupProxy(int gId){ return *(_dataProxys[gId]); }
   dgDofContainer (std::vector<dgGroupOfElements*> &groups, const dgConservationLaw &claw);
   ~dgDofContainer ();  
 };
@@ -51,6 +53,7 @@ public:
   void setup (); // setup the groups and allocate
   void exportSolution (std::string filename); // export the solution
   double RK44 (double dt); 
+  double multirateRK43 (double dt); 
   void L2Projection (std::string functionName); // assign the solution to a given function
 
   static const char className[];
