@@ -74,7 +74,8 @@ class elasticitySolver
   void setMesh(const std::string &meshFileName);
   virtual void solve();
   virtual PView *buildDisplacementView(const std::string &postFileName);
-  virtual PView *buildVonMisesView(const std::string &postFileName);
+  virtual PView *buildElasticEnergyView(const std::string &postFileName);
+  // virtual PView *buildVonMisesView(const std::string &postFileName);
   // std::pair<PView *, PView*> buildErrorEstimateView
   //   (const std::string &errorFileName, double, int);
   // std::pair<PView *, PView*> buildErrorEstimateView

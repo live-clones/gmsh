@@ -21,46 +21,6 @@
 #include "functionSpace.h"
 #include "groupOfElements.h"
 
-
-
-// evaluation of a field ???
-template<class T>
-class Field {
- protected:
-  typedef typename TensorialTraits<T>::ValType ValType;
-  typedef typename TensorialTraits<T>::GradType GradType;
-  dofManager<double> *dm; // 
-/*  typedef typename TensorialTraits<T>::HessType HessType;
-  typedef typename TensorialTraits<T>::DivType DivType;
-  typedef typename TensorialTraits<T>::CurlType CurlType;*/
- 
- public:
-  virtual int f(MElement *ele, double u, double v, double w, ValType &val)=0;
-  virtual int gradf(MElement *ele, double u, double v, double w,GradType &grad)=0;
-//  virtual int gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads, STensor3 &invjac)=0;// on passe le jacobien que l'on veut ...
-/* virtual int hessf(MElement *ele, double u, double v, double w,std::vector<HessType> &hesss);
-  virtual int divf(MElement *ele, double u, double v, double w,std::vector<DivType> &divs);
-  virtual int curlf(MElement *ele, double u, double v, double w,std::vector<CurlType> &curls);*/
-  virtual int getNumKeys(MElement *ele)=0; // if one needs the number of dofs
-  virtual int getKeys(MElement *ele, Dof *keys)=0; // may be faster once the number of dofs is known
-  virtual int getKeys(MElement *ele, std::vector<Dof> &keys)=0; 
-};
-
-
-
-
-
-
-class Formulation
-{
-  std::vector<FunctionSpace<double>* > scalarfs;
-  std::vector<FunctionSpace<SVector3>* > vectorfs;
-  std::vector<groupOfElements* > groups;
-  std::vector<std::pair<MElement*,std::vector<groupOfElements&> > > links;
-  dofManager<double> *dm; // 
-
-};
-
 class  BilinearTermBase
 {
  public :
@@ -74,14 +34,13 @@ template<class S1,class S2> class BilinearTerm : public BilinearTermBase
   S2& space2;
  public :
   BilinearTerm(S1& space1_,S2& space2_) : space1(space1_),space2(space2_) {}
-  virtual void get(MElement *ele,int npts,IntPt *GP,fullMatrix<double> &m) =0;
 };
 
 class  LinearTermBase
 {
   public:
   virtual void get(MElement *ele,int npts,IntPt *GP,fullVector<double> &v) =0;
-  virtual void get(MVertex *v,fullVector<double> &m) =0;
+  virtual void get(MVertex *ver,fullVector<double> &m) =0;
 };
 
 template<class S1> class LinearTerm : public LinearTermBase
@@ -90,7 +49,6 @@ template<class S1> class LinearTerm : public LinearTermBase
   S1& space1;
  public : 
   LinearTerm(S1& space1_) : space1(space1_) {}
-  virtual void get(MElement *ele,int npts,IntPt *GP,fullVector<double> &m) =0;
 };
 
 class  ScalarTermBase
@@ -102,7 +60,22 @@ class  ScalarTermBase
 class ScalarTerm : public ScalarTermBase
 {
  public : 
-  virtual void get(MElement *ele,int npts,IntPt *GP,double &v) =0;
+};
+
+class ScalarTermOne : public ScalarTerm
+{
+ public : 
+  virtual void get(MElement *ele,int npts,IntPt *GP,double &val)
+  {
+    double jac[3][3];
+    val=0;
+    for (int i = 0; i < npts; i++)
+    {
+      const double u = GP[i].pt[0];const double v = GP[i].pt[1];const double w = GP[i].pt[2];
+      const double weight = GP[i].weight;const double detJ = ele->getJacobian(u, v, w, jac);
+      val+=weight*detJ;
+    }
+  }
 };
 
 
@@ -117,7 +90,7 @@ template<class S1,class S2> class LaplaceTerm : public BilinearTerm<S1,S2>
   {
     Msg::Error("LaplaceTerm<S1,S2> w/ S1!=S2 not implemented");
   }
-  virtual void get(MVertex *v,fullMatrix<double> &m)
+  virtual void get(MVertex *ver,fullMatrix<double> &m)
   {
     Msg::Error("LaplaceTerm<S1,S2> w/ S1!=S2 not implemented");
   }

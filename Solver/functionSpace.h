@@ -67,9 +67,9 @@ class FunctionSpaceBase
 {
  public:
   virtual int getNumKeys(MElement *ele)=0; // if one needs the number of dofs
-  virtual int getKeys(MElement *ele, std::vector<Dof> &keys)=0;
+  virtual void getKeys(MElement *ele, std::vector<Dof> &keys)=0;
   virtual int getNumKeys(MVertex *ver)=0; // if one needs the number of dofs
-  virtual int getKeys(MVertex *ver, std::vector<Dof> &keys)=0;
+  virtual void getKeys(MVertex *ver, std::vector<Dof> &keys)=0;
 };
 
 template<class T>
@@ -83,18 +83,18 @@ class FunctionSpace : public FunctionSpaceBase
   typedef typename TensorialTraits<T>::CurlType CurlType;*/
  
  public:
-  virtual int f(MVertex *ver, std::vector<ValType> &vals) {} // used for neumann BC
-  virtual int f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)=0;
-  virtual int gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)=0;
+  virtual void f(MVertex *ver, std::vector<ValType> &vals) {} // used for neumann BC
+  virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)=0;
+  virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)=0;
 //  virtual groupOfElements* getSupport()=0;// probablement inutile
 //  virtual int gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads, STensor3 &invjac)=0;// on passe le jacobien que l'on veut ...
 /* virtual int hessf(MElement *ele, double u, double v, double w,std::vector<HessType> &hesss);
   virtual int divf(MElement *ele, double u, double v, double w,std::vector<DivType> &divs);
   virtual int curlf(MElement *ele, double u, double v, double w,std::vector<CurlType> &curls);*/
   virtual int getNumKeys(MElement *ele)=0; // if one needs the number of dofs
-  virtual int getKeys(MElement *ele, std::vector<Dof> &keys)=0;
+  virtual void getKeys(MElement *ele, std::vector<Dof> &keys)=0;
   virtual int getNumKeys(MVertex *ver)=0; // if one needs the number of dofs
-  virtual int getKeys(MVertex *ver, std::vector<Dof> &keys)=0;
+  virtual void getKeys(MVertex *ver, std::vector<Dof> &keys)=0;
 };
 
 class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
@@ -113,15 +113,15 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
  public:
   ScalarLagrangeFunctionSpace(int i=0):_iField(i) {}
   virtual int getId(void) const {return _iField;};
-  virtual int f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)
+  virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)
   {
     int ndofs= ele->getNumVertices();
     int curpos=vals.size();
     vals.resize(curpos+ndofs);
     ele->getShapeFunctions(u, v, w, &(vals[curpos]));
   };
-  virtual int f(MVertex *ver, std::vector<ValType> &vals) {vals.push_back(1.0);} // used for neumann BC
-  virtual int gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
+  virtual void f(MVertex *ver, std::vector<ValType> &vals) {vals.push_back(1.0);} // used for neumann BC
+  virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
   {
     int ndofs= ele->getNumVertices();
     grads.reserve(grads.size()+ndofs);
@@ -140,7 +140,7 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
   };
   virtual int getNumKeys(MElement *ele) {return ele->getNumVertices();}
 
-  virtual int getKeys(MElement *ele, std::vector<Dof> &keys) // appends ...
+  virtual void getKeys(MElement *ele, std::vector<Dof> &keys) // appends ...
   {
       int ndofs= ele->getNumVertices();
       keys.reserve(keys.size()+ndofs);
@@ -148,7 +148,7 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
         getKeys(ele->getVertex(i),keys);
   }
   virtual int getNumKeys(MVertex *ver) { return 1;}
-  virtual int getKeys(MVertex *ver, std::vector<Dof> &keys)
+  virtual void getKeys(MVertex *ver, std::vector<Dof> &keys)
   {
     keys.push_back(Dof(ver->getNum(), _iField));
   };
@@ -187,7 +187,7 @@ public :
   }
 
   virtual ~ScalarToAnyFunctionSpace() {delete ScalarFS;}
-  virtual int f(MVertex *ver, std::vector<ValType> &vals)
+  virtual void f(MVertex *ver, std::vector<ValType> &vals)
   {
     std::vector<double> valsd;
     ScalarFS->f(ver,valsd);
@@ -201,7 +201,7 @@ public :
     }
   } // used for neumann BC
 
-  virtual int f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)
+  virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)
   {
     std::vector<double> valsd;
     ScalarFS->f(ele,u,v,w,valsd);
@@ -215,7 +215,7 @@ public :
     }
   }
   
-  virtual int gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
+  virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
   {
     std::vector<SVector3> gradsd;
     ScalarFS->gradf(ele,u,v,w,gradsd);
@@ -236,7 +236,7 @@ public :
   
   virtual int getNumKeys(MElement *ele) {return ScalarFS->getNumKeys(ele)*comp.size();}
   
-  virtual int getKeys(MElement *ele, std::vector<Dof> &keys)
+  virtual void getKeys(MElement *ele, std::vector<Dof> &keys)
   {
 
     int nk=ScalarFS->getNumKeys(ele);
@@ -259,7 +259,7 @@ public :
   }
 
   virtual int getNumKeys(MVertex *ver) { return ScalarFS->getNumKeys(ver)*comp.size();}
-  virtual int getKeys(MVertex *ver, std::vector<Dof> &keys)
+  virtual void getKeys(MVertex *ver, std::vector<Dof> &keys)
   {
     int nk=ScalarFS->getNumKeys(ver);
     std::vector<Dof> bufk;
@@ -348,19 +348,19 @@ class CompositeFunctionSpace : public FunctionSpace<T>
       delete (*it);
   }
 
-  virtual int f(MVertex *ver, std::vector<ValType> &vals)
+  virtual void f(MVertex *ver, std::vector<ValType> &vals)
   {
     for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
       (*it)->f(ver,vals);
   }
 
-  virtual int f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals)
+  virtual void f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals)
   {
     for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
       (*it)->f(ele,u,v,w,vals);
   }
 
-  virtual int gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
+  virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
   {
     for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
       (*it)->gradf(ele,u,v,w,grads);
@@ -374,7 +374,7 @@ class CompositeFunctionSpace : public FunctionSpace<T>
     return ndofs;
   }
 
-  virtual int getKeys(MElement *ele, std::vector<Dof> &keys)
+  virtual void getKeys(MElement *ele, std::vector<Dof> &keys)
   {
     for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
       (*it)->getKeys(ele,keys);
@@ -388,7 +388,7 @@ class CompositeFunctionSpace : public FunctionSpace<T>
     return ndofs;
   }
 
-  virtual int getKeys(MVertex *ver, std::vector<Dof> &keys)
+  virtual void getKeys(MVertex *ver, std::vector<Dof> &keys)
   {
     for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
       (*it)->getKeys(ver,keys);
@@ -408,13 +408,13 @@ class xFemFunctionSpace : public FunctionSpace<T>
   FunctionSpace<T>* _spacebase;
 //  Function<double>* enrichment;
  public:
-  virtual int f(MVertex *ver, std::vector<ValType> &vals);
-  virtual int f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals);
-  virtual int gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads);
+  virtual void f(MVertex *ver, std::vector<ValType> &vals);
+  virtual void f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals);
+  virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads);
   virtual int getNumKeys(MElement *ele);
   virtual void getKeys(MElement *ele, std::vector<Dof> &keys);
   virtual int getNumKeys(MVertex *ver);
-  virtual int getKeys(MVertex *ver, std::vector<Dof> &keys);
+  virtual void getKeys(MVertex *ver, std::vector<Dof> &keys);
 
 };
 
@@ -432,13 +432,13 @@ class FilteredFunctionSpace : public FunctionSpace<T>
   F &_filter;
   
  public:
-  virtual int f(MVertex *ver, std::vector<ValType> &vals);
-  virtual int f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals);
-  virtual int gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads);
+  virtual void f(MVertex *ver, std::vector<ValType> &vals);
+  virtual void f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals);
+  virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads);
   virtual int getNumKeys(MElement *ele);
   virtual void getKeys(MElement *ele, std::vector<Dof> &keys);
   virtual int getNumKeys(MVertex *ver);
-  virtual int getKeys(MVertex *ver, std::vector<Dof> &keys);
+  virtual void getKeys(MVertex *ver, std::vector<Dof> &keys);
 };
 
 

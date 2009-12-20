@@ -15,6 +15,7 @@
 #include "terms.h"
 #include "solverAlgorithms.h"
 #include "quadratureRules.h"
+#include "solverField.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -285,9 +286,32 @@ PView* elasticitySolver::buildDisplacementView (const std::string &postFileName)
   return pv;  
 }
 
-PView *elasticitySolver::buildVonMisesView(const std::string &postFileName)
+PView *elasticitySolver::buildElasticEnergyView(const std::string &postFileName)
 {
-  std::map<int, std::vector<double> > data;  
+  std::map<int, std::vector<double> > data;
+  GaussQuadrature Integ_Bulk(GaussQuadrature::GradGrad);
+  double energ=0;
+  for (unsigned int i = 0; i < elasticFields.size(); ++i)
+  {
+    SolverField<SVector3> Field(pAssembler, LagSpace);
+    IsotropicElasticTerm<SolverField<SVector3> ,SolverField<SVector3> > Eterm(Field,elasticFields[i]._E,elasticFields[i]._nu);
+    ScalarTermOne One;
+    for (groupOfElements::elementContainer::const_iterator it = elasticFields[i].g->begin(); it != elasticFields[i].g->end(); ++it)
+    {
+      MElement *e=*it;
+      fullMatrix<double> localMatrix;
+      IntPt *GP;
+      int npts=Integ_Bulk.getIntPoints(e,&GP);
+      Eterm.get(e,npts,GP,localMatrix);
+      double vol=0;
+      One.get(e,npts,GP,vol);
+      std::vector<double> vec;
+      vec.push_back(localMatrix(0,0)/vol);
+      energ+=localMatrix(0,0);
+      data[(*it)->getNum()]=vec;
+    }
+  }
+  std::cout<< "elastic energy=" << energ << std::endl;
   PView *pv = new PView (postFileName, "ElementData", pModel, data, 0.0);
   return pv;  
 }
@@ -300,7 +324,7 @@ PView* elasticitySolver::buildDisplacementView  (const std::string &postFileName
   return 0;
 }
 
-PView* elasticitySolver::buildVonMisesView(const std::string &postFileName)
+PView* elasticitySolver::buildElasticEnergyView(const std::string &postFileName)
 {
   Msg::Error("Post-pro module not available");
   return 0;
