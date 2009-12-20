@@ -191,7 +191,7 @@ class STensor3 {
   {
     for (int i = 0; i < 3; i++){
       for (int j = 0; j < 3; j++){
-        mat(i,j) = _val[getIndex(i, j)];                      
+        mat(i,j) = _val[getIndex(i, j)];
       }
     }
   }
@@ -205,8 +205,8 @@ class STensor3 {
   {
     for (int i = 0; i < 9; i++) _val[i] = other._val[i];
   }
-  // default constructor, identity 
-  STensor3(const double v = 1.0)
+  // default constructor, null tensor
+  STensor3(const double v = 0.0)
   {
     _val[0] = _val[4] = _val[8] = v;
     _val[1] = _val[2] = _val[3] = 0.0;
@@ -274,6 +274,16 @@ inline double dot(const STensor3 &a, const STensor3 &b)
       prod+=a(i,j)*b(i,j);
   return prod;
 }
+
+inline STensor3 operator*(const STensor3 &t, double m)
+{ STensor3 val(t);
+  val*=m;
+  return val; }
+
+inline STensor3 operator*(double m,const STensor3 &t)
+{ STensor3 val(t);
+  val*=m;
+  return val; }
 
 
 #endif

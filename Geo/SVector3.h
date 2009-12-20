@@ -15,7 +15,7 @@ class SVector3 {
  protected:
   SPoint3 P;
  public:
-  SVector3() {}
+  SVector3():P() {}
   // Construct from 2 SPoints, vector from p1 to p2
   SVector3(const SPoint3 &p1, const SPoint3 &p2) : P(p2 - p1) {}
   // Construct from a single SPoint, vector from origin to p1
