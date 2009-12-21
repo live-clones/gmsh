@@ -5,6 +5,7 @@
 #include "highlevel.h"
 #include "groupOfElements.h"
 #include <iterator>
+
 int main (int argc, char* argv[])
 {
   
@@ -29,7 +30,12 @@ int main (int argc, char* argv[])
   PView *pv = mySolver.buildDisplacementView("displacement");
   pv->getData()->writeMSH("disp.msh", false);
   delete pv;
- 	
+  pv = mySolver.buildElasticEnergyView("elastic energy");
+  pv->getData()->writeMSH("energ.msh", false);
+  delete pv;
+
+
+
   // stop gmsh
   GmshFinalize();
   
