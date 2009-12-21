@@ -57,7 +57,8 @@ int GModel::exportDiscreteGEOInternals()
       List_T *points = Tree2List(_geo_internals->Points);
       GVertex *gvb = (*it)->getBeginVertex();
       GVertex *gve = (*it)->getEndVertex();
-      c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
+      int nb = 2 ;
+      c->Control_Points = List_Create(nb, 1, sizeof(Vertex *));
       for(int i = 0; i < List_Nbr(points); i++) {
 	Vertex *v;
  	List_Read(points, i, &v);
@@ -68,8 +69,7 @@ int GModel::exportDiscreteGEOInternals()
  	if (v->Num == gve->tag()) {
  	  List_Add(c->Control_Points, &v);
  	  c->end = v;
- 	}
-	
+ 	}	
       }
       Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
       CreateReversedCurve(c);

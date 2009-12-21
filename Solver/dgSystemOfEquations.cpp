@@ -165,12 +165,15 @@ void dgSystemOfEquations::export_solution_as_is (const std::string &name){
 
 dgDofContainer::dgDofContainer (std::vector<dgGroupOfElements*> &elementGroups, const dgConservationLaw &claw){
   _dataSize = 0;
-  int nbFields = claw.nbFields();
+  totalNbElements = 0;
+  nbFields = claw.nbFields();
   for (int i=0;i<elementGroups.size();i++){
     int nbNodes    = elementGroups[i]->getNbNodes();
     int nbElements = elementGroups[i]->getNbElements();
+    totalNbElements +=nbElements;
     _dataSize += nbNodes*nbFields*nbElements;
   }
+
   // allocate the big vectors
   _data      = new fullVector<double>(_dataSize);
   // create proxys for each group

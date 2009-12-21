@@ -1047,10 +1047,10 @@ void GFaceCompound::parametrize_conformal() const
 
   MVertex *v1 = ordered[0];
   MVertex *v2 = ordered[1];
-  myAssembler.fixVertex(v1, 0, 1, 0);
-  myAssembler.fixVertex(v1, 0, 2, 0);
-  myAssembler.fixVertex(v2, 0, 1, 1);
-  myAssembler.fixVertex(v2, 0, 2, 0);
+  myAssembler.fixVertex(v1, 0, 1, 0);//0
+  myAssembler.fixVertex(v1, 0, 2, 0);//0
+  myAssembler.fixVertex(v2, 0, 1, 1);//1
+  myAssembler.fixVertex(v2, 0, 2, 0);//0
   //printf("Pinned vertex  %g %g %g / %g %g %g \n", v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z());
   //exit(1);
 

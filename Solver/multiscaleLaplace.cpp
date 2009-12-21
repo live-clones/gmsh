@@ -147,9 +147,7 @@ static void  ordering_dirichlet(std::vector<MElement*> &elements,
       double len = sqrt((v0->x() - v1->x()) * (v0->x() - v1->x()) + 
 		       (v0->y() - v1->y()) * (v0->y() - v1->y()) +
 			(v0->z() - v1->z()) * (v0->z() - v1->z())) ;  
-      tot_length += sqrt((v0->x() - v1->x()) * (v0->x() - v1->x()) + 
-			 (v0->y() - v1->y()) * (v0->y() - v1->y()) +
-			 (v0->z() - v1->z()) * (v0->z() - v1->z()));
+      tot_length += len;
       temp.push_back(dirichletEdges[i]);
   }
  
@@ -170,7 +168,7 @@ static void  ordering_dirichlet(std::vector<MElement*> &elements,
 			     (v0->y() - v1->y()) * (v0->y() - v1->y()) +
 			     (v0->z() - v1->z()) * (v0->z() - v1->z()));
 	double iLength = dirichletNodes[dirichletNodes.size()-1].second + (length / tot_length);
-	dirichletNodes.push_back(std::make_pair(current_v,iLength));
+	dirichletNodes.push_back(std::make_pair(v0,iLength));
 	break;
       }
       else if(v1 == current_v){
@@ -181,13 +179,13 @@ static void  ordering_dirichlet(std::vector<MElement*> &elements,
 			     (v0->y() - v1->y()) * (v0->y() - v1->y()) +
 			     (v0->z() - v1->z()) * (v0->z() - v1->z()));
 	double iLength = dirichletNodes[dirichletNodes.size()-1].second + (length  / tot_length);
-	dirichletNodes.push_back(std::make_pair(current_v,iLength));
+	dirichletNodes.push_back(std::make_pair(v1,iLength));
 	break;
       }
     }
     if(!found) return ;
   }    
-  
+
   return;
 }
 //--------------------------------------------------------------
@@ -742,7 +740,7 @@ multiscaleLaplace::multiscaleLaplace (std::vector<MElement *> &elements, int iPa
   for(unsigned int i = 0; i < boundaryNodes.size(); i++){
      MVertex *v = boundaryNodes[i].first;
      const double theta = 2 * M_PI * boundaryNodes[i].second;
-    root->coordinates[v] = SPoint2(cos(theta),sin(theta));
+     root->coordinates[v] = SPoint2(cos(theta),sin(theta));
   }
 
   //Recursively parametrize
@@ -1001,9 +999,9 @@ void multiscaleLaplace::cut (std::vector<MElement *> &elements, int iPart)
   elements.insert(elements.end(),left.begin(),left.end());
   elements.insert(elements.end(),right.begin(),right.end());
 
-  char name[256];
-  sprintf(name, "laplace_%d.msh", iPart);
-  printLevel (name,elements,0,2.0);  
+  //char name[256];
+  //sprintf(name, "laplace_%d.msh", iPart);
+  //printLevel (name,elements,0,2.0);  
 
 }
 

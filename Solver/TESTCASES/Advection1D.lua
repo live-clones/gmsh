@@ -17,7 +17,8 @@ v:set(2,0,0)
 nu=fullMatrix(1,1);
 nu:set(0,0,0)
 
-law = ConservationLawAdvection(FunctionConstant(v):getName(),FunctionConstant(nu):getName())
+law = ConservationLawAdvection(FunctionConstant(v):getName(), '') 
+--FunctionConstant(nu):getName())
 
 dg:setConservationLaw(law)
 

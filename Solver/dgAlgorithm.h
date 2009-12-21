@@ -9,6 +9,7 @@ class dgGroupOfFaces;
 class dgConservationLaw;
 class dgDofContainer;
 class dgTerm;
+class dgLimiter;
 
 class dgAlgorithm {
  public :
@@ -47,6 +48,7 @@ class dgAlgorithm {
 		   double h,	
 		   dgDofContainer &residu,
 		   dgDofContainer &sol,
+		   dgLimiter *limiter=NULL,
 		   int orderRK=4);
   void multirateRungeKutta (
 		   const dgConservationLaw &claw,

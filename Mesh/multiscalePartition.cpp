@@ -260,7 +260,7 @@ void multiscalePartition::partition(partitionLevel & level, int nbParts, typeOfP
       exit(1);
     }
   
-    printLevel (nextLevel->elements, nextLevel->recur,nextLevel->region);  
+    //printLevel (nextLevel->elements, nextLevel->recur,nextLevel->region);  
 
     if (genus != 0 ){
       int nbParts = 2; //std::max(genus+2,2);

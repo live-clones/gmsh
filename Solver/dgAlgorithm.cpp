@@ -8,6 +8,8 @@
 #include "GModel.h"
 #include "MEdge.h"
 #include "function.h"
+#include "dgLimiter.h"
+
 /*
   compute 
     \int \vec{f} \cdot \grad \phi dv   
@@ -266,7 +268,8 @@ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation l
 			      std::vector<dgGroupOfFaces*> &bGroups,		// group of boundaries
 			      double h,				        // time-step
 			      dgDofContainer &sol,
-			      dgDofContainer &resd,			       
+			      dgDofContainer &resd,
+			      dgLimiter *limiter,
 			      int orderRK)				        // order of RK integrator
  {
 
@@ -286,12 +289,12 @@ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation l
    
    dgDofContainer K   (eGroups,claw);
    dgDofContainer Unp (eGroups,claw);
-
+   
    K._data->scale(0.0);
    K._data->axpy(*(sol._data));
    Unp._data->scale(0.0);
    Unp._data->axpy(*(sol._data));
-
+   
    for(int j=0; j<orderRK;j++){
      if(j){
        K._data->scale(b[j]);
@@ -310,12 +313,14 @@ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation l
        }
      }
      Unp._data->axpy(*(K._data),a[j]);
+     if (limiter) limiter->apply(Unp); 
    }
    
    for (int i=0;i<sol._dataSize;i++){
      //     printf("tempSol[%d] = %g\n",i,(*tempSol._data)(i));
      //     memcp
      (*sol._data)(i)=(*Unp._data)(i);
+     //if (limiter) limiter->apply(sol);
    }
  }
 
@@ -592,7 +597,7 @@ void dgAlgorithm::residual( const dgConservationLaw &claw,
     fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements()*2*nbFields);
     faces.mapToInterface(nbFields, *solution[iGroupLeft], *solution[iGroupRight], solInterface);
     residualInterface(claw,faces,solInterface,*solution[iGroupLeft], *solution[iGroupRight],residuInterface);
-    faces.mapFromInterface(nbFields, residuInterface, *residu[iGroupLeft], *residu[iGroupLeft]);
+    faces.mapFromInterface(nbFields, residuInterface, *residu[iGroupLeft], *residu[iGroupRight]);
   }
   //  residu[0]->print("Interfaces");
   //boundaries

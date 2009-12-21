@@ -11,6 +11,8 @@
 struct dgDofContainer {
 private:
   dgDofContainer (const dgDofContainer&);  
+  int totalNbElements; 
+  int nbFields;
 public:
   int _dataSize; // the full data size i.e. concerning all groups
   std::vector<fullMatrix<double> *> _dataProxys; // proxys 
@@ -19,6 +21,8 @@ public:
   inline fullMatrix<double> &getGroupProxy(int gId){ return *(_dataProxys[gId]); }
   dgDofContainer (std::vector<dgGroupOfElements*> &groups, const dgConservationLaw &claw);
   ~dgDofContainer ();  
+  int getNbElements() {return totalNbElements;}
+  int getNbFields() {return nbFields;}
 };
 
 class methodBinding;
