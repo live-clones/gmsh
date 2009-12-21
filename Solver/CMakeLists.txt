@@ -7,7 +7,7 @@ set(SRC
   linearSystemCSR.cpp
   groupOfElements.cpp
   elasticityTerm.cpp
-  elasticitySolver.cpp
+#  elasticitySolver.cpp
   SElement.cpp
   eigenSolver.cpp
   multiscaleLaplace.cpp
