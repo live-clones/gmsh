@@ -9,6 +9,8 @@
 #include "Homology.h"
 #include "ChainComplex.h"
 #include "OS.h"
+#include "PView.h"
+#include "PViewDataGModel.h"
 
 #if defined(HAVE_KBIPACK)
 Homology::Homology(GModel* model, std::vector<int> physicalDomain, std::vector<int> physicalSubdomain){
@@ -91,7 +93,7 @@ void Homology::findGenerators(std::string fileName){
   _cellComplex->reduction(1);
   _cellComplex->combine(1);
   
-  _cellComplex->checkCoherence();
+    _cellComplex->checkCoherence();
   //_cellComplex->printEuler();
   
   //_cellComplex->emptyTrash();
@@ -183,7 +185,7 @@ void Homology::findGenerators(std::string fileName){
   printf("H1 = %d \n", HRank[1]);
   printf("H2 = %d \n", HRank[2]);
   printf("H3 = %d \n", HRank[3]);
-  
+
   return;
 }
 
@@ -293,7 +295,7 @@ void Homology::findDualGenerators(std::string fileName){
   printf("H1* = %d \n", HRank[1]);
   printf("H2* = %d \n", HRank[2]);
   printf("H3* = %d \n", HRank[3]);
-  
+
   return;
 }
 
