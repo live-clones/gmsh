@@ -19,6 +19,7 @@ set(SRC
   dgConservationLawShallowWater2d.cpp
   dgConservationLawWaveEquation.cpp
   dgConservationLawPerfectGas.cpp
+  SlopeLimiter.cpp
   function.cpp
   functionDerivator.cpp
   luaFunction.cpp

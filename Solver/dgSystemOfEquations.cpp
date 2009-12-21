@@ -5,7 +5,7 @@
 #include "MElement.h"
 #include "PView.h"
 #include "PViewData.h"
-
+#include "dgLimiter.h"
 
 class dgConservationLawL2Projection : public dgConservationLaw {
   std::string _functionName;
@@ -77,7 +77,8 @@ void dgSystemOfEquations::setup(){
 
 
 double dgSystemOfEquations::RK44(double dt){
-  _algo->rungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups, dt,  *_solution, *_rightHandSide);
+  //dgLimiter *sl = new SlopeLimiter();
+  _algo->rungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups, dt,  *_solution, *_rightHandSide, NULL);
   return _solution->_data->norm();
 }
 

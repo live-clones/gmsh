@@ -313,14 +313,14 @@ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation l
        }
      }
      Unp._data->axpy(*(K._data),a[j]);
-     if (limiter) limiter->apply(Unp); 
+     if (limiter) limiter->apply(Unp, eGroups, fGroups); 
    }
    
    for (int i=0;i<sol._dataSize;i++){
      //     printf("tempSol[%d] = %g\n",i,(*tempSol._data)(i));
      //     memcp
      (*sol._data)(i)=(*Unp._data)(i);
-     //if (limiter) limiter->apply(sol);
+     //if (limiter) limiter->apply(sol, eGroups, fGroups);
    }
  }
 

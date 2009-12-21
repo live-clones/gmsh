@@ -3,24 +3,23 @@
 
 #include "fullMatrix.h"
 #include <vector>
+struct dgDofContainer;
+class dgGroupOfElements;
+class dgGroupOfFaces;
 
-
-class dgLimiter
-{
+class dgLimiter{
 public:
   dgLimiter ()  {}
-  virtual ~dgLimiter() {}
-  virtual bool apply ( dgDofContainer &sol ) =0;
+  virtual bool apply ( dgDofContainer &sol, std::vector<dgGroupOfElements*> &eGroups, 
+		       std::vector<dgGroupOfFaces*> &fGroup ) = 0;
 };
 
-class SlopeLimiter : public dgLimiter
-{
-
- public :
+class SlopeLimiter : public dgLimiter{
+public :
   SlopeLimiter () : dgLimiter () {}
-  ~SlopeLimiter() {}
-  bool apply ( dgDofContainer &sol );
-
+  virtual bool apply ( dgDofContainer &solution,  
+		       std::vector<dgGroupOfElements*> &eGroups, 
+		       std::vector<dgGroupOfFaces*> &fGroup);
 };
 
 #endif
