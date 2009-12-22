@@ -289,6 +289,8 @@ bool fullMatrix<double>::svd(fullMatrix<double> &V, fullVector<double> &S)
   return false;
 }
 
+#endif
+
 #include "Bindings.h"
 template<>
 void fullMatrix<double>::registerBindings(binding *b){
@@ -299,6 +301,5 @@ void fullMatrix<double>::registerBindings(binding *b){
   cb->addMethod("get",&fullMatrix<double>::get);
   cb->addMethod("set",&fullMatrix<double>::set);
   cb->addMethod("gemm",&fullMatrix<double>::gemm);
-  cb->setConstructor(constructorPtr<fullMatrix<double>,int,int>);
+  //  cb->setConstructor(constructorPtr<fullMatrix<double>,int,int>);
 }
-#endif

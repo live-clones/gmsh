@@ -353,8 +353,6 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
   double U[3];
   e->xyz2uvw(P, U);
 
-  //printf("hey!\n");
-
   double nodeval[8 * 9];
   for(int step = 0; step < _theViewDataGModel->getNumTimeSteps(); step++){
     if(timestep < 0 || step == timestep){

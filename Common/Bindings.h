@@ -3,6 +3,7 @@
 #include <string>
 #include <list>
 #include <typeinfo>
+#include "GmshConfig.h"
 
 class methodBinding{
   public:
@@ -32,9 +33,9 @@ tObj *constructorPtr(){
   return new tObj();
 }
 
-#ifdef HAVE_LUA //no bindings
+#if defined(HAVE_LUA)
 #include "LuaBindings.h"
-#else
+#else  //no bindings
 #include "DummyBindings.h"
 #endif
 
