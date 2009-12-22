@@ -65,6 +65,7 @@ void PrintUsage(const char *name)
   Msg::Direct("                          bdf, p3d, cgns, med, fea)");
   Msg::Direct("  -bin                  Use binary format when available");  
   Msg::Direct("  -parametric           Save vertices with their parametric coordinates");  
+  Msg::Direct("  -distance             Save distance of vertices to the boundaries");  
   Msg::Direct("  -numsubedges          Set the number of subdivisions when displaying high order elements");  
   Msg::Direct("  -algo string          Select mesh algorithm (meshadapt, del2d, front2d, del3d, front3d)");
   Msg::Direct("  -smooth int           Set number of mesh smoothing steps");
@@ -471,6 +472,10 @@ void GetOptions(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "parametric")) {
         i++;
         CTX::instance()->mesh.saveParametric = 1;
+      }
+      else if(!strcmp(argv[i] + 1, "distance")) {
+        i++;
+        CTX::instance()->mesh.saveDistance = 1;
       }
       else if(!strcmp(argv[i] + 1, "algo")) {
         i++;

@@ -1501,7 +1501,7 @@ Shape :
       $$.Type = MSH_PHYSICAL_SURFACE;
       $$.Num = num;
     }
-  | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
+    | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
       if(FindPhysicalGroup(num, MSH_PHYSICAL_SURFACE)){
@@ -1512,13 +1512,13 @@ Shape :
 	List_T *S[4] = {0, 0, 0, 0};
 	PhysicalGroup *p = Create_PhysicalGroup(num, MSH_PHYSICAL_SURFACE, temp, S);
 	List_Delete(temp);
-        List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
+	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
       }
       List_Delete($7);
       $$.Type = MSH_PHYSICAL_SURFACE;
       $$.Num = num;
     }
-  | tCompound tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
+    | tCompound tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
       if(FindPhysicalGroup(num, MSH_PHYSICAL_LINE)){
@@ -1529,12 +1529,13 @@ Shape :
 	List_T *S[4] = {temp, 0, 0, 0};
 	PhysicalGroup *p = Create_PhysicalGroup(num, MSH_PHYSICAL_LINE, temp, S);
 	List_Delete(temp);
-        List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
+	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
       }
       List_Delete($7);
       $$.Type = MSH_PHYSICAL_LINE;
       $$.Num = num;
     }
+
   // Volumes
 
   // for backward compatibility:

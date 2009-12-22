@@ -376,6 +376,8 @@ class GModel
   int readMSH(const std::string &name);
   int writeMSH(const std::string &name, double version=1.0, bool binary=false,
                bool saveAll=false, bool saveParametric=false, double scalingFactor=1.0);
+  int writeDistanceMSH(const std::string &name, double version=1.0, bool binary=false,
+		       bool saveAll=false, bool saveParametric=false, double scalingFactor=1.0);
 
   // Visual FEA file format
   int writeFEA(const std::string &name, int elementTagType,

@@ -723,6 +723,7 @@ int mshFileDialog(const char *name)
     Fl_Window *window;
     Fl_Check_Button *b;
     Fl_Check_Button *p;
+    Fl_Check_Button *d;
     Fl_Choice *c;
     Fl_Button *ok, *cancel;
   };
@@ -762,6 +763,7 @@ int mshFileDialog(const char *name)
                    CTX::instance()->mesh.binary ? 2 : 1);
   dialog->b->value(CTX::instance()->mesh.saveAll ? 1 : 0);
   dialog->p->value(CTX::instance()->mesh.saveParametric ? 1 : 0);
+  dialog->d->value(CTX::instance()->mesh.saveDistance ? 1 : 0);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -775,6 +777,7 @@ int mshFileDialog(const char *name)
         opt_mesh_binary(0, GMSH_SET | GMSH_GUI, (dialog->c->value() == 2) ? 1 : 0);
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
         opt_mesh_save_parametric(0, GMSH_SET | GMSH_GUI, dialog->p->value() ? 1 : 0);
+	opt_mesh_save_distance(0, GMSH_SET | GMSH_GUI, dialog->d->value() ? 1 : 0);
         CreateOutputFile(name, FORMAT_MSH);
         dialog->window->hide();
         return 1;

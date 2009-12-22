@@ -171,6 +171,12 @@ void CreateOutputFile(std::string fileName, int format)
     break;
 
   case FORMAT_MSH:
+    if (CTX::instance()->mesh.saveDistance){
+      GModel::current()->writeDistanceMSH
+	(fileName, CTX::instance()->mesh.mshFileVersion,
+	 CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
+	 CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor);
+    }
     GModel::current()->writeMSH
       (fileName, CTX::instance()->mesh.mshFileVersion,
        CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
