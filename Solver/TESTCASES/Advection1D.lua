@@ -1,7 +1,7 @@
 model = GModel  ()
 model:load ('edge.geo')
---model:mesh (1)
---model:save ('edge_new.msh')
+-- model:mesh (1)
+-- model:save ('edge.msh')
 model:load ('edge.msh')
 dg = dgSystemOfEquations (model)
 dg:setOrder(1)
@@ -37,17 +37,24 @@ function initial_condition( xyz , f )
     x = xyz:get(i,0)
     y = xyz:get(i,1)
     z = xyz:get(i,2)
-    f:set (i, 0, math.exp(-100*((x+0.8)^2)))
+    if (x>-0.3 and x<0.3) then
+     f:set (i, 0, 1)
+   else
+     f:set (i, 0, 0)
+    end	
   end
 end
 dg:L2Projection(FunctionLua(1,'initial_condition',{'XYZ'}):getName())
 
+dg:exportSolution('output/Adv1D_unlimited')
+dg:limitSolution()
 dg:exportSolution('output/Adv1D_00000')
+
 
 -- main loop
 n = 5
 for i=1,100*n do
-  norm = dg:RK44(0.03)
+  norm = dg:RK44_limiter(0.03)
   if (i % n == 0) then 
     print('iter',i,norm)
     dg:exportSolution(string.format("output/Adv1D-%05d", i)) 

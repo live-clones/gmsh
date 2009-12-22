@@ -47,8 +47,10 @@ methodBinding *dgSystemOfEquations::methods[]={
   new methodBindingTemplate<dgSystemOfEquations,void,dgConservationLaw*>("setConservationLaw",&dgSystemOfEquations::setConservationLaw),
   new methodBindingTemplate<dgSystemOfEquations,void>("setup",&dgSystemOfEquations::setup),
   new methodBindingTemplate<dgSystemOfEquations,void,std::string>("exportSolution",&dgSystemOfEquations::exportSolution),
+  new methodBindingTemplate<dgSystemOfEquations,void>("limitSolution",&dgSystemOfEquations::limitSolution),
   new methodBindingTemplate<dgSystemOfEquations,void,std::string>("L2Projection",&dgSystemOfEquations::L2Projection),
   new methodBindingTemplate<dgSystemOfEquations,double,double>("RK44",&dgSystemOfEquations::RK44),
+  new methodBindingTemplate<dgSystemOfEquations,double,double>("RK44_limiter",&dgSystemOfEquations::RK44_limiter),
   new methodBindingTemplate<dgSystemOfEquations,double,double>("multirateRK43",&dgSystemOfEquations::multirateRK43),
  0};
 
@@ -77,9 +79,14 @@ void dgSystemOfEquations::setup(){
 
 
 double dgSystemOfEquations::RK44(double dt){
-  //dgLimiter *sl = new SlopeLimiter();
   _algo->rungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups, dt,  *_solution, *_rightHandSide, NULL);
   return _solution->_data->norm();
+}
+
+double dgSystemOfEquations::RK44_limiter(double dt){
+	dgLimiter *sl = new dgSlopeLimiter();
+	_algo->rungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups, dt,  *_solution, *_rightHandSide, sl);
+	return _solution->_data->norm();
 }
 
 
@@ -90,6 +97,12 @@ double dgSystemOfEquations::multirateRK43(double dt){
 
 void dgSystemOfEquations::exportSolution(std::string outputFile){
   export_solution_as_is(outputFile);
+}
+void dgSystemOfEquations::limitSolution(){
+	dgLimiter *sl = new dgSlopeLimiter();
+  sl->apply(*_solution,_elementGroups,_faceGroups);
+
+  delete sl;
 }
 #endif // HAVE_LUA
 

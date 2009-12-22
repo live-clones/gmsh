@@ -7,6 +7,7 @@
 #include "dgAlgorithm.h"
 #include "dgConservationLaw.h"
 #include "Gmsh.h"
+#include "dgLimiter.h"
 
 struct dgDofContainer {
 private:
@@ -56,7 +57,9 @@ public:
   dgSystemOfEquations(GModel *_gm);
   void setup (); // setup the groups and allocate
   void exportSolution (std::string filename); // export the solution
-  double RK44 (double dt); 
+  void limitSolution (); // apply the limiter on the solution
+  double RK44 (double dt);
+  double RK44_limiter (double dt); 
   double multirateRK43 (double dt); 
   void L2Projection (std::string functionName); // assign the solution to a given function
 

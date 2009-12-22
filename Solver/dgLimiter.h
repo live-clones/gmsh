@@ -14,9 +14,9 @@ public:
 		       std::vector<dgGroupOfFaces*> &fGroup ) = 0;
 };
 
-class SlopeLimiter : public dgLimiter{
+class dgSlopeLimiter : public dgLimiter{
 public :
-  SlopeLimiter () : dgLimiter () {}
+  dgSlopeLimiter () : dgLimiter () {}
   virtual bool apply ( dgDofContainer &solution,  
 		       std::vector<dgGroupOfElements*> &eGroups, 
 		       std::vector<dgGroupOfFaces*> &fGroup);

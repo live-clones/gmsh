@@ -296,11 +296,14 @@ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation l
    Unp._data->axpy(*(sol._data));
    
    for(int j=0; j<orderRK;j++){
-     if(j){
-       K._data->scale(b[j]);
-       K._data->axpy(*(sol._data));
-     }
-     //     printf("iter %d sol size = %d\n",j,sol._dataSize);
+	   if(j){
+		   K._data->scale(b[j]);
+		   K._data->axpy(*(sol._data));
+		   if (limiter){
+         limiter->apply(K, eGroups, fGroups);
+       }
+	   }
+	   
      this->residual(claw,eGroups,fGroups,bGroups,K._dataProxys,resd._dataProxys);
      K._data->scale(0.);
      for(int k=0;k < eGroups.size();k++) {
@@ -313,14 +316,11 @@ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation l
        }
      }
      Unp._data->axpy(*(K._data),a[j]);
-     if (limiter) limiter->apply(Unp, eGroups, fGroups); 
    }
-   
+   if (limiter) limiter->apply(Unp, eGroups, fGroups);
    for (int i=0;i<sol._dataSize;i++){
-     //     printf("tempSol[%d] = %g\n",i,(*tempSol._data)(i));
-     //     memcp
+	   
      (*sol._data)(i)=(*Unp._data)(i);
-     //if (limiter) limiter->apply(sol, eGroups, fGroups);
    }
  }
 
