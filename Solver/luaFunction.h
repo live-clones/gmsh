@@ -6,6 +6,7 @@
 class lua_State;
 #include <string>
 #include <vector>
+class binding;
 class functionLua : public function {
   lua_State *_L;
   std::string _luaFunctionName;
@@ -16,10 +17,7 @@ class functionLua : public function {
   functionLua (int nbCol, std::string &luaFunctionName, std::vector<std::string> &dependenciesName, lua_State *L);
 
   dataCacheDouble *newDataCache(dataCacheMap *m);
-  static const char *className;
-  static const char *parentClassName;
-  static methodBinding *methods[];
-  static constructorBinding *constructorMethod;
+  static void registerBindings(binding *b);
 };
 #endif // HAVE LUA
 #endif // _LUA_FUNCTION_H_

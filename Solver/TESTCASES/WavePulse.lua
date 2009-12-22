@@ -27,15 +27,16 @@ myModel   = GModel  ()
 --myModel:load('square_quads.msh')
 myModel:load('square_mixed.msh')
 
+
 print'*** Create a dg solver ***'
 DG = dgSystemOfEquations (myModel)
-DG:setOrder(2)
-law=ConservationLawWaveEquation(2)
+DG:setOrder(3)
+law=dgConservationLawWaveEquation(2)
 DG:setConservationLaw(law)
-law:addBoundaryCondition('Border',law:newWallBoundary())
+law:addBoundaryCondition('Border',law:newBoundaryWall())
 DG:setup()
 
-initialCondition = FunctionLua(3,'initial_condition',{'XYZ'}):getName()
+initialCondition = functionLua(3,'initial_condition',{'XYZ'}):getName()
 
 print'*** setting the initial solution ***'
 
@@ -55,7 +56,7 @@ for i=1,N do
 --    norm = DG:multirateRK43(dt)
     norm = DG:RK44(dt)
     print('*** ITER ***',i,norm)
-    if (i % 100 == 0) then 
+    if (i % 10 == 0) then 
        DG:exportSolution(string.format("output/solution-%04d", i)) 
     end
 end

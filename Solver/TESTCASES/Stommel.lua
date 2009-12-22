@@ -3,8 +3,8 @@ model:load ('stommel_square.msh')
 dg = dgSystemOfEquations (model)
 order=1
 dg:setOrder (order)
-claw = ShallowWater2d()
-claw:addBoundaryCondition('Wall',claw:newWallBoundary())
+claw = dgConservationLawShallowWater2d()
+claw:addBoundaryCondition('Wall',claw:newBoundaryWall())
 dg:setConservationLaw(claw)
 dg:setup()
 

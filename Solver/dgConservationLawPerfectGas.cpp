@@ -311,10 +311,11 @@ class dgBoundaryConditionPerfectGasLaw2dFreeStream : public dgBoundaryCondition 
 #endif
 
 #include "Bindings.h"
-const char *dgPerfectGasLaw2d::className = "ConservationLawPerfectGas2d";
-const char *dgPerfectGasLaw2d::parentClassName = "ConservationLaw";
-methodBinding *dgPerfectGasLaw2d::methods[] ={
-  new methodBindingTemplate<const dgPerfectGasLaw2d,dgBoundaryCondition*>("newWallBoundary",&dgPerfectGasLaw2d::newWallBoundary),
-0};
-constructorBinding *dgPerfectGasLaw2d::constructorMethod=new constructorBindingTemplate<dgPerfectGasLaw2d>();
 
+void dgPerfectGasLaw2dRegisterBindings (binding *b){
+  classBinding *cb = b->addClass<dgPerfectGasLaw2d>("dgPerfectGasLaw2d");
+  methodBinding *cm;
+  cb->addMethod("newWallBoundary",&dgPerfectGasLaw2d::newWallBoundary);
+  cb->setConstructor(constructorPtr<dgPerfectGasLaw2d>);
+  cb->setParentClass<dgConservationLaw>();
+}

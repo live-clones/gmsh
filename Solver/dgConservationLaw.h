@@ -9,19 +9,15 @@
 #include "fullMatrix.h"
 class dataCacheDouble;
 class dataCacheMap;
-class constructorBinding;
-class methodBinding;
 
 class dgConservationLaw;
+class binding;
 
 class dgBoundaryCondition {
  public:
   virtual ~dgBoundaryCondition () {}
   virtual dataCacheDouble *newBoundaryTerm(dataCacheMap &cacheMapLeft) const = 0;
-  static const char className[];
-  static const char parentClassName[];
-  static methodBinding *methods[];
-  static constructorBinding *constructorMethod;
+  static void registerBindings(binding *b);
 };
 
 class dgConservationLaw {
@@ -58,10 +54,7 @@ class dgConservationLaw {
   dgBoundaryCondition *newOutsideValueBoundary(std::string outsideValueFunctionName);
   dgBoundaryCondition *new0FluxBoundary();
 
-  static const char className[];
-  static const char parentClassName[];
-  static methodBinding *methods[];
-  static constructorBinding *constructorMethod;
+  static void registerBindings(binding *b);
 };
 
 dgConservationLaw *dgNewPerfectGasLaw2d();

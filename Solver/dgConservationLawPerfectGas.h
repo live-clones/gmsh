@@ -11,10 +11,8 @@ class dgPerfectGasLaw2d : public dgConservationLaw {
   dataCacheDouble *newDiffusiveFlux( dataCacheMap &cacheMap) const;
   dataCacheDouble *newSourceTerm (dataCacheMap &cacheMap) const;
   dgPerfectGasLaw2d();
-  static const char * className;
-  static const char * parentClassName;
-  static methodBinding *methods[];
-  static constructorBinding *constructorMethod;
   dgBoundaryCondition *newWallBoundary()const ;
 };
+class binding;
+void dgPerfectGasLaw2dRegisterBindings(binding *b);
 #endif

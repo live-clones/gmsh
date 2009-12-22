@@ -141,23 +141,17 @@ functionConstant::functionConstant(const fullMatrix<double> *source){
 }
 
 #include "Bindings.h"
-const char *functionConstant::className="FunctionConstant";
-const char *functionConstant::parentClassName="Function";
-methodBinding *functionConstant::methods[]={0};
-constructorBinding *functionConstant::constructorMethod=new constructorBindingTemplate<functionConstant,fullMatrix<double>*>();
-
-
-
-
 
 void function::registerDefaultFunctions()
 {
   function::add("XYZ", new functionXYZ);
 }
 
-const char *function::className="Function";
-const char *function::parentClassName="";
-methodBinding *function::methods[]={new methodBindingTemplate<const function,std::string>("getName",&function::getName),
-0};
-constructorBinding *function::constructorMethod=0;
+void function::registerBindings(binding *b){
+  classBinding *cb = b->addClass<function>("function");
+  cb->addMethod("getName",&function::getName);
+  cb = b->addClass<functionConstant>("functionConstant");
+  cb->setConstructor(constructorPtr<functionConstant,fullMatrix<double>*>);
+  cb->setParentClass<function>();
+}
 

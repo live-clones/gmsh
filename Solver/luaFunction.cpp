@@ -26,9 +26,9 @@ class functionLua::data : public dataCacheDouble{
     lua_getfield(_function->_L, LUA_GLOBALSINDEX, _function->_luaFunctionName.c_str());
     for (int i=0;i< _dependencies.size();i++){
       const fullMatrix<double> *data = &(*_dependencies[i])();
-      classBinding<const fullMatrix<double> >::push(_function->_L,data,false);
+      luaStack<const fullMatrix<double>*>::push(_function->_L,data);
     }
-    classBinding<const fullMatrix<double> >::push(_function->_L,&_value,false);
+    luaStack<const fullMatrix<double>*>::push(_function->_L,&_value);
     lua_call(_function->_L,_dependencies.size()+1,0);  /* call Lua function */
   }
 };
@@ -46,9 +46,10 @@ dataCacheDouble *functionLua::newDataCache(dataCacheMap *m)
   return new data(this,m);
 }
 
-const char *functionLua::className="FunctionLua";
-const char *functionLua::parentClassName="Function";
-methodBinding *functionLua::methods[]={0};
-constructorBinding *functionLua::constructorMethod=new constructorBindingTemplate<functionLua,int,std::string,std::vector<std::string> ,lua_State*>();
+void functionLua::registerBindings(binding *b){
+  classBinding *cb= b->addClass<functionLua>("functionLua");
+  cb->setConstructor(constructorPtr<functionLua,int,std::string,std::vector<std::string>,lua_State*>);
+  cb->setParentClass<function>();
+}
 
 #endif // HAVE LUA

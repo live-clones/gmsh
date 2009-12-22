@@ -19,11 +19,6 @@
 #include "SBoundingBox3d.h"
 #include "discreteFace.h"
 
-#ifdef HAVE_LUA
-  class methodBinding;
-  class constructorBinding;
-#endif
-
 class Octree;
 class FM_Internals;
 class GEO_Internals;
@@ -33,6 +28,7 @@ class FieldManager;
 class CGNSOptions;
 class gLevelset;
 class discreteFace;
+class binding;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel
@@ -445,12 +441,7 @@ class GModel
   void save(std::string fileName);
   void load(std::string fileName);
 
-#ifdef HAVE_LUA
-  static const char className[];
-  static const char parentClassName[];
-  static methodBinding *methods[];
-  static constructorBinding *constructorMethod;
-#endif
+  static void registerBindings(binding *b);
 };
 
 #endif

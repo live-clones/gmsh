@@ -1380,13 +1380,12 @@ void GModel::save(std::string fileName){
 
 #ifdef HAVE_LUA
 #include "Bindings.h"
-const char GModel::className[]="GModel";
-const char GModel::parentClassName[]="";
-methodBinding *GModel::methods[]={
-  new methodBindingTemplate<GModel,int,int>("mesh",&GModel::mesh),
-  new methodBindingTemplate<GModel,void,std::string>("load",&GModel::load),
-  new methodBindingTemplate<GModel,void,std::string>("save",&GModel::save),
-  0
-};
-constructorBinding *GModel::constructorMethod=new constructorBindingTemplate<GModel>();
+void GModel::registerBindings(binding *b){
+  classBinding *cb = b->addClass<GModel>("GModel");
+  methodBinding *cm;
+  cm = cb->addMethod("mesh",&GModel::mesh);
+  cm = cb->addMethod("load",&GModel::load);
+  cm = cb->addMethod("save",&GModel::save);
+  cb->setConstructor(constructorPtr<GModel>);
+}
 #endif

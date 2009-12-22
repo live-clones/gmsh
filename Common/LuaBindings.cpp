@@ -23,7 +23,6 @@ void report_errors(lua_State *L, int status)
     lua_pop(L, 1); // remove error message
   }
 }
-
 int read_lua(const char *filename)
 {
   lua_State *L = lua_open();
@@ -34,20 +33,21 @@ int read_lua(const char *filename)
   luaopen_string(L);
   luaopen_math(L);
   luaopen_debug(L);
+  binding b;
+  b.L=L;
 
   // Register Lua bindings
-  classBinding<GModel>::Register(L);
-  classBinding<dgSystemOfEquations>::Register(L);
-  classBinding<dgBoundaryCondition>::Register(L);
-  classBinding<dgConservationLaw>::Register(L);
-  classBinding<dgConservationLawShallowWater2d>::Register(L);
-  classBinding<dgConservationLawAdvection>::Register(L);
-  classBinding<dgConservationLawWaveEquation>::Register(L);
-  classBinding<dgPerfectGasLaw2d>::Register(L);
-  classBinding<fullMatrix<double> >::Register(L);
-  classBinding<function>::Register(L);
-  classBinding<functionLua>::Register(L);
-  classBinding<functionConstant>::Register(L);
+  GModel::registerBindings(&b);
+  dgSystemOfEquations::registerBindings(&b);
+  dgBoundaryCondition::registerBindings(&b);
+  dgConservationLaw::registerBindings(&b);
+  dgConservationLawShallowWater2dRegisterBindings(&b);
+  dgConservationLawWaveEquationRegisterBindings(&b);
+  dgConservationLawAdvectionRegisterBindings(&b);
+  dgPerfectGasLaw2dRegisterBindings(&b);
+  fullMatrix<double>::registerBindings(&b);
+  function::registerBindings(&b);
+  functionLua::registerBindings(&b);
   function::registerDefaultFunctions();
 
   int s = luaL_loadfile(L, filename);

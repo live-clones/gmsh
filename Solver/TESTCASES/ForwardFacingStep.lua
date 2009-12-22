@@ -28,11 +28,11 @@ myModel:load ('step.msh')
 print'*** Create a dg solver ***'
 DG = dgSystemOfEquations (myModel)
 DG:setOrder(order)
-law=ConservationLawPerfectGas2d()
+law=dgPerfectGasLaw2d()
 DG:setConservationLaw(law)
 law:addBoundaryCondition('Walls',law:newWallBoundary())
 
-FS = FunctionLua(4, 'free_stream', {'XYZ'}):getName()
+FS = functionLua(4, 'free_stream', {'XYZ'}):getName()
 
 law:addBoundaryCondition('LeftRight',law:newOutsideValueBoundary(FS))
 DG:setup()

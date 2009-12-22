@@ -63,15 +63,16 @@ dgBoundaryCondition *dgConservationLaw::new0FluxBoundary() {
 }
 
 #include "Bindings.h"
-const char dgConservationLaw::className[]="ConservationLaw";
-const char  dgConservationLaw::parentClassName[]="";
-methodBinding * dgConservationLaw::methods[]={
-  new methodBindingTemplate<dgConservationLaw,void,std::string,dgBoundaryCondition*>("addBoundaryCondition",&dgConservationLaw::addBoundaryCondition),
-  new methodBindingTemplate<dgConservationLaw,dgBoundaryCondition*>("new0FluxBoundary",&dgConservationLaw::new0FluxBoundary),
-  new methodBindingTemplate<dgConservationLaw,dgBoundaryCondition*,std::string>("newOutsideValueBoundary",&dgConservationLaw::newOutsideValueBoundary),
-0};
-constructorBinding * dgConservationLaw::constructorMethod=NULL;
-const char dgBoundaryCondition::className[]="BoundaryCondition";
-const char  dgBoundaryCondition::parentClassName[]="";
-methodBinding * dgBoundaryCondition::methods[]={0};
-constructorBinding * dgBoundaryCondition::constructorMethod=NULL;
+
+void dgConservationLaw::registerBindings(binding *b){
+  classBinding *cb = b->addClass<dgConservationLaw>("dgConservationLaw");
+  cb->addMethod("addBoundaryCondition",&dgConservationLaw::addBoundaryCondition);
+  cb->addMethod("new0FluxBoundary",&dgConservationLaw::new0FluxBoundary);
+  cb->addMethod("newOutsideValueBoundary",&dgConservationLaw::newOutsideValueBoundary);
+}
+
+
+
+void dgBoundaryCondition::registerBindings(binding *b){
+  classBinding *cb = b->addClass<dgBoundaryCondition>("dgBoundaryCondition");
+}

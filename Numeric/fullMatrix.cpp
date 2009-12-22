@@ -289,28 +289,16 @@ bool fullMatrix<double>::svd(fullMatrix<double> &V, fullVector<double> &S)
   return false;
 }
 
-#if defined(HAVE_LUA)
 #include "Bindings.h"
 template<>
-const char fullMatrix<double>::className[]="fullMatrix";
-template<>
-const char fullMatrix<float>::className[]="fullMatrixFloat";
-template<>
-const char fullMatrix<double>::parentClassName[]="";
-template<>
-const char fullMatrix<float>::parentClassName[]="";
-template<>
-methodBinding *fullMatrix<double>::methods[]={
-  new methodBindingTemplate<const fullMatrix<double>,int>("size1",&fullMatrix<double>::size1),
-  new methodBindingTemplate<const fullMatrix<double>,int>("size2",&fullMatrix<double>::size2),
-  new methodBindingTemplate<const fullMatrix<double>,double,int,int>("get",&fullMatrix<double>::get),
-  new methodBindingTemplate<fullMatrix<double>,void,int,int,double>("set",&fullMatrix<double>::set),
-  new methodBindingTemplate<fullMatrix<double>,void,const fullMatrix<double>*,const fullMatrix<double> *>("gemm",&fullMatrix<double>::gemm),
-  0
-};
-template<>
-constructorBinding *fullMatrix<double>::constructorMethod = new constructorBindingTemplate<fullMatrix<double>,int,int>();
-#endif
-
-
+void fullMatrix<double>::registerBindings(binding *b){
+  classBinding *cb = b->addClass<fullMatrix<double> >("fullMatrix");
+  methodBinding *cm;
+  cb->addMethod("size1",&fullMatrix<double>::size1);
+  cb->addMethod("size2",&fullMatrix<double>::size2);
+  cb->addMethod("get",&fullMatrix<double>::get);
+  cb->addMethod("set",&fullMatrix<double>::set);
+  cb->addMethod("gemm",&fullMatrix<double>::gemm);
+  cb->setConstructor(constructorPtr<fullMatrix<double>,int,int>);
+}
 #endif

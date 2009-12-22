@@ -37,24 +37,34 @@ void dgSystemOfEquations::setConservationLaw (dgConservationLaw *law){
   _claw=law;
 }
 
-#ifdef HAVE_LUA
 #include "Bindings.h"
-const char dgSystemOfEquations::className[] = "dgSystemOfEquations";
-const char dgSystemOfEquations::parentClassName[] = "";
-constructorBinding *dgSystemOfEquations::constructorMethod = new constructorBindingTemplate<dgSystemOfEquations,GModel*>();
-methodBinding *dgSystemOfEquations::methods[]={
-  new methodBindingTemplate<dgSystemOfEquations,void,int>("setOrder",&dgSystemOfEquations::setOrder),
-  new methodBindingTemplate<dgSystemOfEquations,void,dgConservationLaw*>("setConservationLaw",&dgSystemOfEquations::setConservationLaw),
-  new methodBindingTemplate<dgSystemOfEquations,void>("setup",&dgSystemOfEquations::setup),
-  new methodBindingTemplate<dgSystemOfEquations,void,std::string>("exportSolution",&dgSystemOfEquations::exportSolution),
-  new methodBindingTemplate<dgSystemOfEquations,void>("limitSolution",&dgSystemOfEquations::limitSolution),
-  new methodBindingTemplate<dgSystemOfEquations,void,std::string>("L2Projection",&dgSystemOfEquations::L2Projection),
-  new methodBindingTemplate<dgSystemOfEquations,double,double>("RK44",&dgSystemOfEquations::RK44),
-  new methodBindingTemplate<dgSystemOfEquations,double>("computeInvSpectralRadius",&dgSystemOfEquations::computeInvSpectralRadius),
-  new methodBindingTemplate<dgSystemOfEquations,double,double>("RK44_limiter",&dgSystemOfEquations::RK44_limiter),
-  new methodBindingTemplate<dgSystemOfEquations,double,double>("multirateRK43",&dgSystemOfEquations::multirateRK43),
- 0};
-#endif // HAVE_LUA
+void dgSystemOfEquations::registerBindings(binding *b){
+  classBinding *cb = b->addClass<dgSystemOfEquations>("dgSystemOfEquations");
+  cb->setDescription("a class to rule them all :-) -- bad description, this class will be removed anyway");
+  cb->setConstructor(constructorPtr<dgSystemOfEquations,GModel*>);
+  methodBinding *cm;
+  cm = cb->addMethod("setConservationLaw",&dgSystemOfEquations::setConservationLaw);
+  cm->setArgNames("law",NULL);
+  cm->setDescription("set the conservation law this system solve");
+  cm = cb->addMethod("setup",&dgSystemOfEquations::setup);
+  cm->setDescription("allocate and init internal stuff, call this function after setOrder and setLaw and before anything else on this instance");
+  cm = cb->addMethod("exportSolution",&dgSystemOfEquations::exportSolution);
+  cm->setArgNames("filename",NULL);
+  cm->setDescription("Print the solution into a file. This file does not contain the mesh. To visualize the solution in gmsh you have to open the mesh file first.");
+  cm= cb->addMethod("L2Projection",&dgSystemOfEquations::L2Projection);
+  cm->setArgNames("functionName",NULL);
+  cm->setDescription("project the function \"functionName\" on the solution vector");
+  cm = cb->addMethod("RK44",&dgSystemOfEquations::RK44);
+  cm->setArgNames("norm","dt",NULL);
+  cm->setDescription("do a runge-kuta temporal iteration with a time step \"dt\" and return the sum of the nodal residuals");
+  cm = cb->addMethod("setOrder",&dgSystemOfEquations::setOrder);
+  cm->setArgNames("order",NULL);
+  cm->setDescription("set the polynpolynomialomial order of the lagrange shape functions");
+  cb->addMethod("limitSolution",&dgSystemOfEquations::limitSolution);
+  cb->addMethod("computeInvSpectralRadius",&dgSystemOfEquations::computeInvSpectralRadius);
+  cb->addMethod("RK44_limiter",&dgSystemOfEquations::RK44_limiter);
+  cb->addMethod("multirateRK43",&dgSystemOfEquations::multirateRK43);
+}
 
 // do a L2 projection
 void dgSystemOfEquations::L2Projection (std::string functionName){

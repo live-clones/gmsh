@@ -140,13 +140,11 @@ dgBoundaryCondition *dgConservationLawShallowWater2d::newBoundaryWall(){
   return new boundaryWall();
 }
 
-#ifdef HAVE_LUA
 #include "Bindings.h"
-const char dgConservationLawShallowWater2d::className[]="ShallowWater2d";
-const char dgConservationLawShallowWater2d::parentClassName[]="ConservationLaw";
-methodBinding *dgConservationLawShallowWater2d::methods[]={
-  new methodBindingTemplate<dgConservationLawShallowWater2d,dgBoundaryCondition*>("newWallBoundary",&dgConservationLawShallowWater2d::newBoundaryWall),
-  0
-};
-constructorBinding *dgConservationLawShallowWater2d::constructorMethod=new constructorBindingTemplate<dgConservationLawShallowWater2d>();
-#endif
+void dgConservationLawShallowWater2dRegisterBindings (binding *b){
+  classBinding *cb = b->addClass<dgConservationLawShallowWater2d>("dgConservationLawShallowWater2d");
+  methodBinding *cm;
+  cb->addMethod("newBoundaryWall",&dgConservationLawShallowWater2d::newBoundaryWall);
+  cb->setConstructor(constructorPtr<dgConservationLawShallowWater2d>);
+  cb->setParentClass<dgConservationLaw>();
+}

@@ -2,14 +2,14 @@ model = GModel  ()
 model:load ('square.geo')
 model:load ('square.msh')
 dg = dgSystemOfEquations (model)
-dg:setOrder(5)
+dg:setOrder(3)
 
 
 -- conservation law
 -- advection speed
 nu=fullMatrix(1,1);
 nu:set(0,0,0.01)
-law = ConservationLawAdvection('',FunctionConstant(nu):getName())
+law = dgConservationLawAdvection('',functionConstant(nu):getName())
 dg:setConservationLaw(law)
 
 -- boundary condition
@@ -28,7 +28,7 @@ function initial_condition( xyz , f )
     f:set (i, 0, math.exp(-100*((x-0.2)^2 +(y-0.3)^2)))
   end
 end
-dg:L2Projection(FunctionLua(1,'initial_condition',{'XYZ'}):getName())
+dg:L2Projection(functionLua(1,'initial_condition',{'XYZ'}):getName())
 
 dg:exportSolution('output/Diffusion_00000')
 

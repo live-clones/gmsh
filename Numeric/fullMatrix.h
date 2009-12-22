@@ -11,6 +11,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 
+class binding;
 template <class scalar> class fullMatrix;
 
 template <class scalar>
@@ -93,10 +94,6 @@ class fullVector
     printf("\n");
   }
 };
-#if defined(HAVE_LUA)
-class methodBinding;
-class constructorBinding;
-#endif
 
 template <class scalar>
 class fullMatrix
@@ -112,12 +109,6 @@ class fullMatrix
   inline void set(int r, int c, scalar v){
     (*this)(r,c)=v;
   }
-#if defined(HAVE_LUA)
-  static const char className[];
-  static const char parentClassName[];
-  static methodBinding *methods[];
-  static constructorBinding *constructorMethod;
-#endif // HAVE LUA  
   fullMatrix(scalar *original, int r, int c){
     _r = r;
     _c = c;
@@ -219,9 +210,6 @@ class fullMatrix
   }
 #endif
   ;
-  inline void gemm (const fullMatrix<scalar> *a, const fullMatrix<scalar> *b){
-    gemm(*a,*b);
-  }
   void gemm(const fullMatrix<scalar> &a, const fullMatrix<scalar> &b, 
             scalar alpha=1., scalar beta=1.)
 #if !defined(HAVE_BLAS)
@@ -370,6 +358,7 @@ inline void add(const fullMatrix<scalar> &m, const double &a)
       printf("\n");
     }
   }
+  static void registerBindings(binding *b);
 };
 
 #endif

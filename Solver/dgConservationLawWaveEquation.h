@@ -21,4 +21,5 @@ class dgConservationLawWaveEquation : public dgConservationLaw {
   static methodBinding *methods[];
   static constructorBinding *constructorMethod;
 };
+void dgConservationLawWaveEquationRegisterBindings(binding *b);
 #endif

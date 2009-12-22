@@ -2,11 +2,8 @@
 #define _DG_CONSERVATION_LAW_SHALLOW_WATER_2D_
 #include "dgConservationLaw.h"
 
-#ifdef HAVE_LUA
-class methodBinding;
-class constructorBinding;
-#endif
 class dataCacheMap;
+class binding;
 
 class dgConservationLawShallowWater2d : public dgConservationLaw {
   class advection;
@@ -23,11 +20,6 @@ class dgConservationLawShallowWater2d : public dgConservationLaw {
     _nbf = 3; // H U(=Hu) V(=Hv)
   }
   dgBoundaryCondition *newBoundaryWall();
-#ifdef HAVE_LUA
-  static const char className[];
-  static const char parentClassName[];
-  static methodBinding *methods[];
-  static constructorBinding *constructorMethod;
-#endif
 };
+void dgConservationLawShallowWater2dRegisterBindings(binding *b);
 #endif

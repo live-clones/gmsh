@@ -10,7 +10,7 @@ vmodel[1]:load('')
 vmodel[2]:load('')
 
 dg = dgSystemOfEquations (model)
-dg:setOrder(1)
+dg:setOrder(3)
 
 -- conservation law
 
@@ -24,13 +24,13 @@ v:set(2,0,0)
 nu=fullMatrix(1,1);
 nu:set(0,0,0.001)
 
-law = ConservationLawAdvection(FunctionConstant(v):getName(),FunctionConstant(nu):getName())
+law = dgConservationLawAdvection(functionConstant(v):getName(),functionConstant(nu):getName())
 dg:setConservationLaw(law)
 
 -- boundary condition
 outside=fullMatrix(1,1)
 outside:set(0,0,0.)
-law:addBoundaryCondition('Border',law:newOutsideValueBoundary(FunctionConstant(outside):getName()))
+law:addBoundaryCondition('Border',law:newOutsideValueBoundary(functionConstant(outside):getName()))
 
 dg:setup()
 
@@ -43,14 +43,14 @@ function initial_condition( xyz , f )
     f:set (i, 0, math.exp(-100*((x-0.2)^2 +(y-0.3)^2)))
   end
 end
-dg:L2Projection(FunctionLua(1,'initial_condition',{'XYZ'}):getName())
+dg:L2Projection(functionLua(1,'initial_condition',{'XYZ'}):getName())
 
 dg:exportSolution('output/Advection_00000')
 
 -- main loop
 for i=1,10000 do
   norm = dg:RK44(0.01)
-  if (i % 1 == 0) then 
+  if (i % 10 == 0) then 
     print('iter',i,norm)
     dg:exportSolution(string.format("output/Advection-%05d", i)) 
   end

@@ -17,7 +17,7 @@ v:set(2,0,0)
 nu=fullMatrix(1,1);
 nu:set(0,0,0)
 
-law = ConservationLawAdvection(FunctionConstant(v):getName(), '') 
+law = dgConservationLawAdvection(functionConstant(v):getName(), '') 
 --FunctionConstant(nu):getName())
 
 dg:setConservationLaw(law)
@@ -25,7 +25,7 @@ dg:setConservationLaw(law)
 -- boundary condition
 outside=fullMatrix(1,1)
 outside:set(0,0,0.)
-bndcondition=law:newOutsideValueBoundary(FunctionConstant(outside):getName())
+bndcondition=law:newOutsideValueBoundary(functionConstant(outside):getName())
 law:addBoundaryCondition('Left',bndcondition)
 law:addBoundaryCondition('Right',bndcondition)
 
@@ -44,7 +44,7 @@ function initial_condition( xyz , f )
     end	
   end
 end
-dg:L2Projection(FunctionLua(1,'initial_condition',{'XYZ'}):getName())
+dg:L2Projection(functionLua(1,'initial_condition',{'XYZ'}):getName())
 
 dg:exportSolution('output/Adv1D_unlimited')
 dg:limitSolution()

@@ -26,8 +26,7 @@ public:
   int getNbFields() {return nbFields;}
 };
 
-class methodBinding;
-class constructorBinding;
+class binding;
 
 class dgSystemOfEquations {
   // the mesh and the model
@@ -65,10 +64,7 @@ public:
   void L2Projection (std::string functionName); // assign the solution to a given function
   double computeInvSpectralRadius();
 
-  static const char className[];
-  static const char parentClassName[];
-  static methodBinding *methods[];
-  static constructorBinding *constructorMethod;
+  static void registerBindings(binding *b);
 
   inline const fullMatrix<double> getSolutionProxy (int iGroup, int iElement){
     return fullMatrix<double> ( *_solution->_dataProxys [iGroup] ,

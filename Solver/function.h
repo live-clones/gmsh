@@ -7,8 +7,7 @@
 #include <fullMatrix.h>
 class dataCacheMap;
 class MElement;
-class methodBinding;
-class constructorBinding;
+class binding;
 
 // those classes manage complex function dependencies and keep their values in cache so that they are not recomputed when it is not necessary. To do this, we use three classes : function, dataCache and dataCacheMap. The workflow is :
 //
@@ -127,11 +126,8 @@ class function {
 
   inline  std::string getName()const {return _name;}
 
-  static const char *className;
-  static const char *parentClassName;
-  static methodBinding *methods[];
-  static constructorBinding *constructorMethod;
   virtual ~function(){};
+  static void registerBindings(binding *b);
 };
 
 // A special node in the dependency tree for which all the leafs
@@ -179,12 +175,5 @@ class functionConstant : public function {
   fullMatrix<double> _source;
   dataCacheDouble *newDataCache(dataCacheMap *m);
   functionConstant(const fullMatrix<double> *source);
-  static const char *className;
-  static const char *parentClassName;
-  static methodBinding *methods[];
-  static constructorBinding *constructorMethod;
-  ~functionConstant(){
-    printf("delete fc\n");
-  }
 };
 #endif
