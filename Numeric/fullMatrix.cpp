@@ -301,5 +301,6 @@ void fullMatrix<double>::registerBindings(binding *b){
   cb->addMethod("get",&fullMatrix<double>::get);
   cb->addMethod("set",&fullMatrix<double>::set);
   cb->addMethod("gemm",&fullMatrix<double>::gemm);
-  //  cb->setConstructor(constructorPtr<fullMatrix<double>,int,int>);
+  // FIXME DOES NOT COMPILE ON MAC
+  cb->setConstructor(constructorPtr<fullMatrix<double>,int,int>);
 }
