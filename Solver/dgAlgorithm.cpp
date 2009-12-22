@@ -504,6 +504,22 @@ void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (mayb
   delete boundaryTerm;
 }
 
+/*
+void dgAlgorithm::buildGroupsOfFaces(GModel *model, int dim, int order,
+				     std::vector<dgGroupOfElements*> &eGroups,
+				     std::vector<dgGroupOfFaces*> &fGroups,
+				     std::vector<dgGroupOfFaces*> &bGroups){
+}
+
+void dgAlgorithm::buildMandatoryGroups(dgGroupOfElements &eGroup,
+				       std::vector<dgGroupOfElements*> &partitionedGroups){
+}
+
+void dgAlgorithm::partitionGroup(dgGroupOfElements &eGroup,
+				 std::vector<dgGroupOfElements*> &partitionedGroups){
+}
+*/
+
 void dgAlgorithm::buildGroups(GModel *model, int dim, int order,
     std::vector<dgGroupOfElements*> &eGroups,
     std::vector<dgGroupOfFaces*> &fGroups,
@@ -514,7 +530,7 @@ void dgAlgorithm::buildGroups(GModel *model, int dim, int order,
   std::map<const std::string,std::set<MFace, Less_Face> > boundaryFaces;
   std::vector<GEntity*> entities;
   model->getEntities(entities);
-  std::vector<MElement *> allElements;
+  std::map<int, std::vector<MElement *> >allElements;
   for(unsigned int i = 0; i < entities.size(); i++){
     GEntity *entity = entities[i];
     if(entity->dim() == dim-1){
@@ -539,36 +555,51 @@ void dgAlgorithm::buildGroups(GModel *model, int dim, int order,
       }
     }else if(entity->dim() == dim){
       for (int iel=0; iel<entity->getNumMeshElements(); iel++)
-        allElements.push_back(entity->getMeshElement(iel));
+        allElements[entity->getMeshElement(iel)->getType()].push_back(entity->getMeshElement(iel));
     }
   }
-  eGroups.push_back(new dgGroupOfElements(allElements,order));
-  switch(dim) {
+  // do a group of elements for every element type that is present in the mesh
+  Msg::Info("%d groups of elements",allElements.size());
+  for (std::map<int, std::vector<MElement *> >::iterator it = allElements.begin(); it !=allElements.end() ; ++it)
+    eGroups.push_back(new dgGroupOfElements(it->second,order));
+
+  for (int i=0;i<eGroups.size();i++){
+    // create a group of faces on the boundary for every group ef elements
+    switch(dim) {
     case 1 : {
       std::map<const std::string, std::set<MVertex*> >::iterator mapIt;
       for(mapIt=boundaryVertices.begin(); mapIt!=boundaryVertices.end(); mapIt++) {
-        bGroups.push_back(new dgGroupOfFaces(*eGroups[0],mapIt->first,order,mapIt->second));
+        bGroups.push_back(new dgGroupOfFaces(*eGroups[i],mapIt->first,order,mapIt->second));
       }
       break;
     }
     case 2 : {
       std::map<const std::string, std::set<MEdge, Less_Edge> >::iterator mapIt;
       for(mapIt=boundaryEdges.begin(); mapIt!=boundaryEdges.end(); mapIt++) {
-        bGroups.push_back(new dgGroupOfFaces(*eGroups[0],mapIt->first,order,mapIt->second));
+        bGroups.push_back(new dgGroupOfFaces(*eGroups[i],mapIt->first,order,mapIt->second));
       }
       break;
     }
     case 3 : {
       std::map<const std::string, std::set<MFace, Less_Face> >::iterator mapIt;
       for(mapIt=boundaryFaces.begin(); mapIt!=boundaryFaces.end(); mapIt++) {
-        bGroups.push_back(new dgGroupOfFaces(*eGroups[0],mapIt->first,order,mapIt->second));
+        bGroups.push_back(new dgGroupOfFaces(*eGroups[i],mapIt->first,order,mapIt->second));
       }
       break;
     }
+    }
+    // create a group of faces for every face that is common to elements of the same group 
+    fGroups.push_back(new dgGroupOfFaces(*eGroups[i],order));
+    // create a groupe of d
+    for (int j=i+1;j<eGroups.size();j++){
+      dgGroupOfFaces *gof = new dgGroupOfFaces(*eGroups[i],*eGroups[j],order);
+      if (gof->getNbElements())
+	fGroups.push_back(gof);
+      else
+	delete gof;
+    }
   }
-  fGroups.push_back(new dgGroupOfFaces(*eGroups[0],order));
 }
-
 // works for any number of groups 
 void dgAlgorithm::residual( const dgConservationLaw &claw,
 			    std::vector<dgGroupOfElements*> &eGroups, //group of elements
@@ -616,3 +647,51 @@ void dgAlgorithm::residual( const dgConservationLaw &claw,
   }
   //  residu[0]->print("Boundaries");
 }
+
+void dgAlgorithm::computeElementaryTimeSteps ( //dofManager &dof, // the DOF manager (maybe useless here)
+					      const dgConservationLaw &claw,   // the conservation law
+					      const dgGroupOfElements & group, 
+					      fullMatrix<double> &solution,
+					      std::vector<double> & DT
+					       )
+{ 
+  dataCacheMap cacheMap(group.getNbNodes());
+  dataCacheDouble &sol = cacheMap.provideData("Solution");
+  dataCacheElement &cacheElement = cacheMap.getElement();
+  // provided dataCache
+  dataCacheDouble *maxConvectiveSpeed = claw.newMaxConvectiveSpeed(cacheMap);
+  dataCacheDouble *maximumDiffusivity = claw.newMaximumDiffusivity(cacheMap);
+
+  const int nbFields = claw.nbFields();
+  /* This is an estimate on how lengths changes with p 
+     It is merely the smallest distance between gauss 
+     points at order p + 1 */
+  const double p   = group.getOrder();
+  const double Cip = 3 * (p + 1) * (p + group.getDimUVW()) ;
+  double l_red = 1./3.*p*p +7./6.*p +1.0;
+  double l_red_sq = l_red*l_red;
+  DT.resize(group.getNbElements());
+  for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {
+    sol.setAsProxy(solution, iElement*nbFields, nbFields);
+    MElement *e = group.getElement(iElement);
+    cacheElement.set(e);
+    const double L = e->minEdge();
+    double spectralRadius = 0.0;
+    if (maximumDiffusivity){
+      double nu = (*maximumDiffusivity)(0,0);
+      for (int k=1;k<group.getNbNodes();k++) nu = std::max((*maximumDiffusivity)(k,0), nu);
+      spectralRadius +=  group.getDimUVW()*nu/(L*L)*std::max(l_red_sq,6.*l_red*Cip);
+      spectralRadius +=  4.0*nu*l_red*Cip/(L*L);
+    }
+    if (maxConvectiveSpeed){
+      double c = (*maxConvectiveSpeed)(0,0);
+      for (int k=1;k<group.getNbNodes();k++) c = std::max((*maxConvectiveSpeed)(k,0), c);
+      spectralRadius += 4.0*c*l_red/L; 
+      //      printf("coucou %g %g %g %g\n",c,l_red,L,spectralRadius);
+    }
+    DT[iElement] = 1./spectralRadius;
+  }
+  delete maximumDiffusivity;
+  delete maxConvectiveSpeed;
+}
+

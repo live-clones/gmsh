@@ -32,7 +32,7 @@ struct polynomialBasis
     return faceClosure[id];
   }
   inline int getEdgeClosureId(int iEdge, int iSign) const {
-    return iSign == 1 ? iEdge : 3 + iEdge;
+    return iSign == 1 ? iEdge : edgeClosure.size()/2 + iEdge;
   }
   inline const std::vector<int> &getEdgeClosure(int id) const
   {

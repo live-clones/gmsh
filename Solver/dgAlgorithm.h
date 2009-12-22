@@ -50,6 +50,12 @@ class dgAlgorithm {
 		   dgDofContainer &sol,
 		   dgLimiter *limiter=NULL,
 		   int orderRK=4);
+  static void computeElementaryTimeSteps ( //dofManager &dof, // the DOF manager (maybe useless here)
+					  const dgConservationLaw &claw,   // the conservation law
+					  const dgGroupOfElements & group, // the group
+					  fullMatrix<double> &solution, // the solution 
+					  std::vector<double> & DT // elementary time steps
+					   );
   void multirateRungeKutta (
 		   const dgConservationLaw &claw,
 		   std::vector<dgGroupOfElements*> &eGroups, //group of elements
@@ -59,6 +65,7 @@ class dgAlgorithm {
 		   dgDofContainer &residu,
 		   dgDofContainer &sol,
 		   int orderRK=3);
+
   static void multAddInverseMassMatrix ( /*dofManager &dof,*/
 					const dgGroupOfElements & group,
 					fullMatrix<double> &residu,

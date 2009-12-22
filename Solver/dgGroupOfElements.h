@@ -155,6 +155,7 @@ public:
   
   inline fullMatrix<double> &getNormals () const {return *_normals;}
   dgGroupOfFaces (const dgGroupOfElements &elements,int pOrder);
+  dgGroupOfFaces (const dgGroupOfElements &a, const dgGroupOfElements &b,int pOrder);
   dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MVertex*> &boundaryVertices);
   dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MEdge,Less_Edge> &boundaryEdges);
   dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MFace,Less_Face> &boundaryFaces);

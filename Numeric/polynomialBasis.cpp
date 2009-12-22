@@ -752,21 +752,22 @@ static void generate3dFaceClosure(polynomialBasis::clCont &closure, int order)
   }
 }
 
-static void generate2dEdgeClosure(polynomialBasis::clCont &closure, int order)
+static void generate2dEdgeClosure(polynomialBasis::clCont &closure, int order, int nNod = 3)
 {
   closure.clear();
-  closure.resize(6);
-  for (int j = 0; j < 3 ; j++){
+  closure.resize(2*nNod);
+  for (int j = 0; j < nNod ; j++){
     closure[j].push_back(j);
-    closure[j].push_back((j+1)%3);
-    closure[3+j].push_back((j+1)%3);
-    closure[3+j].push_back(j);
+    closure[j].push_back((j+1)%nNod);
+    closure[nNod+j].push_back((j+1)%nNod);
+    closure[nNod+j].push_back(j);
     for (int i=0; i < order-1; i++){
-      closure[j].push_back( 3 + (order-1)*j + i );
-      closure[3+j].push_back(3 + (order-1)*(j+1) -i -1);
+      closure[j].push_back( nNod + (order-1)*j + i );
+      closure[nNod+j].push_back(nNod + (order-1)*(j+1) -i -1);
     }
   }
 }
+
 
 
 static void generate1dVertexClosure(polynomialBasis::clCont &closure)
@@ -893,38 +894,47 @@ const polynomialBasis &polynomialBases::find(int tag)
   case MSH_QUA_4 :
     F.monomials = generatePascalQuad(1);
     F.points =    gmshGeneratePointsQuad(1,false);
+    generate2dEdgeClosure(F.edgeClosure, 1, 4);
     break;
   case MSH_QUA_9 :
     F.monomials = generatePascalQuad(2);
     F.points =    gmshGeneratePointsQuad(2,false);
+    generate2dEdgeClosure(F.edgeClosure, 2, 4);
     break;
   case MSH_QUA_16 :
     F.monomials = generatePascalQuad(3);
     F.points =    gmshGeneratePointsQuad(3,false);
+    generate2dEdgeClosure(F.edgeClosure, 3, 4);
     break;
   case MSH_QUA_25 :
     F.monomials = generatePascalQuad(4);
     F.points =    gmshGeneratePointsQuad(4,false);
+    generate2dEdgeClosure(F.edgeClosure, 4, 4);
     break;
   case MSH_QUA_36 :
     F.monomials = generatePascalQuad(5);
     F.points =    gmshGeneratePointsQuad(5,false);
+    generate2dEdgeClosure(F.edgeClosure, 5, 4);
     break;
   case MSH_QUA_8 :
     F.monomials = generatePascalQuadSerendip(2);
     F.points =    gmshGeneratePointsQuad(2,true);
+    generate2dEdgeClosure(F.edgeClosure, 2, 4);
     break;
   case MSH_QUA_12 :
     F.monomials = generatePascalQuadSerendip(3);
     F.points =    gmshGeneratePointsQuad(3,true);
+    generate2dEdgeClosure(F.edgeClosure, 3, 4);
     break;
   case MSH_QUA_16I :
     F.monomials = generatePascalQuadSerendip(4);
     F.points =    gmshGeneratePointsQuad(4,true);
+    generate2dEdgeClosure(F.edgeClosure, 4, 4);
     break;
   case MSH_QUA_20 :
     F.monomials = generatePascalQuadSerendip(5);
     F.points =    gmshGeneratePointsQuad(5,true);
+    generate2dEdgeClosure(F.edgeClosure, 5, 4);
     break;
   default :
     Msg::Error("Unknown function space %d: reverting to TET_4", tag);

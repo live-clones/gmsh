@@ -3,6 +3,7 @@
 #include "polynomialBasis.h"
 #include "Numeric.h"
 #include "MTriangle.h"
+#include "MQuadrangle.h"
 #include "MLine.h"
 #include "MPoint.h"
 #include "GModel.h"
@@ -153,11 +154,21 @@ void dgGroupOfFaces::addFace(const MFace &topoFace, int iElLeft, int iElRight){
   // triangular face
   if (topoFace.getNumVertices() == 3){
     switch(vertices.size()){
-      case 3  : _faces.push_back(new MTriangle (vertices) ); break;
-      case 6  : _faces.push_back(new MTriangle6 (vertices) ); break;
-      case 10 : _faces.push_back(new MTriangleN (vertices, 3) ); break;
-      case 15 : _faces.push_back(new MTriangleN (vertices, 4) ); break;
-      case 21 : _faces.push_back(new MTriangleN (vertices, 5) ); break;
+    case 3  : _faces.push_back(new MTriangle   (vertices) ); break;
+    case 6  : _faces.push_back(new MTriangle6  (vertices) ); break;
+    case 10  : _faces.push_back(new MTriangleN (vertices,3) ); break;
+    case 15  : _faces.push_back(new MTriangleN (vertices,4) ); break;
+    case 21  : _faces.push_back(new MTriangleN (vertices,5) ); break;
+    default : throw;
+    }
+  }
+  else if (topoFace.getNumVertices() == 4){
+    switch(vertices.size()){
+      case 4  : _faces.push_back(new MQuadrangle (vertices) ); break;
+      case 8  : _faces.push_back(new MQuadrangle8 (vertices) ); break;
+      case 9  : _faces.push_back(new MQuadrangle9 (vertices) ); break;
+      case 16 : _faces.push_back(new MQuadrangleN (vertices, 4)); break;
+      case 25 : _faces.push_back(new MQuadrangleN (vertices, 5)); break;
       default : throw;
     }
   }
@@ -182,11 +193,12 @@ void dgGroupOfFaces::addEdge(const MEdge &topoEdge, int iElLeft, int iElRight) {
   const std::vector<int> &geomClosure = elLeft.getFunctionSpace()->getEdgeClosure(_closuresIdLeft.back());
   for (int j=0; j<geomClosure.size() ; j++)
     vertices.push_back( elLeft.getVertex(geomClosure[j]) );
-  switch(vertices.size()){
+  switch(vertices.size())
+    {
     case 2  : _faces.push_back(new MLine (vertices) ); break;
     case 3  : _faces.push_back(new MLine3 (vertices) ); break;
     default : _faces.push_back(new MLineN (vertices) ); break;
-  }
+    }
 }
 
 void dgGroupOfFaces::addVertex(MVertex *topoVertex, int iElLeft, int iElRight){
@@ -205,6 +217,7 @@ void dgGroupOfFaces::addVertex(MVertex *topoVertex, int iElLeft, int iElRight){
 }
 
 void dgGroupOfFaces::init(int pOrder) {
+  if (!_faces.size())return;
   _fsFace = _faces[0]->getFunctionSpace (pOrder);
   _integration = dgGetIntegrationRule (_faces[0],pOrder);
   _redistribution = new fullMatrix<double> (_fsFace->coefficients.size1(),_integration->size1());
@@ -299,6 +312,7 @@ void dgGroupOfFaces::init(int pOrder) {
 
 dgGroupOfFaces::~dgGroupOfFaces()
 {
+  if (!_faces.size())return;
   delete _redistribution;
   delete _collocation;
   delete _detJac;
@@ -430,6 +444,107 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, int pOrder):
   init(pOrder);
 }
 
+dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup1, const dgGroupOfElements &elGroup2, int pOrder):
+  _groupLeft(elGroup1),_groupRight(elGroup2)
+{
+  _fsLeft=_groupLeft.getElement(0)->getFunctionSpace(pOrder);
+  _fsRight=_groupRight.getElement(0)->getFunctionSpace(pOrder);
+  switch (_groupLeft.getElement(0)->getDim()) {
+    case 1 : {
+      std::map<MVertex*,int> vertexMap1;
+      _closuresLeft = _fsLeft->vertexClosure;
+      _closuresRight = _fsRight->vertexClosure;
+
+      for(int i=0; i<elGroup1.getNbElements(); i++){
+        MElement &el = *elGroup1.getElement(i);
+        for (int j=0; j<el.getNumVertices(); j++){
+          MVertex* vertex = el.getVertex(j);
+          if(vertexMap1.find(vertex) == vertexMap1.end()){
+            vertexMap1[vertex] = i;
+          }else{
+            vertexMap1.erase(vertex);
+          }
+        }
+      }
+
+      for(int i=0; i<elGroup2.getNbElements(); i++){
+        MElement &el = *elGroup2.getElement(i);
+        for (int j=0; j<el.getNumVertices(); j++){
+          MVertex* vertex = el.getVertex(j);
+	  std::map<MVertex*,int>::iterator it = vertexMap1.find(vertex);
+	  if(it != vertexMap1.end()){
+	    addVertex(vertex,it->second,i);
+	  }
+        }
+      }      
+    }
+    break;
+    case 2 : {
+      std::map<MEdge,int,Less_Edge> edgeMap;
+      _closuresLeft = _fsLeft->edgeClosure;
+      _closuresRight = _fsRight->edgeClosure;
+      for(int i=0; i<elGroup1.getNbElements(); i++){
+        MElement &el = *elGroup1.getElement(i);
+        for (int j=0; j<el.getNumEdges(); j++){
+          MEdge edge = el.getEdge(j);
+          if(edgeMap.find(edge) == edgeMap.end()){
+            edgeMap[edge] = i;
+          }else{
+            edgeMap.erase(edge);
+          }
+        }
+      }
+      for(int i=0; i<elGroup2.getNbElements(); i++){
+        MElement &el = *elGroup2.getElement(i);
+        for (int j=0; j<el.getNumEdges(); j++){
+          MEdge edge = el.getEdge(j);
+	  std::map<MEdge,int,Less_Edge>::iterator it = edgeMap.find(edge);
+	  if(it != edgeMap.end()){
+// 	    MElement &el2 = *elGroup1.getElement(it->second);
+// 	    printf("%d %d \n",edge.getVertex(0)->getNum(),edge.getVertex(1)->getNum());
+// 	    for (int k=0;k<el.getNumVertices();k++)printf("%d ",el.getVertex(k)->getNum());
+// 	    printf("\n");
+// 	    for (int k=0;k<el2.getNumVertices();k++)printf("%d ",el2.getVertex(k)->getNum());
+// 	    printf("\n");
+	    addEdge(edge,it->second,i);
+          }
+        }
+      }
+      
+      printf("groupe mixte %d %d elements %d faces\n",elGroup1.getNbElements(),elGroup2.getNbElements(),_faces.size());
+      break;
+    }
+    case 3 : {
+      std::map<MFace,int,Less_Face> faceMap;
+      _closuresLeft = _fsLeft->faceClosure;
+      _closuresRight = _fsRight->faceClosure;
+      for(int i=0; i<elGroup1.getNbElements(); i++){
+        MElement &el = *elGroup1.getElement(i);
+        for (int j=0; j<el.getNumFaces(); j++){
+          MFace face = el.getFace(j);
+          if(faceMap.find(face) == faceMap.end()){
+            faceMap[face] = i;
+          }else{
+            faceMap.erase(face);
+          }
+        }
+      }
+      for(int i=0; i<elGroup2.getNbElements(); i++){
+        MElement &el = *elGroup2.getElement(i);
+        for (int j=0; j<el.getNumFaces(); j++){
+          MFace face = el.getFace(j);
+	  std::map<MFace,int,Less_Face>::iterator it = faceMap.find(face);
+	  if(it != faceMap.end()){
+	    addFace(face,it->second,i);
+          }
+        }
+      }
+      break;
+    }
+    default : throw;
+  }
+  init(pOrder);
+}
 void dgGroupOfFaces::mapToInterface ( int nFields,
     const fullMatrix<double> &vLeft,
     const fullMatrix<double> &vRight,

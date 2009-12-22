@@ -28,6 +28,22 @@ class dgConservationLawWaveEquation::hyperbolicFlux : public dataCacheDouble {
     }
   }
 };
+
+class dgConservationLawWaveEquation::maxConvectiveSpeed : public dataCacheDouble {
+  dataCacheDouble &sol;
+  public:
+  maxConvectiveSpeed(dataCacheMap &cacheMap):
+    sol(cacheMap.get("Solution",this))
+  {
+  };
+  void _eval () {
+    int nQP = sol().size1();
+    if(_value.size1() != nQP)
+      _value=fullMatrix<double>(nQP,1);
+    _value.setAll(c);
+  }
+};
+
 class dgConservationLawWaveEquation::riemann : public dataCacheDouble {
   dataCacheDouble &normals, &solL, &solR;
   const int _DIM,_nbf;
@@ -68,6 +84,9 @@ class dgConservationLawWaveEquation::riemann : public dataCacheDouble {
 };
 dataCacheDouble *dgConservationLawWaveEquation::newConvectiveFlux( dataCacheMap &cacheMap) const {
   return new hyperbolicFlux(cacheMap,_DIM);
+}
+dataCacheDouble *dgConservationLawWaveEquation::newMaxConvectiveSpeed( dataCacheMap &cacheMap) const {
+  return new maxConvectiveSpeed(cacheMap);
 }
 dataCacheDouble *dgConservationLawWaveEquation::newRiemannSolver( dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight) const {
   return new riemann(cacheMapLeft, cacheMapRight,_DIM);

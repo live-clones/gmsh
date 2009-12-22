@@ -6,12 +6,14 @@ class constructorBinding;
 class dgConservationLawWaveEquation : public dgConservationLaw {
   int _DIM;
   class hyperbolicFlux;
+  class maxConvectiveSpeed;
   class riemann;
   public:
   dataCacheDouble *newConvectiveFlux( dataCacheMap &cacheMap) const ;
   dataCacheDouble *newRiemannSolver( dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight) const;
   dataCacheDouble *newDiffusiveFlux( dataCacheMap &cacheMap) const ;
   dataCacheDouble *newSourceTerm (dataCacheMap &cacheMap) const ;
+  dataCacheDouble *newMaxConvectiveSpeed (dataCacheMap &cacheMap) const;
   dgBoundaryCondition *newBoundaryWall () const;
   dgConservationLawWaveEquation(int DIM);
   static const char *className;

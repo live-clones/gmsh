@@ -51,6 +51,7 @@ class dgSystemOfEquations {
   // groups of faces (boundary conditions)
   std::vector<dgGroupOfFaces*> _boundaryGroups;
   dgSystemOfEquations(const dgSystemOfEquations &) {}
+  double computeTimeStepMethodOfLines () const;
 public:
   void setOrder (int order); // set the polynomial order
   void setConservationLaw (dgConservationLaw *law); // set the conservationLaw
@@ -62,6 +63,7 @@ public:
   double RK44_limiter (double dt); 
   double multirateRK43 (double dt); 
   void L2Projection (std::string functionName); // assign the solution to a given function
+  double computeInvSpectralRadius();
 
   static const char className[];
   static const char parentClassName[];

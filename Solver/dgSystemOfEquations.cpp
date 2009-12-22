@@ -50,9 +50,11 @@ methodBinding *dgSystemOfEquations::methods[]={
   new methodBindingTemplate<dgSystemOfEquations,void>("limitSolution",&dgSystemOfEquations::limitSolution),
   new methodBindingTemplate<dgSystemOfEquations,void,std::string>("L2Projection",&dgSystemOfEquations::L2Projection),
   new methodBindingTemplate<dgSystemOfEquations,double,double>("RK44",&dgSystemOfEquations::RK44),
+  new methodBindingTemplate<dgSystemOfEquations,double>("computeInvSpectralRadius",&dgSystemOfEquations::computeInvSpectralRadius),
   new methodBindingTemplate<dgSystemOfEquations,double,double>("RK44_limiter",&dgSystemOfEquations::RK44_limiter),
   new methodBindingTemplate<dgSystemOfEquations,double,double>("multirateRK43",&dgSystemOfEquations::multirateRK43),
  0};
+#endif // HAVE_LUA
 
 // do a L2 projection
 void dgSystemOfEquations::L2Projection (std::string functionName){
@@ -83,12 +85,22 @@ double dgSystemOfEquations::RK44(double dt){
   return _solution->_data->norm();
 }
 
+double dgSystemOfEquations::computeInvSpectralRadius(){  
+  
+  double sr = 1.e22;
+  for (int i=0;i<_elementGroups.size();i++){
+    std::vector<double> DTS;
+    _algo->computeElementaryTimeSteps(*_claw, *_elementGroups[i], *_solution->_dataProxys[i], DTS);
+    for (int k=0;k<DTS.size();k++) sr = std::min(sr,DTS[k]);
+  }
+  return sr;
+}
+
 double dgSystemOfEquations::RK44_limiter(double dt){
 	dgLimiter *sl = new dgSlopeLimiter();
 	_algo->rungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups, dt,  *_solution, *_rightHandSide, sl);
 	return _solution->_data->norm();
 }
-
 
 double dgSystemOfEquations::multirateRK43(double dt){
   _algo->multirateRungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups, dt,  *_solution, *_rightHandSide);
@@ -98,13 +110,13 @@ double dgSystemOfEquations::multirateRK43(double dt){
 void dgSystemOfEquations::exportSolution(std::string outputFile){
   export_solution_as_is(outputFile);
 }
+
 void dgSystemOfEquations::limitSolution(){
 	dgLimiter *sl = new dgSlopeLimiter();
   sl->apply(*_solution,_elementGroups,_faceGroups);
 
   delete sl;
 }
-#endif // HAVE_LUA
 
 dgSystemOfEquations::~dgSystemOfEquations(){
   for (int i=0;i<_elementGroups.size();i++){
@@ -196,7 +208,7 @@ dgDofContainer::dgDofContainer (std::vector<dgGroupOfElements*> &elementGroups, 
   for (int i=0;i<elementGroups.size();i++){    
     int nbNodes    = elementGroups[i]->getNbNodes();
     int nbElements = elementGroups[i]->getNbElements();
-    _dataProxys[i] = new fullMatrix<double> (&(*_data)(offset*sizeof(double)),nbNodes, nbFields*nbElements);
+    _dataProxys[i] = new fullMatrix<double> (&(*_data)(offset),nbNodes, nbFields*nbElements);
     offset += nbNodes*nbFields*nbElements;
   }  
   //  printf("datasize = %d\n",_dataSize);
