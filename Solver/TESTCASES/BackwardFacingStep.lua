@@ -41,10 +41,11 @@ DG:setup()
 print'*** setting the initial solution ***'
 
 DG:L2Projection(FS)
+DG:limitSolution()
 
 print'*** export ***'
 
-DG:exportSolution('solution_0')
+DG:exportSolution('output/solution_0')
 
 print'*** solve ***'
 
@@ -52,11 +53,11 @@ LC = 0.1
 dt = .3*LC/(SOUND+V);
 print('DT=',dt)
 
-for i=1,1000 do
-    norm = DG:RK44(dt)
+for i=1,10000 do
+    norm = DG:RK44_limiter(dt)
     print('*** ITER ***',i,norm)
-    if (i % 10 == 0) then 
-       DG:exportSolution(string.format("solution-%03d", i)) 
+    if (i % 100 == 0) then 
+       DG:exportSolution(string.format("output/solution-%06d", i)) 
     end
 end
 
