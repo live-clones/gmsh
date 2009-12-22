@@ -1,4 +1,4 @@
-MACH = 0.1;
+MACH = 3;
 RHO  = 1.0;
 PRES = 1./(MACH*RHO*RHO*1.4*1.4) 
 V = 1.0 
@@ -49,7 +49,7 @@ DG:exportSolution('output/solution_0')
 
 print'*** solve ***'
 
-LC = 0.1
+LC = 0.1*.1
 dt = .3*LC/(SOUND+V);
 print('DT=',dt)
 
