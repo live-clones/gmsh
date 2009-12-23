@@ -141,14 +141,10 @@ dgBoundaryCondition *dgConservationLawShallowWater2d::newBoundaryWall(){
 }
 
 #include "Bindings.h"
-static dgConservationLawShallowWater2d *myConstructorPtr(){
-  return new dgConservationLawShallowWater2d;
-}
 void dgConservationLawShallowWater2dRegisterBindings (binding *b){
   classBinding *cb = b->addClass<dgConservationLawShallowWater2d>("dgConservationLawShallowWater2d");
   methodBinding *cm;
   cb->addMethod("newBoundaryWall",&dgConservationLawShallowWater2d::newBoundaryWall);
-  //  cb->setConstructor(constructorPtr<dgConservationLawShallowWater2d>);
-  cb->setConstructor(myConstructorPtr);
+  cb->setConstructor<dgConservationLawShallowWater2d>();
   cb->setParentClass<dgConservationLaw>();
 }

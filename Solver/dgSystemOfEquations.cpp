@@ -46,7 +46,7 @@ static dgSystemOfEquations *myConstructorPtr(GModel* gm){
 void dgSystemOfEquations::registerBindings(binding *b){
   classBinding *cb = b->addClass<dgSystemOfEquations>("dgSystemOfEquations");
   cb->setDescription("a class to rule them all :-) -- bad description, this class will be removed anyway");
-  cb->setConstructor(myConstructorPtr);
+  cb->setConstructor<dgSystemOfEquations,GModel*>();
   methodBinding *cm;
   cm = cb->addMethod("setConservationLaw",&dgSystemOfEquations::setConservationLaw);
   cm->setArgNames("law",NULL);

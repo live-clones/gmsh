@@ -136,14 +136,10 @@ dgBoundaryCondition *dgConservationLawWaveEquation::newBoundaryWall()const{
 }
 
 #include "Bindings.h"
-static dgConservationLawWaveEquation *myConstructorPtr(int d){
-  return new dgConservationLawWaveEquation (d);
-}
 void dgConservationLawWaveEquationRegisterBindings(binding *b){
   classBinding *cb = b->addClass<dgConservationLawWaveEquation> ("dgConservationLawWaveEquation");
   methodBinding *cm;
   cb->addMethod("newBoundaryWall",&dgConservationLawWaveEquation::newBoundaryWall);
-  //  cb->setConstructor(constructorPtr<dgConservationLawWaveEquation,int>);
-  cb->setConstructor(myConstructorPtr);
+  cb->setConstructor<dgConservationLawWaveEquation,int>();
   cb->setParentClass<dgConservationLaw>();
 }

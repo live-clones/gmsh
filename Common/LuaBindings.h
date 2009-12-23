@@ -144,7 +144,7 @@ class luaStack<const type *>{
 };
 
 /*** template to call c function from the lua stack ***/
-//static, return (only used for  contructor now)
+//static, return 
 template < typename tRet, typename t0, typename t1, typename t2, typename t3>
 static int luaCall(lua_State *L,tRet (*_f)(t0,t1,t2,t3)) {
   lua_remove(L,1);
@@ -284,6 +284,7 @@ static int luaCall(lua_State *L,void (tObj::*_f)()) {
   return 0;
 };
 
+
 /*** actual bindings classes ***/
 class luaMethodBinding :public methodBinding{
   public:
@@ -291,6 +292,9 @@ class luaMethodBinding :public methodBinding{
   virtual int call (lua_State *L)=0;
   luaMethodBinding(const std::string luaname){
     _luaname=luaname;
+  }
+  luaMethodBinding(){
+    _luaname="";
   }
 };
 
@@ -303,6 +307,53 @@ class methodBindingT:public luaMethodBinding {
   }
   int call (lua_State *L) {
     return luaCall(L,_f);
+  }
+};
+
+template <typename tObj, typename t0=void, typename t1=void , typename t2=void, typename t3=void>
+class constructorBindingT:public luaMethodBinding {
+  public:
+  int call (lua_State *L) {
+    lua_remove(L,1);
+    (luaStack<tObj*>::push(L,new tObj(luaStack<t0>::get(L,1),luaStack<t1>::get(L,2),luaStack<t2>::get(L,3), luaStack<t3>::get(L,4))));
+    return 1;
+  }
+};
+
+template <typename tObj>
+class constructorBindingT<tObj,void,void,void,void>:public luaMethodBinding {
+  public:
+  int call (lua_State *L) {
+    lua_remove(L,1);
+    (luaStack<tObj*>::push(L,new tObj()));
+    return 1;
+  }
+};
+template <typename tObj, typename t0>
+class constructorBindingT<tObj,t0,void,void,void>:public luaMethodBinding {
+  public:
+  int call (lua_State *L) {
+    lua_remove(L,1);
+    (luaStack<tObj*>::push(L,new tObj(luaStack<t0>::get(L,1))));
+    return 1;
+  }
+};
+template <typename tObj, typename t0, typename t1>
+class constructorBindingT<tObj,t0,t1,void,void>:public luaMethodBinding {
+  public:
+  int call (lua_State *L) {
+    lua_remove(L,1);
+    (luaStack<tObj*>::push(L,new tObj(luaStack<t0>::get(L,1),luaStack<t1>::get(L,2))));
+    return 1;
+  }
+};
+template <typename tObj, typename t0, typename t1, typename t2>
+class constructorBindingT<tObj,t0,t1,t2,void>:public luaMethodBinding {
+  public:
+  int call (lua_State *L) {
+    lua_remove(L,1);
+    (luaStack<tObj*>::push(L,new tObj(luaStack<t0>::get(L,1),luaStack<t1>::get(L,2),luaStack<t2>::get(L,3))));
+    return 1;
   }
 };
 
@@ -328,6 +379,16 @@ class classBinding {
     sprintf(buff, "%p", ud->pt);
     lua_pushfstring(L, "%s (%s)", name, buff);
     return 1;
+  }
+  void setConstructorLuaMethod(luaMethodBinding *constructor){
+    lua_getglobal(_L,_className.c_str());
+    int methods = lua_gettop(_L);
+    lua_getmetatable(_L,methods);
+    int mt = lua_gettop(_L);
+    lua_pushlightuserdata(_L,(void*)constructor);
+    lua_pushcclosure(_L, callMethod, 1);
+    lua_setfield(_L, mt,"__call");
+    lua_pop(_L,2);
   }
 public:
   // get userdata from Lua stack and return pointer to T object
@@ -388,19 +449,35 @@ public:
     lua_pop(_L,1);
     return mb; 
   }
-  template <typename cb>
-  methodBinding *setConstructor(cb f){
-    luaMethodBinding *_constructorMethod = new methodBindingT<cb>("constructor",f);
-
-    lua_getglobal(_L,_className.c_str());
-    int methods = lua_gettop(_L);
-    lua_getmetatable(_L,methods);
-    int mt = lua_gettop(_L);
-    lua_pushlightuserdata(_L,(void*)_constructorMethod);
-    lua_pushcclosure(_L, callMethod, 1);
-    lua_setfield(_L, mt,"__call");
-    lua_pop(_L,2);
-    return _constructorMethod;
+  template <typename tObj, typename t0, typename t1, typename t2, typename t3 >
+  methodBinding *setConstructor(){
+    luaMethodBinding *constructorLua = new constructorBindingT<tObj,t0,t1,t2,t3>;
+    setConstructorLuaMethod(constructorLua);
+    return constructorLua;
+  }
+  template <typename tObj, typename t0, typename t1, typename t2 >
+  methodBinding *setConstructor(){
+    luaMethodBinding *constructorLua = new constructorBindingT<tObj,t0,t1,t2>;
+    setConstructorLuaMethod(constructorLua);
+    return constructorLua;
+  }
+  template <typename tObj, typename t0, typename t1>
+  methodBinding *setConstructor(){
+    luaMethodBinding *constructorLua = new constructorBindingT<tObj,t0,t1>;
+    setConstructorLuaMethod(constructorLua);
+    return constructorLua;
+  }
+  template <typename tObj, typename t0>
+  methodBinding *setConstructor(){
+    luaMethodBinding *constructorLua = new constructorBindingT<tObj,t0>;
+    setConstructorLuaMethod(constructorLua);
+    return constructorLua;
+  }
+  template<typename tObj>
+  methodBinding *setConstructor(){
+    luaMethodBinding *constructorLua = new constructorBindingT<tObj>;
+    setConstructorLuaMethod(constructorLua);
+    return constructorLua;
   }
 };
 

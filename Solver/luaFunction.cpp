@@ -32,7 +32,7 @@ class functionLua::data : public dataCacheDouble{
     lua_call(_function->_L,_dependencies.size()+1,0);  /* call Lua function */
   }
 };
-functionLua::functionLua (int nbCol, std::string &luaFunctionName, std::vector<std::string> &dependencies, lua_State *L)
+functionLua::functionLua (int nbCol, std::string luaFunctionName, std::vector<std::string> dependencies, lua_State *L)
   : _luaFunctionName(luaFunctionName), _dependenciesName(dependencies),_L(L),_nbCol(nbCol)
 {
   static int c=0;
@@ -48,7 +48,7 @@ dataCacheDouble *functionLua::newDataCache(dataCacheMap *m)
 
 void functionLua::registerBindings(binding *b){
   classBinding *cb= b->addClass<functionLua>("functionLua");
-  cb->setConstructor(constructorPtr<functionLua,int,std::string,std::vector<std::string>,lua_State*>);
+  cb->setConstructor<functionLua,int,std::string,std::vector<std::string>,lua_State*>();
   cb->setParentClass<function>();
 }
 

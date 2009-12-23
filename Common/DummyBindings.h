@@ -9,10 +9,16 @@ public:
   methodBinding *addMethod(std::string n, cb f){
     return new methodBinding();
   }
-  template <typename cb>
-  methodBinding *setConstructor(cb f){
-    return new methodBinding();
-  }
+  template <typename tObj, typename t0, typename t1, typename t2, typename t3 >
+  methodBinding *setConstructor(){}
+  template <typename tObj, typename t0, typename t1, typename t2 >
+  methodBinding *setConstructor(){}
+  template <typename tObj, typename t0, typename t1>
+  methodBinding *setConstructor(){}
+  template <typename tObj, typename t0>
+  methodBinding *setConstructor(){}
+  template<typename tObj>
+  methodBinding *setConstructor(){}
 };
 
 class binding {

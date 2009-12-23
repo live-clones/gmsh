@@ -14,7 +14,7 @@ class functionLua : public function {
   int _nbCol;
   class data;
  public:
-  functionLua (int nbCol, std::string &luaFunctionName, std::vector<std::string> &dependenciesName, lua_State *L);
+  functionLua (int nbCol, std::string luaFunctionName, std::vector<std::string> dependenciesName, lua_State *L);
 
   dataCacheDouble *newDataCache(dataCacheMap *m);
   static void registerBindings(binding *b);
