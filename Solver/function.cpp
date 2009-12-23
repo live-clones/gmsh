@@ -147,11 +147,15 @@ void function::registerDefaultFunctions()
   function::add("XYZ", new functionXYZ);
 }
 
+static functionConstant *myConstructorPtr(fullMatrix<double>*m){
+  return new functionConstant(m);
+}
 void function::registerBindings(binding *b){
   classBinding *cb = b->addClass<function>("function");
   cb->addMethod("getName",&function::getName);
   cb = b->addClass<functionConstant>("functionConstant");
-  cb->setConstructor(constructorPtr<functionConstant,fullMatrix<double>*>);
+  cb->setConstructor(myConstructorPtr);
+  //  cb->setConstructor(constructorPtr<functionConstant,fullMatrix<double>*>);
   cb->setParentClass<function>();
 }
 

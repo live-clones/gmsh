@@ -292,6 +292,12 @@ bool fullMatrix<double>::svd(fullMatrix<double> &V, fullVector<double> &S)
 #endif
 
 #include "Bindings.h"
+
+// I DID FIX IT FOR NOW ... SHOULD BE BETTER -- JF
+static fullMatrix<double> *myConstructorPtr(int a0, int a1){
+  return new fullMatrix<double>(a0,a1);
+}
+
 template<>
 void fullMatrix<double>::registerBindings(binding *b){
   classBinding *cb = b->addClass<fullMatrix<double> >("fullMatrix");
@@ -302,5 +308,6 @@ void fullMatrix<double>::registerBindings(binding *b){
   cb->addMethod("set",&fullMatrix<double>::set);
   cb->addMethod("gemm",&fullMatrix<double>::gemm);
   // FIXME DOES NOT COMPILE ON MAC
-  cb->setConstructor(constructorPtr<fullMatrix<double>,int,int>);
+  cb->setConstructor(myConstructorPtr);
+  //  cb->setConstructor(constructorPtr<fullMatrix<double>,int,int>);
 }

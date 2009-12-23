@@ -5,8 +5,8 @@
 
 //----------------------------------------------------------------------------------   
 bool dgSlopeLimiter::apply ( dgDofContainer &solution,   
-    std::vector<dgGroupOfElements*> &eGroups,   
-    std::vector<dgGroupOfFaces*> &fGroups) 
+			     std::vector<dgGroupOfElements*> &eGroups,   
+			     std::vector<dgGroupOfFaces*> &fGroups) 
 {    
 
   //WARNING FOR ONLY 1 GROUP OF FACES    

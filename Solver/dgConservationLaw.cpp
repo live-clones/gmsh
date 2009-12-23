@@ -71,8 +71,6 @@ void dgConservationLaw::registerBindings(binding *b){
   cb->addMethod("newOutsideValueBoundary",&dgConservationLaw::newOutsideValueBoundary);
 }
 
-
-
 void dgBoundaryCondition::registerBindings(binding *b){
   classBinding *cb = b->addClass<dgBoundaryCondition>("dgBoundaryCondition");
 }

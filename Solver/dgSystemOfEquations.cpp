@@ -38,14 +38,19 @@ void dgSystemOfEquations::setConservationLaw (dgConservationLaw *law){
 }
 
 #include "Bindings.h"
+
+static dgSystemOfEquations *myConstructorPtr(GModel* gm){
+  return new dgSystemOfEquations(gm);
+}
+
 void dgSystemOfEquations::registerBindings(binding *b){
   classBinding *cb = b->addClass<dgSystemOfEquations>("dgSystemOfEquations");
   cb->setDescription("a class to rule them all :-) -- bad description, this class will be removed anyway");
-  cb->setConstructor(constructorPtr<dgSystemOfEquations,GModel*>);
+  cb->setConstructor(myConstructorPtr);
   methodBinding *cm;
   cm = cb->addMethod("setConservationLaw",&dgSystemOfEquations::setConservationLaw);
   cm->setArgNames("law",NULL);
-  cm->setDescription("set the conservation law this system solve");
+  cm->setDescription("set the conservation law this system solves");
   cm = cb->addMethod("setup",&dgSystemOfEquations::setup);
   cm->setDescription("allocate and init internal stuff, call this function after setOrder and setLaw and before anything else on this instance");
   cm = cb->addMethod("exportSolution",&dgSystemOfEquations::exportSolution);

@@ -95,8 +95,13 @@ dgConservationLawAdvection::dgConservationLawAdvection(std::string vFunctionName
 
 #include "Bindings.h"
 
+static dgConservationLawAdvection *myConstructorPtr(std::string a,std::string b){
+  return new dgConservationLawAdvection(a,b);
+}
+
 void dgConservationLawAdvectionRegisterBindings (binding *b){
   classBinding *cb = b->addClass<dgConservationLawAdvection>("dgConservationLawAdvection");
-  cb->setConstructor(constructorPtr<dgConservationLawAdvection,std::string,std::string>);
+  //  cb->setConstructor(constructorPtr<dgConservationLawAdvection,std::string,std::string>);
+  cb->setConstructor(myConstructorPtr);
   cb->setParentClass<dgConservationLaw>();
 }

@@ -312,10 +312,15 @@ class dgBoundaryConditionPerfectGasLaw2dFreeStream : public dgBoundaryCondition 
 
 #include "Bindings.h"
 
+static dgPerfectGasLaw2d *myConstructorPtr(){
+  return new dgPerfectGasLaw2d ;
+}
+
 void dgPerfectGasLaw2dRegisterBindings (binding *b){
   classBinding *cb = b->addClass<dgPerfectGasLaw2d>("dgPerfectGasLaw2d");
   methodBinding *cm;
   cb->addMethod("newWallBoundary",&dgPerfectGasLaw2d::newWallBoundary);
-  cb->setConstructor(constructorPtr<dgPerfectGasLaw2d>);
+  //  cb->setConstructor(constructorPtr<dgPerfectGasLaw2d>);
+  cb->setConstructor(myConstructorPtr);
   cb->setParentClass<dgConservationLaw>();
 }
