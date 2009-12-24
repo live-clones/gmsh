@@ -20,6 +20,7 @@
 #if defined(HAVE_BLAS)
 
 extern "C" {
+  void F77NAME(daxpy)(int *n, double *alpha, double *x, int *incx, double *y, int *incy);
   void F77NAME(dgemm)(const char *transa, const char *transb, int *m, int *n, int *k, 
                       double *alpha, double *a, int *lda, 
                       double *b, int *ldb, double *beta, 
@@ -36,22 +37,17 @@ extern "C" {
                       std::complex<double> *alpha, std::complex<double> *a, int *lda, 
                       std::complex<double> *x, int *incx, std::complex<double> *beta, 
                       std::complex<double> *y, int *incy);
-  void F77NAME(daxpy)(int *n, double *alpha, double *x, int *incx, double *y, int *incy );
-
-
 }
 
 template<> 
 void fullVector<double>::axpy(fullVector<double> &x,double alpha)
 {
-  //  for (int i=0;i<_r;i++) _data[i] += alpha * x._data[i];
-  //  return;
   int M = _r, INCX = 1, INCY = 1;
   F77NAME(daxpy)(&M, &alpha, x._data,&INCX, _data, &INCY);
 }
 
 template<> 
-void fullMatrix<double>::mult(const fullMatrix<double> &b, fullMatrix<double> &c)const
+void fullMatrix<double>::mult(const fullMatrix<double> &b, fullMatrix<double> &c) const
 {
   int M = c.size1(), N = c.size2(), K = _c;
   int LDA = _r, LDB = b.size1(), LDC = c.size1();
@@ -62,7 +58,7 @@ void fullMatrix<double>::mult(const fullMatrix<double> &b, fullMatrix<double> &c
 
 template<> 
 void fullMatrix<std::complex<double> >::mult(const fullMatrix<std::complex<double> > &b, 
-                                             fullMatrix<std::complex<double> > &c)const
+                                             fullMatrix<std::complex<double> > &c) const
 {
   int M = c.size1(), N = c.size2(), K = _c;
   int LDA = _r, LDB = b.size1(), LDC = c.size1();
@@ -294,13 +290,13 @@ bool fullMatrix<double>::svd(fullMatrix<double> &V, fullVector<double> &S)
 #include "Bindings.h"
 
 template<>
-void fullMatrix<double>::registerBindings(binding *b){
+void fullMatrix<double>::registerBindings(binding *b)
+{
   classBinding *cb = b->addClass<fullMatrix<double> >("fullMatrix");
-  methodBinding *cm;
-  cb->addMethod("size1",&fullMatrix<double>::size1);
-  cb->addMethod("size2",&fullMatrix<double>::size2);
-  cb->addMethod("get",&fullMatrix<double>::get);
-  cb->addMethod("set",&fullMatrix<double>::set);
-  cb->addMethod("gemm",&fullMatrix<double>::gemm);
+  cb->addMethod("size1", &fullMatrix<double>::size1);
+  cb->addMethod("size2", &fullMatrix<double>::size2);
+  cb->addMethod("get", &fullMatrix<double>::get);
+  cb->addMethod("set", &fullMatrix<double>::set);
+  cb->addMethod("gemm", &fullMatrix<double>::gemm);
   cb->setConstructor<fullMatrix<double>,int,int>();
 }

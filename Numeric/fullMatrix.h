@@ -22,7 +22,6 @@ class fullVector
   scalar *_data;
   friend class fullMatrix<scalar>;
  public:
-
   fullVector(int r) : _r(r)
   {
     _data = new scalar[_r];
@@ -35,19 +34,16 @@ class fullVector
     for(int i = 0; i < _r; ++i) _data[i] = other._data[i];
   }
   ~fullVector() { if(_data) delete [] _data; }
-
   bool resize(int r)
   { 
-    if ((_r<r))
-    {
+    if (_r < r){
       if (_data) delete[] _data;
-      _r=r;
+      _r = r;
       _data = new scalar[_r];
       return true;
     }
     return false;
   }
-
   inline scalar operator () (int i) const
   {
     return _data[i];
@@ -76,11 +72,10 @@ class fullVector
     for(int i = 0; i < _r; ++i) s += _data[i] * other._data[i];
     return s;
   }
-  // y <- y + alpha * x
   void axpy(fullVector<scalar> &x, scalar alpha=1.)
 #if !defined(HAVE_BLAS)
   {
-    for (int i=0;i<_r;i++) _data[i] += alpha * x._data[i];
+    for (int i = 0; i < _r; i++) _data[i] += alpha * x._data[i];
   }
 #endif
   ;
@@ -103,19 +98,17 @@ class fullMatrix
   int _r, _c;
   scalar *_data;
  public:
-  inline scalar get (int r, int c)const {
-    return (*this)(r,c);
-  }
-  inline void set(int r, int c, scalar v){
-    (*this)(r,c)=v;
-  }
-  fullMatrix(scalar *original, int r, int c){
+  inline scalar get(int r, int c) const { return (*this)(r, c); }
+  inline void set(int r, int c, scalar v){ (*this)(r, c) = v; }
+  fullMatrix(scalar *original, int r, int c)
+  {
     _r = r;
     _c = c;
     _own_data = false;
     _data = original;
   }
-  fullMatrix(fullMatrix<scalar> &original, int c_start, int c){
+  fullMatrix(fullMatrix<scalar> &original, int c_start, int c)
+  {
     _c = c;
     _r = original._r;
     _own_data = false;
@@ -127,7 +120,8 @@ class fullMatrix
     _own_data = true;
     scale(0.);
   }
-  fullMatrix(int r, int c, double *data) : _r(r), _c(c), _data(data),_own_data(false)
+  fullMatrix(int r, int c, double *data)
+    : _r(r), _c(c), _data(data), _own_data(false)
   {
     scale(0.);
   }
@@ -139,25 +133,24 @@ class fullMatrix
   }
   fullMatrix() : _own_data(false),_r(0), _c(0), _data(0) {}
   ~fullMatrix() { if(_data && _own_data) delete [] _data; }
-
   bool resize(int r, int c) // data will be owned (same as constructor)
   {
-    if ((r*c>_r*_c)||(!_own_data))
-    {
-      _r=r;_c=c;
-      if ((_own_data)&&(_data)) delete[] _data;
+    if ((r * c > _r * _c) || !_own_data){
+      _r = r;
+      _c = c;
+      if (_own_data && _data) delete[] _data;
       _data = new scalar[_r * _c];
       _own_data = true;
       return true;
     }
-    else
-    {
-      _r=r;_c=c;
+    else{
+      _r = r;
+      _c = c;
     }
     return false; // no reallocation
   }
-
-  void setAsProxy(fullMatrix<scalar> &original, int c_start, int c) {
+  void setAsProxy(fullMatrix<scalar> &original, int c_start, int c)
+  {
     if(_data && _own_data)
       delete [] _data;
     _c = c;
@@ -173,10 +166,9 @@ class fullMatrix
       _r = other._r; 
       _c = other._c;
       if (_data && _own_data) delete[] _data;
-      if ((_r==0)||(_c==0))
+      if ((_r == 0) || (_c == 0))
         _data=0;
-      else
-      {
+      else{
         _data = new scalar[_r * _c];
         _own_data=true;
         for(int i = 0; i < _r * _c; ++i) _data[i] = other._data[i];
@@ -243,14 +235,12 @@ class fullMatrix
       for(int j = 0; j < size2(); j++)
         (*this)(i, j) += m(i, j);
   }
-  
-inline void add(const fullMatrix<scalar> &m, const double &a) 
+  inline void add(const fullMatrix<scalar> &m, const double &a) 
   {
     for(int i = 0; i < size1(); i++)
       for(int j = 0; j < size2(); j++)
         (*this)(i, j) += a*m(i, j);
   }
-  
   void mult(const fullVector<scalar> &x, fullVector<scalar> &y)
 #if !defined(HAVE_BLAS)
   {
