@@ -442,6 +442,10 @@ class GModel
   void load(std::string fileName);
 
   static void registerBindings(binding *b);
+
+  void storeElementsInEntities(std::map<int, std::vector<MElement*> > &map){
+    _storeElementsInEntities(map);
+  }
 };
 
 #endif

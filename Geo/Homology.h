@@ -78,6 +78,17 @@ class Homology
    return domainString;
    }
    
+   int writeHeaderMSH(const std::string &name){  
+       FILE *fp = fopen(name.c_str(), "w");
+       if(!fp){
+         Msg::Error("Unable to open file '%s'", name.c_str());
+             printf("Unable to open file.");
+             return 0;
+       }
+     fprintf(fp, "$MeshFormat\n2.1 0 8\n$EndMeshFormat\n");
+     fclose(fp);
+     return 1;
+   }
 };
 
 #endif

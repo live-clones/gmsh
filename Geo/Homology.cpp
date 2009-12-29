@@ -9,8 +9,6 @@
 #include "Homology.h"
 #include "ChainComplex.h"
 #include "OS.h"
-#include "PView.h"
-#include "PViewDataGModel.h"
 
 #if defined(HAVE_KBIPACK)
 Homology::Homology(GModel* model, std::vector<int> physicalDomain, std::vector<int> physicalSubdomain){
@@ -127,7 +125,7 @@ void Homology::findGenerators(std::string fileName){
       convert(i, generator);
       
       std::string name = "H" + dimension + getDomainString()  + generator;
-      Chain* chain = new Chain(_cellComplex->getCells(j), chains->getCoeffVector(j,i), _cellComplex, name, chains->getTorsion(j,i));
+      Chain* chain = new Chain(_cellComplex->getCells(j), chains->getCoeffVector(j,i), _cellComplex, _model, name, chains->getTorsion(j,i));
       //Chain* chain2 = new Chain(chain);
       //printf("chain %d \n", i);
       t1 = Cpu();
@@ -149,7 +147,7 @@ void Homology::findGenerators(std::string fileName){
         convert(i+1, generator);
         std::string name = "H" + dimension + getDomainString() + generator;
         std::vector<int> coeffs (_cellComplex->getOmitted(i).size(),1);
-        Chain* chain = new Chain(_cellComplex->getOmitted(i), coeffs, _cellComplex, name, 1);
+        Chain* chain = new Chain(_cellComplex->getOmitted(i), coeffs, _cellComplex, _model, name, 1);
         if(chain->getSize() != 0) HRank[j] = HRank[j] + 1;
         //delete chain;
         chainVector.push_back(chain);
@@ -160,9 +158,11 @@ void Homology::findGenerators(std::string fileName){
   }
   
   _cellComplex->writeComplexMSH(fileName);
+  //writeHeaderMSH(fileName);
   for(int i = 0; i < chainVector.size(); i++){
     Chain* chain = chainVector.at(i);
     chain->writeChainMSH(fileName);
+    chain->createPView();
     chainVector.at(i) = NULL;
     delete chain;
   }
@@ -251,8 +251,9 @@ void Homology::findDualGenerators(std::string fileName){
       convert(i, generator);
       
       std::string name = "H" + dimension + "*" + getDomainString() + generator;
-      Chain* chain = new Chain(_cellComplex->getCells(j), chains->getCoeffVector(j,i), _cellComplex, name, chains->getTorsion(j,i));
+      Chain* chain = new Chain(_cellComplex->getCells(j), chains->getCoeffVector(j,i), _cellComplex, _model, name, chains->getTorsion(j,i));
       chain->writeChainMSH(fileName);
+      chain->createPView();
       if(chain->getSize() != 0){
         HRank[dim-j] = HRank[dim-j] + 1;
         if(chain->getTorsion() != 1) Msg::Warning("H%d* %d has torsion coefficient %d!", dim-j, i, chain->getTorsion());
@@ -268,7 +269,7 @@ void Homology::findDualGenerators(std::string fileName){
         convert(i+1, generator);
         std::string name = "H" + dimension + "*" + getDomainString() + generator;
         std::vector<int> coeffs (_cellComplex->getOmitted(i).size(),1);
-        Chain* chain = new Chain(_cellComplex->getOmitted(i), coeffs, _cellComplex, name, 1);
+        Chain* chain = new Chain(_cellComplex->getOmitted(i), coeffs, _cellComplex, _model, name, 1);
         chain->writeChainMSH(fileName);
         if(chain->getSize() != 0) HRank[dim-j] = HRank[dim-j] + 1;
         delete chain;

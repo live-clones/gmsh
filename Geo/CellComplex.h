@@ -40,7 +40,7 @@ class Less_Cell{
    bool operator()(const Cell* c1, const Cell* c2) const;
 };
 
-// Abstract class representing an elemtary cell of a cell complex.
+// Abstract class representing an elementary cell of a cell complex.
 class Cell
 {  
   protected:
@@ -93,6 +93,9 @@ class Cell
    virtual int getIndex() const { return _index; };
    virtual void setIndex(int index) { _index = index; };
    virtual int getNum() { return -1; }
+   virtual int getType() { return -1; }
+   virtual int getTypeForMSH() { return -1; }
+   virtual int getPartition() { return -1; }
    virtual void setImmune(bool immune) { _immune = immune; };
    virtual bool getImmune() const { return _immune; };
    
@@ -354,6 +357,9 @@ class ZeroSimplex : public Simplex, public MPoint
    
    int getDim() const { return 0; }
    int getNum() { return MPoint::getNum(); }
+   int getType() { return MPoint::getType(); }
+   int getTypeForMSH() { return MPoint::getTypeForMSH(); }
+   int getPartition() { return MPoint::getPartition(); }
    int getNumVertices() const { return 1; }
    MVertex* getVertex(int vertex) const {return _v[0]; }
    int getSortedVertex(int vertex) const {return _v[0]->getNum(); }
@@ -389,6 +395,9 @@ class OneSimplex : public Simplex, public MLine
    
    int getDim() const { return 1; }
    int getNum() { return MLine::getNum(); }
+   int getType() { return MLine::getType(); }
+   int getTypeForMSH() { return MLine::getTypeForMSH(); }
+   int getPartition() { return MLine::getPartition(); }
    int getNumVertices() const { return 2; }
    int getNumFacets() const {  return 2; }
    MVertex* getVertex(int vertex) const {return _v[vertex]; }
@@ -435,6 +444,9 @@ class TwoSimplex : public Simplex, public MTriangle
    
    int getDim() const { return 2; }
    int getNum() { return MTriangle::getNum(); }
+   int getType() { return MTriangle::getType(); }
+   int getTypeForMSH() { return MTriangle::getTypeForMSH(); }
+   int getPartition() { return MTriangle::getPartition(); }
    int getNumVertices() const { return 3; }
    int getNumFacets() const { return 3; }
    MVertex* getVertex(int vertex) const {return _v[vertex]; }
@@ -480,6 +492,9 @@ class CQuadrangle : public Cell, public MQuadrangle
    
    int getDim() const { return 2; }
    int getNum() { return MQuadrangle::getNum(); }
+   int getType() { return MQuadrangle::getType(); }
+   int getTypeForMSH() { return MQuadrangle::getTypeForMSH(); }
+   int getPartition() { return MQuadrangle::getPartition(); }
    int getNumVertices() const { return 4; }
    int getNumFacets() const { return 4; }
    MVertex* getVertex(int vertex) const {return _v[vertex]; }
@@ -527,6 +542,9 @@ class ThreeSimplex : public Simplex, public MTetrahedron
    
    int getDim() const { return 3; }
    int getNum() { return MTetrahedron::getNum(); }
+   int getType() { return MTetrahedron::getType(); }
+   int getTypeForMSH() { return MTetrahedron::getTypeForMSH(); }
+   int getPartition() { return MTetrahedron::getPartition(); }
    int getNumVertices() const { return 4; }
    int getNumFacets() const { return 4; }
    MVertex* getVertex(int vertex) const {return _v[vertex]; }
@@ -573,6 +591,9 @@ class CHexahedron : public Cell, public MHexahedron
    
    int getDim() const { return 3; }
    int getNum() { return MHexahedron::getNum(); }
+   int getType() { return MHexahedron::getType(); }
+   int getTypeForMSH() { return MHexahedron::getTypeForMSH(); }
+   int getPartition() { return MHexahedron::getPartition(); }
    int getNumVertices() const { return 8; }
    int getNumFacets() const { return 6; }
    MVertex* getVertex(int vertex) const {return _v[vertex]; }
@@ -619,6 +640,9 @@ class CPrism : public Cell, public MPrism
    
    int getDim() const { return 3; }
    int getNum() { return MPrism::getNum(); }
+   int getType() { return MPrism::getType(); }
+   int getTypeForMSH() { return MPrism::getTypeForMSH(); }
+   int getPartition() { return MPrism::getPartition(); }
    int getNumVertices() const { return 6; }
    int getNumFacets() const { return 5; }
    MVertex* getVertex(int vertex) const {return _v[vertex]; }
@@ -664,6 +688,9 @@ class CPyramid : public Cell, public MPyramid
    
    int getDim() const { return 3; }
    int getNum() { return MPyramid::getNum(); }
+   int getType() { return MPyramid::getType(); }
+   int getTypeForMSH() { return MPyramid::getTypeForMSH(); }
+   int getPartition() { return MPyramid::getPartition(); }
    int getNumVertices() const { return 5; }
    int getNumFacets() const { return 5; }
    MVertex* getVertex(int vertex) const {return _v[vertex]; }

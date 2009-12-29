@@ -141,6 +141,7 @@ class Chain{
    std::string _name;
    // cell complex this chain belongs to
    CellComplex* _cellComplex;
+   GModel* _model;
    
    // torsion coefficient
    int _torsion;
@@ -157,13 +158,15 @@ class Chain{
    
   public:
    Chain(){}
-   Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, CellComplex* cellComplex, std::string name="Chain", int torsion=0);
+   Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, CellComplex* cellComplex, GModel* model,
+         std::string name="Chain", int torsion=0);
    Chain(Chain* chain){ 
      _cells = chain->getCells();
      _torsion = chain->getTorsion();
      _name = chain->getName();
      _cellComplex = chain->getCellComplex();
      _dim = chain->getDim();
+     _model = chain->getGModel();
    }
    ~Chain(){}
    
@@ -175,7 +178,7 @@ class Chain{
    //int getCoeff(int i) { return _cells.at(i).second; }
    
    
-   
+   // remove a cell from this chain
    void removeCell(Cell* cell) {
      citer it = _cells.find(cell);
      if(it != _cells.end()){
@@ -183,6 +186,8 @@ class Chain{
      }
      return;
    }
+   
+   // add a cell to this chain
    void addCell(Cell* cell, int coeff) {
      std::pair<citer,bool> insert = _cells.insert( std::make_pair( cell, coeff));
      if(!insert.second && (*insert.first).second == 0) (*insert.first).second = coeff; 
@@ -193,26 +198,12 @@ class Chain{
      }
      return;
    }
-   /*
-   void insertCells(){
-     for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
-       Cell* cell = (*cit).first;
-       std::vector<Cell*> cells;
-       if(!_cellComplex->hasCell(cell)){
-         _cellComplex->insertCell(cell);
-       }
-       
-     }
-     return;
-   }
-   */
-   
+
    bool hasCell(Cell* c){
      citer it = _cells.find(c);
      if(it != _cells.end() && (*it).second != 0) return true;
      return false;
-   }
-   
+   }   
    Cell* findCell(Cell* c){
      citer it = _cells.find(c);
      if(it != _cells.end() && (*it).second != 0) return (*it).first;
@@ -225,13 +216,13 @@ class Chain{
    }
      
    
-   
-   
    int getTorsion() {return _torsion;}
    int getDim() {return _dim;}
    CellComplex* getCellComplex() {return _cellComplex;}
+   GModel* getGModel() {return _model;}
    std::map<Cell*, int, Less_Cell>  getCells() {return _cells;}
    
+   // erase cells from the chain with zero coefficient
    void eraseNullCells(){
      for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
        if( (*cit).second == 0){
@@ -250,6 +241,7 @@ class Chain{
      return;
    }
    
+   
    void deImmuneCells(){
      for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
        Cell* cell = (*cit).first;
@@ -262,29 +254,26 @@ class Chain{
      //eraseNullCells();
      return _cells.size();
    }
-   
    int getNumCells() {
-     //int count = 0;
-     //for(std::vector< std::pair <Cell*, int> >::iterator it = _cells.begin(); it != _cells.end(); it++){
-     //  Cell* cell = (*it).first;
-     //  count = count + cell->getNumCells();
-     //}
-     //return count;
      return _cells.size();
    }
-   
    
    // get/set chain name
    std::string getName() { return _name; }
    void setName(std::string name) { _name=name; }
 
+   // make local deformations to the chain to make it smoother and smaller
+   // (for primary complex chains only, not for dual chains represented by primary cells (yet).)
    void smoothenChain();
    
    // append this chain to a 2.1 MSH ASCII file as $ElementData
    int writeChainMSH(const std::string &name);
+
+   // create a PView of this chain.
+   // Warning: saving the PView in the GUI changes the numbering of the mesh, 
+   // but NOT the numbering of the post-processing ElementData accordingly! (See Post/PViewDataGModelIO.cpp writeMSH)
+   void createPView();
    
-   //void getData(std::map<int, std::vector<double> >& data);
-     
 };
    
 #endif

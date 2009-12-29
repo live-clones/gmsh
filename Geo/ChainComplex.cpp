@@ -7,6 +7,7 @@
 
 #include "ChainComplex.h"
 #include "OS.h"
+#include "PView.h"
 
 #if defined(HAVE_KBIPACK)
 
@@ -455,7 +456,7 @@ int ChainComplex::getTorsion(int dim, int chainNumber){
   
 }
 
-Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, CellComplex* cellComplex, std::string name, int torsion){
+Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, CellComplex* cellComplex, GModel* model, std::string name, int torsion){
   
   int i = 0;
   for(std::set<Cell*, Less_Cell>::iterator cit = cells.begin(); cit != cells.end(); cit++){
@@ -478,6 +479,7 @@ Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, CellComp
   _name = name;
   _cellComplex = cellComplex;
   _torsion = torsion;
+  _model = model;
   
 }
 
@@ -821,7 +823,7 @@ void Chain::smoothenChain(){
     straightenChain(*cit);
   }
   
- 
+  eraseNullCells();
   double t2 = Cpu();
   printf("Smoothened a %d-chain from %d cells to %d cells (%g s).\n", getDim(), start, getSize(), t2-t1);
   return;
@@ -875,39 +877,32 @@ int Chain::writeChainMSH(const std::string &name){
   
 }
 
-/*
-void Chain::getData(std::map<int, std::vector<double> > & data){
+void Chain::createPView(){
   
-  if(getSize() == 0) return;
+  std::vector<MElement*> elements;
+  MElementFactory factory;
+
+  std::map<int, std::vector<double> > data;
   
-  //std::list< std::pair<int, Cell*> > cells;
-  for(int i = 0; i < getSize(); i++){
-    Cell* cell = getCell(i);
-    /*
-    cells = cell->getCells();
-    for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
-      Cell* cell2 = (*it).second;
-      std::vector<double> coeff;
-      coeff.push_back(getCoeff(i)*(*it).first);
-      std::pair<int, std::vector<double> >  dataPair = std::make_pair(cell2->getTag(), coeff);
-      data.insert(dataPair);
-      //printf("%d, %d, \n", cell2->getNum(), (int)coeff.at(0));
-      
-    }
+  for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
+    Cell* cell = (*cit).first;
+    int coeff = (*cit).second;
+    std::vector<MVertex*> v = cell->getVertexVector();
+    MElement *e = factory.create(cell->getTypeForMSH(), v, cell->getNum(), cell->getPartition());
+    elements.push_back(e);
     
-    std::vector<double> coeff;
-    coeff.push_back(getCoeff(i));
-    std::pair<int, std::vector<double> >  dataPair = std::make_pair(cell->getTag(), coeff);
-    data.insert(dataPair);
-    
+    std::vector<double> coeffs (1,coeff);
+    data.insert(std::make_pair(e->getNum(), coeffs));
   }
   
-  //for(std::map<int, std::vector<double> >::iterator it = data.begin(); it != data.end(); it++){
-  //  printf("%d, %d, \n", (*it).first, (int)(*it).second.at(0));  
-  //}
+  std::map<int, std::vector<MElement*> > map;
+  map.insert(std::make_pair(0, elements));
+  _model->storeElementsInEntities(map);
+
+  if(!data.empty()) PView *chain = new PView(getName(), "ElementData", getGModel(), data, 0, 1);
   
-  return; 
+  return;
 }
-*/
+
 
 #endif
