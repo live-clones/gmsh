@@ -935,6 +935,9 @@ int CellComplex::writeComplexMSH(const std::string &name){
   
   fprintf(fp, "%d\n", count);
 
+  int type = -1;
+  int physical = 0;
+  int elementary = 0;
   int partition = 0;
   
   for(citer cit = firstCell(0); cit != lastCell(0); cit++) {
@@ -942,7 +945,9 @@ int CellComplex::writeComplexMSH(const std::string &name){
     if(vertex->inSubdomain()) partition = 3;
     else if(vertex->onDomainBoundary()) partition = 2;
     else partition = 1;
-    fprintf(fp, "%d %d %d %d %d %d %d\n", vertex->getNum(), 15, 3, 0, 0, partition, vertex->getVertex(0)->getNum());
+    type = vertex->getTypeForMSH();
+    //vertex->writeMSH(fp, 2.1, false, 0, elementary, physical);
+    fprintf(fp, "%d %d %d %d %d %d %d\n", vertex->getNum(), type, 3, physical, elementary, partition, vertex->getVertex(0)->getNum());
   }
   
   std::list< std::pair<int, Cell*> > cells;
@@ -954,7 +959,9 @@ int CellComplex::writeComplexMSH(const std::string &name){
     cells = edge->getCells();
     for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
       Cell* cell = (*it).second;
-      fprintf(fp, "%d %d %d %d %d %d %d %d\n", cell->getNum(), 1, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum());
+      type = cell->getTypeForMSH();
+      //cell->writeMSH(fp, 2.1, false, 0, elementary, physical);
+      fprintf(fp, "%d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum());
     }
   }
   
@@ -966,8 +973,9 @@ int CellComplex::writeComplexMSH(const std::string &name){
     cells = face->getCells();
     for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
       Cell* cell = (*it).second;
-      if(cell->getNumVertices() == 3) fprintf(fp, "%d %d %d %d %d %d %d %d %d\n", cell->getNum(), 2, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum());
-      else if (cell->getNumVertices() == 4)  fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), 3, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
+      type = cell->getTypeForMSH();
+      if(cell->getNumVertices() == 3) fprintf(fp, "%d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum());
+      else if (cell->getNumVertices() == 4)  fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
     }
   }
   for(citer cit = firstCell(3); cit != lastCell(3); cit++) {
@@ -978,50 +986,53 @@ int CellComplex::writeComplexMSH(const std::string &name){
     cells = volume->getCells();
     for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
       Cell* cell = (*it).second;
-      if(cell->getNumVertices() == 4) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), 4, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
-      if(cell->getNumVertices() == 8) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), 12, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(), cell->getVertex(4)->getNum(), cell->getVertex(5)->getNum(), cell->getVertex(6)->getNum(), cell->getVertex(7)->getNum() );
-      if(cell->getNumVertices() == 6) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), 13, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(),cell->getVertex(4)->getNum(), cell->getVertex(5)->getNum());
-      if(cell->getNumVertices() == 5) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), 14, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(), cell->getVertex(4)->getNum());      
+      type = cell->getTypeForMSH();
+      if(cell->getNumVertices() == 4) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
+      if(cell->getNumVertices() == 8) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(), cell->getVertex(4)->getNum(), cell->getVertex(5)->getNum(), cell->getVertex(6)->getNum(), cell->getVertex(7)->getNum() );
+      if(cell->getNumVertices() == 6) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(),cell->getVertex(4)->getNum(), cell->getVertex(5)->getNum());
+      if(cell->getNumVertices() == 5) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(), cell->getVertex(4)->getNum());      
     }
   }
   
   for(int i = 0; i < _store.size(); i++){
     for(citer cit = _store.at(i).begin(); cit != _store.at(i).end(); cit++){
       Cell* cell = *cit;
+      type = cell->getTypeForMSH();
       if(cell->inSubdomain()) partition = 3;
       else if(cell->onDomainBoundary()) partition = 2;
       else partition = 1;
-      if(cell->getDim() == 0) fprintf(fp, "%d %d %d %d %d %d %d\n", cell->getNum(), 15, 3, 0, 0, partition, cell->getVertex(0)->getNum());
-      if(cell->getDim() == 1) fprintf(fp, "%d %d %d %d %d %d %d %d\n", cell->getNum(), 1, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum());
+      if(cell->getDim() == 0) fprintf(fp, "%d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum());
+      if(cell->getDim() == 1) fprintf(fp, "%d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum());
       if(cell->getDim() == 2){
-        if(cell->getNumVertices() == 3) fprintf(fp, "%d %d %d %d %d %d %d %d %d\n", cell->getNum(), 2, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum());
-        else if (cell->getNumVertices() == 4)  fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), 3, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
+        if(cell->getNumVertices() == 3) fprintf(fp, "%d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum());
+        else if (cell->getNumVertices() == 4)  fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
       }
       if(cell->getDim() == 3){
-        if(cell->getNumVertices() == 4) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), 4, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
-        if(cell->getNumVertices() == 8) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), 12, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(), cell->getVertex(4)->getNum(), cell->getVertex(5)->getNum(), cell->getVertex(6)->getNum(), cell->getVertex(7)->getNum() );
-        if(cell->getNumVertices() == 6) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), 13, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(),cell->getVertex(4)->getNum(), cell->getVertex(5)->getNum());
-        if(cell->getNumVertices() == 5) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), 14, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(), cell->getVertex(4)->getNum());
+        if(cell->getNumVertices() == 4) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
+        if(cell->getNumVertices() == 8) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(), cell->getVertex(4)->getNum(), cell->getVertex(5)->getNum(), cell->getVertex(6)->getNum(), cell->getVertex(7)->getNum() );
+        if(cell->getNumVertices() == 6) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(),cell->getVertex(4)->getNum(), cell->getVertex(5)->getNum());
+        if(cell->getNumVertices() == 5) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(), cell->getVertex(4)->getNum());
       }  
     }
   }
   
   for(citer cit = _ecells.begin(); cit != _ecells.end(); cit++){
     Cell* cell = *cit;
+    type = cell->getTypeForMSH();
     if(cell->inSubdomain()) partition = 3;
     else if(cell->onDomainBoundary()) partition = 2;
     else partition = 1;
-    if(cell->getDim() == 0) fprintf(fp, "%d %d %d %d %d %d %d\n", cell->getNum(), 15, 3, 0, 0, partition, cell->getVertex(0)->getNum());
-    if(cell->getDim() == 1) fprintf(fp, "%d %d %d %d %d %d %d %d\n", cell->getNum(), 1, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum());
+    if(cell->getDim() == 0) fprintf(fp, "%d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum());
+    if(cell->getDim() == 1) fprintf(fp, "%d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum());
     if(cell->getDim() == 2){
-      if(cell->getNumVertices() == 3) fprintf(fp, "%d %d %d %d %d %d %d %d %d\n", cell->getNum(), 2, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum());
-      else if (cell->getNumVertices() == 4)  fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), 3, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
+      if(cell->getNumVertices() == 3) fprintf(fp, "%d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum());
+      else if (cell->getNumVertices() == 4)  fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
     }
     if(cell->getDim() == 3){
-      if(cell->getNumVertices() == 4) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), 4, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
-      if(cell->getNumVertices() == 8) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), 12, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(), cell->getVertex(4)->getNum(), cell->getVertex(5)->getNum(), cell->getVertex(6)->getNum(), cell->getVertex(7)->getNum() );
-      if(cell->getNumVertices() == 6) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), 13, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(),cell->getVertex(4)->getNum(), cell->getVertex(5)->getNum());
-      if(cell->getNumVertices() == 5) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), 14, 3, 0, 0, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(), cell->getVertex(4)->getNum());
+      if(cell->getNumVertices() == 4) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
+      if(cell->getNumVertices() == 8) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(), cell->getVertex(4)->getNum(), cell->getVertex(5)->getNum(), cell->getVertex(6)->getNum(), cell->getVertex(7)->getNum() );
+      if(cell->getNumVertices() == 6) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(),cell->getVertex(4)->getNum(), cell->getVertex(5)->getNum());
+      if(cell->getNumVertices() == 5) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(), cell->getVertex(4)->getNum());
     }  
   }
   

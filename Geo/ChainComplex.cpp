@@ -834,7 +834,7 @@ int Chain::writeChainMSH(const std::string &name){
   
   //_cellComplex->writeComplexMSH(name);
   
-  if(getSize() == 0) return 0;
+  if(getSize() == 0) return 1;
   
   FILE *fp = fopen(name.c_str(), "a");
   if(!fp){
@@ -855,26 +855,16 @@ int Chain::writeChainMSH(const std::string &name){
   fprintf(fp, "%d \n", getSize());
   fprintf(fp, "0 \n");
   
-  //std::list< std::pair<int, Cell*> > cells;
   for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
     Cell* cell = (*cit).first;
     int coeff = (*cit).second;
     fprintf(fp, "%d %d \n", cell->getNum(), coeff );
-    /*
-    cells = cell->getCells();    
-    for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
-      Cell* cell2 = (*it).second;
-     fprintf(fp, "%d %d \n", cell2->getNum(), getCoeff(i)*(*it).first );
-    }
-    */
   }
   
   fprintf(fp, "$EndElementData\n");
-  
   fclose(fp);
   
   return 1;
-  
 }
 
 void Chain::createPView(){

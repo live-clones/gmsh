@@ -96,6 +96,7 @@ class Cell
    virtual int getType() { return -1; }
    virtual int getTypeForMSH() { return -1; }
    virtual int getPartition() { return -1; }
+   virtual void setPartition(int num){}
    virtual void setImmune(bool immune) { _immune = immune; };
    virtual bool getImmune() const { return _immune; };
    
@@ -327,6 +328,7 @@ class Cell
    // checks whether lower dimensional simplex tau is on the boundary of this cell
    virtual int kappa(Cell* tau) const;
    
+   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false,  int num=0, int elementary=1, int physical=1, int parentNum=0) {}
 };
 
 
@@ -418,6 +420,7 @@ class OneSimplex : public Simplex, public MLine
    int kappa(Cell* tau) const;
    
    void printCell() const { printf("Cell dimension: %d, Vertices: %d %d, in subdomain: %d \n", getDim(), _v[0]->getNum(), _v[1]->getNum(), _inSubdomain); }
+   
 };
 
 // Two simplex cell type.

@@ -266,12 +266,10 @@ class Chain{
    // (for primary complex chains only, not for dual chains represented by primary cells (yet).)
    void smoothenChain();
    
-   // append this chain to a 2.1 MSH ASCII file as $ElementData
+   // append this chain to a MSH ASCII file as $ElementData
    int writeChainMSH(const std::string &name);
 
    // create a PView of this chain.
-   // Warning: saving the PView in the GUI changes the numbering of the mesh, 
-   // but NOT the numbering of the post-processing ElementData accordingly! (See Post/PViewDataGModelIO.cpp writeMSH)
    void createPView();
    
 };

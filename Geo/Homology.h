@@ -10,6 +10,7 @@
 
 #include <sstream>
 #include "CellComplex.h"
+#include "ChainComplex.h"
 
 #if defined(HAVE_KBIPACK)
 
@@ -25,16 +26,30 @@ bool convert(const TTypeA& input, TTypeB& output ){
 class Homology
 {
   private:
+   
+   // base cell complex and the model of the homology computation
    CellComplex* _cellComplex;
    GModel* _model;
 
+   // domain and the relative subdomain of the homology computation
    std::vector<int> _domain;
    std::vector<int> _subdomain;
+
+   // generator chains
+   std::vector<Chain*> _generators[4];
    
   public:
    
    Homology(GModel* model, std::vector<int> physicalDomain, std::vector<int> physicalSubdomain);
-   ~Homology(){ delete _cellComplex; }
+   ~Homology(){ 
+     delete _cellComplex; 
+     for(int i = 0; i < 4; i++) {
+       for(int j = 0; j < _generators[i].size(); j++){
+         Chain* chain = _generators[i].at(j);
+         delete chain;
+       }
+     }
+   }
    
    // Find the generators/duals of homology spaces, or just compute the ranks of homology spaces
    void findGenerators(std::string fileName);
@@ -45,7 +60,10 @@ class Homology
    //void swapSubdomain() { _cellComplex->swapSubdomain(); }
    
    // Restore the cell complex to its original state before cell reductions
-   void restoreHomology() { _cellComplex->restoreComplex(); }
+   void restoreHomology() { 
+     _cellComplex->restoreComplex();
+     for(int i = 0; i < 4; i++) _generators[i].clear();
+   }
    
    // Create a string describing the generator
    std::string getDomainString() {
@@ -78,17 +96,31 @@ class Homology
    return domainString;
    }
    
-   int writeHeaderMSH(const std::string &name){  
-       FILE *fp = fopen(name.c_str(), "w");
-       if(!fp){
-         Msg::Error("Unable to open file '%s'", name.c_str());
-             printf("Unable to open file.");
-             return 0;
+   // create PViews of the generators
+   void createPViews(){
+     for(int i = 0; i < 4; i++){
+       for(int j = 0; j < _generators[i].size(); j++){
+         Chain* chain = _generators[i].at(j);
+         chain->createPView();
        }
-     fprintf(fp, "$MeshFormat\n2.1 0 8\n$EndMeshFormat\n");
-     fclose(fp);
-     return 1;
+     }
    }
+   
+   // write the generators to a file
+   bool writeGeneratorsMSH(std::string fileName, bool binary=false){
+     if(!_model->writeMSH(fileName, 2.0, binary, true, false, 1.0, false)) return false;
+     for(int i = 0; i < 4; i++){
+       for(int j = 0; j < _generators[i].size(); j++){
+         Chain* chain = _generators[i].at(j);
+         if(!chain->writeChainMSH(fileName)) return false;
+       }
+     }
+     Msg::Info("Wrote results to %s.", fileName.c_str());
+     printf("Wrote results to %s. \n", fileName.c_str());
+     
+     return true;
+   }
+   
 };
 
 #endif

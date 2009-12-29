@@ -74,8 +74,6 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain, std::vector<i
 
 void Homology::findGenerators(std::string fileName){
   
-  
-  
   Msg::Info("Reducing Cell Complex...");
   double t1 = Cpu();
   //_cellComplex->printEuler();
@@ -103,16 +101,12 @@ void Homology::findGenerators(std::string fileName){
 
   //for(int i = 0; i < 4; i++) { printf("Dim %d: \n", i); _cellComplex->printComplex(i); }
   
-  //_cellComplex->writeComplexMSH(fileName);
-  
   Msg::Info("Computing homology groups...");
   t1 = Cpu();
   ChainComplex* chains = new ChainComplex(_cellComplex);
   chains->computeHomology();
   t2 = Cpu();
   Msg::Info("Homology Computation complete (%g s).", t2 - t1);
-  
-  std::vector<Chain*> chainVector;
   
   int HRank[4];
   for(int j = 0; j < 4; j++){
@@ -126,8 +120,6 @@ void Homology::findGenerators(std::string fileName){
       
       std::string name = "H" + dimension + getDomainString()  + generator;
       Chain* chain = new Chain(_cellComplex->getCells(j), chains->getCoeffVector(j,i), _cellComplex, _model, name, chains->getTorsion(j,i));
-      //Chain* chain2 = new Chain(chain);
-      //printf("chain %d \n", i);
       t1 = Cpu();
       int start = chain->getSize();
       chain->smoothenChain();
@@ -137,9 +129,7 @@ void Homology::findGenerators(std::string fileName){
         HRank[j] = HRank[j] + 1;
         if(chain->getTorsion() != 1) Msg::Warning("H%d %d has torsion coefficient %d!", j, i, chain->getTorsion());
       }
-      chainVector.push_back(chain);
-      //chainVector.push_back(chain2);
-      //delete chain;
+      _generators[j].push_back(chain);
     }
     if(j == _cellComplex->getDim() && _cellComplex->getNumOmitted() > 0){
       for(int i = 0; i < _cellComplex->getNumOmitted(); i++){
@@ -149,25 +139,15 @@ void Homology::findGenerators(std::string fileName){
         std::vector<int> coeffs (_cellComplex->getOmitted(i).size(),1);
         Chain* chain = new Chain(_cellComplex->getOmitted(i), coeffs, _cellComplex, _model, name, 1);
         if(chain->getSize() != 0) HRank[j] = HRank[j] + 1;
-        //delete chain;
-        chainVector.push_back(chain);
+        _generators[j].push_back(chain);
       }
     }
     
     
   }
   
-  _cellComplex->writeComplexMSH(fileName);
-  //writeHeaderMSH(fileName);
-  for(int i = 0; i < chainVector.size(); i++){
-    Chain* chain = chainVector.at(i);
-    chain->writeChainMSH(fileName);
-    chain->createPView();
-    chainVector.at(i) = NULL;
-    delete chain;
-  }
-  chainVector.clear();
-  
+  createPViews();
+  writeGeneratorsMSH(fileName);
   
   Msg::Info("Ranks of homology groups for primal cell complex:");
   Msg::Info("H0 = %d", HRank[0]);
@@ -175,9 +155,6 @@ void Homology::findGenerators(std::string fileName){
   Msg::Info("H2 = %d", HRank[2]);
   Msg::Info("H3 = %d", HRank[3]);
   if(omitted != 0) Msg::Info("The computation of generators in %d highest dimensions was omitted.", omitted);
-  
-  Msg::Info("Wrote results to %s.", fileName.c_str());
-  printf("Wrote results to %s. \n", fileName.c_str());
   
   delete chains;
   
@@ -252,14 +229,11 @@ void Homology::findDualGenerators(std::string fileName){
       
       std::string name = "H" + dimension + "*" + getDomainString() + generator;
       Chain* chain = new Chain(_cellComplex->getCells(j), chains->getCoeffVector(j,i), _cellComplex, _model, name, chains->getTorsion(j,i));
-      chain->writeChainMSH(fileName);
-      chain->createPView();
+      _generators[dim-j].push_back(chain);
       if(chain->getSize() != 0){
         HRank[dim-j] = HRank[dim-j] + 1;
         if(chain->getTorsion() != 1) Msg::Warning("H%d* %d has torsion coefficient %d!", dim-j, i, chain->getTorsion());
-      }
-      delete chain;
-            
+      }     
     }
     
     
@@ -270,25 +244,23 @@ void Homology::findDualGenerators(std::string fileName){
         std::string name = "H" + dimension + "*" + getDomainString() + generator;
         std::vector<int> coeffs (_cellComplex->getOmitted(i).size(),1);
         Chain* chain = new Chain(_cellComplex->getOmitted(i), coeffs, _cellComplex, _model, name, 1);
-        chain->writeChainMSH(fileName);
+        _generators[dim-j].push_back(chain);
         if(chain->getSize() != 0) HRank[dim-j] = HRank[dim-j] + 1;
-        delete chain;
-        
       }
     }
     
     
   }
    
+  createPViews();
+  writeGeneratorsMSH(fileName);
+  
   Msg::Info("Ranks of homology groups for dual cell complex:");
   Msg::Info("H0* = %d", HRank[0]);
   Msg::Info("H1* = %d", HRank[1]);
   Msg::Info("H2* = %d", HRank[2]);
   Msg::Info("H3* = %d", HRank[3]);
   if(omitted != 0) Msg::Info("The computation of %d highest dimension dual generators was omitted.", omitted);
-  
-  Msg::Info("Wrote results to %s.", fileName.c_str());
-  printf("Wrote results to %s. \n", fileName.c_str());
   
   delete chains;
   

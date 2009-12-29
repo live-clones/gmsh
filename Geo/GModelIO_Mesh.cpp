@@ -529,36 +529,41 @@ static void writeElementHeaderMSH(bool binary, FILE *fp, std::map<int,int> &elem
 template<class T>
 static void writeElementsMSH(FILE *fp, T *ele, bool saveAll, 
                              double version, bool binary, int &num, int elementary, 
-                             std::vector<int> &physicals, int parentNum)
+                             std::vector<int> &physicals, int parentNum, bool eleRenumbering=true)
 {
-  if(saveAll)
-    ele->writeMSH(fp, version, binary, ++num, elementary, 0, parentNum);
-  else
-    for(unsigned int j = 0; j < physicals.size(); j++)
-      ele->writeMSH(fp, version, binary, ++num, elementary, physicals[j], parentNum);
+  if(saveAll){
+    if(eleRenumbering) ele->writeMSH(fp, version, binary, ++num, elementary, 0, parentNum);
+    else ele->writeMSH(fp, version, binary, 0, elementary, 0, parentNum);
+  }
+  else{
+    for(unsigned int j = 0; j < physicals.size(); j++){
+      if(eleRenumbering) ele->writeMSH(fp, version, binary, ++num, elementary, physicals[j], parentNum);
+      else ele->writeMSH(fp, version, binary, 0, elementary, physicals[j], parentNum);
+    }
+  }
 }
 
 template<class T>
 static void writeElementsMSH(FILE *fp, std::vector<T*> &ele, bool saveAll,
                              double version, bool binary, int &num, int elementary,
-                             std::vector<int> &physicals)
+                             std::vector<int> &physicals, bool eleRenumbering=true)
 {
   for(unsigned int i = 0; i < ele.size(); i++)
     writeElementsMSH(fp, ele[i], saveAll, version, binary, num,
-                     elementary, physicals, 0);
+                     elementary, physicals, 0, eleRenumbering);
 }
 
 template<class T>
 static void writeElementsMSH(FILE *fp, std::vector<T*> &ele, bool saveAll,
                              double version, bool binary, int &num, int elementary,
-                             std::vector<int> &physicals, std::map<MElement *, int> &parentsNum)
+                             std::vector<int> &physicals, std::map<MElement *, int> &parentsNum, bool eleRenumbering=true)
 {
   for(unsigned int i = 0; i < ele.size(); i++) {
     int parentNum = (ele[i]->getParent() != NULL &&
                      parentsNum.find(ele[i]->getParent()) != parentsNum.end()) ?
       parentsNum.find(ele[i]->getParent())->second : 0;
     writeElementsMSH(fp, ele[i], saveAll, version, binary, num,
-                     elementary, physicals, parentNum);
+                     elementary, physicals, parentNum, eleRenumbering);
   }
 }
 int GModel::writeDistanceMSH(const std::string &name, double version, bool binary,
@@ -653,7 +658,7 @@ int GModel::writeDistanceMSH(const std::string &name, double version, bool binar
 
 }
 int GModel::writeMSH(const std::string &name, double version, bool binary,
-                     bool saveAll, bool saveParametric, double scalingFactor)
+                     bool saveAll, bool saveParametric, double scalingFactor, bool eleRenumbering)
 {
   FILE *fp = fopen(name.c_str(), binary ? "wb" : "w");
   if(!fp){
@@ -789,99 +794,99 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   writeElementHeaderMSH(binary, fp, elements, MSH_PNT);
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     writeElementsMSH(fp, (*it)->points, saveAll, version, binary, num,
-                     (*it)->tag(), (*it)->physicals);
+                     (*it)->tag(), (*it)->physicals, eleRenumbering);
 
   writeElementHeaderMSH(binary, fp, elements, MSH_LIN_2, MSH_LIN_3, MSH_LIN_4,
                         MSH_LIN_5);
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
    writeElementsMSH(fp, (*it)->lines, saveAll, version, binary, num,
-                     (*it)->tag(), (*it)->physicals);
+                     (*it)->tag(), (*it)->physicals, eleRenumbering);
 
   writeElementHeaderMSH(binary, fp, elements, MSH_TRI_3, MSH_TRI_6, MSH_TRI_9,
                         MSH_TRI_10, MSH_TRI_12, MSH_TRI_15, MSH_TRI_15I, MSH_TRI_21);
   for(itP = parents[0].begin(); itP != parents[0].end(); itP++)
     if(itP->first->getType() == TYPE_TRI) {
       writeElementsMSH(fp, itP->first, saveAll, version, binary, num,
-                       itP->second->tag(), itP->second->physicals, 0);
+                       itP->second->tag(), itP->second->physicals, 0, eleRenumbering);
       parentsNum[itP->first] = num;
     }
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, (*it)->triangles, saveAll, version, binary, num,
-                     (*it)->tag(), (*it)->physicals);
+                     (*it)->tag(), (*it)->physicals, eleRenumbering);
   writeElementHeaderMSH(binary, fp, elements, MSH_QUA_4, MSH_QUA_9, MSH_QUA_8, 
                         MSH_QUA_16, MSH_QUA_25, MSH_QUA_36, MSH_QUA_12, MSH_QUA_16I,
                         MSH_QUA_20);
   for(itP = parents[0].begin(); itP != parents[0].end(); itP++)
     if(itP->first->getType() == TYPE_QUA) {
       writeElementsMSH(fp, itP->first, saveAll, version, binary, num,
-                       itP->second->tag(), itP->second->physicals, 0);
+                       itP->second->tag(), itP->second->physicals, 0, eleRenumbering);
       parentsNum[itP->first] = num;
     }
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, (*it)->quadrangles, saveAll, version, binary, num,
-                     (*it)->tag(), (*it)->physicals);
+                     (*it)->tag(), (*it)->physicals, eleRenumbering);
   writeElementHeaderMSH(binary, fp, elements, MSH_POLYG_);
   for(itP = parents[0].begin(); itP != parents[0].end(); itP++)
     if(itP->first->getType() == TYPE_POLYG) {
       writeElementsMSH(fp, itP->first, saveAll, version, binary, num,
-                       itP->second->tag(), itP->second->physicals, 0);
+                       itP->second->tag(), itP->second->physicals, 0, eleRenumbering);
       parentsNum[itP->first] = num;
     }
   for(fiter it = firstFace(); it != lastFace(); it++)
     writeElementsMSH(fp, (*it)->polygons, saveAll, version, binary, num,
-                     (*it)->tag(), (*it)->physicals, parentsNum);
+                     (*it)->tag(), (*it)->physicals, parentsNum, eleRenumbering);
 
   writeElementHeaderMSH(binary, fp, elements, MSH_TET_4, MSH_TET_10, MSH_TET_20, 
                         MSH_TET_35, MSH_TET_56, MSH_TET_52);
   for(itP = parents[1].begin(); itP != parents[1].end(); itP++)
     if(itP->first->getType() == TYPE_TET) {
       writeElementsMSH(fp, itP->first, saveAll, version, binary, num,
-                       itP->second->tag(), itP->second->physicals, 0);
+                       itP->second->tag(), itP->second->physicals, 0, eleRenumbering);
       parentsNum[itP->first] = num;
     }
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->tetrahedra, saveAll, version, binary, num,
-                     (*it)->tag(), (*it)->physicals);
+                     (*it)->tag(), (*it)->physicals, eleRenumbering);
   writeElementHeaderMSH(binary, fp, elements, MSH_HEX_8, MSH_HEX_27, MSH_HEX_20);
   for(itP = parents[1].begin(); itP != parents[1].end(); itP++)
     if(itP->first->getType() == TYPE_HEX) {
       writeElementsMSH(fp, itP->first, saveAll, version, binary, num,
-                       itP->second->tag(), itP->second->physicals, 0);
+                       itP->second->tag(), itP->second->physicals, 0, eleRenumbering);
       parentsNum[itP->first] = num;
     }
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->hexahedra, saveAll, version, binary, num,
-                     (*it)->tag(), (*it)->physicals);
+                     (*it)->tag(), (*it)->physicals, eleRenumbering);
   writeElementHeaderMSH(binary, fp, elements, MSH_PRI_6, MSH_PRI_18, MSH_PRI_15);
   for(itP = parents[1].begin(); itP != parents[1].end(); itP++)
     if(itP->first->getType() == TYPE_PRI) {
       writeElementsMSH(fp, itP->first, saveAll, version, binary, num,
-                       itP->second->tag(), itP->second->physicals, 0);
+                       itP->second->tag(), itP->second->physicals, 0, eleRenumbering);
       parentsNum[itP->first] = num;
     }
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->prisms, saveAll, version, binary, num,
-                     (*it)->tag(), (*it)->physicals);
+                     (*it)->tag(), (*it)->physicals, eleRenumbering);
   writeElementHeaderMSH(binary, fp, elements, MSH_PYR_5, MSH_PYR_14, MSH_PYR_13);
   for(itP = parents[1].begin(); itP != parents[1].end(); itP++)
     if(itP->first->getType() == TYPE_PYR) {
       writeElementsMSH(fp, itP->first, saveAll, version, binary, num,
-                       itP->second->tag(), itP->second->physicals, 0);
+                       itP->second->tag(), itP->second->physicals, 0, eleRenumbering);
       parentsNum[itP->first] = num;
     }
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->pyramids, saveAll, version, binary, num,
-                     (*it)->tag(), (*it)->physicals);
+                     (*it)->tag(), (*it)->physicals, eleRenumbering);
   writeElementHeaderMSH(binary, fp, elements, MSH_POLYH_);
   for(itP = parents[1].begin(); itP != parents[1].end(); itP++)
     if(itP->first->getType() == TYPE_POLYH) {
       writeElementsMSH(fp, itP->first, saveAll, version, binary, num,
-                       itP->second->tag(), itP->second->physicals, 0);
+                       itP->second->tag(), itP->second->physicals, 0, eleRenumbering);
       parentsNum[itP->first] = num;
     }
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->polyhedra, saveAll, version, binary, num,
-                     (*it)->tag(), (*it)->physicals, parentsNum);
+                     (*it)->tag(), (*it)->physicals, parentsNum, eleRenumbering);
   
   if(binary) fprintf(fp, "\n");
 
