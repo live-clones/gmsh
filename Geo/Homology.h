@@ -46,6 +46,7 @@ class Homology
      for(int i = 0; i < 4; i++) {
        for(int j = 0; j < _generators[i].size(); j++){
          Chain* chain = _generators[i].at(j);
+         //_model->deletePhysicalGroup(chain->getDim(), chain->getNum());
          delete chain;
        }
      }

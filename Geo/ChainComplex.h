@@ -139,6 +139,8 @@ class Chain{
    std::map< Cell*, int, Less_Cell > _cells;
    // name of the chain (optional)
    std::string _name;
+   // physical group number of the chain
+   int _num;
    // cell complex this chain belongs to
    CellComplex* _cellComplex;
    GModel* _model;
@@ -261,7 +263,10 @@ class Chain{
    // get/set chain name
    std::string getName() { return _name; }
    void setName(std::string name) { _name=name; }
-
+   // get/set physical group number
+   int getNum() { return _num; }
+   void setNum(int num) { _num=num; }
+   
    // make local deformations to the chain to make it smoother and smaller
    // (for primary complex chains only, not for dual chains represented by primary cells (yet).)
    void smoothenChain();
