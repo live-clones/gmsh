@@ -871,18 +871,22 @@ void Chain::createPView(){
   
   std::vector<MElement*> elements;
   MElementFactory factory;
-
   std::map<int, std::vector<double> > data;
   
   for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
     Cell* cell = (*cit).first;
     int coeff = (*cit).second;
     std::vector<MVertex*> v = cell->getVertexVector();
+    if(cell->getDim() > 0 && coeff == -1){ // flip orientation
+      MVertex* temp = v[0];
+      v[0] = v[1];
+      v[1] = temp;
+    }
     MElement *e = factory.create(cell->getTypeForMSH(), v, cell->getNum(), cell->getPartition());
     elements.push_back(e);
     
-    std::vector<double> coeffs (1,coeff);
-    data.insert(std::make_pair(e->getNum(), coeffs));
+    std::vector<double> coeffs (1,1);
+    data[e->getNum()] = coeffs;
   }
   
   int max[4];
@@ -903,6 +907,7 @@ void Chain::createPView(){
   _model->storeChain(getDim(), entityMap, physicalMap);
   _model->setPhysicalName(getName(), getDim(), physicalNum);
   
+  // only for visualization
   if(!data.empty()) PView *chain = new PView(getName(), "ElementData", getGModel(), data, 0, 1);
   
   return;

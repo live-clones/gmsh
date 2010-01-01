@@ -6,7 +6,10 @@
  *
  *********************************************************************/
  
-// Homology computation in Gmsh finds representatives of (relative) homology spaces using a mesh of a model. Those representatives generate the (relative) homology spaces of the model. Alternativelly, Gmsh can only look for the ranks of the (relative) homology spaces, the Betti numbers of the model. 
+// Homology computation in Gmsh finds representative chains of (relative) homology spaces using a mesh of a model. Those representatives generate the (relative) homology spaces of the model. Alternatively, Gmsh can only look for the ranks of the (relative) homology spaces, the Betti numbers of the model. 
+
+// The generators chains are stored in a given .msh-file as physical groups, whose mesh elements are oriented such that their coeffecients are 1 in the generator chain.
+
 
 // Create an example geometry
 
@@ -137,12 +140,11 @@ HomCut("t10_homcut.msh") = {{69}, {70, 71, 72, 73}};
 // Only find and print the ranks of the relative homology spaces (Betti numbers).
 HomRank {{69},{70, 71, 72, 73}};
 
-// Hide mesh elements
+// Hide mesh elements for instant visualization
 Mesh.Points = 0;
 Mesh.Lines = 0;
 Mesh.Triangles = 0;
 Mesh.Tetrahedra = 0; 
-
 
 // More examples (uncomment):
 //  HomGen("t10_homgen.msh_1") = {{69}, {}}; 
