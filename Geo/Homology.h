@@ -108,7 +108,7 @@ class Homology
    
    // write the generators to a file
    bool writeGeneratorsMSH(std::string fileName, bool binary=false){
-     if(!_model->writeMSH(fileName, 2.0, binary, true, false, 1.0, false)) return false;
+     if(!_model->writeMSH(fileName, 2.0, binary, false, false, 1.0, false)) return false;
      for(int i = 0; i < 4; i++){
        for(int j = 0; j < _generators[i].size(); j++){
          Chain* chain = _generators[i].at(j);

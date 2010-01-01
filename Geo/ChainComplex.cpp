@@ -885,10 +885,24 @@ void Chain::createPView(){
     data.insert(std::make_pair(e->getNum(), coeffs));
   }
   
-  std::map<int, std::vector<MElement*> > map;
-  map.insert(std::make_pair(0, elements));
-  _model->storeElementsInEntities(map);
-
+  int max[4];
+  for(int i = 0; i < 4; i++) max[i] = _model->getMaxElementaryNumber(i);
+  int entityNum = *std::max_element(max,max+4) + 1;
+  for(int i = 0; i < 4; i++) max[i] = _model->getMaxPhysicalNumber(i);
+  int physicalNum = *std::max_element(max,max+4) + 1;
+  
+  std::map<int, std::vector<MElement*> > entityMap;
+  //int entityNum = _model->getMaxElementaryNumber(getDim())+1;
+  entityMap[entityNum] = elements;
+  std::map<int, std::map<int, std::string> > physicalMap;
+  std::map<int, std::string> physicalInfo;
+  //int physicalNum = _model->getMaxPhysicalNumber(getDim())+1; 
+  physicalInfo[physicalNum]=getName();
+  physicalMap[entityNum] = physicalInfo;
+  
+  _model->storeChain(getDim(), entityMap, physicalMap);
+  _model->setPhysicalName(getName(), getDim(), physicalNum);
+  
   if(!data.empty()) PView *chain = new PView(getName(), "ElementData", getGModel(), data, 0, 1);
   
   return;

@@ -443,8 +443,11 @@ class GModel
 
   static void registerBindings(binding *b);
 
-  void storeElementsInEntities(std::map<int, std::vector<MElement*> > &map){
-    _storeElementsInEntities(map);
+  // Store mesh elements of a chain in a new elementary and physical entity
+  void storeChain(int dim, std::map<int, std::vector<MElement*> > &entityMap, 
+                 std::map<int, std::map<int, std::string> > &physicalMap){
+    _storeElementsInEntities(entityMap);
+    _storePhysicalTagsInEntities(dim, physicalMap);
   }
 };
 
