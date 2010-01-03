@@ -16,6 +16,7 @@ CellComplex::CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> su
   _subdomain = subdomain;
   
   _dim = 0;
+  _simplicial = true;
   
   // find boundary elements
   find_boundary(domain, subdomain);
@@ -167,16 +168,20 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
       }
       else if(type == MSH_QUA_4 || type == MSH_QUA_8 || type == MSH_QUA_9){
         cell = new CQuadrangle(vertices, tag, subdomain, boundary);
+        _simplicial = false;
       }
       /*
       else if(type == MSH_HEX_8 || type == MSH_HEX_27 || type == MSH_HEX_20){
         cell = new CHexahedron(vertices, tag, subdomain, boundary);
+        _simplicial = false;
       }
       else if(type == MSH_PRI_6 || type == MSH_PRI_18 || type == MSH_PRI_15){
         cell = new CPrism(vertices, tag, subdomain, boundary);
+        _simplicial = false;
       }
       else if(type == MSH_PYR_5 || type == MSH_PYR_14 || type == MSH_PYR_13){
         cell = new CPyramid(vertices, tag, subdomain, boundary);
+        _simplicial = false;
       }*/
       else printf("Error: mesh element %d not implemented yet! \n", type);
       tag++;

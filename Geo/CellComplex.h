@@ -903,6 +903,9 @@ class CellComplex
    
    int _dim;
    
+   // Is the cell complex simplicial
+   bool _simplicial;
+   
   public:
    // iterator for the cells of same dimension
    typedef std::set<Cell*, Less_Cell>::iterator citer;
@@ -997,6 +1000,8 @@ class CellComplex
    int getOrgSize(int dim){ return _ocells[dim].size(); }
    
    int getDim() {return _dim; } 
+   
+   bool simplicial() { return _simplicial; }
    
    std::set<Cell*, Less_Cell> getCells(int dim){ return _cells[dim]; }
    std::set<Cell*, Less_Cell> getOrgCells(int dim){ return _ocells[dim]; }

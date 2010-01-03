@@ -150,13 +150,10 @@ class Chain{
    
    int _dim;
    
-   std::pair<Cell*, int> findRemainingBoundary(Cell* b, Cell* c1, Cell* c2, Cell* c3=NULL);
-   Cell* findCommonCbdCell(Cell* c1, Cell* c2, Cell* c3=NULL);
-   int findOrientation(Cell* b, Cell* c);
-   bool straightenChain( std::pair<Cell*, int> cell);
-   bool bendChain( std::pair<Cell*, int> cell);
-   bool removeBoundary( std::pair<Cell*, int> cell);
-   std::map<Cell*, int, Less_Cell>  getBdCellsInChain(Cell* cell);
+   
+   bool deform(std::map<Cell*, int, Less_Cell> &cellsInChain, std::map<Cell*, int, Less_Cell> &cellsNotInChain);
+   bool deformChain(std::pair<Cell*, int> cell, bool straighten, bool bend);   
+   
    
   public:
    Chain(){}
