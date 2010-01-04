@@ -21,6 +21,8 @@ struct partitionLevel {
   std::vector<MElement *> elements;
 };
 
+typedef enum {LAPLACIAN= 0, MULTILEVEL=1} typeOfPartition;
+
 class multiscalePartition{
 
  private:

@@ -75,8 +75,16 @@ template <> struct LFaceTr<MFace>
 
 template <unsigned DIM>
 struct MakeGraphFromEntity;
+
 template <unsigned DIM>
 struct MatchBoElemToGrVertex;
+
+struct BoElemGr;
+typedef std::vector<BoElemGr> BoElemGrVec;
+
+int MakeGraph(GModel *const model, Graph &graph,
+              BoElemGrVec *const boElemGrVec = 0);
+
 template <unsigned DIM, typename EntIter, typename EntIterBE>
 void MakeGraphDIM(const EntIter begin, const EntIter end,
                   const EntIterBE beginBE, const EntIterBE endBE,
@@ -104,36 +112,35 @@ void MakeGraphDIM(const EntIter begin, const EntIter end,
 
 
 
-int PartitionMeshElements( std::vector<MElement*> &elements, meshPartitionOptions &options){
-
- GModel *tmp_model = new GModel();
- GFace *gf = new discreteFace(tmp_model, 1);
- std::set<MVertex *> setv;
- for (unsigned i=0;i<elements.size();++i)
-   for (int j=0;j<elements[i]->getNumVertices();j++)
-     setv.insert(elements[i]->getVertex(j));
- 
- for (std::set<MVertex* >::iterator it = setv.begin(); it != setv.end(); it++)
-   gf->mesh_vertices.push_back(*it);
-
- for (std::vector<MElement* >::iterator it = elements.begin(); it != elements.end(); it++){
-   if ((*it)->getType() == TYPE_TRI) 
-     gf->triangles.push_back((MTriangle*)(*it));
-   else if  ((*it)->getType() == TYPE_QUA) 
-     gf->quadrangles.push_back((MQuadrangle*)(*it));
- }
- tmp_model->add(gf);
-
- PartitionMesh(tmp_model,options); 
-
- tmp_model->remove(gf);
- delete tmp_model;
-
- return 1;
-
+int PartitionMeshElements(std::vector<MElement*> &elements, meshPartitionOptions &options)
+{
+  GModel *tmp_model = new GModel();
+  GFace *gf = new discreteFace(tmp_model, 1);
+  std::set<MVertex *> setv;
+  for (unsigned i=0;i<elements.size();++i)
+    for (int j=0;j<elements[i]->getNumVertices();j++)
+      setv.insert(elements[i]->getVertex(j));
+  
+  for (std::set<MVertex* >::iterator it = setv.begin(); it != setv.end(); it++)
+    gf->mesh_vertices.push_back(*it);
+  
+  for (std::vector<MElement* >::iterator it = elements.begin(); it != elements.end(); it++){
+    if ((*it)->getType() == TYPE_TRI) 
+      gf->triangles.push_back((MTriangle*)(*it));
+    else if  ((*it)->getType() == TYPE_QUA) 
+      gf->quadrangles.push_back((MQuadrangle*)(*it));
+  }
+  tmp_model->add(gf);
+  
+  PartitionMesh(tmp_model,options); 
+  
+  tmp_model->remove(gf);
+  delete tmp_model;
+  
+  return 1;
 }
 
-int PartitionMeshFace( std::list<GFace*> &cFaces, meshPartitionOptions &options)
+int PartitionMeshFace(std::list<GFace*> &cFaces, meshPartitionOptions &options)
 {
   GModel *tmp_model = new GModel();
   for(std::list<GFace*>::iterator it = cFaces.begin(); it != cFaces.end(); it++)
@@ -187,7 +194,7 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options)
   model->recomputeMeshPartitions();
 
   if (options.createPartitionBoundaries)
-    CreatePartitionBoundaries (model);
+    CreatePartitionBoundaries (model, true);
 
   Msg::Info("Partitioning complete");
   Msg::StatusBar(1, false, "Mesh");
@@ -725,7 +732,7 @@ struct MatchBoElemToGrVertex
 
 
 template <class ITERATOR>
-void fillit_(std::multimap<MFace,MElement*,Less_Face> &faceToElement,
+void fillit_(std::multimap<MFace, MElement*, Less_Face> &faceToElement,
 	     ITERATOR it_beg, ITERATOR it_end)
 {
   for (ITERATOR IT = it_beg; IT != it_end ; ++IT){
@@ -733,12 +740,12 @@ void fillit_(std::multimap<MFace,MElement*,Less_Face> &faceToElement,
     for(int j=0;j < el->getNumFaces();j++) {
       MFace e = el->getFace(j);
       faceToElement.insert(std::make_pair(e,el));
-    }// for every edge of the elem
-  }// for every elem of the face
+    }
+  }
 }
 
 template <class ITERATOR>
-void fillit_(std::multimap<MEdge,MElement*,Less_Edge> &edgeToElement,
+void fillit_(std::multimap<MEdge, MElement*, Less_Edge> &edgeToElement,
 	     ITERATOR it_beg, ITERATOR it_end)
 {
   for (ITERATOR IT = it_beg; IT != it_end ; ++IT){
@@ -746,12 +753,12 @@ void fillit_(std::multimap<MEdge,MElement*,Less_Edge> &edgeToElement,
     for(int j=0;j < el->getNumEdges();j++) {
       MEdge e = el->getEdge(j);
       edgeToElement.insert(std::make_pair(e,el));
-    }// for every edge of the elem
-  }// for every elem of the face
+    }
+  }
 }
 
 template <class ITERATOR>
-void fillit_(std::multimap<MVertex*,MElement*> &vertexToElement,
+void fillit_(std::multimap<MVertex*, MElement*> &vertexToElement,
 	     ITERATOR it_beg, ITERATOR it_end)
 {
   for (ITERATOR IT = it_beg; IT != it_end ; ++IT){
@@ -759,8 +766,8 @@ void fillit_(std::multimap<MVertex*,MElement*> &vertexToElement,
     for(int j=0;j < el->getNumVertices();j++) {
       MVertex* e = el->getVertex(j);
       vertexToElement.insert(std::make_pair(e,el));
-    }// for every edge of the elem
-  }// for every elem of the face
+    }
+  }
 }
 
 void assignPartitionBoundary(GModel *model,
@@ -863,7 +870,7 @@ void  splitBoundaryEdges(GModel *model,  std::set<partitionEdge*, Less_partition
 	  MVertex *v1 = (*it)->getVertex(0);
 	  MVertex *v2 = (*it)->getVertex(1);
 	  std::list<MLine*>::iterator itp;
-	  if ( v1 == vE  ){
+	  if (v1 == vE){
 	    myLines.push_back(*it);
 	    itp = it;
 	    it++;
@@ -871,7 +878,7 @@ void  splitBoundaryEdges(GModel *model,  std::set<partitionEdge*, Less_partition
 	    vE = v2;
 	    i = -1;
 	  }
-	  else if ( v2 == vE){
+	  else if (v2 == vE){
 	    myLines.push_back(*it);
 	    itp = it;
 	    it++;
@@ -948,108 +955,157 @@ void assignPartitionBoundary(GModel *model,
   ppv->points.push_back(new MPoint (ve));
 }
 
-int CreatePartitionBoundaries(GModel *model)
+static void addGhostCells(GEntity *ge, 
+                          std::multimap<MVertex*, MElement*> &vertexToElement, 
+                          std::multimap<MElement*, short> &ghosts)
+{
+  // get all the nodes on the partition boundary (there are not stored
+  // so we need to recompute them)
+  std::set<MVertex*> verts;
+  for(unsigned int i = 0; i < ge->getNumMeshElements(); i++){
+    MElement *e = ge->getMeshElement(i);
+    for(unsigned int j = 0; j < e->getNumVertices(); j++)
+      verts.insert(e->getVertex(j));
+  }
+  
+  // get all the elements in touching the interface nodes
+  for(std::set<MVertex*>::iterator it = verts.begin(); it != verts.end(); it++){
+    MVertex *v = *it;
+    std::pair<std::multimap<MVertex*, MElement*>::iterator,
+              std::multimap<MVertex*, MElement*>::iterator> itp =
+      vertexToElement.equal_range(v);
+    // get all partitions sharing this node
+    std::set<short> parts;
+    for(std::multimap<MVertex*, MElement*>::iterator ite = itp.first;
+        ite != itp.second; ite++)
+      parts.insert(ite->second->getPartition());
+    // update partition info for each element touching the node
+    for(std::multimap<MVertex*, MElement*>::iterator ite = itp.first;
+        ite != itp.second; ite++){
+      MElement *e = ite->second;
+      for(std::set<short>::iterator its = parts.begin(); its != parts.end(); its++)
+        if(*its != e->getPartition())
+          ghosts.insert(std::pair<MElement*, short>(e, *its));
+    }
+  }
+#if 1
+  for(std::multimap<MElement*, short>::iterator it = ghosts.begin();
+      it != ghosts.end(); it++)
+    printf("ele %d (part %d) ghost %d\n", it->first->getNum(),
+           it->first->getPartition(), it->second);
+#endif
+}
+
+int CreatePartitionBoundaries(GModel *model, bool createGhostCells)
 {
   unsigned numElem[5];
   const int meshDim = model->getNumMeshElements(numElem);
+  std::set<partitionFace*, Less_partitionFace> pfaces;
   std::set<partitionEdge*, Less_partitionEdge> pedges;
   std::set<partitionVertex*, Less_partitionVertex> pvertices;
-  std::set<partitionFace*, Less_partitionFace> pfaces;
 
+  std::multimap<MFace, MElement*, Less_Face> faceToElement;
+  std::multimap<MEdge, MElement*, Less_Edge> edgeToElement;
+  std::multimap<MVertex*, MElement*> vertexToElement;
+  
   // assign partition faces
   if (meshDim == 3){
-    std::multimap<MFace,MElement*,Less_Face> faceToElement;    
     for(GModel::riter it = model->firstRegion(); it != model->lastRegion(); ++it){
-      fillit_ ( faceToElement,(*it)->tetrahedra.begin(),(*it)->tetrahedra.end());
-      fillit_ ( faceToElement,(*it)->hexahedra.begin(),(*it)->hexahedra.end());
-      fillit_ ( faceToElement,(*it)->prisms.begin(),(*it)->prisms.end());
-      fillit_ ( faceToElement,(*it)->pyramids.begin(),(*it)->pyramids.end());
-      fillit_ ( faceToElement,(*it)->polyhedra.begin(),(*it)->polyhedra.end());
+      fillit_(faceToElement, (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
+      fillit_(faceToElement, (*it)->hexahedra.begin(), (*it)->hexahedra.end());
+      fillit_(faceToElement, (*it)->prisms.begin(), (*it)->prisms.end());
+      fillit_(faceToElement, (*it)->pyramids.begin(), (*it)->pyramids.end());
+      fillit_(faceToElement, (*it)->polyhedra.begin(), (*it)->polyhedra.end());
     }    
-    {
-      std::multimap<MFace,MElement*,Less_Face>::iterator it = faceToElement.begin();
-      Equal_Face oper;
-      while ( it != faceToElement.end() ){
-	MFace e = it->first;
-	std::vector<MElement*> voe;
-	do {
-	  voe.push_back(it->second);
-	  ++it;
-	  if (it ==  faceToElement.end() ) break;
-	}while (oper (e,it->first));
-	assignPartitionBoundary (model,e,pfaces,voe);
-      }
+    std::multimap<MFace, MElement*, Less_Face>::iterator it = faceToElement.begin();
+    Equal_Face oper;
+    while (it != faceToElement.end()){
+      MFace e = it->first;
+      std::vector<MElement*> voe;
+      do {
+        voe.push_back(it->second);
+        ++it;
+        if (it ==  faceToElement.end()) break;
+      } while (oper (e,it->first));
+      assignPartitionBoundary(model, e, pfaces, voe);
     }
   }
   
   // assign partition edges
   if (meshDim > 1){
-    std::multimap<MEdge,MElement*,Less_Edge> edgeToElement;
     if (meshDim == 2){
       for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it){
-	fillit_ ( edgeToElement,(*it)->triangles.begin(),(*it)->triangles.end());
-	fillit_ ( edgeToElement,(*it)->quadrangles.begin(),(*it)->quadrangles.end());
-	fillit_ ( edgeToElement,(*it)->polygons.begin(),(*it)->polygons.end());
+	fillit_(edgeToElement, (*it)->triangles.begin(), (*it)->triangles.end());
+	fillit_(edgeToElement, (*it)->quadrangles.begin(), (*it)->quadrangles.end());
+	fillit_(edgeToElement, (*it)->polygons.begin(), (*it)->polygons.end());
       }
     }
     else if (meshDim == 3){
       for(GModel::riter it = model->firstRegion(); it != model->lastRegion(); ++it){
-	fillit_ ( edgeToElement,(*it)->tetrahedra.begin(),(*it)->tetrahedra.end());
-	fillit_ ( edgeToElement,(*it)->hexahedra.begin(),(*it)->hexahedra.end());
-	fillit_ ( edgeToElement,(*it)->prisms.begin(),(*it)->prisms.end());
-	fillit_ ( edgeToElement,(*it)->pyramids.begin(),(*it)->pyramids.end());
-	fillit_ ( edgeToElement,(*it)->polyhedra.begin(),(*it)->polyhedra.end());
+	fillit_(edgeToElement, (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
+	fillit_(edgeToElement, (*it)->hexahedra.begin(), (*it)->hexahedra.end());
+	fillit_(edgeToElement, (*it)->prisms.begin(), (*it)->prisms.end());
+	fillit_(edgeToElement, (*it)->pyramids.begin(), (*it)->pyramids.end());
+	fillit_(edgeToElement, (*it)->polyhedra.begin(), (*it)->polyhedra.end());
       }    
     }
-    {
-      std::multimap<MEdge,MElement*,Less_Edge>::iterator it = edgeToElement.begin();
-      Equal_Edge oper;
-      while ( it != edgeToElement.end() ){
-	MEdge e = it->first;
-	std::vector<MElement*> voe;
-	do {
-	  voe.push_back(it->second);
-	  ++it;
-	  if (it ==  edgeToElement.end() ) break;
-	}while (oper (e,it->first));
-	assignPartitionBoundary (model,e,pedges,voe,pfaces);
-      }
-      //splitBoundaryEdges(model,pedges);
+    std::multimap<MEdge, MElement*, Less_Edge>::iterator it = edgeToElement.begin();
+    Equal_Edge oper;
+    while (it != edgeToElement.end()){
+      MEdge e = it->first;
+      std::vector<MElement*> voe;
+      do {
+        voe.push_back(it->second);
+        ++it;
+        if (it ==  edgeToElement.end()) break;
+      }while (oper (e,it->first));
+      assignPartitionBoundary(model, e, pedges, voe, pfaces);
     }
+    //splitBoundaryEdges(model,pedges);
   }
 
   // make partition vertices
   if (meshDim > 1){
-    std::multimap<MVertex*,MElement*> vertexToElement;
     if (meshDim == 2){
       for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it){
-	fillit_ ( vertexToElement,(*it)->triangles.begin(),(*it)->triangles.end());
-	fillit_ ( vertexToElement,(*it)->quadrangles.begin(),(*it)->quadrangles.end());
-	fillit_ ( vertexToElement,(*it)->polygons.begin(),(*it)->polygons.end());
+	fillit_(vertexToElement, (*it)->triangles.begin(), (*it)->triangles.end());
+	fillit_(vertexToElement, (*it)->quadrangles.begin(), (*it)->quadrangles.end());
+	fillit_(vertexToElement, (*it)->polygons.begin(), (*it)->polygons.end());
       }
     }
     else if (meshDim == 3){
       for(GModel::riter it = model->firstRegion(); it != model->lastRegion(); ++it){
-	fillit_ ( vertexToElement,(*it)->tetrahedra.begin(),(*it)->tetrahedra.end());
-	fillit_ ( vertexToElement,(*it)->hexahedra.begin(),(*it)->hexahedra.end());
-	fillit_ ( vertexToElement,(*it)->prisms.begin(),(*it)->prisms.end());
-	fillit_ ( vertexToElement,(*it)->pyramids.begin(),(*it)->pyramids.end());
-	fillit_ ( vertexToElement,(*it)->polyhedra.begin(),(*it)->polyhedra.end());
+	fillit_(vertexToElement, (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
+	fillit_(vertexToElement, (*it)->hexahedra.begin(), (*it)->hexahedra.end());
+	fillit_(vertexToElement, (*it)->prisms.begin(), (*it)->prisms.end());
+	fillit_(vertexToElement, (*it)->pyramids.begin(), (*it)->pyramids.end());
+	fillit_(vertexToElement, (*it)->polyhedra.begin(), (*it)->polyhedra.end());
       }
     }    
-    {
-      std::multimap<MVertex*,MElement*>::iterator it = vertexToElement.begin();
-      while ( it != vertexToElement.end() ){
-	MVertex *v = it->first;
-	std::vector<MElement*> voe;
-	do {
-	  voe.push_back(it->second);
-	  ++it;
-	  if (it ==  vertexToElement.end() ) break;
-	}while (v == it->first);
-	assignPartitionBoundary (model,v,pvertices,voe,pedges,pfaces);
-      }
+    std::multimap<MVertex*, MElement*>::iterator it = vertexToElement.begin();
+    while (it != vertexToElement.end()){
+      MVertex *v = it->first;
+      std::vector<MElement*> voe;
+      do {
+        voe.push_back(it->second);
+        ++it;
+        if (it ==  vertexToElement.end()) break;
+      }while (v == it->first);
+      assignPartitionBoundary(model, v, pvertices, voe, pedges, pfaces);
     }
+  }
+
+  if(createGhostCells){
+    std::multimap<MElement*, short> &ghosts(model->getGhostCells());
+    ghosts.clear();
+    if(meshDim == 2)
+      for(std::set<partitionEdge*, Less_partitionEdge>::iterator it = pedges.begin();
+          it != pedges.end(); it++)
+        addGhostCells(*it, vertexToElement, ghosts);
+    else if(meshDim == 3)
+      for(std::set<partitionFace*, Less_partitionFace>::iterator it = pfaces.begin();
+          it != pfaces.end(); it++)
+        addGhostCells(*it, vertexToElement, ghosts);
   }
 
   return 1;
@@ -1063,7 +1119,7 @@ void createPartitionFaces(GModel *model, GFaceCompound *gf, int N,
   //--------------------------------------------
   std::vector<std::set<MVertex*> > allNodes;
   int numMax = model->maxFaceNum() + 1;
-  for( int i =0; i < N;  i++){
+  for(int i = 0; i < N; i++){
     //printf("*** Created discreteFace %d \n", numMax+i);
     discreteFace *face = new discreteFace(model, numMax+i);
     discreteFaces.push_back(face);
@@ -1075,7 +1131,7 @@ void createPartitionFaces(GModel *model, GFaceCompound *gf, int N,
   std::list<GFace*> _compound =  gf->getCompounds();
   std::list<GFace*>::iterator it = _compound.begin();
 
-  for( ; it != _compound.end() ; ++it){
+  for( ; it != _compound.end(); ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *e = (*it)->triangles[i];
       int part = e->getPartition();
@@ -1087,7 +1143,7 @@ void createPartitionFaces(GModel *model, GFaceCompound *gf, int N,
     }
   }
 
-  for( int i =0; i < N;  i++){
+  for(int i = 0; i < N; i++){
     for (std::set<MVertex*>::iterator it = allNodes[i].begin(); it != allNodes[i].end(); it++){ 
       discreteFaces[i]->mesh_vertices.push_back(*it);
     }

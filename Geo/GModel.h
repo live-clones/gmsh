@@ -50,6 +50,10 @@ class GModel
   std::vector<MElement*> _elementVectorCache;
   std::map<int, MElement*> _elementMapCache;
 
+  // ghost cell information (stores partitions for each element acting
+  // as a ghost cell)
+  std::multimap<MElement*, short> _ghostCells;
+  
   // an octree for fast mesh element lookup
   Octree *_octree;
 
@@ -313,6 +317,8 @@ class GModel
   void setMaxPartitionSize(const int pSize) { partitionSize[1] = pSize; }
   int getMinPartitionSize() const { return partitionSize[0]; }
   int getMaxPartitionSize() const { return partitionSize[1]; }
+
+  std::multimap<MElement*, short> &getGhostCells(){ return _ghostCells; }
 
   // perform various coherence tests on the mesh
   void checkMeshCoherence(double tolerance);
