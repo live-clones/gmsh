@@ -188,7 +188,7 @@ void elasticitySolver::solve()
 
   for (unsigned int i = 0; i < allNeumann.size(); i++)
   {
-    LoadTerm<FunctionSpace<SVector3> > Lterm(*LagSpace,allNeumann[i]._f);
+    LoadTerm<SVector3> Lterm(*LagSpace,allNeumann[i]._f);
     if (allNeumann[i].onWhat==BoundaryCondition::ON_VERTEX)
       Assemble(Lterm,*LagSpace,allNeumann[i].g->vbegin(),allNeumann[i].g->vend(),*pAssembler);
     else
@@ -200,13 +200,23 @@ void elasticitySolver::solve()
   GaussQuadrature Integ_Bulk(GaussQuadrature::GradGrad);
   for (unsigned int i = 0; i < elasticFields.size(); i++)
   {
-    IsotropicElasticTerm<FunctionSpace<SVector3> ,FunctionSpace<SVector3> > Eterm(*LagSpace,elasticFields[i]._E,elasticFields[i]._nu);
+    IsotropicElasticTerm Eterm(*LagSpace,elasticFields[i]._E,elasticFields[i]._nu);
+//    LaplaceTerm<SVector3,SVector3> Eterm(*LagSpace);
     Assemble(Eterm,*LagSpace,elasticFields[i].g->begin(),elasticFields[i].g->end(),Integ_Bulk,*pAssembler);
   }
 
   printf("-- done assembling!\n");
   lsys->systemSolve();
   printf("-- done solving!\n");
+  double energ=0;
+  for (unsigned int i = 0; i < elasticFields.size(); i++)
+  {
+    SolverField<SVector3> Field(pAssembler, LagSpace);
+    IsotropicElasticTerm Eterm(Field,elasticFields[i]._E,elasticFields[i]._nu);
+    BilinearTermToScalarTerm<SVector3,SVector3> Elastic_Energy_Term(Eterm);
+    Assemble(Elastic_Energy_Term,elasticFields[i].g->begin(),elasticFields[i].g->end(),Integ_Bulk,energ);
+  }
+  printf("elastic energy=%f\n",energ);
 }
 
 
@@ -264,21 +274,12 @@ PView* elasticitySolver::buildDisplacementView (const std::string &postFileName)
       for (int j = 0; j < e->getNumVertices(); ++j) v.insert(e->getVertex(j));
     }
   }
-  std::map<int, std::vector<double> > data;  
+  std::map<int, std::vector<double> > data;
+  SolverField<SVector3> Field(pAssembler, LagSpace);
   for ( std::set<MVertex*>::iterator it = v.begin(); it != v.end(); ++it)
   {
-    SVector3 val(0,0,0);
-    for (unsigned int i = 0; i < elasticFields.size(); ++i)
-    {
-      std::vector<Dof> D;
-      std::vector<SVector3> SFVals;
-      std::vector<double> Vals;
-      LagSpace->getKeys(*it,D);
-      pAssembler->getDofValue(D,Vals);
-      LagSpace->f(*it,SFVals);
-      for (int i=0;i<D.size();++i)
-        val+=SFVals[i]*Vals[i];
-    }
+    SVector3 val;
+    Field.f(*it,val);
     std::vector<double> vec(3);vec[0]=val(0);vec[1]=val(1);vec[2]=val(2);
     data[(*it)->getNum()]=vec;
   }
@@ -290,30 +291,54 @@ PView *elasticitySolver::buildElasticEnergyView(const std::string &postFileName)
 {
   std::map<int, std::vector<double> > data;
   GaussQuadrature Integ_Bulk(GaussQuadrature::GradGrad);
-  double energ=0;
   for (unsigned int i = 0; i < elasticFields.size(); ++i)
   {
     SolverField<SVector3> Field(pAssembler, LagSpace);
-    IsotropicElasticTerm<SolverField<SVector3> ,SolverField<SVector3> > Eterm(Field,elasticFields[i]._E,elasticFields[i]._nu);
-    ScalarTermOne One;
+    IsotropicElasticTerm Eterm(Field,elasticFields[i]._E,elasticFields[i]._nu);
+    BilinearTermToScalarTerm<SVector3,SVector3> Elastic_Energy_Term(Eterm);
+    ScalarTermConstant One(1.0);
     for (groupOfElements::elementContainer::const_iterator it = elasticFields[i].g->begin(); it != elasticFields[i].g->end(); ++it)
     {
       MElement *e=*it;
-      fullMatrix<double> localMatrix;
+      double energ;
+      double vol;
       IntPt *GP;
       int npts=Integ_Bulk.getIntPoints(e,&GP);
-      Eterm.get(e,npts,GP,localMatrix);
-      double vol=0;
+      Elastic_Energy_Term.get(e,npts,GP,energ);
       One.get(e,npts,GP,vol);
       std::vector<double> vec;
-      vec.push_back(localMatrix(0,0)/vol);
-      energ+=localMatrix(0,0);
+      vec.push_back(energ/vol);
       data[(*it)->getNum()]=vec;
     }
   }
-  std::cout<< "elastic energy=" << energ << std::endl;
   PView *pv = new PView (postFileName, "ElementData", pModel, data, 0.0);
-  return pv;  
+  return pv;
+}
+
+PView *elasticitySolver::buildVonMisesView(const std::string &postFileName)
+{
+  std::map<int, std::vector<double> > data;
+  GaussQuadrature Integ_Bulk(GaussQuadrature::GradGrad);
+  for (unsigned int i = 0; i < elasticFields.size(); ++i)
+  {
+    SolverField<SVector3> Field(pAssembler, LagSpace);
+    IsotropicElasticTerm Eterm(Field,elasticFields[i]._E,elasticFields[i]._nu);
+    BilinearTermToScalarTerm<SVector3,SVector3> Elastic_Energy_Term(Eterm);
+    for (groupOfElements::elementContainer::const_iterator it = elasticFields[i].g->begin(); it != elasticFields[i].g->end(); ++it)
+    {
+      MElement *e=*it;
+      double energ;
+      double vol;
+      IntPt *GP;
+      int npts=Integ_Bulk.getIntPoints(e,&GP);
+      Elastic_Energy_Term.get(e,npts,GP,energ);
+      std::vector<double> vec;
+      vec.push_back(energ);
+      data[(*it)->getNum()]=vec;
+    }
+  }
+  PView *pv = new PView (postFileName, "ElementData", pModel, data, 0.0);
+  return pv;
 }
 
 

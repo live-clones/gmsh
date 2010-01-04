@@ -90,6 +90,30 @@ template<class Assembler> void Assemble(LinearTermBase &term,FunctionSpaceBase &
   assembler.assemble(R, localVector);
 }
 
+template<class Iterator,class dataMat> void Assemble(ScalarTermBase &term,Iterator itbegin,Iterator itend,QuadratureBase &integrator,dataMat & val)
+{
+  dataMat localval;
+  for (Iterator it = itbegin;it!=itend; ++it)
+  {
+    MElement *e = *it;
+    IntPt *GP;
+    int npts=integrator.getIntPoints(e,&GP);
+    term.get(e,npts,GP,localval);
+    val+=localval;
+  }
+}
+
+template<class Iterator,class dataMat> void Assemble(ScalarTermBase &term,MElement *e,QuadratureBase &integrator,dataMat & val)
+{
+  dataMat localval;
+  IntPt *GP;
+  int npts=integrator.getIntPoints(e,&GP);
+  term.get(e,npts,GP,localval);
+  val+=localval;
+}
+
+
+
 template<class Assembler> void FixDofs(Assembler &assembler,std::vector<Dof> &dofs,std::vector<typename Assembler::dataVec> &vals)
 {
   int nbff=dofs.size();

@@ -20,9 +20,8 @@ class groupOfElements;
 struct elasticField {
   int _tag; // tag for the dofManager
   groupOfElements *g; // support for this field
-  simpleFunction<double> *_enrichment; // XFEM enrichment
   double _E, _nu; // specific elastic datas (should be somewhere else)
-  elasticField () : g(0), _enrichment(0),_tag(0){}
+  elasticField () : g(0),_tag(0){}
 };
 
 struct BoundaryCondition
@@ -75,7 +74,7 @@ class elasticitySolver
   virtual void solve();
   virtual PView *buildDisplacementView(const std::string &postFileName);
   virtual PView *buildElasticEnergyView(const std::string &postFileName);
-  // virtual PView *buildVonMisesView(const std::string &postFileName);
+  virtual PView *buildVonMisesView(const std::string &postFileName);
   // std::pair<PView *, PView*> buildErrorEstimateView
   //   (const std::string &errorFileName, double, int);
   // std::pair<PView *, PView*> buildErrorEstimateView
