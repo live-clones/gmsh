@@ -617,35 +617,35 @@ void dgAlgorithm::residual( const dgConservationLaw &claw,
   //  residu[0]->print("Volume");
   //interface term
   for(size_t i=0;i<fGroups.size() ; i++) {
-    dgGroupOfFaces &faces = *fGroups[i];
-    int iGroupLeft = -1, iGroupRight = -1;
-    for(size_t j=0;j<eGroups.size() ; j++) {
-      if (eGroups[j] == &faces.getGroupLeft())iGroupLeft = j;
-      if (eGroups[j] == &faces.getGroupRight())iGroupRight= j;
+      dgGroupOfFaces &faces = *fGroups[i];
+      int iGroupLeft = -1, iGroupRight = -1;
+      for(size_t j=0;j<eGroups.size() ; j++) {
+	if (eGroups[j] == &faces.getGroupLeft())iGroupLeft = j;
+	if (eGroups[j] == &faces.getGroupRight())iGroupRight= j;
+      }
+      fullMatrix<double> solInterface(faces.getNbNodes(),faces.getNbElements()*2*nbFields);
+      fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements()*2*nbFields);
+      faces.mapToInterface(nbFields, *solution[iGroupLeft], *solution[iGroupRight], solInterface);
+      residualInterface(claw,faces,solInterface,*solution[iGroupLeft], *solution[iGroupRight],residuInterface);
+      faces.mapFromInterface(nbFields, residuInterface, *residu[iGroupLeft], *residu[iGroupRight]);
     }
-    
-    fullMatrix<double> solInterface(faces.getNbNodes(),faces.getNbElements()*2*nbFields);
-    fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements()*2*nbFields);
-    faces.mapToInterface(nbFields, *solution[iGroupLeft], *solution[iGroupRight], solInterface);
-    residualInterface(claw,faces,solInterface,*solution[iGroupLeft], *solution[iGroupRight],residuInterface);
-    faces.mapFromInterface(nbFields, residuInterface, *residu[iGroupLeft], *residu[iGroupRight]);
-  }
-  //  residu[0]->print("Interfaces");
-  //boundaries
-  for(size_t i=0;i<bGroups.size() ; i++) {
-    dgGroupOfFaces &faces = *bGroups[i];
-    int iGroupLeft = -1, iGroupRight = -1;
-    for(size_t j=0;j<eGroups.size() ; j++) {
-      if (eGroups[j] == &faces.getGroupLeft())iGroupLeft = j;
-      if (eGroups[j] == &faces.getGroupRight())iGroupRight= j;
+    //  residu[0]->print("Interfaces");
+    //boundaries
+    for(size_t i=0;i<bGroups.size() ; i++) {
+      dgGroupOfFaces &faces = *bGroups[i];
+      int iGroupLeft = -1, iGroupRight = -1;
+      for(size_t j=0;j<eGroups.size() ; j++) {
+	if (eGroups[j] == &faces.getGroupLeft())iGroupLeft = j;
+	if (eGroups[j] == &faces.getGroupRight())iGroupRight= j;
+      }
+      fullMatrix<double> solInterface(faces.getNbNodes(),faces.getNbElements()*nbFields);
+      fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements()*nbFields);
+      faces.mapToInterface(nbFields, *solution[iGroupLeft], *solution[iGroupRight], solInterface);
+      residualBoundary(claw,faces,solInterface,*solution[iGroupLeft],residuInterface);
+      faces.mapFromInterface(nbFields, residuInterface, *residu[iGroupLeft], *residu[iGroupRight]);
     }
-    fullMatrix<double> solInterface(faces.getNbNodes(),faces.getNbElements()*nbFields);
-    fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements()*nbFields);
-    faces.mapToInterface(nbFields, *solution[iGroupLeft], *solution[iGroupRight], solInterface);
-    residualBoundary(claw,faces,solInterface,*solution[iGroupLeft],residuInterface);
-    faces.mapFromInterface(nbFields, residuInterface, *residu[iGroupLeft], *residu[iGroupRight]);
-  }
-  //  residu[0]->print("Boundaries");
+
+    //  residu[0]->print("Boundaries");
 }
 
 void dgAlgorithm::computeElementaryTimeSteps ( //dofManager &dof, // the DOF manager (maybe useless here)

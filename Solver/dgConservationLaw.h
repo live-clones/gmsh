@@ -53,6 +53,7 @@ class dgConservationLaw {
   //a generic boundary condition using the Riemann solver of the conservation Law
   dgBoundaryCondition *newOutsideValueBoundary(std::string outsideValueFunctionName);
   dgBoundaryCondition *new0FluxBoundary();
+  dgBoundaryCondition *newSymmetryBoundary();
 
   static void registerBindings(binding *b);
 };

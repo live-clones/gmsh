@@ -9,7 +9,8 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution,
 			     std::vector<dgGroupOfFaces*> &fGroups) 
 {    
 
-  //WARNING FOR ONLY 1 GROUP OF FACES    
+  //WARNING: ONLY FOR 1 GROUP OF FACES 
+  //TODO: make this more general   
   dgGroupOfFaces* group = fGroups[0];   
   fullMatrix<double> &SolLeft = *(solution._dataProxys[0]);
   fullMatrix<double> &SolRight = *(solution._dataProxys[0]);    
@@ -104,7 +105,6 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution,
         locMin = std::min (locMin, Temp (i,k)); 
       }	
       AVG /= (double) fSize;  
-      // printf("AVG %e   LocMax %e   Locmin %e\n",AVG,locMax,locMin);
 
       //SLOPE LIMITING DG
       //-------------------  
@@ -116,23 +116,9 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution,
       if (AVG < neighMin) slopeLimiterValue = 0;  
       if (AVG > neighMax) slopeLimiterValue = 0;  
 
-      //	  if (detectDISC(iElement) == 0.0) slopeLimiterValue = 1.0; // do not limit
-//      if (slopeLimiterValue != 1.0) printf("limit (%e) elem =%d \n", slopeLimiterValue, iElement);
-//      slopeLimiterValue=0;
-
       for (int i=0; i<fSize; ++i) Temp(i,k) *= slopeLimiterValue;
 
       for (int i=0; i<fSize; ++i) Temp(i,k) += AVG;    
-
-      //MINMOD DG (IF CHANGE TO THIS ADD LIMITER LINE IN RUNGEKUTTANNOPERATOR.cc)    
-      //--------------------------------
-      // 	  if (detectDISC(iElement) != 0.0){   
-      // 	    const size_t nn = Temp.size1();   
-      // 	    double alpha = 0.5; //0.5 1.0 1.3 (alpha=0.5 => MUSC Schem VAN LEER) 
-      // 	    Temp(0,k) = AVG-minmod(AVG-Temp(0,k), alpha*(AVG-MEANL(iElement,k)), alpha*(MEANR(iElement,k)-AVG));    
-      // 	    Temp(nn-1,k) = AVG+minmod(Temp(nn-1,k)-AVG, alpha*(AVG-MEANL(iElement,k)), alpha*(MEANR(iElement,k)-AVG));	  
-      // 	    }   
-
 
     }
   }  

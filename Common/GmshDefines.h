@@ -97,7 +97,6 @@
 #define MSH_QUA_16I 40
 #define MSH_QUA_20 41
 
-
 #define MSH_NUM_TYPE 35
 
 // Geometric entities

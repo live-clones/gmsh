@@ -6,6 +6,7 @@
 #include "MTriangle.h"
 #include "Numeric.h"
 #include "Context.h"
+#include "GmshDefines.h"
 
 #if defined(HAVE_MESH)
 #include "qualityMeasures.h"

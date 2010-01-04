@@ -21,9 +21,9 @@ end
 -- conservation law
 -- advection speed
 v=fullMatrix(3,1);
-v:set(0,0,0.15)
+v:set(0,0,0)
 v:set(1,0,0)
-v:set(2,0,0)
+v:set(2,0,0.15)
 
 law = dgConservationLawAdvection(functionConstant(v):getName(),'')
 dg:setConservationLaw(law)
@@ -49,7 +49,7 @@ print'***exporting init solution ***'
 -- main loop
 n = 5
 for i=1,100*n do
-  norm = dg:RK44(0.0003)
+  norm = dg:RK44(0.03)
   if (i % n == 0) then 
     print('iter',i,norm)
     dg:exportSolution(string.format("output/Adv3D-%05d", i)) 

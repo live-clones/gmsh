@@ -148,7 +148,7 @@ public:
   inline double getElementVolumeLeft(int iFace) const {return _groupLeft.getElementVolume(_left[iFace]);}
   inline double getElementVolumeRight(int iFace) const {return _groupRight.getElementVolume(_right[iFace]);}
   inline MElement* getFace (int iElement) const {return _faces[iElement];}  
-  inline const std::vector<int> &getClosureLeft(int iFace) const{ return _closuresLeft[_closuresIdLeft[iFace]];}
+  inline const std::vector<int> &getClosureLeft(int iFace) const{ return _closuresLeft[_closuresIdLeft[iFace]]; }
   inline const std::vector<int> &getClosureRight(int iFace) const{ return _closuresRight[_closuresIdRight[iFace]];}
   inline fullMatrix<double> &getIntegrationOnElementLeft(int iFace) { return _integrationPointsLeft[_closuresIdLeft[iFace]];}
   inline fullMatrix<double> &getIntegrationOnElementRight(int iFace) { return _integrationPointsRight[_closuresIdRight[iFace]];}

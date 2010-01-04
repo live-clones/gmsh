@@ -4,8 +4,7 @@ model:load ('edge.geo')
 -- model:save ('edge.msh')
 model:load ('edge.msh')
 dg = dgSystemOfEquations (model)
-dg:setOrder(1)
-
+dg:setOrder(0)
 
 -- conservation law
 -- advection speed
@@ -45,16 +44,17 @@ function initial_condition( xyz , f )
   end
 end
 dg:L2Projection(functionLua(1,'initial_condition',{'XYZ'}):getName())
+print'***exporting init solution ***'
 
 dg:exportSolution('output/Adv1D_unlimited')
 dg:limitSolution()
-dg:exportSolution('output/Adv1D_00000')
+dg:exportSolution('output/Adv1D-00000')
 
 
 -- main loop
 n = 5
 for i=1,100*n do
-  norm = dg:RK44_limiter(0.03)
+  norm = dg:RK44(0.03)
   if (i % n == 0) then 
     print('iter',i,norm)
     dg:exportSolution(string.format("output/Adv1D-%05d", i)) 

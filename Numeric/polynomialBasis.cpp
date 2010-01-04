@@ -741,11 +741,12 @@ static void getFaceClosure(int iFace, int iSign, int iRotate, std::vector<int> &
 static void generate3dFaceClosure(polynomialBasis::clCont &closure, int order)
 {
 
+  closure.clear();
   for (int iRotate = 0; iRotate < 3; iRotate++){
     for (int iSign = 1; iSign >= -1; iSign -= 2){
       for (int iFace = 0; iFace < 4; iFace++){
 	std::vector<int> closure_face;
-	getFaceClosure(iFace, iSign, iRotate, closure_face, order);
+	getFaceClosure(iFace, iSign, iRotate, closure_face, order);	
 	closure.push_back(closure_face);
       }
     }
@@ -768,24 +769,23 @@ static void generate2dEdgeClosure(polynomialBasis::clCont &closure, int order, i
   }
 }
 
-
-
 static void generate1dVertexClosure(polynomialBasis::clCont &closure)
 {
+
   closure.clear();
   closure.resize(2);
   closure[0].push_back(0);
   closure[1].push_back(1);
-  }
+  
+}
 std::map<int, polynomialBasis> polynomialBases::fs;
 
 const polynomialBasis &polynomialBases::find(int tag) 
 {
   std::map<int, polynomialBasis>::const_iterator it = fs.find(tag);
-  if (it != fs.end()) return it->second;
-  
+  if (it != fs.end())     return it->second;
   polynomialBasis F;
-  
+
   switch (tag){
   case MSH_PNT:
     F.monomials = generate1DMonomials(0);
@@ -947,6 +947,7 @@ const polynomialBasis &polynomialBases::find(int tag)
   fs.insert(std::make_pair(tag, F));
   return fs[tag];
 }
+
 
 std::map<std::pair<int, int>, fullMatrix<double> > polynomialBases::injector;
 

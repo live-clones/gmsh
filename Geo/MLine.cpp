@@ -2,7 +2,7 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
-
+#include "GmshDefines.h"
 #include "MLine.h"
 #include "GaussLegendre1D.h"
 #include "Context.h"

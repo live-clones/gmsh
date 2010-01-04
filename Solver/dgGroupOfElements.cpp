@@ -229,6 +229,7 @@ void dgGroupOfFaces::init(int pOrder) {
   for (size_t i=0; i<_closuresRight.size(); i++)
     _integrationPointsRight.push_back(dgGetFaceIntegrationRuleOnElement(_fsFace,*_integration,_fsRight,_closuresRight[i]));
   double f[256];
+  
   for (int j=0;j<_integration->size1();j++) {
     _fsFace->f((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), f);
     const double weight = (*_integration)(j,3);
@@ -237,6 +238,7 @@ void dgGroupOfFaces::init(int pOrder) {
       (*_collocation)(j,k) = f[k];
     }
   }
+  
   for (int i=0;i<_faces.size();i++){
     MElement *f = _faces[i];
     for (int j=0;j< _integration->size1() ; j++ ){
@@ -245,7 +247,7 @@ void dgGroupOfFaces::init(int pOrder) {
       (*_interfaceSurface)(i,0) += (*_integration)(j,3)*(*_detJac)(j,i);
     }
   }
-
+  
   // compute data on quadrature points : normals and dPsidX
   double g[256][3];
   _normals = new fullMatrix<double> (3,_integration->size1()*_faces.size());
@@ -255,58 +257,59 @@ void dgGroupOfFaces::init(int pOrder) {
   }
   int index = 0;
   for (size_t i=0; i<_faces.size();i++){
-    const std::vector<int> &closureLeft=getClosureLeft(i);
-    fullMatrix<double> &intLeft=_integrationPointsLeft[_closuresIdLeft[i]];
-    double jac[3][3],ijac[3][3];
-    for (int j=0; j<intLeft.size1(); j++){
-      _fsLeft->df((intLeft)(j,0),(intLeft)(j,1),(intLeft)(j,2),g);
-      getElementLeft(i)->getJacobian ((intLeft)(j,0), (intLeft)(j,1), (intLeft)(j,2), jac);
-      inv3x3(jac,ijac);
-      //compute dPsiLeftDxOnQP
-      //(iPsi*3+iXYZ,iQP+iFace*NQP);
-      int nPsi = _fsLeft->coefficients.size1();
-      for (int iPsi=0; iPsi< nPsi; iPsi++) {
-        (*_dPsiLeftDxOnQP)(j*3  ,i*nPsi+iPsi) = g[iPsi][0]*ijac[0][0]+g[iPsi][1]*ijac[0][1]+g[iPsi][2]*ijac[0][2];
-        (*_dPsiLeftDxOnQP)(j*3+1,i*nPsi+iPsi) = g[iPsi][0]*ijac[1][0]+g[iPsi][1]*ijac[1][1]+g[iPsi][2]*ijac[1][2];
-        (*_dPsiLeftDxOnQP)(j*3+2,i*nPsi+iPsi) = g[iPsi][0]*ijac[2][0]+g[iPsi][1]*ijac[2][1]+g[iPsi][2]*ijac[2][2];
+  
+      const std::vector<int> &closureLeft=getClosureLeft(i);
+      fullMatrix<double> &intLeft=_integrationPointsLeft[_closuresIdLeft[i]];
+      double jac[3][3],ijac[3][3];
+      for (int j=0; j<intLeft.size1(); j++){
+	_fsLeft->df((intLeft)(j,0),(intLeft)(j,1),(intLeft)(j,2),g);
+	getElementLeft(i)->getJacobian ((intLeft)(j,0), (intLeft)(j,1), (intLeft)(j,2), jac);
+	inv3x3(jac,ijac);
+	//compute dPsiLeftDxOnQP
+	//(iPsi*3+iXYZ,iQP+iFace*NQP);
+	int nPsi = _fsLeft->coefficients.size1();
+	for (int iPsi=0; iPsi< nPsi; iPsi++) {
+	  (*_dPsiLeftDxOnQP)(j*3  ,i*nPsi+iPsi) = g[iPsi][0]*ijac[0][0]+g[iPsi][1]*ijac[0][1]+g[iPsi][2]*ijac[0][2];
+	  (*_dPsiLeftDxOnQP)(j*3+1,i*nPsi+iPsi) = g[iPsi][0]*ijac[1][0]+g[iPsi][1]*ijac[1][1]+g[iPsi][2]*ijac[1][2];
+	  (*_dPsiLeftDxOnQP)(j*3+2,i*nPsi+iPsi) = g[iPsi][0]*ijac[2][0]+g[iPsi][1]*ijac[2][1]+g[iPsi][2]*ijac[2][2];
+	}
+	//compute face normals
+	double &nx=(*_normals)(0,index);
+	double &ny=(*_normals)(1,index);
+	double &nz=(*_normals)(2,index);
+	double nu=0,nv=0,nw=0;
+	for (size_t k=0; k<closureLeft.size(); k++){
+	  int inode=closureLeft[k];
+	  nu += g[inode][0];
+	  nv += g[inode][1];
+	  nw += g[inode][2];
+	}
+	nx = nu*ijac[0][0]+nv*ijac[0][1]+nw*ijac[0][2];
+	ny = nu*ijac[1][0]+nv*ijac[1][1]+nw*ijac[1][2];
+	nz = nu*ijac[2][0]+nv*ijac[2][1]+nw*ijac[2][2];
+	double norm = sqrt(nx*nx+ny*ny+nz*nz);
+	nx/=norm;
+	ny/=norm;
+	nz/=norm;
+	index++;
       }
-      //compute face normals
-      double &nx=(*_normals)(0,index);
-      double &ny=(*_normals)(1,index);
-      double &nz=(*_normals)(2,index);
-      double nu=0,nv=0,nw=0;
-      for (size_t k=0; k<closureLeft.size(); k++){
-        int inode=closureLeft[k];
-        nu += g[inode][0];
-        nv += g[inode][1];
-        nw += g[inode][2];
+      // there is nothing on the right for boundary groups
+      if(_fsRight){
+	fullMatrix<double> &intRight=_integrationPointsRight[_closuresIdRight[i]];
+	for (int j=0; j<intRight.size1(); j++){
+	  _fsRight->df((intRight)(j,0),(intRight)(j,1),(intRight)(j,2),g);
+	  getElementRight(i)->getJacobian ((intRight)(j,0), (intRight)(j,1), (intRight)(j,2), jac);
+	  inv3x3(jac,ijac);
+	  //compute dPsiRightDxOnQP
+	  // (iQP*3+iXYZ , iFace*NPsi+iPsi)
+	  int nPsi = _fsRight->coefficients.size1();
+	  for (int iPsi=0; iPsi< nPsi; iPsi++) {
+	    (*_dPsiRightDxOnQP)(j*3  ,i*nPsi+iPsi) = g[iPsi][0]*ijac[0][0]+g[iPsi][1]*ijac[0][1]+g[iPsi][2]*ijac[0][2];
+	    (*_dPsiRightDxOnQP)(j*3+1,i*nPsi+iPsi) = g[iPsi][0]*ijac[1][0]+g[iPsi][1]*ijac[1][1]+g[iPsi][2]*ijac[1][2];
+	    (*_dPsiRightDxOnQP)(j*3+2,i*nPsi+iPsi) = g[iPsi][0]*ijac[2][0]+g[iPsi][1]*ijac[2][1]+g[iPsi][2]*ijac[2][2];
+	  }
+	}
       }
-      nx = nu*ijac[0][0]+nv*ijac[0][1]+nw*ijac[0][2];
-      ny = nu*ijac[1][0]+nv*ijac[1][1]+nw*ijac[1][2];
-      nz = nu*ijac[2][0]+nv*ijac[2][1]+nw*ijac[2][2];
-      double norm = sqrt(nx*nx+ny*ny+nz*nz);
-      nx/=norm;
-      ny/=norm;
-      nz/=norm;
-      index++;
-    }
-    // there is nothing on the right for boundary groups
-    if(_fsRight){
-      fullMatrix<double> &intRight=_integrationPointsRight[_closuresIdRight[i]];
-      for (int j=0; j<intRight.size1(); j++){
-        _fsRight->df((intRight)(j,0),(intRight)(j,1),(intRight)(j,2),g);
-        getElementRight(i)->getJacobian ((intRight)(j,0), (intRight)(j,1), (intRight)(j,2), jac);
-        inv3x3(jac,ijac);
-        //compute dPsiRightDxOnQP
-        // (iQP*3+iXYZ , iFace*NPsi+iPsi)
-        int nPsi = _fsRight->coefficients.size1();
-        for (int iPsi=0; iPsi< nPsi; iPsi++) {
-          (*_dPsiRightDxOnQP)(j*3  ,i*nPsi+iPsi) = g[iPsi][0]*ijac[0][0]+g[iPsi][1]*ijac[0][1]+g[iPsi][2]*ijac[0][2];
-          (*_dPsiRightDxOnQP)(j*3+1,i*nPsi+iPsi) = g[iPsi][0]*ijac[1][0]+g[iPsi][1]*ijac[1][1]+g[iPsi][2]*ijac[1][2];
-          (*_dPsiRightDxOnQP)(j*3+2,i*nPsi+iPsi) = g[iPsi][0]*ijac[2][0]+g[iPsi][1]*ijac[2][1]+g[iPsi][2]*ijac[2][2];
-        }
-      }
-    }
   }
 }
 
@@ -399,7 +402,7 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, int pOrder):
           if(vertexMap.find(vertex) == vertexMap.end()){
             vertexMap[vertex] = i;
           }else{
-            addVertex(vertex,vertexMap[vertex],i);
+	    addVertex(vertex,vertexMap[vertex],i);
           }
         }
       }
@@ -454,7 +457,6 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup1, const dgGroup
       std::map<MVertex*,int> vertexMap1;
       _closuresLeft = _fsLeft->vertexClosure;
       _closuresRight = _fsRight->vertexClosure;
-
       for(int i=0; i<elGroup1.getNbElements(); i++){
         MElement &el = *elGroup1.getElement(i);
         for (int j=0; j<el.getNumVertices(); j++){
@@ -597,7 +599,7 @@ void dgGroupOfFaces::mapFromInterface ( int nFields,
         for(size_t j =0; j < closureLeft.size(); j++)
           vLeft(closureLeft[j], _left[i]*nFields + iField) += v(j, i*2*nFields + iField);
         for(size_t j =0; j < closureRight.size(); j++)
-          vRight(closureRight[j], _right[i]*nFields + iField) += v(j, (i*2+1)*nFields + iField);
+	  vRight(closureRight[j], _right[i]*nFields + iField) += v(j, (i*2+1)*nFields + iField);
       }
     }
   }
