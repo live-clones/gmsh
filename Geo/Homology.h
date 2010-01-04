@@ -117,8 +117,8 @@ class Homology
          if(!chain->writeChainMSH(fileName)) return false;
        }
      }*/
-     Msg::Info("Wrote results to %s.", fileName.c_str());
-     printf("Wrote results to %s. \n", fileName.c_str());
+     Msg::Info("Wrote homology computation results to %s.", fileName.c_str());
+     printf("Wrote homology computation results to %s. \n", fileName.c_str());
      
      return true;
    }

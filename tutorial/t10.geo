@@ -130,21 +130,15 @@ Physical Surface(75) = {46, 63, 66, 52, 50, 48, 54, 60, 58, 56};
 Mesh 3;
 
 // Find generators of relative homology spaces of the domain modulo the four terminals.
-// Save the generator chains to t10_homgen.msh.
-HomGen("t10_homgen.msh") = {{69}, {70, 71, 72, 73}};
+// Save the generator chains to t10_hom.msh.
+HomGen("t10_hom.msh") = {{69}, {70, 71, 72, 73}};
 
 // Find the corresponding cuts.
-// Save the cut chains to t10_homcut.msh.
-HomCut("t10_homcut.msh") = {{69}, {70, 71, 72, 73}};
+// Save the cut chains to t10_hom.msh.
+HomCut("t10_hom.msh") = {{69}, {70, 71, 72, 73}};
 
 // Only find and print the ranks of the relative homology spaces (Betti numbers).
 HomRank {{69},{70, 71, 72, 73}};
-
-// Hide mesh elements for instant visualization
-Mesh.Points = 0;
-Mesh.Lines = 0;
-Mesh.Triangles = 0;
-Mesh.Tetrahedra = 0; 
 
 // More examples (uncomment):
 //  HomGen("t10_homgen.msh_1") = {{69}, {}}; 

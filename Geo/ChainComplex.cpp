@@ -8,6 +8,7 @@
 #include "ChainComplex.h"
 #include "OS.h"
 #include "PView.h"
+#include "Options.h"
 
 #if defined(HAVE_KBIPACK)
 
@@ -484,34 +485,44 @@ Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, CellComp
 }
 
 bool Chain::deform(std::map<Cell*, int, Less_Cell> &cellsInChain, std::map<Cell*, int, Less_Cell> &cellsNotInChain){
-  
+  //printf("--- \n");
   std::vector<int> cc;
   std::vector<int> bc;
   
   for(citer cit = cellsInChain.begin(); cit != cellsInChain.end(); cit++){
     Cell* c = (*cit).first;
     c->setImmune(false);
+    //c->printCell();
     if(!c->inSubdomain()) {
       cc.push_back(getCoeff(c));
       bc.push_back((*cit).second);
     }
-    removeCell(c);
   }
   
-  // FIXME: orientations don't get right on 2-chains
-  int flip = 1;
-  if(cc[0] != bc[0]) flip = flip*-1;
-    
+  // FIXME: orientations don't get right on 2-chains with bending or subdomain cells (disabled for now).
+  
+  bool flip = false;
+  if(cc[0] != bc[0]) flip = true; 
+  for(int i = 0; i < cc.size(); i++){
+    //printf("cc: %d, bc: %d \n", cc.at(i), bc.at(i));
+    if(flip && cc[i] == bc[i]) return false;
+    if(!flip && cc[i] != bc[i]) return false; 
+  }
+  
+  for(citer cit = cellsInChain.begin(); cit != cellsInChain.end(); cit++) removeCell((*cit).first);
+  
   int n = 1;
   for(citer cit = cellsNotInChain.begin(); cit != cellsNotInChain.end(); cit++){
     Cell* c = (*cit).first;
     if(n == 2) c->setImmune(true);
     else c->setImmune(false);
-    int coeff = -1*(*cit).second*flip;
+    int coeff = -1*(*cit).second;
+    if(flip) coeff = coeff*-1;
     addCell(c, coeff);
+    //c->printCell();
     n++;
   }
-  
+  //printf("--- \n");
   
   return true;
 }
@@ -541,7 +552,7 @@ bool Chain::deformChain(std::pair<Cell*, int> cell, bool straighten, bool bend){
       Cell* c = (*cit2).first;
       int coeff = getCoeff(c);
       if(c->getImmune()) next = true;
-      if(bend && c->inSubdomain()) next = true;
+      if(/* FIXME: bend && */c->inSubdomain()) next = true;
       if(coeff > 1 || coeff < -1) next = true; 
     }
     
@@ -557,28 +568,25 @@ bool Chain::deformChain(std::pair<Cell*, int> cell, bool straighten, bool bend){
     if( (getDim() == 1 && cellsInChain.size() == 2 && cellsNotInChain.size() == 1 && straighten) ||
         (getDim() == 2 && cellsInChain.size() == 3 && cellsNotInChain.size() == 1 && straighten)){
       //printf("straighten \n");
-      deform(cellsInChain, cellsNotInChain);
-      return true;
+      return deform(cellsInChain, cellsNotInChain);
     }
     else if ( (getDim() == 1 && cellsInChain.size() == 1 && cellsNotInChain.size() == 2 && bend) ||
               (getDim() == 2 && cellsInChain.size() == 2 && cellsNotInChain.size() == 2 && bend)){
       //printf("bend \n");
-      deform(cellsInChain, cellsNotInChain);
-      return true;
+      //FIXME: return deform(cellsInChain, cellsNotInChain);
+      return false;
     }
     else if ((getDim() == 1 && cellsInChain.size() == 3 && cellsNotInChain.size() == 0) ||
              (getDim() == 2 && cellsInChain.size() == 4 && cellsNotInChain.size() == 0)){
       //printf("remove boundary \n");
-      deform(cellsInChain, cellsNotInChain);
-      return true;
+      return deform(cellsInChain, cellsNotInChain);
     }
   }
   
   return false;
 }
 
-void Chain::smoothenChain(){  
-  
+void Chain::smoothenChain(){
   if(!_cellComplex->simplicial()) return;
   
   int start = getSize();
@@ -656,9 +664,16 @@ void Chain::createPView(){
     int coeff = (*cit).second;
     std::vector<MVertex*> v = cell->getVertexVector();
     if(cell->getDim() > 0 && coeff < 0){ // flip orientation
-      MVertex* temp = v[0];
-      v[0] = v[1];
-      v[1] = temp;
+      if(getDim() != 1){
+        MVertex* temp = v[1];
+        v[1] = v[v.size()-1];
+        v[v.size()-1] = temp;
+      }
+      else{
+        MVertex* temp = v[0];
+        v[0] = v[1];
+        v[1] = temp;
+      }
     }
     MElement *e = factory.create(cell->getTypeForMSH(), v, cell->getNum(), cell->getPartition());
     for(int i = 0; i < abs(coeff); i++) elements.push_back(e);
@@ -682,6 +697,21 @@ void Chain::createPView(){
   //int physicalNum = _model->getMaxPhysicalNumber(getDim())+1; 
   physicalInfo[physicalNum]=getName();
   physicalMap[entityNum] = physicalInfo;
+  
+  // hide mesh
+  opt_mesh_points(0, GMSH_SET, 0);
+  opt_mesh_lines(0, GMSH_SET, 0);
+  opt_mesh_triangles(0, GMSH_SET, 0);
+  opt_mesh_quadrangles(0, GMSH_SET, 0);
+  opt_mesh_tetrahedra(0, GMSH_SET, 0);
+  opt_mesh_hexahedra(0, GMSH_SET, 0);
+  opt_mesh_prisms(0, GMSH_SET, 0);
+  opt_mesh_pyramids(0, GMSH_SET, 0);
+
+  // show post-processing normals, tangents and element boundaries
+  opt_view_normals(0, GMSH_SET, 20);
+  opt_view_tangents(0, GMSH_SET, 20);
+  opt_view_show_element(0, GMSH_SET, 1);
   
   if(!data.empty()){
     _model->storeChain(getDim(), entityMap, physicalMap);

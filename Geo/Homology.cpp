@@ -147,7 +147,7 @@ void Homology::findGenerators(std::string fileName){
   }
   
   createPViews();
-  writeGeneratorsMSH(fileName);
+  if(fileName != "") writeGeneratorsMSH(fileName);
   
   Msg::Info("Ranks of homology groups for primal cell complex:");
   Msg::Info("H0 = %d", HRank[0]);
@@ -253,7 +253,7 @@ void Homology::findDualGenerators(std::string fileName){
   }
    
   createPViews();
-  writeGeneratorsMSH(fileName);
+  if(fileName != "") writeGeneratorsMSH(fileName);
   
   Msg::Info("Ranks of homology groups for dual cell complex:");
   Msg::Info("H0* = %d", HRank[0]);
