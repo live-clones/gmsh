@@ -210,6 +210,14 @@ GeomMeshMatcher::matchEdges(GModel* m1, GModel* m2,
     coresp_e->push_back(Pair<GEdge*,GEdge*>((GEdge*) *entity1 ,
                                              choice));
     choice->setTag(((GEdge*) *entity1)->tag());
+
+    // This reverses the edge if it's not parametrized in the right direction
+    if (choice->getBeginVertex() == findMatching<GVertex*>(*coresp_v,v2) &&
+	choice->getEndVertex() == findMatching<GVertex*>(*coresp_v,v1)) {
+      Msg::Info("Wrong parametrization direction, reversing.");
+      choice->reverse();
+    }
+
     num_matched_edges++;
   }
 
