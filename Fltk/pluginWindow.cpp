@@ -267,7 +267,7 @@ void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,
       Fl_Group *g = new Fl_Group(x, y + BH, width, height - BH, "Help");
 
       Fl_Browser *o = new Fl_Browser
-        (x + WB, y + WB + BH, width - 2 * WB, height - 2 * WB - BH);
+        (x + WB, y + WB + BH, width - 2 * WB, height - 2 * WB - 2 * BH);
       o->add(" ");
       add_multiline_in_browser(o, "@c@b@.", p->getName().c_str(), false);
       o->add(" ");

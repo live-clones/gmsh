@@ -959,8 +959,8 @@ static void addGhostCells(GEntity *ge,
                           std::multimap<MVertex*, MElement*> &vertexToElement, 
                           std::multimap<MElement*, short> &ghosts)
 {
-  // get all the nodes on the partition boundary (there are not stored
-  // so we need to recompute them)
+  // get all the nodes on the partition boundary (we need to recompute
+  // them, as they are not owned by the entity)
   std::set<MVertex*> verts;
   for(unsigned int i = 0; i < ge->getNumMeshElements(); i++){
     MElement *e = ge->getMeshElement(i);
@@ -968,32 +968,41 @@ static void addGhostCells(GEntity *ge,
       verts.insert(e->getVertex(j));
   }
   
-  // get all the elements in touching the interface nodes
+  // get all the elements that touch these nodes
   for(std::set<MVertex*>::iterator it = verts.begin(); it != verts.end(); it++){
-    MVertex *v = *it;
     std::pair<std::multimap<MVertex*, MElement*>::iterator,
-              std::multimap<MVertex*, MElement*>::iterator> itp =
-      vertexToElement.equal_range(v);
-    // get all partitions sharing this node
+              std::multimap<MVertex*, MElement*>::iterator> pve =
+      vertexToElement.equal_range(*it);
+    // get all the partitions that touch this node
     std::set<short> parts;
-    for(std::multimap<MVertex*, MElement*>::iterator ite = itp.first;
-        ite != itp.second; ite++)
+    for(std::multimap<MVertex*, MElement*>::iterator ite = pve.first;
+        ite != pve.second; ite++)
       parts.insert(ite->second->getPartition());
-    // update partition info for each element touching the node
-    for(std::multimap<MVertex*, MElement*>::iterator ite = itp.first;
-        ite != itp.second; ite++){
+    // update the partition info for each element touching the node
+    for(std::multimap<MVertex*, MElement*>::iterator ite = pve.first;
+        ite != pve.second; ite++){
       MElement *e = ite->second;
-      for(std::set<short>::iterator its = parts.begin(); its != parts.end(); its++)
-        if(*its != e->getPartition())
-          ghosts.insert(std::pair<MElement*, short>(e, *its));
+      std::pair<std::multimap<MElement*, short>::iterator,
+                std::multimap<MElement*, short>::iterator> peg =
+        ghosts.equal_range(e);
+      for(std::set<short>::iterator its = parts.begin(); its != parts.end(); its++){
+        short partition = *its;
+        bool skip = false;
+        // insert the partition in the ghost map if 1) it's not
+        // already there and 2) it's not the same as the partition the
+        // element actually belongs to
+        for(std::multimap<MElement*, short>::iterator itg = peg.first;
+            itg != peg.second; itg++){
+          if(partition == itg->second){
+            skip = true;
+            break;
+          }
+        }
+        if(!skip && partition != e->getPartition())
+          ghosts.insert(std::pair<MElement*, short>(e, partition));
+      }
     }
   }
-#if 1
-  for(std::multimap<MElement*, short>::iterator it = ghosts.begin();
-      it != ghosts.end(); it++)
-    printf("ele %d (part %d) ghost %d\n", it->first->getNum(),
-           it->first->getPartition(), it->second);
-#endif
 }
 
 int CreatePartitionBoundaries(GModel *model, bool createGhostCells)
@@ -1008,7 +1017,7 @@ int CreatePartitionBoundaries(GModel *model, bool createGhostCells)
   std::multimap<MEdge, MElement*, Less_Edge> edgeToElement;
   std::multimap<MVertex*, MElement*> vertexToElement;
   
-  // assign partition faces
+  // create partition faces
   if (meshDim == 3){
     for(GModel::riter it = model->firstRegion(); it != model->lastRegion(); ++it){
       fillit_(faceToElement, (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
@@ -1031,7 +1040,7 @@ int CreatePartitionBoundaries(GModel *model, bool createGhostCells)
     }
   }
   
-  // assign partition edges
+  // create partition edges
   if (meshDim > 1){
     if (meshDim == 2){
       for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it){
@@ -1064,7 +1073,7 @@ int CreatePartitionBoundaries(GModel *model, bool createGhostCells)
     //splitBoundaryEdges(model,pedges);
   }
 
-  // make partition vertices
+  // create partition vertices
   if (meshDim > 1){
     if (meshDim == 2){
       for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it){
@@ -1095,6 +1104,8 @@ int CreatePartitionBoundaries(GModel *model, bool createGhostCells)
     }
   }
 
+  // create vertex-based ghost cells (i.e., elements that touch the
+  // partition boundaries by at least one vertex)
   if(createGhostCells){
     std::multimap<MElement*, short> &ghosts(model->getGhostCells());
     ghosts.clear();
@@ -1106,6 +1117,15 @@ int CreatePartitionBoundaries(GModel *model, bool createGhostCells)
       for(std::set<partitionFace*, Less_partitionFace>::iterator it = pfaces.begin();
           it != pfaces.end(); it++)
         addGhostCells(*it, vertexToElement, ghosts);
+#if 1
+    FILE *fp = fopen("ghosts.pos", "w");
+    fprintf(fp, "View \"ghosts\"{\n");
+    for(std::multimap<MElement*, short>::iterator it = ghosts.begin();
+        it != ghosts.end(); it++)
+      it->first->writePOS(fp, false, true, false, false, false, false);
+    fprintf(fp, "};\n");
+    fclose(fp);
+#endif
   }
 
   return 1;
