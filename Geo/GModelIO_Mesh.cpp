@@ -527,18 +527,15 @@ static void writeElementHeaderMSH(bool binary, FILE *fp, std::map<int,int> &elem
 }
 
 template<class T>
-static void writeElementsMSH(FILE *fp, T *ele, bool saveAll, 
-                             double version, bool binary, int &num, int elementary, 
-                             std::vector<int> &physicals, int parentNum)
+static void writeElementMSH(FILE *fp, T *ele, bool saveAll, 
+                            double version, bool binary, int &num, int elementary, 
+                            std::vector<int> &physicals, int parentNum)
 {
-  if(saveAll){
+  if(saveAll)
     ele->writeMSH(fp, version, binary, ++num, elementary, 0, parentNum);
-  }
-  else{
-    for(unsigned int j = 0; j < physicals.size(); j++){
+  else
+    for(unsigned int j = 0; j < physicals.size(); j++)
       ele->writeMSH(fp, version, binary, ++num, elementary, physicals[j], parentNum);
-    }
-  }
 }
 
 template<class T>
@@ -547,8 +544,8 @@ static void writeElementsMSH(FILE *fp, std::vector<T*> &ele, bool saveAll,
                              std::vector<int> &physicals)
 {
   for(unsigned int i = 0; i < ele.size(); i++)
-    writeElementsMSH(fp, ele[i], saveAll, version, binary, num,
-                     elementary, physicals, 0);
+    writeElementMSH(fp, ele[i], saveAll, version, binary, num,
+                    elementary, physicals, 0);
 }
 
 template<class T>
@@ -558,11 +555,11 @@ static void writeElementsMSH(FILE *fp, std::vector<T*> &ele, bool saveAll,
                              std::map<MElement*, int> &parentsNum)
 {
   for(unsigned int i = 0; i < ele.size(); i++) {
-    int parentNum = (ele[i]->getParent() != NULL &&
+    int parentNum = (ele[i]->getParent() &&
                      parentsNum.find(ele[i]->getParent()) != parentsNum.end()) ?
       parentsNum.find(ele[i]->getParent())->second : 0;
-    writeElementsMSH(fp, ele[i], saveAll, version, binary, num,
-                     elementary, physicals, parentNum);
+    writeElementMSH(fp, ele[i], saveAll, version, binary, num,
+                    elementary, physicals, parentNum);
   }
 }
 
@@ -718,8 +715,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
                         MSH_TRI_10, MSH_TRI_12, MSH_TRI_15, MSH_TRI_15I, MSH_TRI_21);
   for(itP = parents[0].begin(); itP != parents[0].end(); itP++)
     if(itP->first->getType() == TYPE_TRI) {
-      writeElementsMSH(fp, itP->first, saveAll, version, binary, num,
-                       itP->second->tag(), itP->second->physicals, 0);
+      writeElementMSH(fp, itP->first, saveAll, version, binary, num,
+                      itP->second->tag(), itP->second->physicals, 0);
       parentsNum[itP->first] = num;
     }
   for(fiter it = firstFace(); it != lastFace(); ++it)
@@ -732,8 +729,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
                         MSH_QUA_20);
   for(itP = parents[0].begin(); itP != parents[0].end(); itP++)
     if(itP->first->getType() == TYPE_QUA) {
-      writeElementsMSH(fp, itP->first, saveAll, version, binary, num,
-                       itP->second->tag(), itP->second->physicals, 0);
+      writeElementMSH(fp, itP->first, saveAll, version, binary, num,
+                      itP->second->tag(), itP->second->physicals, 0);
       parentsNum[itP->first] = num;
     }
   for(fiter it = firstFace(); it != lastFace(); ++it)
@@ -744,8 +741,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   writeElementHeaderMSH(binary, fp, elements, MSH_POLYG_);
   for(itP = parents[0].begin(); itP != parents[0].end(); itP++)
     if(itP->first->getType() == TYPE_POLYG) {
-      writeElementsMSH(fp, itP->first, saveAll, version, binary, num,
-                       itP->second->tag(), itP->second->physicals, 0);
+      writeElementMSH(fp, itP->first, saveAll, version, binary, num,
+                      itP->second->tag(), itP->second->physicals, 0);
       parentsNum[itP->first] = num;
     }
   for(fiter it = firstFace(); it != lastFace(); it++)
@@ -757,8 +754,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
                         MSH_TET_35, MSH_TET_56, MSH_TET_52);
   for(itP = parents[1].begin(); itP != parents[1].end(); itP++)
     if(itP->first->getType() == TYPE_TET) {
-      writeElementsMSH(fp, itP->first, saveAll, version, binary, num,
-                       itP->second->tag(), itP->second->physicals, 0);
+      writeElementMSH(fp, itP->first, saveAll, version, binary, num,
+                      itP->second->tag(), itP->second->physicals, 0);
       parentsNum[itP->first] = num;
     }
   for(riter it = firstRegion(); it != lastRegion(); ++it)
@@ -769,8 +766,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   writeElementHeaderMSH(binary, fp, elements, MSH_HEX_8, MSH_HEX_27, MSH_HEX_20);
   for(itP = parents[1].begin(); itP != parents[1].end(); itP++)
     if(itP->first->getType() == TYPE_HEX) {
-      writeElementsMSH(fp, itP->first, saveAll, version, binary, num,
-                       itP->second->tag(), itP->second->physicals, 0);
+      writeElementMSH(fp, itP->first, saveAll, version, binary, num,
+                      itP->second->tag(), itP->second->physicals, 0);
       parentsNum[itP->first] = num;
     }
   for(riter it = firstRegion(); it != lastRegion(); ++it)
@@ -781,8 +778,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   writeElementHeaderMSH(binary, fp, elements, MSH_PRI_6, MSH_PRI_18, MSH_PRI_15);
   for(itP = parents[1].begin(); itP != parents[1].end(); itP++)
     if(itP->first->getType() == TYPE_PRI) {
-      writeElementsMSH(fp, itP->first, saveAll, version, binary, num,
-                       itP->second->tag(), itP->second->physicals, 0);
+      writeElementMSH(fp, itP->first, saveAll, version, binary, num,
+                      itP->second->tag(), itP->second->physicals, 0);
       parentsNum[itP->first] = num;
     }
   for(riter it = firstRegion(); it != lastRegion(); ++it)
@@ -793,8 +790,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   writeElementHeaderMSH(binary, fp, elements, MSH_PYR_5, MSH_PYR_14, MSH_PYR_13);
   for(itP = parents[1].begin(); itP != parents[1].end(); itP++)
     if(itP->first->getType() == TYPE_PYR) {
-      writeElementsMSH(fp, itP->first, saveAll, version, binary, num,
-                       itP->second->tag(), itP->second->physicals, 0);
+      writeElementMSH(fp, itP->first, saveAll, version, binary, num,
+                      itP->second->tag(), itP->second->physicals, 0);
       parentsNum[itP->first] = num;
     }
   for(riter it = firstRegion(); it != lastRegion(); ++it)
@@ -805,8 +802,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   writeElementHeaderMSH(binary, fp, elements, MSH_POLYH_);
   for(itP = parents[1].begin(); itP != parents[1].end(); itP++)
     if(itP->first->getType() == TYPE_POLYH) {
-      writeElementsMSH(fp, itP->first, saveAll, version, binary, num,
-                       itP->second->tag(), itP->second->physicals, 0);
+      writeElementMSH(fp, itP->first, saveAll, version, binary, num,
+                      itP->second->tag(), itP->second->physicals, 0);
       parentsNum[itP->first] = num;
     }
   for(riter it = firstRegion(); it != lastRegion(); ++it)
