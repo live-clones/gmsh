@@ -697,20 +697,23 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   fprintf(fp, "%d\n", numElements);
   int num = 0;
 
-  std::map<MElement *, int> parentsNum;
-  std::map<MElement *, GEntity *>::const_iterator itP;
+  std::map<MElement*, int> parentsNum;
+  std::map<MElement*, GEntity*>::const_iterator itP;
 
+  // points
   writeElementHeaderMSH(binary, fp, elements, MSH_PNT);
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     writeElementsMSH(fp, (*it)->points, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
 
+  // lines
   writeElementHeaderMSH(binary, fp, elements, MSH_LIN_2, MSH_LIN_3, MSH_LIN_4,
                         MSH_LIN_5);
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
    writeElementsMSH(fp, (*it)->lines, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
 
+  // triangles
   writeElementHeaderMSH(binary, fp, elements, MSH_TRI_3, MSH_TRI_6, MSH_TRI_9,
                         MSH_TRI_10, MSH_TRI_12, MSH_TRI_15, MSH_TRI_15I, MSH_TRI_21);
   for(itP = parents[0].begin(); itP != parents[0].end(); itP++)
@@ -722,6 +725,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, (*it)->triangles, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
+
+  // quads
   writeElementHeaderMSH(binary, fp, elements, MSH_QUA_4, MSH_QUA_9, MSH_QUA_8, 
                         MSH_QUA_16, MSH_QUA_25, MSH_QUA_36, MSH_QUA_12, MSH_QUA_16I,
                         MSH_QUA_20);
@@ -734,6 +739,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, (*it)->quadrangles, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
+
+  // polygons
   writeElementHeaderMSH(binary, fp, elements, MSH_POLYG_);
   for(itP = parents[0].begin(); itP != parents[0].end(); itP++)
     if(itP->first->getType() == TYPE_POLYG) {
@@ -745,6 +752,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     writeElementsMSH(fp, (*it)->polygons, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals, parentsNum);
 
+  // tets
   writeElementHeaderMSH(binary, fp, elements, MSH_TET_4, MSH_TET_10, MSH_TET_20, 
                         MSH_TET_35, MSH_TET_56, MSH_TET_52);
   for(itP = parents[1].begin(); itP != parents[1].end(); itP++)
@@ -756,6 +764,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->tetrahedra, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
+
+  // hexas
   writeElementHeaderMSH(binary, fp, elements, MSH_HEX_8, MSH_HEX_27, MSH_HEX_20);
   for(itP = parents[1].begin(); itP != parents[1].end(); itP++)
     if(itP->first->getType() == TYPE_HEX) {
@@ -766,6 +776,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->hexahedra, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
+
+  // prisms
   writeElementHeaderMSH(binary, fp, elements, MSH_PRI_6, MSH_PRI_18, MSH_PRI_15);
   for(itP = parents[1].begin(); itP != parents[1].end(); itP++)
     if(itP->first->getType() == TYPE_PRI) {
@@ -776,6 +788,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->prisms, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
+
+  // pyramids
   writeElementHeaderMSH(binary, fp, elements, MSH_PYR_5, MSH_PYR_14, MSH_PYR_13);
   for(itP = parents[1].begin(); itP != parents[1].end(); itP++)
     if(itP->first->getType() == TYPE_PYR) {
@@ -786,6 +800,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->pyramids, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
+
+  // polyhedra
   writeElementHeaderMSH(binary, fp, elements, MSH_POLYH_);
   for(itP = parents[1].begin(); itP != parents[1].end(); itP++)
     if(itP->first->getType() == TYPE_POLYH) {

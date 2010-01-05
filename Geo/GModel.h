@@ -379,7 +379,8 @@ class GModel
   int writeMSH(const std::string &name, double version=1.0, bool binary=false,
                bool saveAll=false, bool saveParametric=false, double scalingFactor=1.0);
   int writeDistanceMSH(const std::string &name, double version=1.0, bool binary=false,
-		       bool saveAll=false, bool saveParametric=false, double scalingFactor=1.0);
+		       bool saveAll=false, bool saveParametric=false, 
+                       double scalingFactor=1.0);
 
   // Visual FEA file format
   int writeFEA(const std::string &name, int elementTagType,
@@ -451,7 +452,8 @@ class GModel
 
   // Store mesh elements of a chain in a new elementary and physical entity
   void storeChain(int dim, std::map<int, std::vector<MElement*> > &entityMap, 
-                 std::map<int, std::map<int, std::string> > &physicalMap){
+                  std::map<int, std::map<int, std::string> > &physicalMap)
+  {
     _storeElementsInEntities(entityMap);
     _storePhysicalTagsInEntities(dim, physicalMap);
     _associateEntityWithMeshVertices();
