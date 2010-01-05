@@ -554,7 +554,8 @@ static void writeElementsMSH(FILE *fp, std::vector<T*> &ele, bool saveAll,
 template<class T>
 static void writeElementsMSH(FILE *fp, std::vector<T*> &ele, bool saveAll,
                              double version, bool binary, int &num, int elementary,
-                             std::vector<int> &physicals, std::map<MElement *, int> &parentsNum)
+                             std::vector<int> &physicals,
+                             std::map<MElement*, int> &parentsNum)
 {
   for(unsigned int i = 0; i < ele.size(); i++) {
     int parentNum = (ele[i]->getParent() != NULL &&
@@ -564,97 +565,7 @@ static void writeElementsMSH(FILE *fp, std::vector<T*> &ele, bool saveAll,
                      elementary, physicals, parentNum);
   }
 }
-int GModel::writeDistanceMSH(const std::string &name, double version, bool binary,
-			     bool saveAll, bool saveParametric, double scalingFactor)
-{
 
-  std::vector<GEntity*> entities;
-  getEntities(entities);
-
-  int numnodes = 0;
-  for(unsigned int i = 0; i < entities.size()-1; i++)
-    numnodes += entities[i]->mesh_vertices.size();
-
-  int totNumNodes = numnodes + entities[entities.size()-1]->mesh_vertices.size();
-  std::map<MVertex*,double > distance;
-
-  //EMI: TODO COMPUTE this with EDP distanceTERM instead of ANN
-  //write solution for elements
-
-#if defined(HAVE_ANN)
- Msg::Info("Computing Distance function to the boundaries with ANN");
- 
- // add all points from boundaries into kdtree
-  ANNpointArray kdnodes = annAllocPts(numnodes, 4);
-  int k = 0;
-  for(unsigned int i = 0; i < entities.size()-1; i++)
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
-      MVertex *v =  entities[i]->mesh_vertices[j];
-      distance.insert(std::make_pair(v, 0.0));
-      kdnodes[k][0] = v->x();
-      kdnodes[k][1] = v->y();
-      kdnodes[k][2] = v->z();
-      k++;
-    }  
-  ANNkd_tree *kdtree = new ANNkd_tree(kdnodes, numnodes, 3);
-
-  // compute the distances with the kdtree
-  ANNidxArray index = new ANNidx[1];
-  ANNdistArray dist = new ANNdist[1];
-  GEntity* g = entities[entities.size()-1];
-  for(unsigned int j = 0; j < g->mesh_vertices.size(); j++){
-    MVertex *v = g->mesh_vertices[j];
-    double xyz[3] = {v->x(), v->y(), v->z()};
-    kdtree->annkSearch(xyz, 1, index, dist);
-    double d = sqrt(dist[0]);
-    distance.insert(std::make_pair(v, d));
-  }
-  delete [] index;
-  delete [] dist;
-  delete kdtree;
-  annDeallocPts(kdnodes);
-#endif
-
-  //write distance in msh file
-  Msg::Info("Writing distance.pos");
-  FILE * f = fopen("distance.pos","w");
-  fprintf(f,"View \"distance\"{\n");
-  for(std::map<MVertex*, double>::iterator it = distance.begin(); it != distance.end(); it++) {
-      fprintf(f,"SP(%g,%g,%g){%g};\n",
-	      it->first->x(), it->first->y(), it->first->z(),
-	      it->second);      
-  }
-  fprintf(f,"};\n");
-  fclose(f);
-
-//   Msg::Info("Writing distance-bgm.pos");
-//   FILE * f2 = fopen("distance-bgm.pos","w");
-//   fprintf(f,"View \"distance\"{\n");
-//   GEntity* ge = entities[entities.size()-1];
-//   for(unsigned int i = 0; i < ge->getNumMeshElements(); i++){ 
-//     MElement *e = ge->getMeshElement(i);
-//     fprintf(f2,"ST(");//TO DO CHANGE this
-//     std::vector<double> dist;
-//     for(int j = 0; j < e->getNumVertices(); j++) {
-//       MVertex *v =  e->getVertex(j);
-//       if(j) fprintf(f2,",%g,%g,%g",v->x(),v->y(), v->z());
-//       else fprintf(f2,"%g,%g,%g", v->x(),v->y(), v->z());
-//       std::map<MVertex*, double>::iterator it = distance.find(v);
-//       dist.push_back(it->second);
-//     }
-//     fprintf(f2,"){");
-//     for (int i=0; i<dist.size(); i++){
-//       if (i) fprintf(f2,",%g", dist[i]);
-//       else fprintf(f2,"%g", dist[i]);
-//     }   
-//     fprintf(f2,"};\n");
-//   }
-//   fprintf(f,"};\n");
-//   fclose(f2);
-   
-  return 1;
-
-}
 int GModel::writeMSH(const std::string &name, double version, bool binary,
                      bool saveAll, bool saveParametric, double scalingFactor)
 {
@@ -896,6 +807,98 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   }
 
   fclose(fp);
+  return 1;
+}
+
+int GModel::writeDistanceMSH(const std::string &name, double version, bool binary,
+			     bool saveAll, bool saveParametric, double scalingFactor)
+{
+  std::vector<GEntity*> entities;
+  getEntities(entities);
+
+  int numnodes = 0;
+  for(unsigned int i = 0; i < entities.size()-1; i++)
+    numnodes += entities[i]->mesh_vertices.size();
+
+  int totNumNodes = numnodes + entities[entities.size()-1]->mesh_vertices.size();
+  std::map<MVertex*,double > distance;
+
+  // EMI: TODO COMPUTE this with EDP distanceTERM instead of ANN write
+  // solution for elements
+
+  // CG: Emi -- pourquoi ne pas en faire un plugin, plutot ?
+
+#if defined(HAVE_ANN)
+  Msg::Info("Computing Distance function to the boundaries with ANN");
+ 
+ // add all points from boundaries into kdtree
+  ANNpointArray kdnodes = annAllocPts(numnodes, 4);
+  int k = 0;
+  for(unsigned int i = 0; i < entities.size()-1; i++)
+    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+      MVertex *v =  entities[i]->mesh_vertices[j];
+      distance.insert(std::make_pair(v, 0.0));
+      kdnodes[k][0] = v->x();
+      kdnodes[k][1] = v->y();
+      kdnodes[k][2] = v->z();
+      k++;
+    }  
+  ANNkd_tree *kdtree = new ANNkd_tree(kdnodes, numnodes, 3);
+
+  // compute the distances with the kdtree
+  ANNidxArray index = new ANNidx[1];
+  ANNdistArray dist = new ANNdist[1];
+  GEntity* g = entities[entities.size()-1];
+  for(unsigned int j = 0; j < g->mesh_vertices.size(); j++){
+    MVertex *v = g->mesh_vertices[j];
+    double xyz[3] = {v->x(), v->y(), v->z()};
+    kdtree->annkSearch(xyz, 1, index, dist);
+    double d = sqrt(dist[0]);
+    distance.insert(std::make_pair(v, d));
+  }
+  delete [] index;
+  delete [] dist;
+  delete kdtree;
+  annDeallocPts(kdnodes);
+#endif
+
+  //write distance in msh file
+  Msg::Info("Writing distance.pos");
+  FILE * f = fopen("distance.pos","w");
+  fprintf(f,"View \"distance\"{\n");
+  for(std::map<MVertex*, double>::iterator it = distance.begin(); it != distance.end(); it++) {
+      fprintf(f,"SP(%g,%g,%g){%g};\n",
+	      it->first->x(), it->first->y(), it->first->z(),
+	      it->second);      
+  }
+  fprintf(f,"};\n");
+  fclose(f);
+
+//   Msg::Info("Writing distance-bgm.pos");
+//   FILE * f2 = fopen("distance-bgm.pos","w");
+//   fprintf(f,"View \"distance\"{\n");
+//   GEntity* ge = entities[entities.size()-1];
+//   for(unsigned int i = 0; i < ge->getNumMeshElements(); i++){ 
+//     MElement *e = ge->getMeshElement(i);
+//     fprintf(f2,"ST(");//TO DO CHANGE this
+//     std::vector<double> dist;
+//     for(int j = 0; j < e->getNumVertices(); j++) {
+//       MVertex *v =  e->getVertex(j);
+//       if(j) fprintf(f2,",%g,%g,%g",v->x(),v->y(), v->z());
+//       else fprintf(f2,"%g,%g,%g", v->x(),v->y(), v->z());
+//       std::map<MVertex*, double>::iterator it = distance.find(v);
+//       dist.push_back(it->second);
+//     }
+//     fprintf(f2,"){");
+//     for (int i=0; i<dist.size(); i++){
+//       if (i) fprintf(f2,",%g", dist[i]);
+//       else fprintf(f2,"%g", dist[i]);
+//     }   
+//     fprintf(f2,"};\n");
+//   }
+//   fprintf(f,"};\n");
+//   fclose(f2);
+   
   return 1;
 }
 
