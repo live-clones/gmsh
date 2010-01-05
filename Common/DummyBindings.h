@@ -14,11 +14,11 @@ public:
   template <typename tObj, typename t0, typename t1, typename t2 >
   methodBinding *setConstructor(){}
   template <typename tObj, typename t0, typename t1>
-  methodBinding *setConstructor(){}
+  methodBinding *setConstructor(){return 0;}
   template <typename tObj, typename t0>
-  methodBinding *setConstructor(){}
+  methodBinding *setConstructor(){return 0;}
   template<typename tObj>
-  methodBinding *setConstructor(){}
+  methodBinding *setConstructor(){return 0;}
 };
 
 class binding {
