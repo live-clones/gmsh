@@ -83,30 +83,18 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
 
   int gens = (int)HomologyComputationOptions_Number[4].def;
   int cuts = (int)HomologyComputationOptions_Number[5].def;
-  int betti = (int)HomologyComputationOptions_Number[6].def;
-  
+  int betti = (int)HomologyComputationOptions_Number[6].def;  
 
   GModel *m = GModel::current();
   
   Homology* homology = new Homology(m, domain, subdomain);
   
-  //if(swap == 1) homology->swapSubdomain();
-  
-  if(gens == 1 && cuts != 1 && betti != 1) {
-    homology->findGenerators(fileName);
-    GmshMergeFile(fileName);
-  }
-  else if(cuts == 1 && gens != 1 && betti != 1) {
-    homology->findDualGenerators(fileName);
-    GmshMergeFile(fileName);
-  }
-  else if(cuts != 1 && gens != 1 && betti == 1) {
-    homology->computeBettiNumbers();
-  }
+  if(gens == 1 && cuts != 1 && betti != 1) homology->findGenerators(fileName);
+  else if(cuts == 1 && gens != 1 && betti != 1) homology->findDualGenerators(fileName);
+  else if(cuts != 1 && gens != 1 && betti == 1) homology->computeBettiNumbers();
   else Msg::Error("Choose either generators, dual generators or Betti numbers to compute.");
   
   delete homology; 
-  
   
   return 0;
 }
