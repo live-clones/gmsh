@@ -332,7 +332,7 @@ int MergeFile(std::string fileName, bool warnIfMissing)
 #endif
 #if defined(HAVE_LUA)
   else if(ext == ".lua" || ext == ".LUA") {
-    status = read_lua(fileName.c_str());
+    status = binding::instance()->readFile(fileName.c_str());
   }
 #endif
   else {

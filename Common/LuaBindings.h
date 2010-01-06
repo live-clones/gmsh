@@ -2,14 +2,28 @@
 #define _LUA_BINDINGS_H_
 #include "Bindings.h"
 #ifdef HAVE_LUA
-int read_lua(const char *filename);
+#include "BindingsDocTemplates.h"
 
 extern "C" {
 #include "lua.h"
 #include "lauxlib.h"
 }
 #include <vector>
+#include <set>
 
+class classBinding;
+class binding {
+  static binding *_instance;
+  public:
+  inline static binding *instance(){return _instance ? _instance : new binding();}
+  lua_State *L;
+  int readFile(const char *filename);
+  void interactiveSession();
+  binding();
+  std::map<std::string,classBinding *> classes;
+  template<class t>
+  classBinding *addClass(std::string className);
+};
 
 /*** store a unique static class name for each binded class ***/
 template <typename type>
@@ -302,11 +316,14 @@ template <typename cb>
 class methodBindingT:public luaMethodBinding {
   public:
   cb _f;
-  methodBindingT(const std::string luaname,cb f):luaMethodBinding(luaname){
+  methodBindingT(const std::string luaname,cb f):luaMethodBinding(luaname) {
     _f=f;
   }
   int call (lua_State *L) {
     return luaCall(L,_f);
+  }
+  void getArgNames(std::string &returnTypeName, std::vector<std::string> &argTypeName) {
+    getArgNames(_f,returnTypeName,argTypeName);
   }
 };
 
@@ -357,10 +374,9 @@ class constructorBindingT<tObj,t0,t1,t2,void>:public luaMethodBinding {
   }
 };
 
-
 class classBinding {
   std::string _className;
-  lua_State *_L;
+  binding *_b;
   static int callMethod(lua_State *L) {
     return  static_cast<luaMethodBinding*>(lua_touserdata(L, lua_upvalueindex(1)))->call(L); 
   }
@@ -381,19 +397,25 @@ class classBinding {
     return 1;
   }
   void setConstructorLuaMethod(luaMethodBinding *constructor){
-    lua_getglobal(_L,_className.c_str());
-    int methods = lua_gettop(_L);
-    lua_getmetatable(_L,methods);
-    int mt = lua_gettop(_L);
-    lua_pushlightuserdata(_L,(void*)constructor);
-    lua_pushcclosure(_L, callMethod, 1);
-    lua_setfield(_L, mt,"__call");
-    lua_pop(_L,2);
+    lua_State *L = _b->L;
+    lua_getglobal(L,_className.c_str());
+    int methods = lua_gettop(L);
+    lua_getmetatable(L,methods);
+    int mt = lua_gettop(L);
+    lua_pushlightuserdata(L,(void*)constructor);
+    lua_pushcclosure(L, callMethod, 1);
+    lua_setfield(L, mt,"__call");
+    lua_pop(L,2);
   }
+  //for the doc
+  std::string _description;
+  classBinding *_parent;
 public:
+  std::set<classBinding *> children;
   // get userdata from Lua stack and return pointer to T object
-  classBinding(lua_State *L, std::string name){
-    _L=L;
+  classBinding(binding *b, std::string name){
+    _b=b;
+    lua_State *L = _b->L;
     _className=name;
 
     // there are 3 tables involved :
@@ -423,30 +445,42 @@ public:
   } 
   template<typename parentType>
   void setParentClass(){
+    if(_parent)
+      Msg::Error("Multiple inheritance not implemented in lua bindings for class %s",_className.c_str());
     std::string parentClassName=className<parentType>::get();
-    lua_getglobal(_L,_className.c_str());
-    lua_getmetatable(_L,-1);
-    int mt=lua_gettop(_L);
-    lua_getglobal(_L,parentClassName.c_str());
-    lua_setfield(_L,mt,"__index");// mt.__index = global[_parentClassName] // this is the inheritance bit
-    lua_pop(_L,2);
+    _parent = _b->classes[parentClassName];
+    _parent->children.insert(this);
+    lua_getglobal(_b->L,_className.c_str());
+    lua_getmetatable(_b->L,-1);
+    int mt=lua_gettop(_b->L);
+    lua_getglobal(_b->L,parentClassName.c_str());
+    lua_setfield(_b->L,mt,"__index");// mt.__index = global[_parentClassName] // this is the inheritance bit
+    lua_pop(_b->L,2);
   }
-  void setDescription(std::string description){};
+
+  void setDescription(std::string description){
+    _description = description;
+  }
+  inline const std::string getDescription()const {return _description;};
+  inline classBinding *getParent()const {return _parent;};
+  std::map<std::string, luaMethodBinding *> methods;
 
   template <typename cb>
   methodBinding *addMethod(std::string n, cb f){
     luaMethodBinding *mb = new methodBindingT<cb>(n,f);
+    methods[n]=mb;
+    lua_State *L=_b->L;
 
-    lua_getglobal(_L,_className.c_str());
-    int methods=lua_gettop(_L);
+    lua_getglobal(L,_className.c_str());
+    int methods=lua_gettop(L);
     /*int (*lc)(lua_State *,cb)=(int(*)(lua_State*,cb))luaCall;
-    lua_pushlightuserdata(_L, (void*)lc);
-    lua_pushlightuserdata(_L, (void*)f);
-    lua_pushcclosure(_L, callMethod2, 2);*/
-    lua_pushlightuserdata(_L, (void*)mb);
-    lua_pushcclosure(_L, callMethod, 1);
-    lua_setfield(_L,methods, n.c_str()); //className.name = callMethod(mb)
-    lua_pop(_L,1);
+    lua_pushlightuserdata(L, (void*)lc);
+    lua_pushlightuserdata(L, (void*)f);
+    lua_pushcclosure(L, callMethod2, 2);*/
+    lua_pushlightuserdata(L, (void*)mb);
+    lua_pushcclosure(L, callMethod, 1);
+    lua_setfield(L,methods, n.c_str()); //className.name = callMethod(mb)
+    lua_pop(L,1);
     return mb; 
   }
   template <typename tObj, typename t0, typename t1, typename t2, typename t3 >
@@ -479,19 +513,15 @@ public:
     setConstructorLuaMethod(constructorLua);
     return constructorLua;
   }
+  inline const std::string getClassName()const {return _className;}
 };
 
-class binding {
-  public:
-  lua_State *L;
-  template<class t>
-  classBinding *addClass(std::string className);
-};
 
 template<typename t>
 classBinding *binding::addClass(std::string name){
   className<t>::set(name);
-  classBinding *cb=new classBinding(L,name);
+  classBinding *cb=new classBinding(this,name);
+  classes[name]=cb;
   return cb;
 }
 #endif

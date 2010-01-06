@@ -28,6 +28,10 @@
 #include "PluginManager.h"
 #endif
 
+#if defined(HAVE_LUA)
+#include "LuaBindings.h"
+#endif
+
 int GmshInitialize(int argc, char **argv)
 {
   // we need at least one model during option parsing
@@ -141,6 +145,12 @@ int GmshBatch()
   }
 #endif
 
+#if defined(HAVE_LUA)
+  if(CTX::instance()->batch == -4){
+    binding::instance()->interactiveSession();
+  }
+  else 
+#endif 
   if(CTX::instance()->batch == -3){
     GmshRemote();
   }

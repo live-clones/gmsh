@@ -97,6 +97,9 @@ void PrintUsage(const char *name)
 #if defined(HAVE_FLTK)
   Msg::Direct("  -a, -g, -m, -s, -p    Start in automatic, geometry, mesh, solver or post-processing mode");
 #endif
+#if defined(HAVE_LUA)
+  Msg::Direct("  -lua                  Start an interactive lua session");
+#endif
   Msg::Direct("  -pid                  Print process id on stdout");
   Msg::Direct("  -listen               Always listen to incoming connection requests");
   Msg::Direct("  -v int                Set verbosity level");
@@ -601,6 +604,12 @@ void GetOptions(int argc, char *argv[])
           CTX::instance()->display = argv[i++];
         else
           Msg::Fatal("Missing argument");
+      }
+#endif
+#if defined (HAVE_LUA)
+      else if(!strcmp(argv[i] + 1, "lua")) {
+        i++;
+        CTX::instance()->batch = -4;
       }
 #endif
 #if defined(__APPLE__)

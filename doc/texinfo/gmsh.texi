@@ -915,6 +915,8 @@ Specify display
 Parse input files, then exit
 @item -a, -g, -m, -s, -p
 Start in automatic, geometry, mesh, solver or post-processing mode
+@item -lua
+Start an interactive lua session
 @item -pid
 Print pid on stdout
 @item -listen

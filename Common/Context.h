@@ -92,11 +92,11 @@ class CTX {
   int fileChooserPosition[2];
   // use the system menu bar on Mac OS X?
   int systemMenuBar;
-  // batch mode (-3: server daemon, -2: check coherence, -1: write
+  // batch mode (-4: lua session, -3: server daemon, -2: check coherence, -1: write
   // geo, 0: full gfx, 1: 1D mesh, 2: 2D mesh, 3: 3D mesh, 4: adapt
   // mesh, 5: refine mesh)
   int batch; 
-  // batch operations to appy after meshing (1: partition mesh)
+  // batch operations to apply after meshing (1: partition mesh)
   int batchAfterMesh;
   // initial menu (0: automatic, 1: geom, 2: mesh, 3: solver, 4: post)
   int initialContext;

@@ -38,6 +38,7 @@
 #cmakedefine HAVE_PETSC
 #cmakedefine HAVE_POST
 #cmakedefine HAVE_QT
+#cmakedefine HAVE_READLINE
 #cmakedefine HAVE_SLEPC
 #cmakedefine HAVE_SOLVER
 #cmakedefine HAVE_TAUCS

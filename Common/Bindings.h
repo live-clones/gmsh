@@ -6,9 +6,11 @@
 #include "GmshConfig.h"
 
 class methodBinding{
+  std::string _description;
   public:
   void setArgNames(std::string arg1, ...){}
-  void setDescription(std::string description){}
+  void setDescription(std::string description){_description=description;}
+  inline const std::string getDescription() const {return _description;}
 };
 
 #if defined(HAVE_LUA)
@@ -16,5 +18,6 @@ class methodBinding{
 #else  //no bindings
 #include "DummyBindings.h"
 #endif
+
 
 #endif
