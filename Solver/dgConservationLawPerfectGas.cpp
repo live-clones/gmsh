@@ -1,6 +1,10 @@
 #include "dgConservationLawPerfectGas.h"
 #include "function.h"
 
+/*
+\rho \left(\frac{\partial \mathbf{v}}{\partial t} + \mathbf{v} \cdot \nabla \mathbf{v}\right) = -\nabla p + \mu \nabla^2 \mathbf{v} + \left( \tfrac13 \mu + \mu^v) \nabla (\nabla \cdot \mathbf{v} \right) + \rho \mathbf{f} 
+*/
+
 const double GAMMA = 1.4;
 static inline void _ROE2D (const double &_GAMMA,
 			   const double &nx,  
@@ -169,6 +173,89 @@ class dgPerfectGasLaw2d::advection : public dataCacheDouble {
   }
 };
 
+class dgPerfectGasLaw2d::diffusion : public dataCacheDouble {
+  dataCacheDouble &sol,&grad,&mu,&kappa;
+  public:
+  diffusion(dataCacheMap &cacheMap, 
+	    const std::string &muFunctionName,
+	    const std::string &kappaFunctionName ):
+    sol(cacheMap.get("Solution",this)),
+    grad(cacheMap.get("SolutionGradient",this)),
+    mu(cacheMap.get(muFunctionName,this)),
+    kappa(cacheMap.get(kappaFunctionName,this))
+  {};
+  void _eval () { 
+    const int nQP = sol().size1();      
+    if(_value.size1() != nQP)
+      _value=fullMatrix<double>(nQP,12);
+
+    for (size_t k = 0 ; k < nQP; k++ ){
+      const double muk    = mu(k,0);
+      const double kappak = kappa(k,0);      
+      //      printf("%g %g grad rho (%g %g)\n",muk,kappak,grad(k*3+0,0),grad(k*3+1,0));
+    // find gradients of primitive variables    
+      const double overRho = 1./sol(k,0);
+      const double u = sol(k,1) * overRho;
+      const double v = sol(k,2) * overRho;
+      // grad v    
+      const double dudx = (grad(k*3+0,1) - grad(k*3+0,0) * u) * overRho;
+      const double dudy = (grad(k*3+1,1) - grad(k*3+1,0) * u) * overRho;
+      const double dvdx = (grad(k*3+0,2) - grad(k*3+0,0) * v) * overRho;
+      const double dvdy = (grad(k*3+1,2) - grad(k*3+1,0) * v) * overRho;    
+      // shear stress tensor - Newtonian fluid without bulk viscosity
+      
+      const double tauxx = muk * (dudx - dvdy);
+      const double tauxy = muk * (dudy + dvdx);
+      const double tauyy = - tauxx;
+    
+      _value(k,1) = -tauxx;
+      _value(k,2) = -tauxy;
+    
+      _value(k,1+4) = -tauxy;
+      _value(k,2+4) = -tauyy;    
+      // heat flux
+    
+      const double kOverRhoCv = kappak * overRho; 
+      const double Ek = u * u + v * v;
+      const double eMinus= sol(k,3) * overRho - Ek;
+    
+      // k grad T
+      
+      _value(k,3)      = -kOverRhoCv*(grad(k*3+0,3) - eMinus*grad(k*3+0,0) - (grad(k*3+0,1)*u + grad(k*3+0,2)*v));
+      _value(k,3+4)    = -kOverRhoCv*(grad(k*3+1,3) - eMinus*grad(k*3+1,0) - (grad(k*3+1,1)*u + grad(k*3+1,2)*v));
+      
+      // v . tau - momentum dissipation
+      
+      _value(k,3)      -= (u * tauxx + v * tauxy);
+      _value(k,3+4)    -= (u * tauxy + v * tauyy);         
+      
+      //      printf("%g %g %g %g %g %g %g %g \n",_value(k,0),_value(k,1),_value(k,2),_value(k,3),_value(k,4),_value(k,5),_value(k,6),_value(k,7));
+      
+    }
+  }
+};
+
+class dgPerfectGasLaw2d::source : public dataCacheDouble {
+  dataCacheDouble &sol,&s;
+public:
+  source(dataCacheMap &cacheMap, const std::string &sourceFunctionName):
+    sol(cacheMap.get("Solution",this)),
+    s(cacheMap.get(sourceFunctionName,this))
+  {};
+  void _eval () { 
+    const int nQP = sol().size1();      
+    if(_value.size1() != nQP)
+      _value=fullMatrix<double>(nQP,4);
+    for (size_t k = 0 ; k < nQP; k++ ){
+      _value(k,0) = sol(k,0)*s(0,0);
+      _value(k,1) = sol(k,0)*s(0,1);
+      _value(k,2) = sol(k,0)*s(0,2);
+      _value(k,3) = sol(k,0)*s(0,3);
+    }
+  }
+};
+
+
 class dgPerfectGasLaw2d::riemann : public dataCacheDouble {
   dataCacheDouble &normals, &solL, &solR;
   public:
@@ -180,7 +267,7 @@ class dgPerfectGasLaw2d::riemann : public dataCacheDouble {
   void _eval () { 
     int nQP = solL().size1();
     if(_value.size1() != nQP)
-      _value = fullMatrix<double>(nQP,8);
+      _value = fullMatrix<double>(nQP,12);
 
     for(int i=0; i< nQP; i++) {
       const double solLeft [4] = {solL(i,0),solL(i,1),solL(i,2),solL(i,3)};
@@ -201,6 +288,55 @@ class dgPerfectGasLaw2d::riemann : public dataCacheDouble {
     }
   }
 };
+
+class dgPerfectGasLaw2d::maxConvectiveSpeed : public dataCacheDouble {
+  dataCacheDouble &sol;
+  public:
+  maxConvectiveSpeed(dataCacheMap &cacheMap):
+    sol(cacheMap.get("Solution",this))
+  {
+  };
+  void _eval () {
+    int nQP = sol().size1();
+    if(_value.size1() != nQP)
+      _value=fullMatrix<double>(nQP,1);
+    for(int i=0; i< nQP; i++) {
+      const double rhov2 = (sol(i,1)*sol(i,1) + sol(i,2)*sol(i,2))/sol(i,0);
+      const double p = (GAMMA-1.0)*(sol(i,3) - 0.5 * rhov2);
+      //      printf("p = %g %g %g %g %g\n",p,_value(i,0),_value(i,1),_value(i,2),_value(i,3));
+      const double c = sqrt(GAMMA*p/sol(i,0));
+      _value(i,0) = c+sqrt(rhov2/sol(i,0));
+    }
+  }
+};
+
+class dgPerfectGasLaw2d::maxDiffusivity : public dataCacheDouble {
+  dataCacheDouble &sol,&mu,&kappa;
+  public:
+  maxDiffusivity(dataCacheMap &cacheMap, const std::string &muFunctionName, const std::string &kappaFunctionName ):
+    sol(cacheMap.get("Solution",this)),
+    mu(cacheMap.get(muFunctionName,this)),
+    kappa(cacheMap.get(kappaFunctionName,this))
+  {
+  };
+  void _eval () {
+    int nQP = sol().size1();
+    if(_value.size1() != nQP)
+      _value=fullMatrix<double>(nQP,1);
+    for(int i=0; i< nQP; i++) {
+      _value(i,0) = std::max(mu(i,0),kappa(i,0));
+    }
+  }
+};
+
+
+dataCacheDouble *dgPerfectGasLaw2d::newMaximumDiffusivity( dataCacheMap &cacheMap) const {
+  return _muFunctionName.empty() ? NULL : new maxDiffusivity(cacheMap,_muFunctionName,_kappaFunctionName);
+}
+
+dataCacheDouble *dgPerfectGasLaw2d::newMaxConvectiveSpeed( dataCacheMap &cacheMap) const {
+  return new maxConvectiveSpeed(cacheMap);
+}
 dataCacheDouble *dgPerfectGasLaw2d::newConvectiveFlux( dataCacheMap &cacheMap) const {
   return new advection(cacheMap);
 }
@@ -208,24 +344,38 @@ dataCacheDouble *dgPerfectGasLaw2d::newRiemannSolver( dataCacheMap &cacheMapLeft
   return new riemann(cacheMapLeft, cacheMapRight);
 }
 dataCacheDouble *dgPerfectGasLaw2d::newDiffusiveFlux( dataCacheMap &cacheMap) const {
-  return 0;
+  if (_muFunctionName.empty() || _kappaFunctionName.empty())
+    return 0;
+  else
+    return new diffusion(cacheMap,_muFunctionName,_kappaFunctionName);
 }
 dataCacheDouble *dgPerfectGasLaw2d::newSourceTerm (dataCacheMap &cacheMap) const {
-  return 0;
+  if (_sourceFunctionName.empty())
+    return 0;
+  else
+    return new source(cacheMap,_sourceFunctionName);    
 }
+
 dgPerfectGasLaw2d::dgPerfectGasLaw2d() 
 {
   _nbf = 4; // \rho \rho u \rho v \rho e
 }
 
-
+//-------------------------------------------------------------------------------
+// A class for slip and non slip walls
+// could easily add moving walls ...
+//-------------------------------------------------------------------------------
 class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
+  int _type;
   class term : public dataCacheDouble {
     dataCacheDouble &sol,&normals;
-    public:
+  public:
+//-------------------------------------------------------------------------------
+// NON VISCOUS BOUNDARY FLUX
+//-------------------------------------------------------------------------------
     term(dataCacheMap &cacheMap):
-    sol(cacheMap.get("Solution",this)),
-    normals(cacheMap.get("Normals",this)){}
+      sol(cacheMap.get("Solution",this)),
+      normals(cacheMap.get("Normals",this)){}
     void _eval () { 
       int nQP = sol().size1();
       if(_value.size1() != nQP)
@@ -240,8 +390,13 @@ class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
 				    sol(i,1) - 2 * vn  * nx,
 				    sol(i,2) - 2 * vn  * ny,
 				    sol(i,3)};
-	//	double FLUX[4] ;
-	//	_ROE2D (GAMMA,nx,ny,solLeft,solRight,FLUX);
+	double FLUX[4] ;
+	_ROE2D (GAMMA,nx,ny,solLeft,solRight,FLUX);
+	_value(i,0) = FLUX[0];
+	_value(i,1) = FLUX[1];
+	_value(i,2) = FLUX[2];
+	_value(i,3) = FLUX[3];
+	/*
 	const double q11 = sol(i,1)*sol(i,1)/sol(i,0);
 	const double q22 = sol(i,2)*sol(i,2)/sol(i,0);
 	const double p = (GAMMA-1)*sol(i,3) - 0.5*(GAMMA-1)*(q11+q22);
@@ -249,72 +404,153 @@ class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
 	_value(i,1) = -p*nx;//FLUX[1];
 	_value(i,2) = -p*ny;//FLUX[2];
 	_value(i,3) = 0.0;//FLUX[3];
+	*/
       }
     }
   };
-  public:
-  dgBoundaryConditionPerfectGasLaw2dWall(){}
-  dataCacheDouble *newBoundaryTerm(dataCacheMap &cacheMapLeft) const {
-    return new term(cacheMapLeft);
-  }
-};
-dgBoundaryCondition *dgPerfectGasLaw2d::newWallBoundary() const {
-  return new dgBoundaryConditionPerfectGasLaw2dWall();
-}
 
-#if 0 // JF : I commented this out as I think this equivalent to the generic OutsideValue condition
-can you confirm and remove it ?
-class dgBoundaryConditionPerfectGasLaw2dFreeStream : public dgBoundaryCondition {
-  class term : public dataCacheDouble {
-    dataCacheDouble &sol,&normals,&freeStream;
+//-------------------------------------------------------------------------------
+// Non Slip Dirichlet BC --
+// What to put on the right side of the IP (no velocity, same density) 
+// Assume Adiabatic Wall --> no heat transfer -> \partial_n T = 0
+// So, we use the same temperature as inside
+//-------------------------------------------------------------------------------
+  class dirichletNonSlip : public dataCacheDouble {
+    dataCacheDouble &sol;
     public:
-    term(dataCacheMap &cacheMap, const std::string & freeStreamName):
-    sol(cacheMap.get("Solution",this)),
-    normals(cacheMap.get("Normals",this)),
-    freeStream(cacheMap.get(freeStreamName,this)){}
+    dirichletNonSlip(dataCacheMap &cacheMap):
+    sol(cacheMap.get("Solution",this)){}
     void _eval () { 
       int nQP = sol().size1();
       if(_value.size1() != nQP)
 	_value = fullMatrix<double>(nQP,4);
       
       for(int i=0; i< nQP; i++) {
-	const double nx = normals(0,i);
-	const double ny = normals(1,i);
-	const double solLeft [4] = {sol(i,0),sol(i,1),sol(i,2),sol(i,3)};
-	const double solRight[4] = {freeStream(i,0),
-				    freeStream(i,1),
-				    freeStream(i,2),
-				    freeStream(i,3)};
-	double FLUX[4] ;
-	_ROE2D (GAMMA,nx,ny,solLeft,solRight,FLUX);
-	/*
-	printf("SOLL %g %g %g %g\n",solLeft[0],solLeft[1],solLeft[2], solLeft[3]);
-	printf("SOLR %g %g %g %g\n",solRight[0],solRight[1],solRight[2], solRight[3]);
-	printf("N    %g %g\n",nx,ny);
-	printf("FLUX %g %g %g %g\n",FLUX[0],FLUX[1],FLUX[2],FLUX[3]);
-	*/
-	_value(i,0) = FLUX[0];
-	_value(i,1) = FLUX[1];
-	_value(i,2) = FLUX[2];
-	_value(i,3) = FLUX[3];
+	_value(i,0) = sol(i,0);
+	_value(i,1) = 0.0;
+	_value(i,2) = 0.0;
+	_value(i,3) = sol(i,3) - 0.5 * (sol(i,1) * sol(i,1) + sol(i,2) * sol(i,2))/sol(i,0);
       }
     }
   };
+
+//-------------------------------------------------------------------------------
+// Non Slip Neumann BC --
+// Compute normal diffusive fluxes at the boundary
+// Assume Adiabatic Wall --> no heat transfer -> no flux for component 3 (in 2D)
+//-------------------------------------------------------------------------------
+
+  class neumannNonSlip : public dataCacheDouble {
+    dgConservationLaw *_claw;
+    dataCacheDouble &sol,&normals;
+    dataCacheDouble *diffusiveFlux;
   public:
-  std::string _freeStreamName;
-  dgBoundaryConditionPerfectGasLaw2dFreeStream(std::string & freeStreamName)
-    : _freeStreamName(freeStreamName){}
-  dataCacheDouble *newBoundaryTerm(dataCacheMap &cacheMapLeft) const {
-    return new term(cacheMapLeft,_freeStreamName);
-  }
+    neumannNonSlip(dataCacheMap &cacheMap, dgConservationLaw *claw):
+      _claw (claw),
+      sol(cacheMap.get("Solution",this)),
+      normals(cacheMap.get("Normals",this)){
+      diffusiveFlux=_claw->newDiffusiveFlux(cacheMap);
+      if (diffusiveFlux)diffusiveFlux->addMeAsDependencyOf(this);
+    }
+    void _eval () { 
+      int nQP = sol().size1();
+      if(_value.size1() != nQP)
+	_value = fullMatrix<double>(nQP,4);
+
+      const fullMatrix<double> &dfl = (*diffusiveFlux)();
+
+      for(int i=0; i< nQP; i++) {
+	for (int k=0;k<3;k++) { 
+          _value(i,k) = 
+	    dfl(i,k+4*0) *normals(0,i) +
+	    dfl(i,k+4*1) *normals(1,i) +
+	    dfl(i,k+4*2) *normals(2,i);
+	}
+	_value(i,3) = 0.0; 
+      }
+    }
+    ~neumannNonSlip () {if (diffusiveFlux)delete diffusiveFlux;}
+  };
+
+//-------------------------------------------------------------------------------
+// Slip Wall Dirichlet BC --
+// Assume zero derivatives of all variables --> put the same as inside 
+//-------------------------------------------------------------------------------
+
+  class dirichletSlip : public dataCacheDouble {
+    dataCacheDouble &sol;
+    public:
+    dirichletSlip(dataCacheMap &cacheMap):
+    sol(cacheMap.get("Solution",this)){}
+    void _eval () { 
+      int nQP = sol().size1();
+      if(_value.size1() != nQP)
+	_value = fullMatrix<double>(nQP,sol().size2());
+      
+      for(int i=0; i< nQP; i++) {
+	for(int k=0; k< sol().size2(); k++) {
+	  _value(i,k) = sol(i,k);
+	}
+      }
+    }
+  };
+
+//-------------------------------------------------------------------------------
+// Slip Wall or Symmetry Neumann BC -- assume NO FLUXES AT ALL
+//-------------------------------------------------------------------------------
+
+  class neumannSlip : public dataCacheDouble {
+    dgConservationLaw *_claw;
+    dataCacheDouble &sol,&normals;
+  public:
+    neumannSlip(dataCacheMap &cacheMap, dgConservationLaw *claw):
+      _claw (claw),
+      sol(cacheMap.get("Solution",this)),
+      normals(cacheMap.get("Normals",this)){
+    }
+    void _eval () { 
+      int nQP = sol().size1();
+      if(_value.size1() != nQP)
+	_value = fullMatrix<double>(nQP,4);
+      _value.setAll(0.0);
+    }
+  };
+
+  public:
+    dgBoundaryConditionPerfectGasLaw2dWall(int type, dgPerfectGasLaw2d *claw):_type(type), dgBoundaryCondition(claw){}
+    dataCacheDouble *newBoundaryTerm(dataCacheMap &cacheMapLeft) const {
+      return new term(cacheMapLeft);
+    }
+    dataCacheDouble *newDiffusiveDirichletBC(dataCacheMap &cacheMapLeft) const {
+      switch(_type){
+      case 1 : return new dirichletSlip(cacheMapLeft);
+      case 2 : return new dirichletNonSlip(cacheMapLeft);
+      }
+    }
+    dataCacheDouble *newDiffusiveNeumannBC(dataCacheMap &cacheMapLeft) const {
+      switch(_type){
+      case 1 : return new neumannSlip(cacheMapLeft,_claw);
+      case 2 : return new neumannNonSlip(cacheMapLeft,_claw);
+      }
+    }
 };
-#endif
+
+dgBoundaryCondition *dgPerfectGasLaw2d::newWallBoundary()  {
+  return new dgBoundaryConditionPerfectGasLaw2dWall(2, this);
+}
+dgBoundaryCondition *dgPerfectGasLaw2d::newSlipWallBoundary()  {
+  return new dgBoundaryConditionPerfectGasLaw2dWall(1, this);
+}
 
 #include "Bindings.h"
 void dgPerfectGasLaw2dRegisterBindings (binding *b){
   classBinding *cb = b->addClass<dgPerfectGasLaw2d>("dgPerfectGasLaw2d");
   methodBinding *cm;
   cb->addMethod("newWallBoundary",&dgPerfectGasLaw2d::newWallBoundary);
+  cb->addMethod("newNonSlipWallBoundary",&dgPerfectGasLaw2d::newWallBoundary);
+  cb->addMethod("newSlipWallBoundary",&dgPerfectGasLaw2d::newSlipWallBoundary);
+  cb->addMethod("setSource",&dgPerfectGasLaw2d::setSource);
+  cb->addMethod("setViscosityAndThermalConductivity",&dgPerfectGasLaw2d::setViscosityAndThermalConductivity);
   cb->setConstructor<dgPerfectGasLaw2d>();
   cb->setParentClass<dgConservationLaw>();
 }

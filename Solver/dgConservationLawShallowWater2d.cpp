@@ -117,7 +117,7 @@ class dgConservationLawShallowWater2d::boundaryWall : public dgBoundaryCondition
     }
   };
   public:
-  boundaryWall(){}
+  boundaryWall(dgConservationLaw *claw) : dgBoundaryCondition(claw){}
   dataCacheDouble *newBoundaryTerm(dataCacheMap &cacheMapLeft) const {
     return new term(cacheMapLeft);
   }
@@ -137,7 +137,7 @@ dataCacheDouble *dgConservationLawShallowWater2d::newSourceTerm (dataCacheMap &c
 }
 
 dgBoundaryCondition *dgConservationLawShallowWater2d::newBoundaryWall(){
-  return new boundaryWall();
+  return new boundaryWall(this);
 }
 
 #include "Bindings.h"

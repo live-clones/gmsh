@@ -14,9 +14,16 @@ class dgConservationLaw;
 class binding;
 
 class dgBoundaryCondition {
+  class neumann_;
+  class dirichlet_;
+ protected:
+  dgConservationLaw *_claw;
  public:
+  dgBoundaryCondition (dgConservationLaw *claw)  : _claw(claw){}
   virtual ~dgBoundaryCondition () {}
   virtual dataCacheDouble *newBoundaryTerm(dataCacheMap &cacheMapLeft) const = 0;
+  virtual dataCacheDouble *newDiffusiveNeumannBC(dataCacheMap &cacheMapLeft) const;
+  virtual dataCacheDouble *newDiffusiveDirichletBC(dataCacheMap &cacheMapLeft) const;
   static void registerBindings(binding *b);
 };
 

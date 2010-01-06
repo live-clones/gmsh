@@ -14,6 +14,8 @@ struct meshPartitionOptions
                                         // 2 - METIS
   int num_partitions;
 
+  int renumber;
+
   bool createPartitionBoundaries;
 
 //--Chaco
@@ -82,7 +84,8 @@ struct meshPartitionOptions
   void setDefaults()
   {
     partitioner = 2;
-    num_partitions = 4;
+    num_partitions = 1;
+    renumber = 0;
     global_method = 1;
     architecture = 1;
     ndims_tot = 2;

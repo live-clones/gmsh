@@ -52,6 +52,7 @@ extern "C" void METIS_PartGraphRecursive
 extern "C" void METIS_PartGraphKway
 (int *, idxtype *, idxtype *, idxtype *, idxtype *, int *, int *, int *, int *,
  int *, idxtype *);
+extern "C" void METIS_NodeND(int *n,int *xadj,int *adjncy,int *numflag,int *options,int *perm,int *iperm);
 
 
 /*==============================================================================
@@ -112,6 +113,34 @@ void MakeGraphDIM(const EntIter begin, const EntIter end,
 
 
 
+int RenumberMesh(GModel *const model, meshPartitionOptions &options, std::vector<MElement*> &numbered)
+{
+
+  Graph graph;
+  BoElemGrVec boElemGrVec;
+  int ier;
+  Msg::StatusBar(1, true, "Building graph...");
+  ier = MakeGraph(model, graph, &boElemGrVec);
+  Msg::StatusBar(1, true, "Renumbering graph...");
+  if(!ier) ier = RenumberGraph(graph, options);
+  if(ier) {
+    Msg::StatusBar(1, false, "Mesh");
+    return 1;
+  }
+
+  // create the numbering
+  numbered.clear();
+  const int n = graph.getNumVertex();
+  numbered.resize(n);
+  for(int i = 0; i != n; ++i) {
+    numbered[graph.partition[i]-1] = graph.element[i];
+  }
+
+  Msg::Info("Renumbering complete");
+  Msg::StatusBar(1, false, "Mesh");
+  return 0;
+}
+
 int PartitionMeshElements(std::vector<MElement*> &elements, meshPartitionOptions &options)
 {
   GModel *tmp_model = new GModel();
@@ -153,6 +182,80 @@ int PartitionMeshFace(std::list<GFace*> &cFaces, meshPartitionOptions &options)
   delete tmp_model;
   return 1;
 }
+int RenumberMeshElements( std::vector<MElement*> &elements, meshPartitionOptions &options ){
+  if (elements.size() < 3)return 1;
+  GModel *tmp_model = new GModel();
+  std::set<MVertex *> setv;
+  for (unsigned i=0;i<elements.size();++i)
+    for (int j=0;j<elements[i]->getNumVertices();j++)
+      setv.insert(elements[i]->getVertex(j));
+  if (elements[0]->getDim() == 2){
+    GFace *gf = new discreteFace(tmp_model, 1);
+    for (std::set<MVertex* >::iterator it = setv.begin(); it != setv.end(); it++)
+      gf->mesh_vertices.push_back(*it);
+    for (std::vector<MElement* >::iterator it = elements.begin(); it != elements.end(); it++){
+      if ((*it)->getType() == TYPE_TRI) 
+	gf->triangles.push_back((MTriangle*)(*it));
+      else if  ((*it)->getType() == TYPE_QUA) 
+	gf->quadrangles.push_back((MQuadrangle*)(*it));
+    }
+    tmp_model->add(gf);
+    RenumberMesh(tmp_model,options,elements);    
+    tmp_model->remove(gf);
+  }
+  else if (elements[0]->getDim() == 3){
+    GFace *gf = new discreteFace(tmp_model, 1);
+    for (std::set<MVertex* >::iterator it = setv.begin(); it != setv.end(); it++)
+      gf->mesh_vertices.push_back(*it);
+    for (std::vector<MElement* >::iterator it = elements.begin(); it != elements.end(); it++){
+      if ((*it)->getType() == TYPE_TRI) 
+	gf->triangles.push_back((MTriangle*)(*it));
+      else if  ((*it)->getType() == TYPE_QUA) 
+	gf->quadrangles.push_back((MQuadrangle*)(*it));
+    }
+    tmp_model->add(gf);
+  }
+  delete tmp_model;
+  return 1;
+}
+
+int RenumberMesh(GModel *const model, meshPartitionOptions &options)  
+{
+  
+  for (GModel::fiter it = model->firstFace() ; it != model->lastFace() ; ++it){
+    std::vector<MElement *> temp;
+
+    temp.insert(temp.begin(),(*it)->triangles.begin(),(*it)->triangles.end());
+    RenumberMeshElements (temp,options);
+    (*it)->triangles.clear();
+    for (int i=0;i<temp.size();i++) (*it)->triangles.push_back((MTriangle*)temp[i]);
+    
+    temp.clear();
+
+    temp.insert(temp.begin(),(*it)->quadrangles.begin(),(*it)->quadrangles.end());
+    RenumberMeshElements (temp,options);
+    (*it)->quadrangles.clear();
+    for (int i=0;i<temp.size();i++) (*it)->quadrangles.push_back((MQuadrangle*)temp[i]);
+  }
+  for (GModel::riter it = model->firstRegion() ; it != model->lastRegion() ; ++it){
+    std::vector<MElement *> temp;
+
+    temp.insert(temp.begin(),(*it)->tetrahedra.begin(),(*it)->tetrahedra.end());
+    RenumberMeshElements (temp,options);
+    (*it)->tetrahedra.clear();
+    for (int i=0;i<temp.size();i++) (*it)->tetrahedra.push_back((MTetrahedron*)temp[i]);
+
+    temp.clear();
+
+    temp.insert(temp.begin(),(*it)->hexahedra.begin(),(*it)->hexahedra.end());
+    RenumberMeshElements (temp,options);
+    (*it)->hexahedra.clear();
+    for (int i=0;i<temp.size();i++) (*it)->hexahedra.push_back((MHexahedron*)temp[i]);
+  }
+  return 1;
+}
+
+
 
 int PartitionMesh(GModel *const model, meshPartitionOptions &options)
 {
@@ -325,7 +428,7 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
              &options.num_partitions, metisOptions, &edgeCut,
              &graph.partition[graph.section[iSec]]);
           break;
-        }
+	}
       }
       catch(...) {
         Msg::Error("METIS threw an exception");
@@ -343,6 +446,41 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
   return ier;
 }
 
+int RenumberGraph(Graph &graph, meshPartitionOptions &options)
+{
+  int ier = 0;
+#ifdef HAVE_METIS
+  {
+    Msg::Info("Launching METIS graph renumberer");
+    // "C" numbering for Metis
+    {
+      int *p = &graph.adjncy[0];  //**Sections
+      for(int n = graph.adjncy.size(); n--;) --(*p++);
+    }
+    try {
+      int n = graph.getNumVertex();
+      int numflag = 0;
+      const int iSec = 0;
+      int options = 0;
+      int *perm = new int[n];
+      METIS_NodeND(&n, 
+		   &graph.xadj[graph.section[iSec]],
+		   &graph.adjncy[graph.section[iSec]], &numflag,&options,perm,&graph.partition[graph.section[iSec]]);
+      delete [] perm;
+    }
+    catch(...) {
+      Msg::Error("METIS threw an exception");
+      ier = 2;
+    }
+    // Number elements from 1
+    if(!ier) {
+      int *p = &graph.partition[0];  //**Sections
+      for(int n = graph.getNumVertex(); n--;) ++(*p++);
+    }
+  }
+#endif
+  return ier;
+}
 
 /*******************************************************************************
  *

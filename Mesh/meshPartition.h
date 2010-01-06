@@ -23,7 +23,9 @@ struct meshPartitionOptions;
  ******************************************************************************/
 
 int PartitionGraph(Graph &graph, meshPartitionOptions &options);
+int RenumberGraph(Graph &graph, meshPartitionOptions &options);
 int PartitionMesh(GModel *const model, meshPartitionOptions &options);
+int RenumberMesh(GModel *const model, meshPartitionOptions &options);
 int PartitionMeshFace(std::list<GFace*> &cFaces, meshPartitionOptions &options);
 int PartitionMeshElements(std::vector<MElement*> &elements, meshPartitionOptions &options);
 bool PartitionZeroGenus(std::list<GFace*> &cFaces, int &nbParts);

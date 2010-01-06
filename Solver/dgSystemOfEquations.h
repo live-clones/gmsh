@@ -71,6 +71,8 @@ public:
 				iElement * _claw->nbFields(),_claw->nbFields());
   }
   void export_solution_as_is (const std::string &fileName);
+  void saveSolution (const std::string &fileName) const;
+  void loadSolution (const std::string &fileName);
   ~dgSystemOfEquations();
 private:
 };

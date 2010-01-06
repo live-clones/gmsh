@@ -126,13 +126,13 @@ class dgBoundaryConditionWaveEquationWall : public dgBoundaryCondition {
     }
   };
   public:
-  dgBoundaryConditionWaveEquationWall(int DIM):_DIM(DIM){}
+  dgBoundaryConditionWaveEquationWall(int DIM, dgConservationLaw *claw):_DIM(DIM),dgBoundaryCondition(claw){}
   dataCacheDouble *newBoundaryTerm(dataCacheMap &cacheMapLeft) const {
     return new term(cacheMapLeft,_DIM);
   }
 };
-dgBoundaryCondition *dgConservationLawWaveEquation::newBoundaryWall()const{
-  return new dgBoundaryConditionWaveEquationWall(_DIM);
+dgBoundaryCondition *dgConservationLawWaveEquation::newBoundaryWall(){
+  return new dgBoundaryConditionWaveEquationWall(_DIM, this);
 }
 
 #include "Bindings.h"

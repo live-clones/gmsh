@@ -14,7 +14,7 @@ class dgConservationLawWaveEquation : public dgConservationLaw {
   dataCacheDouble *newDiffusiveFlux( dataCacheMap &cacheMap) const ;
   dataCacheDouble *newSourceTerm (dataCacheMap &cacheMap) const ;
   dataCacheDouble *newMaxConvectiveSpeed (dataCacheMap &cacheMap) const;
-  dgBoundaryCondition *newBoundaryWall () const;
+  dgBoundaryCondition *newBoundaryWall () ;
   dgConservationLawWaveEquation(int DIM);
   static const char *className;
   static const char *parentClassName;

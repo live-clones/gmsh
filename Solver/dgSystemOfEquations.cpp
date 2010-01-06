@@ -69,6 +69,8 @@ void dgSystemOfEquations::registerBindings(binding *b){
   cb->addMethod("computeInvSpectralRadius",&dgSystemOfEquations::computeInvSpectralRadius);
   cb->addMethod("RK44_limiter",&dgSystemOfEquations::RK44_limiter);
   cb->addMethod("multirateRK43",&dgSystemOfEquations::multirateRK43);
+  cb->addMethod("saveSolution",&dgSystemOfEquations::saveSolution);
+  cb->addMethod("loadSolution",&dgSystemOfEquations::loadSolution);
 }
 
 // do a L2 projection
@@ -141,6 +143,18 @@ dgSystemOfEquations::~dgSystemOfEquations(){
     delete _solution;
     delete _rightHandSide;
   }
+}
+
+void dgSystemOfEquations::saveSolution (const std::string &name) const{
+  FILE *f = fopen (name.c_str(),"wb");
+  _solution->_data->binarySave(f);
+  fclose(f);
+}
+
+void dgSystemOfEquations::loadSolution (const std::string &name){
+  FILE *f = fopen (name.c_str(),"rb");
+  _solution->_data->binaryLoad(f);
+  fclose(f);
 }
 
 void dgSystemOfEquations::export_solution_as_is (const std::string &name){
