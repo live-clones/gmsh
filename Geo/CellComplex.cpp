@@ -169,8 +169,7 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
       else if(type == MSH_QUA_4 || type == MSH_QUA_8 || type == MSH_QUA_9){
         cell = new CQuadrangle(vertices, tag, subdomain, boundary);
         _simplicial = false;
-      }
-      /*
+      }/* FIXME: reduction doesn't work for these      
       else if(type == MSH_HEX_8 || type == MSH_HEX_27 || type == MSH_HEX_20){
         cell = new CHexahedron(vertices, tag, subdomain, boundary);
         _simplicial = false;
@@ -215,7 +214,8 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
           delete newCell;
           Cell* oldCell = *(insertInfo.first);
           if(!subdomain && !boundary){
-            int ori = cell->kappa(oldCell);
+            //int ori = cell->kappa(oldCell);
+            int ori = cell->getFacetOri(oldCell);
             oldCell->addCoboundaryCell( ori, cell );
             oldCell->addOrgCbdCell( ori, cell );
             cell->addBoundaryCell( ori, oldCell);
@@ -223,7 +223,8 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
           }
         }
         else if(!subdomain && !boundary) {
-          int ori = cell->kappa(newCell);
+          //int ori = cell->kappa(newCell);
+          int ori = cell->getFacetOri(vertices);
           cell->addBoundaryCell( ori, newCell );
           cell->addOrgBdCell( ori, newCell );
           newCell->addCoboundaryCell( ori, cell);
@@ -256,7 +257,7 @@ int Simplex::kappa(Cell* tau) const{
   return value;  
 }
 */
-
+/*
 int Cell::kappa(Cell* tau) const{
   for(int i=0; i < tau->getNumVertices(); i++){
     if( !(this->hasVertex(tau->getVertex(i)->getNum())) ) return 0;
@@ -306,8 +307,7 @@ int OneSimplex::kappa(Cell* tau) const{
   if(tau->getVertex(0) == this->getVertex(0)) return -1;
   else return 1;
     
-}
-
+}*/
 
 void CellComplex::removeCell(Cell* cell, bool other){
   

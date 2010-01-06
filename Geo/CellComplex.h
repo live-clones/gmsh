@@ -99,7 +99,7 @@ class Cell
    virtual void setPartition(int num){}
    virtual void setImmune(bool immune) { _immune = immune; };
    virtual bool getImmune() const { return _immune; };
-   
+
    // get the number of vertices this cell has
    virtual int getNumVertices() const = 0;
    virtual MVertex* getVertex(int vertex) const = 0; //{return _vertices.at(vertex);}
@@ -295,7 +295,10 @@ class Cell
    
    virtual int getNumFacets() const { return 0; }
    virtual void getFacetVertices(const int num, std::vector<MVertex*> &v) const {};
-   
+   // get boundary cell orientation
+   virtual int getFacetOri(Cell* cell) { std::vector<MVertex*> v = cell->getVertexVector(); return getFacetOri(v); } 
+   virtual int getFacetOri(std::vector<MVertex*> &v) { return 0; }   
+
    virtual bool isCombined() { return _combined; }
    virtual std::list< std::pair<int, Cell*> > getCells() {  std::list< std::pair<int, Cell*> >cells; cells.push_back( std::make_pair(1, this)); return cells; }
    virtual int getNumCells() {return 1;}
@@ -326,7 +329,7 @@ class Cell
    }
    
    // checks whether lower dimensional simplex tau is on the boundary of this cell
-   virtual int kappa(Cell* tau) const;
+   //virtual int kappa(Cell* tau) const;
    
    virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false,  int num=0, int elementary=1, int physical=1, int parentNum=0) {}
 };
@@ -416,8 +419,14 @@ class OneSimplex : public Simplex, public MLine
      v.resize(1);
      v[0] = _v[num];
    }
-   
-   int kappa(Cell* tau) const;
+   int getFacetOri(std::vector<MVertex*> &v){
+     if(v.size() != 1) return 0;
+     else if(v[0] == _v[0]) return -1;
+     else if(v[0] == _v[1]) return 1;
+     else return 0;
+   }
+
+   //int kappa(Cell* tau) const;
    
    void printCell() const { printf("Cell dimension: %d, Vertices: %d %d, in subdomain: %d \n", getDim(), _v[0]->getNum(), _v[1]->getNum(), _inSubdomain); }
    
@@ -466,7 +475,15 @@ class TwoSimplex : public Simplex, public MTriangle
    void getFacetVertices(const int num, std::vector<MVertex*> &v) const {
      MTriangle::getEdgeVertices(num, v);
    }
-   
+   int getFacetOri(std::vector<MVertex*> &v){
+     if(v.size() != 2) return 0;
+     MEdge facet = MEdge(v[0], v[1]);
+     int ithFacet = 0;
+     int sign = 0;
+     MTriangle::getEdgeInfo(facet, ithFacet, sign);
+     return sign;
+   }    
+
    void printCell() const { printf("Cell dimension: %d, Vertices: %d %d %d, in subdomain: %d\n", getDim(), _v[0]->getNum(), _v[1]->getNum(), _v[2]->getNum(), _inSubdomain); }
 };
 
@@ -514,6 +531,14 @@ class CQuadrangle : public Cell, public MQuadrangle
    void getFacetVertices(const int num, std::vector<MVertex*> &v) const {
      MQuadrangle::getEdgeVertices(num, v);
    }
+   int getFacetOri(std::vector<MVertex*> &v){
+     if(v.size() != 2) return 0;
+     MEdge facet = MEdge(v[0], v[1]);
+     int ithFacet = 0;
+     int sign = 0;
+     MQuadrangle::getEdgeInfo(facet, ithFacet, sign);
+     return sign;
+   }  
    
    void printCell() const { printf("Cell dimension: %d, Vertices: %d %d %d %d, in subdomain: %d\n", 
                                     getDim(), _v[0]->getNum(), _v[1]->getNum(), _v[2]->getNum(), 
@@ -562,7 +587,16 @@ class ThreeSimplex : public Simplex, public MTetrahedron
    void getFacetVertices(const int num, std::vector<MVertex*> &v) const {
      MTetrahedron::getFaceVertices(num, v);
    }
-   
+   int getFacetOri(std::vector<MVertex*> &v){
+     if(v.size() != 3) return 0;
+     MFace facet = MFace(v);
+     int ithFacet = 0;
+     int sign = 0;
+     int rot = 0;
+     MTetrahedron::getFaceInfo(facet, ithFacet, sign, rot);
+     return sign;
+   }
+
    virtual void printCell() const { printf("Cell dimension: %d, Vertices: %d %d %d %d, in subdomain: %d \n", getDim(), _v[0]->getNum(), _v[1]->getNum(), _v[2]->getNum(), _v[3]->getNum(), _inSubdomain); }
 };
 
@@ -611,6 +645,15 @@ class CHexahedron : public Cell, public MHexahedron
    
    void getFacetVertices(const int num, std::vector<MVertex*> &v) const {
      MHexahedron::getFaceVertices(num, v);
+   }
+   int getFacetOri(std::vector<MVertex*> &v){
+     if(v.size() != 4) return 0;
+     MFace facet = MFace(v);
+     int ithFacet = 0;
+     int sign = 0;
+     int rot = 0;
+     MHexahedron::getFaceInfo(facet, ithFacet, sign, rot);
+     return sign;
    }
    
    virtual void printCell() const { printf("Cell dimension: %d, Vertices: %d %d %d %d %d %d %d %d, in subdomain: %d \n", getDim(), _v[0]->getNum(), _v[1]->getNum(), _v[2]->getNum(), _v[3]->getNum(), _v[4]->getNum(), _v[5]->getNum(), _v[6]->getNum(), _v[7]->getNum(), _inSubdomain); }
@@ -661,6 +704,15 @@ class CPrism : public Cell, public MPrism
    void getFacetVertices(const int num, std::vector<MVertex*> &v) const {
      MPrism::getFaceVertices(num, v);
    }
+   int getFacetOri(std::vector<MVertex*> &v){
+     if(v.size() != 4 && v.size() != 3) return 0;
+     MFace facet = MFace(v);
+     int ithFacet = 0;
+     int sign = 0;
+     int rot = 0;
+     MPrism::getFaceInfo(facet, ithFacet, sign, rot);
+     return sign;
+   }
    
    virtual void printCell() const { printf("Cell dimension: %d, Vertices: %d %d %d %d %d %d, in subdomain: %d \n", getDim(), _v[0]->getNum(), _v[1]->getNum(), _v[2]->getNum(), _v[3]->getNum(), _v[4]->getNum(), _v[5]->getNum(),  _inSubdomain); }
 };
@@ -708,6 +760,15 @@ class CPyramid : public Cell, public MPyramid
    
    void getFacetVertices(const int num, std::vector<MVertex*> &v) const {
      MPyramid::getFaceVertices(num, v);
+   }
+   int getFacetOri(std::vector<MVertex*> &v){
+     if(v.size() != 4 && v.size() != 3) return 0;
+     MFace facet = MFace(v);
+     int ithFacet = 0;
+     int sign = 0;
+     int rot = 0;
+     MPyramid::getFaceInfo(facet, ithFacet, sign, rot);
+     return sign;
    }
    
    virtual void printCell() const { printf("Cell dimension: %d, Vertices: %d %d %d %d %d, in subdomain: %d \n", getDim(), _v[0]->getNum(), _v[1]->getNum(), _v[2]->getNum(), _v[3]->getNum(), _v[4]->getNum(), _inSubdomain); }
@@ -841,7 +902,7 @@ class CombinedCell : public Cell{
    int getSortedVertex(int vertex) const { return _vs.at(vertex); }
    std::vector<MVertex*> getVertexVector() const { return _v; }
    
-   int kappa(Cell* tau) const { return 0; }
+   //int kappa(Cell* tau) const { return 0; }
    
    // true if this cell has given vertex
    bool hasVertex(int vertex) const {
@@ -1030,7 +1091,7 @@ class CellComplex
 
    // kappa for two cells of this cell complex
    // implementation will vary depending on cell type
-   inline int kappa(Cell* sigma, Cell* tau) const { return sigma->kappa(tau); }
+   //inline int kappa(Cell* sigma, Cell* tau) const { return sigma->kappa(tau); }
    
    
    // check whether two cells both belong to subdomain or if neither one does

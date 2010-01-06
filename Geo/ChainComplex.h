@@ -152,7 +152,7 @@ class Chain{
    
    
    bool deform(std::map<Cell*, int, Less_Cell> &cellsInChain, std::map<Cell*, int, Less_Cell> &cellsNotInChain);
-   bool deformChain(std::pair<Cell*, int> cell, bool straighten, bool bend);   
+   bool deformChain(std::pair<Cell*, int> cell, bool bend);
    
    
   public:
