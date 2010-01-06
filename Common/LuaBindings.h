@@ -1,6 +1,8 @@
 #ifndef _LUA_BINDINGS_H_
 #define _LUA_BINDINGS_H_
+
 #include "Bindings.h"
+
 #ifdef HAVE_LUA
 #include "BindingsDocTemplates.h"
 

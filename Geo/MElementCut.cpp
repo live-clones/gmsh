@@ -137,7 +137,8 @@ void MPolyhedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 }
 
 void MPolyhedron::writeMSH(FILE *fp, double version, bool binary, int num,
-                           int elementary, int physical, int parentNum)
+                           int elementary, int physical, int parentNum,
+                           std::vector<short> *ghosts)
 {
   int type = getTypeForMSH();
 
@@ -156,14 +157,13 @@ void MPolyhedron::writeMSH(FILE *fp, double version, bool binary, int num,
       fprintf(fp, " %d %d", abs(physical), elementary);
     else {
       if(parentNum)
-        fprintf(fp, " 4 %d %d %d %d", abs(physical), elementary, partE, parentNum);
+        fprintf(fp, " 5 %d %d 1 %d %d", abs(physical), elementary, partE, parentNum);
       else
-        fprintf(fp, " 3 %d %d %d", abs(physical), elementary, partE);
+        fprintf(fp, " 4 %d %d 1 %d", abs(physical), elementary, partE);
     }
   }
   else{
-    int tags[4] = {num ? num : numE, abs(physical), elementary, partE};
-    fwrite(tags, sizeof(int), 4, fp);
+    Msg::Error("Binary output not coded for polyhedra");
   }
 
   if(physical < 0) revert();
@@ -275,7 +275,8 @@ void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 }
 
 void MPolygon::writeMSH(FILE *fp, double version, bool binary, int num,
-                        int elementary, int physical, int parentNum)
+                        int elementary, int physical, int parentNum,
+                        std::vector<short> *ghosts)
 {
   int type = getTypeForMSH();
 
@@ -294,14 +295,13 @@ void MPolygon::writeMSH(FILE *fp, double version, bool binary, int num,
       fprintf(fp, " %d %d", abs(physical), elementary);
     else {
       if(parentNum)
-        fprintf(fp, " 4 %d %d %d %d", abs(physical), elementary, partE, parentNum);
+        fprintf(fp, " 5 %d %d 1 %d %d", abs(physical), elementary, partE, parentNum);
       else
-        fprintf(fp, " 3 %d %d %d", abs(physical), elementary, partE);
+        fprintf(fp, " 4 %d %d 1 %d", abs(physical), elementary, partE);
     }
   }
   else{
-    int tags[4] = {num ? num : numE, abs(physical), elementary, partE};
-    fwrite(tags, sizeof(int), 4, fp);
+    Msg::Error("Binary output not coded for polygons");
   }
 
   if(physical < 0) revert();

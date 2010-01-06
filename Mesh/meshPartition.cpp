@@ -730,16 +730,15 @@ struct MatchBoElemToGrVertex
   }
 };
 
-
 template <class ITERATOR>
 void fillit_(std::multimap<MFace, MElement*, Less_Face> &faceToElement,
 	     ITERATOR it_beg, ITERATOR it_end)
 {
   for (ITERATOR IT = it_beg; IT != it_end ; ++IT){
     MElement *el = *IT;
-    for(int j=0;j < el->getNumFaces();j++) {
+    for(int j = 0; j < el->getNumFaces(); j++) {
       MFace e = el->getFace(j);
-      faceToElement.insert(std::make_pair(e,el));
+      faceToElement.insert(std::make_pair(e, el));
     }
   }
 }
@@ -748,11 +747,11 @@ template <class ITERATOR>
 void fillit_(std::multimap<MEdge, MElement*, Less_Edge> &edgeToElement,
 	     ITERATOR it_beg, ITERATOR it_end)
 {
-  for (ITERATOR IT = it_beg; IT != it_end ; ++IT){
+  for (ITERATOR IT = it_beg; IT != it_end; ++IT){
     MElement *el = *IT;
-    for(int j=0;j < el->getNumEdges();j++) {
+    for(int j = 0; j < el->getNumEdges(); j++) {
       MEdge e = el->getEdge(j);
-      edgeToElement.insert(std::make_pair(e,el));
+      edgeToElement.insert(std::make_pair(e, el));
     }
   }
 }
@@ -763,15 +762,14 @@ void fillit_(std::multimap<MVertex*, MElement*> &vertexToElement,
 {
   for (ITERATOR IT = it_beg; IT != it_end ; ++IT){
     MElement *el = *IT;
-    for(int j=0;j < el->getNumVertices();j++) {
+    for(int j = 0; j < el->getNumVertices(); j++) {
       MVertex* e = el->getVertex(j);
-      vertexToElement.insert(std::make_pair(e,el));
+      vertexToElement.insert(std::make_pair(e, el));
     }
   }
 }
 
-void assignPartitionBoundary(GModel *model,
-			     MFace &me,
+void assignPartitionBoundary(GModel *model, MFace &me,
 			     std::set<partitionFace*, Less_partitionFace> &pfaces,
 			     std::vector<MElement*> &v)
 {
@@ -1117,15 +1115,6 @@ int CreatePartitionBoundaries(GModel *model, bool createGhostCells)
       for(std::set<partitionFace*, Less_partitionFace>::iterator it = pfaces.begin();
           it != pfaces.end(); it++)
         addGhostCells(*it, vertexToElement, ghosts);
-#if 1
-    FILE *fp = fopen("ghosts.pos", "w");
-    fprintf(fp, "View \"ghosts\"{\n");
-    for(std::multimap<MElement*, short>::iterator it = ghosts.begin();
-        it != ghosts.end(); it++)
-      it->first->writePOS(fp, false, true, false, false, false, false);
-    fprintf(fp, "};\n");
-    fclose(fp);
-#endif
   }
 
   return 1;

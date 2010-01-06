@@ -372,8 +372,8 @@ void MElement::interpolateCurl(double val[], double u, double v, double w, doubl
   f[2] = fy[0] - fx[1];
 }
 
-double MElement::interpolateDiv(double val[], double u, double v, double w, int stride,
-                                int order)
+double MElement::interpolateDiv(double val[], double u, double v, double w, 
+                                int stride, int order)
 {
   double fx[3], fy[3], fz[3], jac[3][3], inv[3][3];
   getJacobian(u, v, w, jac);
@@ -385,7 +385,8 @@ double MElement::interpolateDiv(double val[], double u, double v, double w, int 
 }
 
 void MElement::writeMSH(FILE *fp, double version, bool binary, int num, 
-                        int elementary, int physical, int parentNum)
+                        int elementary, int physical, int parentNum,
+                        std::vector<short> *ghosts)
 {
   int type = getTypeForMSH();
 
@@ -400,12 +401,36 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
     fprintf(fp, "%d %d", num ? num : _num, type);
     if(version < 2.0)
       fprintf(fp, " %d %d %d", abs(physical), elementary, n);
-    else
-      fprintf(fp, " 3 %d %d %d", abs(physical), elementary, _partition);
+    else if(!_partition)
+      fprintf(fp, " 2 %d %d", abs(physical), elementary);
+    else if(!ghosts)
+      fprintf(fp, " 4 %d %d 1 %d", abs(physical), elementary, _partition);
+    else{
+      int numGhosts = ghosts->size();
+      fprintf(fp, " %d %d %d %d %d", 4 + numGhosts, abs(physical), elementary, 
+              1 + numGhosts, _partition);
+      for(unsigned int i = 0; i < ghosts->size(); i++)
+        fprintf(fp, " %d", -(*ghosts)[i]);
+    }
   }
   else{
-    int tags[4] = {num ? num : _num, abs(physical), elementary, _partition};
-    fwrite(tags, sizeof(int), 4, fp);
+    int numTags, numGhosts = 0;
+    if(!_partition) numTags = 2;
+    else if(!ghosts) numTags = 4;
+    else{
+      numGhosts = ghosts->size();
+      numTags = 4 + numGhosts;
+    }
+    // we write elements in blobs of single elements; this will lead
+    // to suboptimal reads, but it's much simpler when the number of
+    // tags change from element to element (third-party codes can
+    // still write MSH file optimized for reading speed, by grouping
+    // elements with the same number of tags in blobs)
+    int blob[60] = {type, 1, numTags, num ? num : _num, abs(physical), elementary, 
+                    1 + numGhosts, _partition};
+    if(ghosts)
+      for(unsigned int i = 0; i < numGhosts; i++) blob[8 + i] = -(*ghosts)[i];
+    fwrite(blob, sizeof(int), 4 + numTags, fp);
   }
 
   if(physical < 0) revert();

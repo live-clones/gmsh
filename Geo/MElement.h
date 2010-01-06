@@ -226,8 +226,9 @@ class MElement
   }
 
   // IO routines
-  virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
-                        int num=0, int elementary=1, int physical=1, int parentNum=0);
+  virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false,
+                        int num=0, int elementary=1, int physical=1,
+                        int parentNum=0, std::vector<short> *ghosts=0);
   virtual void writePOS(FILE *fp, bool printElementary, bool printElementNumber, 
                         bool printGamma, bool printEta, bool printRho, 
                         bool printDisto,double scalingFactor=1.0, int elementary=1);

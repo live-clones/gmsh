@@ -123,8 +123,9 @@ class MPolyhedron : public MElement {
   }
   virtual bool isInside(double u, double v, double w);
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
-  virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
-                        int num=0, int elementary=1, int physical=1, int parentNum=0);
+  virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false,
+                        int num=0, int elementary=1, int physical=1,
+                        int parentNum=0, std::vector<short> *ghosts=0);
   virtual MElement *getParent() const { return _orig; }
   virtual void setParent(MElement *p) { _orig = p; }
   virtual int getNumChildren() const { return _parts.size(); }
@@ -225,8 +226,9 @@ class MPolygon : public MElement {
   }
   virtual bool isInside(double u, double v, double w);
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
-  virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
-                        int num=0, int elementary=1, int physical=1, int parentNum=0);
+  virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false,
+                        int num=0, int elementary=1, int physical=1,
+                        int parentNum=0, std::vector<short> *ghosts=0);
   virtual MElement *getParent() const { return _orig; }
   virtual void setParent(MElement *p) { _orig = p; }
   virtual int getNumChildren() const { return _parts.size(); }

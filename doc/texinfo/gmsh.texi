@@ -3399,7 +3399,7 @@ for some examples.
 This chapter describes Gmsh's native ``MSH'' file format, used to store
 meshes and associated post-processing datasets. The MSH format exists in
 two flavors: ASCII and binary. The format has a version number
-(currently: 2.1) that is independent of Gmsh's main version number.
+(currently: 2.2) that is independent of Gmsh's main version number.
 
 (Remember that for small post-processing datasets you can also use
 human-readable ``parsed'' post-processing views, as described in
@@ -3505,7 +3505,7 @@ $ElementEndNodeData
 where
 @table @code
 @item @var{version-number}
-is a real number equal to 2.1
+is a real number equal to 2.2
 
 @item @var{file-type}
 is an integer equal to 0 in the ASCII file format.
@@ -3632,8 +3632,8 @@ gives the number of integer tags that follow for the @var{n}-th
 element. By default, the first @var{tag} is the number of the physical
 entity to which the element belongs; the second is the number of the
 elementary geometrical entity to which the element belongs; the third is
-the number of a mesh partition to which the element belongs. All tags
-must be postive integers, or zero. A zero tag is equivalent to no tag.
+the number of mesh partitions to which the element belongs, followed by
+the partition ids. A zero tag is equivalent to no tag.
 
 @item @var{node-number-list}
 is the list of the node numbers of the @var{n}-th element. The ordering of
@@ -3675,7 +3675,7 @@ file!):
 
 @smallexample
 $MeshFormat
-2.1 0 8
+2.2 0 8
 $EndMeshFormat
 $Nodes
 6                      @emph{six mesh nodes:}
@@ -3745,7 +3745,7 @@ $EndElements
 where
 @table @code
 @item @var{version-number}
-is a real number equal to 2.1.
+is a real number equal to 2.2.
 
 @item @var{file-type}
 is an integer equal to 1.
@@ -3797,7 +3797,7 @@ per element (same as @var{number-of-tags} in the ASCII format).
 Here is a pseudo C code to write @var{element-header-binary}:
 @example
 int header[3] = @{elm_type, num_elm_follow, num_tags@};
-fwrite(&header, sizeof(int), 3, file);
+fwrite(&header, sizeof(int), 2, file);
 @end example
 
 @item @var{elements-binary}
@@ -3809,13 +3809,12 @@ contain the tags, and the last (#@var{node-number-list} * 4) contain the
 node indices.
 
 Here is a pseudo C code to write @var{elements-binary} for triangles
-with the 3 standard tags (the physical and elementary regions, and the
-mesh partition):
+with the 2 standard tags (the physical and elementary regions):
 @example
 for(i = 0; i < number_of_triangles; i++)@{
-  int data[7] = @{num_i, physical, elementary, partition, 
+  int data[6] = @{num_i, physical, elementary, 
                  node_i_1, node_i_2, node_i_3@};
-  fwrite(data, sizeof(int), 7, file);
+  fwrite(data, sizeof(int), 6, file);
 @}
 @end example
 @end table
