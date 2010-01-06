@@ -4,7 +4,7 @@
 #include "Bindings.h"
 
 #ifdef HAVE_LUA
-#include "BindingsDocTemplates.h"
+//#include "BindingsDocTemplates.h"
 
 extern "C" {
 #include "lua.h"
