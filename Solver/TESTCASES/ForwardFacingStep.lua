@@ -25,7 +25,6 @@ end
 --[[ 
      Example of a lua program driving the DG code
 --]]
-sv
 order = 1
 print'*** Loading the mesh and the model ***'
 myModel   = GModel  ()
