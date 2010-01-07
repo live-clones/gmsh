@@ -26,9 +26,9 @@ FS = functionLua(4, 'free_stream', {'XYZ'}):getName()
 
 -- diffusivity
 mu=fullMatrix(1,1);
-mu:set(0,0,0.03)
+mu:set(0,0,0.02)
 kappa=fullMatrix(1,1);
-kappa:set(0,0,0.03)
+kappa:set(0,0,0.02)
 
 print'*** Loading the mesh and the model ***'
 myModel   = GModel  ()
@@ -58,19 +58,20 @@ DG:exportSolution('output/cyl_0')
 
 print'*** solve ***'
 
-CFL = 2.1;
+CFL = 20.1;
 dt = CFL * DG:computeInvSpectralRadius();
 print('DT = ',dt)
 T = 0;
-for i=1,10000 do
+for i=1,100000 do
     dt = CFL * DG:computeInvSpectralRadius();    
     norm = DG:RK44(dt)
     T = T + dt
-    if (i % 1 == 0) then 
+    if (i % 10 == 0) then 
        print('*** ITER ***',i,norm,dt,T)
     end
     if (i % 100 == 0) then 
        DG:exportSolution(string.format("output/cyl-%06d", i)) 
+       DG:saveSolution(string.format("output/cyl-%06d.bin", i)) 
     end
 end
 

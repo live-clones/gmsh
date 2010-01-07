@@ -60,6 +60,7 @@ void dgSystemOfEquations::registerBindings(binding *b){
   cm->setArgNames("functionName",NULL);
   cm->setDescription("project the function \"functionName\" on the solution vector");
   cm = cb->addMethod("RK44",&dgSystemOfEquations::RK44);
+  cm = cb->addMethod("ForwardEuler",&dgSystemOfEquations::ForwardEuler);
   cm->setArgNames("norm","dt",NULL);
   cm->setDescription("do a runge-kuta temporal iteration with a time step \"dt\" and return the sum of the nodal residuals");
   cm = cb->addMethod("setOrder",&dgSystemOfEquations::setOrder);
@@ -114,11 +115,16 @@ double dgSystemOfEquations::computeInvSpectralRadius(){
 }
 
 double dgSystemOfEquations::RK44_limiter(double dt){
-	dgLimiter *sl = new dgSlopeLimiter();
-	_algo->rungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups, dt,  *_solution, *_rightHandSide, sl);
-	return _solution->_data->norm();
+  dgLimiter *sl = new dgSlopeLimiter();
+  _algo->rungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups, dt,  *_solution, *_rightHandSide, sl);
+  delete sl;
+  return _solution->_data->norm();
 }
 
+double dgSystemOfEquations::ForwardEuler(double dt){
+  _algo->rungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups, dt,  *_solution, *_rightHandSide, NULL,1);
+  return _solution->_data->norm();
+}
 double dgSystemOfEquations::multirateRK43(double dt){
   _algo->multirateRungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups, dt,  *_solution, *_rightHandSide);
   return _solution->_data->norm();
@@ -145,13 +151,13 @@ dgSystemOfEquations::~dgSystemOfEquations(){
   }
 }
 
-void dgSystemOfEquations::saveSolution (const std::string &name) const{
+void dgSystemOfEquations::saveSolution (std::string name) {
   FILE *f = fopen (name.c_str(),"wb");
   _solution->_data->binarySave(f);
   fclose(f);
 }
 
-void dgSystemOfEquations::loadSolution (const std::string &name){
+void dgSystemOfEquations::loadSolution (std::string name){
   FILE *f = fopen (name.c_str(),"rb");
   _solution->_data->binaryLoad(f);
   fclose(f);

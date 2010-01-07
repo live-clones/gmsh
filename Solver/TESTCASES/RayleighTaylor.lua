@@ -39,7 +39,7 @@ end
      Example of a lua program driving the DG code
 --]]
 
-order = 4
+order = 1
 print'*** Loading the mesh and the model ***'
 myModel   = GModel  ()
  myModel:load ('rect.geo')	

@@ -5,6 +5,7 @@ class dgPerfectGasLaw2d : public dgConservationLaw {
   class advection;
   class diffusion;
   class riemann;
+  class riemannGodunov;
   class source;
   class maxConvectiveSpeed;
   class maxDiffusivity;

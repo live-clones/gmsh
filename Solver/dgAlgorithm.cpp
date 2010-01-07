@@ -281,6 +281,10 @@ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation l
    double a[4] = {h/6.0,h/3.0,h/3.0,h/6.0};
    double b[4] = {0.,h/2.0,h/2.0,h};
    
+   if (orderRK = 1.0){
+     a[0] = h;
+   }
+
    // fullMatrix<double> K(sol);
    // Current updated solution
    // fullMatrix<double> Unp(sol);
@@ -298,14 +302,17 @@ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation l
    Unp._data->axpy(*(sol._data));
    
    for(int j=0; j<orderRK;j++){
-	   if(j){
-		   K._data->scale(b[j]);
-		   K._data->axpy(*(sol._data));
-		   if (limiter){
-         limiter->apply(K, eGroups, fGroups);
+     if(j){
+       K._data->scale(b[j]);
+       K._data->axpy(*(sol._data));
+       if (limiter){
+	 //         limiter->apply(K, eGroups, fGroups);
        }
-	   }
-	   
+     }
+     
+    if (limiter){
+      limiter->apply(K, eGroups, fGroups);
+    }
      this->residual(claw,eGroups,fGroups,bGroups,K._dataProxys,resd._dataProxys);
      K._data->scale(0.);
      for(int k=0;k < eGroups.size();k++) {
@@ -318,10 +325,10 @@ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation l
        }
      }
      Unp._data->axpy(*(K._data),a[j]);
+     //if (limiter) limiter->apply(Unp, eGroups, fGroups);
    }
    if (limiter) limiter->apply(Unp, eGroups, fGroups);
-   for (int i=0;i<sol._dataSize;i++){
-	   
+   for (int i=0;i<sol._dataSize;i++){	   
      (*sol._data)(i)=(*Unp._data)(i);
    }
  }
@@ -524,6 +531,7 @@ void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (mayb
         normalFluxQP(iPt,k) = (*boundaryTerm)(iPt,k)*detJ;
     }
 
+    // ----- 2.3.3 --- compute viscous contribution
     if (diffusiveFluxLeft) {
       for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
         const double detJ = group.getDetJ (iFace, iPt);

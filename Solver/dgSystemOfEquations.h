@@ -60,6 +60,7 @@ public:
   void limitSolution (); // apply the limiter on the solution
   double RK44 (double dt);
   double RK44_limiter (double dt); 
+  double ForwardEuler (double dt); 
   double multirateRK43 (double dt); 
   void L2Projection (std::string functionName); // assign the solution to a given function
   double computeInvSpectralRadius();
@@ -71,11 +72,10 @@ public:
 				iElement * _claw->nbFields(),_claw->nbFields());
   }
   void export_solution_as_is (const std::string &fileName);
-  void saveSolution (const std::string &fileName) const;
-  void loadSolution (const std::string &fileName);
+  void saveSolution (std::string fileName) ;
+  void loadSolution (std::string fileName);
   ~dgSystemOfEquations();
 private:
 };
-
 #endif // _DG_SYSTEM_OF_EQUATIONS_
 

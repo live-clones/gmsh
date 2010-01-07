@@ -6,6 +6,206 @@
 */
 
 const double GAMMA = 1.4;
+#define RIEM_TOL   ((double)1e-12)       /* Rel error to achieve in pstar */
+#define RIEM_ITER  (20)                   /* Max number of iterations */
+
+#define smallu ((double)1e-14)
+#define smallp ((double)1e-14)
+
+#define max2(a,b)  ( (a)>(b) ? (a) : (b) )
+#define max3(a,b,c) ( max2( a , max2(b,c) ) )
+
+bool riemannExact( double rho1,                /* inputs */
+		   double  u1,
+		   double  v1,
+		   double  w1,
+		   double  p1,
+		   double rho2,
+		   double  u2,
+		   double  v2,
+		   double  w2,
+		   double  p2,
+		   double *rhoav,               /* outputs */
+		   double  *uav,
+		   double  *utav,
+		   double  *uttav,
+		   double  *pav ) 
+{
+  
+  /*
+   * local variables (previously in commons)
+   */
+  // double rho,u,p,ut,utt;
+    
+  int n;
+  double   plft, vlft, ulft, utlft, uttlft, clft;
+  double   prght, vrght, urght, utrght, uttrght, crght;
+  double   pstar, ustar, rhostr, cestar, westar, vstar;
+  double   rhos, us, uts, utts, ps;
+  double   ws, vs, wes, ces;
+  double   wlft, wrght;
+  double   scrch1, scrch2, scrch3, scrch4;
+  double   prevpstar, relpstar;
+  // double Q[4];
+
+
+  //
+  // rml - convert to flash unknowns;
+  //
+
+  vlft= (double)1/ rho1;                   // volume over mass 
+  ulft= u1;
+  utlft= v1;
+  uttlft= w1;
+  plft= p1;
+
+  if(plft/vlft < 0.0){
+    return false;}
+  clft=sqrt(GAMMA*plft/vlft);       // rho * eulerian sound speed 
+
+  vrght= (double)1/ rho2;
+  urght= u2;
+  utrght= v2;
+  uttrght= w2;
+  prght= p2;
+  if(prght/vrght < 0.0) {
+
+
+    return false;}
+  crght=sqrt(GAMMA*prght/vrght);
+
+  //
+  // Start of Bruce's original code
+  //
+
+
+  pstar=prght-plft-crght*(urght-ulft);
+  pstar=plft+pstar*clft/(clft+crght);
+  pstar=max2(smallp,pstar);
+
+  // 
+  // rml - add ability to jump of out loop when converged
+  //
+
+  prevpstar=pstar;                           // save previous value 
+  relpstar=RIEM_TOL;
+
+  for (n=0; n<RIEM_ITER && relpstar>=RIEM_TOL ; n++)
+    {
+      scrch1=0.5*(GAMMA+1.)/GAMMA;
+      wlft=1.+scrch1*(pstar-plft)/plft;
+      wrght=1.+scrch1*(pstar-prght)/prght;
+
+      if(wlft<0.0 || wrght<0.0)
+        { 
+          return false;}
+      wlft=clft*sqrt(wlft);
+      wrght=crght*sqrt(wrght);
+
+      scrch1=4.*vlft*wlft*wlft;
+      scrch1=-scrch1*wlft/(scrch1-(GAMMA+1.)*(pstar-plft));
+      scrch2=4.*vrght*wrght*wrght;
+      scrch2=scrch2*wrght/(scrch2-(GAMMA+1.)*(pstar-prght));
+      scrch3=ulft-(pstar-plft)/wlft;
+      scrch4=urght+(pstar-prght)/wrght;
+      pstar=pstar+(scrch4-scrch3)*(scrch1*scrch2)/(scrch2-scrch1);
+      pstar=max2(smallp,pstar);
+
+      //
+      // rml - compute relative error
+      //
+
+      relpstar=fabs(pstar-prevpstar)/prevpstar;
+      // printf("pstar %e  diff %e  relpstar %e\n",
+      //     pstar,pstar-prevpstar,relpstar); 
+
+      prevpstar=pstar;
+    }
+
+  if (relpstar>=RIEM_TOL)
+    {
+      printf("Riemann solver failed : residual %12.5E\n",relpstar);
+      return false;
+    }
+
+  scrch3=ulft-(pstar-plft)/wlft;
+  scrch4=urght+(pstar-prght)/wrght;
+  ustar=0.5*(scrch3+scrch4);
+
+  if (ustar>=0)
+    scrch1= 1;
+  else
+    scrch1= -1;
+
+
+  scrch2=0.5*(1.+scrch1);
+  scrch3=0.5*(1.-scrch1);
+  ps=plft*scrch2+prght*scrch3;
+  us=ulft*scrch2+urght*scrch3;
+  uts=utlft*scrch2+utrght*scrch3;
+  utts=uttlft*scrch2+uttrght*scrch3;           // rml 3rd dimension 
+
+  vs=vlft*scrch2+vrght*scrch3;
+  rhos=1./vs;
+  ws=wlft*scrch2+wrght*scrch3;
+
+  if(ps*vs < 0) {
+    return false;
+  }
+
+  ces=sqrt(GAMMA*ps*vs);
+  vstar=vs-(pstar-ps)/(ws*ws);
+  vstar=max2(vstar,(GAMMA-1.)/(GAMMA+1.)*vs);
+  rhostr=1./vstar;
+
+  if(pstar*vstar < 0)
+    {
+      return false;}
+
+  cestar=sqrt(GAMMA*pstar*vstar);
+  wes=ces-scrch1*us;
+  westar=cestar-scrch1*ustar;
+  scrch4=ws*vs-scrch1*us;
+
+  if ( (pstar-ps) >= 0 )
+    {
+      wes=scrch4;
+      westar=scrch4;
+    }
+
+
+  //
+  //   compute correct state for rarefaction fan
+  //
+
+  scrch1=max3(wes-westar,wes+westar,smallu);
+  scrch1=(wes+westar)/scrch1;
+  scrch1=0.5*(1.+scrch1);
+  scrch2=1.-scrch1;
+
+  *rhoav= scrch1*rhostr+scrch2*rhos;
+  *uav= scrch1*ustar+scrch2*us;
+  *utav= uts;
+  *uttav= utts;                                 // rml 3rd dimension //
+  *pav=scrch1*pstar+scrch2*ps;
+
+  if (westar>=0)
+    {
+      *rhoav= rhostr;
+      *uav= ustar;
+      *pav= pstar;
+    }
+
+  if (wes<0)
+    {
+      *rhoav= rhos;
+      *uav= us;
+      *pav= ps;
+    }
+    
+  return true;
+}
+
 static inline void _ROE2D (const double &_GAMMA,
 			   const double &nx,  
 			   const double &ny,  
@@ -289,6 +489,72 @@ class dgPerfectGasLaw2d::riemann : public dataCacheDouble {
   }
 };
 
+class dgPerfectGasLaw2d::riemannGodunov : public dataCacheDouble {
+  dataCacheDouble &normals, &solL, &solR;
+  public:
+  riemannGodunov(dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight):
+    normals(cacheMapLeft.get("Normals", this)),
+    solL(cacheMapLeft.get("Solution", this)),
+    solR(cacheMapRight.get("Solution", this))
+  {};
+  void _eval () { 
+    int nQP = solL().size1();
+    if(_value.size1() != nQP)
+      _value = fullMatrix<double>(nQP,12);
+
+    for(int i=0; i< nQP; i++) {
+      const double nx = normals(0,i);
+      const double ny = normals(1,i);
+
+      const double unL = (solL(i,1)*nx+solL(i,2)*ny)/solL(i,0);
+      const double utL = (solL(i,1)*ny-solL(i,2)*nx)/solL(i,0);
+      const double rhoV2L = (unL*unL+utL*utL)*solL(i,0);
+      const double pL = (GAMMA-1.)*solL(i,3) - 0.5*(GAMMA-1.)* rhoV2L;
+
+      const double unR = (solR(i,1)*nx+solR(i,2)*ny)/solR(i,0);
+      const double utR = (solR(i,1)*ny-solR(i,2)*nx)/solR(i,0);
+      const double rhoV2R = (unR*unR+utR*utR)*solR(i,0);
+      const double pR = (GAMMA-1.)*solR(i,3) - 0.5*(GAMMA-1.)* rhoV2R;
+
+      double rhoAv,unAv,utAv,usAv,pAv;
+      riemannExact(solL(i,0), unL,utL,0.0,pL,
+		   solR(i,0), unR,utR,0.0,pR,
+		   &rhoAv,&unAv,&utAv,&usAv,&pAv);
+
+		   
+      const double vxAv = unAv * nx + utAv *ny;
+      const double vyAv = unAv * ny - utAv *nx;
+      // p = rho E (G-1) - 0.5 (G-1) * rho V^2
+      // rho E = p / (G-1) + 0.5 * rho V^2
+      const double rhoE = 
+	(1./(GAMMA-1.)) * pAv + 0.5 * rhoAv * (vxAv*vxAv + vyAv*vyAv);
+      
+      /*      printf("%g %g %g %g, (%g %g) %g %g %g %g\n",
+	     solL(i,0), solL(i,1), solL(i,2), solL(i,3),pL,pAv, 
+	     rhoAv, rhoAv*vxAv,rhoAv*vyAv,rhoE);
+      */
+      const double F0 = rhoAv * unAv;
+      /*
+      const double qq = invrho*(sol(k,3)+p);
+
+      _value(k,0)   = sol(k,1);
+      _value(k,1) = q11+p;
+      _value(k,2) = q12;
+      _value(k,3) = sol(k,1)*qq;
+      */
+
+      _value(i,0) = -F0;
+      _value(i,1) = -(F0*vxAv + pAv*nx);
+      _value(i,2) = -(F0*vyAv + pAv*ny);
+      _value(i,3) = - (rhoE+pAv) * unAv;
+      _value(i,4) = -_value(i,0);
+      _value(i,5) = -_value(i,1);
+      _value(i,6) = -_value(i,2);
+      _value(i,7) = -_value(i,3);
+    }
+  }
+};
+
 class dgPerfectGasLaw2d::maxConvectiveSpeed : public dataCacheDouble {
   dataCacheDouble &sol;
   public:
@@ -341,7 +607,7 @@ dataCacheDouble *dgPerfectGasLaw2d::newConvectiveFlux( dataCacheMap &cacheMap) c
   return new advection(cacheMap);
 }
 dataCacheDouble *dgPerfectGasLaw2d::newRiemannSolver( dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight) const {
-  return new riemann(cacheMapLeft, cacheMapRight);
+  return new riemannGodunov(cacheMapLeft, cacheMapRight);
 }
 dataCacheDouble *dgPerfectGasLaw2d::newDiffusiveFlux( dataCacheMap &cacheMap) const {
   if (_muFunctionName.empty() || _kappaFunctionName.empty())
@@ -384,6 +650,7 @@ class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
       for(int i=0; i< nQP; i++) {
 	const double nx = normals(0,i);
 	const double ny = normals(1,i);
+	
 	const double solLeft [4] = {sol(i,0),sol(i,1),sol(i,2),sol(i,3)};
 	const double vn = (solLeft [1] * nx +  solLeft [2] * ny);
 	const double solRight[4] = {sol(i,0),
@@ -399,12 +666,13 @@ class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
 	/*
 	const double q11 = sol(i,1)*sol(i,1)/sol(i,0);
 	const double q22 = sol(i,2)*sol(i,2)/sol(i,0);
-	const double p = (GAMMA-1)*sol(i,3) - 0.5*(GAMMA-1)*(q11+q22);
+	const double p = (GAMMA-1.)*sol(i,3) - 0.5*(GAMMA-1.)*(q11+q22);
 	_value(i,0) = 0;//FLUX[0];
 	_value(i,1) = -p*nx;//FLUX[1];
 	_value(i,2) = -p*ny;//FLUX[2];
 	_value(i,3) = 0.0;//FLUX[3];
 	*/
+	
       }
     }
   };
@@ -474,7 +742,7 @@ class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
 
 //-------------------------------------------------------------------------------
 // Slip Wall Dirichlet BC --
-// Assume zero derivatives of all variables --> put the same as inside 
+// Assume zero normal derivatives of all variables --> put the same as inside 
 //-------------------------------------------------------------------------------
 
   class dirichletSlip : public dataCacheDouble {

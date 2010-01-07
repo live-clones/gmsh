@@ -1,10 +1,11 @@
-MACH = 1.0;
+MACH = 3;
 GAMMA = 1.4;
 U = 3.0
 V = 0.0 
 RHO  = 1.4;
 
 PRES = RHO*U*U/(GAMMA*MACH*MACH)
+
 --PRES = 1;
 --PRES = ./(MACH*RHO*RHO*GAMMA*GAMMA) 
 
@@ -18,7 +19,7 @@ function free_stream( XYZ, FCT )
     FCT:set(i,0,RHO) 
     FCT:set(i,1,RHO*U) 
     FCT:set(i,2,RHO*V) 
-    FCT:set(i,3, 0.5*RHO*(U*U+V*V)+PRES/(RHO*GAMMA-1)) 
+    FCT:set(i,3, 0.5*RHO*(U*U+V*V)+PRES/(GAMMA-1)) 
   end
 end
 
@@ -41,6 +42,7 @@ DG:setConservationLaw(law)
 
 law:addBoundaryCondition('Walls',law:newWallBoundary())
 law:addBoundaryCondition('LeftRight',law:newOutsideValueBoundary(FS))
+--law:addBoundaryCondition('Walls',law:newOutsideValueBoundary(FS))
 
 DG:setup()
 
@@ -54,13 +56,17 @@ print'*** export ***'
 DG:exportSolution('output/solution_0')
 
 print'*** solve ***'
-CFL = 2.0;
 
-for i=1,1000 do
-    dt = CFL * DG:computeInvSpectralRadius();
-    norm = DG:RK44_limiter(0.1*dt)
-    print('*** ITER ***',i,dt, norm)
-    if (i % 1 == 0) then 
+CFL = 2
+
+for i=1,5000 do
+    dt = CFL * DG:computeInvSpectralRadius();    
+    norm = DG:RK44_limiter(dt)
+    DG:limitSolution()
+    if (i % 10 == 0) then 
+       print('*** ITER ***',i,norm,dt)
+    end
+    if (i % 100 == 0) then 
        DG:exportSolution(string.format("output/solution-%06d", i)) 
     end
 end

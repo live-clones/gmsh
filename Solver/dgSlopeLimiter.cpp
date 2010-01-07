@@ -11,6 +11,7 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution,
 
   //WARNING: ONLY FOR 1 GROUP OF FACES 
   //TODO: make this more general   
+
   dgGroupOfFaces* group = fGroups[0];   
   fullMatrix<double> &SolLeft = *(solution._dataProxys[0]);
   fullMatrix<double> &SolRight = *(solution._dataProxys[0]);    
@@ -18,19 +19,7 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution,
   int totNbElems = solution.getNbElements();
 
 
-  //--- CLIPPING: check unphysical values
- //  double fmin = 1.e-10;
-//   for (int iElement=0;iElement<totNbElems;iElement++){
-//     fullMatrix<double> solElem;
-//     solElem.setAsProxy(SolRight, nbFields*iElement, nbFields );   
-//     for (int k=0;k< solElem.size1() ;k++){
-//       if (solElem(k,0) < fmin) {
-// 	printf("ARGG negative density \n");
-// 	solElem(k,0) = fmin;
-//       }
-//     }
-//   }
-
+  //  --- CLIPPING: check unphysical values
   // first compute max and min of all fields for all stencils    
   //----------------------------------------------------------   
 
@@ -39,65 +28,36 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution,
   MIN.setAll ( 1.e22);  
   MAX.setAll (-1.e22);  
 
-  fullMatrix<double>  MEANL (totNbElems, nbFields);    
-  fullMatrix<double>  MEANR (totNbElems, nbFields);    
-  MEANL.setAll ( 0.01); 
-  MEANR.setAll ( 0.01); 
-
   int iElementL, iElementR, fSize; 	 
   for(int iFace=0 ; iFace<group->getNbElements();iFace++)  
   {
     iElementL = group->getElementLeftId(iFace);  
     iElementR = group->getElementRightId(iFace); 
-    if (iElementR >= 0)
-    {   
-      fullMatrix<double> TempL, TempR;
-      TempL.setAsProxy(SolLeft, nbFields*iElementL, nbFields );
-      TempR.setAsProxy(SolRight, nbFields*iElementR, nbFields );    	
 
-      fSize = TempL.size1(); 
-      for (int k=0; k< nbFields; ++k)    
-      {    
-        double AVGL = 0;  
-        double AVGR = 0;  
-        for (int i=0; i<fSize; ++i) 
-        {  
-          AVGL += TempL(i,k);  
-          AVGR += TempR(i,k);  
-        }  
-        AVGL /= (double) fSize;
-        AVGR /= (double) fSize;
-        MIN ( iElementL , k ) = std::min ( AVGR , MIN ( iElementL , k ) );  
-        MAX ( iElementL , k ) = std::max ( AVGR , MAX ( iElementL , k ) );  
-        MIN ( iElementR , k ) = std::min ( AVGL , MIN ( iElementR , k ) );  
-        MAX ( iElementR , k ) = std::max ( AVGL , MAX ( iElementR , k ) );  
-
-        MEANR( iElementL,k ) = AVGR;
-        MEANL( iElementR,k ) = AVGL;
-
-      }    
-    }   
-    else{    
-      fullMatrix<double> TempL ;  
-      TempL.setAsProxy(SolLeft, nbFields*iElementL, nbFields );  
-      for (int k=0; k<nbFields; ++k){   
-        for (int i=0; i<fSize; ++i){    
-          MIN ( iElementL , k ) = std::min (  TempL(i,k) , MIN ( iElementL , k ) );  
-          MAX ( iElementL , k ) = std::max (  TempL(i,k) , MAX ( iElementL , k ) );  
-
-
-          double AVG = 0;
-          for (int i=0; i<fSize; ++i)  AVG += TempL(i,k);   
-
-        } 
-      }   
-    }   
+    fullMatrix<double> TempL, TempR;
+    TempL.setAsProxy(SolLeft, nbFields*iElementL, nbFields );
+    TempR.setAsProxy(SolRight, nbFields*iElementR, nbFields );    	
+    
+    fSize = TempL.size1(); 
+    for (int k=0; k< nbFields; ++k){    
+      double AVGL = 0;  
+      double AVGR = 0;  
+      for (int i=0; i<fSize; ++i) {  
+	AVGL += TempL(i,k);  
+	AVGR += TempR(i,k);  
+      }  
+      AVGL /= (double) fSize;
+      AVGR /= (double) fSize;
+      MIN ( iElementL , k ) = std::min ( AVGR , MIN ( iElementL , k ) );  
+      MAX ( iElementL , k ) = std::max ( AVGR , MAX ( iElementL , k ) );  
+      MIN ( iElementR , k ) = std::min ( AVGL , MIN ( iElementR , k ) );  
+      MAX ( iElementR , k ) = std::max ( AVGL , MAX ( iElementR , k ) );  
+    }    
   }
-  // some parallel should be done here in order to compute averages on other processors   
+
+  //  printf("fSize = %d\n",fSize);
+  
   //----------------------------------------------------------   
-
-  //...   
-
   // then limit the solution  
   //----------------------------------------------------------   
 
@@ -129,13 +89,42 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution,
       if (locMin != AVG && locMin < neighMin) slopeLimiterValue = std::min ( slopeLimiterValue , (AVG-neighMin) / (AVG-locMin) ); 
       if (AVG < neighMin) slopeLimiterValue = 0;  
       if (AVG > neighMax) slopeLimiterValue = 0;  
+      
+      //      if (slopeLimiterValue != 1.0){
+      //	printf("LIMTING %g\n",slopeLimiterValue);
+      //      }
+      //      slopeLimiterValue = 0.0;   
 
-      for (int i=0; i<fSize; ++i) Temp(i,k) *= slopeLimiterValue;
-
-      for (int i=0; i<fSize; ++i) Temp(i,k) += AVG;    
+      for (int i=0; i<fSize; ++i) Temp(i,k) = AVG + Temp(i,k)*slopeLimiterValue;
 
     }
   }  
+
+  #if 0
+  double rhomin = 1.e-3;
+  double presmin= 1.e-3;
+  for (int iElement=0;iElement<totNbElems;iElement++){
+    fullMatrix<double> solElem;
+    solElem.setAsProxy(SolRight, nbFields*iElement, nbFields );   
+    for (int k=0;k< solElem.size1() ;k++){
+       if (solElem(k,0) < rhomin) {
+ 	solElem(k,0) = rhomin;
+       }
+       double rhoV2 = 0;
+       for (int j=0;j<2;j++) {
+	 double rhov = solElem(k,j+1);
+	 rhoV2 += rhov*rhov;
+       }
+       rhoV2 /= solElem(k,0);
+       const double p = (1.4-1)*solElem(k,3) - 0.5*(1.4-1)* rhoV2;
+       if (p < presmin) {
+	 solElem(k,3) = 0.5 *rhoV2 + presmin / (1.4-1);
+	 //	 printf("negative pressure %g cliiped !!\n",p);
+       }
+     }
+  }
+  #endif
+
   return true; 
 
 }
