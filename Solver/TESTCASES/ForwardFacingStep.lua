@@ -25,7 +25,7 @@ end
 --[[ 
      Example of a lua program driving the DG code
 --]]
-
+sv
 order = 1
 print'*** Loading the mesh and the model ***'
 myModel   = GModel  ()
@@ -55,14 +55,12 @@ print'*** export ***'
 DG:exportSolution('output/solution_0')
 
 print'*** solve ***'
+CFL = 2.0;
 
-LC = 0.1*.1
-dt = .3*LC/(SOUND+V);
-print('DT=',dt)
-
-for i=1,10 do
+for i=1,1000 do
+    dt = CFL * DG:computeInvSpectralRadius();
     norm = DG:RK44_limiter(0.1*dt)
-    print('*** ITER ***',i,norm)
+    print('*** ITER ***',i,dt, norm)
     if (i % 1 == 0) then 
        DG:exportSolution(string.format("output/solution-%06d", i)) 
     end
