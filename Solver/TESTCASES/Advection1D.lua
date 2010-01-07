@@ -4,7 +4,7 @@ model:load ('edge.geo')
 -- model:save ('edge.msh')
 model:load ('edge.msh')
 dg = dgSystemOfEquations (model)
-dg:setOrder(0)
+dg:setOrder(1)
 
 -- conservation law
 -- advection speed
@@ -54,7 +54,7 @@ dg:exportSolution('output/Adv1D-00000')
 -- main loop
 n = 5
 for i=1,100*n do
-  norm = dg:RK44(0.03)
+  norm = dg:RK44_limiter(0.03)
   if (i % n == 0) then 
     print('iter',i,norm)
     dg:exportSolution(string.format("output/Adv1D-%05d", i)) 
