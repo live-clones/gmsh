@@ -127,8 +127,8 @@ void binding::interactiveSession(){
   }
   clear_history();
   #else
-  while(std::string line,
-        std::cout<<"lua> ",
+  std::string line;
+  while(std::cout<<"lua> ",
         getline(std::cin,line) ){
     report_errors(L, luaL_dostring(L, line.c_str()));
   }
