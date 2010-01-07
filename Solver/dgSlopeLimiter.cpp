@@ -17,6 +17,20 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution,
   int nbFields = solution.getNbFields();    
   int totNbElems = solution.getNbElements();
 
+
+  //--- CLIPPING: check unphysical values
+ //  double fmin = 1.e-10;
+//   for (int iElement=0;iElement<totNbElems;iElement++){
+//     fullMatrix<double> solElem;
+//     solElem.setAsProxy(SolRight, nbFields*iElement, nbFields );   
+//     for (int k=0;k< solElem.size1() ;k++){
+//       if (solElem(k,0) < fmin) {
+// 	printf("ARGG negative density \n");
+// 	solElem(k,0) = fmin;
+//       }
+//     }
+//   }
+
   // first compute max and min of all fields for all stencils    
   //----------------------------------------------------------   
 
