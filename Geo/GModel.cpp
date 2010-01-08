@@ -710,7 +710,7 @@ void GModel::removeInvisibleElements()
   }
 }
 
-int GModel::indexMeshVertices(bool all)
+int GModel::indexMeshVertices(bool all, int singlePartition)
 {
   std::vector<GEntity*> entities;
   getEntities(entities);
@@ -722,20 +722,35 @@ int GModel::indexMeshVertices(bool all)
       entities[i]->mesh_vertices[j]->setIndex(-1);
 
   // tag all mesh vertices belonging to elements that need to be saved
-  //with 0
-  for(unsigned int i = 0; i < entities.size(); i++)
-    if(all || entities[i]->physicals.size())
-      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
-        for(int k = 0; k < entities[i]->getMeshElement(j)->getNumVertices(); k++)
-          entities[i]->getMeshElement(j)->getVertex(k)->setIndex(0);
+  // with 0, or with -2 if they need to be taken into account in the
+  // numbering but need not to be saved (because we save a single
+  // partition and they are not used in that partition)
+  for(unsigned int i = 0; i < entities.size(); i++){
+    if(all || entities[i]->physicals.size()){
+      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+        MElement *e = entities[i]->getMeshElement(j);
+        for(int k = 0; k < e->getNumVertices(); k++){
+          if(!singlePartition || e->getPartition() == singlePartition)
+            e->getVertex(k)->setIndex(0);
+          else if(e->getVertex(k)->getIndex() == -1)
+            e->getVertex(k)->setIndex(-2);
+        }
+      }
+    }
+  }
 
   // renumber all the mesh vertices tagged with 0
-  int numVertices = 0;
+  int numVertices = 0, index = 0;
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
-      if(!entities[i]->mesh_vertices[j]->getIndex())
-        entities[i]->mesh_vertices[j]->setIndex(++numVertices);
-
+      if(!entities[i]->mesh_vertices[j]->getIndex()){
+        index++;
+        numVertices++;
+        entities[i]->mesh_vertices[j]->setIndex(index);
+      }
+      else if(entities[i]->mesh_vertices[j]->getIndex() == -2)
+        index++;
+  
   return numVertices;
 }
 

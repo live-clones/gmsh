@@ -591,7 +591,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
 
   // get the number of vertices and index the vertices in a continuous
   // sequence
-  int numVertices = indexMeshVertices(saveAll);
+  int numVertices = indexMeshVertices(saveAll, saveSinglePartition);
 
   // FIXME if saveSinglePartition, re-tag some nodes with '0' index
   // and recompute numVertices
@@ -796,19 +796,6 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
 
   fclose(fp);
 
-#if 1
-  if(_ghostCells.size()){
-    Msg::Info("Wrinting ghost cells in debug file");
-    fp = fopen("ghosts.pos", "w");
-    fprintf(fp, "View \"ghosts\"{\n");
-    for(std::multimap<MElement*, short>::iterator it = _ghostCells.begin();
-        it != _ghostCells.end(); it++)
-      it->first->writePOS(fp, false, true, false, false, false, false);
-    fprintf(fp, "};\n");
-    fclose(fp);
-  }
-#endif
-
   return 1;
 }
 
@@ -825,10 +812,25 @@ int GModel::writePartitionedMSH(const std::string &baseName, bool binary,
     sstream << baseName << "_" << std::setw(3) << std::setfill('0') << partition;
 
     int startNum = index ? getNumElementsMSH(this, saveAll, partition) : 0;
+    Msg::Info("Writing partition %d in file '%s'", partition, sstream.str().c_str());
     writeMSH(sstream.str(), 2.2, binary, saveAll, saveParametric, 
              scalingFactor, startNum, partition);
     index++;
   }
+
+#if 1
+  if(_ghostCells.size()){
+    Msg::Info("Writing ghost cells in debug file 'ghosts.pos'");
+    FILE *fp = fopen("ghosts.pos", "w");
+    fprintf(fp, "View \"ghosts\"{\n");
+    for(std::multimap<MElement*, short>::iterator it = _ghostCells.begin();
+        it != _ghostCells.end(); it++)
+      it->first->writePOS(fp, false, true, false, false, false, false);
+    fprintf(fp, "};\n");
+    fclose(fp);
+  }
+#endif
+
   return 1;
 }
 

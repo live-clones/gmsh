@@ -293,7 +293,7 @@ class GModel
 
   // index all the (used) mesh vertices in a continuous sequence,
   // starting at 1
-  int indexMeshVertices(bool all);
+  int indexMeshVertices(bool all, int singlePartition=0);
 
   // scale the mesh by the given factor
   void scaleMesh(double factor);
