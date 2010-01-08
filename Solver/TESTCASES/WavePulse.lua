@@ -1,5 +1,3 @@
-
-
 --[[ 
      Function for initial conditions
 --]]
@@ -55,9 +53,9 @@ print('DT = ',dt)
 for i=1,N do
 --    norm = DG:multirateRK43(dt)
     norm = DG:RK44(dt)
-    print('*** ITER ***',i,norm)
-    if (i % 10 == 0) then 
-       DG:exportSolution(string.format("output/solution-%04d", i)) 
+    if (i % 100 == 0) then 
+      print('*** ITER ***',i,norm)
+      DG:exportSolution(string.format("output/solution-%04d", i)) 
     end
 end
 

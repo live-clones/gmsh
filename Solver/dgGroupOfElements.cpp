@@ -88,6 +88,7 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e, int polyOr
         for (int l=0;l<nbPsi;l++) { 
           imass(k,l) += f[k]*f[l]*weight*detjac;
         }
+        // (iQP*3+iXYZ , iFace*NPsi+iPsi)
         (*_dPsiDx)(j*3  ,i*nbPsi+k) = g[k][0]*ijac[0][0]+g[k][1]*ijac[0][1]+g[k][2]*ijac[0][2];
         (*_dPsiDx)(j*3+1,i*nbPsi+k) = g[k][0]*ijac[1][0]+g[k][1]*ijac[1][1]+g[k][2]*ijac[1][2];
         (*_dPsiDx)(j*3+2,i*nbPsi+k) = g[k][0]*ijac[2][0]+g[k][1]*ijac[2][1]+g[k][2]*ijac[2][2];
@@ -266,7 +267,7 @@ void dgGroupOfFaces::init(int pOrder) {
 	getElementLeft(i)->getJacobian ((intLeft)(j,0), (intLeft)(j,1), (intLeft)(j,2), jac);
 	inv3x3(jac,ijac);
 	//compute dPsiLeftDxOnQP
-	//(iPsi*3+iXYZ,iQP+iFace*NQP);
+  // (iQP*3+iXYZ , iFace*NPsi+iPsi)
 	int nPsi = _fsLeft->coefficients.size1();
 	for (int iPsi=0; iPsi< nPsi; iPsi++) {
 	  (*_dPsiLeftDxOnQP)(j*3  ,i*nPsi+iPsi) = g[iPsi][0]*ijac[0][0]+g[iPsi][1]*ijac[0][1]+g[iPsi][2]*ijac[0][2];

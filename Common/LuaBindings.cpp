@@ -123,7 +123,8 @@ void binding::interactiveSession(){
       add_history(expansion);
       report_errors(L, luaL_dostring(L, expansion));
     }
-    free(expansion);
+    if(expansion)
+      free(expansion);
   }
   clear_history();
   #else

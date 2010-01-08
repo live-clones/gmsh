@@ -43,7 +43,7 @@ static dgSystemOfEquations *myConstructorPtr(GModel* gm){
   return new dgSystemOfEquations(gm);
 }
 
-void dgSystemOfEquations::registerBindings(binding *b){
+void dgSystemOfEquations::registerBindings(binding *b) {
   classBinding *cb = b->addClass<dgSystemOfEquations>("dgSystemOfEquations");
   cb->setDescription("a class to rule them all :-) -- bad description, this class will be removed anyway");
   cb->setConstructor<dgSystemOfEquations,GModel*>();
