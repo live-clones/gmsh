@@ -484,28 +484,26 @@ Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, CellComp
 }
 
 bool Chain::deform(std::map<Cell*, int, Less_Cell> &cellsInChain, std::map<Cell*, int, Less_Cell> &cellsNotInChain){
-  //printf("--- \n");
+
   std::vector<int> cc;
   std::vector<int> bc;
   
   for(citer cit = cellsInChain.begin(); cit != cellsInChain.end(); cit++){
     Cell* c = (*cit).first;
     c->setImmune(false);
-    //c->printCell();
     if(!c->inSubdomain()) {
       cc.push_back(getCoeff(c));
       bc.push_back((*cit).second);
     }
-    removeCell(c);
-  }
-  if(cc.empty()) return false;
-  int inout = cc[0]*bc[0];
-  for(int i = 0; i < cc.size(); i++){
-    //printf("cc: %d, bc: %d \n", cc.at(i), bc.at(i));
-    if(cc[i]*bc[i] != inout) printf("Error: Chain smoothening orientation mismatch! \n");
   }
   
-  //for(citer cit = cellsInChain.begin(); cit != cellsInChain.end(); cit++) removeCell((*cit).first);
+  if(cc.empty() || (getDim() == 2 && cc.size() < 2) ) return false;
+  int inout = cc[0]*bc[0];
+  for(int i = 0; i < cc.size(); i++){
+    if(cc[i]*bc[i] != inout) return false;  
+  }
+  
+  for(citer cit = cellsInChain.begin(); cit != cellsInChain.end(); cit++) removeCell((*cit).first);
   
   int n = 1;
   for(citer cit = cellsNotInChain.begin(); cit != cellsNotInChain.end(); cit++){
@@ -514,10 +512,8 @@ bool Chain::deform(std::map<Cell*, int, Less_Cell> &cellsInChain, std::map<Cell*
     else c->setImmune(false);
     int coeff = -1*inout*(*cit).second;
     addCell(c, coeff);
-    //c->printCell();
     n++;
   }
-  //printf("--- \n");
   
   return true;
 }
@@ -531,9 +527,8 @@ bool Chain::deformChain(std::pair<Cell*, int> cell, bool bend){
     std::map<Cell*, int, Less_Cell> cellsInChain;
     std::map<Cell*, int, Less_Cell> cellsNotInChain;
     Cell* c1CbdCell = (*cit).first;
-    //c1CbdCell->printCell();
-    //c1CbdCell->printOrgBd();
     std::map<Cell*, int, Less_Cell> c1CbdBd = c1CbdCell->getOrgBd();
+
     for(citer cit2 = c1CbdBd.begin(); cit2 != c1CbdBd.end(); cit2++){
       Cell* c1CbdBdCell = (*cit2).first;
       int coeff = (*cit2).second;
@@ -558,8 +553,6 @@ bool Chain::deformChain(std::pair<Cell*, int> cell, bool bend){
     
     if(next) continue;
     
-    if(getDim() != 2) bend = false;
-    
     //printf("dim: %d, in chain: %d, not in chain: %d \n", getDim(), cellsInChain.size(), cellsNotInChain.size());
     
     if( (getDim() == 1 && cellsInChain.size() == 2 && cellsNotInChain.size() == 1) ||
@@ -583,7 +576,6 @@ bool Chain::deformChain(std::pair<Cell*, int> cell, bool bend){
 }
 
 void Chain::smoothenChain(){
-
   if(!_cellComplex->simplicial()) return;
   
   int start = getSize();
@@ -593,8 +585,9 @@ void Chain::smoothenChain(){
   for(int i = 0; i < 20; i++){
     int size = getSize();
     for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
-      deformChain(*cit, true);
-      deformChain(*cit, false);
+      //if(!deformChain(*cit, false) && getDim() == 2) deformChain(*cit, true);
+      if(getDim() == 2) deformChain(*cit, true);
+      deformChain(*cit, false);      
     }
     deImmuneCells();
     eraseNullCells();

@@ -734,7 +734,8 @@ int CellComplex::cocombine(int dim){
           CombinedCell* newCell = new CombinedCell(c1, c2, (or1 != or2), true );
           removeCell(c1);
           removeCell(c2);
-          _cells[dim].insert(newCell);
+          std::pair<citer, bool> insertInfo = _cells[dim].insert(newCell);
+          if(!insertInfo.second) printf("Warning: Combined cell not inserted! \n");
           
           cit = firstCell(dim);
           count++;
@@ -752,7 +753,6 @@ int CellComplex::cocombine(int dim){
 }
 
 int CellComplex::combine(int dim){
-  
   double t1 = Cpu();
   printf("Cell complex before combining: %d volumes, %d faces, %d edges and %d vertices.\n",
          getSize(3), getSize(2), getSize(1), getSize(0));
