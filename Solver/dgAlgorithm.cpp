@@ -268,7 +268,7 @@ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation l
 			      std::vector<dgGroupOfElements*> &eGroups,	// group of elements
 			      std::vector<dgGroupOfFaces*> &fGroups,		// group of interfacs
 			      std::vector<dgGroupOfFaces*> &bGroups,		// group of boundaries
-			      double h,				        // time-step
+			      double h,				         // time-step
 			      dgDofContainer &sol,
 			      dgDofContainer &resd,
 			      dgLimiter *limiter,
@@ -305,9 +305,6 @@ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation l
      if(j){
        K._data->scale(b[j]);
        K._data->axpy(*(sol._data));
-       if (limiter){
-	 //         limiter->apply(K, eGroups, fGroups);
-       }
      }
      
     if (limiter){
@@ -325,7 +322,6 @@ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation l
        }
      }
      Unp._data->axpy(*(K._data),a[j]);
-     //if (limiter) limiter->apply(Unp, eGroups, fGroups);
    }
    if (limiter) limiter->apply(Unp, eGroups, fGroups);
    for (int i=0;i<sol._dataSize;i++){	   
@@ -545,7 +541,6 @@ void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (mayb
         }
       }
     }    
-
 
   }
   // ----- 3 ---- do the redistribution at face nodes using BLAS3

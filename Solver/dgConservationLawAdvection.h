@@ -1,6 +1,8 @@
 #ifndef _DG_CONSERVATION_LAW_ADVECTION_H
 #define _DG_CONSERVATION_LAW_ADVECTION_H
 #include "dgConservationLaw.h"
+//Advection diffusion equation
+//dc/dt + v div(c) - nu lapl(c) = 0
 class dgConservationLawAdvection : public dgConservationLaw {
   std::string _vFunctionName,_nuFunctionName;
   class advection;

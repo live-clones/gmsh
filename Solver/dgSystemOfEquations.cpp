@@ -103,8 +103,7 @@ double dgSystemOfEquations::RK44(double dt){
   return _solution->_data->norm();
 }
 
-double dgSystemOfEquations::computeInvSpectralRadius(){  
-  
+double dgSystemOfEquations::computeInvSpectralRadius(){   
   double sr = 1.e22;
   for (int i=0;i<_elementGroups.size();i++){
     std::vector<double> DTS;
@@ -115,7 +114,7 @@ double dgSystemOfEquations::computeInvSpectralRadius(){
 }
 
 double dgSystemOfEquations::RK44_limiter(double dt){
-  dgLimiter *sl = new dgSlopeLimiter();
+  dgLimiter *sl = new dgSlopeLimiter(_claw);
   _algo->rungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups, dt,  *_solution, *_rightHandSide, sl);
   delete sl;
   return _solution->_data->norm();
@@ -135,7 +134,7 @@ void dgSystemOfEquations::exportSolution(std::string outputFile){
 }
 
 void dgSystemOfEquations::limitSolution(){
-	dgLimiter *sl = new dgSlopeLimiter();
+  dgLimiter *sl = new dgSlopeLimiter(_claw);
   sl->apply(*_solution,_elementGroups,_faceGroups);
 
   delete sl;

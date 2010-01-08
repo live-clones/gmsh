@@ -6,17 +6,20 @@
 struct dgDofContainer;
 class dgGroupOfElements;
 class dgGroupOfFaces;
+class dgConservationLaw;
 
 class dgLimiter{
+protected:
+  dgConservationLaw *_claw;
 public:
-  dgLimiter ()  {}
+  dgLimiter (dgConservationLaw *claw) : _claw(claw) {}
   virtual bool apply ( dgDofContainer &sol, std::vector<dgGroupOfElements*> &eGroups, 
 		       std::vector<dgGroupOfFaces*> &fGroup ) = 0;
 };
 
 class dgSlopeLimiter : public dgLimiter{
 public :
-  dgSlopeLimiter () : dgLimiter () {}
+  dgSlopeLimiter (dgConservationLaw *claw) : dgLimiter (claw) {}
   virtual bool apply ( dgDofContainer &solution,  
 		       std::vector<dgGroupOfElements*> &eGroups, 
 		       std::vector<dgGroupOfFaces*> &fGroup);

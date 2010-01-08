@@ -23,7 +23,6 @@ public:
   dgDofContainer (std::vector<dgGroupOfElements*> &groups, const dgConservationLaw &claw);
   ~dgDofContainer ();  
   int getNbElements() {return totalNbElements;}
-  int getNbFields() {return nbFields;}
 };
 
 class binding;

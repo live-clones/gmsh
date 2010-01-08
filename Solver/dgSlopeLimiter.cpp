@@ -1,7 +1,7 @@
 #include "dgLimiter.h" 
 #include "dgGroupOfElements.h"   
 #include "dgSystemOfEquations.h" 
-
+#include "function.h"
 
 //----------------------------------------------------------------------------------   
 bool dgSlopeLimiter::apply ( dgDofContainer &solution,   
@@ -13,13 +13,11 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution,
   //TODO: make this more general   
 
   dgGroupOfFaces* group = fGroups[0];   
-  fullMatrix<double> &SolLeft = *(solution._dataProxys[0]);
-  fullMatrix<double> &SolRight = *(solution._dataProxys[0]);    
-  int nbFields = solution.getNbFields();    
+  fullMatrix<double> &solleft = solution.getGroupProxy(0); //*(solution._dataProxys[0]);
+  fullMatrix<double> &solright = solution.getGroupProxy(0); //*(solution._dataProxys[0]);
+  int nbFields =_claw->nbFields();    
   int totNbElems = solution.getNbElements();
 
-
-  //  --- CLIPPING: check unphysical values
   // first compute max and min of all fields for all stencils    
   //----------------------------------------------------------   
 
@@ -29,14 +27,14 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution,
   MAX.setAll (-1.e22);  
 
   int iElementL, iElementR, fSize; 	 
-  for(int iFace=0 ; iFace<group->getNbElements();iFace++)  
-  {
+  for(int iFace=0 ; iFace<group->getNbElements();iFace++)   {
+
     iElementL = group->getElementLeftId(iFace);  
     iElementR = group->getElementRightId(iFace); 
 
     fullMatrix<double> TempL, TempR;
-    TempL.setAsProxy(SolLeft, nbFields*iElementL, nbFields );
-    TempR.setAsProxy(SolRight, nbFields*iElementR, nbFields );    	
+    TempL.setAsProxy(solleft, nbFields*iElementL, nbFields );
+    TempR.setAsProxy(solright, nbFields*iElementR, nbFields );    	
     
     fSize = TempL.size1(); 
     for (int k=0; k< nbFields; ++k){    
@@ -55,16 +53,13 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution,
     }    
   }
 
-  //  printf("fSize = %d\n",fSize);
-  
-  //----------------------------------------------------------   
+   //----------------------------------------------------------   
   // then limit the solution  
   //----------------------------------------------------------   
 
-  for (int iElement=0 ; iElement<totNbElems; ++iElement) 
-  { 
+  for (int iElement=0 ; iElement<totNbElems; ++iElement)  { 
     fullMatrix<double> Temp;  
-    Temp.setAsProxy(SolRight, nbFields*iElement, nbFields );    	
+    Temp.setAsProxy(solleft, nbFields*iElement, nbFields );    	
     for (int k=0; k<nbFields; ++k) 
     {
       double AVG = 0.;   
@@ -90,9 +85,7 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution,
       if (AVG < neighMin) slopeLimiterValue = 0;  
       if (AVG > neighMax) slopeLimiterValue = 0;  
       
-      //      if (slopeLimiterValue != 1.0){
-      //	printf("LIMTING %g\n",slopeLimiterValue);
-      //      }
+      //      if (slopeLimiterValue != 1.0)	printf("LIMTING %g\n",slopeLimiterValue);
       //      slopeLimiterValue = 0.0;   
 
       for (int i=0; i<fSize; ++i) Temp(i,k) = AVG + Temp(i,k)*slopeLimiterValue;
@@ -100,31 +93,50 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution,
     }
   }  
 
-  #if 0
-  double rhomin = 1.e-3;
-  double presmin= 1.e-3;
-  for (int iElement=0;iElement<totNbElems;iElement++){
-    fullMatrix<double> solElem;
-    solElem.setAsProxy(SolRight, nbFields*iElement, nbFields );   
-    for (int k=0;k< solElem.size1() ;k++){
-       if (solElem(k,0) < rhomin) {
- 	solElem(k,0) = rhomin;
-       }
-       double rhoV2 = 0;
-       for (int j=0;j<2;j++) {
-	 double rhov = solElem(k,j+1);
-	 rhoV2 += rhov*rhov;
-       }
-       rhoV2 /= solElem(k,0);
-       const double p = (1.4-1)*solElem(k,3) - 0.5*(1.4-1)* rhoV2;
-       if (p < presmin) {
-	 solElem(k,3) = 0.5 *rhoV2 + presmin / (1.4-1);
-	 //	 printf("negative pressure %g cliiped !!\n",p);
-       }
-     }
-  }
-  #endif
+  //  --- CLIPPING: check unphysical values
+ //  fullMatrix<double> solutionQP (group->getNbIntegrationPoints(),group->getNbElements() * nbFields);
+//   group->getCollocationMatrix().mult(solleft, solutionQP);
+//   //dataCacheDouble &solutionQPe = cacheMap.provideData("Solution");
+//   //solutionQPe.set(fullMatrix<double>(group.getNbIntegrationPoints(),nbFields));
+//   //dataCacheElement &cacheElement = cacheMap.getElement();
+//   dataCacheMap cacheMap(group->getNbIntegrationPoints());
+//   dataCacheDouble *clipping = _claw->newClipToPhysics(cacheMap);
+//   fullMatrix<double> clippedSol;
+//    for (int iElement=0 ; iElement<group->getNbElements() ;++iElement) {
+//      clippedSol.setAsProxy(solutionQP, iElement*nbFields, nbFields );
+//      for (int iPt =0; iPt< group->getNbIntegrationPoints(); iPt++) {
+//        for (int k=0;k<nbFields;k++)
+// 	 clippedSol(iPt,k) =  (*clipping)(iPt,k);
+//      }
+//      //cacheElement.set(group.getElement(iElement));
+//    }
+//    solleft.gemm(group->getRedistributionMatrix(),solutionQP);
+
+  //#if 0
+//   double rhomin = 1.e-3;
+//   double presmin= 1.e-3;
+//   for (int iElement=0;iElement<totNbElems;iElement++){
+//     fullMatrix<double> solElem;
+//     solElem.setAsProxy(solleft, nbFields*iElement, nbFields );   
+//     for (int k=0;k< solElem.size1() ;k++){
+//        if (solElem(k,0) < rhomin) {
+//  	solElem(k,0) = rhomin;
+//        }
+//        double rhoV2 = 0;
+//        for (int j=0;j<2;j++) {
+// 	 double rhov = solElem(k,j+1);
+// 	 rhoV2 += rhov*rhov;
+//        }
+//        rhoV2 /= solElem(k,0);
+//        const double p = (1.4-1)*solElem(k,3) - 0.5*(1.4-1)* rhoV2;
+//        if (p < presmin) {
+// 	 solElem(k,3) = 0.5 *rhoV2 + presmin / (1.4-1);
+//        }
+//      }
+//   }
+  //#endif
 
   return true; 
 
 }
+

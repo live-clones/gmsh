@@ -1,4 +1,4 @@
-MACH = 3;
+MACH = 3.0;
 GAMMA = 1.4;
 U = 3.0
 V = 0.0 
@@ -26,6 +26,7 @@ end
 --[[ 
      Example of a lua program driving the DG code
 --]]
+
 order = 1
 print'*** Loading the mesh and the model ***'
 myModel   = GModel  ()
@@ -56,7 +57,6 @@ print'*** export ***'
 DG:exportSolution('output/solution_0')
 
 print'*** solve ***'
-
 CFL = 2
 
 for i=1,5000 do

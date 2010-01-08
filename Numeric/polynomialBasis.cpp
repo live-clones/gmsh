@@ -677,15 +677,6 @@ static void getFaceClosure(int iFace, int iSign, int iRotate, std::vector<int> &
   default:
     int face[4][3] = {{-3, -2, -1}, {1, -6, 4}, {-4, 5, 3}, {6, 2, -5}};
     int order1node[4][3] = {{0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {3, 1, 2}};
-    // int facedofstmp[200];
-    // face 0 | 0 1 2
-    // face 1 | 0 4 -3
-    // face 2 | 1 5 -4
-    // face 3 | -2 5 -3
-    // edge 0   |  4 -> 4+order-2
-    // edge 1   |  4+order-1 -> 4 + 2*(order-1)-1
-    // edge 2   |  4+2*(order-1)-> 4+ 3*(order-1)-1
-    // edge k   |  4+k*(order-1) -> 4+(k+1)*(order-1)-1
     for (int i = 0; i < 3; ++i){
       int k = (3 + (iSign * i) + iRotate) % 3;	//- iSign * iRotate
       closure[i] = order1node[iFace][k];

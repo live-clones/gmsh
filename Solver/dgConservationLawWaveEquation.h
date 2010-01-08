@@ -1,6 +1,10 @@
 #ifndef _DG_CONSERVATION_LAW_WAVE_EQUATION_H_
 #define _DG_CONSERVATION_LAW_WAVE_EQUATION_H_
 #include "dgConservationLaw.h"
+// Linear acoustics
+// dp/dt - rho*c^2  div(u,v) = 0
+// du/dt + 1/rho  dp/dx = 0
+// dv/dt + 1/rho  dp/dy = 0
 class methodBinding;
 class constructorBinding;
 class dgConservationLawWaveEquation : public dgConservationLaw {

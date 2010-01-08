@@ -213,11 +213,14 @@ static inline void _ROE2D (const double &_GAMMA,
 			   const double *solR,
 			   double *FLUX){
 
+  //sol cons var: rho, rhou, rhov, rhoE
+  //u prim var  : rho, u, v, p
   const double gamma = _GAMMA;
   const double GM1 = gamma - 1.;
   
   double uL[4], uR[4];
-  const double overRhoL = 1./solL[0];	
+  const double overRhoL = 1./solL[0];
+
   uL[0] = solL[0];
   uL[1] = solL[1]*overRhoL; 
   uL[2] = solL[2]*overRhoL;
@@ -228,38 +231,33 @@ static inline void _ROE2D (const double &_GAMMA,
   uR[1] = solR[1]*overRhoR; 
   uR[2] = solR[2]*overRhoR;
   uR[3] = GM1*(solR[3] - 0.5* (solR[1]*solR[1]+solR[2]*solR[2])*overRhoR); 
-  // central contributions 
-  
-  double halfrhoun;                           
-  
-  /* --- left contributions ---*/
+
+  //* --- central contributions ---*/
+
+  double halfrhoun;                            
+  // --- left contributions 
   halfrhoun = 0.5*(uL[0]*(uL[1]*nx + uL[2]*ny));
-  double HL        = gamma/GM1* uL[3]/uL[0]+0.5*(uL[1]*uL[1]+
-						 uL[2]*uL[2]);
-  
+  double HL        = gamma/GM1* uL[3]/uL[0]+0.5*(uL[1]*uL[1]+uL[2]*uL[2]);
   FLUX[0] = halfrhoun;
   FLUX[1] = halfrhoun*uL[1] + .5*uL[3]*nx;
   FLUX[2] = halfrhoun*uL[2] + .5*uL[3]*ny;
   FLUX[3] = halfrhoun*HL; 
   
-  /* --- right contributions ---*/
-  
+  // --- right contributions  
   halfrhoun = 0.5*(uR[0]*(uR[1]*nx+uR[2]*ny));
-  double HR        = gamma/GM1* uR[3]/uR[0]+0.5*(uR[1]*uR[1]+uR[2]*uR[2]);
-  
+  double HR        = gamma/GM1* uR[3]/uR[0]+0.5*(uR[1]*uR[1]+uR[2]*uR[2]); 
   FLUX[0] += halfrhoun;
   FLUX[1] += halfrhoun*uR[1] + .5*uR[3]*nx;
   FLUX[2] += halfrhoun*uR[2] + .5*uR[3]*ny;
   FLUX[3] += halfrhoun*HR; 
 
-  /* --- add dissipation ---*/       	
+  /* --- add rhoe dissipation ---*/       	
   
   double sqr_rhoL = sqrt(uL[0]);					
-  double sqr_rhoR = sqrt(uR[0]);					
-  
+  double sqr_rhoR = sqrt(uR[0]);					 
   double invz1  = 1./ (sqr_rhoL + sqr_rhoR);
   
-  // double rho  =   sqr_rhoL * sqr_rhoR;					  
+  //rhoe average state					  
   double u    = ( sqr_rhoL* uL[1] + sqr_rhoR * uR[1] ) * invz1;	  
   double v    = ( sqr_rhoL* uL[2] + sqr_rhoR * uR[2] ) * invz1;	  
   double H    = ( sqr_rhoL* HL    + sqr_rhoR * HR    ) * invz1;	  
@@ -281,17 +279,14 @@ static inline void _ROE2D (const double &_GAMMA,
   double g1OnC2 = g1*oC2;
   double TtOnT     = (1.0 - u2*g1OnC2);
   
-  // matrix of left eigenvectors
-  
+  // matrix of left eigenvectors  
   double L[16] = {
     nx*TtOnT       ,nx*u*g1OnC2      ,nx*v*g1OnC2 , -nx*g1OnC2, // L1
     - tet          , ny              ,-nx         , 0,          // L3
     g1*u2 - c*un   , c*nx - g1*u     , c*ny - g1*v, g1,         // L3
     g1*u2 + c*un   ,-c*nx - g1*u     ,-c*ny - g1*v, g1};        // L4
   
-  
   // characteristic decomposition of differences  
-  
   double dW[4] = {0,0,0,0};
   int idx = 0;
   for (int i=0;i<4;i++)
@@ -299,7 +294,6 @@ static inline void _ROE2D (const double &_GAMMA,
       dW[i] += L[idx++]*dU[j];
   
   // matrix of right eigenvectors
-  
   double R[16] = {
     //R1 //R2   //R3                //R4              
     nx   ,0     ,0.5*oC2            ,0.5*oC2,
@@ -307,11 +301,9 @@ static inline void _ROE2D (const double &_GAMMA,
     v*nx ,- nx  ,0.5*(ny*oC + v*oC2),0.5*(-ny*oC + v*oC2),
     u2*nx,tet   ,0.5*(un*oC + H*oC2),0.5*(-un*oC + H*oC2)};
   
-  
   // eigenvalues
-  // KH : shouldn't we take into account an entropy correction ?
-    // absorb half the surface : scaling wrt central term
-  
+  // TODO : shouldn't we take into account an entropy correction ?
+  // absorb half the surface : scaling wrt central term
   
   const double A = 0.5;
   double eps = 1.e-6;
@@ -330,8 +322,7 @@ static inline void _ROE2D (const double &_GAMMA,
       lflux -= lA[j]*dW[j]*R[index++];
     FLUX[k] = -lflux;
   }
-} 
-// perfect gas law, GAMMA is the only parameter
+};
 
 class dgPerfectGasLaw2d::advection : public dataCacheDouble {
   dataCacheDouble &sol;
@@ -345,7 +336,6 @@ class dgPerfectGasLaw2d::advection : public dataCacheDouble {
       _value=fullMatrix<double>(nQP,8);
     const double GM1 = GAMMA - 1.0;
     for (size_t k = 0 ; k < nQP; k++ ){
-      //	printf("%d %g %g %g %g\n",k,sol(k,0),sol(k,1),sol(k,2),sol(k,3));
       const double invrho = 1./sol(k,0);
 
       const double q12 = sol(k,1)*sol(k,2)*invrho;
@@ -365,10 +355,6 @@ class dgPerfectGasLaw2d::advection : public dataCacheDouble {
       _value(k,2+4) = q22+p;
       _value(k,3+4) = sol(k,2)*qq;
 
-      /*	_value(k,8) = 0;
-          _value(k,9) = 0;
-          _value(k,10) = 0;
-          _value(k,11) = 0;*/
     }
   }
 };
@@ -452,6 +438,32 @@ public:
       _value(k,2) = sol(k,0)*s(0,2);
       _value(k,3) = sol(k,0)*s(0,3);
     }
+  }
+};
+
+class dgPerfectGasLaw2d::clipToPhysics : public dataCacheDouble {
+  dataCacheDouble &sol;
+public:
+  clipToPhysics(dataCacheMap &cacheMap):
+    sol(cacheMap.get("Solution",this))
+  {};
+  void _eval () { 
+    double rhomin = 1.e-3;
+    double presmin= 1.e-3;
+    const int nQP = sol().size1();      
+    for (size_t k = 0 ; k < nQP; k++ ){
+      _value(k,0) = sol(k,0);
+      _value(k,1) = sol(k,1);
+      _value(k,2) = sol(k,1);
+      _value(k,3) = sol(k,3);
+      if (sol(k,0) < rhomin)  
+	_value(k,0) = rhomin;
+      double rhoV2 = sol(k,1)*sol(k,1)+sol(k,2)*sol(k,2);
+      rhoV2 /= sol(k,0);
+      const double p = (GAMMA-1)*(sol(k,3) - 0.5*rhoV2);
+      if (p < presmin) 
+	_value(k,3) = presmin / (GAMMA-1) +  0.5 *rhoV2 ; 
+     }
   }
 };
 
@@ -620,6 +632,9 @@ dataCacheDouble *dgPerfectGasLaw2d::newSourceTerm (dataCacheMap &cacheMap) const
     return 0;
   else
     return new source(cacheMap,_sourceFunctionName);    
+}
+dataCacheDouble *dgPerfectGasLaw2d::newClipToPhysics( dataCacheMap &cacheMap) const {
+  return new clipToPhysics(cacheMap);
 }
 
 dgPerfectGasLaw2d::dgPerfectGasLaw2d() 

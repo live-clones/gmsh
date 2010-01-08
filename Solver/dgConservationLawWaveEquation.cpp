@@ -1,9 +1,7 @@
 #include "dgConservationLaw.h"
 #include "dgConservationLawWaveEquation.h"
 #include "function.h"
-// dp/dt - rho*c^2  div(u,v) = 0
-// du/dt + 1/rho  dp/dx = 0
-// dv/dt + 1/rho  dp/dy = 0
+
 static double c=1;
 static double rho=1;
 
