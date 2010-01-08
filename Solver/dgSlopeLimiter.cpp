@@ -92,26 +92,25 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution,
 
     }
   }  
-
+/*
   //  --- CLIPPING: check unphysical values
- //  fullMatrix<double> solutionQP (group->getNbIntegrationPoints(),group->getNbElements() * nbFields);
-//   group->getCollocationMatrix().mult(solleft, solutionQP);
-//   //dataCacheDouble &solutionQPe = cacheMap.provideData("Solution");
-//   //solutionQPe.set(fullMatrix<double>(group.getNbIntegrationPoints(),nbFields));
-//   //dataCacheElement &cacheElement = cacheMap.getElement();
-//   dataCacheMap cacheMap(group->getNbIntegrationPoints());
-//   dataCacheDouble *clipping = _claw->newClipToPhysics(cacheMap);
-//   fullMatrix<double> clippedSol;
-//    for (int iElement=0 ; iElement<group->getNbElements() ;++iElement) {
-//      clippedSol.setAsProxy(solutionQP, iElement*nbFields, nbFields );
-//      for (int iPt =0; iPt< group->getNbIntegrationPoints(); iPt++) {
-//        for (int k=0;k<nbFields;k++)
-// 	 clippedSol(iPt,k) =  (*clipping)(iPt,k);
-//      }
-//      //cacheElement.set(group.getElement(iElement));
-//    }
-//    solleft.gemm(group->getRedistributionMatrix(),solutionQP);
+  dataCacheMap cacheMap(group->getNbNodes());
+  dgGroupOfElements* group = eGroups[0];   
+  fullMatrix<double> &solGroup = solution.getGroupProxy(0);
+  dataCacheDouble &solutionE = cacheMap.provideData("Solution");
+  solutionE.set(fullMatrix<double>(group.getNbNodes(),nbFields));
+  dataCacheElement &cacheElement = cacheMap.getElement();
+  dataCacheDouble *solutionEClipped = _claw->newClipToPhysics(cacheMap);
+  for (int iElement=0 ; iElement<group->getNbElements() ;++iElement) {
+    cacheElement.set(group.getElement(iElement));
+    solutionE.setAsProxy(solGroup,iElement*nbFields,nbFields);
+    for (int iPt =0; iPt< group->getNbNodes(); iPt++) {
+      solutionE.set((*solutionEclipped)());
+    }
+  }
+  delete solutionEClipped;
 
+*/
   //#if 0
 //   double rhomin = 1.e-3;
 //   double presmin= 1.e-3;

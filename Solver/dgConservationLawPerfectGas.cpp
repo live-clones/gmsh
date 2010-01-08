@@ -443,26 +443,29 @@ public:
 
 class dgPerfectGasLaw2d::clipToPhysics : public dataCacheDouble {
   dataCacheDouble &sol;
+  double _presMin, _rhoMin;
 public:
-  clipToPhysics(dataCacheMap &cacheMap):
+  clipToPhysics(dataCacheMap &cacheMap, double presMin, double rhoMin):
     sol(cacheMap.get("Solution",this))
-  {};
+  {
+    _presMin=presMin;
+    _rhoMin=rhoMin;
+    _value=fullMatrix<double>(cacheMap.getNbEvaluationPoints(),4);
+  };
   void _eval () { 
-    double rhomin = 1.e-3;
-    double presmin= 1.e-3;
     const int nQP = sol().size1();      
     for (size_t k = 0 ; k < nQP; k++ ){
       _value(k,0) = sol(k,0);
       _value(k,1) = sol(k,1);
       _value(k,2) = sol(k,1);
       _value(k,3) = sol(k,3);
-      if (sol(k,0) < rhomin)  
-	_value(k,0) = rhomin;
+      if (sol(k,0) < _rhoMin)  
+	_value(k,0) = _rhoMin;
       double rhoV2 = sol(k,1)*sol(k,1)+sol(k,2)*sol(k,2);
       rhoV2 /= sol(k,0);
       const double p = (GAMMA-1)*(sol(k,3) - 0.5*rhoV2);
-      if (p < presmin) 
-	_value(k,3) = presmin / (GAMMA-1) +  0.5 *rhoV2 ; 
+      if (p < _presMin) 
+	_value(k,3) = _presMin / (GAMMA-1) +  0.5 *rhoV2 ; 
      }
   }
 };
@@ -634,7 +637,7 @@ dataCacheDouble *dgPerfectGasLaw2d::newSourceTerm (dataCacheMap &cacheMap) const
     return new source(cacheMap,_sourceFunctionName);    
 }
 dataCacheDouble *dgPerfectGasLaw2d::newClipToPhysics( dataCacheMap &cacheMap) const {
-  return new clipToPhysics(cacheMap);
+  return new clipToPhysics(cacheMap,1e-3,1e-3);
 }
 
 dgPerfectGasLaw2d::dgPerfectGasLaw2d() 
