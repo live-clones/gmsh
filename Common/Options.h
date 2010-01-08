@@ -495,6 +495,7 @@ double opt_mesh_light_lines(OPT_ARGS_NUM);
 double opt_mesh_light_two_side(OPT_ARGS_NUM);
 double opt_mesh_format(OPT_ARGS_NUM);
 double opt_mesh_msh_file_version(OPT_ARGS_NUM);
+double opt_mesh_msh_file_partitioned(OPT_ARGS_NUM);
 double opt_mesh_binary(OPT_ARGS_NUM);
 double opt_mesh_bdf_field_format(OPT_ARGS_NUM);
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM);

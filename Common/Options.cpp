@@ -5364,6 +5364,13 @@ double opt_mesh_msh_file_version(OPT_ARGS_NUM)
   return CTX::instance()->mesh.mshFileVersion;
 }
 
+double opt_mesh_msh_file_partitioned(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.mshFilePartitioned = val;
+  return CTX::instance()->mesh.mshFilePartitioned;
+}
+
 double opt_mesh_binary(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

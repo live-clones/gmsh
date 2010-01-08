@@ -50,7 +50,8 @@ void GRegion::deleteMesh()
 
 unsigned int GRegion::getNumMeshElements()
 { 
-  return tetrahedra.size() + hexahedra.size() + prisms.size() + pyramids.size() + polyhedra.size();
+  return tetrahedra.size() + hexahedra.size() + prisms.size() + pyramids.size() +
+    polyhedra.size();
 }
 
 void GRegion::getNumMeshElements(unsigned *const c) const

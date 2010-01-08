@@ -1,21 +1,21 @@
 
-model = GModel  ()
-model:load ('box.geo')
-model:load ('box.msh')
-dg = dgSystemOfEquations (model)
+model = GModel()
+model:load('box.geo')
+model:load('box.msh')
+dg = dgSystemOfEquations(model)
 dg:setOrder(1)
 
 -- initial condition
 function initial_condition( xyz , f )
-  for i=0,xyz:size1()-1 do
-    x = xyz:get(i,0)
-    y = xyz:get(i,1)
-    z = xyz:get(i,2)
-    --f:set (i, 0, math.exp(-100*((x-0.5)^2)))
-    --f:set (i, 0, x )
-    f:set (i, 0, math.sqrt((x-0.3)*(x-0.3)+(y-0.3)*(y-0.3)+z*z)-0.2)	
-    --f:set(i, 0, math.exp((x-.3)*(x-.3)+(y-.3)*(y-.3)+z*z)-.2))
-  end
+   for i=0,xyz:size1()-1 do
+      x = xyz:get(i,0)
+      y = xyz:get(i,1)
+      z = xyz:get(i,2)
+      --f:set (i, 0, math.exp(-100*((x-0.5)^2)))
+      --f:set (i, 0, x )
+      f:set (i, 0, math.sqrt((x-0.3)*(x-0.3)+(y-0.3)*(y-0.3)+z*z)-0.2)	
+      --f:set(i, 0, math.exp((x-.3)*(x-.3)+(y-.3)*(y-.3)+z*z)-.2))
+   end
 end
 
 -- conservation law

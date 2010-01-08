@@ -75,9 +75,9 @@ struct meshPartitionOptions
 //--Constructor
 
   meshPartitionOptions()
-     :
-     goal(0)
-  { }
+  {
+    setDefaults();
+  }
 
 //--Default values
 

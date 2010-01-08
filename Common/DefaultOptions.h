@@ -1102,8 +1102,10 @@ StringXNumber MeshOptions_Number[] = {
     "Minimum number of points used to mesh a circle" },
   { F|O, "MinimumCurvePoints" , opt_mesh_min_curv_points, 3. ,
     "Minimum number of points used to mesh a (non-straight) curve" },
-  { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 2.1 , 
+  { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 2.2 , 
     "Version of the MSH file format to use" },
+  { F|O, "MshFilePartitioned" , opt_mesh_msh_file_partitioned , 0. , 
+    "Split MSH file by mesh partition" },
 
   { F, "NbHexahedra" , opt_mesh_nb_hexahedra , 0. , 
     "Number of hexahedra in the current mesh (read-only)" },

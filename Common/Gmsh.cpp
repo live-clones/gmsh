@@ -170,8 +170,10 @@ int GmshBatch()
       RefineMesh(GModel::current(), CTX::instance()->mesh.secondOrderLinear);
 #if defined(HAVE_CHACO) || defined(HAVE_METIS)
     if(CTX::instance()->batchAfterMesh == 1){
-      if (CTX::instance()->partitionOptions.num_partitions > 1)PartitionMesh(GModel::current(), CTX::instance()->partitionOptions);
-      if (CTX::instance()->partitionOptions.renumber)RenumberMesh(GModel::current(), CTX::instance()->partitionOptions);
+      if (CTX::instance()->partitionOptions.num_partitions > 1)
+        PartitionMesh(GModel::current(), CTX::instance()->partitionOptions);
+      if (CTX::instance()->partitionOptions.renumber)
+        RenumberMesh(GModel::current(), CTX::instance()->partitionOptions);
     }
 #endif
 #endif

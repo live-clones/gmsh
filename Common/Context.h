@@ -20,7 +20,7 @@ struct contextMeshOptions {
   int pointsNum, linesNum, surfacesNum, volumesNum;
   int optimize, optimizeNetgen, refineSteps, qualityType, labelType, remove4triangles;
   double normals, tangents, explode, angleSmoothNormals, allowSwapEdgeAngle;
-  double mshFileVersion, labelFrequency, pointSize, lineWidth;
+  double mshFileVersion, mshFilePartitioned, labelFrequency, pointSize, lineWidth;
   double qualityInf, qualitySup, radiusInf, radiusSup;
   double scalingFactor, lcFactor, randFactor, lcIntegrationPrecision;
   double lcMin, lcMax, toleranceEdgeLength;

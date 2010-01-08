@@ -721,9 +721,7 @@ int mshFileDialog(const char *name)
 {
   struct _mshFileDialog{
     Fl_Window *window;
-    Fl_Check_Button *b;
-    Fl_Check_Button *p;
-    Fl_Check_Button *d;
+    Fl_Check_Button *b[3];
     Fl_Choice *c;
     Fl_Button *ok, *cancel;
   };
@@ -740,19 +738,23 @@ int mshFileDialog(const char *name)
 
   if(!dialog){
     dialog = new _mshFileDialog;
-    int h = 3 * WB + 4 * BH, w = 2 * BBB + 3 * WB, y = WB;
+    int h = 3 * WB + 5 * BH, w = 2 * BBB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "MSH Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
     dialog->c = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "Format"); y += BH;
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
-    dialog->b = new Fl_Check_Button
+    dialog->b[0] = new Fl_Check_Button
       (WB, y, 2 * BBB + WB, BH, "Save all (ignore physical groups)"); y += BH;
-    dialog->b->type(FL_TOGGLE_BUTTON);
-    dialog->p = new Fl_Check_Button
-      (WB, y, 2 * BBB + WB, BH, "Save Parametric Coordinates"); y += BH;
-    dialog->p->type(FL_TOGGLE_BUTTON);
+    dialog->b[0]->type(FL_TOGGLE_BUTTON);
+    dialog->b[1] = new Fl_Check_Button
+      (WB, y, 2 * BBB + WB, BH, "Save parametric coordinates"); y += BH;
+    dialog->b[1]->type(FL_TOGGLE_BUTTON);
+    dialog->b[2] = new Fl_Check_Button
+      (WB, y, 2 * BBB + WB, BH, "Save one file per partition"); y += BH;
+    dialog->b[2]->type(FL_TOGGLE_BUTTON);
+
     dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
     dialog->window->end();
@@ -761,9 +763,9 @@ int mshFileDialog(const char *name)
   
   dialog->c->value((CTX::instance()->mesh.mshFileVersion == 1.0) ? 0 : 
                    CTX::instance()->mesh.binary ? 2 : 1);
-  dialog->b->value(CTX::instance()->mesh.saveAll ? 1 : 0);
-  dialog->p->value(CTX::instance()->mesh.saveParametric ? 1 : 0);
-  dialog->d->value(CTX::instance()->mesh.saveDistance ? 1 : 0);
+  dialog->b[0]->value(CTX::instance()->mesh.saveAll ? 1 : 0);
+  dialog->b[1]->value(CTX::instance()->mesh.saveParametric ? 1 : 0);
+  dialog->b[2]->value(CTX::instance()->mesh.mshFilePartitioned ? 1 : 0);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -775,9 +777,9 @@ int mshFileDialog(const char *name)
         opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI, 
                                   (dialog->c->value() == 0) ? 1.0 : 2.2);
         opt_mesh_binary(0, GMSH_SET | GMSH_GUI, (dialog->c->value() == 2) ? 1 : 0);
-        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
-        opt_mesh_save_parametric(0, GMSH_SET | GMSH_GUI, dialog->p->value() ? 1 : 0);
-	opt_mesh_save_distance(0, GMSH_SET | GMSH_GUI, dialog->d->value() ? 1 : 0);
+        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
+        opt_mesh_save_parametric(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value() ? 1 : 0);
+	opt_mesh_msh_file_partitioned(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value() ? 1 : 0);
         CreateOutputFile(name, FORMAT_MSH);
         dialog->window->hide();
         return 1;
