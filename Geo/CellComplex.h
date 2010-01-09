@@ -66,7 +66,9 @@ class Cell
    
    // for some algorithms to omit this cell
    bool _immune;
-      
+   
+   
+  
    // mutable list of cells on the boundary and on the coboundary of this cell
    std::map< Cell*, int, Less_Cell > _boundary;
    std::map< Cell*, int, Less_Cell > _coboundary;

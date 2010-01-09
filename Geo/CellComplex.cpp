@@ -717,8 +717,8 @@ int CellComplex::cocombine(int dim){
         it++;
         int or2 = (*it).second;
         Cell* c2 = (*it).first;
-        
-        if(!(*c1 == *c2) 
+
+        if(!(*c1 == *c2) && abs(or1) == abs(or2)
            && inSameDomain(s, c1) && inSameDomain(s, c2)
            && c1->getNumVertices() < getSize(dim) // heuristics for mammoth cell birth control
            && c2->getNumVertices() < getSize(dim)){
@@ -771,12 +771,13 @@ int CellComplex::combine(int dim){
     bd_c = cell->getBoundary();
     enqueueCells(bd_c, Q, Qset);
     while(Q.size() != 0){
-
+      
       Cell* s = Q.front();
       Q.pop(); 
       cbd_c = s->getOrientedCoboundary();
 
       if(s->getCoboundarySize() == 2){
+
         std::map<Cell*, int, Less_Cell>::iterator it = cbd_c.begin();
         int or1 = (*it).second;
         Cell* c1 = (*it).first;
@@ -784,7 +785,7 @@ int CellComplex::combine(int dim){
         int or2 = (*it).second;
         Cell* c2 = (*it).first;
 
-        if(!(*c1 == *c2) 
+        if(!(*c1 == *c2) && abs(or1) == abs(or2)
            && inSameDomain(s, c1) && inSameDomain(s, c2)
            && c1->getNumVertices() < getSize(dim) // heuristics for mammoth cell birth control
            && c2->getNumVertices() < getSize(dim)){

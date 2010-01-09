@@ -88,67 +88,26 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
                 gmp_matrix_get_elem(elem, bdCell->getIndex(), cell->getIndex(), _HMatrix[dim]);
                 old_elem = mpz_get_si(elem);
                 mpz_set_si(elem, old_elem + (*it).second);
-                if( (old_elem + (*it).second) > 1 || (old_elem + (*it).second) < -1 ){
+                /*if( (old_elem + (*it).second) > 1 || (old_elem + (*it).second) < -1 ){
                   printf("Warning: Invalid incidence index: %d! HMatrix: %d.", (old_elem + (*it).second), dim);
                   printf(" Set to %d. \n", (old_elem + (*it).second) % 2);
                   mpz_set_si(elem, (old_elem + (*it).second) % 2);
-                }
+                }*/
                 gmp_matrix_set_elem(elem, bdCell->getIndex(), cell->getIndex(), _HMatrix[dim]);
               }
             }
           }
         }
-      }
-      
-      mpz_clear(elem);
-      
+      }     
+      mpz_clear(elem);  
     }
-    
-    /*
-    else{
-      
-      long int elems[rows*cols];
-      
-      std::set<Cell*, Less_Cell>::iterator high = cellComplex->firstCell(dim);
-      std::set<Cell*, Less_Cell>::iterator low = cellComplex->firstCell(dim-1);
-      
-      unsigned int i = 0;
-      while(i < rows*cols){
-        while(low != cellComplex->lastCell(dim-1)){
-          Cell* lowcell = *low;
-          Cell* highcell = *high;
-          if(!(highcell->inSubdomain() || lowcell->inSubdomain())){
-            
-            
-            std::list< std::pair<int, Cell*> >bdHigh = highcell->getBoundary();
-            for(std::list< std::pair<int, Cell*> >::iterator it = bdHigh.begin(); it != bdHigh.end(); it++){
-              Cell* bdCell = (*it).second;
-              if(bdCell->getTag() == lowcell->getTag()) elems[i] = (*it).first;
-              else elems[i] = 0;
-            }
-            
-              
-            elems[i] = cellComplex->kappa(*high, *low);
-            i++;
-          }
-          low++;
-        }
-        low = cellComplex->firstCell(dim-1);
-        high++;
-      }
-      _HMatrix[dim] = create_gmp_matrix_int(rows, cols, elems);      
-    }
-    */
-
 
     _kerH[dim] = NULL;
     _codH[dim] = NULL;
     _JMatrix[dim] = NULL;
     _QMatrix[dim] = NULL;
-    _Hbasis[dim] = NULL; 
-    
+    _Hbasis[dim] = NULL;     
   }
-  
   return;
 }
 
