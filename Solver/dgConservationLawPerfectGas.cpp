@@ -446,27 +446,31 @@ class dgPerfectGasLaw2d::clipToPhysics : public dataCacheDouble {
   double _presMin, _rhoMin;
 public:
   clipToPhysics(dataCacheMap &cacheMap, double presMin, double rhoMin):
-    sol(cacheMap.get("Solution",this))
+    sol(cacheMap.get("SolToClip",this))
   {
     _presMin=presMin;
     _rhoMin=rhoMin;
     _value=fullMatrix<double>(cacheMap.getNbEvaluationPoints(),4);
   };
   void _eval () { 
-    const int nQP = sol().size1();      
-    for (size_t k = 0 ; k < nQP; k++ ){
+    const int nDofs = sol().size1();
+    for (size_t k = 0 ; k < nDofs; k++ ){
       _value(k,0) = sol(k,0);
       _value(k,1) = sol(k,1);
       _value(k,2) = sol(k,1);
       _value(k,3) = sol(k,3);
-      if (sol(k,0) < _rhoMin)  
+      if (sol(k,0) < _rhoMin){
+	//printf("CL: clip rho min =%g \n", _rhoMin);
 	_value(k,0) = _rhoMin;
+      }
       double rhoV2 = sol(k,1)*sol(k,1)+sol(k,2)*sol(k,2);
       rhoV2 /= sol(k,0);
       const double p = (GAMMA-1)*(sol(k,3) - 0.5*rhoV2);
-      if (p < _presMin) 
+      if (p < _presMin) {
 	_value(k,3) = _presMin / (GAMMA-1) +  0.5 *rhoV2 ; 
-     }
+	//printf("CL: clip pres min =%g \n ", _value(k,3));
+      }
+    }
   }
 };
 

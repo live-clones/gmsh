@@ -12,9 +12,9 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution,
   //WARNING: ONLY FOR 1 GROUP OF FACES 
   //TODO: make this more general   
 
-  dgGroupOfFaces* group = fGroups[0];   
-  fullMatrix<double> &solleft = solution.getGroupProxy(0); //*(solution._dataProxys[0]);
-  fullMatrix<double> &solright = solution.getGroupProxy(0); //*(solution._dataProxys[0]);
+  dgGroupOfFaces* group = fGroups[0];  
+  fullMatrix<double> &solleft = solution.getGroupProxy(0);
+  fullMatrix<double> &solright = solution.getGroupProxy(0); 
   int nbFields =_claw->nbFields();    
   int totNbElems = solution.getNbElements();
 
@@ -92,48 +92,40 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution,
 
     }
   }  
-/*
-  //  --- CLIPPING: check unphysical values
-  dataCacheMap cacheMap(group->getNbNodes());
-  dgGroupOfElements* group = eGroups[0];   
-  fullMatrix<double> &solGroup = solution.getGroupProxy(0);
-  dataCacheDouble &solutionE = cacheMap.provideData("Solution");
-  solutionE.set(fullMatrix<double>(group.getNbNodes(),nbFields));
-  dataCacheElement &cacheElement = cacheMap.getElement();
-  dataCacheDouble *solutionEClipped = _claw->newClipToPhysics(cacheMap);
-  for (int iElement=0 ; iElement<group->getNbElements() ;++iElement) {
-    cacheElement.set(group.getElement(iElement));
-    solutionE.setAsProxy(solGroup,iElement*nbFields,nbFields);
-    for (int iPt =0; iPt< group->getNbNodes(); iPt++) {
-      solutionE.set((*solutionEclipped)());
-    }
-  }
-  delete solutionEClipped;
 
-*/
-  //#if 0
-//   double rhomin = 1.e-3;
-//   double presmin= 1.e-3;
-//   for (int iElement=0;iElement<totNbElems;iElement++){
-//     fullMatrix<double> solElem;
-//     solElem.setAsProxy(solleft, nbFields*iElement, nbFields );   
-//     for (int k=0;k< solElem.size1() ;k++){
-//        if (solElem(k,0) < rhomin) {
-//  	solElem(k,0) = rhomin;
-//        }
-//        double rhoV2 = 0;
-//        for (int j=0;j<2;j++) {
-// 	 double rhov = solElem(k,j+1);
-// 	 rhoV2 += rhov*rhov;
-//        }
-//        rhoV2 /= solElem(k,0);
-//        const double p = (1.4-1)*solElem(k,3) - 0.5*(1.4-1)* rhoV2;
-//        if (p < presmin) {
-// 	 solElem(k,3) = 0.5 *rhoV2 + presmin / (1.4-1);
-//        }
-//      }
-//   }
-  //#endif
+  //  --- CLIPPING: check unphysical values
+  for (int iG = 0; iG < eGroups.size(); iG++){
+    dgGroupOfElements* egroup = eGroups[iG];  
+    fullMatrix<double> &solGroup = solution.getGroupProxy(iG);
+
+    dataCacheMap cacheMap(egroup->getNbNodes());//nbdofs for each element
+
+    dataCacheDouble &solutionE = cacheMap.provideData("SolToClip");
+    solutionE.set(fullMatrix<double>(egroup->getNbNodes(),nbFields));//e.g 3x4 for perfect gas
+
+    dataCacheDouble *solutionEClipped = _claw->newClipToPhysics(cacheMap);
+    dataCacheElement &cacheElement = cacheMap.getElement();
+    for (int iElement=0 ; iElement<egroup->getNbElements() ;++iElement) {
+
+      cacheElement.set(egroup->getElement(iElement));
+      solutionE.setAsProxy(solGroup,iElement*nbFields,nbFields);
+      solutionE.set((*solutionEClipped)());
+
+//       fullMatrix<double> solElem;
+//       double min = 1.e-3;
+//       solElem.setAsProxy(solGroup, nbFields*iElement, nbFields );   
+//       for (int k=0;k< solElem.size1() ;k++){
+// 	if (solElem(k,0) < min) solElem(k,0) = min;
+// 	double rhoV2 = solElem(k,1)*solElem(k,1)+solElem(k,2)*solElem(k,2);
+// 	rhoV2 /= solElem(k,0);
+//        const double p = (1.4-1)*(solElem(k,3) - 0.5* rhoV2);
+//        if (p < 1.e-3)  solElem(k,3) = 0.5 *rhoV2 + min / (1.4-1);
+//       }
+      
+    }
+    delete solutionEClipped;
+    
+  }
 
   return true; 
 
