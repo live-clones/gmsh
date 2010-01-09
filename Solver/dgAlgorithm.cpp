@@ -281,7 +281,7 @@ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation l
    double a[4] = {h/6.0,h/3.0,h/3.0,h/6.0};
    double b[4] = {0.,h/2.0,h/2.0,h};
    
-   if (orderRK = 1.0){
+   if (orderRK == 1){
      a[0] = h;
    }
 

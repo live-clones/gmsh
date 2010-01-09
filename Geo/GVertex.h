@@ -78,6 +78,7 @@ class GVertex : public GEntity
   bool isOnSeam(const GFace *gf) const;
 
   std::vector<MPoint*> points;
+  
 };
 
 #endif

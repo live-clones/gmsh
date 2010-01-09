@@ -446,7 +446,7 @@ class dgPerfectGasLaw2d::clipToPhysics : public dataCacheDouble {
   double _presMin, _rhoMin;
 public:
   clipToPhysics(dataCacheMap &cacheMap, double presMin, double rhoMin):
-    sol(cacheMap.get("SolToClip",this))
+    sol(cacheMap.get("Solution",this))
   {
     _presMin=presMin;
     _rhoMin=rhoMin;
@@ -457,7 +457,7 @@ public:
     for (size_t k = 0 ; k < nDofs; k++ ){
       _value(k,0) = sol(k,0);
       _value(k,1) = sol(k,1);
-      _value(k,2) = sol(k,1);
+      _value(k,2) = sol(k,2);
       _value(k,3) = sol(k,3);
       if (sol(k,0) < _rhoMin){
 	//printf("CL: clip rho min =%g \n", _rhoMin);

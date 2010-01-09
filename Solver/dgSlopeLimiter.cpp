@@ -92,42 +92,29 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution,
 
     }
   }  
-
   //  --- CLIPPING: check unphysical values
   for (int iG = 0; iG < eGroups.size(); iG++){
     dgGroupOfElements* egroup = eGroups[iG];  
     fullMatrix<double> &solGroup = solution.getGroupProxy(iG);
 
     dataCacheMap cacheMap(egroup->getNbNodes());//nbdofs for each element
-
-    dataCacheDouble &solutionE = cacheMap.provideData("SolToClip");
-    solutionE.set(fullMatrix<double>(egroup->getNbNodes(),nbFields));//e.g 3x4 for perfect gas
-
-    dataCacheDouble *solutionEClipped = _claw->newClipToPhysics(cacheMap);
+    dataCacheDouble &solutionE = cacheMap.provideData("Solution");
     dataCacheElement &cacheElement = cacheMap.getElement();
-    for (int iElement=0 ; iElement<egroup->getNbElements() ;++iElement) {
-
-      cacheElement.set(egroup->getElement(iElement));
-      solutionE.setAsProxy(solGroup,iElement*nbFields,nbFields);
-      solutionE.set((*solutionEClipped)());
-
-//       fullMatrix<double> solElem;
-//       double min = 1.e-3;
-//       solElem.setAsProxy(solGroup, nbFields*iElement, nbFields );   
-//       for (int k=0;k< solElem.size1() ;k++){
-// 	if (solElem(k,0) < min) solElem(k,0) = min;
-// 	double rhoV2 = solElem(k,1)*solElem(k,1)+solElem(k,2)*solElem(k,2);
-// 	rhoV2 /= solElem(k,0);
-//        const double p = (1.4-1)*(solElem(k,3) - 0.5* rhoV2);
-//        if (p < 1.e-3)  solElem(k,3) = 0.5 *rhoV2 + min / (1.4-1);
-//       }
-      
+    dataCacheDouble *solutionEClipped = _claw->newClipToPhysics(cacheMap);
+    if (solutionEClipped){
+      for (int iElement=0 ; iElement<egroup->getNbElements() ;++iElement) {
+	solutionE.setAsProxy(solGroup, iElement*nbFields, nbFields );
+	fullMatrix<double> Temp;  
+	Temp.setAsProxy(solGroup, nbFields*iElement, nbFields );    	
+	cacheElement.set(egroup->getElement(iElement));
+	for (int K=0;K<Temp.size1();K++)
+	  for (int L=0;L<Temp.size2();L++)
+	    Temp(K,L) = (*solutionEClipped)(K,L);      
+      }
+      delete solutionEClipped;
     }
-    delete solutionEClipped;
-    
-  }
-
+  }  
   return true; 
-
+  
 }
 

@@ -66,12 +66,20 @@ void dgSystemOfEquations::registerBindings(binding *b) {
   cm = cb->addMethod("setOrder",&dgSystemOfEquations::setOrder);
   cm->setArgNames("order",NULL);
   cm->setDescription("set the polynpolynomialomial order of the lagrange shape functions");
-  cb->addMethod("limitSolution",&dgSystemOfEquations::limitSolution);
-  cb->addMethod("computeInvSpectralRadius",&dgSystemOfEquations::computeInvSpectralRadius);
-  cb->addMethod("RK44_limiter",&dgSystemOfEquations::RK44_limiter);
-  cb->addMethod("multirateRK43",&dgSystemOfEquations::multirateRK43);
-  cb->addMethod("saveSolution",&dgSystemOfEquations::saveSolution);
-  cb->addMethod("loadSolution",&dgSystemOfEquations::loadSolution);
+  cm = cb->addMethod("limitSolution",&dgSystemOfEquations::limitSolution);
+  cm->setDescription("apply a slope limiter to the solution (only if polynomial order p = 1 for now).");
+  cm = cb->addMethod("computeInvSpectralRadius",&dgSystemOfEquations::computeInvSpectralRadius);
+  cm->setDescription("returns the inverse of the spectral radius (largest eigenvalue) of L(u). Useful for computing stable explicit time step");
+  cm = cb->addMethod("RK44_limiter",&dgSystemOfEquations::RK44_limiter);
+  cm->setArgNames("dt",NULL);
+  cm->setDescription("do one RK44 time step with the slope limiter (only for p=1)");
+  cm = cb->addMethod("multirateRK43",&dgSystemOfEquations::multirateRK43);
+  cm = cb->addMethod("saveSolution",&dgSystemOfEquations::saveSolution);
+  cm->setArgNames("filename",NULL);
+  cm->setDescription("dump the solution in binary format");
+  cm = cb->addMethod("loadSolution",&dgSystemOfEquations::loadSolution);
+  cm->setArgNames("filename",NULL);
+  cm->setDescription("reload a solution in binary format");
 }
 
 // do a L2 projection

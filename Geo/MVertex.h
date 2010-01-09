@@ -15,6 +15,7 @@ class GEntity;
 class GEdge;
 class GFace;
 class MVertex;
+class binding;
 
 class MVertexLessThanLexicographic{
  public:
@@ -108,6 +109,7 @@ class MVertex{
   void writeMESH(FILE *fp, double scalingFactor=1.0);
   void writeBDF(FILE *fp, int format=0, double scalingFactor=1.0);
   void writeDIFF(FILE *fp, bool binary, double scalingFactor=1.0);
+  static void registerBindings(binding *b);
 };
 
 class MEdgeVertex : public MVertex{

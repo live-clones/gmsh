@@ -396,3 +396,16 @@ bool reparamMeshVertexOnEdge(const MVertex *v, const GEdge *ge, double &param)
   if(param < 1.e6) return true;
   return false;
 }
+
+#include "Bindings.h"
+
+void MVertex::registerBindings(binding *b)
+{
+  classBinding *cb = b->addClass<MVertex>("MVertex");
+  methodBinding *cm;
+  cm = cb->addMethod("getNum",&MVertex::getNum);
+  //  cm = cb->addMethod("x",&MVertex::x);
+  //  cm = cb->addMethod("y",&MVertex::y);
+  //  cm = cb->addMethod("z",&MVertex::z);
+  cm = cb->setConstructor<MVertex,double,double,double>();
+}

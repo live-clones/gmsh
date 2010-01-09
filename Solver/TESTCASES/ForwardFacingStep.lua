@@ -59,12 +59,15 @@ DG:exportSolution('output/solution_0')
 print'*** solve ***'
 CFL = 2
 
+local x = os.clock()
+
 for i=1,5000 do
     dt = CFL * DG:computeInvSpectralRadius();    
-    norm = DG:RK44_limiter(dt)
+--    norm = DG:RK44_limiter(dt)
+    norm = DG:ForwardEuler(dt)
     DG:limitSolution()
     if (i % 10 == 0) then 
-       print('*** ITER ***',i,norm,dt)
+       print('|ITER|',i,'|NORM|',norm,'|DT|',dt,'|CPU|',os.clock() - x)
     end
     if (i % 100 == 0) then 
        DG:exportSolution(string.format("output/solution-%06d", i)) 

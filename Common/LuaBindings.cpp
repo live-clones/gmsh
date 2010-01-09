@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string>
 #include "Gmsh.h"
+#include "MVertex.h"
+#include "MElement.h"
 #include "Bindings.h"
 #include "dgSystemOfEquations.h"
 #include "luaFunction.h"
@@ -169,6 +171,7 @@ binding::binding(){
   function::registerBindings(this);
   functionLua::registerBindings(this);
   function::registerDefaultFunctions();
+  MVertex::registerBindings(this);
 }
 binding *binding::_instance=NULL;
 #endif
