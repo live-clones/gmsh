@@ -586,6 +586,12 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     return 0;
   }
 
+  // binary format exists only in version 2
+  if(version > 1 || binary) 
+    version = 2.2;
+  else
+    version = 1.0;
+
   // if there are no physicals we save all the elements
   if(noPhysicalGroups()) saveAll = true;
 
@@ -593,15 +599,6 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   // sequence
   int numVertices = indexMeshVertices(saveAll, saveSinglePartition);
 
-  // FIXME if saveSinglePartition, re-tag some nodes with '0' index
-  // and recompute numVertices
-  
-  // binary format exists only in version 2
-  if(version > 1 || binary) 
-    version = 2.2;
-  else
-    version = 1.0;
-  
   // get the number of elements we need to save
   int numElements = getNumElementsMSH(this, saveAll, saveSinglePartition);
 
@@ -615,13 +612,6 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     for(unsigned int i = 0; i < (*it)->polyhedra.size(); i++)
       if((*it)->polyhedra[i]->ownsParent())
         parents[1][(*it)->polyhedra[i]->getParent()] = (*it);
-
-  // get ghost cells
-  std::multimap<MElement*, int> ghostCells;
-  if(saveSinglePartition && getGhostCells().size()){
-    // XXXX
-    numElements += ghostCells.size();    
-  }
 
   if(version >= 2.0){
     fprintf(fp, "$MeshFormat\n");
@@ -818,7 +808,7 @@ int GModel::writePartitionedMSH(const std::string &baseName, bool binary,
     index++;
   }
 
-#if 1
+#if 0
   if(_ghostCells.size()){
     Msg::Info("Writing ghost cells in debug file 'ghosts.pos'");
     FILE *fp = fopen("ghosts.pos", "w");
