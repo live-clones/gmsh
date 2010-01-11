@@ -30,8 +30,8 @@ class binding;
 // a node in the dependency tree. The usefull field is _dependOnMe which is the set of every other nodes that depend on me. When the value of this node change all nodes depending on this one are marked as "invalid" and will be recomputed the next time their data are accessed. To be able to maintain _dependOnMe up to date when a new node is inserted in the tree, we need _iDependOn list. So we do not really store a tree but instead each node contain a complete list of all it's parents and all it's children (and the parents of the parents of ... of its parents and the children of the children of ... of it's children). This way invalidate all the dependencies of a node is really fast and does not involve a complex walk accross the tree structure.
 class dataCache {
   friend class dataCacheMap;
-  // pointers to the "_valid" flag of all dataCache depending on me
-  std::set<bool*> _dependOnMe;
+  // pointers to all of the dataCache depending on me
+  std::set<dataCache*> _dependOnMe;
   std::set<dataCache*> _iDependOn;
 protected :
   bool _valid;
@@ -39,9 +39,9 @@ protected :
   inline void _invalidateDependencies()
   {
     // if this is too slow we can keep a C array cache of the _dependOnMe set
-    for(std::set<bool*>::iterator it = _dependOnMe.begin();
+    for(std::set<dataCache*>::iterator it = _dependOnMe.begin();
       it!=_dependOnMe.end(); it++)
-        **it=false;
+        (*it)->_valid=false;
   }
   dataCache() : _valid(false) {}
   virtual ~dataCache(){};

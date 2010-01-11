@@ -7,11 +7,11 @@
 
 void dataCache::addMeAsDependencyOf (dataCache *newDep)
 {
-  _dependOnMe.insert(&newDep->_valid);
+  _dependOnMe.insert(newDep);
   newDep->_iDependOn.insert(this);
   for(std::set<dataCache*>::iterator it = _iDependOn.begin();
       it != _iDependOn.end(); it++) {
-    (*it)->_dependOnMe.insert(&newDep->_valid);
+    (*it)->_dependOnMe.insert(newDep);
     newDep->_iDependOn.insert(*it);
   }
 }
