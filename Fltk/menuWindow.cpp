@@ -1794,7 +1794,7 @@ static void mesh_define_transfinite_cb(Fl_Widget *w, void *data)
   FlGui::instance()->menu->setContext(menu_mesh_define_transfinite, 0);
 }
 
-static void add_transfinite(int dim)
+static void add_transfinite_embedded(int dim, bool embed)
 {
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   switch (dim) {
@@ -1885,17 +1885,22 @@ static void add_transfinite(int dim)
         }
         while(1) {
           if(p.size() == 1)
-            Msg::StatusBar(3, false, "Select (ordered) boundary points\n"
-                           "[Press 'e' to end selection or 'q' to abort]");
+            Msg::StatusBar(3, false, "Select %s points\n"
+                           "[Press 'e' to end selection or 'q' to abort]",
+                           embed ? "embedded" : "(ordered) boundary");
           else
-            Msg::StatusBar(3, false, "Select (ordered) boundary points\n"
+            Msg::StatusBar(3, false, "Select %s points\n"
                            "[Press 'e' to end selection, 'u' to undo last selection "
-                           "or 'q' to abort]");
+                           "or 'q' to abort]",
+                           embed ? "embedded" : "(ordered) boundary");
           ib = FlGui::instance()->selectEntity(ENT_POINT);
           if(ib == 'l') {
-            FlGui::instance()->selectedVertices[0]->setSelection(1);
+            for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
+              FlGui::instance()->selectedVertices[i]->setSelection(1);
+              p.push_back(FlGui::instance()->selectedVertices[i]->tag());
+              if(!embed) break;
+            }
             drawContext::global()->draw();
-            p.push_back(FlGui::instance()->selectedVertices[0]->tag());
           }
           if(ib == 'u') {
             if(p.size() > 1){
@@ -1912,11 +1917,14 @@ static void add_transfinite(int dim)
           if(ib == 'e') {
             switch (dim) {
             case 2:
-              if(p.size() == 0 + 1 || p.size() == 3 + 1 || p.size() == 4 + 1)
+              if(embed && p.size())
+                add_embedded("Point", p, GModel::current()->getFileName());
+              else if(!embed && 
+                      (p.size() == 0 + 1 || p.size() == 3 + 1 || p.size() == 4 + 1))
                 add_trsfsurf(p, GModel::current()->getFileName(),
                              FlGui::instance()->meshContext->choice[1]->text());
               else
-                Msg::Error("Wrong number of points for transfinite surface");
+                Msg::Error("Wrong number of points for mesh constraint");
               break;
             case 3:
               if(p.size() == 6 + 1 || p.size() == 8 + 1)
@@ -1948,18 +1956,23 @@ static void add_transfinite(int dim)
 static void mesh_define_transfinite_line_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->meshContext->show(1);
-  add_transfinite(1);
+  add_transfinite_embedded(1, false);
 }
 
 static void mesh_define_transfinite_surface_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->meshContext->show(2);
-  add_transfinite(2);
+  add_transfinite_embedded(2, false);
 }
 
 static void mesh_define_transfinite_volume_cb(Fl_Widget *w, void *data)
 {
-  add_transfinite(3);
+  add_transfinite_embedded(3, false);
+}
+
+static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
+{
+  add_transfinite_embedded(2, true);
 }
 
 static void view_toggle_cb(Fl_Widget *w, void *data)
@@ -2498,6 +2511,7 @@ contextItem menu_mesh[] = {
     {"1Mesh>Define"} ,
     {"Fields",      (Fl_Callback *)field_cb},
     {"Characteristic length", (Fl_Callback *)mesh_define_length_cb  } ,
+    {"Embedded point", (Fl_Callback *)mesh_define_embedded_cb, (void*)"point" } ,
     {"Recombine",   (Fl_Callback *)mesh_define_recombine_cb  } ,
     {"Transfinite", (Fl_Callback *)mesh_define_transfinite_cb  } , 
     {""} 

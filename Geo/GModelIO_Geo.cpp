@@ -43,17 +43,18 @@ int GModel::readGEO(const std::string &name)
 
 int GModel::exportDiscreteGEOInternals()
 {
-
   _geo_internals = new GEO_Internals;
 
   for(viter it = firstVertex(); it != lastVertex(); it++){
-    Vertex *v = Create_Vertex((*it)->tag(), (*it)->x(), (*it)->y(), (*it)->z(), (*it)->prescribedMeshSizeAtVertex(), 1.0);
+    Vertex *v = Create_Vertex((*it)->tag(), (*it)->x(), (*it)->y(), (*it)->z(),
+                              (*it)->prescribedMeshSizeAtVertex(), 1.0);
     Tree_Add(GModel::current()->getGEOInternals()->Points, &v);
   }
 
   for(eiter it = firstEdge(); it != lastEdge(); it++){
     if((*it)->geomType() == GEntity::DiscreteCurve){
-      Curve *c = Create_Curve((*it)->tag(), MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0., 1.);
+      Curve *c = Create_Curve((*it)->tag(), MSH_SEGM_DISCRETE, 1,
+                              NULL, NULL, -1, -1, 0., 1.);
       List_T *points = Tree2List(_geo_internals->Points);
       GVertex *gvb = (*it)->getBeginVertex();
       GVertex *gve = (*it)->getEndVertex();
@@ -95,8 +96,7 @@ int GModel::exportDiscreteGEOInternals()
     }
   }
 
-  //create Volumes from discreteRegions
-  //TODO
+  // TODO: create Volumes from discreteRegions
 
   Msg::Debug("Geo internal model has:");
   List_T *points = Tree2List(_geo_internals->Points);
@@ -111,7 +111,6 @@ int GModel::exportDiscreteGEOInternals()
 
 int GModel::importGEOInternals()
 {
-
   if(Tree_Nbr(_geo_internals->Points)) {
     List_T *points = Tree2List(_geo_internals->Points);
     for(int i = 0; i < List_Nbr(points); i++){
@@ -185,15 +184,17 @@ int GModel::importGEOInternals()
   for(int i = 0; i < List_Nbr(_geo_internals->PhysicalGroups); i++){
     PhysicalGroup *p;
     List_Read(_geo_internals->PhysicalGroups, i, &p);
-    std::vector<GEdge*>e_compound;
-    std::list<GFace*>f_compound;
-    std::vector<GRegion*>r_compound;
+    std::vector<GEdge*> e_compound;
+    std::list<GFace*> f_compound;
+    std::vector<GRegion*> r_compound;
     for(int j = 0; j < List_Nbr(p->Entities); j++){
       int num;
       List_Read(p->Entities, j, &num);
       GEntity *ge = 0;
       switch(p->Typ){
-      case MSH_PHYSICAL_POINT:   ge = getVertexByTag(abs(num)); break;
+      case MSH_PHYSICAL_POINT:
+        ge = getVertexByTag(abs(num));
+        break;
       case MSH_PHYSICAL_LINE: 
         ge = getEdgeByTag(abs(num));
         e_compound.push_back(getEdgeByTag(abs(num)));
@@ -213,10 +214,8 @@ int GModel::importGEOInternals()
         ge->physicals.push_back(pnum);
     }
 
-
     // the physical is a compound i.e. we allow the meshes
     // not to conform internal MEdges of the compound
-
 
     if (p->Typ == MSH_PHYSICAL_LINE && p->Boundaries[0]){
       GEdge *ge = getEdgeByTag(abs(p->Num));

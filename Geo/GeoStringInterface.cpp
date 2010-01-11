@@ -20,7 +20,7 @@
 #include "Parser.h"
 #endif
 
-void add_infile(std::string text, std::string fileName, bool deleted_something)
+void add_infile(std::string text, std::string fileName, bool forceDestroy)
 {
   // make sure we don't add stuff in a non-geo file
   if(!CTX::instance()->expertMode) {
@@ -80,9 +80,9 @@ void add_infile(std::string text, std::string fileName, bool deleted_something)
   fclose(gmsh_yyin);
   gmsh_yyin = gmsh_yyin_old;
 
-  if(deleted_something){
-    // we need to start from scratch since the command just parsed
-    // could have deleted some entities
+  if(forceDestroy){
+    // we need to start from scratch (e.g. if the command just parsed
+    // could have deleted some entities)
     GModel::current()->destroy();
   }
   GModel::current()->importGEOInternals();
@@ -181,6 +181,18 @@ void add_trsfvol(std::vector<int> &l, std::string fileName)
   }
   sstream << "};";
   add_infile(sstream.str(), fileName);
+}
+
+void add_embedded(std::string what, std::vector<int> &l, std::string fileName)
+{
+  std::ostringstream sstream;
+  sstream << "Point{";
+  for(unsigned int i = 1; i < l.size(); i++) {
+    if(i > 1) sstream << ", ";
+    sstream << l[i];
+  }
+  sstream << "} In Surface{" << l[0] << "};";
+  add_infile(sstream.str(), fileName, true);
 }
 
 void add_param(std::string par, std::string value, std::string fileName)

@@ -19,6 +19,7 @@ void add_trsfline(std::vector<int> &l, std::string fileName, std::string type,
                   std::string typearg, std::string pts);
 void add_trsfsurf(std::vector<int> &l, std::string fileName, std::string dir);
 void add_trsfvol(std::vector<int> &l, std::string fileName);
+void add_embedded(std::string what, std::vector<int> &l, std::string fileName);
 void add_param(std::string par, std::string value, std::string fileName);
 void add_point(std::string fileName, std::string x, std::string y, std::string z, 
                std::string lc);
