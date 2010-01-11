@@ -104,13 +104,8 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution,
     if (solutionEClipped){
       for (int iElement=0 ; iElement<egroup->getNbElements() ;++iElement) {
 	solutionE.setAsProxy(solGroup, iElement*nbFields, nbFields );
-	fullMatrix<double> Temp;  
-	Temp.setAsProxy(solGroup, nbFields*iElement, nbFields );    	
-	cacheElement.set(egroup->getElement(iElement));
-	for (int K=0;K<Temp.size1();K++)
-	  for (int L=0;L<Temp.size2();L++)
-	    Temp(K,L) = (*solutionEClipped)(K,L);      
-      }
+	solutionE.set((*solutionEClipped)());    
+       }
       delete solutionEClipped;
     }
   }  
