@@ -59,7 +59,7 @@ Plane Surface(6) = {5} ;
 // triangles discretizing surface 6). This is achieved by the
 // definition of `physical entities'. Physical entities will group
 // elements belonging to several elementary entities by giving them a
-// common number (a region number), and specifying their orientation.
+// common number (a region number).
 
 // We can for example group the points 1 and 2 into the physical
 // entity 1:

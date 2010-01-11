@@ -37,13 +37,14 @@ Extrude { {0,1,0} , {-0.1,0,0.1} , -Pi/2 } {
 // {0,0.15,0.25}, Pi/2) can also be combined:
 
 out[] = Extrude { {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , Pi/2 } { 
-  Surface{news-1}; Layers{10}; Recombine; 
+  Surface{144}; Layers{10}; Recombine; 
 };
 
 // In this last extrusion command we retrieved the volume number
-// programatically by saving the output of the command into a
-// list. This list will contain the "top" of the extruded surface (in
-// out[0]) as well as the newly created volume (in out[1]).
+// programatically by using the return value (a list) of the Extrude
+// command. This list contains the "top" of the extruded surface (in
+// out[0]), the newly created volume (in out[1]) and the ids of the
+// lateral surfaces (in out[2], out[3], ...)
 
 // We can then define a new physical volume to save all the tetrahedra
 // with a common region number (101):
@@ -69,9 +70,9 @@ Mesh.Color.Points = {255,0,0};
 
 Geometry.Color.Surfaces = Geometry.Color.Points;
 
-// You can click on the `?'  button in the status bar of the graphic
-// window to see the current values of all options. To save all the
-// options in a file, you can use the `File->Save as->Gmsh options'
-// menu. To save the current options as the default options for all
-// future Gmsh sessions, you should use the `Tools->Options->Save as
-// defaults' button.
+// You can use the `Help->Current options' menu to see the current
+// values of all options. To save all the options in a file, use
+// `File->Save as->Gmsh options'. To associate the current options
+// with the current file use `File->Save Options->For Current
+// File'. To save the current options for all future Gmsh sessions use
+// `File->Save Options->As default'.

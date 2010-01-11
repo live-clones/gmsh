@@ -27,34 +27,38 @@ Translate {-0.05, 0, 0} { Point{3}; }
 // The resulting point can also be duplicated and translated by 0.1
 // along the y axis:
 
-tmp[] = Translate {0, 0.1, 0} { Duplicata{ Point{3}; } } ;
+Translate {0, 0.1, 0} { Duplicata{ Point{3}; } }
 
-// In this case, we assigned the result of the Translate command to a
-// list, so that we can retrieve the number of the newly created point
-// and use it to create new lines and a new surface:
+// This command created a new point with an automatically assigned
+// id. This id can be obtained using the graphical user interface by
+// hovering the mouse over it and looking at the bottom of the graphic
+// window: in this case, the new point has id "6". Point 6 can then be
+// used to create new entities, e.g.:
 
-Line(7) = {3,tmp[0]};
-Line(8) = {tmp[0],5};
+Line(7) = {3, 6};
+Line(8) = {6, 5};
 Line Loop(10) = {5,-8,-7,3};
 Plane Surface(11) = {10};
 
-// Of course, these transformation commands not only apply to points,
-// but also to lines and surfaces. We can for example translate a copy
-// of surface 6 by 0.12 units along the z axis and define some
-// additional lines and surfaces with:
+// Using the graphical user interface to obtain the ids of newly
+// created entities can sometimes be cumbersome. It can then be
+// advantageous to use the return value of the transformation commands
+// directly. For example, the Translate command returns a list
+// containing the ids of the translated entities. For example, we can
+// translate copies of the two surfaces 6 and 11 to the right with the
+// following command:
 
-h = 0.12;
-Translate {0, 0, h} { Duplicata{ Surface{6}; } }
+my_new_surfs[] = Translate {0.12, 0, 0} { Duplicata{ Surface{6, 11}; } };
 
-Line(106) = {1,8};
-Line(107) = {2,12};
-Line(108) = {3,16};
-Line(109) = {4,7};
+// my_new_surfs[] (note the square brackets) denotes a list, which in
+// this case contains the ids of the two new surfaces (check
+// `Tools->Message console' to see the message):
 
-Line Loop(110) = {1,107,-103,-106}; Plane Surface(111) = {110};
-Line Loop(112) = {2,107,104,-108};  Plane Surface(113) = {112};
-Line Loop(114) = {3,109,-105,-108}; Plane Surface(115) = {114};
-Line Loop(116) = {4,106,-102,-109}; Plane Surface(117) = {116};
+Printf("New surfaces '%g' and '%g'", my_new_surfs[0], my_new_surfs[1]);
+
+// In Gmsh lists use square brackets for their definition (mylist[] =
+// {1,2,3};) as well as to access their elements (myotherlist[] =
+// {mylist[0], mylist[2]};). Note that list indexing starts at 0.
 
 // Volumes are the fourth type of elementary entities in Gmsh. In the
 // same way one defines line loops to build surfaces, one has to
@@ -62,20 +66,38 @@ Line Loop(116) = {4,106,-102,-109}; Plane Surface(117) = {116};
 // following volume does not have holes and thus consists of a single
 // surface loop:
 
-Surface Loop(118) = {117,-6,111,-113,101,115};
-Volume(119) = {118};
+Point(100) = {0., 0.3, 0.13, lc};
+Point(101) = {0.08, 0.3, 0.1, lc};
+Point(102) = {0.08, 0.4, 0.1, lc};
+Point(103) = {0., 0.4, 0.13, lc};
 
-// Another way to define a volume is by extruding a surface. The
-// following command extrudes the surface 11 along the z axis and
-// automatically creates a new volume:
+Line(110) = {4, 100};   Line(111) = {3, 101};
+Line(112) = {6, 102};   Line(113) = {5, 103};
+Line(114) = {103, 100}; Line(115) = {100, 101};
+Line(116) = {101, 102}; Line(117) = {102, 103};
 
-Extrude {0, 0, h} { Surface{11}; }
+Line Loop(118) = {115, -111, 3, 110};  Plane Surface(119) = {118};
+Line Loop(120) = {111, 116, -112, -7}; Plane Surface(121) = {120};
+Line Loop(122) = {112, 117, -113, -8}; Plane Surface(123) = {122};
+Line Loop(124) = {114, -110, 5, 113};  Plane Surface(125) = {124};
+Line Loop(126) = {115, 116, 117, 114}; Plane Surface(127) = {126};
 
-// All these geometrical transformations automatically generate new
-// elementary entities. The following command permits to manually
-// assign a characteristic length to some of the new points:
+Surface Loop(128) = {127, 119, 121, 123, 125, 11};
+Volume(129) = {128};
 
-Characteristic Length {tmp[0], 2, 12, 3, 16, 6, 22} = lc * 4;
+// When a volume can be extruded from a surface, it is usually easier
+// to use the Extrude command directly instead of creating all the
+// points, lines and surfaces by hand. For example, the following
+// command extrudes the surface 11 along the z axis and automatically
+// creates a new volume (as well as all the needed points, lines and
+// surfaces):
+
+Extrude {0, 0, 0.12} { Surface{my_new_surfs[1]}; }
+
+// The following command permits to manually assign a characteristic
+// length to some of the new points:
+
+Characteristic Length {103, 105, 109, 102, 28, 24, 6, 5} = lc * 3;
 
 // Note that, if the transformation tools are handy to create complex
 // geometries, it is also sometimes useful to generate the `flat'
@@ -91,4 +113,4 @@ Characteristic Length {tmp[0], 2, 12, 3, 16, 6, 22} = lc * 4;
 // with a common region number, we finally define a physical
 // volume:
 
-Physical Volume (1) = {119,120};
+Physical Volume (1) = {129,130};
