@@ -17,6 +17,7 @@ struct meshPartitionOptions
   int renumber;
 
   bool createPartitionBoundaries;
+  bool createGhostCells;
 
 //--Chaco
 
@@ -107,6 +108,7 @@ struct meshPartitionOptions
     edge_matching = 3;
     refine_algorithm = 3;
     createPartitionBoundaries = true;
+    createGhostCells = true;
   }
 
 };

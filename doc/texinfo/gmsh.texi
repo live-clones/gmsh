@@ -4964,14 +4964,14 @@ image file.
 
 @item How can I save MPEG, AVI, ..., animations?
 
-Yes, using scripts. Have a look at @file{tutorial/t8.geo} or
+Using a script. Have a look at @file{tutorial/t8.geo} or
 @file{demos/anim.script} for some examples.
 
 @item Can I change values in input fields with the mouse in the GUI?
 
 Yes: dragging the mouse in a numeric input field slides the value! The
-left button moves one step per pixel, the middle by 10 * step, and the
-right button by 100 * step.
+left button moves one step per pixel, the middle by `10*step', and the
+right button by `100*step'.
 
 @item Can I copy messages to the clipboard?
 
@@ -5047,7 +5047,7 @@ files in your main project file.
 @item What should I do when the 2D unstructured algorithm fails?
 
 Verify that the curves in the model do not self-intersect. If
-Mesh.RandomFactor * size(triangle)/size(model) approaches machine
+`Mesh.RandomFactor*size(triangle)/size(model)' approaches machine
 accuracy, increase Mesh.RandomFactor.
 
 If everything fails file a bug report with the version of your operating
