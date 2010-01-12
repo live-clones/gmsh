@@ -10,5 +10,6 @@ Line Loop(5) = {2, 3, 4, 1};
 Plane Surface(6) = {5};
 Physical Line("Border") = {1, 2, 3, 4};
 Physical Surface("Inside") = {6};
+Mesh.CharacteristicLengthExtendFromBoundary=1;
 //Transfinite Line {1, 2, 4, 3} = 2 Using Progression 1;
 //Transfinite Surface {6};

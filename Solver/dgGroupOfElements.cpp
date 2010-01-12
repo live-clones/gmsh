@@ -605,10 +605,3 @@ void dgGroupOfFaces::mapFromInterface ( int nFields,
     }
   }
 }
-/*
-const char luaTest::className[]="luaTest";
-methodBinding *luaTest::methods[] = {
-  new LunaSignature<luaTest,int,int,int,int>("print",&luaTest::print),
-  0};
-constructorBinding *luaTest::constructorMethod = new LunaConstructor<luaTest,int>;
-*/
