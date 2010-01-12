@@ -13,7 +13,9 @@
 
 void ScalarLagrangeToXfemFS::f(MVertex *ver, std::vector<ValType> &vals)
 {
-    if (!(*_TagEnrichedVertex)[ver->getNum()]) vals.push_back(1.0);
+    std::set<int>::iterator it;
+    it = _TagEnrichedVertex->find(ver->getNum());
+    if (it==_TagEnrichedVertex->end()) vals.push_back(1.0);
     else
     {
         double func = (*_funcEnrichment)(ver->x(),ver->y(),ver->z());
@@ -39,7 +41,9 @@ void ScalarLagrangeToXfemFS::f(MElement *ele, double u, double v, double w, std:
 
     for (int i=0 ;i<ele->getNumVertices();i++)
     {
-        if ((*_TagEnrichedVertex)[ele->getVertex(i)->getNum()]) ndofs = ndofs + 1; // enriched dof
+        std::set<int>::iterator it;
+        it = _TagEnrichedVertex->find(ele->getVertex(i)->getNum());
+        if (it!=_TagEnrichedVertex->end()) ndofs = ndofs + 1; // enriched dof
     }
 
     int curpos=vals.size();
@@ -51,7 +55,9 @@ void ScalarLagrangeToXfemFS::f(MElement *ele, double u, double v, double w, std:
     int k=0;
     for (int i=0 ;i<ele->getNumVertices();i++)
     {
-        if ((*_TagEnrichedVertex)[ele->getVertex(i)->getNum()])
+        std::set<int>::iterator it;
+        it = _TagEnrichedVertex->find(ele->getVertex(i)->getNum());
+        if (it!=_TagEnrichedVertex->end())
         {
             vals[curpos+normaldofs+k] = vals[curpos+i]*func;  // enriched dof
             k++;
@@ -77,7 +83,9 @@ void ScalarLagrangeToXfemFS::gradf(MElement *ele, double u, double v, double w,s
 
     for (int i=0 ;i< (ele->getNumVertices());i++)
     {
-        if ((*_TagEnrichedVertex)[ele->getVertex(i)->getNum()]) ndofs = ndofs + 1; // enriched dof
+        std::set<int>::iterator it;
+        it = _TagEnrichedVertex->find(ele->getVertex(i)->getNum());
+        if (it!=_TagEnrichedVertex->end()){ndofs = ndofs + 1;} // enriched dof
     }
 
     int curpos = grads.size();
@@ -88,7 +96,9 @@ void ScalarLagrangeToXfemFS::gradf(MElement *ele, double u, double v, double w,s
     int k = 0;
     for (int i=0 ;i<(ele->getNumVertices());i++)
     {
-        if ((*_TagEnrichedVertex)[ele->getVertex(i)->getNum()]) // enriched dof
+        std::set<int>::iterator it;
+        it = _TagEnrichedVertex->find(ele->getVertex(i)->getNum());
+        if (it!=_TagEnrichedVertex->end()) // enriched dof
         {
             gradsuvw[curpos+normaldofs+k][0] = gradsuvw[curpos+i][0]*func;
             gradsuvw[curpos+normaldofs+k][1] = gradsuvw[curpos+i][1]*func;
@@ -121,7 +131,9 @@ int ScalarLagrangeToXfemFS::getNumKeys(MElement *ele)
     {
         for (int i=0 ;i<(ele->getNumVertices());i++)
         {
-            if ((*_TagEnrichedVertex)[ele->getVertex(i)->getNum()]) ndofs = ndofs + 1;
+            std::set<int>::iterator it;
+            it = _TagEnrichedVertex->find(ele->getVertex(i)->getNum());
+            if (it!=_TagEnrichedVertex->end()) ndofs = ndofs + 1;
         }
     }
     return ndofs;
@@ -129,8 +141,10 @@ int ScalarLagrangeToXfemFS::getNumKeys(MElement *ele)
 
 int ScalarLagrangeToXfemFS::getNumKeys(MVertex *ver)
 {
-    if (!(*_TagEnrichedVertex)[ver->getNum()]) return 1 ;
-    else return 2; // if enriched vertex, there is two dof at this vertex (one dimension)
+    std::set<int>::iterator it;
+    it = _TagEnrichedVertex->find(ver->getNum());
+    if (it!=_TagEnrichedVertex->end()) return 2 ;
+    else return 1; // if enriched vertex, there is two dof at this vertex (one dimension)
 }
 
 void ScalarLagrangeToXfemFS::getKeys(MElement *ele, std::vector<Dof> &keys)
@@ -146,7 +160,9 @@ void ScalarLagrangeToXfemFS::getKeys(MElement *ele, std::vector<Dof> &keys)
 
     for (int i=0 ;i<(ele->getNumVertices());i++)
     {
-        if ((*_TagEnrichedVertex)[ele->getVertex(i)->getNum()]) ndofs = ndofs + 1;
+        std::set<int>::iterator it;
+        it = _TagEnrichedVertex->find(ele->getVertex(i)->getNum());
+        if (it!=_TagEnrichedVertex->end()) ndofs = ndofs + 1;
     }
 
     keys.reserve(keys.size()+ndofs);
@@ -167,7 +183,9 @@ void ScalarLagrangeToXfemFS::getKeys(MElement *ele, std::vector<Dof> &keys)
 
 void ScalarLagrangeToXfemFS::getKeys(MVertex *ver, std::vector<Dof> &keys)
 {
-    if ((*_TagEnrichedVertex)[ver->getNum()])
+    std::set<int>::iterator it;
+    it = _TagEnrichedVertex->find(ver->getNum());
+    if (it!=_TagEnrichedVertex->end())
     {
         keys.push_back(Dof(ver->getNum(), _iField));
         keys.push_back(Dof(ver->getNum(), _iField+1)); // we tag the additional dof with number field+1

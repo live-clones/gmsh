@@ -16,6 +16,7 @@
 #include "Numeric.h"
 #include "MElement.h"
 #include "dofManager.h"
+#include <set>
 
 
 #include "functionSpace.h"
@@ -33,12 +34,12 @@ class ScalarLagrangeToXfemFS : public ScalarLagrangeFunctionSpace{
 
   protected:
 
-    std::map<int , bool> *_TagEnrichedVertex;
+    std::set<int > *_TagEnrichedVertex;
     simpleFunction<double> *_funcEnrichment;
 
   public:
 //
-    ScalarLagrangeToXfemFS(int i, std::map<int , bool> &TagEnrichedVertex, simpleFunction<double> *funcEnrichment) : ScalarLagrangeFunctionSpace(i)
+    ScalarLagrangeToXfemFS(int i, std::set<int > &TagEnrichedVertex, simpleFunction<double> *funcEnrichment) : ScalarLagrangeFunctionSpace(i)
     {
       _TagEnrichedVertex = & TagEnrichedVertex;
       _funcEnrichment = funcEnrichment;
@@ -77,19 +78,19 @@ class ScalarXFEMToVectorFS : public ScalarToAnyFunctionSpace<SVector3>
     typedef TensorialTraits<SVector3>::DivType DivType;
     typedef TensorialTraits<SVector3>::CurlType CurlType;
 
-    ScalarXFEMToVectorFS(int id , std::map<int , bool> & TagEnrichedVertex , simpleFunction<double> * funcEnrichment) :
+    ScalarXFEMToVectorFS(int id , std::set<int > & TagEnrichedVertex , simpleFunction<double> * funcEnrichment) :
           ScalarToAnyFunctionSpace<SVector3>::ScalarToAnyFunctionSpace(ScalarLagrangeToXfemFS(id,TagEnrichedVertex,funcEnrichment),
           SVector3(1.,0.,0.),VECTOR_X, SVector3(0.,1.,0.),VECTOR_Y,SVector3(0.,0.,1.),VECTOR_Z) {}
 
-    ScalarXFEMToVectorFS(int id,Along comp1, std::map<int , bool> &TagEnrichedVertex , simpleFunction<double> * funcEnrichment) :
+    ScalarXFEMToVectorFS(int id,Along comp1, std::set<int > &TagEnrichedVertex , simpleFunction<double> * funcEnrichment) :
           ScalarToAnyFunctionSpace<SVector3>::ScalarToAnyFunctionSpace(ScalarLagrangeToXfemFS(id,TagEnrichedVertex,funcEnrichment),
           BasisVectors[comp1],comp1) {}
 
-    ScalarXFEMToVectorFS(int id,Along comp1,Along comp2, std::map<int , bool> &TagEnrichedVertex,simpleFunction<double> *funcEnrichment) :
+    ScalarXFEMToVectorFS(int id,Along comp1,Along comp2, std::set<int > &TagEnrichedVertex,simpleFunction<double> *funcEnrichment) :
           ScalarToAnyFunctionSpace<SVector3>::ScalarToAnyFunctionSpace(ScalarLagrangeToXfemFS(id,TagEnrichedVertex,funcEnrichment),
           BasisVectors[comp1],comp1, BasisVectors[comp2],comp2) {}
 
-    ScalarXFEMToVectorFS(int id,Along comp1,Along comp2, Along comp3, std::map<int , bool> &TagEnrichedVertex,simpleFunction<double> *funcEnrichment) :
+    ScalarXFEMToVectorFS(int id,Along comp1,Along comp2, Along comp3, std::set<int > &TagEnrichedVertex,simpleFunction<double> *funcEnrichment) :
           ScalarToAnyFunctionSpace<SVector3>::ScalarToAnyFunctionSpace(ScalarLagrangeToXfemFS(id,TagEnrichedVertex,funcEnrichment),
           BasisVectors[comp1],comp1, BasisVectors[comp2],comp2, BasisVectors[comp3],comp3) {}
 };

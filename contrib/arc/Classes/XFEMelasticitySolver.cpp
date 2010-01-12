@@ -72,14 +72,7 @@ void XFEMelasticitySolver::solve(){
       {
         for (int k = 0; k < e->getParent()->getNumVertices(); ++k)
         {  // for all vertices in the element parent
-          _TagEnrichedVertex[e->getParent()->getVertex(k)->getNum()] = true;
-        }
-      }
-      else
-      {
-        for (int k = 0; k < e->getNumVertices(); ++k)
-        {
-          _TagEnrichedVertex[e->getVertex(k)->getNum()] = false;
+          _TagEnrichedVertex.insert(e->getParent()->getVertex(k)->getNum());
         }
       }
     }

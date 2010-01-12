@@ -25,7 +25,7 @@ int main (int argc, char* argv[])
 
     if (argc < 2)
     {
-        printf("usage : elasticity input_file_name yeahhh \n");
+        printf("usage : elasticity input_file_name\n");
         return -1;
     }
 
