@@ -1029,26 +1029,33 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
       for(int k = 0; k < e->getNumVertices(); k++){
         MVertex *v = e->getVertex(k);
         std::set<MVertex*, MVertexLessThanLexicographic>::iterator it = pos.find(v);
-        if(it != pos.end())
-          verts.push_back(*it);
-        else
-          Msg::Error("Could not find unique vertex (%g,%g,%g)", v->x(), v->y(), v->z());
+        if(it == pos.end()){
+          Msg::Info("Linear search for (%.16g, %.16g, %.16g)", v->x(), v->y(), v->z()); 
+          it = v->linearSearch(pos);
+          if(it == pos.end()){
+            Msg::Error("Could not find unique vertex (%.16g, %.16g, %.16g)", 
+                       v->x(), v->y(), v->z());
+            break;
+          }
+        }
+        verts.push_back(*it);
       }
-      MElementFactory factory;
-      MElement *e2 = factory.create(e->getTypeForMSH(), verts, e->getNum(),
-                                    e->getPartition());
-      switch(e2->getType()){
-      case TYPE_PNT: elements[0][entities[i]->tag()].push_back(e2); break;
-      case TYPE_LIN: elements[1][entities[i]->tag()].push_back(e2); break;
-      case TYPE_TRI: elements[2][entities[i]->tag()].push_back(e2); break;
-      case TYPE_QUA: elements[3][entities[i]->tag()].push_back(e2); break;
-      case TYPE_TET: elements[4][entities[i]->tag()].push_back(e2); break;
-      case TYPE_HEX: elements[5][entities[i]->tag()].push_back(e2); break;
-      case TYPE_PRI: elements[6][entities[i]->tag()].push_back(e2); break;
-      case TYPE_PYR: elements[7][entities[i]->tag()].push_back(e2); break;
-      case TYPE_POLYG: elements[8][entities[i]->tag()].push_back(e2); break;
-      case TYPE_POLYH: elements[9][entities[i]->tag()].push_back(e2); break;
-
+      if(verts.size() == e->getNumVertices()){
+        MElementFactory factory;
+        MElement *e2 = factory.create(e->getTypeForMSH(), verts, e->getNum(),
+                                      e->getPartition());
+        switch(e2->getType()){
+        case TYPE_PNT: elements[0][entities[i]->tag()].push_back(e2); break;
+        case TYPE_LIN: elements[1][entities[i]->tag()].push_back(e2); break;
+        case TYPE_TRI: elements[2][entities[i]->tag()].push_back(e2); break;
+        case TYPE_QUA: elements[3][entities[i]->tag()].push_back(e2); break;
+        case TYPE_TET: elements[4][entities[i]->tag()].push_back(e2); break;
+        case TYPE_HEX: elements[5][entities[i]->tag()].push_back(e2); break;
+        case TYPE_PRI: elements[6][entities[i]->tag()].push_back(e2); break;
+        case TYPE_PYR: elements[7][entities[i]->tag()].push_back(e2); break;
+        case TYPE_POLYG: elements[8][entities[i]->tag()].push_back(e2); break;
+        case TYPE_POLYH: elements[9][entities[i]->tag()].push_back(e2); break;
+        }
       }
     }
   }
@@ -1068,7 +1075,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
 
   MVertexLessThanLexicographic::tolerance = old_tol;
 
-  Msg::Info("Removed %d duplicate mesh vertices", diff);
+  Msg::Info("Removed %d duplicate mesh %s", diff, diff > 1 ? "vertices" : "vertex");
 
   return diff;
 }

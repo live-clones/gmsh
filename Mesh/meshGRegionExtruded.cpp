@@ -105,7 +105,7 @@ static int getExtrudedVertices(MElement *ele, ExtrudeParams *ep, int j, int k,
     }
     if(itp == pos.end())
       Msg::Error("Could not find extruded vertex (%.16g, %.16g, %.16g)",
-          tmp.x(), tmp.y(), tmp.z());
+                 tmp.x(), tmp.y(), tmp.z());
     else
       verts.push_back(*itp);
   }
