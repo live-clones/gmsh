@@ -215,6 +215,8 @@ static void recur_compute_centers_ (double R, double a1, double a2,
 
   SPoint2 PL (R*cos(a1),R*sin(a1));
   SPoint2 PR (R*cos(a2),R*sin(a2));
+  printf("R=%g a1=%g PL=%g %g \n", R, a1*180/M_PI, PL.x(), PL.y());
+  printf("R=%g a2=%g PR=%g %g \n", R, a2*180/M_PI, PR.x(), PR.y());
   centers.push_back(std::make_pair(PL,zero));  
   centers.push_back(std::make_pair(PR,zero));  
   for (int i=0;i<root->children.size();i++){
@@ -258,14 +260,15 @@ static void recur_compute_centers_ (double R, double a1, double a2,
 
   //sort centers
   std::sort(centers.begin(),centers.end());
+  //printf("size centers =%d \n", centers.size());
 
   for (int i=1;i<centers.size()-1;i++){
     multiscaleLaplaceLevel* m1 = centers[i-1].second;
     multiscaleLaplaceLevel* m2 = centers[i].second;
     multiscaleLaplaceLevel* m3 = centers[i+1].second;
     if (m2){
-      a1 = atan2 (m2->center.y() - centers[i-1].first.y(),m2->center.x() - centers[i-1].first.x()); 
-      a2 = atan2 (m2->center.y() - centers[i+1].first.y(),m2->center.x() - centers[i+1].first.x()); 
+      a1 = myatan2 (centers[i-1].first.y()- m2->center.y() , centers[i-1].first.x()-m2->center.x()); 
+      a2 = myatan2 (centers[i+1].first.y()- m2->center.y() , centers[i+1].first.x()-m2->center.x()); 
       recur_compute_centers_ (m2->radius, a1, a2, m2);
     }
   }
@@ -513,8 +516,8 @@ static void recur_cut_ (double R, double a1, double a2,
       /*center of the local system is always 0,0
 	its relative position to its parent is center
 	only 2 angles have to be computed for in and out*/
-      a1 = atan2 (m2->center.y() - centers[i-1].first.y(),m2->center.x() - centers[i-1].first.x()); 
-      a2 = atan2 (m2->center.y() - centers[i+1].first.y(),m2->center.x() - centers[i+1].first.x()); 
+      a1 = myatan2 (centers[i-1].first.y() - m2->center.y() , centers[i-1].first.x() - m2->center.x() ); 
+      a2 = myatan2 (centers[i+1].first.y() - m2->center.y() , centers[i+1].first.x() - m2->center.x() );
       recur_cut_ (m2->radius, a1, a2, m2, left, right);
     }
   }
@@ -534,7 +537,7 @@ static void connected_left_right (std::vector<MElement *> &left,
     for (int i=1;i< subRegionsL.size() ; i++){   
       int size = subRegionsL[i].size();
       if(size > maxSize){
-	size = maxSize;
+	maxSize = size;
 	indexL = i;
       }
     }
@@ -558,7 +561,7 @@ static void connected_left_right (std::vector<MElement *> &left,
     for (int i=1;i< subRegionsR.size() ; i++){   
       int size = subRegionsR[i].size();
       if(size > maxSize){
-	size = maxSize;
+	maxSize = size;
 	indexR = i;
       }
     }
@@ -720,7 +723,7 @@ multiscaleLaplace::multiscaleLaplace (std::vector<MElement *> &elements, int iPa
   //if (!CTX::instance()->mesh.smoothInternalEdges)return; 
 
   //Find the boundary loops 
-  //Loop with the largest equivalent  radius is the Dirichlet boundary
+  //The loop with the largest equivalent radius is the Dirichlet boundary
   std::vector<std::pair<MVertex*,double> > boundaryNodes;
   ordering_dirichlet(elements,boundaryNodes);
 
@@ -749,7 +752,7 @@ multiscaleLaplace::multiscaleLaplace (std::vector<MElement *> &elements, int iPa
   parametrize(*root);
 
   //Compute centers for the cut
-  recur_compute_centers_ (1.0, 0., M_PI, root);
+  recur_compute_centers_ (1.0, M_PI, 0.0, root);
 
   //Partition the mesh in left and right
   cut (elements, iPart); 
@@ -759,7 +762,9 @@ multiscaleLaplace::multiscaleLaplace (std::vector<MElement *> &elements, int iPa
 //    std::multimap<MEdge,MElement*,Less_Edge> e2e;
 //    for (int i=0;i<elements.size();++i){
 //      for (int j=0;j<elements[i]->getNumEdges();j++){
-//        e2e.insert(std::make_pair(elements[i]->getEdge(j),elements[i]));
+//        e2e.insert(std::make_pair(elements[i]->ge
+      //a1 = atan2 (m2->center.y() - centers[i-1].first.y(),m2->center.x() - centers[i-1].first.x()); 
+      //a2 = atan2 (m2->center.y() - centers[i+1].first.y(),m2->center.x() - centers[i+1].first.x()); tEdge(j),elements[i]));
 //      }
 //    }
 //    std::map<MEdge,MVertex*,Less_Edge> cutEdges;
@@ -850,6 +855,26 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
   }
 
   //Only keep the right elements and nodes
+  std::vector<std::vector<MElement*> >  regGoodSize;
+  connectedRegions (goodSize,regGoodSize);
+  int index=0;
+  if (regGoodSize.size()  > 0){
+    int maxSize= regGoodSize[0].size(); 
+    for (int i=1;i< regGoodSize.size() ; i++){   
+      int size = regGoodSize[i].size();
+      if(size > maxSize){
+	maxSize = size;
+	index = i;
+      }
+    }
+  }
+  goodSize.clear();
+  for (int i=0;i< regGoodSize.size() ; i++){   
+    if (i == index)
+      goodSize.insert(goodSize.begin(), regGoodSize[i].begin(),  regGoodSize[i].end());
+    else
+      tooSmall.insert(tooSmall.begin(), regGoodSize[i].begin(),  regGoodSize[i].end());
+  }
   level.elements = goodSize;
 
   std::vector<std::vector<MElement*> > regions, regions_;
@@ -991,8 +1016,8 @@ void multiscaleLaplace::cut (std::vector<MElement *> &elements, int iPart)
 {
 
   std::vector<MElement*> left,right;
-  recur_cut_ (1.0, 0, M_PI, root,left,right);
-
+  recur_cut_ (1.0, M_PI, 0.0, root,left,right);
+ 
   connected_left_right(left, right);
 
   elements.clear();

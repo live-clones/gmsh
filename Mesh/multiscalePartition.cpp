@@ -268,7 +268,7 @@ void multiscalePartition::partition(partitionLevel & level, int nbParts, typeOfP
        partition(*nextLevel, nbParts, LAPLACIAN);
      }
     else {
-    Msg::Info("Multiscale part: level %d, region %d is ZERO-GENUS (AR=%d)", 
+      Msg::Info("*** Multiscale partition: level %d, region %d is ZERO-GENUS (AR=%d)", 
 		 nextLevel->recur,nextLevel->region, AR);
     }
     
