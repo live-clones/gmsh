@@ -401,16 +401,12 @@ int GModel::getPhysicalNumber(const int &dim, const std::string &name)
 
 int GModel::getDim()
 {
-  int ret;
-  if(getNumRegions()>0)	ret=3;
-  else if(getNumFaces()>0) ret=2;
-  else if(getNumEdges()>0) ret=1;
-  else if(getNumVertices()>0) ret=0;
-  else{
-    Msg::Warning("The model is empty, dim = -1");
-    ret=-1;
-  }
-  return ret;
+  if(getNumRegions() > 0) return 3;
+  if(getNumFaces() > 0) return 2;
+  if(getNumEdges() > 0) return 1;
+  if(getNumVertices() > 0) return 0;
+  Msg::Warning("The model is empty, dim = -1");
+  return -1;
 }
 
 std::string GModel::getElementaryName(int dim, int number)
