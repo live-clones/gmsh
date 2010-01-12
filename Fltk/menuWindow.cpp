@@ -2511,7 +2511,7 @@ contextItem menu_mesh[] = {
     {"1Mesh>Define"} ,
     {"Fields",      (Fl_Callback *)field_cb},
     {"Characteristic length", (Fl_Callback *)mesh_define_length_cb  } ,
-    {"Embedded point", (Fl_Callback *)mesh_define_embedded_cb, (void*)"point" } ,
+    {"Embedded points", (Fl_Callback *)mesh_define_embedded_cb, (void*)"point" } ,
     {"Recombine",   (Fl_Callback *)mesh_define_recombine_cb  } ,
     {"Transfinite", (Fl_Callback *)mesh_define_transfinite_cb  } , 
     {""} 

@@ -154,7 +154,8 @@ void MVertex::writeMESH(FILE *fp, double scalingFactor)
   if(_index < 0) return; // negative index vertices are never saved
 
   fprintf(fp, " %20.14G      %20.14G      %20.14G      %d\n", 
-          x() * scalingFactor, y() * scalingFactor, z() * scalingFactor, _index);
+          x() * scalingFactor, y() * scalingFactor, z() * scalingFactor, 
+          _ge ? _ge->tag() : 0);
 }
 
 static void double_to_char8(double val, char *str)
