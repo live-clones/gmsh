@@ -46,7 +46,7 @@ DG:exportSolution('output/solution_000')
 
 print'*** solve ***'
 
-N  = 1000;
+N  = 100;
 CFL = 2.1;
 dt = CFL * DG:computeInvSpectralRadius();
 print('DT = ',dt)
