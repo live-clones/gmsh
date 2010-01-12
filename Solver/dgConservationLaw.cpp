@@ -10,7 +10,7 @@ class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
     dgConservationLaw *_claw;
     public:
     term(dgConservationLaw *claw, dataCacheMap &cacheMapLeft,const std::string outsideValueFunctionName):
-      dataCacheDouble(cacheMapLeft.getNbEvaluationPoints(),claw->nbFields()),
+      dataCacheDouble(cacheMapLeft, cacheMapLeft.getNbEvaluationPoints(),claw->nbFields()),
       cacheMapRight(cacheMapLeft.getNbEvaluationPoints()),
       solutionRight(cacheMapRight.provideData("Solution")),
       outsideValue(cacheMapLeft.get(outsideValueFunctionName,this)),
@@ -44,7 +44,7 @@ class dgBoundarySymmetry : public dgBoundaryCondition {
     dgConservationLaw *_claw;
   public:
     term(dgConservationLaw *claw, dataCacheMap &cacheMapLeft):
-      dataCacheDouble(cacheMapLeft.getNbEvaluationPoints(),claw->nbFields()), _claw(claw)
+      dataCacheDouble(cacheMapLeft, cacheMapLeft.getNbEvaluationPoints(),claw->nbFields()), _claw(claw)
     {
       riemannSolver=_claw->newRiemannSolver(cacheMapLeft,cacheMapLeft);
       riemannSolver->addMeAsDependencyOf(this);
@@ -69,7 +69,7 @@ class dgBoundaryCondition0Flux : public dgBoundaryCondition {
   class term : public dataCacheDouble {
   public:
     term(dgConservationLaw *claw,dataCacheMap &cacheMapLeft):
-      dataCacheDouble(cacheMapLeft.getNbEvaluationPoints(),claw->nbFields()) {}
+      dataCacheDouble(cacheMapLeft,cacheMapLeft.getNbEvaluationPoints(),claw->nbFields()) {}
     void _eval() {
     }
   };
@@ -95,6 +95,7 @@ class dgBoundaryCondition::dirichlet_ : public dataCacheDouble {
   dataCacheDouble &sol;
 public:
   dirichlet_(dataCacheMap &cacheMap):
+    dataCacheDouble(cacheMap),
     sol(cacheMap.get("Solution",this)){}
   void _eval () { 
     int nQP = sol().size1();
@@ -112,6 +113,7 @@ class dgBoundaryCondition::neumann_ : public dataCacheDouble {
   dataCacheDouble *diffusiveFlux;
 public:
   neumann_(dataCacheMap &cacheMap, dgConservationLaw *claw):
+    dataCacheDouble(cacheMap),
     _claw (claw),
     sol(cacheMap.get("Solution",this)),
     normals(cacheMap.get("Normals",this)){

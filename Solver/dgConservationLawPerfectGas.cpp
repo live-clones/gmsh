@@ -328,6 +328,7 @@ class dgPerfectGasLaw2d::advection : public dataCacheDouble {
   dataCacheDouble &sol;
   public:
   advection(dataCacheMap &cacheMap):
+    dataCacheDouble(cacheMap),
     sol(cacheMap.get("Solution",this))
   {};
   void _eval () { 
@@ -365,6 +366,7 @@ class dgPerfectGasLaw2d::diffusion : public dataCacheDouble {
   diffusion(dataCacheMap &cacheMap, 
 	    const std::string &muFunctionName,
 	    const std::string &kappaFunctionName ):
+    dataCacheDouble(cacheMap),
     sol(cacheMap.get("Solution",this)),
     grad(cacheMap.get("SolutionGradient",this)),
     mu(cacheMap.get(muFunctionName,this)),
@@ -425,6 +427,7 @@ class dgPerfectGasLaw2d::source : public dataCacheDouble {
   dataCacheDouble &sol,&s;
 public:
   source(dataCacheMap &cacheMap, const std::string &sourceFunctionName):
+    dataCacheDouble(cacheMap),
     sol(cacheMap.get("Solution",this)),
     s(cacheMap.get(sourceFunctionName,this))
   {};
@@ -446,6 +449,7 @@ class dgPerfectGasLaw2d::clipToPhysics : public dataCacheDouble {
   double _presMin, _rhoMin;
 public:
   clipToPhysics(dataCacheMap &cacheMap, double presMin, double rhoMin):
+    dataCacheDouble(cacheMap),
     sol(cacheMap.get("Solution",this))
   {
     _presMin=presMin;
@@ -479,6 +483,7 @@ class dgPerfectGasLaw2d::riemann : public dataCacheDouble {
   dataCacheDouble &normals, &solL, &solR;
   public:
   riemann(dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight):
+    dataCacheDouble(cacheMapLeft),
     normals(cacheMapLeft.get("Normals", this)),
     solL(cacheMapLeft.get("Solution", this)),
     solR(cacheMapRight.get("Solution", this))
@@ -512,6 +517,7 @@ class dgPerfectGasLaw2d::riemannGodunov : public dataCacheDouble {
   dataCacheDouble &normals, &solL, &solR;
   public:
   riemannGodunov(dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight):
+    dataCacheDouble(cacheMapLeft),
     normals(cacheMapLeft.get("Normals", this)),
     solL(cacheMapLeft.get("Solution", this)),
     solR(cacheMapRight.get("Solution", this))
@@ -578,6 +584,7 @@ class dgPerfectGasLaw2d::maxConvectiveSpeed : public dataCacheDouble {
   dataCacheDouble &sol;
   public:
   maxConvectiveSpeed(dataCacheMap &cacheMap):
+    dataCacheDouble(cacheMap),
     sol(cacheMap.get("Solution",this))
   {
   };
@@ -599,6 +606,7 @@ class dgPerfectGasLaw2d::maxDiffusivity : public dataCacheDouble {
   dataCacheDouble &sol,&mu,&kappa;
   public:
   maxDiffusivity(dataCacheMap &cacheMap, const std::string &muFunctionName, const std::string &kappaFunctionName ):
+    dataCacheDouble(cacheMap),
     sol(cacheMap.get("Solution",this)),
     mu(cacheMap.get(muFunctionName,this)),
     kappa(cacheMap.get(kappaFunctionName,this))
@@ -662,6 +670,7 @@ class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
 // NON VISCOUS BOUNDARY FLUX
 //-------------------------------------------------------------------------------
     term(dataCacheMap &cacheMap):
+    dataCacheDouble(cacheMap),
       sol(cacheMap.get("Solution",this)),
       normals(cacheMap.get("Normals",this)){}
     void _eval () { 
@@ -709,6 +718,7 @@ class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
     dataCacheDouble &sol;
     public:
     dirichletNonSlip(dataCacheMap &cacheMap):
+    dataCacheDouble(cacheMap),
     sol(cacheMap.get("Solution",this)){}
     void _eval () { 
       int nQP = sol().size1();
@@ -736,6 +746,7 @@ class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
     dataCacheDouble *diffusiveFlux;
   public:
     neumannNonSlip(dataCacheMap &cacheMap, dgConservationLaw *claw):
+      dataCacheDouble(cacheMap),
       _claw (claw),
       sol(cacheMap.get("Solution",this)),
       normals(cacheMap.get("Normals",this)){
@@ -771,6 +782,7 @@ class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
     dataCacheDouble &sol;
     public:
     dirichletSlip(dataCacheMap &cacheMap):
+    dataCacheDouble(cacheMap),
     sol(cacheMap.get("Solution",this)){}
     void _eval () { 
       int nQP = sol().size1();
@@ -795,6 +807,7 @@ class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
   public:
     neumannSlip(dataCacheMap &cacheMap, dgConservationLaw *claw):
       _claw (claw),
+      dataCacheDouble(cacheMap),
       sol(cacheMap.get("Solution",this)),
       normals(cacheMap.get("Normals",this)){
     }

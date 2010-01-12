@@ -110,15 +110,9 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
     for (int iUVW=0;iUVW<group.getDimUVW();iUVW++){
       residual.gemm(group.getFluxRedistributionMatrix(iUVW),Fuvw[iUVW]);
     }
-    if(convectiveFlux)
-      delete convectiveFlux;
-    if(diffusiveFlux)
-      delete diffusiveFlux;
   }
   if(sourceTerm){
     residual.gemm(group.getSourceRedistributionMatrix(),Source);
-    //    FIXME (JF) : for now TEST TEST
-    //    delete sourceTerm;
   }
 }
 
@@ -240,10 +234,6 @@ void dgAlgorithm::residualInterface ( //dofManager &dof, // the DOF manager (may
 
   if(riemannSolver || diffusiveFluxLeft)
     residual.gemm(group.getRedistributionMatrix(),NormalFluxQP);
-
-  // D ) delete the dataCacheDouble provided by the law
-  if(riemannSolver)
-    delete riemannSolver;
 }
 
 void dgAlgorithm::multAddInverseMassMatrix ( /*dofManager &dof,*/
@@ -453,8 +443,6 @@ void dgAlgorithm::multirateRungeKutta (const dgConservationLaw &claw,			// conse
    }
    
    for (int i=0;i<sol._dataSize;i++){
-     //     printf("tempSol[%d] = %g\n",i,(*tempSol._data)(i));
-     //     memcp
      (*sol._data)(i)=(*Unp._data)(i);
    }
    for(int i=0;i<nStages;i++){
@@ -545,9 +533,6 @@ void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (mayb
   }
   // ----- 3 ---- do the redistribution at face nodes using BLAS3
   residual.gemm(group.getRedistributionMatrix(),NormalFluxQP);
-  delete boundaryTerm;
-  if (dirichlet) delete dirichlet;
-  if (neumann) delete neumann;
 }
 
 /*
@@ -753,11 +738,8 @@ void dgAlgorithm::computeElementaryTimeSteps ( //dofManager &dof, // the DOF man
       double c = (*maxConvectiveSpeed)(0,0);
       for (int k=1;k<group.getNbNodes();k++) c = std::max((*maxConvectiveSpeed)(k,0), c);
       spectralRadius += 4.0*c*l_red/L; 
-      //      printf("coucou %g %g %g %g\n",c,l_red,L,spectralRadius);
     }
     DT[iElement] = 1./spectralRadius;
   }
-  delete maximumDiffusivity;
-  delete maxConvectiveSpeed;
 }
 

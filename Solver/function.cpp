@@ -4,6 +4,9 @@
 #include <sstream>
 
 // dataCache members
+dataCache::dataCache(dataCacheMap *cacheMap) : _valid(false) {
+  cacheMap->addDataCache(this); //this dataCache can be deleted when the dataCacheMap is deleted
+}
 
 void dataCache::addMeAsDependencyOf (dataCache *newDep)
 {
@@ -45,8 +48,8 @@ function *function::get(std::string functionName, bool acceptNull)
 dataCacheElement &dataCacheMap::getElement(dataCache *caller) 
 {
   if(caller)
-    _cacheElement.addMeAsDependencyOf(caller);
-  return _cacheElement;
+    _cacheElement->addMeAsDependencyOf(caller);
+  return *_cacheElement;
 }
 
 dataCacheDouble &dataCacheMap::get(const std::string &functionName, dataCache *caller) 
@@ -64,15 +67,15 @@ dataCacheDouble &dataCacheMap::provideData(std::string name)
   dataCacheDouble *&r= _cacheDoubleMap[name];
   if(r!=NULL)
     throw;
-  r = new providedDataDouble;
+  r = new providedDataDouble(*this);
   return *r;
 }
 
 dataCacheMap::~dataCacheMap()
 {
-  for (std::map<std::string, dataCacheDouble*>::iterator it = _cacheDoubleMap.begin();
-      it!=_cacheDoubleMap.end(); it++) {
-    delete it->second;
+  for (std::set<dataCache*>::iterator it = _toDelete.begin();
+      it!=_toDelete.end(); it++) {
+    delete *it;
   }
 }
 
@@ -88,7 +91,7 @@ class functionXYZ : public function {
   int count;
    public:
     data(dataCacheMap *m) : 
-      dataCacheDouble(m->getNbEvaluationPoints(),3),
+      dataCacheDouble(*m, m->getNbEvaluationPoints(),3),
       _element(m->getElement(this)), _uvw(m->get("UVW", this))
     {
     }
@@ -118,7 +121,7 @@ class functionConstant::data : public dataCacheDouble {
  const functionConstant *_function;
  public:
  data(const functionConstant * function,dataCacheMap *m):
-   dataCacheDouble(m->getNbEvaluationPoints(),function->_source.size1()){
+   dataCacheDouble(*m,m->getNbEvaluationPoints(),function->_source.size1()){
      _function = function;
    }
  void _eval() {

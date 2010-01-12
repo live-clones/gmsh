@@ -10,7 +10,7 @@ class dgConservationLawAdvection::advection : public dataCacheDouble {
   dataCacheDouble &sol, &v;
   public:
   advection(std::string vFunctionName, dataCacheMap &cacheMap):
-    dataCacheDouble(cacheMap.getNbEvaluationPoints(),3),
+    dataCacheDouble(cacheMap,cacheMap.getNbEvaluationPoints(),3),
     sol(cacheMap.get("Solution",this)),
     v(cacheMap.get(vFunctionName,this))
   {};
@@ -26,7 +26,7 @@ class dgConservationLawAdvection::riemann : public dataCacheDouble {
   dataCacheDouble &normals, &solLeft, &solRight,&v;
   public:
   riemann(std::string vFunctionName, dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight):
-    dataCacheDouble(cacheMapLeft.getNbEvaluationPoints(),2),
+    dataCacheDouble(cacheMapLeft,cacheMapLeft.getNbEvaluationPoints(),2),
     normals(cacheMapLeft.get("Normals", this)),
     solLeft(cacheMapLeft.get("Solution", this)),
     solRight(cacheMapRight.get("Solution", this)),
@@ -49,6 +49,7 @@ class dgConservationLawAdvection::diffusion : public dataCacheDouble {
   dataCacheDouble &solgrad, &nu;
   public:
   diffusion(std::string nuFunctionName, dataCacheMap &cacheMap):
+    dataCacheDouble(cacheMap),
     solgrad(cacheMap.get("SolutionGradient",this)),
     nu(cacheMap.get(nuFunctionName,this))
   {};

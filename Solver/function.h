@@ -43,7 +43,7 @@ protected :
       it!=_dependOnMe.end(); it++)
         (*it)->_valid=false;
   }
-  dataCache() : _valid(false) {}
+  dataCache(dataCacheMap *cacheMap);
   virtual ~dataCache(){};
 public :
   // dataCacheMap is the only one supposed to call this
@@ -105,8 +105,8 @@ class dataCacheDouble : public dataCache {
     }
     return _value;
   }
-  dataCacheDouble(){};
-  dataCacheDouble(int size1, int size2):_value(size1,size2){};
+  dataCacheDouble(dataCacheMap &map):dataCache(&map){};
+  dataCacheDouble(dataCacheMap &map,int size1, int size2):dataCache(&map),_value(size1,size2){};
   virtual ~dataCacheDouble(){};
 };
 
@@ -141,15 +141,17 @@ class dataCacheElement : public dataCache {
     _element=ele;
   };
   inline MElement *operator () () { return _element; }
+  dataCacheElement(dataCacheMap *map):dataCache(map){}
 };
 
 // more explanation at the head of this file
 class dataCacheMap {
+  friend class dataCache;
  private:
   int _nbEvaluationPoints;
   // keep track of the current element and all the dataCaches that
   // depend on it
-  dataCacheElement _cacheElement;
+  dataCacheElement *_cacheElement;
   std::map<std::string, dataCacheDouble*> _cacheDoubleMap;
   class providedDataDouble : public dataCacheDouble
   // for data provided by the algorithm and that does not have an _eval function
@@ -157,15 +159,23 @@ class dataCacheMap {
   {
     void _eval() {throw;};
     public:
-    providedDataDouble() {
+    providedDataDouble(dataCacheMap &map):dataCacheDouble(map) {
       _valid=true;
     }
   };
+  std::set<dataCache*> _toDelete;
+ protected:
+  void addDataCache(dataCache *data){
+    _toDelete.insert(data);
+  }
  public:
   dataCacheDouble &get(const std::string &functionName, dataCache *caller=0);
   dataCacheElement &getElement(dataCache *caller=0);
   dataCacheDouble &provideData(std::string name);
-  dataCacheMap(int nbEvaluationPoints):_nbEvaluationPoints(nbEvaluationPoints){}
+  dataCacheMap(int nbEvaluationPoints):_nbEvaluationPoints(nbEvaluationPoints){
+    _cacheElement= new dataCacheElement(this);
+}
+
   inline int getNbEvaluationPoints(){return _nbEvaluationPoints;}
   ~dataCacheMap();
 };

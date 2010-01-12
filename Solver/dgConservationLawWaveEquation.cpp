@@ -10,6 +10,7 @@ class dgConservationLawWaveEquation::hyperbolicFlux : public dataCacheDouble {
   const int _DIM,_nbf;    
   public:
   hyperbolicFlux(dataCacheMap &cacheMap,int DIM):
+    dataCacheDouble(cacheMap),
     sol(cacheMap.get("Solution",this)),_DIM(DIM),_nbf(DIM+1)
   {};
   void _eval () {
@@ -31,6 +32,7 @@ class dgConservationLawWaveEquation::maxConvectiveSpeed : public dataCacheDouble
   dataCacheDouble &sol;
   public:
   maxConvectiveSpeed(dataCacheMap &cacheMap):
+    dataCacheDouble(cacheMap),
     sol(cacheMap.get("Solution",this))
   {
   };
@@ -47,6 +49,7 @@ class dgConservationLawWaveEquation::riemann : public dataCacheDouble {
   const int _DIM,_nbf;
   public:
   riemann(dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight, int DIM):
+    dataCacheDouble(cacheMapLeft),
     normals(cacheMapLeft.get("Normals", this)),
     solL(cacheMapLeft.get("Solution", this)),
     solR(cacheMapRight.get("Solution", this)),
@@ -107,6 +110,7 @@ class dgBoundaryConditionWaveEquationWall : public dgBoundaryCondition {
     dataCacheDouble &sol,&normals;    
     public:
     term(dataCacheMap &cacheMap, int DIM):
+      dataCacheDouble(cacheMap),
       sol(cacheMap.get("Solution",this)),
       normals(cacheMap.get("Normals",this)),
       _DIM(DIM){}
