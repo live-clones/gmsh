@@ -405,8 +405,10 @@ void MVertex::registerBindings(binding *b)
   classBinding *cb = b->addClass<MVertex>("MVertex");
   methodBinding *cm;
   cm = cb->addMethod("getNum",&MVertex::getNum);
-  //  cm = cb->addMethod("x",&MVertex::x);
-  //  cm = cb->addMethod("y",&MVertex::y);
-  //  cm = cb->addMethod("z",&MVertex::z);
+  // here we specify the cast because there are 2 MVertex::x function
+  cm = cb->addMethod("x", (double (MVertex::*)() const) &MVertex::x);
+  cm = cb->addMethod("x2", (double& (MVertex::*)()) &MVertex::x);
+  cm = cb->addMethod("y", (double (MVertex::*)() const) &MVertex::y);
+  cm = cb->addMethod("z", (double (MVertex::*)() const) &MVertex::z);
   cm = cb->setConstructor<MVertex,double,double,double>();
 }
