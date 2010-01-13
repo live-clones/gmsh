@@ -58,7 +58,7 @@ class luaStack {
     printf("error cannot get generic class in lua, only pointers are implemented\n");
   }
   static void push(lua_State *L, type obj){
-    printf("error cannot push generic class in lua, only pointers are implemented\n");
+    Msg::Error("cannot push generic class in lua, only pointers are implemented\n");
   }
 };
 
@@ -69,7 +69,7 @@ class luaStack<lua_State *>{
     return L;
   }
   static void push(lua_State *L, int i){
-    printf("error cannot push a lua_State in lua\n");
+    Msg::Error("error cannot push a lua_State in lua\n");
   }
 };
 
@@ -156,6 +156,42 @@ class luaStack<const type *>{
     ud->pT=(type*)obj;
     luaL_getmetatable(L,className<type>::get().c_str());  // lookup metatable in Lua registry
     lua_setmetatable(L, -2);
+  }
+};
+
+template <typename type>
+class luaStack<type &>{
+  typedef struct { type *pT;} userdataType;
+  public:
+  static type& get(lua_State *L, int ia){
+    userdataType *ud = static_cast<userdataType*>(lua_touserdata(L, ia));
+    if(!ud) luaL_typerror(L, ia, className<type>::get().c_str());
+    return *ud->pT; 
+  }
+  static void push(lua_State *L,type &obj){
+/*    userdataType *ud = static_cast<userdataType*>(lua_newuserdata(L, sizeof(userdataType)));
+    ud->pT=&obj;
+    luaL_getmetatable(L,className<type>::get().c_str());  // lookup metatable in Lua registry
+    lua_setmetatable(L, -2);*/
+    Msg::Error("cannot push a reference lua\n");
+  }
+};
+
+template <typename type>
+class luaStack<const type &>{
+  typedef struct { type *pT;} userdataType;
+  public:
+  static type& get(lua_State *L, int ia){
+    userdataType *ud = static_cast<userdataType*>(lua_touserdata(L, ia));
+    if(!ud) luaL_typerror(L, ia, className<type>::get().c_str());
+    return *ud->pT; 
+  }
+  static void push(lua_State *L,const type &obj){
+    /*userdataType *ud = static_cast<userdataType*>(lua_newuserdata(L, sizeof(userdataType)));
+    ud->pT=(type*)&obj;
+    luaL_getmetatable(L,className<type>::get().c_str());  // lookup metatable in Lua registry
+    lua_setmetatable(L, -2);*/
+    Msg::Error("cannot push a reference lua\n");
   }
 };
 
