@@ -21,7 +21,7 @@
 #include "functionSpace.h"
 
 template<class T>
-class SolverField : public FunctionSpace<T> // being able to use it instead of a real function space is interesting (nbkeys=1, dofs undefined (or could be defined by element-wise )
+class SolverField : public FunctionSpace<T> // being able to use it instead of a real function space is interesting (nbkeys=1, explicit keys/dofs undefined (or could be defined element-wise )
 {
  public:
   typedef typename TensorialTraits<T>::ValType ValType;
@@ -37,26 +37,6 @@ class SolverField : public FunctionSpace<T> // being able to use it instead of a
   virtual void getKeys(MElement *ele, std::vector<Dof> &keys) { Msg::Error("getKeys for SolverField should'nt be called");}
   virtual void getKeys(MVertex *ver, std::vector<Dof> &keys) {Msg::Error("getKeys for SolverField should'nt be called");}
  public:
-
-  virtual void f(MVertex *ver, std::vector<ValType> &vals)
-  {
-    ValType val;
-    f(ver,val);
-    vals.push_back(val);
-  }
-
-  virtual void f(MVertex *ver, ValType &val)
-  {
-    std::vector<Dof> D;
-    std::vector<ValType> SFVals;
-    std::vector<double> DMVals;
-    fs->getKeys(ver,D);
-    dm->getDofValue(D,DMVals);
-    fs->f(ver,SFVals);
-    val=ValType();
-    for (int i=0;i<D.size();++i)
-      val+=SFVals[i]*DMVals[i];
-  }
 
   virtual void f(MElement *ele, double u, double v, double w, ValType &val)
   {
@@ -98,9 +78,6 @@ class SolverField : public FunctionSpace<T> // being able to use it instead of a
     grads.push_back(grad);
   }
 };
-
-
-
 
 /*
 

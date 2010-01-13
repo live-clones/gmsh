@@ -51,6 +51,13 @@ public :
   inline bool somethingDependOnMe() {
     return !_dependOnMe.empty();
   }
+  inline int howManyDependOnMe() {
+    return _dependOnMe.size();
+  }
+  inline int howManyDoIDependOn() {
+    return _iDependOn.size();
+  }
+
 };
 
 // dataCache when the value is a double 

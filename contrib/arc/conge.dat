@@ -5,10 +5,9 @@ EdgeDisplacement 8 1 0
 EdgeDisplacement 8 2 0
 #NodeDisplacement 20 0 0
 #NodeDisplacement 20 1 0
-#NodeDisplacement 20 2 0
 #NodeDisplacement 21 1 0
-#NodeDisplacement 21 2 0
+#NodeForce 21 100e6 0 0
 EdgeForce 9 100e6 0 0
 #FaceForce 7  0 -1.0e10  0 
-#NodeForce 20 -1e7 0 0 
+#NodeForce 20 -1e8 0 0 
 

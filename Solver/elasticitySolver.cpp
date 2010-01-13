@@ -16,7 +16,7 @@
 #include "solverAlgorithms.h"
 #include "quadratureRules.h"
 #include "solverField.h"
-
+#include "MPoint.h"
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
@@ -164,14 +164,11 @@ void elasticitySolver::solve()
   // give priority to fixations : when a dof is fixed, it cannot be
   // numbered afterwards
 
-
+  std::cout <<  "Dirichlet BC"<< std::endl;
   for (unsigned int i = 0; i < allDirichlet.size(); i++)
   {
     FilterDofComponent filter(allDirichlet[i]._comp);
-    if (allDirichlet[i].onWhat==BoundaryCondition::ON_VERTEX)
-      FixNodalDofs(*LagSpace,allDirichlet[i].g->vbegin(),allDirichlet[i].g->vend(),*pAssembler,allDirichlet[i]._f,filter);
-    else
-      FixNodalDofs(*LagSpace,allDirichlet[i].g->begin(),allDirichlet[i].g->end(),*pAssembler,allDirichlet[i]._f,filter);
+    FixNodalDofs(*LagSpace,allDirichlet[i].g->begin(),allDirichlet[i].g->end(),*pAssembler,allDirichlet[i]._f,filter);
   }
 
   // we number the dofs : when a dof is numbered, it cannot be numbered
@@ -185,14 +182,11 @@ void elasticitySolver::solve()
   // First build the force vector
 
   GaussQuadrature Integ_Boundary(GaussQuadrature::Val);
-
+  std::cout <<  "Neumann BC"<< std::endl;
   for (unsigned int i = 0; i < allNeumann.size(); i++)
   {
     LoadTerm<SVector3> Lterm(*LagSpace,allNeumann[i]._f);
-    if (allNeumann[i].onWhat==BoundaryCondition::ON_VERTEX)
-      Assemble(Lterm,*LagSpace,allNeumann[i].g->vbegin(),allNeumann[i].g->vend(),*pAssembler);
-    else
-      Assemble(Lterm,*LagSpace,allNeumann[i].g->begin(),allNeumann[i].g->end(),Integ_Boundary,*pAssembler);
+    Assemble(Lterm,*LagSpace,allNeumann[i].g->begin(),allNeumann[i].g->end(),Integ_Boundary,*pAssembler);
   }
 
 // bulk material law
@@ -279,7 +273,8 @@ PView* elasticitySolver::buildDisplacementView (const std::string &postFileName)
   for ( std::set<MVertex*>::iterator it = v.begin(); it != v.end(); ++it)
   {
     SVector3 val;
-    Field.f(*it,val);
+    MPoint p(*it);
+    Field.f(&p,0,0,0,val);
     std::vector<double> vec(3);vec[0]=val(0);vec[1]=val(1);vec[2]=val(2);
     data[(*it)->getNum()]=vec;
   }

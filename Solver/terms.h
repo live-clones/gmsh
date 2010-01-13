@@ -44,7 +44,6 @@ class  LinearTermBase
   public:
   virtual ~LinearTermBase() {}
   virtual void get(MElement *ele,int npts,IntPt *GP,fullVector<double> &v) =0;
-  virtual void get(MVertex *ver,fullVector<double> &m) =0;
 };
 
 template<class T1> class LinearTerm : public LinearTermBase
@@ -307,20 +306,6 @@ template<class T1> class LoadTerm : public LinearTerm<T1>
       {
         m(j)+=dot(Vals[j],load)*weight*detJ;
       }
-    }
-  }
-
-  virtual void get(MVertex *ver,fullVector<double> &m)
-  {
-    double nbFF=LinearTerm<T1>::space1.getNumKeys(ver);
-    double jac[3][3];
-    m.resize(nbFF);
-    std::vector<typename TensorialTraits<T1>::ValType> Vals;
-    LinearTerm<T1>::space1.f(ver, Vals);
-    typename TensorialTraits<T1>::ValType load=Load(ver->x(),ver->y(),ver->z());
-    for (int j = 0; j < nbFF ; ++j)
-    {
-      m(j)=dot(Vals[j],load);
     }
   }
 };
