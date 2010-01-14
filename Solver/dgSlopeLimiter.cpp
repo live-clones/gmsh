@@ -106,7 +106,6 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution,
 	solutionE.setAsProxy(solGroup, iElement*nbFields, nbFields );
 	solutionE.set((*solutionEClipped)());    
        }
-      delete solutionEClipped;
     }
   }  
   return true; 
