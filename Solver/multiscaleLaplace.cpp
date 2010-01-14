@@ -215,8 +215,6 @@ static void recur_compute_centers_ (double R, double a1, double a2,
 
   SPoint2 PL (R*cos(a1),R*sin(a1));
   SPoint2 PR (R*cos(a2),R*sin(a2));
-  printf("R=%g a1=%g PL=%g %g \n", R, a1*180/M_PI, PL.x(), PL.y());
-  printf("R=%g a2=%g PR=%g %g \n", R, a2*180/M_PI, PR.x(), PR.y());
   centers.push_back(std::make_pair(PL,zero));  
   centers.push_back(std::make_pair(PR,zero));  
   for (int i=0;i<root->children.size();i++){

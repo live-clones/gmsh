@@ -723,6 +723,7 @@ distance to segment
 */
 
 void signedDistancesPointsTriangle(std::vector<double>&distances,
+				   std::vector<SPoint3>&closePts,
                                    const std::vector<SPoint3> &pts,
                                    const SPoint3 &p1,
                                    const SPoint3 &p2,
@@ -742,6 +743,8 @@ void signedDistancesPointsTriangle(std::vector<double>&distances,
   
   distances.clear();
   distances.resize(pts.size());
+  closePts.clear();
+  closePts.resize(pts.size());
 
   for (unsigned int i = 0; i < pts.size(); i++)
     distances[i] = 1.e22;
@@ -763,6 +766,7 @@ void signedDistancesPointsTriangle(std::vector<double>&distances,
     if (d == 0) sign = 1.e10;
     if (u >= 0 && v >= 0 && 1.-u-v >= 0.0){
       distances[i] = d;
+      closePts[i] = SPoint3(0.,0.,0.);//TO DO
     }
     else {
       const double t12 = dot(pp1, t1) / n2t1;
@@ -771,21 +775,80 @@ void signedDistancesPointsTriangle(std::vector<double>&distances,
       const double t23 = dot(pp2, t3) / n2t3;
       d = 1.e10;
       bool found = false;
+      SPoint3 closePt;
       if (t12 >= 0 && t12 <= 1.){
-	d = sign * std::min(fabs(d), p.distance(p1 + (p2 - p1) * t12));            
+	d = sign * std::min(fabs(d), p.distance(p1 + (p2 - p1) * t12));  
+        closePt = p1 + (p2 - p1) * t12;
 	found = true;
       }
       if (t13 >= 0 && t13 <= 1.){
+	if (p.distance(p1 + (p3 - p1) * t13) < fabs(d))	  closePt = p1 + (p3 - p1) * t13;
 	d = sign * std::min(fabs(d), p.distance(p1 + (p3 - p1) * t13));      
 	found = true;
       }      
       if (t23 >= 0 && t23 <= 1.){
+	if (p.distance(p2 + (p3 - p2) * t23) < fabs(d))	  closePt = p2 + (p3 - p2) * t23;
 	d = sign * std::min(fabs(d), p.distance(p2 + (p3 - p2) * t23));      
 	found = true;
       }
-      d = sign * std::min(fabs(d), std::min(std::min(p.distance(p1), p.distance(p2)),
-                                            p.distance(p3)));
+      if (p.distance(p1) < fabs(d)){
+	closePt = p1;
+	d = sign * std::min(fabs(d), p.distance(p1));
+       }
+      if (p.distance(p2) < fabs(d)){
+	closePt = p2;
+	d = sign * std::min(fabs(d), p.distance(p2));
+       }
+      if (p.distance(p3) < fabs(d)){
+	closePt = p3;
+	d = sign * std::min(fabs(d), p.distance(p3));
+      }
+      //d = sign * std::min(fabs(d), std::min(std::min(p.distance(p1), p.distance(p2)),p.distance(p3)));
       distances[i] = d;
+      closePts[i] = closePt;
     }
   }					   
+}
+
+void signedDistancesPointsLine (std::vector<double>&distances,
+				std::vector<SPoint3>&closePts,
+				const std::vector<SPoint3> &pts,
+				const SPoint3 &p1,
+				const SPoint3 &p2){
+
+  SVector3 t1 = p2 - p1;
+  const double n2t1 = dot(t1, t1);
+  
+  distances.clear();
+  distances.resize(pts.size());
+  closePts.clear();
+  closePts.resize(pts.size());
+
+  double d;
+  for (unsigned int i = 0; i < pts.size();i++){
+    const SPoint3 &p = pts[i];
+    SVector3 pp1 = p - p1;
+    const double t12 = dot(pp1, t1) / n2t1;
+    d = 1.e10;
+    bool found = false;
+    SPoint3 closePt;
+    if (t12 >= 0 && t12 <= 1.){
+      d =  std::min(fabs(d), p.distance(p1 + (p2 - p1) * t12));  
+      closePt = p1 + (p2 - p1) * t12;
+      found = true;
+    }
+
+    if (p.distance(p1) < fabs(d)){
+      closePt = p1;
+      d =  std::min(fabs(d), p.distance(p1));
+    }
+    if (p.distance(p2) < fabs(d)){
+      closePt = p2;
+      d =  std::min(fabs(d), p.distance(p2));
+    }
+    
+    distances[i] = d;
+    closePts[i] = closePt;
+  }
+
 }
