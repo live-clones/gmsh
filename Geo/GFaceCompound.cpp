@@ -1078,7 +1078,7 @@ void GFaceCompound::parametrize_conformal() const
   
 
   simpleFunction<double> ONE(1.0);
-  simpleFunction<double> MONE(-1.0 );
+  simpleFunction<double> MONE(1.0 );
   laplaceTerm laplace1(model(), 1, &ONE);
   laplaceTerm laplace2(model(), 2, &ONE);
   crossConfTerm cross12(model(), 1, 2, &ONE);
