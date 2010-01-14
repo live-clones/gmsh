@@ -51,7 +51,7 @@ int main (int argc, char* argv[])
     printf("usage : elasticity input_file_name\n");
     return -1;
   }
-
+#if 0
   fullMatrix<double> a(1,1);
   a(0,0)=1.0;
   fullMatrix<double> b(1,1);
@@ -93,7 +93,8 @@ int main (int argc, char* argv[])
   dc_a.set(b);
   std::cout << "a+b+c+d" << std::endl;
   std::cout << dc_abcd(0,0) << std::endl;
-//  return(0);
+  return(0);
+#endif
 
   GmshInitialize(argc, argv);
   // globals are still present in Gmsh
