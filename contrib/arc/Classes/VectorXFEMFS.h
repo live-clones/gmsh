@@ -28,9 +28,6 @@ class ScalarLagrangeToXfemFS : public ScalarLagrangeFunctionSpace{
 
     typedef TensorialTraits<double>::ValType ValType;
     typedef TensorialTraits<double>::GradType GradType;
-    typedef TensorialTraits<double>::HessType HessType;
-    typedef TensorialTraits<double>::DivType DivType;
-    typedef TensorialTraits<double>::CurlType CurlType;
 
   protected:
 
@@ -74,9 +71,7 @@ class ScalarXFEMToVectorFS : public ScalarToAnyFunctionSpace<SVector3>
 
     typedef TensorialTraits<SVector3>::ValType ValType;
     typedef TensorialTraits<SVector3>::GradType GradType;
-    typedef TensorialTraits<SVector3>::HessType HessType;
-    typedef TensorialTraits<SVector3>::DivType DivType;
-    typedef TensorialTraits<SVector3>::CurlType CurlType;
+
 
     ScalarXFEMToVectorFS(int id , std::set<int > & TagEnrichedVertex , simpleFunction<double> * funcEnrichment) :
           ScalarToAnyFunctionSpace<SVector3>::ScalarToAnyFunctionSpace(ScalarLagrangeToXfemFS(id,TagEnrichedVertex,funcEnrichment),

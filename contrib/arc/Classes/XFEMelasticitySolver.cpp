@@ -26,11 +26,12 @@
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
+#include "MPoint.h"
 #endif
 
 
 #include "DILevelset.h"
-#include "VectorXFEMFS.cpp"
+//#include "VectorXFEMFS.cpp"
 #include "XFEMelasticitySolver.h"
 #include "FuncHeaviside.h"
 
@@ -84,7 +85,6 @@ void XFEMelasticitySolver::solve(){
   _EnrichComp.push_back(1);
   //_EnrichComp.push_back(2);
 
-
   // level set definition (in .dat ??)
   double a(0.), b(1.), c(0.), d(-4.7);
   int n(1); // pour level set
@@ -105,13 +105,11 @@ void XFEMelasticitySolver::solve(){
   // give priority to fixations : when a dof is fixed, it cannot be
   // numbered afterwards
 
+  std::cout <<  "Dirichlet BC"<< std::endl;
   for (unsigned int i = 0; i < allDirichlet.size(); i++)
   {
     FilterDofComponent filter(allDirichlet[i]._comp);
-    if (allDirichlet[i].onWhat==BoundaryCondition::ON_VERTEX)
-      FixNodalDofs(*LagSpace,allDirichlet[i].g->vbegin(),allDirichlet[i].g->vend(),*pAssembler,allDirichlet[i]._f,filter);
-    else
-      FixNodalDofs(*LagSpace,allDirichlet[i].g->begin(),allDirichlet[i].g->end(),*pAssembler,allDirichlet[i]._f,filter);
+    FixNodalDofs(*LagSpace,allDirichlet[i].g->begin(),allDirichlet[i].g->end(),*pAssembler,allDirichlet[i]._f,filter);
   }
 
   // we number the dofs : when a dof is numbered, it cannot be numbered
@@ -125,22 +123,20 @@ void XFEMelasticitySolver::solve(){
   // First build the force vector
 
   GaussQuadrature Integ_Boundary(GaussQuadrature::Val);
-
+  std::cout <<  "Neumann BC"<< std::endl;
   for (unsigned int i = 0; i < allNeumann.size(); i++)
   {
     LoadTerm<SVector3> Lterm(*LagSpace,allNeumann[i]._f);
-    if (allNeumann[i].onWhat==BoundaryCondition::ON_VERTEX)
-      Assemble(Lterm,*LagSpace,allNeumann[i].g->vbegin(),allNeumann[i].g->vend(),*pAssembler);
-    else
-      Assemble(Lterm,*LagSpace,allNeumann[i].g->begin(),allNeumann[i].g->end(),Integ_Boundary,*pAssembler);
+    Assemble(Lterm,*LagSpace,allNeumann[i].g->begin(),allNeumann[i].g->end(),Integ_Boundary,*pAssembler);
   }
 
-  // bulk material law
+// bulk material law
 
   GaussQuadrature Integ_Bulk(GaussQuadrature::GradGrad);
   for (unsigned int i = 0; i < elasticFields.size(); i++)
   {
     IsotropicElasticTerm Eterm(*LagSpace,elasticFields[i]._E,elasticFields[i]._nu);
+//    LaplaceTerm<SVector3,SVector3> Eterm(*LagSpace);
     Assemble(Eterm,*LagSpace,elasticFields[i].g->begin(),elasticFields[i].g->end(),Integ_Bulk,*pAssembler);
   }
 
@@ -158,12 +154,15 @@ void XFEMelasticitySolver::solve(){
     Assemble(Elastic_Energy_Term,elasticFields[i].g->begin(),elasticFields[i].g->end(),Integ_Bulk,energ);
   }
   printf("elastic energy=%f\n",energ);
+  for (int i=0;i<pAssembler->sizeOfR();i++) std::cout<< lsys->getFromSolution(i) << "\n";
+
 }
 
 
 
 PView* XFEMelasticitySolver::buildDisplacementView (const std::string &postFileName)
 {
+
   std::set<MVertex*> v;
   for (unsigned int i = 0; i < elasticFields.size(); ++i)
   {
@@ -179,10 +178,14 @@ PView* XFEMelasticitySolver::buildDisplacementView (const std::string &postFileN
   for ( std::set<MVertex*>::iterator it = v.begin(); it != v.end(); ++it)
   {
     SVector3 val;
-    Field.f(*it,val);
-    std::vector<double> vec(3);vec[0]=val(0);vec[1]=val(1);vec[2]=0;
+    MPoint p(*it);
+    Field.f(&p,0,0,0,val);
+    std::vector<double> vec(3);vec[0]=val(0);vec[1]=val(1);vec[2]=val(2);
+    std::cout<<"ver num : " << (*it)->getNum() <<"\n" ;
+    std::cout<<"( "<<vec[0]<<" "<<vec[1]<<" "<<vec[2]<<" )\n";
     data[(*it)->getNum()]=vec;
   }
   PView *pv = new PView (postFileName, "NodeData", pModel, data, 0.0);
   return pv;
+
 }
