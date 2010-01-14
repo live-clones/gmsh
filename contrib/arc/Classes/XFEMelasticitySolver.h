@@ -19,6 +19,8 @@ class XFEMelasticitySolver : public elasticitySolver
   protected :
     // map containing the tag of vertex and enriched status
     std::set<int > _TagEnrichedVertex;
+    // enriched comp
+    std::vector<int>  _EnrichComp;
     // simple multiplying function enrichment to enrich the space function
     simpleFunction <double> *_funcEnrichment;
 

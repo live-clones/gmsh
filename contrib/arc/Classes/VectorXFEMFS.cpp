@@ -85,7 +85,10 @@ void ScalarLagrangeToXfemFS::gradf(MElement *ele, double u, double v, double w,s
     {
         std::set<int>::iterator it;
         it = _TagEnrichedVertex->find(ele->getVertex(i)->getNum());
-        if (it!=_TagEnrichedVertex->end()){ndofs = ndofs + 1;} // enriched dof
+        if (it!=_TagEnrichedVertex->end())
+        {
+            ndofs = ndofs + 1;    // enriched dof
+        }
     }
 
     int curpos = grads.size();

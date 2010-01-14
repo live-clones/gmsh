@@ -34,6 +34,7 @@
 #include "XFEMelasticitySolver.h"
 #include "FuncHeaviside.h"
 
+#include "NodeEnrichedFS.cpp"
 
 XFEMelasticitySolver::~XFEMelasticitySolver()
 {
@@ -78,16 +79,27 @@ void XFEMelasticitySolver::solve(){
     }
   }
 
+  // enriched composant
+  _EnrichComp.push_back(0);
+  _EnrichComp.push_back(1);
+  //_EnrichComp.push_back(2);
+
+
   // level set definition (in .dat ??)
   double a(0.), b(1.), c(0.), d(-4.7);
   int n(1); // pour level set
   gLevelset *ls = new gLevelsetPlane(a, b, c, d, n);
   _funcEnrichment = new FuncHeaviside(ls);
 
+
   // space function definition
+  FunctionSpace<SVector3> *NLagSpace;
   if (LagSpace) delete LagSpace;
-  if (_dim==3) LagSpace=new ScalarXFEMToVectorFS(_tag,_TagEnrichedVertex,_funcEnrichment);
-  if (_dim==2) LagSpace=new ScalarXFEMToVectorFS(_tag,ScalarXFEMToVectorFS::VECTOR_X,ScalarXFEMToVectorFS::VECTOR_Y,_TagEnrichedVertex,_funcEnrichment);
+  if (_dim==3) NLagSpace=new VectorLagrangeFunctionSpace(_tag);
+  if (_dim==2) NLagSpace=new VectorLagrangeFunctionSpace(_tag,VectorLagrangeFunctionSpace::VECTOR_X,VectorLagrangeFunctionSpace::VECTOR_Y);
+
+  LagSpace = new NodeEnrichedFS<SVector3>(NLagSpace, &_TagEnrichedVertex ,&_EnrichComp, _funcEnrichment);
+  //LagSpace = new ScalarXFEMToVectorFS(_tag,ScalarXFEMToVectorFS::VECTOR_X,ScalarXFEMToVectorFS::VECTOR_Y,_TagEnrichedVertex,_funcEnrichment);
 
   // we first do all fixations. the behavior of the dofManager is to
   // give priority to fixations : when a dof is fixed, it cannot be
