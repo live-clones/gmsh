@@ -60,6 +60,17 @@ StringXString GeneralOptions_String[] = {
   { F|S, "OptionsFileName" , opt_general_options_filename , ".gmsh-options" ,
     "Option file created with `Tools->Options->Save'; automatically read on startup" },
 
+  { F|S, "RecentFile1", opt_general_recent_file1 , "" ,
+    "Most recent opened file"},
+  { F|S, "RecentFile2", opt_general_recent_file2 , "" ,
+    "2nd most recent opened file"},
+  { F|S, "RecentFile3", opt_general_recent_file3 , "" ,
+    "3rd most recent opened file"},
+  { F|S, "RecentFile4", opt_general_recent_file4 , "" ,
+    "4th most recent opened file"},
+  { F|S, "RecentFile5", opt_general_recent_file5 , "" ,
+    "5th most recent opened file"},
+  
   { 0,   "SessionFileName" , opt_general_session_filename , ".gmshrc" ,
     "Option file into which session specific information is saved; automatically "
     "read on startup" },
@@ -597,6 +608,9 @@ StringXNumber GeneralOptions_Number[] = {
     "window" }, 
   { F|S, "GraphicsWidth" , opt_general_graphics_size0 , 600. , 
     "Width (in pixels) of the graphic window" }, 
+
+  { F|S, "HistorySize", opt_general_history_size , 0,
+    "Number of recently opened files in the menu"},
 
   { F|O, "InitialModule", opt_general_initial_context, 0. , 
     "Module launched on startup (0=automatic, 1=geometry, 2=mesh, 3=solver, "

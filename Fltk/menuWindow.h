@@ -72,9 +72,11 @@ class menuWindow{
   std::vector<popupButton*> popup;
   std::vector<popupButton*> popup2;
   std::vector<char*> label, label2;
+
  public:
   menuWindow();
   void setContext(contextItem *menu_asked, int flag);
+  void fillRecentHistoryMenu();
 };
 
 void file_quit_cb(Fl_Widget *w, void *data);
@@ -88,5 +90,6 @@ void geometry_reload_cb(Fl_Widget *w, void *data);
 void mesh_1d_cb(Fl_Widget *w, void *data);
 void mesh_2d_cb(Fl_Widget *w, void *data);
 void mesh_3d_cb(Fl_Widget *w, void *data);
+void file_open_recent_cb(Fl_Widget *w, void *data);
 
 #endif

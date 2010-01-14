@@ -64,6 +64,9 @@ class CTX {
   std::string meshStatReportFileName;
   // the home directory
   std::string homeDir;
+  // file history
+  int history_size;
+  std::string recent_files[5];
   // create mesh statistics report (0: do nothing, 1: create, 2: append)
   int createAppendMeshStatReport;
   // save session/option file on exit?

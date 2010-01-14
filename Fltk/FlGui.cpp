@@ -231,7 +231,7 @@ FlGui::FlGui(int argc, char **argv)
                                         gmsh32x32, 32, 32));
   menu->win->icon
     ((const char*)XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
-                                        gmsh32x32, 32, 32));
+    gmsh32x32, 32, 32));
 #endif
 
   // open graphic window first for correct non-modal behaviour on

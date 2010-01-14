@@ -141,6 +141,17 @@ static void file_merge_cb(Fl_Widget *w, void *data)
     FlGui::instance()->menu->setContext(menu_post, 0);
 }
 
+void file_open_recent_cb(Fl_Widget *w, void *data)
+{  
+  std::string str((const char*)data);
+
+  int n = PView::list.size();
+  OpenProject(str);
+  drawContext::global()->draw();
+  if(n != (int)PView::list.size())
+    FlGui::instance()->menu->setContext(menu_post, 0);
+}
+
 static void file_clear_cb(Fl_Widget *w, void *data)
 {
   ClearProject();
@@ -2218,6 +2229,13 @@ static Fl_Menu_Item bar_table[] = {
     {"&New...",     FL_CTRL+'n', (Fl_Callback *)file_new_cb, 0},
     {"&Open...",    FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
     {"M&erge...",   FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)file_merge_cb, 0},
+    {"Open recent", 0, 0, 0, FL_SUBMENU},
+      {"History1", 0,(Fl_Callback *)file_open_recent_cb, 0, FL_MENU_INVISIBLE},
+      {"History2", 0,(Fl_Callback *)file_open_recent_cb, 0, FL_MENU_INVISIBLE},
+      {"History3", 0,(Fl_Callback *)file_open_recent_cb, 0, FL_MENU_INVISIBLE},
+      {"History4", 0,(Fl_Callback *)file_open_recent_cb, 0, FL_MENU_INVISIBLE},
+      {"History5", 0,(Fl_Callback *)file_open_recent_cb, 0, FL_MENU_INVISIBLE},
+      {0},
     {"&Clear",      0, (Fl_Callback *)file_clear_cb, 0, FL_MENU_DIVIDER},
     {"Remote", 0, 0, 0, FL_MENU_DIVIDER | FL_SUBMENU},
       {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
@@ -2271,6 +2289,13 @@ static Fl_Menu_Item sysbar_table[] = {
     {"Open...",    FL_META+'o', (Fl_Callback *)file_open_cb, 0},
     {"Merge...",   FL_META+FL_SHIFT+'o', (Fl_Callback *)file_merge_cb, 0},
     {"Clear",      0, (Fl_Callback *)file_clear_cb, 0, FL_MENU_DIVIDER},
+    {"Open recent", 0, 0, 0, FL_SUBMENU},
+      {"History1", 0,(Fl_Callback *)file_open_recent_cb, 0, FL_MENU_INVISIBLE},
+      {"History2", 0,(Fl_Callback *)file_open_recent_cb, 0, FL_MENU_INVISIBLE},
+      {"History3", 0,(Fl_Callback *)file_open_recent_cb, 0, FL_MENU_INVISIBLE},
+      {"History4", 0,(Fl_Callback *)file_open_recent_cb, 0, FL_MENU_INVISIBLE},
+      {"History5", 0,(Fl_Callback *)file_open_recent_cb, 0, FL_MENU_INVISIBLE},
+      {0},
     {"Remote", 0, 0, 0, FL_MENU_DIVIDER | FL_SUBMENU},
       {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
       {"Merge...",  0, (Fl_Callback *)file_remote_cb, (void*)"merge"},
@@ -2598,6 +2623,10 @@ menuWindow::menuWindow()
     bar->menu(bar_table);
     bar->box(FL_UP_BOX);
     bar->global();
+    
+    // create recent history menu
+    fillRecentHistoryMenu();
+    
     Fl_Box *o = new Fl_Box(0, BH, width, BH + 6);
     o->box(FL_UP_BOX);
     y = BH + 3;
@@ -2871,4 +2900,19 @@ void menuWindow::setContext(contextItem *menu_asked, int flag)
     win->size(width, _MH + nb * BH);
   else
     win->size(width, _MH + NB_BUTT_SCROLL * BH);
+}
+
+void menuWindow::fillRecentHistoryMenu() {
+  for (int i = 0; i < CTX::instance()->history_size; i++){
+#if defined(__APPLE__)
+    sysbar_table[i+5].text = (CTX::instance()->recent_files[i]).c_str();
+    sysbar_table[i+5].callback_ = (Fl_Callback *)file_open_recent_cb;
+    sysbar_table[i+5].user_data_ = (void*)(CTX::instance()->recent_files[i]).c_str();
+    sysbar_table[i+5].show();
+#endif
+    bar_table[i+5].text = (CTX::instance()->recent_files[i]).c_str();
+    bar_table[i+5].callback_ = (Fl_Callback *)file_open_recent_cb;
+    bar_table[i+5].user_data_ = (void*)(CTX::instance()->recent_files[i]).c_str();
+    bar_table[i+5].show();
+  }; 
 }

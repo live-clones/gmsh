@@ -18,6 +18,7 @@
 #include "StringUtils.h"
 #include "GeomMeshMatcher.h"
 #include "LuaBindings.h"
+#include "menuWindow.h"
 
 #if defined(HAVE_PARSER)
 #include "Parser.h"
@@ -450,11 +451,18 @@ void OpenProject(std::string fileName)
 
   // temporary hack until we fill the current GModel on the fly during
   // parsing
-  ResetTemporaryBoundingBox();
+  ResetTemporaryBoundingBox(); 
 
   // merge the file
-  MergeFile(fileName);
-
+  if(MergeFile(fileName)) {
+    for (int i=4; i > 0; i--)
+      CTX::instance()->recent_files[i] = CTX::instance()->recent_files[i-1];
+    CTX::instance()->recent_files[0] = fileName;
+    if (CTX::instance()->history_size < 5)
+      CTX::instance()->history_size++;
+    FlGui::instance()->menu->fillRecentHistoryMenu();
+  }
+  
   CTX::instance()->lock = 0;
 
 #if defined(HAVE_FLTK)
