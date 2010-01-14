@@ -7,7 +7,7 @@
 #include <iterator>
 #include "function.h"
 #include "fullMatrix.h"
-/*
+
 class functionAdd : public function
 {
  private:
@@ -18,7 +18,7 @@ class functionAdd : public function
     std::vector<dataCacheDouble *> dcvec;
    public:
     data(const functionAdd * fm,dataCacheMap *m) :
-      dataCacheDouble(m->getNbEvaluationPoints(),1)
+      dataCacheDouble(*m,m->getNbEvaluationPoints(),1)
     {
       for (int i=0;i<fm->strvec.size();++i)
         dcvec.push_back(&(m->get(fm->strvec[i],this)));
@@ -41,7 +41,7 @@ class functionAdd : public function
   void addNewTerm(std::string _a)  { strvec.push_back(_a);}
 };
 
-*/
+
 
 
 int main (int argc, char* argv[])
@@ -51,7 +51,7 @@ int main (int argc, char* argv[])
     printf("usage : elasticity input_file_name\n");
     return -1;
   }
-/*
+
   fullMatrix<double> a(1,1);
   a(0,0)=1.0;
   fullMatrix<double> b(1,1);
@@ -93,16 +93,6 @@ int main (int argc, char* argv[])
   dc_a.set(b);
   std::cout << "a+b+c+d" << std::endl;
   std::cout << dc_abcd(0,0) << std::endl;
-*/
-
-/*
-  functionMult fm("axbxcxd","axbxcxd");
-  dataCacheDouble *res;
-  res=fm.newDataCache(&m);
-  std::cout << "*res" << std::endl;
-  std::cout << (*res)(0,0) << std::endl;
-*/
-
 //  return(0);
 
   GmshInitialize(argc, argv);
@@ -124,75 +114,6 @@ int main (int argc, char* argv[])
   pv->getData()->writeMSH("energ.msh", false);
   delete pv;
 
-
-
   // stop gmsh
   GmshFinalize();
-
 }
-
-
-
-/*
-  groupOfElements *g = new groupOfElements (2, 7);
-
-  MElement *e=*(g->begin());
-  std::cout << e->getNumPrimaryVertices() << "vertices" << std::endl;
-  const double uvw[3]={0.,0.,0.};
-  std::vector<Dof> dofs;
-  std::vector<double> vals;
-  std::vector<SVector3> grads;
-  std::vector<SVector3> vals2;
-  std::vector<STensor3> grads2;
-
-  std::ostream_iterator< double > output( std::cout, " " );
-
-  ScalarLagrangeFunctionSpace L(100);
-  std::cout << L.getNumKeys(e) << "fonctions de formes L" << std::endl;
-  L.getKeys(e,dofs);
-  for (int i=0;i<dofs.size();++i) std::cout << "entity: " << dofs[i].getEntity() << " id: " << dofs[i].getType() << std::endl;
-  dofs.clear();
-  L.f(e,0.1,0.1,0,vals);
-  L.gradf(e,0.1,0.1,0,grads);
-  std::copy(vals.begin(),vals.end(),output); std::cout << std::endl;
-  for (std::vector<SVector3>::iterator it=grads.begin();it!=grads.end();++it) { std::cout << (*it)[0]<< " " << (*it)[1] <<" " << (*it)[2] << std::endl; }
-
-  VectorLagrangeFunctionSpace L1(100,VectorLagrangeFunctionSpace::VECTOR_X);
-  VectorLagrangeFunctionSpace L2(100,VectorLagrangeFunctionSpace::VECTOR_Y);
-  std::cout << L2.getNumKeys(e) << "fonctions de formes L2" << std::endl;
-  L2.f(e,0.1,0.1,0,vals2);
-  L2.gradf(e,0.1,0.1,0,grads2);
-  for (std::vector<SVector3>::iterator it=vals2.begin();it!=vals2.end();++it) { std::cout << (*it)[0]<< " " << (*it)[1] <<" " << (*it)[2] << std::endl; }
-  for (std::vector<STensor3>::iterator it=grads2.begin();it!=grads2.end();++it) { (*it).print(""); }
-
-  VectorLagrangeFunctionSpace L3(100,VectorLagrangeFunctionSpace::VECTOR_Z);
-
-  VectorLagrangeFunctionSpace P123(100);
-  std::cout << P123.getNumKeys(e) << "fonctions de formes P123" << std::endl;
-  P123.getKeys(e,dofs);
-  std::cout << dofs.size() << std::endl;
-  for (int i=0;i<dofs.size();++i) std::cout << "entity: " << dofs[i].getEntity() << " id: " << dofs[i].getType() << std::endl;
-
-  vals2.clear();
-  grads2.clear();
-  P123.f(e,0.1,0.1,0,vals2);
-  P123.gradf(e,0.1,0.1,0,grads2);
-  for (std::vector<SVector3>::iterator it=vals2.begin();it!=vals2.end();++it) { std::cout << (*it)[0]<< " " << (*it)[1] <<" " << (*it)[2] << std::endl; }
-  for (std::vector<STensor3>::iterator it=grads2.begin();it!=grads2.end();++it) { (*it).print(""); }
-
-
-
-  FormBilinear<TermBilinearMeca,ScalarLagrangeFunctionSpace,ScalarLagrangeFunctionSpace > f(L,L);
-  f.func();
-  f.Accumulate(e,uvw);
-
-
-  FormBilinear<TermBilinearMecaNL,ScalarLagrangeFunctionSpace,ScalarLagrangeFunctionSpace > fnl(L,L);
-  fnl.func();
-
-*/
-
-
-
-
-
