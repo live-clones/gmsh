@@ -280,15 +280,10 @@ CombinedCell::~CombinedCell(){
   }
 } 
 
-// true if this cell has given vertex
 bool CombinedCell::hasVertex(int vertex) const {
-  //std::vector<int>::iterator it = std::find(_vs.begin(), _vs.end(), vertex);
-  //if (it == _vs.end()) return false;
-  //else return true;
-  for(unsigned int i = 0; i < _v.size(); i++){
-    if(_v.at(i)->getNum() == vertex) return true;
-  }
-  return false;
+  std::vector<int>::const_iterator it = std::find(_vs.begin(), _vs.end(), vertex);
+  if (it != _vs.end()) return true;
+  else return false;
 }
 
 void CombinedCell::printCell() const {

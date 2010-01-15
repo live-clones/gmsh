@@ -66,8 +66,6 @@ class Cell
    
    // for some algorithms to omit this cell
    bool _immune;
-   
-   
   
    // mutable list of cells on the boundary and on the coboundary of this cell
    std::map< Cell*, int, Less_Cell > _boundary;
@@ -689,6 +687,7 @@ class CellComplex
    // used in relative homology computation, may be empty
    std::vector<GEntity*> _subdomain;
    
+   // entities on the boundary of the homology computation domain
    std::vector<GEntity*> _boundary;
    
    // mesh vertices in this domain
@@ -698,11 +697,8 @@ class CellComplex
    // one for each dimension
    std::set<Cell*, Less_Cell>  _cells[4];
    
-   // storage for cell pointers to delete them
-   std::list<Cell*> _trash;  
-   
+   // temporary store for omitted cells (generators of the highest dimension)
    std::vector< std::set<Cell*, Less_Cell> > _store;
-   std::set<Cell*, Less_Cell> _ecells;
    
    // original cells of this cell complex
    std::set<Cell*, Less_Cell>  _ocells[4];
@@ -712,7 +708,7 @@ class CellComplex
    
    int _dim;
    
-   // Is the cell complex simplicial
+   // is the cell complex simplicial
    bool _simplicial;
    
    // enqueue cells in queue if they are not there already
@@ -739,7 +735,7 @@ class CellComplex
    CellComplex(){}
    ~CellComplex();
 
-   void emptyTrash();
+   //void emptyTrash();
    
    // restore this cell complex to its original state
    void restoreComplex();
@@ -771,8 +767,6 @@ class CellComplex
    // check whether two cells both belong to subdomain or if neither one does
    bool inSameDomain(Cell* c1, Cell* c2) const { return 
        ( (!c1->inSubdomain() && !c2->inSubdomain()) || (c1->inSubdomain() && c2->inSubdomain()) ); }
-     
-   void insertCell(Cell* cell);
    
    // reduction of this cell complex
    // removes reduction pairs of cell of dimension dim and dim-1
@@ -796,6 +790,7 @@ class CellComplex
    int combine(int dim);
    int cocombine(int dim);
    
+   // Compute betti numbers of this cell complex
    void computeBettiNumbers();
    int getBettiNumber(int i) { if(i > -1 && i < 4) return _betti[i]; else return 0; }
    

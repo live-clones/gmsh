@@ -268,10 +268,6 @@ CellComplex::~CellComplex(){
    }
    */
 
-void CellComplex::insertCell(Cell* cell){
-  _ecells.insert(cell);
-}
-
 void CellComplex::removeCell(Cell* cell, bool other){
   
   std::map<Cell*, int, Less_Cell > coboundary = cell->getOrientedCoboundary();
@@ -337,10 +333,8 @@ int CellComplex::coreduction(Cell* generator, int omitted){
       enqueueCells(cbd_c, Q, Qset);
       removeCell(bd_s.front());
       if(bd_s.front()->getDim() == 0 && omitted > 0) _store.at(omitted-1).insert(bd_s.front());
-      else _trash.push_back(bd_s.front());
       coreductions++;
       
-      _trash.push_back(s);
       
     }
     else if(bd_s.empty()){
@@ -375,10 +369,7 @@ int CellComplex::reduction(int dim, int omitted){
         ++cit;
         removeCell(cbd_c.front());
         removeCell(cell);
-        _trash.push_back(cell);
-        if(dim == getDim() && omitted > 0) _store.at(omitted-1).insert(cbd_c.front());
-        else _trash.push_back(cbd_c.front());
-        
+        if(dim == getDim() && omitted > 0) _store.at(omitted-1).insert(cbd_c.front());    
         
         count++;
         reduced = true;
@@ -619,7 +610,6 @@ void CellComplex::computeBettiNumbers(){
   }
   Msg::Debug("Cell complex Betti numbers: \nH0 = %d \nH1 = %d \nH2 = %d \nH3 = %d \n",
          getBettiNumber(0), getBettiNumber(1), getBettiNumber(2), getBettiNumber(3));
-  
   return;
 }
 
@@ -664,7 +654,6 @@ int CellComplex::cocombine(int dim){
            && c2->getNumVertices() < getSize(dim)){
                   
           removeCell(s);
-          _trash.push_back(s);
           
           cbd_c = c1->getCoboundary();
           enqueueCells(cbd_c, Q, Qset);
@@ -731,7 +720,6 @@ int CellComplex::combine(int dim){
            && c2->getNumVertices() < getSize(dim)){
 
           removeCell(s);
-          _trash.push_back(s);
           
           bd_c = c1->getBoundary();
           enqueueCells(bd_c, Q, Qset);
@@ -872,7 +860,6 @@ int CellComplex::writeComplexMSH(const std::string &name){
   for(int i = 0; i < _store.size(); i++){    
     count = count + _store.at(i).size();
   }
-  count = count + _ecells.size();
   
   fprintf(fp, "%d\n", count);
 
@@ -957,6 +944,7 @@ int CellComplex::writeComplexMSH(const std::string &name){
     }
   }
   
+  /*
   for(citer cit = _ecells.begin(); cit != _ecells.end(); cit++){
     Cell* cell = *cit;
     type = cell->getTypeForMSH();
@@ -975,9 +963,7 @@ int CellComplex::writeComplexMSH(const std::string &name){
       if(cell->getNumVertices() == 6) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(),cell->getVertex(4)->getNum(), cell->getVertex(5)->getNum());
       if(cell->getNumVertices() == 5) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(), cell->getVertex(4)->getNum());
     }  
-  }
-  
-  
+  }*/
   
   fprintf(fp, "$EndElements\n");
   
@@ -1054,55 +1040,45 @@ bool CellComplex::checkCoherence(){
   return coherent;
 }
 
-   void CellComplex::emptyTrash(){
-     for(std::list<Cell*>::iterator cit  = _trash.begin(); cit != _trash.end(); cit++){
-       Cell* cell = *cit;
-       delete cell;
-     }
-     _trash.clear();
-   }
-   
-      void CellComplex::restoreComplex(){
-     for(int i = 0; i < 4; i++){
-       _betti[i] = 0;
-       _cells[i] = _ocells[i];
-       for(citer cit = firstCell(i); cit != lastCell(i); cit++){
-         Cell* cell = *cit;
-         cell->restoreCell();
-       }
-     }
-     _store.clear();
-     _ecells.clear();
-     _trash.clear();
-   }
-   
-      bool CellComplex::hasCell(Cell* cell, bool org){
-     if(!org){
-       citer cit = _cells[cell->getDim()].find(cell);
-       if( cit == lastCell(cell->getDim()) ) return false;
-       else return true;
-     }
-     else{
-       citer cit = _ocells[cell->getDim()].find(cell);
-       if( cit == lastOrgCell(cell->getDim()) ) return false;
-       else return true;
-     }
-   }
-   
-      void CellComplex::makeDualComplex(){
-     std::set<Cell*, Less_Cell> temp = _cells[0];
-     _cells[0] = _cells[3];
-     _cells[3] = temp;
-     temp = _cells[1];
-     _cells[1] = _cells[2];
-     _cells[2] = temp;
-     
-     for(int i = 0; i < 4; i++){
-       for(citer cit = firstCell(i); cit != lastCell(i); cit++){
-         Cell* cell = *cit;
-         cell->makeDualCell();
-       }
-     }
-   }
+void CellComplex::restoreComplex(){
+  for(int i = 0; i < 4; i++){
+    _betti[i] = 0;
+    _cells[i] = _ocells[i];
+    for(citer cit = firstCell(i); cit != lastCell(i); cit++){
+      Cell* cell = *cit;
+      cell->restoreCell();
+    }
+  }
+  _store.clear();
+}
+
+bool CellComplex::hasCell(Cell* cell, bool org){
+  if(!org){
+    citer cit = _cells[cell->getDim()].find(cell);
+    if( cit == lastCell(cell->getDim()) ) return false;
+    else return true;
+  }
+  else{
+    citer cit = _ocells[cell->getDim()].find(cell);
+    if( cit == lastOrgCell(cell->getDim()) ) return false;
+    else return true;
+  }
+}
+
+void CellComplex::makeDualComplex(){
+  std::set<Cell*, Less_Cell> temp = _cells[0];
+  _cells[0] = _cells[3];
+  _cells[3] = temp;
+  temp = _cells[1];
+  _cells[1] = _cells[2];
+  _cells[2] = temp;
+  
+  for(int i = 0; i < 4; i++){
+    for(citer cit = firstCell(i); cit != lastCell(i); cit++){
+      Cell* cell = *cit;
+      cell->makeDualCell();
+    }
+  }
+}
 
 #endif

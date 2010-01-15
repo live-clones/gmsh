@@ -317,63 +317,63 @@ void Homology::computeBettiNumbers(){
   return;
 }
 
-   void Homology::restoreHomology() { 
-     _cellComplex->restoreComplex();
-     for(int i = 0; i < 4; i++) _generators[i].clear();
-   }
-   
-   std::string Homology::getDomainString() {
-     std::string domainString = "({";
-     for(unsigned int i = 0; i < _domain.size(); i++){
-       std::string temp = "";
-       convert(_domain.at(i),temp);
-       domainString += temp;
-       if (_domain.size()-1 > i){ 
-         domainString += ", ";
-       }
-     }
-     domainString += "}";
-     
-     if(!_subdomain.empty()){
-       domainString += ", {";
-       
-       for(unsigned int i = 0; i < _subdomain.size(); i++){
-         std::string temp = "";
-         convert(_subdomain.at(i),temp);
-         domainString += temp;
-         if (_subdomain.size()-1 > i){
-           domainString += ", ";
-         }
-       } 
-       domainString += "}";
-       
-     }
-   domainString += ") ";
-   return domainString;
-   }
-   
-   void Homology::createPViews(){
-     for(int i = 0; i < 4; i++){
-       for(int j = 0; j < _generators[i].size(); j++){
-         Chain* chain = _generators[i].at(j);
-         chain->createPView();
-       }
-     }
-   }
-   
-   bool Homology::writeGeneratorsMSH(std::string fileName, bool binary){
-     if(!_model->writeMSH(fileName, 2.0, binary)) return false;
-     /*
-     for(int i = 0; i < 4; i++){
-       for(int j = 0; j < _generators[i].size(); j++){
-         Chain* chain = _generators[i].at(j);
-         if(!chain->writeChainMSH(fileName)) return false;
-       }
-     }*/
-     Msg::Info("Wrote homology computation results to %s.", fileName.c_str());
-     Msg::Debug("Wrote homology computation results to %s. \n", fileName.c_str());
-     
-     return true;
-   }
+void Homology::restoreHomology() { 
+  _cellComplex->restoreComplex();
+  for(int i = 0; i < 4; i++) _generators[i].clear();
+}
+
+std::string Homology::getDomainString() {
+  std::string domainString = "({";
+  for(unsigned int i = 0; i < _domain.size(); i++){
+    std::string temp = "";
+    convert(_domain.at(i),temp);
+    domainString += temp;
+    if (_domain.size()-1 > i){ 
+      domainString += ", ";
+    }
+  }
+  domainString += "}";
   
+  if(!_subdomain.empty()){
+    domainString += ", {";
+       
+    for(unsigned int i = 0; i < _subdomain.size(); i++){
+      std::string temp = "";
+      convert(_subdomain.at(i),temp);
+      domainString += temp;
+      if (_subdomain.size()-1 > i){
+        domainString += ", ";
+      }
+    } 
+    domainString += "}";
+    
+  }
+  domainString += ") ";
+  return domainString;
+}
+
+void Homology::createPViews(){
+  for(int i = 0; i < 4; i++){
+    for(int j = 0; j < _generators[i].size(); j++){
+      Chain* chain = _generators[i].at(j);
+      chain->createPView();
+    }
+  }
+}
+
+bool Homology::writeGeneratorsMSH(std::string fileName, bool binary){
+  if(!_model->writeMSH(fileName, 2.0, binary)) return false;
+  /*
+   for(int i = 0; i < 4; i++){
+   for(int j = 0; j < _generators[i].size(); j++){
+   Chain* chain = _generators[i].at(j);
+   if(!chain->writeChainMSH(fileName)) return false;
+   }
+   }*/
+  Msg::Info("Wrote homology computation results to %s.", fileName.c_str());
+  Msg::Debug("Wrote homology computation results to %s. \n", fileName.c_str());
+  
+  return true;
+}
+
 #endif

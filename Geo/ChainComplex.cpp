@@ -55,11 +55,11 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
       }
     }
     
-    if( cols == 0 ){
+    if( cols == 0 ){ // no dim-cells, no map
       //_HMatrix[dim] = create_gmp_matrix_zero(rows, 1);
       _HMatrix[dim] = NULL;
     }
-    else if( rows == 0){
+    else if( rows == 0){ // no dim-1-cells, maps everything to zero
       _HMatrix[dim] = create_gmp_matrix_zero(1, cols);
       //_HMatrix[dim] = NULL;
     }
@@ -127,6 +127,7 @@ void ChainComplex::KerCod(int dim){
   mpz_t elem;
   mpz_init(elem);
   
+  // find the rank
   while(rank < minRowCol){
     gmp_matrix_get_elem(elem, rank+1, rank+1, normalForm->canonical);
     if(mpz_cmp_si(elem,0) == 0) break;
@@ -684,10 +685,6 @@ void Chain::addCell(Cell* cell, int coeff) {
   std::pair<citer,bool> insert = _cells.insert( std::make_pair( cell, coeff));
   if(!insert.second && (*insert.first).second == 0) (*insert.first).second = coeff; 
   else if (!insert.second && (*insert.first).second != 0) Msg::Debug("Error: invalid chain smoothening add! \n");
-  
-  if(!_cellComplex->hasCell(cell)){
-    _cellComplex->insertCell(cell);
-  }
   return;
 }
 
