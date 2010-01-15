@@ -10,6 +10,7 @@ class dgConservationLaw;
 class dgDofContainer;
 class dgTerm;
 class dgLimiter;
+class dgSystemOfEquations;
 
 class dgAlgorithm {
  public :
@@ -37,6 +38,7 @@ class dgAlgorithm {
 			std::vector<dgGroupOfElements*> &eGroups, //group of elements
 			std::vector<dgGroupOfFaces*> &fGroups,  // group of interfacs
 			std::vector<dgGroupOfFaces*> &bGroups, // group of boundaries
+      std::vector<dgGroupOfElements*> &ghostGroups, // group of boundaries
 			std::vector<fullMatrix<double> *> &solution, // solution !! at faces nodes
 			std::vector<fullMatrix<double> *> &residual // residual !! at faces nodes
 			);	  
@@ -45,9 +47,11 @@ class dgAlgorithm {
 		   std::vector<dgGroupOfElements*> &eGroups, //group of elements
 		   std::vector<dgGroupOfFaces*> &fGroups,  // group of interfacs
 		   std::vector<dgGroupOfFaces*> &bGroups, // group of boundaries
+      std::vector<dgGroupOfElements*> &ghostGroups, // group of boundaries
 		   double h,	
 		   dgDofContainer &residu,
 		   dgDofContainer &sol,
+       dgSystemOfEquations *syst,
 		   dgLimiter *limiter=NULL,
 		   int orderRK=4);
   static void computeElementaryTimeSteps ( //dofManager &dof, // the DOF manager (maybe useless here)
@@ -61,6 +65,7 @@ class dgAlgorithm {
 		   std::vector<dgGroupOfElements*> &eGroups, //group of elements
 		   std::vector<dgGroupOfFaces*> &fGroups,  // group of interfacs
 		   std::vector<dgGroupOfFaces*> &bGroups, // group of boundaries
+      std::vector<dgGroupOfElements*> &ghostGroups, // group of boundaries
 		   double h,	
 		   dgDofContainer &residu,
 		   dgDofContainer &sol,
@@ -73,7 +78,8 @@ class dgAlgorithm {
   static void buildGroups(GModel *model, int dim, int order,
 			  std::vector<dgGroupOfElements*> &eGroups,
 			  std::vector<dgGroupOfFaces*> &fGroups,
-			  std::vector<dgGroupOfFaces*> &bGroups);
+			  std::vector<dgGroupOfFaces*> &bGroups,
+			  std::vector<dgGroupOfElements*> &ghostGroups);
 };
 
 

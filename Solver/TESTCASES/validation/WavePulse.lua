@@ -22,10 +22,8 @@ myModel   = GModel  ()
 --myModel:load('box.geo')
 --myModel:load('box.msh')
 --myModel:load('square_quads.msh')
-myModel:load('square.geo')
-myModel:load('test.msh')
-
-
+myModel:load('square_part.msh')
+myModel:mesh(2)
 
 print'*** Create a dg solver ***'
 DG = dgSystemOfEquations (myModel)

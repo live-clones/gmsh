@@ -7,6 +7,9 @@
 #include "PView.h"
 #include "PViewData.h"
 #include "dgLimiter.h"
+#ifdef HAVE_MPI
+#include "mpi.h"
+#endif
 
 class dgConservationLawL2Projection : public dgConservationLaw {
   std::string _functionName;
@@ -100,15 +103,68 @@ void dgSystemOfEquations::setup(){
 		     _order,
 		     _elementGroups,
 		     _faceGroups,
-		     _boundaryGroups);
+		     _boundaryGroups,
+         _ghostGroups
+         );
+  // build the ghosts structure
+  int *nGhostElements = new int[Msg::GetCommSize()];
+  int *nParentElements = new int[Msg::GetCommSize()];
+  for (int i=0;i<Msg::GetCommSize();i++) {
+    nGhostElements[i]=0;
+  }
+  for (size_t i = 0; i< _ghostGroups.size(); i++){
+    nGhostElements[_ghostGroups[i]->getGhostPartition()] += _ghostGroups[i]->getNbElements();
+  }
+  #ifdef HAVE_MPI
+  MPI_Alltoall(nGhostElements,1,MPI_INT,nParentElements,1,MPI_INT,MPI_COMM_WORLD); 
+  #else
+  nParentElements[0]=nGhostElements[0];
+  #endif
+  shiftSend = new int[Msg::GetCommSize()];
+  shiftRecv = new int[Msg::GetCommSize()];
+  int *curShiftSend = new int[Msg::GetCommSize()];
+  totalSend=0,totalRecv=0;
+  for(int i= 0; i<Msg::GetCommSize();i++){
+    shiftSend[i] = (i==0 ? 0 : shiftSend[i-1]+nGhostElements[i-1]);
+    curShiftSend[i] = shiftSend[i];
+    shiftRecv[i] = (i==0 ? 0 : shiftRecv[i-1]+nParentElements[i-1]);
+    totalSend+=nGhostElements[i];
+    totalRecv+=nParentElements[i];
+  }
+
+  int *idSend = new int[totalSend];
+  int *idRecv = new int[totalRecv];
+  for (size_t i = 0; i< _ghostGroups.size(); i++){
+    int part = _ghostGroups[i]->getGhostPartition();
+    for (int j=0; j< _ghostGroups[i]->getNbElements() ; j++){
+      idSend[curShiftSend[part]++] = _ghostGroups[i]->getElement(j)->getNum();
+    }
+  }
+  MPI_Alltoallv(idSend,nGhostElements,shiftSend,MPI_INT,idRecv,nParentElements,shiftRecv,MPI_INT,MPI_COMM_WORLD);
+  //create a Map elementNum :: group, position in group
+  std::map<int, std::pair<int,int> > elementMap;
+  for(size_t i = 0; i<_elementGroups.size(); i++) {
+    for(int j=0; j<_elementGroups[i]->getNbElements(); j++){
+      elementMap[_elementGroups[i]->getElement(j)->getNum()]=std::pair<int,int>(i,j);
+    }
+  }
+  _elementsToSend.resize(Msg::GetCommSize());
+  for(int i = 0; i<Msg::GetCommSize();i++){
+    _elementsToSend[i].resize(nParentElements[i]);
+    for(int j=0;j<nParentElements[i];j++){
+      int num = idRecv[shiftRecv[i]+j];
+      _elementsToSend[i][j]=elementMap[num];
+    }
+  }
   // compute the total size of the soution
-  _solution = new dgDofContainer(_elementGroups,*_claw);
-  _rightHandSide = new dgDofContainer(_elementGroups,*_claw);
+  delete curShiftSend;
+  _solution = new dgDofContainer(_elementGroups,_ghostGroups,*_claw);
+  _rightHandSide = new dgDofContainer(_elementGroups,_ghostGroups,*_claw);
 }
 
 
 double dgSystemOfEquations::RK44(double dt){
-  _algo->rungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups, dt,  *_solution, *_rightHandSide, NULL);
+  _algo->rungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups,_ghostGroups, dt,  *_solution, *_rightHandSide, this);
   return _solution->_data->norm();
 }
 
@@ -119,22 +175,29 @@ double dgSystemOfEquations::computeInvSpectralRadius(){
     _algo->computeElementaryTimeSteps(*_claw, *_elementGroups[i], *_solution->_dataProxys[i], DTS);
     for (int k=0;k<DTS.size();k++) sr = std::min(sr,DTS[k]);
   }
-  return sr;
+  #ifdef HAVE_MPI
+  double sr_min;
+  MPI_Allreduce((void *)&sr, &sr_min, 1, MPI_DOUBLE, MPI_MIN,
+                MPI_COMM_WORLD);
+  return sr_min;
+  #else
+  return sr
+  #endif
 }
 
 double dgSystemOfEquations::RK44_limiter(double dt){
   dgLimiter *sl = new dgSlopeLimiter(_claw);
-  _algo->rungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups, dt,  *_solution, *_rightHandSide, sl);
+  _algo->rungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups,_ghostGroups, dt,  *_solution, *_rightHandSide,this, sl);
   delete sl;
   return _solution->_data->norm();
 }
 
 double dgSystemOfEquations::ForwardEuler(double dt){
-  _algo->rungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups, dt,  *_solution, *_rightHandSide, NULL,1);
+  _algo->rungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups,_ghostGroups, dt,  *_solution, *_rightHandSide,this, NULL,1);
   return _solution->_data->norm();
 }
 double dgSystemOfEquations::multirateRK43(double dt){
-  _algo->multirateRungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups, dt,  *_solution, *_rightHandSide);
+  _algo->multirateRungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups,_ghostGroups, dt,  *_solution, *_rightHandSide);
   return _solution->_data->norm();
 }
 
@@ -177,6 +240,8 @@ void dgSystemOfEquations::export_solution_as_is (const std::string &name){
   for (int ICOMP = 0; ICOMP<_claw->nbFields();++ICOMP){
     std::ostringstream name_oss;
     name_oss<<name<<"_COMP_"<<ICOMP<<".msh";
+    if(Msg::GetCommSize()>1)
+      name_oss<<"_"<<Msg::GetCommRank();
     FILE *f = fopen (name_oss.str().c_str(),"w");
     int COUNT = 0;
     for (int i=0;i < _elementGroups.size() ;i++){
@@ -232,6 +297,49 @@ void dgSystemOfEquations::export_solution_as_is (const std::string &name){
   delete pv;
 }
 
+dgDofContainer::dgDofContainer (std::vector<dgGroupOfElements*> &elementGroups,std::vector<dgGroupOfElements*> ghostGroups, const dgConservationLaw &claw){
+  _dataSize = 0;
+  _dataSizeGhost=0;
+  totalNbElements = 0;
+  int totalNbElementsGhost =0;
+  nbFields = claw.nbFields();
+  for (int i=0;i<elementGroups.size();i++){
+    int nbNodes    = elementGroups[i]->getNbNodes();
+    int nbElements = elementGroups[i]->getNbElements();
+    totalNbElements +=nbElements;
+    _dataSize += nbNodes*nbFields*nbElements;
+  }
+  for (int i=0;i<ghostGroups.size();i++){
+    int nbNodes    = ghostGroups[i]->getNbNodes();
+    int nbElements = ghostGroups[i]->getNbElements();
+    totalNbElementsGhost +=nbElements;
+    _dataSizeGhost += nbNodes*nbFields*nbElements;
+  }
+
+  // allocate the big vectors
+  _data      = new fullVector<double>(_dataSize);
+  _ghostData = new fullVector<double>(_dataSizeGhost);
+  // create proxys for each group
+  int offset = 0;
+  _dataProxys.resize(elementGroups.size()+ghostGroups.size());
+  for (int i=0;i<elementGroups.size();i++){    
+    dgGroupOfElements *group=elementGroups[i];
+    int nbNodes    = group->getNbNodes();
+    int nbElements = group->getNbElements();
+    _dataProxys[i] = new fullMatrix<double> (&(*_data)(offset),nbNodes, nbFields*nbElements);
+    offset += nbNodes*nbFields*nbElements;
+  }  
+  offset=0;
+  for (int i=0;i<ghostGroups.size();i++){    
+    dgGroupOfElements *group=ghostGroups[i];
+    int nbNodes    = group->getNbNodes();
+    int nbElements = group->getNbElements();
+    _dataProxys[i+elementGroups.size()] = new fullMatrix<double> (&(*_ghostData)(offset),nbNodes, nbFields*nbElements);
+    offset += nbNodes*nbFields*nbElements;
+  }  
+  //  printf("datasize = %d\n",_dataSize);
+}
+
 dgDofContainer::dgDofContainer (std::vector<dgGroupOfElements*> &elementGroups, const dgConservationLaw &claw){
   _dataSize = 0;
   totalNbElements = 0;
@@ -249,8 +357,9 @@ dgDofContainer::dgDofContainer (std::vector<dgGroupOfElements*> &elementGroups, 
   int offset = 0;
   _dataProxys.resize(elementGroups.size());
   for (int i=0;i<elementGroups.size();i++){    
-    int nbNodes    = elementGroups[i]->getNbNodes();
-    int nbElements = elementGroups[i]->getNbElements();
+    dgGroupOfElements *group=elementGroups[i];
+    int nbNodes    = group->getNbNodes();
+    int nbElements = group->getNbElements();
     _dataProxys[i] = new fullMatrix<double> (&(*_data)(offset),nbNodes, nbFields*nbElements);
     offset += nbNodes*nbFields*nbElements;
   }  
@@ -262,3 +371,72 @@ dgDofContainer::~dgDofContainer (){
   for (int i=0;i<_dataProxys.size();++i) delete _dataProxys[i];
   delete _data;
 }
+
+void dgSystemOfEquations::scatter(dgDofContainer *vector){
+  //1) count
+  int *countS=new int[Msg::GetCommSize()];
+  int *shiftS=new int[Msg::GetCommSize()];
+  int *countR=new int[Msg::GetCommSize()];
+  int *shiftR=new int[Msg::GetCommSize()];
+  for(int i=0;i<Msg::GetCommSize();i++){
+    countS[i]=0;
+    countR[i]=0;
+    for(size_t j=0;j<_elementsToSend[i].size();j++){
+      countS[i] += _elementGroups[_elementsToSend[i][j].first]->getNbNodes()*_claw->nbFields();
+    }
+  }
+  for(size_t i=0; i<_ghostGroups.size(); i++){
+    dgGroupOfElements *group=_ghostGroups[i];
+    countR[group->getGhostPartition()]+=group->getNbElements()*group->getNbNodes()*_claw->nbFields();
+  }
+  shiftS[0]=shiftR[0]=0;
+  int totalS=countS[0];
+  int totalR=countR[0];
+  for(size_t i=1; i<Msg::GetCommSize(); i++){
+    shiftS[i]=shiftS[i-1]+countS[i-1];
+    shiftR[i]=shiftR[i-1]+countR[i-1];
+    totalS+=countS[i];
+    totalR+=countR[i];
+  }
+  double *send=new double[totalS];
+  double *recv=new double[totalR];
+  //2) fill
+  int index=0;
+  for(int i=0;i<Msg::GetCommSize();i++){
+    for(size_t j=0;j<_elementsToSend[i].size();j++){
+      int gid = _elementsToSend[i][j].first;
+      int eid = _elementsToSend[i][j].second;
+      fullMatrix<double> &sol=vector->getGroupProxy(gid);
+      for(int l=0;l<_claw->nbFields();l++){
+        for(int k=0;k<sol.size1();k++){
+          send[index++] = sol(k,eid*_claw->nbFields()+l);
+//          send[index++] = _elementGroups[gid]->getElement(eid)->getNum()*9+l*3+k;
+        }
+      }
+    }
+  }
+  
+  //3) send
+  MPI_Alltoallv(send,countS,shiftS,MPI_DOUBLE,recv,countR,shiftR,MPI_DOUBLE,MPI_COMM_WORLD);
+  //4) distribute
+  for(int i=0; i< _ghostGroups.size();i++){
+    fullMatrix<double>&sol = vector->getGroupProxy(i+_elementGroups.size());
+    int part = _ghostGroups[i]->getGhostPartition();
+    int ndof = sol.size1()*sol.size2();
+    for(int j=0;j<sol.size2();j++){
+      for(int k=0;k<sol.size1();k++){
+        sol(k,j)=recv[shiftR[part]++];
+/*        int a=(int)recv[shiftR[part]++];
+        int b= _ghostGroups[i]->getElement(j/3)->getNum()*9+3*(j%3)+k;
+        if(a!=b)printf("%i %i\n",a,b);*/
+      }
+    }
+  }
+  delete countS;
+  delete countR;
+  delete shiftS;
+  delete shiftR;
+  delete send;
+  delete recv;
+}
+

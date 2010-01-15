@@ -1,5 +1,7 @@
 #ifndef _DG_SYSTEM_OF_EQUATIONS_
 #define _DG_SYSTEM_OF_EQUATIONS_
+#include <vector>
+#include <utility>
 #include "GmshConfig.h"
 #include "GModel.h"
 #include "dgAlgorithm.h"
@@ -15,19 +17,33 @@ private:
   int totalNbElements; 
   int nbFields;
 public:
-  int _dataSize; // the full data size i.e. concerning all groups
+  int _dataSize; // the full data size i.e. concerning all groups (not ghost, see bellow)
+  int _dataSizeGhost; 
   std::vector<fullMatrix<double> *> _dataProxys; // proxys 
   fullVector<double> * _data; // the full data itself
+  fullVector<double> * _ghostData;
   inline int getDataSize(){return _dataSize;}
   inline fullMatrix<double> &getGroupProxy(int gId){ return *(_dataProxys[gId]); }
+  dgDofContainer (std::vector<dgGroupOfElements*> &groups,std::vector<dgGroupOfElements*> ghostGroups, const dgConservationLaw &claw);
   dgDofContainer (std::vector<dgGroupOfElements*> &groups, const dgConservationLaw &claw);
   ~dgDofContainer ();  
   int getNbElements() {return totalNbElements;}
+  //collective, should be called on all proc
+  void setGhostedGroups (std::vector<dgGroupOfElements*> &ghostGroups);
 };
 
 class binding;
 
 class dgSystemOfEquations {
+//////////////
+  //parallel section, should be moved to a new class
+  int *shiftSend,*shiftRecv;
+  int *nGhostElements,*nParentElements;
+  int totalSend, totalRecv;
+  public :
+  void scatter(dgDofContainer *solution);
+//////////////
+  private:
   // the mesh and the model
   GModel *_gm;
   // the algorithm that computes DG operators
@@ -44,6 +60,9 @@ class dgSystemOfEquations {
   dgDofContainer *_rightHandSide;
   // groups of elements (volume terms)
   std::vector<dgGroupOfElements*> _elementGroups;
+  //ghost structure
+  std::vector<dgGroupOfElements*> _ghostGroups;
+  std::vector< std::vector<std::pair<int,int> > >_elementsToSend; //{group,id} of the elements to send to each proc
   // groups of faces (interface terms)
   std::vector<dgGroupOfFaces*> _faceGroups;
   // groups of faces (boundary conditions)

@@ -38,6 +38,7 @@ public:
 
 // store topological and geometrical data for 1 group for 1 discretisation
 class dgGroupOfElements {
+  int _ghostPartition; // -1 : this is not a ghosted group, otherwise the id of the parent partition
   // N elements in the group
   std::vector<MElement*> _elements;
   // the ONLY function space that is used to 
@@ -72,7 +73,7 @@ class dgGroupOfElements {
   //  dgGroupOfElements (const dgGroupOfElements &e, int order) {}
   //  dgGroupOfElements & operator = (const dgGroupOfElements &e) {}
 public:
-  dgGroupOfElements (const std::vector<MElement*> &e, int pOrder);
+  dgGroupOfElements (const std::vector<MElement*> &e, int pOrder,int ghostPartition=-1);
   virtual ~dgGroupOfElements ();
   inline int getNbElements() const {return _elements.size();}
   inline int getNbNodes() const {return _collocation->size2();}
@@ -91,6 +92,7 @@ public:
   inline fullMatrix<double> &getInverseMassMatrix () const {return *_imass;}
   inline const fullMatrix<double> getMapping (int iElement) const {return fullMatrix<double>(*_mapping, iElement, 1);}
   inline int getOrder() const {return _order;}
+  inline int getGhostPartition() const {return _ghostPartition;}
 };
 
 class dgGroupOfFaces {
