@@ -109,7 +109,7 @@ Characteristic Length {103, 105, 109, 102, 28, 24, 6, 5} = lc * 3;
 //
 // on the command line.
 
-// To save all the tetrahedra discretizing the volumes 119 and 120
+// To save all the tetrahedra discretizing the volumes 129 and 130
 // with a common region number, we finally define a physical
 // volume:
 
