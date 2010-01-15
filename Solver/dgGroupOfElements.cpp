@@ -10,6 +10,8 @@
 #include "GModel.h"
 #ifdef HAVE_MPI
 #include "mpi.h"
+#else
+#include <string.h>
 #endif
 
 static fullMatrix<double> * dgGetIntegrationRule (MElement *e, int p){
@@ -792,7 +794,11 @@ void dgGroupCollection::buildGroups(GModel *model, int dim, int order)
       idSend[curShiftSend[part]++] = group->getElement(j)->getNum();
     }
   }
+  #ifdef HAVE_MPI
   MPI_Alltoallv(idSend,nGhostElements,shiftSend,MPI_INT,idRecv,nParentElements,shiftRecv,MPI_INT,MPI_COMM_WORLD);
+  #else
+  memcpy(idRecv,idSend,nParentElements[0]*sizeof(int));
+  #endif
   //create a Map elementNum :: group, position in group
   std::map<int, std::pair<int,int> > elementMap;
   for(size_t i = 0; i< getNbElementGroups(); i++) {

@@ -119,11 +119,10 @@ double dgSystemOfEquations::computeInvSpectralRadius(){
   }
   #ifdef HAVE_MPI
   double sr_min;
-  MPI_Allreduce((void *)&sr, &sr_min, 1, MPI_DOUBLE, MPI_MIN,
-                MPI_COMM_WORLD);
+  MPI_Allreduce((void *)&sr, &sr_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
   return sr_min;
   #else
-  return sr
+  return sr;
   #endif
 }
 

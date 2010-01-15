@@ -3,6 +3,8 @@
 #include "dgGroupOfElements.h"
 #ifdef HAVE_MPI
 #include "mpi.h"
+#else
+#include "string.h"
 #endif
 dgDofContainer::dgDofContainer (dgGroupCollection &groups, int nbFields):
   _groups(groups)
@@ -129,7 +131,11 @@ void dgDofContainer::scatter() {
     }
   }
   //2) send
+  #ifdef HAVE_MPI
   MPI_Alltoallv(sendBuf,countSend,shiftSend,MPI_DOUBLE,recvBuf,countRecv,shiftRecv,MPI_DOUBLE,MPI_COMM_WORLD);
+  #else
+  memcpy(recvBuf,sendBuf,countSend[0]*sizeof(double));
+  #endif
   //3) distribute
   for(int i=0; i< _groups.getNbGhostGroups();i++) {
     fullMatrix<double> &sol = getGroupProxy(i+_groups.getNbElementGroups());
