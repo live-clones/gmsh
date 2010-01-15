@@ -255,10 +255,7 @@ void dgAlgorithm::multAddInverseMassMatrix ( /*dofManager &dof,*/
 
 
 void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation law
-			      std::vector<dgGroupOfElements*> &eGroups,	// group of elements
-			      std::vector<dgGroupOfFaces*> &fGroups,		// group of interfacs
-			      std::vector<dgGroupOfFaces*> &bGroups,		// group of boundaries
-            std::vector<dgGroupOfElements*> &ghostGroups, // group of boundaries
+            dgGroupCollection &groups,
 			      double h,				         // time-step
 			      dgDofContainer &sol,
 			      dgDofContainer &resd,
@@ -266,68 +263,66 @@ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation l
 			      dgLimiter *limiter,
 			      int orderRK
             )				        // order of RK integrator
- {
+{
 
-   // U_{n+1}=U_n+h*(SUM_i a_i*K_i)
-   // K_i=M^(-1)R(U_n+b_i*K_{i-1})
-   
-   double a[4] = {h/6.0,h/3.0,h/3.0,h/6.0};
-   double b[4] = {0.,h/2.0,h/2.0,h};
-   
-   if (orderRK == 1){
-     a[0] = h;
-   }
+  // U_{n+1}=U_n+h*(SUM_i a_i*K_i)
+  // K_i=M^(-1)R(U_n+b_i*K_{i-1})
 
-   // Current updated solution
-   fullMatrix<double> residuEl, KEl;
-   fullMatrix<double> iMassEl;
-   
-   int nbFields = claw.nbFields();
-   
-   dgDofContainer K   (eGroups,ghostGroups,claw);
-   dgDofContainer Unp (eGroups,ghostGroups,claw);
-   
-   K._data->scale(0.0);
-   K._data->axpy(*(sol._data));
-   Unp._data->scale(0.0);
-   Unp._data->axpy(*(sol._data));
-   
-   for(int j=0; j<orderRK;j++){
-     if(j){
-       K._data->scale(b[j]);
-       K._data->axpy(*(sol._data));
-     }
-     
+  double a[4] = {h/6.0,h/3.0,h/3.0,h/6.0};
+  double b[4] = {0.,h/2.0,h/2.0,h};
+
+  if (orderRK == 1){
+    a[0] = h;
+  }
+
+  // Current updated solution
+  fullMatrix<double> residuEl, KEl;
+  fullMatrix<double> iMassEl;
+
+  int nbFields = claw.nbFields();
+
+  dgDofContainer K   (groups,claw);
+  dgDofContainer Unp (groups,claw);
+
+  K._data->scale(0.0);
+  K._data->axpy(*(sol._data));
+  Unp._data->scale(0.0);
+  Unp._data->axpy(*(sol._data));
+
+  for(int j=0; j<orderRK;j++){
+    if(j){
+      K._data->scale(b[j]);
+      K._data->axpy(*(sol._data));
+    }
+
     if (limiter){
-      limiter->apply(K, eGroups, fGroups);
+      limiter->apply(K, groups);
     }
     syst->scatter(&K);
-     this->residual(claw,eGroups,fGroups,bGroups,ghostGroups,K._dataProxys,resd._dataProxys);
-     K._data->scale(0.);
-     for(int k=0;k < eGroups.size();k++) {
-       int nbNodes = eGroups[k]->getNbNodes();
-       for(int i=0;i<eGroups[k]->getNbElements();i++) {
-	 residuEl.setAsProxy(*(resd._dataProxys[k]),i*nbFields,nbFields);
-	 KEl.setAsProxy(*(K._dataProxys[k]),i*nbFields,nbFields);
-	 iMassEl.setAsProxy(eGroups[k]->getInverseMassMatrix(),i*nbNodes,nbNodes);
-	 iMassEl.mult(residuEl,KEl);
-       }
-     }
-     Unp._data->axpy(*(K._data),a[j]);
-   }
-   if (limiter) limiter->apply(Unp, eGroups, fGroups);
-   for (int i=0;i<sol._dataSize;i++){	   
-     (*sol._data)(i)=(*Unp._data)(i);
-   }
- }
+    this->residual(claw,groups,K._dataProxys,resd._dataProxys);
+    K._data->scale(0.);
+    for(int k=0; k < groups.getNbElementGroups(); k++) {
+      dgGroupOfElements *group = groups.getElementGroup(k);
+      int nbNodes = group->getNbNodes();
+      for(int i=0;i<group->getNbElements();i++) {
+        residuEl.setAsProxy(*(resd._dataProxys[k]),i*nbFields,nbFields);
+        KEl.setAsProxy(*(K._dataProxys[k]),i*nbFields,nbFields);
+        iMassEl.setAsProxy(group->getInverseMassMatrix(),i*nbNodes,nbNodes);
+        iMassEl.mult(residuEl,KEl);
+      }
+    }
+    Unp._data->axpy(*(K._data),a[j]);
+  }
+  if (limiter) limiter->apply(Unp, groups);
+  for (int i=0;i<sol._dataSize;i++){	   
+    (*sol._data)(i)=(*Unp._data)(i);
+  }
+}
 
 
 
 void dgAlgorithm::multirateRungeKutta (const dgConservationLaw &claw,			// conservation law
-			      std::vector<dgGroupOfElements*> &eGroups,	// group of elements
-			      std::vector<dgGroupOfFaces*> &fGroups,		// group of interfacs
-			      std::vector<dgGroupOfFaces*> &bGroups,		// group of boundaries
-			    std::vector<dgGroupOfElements*> &ghostGroups, // group of boundaries
+            dgGroupCollection &groups,
 			      double h,				        // time-step
 			      dgDofContainer &sol,
 			      dgDofContainer &resd,			       
@@ -413,11 +408,11 @@ void dgAlgorithm::multirateRungeKutta (const dgConservationLaw &claw,			// conse
    dgDofContainer **K;
    K=new dgDofContainer*[nStages];
    for(int i=0;i<nStages;i++){
-     K[i]=new dgDofContainer(eGroups,claw);
+     K[i]=new dgDofContainer(groups,claw);
      K[i]->_data->scale(0.0);
    }
-   dgDofContainer Unp (eGroups,claw);
-   dgDofContainer tmp (eGroups,claw);
+   dgDofContainer Unp (groups,claw);
+   dgDofContainer tmp (groups,claw);
 
    Unp._data->scale(0.0);
    Unp._data->axpy(*(sol._data));
@@ -425,20 +420,21 @@ void dgAlgorithm::multirateRungeKutta (const dgConservationLaw &claw,			// conse
    for(int j=0; j<nStages;j++){
      tmp._data->scale(0.0);
      tmp._data->axpy(*(sol._data));
-     for(int k=0;k < eGroups.size();k++) {
+     for(int k=0;k < groups.getNbElementGroups();k++) {
        for(int i=0;i<j;i++){
          if(fabs(A[j][i])>1e-12){
            tmp.getGroupProxy(k).add(K[i]->getGroupProxy(k),h*A[j][i]);
          }
        }
      }
-     this->residual(claw,eGroups,fGroups,bGroups,ghostGroups,tmp._dataProxys,resd._dataProxys);
-     for(int k=0;k < eGroups.size();k++) {
-       int nbNodes = eGroups[k]->getNbNodes();
-       for(int i=0;i<eGroups[k]->getNbElements();i++) {
+     this->residual(claw,groups,tmp._dataProxys,resd._dataProxys);
+     for(int k=0;k < groups.getNbElementGroups(); k++) {
+       dgGroupOfElements *group = groups.getElementGroup(k);
+       int nbNodes = group->getNbNodes();
+       for(int i=0;i<group->getNbElements();i++) {
          residuEl.setAsProxy(*(resd._dataProxys[k]),i*nbFields,nbFields);
          KEl.setAsProxy(*(K[j]->_dataProxys[k]),i*nbFields,nbFields);
-         iMassEl.setAsProxy(eGroups[k]->getInverseMassMatrix(),i*nbNodes,nbNodes);
+         iMassEl.setAsProxy(group->getInverseMassMatrix(),i*nbNodes,nbNodes);
          iMassEl.mult(residuEl,KEl);
        }
        Unp.getGroupProxy(k).add(K[j]->getGroupProxy(k),h*b[j]);
@@ -538,182 +534,33 @@ void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (mayb
   residual.gemm(group.getRedistributionMatrix(),NormalFluxQP);
 }
 
-/*
-void dgAlgorithm::buildGroupsOfFaces(GModel *model, int dim, int order,
-				     std::vector<dgGroupOfElements*> &eGroups,
-				     std::vector<dgGroupOfFaces*> &fGroups,
-				     std::vector<dgGroupOfFaces*> &bGroups){
-}
-
-void dgAlgorithm::buildMandatoryGroups(dgGroupOfElements &eGroup,
-				       std::vector<dgGroupOfElements*> &partitionedGroups){
-}
-
-void dgAlgorithm::partitionGroup(dgGroupOfElements &eGroup,
-				 std::vector<dgGroupOfElements*> &partitionedGroups){
-}
-*/
-
-//static void partitionGroup (std::vector<MElement *>,){
-//}
-
-// this function creates groups of elements
-// First, groups of faces are created on every physical group
-// of dimension equal to the dimension of the problem minus one
-// Then, groups of elements are created 
-//  -) Elements of different types are separated
-//  -) Then those groups are split into partitions
-//  -) Finally, those groups are re-numbered 
-// Finally, group of interfaces are created
-//  -) Groups of faces internal to a given group
-//  -) Groups of faces between groups.
- 
-void dgAlgorithm::buildGroups(GModel *model, int dim, int order,
-    std::vector<dgGroupOfElements*> &eGroups,
-    std::vector<dgGroupOfFaces*> &fGroups,
-    std::vector<dgGroupOfFaces*> &bGroups,
-    std::vector<dgGroupOfElements*> &ghostGroups
-    ) 
-{
-  std::map<const std::string,std::set<MVertex*> > boundaryVertices;
-  std::map<const std::string,std::set<MEdge, Less_Edge> > boundaryEdges;
-  std::map<const std::string,std::set<MFace, Less_Face> > boundaryFaces;
-  std::vector<GEntity*> entities;
-  model->getEntities(entities);
-  std::map<int, std::vector<MElement *> >localElements;
-  std::vector<std::map<int, std::vector<MElement *> > >ghostElements(Msg::GetCommSize()); // [partition][elementType]
-  int nlocal=0;
-  int nghosts=0;
-  std::multimap<MElement*, short> &ghostsCells = model->getGhostCells();
-  for(unsigned int i = 0; i < entities.size(); i++){
-    GEntity *entity = entities[i];
-    if(entity->dim() == dim-1){
-      for(unsigned int j = 0; j < entity->physicals.size(); j++){
-        const std::string physicalName = model->getPhysicalName(entity->dim(), entity->physicals[j]);
-        for (int k = 0; k < entity->getNumMeshElements(); k++) {
-          MElement *element = entity->getMeshElement(k);
-          switch(dim) {
-            case 1:
-              boundaryVertices[physicalName].insert( element->getVertex(0) ); 
-              break;
-            case 2:
-              boundaryEdges[physicalName].insert( element->getEdge(0) );
-            break;
-            case 3:
-              boundaryFaces[physicalName].insert( element->getFace(0));
-            break;
-            default :
-            throw;
-          }
-        }
-      }
-    }else if(entity->dim() == dim){
-      for (int iel=0; iel<entity->getNumMeshElements(); iel++){
-        MElement *el=entity->getMeshElement(iel);
-        if(el->getPartition()==Msg::GetCommRank()+1 || el->getPartition()==0){
-          localElements[el->getType()].push_back(el);
-          nlocal++;
-        }else{
-          std::multimap<MElement*, short>::iterator ghost=ghostsCells.lower_bound(el);
-          while(ghost!= ghostsCells.end() && ghost->first==el){
-            nghosts+=(abs(ghost->second)-1==Msg::GetCommRank());
-            ghostElements[el->getPartition()-1][el->getType()].push_back(el);
-            ghost++;
-          }
-        }
-      }
-    }
-  }
-
-
-  Msg::Info("%d groups of elements",localElements.size());
-  // do a group of elements for every element type in the mesh
-  for (std::map<int, std::vector<MElement *> >::iterator it = localElements.begin(); it !=localElements.end() ; ++it){
-    eGroups.push_back(new dgGroupOfElements(it->second,order));
-  }
-
-
-  for (int i=0;i<eGroups.size();i++){
-    // create a group of faces on the boundary for every group ef elements
-    switch(dim) {
-    case 1 : {
-      std::map<const std::string, std::set<MVertex*> >::iterator mapIt;
-      for(mapIt=boundaryVertices.begin(); mapIt!=boundaryVertices.end(); mapIt++) {
-        bGroups.push_back(new dgGroupOfFaces(*eGroups[i],mapIt->first,order,mapIt->second));
-      }
-      break;
-    }
-    case 2 : {
-      std::map<const std::string, std::set<MEdge, Less_Edge> >::iterator mapIt;
-      for(mapIt=boundaryEdges.begin(); mapIt!=boundaryEdges.end(); mapIt++) {
-        bGroups.push_back(new dgGroupOfFaces(*eGroups[i],mapIt->first,order,mapIt->second));
-      }
-      break;
-    }
-    case 3 : {
-      std::map<const std::string, std::set<MFace, Less_Face> >::iterator mapIt;
-      for(mapIt=boundaryFaces.begin(); mapIt!=boundaryFaces.end(); mapIt++) {
-        bGroups.push_back(new dgGroupOfFaces(*eGroups[i],mapIt->first,order,mapIt->second));
-      }
-      break;
-    }
-    }
-    // create a group of faces for every face that is common to elements of the same group 
-    fGroups.push_back(new dgGroupOfFaces(*eGroups[i],order));
-    // create a groupe of d
-    for (int j=i+1;j<eGroups.size();j++){
-      dgGroupOfFaces *gof = new dgGroupOfFaces(*eGroups[i],*eGroups[j],order);
-      if (gof->getNbElements())
-        fGroups.push_back(gof);
-      else
-        delete gof;
-    }
-  }
-  //create ghost groups
-  for(int i=0;i<Msg::GetCommSize();i++){
-    for (std::map<int, std::vector<MElement *> >::iterator it = ghostElements[i].begin(); it !=ghostElements[i].end() ; ++it){
-      ghostGroups.push_back(new dgGroupOfElements(it->second,order,i));
-    }
-  }
-  //create face group for ghostGroups
-  for (int i=0; i<ghostGroups.size(); i++){
-    for (int j=0;j<eGroups.size();j++){
-      dgGroupOfFaces *gof = new dgGroupOfFaces(*ghostGroups[i],*eGroups[j],order);
-      if (gof->getNbElements())
-        fGroups.push_back(gof);
-      else
-        delete gof;
-    }
-  }
-}
 // works for any number of groups 
 void dgAlgorithm::residual( const dgConservationLaw &claw,
-			    std::vector<dgGroupOfElements*> &eGroups, //group of elements
-			    std::vector<dgGroupOfFaces*> &fGroups,  // group of interfacs
-			    std::vector<dgGroupOfFaces*> &bGroups, // group of boundaries
-			    std::vector<dgGroupOfElements*> &ghostGroups, // group of boundaries
+          dgGroupCollection &groups,
 			    std::vector<fullMatrix<double> *> &solution, // solution
 			    std::vector<fullMatrix<double> *> &residu) // residual
 {
   int nbFields=claw.nbFields();
   //volume term
-  for(size_t i=0;i<eGroups.size() ; i++) {
+  for(size_t i=0;i<groups.getNbElementGroups() ; i++) {
     residu[i]->scale(0);
-    
-    residualVolume(claw,*eGroups[i],*solution[i],*residu[i]);
+    residualVolume(claw,*groups.getElementGroup(i),*solution[i],*residu[i]);
   }
   //  residu[0]->print("Volume");
   //interface term
-  for(size_t i=0;i<fGroups.size() ; i++) {
-    dgGroupOfFaces &faces = *fGroups[i];
+  for(size_t i=0;i<groups.getNbFaceGroups() ; i++) {
+    dgGroupOfFaces &faces = *groups.getFaceGroup(i);
     int iGroupLeft = -1, iGroupRight = -1;
-    for(size_t j=0;j<eGroups.size() ; j++) {
-      if (eGroups[j] == &faces.getGroupLeft())iGroupLeft = j;
-      if (eGroups[j] == &faces.getGroupRight())iGroupRight= j;
+    for(size_t j=0;j<groups.getNbElementGroups(); j++) {
+      dgGroupOfElements *groupj = groups.getElementGroup(j);
+      if (groupj == &faces.getGroupLeft()) iGroupLeft = j;
+      if (groupj == &faces.getGroupRight()) iGroupRight= j;
     }
-    for(size_t j=0;j<ghostGroups.size() ; j++) {
-      if (ghostGroups[j] == &faces.getGroupLeft())iGroupLeft = j+eGroups.size();
-      if (ghostGroups[j] == &faces.getGroupRight())iGroupRight= j+eGroups.size();
+    for(size_t j=0;j<groups.getNbGhostGroups(); j++) {
+      dgGroupOfElements *groupj = groups.getGhostGroup(j);
+      if (groupj == &faces.getGroupLeft()) iGroupLeft = j;
+      if (groupj == &faces.getGroupLeft())iGroupLeft = j + groups.getNbElementGroups();
+      if (groupj == &faces.getGroupRight())iGroupRight= j + groups.getNbElementGroups();
     }
     fullMatrix<double> solInterface(faces.getNbNodes(),faces.getNbElements()*2*nbFields);
     fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements()*2*nbFields);
@@ -723,12 +570,13 @@ void dgAlgorithm::residual( const dgConservationLaw &claw,
   }
   //  residu[0]->print("Interfaces");
   //boundaries
-  for(size_t i=0;i<bGroups.size() ; i++) {
-    dgGroupOfFaces &faces = *bGroups[i];
+  for(size_t i=0;i<groups.getNbBoundaryGroups() ; i++) {
+    dgGroupOfFaces &faces = *groups.getBoundaryGroup(i);
     int iGroupLeft = -1, iGroupRight = -1;
-    for(size_t j=0;j<eGroups.size() ; j++) {
-      if (eGroups[j] == &faces.getGroupLeft())iGroupLeft = j;
-      if (eGroups[j] == &faces.getGroupRight())iGroupRight= j;
+    for(size_t j=0;j<groups.getNbElementGroups(); j++) {
+      dgGroupOfElements *groupj = groups.getElementGroup(j);
+      if (groupj == &faces.getGroupLeft())iGroupLeft = j;
+      if (groupj == &faces.getGroupRight())iGroupRight= j;
     }
     fullMatrix<double> solInterface(faces.getNbNodes(),faces.getNbElements()*nbFields);
     fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements()*nbFields);
@@ -783,4 +631,3 @@ void dgAlgorithm::computeElementaryTimeSteps ( //dofManager &dof, // the DOF man
     DT[iElement] = 1./spectralRadius;
   }
 }
-

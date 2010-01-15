@@ -4,15 +4,12 @@
 #include "function.h"
 
 //----------------------------------------------------------------------------------   
-bool dgSlopeLimiter::apply ( dgDofContainer &solution,   
-			     std::vector<dgGroupOfElements*> &eGroups,   
-			     std::vector<dgGroupOfFaces*> &fGroups) 
+bool dgSlopeLimiter::apply ( dgDofContainer &solution, dgGroupCollection &groups)
 {    
-
   //WARNING: ONLY FOR 1 GROUP OF FACES 
   //TODO: make this more general   
 
-  dgGroupOfFaces* group = fGroups[0];  
+  dgGroupOfFaces* group = groups.getFaceGroup(0);  
   fullMatrix<double> &solleft = solution.getGroupProxy(0);
   fullMatrix<double> &solright = solution.getGroupProxy(0); 
   int nbFields =_claw->nbFields();    
@@ -93,8 +90,8 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution,
     }
   }  
   //  --- CLIPPING: check unphysical values
-  for (int iG = 0; iG < eGroups.size(); iG++){
-    dgGroupOfElements* egroup = eGroups[iG];  
+  for (int iG = 0; iG < groups.getNbElementGroups(); iG++){
+    dgGroupOfElements* egroup = groups.getElementGroup(iG);  
     fullMatrix<double> &solGroup = solution.getGroupProxy(iG);
 
     dataCacheMap cacheMap(egroup->getNbNodes());//nbdofs for each element

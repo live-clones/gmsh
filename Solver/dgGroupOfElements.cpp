@@ -606,3 +606,160 @@ void dgGroupOfFaces::mapFromInterface ( int nFields,
     }
   }
 }
+
+/*
+void dgAlgorithm::buildGroupsOfFaces(GModel *model, int dim, int order,
+				     std::vector<dgGroupOfElements*> &eGroups,
+				     std::vector<dgGroupOfFaces*> &fGroups,
+				     std::vector<dgGroupOfFaces*> &bGroups){
+}
+
+void dgAlgorithm::buildMandatoryGroups(dgGroupOfElements &eGroup,
+				       std::vector<dgGroupOfElements*> &partitionedGroups){
+}
+
+void dgAlgorithm::partitionGroup(dgGroupOfElements &eGroup,
+				 std::vector<dgGroupOfElements*> &partitionedGroups){
+}
+*/
+
+//static void partitionGroup (std::vector<MElement *>,){
+//}
+
+// this function creates groups of elements
+// First, groups of faces are created on every physical group
+// of dimension equal to the dimension of the problem minus one
+// Then, groups of elements are created 
+//  -) Elements of different types are separated
+//  -) Then those groups are split into partitions
+//  -) Finally, those groups are re-numbered 
+// Finally, group of interfaces are created
+//  -) Groups of faces internal to a given group
+//  -) Groups of faces between groups.
+ 
+void dgGroupCollection::buildGroups(GModel *model, int dim, int order)
+{
+  _model = model;
+  std::map<const std::string,std::set<MVertex*> > boundaryVertices;
+  std::map<const std::string,std::set<MEdge, Less_Edge> > boundaryEdges;
+  std::map<const std::string,std::set<MFace, Less_Face> > boundaryFaces;
+  std::vector<GEntity*> entities;
+  model->getEntities(entities);
+  std::map<int, std::vector<MElement *> >localElements;
+  std::vector<std::map<int, std::vector<MElement *> > >ghostElements(Msg::GetCommSize()); // [partition][elementType]
+  int nlocal=0;
+  int nghosts=0;
+  std::multimap<MElement*, short> &ghostsCells = model->getGhostCells();
+  for(unsigned int i = 0; i < entities.size(); i++){
+    GEntity *entity = entities[i];
+    if(entity->dim() == dim-1){
+      for(unsigned int j = 0; j < entity->physicals.size(); j++){
+        const std::string physicalName = model->getPhysicalName(entity->dim(), entity->physicals[j]);
+        for (int k = 0; k < entity->getNumMeshElements(); k++) {
+          MElement *element = entity->getMeshElement(k);
+          switch(dim) {
+            case 1:
+              boundaryVertices[physicalName].insert( element->getVertex(0) ); 
+              break;
+            case 2:
+              boundaryEdges[physicalName].insert( element->getEdge(0) );
+            break;
+            case 3:
+              boundaryFaces[physicalName].insert( element->getFace(0));
+            break;
+            default :
+            throw;
+          }
+        }
+      }
+    }else if(entity->dim() == dim){
+      for (int iel=0; iel<entity->getNumMeshElements(); iel++){
+        MElement *el=entity->getMeshElement(iel);
+        if(el->getPartition()==Msg::GetCommRank()+1 || el->getPartition()==0){
+          localElements[el->getType()].push_back(el);
+          nlocal++;
+        }else{
+          std::multimap<MElement*, short>::iterator ghost=ghostsCells.lower_bound(el);
+          while(ghost!= ghostsCells.end() && ghost->first==el){
+            nghosts+=(abs(ghost->second)-1==Msg::GetCommRank());
+            ghostElements[el->getPartition()-1][el->getType()].push_back(el);
+            ghost++;
+          }
+        }
+      }
+    }
+  }
+
+
+  Msg::Info("%d groups of elements",localElements.size());
+  // do a group of elements for every element type in the mesh
+  for (std::map<int, std::vector<MElement *> >::iterator it = localElements.begin(); it !=localElements.end() ; ++it){
+    _elementGroups.push_back(new dgGroupOfElements(it->second,order));
+  }
+
+
+  for (int i=0;i<_elementGroups.size();i++){
+    // create a group of faces on the boundary for every group ef elements
+    switch(dim) {
+    case 1 : {
+      std::map<const std::string, std::set<MVertex*> >::iterator mapIt;
+      for(mapIt=boundaryVertices.begin(); mapIt!=boundaryVertices.end(); mapIt++) {
+        _boundaryGroups.push_back(new dgGroupOfFaces(*_elementGroups[i],mapIt->first,order,mapIt->second));
+      }
+      break;
+    }
+    case 2 : {
+      std::map<const std::string, std::set<MEdge, Less_Edge> >::iterator mapIt;
+      for(mapIt=boundaryEdges.begin(); mapIt!=boundaryEdges.end(); mapIt++) {
+        _boundaryGroups.push_back(new dgGroupOfFaces(*_elementGroups[i],mapIt->first,order,mapIt->second));
+      }
+      break;
+    }
+    case 3 : {
+      std::map<const std::string, std::set<MFace, Less_Face> >::iterator mapIt;
+      for(mapIt=boundaryFaces.begin(); mapIt!=boundaryFaces.end(); mapIt++) {
+        _boundaryGroups.push_back(new dgGroupOfFaces(*_elementGroups[i],mapIt->first,order,mapIt->second));
+      }
+      break;
+    }
+    }
+    // create a group of faces for every face that is common to elements of the same group 
+    _faceGroups.push_back(new dgGroupOfFaces(*_elementGroups[i],order));
+    // create a groupe of d
+    for (int j=i+1;j<_elementGroups.size();j++){
+      dgGroupOfFaces *gof = new dgGroupOfFaces(*_elementGroups[i],*_elementGroups[j],order);
+      if (gof->getNbElements())
+        _faceGroups.push_back(gof);
+      else
+        delete gof;
+    }
+  }
+  //create ghost groups
+  for(int i=0;i<Msg::GetCommSize();i++){
+    for (std::map<int, std::vector<MElement *> >::iterator it = ghostElements[i].begin(); it !=ghostElements[i].end() ; ++it){
+      _ghostGroups.push_back(new dgGroupOfElements(it->second,order,i));
+    }
+  }
+  //create face group for ghostGroups
+  for (int i=0; i<_ghostGroups.size(); i++){
+    for (int j=0;j<_elementGroups.size();j++){
+      dgGroupOfFaces *gof = new dgGroupOfFaces(*_ghostGroups[i],*_elementGroups[j],order);
+      if (gof->getNbElements())
+        _faceGroups.push_back(gof);
+      else
+        delete gof;
+    }
+  }
+  printf("nbGhostGroups : %i nbElementsGroups : %i\n",getNbGhostGroups(), getNbElementGroups());
+}
+
+dgGroupCollection::~dgGroupCollection() {
+  for (int i=0; i< _elementGroups.size(); i++)
+    delete _elementGroups[i];
+  for (int i=0; i< _faceGroups.size(); i++)
+    delete _faceGroups[i];
+  for (int i=0; i< _boundaryGroups.size(); i++)
+    delete _boundaryGroups[i];
+  for (int i=0; i< _ghostGroups.size(); i++)
+    delete _ghostGroups[i];
+}

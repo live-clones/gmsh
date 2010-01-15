@@ -18,6 +18,7 @@
 class MElement;
 class polynomialBasis;
 class GEntity;
+class GModel;
 
 class dgElement {
   MElement *_element;
@@ -179,5 +180,25 @@ public:
   void mapToInterface(int nFields, const fullMatrix<double> &vLeft, const fullMatrix<double> &vRight, fullMatrix<double> &v);
   void mapFromInterface(int nFields, const fullMatrix<double> &v, fullMatrix<double> &vLeft, fullMatrix<double> &vRight);
   const polynomialBasis * getPolynomialBasis() const {return _fsFace;}
+};
+
+class dgGroupCollection {
+  GModel *_model;
+  std::vector<dgGroupOfElements*> _elementGroups; //volume
+  std::vector<dgGroupOfFaces*> _faceGroups; //interface
+  std::vector<dgGroupOfFaces*> _boundaryGroups; //boundary
+  std::vector<dgGroupOfElements*> _ghostGroups; //ghost volume
+  public:
+  inline int getNbElementGroups() const {return _elementGroups.size();}
+  inline int getNbFaceGroups() const {return _faceGroups.size();}
+  inline int getNbBoundaryGroups() const {return _boundaryGroups.size();}
+  inline int getNbGhostGroups() const {return _ghostGroups.size();}
+  inline dgGroupOfElements *getElementGroup(int i) const {return _elementGroups[i];}
+  inline dgGroupOfFaces *getFaceGroup(int i) const {return _faceGroups[i];}
+  inline dgGroupOfFaces *getBoundaryGroup(int i) const {return _boundaryGroups[i];}
+  inline dgGroupOfElements *getGhostGroup(int i) const {return _ghostGroups[i];}
+
+  void buildGroups (GModel *model,int dimension, int order);
+  ~dgGroupCollection();
 };
 #endif

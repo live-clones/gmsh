@@ -4,6 +4,7 @@
 #include "fullMatrix.h"
 #include <vector>
 class GModel;
+class dgGroupCollection;
 class dgGroupOfElements;
 class dgGroupOfFaces;
 class dgConservationLaw;
@@ -34,20 +35,13 @@ class dgAlgorithm {
 				fullMatrix<double> &residual // residual !! at faces nodes
 				 );
   // works only if there is only 1 group of element
-  static void residual( const dgConservationLaw &claw,
-			std::vector<dgGroupOfElements*> &eGroups, //group of elements
-			std::vector<dgGroupOfFaces*> &fGroups,  // group of interfacs
-			std::vector<dgGroupOfFaces*> &bGroups, // group of boundaries
-      std::vector<dgGroupOfElements*> &ghostGroups, // group of boundaries
+  static void residual( const dgConservationLaw &claw, dgGroupCollection &groups,
 			std::vector<fullMatrix<double> *> &solution, // solution !! at faces nodes
 			std::vector<fullMatrix<double> *> &residual // residual !! at faces nodes
 			);	  
   void rungeKutta (
 		   const dgConservationLaw &claw,
-		   std::vector<dgGroupOfElements*> &eGroups, //group of elements
-		   std::vector<dgGroupOfFaces*> &fGroups,  // group of interfacs
-		   std::vector<dgGroupOfFaces*> &bGroups, // group of boundaries
-      std::vector<dgGroupOfElements*> &ghostGroups, // group of boundaries
+       dgGroupCollection &groups,
 		   double h,	
 		   dgDofContainer &residu,
 		   dgDofContainer &sol,
@@ -62,10 +56,7 @@ class dgAlgorithm {
 					   );
   void multirateRungeKutta (
 		   const dgConservationLaw &claw,
-		   std::vector<dgGroupOfElements*> &eGroups, //group of elements
-		   std::vector<dgGroupOfFaces*> &fGroups,  // group of interfacs
-		   std::vector<dgGroupOfFaces*> &bGroups, // group of boundaries
-      std::vector<dgGroupOfElements*> &ghostGroups, // group of boundaries
+       dgGroupCollection &groups,
 		   double h,	
 		   dgDofContainer &residu,
 		   dgDofContainer &sol,

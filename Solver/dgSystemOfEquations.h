@@ -16,6 +16,7 @@ private:
   dgDofContainer (const dgDofContainer&);  
   int totalNbElements; 
   int nbFields;
+  dgGroupCollection &_groups;
 public:
   int _dataSize; // the full data size i.e. concerning all groups (not ghost, see bellow)
   int _dataSizeGhost; 
@@ -24,15 +25,13 @@ public:
   fullVector<double> * _ghostData;
   inline int getDataSize(){return _dataSize;}
   inline fullMatrix<double> &getGroupProxy(int gId){ return *(_dataProxys[gId]); }
-  dgDofContainer (std::vector<dgGroupOfElements*> &groups,std::vector<dgGroupOfElements*> ghostGroups, const dgConservationLaw &claw);
-  dgDofContainer (std::vector<dgGroupOfElements*> &groups, const dgConservationLaw &claw);
+  dgDofContainer (dgGroupCollection &groups, const dgConservationLaw &claw);
   ~dgDofContainer ();  
   int getNbElements() {return totalNbElements;}
-  //collective, should be called on all proc
-  void setGhostedGroups (std::vector<dgGroupOfElements*> &ghostGroups);
 };
 
 class binding;
+
 
 class dgSystemOfEquations {
 //////////////
@@ -42,10 +41,12 @@ class dgSystemOfEquations {
   int totalSend, totalRecv;
   public :
   void scatter(dgDofContainer *solution);
+  std::vector< std::vector<std::pair<int,int> > >_elementsToSend; //{group,id} of the elements to send to each proc
 //////////////
   private:
   // the mesh and the model
   GModel *_gm;
+  dgGroupCollection _groups;
   // the algorithm that computes DG operators
   dgAlgorithm *_algo;
   // the conservation law
@@ -58,15 +59,6 @@ class dgSystemOfEquations {
   // solution and righ hand sides
   dgDofContainer *_solution;
   dgDofContainer *_rightHandSide;
-  // groups of elements (volume terms)
-  std::vector<dgGroupOfElements*> _elementGroups;
-  //ghost structure
-  std::vector<dgGroupOfElements*> _ghostGroups;
-  std::vector< std::vector<std::pair<int,int> > >_elementsToSend; //{group,id} of the elements to send to each proc
-  // groups of faces (interface terms)
-  std::vector<dgGroupOfFaces*> _faceGroups;
-  // groups of faces (boundary conditions)
-  std::vector<dgGroupOfFaces*> _boundaryGroups;
   dgSystemOfEquations(const dgSystemOfEquations &) {}
   double computeTimeStepMethodOfLines () const;
 public:
@@ -93,7 +85,7 @@ public:
   void saveSolution (std::string fileName) ;
   void loadSolution (std::string fileName);
   ~dgSystemOfEquations();
-private:
 };
+
 #endif // _DG_SYSTEM_OF_EQUATIONS_
 

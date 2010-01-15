@@ -89,31 +89,26 @@ void dgSystemOfEquations::registerBindings(binding *b) {
 // do a L2 projection
 void dgSystemOfEquations::L2Projection (std::string functionName){
   dgConservationLawL2Projection Law(functionName,*_claw);
-  for (int i=0;i<_elementGroups.size();i++){
-    _algo->residualVolume(Law,*_elementGroups[i],*_solution->_dataProxys[i],*_rightHandSide->_dataProxys[i]);
-    _algo->multAddInverseMassMatrix(*_elementGroups[i],*_rightHandSide->_dataProxys[i],*_solution->_dataProxys[i]);
+  for (int i=0;i<_groups.getNbElementGroups();i++){
+    dgGroupOfElements *group = _groups.getElementGroup(i);
+    _algo->residualVolume(Law,*group,*_solution->_dataProxys[i],*_rightHandSide->_dataProxys[i]);
+    _algo->multAddInverseMassMatrix(*group,*_rightHandSide->_dataProxys[i],*_solution->_dataProxys[i]);
   }
 }
 
 // ok, we can setup the groups and create solution vectors
 void dgSystemOfEquations::setup(){
   if (!_claw) throw;
-  _algo->buildGroups(_gm,
-		     _dimension,
-		     _order,
-		     _elementGroups,
-		     _faceGroups,
-		     _boundaryGroups,
-         _ghostGroups
-         );
+  _groups.buildGroups(_gm,_dimension,_order);
   // build the ghosts structure
   int *nGhostElements = new int[Msg::GetCommSize()];
   int *nParentElements = new int[Msg::GetCommSize()];
   for (int i=0;i<Msg::GetCommSize();i++) {
     nGhostElements[i]=0;
   }
-  for (size_t i = 0; i< _ghostGroups.size(); i++){
-    nGhostElements[_ghostGroups[i]->getGhostPartition()] += _ghostGroups[i]->getNbElements();
+  for (size_t i = 0; i< _groups.getNbGhostGroups(); i++){
+    dgGroupOfElements *group=_groups.getGhostGroup(i);
+    nGhostElements[group->getGhostPartition()] += group->getNbElements();
   }
   #ifdef HAVE_MPI
   MPI_Alltoall(nGhostElements,1,MPI_INT,nParentElements,1,MPI_INT,MPI_COMM_WORLD); 
@@ -134,18 +129,20 @@ void dgSystemOfEquations::setup(){
 
   int *idSend = new int[totalSend];
   int *idRecv = new int[totalRecv];
-  for (size_t i = 0; i< _ghostGroups.size(); i++){
-    int part = _ghostGroups[i]->getGhostPartition();
-    for (int j=0; j< _ghostGroups[i]->getNbElements() ; j++){
-      idSend[curShiftSend[part]++] = _ghostGroups[i]->getElement(j)->getNum();
+  for (int i = 0; i< _groups.getNbGhostGroups(); i++){
+    dgGroupOfElements *group = _groups.getGhostGroup(i);
+    int part = group->getGhostPartition();
+    for (int j=0; j< group->getNbElements() ; j++){
+      idSend[curShiftSend[part]++] = group->getElement(j)->getNum();
     }
   }
   MPI_Alltoallv(idSend,nGhostElements,shiftSend,MPI_INT,idRecv,nParentElements,shiftRecv,MPI_INT,MPI_COMM_WORLD);
   //create a Map elementNum :: group, position in group
   std::map<int, std::pair<int,int> > elementMap;
-  for(size_t i = 0; i<_elementGroups.size(); i++) {
-    for(int j=0; j<_elementGroups[i]->getNbElements(); j++){
-      elementMap[_elementGroups[i]->getElement(j)->getNum()]=std::pair<int,int>(i,j);
+  for(size_t i = 0; i< _groups.getNbElementGroups(); i++) {
+    dgGroupOfElements *group = _groups.getElementGroup(i);
+    for(int j=0; j< group->getNbElements(); j++){
+      elementMap[group->getElement(j)->getNum()]=std::pair<int,int>(i,j);
     }
   }
   _elementsToSend.resize(Msg::GetCommSize());
@@ -158,21 +155,21 @@ void dgSystemOfEquations::setup(){
   }
   // compute the total size of the soution
   delete curShiftSend;
-  _solution = new dgDofContainer(_elementGroups,_ghostGroups,*_claw);
-  _rightHandSide = new dgDofContainer(_elementGroups,_ghostGroups,*_claw);
+  _solution = new dgDofContainer(_groups,*_claw);
+  _rightHandSide = new dgDofContainer(_groups,*_claw);
 }
 
 
 double dgSystemOfEquations::RK44(double dt){
-  _algo->rungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups,_ghostGroups, dt,  *_solution, *_rightHandSide, this);
+  _algo->rungeKutta(*_claw,_groups, dt,  *_solution, *_rightHandSide, this);
   return _solution->_data->norm();
 }
 
 double dgSystemOfEquations::computeInvSpectralRadius(){   
   double sr = 1.e22;
-  for (int i=0;i<_elementGroups.size();i++){
+  for (int i=0;i<_groups.getNbElementGroups();i++){
     std::vector<double> DTS;
-    _algo->computeElementaryTimeSteps(*_claw, *_elementGroups[i], *_solution->_dataProxys[i], DTS);
+    _algo->computeElementaryTimeSteps(*_claw, *_groups.getElementGroup(i), *_solution->_dataProxys[i], DTS);
     for (int k=0;k<DTS.size();k++) sr = std::min(sr,DTS[k]);
   }
   #ifdef HAVE_MPI
@@ -187,17 +184,17 @@ double dgSystemOfEquations::computeInvSpectralRadius(){
 
 double dgSystemOfEquations::RK44_limiter(double dt){
   dgLimiter *sl = new dgSlopeLimiter(_claw);
-  _algo->rungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups,_ghostGroups, dt,  *_solution, *_rightHandSide,this, sl);
+  _algo->rungeKutta(*_claw,_groups, dt,  *_solution, *_rightHandSide,this, sl);
   delete sl;
   return _solution->_data->norm();
 }
 
 double dgSystemOfEquations::ForwardEuler(double dt){
-  _algo->rungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups,_ghostGroups, dt,  *_solution, *_rightHandSide,this, NULL,1);
+  _algo->rungeKutta(*_claw, _groups, dt,  *_solution, *_rightHandSide,this, NULL,1);
   return _solution->_data->norm();
 }
 double dgSystemOfEquations::multirateRK43(double dt){
-  _algo->multirateRungeKutta(*_claw, _elementGroups, _faceGroups, _boundaryGroups,_ghostGroups, dt,  *_solution, *_rightHandSide);
+  _algo->multirateRungeKutta(*_claw, _groups, dt,  *_solution, *_rightHandSide);
   return _solution->_data->norm();
 }
 
@@ -207,15 +204,12 @@ void dgSystemOfEquations::exportSolution(std::string outputFile){
 
 void dgSystemOfEquations::limitSolution(){
   dgLimiter *sl = new dgSlopeLimiter(_claw);
-  sl->apply(*_solution,_elementGroups,_faceGroups);
+  sl->apply(*_solution,_groups);
 
   delete sl;
 }
 
 dgSystemOfEquations::~dgSystemOfEquations(){
-  for (int i=0;i<_elementGroups.size();i++){
-    delete _elementGroups[i];
-  }
   if (_solution){
     delete _solution;
     delete _rightHandSide;
@@ -244,8 +238,8 @@ void dgSystemOfEquations::export_solution_as_is (const std::string &name){
       name_oss<<"_"<<Msg::GetCommRank();
     FILE *f = fopen (name_oss.str().c_str(),"w");
     int COUNT = 0;
-    for (int i=0;i < _elementGroups.size() ;i++){
-      COUNT += _elementGroups[i]->getNbElements();
+    for (int i=0;i < _groups.getNbElementGroups() ;i++){
+      COUNT += _groups.getElementGroup(i)->getNbElements();
     }
     fprintf(f,"$MeshFormat\n2.1 0 8\n$EndMeshFormat\n");  
     fprintf(f,"$ElementNodeData\n");
@@ -255,16 +249,17 @@ void dgSystemOfEquations::export_solution_as_is (const std::string &name){
     fprintf(f,"0.0\n");
     fprintf(f,"3\n");
     fprintf(f,"0\n 1\n %d\n",COUNT);
-    for (int i=0;i < _elementGroups.size() ;i++){
-      for (int iElement=0 ; iElement<_elementGroups[i]->getNbElements() ;++iElement) {
-	MElement *e = _elementGroups[i]->getElement(iElement);
-	int num = e->getNum();
-	fullMatrix<double> sol = getSolutionProxy (i, iElement);      
-	fprintf(f,"%d %d",num,sol.size1());
-	for (int k=0;k<sol.size1();++k) {
-	  fprintf(f," %12.5E ",sol(k,ICOMP));
-	}
-	fprintf(f,"\n");
+    for (int i=0;i < _groups.getNbElementGroups()  ;i++){
+      dgGroupOfElements *group = _groups.getElementGroup(i);
+      for (int iElement=0 ; iElement< group->getNbElements() ;++iElement) {
+        MElement *e = group->getElement(iElement);
+        int num = e->getNum();
+        fullMatrix<double> sol = getSolutionProxy (i, iElement);      
+        fprintf(f,"%d %d",num,sol.size1());
+        for (int k=0;k<sol.size1();++k) {
+          fprintf(f," %12.5E ",sol(k,ICOMP));
+        }
+        fprintf(f,"\n");
       }
     }
     fprintf(f,"$EndElementNodeData\n");
@@ -276,9 +271,10 @@ void dgSystemOfEquations::export_solution_as_is (const std::string &name){
 
   std::map<int, std::vector<double> > data;
   
-  for (int i=0;i < _elementGroups.size() ;i++){
-    for (int iElement=0 ; iElement<_elementGroups[i]->getNbElements() ;++iElement) {
-      MElement *e = _elementGroups[i]->getElement(iElement);
+  for (int i=0;i < _groups.getNbElementGroups() ;i++){
+    dgGroupOfElements *group = _groups.getElementGroup(i);
+    for (int iElement=0 ; iElement< group->getNbElements() ;++iElement) {
+      MElement *e = group->getElement(iElement);
       int num = e->getNum();
       fullMatrix<double> sol = getSolutionProxy (i, iElement);      
       std::vector<double> val;
@@ -297,21 +293,23 @@ void dgSystemOfEquations::export_solution_as_is (const std::string &name){
   delete pv;
 }
 
-dgDofContainer::dgDofContainer (std::vector<dgGroupOfElements*> &elementGroups,std::vector<dgGroupOfElements*> ghostGroups, const dgConservationLaw &claw){
+dgDofContainer::dgDofContainer (dgGroupCollection &groups, const dgConservationLaw &claw):
+  _groups(groups)
+{
   _dataSize = 0;
   _dataSizeGhost=0;
   totalNbElements = 0;
   int totalNbElementsGhost =0;
   nbFields = claw.nbFields();
-  for (int i=0;i<elementGroups.size();i++){
-    int nbNodes    = elementGroups[i]->getNbNodes();
-    int nbElements = elementGroups[i]->getNbElements();
+  for (int i=0; i< _groups.getNbElementGroups();i++){
+    int nbNodes    = _groups.getElementGroup(i)->getNbNodes();
+    int nbElements = _groups.getElementGroup(i)->getNbElements();
     totalNbElements +=nbElements;
     _dataSize += nbNodes*nbFields*nbElements;
   }
-  for (int i=0;i<ghostGroups.size();i++){
-    int nbNodes    = ghostGroups[i]->getNbNodes();
-    int nbElements = ghostGroups[i]->getNbElements();
+  for (int i=0; i<_groups.getNbGhostGroups(); i++){
+    int nbNodes    = _groups.getGhostGroup(i)->getNbNodes();
+    int nbElements = _groups.getGhostGroup(i)->getNbElements();
     totalNbElementsGhost +=nbElements;
     _dataSizeGhost += nbNodes*nbFields*nbElements;
   }
@@ -321,49 +319,22 @@ dgDofContainer::dgDofContainer (std::vector<dgGroupOfElements*> &elementGroups,s
   _ghostData = new fullVector<double>(_dataSizeGhost);
   // create proxys for each group
   int offset = 0;
-  _dataProxys.resize(elementGroups.size()+ghostGroups.size());
-  for (int i=0;i<elementGroups.size();i++){    
-    dgGroupOfElements *group=elementGroups[i];
+  _dataProxys.resize(_groups.getNbElementGroups()+_groups.getNbGhostGroups());
+  for (int i=0;i<_groups.getNbElementGroups();i++){    
+    dgGroupOfElements *group = _groups.getElementGroup(i);
     int nbNodes    = group->getNbNodes();
     int nbElements = group->getNbElements();
     _dataProxys[i] = new fullMatrix<double> (&(*_data)(offset),nbNodes, nbFields*nbElements);
     offset += nbNodes*nbFields*nbElements;
   }  
   offset=0;
-  for (int i=0;i<ghostGroups.size();i++){    
-    dgGroupOfElements *group=ghostGroups[i];
+  for (int i=0;i<_groups.getNbGhostGroups();i++){    
+    dgGroupOfElements *group = _groups.getGhostGroup(i);
     int nbNodes    = group->getNbNodes();
     int nbElements = group->getNbElements();
-    _dataProxys[i+elementGroups.size()] = new fullMatrix<double> (&(*_ghostData)(offset),nbNodes, nbFields*nbElements);
+    _dataProxys[i+_groups.getNbElementGroups()] = new fullMatrix<double> (&(*_ghostData)(offset),nbNodes, nbFields*nbElements);
     offset += nbNodes*nbFields*nbElements;
   }  
-  //  printf("datasize = %d\n",_dataSize);
-}
-
-dgDofContainer::dgDofContainer (std::vector<dgGroupOfElements*> &elementGroups, const dgConservationLaw &claw){
-  _dataSize = 0;
-  totalNbElements = 0;
-  nbFields = claw.nbFields();
-  for (int i=0;i<elementGroups.size();i++){
-    int nbNodes    = elementGroups[i]->getNbNodes();
-    int nbElements = elementGroups[i]->getNbElements();
-    totalNbElements +=nbElements;
-    _dataSize += nbNodes*nbFields*nbElements;
-  }
-
-  // allocate the big vectors
-  _data      = new fullVector<double>(_dataSize);
-  // create proxys for each group
-  int offset = 0;
-  _dataProxys.resize(elementGroups.size());
-  for (int i=0;i<elementGroups.size();i++){    
-    dgGroupOfElements *group=elementGroups[i];
-    int nbNodes    = group->getNbNodes();
-    int nbElements = group->getNbElements();
-    _dataProxys[i] = new fullMatrix<double> (&(*_data)(offset),nbNodes, nbFields*nbElements);
-    offset += nbNodes*nbFields*nbElements;
-  }  
-  //  printf("datasize = %d\n",_dataSize);
 }
 
 dgDofContainer::~dgDofContainer (){
@@ -382,11 +353,11 @@ void dgSystemOfEquations::scatter(dgDofContainer *vector){
     countS[i]=0;
     countR[i]=0;
     for(size_t j=0;j<_elementsToSend[i].size();j++){
-      countS[i] += _elementGroups[_elementsToSend[i][j].first]->getNbNodes()*_claw->nbFields();
+      countS[i] += _groups.getElementGroup(_elementsToSend[i][j].first)->getNbNodes()*_claw->nbFields();
     }
   }
-  for(size_t i=0; i<_ghostGroups.size(); i++){
-    dgGroupOfElements *group=_ghostGroups[i];
+  for(size_t i=0; i<_groups.getNbGhostGroups(); i++){
+    dgGroupOfElements *group = _groups.getGhostGroup(i);
     countR[group->getGhostPartition()]+=group->getNbElements()*group->getNbNodes()*_claw->nbFields();
   }
   shiftS[0]=shiftR[0]=0;
@@ -410,7 +381,7 @@ void dgSystemOfEquations::scatter(dgDofContainer *vector){
       for(int l=0;l<_claw->nbFields();l++){
         for(int k=0;k<sol.size1();k++){
           send[index++] = sol(k,eid*_claw->nbFields()+l);
-//          send[index++] = _elementGroups[gid]->getElement(eid)->getNum()*9+l*3+k;
+          //send[index++] = _groups.getElementGroup(gid)->getElement(eid)->getNum()*9+l*3+k;
         }
       }
     }
@@ -419,16 +390,16 @@ void dgSystemOfEquations::scatter(dgDofContainer *vector){
   //3) send
   MPI_Alltoallv(send,countS,shiftS,MPI_DOUBLE,recv,countR,shiftR,MPI_DOUBLE,MPI_COMM_WORLD);
   //4) distribute
-  for(int i=0; i< _ghostGroups.size();i++){
-    fullMatrix<double>&sol = vector->getGroupProxy(i+_elementGroups.size());
-    int part = _ghostGroups[i]->getGhostPartition();
+  for(int i=0; i< _groups.getNbGhostGroups();i++){
+    fullMatrix<double>&sol = vector->getGroupProxy(i+_groups.getNbElementGroups());
+    int part = _groups.getGhostGroup(i)->getGhostPartition();
     int ndof = sol.size1()*sol.size2();
     for(int j=0;j<sol.size2();j++){
       for(int k=0;k<sol.size1();k++){
         sol(k,j)=recv[shiftR[part]++];
-/*        int a=(int)recv[shiftR[part]++];
-        int b= _ghostGroups[i]->getElement(j/3)->getNum()*9+3*(j%3)+k;
-        if(a!=b)printf("%i %i\n",a,b);*/
+        //int a=(int)recv[shiftR[part]++];
+        //int b= _groups.getGhostGroup(i)->getElement(j/3)->getNum()*9+3*(j%3)+k;
+        ///*if(a!=b)*/printf("%i %i\n",a,b);
       }
     }
   }
