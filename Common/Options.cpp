@@ -990,36 +990,36 @@ std::string opt_general_options_filename(OPT_ARGS_STR)
 std::string opt_general_recent_file1(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    CTX::instance()->recent_files[0] = val;
-  return CTX::instance()->recent_files[0];
+    CTX::instance()->recentFiles[0] = val;
+  return CTX::instance()->recentFiles[0];
 }
 
 std::string opt_general_recent_file2(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    CTX::instance()->recent_files[1] = val;
-  return CTX::instance()->recent_files[1];
+    CTX::instance()->recentFiles[1] = val;
+  return CTX::instance()->recentFiles[1];
 }
 
 std::string opt_general_recent_file3(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    CTX::instance()->recent_files[2] = val;
-  return CTX::instance()->recent_files[2];
+    CTX::instance()->recentFiles[2] = val;
+  return CTX::instance()->recentFiles[2];
 }
 
 std::string opt_general_recent_file4(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    CTX::instance()->recent_files[3] = val;
-  return CTX::instance()->recent_files[3];
+    CTX::instance()->recentFiles[3] = val;
+  return CTX::instance()->recentFiles[3];
 }
 
 std::string opt_general_recent_file5(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    CTX::instance()->recent_files[4] = val;
-  return CTX::instance()->recent_files[4];
+    CTX::instance()->recentFiles[4] = val;
+  return CTX::instance()->recentFiles[4];
 }
 
 std::string opt_general_editor(OPT_ARGS_STR)
@@ -2528,14 +2528,6 @@ double opt_general_message_auto_scroll(OPT_ARGS_NUM)
     FlGui::instance()->messages->butt->value(CTX::instance()->msgAutoScroll);
 #endif
   return CTX::instance()->msgAutoScroll;
-}
-
-double opt_general_history_size(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    if ((int)val >= 0 && (int)val < 6)
-      CTX::instance()->history_size = (int)val;
-  return CTX::instance()->history_size;
 }
 
 double opt_general_option_position0(OPT_ARGS_NUM)

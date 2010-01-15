@@ -455,11 +455,11 @@ void OpenProject(std::string fileName)
 
   // merge the file
   if(MergeFile(fileName)) {
-    for (int i=4; i > 0; i--)
-      CTX::instance()->recent_files[i] = CTX::instance()->recent_files[i-1];
-    CTX::instance()->recent_files[0] = fileName;
-    if (CTX::instance()->history_size < 5)
-      CTX::instance()->history_size++;
+    if(fileName != CTX::instance()->recentFiles.front())
+      CTX::instance()->recentFiles.insert
+        (CTX::instance()->recentFiles.begin(), fileName);
+    if(CTX::instance()->recentFiles.size() > 5)
+      CTX::instance()->recentFiles.resize(5);
 #if defined(HAVE_FLTK)
     if(FlGui::available())
       FlGui::instance()->menu->fillRecentHistoryMenu();

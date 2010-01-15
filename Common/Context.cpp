@@ -79,6 +79,7 @@ CTX::CTX()
   hideUnselected = 0;
   numWindows = numTiles = 1;
   deltaFontSize = 0;
+  recentFiles.resize(5);
 }
 
 CTX *CTX::_instance = 0;

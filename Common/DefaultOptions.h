@@ -609,9 +609,6 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "GraphicsWidth" , opt_general_graphics_size0 , 600. , 
     "Width (in pixels) of the graphic window" }, 
 
-  { F|S, "HistorySize", opt_general_history_size , 0,
-    "Number of recently opened files in the menu"},
-
   { F|O, "InitialModule", opt_general_initial_context, 0. , 
     "Module launched on startup (0=automatic, 1=geometry, 2=mesh, 3=solver, "
     "4=post-processing) " },

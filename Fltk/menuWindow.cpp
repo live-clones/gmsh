@@ -2228,14 +2228,14 @@ static Fl_Menu_Item bar_table[] = {
   {"&File", 0, 0, 0, FL_SUBMENU},
     {"&New...",     FL_CTRL+'n', (Fl_Callback *)file_new_cb, 0},
     {"&Open...",    FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
-    {"M&erge...",   FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)file_merge_cb, 0},
     {"Open recent", 0, 0, 0, FL_SUBMENU},
-      {"History1", 0,(Fl_Callback *)file_open_recent_cb, 0, FL_MENU_INVISIBLE},
-      {"History2", 0,(Fl_Callback *)file_open_recent_cb, 0, FL_MENU_INVISIBLE},
-      {"History3", 0,(Fl_Callback *)file_open_recent_cb, 0, FL_MENU_INVISIBLE},
-      {"History4", 0,(Fl_Callback *)file_open_recent_cb, 0, FL_MENU_INVISIBLE},
-      {"History5", 0,(Fl_Callback *)file_open_recent_cb, 0, FL_MENU_INVISIBLE},
+      {"History1", 0, 0, 0, FL_MENU_INVISIBLE},
+      {"History2", 0, 0, 0, FL_MENU_INVISIBLE},
+      {"History3", 0, 0, 0, FL_MENU_INVISIBLE},
+      {"History4", 0, 0, 0, FL_MENU_INVISIBLE},
+      {"History5", 0, 0, 0, FL_MENU_INVISIBLE},
       {0},
+    {"M&erge...",   FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)file_merge_cb, 0},
     {"&Clear",      0, (Fl_Callback *)file_clear_cb, 0, FL_MENU_DIVIDER},
     {"Remote", 0, 0, 0, FL_MENU_DIVIDER | FL_SUBMENU},
       {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
@@ -2287,15 +2287,17 @@ static Fl_Menu_Item sysbar_table[] = {
   {"File", 0, 0, 0, FL_SUBMENU},
     {"New...",     FL_META+'n', (Fl_Callback *)file_new_cb, 0},
     {"Open...",    FL_META+'o', (Fl_Callback *)file_open_cb, 0},
+  /* system menu bar is not dynamic in fltk 1.1; it will be in fltk 1.3
+    {"Open recent", 0, 0, 0, FL_SUBMENU},
+      {"History1", 0, 0, 0, FL_MENU_INVISIBLE},
+      {"History2", 0, 0, 0, FL_MENU_INVISIBLE},
+      {"History3", 0, 0, 0, FL_MENU_INVISIBLE},
+      {"History4", 0, 0, 0, FL_MENU_INVISIBLE},
+      {"History5", 0, 0, 0, FL_MENU_INVISIBLE},
+      {0},
+  */
     {"Merge...",   FL_META+FL_SHIFT+'o', (Fl_Callback *)file_merge_cb, 0},
     {"Clear",      0, (Fl_Callback *)file_clear_cb, 0, FL_MENU_DIVIDER},
-    {"Open recent", 0, 0, 0, FL_SUBMENU},
-      {"History1", 0,(Fl_Callback *)file_open_recent_cb, 0, FL_MENU_INVISIBLE},
-      {"History2", 0,(Fl_Callback *)file_open_recent_cb, 0, FL_MENU_INVISIBLE},
-      {"History3", 0,(Fl_Callback *)file_open_recent_cb, 0, FL_MENU_INVISIBLE},
-      {"History4", 0,(Fl_Callback *)file_open_recent_cb, 0, FL_MENU_INVISIBLE},
-      {"History5", 0,(Fl_Callback *)file_open_recent_cb, 0, FL_MENU_INVISIBLE},
-      {0},
     {"Remote", 0, 0, 0, FL_MENU_DIVIDER | FL_SUBMENU},
       {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
       {"Merge...",  0, (Fl_Callback *)file_remote_cb, (void*)"merge"},
@@ -2902,17 +2904,17 @@ void menuWindow::setContext(contextItem *menu_asked, int flag)
     win->size(width, _MH + NB_BUTT_SCROLL * BH);
 }
 
-void menuWindow::fillRecentHistoryMenu() {
-  for (int i = 0; i < CTX::instance()->history_size; i++){
-#if defined(__APPLE__)
-    sysbar_table[i+5].text = (CTX::instance()->recent_files[i]).c_str();
-    sysbar_table[i+5].callback_ = (Fl_Callback *)file_open_recent_cb;
-    sysbar_table[i+5].user_data_ = (void*)(CTX::instance()->recent_files[i]).c_str();
-    sysbar_table[i+5].show();
-#endif
-    bar_table[i+5].text = (CTX::instance()->recent_files[i]).c_str();
-    bar_table[i+5].callback_ = (Fl_Callback *)file_open_recent_cb;
-    bar_table[i+5].user_data_ = (void*)(CTX::instance()->recent_files[i]).c_str();
-    bar_table[i+5].show();
-  }; 
+void menuWindow::fillRecentHistoryMenu()
+{
+  int last = 0;
+  for(unsigned int i = 0; i < CTX::instance()->recentFiles.size(); i++)
+    if(CTX::instance()->recentFiles[i].size()) last = i + 1;
+  for(int i = 0; i < last; i++){
+    bar_table[4 + i].text = CTX::instance()->recentFiles[i].c_str();
+    bar_table[4 + i].callback_ = (Fl_Callback *)file_open_recent_cb;
+    bar_table[4 + i].user_data_ = (void*)CTX::instance()->recentFiles[i].c_str();
+    bar_table[4 + i].show();
+  }
+  for (unsigned int i = last; i < 5; i++)
+    bar_table[4 + i].hide();
 }

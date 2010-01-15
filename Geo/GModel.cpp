@@ -1392,15 +1392,14 @@ void GModel::save(std::string fileName)
   GModel::setCurrent(temp);
 }
 
-
 #include "Bindings.h"
 
 void GModel::registerBindings(binding *b)
 {
   classBinding *cb = b->addClass<GModel>("GModel");
   methodBinding *cm;
-  cm = cb->addMethod("mesh",&GModel::mesh);
-  cm = cb->addMethod("load",&GModel::load);
-  cm = cb->addMethod("save",&GModel::save);
+  cm = cb->addMethod("mesh", &GModel::mesh);
+  cm = cb->addMethod("load", &GModel::load);
+  cm = cb->addMethod("save", &GModel::save);
   cm = cb->setConstructor<GModel>();
 }
