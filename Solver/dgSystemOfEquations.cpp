@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sstream>
 #include "dgSystemOfEquations.h"
 #include "function.h"
 #include "MElement.h"
@@ -174,9 +175,9 @@ void dgSystemOfEquations::export_solution_as_is (const std::string &name){
   // the elementnodedata::export does not work !!
 
   for (int ICOMP = 0; ICOMP<_claw->nbFields();++ICOMP){
-    char aaa[245];
-    sprintf(aaa,"%s_COMP_%d.msh",name.c_str(),ICOMP);
-    FILE *f = fopen (aaa,"w");
+    std::ostringstream name_oss;
+    name_oss<<name<<"_COMP_"<<ICOMP<<".msh";
+    FILE *f = fopen (name_oss.str().c_str(),"w");
     int COUNT = 0;
     for (int i=0;i < _elementGroups.size() ;i++){
       COUNT += _elementGroups[i]->getNbElements();
