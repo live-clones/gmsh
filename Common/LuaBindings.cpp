@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include "Gmsh.h"
+#include "Context.h"
 #include "MVertex.h"
 #include "MElement.h"
 #include "Bindings.h"
@@ -14,6 +15,7 @@
 #include "dgConservationLawAdvection.h"
 #include "dgConservationLawPerfectGas.h"
 #include "dgConservationLawWaveEquation.h"
+
 extern "C" {
   #include "lua.h"
   #include "lualib.h"
@@ -104,7 +106,7 @@ int binding::readFile(const char *filename)
 {
   int s = luaL_loadfile(L, filename);
   if ( s==0 ) {
-    Msg::Info("lua executes %s\n",filename);
+    Msg::Info("lua executes %s",filename);
     s = lua_pcall(L, 0, LUA_MULTRET, 0);
   }
   report_errors(L, s);
@@ -112,9 +114,13 @@ int binding::readFile(const char *filename)
   return (s==0);
 }
 
-void binding::interactiveSession(){
+void binding::interactiveSession()
+{
+  int lock = CTX::instance()->lock;
+  CTX::instance()->lock = 0;
+
   Msg::Info("Starting interactive lua session, press Ctrl-D to exit"); 
-  #ifdef HAVE_READLINE
+#ifdef HAVE_READLINE
   using_history();
   while (const char *line=readline("lua> ")){
     char *expansion;
@@ -129,13 +135,14 @@ void binding::interactiveSession(){
       free(expansion);
   }
   clear_history();
-  #else
+#else
   std::string line;
   while(std::cout<<"lua> ",
         getline(std::cin,line) ){
     report_errors(L, luaL_dostring(L, line.c_str()));
   }
-  #endif
+#endif
+  CTX::instance()->lock = lock;
 }
 
 binding::binding(){
