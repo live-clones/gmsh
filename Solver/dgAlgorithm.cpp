@@ -259,7 +259,6 @@ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation l
 			      double h,				         // time-step
 			      dgDofContainer &sol,
 			      dgDofContainer &resd,
-            dgSystemOfEquations *syst,
 			      dgLimiter *limiter,
 			      int orderRK
             )				        // order of RK integrator
@@ -281,8 +280,8 @@ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation l
 
   int nbFields = claw.nbFields();
 
-  dgDofContainer K   (groups,claw);
-  dgDofContainer Unp (groups,claw);
+  dgDofContainer K   (groups,nbFields);
+  dgDofContainer Unp (groups,nbFields);
 
   K._data->scale(0.0);
   K._data->axpy(*(sol._data));
@@ -298,7 +297,7 @@ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation l
     if (limiter){
       limiter->apply(K, groups);
     }
-    syst->scatter(&K);
+    K.scatter();
     this->residual(claw,groups,K._dataProxys,resd._dataProxys);
     K._data->scale(0.);
     for(int k=0; k < groups.getNbElementGroups(); k++) {
@@ -408,11 +407,11 @@ void dgAlgorithm::multirateRungeKutta (const dgConservationLaw &claw,			// conse
    dgDofContainer **K;
    K=new dgDofContainer*[nStages];
    for(int i=0;i<nStages;i++){
-     K[i]=new dgDofContainer(groups,claw);
+     K[i]=new dgDofContainer(groups,nbFields);
      K[i]->_data->scale(0.0);
    }
-   dgDofContainer Unp (groups,claw);
-   dgDofContainer tmp (groups,claw);
+   dgDofContainer Unp (groups,nbFields);
+   dgDofContainer tmp (groups,nbFields);
 
    Unp._data->scale(0.0);
    Unp._data->axpy(*(sol._data));

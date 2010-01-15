@@ -1,3 +1,4 @@
+#include "GmshConfig.h"
 #include "dgGroupOfElements.h"
 #include "MElement.h"
 #include "polynomialBasis.h"
@@ -7,6 +8,9 @@
 #include "MLine.h"
 #include "MPoint.h"
 #include "GModel.h"
+#ifdef HAVE_MPI
+#include "mpi.h"
+#endif
 
 static fullMatrix<double> * dgGetIntegrationRule (MElement *e, int p){
   int npts;
@@ -515,7 +519,6 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup1, const dgGroup
         }
       }
       
-      printf("groupe mixte %d %d elements %d faces\n",elGroup1.getNbElements(),elGroup2.getNbElements(),_faces.size());
       break;
     }
     case 3 : {
@@ -681,8 +684,10 @@ void dgGroupCollection::buildGroups(GModel *model, int dim, int order)
         }else{
           std::multimap<MElement*, short>::iterator ghost=ghostsCells.lower_bound(el);
           while(ghost!= ghostsCells.end() && ghost->first==el){
-            nghosts+=(abs(ghost->second)-1==Msg::GetCommRank());
-            ghostElements[el->getPartition()-1][el->getType()].push_back(el);
+            if(abs(ghost->second)-1==Msg::GetCommRank()){
+              ghostElements[el->getPartition()-1][el->getType()].push_back(el);
+              nghosts+=1;
+            }
             ghost++;
           }
         }
@@ -750,7 +755,65 @@ void dgGroupCollection::buildGroups(GModel *model, int dim, int order)
         delete gof;
     }
   }
-  printf("nbGhostGroups : %i nbElementsGroups : %i\n",getNbGhostGroups(), getNbElementGroups());
+
+  // build the ghosts structure
+  int *nGhostElements = new int[Msg::GetCommSize()];
+  int *nParentElements = new int[Msg::GetCommSize()];
+  for (int i=0;i<Msg::GetCommSize();i++) {
+    nGhostElements[i]=0;
+  }
+  for (size_t i = 0; i< getNbGhostGroups(); i++){
+    dgGroupOfElements *group = getGhostGroup(i);
+    nGhostElements[group->getGhostPartition()] += group->getNbElements();
+  }
+  #ifdef HAVE_MPI
+  MPI_Alltoall(nGhostElements,1,MPI_INT,nParentElements,1,MPI_INT,MPI_COMM_WORLD); 
+  #else
+  nParentElements[0]=nGhostElements[0];
+  #endif
+  int *shiftSend = new int[Msg::GetCommSize()];
+  int *shiftRecv = new int[Msg::GetCommSize()];
+  int *curShiftSend = new int[Msg::GetCommSize()];
+  int totalSend=0,totalRecv=0;
+  for(int i= 0; i<Msg::GetCommSize();i++){
+    shiftSend[i] = (i==0 ? 0 : shiftSend[i-1]+nGhostElements[i-1]);
+    curShiftSend[i] = shiftSend[i];
+    shiftRecv[i] = (i==0 ? 0 : shiftRecv[i-1]+nParentElements[i-1]);
+    totalSend += nGhostElements[i];
+    totalRecv += nParentElements[i];
+  }
+
+  int *idSend = new int[totalSend];
+  int *idRecv = new int[totalRecv];
+  for (int i = 0; i<getNbGhostGroups(); i++){
+    dgGroupOfElements *group = getGhostGroup(i);
+    int part = group->getGhostPartition();
+    for (int j=0; j< group->getNbElements() ; j++){
+      idSend[curShiftSend[part]++] = group->getElement(j)->getNum();
+    }
+  }
+  MPI_Alltoallv(idSend,nGhostElements,shiftSend,MPI_INT,idRecv,nParentElements,shiftRecv,MPI_INT,MPI_COMM_WORLD);
+  //create a Map elementNum :: group, position in group
+  std::map<int, std::pair<int,int> > elementMap;
+  for(size_t i = 0; i< getNbElementGroups(); i++) {
+    dgGroupOfElements *group = getElementGroup(i);
+    for(int j=0; j< group->getNbElements(); j++){
+      elementMap[group->getElement(j)->getNum()]=std::pair<int,int>(i,j);
+    }
+  }
+  _elementsToSend.resize(Msg::GetCommSize());
+  for(int i = 0; i<Msg::GetCommSize();i++){
+    _elementsToSend[i].resize(nParentElements[i]);
+    for(int j=0;j<nParentElements[i];j++){
+      int num = idRecv[shiftRecv[i]+j];
+      _elementsToSend[i][j]=elementMap[num];
+    }
+  }
+  delete []idRecv;
+  delete []idSend;
+  delete []curShiftSend;
+  delete []shiftSend;
+  delete []shiftRecv;
 }
 
 dgGroupCollection::~dgGroupCollection() {

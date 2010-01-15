@@ -224,6 +224,10 @@ class fullMatrix
   {
     for(int i = 0; i < _r * _c; i++) _data[i] = m;
   }
+  inline void setAll(const fullMatrix<scalar> &m) 
+  {
+    for(int i = 0; i < _r * _c; i++) _data[i] = m._data[i];
+  }
   inline void scale(const double s)
   {
     if(s == 0.)

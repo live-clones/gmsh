@@ -188,6 +188,10 @@ class dgGroupCollection {
   std::vector<dgGroupOfFaces*> _faceGroups; //interface
   std::vector<dgGroupOfFaces*> _boundaryGroups; //boundary
   std::vector<dgGroupOfElements*> _ghostGroups; //ghost volume
+
+  //{group,id} of the elements to send to each partition for a scatter operation
+  std::vector< std::vector<std::pair<int,int> > >_elementsToSend;
+
   public:
   inline int getNbElementGroups() const {return _elementGroups.size();}
   inline int getNbFaceGroups() const {return _faceGroups.size();}
@@ -197,6 +201,10 @@ class dgGroupCollection {
   inline dgGroupOfFaces *getFaceGroup(int i) const {return _faceGroups[i];}
   inline dgGroupOfFaces *getBoundaryGroup(int i) const {return _boundaryGroups[i];}
   inline dgGroupOfElements *getGhostGroup(int i) const {return _ghostGroups[i];}
+
+  inline int getNbImageElementsOnPartition(int partId) const {return _elementsToSend[partId].size();}
+  inline int getImageElementGroup(int partId, int i) const {return _elementsToSend[partId][i].first;}
+  inline int getImageElementPositionInGroup(int partId, int i) const {return _elementsToSend[partId][i].second;}
 
   void buildGroups (GModel *model,int dimension, int order);
   ~dgGroupCollection();

@@ -45,7 +45,6 @@ class dgAlgorithm {
 		   double h,	
 		   dgDofContainer &residu,
 		   dgDofContainer &sol,
-       dgSystemOfEquations *syst,
 		   dgLimiter *limiter=NULL,
 		   int orderRK=4);
   static void computeElementaryTimeSteps ( //dofManager &dof, // the DOF manager (maybe useless here)
