@@ -460,9 +460,11 @@ void OpenProject(std::string fileName)
     CTX::instance()->recent_files[0] = fileName;
     if (CTX::instance()->history_size < 5)
       CTX::instance()->history_size++;
-    FlGui::instance()->menu->fillRecentHistoryMenu();
+#if defined(HAVE_FLTK)
+    if(FlGui::available())
+      FlGui::instance()->menu->fillRecentHistoryMenu();
+#endif
   }
-  
   CTX::instance()->lock = 0;
 
 #if defined(HAVE_FLTK)

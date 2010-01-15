@@ -113,7 +113,7 @@ static void add_scripting(GMSH_PostPlugin *p, PView *view)
   if(view){
     for(int i = 0; i < p->getNbOptions(); i++){
       if(p->getOption(i)->str == "iView") {
-        oldIndex = p->getOption(i)->def;
+        oldIndex = (int)(p->getOption(i)->def);
         p->getOption(i)->def = view->getIndex();
       }
     }
