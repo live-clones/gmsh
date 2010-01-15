@@ -82,17 +82,15 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
               //printf("cell1: %d, cell2: %d \n", bdCell->getIndex(), cell->getIndex());
               if(bdCell->getIndex() > (int)gmp_matrix_rows( _HMatrix[dim]) || bdCell->getIndex() < 1 
                  || cell->getIndex() > (int)gmp_matrix_cols( _HMatrix[dim]) || cell->getIndex() < 1){
-                printf("Warning: Index out of bound! HMatrix: %d. \n", dim);
+                Msg::Debug("Warning: Index out of bound! HMatrix: %d. \n", dim);
               }
               else{
                 gmp_matrix_get_elem(elem, bdCell->getIndex(), cell->getIndex(), _HMatrix[dim]);
                 old_elem = mpz_get_si(elem);
                 mpz_set_si(elem, old_elem + (*it).second);
-                /*if( (old_elem + (*it).second) > 1 || (old_elem + (*it).second) < -1 ){
-                  printf("Warning: Invalid incidence index: %d! HMatrix: %d.", (old_elem + (*it).second), dim);
-                  printf(" Set to %d. \n", (old_elem + (*it).second) % 2);
-                  mpz_set_si(elem, (old_elem + (*it).second) % 2);
-                }*/
+                if( abs((old_elem + (*it).second)) > 1){
+                  Msg::Debug("Incidence index: %d! HMatrix: %d.", (old_elem + (*it).second), dim);
+                }
                 gmp_matrix_set_elem(elem, bdCell->getIndex(), cell->getIndex(), _HMatrix[dim]);
               }
             }
@@ -291,7 +289,7 @@ void ChainComplex::computeHomology(bool dual){
       //KerCod(highDim);
     }
     
-    printf("Homology computation process: step %d of 4 \n", i+1);
+    Msg::Debug("Homology computation process: step %d of 4 \n", i+1);
     
     KerCod(highDim);
     
@@ -560,7 +558,7 @@ void Chain::smoothenChain(){
   
   eraseNullCells();
   double t2 = Cpu();
-  printf("Smoothened a %d-chain from %d cells to %d cells (%g s).\n", getDim(), start, getSize(), t2-t1);
+  Msg::Debug("Smoothened a %d-chain from %d cells to %d cells (%g s).\n", getDim(), start, getSize(), t2-t1);
   return;
 }
 
@@ -574,8 +572,8 @@ int Chain::writeChainMSH(const std::string &name){
   FILE *fp = fopen(name.c_str(), "a");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
-        printf("Unable to open file.");
-        return 0;
+    Msg::Debug("Unable to open file.");
+      return 0;
   }
  
   fprintf(fp, "\n$ElementData\n");
@@ -673,5 +671,66 @@ void Chain::createPView(){
   return;
 }
 
+
+void Chain::removeCell(Cell* cell) {
+  citer it = _cells.find(cell);
+  if(it != _cells.end()){
+    (*it).second = 0;
+  }
+  return;
+}
+
+void Chain::addCell(Cell* cell, int coeff) {
+  std::pair<citer,bool> insert = _cells.insert( std::make_pair( cell, coeff));
+  if(!insert.second && (*insert.first).second == 0) (*insert.first).second = coeff; 
+  else if (!insert.second && (*insert.first).second != 0) Msg::Debug("Error: invalid chain smoothening add! \n");
+  
+  if(!_cellComplex->hasCell(cell)){
+    _cellComplex->insertCell(cell);
+  }
+  return;
+}
+
+bool Chain::hasCell(Cell* c){
+  citer it = _cells.find(c);
+  if(it != _cells.end() && (*it).second != 0) return true;
+  return false;
+}   
+Cell* Chain::findCell(Cell* c){
+  citer it = _cells.find(c);
+  if(it != _cells.end() && (*it).second != 0) return (*it).first;
+  return NULL;
+}
+int Chain::getCoeff(Cell* c){
+  citer it = _cells.find(c);
+  if(it != _cells.end()) return (*it).second;
+  return 0;
+}
+
+void Chain::eraseNullCells(){
+  for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
+    if( (*cit).second == 0){
+      //cit++;
+      //_cells.erase(--cit);
+      _cells.erase(cit);
+      ++cit;
+    }
+  }
+  for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
+    if( (*cit).second == 0){
+      _cells.erase(cit);
+      cit = _cells.begin(); 
+    }
+     }  
+  return;
+}
+
+
+void Chain::deImmuneCells(){
+  for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
+    Cell* cell = (*cit).first;
+    cell->setImmune(false);
+  }
+}
 
 #endif

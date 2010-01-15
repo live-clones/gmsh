@@ -41,16 +41,7 @@ class Homology
   public:
    
    Homology(GModel* model, std::vector<int> physicalDomain, std::vector<int> physicalSubdomain);
-   ~Homology(){ 
-     delete _cellComplex; 
-     for(int i = 0; i < 4; i++) {
-       for(int j = 0; j < _generators[i].size(); j++){
-         Chain* chain = _generators[i].at(j);
-         //_model->deletePhysicalGroup(chain->getDim(), chain->getNum());
-         delete chain;
-       }
-     }
-   }
+   ~Homology();
    
    // Find the generators/duals of homology spaces, or just compute the ranks of homology spaces
    void findGenerators(std::string fileName);
@@ -61,67 +52,15 @@ class Homology
    //void swapSubdomain() { _cellComplex->swapSubdomain(); }
    
    // Restore the cell complex to its original state before cell reductions
-   void restoreHomology() { 
-     _cellComplex->restoreComplex();
-     for(int i = 0; i < 4; i++) _generators[i].clear();
-   }
+   void restoreHomology();
    
    // Create a string describing the generator
-   std::string getDomainString() {
-     std::string domainString = "({";
-     for(unsigned int i = 0; i < _domain.size(); i++){
-       std::string temp = "";
-       convert(_domain.at(i),temp);
-       domainString += temp;
-       if (_domain.size()-1 > i){ 
-         domainString += ", ";
-       }
-     }
-     domainString += "}";
-     
-     if(!_subdomain.empty()){
-       domainString += ", {";
-       
-       for(unsigned int i = 0; i < _subdomain.size(); i++){
-         std::string temp = "";
-         convert(_subdomain.at(i),temp);
-         domainString += temp;
-         if (_subdomain.size()-1 > i){
-           domainString += ", ";
-         }
-       } 
-       domainString += "}";
-       
-     }
-   domainString += ") ";
-   return domainString;
-   }
+   std::string getDomainString();
    
-   // create PViews of the generators
-   void createPViews(){
-     for(int i = 0; i < 4; i++){
-       for(int j = 0; j < _generators[i].size(); j++){
-         Chain* chain = _generators[i].at(j);
-         chain->createPView();
-       }
-     }
-   }
-   
+   // create PViews of the generators and save the chain mesh elements to the mesh of the model
+   void createPViews();
    // write the generators to a file
-   bool writeGeneratorsMSH(std::string fileName, bool binary=false){
-     if(!_model->writeMSH(fileName, 2.0, binary)) return false;
-     /*
-     for(int i = 0; i < 4; i++){
-       for(int j = 0; j < _generators[i].size(); j++){
-         Chain* chain = _generators[i].at(j);
-         if(!chain->writeChainMSH(fileName)) return false;
-       }
-     }*/
-     Msg::Info("Wrote homology computation results to %s.", fileName.c_str());
-     printf("Wrote homology computation results to %s. \n", fileName.c_str());
-     
-     return true;
-   }
+   bool writeGeneratorsMSH(std::string fileName, bool binary=false);
    
 };
 

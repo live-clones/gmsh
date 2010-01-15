@@ -133,9 +133,9 @@ Mesh 3;
 // Save the generator chains to t10_hom.msh.
 HomGen("t10_hom.msh") = {{69}, {70, 71, 72, 73}};
 
-// Find the corresponding cuts.
+// Find the corresponding thin cuts.
 // Save the cut chains to t10_hom.msh.
-HomCut("t10_hom.msh") = {{69}, {70, 71, 72, 73}};
+HomGen("t10_hom.msh") = {{69}, {75}};
 
 // Only find and print the ranks of the relative homology spaces (Betti numbers).
 HomRank {{69},{70, 71, 72, 73}};
@@ -143,6 +143,5 @@ HomRank {{69},{70, 71, 72, 73}};
 // More examples (uncomment):
 //  HomGen("t10_homgen.msh_1") = {{69}, {}}; 
 //  HomGen("t10_homgen.msh_2") = {{69}, {74}}; 
-//  HomGen("t10_homgen.msh_3") = {{69}, {75}};
 
 

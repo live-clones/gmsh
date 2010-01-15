@@ -109,16 +109,7 @@ class Cell
    virtual std::vector<MVertex*> getVertexVector() const = 0;
    
    // restores the cell information to its original state before reduction
-   virtual void restoreCell(){
-     _boundary = _obd;
-     _coboundary = _ocbd;
-     _bdSize = _boundary.size();
-     _cbdSize = _coboundary.size();
-     _combined = false;
-     _index = 0;
-     _immune = false;
-     
-   }
+   virtual void restoreCell();
    
    // true if this cell has given vertex
    virtual bool hasVertex(int vertex) const = 0;
@@ -126,165 +117,43 @@ class Cell
    // (co)boundary cell iterator
    typedef std::map<Cell*, int, Less_Cell>::iterator biter;
    
-   //virtual int getBoundarySize() { return _bdSize; }
-   //virtual int getCoboundarySize() { return _cbdSize; }
    virtual int getBoundarySize() { return _boundary.size(); }
    virtual int getCoboundarySize() { return _coboundary.size(); }
    
+   // get the cell boundary
    virtual std::map<Cell*, int, Less_Cell > getOrientedBoundary() { return _boundary; }
-   virtual std::list< Cell* > getBoundary() {
-     std::list<Cell*> boundary;
-     for( biter it= _boundary.begin(); it != _boundary.end();it++){
-       Cell* cell = (*it).first;
-       boundary.push_back(cell);
-     }
-     return boundary;
-   }
+   virtual std::list< Cell* > getBoundary();
    virtual std::map<Cell*, int, Less_Cell > getOrientedCoboundary() { return _coboundary; }
-   virtual std::list< Cell* > getCoboundary() {
-     std::list<Cell*> coboundary;
-     for( biter it= _coboundary.begin();it!= _coboundary.end();it++){
-       Cell* cell = (*it).first;
-       coboundary.push_back(cell);
-     }
-     return coboundary;
-   }
+   virtual std::list< Cell* > getCoboundary();
    
-   virtual bool addBoundaryCell(int orientation, Cell* cell) {
-     _bdSize++;
-     biter it = _boundary.find(cell);
-     if(it != _boundary.end()){
-       (*it).second = (*it).second + orientation;
-       if((*it).second == 0) {
-         _boundary.erase(it); _bdSize--;
-         (*it).first->removeCoboundaryCell(this,false);
-         return false;
-       }
-       return true;
-     }
-     _boundary.insert( std::make_pair(cell, orientation ) );
-     return true;
-   }
+   // add (co)boundary cell
+   virtual bool addBoundaryCell(int orientation, Cell* cell); 
+   virtual bool addCoboundaryCell(int orientation, Cell* cell);
    
-   virtual bool addCoboundaryCell(int orientation, Cell* cell) {
-     _cbdSize++;
-     biter it = _coboundary.find(cell);
-     if(it != _coboundary.end()){
-       (*it).second = (*it).second + orientation;
-       if((*it).second == 0) {
-         _coboundary.erase(it); _cbdSize--;
-         (*it).first->removeBoundaryCell(this,false);
-         return false;
-       }
-       return true;
-     }
-     _coboundary.insert( std::make_pair(cell, orientation ) );
-     return true;
-   }
+   // remove (co)boundary cell
+   virtual int removeBoundaryCell(Cell* cell, bool other=true);
+   virtual int removeCoboundaryCell(Cell* cell, bool other=true);
    
-   virtual int removeBoundaryCell(Cell* cell, bool other=true) {
-     biter it = _boundary.find(cell);
-     if(it != _boundary.end()){
-       _boundary.erase(it);
-       if(other) (*it).first->removeCoboundaryCell(this, false);
-       _bdSize--;
-       return (*it).second;
-     }
-      
-     return 0;
-   }
-   
-   
-   virtual int removeCoboundaryCell(Cell* cell, bool other=true) {
-     biter it = _coboundary.find(cell);
-     if(it != _coboundary.end()){
-       _coboundary.erase(it);
-       if(other) (*it).first->removeBoundaryCell(this, false);
-       _cbdSize--;
-       return (*it).second;
-     }
-     return 0;
-   }
-   
-   // true if has given cell on (original) boundary
-   virtual bool hasBoundary(Cell* cell, bool org=false){
-     if(!org){
-       biter it = _boundary.find(cell);
-       if(it != _boundary.end()) return true;
-       return false;
-     }
-     else{
-       biter it = _obd.find(cell);
-       if(it != _obd.end()) return true;
-       return false;
-     }
-   }
-   
-   // true if has given cell on (original) boundary
-   virtual bool hasCoboundary(Cell* cell, bool org=false){
-     if(!org){
-       biter it = _coboundary.find(cell);
-       if(it != _coboundary.end()) return true;
-       return false;
-     }
-     else{
-       biter it = _ocbd.find(cell);
-       if(it != _ocbd.end()) return true;
-       return false;
-     } 
-   }
-   
+   // true if has given cell on (original) (co)boundary
+   virtual bool hasBoundary(Cell* cell, bool org=false);
+   virtual bool hasCoboundary(Cell* cell, bool org=false);
    
    virtual void clearBoundary() { _boundary.clear(); }
    virtual void clearCoboundary() { _coboundary.clear(); }
    
    // algebraic dual of the cell
-   virtual void makeDualCell(){ 
-     std::map<Cell*, int, Less_Cell > temp = _boundary;
-     _boundary = _coboundary;
-     _coboundary = temp;
-     _dim = 3-_dim;
-     
-   }
+   virtual void makeDualCell();
    
-   virtual void printBoundary() {  
-     for(biter it = _boundary.begin(); it != _boundary.end(); it++){
-       printf("Boundary cell orientation: %d ", (*it).second);
-       Cell* cell2 = (*it).first;
-       cell2->printCell();
-     }
-     if(_boundary.empty()) printf("Cell boundary is empty. \n");
-   }
-   virtual void printCoboundary() {
-     for(biter it = _coboundary.begin(); it != _coboundary.end(); it++){
-       printf("Coboundary cell orientation: %d, ", (*it).second);
-       Cell* cell2 = (*it).first;
-       cell2->printCell();
-       if(_coboundary.empty()) printf("Cell coboundary is empty. \n");
-     }
-   }
+   virtual void printBoundary();
+   virtual void printCoboundary();
    
+   // original (co)boundary
    virtual void addOrgBdCell(int orientation, Cell* cell) { _obd.insert( std::make_pair(cell, orientation ) ); };
    virtual void addOrgCbdCell(int orientation, Cell* cell) { _ocbd.insert( std::make_pair(cell, orientation ) ); };
    virtual std::map<Cell*, int, Less_Cell > getOrgBd() { return _obd; }
    virtual std::map<Cell*, int, Less_Cell > getOrgCbd() { return _ocbd; }
-   virtual void printOrgBd() {
-     for(biter it = _obd.begin(); it != _obd.end(); it++){
-       printf("Boundary cell orientation: %d ", (*it).second);
-       Cell* cell2 = (*it).first;
-       cell2->printCell();
-     }
-     if(_obd.empty()) printf("Cell boundary is empty. \n");
-   }
-   virtual void printOrgCbd() {
-     for(biter it = _ocbd.begin(); it != _ocbd.end(); it++){
-       printf("Coboundary cell orientation: %d, ", (*it).second);
-       Cell* cell2 = (*it).first;
-       cell2->printCell();
-       if(_ocbd.empty()) printf("Cell coboundary is empty. \n");
-     }
-   }  
-   
+   virtual void printOrgBd();
+   virtual void printOrgCbd(); 
    
    virtual bool inSubdomain() const { return _inSubdomain; }
    //virtual void setInSubdomain(bool subdomain)  { _inSubdomain = subdomain; }
@@ -297,15 +166,16 @@ class Cell
    
    virtual int getNumFacets() const { return 0; }
    virtual void getFacetVertices(const int num, std::vector<MVertex*> &v) const {};
+   
    // get boundary cell orientation
    virtual int getFacetOri(Cell* cell) { std::vector<MVertex*> v = cell->getVertexVector(); return getFacetOri(v); } 
    virtual int getFacetOri(std::vector<MVertex*> &v) { return 0; }   
 
+   // tools for combined cells
    virtual bool isCombined() { return _combined; }
    virtual std::list< std::pair<int, Cell*> > getCells() {  std::list< std::pair<int, Cell*> >cells; cells.push_back( std::make_pair(1, this)); return cells; }
    virtual int getNumCells() {return 1;}
-   
-   
+      
    bool operator==(const Cell& c2){  
      if(this->getNumVertices() != c2.getNumVertices()){
        return false;
@@ -330,21 +200,16 @@ class Cell
      return false;
    }
    
-   // checks whether lower dimensional simplex tau is on the boundary of this cell
-   //virtual int kappa(Cell* tau) const;
-   
-   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false,  int num=0, int elementary=1, int physical=1, int parentNum=0) {}
+   //virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false,  int num=0, int elementary=1, int physical=1, int parentNum=0) {}
 };
 
 
 // Simplicial cell type.
 class Simplex : public Cell
-{ 
-   
+{    
  public:
    Simplex() : Cell() {}
-   ~Simplex(){}  
-   
+   ~Simplex(){}    
 };
 
 // Zero simplex cell type.
@@ -385,9 +250,7 @@ class OneSimplex : public Simplex, public MLine
   private:
    // sorted list of vertices
    int _vs[2];
-  public:
-   
-
+  public: 
    OneSimplex(std::vector<MVertex*> v, int tag=0, bool subdomain=false, bool boundary=false, int num=0, int part=0)
      : MLine(v, num, part){
        _tag = tag;
@@ -427,8 +290,6 @@ class OneSimplex : public Simplex, public MLine
      else if(v[0] == _v[1]) return 1;
      else return 0;
    }
-
-   //int kappa(Cell* tau) const;
    
    void printCell() const { printf("Cell dimension: %d, Vertices: %d %d, in subdomain: %d \n", getDim(), _v[0]->getNum(), _v[1]->getNum(), _inSubdomain); }
    
@@ -798,105 +659,8 @@ class CombinedCell : public Cell{
    
   public:
    
-   CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co=false) : Cell(){
-     
-     // use "smaller" cell as c2
-     if(c1->getNumVertices() < c2->getNumVertices()){
-       Cell* temp = c1;
-       c1 = c2;
-       c2 = temp;
-     }
-     
-     _index = c1->getIndex();
-     _tag = c1->getTag();
-     _dim = c1->getDim();
-     _num = c1->getNum();
-     _inSubdomain = c1->inSubdomain();
-     _onDomainBoundary = c1->onDomainBoundary();
-     _combined = true;
-     
-     _v.reserve(c1->getNumVertices() + c2->getNumVertices());
-     _vs.reserve(c1->getNumVertices() + c2->getNumVertices());
-            
-     
-     _v = c1->getVertexVector();
-     for(int i = 0; i < c2->getNumVertices(); i++){
-       if(!this->hasVertex(c2->getVertex(i)->getNum())) _v.push_back(c2->getVertex(i));
-     }
-     
-     // sorted vertices
-     for(unsigned int i = 0; i < _v.size(); i++) _vs.push_back(_v.at(i)->getNum());
-     std::sort(_vs.begin(), _vs.end());
-     
-     // cells
-     _cells = c1->getCells();
-     std::list< std::pair<int, Cell*> > c2Cells = c2->getCells();
-     for(std::list< std::pair<int, Cell*> >::iterator it = c2Cells.begin(); it != c2Cells.end(); it++){
-       if(!orMatch) (*it).first = -1*(*it).first;
-       _cells.push_back(*it);
-     }
-     
-     // boundary cells
-     std::map< Cell*, int, Less_Cell > c1Boundary = c1->getOrientedBoundary();
-     std::map< Cell*, int, Less_Cell > c2Boundary = c2->getOrientedBoundary();
-     
-     for(std::map<Cell*, int, Less_Cell>::iterator it = c1Boundary.begin(); it != c1Boundary.end(); it++){
-       Cell* cell = (*it).first;
-       int ori = (*it).second;
-       cell->removeCoboundaryCell(c1); 
-       if(this->addBoundaryCell(ori, cell)) cell->addCoboundaryCell(ori, this);
-     }
-     for(std::map<Cell*, int, Less_Cell >::iterator it = c2Boundary.begin(); it != c2Boundary.end(); it++){
-       Cell* cell = (*it).first;
-       if(!orMatch) (*it).second = -1*(*it).second;
-       int ori = (*it).second;
-       cell->removeCoboundaryCell(c2);    
-       if(co){
-         std::map<Cell*, int, Less_Cell >::iterator it2 = c1Boundary.find(cell);
-         bool old = false;
-         if(it2 != c1Boundary.end()) old = true;
-         if(!old){  if(this->addBoundaryCell(ori, cell)) cell->addCoboundaryCell(ori, this); }
-       }
-       else{
-         if(this->addBoundaryCell(ori, cell)) cell->addCoboundaryCell(ori, this);
-       }
-     }
-     
-     // coboundary cells
-     std::map<Cell*, int, Less_Cell > c1Coboundary = c1->getOrientedCoboundary();
-     std::map<Cell*, int, Less_Cell > c2Coboundary = c2->getOrientedCoboundary();
-     
-     for(std::map<Cell*, int, Less_Cell>::iterator it = c1Coboundary.begin(); it != c1Coboundary.end(); it++){
-       Cell* cell = (*it).first;
-       int ori = (*it).second;
-       cell->removeBoundaryCell(c1); 
-       if(this->addCoboundaryCell(ori, cell)) cell->addBoundaryCell(ori, this);
-     }
-     for(std::map<Cell*, int, Less_Cell>::iterator it = c2Coboundary.begin(); it != c2Coboundary.end(); it++){
-       Cell* cell = (*it).first;
-       if(!orMatch) (*it).second = -1*(*it).second;
-       int ori = (*it).second;
-       cell->removeBoundaryCell(c2);    
-       if(!co){
-         std::map<Cell*, int, Less_Cell >::iterator it2 = c1Coboundary.find(cell);
-         bool old = false;
-         if(it2 != c1Coboundary.end()) old = true;
-         if(!old) { if(this->addCoboundaryCell(ori, cell)) cell->addBoundaryCell(ori, this); }
-       }
-       else {
-         if(this->addCoboundaryCell(ori, cell)) cell->addBoundaryCell(ori, this);
-       }
-     }
-
-   }
-  
-   ~CombinedCell(){
-     std::list< std::pair<int, Cell*> > cells = getCells();
-     for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
-       Cell* cell2 = (*it).second;
-       delete cell2;
-     }
-   } 
+   CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co=false);
+   ~CombinedCell();
    
    int getNum() { return _num; }
    int getNumVertices() const { return _v.size(); } 
@@ -904,27 +668,10 @@ class CombinedCell : public Cell{
    int getSortedVertex(int vertex) const { return _vs.at(vertex); }
    std::vector<MVertex*> getVertexVector() const { return _v; }
    
-   //int kappa(Cell* tau) const { return 0; }
-   
    // true if this cell has given vertex
-   bool hasVertex(int vertex) const {
-     //std::vector<int>::iterator it = std::find(_vs.begin(), _vs.end(), vertex);
-     //if (it == _vs.end()) return false;
-     //else return true;
-     for(unsigned int i = 0; i < _v.size(); i++){
-       if(_v.at(i)->getNum() == vertex) return true;
-     }
-     return false;
-   }
+   bool hasVertex(int vertex) const;
    
-   virtual void printCell() const {
-     printf("Cell dimension: %d, ", getDim() ); 
-     printf("Vertices: ");
-     for(int i = 0; i < this->getNumVertices(); i++){
-       printf("%d ", this->getSortedVertex(i));
-     }
-     printf(", in subdomain: %d\n", _inSubdomain);
-   }
+   virtual void printCell() const;
    
    std::list< std::pair<int, Cell*> > getCells() { return _cells; }
    int getNumCells() {return _cells.size();}
@@ -952,8 +699,7 @@ class CellComplex
    std::set<Cell*, Less_Cell>  _cells[4];
    
    // storage for cell pointers to delete them
-   std::list<Cell*> _trash;
-   
+   std::list<Cell*> _trash;  
    
    std::vector< std::set<Cell*, Less_Cell> > _store;
    std::set<Cell*, Less_Cell> _ecells;
@@ -969,11 +715,6 @@ class CellComplex
    // Is the cell complex simplicial
    bool _simplicial;
    
-  public:
-   // iterator for the cells of same dimension
-   typedef std::set<Cell*, Less_Cell>::iterator citer;
-   
-  private: 
    // enqueue cells in queue if they are not there already
    void enqueueCells(std::list<Cell*>& cells, 
                              std::queue<Cell*>& Q, std::set<Cell*, Less_Cell>& Qset);
@@ -987,76 +728,21 @@ class CellComplex
    
    // remove a cell from this cell complex
    void removeCell(Cell* cell, bool other=true);
-  public: 
-   void insertCell(Cell* cell);
    
-   // reduction of this cell complex
-   // removes reduction pairs of cell of dimension dim and dim-1
-   int reduction(int dim, int omitted=0);
-  private:
    // queued coreduction presented in Mrozek's paper
    int coreduction(Cell* generator, int omitted=0);
- 
    
   public: 
    
-   /*
-   CellComplex(CellComplex* cellComplex){
-     
-     _domain = cellComplex->getDomain();
-     _subdomain = cellComplex->getSubdomain;
-     _boundary = cellComplex->getBoundary;
-     _domainVertices = cellComplex->getDomainVertices;
-     
-     for(int i = 0; i < 4; i++){
-       _betti[i] = cellComplex->getBetti(i);
-       _cells[i] = ocells[i];
-       _ocells[i] = ocells[i];
-     }
-     
-     _dim = cellComplex->getDim();
-   }
-   */
-   
    CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> subdomain );
+   //CellComplex(CellComplex* cellComplex)
    CellComplex(){}
-   ~CellComplex(){
-     for(int i = 0; i < 4; i++){
-       _cells[i].clear();
-       
-       for(citer cit = _ocells[i].begin(); cit != _ocells[i].end(); cit++){
-         Cell* cell = *cit;
-         delete cell;
-       }
-        _ocells[i].clear();
-       
-     }
-     //emptyTrash();
-   }
+   ~CellComplex();
 
-   
-   void emptyTrash(){
-     for(std::list<Cell*>::iterator cit  = _trash.begin(); cit != _trash.end(); cit++){
-       Cell* cell = *cit;
-       delete cell;
-     }
-     _trash.clear();
-   }
+   void emptyTrash();
    
    // restore this cell complex to its original state
-   void restoreComplex(){
-     for(int i = 0; i < 4; i++){
-       _betti[i] = 0;
-       _cells[i] = _ocells[i];
-       for(citer cit = firstCell(i); cit != lastCell(i); cit++){
-         Cell* cell = *cit;
-         cell->restoreCell();
-       }
-     }
-     _store.clear();
-     _ecells.clear();
-     _trash.clear();
-   }
+   void restoreComplex();
      
    // get the number of certain dimensional cells
    int getSize(int dim){ return _cells[dim].size(); }
@@ -1069,6 +755,9 @@ class CellComplex
    std::set<Cell*, Less_Cell> getCells(int dim){ return _cells[dim]; }
    std::set<Cell*, Less_Cell> getOrgCells(int dim){ return _ocells[dim]; }
    
+   // iterator for the cells of same dimension
+   typedef std::set<Cell*, Less_Cell>::iterator citer;
+   
    // iterators to the first and last cells of certain dimension
    citer firstCell(int dim) {return _cells[dim].begin(); }
    citer lastCell(int dim) {return _cells[dim].end(); }
@@ -1077,48 +766,35 @@ class CellComplex
    
    
    // true if cell complex has given cell
-   bool hasCell(Cell* cell, bool org=false){
-     if(!org){
-       citer cit = _cells[cell->getDim()].find(cell);
-       if( cit == lastCell(cell->getDim()) ) return false;
-       else return true;
-     }
-     else{
-       citer cit = _ocells[cell->getDim()].find(cell);
-       if( cit == lastOrgCell(cell->getDim()) ) return false;
-       else return true;
-     }
-   }
-     
-
-   // kappa for two cells of this cell complex
-   // implementation will vary depending on cell type
-   //inline int kappa(Cell* sigma, Cell* tau) const { return sigma->kappa(tau); }
-   
+   bool hasCell(Cell* cell, bool org=false); 
    
    // check whether two cells both belong to subdomain or if neither one does
    bool inSameDomain(Cell* c1, Cell* c2) const { return 
        ( (!c1->inSubdomain() && !c2->inSubdomain()) || (c1->inSubdomain() && c2->inSubdomain()) ); }
      
-
+   void insertCell(Cell* cell);
+   
+   // reduction of this cell complex
+   // removes reduction pairs of cell of dimension dim and dim-1
+   int reduction(int dim, int omitted=0);
+     
    // useful functions for (co)reduction of cell complex
    int reduceComplex();
    int coreduceComplex();
    
    // remove cells in subdomain from this cell complex
    void removeSubdomain();
-   
-   
+      
    // print the vertices of cells of certain dimension
    void printComplex(int dim);
    
-   // write this cell complex in 2.1 MSH ASCII format
+   // write this cell complex in 2.0 MSH ASCII format
+   // for debugging only
    int writeComplexMSH(const std::string &name); 
    
    // Cell combining for reduction and coreduction
    int combine(int dim);
    int cocombine(int dim);
-   
    
    void computeBettiNumbers();
    int getBettiNumber(int i) { if(i > -1 && i < 4) return _betti[i]; else return 0; }
@@ -1127,36 +803,15 @@ class CellComplex
    // also check whether all (co)boundary cells of a cell belong to this cell complex
    bool checkCoherence();
    
-   int eulerCharacteristic(){
-     return getSize(0) - getSize(1) + getSize(2) - getSize(3);
-   }
+   int eulerCharacteristic(){ return getSize(0) - getSize(1) + getSize(2) - getSize(3);}
    void printEuler(){ printf("Euler characteristic: %d. \n", eulerCharacteristic()); }
    
    int getNumOmitted() { return _store.size(); };
-   std::set<Cell*, Less_Cell> getOmitted(int i) { return _store.at(i); }
-     
+   std::set<Cell*, Less_Cell> getOmitted(int i) { return _store.at(i); }  
    
    // change roles of boundaries and coboundaries of the cells in this cell complex
    // equivalent to transposing boundary operator matrices
-   void makeDualComplex(){
-     std::set<Cell*, Less_Cell> temp = _cells[0];
-     _cells[0] = _cells[3];
-     _cells[3] = temp;
-     temp = _cells[1];
-     _cells[1] = _cells[2];
-     _cells[2] = temp;
-     
-     for(int i = 0; i < 4; i++){
-       for(citer cit = firstCell(i); cit != lastCell(i); cit++){
-         Cell* cell = *cit;
-         cell->makeDualCell();
-       }
-     }
-   }
-   
-   
-   
-   
+   void makeDualComplex();
 };
 
 #endif

@@ -115,7 +115,7 @@ class ChainComplex{
    // Compute bases for the homology groups of this chain complex 
    void computeHomology(bool dual=false);
    
-   // get coefficient vector for dim-dimensional chain chainNumber 
+   // get coefficient vector for dim-dimensional chain chainNumber (columns of _Hbasis[dim]) 
    std::vector<int> getCoeffVector(int dim, int chainNumber);
    // torsion coefficient for dim-dimensional chain chainNumber 
    int getTorsion(int dim, int chainNumber);
@@ -171,48 +171,15 @@ class Chain{
    
    typedef std::map<Cell*, int, Less_Cell>::iterator citer;
    
-   // get i:th cell of this chain
-   //Cell* getCell(int i) { return _cells.at(i).first; }
-   // get coeffcient of i:th cell of this chain
-   //int getCoeff(int i) { return _cells.at(i).second; }
-   
-   
    // remove a cell from this chain
-   void removeCell(Cell* cell) {
-     citer it = _cells.find(cell);
-     if(it != _cells.end()){
-       (*it).second = 0;
-     }
-     return;
-   }
+   void removeCell(Cell* cell);
    
    // add a cell to this chain
-   void addCell(Cell* cell, int coeff) {
-     std::pair<citer,bool> insert = _cells.insert( std::make_pair( cell, coeff));
-     if(!insert.second && (*insert.first).second == 0) (*insert.first).second = coeff; 
-     else if (!insert.second && (*insert.first).second != 0) printf("Error: invalid chain smoothening add! \n");
-      
-     if(!_cellComplex->hasCell(cell)){
-       _cellComplex->insertCell(cell);
-     }
-     return;
-   }
+   void addCell(Cell* cell, int coeff);
 
-   bool hasCell(Cell* c){
-     citer it = _cells.find(c);
-     if(it != _cells.end() && (*it).second != 0) return true;
-     return false;
-   }   
-   Cell* findCell(Cell* c){
-     citer it = _cells.find(c);
-     if(it != _cells.end() && (*it).second != 0) return (*it).first;
-     return NULL;
-   }
-   int getCoeff(Cell* c){
-     citer it = _cells.find(c);
-     if(it != _cells.end()) return (*it).second;
-     return 0;
-   }
+   bool hasCell(Cell* c);
+   Cell* findCell(Cell* c);
+   int getCoeff(Cell* c);
      
    
    int getTorsion() {return _torsion;}
@@ -222,40 +189,12 @@ class Chain{
    std::map<Cell*, int, Less_Cell>  getCells() {return _cells;}
    
    // erase cells from the chain with zero coefficient
-   void eraseNullCells(){
-     for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
-       if( (*cit).second == 0){
-         //cit++;
-         //_cells.erase(--cit);
-         _cells.erase(cit);
-         ++cit;
-       }
-     }
-     for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
-       if( (*cit).second == 0){
-         _cells.erase(cit);
-         cit = _cells.begin(); 
-       }
-     }  
-     return;
-   }
+   void eraseNullCells();
    
-   
-   void deImmuneCells(){
-     for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
-       Cell* cell = (*cit).first;
-       cell->setImmune(false);
-     }
-   }
+   void deImmuneCells();
    
    // number of cells in this chain 
-   int getSize() { 
-     //eraseNullCells();
-     return _cells.size();
-   }
-   int getNumCells() {
-     return _cells.size();
-   }
+   int getSize() { return _cells.size();}
    
    // get/set chain name
    std::string getName() { return _name; }
@@ -269,6 +208,7 @@ class Chain{
    void smoothenChain();
    
    // append this chain to a MSH ASCII file as $ElementData
+   // for debugging only
    int writeChainMSH(const std::string &name);
 
    // create a PView of this chain.

@@ -31,7 +31,7 @@ set(SRC
     MLine.cpp MTriangle.cpp MQuadrangle.cpp MTetrahedron.cpp
     MHexahedron.cpp MPrism.cpp MPyramid.cpp MElementCut.cpp
   MZone.cpp MZoneBoundary.cpp
-  CellComplex.cpp ChainComplex.cpp Homology.cpp
+  Cell.cpp CellComplex.cpp ChainComplex.cpp Homology.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Geo *.h) 
