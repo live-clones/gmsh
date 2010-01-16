@@ -49,7 +49,7 @@ class MTriangle : public MElement {
     for(int i = 0; i < 3; i++) _v[i] = v[i];
   }
   ~MTriangle(){}
-  virtual int getDim(){ return 2; }
+  virtual int getDim() const { return 2; }
   virtual double gammaShapeMeasure();
   virtual double distoShapeMeasure();
   virtual double angleShapeMeasure();
@@ -72,8 +72,9 @@ class MTriangle : public MElement {
   {
     return MEdge(_v[edges_tri(num, 0)], _v[edges_tri(num, 1)]);
   }
-  virtual void getEdgeInfo (const MEdge & edge, int &ithEdge, int &sign) const {
-    for (ithEdge=0;ithEdge<3;ithEdge++){
+  virtual void getEdgeInfo (const MEdge & edge, int &ithEdge, int &sign) const
+  {
+    for (ithEdge = 0; ithEdge < 3; ithEdge++){
       const MVertex *v0 = _v[edges_tri(ithEdge, 0)];
       const MVertex *v1 = _v[edges_tri(ithEdge, 1)];
       if (v0 == edge.getVertex(0) && v1 == edge.getVertex(1)){
@@ -83,7 +84,7 @@ class MTriangle : public MElement {
 	sign = -1; return;
       }
     }
-    throw;
+    Msg::Error("Could not get edge information for triangle %d", getNum());
   }
   virtual int getNumEdgesRep(){ return 3; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)

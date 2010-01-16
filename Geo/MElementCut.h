@@ -55,7 +55,7 @@ class MPolyhedron : public MElement {
       delete _parts[i];
     if(_intpt) delete [] _intpt;
   }
-  virtual int getDim() { return 3; }
+  virtual int getDim() const { return 3; }
   virtual int getNumVertices() const { return _vertices.size() + _innerVertices.size(); }
   virtual int getNumVolumeVertices() const { return _innerVertices.size(); }
   virtual MVertex *getVertex(int num)
@@ -170,7 +170,7 @@ class MPolygon : public MElement {
       delete _parts[i];
     if(_intpt) delete [] _intpt;
   }
-  virtual int getDim(){ return 2; }
+  virtual int getDim() const { return 2; }
   virtual int getNumVertices() const { return _vertices.size() + _innerVertices.size(); }
   virtual int getNumFaceVertices() const { return _innerVertices.size(); }
   virtual MVertex *getVertex(int num)

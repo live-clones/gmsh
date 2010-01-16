@@ -72,7 +72,7 @@ void MElement::_getFaceRep(MVertex *v0, MVertex *v1, MVertex *v2,
   for(int i = 0; i < 3; i++) n[i] = normal;
 }
 
-char MElement::getVisibility()
+char MElement::getVisibility() const
 {
   if(CTX::instance()->hideUnselected && _visible < 2) return false;
   return _visible; 

@@ -27,7 +27,7 @@ class MPoint : public MElement {
     _v[0] = v[0];
   }
   ~MPoint(){}
-  virtual int getDim(){ return 0; }
+  virtual int getDim() const { return 0; }
   virtual int getNumVertices() const { return 1; }
   virtual MVertex *getVertex(int num){ return _v[0]; }
   virtual int getNumEdges(){ return 0; }

@@ -964,7 +964,10 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
       }
     }
   }
-  else throw;
+  else{
+    Msg::Error("Unknown type of parametrization");
+    return;
+  }
 
   std::list<GFace*>::const_iterator it = _compound.begin();
   for( ; it != _compound.end(); ++it){

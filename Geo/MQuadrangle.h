@@ -50,7 +50,7 @@ class MQuadrangle : public MElement {
     for(int i = 0; i < 4; i++) _v[i] = v[i];
   }
   ~MQuadrangle(){}
-  virtual int getDim(){ return 2; }
+  virtual int getDim() const { return 2; }
   virtual int getNumVertices() const { return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual MVertex *getVertexMED(int num)
@@ -68,8 +68,9 @@ class MQuadrangle : public MElement {
   {
     return MEdge(_v[edges_quad(num, 0)], _v[edges_quad(num, 1)]);
   }
-  virtual void getEdgeInfo (const MEdge & edge, int &ithEdge, int &sign) const {
-    for (ithEdge=0;ithEdge<4;ithEdge++){
+  virtual void getEdgeInfo (const MEdge &edge, int &ithEdge, int &sign) const
+  {
+    for (ithEdge = 0; ithEdge < 4; ithEdge++){
       const MVertex *v0 = _v[edges_quad(ithEdge, 0)];
       const MVertex *v1 = _v[edges_quad(ithEdge, 1)];
       if (v0 == edge.getVertex(0) && v1 == edge.getVertex(1)){
@@ -79,7 +80,7 @@ class MQuadrangle : public MElement {
 	sign = -1; return;
       }
     }
-    throw;
+    Msg::Error("Could not get edge information for quadranglee %d", getNum());
   }
   virtual int getNumEdgesRep(){ return 4; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)

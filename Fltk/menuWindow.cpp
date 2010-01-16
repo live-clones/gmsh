@@ -141,7 +141,7 @@ static void file_merge_cb(Fl_Widget *w, void *data)
     FlGui::instance()->menu->setContext(menu_post, 0);
 }
 
-void file_open_recent_cb(Fl_Widget *w, void *data)
+static void file_open_recent_cb(Fl_Widget *w, void *data)
 {  
   std::string str((const char*)data);
 

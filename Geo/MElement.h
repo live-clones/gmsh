@@ -50,32 +50,35 @@ class MElement
   static void resetGlobalNumber(){ _globalNum = 0; }
 
   // set/get the tolerance for isInside() test
-  static void setTolerance (const double tol){ _isInsideTolerance = tol; }
-  static double getTolerance () { return _isInsideTolerance; }
+  static void setTolerance(const double tol){ _isInsideTolerance = tol; }
+  static double getTolerance() { return _isInsideTolerance; }
 
   // return the tag of the element
-  virtual int getNum(){ return _num; }
+  virtual int getNum() const { return _num; }
 
   // return the geometrical dimension of the element
-  virtual int getDim() = 0;
+  virtual int getDim() const = 0;
 
   // return the polynomial order the element
   virtual int getPolynomialOrder() const { return 1; }
 
   // get/set the partition to which the element belongs
-  virtual int getPartition(){ return _partition; }
+  virtual int getPartition() const { return _partition; }
   virtual void setPartition(int num){_partition = (short)num; }
 
   // get/set the visibility flag
-  virtual char getVisibility();
+  virtual char getVisibility() const;
   virtual void setVisibility(char val){ _visible = val; }
 
   // get the vertices
   virtual int getNumVertices() const = 0;
   virtual MVertex *getVertex(int num) = 0;
+
   // give an MVertex as input and get its local number
-  virtual void getVertexInfo (const MVertex * vertex, int &ithVertex) const 
-  {throw;}
+  virtual void getVertexInfo(const MVertex * vertex, int &ithVertex) const 
+  {
+    Msg::Error("Vertex information not available for this element");
+  }
 
   // get the vertex using the I-deas UNV ordering
   virtual MVertex *getVertexUNV(int num){ return getVertex(num); }
@@ -109,9 +112,12 @@ class MElement
   // get the edges
   virtual int getNumEdges() = 0;
   virtual MEdge getEdge(int num) = 0;
+
   // give an MEdge as input and get its local number and sign
-  virtual void getEdgeInfo (const MEdge & edge, int &ithEdge, int &sign) const 
-  {throw;}
+  virtual void getEdgeInfo(const MEdge & edge, int &ithEdge, int &sign) const 
+  {
+    Msg::Error("Edge information not available for this element");
+  }
 
   // get an edge representation for drawing
   virtual int getNumEdgesRep() = 0;
@@ -126,9 +132,12 @@ class MElement
   // get the faces
   virtual int getNumFaces() = 0;
   virtual MFace getFace(int num) = 0;
+
   // give an MFace as input and get its local number, sign and rotation
-  virtual void getFaceInfo (const MFace & face, int &ithFace, int &sign, int &rot)const 
-  {throw;}
+  virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const
+  {
+    Msg::Error("Face information not available for this element");
+  }
 
   // get a face representation for drawing
   virtual int getNumFacesRep() = 0;

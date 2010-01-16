@@ -64,7 +64,7 @@ class MPyramid : public MElement {
     for(int i = 0; i < 5; i++) _v[i] = v[i];
   }
   ~MPyramid(){}
-  virtual int getDim(){ return 3; }
+  virtual int getDim() const { return 3; }
   virtual int getNumVertices() const { return 5; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual MVertex *getVertexMED(int num)

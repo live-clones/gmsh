@@ -57,7 +57,7 @@ class MTetrahedron : public MElement {
     for(int i = 0; i < 4; i++) _v[i] = v[i];
   }
   ~MTetrahedron(){}
-  virtual int getDim(){ return 3; }
+  virtual int getDim() const { return 3; }
   virtual int getNumVertices() const { return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual MVertex *getVertexMED(int num)
@@ -89,7 +89,7 @@ class MTetrahedron : public MElement {
                  _v[faces_tetra(num, 1)],
                  _v[faces_tetra(num, 2)]);
   }
-  virtual void getFaceInfo (const MFace & face, int &ithFace, int &sign, int &rot)const; 
+  virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const; 
   virtual int getNumFacesRep(){ return 4; }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
