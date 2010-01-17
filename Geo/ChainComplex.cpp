@@ -566,8 +566,6 @@ void Chain::smoothenChain(){
 
 int Chain::writeChainMSH(const std::string &name){
   
-  //_cellComplex->writeComplexMSH(name);
-  
   if(getSize() == 0) return 1;
   
   FILE *fp = fopen(name.c_str(), "a");
@@ -610,20 +608,11 @@ void Chain::createPView(){
   for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
     Cell* cell = (*cit).first;
     int coeff = (*cit).second;
-    std::vector<MVertex*> v = cell->getVertexVector();
-    if(cell->getDim() > 0 && coeff < 0){ // flip orientation
-      if(getDim() != 1){
-        MVertex* temp = v[1];
-        v[1] = v[v.size()-1];
-        v[v.size()-1] = temp;
-      }
-      else{
-        MVertex* temp = v[0];
-        v[0] = v[1];
-        v[1] = temp;
-      }
-    }
-    MElement *e = factory.create(cell->getTypeForMSH(), v, cell->getNum(), cell->getPartition());
+
+    MElement *e = cell->getImageMElement();
+    cell->setDeleteImage(false);
+    
+    if(cell->getDim() > 0 && coeff < 0) e->revert(); // flip orientation
     for(int i = 0; i < abs(coeff); i++) elements.push_back(e);
     
     std::vector<double> coeffs (1,abs(coeff));
@@ -638,11 +627,9 @@ void Chain::createPView(){
   setNum(physicalNum);
   
   std::map<int, std::vector<MElement*> > entityMap;
-  //int entityNum = _model->getMaxElementaryNumber(getDim())+1;
   entityMap[entityNum] = elements;
   std::map<int, std::map<int, std::string> > physicalMap;
   std::map<int, std::string> physicalInfo;
-  //int physicalNum = _model->getMaxPhysicalNumber(getDim())+1; 
   physicalInfo[physicalNum]=getName();
   physicalMap[entityNum] = physicalInfo;
   

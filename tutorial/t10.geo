@@ -8,7 +8,7 @@
  
 // Homology computation in Gmsh finds representative chains of (relative) homology spaces using a mesh of a model. Those representatives generate the (relative) homology spaces of the model. Alternatively, Gmsh can only look for the ranks of the (relative) homology spaces, the Betti numbers of the model. 
 
-// The generators chains are stored in a given .msh-file as physical groups, whose mesh elements are oriented such that their coeffecients are 1 in the generator chain.
+// The generators chains are stored in a given .msh-file as physical groups, whose mesh elements are oriented such that their coefficients are 1 in the generator chain.
 
 
 // Create an example geometry

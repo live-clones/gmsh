@@ -94,9 +94,7 @@ void Homology::findGenerators(std::string fileName){
   int omitted = _cellComplex->reduceComplex();
   //_cellComplex->printEuler();
   
-  //_cellComplex->emptyTrash();
   
- 
   _cellComplex->combine(3);
   _cellComplex->reduction(2);
   _cellComplex->combine(2);
@@ -106,7 +104,6 @@ void Homology::findGenerators(std::string fileName){
     _cellComplex->checkCoherence();
   //_cellComplex->printEuler();
   
-  //_cellComplex->emptyTrash();
   
   double t2 = Cpu();
   Msg::Info("Cell Complex reduction complete (%g s).", t2 - t1);

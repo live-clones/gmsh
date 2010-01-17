@@ -26,46 +26,15 @@ CellComplex::CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> su
   insert_cells(true, true);
   insert_cells(false, true);
   insert_cells(false, false);
-
-  // find vertices in domain
-  find_vertices(domain, subdomain);
   
 
-  //int tag = 1;
   for(int i = 0; i < 4; i++){
-    /*
-    for(citer cit = firstCell(i); cit != lastCell(i); cit++){
-      Cell* cell = *cit;
-      cell->setTag(tag);
-      tag++;
-    }*/
     _ocells[i] = _cells[i];
     _betti[i] = 0;
     if(getSize(i) > _dim) _dim = i;
   }
   
   
-}
-
-void CellComplex::find_vertices(std::vector<GEntity*>& domain, std::vector<GEntity*>& subdomain){
-    // find mesh vertices in the domain
-  for(unsigned int j=0; j < domain.size(); j++) {  
-    for(unsigned int i=0; i < domain.at(j)->getNumMeshElements(); i++){
-      for(int k=0; k < domain.at(j)->getMeshElement(i)->getNumVertices(); k++){
-        MVertex* vertex = domain.at(j)->getMeshElement(i)->getVertex(k);
-        _domainVertices.insert(vertex);
-      }
-    }
-  }
-
-  for(unsigned int j=0; j < subdomain.size(); j++) {
-    for(unsigned int i=0; i < subdomain.at(j)->getNumMeshElements(); i++){
-      for(int k=0; k < subdomain.at(j)->getMeshElement(i)->getNumVertices(); k++){
-        MVertex* vertex = subdomain.at(j)->getMeshElement(i)->getVertex(k);
-        _domainVertices.insert(vertex);
-      }
-    }
-  } 
 }
 
 void CellComplex::find_boundary(std::vector<GEntity*>& domain, std::vector<GEntity*>& subdomain){
@@ -140,7 +109,6 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
   std::vector<MVertex*> vertices;
   
   std::pair<citer, bool> insertInfo;
-  int tag = 1;
 
   // add highest dimensional cells
   for(unsigned int j=0; j < domain.size(); j++) {
@@ -161,15 +129,12 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
          type == MSH_TRI_15 || type == MSH_TRI_15I || type == MSH_TRI_21 || type == MSH_LIN_4 ||
          type == MSH_LIN_5 || type == MSH_LIN_6 || type == MSH_TET_20 || type == MSH_TET_35 || type == MSH_TET_56
          || type == MSH_TET_34 || type == MSH_TET_52 ){
-        if(dim == 3) cell = new ThreeSimplex(vertices, tag, subdomain, boundary); 
-        else if(dim == 2) cell = new TwoSimplex(vertices, tag, subdomain, boundary);
-        else if(dim == 1) cell = new OneSimplex(vertices, tag, subdomain, boundary);
-        else cell = new ZeroSimplex(vertices, tag, subdomain, boundary);
+        cell = new Cell(domain.at(j)->getMeshElement(i), subdomain, boundary);
       }
       else if(type == MSH_QUA_4 || type == MSH_QUA_8 || type == MSH_QUA_9){
-        cell = new CQuadrangle(vertices, tag, subdomain, boundary);
+        cell = new Cell(domain.at(j)->getMeshElement(i), subdomain, boundary);
         _simplicial = false;
-      }/* FIXME: reduction doesn't work for these      
+      }/* FIXME: reduction doesn't work for these (but should).      
       else if(type == MSH_HEX_8 || type == MSH_HEX_27 || type == MSH_HEX_20){
         cell = new CHexahedron(vertices, tag, subdomain, boundary);
         _simplicial = false;
@@ -182,10 +147,7 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
         cell = new CPyramid(vertices, tag, subdomain, boundary);
         _simplicial = false;
       }*/
-      else Msg::Error("Error: mesh element %d not implemented yet! \n", type);
-      tag++;
-      //if(domain.at(j)->getMeshElement(i)->getNum() == 8196) cell->setImmune(true);
-      //else 
+      else Msg::Error("Error: mesh element %d not implemented yet! \n", type); 
       cell->setImmune(false);
       insertInfo = _cells[dim].insert(cell);
       if(!insertInfo.second) delete cell;
@@ -193,28 +155,40 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
   }
 
   // add lower dimensional cells recursively
+  MElementFactory factory;
   for (int dim = 3; dim > 0; dim--){
     for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
       Cell* cell = *cit;
       std::vector<MVertex*> vertices;
       for(int i = 0; i < cell->getNumFacets(); i++){ 
         cell->getFacetVertices(i, vertices);
-        Cell* newCell;
+        int type = cell->getTypeForMSH();
+        
+        int newtype = 0;
+        //FIXME: add missing boundary cell type relations
         if(dim == 3){
-          if(vertices.size() == 3) newCell = new TwoSimplex(vertices, tag, subdomain, boundary);
-          else if(vertices.size() == 4) newCell = new CQuadrangle(vertices, tag, subdomain, boundary);
-          else Msg::Debug("Error: invalid face! \n");
+          if(type == MSH_TET_4) newtype = MSH_TRI_3;
+          else if(type == MSH_TET_10) newtype = MSH_TRI_6;
         }
-        else if(dim == 2) newCell = new OneSimplex(vertices, tag, subdomain, boundary);
-        else if(dim == 1) newCell = new ZeroSimplex(vertices, tag, subdomain, boundary);
+        else if(dim == 2){
+           if(type == MSH_TRI_3 || type == MSH_QUA_4) newtype = MSH_LIN_2;
+           else if(type == MSH_TRI_6 || type == MSH_QUA_8) newtype = MSH_LIN_3;
+        }
+        else if(dim == 1){
+           if(type == MSH_LIN_2 || type == MSH_LIN_3 || type == MSH_LIN_4 ||
+              type == MSH_LIN_5 || type == MSH_LIN_6) newtype = MSH_PNT;
+        }  
+        if(newtype == 0) Msg::Error("Error: mesh element %d not implemented yet! \n", type); 
+        
+        MElement* element = factory.create(newtype, vertices, 0, cell->getPartition());
+        Cell* newCell = new Cell(element, subdomain, boundary);
         newCell->setImmune(cell->getImmune());
-        tag++;
+        newCell->setDeleteImage(true);
         insertInfo = _cells[dim-1].insert(newCell);
         if(!insertInfo.second){
-          delete newCell;
+          delete newCell; 
           Cell* oldCell = *(insertInfo.first);
           if(!subdomain && !boundary){
-            //int ori = cell->kappa(oldCell);
             int ori = cell->getFacetOri(oldCell);
             oldCell->addCoboundaryCell( ori, cell );
             oldCell->addOrgCbdCell( ori, cell );
@@ -223,7 +197,6 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
           }
         }
         else if(!subdomain && !boundary) {
-          //int ori = cell->kappa(newCell);
           int ori = cell->getFacetOri(vertices);
           cell->addBoundaryCell( ori, newCell );
           cell->addOrgBdCell( ori, newCell );
@@ -237,36 +210,35 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
 }
 
 CellComplex::~CellComplex(){
-     for(int i = 0; i < 4; i++){
-       _cells[i].clear();
-       
-       for(citer cit = _ocells[i].begin(); cit != _ocells[i].end(); cit++){
-         Cell* cell = *cit;
-         delete cell;
-       }
-        _ocells[i].clear();
-       
-     }
-     //emptyTrash();
-   }
+  for(int i = 0; i < 4; i++){
+    _cells[i].clear();
+    
+    for(citer cit = _ocells[i].begin(); cit != _ocells[i].end(); cit++){
+      Cell* cell = *cit;
+      delete cell;
+    }
+    _ocells[i].clear();
+    
+  }
+}
 
-   /*
-   CellComplex::CellComplex(CellComplex* cellComplex){
-     
-     _domain = cellComplex->getDomain();
-     _subdomain = cellComplex->getSubdomain;
-     _boundary = cellComplex->getBoundary;
+/*
+ CellComplex::CellComplex(CellComplex* cellComplex){
+ * 
+ _domain = cellComplex->getDomain();
+ _subdomain = cellComplex->getSubdomain;
+ _boundary = cellComplex->getBoundary;
      _domainVertices = cellComplex->getDomainVertices;
-     
-     for(int i = 0; i < 4; i++){
-       _betti[i] = cellComplex->getBetti(i);
-       _cells[i] = ocells[i];
-       _ocells[i] = ocells[i];
-     }
-     
-     _dim = cellComplex->getDim();
+ * 
+ for(int i = 0; i < 4; i++){
+ _betti[i] = cellComplex->getBetti(i);
+ _cells[i] = ocells[i];
+ _ocells[i] = ocells[i];
+ }
+ * 
+ _dim = cellComplex->getDim();
    }
-   */
+ */
 
 void CellComplex::removeCell(Cell* cell, bool other){
   
@@ -693,12 +665,13 @@ int CellComplex::combine(int dim){
   std::map<Cell*, int, Less_Cell> cbd_c;
   std::list<Cell*> bd_c;
   int count = 0;
-  
+
   
   for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
     Cell* cell = *cit;
     bd_c = cell->getBoundary();
     enqueueCells(bd_c, Q, Qset);
+
     while(Q.size() != 0){
       
       Cell* s = Q.front();
@@ -725,10 +698,11 @@ int CellComplex::combine(int dim){
           enqueueCells(bd_c, Q, Qset);
           bd_c = c2->getBoundary();
           enqueueCells(bd_c, Q, Qset);
-          
+
           CombinedCell* newCell = new CombinedCell(c1, c2, (or1 != or2) );
           removeCell(c1);
           removeCell(c2);
+          
           std::pair<citer, bool> insertInfo =  _cells[dim].insert(newCell);
           if(!insertInfo.second) Msg::Debug("Warning: Combined cell not inserted! \n");
           cit = firstCell(dim);
@@ -825,152 +799,6 @@ void CellComplex::swapSubdomain(){
   
   return;
 }*/
-
-
-int CellComplex::writeComplexMSH(const std::string &name){
-    
-  FILE *fp = fopen(name.c_str(), "w");
-  
-  if(!fp){
-    Msg::Error("Unable to open file '%s'", name.c_str());
-    Msg::Debug("Unable to open file.");
-    return 0;
-  } 
-  
-  fprintf(fp, "$MeshFormat\n2.1 0 8\n$EndMeshFormat\n");
-  fprintf(fp, "$Nodes\n");
-  fprintf(fp, "%d\n", (int)_domainVertices.size());
-  
-  for(std::set<MVertex*, Less_MVertex>::iterator vit = _domainVertices.begin(); vit != _domainVertices.end(); vit++){
-    MVertex* vertex = *vit;
-    fprintf(fp, "%d %.16g %.16g %.16g\n", vertex->getNum(), vertex->x(), vertex->y(), vertex->z() );
-  }
-  
-      
-  fprintf(fp, "$EndNodes\n");
-  fprintf(fp, "$Elements\n");
-
-  int count = 0;
-  for(int i = 0; i < 4; i++){
-    for(citer cit = firstCell(i); cit != lastCell(i); cit++){
-      Cell* cell = *cit;
-      count = count + cell->getNumCells();
-    }
-  }
-  for(int i = 0; i < _store.size(); i++){    
-    count = count + _store.at(i).size();
-  }
-  
-  fprintf(fp, "%d\n", count);
-
-  int type = -1;
-  int physical = 0;
-  int elementary = 0;
-  int partition = 0;
-  
-  for(citer cit = firstCell(0); cit != lastCell(0); cit++) {
-    Cell* vertex = *cit;
-    if(vertex->inSubdomain()) partition = 3;
-    else if(vertex->onDomainBoundary()) partition = 2;
-    else partition = 1;
-    type = vertex->getTypeForMSH();
-    //vertex->writeMSH(fp, 2.1, false, 0, elementary, physical);
-    fprintf(fp, "%d %d %d %d %d %d %d\n", vertex->getNum(), type, 3, physical, elementary, partition, vertex->getVertex(0)->getNum());
-  }
-  
-  std::list< std::pair<int, Cell*> > cells;
-  for(citer cit = firstCell(1); cit != lastCell(1); cit++) {
-    Cell* edge = *cit;
-    if(edge->inSubdomain()) partition = 3;
-    else if(edge->onDomainBoundary()) partition = 2;
-    else partition = 1;
-    cells = edge->getCells();
-    for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
-      Cell* cell = (*it).second;
-      type = cell->getTypeForMSH();
-      //cell->writeMSH(fp, 2.1, false, 0, elementary, physical);
-      fprintf(fp, "%d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum());
-    }
-  }
-  
-  for(citer cit = firstCell(2); cit != lastCell(2); cit++) {
-    Cell* face = *cit;
-    if(face->inSubdomain()) partition = 3;
-    else if(face->onDomainBoundary()) partition = 2;
-    else partition = 1;
-    cells = face->getCells();
-    for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
-      Cell* cell = (*it).second;
-      type = cell->getTypeForMSH();
-      if(cell->getNumVertices() == 3) fprintf(fp, "%d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum());
-      else if (cell->getNumVertices() == 4)  fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
-    }
-  }
-  for(citer cit = firstCell(3); cit != lastCell(3); cit++) {
-    Cell* volume = *cit;
-    if(volume->inSubdomain()) partition = 3;
-    else if(volume->onDomainBoundary()) partition = 2;
-    else partition = 1;
-    cells = volume->getCells();
-    for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
-      Cell* cell = (*it).second;
-      type = cell->getTypeForMSH();
-      if(cell->getNumVertices() == 4) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
-      if(cell->getNumVertices() == 8) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(), cell->getVertex(4)->getNum(), cell->getVertex(5)->getNum(), cell->getVertex(6)->getNum(), cell->getVertex(7)->getNum() );
-      if(cell->getNumVertices() == 6) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(),cell->getVertex(4)->getNum(), cell->getVertex(5)->getNum());
-      if(cell->getNumVertices() == 5) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(), cell->getVertex(4)->getNum());      
-    }
-  }
-  
-  for(int i = 0; i < _store.size(); i++){
-    for(citer cit = _store.at(i).begin(); cit != _store.at(i).end(); cit++){
-      Cell* cell = *cit;
-      type = cell->getTypeForMSH();
-      if(cell->inSubdomain()) partition = 3;
-      else if(cell->onDomainBoundary()) partition = 2;
-      else partition = 1;
-      if(cell->getDim() == 0) fprintf(fp, "%d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum());
-      if(cell->getDim() == 1) fprintf(fp, "%d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum());
-      if(cell->getDim() == 2){
-        if(cell->getNumVertices() == 3) fprintf(fp, "%d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum());
-        else if (cell->getNumVertices() == 4)  fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
-      }
-      if(cell->getDim() == 3){
-        if(cell->getNumVertices() == 4) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
-        if(cell->getNumVertices() == 8) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(), cell->getVertex(4)->getNum(), cell->getVertex(5)->getNum(), cell->getVertex(6)->getNum(), cell->getVertex(7)->getNum() );
-        if(cell->getNumVertices() == 6) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(),cell->getVertex(4)->getNum(), cell->getVertex(5)->getNum());
-        if(cell->getNumVertices() == 5) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(), cell->getVertex(4)->getNum());
-      }  
-    }
-  }
-  
-  /*
-  for(citer cit = _ecells.begin(); cit != _ecells.end(); cit++){
-    Cell* cell = *cit;
-    type = cell->getTypeForMSH();
-    if(cell->inSubdomain()) partition = 3;
-    else if(cell->onDomainBoundary()) partition = 2;
-    else partition = 1;
-    if(cell->getDim() == 0) fprintf(fp, "%d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum());
-    if(cell->getDim() == 1) fprintf(fp, "%d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum());
-    if(cell->getDim() == 2){
-      if(cell->getNumVertices() == 3) fprintf(fp, "%d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum());
-      else if (cell->getNumVertices() == 4)  fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
-    }
-    if(cell->getDim() == 3){
-      if(cell->getNumVertices() == 4) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum());
-      if(cell->getNumVertices() == 8) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(), cell->getVertex(4)->getNum(), cell->getVertex(5)->getNum(), cell->getVertex(6)->getNum(), cell->getVertex(7)->getNum() );
-      if(cell->getNumVertices() == 6) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(),cell->getVertex(4)->getNum(), cell->getVertex(5)->getNum());
-      if(cell->getNumVertices() == 5) fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d\n", cell->getNum(), type, 3, physical, elementary, partition, cell->getVertex(0)->getNum(), cell->getVertex(1)->getNum(), cell->getVertex(2)->getNum(), cell->getVertex(3)->getNum(), cell->getVertex(4)->getNum());
-    }  
-  }*/
-  
-  fprintf(fp, "$EndElements\n");
-  
-  fclose(fp);
-  
-  return 1;
-}
 
 
 void CellComplex::printComplex(int dim){

@@ -6,6 +6,7 @@
 // Contributed by Matti Pellikka <matti.pellikka@tut.fi>.
 
 #include "CellComplex.h"
+#include "Cell.h"
 
 #if defined(HAVE_KBIPACK)
 
@@ -27,12 +28,69 @@ bool Less_Cell::operator()(const Cell* c1, const Cell* c2) const {
   return false;
 }
 
+bool Cell::hasVertex(int vertex) const {
+  std::vector<int>::const_iterator it = std::find(_vs.begin(), _vs.end(), vertex);
+  if (it != _vs.end()) return true;
+  else return false;
+}
+
+int Cell::getNumFacets() const { 
+  if(getDim() == 0) return 0;
+  else if(getDim() == 1) return 2;
+  else if(getDim() == 2) return _image->getNumEdges();
+  else if(getDim() == 3) return _image->getNumFaces();
+  else return 0;
+}
+void Cell::getFacetVertices(const int num, std::vector<MVertex*> &v) const {
+  if(getDim() == 0) return;
+  else if(getDim() == 1) { v.resize(1); v[0] = getVertex(num); }
+  else if(getDim() == 2) _image->getEdgeVertices(num, v);
+  else if(getDim() == 3) _image->getFaceVertices(num, v);
+  return;
+}
+
+
+int Cell::getFacetOri(std::vector<MVertex*> &v) {
+  if(getDim() == 0) return 0;
+  else if(getDim() == 1){
+    if(v.size() != 1) return 0;
+    else if(v[0] == getVertex(0)) return -1;
+    else if(v[0] == getVertex(1)) return 1;
+    else return 0;
+  }
+  else if(getDim() == 2){
+    if(v.size() != 2) return 0;
+    MEdge facet = MEdge(v[0], v[1]);
+    int ithFacet = 0;
+    int sign = 0;
+    _image->getEdgeInfo(facet, ithFacet, sign);
+    return sign;
+  }
+  else if(getDim() == 3){
+    if(v.size() != 3) return 0;
+    MFace facet = MFace(v);
+    int ithFacet = 0;
+    int sign = 0;
+    int rot = 0;
+    _image->getFaceInfo(facet, ithFacet, sign, rot);
+    return sign;
+  }
+  else return 0;
+}  
+
+void Cell::printCell() {
+  printf("%d-cell %d: \n" , getDim(), getNum());
+  printf("Vertices: ");
+  for(int i = 0; i < this->getNumVertices(); i++){
+    printf("%d ", this->getSortedVertex(i));
+  }
+  printf(", in subdomain: %d\n", _inSubdomain);
+  printf("Combined: %d \n" , isCombined() );
+};
 
 void Cell::restoreCell(){
   _boundary = _obd;
   _coboundary = _ocbd;
-  _bdSize = _boundary.size();
-  _cbdSize = _coboundary.size();
   _combined = false;
   _index = 0;
   _immune = false;   
@@ -58,12 +116,11 @@ std::list< Cell* > Cell::getCoboundary() {
 
 
 bool Cell::addBoundaryCell(int orientation, Cell* cell) {
-  _bdSize++;
   biter it = _boundary.find(cell);
   if(it != _boundary.end()){
     (*it).second = (*it).second + orientation;
     if((*it).second == 0) {
-      _boundary.erase(it); _bdSize--;
+      _boundary.erase(it);
       (*it).first->removeCoboundaryCell(this,false);
       return false;
     }
@@ -74,12 +131,11 @@ bool Cell::addBoundaryCell(int orientation, Cell* cell) {
 }
 
 bool Cell::addCoboundaryCell(int orientation, Cell* cell) {
-  _cbdSize++;
   biter it = _coboundary.find(cell);
   if(it != _coboundary.end()){
     (*it).second = (*it).second + orientation;
     if((*it).second == 0) {
-      _coboundary.erase(it); _cbdSize--;
+      _coboundary.erase(it);
       (*it).first->removeBoundaryCell(this,false);
       return false;
     }
@@ -94,7 +150,6 @@ int Cell::removeBoundaryCell(Cell* cell, bool other) {
   if(it != _boundary.end()){
     _boundary.erase(it);
     if(other) (*it).first->removeCoboundaryCell(this, false);
-    _bdSize--;
     return (*it).second;
   }
   
@@ -105,7 +160,6 @@ int Cell::removeCoboundaryCell(Cell* cell, bool other) {
   if(it != _coboundary.end()){
     _coboundary.erase(it);
     if(other) (*it).first->removeBoundaryCell(this, false);
-    _cbdSize--;
     return (*it).second;
   }
   return 0;
@@ -189,26 +243,27 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell() {
   }
   
   _index = c1->getIndex();
-  _tag = c1->getTag();
+  //_tag = c1->getTag();
   _dim = c1->getDim();
   _num = c1->getNum();
   _inSubdomain = c1->inSubdomain();
   _onDomainBoundary = c1->onDomainBoundary();
   _combined = true;
+  _image = NULL;
   
   _v.reserve(c1->getNumVertices() + c2->getNumVertices());
   _vs.reserve(c1->getNumVertices() + c2->getNumVertices());
   
-     
-  _v = c1->getVertexVector();
+
+  for(int i = 0; i < c1->getNumVertices(); i++) _v.push_back(c1->getVertex(i));
   for(int i = 0; i < c2->getNumVertices(); i++){
-    if(!this->hasVertex(c2->getVertex(i)->getNum())) _v.push_back(c2->getVertex(i));
+    if(!this->hasVertex(c2->getVertex(i)->getNum())) _v.push_back(c2->getVertex(i)); 
   }
-  
+
   // sorted vertices
   for(unsigned int i = 0; i < _v.size(); i++) _vs.push_back(_v.at(i)->getNum());
   std::sort(_vs.begin(), _vs.end());
-  
+ 
   // cells
   _cells = c1->getCells();
   std::list< std::pair<int, Cell*> > c2Cells = c2->getCells();
@@ -216,7 +271,7 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell() {
     if(!orMatch) (*it).first = -1*(*it).first;
     _cells.push_back(*it);
   }
-  
+
   // boundary cells
   std::map< Cell*, int, Less_Cell > c1Boundary = c1->getOrientedBoundary();
   std::map< Cell*, int, Less_Cell > c2Boundary = c2->getOrientedBoundary();
@@ -242,7 +297,7 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell() {
       if(this->addBoundaryCell(ori, cell)) cell->addCoboundaryCell(ori, this);
     }
   }
-  
+
   // coboundary cells
   std::map<Cell*, int, Less_Cell > c1Coboundary = c1->getOrientedCoboundary();
   std::map<Cell*, int, Less_Cell > c2Coboundary = c2->getOrientedCoboundary();
@@ -268,7 +323,7 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell() {
       if(this->addCoboundaryCell(ori, cell)) cell->addBoundaryCell(ori, this);
     }
   }
-  
+
 }
 
 
@@ -279,62 +334,5 @@ CombinedCell::~CombinedCell(){
     delete cell2;
   }
 } 
-
-bool CombinedCell::hasVertex(int vertex) const {
-  /*std::vector<int>::const_iterator it = std::find(_vs.begin(), _vs.end(), vertex);
-  if (it != _vs.end()) return true;
-  else return false;*/
-  for(unsigned int i = 0; i < _v.size(); i++){
-    if(_v.at(i)->getNum() == vertex) return true;
-  }
-  return false;
-}
-
-void CombinedCell::printCell() const {
-  printf("Cell dimension: %d, ", getDim() ); 
-  printf("Vertices: ");
-  for(int i = 0; i < this->getNumVertices(); i++){
-    printf("%d ", this->getSortedVertex(i));
-  }
-  printf(", in subdomain: %d\n", _inSubdomain);
-}
-
-/*
- int Cell::incidence(Cell* tau) const{
- for(int i=0; i < tau->getNumVertices(); i++){
- if( !(this->hasVertex(tau->getVertex(i)->getNum())) ) return 0;
- }
-  
- if(this->getDim() - tau->getDim() != 1) return 0;
-  
- int value=1;
- 
-  for(int i = 0; i < this->getNumFacets(); i++){
-    std::vector<MVertex*> vTau = tau->getVertexVector(); 
-    std::vector<MVertex*> v;
-    this->getFacetVertices(i, v);
-    value = -1;
-    
-    if(v.size() != vTau.size()) printf("Error: invalid facet!");
-    
-    do {
-      value = value*-1;
-      if(v == vTau) return value;
-    }
-    while (std::next_permutation(vTau.begin(), vTau.end()) );
-    
-    vTau = tau->getVertexVector();
-    value = -1;
-    do {
-      value = value*-1;
-      if(v == vTau) return value;
-    }
-    while (std::prev_permutation(vTau.begin(), vTau.end()) );
-    
-    
-  }
-  
-  return 0;
-}*/
 
 #endif
