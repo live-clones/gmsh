@@ -169,7 +169,7 @@ class Cell
    virtual void printOrgCbd(); 
    
    virtual bool inSubdomain() const { return _inSubdomain; }
-   //virtual void setInSubdomain(bool subdomain)  { _inSubdomain = subdomain; }
+   virtual void setInSubdomain(bool subdomain)  { _inSubdomain = subdomain; }
    
    virtual bool onDomainBoundary() const { return _onDomainBoundary; }
    virtual void setOnDomainBoundary(bool domainboundary)  { _onDomainBoundary = domainboundary; }

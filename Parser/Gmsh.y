@@ -3333,7 +3333,7 @@ Homology :
     
     #if defined(HAVE_KBIPACK)
     Homology* homology = new Homology(GModel::current(), domain, subdomain);
-    homology->findGenerators(fileName);
+    homology->findGenerators(fileName);  
     delete homology;
     #else
     yymsg(0, "Gmsh needs to be configured with option Kbipack to use homology computation.");

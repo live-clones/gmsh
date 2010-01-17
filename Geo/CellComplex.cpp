@@ -18,9 +18,20 @@ CellComplex::CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> su
   _dim = 0;
   _simplicial = true;
   
-  // find boundary entities
-  find_boundary(domain, subdomain);
+  _multidim = false;
+  int dim = 0;
+  for(int i = 0; i < domain.size(); i++){
+    GEntity* entity = domain.at(i);
+    if(i == 0) dim = entity->dim();
+    if(dim != entity->dim()){
+      _multidim = true;
+      Msg::Warning("Domain is not a manifold.");
+    }
+  }
   
+  // find boundary entities
+  if(!_multidim) find_boundary(domain, subdomain);
+
   // insert cells into cell complex
   // subdomain need to be inserted first!
   insert_cells(true, true);
@@ -33,7 +44,6 @@ CellComplex::CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> su
     _betti[i] = 0;
     if(getSize(i) > _dim) _dim = i;
   }
-  
   
 }
 
@@ -97,8 +107,6 @@ void CellComplex::find_boundary(std::vector<GEntity*>& domain, std::vector<GEnti
 }
 
 void CellComplex::insert_cells(bool subdomain, bool boundary){
-
-  // works only for simplicial meshes at the moment!
   
   std::vector<GEntity*> domain;
   
@@ -134,17 +142,17 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
       else if(type == MSH_QUA_4 || type == MSH_QUA_8 || type == MSH_QUA_9){
         cell = new Cell(domain.at(j)->getMeshElement(i), subdomain, boundary);
         _simplicial = false;
-      }/* FIXME: reduction doesn't work for these (but should).      
+      }     
       else if(type == MSH_HEX_8 || type == MSH_HEX_27 || type == MSH_HEX_20){
-        cell = new CHexahedron(vertices, tag, subdomain, boundary);
+        cell = new Cell(domain.at(j)->getMeshElement(i), subdomain, boundary);
         _simplicial = false;
-      }
+      }/* FIXME: no getFaceInfo methods for these MElements
       else if(type == MSH_PRI_6 || type == MSH_PRI_18 || type == MSH_PRI_15){
-        cell = new CPrism(vertices, tag, subdomain, boundary);
+        cell = new Cell(domain.at(j)->getMeshElement(i), subdomain, boundary);
         _simplicial = false;
       }
       else if(type == MSH_PYR_5 || type == MSH_PYR_14 || type == MSH_PYR_13){
-        cell = new CPyramid(vertices, tag, subdomain, boundary);
+        cell = new Cell(domain.at(j)->getMeshElement(i), subdomain, boundary);
         _simplicial = false;
       }*/
       else Msg::Error("Error: mesh element %d not implemented yet! \n", type); 
@@ -163,23 +171,31 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
       for(int i = 0; i < cell->getNumFacets(); i++){ 
         cell->getFacetVertices(i, vertices);
         int type = cell->getTypeForMSH();
-        
         int newtype = 0;
         //FIXME: add missing boundary cell type relations
+        //FIXME: high order meshes don't work
         if(dim == 3){
           if(type == MSH_TET_4) newtype = MSH_TRI_3;
-          else if(type == MSH_TET_10) newtype = MSH_TRI_6;
+          /*else if(type == MSH_TET_10) newtype = MSH_TRI_6;
+          else if(type == MSH_TET_20) newtype = MSH_TRI_9;*/
+          else if(type == MSH_HEX_8) newtype = MSH_QUA_4;
+          /*else if(type == MSH_HEX_20) newtype = MSH_QUA_8;
+          else if(type == MSH_HEX_27) newtype = MSH_QUA_9;*/
         }
         else if(dim == 2){
            if(type == MSH_TRI_3 || type == MSH_QUA_4) newtype = MSH_LIN_2;
-           else if(type == MSH_TRI_6 || type == MSH_QUA_8) newtype = MSH_LIN_3;
+           /*else if(type == MSH_TRI_6 || type == MSH_QUA_8) newtype = MSH_LIN_3;
+           else if(type == MSH_TRI_9) newtype = MSH_LIN_4;
+           else if(type == MSH_QUA_9) newtype = MSH_LIN_3;*/
         }
         else if(dim == 1){
-           if(type == MSH_LIN_2 || type == MSH_LIN_3 || type == MSH_LIN_4 ||
-              type == MSH_LIN_5 || type == MSH_LIN_6) newtype = MSH_PNT;
+           if(type == MSH_LIN_2) newtype = MSH_PNT;
+           /*else if(type == MSH_LIN_3 || type == MSH_LIN_4 ||
+                   type == MSH_LIN_5 || type == MSH_LIN_6) newtype = MSH_PNT;*/
         }  
         if(newtype == 0) Msg::Error("Error: mesh element %d not implemented yet! \n", type); 
         
+        //printf("dim: %d type: %d, newtype: %d, vertices: %d \n", dim, type, newtype, vertices.size());
         MElement* element = factory.create(newtype, vertices, 0, cell->getPartition());
         Cell* newCell = new Cell(element, subdomain, boundary);
         newCell->setImmune(cell->getImmune());
@@ -206,7 +222,6 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
       }
     }
   }
-  
 }
 
 CellComplex::~CellComplex(){
@@ -891,6 +906,18 @@ bool CellComplex::hasCell(Cell* cell, bool org){
     if( cit == lastOrgCell(cell->getDim()) ) return false;
     else return true;
   }
+}
+
+bool CellComplex::swapSubdomain(){
+  if(_multidim) return false;
+  for(int i = 0; i < 4; i++){
+    for(citer cit = firstCell(i); cit != lastCell(i); cit++){
+      Cell* cell = *cit;
+      if(cell->onDomainBoundary() && cell->inSubdomain()) cell->setInSubdomain(false);
+      else if(cell->onDomainBoundary() && !cell->inSubdomain()) cell->setInSubdomain(true);
+    }
+  }
+  return true;
 }
 
 void CellComplex::makeDualComplex(){

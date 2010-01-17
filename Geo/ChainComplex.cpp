@@ -602,7 +602,6 @@ int Chain::writeChainMSH(const std::string &name){
 void Chain::createPView(){
   
   std::vector<MElement*> elements;
-  MElementFactory factory;
   std::map<int, std::vector<double> > data;
   
   for(citer cit = _cells.begin(); cit != _cells.end(); cit++){

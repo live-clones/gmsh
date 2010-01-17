@@ -47,9 +47,8 @@ class Homology
    void findGenerators(std::string fileName);
    void findDualGenerators(std::string fileName);
    void computeBettiNumbers();
-   
-   
-   //void swapSubdomain() { _cellComplex->swapSubdomain(); }
+      
+   bool swapSubdomain() { return _cellComplex->swapSubdomain(); }
    
    // Restore the cell complex to its original state before cell reductions
    void restoreHomology();

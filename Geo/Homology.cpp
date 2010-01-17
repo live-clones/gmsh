@@ -111,7 +111,6 @@ void Homology::findGenerators(std::string fileName){
             _cellComplex->getSize(3), _cellComplex->getSize(2), _cellComplex->getSize(1), _cellComplex->getSize(0));
   Msg::StatusBar(2, false, "%d V, %d F, %d E, %d N.",
             _cellComplex->getSize(3), _cellComplex->getSize(2), _cellComplex->getSize(1), _cellComplex->getSize(0));
-  //for(int i = 0; i < 4; i++) { printf("Dim %d: \n", i); _cellComplex->printComplex(i); }
   
   Msg::Info("Computing homology spaces...");
   Msg::StatusBar(1, false, "Computing...");
@@ -190,7 +189,6 @@ void Homology::findDualGenerators(std::string fileName){
   Msg::StatusBar(1, false, "Reducing...");
   double t1 = Cpu();
   int omitted = _cellComplex->coreduceComplex();
-  //_cellComplex->emptyTrash();
   
   /*
   _cellComplex->makeDualComplex();
@@ -203,13 +201,9 @@ void Homology::findDualGenerators(std::string fileName){
   _cellComplex->makeDualComplex();
   */
   
-
   _cellComplex->cocombine(0);
   _cellComplex->cocombine(1);
   _cellComplex->cocombine(2);
-  
-  
-  //_cellComplex->emptyTrash();
   
   _cellComplex->checkCoherence();
   double t2 = Cpu();
@@ -219,8 +213,6 @@ void Homology::findDualGenerators(std::string fileName){
   Msg::StatusBar(2, false, "%d V, %d F, %d E, %d N.",
             _cellComplex->getSize(3), _cellComplex->getSize(2), _cellComplex->getSize(1), _cellComplex->getSize(0));
   
-  
-  //_cellComplex->writeComplexMSH(fileName);
   
   Msg::Info("Computing homology spaces...");
   Msg::StatusBar(1, false, "Computing...");
@@ -360,16 +352,8 @@ void Homology::createPViews(){
 
 bool Homology::writeGeneratorsMSH(std::string fileName, bool binary){
   if(!_model->writeMSH(fileName, 2.0, binary)) return false;
-  /*
-   for(int i = 0; i < 4; i++){
-   for(int j = 0; j < _generators[i].size(); j++){
-   Chain* chain = _generators[i].at(j);
-   if(!chain->writeChainMSH(fileName)) return false;
-   }
-   }*/
   Msg::Info("Wrote homology computation results to %s.", fileName.c_str());
-  Msg::Debug("Wrote homology computation results to %s. \n", fileName.c_str());
-  
+  Msg::Debug("Wrote homology computation results to %s. \n", fileName.c_str());  
   return true;
 }
 

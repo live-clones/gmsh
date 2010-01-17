@@ -59,6 +59,9 @@ class CellComplex
    // is the cell complex simplicial
    bool _simplicial;
    
+   // does the domain contain entities of different dimensions
+   bool _multidim;
+   
    // enqueue cells in queue if they are not there already
    void enqueueCells(std::list<Cell*>& cells, 
                              std::queue<Cell*>& Q, std::set<Cell*, Less_Cell>& Qset);
@@ -129,10 +132,6 @@ class CellComplex
    // print the vertices of cells of certain dimension
    void printComplex(int dim);
    
-   // write this cell complex in 2.0 MSH ASCII format
-   // for debugging only
-   //int writeComplexMSH(const std::string &name); 
-   
    // Cell combining for reduction and coreduction
    int combine(int dim);
    int cocombine(int dim);
@@ -144,6 +143,9 @@ class CellComplex
    // check whether all boundary cells of a cell has this cell as coboundary cell and vice versa
    // also check whether all (co)boundary cells of a cell belong to this cell complex
    bool checkCoherence();
+   
+   // make cells on the domain boundary that are not in the subdomain subdomain cells and vice versa
+   bool swapSubdomain();
    
    int eulerCharacteristic(){ return getSize(0) - getSize(1) + getSize(2) - getSize(3);}
    void printEuler(){ printf("Euler characteristic: %d. \n", eulerCharacteristic()); }

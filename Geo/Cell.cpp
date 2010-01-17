@@ -243,7 +243,6 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell() {
   }
   
   _index = c1->getIndex();
-  //_tag = c1->getTag();
   _dim = c1->getDim();
   _num = c1->getNum();
   _inSubdomain = c1->inSubdomain();
