@@ -136,7 +136,7 @@ public:
       }
     }
   }
-  ~neumann_ () {if (diffusiveFlux)delete diffusiveFlux;}
+  ~neumann_ () {}
 };
 
 dataCacheDouble *dgBoundaryCondition::newDiffusiveDirichletBC(dataCacheMap &cacheMapLeft) const {

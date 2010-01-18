@@ -770,7 +770,7 @@ class dgBoundaryConditionPerfectGasLaw2dWall : public dgBoundaryCondition {
 	_value(i,3) = 0.0; 
       }
     }
-    ~neumannNonSlip () {if (diffusiveFlux)delete diffusiveFlux;}
+    ~neumannNonSlip (){}; 
   };
 
 //-------------------------------------------------------------------------------
