@@ -1,0 +1,43 @@
+body {
+  margin: 2em;
+  text-align: center;
+}
+table {
+  margin-left: auto;
+  margin-right: auto;
+}
+a {
+  text-decoration: none;
+}
+a:hover, a:visited {
+	color: inherit;
+}
+td {
+  text-align: center;
+}
+table{
+  border-collapse: collapse;
+}
+td.first_col {
+  text-align: left;
+  padding-right: 1em;
+}
+tr.even_line td {
+  background-color: #F0F0F0;
+}
+th {
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  border-bottom: solid black 1px;
+}
+td.slim_benchmark_failed {
+  color: red;
+  font-weight: bold;
+}
+td.slim_benchmark_passed {
+  color: green;
+}
+td.slim_benchmark_running {
+  color: orange;
+  font-weight: bold;
+}
