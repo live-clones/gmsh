@@ -711,21 +711,33 @@ void dgGroupCollection::buildGroups(GModel *model, int dim, int order)
     case 1 : {
       std::map<const std::string, std::set<MVertex*> >::iterator mapIt;
       for(mapIt=boundaryVertices.begin(); mapIt!=boundaryVertices.end(); mapIt++) {
-        _boundaryGroups.push_back(new dgGroupOfFaces(*_elementGroups[i],mapIt->first,order,mapIt->second));
+        dgGroupOfFaces *gof = new dgGroupOfFaces(*_elementGroups[i],mapIt->first,order,mapIt->second);
+        if (gof->getNbElements())
+          _boundaryGroups.push_back(gof);
+        else
+          delete gof;
+        break;
       }
-      break;
     }
     case 2 : {
       std::map<const std::string, std::set<MEdge, Less_Edge> >::iterator mapIt;
       for(mapIt=boundaryEdges.begin(); mapIt!=boundaryEdges.end(); mapIt++) {
-        _boundaryGroups.push_back(new dgGroupOfFaces(*_elementGroups[i],mapIt->first,order,mapIt->second));
+      dgGroupOfFaces *gof=new dgGroupOfFaces(*_elementGroups[i],mapIt->first,order,mapIt->second);
+        if(gof->getNbElements())
+          _boundaryGroups.push_back(gof);
+        else
+          delete gof;
       }
       break;
     }
     case 3 : {
       std::map<const std::string, std::set<MFace, Less_Face> >::iterator mapIt;
       for(mapIt=boundaryFaces.begin(); mapIt!=boundaryFaces.end(); mapIt++) {
-        _boundaryGroups.push_back(new dgGroupOfFaces(*_elementGroups[i],mapIt->first,order,mapIt->second));
+        dgGroupOfFaces *gof=new dgGroupOfFaces(*_elementGroups[i],mapIt->first,order,mapIt->second);
+        if(gof->getNbElements())
+          _boundaryGroups.push_back(gof);
+        else
+          delete gof;
       }
       break;
     }

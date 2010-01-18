@@ -26,9 +26,9 @@ FS = functionLua(4, 'free_stream', {'XYZ'}):getName()
 
 -- diffusivity
 mu=fullMatrix(1,1);
-mu:set(0,0,0.02)
+mu:set(0,0,0.01)
 kappa=fullMatrix(1,1);
-kappa:set(0,0,0.02)
+kappa:set(0,0,0.01)
 
 print'*** Loading the mesh and the model ***'
 myModel   = GModel  ()
@@ -59,6 +59,7 @@ DG:exportSolution('output/cyl_0')
 print'*** solve ***'
 
 CFL = 20.1;
+CFL = 5;
 dt = CFL * DG:computeInvSpectralRadius();
 print('DT = ',dt)
 T = 0;
