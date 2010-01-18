@@ -32,8 +32,8 @@ kappa:set(0,0,0.01)
 
 print'*** Loading the mesh and the model ***'
 myModel   = GModel  ()
-myModel:load ('cyl.geo')	
-myModel:load ('cyl.msh')
+myModel:load ('cyl2.geo')	
+myModel:load ('cyl2.msh')
 
 print'*** Create a dg solver ***'
 DG = dgSystemOfEquations (myModel)
@@ -59,7 +59,6 @@ DG:exportSolution('output/cyl_0')
 print'*** solve ***'
 
 CFL = 20.1;
-CFL = 5;
 dt = CFL * DG:computeInvSpectralRadius();
 print('DT = ',dt)
 T = 0;

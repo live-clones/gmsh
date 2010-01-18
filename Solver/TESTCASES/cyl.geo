@@ -62,7 +62,7 @@ Transfinite Surface(1) = {2,12,14,4};
 Transfinite Surface(2) = {5,15,12,2};
 Transfinite Surface(3) = {3,13,15,5};
 Transfinite Surface(4) = {4,14,13,3};
-//Recombine Surface {1,2,3,4};
+Recombine Surface {1,2,3,4};
 
 Line Loop(9) = {6, 7, 8, 5};
 Line Loop(10) = {11,12,13,14};
