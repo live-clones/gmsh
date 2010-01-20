@@ -282,43 +282,38 @@ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation l
 
   dgDofContainer K   (groups,nbFields);
   dgDofContainer Unp (groups,nbFields);
-
-  K._data->scale(0.0);
-  K._data->axpy(*(sol._data));
-  Unp._data->scale(0.0);
-  Unp._data->axpy(*(sol._data));
+  K.scale(0.);
+  K.axpy(sol);
+  Unp.scale(0.);
+  Unp.axpy(sol);
 
   for(int j=0; j<orderRK;j++){
     if(j){
-      K._data->scale(b[j]);
-      K._data->axpy(*(sol._data));
+      K.scale(b[j]);
+      K.axpy(sol);
     }
 
     if (limiter){
       limiter->apply(K, groups);
     }
-    K.scatter();
-    this->residual(claw,groups,K._dataProxys,resd._dataProxys);
-    K._data->scale(0.);
+    this->residual(claw,groups,K,resd);
+    K.scale(0.);
     for(int k=0; k < groups.getNbElementGroups(); k++) {
       dgGroupOfElements *group = groups.getElementGroup(k);
       int nbNodes = group->getNbNodes();
       for(int i=0;i<group->getNbElements();i++) {
-        residuEl.setAsProxy(*(resd._dataProxys[k]),i*nbFields,nbFields);
-        KEl.setAsProxy(*(K._dataProxys[k]),i*nbFields,nbFields);
+        residuEl.setAsProxy(resd.getGroupProxy(k),i*nbFields,nbFields);
+        KEl.setAsProxy(K.getGroupProxy(k),i*nbFields,nbFields);
         iMassEl.setAsProxy(group->getInverseMassMatrix(),i*nbNodes,nbNodes);
         iMassEl.mult(residuEl,KEl);
       }
     }
-    Unp._data->axpy(*(K._data),a[j]);
+    Unp.axpy(K,a[j]);
   }
   if (limiter) limiter->apply(Unp, groups);
-  for (int i=0;i<sol._dataSize;i++){	   
-    (*sol._data)(i)=(*Unp._data)(i);
-  }
+  sol.scale(0.);
+  sol.axpy(Unp);
 }
-
-
 
 void dgAlgorithm::multirateRungeKutta (const dgConservationLaw &claw,			// conservation law
             dgGroupCollection &groups,
@@ -408,17 +403,17 @@ void dgAlgorithm::multirateRungeKutta (const dgConservationLaw &claw,			// conse
    K=new dgDofContainer*[nStages];
    for(int i=0;i<nStages;i++){
      K[i]=new dgDofContainer(groups,nbFields);
-     K[i]->_data->scale(0.0);
+     K[i]->scale(0.);
    }
    dgDofContainer Unp (groups,nbFields);
    dgDofContainer tmp (groups,nbFields);
 
-   Unp._data->scale(0.0);
-   Unp._data->axpy(*(sol._data));
+   Unp.scale(0.0);
+   Unp.axpy(sol);
 
    for(int j=0; j<nStages;j++){
-     tmp._data->scale(0.0);
-     tmp._data->axpy(*(sol._data));
+     tmp.scale(0.0);
+     tmp.axpy(sol);
      for(int k=0;k < groups.getNbElementGroups();k++) {
        for(int i=0;i<j;i++){
          if(fabs(A[j][i])>1e-12){
@@ -426,23 +421,22 @@ void dgAlgorithm::multirateRungeKutta (const dgConservationLaw &claw,			// conse
          }
        }
      }
-     this->residual(claw,groups,tmp._dataProxys,resd._dataProxys);
+     this->residual(claw,groups,tmp,resd);
      for(int k=0;k < groups.getNbElementGroups(); k++) {
        dgGroupOfElements *group = groups.getElementGroup(k);
        int nbNodes = group->getNbNodes();
        for(int i=0;i<group->getNbElements();i++) {
-         residuEl.setAsProxy(*(resd._dataProxys[k]),i*nbFields,nbFields);
-         KEl.setAsProxy(*(K[j]->_dataProxys[k]),i*nbFields,nbFields);
+         residuEl.setAsProxy(resd.getGroupProxy(k),i*nbFields,nbFields);
+         KEl.setAsProxy(K[j]->getGroupProxy(k),i*nbFields,nbFields);
          iMassEl.setAsProxy(group->getInverseMassMatrix(),i*nbNodes,nbNodes);
          iMassEl.mult(residuEl,KEl);
        }
        Unp.getGroupProxy(k).add(K[j]->getGroupProxy(k),h*b[j]);
      }
    }
-   
-   for (int i=0;i<sol._dataSize;i++){
-     (*sol._data)(i)=(*Unp._data)(i);
-   }
+   sol.scale(0.);
+   sol.axpy(Unp);
+
    for(int i=0;i<nStages;i++){
      delete K[i];
    }
@@ -536,14 +530,15 @@ void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (mayb
 // works for any number of groups 
 void dgAlgorithm::residual( const dgConservationLaw &claw,
           dgGroupCollection &groups,
-			    std::vector<fullMatrix<double> *> &solution, // solution
-			    std::vector<fullMatrix<double> *> &residu) // residual
+          dgDofContainer &solution,
+          dgDofContainer &residu)
 {
+  solution.scatter();
   int nbFields=claw.nbFields();
   //volume term
   for(size_t i=0;i<groups.getNbElementGroups() ; i++) {
-    residu[i]->scale(0);
-    residualVolume(claw,*groups.getElementGroup(i),*solution[i],*residu[i]);
+    residu.getGroupProxy(i).scale(0);
+    residualVolume(claw,*groups.getElementGroup(i),solution.getGroupProxy(i),residu.getGroupProxy(i));
   }
   //  residu[0]->print("Volume");
   //interface term
@@ -563,11 +558,10 @@ void dgAlgorithm::residual( const dgConservationLaw &claw,
     }
     fullMatrix<double> solInterface(faces.getNbNodes(),faces.getNbElements()*2*nbFields);
     fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements()*2*nbFields);
-    faces.mapToInterface(nbFields, *solution[iGroupLeft], *solution[iGroupRight], solInterface);
-    residualInterface(claw,faces,solInterface,*solution[iGroupLeft], *solution[iGroupRight],residuInterface);
-    faces.mapFromInterface(nbFields, residuInterface, *residu[iGroupLeft], *residu[iGroupRight]);
+    faces.mapToInterface(nbFields, solution.getGroupProxy(iGroupLeft), solution.getGroupProxy(iGroupRight), solInterface);
+    residualInterface(claw,faces,solInterface,solution.getGroupProxy(iGroupLeft), solution.getGroupProxy(iGroupRight),residuInterface);
+    faces.mapFromInterface(nbFields, residuInterface,residu.getGroupProxy(iGroupLeft), residu.getGroupProxy(iGroupRight));
   }
-  //  residu[0]->print("Interfaces");
   //boundaries
   for(size_t i=0;i<groups.getNbBoundaryGroups() ; i++) {
     dgGroupOfFaces &faces = *groups.getBoundaryGroup(i);
@@ -579,12 +573,10 @@ void dgAlgorithm::residual( const dgConservationLaw &claw,
     }
     fullMatrix<double> solInterface(faces.getNbNodes(),faces.getNbElements()*nbFields);
     fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements()*nbFields);
-    faces.mapToInterface(nbFields, *solution[iGroupLeft], *solution[iGroupRight], solInterface);
-    residualBoundary(claw,faces,solInterface,*solution[iGroupLeft],residuInterface);
-    faces.mapFromInterface(nbFields, residuInterface, *residu[iGroupLeft], *residu[iGroupRight]);
+    faces.mapToInterface(nbFields, solution.getGroupProxy(iGroupLeft), solution.getGroupProxy(iGroupRight), solInterface);
+    residualBoundary(claw,faces,solInterface,solution.getGroupProxy(iGroupLeft),residuInterface);
+    faces.mapFromInterface(nbFields, residuInterface, residu.getGroupProxy(iGroupLeft), residu.getGroupProxy(iGroupRight));
   }
-
-  //  residu[0]->print("Boundaries");
 }
 
 void dgAlgorithm::computeElementaryTimeSteps ( //dofManager &dof, // the DOF manager (maybe useless here)

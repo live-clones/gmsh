@@ -30,7 +30,6 @@ dgSystemOfEquations::dgSystemOfEquations(GModel *gm){
   _solution = 0;
 }
 
-
 // set the order of interpolation
 void dgSystemOfEquations::setOrder(int o){
   _order = o;
@@ -91,8 +90,8 @@ void dgSystemOfEquations::L2Projection (std::string functionName){
   dgConservationLawL2Projection Law(functionName,*_claw);
   for (int i=0;i<_groups.getNbElementGroups();i++){
     dgGroupOfElements *group = _groups.getElementGroup(i);
-    _algo->residualVolume(Law,*group,*_solution->_dataProxys[i],*_rightHandSide->_dataProxys[i]);
-    _algo->multAddInverseMassMatrix(*group,*_rightHandSide->_dataProxys[i],*_solution->_dataProxys[i]);
+    _algo->residualVolume(Law,*group,_solution->getGroupProxy(i),_rightHandSide->getGroupProxy(i));
+    _algo->multAddInverseMassMatrix(*group,_rightHandSide->getGroupProxy(i),_solution->getGroupProxy(i));
   }
 }
 
@@ -107,14 +106,14 @@ void dgSystemOfEquations::setup(){
 
 double dgSystemOfEquations::RK44(double dt){
   _algo->rungeKutta(*_claw,_groups, dt,  *_solution, *_rightHandSide);
-  return _solution->_data->norm();
+  return _solution->norm();
 }
 
 double dgSystemOfEquations::computeInvSpectralRadius(){   
   double sr = 1.e22;
   for (int i=0;i<_groups.getNbElementGroups();i++){
     std::vector<double> DTS;
-    _algo->computeElementaryTimeSteps(*_claw, *_groups.getElementGroup(i), *_solution->_dataProxys[i], DTS);
+    _algo->computeElementaryTimeSteps(*_claw, *_groups.getElementGroup(i), _solution->getGroupProxy(i), DTS);
     for (int k=0;k<DTS.size();k++) sr = std::min(sr,DTS[k]);
   }
   #ifdef HAVE_MPI
@@ -130,16 +129,16 @@ double dgSystemOfEquations::RK44_limiter(double dt){
   dgLimiter *sl = new dgSlopeLimiter(_claw);
   _algo->rungeKutta(*_claw,_groups, dt,  *_solution, *_rightHandSide, sl);
   delete sl;
-  return _solution->_data->norm();
+  return _solution->norm();
 }
 
 double dgSystemOfEquations::ForwardEuler(double dt){
   _algo->rungeKutta(*_claw, _groups, dt,  *_solution, *_rightHandSide, NULL,1);
-  return _solution->_data->norm();
+  return _solution->norm();
 }
 double dgSystemOfEquations::multirateRK43(double dt){
   _algo->multirateRungeKutta(*_claw, _groups, dt,  *_solution, *_rightHandSide);
-  return _solution->_data->norm();
+  return _solution->norm();
 }
 
 void dgSystemOfEquations::exportSolution(std::string outputFile){
@@ -161,15 +160,11 @@ dgSystemOfEquations::~dgSystemOfEquations(){
 }
 
 void dgSystemOfEquations::saveSolution (std::string name) {
-  FILE *f = fopen (name.c_str(),"wb");
-  _solution->_data->binarySave(f);
-  fclose(f);
+  _solution->save(name);
 }
 
 void dgSystemOfEquations::loadSolution (std::string name){
-  FILE *f = fopen (name.c_str(),"rb");
-  _solution->_data->binaryLoad(f);
-  fclose(f);
+  _solution->load(name);
 }
 
 void dgSystemOfEquations::export_solution_as_is (const std::string &name){

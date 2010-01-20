@@ -9,7 +9,7 @@
 dgDofContainer::dgDofContainer (dgGroupCollection &groups, int nbFields):
   _groups(groups)
 {
-  _dataSize = 0;
+  int _dataSize = 0;
   _dataSizeGhost=0;
   _totalNbElements = 0;
   _parallelStructureExists = false;
@@ -67,7 +67,6 @@ dgDofContainer::~dgDofContainer (){
     delete []sendBuf;
     delete []recvBuf;
   }
-  if (!_dataSize)return;
   for (int i=0;i<_dataProxys.size();++i) delete _dataProxys[i];
   delete _data;
   delete _ghostData;
@@ -142,4 +141,36 @@ void dgDofContainer::scatter() {
     fullMatrix<double> recvProxy (recvBuf + groupShiftRecv[i], sol.size1(), sol.size2());
     sol.setAll(recvProxy);
   }
+}
+void dgDofContainer::scale(double f) 
+{
+  _data->scale(f);
+  _ghostData->scale(f); 
+}
+
+void dgDofContainer::axpy(dgDofContainer &x, double a)
+{
+  _data->axpy(*x._data,a);
+  _ghostData->axpy(*x._ghostData,a); 
+}
+
+double dgDofContainer::norm() {
+  double localNorm = _data->norm();
+  #ifdef HAVE_MPI
+  double globalNorm;
+  MPI_Allreduce(&localNorm, &globalNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  return globalNorm;
+  #else
+  return localNorm;
+  #endif
+}
+void dgDofContainer::save(const std::string name) {
+  FILE *f = fopen (name.c_str(),"rb");
+  _data->binaryLoad(f);
+  fclose(f);
+}
+void dgDofContainer::load(const std::string name) {
+  FILE *f = fopen (name.c_str(),"rb");
+  _data->binaryLoad(f);
+  fclose(f);
 }

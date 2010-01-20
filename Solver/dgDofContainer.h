@@ -12,23 +12,25 @@ private:
   int _nbFields;
   dgGroupCollection &_groups;
   int _dataSizeGhost; 
+  fullVector<double> * _data; // the full data itself
   fullVector<double> * _ghostData;
-  inline int getDataSize(){return _dataSize;}
+  //inline int getDataSize(){return _dataSize;}
   // parallel
   void buildParallelStructure();
   bool _parallelStructureExists;
   int *countSend,*countRecv,*shiftSend,*shiftRecv,*groupShiftRecv;
   double *sendBuf, *recvBuf;
-public:
-  //todo move those 3 to private
-  fullVector<double> * _data; // the full data itself
   std::vector<fullMatrix<double> *> _dataProxys; // proxys 
-  int _dataSize; // the full data size i.e. concerning all groups (not ghost, see bellow)
-
+public:
+  void scale(double f);
+  double norm();
+  void axpy(dgDofContainer &x, double a=1.);
   inline fullMatrix<double> &getGroupProxy(int gId){ return *(_dataProxys[gId]); }
   dgDofContainer (dgGroupCollection &groups, int nbFields);
   ~dgDofContainer ();  
   int getNbElements() {return _totalNbElements;}
   void scatter();
+  void save(const std::string name);
+  void load(const std::string name);
 };
 #endif

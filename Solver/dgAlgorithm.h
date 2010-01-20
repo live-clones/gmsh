@@ -36,9 +36,7 @@ class dgAlgorithm {
 				 );
   // works only if there is only 1 group of element
   static void residual( const dgConservationLaw &claw, dgGroupCollection &groups,
-			std::vector<fullMatrix<double> *> &solution, // solution !! at faces nodes
-			std::vector<fullMatrix<double> *> &residual // residual !! at faces nodes
-			);	  
+			dgDofContainer &solution, dgDofContainer &residual);	  
   void rungeKutta (
 		   const dgConservationLaw &claw,
        dgGroupCollection &groups,
