@@ -71,27 +71,36 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
       
       _HMatrix[dim] = create_gmp_matrix_zero(rows, cols);
       //printMatrix(_HMatrix[dim]);
-      for( std::set<Cell*, Less_Cell>::iterator cit = cellComplex->firstCell(dim); cit != cellComplex->lastCell(dim); cit++){
+      for( std::set<Cell*, Less_Cell>::iterator cit = 
+	     cellComplex->firstCell(dim);
+	   cit != cellComplex->lastCell(dim); cit++){
         Cell* cell = *cit;
         if(!cell->inSubdomain()){
-          std::map<Cell*, int, Less_Cell> bdCell = cell->getOrientedBoundary();
-          for(std::map<Cell*, int, Less_Cell>::iterator it = bdCell.begin(); it != bdCell.end(); it++){
+          std::map<Cell*, int, Less_Cell> bdCell;
+	  cell->getBoundary(bdCell);
+          for(std::map<Cell*, int, Less_Cell>::iterator it = bdCell.begin();
+	      it != bdCell.end(); it++){
             Cell* bdCell = (*it).first;
             if(!bdCell->inSubdomain()){
               int old_elem = 0;
               //printf("cell1: %d, cell2: %d \n", bdCell->getIndex(), cell->getIndex());
-              if(bdCell->getIndex() > (int)gmp_matrix_rows( _HMatrix[dim]) || bdCell->getIndex() < 1 
-                 || cell->getIndex() > (int)gmp_matrix_cols( _HMatrix[dim]) || cell->getIndex() < 1){
+              if(bdCell->getIndex() > (int)gmp_matrix_rows( _HMatrix[dim]) 
+		 || bdCell->getIndex() < 1 
+                 || cell->getIndex() > (int)gmp_matrix_cols( _HMatrix[dim]) 
+		 || cell->getIndex() < 1){
                 Msg::Debug("Warning: Index out of bound! HMatrix: %d. \n", dim);
               }
               else{
-                gmp_matrix_get_elem(elem, bdCell->getIndex(), cell->getIndex(), _HMatrix[dim]);
+                gmp_matrix_get_elem(elem, bdCell->getIndex(), 
+				    cell->getIndex(), _HMatrix[dim]);
                 old_elem = mpz_get_si(elem);
                 mpz_set_si(elem, old_elem + (*it).second);
                 if( abs((old_elem + (*it).second)) > 1){
-                  Msg::Debug("Incidence index: %d! HMatrix: %d.", (old_elem + (*it).second), dim);
+                  Msg::Debug("Incidence index: %d! HMatrix: %d.", 
+			     (old_elem + (*it).second), dim);
                 }
-                gmp_matrix_set_elem(elem, bdCell->getIndex(), cell->getIndex(), _HMatrix[dim]);
+                gmp_matrix_set_elem(elem, bdCell->getIndex(), 
+				    cell->getIndex(), _HMatrix[dim]);
               }
             }
           }
@@ -415,15 +424,19 @@ int ChainComplex::getTorsion(int dim, int chainNumber){
   
 }
 
-Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, CellComplex* cellComplex, GModel* model, std::string name, int torsion){
+Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, 
+	     CellComplex* cellComplex, GModel* model,
+	     std::string name, int torsion){
   
   int i = 0;
-  for(std::set<Cell*, Less_Cell>::iterator cit = cells.begin(); cit != cells.end(); cit++){
+  for(std::set<Cell*, Less_Cell>::iterator cit = cells.begin();
+      cit != cells.end(); cit++){
     Cell* cell = *cit;
     _dim = cell->getDim();
     if(!cell->inSubdomain() && (int)coeffs.size() > i){
       if(coeffs.at(i) != 0){
-        std::list< std::pair<int, Cell*> > subCells = cell->getCells();
+        std::list< std::pair<int, Cell*> > subCells;
+	cell->getCells(subCells);
         for(std::list< std::pair<int, Cell*> >::iterator it = subCells.begin(); it != subCells.end(); it++){
           Cell* subCell = (*it).second;
           int coeff = (*it).first;
@@ -441,7 +454,8 @@ Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, CellComp
   
 }
 
-bool Chain::deform(std::map<Cell*, int, Less_Cell> &cellsInChain, std::map<Cell*, int, Less_Cell> &cellsNotInChain){
+bool Chain::deform(std::map<Cell*, int, Less_Cell> &cellsInChain, 
+		   std::map<Cell*, int, Less_Cell> &cellsNotInChain){
 
   std::vector<int> cc;
   std::vector<int> bc;
@@ -461,7 +475,9 @@ bool Chain::deform(std::map<Cell*, int, Less_Cell> &cellsInChain, std::map<Cell*
     if(cc[i]*bc[i] != inout) return false;  
   }
   
-  for(citer cit = cellsInChain.begin(); cit != cellsInChain.end(); cit++) removeCell((*cit).first);
+  for(citer cit = cellsInChain.begin(); cit != cellsInChain.end(); cit++){
+    removeCell((*cit).first);
+  }
   
   int n = 1;
   for(citer cit = cellsNotInChain.begin(); cit != cellsNotInChain.end(); cit++){
@@ -479,18 +495,23 @@ bool Chain::deform(std::map<Cell*, int, Less_Cell> &cellsInChain, std::map<Cell*
 bool Chain::deformChain(std::pair<Cell*, int> cell, bool bend){
   
   Cell* c1 = cell.first;
-  std::map<Cell*, int, Less_Cell> c1Cbd = c1->getOrgCbd();
+  std::map<Cell*, int, Less_Cell> c1Cbd;
+  c1->getOrgCbd(c1Cbd);
   for(citer cit = c1Cbd.begin(); cit != c1Cbd.end(); cit++){
     
     std::map<Cell*, int, Less_Cell> cellsInChain;
     std::map<Cell*, int, Less_Cell> cellsNotInChain;
     Cell* c1CbdCell = (*cit).first;
-    std::map<Cell*, int, Less_Cell> c1CbdBd = c1CbdCell->getOrgBd();
+    std::map<Cell*, int, Less_Cell> c1CbdBd;
+    c1CbdCell->getOrgBd(c1CbdBd);
 
     for(citer cit2 = c1CbdBd.begin(); cit2 != c1CbdBd.end(); cit2++){
       Cell* c1CbdBdCell = (*cit2).first;
       int coeff = (*cit2).second;
-      if( (hasCell(c1CbdBdCell) && getCoeff(c1CbdBdCell) != 0) || c1CbdBdCell->inSubdomain()) cellsInChain.insert(std::make_pair(c1CbdBdCell, coeff));
+      if( (hasCell(c1CbdBdCell) && getCoeff(c1CbdBdCell) != 0) 
+	  || c1CbdBdCell->inSubdomain()){
+	cellsInChain.insert(std::make_pair(c1CbdBdCell, coeff));
+      }
       else cellsNotInChain.insert(std::make_pair(c1CbdBdCell, coeff));
     }
     
@@ -504,7 +525,8 @@ bool Chain::deformChain(std::pair<Cell*, int> cell, bool bend){
       if(coeff > 1 || coeff < -1) next = true; 
     }
     
-    for(citer cit2 = cellsNotInChain.begin(); cit2 != cellsNotInChain.end(); cit2++){
+    for(citer cit2 = cellsNotInChain.begin(); cit2 != cellsNotInChain.end();
+	cit2++){
       Cell* c = (*cit2).first;
       if(c->inSubdomain()) next = true;
     }
@@ -513,18 +535,24 @@ bool Chain::deformChain(std::pair<Cell*, int> cell, bool bend){
     
     //printf("dim: %d, in chain: %d, not in chain: %d \n", getDim(), cellsInChain.size(), cellsNotInChain.size());
     
-    if( (getDim() == 1 && cellsInChain.size() == 2 && cellsNotInChain.size() == 1) ||
-        (getDim() == 2 && cellsInChain.size() == 3 && cellsNotInChain.size() == 1)){
+    if( (getDim() == 1 && cellsInChain.size() == 2 
+	 && cellsNotInChain.size() == 1) || 
+	(getDim() == 2 && cellsInChain.size() == 3 
+	 && cellsNotInChain.size() == 1)){
       //printf("straighten \n");
       return deform(cellsInChain, cellsNotInChain);
     }
-    else if ( (getDim() == 1 && cellsInChain.size() == 1 && cellsNotInChain.size() == 2 && bend) ||
-              (getDim() == 2 && cellsInChain.size() == 2 && cellsNotInChain.size() == 2 && bend)){
+    else if ( (getDim() == 1 && cellsInChain.size() == 1 
+	       && cellsNotInChain.size() == 2 && bend) ||
+              (getDim() == 2 && cellsInChain.size() == 2 
+	       && cellsNotInChain.size() == 2 && bend)){
       //printf("bend \n");
       return deform(cellsInChain, cellsNotInChain);
     }
-    else if ((getDim() == 1 && cellsInChain.size() == 3 && cellsNotInChain.size() == 0) ||
-             (getDim() == 2 && cellsInChain.size() == 4 && cellsNotInChain.size() == 0)){
+    else if ((getDim() == 1 && cellsInChain.size() == 3 
+	      && cellsNotInChain.size() == 0) ||
+             (getDim() == 2 && cellsInChain.size() == 4 
+	      && cellsNotInChain.size() == 0)){
       //printf("remove boundary \n");
       return deform(cellsInChain, cellsNotInChain);
     }
@@ -652,9 +680,9 @@ void Chain::createPView(){
     _model->setPhysicalName(getName(), getDim(), physicalNum);
     
     // only for visualization
-    PView *chain = new PView(getName(), "ElementData", getGModel(), data, 0, 1);
+    PView* chain = new PView(getName(), "ElementData", getGModel(), data, 0, 1);
   }
-  
+   
   return;
 }
 

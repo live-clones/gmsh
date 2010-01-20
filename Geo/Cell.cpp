@@ -18,7 +18,8 @@ bool Less_Cell::operator()(const Cell* c1, const Cell* c2) const {
     return (c1->getNumVertices() < c2->getNumVertices());
   }
   
-  //"natural number" -like ordering (the number of a vertice corresponds a digit)
+  // "natural number" -like ordering 
+  // (the number of a vertice corresponds a digit)
   
   for(int i=0; i < c1->getNumVertices();i++){
     if(c1->getSortedVertex(i) < c2->getSortedVertex(i)) return true;
@@ -28,8 +29,26 @@ bool Less_Cell::operator()(const Cell* c1, const Cell* c2) const {
   return false;
 }
 
+
+Cell::Cell(MElement* image, bool subdomain, bool boundary) :  
+  _combined(false), _index(0), _immune(false), _image(NULL), 
+  _deleteImage(false) {
+  _onDomainBoundary = boundary;
+  _inSubdomain = subdomain;
+  _dim = image->getDim();
+  _image = image;
+  for(int i = 0; i < image->getNumVertices(); i++) 
+    _vs.push_back(image->getVertex(i)->getNum()); 
+  std::sort(_vs.begin(), _vs.end());
+}
+
+Cell::~Cell() {
+  if(_deleteImage) delete _image; 
+}
+
 bool Cell::hasVertex(int vertex) const {
-  std::vector<int>::const_iterator it = std::find(_vs.begin(), _vs.end(), vertex);
+  std::vector<int>::const_iterator it = std::find(_vs.begin(), _vs.end(), 
+						  vertex);
   if (it != _vs.end()) return true;
   else return false;
 }
@@ -95,25 +114,6 @@ void Cell::restoreCell(){
   _index = 0;
   _immune = false;   
 }
-
-std::list< Cell* > Cell::getBoundary() {
-  std::list<Cell*> boundary;
-  for( biter it= _boundary.begin(); it != _boundary.end();it++){
-    Cell* cell = (*it).first;
-    boundary.push_back(cell);
-  }
-  return boundary;
-}
-
-std::list< Cell* > Cell::getCoboundary() {
-  std::list<Cell*> coboundary;
-  for( biter it= _coboundary.begin();it!= _coboundary.end();it++){
-    Cell* cell = (*it).first;
-    coboundary.push_back(cell);
-  }
-  return coboundary;
-}
-
 
 bool Cell::addBoundaryCell(int orientation, Cell* cell) {
   biter it = _boundary.find(cell);
@@ -256,32 +256,42 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell() {
 
   for(int i = 0; i < c1->getNumVertices(); i++) _v.push_back(c1->getVertex(i));
   for(int i = 0; i < c2->getNumVertices(); i++){
-    if(!this->hasVertex(c2->getVertex(i)->getNum())) _v.push_back(c2->getVertex(i)); 
+    if(!this->hasVertex(c2->getVertex(i)->getNum())){
+      _v.push_back(c2->getVertex(i)); 
+    }
   }
 
   // sorted vertices
-  for(unsigned int i = 0; i < _v.size(); i++) _vs.push_back(_v.at(i)->getNum());
+  for(unsigned int i = 0; i < _v.size(); i++){
+    _vs.push_back(_v.at(i)->getNum());
+  }
   std::sort(_vs.begin(), _vs.end());
  
   // cells
-  _cells = c1->getCells();
-  std::list< std::pair<int, Cell*> > c2Cells = c2->getCells();
-  for(std::list< std::pair<int, Cell*> >::iterator it = c2Cells.begin(); it != c2Cells.end(); it++){
+  c1->getCells(_cells);
+  std::list< std::pair<int, Cell*> > c2Cells;
+  c2->getCells(c2Cells);
+  for(std::list< std::pair<int, Cell*> >::iterator it = c2Cells.begin();
+      it != c2Cells.end(); it++){
     if(!orMatch) (*it).first = -1*(*it).first;
     _cells.push_back(*it);
   }
 
   // boundary cells
-  std::map< Cell*, int, Less_Cell > c1Boundary = c1->getOrientedBoundary();
-  std::map< Cell*, int, Less_Cell > c2Boundary = c2->getOrientedBoundary();
+  std::map< Cell*, int, Less_Cell > c1Boundary;
+  c1->getBoundary(c1Boundary);
+  std::map< Cell*, int, Less_Cell > c2Boundary; 
+  c2->getBoundary(c2Boundary);
   
-  for(std::map<Cell*, int, Less_Cell>::iterator it = c1Boundary.begin(); it != c1Boundary.end(); it++){
+  for(std::map<Cell*, int, Less_Cell>::iterator it = c1Boundary.begin();
+      it != c1Boundary.end(); it++){
     Cell* cell = (*it).first;
     int ori = (*it).second;
     cell->removeCoboundaryCell(c1); 
     if(this->addBoundaryCell(ori, cell)) cell->addCoboundaryCell(ori, this);
   }
-  for(std::map<Cell*, int, Less_Cell >::iterator it = c2Boundary.begin(); it != c2Boundary.end(); it++){
+  for(std::map<Cell*, int, Less_Cell >::iterator it = c2Boundary.begin(); 
+      it != c2Boundary.end(); it++){
     Cell* cell = (*it).first;
     if(!orMatch) (*it).second = -1*(*it).second;
     int ori = (*it).second;
@@ -290,7 +300,11 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell() {
       std::map<Cell*, int, Less_Cell >::iterator it2 = c1Boundary.find(cell);
       bool old = false;
       if(it2 != c1Boundary.end()) old = true;
-      if(!old){  if(this->addBoundaryCell(ori, cell)) cell->addCoboundaryCell(ori, this); }
+      if(!old){  
+	if(this->addBoundaryCell(ori, cell)) { 
+	  cell->addCoboundaryCell(ori, this);
+	}
+      }
     }
     else{
       if(this->addBoundaryCell(ori, cell)) cell->addCoboundaryCell(ori, this);
@@ -298,16 +312,20 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell() {
   }
 
   // coboundary cells
-  std::map<Cell*, int, Less_Cell > c1Coboundary = c1->getOrientedCoboundary();
-  std::map<Cell*, int, Less_Cell > c2Coboundary = c2->getOrientedCoboundary();
+  std::map<Cell*, int, Less_Cell > c1Coboundary;
+  c1->getCoboundary(c1Coboundary);
+  std::map<Cell*, int, Less_Cell > c2Coboundary;
+  c2->getCoboundary(c2Coboundary);
   
-  for(std::map<Cell*, int, Less_Cell>::iterator it = c1Coboundary.begin(); it != c1Coboundary.end(); it++){
+  for(std::map<Cell*, int, Less_Cell>::iterator it = c1Coboundary.begin(); 
+      it != c1Coboundary.end(); it++){
     Cell* cell = (*it).first;
     int ori = (*it).second;
     cell->removeBoundaryCell(c1); 
     if(this->addCoboundaryCell(ori, cell)) cell->addBoundaryCell(ori, this);
   }
-  for(std::map<Cell*, int, Less_Cell>::iterator it = c2Coboundary.begin(); it != c2Coboundary.end(); it++){
+  for(std::map<Cell*, int, Less_Cell>::iterator it = c2Coboundary.begin();
+      it != c2Coboundary.end(); it++){
     Cell* cell = (*it).first;
     if(!orMatch) (*it).second = -1*(*it).second;
     int ori = (*it).second;
@@ -316,7 +334,11 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell() {
       std::map<Cell*, int, Less_Cell >::iterator it2 = c1Coboundary.find(cell);
       bool old = false;
       if(it2 != c1Coboundary.end()) old = true;
-      if(!old) { if(this->addCoboundaryCell(ori, cell)) cell->addBoundaryCell(ori, this); }
+      if(!old) { 
+	if(this->addCoboundaryCell(ori, cell)){
+	  cell->addBoundaryCell(ori, this); 
+	}
+      }
     }
     else {
       if(this->addCoboundaryCell(ori, cell)) cell->addBoundaryCell(ori, this);
@@ -324,14 +346,5 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell() {
   }
 
 }
-
-
-CombinedCell::~CombinedCell(){
-  std::list< std::pair<int, Cell*> > cells = getCells();
-  for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin(); it != cells.end(); it++){
-    Cell* cell2 = (*it).second;
-    delete cell2;
-  }
-} 
 
 #endif

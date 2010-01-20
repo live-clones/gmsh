@@ -74,16 +74,16 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain, std::vector<i
             _cellComplex->getSize(3), _cellComplex->getSize(2), _cellComplex->getSize(1), _cellComplex->getSize(0));          
   
 }
-   Homology::~Homology(){ 
-     delete _cellComplex; 
-     for(int i = 0; i < 4; i++) {
-       for(int j = 0; j < _generators[i].size(); j++){
-         Chain* chain = _generators[i].at(j);
-         //_model->deletePhysicalGroup(chain->getDim(), chain->getNum());
-         delete chain;
-       }
-     }
-   }
+Homology::~Homology(){ 
+  delete _cellComplex; 
+    for(int i = 0; i < 4; i++) {
+      for(int j = 0; j < _generators[i].size(); j++){
+        Chain* chain = _generators[i].at(j);
+        //_model->deletePhysicalGroup(chain->getDim(), chain->getNum());
+        delete chain;
+    }
+  }
+}
 
 void Homology::findGenerators(std::string fileName){
   

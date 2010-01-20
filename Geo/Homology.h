@@ -15,52 +15,55 @@
 #if defined(HAVE_KBIPACK)
 
 template <class TTypeA, class TTypeB>
-bool convert(const TTypeA& input, TTypeB& output ){
-   std::stringstream stream;
-   stream << input;
-   stream >> output;
-   return stream.good();
+  bool convert(const TTypeA& input, TTypeB& output ){
+  std::stringstream stream;
+  stream << input;
+  stream >> output;
+  return stream.good();
 }
 
 
 class Homology
 {
-  private:
-   
-   // base cell complex and the model of the homology computation
-   CellComplex* _cellComplex;
-   GModel* _model;
+ private:
+  
+  // base cell complex and the model of the homology computation
+  CellComplex* _cellComplex;
+  GModel* _model;
 
-   // domain and the relative subdomain of the homology computation
-   std::vector<int> _domain;
-   std::vector<int> _subdomain;
-
-   // generator chains
-   std::vector<Chain*> _generators[4];
+  // domain and the relative subdomain of the homology computation
+  std::vector<int> _domain;
+  std::vector<int> _subdomain;
+  
+  // generator chains
+  std::vector<Chain*> _generators[4];
    
-  public:
+ public:
+  
+  Homology(GModel* model, std::vector<int> physicalDomain,
+	   std::vector<int> physicalSubdomain);
+  ~Homology();
+  
+  // Find the generators/duals of homology spaces,
+  // or just compute the ranks of homology spaces
+  void findGenerators(std::string fileName);
+  void findDualGenerators(std::string fileName);
+  void computeBettiNumbers();
+  
+  bool swapSubdomain() { return _cellComplex->swapSubdomain(); }
+  
+  // Restore the cell complex to its original state before cell reductions
+  void restoreHomology();
    
-   Homology(GModel* model, std::vector<int> physicalDomain, std::vector<int> physicalSubdomain);
-   ~Homology();
-   
-   // Find the generators/duals of homology spaces, or just compute the ranks of homology spaces
-   void findGenerators(std::string fileName);
-   void findDualGenerators(std::string fileName);
-   void computeBettiNumbers();
-      
-   bool swapSubdomain() { return _cellComplex->swapSubdomain(); }
-   
-   // Restore the cell complex to its original state before cell reductions
-   void restoreHomology();
-   
-   // Create a string describing the generator
-   std::string getDomainString();
-   
-   // create PViews of the generators and save the chain mesh elements to the mesh of the model
-   void createPViews();
-   // write the generators to a file
-   bool writeGeneratorsMSH(std::string fileName, bool binary=false);
-   
+  // Create a string describing the generator
+  std::string getDomainString();
+  
+  // create PViews of the generators and save the chain mesh elements
+  // to the mesh of the model
+  void createPViews();
+  // write the generators to a file
+  bool writeGeneratorsMSH(std::string fileName, bool binary=false);
+  
 };
 
 #endif

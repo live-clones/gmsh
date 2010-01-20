@@ -29,19 +29,19 @@ int main(int argc, char **argv)
   std::vector<int> domain;
   std::vector<int> subdomain;
   
-  Homology* homology = new Homology(m, domain, subdomain);
-  std::string fileName = "homology_generators.msh";
+  Homology* homology1 = new Homology(m, domain, subdomain);
+  std::string fileName = "homology.msh";
   homology->findGenerators(fileName);
-  homology->restoreHomology();
+  delete homology1;
   
-  Homology* homology = new Homology(m, domain, subdomain);
-  fileName = "homology_dualgenerators.msh";
+  Homology* homology2 = new Homology(m, domain, subdomain);
+  fileName = "homology.msh";
   homology->findDualGenerators(fileName);
-  homology->restoreHomology();
+  delete homology2;
   
-  Homology* homology = new Homology(m, domain, subdomain);
+  Homology* homology3 = new Homology(m, domain, subdomain);
   homology->computeBettiNumbers();
-  delete homology;
+  delete homology3;
   
   delete m;
   GmshFinalize();
