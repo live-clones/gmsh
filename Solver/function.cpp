@@ -143,6 +143,44 @@ functionConstant::functionConstant(const fullMatrix<double> *source){
   function::add(_name,this);
 }
 
+// function that enables to interpolate a DG solution using
+// geometrical search in a mesh 
+/*
+class functionSystemOfEquations::data : public dataCacheDouble {
+  dgSystemOfEquations *_sys;
+  dataCacheDouble &xyz;
+public:
+  data(dataCacheMap &m, dgSystemOfEquations *sys) :
+    _sys(sys), 
+    xyz(cacheMap.get("Solution",this)),
+    dataCacheDouble(m.getNbEvaluationPoints(), sys->getLaw()->getNbFields())
+  {
+  }
+  void _eval() {
+    int nP =xyz().size1();
+    if(_value.size1() != nP)
+      _value = fullMatrix<double>(nP,sys->getLaw()->getNbFields());
+    _value.setAll(0.0);
+    double fs[256];
+    for (int i=0;i<_value.size1();i++){
+      const double x = xyz(i,0);
+      const double y = xyz(i,1);
+      const double z = xyz(i,2);
+      MElement *e = _sys->getModel()->getMeshElementByCoord(SPoint3(x,y,z));
+      std::pair<dgGroupOfElements*,int> location = _sys->getElementPosition(e);
+      double U[3],X[3]={xyz(i,0),xyz(i,1),xyz(i,2)};
+      e->xyz2uvw (X,U);
+      location.first->getFunctionSpace().f(U[0],U[1],U[2],fs);      
+    }
+  }
+  dataCacheDouble *newDataCache(dataCacheMap *m)
+  {
+    return new data(this,_sys);
+  }
+};
+*/
+
+
 #include "Bindings.h"
 
 void function::registerDefaultFunctions()

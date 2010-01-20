@@ -7,6 +7,7 @@
 #include "BDS.h"
 #include "MVertex.h"
 #include "MTriangle.h"
+#include "MQuadrangle.h"
 #include "MTetrahedron.h"
 #include "Numeric.h"
 #include "polynomialBasis.h"
@@ -177,7 +178,7 @@ double qmTet(const double &x1, const double &y1, const double &z1,
   }
 }
 
-double mesh_functional_distorsion(MTriangle *t, double u, double v)
+double mesh_functional_distorsion(MElement *t, double u, double v)
 {
   // compute uncurved element jacobian d_u x and d_v x
   double mat[3][3];  
@@ -246,6 +247,35 @@ double qmDistorsionOfMapping (MTriangle *e)
   }
   return dmin;
 }
+
+double qmDistorsionOfMapping (MQuadrangle *e)
+{
+  //  return 1.0;
+  if (e->getPolynomialOrder() == 1) return 1.0;
+  //  if (e->getPolynomialOrder() == 2) return mesh_functional_distorsion_p2(e);
+
+  IntPt *pts;
+  int npts;
+  e->getIntegrationPoints(e->getPolynomialOrder(),&npts, &pts);
+  double dmin;
+  for (int i = 0 ; i < npts; i++){
+    const double u = pts[i].pt[0];
+    const double v = pts[i].pt[1];
+    const double di  = mesh_functional_distorsion (e, u, v);
+    dmin = (i == 0)? di : std::min(dmin, di);
+  }
+  const fullMatrix<double>& points = e->getFunctionSpace()->points;
+
+  for (int i = 0; i < e->getNumPrimaryVertices(); i++) {
+    const double u = points(i, 0);
+    const double v = points(i, 1);
+    const double di  = mesh_functional_distorsion (e, u, v);
+    dmin = std::min(dmin, di);
+  }
+  //  printf("%g\n",dmin);
+  return dmin;
+}
+
 
 static double mesh_functional_distorsion(MTetrahedron *t, double u, double v, double w)
 {
@@ -351,3 +381,63 @@ double qmTriangleAngles (MTriangle *e) {
 
   return worst_quality;
 }
+
+
+double qmQuadrangleAngles (MQuadrangle *e) {
+  double a = 100;
+  double worst_quality = std::numeric_limits<double>::max();
+  double mat[3][3];
+  double mat2[3][3];
+  double den = atan(a*(M_PI/4)) + atan(a*(2*M_PI/4 - (M_PI/4)));
+
+  // This matrix is used to "rotate" the triangle to get each vertex
+  // as the "origin" of the mapping in turn 
+  double rot[3][3];
+  rot[0][0]=-1; rot[0][1]=1; rot[0][2]=0;
+  rot[1][0]=-1; rot[1][1]=0; rot[1][2]=0;
+  rot[2][0]= 0; rot[2][1]=0; rot[2][2]=1;
+  double tmp[3][3];
+  
+  const double u[9] = {-1,-1, 1, 1, 0,0,1,-1,0};
+  const double v[9] = {-1, 1, 1,-1, -1,1,0,0,0};
+
+  for (int i = 0; i < 9; i++) {
+
+    e->getJacobian(u[i], v[i], 0, mat);
+    e->getPrimaryJacobian(u[i],v[i],0,mat2);
+    //    for (int j = 0; j < i; j++) {
+    //matmat(rot,mat,tmp);
+    //      memcpy(mat, tmp, sizeof(mat)); 
+    //    }
+    //get angle
+    double v1[3] = {mat[0][0],  mat[0][1],  mat[0][2] };
+    double v2[3] = {mat[1][0],  mat[1][1],  mat[1][2] };
+    double v3[3] = {mat2[0][0],  mat2[0][1],  mat2[0][2] };
+    double v4[3] = {mat2[1][0],  mat2[1][1],  mat2[1][2] };
+    norme(v1);
+    norme(v2);
+    norme(v3);
+    norme(v4);
+    double v12[3], v34[3];
+    prodve(v1,v2,v12);
+    prodve(v3,v4,v34);
+    norme(v12); 
+    norme(v34);
+    double orientation;
+    prosca(v12,v34,&orientation);
+
+    // If the if the triangle is "flipped" it's no good
+    //    if (orientation < 0)
+    //      return -std::numeric_limits<double>::max();
+
+    double c;
+    prosca(v1,v2,&c);
+    printf("%g %g\n",c,acos(c)*180/M_PI);
+    double x = fabs(acos(c))-M_PI/2;
+    double quality = (atan(a*(x+M_PI/4)) + atan(a*(2*M_PI/4 - (x+M_PI/4))))/den;
+    worst_quality = std::min(worst_quality, quality);
+  }
+
+  return worst_quality;
+}
+

@@ -82,6 +82,7 @@ public:
   inline int getDimUVW () const {return _dimUVW;}
   inline int getDimXYZ () const {return _dimXYZ;}
   inline MElement* getElement (int iElement) const {return _elements[iElement];}  
+  inline const polynomialBasis & getFunctionSpace () const {return _fs;}
   inline const fullMatrix<double> & getIntegrationPointsMatrix () const {return *_integration;}
   inline const fullMatrix<double> & getCollocationMatrix () const {return *_collocation;}
   inline const fullMatrix<double> & getFluxRedistributionMatrix (int i) const {return *_redistributionFluxes[i];}

@@ -7,6 +7,11 @@
 #include "GaussLegendre1D.h"
 #include "Context.h"
 #include "qualityMeasures.h"
+
+#if defined(HAVE_MESH)
+#include "qualityMeasures.h"
+#endif
+
 #define SQU(a)      ((a)*(a))
 const polynomialBasis* MQuadrangle::getFunctionSpace(int o) const
 {
@@ -37,6 +42,8 @@ const polynomialBasis* MQuadrangle::getFunctionSpace(int o) const
 int MQuadrangleN::getNumEdgesRep(){ return 4 * CTX::instance()->mesh.numSubEdges; }
 int MQuadrangle8::getNumEdgesRep(){ return 4 * CTX::instance()->mesh.numSubEdges; }
 int MQuadrangle9::getNumEdgesRep(){ return 4 * CTX::instance()->mesh.numSubEdges; }
+
+
 
 static void _myGetEdgeRep(MQuadrangle *q, int num, double *x, double *y, double *z,
                           SVector3 *n, int numSubEdges)
@@ -159,3 +166,22 @@ void MQuadrangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *pts = getGQQPts(pOrder);
 }
 
+double MQuadrangle::distoShapeMeasure()
+{
+#if defined(HAVE_MESH)
+  //  return qmTriangleAngles(this);
+  return qmDistorsionOfMapping(this);
+#else
+  return 0.;
+#endif
+}
+
+
+double MQuadrangle::angleShapeMeasure()
+{
+#if defined(HAVE_MESH)
+  return qmQuadrangleAngles(this);
+#else
+  return 1.;
+#endif
+}

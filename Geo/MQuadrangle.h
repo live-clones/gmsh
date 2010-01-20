@@ -129,6 +129,8 @@ class MQuadrangle : public MElement {
     return true;
   }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
+  virtual double angleShapeMeasure();
+  virtual double distoShapeMeasure();
  private:
   int edges_quad(const int edge, const int vert) const
   {

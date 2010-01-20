@@ -27,6 +27,7 @@ SPoint3 MTriangle::circumcenter()
 double MTriangle::distoShapeMeasure()
 {
 #if defined(HAVE_MESH)
+  //return qmTriangleAngles(this);
   return qmDistorsionOfMapping(this);
 #else
   return 0.;

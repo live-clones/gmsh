@@ -18,6 +18,7 @@
 #include "Gauss.h"
 
 class GFace;
+class binding;
 
 // A mesh element.
 class MElement 
@@ -266,6 +267,7 @@ class MElement
   // return the number of vertices, as well as the element name if
   // 'name' != 0
   static int getInfoMSH(const int typeMSH, const char **const name=0);
+  static void registerBindings(binding *b);
 };
 
 class MElementLessThanLexicographic{

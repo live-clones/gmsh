@@ -20,7 +20,7 @@ end
      Example of a lua program driving the DG code
 --]]
 
-order = 3
+order = 5
 
 FS = functionLua(4, 'free_stream', {'XYZ'}):getName()
 
@@ -62,7 +62,7 @@ CFL = 20.1;
 dt = CFL * DG:computeInvSpectralRadius();
 print('DT = ',dt)
 T = 0;
-for i=1,100000 do
+for i=1,1000000 do
     dt = CFL * DG:computeInvSpectralRadius();    
     norm = DG:RK44(dt)
     T = T + dt

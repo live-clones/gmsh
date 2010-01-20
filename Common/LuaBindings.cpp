@@ -179,6 +179,7 @@ binding::binding(){
   functionLua::registerBindings(this);
   function::registerDefaultFunctions();
   MVertex::registerBindings(this);
+  MElement::registerBindings(this);
 }
 binding *binding::_instance=NULL;
 #endif

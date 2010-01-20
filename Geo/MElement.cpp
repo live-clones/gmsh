@@ -801,3 +801,19 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   default:         return 0;
   }
 }
+
+#include "Bindings.h"
+
+void MElement::registerBindings(binding *b)
+{
+  classBinding *cb = b->addClass<MElement>("MElement");
+  methodBinding *cm;
+  cm = cb->addMethod("getNum",&MElement::getNum);
+  // here we specify the cast because there are 2 MVertex::x function
+  cm = cb->addMethod("getNumVertices", &MElement::getNumVertices);
+  cm = cb->addMethod("getVertex", &MElement::getVertex);
+  cm = cb->addMethod("getType", &MElement::getType);
+  cm = cb->addMethod("getPartition", &MElement::getPartition);
+  cm = cb->addMethod("getPolynomialOrder", &MElement::getPolynomialOrder);
+  cm = cb->addMethod("getDim", &MElement::getDim);
+}

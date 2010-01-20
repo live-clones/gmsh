@@ -407,7 +407,7 @@ void MVertex::registerBindings(binding *b)
   cm = cb->addMethod("getNum",&MVertex::getNum);
   // here we specify the cast because there are 2 MVertex::x function
   cm = cb->addMethod("x", (double (MVertex::*)() const) &MVertex::x);
-  cm = cb->addMethod("x2", (double& (MVertex::*)()) &MVertex::x);
+  // cm = cb->addMethod("x2", (double& (MVertex::*)()) &MVertex::x);
   cm = cb->addMethod("y", (double (MVertex::*)() const) &MVertex::y);
   cm = cb->addMethod("z", (double (MVertex::*)() const) &MVertex::z);
   cm = cb->setConstructor<MVertex,double,double,double>();

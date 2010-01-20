@@ -942,12 +942,23 @@ static void checkHighOrderTriangles(const char* cc, GModel *m,
       if (disto < 0) bad.push_back(t);
       else if (disto < 0.2) nbfair++;
     }
+    for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++){
+      MQuadrangle *t = (*it)->quadrangles[i];
+      double disto_ = t->distoShapeMeasure();
+      double gamma_ = t->gammaShapeMeasure();
+      double disto = disto_;
+      minJGlob = std::min(minJGlob, disto);
+      minGGlob = std::min(minGGlob, gamma_);
+      avg += disto; count++;
+      if (disto < 0) bad.push_back(t);
+      else if (disto < 0.2) nbfair++;
+    }
   }
   if (minJGlob > 0) 
-    Msg::Info("%s : Worst Triangle Smoothness %g Gamma %g NbFair = %d", 
+    Msg::Info("%s : Worst Face Smoothness %g Gamma %g NbFair = %d", 
               cc, minJGlob, minGGlob,nbfair );
   else
-    Msg::Warning("%s : Worst Triangle Smoothness %g (%d negative jacobians) "
+    Msg::Warning("%s : Worst Face Smoothness %g (%d negative jacobians) "
                  "Worst Gamma %g Avg Smoothness %g", cc, minJGlob, bad.size(),
                  minGGlob, avg / (count ? count : 1));
 }

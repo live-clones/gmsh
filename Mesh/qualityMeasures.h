@@ -10,16 +10,19 @@ class BDS_Point;
 class BDS_Face;
 class MVertex;
 class MTriangle;
+class MQuadrangle;
 class MTetrahedron;
 class MElement;
 
 enum qualityMeasure4Triangle {QMTRI_RHO, QMTRI_COND};
 enum qualityMeasure4Tet{QMTET_1, QMTET_2, QMTET_3, QMTET_ONE, QMTET_COND};
 
+double qmDistorsionOfMapping (MQuadrangle *e);
 double qmDistorsionOfMapping (MTriangle *e);
 double qmDistorsionOfMapping (MTetrahedron *e);
 
 double qmTriangleAngles (MTriangle *e);
+double qmQuadrangleAngles (MQuadrangle *e);
 
 double qmTriangle(MTriangle *f, const qualityMeasure4Triangle &cr); 
 double qmTriangle(BDS_Face *f, const qualityMeasure4Triangle &cr); 

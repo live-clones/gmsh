@@ -117,12 +117,12 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
 }
 
 void dgAlgorithm::residualInterface ( //dofManager &dof, // the DOF manager (maybe useless here)
-				   const dgConservationLaw &claw,   // the conservation law
-				   dgGroupOfFaces &group, 
-				   const fullMatrix<double> &solution, // solution !! at faces nodes
-				   fullMatrix<double> &solutionLeft, 
-				   fullMatrix<double> &solutionRight, 
-				   fullMatrix<double> &residual // residual !! at faces nodes
+				     const dgConservationLaw &claw,   // the conservation law
+				     dgGroupOfFaces &group, 
+				     const fullMatrix<double> &solution, // solution !! at faces nodes
+				     fullMatrix<double> &solutionLeft, 
+				     fullMatrix<double> &solutionRight, 
+				     fullMatrix<double> &residual // residual !! at faces nodes
 				      )
 { 
   // A) global operations before entering the loop over the faces

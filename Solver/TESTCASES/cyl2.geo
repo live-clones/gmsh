@@ -1,11 +1,11 @@
-a = .1;
-b = 1;
+a = .4;
+b = 2;
 radius = 0.5;
 radiusBoundaryLayer = 0.7;
 Point(1) = {0, 0, 0, a};
 
-nlayers=3;
-np=5;
+nlayers=2;
+np=3;
 np2=2;
 
 

@@ -1401,5 +1401,9 @@ void GModel::registerBindings(binding *b)
   cm = cb->addMethod("mesh", &GModel::mesh);
   cm = cb->addMethod("load", &GModel::load);
   cm = cb->addMethod("save", &GModel::save);
+  cm = cb->addMethod("getNumMeshElements",(int (GModel::*)()) &GModel::getNumMeshElements);
+  cm = cb->addMethod("getMeshElementByTag",&GModel::getMeshElementByTag);
+  cm = cb->addMethod("getNumMeshVertices",&GModel::getNumMeshVertices);
+  cm = cb->addMethod("getMeshVertexByTag",&GModel::getMeshVertexByTag);
   cm = cb->setConstructor<GModel>();
 }
