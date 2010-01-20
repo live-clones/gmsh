@@ -277,14 +277,12 @@ void CellComplex::removeCell(Cell* cell, bool other){
   std::map<Cell*, int, Less_Cell > boundary; 
   cell->getBoundary(boundary);
   
-  for(std::map<Cell*, int, Less_Cell>::iterator it = coboundary.begin();
-      it != coboundary.end(); it++){
+  for(Cell::biter it = coboundary.begin(); it != coboundary.end(); it++){
     Cell* cbdCell = (*it).first;
     cbdCell->removeBoundaryCell(cell, other);
   } 
   
-  for(std::map<Cell*, int, Less_Cell>::iterator it = boundary.begin();
-      it != boundary.end(); it++){
+  for(Cell::biter it = boundary.begin(); it != boundary.end(); it++){
     Cell* bdCell = (*it).first;
     bdCell->removeCoboundaryCell(cell, other);
   }
@@ -293,7 +291,7 @@ void CellComplex::removeCell(Cell* cell, bool other){
   
 }
 
-void CellComplex::removeCellQset(Cell*& cell, 
+void CellComplex::removeCellQset(Cell* cell, 
 				 std::set<Cell*, Less_Cell>& Qset){
   Qset.erase(cell);
 }
@@ -325,8 +323,7 @@ int CellComplex::coreduction(Cell* generator, int omitted){
   
   std::map<Cell*, int, Less_Cell > bd_s;
   std::map<Cell*, int, Less_Cell > cbd_c;
-  //std::list<Cell*> bd_s;
-  //std::list<Cell*> cbd_c;
+
   Cell* s;
   int round = 0;
   while( !Q.empty() ){
@@ -336,9 +333,9 @@ int CellComplex::coreduction(Cell* generator, int omitted){
     s = Q.front();
     Q.pop();
     removeCellQset(s, Qset);
-    s->getBoundary(bd_s);
-    
-    if( bd_s.size() == 1 && inSameDomain(s, bd_s.begin()->first) ){
+    if(s->getBoundarySize() == 1 
+       && inSameDomain(s, s->firstBoundary()->first) ){
+      s->getBoundary(bd_s);
       removeCell(s);
       bd_s.begin()->first->getCoboundary(cbd_c);
       enqueueCells(cbd_c, Q, Qset);
@@ -347,10 +344,8 @@ int CellComplex::coreduction(Cell* generator, int omitted){
 	_store.at(omitted-1).insert(bd_s.begin()->first);
       }
       coreductions++;
-      
-      
     }
-    else if(bd_s.empty()){
+    else if(s->getBoundarySize() == 0){
       s->getCoboundary(cbd_c);
       enqueueCells(cbd_c, Q, Qset);
     }
@@ -363,7 +358,6 @@ int CellComplex::coreduction(Cell* generator, int omitted){
 
 int CellComplex::reduction(int dim, int omitted){
   if(dim < 1 || dim > 3) return 0;
-  //std::list<Cell*> cbd_c;
   std::map<Cell*, int, Less_Cell > cbd_c;
   int count = 0;
   
@@ -377,28 +371,25 @@ int CellComplex::reduction(int dim, int omitted){
       
       
       Cell* cell = *cit;
-      cell->getCoboundary(cbd_c);
-      if( cbd_c.size() == 1 && inSameDomain(cell, cbd_c.begin()->first)){
-          //&& ( (!cell->getImmune() && !cbd_c.front()->getImmune() ) )){
-        ++cit;
-        removeCell(cbd_c.begin()->first);
-        removeCell(cell);
-        if(dim == getDim() && omitted > 0){
-	  _store.at(omitted-1).insert(cbd_c.begin()->first);    
+      if( cell->getCoboundarySize() == 1 
+	  && inSameDomain(cell, cell->firstCoboundary()->first)){
+	++cit;
+	if(dim == getDim() && omitted > 0){
+	  _store.at(omitted-1).insert(cell->firstCoboundary()->first);    
 	}
-        
-        count++;
-        reduced = true;
-        
+	removeCell(cell->firstCoboundary()->first);
+	removeCell(cell);
+	count++;
+	reduced = true;
+	
       }
+    
       if(getSize(dim) == 0 || getSize(dim-1) == 0) break;
       cit++;
-      
     }
-    //if(!reduced && ignoreCells) { ignoreCells = false; reduced = true;}
     
   }
-
+  
   return count;
 }
 /*
@@ -641,7 +632,6 @@ int CellComplex::cocombine(int dim){
   std::queue<Cell*> Q;
   std::set<Cell*, Less_Cell> Qset;
   std::map<Cell*, int, Less_Cell> cbd_c;
-  std::map<Cell*, int, Less_Cell > bd_c;
   int count = 0;
   
   for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
@@ -654,10 +644,8 @@ int CellComplex::cocombine(int dim){
       Cell* s = Q.front();
       Q.pop();
       
-      s->getBoundary(bd_c);
       if(s->getBoundarySize() == 2){
-      
-        std::map<Cell*, int, Less_Cell>::iterator it = bd_c.begin();
+	Cell::biter it = s->firstBoundary();
         int or1 = (*it).second;
         Cell* c1 = (*it).first;
         it++;
@@ -706,7 +694,7 @@ int CellComplex::combine(int dim){
   
   std::queue<Cell*> Q;
   std::set<Cell*, Less_Cell> Qset;
-  std::map<Cell*, int, Less_Cell> cbd_c;
+  //std::map<Cell*, int, Less_Cell> cbd_c;
   std::map<Cell*, int, Less_Cell> bd_c;
   int count = 0;
 
@@ -720,11 +708,9 @@ int CellComplex::combine(int dim){
       
       Cell* s = Q.front();
       Q.pop(); 
-      s->getCoboundary(cbd_c);
 
       if(s->getCoboundarySize() == 2){
-
-        std::map<Cell*, int, Less_Cell>::iterator it = cbd_c.begin();
+	Cell::biter it = s->firstCoboundary();
         int or1 = (*it).second;
         Cell* c1 = (*it).first;
         it++;

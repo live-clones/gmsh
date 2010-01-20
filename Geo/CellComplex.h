@@ -69,7 +69,7 @@ class CellComplex
   void enqueueCells(std::map<Cell*, int, Less_Cell>& cells, 
 		    std::queue<Cell*>& Q, std::set<Cell*, Less_Cell>& Qset);
   // remove cell from the queue set
-  void removeCellQset(Cell*& cell, std::set<Cell*, Less_Cell>& Qset);
+  void removeCellQset(Cell* cell, std::set<Cell*, Less_Cell>& Qset);
   
   // for constructor 
   void insert_cells(bool subdomain, bool boundary);

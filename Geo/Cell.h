@@ -116,14 +116,18 @@ class Cell
   
   // (co)boundary cell iterator
   typedef std::map<Cell*, int, Less_Cell>::iterator biter;
-  
+  biter firstBoundary(){ return _boundary.begin(); }
+  biter lastBoundary(){ return _boundary.end(); }
+  biter firstCoboundary(){ return _coboundary.begin(); }
+  biter lastCoboundary(){ return _coboundary.end(); }
+
   virtual int getBoundarySize() { return _boundary.size(); }
   virtual int getCoboundarySize() { return _coboundary.size(); }
    
   // get the cell boundary
   virtual void getBoundary(std::map<Cell*, int, Less_Cell >& boundary){
     boundary =  _boundary; }
-  virtual void getCoboundary(  std::map<Cell*, int, Less_Cell >& coboundary ){
+  virtual void getCoboundary(std::map<Cell*, int, Less_Cell >& coboundary){
     coboundary = _coboundary; }
   
   // add (co)boundary cell

@@ -76,10 +76,8 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
 	   cit != cellComplex->lastCell(dim); cit++){
         Cell* cell = *cit;
         if(!cell->inSubdomain()){
-          std::map<Cell*, int, Less_Cell> bdCell;
-	  cell->getBoundary(bdCell);
-          for(std::map<Cell*, int, Less_Cell>::iterator it = bdCell.begin();
-	      it != bdCell.end(); it++){
+          for(Cell::biter it = cell->firstBoundary();
+	      it != cell->lastBoundary(); it++){
             Cell* bdCell = (*it).first;
             if(!bdCell->inSubdomain()){
               int old_elem = 0;
