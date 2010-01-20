@@ -18,8 +18,9 @@
 #include "StringUtils.h"
 #include "GeomMeshMatcher.h"
 #include "LuaBindings.h"
+#if defined(HAVE_FLTK)
 #include "menuWindow.h"
-
+#endif 
 #if defined(HAVE_PARSER)
 #include "Parser.h"
 #endif
