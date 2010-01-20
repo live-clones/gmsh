@@ -7,10 +7,13 @@
 #include "GmshDefines.h"
 #include "Extract.h"
 #include "mathEvaluator.h"
+#include "OctreePost.h"
 
 StringXNumber ExtractOptions_Number[] = {
   {GMSH_FULLRC, "TimeStep", NULL, -1.},
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "iView", NULL, -1.},
+  {GMSH_FULLRC, "ExternalView", NULL, -1.},
+  {GMSH_FULLRC, "ExternalTimeStep", NULL, -1.}
 };
 
 StringXString ExtractOptions_String[] = {
@@ -49,11 +52,12 @@ std::string GMSH_ExtractPlugin::getHelp() const
          "Fabs, etc.) and operators (+, -, *, /, ^), all\n"
          "expressions can contain the symbols v0, v1, v2,\n"
          " ..., vn, which represent the n components of the\n"
-         "field, and the symbols x, y and z, which represent\n"
-         "the three spatial coordinates. If `TimeStep' < 0,\n"
-         "the plugin extracts data from all the time steps\n"
-         "in the view. If `iView' < 0, the plugin is run on\n"
-         "the current view.\n"
+         "field, w0, w1, w2,..., wn which represent the n components\n"
+         "of the external view and the symbols x, y and z,\n"
+         "which represent the three spatial coordinates.\n"
+         "If `TimeStep' < 0, the plugin extracts data from \n"
+         "all the time steps in the view.\n"
+         "If `iView' < 0, the plugin is run on the current view.\n"
          "\n"
          "Plugin(Extract) creates one new view.\n";
 }
@@ -130,6 +134,8 @@ PView *GMSH_ExtractPlugin::execute(PView *view)
 {
   int timeStep = (int)ExtractOptions_Number[0].def;
   int iView = (int)ExtractOptions_Number[1].def;
+  int iExternalView = (int)ExtractOptions_Number[2].def;
+  int stepExternal = (int)ExtractOptions_Number[3].def;
   std::vector<std::string> expr(9);
   for(int i = 0; i < 9; i++) expr[i] = ExtractOptions_String[i].def;
   
@@ -140,6 +146,27 @@ PView *GMSH_ExtractPlugin::execute(PView *view)
   if(data1->hasMultipleMeshes()){
     Msg::Error("Extract plugin cannot be applied to multi-mesh views");
     return view;
+  }
+  PView *externalView = NULL;
+  PViewData *dataExternal = NULL;
+  OctreePost *octree = 0;
+
+  if(iExternalView>=0){
+    externalView = getView(iExternalView, view);
+    if(!externalView){
+      Msg::Error("Extract plugin cannot found external view %i",iExternalView);
+      return view;
+    }
+    dataExternal = externalView->getData();
+    if(dataExternal->hasMultipleMeshes()){
+      Msg::Error("Extract plugin cannot be applied to multi-mesh views");
+      return view;
+    }
+    if((data1->getNumEntities() != dataExternal->getNumEntities()) ||
+        (data1->getNumElements() != dataExternal->getNumElements())){
+      Msg::Info("External view based on different grid: interpolating...");
+      octree = new OctreePost(externalView);
+    }
   }
 
   int numComp2;
@@ -160,7 +187,7 @@ PView *GMSH_ExtractPlugin::execute(PView *view)
   expr.resize(numComp2);
 
   const char *names[] = 
-    { "x", "y", "z", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8" };
+    { "x", "y", "z", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "w0","w1","w2","w3","w4","w5","w6","w7","w8","w9" };
   unsigned int numVariables = sizeof(names) / sizeof(names[0]);
   std::vector<std::string> variables(numVariables);
   for(unsigned int i = 0; i < numVariables; i++) variables[i] = names[i];
@@ -186,7 +213,9 @@ PView *GMSH_ExtractPlugin::execute(PView *view)
       int numNodes = data1->getNumNodes(0, ent, ele);
       int type = data1->getType(0, ent, ele);
       int numComp = data1->getNumComponents(0, ent, ele);
+      int numCompExternal = !dataExternal ? 9 : octree ? 9 : dataExternal->getNumComponents(stepExternal, ent, ele);
       std::vector<double> *out = incrementList(data2, numComp2, type);
+      std::vector<double> w(std::max(9, numCompExternal), 0.);
       std::vector<double> x(numNodes), y(numNodes), z(numNodes);
       for(int nod = 0; nod < numNodes; nod++)
         data1->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
@@ -201,7 +230,18 @@ PView *GMSH_ExtractPlugin::execute(PView *view)
           for(int comp = 0; comp < numComp; comp++)
             data1->getValue(step, ent, ele, nod, comp, v[comp]);
           values[0] = x[nod]; values[1] = y[nod]; values[2] = z[nod];
+          if(dataExternal){
+            if(octree){
+              if(!octree->searchScalar(x[nod], y[nod], z[nod], &w[0], stepExternal))
+                if(!octree->searchVector(x[nod], y[nod], z[nod], &w[0], stepExternal))
+                  octree->searchTensor(x[nod], y[nod], z[nod], &w[0], stepExternal);
+            }
+            else
+              for(int comp = 0; comp < numCompExternal; comp++)
+                dataExternal->getValue(stepExternal, ent, ele, nod, comp, w[comp]);
+          }
           for(int i = 0; i < 9; i++) values[3 + i] = v[i];
+          for(int i = 0; i < 9; i++) values[12 + i] = w[i];
           if(f.eval(values, res))
             for(int i = 0; i < numComp2; i++)
               out->push_back(res[i]);
