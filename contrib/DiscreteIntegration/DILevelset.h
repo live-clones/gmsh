@@ -95,6 +95,7 @@ public:
 
 class gLevelsetSphere : public gLevelsetPrimitive
 {
+protected:
   double xc, yc, zc, r;
 public:
   gLevelsetSphere (const double &x, const double &y, const double &z, const double &R, int &tag) : gLevelsetPrimitive(tag), xc(x), yc(y), zc(z), r(R) {}
@@ -105,6 +106,7 @@ public:
 
 class gLevelsetPlane : public gLevelsetPrimitive
 {
+protected:
   double a, b, c, d;
 public:
   // define the plane _a*x+_b*y+_c*z+_d, with outward normal (a,b,c)
@@ -211,6 +213,7 @@ public:
 
 class gLevelsetReverse : public gLevelset
 {
+protected:
   const gLevelset *ls;
 public:
   gLevelsetReverse (const gLevelset *p) : ls(p){}
