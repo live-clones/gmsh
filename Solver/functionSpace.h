@@ -53,7 +53,8 @@ class FunctionSpace : public FunctionSpaceBase
   typedef typename TensorialTraits<T>::ValType ValType;
   typedef typename TensorialTraits<T>::GradType GradType;
   virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)=0;
-  virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)=0;
+  virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads) =0;
+  virtual void gradfuvw(MElement *ele, double u, double v, double w,std::vector<GradType> &grads) {}; // should return to pure virtual once all is done.
   virtual int getNumKeys(MElement *ele)=0; // if one needs the number of dofs
   virtual void getKeys(MElement *ele, std::vector<Dof> &keys)=0;
 };
@@ -100,6 +101,20 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
       invjac[1][0] * gradsuvw[i][0] + invjac[1][1] * gradsuvw[i][1] + invjac[1][2] * gradsuvw[i][2],
       invjac[2][0] * gradsuvw[i][0] + invjac[2][1] * gradsuvw[i][1] + invjac[2][2] * gradsuvw[i][2]
                             ));
+  }
+
+  virtual void gradfuvw(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
+  {
+    int ndofs= ele->getNumVertices();
+    grads.reserve(grads.size()+ndofs);
+    double gradsuvw[256][3];
+    ele->getGradShapeFunctions(u, v, w, gradsuvw);
+    for (int i=0;i<ndofs;++i)
+      grads.push_back(GradType(
+      gradsuvw[i][0] ,
+      gradsuvw[i][1] ,
+      gradsuvw[i][2]
+                      ));
   }
 
   virtual int getNumKeys(MElement *ele) {return ele->getNumVertices();}
@@ -177,6 +192,26 @@ public :
     }
   }
   
+  
+  virtual void gradfuvw(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
+  {
+    std::vector<SVector3> gradsd;
+    ScalarFS->gradfuvw(ele,u,v,w,gradsd);
+    int nbdofs=gradsd.size();
+    int nbcomp=comp.size();
+    int curpos=grads.size();
+    grads.reserve(curpos+nbcomp*nbdofs);
+    GradType val;
+    for (int j=0;j<nbcomp;++j)
+    {
+      for (int i=0;i<nbdofs;++i)
+      {
+        tensprod(multipliers[j],gradsd[i],val);
+        grads.push_back(val);
+      }
+    }
+  }
+
   virtual int getNumKeys(MElement *ele) {return ScalarFS->getNumKeys(ele)*comp.size();}
   
   virtual void getKeys(MElement *ele, std::vector<Dof> &keys)
