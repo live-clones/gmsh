@@ -1302,7 +1302,7 @@ bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge*> &edges)
     return isMeshed;
   }
   
-  bool correctParam = gf->parametrize();
+   bool correctParam = gf->parametrize();
   
   if (!correctParam){
    partitionAndRemesh((GFaceCompound*) gf);
@@ -1486,7 +1486,8 @@ void partitionAndRemesh(GFaceCompound *gf)
 
   Msg::Info("*** Mesh of surface %d done by assembly remeshed faces", gf->tag());
   Msg::Info("-----------------------------------------------------------");
-  gf->coherenceNormals();
+ 
+  //gf->coherenceNormals();
   gf->meshStatistics.status = GFace::DONE; 
 
   //CreateOutputFile("toto.msh", CTX::instance()->mesh.format);

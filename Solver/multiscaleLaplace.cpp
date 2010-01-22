@@ -216,7 +216,8 @@ static void recur_compute_centers_ (double R, double a1, double a2,
   SPoint2 PL (R*cos(a1),R*sin(a1));
   SPoint2 PR (R*cos(a2),R*sin(a2));
   centers.push_back(std::make_pair(PL,zero));  
-  centers.push_back(std::make_pair(PR,zero));  
+  centers.push_back(std::make_pair(PR,zero)); 
+ 
   for (int i=0;i<root->children.size();i++){
     multiscaleLaplaceLevel* m = root->children[i];    
     centers.push_back(std::make_pair(m->center,m));   
@@ -234,7 +235,7 @@ static void recur_compute_centers_ (double R, double a1, double a2,
   connected_bounds(root->elements, boundaries);
 
   //add the center of real holes ... 
-  if (root->children.size()==0 || boundaries.size()-1 != root->children.size()){
+  if (root->children.size()==0 ){//|| boundaries.size()-1 != root->children.size()){
     for (int i = 0; i < boundaries.size(); i++){
       std::vector<MEdge> me = boundaries[i];
       SPoint2 c(0.0,0.0);
@@ -258,7 +259,6 @@ static void recur_compute_centers_ (double R, double a1, double a2,
 
   //sort centers
   std::sort(centers.begin(),centers.end());
-  //printf("size centers =%d \n", centers.size());
 
   for (int i=1;i<centers.size()-1;i++){
     multiscaleLaplaceLevel* m1 = centers[i-1].second;
@@ -622,12 +622,32 @@ static void printLevel ( const char* fn,
 }
 //--------------------------------------------------------------
 static double localSize(MElement *e,  std::map<MVertex*,SPoint2> &solution){
+
   SBoundingBox3d local;
   for(unsigned int j = 0; j<e->getNumVertices(); ++j){
     SPoint2 p = solution[e->getVertex(j)];
     local += SPoint3(p.x(),p.y(),0.0);
   }    
-  return local.max().distance(local.min());    
+  return local.max().distance(local.min());
+
+//   MVertex* v0 = e->getVertex(0); 
+//   MVertex* v1 = e->getVertex(1); 
+//   MVertex* v2 = e->getVertex(2); 
+//   double p0[3] = {v0->x(), v0->y(), v0->z()}; 
+//   double p1[3] = {v1->x(), v1->y(), v1->z()};
+//   double p2[3] = {v2->x(), v2->y(), v2->z()};
+//   double a_3D = fabs(triangle_area(p0, p1, p2));
+//   SPoint2 s1 = solution[v0];
+//   SPoint2 s2 = solution[v1];
+//   SPoint2 s3 = solution[v2];
+//   double q0[3] = {s1.x(), s1.y(), 0.0}; 
+//   double q1[3] = {s2.x(), s2.y(), 0.0};
+//   double q2[3] = {s3.x(), s3.y(), 0.0};
+//   double a_2D = fabs(triangle_area(q0, q1, q2)); 
+ 
+//   return a_2D;  //a_2D / a_3D;
+ 
+   
 }
 //-------------------------------------------------------------
 static void one2OneMap(std::vector<MElement *> &elements, std::map<MVertex*,SPoint2> &solution) {
@@ -700,8 +720,8 @@ static bool checkOrientation(std::vector<MElement *> &elements,
   
   int iterMax = 1;
   if(!oriented && iter < iterMax){
-    if (iter == 0) Msg::Warning("*** Parametrization is NOT 1 to 1 : applying cavity checks.");
-    Msg::Warning("*** Cavity Check - iter %d -",iter);
+    if (iter == 0) Msg::Debug("Parametrization is NOT 1 to 1 : applying cavity checks.");
+    Msg::Debug("Cavity Check - iter %d -",iter);
     one2OneMap(elements, solution);
     return checkOrientation(elements, solution, iter+1);
   }
@@ -812,6 +832,7 @@ multiscaleLaplace::multiscaleLaplace (std::vector<MElement *> &elements, int iPa
 void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
 
 
+  //Compute all nodes for the level
   std::set<MVertex*> allNodes;
   for(unsigned int i = 0; i < level.elements.size(); ++i){
     MElement *e = level.elements[i];
@@ -824,10 +845,10 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
   std::map<MVertex*,SPoint2> solution;
   parametrize_method(level, allNodes, solution, HARMONIC);
   if (!checkOrientation(level.elements, solution, 0)){
-    Msg::Info("Parametrization failed using standard techniques : moving to convex combination");
+    Msg::Debug("Parametrization switched to convex combination");
     parametrize_method(level, allNodes, solution, CONVEXCOMBINATION);
   }
- 
+
   //Compute the bbox of the parametric space
   SBoundingBox3d bbox;
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
@@ -839,20 +860,16 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
 
   //Check elements that are too small
   std::vector<MElement*> tooSmall, goodSize;
-
   for(unsigned int i = 0; i < level.elements.size(); ++i){
     MElement *e = level.elements[i];
     std::vector<SPoint2> localCoord;
     double local_size = localSize(e,solution);
-    if (local_size < 1.e-6 * global_size){
+    if (local_size < 1.e-6 * global_size) 
       tooSmall.push_back(e);
-    }
-    else{
-      goodSize.push_back(e);
-    }
+    else  goodSize.push_back(e);
   }
 
-  //Only keep the right elements and nodes
+  //Only keep the connected elements vectors goodSize and tooSmall
   std::vector<std::vector<MElement*> >  regGoodSize;
   connectedRegions (goodSize,regGoodSize);
   int index=0;
@@ -868,30 +885,29 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
   }
   goodSize.clear();
   for (int i=0;i< regGoodSize.size() ; i++){   
-    if (i == index)
-      goodSize.insert(goodSize.begin(), regGoodSize[i].begin(),  regGoodSize[i].end());
-    else
-      tooSmall.insert(tooSmall.begin(), regGoodSize[i].begin(),  regGoodSize[i].end());
+    if (i == index)  goodSize.insert(goodSize.begin(), regGoodSize[i].begin(),  regGoodSize[i].end());
+    else  tooSmall.insert(tooSmall.begin(), regGoodSize[i].begin(),  regGoodSize[i].end());
   }
+
   level.elements = goodSize;
 
-  std::vector<std::vector<MElement*> > regions, regions_;
+  //Add the not too small regions to the level.elements 
+  std::vector<std::vector<MElement*> >  regions_, regions ;
   connectedRegions (tooSmall,regions_);
-
-  //Remove small regions 
   for (int i=0;i< regions_.size() ; i++){    
-    bool region_has_really_small_elements = false;
+    bool really_small_elements = false;
     for (int k=0; k<regions_[i].size() ; k++){
       MElement *e = regions_[i][k];
       double local_size = localSize(e,solution);
-      if (local_size < 1.e-8 * global_size){
-	region_has_really_small_elements = true;
-      }
+      if (local_size < 1.e-8 * global_size) 
+	really_small_elements = true;
     }
-    if(region_has_really_small_elements) regions.push_back(regions_[i]);
-    else level.elements.insert(level.elements.begin(),  regions_[i].begin(), regions_[i].end() );
+    if(really_small_elements && regions_[i].size() > 10) regions.push_back(regions_[i]);
+    else
+      level.elements.insert(level.elements.begin(), regions_[i].begin(), regions_[i].end() );
   }  
 
+ //Fill level.coordinates
   std::set<MVertex*> goodSizev;
   for(unsigned int i = 0; i < level.elements.size(); ++i){
     MElement *e = level.elements[i];
@@ -900,23 +916,20 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
       level.coordinates[e->getVertex(j)] = solution[e->getVertex(j)];
     }
   }
-  
-  // DEBUG
+
+  //Save multiscale meshes
   char name[245];
   sprintf(name,"multiscale_level%d_region%d_real.msh",level.recur, level.region);
   printLevel (name,level.elements,0,2.0);
   sprintf(name,"multiscale_level%d_region%d_param.msh",level.recur, level.region);
   printLevel (name,level.elements,&level.coordinates,2.0);
-  // END DEBUG
 
-  if (regions.size() >0)
-    Msg::Info("%d connected regions\n",regions.size());
 
+  //For every small region compute a new parametrization
+  Msg::Info("Level (%d-%d): %d connected small regions",level.recur,level.region, regions.size());
   for (int i=0;i< regions.size() ; i++){    
-    // check nodes that appear both on too small and good size
-    // and set it to the next level
-    // maybe more than one level should be created here
     std::set<MVertex*> tooSmallv;
+    tooSmallv.clear();
     for (int k=0; k<regions[i].size() ; k++){
       MElement *e = regions[i][k];
       for(unsigned int j = 0; j<e->getNumVertices(); ++j){
@@ -927,7 +940,7 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
     multiscaleLaplaceLevel *nextLevel = new multiscaleLaplaceLevel;
     nextLevel->elements = regions[i];
     nextLevel->recur = level.recur+1;
-    nextLevel->region = i;
+    nextLevel->region = i;//Emi add something here
     SBoundingBox3d smallB;
     for(std::set<MVertex *>::iterator itv = tooSmallv.begin(); itv !=tooSmallv.end() ; ++itv){
       SPoint2 p = solution[*itv];
@@ -944,16 +957,13 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
       }
     }
     // recursively continue if tooSmall is not empty
-    if (!tooSmall.empty()){
-      Msg::Info("Multiscale Laplace, level %d region %d, %d too small",level.recur,level.region,tooSmall.size());
+    if (!tooSmallv.empty()){
+      Msg::Info("Level (%d-%d) Multiscale Laplace (reg[%d] =  %d too small)",level.recur,level.region, i, tooSmallv.size());
       level.children.push_back(nextLevel);
       parametrize (*nextLevel);
     }
-    else {
-      Msg::Info("Multiscale Laplace, level %d DONE",level.recur);
-      delete nextLevel;
-    }
   }
+
 }
 
 void multiscaleLaplace::parametrize_method (multiscaleLaplaceLevel & level, 

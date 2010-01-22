@@ -353,7 +353,7 @@ bool GFaceCompound::checkOrientation(int iter) const
   int iterMax = 5;
   if(!oriented && iter < iterMax){
     if (iter == 0) Msg::Warning("*** Parametrization is NOT 1 to 1 : applying cavity checks.");
-    Msg::Warning("*** Cavity Check - iter %d -",iter);
+    Msg::Debug("*** Cavity Check - iter %d -",iter);
     one2OneMap();
     return checkOrientation(iter+1);
   }
@@ -451,7 +451,7 @@ bool GFaceCompound::parametrize() const
   buildOct();  
   
   if (!checkOrientation(0)){
-    Msg::Info("Parametrization failed using standard techniques : moving to convex combination");
+    Msg::Info("Parametrization switched to convex combination map");
     coordinates.clear(); 
     Octree_Delete(oct);
     fillNeumannBCS();
@@ -719,7 +719,7 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   if (!_lsys) {
 #if defined(HAVE_PETSC)
     _lsys = new linearSystemPETSc<double>;
-#elif defined(HAVE_TAUCS)
+#elif defined(_HAVE_TAUCS) 
     _lsys = new linearSystemCSRTaucs<double>;
 #elif defined(HAVE_GMM)
     linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
@@ -1049,14 +1049,24 @@ void GFaceCompound::parametrize_conformal() const
   }
 
   MVertex *v1 = ordered[0];
-  MVertex *v2 = ordered[1];
+  MVertex *v2 ; 
+  double maxSize = 0.0;
+  for (int i=1; i< ordered.size(); i++){
+    MVertex *vi= ordered[i];
+    double dist = vi->distance(v1);
+    if (dist > maxSize){
+      v2 = vi;
+      maxSize = dist;
+    }
+  }
+
   myAssembler.fixVertex(v1, 0, 1, 0);//0
   myAssembler.fixVertex(v1, 0, 2, 0);//0
   myAssembler.fixVertex(v2, 0, 1, 1);//1
   myAssembler.fixVertex(v2, 0, 2, 0);//0
-  //printf("Pinned vertex  %g %g %g / %g %g %g \n", v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z());
-  //exit(1);
 
+  //printf("Pinned vertex  %g %g %g / %g %g %g \n", v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z());
+ 
   std::list<GFace*>::const_iterator it = _compound.begin();
   for( ; it != _compound.end(); ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
@@ -1081,7 +1091,7 @@ void GFaceCompound::parametrize_conformal() const
   
 
   simpleFunction<double> ONE(1.0);
-  simpleFunction<double> MONE(1.0 );
+  simpleFunction<double> MONE(-1.0 );
   laplaceTerm laplace1(model(), 1, &ONE);
   laplaceTerm laplace2(model(), 2, &ONE);
   crossConfTerm cross12(model(), 1, 2, &ONE);
@@ -1283,7 +1293,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
   //    return lt->gf->point(pv.x(),pv.y());
   //  }
   
-  const bool LINEARMESH = true; //false; //false
+  const bool LINEARMESH = true; //false
 
   if(LINEARMESH){
 
@@ -1601,12 +1611,7 @@ bool GFaceCompound::checkTopology() const
 
   double H = getSizeH();
   double D = H; 
-  if (_interior_loops.size() > 0)
-    D =  getSizeBB(_U0);
-//   for(std::list<std::list<GEdge*> >::const_iterator it = _interior_loops.begin();   it != _interior_loops.end(); it++){
-//     double size = getSizeBB(*it);
-//     D = std::min(D, size);
-//   }
+  if (_interior_loops.size() > 0)    D =  getSizeBB(_U0);
   int AR = (int) ceil(H/D);
   
   if (G != 0 || Nb < 1){
@@ -1640,8 +1645,8 @@ bool GFaceCompound::checkAspectRatio() const
   bool paramOK = true;
   if(allNodes.empty()) buildAllNodes();
   
-  double limit =  1.e12;
-  double areaMax = 0.0;
+  double limit =  1.e-15;
+  double areaMin = 1.e15;
   int nb = 0;
   std::list<GFace*>::const_iterator it = _compound.begin();
   for( ; it != _compound.end() ; ++it){
@@ -1662,22 +1667,19 @@ bool GFaceCompound::checkAspectRatio() const
       double q1[3] = {it1->second.x(), it1->second.y(), 0.0};
       double q2[3] = {it2->second.x(), it2->second.y(), 0.0};
       double a_2D = fabs(triangle_area(q0, q1, q2));   
-      if (1/a_2D > limit) nb++;
-      areaMax = std::max(areaMax,1./a_2D);
-      //printf("a3D/a2D=%g, AreaMax=%g\n", a_3D/a_2D, areaMax);
+      if (a_2D > limit) nb++;
+      areaMin = std::min(areaMin,a_2D);
     }
   }
   
-  if (areaMax > limit && nb > 2) {
-    Msg::Warning("Geometrical aspect ratio too high (1/area_2D=%g)", areaMax);
+  if (areaMin < limit && nb > 2) {
+    Msg::Warning("Geometrical aspect ratio too high (a_2D=%g)", areaMin);
     SBoundingBox3d bboxH = bounds();
     double H = getSizeH();
     double D = getSizeBB(_U0);
     double eta = H/D;
-    int split =  -2;
-    //printf("H=%g, D=%g split=%d nbSplit=%d \n", H, D, split, nbSplit);
-    Msg::Info("Partition geometry in N=%d parts", std::abs(nbSplit));
-    paramOK = false;
+    int nbSplit =  -2;
+    paramOK = true; //false;
   }
   else {
     Msg::Debug("Geometrical aspect ratio is OK  :-)");
@@ -1691,6 +1693,7 @@ bool GFaceCompound::checkAspectRatio() const
 void GFaceCompound::coherenceNormals()
 {
 
+  Msg::Info("Coherence Normals ");
   std::map<MEdge, std::set<MTriangle*>, Less_Edge > edge2tris;
   for(unsigned int i = 0; i < triangles.size(); i++){
     MTriangle *t = triangles[i];

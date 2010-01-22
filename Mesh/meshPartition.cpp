@@ -973,9 +973,6 @@ void assignPartitionBoundary(GModel *model,
     ppe = new  partitionEdge(model, -(int)pedges.size()-1, 0, 0, v2);
     pedges.insert (ppe);
     model->add(ppe);
-    printf("*** Create partitionEdge %d (", ppe->tag());
-    for (unsigned int i = 0; i < v2.size(); ++i) printf("%d ", v2[i]);
-    printf(")\n");
   }
   else ppe = *it;
   ppe->lines.push_back(new MLine (me.getVertex(0),me.getVertex(1)));

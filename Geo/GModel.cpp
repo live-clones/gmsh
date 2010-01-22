@@ -1078,6 +1078,9 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
 
 void GModel::createTopologyFromMesh()
 {
+
+  Msg::Info("Creating topology from mesh");
+
   // for each discreteRegion, create topology
   std::vector<discreteRegion*> discRegions;
   for(riter it = firstRegion(); it != lastRegion(); it++)
@@ -1085,7 +1088,7 @@ void GModel::createTopologyFromMesh()
       discRegions.push_back((discreteRegion*) *it);
 
   //EMI-FIX in case of createTopology for Volumes
-  //all faces are set to the volume
+  //all faces are set to aeach volume
   for (std::vector<discreteRegion*>::iterator it = discRegions.begin();
        it != discRegions.end(); it++)
     (*it)->setBoundFaces();
@@ -1096,63 +1099,14 @@ void GModel::createTopologyFromMesh()
     if((*it)->geomType() == GEntity::DiscreteSurface)
       discFaces.push_back((discreteFace*) *it);
   
-//EMI TODO
-//check for closed faces
-//  for (std::vector<discreteFace*>::iterator itf = discFaces.begin(); itf != discFaces.end(); itf++){
-
-//    std::list<MTriangles*> tris;
-//    for (unsigned int i = 0; i < (*itf)->trinagles.size(); i++){
-//      tris.push_back((*itf)->triangles[i]);
-//    }
-
-//    while (!tris.empty()) {
-//      for (int i=0; i<3; i++) {
-//        for (std::list<MTriangle*>::iterator it = tris.begin() ; it != segments.end(); ++it){
-// 	 MEdge *e0 = (*it)->getEdge(0);
-// 	 MEdge *e1 = (*it)->getEdge(1);
-// 	 MEdge *e2 = (*it)->getEdge(2);
-// 	 //printf("mline %d %d \n", v1->getNum(), v2->getNum());
-// 	 std::list<MTriangle*>::iterator itp;
-// 	 if ( v1 == vE  ){
-// 	   //printf("->push back this mline \n");
-// 	   myLines.push_back(*it);
-// 	   itp = it;
-// 	   it++;
-// 	   segments.erase(itp);
-// 	   vE = v2;
-// 	   i = -1;
-// 	 }
-// 	 else if ( v2 == vE){
-// 	   //printf("->push back this mline \n");
-// 	   myLines.push_back(*it);
-// 	   itp = it;
-// 	   it++;
-// 	   segments.erase(itp);
-// 	   vE = v1;
-// 	   i=-1;
-// 	 }
-// 	 if (it == segments.end()) break;
-//        }
-//        if (vB == vE) break;
-//        if (segments.empty()) break;
-//        //printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
-//        MVertex *temp = vB;
-//        vB = vE;
-//        vE = temp;
-//      }
-//      GFace *newGe = new discreteFace(GModel::current(), GModel::current()->maxFaceNum() + 1, 0, 0);
-//      newGe->lines.insert(newGe->lines.end(), myLines.begin(), myLines.end());
-//      GModel::current()->add(newGe);
-//    }
-//  }
-
-//  }
+  //EMI TODO
+  //check for closed faces
   
-  //create Topo From Faces
   createTopologyFromFaces(discFaces);
   
-  //create
+  //create old format (necessaray for boundary layers)
   exportDiscreteGEOInternals();
+
 }
 
 void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)

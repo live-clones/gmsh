@@ -839,6 +839,7 @@ int GModel::writeDistanceMSH(const std::string &name, double version, bool binar
 
   //geometrical distance
 
+  //Compute distance for akk
   std::map<MVertex*,double* > distance_map; 
   std::vector<SPoint3> pts;
   std::vector<double> distances;

@@ -418,7 +418,7 @@ GPoint discreteEdge::point(double par) const
   MVertex *vB = lines[iEdge]->getVertex(0);
   MVertex *vE = lines[iEdge]->getVertex(1);
 
-  const bool LINEARMESH = true; //false; //false;
+  const bool LINEARMESH = true; //false;
   
   if (LINEARMESH){
     //linear Lagrange mesh

@@ -352,7 +352,7 @@ int linearSystemCSRTaucs<double>::systemSolve()
                               options,
                               NULL);
   double t2 = Cpu();
-  Msg::Info("TAUCS has solved %d unknowns in %8.3f seconds", _b->size(), t2 - t1);
+  Msg::Debug("TAUCS has solved %d unknowns in %8.3f seconds", _b->size(), t2 - t1);
   if (result != TAUCS_SUCCESS){
     Msg::Error("Taucs Was Not Successfull %d", result);
   }

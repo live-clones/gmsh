@@ -25,6 +25,25 @@ static void recur_connect(MVertex *v,
 
 }
 
+
+// starting form a list of elements, returns
+// lists of lists that are all simply connected
+static void recur_connect_e (const MEdge &e,
+			     std::multimap<MEdge,MElement*,Less_Edge> &e2e,
+			     std::set<MElement*> &group,
+			     std::set<MEdge,Less_Edge> &touched){
+  if (touched.find(e) != touched.end())return;
+  touched.insert(e);
+  for (std::multimap <MEdge,MElement*,Less_Edge>::iterator it = e2e.lower_bound(e);
+	 it != e2e.upper_bound(e) ; ++it){
+    group.insert(it->second);
+    for (int i=0;i<it->second->getNumEdges();++i){
+      recur_connect_e (it->second->getEdge(i),e2e,group,touched);
+    }
+  }
+}
+
+
 static int connected_bounds (std::vector<MEdge> &edges,  std::vector<std::vector<MEdge> > &boundaries)
 {
   std::multimap<MVertex*,MEdge> v2e;
@@ -47,6 +66,27 @@ static int connected_bounds (std::vector<MEdge> &edges,  std::vector<std::vector
   return boundaries.size();
 }
 
+//--------------------------------------------------------------
+static void connectedRegions (std::vector<MElement*> &elements,
+			      std::vector<std::vector<MElement*> > &regions)
+{
+  std::multimap<MEdge,MElement*,Less_Edge> e2e;
+  for (int i=0;i<elements.size();++i){
+    for (int j=0;j<elements[i]->getNumEdges();j++){
+      e2e.insert(std::make_pair(elements[i]->getEdge(j),elements[i]));
+    }
+  }
+  while (!e2e.empty()){
+    std::set<MElement*> group;
+    std::set<MEdge,Less_Edge> touched;
+    recur_connect_e (e2e.begin()->first,e2e,group,touched);
+    std::vector<MElement*> temp;
+    temp.insert(temp.begin(), group.begin(), group.end());
+    regions.push_back(temp);
+    for ( std::set<MEdge>::iterator it = touched.begin() ; it != touched.end();++it)
+      e2e.erase(*it);
+  }
+}
 
 static int getGenus (std::vector<MElement *> &elements,  
 		     std::vector<std::vector<MEdge> > &boundaries)
@@ -115,6 +155,7 @@ static int getAspectRatio(std::vector<MElement *> &elements,
   double H = norm(SVector3(bb.max(), bb.min()));
   
   double D = H;
+  if (boundaries.size() > 0.0 ) D = 0.0;
   for (unsigned int i = 0; i < boundaries.size(); i++){
     std::set<MVertex*> vb;
     std::vector<MEdge> iBound = boundaries[i];
@@ -129,7 +170,7 @@ static int getAspectRatio(std::vector<MElement *> &elements,
       vBounds.push_back(pt);
     }
     SOrientedBoundingBox obboxD = SOrientedBoundingBox::buildOBB(vBounds);
-    D = std::min(D, obboxD.getMaxSize());
+    D = std::max(D, obboxD.getMaxSize());
   }
   int AR = (int)ceil(H/D);
   
@@ -146,11 +187,25 @@ static void getGenusAndRatio(std::vector<MElement *> &elements, int & genus, int
 static void partitionRegions(std::vector<MElement*> &elements, 
                              std::vector<std::vector<MElement*> > &regions)
 {
- for (unsigned int i = 0; i < elements.size(); ++i){
-   MElement *e = elements[i];
-   int part = e->getPartition();
-   regions[part-1].push_back(e);
- }
+  
+  for (unsigned int i = 0; i < elements.size(); ++i){
+    MElement *e = elements[i];
+    int part = e->getPartition();
+    regions[part-1].push_back(e);
+  }
+
+  std::vector<std::vector<MElement*> > allRegions;
+  for (unsigned int k = 0; k < regions.size(); ++k){
+    std::vector<std::vector<MElement*> >  conRegions;
+    conRegions.clear();
+    connectedRegions (regions[k], conRegions);
+    for (int j=0; j< conRegions.size() ; j++)  
+      allRegions.push_back(conRegions[j]); 
+  }
+  regions.clear();
+  regions.resize(allRegions.size());
+  regions = allRegions;
+
 }
 
 static void printLevel(std::vector<MElement *> &elements, int recur, int region)
@@ -248,27 +303,27 @@ void multiscalePartition::partition(partitionLevel & level, int nbParts, typeOfP
     int genus, AR;
     getGenusAndRatio(regions[i], genus, AR);
 
+    printLevel (nextLevel->elements, nextLevel->recur,nextLevel->region);  
+
     if (genus < 0) {
       Msg::Error("Genus partition is negative G=%d!", genus);
       exit(1);
-    }
-  
-    //printLevel (nextLevel->elements, nextLevel->recur,nextLevel->region);  
-
+    }  
+   
     if (genus != 0 ){
       int nbParts = 2; //std::max(genus+2,2);
-      Msg::Info("Multiscale part: level %d region %d  is %d-GENUS (AR=%d) ---> MULTILEVEL partition %d parts",
+      Msg::Info("Mesh partition: level (%d-%d)  is %d-GENUS (AR=%d) ---> MULTILEVEL partition %d parts",
 		nextLevel->recur,nextLevel->region, genus, AR, nbParts);  
       partition(*nextLevel, nbParts, MULTILEVEL);
     }
      else if (genus == 0  &&  AR > 3 ){
        int nbParts = 2;
-       Msg::Info("Multiscale part: level %d region %d  is ZERO-GENUS (AR=%d) ---> LAPLACIAN partition %d parts",
+       Msg::Info("Mesh partition: level (%d-%d)  is ZERO-GENUS (AR=%d) ---> LAPLACIAN partition %d parts",
  		nextLevel->recur,nextLevel->region, AR, nbParts);  
        partition(*nextLevel, nbParts, LAPLACIAN);
      }
     else {
-      Msg::Info("*** Multiscale partition: level %d, region %d is ZERO-GENUS (AR=%d)", 
+      Msg::Info("*** Mesh partition: level (%d-%d) is ZERO-GENUS (AR=%d)", 
 		 nextLevel->recur,nextLevel->region, AR);
     }
     
@@ -279,7 +334,7 @@ void multiscalePartition::partition(partitionLevel & level, int nbParts, typeOfP
 
 int multiscalePartition::assembleAllPartitions()
 {
-  int nbParts =  1;   
+  int iPart =  1;   
 
   for (unsigned i = 0; i< levels.size(); i++){
     partitionLevel *iLevel = levels[i];
@@ -287,11 +342,11 @@ int multiscalePartition::assembleAllPartitions()
       for (unsigned j = 0; j < iLevel->elements.size(); j++){
 	MElement *e = iLevel->elements[j];
 	int part = e->getPartition();
-	e->setPartition(nbParts);
+	e->setPartition(iPart);
       }
-      nbParts++;
+      iPart++;
     }
   }
   
-  return nbParts - 1;
+  return iPart - 1;
 }
