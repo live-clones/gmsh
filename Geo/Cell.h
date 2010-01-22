@@ -78,7 +78,10 @@ class Cell
   
   // sorted vertices of this cell (used for ordering of the cells)
   std::vector<int> _vs;
-  
+
+  virtual MVertex* getVertex(int vertex) const { 
+    return _image->getVertex(vertex); }  
+ 
  public:
 
  Cell() : _combined(false), _index(0), _immune(false), _image(NULL), 
@@ -92,10 +95,10 @@ class Cell
   virtual int getDim() const { return _dim; };
   virtual int getIndex() const { return _index; };
   virtual void setIndex(int index) { _index = index; };
-  virtual int getNum() { return _image->getNum(); }
-  virtual int getType() { return _image->getType(); }
-  virtual int getTypeForMSH() { return _image->getTypeForMSH(); }
-  virtual int getPartition() { return _image->getPartition(); }
+  virtual int getNum() const { return _image->getNum(); }
+  virtual int getType() const { return _image->getType(); }
+  virtual int getTypeForMSH() const { return _image->getTypeForMSH(); }
+  virtual int getPartition() const { return _image->getPartition(); }
   virtual void setImmune(bool immune) { _immune = immune; };
   virtual bool getImmune() const { return _immune; };
   virtual void setDeleteImage(bool deleteImage) { 
@@ -104,8 +107,6 @@ class Cell
   
   // get the number of vertices this cell has
   virtual int getNumVertices() const { return _image->getNumVertices(); }
-  virtual MVertex* getVertex(int vertex) const { 
-    return _image->getVertex(vertex); }
   virtual int getSortedVertex(int vertex) const { return _vs.at(vertex); }
   
   // restores the cell information to its original state before reduction
@@ -116,23 +117,29 @@ class Cell
   
   // (co)boundary cell iterator
   typedef std::map<Cell*, int, Less_Cell>::iterator biter;
-  biter firstBoundary(){ return _boundary.begin(); }
-  biter lastBoundary(){ return _boundary.end(); }
-  biter firstCoboundary(){ return _coboundary.begin(); }
-  biter lastCoboundary(){ return _coboundary.end(); }
+  biter firstBoundary(bool org=false){ 
+    return org ? _obd.begin() : _boundary.begin(); }
+  biter lastBoundary(bool org=false){ 
+    return org ? _obd.end() : _boundary.end(); }
+  biter firstCoboundary(bool org=false){ 
+    return org ? _ocbd.begin() : _coboundary.begin(); }
+  biter lastCoboundary(bool org=false){ 
+    return org ? _ocbd.end() : _coboundary.end(); }
 
   virtual int getBoundarySize() { return _boundary.size(); }
   virtual int getCoboundarySize() { return _coboundary.size(); }
    
   // get the cell boundary
-  virtual void getBoundary(std::map<Cell*, int, Less_Cell >& boundary){
-    boundary =  _boundary; }
-  virtual void getCoboundary(std::map<Cell*, int, Less_Cell >& coboundary){
-    coboundary = _coboundary; }
+  virtual void getBoundary(std::map<Cell*, int, Less_Cell >& boundary, 
+			   bool org=false){
+    org ? boundary = _obd : boundary =  _boundary; }
+  virtual void getCoboundary(std::map<Cell*, int, Less_Cell >& coboundary,
+			     bool org=false){
+    org ? coboundary = _ocbd : coboundary = _coboundary; }
   
   // add (co)boundary cell
-  virtual bool addBoundaryCell(int orientation, Cell* cell); 
-  virtual bool addCoboundaryCell(int orientation, Cell* cell);
+  virtual bool addBoundaryCell(int orientation, Cell* cell, bool org=false); 
+  virtual bool addCoboundaryCell(int orientation, Cell* cell, bool org=false);
   
   // remove (co)boundary cell
   virtual int removeBoundaryCell(Cell* cell, bool other=true);
@@ -150,20 +157,8 @@ class Cell
   
   // print cell info
   virtual void printCell();
-  virtual void printBoundary();
-  virtual void printCoboundary();
-  
-  // original (co)boundary
-  virtual void addOrgBdCell(int orientation, Cell* cell) { 
-    _obd.insert( std::make_pair(cell, orientation ) ); };
-  virtual void addOrgCbdCell(int orientation, Cell* cell) { 
-    _ocbd.insert( std::make_pair(cell, orientation ) ); };
-  virtual void getOrgBd( std::map<Cell*, int, Less_Cell >& obd) { 
-    obd =  _obd; }
-  virtual void getOrgCbd( std::map<Cell*, int, Less_Cell >& obdc) {
-    obdc = _ocbd; }
-  virtual void printOrgBd();
-  virtual void printOrgCbd(); 
+  virtual void printBoundary(bool org=false);
+  virtual void printCoboundary(bool org=false);
   
   virtual bool inSubdomain() const { return _inSubdomain; }
   virtual void setInSubdomain(bool subdomain)  { _inSubdomain = subdomain; }
@@ -214,28 +209,26 @@ class Cell
 class CombinedCell : public Cell{
   
  private:
-  // vertices
-  std::vector<MVertex*> _v;
-  // sorted list of all vertices
+  // sorted list of vertices
   std::vector<int> _vs;
   // list of cells this cell is a combination of
   std::list< std::pair<int, Cell*> > _cells;
-  int _num;
+  
+  MVertex* getVertex(int vertex) const { return NULL; }
   
  public:
   
   CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co=false);
   ~CombinedCell() {}
   
-  int getNum() { return _num; }
-  int getType() { return 0; }
-  int getTypeForMSH() { return 0; }
-  int getPartition() { return 0; }
+  int getNum() const { return 0; }
+  int getType() const { return 0; }
+  int getTypeForMSH() const { return 0; }
+  int getPartition() const { return 0; }
   
-  int getNumVertices() const { return _v.size(); } 
-  MVertex* getVertex(int vertex) const { return _v.at(vertex); }
+  int getNumVertices() const { return _vs.size(); } 
   int getSortedVertex(int vertex) const { return _vs.at(vertex); }
-  
+
   void getCells(std::list< std::pair<int, Cell*> >& cells) { cells = _cells; }
   int getNumCells() {return _cells.size();}
   

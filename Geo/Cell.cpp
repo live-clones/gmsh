@@ -17,7 +17,7 @@ bool Less_Cell::operator()(const Cell* c1, const Cell* c2) const {
   if(c1->getNumVertices() != c2->getNumVertices()){
     return (c1->getNumVertices() < c2->getNumVertices());
   }
-  
+
   // "natural number" -like ordering 
   // (the number of a vertice corresponds a digit)
   
@@ -115,7 +115,8 @@ void Cell::restoreCell(){
   _immune = false;   
 }
 
-bool Cell::addBoundaryCell(int orientation, Cell* cell) {
+bool Cell::addBoundaryCell(int orientation, Cell* cell, bool org) {
+  if(org) _obd.insert( std::make_pair(cell, orientation ) );
   biter it = _boundary.find(cell);
   if(it != _boundary.end()){
     (*it).second = (*it).second + orientation;
@@ -130,7 +131,8 @@ bool Cell::addBoundaryCell(int orientation, Cell* cell) {
   return true;
 }
 
-bool Cell::addCoboundaryCell(int orientation, Cell* cell) {
+bool Cell::addCoboundaryCell(int orientation, Cell* cell, bool org) {
+  if(org) _ocbd.insert( std::make_pair(cell, orientation ) );
   biter it = _coboundary.find(cell);
   if(it != _coboundary.end()){
     (*it).second = (*it).second + orientation;
@@ -198,43 +200,28 @@ void Cell::makeDualCell(){
   _dim = 3-_dim;     
 }
 
-void Cell::printBoundary() {  
-  for(biter it = _boundary.begin(); it != _boundary.end(); it++){
+void Cell::printBoundary(bool org) {  
+  for(biter it = firstBoundary(org); it != lastBoundary(org); it++){
     printf("Boundary cell orientation: %d ", (*it).second);
     Cell* cell2 = (*it).first;
     cell2->printCell();
   }
-  if(_boundary.empty()) printf("Cell boundary is empty. \n");
+  if(firstBoundary(org) == lastBoundary(org)){
+    printf("Cell boundary is empty. \n");
+  }
 }
-void Cell::printCoboundary() {
-  for(biter it = _coboundary.begin(); it != _coboundary.end(); it++){
+void Cell::printCoboundary(bool org) {
+  for(biter it = firstCoboundary(org); it != lastCoboundary(org); it++){
     printf("Coboundary cell orientation: %d, ", (*it).second);
     Cell* cell2 = (*it).first;
     cell2->printCell();
-    if(_coboundary.empty()) printf("Cell coboundary is empty. \n");
+    if(firstCoboundary(org) == lastCoboundary(org)){
+      printf("Cell coboundary is empty. \n");
+    }
   }
 }
-   
-void Cell::printOrgBd() {
-  for(biter it = _obd.begin(); it != _obd.end(); it++){
-    printf("Boundary cell orientation: %d ", (*it).second);
-    Cell* cell2 = (*it).first;
-    cell2->printCell();
-  }
-  if(_obd.empty()) printf("Cell boundary is empty. \n");
-}
-void Cell::printOrgCbd() {
-  for(biter it = _ocbd.begin(); it != _ocbd.end(); it++){
-    printf("Coboundary cell orientation: %d, ", (*it).second);
-    Cell* cell2 = (*it).first;
-    cell2->printCell();
-    if(_ocbd.empty()) printf("Cell coboundary is empty. \n");
-  }
-}  
 
-
-CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell() {
-  
+CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell() {  
   // use "smaller" cell as c2
   if(c1->getNumVertices() < c2->getNumVertices()){
     Cell* temp = c1;
@@ -244,27 +231,23 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell() {
   
   _index = c1->getIndex();
   _dim = c1->getDim();
-  _num = c1->getNum();
   _inSubdomain = c1->inSubdomain();
   _onDomainBoundary = c1->onDomainBoundary();
   _combined = true;
   _image = NULL;
   
-  _v.reserve(c1->getNumVertices() + c2->getNumVertices());
+  // vertices
   _vs.reserve(c1->getNumVertices() + c2->getNumVertices());
-  
-
-  for(int i = 0; i < c1->getNumVertices(); i++) _v.push_back(c1->getVertex(i));
+  for(int i = 0; i < c1->getNumVertices(); i++){
+    _vs.push_back(c1->getSortedVertex(i));
+  }
+  std::vector<int> v;
   for(int i = 0; i < c2->getNumVertices(); i++){
-    if(!this->hasVertex(c2->getVertex(i)->getNum())){
-      _v.push_back(c2->getVertex(i)); 
+    if(!this->hasVertex(c2->getSortedVertex(i))){
+      v.push_back(c2->getSortedVertex(i)); 
     }
   }
-
-  // sorted vertices
-  for(unsigned int i = 0; i < _v.size(); i++){
-    _vs.push_back(_v.at(i)->getNum());
-  }
+  for(unsigned int i = 0; i < v.size(); i++) _vs.push_back(v.at(i));
   std::sort(_vs.begin(), _vs.end());
  
   // cells

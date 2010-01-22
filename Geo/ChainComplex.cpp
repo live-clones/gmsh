@@ -33,7 +33,8 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
     
     int index = 1;
     // ignore subdomain cells
-    for(std::set<Cell*, Less_Cell>::iterator cit = cellComplex->firstCell(dim); cit != cellComplex->lastCell(dim); cit++){
+    for(CellComplex::citer cit = cellComplex->firstCell(dim); 
+	cit != cellComplex->lastCell(dim); cit++){
       Cell* cell = *cit;
       cell->setIndex(index);
       index++;
@@ -44,7 +45,8 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
     }
     index = 1;
     if(dim > 0){
-      for(std::set<Cell*, Less_Cell>::iterator cit = cellComplex->firstCell(dim-1); cit != cellComplex->lastCell(dim-1); cit++){
+      for(CellComplex::citer cit = cellComplex->firstCell(dim-1); 
+	  cit != cellComplex->lastCell(dim-1); cit++){
         Cell* cell = *cit;
         cell->setIndex(index);
         index++;
@@ -70,7 +72,6 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
       mpz_init(elem);
       
       _HMatrix[dim] = create_gmp_matrix_zero(rows, cols);
-      //printMatrix(_HMatrix[dim]);
       for( std::set<Cell*, Less_Cell>::iterator cit = 
 	     cellComplex->firstCell(dim);
 	   cit != cellComplex->lastCell(dim); cit++){
@@ -81,12 +82,13 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
             Cell* bdCell = (*it).first;
             if(!bdCell->inSubdomain()){
               int old_elem = 0;
-              //printf("cell1: %d, cell2: %d \n", bdCell->getIndex(), cell->getIndex());
+
               if(bdCell->getIndex() > (int)gmp_matrix_rows( _HMatrix[dim]) 
 		 || bdCell->getIndex() < 1 
                  || cell->getIndex() > (int)gmp_matrix_cols( _HMatrix[dim]) 
 		 || cell->getIndex() < 1){
-                Msg::Debug("Warning: Index out of bound! HMatrix: %d. \n", dim);
+                Msg::Debug("Warning: Index out of bound! HMatrix: %d. \n",
+			   dim);
               }
               else{
                 gmp_matrix_get_elem(elem, bdCell->getIndex(), 
@@ -121,15 +123,19 @@ void ChainComplex::KerCod(int dim){
   
   if(dim < 0 || dim > 3 || _HMatrix[dim] == NULL) return;
   
-  gmp_matrix* HMatrix = copy_gmp_matrix(_HMatrix[dim], 1, 1, 
-                                        gmp_matrix_rows(_HMatrix[dim]), gmp_matrix_cols(_HMatrix[dim]));
+  gmp_matrix* HMatrix 
+    = copy_gmp_matrix(_HMatrix[dim], 1, 1, 
+		      gmp_matrix_rows(_HMatrix[dim]),
+		      gmp_matrix_cols(_HMatrix[dim]));
   
-  gmp_normal_form* normalForm = create_gmp_Hermite_normal_form(HMatrix, NOT_INVERTED, INVERTED);
+  gmp_normal_form* normalForm 
+    = create_gmp_Hermite_normal_form(HMatrix, NOT_INVERTED, INVERTED);
   //printMatrix(normalForm->left);
   //printMatrix(normalForm->canonical);
   //printMatrix(normalForm->right);
   
-  int minRowCol = std::min(gmp_matrix_rows(normalForm->canonical), gmp_matrix_cols(normalForm->canonical));
+  int minRowCol = std::min(gmp_matrix_rows(normalForm->canonical), 
+			   gmp_matrix_cols(normalForm->canonical));
   int rank = 0;
   mpz_t elem;
   mpz_init(elem);
@@ -142,14 +148,17 @@ void ChainComplex::KerCod(int dim){
   }
   
   if(rank != (int)gmp_matrix_cols(normalForm->canonical)){
-    _kerH[dim] = copy_gmp_matrix(normalForm->right, 1, rank+1, 
-                                 gmp_matrix_rows(normalForm->right),  gmp_matrix_cols(normalForm->right));
+    _kerH[dim] 
+      = copy_gmp_matrix(normalForm->right, 1, rank+1, 
+			gmp_matrix_rows(normalForm->right),
+			gmp_matrix_cols(normalForm->right));
   }
   
   if(rank > 0){
-     _codH[dim] = copy_gmp_matrix(normalForm->canonical, 1, 1,
-                                  gmp_matrix_rows(normalForm->canonical), rank);
-    gmp_matrix_left_mult(normalForm->left, _codH[dim]);
+     _codH[dim] = 
+       copy_gmp_matrix(normalForm->canonical, 1, 1,
+		       gmp_matrix_rows(normalForm->canonical), rank);
+     gmp_matrix_left_mult(normalForm->left, _codH[dim]);
   }
   
   mpz_clear(elem);
@@ -161,12 +170,18 @@ void ChainComplex::KerCod(int dim){
 //j:B_(k+1)->Z_k
 void ChainComplex::Inclusion(int lowDim, int highDim){
   
-  if(getKerHMatrix(lowDim) == NULL || getCodHMatrix(highDim) == NULL || abs(lowDim-highDim) != 1) return;
+  if(getKerHMatrix(lowDim) == NULL 
+     || getCodHMatrix(highDim) == NULL 
+     || abs(lowDim-highDim) != 1) return;
   
-  gmp_matrix* Zbasis = copy_gmp_matrix(_kerH[lowDim], 1, 1,
-                                       gmp_matrix_rows(_kerH[lowDim]), gmp_matrix_cols(_kerH[lowDim]));
-  gmp_matrix* Bbasis = copy_gmp_matrix(_codH[highDim], 1, 1,
-                                       gmp_matrix_rows(_codH[highDim]), gmp_matrix_cols(_codH[highDim]));
+  gmp_matrix* Zbasis = 
+    copy_gmp_matrix(_kerH[lowDim], 1, 1,
+		    gmp_matrix_rows(_kerH[lowDim]), 
+		    gmp_matrix_cols(_kerH[lowDim]));
+  gmp_matrix* Bbasis 
+    = copy_gmp_matrix(_codH[highDim], 1, 1,
+		      gmp_matrix_rows(_codH[highDim]), 
+		      gmp_matrix_cols(_codH[highDim]));
   
   
   int rows = gmp_matrix_rows(Bbasis);
@@ -179,7 +194,8 @@ void ChainComplex::Inclusion(int lowDim, int highDim){
   
   
   // A*inv(V) = U*S
-  gmp_normal_form* normalForm = create_gmp_Smith_normal_form(Zbasis, INVERTED, INVERTED);
+  gmp_normal_form* normalForm 
+    = create_gmp_Smith_normal_form(Zbasis, INVERTED, INVERTED);
   
   mpz_t elem;
   mpz_init(elem);
@@ -198,7 +214,9 @@ void ChainComplex::Inclusion(int lowDim, int highDim){
   
   
   
-  gmp_matrix* LB = copy_gmp_matrix(Bbasis, 1, 1, gmp_matrix_cols(Zbasis), gmp_matrix_cols(Bbasis));
+  gmp_matrix* LB = copy_gmp_matrix(Bbasis, 1, 1, 
+				   gmp_matrix_cols(Zbasis), 
+				   gmp_matrix_cols(Bbasis));
   destroy_gmp_matrix(Bbasis);
   
   rows = gmp_matrix_rows(LB);
@@ -240,12 +258,15 @@ void ChainComplex::Quotient(int dim){
   
   if(dim < 0 || dim > 4 || _JMatrix[dim] == NULL) return;
   
-  gmp_matrix* JMatrix = copy_gmp_matrix(_JMatrix[dim], 1, 1,
-                                        gmp_matrix_rows(_JMatrix[dim]), gmp_matrix_cols(_JMatrix[dim]));
+  gmp_matrix* JMatrix = 
+    copy_gmp_matrix(_JMatrix[dim], 1, 1,
+		    gmp_matrix_rows(_JMatrix[dim]), 
+		    gmp_matrix_cols(_JMatrix[dim]));
   int rows = gmp_matrix_rows(JMatrix);
   int cols = gmp_matrix_cols(JMatrix);
   
-  gmp_normal_form* normalForm = create_gmp_Smith_normal_form(JMatrix, NOT_INVERTED, NOT_INVERTED);
+  gmp_normal_form* normalForm = 
+    create_gmp_Smith_normal_form(JMatrix, NOT_INVERTED, NOT_INVERTED);
 
   //printMatrix(normalForm->left);
   //printMatrix(normalForm->canonical);
@@ -266,7 +287,8 @@ void ChainComplex::Quotient(int dim){
   
   int rank = cols - _torsion[dim].size();
   if(rows - rank > 0){
-    gmp_matrix* Hbasis = copy_gmp_matrix(normalForm->left, 1, rank+1, rows, rows);
+    gmp_matrix* Hbasis = 
+      copy_gmp_matrix(normalForm->left, 1, rank+1, rows, rows);
     _QMatrix[dim] = Hbasis;
   }
   
@@ -302,11 +324,17 @@ void ChainComplex::computeHomology(bool dual){
     KerCod(highDim);
     
     // 1) no edges, but zero cells
-    if(lowDim == 0 && !dual &&  gmp_matrix_cols(getHMatrix(lowDim)) > 0 && getHMatrix(highDim) == NULL) {
-      setHbasis( setDim, create_gmp_matrix_identity(gmp_matrix_cols(getHMatrix(lowDim))) );
+    if(lowDim == 0 && !dual 
+       &&  gmp_matrix_cols(getHMatrix(lowDim)) > 0 
+       && getHMatrix(highDim) == NULL) {
+      setHbasis( setDim, 
+		 create_gmp_matrix_identity(gmp_matrix_cols(getHMatrix(lowDim))) );
     }
-    else if(highDim == 0 && dual &&  gmp_matrix_rows(getHMatrix(highDim)) > 0 && getHMatrix(lowDim) == NULL) {
-      setHbasis( setDim, create_gmp_matrix_identity(gmp_matrix_rows(getHMatrix(highDim))) );
+    else if(highDim == 0 && dual 
+	    &&  gmp_matrix_rows(getHMatrix(highDim)) > 0 
+	    && getHMatrix(lowDim) == NULL) {
+      setHbasis( setDim, 
+		 create_gmp_matrix_identity(gmp_matrix_rows(getHMatrix(highDim))) );
     }
     
     // 2) this dimension is empty
@@ -315,9 +343,10 @@ void ChainComplex::computeHomology(bool dual){
     }
     // 3) No higher dimension cells -> none of the cycles are boundaries
     else if(getHMatrix(highDim) == NULL){
-      setHbasis( setDim, copy_gmp_matrix(getKerHMatrix(lowDim), 1, 1,
-                                         gmp_matrix_rows(getKerHMatrix(lowDim)), 
-                                         gmp_matrix_cols(getKerHMatrix(lowDim))) );
+      setHbasis( setDim, 
+		 copy_gmp_matrix(getKerHMatrix(lowDim), 1, 1,
+				 gmp_matrix_rows(getKerHMatrix(lowDim)), 
+				 gmp_matrix_cols(getKerHMatrix(lowDim))) );
     }
     
    
@@ -329,23 +358,26 @@ void ChainComplex::computeHomology(bool dual){
       
       // 4) No lower dimension cells -> all chains are cycles
       if(getHMatrix(lowDim) == NULL){
-        setKerHMatrix(lowDim, create_gmp_matrix_identity(gmp_matrix_rows(getHMatrix(highDim))) );
+        setKerHMatrix(lowDim, 
+		      create_gmp_matrix_identity(gmp_matrix_rows(getHMatrix(highDim))) );
       }
       Inclusion(lowDim, highDim);
       Quotient(lowDim);
       
       if(getCodHMatrix(highDim) == NULL){
-        setHbasis(setDim, copy_gmp_matrix(getKerHMatrix(lowDim), 1, 1,
-                                          gmp_matrix_rows(getKerHMatrix(lowDim)), 
-                                          gmp_matrix_cols(getKerHMatrix(lowDim))) );
+        setHbasis(setDim, 
+		  copy_gmp_matrix(getKerHMatrix(lowDim), 1, 1,
+				  gmp_matrix_rows(getKerHMatrix(lowDim)), 
+				  gmp_matrix_cols(getKerHMatrix(lowDim))) );
       }  
       else if(getJMatrix(lowDim) == NULL || getQMatrix(lowDim) == NULL){
         setHbasis(setDim, NULL);
       } 
       else{
-        setHbasis(setDim, copy_gmp_matrix(getKerHMatrix(lowDim), 1, 1, 
-                                          gmp_matrix_rows(getKerHMatrix(lowDim)), 
-                                          gmp_matrix_cols(getKerHMatrix(lowDim))) );
+        setHbasis(setDim, 
+		  copy_gmp_matrix(getKerHMatrix(lowDim), 1, 1, 
+				  gmp_matrix_rows(getKerHMatrix(lowDim)), 
+				  gmp_matrix_cols(getKerHMatrix(lowDim))) );
         
         gmp_matrix_right_mult(getHbasis(setDim), getQMatrix(lowDim));
       } 
@@ -392,7 +424,8 @@ std::vector<int> ChainComplex::getCoeffVector(int dim, int chainNumber){
   std::vector<int> coeffVector;
   
   if(dim < 0 || dim > 4) return coeffVector;
-  if(_Hbasis[dim] == NULL || (int)gmp_matrix_cols(_Hbasis[dim]) < chainNumber) return coeffVector;
+  if(_Hbasis[dim] == NULL 
+     || (int)gmp_matrix_cols(_Hbasis[dim]) < chainNumber) return coeffVector;
   
   int rows = gmp_matrix_rows(_Hbasis[dim]);
   
@@ -416,10 +449,11 @@ std::vector<int> ChainComplex::getCoeffVector(int dim, int chainNumber){
 
 int ChainComplex::getTorsion(int dim, int chainNumber){
   if(dim < 0 || dim > 4) return 0;
-  if(_Hbasis[dim] == NULL || (int)gmp_matrix_cols(_Hbasis[dim]) < chainNumber) return 0;
-  if(_torsion[dim].empty() || (int)_torsion[dim].size() < chainNumber) return 1;
+  if(_Hbasis[dim] == NULL 
+     || (int)gmp_matrix_cols(_Hbasis[dim]) < chainNumber) return 0;
+  if(_torsion[dim].empty() 
+     || (int)_torsion[dim].size() < chainNumber) return 1;
   else return _torsion[dim].at(chainNumber-1);
-  
 }
 
 Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, 
@@ -435,7 +469,8 @@ Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs,
       if(coeffs.at(i) != 0){
         std::list< std::pair<int, Cell*> > subCells;
 	cell->getCells(subCells);
-        for(std::list< std::pair<int, Cell*> >::iterator it = subCells.begin(); it != subCells.end(); it++){
+        for(std::list< std::pair<int, Cell*> >::iterator it = 
+	      subCells.begin(); it != subCells.end(); it++){
           Cell* subCell = (*it).second;
           int coeff = (*it).first;
           _cells.insert( std::make_pair(subCell, coeffs.at(i)*coeff));
@@ -478,7 +513,8 @@ bool Chain::deform(std::map<Cell*, int, Less_Cell> &cellsInChain,
   }
   
   int n = 1;
-  for(citer cit = cellsNotInChain.begin(); cit != cellsNotInChain.end(); cit++){
+  for(citer cit = cellsNotInChain.begin(); cit != cellsNotInChain.end();
+      cit++){
     Cell* c = (*cit).first;
     if(n == 2) c->setImmune(true);
     else c->setImmune(false);
@@ -493,17 +529,15 @@ bool Chain::deform(std::map<Cell*, int, Less_Cell> &cellsInChain,
 bool Chain::deformChain(std::pair<Cell*, int> cell, bool bend){
   
   Cell* c1 = cell.first;
-  std::map<Cell*, int, Less_Cell> c1Cbd;
-  c1->getOrgCbd(c1Cbd);
-  for(citer cit = c1Cbd.begin(); cit != c1Cbd.end(); cit++){
+  for(citer cit = c1->firstCoboundary(true); cit != c1->lastCoboundary(true);
+      cit++){
     
     std::map<Cell*, int, Less_Cell> cellsInChain;
     std::map<Cell*, int, Less_Cell> cellsNotInChain;
     Cell* c1CbdCell = (*cit).first;
-    std::map<Cell*, int, Less_Cell> c1CbdBd;
-    c1CbdCell->getOrgBd(c1CbdBd);
 
-    for(citer cit2 = c1CbdBd.begin(); cit2 != c1CbdBd.end(); cit2++){
+    for(citer cit2 = c1CbdCell->firstBoundary(true);
+	cit2 != c1CbdCell->lastBoundary(true); cit2++){
       Cell* c1CbdBdCell = (*cit2).first;
       int coeff = (*cit2).second;
       if( (hasCell(c1CbdBdCell) && getCoeff(c1CbdBdCell) != 0) 
@@ -527,11 +561,8 @@ bool Chain::deformChain(std::pair<Cell*, int> cell, bool bend){
 	cit2++){
       Cell* c = (*cit2).first;
       if(c->inSubdomain()) next = true;
-    }
-    
+    }    
     if(next) continue;
-    
-    //printf("dim: %d, in chain: %d, not in chain: %d \n", getDim(), cellsInChain.size(), cellsNotInChain.size());
     
     if( (getDim() == 1 && cellsInChain.size() == 2 
 	 && cellsNotInChain.size() == 1) || 
@@ -581,11 +612,14 @@ void Chain::smoothenChain(){
   }
   
   deImmuneCells();
-  for(citer cit = _cells.begin(); cit != _cells.end(); cit++) deformChain(*cit, false);
+  for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
+    deformChain(*cit, false);
+  }
   
   eraseNullCells();
   double t2 = Cpu();
-  Msg::Debug("Smoothened a %d-chain from %d cells to %d cells (%g s).\n", getDim(), start, getSize(), t2-t1);
+  Msg::Debug("Smoothened a %d-chain from %d cells to %d cells (%g s).\n",
+	     getDim(), start, getSize(), t2-t1);
   return;
 }
 
@@ -678,7 +712,8 @@ void Chain::createPView(){
     _model->setPhysicalName(getName(), getDim(), physicalNum);
     
     // only for visualization
-    PView* chain = new PView(getName(), "ElementData", getGModel(), data, 0, 1);
+    PView* chain = new PView(getName(), "ElementData", getGModel(), 
+			     data, 0, 1);
   }
    
   return;
@@ -695,8 +730,12 @@ void Chain::removeCell(Cell* cell) {
 
 void Chain::addCell(Cell* cell, int coeff) {
   std::pair<citer,bool> insert = _cells.insert( std::make_pair( cell, coeff));
-  if(!insert.second && (*insert.first).second == 0) (*insert.first).second = coeff; 
-  else if (!insert.second && (*insert.first).second != 0) Msg::Debug("Error: invalid chain smoothening add! \n");
+  if(!insert.second && (*insert.first).second == 0){
+    (*insert.first).second = coeff; 
+  }
+  else if (!insert.second && (*insert.first).second != 0){
+    Msg::Debug("Error: invalid chain smoothening add! \n");
+  }
   return;
 }
 
