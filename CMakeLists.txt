@@ -424,7 +424,7 @@ if(ENABLE_GMM)
 endif(ENABLE_GMM)
 
 if(ENABLE_KBIPACK)
-  find_library(GMP_LIB libgmp.a)
+  find_library(GMP_LIB NAMES libgmp.a libgmp.dll.a)
   if(GMP_LIB)
     add_subdirectory(contrib/kbipack)
     set(HAVE_KBIPACK TRUE)
