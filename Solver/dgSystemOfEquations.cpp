@@ -49,8 +49,10 @@ static dgSystemOfEquations *myConstructorPtr(GModel* gm){
 void dgSystemOfEquations::registerBindings(binding *b) {
   classBinding *cb = b->addClass<dgSystemOfEquations>("dgSystemOfEquations");
   cb->setDescription("a class to rule them all :-) -- bad description, this class will be removed anyway");
-  cb->setConstructor<dgSystemOfEquations,GModel*>();
   methodBinding *cm;
+  cm = cb->setConstructor<dgSystemOfEquations,GModel*>();
+  cm->setArgNames("model",NULL);
+  cm->setDescription("A new system of equation on the domain described by 'model'");
   cm = cb->addMethod("setConservationLaw",&dgSystemOfEquations::setConservationLaw);
   cm->setArgNames("law",NULL);
   cm->setDescription("set the conservation law this system solves");
@@ -63,9 +65,11 @@ void dgSystemOfEquations::registerBindings(binding *b) {
   cm->setArgNames("functionName",NULL);
   cm->setDescription("project the function \"functionName\" on the solution vector");
   cm = cb->addMethod("RK44",&dgSystemOfEquations::RK44);
+  cm->setArgNames("dt",NULL);
+  cm->setDescription("Do a runge-kuta temporal iteration with 4 sub-steps and a precision order of 4 with a time step \"dt\". This function returns the sum of the nodal residuals.");
   cm = cb->addMethod("ForwardEuler",&dgSystemOfEquations::ForwardEuler);
-  cm->setArgNames("norm","dt",NULL);
-  cm->setDescription("do a runge-kuta temporal iteration with a time step \"dt\" and return the sum of the nodal residuals");
+  cm->setArgNames("dt",NULL);
+  cm->setDescription("do a forward euler temporal iteration with a time step \"dt\" and return the sum of the nodal residuals");
   cm = cb->addMethod("setOrder",&dgSystemOfEquations::setOrder);
   cm->setArgNames("order",NULL);
   cm->setDescription("set the polynpolynomialomial order of the lagrange shape functions");
@@ -77,6 +81,8 @@ void dgSystemOfEquations::registerBindings(binding *b) {
   cm->setArgNames("dt",NULL);
   cm->setDescription("do one RK44 time step with the slope limiter (only for p=1)");
   cm = cb->addMethod("multirateRK43",&dgSystemOfEquations::multirateRK43);
+  cm->setArgNames("dt",NULL);
+  cm->setDescription("Do a runge-kuta temporal iteration with 4 sub-steps and a precision order of 3 using different time-step depending on the element size. This function returns the sum of the nodal residuals.");
   cm = cb->addMethod("saveSolution",&dgSystemOfEquations::saveSolution);
   cm->setArgNames("filename",NULL);
   cm->setDescription("dump the solution in binary format");

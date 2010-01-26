@@ -151,12 +151,21 @@ dataCacheDouble *dgBoundaryCondition::newDiffusiveNeumannBC(dataCacheMap &cacheM
 
 void dgConservationLaw::registerBindings(binding *b){
   classBinding *cb = b->addClass<dgConservationLaw>("dgConservationLaw");
-  cb->addMethod("addBoundaryCondition",&dgConservationLaw::addBoundaryCondition);
-  cb->addMethod("new0FluxBoundary",&dgConservationLaw::new0FluxBoundary);
-  cb->addMethod("newSymmetryBoundary",&dgConservationLaw::newSymmetryBoundary);
-  cb->addMethod("newOutsideValueBoundary",&dgConservationLaw::newOutsideValueBoundary);
+  cb->setDescription("A conservation law is defined a convective flux (f), a diffusive flux(g), a source term(r) and a set of boundary conditions.\n\\partial_t L(u) =   \\nabla \\cdot (\\vec{f}(u,forcings)) + \\nabla \\cdot (\\vec{g}(u,\\nabla u,forcings) + r(u,forcings).");
+  methodBinding *cm;
+  cm = cb->addMethod("addBoundaryCondition",&dgConservationLaw::addBoundaryCondition);
+  cm->setDescription("Use the boundary condition 'bc' for interface tagged with 'tag',");
+  cm->setArgNames("tag","bc",NULL);
+  cm = cb->addMethod("new0FluxBoundary",&dgConservationLaw::new0FluxBoundary);
+  cm->setDescription("Create a new boundary condition which set to 0 all the fluxes through the interfaces.");
+  cm = cb->addMethod("newSymmetryBoundary",&dgConservationLaw::newSymmetryBoundary);
+  cm->setDescription("Create a new boundary condition using the values computed inside the domain as boundary values. (In practice, the fluxes are computed with the Riemann solver of this equation using the internal values as internal AND external values.)");
+  cm = cb->addMethod("newOutsideValueBoundary",&dgConservationLaw::newOutsideValueBoundary);
+  cm->setDescription("Create a new boundary condition which compute the fluxes using the Riemann solver using the 'outsideFunction' function to compute external values.");
+  cm->setArgNames("outsideFunction",NULL);
 }
 
 void dgBoundaryCondition::registerBindings(binding *b){
   classBinding *cb = b->addClass<dgBoundaryCondition>("dgBoundaryCondition");
+  cb->setDescription("A boundary condition of a conservation law. Boundary conditions should be associated with tag using dgConservationLaw::addBoundaryCondition.");
 }

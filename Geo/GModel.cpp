@@ -1351,13 +1351,27 @@ void GModel::save(std::string fileName)
 void GModel::registerBindings(binding *b)
 {
   classBinding *cb = b->addClass<GModel>("GModel");
+  cb->setDescription("A GModel contains a geometrycal and it's mesh.");
   methodBinding *cm;
   cm = cb->addMethod("mesh", &GModel::mesh);
+  cm->setArgNames("dim",NULL);
+  cm->setDescription("Generate a mesh of this model in dimension 'dim'.");
   cm = cb->addMethod("load", &GModel::load);
+  cm->setDescription("Merge the file 'filename' in this model, the file can be in any format (guessed from the extension) known by gmsh.");
+  cm->setArgNames("filename",NULL);
   cm = cb->addMethod("save", &GModel::save);
+  cm->setDescription("Save this model in the file 'filename'. The content of the file depends on the format (guessed from the extension).");
+  cm->setArgNames("filename",NULL);
   cm = cb->addMethod("getNumMeshElements",(int (GModel::*)()) &GModel::getNumMeshElements);
+  cm->setDescription("return the number of mesh elemnts in the model");
   cm = cb->addMethod("getMeshElementByTag",&GModel::getMeshElementByTag);
+  cm->setArgNames("tag",NULL);
+  cm->setDescription("access a mesh element by tag, using the element cache");
   cm = cb->addMethod("getNumMeshVertices",&GModel::getNumMeshVertices);
+  cm->setDescription("return the total number of vertices in the mesh");
   cm = cb->addMethod("getMeshVertexByTag",&GModel::getMeshVertexByTag);
+  cm->setDescription("access a mesh vertex by tag, using the vertex cache");
+  cm->setArgNames("tag",NULL);
   cm = cb->setConstructor<GModel>();
+  cm->setDescription("Create an empty GModel.");
 }

@@ -293,17 +293,22 @@ template<>
 void fullMatrix<double>::registerBindings(binding *b)
 {
   classBinding *cb = b->addClass<fullMatrix<double> >("fullMatrix");
+  cb->setDescription("A full matrix of double-precision floating point numbers. The memory is allocated in one continuous block and stored in column major order (like in fortran).");
   methodBinding *cm;
   cm = cb->addMethod("size1", &fullMatrix<double>::size1);
-  cm->setDescription("return the number of rows in the matrix");
+  cm->setDescription("Returns the number of rows in the matrix");
   cm = cb->addMethod("size2", &fullMatrix<double>::size2);
-  cm->setDescription("return the number of columns in the matrix");
+  cm->setDescription("Returns the number of columns in the matrix");
   cm = cb->addMethod("get", &fullMatrix<double>::get);
   cm->setArgNames("i","j",NULL);
-  cm->setDescription("return the (i,j) entry of the matrix");
+  cm->setDescription("Returns the (i,j) entry of the matrix");
   cm = cb->addMethod("set", &fullMatrix<double>::set);
   cm->setArgNames("i","j","v",NULL);
-  cm->setDescription("set the (i,j) entry of the matrix to v");
+  cm->setDescription("Sets the (i,j) entry of the matrix to v");
   cm = cb->addMethod("gemm", &fullMatrix<double>::gemm);
+  cm->setArgNames("A","B","alpha","beta",NULL);
+  cm->setDescription("this = beta*this + alpha * (A.B)");
   cm = cb->setConstructor<fullMatrix<double>,int,int>();
+  cm->setDescription ("A new matrix of size 'nRows' x 'nColumns'");
+  cm->setArgNames("nRows","nColumns",NULL);
 }

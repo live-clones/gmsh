@@ -6,7 +6,7 @@
 #include "function.h"
 #include "dgConservationLawAdvection.h"
 
-class dgConservationLawAdvection::advection : public dataCacheDouble {
+class dgConservationLawAdvectionDiffusion::advection : public dataCacheDouble {
   dataCacheDouble &sol, &v;
   public:
   advection(std::string vFunctionName, dataCacheMap &cacheMap):
@@ -22,7 +22,7 @@ class dgConservationLawAdvection::advection : public dataCacheDouble {
     }
   }
 };
-class dgConservationLawAdvection::riemann : public dataCacheDouble {
+class dgConservationLawAdvectionDiffusion::riemann : public dataCacheDouble {
   dataCacheDouble &normals, &solLeft, &solRight,&v;
   public:
   riemann(std::string vFunctionName, dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight):
@@ -45,7 +45,7 @@ class dgConservationLawAdvection::riemann : public dataCacheDouble {
     }
   }
 };
-class dgConservationLawAdvection::diffusion : public dataCacheDouble {
+class dgConservationLawAdvectionDiffusion::diffusion : public dataCacheDouble {
   dataCacheDouble &solgrad, &nu;
   public:
   diffusion(std::string nuFunctionName, dataCacheMap &cacheMap):
@@ -63,31 +63,31 @@ class dgConservationLawAdvection::diffusion : public dataCacheDouble {
     }
   }
 };
-dataCacheDouble *dgConservationLawAdvection::newConvectiveFlux( dataCacheMap &cacheMap) const {
+dataCacheDouble *dgConservationLawAdvectionDiffusion::newConvectiveFlux( dataCacheMap &cacheMap) const {
   if( !_vFunctionName.empty())
     return new advection(_vFunctionName,cacheMap);
   else
     return NULL;
 }
-dataCacheDouble *dgConservationLawAdvection::newMaximumDiffusivity( dataCacheMap &cacheMap) const {
+dataCacheDouble *dgConservationLawAdvectionDiffusion::newMaximumDiffusivity( dataCacheMap &cacheMap) const {
   if( !_nuFunctionName.empty())
     return &cacheMap.get(_nuFunctionName);
   else
     return NULL;
 }
-dataCacheDouble *dgConservationLawAdvection::newRiemannSolver( dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight) const {
+dataCacheDouble *dgConservationLawAdvectionDiffusion::newRiemannSolver( dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight) const {
   if( !_vFunctionName.empty())
     return new riemann(_vFunctionName,cacheMapLeft, cacheMapRight);
   else
     return NULL;
 }
-dataCacheDouble *dgConservationLawAdvection::newDiffusiveFlux( dataCacheMap &cacheMap) const {
+dataCacheDouble *dgConservationLawAdvectionDiffusion::newDiffusiveFlux( dataCacheMap &cacheMap) const {
   if( !_nuFunctionName.empty())
     return new diffusion(_nuFunctionName,cacheMap);
   else
     return NULL;
 }
-dgConservationLawAdvection::dgConservationLawAdvection(std::string vFunctionName, std::string nuFunctionName) 
+dgConservationLawAdvectionDiffusion::dgConservationLawAdvectionDiffusion(std::string vFunctionName, std::string nuFunctionName) 
 {
   _vFunctionName = vFunctionName;
   _nuFunctionName = nuFunctionName;
@@ -95,8 +95,12 @@ dgConservationLawAdvection::dgConservationLawAdvection(std::string vFunctionName
 }
 
 #include "Bindings.h"
-void dgConservationLawAdvectionRegisterBindings (binding *b){
-  classBinding *cb = b->addClass<dgConservationLawAdvection>("dgConservationLawAdvection");
-  cb->setConstructor<dgConservationLawAdvection,std::string,std::string>();
+void dgConservationLawAdvectionDiffusionRegisterBindings (binding *b){
+  classBinding *cb = b->addClass<dgConservationLawAdvectionDiffusion>("dgConservationLawAdvectionDiffusion");
+  methodBinding *cm;
+  cm = cb->setConstructor<dgConservationLawAdvectionDiffusion,std::string,std::string>();
+  cm->setArgNames("v","nu",NULL);
+  cm->setDescription("A new advection-diffusion law. The advection speed is given by 'v' vector function and the (scalar) diffusivity is given by the function 'nu'.");
   cb->setParentClass<dgConservationLaw>();
+  cb->setDescription("Advection and diffusion of a scalar, the advection and diffusion are provided by functions.");
 }

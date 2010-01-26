@@ -27,7 +27,7 @@ extern "C" {
 #include "history.h"
 #endif
 
-static void report_errors(lua_State *L, int status)
+static void reportErrors(lua_State *L, int status)
 {
   if ( status!=0 ) {
     std::cerr << "-- " << lua_tostring(L, -1) << std::endl;
@@ -41,36 +41,40 @@ const char *colorBlue = "\033[1;34m";
 const char *colorDefault = "\033[0m";
 const char *colorBold = "\033[1m";
 
-static void print_method(std::string name, luaMethodBinding *mb, bool isConstructor=false) {
+static void printMethod(std::string name, luaMethodBinding *mb, bool isConstructor=false) {
   std::vector<std::string> argTypeNames;
   mb->getArgTypeNames(argTypeNames);
   std::cout<<"  ";
   if(!isConstructor)
     std::cout<<colorBold<<argTypeNames[0];
   std::cout<<colorBlue<<" "<<name<<colorDefault<<colorBold<<" (";
+  int count=0;
   for(int i=1;i< argTypeNames.size(); i++){
-    if(i!=1)
+    if(argTypeNames[i]=="-1")
+      continue;
+    if(count!=0)
       std::cout<<", ";
     std::cout<<colorBold<<argTypeNames[i]<<colorDefault;
-    if(mb->getArgNames().size()>i-1)
-      std::cout<<" "<<mb->getArgNames()[i-1];
+    if(mb->getArgNames().size()>count)
+      std::cout<<" "<<mb->getArgNames()[count];
+    count++;
   }
   std::cout<<colorBold<<")\n"<<colorDefault;
   const std::string description=mb->getDescription();
   std::cout<<(description.empty()?"no help available":description) <<"\n";
 
 }
-static void list_methods(classBinding *cb){
+static void listMethods(classBinding *cb){
   if(cb->methods.size())
     std::cout<<colorGreen<<"Methods from "<<cb->getClassName()<<colorDefault<<"\n";
   for(std::map<std::string,luaMethodBinding *>::iterator it = cb->methods.begin(); it!=cb->methods.end(); it++){
-    print_method(it->first,it->second);
+    printMethod(it->first,it->second);
   }
   if(cb->getParent())
-    list_methods(cb->getParent());
+    listMethods(cb->getParent());
 }
 
-static int lua_help (lua_State *L){
+static int luaHelp (lua_State *L){
   int argc = lua_gettop(L);
   binding *b = binding::instance();
   if (argc==0){
@@ -95,10 +99,10 @@ static int lua_help (lua_State *L){
     std::cout<<"\n";
     if(cb->getConstructor()){
       std::cout<<colorGreen<<"Constructor"<<colorDefault<<"\n";
-      print_method(className,cb->getConstructor(),true);
+      printMethod(className,cb->getConstructor(),true);
       std::cout<<"\n";
     }
-    list_methods(cb);
+    listMethods(cb);
     std::cout<<"\n";
     if(cb->children.size()){
       std::cout<<colorGreen<<"Children of "<<cb->getClassName()<<colorDefault<<"\n";
@@ -112,13 +116,15 @@ static int lua_help (lua_State *L){
   }
   return 0;
 }
+
+
 #ifdef HAVE_READLINE
-static int lua_save (lua_State *L){
+static int luaSave (lua_State *L){
   const char *filename = luaL_checkstring(L,1);
   write_history(filename);
   return 0;
 }
-static int lua_clear (lua_State *L){
+static int luaClear (lua_State *L){
   clear_history();
   return 0;
 }
@@ -126,20 +132,75 @@ static int lua_clear (lua_State *L){
 
 int binding::readFile(const char *filename)
 {
+  checkDocCompleteness();
   int s = luaL_loadfile(L, filename);
   if ( s==0 ) {
     Msg::Info("lua executes %s",filename);
     s = lua_pcall(L, 0, LUA_MULTRET, 0);
   }
-  report_errors(L, s);
+  reportErrors(L, s);
   lua_close(L);
   return (s==0);
+}
+
+static int countInArguments(const std::vector<std::string> &types){
+  int c=0;
+  for(int i=1;i<types.size();i++)
+    c+=(types[i]!="-1");
+  return c;
+}
+
+void binding::checkDocCompleteness(){
+  int nBad = 0;
+  for(std::map<std::string,classBinding *>::iterator cb = classes.begin(); cb!=classes.end();cb++) {
+    if(cb->second->getDescription().empty()){
+      Msg::Error("binded class %s has no description.", cb->first.c_str());
+      nBad++;
+    }
+    luaMethodBinding *constructor = cb->second->getConstructor();
+    if(constructor){
+      if(constructor->getDescription().empty()){
+        Msg::Error("binded constructor of class %s has no description.", cb->first.c_str());
+        nBad++;
+      }
+      std::vector<std::string> argTypeNames;
+      constructor->getArgTypeNames(argTypeNames);
+      int nTypeArg = countInArguments(argTypeNames);
+      int nDocArg = constructor->getArgNames().size();
+      if(nTypeArg != nDocArg){
+        Msg::Error("binded constructor of class %s takes %i arguments but %i are documented.",
+          cb->first.c_str(), nTypeArg, nDocArg);
+        nBad++;
+      }
+    }
+    for(std::map<std::string,luaMethodBinding*>::iterator mb = cb->second->methods.begin(); mb != cb->second->methods.end(); mb++){
+      if(mb->second->getDescription().empty()){
+        Msg::Error("binded method %s.%s has no description.", cb->first.c_str(),mb->first.c_str());
+        nBad++;
+      }
+      std::vector<std::string> argTypeNames;
+      mb->second->getArgTypeNames(argTypeNames);
+      int nTypeArg = countInArguments(argTypeNames);
+      int nDocArg = mb->second->getArgNames().size();
+      if(nTypeArg != nDocArg){
+        Msg::Error("binded method %s.%s takes %i arguments but %i are documented.",
+          cb->first.c_str(),mb->first.c_str(), nTypeArg, nDocArg);
+        nBad++;
+      }
+    }
+  }
+  if(nBad!=0){
+    Msg::Error("Bindings documentation is not complete (%i error(s) ). To enforce documentation completeness, I will exit now. Please complete the documentation and run gmsh again ;-) .\n",nBad);
+    exit(1);
+  }
+    
 }
 
 void binding::interactiveSession()
 {
   int lock = CTX::instance()->lock;
   CTX::instance()->lock = 0;
+  checkDocCompleteness();
 
   Msg::Info("Starting interactive lua session, press Ctrl-D to exit"); 
 #ifdef HAVE_READLINE
@@ -151,7 +212,7 @@ void binding::interactiveSession()
       std::cout<<expansion<<"\n";
     if(r==0 || r==1){
       add_history(expansion);
-      report_errors(L, luaL_dostring(L, expansion));
+      reportErrors(L, luaL_dostring(L, expansion));
     }
     if(expansion)
       free(expansion);
@@ -181,10 +242,10 @@ binding::binding(){
   luaopen_math(L);
   luaopen_debug(L);
 
-  lua_register(L,"help",lua_help);
+  lua_register(L,"help",luaHelp);
   #ifdef HAVE_READLINE
-  lua_register(L,"saveHistory",lua_save);
-  lua_register(L,"clearHistory",lua_clear);
+  lua_register(L,"saveHistory",luaSave);
+  lua_register(L,"clearHistory",luaClear);
   #endif
 
   // Register Lua bindings
@@ -196,7 +257,7 @@ binding::binding(){
   dgBoundaryCondition::registerBindings(this);
   dgConservationLawShallowWater2dRegisterBindings(this);
   dgConservationLawWaveEquationRegisterBindings(this);
-  dgConservationLawAdvectionRegisterBindings(this);
+  dgConservationLawAdvectionDiffusionRegisterBindings(this);
   dgPerfectGasLaw2dRegisterBindings(this);
   functionLua::registerBindings(this);
   function::registerDefaultFunctions();

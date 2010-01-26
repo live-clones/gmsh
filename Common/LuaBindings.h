@@ -9,16 +9,53 @@
 #include "Bindings.h"
 
 #ifdef HAVE_LUA
-#include "BindingsTypeName.h"
 
 extern "C" {
 #include "lua.h"
 #include "lauxlib.h"
 }
+/*** store a unique static class name for each binded class ***/
+template <typename type>
+class className{
+  static std::string _name;
+  public:
+  static void set(std::string name){
+    if(_name!=""){
+      throw;
+    }
+    _name=name;
+  }
+  static const std::string &get(){
+    if(_name==""){
+      throw;
+    }
+    return _name;
+  }
+};
+template<typename type>
+std::string  className<type>::_name;
+
+template <>
+template <typename t>
+class className<t*>{
+  public:
+  static const std::string get(){
+    return className<t>::get();
+  }
+};
+template <typename t>
+class className<const t &>{
+  public:
+  static const std::string get(){
+    return className<t>::get();
+  }
+};
+
 
 class classBinding;
 class binding {
   static binding *_instance;
+  void checkDocCompleteness();
   public:
   inline static binding *instance(){return _instance ? _instance : new binding();}
   lua_State *L;
@@ -30,18 +67,28 @@ class binding {
   classBinding *addClass(std::string className);
 };
 
+template <>
+class className<lua_State>{
+  public:
+  static const std::string get(){
+    return "-1";
+  }
+};
+
 
 
 /*** lua Stack : templates to get/push value from/on the lua stack ***/
 
 template<class type>
 class luaStack {
+};
+
+template <>
+class luaStack<void>
+{
   public:
-  static type get(lua_State *L, int ia){
-    Msg::Error("error cannot get generic class in lua, only pointers are implemented\n");
-  }
-  static void push(lua_State *L, type obj){
-    Msg::Error("cannot push generic class in lua, only pointers are implemented\n");
+  static std::string getName(){
+    return "void";
   }
 };
 
@@ -51,8 +98,8 @@ class luaStack<lua_State *>{
   static lua_State *get(lua_State *L, int ia){
     return L;
   }
-  static void push(lua_State *L, int i){
-    Msg::Error("error cannot push a lua_State in lua\n");
+  static std::string getName(){
+    return "-1";
   }
 };
 
@@ -65,6 +112,9 @@ class luaStack<int>{
   }
   static void push(lua_State *L, int i){
     lua_pushinteger(L,i);
+  }
+  static std::string getName(){
+    return "int";
   }
 };
 
@@ -83,7 +133,9 @@ class luaStack<std::vector<type > >{
     }
     return v;
   }
-  static void push(lua_State *L, std::vector<type> a){
+  static std::string getName(){
+    std::string name="vector of ";
+    return name+luaStack<type>::getName();
   }
 };
 
@@ -96,6 +148,9 @@ class luaStack<double>{
   static void push(lua_State *L, double v){
     lua_pushnumber(L,v);
   }
+  static std::string getName(){
+    return "double";
+  }
 };
 
 template<>
@@ -106,6 +161,9 @@ class luaStack<std::string>{
   }
   static void push(lua_State *L, std::string s){
     lua_pushstring(L,s.c_str());
+  }
+  static std::string getName(){
+    return "string";
   }
 };
 
@@ -124,6 +182,9 @@ class luaStack<type *>{
     luaL_getmetatable(L,className<type>::get().c_str());  // lookup metatable in Lua registry
     lua_setmetatable(L, -2);
   }
+  static std::string getName(){
+    return className<type>::get();
+  }
 };
 template <typename type>
 class luaStack<const type *>{
@@ -140,6 +201,9 @@ class luaStack<const type *>{
     luaL_getmetatable(L,className<type>::get().c_str());  // lookup metatable in Lua registry
     lua_setmetatable(L, -2);
   }
+  static std::string getName(){
+    return className<type>::get();
+  }
 };
 
 template <typename type>
@@ -151,12 +215,8 @@ class luaStack<type &>{
     if(!ud) luaL_typerror(L, ia, className<type>::get().c_str());
     return *ud->pT; 
   }
-  static void push(lua_State *L,type &obj){
-/*    userdataType *ud = static_cast<userdataType*>(lua_newuserdata(L, sizeof(userdataType)));
-    ud->pT=&obj;
-    luaL_getmetatable(L,className<type>::get().c_str());  // lookup metatable in Lua registry
-    lua_setmetatable(L, -2);*/
-    Msg::Error("cannot push a reference lua\n");
+  static std::string getName(){
+    return className<type>::get();
   }
 };
 
@@ -169,12 +229,98 @@ class luaStack<const type &>{
     if(!ud) luaL_typerror(L, ia, className<type>::get().c_str());
     return *ud->pT; 
   }
-  static void push(lua_State *L,const type &obj){
-    /*userdataType *ud = static_cast<userdataType*>(lua_newuserdata(L, sizeof(userdataType)));
-    ud->pT=(type*)&obj;
-    luaL_getmetatable(L,className<type>::get().c_str());  // lookup metatable in Lua registry
-    lua_setmetatable(L, -2);*/
-    Msg::Error("cannot push a reference lua\n");
+  static std::string getName(){
+    return className<type>::get();
+  }
+};
+
+template <typename cb>
+class argTypeNames;
+template <typename tr, typename tObj, typename t0, typename t1, typename t2, typename t3>
+class argTypeNames<tr (tObj::*)(t0,t1,t2,t3)>{
+  public:
+  static void get(std::vector<std::string> &names){
+    names.clear();
+    names.push_back(luaStack<tr>::getName());
+    names.push_back(luaStack<t0>::getName());
+    names.push_back(luaStack<t1>::getName());
+    names.push_back(luaStack<t2>::getName());
+    names.push_back(luaStack<t3>::getName());
+  }
+};
+template <typename tr, typename tObj, typename t0, typename t1, typename t2>
+class argTypeNames<tr (tObj::*)(t0,t1,t2)>{
+  public:
+  static void get(std::vector<std::string> &names){
+    names.clear();
+    names.push_back(luaStack<tr>::getName());
+    names.push_back(luaStack<t0>::getName());
+    names.push_back(luaStack<t1>::getName());
+    names.push_back(luaStack<t2>::getName());
+  }
+};
+template <typename tr, typename tObj, typename t0, typename t1>
+class argTypeNames<tr (tObj::*)(t0,t1)>{
+  public:
+  static void get(std::vector<std::string> &names){
+    names.clear();
+    names.push_back(luaStack<tr>::getName());
+    names.push_back(luaStack<t0>::getName());
+    names.push_back(luaStack<t1>::getName());
+  }
+};
+template <typename tr, typename tObj, typename t0>
+class argTypeNames<tr (tObj::*)(t0)>{
+  public:
+  static void get(std::vector<std::string> &names){
+    names.clear();
+    names.push_back(luaStack<tr>::getName());
+    names.push_back(luaStack<t0>::getName());
+  }
+};
+template <typename tr, typename tObj>
+class argTypeNames<tr (tObj::*)()>{
+  public:
+  static void get(std::vector<std::string> &names){
+    names.clear();
+    names.push_back(luaStack<tr>::getName());
+  }
+};
+template <typename cb>
+class argTypeNames;
+template <typename tr, typename tObj, typename t0, typename t1, typename t2, typename t3>
+class argTypeNames<tr (tObj::*)(t0,t1,t2,t3)const>{
+  public:
+  static void get(std::vector<std::string> &names){
+    argTypeNames<tr (tObj::*)(t0,t1,t2,t3)>::get(names);
+  }
+};
+template <typename tr, typename tObj, typename t0, typename t1, typename t2>
+class argTypeNames<tr (tObj::*)(t0,t1,t2)const>{
+  public:
+  static void get(std::vector<std::string> &names){
+    argTypeNames<tr (tObj::*)(t0,t1,t2)>::get(names);
+  }
+};
+template <typename tr, typename tObj, typename t0, typename t1>
+class argTypeNames<tr (tObj::*)(t0,t1)const>{
+  public:
+  static void get(std::vector<std::string> &names){
+    argTypeNames<tr (tObj::*)(t0,t1)>::get(names);
+  }
+};
+template <typename tr, typename tObj, typename t0>
+class argTypeNames<tr (tObj::*)(t0)const>{
+  public:
+  static void get(std::vector<std::string> &names){
+    argTypeNames<tr (tObj::*)(t0)>::get(names);
+  }
+};
+template <typename tr, typename tObj>
+class argTypeNames<tr (tObj::*)()const>{
+  public:
+  static void get(std::vector<std::string> &names){
+    argTypeNames<tr (tObj::*)()>::get(names);
   }
 };
 

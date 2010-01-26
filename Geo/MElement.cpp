@@ -807,13 +807,21 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
 void MElement::registerBindings(binding *b)
 {
   classBinding *cb = b->addClass<MElement>("MElement");
+  cb->setDescription("A mesh element.");
   methodBinding *cm;
   cm = cb->addMethod("getNum",&MElement::getNum);
-  // here we specify the cast because there are 2 MVertex::x function
+  cm->setDescription("return the tag of the element");
   cm = cb->addMethod("getNumVertices", &MElement::getNumVertices);
+  cm->setDescription("get the number of vertices of this element");
   cm = cb->addMethod("getVertex", &MElement::getVertex);
+  cm->setDescription("return the i-th vertex of this element");
+  cm->setArgNames("i",NULL);
   cm = cb->addMethod("getType", &MElement::getType);
+  cm->setDescription("get the type of the element");
   cm = cb->addMethod("getPartition", &MElement::getPartition);
+  cm->setDescription("get the partition to which the element belongs");
   cm = cb->addMethod("getPolynomialOrder", &MElement::getPolynomialOrder);
+  cm->setDescription("return the polynomial order the element");
   cm = cb->addMethod("getDim", &MElement::getDim);
+  cm->setDescription("return the geometrical dimension of the element");
 }

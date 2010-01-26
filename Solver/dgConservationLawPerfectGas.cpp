@@ -848,12 +848,19 @@ dgBoundaryCondition *dgPerfectGasLaw2d::newSlipWallBoundary()  {
 #include "Bindings.h"
 void dgPerfectGasLaw2dRegisterBindings (binding *b){
   classBinding *cb = b->addClass<dgPerfectGasLaw2d>("dgPerfectGasLaw2d");
+  cb->setDescription("Perfect Gas conservation law\n\\rho \\left(\\frac{\\partial \\mathbf{v}}{\\partial t} + \\mathbf{v} \\cdot \\nabla \\mathbf{v}\\right) = -\\nabla p + \\mu \\nabla^2 \\mathbf{v} + \\left( \\tfrac13 \\mu + \\mu^v) \\nabla (\\nabla \\cdot \\mathbf{v} \\right) + \\rho \\mathbf{f}"); 
   methodBinding *cm;
-  cb->addMethod("newWallBoundary",&dgPerfectGasLaw2d::newWallBoundary);
-  cb->addMethod("newNonSlipWallBoundary",&dgPerfectGasLaw2d::newWallBoundary);
-  cb->addMethod("newSlipWallBoundary",&dgPerfectGasLaw2d::newSlipWallBoundary);
-  cb->addMethod("setSource",&dgPerfectGasLaw2d::setSource);
-  cb->addMethod("setViscosityAndThermalConductivity",&dgPerfectGasLaw2d::setViscosityAndThermalConductivity);
-  cb->setConstructor<dgPerfectGasLaw2d>();
+  cm = cb->addMethod("newNonSlipWallBoundary",&dgPerfectGasLaw2d::newWallBoundary);
+  cm->setDescription("non slip wall");
+  cm = cb->addMethod("newSlipWallBoundary",&dgPerfectGasLaw2d::newSlipWallBoundary);
+  cm->setDescription("slip wall");
+  cm = cb->addMethod("setSource",&dgPerfectGasLaw2d::setSource);
+  cm->setArgNames("f",NULL);
+  cm->setDescription("set the function to compute the source term");
+  cm = cb->addMethod("setViscosityAndThermalConductivity",&dgPerfectGasLaw2d::setViscosityAndThermalConductivity);
+  cm->setArgNames("f_mu","f_kappa",NULL);
+  cm->setDescription("set the fonctions to compute mu and kappa, the scalar viscosity and thermal conductivity coefficients");
+  cm = cb->setConstructor<dgPerfectGasLaw2d>();
+  cm->setDescription("A new perfect gas conservation law");
   cb->setParentClass<dgConservationLaw>();
 }

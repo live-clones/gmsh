@@ -48,7 +48,11 @@ dataCacheDouble *functionLua::newDataCache(dataCacheMap *m)
 
 void functionLua::registerBindings(binding *b){
   classBinding *cb= b->addClass<functionLua>("functionLua");
-  cb->setConstructor<functionLua,int,std::string,std::vector<std::string>,lua_State*>();
+  cb->setDescription("A function (see the 'function' documentation entry) defined in LUA.");
+  methodBinding *mb;
+  mb = cb->setConstructor<functionLua,int,std::string,std::vector<std::string>,lua_State*>();
+  mb->setArgNames("d", "f", "dep", NULL);
+  mb->setDescription("A new functionLua which evaluates a vector of dimension 'd' using the lua function 'f'. This function can take other functions as arguments listed by the 'dep' vector.");
   cb->setParentClass<function>();
 }
 

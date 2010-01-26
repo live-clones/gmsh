@@ -403,12 +403,18 @@ bool reparamMeshVertexOnEdge(const MVertex *v, const GEdge *ge, double &param)
 void MVertex::registerBindings(binding *b)
 {
   classBinding *cb = b->addClass<MVertex>("MVertex");
+  cb->setDescription("A mesh vertex.");
   methodBinding *cm;
   cm = cb->addMethod("getNum",&MVertex::getNum);
-  // here we specify the cast because there are 2 MVertex::x function
+  cm->setDescription("Return the immutable vertex number.");
+  //the cast is epxlicitely given because there are 2 MVertex::x function
   cm = cb->addMethod("x", (double (MVertex::*)() const) &MVertex::x);
-  // cm = cb->addMethod("x2", (double& (MVertex::*)()) &MVertex::x);
+  cm->setDescription("Return the x-coordinate.");
   cm = cb->addMethod("y", (double (MVertex::*)() const) &MVertex::y);
+  cm->setDescription("Return the y-coordinate.");
   cm = cb->addMethod("z", (double (MVertex::*)() const) &MVertex::z);
+  cm->setDescription("Return the z-coordinate.");
   cm = cb->setConstructor<MVertex,double,double,double>();
+  cm->setArgNames("x","y","z",NULL);
+  cm->setDescription("Create a new mesh vertex at (x,y,z).");
 }

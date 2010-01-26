@@ -140,8 +140,13 @@ dgBoundaryCondition *dgConservationLawWaveEquation::newBoundaryWall(){
 #include "Bindings.h"
 void dgConservationLawWaveEquationRegisterBindings(binding *b){
   classBinding *cb = b->addClass<dgConservationLawWaveEquation> ("dgConservationLawWaveEquation");
+  cb->setDescription("Solve the wave equation in dimension 1, 2 or 3.)");
   methodBinding *cm;
-  cb->addMethod("newBoundaryWall",&dgConservationLawWaveEquation::newBoundaryWall);
-  cb->setConstructor<dgConservationLawWaveEquation,int>();
+  cm = cb->addMethod("newBoundaryWall",&dgConservationLawWaveEquation::newBoundaryWall);
+  cm->setDescription("wall boundary");
+  cm = cb->setConstructor<dgConservationLawWaveEquation,int>();
+  cm->setArgNames("d",NULL);
+  cm->setDescription("New wave equation of dimension 'd'");
+
   cb->setParentClass<dgConservationLaw>();
 }

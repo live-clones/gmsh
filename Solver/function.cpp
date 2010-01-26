@@ -189,9 +189,15 @@ void function::registerDefaultFunctions()
 }
 void function::registerBindings(binding *b){
   classBinding *cb = b->addClass<function>("function");
-  cb->addMethod("getName",&function::getName);
+  cb->setDescription("A generic function that can be evaluated on a set of points. Functions can call other functions and their values are cached so that if two different functions call the same function f, f is only evaluated once.");
+  methodBinding *mb;
+  mb = cb->addMethod("getName",&function::getName);
+  mb->setDescription("Return the string which identifies this function.");
   cb = b->addClass<functionConstant>("functionConstant");
-  cb->setConstructor<functionConstant,fullMatrix<double>*>();
+  cb->setDescription("A constant (scalar or vector) function");
+  mb = cb->setConstructor<functionConstant,fullMatrix<double>*>();
+  mb->setArgNames("v",NULL);
+  mb->setDescription("A new constant function wich values 'v' everywhere. v can be a row-vector.");
   cb->setParentClass<function>();
 }
 
