@@ -41,13 +41,30 @@ const char *colorBlue = "\033[1;34m";
 const char *colorDefault = "\033[0m";
 const char *colorBold = "\033[1m";
 
+static void print_method(std::string name, luaMethodBinding *mb, bool isConstructor=false) {
+  std::vector<std::string> argTypeNames;
+  mb->getArgTypeNames(argTypeNames);
+  std::cout<<"  ";
+  if(!isConstructor)
+    std::cout<<colorBold<<argTypeNames[0];
+  std::cout<<colorBlue<<" "<<name<<colorDefault<<colorBold<<" (";
+  for(int i=1;i< argTypeNames.size(); i++){
+    if(i!=1)
+      std::cout<<", ";
+    std::cout<<colorBold<<argTypeNames[i]<<colorDefault;
+    if(mb->getArgNames().size()>i-1)
+      std::cout<<" "<<mb->getArgNames()[i-1];
+  }
+  std::cout<<colorBold<<")\n"<<colorDefault;
+  const std::string description=mb->getDescription();
+  std::cout<<(description.empty()?"no help available":description) <<"\n";
+
+}
 static void list_methods(classBinding *cb){
   if(cb->methods.size())
-    std::cout<<colorBold<<"Methods from "<<cb->getClassName()<<colorDefault<<"\n";
+    std::cout<<colorGreen<<"Methods from "<<cb->getClassName()<<colorDefault<<"\n";
   for(std::map<std::string,luaMethodBinding *>::iterator it = cb->methods.begin(); it!=cb->methods.end(); it++){
-    std::cout<<colorBlue<<"  "<<it->first<<colorDefault<<" : ";
-    const std::string description=it->second->getDescription();
-    std::cout<<(description.empty()?"no help available":description) <<"\n";
+    print_method(it->first,it->second);
   }
   if(cb->getParent())
     list_methods(cb->getParent());
@@ -76,12 +93,17 @@ static int lua_help (lua_State *L){
     const std::string description=cb->getDescription();
     std::cout<<(description.empty()?"no help available":description) <<"\n";
     std::cout<<"\n";
+    if(cb->getConstructor()){
+      std::cout<<colorGreen<<"Constructor"<<colorDefault<<"\n";
+      print_method(className,cb->getConstructor(),true);
+      std::cout<<"\n";
+    }
     list_methods(cb);
     std::cout<<"\n";
     if(cb->children.size()){
-      std::cout<<colorBold<<"Children of "<<cb->getClassName()<<colorDefault<<"\n";
+      std::cout<<colorGreen<<"Children of "<<cb->getClassName()<<colorDefault<<"\n";
       for(std::set<classBinding *>::iterator it = cb->children.begin(); it!=cb->children.end(); it++){
-        std::cout<<"  "<<colorGreen<<(*it)->getClassName()<<colorDefault<<" : ";
+        std::cout<<"  "<<colorBlue<<(*it)->getClassName()<<colorDefault<<" : ";
         const std::string description=(*it)->getDescription();
         std::cout<<(description.empty()?"no help available":description) <<"\n";
       }
@@ -167,15 +189,15 @@ binding::binding(){
 
   // Register Lua bindings
   GModel::registerBindings(this);
+  fullMatrix<double>::registerBindings(this);
+  function::registerBindings(this);
+  dgConservationLaw::registerBindings(this);
   dgSystemOfEquations::registerBindings(this);
   dgBoundaryCondition::registerBindings(this);
-  dgConservationLaw::registerBindings(this);
   dgConservationLawShallowWater2dRegisterBindings(this);
   dgConservationLawWaveEquationRegisterBindings(this);
   dgConservationLawAdvectionRegisterBindings(this);
   dgPerfectGasLaw2dRegisterBindings(this);
-  fullMatrix<double>::registerBindings(this);
-  function::registerBindings(this);
   functionLua::registerBindings(this);
   function::registerDefaultFunctions();
   MVertex::registerBindings(this);

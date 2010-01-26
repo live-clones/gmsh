@@ -1,17 +1,20 @@
 #ifndef _LUA_BINDINGS_H_
 #define _LUA_BINDINGS_H_
 
+#include <map>
+#include <vector>
+#include <set>
+#include "GmshConfig.h"
+#include "GmshMessage.h"
 #include "Bindings.h"
 
 #ifdef HAVE_LUA
-//#include "BindingsDocTemplates.h"
+#include "BindingsTypeName.h"
 
 extern "C" {
 #include "lua.h"
 #include "lauxlib.h"
 }
-#include <vector>
-#include <set>
 
 class classBinding;
 class binding {
@@ -27,26 +30,6 @@ class binding {
   classBinding *addClass(std::string className);
 };
 
-/*** store a unique static class name for each binded class ***/
-template <typename type>
-class className{
-  static std::string _name;
-  public:
-  static void set(std::string name){
-    if(_name!="")
-      throw;
-    _name=name;
-  }
-  static const std::string &get(){
-    if(_name=="")
-      throw;
-    return _name;
-  }
-};
-template<typename type>
-std::string  className<type>::_name;
-
-
 
 
 /*** lua Stack : templates to get/push value from/on the lua stack ***/
@@ -55,7 +38,7 @@ template<class type>
 class luaStack {
   public:
   static type get(lua_State *L, int ia){
-    printf("error cannot get generic class in lua, only pointers are implemented\n");
+    Msg::Error("error cannot get generic class in lua, only pointers are implemented\n");
   }
   static void push(lua_State *L, type obj){
     Msg::Error("cannot push generic class in lua, only pointers are implemented\n");
@@ -309,6 +292,8 @@ static int luaCall(lua_State *L,void (tObj::*_f)() const) {
   return 0;
 };
 
+
+
 //non const, no return
 template <typename tObj, typename t0, typename t1, typename t2, typename t3>
 static int luaCall(lua_State *L,void (tObj::*_f)(t0,t1,t2,t3)) {
@@ -337,6 +322,9 @@ static int luaCall(lua_State *L,void (tObj::*_f)()) {
 };
 
 
+/*** arg names ***/
+
+
 /*** actual bindings classes ***/
 class luaMethodBinding :public methodBinding{
   public:
@@ -348,6 +336,7 @@ class luaMethodBinding :public methodBinding{
   luaMethodBinding(){
     _luaname="";
   }
+  virtual void getArgTypeNames(std::vector<std::string> &names){};
 };
 
 template <typename cb>
@@ -360,8 +349,8 @@ class methodBindingT:public luaMethodBinding {
   int call (lua_State *L) {
     return luaCall(L,_f);
   }
-  void getArgNames(std::string &returnTypeName, std::vector<std::string> &argTypeName) {
-    getArgNames(_f,returnTypeName,argTypeName);
+  void getArgTypeNames(std::vector<std::string> &names) {
+    argTypeNames<cb>::get(names);
   }
 };
 
@@ -373,6 +362,9 @@ class constructorBindingT:public luaMethodBinding {
     (luaStack<tObj*>::push(L,new tObj(luaStack<t0>::get(L,1),luaStack<t1>::get(L,2),luaStack<t2>::get(L,3), luaStack<t3>::get(L,4))));
     return 1;
   }
+  void getArgTypeNames(std::vector<std::string> &names) {
+    argTypeNames<void (tObj::*)(t0,t1,t2,t3)>::get(names);
+  }
 };
 
 template <typename tObj>
@@ -383,6 +375,9 @@ class constructorBindingT<tObj,void,void,void,void>:public luaMethodBinding {
     (luaStack<tObj*>::push(L,new tObj()));
     return 1;
   }
+  void getArgTypeNames(std::vector<std::string> &names) {
+    argTypeNames<void (tObj::*)()>::get(names);
+  }
 };
 template <typename tObj, typename t0>
 class constructorBindingT<tObj,t0,void,void,void>:public luaMethodBinding {
@@ -391,6 +386,9 @@ class constructorBindingT<tObj,t0,void,void,void>:public luaMethodBinding {
     lua_remove(L,1);
     (luaStack<tObj*>::push(L,new tObj(luaStack<t0>::get(L,1))));
     return 1;
+  }
+  void getArgTypeNames(std::vector<std::string> &names) {
+    argTypeNames<void (tObj::*)(t0)>::get(names);
   }
 };
 template <typename tObj, typename t0, typename t1>
@@ -401,6 +399,9 @@ class constructorBindingT<tObj,t0,t1,void,void>:public luaMethodBinding {
     (luaStack<tObj*>::push(L,new tObj(luaStack<t0>::get(L,1),luaStack<t1>::get(L,2))));
     return 1;
   }
+  void getArgTypeNames(std::vector<std::string> &names) {
+    argTypeNames<void (tObj::*)(t0,t1)>::get(names);
+  }
 };
 template <typename tObj, typename t0, typename t1, typename t2>
 class constructorBindingT<tObj,t0,t1,t2,void>:public luaMethodBinding {
@@ -410,11 +411,15 @@ class constructorBindingT<tObj,t0,t1,t2,void>:public luaMethodBinding {
     (luaStack<tObj*>::push(L,new tObj(luaStack<t0>::get(L,1),luaStack<t1>::get(L,2),luaStack<t2>::get(L,3))));
     return 1;
   }
+  void getArgTypeNames(std::vector<std::string> &names) {
+    argTypeNames<void (tObj::*)(t0,t1,t2)>::get(names);
+  }
 };
 
 class classBinding {
   std::string _className;
   binding *_b;
+  luaMethodBinding *_constructor;
   static int callMethod(lua_State *L) {
     return  static_cast<luaMethodBinding*>(lua_touserdata(L, lua_upvalueindex(1)))->call(L); 
   }
@@ -444,17 +449,22 @@ class classBinding {
     lua_pushcclosure(L, callMethod, 1);
     lua_setfield(L, mt,"__call");
     lua_pop(L,2);
+    _constructor=constructor;
   }
   //for the doc
   std::string _description;
   classBinding *_parent;
 public:
   std::set<classBinding *> children;
+  inline luaMethodBinding *getConstructor(){
+    return _constructor;
+  }
   // get userdata from Lua stack and return pointer to T object
   classBinding(binding *b, std::string name){
     _b=b;
     lua_State *L = _b->L;
     _className=name;
+    _constructor=NULL;
 
     // there are 3 tables involved :
     // methods : the table of the C++ functions we bind (exept constructor)

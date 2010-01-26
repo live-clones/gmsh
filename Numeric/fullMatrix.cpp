@@ -293,10 +293,17 @@ template<>
 void fullMatrix<double>::registerBindings(binding *b)
 {
   classBinding *cb = b->addClass<fullMatrix<double> >("fullMatrix");
-  cb->addMethod("size1", &fullMatrix<double>::size1);
-  cb->addMethod("size2", &fullMatrix<double>::size2);
-  cb->addMethod("get", &fullMatrix<double>::get);
-  cb->addMethod("set", &fullMatrix<double>::set);
-  cb->addMethod("gemm", &fullMatrix<double>::gemm);
-  cb->setConstructor<fullMatrix<double>,int,int>();
+  methodBinding *cm;
+  cm = cb->addMethod("size1", &fullMatrix<double>::size1);
+  cm->setDescription("return the number of rows in the matrix");
+  cm = cb->addMethod("size2", &fullMatrix<double>::size2);
+  cm->setDescription("return the number of columns in the matrix");
+  cm = cb->addMethod("get", &fullMatrix<double>::get);
+  cm->setArgNames("i","j",NULL);
+  cm->setDescription("return the (i,j) entry of the matrix");
+  cm = cb->addMethod("set", &fullMatrix<double>::set);
+  cm->setArgNames("i","j","v",NULL);
+  cm->setDescription("set the (i,j) entry of the matrix to v");
+  cm = cb->addMethod("gemm", &fullMatrix<double>::gemm);
+  cm = cb->setConstructor<fullMatrix<double>,int,int>();
 }

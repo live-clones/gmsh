@@ -23,6 +23,7 @@ set(SRC
   TreeUtils.cpp avl.cpp
   MallocUtils.cpp
   ConnectionManager.cpp
+  Bindings.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_SOURCE_DIR}/Common *.h) 
