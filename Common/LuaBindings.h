@@ -611,6 +611,7 @@ public:
     lua_State *L = _b->L;
     _className=name;
     _constructor=NULL;
+    _parent=NULL;
 
     // there are 3 tables involved :
     // methods : the table of the C++ functions we bind (exept constructor)
