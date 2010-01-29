@@ -73,3 +73,4 @@ Physical Surface("BoundaryLayer") = {100};
 Physical Line("Cylinder") = {4, 1, 2, 3};
 Physical Line("Box") = {5, 6, 7, 8};
 Mesh.CharacteristicLengthExtendFromBoundary=1;
+Recombine Surface {4, 1, 2, 3};

@@ -1,7 +1,7 @@
 MACH = .05;
 RHO  = 1.0;
 PRES = 1./(MACH*RHO*RHO*1.4*1.4) 
-V = 1.0 
+V = 1 
 SOUND = V/MACH
 
 --[[ 
@@ -26,7 +26,7 @@ FS = functionLua(4, 'free_stream', {'XYZ'}):getName()
 
 -- diffusivity
 mu=fullMatrix(1,1);
-mu:set(0,0,0.01)
+mu:set(0,0,0.025)
 kappa=fullMatrix(1,1);
 kappa:set(0,0,0.01)
 
@@ -62,7 +62,7 @@ CFL = 20.1;
 dt = CFL * DG:computeInvSpectralRadius();
 print('DT = ',dt)
 T = 0;
-for i=1,1000000 do
+for i=1,2 do
     dt = CFL * DG:computeInvSpectralRadius();    
     norm = DG:RK44(dt)
     T = T + dt
