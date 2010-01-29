@@ -4871,7 +4871,7 @@ libraries. See @ref{License} for more information.
 Nothing... The name was derived from a previous version called ``msh''
 (a shortcut for ``mesh''), with the ``g'' prefix added to differentiate
 it. The default mesh file format used by Gmsh still uses the @file{.msh}
-extention.
+extension.
 
 In English people tend to pronounce `Gmsh' as ``gee-mesh''.
 

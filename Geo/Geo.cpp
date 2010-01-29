@@ -147,7 +147,7 @@ static void Free_Vertex(void *a, void *b)
   }
 }
 
-PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T *intlist, List_T *bndlist[4])
+PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T *intlist)
 {
   PhysicalGroup *p = new PhysicalGroup;
   p->Entities = List_Create(List_Nbr(intlist), 1, sizeof(int));
@@ -160,17 +160,6 @@ PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T *intlist, List_T *b
     int j;
     List_Read(intlist, i, &j);
     List_Add(p->Entities, &j);
-  }
-  p->Boundaries[0] = p->Boundaries[1] = p->Boundaries[2] = p->Boundaries[3] = 0;
-  if (bndlist){
-    for(int i = 0; i < 4; i++) {
-      p->Boundaries[i] = List_Create(List_Nbr(bndlist[i]), 1, sizeof(int));
-      for(int j = 0; j < List_Nbr(bndlist[i]); j++) {
-        int k;
-        List_Read(bndlist[i], j, &k);
-        List_Add(p->Boundaries[i], &k);
-      }
-    }
   }
   return p;
 }

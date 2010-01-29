@@ -130,19 +130,28 @@ int GModel::importGEOInternals()
     for(int i = 0; i < List_Nbr(curves); i++){
       Curve *c;
       List_Read(curves, i, &c);
-      if(c->Num >= 0 && c->beg && c->end){
+      if(c->Num >= 0){
         GEdge *e = getEdgeByTag(c->Num);
-        if(!e){
+        if(!e && c->Typ == MSH_SEGM_COMPOUND){
+          std::vector<GEdge*> comp;
+          for(unsigned int j = 0; j < c->compound.size(); j++){
+            GEdge *ge = getEdgeByTag(c->compound[j]);
+            if(ge) comp.push_back(ge);
+          }
+          e = new GEdgeCompound(this, c->Num, comp);
+          add(e);
+        }
+        else if(!e && c->beg && c->end){
           e = new gmshEdge(this, c,
                            getVertexByTag(c->beg->Num),
                            getVertexByTag(c->end->Num));
-         add(e);
+          add(e);
         }
         else
           e->resetMeshAttributes();
         if(!c->Visible) e->setVisibility(0);
         if(c->Color.type) e->setColor(c->Color.mesh);
-        if(c->degenerated)e->setTooSmall(true);
+        if(c->degenerated) e->setTooSmall(true);
       }
     }
     List_Delete(curves);
@@ -153,7 +162,26 @@ int GModel::importGEOInternals()
       Surface *s;
       List_Read(surfaces, i, &s);
       GFace *f = getFaceByTag(s->Num);
-      if(!f){
+      if(!f && s->Typ == MSH_SURF_COMPOUND){
+        std::list<GFace*> comp;
+        for(unsigned int j = 0; j < s->compound.size(); j++){
+          GFace *gf = getFaceByTag(s->compound[j]);
+          if(gf) comp.push_back(gf);
+        }
+        std::list<GEdge*> b[4];
+        for(int j = 0; j < 4; j++){
+          for(int k = 0; k < s->compoundBoundary[j].size(); k++){
+            GEdge *ge = getEdgeByTag(s->compoundBoundary[j][k]);
+            if(ge) b[j].push_back(ge);
+          }
+        }
+        f = new GFaceCompound(this, std::abs(s->Num), comp,
+                              b[0], b[1], b[2], b[3], 0,
+                              s->Num > 0 ? GFaceCompound::HARMONIC :
+                              GFaceCompound::CONFORMAL);
+        add(f);
+      }
+      else if(!f){
         f = new gmshFace(this, s);
         add(f);
       }
@@ -170,7 +198,16 @@ int GModel::importGEOInternals()
       Volume *v;
       List_Read(volumes, i, &v);
       GRegion *r = getRegionByTag(v->Num);
-      if(!r){
+      if(!r && v->Typ == MSH_VOLUME_COMPOUND){
+        std::vector<GRegion*> comp;
+        for(unsigned int j = 0; j < v->compound.size(); j++){
+          GRegion *gr = getRegionByTag(v->compound[j]);
+          if(gr) comp.push_back(gr);
+        }
+        r = new GRegionCompound(this, v->Num, comp);
+        add(r);
+      }
+      else if(!r){
         r = new gmshRegion(this, v);
         add(r);
       }
@@ -184,81 +221,21 @@ int GModel::importGEOInternals()
   for(int i = 0; i < List_Nbr(_geo_internals->PhysicalGroups); i++){
     PhysicalGroup *p;
     List_Read(_geo_internals->PhysicalGroups, i, &p);
-    std::vector<GEdge*> e_compound;
-    std::list<GFace*> f_compound;
-    std::vector<GRegion*> r_compound;
     for(int j = 0; j < List_Nbr(p->Entities); j++){
       int num;
       List_Read(p->Entities, j, &num);
       GEntity *ge = 0;
       switch(p->Typ){
-      case MSH_PHYSICAL_POINT:
-        ge = getVertexByTag(abs(num));
-        break;
-      case MSH_PHYSICAL_LINE: 
-        ge = getEdgeByTag(abs(num));
-        e_compound.push_back(getEdgeByTag(abs(num)));
-        break; 
-     case MSH_PHYSICAL_SURFACE: 
-        ge = getFaceByTag(abs(num));
-        f_compound.push_back(getFaceByTag(abs(num))); 
-        break;
-      case MSH_PHYSICAL_VOLUME:  
-        ge = getRegionByTag(abs(num)); 
-        r_compound.push_back(getRegionByTag(abs(num))); 
-        break;
+      case MSH_PHYSICAL_POINT:   ge = getVertexByTag(abs(num)); break;
+      case MSH_PHYSICAL_LINE:    ge = getEdgeByTag(abs(num)); break; 
+      case MSH_PHYSICAL_SURFACE: ge = getFaceByTag(abs(num)); break;
+      case MSH_PHYSICAL_VOLUME:  ge = getRegionByTag(abs(num)); break;
       }
       int pnum = sign(num) * p->Num;
       if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) == 
          ge->physicals.end())
         ge->physicals.push_back(pnum);
     }
-
-    // the physical is a compound i.e. we allow the meshes
-    // not to conform internal MEdges of the compound
-
-    if (p->Typ == MSH_PHYSICAL_LINE && p->Boundaries[0]){
-      GEdge *ge = getEdgeByTag(abs(p->Num));
-      if (!ge){
-        GEdgeCompound *ge = new GEdgeCompound(this, p->Num, e_compound);
-        add(ge);
-      }
-      else
-        ge->resetMeshAttributes();
-    }      
-    if (p->Typ == MSH_PHYSICAL_SURFACE && p->Boundaries[0]){
-      int i = 0;
-      List_T *bnd;
-      std::list<GEdge*> b[4];
-      while(i < 4 && (bnd = p->Boundaries[i])){
-        for(int j = 0; j < List_Nbr(bnd); j++){
-          int ie;
-          List_Read(bnd, j, &ie);
-          b[i].push_back(getEdgeByTag(abs(ie)));
-        }
-        i++;
-      }
-      GFace *gf = getFaceByTag(abs(p->Num));
-      if (!gf){
-        GFaceCompound *gf = new GFaceCompound(this, abs(p->Num), f_compound, 
-                                              b[0], b[1], b[2], b[3],0,
-					      p->Num > 0 ? GFaceCompound::HARMONIC :
-					      GFaceCompound::CONFORMAL);
-        add(gf);
-      }
-      else
-        gf->resetMeshAttributes();
-    }   
-    if (p->Typ == MSH_PHYSICAL_VOLUME && p->Boundaries[0]){
-      GRegion *gr = getRegionByTag(abs(p->Num));
-      if (!gr){
-        GRegionCompound *gr = new GRegionCompound(this, p->Num, r_compound);
-        add(gr);
-      }
-      else
-        gr->resetMeshAttributes();
-    }
-   
   }
 
   Msg::Debug("Gmsh model (GModel) imported:");
