@@ -134,54 +134,93 @@ static int getGenus (std::vector<MElement *> &elements,
 static int getAspectRatio(std::vector<MElement *> &elements, 
                           std::vector<std::vector<MEdge> > &boundaries)
 { 
-  std::set<MVertex*> vs;
-  for(unsigned int i = 0; i < elements.size(); i++){
-    MElement *e = elements[i];
-    for(int j = 0; j < e->getNumVertices(); j++){
-      vs.insert(e->getVertex(j));
-    }
-  }
-  SBoundingBox3d bb;
-  SOrientedBoundingBox obbox ;
-  std::vector<SPoint3> vertices;
-  for (std::set<MVertex* >::iterator it = vs.begin(); it != vs.end(); it++){
-    SPoint3 pt((*it)->x(),(*it)->y(), (*it)->z());
-    vertices.push_back(pt);
-    bb += pt;
+
+  double area3D = 0.0;
+  for(unsigned int i = 0; i <elements.size(); ++i){
+    MElement *t = elements[i];
+    std::vector<MVertex *> v(3);
+    for(int k = 0; k < 3; k++) v[k] = t->getVertex(k);
+    double p0[3] = {v[0]->x(), v[0]->y(), v[0]->z()}; 
+    double p1[3] = {v[1]->x(), v[1]->y(), v[1]->z()};
+    double p2[3] = {v[2]->x(), v[2]->y(), v[2]->z()};
+    double a_3D = fabs(triangle_area(p0, p1, p2));
+    area3D += a_3D;
   }
   
-  //obbox =  SOrientedBoundingBox::buildOBB(vertices);
-  //double H = obbox.getMaxSize(); 
-  double H = norm(SVector3(bb.max(), bb.min()));
-  
-  double D = H;
-  if (boundaries.size() > 0.0 ) D = 0.0;
-  for (unsigned int i = 0; i < boundaries.size(); i++){
-    std::set<MVertex*> vb;
+  double tot_length = 0.0;
+  for(unsigned int i = 0; i <boundaries.size(); ++i){
     std::vector<MEdge> iBound = boundaries[i];
-    for (unsigned int j = 0; j < iBound.size(); j++){
-      MEdge e = iBound[j];
-      vb.insert(e.getVertex(0));
-      vb.insert(e.getVertex(1));
+    double iLength = 0.0;
+    for( unsigned int j = 0; j <iBound.size(); ++j){
+      MVertex *v0 = iBound[j].getVertex(0);
+      MVertex *v1 = iBound[j].getVertex(1);    
+      const double length = sqrt((v0->x() - v1->x()) * (v0->x() - v1->x()) + 
+				 (v0->y() - v1->y()) * (v0->y() - v1->y()) +
+				 (v0->z() - v1->z()) * (v0->z() - v1->z()));
+      iLength += length;
     }
-    std::vector<SPoint3> vBounds;
-    for (std::set<MVertex* >::iterator it = vb.begin(); it != vb.end(); it++){
-      SPoint3 pt((*it)->x(),(*it)->y(), (*it)->z());
-      vBounds.push_back(pt);
-    }
-    SOrientedBoundingBox obboxD = SOrientedBoundingBox::buildOBB(vBounds);
-    D = std::max(D, obboxD.getMaxSize());
+    tot_length += iLength;
   }
-  int AR = (int)ceil(H/D);
+  int AR = 1.0;
+  if (boundaries.size() > 0 ){
+    tot_length /= boundaries.size();
+    AR = (int) ceil(2*3.14*area3D/(tot_length*tot_length));
+  }
+
+//   std::set<MVertex*> vs;
+//   for(unsigned int i = 0; i < elements.size(); i++){
+//     MElement *e = elements[i];
+//     for(int j = 0; j < e->getNumVertices(); j++){
+//       vs.insert(e->getVertex(j));
+//     }
+//   }
+//   SBoundingBox3d bb;
+//   std::vector<SPoint3> vertices;
+//   for (std::set<MVertex* >::iterator it = vs.begin(); it != vs.end(); it++){
+//     SPoint3 pt((*it)->x(),(*it)->y(), (*it)->z());
+//     vertices.push_back(pt);
+//     bb += pt;
+//   }
+//   double H = norm(SVector3(bb.max(), bb.min()));
+
+//   //SOrientedBoundingBox obbox =  SOrientedBoundingBox::buildOBB(vertices);
+//   //double H = obbox.getMaxSize(); 
+  
+//   double D = H;
+//   if (boundaries.size()  > 0 ) D = 0.0;
+//   for (unsigned int i = 0; i < boundaries.size(); i++){
+//     std::set<MVertex*> vb;
+//     std::vector<MEdge> iBound = boundaries[i];
+//     for (unsigned int j = 0; j < iBound.size(); j++){
+//       MEdge e = iBound[j];
+//       vb.insert(e.getVertex(0));
+//       vb.insert(e.getVertex(1));
+//     }
+//     std::vector<SPoint3> vBounds;
+//     SBoundingBox3d bb;
+//     for (std::set<MVertex* >::iterator it = vb.begin(); it != vb.end(); it++){
+//       SPoint3 pt((*it)->x(),(*it)->y(), (*it)->z());
+//       vBounds.push_back(pt);
+//       bb +=pt;
+//     }
+//     double iD = norm(SVector3(bb.max(), bb.min()));
+//     D = std::max(D, iD);
+    
+//     //SOrientedBoundingBox obboxD = SOrientedBoundingBox::buildOBB(vBounds); 
+//     //D = std::max(D, obboxD.getMaxSize());
+//   }
+//   int AR = (int)ceil(H/D);
   
   return AR;
 }
 
-static void getGenusAndRatio(std::vector<MElement *> &elements, int & genus, int &AR)
+static void getGenusAndRatio(std::vector<MElement *> &elements, int & genus, int &AR, int &NB)
 {
   std::vector<std::vector<MEdge> > boundaries;
   genus = getGenus(elements, boundaries);  
+  NB = boundaries.size();
   AR = getAspectRatio(elements, boundaries);
+
 }
 
 static void partitionRegions(std::vector<MElement*> &elements, 
@@ -281,7 +320,8 @@ void multiscalePartition::partition(partitionLevel & level, int nbParts, typeOfP
 #if defined(HAVE_METIS) || defined(HAVE_CHACO)
 
   if (method == LAPLACIAN){
-    multiscaleLaplace multiLaplace(level.elements, level.recur);
+    std::map<MVertex*, SPoint3> coordinates;
+    multiscaleLaplace multiLaplace(level.elements, coordinates);
   }
   else if (method == MULTILEVEL){
     setNumberOfPartitions(nbParts);
@@ -300,8 +340,8 @@ void multiscalePartition::partition(partitionLevel & level, int nbParts, typeOfP
     nextLevel->region = i;
 
     levels.push_back(nextLevel);
-    int genus, AR;
-    getGenusAndRatio(regions[i], genus, AR);
+    int genus, AR, NB;
+    getGenusAndRatio(regions[i], genus, AR, NB);
 
     printLevel (nextLevel->elements, nextLevel->recur,nextLevel->region);  
 
@@ -316,15 +356,15 @@ void multiscalePartition::partition(partitionLevel & level, int nbParts, typeOfP
 		nextLevel->recur,nextLevel->region, genus, AR, nbParts);  
       partition(*nextLevel, nbParts, MULTILEVEL);
     }
-     else if (genus == 0  &&  AR > 3 ){
-       int nbParts = 2;
-       Msg::Info("Mesh partition: level (%d-%d)  is ZERO-GENUS (AR=%d) ---> LAPLACIAN partition %d parts",
- 		nextLevel->recur,nextLevel->region, AR, nbParts);  
-       partition(*nextLevel, nbParts, LAPLACIAN);
-     }
+    else if (genus == 0  &&  AR > 4 || genus == 0  &&  NB > 1){
+      int nbParts = 2;
+      Msg::Info("Mesh partition: level (%d-%d)  is ZERO-GENUS (AR=%d NB=%d) ---> LAPLACIAN partition %d parts",
+ 		nextLevel->recur,nextLevel->region, AR, NB, nbParts);  
+      partition(*nextLevel, nbParts, LAPLACIAN);
+    }
     else {
-      Msg::Info("*** Mesh partition: level (%d-%d) is ZERO-GENUS (AR=%d)", 
-		 nextLevel->recur,nextLevel->region, AR);
+      Msg::Info("*** Mesh partition: level (%d-%d) is ZERO-GENUS (AR=%d, NB=%d)", 
+		nextLevel->recur,nextLevel->region, AR, NB);
     }
     
   }

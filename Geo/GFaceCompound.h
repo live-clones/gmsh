@@ -19,6 +19,8 @@
 #include "meshGFaceOptimize.h"
 #include "linearSystem.h"
 
+#define AR_MAX 5 //maximal geometrical spacte ratio
+
 /*
 A GFaceCompound is a model face that is the compound of model faces.
 
@@ -51,7 +53,7 @@ class Octree;
 class GFaceCompound : public GFace {
  public:
   typedef enum {ITERU=0,ITERV=1,ITERD=2} iterationStep;
-  typedef enum {HARMONIC=1,CONFORMAL=2, CONVEXCOMBINATION=3} typeOfMapping;
+  typedef enum {HARMONIC=1,CONFORMAL=2, CONVEXCOMBINATION=3, MULTISCALE=4} typeOfMapping;
   typedef enum {UNITCIRCLE, SQUARE} typeOfIsomorphism;
   void computeNormals(std::map<MVertex*, SVector3> &normals) const;
  protected:
@@ -71,11 +73,12 @@ class GFaceCompound : public GFace {
   void buildOct() const ;
   void buildAllNodes() const; 
   void parametrize(iterationStep, typeOfMapping) const;
-  void parametrize_conformal() const;
+  bool parametrize_conformal() const;
   void compute_distance() const;
   bool checkOrientation(int iter) const;
+  bool checkFolding(std::vector<MVertex*> &ordered) const;
   void one2OneMap() const;
-  bool checkAspectRatio() const;
+  double checkAspectRatio() const;
   void computeNormals () const;
   void getBoundingEdges();
   void getUniqueEdges(std::set<GEdge*> & _unique); 
@@ -118,7 +121,7 @@ class GFaceCompound : public GFace {
   mutable int nbSplit;
  private:
   typeOfIsomorphism _type;
-  typeOfMapping _mapping;
+  mutable typeOfMapping _mapping;
 };
 
 #else

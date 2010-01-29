@@ -44,6 +44,40 @@ static void fixEdgeToValue(GEdge *ed, double value, dofManager<double> &myAssemb
   }
 }
 
+//--------------------------------------------------------------
+static int intersection_segments (SPoint3 &p1, SPoint3 &p2,
+				  SPoint3 &q1, SPoint3 &q2, 
+				  double x[2]){
+  
+
+  double xp_max = std::max(p1.x(),p2.x()); 
+  double yp_max = std::max(p1.y(),p2.y()); 
+  double xq_max = std::max(q1.x(),q2.x()); 
+  double yq_max = std::max(q1.y(),q2.y()); 
+
+  double xp_min = std::min(p1.x(),p2.x()); 
+  double yp_min = std::min(p1.y(),p2.y()); 
+  double xq_min = std::min(q1.x(),q2.x()); 
+  double yq_min = std::min(q1.y(),q2.y()); 
+  if ( yq_min > yp_max || xq_min >  xp_max ||
+       yq_max < yp_min || xq_max <  xp_min){
+    return 0;
+  }
+  else{
+  double A[2][2];
+  A[0][0] = p2.x()-p1.x();
+  A[0][1] = q1.x()-q2.x();
+  A[1][0] = p2.y()-p1.y();
+  A[1][1] = q1.y()-q2.y();
+  double b[2] = {q1.x()-p1.x(),q1.y()-p1.y()};
+  sys2x2(A,b,x);
+
+  return (x[0] >= 0.0 && x[0] <= 1. &&
+	  x[1] >= 0.0 && x[1] <= 1.);
+  } 
+  
+}
+//--------------------------------------------------------------
 static void computeCGKernelPolygon(std::map<MVertex*,SPoint3> &coordinates, 
                                    std::vector<MVertex*> &cavV, double &ucg, double &vcg)
 {
@@ -242,6 +276,8 @@ void GFaceCompound::fillNeumannBCS() const
       double x=0.; 
       double y=0.; 
       double z=0.;
+      //EMI- TODO FIND KERNEL OF POLYGON AND PLACE AT CG KERNEL !
+      //IF NO KERNEL -> DO NOT FILL TRIS
       for (std::list<GEdge*>::iterator ite = loop.begin(); ite != loop.end(); ite++){
 	for (unsigned int k= 0; k< (*ite)->getNumMeshElements(); k++){
 	  MVertex *v0 = (*ite)->getMeshElement(k)->getVertex(0);
@@ -261,46 +297,45 @@ void GFaceCompound::fillNeumannBCS() const
 	  MVertex *v0 = (*ite)->getMeshElement(i)->getVertex(0);
 	  MVertex *v1 = (*ite)->getMeshElement(i)->getVertex(1);
   
-	  //fillTris.push_back(new MTriangle(v0,v1, c));
+//	  fillTris.push_back(new MTriangle(v0,v1, c));
 
-// 	  MVertex *v2 = new MVertex(.5*(v0->x()+c->x()), .5*(v0->y()+c->y()), .5*(v0->z()+c->z()));
-// 	  MVertex *v3 = new MVertex(.5*(v1->x()+c->x()), .5*(v1->y()+c->y()), .5*(v1->z()+c->z()));
-// 	  fillTris.push_back(new MTriangle(v0,v2,v3));
-// 	  fillTris.push_back(new MTriangle(v2,c, v3));
-// 	  fillTris.push_back(new MTriangle(v0,v3, v1);
-
-	  MVertex *v2 = new MVertex(.66*v0->x()+.33*c->x(), .66*v0->y()+.33*c->y(), .66*v0->z()+.33*c->z());
-	  MVertex *v3 = new MVertex(.66*v1->x()+.33*c->x(), .66*v1->y()+.33*c->y(), .66*v1->z()+.33*c->z());
-	  MVertex *v4 = new MVertex(.33*v0->x()+.66*c->x(), .33*v0->y()+.66*c->y(), .33*v0->z()+.66*c->z());
-	  MVertex *v5 = new MVertex(.33*v1->x()+.66*c->x(), .33*v1->y()+.66*c->y(), .33*v1->z()+.66*c->z()); 
+	  MVertex *v2 = new MVertex(.5*(v0->x()+c->x()), .5*(v0->y()+c->y()), .5*(v0->z()+c->z()));
+	  MVertex *v3 = new MVertex(.5*(v1->x()+c->x()), .5*(v1->y()+c->y()), .5*(v1->z()+c->z()));
 	  fillTris.push_back(new MTriangle(v0,v2,v3));
-	  fillTris.push_back(new MTriangle(v2,v5,v3));
-	  fillTris.push_back(new MTriangle(v2,v4,v5));
-	  fillTris.push_back(new MTriangle(v4,c,v5));
-	  fillTris.push_back(new MTriangle(v0,v3,v1));
+	  fillTris.push_back(new MTriangle(v2,c, v3));
+	  fillTris.push_back(new MTriangle(v0,v3, v1)) ;
+
+// 	  MVertex *v2 = new MVertex(.66*v0->x()+.33*c->x(), .66*v0->y()+.33*c->y(), .66*v0->z()+.33*c->z());
+// 	  MVertex *v3 = new MVertex(.66*v1->x()+.33*c->x(), .66*v1->y()+.33*c->y(), .66*v1->z()+.33*c->z());
+// 	  MVertex *v4 = new MVertex(.33*v0->x()+.66*c->x(), .33*v0->y()+.66*c->y(), .33*v0->z()+.66*c->z());
+// 	  MVertex *v5 = new MVertex(.33*v1->x()+.66*c->x(), .33*v1->y()+.66*c->y(), .33*v1->z()+.66*c->z()); 
+// 	  fillTris.push_back(new MTriangle(v0,v2,v3));
+// 	  fillTris.push_back(new MTriangle(v2,v5,v3));
+// 	  fillTris.push_back(new MTriangle(v2,v4,v5));
+// 	  fillTris.push_back(new MTriangle(v4,c,v5));
+// 	  fillTris.push_back(new MTriangle(v0,v3,v1));
 
 	}
       }
     }
   }
   
-  //if (fillTris.size() > 0)
-    //printf("**** Filling Neuman BCs with %d triangles \n", fillTris.size());
-  
-//    FILE * ftri = fopen("fillTris.pos","w");
-//    fprintf(ftri,"View \"\"{\n");
-//    for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 !=fillTris.end(); it2++ ){
-//      MTriangle *t = (*it2);
-//      fprintf(ftri,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
-//  	    t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
-//  	    t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
-//  	    t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
-//  	    1., 1., 1.);
-//    }
-//    fprintf(ftri,"};\n");
-//    fclose(ftri);
-   
-//    exit(1);
+
+  if (fillTris.size() > 0){
+    FILE * ftri = fopen("fillTris.pos","a");
+    fprintf(ftri,"View \"\"{\n");
+    for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 !=fillTris.end(); it2++ ){
+      MTriangle *t = (*it2);
+      fprintf(ftri,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+	      t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
+	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
+	      t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
+	      1., 1., 1.);
+    }
+    fprintf(ftri,"};\n");
+    fclose(ftri);
+  }
+
 
 }
 
@@ -313,7 +348,31 @@ bool GFaceCompound::trivial() const
   }
   return false;
 }
+//For the conformal map the linear system cannot guarantee there is no folding 
+//of triangles
+bool GFaceCompound::checkFolding(std::vector<MVertex*> &ordered) const
+{
+ 
+  bool has_no_folding = true;
 
+  for(unsigned int i = 0; i < ordered.size()-1; ++i){
+    SPoint3 p1 = coordinates[ordered[i]];
+    SPoint3 p2 = coordinates[ordered[i+1]];
+    int maxSize = (i==0) ? ordered.size()-2: ordered.size()-1;
+    for(unsigned int k = i+2; k < maxSize; ++k){
+      SPoint3 q1 = coordinates[ordered[k]];
+      SPoint3 q2 = coordinates[ordered[k]];
+      double x[2];
+      int inters = intersection_segments (p1,p2,q1,q2,x);
+      if (inters > 0) has_no_folding = false;
+    }
+  }
+  
+  if ( !has_no_folding ) 
+    Msg::Warning("$$$ Folding for compound face %d", this->tag());
+
+  return has_no_folding;
+}
 
 //check if the discrete harmonic map is correct
 //by checking that all the mapped triangles have
@@ -419,52 +478,60 @@ bool GFaceCompound::parametrize() const
   
   if(allNodes.empty()) buildAllNodes();
   
-//   // TEST MULTISCALE LAPLACE ----------------------------------
-//   std::vector<MElement*> _elements;
-//   for( std::list<GFace*>::const_iterator itt = _compound.begin(); itt != _compound.end(); ++itt)
-//     for(unsigned int i = 0; i < (*itt)->triangles.size(); ++i)
-//       _elements.push_back((*itt)->triangles[i]);
-//   multiscaleLaplace multiLaplace(_elements); 
-//   printf("ended multiscale \n");
-//   exit(1);
-  // TEST MULTISCALE LAPLACE ----------------------------------
 
   //Laplace parametrization
   //-----------------
   if (_mapping == HARMONIC){
-    Msg::Debug("Parametrizing surface %d with 'harmonic map'", tag());
+    Msg::Debug("Parametrizing surface %d with 'harmonic map'", tag()); 
     fillNeumannBCS();
     parametrize(ITERU,HARMONIC); 
     parametrize(ITERV,HARMONIC);
+  }
+  //Multiscale Laplace parametrization
+  //-----------------
+  else if (_mapping == MULTISCALE){
+    std::vector<MElement*> _elements;
+    for( std::list<GFace*>::const_iterator itt = _compound.begin(); itt != _compound.end(); ++itt)
+      for(unsigned int i = 0; i < (*itt)->triangles.size(); ++i)
+	_elements.push_back((*itt)->triangles[i]);
+    multiscaleLaplace multiLaplace(_elements, coordinates); 
   }
   //Conformal map parametrization
   //----------------- 
   else if (_mapping == CONFORMAL){
     Msg::Debug("Parametrizing surface %d with 'conformal map'", tag());
     fillNeumannBCS();
-    parametrize_conformal();
+    bool withoutFolding = parametrize_conformal() ;
+    printStuff();
+    if ( withoutFolding == false ){
+      Msg::Warning("$$$ Parametrization switched to harmonic map");
+      parametrize(ITERU,HARMONIC); 
+      parametrize(ITERV,HARMONIC);
+    }
   }
   //Distance function
   //-----------------
   //compute_distance();
 
   buildOct();  
-  
+  printStuff();
+
   if (!checkOrientation(0)){
-    Msg::Info("Parametrization switched to convex combination map");
+    Msg::Info("*** Parametrization switched to convex combination map");
     coordinates.clear(); 
     Octree_Delete(oct);
     fillNeumannBCS();
     parametrize(ITERU,CONVEXCOMBINATION);
     parametrize(ITERV,CONVEXCOMBINATION);
+    checkOrientation(0);
     buildOct();
   }
 
-  printStuff();
+
 
   computeNormals();  
 
-  if (!checkAspectRatio()){
+  if (checkAspectRatio() > AR_MAX){
     printf("WARNING: geom aspect ratio too high \n");
     exit(1);
     paramOK = false;
@@ -534,30 +601,28 @@ double GFaceCompound::getSizeH() const
 {
 
   SBoundingBox3d bb;
-  SOrientedBoundingBox obbox ;
   std::vector<SPoint3> vertices;
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
     SPoint3 pt((*itv)->x(),(*itv)->y(), (*itv)->z());
     vertices.push_back(pt);
     bb +=pt;
   }
-   
-  //obbox =  SOrientedBoundingBox::buildOBB(vertices);
-  //double H = obbox.getMaxSize(); 
- 
   double H = norm(SVector3(bb.max(), bb.min()));
 
+  //SOrientedBoundingBox obbox =  SOrientedBoundingBox::buildOBB(vertices);
+  //double H = obbox.getMaxSize(); 
+ 
   return H;
 
 }
 double GFaceCompound::getSizeBB(const std::list<GEdge* > &elist) const
 {
    
-  SOrientedBoundingBox obboxD = obb_boundEdges(elist);
-  double D = obboxD.getMaxSize();
+  //SOrientedBoundingBox obboxD = obb_boundEdges(elist);
+  //double D = obboxD.getMaxSize();
 
-  //SOrientedBoundingBox bboxD = boundEdges(elist);
-  //double D = norm(SVector3(bboxD.max(), bboxD.min()));
+  SBoundingBox3d bboxD = boundEdges(elist);
+  double D = norm(SVector3(bboxD.max(), bboxD.min()));
 
   return D;
 
@@ -1035,7 +1100,7 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
 
 }
 
-void GFaceCompound::parametrize_conformal() const
+bool GFaceCompound::parametrize_conformal() const
 {
 
   dofManager<double> myAssembler(_lsys);
@@ -1045,20 +1110,22 @@ void GFaceCompound::parametrize_conformal() const
   bool success = orderVertices(_U0, ordered, coords);
   if(!success){
     Msg::Error("Could not order vertices on boundary");
-    return;
+    return false;
   }
 
-  MVertex *v1 = ordered[0];
-  MVertex *v2 ; 
-  double maxSize = 0.0;
-  for (int i=1; i< ordered.size(); i++){
-    MVertex *vi= ordered[i];
-    double dist = vi->distance(v1);
-    if (dist > maxSize){
-      v2 = vi;
-      maxSize = dist;
-    }
-  }
+   MVertex *v1 = ordered[0];
+   MVertex *v2  = ordered[(int)ceil(ordered.size()/2)];
+
+//   MVertex *v2 ;  
+//   double maxSize = 0.0;
+//   for (int i=1; i< ordered.size(); i++){
+//     MVertex *vi= ordered[i];
+//     double dist = vi->distance(v1);
+//     if (dist > maxSize){
+//       v2 = vi;
+//       maxSize = dist;
+//     }
+//   }
 
   myAssembler.fixVertex(v1, 0, 1, 0);//0
   myAssembler.fixVertex(v1, 0, 2, 0);//0
@@ -1126,6 +1193,9 @@ void GFaceCompound::parametrize_conformal() const
   }
 
   _lsys->clear();
+
+  //check for folding
+  return checkFolding(ordered);
 
 }
 
@@ -1611,22 +1681,27 @@ bool GFaceCompound::checkTopology() const
 
   double H = getSizeH();
   double D = H; 
-  if (_interior_loops.size() > 0)    D =  getSizeBB(_U0);
-  int AR = (int) ceil(H/D);
-  
+  if (_interior_loops.size() > 0)    D =  getSizeBB(_U0); 
+  int AR = (int) checkAspectRatio();
+  //int AR = (int) ceil(H/D);
+
   if (G != 0 || Nb < 1){
     correctTopo = false;
-    nbSplit = 2; //std::max(G+2, 2);
+    nbSplit = std::max(G+2, 2);
     Msg::Info("-----------------------------------------------------------");
     Msg::Warning("Wrong topology: Genus=%d, Nb boundaries=%d, AR=%g", G, Nb, H/D);
     Msg::Info("*** Split surface %d in %d parts with Multilevel Mesh partitioner", tag(), nbSplit);
   }
-   else if (G == 0 && AR > 3){
+   else if (G == 0 && AR > AR_MAX){
      correctTopo = false;
      nbSplit = -2;
      Msg::Info("-----------------------------------------------------------");
      Msg::Warning("Wrong topology: Genus=%d, Nb boundaries=%d, AR=%d", G, Nb, AR);
      Msg::Info("*** Split surface %d in 2 parts with Laplacian Mesh partitioner", tag());
+
+//      correctTopo = true;
+//      _mapping = MULTISCALE;
+//      Msg::Warning("Aspect Ratio (AR=%d) is too high: using multiscale Laplace", AR);
    }
   else{
     Msg::Debug("Correct topology: Genus=%d and Nb boundaries=%d, AR=%g", G, Nb, H/D);
@@ -1636,17 +1711,17 @@ bool GFaceCompound::checkTopology() const
 
 }
 
-bool GFaceCompound::checkAspectRatio() const
+double GFaceCompound::checkAspectRatio() const
 {
 
   //if ((*(_compound.begin()))->geomType() != GEntity::DiscreteSurface)
   //  return true;
 
-  bool paramOK = true;
   if(allNodes.empty()) buildAllNodes();
   
   double limit =  1.e-15;
   double areaMin = 1.e15;
+  double area3D = 0.0;
   int nb = 0;
   std::list<GFace*>::const_iterator it = _compound.begin();
   for( ; it != _compound.end() ; ++it){
@@ -1663,6 +1738,7 @@ bool GFaceCompound::checkAspectRatio() const
       double p1[3] = {v[1]->x(), v[1]->y(), v[1]->z()};
       double p2[3] = {v[2]->x(), v[2]->y(), v[2]->z()};
       double a_3D = fabs(triangle_area(p0, p1, p2));
+      area3D += a_3D;
       double q0[3] = {it0->second.x(), it0->second.y(), 0.0}; 
       double q1[3] = {it1->second.x(), it1->second.y(), 0.0};
       double q2[3] = {it2->second.x(), it2->second.y(), 0.0};
@@ -1672,6 +1748,20 @@ bool GFaceCompound::checkAspectRatio() const
     }
   }
   
+  std::list<GEdge*>::const_iterator it0 = _U0.begin();
+  double tot_length = 0;
+  for( ; it0 != _U0.end(); ++it0 ){
+    for(unsigned int i = 0; i < (*it0)->lines.size(); i++ ){
+      MVertex *v0 = (*it0)->lines[i]->getVertex(0);
+      MVertex *v1 = (*it0)->lines[i]->getVertex(1);    
+      const double length = sqrt((v0->x() - v1->x()) * (v0->x() - v1->x()) + 
+                                 (v0->y() - v1->y()) * (v0->y() - v1->y()) +
+                                 (v0->z() - v1->z()) * (v0->z() - v1->z()));
+      tot_length += length;
+    }
+  }
+  double AR = 2*3.14*area3D/(tot_length*tot_length);
+  
   if (areaMin < limit && nb > 2) {
     Msg::Warning("Geometrical aspect ratio too high (a_2D=%g)", areaMin);
     SBoundingBox3d bboxH = bounds();
@@ -1679,14 +1769,12 @@ bool GFaceCompound::checkAspectRatio() const
     double D = getSizeBB(_U0);
     double eta = H/D;
     int nbSplit =  -2;
-    paramOK = true; //false;
   }
   else {
     Msg::Debug("Geometrical aspect ratio is OK  :-)");
-    paramOK = true;
   }
   
-  return paramOK;
+  return AR;
 
 }
 
@@ -1694,6 +1782,7 @@ void GFaceCompound::coherenceNormals()
 {
 
   Msg::Info("Coherence Normals ");
+
   std::map<MEdge, std::set<MTriangle*>, Less_Edge > edge2tris;
   for(unsigned int i = 0; i < triangles.size(); i++){
     MTriangle *t = triangles[i];

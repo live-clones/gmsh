@@ -1336,8 +1336,6 @@ void partitionAndRemesh(GFaceCompound *gf)
   //-----------------------------------------------------
   
   std::list<GFace*> cFaces = gf->getCompounds();
-  //PartitionMeshFace(cFaces, options);
-
   std::vector<MElement *> elements;
   for (std::list<GFace*>::iterator it = cFaces.begin(); it != cFaces.end(); it++)
     for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++)

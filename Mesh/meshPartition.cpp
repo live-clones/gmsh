@@ -1080,9 +1080,6 @@ void assignPartitionBoundary(GModel *model,
     ppv = new  partitionVertex(model, -(int)pvertices.size()-1,v2);
     pvertices.insert (ppv);
     model->add(ppv);
-    printf("*** created partitionVertex %d (", ppv->tag());
-    for (unsigned int i = 0; i < v2.size(); ++i) printf("%d ", v2[i]);
-    printf(")\n");
   }
   else ppv = *it;
   ppv->points.push_back(new MPoint (ve));
@@ -1276,11 +1273,13 @@ void createPartitionFaces(GModel *model, GFaceCompound *gf, int N,
   std::list<GFace*>::iterator it = _compound.begin();
 
   for( ; it != _compound.end(); ++it){
+    //printf("tag compound =%d \n", (*it)->tag());
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *e = (*it)->triangles[i];
       int part = e->getPartition();
       for(int j = 0; j < 3; j++){
 	MVertex *v0 = e->getVertex(j);
+	//printf("v0=%d part=%d\n", v0->getNum(), part); //returns part 0 ???
 	allNodes[part-1].insert(v0);
       }
       discreteFaces[part-1]->triangles.push_back(new MTriangle(e->getVertex(0),e->getVertex(1),e->getVertex(2)));     
