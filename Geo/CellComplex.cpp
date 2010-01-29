@@ -497,21 +497,20 @@ int CellComplex::reduceComplex(){
 }
 
 
-void CellComplex::removeSubdomain(){
-  
+void CellComplex::removeSubdomain()
+{
+  std::vector<Cell*> toRemove;
   for(int i = 0; i < 4; i++){
-    for(citer cit = firstCell(i); cit != lastCell(i); ){
-      Cell* cell = *cit;
-      cit++;
-      if(cell->inSubdomain()) removeCell(cell);
+    for(citer cit = firstCell(i); cit != lastCell(i); ++cit){
+      Cell *cell = *cit;
+      if(cell->inSubdomain()) toRemove.push_back(cell);
     }
   }
-
-  return;
+  for(unsigned int i = 0; i < toRemove.size(); i++) removeCell(toRemove[i]);
 }
 
-
-int CellComplex::coreduceComplex(){
+int CellComplex::coreduceComplex()
+{
 
   Msg::Debug("Cell complex before coreduction: %d volumes, %d faces, %d edges and %d vertices.\n",
          getSize(3), getSize(2), getSize(1), getSize(0));
