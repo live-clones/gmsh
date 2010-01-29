@@ -500,21 +500,16 @@ int CellComplex::reduceComplex(){
 void CellComplex::removeSubdomain(){
   
   for(int i = 0; i < 4; i++){
-    for(citer cit = firstCell(i); cit != lastCell(i); cit++){
+    for(citer cit = firstCell(i); cit != lastCell(i); ){
       Cell* cell = *cit;
       if(cell->inSubdomain()) {
         removeCell(cell);
-        ++cit;
+        cit++;
       }
-    }
-    for(citer cit = firstCell(i); cit != lastCell(i); cit++){
-      Cell* cell = *cit;
-      if(cell->inSubdomain()) {
-        removeCell(cell);
-        cit = firstCell(i);
-      }
+      else ++cit;
     }
   }
+
   return;
 }
 
@@ -526,7 +521,7 @@ int CellComplex::coreduceComplex(){
   
   int count = 0;
   
-  CellComplex::removeSubdomain();
+  removeSubdomain();
   
   for(int dim = 0; dim < 4; dim++){
     citer cit = firstCell(dim);

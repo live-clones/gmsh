@@ -94,6 +94,7 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   else if(cuts != 1 && gens != 1 && betti == 1) homology->computeBettiNumbers();
   else Msg::Error("Choose either generators, dual generators or Betti numbers to compute.");
   
+
   delete homology; 
   
   return 0;

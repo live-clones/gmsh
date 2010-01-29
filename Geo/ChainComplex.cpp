@@ -1,3 +1,4 @@
+
 // Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
@@ -703,8 +704,8 @@ void Chain::createPView(){
   opt_mesh_pyramids(0, GMSH_SET, 0);
 
   // show post-processing normals, tangents and element boundaries
-  opt_view_normals(0, GMSH_SET, 20);
-  opt_view_tangents(0, GMSH_SET, 20);
+  //opt_view_normals(0, GMSH_SET, 20);
+  //opt_view_tangents(0, GMSH_SET, 20);
   opt_view_show_element(0, GMSH_SET, 1);
   
   if(!data.empty()){
