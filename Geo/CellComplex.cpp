@@ -502,11 +502,8 @@ void CellComplex::removeSubdomain(){
   for(int i = 0; i < 4; i++){
     for(citer cit = firstCell(i); cit != lastCell(i); ){
       Cell* cell = *cit;
-      if(cell->inSubdomain()) {
-        removeCell(cell);
-        cit++;
-      }
-      else ++cit;
+      cit++;
+      if(cell->inSubdomain()) removeCell(cell);
     }
   }
 

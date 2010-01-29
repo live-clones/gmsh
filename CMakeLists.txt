@@ -73,7 +73,8 @@ set(GMSH_API
     Geo/MPyramid.h Geo/MElementCut.h Geo/discreteVertex.h Geo/discreteEdge.h
     Geo/discreteFace.h Geo/discreteRegion.h Geo/SPoint2.h Geo/SPoint3.h
     Geo/SVector3.h Geo/STensor3.h Geo/SBoundingBox3d.h Geo/Pair.h Geo/Range.h 
-    Geo/SOrientedBoundingBox.h Geo/CellComplex.h Geo/ChainComplex.h
+    Geo/SOrientedBoundingBox.h Geo/CellComplex.h Geo/ChainComplex.h Geo/Cell.h
+    Geo/Homology.h
   Mesh/meshGEdge.h Mesh/meshGFace.h Mesh/meshGFaceOptimize.h 
     Mesh/meshGFaceDelaunayInsertion.h
   Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h Solver/elasticityTerm.h
