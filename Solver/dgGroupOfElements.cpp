@@ -700,8 +700,8 @@ void dgGroupCollection::buildGroups(GModel *model, int dim, int order)
       }
     }
   }
-
-
+	
+	
   Msg::Info("%d groups of elements",localElements.size());
   // do a group of elements for every element type in the mesh
   for (std::map<int, std::vector<MElement *> >::iterator it = localElements.begin(); it !=localElements.end() ; ++it){
@@ -837,6 +837,248 @@ void dgGroupCollection::buildGroups(GModel *model, int dim, int order)
   delete []shiftSend;
   delete []shiftRecv;
 }
+
+
+void dgGroupCollection::buildGroups(GModel *model, int dim, int order,std::string groupType)
+{
+	_model = model;
+	std::map<const std::string,std::set<MVertex*> > boundaryVertices;
+	std::map<const std::string,std::set<MEdge, Less_Edge> > boundaryEdges;
+	std::map<const std::string,std::set<MFace, Less_Face> > boundaryFaces;
+	std::vector<GEntity*> entities;
+	model->getEntities(entities);
+	std::map<int, std::vector<MElement *> >localElements;
+	std::vector<std::map<int, std::vector<MElement *> > >ghostElements(Msg::GetCommSize()); // [partition][elementType]
+	int nlocal=0;
+	int nghosts=0;
+	std::multimap<MElement*, short> &ghostsCells = model->getGhostCells();
+	for(unsigned int i = 0; i < entities.size(); i++){
+		GEntity *entity = entities[i];
+		if(entity->dim() == dim-1){
+			for(unsigned int j = 0; j < entity->physicals.size(); j++){
+				const std::string physicalName = model->getPhysicalName(entity->dim(), entity->physicals[j]);
+				for (int k = 0; k < entity->getNumMeshElements(); k++) {
+					MElement *element = entity->getMeshElement(k);
+					switch(dim) {
+						case 1:
+							boundaryVertices[physicalName].insert( element->getVertex(0) ); 
+							break;
+						case 2:
+							boundaryEdges[physicalName].insert( element->getEdge(0) );
+							break;
+						case 3:
+							boundaryFaces[physicalName].insert( element->getFace(0));
+							break;
+						default :
+							throw;
+					}
+				}
+			}
+		}else if(entity->dim() == dim){
+			double max_edgeM=-1.e22;
+			double max_edgem=1.e22;
+			double min_edgeM=-1.e22;
+			double min_edgem=1.e22;
+			
+			for (int iel=0; iel<entity->getNumMeshElements(); iel++){
+				MElement *el=entity->getMeshElement(iel);
+				if (el->maxEdge()>max_edgeM) {
+					max_edgeM=el->maxEdge();
+				}
+				if (el->maxEdge()<max_edgem) {
+					max_edgem=el->maxEdge();
+				}
+				if (el->minEdge()>min_edgeM) {
+					min_edgeM=el->minEdge();
+				}
+				if (el->minEdge()<min_edgeM) {
+					min_edgem=el->minEdge();
+				}									
+			}
+			//printf("\n a1=%f, a2=%f \n",(min_edgeM+min_edgem)/2.,(max_edgeM+max_edgem)/2.);
+			for (int iel=0; iel<entity->getNumMeshElements(); iel++){
+				MElement *el=entity->getMeshElement(iel);
+				if(el->getPartition()==Msg::GetCommRank()+1 || el->getPartition()==0){
+					
+					if (groupType=="minEdge") {
+							if (el->minEdge()> (min_edgeM+min_edgem)/2.) {
+							 localElements[0].push_back(el);
+							 }
+							 else{
+							 localElements[1].push_back(el);
+							 }
+					}
+					else if(groupType=="maxEdge"){
+							if (el->maxEdge()> (max_edgeM+max_edgem)/2.) {
+							 localElements[0].push_back(el);
+							}
+							else{
+							 localElements[1].push_back(el);
+							}
+						
+					}
+					else{
+							localElements[el->getType()].push_back(el);
+					}
+
+					
+					nlocal++;
+				}else{
+					std::multimap<MElement*, short>::iterator ghost=ghostsCells.lower_bound(el);
+					while(ghost!= ghostsCells.end() && ghost->first==el){
+						if(abs(ghost->second)-1==Msg::GetCommRank()){
+							ghostElements[el->getPartition()-1][el->getType()].push_back(el);
+							nghosts+=1;
+						}
+						ghost++;
+					}
+				}
+			}
+		}
+	}
+	
+	
+	Msg::Info("%d groups of elements",localElements.size());
+	for (int n=0; n<localElements.size(); n++) {
+		printf("\n **** Group %d: %d elements **** \n", n,localElements[n].size());
+	}
+	// do a group of elements for every element type in the mesh
+	for (std::map<int, std::vector<MElement *> >::iterator it = localElements.begin(); it !=localElements.end() ; ++it){
+		_elementGroups.push_back(new dgGroupOfElements(it->second,order));
+	}
+	
+	
+	for (int i=0;i<_elementGroups.size();i++){
+		// create a group of faces on the boundary for every group ef elements
+		switch(dim) {
+			case 1 : {
+				std::map<const std::string, std::set<MVertex*> >::iterator mapIt;
+				for(mapIt=boundaryVertices.begin(); mapIt!=boundaryVertices.end(); mapIt++) {
+					dgGroupOfFaces *gof = new dgGroupOfFaces(*_elementGroups[i],mapIt->first,order,mapIt->second);
+					if (gof->getNbElements())
+						_boundaryGroups.push_back(gof);
+					else
+						delete gof;
+					break;
+				}
+			}
+			case 2 : {
+				std::map<const std::string, std::set<MEdge, Less_Edge> >::iterator mapIt;
+				for(mapIt=boundaryEdges.begin(); mapIt!=boundaryEdges.end(); mapIt++) {
+					dgGroupOfFaces *gof=new dgGroupOfFaces(*_elementGroups[i],mapIt->first,order,mapIt->second);
+					if(gof->getNbElements())
+						_boundaryGroups.push_back(gof);
+					else
+						delete gof;
+				}
+				break;
+			}
+			case 3 : {
+				std::map<const std::string, std::set<MFace, Less_Face> >::iterator mapIt;
+				for(mapIt=boundaryFaces.begin(); mapIt!=boundaryFaces.end(); mapIt++) {
+					dgGroupOfFaces *gof=new dgGroupOfFaces(*_elementGroups[i],mapIt->first,order,mapIt->second);
+					if(gof->getNbElements())
+						_boundaryGroups.push_back(gof);
+					else
+						delete gof;
+				}
+				break;
+			}
+		}
+		// create a group of faces for every face that is common to elements of the same group 
+		_faceGroups.push_back(new dgGroupOfFaces(*_elementGroups[i],order));
+		// create a groupe of d
+		for (int j=i+1;j<_elementGroups.size();j++){
+			dgGroupOfFaces *gof = new dgGroupOfFaces(*_elementGroups[i],*_elementGroups[j],order);
+			if (gof->getNbElements())
+				_faceGroups.push_back(gof);
+			else
+				delete gof;
+		}
+	}
+	//create ghost groups
+	for(int i=0;i<Msg::GetCommSize();i++){
+		for (std::map<int, std::vector<MElement *> >::iterator it = ghostElements[i].begin(); it !=ghostElements[i].end() ; ++it){
+			_ghostGroups.push_back(new dgGroupOfElements(it->second,order,i));
+		}
+	}
+	//create face group for ghostGroups
+	for (int i=0; i<_ghostGroups.size(); i++){
+		for (int j=0;j<_elementGroups.size();j++){
+			dgGroupOfFaces *gof = new dgGroupOfFaces(*_ghostGroups[i],*_elementGroups[j],order);
+			if (gof->getNbElements())
+				_faceGroups.push_back(gof);
+			else
+				delete gof;
+		}
+	}
+	
+	// build the ghosts structure
+	int *nGhostElements = new int[Msg::GetCommSize()];
+	int *nParentElements = new int[Msg::GetCommSize()];
+	for (int i=0;i<Msg::GetCommSize();i++) {
+		nGhostElements[i]=0;
+	}
+	for (size_t i = 0; i< getNbGhostGroups(); i++){
+		dgGroupOfElements *group = getGhostGroup(i);
+		nGhostElements[group->getGhostPartition()] += group->getNbElements();
+	}
+#ifdef HAVE_MPI
+	MPI_Alltoall(nGhostElements,1,MPI_INT,nParentElements,1,MPI_INT,MPI_COMM_WORLD); 
+#else
+	nParentElements[0]=nGhostElements[0];
+#endif
+	int *shiftSend = new int[Msg::GetCommSize()];
+	int *shiftRecv = new int[Msg::GetCommSize()];
+	int *curShiftSend = new int[Msg::GetCommSize()];
+	int totalSend=0,totalRecv=0;
+	for(int i= 0; i<Msg::GetCommSize();i++){
+		shiftSend[i] = (i==0 ? 0 : shiftSend[i-1]+nGhostElements[i-1]);
+		curShiftSend[i] = shiftSend[i];
+		shiftRecv[i] = (i==0 ? 0 : shiftRecv[i-1]+nParentElements[i-1]);
+		totalSend += nGhostElements[i];
+		totalRecv += nParentElements[i];
+	}
+	
+	int *idSend = new int[totalSend];
+	int *idRecv = new int[totalRecv];
+	for (int i = 0; i<getNbGhostGroups(); i++){
+		dgGroupOfElements *group = getGhostGroup(i);
+		int part = group->getGhostPartition();
+		for (int j=0; j< group->getNbElements() ; j++){
+			idSend[curShiftSend[part]++] = group->getElement(j)->getNum();
+		}
+	}
+#ifdef HAVE_MPI
+	MPI_Alltoallv(idSend,nGhostElements,shiftSend,MPI_INT,idRecv,nParentElements,shiftRecv,MPI_INT,MPI_COMM_WORLD);
+#else
+	memcpy(idRecv,idSend,nParentElements[0]*sizeof(int));
+#endif
+	//create a Map elementNum :: group, position in group
+	std::map<int, std::pair<int,int> > elementMap;
+	for(size_t i = 0; i< getNbElementGroups(); i++) {
+		dgGroupOfElements *group = getElementGroup(i);
+		for(int j=0; j< group->getNbElements(); j++){
+			elementMap[group->getElement(j)->getNum()]=std::pair<int,int>(i,j);
+		}
+	}
+	_elementsToSend.resize(Msg::GetCommSize());
+	for(int i = 0; i<Msg::GetCommSize();i++){
+		_elementsToSend[i].resize(nParentElements[i]);
+		for(int j=0;j<nParentElements[i];j++){
+			int num = idRecv[shiftRecv[i]+j];
+			_elementsToSend[i][j]=elementMap[num];
+		}
+	}
+	delete []idRecv;
+	delete []idSend;
+	delete []curShiftSend;
+	delete []shiftSend;
+	delete []shiftRecv;
+}
+
+
+
 
 dgGroupCollection::~dgGroupCollection() {
   for (int i=0; i< _elementGroups.size(); i++)

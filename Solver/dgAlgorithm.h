@@ -51,6 +51,8 @@ class dgAlgorithm {
 					  fullMatrix<double> &solution, // the solution 
 					  std::vector<double> & DT // elementary time steps
 					   );
+  // works only (for the moment) for two groups of elements, small and big step
+  // Uses RK43 from Schlegel (10 stages)	
   void multirateRungeKutta (
 		   const dgConservationLaw &claw,
        dgGroupCollection &groups,

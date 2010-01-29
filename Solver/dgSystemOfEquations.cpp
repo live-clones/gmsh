@@ -58,6 +58,9 @@ void dgSystemOfEquations::registerBindings(binding *b) {
   cm->setDescription("set the conservation law this system solves");
   cm = cb->addMethod("setup",&dgSystemOfEquations::setup);
   cm->setDescription("allocate and init internal stuff, call this function after setOrder and setLaw and before anything else on this instance");
+  cm = cb->addMethod("createGroups",&dgSystemOfEquations::createGroups);
+  cm->setArgNames("groupType",NULL);
+  cm->setDescription("allocate and init internal stuff, creates groups form criterion groupType");
   cm = cb->addMethod("exportSolution",&dgSystemOfEquations::exportSolution);
   cm->setArgNames("filename",NULL);
   cm->setDescription("Print the solution into a file. This file does not contain the mesh. To visualize the solution in gmsh you have to open the mesh file first.");
@@ -101,6 +104,16 @@ void dgSystemOfEquations::L2Projection (std::string functionName){
   }
 }
 
+// dgSystemOfEquations::setup() + build groups with criterion:
+// - default: elementType
+// - minEdge (based on minimum edges of elements) , for the moment only two groups possible
+// - maxEdge (based on maximum edges of elements) , for the moment only two groups possible
+void dgSystemOfEquations::createGroups(std::string groupType){
+	_groups.buildGroups(_gm,_dimension,_order,groupType);
+	_solution = new dgDofContainer(_groups,_claw->nbFields());
+	_rightHandSide = new dgDofContainer(_groups,_claw->nbFields());
+	}
+	
 // ok, we can setup the groups and create solution vectors
 void dgSystemOfEquations::setup(){
   if (!_claw) throw;

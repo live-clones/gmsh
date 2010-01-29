@@ -357,9 +357,11 @@ void dgAlgorithm::multirateRungeKutta (const dgConservationLaw &claw,			// conse
 //   double b[4]={1.0/6.0, 1.0/3.0, 1.0/3.0, 1.0/6.0};
 //   double c[4]={0, 1.0/2.0, 1.0/2.0, 1};
    
-
+	 double A[10][10];
+	 double *b;
+	 double *c;
 // Small step RK43
-   double A[10][10]={
+   double A1[10][10]={
 {0,         0,         0,         0,         0,         0,         0,         0,         0,         0},
 {1.0/4.0   ,0,         0,         0,         0,         0,         0,         0,         0,         0},
 {-1.0/12.0, 1.0/3.0,   0,         0,         0,         0,         0,         0,         0,         0},
@@ -371,24 +373,24 @@ void dgAlgorithm::multirateRungeKutta (const dgConservationLaw &claw,			// conse
 {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         1.0/6.0,   -1.0/6.0,  1.0/2.0,   0,         0},
 {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0, 0}
    };
-   double b[10]={1.0/12.0, 1.0/6.0, 1.0/6.0,1.0/12.0,0,1.0/12.0, 1.0/6.0, 1.0/6.0,1.0/12.0,0};
-   double c[10]={0, 1.0/4.0, 1.0/4.0, 1.0/2.0, 1.0/2.0, 1.0/2.0, 3.0/4.0, 3.0/4.0, 1, 1 };
+   double b1[10]={1.0/12.0, 1.0/6.0, 1.0/6.0,1.0/12.0,0,1.0/12.0, 1.0/6.0, 1.0/6.0,1.0/12.0,0};
+   double c1[10]={0, 1.0/4.0, 1.0/4.0, 1.0/2.0, 1.0/2.0, 1.0/2.0, 3.0/4.0, 3.0/4.0, 1, 1 };
 
 // Big step RK43
-//   double A[10][10]={
-//{0,         0,         0,         0,         0,         0,         0,         0,         0,         0},
-//{1.0/4.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
-//{1.0/4.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
-//{1.0/2.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
-//{1.0/2.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
-//{-1.0/6.0,  0,         0,         0,         2.0/3.0,   0,         0,         0,         0,         0},
-//{1.0/12.0,  0,         0,         0,         1.0/6.0,   1.0/2.0,   0,         0,         0,         0},
-//{1.0/12.0,  0,         0,         0,         1.0/6.0,   1.0/2.0,   0,         0,         0,         0},
-//{1.0/3.0 ,  0,         0,         0,         -1.0/3.0,  1,         0,         0,         0,         0},
-//{1.0/3.0 ,  0,         0,         0,         -1.0/3.0,  1,         0,         0,         0,         0},
-//   };
-//   double b[10]={1.0/6.0, 0 , 0 , 0 , 1.0/3.0,1.0/3.0, 0 , 0 , 0 , 1.0/6.0};
-//   double c[10]={0, 1.0/4.0, 1.0/4.0, 1.0/2.0, 1.0/2.0, 1.0/2.0, 3.0/4.0, 3.0/4.0, 1, 1 };
+   double A2[10][10]={
+{0,         0,         0,         0,         0,         0,         0,         0,         0,         0},
+{1.0/4.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
+{1.0/4.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
+{1.0/2.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
+{1.0/2.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
+{-1.0/6.0,  0,         0,         0,         2.0/3.0,   0,         0,         0,         0,         0},
+{1.0/12.0,  0,         0,         0,         1.0/6.0,   1.0/2.0,   0,         0,         0,         0},
+{1.0/12.0,  0,         0,         0,         1.0/6.0,   1.0/2.0,   0,         0,         0,         0},
+{1.0/3.0 ,  0,         0,         0,         -1.0/3.0,  1,         0,         0,         0,         0},
+{1.0/3.0 ,  0,         0,         0,         -1.0/3.0,  1,         0,         0,         0,         0},
+   };
+   double b2[10]={1.0/6.0, 0 , 0 , 0 , 1.0/3.0,1.0/3.0, 0 , 0 , 0 , 1.0/6.0};
+   double c2[10]={0, 1.0/4.0, 1.0/4.0, 1.0/2.0, 1.0/2.0, 1.0/2.0, 3.0/4.0, 3.0/4.0, 1, 1 };
 
 
    // fullMatrix<double> K(sol);
@@ -410,11 +412,25 @@ void dgAlgorithm::multirateRungeKutta (const dgConservationLaw &claw,			// conse
 
    Unp.scale(0.0);
    Unp.axpy(sol);
-
+   // Case of 2 groups: first with big steps, second with small steps	 
    for(int j=0; j<nStages;j++){
      tmp.scale(0.0);
      tmp.axpy(sol);
      for(int k=0;k < groups.getNbElementGroups();k++) {
+		 if (k==0) {
+			 for (int ii=0; ii<10; ii++) {
+				 for (int jj=0; jj<10; jj++) {
+					 A[ii][jj]=A2[ii][jj];
+				 }
+			 }
+		 }
+		 else{
+			 for (int ii=0; ii<10; ii++) {
+				 for (int jj=0; jj<10; jj++) {
+					 A[ii][jj]=A1[ii][jj];
+				 }
+			 }
+		 }
        for(int i=0;i<j;i++){
          if(fabs(A[j][i])>1e-12){
            tmp.getGroupProxy(k).add(K[i]->getGroupProxy(k),h*A[j][i]);
@@ -423,6 +439,15 @@ void dgAlgorithm::multirateRungeKutta (const dgConservationLaw &claw,			// conse
      }
      this->residual(claw,groups,tmp,resd);
      for(int k=0;k < groups.getNbElementGroups(); k++) {
+		 if (k==0) {
+			 b=b2;
+			 c=c2;
+		 }
+		 else{
+			 b=b1;
+			 c=c1;
+		 }
+		 
        dgGroupOfElements *group = groups.getElementGroup(k);
        int nbNodes = group->getNbNodes();
        for(int i=0;i<group->getNbElements();i++) {
@@ -592,7 +617,7 @@ void dgAlgorithm::computeElementaryTimeSteps ( //dofManager &dof, // the DOF man
   // provided dataCache
   dataCacheDouble *maxConvectiveSpeed = claw.newMaxConvectiveSpeed(cacheMap);
   dataCacheDouble *maximumDiffusivity = claw.newMaximumDiffusivity(cacheMap);
-
+	
   const int nbFields = claw.nbFields();
   /* This is an estimate on how lengths changes with p 
      It is merely the smallest distance between gauss 

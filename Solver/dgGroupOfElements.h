@@ -208,6 +208,7 @@ class dgGroupCollection {
   inline int getImageElementPositionInGroup(int partId, int i) const {return _elementsToSend[partId][i].second;}
 
   void buildGroups (GModel *model,int dimension, int order);
+  void buildGroups (GModel *model,int dimension, int order, std::string groupType);
   ~dgGroupCollection();
 };
 #endif

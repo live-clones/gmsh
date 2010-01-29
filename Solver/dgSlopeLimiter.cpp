@@ -14,7 +14,7 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution, dgGroupCollection &groups
   fullMatrix<double> &solright = solution.getGroupProxy(0); 
   int nbFields =_claw->nbFields();    
   int totNbElems = solution.getNbElements();
-
+	
   // first compute max and min of all fields for all stencils    
   //----------------------------------------------------------   
 
@@ -32,7 +32,7 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution, dgGroupCollection &groups
     fullMatrix<double> TempL, TempR;
     TempL.setAsProxy(solleft, nbFields*iElementL, nbFields );
     TempR.setAsProxy(solright, nbFields*iElementR, nbFields );    	
-    
+	  
     fSize = TempL.size1(); 
     for (int k=0; k< nbFields; ++k){    
       double AVGL = 0;  

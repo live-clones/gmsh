@@ -42,6 +42,7 @@ public:
   void setOrder (int order); // set the polynomial order
   void setConservationLaw (dgConservationLaw *law); // set the conservationLaw
   dgSystemOfEquations(GModel *_gm);
+  void createGroups(std::string groupType); // create groups from criterion: minEdge (2 groups), maxEdge (2 groups), elementType, allocate (same as setup())
   void setup (); // setup the groups and allocate
   void exportSolution (std::string filename); // export the solution
   void limitSolution (); // apply the limiter on the solution
