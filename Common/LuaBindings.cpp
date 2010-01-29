@@ -222,7 +222,7 @@ void binding::interactiveSession()
   std::string line;
   while(std::cout<<"lua> ",
         getline(std::cin,line) ){
-    report_errors(L, luaL_dostring(L, line.c_str()));
+    reportErrors(L, luaL_dostring(L, line.c_str()));
   }
 #endif
   CTX::instance()->lock = lock;
