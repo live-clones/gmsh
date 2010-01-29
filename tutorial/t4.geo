@@ -6,22 +6,23 @@
  *
  *********************************************************************/
 
-// As usual, we start by defining some variables, some points and some
-// lines:
+// As usual, we start by defining some variables:
 
 cm = 1e-02;
-
-e1 = 4.5*cm; e2 = 6*cm / 2; e3 =  5*cm / 2;
-
-h1 = 5*cm; h2 = 10*cm; h3 = 5*cm; h4 = 2*cm; h5 = 4.5*cm;
-
-R1 = 1*cm; R2 = 1.5*cm; r = 1*cm;
-
-ccos = ( -h5*R1 + e2 * Hypot(h5,Hypot(e2,R1)) ) / (h5^2 + e2^2);
-ssin = Sqrt(1-ccos^2);
-
+e1 = 4.5 * cm; e2 = 6 * cm / 2; e3 =  5 * cm / 2;
+h1 = 5 * cm; h2 = 10 * cm; h3 = 5 * cm; h4 = 2 * cm; h5 = 4.5 * cm;
+R1 = 1 * cm; R2 = 1.5 * cm; r = 1 * cm;
 Lc1 = 0.01;
 Lc2 = 0.003;
+
+// We can use all the usual mathematical functions (note the
+// capitalized first letters), plus some useful functions like
+// Hypot(a, b) := Sqrt(a^2 + b^2):
+
+ccos = (-h5*R1 + e2 * Hypot(h5, Hypot(e2, R1))) / (h5^2 + e2^2);
+ssin = Sqrt(1 - ccos^2);
+
+// Then we define some points and some lines using these variables:
 
 Point(1) = { -e1-e2, 0.0  , 0.0 , Lc1};
 Point(2) = { -e1-e2, h1   , 0.0 , Lc1};
@@ -93,21 +94,26 @@ Plane Surface(22) = {21};
 Line Loop(23) = {11,-12,13,14,1,2,-3,4,5,6,7,-8,9,10};
 Plane Surface(24) = {23,21};
 
+// As a general rule, if a surface has N holes, it is defined by N+1
+// line loops: the first loop defines the exterior boundary; the other
+// loops define the boundaries of the holes.
+
 // Finally, we can add some comments by embedding a post-processing
 // view containing some strings, and change the color of some mesh
 // entities:
 
 View "comments" {
-  // 10 pixels from the left and 15 pixels from the top of the graphic
-  // window:
-  T2(10,15,0){StrCat("File created on ", Today)};
+  // Add a text string in window coordinates, 10 pixels from the left
+  // and 10 pixels from the bottom:
+  T2(10, -10, 0){ "Copyright (C) My Company" };
 
-  // 10 pixels from the left and 10 pixels from the bottom of the
-  // graphic window:
-  T2(10,-10,0){"Copyright (C) My Company"};
+  // Add another text string in window coordinates, 10 pixels from the
+  // left and 15 pixels from the top, using the StrCat() function to
+  // concatenate a string with the current date:
+  T2(10, 15, 0){ StrCat("File created on ", Today) };
 
-  // in the model, at (X,Y,Z) = (0.0,0.11,0.0):
-  T3(0,0.11,0,0){"Hole"};
+  // Add a text string in model coordinates at (X,Y,Z) = (0, 0.11, 0):
+  T3(0, 0.11, 0, 0){ "Hole" };
 };
 
 Color Grey50{ Surface{ 22 }; }

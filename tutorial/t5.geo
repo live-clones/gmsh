@@ -6,27 +6,28 @@
  *
  *********************************************************************/
 
-// Again, we start be defining some characteristic lengths:
+// We start by defining some target mesh sizes:
 
 lcar1 = .1;
 lcar2 = .0005;
 lcar3 = .055;
 
-// If we wanted to change these lengths globally (without changing the
-// above definitions), we could give a global scaling factor for all
-// characteristic lengths on the command line with the `-clscale'
+// If we wanted to change these mesh sizes globally (without changing
+// the above definitions), we could give a global scaling factor for
+// all characteristic lengths on the command line with the `-clscale'
 // option (or with `Mesh.CharacteristicLengthFactor' in an option
 // file). For example, with:
 //
 // > gmsh t5.geo -clscale 1
 //
-// this input file produces a mesh of approximately 3,000 nodes and
-// 15,000 tetrahedra. With
+// this input file produces a mesh of approximately 1,300 nodes and
+// 11,000 tetrahedra. With
 //
 // > gmsh t5.geo -clscale 0.2
 //
-// the mesh counts approximately 600,000 nodes and 3.6 million
-// tetrahedra.
+// the mesh counts approximately 350,000 nodes and 2.1 million
+// tetrahedra. You can check mesh statistics in the graphical user
+// interface with the `Tools->Statistics' menu.
 
 // We proceed by defining some elementary entities describing a
 // truncated cube:
@@ -125,6 +126,8 @@ For t In {1:5}
   x += 0.166 ; 
   z += 0.166 ; 
 
+  // We call the `CheeseHole' function:
+
   Call CheeseHole ;
 
   // We define a physical volume for each hole:
@@ -134,7 +137,7 @@ For t In {1:5}
   // We also print some variables on the terminal (note that, since
   // all variables are treated internally as floating point numbers,
   // the format string should only contain valid floating point format
-  // specifiers):
+  // specifiers like `%g', `%f', '%e', etc.):
 
   Printf("Hole %g (center = {%g,%g,%g}, radius = %g) has number %g!",
 	 t, x, y, z, r, thehole) ;
@@ -149,9 +152,10 @@ theloops[0] = newreg ;
 Surface Loop(theloops[0]) = {35,31,29,37,33,23,39,25,27} ;
 
 // The volume of the cube, without the 5 holes, is now defined by 6
-// surface loops (the exterior surface and the five interior loops).
-// To reference an array of variables, its identifier is followed by
-// '[]':
+// surface loops: the first surface loop defines the exterior surface;
+// the surface loops other than the first one define holes.  (Again,
+// to reference an array of variables, its identifier is followed by
+// square brackets):
 
 Volume(186) = {theloops[]} ;
 
