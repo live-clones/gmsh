@@ -337,8 +337,10 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string bo
   _groupLeft(elGroup),_groupRight(elGroup)
 {
   _boundaryTag=boundaryTag;
-  if(boundaryTag=="")
-    throw;
+  if(boundaryTag==""){
+    Msg::Warning ("empty boundary tag, group of boundary faces not created");
+    return;
+  }
   _fsLeft=_groupLeft.getElement(0)->getFunctionSpace(pOrder);
   _closuresLeft = _fsLeft->vertexClosure;
   _fsRight=NULL;
@@ -357,8 +359,10 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string bo
   _groupLeft(elGroup),_groupRight(elGroup)
 {
   _boundaryTag=boundaryTag;
-  if(boundaryTag=="")
-    throw;
+  if(boundaryTag==""){
+    Msg::Warning ("empty boundary tag, group of boundary faces not created");
+    return;
+  }
   _fsLeft=_groupLeft.getElement(0)->getFunctionSpace(pOrder);
   _closuresLeft = _fsLeft->edgeClosure;
   _fsRight=NULL;
