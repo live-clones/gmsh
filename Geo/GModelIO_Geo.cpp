@@ -175,7 +175,7 @@ int GModel::importGEOInternals()
             if(ge) b[j].push_back(ge);
           }
         }
-        f = new GFaceCompound(this, std::abs(s->Num), comp,
+        f = new GFaceCompound(this, s->Num, comp,
                               b[0], b[1], b[2], b[3], 0,
                               s->Num > 0 ? GFaceCompound::HARMONIC :
                               GFaceCompound::CONFORMAL);
