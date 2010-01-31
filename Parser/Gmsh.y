@@ -1271,6 +1271,22 @@ Shape :
       $$.Type = MSH_SEGM_LOOP;
       $$.Num = num;
     }
+  | tCompound tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$4;
+      if(FindCurve(num)){
+	yymsg(0, "Curve %d already exists", num);
+      }
+      else{
+        Curve *c = Create_Curve(num, MSH_SEGM_COMPOUND, 1, NULL, NULL, -1, -1, 0., 1.);
+        for(int i = 0; i < List_Nbr($7); i++)
+          c->compound.push_back((int)*(double*)List_Pointer($7, i));
+	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
+      }
+      List_Delete($7);
+      $$.Type = MSH_SEGM_COMPOUND;
+      $$.Num = num;
+    }
   | tPhysical tLine 
     {
       curPhysDim = 1;
@@ -1436,40 +1452,20 @@ Shape :
       $$.Type = MSH_SURF_LOOP;
       $$.Num = num;
     }
-  | tPhysical tSurface 
-    {
-      curPhysDim = 2;
-    }
-    '(' PhysicalId ')' tAFFECT ListOfDouble tEND
-    {
-      int num = (int)$5;
-      if(FindPhysicalGroup(num, MSH_PHYSICAL_SURFACE)){
-	yymsg(0, "Physical surface %d already exists", num);
-      }
-      else{
-	List_T *temp = ListOfDouble2ListOfInt($8);
-	PhysicalGroup *p = Create_PhysicalGroup(num, MSH_PHYSICAL_SURFACE, temp);
-	List_Delete(temp);
-	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
-      }
-      List_Delete($8);
-      $$.Type = MSH_PHYSICAL_SURFACE;
-      $$.Num = num;
-    }
-  | tCompound tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      if(FindVolume(num)){
-	yymsg(0, "Volume %d already exists", num);
+      if(FindSurface(num)){
+	yymsg(0, "Surface %d already exists", num);
       }
       else{
-	Volume *v = Create_Volume(num, MSH_VOLUME_COMPOUND);
+        Surface *s = Create_Surface(num, MSH_SURF_COMPOUND);
         for(int i = 0; i < List_Nbr($7); i++)
-          v->compound.push_back((int)*(double*)List_Pointer($7, i));
-	Tree_Add(GModel::current()->getGEOInternals()->Volumes, &v);
+          s->compound.push_back((int)*(double*)List_Pointer($7, i));
+	Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
       }
       List_Delete($7);
-      $$.Type = MSH_VOLUME_COMPOUND;
+      $$.Type = MSH_SURF_COMPOUND;
       $$.Num = num;
     }
   | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tSTRING 
@@ -1502,36 +1498,24 @@ Shape :
       $$.Type = MSH_SURF_COMPOUND;
       $$.Num = num;
     }
-  | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tPhysical tSurface 
     {
-      int num = (int)$4;
-      if(FindSurface(num)){
-	yymsg(0, "Surface %d already exists", num);
-      }
-      else{
-        Surface *s = Create_Surface(num, MSH_SURF_COMPOUND);
-        for(int i = 0; i < List_Nbr($7); i++)
-          s->compound.push_back((int)*(double*)List_Pointer($7, i));
-	Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
-      }
-      List_Delete($7);
-      $$.Type = MSH_SURF_COMPOUND;
-      $$.Num = num;
+      curPhysDim = 2;
     }
-  | tCompound tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
+    '(' PhysicalId ')' tAFFECT ListOfDouble tEND
     {
-      int num = (int)$4;
-      if(FindCurve(num)){
-	yymsg(0, "Curve %d already exists", num);
+      int num = (int)$5;
+      if(FindPhysicalGroup(num, MSH_PHYSICAL_SURFACE)){
+	yymsg(0, "Physical surface %d already exists", num);
       }
       else{
-        Curve *c = Create_Curve(num, MSH_SEGM_COMPOUND, 1, NULL, NULL, -1, -1, 0., 1.);
-        for(int i = 0; i < List_Nbr($7); i++)
-          c->compound.push_back((int)*(double*)List_Pointer($7, i));
-	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
+	List_T *temp = ListOfDouble2ListOfInt($8);
+	PhysicalGroup *p = Create_PhysicalGroup(num, MSH_PHYSICAL_SURFACE, temp);
+	List_Delete(temp);
+	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
       }
-      List_Delete($7);
-      $$.Type = MSH_SEGM_COMPOUND;
+      List_Delete($8);
+      $$.Type = MSH_PHYSICAL_SURFACE;
       $$.Num = num;
     }
 
@@ -1587,7 +1571,22 @@ Shape :
       List_Delete($5);
 #endif
     }
-
+  | tCompound tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$4;
+      if(FindVolume(num)){
+	yymsg(0, "Volume %d already exists", num);
+      }
+      else{
+	Volume *v = Create_Volume(num, MSH_VOLUME_COMPOUND);
+        for(int i = 0; i < List_Nbr($7); i++)
+          v->compound.push_back((int)*(double*)List_Pointer($7, i));
+	Tree_Add(GModel::current()->getGEOInternals()->Volumes, &v);
+      }
+      List_Delete($7);
+      $$.Type = MSH_VOLUME_COMPOUND;
+      $$.Num = num;
+    }
   | tPhysical tVolume 
     {
       curPhysDim = 3;

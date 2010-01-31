@@ -377,10 +377,10 @@ Gmsh uses a boundary representation (``BRep'') to describe geometries.
 Models are created in a bottom-up flow by successively defining points,
 oriented lines (line segments, circles, ellipses, splines, @dots{}),
 oriented surfaces (plane surfaces, ruled surfaces, triangulated
-surfaces, @dots{}) and volumes. Compound groups of geometrical entities
-(called ``physical groups'') can also be defined, based on these
-elementary geometric entities. Gmsh's scripting language allows all
-geometrical entities to be fully parametrized.
+surfaces, @dots{}) and volumes. Groups of geometrical entities (called
+``physical groups'') can also be defined, based on these elementary
+geometric entities. Gmsh's scripting language allows all geometrical
+entities to be fully parametrized.
 
 @c -------------------------------------------------------------------------
 @c Mesh: finite element mesh generation
@@ -2001,7 +2001,7 @@ ways, for example using the @code{Translate}, @code{Rotate},
 @code{Delete} command, provided that no higher-dimension entity
 references them.
 
-Compound groups of elementary geometrical entities can also be defined and
+Groups of elementary geometrical entities can also be defined and
 are called ``physical'' entities. These physical entities cannot be modified
 by geometry commands: their only purpose is to assemble elementary entities
 into larger groups, possibly modifying their orientation, so that they can
@@ -2157,6 +2157,16 @@ supports it, it is not recommended to specify multiple line loops (or
 subloops) in a single @code{Line Loop} command. (Line loops are used to
 create surfaces: see @ref{Surfaces}.)
 
+@item Compound Line ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a compound line from several elementary lines.  When meshed, a
+compound line will be reparametrized as a single line, whose mesh can
+thus cross internal boundaries. The @var{expression} inside the
+parentheses is the compound line's identification number; the
+@var{expression-list} on the right hand side contains the identification
+number of the elementary lines that should be reparametrized as a single
+line. See @code{Compound Surface} for additional information on compound
+entities.
+
 @item Physical Line ( @var{expression} | @var{char-expression} ) = @{ @var{expression-list} @};
 Creates a physical line. The @var{expression} inside the parentheses is
 the physical line's identification number (if a @var{char-expression} is
@@ -2198,11 +2208,11 @@ same surface (in which case the two line loops should be combined).
 Creates a ruled surface, i.e., a surface that can be interpolated using
 transfinite interpolation. The @var{expression} inside the parentheses
 is the ruled surface's identification number; the first
-@var{expression-list} on the right hand side should the identification
-number of a line loop composed of either three or four elementary
-lines. The optional @code{In Sphere} argument forces the surface to be a
-spherical patch (the extra parameter gives the identification number of
-the center of the sphere).
+@var{expression-list} on the right hand side should contain the
+identification number of a line loop composed of either three or four
+elementary lines. The optional @code{In Sphere} argument forces the
+surface to be a spherical patch (the extra parameter gives the
+identification number of the center of the sphere).
 
 @item Surface Loop ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a surface loop (a shell). The @var{expression} inside the
@@ -2213,6 +2223,21 @@ surface loop. A surface loop must always represent a closed shell, and the
 elementary surfaces should be oriented consistently (using negative
 identification numbers to specify reverse orientation). (Surface loops are
 used to create volumes: see @ref{Volumes}.)
+
+@item Compound Surface ( @var{expression} ) = @{ @var{expression-list} @} < Boundary @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @} @} >;
+Creates a compound surface from several elementary surfaces.  When
+meshed, a compound surface will be reparametrized as a single surface,
+whose mesh can thus cross internal boundaries. Compound surfaces are
+mostly useful for remeshing discrete models; see ``J.-F. Remacle,
+C. Geuzaine, G. Compere and E. Marchandise, @emph{High Quality Surface
+Remeshing Using Harmonic Maps}, International Journal for Numerical
+Methods in Engineering, 2009'' for details.  The @var{expression} inside
+the parentheses is the compound surface's identification number; the
+mandatory @var{expression-list} on the right hand side contains the
+identification number of the elementary surfaces that should be
+reparametrized as a single surface.
+
+@c TODO document the optional @code{Boundary} arguments.
 
 @item Physical Surface ( @var{expression} | @var{char-expression} ) = @{ @var{expression-list} @};
 Creates a physical surface. The @var{expression} inside the parentheses
@@ -2251,6 +2276,16 @@ should be defined separately). Likewise, a surface loop defining a hole
 should not have any surfaces in common with another surface loop defining a
 hole in the same volume (in which case the two surface loops should be
 combined).
+
+@item Compound Volume ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a compound volume from several elementary volumes.  When meshed,
+a compound volume will be reparametrized as a single volume, whose mesh
+can thus cross internal boundaries. The @var{expression} inside the
+parentheses is the compound volume's identification number; the
+@var{expression-list} on the right hand side contains the identification
+number of the elementary volumes that should be reparametrized as a
+single volume. See @code{Compound Surface} for additional information on
+compound entities.
 
 @item Physical Volume ( @var{expression} | @var{char-expression} ) = @{ @var{expression-list} @};
 Creates a physical volume. The @var{expression} inside the parentheses
