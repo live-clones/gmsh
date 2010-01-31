@@ -1149,15 +1149,18 @@ void DeleteShape(int Type, int Num)
   case MSH_SEGM_ELLI:
   case MSH_SEGM_ELLI_INV:
   case MSH_SEGM_NURBS:
+  case MSH_SEGM_COMPOUND:
     DeleteCurve(Num);
     DeleteCurve(-Num);
     break;
   case MSH_SURF_TRIC:
   case MSH_SURF_REGL:
   case MSH_SURF_PLAN:
+  case MSH_SURF_COMPOUND:
     DeleteSurface(Num);
     break;
   case MSH_VOLUME:
+  case MSH_VOLUME_COMPOUND:
     DeleteVolume(Num);
     break;
   case MSH_POINT_FROM_GMODEL:
@@ -1280,6 +1283,7 @@ void VisibilityShape(int Type, int Num, int Mode)
   case MSH_SEGM_ELLI_INV:
   case MSH_SEGM_NURBS:
   case MSH_SEGM_DISCRETE:
+  case MSH_SEGM_COMPOUND:
   case MSH_SEGM_FROM_GMODEL:
     if((c = FindCurve(Num)))
       c->Visible = Mode;
@@ -1295,6 +1299,7 @@ void VisibilityShape(int Type, int Num, int Mode)
   case MSH_SURF_REGL:
   case MSH_SURF_PLAN:
   case MSH_SURF_DISCRETE:
+  case MSH_SURF_COMPOUND:
   case MSH_SURF_FROM_GMODEL:
     if((s = FindSurface(Num)))
       s->Visible = Mode;
@@ -1308,6 +1313,7 @@ void VisibilityShape(int Type, int Num, int Mode)
     break;
   case MSH_VOLUME:
   case MSH_VOLUME_DISCRETE:
+  case MSH_VOLUME_COMPOUND:
   case MSH_VOLUME_FROM_GMODEL:
     if((V = FindVolume(Num)))
       V->Visible = Mode;
