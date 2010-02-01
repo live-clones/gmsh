@@ -523,14 +523,6 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
     pC->k = NULL;
 
   if(Liste) {
-    if(Typ == MSH_SEGM_LINE && List_Nbr(Liste) == 2){
-      int iPnt0, iPnt1;
-      List_Read(Liste, 0, &iPnt0);
-      List_Read(Liste, 1, &iPnt1);
-      if(iPnt0 == iPnt1)
-        Msg::Error("Zero-length straight line from point %d to point %d",
-                   iPnt0, iPnt1);
-    }
     pC->Control_Points = List_Create(List_Nbr(Liste), 1, sizeof(Vertex *));
     for(int j = 0; j < List_Nbr(Liste); j++) {
       int iPnt;

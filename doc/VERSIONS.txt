@@ -1,6 +1,8 @@
-2.4.3 (?): new client/server visualization mode; new option to force
-the type of views dynamically; small bug fixes and usability
-improvements.
+2.5.0 (?): new client/server visualization mode; new compound
+geometrical entities (useful for remeshing); new option to force the
+type of views dynamically; bumped mesh version format to 2.2 (change
+in the meaning of the partion tags; this only affect partioned
+meshes); small bug fixes and usability improvements.
 
 2.4.2 (Sep 21, 2009): solver code refactoring + better IDE
 integration.

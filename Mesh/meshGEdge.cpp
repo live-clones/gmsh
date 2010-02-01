@@ -267,16 +267,21 @@ void meshGEdge::operator() (GEdge *ge)
   double t_end = bounds.high();
   
   // first compute the length of the curve by integrating one
+  double length;
   std::vector<IntPoint> Points;
-  double length = Integration(ge, t_begin, t_end, F_One, Points, 1.e-8 * CTX::instance()->lc);
+  if(ge->geomType() == GEntity::Line && ge->getBeginVertex() == ge->getEndVertex())
+    length = 0.; // special case t avoid infinite loop in integration
+  else
+    length = Integration(ge, t_begin, t_end, F_One, Points, 1.e-8 * CTX::instance()->lc);
   ge->setLength(length);
   Points.clear();
 
-  if(length == 0.0)
+  if(length == 0. && CTX::instance()->mesh.toleranceEdgeLength == 0.)
+    Msg::Error("Curve %d has a zero length", ge->tag());
+  else
     Msg::Debug("Curve %d has a zero length", ge->tag());
 
-  // TEST
-  if (length < CTX::instance()->mesh.toleranceEdgeLength) ge->setTooSmall(true);
+  if(length < CTX::instance()->mesh.toleranceEdgeLength) ge->setTooSmall(true);
 
   // Integrate detJ/lc du 
   double a;
