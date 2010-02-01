@@ -148,6 +148,7 @@ class Surface{
   int Method;
   int Recombine;
   int Recombine_Dir; // -1 is left, +1 is right, 0 is alternated
+  int TypeOfMapping; // 0 is cad, +1 is harmonic, -1 is conformal
   double RecombineAngle;
   int TransfiniteSmoothing;
   List_T *Generatrices;

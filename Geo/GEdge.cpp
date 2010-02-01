@@ -209,7 +209,7 @@ SVector3 GEdge::secondDer(double par) const
 
 SPoint2 GEdge::reparamOnFace(const GFace *face, double epar,int dir) const
 {
-  // reparmaterize the point onto the given face.
+  // reparametrize the point onto the given face.
   const GPoint p3 = point(epar);
   SPoint3 sp3(p3.x(), p3.y(), p3.z());
   return face->parFromPoint(sp3);

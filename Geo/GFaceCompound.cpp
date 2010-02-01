@@ -533,7 +533,7 @@ bool GFaceCompound::parametrize() const
 
   if (checkAspectRatio() > AR_MAX){
     printf("WARNING: geom aspect ratio too high \n");
-    exit(1);
+    //exit(1);
     paramOK = false;
   }
 
@@ -1333,7 +1333,6 @@ SPoint2 GFaceCompound::parFromPoint(const SPoint3 &p) const
 
   std::map<SPoint3,SPoint3>::const_iterator it = _coordPoints.find(p);
   SPoint3 sp = it->second;
-  printf("return u,v=%g %g \n", sp.x(), sp.y());
 
   return SPoint2(sp.x(), sp.y());
 
