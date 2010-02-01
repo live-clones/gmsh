@@ -129,7 +129,6 @@ void GFace::resetMeshAttributes()
   meshAttributes.recombineAngle = 45.;
   meshAttributes.Method = MESH_UNSTRUCTURED;
   meshAttributes.transfiniteArrangement = 0;
-  meshAttributes.typeOfMapping = 0;
   meshAttributes.transfiniteSmoothing = -1;
   meshAttributes.extrude = 0;
 }

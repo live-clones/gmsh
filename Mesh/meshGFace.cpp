@@ -1296,15 +1296,15 @@ bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge*> &edges)
 #if defined(HAVE_SOLVER)  
 
   bool correctTopo = gf->checkTopology();
-  if (!correctTopo){
+  if (!correctTopo && gf->allowPartition()){
     partitionAndRemesh((GFaceCompound*) gf);
     isMeshed = true;
     return isMeshed;
   }
   
-   bool correctParam = gf->parametrize();
+  bool correctParam = gf->parametrize();
   
-  if (!correctParam){
+  if (!correctParam &&  gf->allowPartition()){
    partitionAndRemesh((GFaceCompound*) gf);
    isMeshed = true;
    return isMeshed;

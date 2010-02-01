@@ -776,9 +776,10 @@ void GFaceCompound::computeALoop(std::set<GEdge*> &_unique, std::list<GEdge*> &l
 GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 			     std::list<GEdge*> &U0, std::list<GEdge*> &V0,
 			     std::list<GEdge*> &U1, std::list<GEdge*> &V1,
-			     linearSystem<double> *lsys, typeOfMapping mpg)
+			     linearSystem<double> *lsys, typeOfMapping mpg, 
+			     int allowPartition)
   : GFace(m, tag), _compound(compound), _U0(U0), _U1(U1), _V0(V0), _V1(V1), oct(0),
-    _lsys(lsys),_mapping(mpg)
+    _lsys(lsys),_mapping(mpg), _allowPartition(allowPartition)
 {
 
   if (!_lsys) {

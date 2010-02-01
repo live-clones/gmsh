@@ -99,7 +99,7 @@ class GFaceCompound : public GFace {
                 std::list<GEdge*> &U0, std::list<GEdge*> &U1,
                 std::list<GEdge*> &V0, std::list<GEdge*> &V1,
 		linearSystem<double>* lsys =0,
-		typeOfMapping typ = HARMONIC);
+		typeOfMapping typ = HARMONIC, int allowPartition=1);
   virtual ~GFaceCompound();
   Range<double> parBounds(int i) const 
   { return trivial() ? (*(_compound.begin()))->parBounds(i) : Range<double>(-1, 1); }
@@ -119,9 +119,11 @@ class GFaceCompound : public GFace {
   void coherenceNormals();
   virtual std::list<GFace*> getCompounds() const {return _compound;};
   mutable int nbSplit;
+  int allowPartition() const{return _allowPartition;};
  private:
   typeOfIsomorphism _type;
   mutable typeOfMapping _mapping;
+  int _allowPartition;
 };
 
 #else

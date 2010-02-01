@@ -118,7 +118,7 @@ fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 
 %type <d> FExpr FExpr_Single 
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
-%type <i> CompoundMap
+%type <i> CompoundMap CompoundSplit
 %type <i> NumericAffectation NumericIncrement PhysicalId
 %type <i> TransfiniteArrangement RecombineAngle
 %type <u> ColorExpr
@@ -1453,7 +1453,7 @@ Shape :
       $$.Type = MSH_SURF_LOOP;
       $$.Num = num;
     }
-  | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble CompoundMap tEND
+  | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble CompoundMap CompoundSplit tEND
     {
       int num = (int)$4;
       if(FindSurface(num)){
@@ -1463,7 +1463,8 @@ Shape :
         Surface *s = Create_Surface(num, MSH_SURF_COMPOUND);
         for(int i = 0; i < List_Nbr($7); i++){
           s->compound.push_back((int)*(double*)List_Pointer($7, i));
-	  s->Parametrization = $8;
+	  s->TypeOfMapping = $8;
+	  s->AllowPartition = $9;
 	}
 	Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
       }
@@ -1472,7 +1473,7 @@ Shape :
       $$.Num = num;
     }
   | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tSTRING 
-      '{' RecursiveListOfListOfDouble '}' CompoundMap tEND
+      '{' RecursiveListOfListOfDouble '}' CompoundMap CompoundSplit tEND
     {
       int num = (int)$4;
       if(FindSurface(num)){
@@ -1490,7 +1491,8 @@ Shape :
 	  List_T *l = *(List_T**)List_Pointer($10, i);
           for (int j = 0; j < List_Nbr(l); j++){
             s->compoundBoundary[i].push_back((int)*(double*)List_Pointer(l, j));
-	    s->Parametrization = $12;
+	    s->TypeOfMapping = $12;
+            s->AllowPartition = $13;
 	  }
 	}
 	Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
@@ -2873,8 +2875,8 @@ ExtrudeParameter :
     }
 ;
 
-//  T R A N S F I N I T E ,   R E C O M B I N E   &   S M O O T H I N G
 
+//  COMPOUND
 CompoundMap : 
     {
       $$ = 1; // harmonic
@@ -2890,7 +2892,20 @@ CompoundMap :
       Free($1);
     }
 ;
-
+CompoundSplit : 
+    {
+      $$ = 1; // partitionning allowed
+    }
+  | tSTRING
+    {
+      if(!strcmp($1, "NoSplit"))
+        $$ = 0;
+      else 
+        $$ = 1;
+      Free($1);
+    }
+;
+//  T R A N S F I N I T E ,   R E C O M B I N E   &   S M O O T H I N G
 
 TransfiniteType : 
     {
