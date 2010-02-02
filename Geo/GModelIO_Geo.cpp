@@ -175,10 +175,12 @@ int GModel::importGEOInternals()
             if(ge) b[j].push_back(ge);
           }
         }
+	int allowPartition = 1;
+	if (abs(s->TypeOfMapping) != 1) allowPartition = 0;
         f = new GFaceCompound(this, s->Num, comp,
                               b[0], b[1], b[2], b[3], 0,
                               s->TypeOfMapping > 0 ? GFaceCompound::HARMONIC :
-                              GFaceCompound::CONFORMAL, s->AllowPartition);
+                              GFaceCompound::CONFORMAL, allowPartition);
         add(f);
       }
       else if(!f){

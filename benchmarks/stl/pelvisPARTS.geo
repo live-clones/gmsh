@@ -8,10 +8,10 @@ Compound Line(70)={7};
 Compound Line(80)={8};
 Compound Line(90)={9};
 
-Compound Surface(100)={2} Harmonic NoSplit; 
-Compound Surface(200)={3} Harmonic NoSplit; 
-Compound Surface(300)={4} Harmonic NoSplit;
-Compound Surface(400)={5} Harmonic NoSplit; 
+Compound Surface(100)={2} Harmonic_NoSplit; 
+Compound Surface(200)={3} Harmonic_NoSplit; 
+Compound Surface(300)={4} Harmonic_NoSplit;
+Compound Surface(400)={5} Harmonic_NoSplit; 
 
 Surface Loop(500)={100,200,300,400};
 Volume(501)={500};

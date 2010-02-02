@@ -118,7 +118,7 @@ fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 
 %type <d> FExpr FExpr_Single 
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
-%type <i> CompoundMap CompoundSplit
+%type <i> CompoundMap 
 %type <i> NumericAffectation NumericIncrement PhysicalId
 %type <i> TransfiniteArrangement RecombineAngle
 %type <u> ColorExpr
@@ -1453,7 +1453,7 @@ Shape :
       $$.Type = MSH_SURF_LOOP;
       $$.Num = num;
     }
-  | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble CompoundMap CompoundSplit tEND
+  | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble CompoundMap tEND
     {
       int num = (int)$4;
       if(FindSurface(num)){
@@ -1464,7 +1464,6 @@ Shape :
         for(int i = 0; i < List_Nbr($7); i++){
           s->compound.push_back((int)*(double*)List_Pointer($7, i));
 	  s->TypeOfMapping = $8;
-	  s->AllowPartition = $9;
 	}
 	Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
       }
@@ -1473,7 +1472,7 @@ Shape :
       $$.Num = num;
     }
   | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tSTRING 
-      '{' RecursiveListOfListOfDouble '}' CompoundMap CompoundSplit tEND
+      '{' RecursiveListOfListOfDouble '}' CompoundMap tEND
     {
       int num = (int)$4;
       if(FindSurface(num)){
@@ -1492,7 +1491,6 @@ Shape :
           for (int j = 0; j < List_Nbr(l); j++){
             s->compoundBoundary[i].push_back((int)*(double*)List_Pointer(l, j));
 	    s->TypeOfMapping = $12;
-            s->AllowPartition = $13;
 	  }
 	}
 	Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
@@ -2883,25 +2881,14 @@ CompoundMap :
     }
   | tSTRING
     {
-      if(!strcmp($1, "Convex"))
-        $$ = 0;
-      else if(!strcmp($1, "Harmonic"))
+      if(!strcmp($1, "Harmonic"))
         $$ = 1;
       else if(!strcmp($1, "Conformal"))
         $$ = -1;
-      Free($1);
-    }
-;
-CompoundSplit : 
-    {
-      $$ = 1; // partitionning allowed
-    }
-  | tSTRING
-    {
-      if(!strcmp($1, "NoSplit"))
-        $$ = 0;
-      else 
-        $$ = 1;
+      else if(!strcmp($1, "Harmonic_NoSplit"))
+        $$ = 2;
+      else if(!strcmp($1, "Conformal_NoSplit"))
+        $$ = -2;
       Free($1);
     }
 ;

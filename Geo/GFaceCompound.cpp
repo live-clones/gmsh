@@ -411,8 +411,8 @@ bool GFaceCompound::checkOrientation(int iter) const
 
   int iterMax = 5;
   if(!oriented && iter < iterMax){
-    if (iter == 0) Msg::Warning("*** Parametrization is NOT 1 to 1 : applying cavity checks.");
-    Msg::Debug("*** Cavity Check - iter %d -",iter);
+    if (iter == 0) Msg::Warning("--- Parametrization is NOT 1 to 1 : applying cavity checks.");
+    Msg::Debug("--- Cavity Check - iter %d -",iter);
     one2OneMap();
     return checkOrientation(iter+1);
   }
@@ -532,7 +532,7 @@ bool GFaceCompound::parametrize() const
   computeNormals();  
 
   if (checkAspectRatio() > AR_MAX){
-    printf("WARNING: geom aspect ratio too high \n");
+    Msg::Warning("Geometrical aspect ratio too high");
     //exit(1);
     paramOK = false;
   }
@@ -1688,16 +1688,20 @@ bool GFaceCompound::checkTopology() const
   if (G != 0 || Nb < 1){
     correctTopo = false;
     nbSplit = std::max(G+2, 2);
-    Msg::Info("-----------------------------------------------------------");
     Msg::Warning("Wrong topology: Genus=%d, Nb boundaries=%d, AR=%g", G, Nb, H/D);
-    Msg::Info("*** Split surface %d in %d parts with Multilevel Mesh partitioner", tag(), nbSplit);
+    if (_allowPartition){
+      Msg::Info("-----------------------------------------------------------");
+      Msg::Info("--- Split surface %d in %d parts with Multilevel Mesh partitioner", tag(), nbSplit);
+    }
   }
    else if (G == 0 && AR > AR_MAX){
      correctTopo = false;
      nbSplit = -2;
-     Msg::Info("-----------------------------------------------------------");
      Msg::Warning("Wrong topology: Genus=%d, Nb boundaries=%d, AR=%d", G, Nb, AR);
-     Msg::Info("*** Split surface %d in 2 parts with Laplacian Mesh partitioner", tag());
+     if (_allowPartition){
+       Msg::Info("-----------------------------------------------------------");
+       Msg::Info("--- Split surface %d in 2 parts with Laplacian Mesh partitioner", tag());
+     }
 
 //      correctTopo = true;
 //      _mapping = MULTISCALE;
