@@ -293,9 +293,7 @@ void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation l
       K.axpy(sol);
     }
 
-    if (limiter){
-      limiter->apply(K, groups);
-    }
+    if (limiter) limiter->apply(K, groups);
     this->residual(claw,groups,K,resd);
     K.scale(0.);
     for(int k=0; k < groups.getNbElementGroups(); k++) {

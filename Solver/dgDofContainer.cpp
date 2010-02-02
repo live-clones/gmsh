@@ -28,6 +28,7 @@ dgDofContainer::dgDofContainer (dgGroupCollection &groups, int nbFields):
   _dataProxys.resize(_groups.getNbElementGroups()+_groups.getNbGhostGroups());
   for (int i=0;i<_groups.getNbElementGroups();i++){    
     dgGroupOfElements *group = _groups.getElementGroup(i);
+    _groupId[group] = i;
     int nbNodes    = group->getNbNodes();
     int nbElements = group->getNbElements();
     _dataProxys[i] = new fullMatrix<double> (&(*_data)(offset),nbNodes, _nbFields*nbElements);
@@ -51,6 +52,7 @@ dgDofContainer::dgDofContainer (dgGroupCollection &groups, int nbFields):
     dgGroupOfElements *group = _groups.getGhostGroup(i);
     int nbNodes    = group->getNbNodes();
     int nbElements = group->getNbElements();
+    _groupId[group] = i+_groups.getNbElementGroups();
     _dataProxys[i+_groups.getNbElementGroups()] = new fullMatrix<double> (&(*_ghostData)(offset),nbNodes, _nbFields*nbElements);
     offset += nbNodes*_nbFields*nbElements;
   }  
@@ -141,6 +143,12 @@ void dgDofContainer::scatter() {
     fullMatrix<double> recvProxy (recvBuf + groupShiftRecv[i], sol.size1(), sol.size2());
     sol.setAll(recvProxy);
   }
+}
+void dgDofContainer::setAll(double v) {
+  for(int i=0;i<_data->size();i++)
+    (*_data)(i)=v;
+  for(int i=0;i<_ghostData->size();i++)
+    (*_ghostData)(i)=v;
 }
 void dgDofContainer::scale(double f) 
 {

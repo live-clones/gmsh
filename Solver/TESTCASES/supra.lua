@@ -18,13 +18,13 @@ end
 
 function valueRight(f)
   for i=0,f:size1()-1 do
-    f:set(i,0,math.sin(2*math.pi*t/T))
+    f:set(i,0,math.sin(2*math.pi*t/T+math.pi/2))
   end
 end
 
 function valueLeft(f)
   for i=0,f:size1()-1 do
-    f:set(i,0,-math.sin(2*math.pi*t/T))
+    f:set(i,0,-math.sin(2*math.pi*t/T+math.pi/2))
   end
 end
 
