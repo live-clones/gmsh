@@ -1,4 +1,4 @@
-Mesh.CharacteristicLengthFactor=0.133;
+//Mesh.CharacteristicLengthFactor=0.133;
 Mesh.Algorithm3D = 4; //Frontal (4) Delaunay(1)
 
 Merge "pelvisSMOOTH.stl";

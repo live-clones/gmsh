@@ -13,6 +13,7 @@
 #include "CutMap.h"
 #include "CutGrid.h"
 #include "StreamLines.h"
+#include "Particles.h"
 #include "CutPlane.h"
 #include "CutParametric.h"
 #include "CutSphere.h"
@@ -147,6 +148,8 @@ void PluginManager::registerDefaultPlugins()
   if(CTX::instance()->post.plugins){
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("StreamLines", GMSH_RegisterStreamLinesPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("Particles", GMSH_RegisterParticlesPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("CutGrid", GMSH_RegisterCutGridPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>

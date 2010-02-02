@@ -145,10 +145,10 @@ std::string GMSH_StreamLinesPlugin::getHelp() const
          "lines. The plugin takes as input a grid defined\n"
          "by the 3 points (`X0',`Y0',`Z0') (origin),\n"
          "(`X1',`Y1',`Z1') (axis of U) and (`X2',`Y2',`Z2')\n"
-         "(axis of V). The number of points that are to\n"
-         "be transported along U and V is set with the\n"
+         "(axis of V). The number of points along U and V\n"
+         "that are to be transported is set with the\n"
          "options `nPointsU' and `nPointsV'. The equation\n"
-         "DX(t)/dt=V(x,y,z) is then solved with the initial\n"
+         "dX(t)/dt=V(x,y,z) is then solved with the initial\n"
          "condition X(t=0) chosen as the grid and with V(x,y,z)\n"
          "interpolated on the vector view. The time stepping\n"
          "scheme is a RK44 with step size `DT' and `MaxIter'\n"
@@ -187,14 +187,14 @@ void GMSH_StreamLinesPlugin::getPoint(int iU, int iV, double *X)
   double u = getNbU() > 1 ? (double)iU / (double)(getNbU() - 1.) : 0.;
   double v = getNbV() > 1 ? (double)iV / (double)(getNbV() - 1.) : 0.;
   X[0] = StreamLinesOptions_Number[0].def + 
-    u  * (StreamLinesOptions_Number[3].def-StreamLinesOptions_Number[0].def) +
-    v  * (StreamLinesOptions_Number[6].def-StreamLinesOptions_Number[0].def);
+    u  * (StreamLinesOptions_Number[3].def - StreamLinesOptions_Number[0].def) +
+    v  * (StreamLinesOptions_Number[6].def - StreamLinesOptions_Number[0].def);
   X[1] = StreamLinesOptions_Number[1].def + 
-    u  * (StreamLinesOptions_Number[4].def-StreamLinesOptions_Number[1].def) +
-    v  * (StreamLinesOptions_Number[7].def-StreamLinesOptions_Number[1].def);
+    u  * (StreamLinesOptions_Number[4].def - StreamLinesOptions_Number[1].def) +
+    v  * (StreamLinesOptions_Number[7].def - StreamLinesOptions_Number[1].def);
   X[2] = StreamLinesOptions_Number[2].def + 
-    u  * (StreamLinesOptions_Number[5].def-StreamLinesOptions_Number[2].def) +
-    v  * (StreamLinesOptions_Number[8].def-StreamLinesOptions_Number[2].def);
+    u  * (StreamLinesOptions_Number[5].def - StreamLinesOptions_Number[2].def) +
+    v  * (StreamLinesOptions_Number[8].def - StreamLinesOptions_Number[2].def);
 }
 
 PView *GMSH_StreamLinesPlugin::execute(PView *v)
@@ -245,7 +245,7 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
         data3->NbVP++;
         data3->VP.push_back(X[0]);
         data3->VP.push_back(X[1]);
-        data3->VP.push_back(X[2]);            
+        data3->VP.push_back(X[2]);
       }
 
       int currentTimeStep = 0;
@@ -302,7 +302,7 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
         else{
           data3->VP.push_back(DX[0]);
           data3->VP.push_back(DX[1]);
-          data3->VP.push_back(DX[2]);         
+          data3->VP.push_back(DX[2]);
         }
       }
     }
