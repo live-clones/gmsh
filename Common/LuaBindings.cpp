@@ -206,11 +206,11 @@ void binding::interactiveSession()
 #ifdef HAVE_READLINE
   using_history();
   while (const char *line=readline("lua> ")){
-    char *expansion;
+    char *expansion=NULL;
     int r=history_expand((char*)line,&expansion);
     if(r)
       std::cout<<expansion<<"\n";
-    if(r==0 || r==1){
+    if((r==0 || r==1)&& expansion){
       add_history(expansion);
       reportErrors(L, luaL_dostring(L, expansion));
     }
