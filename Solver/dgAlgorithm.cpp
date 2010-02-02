@@ -500,6 +500,7 @@ void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (mayb
   // viscous
   dataCacheDouble *diffusiveFluxLeft = claw.newDiffusiveFlux(cacheMapLeft);
   dataCacheDouble *maximumDiffusivityLeft = claw.newMaximumDiffusivity(cacheMapLeft);
+  dataCacheDouble *maximumDiffusivityOut = boundaryCondition->newMaximumDiffusivity(cacheMapLeft);
   dataCacheDouble *neumann   = boundaryCondition->newDiffusiveNeumannBC(cacheMapLeft);
   dataCacheDouble *dirichlet = boundaryCondition->newDiffusiveDirichletBC(cacheMapLeft);
 
@@ -540,13 +541,14 @@ void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (mayb
         for (int k=0;k<nbFields;k++) { 
           double minl = group.getElementVolumeLeft(iFace)/group.getInterfaceSurface(iFace);
           double nu = (*maximumDiffusivityLeft)(iPt,0);
-	  double mu = (p+1)*(p+dim)/dim*nu/minl;
+          if(maximumDiffusivityOut)
+            nu = std::max(nu,(*maximumDiffusivityOut)(iPt,0));
+          double mu = (p+1)*(p+dim)/dim*nu/minl;
           double solutionJumpPenalty = (solutionQPLeft(iPt,k)-(*dirichlet)(iPt,k))/2*mu;
           normalFluxQP(iPt,k) -= ((*neumann)(iPt,k)+solutionJumpPenalty)*detJ;
         }
       }
     }    
-
   }
   // ----- 3 ---- do the redistribution at face nodes using BLAS3
   residual.gemm(group.getRedistributionMatrix(),NormalFluxQP);

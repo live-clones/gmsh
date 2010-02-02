@@ -24,6 +24,7 @@ class dgBoundaryCondition {
   virtual dataCacheDouble *newBoundaryTerm(dataCacheMap &cacheMapLeft) const = 0;
   virtual dataCacheDouble *newDiffusiveNeumannBC(dataCacheMap &cacheMapLeft) const;
   virtual dataCacheDouble *newDiffusiveDirichletBC(dataCacheMap &cacheMapLeft) const;
+  virtual dataCacheDouble *newMaximumDiffusivity(dataCacheMap &cacheMapLeft)const {return NULL;}
   static void registerBindings(binding *b);
 };
 
@@ -60,6 +61,7 @@ class dgConservationLaw {
 
   //a generic boundary condition using the Riemann solver of the conservation Law
   dgBoundaryCondition *newOutsideValueBoundary(std::string outsideValueFunctionName);
+  dgBoundaryCondition *newNeumannBoundary(const std::string fluxFunctionName);
   dgBoundaryCondition *new0FluxBoundary();
   dgBoundaryCondition *newSymmetryBoundary();
 
