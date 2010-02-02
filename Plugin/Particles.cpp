@@ -225,10 +225,9 @@ PView *GMSH_ParticlesPlugin::execute(PView *v)
   }
 
   OctreePost o1(v1);
-  double *val2 = 0;
 
-  PView *v3 = new PView();
-  PViewDataList *data3 = getDataList(v3);
+  PView *v2 = new PView();
+  PViewDataList *data2 = getDataList(v2);
 
   // Solve 'A2 d^2x/dt^2 + A1 dx/dt + A0 x = F' using a Newmark scheme:
   //
@@ -250,18 +249,18 @@ PView *GMSH_ParticlesPlugin::execute(PView *v)
       getPoint(i, j, XINIT);
       getPoint(i, j, X0);
       getPoint(i, j, X1);
-      data3->NbVP++;
-      data3->VP.push_back(XINIT[0]);
-      data3->VP.push_back(XINIT[1]);
-      data3->VP.push_back(XINIT[2]);
+      data2->NbVP++;
+      data2->VP.push_back(XINIT[0]);
+      data2->VP.push_back(XINIT[1]);
+      data2->VP.push_back(XINIT[2]);
       for(int iter = 0; iter < maxIter; iter++){
         double F[3], X[3];
         o1.searchVector(X1[0], X1[1], X1[2], F, timeStep);
         for(int k = 0; k < 3; k++)
           X[k] = 1 / c1 * (c2 * X1[k] + c3 * X0[k] + c4 * F[k]);
-        data3->VP.push_back(X[0] - XINIT[0]);
-        data3->VP.push_back(X[1] - XINIT[1]);
-        data3->VP.push_back(X[2] - XINIT[2]);
+        data2->VP.push_back(X[0] - XINIT[0]);
+        data2->VP.push_back(X[1] - XINIT[1]);
+        data2->VP.push_back(X[2] - XINIT[2]);
         for(int k = 0; k < 3; k++){
           X0[k] = X1[k];
           X1[k] = X[k];
@@ -270,11 +269,11 @@ PView *GMSH_ParticlesPlugin::execute(PView *v)
     }
   }
 
-  v3->getOptions()->vectorType = PViewOptions::Displacement;
+  v2->getOptions()->vectorType = PViewOptions::Displacement;
 
-  data3->setName(data1->getName() + "_Particles");
-  data3->setFileName(data1->getName() + "_Particles.pos");
-  data3->finalize();
+  data2->setName(data1->getName() + "_Particles");
+  data2->setFileName(data1->getName() + "_Particles.pos");
+  data2->finalize();
 
-  return v3;
+  return v2;
 }
