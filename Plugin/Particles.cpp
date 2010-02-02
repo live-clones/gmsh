@@ -149,24 +149,24 @@ std::string GMSH_ParticlesPlugin::getHelp() const
 {
   return 
     "Plugin(Particles) computes the trajectory\n"
-    "of a particule in the force field given by the\n"
+    "of particules in the force field given by the\n"
     "`TimeStep'-th time step of a vector view\n"
     "`iView'. The plugin takes as input a grid defined\n"
     "by the 3 points (`X0',`Y0',`Z0') (origin),\n"
     "(`X1',`Y1',`Z1') (axis of U) and (`X2',`Y2',`Z2')\n"
-    "(axis of V). The number of points along U and V\n"
+    "(axis of V). The number of particles along U and V\n"
     "that are to be transported is set with the\n"
     "options `nPointsU' and `nPointsV'. The equation\n"
-    "A2*d^2X(t)/dt^2+A1*dX(t)/dt+A0*X(t)=F(x,y,z) is then\n"
+    "A2*d^2X(t)/dt^2+A1*dX(t)/dt+A0*X(t)=F is then\n"
     "solved with the initial conditions X(t=0) chosen\n"
-    "as the grid, dX/dt(t=0)=0, and with F(x,y,z)\n"
+    "as the grid, dX/dt(t=0)=0, and with F\n"
     "interpolated from the vector view. Time stepping\n"
     "is done using a Newmark scheme with step size `DT'\n"
     "and `MaxIter' maximum number of iterations. If\n"
     "`iView' < 0 the plugin is run on the current view.\n"
     "\n"
-    "Plugin(Particles) creates one new view. This\n"
-    "view contains multi-step vector points.\n";
+    "Plugin(Particles) creates one new view containing\n"
+    "multi-step vector points.\n";
 }
 
 int GMSH_ParticlesPlugin::getNbOptions() const
