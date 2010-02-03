@@ -24,6 +24,7 @@
 #include "dofManager.h"
 #include "functionSpace.h"
 #include "simpleFunction.h"
+#include "FuncGradDisc.h"
 #include <set>
 
 
@@ -41,12 +42,13 @@ protected:
 
     std::set<int > *_TagEnrichedVertex;
     std::vector<int> * _EnrichComp;
-    simpleFunction<double> *_funcEnrichment;
+    //simpleFunction<double> *_funcEnrichment;
+    FuncGradDisc *_funcEnrichment;
     FunctionSpace<T> *_SupportFS;
 
 public:
 
-    NodeEnrichedFS(FunctionSpace<T> * SupportFS, std::set<int > * TagEnrichedVertex , std::vector<int> * EnrichComp,  simpleFunction<double> *funcEnrichment)
+    NodeEnrichedFS(FunctionSpace<T> * SupportFS, std::set<int > * TagEnrichedVertex , std::vector<int> * EnrichComp,  FuncGradDisc *funcEnrichment)
     {
         _SupportFS = SupportFS;
         _TagEnrichedVertex = TagEnrichedVertex;

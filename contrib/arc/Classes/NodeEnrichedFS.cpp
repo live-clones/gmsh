@@ -8,8 +8,9 @@
 //
 //
 
-
+#include "FuncGradDisc.h"
 #include "NodeEnrichedFS.h"
+
 
 
 template <class T> void NodeEnrichedFS<T>::f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)
@@ -50,7 +51,7 @@ template <class T> void NodeEnrichedFS<T>::f(MElement *ele, double u, double v, 
         SPoint3 p;
         elep->pnt(u, v, w, p);
         double func;
-        func = (*_funcEnrichment)(p.x(), p.y(), p.z());
+        func = (*_funcEnrichment)(p.x(), p.y(), p.z(),elep);
 
         for (int i=0 ;i<EnrichedVertex.size();i++)
         {
@@ -90,6 +91,9 @@ template <class T> void NodeEnrichedFS<T>::gradf(MElement *ele, double u, double
     }
 
 
+    std::vector<ValType> valsd;
+    _SupportFS->f(elep,u,v,w,valsd);
+
     int curpos=grads.size();
     grads.reserve(curpos+nbdofs);
 
@@ -99,16 +103,24 @@ template <class T> void NodeEnrichedFS<T>::gradf(MElement *ele, double u, double
     // then enriched dofs so the order is ex:(u1x,u2x,u3x,u1y,u2y,u3y,a2x,a2y,a3x,a3y)
     if (nbdofs>normaldofs) // if enriched
     {
-        // Enrichment function calcul
+        double df[3];
         SPoint3 p;
         elep->pnt(u, v, w, p);
+        _funcEnrichment->gradient (p.x(), p.y(),p.z(),df[0],df[1],df[2],elep);
+        ValType gradfunc(df[0],df[1],df[2]);
+
+        // Enrichment function calcul
+
         double func;
-        func = (*_funcEnrichment)(p.x(), p.y(), p.z());
+        func = (*_funcEnrichment)(p.x(), p.y(), p.z(),elep);
 
         for (int i=0 ;i<EnrichedVertex.size();i++)
         {
-            for (int j=0;j<_EnrichComp->size();j++){
-                grads.push_back(gradsd[EnrichedVertex[i]+(_EnrichComp->at(j))*elep->getNumVertices()]*func);
+            for (int j=0;j<_EnrichComp->size();j++)
+            {
+                GradType GradFunc;
+                tensprod(valsd[EnrichedVertex[i]+(_EnrichComp->at(j))*elep->getNumVertices()],gradfunc,GradFunc);
+                grads.push_back(gradsd[EnrichedVertex[i]+(_EnrichComp->at(j))*elep->getNumVertices()]*func + GradFunc);
             }
         }
     }
