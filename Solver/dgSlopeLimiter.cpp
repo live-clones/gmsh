@@ -6,6 +6,7 @@
 //----------------------------------------------------------------------------------   
 bool dgSlopeLimiter::apply ( dgDofContainer &solution, dgGroupCollection &groups)
 {    
+  printf("limit \n");
   solution.scatter();
   int nbFields =_claw->nbFields();    
 	

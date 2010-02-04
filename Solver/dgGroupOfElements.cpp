@@ -940,7 +940,7 @@ void dgGroupCollection::buildGroups(GModel *model, int dim, int order,std::strin
 	
 	Msg::Info("%d groups of elements",localElements.size());
 	for (int n=0; n<localElements.size(); n++) {
-		printf("\n **** Group %d: %d elements **** \n", n,localElements[n].size());
+		printf("\n **** Group %i: %lu elements **** \n", n,localElements[n].size());
 	}
 	// do a group of elements for every element type in the mesh
 	for (std::map<int, std::vector<MElement *> >::iterator it = localElements.begin(); it !=localElements.end() ; ++it){
