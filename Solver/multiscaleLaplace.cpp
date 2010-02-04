@@ -467,7 +467,7 @@ static void connectedRegions (std::vector<MElement*> &elements,
     std::vector<MElement*> temp;
     temp.insert(temp.begin(), group.begin(), group.end());
     regions.push_back(temp);
-    for ( std::set<MEdge>::iterator it = touched.begin() ; it != touched.end();++it)
+    for ( std::set<MEdge,Less_Edge>::iterator it = touched.begin() ; it != touched.end();++it)
       e2e.erase(*it);
   }
 }
