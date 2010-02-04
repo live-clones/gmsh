@@ -31,7 +31,9 @@ protected:
   int tag_; // must be greater than 0
 public:
   gLevelset() : tag_(-1) {}
+  gLevelset(const gLevelset &);
   virtual ~gLevelset(){}
+  virtual gLevelset * clone() const{printf("Error virtual fct called gLevelset::clone()");	return 0;}
   virtual double operator() (const double &x, const double &y, const double &z) const = 0;
   // inline double operator () (const SPoint3 &p) const {return this->operator()(p.x(),p.y(),p.z());}
   bool isInsideDomain (const double &x, const double &y, const double &z) const {return this->operator()(x,y,z) * insideDomain > 0.;}
@@ -76,6 +78,7 @@ class gLevelsetPrimitive : public gLevelset
 {
 public:
   gLevelsetPrimitive() : gLevelset() {}
+  gLevelsetPrimitive(const gLevelsetPrimitive &lv) : gLevelset(lv) {}
   gLevelsetPrimitive(int &tag) {
     if (tag < 1) {
       printf("Tag of the levelset (%d) must be greater than 0.\n", tag);
@@ -115,6 +118,9 @@ public:
   gLevelsetPlane (const double *pt, const double *norm, int &tag);
   // define the plane passing through the 3 points pt1,pt2,pt3 and with outward normal (pt1,pt2)x(pt1,pt3)
   gLevelsetPlane (const double *pt1, const double *pt2, const double *pt3, int &tag);
+  // copy constructor
+  gLevelsetPlane(const gLevelsetPlane &lv);
+  virtual gLevelset * clone() const{return new gLevelsetPlane(*this);}
   // return negative value inward and positive value outward
   virtual double operator() (const double &x, const double &y, const double &z) const
     {return a * x + b * y + c * z + d;} 
@@ -136,7 +142,9 @@ protected:
 public:
   gLevelsetQuadric() : gLevelsetPrimitive() {init(); }
   gLevelsetQuadric(int &tag) : gLevelsetPrimitive(tag) {init(); }
-  ~gLevelsetQuadric() {}
+  gLevelsetQuadric(const gLevelsetQuadric &);
+  
+  virtual ~gLevelsetQuadric() {}
   double operator () (const double &x, const double &y, const double &z) const;
   virtual int type() const = 0;
 };
@@ -145,6 +153,8 @@ class gLevelsetGenCylinder : public gLevelsetQuadric
 {
 public:
   gLevelsetGenCylinder (const double *pt, const double *dir, const double &R, int &tag);
+  gLevelsetGenCylinder (const gLevelsetGenCylinder& );
+  virtual gLevelset * clone() const{return new gLevelsetGenCylinder(*this);}
   int type() const {return GENCYLINDER;}
 };
 
@@ -152,6 +162,8 @@ class gLevelsetEllipsoid : public gLevelsetQuadric
 {
 public:
   gLevelsetEllipsoid (const double *pt, const double *dir, const double &a, const double &b, const double &c, int &tag);
+  gLevelsetEllipsoid (const gLevelsetEllipsoid& );
+  virtual gLevelset * clone() const{return new gLevelsetEllipsoid(*this);}
   int type() const {return ELLIPS;}
 };
 
@@ -159,6 +171,8 @@ class gLevelsetCone : public gLevelsetQuadric
 {
 public:
   gLevelsetCone (const double *pt, const double *dir, const double &angle, int &tag);
+  gLevelsetCone (const gLevelsetCone& );
+  virtual gLevelset * clone() const{return new gLevelsetCone(*this);}
   int type() const {return CONE;}
 };
 
@@ -167,6 +181,8 @@ class gLevelsetGeneralQuadric : public gLevelsetQuadric
 public:
   gLevelsetGeneralQuadric (const double *pt, const double *dir, const double &x2, const double &y2, const double &z2,
                            const double &z, const double &c, int &tag);
+  gLevelsetGeneralQuadric (const gLevelsetGeneralQuadric& );
+  virtual gLevelset * clone() const{return new gLevelsetGeneralQuadric(*this);}
   int type() const {return QUADRIC;}
 };
 
@@ -179,6 +195,7 @@ protected:
 public:
   gLevelsetTools () {}
   gLevelsetTools (std::vector<const gLevelset *> &p) {children = p;}
+  gLevelsetTools (const gLevelsetTools &);
   ~gLevelsetTools () {
     for(int i = 0; i < (int)children.size(); i++)
       delete children[i];
@@ -209,6 +226,8 @@ public:
     if(children.size() != 1) return tag_;
     return children[0]->getTag();
   }
+	
+  
 };
 
 class gLevelsetReverse : public gLevelset
@@ -235,7 +254,9 @@ public:
   gLevelsetCut (std::vector<const gLevelset *> &p) : gLevelsetTools(p) { }
   double choose (double d1, double d2) const {
     return (d1 > -d2) ? d1 : -d2; // greater of d1 and -d2
-  }
+  }	
+  gLevelsetCut(const gLevelsetCut &lv):gLevelsetTools(lv){}
+  virtual gLevelset * clone() const{return new gLevelsetCut(*this);}
   int type2() const {return CUT;}
 };
 
@@ -244,6 +265,9 @@ class gLevelsetUnion : public gLevelsetTools
 {
 public:
   gLevelsetUnion (std::vector<const gLevelset *> &p) : gLevelsetTools(p) { }
+  gLevelsetUnion(const gLevelsetUnion &lv):gLevelsetTools(lv){}
+  virtual gLevelset * clone() const{return new gLevelsetUnion(*this);}
+  
   double choose (double d1, double d2) const {
     return (d1 < d2) ? d1 : d2; // lesser of d1 and d2
   }
@@ -254,7 +278,10 @@ public:
 class gLevelsetIntersection : public gLevelsetTools
 {
 public:
-  gLevelsetIntersection (std::vector<const gLevelset *> &p) : gLevelsetTools(p) { }
+	gLevelsetIntersection (std::vector<const gLevelset *> &p) : gLevelsetTools(p) { }
+	gLevelsetIntersection(const gLevelsetIntersection &lv):gLevelsetTools(lv){}
+  virtual gLevelset * clone() const{return new gLevelsetIntersection(*this);}
+  
   double choose (double d1, double d2) const {
     return (d1 > d2) ? d1 : d2; // greater of d1 and d2
   }
@@ -285,6 +312,8 @@ class gLevelsetImproved : public gLevelset
 protected:
   gLevelset *Ls;
 public:
+  gLevelsetImproved(){}
+  gLevelsetImproved(const gLevelsetImproved &lv);
   double operator() (const double &x, const double &y, const double &z) const {return (*Ls)(x, y, z);}
   std::vector<const gLevelset *> getChildren() const { return Ls->getChildren(); }
   double choose (double d1, double d2) const { return Ls->choose(d1, d2); }
@@ -320,6 +349,8 @@ public:
   //                         face(pt1,pt5,pt8,pt4) : tag+5
   gLevelsetBox(const double *pt1, const double *pt2, const double *pt3, const double *pt4,
                const double *pt5, const double *pt6, const double *pt7, const double *pt8, int &tag);
+  gLevelsetBox(const gLevelsetBox &);
+  virtual gLevelset * clone() const{return new gLevelsetBox(*this);}
   int type() const {return BOX;}
 };
 
@@ -344,6 +375,8 @@ public:
   //                         plane face opposite to pt : tag+2
   //                         interior face :             tag+3
   gLevelsetCylinder (const double *pt, const double *dir, const double &R, const double &r, const double &H, int &tag);
+  gLevelsetCylinder(const gLevelsetCylinder &);
+  virtual gLevelset * clone() const{return new gLevelsetCylinder(*this);}
   int type() const {return CYLINDER;}
 };
 
@@ -379,6 +412,8 @@ public:
                    const double &H1, const double &H2, const double &H3,
                    const double &R1, const double &r1, const double &R2, const double &r2,
                    const double &L1, const double &L2, const double &E, int &tag);
+  gLevelsetConrod(const gLevelsetConrod &);
+  virtual gLevelset * clone() const{return new gLevelsetConrod(*this);}
   int type() const {return CONROD;}
 };
 

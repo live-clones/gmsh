@@ -80,6 +80,11 @@ void gLevelset::getRPN(std::vector<const gLevelset *> &gLsRPN) const {
   }
 }
 
+gLevelset::gLevelset(const gLevelset &lv)
+{
+	tag_=lv.tag_;
+}
+
 gLevelsetPlane::gLevelsetPlane(const double * pt, const double *norm, int &tag) : gLevelsetPrimitive(tag) {
   a = norm[0];
   b = norm[1];
@@ -92,7 +97,12 @@ gLevelsetPlane::gLevelsetPlane(const double * pt1, const double *pt2, const doub
   c = det3(pt1[0], pt1[1], 1., pt2[0], pt2[1], 1., pt3[0], pt3[1], 1.);
   d = -det3(pt1[0], pt1[1], pt1[2], pt2[0], pt2[1], pt2[2], pt3[0], pt3[1], pt3[2]);
 }
-
+gLevelsetPlane::gLevelsetPlane(const gLevelsetPlane &lv) : gLevelsetPrimitive(lv) {
+  a = lv.a;
+  b = lv.b;
+  c = lv.c;
+  d = lv.d;
+}
 /*
   assume a quadric 
   x^T A x + b^T x + c = 0
@@ -104,6 +114,14 @@ gLevelsetPlane::gLevelsetPlane(const double * pt1, const double *pt2, const doub
   x^T A x + [b^T - 2 A t] x + [c - b^T t + t^T A t ] = 0
 */
 
+gLevelsetQuadric::gLevelsetQuadric(const gLevelsetQuadric &lv):gLevelsetPrimitive(lv)
+{
+	for(int i = 0; i < 3; i++){
+		B[i] = lv.B[i];
+		for(int j = 0; j < 3; j++) A[i][j] = lv.A[i][j];
+	}
+	C=lv.C;
+}
 void gLevelsetQuadric::Ax(const double x[3], double res[3], double fact){
   for(int i = 0; i < 3; i++){
     res[i] = 0.;
@@ -226,6 +244,7 @@ gLevelsetGenCylinder::gLevelsetGenCylinder(const double *pt, const double *dir, 
   rotate(rot);
   translate(pt);
 }
+gLevelsetGenCylinder::gLevelsetGenCylinder (const gLevelsetGenCylinder& lv):gLevelsetQuadric(lv){}
 
 gLevelsetEllipsoid::gLevelsetEllipsoid(const double *pt, const double *dir, const double &a, 
                                        const double &b, const double &c, int &tag) : gLevelsetQuadric(tag) {
@@ -238,6 +257,7 @@ gLevelsetEllipsoid::gLevelsetEllipsoid(const double *pt, const double *dir, cons
   rotate(rot);
   translate(pt);
 }
+gLevelsetEllipsoid::gLevelsetEllipsoid (const gLevelsetEllipsoid& lv):gLevelsetQuadric(lv){}
 
 gLevelsetCone::gLevelsetCone(const double *pt, const double *dir, const double &angle, int &tag) : gLevelsetQuadric(tag) {
   A[0][0] = 1.;
@@ -249,6 +269,8 @@ gLevelsetCone::gLevelsetCone(const double *pt, const double *dir, const double &
   translate(pt);
 }
 
+gLevelsetCone::gLevelsetCone (const gLevelsetCone& lv):gLevelsetQuadric(lv)
+{}
 gLevelsetGeneralQuadric::gLevelsetGeneralQuadric(const double *pt, const double *dir, const double &x2, const double &y2, const double &z2,
                                                  const double &z, const double &c, int &tag) : gLevelsetQuadric(tag) {
   A[0][0] = x2;
@@ -262,8 +284,24 @@ gLevelsetGeneralQuadric::gLevelsetGeneralQuadric(const double *pt, const double 
   translate(pt);
 }
 
+gLevelsetGeneralQuadric::gLevelsetGeneralQuadric (const gLevelsetGeneralQuadric& lv):gLevelsetQuadric(lv)
+{}
+
+gLevelsetTools::gLevelsetTools(const gLevelsetTools &lv):gLevelset(lv)
+{
+	std::vector<const gLevelset *> &_children=lv.getChildren();
+	unsigned siz=_children.size();
+	children.resize(siz);
+	for(unsigned i=0;i<siz;++i)	
+		children[i]=_children[i]->clone();
+}
+gLevelsetImproved::gLevelsetImproved(const gLevelsetImproved &lv):gLevelset(lv)
+{
+	Ls=lv.Ls->clone();
+}
+
 gLevelsetBox::gLevelsetBox(const double *pt, const double *dir1, const double *dir2, const double *dir3,
-                           const double &a, const double &b, const double &c, int &tag) {
+						   const double &a, const double &b, const double &c, int &tag):gLevelsetImproved() {
   double dir1m[3] = {-dir1[0], -dir1[1], -dir1[2]};
   double dir2m[3] = {-dir2[0], -dir2[1], -dir2[2]};
   double dir3m[3] = {-dir3[0], -dir3[1], -dir3[2]};
@@ -283,7 +321,7 @@ gLevelsetBox::gLevelsetBox(const double *pt, const double *dir1, const double *d
 }
 
 gLevelsetBox::gLevelsetBox(const double *pt1, const double *pt2, const double *pt3, const double *pt4,
-                           const double *pt5, const double *pt6, const double *pt7, const double *pt8, int &tag) {
+                           const double *pt5, const double *pt6, const double *pt7, const double *pt8, int &tag):gLevelsetImproved() {
   if(!isPlanar(pt1, pt2, pt3, pt4) || !isPlanar(pt5, pt6, pt7, pt8) || !isPlanar(pt1, pt2, pt5, pt6) ||
      !isPlanar(pt3, pt4, pt7, pt8) || !isPlanar(pt1, pt4, pt5, pt8) || !isPlanar(pt2, pt3, pt6, pt7))
     printf("WARNING : faces of the box are not planar! %d, %d, %d, %d, %d, %d\n",
@@ -299,7 +337,9 @@ gLevelsetBox::gLevelsetBox(const double *pt1, const double *pt2, const double *p
   Ls = new gLevelsetIntersection(p);
 }
 
-gLevelsetCylinder::gLevelsetCylinder(const double *pt, const double *dir, const double &R, const double &H, int &tag) {
+gLevelsetBox::gLevelsetBox(const gLevelsetBox &lv):gLevelsetImproved(lv){}
+
+gLevelsetCylinder::gLevelsetCylinder(const double *pt, const double *dir, const double &R, const double &H, int &tag):gLevelsetImproved() {
   double dir2[3] = {-dir[0], -dir[1], -dir[2]};
   double n[3]; norm(dir, n);
   double pt2[3] = {pt[0] + H * n[0], pt[1] + H * n[1], pt[2] + H * n[2]};
@@ -310,7 +350,7 @@ gLevelsetCylinder::gLevelsetCylinder(const double *pt, const double *dir, const 
   Ls = new gLevelsetIntersection(p);
 }
 
-gLevelsetCylinder::gLevelsetCylinder(const double * pt, const double *dir, const double &R, const double &r, const double &H, int &tag) {
+gLevelsetCylinder::gLevelsetCylinder(const double * pt, const double *dir, const double &R, const double &r, const double &H, int &tag):gLevelsetImproved() {
   double dir2[3] = {-dir[0], -dir[1], -dir[2]};
   double n[3]; norm(dir, n);
   double pt2[3] = {pt[0] + H * n[0], pt[1] + H * n[1], pt[2] + H * n[2]};
@@ -323,11 +363,12 @@ gLevelsetCylinder::gLevelsetCylinder(const double * pt, const double *dir, const
   p2.push_back(new gLevelsetGenCylinder(pt, dir, r, tag));
   Ls = new gLevelsetCut(p2);
 }
+gLevelsetCylinder::gLevelsetCylinder(const gLevelsetCylinder &lv):gLevelsetImproved(lv){}
 
 gLevelsetConrod::gLevelsetConrod(const double *pt, const double *dir1, const double *dir2,
                                  const double &H1, const double &H2, const double &H3,
                                  const double &R1, const double &r1, const double &R2, const double &r2,
-                                 const double &L1, const double &L2, const double &E, int &tag) {
+								 const double &L1, const double &L2, const double &E, int &tag):gLevelsetImproved() {
   double n1[3]; norm(dir1, n1);
   double n2[3]; norm(dir2, n2);
   double pt1[3] = {pt[0] - n2[0] * H1 / 2., pt[1] - n2[1] * H1 / 2., pt[2] - n2[2] * H1 / 2.};
@@ -357,5 +398,5 @@ gLevelsetConrod::gLevelsetConrod(const double *pt, const double *dir1, const dou
   Ls = new gLevelsetCut(p2);
 }
 
-
+gLevelsetConrod::gLevelsetConrod(const gLevelsetConrod &lv):gLevelsetImproved(lv){}
 #endif
