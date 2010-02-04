@@ -229,7 +229,7 @@ PView *GMSH_ParticlesPlugin::execute(PView *v)
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
 
-  // Solve 'A2 d^2x/dt^2 + A1 dx/dt + A0 x = F' using a Newmark scheme:
+  // solve 'A2 d^2x/dt^2 + A1 dx/dt + A0 x = F' using a Newmark scheme:
   //
   // (A2 + gamma DT A1 + beta DT^2 A0) x^{n+1} =
   //   (2 A2 - (1 - 2 gamma) DT A1 - (0.5 + gamma - 2 beta) DT^2 A0) x^n +
@@ -257,7 +257,7 @@ PView *GMSH_ParticlesPlugin::execute(PView *v)
         double F[3], X[3];
         o1.searchVector(X1[0], X1[1], X1[2], F, timeStep);
         for(int k = 0; k < 3; k++)
-          X[k] = 1 / c1 * (c2 * X1[k] + c3 * X0[k] + c4 * F[k]);
+          X[k] = (c2 * X1[k] + c3 * X0[k] + c4 * F[k]) / c1;
         data2->VP.push_back(X[0] - XINIT[0]);
         data2->VP.push_back(X[1] - XINIT[1]);
         data2->VP.push_back(X[2] - XINIT[2]);
