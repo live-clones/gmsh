@@ -1115,7 +1115,7 @@ bool GFaceCompound::parametrize_conformal() const
   }
 
    MVertex *v1 = ordered[0];
-   MVertex *v2  = ordered[(int)ceil(ordered.size()/2)];
+   MVertex *v2  = ordered[(int)ceil((double)ordered.size()/2.)];
 
 //   MVertex *v2 ;  
 //   double maxSize = 0.0;
