@@ -1,5 +1,5 @@
 //
-// Description: 
+// Description:
 //
 //
 // Author:  <Boris Sedji>,  12/2009
@@ -34,15 +34,15 @@ class Box;
 
 class OctreeLSImage
 {
- 	 
+
 	private :
 
 		// Octree's root
 		Box* _root;
   	// Octree's image
     itk::Image< float, 3 >::Pointer _image;
-		// Window size
-		int _size[3];
+		// Region size
+		int _ImageSize[3];
 		// Mesh list of nodes
     std::vector< std::vector <int> > _ListNodes;
 		// Mesh list of elements
@@ -53,7 +53,7 @@ class OctreeLSImage
     int _LeafNumber;
 		// Count octree's leafs
 		void SetLeafNumber();
-		void FillMeshInfo();
+		void FillMeshInfo(int & pas);
 
 	public :
 
@@ -65,14 +65,14 @@ class OctreeLSImage
     void Mesh(int  maxsize, int  minsize);
     itk::Image< float, 3 >::Pointer GetImage(){return _image;}
     int GetLeafNumber(){this->SetLeafNumber();return _LeafNumber;}
-    // Refine if too much generations between adjacent leafs 
+    // Refine if too much generations between adjacent leafs
 		bool Smooth();
 		//std::vector< std::vector <int> > *GetListElements();
 		// Create GModel
-		GModel* CreateGModel();
+		GModel* CreateGModel(bool simplex, double facx, double facy, double facz,int & sizemax,int & sizemin);
     // Create PView representation of the level set
 		PView* CreateLSPView(GModel* m);
-    int* GetSize(){return _size;}
+    int* GetSize(){return _ImageSize;}
 
 };
 
@@ -93,7 +93,7 @@ class Box{
         BoxData* GetData(){return _data;}
         // Does it have children
         bool HaveChildren();
-				// Fill level set value in data with image values        
+				// Fill level set value in data with image values
         void FillLevelSetValue(itk::Image< float, 3 >::Pointer image, BoxData *data);
 	      // The smallest length of the box
         int BoxSize();
@@ -113,7 +113,7 @@ class Box{
 				// Give all the leafs containing this node
         void GetLeafsWith(std::vector<Box*> &Leafs, int x, int y, int z);
 				// Recursive function to create the list of the mesh nodes, elements and levelset values
-				void FillMeshInfo(std::vector<std::vector<int> > &ListNodes, std::vector< std::vector<int> > &ListElements, std::vector< float > &ListLSValue);
+				void FillMeshInfo(std::vector<std::vector<int> > &ListNodes, std::vector< std::vector<int> > &ListElements, std::vector< float > &ListLSValue,int &pas);
 				// Recursive function to create the list of mesh elements in relation with the list of nodes
 				void SetElementNode(int pos,int iti){_ElementNodes[pos]=iti;}
 				void FillElementsNode(std::vector< std::vector<int> > &ListElements);
