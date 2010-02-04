@@ -35,19 +35,19 @@ int main( int argc, char *argv[] )
   typedef itk::ImageFileReader< ImageTypeFloat > ImageReaderTypeFloat;
   ImageReaderTypeFloat::Pointer reader = ImageReaderTypeFloat::New();
 
-	
-  reader->SetFileName(argv[1]);    
+
+  reader->SetFileName(argv[1]);
 
 	ImageTypeFloat::Pointer image = reader->GetOutput();
   image->Update();
 
   ImageTypeFloat::RegionType region;
   region = image->GetLargestPossibleRegion ();
-  
+
   std::cout<<"\nImage dimensions : " << region.GetSize(0) << " x " << region.GetSize(1);
 
   QuadtreeLSImage quadtree(image);
-  
+
   int sizemax = atoi(argv[2]);
   int sizemin = atoi(argv[3]);
 
@@ -65,19 +65,22 @@ int main( int argc, char *argv[] )
   	std::cout<<"\nLeaf Number : "<< (quadtree.GetLeafNumber())<<"\n";
     k++;
   }
-	
+
+	bool simplex = 1;
+	double facx = 1;
+	double facy = 1;
 	// Create GModel with the octree mesh
-  GModel *m = quadtree.CreateGModel();
-	
-	// Write a .msh file with the mesh 
+  GModel *m = quadtree.CreateGModel(simplex,facx,facy,sizemax, sizemin);
+
+	// Write a .msh file with the mesh
  	std::string ModelName = "QuadtreeMesh.msh" ;
-   m->writeMSH(ModelName,2.1,false,false);
- 
+  m->writeMSH(ModelName,2.1,false,false);
+
 	// Write a .msh file with the level set values as postview data
- 	PView *pv = quadtree.CreateLSPView(m);
-	bool useadapt = true;
- 	pv->getData(useadapt)->writeMSH("LSPView.msh", false);
- 
+// 	PView *pv = quadtree.CreateLSPView(m);
+//	bool useadapt = true;
+// 	pv->getData(useadapt)->writeMSH("LSPView.msh", false);
+
   std::cout<<"\n";
 
   return 0;
