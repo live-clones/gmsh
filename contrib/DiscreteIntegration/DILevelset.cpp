@@ -289,7 +289,7 @@ gLevelsetGeneralQuadric::gLevelsetGeneralQuadric (const gLevelsetGeneralQuadric&
 
 gLevelsetTools::gLevelsetTools(const gLevelsetTools &lv):gLevelset(lv)
 {
-	std::vector<const gLevelset *> &_children=lv.getChildren();
+	std::vector<const gLevelset *> _children=lv.getChildren();
 	unsigned siz=_children.size();
 	children.resize(siz);
 	for(unsigned i=0;i<siz;++i)	
