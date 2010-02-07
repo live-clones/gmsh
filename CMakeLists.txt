@@ -83,7 +83,7 @@ set(GMSH_API
   Post/PView.h Post/PViewData.h Plugin/PluginManager.h
   Graphics/drawContext.h
   contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h 
-    contrib/kbipack/gmp_blas.h
+    contrib/kbipack/gmp_blas.h contrib/kbipack/mpz.h
   contrib/DiscreteIntegration/DILevelset.h)
 
 execute_process(COMMAND date "+%Y%m%d" OUTPUT_VARIABLE DATE 
@@ -427,9 +427,11 @@ endif(ENABLE_GMM)
 if(ENABLE_KBIPACK)
   find_library(GMP_LIB NAMES libgmp.a libgmp.dll.a)
   if(GMP_LIB)
-    add_subdirectory(contrib/kbipack)
+    message("-- Found GMP")
     set(HAVE_KBIPACK TRUE)
     list(APPEND CONFIG_OPTIONS "Kbipack")
+    add_subdirectory(contrib/kbipack)
+    set(HAVE_GMP TRUE)
     list(APPEND EXTERNAL_LIBRARIES ${GMP_LIB})
   endif(GMP_LIB)
 endif(ENABLE_KBIPACK)

@@ -31,7 +31,7 @@
 #define __GMP_BLAS_H__
 
 #include <stdio.h>
-#include <gmp.h>
+#include <mpz.h>
 
 /***********/
 /* Level 1 */
@@ -39,7 +39,7 @@
 
 /* x <-> y */
 void 
-gmp_blas_swap(size_t n,          mpz_t * x, size_t incx, mpz_t * y, size_t incy);
+gmp_blas_swap(size_t n, mpz_t * x, size_t incx, mpz_t * y, size_t incy);
 
 /* x <- ax */
 void 

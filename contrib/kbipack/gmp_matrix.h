@@ -28,7 +28,7 @@
 #ifndef __GMP_MATRIX_H__
 #define __GMP_MATRIX_H__
 
-#include"gmp_blas.h"
+#include "gmp_blas.h"
 
 typedef struct
 {

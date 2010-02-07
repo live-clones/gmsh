@@ -25,9 +25,9 @@
 #include "GVertex.h"
 #include "CellComplex.h"
 
-#include "gmp.h"
+#include "mpz.h"
 extern "C" {
-  #include "gmp_normal_form.h" // perhaps make c++ headers instead?
+  #include "gmp_normal_form.h"
 }
 
 // A class representing a chain complex of a cell complex.

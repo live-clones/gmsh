@@ -164,7 +164,7 @@ size_t gmp_blas_iamax(size_t n, const mpz_t* x, size_t incx)
   mpz_t  max_so_far;
 
   mpz_init(max_so_far);
-  mpz_set(max_so_far, 0);
+  mpz_set_si(max_so_far, 0);
   ind_so_far = 0;
 
   for(ind = 0; ind < n; ind++)

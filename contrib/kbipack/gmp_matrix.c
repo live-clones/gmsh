@@ -132,7 +132,7 @@ create_gmp_matrix_identity(size_t dim)
 
 gmp_matrix * 
 create_gmp_matrix_zero(size_t rows, size_t cols)
-{
+{ 
   gmp_matrix * new_matrix;
   size_t       ind;
 
@@ -156,7 +156,6 @@ create_gmp_matrix_zero(size_t rows, size_t cols)
     {
       mpz_init_set_si (new_matrix -> storage[ind], 0);
     }
-
   return new_matrix;
 }
 
@@ -374,7 +373,6 @@ gmp_matrix_negate_col(size_t col, gmp_matrix * m)
     {
       return EXIT_FAILURE;
     }
-
   mpz_init(minus_one);
   mpz_set_si(minus_one, -1);
   gmp_blas_scal(m -> rows, minus_one, 

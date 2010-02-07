@@ -68,10 +68,8 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
     }
     
     else{
-     
       mpz_t elem;
       mpz_init(elem);
-      
       _HMatrix[dim] = create_gmp_matrix_zero(rows, cols);
       for( std::set<Cell*, Less_Cell>::iterator cit = 
 	     cellComplex->firstCell(dim);
@@ -106,8 +104,8 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
             }
           }
         }
-      }     
-      mpz_clear(elem);  
+      } 
+      mpz_clear(elem); 
     }
 
     _kerH[dim] = NULL;

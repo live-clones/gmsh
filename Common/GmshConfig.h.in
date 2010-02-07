@@ -15,6 +15,7 @@
 #cmakedefine HAVE_FL_TREE
 #cmakedefine HAVE_FOURIER_MODEL
 #cmakedefine HAVE_GMM
+#cmakedefine HAVE_GMP
 #cmakedefine HAVE_KBIPACK
 #cmakedefine HAVE_LAPACK
 #cmakedefine HAVE_LIBCGNS

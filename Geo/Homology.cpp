@@ -199,8 +199,11 @@ void Homology::findDualGenerators(std::string fileName){
   int omitted = _cellComplex->coreduceComplex();
   
   _cellComplex->cocombine(0);
+  _cellComplex->coreduction(1);
   _cellComplex->cocombine(1);
+  _cellComplex->coreduction(2);
   _cellComplex->cocombine(2);
+  _cellComplex->coreduction(3);
   
   _cellComplex->checkCoherence();
   double t2 = Cpu();

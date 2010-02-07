@@ -129,15 +129,23 @@ Physical Surface(75) = {46, 63, 66, 52, 50, 48, 54, 60, 58, 56};
 // Create a mesh of the model
 Mesh 3;
 
-// Find generators of relative homology spaces of the domain modulo the four terminals.
+// Find generators of relative homology spaces of the domain modulo the 
+// four terminals.
 // Save the generator chains to t10_hom.msh.
 HomGen("t10_hom.msh") = {{69}, {70, 71, 72, 73}};
 
-// Find the corresponding thin cuts.
+// Find the corresponding thin cuts, 
+// generators of relative homology spaces modulo the 
+// non-terminal domain surface.
 // Save the cut chains to t10_hom.msh.
 HomGen("t10_hom.msh") = {{69}, {75}};
 
-// Only find and print the ranks of the relative homology spaces (Betti numbers).
+// Find the corresponding thick cuts.
+// Save the cut chains to t10_hom.msh.
+ HomCut("t10_hom.msh") = {{69}, {70, 71, 72, 73}};
+
+// Only find and print the ranks of the relative homology spaces 
+// (Betti numbers).
 HomRank {{69},{70, 71, 72, 73}};
 
 // More examples (uncomment):

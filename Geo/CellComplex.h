@@ -121,11 +121,12 @@ class CellComplex
     return ( (!c1->inSubdomain() && !c2->inSubdomain()) 
 	     || (c1->inSubdomain() && c2->inSubdomain()) ); }
   
-  // reduction of this cell complex
-  // removes reduction pairs of cell of dimension dim and dim-1
+  // (co)reduction of this cell complex
+  // removes (co)reduction pairs of cell of dimension dim and dim-1
   int reduction(int dim, int omitted=0);
-  
-  // useful functions for (co)reduction of cell complex
+  int coreduction(int dim, int omitted=0);  
+
+  // full (co)reduction of this cell complex (all dimensions)
   int reduceComplex();
   int coreduceComplex();
   
