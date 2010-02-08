@@ -273,7 +273,7 @@ void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,
         (x + width - BB - WB, y + height - BH - WB, BB, BH, "Run");
       run->callback(plugin_run_cb, (void*)p);
 
-      g->resizable(new Fl_Box(x + WB, y + 4 * BH + WB, WB, WB));
+      g->resizable(new Fl_Box(x + 2 * WB, y + top + 2 * BH, 1, 1));
       g->end();
       o->resizable(g);
     }
@@ -290,6 +290,8 @@ void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,
       o->value(help.c_str());
       o->textfont(FL_HELVETICA);
       o->textsize(FL_NORMAL_SIZE);
+
+      g->resizable(new Fl_Box(x + 2 * WB, y + top + 2 * BH, 1, 1));
       g->end();
     }
     o->end();
@@ -305,6 +307,7 @@ pluginWindow::pluginWindow(int deltaFontSize)
 
   int width0 = 34 * FL_NORMAL_SIZE + WB;
   int height0 = 12 * BH + 4 * WB;
+  int L1 = 10 * FL_NORMAL_SIZE, L2 = 6 * FL_NORMAL_SIZE;
 
   int width = (CTX::instance()->pluginSize[0] < width0) ? width0 : 
     CTX::instance()->pluginSize[0];
@@ -315,7 +318,6 @@ pluginWindow::pluginWindow(int deltaFontSize)
     (width, height, CTX::instance()->nonModalWindows ? true : false, "Plugins");
   win->box(GMSH_WINDOW_BOX);
 
-  int L1 = (int)(0.3 * width), L2 = (int)(0.6 * L1);
   browser = new Fl_Hold_Browser(WB, WB, L1, height - 2 * WB);
   browser->callback(plugin_browser_cb);
 
@@ -347,7 +349,7 @@ pluginWindow::pluginWindow(int deltaFontSize)
   record->type(FL_TOGGLE_BUTTON);
   record->tooltip("Append scripting command to file options when plugin is run");
   
-  Fl_Box *resize_box = new Fl_Box(L1 + L2 + 3 * WB, WB, 1, 1);
+  Fl_Box *resize_box = new Fl_Box(L1 + L2 + 2 * BH, height - 4 * BH, 1, 1);
   win->resizable(resize_box);
   win->size_range(width0, height0);
 
