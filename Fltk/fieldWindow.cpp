@@ -26,6 +26,7 @@
 #include "GmshMessage.h"
 #include "Field.h"
 #include "GeoStringInterface.h"
+#include "StringUtils.h"
 #include "Options.h"
 #include "Context.h"
 
@@ -164,7 +165,9 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
   options_tab->end();
 
   Fl_Group *help_tab = new Fl_Group(x, y, w, h, "Help");
-  help_display = new Fl_Browser(x, y + WB, w, h - 2 * WB);
+  help_display = new Fl_Help_View(x, y + WB, w, h - 2 * WB);
+  help_display->textfont(FL_HELVETICA);
+  help_display->textsize(FL_NORMAL_SIZE);
   help_tab->end();
 
   tabs->end();
@@ -345,19 +348,16 @@ void fieldWindow::editField(Field *f)
   options_scroll->begin();
   int xx = options_scroll->x();
   int yy = options_scroll->y();
-  help_display->clear();
-  help_display->add("\n");
-  add_multiline_in_browser(help_display, "", f->getDescription().c_str(), 100);
-  help_display->add("\n");
-  help_display->add("@b@cOptions");
+
+  std::string help = f->getDescription();
+  ConvertToHTML(help);
+  help += std::string("<p><center><b>Options</b></center>");
   for(std::map<std::string, FieldOption*>::iterator it = f->options.begin(); 
       it != f->options.end(); it++){
     Fl_Widget *input;
-    help_display->add("\n");
-    help_display->add(("@b" + it->first).c_str());
-    help_display->add(("@i" + it->second->getTypeName()).c_str());
-    add_multiline_in_browser
-      (help_display, "", it->second->getDescription().c_str(), 100);
+    help += std::string("<p><b>") + it->first + "</b>";
+    help += " (<em>" + it->second->getTypeName() + "</em>): ";
+    help += it->second->getDescription();
     switch(it->second->getType()){
     case FIELD_OPTION_INT:
     case FIELD_OPTION_DOUBLE:
@@ -390,6 +390,7 @@ void fieldWindow::editField(Field *f)
     options_widget.push_back(input);
     yy += BH;
   }
+  help_display->value(help.c_str());
   options_scroll->end();
 
   FL_NORMAL_SIZE += _deltaFontSize;

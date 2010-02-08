@@ -8,8 +8,8 @@
 
 #include <list>
 #include <FL/Fl_Window.H>
-#include <FL/Fl_Browser.H>
 #include <FL/Fl_Hold_Browser.H>
+#include <FL/Fl_Help_View.H>
 #include <FL/Fl_Widget.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Group.H>
@@ -31,7 +31,7 @@ class fieldWindow{
   Fl_Box *title, *empty_message;
   Fl_Button *background_btn;
   Fl_Menu_Button *put_on_view_btn;
-  Fl_Browser *help_display;
+  Fl_Help_View *help_display;
   Fl_Button *delete_btn;
   int selected_id;
  public:

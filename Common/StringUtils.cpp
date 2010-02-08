@@ -140,3 +140,29 @@ std::string ConvertFileToString(std::string fileName)
   fclose(fp);
   return out;
 }
+
+void ConvertToHTML(std::string &in)
+{
+  while(1){
+    int pos = in.find("<");
+    if(pos == std::string::npos) break;
+    in.replace(pos, 1, "&lt;");
+  }
+  while(1){
+    int pos = in.find(">");
+    if(pos == std::string::npos) break;
+    in.replace(pos, 1, "&gt;");
+  }
+  while(1){
+    const char n2[3] = {'\n', '\n', '\0'};
+    int pos = in.find(n2);
+    if(pos == std::string::npos) break;
+    in.replace(pos, 2, "<p>");
+  }
+  while(1){
+    const char n1[2] = {'\n', '\0'};
+    int pos = in.find(n1);
+    if(pos == std::string::npos) break;
+    in.replace(pos, 1, "<br>");
+  }
+}

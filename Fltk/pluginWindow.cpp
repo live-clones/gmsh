@@ -24,6 +24,7 @@
 #include "MVertex.h"
 #include "Context.h"
 #include "GeoStringInterface.h"
+#include "StringUtils.h"
 
 #define MAX_PLUGIN_OPTIONS 50
 class PluginDialogBox{
@@ -216,32 +217,6 @@ static void plugin_create_new_view_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-static void htmlize(std::string &in)
-{
-  while(1){
-    int pos = in.find("<");
-    if(pos == std::string::npos) break;
-    in.replace(pos, 1, "&lt;");
-  }
-  while(1){
-    int pos = in.find(">");
-    if(pos == std::string::npos) break;
-    in.replace(pos, 1, "&gt;");
-  }
-  while(1){
-    const char n2[3] = {'\n', '\n', '\0'};
-    int pos = in.find(n2);
-    if(pos == std::string::npos) break;
-    in.replace(pos, 2, "<p>");
-  }
-  while(1){
-    const char n1[2] = {'\n', '\0'};
-    int pos = in.find(n1);
-    if(pos == std::string::npos) break;
-    in.replace(pos, 1, "<br>");
-  }
-}
-
 void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,
                                     int width, int height)
 {
@@ -309,7 +284,7 @@ void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,
       Fl_Help_View *o = new Fl_Help_View
         (x + WB, y + top + BH + WB, width - 2 * WB, height - top - 2 * BH - 3 * WB);
       std::string help = p->getHelp();
-      htmlize(help);
+      ConvertToHTML(help);
       help += std::string("<p><em>Author: ") + p->getAuthor() + "</em>";
       help += std::string("<br><em>Copyright: ") + p->getCopyright() + "</em>";
       o->value(help.c_str());

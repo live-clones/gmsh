@@ -19,5 +19,6 @@ std::vector<std::string> SplitFileName(std::string fileName);
 std::vector<std::string> SplitWhiteSpace(std::string in, unsigned int len);
 std::string ReplacePercentS(std::string in, std::string val);
 std::string ConvertFileToString(std::string fileName);
+void ConvertToHTML(std::string &in);
 
 #endif
