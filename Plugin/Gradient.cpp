@@ -22,10 +22,11 @@ extern "C"
 std::string GMSH_GradientPlugin::getHelp() const
 {
   return "Plugin(Gradient) computes the gradient of the\n"
-         "field in the view `View'. If `View' < 0, the\n"
-         "plugin is run on the current view.\n"
-         "\n"
-         "Plugin(Gradient) creates one new view.\n";
+    "field in the view `View'.\n"
+    "\n"
+    "If `View' < 0, the plugin is run on the current view.\n"
+    "\n"
+    "Plugin(Gradient) creates one new view.\n";
 }
 
 int GMSH_GradientPlugin::getNbOptions() const

@@ -22,11 +22,12 @@ extern "C"
 
 std::string GMSH_SkinPlugin::getHelp() const
 {
-  return "Plugin(Skin) extracts the skin (the boundary) of\n"
-         "the view `View'. If `View' < 0, the plugin is run\n"
-         "on the current view.\n"
-         "\n"
-         "Plugin(Skin) creates one new view.\n";
+  return "Plugin(Skin) extracts the boundary (skin) of\n"
+    "the view `View'.\n"
+    "\n"
+    "If `View' < 0, the plugin is run on the current view.\n"
+    "\n"
+    "Plugin(Skin) creates one new view.\n";
 }
 
 int GMSH_SkinPlugin::getNbOptions() const

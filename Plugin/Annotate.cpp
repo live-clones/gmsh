@@ -178,17 +178,19 @@ std::string GMSH_AnnotatePlugin::callbackAlign(int num, int action, std::string 
 std::string GMSH_AnnotatePlugin::getHelp() const
 {
   return "Plugin(Annotate) adds the text string `Text',\n"
-         "in font `Font' and size `FontSize', in the view\n"
-         "`View'. If `ThreeD' is equal to 1, the plugin inserts\n"
-         "the string in model coordinates at the position\n"
-         "(`X',`Y',`Z'). If `ThreeD' is equal to 0, the plugin\n"
-         "inserts the string in screen coordinates at\n"
-         "the position (`X',`Y'). The string is aligned\n"
-         "according to `Align'. If `View' < 0, the plugin\n"
-         "is run on the current view.\n"
-         "\n"
-         "Plugin(Annotate) is executed in-place for list-based\n"
-         "datasets or creates a new view for other datasets.\n";
+    "in font `Font' and size `FontSize', in the view\n"
+    "`View'. The string is aligned according to `Align'.\n"
+    "\n"
+    "If `ThreeD' is equal to 1, the plugin inserts\n"
+    "the string in model coordinates at the position\n"
+    "(`X',`Y',`Z'). If `ThreeD' is equal to 0, the plugin\n"
+    "inserts the string in screen coordinates at\n"
+    "the position (`X',`Y').\n"
+    "\n"
+    "If `View' < 0, the plugin is run on the current view.\n"
+    "\n"
+    "Plugin(Annotate) is executed in-place for list-based\n"
+    "datasets or creates a new view for other datasets.\n";
 }
 
 int GMSH_AnnotatePlugin::getNbOptions() const

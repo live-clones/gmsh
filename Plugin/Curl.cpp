@@ -22,10 +22,11 @@ extern "C"
 std::string GMSH_CurlPlugin::getHelp() const
 {
   return "Plugin(Curl) computes the curl of the field\n"
-         "in the view `View'. If `View' < 0, the plugin\n"
-         "is run on the current view.\n"
-         "\n"
-         "Plugin(Curl) creates one new view.\n";
+    "in the view `View'.\n"
+    "\n"
+    "If `View' < 0, the plugin is run on the current view.\n"
+    "\n"
+    "Plugin(Curl) creates one new view.\n";
 }
 
 int GMSH_CurlPlugin::getNbOptions() const

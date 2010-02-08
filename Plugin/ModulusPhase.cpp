@@ -22,13 +22,14 @@ extern "C"
 std::string GMSH_ModulusPhasePlugin::getHelp() const
 {
   return "Plugin(ModulusPhase) interprets the time steps\n"
-         "`realPart' and `imaginaryPart' in the view `View'\n"
-         "as the real and imaginary parts of a complex field\n"
-         "and replaces them with their corresponding\n"
-         "modulus and phase. If `View' < 0, the plugin is\n"
-         "run on the current view.\n"
-         "\n"
-         "Plugin(ModulusPhase) is executed in-place.\n";
+    "`realPart' and `imaginaryPart' in the view `View'\n"
+    "as the real and imaginary parts of a complex field\n"
+    "and replaces them with their corresponding\n"
+    "modulus and phase.\n"
+    "\n"
+    "If `View' < 0, the plugin is run on the current view.\n"
+    "\n"
+    "Plugin(ModulusPhase) is executed in-place.\n";
 }
 
 int GMSH_ModulusPhasePlugin::getNbOptions() const

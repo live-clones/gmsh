@@ -21,10 +21,11 @@ extern "C"
 std::string GMSH_LongituteLatitudePlugin::getHelp() const
 {
   return "Plugin(LongituteLatitude) projects the view `View'\n"
-         "in longitude-latitude. If `View' < 0, the plugin\n"
-         "is run on the current view.\n"
-         "\n"
-         "Plugin(LongituteLatitude) is executed in place.\n";
+    "in longitude-latitude.\n"
+    "\n"
+    "If `View' < 0, the plugin is run on the current view.\n"
+    "\n"
+    "Plugin(LongituteLatitude) is executed in place.\n";
 }
 
 int GMSH_LongituteLatitudePlugin::getNbOptions() const

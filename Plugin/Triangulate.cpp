@@ -28,12 +28,13 @@ extern "C"
 std::string GMSH_TriangulatePlugin::getHelp() const
 {
   return "Plugin(Triangulate) triangulates the points in the\n"
-         "view `View', assuming that all the points belong\n"
-         "to a surface that can be projected one-to-one\n"
-         "onto a plane. If `View' < 0, the plugin is run on\n"
-         "the current view.\n"
-         "\n"
-         "Plugin(Triangulate) creates one new view.\n";
+    "view `View', assuming that all the points belong\n"
+    "to a surface that can be projected one-to-one\n"
+    "onto a plane.\n"
+    "\n"
+    "If `View' < 0, the plugin is run on the current view.\n"
+    "\n"
+    "Plugin(Triangulate) creates one new view.\n";
 }
 
 int GMSH_TriangulatePlugin::getNbOptions() const

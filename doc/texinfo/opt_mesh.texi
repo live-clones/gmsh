@@ -56,7 +56,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ChacoHypercubeDim
 (Adv. Chaco): Dimensional partitioning for a hypercube topology@*
-Default value: @code{2}@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ChacoLocalMethod
@@ -66,7 +66,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ChacoMeshDim1
 (Adv. Chaco): Number of partitions in the first dimension of a mesh topology@*
-Default value: @code{4}@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ChacoMeshDim2
@@ -266,7 +266,12 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MshFileVersion
 Version of the MSH file format to use@*
-Default value: @code{2.1}@*
+Default value: @code{2.2}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MshFilePartitioned
+Split MSH file by mesh partition@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.NbHexahedra
@@ -281,7 +286,7 @@ Saved in: @code{-}
 
 @item Mesh.NbPartitions
 Number of partitions@*
-Default value: @code{4}@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.NbPrisms
@@ -426,6 +431,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SaveParametric
 Save parametric coordinates of nodes@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.SaveDistance
+Save distance of nodes to boundaries@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

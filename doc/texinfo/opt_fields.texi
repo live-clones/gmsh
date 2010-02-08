@@ -21,11 +21,11 @@ give strange results for complex surfaces)@*
 type: list@*
 default value: @code{@{@}}
 @item NNodesByEdge
-Number of nodes used to discetized each curve@*
+Number of nodes used to discretized each curve@*
 type: integer@*
 default value: @code{20}
 @item NodesList
-Indices of nodes in the geomtric model@*
+Indices of nodes in the geometric model@*
 type: list@*
 default value: @code{@{@}}
 @end table

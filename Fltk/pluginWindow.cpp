@@ -284,8 +284,9 @@ void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,
       o->add(" ");
       add_multiline_in_browser(o, "", p->getHelp().c_str(), false);
       o->add(" ");
-      add_multiline_in_browser(o, "Author: ", p->getAuthor().c_str(), false);
-      add_multiline_in_browser(o, "Copyright (C) ", p->getCopyright().c_str(), 
+      o->add(" ");
+      add_multiline_in_browser(o, "@i@.Author: ", p->getAuthor().c_str(), false);
+      add_multiline_in_browser(o, "@i@.Copyright (C) ", p->getCopyright().c_str(), 
                                false);
       o->add(" ");
 

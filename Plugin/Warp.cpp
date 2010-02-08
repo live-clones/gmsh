@@ -26,17 +26,19 @@ extern "C"
 std::string GMSH_WarpPlugin::getHelp() const
 {
   return "Plugin(Warp) transforms the elements in the\n"
-         "view `View' by adding to their node coordinates\n"
-         "the vector field stored in the `TimeStep'-th time\n"
-         "step of the view `OtherView', scaled by `Factor'. If\n"
-         "`OtherView' < 0, the vector field is taken as the field\n"
-         "of surface normals multiplied by the `TimeStep'\n"
-         "value in `View'. (The smoothing of the surface\n"
-         "normals is controlled by the `SmoothingAngle'\n"
-         "parameter.) If `View' < 0, the plugin is run on\n"
-         "the current view.\n"
-         "\n"
-         "Plugin(Warp) is executed in-place.\n";
+    "view `View' by adding to their node coordinates\n"
+    "the vector field stored in the `TimeStep'-th time\n"
+    "step of the view `OtherView', scaled by `Factor'.\n"
+    "\n"
+    "If `View' < 0, the plugin is run on the current view.\n"
+    "\n"
+    "If `OtherView' < 0, the vector field is taken as the\n"
+    "field of surface normals multiplied by the `TimeStep'\n"
+    "value in `View'. (The smoothing of the surface\n"
+    "normals is controlled by the `SmoothingAngle'\n"
+    "parameter.)\n"
+    "\n"
+    "Plugin(Warp) is executed in-place.\n";
 }
 
 int GMSH_WarpPlugin::getNbOptions() const

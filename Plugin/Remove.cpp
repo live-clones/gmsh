@@ -33,10 +33,11 @@ extern "C"
 std::string GMSH_RemovePlugin::getHelp() const
 {
   return "Plugin(Remove) removes the marked items\n"
-         "from the view `View'. If `View' < 0, the plugin\n"
-         "is run on the current view.\n"
-         "\n"
-         "Plugin(Remove) is executed in-place.\n";
+    "from the view `View'.\n"
+    "\n"
+    "If `View' < 0, the plugin is run on the current view.\n"
+    "\n"
+    "Plugin(Remove) is executed in-place.\n";
 }
 
 int GMSH_RemovePlugin::getNbOptions() const

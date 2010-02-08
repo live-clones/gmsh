@@ -74,6 +74,31 @@ Option file created with `Tools->Options->Save'; automatically read on startup@*
 Default value: @code{".gmsh-options"}@*
 Saved in: @code{General.SessionFileName}
 
+@item General.RecentFile1
+Most recent opened file@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.RecentFile2
+2nd most recent opened file@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.RecentFile3
+3rd most recent opened file@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.RecentFile4
+4th most recent opened file@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.RecentFile5
+5th most recent opened file@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
 @item General.SessionFileName
 Option file into which session specific information is saved; automatically read on startup@*
 Default value: @code{".gmshrc"}@*

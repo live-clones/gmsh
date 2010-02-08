@@ -23,7 +23,7 @@ class GMSH_ProbePlugin : public GMSH_PostPlugin
   std::string getName() const { return "Probe"; }
   std::string getShortHelp() const
   {
-    return "Get value of a view at one given point";
+    return "Get value at point (X, Y, Z)";
   }
   std::string getHelp() const;
   int getNbOptions() const;

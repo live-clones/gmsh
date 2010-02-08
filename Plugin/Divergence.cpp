@@ -22,10 +22,11 @@ extern "C"
 std::string GMSH_DivergencePlugin::getHelp() const
 {
   return "Plugin(Divergence) computes the divergence of the\n"
-         "field in the view `View'. If `View' < 0, the plugin\n"
-         "is run on the current view.\n"
-         "\n"
-         "Plugin(Divergence) creates one new view.\n";
+    "field in the view `View'.\n"
+    "\n"
+    "If `View' < 0, the plugin is run on the current view.\n"
+    "\n"
+    "Plugin(Divergence) creates one new view.\n";
 }
 
 int GMSH_DivergencePlugin::getNbOptions() const

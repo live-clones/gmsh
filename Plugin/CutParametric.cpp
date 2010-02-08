@@ -168,14 +168,16 @@ std::string GMSH_CutParametricPlugin::callbackZ(int num, int action, std::string
 std::string GMSH_CutParametricPlugin::getHelp() const
 {
   return "Plugin(CutParametric) cuts the view `View' with\n"
-         "the parametric function (`X'(u), `Y'(u), `Z'(u)),\n"
-         "using `NumPointsU' values of the parameter u in\n"
-         "[`MinU', `MaxU']. If `ConnectPoints' is set, the\n"
-         "plugin creates line elements; otherwise, the\n"
-         "plugin generates points. If `View' < 0, the plugin\n"
-         "is run on the current view.\n"
-         "\n"
-         "Plugin(CutParametric) creates one new view.\n";
+    "the parametric function (`X'(u), `Y'(u), `Z'(u)),\n"
+    "using `NumPointsU' values of the parameter u in\n"
+    "[`MinU', `MaxU'].\n"
+    "\n"
+    "If `ConnectPoints' is set, the plugin creates line\n"
+    "elements; otherwise, the plugin generates points.\n"
+    "\n"
+    "If `View' < 0, the plugin is run on the current view.\n"
+    "\n"
+    "Plugin(CutParametric) creates one new view.\n";
 }
 
 int GMSH_CutParametricPlugin::getNbOptions() const
