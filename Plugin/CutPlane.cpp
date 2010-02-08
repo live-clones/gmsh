@@ -112,16 +112,13 @@ double GMSH_CutPlanePlugin::callbackTarget(int num, int action, double value)
 
 std::string GMSH_CutPlanePlugin::getHelp() const
 {
-  return "Plugin(CutPlane) cuts the view `View' with\n"
-    "the plane `A'*X + `B'*Y + `C'*Z + `D' = 0.\n"
-    "\n"
-    "If `ExtractVolume' is nonzero, the plugin extracts\n"
-    "the elements on one side of the plane (depending\n"
-    "on the sign of `ExtractVolume'). \n"
-    "\n"
-    "If `View' < 0, the plugin is run on the current view.\n"
-    "\n"
-    "Plugin(CutPlane) creates one new view.\n";
+  return "Plugin(CutPlane) cuts the view `View' with "
+    "the plane `A'*X + `B'*Y + `C'*Z + `D' = 0.\n\n"
+    "If `ExtractVolume' is nonzero, the plugin extracts "
+    "the elements on one side of the plane (depending "
+    "on the sign of `ExtractVolume').\n\n"
+    "If `View' < 0, the plugin is run on the current view.\n\n"
+    "Plugin(CutPlane) creates one new view.";
 }
 
 int GMSH_CutPlanePlugin::getNbOptions() const

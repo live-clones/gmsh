@@ -97,12 +97,10 @@ double GMSH_ProbePlugin::callbackZ(int num, int action, double value)
 
 std::string GMSH_ProbePlugin::getHelp() const
 {
-  return "Plugin(Probe) gets the value of the view `View' at\n"
-    "the point (`X',`Y',`Z').\n"
-    "\n"
-    "If `View' < 0, the plugin is run on the current view.\n"
-    "\n"
-    "Plugin(Probe) creates one new view.\n";
+  return "Plugin(Probe) gets the value of the view `View' at "
+    "the point (`X',`Y',`Z').\n\n"
+    "If `View' < 0, the plugin is run on the current view.\n\n"
+    "Plugin(Probe) creates one new view.";
 }
 
 int GMSH_ProbePlugin::getNbOptions() const

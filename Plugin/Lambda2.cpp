@@ -21,26 +21,22 @@ extern "C"
 
 std::string GMSH_Lambda2Plugin::getHelp() const
 {
-  return "Plugin(Lambda2) computes the eigenvalues\n"
-    "Lambda(1,2,3) of the tensor (S_ik S_kj +\n"
-    "Om_ik Om_kj), where S_ij = 0.5 (ui,j + uj,i)\n"
-    "and Om_ij = 0.5 (ui,j - uj,i) are respectively\n"
-    "the symmetric and antisymmetric parts of the\n"
-    "velocity gradient tensor.\n"
-    "\n"
-    "Vortices are well represented by regions where\n"
-    "Lambda(2) is negative.\n"
-    "\n"
-    "If `View' contains tensor elements, the plugin\n"
-    "directly uses the tensors as the values of the\n"
-    "velocity gradient tensor; if `View' contains\n"
-    "vector elements, the plugin uses them as the\n"
-    "velocities from which to derive the velocity\n"
-    "gradient tensor.\n"
-    "\n"
-    "If `View' < 0, the plugin is run on the current view.\n"
-    "\n"
-    "Plugin(Lambda2) creates one new view.\n";
+  return "Plugin(Lambda2) computes the eigenvalues "
+    "Lambda(1,2,3) of the tensor (S_ik S_kj + "
+    "Om_ik Om_kj), where S_ij = 0.5 (ui,j + uj,i) "
+    "and Om_ij = 0.5 (ui,j - uj,i) are respectively "
+    "the symmetric and antisymmetric parts of the "
+    "velocity gradient tensor.\n\n"
+    "Vortices are well represented by regions where "
+    "Lambda(2) is negative.\n\n"
+    "If `View' contains tensor elements, the plugin "
+    "directly uses the tensors as the values of the "
+    "velocity gradient tensor; if `View' contains "
+    "vector elements, the plugin uses them as the "
+    "velocities from which to derive the velocity "
+    "gradient tensor.\n\n"
+    "If `View' < 0, the plugin is run on the current view.\n\n"
+    "Plugin(Lambda2) creates one new view.";
 }
 
 int GMSH_Lambda2Plugin::getNbOptions() const

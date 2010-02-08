@@ -167,22 +167,18 @@ double GMSH_CutGridPlugin::callbackConnect(int num, int action, double value)
 
 std::string GMSH_CutGridPlugin::getHelp() const
 {
-  return "Plugin(CutGrid) cuts the view `View' with a\n"
-    "rectangular grid defined by the 3 points\n"
-    "(`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of U)\n"
-    "and (`X2',`Y2',`Z2') (axis of V).\n"
-    "\n"
-    "The number of points along U and V is set with the\n"
-    "options `NumPointsU' and `NumPointsV'.\n"
-    "\n"
-    "If `ConnectPoints' is zero, the plugin creates points;\n"
-    "otherwise, the plugin generates quadrangles, lines or\n"
-    "points depending on the values of `NumPointsU' and\n"
-    "`NumPointsV'.\n"
-    "\n"
-    "If `View' < 0, the plugin is run on the current view.\n"
-    "\n"
-    "Plugin(CutGrid) creates one new view.\n";
+  return "Plugin(CutGrid) cuts the view `View' with a "
+    "rectangular grid defined by the 3 points "
+    "(`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of U) "
+    "and (`X2',`Y2',`Z2') (axis of V).\n\n"
+    "The number of points along U and V is set with the "
+    "options `NumPointsU' and `NumPointsV'.\n\n"
+    "If `ConnectPoints' is zero, the plugin creates points; "
+    "otherwise, the plugin generates quadrangles, lines or "
+    "points depending on the values of `NumPointsU' and "
+    "`NumPointsV'.\n\n"
+    "If `View' < 0, the plugin is run on the current view.\n\n"
+    "Plugin(CutGrid) creates one new view.";
 }
 
 int GMSH_CutGridPlugin::getNbOptions() const

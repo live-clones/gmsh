@@ -25,14 +25,12 @@ extern "C"
 
 std::string GMSH_ExtractElementsPlugin::getHelp() const
 {
-  return "Plugin(ExtractElements) extracts the elements\n"
-    "from the view `View' whose `TimeStep'-th values\n"
-    "(averaged by element) are comprised between\n"
-    "`MinVal' and `MaxVal'.\n"
-    "\n"
-    "If `View' < 0, the plugin is run on the current view.\n"
-    "\n"
-    "Plugin(ExtractElements) creates one new view.\n";
+  return "Plugin(ExtractElements) extracts the elements "
+    "from the view `View' whose `TimeStep'-th values "
+    "(averaged by element) are comprised between "
+    "`MinVal' and `MaxVal'.\n\n"
+    "If `View' < 0, the plugin is run on the current view.\n\n"
+    "Plugin(ExtractElements) creates one new view.";
 }
 
 int GMSH_ExtractElementsPlugin::getNbOptions() const

@@ -59,7 +59,7 @@ public:
       point[2] = 0;
       ipoint++;
       if(fscanf(fp, "%le %le", &point[0], &point[1]) != 2) 
-        Msg::Error("gshhs:  Error reading loops2 file.\n");
+        Msg::Error("gshhs:  Error reading loops2 file.");
       return true;
     }
   };
@@ -184,7 +184,7 @@ public:
       if(ip >= h.n)
         return false;
       if (fread ((void *)&p, (size_t)sizeof(POINT), (size_t)1, fp) != 1) {
-        printf ("gshhs:  Error reading gshhs file.\n");
+        Msg::Error("gshhs:  Error reading gshhs file.");
         exit(1);
       }
       if (flip) {
@@ -918,56 +918,44 @@ extern "C"
 std::string GMSH_GSHHSPlugin::getHelp() const
 {
   return 
-    "Plugin(GSHHS) read different kind of contour lines data\n"
-    "and write a .geo file on the surface of a sphere (the Earth).\n"
-    "\n"
-    "The principal application is to load GSHHS data\n (see\n"
-    "http://www.soest.hawaii.edu/wessel/gshhs/gshhs.html).\n"
-    "\n"
-    "Valid values for \"Format\" are:\n"
-    "\n"
-    "- \"gshhs\": open GSHHS file\n"
-    "\n"
-    "- \"loops2\": import 2D contour lines in simple text format:\n"
-    "   NB_POINTS_IN_FIRST_LOOP FIRST_LOOP_IS_CLOSED\n"
-    "   COORD1 COORD2\n"
-    "   COORD1 COORD2\n"
-    "   ...    ...\n"
-    "   NB_POINTS_IN_SECOND_LOOP SECOND_LOOP_IS_CLOSED\n"
-    "   ...\n"
-    "(LOOP_IS_CLOSED specify if this coast line describe a closed\n"
-    "curve (0=no, 1=yes). In the case of \"loops2\" format, you\n"
-    "can specify the the coordinate system used in the input file\n"
-    "with the \"Coordinate\" option, valid values are\n"
-    "\n"
-    "- \"lonlat\" for longitude-latidute radian,\n"
-    "\n"
-    "- \"lonlat_degrees\" for longitude-latitude degrees,\n"
-    "\n"
-    "- \"UTM\" for universal transverse mercartor (\"UTMZone\"\n"
-    "option should be specified)\n"
-    "\n"
-    "- \"cartesian\" for full 3D coordinates\n"
-    "\n"
-    "- \"radius\" specify the earth radius.\n"
-    "\n"
-    "If the \"iField\" option is set, consecutive points closer\n"
-    "than the value of the field iField (in meters) will not be\n"
-    "added.\n"
-    "\n"
-    "If \"MinStraitsFactor\" > 0 and if a field iField is\n"
-    "provided, coastlines closer than MinStraitsFactor *\n"
-    "field(IField) are merged and inner corners which form an\n"
-    "angle < pi/3 are removed.\n"
-    "\n"
-    "The output is always in stereographic coordinates, if\n"
-    "the \"WritePolarSphere\" option is not 0, a sphere is\n"
-    "added to the geo file.\n"
-    "\n"
-    "WARNING: this plugin is still experimental and needs\n"
-    "polishing and error-handling. In particular, it will\n"
-    "probably crash if an inexistant field id is given or if\n"
-    "the input/output cannot be open.\n";
+    "Plugin(GSHHS) read different kind of contour lines data "
+    "and write a .geo file on the surface of a sphere (the Earth).\n\n"
+    "The principal application is to load GSHHS data\n (see "
+    "http://www.soest.hawaii.edu/wessel/gshhs/gshhs.html).\n\n"
+    "Valid values for \"Format\" are:\n\n"
+    "- \"gshhs\": open GSHHS file\n\n"
+    "- \"loops2\": import 2D contour lines in simple text format:\n\n"
+    "NB_POINTS_IN_FIRST_LOOP FIRST_LOOP_IS_CLOSED\n"
+    "COORD1 COORD2\n"
+    "COORD1 COORD2\n"
+    "...    ...\n"
+    "NB_POINTS_IN_SECOND_LOOP SECOND_LOOP_IS_CLOSED\n"
+    "...\n\n"
+    "(LOOP_IS_CLOSED specifies if this coast line describes a closed "
+    "curve (0=no, 1=yes)).\n\n"
+    "In the case of \"loops2\" format, you "
+    "can specify the coordinate system used in the input file "
+    "with the \"Coordinate\" option. Valid values are\n\n"
+    "- \"lonlat\" for longitude-latidute radian,\n\n"
+    "- \"lonlat_degrees\" for longitude-latitude degrees,\n\n"
+    "- \"UTM\" for universal transverse mercartor (\"UTMZone\" "
+    "option should be specified)\n\n"
+    "- \"cartesian\" for full 3D coordinates\n\n"
+    "- \"radius\" specify the earth radius.\n\n"
+    "If the \"iField\" option is set, consecutive points closer "
+    "than the value of the field iField (in meters) will not be "
+    "added.\n\n"
+    "If \"MinStraitsFactor\" > 0 and if a field iField is "
+    "provided, coastlines closer than MinStraitsFactor * "
+    "field(IField) are merged and inner corners which form an "
+    "angle < pi/3 are removed.\n\n"
+    "The output is always in stereographic coordinates, if "
+    "the \"WritePolarSphere\" option is not 0, a sphere is "
+    "added to the geo file.\n\n"
+    "WARNING: this plugin is still experimental and needs "
+    "polishing and error-handling. In particular, it will "
+    "probably crash if an inexistant field id is given or if "
+    "the input/output cannot be open.";
 }
 
 int GMSH_GSHHSPlugin::getNbOptions() const

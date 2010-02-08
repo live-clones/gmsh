@@ -26,24 +26,20 @@ extern "C"
 
 std::string GMSH_SphericalRaisePlugin::getHelp() const
 {
-  return "Plugin(SphericalRaise) transforms the\n"
-    "coordinates of the elements in the view\n"
-    "`View' using the values associated with the\n"
-    "`TimeStep'-th time step.\n"
-    "\n"
-    "Instead of elevating the nodes along the X, Y\n"
-    "and Z axes as with the View[`View'].RaiseX,\n"
-    "View[`View'].RaiseY and View[`View'].RaiseZ\n"
-    "options, the raise is applied along the radius\n"
-    "of a sphere centered at (`Xc', `Yc', `Zc').\n"
-    "\n"
-    "To produce a standard radiation pattern, set\n"
-    "`Offset' to minus the radius of the sphere the\n"
-    "original data lives on.\n"
-    "\n"
-    "If `View' < 0, the plugin is run on the current view.\n"
-    "\n"
-    "Plugin(SphericalRaise) is executed in-place.\n";
+  return "Plugin(SphericalRaise) transforms the "
+    "coordinates of the elements in the view "
+    "`View' using the values associated with the "
+    "`TimeStep'-th time step.\n\n"
+    "Instead of elevating the nodes along the X, Y "
+    "and Z axes as with the View[`View'].RaiseX, "
+    "View[`View'].RaiseY and View[`View'].RaiseZ "
+    "options, the raise is applied along the radius "
+    "of a sphere centered at (`Xc', `Yc', `Zc').\n\n"
+    "To produce a standard radiation pattern, set "
+    "`Offset' to minus the radius of the sphere the "
+    "original data lives on.\n\n"
+    "If `View' < 0, the plugin is run on the current view.\n\n"
+    "Plugin(SphericalRaise) is executed in-place.";
 }
 
 int GMSH_SphericalRaisePlugin::getNbOptions() const

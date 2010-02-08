@@ -32,20 +32,16 @@ extern "C"
 
 std::string GMSH_TransformPlugin::getHelp() const
 {
-  return "Plugin(Transform) transforms the homogeneous\n"
-    "node coordinates (x,y,z,1) of the elements in\n"
-    "the view `View' by the matrix\n"
-    "\n"
+  return "Plugin(Transform) transforms the homogeneous "
+    "node coordinates (x,y,z,1) of the elements in "
+    "the view `View' by the matrix\n\n"
     "[`A11' `A12' `A13' `Tx']\n"
     "[`A21' `A22' `A23' `Ty']\n"
-    "[`A31' `A32' `A33' `Tz'].\n"
-    "\n"
-    "If `SwapOrientation' is set, the orientation of the\n"
-    "elements is reversed.\n"
-    "\n"
-    "If `View' < 0, the plugin is run on the current view.\n"
-    "\n"
-    "Plugin(Transform) is executed in-place.\n";
+    "[`A31' `A32' `A33' `Tz'].\n\n"
+    "If `SwapOrientation' is set, the orientation of the "
+    "elements is reversed.\n\n"
+    "If `View' < 0, the plugin is run on the current view.\n\n"
+    "Plugin(Transform) is executed in-place.";
 }
 
 int GMSH_TransformPlugin::getNbOptions() const

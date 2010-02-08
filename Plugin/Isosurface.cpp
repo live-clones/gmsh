@@ -79,25 +79,21 @@ double GMSH_IsosurfacePlugin::callbackTarget(int num, int action, double value)
 
 std::string GMSH_IsosurfacePlugin::getHelp() const
 {
-  return "Plugin(Isosurface) extracts the isosurface of value\n"
-    "`Value' from the view `View', and draws the\n"
-    "`OtherTimeStep'-th step of the view `OtherView' on\n"
-    "this isosurface.\n"
-    "\n"
-    "If `ExtractVolume' is nonzero, the plugin extracts the\n" 
-    "isovolume with values greater (if `ExtractVolume' > 0)\n"
-    "or smaller (if `ExtractVolume' < 0) than the isosurface\n"
-    "`Value'.\n"
-    "\n"
-    "If `OtherTimeStep' < 0, the plugin uses, for each time\n"
-    "step in `View', the corresponding time step in `OtherView'.\n"
-    "If `OtherView' < 0, the plugin uses `View' as the value\n"
-    "source.\n"
-    "\n"
-    "If `View' < 0, the plugin is run on the current view.\n"
-    "\n"
-    "Plugin(Isosurface) creates as many views as there are\n"
-    "time steps in `View'.\n";
+  return "Plugin(Isosurface) extracts the isosurface of value "
+    "`Value' from the view `View', and draws the "
+    "`OtherTimeStep'-th step of the view `OtherView' on "
+    "this isosurface.\n\n"
+    "If `ExtractVolume' is nonzero, the plugin extracts the " 
+    "isovolume with values greater (if `ExtractVolume' > 0) "
+    "or smaller (if `ExtractVolume' < 0) than the isosurface "
+    "`Value'.\n\n"
+    "If `OtherTimeStep' < 0, the plugin uses, for each time "
+    "step in `View', the corresponding time step in `OtherView'. "
+    "If `OtherView' < 0, the plugin uses `View' as the value "
+    "source.\n\n"
+    "If `View' < 0, the plugin is run on the current view.\n\n"
+    "Plugin(Isosurface) creates as many views as there are "
+    "time steps in `View'.";
 }
 
 int GMSH_IsosurfacePlugin::getNbOptions() const

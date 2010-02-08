@@ -23,18 +23,14 @@ extern "C"
 
 std::string GMSH_HarmonicToTimePlugin::getHelp() const
 {
-  return "Plugin(HarmonicToTime) takes the values in the\n"
-    "time steps `RealPart' and `ImaginaryPart' of\n"
-    "the view `View', and creates a new view\n"
-    "containing\n"
-    "\n"
-    "`View'[`RealPart'] * cos(p) - `View'[`ImaginaryPart'] * sin(p)\n"
-    "\n"
-    "with p = 2*Pi*k/`NumSteps', k = 0, ..., `NumSteps'-1.\n"
-    "\n"
-    "If `View' < 0, the plugin is run on the current view.\n"
-    "\n"
-    "Plugin(HarmonicToTime) creates one new view.\n";
+  return "Plugin(HarmonicToTime) takes the values in the "
+    "time steps `RealPart' and `ImaginaryPart' of "
+    "the view `View', and creates a new view "
+    "containing\n\n"
+    "`View'[`RealPart'] * cos(p) - `View'[`ImaginaryPart'] * sin(p)\n\n"
+    "with p = 2*Pi*k/`NumSteps', k = 0, ..., `NumSteps'-1.\n\n"
+    "If `View' < 0, the plugin is run on the current view.\n\n"
+    "Plugin(HarmonicToTime) creates one new view.";
 }
 
 int GMSH_HarmonicToTimePlugin::getNbOptions() const

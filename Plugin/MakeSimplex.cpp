@@ -19,14 +19,11 @@ extern "C"
 
 std::string GMSH_MakeSimplexPlugin::getHelp() const
 {
-  return "Plugin(MakeSimplex) decomposes all non-\n"
-    "simplectic elements (quadrangles, prisms,\n"
-    "hexahedra, pyramids) in the view `View' into\n"
-    "simplices (triangles, tetrahedra).\n"
-    "\n"
-    "If `View' < 0, the plugin is run on the current view.\n"
-    "\n"
-    "Plugin(MakeSimplex) is executed in-place.\n";
+  return "Plugin(MakeSimplex) decomposes all non-simplectic "
+    "elements (quadrangles, prisms, hexahedra, pyramids) in the "
+    "view `View' into simplices (triangles, tetrahedra).\n\n"
+    "If `View' < 0, the plugin is run on the current view.\n\n"
+    "Plugin(MakeSimplex) is executed in-place.";
 }
 
 int GMSH_MakeSimplexPlugin::getNbOptions() const

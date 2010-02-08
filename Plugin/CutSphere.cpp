@@ -109,16 +109,13 @@ double GMSH_CutSpherePlugin::callbackTarget(int num, int action, double value)
 
 std::string GMSH_CutSpherePlugin::getHelp() const
 {
-  return "Plugin(CutSphere) cuts the view `View' with the\n"
-    "sphere (X-`Xc')^2 + (Y-`Yc')^2 + (Z-`Zc')^2 = `R'^2.\n"
-    "\n"
-    "If `ExtractVolume' is nonzero, the plugin extracts\n"
-    "the elements inside (if `ExtractVolume' < 0) or\n"
-    "outside (if `ExtractVolume' > 0) the sphere.\n"
-    "\n"
-    "If `View' < 0, the plugin is run on the current view.\n"
-    "\n"
-    "Plugin(CutSphere) creates one new view.\n";
+  return "Plugin(CutSphere) cuts the view `View' with the "
+    "sphere (X-`Xc')^2 + (Y-`Yc')^2 + (Z-`Zc')^2 = `R'^2.\n\n"
+    "If `ExtractVolume' is nonzero, the plugin extracts "
+    "the elements inside (if `ExtractVolume' < 0) or "
+    "outside (if `ExtractVolume' > 0) the sphere.\n\n"
+    "If `View' < 0, the plugin is run on the current view.\n\n"
+    "Plugin(CutSphere) creates one new view.";
 }
 
 int GMSH_CutSpherePlugin::getNbOptions() const

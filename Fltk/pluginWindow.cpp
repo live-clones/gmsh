@@ -12,6 +12,7 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Scroll.H>
+#include <FL/Fl_Help_View.H>
 #include "FlGui.h"
 #include "drawContext.h"
 #include "pluginWindow.h"
@@ -215,6 +216,32 @@ static void plugin_create_new_view_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+static void htmlize(std::string &in)
+{
+  while(1){
+    int pos = in.find("<");
+    if(pos == std::string::npos) break;
+    in.replace(pos, 1, "&lt;");
+  }
+  while(1){
+    int pos = in.find(">");
+    if(pos == std::string::npos) break;
+    in.replace(pos, 1, "&gt;");
+  }
+  while(1){
+    const char n2[3] = {'\n', '\n', '\0'};
+    int pos = in.find(n2);
+    if(pos == std::string::npos) break;
+    in.replace(pos, 2, "<p>");
+  }
+  while(1){
+    const char n1[2] = {'\n', '\0'};
+    int pos = in.find(n1);
+    if(pos == std::string::npos) break;
+    in.replace(pos, 1, "<br>");
+  }
+}
+
 void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,
                                     int width, int height)
 {
@@ -279,17 +306,15 @@ void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,
       Fl_Group *g = new Fl_Group
         (x, y + top + BH, width, height - top - BH, "Help");
 
-      Fl_Browser *o = new Fl_Browser
+      Fl_Help_View *o = new Fl_Help_View
         (x + WB, y + top + BH + WB, width - 2 * WB, height - top - 2 * BH - 3 * WB);
-      o->add(" ");
-      add_multiline_in_browser(o, "", p->getHelp().c_str(), false);
-      o->add(" ");
-      o->add(" ");
-      add_multiline_in_browser(o, "@i@.Author: ", p->getAuthor().c_str(), false);
-      add_multiline_in_browser(o, "@i@.Copyright (C) ", p->getCopyright().c_str(), 
-                               false);
-      o->add(" ");
-
+      std::string help = p->getHelp();
+      htmlize(help);
+      help += std::string("<p><em>Author: ") + p->getAuthor() + "</em>";
+      help += std::string("<br><em>Copyright: ") + p->getCopyright() + "</em>";
+      o->value(help.c_str());
+      o->textfont(FL_HELVETICA);
+      o->textsize(FL_NORMAL_SIZE);
       g->end();
     }
     o->end();

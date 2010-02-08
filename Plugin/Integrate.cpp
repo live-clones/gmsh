@@ -21,14 +21,12 @@ extern "C"
 
 std::string GMSH_IntegratePlugin::getHelp() const
 {
-  return "Plugin(Integrate) integrates scalar fields over\n"
-    "all the elements in the view `View', as well\n"
-    "as the circulation/flux of vector fields over\n"
-    "line/surface elements.\n"
-    "\n"
-    "If `View' < 0, the plugin is run on the current view.\n"
-    "\n"
-    "Plugin(Integrate) creates one new view.\n";
+  return "Plugin(Integrate) integrates scalar fields over "
+    "all the elements in the view `View', as well "
+    "as the circulation/flux of vector fields over "
+    "line/surface elements.\n\n"
+    "If `View' < 0, the plugin is run on the current view.\n\n"
+    "Plugin(Integrate) creates one new view.";
 }
 
 int GMSH_IntegratePlugin::getNbOptions() const

@@ -21,12 +21,10 @@ extern "C"
 
 std::string GMSH_EigenvaluesPlugin::getHelp() const
 {
-  return "Plugin(Eigenvalues) computes the three real\n"
-    "eigenvalues of each tensor in the view `View'.\n"
-    "\n"
-    "If `View' < 0, the plugin is run on the current view.\n"
-    "\n"
-    "Plugin(Eigenvalues) creates three new scalar views.\n";
+  return "Plugin(Eigenvalues) computes the three real "
+    "eigenvalues of each tensor in the view `View'.\n\n"
+    "If `View' < 0, the plugin is run on the current view.\n\n"
+    "Plugin(Eigenvalues) creates three new scalar views.";
 }
 
 int GMSH_EigenvaluesPlugin::getNbOptions() const
