@@ -7,7 +7,7 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
-#include <FL/Fl_Browser.H>
+#include <FL/Fl_Help_View.H>
 #include "GmshMessage.h"
 #include "GmshSocket.h"
 #include "ConnectionManager.h"
@@ -510,14 +510,15 @@ solverWindow::solverWindow(int num, int deltaFontSize)
       Fl_Group *g = new Fl_Group
         (WB, WB + BH, width - 2 * WB, height - 2 * WB, "About");
 
-      Fl_Browser *o = new Fl_Browser
+      Fl_Help_View *o = new Fl_Help_View
         (2 * WB, 2 * WB + 1 * BH, width - 4 * WB, height - 4 * WB - BH);
-      o->add(" ");
-      add_multiline_in_browser
-        (o, "@c@b@.", ConnectionManager::get(num)->name.c_str(), false);
-      o->add(" ");
-      add_multiline_in_browser
-        (o, "@c@. ", ConnectionManager::get(num)->help.c_str(), false);
+      o->textfont(FL_HELVETICA);
+      o->textsize(FL_NORMAL_SIZE);
+      std::string help = ConnectionManager::get(num)->help;
+      ConvertToHTML(help);
+      help = std::string("<h3>") + ConnectionManager::get(num)->name + 
+        "</h3><p>" + help;
+      o->value(help.c_str());
 
       g->end();
     }

@@ -111,8 +111,4 @@ class FlGui{
 void redraw_cb(Fl_Widget *w, void *data);
 void window_cb(Fl_Widget *w, void *data);
 
-class Fl_Browser;
-void add_multiline_in_browser(Fl_Browser *o, const char *prefix, 
-                              const char *str, int wrap=0);
-
 #endif

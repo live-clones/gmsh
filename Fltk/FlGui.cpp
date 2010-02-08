@@ -860,31 +860,3 @@ void window_cb(Fl_Widget *w, void *data)
   }
 }
 
-void add_multiline_in_browser(Fl_Browser *o, const char *prefix, 
-                              const char *str, int wrap)
-{
-  int start = 0, len;
-  if(!str || !strlen(str) || !strcmp(str, "\n")) {
-    o->add(" ");
-    return;
-  }
-  for(int i = 0; i < (int)strlen(str); i++) {
-    if(i == (int)strlen(str) - 1 || str[i] == '\n' || 
-       (wrap > 0 && i - start == wrap)) {
-      if(wrap > 0 && i - start == wrap){ //line is longer than wrap
-        while(str[i] != ' ' && i > start) //go back to the previous space
-          i--;
-        if(i == start) //no space in this line, cut the word
-          i += wrap;
-      }
-      len = i - start + (str[i] == '\n' ? 0 : 1);
-      char *buff = new char[len + strlen(prefix) + 2];
-      strcpy(buff, prefix);
-      strncat(buff, &str[start], len);
-      buff[len + strlen(prefix)] = '\0';
-      o->add(buff);
-      start = i + 1;
-      delete [] buff;
-    }
-  }
-}

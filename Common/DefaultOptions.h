@@ -120,8 +120,8 @@ StringXString SolverOptions_String[] = {
   { F|O, "Name0" , opt_solver_name0 , "GetDP" ,
     "Name of solver 0" },
   { F|O, "Help0" , opt_solver_help0 , 
-    "A General environment for the treatment of\nDiscrete Problems\n\n"
-    "Copyright (C) 1997-2009\nPatrick Dular and Christophe Geuzaine\n\n"
+    "A General environment for the treatment of Discrete Problems\n\n"
+    "Copyright (C) 1997-2009 Patrick Dular and Christophe Geuzaine\n\n"
     "Visit http://www.geuz.org/getdp/ for more info",
     "Help string for solver 0" },
   { F|O, "Executable0" , opt_solver_executable0 , 
