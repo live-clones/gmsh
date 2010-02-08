@@ -876,6 +876,8 @@ Compute characteristic lengths from curvatures
 Set random perturbation factor
 @item -bgm file
 Load background mesh from file
+@item -check file
+Perform various consistency checks on mesh
 @end ftable
 
 @sp 1 

@@ -1,4 +1,4 @@
-.TH Gmsh 1 "18 january 2009" "Gmsh 2.3" "Gmsh Manual Pages"
+.TH Gmsh 1 "8 february 2010" "Gmsh 2.5" "Gmsh Manual Pages"
 .UC 4
 .\" ********************************************************************
 .SH NAME
@@ -51,7 +51,7 @@ save all elements (and discard all physical group definitions).
 specify mesh output file name.
 .TP 4
 .B \-format string
-set output mesh format (msh, msh1, msh2, unv, vrml, stl, mesh, bdf, p3d, cgns, med).
+set output mesh format (msh, msh1, msh2, unv, vrml, stl, mesh, bdf, p3d, cgns, med, fea).
 .TP 4
 .B \-bin
 use binary format when available.
@@ -77,6 +77,7 @@ Set minimum characteristic length.
 .TP 4
 .B \-clmax float
 Set maximum characteristic length.
+.TP 4
 .B \-clcurv
 Compute characteristic lengths from curvatures.
 .TP 4
@@ -85,6 +86,9 @@ set random perturbation factor.
 .TP 4
 .B \-bgm file
 load the post-processing view in file as the current background mesh.
+.TP 4
+.B \-check
+perform various consistency checks on mesh.
 .\" ********************************************************************
 .SH POST-PROCESSING OPTIONS
 .TP 4

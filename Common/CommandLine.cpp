@@ -82,6 +82,7 @@ void PrintUsage(const char *name)
   Msg::Direct("                          below which a swap is allowed");
   Msg::Direct("  -rand float           Set random perturbation factor");
   Msg::Direct("  -bgm file             Load background mesh from file");
+  Msg::Direct("  -check                Perform various consistency checks on mesh");
 #if defined(HAVE_FLTK)
   Msg::Direct("Post-processing options:");
   Msg::Direct("  -noview               Hide all views on startup");
