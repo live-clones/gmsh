@@ -12,13 +12,13 @@
 StringXNumber ModifyComponentOptions_Number[] = {
   {GMSH_FULLRC, "Component", NULL, -1.},
   {GMSH_FULLRC, "TimeStep", NULL, -1.},
-  {GMSH_FULLRC, "ExternalView", NULL, -1.},
-  {GMSH_FULLRC, "ExternalTimeStep", NULL, -1.},
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "View", NULL, -1.},
+  {GMSH_FULLRC, "OtherTimeStep", NULL, -1.},
+  {GMSH_FULLRC, "OtherView", NULL, -1.}
 };
 
 StringXString ModifyComponentOptions_String[] = {
-  {GMSH_FULLRC, "Expression", NULL, "v0*Sin(x)"}
+  {GMSH_FULLRC, "Expression", NULL, "v0 * Sin(x)"}
 };
 
 extern "C"
@@ -33,7 +33,7 @@ std::string GMSH_ModifyComponentPlugin::getHelp() const
 {
   return "Plugin(ModifyComponent) sets the `Component'-th\n"
          "component of the `TimeStep'-th time step in the\n"
-         "view `iView' to the expression `Expression'.\n"
+         "view `View' to the expression `Expression'.\n"
          "`Expression' can contain:\n"
          "\n"
          "- the usual mathematical functions (Log, Sqrt,\n"
@@ -46,33 +46,33 @@ std::string GMSH_ModifyComponentPlugin::getHelp() const
          "current time and time step values;\n"
          "\n"
          "- the symbol v, to retrieve the `Component'-th\n"
-         "component of the field in `iView' at the\n"
+         "component of the field in `View' at the\n"
          "`TimeStep'-th time step;\n"
          "\n"
          "- the symbols v0, v1, v2, ..., v8, to retrieve each\n"
-         "component of the field in `iView' at the\n"
+         "component of the field in `View' at the\n"
          "`TimeStep'-th time step;\n"
          "\n"
          "- the symbol w, to retrieve the `Component'-th\n"
-         "component of the field in `ExternalView' at the\n"
-         "`ExternalTimeStep'-th time step. If `ExternalView'\n"
-         "and `iView' are based on different spatial grids,\n"
-         "or if their data types are different, `ExternalView'\n"
-         "is interpolated onto `iView';\n"
+         "component of the field in `OtherView' at the\n"
+         "`OtherTimeStep'-th time step. If `OtherView'\n"
+         "and `View' are based on different spatial grids,\n"
+         "or if their data types are different, `OtherView'\n"
+         "is interpolated onto `View';\n"
          "\n"
          "- the symbols w0, w1, w2, ..., w8, to retrieve each\n"
-         "component of the field in `ExternalView' at the\n"
-         "`ExternalTimeStep'-th time step.\n"
+         "component of the field in `OtherView' at the\n"
+         "`OtherTimeStep'-th time step.\n"
          "\n"
          "If `TimeStep' < 0, the plugin automatically loops\n"
-         "over all the time steps in `iView' and evaluates\n"
-         "`Expression' for each one. If `ExternalTimeStep'\n"
+         "over all the time steps in `View' and evaluates\n"
+         "`Expression' for each one. If `OtherTimeStep'\n"
          "< 0, the plugin uses `TimeStep' instead. If\n"
          "`Component' < 0, the plugin automatically loops\n"
          "over all the components in the view and\n"
-         "evaluates `Expression' for each one. If `iView'\n"
+         "evaluates `Expression' for each one. If `View'\n"
          "< 0, the plugin is run on the current view. If\n"
-         "`ExternalView' < 0, the plugin uses `iView'\n"
+         "`OtherView' < 0, the plugin uses `View'\n"
          "instead.\n"
          "\n"
          "Plugin(ModifyComponent) is executed in-place.\n";
@@ -102,9 +102,9 @@ PView *GMSH_ModifyComponentPlugin::execute(PView *view)
 {
   int component = (int)ModifyComponentOptions_Number[0].def;
   int timeStep = (int)ModifyComponentOptions_Number[1].def;
-  int externalView = (int)ModifyComponentOptions_Number[2].def;
-  int externalTimeStep = (int)ModifyComponentOptions_Number[3].def;
-  int iView = (int)ModifyComponentOptions_Number[4].def;
+  int iView = (int)ModifyComponentOptions_Number[2].def;
+  int otherTimeStep = (int)ModifyComponentOptions_Number[3].def;
+  int otherView = (int)ModifyComponentOptions_Number[4].def;
 
   PView *v1 = getView(iView, view);
   if(!v1) return view;
@@ -119,23 +119,23 @@ PView *GMSH_ModifyComponentPlugin::execute(PView *view)
 
   PView *v2 = v1;
 
-  if(externalView >= 0){
-    if(externalView < (int)PView::list.size())
-      v2 = PView::list[externalView];
+  if(otherView >= 0){
+    if(otherView < (int)PView::list.size())
+      v2 = PView::list[otherView];
     else
-      Msg::Error("View[%d] does not exist: using self", externalView);
+      Msg::Error("View[%d] does not exist: using self", otherView);
   }
 
   PViewData *data2 = v2->getData();
 
-  if(externalTimeStep < 0 && data2->getNumTimeSteps() != data1->getNumTimeSteps()){
+  if(otherTimeStep < 0 && data2->getNumTimeSteps() != data1->getNumTimeSteps()){
     Msg::Error("Number of time steps don't match: using step 0");
-    externalTimeStep = 0;
+    otherTimeStep = 0;
   }
-  else if(externalTimeStep > data2->getNumTimeSteps() - 1){
+  else if(otherTimeStep > data2->getNumTimeSteps() - 1){
     Msg::Error("Invalid time step (%d) in View[%d]: using step 0 instead",
-               externalTimeStep, v2->getIndex());
-    externalTimeStep = 0;
+               otherTimeStep, v2->getIndex());
+    otherTimeStep = 0;
   }
 
   const char *names[] = 
@@ -153,7 +153,7 @@ PView *GMSH_ModifyComponentPlugin::execute(PView *view)
   OctreePost *octree = 0;
   if((data1->getNumEntities() != data2->getNumEntities()) ||
      (data1->getNumElements() != data2->getNumElements())){
-    Msg::Info("External view based on different grid: interpolating...");
+    Msg::Info("Other view based on different grid: interpolating...");
     octree = new OctreePost(v2);
   }
 
@@ -163,7 +163,7 @@ PView *GMSH_ModifyComponentPlugin::execute(PView *view)
     if(timeStep >= 0 && timeStep != step) continue;
 
     double time = data1->getTime(step);
-    int step2 = (externalTimeStep < 0) ? step : externalTimeStep;
+    int step2 = (otherTimeStep < 0) ? step : otherTimeStep;
 
     // tag all the nodes with "0" (the default tag)
     for(int ent = 0; ent < data1->getNumEntities(step); ent++){

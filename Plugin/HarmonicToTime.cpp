@@ -9,8 +9,8 @@
 StringXNumber HarmonicToTimeOptions_Number[] = {
   {GMSH_FULLRC, "RealPart", NULL, 0.},
   {GMSH_FULLRC, "ImaginaryPart", NULL, 1.},
-  {GMSH_FULLRC, "nSteps", NULL, 20.},
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "NumSteps", NULL, 20.},
+  {GMSH_FULLRC, "View", NULL, -1.}
 };
 
 extern "C"
@@ -25,11 +25,11 @@ std::string GMSH_HarmonicToTimePlugin::getHelp() const
 {
   return "Plugin(HarmonicToTime) takes the values in the\n"
          "time steps `RealPart' and `ImaginaryPart' of\n"
-         "the view `iView', and creates a new view\n"
-         "containing (`iView'[`RealPart'] * cos(p) -\n"
-         "`iView'[`ImaginaryPart'] * sin(p)), with\n"
-         "p = 2*Pi*k/`nSteps', k = 0, ..., `nSteps'-1.\n"
-         "If `iView' < 0, the plugin is run on the\n"
+         "the view `View', and creates a new view\n"
+         "containing (`View'[`RealPart'] * cos(p) -\n"
+         "`View'[`ImaginaryPart'] * sin(p)), with\n"
+         "p = 2*Pi*k/`NumSteps', k = 0, ..., `NumSteps'-1.\n"
+         "If `View' < 0, the plugin is run on the\n"
          "current view.\n"
          "\n"
          "Plugin(HarmonicToTime) creates one new view.\n";

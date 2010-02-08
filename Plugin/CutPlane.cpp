@@ -21,7 +21,7 @@ StringXNumber CutPlaneOptions_Number[] = {
   {GMSH_FULLRC, "ExtractVolume", GMSH_CutPlanePlugin::callbackVol, 0},
   {GMSH_FULLRC, "RecurLevel", GMSH_CutPlanePlugin::callbackRecur, 4},
   {GMSH_FULLRC, "TargetError", GMSH_CutPlanePlugin::callbackTarget, 0.},
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "View", NULL, -1.}
 };
 
 extern "C"
@@ -112,11 +112,11 @@ double GMSH_CutPlanePlugin::callbackTarget(int num, int action, double value)
 
 std::string GMSH_CutPlanePlugin::getHelp() const
 {
-  return "Plugin(CutPlane) cuts the view `iView' with\n"
+  return "Plugin(CutPlane) cuts the view `View' with\n"
          "the plane `A'*X + `B'*Y + `C'*Z + `D' = 0. If\n"
          "`ExtractVolume' is nonzero, the plugin extracts\n"
          "the elements on one side of the plane (depending\n"
-         "on the sign of `ExtractVolume'). If `iView' < 0,\n"
+         "on the sign of `ExtractVolume'). If `View' < 0,\n"
          "the plugin is run on the current view.\n"
          "\n"
          "Plugin(CutPlane) creates one new view.\n";

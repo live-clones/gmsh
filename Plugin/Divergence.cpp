@@ -8,7 +8,7 @@
 #include "GmshDefines.h"
 
 StringXNumber DivergenceOptions_Number[] = {
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "View", NULL, -1.}
 };
 
 extern "C"
@@ -22,7 +22,7 @@ extern "C"
 std::string GMSH_DivergencePlugin::getHelp() const
 {
   return "Plugin(Divergence) computes the divergence of the\n"
-         "field in the view `iView'. If `iView' < 0, the plugin\n"
+         "field in the view `View'. If `View' < 0, the plugin\n"
          "is run on the current view.\n"
          "\n"
          "Plugin(Divergence) creates one new view.\n";

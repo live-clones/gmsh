@@ -24,15 +24,15 @@ StringXNumber ParticlesOptions_Number[] = {
   {GMSH_FULLRC, "X2", GMSH_ParticlesPlugin::callbackX2, 0.},
   {GMSH_FULLRC, "Y2", GMSH_ParticlesPlugin::callbackY2, 1.},
   {GMSH_FULLRC, "Z2", GMSH_ParticlesPlugin::callbackZ2, 0.},
-  {GMSH_FULLRC, "nPointsU", GMSH_ParticlesPlugin::callbackU, 10},
-  {GMSH_FULLRC, "nPointsV", GMSH_ParticlesPlugin::callbackV, 1},
-  {GMSH_FULLRC, "MaxIter", NULL, 100},
-  {GMSH_FULLRC, "DT", NULL, .1},
-  {GMSH_FULLRC, "TimeStep", NULL, 0},
+  {GMSH_FULLRC, "NumPointsU", GMSH_ParticlesPlugin::callbackU, 10},
+  {GMSH_FULLRC, "NumPointsV", GMSH_ParticlesPlugin::callbackV, 1},
   {GMSH_FULLRC, "A2", NULL, 1. },
   {GMSH_FULLRC, "A1", NULL, 0. },
   {GMSH_FULLRC, "A0", NULL, 0. },
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "DT", NULL, .1},
+  {GMSH_FULLRC, "MaxIter", NULL, 100},
+  {GMSH_FULLRC, "TimeStep", NULL, 0},
+  {GMSH_FULLRC, "View", NULL, -1.}
 };
 
 extern "C"
@@ -151,19 +151,19 @@ std::string GMSH_ParticlesPlugin::getHelp() const
     "Plugin(Particles) computes the trajectory\n"
     "of particules in the force field given by the\n"
     "`TimeStep'-th time step of a vector view\n"
-    "`iView'. The plugin takes as input a grid defined\n"
+    "`View'. The plugin takes as input a grid defined\n"
     "by the 3 points (`X0',`Y0',`Z0') (origin),\n"
     "(`X1',`Y1',`Z1') (axis of U) and (`X2',`Y2',`Z2')\n"
     "(axis of V). The number of particles along U and V\n"
     "that are to be transported is set with the\n"
-    "options `nPointsU' and `nPointsV'. The equation\n"
+    "options `NumPointsU' and `NumPointsV'. The equation\n"
     "A2*d^2X(t)/dt^2+A1*dX(t)/dt+A0*X(t)=F is then\n"
     "solved with the initial conditions X(t=0) chosen\n"
     "as the grid, dX/dt(t=0)=0, and with F\n"
     "interpolated from the vector view. Time stepping\n"
     "is done using a Newmark scheme with step size `DT'\n"
     "and `MaxIter' maximum number of iterations. If\n"
-    "`iView' < 0 the plugin is run on the current view.\n"
+    "`View' < 0 the plugin is run on the current view.\n"
     "\n"
     "Plugin(Particles) creates one new view containing\n"
     "multi-step vector points.\n";
@@ -206,12 +206,12 @@ void GMSH_ParticlesPlugin::getPoint(int iU, int iV, double *X)
 
 PView *GMSH_ParticlesPlugin::execute(PView *v)
 {
-  int maxIter = (int)ParticlesOptions_Number[11].def;
-  double DT = ParticlesOptions_Number[12].def;
-  int timeStep = (int)ParticlesOptions_Number[13].def;
-  double A2 = ParticlesOptions_Number[14].def;
-  double A1 = ParticlesOptions_Number[15].def;
-  double A0 = ParticlesOptions_Number[16].def;
+  double A2 = ParticlesOptions_Number[11].def;
+  double A1 = ParticlesOptions_Number[12].def;
+  double A0 = ParticlesOptions_Number[13].def;
+  double DT = ParticlesOptions_Number[14].def;
+  int maxIter = (int)ParticlesOptions_Number[15].def;
+  int timeStep = (int)ParticlesOptions_Number[16].def;
   int iView = (int)ParticlesOptions_Number[17].def;
 
   PView *v1 = getView(iView, v);

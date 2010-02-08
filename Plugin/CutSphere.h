@@ -23,7 +23,7 @@ class GMSH_CutSpherePlugin : public GMSH_LevelsetPlugin
   std::string getName() const { return "CutSphere"; }
   std::string getShortHelp() const
   {
-    return "Cut with a sphere";
+    return "Cut with a sphere centered at (Xc, Yc, Zc)";
   }
   std::string getHelp() const;
   int getNbOptions() const;
@@ -36,6 +36,7 @@ class GMSH_CutSpherePlugin : public GMSH_LevelsetPlugin
   static double callbackR(int, int, double);
   static double callbackVol(int, int, double);
   static double callbackRecur(int, int, double);
+  static double callbackTarget(int, int, double);
   static void draw(void *context);
 };
 

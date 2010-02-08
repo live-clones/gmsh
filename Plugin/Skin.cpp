@@ -9,7 +9,7 @@
 #include "GmshDefines.h"
 
 StringXNumber SkinOptions_Number[] = {
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "View", NULL, -1.}
 };
 
 extern "C"
@@ -23,7 +23,7 @@ extern "C"
 std::string GMSH_SkinPlugin::getHelp() const
 {
   return "Plugin(Skin) extracts the skin (the boundary) of\n"
-         "the view `iView'. If `iView' < 0, the plugin is run\n"
+         "the view `View'. If `View' < 0, the plugin is run\n"
          "on the current view.\n"
          "\n"
          "Plugin(Skin) creates one new view.\n";

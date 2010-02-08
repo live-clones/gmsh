@@ -27,10 +27,10 @@ Plugin(CutGrid).Z0 = 0.5;
 Plugin(CutGrid).X1 = 2;
 Plugin(CutGrid).Y1 = 0.5;
 Plugin(CutGrid).Z1 = 0.5;
-Plugin(CutGrid).nPointsU = 51;
-Plugin(CutGrid).nPointsV = 1;
+Plugin(CutGrid).NumPointsU = 51;
+Plugin(CutGrid).NumPointsV = 1;
 Plugin(CutGrid).ConnectPoints = 0;
-Plugin(CutGrid).iView = -1;
+Plugin(CutGrid).View = -1;
 
 Plugin(CutGrid).Run;
 

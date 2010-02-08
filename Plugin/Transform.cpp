@@ -19,7 +19,7 @@ StringXNumber TransformOptions_Number[] = {
   {GMSH_FULLRC, "Ty", NULL, 0.}, // cannot use T2 (reserved token in parser)
   {GMSH_FULLRC, "Tz", NULL, 0.}, // cannot use T3 (reserved token in parser)
   {GMSH_FULLRC, "SwapOrientation", NULL, 0.},
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "View", NULL, -1.}
 };
 
 extern "C"
@@ -34,12 +34,12 @@ std::string GMSH_TransformPlugin::getHelp() const
 {
   return "Plugin(Transform) transforms the homogeneous\n"
          "node coordinates (x,y,z,1) of the elements in\n"
-         "the view `iView' by the matrix\n"
+         "the view `View' by the matrix\n"
          "[`A11' `A12' `A13' `Tx']\n"
          "[`A21' `A22' `A23' `Ty']\n"
          "[`A31' `A32' `A33' `Tz'].\n"
          "If `SwapOrientation' is set, the orientation of the\n"
-         "elements is reversed. If `iView' < 0, the plugin\n"
+         "elements is reversed. If `View' < 0, the plugin\n"
          "is run on the current view.\n"
          "\n"
          "Plugin(Transform) is executed in-place.\n";

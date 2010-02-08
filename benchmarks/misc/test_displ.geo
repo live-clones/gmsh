@@ -1,14 +1,14 @@
 Include "test_field.pos";
 Include "test_displ.pos";
 
-Plugin(Warp).iView = 0;
-Plugin(Warp).dView = 1;
+Plugin(Warp).View = 0;
+Plugin(Warp).OtherView = 1;
 Plugin(Warp).Factor = 1;
 Plugin(Warp).Run;
 
 View[0].ShowElement = 1;
 
-Plugin(Skin).iView = 0;
+Plugin(Skin).View = 0;
 Plugin(Skin).Run;
 
 View[0].Visible = 0;

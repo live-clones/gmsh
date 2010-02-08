@@ -22,10 +22,10 @@ StringXNumber CutGridOptions_Number[] = {
   {GMSH_FULLRC, "X2", GMSH_CutGridPlugin::callbackX2, 0.},
   {GMSH_FULLRC, "Y2", GMSH_CutGridPlugin::callbackY2, 1.},
   {GMSH_FULLRC, "Z2", GMSH_CutGridPlugin::callbackZ2, 0.},
-  {GMSH_FULLRC, "nPointsU", GMSH_CutGridPlugin::callbackU, 20},
-  {GMSH_FULLRC, "nPointsV", GMSH_CutGridPlugin::callbackV, 20},
+  {GMSH_FULLRC, "NumPointsU", GMSH_CutGridPlugin::callbackU, 20},
+  {GMSH_FULLRC, "NumPointsV", GMSH_CutGridPlugin::callbackV, 20},
   {GMSH_FULLRC, "ConnectPoints", GMSH_CutGridPlugin::callbackConnect, 1},
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "View", NULL, -1.}
 };
 
 extern "C"
@@ -167,16 +167,16 @@ double GMSH_CutGridPlugin::callbackConnect(int num, int action, double value)
 
 std::string GMSH_CutGridPlugin::getHelp() const
 {
-  return "Plugin(CutGrid) cuts the view `iView' with a\n"
+  return "Plugin(CutGrid) cuts the view `View' with a\n"
          "rectangular grid defined by the 3 points\n"
          "(`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of\n"
          "U) and (`X2',`Y2',`Z2') (axis of V). The number of\n"
          "points along U and V is set with the options\n"
-         "`nPointsU' and `nPointsV'. If `ConnectPoints' is\n"
+         "`NumPointsU' and `NumPointsV'. If `ConnectPoints' is\n"
          "zero, the plugin creates points; otherwise, the\n"
          "plugin generates quadrangles, lines or points\n"
-         " depending on the values of `nPointsU' and\n"
-         "`nPointsV'. If `iView' < 0, the plugin is run on\n"
+         " depending on the values of `NumPointsU' and\n"
+         "`NumPointsV'. If `View' < 0, the plugin is run on\n"
          "the current view.\n"
          "\n"
          "Plugin(CutGrid) creates one new view.\n";

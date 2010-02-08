@@ -41,7 +41,6 @@
 #include "Lambda2.h"
 #include "ModifyComponent.h"
 #include "Probe.h"
-#include "FieldView.h"
 #include "GSHHS.h"
 #include "HomologyComputation.h"
 
@@ -203,8 +202,6 @@ void PluginManager::registerDefaultPlugins()
                       ("Lambda2", GMSH_RegisterLambda2Plugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Probe", GMSH_RegisterProbePlugin()));
-    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
-                      ("FieldView", GMSH_RegisterFieldViewPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Triangulate", GMSH_RegisterTriangulatePlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>

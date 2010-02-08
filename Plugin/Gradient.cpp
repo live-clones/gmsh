@@ -8,7 +8,7 @@
 #include "GmshDefines.h"
 
 StringXNumber GradientOptions_Number[] = {
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "View", NULL, -1.}
 };
 
 extern "C"
@@ -22,7 +22,7 @@ extern "C"
 std::string GMSH_GradientPlugin::getHelp() const
 {
   return "Plugin(Gradient) computes the gradient of the\n"
-         "field in the view `iView'. If `iView' < 0, the\n"
+         "field in the view `View'. If `View' < 0, the\n"
          "plugin is run on the current view.\n"
          "\n"
          "Plugin(Gradient) creates one new view.\n";

@@ -8,7 +8,7 @@
 #include "PViewOptions.h"
 
 StringXNumber IntegrateOptions_Number[] = {
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "View", NULL, -1.}
 };
 
 extern "C"
@@ -22,9 +22,9 @@ extern "C"
 std::string GMSH_IntegratePlugin::getHelp() const
 {
   return "Plugin(Integrate) integrates scalar fields over\n"
-         "all the elements in the view `iView', as well\n"
+         "all the elements in the view `View', as well\n"
          "as the circulation/flux of vector fields over\n"
-         "line/surface elements. If `iView' < 0, the\n"
+         "line/surface elements. If `View' < 0, the\n"
          "plugin is run on the current view.\n"
          "\n"
          "Plugin(Integrate) creates one new view.\n";

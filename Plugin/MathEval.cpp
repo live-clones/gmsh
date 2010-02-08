@@ -11,9 +11,9 @@
 
 StringXNumber MathEvalOptions_Number[] = {
   {GMSH_FULLRC, "TimeStep", NULL, -1.},
-  {GMSH_FULLRC, "iView", NULL, -1.},
-  {GMSH_FULLRC, "ExternalView", NULL, -1.},
-  {GMSH_FULLRC, "ExternalTimeStep", NULL, -1.}
+  {GMSH_FULLRC, "View", NULL, -1.},
+  {GMSH_FULLRC, "OtherTimeStep", NULL, -1.},
+  {GMSH_FULLRC, "OtherView", NULL, -1.}
 };
 
 StringXString MathEvalOptions_String[] = {
@@ -39,9 +39,10 @@ extern "C"
 std::string GMSH_MathEvalPlugin::getHelp() const
 {
   return "Plugin(MathEval) creates a new view using\n"
-         "data from `iView'. If only `Expression0' is\n"
-         "given (and `Expression1', ..., `Expression8' are\n"
-         "all empty), the plugin creates a scalar view.\n"
+         "data from the time step `TimeStep' in the view\n"
+         "`View'. If only `Expression0' is given\n"
+         "(and `Expression1', ..., `Expression8' are all\n"
+         "empty), the plugin creates a scalar view.\n"
          "If `Expression0', `Expression1' and/or\n"
          "`Expression2' are given (and `Expression3',\n"
          "..., `Expression8' are all empty) the plugin\n"
@@ -50,13 +51,14 @@ std::string GMSH_MathEvalPlugin::getHelp() const
          "mathematical functions (Exp, Log, Sqrt, Sin, Cos,\n"
          "Fabs, etc.) and operators (+, -, *, /, ^), all\n"
          "expressions can contain the symbols v0, v1, v2,\n"
-         " ..., vn, which represent the n components in\n"
-         "`iView', w0, w1, w2,..., wn which represent the n\n"
-         "components of `ExternalView' and the symbols x,\n"
-         "y and z, which represent the three spatial coordinates.\n"
-         "If `TimeStep' < 0, the plugin extracts data from \n"
-         "all the time steps in the view.\n"
-         "If `iView' < 0, the plugin is run on the current view.\n"
+         "..., vn, which represent the n components in\n"
+         "`View'; w0, w1, w2,..., wn, which represent the n\n"
+         "components of `OtherView' (at time step `OtherTimeStep');\n"
+         "and the symbols x, y and z, which represent the three\n"
+         "spatial coordinates. If `TimeStep' < 0, the plugin\n"
+         "extracts data from all the time steps in the view.\n"
+         "If `View' < 0, the plugin is run on the current\n"
+         "view.\n"
          "\n"
          "Plugin(MathEval) creates one new view.\n";
 }
@@ -133,8 +135,8 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
 {
   int timeStep = (int)MathEvalOptions_Number[0].def;
   int iView = (int)MathEvalOptions_Number[1].def;
-  int iExternalView = (int)MathEvalOptions_Number[2].def;
-  int stepExternal = (int)MathEvalOptions_Number[3].def;
+  int otherTimeStep = (int)MathEvalOptions_Number[2].def;
+  int iOtherView = (int)MathEvalOptions_Number[3].def;
   std::vector<std::string> expr(9);
   for(int i = 0; i < 9; i++) expr[i] = MathEvalOptions_String[i].def;
   
@@ -146,25 +148,25 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
     Msg::Error("MathEval plugin cannot be applied to multi-mesh views");
     return view;
   }
-  PView *externalView = NULL;
-  PViewData *dataExternal = NULL;
+  PView *otherView = NULL;
+  PViewData *dataOther = NULL;
   OctreePost *octree = 0;
 
-  if(iExternalView>=0){
-    externalView = getView(iExternalView, view);
-    if(!externalView){
-      Msg::Error("MathEval plugin cannot found external view %i",iExternalView);
+  if(iOtherView >= 0){
+    otherView = getView(iOtherView, view);
+    if(!otherView){
+      Msg::Error("MathEval plugin cannot found other view %i", iOtherView);
       return view;
     }
-    dataExternal = externalView->getData();
-    if(dataExternal->hasMultipleMeshes()){
+    dataOther = otherView->getData();
+    if(dataOther->hasMultipleMeshes()){
       Msg::Error("MathEval plugin cannot be applied to multi-mesh views");
       return view;
     }
-    if((data1->getNumEntities() != dataExternal->getNumEntities()) ||
-        (data1->getNumElements() != dataExternal->getNumElements())){
-      Msg::Info("External view based on different grid: interpolating...");
-      octree = new OctreePost(externalView);
+    if((data1->getNumEntities() != dataOther->getNumEntities()) ||
+        (data1->getNumElements() != dataOther->getNumElements())){
+      Msg::Info("Other view based on different grid: interpolating...");
+      octree = new OctreePost(otherView);
     }
   }
 
@@ -186,7 +188,8 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   expr.resize(numComp2);
 
   const char *names[] = 
-    { "x", "y", "z", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "w0","w1","w2","w3","w4","w5","w6","w7","w8","w9" };
+    { "x", "y", "z", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8",
+      "w0", "w1", "w2", "w3", "w4", "w5", "w6", "w7", "w8", "w9" };
   unsigned int numVariables = sizeof(names) / sizeof(names[0]);
   std::vector<std::string> variables(numVariables);
   for(unsigned int i = 0; i < numVariables; i++) variables[i] = names[i];
@@ -212,9 +215,10 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
       int numNodes = data1->getNumNodes(0, ent, ele);
       int type = data1->getType(0, ent, ele);
       int numComp = data1->getNumComponents(0, ent, ele);
-      int numCompExternal = !dataExternal ? 9 : octree ? 9 : dataExternal->getNumComponents(stepExternal, ent, ele);
+      int numCompOther = !dataOther ? 9 : octree ? 9 : 
+        dataOther->getNumComponents(otherTimeStep, ent, ele);
       std::vector<double> *out = incrementList(data2, numComp2, type);
-      std::vector<double> w(std::max(9, numCompExternal), 0.);
+      std::vector<double> w(std::max(9, numCompOther), 0.);
       std::vector<double> x(numNodes), y(numNodes), z(numNodes);
       for(int nod = 0; nod < numNodes; nod++)
         data1->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
@@ -229,15 +233,15 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
           for(int comp = 0; comp < numComp; comp++)
             data1->getValue(step, ent, ele, nod, comp, v[comp]);
           values[0] = x[nod]; values[1] = y[nod]; values[2] = z[nod];
-          if(dataExternal){
+          if(dataOther){
             if(octree){
-              if(!octree->searchScalar(x[nod], y[nod], z[nod], &w[0], stepExternal))
-                if(!octree->searchVector(x[nod], y[nod], z[nod], &w[0], stepExternal))
-                  octree->searchTensor(x[nod], y[nod], z[nod], &w[0], stepExternal);
+              if(!octree->searchScalar(x[nod], y[nod], z[nod], &w[0], otherTimeStep))
+                if(!octree->searchVector(x[nod], y[nod], z[nod], &w[0], otherTimeStep))
+                  octree->searchTensor(x[nod], y[nod], z[nod], &w[0], otherTimeStep);
             }
             else
-              for(int comp = 0; comp < numCompExternal; comp++)
-                dataExternal->getValue(stepExternal, ent, ele, nod, comp, w[comp]);
+              for(int comp = 0; comp < numCompOther; comp++)
+                dataOther->getValue(otherTimeStep, ent, ele, nod, comp, w[comp]);
           }
           for(int i = 0; i < 9; i++) values[3 + i] = v[i];
           for(int i = 0; i < 9; i++) values[12 + i] = w[i];

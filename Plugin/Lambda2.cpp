@@ -8,7 +8,7 @@
 
 StringXNumber Lambda2Options_Number[] = {
   {GMSH_FULLRC, "Eigenvalue", NULL, 2.},
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "View", NULL, -1.}
 };
 
 extern "C"
@@ -28,12 +28,12 @@ std::string GMSH_Lambda2Plugin::getHelp() const
          "the symmetric and antisymmetric parts of the\n"
          "velocity gradient tensor. Vortices are well\n"
          "represented by regions where Lambda(2) is\n"
-         "negative. If `iView' contains tensor elements,\n"
+         "negative. If `View' contains tensor elements,\n"
          "the plugin directly uses the tensors as the\n"
          "values of the velocity gradient tensor; if\n"
-         "`iView' contains vector elements, the plugin\n"
+         "`View' contains vector elements, the plugin\n"
          "uses them as the velocities from which to derive\n"
-         "the velocity gradient tensor. If `iView' < 0,\n"
+         "the velocity gradient tensor. If `View' < 0,\n"
          "the plugin is run on the current view.\n"
          "\n"
          "Plugin(Lambda2) creates one new view.\n";

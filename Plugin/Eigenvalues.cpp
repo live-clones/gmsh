@@ -8,7 +8,7 @@
 #include "GmshDefines.h"
 
 StringXNumber EigenvaluesOptions_Number[] = {
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "View", NULL, -1.}
 };
 
 extern "C"
@@ -22,8 +22,8 @@ extern "C"
 std::string GMSH_EigenvaluesPlugin::getHelp() const
 {
   return "Plugin(Eigenvalues) computes the three real\n"
-         "eigenvalues of each tensor in the view `iView'.\n"
-         "If `iView' < 0, the plugin is run on the current view.\n"
+         "eigenvalues of each tensor in the view `View'.\n"
+         "If `View' < 0, the plugin is run on the current view.\n"
          "\n"
          "Plugin(Eigenvalues) creates three new scalar views.\n";
 }

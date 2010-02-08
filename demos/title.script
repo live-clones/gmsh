@@ -8,7 +8,7 @@ num = PostProcessing.NbViews-1;
 // add the main project name
 x = -25;
 y = 40;
-Plugin(Annotate).iView = num; 
+Plugin(Annotate).View = num; 
 Plugin(Annotate).Text = StrCat("Project: ", StrPrefix(StrRelative(Sprintf(General.FileName))));
 Plugin(Annotate).Font = "Helvetica-Bold"; 
 Plugin(Annotate).FontSize = 20; 

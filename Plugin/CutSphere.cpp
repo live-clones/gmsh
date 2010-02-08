@@ -19,7 +19,8 @@ StringXNumber CutSphereOptions_Number[] = {
   {GMSH_FULLRC, "R", GMSH_CutSpherePlugin::callbackR, 0.25},
   {GMSH_FULLRC, "ExtractVolume", GMSH_CutSpherePlugin::callbackVol, 0.},
   {GMSH_FULLRC, "RecurLevel", GMSH_CutSpherePlugin::callbackRecur, 4},
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "TargetError", GMSH_CutSpherePlugin::callbackTarget, 0.},
+  {GMSH_FULLRC, "View", NULL, -1.}
 };
 
 extern "C"
@@ -100,14 +101,20 @@ double GMSH_CutSpherePlugin::callbackRecur(int num, int action, double value)
                   1, 0, 10);
 }
 
+double GMSH_CutSpherePlugin::callbackTarget(int num, int action, double value)
+{
+  return callback(num, action, value, &CutSphereOptions_Number[6].def,
+                  0.01, 0., 1.);
+}
+
 std::string GMSH_CutSpherePlugin::getHelp() const
 {
-  return "Plugin(CutSphere) cuts the view `iView' with the\n"
+  return "Plugin(CutSphere) cuts the view `View' with the\n"
          "sphere (X-`Xc')^2 + (Y-`Yc')^2 + (Z-`Zc')^2 = `R'^2.\n"
          "If `ExtractVolume' is nonzero, the plugin extracts\n"
          "the elements inside (if `ExtractVolume' < 0) or\n"
          "outside (if `ExtractVolume' > 0) the sphere. If\n"
-         "`iView' < 0, the plugin is run on the current view.\n"
+         "`View' < 0, the plugin is run on the current view.\n"
          "\n"
          "Plugin(CutSphere) creates one new view.\n";
 }
@@ -134,12 +141,13 @@ double GMSH_CutSpherePlugin::levelset(double x, double y, double z,
 
 PView *GMSH_CutSpherePlugin::execute(PView *v)
 {
-  int iView = (int)CutSphereOptions_Number[6].def;
+  int iView = (int)CutSphereOptions_Number[7].def;
   _ref[0] = CutSphereOptions_Number[0].def;
   _ref[1] = CutSphereOptions_Number[1].def;
   _ref[2] = CutSphereOptions_Number[2].def;
   _extractVolume = (int)CutSphereOptions_Number[4].def;
   _recurLevel = (int)CutSphereOptions_Number[5].def;
+  _targetError = CutSphereOptions_Number[6].def;
 
   _valueIndependent = 1;
   _valueView = -1;

@@ -14,7 +14,7 @@
 #include "Context.h"
 
 StringXNumber TriangulateOptions_Number[] = {
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "View", NULL, -1.}
 };
 
 extern "C"
@@ -28,9 +28,9 @@ extern "C"
 std::string GMSH_TriangulatePlugin::getHelp() const
 {
   return "Plugin(Triangulate) triangulates the points in the\n"
-         "view `iView', assuming that all the points belong\n"
+         "view `View', assuming that all the points belong\n"
          "to a surface that can be projected one-to-one\n"
-         "onto a plane. If `iView' < 0, the plugin is run on\n"
+         "onto a plane. If `View' < 0, the plugin is run on\n"
          "the current view.\n"
          "\n"
          "Plugin(Triangulate) creates one new view.\n";

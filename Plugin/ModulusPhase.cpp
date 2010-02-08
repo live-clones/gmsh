@@ -8,7 +8,7 @@
 StringXNumber ModulusPhaseOptions_Number[] = {
   {GMSH_FULLRC, "RealPart", NULL, 0.},
   {GMSH_FULLRC, "ImaginaryPart", NULL, 1.},
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "View", NULL, -1.}
 };
 
 extern "C"
@@ -22,10 +22,10 @@ extern "C"
 std::string GMSH_ModulusPhasePlugin::getHelp() const
 {
   return "Plugin(ModulusPhase) interprets the time steps\n"
-         "`realPart' and `imaginaryPart' in the view `iView'\n"
+         "`realPart' and `imaginaryPart' in the view `View'\n"
          "as the real and imaginary parts of a complex field\n"
          "and replaces them with their corresponding\n"
-         "modulus and phase. If `iView' < 0, the plugin is\n"
+         "modulus and phase. If `View' < 0, the plugin is\n"
          "run on the current view.\n"
          "\n"
          "Plugin(ModulusPhase) is executed in-place.\n";

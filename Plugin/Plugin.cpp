@@ -68,7 +68,7 @@ PView *GMSH_PostPlugin::executeRemote(PView *view)
   }
   
   for(int i = 0; i < getNbOptions(); i++)
-    if(getOption(i)->str == "iView") getOption(i)->def = remoteIndex;
+    if(getOption(i)->str == "View") getOption(i)->def = remoteIndex;
   
   std::string options = serialize();
   view->getData()->fillRemoteVertexArrays(options);

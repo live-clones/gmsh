@@ -13,7 +13,7 @@ StringXNumber SphericalRaiseOptions_Number[] = {
   {GMSH_FULLRC, "Raise", NULL, 1.},
   {GMSH_FULLRC, "Offset", NULL, 0.},
   {GMSH_FULLRC, "TimeStep", NULL, 0.},
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "View", NULL, -1.}
 };
 
 extern "C"
@@ -28,16 +28,16 @@ std::string GMSH_SphericalRaisePlugin::getHelp() const
 {
   return "Plugin(SphericalRaise) transforms the\n"
          "coordinates of the elements in the view\n"
-         "`iView' using the values associated with the\n"
+         "`View' using the values associated with the\n"
          "`TimeStep'-th time step. Instead of elevating\n"
          "the nodes along the X, Y and Z axes as in\n"
-         "View[`iView'].RaiseX, View[`iView'].RaiseY\n"
-         "and View[`iView'].RaiseZ, the raise is applied\n"
+         "View[`View'].RaiseX, View[`View'].RaiseY\n"
+         "and View[`View'].RaiseZ, the raise is applied\n"
          " along the radius of a sphere centered at\n"
          "(`Xc', `Yc', `Zc'). To produce a standard\n"
          "radiation pattern, set `Offset' to minus the\n"
          "radius of the sphere the original data lives on.\n"
-         "If `iView' < 0, the plugin is run on the current\n"
+         "If `View' < 0, the plugin is run on the current\n"
          "view.\n"
          "\n"
          "Plugin(SphericalRaise) is executed in-place.\n";

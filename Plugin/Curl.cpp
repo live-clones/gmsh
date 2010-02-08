@@ -8,7 +8,7 @@
 #include "GmshDefines.h"
 
 StringXNumber CurlOptions_Number[] = {
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "View", NULL, -1.}
 };
 
 extern "C"
@@ -22,7 +22,7 @@ extern "C"
 std::string GMSH_CurlPlugin::getHelp() const
 {
   return "Plugin(Curl) computes the curl of the field\n"
-         "in the view `iView'. If `iView' < 0, the plugin\n"
+         "in the view `View'. If `View' < 0, the plugin\n"
          "is run on the current view.\n"
          "\n"
          "Plugin(Curl) creates one new view.\n";

@@ -21,7 +21,7 @@ For i In {1:N}
   theta = 2*Pi*(i-1)/N;
   Plugin(Transform).A11 =  Cos(theta); Plugin(Transform).A12 = Sin(theta);
   Plugin(Transform).A21 = -Sin(theta); Plugin(Transform).A22 = Cos(theta);
-  Plugin(Transform).iView = i-1;
+  Plugin(Transform).View = i-1;
   Plugin(Transform).Run;
   If(i != 1)
     View[i-1].ShowScale = 0;

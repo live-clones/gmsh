@@ -13,7 +13,7 @@
 #endif
 
 StringXNumber TetrahedralizeOptions_Number[] = {
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "View", NULL, -1.}
 };
 
 extern "C"
@@ -27,7 +27,7 @@ extern "C"
 std::string GMSH_TetrahedralizePlugin::getHelp() const
 {
   return "Plugin(Tetrahedralize) tetrahedralizes the points in the\n"
-         "view `iView'. If `iView' < 0, the plugin is run on\n"
+         "view `View'. If `View' < 0, the plugin is run on\n"
          "the current view.\n"
          "\n"
          "Plugin(Tetrahedralize) creates one new view.\n";

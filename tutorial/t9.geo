@@ -23,33 +23,33 @@ Include "view3.pos" ;
 // extracts an isosurface from a 3D scalar view), and run it:
 
 Plugin(Isosurface).Value = 0.67 ; // iso-value level
-Plugin(Isosurface).iView = 0 ; // source view is View[0]
+Plugin(Isosurface).View = 0 ; // source view is View[0]
 Plugin(Isosurface).Run ; 
 
 // We also set some options for the `CutPlane' plugin (which computes
-// a section of a 3D view), and then run it:
+// a section of a 3D view using the plane A*x+B*y+C*z+D=0), and then
+// run it:
 
 Plugin(CutPlane).A = 0 ; 
 Plugin(CutPlane).B = 0.2 ; 
 Plugin(CutPlane).C = 1 ; 
 Plugin(CutPlane).D = 0 ; 
-Plugin(CutPlane).iView = 0 ;
+Plugin(CutPlane).View = 0 ;
 Plugin(CutPlane).Run ; 
 
-// Add a title
+// Add a title (By convention, for window coordinates a value greater
+// than 99999 represents the center. We could also use
+// `General.GraphicsWidth / 2', but that would only center the string
+// for the current window size.):
 
 Plugin(Annotate).Text = "A nice title" ; 
-// By convention, a value greater than 99999 represents the center (we
-// could also use `General.GraphicsWidth/2', but that would only center
-// the string for the current window size):
 Plugin(Annotate).X = 1.e5;
 Plugin(Annotate).Y = 50 ; 
 Plugin(Annotate).Font = "Times-BoldItalic" ; 
 Plugin(Annotate).FontSize = 28 ; 
 Plugin(Annotate).Align = "Center" ; 
-Plugin(Annotate).iView = 0 ;
+Plugin(Annotate).View = 0 ;
 Plugin(Annotate).Run ; 
-
 Plugin(Annotate).Text = "(and a small subtitle)" ; 
 Plugin(Annotate).Y = 70 ; 
 Plugin(Annotate).Font = "Times-Roman" ; 

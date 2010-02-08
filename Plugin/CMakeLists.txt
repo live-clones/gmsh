@@ -18,7 +18,6 @@ set(SRC
   Skin.cpp GSHHS.cpp 
   MathEval.cpp ModifyComponent.cpp ExtractElements.cpp
   MakeSimplex.cpp
-  FieldView.cpp 
   Integrate.cpp Gradient.cpp Curl.cpp Divergence.cpp
   Annotate.cpp Remove.cpp
   Probe.cpp

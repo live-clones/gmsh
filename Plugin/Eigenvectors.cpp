@@ -10,7 +10,7 @@
 
 StringXNumber EigenvectorsOptions_Number[] = {
   {GMSH_FULLRC, "ScaleByEigenvalues", NULL, 1.},
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "View", NULL, -1.}
 };
 
 extern "C"
@@ -24,12 +24,12 @@ extern "C"
 std::string GMSH_EigenvectorsPlugin::getHelp() const
 {
   return "Plugin(Eigenvectors) computes the three (right)\n"
-         "eigenvectors of each tensor in the view `iView'\n"
+         "eigenvectors of each tensor in the view `View'\n"
          "and sorts them according to the value of the\n"
          "associated eigenvalues. If `ScaleByEigenvalues'\n"
          "is set, each eigenvector is scaled by its\n"
          "associated eigenvalue. The plugin gives an error\n"
-         "if the eigenvectors are complex. If `iView' < 0,\n"
+         "if the eigenvectors are complex. If `View' < 0,\n"
          "the plugin is run on the current view.\n"
          "\n"
          "Plugin(Eigenvectors) creates three new\n"

@@ -12,7 +12,7 @@ StringXNumber ExtractElementsOptions_Number[] = {
   {GMSH_FULLRC, "MinVal", NULL, 0.},
   {GMSH_FULLRC, "MaxVal", NULL, 1.},
   {GMSH_FULLRC, "TimeStep", NULL, 0.},
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "View", NULL, -1.}
 };
 
 extern "C"
@@ -26,9 +26,9 @@ extern "C"
 std::string GMSH_ExtractElementsPlugin::getHelp() const
 {
   return "Plugin(ExtractElements) extracts the elements\n"
-         "from the view `iView' whose `TimeStep'-th values\n"
+         "from the view `View' whose `TimeStep'-th values\n"
          "(averaged by element) are comprised between\n"
-         "`MinVal' and `MaxVal'. If `iView' < 0, the plugin\n"
+         "`MinVal' and `MaxVal'. If `View' < 0, the plugin\n"
          "is run on the current view.\n"
          "\n"
          "Plugin(ExtractElements) creates one new view.\n";

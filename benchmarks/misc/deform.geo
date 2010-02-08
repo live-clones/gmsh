@@ -5,8 +5,8 @@ PostProcessing.Format = 3; // save view as STL
 
 For t In {0 : View[0].NbTimeStep - 1}
 
-  Plugin(Warp).iView = 0;
-  Plugin(Warp).dView = 0;
+  Plugin(Warp).View = 0;
+  Plugin(Warp).OtherView = 0;
   Plugin(Warp).TimeStep = t;
   Plugin(Warp).Factor = fact;
   Plugin(Warp).Run;

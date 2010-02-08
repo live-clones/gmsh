@@ -5,6 +5,8 @@ xmin = View[0].MinX; xmax = View[0].MaxX;
 ymin = View[0].MinY; ymax = View[0].MaxY;
 zmin = View[0].MinZ; zmax = View[0].MaxZ;
 
+Plugin(CutGrid).View = 0 ; 
+
 // can be a bit ugly if using more than 1 series, since we don't sort
 // intersecting elements accuratly.
 

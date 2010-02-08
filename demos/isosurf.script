@@ -3,11 +3,11 @@ minIso = View[0].Min;
 maxIso = View[0].Max;
 nbIso = GetValue("Number of isosurfaces?", 7);
 
-Plugin(CutMap).iView = 0;
+Plugin(Isosurface).View = 0;
 
 For i In {0:nbIso-1}
-  Plugin(CutMap).A = minIso + i * (maxIso-minIso)/(nbIso > 1 ? nbIso-1 : 1);
-  Plugin(CutMap).Run;
+  Plugin(Isosurface).Value = minIso + i * (maxIso-minIso)/(nbIso > 1 ? nbIso-1 : 1);
+  Plugin(Isosurface).Run;
 EndFor
 
 Delete View[0];
@@ -15,8 +15,7 @@ Delete Empty Views;
 
 Combine Views;
 
-
-Plugin(MakeSimplex).iView = 0;
+Plugin(MakeSimplex).View = 0;
 Plugin(MakeSimplex).Run;
 
 View[0].ColormapAlpha = 0.6;

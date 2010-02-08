@@ -6,7 +6,7 @@
 #include "MakeSimplex.h"
 
 StringXNumber MakeSimplexOptions_Number[] = {
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "View", NULL, -1.}
 };
 
 extern "C"
@@ -21,8 +21,8 @@ std::string GMSH_MakeSimplexPlugin::getHelp() const
 {
   return "Plugin(MakeSimplex) decomposes all non-\n"
          "simplectic elements (quadrangles, prisms,\n"
-         "hexahedra, pyramids) in the view `iView' into\n"
-         "simplices (triangles, tetrahedra). If `iView' < 0,\n"
+         "hexahedra, pyramids) in the view `View' into\n"
+         "simplices (triangles, tetrahedra). If `View' < 0,\n"
          "the plugin is run on the current view.\n"
          "\n"
          "Plugin(MakeSimplex) is executed\n"

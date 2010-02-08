@@ -7,7 +7,7 @@
 #include "OpenFile.h"
 
 StringXNumber LongituteLatitudeOptions_Number[] = {
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "View", NULL, -1.}
 };
 
 extern "C"
@@ -20,8 +20,8 @@ extern "C"
 
 std::string GMSH_LongituteLatitudePlugin::getHelp() const
 {
-  return "Plugin(LongituteLatitude) projects the view `iView'\n"
-         "in longitude-latitude. If `iView' < 0, the plugin\n"
+  return "Plugin(LongituteLatitude) projects the view `View'\n"
+         "in longitude-latitude. If `View' < 0, the plugin\n"
          "is run on the current view.\n"
          "\n"
          "Plugin(LongituteLatitude) is executed in place.\n";

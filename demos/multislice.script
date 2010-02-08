@@ -1,11 +1,14 @@
+Plugin(CutGrid).View = 0;
+Plugin(CutPlane).View = 0;
+
 xslices = GetValue("Number of slices along X-axis?", 10);
 yslices = GetValue("Number of slices along Y-axis?", 0);
 zslices = GetValue("Number of slices along Z-axis?", 0);
 regular = GetValue("Use regular grid?", 0);
 If(regular)
   npts = GetValue("Number of points in regular grid?", 20);
-  Plugin(CutGrid).nPointsU = npts;
-  Plugin(CutGrid).nPointsV = npts;
+  Plugin(CutGrid).NumPointsU = npts;
+  Plugin(CutGrid).NumPointsV = npts;
 EndIf
 
 xmin = View[0].MinX; xmax = View[0].MaxX;
