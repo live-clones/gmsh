@@ -2,8 +2,9 @@
 geometrical entities (useful for remeshing); new option to force the
 type of views dynamically; bumped mesh version format to 2.2 (change
 in the meaning of the partion tags; this only affect partioned
-meshes); renamed several post-processing plugins to clarify their
-function; many small bug fixes and usability improvements.
+meshes); renamed several post-processing plugins (as well as plugin
+options) to make them easier to understand; many small bug fixes and
+usability improvements.
 
 2.4.2 (Sep 21, 2009): solver code refactoring + better IDE
 integration.
