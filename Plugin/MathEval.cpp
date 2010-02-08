@@ -5,18 +5,18 @@
 
 #include "GmshConfig.h"
 #include "GmshDefines.h"
-#include "Extract.h"
+#include "MathEval.h"
 #include "mathEvaluator.h"
 #include "OctreePost.h"
 
-StringXNumber ExtractOptions_Number[] = {
+StringXNumber MathEvalOptions_Number[] = {
   {GMSH_FULLRC, "TimeStep", NULL, -1.},
   {GMSH_FULLRC, "iView", NULL, -1.},
   {GMSH_FULLRC, "ExternalView", NULL, -1.},
   {GMSH_FULLRC, "ExternalTimeStep", NULL, -1.}
 };
 
-StringXString ExtractOptions_String[] = {
+StringXString MathEvalOptions_String[] = {
   {GMSH_FULLRC, "Expression0", NULL, "Sqrt(v0^2+v1^2+v2^2)"},
   {GMSH_FULLRC, "Expression1", NULL, ""},
   {GMSH_FULLRC, "Expression2", NULL, ""},
@@ -30,17 +30,16 @@ StringXString ExtractOptions_String[] = {
 
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterExtractPlugin()
+  GMSH_Plugin *GMSH_RegisterMathEvalPlugin()
   {
-    return new GMSH_ExtractPlugin();
+    return new GMSH_MathEvalPlugin();
   }
 }
 
-std::string GMSH_ExtractPlugin::getHelp() const
+std::string GMSH_MathEvalPlugin::getHelp() const
 {
-  return "Plugin(Extract) extracts a combination of\n"
-         "components from the `TimeStep'th time step\n"
-         "in the view `iView'. If only `Expression0' is\n"
+  return "Plugin(MathEval) creates a new view using\n"
+         "data from `iView'. If only `Expression0' is\n"
          "given (and `Expression1', ..., `Expression8' are\n"
          "all empty), the plugin creates a scalar view.\n"
          "If `Expression0', `Expression1' and/or\n"
@@ -51,35 +50,35 @@ std::string GMSH_ExtractPlugin::getHelp() const
          "mathematical functions (Exp, Log, Sqrt, Sin, Cos,\n"
          "Fabs, etc.) and operators (+, -, *, /, ^), all\n"
          "expressions can contain the symbols v0, v1, v2,\n"
-         " ..., vn, which represent the n components of the\n"
-         "field, w0, w1, w2,..., wn which represent the n components\n"
-         "of the external view and the symbols x, y and z,\n"
-         "which represent the three spatial coordinates.\n"
+         " ..., vn, which represent the n components in\n"
+         "`iView', w0, w1, w2,..., wn which represent the n\n"
+         "components of `ExternalView' and the symbols x,\n"
+         "y and z, which represent the three spatial coordinates.\n"
          "If `TimeStep' < 0, the plugin extracts data from \n"
          "all the time steps in the view.\n"
          "If `iView' < 0, the plugin is run on the current view.\n"
          "\n"
-         "Plugin(Extract) creates one new view.\n";
+         "Plugin(MathEval) creates one new view.\n";
 }
 
-int GMSH_ExtractPlugin::getNbOptions() const
+int GMSH_MathEvalPlugin::getNbOptions() const
 {
-  return sizeof(ExtractOptions_Number) / sizeof(StringXNumber);
+  return sizeof(MathEvalOptions_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber *GMSH_ExtractPlugin::getOption(int iopt)
+StringXNumber *GMSH_MathEvalPlugin::getOption(int iopt)
 {
-  return &ExtractOptions_Number[iopt];
+  return &MathEvalOptions_Number[iopt];
 }
 
-int GMSH_ExtractPlugin::getNbOptionsStr() const
+int GMSH_MathEvalPlugin::getNbOptionsStr() const
 {
-  return sizeof(ExtractOptions_String) / sizeof(StringXString);
+  return sizeof(MathEvalOptions_String) / sizeof(StringXString);
 }
 
-StringXString *GMSH_ExtractPlugin::getOptionStr(int iopt)
+StringXString *GMSH_MathEvalPlugin::getOptionStr(int iopt)
 {
-  return &ExtractOptions_String[iopt];
+  return &MathEvalOptions_String[iopt];
 }
 
 static std::vector<double> *incrementList(PViewDataList *data, int numComp, 
@@ -130,21 +129,21 @@ static std::vector<double> *incrementList(PViewDataList *data, int numComp,
   return 0;
 }
 
-PView *GMSH_ExtractPlugin::execute(PView *view)
+PView *GMSH_MathEvalPlugin::execute(PView *view)
 {
-  int timeStep = (int)ExtractOptions_Number[0].def;
-  int iView = (int)ExtractOptions_Number[1].def;
-  int iExternalView = (int)ExtractOptions_Number[2].def;
-  int stepExternal = (int)ExtractOptions_Number[3].def;
+  int timeStep = (int)MathEvalOptions_Number[0].def;
+  int iView = (int)MathEvalOptions_Number[1].def;
+  int iExternalView = (int)MathEvalOptions_Number[2].def;
+  int stepExternal = (int)MathEvalOptions_Number[3].def;
   std::vector<std::string> expr(9);
-  for(int i = 0; i < 9; i++) expr[i] = ExtractOptions_String[i].def;
+  for(int i = 0; i < 9; i++) expr[i] = MathEvalOptions_String[i].def;
   
   PView *v1 = getView(iView, view);
   if(!v1) return view;
   PViewData *data1 = v1->getData();
 
   if(data1->hasMultipleMeshes()){
-    Msg::Error("Extract plugin cannot be applied to multi-mesh views");
+    Msg::Error("MathEval plugin cannot be applied to multi-mesh views");
     return view;
   }
   PView *externalView = NULL;
@@ -154,12 +153,12 @@ PView *GMSH_ExtractPlugin::execute(PView *view)
   if(iExternalView>=0){
     externalView = getView(iExternalView, view);
     if(!externalView){
-      Msg::Error("Extract plugin cannot found external view %i",iExternalView);
+      Msg::Error("MathEval plugin cannot found external view %i",iExternalView);
       return view;
     }
     dataExternal = externalView->getData();
     if(dataExternal->hasMultipleMeshes()){
-      Msg::Error("Extract plugin cannot be applied to multi-mesh views");
+      Msg::Error("MathEval plugin cannot be applied to multi-mesh views");
       return view;
     }
     if((data1->getNumEntities() != dataExternal->getNumEntities()) ||
@@ -257,8 +256,8 @@ PView *GMSH_ExtractPlugin::execute(PView *view)
   else
     data2->Time.push_back(data1->getTime(timeStep));
         
-  data2->setName(data1->getName() + "_Extract");
-  data2->setFileName(data1->getName() + "_Extract.pos");
+  data2->setName(data1->getName() + "_MathEval");
+  data2->setFileName(data1->getName() + "_MathEval.pos");
   data2->finalize();
 
   return v2;

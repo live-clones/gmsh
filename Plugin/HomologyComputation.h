@@ -22,7 +22,11 @@ class GMSH_HomologyComputationPlugin : public GMSH_PostPlugin
 {
  public:
   GMSH_HomologyComputationPlugin(){}
-  std::string getName() const { return "HomologyComputation"; }
+  std::string getName() const { return "Homology"; }
+  std::string getShortHelp() const
+  {
+    return "Compute relative homology groups";
+  }
   std::string getHelp() const;
   std::string getAuthor() const { return "M. Pellikka"; }
   int getNbOptions() const;

@@ -18,6 +18,10 @@ class GMSH_Lambda2Plugin : public GMSH_PostPlugin
  public:
   GMSH_Lambda2Plugin(){}
   std::string getName() const { return "Lambda2"; }
+  std::string getShortHelp() const
+  {
+    return "Detect vortices";
+  }
   std::string getHelp() const;
   std::string getAuthor() const { return "E. Marchandise"; }
   int getNbOptions() const;

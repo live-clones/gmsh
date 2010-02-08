@@ -18,6 +18,10 @@ class GMSH_DivergencePlugin : public GMSH_PostPlugin
  public:
   GMSH_DivergencePlugin(){}
   std::string getName() const { return "Divergence"; }
+  std::string getShortHelp() const 
+  { 
+    return "Compute the divergence of a vector view";
+  }
   std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  

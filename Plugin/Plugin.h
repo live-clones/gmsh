@@ -46,6 +46,7 @@ class GMSH_Plugin
   // return plugin type, name and info
   virtual GMSH_PLUGIN_TYPE getType() const = 0;
   virtual std::string getName() const = 0;
+  virtual std::string getShortHelp() const = 0;
   virtual std::string getHelp() const = 0;
   virtual std::string getAuthor() const { return "C. Geuzaine, J.-F. Remacle"; }
   virtual std::string getCopyright() const { return "C. Geuzaine, J.-F. Remacle"; }

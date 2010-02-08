@@ -26,6 +26,10 @@ class GMSH_CutGridPlugin : public GMSH_PostPlugin
  public:
   GMSH_CutGridPlugin(){}
   std::string getName() const { return "CutGrid"; }
+  std::string getShortHelp() const
+  {
+    return "Cut with a regular grid defined by 3 points";
+  }
   std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  

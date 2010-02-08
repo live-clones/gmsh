@@ -21,6 +21,10 @@ class GMSH_CutSpherePlugin : public GMSH_LevelsetPlugin
  public:
   GMSH_CutSpherePlugin(){}
   std::string getName() const { return "CutSphere"; }
+  std::string getShortHelp() const
+  {
+    return "Cut with a sphere";
+  }
   std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  

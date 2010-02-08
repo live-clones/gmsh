@@ -24,6 +24,7 @@ class GMSH_AnnotatePlugin : public GMSH_PostPlugin
  public:
   GMSH_AnnotatePlugin(){}
   std::string getName() const { return "Annotate"; }
+  std::string getShortHelp() const { return "Add a text annotation"; }
   std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  

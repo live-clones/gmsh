@@ -3,32 +3,32 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include "CutMap.h"
+#include "Isosurface.h"
 #include "Context.h"
 
-StringXNumber CutMapOptions_Number[] = {
-  {GMSH_FULLRC, "A", GMSH_CutMapPlugin::callbackA, 0.},
+StringXNumber IsosurfaceOptions_Number[] = {
+  {GMSH_FULLRC, "Value", GMSH_IsosurfacePlugin::callbackValue, 0.},
   {GMSH_FULLRC, "dTimeStep", NULL, -1.},
   {GMSH_FULLRC, "dView", NULL, -1.},
-  {GMSH_FULLRC, "ExtractVolume", GMSH_CutMapPlugin::callbackVol, 0.},
-  {GMSH_FULLRC, "RecurLevel", GMSH_CutMapPlugin::callbackRecur, 4},
-  {GMSH_FULLRC, "TargetError", GMSH_CutMapPlugin::callbackTarget, 0},
+  {GMSH_FULLRC, "ExtractVolume", GMSH_IsosurfacePlugin::callbackVol, 0.},
+  {GMSH_FULLRC, "RecurLevel", GMSH_IsosurfacePlugin::callbackRecur, 4},
+  {GMSH_FULLRC, "TargetError", GMSH_IsosurfacePlugin::callbackTarget, 0},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterCutMapPlugin()
+  GMSH_Plugin *GMSH_RegisterIsosurfacePlugin()
   {
-    return new GMSH_CutMapPlugin();
+    return new GMSH_IsosurfacePlugin();
   }
 }
 
-double GMSH_CutMapPlugin::callbackA(int num, int action, double value)
+double GMSH_IsosurfacePlugin::callbackValue(int num, int action, double value)
 {
   double min = 0., max = 1.;
   if(action > 0){
-    int iview = (int)CutMapOptions_Number[6].def;
+    int iview = (int)IsosurfaceOptions_Number[6].def;
     if(iview < 0) iview = num;
     if(iview >= 0 && iview < (int)PView::list.size()){
       min = PView::list[iview]->getData()->getMin();
@@ -44,7 +44,7 @@ double GMSH_CutMapPlugin::callbackA(int num, int action, double value)
   return 0.;
 }
 
-double GMSH_CutMapPlugin::callbackVol(int num, int action, double value)
+double GMSH_IsosurfacePlugin::callbackVol(int num, int action, double value)
 {
   switch(action){ // configure the input field
   case 1: return 1.;
@@ -55,7 +55,7 @@ double GMSH_CutMapPlugin::callbackVol(int num, int action, double value)
   return 0.;
 }
 
-double GMSH_CutMapPlugin::callbackRecur(int num, int action, double value)
+double GMSH_IsosurfacePlugin::callbackRecur(int num, int action, double value)
 {
   switch(action){ // configure the input field
   case 1: return 1.;
@@ -66,7 +66,7 @@ double GMSH_CutMapPlugin::callbackRecur(int num, int action, double value)
   return 0.;
 }
 
-double GMSH_CutMapPlugin::callbackTarget(int num, int action, double value)
+double GMSH_IsosurfacePlugin::callbackTarget(int num, int action, double value)
 {
   switch(action){ // configure the input field
   case 1: return 0.01;
@@ -77,10 +77,10 @@ double GMSH_CutMapPlugin::callbackTarget(int num, int action, double value)
   return 0.;
 }
 
-std::string GMSH_CutMapPlugin::getHelp() const
+std::string GMSH_IsosurfacePlugin::getHelp() const
 {
-  return "Plugin(CutMap) extracts the isosurface of value\n"
-         "`A' from the view `iView' and draws the\n"
+  return "Plugin(Isosurface) extracts the isosurface of value\n"
+         "`Value' from the view `iView' and draws the\n"
          "`dTimeStep'-th value of the view `dView' on the\n"
          "isosurface. If `iView' < 0, the plugin is run\n"
          "on the current view. If `dTimeStep' < 0, the\n"
@@ -90,39 +90,39 @@ std::string GMSH_CutMapPlugin::getHelp() const
          "If `ExtractVolume' is nonzero, the plugin\n" 
          "extracts the isovolume with values greater (if\n"
          "`ExtractVolume' > 0) or smaller (if `ExtractVolume'\n"
-         "< 0) than the isosurface `A'.\n"
+         "< 0) than the isosurface `Value'.\n"
          "\n"
-         "Plugin(CutMap) creates as many views as there\n"
+         "Plugin(Isosurface) creates as many views as there\n"
          "are time steps in `iView'.\n";
 }
 
-int GMSH_CutMapPlugin::getNbOptions() const
+int GMSH_IsosurfacePlugin::getNbOptions() const
 {
-  return sizeof(CutMapOptions_Number) / sizeof(StringXNumber);
+  return sizeof(IsosurfaceOptions_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber *GMSH_CutMapPlugin::getOption(int iopt)
+StringXNumber *GMSH_IsosurfacePlugin::getOption(int iopt)
 {
-  return &CutMapOptions_Number[iopt];
+  return &IsosurfaceOptions_Number[iopt];
 }
 
-double GMSH_CutMapPlugin::levelset(double x, double y, double z, double val) const
+double GMSH_IsosurfacePlugin::levelset(double x, double y, double z, double val) const
 {
-  // we must look into the map for Map(x,y,z) - A
+  // we must look into the map for Map(x,y,z) - Value
   // this is the case when the map is the same as the view,
-  // the result is the extraction of isovalue A
-  return val - CutMapOptions_Number[0].def;
+  // the result is the extraction of isovalue Value
+  return val - IsosurfaceOptions_Number[0].def;
 }
 
-PView *GMSH_CutMapPlugin::execute(PView *v)
+PView *GMSH_IsosurfacePlugin::execute(PView *v)
 {
-  int iView = (int)CutMapOptions_Number[6].def;
+  int iView = (int)IsosurfaceOptions_Number[6].def;
   _valueIndependent = 0;
-  _valueView = (int)CutMapOptions_Number[2].def;
-  _valueTimeStep = (int)CutMapOptions_Number[1].def;
-  _extractVolume = (int)CutMapOptions_Number[3].def;
-  _recurLevel = (int)CutMapOptions_Number[4].def;
-  _targetError = CutMapOptions_Number[5].def;
+  _valueView = (int)IsosurfaceOptions_Number[2].def;
+  _valueTimeStep = (int)IsosurfaceOptions_Number[1].def;
+  _extractVolume = (int)IsosurfaceOptions_Number[3].def;
+  _recurLevel = (int)IsosurfaceOptions_Number[4].def;
+  _targetError = IsosurfaceOptions_Number[5].def;
   _orientation = GMSH_LevelsetPlugin::MAP;
   
   PView *v1 = getView(iView, v);

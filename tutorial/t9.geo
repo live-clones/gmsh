@@ -10,7 +10,7 @@
 // capabilities. For example, post-processing plugins can modify a
 // view, or create a new view based on previously loaded
 // views. Several default plugins are statically linked with Gmsh,
-// e.g. CutMap, CutPlane, CutSphere, Skin, Transform or Smooth.
+// e.g. Isosurface, CutPlane, CutSphere, Skin, Transform or Smooth.
 // Plugins can be controlled in the same way as other options: either
 // from the graphical interface (right click on the view button, then
 // `Plugins'), or from the command file.
@@ -19,12 +19,12 @@
 
 Include "view3.pos" ;
 
-// We then set some options for the `CutMap' plugin (which extracts an
-// isovalue surface from a 3D scalar view), and run it:
+// We then set some options for the `Isosurface' plugin (which
+// extracts an isosurface from a 3D scalar view), and run it:
 
-Plugin(CutMap).A = 0.67 ; // iso-value level
-Plugin(CutMap).iView = 0 ; // source view is View[0]
-Plugin(CutMap).Run ; 
+Plugin(Isosurface).Value = 0.67 ; // iso-value level
+Plugin(Isosurface).iView = 0 ; // source view is View[0]
+Plugin(Isosurface).Run ; 
 
 // We also set some options for the `CutPlane' plugin (which computes
 // a section of a 3D view), and then run it:

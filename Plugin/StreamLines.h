@@ -20,6 +20,10 @@ class GMSH_StreamLinesPlugin : public GMSH_PostPlugin
  public:
   GMSH_StreamLinesPlugin(){}
   std::string getName() const { return "StreamLines"; }
+  std::string getShortHelp() const
+  {
+    return "Compute particle trajectories in velocity field";
+  }
   std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  

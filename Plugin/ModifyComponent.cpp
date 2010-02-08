@@ -5,11 +5,11 @@
 
 #include <vector>
 #include "GmshConfig.h"
-#include "Evaluate.h"
+#include "ModifyComponent.h"
 #include "OctreePost.h"
 #include "mathEvaluator.h"
 
-StringXNumber EvaluateOptions_Number[] = {
+StringXNumber ModifyComponentOptions_Number[] = {
   {GMSH_FULLRC, "Component", NULL, -1.},
   {GMSH_FULLRC, "TimeStep", NULL, -1.},
   {GMSH_FULLRC, "ExternalView", NULL, -1.},
@@ -17,21 +17,21 @@ StringXNumber EvaluateOptions_Number[] = {
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
-StringXString EvaluateOptions_String[] = {
+StringXString ModifyComponentOptions_String[] = {
   {GMSH_FULLRC, "Expression", NULL, "v0*Sin(x)"}
 };
 
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterEvaluatePlugin()
+  GMSH_Plugin *GMSH_RegisterModifyComponentPlugin()
   {
-    return new GMSH_EvaluatePlugin();
+    return new GMSH_ModifyComponentPlugin();
   }
 }
 
-std::string GMSH_EvaluatePlugin::getHelp() const
+std::string GMSH_ModifyComponentPlugin::getHelp() const
 {
-  return "Plugin(Evaluate) sets the `Component'-th\n"
+  return "Plugin(ModifyComponent) sets the `Component'-th\n"
          "component of the `TimeStep'-th time step in the\n"
          "view `iView' to the expression `Expression'.\n"
          "`Expression' can contain:\n"
@@ -75,36 +75,36 @@ std::string GMSH_EvaluatePlugin::getHelp() const
          "`ExternalView' < 0, the plugin uses `iView'\n"
          "instead.\n"
          "\n"
-         "Plugin(Evaluate) is executed in-place.\n";
+         "Plugin(ModifyComponent) is executed in-place.\n";
 }
 
-int GMSH_EvaluatePlugin::getNbOptions() const
+int GMSH_ModifyComponentPlugin::getNbOptions() const
 {
-  return sizeof(EvaluateOptions_Number) / sizeof(StringXNumber);
+  return sizeof(ModifyComponentOptions_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber *GMSH_EvaluatePlugin::getOption(int iopt)
+StringXNumber *GMSH_ModifyComponentPlugin::getOption(int iopt)
 {
-  return &EvaluateOptions_Number[iopt];
+  return &ModifyComponentOptions_Number[iopt];
 }
 
-int GMSH_EvaluatePlugin::getNbOptionsStr() const
+int GMSH_ModifyComponentPlugin::getNbOptionsStr() const
 {
-  return sizeof(EvaluateOptions_String) / sizeof(StringXString);
+  return sizeof(ModifyComponentOptions_String) / sizeof(StringXString);
 }
 
-StringXString *GMSH_EvaluatePlugin::getOptionStr(int iopt)
+StringXString *GMSH_ModifyComponentPlugin::getOptionStr(int iopt)
 {
-  return &EvaluateOptions_String[iopt];
+  return &ModifyComponentOptions_String[iopt];
 }
 
-PView *GMSH_EvaluatePlugin::execute(PView *view)
+PView *GMSH_ModifyComponentPlugin::execute(PView *view)
 {
-  int component = (int)EvaluateOptions_Number[0].def;
-  int timeStep = (int)EvaluateOptions_Number[1].def;
-  int externalView = (int)EvaluateOptions_Number[2].def;
-  int externalTimeStep = (int)EvaluateOptions_Number[3].def;
-  int iView = (int)EvaluateOptions_Number[4].def;
+  int component = (int)ModifyComponentOptions_Number[0].def;
+  int timeStep = (int)ModifyComponentOptions_Number[1].def;
+  int externalView = (int)ModifyComponentOptions_Number[2].def;
+  int externalTimeStep = (int)ModifyComponentOptions_Number[3].def;
+  int iView = (int)ModifyComponentOptions_Number[4].def;
 
   PView *v1 = getView(iView, view);
   if(!v1) return view;
@@ -144,7 +144,7 @@ PView *GMSH_EvaluatePlugin::execute(PView *view)
      "w", "w0", "w1", "w2", "w3", "w4", "w5", "w6", "w7", "w8"};
   unsigned int numVariables = sizeof(names) / sizeof(names[0]);
   std::vector<std::string> expressions(1), variables(numVariables);
-  expressions[0] = EvaluateOptions_String[0].def;
+  expressions[0] = ModifyComponentOptions_String[0].def;
   for(unsigned int i = 0; i < numVariables; i++) variables[i] = names[i];
   mathEvaluator f(expressions, variables);
   if(expressions.empty()) return view;

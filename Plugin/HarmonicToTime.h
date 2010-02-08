@@ -18,6 +18,10 @@ class GMSH_HarmonicToTimePlugin : public GMSH_PostPlugin
  public:
   GMSH_HarmonicToTimePlugin(){}
   std::string getName() const { return "HarmonicToTime"; }
+  std::string getShortHelp() const
+  {
+    return "Transform harmonic data into time domain";
+  }
   std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);  

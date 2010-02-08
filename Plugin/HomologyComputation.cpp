@@ -39,10 +39,10 @@ extern "C"
 
 std::string GMSH_HomologyComputationPlugin::getHelp() const
 {
-  return "Plugin(HomologyComputation) computes generators \n"
+  return "Plugin(Homology) computes generators \n"
          "for (relative) homology groups and their thick cuts. \n"
          "\n"
-         "Plugin(HomologyComputation) creates new views.\n";
+         "Plugin(Homology) creates new views.\n";
 }
 
 int GMSH_HomologyComputationPlugin::getNbOptions() const

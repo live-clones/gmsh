@@ -18,6 +18,10 @@ class GMSH_SphericalRaisePlugin : public GMSH_PostPlugin
  public:
   GMSH_SphericalRaisePlugin(){}
   std::string getName() const { return "SphericalRaise"; }
+  std::string getShortHelp() const
+  {
+    return "Create spherical elevation plot";
+  }
   std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  

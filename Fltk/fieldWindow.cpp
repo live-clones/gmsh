@@ -48,7 +48,8 @@ static void field_new_cb(Fl_Widget *w, void *data)
   FieldManager *fields = GModel::current()->getFields();
   int id = fields->newId();
   add_field(id, mb->text(), GModel::current()->getFileName());
-  FlGui::instance()->fields->editField((*fields)[id]);
+  if((*fields)[id])
+    FlGui::instance()->fields->editField((*fields)[id]);
 }
 
 static void field_apply_cb(Fl_Widget *w, void *data)

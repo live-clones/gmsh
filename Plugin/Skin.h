@@ -18,6 +18,10 @@ class GMSH_SkinPlugin : public GMSH_PostPlugin
  public:
   GMSH_SkinPlugin(){}
   std::string getName() const { return "Skin"; }
+  std::string getShortHelp() const
+  {
+    return "Extract boundary of a view";
+  }
   std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  

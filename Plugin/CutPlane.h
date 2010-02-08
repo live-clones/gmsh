@@ -22,6 +22,10 @@ class GMSH_CutPlanePlugin : public GMSH_LevelsetPlugin
  public:
   GMSH_CutPlanePlugin(){}
   std::string getName() const { return "CutPlane"; }
+  std::string getShortHelp() const
+  {
+    return "Cut with the plane A*X + B*Y + C*Z + D = 0";
+  }
   std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  

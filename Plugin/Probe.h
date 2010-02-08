@@ -21,6 +21,10 @@ class GMSH_ProbePlugin : public GMSH_PostPlugin
  public:
   GMSH_ProbePlugin(){}
   std::string getName() const { return "Probe"; }
+  std::string getShortHelp() const
+  {
+    return "Get value of a view at one given point";
+  }
   std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  

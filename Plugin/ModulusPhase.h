@@ -18,6 +18,10 @@ class GMSH_ModulusPhasePlugin : public GMSH_PostPlugin
  public:
   GMSH_ModulusPhasePlugin(){}
   std::string getName() const { return "ModulusPhase"; }
+  std::string getShortHelp() const
+  {
+    return "Compute modulus/phase of a complex view";
+  }
   std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  

@@ -18,6 +18,10 @@ class GMSH_TriangulatePlugin : public GMSH_PostPlugin
  public:
   GMSH_TriangulatePlugin(){}
   std::string getName() const { return "Triangulate"; }
+  std::string getShortHelp() const
+  {
+    return "Mesh 2D point cloud";
+  }
   std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);  

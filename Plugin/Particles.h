@@ -20,6 +20,10 @@ class GMSH_ParticlesPlugin : public GMSH_PostPlugin
  public:
   GMSH_ParticlesPlugin(){}
   std::string getName() const { return "Particles"; }
+  std::string getShortHelp() const
+  {
+    return "Compute particle trajectories in force field";
+  }
   std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  

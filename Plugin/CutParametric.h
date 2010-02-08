@@ -28,6 +28,10 @@ class GMSH_CutParametricPlugin : public GMSH_PostPlugin
  public:
   GMSH_CutParametricPlugin(){}
   std::string getName() const { return "CutParametric"; }
+  std::string getShortHelp() const
+  {
+    return "Cut with the parametric curve (X(u), Y(u), Z(u))";
+  }
   std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  

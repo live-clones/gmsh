@@ -18,6 +18,10 @@ class GMSH_IntegratePlugin : public GMSH_PostPlugin
  public:
   GMSH_IntegratePlugin(){}
   std::string getName() const { return "Integrate"; }
+  std::string getShortHelp() const
+  {
+    return "Integrate data";
+  }
   std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);  

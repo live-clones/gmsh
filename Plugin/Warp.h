@@ -18,6 +18,10 @@ class GMSH_WarpPlugin : public GMSH_PostPlugin
  public:
   GMSH_WarpPlugin(){}
   std::string getName() const { return "Warp"; }
+  std::string getShortHelp() const
+  {
+    return "Deform view using a vector field";
+  }
   std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  

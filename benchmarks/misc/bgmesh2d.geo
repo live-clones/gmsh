@@ -1890,6 +1890,6 @@ ST(  5.0004023e-01,  5.0000472e-01, 0,  5.0002530e-01,  5.0002198e-01, 0,  5.000
 
 // Warning: you have a value of 0.0 as your mesh size somewhere in the
 // view above... Let's add an epsilon to make it disappear
-Plugin(Evaluate).Expression = "v + 1.e-6";
-Plugin(Evaluate).Run;
+Plugin(ModifyComponent).Expression = "v + 1.e-6";
+Plugin(ModifyComponent).Run;
 Background Mesh View[0];

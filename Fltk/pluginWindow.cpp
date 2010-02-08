@@ -220,13 +220,25 @@ void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,
   p->dialogBox = new PluginDialogBox;
   p->dialogBox->group = new Fl_Group(x, y, width, height);
 
+  Fl_Box *title = new Fl_Box(x, y, width, BH, strdup(p->getName().c_str()));
+  title->labelfont(FL_BOLD);
+  title->labelsize(FL_NORMAL_SIZE + 3);
+  title->align(FL_ALIGN_INSIDE);
+
+  Fl_Box *help = new Fl_Box
+    (x, y + BH, width, BH + WB, strdup(p->getShortHelp().c_str()));
+  help->align(FL_ALIGN_WRAP | FL_ALIGN_CLIP | FL_ALIGN_TOP | FL_ALIGN_INSIDE);
+
+  int top = 2 * BH + WB;
+
   {
-    Fl_Tabs *o = new Fl_Tabs(x, y, width, height);
+    Fl_Tabs *o = new Fl_Tabs(x, y + top, width, height - top);
     {
-      Fl_Group *g = new Fl_Group(x, y + BH, width, height - BH, "Options");
+      Fl_Group *g = new Fl_Group
+        (x, y + top + BH, width, height - top - BH, "Options");
 
       Fl_Scroll *s = new Fl_Scroll
-        (x + WB, y + WB + BH, width - 2 * WB, height - 2 * BH - 3 * WB);
+        (x + WB, y + top + BH + WB, width - 2 * WB, height - top - 2 * BH - 3 * WB);
 
       int m = p->getNbOptionsStr();
       if(m > MAX_PLUGIN_OPTIONS) m = MAX_PLUGIN_OPTIONS;
@@ -238,7 +250,7 @@ void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,
       for(int i = 0; i < m; i++) {
         StringXString *sxs = p->getOptionStr(i);
         p->dialogBox->input[i] = new Fl_Input
-          (x + WB, y + WB + (k + 1) * BH, IW, BH, sxs->str);
+          (x + WB, y + top + (k + 1) * BH + WB, IW, BH, sxs->str);
         p->dialogBox->input[i]->align(FL_ALIGN_RIGHT);
         p->dialogBox->input[i]->value(sxs->def.c_str());
         k++;
@@ -246,7 +258,7 @@ void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,
       for(int i = 0; i < n; i++) {
         StringXNumber *sxn = p->getOption(i);
         p->dialogBox->value[i] = new Fl_Value_Input
-          (x + WB, y + WB + (k + 1) * BH, IW, BH, sxn->str);
+          (x + WB, y + top + (k + 1) * BH + WB, IW, BH, sxn->str);
         p->dialogBox->value[i]->align(FL_ALIGN_RIGHT);
         p->dialogBox->value[i]->value(sxn->def);
         k++;
@@ -258,18 +270,16 @@ void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,
         (x + width - BB - WB, y + height - BH - WB, BB, BH, "Run");
       run->callback(plugin_run_cb, (void*)p);
 
-      g->resizable(new Fl_Box(x + WB, y + 2 * BH, WB, WB));
+      g->resizable(new Fl_Box(x + WB, y + 4 * BH + WB, WB, WB));
       g->end();
-
       o->resizable(g);
     }
     {
-      Fl_Group *g = new Fl_Group(x, y + BH, width, height - BH, "Help");
+      Fl_Group *g = new Fl_Group
+        (x, y + top + BH, width, height - top - BH, "Help");
 
       Fl_Browser *o = new Fl_Browser
-        (x + WB, y + WB + BH, width - 2 * WB, height - 2 * WB - 2 * BH);
-      o->add(" ");
-      add_multiline_in_browser(o, "@c@b@.", p->getName().c_str(), false);
+        (x + WB, y + top + BH + WB, width - 2 * WB, height - top - 2 * BH - 3 * WB);
       o->add(" ");
       add_multiline_in_browser(o, "", p->getHelp().c_str(), false);
       o->add(" ");
@@ -335,7 +345,7 @@ pluginWindow::pluginWindow(int deltaFontSize)
   record->type(FL_TOGGLE_BUTTON);
   record->tooltip("Append scripting command to file options when plugin is run");
   
-  Fl_Box *resize_box = new Fl_Box(3*WB + L1+L2, WB, WB, height - 2 * WB);
+  Fl_Box *resize_box = new Fl_Box(L1 + L2 + 3 * WB, WB, 1, 1);
   win->resizable(resize_box);
   win->size_range(width0, height0);
 

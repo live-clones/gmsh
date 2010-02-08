@@ -17,6 +17,10 @@ class GMSH_LongituteLatitudePlugin : public GMSH_PostPlugin
 {
  public:
   std::string getName() const { return "LongitudeLatitude"; }
+  std::string getShortHelp() const
+  {
+    return "Project in longitude-latitude";
+  }
   std::string getHelp() const;
   std::string getAuthor() const { return "J. Lambrechts"; }
   int getNbOptions() const;

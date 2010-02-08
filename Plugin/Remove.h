@@ -18,6 +18,10 @@ class GMSH_RemovePlugin : public GMSH_PostPlugin
  public:
   GMSH_RemovePlugin(){}
   std::string getName() const { return "Remove"; }
+  std::string getShortHelp() const
+  {
+    return "Remove selected data from a view";
+  }
   std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  

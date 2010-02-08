@@ -16,7 +16,7 @@ StringXNumber AnnotateOptions_Number[] = {
   {GMSH_FULLRC, "X", GMSH_AnnotatePlugin::callbackX, 50.},
   {GMSH_FULLRC, "Y", GMSH_AnnotatePlugin::callbackY, 30.},
   {GMSH_FULLRC, "Z", GMSH_AnnotatePlugin::callbackZ, 0.},
-  {GMSH_FULLRC, "ThereD", GMSH_AnnotatePlugin::callback3D, 0.},
+  {GMSH_FULLRC, "ThreeD", GMSH_AnnotatePlugin::callback3D, 0.},
   {GMSH_FULLRC, "FontSize", GMSH_AnnotatePlugin::callbackFontSize, 14.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };

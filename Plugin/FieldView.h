@@ -17,6 +17,10 @@ class GMSH_FieldViewPlugin : public GMSH_PostPlugin
 {
  public:
   std::string getName() const { return "FieldView"; }
+  std::string getShortHelp() const
+  {
+    return "Visualize background mesh field";
+  }
   std::string getHelp() const;
   std::string getAuthor() const { return "J. Lambrechts"; }
   int getNbOptions() const;

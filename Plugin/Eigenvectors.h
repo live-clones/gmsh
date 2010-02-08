@@ -18,6 +18,10 @@ class GMSH_EigenvectorsPlugin : public GMSH_PostPlugin
  public:
   GMSH_EigenvectorsPlugin(){}
   std::string getName() const { return "Eigenvectors"; }
+  std::string getShortHelp() const
+  {
+    return "Compute eigenvectors of a tensor view";
+  }
   std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  

@@ -877,6 +877,10 @@ public:
     }
   };
   std::string getName() const { return "GSHHS"; }
+  std::string getShortHelp() const
+  {
+    return "Import and process GSHHS data sets";
+  }
   std::string getHelp() const;
   std::string getAuthor() const { return "J. Lambrechts"; }
   int getNbOptions() const;

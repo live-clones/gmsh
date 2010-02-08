@@ -6,7 +6,7 @@
 set(SRC
   Plugin.cpp PluginManager.cpp
   Levelset.cpp
-    CutPlane.cpp CutSphere.cpp CutMap.cpp 
+    CutPlane.cpp CutSphere.cpp Isosurface.cpp 
   Smooth.cpp CutParametric.cpp
   Lambda2.cpp
   Eigenvectors.cpp Eigenvalues.cpp
@@ -16,9 +16,9 @@ set(SRC
   Triangulate.cpp Tetrahedralize.cpp
   Warp.cpp SphericalRaise.cpp
   Skin.cpp GSHHS.cpp 
-  Extract.cpp ExtractElements.cpp ExtractEdges.cpp
+  MathEval.cpp ModifyComponent.cpp ExtractElements.cpp
   MakeSimplex.cpp
-  Evaluate.cpp FieldView.cpp 
+  FieldView.cpp 
   Integrate.cpp Gradient.cpp Curl.cpp Divergence.cpp
   Annotate.cpp Remove.cpp
   Probe.cpp

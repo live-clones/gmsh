@@ -3,21 +3,25 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _EVALUATE_H_
-#define _EVALUATE_H_
+#ifndef _MATH_EVAL_H_
+#define _MATH_EVAL_H_
 
 #include "Plugin.h"
 
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterEvaluatePlugin();
+  GMSH_Plugin *GMSH_RegisterMathEvalPlugin();
 }
 
-class GMSH_EvaluatePlugin : public GMSH_PostPlugin
+class GMSH_MathEvalPlugin : public GMSH_PostPlugin
 {
  public:
-  GMSH_EvaluatePlugin(){}
-  std::string getName() const { return "Evaluate"; }
+  GMSH_MathEvalPlugin(){}
+  std::string getName() const { return "MathEval"; }
+  std::string getShortHelp() const
+  {
+    return "Create a view using mathematical expressions";
+  }
   std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);  
