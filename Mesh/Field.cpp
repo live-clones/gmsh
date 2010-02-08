@@ -151,11 +151,11 @@ Field *FieldManager::get(int id)
 Field *FieldManager::newField(int id, std::string type_name)
 {
   if(find(id) != end()) {
-    Msg::Error("Field id %i is already defined.", id);
+    Msg::Error("Field id %i is already defined", id);
     return 0;
   }
   if(map_type_name.find(type_name) == map_type_name.end()) {
-    Msg::Error("Unknown field type \"%s\".", type_name.c_str());
+    Msg::Error("Unknown field type \"%s\"", type_name.c_str());
     return 0;
   }
   Field *f = (*map_type_name[type_name]) ();
@@ -192,7 +192,7 @@ void FieldManager::deleteField(int id)
 {
   iterator it = find(id);
   if(it == end()) {
-    Msg::Error("Cannot delete field id %i, it does not exist.", id);
+    Msg::Error("Cannot delete field id %i, it does not exist", id);
     return;
   }
   delete it->second;
@@ -614,8 +614,8 @@ public:
   }
   virtual std::string getDescription()
   {
-    return "F = LCMin if Field[IField] <= DistMin, "
-      "F = LCMax if Field[IField] >= DistMax, "
+    return "F = LCMin if Field[IField] <= DistMin,\n"
+      "F = LCMax if Field[IField] >= DistMax,\n"
       "F = interpolation between LcMin and LcMax if DistMin < Field[IField] < DistMax";
   }
   virtual void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0)
@@ -732,7 +732,7 @@ class GradientField : public Field
          (*field) (x, y, z - delta / 2)) / delta;
       return sqrt(gx * gx + gy * gy + gz * gz);
     default:
-      Msg::Error("Field %i : Unknown kind (%i) of gradient.", this->id,
+      Msg::Error("Field %i : Unknown kind (%i) of gradient", this->id,
                  kind);
       return MAX_LC;
     }

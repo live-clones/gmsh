@@ -285,8 +285,7 @@ void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y,
         (x + WB, y + top + BH + WB, width - 2 * WB, height - top - 2 * BH - 3 * WB);
       std::string help = p->getHelp();
       ConvertToHTML(help);
-      help += std::string("<p><em>Author: ") + p->getAuthor() + "</em>";
-      help += std::string("<br><em>Copyright: ") + p->getCopyright() + "</em>";
+      help += std::string("<p><em>Author(s): ") + p->getAuthor() + "</em>";
       o->value(help.c_str());
       o->textfont(FL_HELVETICA);
       o->textsize(FL_NORMAL_SIZE);
