@@ -23,7 +23,7 @@ static const char *help_link(Fl_Widget *w, const char *uri)
 aboutWindow::aboutWindow()
 {
   int width = 26 * FL_NORMAL_SIZE;
-  int height = 16 * BH;
+  int height = 17 * BH;
 
   win = new paletteWindow
     (width, height, CTX::instance()->nonModalWindows ? true : false, "About Gmsh");
@@ -46,8 +46,8 @@ aboutWindow::aboutWindow()
           << "<li><i>Build OS:</i> " << GetGmshBuildOS()
           << "<li><i>Build date:</i> " << GetGmshBuildDate()
           << "<li><i>Build host:</i> " << GetGmshBuildHost()
-          << "<li><i>Packaged by:</i> " << GetGmshPackager()
           << "<li><i>Build options:</i>" << GetGmshBuildOptions()
+          << "<li><i>Packaged by:</i> " << GetGmshPackager()
           << "</ul></font><center>"
           << "Visit <a href=\"http://geuz.org/gmsh/\">http://geuz.org/gmsh/</a> "
           << "for more information</center>";
