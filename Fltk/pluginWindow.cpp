@@ -348,8 +348,7 @@ pluginWindow::pluginWindow(int deltaFontSize)
   record->type(FL_TOGGLE_BUTTON);
   record->tooltip("Append scripting command to file options when plugin is run");
   
-  Fl_Box *resize_box = new Fl_Box(L1 + L2 + 2 * BH, height - 4 * BH, 1, 1);
-  win->resizable(resize_box);
+  win->resizable(new Fl_Box(L1 + L2 + 2 * BH, height - 4 * BH, 10, 10));
   win->size_range(width0, height0);
 
   win->position(CTX::instance()->pluginPosition[0], CTX::instance()->pluginPosition[1]);
