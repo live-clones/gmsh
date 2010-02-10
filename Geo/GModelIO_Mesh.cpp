@@ -318,7 +318,7 @@ int GModel::readMSH(const std::string &name)
         if(numVertices > 100000) 
           Msg::ProgressMeter(i + 1, numVertices, "Reading nodes");
       }
-      // if the vertex numbering is dense, tranfer the map into a
+      // If the vertex numbering is dense, transfer the map into a
       // vector to speed up element creation
       if((int)vertexMap.size() == numVertices && 
          ((minVertex == 1 && maxVertex == numVertices) ||
@@ -2823,7 +2823,7 @@ int GModel::readDIFF(const std::string &name)
         vertexMap[num] = new MVertex(xyz[0], xyz[1], xyz[2], 0, num);
       if(numVertices > 100000) 
         Msg::ProgressMeter(i + 1, numVertices, "Reading nodes");
-      // If the vertex numbering is dense, tranfer the map into a
+      // If the vertex numbering is dense, transfer the map into a
       // vector to speed up element creation
       if((int)vertexMap.size() == numVertices && 
          ((minVertex == 1 && maxVertex == numVertices) ||
@@ -3175,7 +3175,7 @@ GModel *GModel::createGModel(std::map<int, MVertex*> &vertexMap,
   if(minVertex == std::numeric_limits<int>::max())
     Msg::Error("Could not determine the min index of vertices");
   
-  // If the vertex numbering is dense, tranfer the map into a
+  // If the vertex numbering is dense, transfer the map into a
   // vector to speed up element creation
   if((minVertex == 1 && maxVertex == numVertices) ||
      (minVertex == 0 && maxVertex == numVertices - 1)){

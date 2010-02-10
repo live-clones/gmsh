@@ -89,10 +89,10 @@ class fullVector
     printf("\n");
   }
   void binarySave (FILE *f) const{
-    fwrite (_data,sizeof(scalar),_r,f); 
+    fwrite (_data, sizeof(scalar), _r, f); 
   }
   void binaryLoad (FILE *f){
-    fread (_data,sizeof(scalar),_r,f); 
+    if(fread (_data, sizeof(scalar), _r, f) != _r) return; 
   }
 };
 

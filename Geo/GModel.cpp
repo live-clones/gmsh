@@ -1302,7 +1302,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
   }
 }
 
-GModel *GModel::buildCutGModel(gLevelset *ls)
+GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem)
 {
   std::map<int, std::vector<MElement*> > elements[10];
   std::map<int, std::map<int, std::string> > physicals[4];
@@ -1311,7 +1311,7 @@ GModel *GModel::buildCutGModel(gLevelset *ls)
   Msg::Info("Cutting mesh...");
   double t1 = Cpu();
 
-  GModel *cutGM = buildCutMesh(this, ls, elements, vertexMap, physicals);
+  GModel *cutGM = buildCutMesh(this, ls, elements, vertexMap, physicals, cutElem);
 
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
     cutGM->_storeElementsInEntities(elements[i]);

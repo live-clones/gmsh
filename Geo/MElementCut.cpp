@@ -384,8 +384,6 @@ void MLineBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 
 //---------------------------------------- CutMesh ----------------------------
 
-#if defined(HAVE_DINTEGRATION)
-
 static bool equalV(MVertex *v, const DI_Point *p)
 {
   return (fabs(v->x() - p->x()) < 1.e-15 &&
@@ -424,7 +422,8 @@ static int getElementaryTag(int lsTag, int elementary, std::map<int, int> &newEl
   }
   return elementary;
 }
-static void getPhysicalTag(int lsTag, const std::vector<int> &physicals, std::vector<int> &phys2, std::map<int, int> &newPhysTags)
+static void getPhysicalTag(int lsTag, const std::vector<int> &physicals,
+                           std::vector<int> &phys2, std::map<int, int> &newPhysTags)
 {
   phys2.clear();
   for(unsigned int i = 0; i < physicals.size(); i++){
@@ -452,11 +451,127 @@ static int getBorderTag(int lsTag, int count, int &maxTag, std::map<int, int> &b
   return lsTag;
 }
 
-typedef std::set<MVertex*,MVertexLessThanLexicographic> newVerticesContainer ;
+static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
+                             GEntity *ge, GModel *GM, int &numEle,
+                             std::map<int, MVertex*> &vertexMap,
+                             std::map<int, std::vector<MElement*> > elements[10],
+                             std::map<int, std::map<int, std::string> > physicals[4],
+                             std::map<int, int> newElemTags[4],
+                             std::map<int, int> newPhysTags[4])
+{
+  int elementary = ge->tag();
+  int eType = e->getTypeForMSH();
+  int ePart = e->getPartition();
+  std::vector<int> gePhysicals = ge->physicals;
+
+  std::vector<MVertex*> vmv;
+  if(eType != MSH_POLYG_ && eType != MSH_POLYH_) {
+    for(int i = 0; i < e->getNumVertices(); i++) {
+      MVertex *vert = e->getVertex(i);
+      int numV = vert->getNum();
+      if(vertexMap.count(numV))
+        vmv.push_back(vertexMap[numV]);
+      else {
+        MVertex *mv = new MVertex(vert->x(), vert->y(), vert->z(), 0, numV);
+        vmv.push_back(mv);
+        vertexMap[numV] = mv;
+      }
+    }
+  }
+  else {
+    for(int i = 0; i < e->getNumChildren(); i++) {
+      for(int j = 0; j < e->getChild(i)->getNumVertices(); j++) {
+        MVertex *vert = e->getChild(i)->getVertex(j);
+        int numV = vert->getNum();
+        if(vertexMap.count(numV))
+          vmv.push_back(vertexMap[numV]);
+        else {
+          MVertex *mv = new MVertex(vert->x(), vert->y(), vert->z(), 0, numV);
+          vmv.push_back(mv);
+          vertexMap[numV] = mv;
+        }
+      }
+    }
+  }
+  MElementFactory factory;
+  MElement *copy = factory.create(eType, vmv, ++numEle, ePart);
+
+  double lsMean = 0.;
+  for(int k = 0; k < e->getNumVertices(); k++)
+    lsMean += verticesLs(e->getVertex(k)->getIndex(), 0);
+  int lsTag = (lsMean < 0) ? 1 : -1;
+
+  switch (eType) {
+  case MSH_TET_4 :
+  case MSH_HEX_8 :
+  case MSH_PYR_5 :
+  case MSH_PRI_6 :
+  case MSH_POLYH_ :
+    {
+      int reg = getElementaryTag(lsTag, elementary, newElemTags[3]);
+      std::vector<int> phys;
+      getPhysicalTag(lsTag, gePhysicals, phys, newPhysTags[3]);
+      if(eType == MSH_TET_4)
+        elements[4][reg].push_back(copy);
+      else if(eType == MSH_HEX_8)
+        elements[5][reg].push_back(copy);
+      else if(eType == MSH_PRI_6)
+        elements[6][reg].push_back(copy);
+      else if(eType == MSH_PYR_5)
+        elements[7][reg].push_back(copy);
+      else if(eType == MSH_POLYH_)
+        elements[9][reg].push_back(copy);
+      assignPhysicals(GM, phys, reg, 3, physicals);
+    }
+    break;
+  case MSH_TRI_3 :
+  case MSH_QUA_4 :
+  case MSH_POLYG_ :
+    {
+      int reg = getElementaryTag(lsTag, elementary, newElemTags[2]);
+      std::vector<int> phys;
+      getPhysicalTag(lsTag, gePhysicals, phys, newPhysTags[2]);
+      if(eType == MSH_TRI_3)
+        elements[2][reg].push_back(copy);
+      else if(eType == MSH_QUA_4)
+        elements[3][reg].push_back(copy);
+      else if(eType == MSH_POLYG_)
+        elements[8][reg].push_back(copy);
+      assignPhysicals(GM, phys, reg, 2, physicals);
+    }
+    break;
+  case MSH_LIN_2 :
+    {
+      int reg = getElementaryTag(lsTag, elementary, newElemTags[1]);
+      std::vector<int> phys;
+      getPhysicalTag(lsTag, gePhysicals, phys, newPhysTags[1]);
+      elements[1][reg].push_back(copy);
+      assignPhysicals(GM, phys, reg, 1, physicals);
+    }
+    break;
+  case MSH_PNT :
+    {
+      int reg = getElementaryTag(lsTag, elementary, newElemTags[0]);
+      std::vector<int> phys;
+      getPhysicalTag(lsTag, gePhysicals, phys, newPhysTags[0]);
+      elements[0][reg].push_back(copy);
+      assignPhysicals(GM, phys, reg, 0, physicals);
+    }
+    break;
+  default :
+    Msg::Error("This type of element cannot be cut.");
+    return;
+  }
+}
+
+#if defined(HAVE_DINTEGRATION)
+
+typedef std::set<MVertex*, MVertexLessThanLexicographic> newVerticesContainer ;
 
 static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
                            fullMatrix<double> &verticesLs,
-                           GEntity *ge, GModel *GM, int &numEle, std::map<int, MVertex*> &vertexMap,
+                           GEntity *ge, GModel *GM, int &numEle,
+                           std::map<int, MVertex*> &vertexMap,
 			   newVerticesContainer &newVertices,
                            std::map<int, std::vector<MElement*> > elements[10],
                            std::map<int, std::map<int, std::string> > physicals[4],
@@ -620,10 +735,10 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
           for(int j = 0; j < 4; j++){
             int numV = getElementVertexNum(tetras[i]->pt(j), e);
 	    if (numV == -1){
-	      MVertex *newv = new MVertex(tetras[i]->x(j), tetras[i]->y(j), tetras[i]->z(j), 0);
+	      MVertex *newv = new MVertex(tetras[i]->x(j), tetras[i]->y(j), tetras[i]->z(j));
 	      std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
 	      mv[j] = *(it.first);
-	      if (!it.second) delete newv;
+	      if (!it.second) newv->deleteLast();
 	    }
 	    else {
               std::map<int, MVertex*>::iterator it = vertexMap.find(numV);
@@ -677,10 +792,10 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
         for(int j = 0; j < 3; j++){
           int numV = getElementVertexNum(triangles[i]->pt(j), e);
           if(numV == -1) {
-	    MVertex *newv = new MVertex(triangles[i]->x(j), triangles[i]->y(j), triangles[i]->z(j), 0);
+	    MVertex *newv = new MVertex(triangles[i]->x(j), triangles[i]->y(j), triangles[i]->z(j));
 	    std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
 	    mv[j] = *(it.first);
-	    if (!it.second) delete newv;
+	    if (!it.second) newv->deleteLast();
           }
           else {
             std::map<int, MVertex*>::iterator it = vertexMap.find(numV);
@@ -696,8 +811,8 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
         if(p1 || p2) tri = new MTriangleBorder(mv[0], mv[1], mv[2], p1, p2, ++numEle, ePart);
         else tri = new MTriangle(mv[0], mv[1], mv[2], ++numEle, ePart);
         int lsT = triangles[i]->lsTag();
-        int c = elements[2].count(lsT) + elements[3].count(lsT);
-        // suppose that the surfaces have been cut before the volumes!
+        int c = elements[2].count(lsT) + elements[3].count(lsT) + elements[8].count(lsT);
+        // the surfaces are cut before the volumes!
         int reg = getBorderTag(lsT, c, newElemTags[2][0], borderElemTags[1]);
         int physTag = getBorderTag(lsT, c, newPhysTags[2][0], borderPhysTags[1]);
         std::vector<int> phys; phys.push_back(physTag);
@@ -749,10 +864,10 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
           for(int j = 0; j < 3; j++){
             int numV = getElementVertexNum(triangles[i]->pt(j), e);
             if(numV == -1) {
-	      MVertex *newv = new MVertex(triangles[i]->x(j), triangles[i]->y(j), triangles[i]->z(j), 0);
+	      MVertex *newv = new MVertex(triangles[i]->x(j), triangles[i]->y(j), triangles[i]->z(j));
 	      std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
 	      mv[j] = *(it.first);
-	      if (!it.second) delete newv;
+	      if (!it.second) newv->deleteLast();
             }
             else {
               std::map<int, MVertex*>::iterator it = vertexMap.find(numV);
@@ -802,10 +917,10 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
         for(int j = 0; j < 2; j++){
           int numV = getElementVertexNum(lines[i]->pt(j), e);
           if(numV == -1) {
-	    MVertex *newv = new MVertex(lines[i]->x(j), lines[i]->y(j), lines[i]->z(j), 0);
+	    MVertex *newv = new MVertex(lines[i]->x(j), lines[i]->y(j), lines[i]->z(j));
 	    std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
 	    mv[j] = *(it.first);
-	    if (!it.second) delete newv;
+	    if (!it.second) newv->deleteLast();
           }
           else {
             std::map<int, MVertex*>::iterator it = vertexMap.find(numV);
@@ -822,7 +937,7 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
         else lin = new MLine(mv[0], mv[1], ++numEle, ePart);
         int lsL = lines[i]->lsTag();
         int c = elements[1].count(lsL);
-        // suppose that the lines have been cut before the surfaces!
+        // the lines are cut before the surfaces!
         int reg = getBorderTag(lsL, c, newElemTags[1][0], borderElemTags[0]);
         int physTag = getBorderTag(lsL, c, newPhysTags[1][0], borderPhysTags[0]);
         std::vector<int> phys; phys.push_back(physTag);
@@ -844,10 +959,10 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
           for(int j = 0; j < 2; j++){
             int numV = getElementVertexNum(lines[i]->pt(j), e);
             if(numV == -1) {
-	      MVertex *newv = new MVertex(lines[i]->x(j), lines[i]->y(j), lines[i]->z(j), 0);
+	      MVertex *newv = new MVertex(lines[i]->x(j), lines[i]->y(j), lines[i]->z(j));
 	      std::pair<newVerticesContainer::iterator, bool> it = newVertices.insert(newv);
 	      mv[j] = *(it.first);
-	      if (!it.second) delete newv;
+	      if (!it.second) newv->deleteLast();
             }
             else {
               std::map<int, MVertex*>::iterator it = vertexMap.find(numV);
@@ -903,19 +1018,32 @@ static void elementCutMesh(MElement *e, std::vector<const gLevelset *> &RPN,
 GModel *buildCutMesh(GModel *gm, gLevelset *ls,
                      std::map<int, std::vector<MElement*> > elements[10],
                      std::map<int, MVertex*> &vertexMap,
-                     std::map<int, std::map<int, std::string> > physicals[4])
+                     std::map<int, std::map<int, std::string> > physicals[4],
+                     bool cutElem)
 {
 #if defined(HAVE_DINTEGRATION)
-  int numVert = gm->indexMeshVertices(true);
 
   GModel *cutGM = new GModel(gm->getName() + "_cut");
   cutGM->setFileName(cutGM->getName());
 
-  newVerticesContainer newVertices;
-
   std::vector<GEntity*> gmEntities;
   gm->getEntities(gmEntities);
-  int numEle = gm->getNumMeshElements();
+
+  std::vector<const gLevelset *> primitives;
+  ls->getPrimitives(primitives);
+  int numVert = gm->indexMeshVertices(true);
+  int nbLs = (cutElem) ? primitives.size() : 1;
+  fullMatrix<double> verticesLs(numVert + 1, nbLs);
+  for(unsigned int i = 0; i < gmEntities.size(); i++) {
+    for(unsigned int j = 0; j < gmEntities[i]->getNumMeshVertices(); j++) {
+      MVertex *vi = gmEntities[i]->getMeshVertex(j);
+      if(cutElem)
+        for(unsigned int k = 0; k < primitives.size(); k++)
+          verticesLs(vi->getIndex(), k) = (*primitives[k])(vi->x(), vi->y(), vi->z());
+      else
+        verticesLs(vi->getIndex(), 0) = (*ls)(vi->x(), vi->y(), vi->z());
+    }
+  }
 
   std::map<int, int> newElemTags[4];
   std::map<int, int> newPhysTags[4];
@@ -923,21 +1051,24 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
     newElemTags[d][0] = gm->getMaxElementaryNumber(d);
     newPhysTags[d][0] = gm->getMaxPhysicalNumber(d);
   }
-  std::map<int, int> borderElemTags[2];
-  std::map<int, int> borderPhysTags[2];
+  int numEle = gm->getNumMeshElements();
 
-  std::vector<const gLevelset *> primitives;
-  ls->getPrimitives(primitives);
-  fullMatrix<double> verticesLs(numVert + 1, primitives.size());
-  for(unsigned int i = 0; i < gmEntities.size(); i++) {
-    for(unsigned int j = 0; j < gmEntities[i]->getNumMeshVertices(); j++) {
-      MVertex *vi = gmEntities[i]->getMeshVertex(j);
-      for(unsigned int k = 0; k < primitives.size(); k++) {
-        verticesLs(vi->getIndex(), k) = (*primitives[k])(vi->x(), vi->y(), vi->z());
+  if(!cutElem) {
+    for(unsigned int i = 0; i < gmEntities.size(); i++) {
+      for(unsigned int j = 0; j < gmEntities[i]->getNumMeshElements(); j++) {
+        MElement *e = gmEntities[i]->getMeshElement(j);
+        e->setVolumePositive();
+        elementSplitMesh(e, verticesLs, gmEntities[i], gm, numEle, vertexMap,
+                         elements, physicals, newElemTags, newPhysTags);
+        cutGM->getMeshPartitions().insert(e->getPartition());
       }
     }
+    return cutGM;
   }
 
+  newVerticesContainer newVertices;
+  std::map<int, int> borderElemTags[2];
+  std::map<int, int> borderPhysTags[2];
   DI_Point::Container cp;
   std::vector<DI_Line *> lines;
   std::vector<DI_Triangle *> triangles;

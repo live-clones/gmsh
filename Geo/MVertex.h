@@ -46,6 +46,7 @@ class MVertex{
  public:
   MVertex(double x, double y, double z, GEntity *ge=0, int num=0);
   virtual ~MVertex(){}
+  inline void deleteLast() {if(_num == _globalNum) _globalNum--; delete this;}
 
   // get/reset the global node number
   static int getGlobalNumber(){ return _globalNum; }

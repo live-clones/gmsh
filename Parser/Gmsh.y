@@ -2009,6 +2009,12 @@ LevelSet :
         GM->buildCutGModel(FindLevelSet(t)->ls);
         GM->setVisibility(0);
       }
+      else if(!strcmp($2, "SplitMesh")){
+        int t = (int)$4;
+        GModel *GM = GModel::current();
+        GM->buildCutGModel(FindLevelSet(t)->ls, false);
+        GM->setVisibility(0);
+      }
       else
         yymsg(0, "Wrong levelset definition");
       Free($2);
