@@ -282,14 +282,25 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
       sprintf(opts, "dV");
       try{
         tetrahedralize(opts, &in, &out);
-        Msg::Info("%d faces self-intersect", out.numberoftrifaces);
-        for(int i = 0; i < out.numberoftrifaces; i++){
-          Msg::Info("face (%d %d %d) on model face %d",
-                    numberedV[out.trifacelist[i * 3 + 0] - 1]->getNum(),
-                    numberedV[out.trifacelist[i * 3 + 1] - 1]->getNum(),
-                    numberedV[out.trifacelist[i * 3 + 2] - 1]->getNum(),
-                    out.trifacemarkerlist[i]);
+        Msg::Info("%d intersecting faces have been saved into 'intersect.pos'",
+                  out.numberoftrifaces);
+        FILE *fp = fopen("intersect.pos", "w");
+        if(fp){
+          fprintf(fp, "View \"intersections\" {\n");
+          for(int i = 0; i < out.numberoftrifaces; i++){
+            MVertex *v1 = numberedV[out.trifacelist[i * 3 + 0] - 1];
+            MVertex *v2 = numberedV[out.trifacelist[i * 3 + 1] - 1];
+            MVertex *v3 = numberedV[out.trifacelist[i * 3 + 2] - 1];
+            int surf = out.trifacemarkerlist[i];
+            fprintf(fp, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+                    v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z(), 
+                    v3->x(), v3->y(), v3->z(), surf, surf, surf);
+          }
+          fprintf(fp, "};\n");
+          fclose(fp);
         }
+        else
+          Msg::Error("Could not open file 'intersect.pos'");
       }
       catch (int error2){
         Msg::Error("Surface mesh is wrong, cannot do the 3D mesh");
