@@ -33,7 +33,7 @@ aboutWindow::aboutWindow()
   o->box(FL_FLAT_BOX);
   std::ostringstream sstream;
   sstream << "<center><h3>Gmsh</h3><br>version " << GetGmshVersion()
-          << "<p>Copyright (C) 1997-2009"
+          << "<p>Copyright (C) 1997-2010"
           << "<br>Christophe Geuzaine and Jean-Fran&ccedil;ois Remacle"
           << "<p><a href=\"http://geuz.org/gmsh/doc/CREDITS.txt\">Credits</a> "
           << "and <a href=\"http://geuz.org/gmsh/doc/LICENSE.txt\">licensing "
