@@ -85,7 +85,7 @@ class GFaceCompound : public GFace {
   void computeALoop(std::set<GEdge*> & _unique, std::list<GEdge*> &);
   void getTriangle(double u, double v, GFaceCompoundTriangle **lt, 
                    double &_u, double &_v) const;
-  virtual double curvature(MTriangle *t, double u, double v) const;
+  virtual double locCurvature(MTriangle *t, double u, double v) const;
   void printStuff() const;
   bool trivial() const ;
   linearSystem <double> *_lsys;

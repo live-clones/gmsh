@@ -590,7 +590,8 @@ static void printLevel ( const char* fn,
 			 std::map<MVertex*,SPoint2> *coordinates,
 			 double version){
 
-  
+  if( !CTX::instance()->mesh.saveAll) return;  
+
   std::set<MVertex*> vs;
   for (int i=0;i<elements.size();i++)
     for (int j=0;j<elements[i]->getNumVertices();j++)
@@ -1073,9 +1074,9 @@ void multiscaleLaplace::cut (std::vector<MElement *> &elements)
   elements.insert(elements.end(),left.begin(),left.end());
   elements.insert(elements.end(),right.begin(),right.end());
 
-  printLevel ("multiscale-all.msh",elements, 0,2.0);  
-  printLevel ("multiscale-left.msh",left,0,2.0);  
-  printLevel ("multiscale-right.msh",right,0,2.0);  
+  //printLevel ("multiscale-all.msh",elements, 0,2.0);  
+  //printLevel ("multiscale-left.msh",left,0,2.0);  
+  //printLevel ("multiscale-right.msh",right,0,2.0);  
 
 }
 

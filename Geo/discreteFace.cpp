@@ -73,7 +73,6 @@ SPoint2 discreteFace::parFromPoint(const SPoint3 &p) const
 {
 
   if (getCompound()){
-    printf("par from point in GFaceCompound %d \n", getCompound()->tag());
     return getCompound()->parFromPoint(p);
   }
   else{

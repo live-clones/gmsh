@@ -39,13 +39,10 @@ static double max_surf_curvature(const GEdge *ge, double u)
   double val = 0;
   std::list<GFace *> faces = ge->faces();
   std::list<GFace *>::iterator it = faces.begin();
-  //printf("for gedge=%d facesnb=%d \n", ge->tag(), faces.size());
   while(it != faces.end()){
     if ((*it)->geomType() != GEntity::CompoundSurface){
-      printf("for gedge %d face=%d \n",ge->tag(), (*it)->tag());
       SPoint2 par = ge->reparamOnFace((*it), u, 1);
       double cc = (*it)->curvature(par);
-      printf("for face compute curvature =%g \n", cc);
       val = std::max(cc, val);
     }
     ++it;

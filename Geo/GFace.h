@@ -250,8 +250,6 @@ class GFace : public GEntity
     // all diagonals of the triangulation are left (-1), right (1) or
     // alternated (0)
     int transfiniteArrangement;
-    // type of mapping is cad (0), harmonic (1) or conformal (-1)
-    int typeOfMapping;
     // do we smooth (transfinite) mesh? (<0 to use default smoothing)
     int transfiniteSmoothing;
     // the extrusion parameters (if any)

@@ -1356,12 +1356,12 @@ void partitionAndRemesh(GFaceCompound *gf)
   
   gf->model()->createTopologyFromFaces(pFaces);
    
-  Msg::Info("*** Multiscale Partition SUCCESSFULLY PERFORMED : %d parts", NF );
-  CreateOutputFile("multiscalePARTS.msh", CTX::instance()->mesh.format);
+  Msg::Info("Multiscale Partition SUCCESSFULLY PERFORMED : %d parts", NF );
+  gf->model()->writeMSH("multiscalePARTS.msh", 2.0, false, true);
  
   //Remesh new faces (Compound Lines and Compound Surfaces)
   //-----------------------------------------------------
-  Msg::Info("*** Parametrize Compounds:");
+  Msg::Info("--- Parametrize Compounds:");
  
   //Parametrize Compound Lines
   int NE = gf->model()->maxEdgeNum() - nume + 1;
@@ -1395,11 +1395,10 @@ void partitionAndRemesh(GFaceCompound *gf)
 
   Msg::Info("*** Mesh Compounds:");
 
-  //Mesh 1D and 2D
   for (int i=0; i < NE; i++){
     GEdge *gec = gf->model()->getEdgeByTag(nume + NE + i);
      meshGEdge mge;
-     mge(gec);//meshing 1D
+     mge(gec);
   }
 
   Msg::Info("*** Starting Mesh of surface %d ...", gf->tag());
@@ -1407,7 +1406,7 @@ void partitionAndRemesh(GFaceCompound *gf)
   for (int i=0; i < NF; i++){
     GFace *gfc =  gf->model()->getFaceByTag(numf + NF + i );
     meshGFace mgf;
-    mgf(gfc);//meshing 2D
+    mgf(gfc);
       
     for(unsigned int j = 0; j < gfc->triangles.size(); ++j){
       MTriangle *t = gfc->triangles[j];

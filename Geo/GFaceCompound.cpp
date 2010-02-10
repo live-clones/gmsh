@@ -475,7 +475,8 @@ bool GFaceCompound::parametrize() const
   if(trivial()) return paramOK;
 
   coordinates.clear(); 
-  
+  computeNormals();  
+
   if(allNodes.empty()) buildAllNodes();
   
 
@@ -517,7 +518,7 @@ bool GFaceCompound::parametrize() const
   printStuff();
 
   if (!checkOrientation(0)){
-    Msg::Info("*** Parametrization switched to convex combination map");
+    Msg::Info("--- Parametrization switched to convex combination map");
     coordinates.clear(); 
     Octree_Delete(oct);
     fillNeumannBCS();
@@ -529,7 +530,7 @@ bool GFaceCompound::parametrize() const
 
 
 
-  computeNormals();  
+
 
   if (checkAspectRatio() > AR_MAX){
     Msg::Warning("Geometrical aspect ratio too high");
@@ -1305,15 +1306,14 @@ double GFaceCompound::curvatureMax(const SPoint2 &param) const
     return lt->gf->curvatureMax(pv);
   }
   else if (lt->gf->geomType() == GEntity::DiscreteSurface) {
-    //printf("!!!! compute here curvatureMax \n");
     double curv= 0.;
-    curv = curvature(lt->tri,U,V);
+    curv = locCurvature(lt->tri,U,V);
     return curv;
   }
   return 0.;
 }
 
-double GFaceCompound::curvature(MTriangle *t, double u, double v) const
+double GFaceCompound::locCurvature(MTriangle *t, double u, double v) const
 {
 
   SVector3 n1 = _normals[t->getVertex(0)];
@@ -1323,9 +1323,8 @@ double GFaceCompound::curvature(MTriangle *t, double u, double v) const
 		   n1.y(), n2.y(), n3.y(),
 		   n1.z(), n2.z(), n3.z()};
 
-  return fabs(t->interpolateDiv(val, u, v, 0.0));
+  return fabs(t->interpolateDiv(val, u, v, 3));
 
-  return 0.;
 }
 
 SPoint2 GFaceCompound::parFromPoint(const SPoint3 &p) const
@@ -1358,10 +1357,6 @@ GPoint GFaceCompound::point(double par1, double par2) const
     gp.setNoSuccess();
     return gp;
   }
-  //  if(lt->gf && lt->gf->geomType() != GEntity::DiscreteSurface){
-  //    SPoint2 pv = lt->gfp1*(1.-U-V) + lt->gfp2*U + lt->gfp3*V;
-  //    return lt->gf->point(pv.x(),pv.y());
-  //  }
   
   const bool LINEARMESH = true; //false
 
@@ -1785,7 +1780,7 @@ double GFaceCompound::checkAspectRatio() const
 void GFaceCompound::coherenceNormals()
 {
 
-  Msg::Info("Coherence Normals ");
+  Msg::Info("Re-orient all triangles (face normals) coherently");
 
   std::map<MEdge, std::set<MTriangle*>, Less_Edge > edge2tris;
   for(unsigned int i = 0; i < triangles.size(); i++){
@@ -1876,6 +1871,9 @@ int GFaceCompound::genusGeom() const
 
 void GFaceCompound::printStuff() const
 {
+
+  if( !CTX::instance()->mesh.saveAll) return;  
+
   std::list<GFace*>::const_iterator it = _compound.begin();
  
   char name0[256], name1[256], name2[256], name3[256];
@@ -1887,13 +1885,6 @@ void GFaceCompound::printStuff() const
   sprintf(name4, "XYZU-%d.pos", (*it)->tag());
   sprintf(name5, "XYZV-%d.pos", (*it)->tag());
   sprintf(name6, "XYZC-%d.pos", (*it)->tag());
-
- // sprintf(name1, "UVX.pos");
-//  sprintf(name2, "UVY.pos");
-//  sprintf(name3, "UVZ.pos"); 
-//  sprintf(name4, "XYZU.pos");
-//  sprintf(name5, "XYZV.pos");
-//  sprintf(name6, "XYZC.pos");
 
   FILE * uva = fopen(name0,"w");
   FILE * uvx = fopen(name1,"w");
@@ -1920,13 +1911,6 @@ void GFaceCompound::printStuff() const
 	coordinates.find(t->getVertex(1));
       std::map<MVertex*,SPoint3>::const_iterator it2 = 
 	coordinates.find(t->getVertex(2));
-//       fprintf(xyzu,"VT(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g,%g,%g,%g,%g,%g};\n",
-// 	      t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
-// 	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
-// 	      t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
-// 	      (35.*it0->second.x()-t->getVertex(0)->x()), -t->getVertex(0)->y(), (35.*it0->second.y()-t->getVertex(0)->z()),
-// 	      (35.*it1->second.x()-t->getVertex(1)->x()), -t->getVertex(1)->y(), (35.*it1->second.y()-t->getVertex(1)->z()),
-// 	      (35.*it2->second.x()-t->getVertex(2)->x()), -t->getVertex(2)->y(), (35.*it2->second.y()-t->getVertex(2)->z()));
       fprintf(xyzv,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 	      t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
 	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
@@ -1937,16 +1921,14 @@ void GFaceCompound::printStuff() const
 	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
 	      t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
 	      it0->second.x(),it1->second.x(),it2->second.x());
-      //double K1 = curvature(t,it0->second.x(),it0->second.y());
-      //double K2 = curvature(t,it1->second.x(),it1->second.y());
-      //double K3 = curvature(t,it2->second.x(),it2->second.y());
-      //      const double K = fabs(curvature (t));
+      double K1 = locCurvature(t,it0->second.x(),it0->second.y());
+      double K2 = locCurvature(t,it1->second.x(),it1->second.y());
+      double K3 = locCurvature(t,it2->second.x(),it2->second.y());
       fprintf(xyzc,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 	      t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
 	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
 	      t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
-	      it0->second.z(),it1->second.z(),it2->second.z());
-              //K1, K2, K3);
+	      K1, K2, K3);
       
       double p0[3] = {t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z()}; 
       double p1[3] = {t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z()};

@@ -38,7 +38,7 @@ Line Loop(27) = {-4,12,-6};
 Ruled Surface(28) = {27};
 
 Extrude {
-  Surface{14:28:2};  Layers{10, 0.1}; // Recombine; 
+  Surface{14:28:2};  Layers{10, 0.2}; // Recombine; 
 }
 
 

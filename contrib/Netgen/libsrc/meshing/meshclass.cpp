@@ -3334,16 +3334,16 @@ namespace netgen
 	    if (IntersectTriangleTriangle (&trip1[0], &trip2[0]))
 	      {
 		overlap = 1;
-		PrintWarning ("Intersecting elements " 
+		PrintError ("Intersecting elements " 
 			      ,i, " and ", inters.Get(j));
 
 		(*testout) << "Intersecting: " << endl;
 		(*testout) << "openelement " << i << " with open element " << inters.Get(j) << endl;
 
-		cout << "el1 = " << tri << endl;
-		cout << "el2 = " << tri2 << endl;
-		cout << "layer1 = " <<  (*this)[tri[0]].GetLayer() << endl;
-		cout << "layer2 = " <<  (*this)[tri2[0]].GetLayer() << endl;
+// 		cout << "el1 = " << tri << endl;
+// 		cout << "el2 = " << tri2 << endl;
+// 		cout << "layer1 = " <<  (*this)[tri[0]].GetLayer() << endl;
+// 		cout << "layer2 = " <<  (*this)[tri2[0]].GetLayer() << endl;
 
 
 		for (k = 1; k <= 3; k++)

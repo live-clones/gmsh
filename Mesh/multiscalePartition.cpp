@@ -343,7 +343,7 @@ void multiscalePartition::partition(partitionLevel & level, int nbParts, typeOfP
     int genus, AR, NB;
     getGenusAndRatio(regions[i], genus, AR, NB);
 
-    printLevel (nextLevel->elements, nextLevel->recur,nextLevel->region);  
+    //printLevel (nextLevel->elements, nextLevel->recur,nextLevel->region);  
 
     if (genus < 0) {
       Msg::Error("Genus partition is negative G=%d!", genus);
@@ -356,7 +356,7 @@ void multiscalePartition::partition(partitionLevel & level, int nbParts, typeOfP
 		nextLevel->recur,nextLevel->region, genus, AR, nbParts);  
       partition(*nextLevel, nbParts, MULTILEVEL);
     }
-    else if (genus == 0  &&  AR > 4 || genus == 0  &&  NB > 1){
+    else if (genus == 0  &&  AR > 3 || genus == 0  &&  NB > 1){
       int nbParts = 2;
       Msg::Info("Mesh partition: level (%d-%d)  is ZERO-GENUS (AR=%d NB=%d) ---> LAPLACIAN partition %d parts",
  		nextLevel->recur,nextLevel->region, AR, NB, nbParts);  
