@@ -168,7 +168,11 @@ static void general_options_color_scheme_cb(Fl_Widget *w, void *data)
 
 static void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
 {
-  Msg::StatusBar(3, false, "Select entity\n[Press 'q' to abort]");
+  Msg::StatusBar(3, false, "Select entity or element\n[Press 'q' to abort]");
+
+  CTX::instance()->pickElements = 1;
+  CTX::instance()->mesh.changed = ENT_ALL;
+  drawContext::global()->draw();
   char ib = FlGui::instance()->selectEntity(ENT_ALL);
   if(ib == 'l') {
     SPoint3 pc(0., 0., 0.);
@@ -176,20 +180,20 @@ static void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
       pc.setPosition(FlGui::instance()->selectedVertices[0]->x(),
                      FlGui::instance()->selectedVertices[0]->y(),
                      FlGui::instance()->selectedVertices[0]->z());
+    else if(FlGui::instance()->selectedElements.size())
+      pc = FlGui::instance()->selectedElements[0]->barycenter();
     else if(FlGui::instance()->selectedEdges.size())
       pc = FlGui::instance()->selectedEdges[0]->bounds().center();
     else if(FlGui::instance()->selectedFaces.size())
       pc = FlGui::instance()->selectedFaces[0]->bounds().center();
     else if(FlGui::instance()->selectedRegions.size())
       pc = FlGui::instance()->selectedRegions[0]->bounds().center();
-    else if(FlGui::instance()->selectedElements.size())
-      pc = FlGui::instance()->selectedElements[0]->barycenter();
-    opt_general_rotation_center_cg
-      (0, GMSH_SET, FlGui::instance()->options->general.butt[15]->value());
     opt_general_rotation_center0(0, GMSH_SET|GMSH_GUI, pc.x());
     opt_general_rotation_center1(0, GMSH_SET|GMSH_GUI, pc.y());
     opt_general_rotation_center2(0, GMSH_SET|GMSH_GUI, pc.z());
   }
+  CTX::instance()->pickElements = 0;
+  CTX::instance()->mesh.changed = ENT_ALL;
   GModel::current()->setSelection(0);
   drawContext::global()->draw();
   Msg::StatusBar(3, false, "");
@@ -212,6 +216,11 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
     const char *name = (const char*)data;
     if(!strcmp(name, "rotation_center_coord")){
       CTX::instance()->drawRotationCenter = 1;
+    }
+    else if(!strcmp(name, "rotation_center")){
+      // pre-fill with cg
+      for(int i = 0; i < 3; i++)
+        o->general.value[8 + i]->value(CTX::instance()->cg[i]);
     }
     else if(!strcmp(name, "light_value")){
       double x, y, z;
