@@ -10,8 +10,8 @@
 
 #if defined(HAVE_KBIPACK)
 
-bool Less_Cell::operator()(const Cell* c1, const Cell* c2) const {
-  
+bool Less_Cell::operator()(const Cell* c1, const Cell* c2) const 
+{  
   //cells with fever vertices first
   
   if(c1->getNumVertices() != c2->getNumVertices()){
@@ -32,7 +32,8 @@ bool Less_Cell::operator()(const Cell* c1, const Cell* c2) const {
 
 Cell::Cell(MElement* image, bool subdomain, bool boundary) :  
   _combined(false), _index(0), _immune(false), _image(NULL), 
-  _deleteImage(false) {
+  _deleteImage(false) 
+{
   _onDomainBoundary = boundary;
   _inSubdomain = subdomain;
   _dim = image->getDim();
@@ -42,25 +43,30 @@ Cell::Cell(MElement* image, bool subdomain, bool boundary) :
   std::sort(_vs.begin(), _vs.end());
 }
 
-Cell::~Cell() {
+Cell::~Cell() 
+{
   if(_deleteImage) delete _image; 
 }
 
-bool Cell::hasVertex(int vertex) const {
+bool Cell::hasVertex(int vertex) const 
+{
   std::vector<int>::const_iterator it = std::find(_vs.begin(), _vs.end(), 
 						  vertex);
   if (it != _vs.end()) return true;
   else return false;
 }
 
-int Cell::getNumFacets() const { 
+int Cell::getNumFacets() const 
+{ 
   if(getDim() == 0) return 0;
   else if(getDim() == 1) return 2;
   else if(getDim() == 2) return _image->getNumEdges();
   else if(getDim() == 3) return _image->getNumFaces();
   else return 0;
 }
-void Cell::getFacetVertices(const int num, std::vector<MVertex*> &v) const {
+
+void Cell::getFacetVertices(const int num, std::vector<MVertex*> &v) const 
+{
   if(getDim() == 0) return;
   else if(getDim() == 1) { v.resize(1); v[0] = getVertex(num); }
   else if(getDim() == 2) _image->getEdgeVertices(num, v);
@@ -68,8 +74,8 @@ void Cell::getFacetVertices(const int num, std::vector<MVertex*> &v) const {
   return;
 }
 
-
-int Cell::getFacetOri(std::vector<MVertex*> &v) {
+int Cell::getFacetOri(std::vector<MVertex*> &v) 
+{
   if(getDim() == 0) return 0;
   else if(getDim() == 1){
     if(v.size() != 1) return 0;
@@ -97,7 +103,8 @@ int Cell::getFacetOri(std::vector<MVertex*> &v) {
   else return 0;
 }  
 
-void Cell::printCell() {
+void Cell::printCell() 
+{
   printf("%d-cell %d: \n" , getDim(), getNum());
   printf("Vertices: ");
   for(int i = 0; i < this->getNumVertices(); i++){
@@ -115,7 +122,8 @@ void Cell::restoreCell(){
   _immune = false;   
 }
 
-bool Cell::addBoundaryCell(int orientation, Cell* cell, bool org) {
+bool Cell::addBoundaryCell(int orientation, Cell* cell, bool org) 
+{
   if(org) _obd.insert( std::make_pair(cell, orientation ) );
   biter it = _boundary.find(cell);
   if(it != _boundary.end()){
@@ -131,7 +139,8 @@ bool Cell::addBoundaryCell(int orientation, Cell* cell, bool org) {
   return true;
 }
 
-bool Cell::addCoboundaryCell(int orientation, Cell* cell, bool org) {
+bool Cell::addCoboundaryCell(int orientation, Cell* cell, bool org) 
+{
   if(org) _ocbd.insert( std::make_pair(cell, orientation ) );
   biter it = _coboundary.find(cell);
   if(it != _coboundary.end()){
@@ -147,7 +156,8 @@ bool Cell::addCoboundaryCell(int orientation, Cell* cell, bool org) {
   return true;
 }
 
-int Cell::removeBoundaryCell(Cell* cell, bool other) {
+int Cell::removeBoundaryCell(Cell* cell, bool other) 
+{
   biter it = _boundary.find(cell);
   if(it != _boundary.end()){
     _boundary.erase(it);
@@ -156,8 +166,10 @@ int Cell::removeBoundaryCell(Cell* cell, bool other) {
   }
   
   return 0;
-} 
-int Cell::removeCoboundaryCell(Cell* cell, bool other) {
+}
+ 
+int Cell::removeCoboundaryCell(Cell* cell, bool other) 
+{
   biter it = _coboundary.find(cell);
   if(it != _coboundary.end()){
     _coboundary.erase(it);
@@ -167,7 +179,8 @@ int Cell::removeCoboundaryCell(Cell* cell, bool other) {
   return 0;
 }
    
-bool Cell::hasBoundary(Cell* cell, bool org){
+bool Cell::hasBoundary(Cell* cell, bool org)
+{
   if(!org){
     biter it = _boundary.find(cell);
     if(it != _boundary.end()) return true;
@@ -180,7 +193,8 @@ bool Cell::hasBoundary(Cell* cell, bool org){
   }
 }
 
-bool Cell::hasCoboundary(Cell* cell, bool org){
+bool Cell::hasCoboundary(Cell* cell, bool org)
+{
   if(!org){
     biter it = _coboundary.find(cell);
     if(it != _coboundary.end()) return true;
@@ -193,14 +207,16 @@ bool Cell::hasCoboundary(Cell* cell, bool org){
   } 
 }
 
-void Cell::makeDualCell(){ 
+void Cell::makeDualCell()
+{ 
   std::map<Cell*, int, Less_Cell > temp = _boundary;
   _boundary = _coboundary;
   _coboundary = temp;
   _dim = 3-_dim;     
 }
 
-void Cell::printBoundary(bool org) {  
+void Cell::printBoundary(bool org) 
+{  
   for(biter it = firstBoundary(org); it != lastBoundary(org); it++){
     printf("Boundary cell orientation: %d ", (*it).second);
     Cell* cell2 = (*it).first;
@@ -210,7 +226,9 @@ void Cell::printBoundary(bool org) {
     printf("Cell boundary is empty. \n");
   }
 }
-void Cell::printCoboundary(bool org) {
+
+void Cell::printCoboundary(bool org) 
+{
   for(biter it = firstCoboundary(org); it != lastCoboundary(org); it++){
     printf("Coboundary cell orientation: %d, ", (*it).second);
     Cell* cell2 = (*it).first;
@@ -221,7 +239,8 @@ void Cell::printCoboundary(bool org) {
   }
 }
 
-CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell() {  
+CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell() 
+{  
   // use "smaller" cell as c2
   if(c1->getNumVertices() < c2->getNumVertices()){
     Cell* temp = c1;

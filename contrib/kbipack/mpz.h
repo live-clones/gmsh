@@ -17,10 +17,12 @@
 #ifndef __MPZ_H__
 #define __MPZ_H__
 
-#include "gmp.h"
+#include "GmshConfig.h"
 
-// disabled for now
-#if 0
+#if defined(HAVE_GMP)
+#include "gmp.h"
+#else
+
 #include <stdlib.h>
 #include <stdio.h>
 

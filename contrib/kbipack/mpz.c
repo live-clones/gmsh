@@ -15,9 +15,9 @@
  */
 
 #include "mpz.h"
+#include "GmshConfig.h"
 
-// disabled for now
-#if 0
+#if ! defined(HAVE_GMP)
 
 #include "limits.h"
 
@@ -27,7 +27,6 @@ void overflow()
 }
 
 long int addcheck(long int a, long int b){
-
   long int c = a + b;
   if (b >= 0){
     if (c < a) overflow();

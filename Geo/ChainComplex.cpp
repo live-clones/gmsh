@@ -13,8 +13,8 @@
 
 #if defined(HAVE_KBIPACK)
 
-ChainComplex::ChainComplex(CellComplex* cellComplex){
-  
+ChainComplex::ChainComplex(CellComplex* cellComplex)
+{ 
   _dim = cellComplex->getDim();
   _cellComplex = cellComplex;
   
@@ -24,13 +24,11 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
   _JMatrix[4] = NULL;
   _QMatrix[4] = NULL;
   _Hbasis[4] = NULL;
-  
-    
+     
   for(int dim = 0; dim < 4; dim++){
     unsigned int cols = cellComplex->getSize(dim);
     unsigned int rows = 0;
     if(dim > 0) rows = cellComplex->getSize(dim-1);
-  
     
     int index = 1;
     // ignore subdomain cells
@@ -118,8 +116,8 @@ ChainComplex::ChainComplex(CellComplex* cellComplex){
 }
 
 
-void ChainComplex::KerCod(int dim){
-  
+void ChainComplex::KerCod(int dim)
+{ 
   if(dim < 0 || dim > 3 || _HMatrix[dim] == NULL) return;
   
   gmp_matrix* HMatrix 
@@ -167,8 +165,8 @@ void ChainComplex::KerCod(int dim){
 }
 
 //j:B_(k+1)->Z_k
-void ChainComplex::Inclusion(int lowDim, int highDim){
-  
+void ChainComplex::Inclusion(int lowDim, int highDim)
+{
   if(getKerHMatrix(lowDim) == NULL 
      || getCodHMatrix(highDim) == NULL 
      || abs(lowDim-highDim) != 1) return;
@@ -191,14 +189,12 @@ void ChainComplex::Inclusion(int lowDim, int highDim){
   cols = gmp_matrix_cols(Zbasis);
   if(rows < cols) return;
   
-  
   // A*inv(V) = U*S
   gmp_normal_form* normalForm 
     = create_gmp_Smith_normal_form(Zbasis, INVERTED, INVERTED);
   
   mpz_t elem;
   mpz_init(elem);
-  
   
   for(int i = 1; i <= cols; i++){
   
@@ -209,9 +205,7 @@ void ChainComplex::Inclusion(int lowDim, int highDim){
     }
   }
   
-  gmp_matrix_left_mult(normalForm->left, Bbasis);
-  
-  
+  gmp_matrix_left_mult(normalForm->left, Bbasis); 
   
   gmp_matrix* LB = copy_gmp_matrix(Bbasis, 1, 1, 
 				   gmp_matrix_cols(Zbasis), 
@@ -253,8 +247,8 @@ void ChainComplex::Inclusion(int lowDim, int highDim){
   
 }
 
-void ChainComplex::Quotient(int dim){
-  
+void ChainComplex::Quotient(int dim)
+{
   if(dim < 0 || dim > 4 || _JMatrix[dim] == NULL) return;
   
   gmp_matrix* JMatrix = 
@@ -296,12 +290,11 @@ void ChainComplex::Quotient(int dim){
   return; 
 }
 
-void ChainComplex::computeHomology(bool dual){
-  
+void ChainComplex::computeHomology(bool dual)
+{  
   int lowDim = 0;
   int highDim = 0;
-  int setDim = 0;
-  
+  int setDim = 0; 
   
   for(int i=-1; i < 4; i++){
     

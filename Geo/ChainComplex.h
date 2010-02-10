@@ -25,10 +25,18 @@
 #include "GVertex.h"
 #include "CellComplex.h"
 
-#include "mpz.h"
+
+#if defined(HAVE_GMP) 
+#include "gmp.h"
 extern "C" {
   #include "gmp_normal_form.h"
 }
+#else
+extern "C" {
+  #include "mpz.h"
+  #include "gmp_normal_form.h"
+}
+#endif
 
 // A class representing a chain complex of a cell complex.
 // This should only be constructed for a reduced cell complex because of

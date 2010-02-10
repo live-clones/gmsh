@@ -10,7 +10,9 @@
 
 #if defined(HAVE_KBIPACK)
 
-CellComplex::CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> subdomain ){
+CellComplex::CellComplex( std::vector<GEntity*> domain, 
+			  std::vector<GEntity*> subdomain )
+{
   
   _domain = domain;
   _subdomain = subdomain;
@@ -48,8 +50,8 @@ CellComplex::CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> su
 }
 
 void CellComplex::find_boundary(std::vector<GEntity*>& domain, 
-				std::vector<GEntity*>& subdomain){
-  
+				std::vector<GEntity*>& subdomain)
+{  
   // determine mesh entities on boundary of the domain
   bool duplicate = false;
   for(unsigned int j=0; j < _domain.size(); j++){
@@ -113,8 +115,8 @@ void CellComplex::find_boundary(std::vector<GEntity*>& domain,
   }
 }
 
-void CellComplex::insert_cells(bool subdomain, bool boundary){
-  
+void CellComplex::insert_cells(bool subdomain, bool boundary)
+{  
   std::vector<GEntity*> domain;
   
   if(subdomain) domain = _subdomain;
@@ -231,7 +233,8 @@ void CellComplex::insert_cells(bool subdomain, bool boundary){
   }
 }
 
-CellComplex::~CellComplex(){
+CellComplex::~CellComplex()
+{
   for(int i = 0; i < 4; i++){
     _cells[i].clear();
     
@@ -247,7 +250,8 @@ CellComplex::~CellComplex(){
 }
 
 /*
-CellComplex::CellComplex(CellComplex* cellComplex){
+CellComplex::CellComplex(CellComplex* cellComplex)
+{
   _domain = cellComplex->getDomain();
   _subdomain = cellComplex->getSubdomain();
   _boundary = cellComplex->getBoundary();
@@ -258,16 +262,17 @@ CellComplex::CellComplex(CellComplex* cellComplex){
   }
   _dim = cellComplex->getDim();
   restoreComplex();
-}
- */
-void CellComplex::insertCell(Cell* cell){
+  }*/
+
+void CellComplex::insertCell(Cell* cell)
+{
   _newcells.push_back(cell);      
   std::pair<citer, bool> insertInfo = _cells[cell->getDim()].insert(cell);
   if(!insertInfo.second) Msg::Debug("Warning: Cell not inserted! \n");
 }
 
-void CellComplex::removeCell(Cell* cell, bool other){
-  
+void CellComplex::removeCell(Cell* cell, bool other)
+{  
   std::map<Cell*, int, Less_Cell > coboundary;
   cell->getCoboundary(coboundary);
   std::map<Cell*, int, Less_Cell > boundary; 
@@ -283,32 +288,32 @@ void CellComplex::removeCell(Cell* cell, bool other){
     bdCell->removeCoboundaryCell(cell, other);
   }
   
-  _cells[cell->getDim()].erase(cell);
-  
+  _cells[cell->getDim()].erase(cell); 
 }
 
 void CellComplex::removeCellQset(Cell* cell, 
-				 std::set<Cell*, Less_Cell>& Qset){
+				 std::set<Cell*, Less_Cell>& Qset)
+{
   Qset.erase(cell);
 }
 
 void CellComplex::enqueueCells(std::map<Cell*, int, Less_Cell>& cells, 
 			       std::queue<Cell*>& Q,
-			       std::set<Cell*, Less_Cell>& Qset){
+			       std::set<Cell*, Less_Cell>& Qset)
+{
   for(std::map<Cell*, int, Less_Cell>::iterator cit = cells.begin();
       cit != cells.end(); cit++){
     Cell* cell = (*cit).first;
     citer it = Qset.find(cell);
-    //citer it2 = _cells[cell->getDim()].find(cell);
-    if(it == Qset.end()){// && it2 != _cells[cell->getDim()].end()){
+    if(it == Qset.end()){
       Qset.insert(cell);
       Q.push(cell);
     }
   }
 }
 
-int CellComplex::coreduction(Cell* generator, int omitted){
-  
+int CellComplex::coreduction(Cell* generator, int omitted)
+{  
   int coreductions = 0;
   
   std::queue<Cell*> Q;
@@ -346,7 +351,8 @@ int CellComplex::coreduction(Cell* generator, int omitted){
   return coreductions;
 }
 
-int CellComplex::reduction(int dim, int omitted){
+int CellComplex::reduction(int dim, int omitted)
+{
   if(dim < 1 || dim > 3) return 0;
 
   int count = 0;
@@ -378,7 +384,8 @@ int CellComplex::reduction(int dim, int omitted){
   return count;
 }
 
-int CellComplex::coreduction(int dim, int omitted){
+int CellComplex::coreduction(int dim, int omitted)
+{
   if(dim < 1 || dim > 3) return 0;
 
   int count = 0;
@@ -410,8 +417,8 @@ int CellComplex::coreduction(int dim, int omitted){
   return count;
 }
   
-int CellComplex::reduceComplex(){
-  
+int CellComplex::reduceComplex()
+{  
   double t1 = Cpu();
   
   Msg::Debug("Cell complex before reduction: %d volumes, %d faces, %d edges and %d vertices.\n",
@@ -498,8 +505,8 @@ int CellComplex::coreduceComplex()
   return omitted;
 }
 
-void CellComplex::computeBettiNumbers(){
-  
+void CellComplex::computeBettiNumbers()
+{  
   removeSubdomain();
 
   for(int i = 0; i < 4; i++){
@@ -526,8 +533,8 @@ void CellComplex::computeBettiNumbers(){
 }
 
 
-int CellComplex::cocombine(int dim){
- 
+int CellComplex::cocombine(int dim)
+{ 
   double t1 = Cpu();
   Msg::Debug("Cell complex before cocombining: %d volumes, %d faces, %d edges and %d vertices.\n",
          getSize(3), getSize(2), getSize(1), getSize(0));
@@ -591,7 +598,8 @@ int CellComplex::cocombine(int dim){
   return count;
 }
 
-int CellComplex::combine(int dim){
+int CellComplex::combine(int dim)
+{
   double t1 = Cpu();
   Msg::Debug("Cell complex before combining: %d volumes, %d faces, %d edges and %d vertices.\n",
          getSize(3), getSize(2), getSize(1), getSize(0));
@@ -656,7 +664,8 @@ int CellComplex::combine(int dim){
   return count;
 }
 
-void CellComplex::printComplex(int dim){
+void CellComplex::printComplex(int dim)
+{
   for (citer cit = firstCell(dim); cit != lastCell(dim); cit++){
     Cell* cell = *cit;
     cell->printCell();
@@ -666,7 +675,8 @@ void CellComplex::printComplex(int dim){
   }
 }
 
-bool CellComplex::checkCoherence(){
+bool CellComplex::checkCoherence()
+{
   bool coherent = true;
   for(int i = 0; i < 4; i++){
     for(citer cit = firstCell(i); cit != lastCell(i); cit++){
@@ -727,7 +737,8 @@ bool CellComplex::checkCoherence(){
   return coherent;
 }
 
-void CellComplex::restoreComplex(){
+void CellComplex::restoreComplex()
+{
   for(int i = 0; i < 4; i++){
     _betti[i] = 0;
     _cells[i] = _ocells[i];
@@ -739,7 +750,8 @@ void CellComplex::restoreComplex(){
   _store.clear();
 }
 
-bool CellComplex::hasCell(Cell* cell, bool org){
+bool CellComplex::hasCell(Cell* cell, bool org)
+{
   if(!org){
     citer cit = _cells[cell->getDim()].find(cell);
     if( cit == lastCell(cell->getDim()) ) return false;
@@ -752,7 +764,8 @@ bool CellComplex::hasCell(Cell* cell, bool org){
   }
 }
 
-bool CellComplex::swapSubdomain(){
+bool CellComplex::swapSubdomain()
+{
   if(_multidim) return false;
   for(int i = 0; i < 4; i++){
     for(citer cit = firstCell(i); cit != lastCell(i); cit++){
@@ -766,7 +779,8 @@ bool CellComplex::swapSubdomain(){
   return true;
 }
 
-void CellComplex::makeDualComplex(){
+void CellComplex::makeDualComplex()
+{
   std::set<Cell*, Less_Cell> temp = _cells[0];
   _cells[0] = _cells[3];
   _cells[3] = temp;

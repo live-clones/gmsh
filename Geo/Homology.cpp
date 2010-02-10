@@ -11,11 +11,11 @@
 #include "OS.h"
 
 #if defined(HAVE_KBIPACK)
+
 Homology::Homology(GModel* model, std::vector<int> physicalDomain, 
-		   std::vector<int> physicalSubdomain){
-  
-  _model = model;
-  
+		   std::vector<int> physicalSubdomain)
+{ 
+  _model = model; 
   _domain = physicalDomain;
   _subdomain = physicalSubdomain;
   
@@ -26,7 +26,6 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain,
   
   std::map<int, std::vector<GEntity*> > groups[4];
   model->getPhysicalGroups(groups);
-  
   
   std::map<int, std::vector<GEntity*> >::iterator it;
   std::vector<GEntity*> domainEntities;
@@ -77,6 +76,7 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain,
 		 _cellComplex->getSize(1), _cellComplex->getSize(0));          
   
 }
+
 Homology::~Homology(){ 
   delete _cellComplex; 
     for(int i = 0; i < 4; i++) {
@@ -88,8 +88,8 @@ Homology::~Homology(){
   }
 }
 
-void Homology::findGenerators(std::string fileName){
-  
+void Homology::findGenerators(std::string fileName)
+{
   Msg::Info("Reducing the Cell Complex...");
   Msg::StatusBar(1, false, "Reducing...");
   double t1 = Cpu();
@@ -163,8 +163,6 @@ void Homology::findGenerators(std::string fileName){
         _generators[j].push_back(chain);
       }
     }
-    
-    
   }
   
   createPViews();
@@ -191,8 +189,8 @@ void Homology::findGenerators(std::string fileName){
   return;
 }
 
-void Homology::findDualGenerators(std::string fileName){
-  
+void Homology::findDualGenerators(std::string fileName)
+{ 
   Msg::Info("Reducing Cell Complex...");
   Msg::StatusBar(1, false, "Reducing...");
   double t1 = Cpu();
@@ -214,8 +212,7 @@ void Homology::findDualGenerators(std::string fileName){
   Msg::StatusBar(2, false, "%d V, %d F, %d E, %d N.",
 		 _cellComplex->getSize(3), _cellComplex->getSize(2), 
 		 _cellComplex->getSize(1), _cellComplex->getSize(0));
-  
-  
+   
   Msg::Info("Computing homology spaces...");
   Msg::StatusBar(1, false, "Computing...");
   t1 = Cpu();
@@ -226,9 +223,7 @@ void Homology::findDualGenerators(std::string fileName){
   Msg::Info("Homology Computation complete (%g s).", t2- t1);
   
   int dim = _cellComplex->getDim();
- 
-  
-  
+   
   int HRank[4];
   for(int i = 0; i < 4; i++) HRank[i] = 0;
   for(int j = 3; j > -1; j--){
@@ -275,7 +270,7 @@ void Homology::findDualGenerators(std::string fileName){
   createPViews();
   if(fileName != "") writeGeneratorsMSH(fileName);
   
-  Msg::Info("Ranks of homology spaces for dual cell complex:");
+  Msg::Info("Ranks of homology spaces for the dual cell complex:");
   Msg::Info("H0* = %d", HRank[0]);
   Msg::Info("H1* = %d", HRank[1]);
   Msg::Info("H2* = %d", HRank[2]);
@@ -296,8 +291,8 @@ void Homology::findDualGenerators(std::string fileName){
   return;
 }
 
-void Homology::computeBettiNumbers(){
-  
+void Homology::computeBettiNumbers()
+{  
   Msg::Info("Running coreduction...");
   Msg::StatusBar(1, false, "Computing...");
   double t1 = Cpu();
@@ -309,7 +304,7 @@ void Homology::computeBettiNumbers(){
   Msg::Info("H1 = %d", _cellComplex->getBettiNumber(1));
   Msg::Info("H2 = %d", _cellComplex->getBettiNumber(2));
   Msg::Info("H3 = %d", _cellComplex->getBettiNumber(3));
-  
+
   Msg::StatusBar(1, false, "Homology");
   Msg::StatusBar(2, false, "H0: %d, H1: %d, H2: %d, H3: %d.", 
 		 _cellComplex->getBettiNumber(0), 
@@ -319,12 +314,14 @@ void Homology::computeBettiNumbers(){
   return;
 }
 
-void Homology::restoreHomology() { 
+void Homology::restoreHomology() 
+{ 
   _cellComplex->restoreComplex();
   for(int i = 0; i < 4; i++) _generators[i].clear();
 }
 
-std::string Homology::getDomainString() {
+std::string Homology::getDomainString() 
+{
   std::string domainString = "({";
   for(unsigned int i = 0; i < _domain.size(); i++){
     std::string temp = "";
@@ -354,7 +351,8 @@ std::string Homology::getDomainString() {
   return domainString;
 }
 
-void Homology::createPViews(){
+void Homology::createPViews()
+{
   for(int i = 0; i < 4; i++){
     for(int j = 0; j < _generators[i].size(); j++){
       Chain* chain = _generators[i].at(j);
@@ -363,7 +361,8 @@ void Homology::createPViews(){
   }
 }
 
-bool Homology::writeGeneratorsMSH(std::string fileName, bool binary){
+bool Homology::writeGeneratorsMSH(std::string fileName, bool binary)
+{
   if(!_model->writeMSH(fileName, 2.0, binary)) return false;
   Msg::Info("Wrote homology computation results to %s.", fileName.c_str());
   Msg::Debug("Wrote homology computation results to %s. \n", 
