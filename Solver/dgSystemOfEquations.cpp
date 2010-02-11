@@ -205,8 +205,9 @@ void dgSystemOfEquations::export_solution_as_is (const std::string &name){
     fprintf(f,"\"%s\"\n",name.c_str());
     fprintf(f,"1\n");
     fprintf(f,"0.0\n");
-    fprintf(f,"3\n");
+    fprintf(f,"%d\n", Msg::GetCommSize() > 1 ? 4 : 3);
     fprintf(f,"0\n 1\n %d\n",COUNT);
+    if(Msg::GetCommSize() > 1) fprintf(f,"%d\n", Msg::GetCommRank());
     for (int i=0;i < _groups.getNbElementGroups()  ;i++){
       dgGroupOfElements *group = _groups.getElementGroup(i);
       for (int iElement=0 ; iElement< group->getNbElements() ;++iElement) {
