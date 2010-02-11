@@ -138,7 +138,7 @@ void Homology::findGenerators(std::string fileName)
 			       chains->getTorsion(j,i));
       t1 = Cpu();
       int start = chain->getSize();
-      chain->smoothenChain();
+      //chain->smoothenChain();
       t2 = Cpu();
       Msg::Info("Smoothened H%d %d from %d cells to %d cells (%g s).", 
 		j, i, start, chain->getSize(), t2 - t1);

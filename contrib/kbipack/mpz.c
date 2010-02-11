@@ -19,11 +19,13 @@
 
 #if ! defined(HAVE_GMP)
 
+#include "GmshMessage.cpp"
 #include "limits.h"
 
 void overflow()
 {
   printf("ERROR: Integer overflow detected! Compile with GMP library to fix this. \n");
+  Msg::Error("Integer overflow detected! Compile with GMP library to fix this. \n");
 }
 
 long int addcheck(long int a, long int b){
