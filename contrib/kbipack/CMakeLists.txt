@@ -8,7 +8,7 @@ set(SRC
   gmp_matrix_io.c
   gmp_matrix.c
   gmp_blas.c
-  mpz.c
+  mpz.cpp
 )
 
 file(GLOB_RECURSE HDR RELATIVE ${CMAKE_SOURCE_DIR}/contrib/kbipack *.h)
