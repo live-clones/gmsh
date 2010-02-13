@@ -41,7 +41,7 @@ typedef struct
    responsible for sufficient supply. */
 gmp_matrix * 
 create_gmp_matrix(size_t rows, size_t cols, 
-		  const mpz_t * elems);
+		  mpz_t * elems);
 gmp_matrix * 
 create_gmp_matrix_int(size_t rows, size_t cols, 
 		  const long int * elems);

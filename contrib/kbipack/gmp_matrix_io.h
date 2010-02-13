@@ -31,7 +31,7 @@
 #include "gmp_matrix.h"
 
 gmp_matrix * gmp_matrix_read_coord(char* filename);
-int          gmp_matrix_write_coord(char* filename, const gmp_matrix * M);
+int          gmp_matrix_write_coord(char* filename, gmp_matrix * M);
 
 
 #endif

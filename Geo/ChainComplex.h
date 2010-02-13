@@ -27,15 +27,11 @@
 
 
 #if defined(HAVE_GMP) 
-#include "gmp.h"
-extern "C" {
+  #include "gmp.h"
   #include "gmp_normal_form.h"
-}
 #else
-extern "C" {
   #include "mpz.h"
   #include "gmp_normal_form.h"
-}
 #endif
 
 // A class representing a chain complex of a cell complex.

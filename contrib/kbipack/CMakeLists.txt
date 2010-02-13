@@ -4,10 +4,10 @@
 # bugs and problems to <gmsh@geuz.org>.
 
 set(SRC
-  gmp_normal_form.c
-  gmp_matrix_io.c
-  gmp_matrix.c
-  gmp_blas.c
+  gmp_normal_form.cpp
+  gmp_matrix_io.cpp
+  gmp_matrix.cpp
+  gmp_blas.cpp
   mpz.cpp
 )
 

@@ -47,19 +47,19 @@ gmp_blas_scal(size_t n, mpz_t a, mpz_t * x, size_t incx);
 
 /* y <- x */
 void 
-gmp_blas_copy(size_t n, const mpz_t * x, size_t incx, mpz_t * y, size_t incy); 
+gmp_blas_copy(size_t n, mpz_t * x, size_t incx, mpz_t * y, size_t incy); 
 
 /* y <- ax + y */
 void 
 gmp_blas_axpy(size_t n, mpz_t a, 
-	      const mpz_t * x, size_t incx, 
+	      mpz_t * x, size_t incx, 
 	      mpz_t * y,       size_t incy); 
 
 /* d <- x^T y The integer * d has to be initialized by e.g. mpz_init() ! */
 void
 gmp_blas_dot(mpz_t * d, size_t n, 
-	     const mpz_t * x, size_t incx, 
-	     const mpz_t * y, size_t incy); 
+	     mpz_t * x, size_t incx, 
+	     mpz_t * y, size_t incy); 
 
 
 /* Givens rotations are obviously impossible. However, the extended Euclid  
@@ -92,12 +92,12 @@ void gmp_blas_rot(size_t n,
 /* Returns k such that x[(k-1)*incx] != 0 holds for the first time. 
    In FORTRAN, this is x((k-1)*incx + 1) .NE. 0.
    If none found, returns n+1. */
-size_t gmp_blas_inz  (size_t n, const mpz_t * x, size_t incx);
+size_t gmp_blas_inz  (size_t n, mpz_t * x, size_t incx);
 
 /* Similarly, x[(k-1)*incx] is maximal by modulus */
-size_t gmp_blas_iamax(size_t n, const mpz_t * x, size_t incx);
+size_t gmp_blas_iamax(size_t n, mpz_t * x, size_t incx);
 
 /* Similarly, x[(k-1)*incx] is nonzero and minimal by modulus */
-size_t gmp_blas_iamin(size_t n, const mpz_t * x, size_t incx);
+size_t gmp_blas_iamin(size_t n, mpz_t * x, size_t incx);
 
 #endif

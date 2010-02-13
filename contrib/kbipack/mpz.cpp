@@ -19,7 +19,7 @@
 
 #if ! defined(HAVE_GMP)
 
-#include "GmshMessage.cpp"
+#include "GmshMessage.h"
 #include "limits.h"
 
 void overflow()
