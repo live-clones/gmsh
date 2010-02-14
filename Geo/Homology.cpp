@@ -124,11 +124,11 @@ void Homology::findGenerators(std::string fileName)
   int HRank[4];
   for(int j = 0; j < 4; j++){
     HRank[j] = 0;
-    std::string dimension;
+    std::string dimension = "";
     convert(j, dimension);
     for(int i = 1; i <= chains->getBasisSize(j); i++){
       
-      std::string generator;
+      std::string generator = "";
       convert(i, generator);
       
       std::string name = "H" + dimension + getDomainString()  + generator;
@@ -136,12 +136,12 @@ void Homology::findGenerators(std::string fileName)
 			       chains->getCoeffVector(j,i), 
 			       _cellComplex, _model, name, 
 			       chains->getTorsion(j,i));
-      t1 = Cpu();
+      /*t1 = Cpu();
       int start = chain->getSize();
       chain->smoothenChain();
       t2 = Cpu();
       Msg::Info("Smoothened H%d %d from %d cells to %d cells (%g s).", 
-		j, i, start, chain->getSize(), t2 - t1);
+      j, i, start, chain->getSize(), t2 - t1);*/
       if(chain->getSize() != 0) {
         HRank[j] = HRank[j] + 1;
         if(chain->getTorsion() != 1){
@@ -227,12 +227,12 @@ void Homology::findDualGenerators(std::string fileName)
   int HRank[4];
   for(int i = 0; i < 4; i++) HRank[i] = 0;
   for(int j = 3; j > -1; j--){
-    std::string dimension;
+    std::string dimension = "";
     convert(dim-j, dimension);
 
     for(int i = 1; i <= chains->getBasisSize(j); i++){
       
-      std::string generator;
+      std::string generator = "";
       convert(i, generator);
       
       std::string name = "H" + dimension + "*" + getDomainString() + generator;
