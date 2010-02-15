@@ -71,7 +71,7 @@ for i=1,2 do
     end
     if (i % 100 == 0) then 
        DG:exportSolution(string.format("output/cyl-%06d", i)) 
-       DG:saveSolution(string.format("output/cyl-%06d.bin", i)) 
+--       DG:saveSolution(string.format("output/cyl-%06d.bin", i)) 
     end
 end
 

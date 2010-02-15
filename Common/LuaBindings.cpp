@@ -6,6 +6,8 @@
 #include "Context.h"
 #include "MVertex.h"
 #include "MElement.h"
+#include "GFace.h"
+#include "DivideAndConquer.h"
 #include "Bindings.h"
 #include "dgSystemOfEquations.h"
 #include "luaFunction.h"
@@ -234,6 +236,7 @@ binding::binding(){
   }
   _instance=this;
   L = lua_open();
+  /*
   luaopen_base(L);
   luaopen_table(L);
   luaopen_os(L);
@@ -241,12 +244,19 @@ binding::binding(){
   luaopen_string(L);
   luaopen_math(L);
   luaopen_debug(L);
+  */
+  luaL_openlibs(L);
 
   lua_register(L,"help",luaHelp);
   #ifdef HAVE_READLINE
   lua_register(L,"saveHistory",luaSave);
   lua_register(L,"clearHistory",luaClear);
   #endif
+
+  //  lua_pushcfunction(L, luaopen_io);
+  //  lua_call(L, 0, 0);
+
+ 
 
   // Register Lua bindings
   GModel::registerBindings(this);
@@ -263,6 +273,9 @@ binding::binding(){
   function::registerDefaultFunctions();
   MVertex::registerBindings(this);
   MElement::registerBindings(this);
+  DocRecord::registerBindings(this);
+  GEntity::registerBindings(this);
+  GFace::registerBindings(this);
 }
 binding *binding::_instance=NULL;
 #endif

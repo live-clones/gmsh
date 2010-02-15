@@ -301,6 +301,11 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
     ++itvx;
   }
  
+  // add _additional_vertices 
+  all_vertices.insert(gf->_additional_vertices.begin(),
+		      gf->_additional_vertices.end());
+
+
   if(all_vertices.size() < 3){
     Msg::Warning("Mesh Generation of Model Face %d Skipped: "
                  "Only %d Mesh Vertices on The Contours",
@@ -478,7 +483,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
 
     if(RECUR_ITER > 0)
       Msg::Warning(":-) Gmsh was able to recover all edges after %d iterations",
-                   RECUR_ITER);
+                   RECUR_ITER);    
     
     Msg::Debug("Boundary Edges recovered for surface %d", gf->tag());
      
@@ -1234,7 +1239,7 @@ void deMeshGFace::operator() (GFace *gf)
   gf->meshStatistics.nbTriangle = gf->meshStatistics.nbEdge = 0;
 }
 
-int debugSurface = -1;
+int debugSurface = -100;
 
 void meshGFace::operator() (GFace *gf)
 {

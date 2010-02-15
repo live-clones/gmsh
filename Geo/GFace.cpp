@@ -17,6 +17,7 @@
 #include "Numeric.h"
 #include "GaussLegendre1D.h"
 #include "Context.h"
+#include "meshGFaceLloyd.h"
 
 #define SQU(a)      ((a)*(a))
 
@@ -1044,3 +1045,22 @@ bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
   }
   return true;
 }
+
+void GFace::lloyd(int nbiter, int infn){
+  lloydAlgorithm algo(nbiter, infn);
+  algo(this);
+}
+
+#include "Bindings.h"
+
+void GFace::registerBindings(binding *b)
+{
+  classBinding *cb = b->addClass<GFace>("GFace");
+  cb->setParentClass<GEntity>();
+  cb->setDescription("A Geometrical Face.");
+  methodBinding *cm;
+  cm = cb->addMethod("lloyd", &GFace::lloyd);
+  cm->setDescription("do N iteration of Lloyd's algorithm using or not the infinite norm");
+  cm->setArgNames("N","infiniteNorm",NULL);
+}
+

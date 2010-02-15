@@ -22,6 +22,7 @@ class GRegion;
 class MVertex;
 class MElement;
 class VertexArray;
+class binding;
 
 // A geometric model entity.
 class GEntity {
@@ -266,6 +267,10 @@ class GEntity {
 
   // get the mesh vertex at the given index
   MVertex *getMeshVertex(unsigned int index) { return mesh_vertices[index]; }
+
+  // bindings
+  static void registerBindings(binding *b);
+
 };
 
 class GEntityLessThan {

@@ -62,6 +62,8 @@ double inv2x2(double mat[2][2], double inv[2][2]);
 double angle_02pi(double A3);
 double angle_plan(double V[3], double P1[3], double P2[3], double n[3]);
 double triangle_area(double p0[3], double p1[3], double p2[3]);
+double triangle_area2d(double p0[2], double p1[2], double p2[2]);
+double triangle_polar_inertia(double p0[2], double p1[2], double p2[2]);
 void circumCenterXY(double *p1, double *p2, double *p3, double *res);
 void circumCenterXYZ(double *p1, double *p2, double *p3, double *res, double *uv=0);
 char float2char(float f);

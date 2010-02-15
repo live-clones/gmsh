@@ -197,8 +197,7 @@ class fullMatrix
       for(int j = j0, destj = destj0; j < j0 + nj; j++, destj++)
         (*this)(desti, destj) = a(i, j);
   }
-  void mult(const fullMatrix<scalar> &b, fullMatrix<scalar> &c)const
-#if !defined(HAVE_BLAS)
+  void mult_naive(const fullMatrix<scalar> &b, fullMatrix<scalar> &c)const
   {
     c.scale(0.);
     for(int i = 0; i < _r; i++)
@@ -206,17 +205,29 @@ class fullMatrix
         for(int k = 0; k < _c; k++)
           c._data[i + _r * j] += (*this)(i, k) * b(k, j);
   }
+  ;
+  void mult(const fullMatrix<scalar> &b, fullMatrix<scalar> &c)const
+#if !defined(HAVE_BLAS)
+  {
+    mult_naive(b,c);
+  }
 #endif
+  ;
+  void gemm_naive(const fullMatrix<scalar> &a, const fullMatrix<scalar> &b, 
+		  scalar alpha=1., scalar beta=1.)
+  {
+    fullMatrix<scalar> temp(a.size1(), b.size2());
+    a.mult_naive(b, temp);
+    temp.scale(alpha);
+    scale(beta);
+    add(temp);
+  }
   ;
   void gemm(const fullMatrix<scalar> &a, const fullMatrix<scalar> &b, 
             scalar alpha=1., scalar beta=1.)
 #if !defined(HAVE_BLAS)
   {
-    fullMatrix<scalar> temp(a.size1(), b.size2());
-    a.mult(b, temp);
-    temp.scale(alpha);
-    scale(beta);
-    add(temp);
+    gemm_naive(anb,alpha,beta);
   }
 #endif
   ;

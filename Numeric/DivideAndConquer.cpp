@@ -19,7 +19,6 @@
 #include "DivideAndConquer.h"
 #include "Numeric.h"
 #include "robustPredicates.h"
-#include "MallocUtils.h"
 
 #define Pred(x) ((x)->prev)
 #define Succ(x) ((x)->next)
@@ -334,7 +333,7 @@ int DocRecord::DListInsert(DListRecord **dlist, DPoint center, PointNumero newPo
   double alpha1, alpha, beta, xx, yy;
   int first;
 
-  newp = (DListRecord *) Malloc(sizeof(DListRecord));
+  newp = new DListRecord;
   newp->point_num = newPoint;
 
   if(*dlist == NULL) {
@@ -406,7 +405,7 @@ int DocRecord::DListDelete(DListPeek *dlist, PointNumero oldPoint)
     return 0;
   if(Succ(*dlist) == *dlist) {
     if((*dlist)->point_num == oldPoint) {
-      Free(*dlist);
+      delete *dlist;
       *dlist = NULL;
       return 1;
     }
@@ -421,7 +420,7 @@ int DocRecord::DListDelete(DListPeek *dlist, PointNumero oldPoint)
       if(p == *dlist) {
         *dlist = Succ(p);
       }
-      Free(p);
+      delete p;
       return 1;
     }
     p = Succ(p);
@@ -440,10 +439,10 @@ int DocRecord::Delete(PointNumero a, PointNumero b)
 }
 
 // compte les points sur le polygone convexe
-int DocRecord::CountPointsOnHull(int n)
+int DocRecord::CountPointsOnHull()
 {
   PointNumero p, p2, temp;
-  int i;
+  int i, n=numPoints;
 
   if(points[0].adjacent == NULL)
     return 0;
@@ -459,6 +458,26 @@ int DocRecord::CountPointsOnHull(int n)
   return (i <= n) ? i : -1;
 }
 
+// compte les points sur le polygone convexe
+void DocRecord::ConvexHull()
+{
+  PointNumero p, p2, temp;
+
+  if(points[0].adjacent == NULL)
+    return;
+  int count = 0;
+  p = 0;
+  _hull[count++] = p;
+  p2 = First(0);
+  while((p2 != 0) && (count < numPoints)) {
+    temp = p2;
+    p2 = Successor(p2, p);
+    p = temp;
+    _hull[count++] = p;
+  }
+}
+
+
 PointNumero *DocRecord::ConvertDlistToArray(DListPeek *dlist, int *n)
 {
   DListPeek p, temp;
@@ -470,7 +489,7 @@ PointNumero *DocRecord::ConvertDlistToArray(DListPeek *dlist, int *n)
     max++;
     p = Pred(p);
   } while(p != *dlist);
-  ptr = (PointNumero *) Malloc((max + 1) * sizeof(PointNumero));
+  ptr = new PointNumero[max + 1];
   if(ptr == NULL)
     return NULL;
   p = *dlist;
@@ -478,12 +497,191 @@ PointNumero *DocRecord::ConvertDlistToArray(DListPeek *dlist, int *n)
     ptr[i] = p->point_num;
     temp = p;
     p = Pred(p);
-    Free(temp);
+    delete temp;
   }
   ptr[max] = ptr[0];
   *dlist = NULL;
   *n = max;
   return ptr;
+}
+
+// build ready to use voronoi datas
+void DocRecord::ConvertDListToVoronoiData()
+{
+  if (_adjacencies){
+    for(int i = 0; i < numPoints; i++)
+      if (_adjacencies[i].t) 
+	delete [] _adjacencies[i].t;
+    delete [] _adjacencies;
+  }  
+  if (_hull)delete [] _hull;
+  _hullSize = CountPointsOnHull ();
+  _hull = new PointNumero[_hullSize];
+  ConvexHull();
+  std::sort(_hull, _hull+_hullSize);
+  _adjacencies = new STriangle[numPoints];
+  
+  for(PointNumero i = 0; i < numPoints; i++) 
+    _adjacencies[i].t = ConvertDlistToArray(&points[i].adjacent,
+					    &_adjacencies[i].t_length);    
+
+}
+
+void DocRecord::voronoiCell (PointNumero pt, std::vector<SPoint2> &pts) const {
+
+  if (!_adjacencies){
+    printf("no adjacencies were created\n");
+    throw;
+  }
+  const int n = _adjacencies[pt].t_length;
+  for(int j = 0; j < n; j++) {
+    PointNumero a = _adjacencies[pt].t[j];
+    PointNumero b = _adjacencies[pt].t[(j+1) %n];
+    double pa[2] = {(double)points[a].where.h, (double)points[a].where.v};
+    double pb[2] = {(double)points[b].where.h, (double)points[b].where.v};
+    double pc[2] = {(double)points[pt].where.h, (double)points[pt].where.v};
+    double center[2];
+    circumCenterXY (pa,pb,pc,center);
+    pts.push_back(SPoint2(center[0],center[1]));
+  }
+}
+
+/*
+  Consider N points {X_1, \dots, X_N}
+  We want to find the point X_P that verifies
+  
+  min max | X_i - X_P | , i=1,\dots,N
+
+  L2 norm
+
+  min \int_V || X - X_P||^2 dv 
+
+  =>  2 \int_V || X - X_P|| dv = 0 => X_P is the centroid 
+
+  min \int_V || X - X_P||^{2m} dv 
+
+  =>  2 \int_V || X - X_P||^{2m-1} dv = 0 => X_P is somewhere ...
+
+  now in infinite norm, how to find X_P ?
+
+*/
+
+void DocRecord::makePosView(std::string fileName) {
+  FILE *f = fopen(fileName.c_str(),"w");
+   if (_adjacencies){
+    fprintf(f,"View \"voronoi\" {\n");
+    for(PointNumero i = 0; i < numPoints; i++) {
+      std::vector<SPoint2> pts;
+      double pc[2] = {(double)points[i].where.h, (double)points[i].where.v};
+      if (!onHull(i)){
+	fprintf(f,"SP(%g,%g,%g)  {%g};\n",pc[0],pc[1],0.0,(double)i);
+	voronoiCell (i,pts);
+	for (int j=0;j<pts.size();j++){
+	  fprintf(f,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
+		  pts[j].x(),pts[j].y(),0.0,
+		  pts[(j+1)%pts.size()].x(),pts[(j+1)%pts.size()].y(),0.0,
+		  (double)i,(double)i);
+	}
+      }
+      else {
+	fprintf(f,"SP(%g,%g,%g)  {%g};\n",pc[0],pc[1],0.0,-(double)i);
+      }
+    }
+    fprintf(f,"};\n");    
+  }
+  fclose(f);
+}
+
+void centroidOfOrientedBox(std::vector<SPoint2> &pts,
+			   const double &angle,
+			   double &xc, 
+			   double &yc, 
+			   double &inertia) {  
+  const int N = pts.size();
+  
+  double sina = sin(angle);
+  double cosa = cos(angle);
+  
+  double xmin = cosa* pts[0].x()+ sina*pts[0].y();
+  double xmax = cosa* pts[0].x()+ sina*pts[0].y();
+  double ymin = -sina* pts[0].x()+ cosa*pts[0].y();
+  double ymax = -sina* pts[0].x()+ cosa*pts[0].y();
+  for (int j=1;j<N;j++){
+    xmin = std::min(cosa* pts[j].x()+ sina*pts[j].y(),xmin);
+    ymin = std::min(-sina* pts[j].x()+ cosa*pts[j].y(),ymin);
+    xmax = std::max(cosa* pts[j].x()+ sina*pts[j].y(),xmax);
+    ymax = std::max(-sina* pts[j].x()+ cosa*pts[j].y(),ymax);
+  }
+  double XC = 0.5*(xmax+xmin);
+  double YC = 0.5*(ymax+ymin);
+  xc = XC*cosa - YC *sina;
+  yc = XC*sina + YC *cosa;
+  inertia = std::max(xmax-xmin,ymax-ymin);
+}
+
+void centroidOfPolygon(SPoint2 &pc,
+		       std::vector<SPoint2> &pts,
+		       double &xc, 
+		       double &yc,
+		       double &inertia) {
+  double area_tot = 0;
+  SPoint2 center(0,0);
+  for (int j=0;j<pts.size();j++){
+    SPoint2 &pa =pts[j];
+    SPoint2 &pb =pts[(j+1)%pts.size()];
+    const double area  = triangle_area2d(pa,pb,pc);     
+    area_tot += area;
+    center += ((pa+pb+pc) * (area/3.0));
+  }
+  SPoint2 x = center * (1.0/area_tot);
+  inertia = 0;
+  for (int j=0;j<pts.size();j++){
+    SPoint2 &pa =pts[j];
+    SPoint2 &pb =pts[(j+1)%pts.size()];
+    const double area  = triangle_area2d(pa,pb,pc);     
+    
+    const double b = sqrt (  (pa.x()-pb.x())*(pa.x()-pb.x()) + 
+			     (pa.y()-pb.y())*(pa.y()-pb.y()) );
+    const double h = 2.0 * area / b;
+    const double a = fabs((pb.x()-pa.x())*(pc.x()-pa.x())*
+			  (pb.y()-pa.y())*(pc.y()-pa.y()))/b;
+    
+    const double j2 = (h*b*b*b + h*a*b*b + h*a*a*b + b*h*h*h) / 12.0;
+    
+    center = (pa+pb+pc) * (1.0/3.0);
+    const SPoint2 dx = x - center;
+    inertia += j2 + area*area*(dx.x()+dx.x()+dx.y()*dx.y());
+  }
+  xc = x.x();
+  yc = x.y();
+}
+
+double  DocRecord::Lloyd(int type) {
+  fullMatrix<double> cgs(numPoints,2);
+  double inertia_tot;
+  for(PointNumero i = 0; i < numPoints; i++) {
+    PointRecord &pt = points[i];
+    std::vector<SPoint2> pts;
+    voronoiCell (i,pts); 
+    double E;
+    
+    if (!points[i].data){
+      SPoint2 p (pt.where.h,pt.where.v);
+      if (type == 0)	
+	centroidOfPolygon (p,pts, cgs(i,0), cgs(i,1),E);	      
+      else 
+	centroidOfOrientedBox (pts, 0.0, cgs(i,0),cgs(i,1),E);	  
+    }
+    inertia_tot += E;
+  } 
+  
+  for(PointNumero i = 0; i < numPoints; i++) {
+    if (!points[i].data){
+      points[i].where.h = cgs(i,0);
+      points[i].where.v = cgs(i,1);
+    }
+  }
+  return inertia_tot;
 }
 
 // Convertir les listes d'adjacence en triangles
@@ -495,14 +693,15 @@ int DocRecord::ConvertDListToTriangles()
   int count = 0, count2 = 0;
   PointNumero aa, bb, cc;
 
-  STriangle *striangle = (STriangle *) Malloc(n * sizeof(STriangle));
+  STriangle *striangle = new STriangle[n];
 
-  count2 = CountPointsOnHull(n);
+  count2 = CountPointsOnHull();
 
   // nombre de triangles que l'on doit obtenir
   count2 = 2 * (n - 1) - count2;
 
-  triangles = (Triangle *) Malloc(2 * count2 * sizeof(Triangle));
+  // FIXME ::: WHY 2 * ???????????????????
+  triangles = new Triangle[2 * count2];
 
   for(i = 0; i < n; i++) {
     // on cree une liste de points connectes au point i (t) + nombre
@@ -530,8 +729,8 @@ int DocRecord::ConvertDListToTriangles()
   numTriangles = count2;
 
   for(int i = 0; i < n; i++)
-    Free(striangle[i].t);
-  Free(striangle);
+    delete [] striangle[i].t;
+  delete striangle;
 
   return 1;
 }
@@ -548,23 +747,29 @@ void DocRecord::RemoveAllDList()
       do {
         temp = p;
         p = Pred(p);
-        Free(temp);
+        delete temp;
       } while(p != points[i].adjacent);
       points[i].adjacent = NULL;
     }
 }
 
 DocRecord::DocRecord(int n) 
-  : numPoints(n), points(NULL), numTriangles(0), triangles(NULL)
+  : numPoints(n), points(NULL), numTriangles(0), triangles(NULL), _hullSize(0), _hull(NULL),_adjacencies(NULL)
 {
   if(numPoints)
-    points = (PointRecord*)Malloc(numPoints * sizeof(PointRecord));
+    points = new PointRecord[numPoints];
 }
 
 DocRecord::~DocRecord()
 {
-  if(points) Free(points);
-  if(triangles) Free(triangles);
+  if(points) delete [] points;
+  if(triangles) delete []triangles;
+  if(_hull) delete [] _hull;
+  if (_adjacencies){
+    for(int i = 0; i < numPoints; i++)
+      delete [] _adjacencies[i].t;
+    delete _adjacencies;
+  }
 }
 
 void DocRecord::MakeMeshWithPoints()
@@ -574,4 +779,50 @@ void DocRecord::MakeMeshWithPoints()
   ConvertDListToTriangles();
   RemoveAllDList();
 }
+
+void DocRecord::Voronoi()
+{
+  if(numPoints < 3) return;
+  BuildDelaunay();
+  ConvertDListToVoronoiData();
+}
+
+void DocRecord::setPoints(fullMatrix<double> *p){ 
+  if (numPoints != p->size1())throw;
+  for (int i=0;i<p->size1();i++){
+    x(i) = (*p)(i,0);
+    y(i) = (*p)(i,1);
+    data(i) = (*p)(i,2) < 0  ? (void *) 1 : NULL;
+  }
+} 
+
+
+#include "Bindings.h"
+
+void DocRecord::registerBindings(binding *b)
+{
+  classBinding *cb = b->addClass<DocRecord>("Triangulator");
+  cb->setDescription("A class that does 2D delaunay triangulation (JF's SANDBOX for the moment)");
+  methodBinding *cm;
+
+  cm = cb->addMethod("setPoints", &DocRecord::setPoints);
+  cm->setDescription("Set the NumPoints points of the triangulation (x,y,fixed)");
+  cm->setArgNames("points",NULL);
+  cm = cb->addMethod("Triangulate", &DocRecord::MakeMeshWithPoints);
+  cm->setDescription("Compute the Delaunay triangulation");
+  cm = cb->addMethod("Voronoi", &DocRecord::Voronoi);
+  cm->setDescription("Compute the Voronoi cells");
+  cm = cb->addMethod("hullSize", &DocRecord::hullSize);
+  cm->setDescription("returns the size of the hull");
+  cm = cb->addMethod("makePosView", &DocRecord::makePosView);
+  cm->setDescription("save a .pos file with the voronoi");
+  cm->setArgNames("FileName",NULL);
+  cm = cb->addMethod("Lloyd", &DocRecord::Lloyd);
+  cm->setDescription("do one iteration of Lloyd's algorithm");
+  cm->setArgNames("Type",NULL);
+  cm = cb->setConstructor<DocRecord,int>();
+  cm->setDescription ("A Triangulator");
+  cm->setArgNames("NumPoints",NULL);
+}
+
 

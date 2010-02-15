@@ -13,6 +13,7 @@ set(SRC
     meshGFaceExtruded.cpp 
     meshGFaceBDS.cpp 
     meshGFaceDelaunayInsertion.cpp 
+    meshGFaceLloyd.cpp 
     meshGFaceOptimize.cpp 
     meshGFaceQuadrilateralize.cpp 
     meshGRegion.cpp 

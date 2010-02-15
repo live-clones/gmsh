@@ -5,7 +5,13 @@
 
 #ifndef _DIVIDE_AND_CONQUER_H_
 #define _DIVIDE_AND_CONQUER_H_
+#include <vector>
+#include <algorithm>
+#include "fullMatrix.h"
+#include "SPoint2.h"
 
+class binding;
+class GFace;
 typedef struct _CDLIST DListRecord, *DListPeek;
 typedef int PointNumero;
 
@@ -14,11 +20,12 @@ typedef struct{
   double h;
 }DPoint;
 
-typedef struct{
+struct PointRecord{
   DPoint where;
   DListPeek adjacent;
   void *data;
-}PointRecord;
+  PointRecord () : data (0) , adjacent(0) {}
+};
 
 struct _CDLIST{
   PointNumero point_num;
@@ -46,6 +53,9 @@ typedef struct{
 
 class DocRecord{
  private:
+  int _hullSize;
+  PointNumero *_hull;
+  STriangle * _adjacencies;
   PointNumero Predecessor(PointNumero a, PointNumero b);
   PointNumero Successor(PointNumero a, PointNumero b);
   int FixFirst(PointNumero x, PointNumero f);
@@ -57,15 +67,17 @@ class DocRecord{
   int Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k);
   int Merge(DT vl, DT vr);
   DT RecurTrig(PointNumero left, PointNumero right);
-  int BuildDelaunay();
   int DListInsert(DListRecord **dlist, DPoint center, PointNumero newPoint);
   int Insert(PointNumero a, PointNumero b);
   int DListDelete(DListPeek *dlist, PointNumero oldPoint);
   int Delete(PointNumero a, PointNumero b);
-  int CountPointsOnHull(int n);
   PointNumero *ConvertDlistToArray(DListPeek *dlist, int *n);
   int ConvertDListToTriangles();
+  void ConvertDListToVoronoiData();
   void RemoveAllDList();
+  int BuildDelaunay();
+  int CountPointsOnHull();
+  void ConvexHull();
  public:
   int numPoints;        // number of points
   PointRecord *points;  // points to triangulate
@@ -74,8 +86,29 @@ class DocRecord{
   DocRecord(int n);
   double &x(int i){ return points[i].where.v; } 
   double &y(int i){ return points[i].where.h; } 
+  void*  &data(int i){ return points[i].data; } 
+  void setPoints(fullMatrix<double> *p);
   ~DocRecord();
   void MakeMeshWithPoints();
+  void Voronoi ();
+  int hullSize() {return _hullSize;}
+  int onHull(PointNumero i) {return std::binary_search(_hull, _hull+_hullSize, i);}
+  void makePosView(std::string);
+  double Lloyd (int);
+  void voronoiCell (PointNumero pt, std::vector<SPoint2> &pts) const;
+  static void registerBindings(binding *b);
 };
+
+void centroidOfOrientedBox(std::vector<SPoint2> &pts,
+			   const double &angle,
+			   double &xc, 
+			   double &yc, 
+			   double &inertia);
+void centroidOfPolygon(SPoint2 &pc,
+		       std::vector<SPoint2> &pts,
+		       double &xc, 
+		       double &yc,
+		       double &inertia);
+
 
 #endif

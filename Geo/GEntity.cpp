@@ -64,3 +64,25 @@ std::string GEntity::getInfoString()
 
   return sstream.str();
 }
+
+#include "Bindings.h"
+
+void GEntity::registerBindings(binding *b)
+{
+  classBinding *cb = b->addClass<GEntity>("GEntity");
+  cb->setDescription("A GEntity is a geometrical entity of the model.");
+
+  methodBinding *cm;
+  cm = cb->addMethod("model", &GEntity::model);
+  cm->setDescription("returns the geometric model the entity belongs to.");
+
+  /*
+  cm = cb->addMethod("getNumMeshElements", (unsigned int (GEntity::*)() )  &GEntity::getNumMeshElements);
+  cm->setDescription("Return the number of elements of the mesh of the entity.");
+  cm = cb->addMethod("getMeshElement", &GEntity::getMeshElement);
+  cm->setDescription("returns the ith MElement.");
+  cm->setArgNames("i",NULL);
+  */
+
+}
+

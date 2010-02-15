@@ -818,6 +818,8 @@ void MElement::registerBindings(binding *b)
   cm->setArgNames("i",NULL);
   cm = cb->addMethod("getType", &MElement::getType);
   cm->setDescription("get the type of the element");
+  cm = cb->addMethod("getTypeForMSH", &MElement::getTypeForMSH);
+  cm->setDescription("get the gmsh type of the element");
   cm = cb->addMethod("getPartition", &MElement::getPartition);
   cm->setDescription("get the partition to which the element belongs");
   cm = cb->addMethod("getPolynomialOrder", &MElement::getPolynomialOrder);

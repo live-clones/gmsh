@@ -281,6 +281,21 @@ double triangle_area(double p0[3], double p1[3], double p2[3])
   return 0.5 * sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
 }
 
+double triangle_area2d(double p0[2], double p1[2], double p2[2])
+{
+  const double c =  
+    (p2[0] - p1[0])*(p0[1] - p1[1]) - 
+    (p2[1] - p1[1])*(p0[0] - p1[0]);
+
+  return 0.5 * sqrt(c*c);
+}
+
+double triangle_polar_inertia(double p0[2], double p1[2], double p2[2])
+{
+  throw;
+}
+
+
 void circumCenterXY(double *p1, double *p2, double *p3, double *res)
 {
   double d, a1, a2, a3;
@@ -294,7 +309,7 @@ void circumCenterXY(double *p1, double *p2, double *p3, double *res)
 
   d = 2. * (double)(y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2));
   if(d == 0.0) {
-    Msg::Warning("Colinear points in circum circle computation");
+    //    Msg::Warning("Colinear points in circum circle computation");
     res[0] = res[1] = -99999.;
     return ;
   }

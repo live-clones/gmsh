@@ -1372,6 +1372,9 @@ void GModel::registerBindings(binding *b)
   cm = cb->addMethod("getMeshVertexByTag",&GModel::getMeshVertexByTag);
   cm->setDescription("access a mesh vertex by tag, using the vertex cache");
   cm->setArgNames("tag",NULL);
+  cm = cb->addMethod("getFaceByTag",&GModel::getFaceByTag);
+  cm->setDescription("access a model face by its tag");
+  cm->setArgNames("tag",NULL);
   cm = cb->setConstructor<GModel>();
   cm->setDescription("Create an empty GModel.");
 }

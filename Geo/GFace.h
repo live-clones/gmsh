@@ -238,6 +238,9 @@ class GFace : public GEntity
   bool fillPointCloud(double maxDist, std::vector<SPoint3> *points,
                       std::vector<SVector3> *normals=0);
 
+  // apply Lloyd's algorithm to the mesh
+  void lloyd (int nIter, int infNorm = 0); 
+
   struct {
     // do we recombine the triangles of the mesh?
     int recombine;
@@ -285,6 +288,16 @@ class GFace : public GEntity
   std::vector<MTriangle*> triangles;
   std::vector<MQuadrangle*> quadrangles;
   std::vector<MPolygon*> polygons;
+
+  // an array with additional vertices that are supposed to exist
+  // in the final mesh of the model face. This can be used for 
+  // boundary layer meshes or when using Lloyd-like smoothing algorithms
+  // those vertices are classifed on this GFace, their type is MFaceVertex.
+  // After mesh generation, those are moved to the mesh_vertices array 
+  std::vector<MVertex*> _additional_vertices;
+  
+
+  static void registerBindings(binding *b);
 };
 
 #endif
