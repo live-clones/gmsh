@@ -181,7 +181,7 @@ class Chain{
   
   
  public:
-  Chain(){}
+  Chain() {}
   Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, 
 	CellComplex* cellComplex, GModel* model,
 	std::string name="Chain", int torsion=0);
@@ -193,7 +193,7 @@ class Chain{
     _dim = chain->getDim();
     _model = chain->getGModel();
   }
-  ~Chain(){}
+  ~Chain() {}
    
   typedef std::map<Cell*, int, Less_Cell>::iterator citer;
    
@@ -208,11 +208,11 @@ class Chain{
   int getCoeff(Cell* c);
   
   
-  int getTorsion() {return _torsion;}
-  int getDim() {return _dim;}
-  CellComplex* getCellComplex() {return _cellComplex;}
-  GModel* getGModel() {return _model;}
-  std::map<Cell*, int, Less_Cell>  getCells() {return _cells;}
+  int getTorsion() { return _torsion; }
+  int getDim() { return _dim; }
+  CellComplex* getCellComplex() { return _cellComplex; }
+  GModel* getGModel() { return _model; }
+  std::map<Cell*, int, Less_Cell>  getCells() { return _cells; }
   
   // erase cells from the chain with zero coefficient
   void eraseNullCells();

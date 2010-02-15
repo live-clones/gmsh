@@ -136,12 +136,12 @@ void Homology::findGenerators(std::string fileName)
 			       chains->getCoeffVector(j,i), 
 			       _cellComplex, _model, name, 
 			       chains->getTorsion(j,i));
-      /*t1 = Cpu();
+      t1 = Cpu();
       int start = chain->getSize();
       chain->smoothenChain();
       t2 = Cpu();
       Msg::Info("Smoothened H%d %d from %d cells to %d cells (%g s).", 
-      j, i, start, chain->getSize(), t2 - t1);*/
+		j, i, start, chain->getSize(), t2 - t1);
       if(chain->getSize() != 0) {
         HRank[j] = HRank[j] + 1;
         if(chain->getTorsion() != 1){

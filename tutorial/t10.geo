@@ -14,7 +14,7 @@
 // Create an example geometry
 
 m=0.5; // mesh characteristic length
-h=1;
+h=2;
 
 Point(newp) = {0, 0, 0, m};
 Point(newp) = {10, 0, 0, m};
