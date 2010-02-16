@@ -72,7 +72,7 @@ law:addBoundaryCondition('Top',law:newOutsideValueBoundary(FS))
 GC=dgGroupCollection(myModel,2,order)
 solution=dgDofContainer(GC,4)
 solution:L2Projection(FS)
-limiter=dgSlopeLimiter(law)
+limiter = dgSlopeLimiter(law)
 -- limiter:apply(solution)
 GC:buildGroupsOfInterfaces(myModel,2,order)
 

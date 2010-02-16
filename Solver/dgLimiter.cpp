@@ -4,7 +4,7 @@
 #include "function.h"
 
 //----------------------------------------------------------------------------------   
-bool dgSlopeLimiter::apply ( dgDofContainer *solution)
+int dgSlopeLimiter::apply ( dgDofContainer *solution)
 {    
   dgGroupCollection *groups=solution->getGroups();
   solution->scatter();
@@ -118,7 +118,7 @@ bool dgSlopeLimiter::apply ( dgDofContainer *solution)
       }
     }
   }  
-  return true; 
+  return 1; 
 }
 
 #include "Bindings.h"
@@ -127,9 +127,9 @@ void dgLimiter::registerBindings(binding *b) {
   classBinding *cb = b->addClass<dgLimiter>("dgLimiter");
   cb->setDescription("Parent class for limiters");
   methodBinding *cm;
-//  cm = cb->addMethod("apply",&dgLimiter::apply);
-//  cm->setArgNames("solution",NULL);
-//  cm->setDescription("apply the limiter on the solution");
+  cm = cb->addMethod("apply",&dgLimiter::apply);
+  cm->setArgNames("solution",NULL);
+  cm->setDescription("apply the limiter on the solution");
 }
 
 void dgSlopeLimiter::registerBindings(binding *b) {
@@ -139,5 +139,6 @@ void dgSlopeLimiter::registerBindings(binding *b) {
   cm = cb->setConstructor<dgSlopeLimiter,dgConservationLaw *>();
   cm->setDescription("A new explicit slope limiter");
   cm->setArgNames("law",NULL);
+  cb->setParentClass<dgLimiter>();
 }
 

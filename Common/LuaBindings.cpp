@@ -20,6 +20,7 @@
 #include "dgConservationLawWaveEquation.h"
 #include "dgRungeKutta.h"
 #include "dgSystemOfEquations.h"
+#include "dgLimiter.h"
 
 extern "C" {
   #include "lua.h"
@@ -282,6 +283,8 @@ binding::binding(){
   DocRecord::registerBindings(this);
   GEntity::registerBindings(this);
   GFace::registerBindings(this);
+  dgLimiter::registerBindings(this);
+  dgSlopeLimiter::registerBindings(this);
 }
 binding *binding::_instance=NULL;
 #endif
