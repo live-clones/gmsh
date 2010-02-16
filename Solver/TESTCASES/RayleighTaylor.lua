@@ -72,29 +72,30 @@ law:addBoundaryCondition('Top',law:newOutsideValueBoundary(FS))
 GC=dgGroupCollection(myModel,2,order)
 solution=dgDofContainer(GC,4)
 solution:L2Projection(FS)
-DG:limitSolution()
-GC:splitGroupsForMultirate(0.0003,law)
+-- limiter=dgSlopeLimiter()
+-- limiter:apply(solution)
 GC:buildGroupsOfInterfaces(myModel,2,order)
 
 print'*** setting the initial solution ***'
 --print'*** export ***'
 
-DG:exportSolution('output/rt_0')
+solution:exportMsh(string.format("output/rt-%06d", 0)) 
 
 print'*** solve ***'
 
 LC = 0.1*.1
 dt = .0003;
 print('DT=',dt)
-
+RK=dgRungeKutta()
+-- RK:setLimiter(limiter)
 for i=1,10000 do
 --    norm = DG:RK44_limiter(dt)
-    norm = DG:RK44(dt)
+    norm = RK:iterate44(law,dt,solution)
     if (i % 10 == 0) then 
        print('*** ITER ***',i,norm)
     end
     if (i % 100 == 0) then 
-       DG:exportSolution(string.format("output/rt-%06d", i)) 
+       solution:exportMsh(string.format("output/rt-%06d", i)) 
     end
 end
 

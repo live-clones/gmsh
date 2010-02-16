@@ -142,7 +142,7 @@ void dgSystemOfEquations::exportSolution(std::string outputFile){
 
 void dgSystemOfEquations::limitSolution(){
   dgLimiter *sl = new dgSlopeLimiter(_claw);
-  sl->apply(*_solution,_groups);
+  sl->apply(*_solution);
 
   delete sl;
 }

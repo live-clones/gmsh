@@ -4,8 +4,9 @@
 #include "function.h"
 
 //----------------------------------------------------------------------------------   
-bool dgSlopeLimiter::apply ( dgDofContainer &solution, dgGroupCollection &groups)
+bool dgSlopeLimiter::apply ( dgDofContainer &solution)
 {    
+  dgGroupCollection &groups=*solution.getGroups();
   solution.scatter();
   int nbFields =_claw->getNbFields();    
 	
@@ -120,3 +121,19 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution, dgGroupCollection &groups
   return true; 
 }
 
+/*
+#include "Bindings.h"
+
+void dgSlopeLimiter::registerBindings(binding *b) {
+  classBinding *cb = b->addClass<dgSlopeLimiter>("dgSlopeLimiter");
+  cb->setDescription("The usual DG slope limiter: keep the mean, reduces uniformly the slope until it does not overshoot the neighbors' mean");
+  methodBinding *cm;
+  cm = cb->setConstructor<dgSlopeLimiter,dgConservationLaw *>();
+  cm->setDescription("A new explicit slope limiter");
+  cm->setArgNames("law",NULL);
+//  cm = cb->addMethod("apply",&dgLimiter::apply);
+//  cm->setArgNames("solution",NULL);
+//  cm->setDescription("apply the limiter on the solution");
+}
+
+*/

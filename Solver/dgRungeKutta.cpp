@@ -49,7 +49,7 @@ double dgRungeKutta::diagonalRK (const dgConservationLaw *claw,
       K.axpy(*sol);
     }
 
-    if (_limiter) _limiter->apply(K, *groups);
+    if (_limiter) _limiter->apply(K);
     dgAlgorithm::residual(*claw,*groups,K,resd);
     K.scale(0.);
     for(int k=0; k < groups->getNbElementGroups(); k++) {
@@ -64,9 +64,10 @@ double dgRungeKutta::diagonalRK (const dgConservationLaw *claw,
     }
     Unp.axpy(K,b[j]*dt);
   }
-  if (_limiter) _limiter->apply(Unp, *groups);
+  if (_limiter) _limiter->apply(Unp);
   sol->scale(0.);
   sol->axpy(Unp);
+  return sol->norm();
 }
 
 dgRungeKutta::dgRungeKutta():_limiter(NULL) {}
@@ -89,4 +90,7 @@ void dgRungeKutta::registerBindings(binding *b) {
   cm = cb->addMethod("iterate44",&dgRungeKutta::iterate44);
   cm->setArgNames("law","dt","solution",NULL);
   cm->setDescription("update solution by doing classical fourth order runge-kutta step of time step dt for the conservation law");
+//  cm = cb->addMethod("setLimiter",&dgRungeKutta::setLimiter);
+//  cm->setArgNames("limiter",NULL);
+//  cm->setDescription("if a limiter is set, it is applied after each RK stage");
 }
