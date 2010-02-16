@@ -37,17 +37,21 @@ class Homology
   
   // generator chains
   std::vector<Chain*> _generators[4];
-   
+  
+  std::string _fileName;
+ 
  public:
   
   Homology(GModel* model, std::vector<int> physicalDomain,
 	   std::vector<int> physicalSubdomain);
   ~Homology();
   
+  void setFileName(std::string fileName) { _fileName = fileName; }
+
   // Find the generators/duals of homology spaces,
   // or just compute the ranks of homology spaces
-  void findGenerators(std::string fileName);
-  void findDualGenerators(std::string fileName);
+  void findGenerators();
+  void findDualGenerators();
   void computeBettiNumbers();
   
   bool swapSubdomain() { return _cellComplex->swapSubdomain(); }
@@ -62,8 +66,10 @@ class Homology
   // to the mesh of the model
   void createPViews();
   // write the generators to a file
-  bool writeGeneratorsMSH(std::string fileName, bool binary=false);
-  
+  bool writeGeneratorsMSH(bool binary=false);
+  bool writeBettiNumbers() { 
+    return _cellComplex->writeBettiNumbers(_fileName); }
+
 };
 
 #endif

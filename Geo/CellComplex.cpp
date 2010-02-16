@@ -7,6 +7,7 @@
 
 #include "CellComplex.h"
 #include "OS.h"
+#include "Context.h"
 
 #if defined(HAVE_KBIPACK)
 
@@ -28,6 +29,7 @@ CellComplex::CellComplex( std::vector<GEntity*> domain,
     if(dim != entity->dim()){
       _multidim = true;
       Msg::Warning("Domain is not a manifold.");
+      break;
     }
   }
   
@@ -124,21 +126,29 @@ void CellComplex::insert_cells(bool subdomain, bool boundary)
   else domain = _domain;
   
   std::vector<MVertex*> vertices;
-  
   std::pair<citer, bool> insertInfo;
 
   // add highest dimensional cells
   for(unsigned int j=0; j < domain.size(); j++) {
     for(unsigned int i=0; i < domain.at(j)->getNumMeshElements(); i++){
       vertices.clear();
-      
-      for(int k=0; k < domain.at(j)->getMeshElement(i)->getNumVertices(); k++){
-        MVertex* vertex = domain.at(j)->getMeshElement(i)->getVertex(k);
+      MElement* element = domain.at(j)->getMeshElement(i);
+
+      for(int k=0; k < element->getNumVertices(); k++){
+        MVertex* vertex = element->getVertex(k);
         vertices.push_back(vertex);
       }
       
-      int dim = domain.at(j)->getMeshElement(i)->getDim();
-      int type = domain.at(j)->getMeshElement(i)->getTypeForMSH();
+      int dim = element->getDim();
+      int type = element->getTypeForMSH();
+      
+      if(CTX::instance()->mesh.radiusSup){
+	double max = CTX::instance()->mesh.radiusSup;
+	double min = CTX::instance()->mesh.radiusInf;
+	double r = element->maxEdge();
+	if(r < min || r > max) continue;
+      }
+
       Cell* cell;
       // simplex types
       if(type == MSH_LIN_2 || type == MSH_TRI_3 || type == MSH_TET_4
@@ -149,25 +159,28 @@ void CellComplex::insert_cells(bool subdomain, bool boundary)
 	 || type == MSH_LIN_6 || type == MSH_TET_20 || type == MSH_TET_35 
 	 || type == MSH_TET_56
          || type == MSH_TET_34 || type == MSH_TET_52 ){
-        cell = new Cell(domain.at(j)->getMeshElement(i), subdomain, boundary);
+        cell = new Cell(element, subdomain, boundary);
       }
       else if(type == MSH_QUA_4 || type == MSH_QUA_8 || type == MSH_QUA_9){
-        cell = new Cell(domain.at(j)->getMeshElement(i), subdomain, boundary);
+        cell = new Cell(element, subdomain, boundary);
         _simplicial = false;
       }     
       else if(type == MSH_HEX_8 || type == MSH_HEX_27 || type == MSH_HEX_20){
-        cell = new Cell(domain.at(j)->getMeshElement(i), subdomain, boundary);
+        cell = new Cell(element, subdomain, boundary);
         _simplicial = false;
       }/* FIXME: no getFaceInfo methods for these MElements
       else if(type == MSH_PRI_6 || type == MSH_PRI_18 || type == MSH_PRI_15){
-        cell = new Cell(domain.at(j)->getMeshElement(i), subdomain, boundary);
+        cell = new Cell(element, subdomain, boundary);
         _simplicial = false;
       }
       else if(type == MSH_PYR_5 || type == MSH_PYR_14 || type == MSH_PYR_13){
-        cell = new Cell(domain.at(j)->getMeshElement(i), subdomain, boundary);
+        cell = new Cell(element, subdomain, boundary);
         _simplicial = false;
       }*/
-      else Msg::Error("Error: mesh element %d not implemented yet! \n", type); 
+      else {
+	Msg::Error("Error: mesh element %d not implemented yet! \n", type); 
+	continue;
+      }
       cell->setImmune(false);
       insertInfo = _cells[dim].insert(cell);
       if(!insertInfo.second) delete cell;
@@ -507,21 +520,18 @@ int CellComplex::coreduceComplex()
 
 void CellComplex::computeBettiNumbers()
 {  
-  removeSubdomain();
-
   for(int i = 0; i < 4; i++){
-    if (getSize(i) != 0) _betti[i] = -1;
-    else _betti[i] = 0;
+    _betti[i] = 0;
 
     Msg::Debug("Betti number computation process: step %d of 4 \n", i+1);
     while (getSize(i) != 0){
       citer cit = firstCell(i);
       Cell* cell = *cit;
-      /*while(!cell->inSubdomain() && cit != lastCell(i)){
+      while(!cell->inSubdomain() && cit != lastCell(i)){
         cell = *cit;
         cit++;
       }
-      if(!cell->inSubdomain())*/ _betti[i] = _betti[i] + 1;
+      if(!cell->inSubdomain()) _betti[i] = _betti[i] + 1;
       removeCell(cell, false);
       coreduction(cell);
     }
@@ -794,6 +804,27 @@ void CellComplex::makeDualComplex()
       cell->makeDualCell();
     }
   }
+}
+
+bool CellComplex::writeBettiNumbers(std::string fileName)
+{
+  if(fileName.empty()) return false;
+  FILE *fp = fopen(fileName.c_str(), "w");
+  if(!fp){
+    Msg::Error("Unable to open file '%s'", fileName.c_str());
+    return false;
+  }
+ 
+  fprintf(fp, "$BettiNumbers\n");
+  fprintf(fp, "H0 %d \n", getBettiNumber(0));
+  fprintf(fp, "H1 %d \n", getBettiNumber(1));
+  fprintf(fp, "H2 %d \n", getBettiNumber(2));
+  fprintf(fp, "H3 %d \n", getBettiNumber(3));
+  fprintf(fp, "$EndBettiNumbers\n");
+  
+  fclose(fp);
+  Msg::Info("Wrote Betti numbers to %s.", fileName.c_str());
+  return true;
 }
 
 #endif

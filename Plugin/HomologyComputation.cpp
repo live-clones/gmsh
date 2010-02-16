@@ -10,7 +10,6 @@
 #include "GmshConfig.h"
 #include "GModel.h"
 #include "Homology.h"
-#include "PViewDataGModel.h"
 #include "HomologyComputation.h"
 
 #if defined(HAVE_KBIPACK)
@@ -21,8 +20,8 @@ StringXNumber HomologyComputationOptions_Number[] = {
   {GMSH_FULLRC, "PhysicalGroupForSubdomain1", NULL, 0.},
   {GMSH_FULLRC, "PhysicalGroupForSubdomain2", NULL, 0.},
   {GMSH_FULLRC, "ComputeGenerators", NULL, 1.},
-  {GMSH_FULLRC, "ComputeDualGenerators", NULL, 0.},
-  {GMSH_FULLRC, "ComputeBettiNumbers", NULL, 0.},
+  {GMSH_FULLRC, "ComputeCuts", NULL, 0.},
+  {GMSH_FULLRC, "ComputeRanks", NULL, 0.},
 };
 
 StringXString HomologyComputationOptions_String[] = {
@@ -39,9 +38,16 @@ extern "C"
 
 std::string GMSH_HomologyComputationPlugin::getHelp() const
 {
-  return "Plugin(Homology) computes generators for "
-    "(relative) homology groups and their thick cuts.\n\n"
-    "Plugin(Homology) creates new views.";
+  return "Plugin(Homology) computes ranks and generators of "
+    "(relative) homology spaces and their thick cuts.\n\n"
+    
+    "Define physical groups in order to specify the computation "
+    "domain and the relative subdomain. Otherwise the whole mesh "
+    "is the domain and the relative subdomain is empty. \n\n"
+    
+    "Plugin(Homology) creates new views, one for each generator found. "
+    "The resulting generator chains together with the mesh are saved to "
+    "the file given.";
 }
 
 int GMSH_HomologyComputationPlugin::getNbOptions() const
@@ -67,34 +73,44 @@ StringXString *GMSH_HomologyComputationPlugin::getOptionStr(int iopt)
 PView *GMSH_HomologyComputationPlugin::execute(PView *v)
 {
   std::string fileName = HomologyComputationOptions_String[0].def;
-  if(fileName.empty()) {
-    Msg::Error("Filename not given!");
-    return 0;
-  }
   
   std::vector<int> domain;
   std::vector<int> subdomain;
   
-  domain.push_back((int)HomologyComputationOptions_Number[0].def);
-  domain.push_back((int)HomologyComputationOptions_Number[1].def);
-  subdomain.push_back((int)HomologyComputationOptions_Number[2].def);  
-  subdomain.push_back((int)HomologyComputationOptions_Number[3].def);
+  int d1 = (int)HomologyComputationOptions_Number[0].def;
+  int d2 = (int)HomologyComputationOptions_Number[1].def;
+  if(d1 > 0) domain.push_back(d1);
+  if(d2 > 0) domain.push_back(d2);
+  d1 = (int)HomologyComputationOptions_Number[2].def;
+  d2 = (int)HomologyComputationOptions_Number[3].def;
+  if(d1 > 0) subdomain.push_back(d1);
+  if(d2 > 0) subdomain.push_back(d2);
+
 
   int gens = (int)HomologyComputationOptions_Number[4].def;
   int cuts = (int)HomologyComputationOptions_Number[5].def;
-  int betti = (int)HomologyComputationOptions_Number[6].def;  
+  int rank = (int)HomologyComputationOptions_Number[6].def;  
 
   GModel *m = GModel::current();
   
-  Homology* homology = new Homology(m, domain, subdomain);
-  
-  if(gens == 1 && cuts != 1 && betti != 1) homology->findGenerators(fileName);
-  else if(cuts == 1 && gens != 1 && betti != 1) homology->findDualGenerators(fileName);
-  else if(cuts != 1 && gens != 1 && betti == 1) homology->computeBettiNumbers();
-  else Msg::Error("Choose either generators, dual generators or Betti numbers to compute.");
-  
-
-  delete homology; 
+  if(gens != 0){
+    Homology* homology = new Homology(m, domain, subdomain);
+    homology->setFileName(fileName);
+    homology->findGenerators();
+    delete homology; 
+  }
+  if(cuts != 0){
+    Homology* homology = new Homology(m, domain, subdomain);
+    homology->setFileName(fileName);
+    homology->findDualGenerators();
+    delete homology; 
+  }
+  if(rank != 0){
+    Homology* homology = new Homology(m, domain, subdomain);
+    homology->setFileName(fileName);
+    homology->computeBettiNumbers();
+    delete homology; 
+  }
   
   return 0;
 }

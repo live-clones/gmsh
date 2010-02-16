@@ -18,46 +18,57 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain,
   _model = model; 
   _domain = physicalDomain;
   _subdomain = physicalSubdomain;
+  _fileName = "";
   
   Msg::Info("Creating a Cell Complex...");
   Msg::StatusBar(1, false, "Cell Complex...");
   Msg::StatusBar(2, false, "");
   double t1 = Cpu();
   
-  std::map<int, std::vector<GEntity*> > groups[4];
-  model->getPhysicalGroups(groups);
-  
-  std::map<int, std::vector<GEntity*> >::iterator it;
   std::vector<GEntity*> domainEntities;
   std::vector<GEntity*> subdomainEntities;
-    
-  for(unsigned int i = 0; i < physicalDomain.size(); i++){
+
+  // default to the whole model
+  if(_domain.empty()){
+    //_model->getEntities(domainEntities);
+    int dim = _model->getDim();
+    std::vector<GEntity*> entities;
+    _model->getEntities(entities);
+    for(std::vector<GEntity*>::iterator it = entities.begin();
+        it != entities.end(); it++){
+      if((*it)->dim() == dim) domainEntities.push_back(*it);
+    }
+  }
+
+  std::map<int, std::vector<GEntity*> > groups[4];
+  model->getPhysicalGroups(groups);
+  std::map<int, std::vector<GEntity*> >::iterator it;
+  
+  for(unsigned int i = 0; i < _domain.size(); i++){
     for(int j = 0; j < 4; j++){
-      it = groups[j].find(physicalDomain.at(i));
+      it = groups[j].find(_domain.at(i));
       if(it != groups[j].end()){
-        std::vector<GEntity*> physicalGroup = (*it).second;
-        for(unsigned int k = 0; k < physicalGroup.size(); k++){
-          domainEntities.push_back(physicalGroup.at(k));
-        }
+	std::vector<GEntity*> physicalGroup = (*it).second;
+	for(unsigned int k = 0; k < physicalGroup.size(); k++){
+	  domainEntities.push_back(physicalGroup.at(k));
+	  }
       }
     }
   }
-  for(unsigned int i = 0; i < physicalSubdomain.size(); i++){           
+  for(unsigned int i = 0; i < _subdomain.size(); i++){           
     for(int j = 0; j < 4; j++){
-      it = groups[j].find(physicalSubdomain.at(i));
+      it = groups[j].find(_subdomain.at(i));
       if(it != groups[j].end()){
-        std::vector<GEntity*> physicalGroup = (*it).second;
-        for(unsigned int k = 0; k < physicalGroup.size(); k++){
-          subdomainEntities.push_back(physicalGroup.at(k));
-        }
-        
+	std::vector<GEntity*> physicalGroup = (*it).second;
+	for(unsigned int k = 0; k < physicalGroup.size(); k++){
+	  subdomainEntities.push_back(physicalGroup.at(k));
+	}	  
       }
     }
   }
   
-  if(domainEntities.empty()) Msg::Warning("Domain is empty.");
+  if(domainEntities.empty()) Msg::Error("Domain is empty.");
   if(subdomainEntities.empty()) Msg::Info("Subdomain is empty.");
-  
   
   _cellComplex =  new CellComplex(domainEntities, subdomainEntities);
   
@@ -88,7 +99,7 @@ Homology::~Homology(){
   }
 }
 
-void Homology::findGenerators(std::string fileName)
+void Homology::findGenerators()
 {
   Msg::Info("Reducing the Cell Complex...");
   Msg::StatusBar(1, false, "Reducing...");
@@ -166,7 +177,7 @@ void Homology::findGenerators(std::string fileName)
   }
   
   createPViews();
-  if(fileName != "") writeGeneratorsMSH(fileName);
+  if(_fileName != "") writeGeneratorsMSH();
   
   Msg::Info("Ranks of homology spaces for primal cell complex:");
   Msg::Info("H0 = %d", HRank[0]);
@@ -189,7 +200,7 @@ void Homology::findGenerators(std::string fileName)
   return;
 }
 
-void Homology::findDualGenerators(std::string fileName)
+void Homology::findDualGenerators()
 { 
   Msg::Info("Reducing Cell Complex...");
   Msg::StatusBar(1, false, "Reducing...");
@@ -268,7 +279,7 @@ void Homology::findDualGenerators(std::string fileName)
   }
    
   createPViews();
-  if(fileName != "") writeGeneratorsMSH(fileName);
+  if(_fileName != "") writeGeneratorsMSH();
   
   Msg::Info("Ranks of homology spaces for the dual cell complex:");
   Msg::Info("H0* = %d", HRank[0]);
@@ -311,6 +322,8 @@ void Homology::computeBettiNumbers()
 		 _cellComplex->getBettiNumber(1), 
 		 _cellComplex->getBettiNumber(2), 
 		 _cellComplex->getBettiNumber(3));
+  
+  if(_fileName != "") writeBettiNumbers();
   return;
 }
 
@@ -323,19 +336,21 @@ void Homology::restoreHomology()
 std::string Homology::getDomainString() 
 {
   std::string domainString = "({";
-  for(unsigned int i = 0; i < _domain.size(); i++){
-    std::string temp = "";
-    convert(_domain.at(i),temp);
-    domainString += temp;
-    if (_domain.size()-1 > i){ 
-      domainString += ", ";
+  if(_domain.empty()) domainString += "0";
+  else{
+    for(unsigned int i = 0; i < _domain.size(); i++){
+      std::string temp = "";
+      convert(_domain.at(i),temp);
+      domainString += temp;
+      if (_domain.size()-1 > i){ 
+	domainString += ", ";
+      }
     }
   }
   domainString += "}";
   
   if(!_subdomain.empty()){
-    domainString += ", {";
-       
+    domainString += ", {";    
     for(unsigned int i = 0; i < _subdomain.size(); i++){
       std::string temp = "";
       convert(_subdomain.at(i),temp);
@@ -345,7 +360,6 @@ std::string Homology::getDomainString()
       }
     } 
     domainString += "}";
-    
   }
   domainString += ") ";
   return domainString;
@@ -361,12 +375,11 @@ void Homology::createPViews()
   }
 }
 
-bool Homology::writeGeneratorsMSH(std::string fileName, bool binary)
+bool Homology::writeGeneratorsMSH(bool binary)
 {
-  if(!_model->writeMSH(fileName, 2.0, binary)) return false;
-  Msg::Info("Wrote homology computation results to %s.", fileName.c_str());
-  Msg::Debug("Wrote homology computation results to %s. \n", 
-	     fileName.c_str());  
+  if(_fileName.empty()) return false;
+  if(!_model->writeMSH(_fileName, 2.0, binary)) return false;
+  Msg::Info("Wrote homology computation results to %s.", _fileName.c_str());
   return true;
 }
 

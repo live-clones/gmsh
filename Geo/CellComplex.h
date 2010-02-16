@@ -19,11 +19,6 @@
 #include <queue>
 #include "Cell.h"
 #include "MElement.h"
-#include "GModel.h"
-#include "GEntity.h"
-#include "GRegion.h"
-#include "GFace.h"
-#include "GVertex.h"
 
 class Cell;
 
@@ -144,7 +139,8 @@ class CellComplex
   void computeBettiNumbers();
   int getBettiNumber(int i) { 
     if(i > -1 && i < 4) return _betti[i]; else return 0; }
-  
+  bool writeBettiNumbers(std::string fileName);  
+
   // check whether all boundary cells of a cell has this cell 
   // as coboundary cell and vice versa
   // also check whether all (co)boundary cells of a cell

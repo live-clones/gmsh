@@ -3301,10 +3301,10 @@ Coherence :
 
 Homology : 
 
-    tHomRank '{' ListOfDouble ',' ListOfDouble '}' tEND
+    tHomRank '(' StringExprVar ')' tAFFECT '{' ListOfDouble ',' ListOfDouble '}' tEND
     {
     
-    List_T *temp = ListOfDouble2ListOfInt($3);
+    List_T *temp = ListOfDouble2ListOfInt($7);
     std::vector<int> domain;
     
     for (int i = 0; i < List_Nbr(temp); i++){
@@ -3312,27 +3312,31 @@ Homology :
       List_Read(temp, i, &item);
       domain.push_back(item);
     }
-    List_Delete($3);
+    List_Delete($7);
     List_Delete(temp);
     
-    List_T *temp2 = ListOfDouble2ListOfInt($5);
+    List_T *temp2 = ListOfDouble2ListOfInt($9);
     std::vector<int> subdomain;
     for (int i = 0; i < List_Nbr(temp2); i++){
       int item = 0;
       List_Read(temp2, i, &item);
       subdomain.push_back(item);
     }
-    List_Delete($5);
+    List_Delete($9);
     List_Delete(temp2);
+    
+    std::string fileName = "";
+    fileName = $3;
     
     #if defined(HAVE_KBIPACK)
     Homology* homology = new Homology(GModel::current(), domain, subdomain);
+    homology->setFileName(fileName);
     homology->computeBettiNumbers();
     delete homology;
     #else
     yymsg(0, "Gmsh needs to be configured with option Kbipack to use homology computation.");    
     #endif
-    }
+    }      
     
   | tHomGen '(' StringExprVar ')' tAFFECT '{' ListOfDouble ',' ListOfDouble '}' tEND
     {
@@ -3357,11 +3361,13 @@ Homology :
     List_Delete($9);
     List_Delete(temp2);
     
-    std::string fileName = $3;
+    std::string fileName = "";
+    fileName = $3;
     
     #if defined(HAVE_KBIPACK)
     Homology* homology = new Homology(GModel::current(), domain, subdomain);
-    homology->findGenerators(fileName);  
+    homology->setFileName(fileName);
+    homology->findGenerators();  
     delete homology;
     #else
     yymsg(0, "Gmsh needs to be configured with option Kbipack to use homology computation.");
@@ -3391,11 +3397,13 @@ Homology :
     List_Delete($9);
     List_Delete(temp2);
     
-    std::string fileName = $3;
+    std::string fileName = "";
+    fileName = $3;
     
     #if defined(HAVE_KBIPACK)
     Homology* homology = new Homology(GModel::current(), domain, subdomain);
-    homology->findDualGenerators(fileName);
+    homology->setFileName(fileName);
+    homology->findDualGenerators();
     delete homology;
     #else
     yymsg(0, "Gmsh needs to be configured with option Kbipack to use homology computation.");

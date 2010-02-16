@@ -19,14 +19,6 @@
 #include <queue>
 #include "CellComplex.h"
 #include "MElement.h"
-#include "MPoint.h"
-#include "MLine.h"
-#include "MTriangle.h"
-#include "MQuadrangle.h"
-#include "MHexahedron.h"
-#include "MPrism.h"
-#include "MPyramid.h"
-#include "MTetrahedron.h"
 #include "GModel.h"
 
 class Cell;
