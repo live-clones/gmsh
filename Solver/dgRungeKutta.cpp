@@ -4,7 +4,6 @@
 #include "dgLimiter.h"
 #include "dgAlgorithm.h"
 #include "dgGroupOfElements.h"
-#include "bindings.h"
 
 double dgRungeKutta::iterateEuler(const dgConservationLaw *claw, double dt, dgDofContainer *solution) {
   double A[] = {0};
@@ -71,6 +70,9 @@ double dgRungeKutta::diagonalRK (const dgConservationLaw *claw,
 }
 
 dgRungeKutta::dgRungeKutta():_limiter(NULL) {}
+
+
+#include "Bindings.h"
 
 void dgRungeKutta::registerBindings(binding *b) {
   classBinding *cb = b->addClass<dgRungeKutta>("dgRungeKutta");
