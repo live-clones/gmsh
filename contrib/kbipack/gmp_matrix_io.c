@@ -51,7 +51,7 @@ gmp_matrix * gmp_matrix_read_coord(char* filename)
     }
 
   /* First read the size of the matrix */
-  read_values = sscanf(buffer, "%u %u %u", &nrows, &ncols, &dummy);
+  read_values = sscanf(buffer, "%lu %lu %lu", &nrows, &ncols, &dummy);
 
   /* Create the matrix */
   new_matrix = create_gmp_matrix_zero(nrows, ncols);

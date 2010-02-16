@@ -58,11 +58,11 @@ DG:exportSolution('output/cyl_0')
 
 print'*** solve ***'
 
-CFL = 20.1;
+CFL = 5.1;
 dt = CFL * DG:computeInvSpectralRadius();
 print('DT = ',dt)
 T = 0;
-for i=1,2 do
+for i=1,100000 do
     dt = CFL * DG:computeInvSpectralRadius();    
     norm = DG:RK44(dt)
     T = T + dt

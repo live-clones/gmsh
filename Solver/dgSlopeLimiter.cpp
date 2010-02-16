@@ -6,14 +6,13 @@
 //----------------------------------------------------------------------------------   
 bool dgSlopeLimiter::apply ( dgDofContainer &solution, dgGroupCollection &groups)
 {    
-  printf("limit \n");
   solution.scatter();
-  int nbFields =_claw->nbFields();    
+  int nbFields =_claw->getNbFields();    
 	
   // first compute max and min of all fields for all stencils    
   //----------------------------------------------------------   
-  dgDofContainer MIN(groups, nbFields);
-  dgDofContainer MAX(groups, nbFields);
+  dgDofContainer MIN(&groups, nbFields);
+  dgDofContainer MAX(&groups, nbFields);
 
   MIN.setAll ( 1.e22);  
   MAX.setAll (-1.e22);  

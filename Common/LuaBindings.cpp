@@ -9,14 +9,17 @@
 #include "GFace.h"
 #include "DivideAndConquer.h"
 #include "Bindings.h"
-#include "dgSystemOfEquations.h"
 #include "luaFunction.h"
 #include "function.h"
+#include "GModel.h"
 #include "dgGroupOfElements.h"
+#include "dgDofContainer.h"
 #include "dgConservationLawShallowWater2d.h"
 #include "dgConservationLawAdvection.h"
 #include "dgConservationLawPerfectGas.h"
 #include "dgConservationLawWaveEquation.h"
+#include "dgRungeKutta.h"
+#include "dgSystemOfEquations.h"
 
 extern "C" {
   #include "lua.h"
@@ -262,13 +265,16 @@ binding::binding(){
   GModel::registerBindings(this);
   fullMatrix<double>::registerBindings(this);
   function::registerBindings(this);
+  dgGroupCollection::registerBindings(this);
+  dgDofContainer::registerBindings(this);
   dgConservationLaw::registerBindings(this);
-  dgSystemOfEquations::registerBindings(this);
+  dgRungeKutta::registerBindings(this);
   dgBoundaryCondition::registerBindings(this);
   dgConservationLawShallowWater2dRegisterBindings(this);
   dgConservationLawWaveEquationRegisterBindings(this);
   dgConservationLawAdvectionDiffusionRegisterBindings(this);
   dgPerfectGasLaw2dRegisterBindings(this);
+  dgSystemOfEquations::registerBindings(this);
   functionLua::registerBindings(this);
   function::registerDefaultFunctions();
   MVertex::registerBindings(this);

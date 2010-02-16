@@ -25,7 +25,7 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
 { 
   // ----- 1 ----  get the solution at quadrature points
   // ----- 1.1 --- allocate a matrix of size (nbFields * nbElements, nbQuadraturePoints) 
-  int nbFields = claw.nbFields();
+  int nbFields = claw.getNbFields();
   fullMatrix<double> solutionQP (group.getNbIntegrationPoints(),group.getNbElements() * nbFields);
   // ----- 1.2 --- multiply the solution by the collocation matrix
   group.getCollocationMatrix().mult(solution  , solutionQP); 
@@ -96,7 +96,7 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
       }
     }
     if (sourceTerm){
-      source.setAsProxy(Source, iElement*claw.nbFields(),claw.nbFields());
+      source.setAsProxy(Source, iElement*claw.getNbFields(),claw.getNbFields());
       for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
         const double detJ = group.getDetJ (iElement, iPt);
         for (int k=0;k<nbFields;k++){
@@ -127,7 +127,7 @@ void dgAlgorithm::residualInterface ( //dofManager &dof, // the DOF manager (may
 { 
   // A) global operations before entering the loop over the faces
   // A1 ) copy locally some references from the group for the sake of lisibility
-  int nbFields = claw.nbFields();
+  int nbFields = claw.getNbFields();
   int nbNodesLeft = group.getGroupLeft().getNbNodes();
   int nbNodesRight = group.getGroupRight().getNbNodes();
   int nbFaces = group.getNbElements();
@@ -254,66 +254,8 @@ void dgAlgorithm::multAddInverseMassMatrix ( /*dofManager &dof,*/
 }
 
 
-void dgAlgorithm::rungeKutta (const dgConservationLaw &claw,			// conservation law
-            dgGroupCollection &groups,
-			      double h,				         // time-step
-			      dgDofContainer &sol,
-			      dgDofContainer &resd,
-			      dgLimiter *limiter,
-			      int orderRK
-            )				        // order of RK integrator
-{
 
-  // U_{n+1}=U_n+h*(SUM_i a_i*K_i)
-  // K_i=M^(-1)R(U_n+b_i*K_{i-1})
-
-  double a[4] = {h/6.0,h/3.0,h/3.0,h/6.0};
-  double b[4] = {0.,h/2.0,h/2.0,h};
-
-  if (orderRK == 1){
-    a[0] = h;
-  }
-
-  // Current updated solution
-  fullMatrix<double> residuEl, KEl;
-  fullMatrix<double> iMassEl;
-
-  int nbFields = claw.nbFields();
-
-  dgDofContainer K   (groups,nbFields);
-  dgDofContainer Unp (groups,nbFields);
-  K.scale(0.);
-  K.axpy(sol);
-  Unp.scale(0.);
-  Unp.axpy(sol);
-
-  for(int j=0; j<orderRK;j++){
-    if(j){
-      K.scale(b[j]);
-      K.axpy(sol);
-    }
-
-    if (limiter) limiter->apply(K, groups);
-    this->residual(claw,groups,K,resd);
-    K.scale(0.);
-    for(int k=0; k < groups.getNbElementGroups(); k++) {
-      dgGroupOfElements *group = groups.getElementGroup(k);
-      int nbNodes = group->getNbNodes();
-      for(int i=0;i<group->getNbElements();i++) {
-        residuEl.setAsProxy(resd.getGroupProxy(k),i*nbFields,nbFields);
-        KEl.setAsProxy(K.getGroupProxy(k),i*nbFields,nbFields);
-        iMassEl.setAsProxy(group->getInverseMassMatrix(),i*nbNodes,nbNodes);
-        iMassEl.mult(residuEl,KEl);
-      }
-    }
-    Unp.axpy(K,a[j]);
-  }
-  if (limiter) limiter->apply(Unp, groups);
-  sol.scale(0.);
-  sol.axpy(Unp);
-}
-
-void dgAlgorithm::multirateRungeKutta (const dgConservationLaw &claw,			// conservation law
+/*void dgAlgorithm::multirateRungeKutta (const dgConservationLaw &claw,			// conservation law
             dgGroupCollection &groups,
 			      double h,				        // time-step
 			      dgDofContainer &sol,
@@ -397,16 +339,16 @@ void dgAlgorithm::multirateRungeKutta (const dgConservationLaw &claw,			// conse
    fullMatrix<double> residuEl, KEl;
    fullMatrix<double> iMassEl;
    
-   int nbFields = claw.nbFields();
+   int nbFields = claw.getNbFields();
    
    dgDofContainer **K;
    K=new dgDofContainer*[nStages];
    for(int i=0;i<nStages;i++){
-     K[i]=new dgDofContainer(groups,nbFields);
+     K[i]=new dgDofContainer(&groups,nbFields);
      K[i]->scale(0.);
    }
-   dgDofContainer Unp (groups,nbFields);
-   dgDofContainer tmp (groups,nbFields);
+   dgDofContainer Unp (&groups,nbFields);
+   dgDofContainer tmp (&groups,nbFields);
 
    Unp.scale(0.0);
    Unp.axpy(sol);
@@ -435,7 +377,7 @@ void dgAlgorithm::multirateRungeKutta (const dgConservationLaw &claw,			// conse
          }
        }
      }
-     this->residual(claw,groups,tmp,resd);
+     dgAlgorithm::residual(claw,groups,tmp,resd);
      for(int k=0;k < groups.getNbElementGroups(); k++) {
 		 if (k==0) {
 			 b=b2;
@@ -464,7 +406,7 @@ void dgAlgorithm::multirateRungeKutta (const dgConservationLaw &claw,			// conse
      delete K[i];
    }
    delete []K;
- }
+ }*/
 
 void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (maybe useless here)
 				   const dgConservationLaw &claw,   // the conservation law
@@ -474,7 +416,7 @@ void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (mayb
 				   fullMatrix<double> &residual // residual !! at faces nodes
 				     )
 { 
-  int nbFields = claw.nbFields();
+  int nbFields = claw.getNbFields();
   int nbNodesLeft = group.getGroupLeft().getNbNodes();
   const dgBoundaryCondition *boundaryCondition = claw.getBoundaryCondition(group.getBoundaryTag());
   // ----- 1 ----  get the solution at quadrature points
@@ -559,7 +501,7 @@ void dgAlgorithm::residual( const dgConservationLaw &claw,
           dgDofContainer &residu)
 {
   solution.scatter();
-  int nbFields=claw.nbFields();
+  int nbFields=claw.getNbFields();
   //volume term
   for(size_t i=0;i<groups.getNbElementGroups() ; i++) {
     residu.getGroupProxy(i).scale(0);
@@ -618,7 +560,7 @@ void dgAlgorithm::computeElementaryTimeSteps ( //dofManager &dof, // the DOF man
   dataCacheDouble *maxConvectiveSpeed = claw.newMaxConvectiveSpeed(cacheMap);
   dataCacheDouble *maximumDiffusivity = claw.newMaximumDiffusivity(cacheMap);
 	
-  const int nbFields = claw.nbFields();
+  const int nbFields = claw.getNbFields();
   /* This is an estimate on how lengths changes with p 
      It is merely the smallest distance between gauss 
      points at order p + 1 */
@@ -647,3 +589,4 @@ void dgAlgorithm::computeElementaryTimeSteps ( //dofManager &dof, // the DOF man
     DT[iElement] = 1./spectralRadius;
   }
 }
+

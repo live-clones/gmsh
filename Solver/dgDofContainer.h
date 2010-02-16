@@ -29,12 +29,17 @@ public:
   void axpy(dgDofContainer &x, double a=1.);
   inline fullMatrix<double> &getGroupProxy(int gId){ return *(_dataProxys[gId]); }
   inline fullMatrix<double> &getGroupProxy(const dgGroupOfElements* g){ return *(_dataProxys[_groupId[g]]); }
-  dgDofContainer (dgGroupCollection &groups, int nbFields);
+  dgDofContainer (dgGroupCollection *groups, int nbFields);
   ~dgDofContainer ();  
   int getNbElements() {return _totalNbElements;}
   void scatter();
   void save(const std::string name);
   void load(const std::string name);
   void setAll(double v);
+  void L2Projection(std::string functionName);
+  void exportMsh(const std::string name);
+
+  static void registerBindings(binding *b);
+  inline dgGroupCollection *getGroups() { return &_groups; }
 };
 #endif

@@ -10,7 +10,7 @@ class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
     dgConservationLaw *_claw;
     public:
     term(dgConservationLaw *claw, dataCacheMap &cacheMapLeft,const std::string outsideValueFunctionName):
-      dataCacheDouble(cacheMapLeft, cacheMapLeft.getNbEvaluationPoints(),claw->nbFields()),
+      dataCacheDouble(cacheMapLeft, cacheMapLeft.getNbEvaluationPoints(),claw->getNbFields()),
       cacheMapRight(cacheMapLeft.getNbEvaluationPoints()),
       solutionRight(cacheMapRight.provideData("Solution")),
       outsideValue(cacheMapLeft.get(outsideValueFunctionName,this)),
@@ -34,7 +34,7 @@ class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
     dataCacheDouble &outsideValue;
     public:
     dirichlet(dgConservationLaw *claw, dataCacheMap &cacheMap,const std::string outsideValueFunctionName):
-      dataCacheDouble(cacheMap, cacheMap.getNbEvaluationPoints(),claw->nbFields()),
+      dataCacheDouble(cacheMap, cacheMap.getNbEvaluationPoints(),claw->getNbFields()),
       outsideValue(cacheMap.get(outsideValueFunctionName,this)){}
     void _eval () { 
       for(int i=0;i<_value.size1();i++)
@@ -50,7 +50,7 @@ class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
     dgConservationLaw *_claw;
     public:
     maximumDiffusivity(dgConservationLaw *claw, dataCacheMap &cacheMapLeft,const std::string outsideValueFunctionName):
-      dataCacheDouble(cacheMapLeft, cacheMapLeft.getNbEvaluationPoints(),claw->nbFields()),
+      dataCacheDouble(cacheMapLeft, cacheMapLeft.getNbEvaluationPoints(),claw->getNbFields()),
       cacheMapRight(cacheMapLeft.getNbEvaluationPoints()),
       solutionRight(cacheMapRight.provideData("Solution")),
       outsideValue(cacheMapLeft.get(outsideValueFunctionName,this)),
@@ -89,7 +89,7 @@ class dgBoundaryConditionNeumann : public dgBoundaryCondition {
     dataCacheDouble &flux;
     public:
     term(dgConservationLaw *claw, dataCacheMap &cacheMapLeft,const std::string fluxFunctionName):
-      dataCacheDouble(cacheMapLeft, cacheMapLeft.getNbEvaluationPoints(),claw->nbFields()),
+      dataCacheDouble(cacheMapLeft, cacheMapLeft.getNbEvaluationPoints(),claw->getNbFields()),
       flux(cacheMapLeft.get(fluxFunctionName,this))
     {}
     void _eval() {
@@ -113,7 +113,7 @@ class dgBoundarySymmetry : public dgBoundaryCondition {
     dgConservationLaw *_claw;
   public:
     term(dgConservationLaw *claw, dataCacheMap &cacheMapLeft):
-      dataCacheDouble(cacheMapLeft, cacheMapLeft.getNbEvaluationPoints(),claw->nbFields()), _claw(claw)
+      dataCacheDouble(cacheMapLeft, cacheMapLeft.getNbEvaluationPoints(),claw->getNbFields()), _claw(claw)
     {
       riemannSolver=_claw->newRiemannSolver(cacheMapLeft,cacheMapLeft);
       riemannSolver->addMeAsDependencyOf(this);
@@ -138,7 +138,7 @@ class dgBoundaryCondition0Flux : public dgBoundaryCondition {
   class term : public dataCacheDouble {
   public:
     term(dgConservationLaw *claw,dataCacheMap &cacheMapLeft):
-      dataCacheDouble(cacheMapLeft,cacheMapLeft.getNbEvaluationPoints(),claw->nbFields()) {}
+      dataCacheDouble(cacheMapLeft,cacheMapLeft.getNbEvaluationPoints(),claw->getNbFields()) {}
     void _eval() {
     }
   };
@@ -238,6 +238,8 @@ void dgConservationLaw::registerBindings(binding *b){
   cm = cb->addMethod("newNeumannBoundary",&dgConservationLaw::newNeumannBoundary);
   cm->setDescription("Create a new boundary condition with a given flux (no other fluxes will be computed, nor with the rieman solver nor the IP diffusive term");
   cm->setArgNames("flux",NULL);
+  cm = cb->addMethod("getNbFields",&dgConservationLaw::getNbFields);
+  cm->setDescription("Return the number of fields composing the unknowns of this conservation law. For vectorial fields, each components is counted as one field.");
 }
 
 void dgBoundaryCondition::registerBindings(binding *b){

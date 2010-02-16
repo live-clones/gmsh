@@ -29,7 +29,9 @@ function valueLeft(f)
 end
 
 law = dgConservationLawAdvectionDiffusion('',functionLua(1,'diffusivity',{'Solution'}):getName())
+print(law)
 dg:setConservationLaw(law)
+print(law)
 
 -- boundary condition
 --[[

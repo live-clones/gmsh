@@ -15,6 +15,7 @@ class dgSystemOfEquations;
 
 class dgAlgorithm {
  public :
+  static void registerBindings(binding *b); 
   static void residualVolume ( //dofManager &dof, // the DOF manager (maybe useless here)
 			      const dgConservationLaw &claw,   // the conservation law
 			      const dgGroupOfElements & group, 
@@ -34,43 +35,19 @@ class dgAlgorithm {
 				fullMatrix<double> &solutionLeft,
 				fullMatrix<double> &residual // residual !! at faces nodes
 				 );
-  // works only if there is only 1 group of element
   static void residual( const dgConservationLaw &claw, dgGroupCollection &groups,
 			dgDofContainer &solution, dgDofContainer &residual);	  
-  void rungeKutta (
-		   const dgConservationLaw &claw,
-       dgGroupCollection &groups,
-		   double h,	
-		   dgDofContainer &residu,
-		   dgDofContainer &sol,
-		   dgLimiter *limiter=NULL,
-		   int orderRK=4);
   static void computeElementaryTimeSteps ( //dofManager &dof, // the DOF manager (maybe useless here)
 					  const dgConservationLaw &claw,   // the conservation law
 					  const dgGroupOfElements & group, // the group
 					  fullMatrix<double> &solution, // the solution 
 					  std::vector<double> & DT // elementary time steps
 					   );
-  // works only (for the moment) for two groups of elements, small and big step
-  // Uses RK43 from Schlegel (10 stages)	
-  void multirateRungeKutta (
-		   const dgConservationLaw &claw,
-       dgGroupCollection &groups,
-		   double h,	
-		   dgDofContainer &residu,
-		   dgDofContainer &sol,
-		   int orderRK=3);
 
   static void multAddInverseMassMatrix ( /*dofManager &dof,*/
 					const dgGroupOfElements & group,
 					fullMatrix<double> &residu,
 					fullMatrix<double> &sol);
-  static void buildGroups(GModel *model, int dim, int order,
-			  std::vector<dgGroupOfElements*> &eGroups,
-			  std::vector<dgGroupOfFaces*> &fGroups,
-			  std::vector<dgGroupOfFaces*> &bGroups,
-			  std::vector<dgGroupOfElements*> &ghostGroups);
 };
-
 
 #endif

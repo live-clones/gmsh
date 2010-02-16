@@ -35,7 +35,7 @@ class dgConservationLaw {
  public:
   virtual ~dgConservationLaw () {}
 
-  int nbFields() const {return _nbf;}
+  int getNbFields() const {return _nbf;}
 
   virtual dataCacheDouble *newSourceTerm (dataCacheMap &cacheMap) const {return NULL;} 
   virtual dataCacheDouble *newDiffusiveFlux (dataCacheMap &cacheMap) const {return NULL;} 

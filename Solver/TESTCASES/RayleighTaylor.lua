@@ -48,14 +48,14 @@ if (order == 1) then
 elseif (order == 2) then
    myModel:load ('rect2.msh')
 elseif (order == 3) then
-   myModel:load ('rect2.msh')
+   myModel:load ('rect3.msh')
 elseif (order == 4) then
    myModel:load ('rect4.msh')
+elseif (order == 5) then
+   myModel:load ('rect5.msh')
 end
 
 print'*** Create a dg solver ***'
-DG = dgSystemOfEquations (myModel)
-DG:setOrder(order)
 law=dgPerfectGasLaw2d()
 
 g=fullMatrix(4,1);
@@ -65,18 +65,18 @@ g:set(2,0,-1.)
 g:set(3,0,0)
 
 law:setSource(functionConstant(g):getName())
-DG:setConservationLaw(law)
 law:addBoundaryCondition('Walls',law:newSlipWallBoundary())
 FS = functionLua(4, 'initial_condition', {'XYZ'}):getName()
 law:addBoundaryCondition('Top',law:newOutsideValueBoundary(FS))
 
-DG:setup()
+GC=dgGroupCollection(myModel,2,order)
+solution=dgDofContainer(GC,4)
+solution:L2Projection(FS)
+DG:limitSolution()
+GC:splitGroupsForMultirate(0.0003,law)
+GC:buildGroupsOfInterfaces(myModel,2,order)
 
 print'*** setting the initial solution ***'
-
-DG:L2Projection(FS)
-DG:limitSolution()
-
 --print'*** export ***'
 
 DG:exportSolution('output/rt_0')

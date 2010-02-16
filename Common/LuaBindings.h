@@ -27,6 +27,7 @@ class className{
   }
   static const std::string &get(){
     if(_name==""){
+      Msg::Error("Class unknown to Lua");
       throw;
     }
     return _name;

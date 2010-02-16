@@ -20,6 +20,10 @@ class polynomialBasis;
 class GEntity;
 class GModel;
 
+class binding;
+class dgConservationLaw;
+
+
 class dgElement {
   MElement *_element;
   // solution at points
@@ -192,7 +196,8 @@ class dgGroupCollection {
 
   //{group,id} of the elements to send to each partition for a scatter operation
   std::vector< std::vector<std::pair<int,int> > >_elementsToSend;
-
+  bool _groupsOfElementsBuilt;
+  bool _groupsOfInterfacesBuilt;
   public:
   inline int getNbElementGroups() const {return _elementGroups.size();}
   inline int getNbFaceGroups() const {return _faceGroups.size();}
@@ -207,8 +212,14 @@ class dgGroupCollection {
   inline int getImageElementGroup(int partId, int i) const {return _elementsToSend[partId][i].first;}
   inline int getImageElementPositionInGroup(int partId, int i) const {return _elementsToSend[partId][i].second;}
 
-  void buildGroups (GModel *model,int dimension, int order);
-  void buildGroups (GModel *model,int dimension, int order, std::string groupType);
+  void buildGroupsOfElements (GModel *model,int dimension, int order);
+  void buildGroupsOfInterfaces ();
+
+  void splitGroupsForMultirate(double refDt,dgConservationLaw *claw);
+
+  dgGroupCollection(GModel *model, int dimension, int order);
+  dgGroupCollection();
+  static void registerBindings(binding *b);
   ~dgGroupCollection();
 };
 #endif

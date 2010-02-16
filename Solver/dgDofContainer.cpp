@@ -1,13 +1,18 @@
 #include "GmshConfig.h"
 #include "dgDofContainer.h"
+#include "function.h"
 #include "dgGroupOfElements.h"
+#include "dgConservationLaw.h"
+#include "dgAlgorithm.h"
 #ifdef HAVE_MPI
 #include "mpi.h"
 #else
 #include "string.h"
 #endif
-dgDofContainer::dgDofContainer (dgGroupCollection &groups, int nbFields):
-  _groups(groups)
+#include <sstream>
+#include "MElement.h"
+dgDofContainer::dgDofContainer (dgGroupCollection *groups, int nbFields):
+  _groups(*groups)
 {
   int _dataSize = 0;
   _dataSizeGhost=0;
@@ -173,12 +178,121 @@ double dgDofContainer::norm() {
   #endif
 }
 void dgDofContainer::save(const std::string name) {
-  FILE *f = fopen (name.c_str(),"rb");
-  _data->binaryLoad(f);
+  FILE *f = fopen (name.c_str(),"wb");
+  _data->binarySave(f);
   fclose(f);
 }
 void dgDofContainer::load(const std::string name) {
   FILE *f = fopen (name.c_str(),"rb");
   _data->binaryLoad(f);
   fclose(f);
+}
+
+void dgDofContainer::L2Projection(std::string functionName){
+  dgDofContainer rhs(&_groups, _nbFields);
+  for (int iGroup=0;iGroup<_groups.getNbElementGroups();iGroup++) {
+    const dgGroupOfElements &group = *_groups.getElementGroup(iGroup);
+    fullMatrix<double> Source = fullMatrix<double> (group.getNbIntegrationPoints(),group.getNbElements() * _nbFields);
+    dataCacheMap cacheMap(group.getNbIntegrationPoints());
+    dataCacheElement &cacheElement = cacheMap.getElement();
+    cacheMap.provideData("UVW").set(group.getIntegrationPointsMatrix());
+    dataCacheDouble &sourceTerm = cacheMap.get(functionName);
+    fullMatrix<double> source;
+    for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {
+      cacheElement.set(group.getElement(iElement));
+      source.setAsProxy(Source, iElement*_nbFields, _nbFields);
+      for (int iPt =0; iPt< group.getNbIntegrationPoints(); iPt++) {
+        const double detJ = group.getDetJ (iElement, iPt);
+        for (int k=0;k<_nbFields;k++)
+          source(iPt,k) = sourceTerm(iPt,k)*detJ;
+      }
+    }
+    rhs.getGroupProxy(iGroup).gemm(group.getSourceRedistributionMatrix(), Source);
+    dgAlgorithm::multAddInverseMassMatrix(group, rhs.getGroupProxy(iGroup), getGroupProxy(iGroup));
+  }
+}
+
+
+void dgDofContainer::exportMsh(const std::string name){
+  // the elementnodedata::export does not work !!
+
+  for (int ICOMP = 0; ICOMP<_nbFields;++ICOMP){
+    std::ostringstream name_oss;
+    name_oss<<name<<"_COMP_"<<ICOMP<<".msh";
+    if(Msg::GetCommSize()>1)
+      name_oss<<"_"<<Msg::GetCommRank();
+    FILE *f = fopen (name_oss.str().c_str(),"w");
+    int COUNT = 0;
+    for (int i=0;i < _groups.getNbElementGroups() ;i++){
+      COUNT += _groups.getElementGroup(i)->getNbElements();
+    }
+    fprintf(f,"$MeshFormat\n2.1 0 8\n$EndMeshFormat\n");  
+    fprintf(f,"$ElementNodeData\n");
+    fprintf(f,"1\n");
+    fprintf(f,"\"%s\"\n",name.c_str());
+    fprintf(f,"1\n");
+    fprintf(f,"0.0\n");
+    fprintf(f,"%d\n", Msg::GetCommSize() > 1 ? 4 : 3);
+    fprintf(f,"0\n 1\n %d\n",COUNT);
+    if(Msg::GetCommSize() > 1) fprintf(f,"%d\n", Msg::GetCommRank());
+    for (int i=0;i < _groups.getNbElementGroups()  ;i++){
+      dgGroupOfElements *group = _groups.getElementGroup(i);
+      for (int iElement=0 ; iElement< group->getNbElements() ;++iElement) {
+        MElement *e = group->getElement(iElement);
+        int num = e->getNum();
+        fullMatrix<double> sol(getGroupProxy(i), iElement*_nbFields,_nbFields);
+        fprintf(f,"%d %d",num,sol.size1());
+        for (int k=0;k<sol.size1();++k) {
+          fprintf(f," %.16E ",sol(k,ICOMP));
+        }
+        fprintf(f,"\n");
+      }
+    }
+    fprintf(f,"$EndElementNodeData\n");
+    fclose(f);
+  }
+  return;
+  // we should discuss that : we do a copy of the solution, this should
+  // be avoided !
+
+  /*std::map<int, std::vector<double> > data;
+  
+  for (int i=0;i < _groups.getNbElementGroups() ;i++){
+    dgGroupOfElements *group = _groups.getElementGroup(i);
+    for (int iElement=0 ; iElement< group->getNbElements() ;++iElement) {
+      MElement *e = group->getElement(iElement);
+      int num = e->getNum();
+      fullMatrix<double> sol(getGroupProxy(i), iElement*_nbFields,_nbFields);
+      std::vector<double> val;
+      //      val.resize(sol.size2()*sol.size1());
+      val.resize(sol.size1());
+      int counter = 0;
+      //      for (int iC=0;iC<sol.size2();iC++)
+      printf("%g %g %g\n",sol(0,0),sol(1,0),sol(2,0));
+      for (int iR=0;iR<sol.size1();iR++)val[counter++] = sol(iR,0);
+      data[num] = val;
+    }
+  }
+
+  PView *pv = new PView (name, "ElementNodeData", _gm, data, 0.0, 1);
+  pv->getData()->writeMSH(name+".msh", false); 
+  delete pv;
+  */
+}
+
+
+#include "LuaBindings.h"
+void dgDofContainer::registerBindings(binding *b){
+  classBinding *cb = b->addClass<dgDofContainer>("dgDofContainer");
+  cb->setDescription("The DofContainer class provides a vector containing the degree of freedoms");
+  methodBinding *cm;
+  cm = cb->setConstructor<dgDofContainer,dgGroupCollection*,int>();
+  cm->setDescription("Build a vector");
+  cm->setArgNames("GroupCollection","nbFields",NULL);
+  cm = cb->addMethod("L2Projection",&dgDofContainer::L2Projection);
+  cm->setDescription("Project a function onto this vector");
+  cm->setArgNames("functionName",NULL);
+  cm = cb->addMethod("exportMsh",&dgDofContainer::exportMsh);
+  cm->setDescription("Export the dof for gmsh visualization");
+  cm->setArgNames("filename",NULL);
 }
