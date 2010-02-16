@@ -4,29 +4,29 @@
 #include "function.h"
 
 //----------------------------------------------------------------------------------   
-bool dgSlopeLimiter::apply ( dgDofContainer &solution)
+bool dgSlopeLimiter::apply ( dgDofContainer *solution)
 {    
-  dgGroupCollection &groups=*solution.getGroups();
-  solution.scatter();
+  dgGroupCollection *groups=solution->getGroups();
+  solution->scatter();
   int nbFields =_claw->getNbFields();    
 	
   // first compute max and min of all fields for all stencils    
   //----------------------------------------------------------   
-  dgDofContainer MIN(&groups, nbFields);
-  dgDofContainer MAX(&groups, nbFields);
+  dgDofContainer MIN(groups, nbFields);
+  dgDofContainer MAX(groups, nbFields);
 
   MIN.setAll ( 1.e22);  
   MAX.setAll (-1.e22);  
 
   int iElementL, iElementR, fSize; 	 
   fullMatrix<double> TempL, TempR;
-  for( int iGFace=0; iGFace<groups.getNbFaceGroups(); iGFace++) {
-    dgGroupOfFaces* group = groups.getFaceGroup(iGFace);  
+  for( int iGFace=0; iGFace<groups->getNbFaceGroups(); iGFace++) {
+    dgGroupOfFaces* group = groups->getFaceGroup(iGFace);  
     const dgGroupOfElements *groupLeft = &group->getGroupLeft();
     const dgGroupOfElements *groupRight = &group->getGroupRight();
 
-    fullMatrix<double> &solleft = solution.getGroupProxy(groupLeft);
-    fullMatrix<double> &solright = solution.getGroupProxy(groupRight); 
+    fullMatrix<double> &solleft = solution->getGroupProxy(groupLeft);
+    fullMatrix<double> &solright = solution->getGroupProxy(groupRight); 
     fullMatrix<double> &MINLeft = MIN.getGroupProxy(groupLeft);
     fullMatrix<double> &MAXLeft = MAX.getGroupProxy(groupLeft);
     fullMatrix<double> &MINRight = MIN.getGroupProxy(groupRight);
@@ -62,9 +62,9 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution)
   // then limit the solution  
   //----------------------------------------------------------   
 
-  for (int iGroup=0 ; iGroup<groups.getNbElementGroups() ; iGroup++) {
-    dgGroupOfElements &group = *groups.getElementGroup(iGroup);
-    fullMatrix<double> &sol = solution.getGroupProxy(iGroup);
+  for (int iGroup=0 ; iGroup<groups->getNbElementGroups() ; iGroup++) {
+    dgGroupOfElements &group = *groups->getElementGroup(iGroup);
+    fullMatrix<double> &sol = solution->getGroupProxy(iGroup);
     fullMatrix<double> &MAXG = MAX.getGroupProxy(iGroup);
     fullMatrix<double> &MING = MIN.getGroupProxy(iGroup);
     fullMatrix<double> Temp;  
@@ -103,9 +103,9 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution)
     }  
   }
   //  --- CLIPPING: check unphysical values
-  for (int iG = 0; iG < groups.getNbElementGroups(); iG++){
-    dgGroupOfElements* egroup = groups.getElementGroup(iG);  
-    fullMatrix<double> &solGroup = solution.getGroupProxy(iG);
+  for (int iG = 0; iG < groups->getNbElementGroups(); iG++){
+    dgGroupOfElements* egroup = groups->getElementGroup(iG);  
+    fullMatrix<double> &solGroup = solution->getGroupProxy(iG);
 
     dataCacheMap cacheMap(egroup->getNbNodes());//nbdofs for each element
     dataCacheDouble &solutionE = cacheMap.provideData("Solution");
@@ -121,8 +121,16 @@ bool dgSlopeLimiter::apply ( dgDofContainer &solution)
   return true; 
 }
 
-/*
 #include "Bindings.h"
+
+void dgLimiter::registerBindings(binding *b) {
+  classBinding *cb = b->addClass<dgLimiter>("dgLimiter");
+  cb->setDescription("Parent class for limiters");
+  methodBinding *cm;
+//  cm = cb->addMethod("apply",&dgLimiter::apply);
+//  cm->setArgNames("solution",NULL);
+//  cm->setDescription("apply the limiter on the solution");
+}
 
 void dgSlopeLimiter::registerBindings(binding *b) {
   classBinding *cb = b->addClass<dgSlopeLimiter>("dgSlopeLimiter");
@@ -131,9 +139,5 @@ void dgSlopeLimiter::registerBindings(binding *b) {
   cm = cb->setConstructor<dgSlopeLimiter,dgConservationLaw *>();
   cm->setDescription("A new explicit slope limiter");
   cm->setArgNames("law",NULL);
-//  cm = cb->addMethod("apply",&dgLimiter::apply);
-//  cm->setArgNames("solution",NULL);
-//  cm->setDescription("apply the limiter on the solution");
 }
 
-*/

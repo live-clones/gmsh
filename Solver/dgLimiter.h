@@ -13,14 +13,15 @@ protected:
   dgConservationLaw *_claw;
 public:
   dgLimiter (dgConservationLaw *claw) : _claw(claw) {}
-  virtual bool apply ( dgDofContainer &sol)=0;
+  virtual bool apply ( dgDofContainer *sol)=0;
+  static void registerBindings(binding *b);
 };
 
 class dgSlopeLimiter : public dgLimiter{
 public :
   dgSlopeLimiter (dgConservationLaw *claw) : dgLimiter (claw) {}
-  virtual bool apply ( dgDofContainer &solution);
-  //static void registerBindings(binding *b);
+  virtual bool apply ( dgDofContainer *solution);
+  static void registerBindings(binding *b);
 };
 
 #endif
