@@ -268,9 +268,11 @@ binding::binding(){
   function::registerBindings(this);
   dgGroupCollection::registerBindings(this);
   dgDofContainer::registerBindings(this);
-  dgConservationLaw::registerBindings(this);
   dgRungeKutta::registerBindings(this);
+  dgLimiter::registerBindings(this);
+  dgSlopeLimiterRegisterBindings(this);
   dgBoundaryCondition::registerBindings(this);
+  dgConservationLaw::registerBindings(this);
   dgConservationLawShallowWater2dRegisterBindings(this);
   dgConservationLawWaveEquationRegisterBindings(this);
   dgConservationLawAdvectionDiffusionRegisterBindings(this);
@@ -283,8 +285,6 @@ binding::binding(){
   DocRecord::registerBindings(this);
   GEntity::registerBindings(this);
   GFace::registerBindings(this);
-  dgLimiter::registerBindings(this);
-  dgSlopeLimiter::registerBindings(this);
 }
 binding *binding::_instance=NULL;
 #endif
