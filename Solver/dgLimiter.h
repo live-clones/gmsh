@@ -21,7 +21,7 @@ class dgSlopeLimiter : public dgLimiter{
 public :
   dgSlopeLimiter (dgConservationLaw *claw) : dgLimiter (claw) {}
   virtual int apply ( dgDofContainer *solution);
-  static void registerBindings(binding *b);
 };
+void dgSlopeLimiterRegisterBindings(binding *b);
 
 #endif

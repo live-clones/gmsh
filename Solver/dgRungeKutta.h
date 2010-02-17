@@ -4,15 +4,20 @@ class dgConservationLaw;
 class dgDofContainer;
 class dgLimiter;
 class binding;
+#include "fullMatrix.h"
 class dgRungeKutta {
   double diagonalRK(const dgConservationLaw *claw, double dt, dgDofContainer *solution, int nStages, double *A, double *b); // c == A
-  //static double nonDiagonalRK();
+  double nonDiagonalRK(const dgConservationLaw *claw, double dt, dgDofContainer *solution, int nStages, fullMatrix<double>&A, double *b, double *c);
   dgLimiter *_limiter;
   public:
   void setLimiter(dgLimiter *limiter) { _limiter = limiter; }
   double iterateEuler(const dgConservationLaw *claw, double dt, dgDofContainer *solution);
   double iterate22(const dgConservationLaw *claw, double dt, dgDofContainer *solution);
+  double iterate33(const dgConservationLaw *claw, double dt, dgDofContainer *solution);
   double iterate44(const dgConservationLaw *claw, double dt, dgDofContainer *solution);
+  double iterate44ThreeEight(const dgConservationLaw *claw, double dt, dgDofContainer *solution);
+  double iterate43SchlegelJCAM2009(const dgConservationLaw *claw, double dt, dgDofContainer *solution);
+  double iterateRKFehlberg45(const dgConservationLaw *claw, double dt, dgDofContainer *solution);
   static void registerBindings (binding *b);
   dgRungeKutta();
 };

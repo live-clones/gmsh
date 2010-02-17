@@ -132,7 +132,7 @@ void dgLimiter::registerBindings(binding *b) {
   cm->setDescription("apply the limiter on the solution");
 }
 
-void dgSlopeLimiter::registerBindings(binding *b) {
+void dgSlopeLimiterRegisterBindings(binding *b) {
   classBinding *cb = b->addClass<dgSlopeLimiter>("dgSlopeLimiter");
   cb->setDescription("The usual DG slope limiter: keep the mean, reduces uniformly the slope until it does not overshoot the neighbors' mean");
   methodBinding *cm;
