@@ -32,11 +32,13 @@ public:
   dgDofContainer (dgGroupCollection *groups, int nbFields);
   ~dgDofContainer ();  
   int getNbElements() {return _totalNbElements;}
+  int getNbFields() {return _nbFields;}
   void scatter();
   void save(const std::string name);
   void load(const std::string name);
   void setAll(double v);
   void L2Projection(std::string functionName);
+  void Mesh2Mesh_L2Projection(dgDofContainer &other);
   void exportMsh(const std::string name);
 
   static void registerBindings(binding *b);

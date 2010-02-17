@@ -3,6 +3,9 @@
 #include "function.h"
 #include "SPoint3.h"
 #include "MElement.h"
+#include "dgDofContainer.h"
+#include "dgGroupOfElements.h"
+#include "GModel.h"
 
 // dataCache members
 dataCache::dataCache(dataCacheMap *cacheMap) : _valid(false) {
@@ -214,6 +217,7 @@ dataCacheDouble *functionConstant::newDataCache(dataCacheMap *m)
 {
  return new data(this,m);
 }
+
 functionConstant::functionConstant(const fullMatrix<double> *source){
  _source = *source;
   static int c=0;
@@ -225,40 +229,66 @@ functionConstant::functionConstant(const fullMatrix<double> *source){
 
 // function that enables to interpolate a DG solution using
 // geometrical search in a mesh 
-/*
-class functionSystemOfEquations::data : public dataCacheDouble {
-  dgSystemOfEquations *_sys;
+
+functionMesh2Mesh::functionMesh2Mesh(dgDofContainer *dofc) 
+  : _dofContainer(dofc) 
+{
+  static int c=0;
+  std::ostringstream oss;
+  oss<<"FunctionMesh2Mesh_"<<c++;
+  _name = oss.str();
+  function::add(_name,this);
+}
+
+class functionMesh2Mesh::data : public dataCacheDouble {
+  dgDofContainer  *_dofContainer;
   dataCacheDouble &xyz;
 public:
-  data(dataCacheMap &m, dgSystemOfEquations *sys) :
-    _sys(sys), 
-    xyz(cacheMap.get("Solution",this)),
-    dataCacheDouble(m.getNbEvaluationPoints(), sys->getLaw()->getNbFields())
+  data(dataCacheMap &m, dgDofContainer *sys) :
+    _dofContainer(sys), 
+    xyz(m.get("XYZ",this)),
+    dataCacheDouble(m,m.getNbEvaluationPoints(), sys->getNbFields())
   {
   }
   void _eval() {
     int nP =xyz().size1();
     if(_value.size1() != nP)
-      _value = fullMatrix<double>(nP,sys->getLaw()->getNbFields());
+      _value = fullMatrix<double>(nP,_dofContainer->getNbFields());
     _value.setAll(0.0);
     double fs[256];
+    fullMatrix<double> solEl;
+    GModel *m = _dofContainer->getGroups()->getModel();
     for (int i=0;i<_value.size1();i++){
       const double x = xyz(i,0);
       const double y = xyz(i,1);
       const double z = xyz(i,2);
-      MElement *e = _sys->getModel()->getMeshElementByCoord(SPoint3(x,y,z));
-      std::pair<dgGroupOfElements*,int> location = _sys->getElementPosition(e);
-      double U[3],X[3]={xyz(i,0),xyz(i,1),xyz(i,2)};
+      SPoint3 p(x,y,z);
+      MElement *e = m->getMeshElementByCoord(p);
+      int ig,index;
+      _dofContainer->getGroups()->find (e,ig,index);
+      dgGroupOfElements *group =  _dofContainer->getGroups()->getElementGroup(ig);      
+      double U[3],X[3]={x,y,z};
       e->xyz2uvw (X,U);
-      location.first->getFunctionSpace().f(U[0],U[1],U[2],fs);      
+      group->getFunctionSpace().f(U[0],U[1],U[2],fs);      
+      fullMatrix<double> &sol = _dofContainer->getGroupProxy(ig);
+      solEl.setAsProxy(sol,index*_dofContainer->getNbFields(),_dofContainer->getNbFields());
+      int fSize = group->getNbNodes();
+      for (int k=0;k<_dofContainer->getNbFields();k++){
+	_value(i,k) = 0.0; 	
+	for (int j=0;j<fSize;j++){
+	  _value(i,k) += solEl(j,k)*fs[j]; 		  
+	}
+      }
     }
   }
-  dataCacheDouble *newDataCache(dataCacheMap *m)
-  {
-    return new data(this,_sys);
-  }
 };
-*/
+
+dataCacheDouble *functionMesh2Mesh::newDataCache(dataCacheMap *m)
+{
+  printf("coussdo %d %d\n",m->getNbEvaluationPoints(),_dofContainer->getNbFields());  
+  return new data(*m,_dofContainer);
+}
+
 
 #include "Bindings.h"
 
@@ -286,6 +316,14 @@ void function::registerBindings(binding *b){
   mb = cb->setConstructor<functionStructuredGridFile,std::string, std::string>();
   mb->setArgNames("fileName","coordinateFunction",NULL);
   mb->setDescription("Tri-linearly interpolate through data in file 'fileName' at coordinate given by 'coordinateFunction'.\nThe file format is :\nx0 y0 z0\ndx dy dz\nnx ny nz\nv(0,0,0) v(0,0,1) v(0 0 2) ..."); 
+
+  cb = b->addClass<functionMesh2Mesh>("functionMesh2Mesh");
+  cb->setDescription("A function that can be used to interpolate into a given mesh");
+  mb = cb->setConstructor<functionMesh2Mesh,dgDofContainer*>();
+  mb->setArgNames("solution",NULL);
+  mb->setDescription("A solution.");
+  cb->setParentClass<function>();
+
 
 }
 

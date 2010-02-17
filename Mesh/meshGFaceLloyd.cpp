@@ -20,8 +20,6 @@ void lloydAlgorithm::operator () ( GFace * gf) {
     }
   }
 
-  // assume every 
-
 
   // Create a triangulator
   DocRecord triangulator (all.size());

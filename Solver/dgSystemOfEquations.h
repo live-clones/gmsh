@@ -34,7 +34,6 @@ class dgSystemOfEquations {
 public:
   const dgConservationLaw * getLaw() const {return _claw;}
   const GModel            * getModel() const {return _gm;}
-  std::pair<dgGroupOfElements*,int> getElementPosition (MElement *);
   void setOrder (int order); // set the polynomial order
   void setConservationLaw (dgConservationLaw *law); // set the conservationLaw
   dgSystemOfEquations(GModel *_gm);

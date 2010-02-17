@@ -46,6 +46,8 @@ class dgGroupOfElements {
   int _ghostPartition; // -1 : this is not a ghosted group, otherwise the id of the parent partition
   // N elements in the group
   std::vector<MElement*> _elements;
+  // inverse map that gives the index of an element in the group
+  std::map<MElement*,int> element_to_index;
   // the ONLY function space that is used to 
   // inerpolated the fields (may be different to the 
   // one of the elements)
@@ -99,6 +101,11 @@ public:
   inline const fullMatrix<double> getMapping (int iElement) const {return fullMatrix<double>(*_mapping, iElement, 1);}
   inline int getOrder() const {return _order;}
   inline int getGhostPartition() const {return _ghostPartition;}
+  inline int getIndexOfElement (MElement *e) const {
+    std::map<MElement*,int>::const_iterator it = element_to_index.find(e);
+    if (it == element_to_index.end())return -1;
+    return it->second;
+  }
 };
 
 class dgGroupOfFaces {
@@ -199,6 +206,7 @@ class dgGroupCollection {
   bool _groupsOfElementsBuilt;
   bool _groupsOfInterfacesBuilt;
   public:
+  inline GModel* getModel() {return _model;}
   inline int getNbElementGroups() const {return _elementGroups.size();}
   inline int getNbFaceGroups() const {return _faceGroups.size();}
   inline int getNbBoundaryGroups() const {return _boundaryGroups.size();}
@@ -216,6 +224,8 @@ class dgGroupCollection {
   void buildGroupsOfInterfaces ();
 
   void splitGroupsForMultirate(double refDt,dgConservationLaw *claw);
+
+  void find (MElement *elementToFind, int &iGroup, int &ithElementOfGroup);
 
   dgGroupCollection(GModel *model, int dimension, int order);
   dgGroupCollection();

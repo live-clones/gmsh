@@ -53,7 +53,9 @@ static fullMatrix<double> dgGetFaceIntegrationRuleOnElement (
 }
 
 
-dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e, int polyOrder,int ghostPartition)
+dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e, 
+				     int polyOrder,
+				     int ghostPartition)
   : _elements(e), 
    _fs(*_elements[0]->getFunctionSpace(polyOrder)),
    _integration(dgGetIntegrationRule (_elements[0], polyOrder)),
@@ -76,6 +78,7 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e, int polyOr
 
   for (int i=0;i<_elements.size();i++){
     MElement *e = _elements[i];
+    element_to_index[e] = i;
     fullMatrix<double> imass(*_imass,nbPsi*i,nbPsi);
     for (int j=0;j< _integration->size1() ; j++ ){
       _fs.f((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), f);
@@ -919,6 +922,13 @@ dgGroupCollection::~dgGroupCollection() {
     delete _boundaryGroups[i];
   for (int i=0; i< _ghostGroups.size(); i++)
     delete _ghostGroups[i];
+}
+
+void dgGroupCollection::find (MElement*e, int &ig, int &index){
+  for (ig=0;ig<_elementGroups.size();ig++){
+    index = _elementGroups[ig]->getIndexOfElement(e);
+    if (index != -1)return;
+  }
 }
 
 #include "LuaBindings.h"

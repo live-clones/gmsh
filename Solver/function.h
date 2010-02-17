@@ -8,7 +8,7 @@
 class dataCacheMap;
 class MElement;
 class binding;
-class dgSystemOfEquations;
+class dgDofContainer;
 
 // those classes manage complex function dependencies and keep their values in cache so that they are not recomputed when it is not necessary. To do this, we use three classes : function, dataCache and dataCacheMap. The workflow is :
 //
@@ -195,12 +195,12 @@ class functionConstant : public function {
   functionConstant(const fullMatrix<double> *source);
 };
 
-class functionSystemOfEquations : public function {
-  dgSystemOfEquations *_sys;
+class functionMesh2Mesh : public function {
+  dgDofContainer *_dofContainer;
 public:
   class data ;
   dataCacheDouble *newDataCache(dataCacheMap *m);
-  functionSystemOfEquations(dgSystemOfEquations *sys) : _sys(sys) {}
+  functionMesh2Mesh(dgDofContainer *dofc) ;
 };
 
 #endif
