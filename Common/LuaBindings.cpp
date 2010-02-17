@@ -138,6 +138,8 @@ static int luaClear (lua_State *L){
 
 int binding::readFile(const char *filename)
 {
+  int lock = CTX::instance()->lock;
+  CTX::instance()->lock = 0;
   checkDocCompleteness();
   int s = luaL_loadfile(L, filename);
   if ( s==0 ) {
@@ -146,6 +148,7 @@ int binding::readFile(const char *filename)
   }
   reportErrors(L, s);
   lua_close(L);
+  CTX::instance()->lock = lock;
   return (s==0);
 }
 
