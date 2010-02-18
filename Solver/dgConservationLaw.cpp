@@ -61,8 +61,8 @@ class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
         maxDif->addMeAsDependencyOf(this);
     }
     void _eval() {
-      solutionRight.set(outsideValue());
       if(maxDif){
+        solutionRight.set(outsideValue());
         for(int i=0;i<_value.size1(); i++)
           for(int j=0;j<_value.size2(); j++)
             _value(i,j) = (*maxDif)(i,j);
