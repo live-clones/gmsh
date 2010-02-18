@@ -21,6 +21,7 @@
 #include "dgRungeKutta.h"
 #include "dgSystemOfEquations.h"
 #include "dgLimiter.h"
+#include "bindings.h"
 
 extern "C" {
   #include "lua.h"
@@ -32,6 +33,61 @@ extern "C" {
 #include "readline.h"
 #include "history.h"
 #endif
+
+//trivial class to bind options
+class gmshOptions {
+  public:
+  gmshOptions(){};
+  void colorSet(std::string category, int index, std::string name, int value) {
+    GmshSetOption(category,name,(unsigned int)(value), index);
+  }
+  int colorGet(std::string category, int index, std::string name) {
+    unsigned int value;
+    GmshGetOption(category, name, value, index);
+    return value;
+  }
+  double numberGet(std::string category, int index, std::string name) {
+    double value;
+    GmshGetOption(category, name, value, index);
+    return value;
+  }
+  void numberSet(std::string category, int index, std::string name, double value) {
+    GmshSetOption(category, name, value, index);
+  }
+  std::string stringGet(std::string category, int index, std::string name) {
+    std::string value;
+    GmshGetOption(category, name, value, index);
+    return value;
+  }
+  void stringSet(std::string category, int index, std::string name, double value) {
+    GmshSetOption(category, name, value, index);
+  }
+  static void registerBindings(binding *b) {
+    classBinding *cb = b->addClass<gmshOptions>("gmshOptions");
+    cb->setDescription("access the gmsh option database");
+    methodBinding *mb;
+    mb = cb->addMethod("colorSet", &gmshOptions::colorSet);
+    mb->setDescription("set the value of a color (unsigned int) option. This is equivalent to category[index].name = value");
+    mb->setArgNames("category","index","name","value",NULL);
+    mb = cb->addMethod("colorGet", &gmshOptions::colorGet);
+    mb->setDescription("return the value of a color (unsigned int) option. This is equivalent to category[index].name");
+    mb->setArgNames("category","index","name",NULL);
+    mb = cb->addMethod("numberSet", &gmshOptions::numberSet);
+    mb->setDescription("set the value of a number option. This is equivalent to category[index].name = value");
+    mb->setArgNames("category","index","name","value",NULL);
+    mb = cb->addMethod("numberGet", &gmshOptions::numberGet);
+    mb->setDescription("return the value of a number option. This is equivalent to category[index].name");
+    mb->setArgNames("category","index","name",NULL);
+    mb = cb->addMethod("srtingSet", &gmshOptions::stringSet);
+    mb->setDescription("set the value of a string option. This is equivalent to category[index].name = \"value\"");
+    mb->setArgNames("category","index","name","value",NULL);
+    mb = cb->addMethod("srtingGet", &gmshOptions::stringGet);
+    mb->setDescription("return the value of a string option. This is equivalent to category[index].name");
+    mb->setArgNames("category","index","name",NULL);
+    mb = cb->setConstructor<gmshOptions>();
+    mb->setDescription("an instance of gmshOptions is needed to access the database");
+  }
+};
 
 static void reportErrors(lua_State *L, int status)
 {
@@ -288,6 +344,7 @@ binding::binding(){
   DocRecord::registerBindings(this);
   GEntity::registerBindings(this);
   GFace::registerBindings(this);
+  gmshOptions::registerBindings(this);
 }
 binding *binding::_instance=NULL;
 #endif

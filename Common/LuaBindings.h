@@ -119,6 +119,21 @@ class luaStack<int>{
   }
 };
 
+template<>
+class luaStack<unsigned int>{
+  public:
+  static int get(lua_State *L, unsigned int ia){
+    unsigned int a= (unsigned int)luaL_checkint(L,ia);
+    return a;
+  }
+  static void push(lua_State *L, unsigned int i){
+    lua_pushinteger(L,i);
+  }
+  static std::string getName(){
+    return "unsigned int";
+  }
+};
+
 template<class type>
 class luaStack<std::vector<type > >{
   public:
