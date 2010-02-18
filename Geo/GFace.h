@@ -296,7 +296,6 @@ class GFace : public GEntity
   // After mesh generation, those are moved to the mesh_vertices array 
   std::vector<MVertex*> _additional_vertices;
   
-
   static void registerBindings(binding *b);
 };
 

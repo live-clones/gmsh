@@ -67,6 +67,9 @@ class MVertex{
   inline double & x() { return _x; }
   inline double & y() { return _y; }
   inline double & z() { return _z; }
+  // cannot use the reference to set the value in the bindings
+  inline void setXYZ(double x,double y, double z) {_x=x; _y=y; _z=z; }
+
   inline SPoint3 point() const { return SPoint3(_x, _y, _z); }
 
   // get/set the parent entity

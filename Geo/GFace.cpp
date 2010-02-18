@@ -18,6 +18,7 @@
 #include "GaussLegendre1D.h"
 #include "Context.h"
 #include "meshGFaceLloyd.h"
+#include "bindings.h"
 
 #define SQU(a)      ((a)*(a))
 
@@ -1059,10 +1060,9 @@ void GFace::registerBindings(binding *b)
 {
   classBinding *cb = b->addClass<GFace>("GFace");
   cb->setParentClass<GEntity>();
-  cb->setDescription("A Geometrical Face.");
+  cb->setDescription("A GFace is a geometrical 2D entity");
   methodBinding *cm;
   cm = cb->addMethod("lloyd", &GFace::lloyd);
   cm->setDescription("do N iteration of Lloyd's algorithm using or not the infinite norm");
   cm->setArgNames("N","infiniteNorm",NULL);
 }
-

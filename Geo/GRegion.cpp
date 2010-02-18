@@ -14,6 +14,7 @@
 #include "MElementCut.h"
 #include "GmshMessage.h"
 #include "VertexArray.h"
+#include "bindings.h"
 
 GRegion::GRegion(GModel *model, int tag) : GEntity (model, tag)
 {
@@ -256,4 +257,11 @@ bool GRegion::edgeConnected(GRegion *r) const
     ++it;
   }
   return false;
+}
+
+void GRegion::registerBindings(binding *b)
+{
+  classBinding *cb = b->addClass<GRegion>("GRegion");
+  cb->setDescription("A GRegion is a geometrical 3D entity");
+  cb->setParentClass<GEntity>();
 }

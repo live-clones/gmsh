@@ -9,6 +9,7 @@
 #include "MElement.h"
 #include "VertexArray.h"
 #include "Context.h"
+#include "Bindings.h"
 
 GEntity::GEntity(GModel *m, int t)
   : _model(m), _tag(t), _visible(1), _selection(0),
@@ -60,24 +61,21 @@ std::string GEntity::getInfoString()
   return sstream.str();
 }
 
-#include "Bindings.h"
-
 void GEntity::registerBindings(binding *b)
 {
   classBinding *cb = b->addClass<GEntity>("GEntity");
   cb->setDescription("A GEntity is a geometrical entity of the model.");
-
-  methodBinding *cm;
-  cm = cb->addMethod("model", &GEntity::model);
-  cm->setDescription("returns the geometric model the entity belongs to.");
-
-  /*
-  cm = cb->addMethod("getNumMeshElements", (unsigned int (GEntity::*)() )  &GEntity::getNumMeshElements);
-  cm->setDescription("Return the number of elements of the mesh of the entity.");
-  cm = cb->addMethod("getMeshElement", &GEntity::getMeshElement);
-  cm->setDescription("returns the ith MElement.");
-  cm->setArgNames("i",NULL);
-  */
-
+  methodBinding *mb;
+  mb = cb->addMethod("getNumMeshElements",(unsigned int (GEntity::*)())&GEntity::getNumMeshElements);
+  mb->setDescription("return the number of mesh elements in this entity");
+  mb = cb->addMethod("getMeshElement",&GEntity::getMeshElement);
+  mb->setDescription("get the mesh element at the given index");
+  mb->setArgNames("index",NULL);
+  mb = cb->addMethod("getNumMeshVertices",(unsigned int (GEntity::*)())&GEntity::getNumMeshVertices);
+  mb->setDescription("return the number of mesh vertices in this entity");
+  mb = cb->addMethod("getMeshVertex",&GEntity::getMeshVertex);
+  mb->setDescription("get the mesh vertex at the given index");
+  mb->setArgNames("index",NULL);
+  mb = cb->addMethod("model", &GEntity::model);
+  mb->setDescription("returns the geometric model the entity belongs to.");
 }
-

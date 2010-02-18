@@ -14,6 +14,7 @@
 #include "MLine.h"
 #include "GaussLegendre1D.h"
 #include "Context.h"
+#include "bindings.h"
 
 GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
   : GEntity(model, tag), _tooSmall(false), v0(_v0), v1(_v1), compound(0)
@@ -343,4 +344,11 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z,
   Msg::Error("Could not converge reparametrisation of point (%e,%e,%e) on edge %d",
              Q.x(), Q.y(), Q.z(), tag());
   return false;
+}
+
+void GEdge::registerBindings(binding *b)
+{
+  classBinding *cb = b->addClass<GEdge>("GEdge");
+  cb->setDescription("A GEdge is a geometrical 1D entity");
+  cb->setParentClass<GEntity>();
 }

@@ -10,6 +10,7 @@
 #include "GFace.h"
 #include "MPoint.h"
 #include "GmshMessage.h"
+#include "bindings.h"
 
 GVertex::GVertex(GModel *m, int tag, double ms) : GEntity(m, tag), meshSize(ms) 
 {
@@ -84,4 +85,11 @@ bool GVertex::isOnSeam(const GFace *gf) const
     if ( (*eIter)->isSeam(gf) ) return true;
   }
   return false;
+}
+
+void GVertex::registerBindings(binding *b)
+{
+  classBinding *cb = b->addClass<GVertex>("GVertex");
+  cb->setDescription("A GVertex is a geometrical 0D entity");
+  cb->setParentClass<GEntity>();
 }

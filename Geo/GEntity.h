@@ -270,7 +270,6 @@ class GEntity {
 
   // bindings
   static void registerBindings(binding *b);
-
 };
 
 class GEntityLessThan {

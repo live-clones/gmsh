@@ -319,31 +319,32 @@ binding::binding(){
   //  lua_pushcfunction(L, luaopen_io);
   //  lua_call(L, 0, 0);
 
- 
-
   // Register Lua bindings
-  GModel::registerBindings(this);
-  fullMatrix<double>::registerBindings(this);
-  function::registerBindings(this);
-  dgGroupCollection::registerBindings(this);
-  dgDofContainer::registerBindings(this);
-  dgRungeKutta::registerBindings(this);
-  dgLimiter::registerBindings(this);
-  dgSlopeLimiterRegisterBindings(this);
-  dgBoundaryCondition::registerBindings(this);
-  dgConservationLaw::registerBindings(this);
-  dgConservationLawShallowWater2dRegisterBindings(this);
-  dgConservationLawWaveEquationRegisterBindings(this);
-  dgConservationLawAdvectionDiffusionRegisterBindings(this);
-  dgPerfectGasLaw2dRegisterBindings(this);
-  dgSystemOfEquations::registerBindings(this);
-  functionLua::registerBindings(this);
-  function::registerDefaultFunctions();
-  MVertex::registerBindings(this);
-  MElement::registerBindings(this);
   DocRecord::registerBindings(this);
+  GEdge::registerBindings(this);
   GEntity::registerBindings(this);
   GFace::registerBindings(this);
+  GModel::registerBindings(this);
+  GRegion::registerBindings(this);
+  GVertex::registerBindings(this);
+  MElement::registerBindings(this);
+  MVertex::registerBindings(this);
+  dgBoundaryCondition::registerBindings(this);
+  dgConservationLaw::registerBindings(this);
+  dgConservationLawAdvectionDiffusionRegisterBindings(this);
+  dgConservationLawShallowWater2dRegisterBindings(this);
+  dgConservationLawWaveEquationRegisterBindings(this);
+  dgDofContainer::registerBindings(this);
+  dgGroupCollection::registerBindings(this);
+  dgLimiter::registerBindings(this);
+  dgPerfectGasLaw2dRegisterBindings(this);
+  dgRungeKutta::registerBindings(this);
+  dgSlopeLimiterRegisterBindings(this);
+  dgSystemOfEquations::registerBindings(this);
+  fullMatrix<double>::registerBindings(this);
+  function::registerBindings(this);
+  function::registerDefaultFunctions();
+  functionLua::registerBindings(this);
   gmshOptions::registerBindings(this);
 }
 binding *binding::_instance=NULL;

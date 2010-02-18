@@ -19,6 +19,7 @@ class MPrism;
 class MPyramid;
 class MPolyhedron;
 class ExtrudeParams;
+class bindings;
 
 // A model region.
 class GRegion : public GEntity {
@@ -96,6 +97,8 @@ class GRegion : public GEntity {
   std::vector<MPrism*> prisms;
   std::vector<MPyramid*> pyramids;
   std::vector<MPolyhedron*> polyhedra;
+
+  static void registerBindings(binding *b);
 };
 
 #endif

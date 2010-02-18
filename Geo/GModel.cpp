@@ -1373,9 +1373,26 @@ void GModel::registerBindings(binding *b)
   cm = cb->addMethod("getMeshVertexByTag",&GModel::getMeshVertexByTag);
   cm->setDescription("access a mesh vertex by tag, using the vertex cache");
   cm->setArgNames("tag",NULL);
+  cm = cb->addMethod("getNumRegions",&GModel::getNumRegions);
+  cm->setDescription("return the number of rgions (3D geometrical entities)");
+  cm = cb->addMethod("getNumFaces",&GModel::getNumFaces);
+  cm->setDescription("return the number of faces (2D geometrical entities)");
+  cm = cb->addMethod("getNumEdges",&GModel::getNumEdges);
+  cm->setDescription("return the number of edges (1D geometrical entities)");
+  cm = cb->addMethod("getNumVertices",&GModel::getNumVertices);
+  cm->setDescription("return the number of vertices (0D geometrical entities)");
   cm = cb->addMethod("getFaceByTag",&GModel::getFaceByTag);
-  cm->setDescription("access a model face by its tag");
+  cm->setDescription("access a geometrical face by tag");
+  cm->setArgNames("tag",NULL);
+  cm = cb->addMethod("getEdgeByTag",&GModel::getEdgeByTag);
+  cm->setDescription("access a geometrical edge by tag");
+  cm->setArgNames("tag",NULL);
+  cm = cb->addMethod("getVertexByTag",&GModel::getVertexByTag);
+  cm->setDescription("access a geometrical vertex by tag");
+  cm->setArgNames("tag",NULL);
+  cm = cb->addMethod("getRegionByTag",&GModel::getRegionByTag);
+  cm->setDescription("access a geometrical region by tag");
   cm->setArgNames("tag",NULL);
   cm = cb->setConstructor<GModel>();
-  cm->setDescription("Create an empty GModel.");
+  cm->setDescription("Create an empty GModel");
 }

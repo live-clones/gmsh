@@ -183,6 +183,7 @@ class GEdge : public GEntity {
 
   std::vector<MLine*> lines;
 
+  static void registerBindings(binding *b);
 };
 
 #endif
