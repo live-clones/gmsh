@@ -321,8 +321,8 @@ binding::binding(){
 
   // Register Lua bindings
   DocRecord::registerBindings(this);
-  GEdge::registerBindings(this);
   GEntity::registerBindings(this);
+  GEdge::registerBindings(this);
   GFace::registerBindings(this);
   GModel::registerBindings(this);
   GRegion::registerBindings(this);
