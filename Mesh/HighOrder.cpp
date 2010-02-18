@@ -737,7 +737,8 @@ static void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
   std::vector<MQuadrangle*> quadrangles2;
   for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
     MQuadrangle *q = gf->quadrangles[i];
-    MQuadrangle *qNew = setHighOrder(q,gf,edgeVertices,faceVertices,linear,incomplete,nPts,displ2D,displ3D);
+    MQuadrangle *qNew = setHighOrder(q, gf, edgeVertices, faceVertices, linear,
+                                     incomplete, nPts, displ2D, displ3D);
     quadrangles2.push_back(qNew);
     delete q;
   }
@@ -898,6 +899,8 @@ static void removeHighOrderVertices(GEntity *e)
 
 void SetOrder1(GModel *m)
 {
+  m->destroyMeshCaches();
+
   // replace all elements with first order elements
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
     setFirstOrder(*it, (*it)->lines);

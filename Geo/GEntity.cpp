@@ -17,11 +17,6 @@ GEntity::GEntity(GModel *m, int t)
   _color = CTX::instance()->packColor(0, 0, 255, 0);
 }
 
-GEntity::~GEntity()
-{
-  deleteVertexArrays();
-}
-
 void GEntity::deleteVertexArrays()
 {
   if(va_lines) delete va_lines; va_lines = 0;

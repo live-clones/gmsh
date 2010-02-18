@@ -46,6 +46,8 @@ void GRegion::deleteMesh()
   pyramids.clear();
   for(unsigned int i = 0; i < polyhedra.size(); i++) delete polyhedra[i];
   polyhedra.clear();
+  deleteVertexArrays();
+  model()->destroyMeshCaches();
 }
 
 unsigned int GRegion::getNumMeshElements()

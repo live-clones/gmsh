@@ -277,6 +277,8 @@ void discreteEdge::parametrize()
   mesh_vertices = newVertices;
 
   deleteVertexArrays();
+  model()->destroyMeshCaches();
+
   lines.clear();
   lines = newLines;
 

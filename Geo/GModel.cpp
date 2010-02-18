@@ -704,6 +704,7 @@ void GModel::removeInvisibleElements()
     removeInvisible((*it)->lines, all);
     (*it)->deleteVertexArrays();
   }
+  destroyMeshCaches();
 }
 
 int GModel::indexMeshVertices(bool all, int singlePartition)

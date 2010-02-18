@@ -235,10 +235,7 @@ static double Integration(GEdge *ge, double t1, double t2,
 void deMeshGEdge::operator() (GEdge *ge) 
 {
   if(ge->geomType() == GEntity::DiscreteCurve) return;
-
   ge->deleteMesh();
-  ge->deleteVertexArrays();
-  ge->model()->destroyMeshCaches();
 }
 
 void meshGEdge::operator() (GEdge *ge) 

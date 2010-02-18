@@ -5,6 +5,7 @@
 
 #include <sstream>
 #include <algorithm>
+#include "GModel.h"
 #include "GVertex.h"
 #include "GFace.h"
 #include "MPoint.h"
@@ -25,6 +26,8 @@ void GVertex::deleteMesh()
   mesh_vertices.clear();
   for(unsigned int i = 0; i < points.size(); i++) delete points[i];
   points.clear();
+  deleteVertexArrays();
+  model()->destroyMeshCaches();
 }
 
 void GVertex::setPosition(GPoint &p)

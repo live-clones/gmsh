@@ -37,10 +37,10 @@ GFace::~GFace()
     ++it;
   }
 
-  deleteMesh();
-
   if(va_geom_triangles)
     delete va_geom_triangles;
+
+  deleteMesh();
 }
 
 void GFace::delFreeEdge(GEdge *e)
@@ -83,6 +83,8 @@ void GFace::deleteMesh()
   quadrangles.clear();
   for(unsigned int i = 0; i < polygons.size(); i++) delete polygons[i];
   polygons.clear();
+  deleteVertexArrays();
+  model()->destroyMeshCaches();
 }
 
 unsigned int GFace::getNumMeshElements()

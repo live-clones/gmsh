@@ -158,7 +158,7 @@ class GEntity {
 
   GEntity(GModel *m, int t);
 
-  virtual ~GEntity();
+  virtual ~GEntity(){}
 
   // delete the mesh data
   virtual void deleteMesh(){}

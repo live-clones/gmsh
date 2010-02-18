@@ -1396,7 +1396,7 @@ static int swapHighOrderTriangles(GFace *gf,
     }    
   }
   gf->mesh_vertices = mesh_vertices2;
-  printf("Deleted %d vertices from %d\n",c2,gf->mesh_vertices.size());
+  printf("Deleted %d vertices from %d\n", c2, (int)gf->mesh_vertices.size());
   printf("Added %d vertices\n",c1);
 
   for (unsigned int i = 0; i < gf->triangles.size(); i++){
@@ -1408,7 +1408,7 @@ static int swapHighOrderTriangles(GFace *gf,
     }    
   }
 
-  printf("replacing %d by %d\n",gf->triangles.size(),triangles2.size());
+  printf("replacing %d by %d\n", (int)gf->triangles.size(), (int)triangles2.size());
   gf->triangles = triangles2;
   return nbSwap;
 }

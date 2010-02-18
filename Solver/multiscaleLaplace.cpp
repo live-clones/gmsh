@@ -585,16 +585,16 @@ static void connected_left_right (std::vector<MElement *> &left,
 
 }
 //--------------------------------------------------------------
-static void printLevel ( const char* fn,
-			 std::vector<MElement *> &elements,
-			 std::map<MVertex*,SPoint2> *coordinates,
-			 double version){
-
-  if( !CTX::instance()->mesh.saveAll) return;  
+static void printLevel(const char* fn,
+                       std::vector<MElement *> &elements,
+                       std::map<MVertex*,SPoint2> *coordinates,
+                       double version)
+{
+  if(!CTX::instance()->mesh.saveAll) return;  
 
   std::set<MVertex*> vs;
-  for (int i=0;i<elements.size();i++)
-    for (int j=0;j<elements[i]->getNumVertices();j++)
+  for (int i = 0; i < elements.size(); i++)
+    for (int j = 0; j < elements[i]->getNumVertices(); j++)
       vs.insert(elements[i]->getVertex(j));
 
   bool binary = false;
@@ -603,23 +603,23 @@ static void printLevel ( const char* fn,
   fprintf(fp, "%g %d %d\n", version, binary ? 1 : 0, (int)sizeof(double));
   fprintf(fp, "$EndMeshFormat\n");  
 
-  fprintf(fp,"$Nodes\n%d\n",vs.size());
+  fprintf(fp, "$Nodes\n%d\n", (int)vs.size());
   std::set<MVertex*> :: iterator it = vs.begin();
   int index = 1;
   for (; it != vs.end() ; ++it){
     (*it)->setIndex(index++);
     SPoint2 p = (coordinates) ? (*coordinates)[*it] : SPoint2(0,0);
-    if (coordinates) fprintf(fp,"%d %g %g 0\n",(*it)->getIndex(),p.x(),p.y());
-    else fprintf(fp,"%d %g %g %g\n",(*it)->getIndex(),
-		 (*it)->x(),(*it)->y(),(*it)->z());
+    if (coordinates) fprintf(fp, "%d %g %g 0\n", (*it)->getIndex(), p.x(), p.y());
+    else fprintf(fp, "%d %g %g %g\n", (*it)->getIndex(),
+		 (*it)->x(), (*it)->y(), (*it)->z());
   }
-  fprintf(fp,"$EndNodes\n",elements.size());
+  fprintf(fp, "$EndNodes\n");
   
-  fprintf(fp,"$Elements\n%d\n",elements.size());
-  for (int i=0;i<elements.size();i++){
-    elements[i]->writeMSH(fp,version);
+  fprintf(fp, "$Elements\n%d\n", (int)elements.size());
+  for (int i = 0; i < elements.size(); i++){
+    elements[i]->writeMSH(fp, version);
   }
-  fprintf(fp,"$EndElements\n%d\n",elements.size());
+  fprintf(fp, "$EndElements\n");
   
   fclose(fp);
 }

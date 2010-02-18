@@ -124,6 +124,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 
   // Tetgen modifies both surface & edge mesh, so we need to re-create
   // everything
+  gr->model()->destroyMeshCaches();
   std::list<GFace*> faces = gr->faces();
   std::list<GFace*>::iterator it = faces.begin();
   while(it != faces.end()){
@@ -438,10 +439,7 @@ void TransferVolumeMesh(GRegion *gr, Ng_Mesh *ngmesh,
 void deMeshGRegion::operator() (GRegion *gr)
 {
   if(gr->geomType() == GEntity::DiscreteVolume) return;
-
   gr->deleteMesh();
-  gr->deleteVertexArrays();
-  gr->model()->destroyMeshCaches();
 }
 
 int intersect_line_triangle(double X[3], double Y[3], double Z[3] , 

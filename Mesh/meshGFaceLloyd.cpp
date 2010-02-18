@@ -30,8 +30,8 @@ void lloydAlgorithm::operator () ( GFace * gf) {
   const double LC2D = sqrt ((du.high()-du.low())*(du.high()-du.low()) +
 			    (dv.high()-dv.low())*(dv.high()-dv.low()));  
 
-  printf("Lloyd on face %d %d elements %d nodes LC %g\n",gf->tag(),
-	 gf->getNumMeshElements(),all.size(),LC2D);
+  printf("Lloyd on face %d %d elements %d nodes LC %g\n", gf->tag(),
+	 gf->getNumMeshElements(), (int)all.size(), LC2D);
 
   int i = 0;
 

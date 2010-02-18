@@ -1229,17 +1229,12 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 void deMeshGFace::operator() (GFace *gf)
 {
   if(gf->geomType() == GEntity::DiscreteSurface) return;
-
   gf->deleteMesh();
- 
-  gf->deleteVertexArrays();
-  gf->model()->destroyMeshCaches();
-
   gf->meshStatistics.status = GFace::PENDING;
   gf->meshStatistics.nbTriangle = gf->meshStatistics.nbEdge = 0;
 }
 
-int debugSurface = -100;
+int debugSurface = -1;
 
 void meshGFace::operator() (GFace *gf)
 {
