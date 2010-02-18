@@ -18,7 +18,7 @@
 #include "GaussLegendre1D.h"
 #include "Context.h"
 #include "meshGFaceLloyd.h"
-#include "bindings.h"
+#include "Bindings.h"
 
 #define SQU(a)      ((a)*(a))
 

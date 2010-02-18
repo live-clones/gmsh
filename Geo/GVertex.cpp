@@ -10,7 +10,7 @@
 #include "GFace.h"
 #include "MPoint.h"
 #include "GmshMessage.h"
-#include "bindings.h"
+#include "Bindings.h"
 
 GVertex::GVertex(GModel *m, int tag, double ms) : GEntity(m, tag), meshSize(ms) 
 {

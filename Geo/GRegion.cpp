@@ -14,7 +14,7 @@
 #include "MElementCut.h"
 #include "GmshMessage.h"
 #include "VertexArray.h"
-#include "bindings.h"
+#include "Bindings.h"
 
 GRegion::GRegion(GModel *model, int tag) : GEntity (model, tag)
 {

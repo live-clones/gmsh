@@ -21,7 +21,7 @@
 #include "dgRungeKutta.h"
 #include "dgSystemOfEquations.h"
 #include "dgLimiter.h"
-#include "bindings.h"
+#include "Bindings.h"
 
 extern "C" {
   #include "lua.h"
