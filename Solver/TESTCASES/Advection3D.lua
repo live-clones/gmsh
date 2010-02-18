@@ -25,7 +25,7 @@ v:set(0,0,0)
 v:set(1,0,0)
 v:set(2,0,0.15)
 
-law = dgConservationLawAdvection(functionConstant(v):getName(),'')
+law = dgConservationLawAdvectionDiffusion(functionConstant(v):getName(),'')
 dg:setConservationLaw(law)
 
 -- boundary condition
