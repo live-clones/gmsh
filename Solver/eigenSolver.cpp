@@ -27,12 +27,12 @@ void eigenSolver::solve(int numEigenValues, std::string which)
   if(!_A) return;
   Mat A = _A->getMatrix();
   Mat B = _B ? _B->getMatrix() : PETSC_NULL;
-
+   
   _try(MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY));
   _try(MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY));
   PetscInt N, M;
   _try(MatGetSize(A, &N, &M));
-
+ 
   // generalized eigenvalue problem A x - \lambda B x = 0
   EPS eps;
   _try(EPSCreate(PETSC_COMM_WORLD, &eps));
@@ -57,10 +57,12 @@ void eigenSolver::solve(int numEigenValues, std::string which)
   else if(which == "largest")
     _try(EPSSetWhichEigenpairs(eps, EPS_LARGEST_MAGNITUDE));
 
+
   // print info
   const EPSType type;
   _try(EPSGetType(eps, &type));
   Msg::Info("SLEPc solution method: %s", type);
+
   PetscInt nev;
   _try(EPSGetDimensions(eps, &nev, PETSC_NULL, PETSC_NULL));
   Msg::Info("SLEPc number of requested eigenvalues: %d", nev);

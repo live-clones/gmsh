@@ -101,7 +101,13 @@ class dofManager{
   linearSystem<dataMat> *_current;
    
  public:
-  dofManager(linearSystem<dataMat> *l) : _current(l) { _linearSystems["A"] = l; }
+ dofManager(linearSystem<dataMat> *l) : _current(l) { _linearSystems["A"] = l; }
+ dofManager(linearSystem<dataMat> *l1, linearSystem<dataMat> *l2) : _current(l1) { 
+    _linearSystems.insert(std::make_pair("A", l1));
+    _linearSystems.insert(std::make_pair("B", l2));
+    //_linearSystems.["A"] = l1; 
+    //_linearSystems["B"] = l2;
+  }
   inline void fixDof(Dof key, const dataVec &value)
   {
     fixed[key] = value;
@@ -312,6 +318,15 @@ class dofManager{
     _current->zeroMatrix();
     _current->zeroRightHandSide();
   }  
+  inline void setCurrentMatrix(std::string name){
+    typename std::map<const std::string, linearSystem<dataMat>*>::iterator it =  _linearSystems.find(name);
+     if(it != _linearSystems.end())
+       _current = it->second;
+     else{
+       Msg::Error("Current matrix %s not found ",  name.c_str());
+       throw;
+     }
+  }
   linearSystem<dataMat> *getLinearSystem(std::string &name)
   {
     typename std::map<const std::string, linearSystem<dataMat>*>::iterator it =

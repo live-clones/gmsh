@@ -74,6 +74,7 @@ class GFaceCompound : public GFace {
   void buildAllNodes() const; 
   void parametrize(iterationStep, typeOfMapping) const;
   bool parametrize_conformal() const;
+  bool parametrize_conformal_spectral() const;
   void compute_distance() const;
   bool checkOrientation(int iter) const;
   bool checkFolding(std::vector<MVertex*> &ordered) const;

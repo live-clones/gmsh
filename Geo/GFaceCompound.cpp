@@ -25,6 +25,7 @@
 #include "distanceTerm.h"
 #include "crossConfTerm.h"
 #include "convexCombinationTerm.h"
+#include "diagBCTerm.h" 
 #include "linearSystemGMM.h"
 #include "linearSystemCSR.h"
 #include "linearSystemFull.h"
@@ -502,13 +503,14 @@ bool GFaceCompound::parametrize() const
   else if (_mapping == CONFORMAL){
     Msg::Debug("Parametrizing surface %d with 'conformal map'", tag());
     fillNeumannBCS();
-    bool withoutFolding = parametrize_conformal() ;
+    bool withoutFolding = parametrize_conformal_spectral() ;
     printStuff();
     if ( withoutFolding == false ){
       Msg::Warning("$$$ Parametrization switched to harmonic map");
       parametrize(ITERU,HARMONIC); 
       parametrize(ITERV,HARMONIC);
     }
+    //exit(1);
   }
   //Distance function
   //-----------------
@@ -784,14 +786,14 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 {
 
   if (!_lsys) {
-#if defined(HAVE_PETSC)
+#if defined(HAVE_PETSC) && !defined(HAVE_TAUCS)
     _lsys = new linearSystemPETSc<double>;
-#elif defined(_HAVE_TAUCS) 
-    _lsys = new linearSystemCSRTaucs<double>;
-#elif defined(HAVE_GMM)
+#elif defined(HAVE_GMM) && !defined(HAVE_TAUCS)
     linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
     _lsysb->setGmres(1);
     _lsys = _lsysb;
+#elif defined(_HAVE_TAUCS) 
+    _lsys = new linearSystemCSRTaucs<double>;
 #else
     _lsys = new linearSystemFull<double>;
 #endif
@@ -924,7 +926,7 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
     v->getParameter(0,tGlob);
  
     //find compound Edge
-      GEdgeCompound *gec = dynamic_cast<GEdgeCompound*>(v->onWhat());
+    GEdgeCompound *gec = dynamic_cast<GEdgeCompound*>(v->onWhat());
      
     if(gec){
 
@@ -1102,6 +1104,88 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
 
 }
 
+bool GFaceCompound::parametrize_conformal_spectral() const
+{
+
+#if defined(HAVE_PETSC)
+
+  std::vector<MVertex*> ordered;
+  std::vector<double> coords;  
+  bool success = orderVertices(_U0, ordered, coords);
+
+  linearSystem <double> *lsysA  = new linearSystemPETSc<double>;
+  linearSystem <double> *lsysB  = new linearSystemPETSc<double>;
+  dofManager<double> myAssembler(lsysA, lsysB);
+
+  //-------------------------------
+  myAssembler.setCurrentMatrix("A");
+
+  for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+    MVertex *v = *itv;
+    myAssembler.numberVertex(v, 0, 1);
+    myAssembler.numberVertex(v, 0, 2);
+  }
+
+  simpleFunction<double> ONE(1.0);
+  simpleFunction<double> MONE(-1.0 );
+  laplaceTerm laplace1(model(), 1, &ONE);
+  laplaceTerm laplace2(model(), 2, &ONE);
+  crossConfTerm cross12(model(), 1, 2, &ONE);
+  crossConfTerm cross21(model(), 2, 1, &MONE);
+  std::list<GFace*>::const_iterator it = _compound.begin(); 
+  for( ; it != _compound.end() ; ++it){
+    for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+      SElement se((*it)->triangles[i]);
+      laplace1.addToMatrix(myAssembler, &se);
+      laplace2.addToMatrix(myAssembler, &se);
+      cross12.addToMatrix(myAssembler, &se);
+      cross21.addToMatrix(myAssembler, &se);
+    }
+  }
+
+  //-------------------------------
+   myAssembler.setCurrentMatrix("B");
+
+   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+     MVertex *v = *itv;
+     myAssembler.numberVertex(v, 0, 1);
+     myAssembler.numberVertex(v, 0, 2);
+   }
+   diagBCTerm diag(0, 1, &ONE);
+   it = _compound.begin(); 
+   for( ; it != _compound.end() ; ++it){
+     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+       SElement se((*it)->triangles[i]);
+       diag.addToMatrix(myAssembler, &se);
+     }
+   }
+   myAssembler.setCurrentMatrix("A");
+  //-------------------------------
+   eigenSolver eig(&myAssembler, "A" ); //, "B");
+   eig.solve(2, "smallest");
+   //printf("num eigenvalues =%d \n", eig.getNumEigenValues());
+   
+   int k = 0;
+   std::vector<std::complex<double> > &ev = eig.getEigenVector(0); 
+   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+     MVertex *v = *itv;
+     double paramu = ev[k].real();
+     double paramv = ev[k+1].real();
+     coordinates[v] = SPoint3(paramu,paramv,0.0);
+     k = k+2;
+   }
+  
+   lsysA->clear();
+   lsysB->clear();
+   
+   //check for folding
+   return checkFolding(ordered);
+
+#else
+   return false;
+
+#endif
+}
 bool GFaceCompound::parametrize_conformal() const
 {
 
@@ -1115,7 +1199,7 @@ bool GFaceCompound::parametrize_conformal() const
     return false;
   }
 
-   MVertex *v1 = ordered[0];
+   MVertex *v1  = ordered[0];
    MVertex *v2  = ordered[(int)ceil((double)ordered.size()/2.)];
 
 //   MVertex *v2 ;  
@@ -1271,9 +1355,6 @@ void GFaceCompound::computeNormals() const
       MTriangle *t = (*it)->triangles[i];
       t->getJacobian(0, 0, 0, J);
       SVector3 n (J[2][0],J[2][1],J[2][2]);
-      //SVector3 d1(J[0][0], J[0][1], J[0][2]);
-      //SVector3 d2(J[1][0], J[1][1], J[1][2]);
-      //SVector3 n = crossprod(d1, d2);
       n.normalize();
       for(int j = 0; j < 3; j++){
 	std::map<MVertex*, SVector3>::iterator itn = _normals.find(t->getVertex(j));

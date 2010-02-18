@@ -38,7 +38,11 @@ void lloydAlgorithm::operator () ( GFace * gf) {
   for (std::set<MVertex*>::iterator it = all.begin(); it != all.end(); ++it){
     SPoint2 p;
     bool success = reparamMeshVertexOnFace(*it, gf, p);
-    if (!success) return;
+    if (!success) {
+      printf("loyd no succes exit \n");
+      exit(1);
+      return;
+    }
     double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() / 
       (double)RAND_MAX;
     double YY = CTX::instance()->mesh.randFactor * LC2D * (double)rand() / 

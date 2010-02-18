@@ -36,6 +36,7 @@
 #include "CreateFile.h"
 #include "Context.h"
 #include "multiscalePartition.h"
+#include "meshGFaceLloyd.h"
 
 void fourthPoint(double *p1, double *p2, double *p3, double *p4)
 {
@@ -1403,11 +1404,13 @@ void partitionAndRemesh(GFaceCompound *gf)
 
   Msg::Info("*** Starting Mesh of surface %d ...", gf->tag());
 
+  //lloydAlgorithm lloyd(10,0);
   for (int i=0; i < NF; i++){
     GFace *gfc =  gf->model()->getFaceByTag(numf + NF + i );
     meshGFace mgf;
     mgf(gfc);
-      
+    //lloyd(gfc);
+
     for(unsigned int j = 0; j < gfc->triangles.size(); ++j){
       MTriangle *t = gfc->triangles[j];
       std::vector<MVertex *> v(3);
