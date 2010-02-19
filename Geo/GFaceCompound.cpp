@@ -505,6 +505,7 @@ bool GFaceCompound::parametrize() const
     fillNeumannBCS();
     bool withoutFolding = parametrize_conformal_spectral() ;
     printStuff();
+    //exit(1);
     if ( withoutFolding == false ){
       Msg::Warning("$$$ Parametrization switched to harmonic map");
       parametrize(ITERU,HARMONIC); 
@@ -529,10 +530,6 @@ bool GFaceCompound::parametrize() const
     checkOrientation(0);
     buildOct();
   }
-
-
-
-
 
   if (checkAspectRatio() > AR_MAX){
     Msg::Warning("Geometrical aspect ratio too high");
@@ -1119,12 +1116,10 @@ bool GFaceCompound::parametrize_conformal_spectral() const
 
   //-------------------------------
   myAssembler.setCurrentMatrix("A");
-
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
     MVertex *v = *itv;
     myAssembler.numberVertex(v, 0, 1);
     myAssembler.numberVertex(v, 0, 2);
-
   }
 
   simpleFunction<double> ONE(1.0);
@@ -1143,48 +1138,91 @@ bool GFaceCompound::parametrize_conformal_spectral() const
       cross21.addToMatrix(myAssembler, &se);
     }
   }
+  double epsilon = 1.e-6;
+  for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+      MVertex *v = *itv;
+      if (std::find(ordered.begin(), ordered.end(), v) == ordered.end() ){
+        myAssembler.assemble(v, 0, 1, v, 0, 1,  epsilon);
+        myAssembler.assemble(v, 0, 2, v, 0, 2,  epsilon);
+      }
+  }
 
   //-------------------------------
    myAssembler.setCurrentMatrix("B");
-
    for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
      MVertex *v = *itv;
      myAssembler.numberVertex(v, 0, 1);
      myAssembler.numberVertex(v, 0, 2);
    }
-   
-   diagBCTerm diag1(0, 1, &ONE);
-   diagBCTerm diag2(0, 2, &ONE);
-   it = _compound.begin(); 
-   for( ; it != _compound.end() ; ++it){
-     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
-       SElement se((*it)->triangles[i]);
-       diag1.addToMatrix(myAssembler, &se);
-       diag2.addToMatrix(myAssembler, &se);
-     }
-   }
-
-   //-------------------------------
-   eigenSolver eig(&myAssembler, "A" ); //, "B");
-   //eig.solve(1, "largest");
-   eig.solve(1, "smallestReal");
-   //printf("num eigenvalues =%d \n", eig.getNumEigenValues());
-   
-   int k = 0;
-   std::vector<std::complex<double> > &ev = eig.getEigenVector(0); 
+      
+   double small = 0.0;
    for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
      MVertex *v = *itv;
-     double paramu = ev[k].real();
-     double paramv = ev[k+1].real();
-     coordinates[v] = SPoint3(paramu,paramv,0.0);
-     k = k+2;
+     if (std::find(ordered.begin(), ordered.end(), v) == ordered.end() ){
+       myAssembler.assemble(v, 0, 1, v, 0, 1,  small);
+       myAssembler.assemble(v, 0, 2, v, 0, 2,  small);
+     }
+     else{
+       myAssembler.assemble(v, 0, 1, v, 0, 1,  1.0);
+       myAssembler.assemble(v, 0, 2, v, 0, 2,  1.0);
+     }
    }
-  
-   lsysA->clear();
-   lsysB->clear();
-   
-   //check for folding
-   return checkFolding(ordered);
+//    int NB = ordered.size();
+//    for(std::vector<MVertex *>::iterator itv1 = ordered.begin(); itv1 !=ordered.end() ; ++itv1){
+//      for(std::vector<MVertex *>::iterator itv2 = ordered.begin(); itv2 !=ordered.end() ; ++itv2){
+//        myAssembler.assemble(*itv1, 0, 1, *itv2, 0, 1,  -1/NB);
+//        myAssembler.assemble(*itv1, 0, 2, *itv2, 0, 2,  -1/NB);
+//      }
+//    }
+
+//    diagBCTerm diag1(0, 1, &ONE);
+//    diagBCTerm diag2(0, 2, &ONE);
+//    it = _compound.begin(); 
+//    for( ; it != _compound.end() ; ++it){
+//      for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
+//        SElement se((*it)->triangles[i]);
+//        diag1.addToMatrix(myAssembler, &se);
+//        diag2.addToMatrix(myAssembler, &se);
+//      }
+//    }
+
+   //-------------------------------
+   eigenSolver eig(&myAssembler, "B" , "A", true);
+   bool converged = eig.solve(2, "largest");
+     
+   if(converged) {
+     int k = 0;
+     std::vector<std::complex<double> > &ev = eig.getEigenVector(0); 
+     for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+       MVertex *v = *itv;
+       double paramu = ev[k].real();
+       double paramv = ev[k+1].real();
+       coordinates[v] = SPoint3(paramu,paramv,0.0);
+       k = k+2;
+     }
+     
+     //if folding take second sallest eigenvalue
+     bool noFolding = checkFolding(ordered);
+     if (!noFolding ){
+       coordinates.clear();
+       int k = 0;
+       std::vector<std::complex<double> > &ev = eig.getEigenVector(1); 
+       for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+	 MVertex *v = *itv;
+	 double paramu = ev[k].real();
+	 double paramv = ev[k+1].real();
+	 coordinates[v] = SPoint3(paramu,paramv,0.0);
+	 k = k+2;
+       }
+     }
+
+     lsysA->clear();
+     lsysB->clear();
+
+     return checkFolding(ordered);
+
+   }
+   else return false;
 
 #else
    return false;

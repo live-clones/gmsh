@@ -20,13 +20,14 @@
 class eigenSolver{
  private:
   linearSystemPETSc<double> *_A, *_B;
+  bool _hermitian;
   std::vector<std::complex<double> > _eigenValues;
   std::vector<std::vector<std::complex<double> > > _eigenVectors;
   void _try(int ierr) const { CHKERRABORT(PETSC_COMM_WORLD, ierr); }
  public:
   eigenSolver(dofManager<double> *manager, std::string A, 
-              std::string B="");
-  void solve(int numEigenValues=0, std::string which="");
+              std::string B="", bool hermitian=false);
+  bool solve(int numEigenValues=0, std::string which="");
   int getNumEigenValues(){ return _eigenValues.size(); }
   std::complex<double> getEigenValue(int num){ return _eigenValues[num]; }
   std::vector<std::complex<double> > &getEigenVector(int num){ return _eigenVectors[num]; }
@@ -39,7 +40,7 @@ class eigenSolver{
   std::vector<std::complex<double> > _dummy;
  public:
   eigenSolver(dofManager<double> *manager, std::string A, 
-              std::string B=""){}
+              std::string B="", bool hermitian=false){}
   void solve(int numEigenValues=0, std::string which="")
   {
     Msg::Error("Eigen solver requires SLEPc");
