@@ -48,10 +48,9 @@ class diagBCTerm : public femTerm<double> {
 	m(j,k) = 0.0;
 	m(k,j) = 0.0;
       }
-      m(j,j)  = 1.0;
-/*       MVertex *v = e->getVertex(j); */
-/*       if( v->onWhat()->dim() < 2 )  m(j,j) = (nbNodes - 1) ; */
-/*       else m(j,j) = 0.0; */
+      MVertex *v = e->getVertex(j);
+      if( v->onWhat()->dim() < 2 ) m(j,j) = 1.0; 
+      else m(j,j) = 0.0;
     }
   } 
   

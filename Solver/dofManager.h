@@ -105,8 +105,6 @@ class dofManager{
  dofManager(linearSystem<dataMat> *l1, linearSystem<dataMat> *l2) : _current(l1) { 
     _linearSystems.insert(std::make_pair("A", l1));
     _linearSystems.insert(std::make_pair("B", l2));
-    //_linearSystems.["A"] = l1; 
-    //_linearSystems["B"] = l2;
   }
   inline void fixDof(Dof key, const dataVec &value)
   {

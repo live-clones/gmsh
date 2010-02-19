@@ -1124,6 +1124,7 @@ bool GFaceCompound::parametrize_conformal_spectral() const
     MVertex *v = *itv;
     myAssembler.numberVertex(v, 0, 1);
     myAssembler.numberVertex(v, 0, 2);
+
   }
 
   simpleFunction<double> ONE(1.0);
@@ -1151,18 +1152,22 @@ bool GFaceCompound::parametrize_conformal_spectral() const
      myAssembler.numberVertex(v, 0, 1);
      myAssembler.numberVertex(v, 0, 2);
    }
-   diagBCTerm diag(0, 1, &ONE);
+   
+   diagBCTerm diag1(0, 1, &ONE);
+   diagBCTerm diag2(0, 2, &ONE);
    it = _compound.begin(); 
    for( ; it != _compound.end() ; ++it){
      for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
        SElement se((*it)->triangles[i]);
-       diag.addToMatrix(myAssembler, &se);
+       diag1.addToMatrix(myAssembler, &se);
+       diag2.addToMatrix(myAssembler, &se);
      }
    }
-   myAssembler.setCurrentMatrix("A");
-  //-------------------------------
+
+   //-------------------------------
    eigenSolver eig(&myAssembler, "A" ); //, "B");
-   eig.solve(2, "smallest");
+   //eig.solve(1, "largest");
+   eig.solve(1, "smallestReal");
    //printf("num eigenvalues =%d \n", eig.getNumEigenValues());
    
    int k = 0;

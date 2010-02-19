@@ -32,7 +32,14 @@ void eigenSolver::solve(int numEigenValues, std::string which)
   _try(MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY));
   PetscInt N, M;
   _try(MatGetSize(A, &N, &M));
- 
+
+  PetscInt N2, M2;
+  if (_B) {
+    _try(MatAssemblyBegin(B, MAT_FINAL_ASSEMBLY));
+    _try(MatAssemblyEnd(B, MAT_FINAL_ASSEMBLY));
+    _try(MatGetSize(B, &N2, &M2));
+  } 
+
   // generalized eigenvalue problem A x - \lambda B x = 0
   EPS eps;
   _try(EPSCreate(PETSC_COMM_WORLD, &eps));
@@ -42,6 +49,18 @@ void eigenSolver::solve(int numEigenValues, std::string which)
     _try(EPSSetProblemType(eps, _B ? EPS_GHEP : EPS_HEP));
   else
     _try(EPSSetProblemType(eps, _B ? EPS_GNHEP : EPS_NHEP));
+
+//   EPSSetProblemType(eps, EPS_GNHEP);
+//   ST st;
+//   EPSGetST(eps,&st);
+//   KSP ksp;
+//   PC pc;
+//   STGetKSP(st,&ksp); 
+//   KSPGetPC(ksp, &pc);
+//   PCSetType(pc, PCJACOBI);
+//   PCFactorSetMatOrderingType(pc, MATORDERING_RCM);
+//   STSetType(st,STSINV);
+//   STSetShift(st,0.0);
 
   // set some default options
   _try(EPSSetDimensions(eps, 5, PETSC_DECIDE, PETSC_DECIDE));
@@ -54,9 +73,10 @@ void eigenSolver::solve(int numEigenValues, std::string which)
     _try(EPSSetDimensions(eps, numEigenValues, PETSC_DECIDE, PETSC_DECIDE));
   if(which == "smallest")
     _try(EPSSetWhichEigenpairs(eps, EPS_SMALLEST_MAGNITUDE));
+  else if(which == "smallestReal")
+    _try(EPSSetWhichEigenpairs(eps, EPS_SMALLEST_REAL));
   else if(which == "largest")
     _try(EPSSetWhichEigenpairs(eps, EPS_LARGEST_MAGNITUDE));
-
 
   // print info
   const EPSType type;
