@@ -21,12 +21,10 @@ eigenSolver::eigenSolver(dofManager<double> *manager, std::string A,
     _B = dynamic_cast<linearSystemPETSc<double>*>(manager->getLinearSystem(B));
     if(!_B) Msg::Error("Could not find PETSc system '%s'", B.c_str());
   }
-
 }
 
 bool eigenSolver::solve(int numEigenValues, std::string which)
 {
-
   if(!_A) return false;
   Mat A = _A->getMatrix();
   Mat B = _B ? _B->getMatrix() : PETSC_NULL;
@@ -107,15 +105,14 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
     Msg::Error("The operator is nonsymmetric");
   
   // get number of converged approximate eigenpairs
-    PetscInt nconv;
-    _try(EPSGetConverged(eps, &nconv));
-    Msg::Info("SLEPc number of converged eigenpairs: %d", nconv);
-    
-    if (nconv>0) {
+  PetscInt nconv;
+  _try(EPSGetConverged(eps, &nconv));
+  Msg::Info("SLEPc number of converged eigenpairs: %d", nconv);
 
-    // ignore additional eigenvalues if we get more than what we asked
-    if(nconv > nev) nconv = nev;
-    
+  // ignore additional eigenvalues if we get more than what we asked
+  if(nconv > nev) nconv = nev;
+  
+  if (nconv > 0) {
     Vec xr, xi;
     _try(MatGetVecs(A, PETSC_NULL, &xr));
     _try(MatGetVecs(A, PETSC_NULL, &xi));
@@ -151,16 +148,12 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
       }
       _eigenVectors.push_back(ev);
     }
-    
-    // cleanup
-    _try(EPSDestroy(eps));
     _try(VecDestroy(xr));
     _try(VecDestroy(xi));
-    _try(SlepcFinalize());
-
   }
 
-
+  _try(EPSDestroy(eps));
+  _try(SlepcFinalize());
   
   if(reason == EPS_CONVERGED_TOL){
     Msg::Info("SLEPc done");

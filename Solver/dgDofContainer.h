@@ -23,6 +23,7 @@ private:
   double *sendBuf, *recvBuf;
   std::vector<fullMatrix<double> *> _dataProxys; // proxys 
   std::map<const dgGroupOfElements*,int> _groupId;
+  int _mshStep;
 public:
   void scale(double f);
   double norm();

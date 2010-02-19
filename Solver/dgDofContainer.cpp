@@ -12,7 +12,7 @@
 #include <sstream>
 #include "MElement.h"
 dgDofContainer::dgDofContainer (dgGroupCollection *groups, int nbFields):
-  _groups(*groups)
+  _groups(*groups), _mshStep(0)
 {
   int _dataSize = 0;
   _dataSizeGhost=0;
@@ -213,11 +213,13 @@ void dgDofContainer::L2Projection(std::string functionName){
 }
 
 
-void dgDofContainer::exportMsh(const std::string name){
+void dgDofContainer::exportMsh(const std::string name)
+{
   // the elementnodedata::export does not work !!
 
   for (int ICOMP = 0; ICOMP<_nbFields;++ICOMP){
-    std::ostringstream name_oss;
+    std::ostringstream name_oss, name_view;
+    name_view<<"comp_"<<ICOMP;
     name_oss<<name<<"_COMP_"<<ICOMP<<".msh";
     if(Msg::GetCommSize()>1)
       name_oss<<"_"<<Msg::GetCommRank();
@@ -229,11 +231,11 @@ void dgDofContainer::exportMsh(const std::string name){
     fprintf(f,"$MeshFormat\n2.1 0 8\n$EndMeshFormat\n");  
     fprintf(f,"$ElementNodeData\n");
     fprintf(f,"1\n");
-    fprintf(f,"\"%s\"\n",name.c_str());
+    fprintf(f,"\"%s\"\n",name_view.str().c_str());
     fprintf(f,"1\n");
-    fprintf(f,"0.0\n");
+    fprintf(f,"%d\n", _mshStep); // should print actual time here
     fprintf(f,"%d\n", Msg::GetCommSize() > 1 ? 4 : 3);
-    fprintf(f,"0\n 1\n %d\n",COUNT);
+    fprintf(f,"%d\n 1\n %d\n", _mshStep, COUNT);
     if(Msg::GetCommSize() > 1) fprintf(f,"%d\n", Msg::GetCommRank());
     for (int i=0;i < _groups.getNbElementGroups()  ;i++){
       dgGroupOfElements *group = _groups.getElementGroup(i);
@@ -251,7 +253,9 @@ void dgDofContainer::exportMsh(const std::string name){
     fprintf(f,"$EndElementNodeData\n");
     fclose(f);
   }
-  return;
+  
+  _mshStep++;
+
   // we should discuss that : we do a copy of the solution, this should
   // be avoided !
 
@@ -294,5 +298,5 @@ void dgDofContainer::registerBindings(binding *b){
   cm->setArgNames("functionName",NULL);
   cm = cb->addMethod("exportMsh",&dgDofContainer::exportMsh);
   cm->setDescription("Export the dof for gmsh visualization");
-  cm->setArgNames("filename",NULL);
+  cm->setArgNames("filename", NULL);
 }
