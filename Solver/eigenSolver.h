@@ -41,9 +41,10 @@ class eigenSolver{
  public:
   eigenSolver(dofManager<double> *manager, std::string A, 
               std::string B="", bool hermitian=false){}
-  void solve(int numEigenValues=0, std::string which="")
+  bool solve(int numEigenValues=0, std::string which="")
   {
     Msg::Error("Eigen solver requires SLEPc");
+    return false;
   }
   int getNumEigenValues(){ return 0; }
   std::complex<double> getEigenValue(int num){ return 0.; }
