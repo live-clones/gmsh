@@ -49,19 +49,19 @@ void ConnectionManager::runToGetOptions()
 {
   if(inputFileName.empty()) return;
   
-  std::string inputArg = inputFileName.empty() ? "" : ReplacePercentS
-    (inputFileSwitch, std::string("\"") + FixWindowsPath(inputFileName) + "\"");
-  std::string optionArg = ReplacePercentS(optionSwitch, "");
+  std::string inputArg = inputFileName.empty() ? "" : ReplaceSubString
+    ("%s", std::string("\"") + FixWindowsPath(inputFileName) + "\"", inputFileSwitch);
+  std::string optionArg = ReplaceSubString("%s", "", optionSwitch);
   run(inputArg + " " + optionArg);
 }
 
 void ConnectionManager::runCommand(int commandIndex, int optionIndex, int optionChoice)
 {
-  std::string inputArg = inputFileName.empty() ? "" : ReplacePercentS
-    (inputFileSwitch, std::string("\"") + FixWindowsPath(inputFileName) + "\"");
+  std::string inputArg = inputFileName.empty() ? "" : ReplaceSubString
+    ("%s", std::string("\"") + FixWindowsPath(inputFileName) + "\"", inputFileSwitch);
 
-  std::string meshArg = meshFileName.empty() ? "" : ReplacePercentS
-    (meshFileSwitch, std::string("\"") + FixWindowsPath(meshFileName) + "\"");
+  std::string meshArg = meshFileName.empty() ? "" : ReplaceSubString
+    ("%s", std::string("\"") + FixWindowsPath(meshFileName) + "\"", meshFileSwitch);
 
   if(commandIndex < 0 || commandIndex >= (int)buttonSwitch.size()){
     Msg::Error("Wrong command index");
@@ -79,8 +79,8 @@ void ConnectionManager::runCommand(int commandIndex, int optionIndex, int option
       Msg::Error("Wrong option choice");
       return;
     }
-    commandArg = ReplacePercentS
-      (buttonSwitch[commandIndex], optionValue[optionIndex][optionChoice]);
+    commandArg = ReplaceSubString
+      ("%s", optionValue[optionIndex][optionChoice], buttonSwitch[commandIndex]);
   }
   else{ // no options
     commandArg = buttonSwitch[commandIndex];

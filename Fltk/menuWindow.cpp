@@ -547,7 +547,7 @@ static void help_command_line_cb(Fl_Widget *w, void *data)
 static void help_online_cb(Fl_Widget *w, void *data)
 {
   std::string prog = FixWindowsPath(CTX::instance()->webBrowser);
-  SystemCall(ReplacePercentS(prog, "http://geuz.org/gmsh/doc/texinfo/"));
+  SystemCall(ReplaceSubString("%s", "http://geuz.org/gmsh/doc/texinfo/", prog));
 }
 
 static void help_about_cb(Fl_Widget *w, void *data)
@@ -599,7 +599,7 @@ static void geometry_edit_cb(Fl_Widget *w, void *data)
 {
   std::string prog = FixWindowsPath(CTX::instance()->editor);
   std::string file = FixWindowsPath(GModel::current()->getFileName());
-  SystemCall(ReplacePercentS(prog, file));
+  SystemCall(ReplaceSubString("%s", file, prog));
 }
 
 void geometry_reload_cb(Fl_Widget *w, void *data)

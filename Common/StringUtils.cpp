@@ -62,7 +62,7 @@ std::string SanitizeTeXString(const char *in, int equation)
   return out;
 }
 
-std::string FixWindowsPath(std::string in)
+std::string FixWindowsPath(const std::string &in)
 {
 #if defined(__CYGWIN__)
   char tmp[1024];
@@ -73,7 +73,7 @@ std::string FixWindowsPath(std::string in)
 #endif
 }
 
-std::string FixRelativePath(std::string reference, std::string in)
+std::string FixRelativePath(const std::string &reference, const std::string &in)
 {
   if(in.empty()) return "";
 
@@ -88,7 +88,7 @@ std::string FixRelativePath(std::string reference, std::string in)
   }
 }
 
-std::vector<std::string> SplitFileName(std::string fileName)
+std::vector<std::string> SplitFileName(const std::string &fileName)
 {
   // returns [path, baseName, extension]
   int idot = fileName.find_last_of('.');
@@ -104,33 +104,7 @@ std::vector<std::string> SplitFileName(std::string fileName)
   return s;
 }
 
-std::vector<std::string> SplitWhiteSpace(std::string in, unsigned int len)
-{
-  std::vector<std::string> out(1);
-  for(unsigned int i = 0; i < in.size(); i++){
-    out.back() += in[i];
-    if(out.back().size() > len && in[i] == ' ')
-      out.resize(out.size() + 1);
-  }
-  return out;
-}
-
-std::string ReplacePercentS(std::string in, std::string val)
-{
-  std::string out;
-  for(unsigned int i = 0; i < in.size(); i++){
-    if(in[i] == '%' && i + 1 < in.size() && in[i + 1] == 's'){
-      out += val;
-      i++;
-    }
-    else{
-      out += in[i];
-    }
-  }
-  return out;
-}
-
-std::string ConvertFileToString(std::string fileName)
+std::string ConvertFileToString(const std::string &fileName)
 {
   FILE *fp = fopen(fileName.c_str(), "r");
   if(!fp) return "";
@@ -141,28 +115,28 @@ std::string ConvertFileToString(std::string fileName)
   return out;
 }
 
-void ConvertToHTML(std::string &in)
+void ReplaceSubStringInPlace(const std::string &olds, const std::string &news, 
+                             std::string &str)
 {
   while(1){
-    int pos = in.find("<");
+    int pos = str.find(olds.c_str());
     if(pos == std::string::npos) break;
-    in.replace(pos, 1, "&lt;");
+    str.replace(pos, olds.size(), news.c_str());
   }
-  while(1){
-    int pos = in.find(">");
-    if(pos == std::string::npos) break;
-    in.replace(pos, 1, "&gt;");
-  }
-  while(1){
-    const char n2[3] = {'\n', '\n', '\0'};
-    int pos = in.find(n2);
-    if(pos == std::string::npos) break;
-    in.replace(pos, 2, "<p>");
-  }
-  while(1){
-    const char n1[2] = {'\n', '\0'};
-    int pos = in.find(n1);
-    if(pos == std::string::npos) break;
-    in.replace(pos, 1, "<br>");
-  }
+}
+
+std::string ReplaceSubString(const std::string &olds, const std::string &news, 
+                             const std::string &str)
+{
+  std::string copy(str);
+  ReplaceSubStringInPlace(olds, news, copy);
+  return copy;
+}
+
+void ConvertToHTML(std::string &str)
+{
+  ReplaceSubStringInPlace("<", "&lt;", str);
+  ReplaceSubStringInPlace(">", "&gt;", str);
+  ReplaceSubStringInPlace("\n\n", "<p>", str);
+  ReplaceSubStringInPlace("\n", "<br>", str);
 }

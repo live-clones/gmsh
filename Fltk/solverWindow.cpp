@@ -116,8 +116,8 @@ void ConnectionManager::run(std::string args)
   std::string command;
 
   if(prog.size()){
-    command = prog + " " + args + " " + ReplacePercentS
-      (socketSwitch, std::string("\"") + sockname + "\"");
+    command = prog + " " + args + " " + ReplaceSubString
+      ("%s", std::string("\"") + sockname + "\"", socketSwitch);
 #if !defined(WIN32)
     command += " &";
 #endif
@@ -362,7 +362,7 @@ static void solver_file_edit_cb(Fl_Widget *w, void *data)
   int num = (int)(long)data;
   std::string prog = FixWindowsPath(CTX::instance()->editor);
   std::string file = FixWindowsPath(FlGui::instance()->solver[num]->input[0]->value());
-  SystemCall(ReplacePercentS(prog, file));
+  SystemCall(ReplaceSubString("%s", file, prog));
 }
 
 static void solver_choose_mesh_cb(Fl_Widget *w, void *data)

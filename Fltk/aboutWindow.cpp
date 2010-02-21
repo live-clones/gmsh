@@ -16,7 +16,7 @@
 static const char *help_link(Fl_Widget *w, const char *uri)
 {
   std::string prog = FixWindowsPath(CTX::instance()->webBrowser);
-  SystemCall(ReplacePercentS(prog, uri));
+  SystemCall(ReplaceSubString("%s", uri, prog));
   return 0;
 }
 
