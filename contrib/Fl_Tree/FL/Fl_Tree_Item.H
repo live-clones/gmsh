@@ -278,11 +278,11 @@ public:
         return(_usericon);
     }
     /// Set the user data.
-    void userdata(void *val) {
+    void user_data(void *val) {
         _userdata = val;
     }
     /// Get the user data.
-    void *userdata() const {
+    void *user_data() const {
         return(_userdata);
     }
     //////////////////

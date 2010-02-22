@@ -430,7 +430,7 @@ static void _add_vertex(GVertex *gv, Fl_Tree *tree, std::string path)
   vertex << path << "Point " << gv->tag() << "/";
   Fl_Tree_Item *n = tree->add(vertex.str().c_str());
   if(gv->getVisibility()) n->select(1);
-  n->userdata((void*)gv);
+  n->user_data((void*)gv);
   n->close();
 }
 
@@ -440,7 +440,7 @@ static void _add_edge(GEdge *ge, Fl_Tree *tree, std::string path)
   edge << path << "Line " << ge->tag() << "/";
   Fl_Tree_Item *n = tree->add(edge.str().c_str());
   if(ge->getVisibility()) n->select(1);
-  n->userdata((void*)ge);
+  n->user_data((void*)ge);
   n->close();
   if(ge->getBeginVertex())
     _add_vertex(ge->getBeginVertex(), tree, edge.str());
@@ -454,7 +454,7 @@ static void _add_face(GFace *gf, Fl_Tree *tree, std::string path)
   face << path << "Surface " << gf->tag() << "/";
   Fl_Tree_Item *n = tree->add(face.str().c_str());
   if(gf->getVisibility()) n->select(1);
-  n->userdata((void*)gf);
+  n->user_data((void*)gf);
   n->close();
   std::list<GEdge*> edges = gf->edges();
   for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++)
@@ -467,7 +467,7 @@ static void _add_region(GRegion *gr, Fl_Tree *tree, std::string path)
   region << path << "Volume " << gr->tag() << "/";
   Fl_Tree_Item *n = tree->add(region.str().c_str());
   if(gr->getVisibility()) n->select(1);
-  n->userdata((void*)gr);
+  n->user_data((void*)gr);
   n->close();
   std::list<GFace*> faces = gr->faces();
   for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++)
@@ -605,8 +605,8 @@ static void _recur_select(Fl_Tree_Item *n)
 
 static void _recur_set_visible(Fl_Tree_Item *n)
 {
-  if(n->userdata() && n->is_selected()){
-    GEntity *ge = (GEntity*)n->userdata();
+  if(n->user_data() && n->is_selected()){
+    GEntity *ge = (GEntity*)n->user_data();
     bool recursive = FlGui::instance()->visibility->butt[0]->value() ? true : false;
     ge->setVisibility(1, recursive);
     // force this: if we ask to see an entity, let's assume that we
@@ -619,8 +619,8 @@ static void _recur_set_visible(Fl_Tree_Item *n)
 
 static void _recur_update_selected(Fl_Tree_Item *n)
 {
-  if(n->userdata()){
-    GEntity *ge = (GEntity*)n->userdata();
+  if(n->user_data()){
+    GEntity *ge = (GEntity*)n->user_data();
     n->select(ge->getVisibility() ? 1 : 0);
   }
   for(int i = 0; i < n->children(); i++)

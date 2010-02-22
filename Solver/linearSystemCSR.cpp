@@ -342,7 +342,7 @@ int linearSystemCSRTaucs<double>::systemSolve()
   myVeryCuteTaucsMatrix.values.d = (double*)_a->array;
   myVeryCuteTaucsMatrix.flags = TAUCS_SYMMETRIC | TAUCS_LOWER | TAUCS_DOUBLE;
 
-  char* options[] = { "taucs.factor.LLT=true", NULL };
+  char* options[] = { (char*)"taucs.factor.LLT=true", NULL };
   double t1 = Cpu();
   int result = taucs_linsolve(&myVeryCuteTaucsMatrix,
                               NULL,
