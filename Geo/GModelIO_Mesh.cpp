@@ -31,6 +31,14 @@
 #include "MElement.h"
 #include "GEdgeCompound.h"
 #include "GFaceCompound.h"
+#include "simpleFunction.h"
+#include "distanceTerm.h"
+#include "Context.h"
+#include "Numeric.h"
+#include "dofManager.h"
+#include "linearSystemGMM.h"
+#include "linearSystemCSR.h"
+#include "linearSystemFull.h"
 
 #if defined(HAVE_ANN)
 #include "ANN/ANN.h"
@@ -827,6 +835,7 @@ int GModel::writePartitionedMSH(const std::string &baseName, bool binary,
 int GModel::writeDistanceMSH(const std::string &name, double version, bool binary,
 			     bool saveAll, bool saveParametric, double scalingFactor)
 {
+ 
   std::vector<GEntity*> entities;
   getEntities(entities);
 
@@ -835,12 +844,8 @@ int GModel::writeDistanceMSH(const std::string &name, double version, bool binar
     numnodes += entities[i]->mesh_vertices.size();
   int totNumNodes = numnodes + entities[entities.size()-1]->mesh_vertices.size();
 
-  // CG: Emi -- pourquoi ne pas en faire un plugin, plutot ?
-
-  //geometrical distance
-
-  //Compute distance for akk
   std::map<MVertex*,double* > distance_map; 
+  std::map<MVertex*,double > distance_map2;
   std::vector<SPoint3> pts;
   std::vector<double> distances;
   pts.clear(); 
@@ -850,59 +855,145 @@ int GModel::writeDistanceMSH(const std::string &name, double version, bool binar
   for (int i = 0; i< totNumNodes; i++)   distances.push_back(1.e22);
 
   int k=0;
+  int maxDim = 0;
   for(unsigned int i = 0; i < entities.size(); i++){
     GEntity* ge = entities[i]; 
+    maxDim = std::max(maxDim, ge->dim());
     for(unsigned int j = 0; j < ge->mesh_vertices.size(); j++){
       MVertex *v = ge->mesh_vertices[j];
       pts.push_back(SPoint3(v->x(), v->y(),v->z()));
       distance_map.insert(std::make_pair(v, &(distances[k])));
+      distance_map2.insert(std::make_pair(v, 0.0));
       k++;
     }
   }
 
-//   GEntity* g2 = entities[entities.size()-2];//faces
-//   for(unsigned int i = 0; i < g2->getNumMeshElements(); i++){ 
-//     std::vector<double> iDistances;
-//     std::vector<SPoint3> iClosePts;
-//     MElement *e = g2->getMeshElement(i);
-//     MVertex *v1 = e->getVertex(0);
-//     MVertex *v2 = e->getVertex(1);
-//     MVertex *v3 = e->getVertex(2);
-//     SPoint3 p1 (v1->x(),v1->y(),v1->z());
-//     SPoint3 p2 (v2->x(),v2->y(),v2->z());
-//     SPoint3 p3 (v3->x(),v3->y(),v3->z());
-//     //signedDistancesPointsTriangle(iDistances, iClosePts, pts, p1,p2,p3);
-//     signedDistancesPointsLine(iDistances, iClosePts, pts, p1,p2);
-//     signedDistancesPointsLine(iDistances, iClosePts, pts, p1,p3);
-//     signedDistancesPointsLine(iDistances, iClosePts, pts, p2,p3);
-//     for (int k = 0; k< pts.size(); k++) {
-//       if (std::abs(iDistances[k]) < distances[k] ) 
-// 	distances[k] = std::abs(iDistances[k]);
-//     }
-//   }
+  //Compute geometrical distance to mesh boundaries
+  //-------------------------------------------------
 
-  std::map<int, std::vector<GEntity*> > groups[4];
-  getPhysicalGroups(groups);
-  std::map<int, std::vector<GEntity*> >::const_iterator it = groups[1].find(100);//Physical Line(100)={...}
-  if(it == groups[1].end()) return 0;
-  const std::vector<GEntity *> &physEntities = it->second;
-  for(unsigned int i = 0; i < physEntities.size(); i++){
-    GEntity* g2 = physEntities[i];
-    for(unsigned int i = 0; i < g2->getNumMeshElements(); i++){ 
-      std::vector<double> iDistances;
-      std::vector<SPoint3> iClosePts;
-      MElement *e = g2->getMeshElement(i);
-      MVertex *v1 = e->getVertex(0);
-      MVertex *v2 = e->getVertex(1);
-      SPoint3 p1 (v1->x(),v1->y(),v1->z());
-      SPoint3 p2 (v2->x(),v2->y(),v2->z());
-      signedDistancesPointsLine(iDistances, iClosePts, pts, p1,p2);     
-      for (int k = 0; k< pts.size(); k++) {
-	if (std::abs(iDistances[k]) < distances[k] ) 
-	  distances[k] = std::abs(iDistances[k]);
+  for(unsigned int i = 0; i < entities.size(); i++){
+    if(entities[i]->dim() == (maxDim-1)) {
+      GEntity* g2 = entities[i];
+      for(unsigned int k = 0; k < g2->getNumMeshElements(); k++){ 
+	std::vector<double> iDistances;
+	std::vector<SPoint3> iClosePts;
+	MElement *e = g2->getMeshElement(k);
+	MVertex *v1 = e->getVertex(0);
+	MVertex *v2 = e->getVertex(1);
+	SPoint3 p1 (v1->x(),v1->y(),v1->z());
+	SPoint3 p2 (v2->x(),v2->y(),v2->z());
+	if( e->getNumVertices() == 2){
+	  signedDistancesPointsLine(iDistances, iClosePts, pts, p1,p2);
+	}
+	else if( e->getNumVertices() == 3){
+	  MVertex *v3 = e->getVertex(2);
+	  SPoint3 p3 (v3->x(),v3->y(),v3->z());
+	  signedDistancesPointsTriangle(iDistances, iClosePts, pts, p1,p2,p3);
+	}
+	for (int kk = 0; kk< pts.size(); kk++) {
+	  if (std::abs(iDistances[kk]) < distances[kk] ) 
+	    distances[kk] = std::abs(iDistances[kk]);
+	}
       }
     }
   }
+
+//   std::map<int, std::vector<GEntity*> > groups[4];
+//   getPhysicalGroups(groups);
+//   std::map<int, std::vector<GEntity*> >::const_iterator it = groups[1].find(100);//Physical Line(100)={...}
+//   if(it == groups[1].end()) return 0;
+//   const std::vector<GEntity *> &physEntities = it->second;
+//   for(unsigned int i = 0; i < physEntities.size(); i++){
+//     GEntity* g2 = physEntities[i];
+//     for(unsigned int i = 0; i < g2->getNumMeshElements(); i++){ 
+//       std::vector<double> iDistances;
+//       std::vector<SPoint3> iClosePts;
+//       MElement *e = g2->getMeshElement(i);
+//       MVertex *v1 = e->getVertex(0);
+//       MVertex *v2 = e->getVertex(1);
+//       SPoint3 p1 (v1->x(),v1->y(),v1->z());
+//       SPoint3 p2 (v2->x(),v2->y(),v2->z());
+//       signedDistancesPointsLine(iDistances, iClosePts, pts, p1,p2);     
+//       for (int k = 0; k< pts.size(); k++) {
+// 	if (std::abs(iDistances[k]) < distances[k] ) 
+// 	  distances[k] = std::abs(iDistances[k]);
+//       }
+//     }
+//   }
+
+
+  //Compute PDE for distance function
+  //-------------------------------------------------
+  
+#ifdef HAVE_TAUCS
+  linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
+#else
+  linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
+  lsys->setNoisy(1);
+  lsys->setGmres(1);
+  lsys->setPrec(5.e-8);
+#endif
+
+  dofManager<double> myAssembler(lsys);
+
+  SBoundingBox3d bbox;
+  for(unsigned int i = 0; i < entities.size(); i++){
+    if(entities[i]->dim() < maxDim) {
+      GEntity *ge = entities[i];
+      for(unsigned int j = 0; j < ge->mesh_vertices.size(); j++){
+	MVertex *v = ge->mesh_vertices[j];
+	myAssembler.fixVertex(v, 0, 1, 0.0);
+	bbox += SPoint3(v->x(),v->y(),v->z());
+      }
+    }
+  }
+
+  for(unsigned int ii = 0; ii < entities.size(); ii++){
+    if(entities[ii]->dim() == maxDim) {
+      GEntity *ge = entities[ii];
+      for(unsigned int i = 0; i < ge->getNumMeshElements(); ++i){
+	MElement *t = ge->getMeshElement(i);
+	for (int k = 0; k < t->getNumVertices(); k++){
+	    myAssembler.numberVertex(t->getVertex(k), 0, 1);
+	}
+      }    
+    }  
+  }
+
+  double L = norm(SVector3(bbox.max(), bbox.min())); 
+  double mu = L/28;
+  printf("L=%g \n", L);
+
+  simpleFunction<double> DIFF(mu * mu), MONE(1.0);
+  distanceTerm distance(this, 1, &DIFF, &MONE);
+  
+  for(unsigned int ii = 0; ii < entities.size(); ii++){
+    if(entities[ii]->dim() == maxDim) {
+      GEntity *ge = entities[ii];
+      for(unsigned int i = 0; i < ge->getNumMeshElements(); ++i){
+	SElement se(ge->getMeshElement(i));
+	distance.addToMatrix(myAssembler, &se);
+      }
+      groupOfElements g((GFace*)ge);
+      distance.addToRightHandSide(myAssembler, g);
+    }
+  }
+
+   Msg::Info("Distance Computation: Assembly done");
+   lsys->systemSolve();
+   Msg::Info("Distance Computation: System solved");
+ 
+   for(std::map<MVertex*,double >::iterator itv = distance_map2.begin(); itv !=distance_map2.end() ; ++itv){
+    MVertex *v = itv->first;
+    double value =  std::min(0.9999, myAssembler.getDofValue(v, 0, 1));
+    double dist = -mu * log(1. - value);
+    itv->second = dist;
+   }
+
+  lsys->clear();
+
+  //Writing pos files
+  //----------------------
 
   Msg::Info("Writing distance-GEOM.pos");
   FILE * f2 = fopen("distance-GEOM.pos","w");
@@ -920,28 +1011,62 @@ int GModel::writeDistanceMSH(const std::string &name, double version, bool binar
   Msg::Info("Writing distance-bgm.pos");
   FILE * f3 = fopen("distance-bgm.pos","w");
   fprintf(f3,"View \"distance\"{\n");
-  GEntity* ge = entities[entities.size()-1];
-  for(unsigned int i = 0; i < ge->getNumMeshElements(); i++){ 
-    MElement *e = ge->getMeshElement(i);
-    fprintf(f3,"SS(");
-    std::vector<double> dist;
-    for(int j = 0; j < e->getNumVertices(); j++) {
-      MVertex *v =  e->getVertex(j);
-      if(j) fprintf(f3,",%g,%g,%g",v->x(),v->y(), v->z());
-      else fprintf(f3,"%g,%g,%g", v->x(),v->y(), v->z());
-      std::map<MVertex*, double*>::iterator it = distance_map.find(v);
-      printf("dist =%g \n",*(it->second) );
-      dist.push_back(*(it->second));
+  for(unsigned int ii = 0; ii < entities.size(); ii++){
+    if(entities[ii]->dim() == maxDim) {
+      for(unsigned int i = 0; i < entities[ii]->getNumMeshElements(); i++){ 
+	MElement *e = entities[ii]->getMeshElement(i);
+	if (maxDim == 3) fprintf(f3,"SS(");
+	else if (maxDim == 2) fprintf(f3,"ST(");
+	std::vector<double> dist;
+	for(int j = 0; j < e->getNumVertices(); j++) {
+	  MVertex *v =  e->getVertex(j);
+	  if(j) fprintf(f3,",%g,%g,%g",v->x(),v->y(), v->z());
+	  else fprintf(f3,"%g,%g,%g", v->x(),v->y(), v->z());
+	  std::map<MVertex*, double*>::iterator it = distance_map.find(v);
+	  dist.push_back(*(it->second));
+	}
+	fprintf(f3,"){");
+	for (int i=0; i<dist.size(); i++){
+	  if (i) fprintf(f3,",%g", dist[i]);
+	  else fprintf(f3,"%g", dist[i]);
+	}   
+	fprintf(f3,"};\n");
+      }
     }
-    fprintf(f3,"){");
-    for (int i=0; i<dist.size(); i++){
-      if (i) fprintf(f3,",%g", dist[i]);
-      else fprintf(f3,"%g", dist[i]);
-    }   
-    fprintf(f3,"};\n");
   }
   fprintf(f3,"};\n");
   fclose(f3);
+
+  Msg::Info("Writing distance-bgm2.pos");
+  FILE * f4 = fopen("distance-bgm2.pos","w");
+  fprintf(f4,"View \"distance\"{\n");
+  //GEntity* ge = entities[entities.size()-1];
+  for(unsigned int ii = 0; ii < entities.size(); ii++){
+    if(entities[ii]->dim() == maxDim) {
+      for(unsigned int i = 0; i < entities[ii]->getNumMeshElements(); i++){ 
+	MElement *e = entities[ii]->getMeshElement(i);
+	if (maxDim == 3) fprintf(f4,"SS(");
+	else if (maxDim == 2) fprintf(f4,"ST(");
+	std::vector<double> dist;
+	for(int j = 0; j < e->getNumVertices(); j++) {
+	  MVertex *v =  e->getVertex(j);
+	  if(j) fprintf(f4,",%g,%g,%g",v->x(),v->y(), v->z());
+	  else fprintf(f4,"%g,%g,%g", v->x(),v->y(), v->z());
+	  std::map<MVertex*, double>::iterator it = distance_map2.find(v);
+	  dist.push_back(it->second);
+	}
+	fprintf(f4,"){");
+	for (int i=0; i<dist.size(); i++){
+	  if (i) fprintf(f4,",%g", dist[i]);
+	  else fprintf(f4,"%g", dist[i]);
+	}   
+	fprintf(f4,"};\n");
+      }
+    }
+  }
+  fprintf(f4,"};\n");
+  fclose(f4);
+
       
 // #if defined(HAVE_ANN)
 //   Msg::Info("Computing Distance function to the boundaries with ANN");

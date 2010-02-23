@@ -47,7 +47,7 @@ dg:exportSolution('output/Adv3D-00000')
 print'***exporting init solution ***'
 
 -- main loop
-n = 5
+n = 10
 for i=1,100*n do
   norm = dg:RK44(0.03)
   if (i % n == 0) then 
