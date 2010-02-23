@@ -7,6 +7,7 @@
 #include "GaussLegendre1D.h"
 #include "Context.h"
 #include "qualityMeasures.h"
+#include <Numeric.h>
 
 #if defined(HAVE_MESH)
 #include "qualityMeasures.h"
@@ -183,5 +184,82 @@ double MQuadrangle::angleShapeMeasure()
   return qmQuadrangleAngles(this);
 #else
   return 1.;
+#endif
+}
+
+double MQuadrangle::getInnerRadius()
+{
+	double R = 1.e22;
+
+#if defined(HAVE_MESH)
+	// get the coordinates (x, y, z) of the 4 points defining the Quad
+	double x[4] = {_v[0]->x(), _v[1]->x(), _v[2]->x(), _v[3]->x()};
+	double y[4] = {_v[0]->y(), _v[1]->y(), _v[2]->y(), _v[3]->y()};
+	double z[4] = {_v[0]->z(), _v[1]->z(), _v[2]->z(), _v[3]->z()};
+		
+	// get the coefficient (a,b,c,d) of the mean plane - least square!
+	// the plane has for equation " a*x+b*y+c*z+d=0 "	
+
+	// compute the centroïd of the 4 points
+	double xm = (x[0]+x[1]+x[2]+x[3])/4;
+	double ym = (y[0]+y[1]+y[2]+y[3])/4;
+	double zm = (z[0]+z[1]+z[2]+z[3])/4;
+	
+	// using svd decomposition
+	fullMatrix<double> U(4,3), V(3,3);
+	fullVector<double> sigma(3);
+	for (int i = 0; i < 4; i++) {
+		U(i,0) = x[i]-xm;
+		U(i,1) = y[i]-ym;
+		U(i,2) = z[i]-zm;
+	}
+	
+	U.svd(V, sigma);
+	double svd[3];
+	svd[0] = sigma(0);
+	svd[1] = sigma(1);
+	svd[2] = sigma(2);
+	int min;
+	if(fabs(svd[0]) < fabs(svd[1]) && fabs(svd[0]) < fabs(svd[2]))
+		min = 0;
+	else if(fabs(svd[1]) < fabs(svd[0]) && fabs(svd[1]) < fabs(svd[2]))
+		min = 1;
+	else
+		min = 2;
+	double a = V(0, min);
+	double b = V(1, min);
+	double c = V(2, min);
+	
+	double d = -(xm * a + ym * b + zm * c);
+
+	double norm = sqrt(a*a+b*b+c*c);
+
+	// projection of the 4 original points on the mean_plane
+
+	double xp[4], yp[4], zp[4];
+	
+	for (int i = 0; i < 4; i++) {
+		xp[i] = ((b*b+c*c)*x[i]-a*b*y[i]-a*c*z[i]-d*a)/norm;
+		yp[i] = (-a*b*x[i]+(a*a+c*c)*y[i]-b*c*z[i]-d*b)/norm;
+		zp[i] = (-a*c*x[i]-b*c*y[i]+(a*a+b*b)*z[i]-d*c)/norm;
+	}
+	
+	// go from XYZ-plane to XY-plane
+	
+	// 4 points,  4 edges =>  4 inner radii of circles tangent to (at least) 3 of the four edges!
+	double xn[4], yn[4], r[4];
+
+	planarQuad_xyz2xy(xp, yp, zp, xn, yn);
+	
+	// compute for each of the 4 possibilities the incircle radius,  keeping the minimum
+	for (int j = 0; j < 4; j++){
+		r[j] = computeInnerRadiusForQuad(xn, yn, j);
+		if(r[j] < R){
+			R = r[j];
+		}
+	}
+	return R;
+#else
+	return 0.;
 #endif
 }

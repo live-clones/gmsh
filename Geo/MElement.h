@@ -170,6 +170,11 @@ class MElement
   virtual double etaShapeMeasure(){ return 0.; }
   virtual double distoShapeMeasure(){ return 1.0; }
   virtual double angleShapeMeasure() { return 1.0; }
+  
+  // get the radius of the inscribed circle/sphere if it exists, 
+	// otherwise get the minimum radius of all the circles/spheres
+	// tangent to the most boundaries of the element.
+  virtual double getInnerRadius(){ return 0.; }
 
   // compute the barycenter
   virtual SPoint3 barycenter();

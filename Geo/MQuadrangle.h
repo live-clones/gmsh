@@ -131,6 +131,10 @@ class MQuadrangle : public MElement {
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual double angleShapeMeasure();
   virtual double distoShapeMeasure();
+// Computes the minimum inradius of the all the circles tangents to 3 of the 4
+// edges of the quad. If the 4 points of the quad are not planar,  we compute 
+// the mean plane due to the least-square criterion.
+  virtual double getInnerRadius();	
  private:
   int edges_quad(const int edge, const int vert) const
   {

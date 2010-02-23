@@ -425,7 +425,7 @@ void GFace::computeMeanPlane(const std::vector<SPoint3> &points)
   norme(t2);
 
 end:
-  res[3] = (xm * res[0] + ym * res[1] + zm * res[2]);
+  res[3] = -(xm * res[0] + ym * res[1] + zm * res[2]);
 
   for(int i = 0; i < 3; i++)
     meanPlane.plan[0][i] = t1[i];

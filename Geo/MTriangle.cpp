@@ -34,6 +34,26 @@ double MTriangle::distoShapeMeasure()
 #endif
 }
 
+double MTriangle::getInnerRadius()
+{
+#if defined(HAVE_MESH)
+  double r = 0.;
+  int n = getNumEdges();
+  double dist[n];
+  double k = 0.;
+  for (int i=0; i<n; i++)
+  {
+	MEdge e = getEdge(i);
+	dist[i] = e.getVertex(0)->distance(e.getVertex(1));
+	k+=0.5*dist[i];
+  }
+  r=sqrt(k*(k-dist[0])*(k-dist[1])*(k-dist[2]))/k;
+  return r;
+#else
+  return 0.;
+#endif
+}
+
 double MTriangle::angleShapeMeasure()
 {
 #if defined(HAVE_MESH)

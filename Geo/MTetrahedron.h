@@ -128,6 +128,7 @@ class MTetrahedron : public MElement {
   virtual int getVolumeSign(){ return (getVolume() >= 0) ? 1 : -1; }
   virtual double gammaShapeMeasure();
   virtual double distoShapeMeasure();
+	virtual double getInnerRadius(); // radius of sphere inscribed within the Tetrahedron - r=3*Volume/sum(Area_i) 
   virtual double etaShapeMeasure();
   void xyz2uvw(double xyz[3], double uvw[3]);
   virtual const polynomialBasis* getFunctionSpace(int o=-1) const;

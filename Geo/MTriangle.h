@@ -52,6 +52,7 @@ class MTriangle : public MElement {
   virtual int getDim() const { return 2; }
   virtual double gammaShapeMeasure();
   virtual double distoShapeMeasure();
+  virtual double getInnerRadius(); //radius of circle inscribed within the triangle - r=2*Area/sum(Line_i)	
   virtual double angleShapeMeasure();
   virtual int getNumVertices() const { return 3; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
