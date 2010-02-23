@@ -66,6 +66,11 @@ double triangle_area2d(double p0[2], double p1[2], double p2[2]);
 double triangle_polar_inertia(double p0[2], double p1[2], double p2[2]);
 void circumCenterXY(double *p1, double *p2, double *p3, double *res);
 void circumCenterXYZ(double *p1, double *p2, double *p3, double *res, double *uv=0);
+// operate a transformation on the 4 points of a Quad in 3D, to have an equivalent Quad in 2D
+void planarQuad_xyz2xy(double *x, double *y, double *z, double *xn, double *yn);
+// compute the radius of the circle that is tangent to the 3 edges defined by 4 points
+// edge_1=(x0,y0)->(x1,y1); edge_2=(x1,y1)->(x2,y2); edge_3=(x2,y2)->(x3,y3) 
+double computeInnerRadiusForQuad(double *x, double *y, int i);
 char float2char(float f);
 float char2float(char c);
 void eigenvalue(double mat[3][3], double re[3]);
