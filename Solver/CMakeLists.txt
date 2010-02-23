@@ -19,6 +19,7 @@ set(SRC
   dgSystemOfEquations.cpp
   dgConservationLawShallowWater2d.cpp
   dgConservationLawWaveEquation.cpp
+  dgConservationLawMaxwell.cpp
   dgConservationLawPerfectGas.cpp
   dgLimiter.cpp
   dgDofContainer.cpp
