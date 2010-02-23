@@ -18,6 +18,7 @@
 #include "dgConservationLawAdvection.h"
 #include "dgConservationLawPerfectGas.h"
 #include "dgConservationLawWaveEquation.h"
+#include "dgConservationLawMaxwell.h"
 #include "dgRungeKutta.h"
 #include "dgSystemOfEquations.h"
 #include "dgLimiter.h"
@@ -332,6 +333,7 @@ binding::binding(){
   dgBoundaryCondition::registerBindings(this);
   dgConservationLaw::registerBindings(this);
   dgConservationLawAdvectionDiffusionRegisterBindings(this);
+   dgConservationLawMaxwellRegisterBindings(this);
   dgConservationLawShallowWater2dRegisterBindings(this);
   dgConservationLawWaveEquationRegisterBindings(this);
   dgDofContainer::registerBindings(this);
