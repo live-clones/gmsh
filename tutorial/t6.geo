@@ -27,7 +27,9 @@ Plane Surface(1) = {1};
 // Put 20 points with a refinement toward the extremities on curve 2
 Transfinite Line{2} = 20 Using Bump 0.05;
 
-// Put 20 points total on combination of curves l1, l2 and l3
+// Put 20 points total on combination of curves l1, l2 and l3 (beware
+// that the points p1 and p2 are shared by the curves, so we do not
+// create 6 + 6 + 10 = 22 points, but 20!)
 Transfinite Line{l1} = 6;
 Transfinite Line{l2} = 6;
 Transfinite Line{l3} = 10;

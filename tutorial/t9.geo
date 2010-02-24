@@ -24,7 +24,7 @@ Include "view3.pos" ;
 
 Plugin(Isosurface).Value = 0.67 ; // iso-value level
 Plugin(Isosurface).View = 0 ; // source view is View[0]
-Plugin(Isosurface).Run ; 
+Plugin(Isosurface).Run ; // run the plugin!
 
 // We also set some options for the `CutPlane' plugin (which computes
 // a section of a 3D view using the plane A*x+B*y+C*z+D=0), and then
@@ -50,6 +50,7 @@ Plugin(Annotate).FontSize = 28 ;
 Plugin(Annotate).Align = "Center" ; 
 Plugin(Annotate).View = 0 ;
 Plugin(Annotate).Run ; 
+
 Plugin(Annotate).Text = "(and a small subtitle)" ; 
 Plugin(Annotate).Y = 70 ; 
 Plugin(Annotate).Font = "Times-Roman" ; 
