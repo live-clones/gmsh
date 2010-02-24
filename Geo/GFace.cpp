@@ -425,7 +425,7 @@ void GFace::computeMeanPlane(const std::vector<SPoint3> &points)
   norme(t2);
 
 end:
-  res[3] = -(xm * res[0] + ym * res[1] + zm * res[2]);
+  res[3] = (xm * res[0] + ym * res[1] + zm * res[2]);
 
   for(int i = 0; i < 3; i++)
     meanPlane.plan[0][i] = t1[i];
@@ -474,7 +474,7 @@ end:
       double d = meanPlane.a * v->x() + meanPlane.b * v->y() +
         meanPlane.c * v->z() - meanPlane.d;
       if(fabs(d) > lc * 1.e-3) {
-        Msg::Error("Plane surface %d (%gx+%gy+%gz+%g=0) is not plane!",
+        Msg::Error("Plane surface %d (%gx+%gy+%gz=%g) is not plane!",
                    tag(), meanPlane.a, meanPlane.b, meanPlane.c, meanPlane.d);
         Msg::Error("Control point %d = (%g,%g,%g), val=%g",
                    v->tag(), v->x(), v->y(), v->z(), d);
