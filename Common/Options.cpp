@@ -7810,12 +7810,14 @@ double opt_view_center_glyphs(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    opt->centerGlyphs = val ? 1 : 0;
+    opt->centerGlyphs = (int)val;
+    if(opt->centerGlyphs < 0 || opt->centerGlyphs > 2)
+      opt->glyphLocation = 0;
     if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    FlGui::instance()->options->view.butt[1]->value(opt->centerGlyphs);
+    FlGui::instance()->options->view.choice[15]->value(opt->centerGlyphs);
   }
 #endif
   return opt->centerGlyphs;

@@ -1359,7 +1359,7 @@ StringXNumber ViewOptions_Number[] = {
     "dimension, b=option value)" },
 
   { F|O, "CenterGlyphs" , opt_view_center_glyphs , 0, 
-    "Center glyphs (arrows, numbers, etc.)" },
+    "Center glyphs (arrows, numbers, etc.)? (0=left, 1=centered, 2=right)" },
   { F,   "Clip" , opt_view_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
   { F|O, "ColormapAlpha" , opt_view_colormap_alpha , 1.0 ,

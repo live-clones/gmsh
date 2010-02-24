@@ -570,6 +570,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double gen_raise_view = opt_view_gen_raise_view(current, GMSH_GET, 0);
   double show_time = opt_view_show_time(current, GMSH_GET, 0);
   double force_num_components = opt_view_force_num_components(current, GMSH_GET, 0);
+  double center_glyphs = opt_view_center_glyphs(current, GMSH_GET, 0);
 
   double type = opt_view_type(current, GMSH_GET, 0);
   double saturate_values = opt_view_saturate_values(current, GMSH_GET, 0);
@@ -600,7 +601,6 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double use_gen_raise = opt_view_use_gen_raise(current, GMSH_GET, 0);
   double fake_transparency = opt_view_fake_transparency(current, GMSH_GET, 0);
   double use_stipple = opt_view_use_stipple(current, GMSH_GET, 0);
-  double center_glyphs = opt_view_center_glyphs(current, GMSH_GET, 0);
 
   double normals = opt_view_normals(current, GMSH_GET, 0);
   double tangents = opt_view_tangents(current, GMSH_GET, 0);
@@ -743,6 +743,10 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       if(force || (val != force_num_components))
         opt_view_force_num_components(i, GMSH_SET, val);
 
+      val = o->view.choice[15]->value();
+      if(force || (val != center_glyphs))
+        opt_view_center_glyphs(i, GMSH_SET, val);
+
       // view_butts
 
       val = o->view.butt[0]->value();
@@ -852,10 +856,6 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       val = o->view.butt[26]->value();
       if(force || (val != use_stipple))
         opt_view_use_stipple(i, GMSH_SET, val);
-
-      val = o->view.butt[1]->value();
-      if(force || (val != center_glyphs))
-        opt_view_center_glyphs(i, GMSH_SET, val);
 
       // view_values
       
@@ -3017,22 +3017,27 @@ optionWindow::optionWindow(int deltaFontSize)
         view.choice[10]->callback(view_options_ok_cb);
       }
 
-      static Fl_Menu_Item menu_vecloc[] = {
+      static Fl_Menu_Item menu_glyph_loc[] = {
         {"Barycenter", 0, 0, 0},
         {"Vertex", 0, 0, 0},
         {0}
       };
       view.choice[3] = new Fl_Choice
         (L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Glyph location");
-      view.choice[3]->menu(menu_vecloc);
+      view.choice[3]->menu(menu_glyph_loc);
       view.choice[3]->align(FL_ALIGN_RIGHT);
       view.choice[3]->callback(view_options_ok_cb);
 
-      view.butt[1] = new Fl_Check_Button
-        (L + width - (int)(1.15*BB) - 2 * WB, 2 * WB + 10 * BH, (int)(1.15*BB), BH,
-         "Center glyph");
-      view.butt[1]->type(FL_TOGGLE_BUTTON);
-      view.butt[1]->callback(view_options_ok_cb);
+      static Fl_Menu_Item menu_glyph_center[] = {
+        {"Left-aligned", 0, 0, 0},
+        {"Centered", 0, 0, 0},
+        {"Right-aligned", 0, 0, 0},
+        {0}
+      };
+      view.choice[15] = new Fl_Choice
+        (L + width - (int)(1.15*BB) - 2 * WB, 2 * WB + 10 * BH, (int)(1.15*BB), BH);
+      view.choice[15]->menu(menu_glyph_center);
+      view.choice[15]->callback(view_options_ok_cb);
       
       static Fl_Menu_Item menu_tensor[] = {
         {"Von-Mises", 0, 0, 0},

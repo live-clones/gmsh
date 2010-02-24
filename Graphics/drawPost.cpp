@@ -117,10 +117,11 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
         double d = ctx->pixel_equiv_x / ctx->s[0];
         double dx = px * d, dy = py * d, dz = pz * d;
         double x = s[0], y = s[1], z = s[2];
-        if(opt->centerGlyphs){
-          x -= 0.5 * dx;
-          y -= 0.5 * dy;
-          z -= 0.5 * dz;
+        if(opt->centerGlyphs == 2){
+          x -= dx; y -= dy; z -= dz;
+        }
+        else if(opt->centerGlyphs == 1){
+          x -= 0.5 * dx; y -= 0.5 * dy; z -= 0.5 * dz;
         }
         ctx->drawVector(opt->vectorType, opt->intervalsType != PViewOptions::Iso,
                         x, y, z, dx, dy, dz, opt->light);
@@ -168,7 +169,9 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes, int numCo
       unsigned int col = opt->getColor(v, vmin, vmax, false, opt->nbIso);
       glColor4ubv((GLubyte *) & col);
       glRasterPos3d(pc.x(), pc.y(), pc.z());
-      if(opt->centerGlyphs)
+      if(opt->centerGlyphs == 2)
+        ctx->drawStringRight(stringValue(numComp, d, v, opt->format.c_str()));
+      else if(opt->centerGlyphs == 1)
         ctx->drawStringCenter(stringValue(numComp, d, v, opt->format.c_str()));
       else
         ctx->drawString(stringValue(numComp, d, v, opt->format.c_str()));
@@ -181,7 +184,9 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes, int numCo
         unsigned int col = opt->getColor(v, vmin, vmax, false, opt->nbIso);
         glColor4ubv((GLubyte *) & col);
         glRasterPos3d(xyz[i][0], xyz[i][1], xyz[i][2]);
-        if(opt->centerGlyphs)
+        if(opt->centerGlyphs == 2)
+          ctx->drawStringRight(stringValue(numComp, val[i], v, opt->format.c_str()));
+        else if(opt->centerGlyphs == 1)
           ctx->drawStringCenter(stringValue(numComp, val[i], v, opt->format.c_str()));
         else
           ctx->drawString(stringValue(numComp, val[i], v, opt->format.c_str()));
