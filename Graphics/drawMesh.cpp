@@ -331,7 +331,7 @@ static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
           }
         }
         if(CTX::instance()->mesh.pointsNum)
-          drawVertexLabel(ctx, e, v);
+          drawVertexLabel(ctx, v->onWhat() ? v->onWhat() : e, v);
       }
     }
   }
