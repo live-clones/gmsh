@@ -1,5 +1,5 @@
-#include <iostream>
 #include "GmshConfig.h"
+#include "GmshMessage.h"
 #include "dgGroupOfElements.h"
 #include "dgConservationLaw.h"
 #include "dgDofContainer.h"
@@ -129,6 +129,10 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e,
       (*_collocation)(j,k) = f[k];
     }
   }
+}
+
+void dgGroupOfElements::copyPrivateDataFrom(const dgGroupOfElements *from){
+//  Msg::Error("dgGroupOfElements::copyPrivateDataFrom not yet implemented, ask Richard");
 }
 
 dgGroupOfElements::~dgGroupOfElements(){
@@ -622,6 +626,36 @@ void dgGroupOfFaces::mapFromInterface ( int nFields,
     }
   }
 }
+void dgGroupOfFaces::mapLeftFromInterface ( int nFields,
+    const fullMatrix<double> &v,
+    fullMatrix<double> &vLeft
+    )
+{
+  for(int i=0; i<getNbElements(); i++) {
+    const std::vector<int> &closureRight = getClosureRight(i);
+    const std::vector<int> &closureLeft = getClosureLeft(i);
+    for (int iField=0; iField<nFields; iField++){
+      for(size_t j =0; j < closureLeft.size(); j++)
+        vLeft(closureLeft[j], _left[i]*nFields + iField) += v(j, i*2*nFields + iField);
+    }
+  }
+}
+void dgGroupOfFaces::mapRightFromInterface ( int nFields,
+    const fullMatrix<double> &v,
+    fullMatrix<double> &vRight
+    )
+{
+  for(int i=0; i<getNbElements(); i++) {
+    const std::vector<int> &closureRight = getClosureRight(i);
+    const std::vector<int> &closureLeft = getClosureLeft(i);
+    for (int iField=0; iField<nFields; iField++){
+      for(size_t j =0; j < closureRight.size(); j++)
+        vRight(closureRight[j], _right[i]*nFields + iField) += v(j, (i*2+1)*nFields + iField);
+    }
+  }
+}
+
+
 
 /*
 void dgAlgorithm::buildGroupsOfFaces(GModel *model, int dim, int order,
@@ -675,8 +709,11 @@ void dgGroupCollection::buildGroupsOfElements(GModel *model, int dim, int order)
   }
 	
   // do a group of elements for every element type in the mesh
+  int id=_elementGroups.size();
   for (std::map<int, std::vector<MElement *> >::iterator it = localElements.begin(); it !=localElements.end() ; ++it){
-    _elementGroups.push_back(new dgGroupOfElements(it->second,order));
+    dgGroupOfElements *newGroup=new dgGroupOfElements(it->second,order);
+    _elementGroups.push_back(newGroup);
+    id++;
   }
 }
 
@@ -745,7 +782,7 @@ void dgGroupCollection::buildGroupsOfInterfaces() {
 
 
   for (int i=0;i<_elementGroups.size();i++){
-    // create a group of faces on the boundary for every group ef elements
+    // create a group of faces on the boundary for every group of elements
     switch(dim) {
     case 1 : {
       std::map<const std::string, std::set<MVertex*> >::iterator mapIt;
@@ -782,7 +819,11 @@ void dgGroupCollection::buildGroupsOfInterfaces() {
     }
     }
     // create a group of faces for every face that is common to elements of the same group 
-    _faceGroups.push_back(new dgGroupOfFaces(*_elementGroups[i],order));
+    dgGroupOfFaces *gof=new dgGroupOfFaces(*_elementGroups[i],order);
+    if(gof->getNbElements())
+      _faceGroups.push_back(gof);
+    else
+      delete gof;
     // create a groupe of d
     for (int j=i+1;j<_elementGroups.size();j++){
       dgGroupOfFaces *gof = new dgGroupOfFaces(*_elementGroups[i],*_elementGroups[j],order);
@@ -795,7 +836,11 @@ void dgGroupCollection::buildGroupsOfInterfaces() {
   //create ghost groups
   for(int i=0;i<Msg::GetCommSize();i++){
     for (std::map<int, std::vector<MElement *> >::iterator it = ghostElements[i].begin(); it !=ghostElements[i].end() ; ++it){
-      _ghostGroups.push_back(new dgGroupOfElements(it->second,order,i));
+      dgGroupOfElements *gof=new dgGroupOfElements(it->second,order,i);
+      if (gof->getNbElements())
+        _ghostGroups.push_back(gof);
+      else
+        delete gof;
     }
   }
   //create face group for ghostGroups
@@ -875,29 +920,282 @@ void dgGroupCollection::buildGroupsOfInterfaces() {
 
 
 // Split the groups of elements depending on their local time step
-void dgGroupCollection::splitGroupsForMultirate(double refDt,dgConservationLaw *claw){
-  // 1) find the element with the smallest stable time step
-  double sr = DBL_MAX;
-  dgDofContainer *solution = new dgDofContainer((this),claw->getNbFields());
-  solution->scale(0.);
-  for (int i=0;i<getNbElementGroups();i++){
-    std::vector<double> DTS;
-    dgAlgorithm::computeElementaryTimeSteps(*claw, *getElementGroup(i), solution->getGroupProxy(i), DTS);
-    for (int k=0;k<DTS.size();k++){
-      std::cout << "SR: " << DTS[k] << std::endl;
-      sr = std::min(sr,DTS[k]);
+void dgGroupCollection::splitGroupsForMultirate(double dtRef,dgConservationLaw *claw, dgDofContainer *solution){
+  Msg::Info("Splitting Groups for multirate time stepping");
+  int maxNumElems=getElementGroup(0)->getElement(0)->getGlobalNumber()+1;
+  std::vector<int>oldGroupIds;
+  oldGroupIds.resize(maxNumElems);
+  std::vector<MElement*>allElements;
+  allElements.resize(maxNumElems);
+  for(int iGroup=0;iGroup<getNbElementGroups();iGroup++){
+    dgGroupOfElements *elGroup=getElementGroup(iGroup);
+    for(int iElement=0;iElement<elGroup->getNbElements();iElement++){
+      MElement *el=elGroup->getElement(iElement);
+      oldGroupIds[el->getNum()]=iGroup;
+      allElements[el->getNum()]=el;
     }
   }
-  delete solution;
-  #ifdef HAVE_MPI
-  double sr_min;
-  MPI_Allreduce((void *)&sr, &sr_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
-  sr=sr_min;
-  #endif
-  // sr is the time step for the most constrained element.
-  std::cout << "SR: " << sr << std::endl;
 
+  std::vector<int>newGroupIds;
+  newGroupIds.assign(maxNumElems,-1);
+
+  std::vector<std::vector<int> >elementToNeighbors;
+  elementToNeighbors.resize(maxNumElems);
+
+  switch(getElementGroup(0)->getElement(0)->getDim()){
+    case 1:
+      { 
+        std::map<MVertex*,int> vertexMap;
+        for(int iGroup=0;iGroup<getNbElementGroups();iGroup++){
+          dgGroupOfElements *elGroup=getElementGroup(iGroup);
+          for(int iElement=0; iElement<elGroup->getNbElements(); iElement++){
+            MElement *el = elGroup->getElement(iElement);
+            for (int iVertex=0; iVertex<el->getNumVertices(); iVertex++){
+              MVertex* vertex = el->getVertex(iVertex);
+              if(vertexMap.find(vertex) == vertexMap.end()){
+                vertexMap[vertex] = el->getNum();
+              }else{
+                elementToNeighbors[vertexMap[vertex]].push_back(el->getNum());
+                elementToNeighbors[el->getNum()].push_back(vertexMap[vertex]);
+              }
+            }
+          }
+        }
+        vertexMap.clear();
+      }
+      break;
+    case 2:
+      {
+        std::map<MEdge,int,Less_Edge> edgeMap;
+        for(int iGroup=0;iGroup<getNbElementGroups();iGroup++){
+          dgGroupOfElements *elGroup=getElementGroup(iGroup);
+          for(int iElement=0; iElement<elGroup->getNbElements(); iElement++){
+            MElement *el = elGroup->getElement(iElement);
+            for (int iEdge=0; iEdge<el->getNumEdges(); iEdge++){
+              MEdge edge = el->getEdge(iEdge);
+              if(edgeMap.find(edge) == edgeMap.end()){
+                edgeMap[edge] = el->getNum();
+              }else{
+                elementToNeighbors[edgeMap[edge]].push_back(el->getNum());
+                elementToNeighbors[el->getNum()].push_back(edgeMap[edge]);
+              }
+            }
+          }
+        }
+        edgeMap.clear();
+      }
+      break;
+    case 3:
+      { 
+        std::map<MFace,int,Less_Face> faceMap;
+        for(int iGroup=0;iGroup<getNbElementGroups();iGroup++){
+          dgGroupOfElements *elGroup=getElementGroup(iGroup);
+          for(int iElement=0; iElement<elGroup->getNbElements(); iElement++){
+            MElement *el = elGroup->getElement(iElement);
+            for (int iFace=0; iFace<el->getNumFaces(); iFace++){
+              MFace face = el->getFace(iFace);
+              if(faceMap.find(face) == faceMap.end()){
+                faceMap[face] = el->getNum();
+              }else{
+                elementToNeighbors[faceMap[face]].push_back(el->getNum());
+                elementToNeighbors[el->getNum()].push_back(faceMap[face]);
+              }
+            }
+          }
+        }
+        faceMap.clear();
+      }
+      break;
+    default:
+      break;
+  }
+
+  // find the range of time steps
+  double dtMin = DBL_MAX;
+  double dtMax = 0;
+  std::vector<double> *DTS=new std::vector<double>[getNbElementGroups()];
+  for (int i=0;i<getNbElementGroups();i++){
+    dgAlgorithm::computeElementaryTimeSteps(*claw, *getElementGroup(i), solution->getGroupProxy(i), DTS[i]);
+    for (int k=0;k<DTS[i].size();k++){
+      dtMin = std::min(dtMin,DTS[i][k]);
+      dtMax = std::max(dtMax,DTS[i][k]);
+    }
+  }
+  std::vector<double>localDt;
+  localDt.resize(maxNumElems);
+  for (int i=0;i<getNbElementGroups();i++){
+    dgGroupOfElements *elGroup=getElementGroup(i);
+    for(int j=0;j<DTS[i].size();j++){
+      MElement *el=elGroup->getElement(j);
+      localDt[el->getNum()]=DTS[i][j];
+    }
+  }
+  delete []DTS;
+#ifdef HAVE_MPI
+  double dtMin_min;
+  MPI_Allreduce((void *)&dtMin, &dtMin_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+  dtMin=dtMin_min;
+  double dtMax_max;
+  MPI_Allreduce((void *)&dtMax, &dtMax_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+  dtMax=dtMax_max;
+#endif
+  // dtMin is the time step for the most constrained element.
+  if(dtRef<=dtMin){
+    Msg::Info("No multirate, the reference time step is stable for all elements.");
+    return;
+  }
+
+  Msg::Info("Time step for standard RK should be %e",dtMin);
+  Msg::Info("Multirate base time step should be %e",dtMax);
+
+  dtRef=dtMax*0.8;
+  // time steps are dtRef*2^(-dtExponent), with dtExponent ranging in [0:dtMaxExponent]
+  int dtMaxExponent=0;
+  while(dtRef/pow(2.0,(double)dtMaxExponent)>dtMin)
+    dtMaxExponent++;
+  _dtMaxExponent=dtMaxExponent;
+  std::vector<MElement *>currentNewGroup;
+  std::vector< dgGroupOfElements* >newGroups;// indexed by newGroupId
+  std::map<int,int>oldToNewGroupsMap;// oldGroupId to newGroupId
+
+  int lowerLevelGroupIdStart=-1;
+  int lowerLevelGroupIdEnd=-1;
+
+  bool isOuterBufferLayer=false;
+  int currentNewGroupId=0;
+  int loopId=0;
+  for(int currentExponent=dtMaxExponent;currentExponent>=0;(!isOuterBufferLayer)?currentExponent--:currentExponent=currentExponent){
+    double currentDt=dtRef/pow(2.0,(double)currentExponent);
+    std::map<int,std::vector<MElement*> >mapNewGroups;
+    if(lowerLevelGroupIdStart==-1){
+      lowerLevelGroupIdStart=0;
+    }
+    else{
+      // Add the neighbors elements to the new groups
+      int _lowerLevelGroupIdStart=lowerLevelGroupIdStart;
+      int _lowerLevelGroupIdEnd=lowerLevelGroupIdEnd;
+      lowerLevelGroupIdStart=lowerLevelGroupIdEnd;
+      for(int iNewGroup=_lowerLevelGroupIdStart;iNewGroup<_lowerLevelGroupIdEnd;iNewGroup++){
+        for(int iElement=0; iElement<newGroups[iNewGroup]->getNbElements(); iElement++){
+          MElement *el = newGroups[iNewGroup]->getElement(iElement);
+          for(int iNeighbor=0;iNeighbor<elementToNeighbors[el->getNum()].size();iNeighbor++){
+            int neighId=elementToNeighbors[el->getNum()][iNeighbor];
+            if(newGroupIds[neighId]==-1){
+              mapNewGroups[oldGroupIds[neighId]].push_back(allElements[neighId]);
+              newGroupIds[neighId]=-2;
+            }
+          }
+        }
+      }
+    }
+    if(!isOuterBufferLayer){
+      for(int iGroup=0;iGroup<getNbElementGroups();iGroup++){
+        dgGroupOfElements *elGroup=getElementGroup(iGroup);
+        for(int iElement=0;iElement<elGroup->getNbElements();iElement++){
+          MElement *el=elGroup->getElement(iElement);
+          if(localDt[el->getNum()]>=currentDt && localDt[el->getNum()]<currentDt*2){
+            if(newGroupIds[el->getNum()]==-1){
+              mapNewGroups[iGroup].push_back(el);
+              newGroupIds[el->getNum()]=-2;
+            }
+          }
+        }
+      }
+      lowerLevelGroupIdStart=currentNewGroupId;
+      for (std::map<int, std::vector<MElement *> >::iterator it = mapNewGroups.begin(); it !=mapNewGroups.end() ; ++it){
+        if(!it->second.empty()){
+          std::vector<MElement *>forBulk;
+          std::vector<MElement *>forInnerBuffer;
+          for(int i=0;i<it->second.size();i++){
+            MElement* el=it->second[i];
+            bool inInnerBuffer=false;
+            for(int iNeighbor=0;iNeighbor<elementToNeighbors[el->getNum()].size();iNeighbor++){
+              int neighId=elementToNeighbors[el->getNum()][iNeighbor];
+              if(newGroupIds[neighId]==-1){
+                inInnerBuffer=true;
+                continue;
+              }
+            }
+            if(inInnerBuffer){
+              forInnerBuffer.push_back(el);
+            }
+            else{
+              forBulk.push_back(el);
+            }
+          }
+          for(int i=0;i<forBulk.size();i++){
+            newGroupIds[it->second[i]->getNum()]=currentNewGroupId;
+          }
+          dgGroupOfElements *oldGroup=getElementGroup(it->first);
+          dgGroupOfElements *newGroup;
+          if(!forBulk.empty()){
+            newGroup=new dgGroupOfElements(forBulk,oldGroup->getOrder(),oldGroup->getGhostPartition());
+            newGroup->copyPrivateDataFrom(oldGroup);
+            newGroup->_multirateExponent=currentExponent;
+            newGroup->_multirateOuterBuffer=false;
+            newGroup->_multirateInnerBuffer=false;
+            newGroups.resize(currentNewGroupId+1);
+            newGroups[currentNewGroupId]=newGroup;
+            oldToNewGroupsMap[it->first]=currentNewGroupId;
+            currentNewGroupId++;
+          }
+
+          if(!forInnerBuffer.empty()){
+            newGroup=new dgGroupOfElements(forInnerBuffer,oldGroup->getOrder(),oldGroup->getGhostPartition());
+            newGroup->copyPrivateDataFrom(oldGroup);
+            newGroup->_multirateExponent=currentExponent;
+            newGroup->_multirateOuterBuffer=false;
+            newGroup->_multirateInnerBuffer=true;
+            newGroups.resize(currentNewGroupId+1);
+            newGroups[currentNewGroupId]=newGroup;
+            oldToNewGroupsMap[it->first]=currentNewGroupId;
+            currentNewGroupId++;
+          }
+        }
+        else
+          Msg::Info("Empty Group !!!!!!!!!!!!!!!!!!");
+      }
+    }
+    else{
+      for (std::map<int, std::vector<MElement *> >::iterator it = mapNewGroups.begin(); it !=mapNewGroups.end() ; ++it){
+        if(!it->second.empty()){
+          for(int i=0;i<it->second.size();i++){
+            newGroupIds[it->second[i]->getNum()]=currentNewGroupId;
+          }
+          dgGroupOfElements *oldGroup=getElementGroup(it->first);
+          dgGroupOfElements *newGroup=new dgGroupOfElements(it->second,oldGroup->getOrder(),oldGroup->getGhostPartition());
+          newGroup->copyPrivateDataFrom(oldGroup);
+          newGroup->_multirateExponent=currentExponent;
+          newGroup->_multirateOuterBuffer=true;
+          newGroup->_multirateInnerBuffer=false;
+          newGroups.resize(currentNewGroupId+1);
+          newGroups[currentNewGroupId]=newGroup;
+          oldToNewGroupsMap[it->first]=currentNewGroupId;
+          currentNewGroupId++;
+        }
+        else
+          Msg::Info("Empty Group !!!!!!!!!!!!!!!!!!");
+      }
+    }
+    lowerLevelGroupIdEnd=currentNewGroupId;
+    isOuterBufferLayer=!isOuterBufferLayer;
+  }
+  int count=0;
+  for(int i=0;i<newGroups.size();i++){
+    Msg::Info("%d New group # %d has %d elements",newGroups[i]->getMultirateExponent(),i,newGroups[i]->getNbElements());
+    if(newGroups[i]->getIsInnerMultirateBuffer())
+      Msg::Info("InnerBuffer");
+    else if(newGroups[i]->getIsOuterMultirateBuffer())
+      Msg::Info("OuterBuffer");
+    else
+      Msg::Info("Not Buffer");
+    count+=newGroups[i]->getNbElements();
+  }
+  Msg::Info("That makes a total of %d elements",count);
+  _elementGroups.clear();
+  _elementGroups=newGroups;
 }
+
 
 dgGroupCollection::dgGroupCollection()
 {
@@ -945,7 +1243,7 @@ void dgGroupCollection::registerBindings(binding *b){
   cm->setDescription("Build the group of interfaces, i.e. boundary interfaces and inter-element interfaces");
   cm = cb->addMethod("splitGroupsForMultirate",&dgGroupCollection::splitGroupsForMultirate);
   cm->setDescription("Split the groups according to their own stable time step");
-  cm->setArgNames("refDt","claw",NULL);
+  cm->setArgNames("refDt","claw","solution",NULL);
   cm = cb->addMethod("getNbElementGroups", &dgGroupCollection::getNbElementGroups);
   cm->setDescription("return the number of dgGroupOfElements");
   cm = cb->addMethod("getNbFaceGroups", &dgGroupCollection::getNbFaceGroups);

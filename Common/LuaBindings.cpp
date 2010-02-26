@@ -343,6 +343,7 @@ binding::binding(){
   dgPerfectGasLaw2dRegisterBindings(this);
   dgResidual::registerBindings(this);
   dgRungeKutta::registerBindings(this);
+  dgRungeKuttaMultirate::registerBindings(this);
   dgSlopeLimiterRegisterBindings(this);
   dgSystemOfEquations::registerBindings(this);
   fullMatrix<double>::registerBindings(this);

@@ -22,6 +22,7 @@ class GModel;
 
 class binding;
 class dgConservationLaw;
+class dgDofContainer;
 
 
 class dgElement {
@@ -40,10 +41,13 @@ public:
   MElement *element() const { return _element;}
 };
 
+class dgGroupOfFaces;
+
 
 // store topological and geometrical data for 1 group for 1 discretisation
 class dgGroupOfElements {
   int _ghostPartition; // -1 : this is not a ghosted group, otherwise the id of the parent partition
+
   // N elements in the group
   std::vector<MElement*> _elements;
   // inverse map that gives the index of an element in the group
@@ -79,7 +83,16 @@ class dgGroupOfElements {
   // forbid the copy 
   //  dgGroupOfElements (const dgGroupOfElements &e, int order) {}
   //  dgGroupOfElements & operator = (const dgGroupOfElements &e) {}
+protected:
+  int _multirateExponent;
+  bool _multirateInnerBuffer;
+  bool _multirateOuterBuffer;
 public:
+
+  inline int getMultirateExponent() const {return _multirateExponent;}
+  inline int getIsInnerMultirateBuffer() const {return _multirateInnerBuffer;}
+  inline int getIsOuterMultirateBuffer() const {return _multirateOuterBuffer;}
+  inline int getIsMultirateBuffer()const {return _multirateInnerBuffer || _multirateOuterBuffer;}
   dgGroupOfElements (const std::vector<MElement*> &e, int pOrder,int ghostPartition=-1);
   virtual ~dgGroupOfElements ();
   inline int getNbElements() const {return _elements.size();}
@@ -101,11 +114,13 @@ public:
   inline const fullMatrix<double> getMapping (int iElement) const {return fullMatrix<double>(*_mapping, iElement, 1);}
   inline int getOrder() const {return _order;}
   inline int getGhostPartition() const {return _ghostPartition;}
+  void copyPrivateDataFrom(const dgGroupOfElements *from);
   inline int getIndexOfElement (MElement *e) const {
     std::map<MElement*,int>::const_iterator it = element_to_index.find(e);
     if (it == element_to_index.end())return -1;
     return it->second;
   }
+  friend class dgGroupCollection;
 };
 
 class dgGroupOfFaces {
@@ -191,6 +206,8 @@ public:
   //keep this outside the Algorithm because this is the only place where data overlap
   void mapToInterface(int nFields, const fullMatrix<double> &vLeft, const fullMatrix<double> &vRight, fullMatrix<double> &v);
   void mapFromInterface(int nFields, const fullMatrix<double> &v, fullMatrix<double> &vLeft, fullMatrix<double> &vRight);
+  void mapLeftFromInterface(int nFields, const fullMatrix<double> &v, fullMatrix<double> &vLeft);
+  void mapRightFromInterface(int nFields, const fullMatrix<double> &v, fullMatrix<double> &vRight);
   const polynomialBasis * getPolynomialBasis() const {return _fsFace;}
 };
 
@@ -205,7 +222,12 @@ class dgGroupCollection {
   std::vector< std::vector<std::pair<int,int> > >_elementsToSend;
   bool _groupsOfElementsBuilt;
   bool _groupsOfInterfacesBuilt;
+
+  // Multirate stuff
+  int _dtMaxExponent;
+
   public:
+  inline int getDtMaxExponent() const {return _dtMaxExponent;}
   inline GModel* getModel() {return _model;}
   inline int getNbElementGroups() const {return _elementGroups.size();}
   inline int getNbFaceGroups() const {return _faceGroups.size();}
@@ -223,7 +245,7 @@ class dgGroupCollection {
   void buildGroupsOfElements (GModel *model,int dimension, int order);
   void buildGroupsOfInterfaces ();
 
-  void splitGroupsForMultirate(double refDt,dgConservationLaw *claw);
+  void splitGroupsForMultirate(double refDt,dgConservationLaw *claw, dgDofContainer *solution);
 
   void find (MElement *elementToFind, int &iGroup, int &ithElementOfGroup);
 

@@ -18,8 +18,8 @@ Plane Surface(11) = {10};
 Physical Surface("sprut") = {11, 9};
 Physical Line("Walls") = {5, 7, 3, 4, 1};
 Physical Line("Top") = {6};
-Transfinite Line {5, 7, 1, 3} = 50 Using Progression 1;
-Transfinite Line {6, 4, 2} = 25 Using Progression 1;
-Transfinite Surface {9} Alternated;
-Transfinite Surface {11} Alternated;
-Recombine Surface {9, 11};
+//Recombine Surface {9, 11};
+
+Field[1] = MathEval;
+Field[1].F = "0.01*1+0.01*1.7*y";
+Background Field = 1;

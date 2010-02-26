@@ -166,6 +166,14 @@ void dgDofContainer::axpy(dgDofContainer &x, double a)
   _data->axpy(*x._data,a);
   _ghostData->axpy(*x._ghostData,a); 
 }
+void dgDofContainer::axpy(std::vector<dgGroupOfElements*>groupsVector,dgDofContainer &x, double a){
+  for(int i=0;i<groupsVector.size();i++){
+    dgGroupOfElements *g=groupsVector[i];
+    fullMatrix<double> &proxy=getGroupProxy(g);
+    fullMatrix<double> &xProxy=x.getGroupProxy(g);
+    proxy.add(xProxy,a);
+  }
+}
 
 double dgDofContainer::norm() {
   double localNorm = _data->norm();
@@ -213,6 +221,70 @@ void dgDofContainer::L2Projection(std::string functionName){
   }
 }
 
+void dgDofContainer::exportGroupIdMsh(){
+  // the elementnodedata::export does not work !!
+
+  std::ostringstream name_oss;
+  name_oss<<"groups.msh";
+  if(Msg::GetCommSize()>1)
+    name_oss<<"_"<<Msg::GetCommRank();
+  FILE *f = fopen (name_oss.str().c_str(),"w");
+  int COUNT = 0;
+  for (int i=0;i < _groups.getNbElementGroups() ;i++){
+    COUNT += _groups.getElementGroup(i)->getNbElements();
+  }
+  fprintf(f,"$MeshFormat\n2.1 0 8\n$EndMeshFormat\n");  
+  fprintf(f,"$ElementNodeData\n");
+  fprintf(f,"1\n");
+  fprintf(f,"\"%s\"\n","GroupsIds");
+  fprintf(f,"1\n");
+  fprintf(f,"0.0\n");
+  fprintf(f,"%d\n", Msg::GetCommSize() > 1 ? 4 : 3);
+  fprintf(f,"0\n 1\n %d\n",COUNT);
+  if(Msg::GetCommSize() > 1) fprintf(f,"%d\n", Msg::GetCommRank());
+  for (int i=0;i < _groups.getNbElementGroups()  ;i++){
+    dgGroupOfElements *group = _groups.getElementGroup(i);
+    for (int iElement=0 ; iElement< group->getNbElements() ;++iElement) {
+      MElement *e = group->getElement(iElement);
+      int num = e->getNum();
+      fullMatrix<double> sol(getGroupProxy(i), iElement*_nbFields,_nbFields);
+      fprintf(f,"%d %d",num,sol.size1());
+      for (int k=0;k<sol.size1();++k) {
+        fprintf(f," %.16E ",i*1.0);
+      }
+      fprintf(f,"\n");
+    }
+  }
+  fprintf(f,"$EndElementNodeData\n");
+  fclose(f);
+  return;
+  // we should discuss that : we do a copy of the solution, this should
+  // be avoided !
+
+  /*std::map<int, std::vector<double> > data;
+  
+  for (int i=0;i < _groups.getNbElementGroups() ;i++){
+    dgGroupOfElements *group = _groups.getElementGroup(i);
+    for (int iElement=0 ; iElement< group->getNbElements() ;++iElement) {
+      MElement *e = group->getElement(iElement);
+      int num = e->getNum();
+      fullMatrix<double> sol(getGroupProxy(i), iElement*_nbFields,_nbFields);
+      std::vector<double> val;
+      //      val.resize(sol.size2()*sol.size1());
+      val.resize(sol.size1());
+      int counter = 0;
+      //      for (int iC=0;iC<sol.size2();iC++)
+      printf("%g %g %g\n",sol(0,0),sol(1,0),sol(2,0));
+      for (int iR=0;iR<sol.size1();iR++)val[counter++] = sol(iR,0);
+      data[num] = val;
+    }
+  }
+
+  PView *pv = new PView (name, "ElementNodeData", _gm, data, 0.0, 1);
+  pv->getData()->writeMSH(name+".msh", false); 
+  delete pv;
+  */
+}
 
 void dgDofContainer::exportMsh(const std::string name)
 {
@@ -236,7 +308,7 @@ void dgDofContainer::exportMsh(const std::string name)
     fprintf(f,"1\n");
     fprintf(f,"%d\n", _mshStep); // should print actual time here
     fprintf(f,"%d\n", Msg::GetCommSize() > 1 ? 4 : 3);
-    fprintf(f,"%d\n 1\n %d\n", _mshStep, COUNT);
+    fprintf(f,"%d\n 1\n %d\n", 0/*_mshStep*/, COUNT);
     if(Msg::GetCommSize() > 1) fprintf(f,"%d\n", Msg::GetCommRank());
     for (int i=0;i < _groups.getNbElementGroups()  ;i++){
       dgGroupOfElements *group = _groups.getElementGroup(i);
@@ -300,4 +372,6 @@ void dgDofContainer::registerBindings(binding *b){
   cm = cb->addMethod("exportMsh",&dgDofContainer::exportMsh);
   cm->setDescription("Export the dof for gmsh visualization");
   cm->setArgNames("filename", NULL);
+  cm = cb->addMethod("exportGroupIdMsh",&dgDofContainer::exportGroupIdMsh);
+  cm->setDescription("Export the group ids for gmsh visualization");
 }

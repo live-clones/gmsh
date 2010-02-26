@@ -996,7 +996,7 @@ static void checkHighOrderTetrahedron(const char* cc, GModel *m,
                  minGGlob, avg / (count ? count : 1));
 }
 
-extern double mesh_functional_distorsion(MTriangle *t, double u, double v);
+extern double mesh_functional_distorsion(MElement *t, double u, double v);
 
 static void printJacobians(GModel *m, const char *nm)
 {

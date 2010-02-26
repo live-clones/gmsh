@@ -28,6 +28,7 @@ public:
   void scale(double f);
   double norm();
   void axpy(dgDofContainer &x, double a=1.);
+  void axpy(std::vector<dgGroupOfElements*>groups,dgDofContainer &x, double a=1.);
   inline fullMatrix<double> &getGroupProxy(int gId){ return *(_dataProxys[gId]); }
   inline fullMatrix<double> &getGroupProxy(const dgGroupOfElements* g){ return *(_dataProxys[_groupId[g]]); }
   dgDofContainer (dgGroupCollection *groups, int nbFields);
@@ -41,6 +42,7 @@ public:
   void L2Projection(std::string functionName);
   void Mesh2Mesh_L2Projection(dgDofContainer &other);
   void exportMsh(const std::string name);
+  void exportGroupIdMsh();
 
   static void registerBindings(binding *b);
   inline dgGroupCollection *getGroups() { return &_groups; }
