@@ -159,6 +159,7 @@ class dataCacheElement : public dataCache {
 // more explanation at the head of this file
 class dataCacheMap {
   friend class dataCache;
+  friend class dataCacheDouble;
  private:
   int _nbEvaluationPoints;
   // keep track of the current element and all the dataCaches that
@@ -176,10 +177,14 @@ class dataCacheMap {
     }
   };
   std::set<dataCache*> _toDelete;
+  std::set<dataCacheDouble*> _toResize;
 
  protected:
   void addDataCache(dataCache *data){
     _toDelete.insert(data);
+  }
+  void addDataCacheDouble(dataCacheDouble *data){
+    _toResize.insert(data);
   }
  public:
   // dg Part

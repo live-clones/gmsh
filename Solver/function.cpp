@@ -282,8 +282,10 @@ public:
 };
 void dataCacheMap::setNbEvaluationPoints(int nbEvaluationPoints) {
   _nbEvaluationPoints = nbEvaluationPoints;
-  for(std::map<std::string, dataCacheDouble*>::iterator it = _cacheDoubleMap.begin(); it!= _cacheDoubleMap.end(); it++)
-    it->second->resize();
+  for(std::set<dataCacheDouble*>::iterator it = _toResize.begin(); it!= _toResize.end(); it++){
+    (*it)->resize();
+    (*it)->_valid = false;
+  }
 }
 
 dataCacheDouble *functionMesh2Mesh::newDataCache(dataCacheMap *m)
@@ -295,6 +297,7 @@ dataCacheDouble *functionMesh2Mesh::newDataCache(dataCacheMap *m)
 dataCacheDouble::dataCacheDouble(dataCacheMap &map,int nRowByPoint, int nCol):
   dataCache(&map),_cacheMap(map),_value(nRowByPoint==0?1:nRowByPoint*map.getNbEvaluationPoints(),nCol){
     _nRowByPoint=nRowByPoint;
+    map.addDataCacheDouble(this);
 };
 void dataCacheDouble::resize() {
   _value = fullMatrix<double>(_nRowByPoint==0?1:_nRowByPoint*_cacheMap.getNbEvaluationPoints(),_value.size2());

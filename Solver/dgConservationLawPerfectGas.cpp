@@ -332,7 +332,7 @@ class dgPerfectGasLaw2d::advection : public dataCacheDouble {
     sol(cacheMap.get("Solution",this))
   {};
   void _eval () { 
-    const int nQP = sol().size1();      
+    const int nQP = _value.size1();      
     const double GM1 = GAMMA - 1.0;
     for (size_t k = 0 ; k < nQP; k++ ){
       const double invrho = 1./sol(k,0);
