@@ -68,12 +68,12 @@ dataCacheDouble &dataCacheMap::get(const std::string &functionName, dataCache *c
   return *r;
 }
 
-dataCacheDouble &dataCacheMap::provideData(std::string name)
+dataCacheDouble &dataCacheMap::provideData(std::string name,int nRowByPoints, int nCol)
 {
-  dataCacheDouble *&r= _cacheDoubleMap[name];
-  if(r!=NULL)
+  if (_cacheDoubleMap[name] != NULL)
     throw;
-  r = new providedDataDouble(*this);
+  dataCacheDouble *r = new providedDataDouble(*this,nRowByPoints, nCol);
+  _cacheDoubleMap[name] = r;
   return *r;
 }
 
@@ -97,7 +97,7 @@ class functionXYZ : public function {
   int count;
    public:
     data(dataCacheMap *m) : 
-      dataCacheDouble(*m, m->getNbEvaluationPoints(),3),
+      dataCacheDouble(*m, 1,3),
       _element(m->getElement(this)), _uvw(m->get("UVW", this))
     {
     }
@@ -136,7 +136,7 @@ class functionStructuredGridFile : public function {
     functionStructuredGridFile *_fun;
     public:
     data(functionStructuredGridFile *fun, dataCacheMap *m):
-      dataCacheDouble(*m,m->getNbEvaluationPoints(),1),
+      dataCacheDouble(*m,1,1),
       coord(m->get(fun->_coordFunction,this))
     {
       _fun=fun;
@@ -204,7 +204,7 @@ class functionConstant::data : public dataCacheDouble {
  const functionConstant *_function;
  public:
  data(const functionConstant * function,dataCacheMap *m):
-   dataCacheDouble(*m,m->getNbEvaluationPoints(),function->_source.size1()){
+   dataCacheDouble(*m,1,function->_source.size1()){
      _function = function;
    }
  void _eval() {
@@ -247,13 +247,11 @@ public:
   data(dataCacheMap &m, dgDofContainer *sys) :
     _dofContainer(sys), 
     xyz(m.get("XYZ",this)),
-    dataCacheDouble(m,m.getNbEvaluationPoints(), sys->getNbFields())
+    dataCacheDouble(m,1, sys->getNbFields())
   {
   }
   void _eval() {
     int nP =xyz().size1();
-    if(_value.size1() != nP)
-      _value = fullMatrix<double>(nP,_dofContainer->getNbFields());
     _value.setAll(0.0);
     double fs[256];
     fullMatrix<double> solEl;
@@ -282,13 +280,25 @@ public:
     }
   }
 };
+void dataCacheMap::setNbEvaluationPoints(int nbEvaluationPoints) {
+  _nbEvaluationPoints = nbEvaluationPoints;
+  for(std::map<std::string, dataCacheDouble*>::iterator it = _cacheDoubleMap.begin(); it!= _cacheDoubleMap.end(); it++)
+    it->second->resize();
+}
 
 dataCacheDouble *functionMesh2Mesh::newDataCache(dataCacheMap *m)
 {
-  printf("coussdo %d %d\n",m->getNbEvaluationPoints(),_dofContainer->getNbFields());  
   return new data(*m,_dofContainer);
 }
 
+
+dataCacheDouble::dataCacheDouble(dataCacheMap &map,int nRowByPoint, int nCol):
+  dataCache(&map),_cacheMap(map),_value(nRowByPoint==0?1:nRowByPoint*map.getNbEvaluationPoints(),nCol){
+    _nRowByPoint=nRowByPoint;
+};
+void dataCacheDouble::resize() {
+  _value = fullMatrix<double>(_nRowByPoint==0?1:_nRowByPoint*_cacheMap.getNbEvaluationPoints(),_value.size2());
+}
 
 #include "Bindings.h"
 

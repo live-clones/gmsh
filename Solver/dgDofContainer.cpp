@@ -193,9 +193,10 @@ void dgDofContainer::L2Projection(std::string functionName){
   for (int iGroup=0;iGroup<_groups.getNbElementGroups();iGroup++) {
     const dgGroupOfElements &group = *_groups.getElementGroup(iGroup);
     fullMatrix<double> Source = fullMatrix<double> (group.getNbIntegrationPoints(),group.getNbElements() * _nbFields);
-    dataCacheMap cacheMap(group.getNbIntegrationPoints());
+    dataCacheMap cacheMap;
+    cacheMap.setNbEvaluationPoints(group.getNbIntegrationPoints());
     dataCacheElement &cacheElement = cacheMap.getElement();
-    cacheMap.provideData("UVW").set(group.getIntegrationPointsMatrix());
+    cacheMap.provideData("UVW",1,3).set(group.getIntegrationPointsMatrix());
     dataCacheDouble &sourceTerm = cacheMap.get(functionName);
     fullMatrix<double> source;
     for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {

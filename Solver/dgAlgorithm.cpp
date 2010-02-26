@@ -43,13 +43,13 @@ void dgAlgorithm::residualVolume ( //dofManager &dof, // the DOF manager (maybe 
   fullMatrix<double> Fuvw[3] = {fullMatrix<double> ( group.getNbIntegrationPoints(), group.getNbElements() * nbFields),
 				fullMatrix<double> (group.getNbIntegrationPoints(), group.getNbElements() * nbFields),
 				fullMatrix<double> (group.getNbIntegrationPoints(), group.getNbElements() * nbFields)};
-  dataCacheMap cacheMap(group.getNbIntegrationPoints());
+  dataCacheMap cacheMap;
+  cacheMap.setNbEvaluationPoints(group.getNbIntegrationPoints());
   dataCacheElement &cacheElement = cacheMap.getElement();
   // provided dataCache
-  cacheMap.provideData("UVW").set(group.getIntegrationPointsMatrix());
-  dataCacheDouble &solutionQPe = cacheMap.provideData("Solution");
-  dataCacheDouble &gradientSolutionQPe = cacheMap.provideData("SolutionGradient");
-  gradientSolutionQPe.set(fullMatrix<double>(group.getNbIntegrationPoints()*3,nbFields));
+  cacheMap.provideData("UVW",1,3).set(group.getIntegrationPointsMatrix());
+  dataCacheDouble &solutionQPe = cacheMap.provideData("Solution",1,nbFields);
+  dataCacheDouble &gradientSolutionQPe = cacheMap.provideData("SolutionGradient",3,nbFields);
   // needed dataCache
   dataCacheDouble *sourceTerm = claw.newSourceTerm(cacheMap);
     // fluxes in  XYZ coordinates;
@@ -142,23 +142,22 @@ void dgAlgorithm::residualInterface ( //dofManager &dof, // the DOF manager (may
   fullMatrix<double> NormalFluxQP ( group.getNbIntegrationPoints(), nbFaces*nbFields*2);
 
   // create one dataCache for each side
-  dataCacheMap cacheMapLeft(group.getNbIntegrationPoints());
-  dataCacheMap cacheMapRight(group.getNbIntegrationPoints());
+  dataCacheMap cacheMapLeft;
+  cacheMapLeft.setNbEvaluationPoints(group.getNbIntegrationPoints());
+  dataCacheMap cacheMapRight;
+  cacheMapRight.setNbEvaluationPoints(group.getNbIntegrationPoints());
 
   // data this algorithm provide to the cache map (we can maybe move each data to a separate function but
   // I think It's easier like this)
-  dataCacheDouble &normals = cacheMapLeft.provideData("Normals");
+  dataCacheDouble &normals = cacheMapLeft.provideData("Normals",1,1);
   dataCacheElement &cacheElementLeft = cacheMapLeft.getElement();
   dataCacheElement &cacheElementRight = cacheMapRight.getElement();
-  dataCacheDouble &uvwLeft = cacheMapLeft.provideData("UVW");
-  dataCacheDouble &uvwRight = cacheMapRight.provideData("UVW");
-  dataCacheDouble &solutionQPLeft = cacheMapLeft.provideData("Solution");
-  dataCacheDouble &solutionQPRight = cacheMapRight.provideData("Solution");
-  dataCacheDouble &gradientSolutionLeft = cacheMapLeft.provideData("SolutionGradient");
-  dataCacheDouble &gradientSolutionRight = cacheMapRight.provideData("SolutionGradient");
-  //resize gradientSolutionLeft and Right
-  gradientSolutionLeft.set(fullMatrix<double>(group.getNbIntegrationPoints()*3,nbFields));
-  gradientSolutionRight.set(fullMatrix<double>(group.getNbIntegrationPoints()*3,nbFields));
+  dataCacheDouble &uvwLeft = cacheMapLeft.provideData("UVW",1,3);
+  dataCacheDouble &uvwRight = cacheMapRight.provideData("UVW",1,3);
+  dataCacheDouble &solutionQPLeft = cacheMapLeft.provideData("Solution",1,nbFields);
+  dataCacheDouble &solutionQPRight = cacheMapRight.provideData("Solution",1,nbFields);
+  dataCacheDouble &gradientSolutionLeft = cacheMapLeft.provideData("SolutionGradient",3,nbFields);
+  dataCacheDouble &gradientSolutionRight = cacheMapRight.provideData("SolutionGradient",3,nbFields);
 
   // A2 ) ask the law to provide the fluxes (possibly NULL)
   dataCacheDouble *riemannSolver = claw.newRiemannSolver(cacheMapLeft,cacheMapRight);
@@ -425,15 +424,15 @@ void dgAlgorithm::residualBoundary ( //dofManager &dof, // the DOF manager (mayb
   // ----- 2 ----  compute normal fluxes  at integration points
   fullMatrix<double> NormalFluxQP ( group.getNbIntegrationPoints(), group.getNbElements()*nbFields);
 
-  dataCacheMap cacheMapLeft(group.getNbIntegrationPoints());
+  dataCacheMap cacheMapLeft;
+  cacheMapLeft.setNbEvaluationPoints(group.getNbIntegrationPoints());
   fullMatrix<double> &DPsiLeftDx = group.getDPsiLeftDxMatrix();
   // provided dataCache
-  dataCacheDouble &uvw=cacheMapLeft.provideData("UVW");
-  dataCacheDouble &solutionQPLeft = cacheMapLeft.provideData("Solution");
-  dataCacheDouble &gradientSolutionLeft = cacheMapLeft.provideData("SolutionGradient");
-  dataCacheDouble &normals = cacheMapLeft.provideData("Normals");
+  dataCacheDouble &uvw=cacheMapLeft.provideData("UVW",1,3);
+  dataCacheDouble &solutionQPLeft = cacheMapLeft.provideData("Solution",1,nbFields);
+  dataCacheDouble &gradientSolutionLeft = cacheMapLeft.provideData("SolutionGradient",3,nbFields);
+  dataCacheDouble &normals = cacheMapLeft.provideData("Normals",1,1);
   dataCacheElement &cacheElementLeft = cacheMapLeft.getElement();
-  gradientSolutionLeft.set(fullMatrix<double>(group.getNbIntegrationPoints()*3,nbFields));
   // required data
   // inviscid
   dataCacheDouble *boundaryTerm = boundaryCondition->newBoundaryTerm(cacheMapLeft);
@@ -553,14 +552,15 @@ void dgAlgorithm::computeElementaryTimeSteps ( //dofManager &dof, // the DOF man
 					      std::vector<double> & DT
 					       )
 { 
-  dataCacheMap cacheMap(group.getNbNodes());
-  dataCacheDouble &sol = cacheMap.provideData("Solution");
+  const int nbFields = claw.getNbFields();
+  dataCacheMap cacheMap;
+  cacheMap.setNbEvaluationPoints(group.getNbIntegrationPoints());
+  dataCacheDouble &sol = cacheMap.provideData("Solution",1,nbFields);
   dataCacheElement &cacheElement = cacheMap.getElement();
   // provided dataCache
   dataCacheDouble *maxConvectiveSpeed = claw.newMaxConvectiveSpeed(cacheMap);
   dataCacheDouble *maximumDiffusivity = claw.newMaximumDiffusivity(cacheMap);
 	
-  const int nbFields = claw.getNbFields();
   /* This is an estimate on how lengths changes with p 
      It is merely the smallest distance between gauss 
      points at order p + 1 */

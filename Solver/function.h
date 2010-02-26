@@ -61,8 +61,12 @@ public :
 
 };
 
-// dataCache when the value is a double 
+// dataCache when the value is a  matrix of double 
+// the user should provide the number of rows by evaluating points and the number of columns
+// then the size of the matrix is automatically adjusted
 class dataCacheDouble : public dataCache {
+  int _nRowByPoint;
+  dataCacheMap &_cacheMap;
  protected:
   fullMatrix<double> _value;
   // do the actual computation and put the result into _value
@@ -113,8 +117,8 @@ class dataCacheDouble : public dataCache {
     }
     return _value;
   }
-  dataCacheDouble(dataCacheMap &map):dataCache(&map){};
-  dataCacheDouble(dataCacheMap &map,int size1, int size2):dataCache(&map),_value(size1,size2){};
+  void resize();
+  dataCacheDouble(dataCacheMap &map,int nRowByPoints, int nCol);
   virtual ~dataCacheDouble(){};
 };
 
@@ -167,22 +171,32 @@ class dataCacheMap {
   {
     void _eval() {throw;};
     public:
-    providedDataDouble(dataCacheMap &map):dataCacheDouble(map) {
+    providedDataDouble(dataCacheMap &map, int nRowByPoints, int ncol):dataCacheDouble(map,nRowByPoints,ncol) {
       _valid=true;
     }
   };
   std::set<dataCache*> _toDelete;
+
  protected:
   void addDataCache(dataCache *data){
     _toDelete.insert(data);
   }
  public:
+  // dg Part
+  //list of dgDofContainer that have to be evaluated, this not work as a function as it depends on the algorithm
+  std::map<dgDofContainer*,dataCacheDouble*> fields;
+  //list of dgDofContainer whom gradient are needed
+  std::map<dgDofContainer*,dataCacheDouble*> gradientFields;
+  // end dg Part
+
   dataCacheDouble &get(const std::string &functionName, dataCache *caller=0);
   dataCacheElement &getElement(dataCache *caller=0);
-  dataCacheDouble &provideData(std::string name);
-  dataCacheMap(int nbEvaluationPoints):_nbEvaluationPoints(nbEvaluationPoints){
-    _cacheElement= new dataCacheElement(this);
-}
+  dataCacheDouble &provideData(std::string name, int nRowByPoints, int nCol);
+  dataCacheMap(){
+    _cacheElement = new dataCacheElement(this);
+    _nbEvaluationPoints = 0;
+  }
+  void setNbEvaluationPoints(int nbEvaluationPoints);
 
   inline int getNbEvaluationPoints(){return _nbEvaluationPoints;}
   ~dataCacheMap();

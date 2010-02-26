@@ -107,8 +107,9 @@ int dgSlopeLimiter::apply ( dgDofContainer *solution)
     dgGroupOfElements* egroup = groups->getElementGroup(iG);  
     fullMatrix<double> &solGroup = solution->getGroupProxy(iG);
 
-    dataCacheMap cacheMap(egroup->getNbNodes());//nbdofs for each element
-    dataCacheDouble &solutionE = cacheMap.provideData("Solution");
+    dataCacheMap cacheMap;
+    cacheMap.setNbEvaluationPoints(egroup->getNbNodes());//nbdofs for each element
+    dataCacheDouble &solutionE = cacheMap.provideData("Solution",1,nbFields);
     dataCacheElement &cacheElement = cacheMap.getElement();
     dataCacheDouble *solutionEClipped = _claw->newClipToPhysics(cacheMap);
     if (solutionEClipped){

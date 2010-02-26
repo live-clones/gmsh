@@ -41,7 +41,7 @@ FS = functionLua(4, 'free_stream', {'XYZ'}):getName()
 law=dgPerfectGasLaw2d()
 DG:setConservationLaw(law)
 
-law:addBoundaryCondition('Walls',law:newWallBoundary())
+law:addBoundaryCondition('Walls',law:newBoundaryWall())
 law:addBoundaryCondition('LeftRight',law:newOutsideValueBoundary(FS))
 --law:addBoundaryCondition('Walls',law:newOutsideValueBoundary(FS))
 

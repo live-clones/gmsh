@@ -14,7 +14,7 @@ class functionLua::data : public dataCacheDouble{
   std::vector<dataCacheDouble *> _dependencies;
   public:
   data(const functionLua *f, dataCacheMap *m):
-    dataCacheDouble(*m,m->getNbEvaluationPoints(),f->_nbCol),
+    dataCacheDouble(*m,1,f->_nbCol),
     _function(f)    
   {
     _dependencies.resize ( _function->_dependenciesName.size());

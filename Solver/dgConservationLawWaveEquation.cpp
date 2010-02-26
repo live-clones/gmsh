@@ -10,13 +10,11 @@ class dgConservationLawWaveEquation::hyperbolicFlux : public dataCacheDouble {
   const int _DIM,_nbf;    
   public:
   hyperbolicFlux(dataCacheMap &cacheMap,int DIM):
-    dataCacheDouble(cacheMap),
+    dataCacheDouble(cacheMap,1,3*(DIM+1)),
     sol(cacheMap.get("Solution",this)),_DIM(DIM),_nbf(DIM+1)
   {};
   void _eval () {
     int nQP = sol().size1();
-    if(_value.size1() != nQP)
-      _value=fullMatrix<double>(nQP,3*_nbf);
     _value.scale(0.);
     for(int i=0; i< nQP; i++) {
       const double p = sol(i,0);	
@@ -32,14 +30,11 @@ class dgConservationLawWaveEquation::maxConvectiveSpeed : public dataCacheDouble
   dataCacheDouble &sol;
   public:
   maxConvectiveSpeed(dataCacheMap &cacheMap):
-    dataCacheDouble(cacheMap),
+    dataCacheDouble(cacheMap,1,1),
     sol(cacheMap.get("Solution",this))
   {
   };
   void _eval () {
-    int nQP = sol().size1();
-    if(_value.size1() != nQP)
-      _value=fullMatrix<double>(nQP,1);
     _value.setAll(c);
   }
 };
@@ -49,7 +44,7 @@ class dgConservationLawWaveEquation::riemann : public dataCacheDouble {
   const int _DIM,_nbf;
   public:
   riemann(dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight, int DIM):
-    dataCacheDouble(cacheMapLeft),
+    dataCacheDouble(cacheMapLeft,1,2*(DIM+1)),
     normals(cacheMapLeft.get("Normals", this)),
     solL(cacheMapLeft.get("Solution", this)),
     solR(cacheMapRight.get("Solution", this)),
@@ -57,8 +52,6 @@ class dgConservationLawWaveEquation::riemann : public dataCacheDouble {
   {};
   void _eval () { 
     int nQP = solL().size1();
-    if(_value.size1() != nQP)
-      _value = fullMatrix<double>(nQP,2*_nbf);
     for(int i=0; i< nQP; i++) {
       const double n[3] = {normals(0,i),normals(1,i),normals(2,i)};
       double unL=0,unR=0;
@@ -110,14 +103,12 @@ class dgBoundaryConditionWaveEquationWall : public dgBoundaryCondition {
     dataCacheDouble &sol,&normals;    
     public:
     term(dataCacheMap &cacheMap, int DIM):
-      dataCacheDouble(cacheMap),
+      dataCacheDouble(cacheMap,1,DIM+1),
       sol(cacheMap.get("Solution",this)),
       normals(cacheMap.get("Normals",this)),
       _DIM(DIM){}
     void _eval () { 
       int nQP = sol().size1();
-      if(_value.size1() != nQP)
-        _value = fullMatrix<double>(nQP,_DIM+1);
       for(int i=0; i< nQP; i++) {
         const double n[3] = {normals(0,i),normals(1,i),normals(2,i)};
         double p = sol(i,0);	

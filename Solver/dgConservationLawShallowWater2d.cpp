@@ -8,11 +8,11 @@ class dgConservationLawShallowWater2d::advection: public dataCacheDouble {
   dataCacheDouble &sol;
   public:
   advection(dataCacheMap &cacheMap):
-    dataCacheDouble(cacheMap,cacheMap.getNbEvaluationPoints(),9),
+    dataCacheDouble(cacheMap,1,9),
     sol(cacheMap.get("Solution",this))
   {};
   void _eval () { 
-    int nQP = sol().size1();
+    int nQP = _value.size1();
     for(int i=0; i< nQP; i++) {
       double eta = sol(i,0);
       double u = sol(i,1);
@@ -37,7 +37,7 @@ class dgConservationLawShallowWater2d::source: public dataCacheDouble {
   dataCacheDouble &xyz, &solution,&solutionGradient;
   public :
   source(dataCacheMap &cacheMap) : 
-    dataCacheDouble(cacheMap,cacheMap.getNbEvaluationPoints(),3),
+    dataCacheDouble(cacheMap,1,3),
     xyz(cacheMap.get("XYZ",this)),
     solution(cacheMap.get("Solution",this)),
     solutionGradient(cacheMap.get("SolutionGradient",this))
@@ -64,7 +64,7 @@ class dgConservationLawShallowWater2d::riemann:public dataCacheDouble {
   dataCacheDouble &normals, &solL, &solR;
   public:
   riemann(dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight):
-    dataCacheDouble(cacheMapLeft,cacheMapLeft.getNbEvaluationPoints(),6),
+    dataCacheDouble(cacheMapLeft,1,6),
     normals(cacheMapLeft.get("Normals", this)),
     solL(cacheMapLeft.get("Solution", this)),
     solR(cacheMapRight.get("Solution", this))
@@ -133,13 +133,11 @@ class dgConservationLawShallowWater2d::boundaryWall : public dgBoundaryCondition
     dataCacheDouble &sol,&normals;
     public:
     term(dataCacheMap &cacheMap):
-    dataCacheDouble(cacheMap),
+    dataCacheDouble(cacheMap,1,3),
     sol(cacheMap.get("Solution",this)),
     normals(cacheMap.get("Normals",this)){}
     void _eval () { 
       int nQP = sol().size1();
-      if(_value.size1() != nQP)
-        _value = fullMatrix<double>(nQP,3);
       for(int i=0; i< nQP; i++) {
         double nx = normals(0,i);
         double ny = normals(1,i);

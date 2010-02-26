@@ -674,8 +674,6 @@ void dgGroupCollection::buildGroupsOfElements(GModel *model, int dim, int order)
     }
   }
 	
-	
-  Msg::Info("%d groups of elements",localElements.size());
   // do a group of elements for every element type in the mesh
   for (std::map<int, std::vector<MElement *> >::iterator it = localElements.begin(); it !=localElements.end() ; ++it){
     _elementGroups.push_back(new dgGroupOfElements(it->second,order));
@@ -910,8 +908,6 @@ dgGroupCollection::dgGroupCollection(GModel *model, int dimension, int order)
   _groupsOfElementsBuilt=false;_groupsOfInterfacesBuilt=false;
   buildGroupsOfElements(model,dimension,order);
 }
-
-
 
 dgGroupCollection::~dgGroupCollection() {
   for (int i=0; i< _elementGroups.size(); i++)

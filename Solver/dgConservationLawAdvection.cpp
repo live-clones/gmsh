@@ -10,7 +10,7 @@ class dgConservationLawAdvectionDiffusion::advection : public dataCacheDouble {
   dataCacheDouble &sol, &v;
   public:
   advection(std::string vFunctionName, dataCacheMap &cacheMap):
-    dataCacheDouble(cacheMap,cacheMap.getNbEvaluationPoints(),3),
+    dataCacheDouble(cacheMap,1,3),
     sol(cacheMap.get("Solution",this)),
     v(cacheMap.get(vFunctionName,this))
   {};
@@ -26,7 +26,7 @@ class dgConservationLawAdvectionDiffusion::riemann : public dataCacheDouble {
   dataCacheDouble &normals, &solLeft, &solRight,&v;
   public:
   riemann(std::string vFunctionName, dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight):
-    dataCacheDouble(cacheMapLeft,cacheMapLeft.getNbEvaluationPoints(),2),
+    dataCacheDouble(cacheMapLeft,1,2),
     normals(cacheMapLeft.get("Normals", this)),
     solLeft(cacheMapLeft.get("Solution", this)),
     solRight(cacheMapRight.get("Solution", this)),
@@ -49,13 +49,11 @@ class dgConservationLawAdvectionDiffusion::diffusion : public dataCacheDouble {
   dataCacheDouble &solgrad, &nu;
   public:
   diffusion(std::string nuFunctionName, dataCacheMap &cacheMap):
-    dataCacheDouble(cacheMap),
+    dataCacheDouble(cacheMap,1,3),
     solgrad(cacheMap.get("SolutionGradient",this)),
     nu(cacheMap.get(nuFunctionName,this))
   {};
   void _eval () { 
-    if(_value.size1() != solgrad().size1()/3)
-      _value=fullMatrix<double>(solgrad().size1()/3,3);
     for(int i=0; i< solgrad().size1()/3; i++) {
       _value(i,0) = -solgrad(i*3,0)*nu(i,0);
       _value(i,1) = -solgrad(i*3+1,0)*nu(i,0);

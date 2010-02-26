@@ -10,12 +10,12 @@ class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
     dgConservationLaw *_claw;
     public:
     term(dgConservationLaw *claw, dataCacheMap &cacheMapLeft,const std::string outsideValueFunctionName):
-      dataCacheDouble(cacheMapLeft, cacheMapLeft.getNbEvaluationPoints(),claw->getNbFields()),
-      cacheMapRight(cacheMapLeft.getNbEvaluationPoints()),
-      solutionRight(cacheMapRight.provideData("Solution")),
+      dataCacheDouble(cacheMapLeft, 1, claw->getNbFields()),
+      solutionRight(cacheMapRight.provideData("Solution",1,claw->getNbFields())),
       outsideValue(cacheMapLeft.get(outsideValueFunctionName,this)),
       _claw(claw)
     {
+      cacheMapRight.setNbEvaluationPoints(cacheMapLeft.getNbEvaluationPoints());
       riemannSolver=_claw->newRiemannSolver(cacheMapLeft,cacheMapRight);
       if(riemannSolver)
         riemannSolver->addMeAsDependencyOf(this);
@@ -34,7 +34,7 @@ class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
     dataCacheDouble &outsideValue;
     public:
     dirichlet(dgConservationLaw *claw, dataCacheMap &cacheMap,const std::string outsideValueFunctionName):
-      dataCacheDouble(cacheMap, cacheMap.getNbEvaluationPoints(),claw->getNbFields()),
+      dataCacheDouble(cacheMap, 1, claw->getNbFields()),
       outsideValue(cacheMap.get(outsideValueFunctionName,this)){}
     void _eval () { 
       for(int i=0;i<_value.size1();i++)
@@ -50,12 +50,12 @@ class dgBoundaryConditionOutsideValue : public dgBoundaryCondition {
     dgConservationLaw *_claw;
     public:
     maximumDiffusivity(dgConservationLaw *claw, dataCacheMap &cacheMapLeft,const std::string outsideValueFunctionName):
-      dataCacheDouble(cacheMapLeft, cacheMapLeft.getNbEvaluationPoints(),claw->getNbFields()),
-      cacheMapRight(cacheMapLeft.getNbEvaluationPoints()),
-      solutionRight(cacheMapRight.provideData("Solution")),
+      dataCacheDouble(cacheMapLeft, 1, claw->getNbFields()),
+      solutionRight(cacheMapRight.provideData("Solution",1,claw->getNbFields())),
       outsideValue(cacheMapLeft.get(outsideValueFunctionName,this)),
       _claw(claw)
     {
+      cacheMapRight.setNbEvaluationPoints(cacheMapLeft.getNbEvaluationPoints());
       maxDif = _claw->newMaximumDiffusivity(cacheMapRight);
       if(maxDif)
         maxDif->addMeAsDependencyOf(this);
@@ -89,7 +89,7 @@ class dgBoundaryConditionNeumann : public dgBoundaryCondition {
     dataCacheDouble &flux;
     public:
     term(dgConservationLaw *claw, dataCacheMap &cacheMapLeft,const std::string fluxFunctionName):
-      dataCacheDouble(cacheMapLeft, cacheMapLeft.getNbEvaluationPoints(),claw->getNbFields()),
+      dataCacheDouble(cacheMapLeft,1 ,claw->getNbFields()),
       flux(cacheMapLeft.get(fluxFunctionName,this))
     {}
     void _eval() {
@@ -113,7 +113,7 @@ class dgBoundarySymmetry : public dgBoundaryCondition {
     dgConservationLaw *_claw;
   public:
     term(dgConservationLaw *claw, dataCacheMap &cacheMapLeft):
-      dataCacheDouble(cacheMapLeft, cacheMapLeft.getNbEvaluationPoints(),claw->getNbFields()), _claw(claw)
+      dataCacheDouble(cacheMapLeft, 1,claw->getNbFields()), _claw(claw)
     {
       riemannSolver=_claw->newRiemannSolver(cacheMapLeft,cacheMapLeft);
       riemannSolver->addMeAsDependencyOf(this);
@@ -138,7 +138,7 @@ class dgBoundaryCondition0Flux : public dgBoundaryCondition {
   class term : public dataCacheDouble {
   public:
     term(dgConservationLaw *claw,dataCacheMap &cacheMapLeft):
-      dataCacheDouble(cacheMapLeft,cacheMapLeft.getNbEvaluationPoints(),claw->getNbFields()) {}
+      dataCacheDouble(cacheMapLeft,1,claw->getNbFields()) {}
     void _eval() {
     }
   };
@@ -167,15 +167,12 @@ class dgBoundaryCondition::dirichlet_ : public dataCacheDouble {
   dataCacheDouble &sol;
 public:
   dirichlet_(dataCacheMap &cacheMap):
-    dataCacheDouble(cacheMap),
+    dataCacheDouble(cacheMap,1,cacheMap.get("Solution")().size2()),
     sol(cacheMap.get("Solution",this)){}
   void _eval () { 
-    int nQP = sol().size1();
-    if(_value.size1() != nQP)
-      _value = fullMatrix<double>(nQP,sol().size2());
-    for(int i=0; i< nQP; i++) 
+    for(int i=0; i< _value.size1(); i++) 
       for (int k=0;k<sol().size2();k++) 
-	_value(i,k) = sol(i,k);
+        _value(i,k) = sol(i,k);
   }
 };
 
@@ -185,7 +182,7 @@ class dgBoundaryCondition::neumann_ : public dataCacheDouble {
   dataCacheDouble *diffusiveFlux;
 public:
   neumann_(dataCacheMap &cacheMap, dgConservationLaw *claw):
-    dataCacheDouble(cacheMap),
+    dataCacheDouble(cacheMap,1,cacheMap.get("Solution")().size2()),
     _claw (claw),
     sol(cacheMap.get("Solution",this)),
     normals(cacheMap.get("Normals",this)){
@@ -193,18 +190,13 @@ public:
     if (diffusiveFlux)diffusiveFlux->addMeAsDependencyOf(this);
   }
   void _eval () { 
-    int nQP = sol().size1();
-    if(_value.size1() != nQP)
-      _value = fullMatrix<double>(nQP,sol().size2());
-    
     const fullMatrix<double> &dfl = (*diffusiveFlux)();
-    
-    for(int i=0; i< nQP; i++) {
-      for (int k=0;k<sol().size2();k++) { 
-	_value(i,k) = 
-	  dfl(i,k+sol().size2()*0) *normals(0,i) +
-	  dfl(i,k+sol().size2()*1) *normals(1,i) +
-	  dfl(i,k+sol().size2()*2) *normals(2,i);
+    for(int i=0; i< _value.size1(); i++) {
+      for (int k=0;k<_value.size2();k++) { 
+        _value(i,k) = 
+          dfl(i,k+sol().size2()*0) *normals(0,i) +
+          dfl(i,k+sol().size2()*1) *normals(1,i) +
+          dfl(i,k+sol().size2()*2) *normals(2,i);
       }
     }
   }
