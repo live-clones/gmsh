@@ -160,6 +160,13 @@ void dgDofContainer::scale(double f)
   _data->scale(f);
   _ghostData->scale(f); 
 }
+void dgDofContainer::scale(std::vector<dgGroupOfElements*>groupsVector, double f){
+  for(int i=0;i<groupsVector.size();i++){
+    dgGroupOfElements *g=groupsVector[i];
+    fullMatrix<double> &proxy=getGroupProxy(g);
+    proxy.scale(f);
+  }
+}
 
 void dgDofContainer::axpy(dgDofContainer &x, double a)
 {

@@ -34,6 +34,7 @@ class dgRungeKuttaMultirate: public dgRungeKutta{
   private:
   int _maxExponent;
   int _minExponent;
+  double _dt;
   dgConservationLaw *_law;
   dgDofContainer *_solution;
   dgDofContainer **_K;

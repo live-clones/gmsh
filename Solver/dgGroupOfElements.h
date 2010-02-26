@@ -245,7 +245,7 @@ class dgGroupCollection {
   void buildGroupsOfElements (GModel *model,int dimension, int order);
   void buildGroupsOfInterfaces ();
 
-  void splitGroupsForMultirate(double refDt,dgConservationLaw *claw, dgDofContainer *solution);
+  double splitGroupsForMultirate(int maxLevels,dgConservationLaw *claw, dgDofContainer *solution);
 
   void find (MElement *elementToFind, int &iGroup, int &ithElementOfGroup);
 

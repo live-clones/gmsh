@@ -4,6 +4,7 @@
 #include "dgLimiter.h"
 #include "dgResidual.h"
 #include "dgGroupOfElements.h"
+#include <stdio.h>
 
 double dgRungeKutta::iterateEuler(const dgConservationLaw *claw, double dt, dgDofContainer *solution) {
   double A[] = {0};
@@ -423,7 +424,7 @@ dgRungeKuttaMultirate::dgRungeKuttaMultirate(dgGroupCollection* gc,dgConservatio
   _residualVolume=new dgResidualVolume(*_law);
   _residualInterface=new dgResidualInterface(*_law);
   _K=new dgDofContainer*[10];
-  for(int i=0;i>10;i++){
+  for(int i=0;i<10;i++){
     _K[i]=new dgDofContainer(gc,_law->getNbFields());
     _K[i]->setAll(0.0);
   }
@@ -476,6 +477,7 @@ dgRungeKuttaMultirate::~dgRungeKuttaMultirate(){
 }
 
 void dgRungeKuttaMultirate::computeK(int iK,int exponent,bool isBuffer){
+  double localDt=_dt/pow(2.0,(double)exponent);
   double _A[4][4]={
      {0, 0, 0, 0},
      {1.0/2.0, 0, 0 ,0},
@@ -494,8 +496,6 @@ void dgRungeKuttaMultirate::computeK(int iK,int exponent,bool isBuffer){
     {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         1.0/6.0,   -1.0/6.0,  1.0/2.0,   0,         0},
     {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0, 0}
   };
-  double bInner[10]={1.0/12.0, 1.0/6.0, 1.0/6.0,1.0/12.0,0,1.0/12.0, 1.0/6.0, 1.0/6.0,1.0/12.0,0};
-  double cInner[10]={0, 1.0/4.0, 1.0/4.0, 1.0/2.0, 1.0/2.0, 1.0/2.0, 3.0/4.0, 3.0/4.0, 1, 1 };
 
   // Big step RK43
   double _AOuter[10][10]={
@@ -510,29 +510,40 @@ void dgRungeKuttaMultirate::computeK(int iK,int exponent,bool isBuffer){
     {1.0/3.0 ,  0,         0,         0,         -1.0/3.0,  1,         0,         0,         0,         0},
     {1.0/3.0 ,  0,         0,         0,         -1.0/3.0,  1,         0,         0,         0,         0},
   };
-  double bOuter[10]={1.0/6.0, 0 , 0 , 0 , 1.0/3.0,1.0/3.0, 0 , 0 , 0 , 1.0/6.0};
-  double cOuter[10]={0, 1.0/4.0, 1.0/4.0, 1.0/2.0, 1.0/2.0, 1.0/2.0, 3.0/4.0, 3.0/4.0, 1, 1 };
   if(exponent>_maxExponent)
     return;
+//  Msg::Info("K%d, %d, %s",iK,exponent,isBuffer?"Buffer":"Bulk");
   // compute K[iK] for this exponent and buffer
-  _currentInput->scale(0.0);
   if(isBuffer){
-    std::vector<dgGroupOfElements *>gVi=_innerBufferGroupsOfElements[exponent].first;
-    std::vector<dgGroupOfElements *>gVo=_outerBufferGroupsOfElements[exponent].first;
+    std::vector<dgGroupOfElements *>&gVi=_innerBufferGroupsOfElements[exponent].first;
+    std::vector<dgGroupOfElements *>&gVo=_outerBufferGroupsOfElements[exponent].first;
+    _currentInput->scale(gVi,0.0);
+    _currentInput->scale(gVo,0.0);
     _currentInput->axpy(gVi,*_solution,1.0);
     _currentInput->axpy(gVo,*_solution,1.0);
     for(int i=0;i<iK;i++){
-      _currentInput->axpy(gVi,*_K[i],_AInner[iK][i]);
-      _currentInput->axpy(gVo,*_K[i],_AOuter[iK][i]);
+      if(_AInner[iK][i]!=0.0)
+        _currentInput->axpy(gVi,*_K[i],_AInner[iK][i]*localDt);
+      if(_AOuter[iK][i]!=0.0)
+        _currentInput->axpy(gVo,*_K[i],_AOuter[iK][i]*localDt);
     }
   }
   else{
-    std::vector<dgGroupOfElements *>gV=_bulkGroupsOfElements[exponent].first;
+    std::vector<dgGroupOfElements *> &gV=_bulkGroupsOfElements[exponent].first;
+    _currentInput->scale(gV,0.0);
     _currentInput->axpy(gV,*_solution,1.0);
     for(int i=0;i<iK;i++){
-      _currentInput->axpy(gV,*_K[i],_A[iK][i]);
+      if(_A[iK][i]!=0.0)
+        _currentInput->axpy(gV,*_K[i],_A[iK][i]*localDt);
     }
   }
+  computeResidual(exponent,isBuffer,_currentInput,_K[iK]);
+  /*
+  printf("%s%d\t",isBuffer?"B":"N",exponent);
+  for(int i=0;i<exponent;i++)
+    printf("    |");
+  printf(" K%d\n",iK);
+  */
   if(!isBuffer){
     switch(iK){
       case 0:
@@ -555,28 +566,55 @@ void dgRungeKuttaMultirate::computeK(int iK,int exponent,bool isBuffer){
   }
   else{
     if( (iK%5)<4 ){
-      computeK(iK%5,exponent+1,false);
+      computeK(iK%5,exponent,false);
     }
   }
   if( (iK==3 && !isBuffer) || (iK==9 && isBuffer) ){
     updateSolution(exponent,isBuffer);
   }
 }
-void dgRungeKuttaMultirate::updateSolution(int exponent,bool isBuffer){}
+void dgRungeKuttaMultirate::updateSolution(int exponent,bool isBuffer){
+  double localDt=_dt/pow(2.0,(double)exponent);
+  double b[4]={1.0/6.0, 1.0/3.0, 1.0/3.0, 1.0/6.0};
+  double c[4]={0, 1.0/2.0, 1.0/2.0, 1};
+  double bInner[10]={1.0/12.0, 1.0/6.0, 1.0/6.0,1.0/12.0,0,1.0/12.0, 1.0/6.0, 1.0/6.0,1.0/12.0,0};
+  double cInner[10]={0, 1.0/4.0, 1.0/4.0, 1.0/2.0, 1.0/2.0, 1.0/2.0, 3.0/4.0, 3.0/4.0, 1, 1 };
+  double bOuter[10]={1.0/6.0, 0 , 0 , 0 , 1.0/3.0,1.0/3.0, 0 , 0 , 0 , 1.0/6.0};
+  double cOuter[10]={0, 1.0/4.0, 1.0/4.0, 1.0/2.0, 1.0/2.0, 1.0/2.0, 3.0/4.0, 3.0/4.0, 1, 1 };
+  if(isBuffer){
+    std::vector<dgGroupOfElements *>&gVi=_innerBufferGroupsOfElements[exponent].first;
+    std::vector<dgGroupOfElements *>&gVo=_outerBufferGroupsOfElements[exponent].first;
+    for(int i=0;i<10;i++){
+      if(bInner[i]!=0.0)
+        _solution->axpy(gVi,*_K[i],bInner[i]*localDt);
+      if(bOuter[i]!=0.0)
+        _solution->axpy(gVi,*_K[i],bOuter[i]*localDt);
+    }
+  }
+  else{
+    std::vector<dgGroupOfElements *>&gV=_bulkGroupsOfElements[exponent].first;
+    for(int i=0;i<4;i++){
+      if(b[i]!=0.0)
+        _solution->axpy(gV,*_K[i],b[i]*localDt);
+    }
+  }
+}
 void dgRungeKuttaMultirate::computeResidual(int exponent,bool isBuffer,dgDofContainer *solution, dgDofContainer *residual){
   if(isBuffer){
-    std::vector<dgGroupOfElements *>*vei=&_innerBufferGroupsOfElements[exponent].first;
-    std::vector<dgGroupOfElements *>*veo=&_outerBufferGroupsOfElements[exponent].first;
-    for(int i=0;i<vei->size();i++){
-      _residualVolume->computeAndMap1Group(*(*vei)[i], *solution, *residual);
+    std::vector<dgGroupOfElements *>&vei=_innerBufferGroupsOfElements[exponent].first;
+    std::vector<dgGroupOfElements *>&veo=_outerBufferGroupsOfElements[exponent].first;
+    residual->scale(vei,0.0);
+    residual->scale(veo,0.0);
+    for(int i=0;i<vei.size();i++){
+      _residualVolume->computeAndMap1Group(*vei[i], *solution, *residual);
     }
-    for(int i=0;i<veo->size();i++){
-      _residualVolume->computeAndMap1Group(*(*veo)[i], *solution, *residual);
+    for(int i=0;i<veo.size();i++){
+      _residualVolume->computeAndMap1Group(*veo[i], *solution, *residual);
     }
-    std::vector<dgGroupOfFaces *>* vfi=&_innerBufferGroupsOfElements[exponent].second;
-    std::vector<dgGroupOfFaces *>* vfo=&_outerBufferGroupsOfElements[exponent].second;
+    std::vector<dgGroupOfFaces *>& vfi=_innerBufferGroupsOfElements[exponent].second;
+    std::vector<dgGroupOfFaces *>& vfo=_outerBufferGroupsOfElements[exponent].second;
     std::set<dgGroupOfFaces *>gOFSet;
-    gOFSet.insert(vfo->begin(),vfo->end());
+    gOFSet.insert(vfo.begin(),vfo.end());
     for(std::set<dgGroupOfFaces *>::iterator it=gOFSet.begin();it!=gOFSet.end();it++){
       dgGroupOfFaces *faces=*it;
       const dgGroupOfElements *gL=&faces->getGroupLeft();
@@ -592,13 +630,14 @@ void dgRungeKuttaMultirate::computeResidual(int exponent,bool isBuffer,dgDofCont
     }
   }
   else{
-    std::vector<dgGroupOfElements *> *ve=&_bulkGroupsOfElements[exponent].first;
-    for(int i=0;i<ve->size();i++){
-      _residualVolume->computeAndMap1Group(*(*ve)[i], *solution, *residual);
+    std::vector<dgGroupOfElements *> &ve=_bulkGroupsOfElements[exponent].first;
+    residual->scale(ve,0.0);
+    for(int i=0;i<ve.size();i++){
+      _residualVolume->computeAndMap1Group(*ve[i], *solution, *residual);
     }
-    std::vector<dgGroupOfFaces *> *vf=&_bulkGroupsOfElements[exponent].second;
-    for(int i=0;i<vf->size();i++){
-      dgGroupOfFaces *faces=(*vf)[i];
+    std::vector<dgGroupOfFaces *> &vf=_bulkGroupsOfElements[exponent].second;
+    for(int i=0;i<vf.size();i++){
+      dgGroupOfFaces *faces=vf[i];
       const dgGroupOfElements *gL=&faces->getGroupLeft();
       const dgGroupOfElements *gR=&faces->getGroupRight();
       fullMatrix<double> solInterface(faces->getNbNodes(),faces->getNbElements()*2*_law->getNbFields());
@@ -615,6 +654,9 @@ void dgRungeKuttaMultirate::computeResidual(int exponent,bool isBuffer,dgDofCont
 
 double dgRungeKuttaMultirate::iterate(double dt, dgDofContainer *solution){
   _solution=solution;
+  _dt=dt;
+  _currentInput->scale(0.0);
+  _currentInput->axpy(*solution,1.0);
   computeK(0,0,false);
   computeK(1,0,false);
   computeK(2,0,false);

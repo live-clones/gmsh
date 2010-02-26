@@ -920,8 +920,9 @@ void dgGroupCollection::buildGroupsOfInterfaces() {
 
 
 // Split the groups of elements depending on their local time step
-void dgGroupCollection::splitGroupsForMultirate(double dtRef,dgConservationLaw *claw, dgDofContainer *solution){
+double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLaw *claw, dgDofContainer *solution){
   Msg::Info("Splitting Groups for multirate time stepping");
+  maxLevels--;
   int maxNumElems=getElementGroup(0)->getElement(0)->getGlobalNumber()+1;
   std::vector<int>oldGroupIds;
   oldGroupIds.resize(maxNumElems);
@@ -1040,19 +1041,19 @@ void dgGroupCollection::splitGroupsForMultirate(double dtRef,dgConservationLaw *
   dtMax=dtMax_max;
 #endif
   // dtMin is the time step for the most constrained element.
-  if(dtRef<=dtMin){
-    Msg::Info("No multirate, the reference time step is stable for all elements.");
-    return;
-  }
 
   Msg::Info("Time step for standard RK should be %e",dtMin);
   Msg::Info("Multirate base time step should be %e",dtMax);
 
-  dtRef=dtMax*0.8;
+  double dtRef=dtMax*0.8;
   // time steps are dtRef*2^(-dtExponent), with dtExponent ranging in [0:dtMaxExponent]
   int dtMaxExponent=0;
   while(dtRef/pow(2.0,(double)dtMaxExponent)>dtMin)
     dtMaxExponent++;
+  if(dtMaxExponent>maxLevels){
+    dtRef*=1.0/pow(2.0,(double)(dtMaxExponent-maxLevels));
+    dtMaxExponent=maxLevels;
+  }
   _dtMaxExponent=dtMaxExponent;
   std::vector<MElement *>currentNewGroup;
   std::vector< dgGroupOfElements* >newGroups;// indexed by newGroupId
@@ -1093,7 +1094,7 @@ void dgGroupCollection::splitGroupsForMultirate(double dtRef,dgConservationLaw *
         dgGroupOfElements *elGroup=getElementGroup(iGroup);
         for(int iElement=0;iElement<elGroup->getNbElements();iElement++){
           MElement *el=elGroup->getElement(iElement);
-          if(localDt[el->getNum()]>=currentDt && localDt[el->getNum()]<currentDt*2){
+          if(localDt[el->getNum()]>=currentDt && (localDt[el->getNum()]<currentDt*2 || currentExponent==0)){
             if(newGroupIds[el->getNum()]==-1){
               mapNewGroups[iGroup].push_back(el);
               newGroupIds[el->getNum()]=-2;
@@ -1194,6 +1195,7 @@ void dgGroupCollection::splitGroupsForMultirate(double dtRef,dgConservationLaw *
   Msg::Info("That makes a total of %d elements",count);
   _elementGroups.clear();
   _elementGroups=newGroups;
+  return dtRef;
 }
 
 
@@ -1243,7 +1245,7 @@ void dgGroupCollection::registerBindings(binding *b){
   cm->setDescription("Build the group of interfaces, i.e. boundary interfaces and inter-element interfaces");
   cm = cb->addMethod("splitGroupsForMultirate",&dgGroupCollection::splitGroupsForMultirate);
   cm->setDescription("Split the groups according to their own stable time step");
-  cm->setArgNames("refDt","claw","solution",NULL);
+  cm->setArgNames("maxLevels","claw","solution",NULL);
   cm = cb->addMethod("getNbElementGroups", &dgGroupCollection::getNbElementGroups);
   cm->setDescription("return the number of dgGroupOfElements");
   cm = cb->addMethod("getNbFaceGroups", &dgGroupCollection::getNbFaceGroups);

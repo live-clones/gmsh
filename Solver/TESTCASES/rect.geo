@@ -21,5 +21,5 @@ Physical Line("Top") = {6};
 //Recombine Surface {9, 11};
 
 Field[1] = MathEval;
-Field[1].F = "0.01*1+0.01*1.7*y";
+Field[1].F = "0.01*1+0.01*100*(y*y)";
 Background Field = 1;

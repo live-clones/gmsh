@@ -26,6 +26,7 @@ private:
   int _mshStep;
 public:
   void scale(double f);
+  void scale(std::vector<dgGroupOfElements*>groups, double f);
   double norm();
   void axpy(dgDofContainer &x, double a=1.);
   void axpy(std::vector<dgGroupOfElements*>groups,dgDofContainer &x, double a=1.);
