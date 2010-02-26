@@ -2,7 +2,7 @@
 #include "dgConservationLaw.h"
 #include "dgDofContainer.h"
 #include "dgLimiter.h"
-#include "dgAlgorithm.h"
+#include "dgResidual.h"
 #include "dgGroupOfElements.h"
 
 double dgRungeKutta::iterateEuler(const dgConservationLaw *claw, double dt, dgDofContainer *solution) {
@@ -111,6 +111,7 @@ double dgRungeKutta::diagonalRK (const dgConservationLaw *claw,
   K.axpy(*sol);
   Unp.scale(0.);
   Unp.axpy(*sol);
+  dgResidual residual(claw);
 
   for(int j=0; j<nStages;j++){
     if(j){
@@ -119,7 +120,7 @@ double dgRungeKutta::diagonalRK (const dgConservationLaw *claw,
     }
 
     if (_limiter) _limiter->apply(&K);
-    dgAlgorithm::residual(*claw,*groups,K,resd);
+    residual.compute(*groups,K,resd);
     K.scale(0.);
     for(int k=0; k < groups->getNbElementGroups(); k++) {
       dgGroupOfElements *group = groups->getElementGroup(k);
@@ -138,8 +139,6 @@ double dgRungeKutta::diagonalRK (const dgConservationLaw *claw,
   sol->axpy(Unp);
   return sol->norm();
 }
-
-
 
 double dgRungeKutta::nonDiagonalRK(const dgConservationLaw *claw,
   double dt, 
@@ -168,6 +167,7 @@ double dgRungeKutta::nonDiagonalRK(const dgConservationLaw *claw,
 
   Unp.scale(0.0);
   Unp.axpy(*solution);
+  dgResidual residual(claw);
   for(int i=0; i<nStages;i++){
     tmp.scale(0.0);
     tmp.axpy(*solution);
@@ -177,7 +177,7 @@ double dgRungeKutta::nonDiagonalRK(const dgConservationLaw *claw,
       }
     }
     if (_limiter) _limiter->apply(&tmp);
-    dgAlgorithm::residual(*claw,*groups,tmp,resd);
+    residual.compute(*groups,tmp,resd);
 
     // Multiply the spatial residual by the inverse of the mass matrix
     for(int k=0; k < groups->getNbElementGroups(); k++) {

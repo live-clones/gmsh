@@ -23,6 +23,7 @@
 #include "dgSystemOfEquations.h"
 #include "dgLimiter.h"
 #include "Bindings.h"
+#include "dgResidual.h"
 
 extern "C" {
   #include "lua.h"
@@ -340,6 +341,7 @@ binding::binding(){
   dgGroupCollection::registerBindings(this);
   dgLimiter::registerBindings(this);
   dgPerfectGasLaw2dRegisterBindings(this);
+  dgResidual::registerBindings(this);
   dgRungeKutta::registerBindings(this);
   dgSlopeLimiterRegisterBindings(this);
   dgSystemOfEquations::registerBindings(this);

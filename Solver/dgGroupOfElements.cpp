@@ -929,9 +929,15 @@ void dgGroupCollection::find (MElement*e, int &ig, int &index){
 
 #include "LuaBindings.h"
 void dgGroupCollection::registerBindings(binding *b){
-  classBinding *cb = b->addClass<dgGroupCollection>("dgGroupCollection");
-  cb->setDescription("The GroupCollection class let you access to group partitioning functions");
+  classBinding *cb;
   methodBinding *cm;
+  cb = b->addClass<dgGroupOfElements>("dgGroupOfElements");
+  cb->setDescription("a group of element sharing the same properties");
+  cb = b->addClass<dgGroupOfFaces>("dgGroupOfFaces");
+  cb->setDescription("a group of faces. All faces of this group are either interior of the same group of elements or at the boundary between two group of elements");
+
+  cb = b->addClass<dgGroupCollection>("dgGroupCollection");
+  cb->setDescription("The GroupCollection class let you access to group partitioning functions");
   cm = cb->setConstructor<dgGroupCollection,GModel*,int,int>();
   cm->setDescription("Build the group of elements, separated by element type and element order. Additional partitioning can be done using splitGroupsForXXX specific functions");
   cm->setArgNames("model","dimension","order",NULL);
@@ -940,4 +946,19 @@ void dgGroupCollection::registerBindings(binding *b){
   cm = cb->addMethod("splitGroupsForMultirate",&dgGroupCollection::splitGroupsForMultirate);
   cm->setDescription("Split the groups according to their own stable time step");
   cm->setArgNames("refDt","claw",NULL);
+  cm = cb->addMethod("getNbElementGroups", &dgGroupCollection::getNbElementGroups);
+  cm->setDescription("return the number of dgGroupOfElements");
+  cm = cb->addMethod("getNbFaceGroups", &dgGroupCollection::getNbFaceGroups);
+  cm->setDescription("return the number of dgGroupOfFaces (interior ones, not the domain boundaries)");
+  cm = cb->addMethod("getNbBoundaryGroups", &dgGroupCollection::getNbBoundaryGroups);
+  cm->setDescription("return the number of group of boundary faces");
+  cm = cb->addMethod("getElementGroup", &dgGroupCollection::getElementGroup);
+  cm->setDescription("get 1 group of elements");
+  cm->setArgNames("id", NULL);
+  cm = cb->addMethod("getFaceGroup", &dgGroupCollection::getFaceGroup);
+  cm->setDescription("get 1 group of faces");
+  cm->setArgNames("id", NULL);
+  cm = cb->addMethod("getBoundaryGroup", &dgGroupCollection::getBoundaryGroup);
+  cm->setDescription("get 1 group of boundary faces");
+  cm->setArgNames("id", NULL);
 }

@@ -7,14 +7,12 @@ class dgConservationLawMaxwell::advection : public dataCacheDouble {
   dataCacheDouble &sol, &mu_eps;
   public:
   advection(std::string mu_epsFunctionName,dataCacheMap &cacheMap):
-    dataCacheDouble(cacheMap),
+    dataCacheDouble(cacheMap,1,18),
     sol(cacheMap.get("Solution",this)), 
     mu_eps(cacheMap.get(mu_epsFunctionName,this))
   {};
   void _eval () { 
     int nQP = sol().size1();
-    if(_value.size1() != nQP)
-      _value=fullMatrix<double>(nQP,18);
     for(int i=0; i< nQP; i++) {
       double Ex = sol(i,0);
       double Ey = sol(i,1);
@@ -54,14 +52,12 @@ class dgConservationLawMaxwell::source: public dataCacheDouble {
   dataCacheDouble &xyz, &solution;
   public :
   source(dataCacheMap &cacheMap) : 
-    dataCacheDouble(cacheMap),
+    dataCacheDouble(cacheMap,1,6),
     xyz(cacheMap.get("XYZ",this)),
     solution(cacheMap.get("Solution",this))
   {}
   void _eval () {
     int nQP = xyz().size1();
-    if(_value.size1() != nQP)
-      _value = fullMatrix<double>(nQP,6);
     for (int i=0; i<nQP; i++) {
     
       _value (i,0) = 0;
@@ -79,7 +75,7 @@ class dgConservationLawMaxwell::riemann:public dataCacheDouble {
   dataCacheDouble &normals, &solL, &solR, &mu_eps;
   public:
   riemann(std::string mu_epsFunctionName,dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight):
-    dataCacheDouble(cacheMapLeft),
+    dataCacheDouble(cacheMapLeft,1,12),
     normals(cacheMapLeft.get("Normals", this)),
     solL(cacheMapLeft.get("Solution", this)),
     solR(cacheMapRight.get("Solution", this)),
@@ -87,8 +83,6 @@ class dgConservationLawMaxwell::riemann:public dataCacheDouble {
   {};
   void _eval () { 
     int nQP = solL().size1();
-    if(_value.size1() != nQP)
-      _value = fullMatrix<double>(nQP,12);
     for(int i=0; i< nQP; i++) {
 
       double nx= normals(0,i);
@@ -191,14 +185,12 @@ class dgBoundaryConditionMaxwellWall : public dgBoundaryCondition {
     dataCacheDouble &sol,&normals;    
     public:
     term(dataCacheMap &cacheMap):
-      dataCacheDouble(cacheMap),
+      dataCacheDouble(cacheMap,1,6),
       sol(cacheMap.get("Solution",this)),
       normals(cacheMap.get("Normals",this))
       {}
     void _eval () { 
       int nQP = sol().size1();
-      if(_value.size1() != nQP)
-        _value = fullMatrix<double>(nQP,6);
       for(int i=0; i< nQP; i++) {
         
       double nx= normals(0,i);
