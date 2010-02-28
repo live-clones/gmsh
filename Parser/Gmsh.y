@@ -2289,6 +2289,8 @@ Command :
       }
       else if(!strcmp($1, "System"))
 	SystemCall($2);
+      else if(!strcmp($1, "SetName"))
+	GModel::current()->setName($2);
       else
 	yymsg(0, "Unknown command '%s'", $1);
       Free($1); Free($2);

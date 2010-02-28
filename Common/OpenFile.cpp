@@ -18,9 +18,7 @@
 #include "StringUtils.h"
 #include "GeomMeshMatcher.h"
 #include "LuaBindings.h"
-#if defined(HAVE_FLTK)
-#include "menuWindow.h"
-#endif 
+
 #if defined(HAVE_PARSER)
 #include "Parser.h"
 #endif
@@ -37,6 +35,7 @@
 #if defined(HAVE_FLTK)
 #include <FL/fl_ask.H>
 #include "FlGui.h"
+#include "menuWindow.h"
 #include "drawContext.h"
 #endif
 

@@ -402,6 +402,7 @@ static void file_rename_cb(Fl_Widget *w, void *data)
     }
     rename(GModel::current()->getFileName().c_str(), name.c_str());
     GModel::current()->setFileName(name);
+    GModel::current()->setName(SplitFileName(name)[1]);
     FlGui::instance()->setGraphicTitle(GModel::current()->getFileName());
     drawContext::global()->draw();
   }

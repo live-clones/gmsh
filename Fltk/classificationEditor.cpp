@@ -240,7 +240,8 @@ static GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
   std::map<std::pair<int, int>, GEdge*>::iterator it = 
     newEdges.find(std::make_pair<int, int>(i1, i2));
   if(it == newEdges.end()){
-    discreteEdge *temporary = new discreteEdge(GModel::current(), GModel::current()->maxEdgeNum() + 1, 0, 0);
+    discreteEdge *temporary = new discreteEdge
+      (GModel::current(), GModel::current()->maxEdgeNum() + 1, 0, 0);
     //printf("add new edge gf1=%d gf2=%d \n", t1, t2);
     GModel::current()->add(temporary);
     newEdges[std::make_pair<int, int>(i1, i2)] = temporary;
@@ -320,7 +321,8 @@ static void class_color_cb(Fl_Widget* w, void* data)
     std::list<MTri3*> ::iterator it = tris.begin();
     while(it != tris.end()){
       if(!(*it)->isDeleted()){
-        discreteFace *temporary = new discreteFace(GModel::current(), GModel::current()->maxFaceNum() + 1);
+        discreteFace *temporary = new discreteFace
+          (GModel::current(), GModel::current()->maxFaceNum() + 1);
         recurClassify(*it, temporary, lines, reverse);
         GModel::current()->add(temporary);
       }
@@ -401,19 +403,19 @@ static void class_color_cb(Fl_Widget* w, void* data)
           vE = temp;
           //printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
         }
-        GEdge *newGe = new discreteEdge(GModel::current(), GModel::current()->maxEdgeNum() + 1, 0, 0);
+        GEdge *newGe = new discreteEdge
+          (GModel::current(), GModel::current()->maxEdgeNum() + 1, 0, 0);
         newGe->lines.insert(newGe->lines.end(), myLines.begin(), myLines.end());
         GModel::current()->add(newGe);
       }//end for each actual GEdge
     }
     //printf("end new edge with tag \n");
 
-    for (std::map<std::pair<int, int>, GEdge*>::iterator it = newEdges.begin() ; it != newEdges.end() ; ++it){
+    for (std::map<std::pair<int, int>, GEdge*>::iterator it = newEdges.begin();
+         it != newEdges.end(); ++it){
       GEdge *ge = it->second;
       GModel::current()->remove(ge);
     }
-
-
 
     while(it != tris.end()){
       delete *it;

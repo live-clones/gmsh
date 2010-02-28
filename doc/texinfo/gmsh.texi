@@ -1940,6 +1940,9 @@ Suspends the execution of Gmsh during @var{expression} seconds.
 @item System @var{char-expression};
 Executes a system call.
 
+@item SetName @var{char-expression};
+Changes the name of the current model.
+
 @item SyncModel;
 Forces an immediate transfer from the old geometrical database into the
 new one (this transfer normally occurs right after a file is read).
@@ -3973,7 +3976,7 @@ Prism:                      Prism15:               Prism18:
     |    ,/|`\    |         |      |      |        |    ,/|`\    | 
     |  ,/  |  `\  |         |      |      |        |  15  |  16  | 
     |,/    |    `\|         |      |      |        |,/    |    `\| 
-   ,|      |      `\        10     |      11       10-----17-----11
+   ,|      |      |\        10     |      11       10-----17-----11
  ,/ |      0      | `\      |      0      |        |      0      | 
 u   |    ,/ `\    |    v    |    ,/ `\    |        |    ,/ `\    | 
     |  ,/     `\  |         |  ,6     `7  |        |  ,6     `7  | 
