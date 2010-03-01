@@ -23,7 +23,7 @@ CellComplex::CellComplex( std::vector<GEntity*> domain,
   
   _multidim = false;
   int dim = 0;
-  for(int i = 0; i < domain.size(); i++){
+  for(unsigned int i = 0; i < domain.size(); i++){
     GEntity* entity = domain.at(i);
     if(i == 0) dim = entity->dim();
     if(dim != entity->dim()){
@@ -258,7 +258,7 @@ CellComplex::~CellComplex()
     _ocells[i].clear();
     
   }
-  for(int i = 0; i < _newcells.size(); i++) delete _newcells.at(i);
+  for(unsigned int i = 0; i < _newcells.size(); i++) delete _newcells.at(i);
   _newcells.clear();
 }
 

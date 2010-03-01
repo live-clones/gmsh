@@ -491,7 +491,7 @@ bool Chain::deform(std::map<Cell*, int, Less_Cell>& cellsInChain,
   
   if(cc.empty() || (getDim() == 2 && cc.size() < 2) ) return false;
   int inout = cc[0]*bc[0];
-  for(int i = 0; i < cc.size(); i++){
+  for(unsigned int i = 0; i < cc.size(); i++){
     if(cc[i]*bc[i] != inout) return false;  
   }
   

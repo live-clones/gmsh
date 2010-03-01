@@ -221,45 +221,43 @@ int RenumberMeshElements( std::vector<MElement*> &elements, meshPartitionOptions
 
 int RenumberMesh(GModel *const model, meshPartitionOptions &options)  
 {
-  
   for (GModel::fiter it = model->firstFace() ; it != model->lastFace() ; ++it){
     std::vector<MElement *> temp;
 
-    temp.insert(temp.begin(),(*it)->triangles.begin(),(*it)->triangles.end());
-    RenumberMeshElements (temp,options);
+    temp.insert(temp.begin(), (*it)->triangles.begin(), (*it)->triangles.end());
+    RenumberMeshElements(temp, options);
     (*it)->triangles.clear();
-    for (int i=0;i<temp.size();i++) (*it)->triangles.push_back((MTriangle*)temp[i]);
-    
+    for(unsigned int i = 0; i <temp.size(); i++)
+      (*it)->triangles.push_back((MTriangle*)temp[i]);
     temp.clear();
 
     temp.insert(temp.begin(),(*it)->quadrangles.begin(),(*it)->quadrangles.end());
     RenumberMeshElements (temp,options);
     (*it)->quadrangles.clear();
-    for (int i=0;i<temp.size();i++) (*it)->quadrangles.push_back((MQuadrangle*)temp[i]);
+    for(unsigned int i = 0; i < temp.size(); i++)
+      (*it)->quadrangles.push_back((MQuadrangle*)temp[i]);
   }
   for (GModel::riter it = model->firstRegion() ; it != model->lastRegion() ; ++it){
     std::vector<MElement *> temp;
 
-    temp.insert(temp.begin(),(*it)->tetrahedra.begin(),(*it)->tetrahedra.end());
-    RenumberMeshElements (temp,options);
+    temp.insert(temp.begin(), (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
+    RenumberMeshElements(temp, options);
     (*it)->tetrahedra.clear();
-    for (int i=0;i<temp.size();i++) (*it)->tetrahedra.push_back((MTetrahedron*)temp[i]);
-
+    for (int i = 0; i < temp.size(); i++) 
+      (*it)->tetrahedra.push_back((MTetrahedron*)temp[i]);
     temp.clear();
 
     temp.insert(temp.begin(),(*it)->hexahedra.begin(),(*it)->hexahedra.end());
     RenumberMeshElements (temp,options);
     (*it)->hexahedra.clear();
-    for (int i=0;i<temp.size();i++) (*it)->hexahedra.push_back((MHexahedron*)temp[i]);
+    for (unsigned int i = 0; i < temp.size(); i++) 
+      (*it)->hexahedra.push_back((MHexahedron*)temp[i]);
   }
   return 1;
 }
 
-
-
 int PartitionMesh(GModel *const model, meshPartitionOptions &options)
 {
-
   Graph graph;
   BoElemGrVec boElemGrVec;
   int ier;

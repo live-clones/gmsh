@@ -91,7 +91,7 @@ Homology::Homology(GModel* model, std::vector<int> physicalDomain,
 Homology::~Homology(){ 
   delete _cellComplex; 
     for(int i = 0; i < 4; i++) {
-      for(int j = 0; j < _generators[i].size(); j++){
+      for(unsigned int j = 0; j < _generators[i].size(); j++){
         Chain* chain = _generators[i].at(j);
         //_model->deletePhysicalGroup(chain->getDim(), chain->getNum());
         delete chain;
@@ -368,7 +368,7 @@ std::string Homology::getDomainString()
 void Homology::createPViews()
 {
   for(int i = 0; i < 4; i++){
-    for(int j = 0; j < _generators[i].size(); j++){
+    for(unsigned int j = 0; j < _generators[i].size(); j++){
       Chain* chain = _generators[i].at(j);
       chain->createPView();
     }

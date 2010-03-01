@@ -71,8 +71,8 @@ static void connectedRegions (std::vector<MElement*> &elements,
 			      std::vector<std::vector<MElement*> > &regions)
 {
   std::multimap<MEdge,MElement*,Less_Edge> e2e;
-  for (int i=0;i<elements.size();++i){
-    for (int j=0;j<elements[i]->getNumEdges();j++){
+  for (unsigned int i = 0; i < elements.size(); ++i){
+    for (int j = 0; j < elements[i]->getNumEdges(); j++){
       e2e.insert(std::make_pair(elements[i]->getEdge(j),elements[i]));
     }
   }
@@ -162,7 +162,7 @@ static int getAspectRatio(std::vector<MElement *> &elements,
     tot_length += iLength;
   }
   int AR = 1.0;
-  if (boundaries.size() > 0 ){
+  if (boundaries.size() > 0){
     tot_length /= boundaries.size();
     AR = (int) ceil(2*3.14*area3D/(tot_length*tot_length));
   }
@@ -238,7 +238,7 @@ static void partitionRegions(std::vector<MElement*> &elements,
     std::vector<std::vector<MElement*> >  conRegions;
     conRegions.clear();
     connectedRegions (regions[k], conRegions);
-    for (int j=0; j< conRegions.size() ; j++)  
+    for (unsigned int j = 0; j < conRegions.size(); j++)  
       allRegions.push_back(conRegions[j]); 
   }
   regions.clear();
@@ -254,8 +254,8 @@ static void printLevel(std::vector<MElement *> &elements, int recur, int region)
   double version = 2.0;
 
   std::set<MVertex*> vs;
-  for (int i=0;i<elements.size();i++){
-    for (int j=0;j<elements[i]->getNumVertices();j++){
+  for (unsigned int i = 0; i < elements.size(); i++){
+    for (int j = 0; j < elements[i]->getNumVertices(); j++){
       vs.insert(elements[i]->getVertex(j));
     }
   }
@@ -277,15 +277,16 @@ static void printLevel(std::vector<MElement *> &elements, int recur, int region)
   fprintf(fp,"$EndNodes\n",elements.size());
   
   fprintf(fp,"$Elements\n%d\n", (int)elements.size());
-  for (int i=0;i<elements.size();i++){
-    elements[i]->writeMSH(fp,version);
+  for (unsigned int i = 0; i < elements.size(); i++){
+    elements[i]->writeMSH(fp, version);
   }
   fprintf(fp,"$EndElements\n%d\n", (int)elements.size());
   
   fclose(fp);
 }
 
-multiscalePartition::multiscalePartition(std::vector<MElement *> &elements, int nbParts, typeOfPartition method)
+multiscalePartition::multiscalePartition(std::vector<MElement *> &elements,
+                                         int nbParts, typeOfPartition method)
 {
   options = CTX::instance()->partitionOptions;
   options.num_partitions = nbParts;
@@ -315,7 +316,8 @@ void multiscalePartition::setNumberOfPartitions(int &nbParts)
    }
 }
 
-void multiscalePartition::partition(partitionLevel & level, int nbParts, typeOfPartition method)
+void multiscalePartition::partition(partitionLevel & level, int nbParts,
+                                    typeOfPartition method)
 {
 #if defined(HAVE_METIS) || defined(HAVE_CHACO)
 
