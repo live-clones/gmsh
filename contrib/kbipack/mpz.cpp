@@ -104,29 +104,29 @@ void mpz_neg(mpz_ptr rop, mpz_ptr op)
 // division 
 void mpz_divexact(mpz_ptr q, mpz_ptr n, mpz_ptr d)
 {
-  div_t temp;
-  temp = div(n->z, d->z);
+  ldiv_t temp;
+  temp = ldiv(n->z, d->z);
   q->z = temp.quot;
 }
 
 void mpz_cdiv_q(mpz_ptr q, mpz_ptr n, mpz_ptr d)
 {
-  div_t temp;
-  temp = div(n->z, d->z);
+  ldiv_t temp;
+  temp = ldiv(n->z, d->z);
   q->z = temp.quot;
 }
 void mpz_cdiv_qr(mpz_ptr q, mpz_ptr r, mpz_ptr n, mpz_ptr d)
 {
-  div_t temp;
-  temp = div(n->z, d->z);
+  ldiv_t temp;
+  temp = ldiv(n->z, d->z);
   q->z = temp.quot;
   r->z = temp.rem;
 }
 
 void mpz_tdiv_r(mpz_ptr r, mpz_ptr n, mpz_ptr d)
 {
-  div_t temp;
-  temp = div(n->z, d->z);
+  ldiv_t temp;
+  temp = ldiv(n->z, d->z);
   if(n->z < 0) r->z = -temp.rem;
   else r->z = temp.rem;
 }
@@ -183,7 +183,7 @@ void extended_gcd(long int* g, long int* s, long int* t,
   long int y = 1;    
   long int lasty = 0;
   while (b != 0){
-    div_t divt = div(a,b);
+    ldiv_t divt = ldiv(a,b);
     long int quotient = divt.quot;
         
     long int temp = b;
