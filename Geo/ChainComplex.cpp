@@ -390,8 +390,8 @@ void ChainComplex::computeHomology(bool dual)
 
 void ChainComplex::matrixTest()
 {  
-  int rows = 3;
-  int cols = 6;
+  const int rows = 3;
+  const int cols = 6;
   
   long int elems[rows*cols];
   for(int i = 1; i<=rows*cols; i++) elems[i-1] = i;
