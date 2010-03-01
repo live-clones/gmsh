@@ -123,19 +123,45 @@ public:
   friend class dgGroupCollection;
 };
 
+class dgGroupOfFaces;
+
+class dgGroupOfConnections {
+  std::vector<std::vector<int> > _closures; 
+  std::vector<int> _closuresId; 
+  // face integration point in the coordinate of the left and right element (one fullMatrix per closure)
+  std::vector<fullMatrix<double> > _integrationPoints;
+  // XYZ gradient of the shape functions of both elements on the integrations points of the face
+  // (iQP*3+iXYZ , iFace*NPsi+iPsi)
+  fullMatrix<double> _dPsiDxOnQP;
+  const polynomialBasis *_fs;
+  const dgGroupOfElements &_elementGroup;
+  const dgGroupOfFaces &_faceGroup;
+  std::vector<int>_elementId;
+  // normals at integration points  (N*Ni) x 3
+  fullMatrix<double> _normals;
+  public:
+  void addElement(int iElement, int iClosure);
+  dgGroupOfConnections(const dgGroupOfElements &elementGroup, const dgGroupOfFaces &face, int pOrder);
+  inline const polynomialBasis *getFunctionSpace() {return _fs;}
+  inline const dgGroupOfElements &getGroupOfElements() {return _elementGroup;}
+  inline int getElementId(int i) {return _elementId[i];}
+  inline MElement *getElement(int i) {return _elementGroup.getElement(_elementId[i]);}
+  inline const std::vector<int>& getClosure(int i) {return _closures[_closuresId[i]];}
+  inline fullMatrix<double>& getIntegrationPointsOnElement(int i) {return _integrationPoints[_closuresId[i]];}
+  inline fullMatrix<double>& getDPsiDxOnQP() {return _dPsiDxOnQP;}
+  inline fullMatrix<double>& getNormals() {return _normals;}
+  void init();
+};
+
 class dgGroupOfFaces {
+  std::vector<dgGroupOfConnections*> _connections;
   // normals always point outside left to right
   // only used if this is a group of boundary faces
   std::string _boundaryTag;
-  const dgGroupOfElements &_groupLeft,&_groupRight;
-  void addFace(const MFace &topoFace, int iElLeft, int iElRight);
-  void addEdge(const MEdge &topoEdge, int iElLeft, int iElRight);
-  void addVertex(MVertex *topoVertex, int iElLeft, int iElRight);
   // Two polynomialBases for left and right elements
   // the group has always the same types for left and right
-  const polynomialBasis *_fsLeft,*_fsRight, *_fsFace;
+  const polynomialBasis *_fsFace;
   // N elements in the group
-  std::vector<int>_left, _right;
   std::vector<MElement *>_faces;
   // Ni integration points, matrix of size Ni x 3 (u,v,weight)
   fullMatrix<double> *_integration;
@@ -144,19 +170,6 @@ class dgGroupOfFaces {
   // is characterized by a single integer which is the combination
   // this closure is for the interpolation that MAY BE DIFFERENT THAN THE
   // GEOMETRICAL CLOSURE !!!
-  std::vector<std::vector<int> > _closuresLeft; 
-  std::vector<std::vector<int> > _closuresRight; 
-  std::vector<int> _closuresIdLeft; 
-  std::vector<int> _closuresIdRight; 
-  // face integration point in the coordinate of the left and right element (one fullMatrix per closure)
-  std::vector<fullMatrix<double> > _integrationPointsLeft;
-  std::vector<fullMatrix<double> > _integrationPointsRight;
-  // XYZ gradient of the shape functions of both elements on the integrations points of the face
-  // (iQP*3+iXYZ , iFace*NPsi+iPsi)
-  fullMatrix<double> *_dPsiLeftDxOnQP;
-  fullMatrix<double> *_dPsiRightDxOnQP;
-  // normals at integration points  (N*Ni) x 3
-  fullMatrix<double> *_normals;
   // detJac at integration points (N*Ni) x 1
   fullMatrix<double> *_detJac;
   // collocation matrices \psi_i (GP_j) 
@@ -169,21 +182,6 @@ class dgGroupOfFaces {
   //common part of the 3 constructors
   void init(int pOrder);
 public:
-  inline const dgGroupOfElements &getGroupLeft()const {return _groupLeft; }
-  inline const dgGroupOfElements &getGroupRight()const {return _groupRight; }
-  inline int getElementLeftId (int i) const {return _left[i];};
-  inline int getElementRightId (int i) const {return _right[i];};
-  inline MElement* getElementLeft (int i) const {return _groupLeft.getElement(_left[i]);}  
-  inline MElement* getElementRight (int i) const {return _groupRight.getElement(_right[i]);}  
-  inline double getElementVolumeLeft(int iFace) const {return _groupLeft.getElementVolume(_left[iFace]);}
-  inline double getElementVolumeRight(int iFace) const {return _groupRight.getElementVolume(_right[iFace]);}
-  inline MElement* getFace (int iElement) const {return _faces[iElement];}  
-  inline const std::vector<int> &getClosureLeft(int iFace) const{ return _closuresLeft[_closuresIdLeft[iFace]]; }
-  inline const std::vector<int> &getClosureRight(int iFace) const{ return _closuresRight[_closuresIdRight[iFace]];}
-  inline fullMatrix<double> &getIntegrationOnElementLeft(int iFace) { return _integrationPointsLeft[_closuresIdLeft[iFace]];}
-  inline fullMatrix<double> &getIntegrationOnElementRight(int iFace) { return _integrationPointsRight[_closuresIdRight[iFace]];}
-  
-  inline fullMatrix<double> &getNormals () const {return *_normals;}
   dgGroupOfFaces (const dgGroupOfElements &elements,int pOrder, int numVertices = -1);
   dgGroupOfFaces (const dgGroupOfElements &a, const dgGroupOfElements &b,int pOrder, int numVertices = -1);
   dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MVertex*> &boundaryVertices);
@@ -192,8 +190,6 @@ public:
   virtual ~dgGroupOfFaces ();
   inline bool isBoundary() const {return !_boundaryTag.empty();}
   inline const std::string getBoundaryTag() const {return _boundaryTag;}
-  inline fullMatrix<double> & getDPsiLeftDxMatrix() const { return *_dPsiLeftDxOnQP;}
-  inline fullMatrix<double> & getDPsiRightDxMatrix() const { return *_dPsiRightDxOnQP;}
   //this part is common with dgGroupOfElements, we should try polymorphism
   inline int getNbElements() const {return _faces.size();}
   inline int getNbNodes() const {return _collocation->size2();}
@@ -203,12 +199,34 @@ public:
   inline const fullMatrix<double> & getRedistributionMatrix () const {return *_redistribution;}
   inline double getDetJ (int iElement, int iGaussPoint) const {return (*_detJac)(iGaussPoint,iElement);}
   inline double getInterfaceSurface (int iFace)const {return (*_interfaceSurface)(iFace,0);}
+  const polynomialBasis * getPolynomialBasis() const {return _fsFace;}
+  inline MElement* getFace (int iElement) const {return _faces[iElement];}  
+  // duplicate
+private:
+  void addFace(const MFace &topoFace, int iElLeft, int iElRight);
+  void addEdge(const MEdge &topoEdge, int iElLeft, int iElRight);
+  void addVertex(MVertex *topoVertex, int iElLeft, int iElRight);
+public:
   //keep this outside the Algorithm because this is the only place where data overlap
+  inline fullMatrix<double> &getNormals () const {return _connections[0]->getNormals();}
   void mapToInterface(int nFields, const fullMatrix<double> &vLeft, const fullMatrix<double> &vRight, fullMatrix<double> &v);
   void mapFromInterface(int nFields, const fullMatrix<double> &v, fullMatrix<double> &vLeft, fullMatrix<double> &vRight);
   void mapLeftFromInterface(int nFields, const fullMatrix<double> &v, fullMatrix<double> &vLeft);
   void mapRightFromInterface(int nFields, const fullMatrix<double> &v, fullMatrix<double> &vRight);
-  const polynomialBasis * getPolynomialBasis() const {return _fsFace;}
+  inline fullMatrix<double> & getDPsiLeftDxMatrix() const { return _connections[0]->getDPsiDxOnQP();}
+  inline fullMatrix<double> & getDPsiRightDxMatrix() const { return _connections[1]->getDPsiDxOnQP();}
+  inline const dgGroupOfElements &getGroupLeft()const {return _connections[0]->getGroupOfElements(); }
+  inline const dgGroupOfElements &getGroupRight()const {return _connections[1]->getGroupOfElements(); }
+  inline int getElementLeftId (int i) const {return _connections[0]->getElementId(i);}
+  inline int getElementRightId (int i) const {return _connections[1]->getElementId(i);}
+  inline MElement* getElementLeft (int i) const {return _connections[0]->getElement(i);}  
+  inline MElement* getElementRight (int i) const {return _connections[1]->getElement(i);}  
+  inline double getElementVolumeLeft(int iFace) const {return _connections[0]->getGroupOfElements().getElementVolume(getElementLeftId(iFace));}
+  inline double getElementVolumeRight(int iFace) const {return _connections[1]->getGroupOfElements().getElementVolume(getElementRightId(iFace));}
+  inline const std::vector<int> &getClosureLeft(int iFace) const{ return _connections[0]->getClosure(iFace);}
+  inline const std::vector<int> &getClosureRight(int iFace) const{ return _connections[1]->getClosure(iFace);}
+  inline fullMatrix<double> &getIntegrationOnElementLeft(int iFace) { return _connections[0]->getIntegrationPointsOnElement(iFace);}
+  inline fullMatrix<double> &getIntegrationOnElementRight(int iFace) { return _connections[1]->getIntegrationPointsOnElement(iFace);}
 };
 
 class dgGroupCollection {
