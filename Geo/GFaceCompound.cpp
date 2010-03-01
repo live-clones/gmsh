@@ -360,7 +360,7 @@ bool GFaceCompound::checkFolding(std::vector<MVertex*> &ordered) const
     SPoint3 p1 = coordinates[ordered[i]];
     SPoint3 p2 = coordinates[ordered[i+1]];
     int maxSize = (i==0) ? ordered.size()-2: ordered.size()-1;
-    for(unsigned int k = i+2; k < maxSize; ++k){
+    for(int k = i+2; k < maxSize; ++k){
       SPoint3 q1 = coordinates[ordered[k]];
       SPoint3 q2 = coordinates[ordered[k]];
       double x[2];
@@ -442,8 +442,8 @@ void GFaceCompound::one2OneMap() const
     SPoint2 p=getCoordinates(v);
     std::vector<MElement*> vTri = it->second;
     std::map<MVertex*,SPoint2> vCoord;
-    for (int j=0; j < vTri.size(); j++){
-      for (int k= 0; k < vTri[j]->getNumVertices(); k++){
+    for (unsigned int j = 0; j < vTri.size(); j++){
+      for (int k = 0; k < vTri[j]->getNumVertices(); k++){
 	MVertex *vk = vTri[j]->getVertex(k);
 	vCoord[vk] =  getCoordinates(vk);
       }

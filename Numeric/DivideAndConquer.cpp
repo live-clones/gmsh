@@ -477,7 +477,6 @@ void DocRecord::ConvexHull()
   }
 }
 
-
 PointNumero *DocRecord::ConvertDlistToArray(DListPeek *dlist, int *n)
 {
   DListPeek p, temp;
@@ -524,11 +523,10 @@ void DocRecord::ConvertDListToVoronoiData()
   for(PointNumero i = 0; i < numPoints; i++) 
     _adjacencies[i].t = ConvertDlistToArray(&points[i].adjacent,
 					    &_adjacencies[i].t_length);    
-
 }
 
-void DocRecord::voronoiCell (PointNumero pt, std::vector<SPoint2> &pts) const {
-
+void DocRecord::voronoiCell(PointNumero pt, std::vector<SPoint2> &pts) const
+{
   if (!_adjacencies){
     printf("no adjacencies were created\n");
     throw;
@@ -566,7 +564,8 @@ void DocRecord::voronoiCell (PointNumero pt, std::vector<SPoint2> &pts) const {
 
 */
 
-void DocRecord::makePosView(std::string fileName) {
+void DocRecord::makePosView(std::string fileName)
+{
   FILE *f = fopen(fileName.c_str(),"w");
    if (_adjacencies){
     fprintf(f,"View \"voronoi\" {\n");
@@ -576,7 +575,7 @@ void DocRecord::makePosView(std::string fileName) {
       if (!onHull(i)){
 	fprintf(f,"SP(%g,%g,%g)  {%g};\n",pc[0],pc[1],0.0,(double)i);
 	voronoiCell (i,pts);
-	for (int j=0;j<pts.size();j++){
+	for (unsigned int j = 0; j < pts.size(); j++){
 	  fprintf(f,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
 		  pts[j].x(),pts[j].y(),0.0,
 		  pts[(j+1)%pts.size()].x(),pts[(j+1)%pts.size()].y(),0.0,
@@ -592,11 +591,9 @@ void DocRecord::makePosView(std::string fileName) {
   fclose(f);
 }
 
-void centroidOfOrientedBox(std::vector<SPoint2> &pts,
-			   const double &angle,
-			   double &xc, 
-			   double &yc, 
-			   double &inertia) {  
+void centroidOfOrientedBox(std::vector<SPoint2> &pts, const double &angle,
+			   double &xc, double &yc, double &inertia)
+{
   const int N = pts.size();
   
   double sina = sin(angle);
@@ -619,25 +616,23 @@ void centroidOfOrientedBox(std::vector<SPoint2> &pts,
   inertia = std::max(xmax-xmin,ymax-ymin);
 }
 
-void centroidOfPolygon(SPoint2 &pc,
-		       std::vector<SPoint2> &pts,
-		       double &xc, 
-		       double &yc,
-		       double &inertia) {
+void centroidOfPolygon(SPoint2 &pc, std::vector<SPoint2> &pts,
+		       double &xc, double &yc, double &inertia)
+{
   double area_tot = 0;
   SPoint2 center(0,0);
-  for (int j=0;j<pts.size();j++){
-    SPoint2 &pa =pts[j];
-    SPoint2 &pb =pts[(j+1)%pts.size()];
+  for (unsigned int j = 0; j < pts.size(); j++){
+    SPoint2 &pa = pts[j];
+    SPoint2 &pb = pts[(j+1)%pts.size()];
     const double area  = triangle_area2d(pa,pb,pc);     
     area_tot += area;
     center += ((pa+pb+pc) * (area/3.0));
   }
   SPoint2 x = center * (1.0/area_tot);
   inertia = 0;
-  for (int j=0;j<pts.size();j++){
-    SPoint2 &pa =pts[j];
-    SPoint2 &pb =pts[(j+1)%pts.size()];
+  for (unsigned int j = 0; j < pts.size(); j++){
+    SPoint2 &pa = pts[j];
+    SPoint2 &pb = pts[(j+1)%pts.size()];
     const double area  = triangle_area2d(pa,pb,pc);     
     
     const double b = sqrt (  (pa.x()-pb.x())*(pa.x()-pb.x()) + 
@@ -656,7 +651,8 @@ void centroidOfPolygon(SPoint2 &pc,
   yc = x.y();
 }
 
-double  DocRecord::Lloyd(int type) {
+double  DocRecord::Lloyd(int type)
+{
   fullMatrix<double> cgs(numPoints,2);
   double inertia_tot;
   for(PointNumero i = 0; i < numPoints; i++) {
@@ -754,7 +750,8 @@ void DocRecord::RemoveAllDList()
 }
 
 DocRecord::DocRecord(int n) 
-  : numPoints(n), points(NULL), numTriangles(0), triangles(NULL), _hullSize(0), _hull(NULL),_adjacencies(NULL)
+  : numPoints(n), points(NULL), numTriangles(0), triangles(NULL), 
+    _hullSize(0), _hull(NULL), _adjacencies(NULL)
 {
   if(numPoints)
     points = new PointRecord[numPoints];
@@ -796,7 +793,6 @@ void DocRecord::setPoints(fullMatrix<double> *p){
   }
 } 
 
-
 #include "Bindings.h"
 
 void DocRecord::registerBindings(binding *b)
@@ -824,5 +820,3 @@ void DocRecord::registerBindings(binding *b)
   cm->setDescription ("A Triangulator");
   cm->setArgNames("NumPoints",NULL);
 }
-
-
