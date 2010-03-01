@@ -13,9 +13,9 @@ void lloydAlgorithm::operator () ( GFace * gf) {
   std::set<MVertex*> all;
   // get all the points of the face ...
 
-  for (int i=0;i<gf->getNumMeshElements();i++){
+  for (unsigned int i = 0; i < gf->getNumMeshElements(); i++){
     MElement *e = gf->getMeshElement(i);
-    for (int j=0;j<e->getNumVertices();j++){
+    for (int j = 0;j<e->getNumVertices(); j++){
       all.insert(e->getVertex(j));
     }
   }
