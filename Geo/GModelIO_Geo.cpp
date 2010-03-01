@@ -170,7 +170,7 @@ int GModel::importGEOInternals()
         }
         std::list<GEdge*> b[4];
         for(int j = 0; j < 4; j++){
-          for(int k = 0; k < s->compoundBoundary[j].size(); k++){
+          for(unsigned int k = 0; k < s->compoundBoundary[j].size(); k++){
             GEdge *ge = getEdgeByTag(s->compoundBoundary[j][k]);
             if(ge) b[j].push_back(ge);
           }

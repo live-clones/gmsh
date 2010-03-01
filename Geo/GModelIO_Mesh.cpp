@@ -890,7 +890,7 @@ int GModel::writeDistanceMSH(const std::string &name, double version, bool binar
 	  SPoint3 p3 (v3->x(),v3->y(),v3->z());
 	  signedDistancesPointsTriangle(iDistances, iClosePts, pts, p1,p2,p3);
 	}
-	for (int kk = 0; kk< pts.size(); kk++) {
+	for (unsigned int kk = 0; kk< pts.size(); kk++) {
 	  if (std::abs(iDistances[kk]) < distances[kk] ) 
 	    distances[kk] = std::abs(iDistances[kk]);
 	}
@@ -1026,7 +1026,7 @@ int GModel::writeDistanceMSH(const std::string &name, double version, bool binar
 	  dist.push_back(*(it->second));
 	}
 	fprintf(f3,"){");
-	for (int i=0; i<dist.size(); i++){
+	for (unsigned int i = 0; i < dist.size(); i++){
 	  if (i) fprintf(f3,",%g", dist[i]);
 	  else fprintf(f3,"%g", dist[i]);
 	}   
@@ -1056,7 +1056,7 @@ int GModel::writeDistanceMSH(const std::string &name, double version, bool binar
 	  dist.push_back(it->second);
 	}
 	fprintf(f4,"){");
-	for (int i=0; i<dist.size(); i++){
+	for (unsigned int i = 0; i < dist.size(); i++){
 	  if (i) fprintf(f4,",%g", dist[i]);
 	  else fprintf(f4,"%g", dist[i]);
 	}   

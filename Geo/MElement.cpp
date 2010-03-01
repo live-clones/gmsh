@@ -429,7 +429,7 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
     int blob[60] = {type, 1, numTags, num ? num : _num, abs(physical), elementary, 
                     1 + numGhosts, _partition};
     if(ghosts)
-      for(unsigned int i = 0; i < numGhosts; i++) blob[8 + i] = -(*ghosts)[i];
+      for(int i = 0; i < numGhosts; i++) blob[8 + i] = -(*ghosts)[i];
     fwrite(blob, sizeof(int), 4 + numTags, fp);
   }
 
