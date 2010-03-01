@@ -14,6 +14,7 @@ struct IntPt{
 int GaussLegendreTri(int n1, int n2, IntPt *pts);
 int GaussLegendreTet(int n1, int n2, int n3, IntPt *pts); 
 int GaussLegendreHex(int n1, int n2, int n3, IntPt *pts);
+int GaussLegendrePri(int n1, int n2, int n3, IntPt *pts); 
 
 int getNGQLPts (int order);
 IntPt *getGQLPts (int order);
@@ -26,6 +27,9 @@ IntPt *getGQQPts(int order);
 
 int getNGQTetPts(int order);
 IntPt *getGQTetPts(int order);
+
+int getNGQPriPts(int order);
+IntPt *getGQPriPts(int order);
 
 int getNGQHPts(int order);
 IntPt *getGQHPts(int order);

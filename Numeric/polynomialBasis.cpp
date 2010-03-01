@@ -233,6 +233,32 @@ static fullMatrix<double> generatePascalTetrahedron(int order)
   return monomials;
 }  
 
+// generate Pascal prism
+
+static fullMatrix<double> generatePascalPrism(int order)
+{
+  int nbMonomials = (order + 1) * (order + 1) * (order + 2) / 2;
+
+  fullMatrix<double> monomials(nbMonomials, 3);
+
+  int index = 0;
+  fullMatrix<double> lineMonoms = generate1DMonomials(order);
+  fullMatrix<double> triMonoms = generatePascalTriangle(order);
+//   printf("nb: %d nT: %d %d nL: %d %d\n",nbMonomials,triMonoms.size1(),(order+1)*(order+2)/2,lineMonoms.size1(),order+1);
+  for (int j = 0; j < lineMonoms.size1(); j++) {
+    for (int i = 0; i < triMonoms.size1(); i++) {
+      monomials(index,0) = triMonoms(i,0);
+      monomials(index,1) = triMonoms(i,1);
+      monomials(index,2) = lineMonoms(j,0);
+      index ++;
+//       printf("%d: %f %f %f\n",index,triMonoms(i,0),triMonoms(i,1),lineMonoms(j,0));
+    }
+  }
+//   monomials.print();
+  return monomials;
+}  
+
+
 static int nbdoftriangle(int order) { return (order + 1) * (order + 2) / 2; }
 //static int nbdoftriangleserendip(int order) { return 3 * order; }
 
@@ -597,6 +623,31 @@ static fullMatrix<double> gmshGeneratePointsTriangle(int order, bool serendip)
   return point;  
 }
 
+static fullMatrix<double> gmshGeneratePointsPrism(int order, bool serendip) 
+{
+  int nbPoints = (order + 1)*(order + 1)*(order + 2)/2; 
+  fullMatrix<double> point(nbPoints, 3);
+  
+  double overOrder = (order == 0 ? 1. : 1. / order);
+  int index = 0;
+  fullMatrix<double> triPoints = gmshGeneratePointsTriangle(order,false);
+  fullMatrix<double> linePoints = generate1DPoints(order);
+//   printf("nb: %d nT: %d %d nL: %d %d\n",nbPoints,triPoints.size1(),(order+1)*(order+2)/2,linePoints.size1(),order+1);
+  for (int j = 0; j < linePoints.size1(); j++) {
+    for (int i = 0; i < triPoints.size1(); i++) {
+      point(index,0) = triPoints(i,0);
+      point(index,1) = triPoints(i,1);
+      point(index,2) = linePoints(j,0);
+      index ++;
+//       printf("%d: %f %f %f\n",index,triPoints(i,0),triPoints(i,1),linePoints(j,0));
+    }
+  }
+//   point.print();
+
+  point.scale(overOrder);  
+  return point;
+}
+
 static fullMatrix<double> gmshGeneratePointsQuad(int order, bool serendip) 
 {
   int nbPoints = serendip ? order*4 : (order+1)*(order+1);
@@ -744,6 +795,50 @@ static void generate3dFaceClosure(polynomialBasis::clCont &closure, int order)
   }
 }
 
+static void getFaceClosurePrism(int iFace, int iSign, int iRotate, std::vector<int> &closure,
+                           int order)
+{
+  if (order > 1)
+    Msg::Error("FaceClosure not implemented for prisms of order %d",order);
+  bool isTriangle = iFace<2;
+  int nNodes = isTriangle ? (order+1)*(order+2)/2 : (order+1)*(order+1);
+  closure.clear();
+  closure.resize(nNodes);
+  switch (order){
+  case 0:
+    closure[0] = 0;
+    break;
+  default:
+//     int face[4][3] = {{-3, -2, -1}, {1, -6, 4}, {-4, 5, 3}, {6, 2, -5}};
+    int order1node[5][4] = {{0, 2, 1, -1}, {3, 4, 5, -1}, {0, 1, 4, 3}, {0, 3, 5, 2}, {1, 2, 5, 4}};
+    int nVertex = isTriangle ? 3 : 4;
+    for (int i = 0; i < nVertex; ++i){
+      int k;
+        k = (nVertex + (iSign * i) + iRotate) % nVertex;  //- iSign * iRotate
+      closure[i] = order1node[iFace][k];
+    }
+    break;
+  }
+}
+
+static void generate3dFaceClosurePrism(polynomialBasis::clCont &closure, int order)
+{
+
+  closure.clear();
+  for (int iRotate = 0; iRotate < 4; iRotate++){
+    for (int iSign = 1; iSign >= -1; iSign -= 2){
+      for (int iFace = 0; iFace < 5; iFace++){
+    std::vector<int> closure_face;
+    getFaceClosurePrism(iFace, iSign, iRotate, closure_face, order); 
+    closure.push_back(closure_face);
+//       for(int i=0;i < closure_face.size(); i++) { printf("%d ",closure_face.at(i)); }
+//       printf("\n");
+      }
+    }
+  }
+}
+
+
 static void generate2dEdgeClosure(polynomialBasis::clCont &closure, int order, int nNod = 3)
 {
   closure.clear();
@@ -776,7 +871,8 @@ const polynomialBasis &polynomialBases::find(int tag)
   std::map<int, polynomialBasis>::const_iterator it = fs.find(tag);
   if (it != fs.end())     return it->second;
   polynomialBasis F;
-
+  F.numFaces = -1;
+  
   switch (tag){
   case MSH_PNT:
     F.monomials = generate1DMonomials(0);
@@ -848,36 +944,43 @@ const polynomialBasis &polynomialBases::find(int tag)
     generate2dEdgeClosure(F.edgeClosure, 5);
     break;
   case MSH_TET_4 :
+    F.numFaces = 4;
     F.monomials = generatePascalTetrahedron(1);
     F.points =    gmshGeneratePointsTetrahedron(1, false);
     generate3dFaceClosure(F.faceClosure, 1);
     break;
   case MSH_TET_10 :
+    F.numFaces = 4;
     F.monomials = generatePascalTetrahedron(2);
     F.points =    gmshGeneratePointsTetrahedron(2, false);
     generate3dFaceClosure(F.faceClosure, 2);
     break;
   case MSH_TET_20 :
+    F.numFaces = 4;
     F.monomials = generatePascalTetrahedron(3);
     F.points =    gmshGeneratePointsTetrahedron(3, false);
     generate3dFaceClosure(F.faceClosure, 3);
     break;
   case MSH_TET_35 :
+    F.numFaces = 4;
     F.monomials = generatePascalTetrahedron(4);
     F.points =    gmshGeneratePointsTetrahedron(4, false);
     generate3dFaceClosure(F.faceClosure, 4);
     break;
   case MSH_TET_34 :
+    F.numFaces = 4;
     F.monomials = generatePascalSerendipityTetrahedron(4);
     F.points =    gmshGeneratePointsTetrahedron(4, true);
     generate3dFaceClosure(F.faceClosure, 4);
     break;
   case MSH_TET_52 :
+    F.numFaces = 4;
     F.monomials = generatePascalSerendipityTetrahedron(5);
     F.points =    gmshGeneratePointsTetrahedron(5, true);
     generate3dFaceClosure(F.faceClosure, 5);
     break;
   case MSH_TET_56 :
+    F.numFaces = 4;
     F.monomials = generatePascalTetrahedron(5);
     F.points =    gmshGeneratePointsTetrahedron(5, false);
     generate3dFaceClosure(F.faceClosure, 5);
@@ -927,6 +1030,19 @@ const polynomialBasis &polynomialBases::find(int tag)
     F.points =    gmshGeneratePointsQuad(5,true);
     generate2dEdgeClosure(F.edgeClosure, 5, 4);
     break;
+  case MSH_PRI_6 : // first order
+    F.numFaces = 5;
+    F.monomials = generatePascalPrism(1);
+    F.points =    gmshGeneratePointsPrism(1, false);
+    generate3dFaceClosurePrism(F.faceClosure, 1);
+    break;
+  case MSH_PRI_18 : // second order
+    F.numFaces = 5;
+    F.monomials = generatePascalPrism(2);
+    F.points =    gmshGeneratePointsPrism(2, false);
+    generate3dFaceClosurePrism(F.faceClosure, 2);
+    break;
+    
   default :
     Msg::Error("Unknown function space %d: reverting to TET_4", tag);
     F.monomials = generatePascalTetrahedron(1);

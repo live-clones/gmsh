@@ -75,7 +75,7 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e,
   _dPsiDx = new fullMatrix<double> ( _integration->size1()*3,nbPsi*e.size());
   _elementVolume = new fullMatrix<double> (e.size(),1);
   double g[256][3],f[256];
-
+  
   for (int i=0;i<_elements.size();i++){
     MElement *e = _elements[i];
     element_to_index[e] = i;
@@ -408,7 +408,7 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string bo
   init(pOrder);
 }
 
-dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, int pOrder):
+dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, int pOrder, int numVertices):
   _groupLeft(elGroup),_groupRight(elGroup)
 {
   _fsLeft=_groupLeft.getElement(0)->getFunctionSpace(pOrder);
@@ -456,10 +456,12 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, int pOrder):
         MElement &el = *elGroup.getElement(i);
         for (int j=0; j<el.getNumFaces(); j++){
           MFace face = el.getFace(j);
-          if(faceMap.find(face) == faceMap.end()){
-            faceMap[face] = i;
-          }else{
-            addFace(face,faceMap[face],i);
+          if (numVertices < 0 || face.getNumVertices() == numVertices) {
+            if(faceMap.find(face) == faceMap.end()){
+              faceMap[face] = i;
+            }else{
+              addFace(face,faceMap[face],i);
+            }
           }
         }
       }
@@ -470,7 +472,7 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, int pOrder):
   init(pOrder);
 }
 
-dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup1, const dgGroupOfElements &elGroup2, int pOrder):
+dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup1, const dgGroupOfElements &elGroup2, int pOrder, int numVertices):
   _groupLeft(elGroup1),_groupRight(elGroup2)
 {
   _fsLeft=_groupLeft.getElement(0)->getFunctionSpace(pOrder);
@@ -546,10 +548,12 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup1, const dgGroup
         MElement &el = *elGroup1.getElement(i);
         for (int j=0; j<el.getNumFaces(); j++){
           MFace face = el.getFace(j);
-          if(faceMap.find(face) == faceMap.end()){
-            faceMap[face] = i;
-          }else{
-            faceMap.erase(face);
+          if (numVertices < 0 || face.getNumVertices() == numVertices) {
+            if(faceMap.find(face) == faceMap.end()){
+              faceMap[face] = i;
+            }else{
+              faceMap.erase(face);
+            }
           }
         }
       }
@@ -703,6 +707,36 @@ void dgGroupCollection::buildGroupsOfElements(GModel *model, int dim, int order)
         if(el->getPartition()==Msg::GetCommRank()+1 || el->getPartition()==0){
           localElements[el->getType()].push_back(el);
           nlocal++;
+          switch(dim) {
+            case 1: {
+              int interfaceType = 1; // number of vertices
+              if(_interfaceTypes.find(interfaceType) == _interfaceTypes.end()) {
+                _interfaceTypes.insert(interfaceType);
+//                 printf("Inserted interfaceType: %d el: %d dim: %d\n",interfaceType,el->getType(),dim);
+              }
+              break;
+            }
+            case 2: {
+              int interfaceType = 2; // number of vertices
+              if(_interfaceTypes.find(interfaceType) == _interfaceTypes.end()) {
+                _interfaceTypes.insert(interfaceType);
+//                 printf("Inserted interfaceType: %d el: %d dim: %d\n",interfaceType,el->getType(),dim);
+              }
+              break;
+            }
+            case 3: {
+              for(int iFace=0; iFace<el->getNumFaces(); iFace++) {
+                MFace face = el->getFace(iFace);
+                if(_interfaceTypes.find(face.getNumVertices()) == _interfaceTypes.end()) {
+                  _interfaceTypes.insert(face.getNumVertices());
+//                   printf("Inserted interfaceType: %d el: %d dim: %d\n",face.getNumVertices(),el->getType(),dim);
+                }
+              }
+              break;
+            }
+            default :
+            throw;
+          }
         }
       }
     }
@@ -730,7 +764,7 @@ void dgGroupCollection::buildGroupsOfInterfaces() {
 
   std::map<const std::string,std::set<MVertex*> > boundaryVertices;
   std::map<const std::string,std::set<MEdge, Less_Edge> > boundaryEdges;
-  std::map<const std::string,std::set<MFace, Less_Face> > boundaryFaces;
+  std::map<const int,std::map<const std::string,std::set<MFace, Less_Face> > > boundaryFaces; // [elementType][bndString]
 
   std::vector<std::map<int, std::vector<MElement *> > >ghostElements(Msg::GetCommSize()); // [partition][elementType]
   int nghosts=0;
@@ -754,9 +788,11 @@ void dgGroupCollection::buildGroupsOfInterfaces() {
             case 2:
               boundaryEdges[physicalName].insert( element->getEdge(0) );
             break;
-            case 3:
-              boundaryFaces[physicalName].insert( element->getFace(0));
-            break;
+            case 3: {
+              MFace face = element->getFace(0);
+              boundaryFaces[element->getType()][physicalName].insert( face );
+              break;
+            }
             default :
             throw;
           }
@@ -807,30 +843,36 @@ void dgGroupCollection::buildGroupsOfInterfaces() {
       break;
     }
     case 3 : {
-      std::map<const std::string, std::set<MFace, Less_Face> >::iterator mapIt;
-      for(mapIt=boundaryFaces.begin(); mapIt!=boundaryFaces.end(); mapIt++) {
-        dgGroupOfFaces *gof=new dgGroupOfFaces(*_elementGroups[i],mapIt->first,order,mapIt->second);
-        if(gof->getNbElements())
-          _boundaryGroups.push_back(gof);
-        else
-          delete gof;
+    std::map<const int,std::map<const std::string,std::set<MFace, Less_Face> > >::iterator elemTypeIt;
+    std::map<const std::string, std::set<MFace, Less_Face> >::iterator mapIt;
+      for(elemTypeIt=boundaryFaces.begin(); elemTypeIt!=boundaryFaces.end(); elemTypeIt++) {
+        for(mapIt=elemTypeIt->second.begin(); mapIt!=elemTypeIt->second.end(); mapIt++) {
+          dgGroupOfFaces *gof=new dgGroupOfFaces(*_elementGroups[i],mapIt->first,order,mapIt->second);
+          if(gof->getNbElements())
+            _boundaryGroups.push_back(gof);
+          else
+            delete gof;
+        }
       }
       break;
     }
     }
-    // create a group of faces for every face that is common to elements of the same group 
-    dgGroupOfFaces *gof=new dgGroupOfFaces(*_elementGroups[i],order);
-    if(gof->getNbElements())
-      _faceGroups.push_back(gof);
-    else
-      delete gof;
-    // create a groupe of d
-    for (int j=i+1;j<_elementGroups.size();j++){
-      dgGroupOfFaces *gof = new dgGroupOfFaces(*_elementGroups[i],*_elementGroups[j],order);
+    // create a group of faces for every face that is common to elements of the same group
+    // create separate groups for each face type
+    for(std::set<int>::iterator faceTypeIt=_interfaceTypes.begin(); faceTypeIt!=_interfaceTypes.end(); faceTypeIt++) {
+      dgGroupOfFaces *gof = new dgGroupOfFaces(*_elementGroups[i],order,*faceTypeIt);
       if (gof->getNbElements())
         _faceGroups.push_back(gof);
       else
         delete gof;
+//       create a groupe of d
+      for (int j=i+1;j<_elementGroups.size();j++){
+        dgGroupOfFaces *gof = new dgGroupOfFaces(*_elementGroups[i],*_elementGroups[j],order,*faceTypeIt);
+        if (gof->getNbElements())
+          _faceGroups.push_back(gof);
+        else
+          delete gof;
+      }
     }
   }
   //create ghost groups
@@ -846,14 +888,16 @@ void dgGroupCollection::buildGroupsOfInterfaces() {
   //create face group for ghostGroups
   for (int i=0; i<_ghostGroups.size(); i++){
     for (int j=0;j<_elementGroups.size();j++){
-      dgGroupOfFaces *gof = new dgGroupOfFaces(*_ghostGroups[i],*_elementGroups[j],order);
-      if (gof->getNbElements())
-        _faceGroups.push_back(gof);
-      else
-        delete gof;
+      for(std::set<int>::iterator faceTypeIt=_interfaceTypes.begin(); faceTypeIt!=_interfaceTypes.end(); faceTypeIt++) {
+        dgGroupOfFaces *gof = new dgGroupOfFaces(*_ghostGroups[i],*_elementGroups[j],order,*faceTypeIt);
+        if (gof->getNbElements())
+          _faceGroups.push_back(gof);
+        else
+          delete gof;
+      }
     }
   }
-
+  Msg::Info("%d groups of interfaces",_faceGroups.size());
   // build the ghosts structure
   int *nGhostElements = new int[Msg::GetCommSize()];
   int *nParentElements = new int[Msg::GetCommSize()];

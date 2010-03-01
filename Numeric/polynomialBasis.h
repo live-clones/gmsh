@@ -23,10 +23,13 @@ class polynomialBasis
   fullMatrix<double> points;
   fullMatrix<double> monomials;
   fullMatrix<double> coefficients;
+  int numFaces;
   // for a given face/edge, with both a sign and a rotation,
   // give an ordered list of nodes on this face/edge
   inline int getFaceClosureId(int iFace, int iSign, int iRot) const {
-    return iFace + 4 * (iSign == 1 ? 0 : 1) + 8 * iRot;
+//     return iFace + 4 * (iSign == 1 ? 0 : 1) + 8 * iRot; // only for tetrahedra
+//     return iFace + 5*(iSign == 1 ? 0 : 1) + 10*iRot; // only for prisms
+    return iFace + numFaces*(iSign == 1 ? 0 : 1) + 2*numFaces*iRot; // both tetrahedra and prisms
   }
   inline const std::vector<int> &getFaceClosure(int id) const
   {

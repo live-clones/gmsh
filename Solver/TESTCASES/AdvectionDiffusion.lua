@@ -24,7 +24,7 @@ v:set(2,0,0)
 nu=fullMatrix(1,1);
 nu:set(0,0,0.001)
 
-law = dgConservationLawAdvection(functionConstant(v):getName(),functionConstant(nu):getName())
+law = dgConservationLawAdvectionDiffusion(functionConstant(v):getName(),functionConstant(nu):getName())
 dg:setConservationLaw(law)
 
 -- boundary condition

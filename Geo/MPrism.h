@@ -86,6 +86,7 @@ class MPrism : public MElement {
     _getEdgeVertices(num, v);
   }
   virtual int getNumFaces(){ return 5; }
+  virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const; 
   virtual MFace getFace(int num)
   {
     if(num < 2)
@@ -128,6 +129,7 @@ class MPrism : public MElement {
     tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
     tmp = _v[3]; _v[3] = _v[4]; _v[4] = tmp;
   }
+  virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
   virtual int getVolumeSign();
   virtual void getShapeFunctions(double u, double v, double w, double s[], int o) 
   {
@@ -167,6 +169,7 @@ class MPrism : public MElement {
       return false;
     return true;
   }
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
  private:
   int edges_prism(const int edge, const int vert) const
   {

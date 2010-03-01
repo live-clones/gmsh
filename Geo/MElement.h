@@ -237,7 +237,7 @@ class MElement
   // integration routines
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   {
-    Msg::Error("No integration points defined for this type of element");
+    Msg::Error("No integration points defined for this type of element: %d",this->getType());
   }
 
   // IO routines

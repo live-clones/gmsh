@@ -184,8 +184,8 @@ public:
   inline fullMatrix<double> &getIntegrationOnElementRight(int iFace) { return _integrationPointsRight[_closuresIdRight[iFace]];}
   
   inline fullMatrix<double> &getNormals () const {return *_normals;}
-  dgGroupOfFaces (const dgGroupOfElements &elements,int pOrder);
-  dgGroupOfFaces (const dgGroupOfElements &a, const dgGroupOfElements &b,int pOrder);
+  dgGroupOfFaces (const dgGroupOfElements &elements,int pOrder, int numVertices = -1);
+  dgGroupOfFaces (const dgGroupOfElements &a, const dgGroupOfElements &b,int pOrder, int numVertices = -1);
   dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MVertex*> &boundaryVertices);
   dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MEdge,Less_Edge> &boundaryEdges);
   dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MFace,Less_Face> &boundaryFaces);
@@ -217,6 +217,8 @@ class dgGroupCollection {
   std::vector<dgGroupOfFaces*> _faceGroups; //interface
   std::vector<dgGroupOfFaces*> _boundaryGroups; //boundary
   std::vector<dgGroupOfElements*> _ghostGroups; //ghost volume
+  // container of different face types (identified by the number of vertices) 
+  std::set<int> _interfaceTypes;
 
   //{group,id} of the elements to send to each partition for a scatter operation
   std::vector< std::vector<std::pair<int,int> > >_elementsToSend;
