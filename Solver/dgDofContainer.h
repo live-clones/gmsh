@@ -6,7 +6,7 @@
 class dgGroupCollection;
 class dgGroupOfElements;
 
-struct dgDofContainer {
+class dgDofContainer {
 private:
   dgDofContainer (const dgDofContainer&);  
   int _totalNbElements; 
