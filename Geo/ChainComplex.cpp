@@ -402,8 +402,6 @@ void ChainComplex::matrixTest()
   
   printMatrix(matrix);
   printMatrix(copymatrix);
-  
-  return; 
 }
 
 std::vector<int> ChainComplex::getCoeffVector(int dim, int chainNumber)
