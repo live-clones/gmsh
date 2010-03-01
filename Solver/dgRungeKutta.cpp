@@ -205,7 +205,9 @@ double dgRungeKutta::nonDiagonalRK(const dgConservationLaw *claw,
 }
 
 
-double dgRungeKutta::iterate43Multirate(const dgConservationLaw *claw, double dt, dgDofContainer *solution){
+double dgRungeKutta::iterate43Multirate(const dgConservationLaw *claw, double dt,
+                                        dgDofContainer *solution)
+{
   double A[4][4]={
      {0, 0, 0, 0},
      {1.0/2.0, 0, 0 ,0},
@@ -376,6 +378,8 @@ double dgRungeKutta::iterate43Multirate(const dgConservationLaw *claw, double dt
   delete []K;
   return solution->norm();
 */
+
+  return 0.;
 }
 
 
