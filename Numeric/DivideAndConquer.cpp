@@ -651,10 +651,10 @@ void centroidOfPolygon(SPoint2 &pc, std::vector<SPoint2> &pts,
   yc = x.y();
 }
 
-double  DocRecord::Lloyd(int type)
+double DocRecord::Lloyd(int type)
 {
   fullMatrix<double> cgs(numPoints,2);
-  double inertia_tot;
+  double inertia_tot = 0.;
   for(PointNumero i = 0; i < numPoints; i++) {
     PointRecord &pt = points[i];
     std::vector<SPoint2> pts;
