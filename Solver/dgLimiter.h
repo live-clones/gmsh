@@ -3,7 +3,7 @@
 
 #include "fullMatrix.h"
 #include <vector>
-struct dgDofContainer;
+class dgDofContainer;
 class dgGroupCollection;
 class dgConservationLaw;
 class binding;
