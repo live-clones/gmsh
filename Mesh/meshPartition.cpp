@@ -243,7 +243,7 @@ int RenumberMesh(GModel *const model, meshPartitionOptions &options)
     temp.insert(temp.begin(), (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
     RenumberMeshElements(temp, options);
     (*it)->tetrahedra.clear();
-    for (int i = 0; i < temp.size(); i++) 
+    for (unsigned int i = 0; i < temp.size(); i++) 
       (*it)->tetrahedra.push_back((MTetrahedron*)temp[i]);
     temp.clear();
 
@@ -1092,7 +1092,7 @@ static void addGhostCells(GEntity *ge,
   std::set<MVertex*> verts;
   for(unsigned int i = 0; i < ge->getNumMeshElements(); i++){
     MElement *e = ge->getMeshElement(i);
-    for(unsigned int j = 0; j < e->getNumVertices(); j++)
+    for(int j = 0; j < e->getNumVertices(); j++)
       verts.insert(e->getVertex(j));
   }
   
