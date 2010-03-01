@@ -13,8 +13,9 @@
 
 // presently those function spaces are only for simplices and quads;
 // should be extended to other elements like hexes
-struct polynomialBasis 
+class polynomialBasis 
 {
+ public:
   typedef std::vector<std::vector<int> > clCont;
   clCont faceClosure;
   clCont edgeClosure;

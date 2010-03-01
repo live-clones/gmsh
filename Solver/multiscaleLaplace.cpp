@@ -81,7 +81,7 @@ static void connected_bounds (std::vector<MElement*> &elements,
   }    
  
   std::multimap<MVertex*,MEdge> v2e;
-  for (unsigned i=0;i<bEdges.size();++i){
+  for (unsigned int i = 0; i < bEdges.size(); ++i){
     for (int j=0;j<bEdges[i].getNumVertices();j++){
       v2e.insert(std::make_pair(bEdges[i].getVertex(j),bEdges[i]));
     }
@@ -137,7 +137,7 @@ static void  ordering_dirichlet(std::vector<MElement*> &elements,
   //largest boundary is dirichlet boundary
   std::vector<MEdge> dirichletEdges;
   double maxSize = 0.0;
-  for(int i=0; i< boundaries.size(); i++){
+  for(unsigned int i = 0; i < boundaries.size(); i++){
     std::vector<MEdge> iBound = boundaries[i];
     double size = getSizeBB(iBound);
     if (size > maxSize) {
@@ -150,7 +150,7 @@ static void  ordering_dirichlet(std::vector<MElement*> &elements,
   dirichletNodes.clear();
   std::list<MEdge> temp;
   double tot_length = 0.0;
-  for(int i= 0 ; i < dirichletEdges.size(); i++ ){
+  for(unsigned int i = 0; i < dirichletEdges.size(); i++ ){
       MVertex *v0 =  dirichletEdges[i].getVertex(0);
       MVertex *v1 =  dirichletEdges[i].getVertex(1); 
       double len = sqrt((v0->x() - v1->x()) * (v0->x() - v1->x()) + 
@@ -243,7 +243,7 @@ static void recur_compute_centers_ (double R, double a1, double a2,
   if (root->children.size()==0 ){//|| boundaries.size()-1 != root->children.size()){
     std::vector<std::vector<MEdge> > boundaries;
     connected_bounds(root->elements, boundaries);
-    for (int i = 0; i < boundaries.size(); i++){
+    for (unsigned int i = 0; i < boundaries.size(); i++){
       std::vector<MEdge> me = boundaries[i];
       SPoint2 c(0.0,0.0);
       double rad = 0.0;
@@ -320,7 +320,7 @@ static void recur_cut_edges_ (multiscaleLaplaceLevel * root,
       }
     }
   }
-  for (int i=0;i<centers.size();i++){
+  for (unsigned int i = 0; i < centers.size(); i++){
     multiscaleLaplaceLevel* m2 = centers[i].second;
     if (m2){
       recur_cut_edges_ (m2,e2e,cutEdges,cutVertices);
@@ -336,7 +336,7 @@ static void recur_cut_elements_ (multiscaleLaplaceLevel * root,
 
   std::vector<std::pair<SPoint2,multiscaleLaplaceLevel*> > &centers = root->cut;
   std::vector<MElement*> newElements;
-  for (int i=0;i<root->elements.size();i++){
+  for (unsigned int i = 0; i < root->elements.size(); i++){
     MVertex *c[3] = {0,0,0};
     for (int j=0;j<3;j++){
       MEdge ed = root->elements[i]->getEdge(j);
@@ -407,7 +407,7 @@ static void recur_cut_elements_ (multiscaleLaplaceLevel * root,
   }
   root->elements = newElements;
   _all.insert(_all.end(),newElements.begin(),newElements.end());
-  for (int i=0;i<centers.size();i++){
+  for (unsigned int i = 0; i < centers.size(); i++){
     multiscaleLaplaceLevel* m2 = centers[i].second;
     if (m2){
       recur_cut_elements_ (m2,cutEdges,cutVertices,theCut,_all);
@@ -455,8 +455,8 @@ static void connectedRegions (std::vector<MElement*> &elements,
 			      std::vector<std::vector<MElement*> > &regions)
 {
   std::multimap<MEdge,MElement*,Less_Edge> e2e;
-  for (int i=0;i<elements.size();++i){
-    for (int j=0;j<elements[i]->getNumEdges();j++){
+  for (unsigned int i = 0; i < elements.size(); ++i){
+    for (int j = 0; j < elements[i]->getNumEdges(); j++){
       e2e.insert(std::make_pair(elements[i]->getEdge(j),elements[i]));
     }
   }
@@ -487,14 +487,14 @@ static void recur_cut_ (double R, double a1, double a2,
   SPoint2 farLeft (0.5*(PL.x()+PR.x()) - (PR.y()-PL.y())/d ,
 		   0.5*(PL.y()+PR.y()) + (PR.x()-PL.x())/d );
   
-  for (int i=0;i<root->elements.size();i++){
+  for (unsigned int i = 0; i < root->elements.size(); i++){
     SPoint2 pp (0,0);
     for (int j=0; j<root->elements[i]->getNumVertices(); j++){
       pp += root->coordinates[root->elements[i]->getVertex(j)];
     }
     pp *= 1./(double)root->elements[i]->getNumVertices();
     int nbIntersect = 0;
-    for (int j=0;j<centers.size()-1;j++){
+    for (int j = 0; j < centers.size() - 1; j++){
       double x[2];
       nbIntersect += intersection_segments (centers[j].first,centers[j+1].first,pp,farLeft,x); 
     }
@@ -512,7 +512,7 @@ static void recur_cut_ (double R, double a1, double a2,
  //    }
   }
   
-  for (int i=1;i<centers.size()-1;i++){
+  for (int i = 1; i < centers.size() - 1; i++){
     multiscaleLaplaceLevel* m1 = centers[i-1].second;
     multiscaleLaplaceLevel* m2 = centers[i].second;
     multiscaleLaplaceLevel* m3 = centers[i+1].second;
@@ -593,7 +593,7 @@ static void printLevel(const char* fn,
   if(!CTX::instance()->mesh.saveAll) return;  
 
   std::set<MVertex*> vs;
-  for (int i = 0; i < elements.size(); i++)
+  for (unsigned int i = 0; i < elements.size(); i++)
     for (int j = 0; j < elements[i]->getNumVertices(); j++)
       vs.insert(elements[i]->getVertex(j));
 
@@ -616,7 +616,7 @@ static void printLevel(const char* fn,
   fprintf(fp, "$EndNodes\n");
   
   fprintf(fp, "$Elements\n%d\n", (int)elements.size());
-  for (int i = 0; i < elements.size(); i++){
+  for (unsigned int i = 0; i < elements.size(); i++){
     elements[i]->writeMSH(fp, version);
   }
   fprintf(fp, "$EndElements\n");
@@ -967,7 +967,7 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
 
   //For every small region compute a new parametrization
   Msg::Info("Level (%d-%d): %d connected small regions",level.recur, level.region, regions.size());
-  for (int i=0;i< regions.size() ; i++){    
+  for (unsigned int i = 0; i < regions.size(); i++){    
     std::set<MVertex*> tooSmallv;
     tooSmallv.clear();
     for (int k=0; k<regions[i].size() ; k++){
