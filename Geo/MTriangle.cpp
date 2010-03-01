@@ -38,10 +38,9 @@ double MTriangle::getInnerRadius()
 {
 #if defined(HAVE_MESH)
   double r = 0.;
-  const int n = getNumEdges();
-  double dist[n];
+  double dist[3];
   double k = 0.;
-  for (int i = 0; i < n; i++){
+  for (int i = 0; i < 3; i++){
     MEdge e = getEdge(i);
     dist[i] = e.getVertex(0)->distance(e.getVertex(1));
     k += 0.5 * dist[i];
