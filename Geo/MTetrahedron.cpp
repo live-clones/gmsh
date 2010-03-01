@@ -49,25 +49,25 @@ double MTetrahedronN::distoShapeMeasure()
 double MTetrahedron::getInnerRadius()
 {
 #if defined(HAVE_MESH)
-  double r = 0.;
-  double dist[3];
-  double face_area = 0.;	
+  double dist[3], face_area = 0.;
   double vol = getVolume();
-  for(int i = 0; i<4; i++){  
+  for(int i = 0; i < 4; i++){  
     MFace f = getFace(i);
     for (int j = 0; j < 3; j++){
       MEdge e = f.getEdge(j);
       dist[j] = e.getVertex(0)->distance(e.getVertex(1));
     }
-    face_area+=0.25*sqrt((dist[0]+dist[1]+dist[2])*(-dist[0]+dist[1]+dist[2])*(dist[0]-dist[1]+dist[2])*(dist[0]+dist[1]-dist[2]));
-  } 
-
-r = 3*vol/face_area;
+    face_area += 0.25 * sqrt((dist[0] + dist[1] + dist[2]) * 
+                             (-dist[0] + dist[1] + dist[2]) * 
+                             (dist[0] - dist[1] + dist[2]) * 
+                             (dist[0] + dist[1] - dist[2]));
+  }
+  return 3 * vol / face_area;
 #else
-  r=0.;
+  return 0.;
 #endif
- return r;
 }
+
 double MTetrahedron::gammaShapeMeasure()
 {
 #if defined(HAVE_MESH)
