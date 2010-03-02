@@ -53,7 +53,7 @@ FS = functionLua(1, 'initial_condition', {'XYZ'}):getName()
 GC=dgGroupCollection(myModel,2,order)
 solTmp=dgDofContainer(GC,1)
 solTmp:L2Projection(FS)
-dt=GC:splitGroupsForMultirate(20,law,solTmp)
+dt=GC:splitGroupsForMultirate(100,law,solTmp)
 GC:buildGroupsOfInterfaces(myModel,2,order)
 solution=dgDofContainer(GC,1)
 solution:L2Projection(FS)
@@ -87,7 +87,7 @@ time=0
 -- multirateRK:setLimiter(limiter)
 --for i=1,1000
 i=0
-while time<0.1 do
+while time<0.2 do
 --     norm1 = RK:iterate43SchlegelJCAM2009(law,dt,solution)
 -- TEST with Explicit Euler multirate !!!
     norm2 = multirateRK:iterate(dt,solution2)

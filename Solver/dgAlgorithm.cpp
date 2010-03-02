@@ -107,7 +107,7 @@ void dgAlgorithm::computeElementaryTimeSteps ( //dofManager &dof, // the DOF man
     sol.setAsProxy(solution, iElement*nbFields, nbFields);
     MElement *e = group.getElement(iElement);
     cacheElement.set(e);
-    const double L = e->minEdge();
+    const double L = group.getInnerRadius(iElement);
     double spectralRadius = 0.0;
     if (maximumDiffusivity){
       double nu = (*maximumDiffusivity)(0,0);

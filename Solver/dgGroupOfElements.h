@@ -80,6 +80,8 @@ class dgGroupOfElements {
   //
   // volume/surface/length of the element (sum_qp w_i detJ_i)
   fullMatrix<double> *_elementVolume;
+  // inradius of the element, i.e. a lengthscale to compute the timestep
+  fullMatrix<double> *_innerRadii;
   // forbid the copy 
   //  dgGroupOfElements (const dgGroupOfElements &e, int order) {}
   //  dgGroupOfElements & operator = (const dgGroupOfElements &e) {}
@@ -107,6 +109,7 @@ public:
   inline const fullMatrix<double> & getFluxRedistributionMatrix (int i) const {return *_redistributionFluxes[i];}
   inline const fullMatrix<double> & getSourceRedistributionMatrix () const {return *_redistributionSource;}
   inline double getElementVolume (int iElement)const {return (*_elementVolume)(iElement,0);}
+  inline double getInnerRadius(int iElement)const {return (*_innerRadii)(iElement,0);}
   inline double getDetJ (int iElement, int iGaussPoint) const {return (*_mapping)(iElement, 10*iGaussPoint + 9);}
   inline double getInvJ (int iElement, int iGaussPoint, int i, int j) const {return (*_mapping)(iElement, 10*iGaussPoint + i + 3*j);}
   inline fullMatrix<double> & getDPsiDx() const { return *_dPsiDx;}

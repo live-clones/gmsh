@@ -74,12 +74,14 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e,
   _imass = new fullMatrix<double> (nbPsi,nbPsi*e.size()); 
   _dPsiDx = new fullMatrix<double> ( _integration->size1()*3,nbPsi*e.size());
   _elementVolume = new fullMatrix<double> (e.size(),1);
+  _innerRadii = new fullMatrix<double> (e.size(),1);
   double g[256][3],f[256];
   
   for (int i=0;i<_elements.size();i++){
     MElement *e = _elements[i];
     element_to_index[e] = i;
     fullMatrix<double> imass(*_imass,nbPsi*i,nbPsi);
+    (*_innerRadii)(i,0)=e->getInnerRadius();
     for (int j=0;j< _integration->size1() ; j++ ){
       _fs.f((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), f);
       _fs.df((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), g);
@@ -132,7 +134,9 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e,
 }
 
 void dgGroupOfElements::copyPrivateDataFrom(const dgGroupOfElements *from){
-//  Msg::Error("dgGroupOfElements::copyPrivateDataFrom not yet implemented, ask Richard");
+  _multirateExponent=from->getMultirateExponent();
+  _multirateInnerBuffer=from->getIsInnerMultirateBuffer();
+  _multirateOuterBuffer=from->getIsOuterMultirateBuffer();
 }
 
 dgGroupOfElements::~dgGroupOfElements(){
@@ -1051,7 +1055,9 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLa
   Msg::Info("Splitting Groups for multirate time stepping");
   maxLevels--;// Number becomes maximum id
 
+  // Interfaces are not built yet, so we use a "mini" structure to deduce neighboring information
   std::vector<dgMiniInterface> *miniInterfaceV=_createMiniInterfaces(*this);
+  // elementToNeighbors[oldGroupId][oldElementId][neighborId (i.e. 0 to 2 for triangles)]<neighborOldGroupId,neighborOldElementId>
   std::vector<std::vector<std::vector<std::pair<int,int> > > >elementToNeighbors;
 
   std::vector<std::vector<int> >newGroupIds;
@@ -1113,7 +1119,6 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLa
   _dtMaxExponent=dtMaxExponent;
   std::vector<MElement *>currentNewGroup;
   std::vector< dgGroupOfElements* >newGroups;// indexed by newGroupId
-  std::map<int,int>oldToNewGroupsMap;// oldGroupId to newGroupId
 
   int lowerLevelGroupIdStart=-1;
   int lowerLevelGroupIdEnd=-1;
@@ -1211,7 +1216,6 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLa
             newGroup->_multirateInnerBuffer=false;
             newGroups.resize(currentNewGroupId+1);
             newGroups[currentNewGroupId]=newGroup;
-            oldToNewGroupsMap[it->first]=currentNewGroupId;
             currentNewGroupId++;
           }
 
@@ -1227,7 +1231,6 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLa
             newGroup->_multirateInnerBuffer=true;
             newGroups.resize(currentNewGroupId+1);
             newGroups[currentNewGroupId]=newGroup;
-            oldToNewGroupsMap[it->first]=currentNewGroupId;
             currentNewGroupId++;
           }
         }
@@ -1255,7 +1258,6 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLa
           newGroup->_multirateInnerBuffer=false;
           newGroups.resize(currentNewGroupId+1);
           newGroups[currentNewGroupId]=newGroup;
-          oldToNewGroupsMap[it->first]=currentNewGroupId;
           currentNewGroupId++;
         }
         else
