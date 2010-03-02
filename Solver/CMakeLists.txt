@@ -14,6 +14,7 @@ set(SRC
   dgGroupOfElements.cpp
   dgAlgorithm.cpp
   dgRungeKutta.cpp
+  dgRungeKuttaMultirate.cpp
   dgConservationLaw.cpp
   dgConservationLawAdvection.cpp
   dgSystemOfEquations.cpp

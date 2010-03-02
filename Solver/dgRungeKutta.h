@@ -30,32 +30,4 @@ class dgRungeKutta {
   dgRungeKutta();
 };
 
-class dgRungeKuttaMultirate: public dgRungeKutta{
-  private:
-  int _maxExponent;
-  int _minExponent;
-  double _dt;
-  dgConservationLaw *_law;
-  dgDofContainer *_solution;
-  dgDofContainer **_K;
-  dgDofContainer *_currentInput;
-  dgDofContainer *_residual;
-  dgResidualVolume *_residualVolume;
-  dgResidualInterface *_residualInterface;
-  dgResidualBoundary *_residualBoundary;
-  std::vector<std::pair<std::vector<dgGroupOfElements*>,std::vector<dgGroupOfFaces*> > >_bulkGroupsOfElements;// int is the multirateExponent
-  std::vector<std::pair<std::vector<dgGroupOfElements*>,std::vector<dgGroupOfFaces*> > >_innerBufferGroupsOfElements;// int is the multirateExponent
-  std::vector<std::pair<std::vector<dgGroupOfElements*>,std::vector<dgGroupOfFaces*> > >_outerBufferGroupsOfElements;// int is the multirateExponent
-  void computeInputForK(int iK,int exponent,bool isBuffer);
-  void computeK(int iK,int exponent,bool isBuffer);
-  void updateSolution(int exponent,bool isBuffer);
-  void computeResidual(int exponent,bool isBuffer,dgDofContainer *solution, dgDofContainer *residual);
-  public:
-  dgRungeKuttaMultirate(dgGroupCollection *gc,dgConservationLaw* law);
-  ~dgRungeKuttaMultirate();
-
-
-  double iterate(double dt, dgDofContainer *solution);
-  static void registerBindings(binding *b);
-};
 #endif

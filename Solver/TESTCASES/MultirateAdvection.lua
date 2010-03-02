@@ -78,7 +78,7 @@ LC = 0.1*.1
 dt=dt
 print('DT=',dt)
 RK=dgRungeKutta()
-multirateRK=dgRungeKuttaMultirate(GC,law)
+multirateRK=dgRungeKuttaMultirate43(GC,law)
 norm1=solution:norm()
 norm2=solution2:norm()
 print('Norm: ',norm1,norm2)
