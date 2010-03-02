@@ -5,6 +5,7 @@
 
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Box.H>
+#include <FL/Fl_Return_Button.H>
 #include "FlGui.h"
 #include "classificationEditor.h"
 #include "paletteWindow.h"
@@ -693,7 +694,7 @@ classificationEditor::classificationEditor() : selected(0)
       (x + BBB + WB, y, (int)(0.5 * BBB) - WB, BH, "All");
     buttons[CLASS_BUTTON_SELECT_ALL_SURFACES]->callback(class_select_all_surfaces_cb, this);
 
-    buttons[CLASS_BUTTON_CLASSIFY] = new Fl_Button 
+    buttons[CLASS_BUTTON_CLASSIFY] = new Fl_Return_Button 
       (x + 1.5 * BBB + WB, y, BBB, BH, "Reclassify");
     buttons[CLASS_BUTTON_CLASSIFY]->callback(class_classify_cb, this);
     buttons[CLASS_BUTTON_CLASSIFY]->deactivate();
