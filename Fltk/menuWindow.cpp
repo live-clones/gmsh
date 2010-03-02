@@ -1344,7 +1344,9 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
         case 9:
           add_recosurf(List1, GModel::current()->getFileName());
           break;
-
+        case 10:
+          add_compound(what, List1, GModel::current()->getFileName());
+          break;
         default:
           Msg::Error("Unknown action on selected entities");
           break;
@@ -1987,6 +1989,16 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
   add_transfinite_embedded(2, true);
 }
 
+static void mesh_define_compound_cb(Fl_Widget *w, void *data)
+{
+  FlGui::instance()->menu->setContext(menu_mesh_define_compound, 0);
+}
+
+static void mesh_define_compound_entity_cb(Fl_Widget *w, void *data)
+{
+  action_point_line_surface_volume(10, 0, (const char *)data);
+}
+
 static void view_toggle_cb(Fl_Widget *w, void *data)
 {
   int num = (int)(long)data;
@@ -2542,6 +2554,7 @@ contextItem menu_mesh[] = {
     {"Embedded points", (Fl_Callback *)mesh_define_embedded_cb, (void*)"point" } ,
     {"Recombine",   (Fl_Callback *)mesh_define_recombine_cb  } ,
     {"Transfinite", (Fl_Callback *)mesh_define_transfinite_cb  } , 
+    {"Compound", (Fl_Callback *)mesh_define_compound_cb  } , 
     {""} 
   };  
     contextItem menu_mesh_define_transfinite[] = {
@@ -2549,6 +2562,13 @@ contextItem menu_mesh[] = {
       {"Line",    (Fl_Callback *)mesh_define_transfinite_line_cb} ,
       {"Surface", (Fl_Callback *)mesh_define_transfinite_surface_cb} ,
       {"Volume",  (Fl_Callback *)mesh_define_transfinite_volume_cb} , 
+      {""} 
+    };  
+    contextItem menu_mesh_define_compound[] = {
+      {"1Mesh>Define>Compound"} ,
+      {"Line",    (Fl_Callback *)mesh_define_compound_entity_cb, (void*)"Line"} ,
+      {"Surface", (Fl_Callback *)mesh_define_compound_entity_cb, (void*)"Surface"} ,
+      {"Volume",  (Fl_Callback *)mesh_define_compound_entity_cb, (void*)"Volume"} , 
       {""} 
     };  
   contextItem menu_mesh_delete[] = {

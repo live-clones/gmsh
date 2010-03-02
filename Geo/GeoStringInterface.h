@@ -36,6 +36,7 @@ void add_surf(std::string type, List_T *list, std::string fileName);
 void add_surfloop(List_T *list, std::string fileName, int *numvol);
 void add_vol(List_T *list, std::string fileName);
 void add_physical(std::string type, List_T *list, std::string fileName);
+void add_compound(std::string type, List_T *list, std::string fileName);
 void translate(int add, List_T *list, std::string fileName, std::string what,
                std::string tx, std::string ty, std::string tz);
 void rotate(int add, List_T *list, std::string fileName, std::string what, 

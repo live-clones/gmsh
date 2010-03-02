@@ -311,6 +311,14 @@ void add_physical(std::string type, List_T *list, std::string fileName)
   add_infile(sstream.str(), fileName);
 }
 
+void add_compound(std::string type, List_T *list, std::string fileName)
+{
+  std::ostringstream sstream;
+  sstream << "Compound " << type << "(" << NEWREG() << ") = {" 
+          << list2string(list) << "};";
+  add_infile(sstream.str(), fileName);
+}
+
 void translate(int add, List_T *list, std::string fileName, std::string what,
                std::string tx, std::string ty, std::string tz)
 {
