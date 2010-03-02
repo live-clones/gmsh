@@ -1,4 +1,4 @@
-lc = .2;
+lc = 1;
 
 Point(1) = {0.0,0.0,0.0,lc};
 Point(2) = {1,0.0,0.0,lc};
@@ -37,9 +37,12 @@ Ruled Surface(26) = {25};
 Line Loop(27) = {-4,12,-6};
 Ruled Surface(28) = {27};
 
-Extrude {
-  Surface{14:28:2};  Layers{10, 0.2}; // Recombine; 
-}
+old = Geometry.ExtrudeReturnLateralEntities;
+Geometry.ExtrudeReturnLateralEntities = 0;
+tmp[] = Extrude {
+  Surface{14:28:2}; Layers{5, 0.2}; Recombine; // 14:28:2 means itterate from 14 to 28 by steps of 2
+};
+Geometry.ExtrudeReturnLateralEntities = old;
 
 Point(100) = {-1.5,-1.5,-1.5, lc};
 Point(101) = {-1.5,1.5,-1.5, lc};
@@ -74,10 +77,11 @@ Plane Surface(186) = {185};
 Line Loop(187) = {172, 173, 174, 167};
 Plane Surface(188) = {187};
 
-Surface Loop(1000) = {20, 22, 18, 14, 26, 16, 24, 28};
-Surface Loop(1001) = {45, 96, 113, 79, 62, 130, 147, 164};
-Surface Loop(1002) = {188, 186, 184, 180, 178, 182};
-Volume(1000) = {1000}; // inside
-Volume(1001) = {1002, 1001}; // outside
+Surface Loop(1000) = {14:28:2}; // the sphere (only need for internal mesh)
+Surface Loop(1001) = {tmp[{0:14:2}]};  // The outside of the BL
+Surface Loop(1002) = {188, 186, 184, 180, 178, 182}; // the box (entire farfield surface loop)
+
+//Volume(1000) = {1000}; /// inside the sphere
+Volume(1001) = {1002, 1001}; /// FarField
 
 Mesh.Algorithm3D = 4;

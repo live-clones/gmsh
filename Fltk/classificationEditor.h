@@ -7,24 +7,26 @@
 #define _CLASSIFICATION_EDITOR_H_
 
 #include <vector>
-#include <FL/Fl_Toggle_Button.H>
-#include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Window.H>
+#include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Value_Input.H>
 #include "GModel.h"
 #include "MElement.h"
 #include "ColorTable.h"
 
-#define CLASSBUTTON_SELECT   0
-#define CLASSBUTTON_DEL      1
-#define CLASSBUTTON_ADD      2
-#define CLASSBUTTON_CLEAR    3
-#define CLASSBUTTON_OK       4
-#define CLASSBUTTON_COLOR    5
-#define CLASSBUTTON_SELFAC   6
-#define CLASSTOGBUTTON_HIDE  0
-#define CLASSTOGBUTTON_CLOS  1
-#define CLASSVALUE_ANGLE     0
+#define CLASS_BUTTON_SELECT_ELEMENTS       0
+#define CLASS_BUTTON_SELECT_ALL_ELEMENTS   1
+#define CLASS_BUTTON_DELETE_FROM_SELECTION 2
+#define CLASS_BUTTON_RESET_SELECTION       3
+#define CLASS_BUTTON_SELECT_SURFACES       4
+#define CLASS_BUTTON_SELECT_ALL_SURFACES   5
+#define CLASS_BUTTON_CLASSIFY              6
+
+#define CLASS_TOGGLE_HIDE             0
+#define CLASS_TOGGLE_BOUNDARY         1
+#define CLASS_TOGGLE_SHOW_ONLY_EDGES  2
+
+#define CLASS_VALUE_ANGLE             0
 
 class edge_angle {
  public :
@@ -40,21 +42,16 @@ class edge_angle {
 class classificationEditor {
  public:
   double op[10];
-  std::vector<MTriangle*> _elements;
-  std::set<GFace*> _faces;
-  Fl_Window *_window;
-  Fl_Button *_buttons[10];
-  Fl_Toggle_Button *_togbuttons[10];
-  Fl_Value_Input *_inputs[10];
-  GEdge *temporary;
-  GEdge *saved;
-  std::list<GFace *> tempFaces;
-  std::vector<edge_angle> edges_detected;
-  std::vector<edge_angle> edges_lonly;
+  std::vector<MTriangle*> elements;
+  std::set<GFace*> faces;
+  Fl_Window *window;
+  Fl_Button *buttons[10];
+  Fl_Check_Button *toggles[10];
+  Fl_Value_Input *inputs[10];
+  GEdge *selected, *saved;
+  std::vector<edge_angle> edges_detected, edges_lonly;
   classificationEditor();
-  void show(){ _window->show(); }
-  std::vector<MTriangle*> &getElements() { return _elements; }
-  Fl_Group *edge_detec, *face_color, *reverse_eng;
+  void show(){ window->show(); }
 };
 
 void mesh_classify_cb(Fl_Widget* w, void* data);
