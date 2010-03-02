@@ -748,10 +748,94 @@ void dgGroupCollection::buildGroupsOfElements(GModel *model, int dim, int order)
   }
 }
 
+class dgMiniInterface {
+  public:
+  int physicalTag;
+  std::vector<std::pair<int,int> > connectedElements; //Group, element
+  dgMiniInterface() {
+    physicalTag = -1;
+  }
+};
+
+static std::vector<dgMiniInterface> *_createMiniInterfaces(dgGroupCollection &groups) {
+  std::vector<GEntity*> entities;
+  groups.getModel()->getEntities(entities);
+  std::map<MVertex*, dgMiniInterface> vertexInterfaces;
+  std::map<MEdge, dgMiniInterface, Less_Edge> edgeInterfaces;
+  std::map<MFace, dgMiniInterface, Less_Face> faceInterfaces;
+  // 1) create the topological interfaces
+  int dim = groups.getElementGroup(0)->getElement(0)->getDim();
+  // 1a) get tag of existing interfaces
+  for(unsigned int i = 0; i < entities.size(); i++){
+    GEntity *entity = entities[i];
+    if(entity->dim() == dim-1){
+      for(unsigned int j = 0; j < entity->physicals.size(); j++){
+        int physicalTag = entity->physicals[j];
+        for (int k = 0; k < entity->getNumMeshElements(); k++) {
+          MElement *element = entity->getMeshElement(k);
+          switch(dim) {
+            case 1: vertexInterfaces[element->getVertex(0)].physicalTag = physicalTag; break;
+            case 2: edgeInterfaces[element->getEdge(0)].physicalTag = physicalTag; break;
+            case 3: faceInterfaces[element->getFace(0)].physicalTag = physicalTag; break;
+            default : throw;
+          }
+        }
+      }
+    }
+  }
+  // 1b) build new interfaces
+  for (size_t iGroup = 0; iGroup < groups.getNbElementGroups(); iGroup++) {
+    dgGroupOfElements &group = *groups.getElementGroup(iGroup);
+    for (size_t iElement = 0; iElement < group.getNbElements(); iElement++) {
+      MElement &element = *group.getElement(iElement);
+      switch(dim) {
+        case 1: 
+          for (int iVertex = 0; iVertex < element.getNumVertices(); iVertex++) {
+            vertexInterfaces[element.getVertex(iVertex)].connectedElements.push_back(std::pair<int,int>(iGroup,iElement));
+          }
+          break;
+        case 2:
+          for (int iEdge = 0; iEdge < element.getNumEdges(); iEdge++) {
+            edgeInterfaces[element.getEdge(iEdge)].connectedElements.push_back(std::pair<int,int>(iGroup,iElement));
+          }
+          break;
+        case 3:
+          for (int iFace = 0; iFace < element.getNumFaces(); iFace++) {
+            faceInterfaces[element.getFace(iFace)].connectedElements.push_back(std::pair<int,int>(iGroup,iElement));
+          }
+          break;
+        default : throw;
+      }
+    }
+  }
+  std::vector<dgMiniInterface> *interfaces = new std::vector<dgMiniInterface>;
+  switch(dim) {
+    case 1: 
+      interfaces->reserve(vertexInterfaces.size());
+      for(std::map<MVertex*, dgMiniInterface>::iterator it = vertexInterfaces.begin(); it != vertexInterfaces.end(); it++)
+        interfaces->push_back(it->second);
+      break;
+    case 2: 
+      interfaces->reserve(edgeInterfaces.size());
+      for(std::map<MEdge, dgMiniInterface, Less_Edge>::iterator it = edgeInterfaces.begin(); it != edgeInterfaces.end(); it++)
+        interfaces->push_back(it->second);
+      break;
+    case 3: 
+      interfaces->reserve(faceInterfaces.size());
+      for(std::map<MFace, dgMiniInterface, Less_Face>::iterator it = faceInterfaces.begin(); it != faceInterfaces.end(); it++)
+        interfaces->push_back(it->second);
+      break;
+  }
+}
+
+  // 2) group the faces by number of connected elements and by physical groups, destroy the actual faces
+  // 3) send vector of elements,closures_id to one unique dgGroupOfFaces constructor
+
 // Finally, group of interfaces are created
 //  -) Groups of faces internal to a given group
 //  -) Groups of faces between groups.
-void dgGroupCollection::buildGroupsOfInterfaces() {
+void dgGroupCollection::buildGroupsOfInterfaces()
+{
   if(_groupsOfInterfacesBuilt)
     return;
   _groupsOfInterfacesBuilt=true;
@@ -795,8 +879,7 @@ void dgGroupCollection::buildGroupsOfInterfaces() {
           }
         }
       }
-    }
-    else if(entity->dim() == dim){
+    } else if(entity->dim() == dim){
       for (int iel=0; iel<entity->getNumMeshElements(); iel++){
         MElement *el=entity->getMeshElement(iel);
         if( ! (el->getPartition()==Msg::GetCommRank()+1 || el->getPartition()==0) ){
@@ -872,6 +955,8 @@ void dgGroupCollection::buildGroupsOfInterfaces() {
       }
     }
   }
+
+/////////////////// GHOSTS
   //create ghost groups
   for(int i=0;i<Msg::GetCommSize();i++){
     for (std::map<int, std::vector<MElement *> >::iterator it = ghostElements[i].begin(); it !=ghostElements[i].end() ; ++it){
@@ -961,7 +1046,7 @@ void dgGroupCollection::buildGroupsOfInterfaces() {
 
 
 // Split the groups of elements depending on their local time step
-double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLaw *claw, dgDofContainer *solution){
+double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLaw *claw, dgDofContainer *solution) {
   Msg::Info("Splitting Groups for multirate time stepping");
   maxLevels--;// Number becomes maximum id
   int maxNumElems=getElementGroup(0)->getElement(0)->getGlobalNumber()+1;
@@ -1250,7 +1335,8 @@ dgGroupCollection::dgGroupCollection(GModel *model, int dimension, int order)
   buildGroupsOfElements(model,dimension,order);
 }
 
-dgGroupCollection::~dgGroupCollection() {
+dgGroupCollection::~dgGroupCollection() 
+{
   for (int i=0; i< _elementGroups.size(); i++)
     delete _elementGroups[i];
   for (int i=0; i< _faceGroups.size(); i++)
@@ -1261,15 +1347,17 @@ dgGroupCollection::~dgGroupCollection() {
     delete _ghostGroups[i];
 }
 
-void dgGroupCollection::find (MElement*e, int &ig, int &index){
-  for (ig=0;ig<_elementGroups.size();ig++){
+void dgGroupCollection::find (MElement*e, int &ig, int &index)
+{
+  for (ig=0;ig<_elementGroups.size();ig++) {
     index = _elementGroups[ig]->getIndexOfElement(e);
     if (index != -1)return;
   }
 }
 
 #include "LuaBindings.h"
-void dgGroupCollection::registerBindings(binding *b){
+void dgGroupCollection::registerBindings(binding *b)
+{
   classBinding *cb;
   methodBinding *cm;
   cb = b->addClass<dgGroupOfElements>("dgGroupOfElements");
