@@ -24,7 +24,7 @@ end
      Example of a lua program driving the DG code
 --]]
 
-order = 2
+order = 1
 print'*** Loading the mesh and the model ***'
 myModel   = GModel  ()
  myModel:load ('rect.geo')	
@@ -53,7 +53,7 @@ FS = functionLua(1, 'initial_condition', {'XYZ'}):getName()
 GC=dgGroupCollection(myModel,2,order)
 solTmp=dgDofContainer(GC,1)
 solTmp:L2Projection(FS)
-dt=GC:splitGroupsForMultirate(1,law,solTmp)
+dt=GC:splitGroupsForMultirate(20,law,solTmp)
 GC:buildGroupsOfInterfaces(myModel,2,order)
 solution=dgDofContainer(GC,1)
 solution:L2Projection(FS)
@@ -95,10 +95,10 @@ while time<0.1 do
     if (i % 10 == 0) then 
        print('*** ITER ***',i,time,norm2)
     end
-  --  if (i % 10 == 0) then 
+    if (i % 10 == 0) then 
   --     solution:exportMsh(string.format("output/rt-%06d", i)) 
-  --     solution2:exportMsh(string.format("outputMultirate/rt-%06d", i)) 
-  --  end
+       solution2:exportMsh(string.format("outputMultirate/rt-%06d", i)) 
+    end
     i=i+1
 end
 
