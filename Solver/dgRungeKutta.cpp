@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "dgRungeKutta.h"
 #include "dgConservationLaw.h"
 #include "dgDofContainer.h"
@@ -5,6 +6,7 @@
 #include "dgResidual.h"
 #include "dgGroupOfElements.h"
 #include <stdio.h>
+#include <algorithm>
 
 double dgRungeKutta::iterateEuler(const dgConservationLaw *claw, double dt, dgDofContainer *solution) {
   double A[] = {0};
@@ -145,7 +147,7 @@ double dgRungeKutta::nonDiagonalRK(const dgConservationLaw *claw,
   double dt, 
   dgDofContainer *solution, 
   int nStages, 
-  fullMatrix<double>&A, //                                     c | A
+  fullMatrix<double>&A, //                          c | A
   double *b, // Standard Butcher tableau notation :___|__
   double *c  //                                       |b^T  
   )
@@ -191,6 +193,7 @@ double dgRungeKutta::nonDiagonalRK(const dgConservationLaw *claw,
         iMassEl.mult(residuEl,KEl);
       }
     }
+    //Msg::Info("norm %d %0.16e",i,K[i]->norm());
     Unp.axpy(*K[i],dt*b[i]);
   }
   if (_limiter) _limiter->apply(&Unp);
@@ -202,184 +205,6 @@ double dgRungeKutta::nonDiagonalRK(const dgConservationLaw *claw,
   }
   delete []K;
   return solution->norm();
-}
-
-
-double dgRungeKutta::iterate43Multirate(const dgConservationLaw *claw, double dt,
-                                        dgDofContainer *solution)
-{
-  double A[4][4]={
-     {0, 0, 0, 0},
-     {1.0/2.0, 0, 0 ,0},
-     {-1.0/6.0, 2.0/3.0, 0, 0},
-     {1.0/3.0, -1.0/3.0, 1, 0}
-  };
-  double b[4]={1.0/6.0, 1.0/3.0, 1.0/3.0, 1.0/6.0};
-  double c[4]={0, 1.0/2.0, 1.0/2.0, 1};
-
-  dgGroupCollection *groups=solution->getGroups();
-  int dtMaxExponent=groups->getDtMaxExponent();
-  int nSmallSteps=1;
-  {
-    int i=0;
-    while(i<dtMaxExponent){
-      nSmallSteps*=2;
-      i++;
-    }
-  }
-
-  int nbFields = claw->getNbFields();
-  dgDofContainer **K;
-  K=new dgDofContainer*[4];
-  for(int i=0;i<4;i++){
-    K[i]=new dgDofContainer(groups,nbFields);
-    K[i]->scale(0.);
-  }
-  dgDofContainer Unp (groups,nbFields);
-  dgDofContainer tmp (groups,nbFields);
-  dgDofContainer resd(groups,nbFields);
-
-// axpy for each group to build the right input vector for the residual
-// At each stage, update the residual for a std::vector of groups, using residualForSomeGroups
-
-// K0 for everyone
-// K1 K2 K3 for the smallestDt group and its corresponding buffer
-// smallestDt can be updated for the first smallset time step
-// K4 for the smallest Dt and the buffer and K1 for the larger Dt
-// K0 for the smallest Dt, K5 for the buffer, and K2 for the larger Dt
-// K1 K2 K3 for the smallestDt and K6 K7 K8 for the buffer
-// K4 for the smallest Dt and K9 for the buffer, K3 for the larger Dt
-// update for everyone
-
-
-
-/*
-  for(int iStep=0;iStep<nSmallSteps;iStep++){
-    for(int iGroup=0; iGroup < groups->getNbElementGroups(); iGroup++) {
-      for(int iStage=0;iStage<4;iStage++){
-        dgGroupOfElements *group=groups->getElementGroup(iGroup);
-        int groupDtExponent=group->getMultirateExponent();
-      }
-      tmp.scale(0.0);
-      tmp.axpy(*solution);
-      for(int j=0;j<i;j++){
-        if(fabs(A(i,j))>1e-12){
-          tmp.axpy(*K[j],dt*A(i,j));
-        }
-      }
-      if (_limiter) _limiter->apply(&tmp);
-      dgAlgorithm::residual(*claw,*groups,tmp,resd);
-
-      // Multiply the spatial residual by the inverse of the mass matrix
-      int nbNodes = group->getNbNodes();
-      for(int j=0;j<group->getNbElements();j++) {
-        residuEl.setAsProxy(resd.getGroupProxy(k),j*nbFields,nbFields);
-        KEl.setAsProxy(K[i]->getGroupProxy(k),j*nbFields,nbFields);
-        iMassEl.setAsProxy(group->getInverseMassMatrix(),j*nbNodes,nbNodes);
-        iMassEl.mult(residuEl,KEl);
-      }
-      }
-      Unp.axpy(*K[i],dt*b[i]);
-    }
-  }
-  */
-/*
-  int nStages=10;
-  // Small step RK43
-  double _A1[10][10]={
-    {0,         0,         0,         0,         0,         0,         0,         0,         0,         0},
-    {1.0/4.0   ,0,         0,         0,         0,         0,         0,         0,         0,         0},
-    {-1.0/12.0, 1.0/3.0,   0,         0,         0,         0,         0,         0,         0,         0},
-    {1.0/6.0,   -1.0/6.0,  1.0/2.0,   0,         0,         0,         0,         0,         0,         0},
-    {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         0,         0,         0,         0,         0},
-    {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         0,         0,         0,         0,         0},
-    {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         1.0/4.0,   0,         0,         0,         0},
-    {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         -1.0/12.0, 1.0/3.0,   0,         0,         0},
-    {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         1.0/6.0,   -1.0/6.0,  1.0/2.0,   0,         0},
-    {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0, 0}
-  };
-  double b1[10]={1.0/12.0, 1.0/6.0, 1.0/6.0,1.0/12.0,0,1.0/12.0, 1.0/6.0, 1.0/6.0,1.0/12.0,0};
-  double c1[10]={0, 1.0/4.0, 1.0/4.0, 1.0/2.0, 1.0/2.0, 1.0/2.0, 3.0/4.0, 3.0/4.0, 1, 1 };
-
-  // Big step RK43
-  double _A2[10][10]={
-    {0,         0,         0,         0,         0,         0,         0,         0,         0,         0},
-    {1.0/4.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
-    {1.0/4.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
-    {1.0/2.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
-    {1.0/2.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
-    {-1.0/6.0,  0,         0,         0,         2.0/3.0,   0,         0,         0,         0,         0},
-    {1.0/12.0,  0,         0,         0,         1.0/6.0,   1.0/2.0,   0,         0,         0,         0},
-    {1.0/12.0,  0,         0,         0,         1.0/6.0,   1.0/2.0,   0,         0,         0,         0},
-    {1.0/3.0 ,  0,         0,         0,         -1.0/3.0,  1,         0,         0,         0,         0},
-    {1.0/3.0 ,  0,         0,         0,         -1.0/3.0,  1,         0,         0,         0,         0},
-  };
-  double b2[10]={1.0/6.0, 0 , 0 , 0 , 1.0/3.0,1.0/3.0, 0 , 0 , 0 , 1.0/6.0};
-  double c2[10]={0, 1.0/4.0, 1.0/4.0, 1.0/2.0, 1.0/2.0, 1.0/2.0, 3.0/4.0, 3.0/4.0, 1, 1 };
-  fullMatrix<double> A1(10,10);
-  fullMatrix<double> A2(10,10);
-  for(int i=0;i<10;i++){
-    for(int j=0;j<10;j++){
-      A1(i,j)=_A1[i][j];
-      A2(i,j)=_A2[i][j];
-    }
-  }
-
-
-  dgGroupCollection *groups=solution->getGroups();
-  fullMatrix<double> residuEl, KEl;
-  fullMatrix<double> iMassEl;
-
-  int nbFields = claw->getNbFields();
-
-  dgDofContainer **K;
-  K=new dgDofContainer*[nStages];
-  for(int i=0;i<nStages;i++){
-    K[i]=new dgDofContainer(groups,nbFields);
-    K[i]->scale(0.);
-  }
-  dgDofContainer Unp (groups,nbFields);
-  dgDofContainer tmp (groups,nbFields);
-  dgDofContainer resd(groups,nbFields);
-
-  Unp.scale(0.0);
-  Unp.axpy(*solution);
-  for(int i=0; i<nStages;i++){
-    tmp.scale(0.0);
-    tmp.axpy(*solution);
-    for(int j=0;j<i;j++){
-      if(fabs(A(i,j))>1e-12){
-        tmp.axpy(*K[j],dt*A(i,j));
-      }
-    }
-    if (_limiter) _limiter->apply(&tmp);
-    dgAlgorithm::residual(*claw,*groups,tmp,resd);
-
-    // Multiply the spatial residual by the inverse of the mass matrix
-    for(int k=0; k < groups->getNbElementGroups(); k++) {
-      dgGroupOfElements *group = groups->getElementGroup(k);
-      int nbNodes = group->getNbNodes();
-      for(int j=0;j<group->getNbElements();j++) {
-        residuEl.setAsProxy(resd.getGroupProxy(k),j*nbFields,nbFields);
-        KEl.setAsProxy(K[i]->getGroupProxy(k),j*nbFields,nbFields);
-        iMassEl.setAsProxy(group->getInverseMassMatrix(),j*nbNodes,nbNodes);
-        iMassEl.mult(residuEl,KEl);
-      }
-    }
-    Unp.axpy(*K[i],dt*b[i]);
-  }
-  if (_limiter) _limiter->apply(&Unp);
-  solution->scale(0.);
-  solution->axpy(Unp);
-
-  for(int i=0;i<nStages;i++){
-    delete K[i];
-  }
-  delete []K;
-  return solution->norm();
-*/
-
-  return 0.;
 }
 
 
@@ -415,9 +240,6 @@ void dgRungeKutta::registerBindings(binding *b) {
   cm = cb->addMethod("iterateRKFehlberg45",&dgRungeKutta::iterateRKFehlberg45);
   cm->setArgNames("law","dt","solution",NULL);
   cm->setDescription("update solution by doing a six stage fifth order Runge-Kutta-Fehlberg step of time step dt for the conservation law");
-  cm = cb->addMethod("iterate43Multirate",&dgRungeKutta::iterate43Multirate);
-  cm->setArgNames("law","dt","solution",NULL);
-  cm->setDescription("update solution by doing a multirate RK43 (from Schlegel et al. Journal of Computational and Applied Mathematics, 2009) step of base time step dt for the conservation law");
   cm = cb->addMethod("setLimiter",&dgRungeKutta::setLimiter);
   cm->setArgNames("limiter",NULL);
   cm->setDescription("if a limiter is set, it is applied after each RK stage");
@@ -427,6 +249,7 @@ dgRungeKuttaMultirate::dgRungeKuttaMultirate(dgGroupCollection* gc,dgConservatio
   _law=law;
   _residualVolume=new dgResidualVolume(*_law);
   _residualInterface=new dgResidualInterface(*_law);
+  _residualBoundary=new dgResidualBoundary(*_law);
   _K=new dgDofContainer*[10];
   for(int i=0;i<10;i++){
     _K[i]=new dgDofContainer(gc,_law->getNbFields());
@@ -434,6 +257,8 @@ dgRungeKuttaMultirate::dgRungeKuttaMultirate(dgGroupCollection* gc,dgConservatio
   }
   _currentInput=new dgDofContainer(gc,_law->getNbFields());
   _currentInput->setAll(0.0);
+  _residual=new dgDofContainer(gc,_law->getNbFields());
+  _residual->setAll(0.0);
   _minExponent=INT_MAX;
   _maxExponent=0;
   for(int iGroup=0;iGroup<gc->getNbElementGroups();iGroup++){
@@ -453,14 +278,17 @@ dgRungeKuttaMultirate::dgRungeKuttaMultirate(dgGroupCollection* gc,dgConservatio
       _bulkGroupsOfElements[ge->getMultirateExponent()].first.push_back(ge);
     }
   }
+//  std::vector<std::set<dgGroupOfFaces*> >bulkFacesSet;
+//  std::vector<std::set<dgGroupOfFaces*> >innerBufferFacesSet;
+//  std::vector<std::set<dgGroupOfFaces*> >outerBufferFacesSet;
+//  bulkFacesSet.resize(_maxExponent+1);
+//  innerBufferFacesSet.resize(_maxExponent+1);
+//  outerBufferFacesSet.resize(_maxExponent+1);
   for(int iGroup=0;iGroup<gc->getNbFaceGroups();iGroup++){
     dgGroupOfFaces *gf=gc->getFaceGroup(iGroup);
     const dgGroupOfElements *ge[2];
     ge[0]=&gf->getGroupLeft();
     ge[1]=&gf->getGroupRight();
-    if(ge[0]==ge[1]){
-      _bulkGroupsOfElements[ge[0]->getMultirateExponent()].second.push_back(gf);
-    }
     for(int i=0;i<2;i++){
       if(ge[i]->getIsInnerMultirateBuffer()){
         _innerBufferGroupsOfElements[ge[i]->getMultirateExponent()].second.push_back(gf);
@@ -472,15 +300,51 @@ dgRungeKuttaMultirate::dgRungeKuttaMultirate(dgGroupCollection* gc,dgConservatio
       }
     }
   }
+  for(int iGroup=0;iGroup<gc->getNbBoundaryGroups();iGroup++){
+    dgGroupOfFaces *gf=gc->getBoundaryGroup(iGroup);
+    const dgGroupOfElements *ge[1];
+    ge[0]=&gf->getGroupLeft();
+    //ge[1]=&gf->getGroupRight();
+    for(int i=0;i<1;i++){
+      if(ge[i]->getIsInnerMultirateBuffer()){
+        _innerBufferGroupsOfElements[ge[i]->getMultirateExponent()].second.push_back(gf);
+      }
+      else if(ge[i]->getIsOuterMultirateBuffer()){
+        _outerBufferGroupsOfElements[ge[i]->getMultirateExponent()].second.push_back(gf);
+      }else{
+        _bulkGroupsOfElements[ge[i]->getMultirateExponent()].second.push_back(gf);
+      }
+    }
+  }
+  // Removing duplicate entries
+  for(int iExp=0;iExp<=_maxExponent;iExp++){
+    std::vector<dgGroupOfFaces*>*v[3];
+    v[0]=&_innerBufferGroupsOfElements[iExp].second;
+    v[1]=&_outerBufferGroupsOfElements[iExp].second;
+    v[2]=&_bulkGroupsOfElements[iExp].second;
+    for(int i=0;i<3;i++){
+      sort(v[i]->begin(),v[i]->end());
+      v[i]->erase(unique(v[i]->begin(),v[i]->end()),v[i]->end());
+    }
+  }
 }
 dgRungeKuttaMultirate::~dgRungeKuttaMultirate(){
   for(int i=0;i>10;i++){
     delete _K[i];
   }
   delete []_K;
+  delete _residual;
+  delete _currentInput;
+  delete _residualVolume;
+  delete _residualInterface;
+  delete _residualBoundary;
 }
 
-void dgRungeKuttaMultirate::computeK(int iK,int exponent,bool isBuffer){
+void dgRungeKuttaMultirate::computeInputForK(int iK,int exponent,bool isBuffer){
+  if(exponent>_maxExponent){
+    return;
+  }
+  //Msg::Info("Input for K%d at level %d %s",iK,exponent,isBuffer?"Buffer":"Bulk");
   double localDt=_dt/pow(2.0,(double)exponent);
   double _A[4][4]={
      {0, 0, 0, 0},
@@ -514,8 +378,6 @@ void dgRungeKuttaMultirate::computeK(int iK,int exponent,bool isBuffer){
     {1.0/3.0 ,  0,         0,         0,         -1.0/3.0,  1,         0,         0,         0,         0},
     {1.0/3.0 ,  0,         0,         0,         -1.0/3.0,  1,         0,         0,         0,         0},
   };
-  if(exponent>_maxExponent)
-    return;
 //  Msg::Info("K%d, %d, %s",iK,exponent,isBuffer?"Buffer":"Bulk");
   // compute K[iK] for this exponent and buffer
   if(isBuffer){
@@ -527,9 +389,9 @@ void dgRungeKuttaMultirate::computeK(int iK,int exponent,bool isBuffer){
     _currentInput->axpy(gVo,*_solution,1.0);
     for(int i=0;i<iK;i++){
       if(_AInner[iK][i]!=0.0)
-        _currentInput->axpy(gVi,*_K[i],_AInner[iK][i]*localDt);
+        _currentInput->axpy(gVi,*_K[i],_AInner[iK][i]*localDt*2);
       if(_AOuter[iK][i]!=0.0)
-        _currentInput->axpy(gVo,*_K[i],_AOuter[iK][i]*localDt);
+        _currentInput->axpy(gVo,*_K[i],_AOuter[iK][i]*localDt*2);
     }
   }
   else{
@@ -537,47 +399,55 @@ void dgRungeKuttaMultirate::computeK(int iK,int exponent,bool isBuffer){
     _currentInput->scale(gV,0.0);
     _currentInput->axpy(gV,*_solution,1.0);
     for(int i=0;i<iK;i++){
-      if(_A[iK][i]!=0.0)
+      if(_A[iK][i]!=0.0){
         _currentInput->axpy(gV,*_K[i],_A[iK][i]*localDt);
+      }
     }
   }
-  computeResidual(exponent,isBuffer,_currentInput,_K[iK]);
-  /*
-  printf("%s%d\t",isBuffer?"B":"N",exponent);
-  for(int i=0;i<exponent;i++)
-    printf("    |");
-  printf(" K%d\n",iK);
-  */
+
   if(!isBuffer){
     switch(iK){
       case 0:
-        for(int i=0;i<4;i++){
-          computeK(i,exponent+1,true);
-        }
+        computeInputForK(0,exponent+1,true);
         break;
       case 1:
-        computeK(4,exponent+1,true);
+        computeInputForK(4,exponent+1,true);
         break;
       case 2:
-        for(int i=5;i<9;i++){
-          computeK(i,exponent+1,true);
-        }
+        computeInputForK(5,exponent+1,true);
         break;
       case 3:
-        computeK(9,exponent+1,true);
+        computeInputForK(9,exponent+1,true);
         break;
     }
   }
   else{
     if( (iK%5)<4 ){
-      computeK(iK%5,exponent,false);
+      computeInputForK(iK%5,exponent,false);
     }
   }
+  computeK(iK,exponent,isBuffer);
+//  Msg::Info("Multirate %d %0.16e",iK,_K[iK]->norm());
   if( (iK==3 && !isBuffer) || (iK==9 && isBuffer) ){
     updateSolution(exponent,isBuffer);
   }
+  if(!isBuffer){
+    switch(iK){
+      case 0:
+        for(int i=1;i<4;i++){
+          computeInputForK(i,exponent+1,true);
+        }
+        break;
+      case 2:
+        for(int i=6;i<9;i++){
+          computeInputForK(i,exponent+1,true);
+        }
+        break;
+    }
+  }
 }
 void dgRungeKuttaMultirate::updateSolution(int exponent,bool isBuffer){
+  //Msg::Info("Updating solution at level %d %s",exponent,isBuffer?"Buffer":"Bulk");
   double localDt=_dt/pow(2.0,(double)exponent);
   double b[4]={1.0/6.0, 1.0/3.0, 1.0/3.0, 1.0/6.0};
   double c[4]={0, 1.0/2.0, 1.0/2.0, 1};
@@ -590,9 +460,9 @@ void dgRungeKuttaMultirate::updateSolution(int exponent,bool isBuffer){
     std::vector<dgGroupOfElements *>&gVo=_outerBufferGroupsOfElements[exponent].first;
     for(int i=0;i<10;i++){
       if(bInner[i]!=0.0)
-        _solution->axpy(gVi,*_K[i],bInner[i]*localDt);
+        _solution->axpy(gVi,*_K[i],bInner[i]*localDt*2);
       if(bOuter[i]!=0.0)
-        _solution->axpy(gVi,*_K[i],bOuter[i]*localDt);
+        _solution->axpy(gVo,*_K[i],bOuter[i]*localDt*2);
     }
   }
   else{
@@ -603,55 +473,103 @@ void dgRungeKuttaMultirate::updateSolution(int exponent,bool isBuffer){
     }
   }
 }
-void dgRungeKuttaMultirate::computeResidual(int exponent,bool isBuffer,dgDofContainer *solution, dgDofContainer *residual){
+void dgRungeKuttaMultirate::computeK(int iK,int exponent,bool isBuffer){
+  //Msg::Info("Compute K%d at level %d %s",iK,exponent,isBuffer?"Buffer":"Bulk");
   if(isBuffer){
     std::vector<dgGroupOfElements *>&vei=_innerBufferGroupsOfElements[exponent].first;
     std::vector<dgGroupOfElements *>&veo=_outerBufferGroupsOfElements[exponent].first;
-    residual->scale(vei,0.0);
-    residual->scale(veo,0.0);
+    _residual->scale(vei,0.0);
+    _residual->scale(veo,0.0);
     for(int i=0;i<vei.size();i++){
-      _residualVolume->computeAndMap1Group(*vei[i], *solution, *residual);
+      _residualVolume->computeAndMap1Group(*vei[i], *_currentInput, *_residual);
     }
     for(int i=0;i<veo.size();i++){
-      _residualVolume->computeAndMap1Group(*veo[i], *solution, *residual);
+      _residualVolume->computeAndMap1Group(*veo[i], *_currentInput, *_residual);
     }
     std::vector<dgGroupOfFaces *>& vfi=_innerBufferGroupsOfElements[exponent].second;
     std::vector<dgGroupOfFaces *>& vfo=_outerBufferGroupsOfElements[exponent].second;
     std::set<dgGroupOfFaces *>gOFSet;
     gOFSet.insert(vfo.begin(),vfo.end());
+    gOFSet.insert(vfi.begin(),vfi.end());
     for(std::set<dgGroupOfFaces *>::iterator it=gOFSet.begin();it!=gOFSet.end();it++){
       dgGroupOfFaces *faces=*it;
-      const dgGroupOfElements *gL=&faces->getGroupLeft();
-      const dgGroupOfElements *gR=&faces->getGroupRight();
-      fullMatrix<double> solInterface(faces->getNbNodes(),faces->getNbElements()*2*_law->getNbFields());
-      fullMatrix<double> residuInterface(faces->getNbNodes(),faces->getNbElements()*2*_law->getNbFields());
-      faces->mapToInterface(_law->getNbFields(), solution->getGroupProxy(gL), solution->getGroupProxy(gR), solInterface);
-      _residualInterface->compute1Group(*faces,solInterface,solution->getGroupProxy(gL), solution->getGroupProxy(gR),residuInterface);
-      if(gL->getMultirateExponent()==exponent && gL->getIsMultirateBuffer())
-        faces->mapLeftFromInterface(_law->getNbFields(), residuInterface,residual->getGroupProxy(gL));
-      if(gL->getMultirateExponent()==exponent && gL->getIsMultirateBuffer())
-        faces->mapRightFromInterface(_law->getNbFields(), residuInterface,residual->getGroupProxy(gR));
+      if(faces->isBoundary()){
+        _residualBoundary->computeAndMap1Group(*faces,*_currentInput,*_residual);
+        //Msg::Info("Buffer face group %p is boundary in multirate",faces);
+      }
+      else{
+        const dgGroupOfElements *gL=&faces->getGroupLeft();
+        const dgGroupOfElements *gR=&faces->getGroupRight();
+        fullMatrix<double> solInterface(faces->getNbNodes(),faces->getNbElements()*2*_law->getNbFields());
+        fullMatrix<double> residuInterface(faces->getNbNodes(),faces->getNbElements()*2*_law->getNbFields());
+        faces->mapToInterface(_law->getNbFields(), _currentInput->getGroupProxy(gL), _currentInput->getGroupProxy(gR), solInterface);
+        _residualInterface->compute1Group(*faces,solInterface,_currentInput->getGroupProxy(gL), _currentInput->getGroupProxy(gR),residuInterface);
+        //Msg::Info("Buffer face group %p is mapped left or right in multirate",faces);
+        if(gL->getMultirateExponent()==exponent && gL->getIsMultirateBuffer())
+          faces->mapLeftFromInterface(_law->getNbFields(), residuInterface,_residual->getGroupProxy(gL));
+        if(gR->getMultirateExponent()==exponent && gR->getIsMultirateBuffer())
+          faces->mapRightFromInterface(_law->getNbFields(), residuInterface,_residual->getGroupProxy(gR));
+      }
+    }
+    fullMatrix<double> iMassEl, KEl,residuEl;
+    for(int iGroup=0;iGroup<vei.size();iGroup++){
+      dgGroupOfElements *group=vei[iGroup];
+      int nbNodes = group->getNbNodes();
+      for(int iElem=0;iElem<group->getNbElements();iElem++){
+        residuEl.setAsProxy(_residual->getGroupProxy(group),iElem*_law->getNbFields(),_law->getNbFields());
+        KEl.setAsProxy(_K[iK]->getGroupProxy(group),iElem*_law->getNbFields(),_law->getNbFields());
+        iMassEl.setAsProxy(group->getInverseMassMatrix(),iElem*nbNodes,nbNodes);
+        iMassEl.mult(residuEl,KEl);
+      }
+    }
+    for(int iGroup=0;iGroup<veo.size();iGroup++){
+      dgGroupOfElements *group=veo[iGroup];
+      int nbNodes = group->getNbNodes();
+      for(int iElem=0;iElem<group->getNbElements();iElem++){
+        residuEl.setAsProxy(_residual->getGroupProxy(group),iElem*_law->getNbFields(),_law->getNbFields());
+        KEl.setAsProxy(_K[iK]->getGroupProxy(group),iElem*_law->getNbFields(),_law->getNbFields());
+        iMassEl.setAsProxy(group->getInverseMassMatrix(),iElem*nbNodes,nbNodes);
+        iMassEl.mult(residuEl,KEl);
+      }
     }
   }
   else{
     std::vector<dgGroupOfElements *> &ve=_bulkGroupsOfElements[exponent].first;
-    residual->scale(ve,0.0);
+    _residual->scale(ve,0.0);
     for(int i=0;i<ve.size();i++){
-      _residualVolume->computeAndMap1Group(*ve[i], *solution, *residual);
+      _residualVolume->computeAndMap1Group(*ve[i], *_currentInput, *_residual);
     }
     std::vector<dgGroupOfFaces *> &vf=_bulkGroupsOfElements[exponent].second;
     for(int i=0;i<vf.size();i++){
       dgGroupOfFaces *faces=vf[i];
-      const dgGroupOfElements *gL=&faces->getGroupLeft();
-      const dgGroupOfElements *gR=&faces->getGroupRight();
-      fullMatrix<double> solInterface(faces->getNbNodes(),faces->getNbElements()*2*_law->getNbFields());
-      fullMatrix<double> residuInterface(faces->getNbNodes(),faces->getNbElements()*2*_law->getNbFields());
-      faces->mapToInterface(_law->getNbFields(), solution->getGroupProxy(gL), solution->getGroupProxy(gR), solInterface);
-      _residualInterface->compute1Group(*faces,solInterface,solution->getGroupProxy(gL), solution->getGroupProxy(gR),residuInterface);
-      if(gL->getMultirateExponent()==exponent && !gL->getIsMultirateBuffer())
-        faces->mapLeftFromInterface(_law->getNbFields(), residuInterface,residual->getGroupProxy(gL));
-      if(gL->getMultirateExponent()==exponent && !gL->getIsMultirateBuffer())
-        faces->mapRightFromInterface(_law->getNbFields(), residuInterface,residual->getGroupProxy(gR));
+      if(faces->isBoundary()){
+        _residualBoundary->computeAndMap1Group(*faces,*_currentInput,*_residual);
+      }
+      else{
+        const dgGroupOfElements *gL=&faces->getGroupLeft();
+        const dgGroupOfElements *gR=&faces->getGroupRight();
+        fullMatrix<double> solInterface(faces->getNbNodes(),faces->getNbElements()*2*_law->getNbFields());
+        fullMatrix<double> residuInterface(faces->getNbNodes(),faces->getNbElements()*2*_law->getNbFields());
+        faces->mapToInterface(_law->getNbFields(), _currentInput->getGroupProxy(gL), _currentInput->getGroupProxy(gR), solInterface);
+        _residualInterface->compute1Group(*faces,solInterface,_currentInput->getGroupProxy(gL), _currentInput->getGroupProxy(gR),residuInterface);
+        if(gL->getMultirateExponent()==exponent && !gL->getIsMultirateBuffer()){
+          faces->mapLeftFromInterface(_law->getNbFields(), residuInterface,_residual->getGroupProxy(gL));
+        }
+        if(gR->getMultirateExponent()==exponent && !gR->getIsMultirateBuffer()){
+          faces->mapRightFromInterface(_law->getNbFields(), residuInterface,_residual->getGroupProxy(gR));
+        }
+      }
+    }
+    fullMatrix<double> iMassEl, KEl,residuEl;
+    for(int iGroup=0;iGroup<ve.size();iGroup++){
+      dgGroupOfElements *group=ve[iGroup];
+      int nbNodes = group->getNbNodes();
+      for(int iElem=0;iElem<group->getNbElements();iElem++){
+        residuEl.setAsProxy(_residual->getGroupProxy(group),iElem*_law->getNbFields(),_law->getNbFields());
+        KEl.setAsProxy(_K[iK]->getGroupProxy(group),iElem*_law->getNbFields(),_law->getNbFields());
+        iMassEl.setAsProxy(group->getInverseMassMatrix(),iElem*nbNodes,nbNodes);
+        iMassEl.mult(residuEl,KEl);
+      }
     }
   }
 }
@@ -659,13 +577,10 @@ void dgRungeKuttaMultirate::computeResidual(int exponent,bool isBuffer,dgDofCont
 double dgRungeKuttaMultirate::iterate(double dt, dgDofContainer *solution){
   _solution=solution;
   _dt=dt;
-  _currentInput->scale(0.0);
-  _currentInput->axpy(*solution,1.0);
-  computeK(0,0,false);
-  computeK(1,0,false);
-  computeK(2,0,false);
-  computeK(3,0,false);
-  updateSolution(0,false);
+  computeInputForK(0,0,false);
+  computeInputForK(1,0,false);
+  computeInputForK(2,0,false);
+  computeInputForK(3,0,false);
   
   return solution->norm();
 }

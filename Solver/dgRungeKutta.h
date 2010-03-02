@@ -10,6 +10,7 @@ class dgGroupOfElements;
 class dgGroupOfFaces;
 class dgResidualVolume;
 class dgResidualInterface;
+class dgResidualBoundary;
 class binding;
 #include "fullMatrix.h"
 class dgRungeKutta {
@@ -25,7 +26,6 @@ class dgRungeKutta {
   double iterate44ThreeEight(const dgConservationLaw *claw, double dt, dgDofContainer *solution);
   double iterate43SchlegelJCAM2009(const dgConservationLaw *claw, double dt, dgDofContainer *solution);
   double iterateRKFehlberg45(const dgConservationLaw *claw, double dt, dgDofContainer *solution);
-  double iterate43Multirate(const dgConservationLaw *claw, double dt, dgDofContainer *solution);
   static void registerBindings (binding *b);
   dgRungeKutta();
 };
@@ -39,11 +39,14 @@ class dgRungeKuttaMultirate: public dgRungeKutta{
   dgDofContainer *_solution;
   dgDofContainer **_K;
   dgDofContainer *_currentInput;
+  dgDofContainer *_residual;
   dgResidualVolume *_residualVolume;
   dgResidualInterface *_residualInterface;
+  dgResidualBoundary *_residualBoundary;
   std::vector<std::pair<std::vector<dgGroupOfElements*>,std::vector<dgGroupOfFaces*> > >_bulkGroupsOfElements;// int is the multirateExponent
   std::vector<std::pair<std::vector<dgGroupOfElements*>,std::vector<dgGroupOfFaces*> > >_innerBufferGroupsOfElements;// int is the multirateExponent
   std::vector<std::pair<std::vector<dgGroupOfElements*>,std::vector<dgGroupOfFaces*> > >_outerBufferGroupsOfElements;// int is the multirateExponent
+  void computeInputForK(int iK,int exponent,bool isBuffer);
   void computeK(int iK,int exponent,bool isBuffer);
   void updateSolution(int exponent,bool isBuffer);
   void computeResidual(int exponent,bool isBuffer,dgDofContainer *solution, dgDofContainer *residual);

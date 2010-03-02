@@ -227,6 +227,17 @@ void dgResidualInterface::compute1Group ( //dofManager &dof, // the DOF manager 
 
 void dgResidualInterface::computeAndMap1Group (dgGroupOfFaces &faces, dgDofContainer &solution, dgDofContainer &residual)
 {
+/*  Msg::Info("Left and Right for %p : gL %p %s %s %d, gR %p %s %s %d",
+    &faces,
+    &faces.getGroupLeft(),
+    faces.getGroupLeft().getIsInnerMultirateBuffer()?"Inner":"",
+    faces.getGroupLeft().getIsOuterMultirateBuffer()?"Outer":"",
+    faces.getGroupLeft().getMultirateExponent(),
+    &faces.getGroupRight(),
+    faces.getGroupRight().getIsInnerMultirateBuffer()?"Inner":"",
+    faces.getGroupRight().getIsOuterMultirateBuffer()?"Outer":"",
+    faces.getGroupRight().getMultirateExponent()
+    );*/
   fullMatrix<double> solInterface(faces.getNbNodes(),faces.getNbElements()*2*_nbFields);
   fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements()*2*_nbFields);
   faces.mapToInterface(_nbFields, solution.getGroupProxy(&faces.getGroupLeft()), solution.getGroupProxy(&faces.getGroupRight()), solInterface);
@@ -337,9 +348,9 @@ void dgResidualBoundary::computeAndMap1Group(dgGroupOfFaces &faces, dgDofContain
   int _nbFields = _claw.getNbFields();
   fullMatrix<double> solInterface(faces.getNbNodes(),faces.getNbElements()*_nbFields);
   fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements()*_nbFields);
-  faces.mapToInterface(_nbFields, solution.getGroupProxy(&faces.getGroupLeft()), solution.getGroupProxy(&faces.getGroupRight()), solInterface);
+  faces.mapToInterface(_nbFields, solution.getGroupProxy(&faces.getGroupLeft()), solution.getGroupProxy(&faces.getGroupLeft()), solInterface);
   compute1Group(faces,solInterface,solution.getGroupProxy(&faces.getGroupLeft()),residuInterface);
-  faces.mapFromInterface(_nbFields, residuInterface, residual.getGroupProxy(&faces.getGroupLeft()), residual.getGroupProxy(&faces.getGroupRight()));
+  faces.mapFromInterface(_nbFields, residuInterface, residual.getGroupProxy(&faces.getGroupLeft()), residual.getGroupProxy(&faces.getGroupLeft()));
 }
 
 void dgResidual::compute(dgGroupCollection &groups, dgDofContainer &solution, dgDofContainer &residual)
@@ -349,8 +360,9 @@ void dgResidual::compute(dgGroupCollection &groups, dgDofContainer &solution, dg
   for (int i=0; i<groups.getNbElementGroups(); i++)
     residualVolume.computeAndMap1Group(*groups.getElementGroup(i), solution, residual);
   dgResidualInterface residualInterface(_claw);
-  for(size_t i=0;i<groups.getNbFaceGroups() ; i++)
+  for(size_t i=0;i<groups.getNbFaceGroups() ; i++){
     residualInterface.computeAndMap1Group(*groups.getFaceGroup(i), solution, residual);
+  }
   dgResidualBoundary residualBoundary(_claw);
   for(size_t i=0;i<groups.getNbBoundaryGroups() ; i++)
     residualBoundary.computeAndMap1Group(*groups.getBoundaryGroup(i), solution, residual);

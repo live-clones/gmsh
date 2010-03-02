@@ -22,6 +22,23 @@ class dgConservationLawAdvectionDiffusion::advection : public dataCacheDouble {
     }
   }
 };
+
+class dgConservationLawAdvectionDiffusion::maxConvectiveSpeed : public dataCacheDouble {
+  dataCacheDouble &v;
+  public:
+  maxConvectiveSpeed(std::string vFunctionName,dataCacheMap &cacheMap):
+    dataCacheDouble(cacheMap,1,1),
+    v(cacheMap.get(vFunctionName,this))
+  {
+  };
+  void _eval () {
+    int nQP = v().size1();
+    for(int i=0; i< nQP; i++) {
+      _value(i,0) = hypot(v(i,0),v(i,1));
+    }
+  }
+};
+
 class dgConservationLawAdvectionDiffusion::riemann : public dataCacheDouble {
   dataCacheDouble &normals, &solLeft, &solRight,&v;
   public:
@@ -67,6 +84,9 @@ dataCacheDouble *dgConservationLawAdvectionDiffusion::newConvectiveFlux( dataCac
   else
     return NULL;
 }
+dataCacheDouble *dgConservationLawAdvectionDiffusion::newMaxConvectiveSpeed( dataCacheMap &cacheMap) const {
+  return new maxConvectiveSpeed(_vFunctionName,cacheMap);
+}
 dataCacheDouble *dgConservationLawAdvectionDiffusion::newMaximumDiffusivity( dataCacheMap &cacheMap) const {
   if( !_nuFunctionName.empty())
     return &cacheMap.get(_nuFunctionName);
@@ -91,7 +111,6 @@ dgConservationLawAdvectionDiffusion::dgConservationLawAdvectionDiffusion(std::st
   _nuFunctionName = nuFunctionName;
   _nbf = 1;
 }
-
 #include "Bindings.h"
 void dgConservationLawAdvectionDiffusionRegisterBindings (binding *b){
   classBinding *cb = b->addClass<dgConservationLawAdvectionDiffusion>("dgConservationLawAdvectionDiffusion");

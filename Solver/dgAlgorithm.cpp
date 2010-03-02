@@ -88,6 +88,8 @@ void dgAlgorithm::computeElementaryTimeSteps ( //dofManager &dof, // the DOF man
   dataCacheMap cacheMap;
   cacheMap.setNbEvaluationPoints(group.getNbIntegrationPoints());
   dataCacheDouble &sol = cacheMap.provideData("Solution",1,nbFields);
+  dataCacheDouble &UVW = cacheMap.provideData("UVW",1,3);
+  UVW.set(group.getIntegrationPointsMatrix());
   dataCacheElement &cacheElement = cacheMap.getElement();
   // provided dataCache
   dataCacheDouble *maxConvectiveSpeed = claw.newMaxConvectiveSpeed(cacheMap);

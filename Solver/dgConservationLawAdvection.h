@@ -8,9 +8,11 @@ class dgConservationLawAdvectionDiffusion : public dgConservationLaw {
   class advection;
   class riemann;
   class diffusion;
+  class maxConvectiveSpeed;
   public:
   dataCacheDouble *newConvectiveFlux( dataCacheMap &cacheMap) const;
   dataCacheDouble *newMaximumDiffusivity( dataCacheMap &cacheMap) const;
+  dataCacheDouble *newMaxConvectiveSpeed( dataCacheMap &cacheMap) const;
   dataCacheDouble *newRiemannSolver( dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight) const;
   dataCacheDouble *newDiffusiveFlux( dataCacheMap &cacheMap) const;
   dgConservationLawAdvectionDiffusion(std::string vFunctionName, std::string nuFunctionName);

@@ -570,6 +570,17 @@ void dgGroupOfFaces::mapLeftFromInterface ( int nFields,
     fullMatrix<double> &vLeft
     )
 {
+  /*Msg::Info("Left for %p : gL %p %s %s %d, gR %p %s %s %d",
+    this,
+    &getGroupLeft(),
+    getGroupLeft().getIsInnerMultirateBuffer()?"Inner":"",
+    getGroupLeft().getIsOuterMultirateBuffer()?"Outer":"",
+    getGroupLeft().getMultirateExponent(),
+    &getGroupRight(),
+    getGroupRight().getIsInnerMultirateBuffer()?"Inner":"",
+    getGroupRight().getIsOuterMultirateBuffer()?"Outer":"",
+    getGroupRight().getMultirateExponent()
+    );*/
   for(int i=0; i<getNbElements(); i++) {
     const std::vector<int> &closureRight = getClosureRight(i);
     const std::vector<int> &closureLeft = getClosureLeft(i);
@@ -584,6 +595,19 @@ void dgGroupOfFaces::mapRightFromInterface ( int nFields,
     fullMatrix<double> &vRight
     )
 {
+  /*Msg::Info("Right for %p : gL %p %s %s %d, gR %p %s %s %d",
+    this,
+    &getGroupLeft(),
+    getGroupLeft().getIsInnerMultirateBuffer()?"Inner":"",
+    getGroupLeft().getIsOuterMultirateBuffer()?"Outer":"",
+    getGroupLeft().getMultirateExponent(),
+    &getGroupRight(),
+    getGroupRight().getIsInnerMultirateBuffer()?"Inner":"",
+    getGroupRight().getIsOuterMultirateBuffer()?"Outer":"",
+    getGroupRight().getMultirateExponent()
+    );*/
+  if(isBoundary())
+    return;
   for(int i=0; i<getNbElements(); i++) {
     const std::vector<int> &closureRight = getClosureRight(i);
     const std::vector<int> &closureLeft = getClosureLeft(i);
@@ -939,7 +963,7 @@ void dgGroupCollection::buildGroupsOfInterfaces() {
 // Split the groups of elements depending on their local time step
 double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLaw *claw, dgDofContainer *solution){
   Msg::Info("Splitting Groups for multirate time stepping");
-  maxLevels--;
+  maxLevels--;// Number becomes maximum id
   int maxNumElems=getElementGroup(0)->getElement(0)->getGlobalNumber()+1;
   std::vector<int>oldGroupIds;
   oldGroupIds.resize(maxNumElems);

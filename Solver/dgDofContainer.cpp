@@ -381,4 +381,6 @@ void dgDofContainer::registerBindings(binding *b){
   cm->setArgNames("filename", NULL);
   cm = cb->addMethod("exportGroupIdMsh",&dgDofContainer::exportGroupIdMsh);
   cm->setDescription("Export the group ids for gmsh visualization");
+  cm = cb->addMethod("norm",&dgDofContainer::norm);
+  cm->setDescription("Returns the norm of the vector");
 }
