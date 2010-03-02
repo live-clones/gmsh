@@ -1731,24 +1731,24 @@ StringXColor GeometryOptions_Color[] = {
 #define COLY  {217, 113, 38, 255}
 
 #define COL0  {255, 120, 0, 255}
-#define COL1  {255, 160, 0, 255}
-#define COL2  {255, 200, 0, 255}
-#define COL3  {255, 240, 0, 255}
-#define COL4  {228, 255, 0, 255}
-#define COL5  {188, 255, 0, 255}
-#define COL6  {148, 255, 0, 255}
-#define COL7  {108, 255, 0, 255}
-#define COL8  {68, 255, 0, 255}
-#define COL9  {0, 255, 52, 255}
-#define COL10 {0, 255, 132, 255}
-#define COL11 {0, 255, 192, 255}
-#define COL12 {0, 216, 255, 255}
-#define COL13 {0, 176, 255, 255}
-#define COL14 {0, 116, 255, 255}
-#define COL15 {0, 76, 255, 255}
-#define COL16 {24, 0, 255, 255}
-#define COL17 {84, 0, 255, 255}
-#define COL18 {104, 0, 255, 255}
+#define COL2  {255, 160, 0, 255}
+#define COL4  {255, 200, 0, 255}
+#define COL6  {255, 240, 0, 255}
+#define COL8  {228, 255, 0, 255}
+#define COL10  {188, 255, 0, 255}
+#define COL12  {148, 255, 0, 255}
+#define COL14  {108, 255, 0, 255}
+#define COL16  {68, 255, 0, 255}
+#define COL18  {0, 255, 52, 255}
+#define COL1 {0, 255, 132, 255}
+#define COL3 {0, 255, 192, 255}
+#define COL5 {0, 216, 255, 255}
+#define COL7 {0, 176, 255, 255}
+#define COL9 {0, 116, 255, 255}
+#define COL11 {0, 76, 255, 255}
+#define COL13 {24, 0, 255, 255}
+#define COL15 {84, 0, 255, 255}
+#define COL17 {104, 0, 255, 255}
 #define COL19 {184, 0, 255, 255}
 
 StringXColor MeshOptions_Color[] = {
