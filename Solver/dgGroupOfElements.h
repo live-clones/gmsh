@@ -201,13 +201,12 @@ public:
   inline double getInterfaceSurface (int iFace)const {return (*_interfaceSurface)(iFace,0);}
   const polynomialBasis * getPolynomialBasis() const {return _fsFace;}
   inline MElement* getFace (int iElement) const {return _faces[iElement];}  
-  // duplicate
 private:
-  void addFace(const MFace &topoFace, int iElLeft, int iElRight);
-  void addEdge(const MEdge &topoEdge, int iElLeft, int iElRight);
-  void addVertex(MVertex *topoVertex, int iElLeft, int iElRight);
+  void addFace(const MFace &topoFace, const std::vector<int> &iEls);
+  void addEdge(const MEdge &topoEdge, const std::vector<int> &iEls);
+  void addVertex(MVertex *topoVertex, const std::vector<int> &iEls);
 public:
-  //keep this outside the Algorithm because this is the only place where data overlap
+  // duplicate
   inline fullMatrix<double> &getNormals () const {return _connections[0]->getNormals();}
   void mapToInterface(int nFields, const fullMatrix<double> &vLeft, const fullMatrix<double> &vRight, fullMatrix<double> &v);
   void mapFromInterface(int nFields, const fullMatrix<double> &v, fullMatrix<double> &vLeft, fullMatrix<double> &vRight);

@@ -154,32 +154,26 @@ void dgGroupOfConnections::addElement(int iElement, int iClosure) {
 }
 
 
+void dgGroupOfFaces::addFace(const MFace &topoFace, const std::vector<int> &iEls){
+  if (iEls.size() != _connections.size())
+    throw;
 
-
-void dgGroupOfFaces::addFace(const MFace &topoFace, int iElLeft, int iElRight){
-  // compute the face element that correspond to the geometrical closure
-  // get the vertices of the face
   std::vector<MVertex*> vertices;
-  int closureId;
-  const MElement *el;
-  int ithFace, sign, rot;
-  if(iElRight>=0){
-    el = _connections[1]->getGroupOfElements().getElement(iElRight);
+  for (size_t i=0; i<iEls.size(); i++){
+    int closureId;
+    const MElement *el;
+    int ithFace, sign, rot;
+    el = _connections[i]->getGroupOfElements().getElement(iEls[i]);
     el->getFaceInfo(topoFace, ithFace, sign, rot);
-    closureId = _connections[1]->getFunctionSpace()->getFaceClosureId(ithFace,sign,rot);
-    _connections[1]->addElement(iElRight, closureId);
+    closureId = _connections[i]->getFunctionSpace()->getFaceClosureId(ithFace,sign,rot);
+    _connections[i]->addElement(iEls[i], closureId);
+    if (i==0) {
+      const std::vector<int> & geomClosure = el->getFunctionSpace()->getFaceClosure(closureId);
+      for (int j=0; j<geomClosure.size() ; j++)
+        vertices.push_back( const_cast<MElement*>(el)->getVertex(geomClosure[j]) );
+    }
   }
 
-  el = _connections[0]->getGroupOfElements().getElement(iElLeft);
-  el->getFaceInfo(topoFace, ithFace, sign, rot);
-  closureId = _connections[0]->getFunctionSpace()->getFaceClosureId(ithFace,sign,rot);
-  _connections[0]->addElement(iElLeft, closureId);
-
-  const std::vector<int> & geomClosure = el->getFunctionSpace()->getFaceClosure(closureId);
-  for (int j=0; j<geomClosure.size() ; j++)
-    vertices.push_back( const_cast<MElement*>(el)->getVertex(geomClosure[j]) );
-
-  // triangular face
   if (topoFace.getNumVertices() == 3){
     switch(vertices.size()){
     case 3  : _faces.push_back(new MTriangle   (vertices) ); break;
@@ -204,40 +198,42 @@ void dgGroupOfFaces::addFace(const MFace &topoFace, int iElLeft, int iElRight){
   }
 }
 
-void dgGroupOfFaces::addEdge(const MEdge &topoEdge, int iElLeft, int iElRight) {
+void dgGroupOfFaces::addEdge(const MEdge &topoEdge, const std::vector<int> &iEls) 
+{
+  if (iEls.size() != _connections.size() )
+    throw;
+
   std::vector<MVertex*> vertices;
-  const MElement *el ;
-  int closureId;
-  int ithFace, sign;
-  if(iElRight>=0) {
-    el = _connections[1]->getGroupOfElements().getElement(iElRight);
+  for (size_t i = 0; i<_connections.size(); i++) {
+    const MElement *el ;
+    int closureId;
+    int ithFace, sign;
+    el = _connections[i]->getGroupOfElements().getElement(iEls[i]);
     el->getEdgeInfo(topoEdge, ithFace, sign);
-    closureId = _connections[1]->getFunctionSpace()->getEdgeClosureId(ithFace,sign);
-    _connections[1]->addElement(iElRight, closureId);
+    closureId = _connections[i]->getFunctionSpace()->getEdgeClosureId(ithFace,sign);
+    _connections[i]->addElement(iEls[i], closureId);
+    if (i==0) {
+      const std::vector<int> & geomClosure = el->getFunctionSpace()->getEdgeClosure(closureId);
+      for (int j=0; j<geomClosure.size() ; j++)
+        vertices.push_back( const_cast<MElement*>(el)->getVertex(geomClosure[j]) );
+    }
   }
 
-  el = _connections[0]->getGroupOfElements().getElement(iElLeft);
-  el->getEdgeInfo(topoEdge, ithFace, sign);
-  closureId = _connections[0]->getFunctionSpace()->getEdgeClosureId(ithFace,sign);
-  _connections[0]->addElement(iElLeft, closureId);
-  const std::vector<int> & geomClosure = el->getFunctionSpace()->getEdgeClosure(closureId);
-  for (int j=0; j<geomClosure.size() ; j++)
-    vertices.push_back( const_cast<MElement*>(el)->getVertex(geomClosure[j]) );
-  switch(vertices.size())
-  {
+  switch(vertices.size()) {
     case 2  : _faces.push_back(new MLine (vertices) ); break;
     case 3  : _faces.push_back(new MLine3 (vertices) ); break;
     default : _faces.push_back(new MLineN (vertices) ); break;
   }
 }
 
-void dgGroupOfFaces::addVertex(MVertex *topoVertex, int iElLeft, int iElRight){
-  int ithVertex;
-  _connections[0]->getGroupOfElements().getElement(iElLeft)->getVertexInfo(topoVertex, ithVertex);
-  _connections[0]->addElement(iElLeft,ithVertex);
-  if(iElRight>=0){
-    _connections[1]->getGroupOfElements().getElement(iElRight)->getVertexInfo(topoVertex, ithVertex);
-    _connections[1]->addElement(iElRight, ithVertex);
+void dgGroupOfFaces::addVertex(MVertex *topoVertex, const std::vector<int> &iEls){
+  if (iEls.size() != _connections.size() )
+    throw;
+
+  for (size_t i=0; i<iEls.size(); i++) {
+    int ithVertex;
+    _connections[i]->getGroupOfElements().getElement(iEls[i])->getVertexInfo(topoVertex, ithVertex);
+    _connections[i]->addElement(iEls[i],ithVertex);
   }
   _faces.push_back(new MPoint(topoVertex) );
 }
@@ -290,12 +286,15 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string bo
     Msg::Warning ("empty boundary tag, group of boundary faces not created");
     return;
   }
+  std::vector<int> iEls(1);
   for(int i=0; i<elGroup.getNbElements(); i++){
     MElement &el = *elGroup.getElement(i);
     for (int j=0; j<el.getNumVertices(); j++){
       MVertex* vertex = el.getVertex(j);
-      if(boundaryVertices.find(vertex)!=boundaryVertices.end())
-        addVertex(vertex,i,-1);
+      if(boundaryVertices.find(vertex)!=boundaryVertices.end()){
+        iEls[0] = i;
+        addVertex(vertex,iEls);
+      }
     }
   }
   init(pOrder);
@@ -308,13 +307,16 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string bo
   if(boundaryTag==""){
     Msg::Warning ("empty boundary tag, group of boundary faces not created");
     return;
-  }
+ }
+ std::vector<int> iEls(1);
   for(int i=0; i<elGroup.getNbElements(); i++){
     MElement &el = *elGroup.getElement(i);
     for (int j=0; j<el.getNumEdges(); j++){
       MEdge edge = el.getEdge(j);
-      if(boundaryEdges.find(edge)!=boundaryEdges.end())
-        addEdge(edge,i,-1);
+      if(boundaryEdges.find(edge)!=boundaryEdges.end()){
+        iEls[0] = i;
+        addEdge(edge, iEls);
+      }
     }
   }
   init(pOrder);
@@ -326,12 +328,15 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string bo
   _boundaryTag=boundaryTag;
   if(boundaryTag=="")
     throw;
+  std::vector<int> iEls(1);
   for(int i=0; i<elGroup.getNbElements(); i++){
     MElement &el = *elGroup.getElement(i);
     for (int j=0; j<el.getNumFaces(); j++){
       MFace face = el.getFace(j);
-      if(boundaryFaces.find(face)!=boundaryFaces.end())
-        addFace(face,i,-1);
+      if(boundaryFaces.find(face)!=boundaryFaces.end()) {
+        iEls[0] = i;
+        addFace(face, iEls);
+      }
     }
   }
   init(pOrder);
@@ -348,6 +353,7 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, int pOrder, in
 {
   _connections.push_back(new dgGroupOfConnections(elGroup, *this, pOrder));
   _connections.push_back(new dgGroupOfConnections(elGroup, *this, pOrder));
+  std::vector<int> iEls(2);
   switch (_connections[0]->getGroupOfElements().getElement(0)->getDim()) {
     case 1 : {
       std::map<MVertex*,int> vertexMap;
@@ -358,7 +364,9 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, int pOrder, in
           if(vertexMap.find(vertex) == vertexMap.end()){
             vertexMap[vertex] = i;
           }else{
-	    addVertex(vertex,vertexMap[vertex],i);
+            iEls[0] = vertexMap[vertex];
+            iEls[1] = i;
+            addVertex(vertex,iEls);
           }
         }
       }
@@ -373,7 +381,9 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, int pOrder, in
           if(edgeMap.find(edge) == edgeMap.end()){
             edgeMap[edge] = i;
           }else{
-            addEdge(edge,edgeMap[edge],i);
+            iEls[0] = edgeMap[edge];
+            iEls[1] = i;
+            addEdge(edge,iEls);
           }
         }
       }
@@ -389,7 +399,9 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup, int pOrder, in
             if(faceMap.find(face) == faceMap.end()){
               faceMap[face] = i;
             }else{
-              addFace(face,faceMap[face],i);
+              iEls[0] = faceMap[face];
+              iEls[1] = i;
+              addFace(face,iEls);
             }
           }
         }
@@ -405,6 +417,7 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup1, const dgGroup
 {
   _connections.push_back(new dgGroupOfConnections(elGroup1, *this, pOrder));
   _connections.push_back(new dgGroupOfConnections(elGroup2, *this, pOrder));
+  std::vector<int> iEls(2);
   switch (_connections[0]->getGroupOfElements().getElement(0)->getDim()) {
     case 1 : {
       std::map<MVertex*,int> vertexMap1;
@@ -420,14 +433,16 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup1, const dgGroup
         }
       }
 
-      for(int i=0; i<elGroup2.getNbElements(); i++){
+      for(int i=0; i<elGroup2.getNbElements(); i++) {
         MElement &el = *elGroup2.getElement(i);
-        for (int j=0; j<el.getNumVertices(); j++){
+        for (int j=0; j<el.getNumVertices(); j++) {
           MVertex* vertex = el.getVertex(j);
-	  std::map<MVertex*,int>::iterator it = vertexMap1.find(vertex);
-	  if(it != vertexMap1.end()){
-	    addVertex(vertex,it->second,i);
-	  }
+          std::map<MVertex*,int>::iterator it = vertexMap1.find(vertex);
+          if(it != vertexMap1.end()) {
+            iEls[0] = it->second;
+            iEls[1] = i;
+            addVertex(vertex,iEls);
+          }
         }
       }      
     }
@@ -449,9 +464,11 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup1, const dgGroup
         MElement &el = *elGroup2.getElement(i);
         for (int j=0; j<el.getNumEdges(); j++){
           MEdge edge = el.getEdge(j);
-	  std::map<MEdge,int,Less_Edge>::iterator it = edgeMap.find(edge);
-	  if(it != edgeMap.end()){
-	    addEdge(edge,it->second,i);
+          std::map<MEdge,int,Less_Edge>::iterator it = edgeMap.find(edge);
+          if(it != edgeMap.end()){
+            iEls[0] = it->second;
+            iEls[1] = i;
+            addEdge(edge,iEls);
           }
         }
       }
@@ -477,9 +494,11 @@ dgGroupOfFaces::dgGroupOfFaces (const dgGroupOfElements &elGroup1, const dgGroup
         MElement &el = *elGroup2.getElement(i);
         for (int j=0; j<el.getNumFaces(); j++){
           MFace face = el.getFace(j);
-	  std::map<MFace,int,Less_Face>::iterator it = faceMap.find(face);
-	  if(it != faceMap.end()){
-	    addFace(face,it->second,i);
+          std::map<MFace,int,Less_Face>::iterator it = faceMap.find(face);
+          if(it != faceMap.end()){
+            iEls[0] = it->second;
+            iEls[1] = i;
+            addFace(face, iEls);
           }
         }
       }
