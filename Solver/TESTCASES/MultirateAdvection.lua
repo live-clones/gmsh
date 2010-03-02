@@ -24,7 +24,7 @@ end
      Example of a lua program driving the DG code
 --]]
 
-order = 1
+order = 2
 print'*** Loading the mesh and the model ***'
 myModel   = GModel  ()
  myModel:load ('rect.geo')	
@@ -53,7 +53,7 @@ FS = functionLua(1, 'initial_condition', {'XYZ'}):getName()
 GC=dgGroupCollection(myModel,2,order)
 solTmp=dgDofContainer(GC,1)
 solTmp:L2Projection(FS)
-dt=GC:splitGroupsForMultirate(10,law,solTmp)
+dt=GC:splitGroupsForMultirate(1,law,solTmp)
 GC:buildGroupsOfInterfaces(myModel,2,order)
 solution=dgDofContainer(GC,1)
 solution:L2Projection(FS)
@@ -87,7 +87,7 @@ time=0
 -- multirateRK:setLimiter(limiter)
 --for i=1,1000
 i=0
-while time<0.5 do
+while time<0.1 do
 --     norm1 = RK:iterate43SchlegelJCAM2009(law,dt,solution)
 -- TEST with Explicit Euler multirate !!!
     norm2 = multirateRK:iterate(dt,solution2)
@@ -95,10 +95,10 @@ while time<0.5 do
     if (i % 10 == 0) then 
        print('*** ITER ***',i,time,norm2)
     end
-    if (i % 10 == 0) then 
-       solution:exportMsh(string.format("output/rt-%06d", i)) 
-       solution2:exportMsh(string.format("outputMultirate/rt-%06d", i)) 
-    end
+  --  if (i % 10 == 0) then 
+  --     solution:exportMsh(string.format("output/rt-%06d", i)) 
+  --     solution2:exportMsh(string.format("outputMultirate/rt-%06d", i)) 
+  --  end
     i=i+1
 end
 
