@@ -8,8 +8,6 @@
 //
 //
 
-
-
 #include <string.h>
 #include "GmshConfig.h"
 #include "elasticitySolver.h"
@@ -248,7 +246,7 @@ void OctreeSolver::solve(){
   //_TagEnrichedVertex.clear();
   _EnrichComp.insert(0);
   _EnrichComp.insert(1);
-  _EnrichComp.insert(2);
+  //_EnrichComp.insert(2);
 
   _funcEnrichment = new FuncGradDisc(_ls,pModel);
 

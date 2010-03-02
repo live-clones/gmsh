@@ -49,11 +49,14 @@ class OctreeLSImage
 		std::vector< std::vector <int> > _ListElements;
 		// Mesh list of levelsetvalue
     std::vector< float > _ListLSValue;
+    // List of HangingNodes
+    std::map< int ,std::vector<int> > _HangingNodes;
  		// Number of box leafs
     int _LeafNumber;
 		// Count octree's leafs
 		void SetLeafNumber();
 		void FillMeshInfo(int & pas);
+		void FillHangingNodes();
 
 	public :
 
@@ -74,6 +77,8 @@ class OctreeLSImage
 		PView* CreateLSPView(GModel* m);
     int* GetSize(){return _ImageSize;}
 
+    std::vector< float >* getListLSValue(){return &_ListLSValue;}
+    std::map< int ,std::vector<int> >* getListHangingNodes(){return &_HangingNodes;}
 };
 
 
@@ -117,6 +122,7 @@ class Box{
 				// Recursive function to create the list of mesh elements in relation with the list of nodes
 				void SetElementNode(int pos,int iti){_ElementNodes[pos]=iti;}
 				void FillElementsNode(std::vector< std::vector<int> > &ListElements);
+				void FillHangingNodes(std::vector< std::vector<int> > &ListNodes, std::vector< std::vector<int> > &ListElements,std::map< int ,std::vector<int> > &HangingNodes);
   	};
 
 #endif

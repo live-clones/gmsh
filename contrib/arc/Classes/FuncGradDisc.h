@@ -63,13 +63,13 @@ class FuncGradDisc :  public  simpleFunction<double> {
         double f = 0;
         for (int i = 0;i<numV;i++)
         {
-           std::cout<<"val[i] :" << val[i] << "\n";
-           std::cout<<"ls(i) :" << (*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z()) << "\n";
+           //std::cout<<"val[i] :" << val[i] << "\n";
+           //std::cout<<"ls(i) :" << (*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z()) << "\n";
            f = f + std::abs((*_ls)(e->getVertex(i)->x(),e->getVertex(i)->y(),e->getVertex(i)->z()))*val[i];
         }
            f = f - std::abs((*_ls)(x,y,z));
 
-        std::cout<<"val f :" << f << "\n";
+        //std::cout<<"val f :" << f << "\n";
         return f;
 
 
