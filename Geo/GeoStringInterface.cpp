@@ -314,6 +314,7 @@ void add_physical(std::string type, List_T *list, std::string fileName)
 void add_compound(std::string type, List_T *list, std::string fileName)
 {
   std::ostringstream sstream;
+  if(SplitFileName(fileName)[2] != ".geo") sstream << "CreateTopology;\n";
   sstream << "Compound " << type << "(" << NEWREG() << ") = {" 
           << list2string(list) << "};";
   add_infile(sstream.str(), fileName);
