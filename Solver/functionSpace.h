@@ -73,12 +73,13 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
   {
     keys.push_back(Dof(ver->getNum(), _iField));
   }
- 
+
  public:
   ScalarLagrangeFunctionSpace(int i=0):_iField(i) {}
   virtual int getId(void) const {return _iField;};
   virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)
   {
+    if (ele->getParent()) ele = ele->getParent();
     int ndofs= ele->getNumVertices();
     int curpos=vals.size();
     vals.resize(curpos+ndofs);
@@ -87,6 +88,7 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
 
   virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
   {
+    if (ele->getParent()) ele = ele->getParent();
     int ndofs= ele->getNumVertices();
     grads.reserve(grads.size()+ndofs);
     double gradsuvw[256][3];
@@ -105,6 +107,7 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
 
   virtual void gradfuvw(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
   {
+    if (ele->getParent()) ele = ele->getParent();
     int ndofs= ele->getNumVertices();
     grads.reserve(grads.size()+ndofs);
     double gradsuvw[256][3];
@@ -117,10 +120,11 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
                       ));
   }
 
-  virtual int getNumKeys(MElement *ele) {return ele->getNumVertices();}
+  virtual int getNumKeys(MElement *ele) {if (ele->getParent()) ele = ele->getParent();return ele->getNumVertices();}
 
   virtual void getKeys(MElement *ele, std::vector<Dof> &keys) // appends ...
   {
+      if (ele->getParent()) ele = ele->getParent();
       int ndofs= ele->getNumVertices();
       keys.reserve(keys.size()+ndofs);
       for (int i=0;i<ndofs;++i)
@@ -138,20 +142,20 @@ protected :
   std::vector<T> multipliers;
   std::vector<int> comp;
   FunctionSpace<double> *ScalarFS;
-public : 
+public :
   template <class T2> ScalarToAnyFunctionSpace(const T2 &SFS, const T& mult, int comp_): ScalarFS(new T2(SFS))
   {
     multipliers.push_back(mult);comp.push_back(comp_);
   }
 
-  template <class T2> ScalarToAnyFunctionSpace(const T2 &SFS, const T& mult1, int comp1_, 
-                          const T& mult2, int comp2_): ScalarFS(new T2(SFS)) 
+  template <class T2> ScalarToAnyFunctionSpace(const T2 &SFS, const T& mult1, int comp1_,
+                          const T& mult2, int comp2_): ScalarFS(new T2(SFS))
   {
     multipliers.push_back(mult1);multipliers.push_back(mult2);comp.push_back(comp1_);comp.push_back(comp2_);
   }
 
-  template <class T2> ScalarToAnyFunctionSpace(const T2 &SFS, const T& mult1, int comp1_, 
-                          const T& mult2, int comp2_,const T& mult3, int comp3_): ScalarFS(new T2(SFS)) 
+  template <class T2> ScalarToAnyFunctionSpace(const T2 &SFS, const T& mult1, int comp1_,
+                          const T& mult2, int comp2_,const T& mult3, int comp3_): ScalarFS(new T2(SFS))
   {
     multipliers.push_back(mult1);multipliers.push_back(mult2);multipliers.push_back(mult3);
     comp.push_back(comp1_);comp.push_back(comp2_);comp.push_back(comp3_);
@@ -172,7 +176,7 @@ public :
       for (int i=0;i<nbdofs;++i) vals.push_back(multipliers[j]*valsd[i]);
     }
   }
-  
+
   virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
   {
     std::vector<SVector3> gradsd;
@@ -191,8 +195,8 @@ public :
       }
     }
   }
-  
-  
+
+
   virtual void gradfuvw(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
   {
     std::vector<SVector3> gradsd;
@@ -213,7 +217,7 @@ public :
   }
 
   virtual int getNumKeys(MElement *ele) {return ScalarFS->getNumKeys(ele)*comp.size();}
-  
+
   virtual void getKeys(MElement *ele, std::vector<Dof> &keys)
   {
 
@@ -267,31 +271,31 @@ class VectorLagrangeFunctionSpace : public ScalarToAnyFunctionSpace<SVector3>
 template<class T>
 class CompositeFunctionSpace : public FunctionSpace<T>
 {
- public: 
+ public:
   typedef typename TensorialTraits<T>::ValType ValType;
   typedef typename TensorialTraits<T>::GradType GradType;
   typedef typename std::vector<FunctionSpace<T>* >::iterator iterFS;
- protected: 
- 
+ protected:
+
   std::vector<FunctionSpace<T>* > _spaces;
  public:
-  template <class T1> CompositeFunctionSpace(const T1& t) { _spaces.push_back(new T1(t));} 
-  template <class T1, class T2> CompositeFunctionSpace(const T1& t1, const T2& t2)   
+  template <class T1> CompositeFunctionSpace(const T1& t) { _spaces.push_back(new T1(t));}
+  template <class T1, class T2> CompositeFunctionSpace(T1& t1, T2& t2)
+  { _spaces.push_back(&t1);
+    _spaces.push_back(&t2); }
+  template <class T1, class T2, class T3> CompositeFunctionSpace(const T1& t1, const T2& t2, const T3& t3)
   { _spaces.push_back(new T1(t1));
-    _spaces.push_back(new T2(t2)); } 
-  template <class T1, class T2, class T3> CompositeFunctionSpace(const T1& t1, const T2& t2, const T3& t3)   
+    _spaces.push_back(new T2(t2));
+    _spaces.push_back(new T3(t3)); }
+  template <class T1, class T2, class T3, class T4> CompositeFunctionSpace(const T1& t1, const T2& t2, const T3& t3, const T4& t4)
   { _spaces.push_back(new T1(t1));
-    _spaces.push_back(new T2(t2)); 
-    _spaces.push_back(new T3(t3)); } 
-  template <class T1, class T2, class T3, class T4> CompositeFunctionSpace(const T1& t1, const T2& t2, const T3& t3, const T4& t4)   
-  { _spaces.push_back(new T1(t1));
-    _spaces.push_back(new T2(t2)); 
-    _spaces.push_back(new T3(t3)); 
-    _spaces.push_back(new T4(t4)); } 
-  template <class T1> void insert(const T1& t)   
+    _spaces.push_back(new T2(t2));
+    _spaces.push_back(new T3(t3));
+    _spaces.push_back(new T4(t4)); }
+  template <class T1> void insert(const T1& t)
   {
     _spaces.push_back(new T(t));
-  } 
+  }
   ~CompositeFunctionSpace(void)
   {
     for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
@@ -330,32 +334,40 @@ class xFemFunctionSpace : public FunctionSpace<T>
  public:
   typedef typename TensorialTraits<T>::ValType ValType;
   typedef typename TensorialTraits<T>::GradType GradType;
- private:
+ protected:
   FunctionSpace<T>* _spacebase;
-//  Function<double>* enrichment;
+  //Function<double>* _enrichment;
  public:
-
-  virtual void f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals);
-  virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads);
-  virtual int getNumKeys(MElement *ele);
-  virtual void getKeys(MElement *ele, std::vector<Dof> &keys);
+  xFemFunctionSpace(FunctionSpace<T>* spacebase) : _spacebase(spacebase) {};
+  virtual void f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals){};
+  virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads){};
+  virtual int getNumKeys(MElement *ele){};
+  virtual void getKeys(MElement *ele, std::vector<Dof> &keys){};
 };
 
 
 template<class T,class F>
 class FilteredFunctionSpace : public FunctionSpace<T>
 {
+
+ public :
+
   typedef typename TensorialTraits<T>::ValType ValType;
   typedef typename TensorialTraits<T>::GradType GradType;
- private:
+
+ protected:
+
   FunctionSpace<T>* _spacebase;
-  F &_filter;
-  
+  F *_filter;
+
  public:
-  virtual void f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals);
-  virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads);
-  virtual int getNumKeys(MElement *ele);
-  virtual void getKeys(MElement *ele, std::vector<Dof> &keys);
+  FilteredFunctionSpace<T,F>(FunctionSpace<T>* spacebase,F * filter) : _spacebase(spacebase),_filter(filter)
+  {};
+  virtual void f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals){};;
+  virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads){};;
+  virtual int getNumKeys(MElement *ele){};;
+  virtual void getKeys(MElement *ele, std::vector<Dof> &keys){};
 };
+
 
 #endif
