@@ -214,6 +214,7 @@ class IsotropicElasticTerm : public BilinearTerm<SVector3,SVector3>
       for (int i = 0; i < npts; i++)
       {
         const double u = GP[i].pt[0]; const double v = GP[i].pt[1]; const double w = GP[i].pt[2];
+	if (ele->getParent()) ele=ele->getParent();
         const double weight = GP[i].weight; const double detJ = ele->getJacobian(u, v, w, jac);
         std::vector<TensorialTraits<SVector3>::GradType> Grads;
         BilinearTerm<SVector3,SVector3>::space1.gradf(ele,u, v, w, Grads); // a optimiser ??
