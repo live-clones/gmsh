@@ -20,6 +20,7 @@
 #include "dgConservationLawWaveEquation.h"
 #include "dgConservationLawMaxwell.h"
 #include "dgRungeKutta.h"
+#include "dgRungeKuttaMultirate.h"
 #include "dgSystemOfEquations.h"
 #include "dgLimiter.h"
 #include "Bindings.h"
@@ -343,7 +344,7 @@ binding::binding(){
   dgPerfectGasLaw2dRegisterBindings(this);
   dgResidual::registerBindings(this);
   dgRungeKutta::registerBindings(this);
-  dgRungeKuttaMultirate::registerBindings(this);
+  dgRungeKuttaMultirate43::registerBindings(this);
   dgSlopeLimiterRegisterBindings(this);
   dgSystemOfEquations::registerBindings(this);
   fullMatrix<double>::registerBindings(this);
