@@ -190,28 +190,26 @@ static void update_edges_cb(Fl_Widget *w, void *data)
  
   if(!e->selected) return;
 
-  printf("%d inside edges detected\n", (int)e->edges_detected.size());
-
   for(unsigned int i = 0; i < e->selected->lines.size(); i++)
     delete e->selected->lines[i];
   e->selected->lines.clear();
 
   for(unsigned int i = 0; i < e->edges_detected.size(); i++){
     edge_angle ea =  e->edges_detected[i];
-    // printf("angle = %g\n",ea.angle);
     if(ea.angle <= e->inputs[CLASS_VALUE_ANGLE]->value() / 180 * M_PI)
       break;
     e->selected->lines.push_back(new MLine(ea.v1, ea.v2));
   } 
 
-  printf("%d boundary edges detected\n", (int)e->edges_lonly.size());
   if(e->toggles[CLASS_TOGGLE_BOUNDARY]->value()){
     for(unsigned int i = 0 ; i < e->edges_lonly.size(); i++){
       edge_angle ea = e->edges_lonly[i];
       e->selected->lines.push_back(new MLine(ea.v1, ea.v2));
-      //check if closed loop
     } 
   }
+
+  Msg::Info("Edges: %d inside, %d boundary, %d selected", (int)e->edges_detected.size(),
+            (int)e->edges_lonly.size(), (int)e->selected->lines.size());
   
   CTX::instance()->mesh.changed = ENT_ALL;
   drawContext::global()->draw();   
@@ -517,13 +515,9 @@ static void class_classify_cb(Fl_Widget *w, void *data)
   // splitted if composed of several open or closed edges
   for (std::map<std::pair<int, int>, GEdge*>::iterator it = newEdges.begin();
        it != newEdges.end() ; ++it){
-    GEdge *ge = it->second;
     std::list<MLine*> segments;
-    for (unsigned int i = 0; i < ge->lines.size(); i++){
-      segments.push_back(ge->lines[i]);
-    }
-    
-    // for each actual GEdge
+    for(unsigned int i = 0; i < it->second->lines.size(); i++)
+      segments.push_back(it->second->lines[i]);
     while (!segments.empty()) {
       std::vector<MLine*> myLines;
       std::list<MLine*>::iterator it = segments.begin();
@@ -532,18 +526,13 @@ static void class_classify_cb(Fl_Widget *w, void *data)
       myLines.push_back(*it);
       segments.erase(it);
       it++;
-      // printf("***candidate mline %d %d of size %d \n", 
-      //        vB->getNum(), vE->getNum(), segments.size());
-      
-      for (int i=0; i<2; i++) {
+      for (int i = 0; i < 2; i++) {
         for (std::list<MLine*>::iterator it = segments.begin();
              it != segments.end(); ++it){ 
           MVertex *v1 = (*it)->getVertex(0);
           MVertex *v2 = (*it)->getVertex(1);
-          // printf("mline %d %d \n", v1->getNum(), v2->getNum());
           std::list<MLine*>::iterator itp;
           if (v1 == vE){
-            // printf("->push back this mline \n");
             myLines.push_back(*it);
             itp = it;
             it++;
@@ -552,7 +541,6 @@ static void class_classify_cb(Fl_Widget *w, void *data)
             i = -1;
           }
           else if ( v2 == vE){
-            //printf("->push back this mline \n");
             myLines.push_back(*it);
             itp = it;
             it++;
@@ -564,21 +552,17 @@ static void class_classify_cb(Fl_Widget *w, void *data)
         }
         if (vB == vE) break;
         if (segments.empty()) break;
-        // printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
         MVertex *temp = vB;
         vB = vE;
         vE = temp;
-        // printf("not found VB=%d vE=%d\n", vB->getNum(), vE->getNum());
       }
       GEdge *newGe = new discreteEdge
         (GModel::current(), GModel::current()->maxEdgeNum() + 1, 0, 0);
       newGe->lines.insert(newGe->lines.end(), myLines.begin(), myLines.end());
       GModel::current()->add(newGe);
-    } //end for each actual GEdge
+    }
   }
 
-  //printf("end new edge with tag \n");
-  
   for (std::map<std::pair<int, int>, GEdge*>::iterator it = newEdges.begin();
        it != newEdges.end(); ++it){
     GEdge *ge = it->second;
