@@ -648,22 +648,27 @@ int Chain::writeChainMSH(const std::string &name)
 void Chain::createPView()
 {  
   std::vector<MElement*> elements;
-  std::map<int, std::vector<double> > data;
-  
+  std::map<int, std::vector<double> > data;  
+  MElementFactory factory;
+
   for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
     Cell* cell = (*cit).first;
     int coeff = (*cit).second;
 
-    MElement *e = cell->getImageMElement();
-    cell->setDeleteImage(false);
-    
-    if(cell->getDim() > 0 && coeff < 0) e->revert(); // flip orientation
-    for(int i = 0; i < abs(coeff); i++) elements.push_back(e);
-    
+    MElement* e = cell->getImageMElement();
+    std::vector<MVertex*> v;
+    for(int i = 0; i < e->getNumVertices(); i++){
+      v.push_back(e->getVertex(i));
+    }
+    MElement* ne = factory.create(e->getTypeForMSH(), v);
+
+    if(cell->getDim() > 0 && coeff < 0) ne->revert(); // flip orientation
+    for(int i = 0; i < abs(coeff); i++) elements.push_back(ne);
+
     std::vector<double> coeffs (1,abs(coeff));
-    data[e->getNum()] = coeffs;
+    data[ne->getNum()] = coeffs;
   }
-  
+
   int max[4];
   for(int i = 0; i < 4; i++) max[i] = _model->getMaxElementaryNumber(i);
   int entityNum = *std::max_element(max,max+4) + 1;
