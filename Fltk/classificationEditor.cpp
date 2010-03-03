@@ -195,10 +195,10 @@ static void update_edges_cb(Fl_Widget *w, void *data)
     delete e->selected->lines[i];
   e->selected->lines.clear();
 
+  double threshold = e->inputs[CLASS_VALUE_ANGLE]->value() / 180. * M_PI;
   for(unsigned int i = 0; i < e->edges_detected.size(); i++){
-    edge_angle ea =  e->edges_detected[i];
-    if(ea.angle <= e->inputs[CLASS_VALUE_ANGLE]->value() / 180 * M_PI)
-      break;
+    edge_angle ea = e->edges_detected[i];
+    if(ea.angle <= threshold) break;
     e->selected->lines.push_back(new MLine(ea.v1, ea.v2));
   } 
 
@@ -315,6 +315,8 @@ static void show_only_edges_cb(Fl_Widget *w, void *data)
   static int old_se = (int)opt_mesh_surfaces_edges(0, GMSH_GET, 0.);
   if(e->toggles[CLASS_TOGGLE_SHOW_ONLY_EDGES]->value()){
     opt_mesh_lines(0, GMSH_SET | GMSH_GUI, 1.);
+    old_sf = (int)opt_mesh_surfaces_faces(0, GMSH_GET, 0.);
+    old_se = (int)opt_mesh_surfaces_edges(0, GMSH_GET, 0.);
     opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI, 0.);
     opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI, 0.);
   }

@@ -7,12 +7,12 @@
 #define _CLASSIFICATION_EDITOR_H_
 
 #include <vector>
+#include <set>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Value_Input.H>
 #include "GModel.h"
 #include "MElement.h"
-#include "ColorTable.h"
 
 #define CLASS_BUTTON_SELECT_ELEMENTS       0
 #define CLASS_BUTTON_SELECT_ALL_ELEMENTS   1
@@ -22,18 +22,18 @@
 #define CLASS_BUTTON_SELECT_ALL_SURFACES   5
 #define CLASS_BUTTON_CLASSIFY              6
 
-#define CLASS_TOGGLE_HIDE             0
-#define CLASS_TOGGLE_BOUNDARY         1
-#define CLASS_TOGGLE_SHOW_ONLY_EDGES  2
+#define CLASS_TOGGLE_HIDE                  0
+#define CLASS_TOGGLE_BOUNDARY              1
+#define CLASS_TOGGLE_SHOW_ONLY_EDGES       2
 
-#define CLASS_VALUE_ANGLE             0
+#define CLASS_VALUE_ANGLE                  0
 
 class edge_angle {
  public :
   MVertex *v1, *v2;
   double angle;
-  edge_angle ( MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2);
-  bool operator < (const edge_angle & other) const
+  edge_angle(MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2);
+  bool operator < (const edge_angle &other) const
   {
     return other.angle < angle;
   }  
@@ -41,14 +41,13 @@ class edge_angle {
 
 class classificationEditor {
  public:
-  double op[10];
   std::vector<MTriangle*> elements;
   std::set<GFace*> faces;
   Fl_Window *window;
   Fl_Button *buttons[10];
   Fl_Check_Button *toggles[10];
   Fl_Value_Input *inputs[10];
-  GEdge *selected, *saved;
+  GEdge *selected;
   std::vector<edge_angle> edges_detected, edges_lonly;
   classificationEditor();
   void show(){ window->show(); }
