@@ -311,8 +311,8 @@ static void class_hide_cb(Fl_Widget *w, void *data)
 static void show_only_edges_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor*)data;
-  static int old_sf = opt_mesh_surfaces_faces(0, GMSH_GET, 0.);
-  static int old_se = opt_mesh_surfaces_edges(0, GMSH_GET, 0.);
+  static int old_sf = (int)opt_mesh_surfaces_faces(0, GMSH_GET, 0.);
+  static int old_se = (int)opt_mesh_surfaces_edges(0, GMSH_GET, 0.);
   if(e->toggles[CLASS_TOGGLE_SHOW_ONLY_EDGES]->value()){
     opt_mesh_lines(0, GMSH_SET | GMSH_GUI, 1.);
     opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI, 0.);
@@ -354,12 +354,10 @@ static void class_delete_edge_cb(Fl_Widget *w, void *data)
       for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++)
         FlGui::instance()->selectedElements[i]->setVisibility(1);
     }
-    // ok, we compute edges !
     if(ib == 'e') {
       GModel::current()->setSelection(0);
       break;
     }
-    // do nothing
     if(ib == 'q') {
       GModel::current()->setSelection(0);
       ele.clear();
@@ -617,7 +615,8 @@ classificationEditor::classificationEditor() : selected(0)
     buttons[CLASS_BUTTON_SELECT_ALL_ELEMENTS]->callback(class_select_all_elements_cb, this);
     
     toggles[CLASS_TOGGLE_HIDE] = new Fl_Check_Button
-      (x + 1.5 * BBB + WB, y, width - 1.5 * BBB - x - 2 * WB, BH, "Hide unselected elements");
+      ((int)(x + 1.5 * BBB + WB), y, (int)(width - 1.5 * BBB - x - 2 * WB), BH, 
+       "Hide unselected elements");
     toggles[CLASS_TOGGLE_HIDE]->type(FL_TOGGLE_BUTTON);
     toggles[CLASS_TOGGLE_HIDE]->callback(class_hide_cb, this);
     
@@ -648,7 +647,8 @@ classificationEditor::classificationEditor() : selected(0)
     inputs[CLASS_VALUE_ANGLE]->callback(update_edges_cb, this);
 
     toggles[CLASS_TOGGLE_SHOW_ONLY_EDGES] = new Fl_Check_Button
-      (x + 1.5 * BBB + WB, y, width - x - 1.5 * BBB - 2 * WB, BH, "Show only edges");
+      ((int)(x + 1.5 * BBB + WB), y, (int)(width - x - 1.5 * BBB - 2 * WB), BH,
+       "Show only edges");
     toggles[CLASS_TOGGLE_SHOW_ONLY_EDGES]->type(FL_TOGGLE_BUTTON);
     toggles[CLASS_TOGGLE_SHOW_ONLY_EDGES]->callback(show_only_edges_cb, this);
     
@@ -660,12 +660,12 @@ classificationEditor::classificationEditor() : selected(0)
     
     y += BH;
     buttons[CLASS_BUTTON_DELETE_FROM_SELECTION] = new Fl_Button 
-      (x, y, 1.5 * BBB, BH, "Delete edges from selection");
+      (x, y, (int)(1.5 * BBB), BH, "Delete edges from selection");
     buttons[CLASS_BUTTON_DELETE_FROM_SELECTION]->callback(class_delete_edge_cb, this);    
     buttons[CLASS_BUTTON_DELETE_FROM_SELECTION]->deactivate();
     
     buttons[CLASS_BUTTON_RESET_SELECTION] = new Fl_Button 
-      (x + 1.5 * BBB + WB, y, BBB, BH, "Reset selection");
+      (x + (int)(1.5 * BBB + WB), y, BBB, BH, "Reset selection");
     buttons[CLASS_BUTTON_RESET_SELECTION]->callback(class_reset_selection_cb, this);    
     buttons[CLASS_BUTTON_RESET_SELECTION]->deactivate();
     
@@ -695,7 +695,7 @@ classificationEditor::classificationEditor() : selected(0)
     buttons[CLASS_BUTTON_SELECT_ALL_SURFACES]->callback(class_select_all_surfaces_cb, this);
 
     buttons[CLASS_BUTTON_CLASSIFY] = new Fl_Return_Button 
-      (x + 1.5 * BBB + WB, y, BBB, BH, "Reclassify");
+      ((int)(x + 1.5 * BBB + WB), y, BBB, BH, "Reclassify");
     buttons[CLASS_BUTTON_CLASSIFY]->callback(class_classify_cb, this);
     buttons[CLASS_BUTTON_CLASSIFY]->deactivate();
 

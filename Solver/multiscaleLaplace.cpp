@@ -258,7 +258,7 @@ static void recur_compute_centers_ (double R, double a1, double a2,
 	rad = std::max(rad,sqrt ((c.x() - p.x())*(c.x() - p.x())+
 				 (c.y() - p.y())*(c.y() - p.y())));
       }
-      if (std::abs(rad/root->radius) < 0.9 && abs(rad) < 0.99){
+      if (std::abs(rad/root->radius) < 0.9 && std::abs(rad) < 0.99){
 	centers.push_back(std::make_pair(c,zero));  
       }
     }

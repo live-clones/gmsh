@@ -161,7 +161,7 @@ static int getAspectRatio(std::vector<MElement *> &elements,
     }
     tot_length += iLength;
   }
-  int AR = 1.0;
+  int AR = 1;
   if (boundaries.size() > 0){
     tot_length /= boundaries.size();
     AR = (int) ceil(2*3.14*area3D/(tot_length*tot_length));
