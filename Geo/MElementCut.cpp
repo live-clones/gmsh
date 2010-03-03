@@ -384,21 +384,6 @@ void MLineBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 
 //---------------------------------------- CutMesh ----------------------------
 
-static bool equalV(MVertex *v, const DI_Point *p)
-{
-  return (fabs(v->x() - p->x()) < 1.e-15 &&
-          fabs(v->y() - p->y()) < 1.e-15 &&
-          fabs(v->z() - p->z()) < 1.e-15);
-}
-
-static int getElementVertexNum(DI_Point *p, MElement *e)
-{
-  for(int i = 0; i < e->getNumVertices(); i++)
-    if(equalV(e->getVertex(i), p))
-      return e->getVertex(i)->getNum();
-  return -1;
-}
-
 static void assignPhysicals(GModel *GM, std::vector<int> &gePhysicals, int reg, int dim,
                             std::map<int, std::map<int, std::string> > physicals[4])
 {
@@ -565,6 +550,22 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
 }
 
 #if defined(HAVE_DINTEGRATION)
+
+static bool equalV(MVertex *v, const DI_Point *p)
+{
+  return (fabs(v->x() - p->x()) < 1.e-15 &&
+          fabs(v->y() - p->y()) < 1.e-15 &&
+          fabs(v->z() - p->z()) < 1.e-15);
+}
+
+static int getElementVertexNum(DI_Point *p, MElement *e)
+{
+  for(int i = 0; i < e->getNumVertices(); i++)
+    if(equalV(e->getVertex(i), p))
+      return e->getVertex(i)->getNum();
+  return -1;
+}
+
 
 typedef std::set<MVertex*, MVertexLessThanLexicographic> newVerticesContainer ;
 
