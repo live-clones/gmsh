@@ -1,36 +1,8 @@
-model = GModel  ()
-model:load ('edge.geo')
--- model:mesh (1)
--- model:save ('edge.msh')
-model:load ('edge.msh')
-dg = dgSystemOfEquations (model)
-dg:setOrder(1)
 
--- conservation law
--- advection speed
-v=fullMatrix(3,1);
-v:set(0,0,0.15)
-v:set(1,0,0)
-v:set(2,0,0)
--- diffusivity
-nu=fullMatrix(1,1);
-nu:set(0,0,0)
+--[[ 
+     Function for initial conditions
+--]]
 
-law = dgConservationLawAdvectionDiffusion(functionConstant(v):getName(), '') 
---FunctionConstant(nu):getName())
-
-dg:setConservationLaw(law)
-
--- boundary condition
-outside=fullMatrix(1,1)
-outside:set(0,0,0.)
-bndcondition=law:newOutsideValueBoundary(functionConstant(outside):getName())
-law:addBoundaryCondition('Left',bndcondition)
-law:addBoundaryCondition('Right',bndcondition)
-
-dg:setup()
-
--- initial condition
 function initial_condition( xyz , f )
   for i=0,xyz:size1()-1 do
     x = xyz:get(i,0)
@@ -43,20 +15,60 @@ function initial_condition( xyz , f )
     end	
   end
 end
-dg:L2Projection(functionLua(1,'initial_condition',{'XYZ'}):getName())
-print'***exporting init solution ***'
 
-dg:exportSolution('output/Adv1D_unlimited')
-dg:limitSolution()
-dg:exportSolution('output/Adv1D-00000')
+--[[ 
+     Example of a lua program driving the DG code
+--]]
 
+model = GModel  ()
+model:load ('edge.msh')
+order=1
+dimension=1
 
--- main loop
+-- conservation law
+-- advection speed
+v=fullMatrix(3,1);
+v:set(0,0,0.15)
+v:set(1,0,0)
+v:set(2,0,0)
+-- diffusivity
+nu=fullMatrix(1,1);
+nu:set(0,0,0)
+
+law = dgConservationLawAdvectionDiffusion(functionConstant(v):getName(), '') 
+
+-- boundary condition
+outside=fullMatrix(1,1)
+outside:set(0,0,0.)
+bndcondition=law:newOutsideValueBoundary(functionConstant(outside):getName())
+law:addBoundaryCondition('Left',bndcondition)
+law:addBoundaryCondition('Right',bndcondition)
+
+groups = dgGroupCollection(model, dimension, order)
+groups:buildGroupsOfInterfaces()
+
+-- build Runge Kutta and limiter
+rk=dgRungeKutta()
+limiter = dgSlopeLimiter(law)
+rk:setLimiter(limiter) 
+
+-- build solution vector
+FS = functionLua(1, 'initial_condition', {'XYZ'}):getName()
+solution = dgDofContainer(groups, law:getNbFields())
+solution:L2Projection(FS)
+
+solution:exportMsh('output/init')
+limiter:apply(solution)
+solution:exportMsh('output/init_limit')
+
+print'*** solve ***'
+local x = os.clock()
 n = 5
+dt = 0.03
 for i=1,100*n do
-  norm = dg:RK44_limiter(0.03)
+  norm = rk:iterate44(law,dt,solution)
   if (i % n == 0) then 
-    print('iter',i,norm)
-    dg:exportSolution(string.format("output/Adv1D-%05d", i)) 
+    print('|ITER|',i,'|NORM|',norm,'|DT|',dt,'|CPU|',os.clock() - x)
+    solution:exportMsh(string.format('output/solution-%06d',i))
   end
 end
