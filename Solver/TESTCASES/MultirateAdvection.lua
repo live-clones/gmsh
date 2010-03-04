@@ -20,6 +20,13 @@ function velocity( XYZ, FCT )
   end
 end
 
+function toIntegrate( XYZ, FCT )
+  for i=0,XYZ:size1()-1 do
+    X = XYZ:get(i,0)
+    Y = XYZ:get(i,1)
+    FCT:set(i,0,X*X) 
+  end
+end
 --[[ 
      Example of a lua program driving the DG code
 --]]
@@ -87,6 +94,7 @@ time=0
 -- multirateRK:setLimiter(limiter)
 --for i=1,1000
 i=0
+integrator=dgFunctionIntegrator(functionLua(1, 'toIntegrate', {'XYZ'}):getName())
 while time<0.2 do
 --     norm1 = RK:iterate43SchlegelJCAM2009(law,dt,solution)
 -- TEST with Explicit Euler multirate !!!
@@ -94,6 +102,9 @@ while time<0.2 do
     time=time+dt
     if (i % 10 == 0) then 
        print('*** ITER ***',i,time,norm2)
+       v=fullMatrix(1,1);
+       integrator:compute(solution2,v);
+       print('integral : ',v:get(0,0,0))
     end
     if (i % 10 == 0) then 
   --     solution:exportMsh(string.format("output/rt-%06d", i)) 

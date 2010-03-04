@@ -23,6 +23,7 @@
 #include "dgRungeKuttaMultirate.h"
 #include "dgSystemOfEquations.h"
 #include "dgLimiter.h"
+#include "dgFunctionIntegrator.h"
 #include "Bindings.h"
 #include "dgResidual.h"
 
@@ -347,6 +348,7 @@ binding::binding(){
   dgRungeKuttaMultirate43::registerBindings(this);
   dgSlopeLimiterRegisterBindings(this);
   dgSystemOfEquations::registerBindings(this);
+  dgFunctionIntegrator::registerBindings(this);
   fullMatrix<double>::registerBindings(this);
   function::registerBindings(this);
   function::registerDefaultFunctions();
