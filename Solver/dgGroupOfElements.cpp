@@ -1170,7 +1170,7 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLa
           int gId=interface.connectedElements[iConn].first;
           int eId=interface.connectedElements[iConn].second;
           int newGroupId=newGroupIds[gId][eId];
-          if(newGroupId >= _lowerLevelGroupIdStart && newGroupId<_lowerLevelGroupIdEnd){
+          if(newGroupId>=0 /*newGroupId >= _lowerLevelGroupIdStart && newGroupId<_lowerLevelGroupIdEnd*/){
             toAdd=true;
             continue;
           }
@@ -1246,6 +1246,9 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLa
             currentNewGroupId++;
           }
 
+          for(int i=0;i<forInnerBuffer.size();i++){
+            newGroupIds[it->first][forInnerBuffer[i]]=currentNewGroupId;
+          }
           if(!forInnerBuffer.empty()){
             std::vector<MElement*>forInnerBufferV;
             for(int i=0;i<forInnerBuffer.size();i++){
