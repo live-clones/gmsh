@@ -60,10 +60,17 @@ std::string GVertex::getAdditionalInfoString()
   return sstream.str();
 }
 
-void GVertex::writeGEO(FILE *fp)
+void GVertex::writeGEO(FILE *fp, const std::string &meshSizeParameter)
 {
-  fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g, %.16g};\n",
-          tag(), x(), y(), z(), prescribedMeshSizeAtVertex());
+  if(meshSizeParameter.size())
+    fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g, %s};\n",
+            tag(), x(), y(), z(), meshSizeParameter.c_str());
+  else if(prescribedMeshSizeAtVertex() != MAX_LC)
+    fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g, %.16g};\n",
+            tag(), x(), y(), z(), prescribedMeshSizeAtVertex());
+  else
+    fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g};\n",
+            tag(), x(), y(), z());
 }
 
 unsigned int GVertex::getNumMeshElements()

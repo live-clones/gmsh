@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <sstream>
 #include <stdlib.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -31,7 +32,7 @@ void GModel::_createGEOInternals()
 
 void GModel::_deleteGEOInternals()
 {
-  delete _geo_internals;
+  if(_geo_internals) delete _geo_internals;
   _geo_internals = 0;
 }
 
@@ -43,6 +44,7 @@ int GModel::readGEO(const std::string &name)
 
 int GModel::exportDiscreteGEOInternals()
 {
+  if(_geo_internals) delete _geo_internals;
   _geo_internals = new GEO_Internals;
 
   for(viter it = firstVertex(); it != lastVertex(); it++){
@@ -329,8 +331,21 @@ int GModel::writeGEO(const std::string &name, bool printLabels)
 {
   FILE *fp = fopen(name.c_str(), "w");
 
-  for(viter it = firstVertex(); it != lastVertex(); it++)
-    (*it)->writeGEO(fp);
+  std::map<double, std::string> meshSizeParameters;
+  int cpt = 0;
+  for(viter it = firstVertex(); it != lastVertex(); it++){
+    double val = (*it)->prescribedMeshSizeAtVertex();
+    if(meshSizeParameters.find(val) == meshSizeParameters.end()){
+      std::ostringstream paramName;
+      paramName << "cl" << ++cpt;
+      fprintf(fp, "%s = %.16g;\n", paramName.str().c_str(),val);
+      meshSizeParameters.insert(std::make_pair(val, paramName.str()));
+    }
+  }
+  for(viter it = firstVertex(); it != lastVertex(); it++){
+    double val = (*it)->prescribedMeshSizeAtVertex();
+    (*it)->writeGEO(fp, meshSizeParameters[val]);
+  }
   for(eiter it = firstEdge(); it != lastEdge(); it++)
     (*it)->writeGEO(fp);
   for(fiter it = firstFace(); it != lastFace(); it++)

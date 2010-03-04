@@ -66,7 +66,7 @@ class GVertex : public GEntity
   virtual std::string getAdditionalInfoString();
 
   // export in GEO format
-  virtual void writeGEO(FILE *fp);
+  virtual void writeGEO(FILE *fp, const std::string &meshSizeParameter="");
 
   // get number of elements in the mesh
   unsigned int getNumMeshElements();
