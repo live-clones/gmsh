@@ -195,8 +195,8 @@ int ParseFile(std::string fileName, bool close, bool warnIfMissing)
   gmsh_yyviewindex = old_yyviewindex;
 
 #if defined(HAVE_FLTK) && defined(HAVE_POST)
-  if(FlGui::available() && numViewsBefore != (int)PView::list.size())
-    FlGui::instance()->updateViews();
+  if(FlGui::available())
+    FlGui::instance()->updateViews(numViewsBefore != (int)PView::list.size());
 #endif
 
   return 1;
@@ -383,8 +383,8 @@ int MergeFile(std::string fileName, bool warnIfMissing)
   CTX::instance()->mesh.changed = ENT_ALL;
 
 #if defined(HAVE_FLTK) && defined(HAVE_POST)
-  if(FlGui::available() && numViewsBefore != (int)PView::list.size())
-    FlGui::instance()->updateViews();
+  if(FlGui::available())
+    FlGui::instance()->updateViews(numViewsBefore != (int)PView::list.size());
 #endif
 
   if(!status) Msg::Error("Error loading '%s'", fileName.c_str());

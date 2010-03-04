@@ -230,10 +230,20 @@ void status_play_manual(int time, int step)
   if(busy) return;
   busy = true;
   if(time) {
-    for(unsigned int i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_timestep(i, GMSH_SET | GMSH_GUI,
-                          opt_view_timestep(i, GMSH_GET, 0) + step);
+    for(unsigned int i = 0; i < PView::list.size(); i++){
+      if(opt_view_visible(i, GMSH_GET, 0)){
+        // skip any empty steps (useful when merging only some steps)
+        int newStep = (int)opt_view_timestep(i, GMSH_GET, 0) + step;
+        int totalSteps = (int)opt_view_nb_timestep(i, GMSH_GET, 0);
+        while(newStep < totalSteps){
+          if(PView::list[i]->getData()->hasTimeStep(newStep))
+            break;
+          else
+            newStep += step;
+        }
+        opt_view_timestep(i, GMSH_SET | GMSH_GUI, newStep);
+      }
+    }
   }
   else { // hide all views except view_in_cycle
     if(step > 0) {

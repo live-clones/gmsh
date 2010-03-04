@@ -315,7 +315,7 @@ void dgDofContainer::exportMsh(const std::string name)
     fprintf(f,"1\n");
     fprintf(f,"%d\n", _mshStep); // should print actual time here
     fprintf(f,"%d\n", Msg::GetCommSize() > 1 ? 4 : 3);
-    fprintf(f,"%d\n 1\n %d\n", 0/*_mshStep*/, COUNT);
+    fprintf(f,"%d\n 1\n %d\n", _mshStep, COUNT);
     if(Msg::GetCommSize() > 1) fprintf(f,"%d\n", Msg::GetCommRank());
     for (int i=0;i < _groups.getNbElementGroups()  ;i++){
       dgGroupOfElements *group = _groups.getElementGroup(i);

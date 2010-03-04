@@ -654,17 +654,19 @@ void FlGui::setGraphicTitle(std::string title)
   }
 }
 
-void FlGui::updateViews()
+void FlGui::updateViews(bool numberOfViewsHasChanged)
 {
   for(unsigned int i = 0; i < graph.size(); i++)
     graph[i]->checkAnimButtons();
-  if(menu->module->value() == 3)
-    menu->setContext(menu_post, 0);
-  options->resetBrowser();
-  options->resetExternalViewList();
-  fields->loadFieldViewList();
-  plugins->resetViewBrowser();
-  clipping->resetBrowser();
+  if(numberOfViewsHasChanged){
+    if(menu->module->value() == 3)
+      menu->setContext(menu_post, 0);
+    options->resetBrowser();
+    options->resetExternalViewList();
+    fields->loadFieldViewList();
+    plugins->resetViewBrowser();
+    clipping->resetBrowser();
+  }
 }
 
 void FlGui::updateFields()

@@ -226,8 +226,7 @@ void ConnectionManager::run(std::string args)
       {
         int n = PView::list.size();
         PView::fillVertexArray(this, length, message, swap);
-        if(n != (int)PView::list.size())
-          FlGui::instance()->updateViews();
+        FlGui::instance()->updateViews(n != (int)PView::list.size());
         drawContext::global()->draw();
       }
       break;

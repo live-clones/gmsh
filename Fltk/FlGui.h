@@ -89,7 +89,7 @@ class FlGui{
   // set the title of the graphic windows
   void setGraphicTitle(std::string title);
   // update the GUI when views get added or deleted
-  void updateViews();
+  void updateViews(bool numberOfViewsHasChanged=true);
   // update the GUI when fields change
   void updateFields();
   // reset the visibility window
