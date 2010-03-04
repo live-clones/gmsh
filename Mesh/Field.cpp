@@ -1065,12 +1065,19 @@ class PostViewField : public Field
   bool crop_negative_values;
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
-    // FIXME: should test unique view num instead, but that would be slower
+    // we should maybe test the unique view num instead, but that
+    // would be slower
     if(view_index < 0 || view_index >= (int)PView::list.size())
       return MAX_LC;
+    PView *v = PView::list[view_index];
+    if(v->getData()->hasModel(GModel::current())){
+      Msg::Error("Cannot use view based on current model for background mesh");
+      Msg::Error("Use a list-based view (.pos file) instead?");
+      return MAX_LC;
+    }
     if(update_needed){
       if(octree) delete octree;
-      octree = new OctreePost(PView::list[view_index]);
+      octree = new OctreePost(v);
       update_needed = false;
     }
     double l = 0.;
@@ -1096,8 +1103,7 @@ class PostViewField : public Field
     crop_negative_values = true;
     options["CropNegativeValues"] = new FieldOptionBool
       (crop_negative_values, "return LC_MAX instead of a negative value (this "
-       "option is needed for backward compatibility with the BackgroundMesh option",
-       &update_needed);
+       "option is needed for backward compatibility with the BackgroundMesh option");
   }
   ~PostViewField()
   {
