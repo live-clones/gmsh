@@ -489,7 +489,8 @@ bool PViewDataGModel::skipElement(int step, int ent, int ele, bool checkVisibili
 
 bool PViewDataGModel::hasTimeStep(int step)
 {
-  if(step < getNumTimeSteps() && _steps[step]->getNumData()) return true;
+  if(step >= 0 && step < getNumTimeSteps() && _steps[step]->getNumData())
+    return true;
   return false;
 }
 

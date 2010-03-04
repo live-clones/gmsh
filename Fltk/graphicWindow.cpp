@@ -235,11 +235,13 @@ void status_play_manual(int time, int step)
         // skip any empty steps (useful when merging only some steps)
         int newStep = (int)opt_view_timestep(i, GMSH_GET, 0) + step;
         int totalSteps = (int)opt_view_nb_timestep(i, GMSH_GET, 0);
-        while(newStep < totalSteps){
+        for(int j = 0; j < totalSteps; j++){
           if(PView::list[i]->getData()->hasTimeStep(newStep))
             break;
           else
             newStep += step;
+          if(newStep < 0) newStep = totalSteps - 1;
+          if(newStep > totalSteps - 1) newStep = 0;
         }
         opt_view_timestep(i, GMSH_SET | GMSH_GUI, newStep);
       }
