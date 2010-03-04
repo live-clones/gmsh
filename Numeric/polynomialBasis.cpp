@@ -875,179 +875,203 @@ const polynomialBasis &polynomialBases::find(int tag)
   
   switch (tag){
   case MSH_PNT:
+    F.numFaces = 1;
     F.monomials = generate1DMonomials(0);
     F.points    = generate1DPoints(0);
     break;
   case MSH_LIN_2 :
+    F.numFaces = 2;
     F.monomials = generate1DMonomials(1);
     F.points    = generate1DPoints(1);
-    generate1dVertexClosure(F.vertexClosure);
+    generate1dVertexClosure(F.closures);
     break;
   case MSH_LIN_3 :
+    F.numFaces = 2;
     F.monomials = generate1DMonomials(2);
     F.points    = generate1DPoints(2);
-    generate1dVertexClosure(F.vertexClosure);
+    generate1dVertexClosure(F.closures);
     break;
   case MSH_LIN_4:
+    F.numFaces = 2;
     F.monomials = generate1DMonomials(3);
     F.points    = generate1DPoints(3);
-    generate1dVertexClosure(F.vertexClosure);
+    generate1dVertexClosure(F.closures);
     break;
   case MSH_LIN_5:
+    F.numFaces = 2;
     F.monomials = generate1DMonomials(4);
     F.points    = generate1DPoints(4);
-    generate1dVertexClosure(F.vertexClosure);
+    generate1dVertexClosure(F.closures);
     break;
   case MSH_LIN_6:
+    F.numFaces = 2;
     F.monomials = generate1DMonomials(5);
     F.points    = generate1DPoints(5);
-    generate1dVertexClosure(F.vertexClosure);
+    generate1dVertexClosure(F.closures);
     break;  
   case MSH_TRI_3 :
+    F.numFaces = 3;
     F.monomials = generatePascalTriangle(1);
     F.points =    gmshGeneratePointsTriangle(1, false);
-    generate2dEdgeClosure(F.edgeClosure, 1);
+    generate2dEdgeClosure(F.closures, 1);
     break;
   case MSH_TRI_6 :
+    F.numFaces = 3;
     F.monomials = generatePascalTriangle(2);
     F.points =    gmshGeneratePointsTriangle(2, false);
-    generate2dEdgeClosure(F.edgeClosure, 2);
+    generate2dEdgeClosure(F.closures, 2);
     break;
   case MSH_TRI_9 :
+    F.numFaces = 3;
     F.monomials = generatePascalSerendipityTriangle(3);
     F.points =    gmshGeneratePointsTriangle(3, true);
-    generate2dEdgeClosure(F.edgeClosure, 3);
+    generate2dEdgeClosure(F.closures, 3);
     break;
   case MSH_TRI_10 :
+    F.numFaces = 3;
     F.monomials = generatePascalTriangle(3);
     F.points =    gmshGeneratePointsTriangle(3, false);
-    generate2dEdgeClosure(F.edgeClosure, 3);
+    generate2dEdgeClosure(F.closures, 3);
     break;
   case MSH_TRI_12 :
+    F.numFaces = 3;
     F.monomials = generatePascalSerendipityTriangle(4);
     F.points =    gmshGeneratePointsTriangle(4, true);
-    generate2dEdgeClosure(F.edgeClosure, 4);
+    generate2dEdgeClosure(F.closures, 4);
     break;
   case MSH_TRI_15 :
+    F.numFaces = 3;
     F.monomials = generatePascalTriangle(4);
     F.points =    gmshGeneratePointsTriangle(4, false);
-    generate2dEdgeClosure(F.edgeClosure, 4);
+    generate2dEdgeClosure(F.closures, 4);
     break;
   case MSH_TRI_15I :
+    F.numFaces = 3;
     F.monomials = generatePascalSerendipityTriangle(5);
     F.points =    gmshGeneratePointsTriangle(5, true);
-    generate2dEdgeClosure(F.edgeClosure, 5);
+    generate2dEdgeClosure(F.closures, 5);
     break;
   case MSH_TRI_21 :
+    F.numFaces = 3;
     F.monomials = generatePascalTriangle(5);
     F.points =    gmshGeneratePointsTriangle(5, false);
-    generate2dEdgeClosure(F.edgeClosure, 5);
+    generate2dEdgeClosure(F.closures, 5);
     break;
   case MSH_TET_4 :
     F.numFaces = 4;
     F.monomials = generatePascalTetrahedron(1);
     F.points =    gmshGeneratePointsTetrahedron(1, false);
-    generate3dFaceClosure(F.faceClosure, 1);
+    generate3dFaceClosure(F.closures, 1);
     break;
   case MSH_TET_10 :
     F.numFaces = 4;
     F.monomials = generatePascalTetrahedron(2);
     F.points =    gmshGeneratePointsTetrahedron(2, false);
-    generate3dFaceClosure(F.faceClosure, 2);
+    generate3dFaceClosure(F.closures, 2);
     break;
   case MSH_TET_20 :
     F.numFaces = 4;
     F.monomials = generatePascalTetrahedron(3);
     F.points =    gmshGeneratePointsTetrahedron(3, false);
-    generate3dFaceClosure(F.faceClosure, 3);
+    generate3dFaceClosure(F.closures, 3);
     break;
   case MSH_TET_35 :
     F.numFaces = 4;
     F.monomials = generatePascalTetrahedron(4);
     F.points =    gmshGeneratePointsTetrahedron(4, false);
-    generate3dFaceClosure(F.faceClosure, 4);
+    generate3dFaceClosure(F.closures, 4);
     break;
   case MSH_TET_34 :
     F.numFaces = 4;
     F.monomials = generatePascalSerendipityTetrahedron(4);
     F.points =    gmshGeneratePointsTetrahedron(4, true);
-    generate3dFaceClosure(F.faceClosure, 4);
+    generate3dFaceClosure(F.closures, 4);
     break;
   case MSH_TET_52 :
     F.numFaces = 4;
     F.monomials = generatePascalSerendipityTetrahedron(5);
     F.points =    gmshGeneratePointsTetrahedron(5, true);
-    generate3dFaceClosure(F.faceClosure, 5);
+    generate3dFaceClosure(F.closures, 5);
     break;
   case MSH_TET_56 :
     F.numFaces = 4;
     F.monomials = generatePascalTetrahedron(5);
     F.points =    gmshGeneratePointsTetrahedron(5, false);
-    generate3dFaceClosure(F.faceClosure, 5);
+    generate3dFaceClosure(F.closures, 5);
     break;
   case MSH_QUA_4 :
+    F.numFaces = 4;
     F.monomials = generatePascalQuad(1);
     F.points =    gmshGeneratePointsQuad(1,false);
-    generate2dEdgeClosure(F.edgeClosure, 1, 4);
+    generate2dEdgeClosure(F.closures, 1, 4);
     break;
   case MSH_QUA_9 :
+    F.numFaces = 4;
     F.monomials = generatePascalQuad(2);
     F.points =    gmshGeneratePointsQuad(2,false);
-    generate2dEdgeClosure(F.edgeClosure, 2, 4);
+    generate2dEdgeClosure(F.closures, 2, 4);
     break;
   case MSH_QUA_16 :
+    F.numFaces = 4;
     F.monomials = generatePascalQuad(3);
     F.points =    gmshGeneratePointsQuad(3,false);
-    generate2dEdgeClosure(F.edgeClosure, 3, 4);
+    generate2dEdgeClosure(F.closures, 3, 4);
     break;
   case MSH_QUA_25 :
+    F.numFaces = 4;
     F.monomials = generatePascalQuad(4);
     F.points =    gmshGeneratePointsQuad(4,false);
-    generate2dEdgeClosure(F.edgeClosure, 4, 4);
+    generate2dEdgeClosure(F.closures, 4, 4);
     break;
   case MSH_QUA_36 :
+    F.numFaces = 4;
     F.monomials = generatePascalQuad(5);
     F.points =    gmshGeneratePointsQuad(5,false);
-    generate2dEdgeClosure(F.edgeClosure, 5, 4);
+    generate2dEdgeClosure(F.closures, 5, 4);
     break;
   case MSH_QUA_8 :
+    F.numFaces = 4;
     F.monomials = generatePascalQuadSerendip(2);
     F.points =    gmshGeneratePointsQuad(2,true);
-    generate2dEdgeClosure(F.edgeClosure, 2, 4);
+    generate2dEdgeClosure(F.closures, 2, 4);
     break;
   case MSH_QUA_12 :
+    F.numFaces = 4;
     F.monomials = generatePascalQuadSerendip(3);
     F.points =    gmshGeneratePointsQuad(3,true);
-    generate2dEdgeClosure(F.edgeClosure, 3, 4);
+    generate2dEdgeClosure(F.closures, 3, 4);
     break;
   case MSH_QUA_16I :
+    F.numFaces = 4;
     F.monomials = generatePascalQuadSerendip(4);
     F.points =    gmshGeneratePointsQuad(4,true);
-    generate2dEdgeClosure(F.edgeClosure, 4, 4);
+    generate2dEdgeClosure(F.closures, 4, 4);
     break;
   case MSH_QUA_20 :
+    F.numFaces = 4;
     F.monomials = generatePascalQuadSerendip(5);
     F.points =    gmshGeneratePointsQuad(5,true);
-    generate2dEdgeClosure(F.edgeClosure, 5, 4);
+    generate2dEdgeClosure(F.closures, 5, 4);
     break;
   case MSH_PRI_6 : // first order
     F.numFaces = 5;
     F.monomials = generatePascalPrism(1);
     F.points =    gmshGeneratePointsPrism(1, false);
-    generate3dFaceClosurePrism(F.faceClosure, 1);
+    generate3dFaceClosurePrism(F.closures, 1);
     break;
   case MSH_PRI_18 : // second order
     F.numFaces = 5;
     F.monomials = generatePascalPrism(2);
     F.points =    gmshGeneratePointsPrism(2, false);
-    generate3dFaceClosurePrism(F.faceClosure, 2);
+    generate3dFaceClosurePrism(F.closures, 2);
     break;
     
   default :
     Msg::Error("Unknown function space %d: reverting to TET_4", tag);
+    F.numFaces = 4;
     F.monomials = generatePascalTetrahedron(1);
     F.points =    gmshGeneratePointsTetrahedron(1, false);
-    generate3dFaceClosure(F.faceClosure, 1);
+    generate3dFaceClosure(F.closures, 1);
     break;
   }  
   F.coefficients = generateLagrangeMonomialCoefficients(F.monomials, F.points);

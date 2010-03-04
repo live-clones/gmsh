@@ -227,17 +227,6 @@ void dgResidualInterface::compute1Group ( //dofManager &dof, // the DOF manager 
 
 void dgResidualInterface::computeAndMap1Group (dgGroupOfFaces &faces, dgDofContainer &solution, dgDofContainer &residual)
 {
-/*  Msg::Info("Left and Right for %p : gL %p %s %s %d, gR %p %s %s %d",
-    &faces,
-    &faces.getGroupLeft(),
-    faces.getGroupLeft().getIsInnerMultirateBuffer()?"Inner":"",
-    faces.getGroupLeft().getIsOuterMultirateBuffer()?"Outer":"",
-    faces.getGroupLeft().getMultirateExponent(),
-    &faces.getGroupRight(),
-    faces.getGroupRight().getIsInnerMultirateBuffer()?"Inner":"",
-    faces.getGroupRight().getIsOuterMultirateBuffer()?"Outer":"",
-    faces.getGroupRight().getMultirateExponent()
-    );*/
   fullMatrix<double> solInterface(faces.getNbNodes(),faces.getNbElements()*2*_nbFields);
   fullMatrix<double> residuInterface(faces.getNbNodes(),faces.getNbElements()*2*_nbFields);
   faces.mapToInterface(_nbFields, solution.getGroupProxy(&faces.getGroupLeft()), solution.getGroupProxy(&faces.getGroupRight()), solInterface);

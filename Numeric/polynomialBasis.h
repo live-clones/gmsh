@@ -17,34 +17,19 @@ class polynomialBasis
 {
  public:
   typedef std::vector<std::vector<int> > clCont;
-  clCont faceClosure;
-  clCont edgeClosure;
-  clCont vertexClosure;
+  clCont closures;
   fullMatrix<double> points;
   fullMatrix<double> monomials;
   fullMatrix<double> coefficients;
   int numFaces;
   // for a given face/edge, with both a sign and a rotation,
   // give an ordered list of nodes on this face/edge
-  inline int getFaceClosureId(int iFace, int iSign, int iRot) const {
-//     return iFace + 4 * (iSign == 1 ? 0 : 1) + 8 * iRot; // only for tetrahedra
-//     return iFace + 5*(iSign == 1 ? 0 : 1) + 10*iRot; // only for prisms
-    return iFace + numFaces*(iSign == 1 ? 0 : 1) + 2*numFaces*iRot; // both tetrahedra and prisms
+  inline const std::vector<int> &getClosure (int id) const // return the closure of dimension dim
+  { 
+    return closures[id];
   }
-  inline const std::vector<int> &getFaceClosure(int id) const
-  {
-    return faceClosure[id];
-  }
-  inline int getEdgeClosureId(int iEdge, int iSign) const {
-    return iSign == 1 ? iEdge : edgeClosure.size()/2 + iEdge;
-  }
-  inline const std::vector<int> &getEdgeClosure(int id) const
-  {
-    return edgeClosure[id];
-  }
-  inline const std::vector<int> &getVertexClosure(int iVertex) const
-  {
-    return vertexClosure[iVertex];
+  inline int getClosureId(int iEl, int iSign=1, int iRot=0) const {
+    return iEl + numFaces*(iSign == 1 ? 0 : 1) + 2*numFaces*iRot;
   }
   inline void evaluateMonomials(double u, double v, double w, double p[]) const 
   {

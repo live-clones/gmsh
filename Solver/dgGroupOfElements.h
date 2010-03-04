@@ -25,6 +25,8 @@ class dgConservationLaw;
 class dgDofContainer;
 
 
+class dgMiniInterface;
+class dgGroupCollection;
 class dgElement {
   MElement *_element;
   // solution at points
@@ -129,6 +131,11 @@ public:
 class dgGroupOfFaces;
 
 class dgGroupOfConnections {
+  // there is a finite number of combinations of orientations, senses
+  // and rotations of the faces (typically 24 for tets). Any pair
+  // is characterized by a single integer which is the combination
+  // this closure is for the interpolation that MAY BE DIFFERENT THAN THE
+  // GEOMETRICAL CLOSURE !!!
   std::vector<std::vector<int> > _closures; 
   std::vector<int> _closuresId; 
   // face integration point in the coordinate of the left and right element (one fullMatrix per closure)
@@ -168,11 +175,6 @@ class dgGroupOfFaces {
   std::vector<MElement *>_faces;
   // Ni integration points, matrix of size Ni x 3 (u,v,weight)
   fullMatrix<double> *_integration;
-  // there is a finite number of combinations of orientations, senses
-  // and rotations of the faces (typically 24 for tets). Any pair
-  // is characterized by a single integer which is the combination
-  // this closure is for the interpolation that MAY BE DIFFERENT THAN THE
-  // GEOMETRICAL CLOSURE !!!
   // detJac at integration points (N*Ni) x 1
   fullMatrix<double> *_detJac;
   // collocation matrices \psi_i (GP_j) 
@@ -182,16 +184,9 @@ class dgGroupOfFaces {
   fullMatrix<double> *_redistribution;
   // surface/length/1 of the interface element (sum_qp w_i detJ_i)
   fullMatrix<double> *_interfaceSurface;
-  //common part of the 3 constructors
-  void init(int pOrder);
 public:
-  dgGroupOfFaces (const dgGroupOfElements &elements,int pOrder, int numVertices = -1);
-  dgGroupOfFaces (const dgGroupOfElements &a, const dgGroupOfElements &b,int pOrder, int numVertices = -1);
-  dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MVertex*> &boundaryVertices);
-  dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MEdge,Less_Edge> &boundaryEdges);
-  dgGroupOfFaces (const dgGroupOfElements &elGroup, std::string boundaryTag, int pOrder,std::set<MFace,Less_Face> &boundaryFaces);
+  dgGroupOfFaces (dgGroupCollection &groups, std::vector<dgMiniInterface> &interfaces, int pOrder);
   virtual ~dgGroupOfFaces ();
-  inline bool isBoundary() const {return !_boundaryTag.empty();}
   inline const std::string getBoundaryTag() const {return _boundaryTag;}
   //this part is common with dgGroupOfElements, we should try polymorphism
   inline int getNbElements() const {return _faces.size();}
@@ -204,12 +199,9 @@ public:
   inline double getInterfaceSurface (int iFace)const {return (*_interfaceSurface)(iFace,0);}
   const polynomialBasis * getPolynomialBasis() const {return _fsFace;}
   inline MElement* getFace (int iElement) const {return _faces[iElement];}  
-private:
-  void addFace(const MFace &topoFace, const std::vector<int> &iEls);
-  void addEdge(const MEdge &topoEdge, const std::vector<int> &iEls);
-  void addVertex(MVertex *topoVertex, const std::vector<int> &iEls);
 public:
   // duplicate
+  bool isBoundary() {return _connections.size()==1;}
   inline fullMatrix<double> &getNormals () const {return _connections[0]->getNormals();}
   void mapToInterface(int nFields, const fullMatrix<double> &vLeft, const fullMatrix<double> &vRight, fullMatrix<double> &v);
   void mapFromInterface(int nFields, const fullMatrix<double> &v, fullMatrix<double> &vLeft, fullMatrix<double> &vRight);
@@ -237,8 +229,6 @@ class dgGroupCollection {
   std::vector<dgGroupOfFaces*> _faceGroups; //interface
   std::vector<dgGroupOfFaces*> _boundaryGroups; //boundary
   std::vector<dgGroupOfElements*> _ghostGroups; //ghost volume
-  // container of different face types (identified by the number of vertices) 
-  std::set<int> _interfaceTypes;
 
   //{group,id} of the elements to send to each partition for a scatter operation
   std::vector< std::vector<std::pair<int,int> > >_elementsToSend;
@@ -248,6 +238,7 @@ class dgGroupCollection {
   // Multirate stuff
   int _dtMaxExponent;
 
+  void buildParallelStructure();
   public:
   inline int getDtMaxExponent() const {return _dtMaxExponent;}
   inline GModel* getModel() {return _model;}
@@ -255,7 +246,7 @@ class dgGroupCollection {
   inline int getNbFaceGroups() const {return _faceGroups.size();}
   inline int getNbBoundaryGroups() const {return _boundaryGroups.size();}
   inline int getNbGhostGroups() const {return _ghostGroups.size();}
-  inline dgGroupOfElements *getElementGroup(int i) const {return _elementGroups[i];}
+  inline dgGroupOfElements *getElementGroup(int i) const {return i<getNbElementGroups()?_elementGroups[i]:_ghostGroups[i-getNbElementGroups()];}
   inline dgGroupOfFaces *getFaceGroup(int i) const {return _faceGroups[i];}
   inline dgGroupOfFaces *getBoundaryGroup(int i) const {return _boundaryGroups[i];}
   inline dgGroupOfElements *getGhostGroup(int i) const {return _ghostGroups[i];}
