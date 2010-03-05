@@ -2,7 +2,7 @@
 C = 1;
 Lup = 1;
 L = 1.;
-lc = .3;
+lc = 0.3;
 
 Point(1) = {0.0, 0.0, -Lup, lc};
 Point(2) = {C  , 0.0, -Lup, lc};
@@ -23,7 +23,7 @@ outtet[] = Extrude {0,0,0.7*L} { Surface{6};};
 // Printf("volume = %g", outtet[1]);
 // Printf("side surfaces = %g %g %g %g", outtet[2], outtet[3], outtet[4], outtet[5]);
 
-outpri[]= Extrude {0,0,0.5*L}{ Surface{outtet[0]}; Layers{4};Recombine;};
+outpri[]= Extrude {0,0,0.5*L}{ Surface{outtet[0]}; Layers{Ceil(0.5*L/lc)};Recombine;};
 // outv[]= Extrude {0,0,0.5*L}{ Surface{7}; Layers{5};Recombine;};
 // Printf("top surface = %g", outpri[0]);
 // Printf("volume = %g", outpri[1]);
@@ -32,7 +32,7 @@ outpri[]= Extrude {0,0,0.5*L}{ Surface{outtet[0]}; Layers{4};Recombine;};
 Mesh.Algorithm3D=4; // frontal [lobes]
 
 Physical Surface("top") = {outpri[0]};
-Physical Surface("bottom") = {5};
+Physical Surface("bottom") = {6};
 Physical Surface("side1") = {outpri[2],outtet[2]};
 Physical Surface("side2") = {outpri[3],outtet[3]};
 Physical Surface("side3") = {outpri[4],outtet[4]};

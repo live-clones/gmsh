@@ -131,7 +131,7 @@ class MPrism : public MElement {
   }
   virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
   virtual int getVolumeSign();
-  virtual void getShapeFunctions(double u, double v, double w, double s[], int o) 
+/*  virtual void getShapeFunctions(double u, double v, double w, double s[], int o) 
   {
     s[0] = (1. - u - v) * (1. - w) * 0.5;
     s[1] =       u      * (1. - w) * 0.5;
@@ -139,9 +139,10 @@ class MPrism : public MElement {
     s[3] = (1. - u - v) * (1. + w) * 0.5;
     s[4] =       u      * (1. + w) * 0.5;
     s[5] =           v  * (1. + w) * 0.5;
-  }
-  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o) 
+  }*/
+/*  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o) 
   {
+    printf("here\n");
     s[0][0] = -0.5 * (1. - w)    ;
     s[0][1] = -0.5 * (1. - w)    ;
     s[0][2] = -0.5 * (1. - u - v);
@@ -160,7 +161,7 @@ class MPrism : public MElement {
     s[5][0] =  0.                ;
     s[5][1] =  0.5 * (1. + w)    ;
     s[5][2] =  0.5 * v           ;
-  }
+  }*/
   virtual bool isInside(double u, double v, double w)
   {
     double tol = _isInsideTolerance;

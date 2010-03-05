@@ -1334,7 +1334,7 @@ void GModel::load(std::string fileName)
 {
   GModel *temp = GModel::current();
   GModel::setCurrent(this);
-  MergeFile(fileName.c_str());
+  MergeFile(fileName.c_str(),true);
   GModel::setCurrent(temp);
 }
 

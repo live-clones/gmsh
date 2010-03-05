@@ -244,17 +244,15 @@ static fullMatrix<double> generatePascalPrism(int order)
   int index = 0;
   fullMatrix<double> lineMonoms = generate1DMonomials(order);
   fullMatrix<double> triMonoms = generatePascalTriangle(order);
-//   printf("nb: %d nT: %d %d nL: %d %d\n",nbMonomials,triMonoms.size1(),(order+1)*(order+2)/2,lineMonoms.size1(),order+1);
   for (int j = 0; j < lineMonoms.size1(); j++) {
     for (int i = 0; i < triMonoms.size1(); i++) {
-      monomials(index,0) = triMonoms(i,0);
-      monomials(index,1) = triMonoms(i,1);
-      monomials(index,2) = lineMonoms(j,0);
-      index ++;
-//       printf("%d: %f %f %f\n",index,triMonoms(i,0),triMonoms(i,1),lineMonoms(j,0));
+        monomials(index,0) = triMonoms(i,0);
+        monomials(index,1) = triMonoms(i,1);
+        monomials(index,2) = lineMonoms(j,0);
+        index ++;
     }
   }
-//   monomials.print();
+  monomials.print("Pri monoms");
   return monomials;
 }  
 
@@ -625,26 +623,50 @@ static fullMatrix<double> gmshGeneratePointsTriangle(int order, bool serendip)
 
 static fullMatrix<double> gmshGeneratePointsPrism(int order, bool serendip) 
 {
+  const double prism18Pts[18][3] = {
+    {0, 0, -1}, // 0
+    {1, 0, -1}, // 1
+    {0, 1, -1}, // 2
+    {0, 0, 1},  // 3
+    {1, 0, 1},  // 4
+    {0, 1, 1},  // 5
+    {0.5, 0, -1},  // 6
+    {0, 0.5, -1},  // 7
+    {0, 0, 0},  // 8
+    {0.5, 0.5, -1},  // 9
+    {1, 0, 0},  // 10
+    {0, 1, 0},  // 11
+    {0.5, 0, 1},  // 12
+    {0, 0.5, 1},  // 13
+    {0.5, 0.5, 1},  // 14
+    {0.5, 0, 0},  // 15
+    {0, 0.5, 0},  // 16
+    {0.5, 0.5, 0},  // 17
+  };
+
   int nbPoints = (order + 1)*(order + 1)*(order + 2)/2; 
   fullMatrix<double> point(nbPoints, 3);
   
-  double overOrder = (order == 0 ? 1. : 1. / order);
   int index = 0;
   fullMatrix<double> triPoints = gmshGeneratePointsTriangle(order,false);
   fullMatrix<double> linePoints = generate1DPoints(order);
-//   printf("nb: %d nT: %d %d nL: %d %d\n",nbPoints,triPoints.size1(),(order+1)*(order+2)/2,linePoints.size1(),order+1);
-  for (int j = 0; j < linePoints.size1(); j++) {
-    for (int i = 0; i < triPoints.size1(); i++) {
-      point(index,0) = triPoints(i,0);
-      point(index,1) = triPoints(i,1);
-      point(index,2) = linePoints(j,0);
-      index ++;
-//       printf("%d: %f %f %f\n",index,triPoints(i,0),triPoints(i,1),linePoints(j,0));
-    }
-  }
-//   point.print();
 
-  point.scale(overOrder);  
+  if (order == 2)
+    for (int i =0; i<18; i++)
+      for (int j=0; j<3;j++)
+        point(i,j) = prism18Pts[i][j];
+  else    
+    for (int j = 0; j <linePoints.size1() ; j++) {
+      for (int i = 0; i < triPoints.size1(); i++) {
+        point(index,0) = triPoints(i,0);
+        point(index,1) = triPoints(i,1);
+        point(index,2) = linePoints(j,0);
+        index ++;
+      }
+    }
+     
+//   point.print("Pri ipts");
+
   return point;
 }
 
@@ -798,26 +820,31 @@ static void generate3dFaceClosure(polynomialBasis::clCont &closure, int order)
 static void getFaceClosurePrism(int iFace, int iSign, int iRotate, std::vector<int> &closure,
                            int order)
 {
-  if (order > 1)
+  if (order > 2)
     Msg::Error("FaceClosure not implemented for prisms of order %d",order);
   bool isTriangle = iFace<2;
   int nNodes = isTriangle ? (order+1)*(order+2)/2 : (order+1)*(order+1);
   closure.clear();
   closure.resize(nNodes);
-  switch (order){
-  case 0:
+  if (order==0) {
     closure[0] = 0;
-    break;
-  default:
-//     int face[4][3] = {{-3, -2, -1}, {1, -6, 4}, {-4, 5, 3}, {6, 2, -5}};
-    int order1node[5][4] = {{0, 2, 1, -1}, {3, 4, 5, -1}, {0, 1, 4, 3}, {0, 3, 5, 2}, {1, 2, 5, 4}};
-    int nVertex = isTriangle ? 3 : 4;
+    return;
+  }
+  int order1node[5][4] = {{0, 2, 1, -1}, {3, 4, 5, -1}, {0, 1, 4, 3}, {0, 3, 5, 2}, {1, 2, 5, 4}};
+  int order2node[5][5] = {{7, 9, 6, -1, -1}, {12, 14, 13, -1, -1}, {6, 10, 12, 8, 15}, {8, 13, 11, 7, 16}, {9, 11, 14, 10, 17}};
+//   int order2node[5][4] = {{7, 9, 6, -1}, {12, 14, 13, -1}, {6, 10, 12, 8}, {8, 13, 11, 7}, {9, 11, 14, 10}};
+  int nVertex = isTriangle ? 3 : 4;
+  for (int i = 0; i < nVertex; ++i){
+    int k = (nVertex + (iSign * i) + iRotate) % nVertex;  //- iSign * iRotate
+    closure[i] = order1node[iFace][k];
+  }
+  if (order==2) {
     for (int i = 0; i < nVertex; ++i){
-      int k;
-        k = (nVertex + (iSign * i) + iRotate) % nVertex;  //- iSign * iRotate
-      closure[i] = order1node[iFace][k];
+      int k = (nVertex + (iSign==-1?-1:0) + (iSign * i) + iRotate) % nVertex;  //- iSign * iRotate
+      closure[nVertex+i] = order2node[iFace][k];
     }
-    break;
+    if (!isTriangle)
+      closure[nNodes-1] = order2node[iFace][4]; // center
   }
 }
 
@@ -828,11 +855,9 @@ static void generate3dFaceClosurePrism(polynomialBasis::clCont &closure, int ord
   for (int iRotate = 0; iRotate < 4; iRotate++){
     for (int iSign = 1; iSign >= -1; iSign -= 2){
       for (int iFace = 0; iFace < 5; iFace++){
-    std::vector<int> closure_face;
-    getFaceClosurePrism(iFace, iSign, iRotate, closure_face, order); 
-    closure.push_back(closure_face);
-//       for(int i=0;i < closure_face.size(); i++) { printf("%d ",closure_face.at(i)); }
-//       printf("\n");
+        std::vector<int> closure_face;
+        getFaceClosurePrism(iFace, iSign, iRotate, closure_face, order); 
+        closure.push_back(closure_face);
       }
     }
   }
@@ -1075,6 +1100,14 @@ const polynomialBasis &polynomialBases::find(int tag)
     break;
   }  
   F.coefficients = generateLagrangeMonomialCoefficients(F.monomials, F.points);
+//   printf("Case: %d coeffs:\n",tag);
+//   for (int i = 0; i<F.coefficients.size1(); i++) {
+//     for (int j = 0; j<F.coefficients.size2(); j++) {
+//       printf("%4.1f ",F.coefficients(i,j));
+//     }
+//     printf("\n");
+//   }
+    
   fs.insert(std::make_pair(tag, F));
   return fs[tag];
 }

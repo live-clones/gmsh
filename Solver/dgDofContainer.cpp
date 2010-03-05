@@ -304,6 +304,10 @@ void dgDofContainer::exportMsh(const std::string name)
     if(Msg::GetCommSize()>1)
       name_oss<<"_"<<Msg::GetCommRank();
     FILE *f = fopen (name_oss.str().c_str(),"w");
+    if(!f){
+      Msg::Error("Unable to open export file '%s'", name.c_str());
+    }
+
     int COUNT = 0;
     for (int i=0;i < _groups.getNbElementGroups() ;i++){
       COUNT += _groups.getElementGroup(i)->getNbElements();

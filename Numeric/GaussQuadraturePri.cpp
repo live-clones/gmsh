@@ -10,7 +10,7 @@
 IntPt *getGQPriPts(int order);
 int getNGQPriPts(int order);
 
-IntPt * GQP[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+IntPt * GQP[28] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 IntPt *getGQPriPts(int order)
 { 

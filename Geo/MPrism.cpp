@@ -37,14 +37,14 @@ const polynomialBasis* MPrism::getFunctionSpace(int o) const
     switch (order) {
     case 1: return &polynomialBases::find(MSH_PRI_6);
     case 2: return &polynomialBases::find(MSH_PRI_18);
-    default: Msg::Error("Order %d tetrahedron function space not implemented", order);
+    default: Msg::Error("Order %d prism function space not implemented", order);
     }
   }
   else { 
     switch (order) {
     case 1: return &polynomialBases::find(MSH_PRI_6);
     case 2: return &polynomialBases::find(MSH_PRI_18);
-    default: Msg::Error("Order %d tetrahedron function space not implemented", order);
+    default: Msg::Error("Order %d prism function space not implemented", order);
     }
   }
   return 0;
