@@ -8,6 +8,7 @@
 #include "dgConservationLaw.h"
 #include "Gmsh.h"
 #include "dgLimiter.h"
+#include "dgTransformNodalValue.h"
 #include "dgDofContainer.h"
 
 
@@ -43,6 +44,9 @@ public:
   void L2Projection (std::string functionName); // assign the solution to a given function
   double RK44(double dt);
   double RK44_limiter(double dt);
+  double RK44_TransformNodalValue(double dt);
+  double RK44_TransformNodalValue_limiter(double dt);
+
   double ForwardEuler(double dt);
 
   double computeInvSpectralRadius();

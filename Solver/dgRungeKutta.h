@@ -5,6 +5,7 @@
 class dgConservationLaw;
 class dgDofContainer;
 class dgLimiter;
+class dgTransformNodalValue;
 class dgGroupCollection;
 class dgGroupOfElements;
 class dgGroupOfFaces;
@@ -17,8 +18,11 @@ class dgRungeKutta {
   double diagonalRK(const dgConservationLaw *claw, double dt, dgDofContainer *solution, int nStages, double *A, double *b); // c == A
   double nonDiagonalRK(const dgConservationLaw *claw, double dt, dgDofContainer *solution, int nStages, fullMatrix<double>&A, double *b, double *c);
   dgLimiter *_limiter;
+  dgTransformNodalValue *_TransformNodalValue;
   public:
   void setLimiter(dgLimiter *limiter) { _limiter = limiter; }
+  void setTransformNodalValue(dgTransformNodalValue *TransformNodalValue) { _TransformNodalValue = TransformNodalValue; }
+
   double iterateEuler(const dgConservationLaw *claw, double dt, dgDofContainer *solution);
   double iterate22(const dgConservationLaw *claw, double dt, dgDofContainer *solution);
   double iterate33(const dgConservationLaw *claw, double dt, dgDofContainer *solution);

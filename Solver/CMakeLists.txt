@@ -23,6 +23,7 @@ set(SRC
   dgConservationLawMaxwell.cpp
   dgConservationLawPerfectGas.cpp
   dgLimiter.cpp
+  dgTransformNodalValue.cpp
   dgResidual.cpp
   dgDofContainer.cpp
   function.cpp

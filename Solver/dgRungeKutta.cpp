@@ -3,6 +3,7 @@
 #include "dgConservationLaw.h"
 #include "dgDofContainer.h"
 #include "dgLimiter.h"
+#include "dgTransformNodalvalue.h"
 #include "dgResidual.h"
 #include "dgGroupOfElements.h"
 
@@ -108,10 +109,14 @@ double dgRungeKutta::diagonalRK (const dgConservationLaw *claw,
   dgDofContainer K   (groups, nbFields);
   dgDofContainer Unp (groups, nbFields);
   dgDofContainer resd(groups, nbFields);
-  K.scale(0.);
-  K.axpy(*sol);
   Unp.scale(0.);
   Unp.axpy(*sol);
+   
+   if (_TransformNodalValue) _TransformNodalValue->apply(&Unp);
+ 
+   K.scale(0.);
+   K.axpy(Unp);
+
   dgResidual residual(claw);
 
   for(int j=0; j<nStages;j++){
@@ -119,7 +124,7 @@ double dgRungeKutta::diagonalRK (const dgConservationLaw *claw,
       K.scale(A[j]*dt);
       K.axpy(*sol);
     }
-
+    if (_TransformNodalValue) _TransformNodalValue->apply_Inverse(&K);
     if (_limiter) _limiter->apply(&K);
     residual.compute(*groups,K,resd);
     K.scale(0.);
@@ -136,6 +141,7 @@ double dgRungeKutta::diagonalRK (const dgConservationLaw *claw,
     Unp.axpy(K,b[j]*dt);
   }
   if (_limiter) _limiter->apply(&Unp);
+  if (_TransformNodalValue) _TransformNodalValue->apply_Inverse(&Unp);
   sol->scale(0.);
   sol->axpy(Unp);
   return sol->norm();
@@ -241,5 +247,10 @@ void dgRungeKutta::registerBindings(binding *b) {
   cm = cb->addMethod("setLimiter",&dgRungeKutta::setLimiter);
   cm->setArgNames("limiter",NULL);
   cm->setDescription("if a limiter is set, it is applied after each RK stage");
+
+ cm = cb->addMethod("setTransformNodalValue",&dgRungeKutta::setTransformNodalValue);
+   cm->setArgNames("TransformNodalValue",NULL);
+   cm->setDescription("if the Nodal values is transformed in first step of RK");
+
 }
 

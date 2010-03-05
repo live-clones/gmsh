@@ -11,6 +11,7 @@ class dgConservationLaw;
 class dgDofContainer;
 class dgTerm;
 class dgLimiter;
+class dgTransformNodalValue;
 class dgSystemOfEquations;
 
 class dgAlgorithm {

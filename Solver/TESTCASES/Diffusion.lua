@@ -2,14 +2,14 @@ model = GModel  ()
 model:load ('square.geo')
 model:load ('square.msh')
 dg = dgSystemOfEquations (model)
-dg:setOrder(3)
+dg:setOrder(1)
 
 
 -- conservation law
 -- advection speed
 nu=fullMatrix(1,1);
 nu:set(0,0,0.01)
-law = dgConservationLawAdvection('',functionConstant(nu):getName())
+law = dgConservationLawAdvectionDiffusion('',functionConstant(nu):getName())
 dg:setConservationLaw(law)
 
 -- boundary condition
@@ -34,7 +34,8 @@ dg:exportSolution('output/Diffusion_00000')
 
 -- main loop
 for i=1,10000 do
-  norm = dg:RK44(0.001)
+  --norm = dg:RK44(0.001)
+  norm = dg:RK44_TransformNodalValue(0.00001)
   if (i % 50 == 0) then 
     print('iter',i,norm)
     dg:exportSolution(string.format("output/Diffusion-%05d", i)) 

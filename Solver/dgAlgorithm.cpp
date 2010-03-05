@@ -9,6 +9,7 @@
 #include "MEdge.h"
 #include "function.h"
 #include "dgLimiter.h"
+#include "dgTransformNodalValue.h"
 #include "meshPartition.h"
 
 /*

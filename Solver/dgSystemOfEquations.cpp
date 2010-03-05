@@ -8,6 +8,7 @@
 #include "PView.h"
 #include "PViewData.h"
 #include "dgLimiter.h"
+#include "dgTransformNodalValue.h"
 #include "dgRungeKutta.h"
 #ifdef HAVE_MPI
 #include "mpi.h"
@@ -69,6 +70,16 @@ void dgSystemOfEquations::registerBindings(binding *b) {
   cm = cb->addMethod("RK44_limiter",&dgSystemOfEquations::RK44_limiter);
   cm->setArgNames("dt",NULL);
   cm->setDescription("do one RK44 time step with the slope limiter (only for p=1)");
+
+cm = cb->addMethod("RK44_TransformNodalValue",&dgSystemOfEquations::RK44_TransformNodalValue);
+  cm->setArgNames("dt",NULL);
+  cm->setDescription("do one RK44 time step with a transformation of nodal value");
+
+  cm = cb->addMethod("RK44_TransformNodalValue_limiter",&dgSystemOfEquations::RK44_TransformNodalValue_limiter);
+  cm->setArgNames("dt",NULL);
+  cm->setDescription("do one RK44 time step with a limiter and a transformation of nodal value");
+
+
   ////cm = cb->addMethod("multirateRK43",&dgSystemOfEquations::multirateRK43);
   //cm->setArgNames("dt",NULL);
   //cm->setDescription("Do a runge-kuta temporal iteration with 4 sub-steps and a precision order of 3 using different time-step depending on the element size. This function returns the sum of the nodal residuals.");
@@ -125,6 +136,31 @@ double dgSystemOfEquations::RK44_limiter(double dt){
   delete sl;
   return _solution->norm();
 }
+
+
+double dgSystemOfEquations::RK44_TransformNodalValue(double dt){
+  dgTransformNodalValue *tnv = new dgSupraTransformNodalValue(_claw);
+  dgRungeKutta rk;
+  rk.setTransformNodalValue(tnv);
+  rk.iterate44(_claw, dt, _solution);
+  delete tnv;
+  return _solution->norm();
+}
+
+
+
+double dgSystemOfEquations::RK44_TransformNodalValue_limiter(double dt){
+  dgLimiter *sl = new dgSlopeLimiter(_claw);
+  dgTransformNodalValue *tnv = new dgSupraTransformNodalValue(_claw);
+  dgRungeKutta rk;
+  rk.setTransformNodalValue(tnv);
+  rk.setLimiter(sl);
+  rk.iterate44(_claw, dt, _solution);
+  delete sl;
+  delete tnv;
+  return _solution->norm();
+}
+
 
 double dgSystemOfEquations::ForwardEuler(double dt){
   dgRungeKutta rk;
