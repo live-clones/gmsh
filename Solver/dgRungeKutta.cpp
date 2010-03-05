@@ -212,7 +212,7 @@ double dgRungeKutta::nonDiagonalRK(const dgConservationLaw *claw,
 }
 
 
-dgRungeKutta::dgRungeKutta():_limiter(NULL) {}
+dgRungeKutta::dgRungeKutta():_limiter(NULL),_TransformNodalValue(NULL){}
 
 
 #include "Bindings.h"
