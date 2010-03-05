@@ -3,7 +3,7 @@
 #include "dgConservationLaw.h"
 #include "dgDofContainer.h"
 #include "dgLimiter.h"
-#include "dgTransformNodalvalue.h"
+#include "dgTransformNodalValue.h"
 #include "dgResidual.h"
 #include "dgGroupOfElements.h"
 
