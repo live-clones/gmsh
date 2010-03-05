@@ -163,7 +163,7 @@ class PViewData {
                            bool checkVisibility=false){ return false; }
 
   // check if the data has the given step/partition/etc.
-  virtual bool hasTimeStep(int step){ return step < getNumTimeSteps(); }
+  virtual bool hasTimeStep(int step){ return step >= 0 && step < getNumTimeSteps(); }
   virtual bool hasPartition(int part){ return false; }
   virtual bool hasMultipleMeshes(){ return false; }
   virtual bool hasModel(GModel *model, int step=-1){ return false; }

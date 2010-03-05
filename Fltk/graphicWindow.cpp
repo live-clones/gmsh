@@ -220,7 +220,7 @@ void status_options_cb(Fl_Widget *w, void *data)
 
 static int stop_anim = 0, view_in_cycle = -1;
 
-void status_play_manual(int time, int step)
+void status_play_manual(int time, int incr)
 {
   // avoid firing this routine recursively (can happen e.g when
   // keeping the finger down on the arrow key: if the system generates
@@ -232,32 +232,32 @@ void status_play_manual(int time, int step)
   if(time) {
     for(unsigned int i = 0; i < PView::list.size(); i++){
       if(opt_view_visible(i, GMSH_GET, 0)){
-        // skip any empty steps (useful when merging only some steps)
-        int newStep = (int)opt_view_timestep(i, GMSH_GET, 0) + step;
-        int totalSteps = (int)opt_view_nb_timestep(i, GMSH_GET, 0);
-        for(int j = 0; j < totalSteps; j++){
-          if(PView::list[i]->getData()->hasTimeStep(newStep))
+        // skip empty steps
+        int step = (int)opt_view_timestep(i, GMSH_GET, 0) + incr;
+        int numSteps = (int)opt_view_nb_timestep(i, GMSH_GET, 0);
+        for(int j = 0; j < numSteps; j++){
+          if(PView::list[i]->getData()->hasTimeStep(step))
             break;
           else
-            newStep += step;
-          if(newStep < 0) newStep = totalSteps - 1;
-          if(newStep > totalSteps - 1) newStep = 0;
+            step += incr;
+          if(step < 0) step = numSteps - 1;
+          if(step > numSteps - 1) step = 0;
         }
-        opt_view_timestep(i, GMSH_SET | GMSH_GUI, newStep);
+        opt_view_timestep(i, GMSH_SET | GMSH_GUI, step);
       }
     }
   }
   else { // hide all views except view_in_cycle
-    if(step > 0) {
-      if((view_in_cycle += step) >= (int)PView::list.size())
+    if(incr > 0) {
+      if((view_in_cycle += incr) >= (int)PView::list.size())
         view_in_cycle = 0;
-      for(int i = 0; i < (int)PView::list.size(); i += step)
+      for(int i = 0; i < (int)PView::list.size(); i += incr)
         opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
     }
     else {
-      if((view_in_cycle += step) < 0)
+      if((view_in_cycle += incr) < 0)
         view_in_cycle = PView::list.size() - 1;
-      for(int i = PView::list.size() - 1; i >= 0; i += step)
+      for(int i = PView::list.size() - 1; i >= 0; i += incr)
         opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
     }
   }

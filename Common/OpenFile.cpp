@@ -7,6 +7,7 @@
 #include <string.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "Options.h"
 #include "Geo.h"
 #include "GModel.h"
 #include "Numeric.h"
@@ -341,20 +342,14 @@ int MergeFile(std::string fileName, bool warnIfMissing)
     if(!strncmp(header, "$PTS", 4) || !strncmp(header, "$NO", 3) || 
        !strncmp(header, "$PARA", 5) || !strncmp(header, "$ELM", 4) ||
        !strncmp(header, "$MeshFormat", 11) || !strncmp(header, "$Comments", 9)) {
-
-      // MATCHER
-      if(CTX::instance()->geom.matchGeomAndMesh  && !GModel::current()->empty() ) {
-        GModel* current_mod = GModel::current();
-        GModel* tmp_model = new GModel();
-        tmp_model->readMSH(fileName);
-        int match_status = GeomMeshMatcher::instance()->match(current_mod, tmp_model);
-
-        if (match_status)
+      // mesh matcher
+      if(CTX::instance()->geom.matchGeomAndMesh && !GModel::current()->empty()){
+        GModel* tmp = new GModel();
+        tmp->readMSH(fileName);
+        if(GeomMeshMatcher::instance()->match(GModel::current(), tmp))
           fileName = "out.msh";
-        delete tmp_model;
+        delete tmp;
       }
-      // MATCHER END
-
       status = GModel::current()->readMSH(fileName);
 #if defined(HAVE_POST)
       if(status > 1) status = PView::readMSH(fileName);
@@ -383,8 +378,22 @@ int MergeFile(std::string fileName, bool warnIfMissing)
   CTX::instance()->mesh.changed = ENT_ALL;
 
 #if defined(HAVE_FLTK) && defined(HAVE_POST)
-  if(FlGui::available())
-    FlGui::instance()->updateViews(numViewsBefore != (int)PView::list.size());
+  if(FlGui::available()){
+    bool newViews = numViewsBefore != (int)PView::list.size();
+    if(newViews){
+      // go directly to the first non-empty step
+      for(unsigned int i = 0; i < PView::list.size(); i++){
+        for(int j = 0; j < (int)opt_view_nb_timestep(i, GMSH_GET, 0); j++){
+          int step = (int)opt_view_timestep(i, GMSH_GET, 0);
+          if(PView::list[i]->getData()->hasTimeStep(step))
+            break;
+          else
+            opt_view_timestep(i, GMSH_SET | GMSH_GUI, step + 1);
+        }
+      }
+    }
+    FlGui::instance()->updateViews(newViews);
+  }
 #endif
 
   if(!status) Msg::Error("Error loading '%s'", fileName.c_str());
