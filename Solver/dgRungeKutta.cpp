@@ -151,7 +151,7 @@ double dgRungeKutta::nonDiagonalRK(const dgConservationLaw *claw,
   double dt, 
   dgDofContainer *solution, 
   int nStages, 
-  fullMatrix<double>&A, //                          c | A
+  fullMatrix<double> &A, //                          c | A
   double *b, // Standard Butcher tableau notation :___|__
   double *c  //                                       |b^T  
   )

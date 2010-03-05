@@ -53,7 +53,6 @@ static fullMatrix<double> dgGetFaceIntegrationRuleOnElement (
   return intgElement;
 }
 
-
 dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e, 
 				     int polyOrder,
 				     int ghostPartition)
@@ -175,9 +174,9 @@ void dgGroupOfFaces::mapToInterface ( int nFields,
     const fullMatrix<double> &vRight,
     fullMatrix<double> &v)
 {
-  if(isBoundary()){
+  if(_connections.size()==1){
     for(int i=0; i<getNbElements(); i++) {
-      const std::vector<int> &closureLeft = getClosureLeft(i);
+      const std::vector<int> &closureLeft = _connections[0]->getClosure(i);
       for (int iField=0; iField<nFields; iField++){
         for(size_t j =0; j < closureLeft.size(); j++){
           v(j, i*nFields + iField) = vLeft(closureLeft[j], _connections[0]->getElementId(i)*nFields + iField);
@@ -187,8 +186,8 @@ void dgGroupOfFaces::mapToInterface ( int nFields,
     
   }else{
     for(int i=0; i<getNbElements(); i++) {
-      const std::vector<int> &closureRight = getClosureRight(i);
-      const std::vector<int> &closureLeft = getClosureLeft(i);
+      const std::vector<int> &closureLeft = _connections[0]->getClosure(i);
+      const std::vector<int> &closureRight = _connections[1]->getClosure(i);
       for (int iField=0; iField<nFields; iField++){
         for(size_t j =0; j < closureLeft.size(); j++){
           v(j, i*2*nFields + iField) = vLeft(closureLeft[j],_connections[0]->getElementId(i)*nFields + iField);
@@ -206,9 +205,9 @@ void dgGroupOfFaces::mapFromInterface ( int nFields,
     fullMatrix<double> &vRight
     )
 {
-  if(isBoundary()){
+  if(_connections.size()==1){
     for(int i=0; i<getNbElements(); i++) {
-      const std::vector<int> &closureLeft = getClosureLeft(i);
+      const std::vector<int> &closureLeft = _connections[0]->getClosure(i);
       for (int iField=0; iField<nFields; iField++){
         for(size_t j =0; j < closureLeft.size(); j++)
           vLeft(closureLeft[j], _connections[0]->getElementId(i)*nFields + iField) += v(j, i*nFields + iField);
@@ -216,8 +215,8 @@ void dgGroupOfFaces::mapFromInterface ( int nFields,
     }
   }else{
     for(int i=0; i<getNbElements(); i++) {
-      const std::vector<int> &closureRight = getClosureRight(i);
-      const std::vector<int> &closureLeft = getClosureLeft(i);
+      const std::vector<int> &closureLeft = _connections[0]->getClosure(i);
+      const std::vector<int> &closureRight = _connections[1]->getClosure(i);
       for (int iField=0; iField<nFields; iField++){
         for(size_t j =0; j < closureLeft.size(); j++)
           vLeft(closureLeft[j], _connections[0]->getElementId(i)*nFields + iField) += v(j, i*2*nFields + iField);
@@ -227,14 +226,14 @@ void dgGroupOfFaces::mapFromInterface ( int nFields,
     }
   }
 }
+
 void dgGroupOfFaces::mapLeftFromInterface ( int nFields,
     const fullMatrix<double> &v,
     fullMatrix<double> &vLeft
     )
 {
   for(int i=0; i<getNbElements(); i++) {
-    const std::vector<int> &closureRight = getClosureRight(i);
-    const std::vector<int> &closureLeft = getClosureLeft(i);
+    const std::vector<int> &closureLeft = _connections[0]->getClosure(i);
     for (int iField=0; iField<nFields; iField++){
       for(size_t j =0; j < closureLeft.size(); j++)
         vLeft(closureLeft[j], _connections[0]->getElementId(i)*nFields + iField) += v(j, i*2*nFields + iField);
@@ -246,11 +245,10 @@ void dgGroupOfFaces::mapRightFromInterface ( int nFields,
     fullMatrix<double> &vRight
     )
 {
-  if(isBoundary())
+  if(_connections.size()==1)
     return;
   for(int i=0; i<getNbElements(); i++) {
-    const std::vector<int> &closureRight = getClosureRight(i);
-    const std::vector<int> &closureLeft = getClosureLeft(i);
+    const std::vector<int> &closureRight = _connections[1]->getClosure(i);
     for (int iField=0; iField<nFields; iField++){
       for(size_t j =0; j < closureRight.size(); j++)
         vRight(closureRight[j], _connections[1]->getElementId(i)*nFields + iField) += v(j, (i*2+1)*nFields + iField);
@@ -271,7 +269,7 @@ void dgGroupOfConnections::init() {
   // compute data on quadrature points : normals and dPsidX
   double g[256][3];
   _normals = fullMatrix<double> (3, nQP*size);
-  _dPsiDxOnQP = fullMatrix<double> ( nQP*3, nPsi*size);
+  _dPsiDx = fullMatrix<double> ( nQP*3, nPsi*size);
   int index = 0;
   for (size_t i=0; i<size;i++){
     const std::vector<int> &closure = getClosure(i);
@@ -284,9 +282,9 @@ void dgGroupOfConnections::init() {
       //compute dPsiDxOnQP
       // (iQP*3+iXYZ , iFace*NPsi+iPsi)
       for (int iPsi=0; iPsi< nPsi; iPsi++) {
-        _dPsiDxOnQP(j*3  ,i*nPsi+iPsi) = g[iPsi][0]*ijac[0][0]+g[iPsi][1]*ijac[0][1]+g[iPsi][2]*ijac[0][2];
-        _dPsiDxOnQP(j*3+1,i*nPsi+iPsi) = g[iPsi][0]*ijac[1][0]+g[iPsi][1]*ijac[1][1]+g[iPsi][2]*ijac[1][2];
-        _dPsiDxOnQP(j*3+2,i*nPsi+iPsi) = g[iPsi][0]*ijac[2][0]+g[iPsi][1]*ijac[2][1]+g[iPsi][2]*ijac[2][2];
+        _dPsiDx(j*3  ,i*nPsi+iPsi) = g[iPsi][0]*ijac[0][0]+g[iPsi][1]*ijac[0][1]+g[iPsi][2]*ijac[0][2];
+        _dPsiDx(j*3+1,i*nPsi+iPsi) = g[iPsi][0]*ijac[1][0]+g[iPsi][1]*ijac[1][1]+g[iPsi][2]*ijac[1][2];
+        _dPsiDx(j*3+2,i*nPsi+iPsi) = g[iPsi][0]*ijac[2][0]+g[iPsi][1]*ijac[2][1]+g[iPsi][2]*ijac[2][2];
       }
       //compute face normals
       double &nx=_normals(0,index);
@@ -311,14 +309,12 @@ void dgGroupOfConnections::init() {
   }
 }
 
-
 // this function creates groups of elements
 // First, groups of faces are created on every physical group
 // of dimension equal to the dimension of the problem minus one
 // Then, groups of elements are created 
 //  -) Elements of different types are separated
 //  -) Then those groups are split into partitions
-//  -) Finally, those groups are re-numbered 
  
 void dgGroupCollection::buildGroupsOfElements(GModel *model, int dim, int order)
 {
@@ -371,10 +367,10 @@ void dgGroupCollection::buildGroupsOfElements(GModel *model, int dim, int order)
   }
 }
 
-class dgMiniConnection {
+class dgMiniConnection 
+{
   public:
   int iGroup, iElement, iClosure;
-  int numVertices;
   dgMiniConnection (int iGroup_, int iElement_, int iClosure_)
   {
     iGroup = iGroup_;
@@ -392,7 +388,8 @@ class dgMiniConnection {
   }
 };
 
-class dgMiniInterface {
+class dgMiniInterface 
+{
   public:
   int physicalTag;
   int numVertices;
@@ -411,7 +408,8 @@ class dgMiniInterface {
   }
 };
 
-static std::vector<dgMiniInterface> *_createMiniInterfaces(dgGroupCollection &groups) {
+static std::vector<dgMiniInterface> *_createMiniInterfaces(dgGroupCollection &groups) 
+{
   std::vector<GEntity*> entities;
   groups.getModel()->getEntities(entities);
   std::map<MVertex*, dgMiniInterface> vertexInterfaces;
@@ -477,18 +475,24 @@ static std::vector<dgMiniInterface> *_createMiniInterfaces(dgGroupCollection &gr
   switch(dim) {
     case 1: 
       interfaces->reserve(vertexInterfaces.size());
-      for(std::map<MVertex*, dgMiniInterface>::iterator it = vertexInterfaces.begin(); it != vertexInterfaces.end(); it++)
+      for(std::map<MVertex*, dgMiniInterface>::iterator it = vertexInterfaces.begin(); it != vertexInterfaces.end(); it++) {
+        it->second.numVertices = 1;
         interfaces->push_back(it->second);
+      }
       break;
     case 2: 
       interfaces->reserve(edgeInterfaces.size());
-      for(std::map<MEdge, dgMiniInterface, Less_Edge>::iterator it = edgeInterfaces.begin(); it != edgeInterfaces.end(); it++)
+      for(std::map<MEdge, dgMiniInterface, Less_Edge>::iterator it = edgeInterfaces.begin(); it != edgeInterfaces.end(); it++) {
+        it->second.numVertices = it->first.getNumVertices();
         interfaces->push_back(it->second);
+      }
       break;
     case 3: 
       interfaces->reserve(faceInterfaces.size());
-      for(std::map<MFace, dgMiniInterface, Less_Face>::iterator it = faceInterfaces.begin(); it != faceInterfaces.end(); it++)
+      for(std::map<MFace, dgMiniInterface,Less_Face>::iterator it = faceInterfaces.begin(); it != faceInterfaces.end(); it++) {
+        it->second.numVertices = it->first.getNumVertices();
         interfaces->push_back(it->second);
+      }
       break;
   }
   for (size_t i = 0; i < interfaces->size(); i++) {
@@ -565,8 +569,13 @@ dgGroupOfFaces::dgGroupOfFaces (dgGroupCollection &groups, std::vector<dgMiniInt
   dgMiniInterface &first = interfaces.front();
   size_t nconnections = first.connections.size();
   int dim = groups.getElementGroup(first.connections[0].iGroup)->getElement(first.connections[0].iElement)->getDim()-1;
+  _physicalTag.clear();
   if(first.physicalTag>=0)
-    _boundaryTag = groups.getModel()->getPhysicalName(dim, first.physicalTag);
+    _physicalTag = groups.getModel()->getPhysicalName(dim, first.physicalTag);
+  if(nconnections==1 && (_physicalTag.empty() || _physicalTag=="")) {
+    Msg::Error("boundary face without tag in the mesh");
+    throw;
+  }
   for (size_t i=0; i<nconnections; i++) {
     _connections.push_back (new dgGroupOfConnections(*groups.getElementGroup(first.connections[i].iGroup), *this, pOrder));
   }
@@ -592,7 +601,7 @@ dgGroupOfFaces::dgGroupOfFaces (dgGroupCollection &groups, std::vector<dgMiniInt
         }
         break; 
       case 3 :
-        if (connection.numVertices == 3) {
+        if (interface.numVertices == 3) {
           switch(vertices.size()){
             case 3   : _faces.push_back (new MTriangle (vertices)); break;
             case 6   : _faces.push_back (new MTriangle6 (vertices)); break;
@@ -601,7 +610,7 @@ dgGroupOfFaces::dgGroupOfFaces (dgGroupCollection &groups, std::vector<dgMiniInt
             case 21  : _faces.push_back (new MTriangleN (vertices, 5)); break;
             default : throw;
           }
-        } else if (connection.numVertices == 4) {
+        } else if (interface.numVertices == 4) {
           switch(vertices.size()){
             case 4  : _faces.push_back (new MQuadrangle (vertices)); break;
             case 8  : _faces.push_back (new MQuadrangle8 (vertices)); break;
@@ -711,7 +720,6 @@ void dgGroupCollection::buildParallelStructure()
   delete []shiftSend;
   delete []shiftRecv;
 }
-
 
 // Split the groups of elements depending on their local time step
 double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLaw *claw, dgDofContainer *solution) {
@@ -959,8 +967,6 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLa
     lowerLevelGroupIdEnd=currentNewGroupId;
     isOuterBufferLayer=!isOuterBufferLayer;
   }
-
-
   // Some stats
   int count=0;
   for(int i=0;i<newGroups.size();i++){
@@ -980,11 +986,11 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLa
   return dtRef;
 }
 
-
 dgGroupCollection::dgGroupCollection()
 {
   _groupsOfElementsBuilt=false;_groupsOfInterfacesBuilt=false;
 }
+
 dgGroupCollection::dgGroupCollection(GModel *model, int dimension, int order)
 {
   _groupsOfElementsBuilt=false;_groupsOfInterfacesBuilt=false;
@@ -1010,6 +1016,7 @@ void dgGroupCollection::find (MElement*e, int &ig, int &index)
     if (index != -1)return;
   }
 }
+
 #include "LuaBindings.h"
 void dgGroupCollection::registerBindings(binding *b)
 {
@@ -1019,7 +1026,6 @@ void dgGroupCollection::registerBindings(binding *b)
   cb->setDescription("a group of element sharing the same properties");
   cb = b->addClass<dgGroupOfFaces>("dgGroupOfFaces");
   cb->setDescription("a group of faces. All faces of this group are either interior of the same group of elements or at the boundary between two group of elements");
-
   cb = b->addClass<dgGroupCollection>("dgGroupCollection");
   cb->setDescription("The GroupCollection class let you access to group partitioning functions");
   cm = cb->setConstructor<dgGroupCollection,GModel*,int,int>();

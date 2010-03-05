@@ -48,8 +48,10 @@ class dgConservationLaw {
 
   inline const dgBoundaryCondition *getBoundaryCondition(const std::string tag) const {
     std::map<const std::string,dgBoundaryCondition*>::const_iterator it = _boundaryConditions.find(tag);
-    if(it==_boundaryConditions.end())
+    if(it==_boundaryConditions.end()) {
+      Msg::Error("no boundary condition defined with tag '%s'", tag.c_str());
       throw;
+    }
     return it->second;
   }
 

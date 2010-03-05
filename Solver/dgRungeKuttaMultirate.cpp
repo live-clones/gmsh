@@ -48,8 +48,8 @@ dgRungeKuttaMultirate::dgRungeKuttaMultirate(dgGroupCollection* gc,dgConservatio
   for(int iGroup=0;iGroup<gc->getNbFaceGroups();iGroup++){
     dgGroupOfFaces *gf=gc->getFaceGroup(iGroup);
     const dgGroupOfElements *ge[2];
-    ge[0]=&gf->getGroupLeft();
-    ge[1]=&gf->getGroupRight();
+    ge[0]=&gf->getGroupOfConnections(0).getGroupOfElements();
+    ge[1]=&gf->getGroupOfConnections(1).getGroupOfElements();
     for(int i=0;i<2;i++){
       if(ge[i]->getIsInnerMultirateBuffer()){
         _innerBufferGroupsOfElements[ge[i]->getMultirateExponent()].second.push_back(gf);
@@ -64,7 +64,7 @@ dgRungeKuttaMultirate::dgRungeKuttaMultirate(dgGroupCollection* gc,dgConservatio
   for(int iGroup=0;iGroup<gc->getNbBoundaryGroups();iGroup++){
     dgGroupOfFaces *gf=gc->getBoundaryGroup(iGroup);
     const dgGroupOfElements *ge[1];
-    ge[0]=&gf->getGroupLeft();
+    ge[0]=&gf->getGroupOfConnections(0).getGroupOfElements();
     //ge[1]=&gf->getGroupRight();
     for(int i=0;i<1;i++){
       if(ge[i]->getIsInnerMultirateBuffer()){
@@ -121,13 +121,13 @@ void dgRungeKuttaMultirate::computeK(int iK,int exponent,bool isBuffer){
     gOFSet.insert(vfi.begin(),vfi.end());
     for(std::set<dgGroupOfFaces *>::iterator it=gOFSet.begin();it!=gOFSet.end();it++){
       dgGroupOfFaces *faces=*it;
-      if(faces->isBoundary()){
+      if(faces->getNbGroupOfConnections()==1){
         _residualBoundary->computeAndMap1Group(*faces,*_currentInput,*_residual);
         //Msg::Info("Buffer face group %p is boundary in multirate",faces);
       }
       else{
-        const dgGroupOfElements *gL=&faces->getGroupLeft();
-        const dgGroupOfElements *gR=&faces->getGroupRight();
+        const dgGroupOfElements *gL = &faces->getGroupOfConnections(0).getGroupOfElements();
+        const dgGroupOfElements *gR = &faces->getGroupOfConnections(1).getGroupOfElements();
         fullMatrix<double> solInterface(faces->getNbNodes(),faces->getNbElements()*2*_law->getNbFields());
         fullMatrix<double> residuInterface(faces->getNbNodes(),faces->getNbElements()*2*_law->getNbFields());
         faces->mapToInterface(_law->getNbFields(), _currentInput->getGroupProxy(gL), _currentInput->getGroupProxy(gR), solInterface);
@@ -170,12 +170,12 @@ void dgRungeKuttaMultirate::computeK(int iK,int exponent,bool isBuffer){
     std::vector<dgGroupOfFaces *> &vf=_bulkGroupsOfElements[exponent].second;
     for(int i=0;i<vf.size();i++){
       dgGroupOfFaces *faces=vf[i];
-      if(faces->isBoundary()){
+      if(faces->getNbGroupOfConnections()==1){
         _residualBoundary->computeAndMap1Group(*faces,*_currentInput,*_residual);
       }
       else{
-        const dgGroupOfElements *gL=&faces->getGroupLeft();
-        const dgGroupOfElements *gR=&faces->getGroupRight();
+        const dgGroupOfElements *gL = &faces->getGroupOfConnections(0).getGroupOfElements();
+        const dgGroupOfElements *gR = &faces->getGroupOfConnections(1).getGroupOfElements();
         fullMatrix<double> solInterface(faces->getNbNodes(),faces->getNbElements()*2*_law->getNbFields());
         fullMatrix<double> residuInterface(faces->getNbNodes(),faces->getNbElements()*2*_law->getNbFields());
         faces->mapToInterface(_law->getNbFields(), _currentInput->getGroupProxy(gL), _currentInput->getGroupProxy(gR), solInterface);

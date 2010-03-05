@@ -155,7 +155,7 @@ class fullMatrix
     }
     return false; // no reallocation
   }
-  void setAsProxy(fullMatrix<scalar> &original, int c_start, int c)
+  void setAsProxy(const fullMatrix<scalar> &original, int c_start, int c)
   {
     if(_data && _own_data)
       delete [] _data;

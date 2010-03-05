@@ -22,8 +22,10 @@ int dgSlopeLimiter::apply ( dgDofContainer *solution)
   fullMatrix<double> TempL, TempR;
   for( int iGFace=0; iGFace<groups->getNbFaceGroups(); iGFace++) {
     dgGroupOfFaces* group = groups->getFaceGroup(iGFace);  
-    const dgGroupOfElements *groupLeft = &group->getGroupLeft();
-    const dgGroupOfElements *groupRight = &group->getGroupRight();
+    const dgGroupOfConnections &left = group->getGroupOfConnections(0);
+    const dgGroupOfConnections &right = group->getGroupOfConnections(1);
+    const dgGroupOfElements *groupLeft = &left.getGroupOfElements();
+    const dgGroupOfElements *groupRight = &right.getGroupOfElements();
 
     fullMatrix<double> &solleft = solution->getGroupProxy(groupLeft);
     fullMatrix<double> &solright = solution->getGroupProxy(groupRight); 
@@ -34,8 +36,8 @@ int dgSlopeLimiter::apply ( dgDofContainer *solution)
 
     for(int iFace=0 ; iFace<group->getNbElements();iFace++)   {
 
-      iElementL = group->getElementLeftId(iFace);  
-      iElementR = group->getElementRightId(iFace); 
+      iElementL = left.getElementId(iFace);  
+      iElementR = right.getElementId(iFace); 
 
       TempL.setAsProxy(solleft, nbFields*iElementL, nbFields );
       TempR.setAsProxy(solright, nbFields*iElementR, nbFields );    	

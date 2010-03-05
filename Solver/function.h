@@ -80,14 +80,14 @@ class dataCacheDouble : public dataCache {
   }
   // take care if you use this you must ensure that the value pointed to are not modified
   // without further call to setAsProxy because the dependencies won't be invalidate
-  inline void setAsProxy(fullMatrix<double> &mat, int cShift, int c) {
+  inline void setAsProxy(const fullMatrix<double> &mat, int cShift, int c) {
     _invalidateDependencies();
     _value.setAsProxy(mat,cShift,c);
     _valid=true;
   }
   // take care if you use this you must ensure that the value pointed to are not modified
   // without further call to setAsProxy because the dependencies won't be invalidate
-  inline void setAsProxy(fullMatrix<double> &mat) {
+  inline void setAsProxy(const fullMatrix<double> &mat) {
     _invalidateDependencies();
     _value.setAsProxy(mat,0,mat.size2());
     _valid=true;
