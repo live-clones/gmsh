@@ -23,6 +23,7 @@
 #include "dgRungeKuttaMultirate.h"
 #include "dgSystemOfEquations.h"
 #include "dgLimiter.h"
+#include "dgTransformNodalValue.h"
 #include "dgFunctionIntegrator.h"
 #include "Bindings.h"
 #include "dgResidual.h"
@@ -342,11 +343,13 @@ binding::binding(){
   dgDofContainer::registerBindings(this);
   dgGroupCollection::registerBindings(this);
   dgLimiter::registerBindings(this);
+  dgTransformNodalValue::registerBindings(this);
   dgPerfectGasLaw2dRegisterBindings(this);
   dgResidual::registerBindings(this);
   dgRungeKutta::registerBindings(this);
   dgRungeKuttaMultirate43::registerBindings(this);
   dgSlopeLimiterRegisterBindings(this);
+  dgSupraTransformNodalValueRegisterBindings(this);
   dgSystemOfEquations::registerBindings(this);
   dgFunctionIntegrator::registerBindings(this);
   fullMatrix<double>::registerBindings(this);
