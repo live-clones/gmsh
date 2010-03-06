@@ -22,6 +22,7 @@ class dgResidualVolume {
   dgResidualVolume (const dgConservationLaw &claw);
   ~dgResidualVolume();
   void compute1Group(dgGroupOfElements &group, fullMatrix<double> &solution, fullMatrix<double> &residual);
+  void compute1GroupWithJacobian(dgGroupOfElements &group, fullMatrix<double> &solution, fullMatrix<double> &residual, fullMatrix<double> &jacobian);
   void computeAndMap1Group(dgGroupOfElements &group, dgDofContainer &solution, dgDofContainer &residual);
 };
 

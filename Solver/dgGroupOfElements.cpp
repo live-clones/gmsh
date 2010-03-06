@@ -64,15 +64,16 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e,
   _order=polyOrder;
   _dimUVW = _dimXYZ = e[0]->getDim();
   // this is the biggest piece of data ... the mappings
-  int nbPsi = _fs.coefficients.size1();
-  _redistributionFluxes[0] = new fullMatrix<double> (nbPsi,_integration->size1());
-  _redistributionFluxes[1] = new fullMatrix<double> (nbPsi,_integration->size1());
-  _redistributionFluxes[2] = new fullMatrix<double> (nbPsi,_integration->size1());
-  _redistributionSource = new fullMatrix<double> (nbPsi,_integration->size1());
-  _collocation = new fullMatrix<double> (_integration->size1(),nbPsi);
-  _mapping = new fullMatrix<double> (e.size(), 10 * _integration->size1());
-  _imass = new fullMatrix<double> (nbPsi,nbPsi*e.size()); 
-  _dPsiDx = new fullMatrix<double> ( _integration->size1()*3,nbPsi*e.size());
+  int nbNodes = _fs.coefficients.size1();
+  int nbQP = _integration->size1();
+  _redistributionFluxes[0] = new fullMatrix<double> (nbNodes, nbQP);
+  _redistributionFluxes[1] = new fullMatrix<double> (nbNodes, nbQP);
+  _redistributionFluxes[2] = new fullMatrix<double> (nbNodes, nbQP);
+  _redistributionSource = new fullMatrix<double> (nbNodes, nbQP);
+  _collocation = new fullMatrix<double> (nbQP, nbNodes);
+  _mapping = new fullMatrix<double> (e.size(), 10 * nbQP);
+  _imass = new fullMatrix<double> (nbNodes,nbNodes*e.size()); 
+  _dPsiDx = new fullMatrix<double> ( nbQP*3,nbNodes*e.size());
   _elementVolume = new fullMatrix<double> (e.size(),1);
   _innerRadii = new fullMatrix<double> (e.size(),1);
   double g[256][3],f[256];
@@ -80,7 +81,7 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e,
   for (int i=0;i<_elements.size();i++){
     MElement *e = _elements[i];
     element_to_index[e] = i;
-    fullMatrix<double> imass(*_imass,nbPsi*i,nbPsi);
+    fullMatrix<double> imass(*_imass,nbNodes*i,nbNodes);
     (*_innerRadii)(i,0)=e->getInnerRadius();
     for (int j=0;j< _integration->size1() ; j++ ){
       _fs.f((*_integration)(j,0), (*_integration)(j,1), (*_integration)(j,2), f);
@@ -100,14 +101,14 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e,
       (*_mapping)(i,10*j + 6) = ijac[2][0];
       (*_mapping)(i,10*j + 7) = ijac[2][1];
       (*_mapping)(i,10*j + 8) = ijac[2][2];
-      for (int k=0;k<nbPsi;k++){ 
-        for (int l=0;l<nbPsi;l++) { 
+      for (int k=0;k<nbNodes;k++){ 
+        for (int l=0;l<nbNodes;l++) { 
           imass(k,l) += f[k]*f[l]*weight*detjac;
         }
         // (iQP*3+iXYZ , iFace*NPsi+iPsi)
-        (*_dPsiDx)(j*3  ,i*nbPsi+k) = g[k][0]*ijac[0][0]+g[k][1]*ijac[0][1]+g[k][2]*ijac[0][2];
-        (*_dPsiDx)(j*3+1,i*nbPsi+k) = g[k][0]*ijac[1][0]+g[k][1]*ijac[1][1]+g[k][2]*ijac[1][2];
-        (*_dPsiDx)(j*3+2,i*nbPsi+k) = g[k][0]*ijac[2][0]+g[k][1]*ijac[2][1]+g[k][2]*ijac[2][2];
+        (*_dPsiDx)(j*3  ,i*nbNodes+k) = g[k][0]*ijac[0][0]+g[k][1]*ijac[0][1]+g[k][2]*ijac[0][2];
+        (*_dPsiDx)(j*3+1,i*nbNodes+k) = g[k][0]*ijac[1][0]+g[k][1]*ijac[1][1]+g[k][2]*ijac[1][2];
+        (*_dPsiDx)(j*3+2,i*nbNodes+k) = g[k][0]*ijac[2][0]+g[k][1]*ijac[2][1]+g[k][2]*ijac[2][2];
       }
     }
     imass.invertInPlace();
@@ -115,20 +116,34 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e,
   // redistribution matrix
   // quadrature weight x parametric gradients in quadrature points
 
-  for (int j=0;j<_integration->size1();j++) {
-    _fs.df((*_integration)(j,0),
-	   (*_integration)(j,1),
-	   (*_integration)(j,2), g);
-    _fs.f((*_integration)(j,0),
-	   (*_integration)(j,1),
-	   (*_integration)(j,2), f);
-    const double weight = (*_integration)(j,3);
-    for (int k=0;k<_fs.coefficients.size1();k++){ 
-      (*_redistributionFluxes[0])(k,j) = g[k][0] * weight;
-      (*_redistributionFluxes[1])(k,j) = g[k][1] * weight;
-      (*_redistributionFluxes[2])(k,j) = g[k][2] * weight;
-      (*_redistributionSource)(k,j) = f[k] * weight;
-      (*_collocation)(j,k) = f[k];
+  _PsiDPsiDXi = fullMatrix<double> (_dimUVW*nbQP, nbNodes*nbNodes);
+  //reditribution of the diffusive jacobian dimUVW*dimUVW*nbIntegrationPoints x nbNodes*nbNodes
+  _dPsiDXDPsiDXi = fullMatrix<double> (_dimUVW*_dimUVW*nbQP, nbNodes*nbNodes);
+
+  for (int xi=0;xi<nbQP; xi++) {
+    _fs.df((*_integration)(xi,0),
+	   (*_integration)(xi,1),
+	   (*_integration)(xi,2), g);
+    _fs.f((*_integration)(xi,0),
+	   (*_integration)(xi,1),
+	   (*_integration)(xi,2), f);
+    const double weight = (*_integration)(xi,3);
+    for (int k=0;k<nbNodes; k++){ 
+      (*_redistributionFluxes[0])(k,xi) = g[k][0] * weight;
+      (*_redistributionFluxes[1])(k,xi) = g[k][1] * weight;
+      (*_redistributionFluxes[2])(k,xi) = g[k][2] * weight;
+      (*_redistributionSource)(k,xi) = f[k] * weight;
+      (*_collocation)(xi,k) = f[k];
+    }
+    for (int alpha=0; alpha<_dimUVW; alpha++) for (int beta=0; beta<_dimUVW; beta++) {
+      for (int i=0; i<nbNodes; i++) for (int j=0; j<nbNodes; j++) {
+        _dPsiDXDPsiDXi((alpha*_dimUVW+beta)*nbQP+xi, i*nbNodes+j) = g[i][alpha]*g[j][beta]*weight;
+      }
+    }
+    for (int alpha=0; alpha<_dimUVW; alpha++){
+      for (int i=0; i<nbNodes; i++) for (int j=0; j<nbNodes; j++) {
+        _dPsiDXDPsiDXi(alpha*nbQP+xi, i*nbNodes+j) = g[i][alpha]*f[j]*weight;
+      }
     }
   }
 }

@@ -27,6 +27,7 @@
 #include "dgFunctionIntegrator.h"
 #include "Bindings.h"
 #include "dgResidual.h"
+#include "drawContext.h"
 
 extern "C" {
   #include "lua.h"
@@ -196,6 +197,10 @@ static int luaClear (lua_State *L){
   return 0;
 }
 #endif
+static int luaRefresh (lua_State *L){
+  drawContext::global()->draw();
+  return 0;
+}
 
 int binding::readFile(const char *filename)
 {
@@ -319,6 +324,7 @@ binding::binding(){
   #ifdef HAVE_READLINE
   lua_register(L,"saveHistory",luaSave);
   lua_register(L,"clearHistory",luaClear);
+  lua_register(L,"refreshGraphics",luaRefresh);
   #endif
 
   //  lua_pushcfunction(L, luaopen_io);

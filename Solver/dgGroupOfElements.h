@@ -73,6 +73,10 @@ class dgGroupOfElements {
   fullMatrix<double> *_imass;
   //
   fullMatrix<double> *_dPsiDx;
+  //redistributions of the convective jacobian diumUVW*nbIntegrationPoints x nbNodes*nbNodes
+  fullMatrix<double> _PsiDPsiDXi;
+  //reditribution of the diffusive jacobian dimUVW*dimUVW*nbIntegrationPoints x nbNodes*nbNodes
+  fullMatrix<double> _dPsiDXDPsiDXi;
   // dimension of the parametric space and of the real space
   // may be different if the domain is a surface in 3D (manifold)
   int _dimUVW, _dimXYZ;
@@ -91,7 +95,6 @@ protected:
   bool _multirateInnerBuffer;
   bool _multirateOuterBuffer;
 public:
-
   inline int getMultirateExponent() const {return _multirateExponent;}
   inline int getIsInnerMultirateBuffer() const {return _multirateInnerBuffer;}
   inline int getIsOuterMultirateBuffer() const {return _multirateOuterBuffer;}
@@ -109,6 +112,8 @@ public:
   inline const fullMatrix<double> & getCollocationMatrix () const {return *_collocation;}
   inline const fullMatrix<double> & getFluxRedistributionMatrix (int i) const {return *_redistributionFluxes[i];}
   inline const fullMatrix<double> & getSourceRedistributionMatrix () const {return *_redistributionSource;}
+  inline const fullMatrix<double> & getDPsiDXDPsiDXi() const {return _dPsiDXDPsiDXi;}
+  inline const fullMatrix<double> & getPsiDPsiDXi() const {return _PsiDPsiDXi;}
   inline double getElementVolume (int iElement)const {return (*_elementVolume)(iElement,0);}
   inline double getInnerRadius(int iElement)const {return (*_innerRadii)(iElement,0);}
   inline double getDetJ (int iElement, int iGaussPoint) const {return (*_mapping)(iElement, 10*iGaussPoint + 9);}
