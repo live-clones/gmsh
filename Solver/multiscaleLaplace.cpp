@@ -227,6 +227,7 @@ static void recur_compute_centers_ (double R, double a1, double a2,
   centers.push_back(std::make_pair(PL,zero));  
   centers.push_back(std::make_pair(PR,zero)); 
  
+  std::map<SPoint2, double> CR;
   for (int i=0;i<root->children.size();i++){
     multiscaleLaplaceLevel* m = root->children[i];    
     centers.push_back(std::make_pair(m->center,m));   
@@ -237,12 +238,13 @@ static void recur_compute_centers_ (double R, double a1, double a2,
       m->radius = std::max(m->radius,sqrt ((m->center.x() - p.x())*(m->center.x() - p.x())+
 					   (m->center.y() - p.y())*(m->center.y() - p.y())));
     }
+    CR.insert(std::make_pair(m->center, m->radius));
   }
 
   //add the center of real holes ... 
-  if (root->children.size()==0 ){//|| boundaries.size()-1 != root->children.size()){
-    std::vector<std::vector<MEdge> > boundaries;
-    connected_bounds(root->elements, boundaries);
+  std::vector<std::vector<MEdge> > boundaries;
+  connected_bounds(root->elements, boundaries);
+  if (root->children.size()==0 ){ // || boundaries.size()-1 != root->children.size()){
     for (unsigned int i = 0; i < boundaries.size(); i++){
       std::vector<MEdge> me = boundaries[i];
       SPoint2 c(0.0,0.0);
@@ -258,6 +260,15 @@ static void recur_compute_centers_ (double R, double a1, double a2,
 	rad = std::max(rad,sqrt ((c.x() - p.x())*(c.x() - p.x())+
 				 (c.y() - p.y())*(c.y() - p.y())));
       }
+
+      //check if the center has not been added
+//       bool newCenter = false;
+//       for (std::map<SPoint2,double>::iterator it = CR.begin(); it != CR.end(); it++){
+// 	SPoint2 p = it->first;
+// 	double radius = it->second;
+// 	double dist = sqrt ((c.x() - p.x())*(c.x() - p.x())+  (c.y() - p.y())*(c.y() - p.y()));
+// 	if (dist > radius) newCenter = true;
+//       }
       if (std::abs(rad/root->radius) < 0.9 && std::abs(rad) < 0.99){
 	centers.push_back(std::make_pair(c,zero));  
       }
@@ -903,7 +914,7 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
     MElement *e = level.elements[i];
     std::vector<SPoint2> localCoord;
     double local_size = localSize(e,solution);
-    if (local_size < 1.e-5 * global_size) 
+    if (local_size < 5.e-5 * global_size) //1.e-5
       tooSmall.push_back(e);
     else  goodSize.push_back(e);
   }
@@ -939,7 +950,7 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
     for (int k=0; k<regions_[i].size() ; k++){
       MElement *e = regions_[i][k];
       double local_size = localSize(e,solution);
-      if (local_size < 1.e-7 * global_size) 
+      if (local_size < 1.e-7 * global_size) //1.e-7
 	really_small_elements = true;
     }
     if(really_small_elements ) regions.push_back(regions_[i]);

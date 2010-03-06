@@ -167,51 +167,52 @@ static int getAspectRatio(std::vector<MElement *> &elements,
     AR = (int) ceil(2*3.14*area3D/(tot_length*tot_length));
   }
 
-//   std::set<MVertex*> vs;
-//   for(unsigned int i = 0; i < elements.size(); i++){
-//     MElement *e = elements[i];
-//     for(int j = 0; j < e->getNumVertices(); j++){
-//       vs.insert(e->getVertex(j));
-//     }
-//   }
-//   SBoundingBox3d bb;
-//   std::vector<SPoint3> vertices;
-//   for (std::set<MVertex* >::iterator it = vs.begin(); it != vs.end(); it++){
-//     SPoint3 pt((*it)->x(),(*it)->y(), (*it)->z());
-//     vertices.push_back(pt);
-//     bb += pt;
-//   }
-//   double H = norm(SVector3(bb.max(), bb.min()));
+  //compute AR also with Bounding box
+  std::set<MVertex*> vs;
+  for(unsigned int i = 0; i < elements.size(); i++){
+    MElement *e = elements[i];
+    for(int j = 0; j < e->getNumVertices(); j++){
+      vs.insert(e->getVertex(j));
+    }
+  }
+  SBoundingBox3d bb;
+  std::vector<SPoint3> vertices;
+  for (std::set<MVertex* >::iterator it = vs.begin(); it != vs.end(); it++){
+    SPoint3 pt((*it)->x(),(*it)->y(), (*it)->z());
+    vertices.push_back(pt);
+    bb += pt;
+  }
+  double H = norm(SVector3(bb.max(), bb.min()));
 
-//   //SOrientedBoundingBox obbox =  SOrientedBoundingBox::buildOBB(vertices);
-//   //double H = obbox.getMaxSize(); 
+  //SOrientedBoundingBox obbox =  SOrientedBoundingBox::buildOBB(vertices);
+  //double H = obbox.getMaxSize(); 
   
-//   double D = H;
-//   if (boundaries.size()  > 0 ) D = 0.0;
-//   for (unsigned int i = 0; i < boundaries.size(); i++){
-//     std::set<MVertex*> vb;
-//     std::vector<MEdge> iBound = boundaries[i];
-//     for (unsigned int j = 0; j < iBound.size(); j++){
-//       MEdge e = iBound[j];
-//       vb.insert(e.getVertex(0));
-//       vb.insert(e.getVertex(1));
-//     }
-//     std::vector<SPoint3> vBounds;
-//     SBoundingBox3d bb;
-//     for (std::set<MVertex* >::iterator it = vb.begin(); it != vb.end(); it++){
-//       SPoint3 pt((*it)->x(),(*it)->y(), (*it)->z());
-//       vBounds.push_back(pt);
-//       bb +=pt;
-//     }
-//     double iD = norm(SVector3(bb.max(), bb.min()));
-//     D = std::max(D, iD);
+  double D = H;
+  if (boundaries.size()  > 0 ) D = 0.0;
+  for (unsigned int i = 0; i < boundaries.size(); i++){
+    std::set<MVertex*> vb;
+    std::vector<MEdge> iBound = boundaries[i];
+    for (unsigned int j = 0; j < iBound.size(); j++){
+      MEdge e = iBound[j];
+      vb.insert(e.getVertex(0));
+      vb.insert(e.getVertex(1));
+    }
+    std::vector<SPoint3> vBounds;
+    SBoundingBox3d bb;
+    for (std::set<MVertex* >::iterator it = vb.begin(); it != vb.end(); it++){
+      SPoint3 pt((*it)->x(),(*it)->y(), (*it)->z());
+      vBounds.push_back(pt);
+      bb +=pt;
+    }
+    double iD = norm(SVector3(bb.max(), bb.min()));
+    D = std::max(D, iD);
     
-//     //SOrientedBoundingBox obboxD = SOrientedBoundingBox::buildOBB(vBounds); 
-//     //D = std::max(D, obboxD.getMaxSize());
-//   }
-//   int AR = (int)ceil(H/D);
+    //SOrientedBoundingBox obboxD = SOrientedBoundingBox::buildOBB(vBounds); 
+    //D = std::max(D, obboxD.getMaxSize());
+  }
+  int AR2 = (int)ceil(H/D);
   
-  return AR;
+  return std::min(AR, AR2);
 }
 
 static void getGenusAndRatio(std::vector<MElement *> &elements, int & genus, int &AR, int &NB)

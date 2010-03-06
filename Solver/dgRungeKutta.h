@@ -5,6 +5,7 @@
 class dgConservationLaw;
 class dgDofContainer;
 class dgLimiter;
+class dgAlgorithm;
 class dgTransformNodalValue;
 class dgGroupCollection;
 class dgGroupOfElements;
@@ -21,6 +22,7 @@ class dgRungeKutta {
   dgTransformNodalValue *_TransformNodalValue;
   public:
   void setLimiter(dgLimiter *limiter) { _limiter = limiter; }
+  double computeInvSpectralRadius(const dgConservationLaw *claw, dgDofContainer *solution);
   void setTransformNodalValue(dgTransformNodalValue *TransformNodalValue) { _TransformNodalValue = TransformNodalValue; }
 
   double iterateEuler(const dgConservationLaw *claw, double dt, dgDofContainer *solution);

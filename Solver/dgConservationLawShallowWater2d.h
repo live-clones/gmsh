@@ -17,7 +17,7 @@ class dgConservationLawShallowWater2d : public dgConservationLaw {
   dataCacheDouble *newSourceTerm (dataCacheMap &cacheMap) const;
   dgConservationLawShallowWater2d() 
   {
-    _nbf = 3; // H U(=Hu) V(=Hv)
+    _nbf = 3; // eta u v
   }
   dgBoundaryCondition *newBoundaryWall();
 };

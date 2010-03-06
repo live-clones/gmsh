@@ -27,50 +27,53 @@ end
      Example of a lua program driving the DG code
 --]]
 
-order = 1
-print'*** Loading the mesh and the model ***'
-myModel   = GModel  ()
-myModel:load ('step.geo')
-myModel:load ('step.msh')
 
-print'*** Create a dg solver ***'
-DG = dgSystemOfEquations (myModel)
-DG:setOrder(order)
+print'*** Loading the mesh and the model ***'
+model   = GModel  ()
+model:load ('step.geo')
+model:load ('step.msh')
+order = 1
+dimension = 2
+
 FS = functionLua(4, 'free_stream', {'XYZ'}):getName()
 
+-- boundary condition
 law=dgPerfectGasLaw2d()
-DG:setConservationLaw(law)
-
 law:addBoundaryCondition('Walls',law:newNonSlipWallBoundary())
 law:addBoundaryCondition('LeftRight',law:newOutsideValueBoundary(FS))
 --law:addBoundaryCondition('Walls',law:newOutsideValueBoundary(FS))
 
-DG:setup()
+groups = dgGroupCollection(model, dimension, order)
+groups:buildGroupsOfInterfaces()
+
+-- build Runge Kutta and limiter
+rk=dgRungeKutta()
+limiter = dgSlopeLimiter(law)
+rk:setLimiter(limiter) 
+
+-- build solution vector
+solution = dgDofContainer(groups, law:getNbFields())
+solution:L2Projection(FS)
+solution:exportGroupIdMsh()
 
 print'*** setting the initial solution ***'
-
-DG:L2Projection(FS)
-DG:limitSolution()
-
-print'*** export ***'
-
-DG:exportSolution('output/solution_0')
+solution:exportMsh('output/init')
+limiter:apply(solution)
+solution:exportMsh('output/init_limit')
 
 print'*** solve ***'
+dg = dgSystemOfEquations (model)
 CFL = 2
-
 local x = os.clock()
-
 for i=1,5000 do
-    dt = CFL * DG:computeInvSpectralRadius();    
---    norm = DG:RK44_limiter(dt)
-    norm = DG:ForwardEuler(dt)
-    DG:limitSolution()
+    dt = CFL * rk:computeInvSpectralRadius(law,solution);    
+--  norm = rk:iterate44(law,dt,solution)
+    norm = rk:iterateEuler(law,dt,solution)
     if (i % 10 == 0) then 
        print('|ITER|',i,'|NORM|',norm,'|DT|',dt,'|CPU|',os.clock() - x)
     end
     if (i % 100 == 0) then 
-       DG:exportSolution(string.format("output/solution-%06d", i)) 
+       solution:exportMsh(string.format('output/solution-%06d', i)) 
     end
 end
 

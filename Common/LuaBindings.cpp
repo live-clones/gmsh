@@ -15,6 +15,7 @@
 #include "dgGroupOfElements.h"
 #include "dgDofContainer.h"
 #include "dgConservationLawShallowWater2d.h"
+#include "dgConservationLawShallowWater1d.h"
 #include "dgConservationLawAdvection.h"
 #include "dgConservationLawPerfectGas.h"
 #include "dgConservationLawWaveEquation.h"
@@ -344,6 +345,7 @@ binding::binding(){
   dgConservationLaw::registerBindings(this);
   dgConservationLawAdvectionDiffusionRegisterBindings(this);
    dgConservationLawMaxwellRegisterBindings(this);
+   dgConservationLawShallowWater1dRegisterBindings(this);
   dgConservationLawShallowWater2dRegisterBindings(this);
   dgConservationLawWaveEquationRegisterBindings(this);
   dgDofContainer::registerBindings(this);

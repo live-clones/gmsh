@@ -50,10 +50,10 @@ void dgResidualVolume::compute1Group(dgGroupOfElements &group, fullMatrix<double
     fullMatrix<double> (group.getNbIntegrationPoints(), group.getNbElements() * _nbFields)};
   fullMatrix<double> fuvwe;
   fullMatrix<double> source;
-  fullMatrix<double> dPsiDx,dofs;
+  fullMatrix<double> dPsiDx,dofs; 
   // ----- 2.3 --- iterate on elements
   for (int iElement=0 ; iElement<group.getNbElements() ;++iElement) {
-    // ----- 2.3.1 --- build a small object that contains elementary solution, jacobians, gmsh element
+      // ----- 2.3.1 --- build a small object that contains elementary solution, jacobians, gmsh element
     _solutionQPe.setAsProxy(solutionQP, iElement*_nbFields, _nbFields );
 
     if(_gradientSolutionQPe.somethingDependOnMe()){
@@ -97,13 +97,12 @@ void dgResidualVolume::compute1Group(dgGroupOfElements &group, fullMatrix<double
       }
     }
   }
-
   // ----- 3 ---- do the redistribution at nodes using as many BLAS3 operations as there are local coordinates
   if(_convectiveFlux || _diffusiveFlux){
     for (int iUVW=0;iUVW<group.getDimUVW();iUVW++){
       residual.gemm(group.getFluxRedistributionMatrix(iUVW),Fuvw[iUVW]);
     }
-  }
+  }  
   if(_sourceTerm){
     residual.gemm(group.getSourceRedistributionMatrix(),Source);
   }

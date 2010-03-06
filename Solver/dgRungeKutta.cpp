@@ -1,11 +1,14 @@
 #include <stdlib.h>
 #include "dgRungeKutta.h"
+#include "dgAlgorithm.h"
 #include "dgConservationLaw.h"
 #include "dgDofContainer.h"
 #include "dgLimiter.h"
 #include "dgTransformNodalValue.h"
 #include "dgResidual.h"
 #include "dgGroupOfElements.h"
+#include <limits.h>
+#include <stdio.h>
 
 double dgRungeKutta::iterateEuler(const dgConservationLaw *claw, double dt, dgDofContainer *solution) {
   double A[] = {0};
@@ -211,6 +214,24 @@ double dgRungeKutta::nonDiagonalRK(const dgConservationLaw *claw,
   return solution->norm();
 }
 
+double dgRungeKutta::computeInvSpectralRadius(const dgConservationLaw *claw, 
+					      dgDofContainer *solution){   
+  double sr = 1.e22;
+  dgGroupCollection *groups=solution->getGroups();
+  for (int i=0;i<groups->getNbElementGroups();i++){
+    std::vector<double> DTS;
+    dgAlgorithm::computeElementaryTimeSteps(*claw, *(groups->getElementGroup(i)), solution->getGroupProxy(i), DTS);
+    for (int k=0;k<DTS.size();k++) sr = std::min(sr,DTS[k]);
+  }
+  #ifdef HAVE_MPI
+  double sr_min;
+  MPI_Allreduce((void *)&sr, &sr_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+  return sr_min;
+  #else
+  return sr;
+  #endif
+}
+
 
 dgRungeKutta::dgRungeKutta():_limiter(NULL),_TransformNodalValue(NULL){}
 
@@ -247,7 +268,9 @@ void dgRungeKutta::registerBindings(binding *b) {
   cm = cb->addMethod("setLimiter",&dgRungeKutta::setLimiter);
   cm->setArgNames("limiter",NULL);
   cm->setDescription("if a limiter is set, it is applied after each RK stage");
-
+  cm = cb->addMethod("computeInvSpectralRadius",&dgRungeKutta::computeInvSpectralRadius);
+  cm->setArgNames("law","solution",NULL);
+  cm->setDescription("Returns the inverse of the spectral radius of L(U). Useful for computing stable explicit time step.");
  cm = cb->addMethod("setTransformNodalValue",&dgRungeKutta::setTransformNodalValue);
    cm->setArgNames("TransformNodalValue",NULL);
    cm->setDescription("if the Nodal values is transformed in first step of RK");

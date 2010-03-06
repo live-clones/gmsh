@@ -176,7 +176,7 @@ dgBoundaryCondition *dgConservationLawShallowWater2d::newBoundaryWall(){
 #include "Bindings.h"
 void dgConservationLawShallowWater2dRegisterBindings (binding *b){
   classBinding *cb = b->addClass<dgConservationLawShallowWater2d>("dgConservationLawShallowWater2d");
-  cb->setDescription("The conservative sallow water conservation law. (H, Hu, Hv)");
+  cb->setDescription("The non-conservative shallow water conservation law. (eta, u, v)");
   methodBinding *cm;
   cm = cb->addMethod("newBoundaryWall",&dgConservationLawShallowWater2d::newBoundaryWall);
   cm->setDescription("slip wall boundary");

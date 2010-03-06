@@ -503,15 +503,14 @@ bool GFaceCompound::parametrize() const
   else if (_mapping == CONFORMAL){
     Msg::Debug("Parametrizing surface %d with 'conformal map'", tag());
     fillNeumannBCS();
-    bool withoutFolding = parametrize_conformal_spectral() ;
-    printStuff();
-    //exit(1);
+    //bool withoutFolding = parametrize_conformal_spectral() ;
+    bool withoutFolding = parametrize_conformal();
     if ( withoutFolding == false ){
+      //printStuff(); exit(1);
       Msg::Warning("$$$ Parametrization switched to harmonic map");
       parametrize(ITERU,HARMONIC); 
       parametrize(ITERV,HARMONIC);
     }
-    //exit(1);
   }
   //Distance function
   //-----------------
@@ -1138,7 +1137,7 @@ bool GFaceCompound::parametrize_conformal_spectral() const
       cross21.addToMatrix(myAssembler, &se);
     }
   }
-  double epsilon = 1.e-6;
+  double epsilon = 1.e-7;
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
       MVertex *v = *itv;
       if (std::find(ordered.begin(), ordered.end(), v) == ordered.end() ){
@@ -1167,14 +1166,19 @@ bool GFaceCompound::parametrize_conformal_spectral() const
        myAssembler.assemble(v, 0, 2, v, 0, 2,  1.0);
      }
    }
+
 //    int NB = ordered.size();
-//    for(std::vector<MVertex *>::iterator itv1 = ordered.begin(); itv1 !=ordered.end() ; ++itv1){
-//      for(std::vector<MVertex *>::iterator itv2 = ordered.begin(); itv2 !=ordered.end() ; ++itv2){
-//        myAssembler.assemble(*itv1, 0, 1, *itv2, 0, 1,  -1/NB);
-//        myAssembler.assemble(*itv1, 0, 2, *itv2, 0, 2,  -1/NB);
+//    for (int i = 0; i< NB; i++){
+//      MVertex *v1 = ordered[i];
+//      for (int j = i; j< NB; j++){
+//        MVertex *v2 = ordered[j];
+//        myAssembler.assemble(v1, 0, 1, v2, 0, 1,  -1./NB);
+//        myAssembler.assemble(v1, 0, 2, v2, 0, 2,  -1./NB);
+//        myAssembler.assemble(v2, 0, 1, v1, 0, 1,  -1./NB);
+//        myAssembler.assemble(v2, 0, 2, v1, 0, 2,  -1./NB);
 //      }
 //    }
-
+ 
 //    diagBCTerm diag1(0, 1, &ONE);
 //    diagBCTerm diag2(0, 2, &ONE);
 //    it = _compound.begin(); 
@@ -1188,7 +1192,7 @@ bool GFaceCompound::parametrize_conformal_spectral() const
 
    //-------------------------------
    eigenSolver eig(&myAssembler, "B" , "A", true);
-   bool converged = eig.solve(2, "largest");
+   bool converged = eig.solve(1, "largest");
      
    if(converged) {
      int k = 0;
@@ -1202,19 +1206,19 @@ bool GFaceCompound::parametrize_conformal_spectral() const
      }
      
      //if folding take second sallest eigenvalue
-     bool noFolding = checkFolding(ordered);
-     if (!noFolding ){
-       coordinates.clear();
-       int k = 0;
-       std::vector<std::complex<double> > &ev = eig.getEigenVector(1); 
-       for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
-	 MVertex *v = *itv;
-	 double paramu = ev[k].real();
-	 double paramv = ev[k+1].real();
-	 coordinates[v] = SPoint3(paramu,paramv,0.0);
-	 k = k+2;
-       }
-     }
+//      bool noFolding = checkFolding(ordered);
+//      if (!noFolding ){
+//        coordinates.clear();
+//        int k = 0;
+//        std::vector<std::complex<double> > &ev = eig.getEigenVector(1); 
+//        for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+// 	 MVertex *v = *itv;
+// 	 double paramu = ev[k].real();
+// 	 double paramv = ev[k+1].real();
+// 	 coordinates[v] = SPoint3(paramu,paramv,0.0);
+// 	 k = k+2;
+//        }
+//      }
 
      lsysA->clear();
      lsysB->clear();

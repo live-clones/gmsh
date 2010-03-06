@@ -15,9 +15,11 @@ Line Loop(8) = {7, -2, 5, 6};
 Plane Surface(9) = {8};
 Line Loop(10) = {3, 4, 1, 2};
 Plane Surface(11) = {10};
+
 Physical Surface("sprut") = {11, 9};
 Physical Line("Walls") = {5, 7, 3, 4, 1};
 Physical Line("Top") = {6};
+
 Recombine Surface {9, 11};
 
 Field[1] = MathEval;
