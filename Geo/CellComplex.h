@@ -19,6 +19,7 @@
 #include <queue>
 #include "Cell.h"
 #include "MElement.h"
+#include "ChainComplex.h"
 
 class Cell;
 
@@ -26,6 +27,8 @@ class Cell;
 class CellComplex
 {
  private:
+
+  GModel* _model;
   
   // the domain in the model which this cell complex covers
   std::vector<GEntity*> _domain;
@@ -67,7 +70,8 @@ class CellComplex
   void removeCellQset(Cell* cell, std::set<Cell*, Less_Cell>& Qset);
   
   // for constructor 
-  void insert_cells(bool subdomain, bool boundary);
+  void insert_cells(std::vector<GEntity*>& domain, 
+		    bool subdomain, bool boundary);
   void find_boundary(std::vector<GEntity*>& domain, 
 		     std::vector<GEntity*>& subdomain);
   
@@ -80,10 +84,13 @@ class CellComplex
   
  public: 
   
-  CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> subdomain );
+  CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> subdomain);
   //CellComplex(CellComplex* cellComplex)
   ~CellComplex();
-  
+
+  std::vector<GEntity*> getDomain() const { return _domain; }
+  std::vector<GEntity*> getSubdomain() const { return _subdomain; }
+
   // restore this cell complex to its original state
   void restoreComplex();
      
@@ -96,6 +103,7 @@ class CellComplex
   bool simplicial() { return _simplicial; }
   
   std::set<Cell*, Less_Cell> getCells(int dim){ return _cells[dim]; }
+  void getCells(std::set<Cell*, Less_Cell>& cells, int dim, int domain=0);
   std::set<Cell*, Less_Cell> getOrgCells(int dim){ return _ocells[dim]; }
   
   // iterator for the cells of same dimension
@@ -113,8 +121,10 @@ class CellComplex
   
   // check whether two cells both belong to subdomain or if neither one does
   bool inSameDomain(Cell* c1, Cell* c2) const { 
-    return ( (!c1->inSubdomain() && !c2->inSubdomain()) 
-	     || (c1->inSubdomain() && c2->inSubdomain()) ); }
+    return ( ((!c1->inSubdomain() && !c2->inSubdomain()) 
+	      || (c1->inSubdomain() && c2->inSubdomain()))
+	     && ((!c1->getImmune() && !c2->getImmune()) 
+		 || (c1->getImmune() && c2->getImmune())) ); }
   
   // (co)reduction of this cell complex
   // removes (co)reduction pairs of cell of dimension dim and dim-1
@@ -122,12 +132,13 @@ class CellComplex
   int coreduction(int dim, int omitted=0);  
 
   // full (co)reduction of this cell complex (all dimensions)
-  int reduceComplex();
+  int reduceComplex(bool omit=true);
   int coreduceComplex();
   
   // remove cells in subdomain from this cell complex
   void removeSubdomain();
-  
+  void deImmuneCells(bool subdomain=false);  
+
   // print the vertices of cells of certain dimension
   void printComplex(int dim);
   
@@ -163,6 +174,10 @@ class CellComplex
   // cell complex
   // equivalent to transposing boundary operator matrices
   void makeDualComplex();
+  
+  // store cells of dimension dim to the GModel as a 
+  // physical group of MElements 
+  void storeCells(int dim);
 };
 
 #endif

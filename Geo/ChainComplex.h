@@ -34,6 +34,8 @@
   #include "gmp_normal_form.h"
 #endif
 
+class CellComplex;
+
 // A class representing a chain complex of a cell complex.
 // This should only be constructed for a reduced cell complex because of
 // dense matrix representations and great computational complexity in 
@@ -75,7 +77,7 @@ class ChainComplex{
   
  public:
   
-  ChainComplex(CellComplex* cellComplex);
+  ChainComplex(CellComplex* cellComplex, int domain=0);
   
   ChainComplex(){
     for(int i = 0; i < 5; i++){
@@ -192,11 +194,14 @@ class Chain{
     _cellComplex = chain->getCellComplex();
     _dim = chain->getDim();
     _model = chain->getGModel();
-  }
-  ~Chain() {}
-   
+    _num = chain->getNum();
+  }  
   typedef std::map<Cell*, int, Less_Cell>::iterator citer;
-   
+  citer firstCell() {return _cells.begin(); }
+  citer lastCell() {return _cells.end(); }
+
+  ~Chain() {} 
+
   // remove a cell from this chain
   void removeCell(Cell* cell);
    
@@ -238,8 +243,8 @@ class Chain{
   // for debugging only
   int writeChainMSH(const std::string &name);
 
-  // create a PView of this chain.
-  void createPView();
+  // create a physical group of this chain.
+  int createPGroup();
   
 };
 

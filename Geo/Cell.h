@@ -37,7 +37,7 @@ class Cell
   // cell dimension
   int _dim;
    
-  // whether this cell belongs to a subdomain, immutable
+  // whether this cell belongs to a subdomain
   // used in relative homology computation
   bool _inSubdomain;
   
@@ -64,9 +64,11 @@ class Cell
   
   // The mesh element that is the image of this cell
   MElement* _image;
+ 
   // Whether to delete the mesh element when done
   // (created for homology computation only)
   bool _deleteImage;
+  bool _deleteWithCellComplex;
   
   // sorted vertices of this cell (used for ordering of the cells)
   std::vector<int> _vs;
@@ -77,7 +79,7 @@ class Cell
  public:
 
  Cell() : _combined(false), _index(0), _immune(false), _image(NULL), 
-    _deleteImage(false) {}
+    _deleteImage(false), _deleteWithCellComplex(true) {}
   Cell(MElement* image, bool subdomain, bool boundary);
   
   virtual ~Cell();
@@ -96,6 +98,10 @@ class Cell
   virtual void setDeleteImage(bool deleteImage) { 
     _deleteImage = deleteImage; };
   virtual bool getDeleteImage() const { return _deleteImage; };
+  virtual void setDeleteWithCellComplex(bool deleteWithCellComplex) { 
+    _deleteWithCellComplex = deleteWithCellComplex; };
+  virtual bool getDeleteWithCellComplex() const { 
+    return _deleteWithCellComplex; };
   
   // get the number of vertices this cell has
   virtual int getNumVertices() const { return _image->getNumVertices(); }

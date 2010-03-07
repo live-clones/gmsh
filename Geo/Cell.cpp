@@ -32,7 +32,7 @@ bool Less_Cell::operator()(const Cell* c1, const Cell* c2) const
 
 Cell::Cell(MElement* image, bool subdomain, bool boundary) :  
   _combined(false), _index(0), _immune(false), _image(NULL), 
-  _deleteImage(false) 
+  _deleteImage(false), _deleteWithCellComplex(true) 
 {
   _onDomainBoundary = boundary;
   _inSubdomain = subdomain;
@@ -254,7 +254,7 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell()
   _onDomainBoundary = c1->onDomainBoundary();
   _combined = true;
   _image = NULL;
-  
+
   // vertices
   _vs.reserve(c1->getNumVertices() + c2->getNumVertices());
   for(int i = 0; i < c1->getNumVertices(); i++){

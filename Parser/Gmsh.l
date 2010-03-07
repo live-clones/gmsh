@@ -142,6 +142,7 @@ Hole                    return tHole;
 HomRank                 return tHomRank;
 HomGen                  return tHomGen;
 HomCut                  return tHomCut;
+HomSeq                  return tHomSeq;
 Hypot                   return tHypot;
 
 In                      return tIn;

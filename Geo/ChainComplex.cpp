@@ -13,7 +13,7 @@
 
 #if defined(HAVE_KBIPACK)
 
-ChainComplex::ChainComplex(CellComplex* cellComplex)
+ChainComplex::ChainComplex(CellComplex* cellComplex, int domain)
 { 
   _dim = cellComplex->getDim();
   _cellComplex = cellComplex;
@@ -37,7 +37,8 @@ ChainComplex::ChainComplex(CellComplex* cellComplex)
       Cell* cell = *cit;
       cell->setIndex(index);
       index++;
-      if(cell->inSubdomain()){
+      if((domain == 0 && cell->inSubdomain()) 
+	 || (domain == 2 && !cell->inSubdomain()) ){
         index--;
         cols--;
       }
@@ -49,7 +50,8 @@ ChainComplex::ChainComplex(CellComplex* cellComplex)
         Cell* cell = *cit;
         cell->setIndex(index);
         index++;
-        if(cell->inSubdomain()){
+        if( (domain == 0 && cell->inSubdomain()) 
+	    || (domain == 2 && !cell->inSubdomain()) ){
           index--;
           rows--;
         }
@@ -73,11 +75,13 @@ ChainComplex::ChainComplex(CellComplex* cellComplex)
 	     cellComplex->firstCell(dim);
 	   cit != cellComplex->lastCell(dim); cit++){
         Cell* cell = *cit;
-        if(!cell->inSubdomain()){
+        if( (domain == 0 && !cell->inSubdomain()) || domain == 1 
+	    || (domain == 2 && cell->inSubdomain()) ){
           for(Cell::biter it = cell->firstBoundary();
 	      it != cell->lastBoundary(); it++){
             Cell* bdCell = (*it).first;
-            if(!bdCell->inSubdomain()){
+            if((domain == 0 && !bdCell->inSubdomain()) || domain == 1 
+	       || (domain == 2 && cell->inSubdomain()) ){
               int old_elem = 0;
 
               if(bdCell->getIndex() > (int)gmp_matrix_rows( _HMatrix[dim]) 
@@ -93,7 +97,7 @@ ChainComplex::ChainComplex(CellComplex* cellComplex)
                 old_elem = mpz_get_si(elem);
                 mpz_set_si(elem, old_elem + (*it).second);
                 if( abs((old_elem + (*it).second)) > 1){
-                  Msg::Debug("Incidence index: %d! HMatrix: %d.", 
+		  Msg::Debug("Incidence index: %d! HMatrix: %d. \n", 
 			     (old_elem + (*it).second), dim);
                 }
                 gmp_matrix_set_elem(elem, bdCell->getIndex(), 
@@ -262,8 +266,7 @@ void ChainComplex::Quotient(int dim)
 
   //printMatrix(normalForm->left);
   //printMatrix(normalForm->canonical);
-  //printMatrix(normalForm->right);
-  
+  //printMatrix(normalForm->right);  
   
   mpz_t elem;
   mpz_init(elem);
@@ -450,7 +453,7 @@ Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs,
       cit != cells.end(); cit++){
     Cell* cell = *cit;
     _dim = cell->getDim();
-    if(!cell->inSubdomain() && (int)coeffs.size() > i){
+    if((int)coeffs.size() > i){
       if(coeffs.at(i) != 0){
         std::list< std::pair<int, Cell*> > subCells;
 	cell->getCells(subCells);
@@ -459,6 +462,7 @@ Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs,
           Cell* subCell = (*it).second;
           int coeff = (*it).first;
           _cells.insert( std::make_pair(subCell, coeffs.at(i)*coeff));
+	  subCell->setDeleteWithCellComplex(false);
         }
       }
       i++;
@@ -645,10 +649,10 @@ int Chain::writeChainMSH(const std::string &name)
   return 1;
 }
 
-void Chain::createPView()
+int Chain::createPGroup()
 {  
   std::vector<MElement*> elements;
-  std::map<int, std::vector<double> > data;  
+  std::map<int, std::vector<double> > data;
   MElementFactory factory;
 
   for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
@@ -660,15 +664,15 @@ void Chain::createPView()
     for(int i = 0; i < e->getNumVertices(); i++){
       v.push_back(e->getVertex(i));
     }
-    MElement* ne = factory.create(e->getTypeForMSH(), v);
-
+    MElement* ne = factory.create(e->getTypeForMSH(), v, 0, e->getPartition());
+    
     if(cell->getDim() > 0 && coeff < 0) ne->revert(); // flip orientation
-    for(int i = 0; i < abs(coeff); i++) elements.push_back(ne);
+    for(int i = 0; i < abs(coeff); i++) elements.push_back(ne);    
 
     std::vector<double> coeffs (1,abs(coeff));
     data[ne->getNum()] = coeffs;
   }
-
+  
   int max[4];
   for(int i = 0; i < 4; i++) max[i] = _model->getMaxElementaryNumber(i);
   int entityNum = *std::max_element(max,max+4) + 1;
@@ -702,12 +706,12 @@ void Chain::createPView()
     _model->storeChain(getDim(), entityMap, physicalMap);
     _model->setPhysicalName(getName(), getDim(), physicalNum);
     
-    // only for visualization
+    // create PView for visualization
     PView* chain = new PView(getName(), "ElementData", getGModel(), 
 			     data, 0, 1);
   }
    
-  return;
+  return physicalNum;
 }
 
 
@@ -725,6 +729,7 @@ void Chain::addCell(Cell* cell, int coeff)
   std::pair<citer,bool> insert = _cells.insert( std::make_pair( cell, coeff));
   if(!insert.second && (*insert.first).second == 0){
     (*insert.first).second = coeff; 
+    cell->setDeleteWithCellComplex(false);
   }
   else if (!insert.second && (*insert.first).second != 0){
     Msg::Debug("Error: invalid chain smoothening add! \n");
@@ -761,7 +766,10 @@ void Chain::eraseNullCells()
       if((*cit).second == 0) toRemove.push_back((*cit).first);
     }
   }
-  for(unsigned int i = 0; i < toRemove.size(); i++) _cells.erase(toRemove[i]);
+  for(unsigned int i = 0; i < toRemove.size(); i++){
+    _cells.erase(toRemove[i]);
+    toRemove[i]->setDeleteWithCellComplex(true);
+  }
   return;
 }
 

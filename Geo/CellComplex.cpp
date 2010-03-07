@@ -11,13 +11,17 @@
 
 #if defined(HAVE_KBIPACK)
 
+
+
 CellComplex::CellComplex( std::vector<GEntity*> domain, 
-			  std::vector<GEntity*> subdomain )
+			  std::vector<GEntity*> subdomain)
 {
-  
   _domain = domain;
   _subdomain = subdomain;
-  
+ 
+  if(!_domain.empty()) _model = _domain.at(0)->model();
+  else _model = NULL;
+
   _dim = 0;
   _simplicial = true;
   
@@ -34,14 +38,13 @@ CellComplex::CellComplex( std::vector<GEntity*> domain,
   }
   
   // find boundary entities
-  if(!_multidim) find_boundary(domain, subdomain);
+  //if(!_multidim) find_boundary(domain, subdomain);
 
   // insert cells into cell complex
   // subdomain need to be inserted first!
-  insert_cells(true, true);
-  insert_cells(false, true);
-  insert_cells(false, false);
-  
+  insert_cells(_subdomain, true, true);
+  //insert_cells(_boundary, false, true);
+  insert_cells(_domain, false, false);
 
   for(int i = 0; i < 4; i++){
     _ocells[i] = _cells[i];
@@ -117,14 +120,9 @@ void CellComplex::find_boundary(std::vector<GEntity*>& domain,
   }
 }
 
-void CellComplex::insert_cells(bool subdomain, bool boundary)
-{  
-  std::vector<GEntity*> domain;
-  
-  if(subdomain) domain = _subdomain;
-  else if(boundary) domain = _boundary;
-  else domain = _domain;
-  
+void CellComplex::insert_cells(std::vector<GEntity*>& domain, 
+			       bool subdomain, bool boundary)
+{
   std::vector<MVertex*> vertices;
   std::pair<citer, bool> insertInfo;
 
@@ -168,11 +166,11 @@ void CellComplex::insert_cells(bool subdomain, bool boundary)
       else if(type == MSH_HEX_8 || type == MSH_HEX_27 || type == MSH_HEX_20){
         cell = new Cell(element, subdomain, boundary);
         _simplicial = false;
-      }/* FIXME: no getFaceInfo methods for these MElements
+      }
       else if(type == MSH_PRI_6 || type == MSH_PRI_18 || type == MSH_PRI_15){
         cell = new Cell(element, subdomain, boundary);
         _simplicial = false;
-      }
+      }/* FIXME: no getFaceInfo methods for these MElements
       else if(type == MSH_PYR_5 || type == MSH_PYR_14 || type == MSH_PYR_13){
         cell = new Cell(element, subdomain, boundary);
         _simplicial = false;
@@ -253,7 +251,7 @@ CellComplex::~CellComplex()
     
     for(citer cit = _ocells[i].begin(); cit != _ocells[i].end(); cit++){
       Cell* cell = *cit;
-      delete cell;
+      if(cell->getDeleteWithCellComplex()) delete cell;
     }
     _ocells[i].clear();
     
@@ -379,7 +377,9 @@ int CellComplex::reduction(int dim, int omitted)
     while(cit != lastCell(dim-1)){
       Cell* cell = *cit;
       if( cell->getCoboundarySize() == 1 
-	  && inSameDomain(cell, cell->firstCoboundary()->first)){
+	  && inSameDomain(cell, cell->firstCoboundary()->first)
+	  && !cell->getImmune() 
+	  && !cell->firstCoboundary()->first->getImmune()){
 	++cit;
 	if(dim == getDim() && omitted > 0){
 	  _store.at(omitted-1).insert(cell->firstCoboundary()->first);    
@@ -430,7 +430,7 @@ int CellComplex::coreduction(int dim, int omitted)
   return count;
 }
   
-int CellComplex::reduceComplex()
+int CellComplex::reduceComplex(bool omit)
 {  
   double t1 = Cpu();
   
@@ -439,31 +439,32 @@ int CellComplex::reduceComplex()
   
   int count = 0;
   for(int i = 3; i > 0; i--) count = count + reduction(i);
+
+  if(omit){
+    int omitted = 0;
+    _store.clear();
     
-  int omitted = 0;
-  _store.clear();
+    //removeSubdomain();
     
-  removeSubdomain();
-  
-  while (getSize(getDim()) != 0){
-    
-    citer cit = firstCell(getDim());
-    Cell* cell = *cit;
-    removeCell(cell);
-    
-    omitted++;
-    std::set< Cell*, Less_Cell > omittedCells;
-    _store.push_back(omittedCells);
-    _store.at(omitted-1).insert(cell);
-    for(int j = 3; j > 0; j--) reduction(j, omitted);
+    while (getSize(getDim()) != 0){
+      
+      citer cit = firstCell(getDim());
+      Cell* cell = *cit;
+      removeCell(cell);
+      
+      omitted++;
+      std::set< Cell*, Less_Cell > omittedCells;
+      _store.push_back(omittedCells);
+      _store.at(omitted-1).insert(cell);
+      for(int j = 3; j > 0; j--) reduction(j, omitted);
+    }
   }
-    
+
   double t2 = Cpu();
   Msg::Debug("Cell complex after reduction: %d volumes, %d faces, %d edges and %d vertices (%g s).\n",
-         getSize(3), getSize(2), getSize(1), getSize(0), t2 - t1);
+	     getSize(3), getSize(2), getSize(1), getSize(0), t2 - t1);
   return 0;
 }
-
 
 void CellComplex::removeSubdomain()
 {
@@ -475,6 +476,30 @@ void CellComplex::removeSubdomain()
     }
   }
   for(unsigned int i = 0; i < toRemove.size(); i++) removeCell(toRemove[i]);
+}
+/*
+void CellComplex::setSubdomain(std::vector<GEntity*>& subdomain){
+  for(int i = 3; i > -1; i--){
+    for(citer cit = firstCell(i); cit != lastCell(i); cit++){
+      Cell* cell = *cit;
+      for(unsigned int j = 0; j < subdomain.size(); j++){
+	if(cell->getGEntity()->tag() == subdomain.at(j)->tag()){
+	  cell->setInSubdomain(true);
+	}
+      }
+    }
+  }
+}*/
+
+void CellComplex::deImmuneCells(bool subdomain)
+{
+  for(int i = 0; i < 4; i++){
+    for(citer cit = firstCell(i); cit != lastCell(i); ++cit){
+      Cell *cell = *cit;
+      if(cell->getImmune() && subdomain) cell->setInSubdomain(true);
+      cell->setImmune(false);
+    }
+  }
 }
 
 int CellComplex::coreduceComplex()
@@ -522,14 +547,24 @@ void CellComplex::computeBettiNumbers()
 {  
   for(int i = 0; i < 4; i++){
     _betti[i] = 0;
-
     Msg::Debug("Betti number computation process: step %d of 4 \n", i+1);
     while (getSize(i) != 0){
+      /*removeSubdomain();
+	citer cit = firstCell(i);
+	while(cit != lastCell(i)){
+	if(coreduction(*cit)) cit = firstCell(i);
+	else cit++;
+	}
+	if(getSize(i) != 0) { 
+	_betti[i] = _betti[i] + 1; 
+	cit = firstCell(i); 
+	removeCell(*cit, false);
+	}*/
       citer cit = firstCell(i);
       Cell* cell = *cit;
       while(!cell->inSubdomain() && cit != lastCell(i)){
-        cell = *cit;
-        cit++;
+	cell = *cit;
+	cit++;
       }
       if(!cell->inSubdomain()) _betti[i] = _betti[i] + 1;
       removeCell(cell, false);
@@ -557,15 +592,13 @@ int CellComplex::cocombine(int dim)
   int count = 0;
   
   for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
-  
     Cell* cell = *cit;
     cell->getCoboundary(cbd_c);
     enqueueCells(cbd_c, Q, Qset);
-    while(Q.size() != 0){
 
+    while(Q.size() != 0){
       Cell* s = Q.front();
       Q.pop();
-      
       if(s->getBoundarySize() == 2){
 	Cell::biter it = s->firstBoundary();
         int or1 = (*it).second;
@@ -579,8 +612,8 @@ int CellComplex::cocombine(int dim)
            && c1->getNumVertices() < getSize(dim) 
 	   // heuristics for mammoth cell birth control
            && c2->getNumVertices() < getSize(dim)){
-	  
-          removeCell(s);
+
+	  removeCell(s);
           
           c1->getCoboundary(cbd_c);
           enqueueCells(cbd_c, Q, Qset);
@@ -774,6 +807,18 @@ bool CellComplex::hasCell(Cell* cell, bool org)
   }
 }
 
+void  CellComplex::getCells(std::set<Cell*, Less_Cell>& cells, 
+			    int dim, int domain){
+  cells.clear();
+  for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
+    Cell* cell = *cit;
+    if( (domain == 0 && !cell->inSubdomain()) || domain == 1
+	|| (domain == 2 && cell->inSubdomain()) ){
+      cells.insert(cell);
+    }
+  }
+}
+
 bool CellComplex::swapSubdomain()
 {
   if(_multidim) return false;
@@ -825,6 +870,43 @@ bool CellComplex::writeBettiNumbers(std::string fileName)
   fclose(fp);
   Msg::Info("Wrote Betti numbers to %s.", fileName.c_str());
   return true;
+}
+
+void CellComplex::storeCells(int dim)
+{
+  std::vector<MElement*> elements;
+
+  for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
+    Cell* cell = *cit;
+    
+    std::list< std::pair<int, Cell*> > cells;
+    cell->getCells(cells);
+    for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin();
+	it != cells.end(); it++){
+      Cell* subCell = it->second;
+      
+      MElement* e = subCell->getImageMElement();
+      subCell->setDeleteImage(false);
+      elements.push_back(e);
+    }
+  }
+
+  int max[4];
+  for(int i = 0; i < 4; i++) max[i] = _model->getMaxElementaryNumber(i);
+  int entityNum = *std::max_element(max,max+4) + 1;
+  for(int i = 0; i < 4; i++) max[i] = _model->getMaxPhysicalNumber(i);
+  int physicalNum = *std::max_element(max,max+4) + 1;
+
+  std::map<int, std::vector<MElement*> > entityMap;
+  entityMap[entityNum] = elements;
+  std::map<int, std::map<int, std::string> > physicalMap;
+  std::map<int, std::string> physicalInfo;
+  physicalInfo[physicalNum]="Cell Complex";
+  physicalMap[entityNum] = physicalInfo;
+
+  _model->storeChain(dim, entityMap, physicalMap);
+  _model->setPhysicalName("Cell Complex", dim, physicalNum);
+
 }
 
 #endif

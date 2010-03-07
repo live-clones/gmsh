@@ -27,17 +27,21 @@ class Homology
 {
  private:
   
-  // base cell complex and the model of the homology computation
-  CellComplex* _cellComplex;
+  // the model of the homology computation
   GModel* _model;
 
   // domain and the relative subdomain of the homology computation
   std::vector<int> _domain;
   std::vector<int> _subdomain;
-  
+  std::vector<GEntity*> _domainEntities;
+  std::vector<GEntity*> _subdomainEntities;  
+
   // generator chains
-  std::vector<Chain*> _generators[4];
-  
+  //std::vector<Chain*> _generators[4];
+  //std::vector<int> _pGroups;
+
+  std::map<int, Chain*> _generators;
+
   std::string _fileName;
  
  public:
@@ -46,30 +50,31 @@ class Homology
 	   std::vector<int> physicalSubdomain);
   ~Homology();
   
+  CellComplex* createCellComplex(std::vector<GEntity*>& domainEntities,
+				 std::vector<GEntity*>& subdomainEntities);
+
   void setFileName(std::string fileName) { _fileName = fileName; }
 
   // Find the generators/duals of homology spaces,
   // or just compute the ranks of homology spaces
-  void findGenerators();
+  void findGenerators(CellComplex* cellComplex=NULL, 
+		      bool omit=true, std::string domainString="");
   void findDualGenerators();
   void computeBettiNumbers();
   
-  bool swapSubdomain() { return _cellComplex->swapSubdomain(); }
+  void findHomSequence();
+
+  //bool swapSubdomain() { return _cellComplex->swapSubdomain(); }
   
   // Restore the cell complex to its original state before cell reductions
-  void restoreHomology();
+  //void restoreHomology();
    
   // Create a string describing the generator
-  std::string getDomainString();
+  std::string getDomainString(const std::vector<int>& domain,
+			      const std::vector<int>& subdomain);
   
-  // create PViews of the generators and save the chain mesh elements
-  // to the mesh of the model
-  void createPViews();
   // write the generators to a file
   bool writeGeneratorsMSH(bool binary=false);
-  bool writeBettiNumbers() { 
-    return _cellComplex->writeBettiNumbers(_fileName); }
-
 };
 
 #endif
