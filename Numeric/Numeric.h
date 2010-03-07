@@ -7,10 +7,10 @@
 #define _NUMERIC_H_
 
 #include <math.h>
+#include <vector>
 #include "fullMatrix.h"
 #include "SPoint3.h"
 #include "SVector3.h"
-#include <vector>
 
 #define myhypot(a,b) (sqrt((a)*(a)+(b)*(b)))
 #define sign(x)      (((x)>=0)?1:-1)
@@ -84,15 +84,15 @@ bool newton_fd(void (*func)(fullVector<double> &, fullVector<double> &, void *),
                fullVector<double> &x, void *data, double relax=1., double tolx=1.e-6);
 double minimize_grad_fd(double (*func)(fullVector<double> &, void *),
                         fullVector<double> &x, void *data);
-void signedDistancesPointsTriangle (std::vector<double>&distances,
-				    std::vector<SPoint3>&closePts,
-				    const std::vector<SPoint3> &pts,
-				    const SPoint3 &p1,
-				    const SPoint3 &p2,
-				    const SPoint3 &p3);
-void signedDistancesPointsLine (std::vector<double>&distances,
-				std::vector<SPoint3>&closePts,
-				const std::vector<SPoint3> &pts,
-				const SPoint3 &p1,
-				const SPoint3 &p2);
+void signedDistancesPointsTriangle(std::vector<double> &distances,
+                                   std::vector<SPoint3> &closePts,
+                                   const std::vector<SPoint3> &pts,
+                                   const SPoint3 &p1,
+                                   const SPoint3 &p2,
+                                   const SPoint3 &p3);
+void signedDistancesPointsLine(std::vector<double> &distances,
+                               std::vector<SPoint3> &closePts,
+                               const std::vector<SPoint3> &pts,
+                               const SPoint3 &p1,
+                               const SPoint3 &p2);
 #endif
