@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include "GmshConfig.h"
 #include "MTriangle.h"
 #include "Numeric.h"
 #include "Context.h"
@@ -36,7 +37,6 @@ double MTriangle::distoShapeMeasure()
 
 double MTriangle::getInnerRadius()
 {
-#if defined(HAVE_MESH)
   double dist[3], k = 0.;
   for (int i = 0; i < 3; i++){
     MEdge e = getEdge(i);
@@ -44,9 +44,6 @@ double MTriangle::getInnerRadius()
     k += 0.5 * dist[i];
   }
   return sqrt(k * (k - dist[0]) * (k - dist[1]) * (k - dist[2])) / k;
-#else
-  return 0.;
-#endif
 }
 
 double MTriangle::angleShapeMeasure()

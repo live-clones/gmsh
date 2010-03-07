@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include "GmshConfig.h"
 #include "MTetrahedron.h"
 #include "Numeric.h"
 #include "Context.h"
@@ -48,7 +49,6 @@ double MTetrahedronN::distoShapeMeasure()
 
 double MTetrahedron::getInnerRadius()
 {
-#if defined(HAVE_MESH)
   double dist[3], face_area = 0.;
   double vol = getVolume();
   for(int i = 0; i < 4; i++){  
@@ -63,9 +63,6 @@ double MTetrahedron::getInnerRadius()
                              (dist[0] + dist[1] - dist[2]));
   }
   return 3 * vol / face_area;
-#else
-  return 0.;
-#endif
 }
 
 double MTetrahedron::gammaShapeMeasure()

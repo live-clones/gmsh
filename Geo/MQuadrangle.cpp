@@ -3,11 +3,12 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include "GmshConfig.h"
 #include "MQuadrangle.h"
 #include "GaussLegendre1D.h"
 #include "Context.h"
 #include "qualityMeasures.h"
-#include <Numeric.h>
+#include "Numeric.h"
 
 #if defined(HAVE_MESH)
 #include "qualityMeasures.h"
@@ -189,7 +190,6 @@ double MQuadrangle::angleShapeMeasure()
 
 double MQuadrangle::getInnerRadius()
 {
-#if defined(HAVE_MESH)
   // get the coordinates (x, y, z) of the 4 points defining the Quad
   double x[4] = {_v[0]->x(), _v[1]->x(), _v[2]->x(), _v[3]->x()};
   double y[4] = {_v[0]->y(), _v[1]->y(), _v[2]->y(), _v[3]->y()};
@@ -260,7 +260,4 @@ double MQuadrangle::getInnerRadius()
     }
   }
   return R;
-#else
-  return 0.;
-#endif
 }

@@ -42,10 +42,5 @@ void MLine::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 
 double MLine::getInnerRadius()
 {
-#if defined(HAVE_MESH)
-  double dist = _v[0]->distance(_v[1]);
-  return dist;
-#else
-  return 0.;
-#endif
+  return _v[0]->distance(_v[1]);
 }
