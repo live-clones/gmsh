@@ -6,12 +6,8 @@
 // Contributed by Matti Pellikka <matti.pellikka@tut.fi>.
 
 #include "CellComplex.h"
-#include "OS.h"
-#include "Context.h"
 
 #if defined(HAVE_KBIPACK)
-
-
 
 CellComplex::CellComplex( std::vector<GEntity*> domain, 
 			  std::vector<GEntity*> subdomain)
@@ -140,13 +136,6 @@ void CellComplex::insert_cells(std::vector<GEntity*>& domain,
       int dim = element->getDim();
       int type = element->getTypeForMSH();
       
-      if(CTX::instance()->mesh.radiusSup){
-	double max = CTX::instance()->mesh.radiusSup;
-	double min = CTX::instance()->mesh.radiusInf;
-	double r = element->maxEdge();
-	if(r < min || r > max) continue;
-      }
-
       Cell* cell;
       // simplex types
       if(type == MSH_LIN_2 || type == MSH_TRI_3 || type == MSH_TET_4
@@ -204,6 +193,8 @@ void CellComplex::insert_cells(std::vector<GEntity*>& domain,
           else if(type == MSH_HEX_8) newtype = MSH_QUA_4;
           /*else if(type == MSH_HEX_20) newtype = MSH_QUA_8;
           else if(type == MSH_HEX_27) newtype = MSH_QUA_9;*/
+	  else if(type == MSH_PRI_6 && vertices.size() == 3) newtype = MSH_TRI_3;
+	  else if(type == MSH_PRI_6 && vertices.size() == 4) newtype = MSH_QUA_4;
         }
         else if(dim == 2){
            if(type == MSH_TRI_3 || type == MSH_QUA_4) newtype = MSH_LIN_2;
@@ -259,21 +250,6 @@ CellComplex::~CellComplex()
   for(unsigned int i = 0; i < _newcells.size(); i++) delete _newcells.at(i);
   _newcells.clear();
 }
-
-/*
-CellComplex::CellComplex(CellComplex* cellComplex)
-{
-  _domain = cellComplex->getDomain();
-  _subdomain = cellComplex->getSubdomain();
-  _boundary = cellComplex->getBoundary();
-
-  for(int i = 0; i < 4; i++){
-    _betti[i] = cellComplex->getBetti(i);
-    _ocells[i] = cellComplex->getOcells(i);
-  }
-  _dim = cellComplex->getDim();
-  restoreComplex();
-  }*/
 
 void CellComplex::insertCell(Cell* cell)
 {
@@ -377,9 +353,7 @@ int CellComplex::reduction(int dim, int omitted)
     while(cit != lastCell(dim-1)){
       Cell* cell = *cit;
       if( cell->getCoboundarySize() == 1 
-	  && inSameDomain(cell, cell->firstCoboundary()->first)
-	  && !cell->getImmune() 
-	  && !cell->firstCoboundary()->first->getImmune()){
+	  && inSameDomain(cell, cell->firstCoboundary()->first)){
 	++cit;
 	if(dim == getDim() && omitted > 0){
 	  _store.at(omitted-1).insert(cell->firstCoboundary()->first);    
@@ -476,30 +450,6 @@ void CellComplex::removeSubdomain()
     }
   }
   for(unsigned int i = 0; i < toRemove.size(); i++) removeCell(toRemove[i]);
-}
-/*
-void CellComplex::setSubdomain(std::vector<GEntity*>& subdomain){
-  for(int i = 3; i > -1; i--){
-    for(citer cit = firstCell(i); cit != lastCell(i); cit++){
-      Cell* cell = *cit;
-      for(unsigned int j = 0; j < subdomain.size(); j++){
-	if(cell->getGEntity()->tag() == subdomain.at(j)->tag()){
-	  cell->setInSubdomain(true);
-	}
-      }
-    }
-  }
-}*/
-
-void CellComplex::deImmuneCells(bool subdomain)
-{
-  for(int i = 0; i < 4; i++){
-    for(citer cit = firstCell(i); cit != lastCell(i); ++cit){
-      Cell *cell = *cit;
-      if(cell->getImmune() && subdomain) cell->setInSubdomain(true);
-      cell->setImmune(false);
-    }
-  }
 }
 
 int CellComplex::coreduceComplex()

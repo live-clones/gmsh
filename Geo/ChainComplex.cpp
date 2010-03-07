@@ -7,9 +7,6 @@
 // Contributed by Matti Pellikka <matti.pellikka@tut.fi>.
 
 #include "ChainComplex.h"
-#include "OS.h"
-#include "PView.h"
-#include "Options.h"
 
 #if defined(HAVE_KBIPACK)
 
@@ -42,6 +39,7 @@ ChainComplex::ChainComplex(CellComplex* cellComplex, int domain)
         index--;
         cols--;
       }
+      else _cellIndices[dim].insert( std::make_pair(index, cell));
     }
     index = 1;
     if(dim > 0){
@@ -55,6 +53,7 @@ ChainComplex::ChainComplex(CellComplex* cellComplex, int domain)
           index--;
           rows--;
         }
+	else _cellIndices[dim-1].insert( std::make_pair(index, cell));
       }
     }
     
@@ -434,6 +433,31 @@ std::vector<int> ChainComplex::getCoeffVector(int dim, int chainNumber)
   return coeffVector;  
 }
 
+void ChainComplex::getChain(std::map<Cell*, int, Less_Cell>& chain, int dim, int chainNumber)
+{
+  chain.clear();
+  if(dim < 0 || dim > 4) return;
+  if(_Hbasis[dim] == NULL
+     || (int)gmp_matrix_cols(_Hbasis[dim]) < chainNumber) return;
+
+  int rows = gmp_matrix_rows(_Hbasis[dim]);
+
+  int elemi;
+  long int elemli;
+  mpz_t elem;
+  mpz_init(elem);
+
+  for(int i = 1; i <= rows; i++){
+    gmp_matrix_get_elem(elem, i, chainNumber, _Hbasis[dim]);
+    elemli = mpz_get_si(elem);
+    elemi = elemli;
+    Cell* cell = _cellIndices[dim][i];
+    chain[cell] = elemi;
+  }
+
+  mpz_clear(elem);
+}
+
 int ChainComplex::getTorsion(int dim, int chainNumber)
 {
   if(dim < 0 || dim > 4) return 0;
@@ -442,343 +466,6 @@ int ChainComplex::getTorsion(int dim, int chainNumber)
   if(_torsion[dim].empty() 
      || (int)_torsion[dim].size() < chainNumber) return 1;
   else return _torsion[dim].at(chainNumber-1);
-}
-
-Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, 
-	     CellComplex* cellComplex, GModel* model,
-	     std::string name, int torsion)
-{  
-  int i = 0;
-  for(std::set<Cell*, Less_Cell>::iterator cit = cells.begin();
-      cit != cells.end(); cit++){
-    Cell* cell = *cit;
-    _dim = cell->getDim();
-    if((int)coeffs.size() > i){
-      if(coeffs.at(i) != 0){
-        std::list< std::pair<int, Cell*> > subCells;
-	cell->getCells(subCells);
-        for(std::list< std::pair<int, Cell*> >::iterator it = 
-	      subCells.begin(); it != subCells.end(); it++){
-          Cell* subCell = (*it).second;
-          int coeff = (*it).first;
-          _cells.insert( std::make_pair(subCell, coeffs.at(i)*coeff));
-	  subCell->setDeleteWithCellComplex(false);
-        }
-      }
-      i++;
-    }
-    
-  }
-  _name = name;
-  _cellComplex = cellComplex;
-  _torsion = torsion;
-  _model = model;
-  
-}
-
-bool Chain::deform(std::map<Cell*, int, Less_Cell>& cellsInChain, 
-		   std::map<Cell*, int, Less_Cell>& cellsNotInChain)
-{
-  std::vector<int> cc;
-  std::vector<int> bc;
-  
-  for(citer cit = cellsInChain.begin(); cit != cellsInChain.end(); cit++){
-    Cell* c = (*cit).first;
-    c->setImmune(false);
-    if(!c->inSubdomain()) {
-      cc.push_back(getCoeff(c));
-      bc.push_back((*cit).second);
-    }
-  }
-  
-  if(cc.empty() || (getDim() == 2 && cc.size() < 2) ) return false;
-  int inout = cc[0]*bc[0];
-  for(unsigned int i = 0; i < cc.size(); i++){
-    if(cc[i]*bc[i] != inout) return false;  
-  }
-  
-  for(citer cit = cellsInChain.begin(); cit != cellsInChain.end(); cit++){
-    removeCell((*cit).first);
-  }
-  
-  int n = 1;
-  for(citer cit = cellsNotInChain.begin(); cit != cellsNotInChain.end();
-      cit++){
-    Cell* c = (*cit).first;
-    if(n == 2) c->setImmune(true);
-    else c->setImmune(false);
-    int coeff = -1*inout*(*cit).second;
-    addCell(c, coeff);
-    n++;
-  }
-  
-  return true;
-}
-
-bool Chain::deformChain(std::pair<Cell*, int> cell, bool bend)
-{  
-  Cell* c1 = cell.first;
-  for(citer cit = c1->firstCoboundary(true); cit != c1->lastCoboundary(true);
-      cit++){
-    
-    std::map<Cell*, int, Less_Cell> cellsInChain;
-    std::map<Cell*, int, Less_Cell> cellsNotInChain;
-    Cell* c1CbdCell = (*cit).first;
-
-    for(citer cit2 = c1CbdCell->firstBoundary(true);
-	cit2 != c1CbdCell->lastBoundary(true); cit2++){
-      Cell* c1CbdBdCell = (*cit2).first;
-      int coeff = (*cit2).second;
-      if( (hasCell(c1CbdBdCell) && getCoeff(c1CbdBdCell) != 0) 
-	  || c1CbdBdCell->inSubdomain()){
-	cellsInChain.insert(std::make_pair(c1CbdBdCell, coeff));
-      }
-      else cellsNotInChain.insert(std::make_pair(c1CbdBdCell, coeff));
-    }
-    
-    bool next = false;
-    
-    for(citer cit2 = cellsInChain.begin(); cit2 != cellsInChain.end(); cit2++){
-      Cell* c = (*cit2).first;
-      int coeff = getCoeff(c);
-      if(c->getImmune()) next = true;
-      if(c->inSubdomain()) bend = false;
-      if(coeff > 1 || coeff < -1) next = true; 
-    }
-    
-    for(citer cit2 = cellsNotInChain.begin(); cit2 != cellsNotInChain.end();
-	cit2++){
-      Cell* c = (*cit2).first;
-      if(c->inSubdomain()) next = true;
-    }    
-    if(next) continue;
-    
-    if( (getDim() == 1 && cellsInChain.size() == 2 
-	 && cellsNotInChain.size() == 1) || 
-	(getDim() == 2 && cellsInChain.size() == 3 
-	 && cellsNotInChain.size() == 1)){
-      //printf("straighten \n");
-      return deform(cellsInChain, cellsNotInChain);
-    }
-    else if ( (getDim() == 1 && cellsInChain.size() == 1 
-	       && cellsNotInChain.size() == 2 && bend) ||
-              (getDim() == 2 && cellsInChain.size() == 2 
-	       && cellsNotInChain.size() == 2 && bend)){
-      //printf("bend \n");
-      return deform(cellsInChain, cellsNotInChain);
-    }
-    else if ((getDim() == 1 && cellsInChain.size() == 3 
-	      && cellsNotInChain.size() == 0) ||
-             (getDim() == 2 && cellsInChain.size() == 4 
-	      && cellsNotInChain.size() == 0)){
-      //printf("remove boundary \n");
-      return deform(cellsInChain, cellsNotInChain);
-    }
-  }
-  
-  return false;
-}
-
-void Chain::smoothenChain()
-{
-  if(!_cellComplex->simplicial()) return;
-  
-  int start = getSize();
-  double t1 = Cpu();
-  
-  int useless = 0;
-  for(int i = 0; i < 20; i++){
-    int size = getSize();
-    for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
-      //if(!deformChain(*cit, false) && getDim() == 2) deformChain(*cit, true);
-      if(getDim() == 2) deformChain(*cit, true);
-      deformChain(*cit, false);      
-    }
-    deImmuneCells();
-    eraseNullCells();
-    if (size >= getSize()) useless++;
-    else useless = 0;
-    if (useless > 5) break;
-  }
-  
-  deImmuneCells();
-  for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
-    deformChain(*cit, false);
-  }
-  
-  eraseNullCells();
-  double t2 = Cpu();
-  Msg::Debug("Smoothened a %d-chain from %d cells to %d cells (%g s).\n",
-	     getDim(), start, getSize(), t2-t1);
-  return;
-}
-
-
-int Chain::writeChainMSH(const std::string &name)
-{  
-  if(getSize() == 0) return 1;
-  
-  FILE *fp = fopen(name.c_str(), "a");
-  if(!fp){
-    Msg::Error("Unable to open file '%s'", name.c_str());
-    Msg::Debug("Unable to open file.");
-      return 0;
-  }
- 
-  fprintf(fp, "\n$ElementData\n");
-  
-  fprintf(fp, "1 \n");
-  fprintf(fp, "\"%s\" \n", getName().c_str());
-  fprintf(fp, "1 \n");
-  fprintf(fp, "0.0 \n");
-  fprintf(fp, "4 \n");
-  fprintf(fp, "0 \n");
-  fprintf(fp, "1 \n");
-  fprintf(fp, "%d \n", getSize());
-  fprintf(fp, "0 \n");
-  
-  for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
-    Cell* cell = (*cit).first;
-    int coeff = (*cit).second;
-    fprintf(fp, "%d %d \n", cell->getNum(), coeff );
-  }
-  
-  fprintf(fp, "$EndElementData\n");
-  fclose(fp);
-  
-  return 1;
-}
-
-int Chain::createPGroup()
-{  
-  std::vector<MElement*> elements;
-  std::map<int, std::vector<double> > data;
-  MElementFactory factory;
-
-  for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
-    Cell* cell = (*cit).first;
-    int coeff = (*cit).second;
-
-    MElement* e = cell->getImageMElement();
-    std::vector<MVertex*> v;
-    for(int i = 0; i < e->getNumVertices(); i++){
-      v.push_back(e->getVertex(i));
-    }
-    MElement* ne = factory.create(e->getTypeForMSH(), v, 0, e->getPartition());
-    
-    if(cell->getDim() > 0 && coeff < 0) ne->revert(); // flip orientation
-    for(int i = 0; i < abs(coeff); i++) elements.push_back(ne);    
-
-    std::vector<double> coeffs (1,abs(coeff));
-    data[ne->getNum()] = coeffs;
-  }
-  
-  int max[4];
-  for(int i = 0; i < 4; i++) max[i] = _model->getMaxElementaryNumber(i);
-  int entityNum = *std::max_element(max,max+4) + 1;
-  for(int i = 0; i < 4; i++) max[i] = _model->getMaxPhysicalNumber(i);
-  int physicalNum = *std::max_element(max,max+4) + 1;
-  setNum(physicalNum);
-  
-  std::map<int, std::vector<MElement*> > entityMap;
-  entityMap[entityNum] = elements;
-  std::map<int, std::map<int, std::string> > physicalMap;
-  std::map<int, std::string> physicalInfo;
-  physicalInfo[physicalNum]=getName();
-  physicalMap[entityNum] = physicalInfo;
-  
-  // hide mesh
-  opt_mesh_points(0, GMSH_SET, 0);
-  opt_mesh_lines(0, GMSH_SET, 0);
-  opt_mesh_triangles(0, GMSH_SET, 0);
-  opt_mesh_quadrangles(0, GMSH_SET, 0);
-  opt_mesh_tetrahedra(0, GMSH_SET, 0);
-  opt_mesh_hexahedra(0, GMSH_SET, 0);
-  opt_mesh_prisms(0, GMSH_SET, 0);
-  opt_mesh_pyramids(0, GMSH_SET, 0);
-
-  // show post-processing normals, tangents and element boundaries
-  //opt_view_normals(0, GMSH_SET, 20);
-  //opt_view_tangents(0, GMSH_SET, 20);
-  opt_view_show_element(0, GMSH_SET, 1);
-  
-  if(!data.empty()){
-    _model->storeChain(getDim(), entityMap, physicalMap);
-    _model->setPhysicalName(getName(), getDim(), physicalNum);
-    
-    // create PView for visualization
-    PView* chain = new PView(getName(), "ElementData", getGModel(), 
-			     data, 0, 1);
-  }
-   
-  return physicalNum;
-}
-
-
-void Chain::removeCell(Cell* cell) 
-{
-  citer it = _cells.find(cell);
-  if(it != _cells.end()){
-    (*it).second = 0;
-  }
-  return;
-}
-
-void Chain::addCell(Cell* cell, int coeff) 
-{
-  std::pair<citer,bool> insert = _cells.insert( std::make_pair( cell, coeff));
-  if(!insert.second && (*insert.first).second == 0){
-    (*insert.first).second = coeff; 
-    cell->setDeleteWithCellComplex(false);
-  }
-  else if (!insert.second && (*insert.first).second != 0){
-    Msg::Debug("Error: invalid chain smoothening add! \n");
-  }
-  return;
-}
-
-bool Chain::hasCell(Cell* c)
-{
-  citer it = _cells.find(c);
-  if(it != _cells.end() && (*it).second != 0) return true;
-  return false;
-}
-   
-Cell* Chain::findCell(Cell* c)
-{
-  citer it = _cells.find(c);
-  if(it != _cells.end() && (*it).second != 0) return (*it).first;
-  return NULL;
-}
-
-int Chain::getCoeff(Cell* c)
-{
-  citer it = _cells.find(c);
-  if(it != _cells.end()) return (*it).second;
-  return 0;
-}
-
-void Chain::eraseNullCells()
-{
-  std::vector<Cell*> toRemove;
-  for(int i = 0; i < 4; i++){
-    for(citer cit = _cells.begin(); cit != _cells.end(); ++cit){
-      if((*cit).second == 0) toRemove.push_back((*cit).first);
-    }
-  }
-  for(unsigned int i = 0; i < toRemove.size(); i++){
-    _cells.erase(toRemove[i]);
-    toRemove[i]->setDeleteWithCellComplex(true);
-  }
-  return;
-}
-
-void Chain::deImmuneCells()
-{
-  for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
-    Cell* cell = (*cit).first;
-    cell->setImmune(false);
-  }
 }
 
 #endif

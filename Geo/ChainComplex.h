@@ -17,14 +17,8 @@
 #include <algorithm>
 #include <set>
 #include <queue>
-#include "MElement.h"
-#include "GModel.h"
-#include "GEntity.h"
-#include "GRegion.h"
-#include "GFace.h"
-#include "GVertex.h"
 #include "CellComplex.h"
-
+#include "OS.h"
 
 #if defined(HAVE_GMP) 
   #include "gmp.h"
@@ -60,6 +54,8 @@ class ChainComplex{
   
   int _dim;
   CellComplex* _cellComplex;
+
+  std::map<int, Cell*> _cellIndices[4];
   
   // set the matrices
   void setHMatrix(int dim, gmp_matrix* matrix) { 
@@ -141,6 +137,7 @@ class ChainComplex{
   // get coefficient vector for dim-dimensional chain chainNumber 
   // (columns of _Hbasis[dim]) 
   std::vector<int> getCoeffVector(int dim, int chainNumber);
+  void getChain(std::map<Cell*, int, Less_Cell>& chain, int dim, int chainNumber);
   // torsion coefficient for dim-dimensional chain chainNumber 
   int getTorsion(int dim, int chainNumber);
   // get rank of homology group of dimension dim
@@ -155,97 +152,6 @@ class ChainComplex{
   
   // debugging aid
   void matrixTest();
-};
-
-// A class representing a chain.
-// Used to visualize generators of the homology groups.
-class Chain{
-  
- private:
-  // cells and their coefficients in this chain
-  std::map< Cell*, int, Less_Cell > _cells;
-  // name of the chain (optional)
-  std::string _name;
-  // physical group number of the chain
-  int _num;
-  // cell complex this chain belongs to
-  CellComplex* _cellComplex;
-  GModel* _model;
-   
-  // torsion coefficient
-  int _torsion;
-  
-  int _dim;
-  
-  bool deform(std::map<Cell*, int, Less_Cell> &cellsInChain, 
-	      std::map<Cell*, int, Less_Cell> &cellsNotInChain);
-  bool deformChain(std::pair<Cell*, int> cell, bool bend);
-  
-  
- public:
-  Chain() {}
-  Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs, 
-	CellComplex* cellComplex, GModel* model,
-	std::string name="Chain", int torsion=0);
-  Chain(Chain* chain){ 
-    _cells = chain->getCells();
-    _torsion = chain->getTorsion();
-    _name = chain->getName();
-    _cellComplex = chain->getCellComplex();
-    _dim = chain->getDim();
-    _model = chain->getGModel();
-    _num = chain->getNum();
-  }  
-  typedef std::map<Cell*, int, Less_Cell>::iterator citer;
-  citer firstCell() {return _cells.begin(); }
-  citer lastCell() {return _cells.end(); }
-
-  ~Chain() {} 
-
-  // remove a cell from this chain
-  void removeCell(Cell* cell);
-   
-  // add a cell to this chain
-  void addCell(Cell* cell, int coeff);
-  
-  bool hasCell(Cell* c);
-  Cell* findCell(Cell* c);
-  int getCoeff(Cell* c);
-  
-  
-  int getTorsion() { return _torsion; }
-  int getDim() { return _dim; }
-  CellComplex* getCellComplex() { return _cellComplex; }
-  GModel* getGModel() { return _model; }
-  std::map<Cell*, int, Less_Cell>  getCells() { return _cells; }
-  
-  // erase cells from the chain with zero coefficient
-  void eraseNullCells();
-   
-  void deImmuneCells();
-  
-  // number of cells in this chain 
-  int getSize() { return _cells.size();}
-  
-  // get/set chain name
-  std::string getName() { return _name; }
-  void setName(std::string name) { _name=name; }
-  // get/set physical group number
-  int getNum() { return _num; }
-  void setNum(int num) { _num=num; }
-  
-  // make local deformations to the chain to make it smoother and smaller
-  // (for primary complex chains only, not for dual chains represented 
-  // by primary cells (yet).)
-  void smoothenChain();
-  
-  // append this chain to a MSH ASCII file as $ElementData
-  // for debugging only
-  int writeChainMSH(const std::string &name);
-
-  // create a physical group of this chain.
-  int createPGroup();
-  
 };
 
 #endif

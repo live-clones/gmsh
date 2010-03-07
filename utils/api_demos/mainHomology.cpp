@@ -31,17 +31,14 @@ int main(int argc, char **argv)
   
   Homology* homology1 = new Homology(m, domain, subdomain);
   std::string fileName = "homology.msh";
-  homology->findGenerators(fileName);
+  homology->findGenerators();
+  homology->setFileName(fileName);
   delete homology1;
   
   Homology* homology2 = new Homology(m, domain, subdomain);
-  fileName = "homology.msh";
-  homology->findDualGenerators(fileName);
+  homology->findDualGenerators();
+  homology->setFileName(fileName);
   delete homology2;
-  
-  Homology* homology3 = new Homology(m, domain, subdomain);
-  homology->computeBettiNumbers();
-  delete homology3;
   
   delete m;
   GmshFinalize();

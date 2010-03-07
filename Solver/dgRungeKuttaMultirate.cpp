@@ -5,6 +5,7 @@
 #include "dgDofContainer.h"
 #include "dgGroupOfElements.h"
 #include <algorithm>
+#include <limits.h>
 
 dgRungeKuttaMultirate::dgRungeKuttaMultirate(dgGroupCollection* gc,dgConservationLaw *law, int nStages){
   _law=law;

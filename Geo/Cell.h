@@ -16,10 +16,12 @@
 #include <string>
 #include <algorithm>
 #include <set>
+#include <list>
+#include <map>
 #include <queue>
 #include "CellComplex.h"
 #include "MElement.h"
-#include "GModel.h"
+//#include "GModel.h"
 
 class Cell;
 

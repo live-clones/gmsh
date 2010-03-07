@@ -20,6 +20,8 @@
 #include "Cell.h"
 #include "MElement.h"
 #include "ChainComplex.h"
+#include "OS.h"
+#include "GModel.h"
 
 class Cell;
 
@@ -177,6 +179,7 @@ class CellComplex
   
   // store cells of dimension dim to the GModel as a 
   // physical group of MElements 
+  // for debugging purposes
   void storeCells(int dim);
 };
 

@@ -144,10 +144,6 @@ HomGen("t10_hom.msh") = {{69}, {75}};
 // Save the cut chains to t10_hom.msh.
 HomCut("t10_hom.msh") = {{69}, {70, 71, 72, 73}};
 
-// Only find and save the ranks of the relative homology spaces 
-// (Betti numbers) to t10_homrank.txt. Does not find generators.
-HomRank("t10_hom.txt") = {{69},{70, 71, 72, 73}};
-
 // More examples (uncomment):
 //  HomGen("t10_hom.msh") = {{69}, {}}; 
 //  HomGen("t10_hom.msh") = {{}, {}};
