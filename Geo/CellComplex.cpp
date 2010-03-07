@@ -9,37 +9,21 @@
 
 #if defined(HAVE_KBIPACK)
 
-CellComplex::CellComplex( std::vector<GEntity*> domain, 
-			  std::vector<GEntity*> subdomain)
+CellComplex::CellComplex( std::vector<MElement*>& domainElements, 
+			  std::vector<MElement*>& subdomainElements)
 {
-  _domain = domain;
-  _subdomain = subdomain;
- 
   _dim = 0;
   _simplicial = true;
-  
-  _multidim = false;
-  int dim = 0;
-  for(unsigned int i = 0; i < domain.size(); i++){
-    GEntity* entity = domain.at(i);
-    if(i == 0) dim = entity->dim();
-    if(dim != entity->dim()){
-      _multidim = true;
-      //printf("Warning: Domain is not a manifold.");
-      break;
-    }
-  }
-  
+
   // insert cells into cell complex
-  // subdomain need to be inserted first!
-  if(!insert_cells(_subdomain, true)){ panic_exit(); return; }
-  if(!insert_cells(_domain, false)) { panic_exit(); return; }
+  // subdomain needs to be inserted first!
+  if(!insert_cells(subdomainElements, true)){ panic_exit(); return; }
+  if(!insert_cells(domainElements, false)) { panic_exit(); return; }
 
   for(int i = 0; i < 4; i++){
     _ocells[i] = _cells[i];
     if(getSize(i) > _dim) _dim = i;
-  }
-  
+  }  
 }
 
 void CellComplex::panic_exit(){
@@ -53,68 +37,50 @@ void CellComplex::panic_exit(){
   }
   for(unsigned int i = 0; i < _newcells.size(); i++) delete _newcells.at(i);
   _newcells.clear();
-  _domain.clear();
-  _subdomain.clear();
 }
 
-bool CellComplex::insert_cells(std::vector<GEntity*>& domain, bool subdomain)
+bool CellComplex::insert_cells(std::vector<MElement*>& elements,
+			       bool subdomain)
 {
   std::vector<MVertex*> vertices;
   std::pair<citer, bool> insertInfo;
 
   // add highest dimensional cells
-  for(unsigned int j=0; j < domain.size(); j++) {
-    for(unsigned int i=0; i < domain.at(j)->getNumMeshElements(); i++){
-      vertices.clear();
-      MElement* element = domain.at(j)->getMeshElement(i);
-
-      for(int k=0; k < element->getNumVertices(); k++){
-        MVertex* vertex = element->getVertex(k);
-        vertices.push_back(vertex);
-      }
-      
-      int dim = element->getDim();
-      int type = element->getTypeForMSH();
-      
-      Cell* cell;
-      // simplex types
-      if(type == MSH_LIN_2 || type == MSH_TRI_3 || type == MSH_TET_4
-	 || type == MSH_LIN_3 || type == MSH_TRI_6 || type == MSH_TET_10 
-	 || type == MSH_PNT || type == MSH_TRI_9 || type == MSH_TRI_10 
-	 || type == MSH_TRI_12 || type == MSH_TRI_15 || type == MSH_TRI_15I 
-	 || type == MSH_TRI_21 || type == MSH_LIN_4 || type == MSH_LIN_5 
-	 || type == MSH_LIN_6 || type == MSH_TET_20 || type == MSH_TET_35 
-	 || type == MSH_TET_56
-         || type == MSH_TET_34 || type == MSH_TET_52 ){
-        cell = new Cell(element);
-      }
-      else if(type == MSH_QUA_4 || type == MSH_QUA_8 || type == MSH_QUA_9){
-        cell = new Cell(element);
-        _simplicial = false;
-      }     
-      else if(type == MSH_HEX_8 || type == MSH_HEX_27 || type == MSH_HEX_20){
-        cell = new Cell(element);
-        _simplicial = false;
-      }
-      else if(type == MSH_PRI_6 || type == MSH_PRI_18 || type == MSH_PRI_15){
-        cell = new Cell(element);
-        _simplicial = false;
-      }/* FIXME: no getFaceInfo methods for these MElements
-      else if(type == MSH_PYR_5 || type == MSH_PYR_14 || type == MSH_PYR_13){
-        cell = new Cell(element, subdomain, boundary);
-        _simplicial = false;
-      }*/
-      else {
-	//printf("Error: mesh element %d not implemented yet! \n", type); 
-	return false;
-      }
-      cell->setImmune(false);
-      cell->setInSubdomain(subdomain);
-      insertInfo = _cells[dim].insert(cell);
-      if(!insertInfo.second) delete cell;
+  for(unsigned int i=0; i < elements.size(); i++){
+    vertices.clear();
+    MElement* element = elements.at(i);
+    
+    for(int k=0; k < element->getNumVertices(); k++){
+      MVertex* vertex = element->getVertex(k);
+      vertices.push_back(vertex);
     }
+      
+    int dim = element->getDim();
+    int type = element->getTypeForMSH();
+    
+    Cell* cell = new Cell(element);
+    // simplex types
+    if( !(type == MSH_PNT
+	  || type == MSH_LIN_2 || type == MSH_TRI_3 || type == MSH_TET_4
+	  || type == MSH_LIN_3 || type == MSH_TRI_6 || type == MSH_TET_10 
+	  || type == MSH_PNT || type == MSH_TRI_9 || type == MSH_TRI_10 
+	  || type == MSH_TRI_12 || type == MSH_TRI_15 || type == MSH_TRI_15I 
+	  || type == MSH_TRI_21 || type == MSH_LIN_4 || type == MSH_LIN_5 
+	  || type == MSH_LIN_6 || type == MSH_TET_20 || type == MSH_TET_35 
+	  || type == MSH_TET_56 || type == MSH_TET_34 || type == MSH_TET_52) ){
+      _simplicial = false;
+    }
+    /* FIXME: no getFaceInfo methods for these MElements */
+    if(type == MSH_PYR_5 || type == MSH_PYR_14 || type == MSH_PYR_13){
+      //printf("Error: mesh element %d not implemented yet! \n", type);
+      return false;
+    }
+    cell->setImmune(false);
+    cell->setInSubdomain(subdomain);
+    insertInfo = _cells[dim].insert(cell);
+    if(!insertInfo.second) delete cell;  
   }
-
+  
   // add lower dimensional cells recursively
   MElementFactory factory;
   for (int dim = 3; dim > 0; dim--){
@@ -123,7 +89,7 @@ bool CellComplex::insert_cells(std::vector<GEntity*>& domain, bool subdomain)
       std::vector<MVertex*> vertices;
       for(int i = 0; i < cell->getNumFacets(); i++){ 
         cell->getFacetVertices(i, vertices);
-        int type = cell->getTypeForMSH();
+        int type = cell->getImageMElement()->getTypeForMSH();
         int newtype = 0;
         //FIXME: add missing boundary cell type relations
         //FIXME: high order meshes don't work
@@ -131,30 +97,34 @@ bool CellComplex::insert_cells(std::vector<GEntity*>& domain, bool subdomain)
           if(type == MSH_TET_4) newtype = MSH_TRI_3;
           /*else if(type == MSH_TET_10) newtype = MSH_TRI_6;
           else if(type == MSH_TET_20) newtype = MSH_TRI_9;*/
-          else if(type == MSH_HEX_8) newtype = MSH_QUA_4;
+	  /*else if(type == MSH_HEX_8) newtype = MSH_QUA_4;*/
           /*else if(type == MSH_HEX_20) newtype = MSH_QUA_8;
           else if(type == MSH_HEX_27) newtype = MSH_QUA_9;*/
-	  else if(type == MSH_PRI_6 && vertices.size() == 3) newtype = MSH_TRI_3;
-	  else if(type == MSH_PRI_6 && vertices.size() == 4) newtype = MSH_QUA_4;
+	  else if(type == MSH_PRI_6 
+		  && vertices.size() == 3) newtype = MSH_TRI_3;
+	  else if(type == MSH_PRI_6 
+		  && vertices.size() == 4) newtype = MSH_QUA_4;
         }
         else if(dim == 2){
-           if(type == MSH_TRI_3 || type == MSH_QUA_4) newtype = MSH_LIN_2;
-           /*else if(type == MSH_TRI_6 || type == MSH_QUA_8) newtype = MSH_LIN_3;
-           else if(type == MSH_TRI_9) newtype = MSH_LIN_4;
-           else if(type == MSH_QUA_9) newtype = MSH_LIN_3;*/
-        }
-        else if(dim == 1){
-           if(type == MSH_LIN_2) newtype = MSH_PNT;
-           /*else if(type == MSH_LIN_3 || type == MSH_LIN_4 ||
-                   type == MSH_LIN_5 || type == MSH_LIN_6) newtype = MSH_PNT;*/
-        }  
-        if(newtype == 0){
+	  if(type == MSH_TRI_3 || type == MSH_QUA_4) newtype = MSH_LIN_2;
+	  /*else if(type == MSH_TRI_6 
+	    || type == MSH_QUA_8) newtype = MSH_LIN_3;
+	    else if(type == MSH_TRI_9) newtype = MSH_LIN_4;
+	    else if(type == MSH_QUA_9) newtype = MSH_LIN_3;*/
+	}
+	else if(dim == 1){
+	  if(type == MSH_LIN_2) newtype = MSH_PNT;
+	  /*else if(type == MSH_LIN_3 || type == MSH_LIN_4 ||
+	    type == MSH_LIN_5 || type == MSH_LIN_6) newtype = MSH_PNT;*/
+	}  
+	if(newtype == 0){
 	  //printf("Error: mesh element %d not implemented yet! \n", type);
 	  return false;
 	}
 	
 	MElement* element = factory.create(newtype, vertices, 0, 
-					   cell->getPartition());
+					   cell->getImageMElement()->
+					   getPartition());
         Cell* newCell = new Cell(element);
         newCell->setImmune(cell->getImmune());
 	newCell->setInSubdomain(subdomain);

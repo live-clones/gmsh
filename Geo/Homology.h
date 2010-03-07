@@ -12,6 +12,7 @@
 #include "CellComplex.h"
 #include "ChainComplex.h"
 #include "OS.h"
+#include "GModel.h"
 #include "PView.h"
 #include "Options.h"
 

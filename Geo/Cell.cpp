@@ -103,7 +103,7 @@ int Cell::getFacetOri(std::vector<MVertex*> &v)
 
 void Cell::printCell() 
 {
-  printf("%d-cell %d: \n" , getDim(), getNum());
+  printf("%d-cell: \n" , getDim());
   printf("Vertices: ");
   for(int i = 0; i < this->getNumVertices(); i++){
     printf("%d ", this->getSortedVertex(i));
@@ -203,14 +203,6 @@ bool Cell::hasCoboundary(Cell* cell, bool org)
     if(it != _ocbd.end()) return true;
     return false;
   } 
-}
-
-void Cell::makeDualCell()
-{ 
-  std::map<Cell*, int, Less_Cell > temp = _boundary;
-  _boundary = _coboundary;
-  _coboundary = temp;
-  _dim = 3-_dim;     
 }
 
 void Cell::printBoundary(bool org) 

@@ -87,10 +87,6 @@ class Cell
   virtual int getDim() const { return _dim; };
   virtual int getIndex() const { return _index; };
   virtual void setIndex(int index) { _index = index; };
-  virtual int getNum() const { return _image->getNum(); }
-  virtual int getType() const { return _image->getType(); }
-  virtual int getTypeForMSH() const { return _image->getTypeForMSH(); }
-  virtual int getPartition() const { return _image->getPartition(); }
   virtual void setImmune(bool immune) { _immune = immune; };
   virtual bool getImmune() const { return _immune; };
   virtual bool inSubdomain() const { return _inSubdomain; }
@@ -146,10 +142,7 @@ class Cell
   virtual void clearBoundary() { _boundary.clear(); }
   virtual void clearCoboundary() { _coboundary.clear(); }
   
-   // algebraic dual of the cell
-  virtual void makeDualCell();
-  
-  // print cell info
+  // print cell debug info
   virtual void printCell();
   virtual void printBoundary(bool org=false);
   virtual void printCoboundary(bool org=false);
@@ -160,14 +153,14 @@ class Cell
   virtual void getFacetVertices(const int num, std::vector<MVertex*> &v) const;
   
   // get boundary cell orientation
+  virtual int getFacetOri(std::vector<MVertex*> &v); 
   virtual int getFacetOri(Cell* cell) { 
     std::vector<MVertex*> v; 
     for(int i = 0; i < cell->getNumVertices(); i++) {
       v.push_back(cell->getVertex(i));
     }
     return getFacetOri(v);
-  } 
-  virtual int getFacetOri(std::vector<MVertex*> &v); 
+  }   
   
   // tools for combined cells
   virtual bool isCombined() { return _combined; }

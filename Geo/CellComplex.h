@@ -20,7 +20,7 @@
 #include "Cell.h"
 #include "MElement.h"
 #include "ChainComplex.h"
-#include "GModel.h"
+//#include "GModel.h"
 
 class Cell;
 
@@ -28,16 +28,6 @@ class Cell;
 class CellComplex
 {
  private:
-  
-  // the domain in the model which this cell complex covers
-  std::vector<GEntity*> _domain;
-  // a subdomain of the given domain
-  // used in relative homology computation, may be empty
-  std::vector<GEntity*> _subdomain;
-   
-  // entities on the boundary of the homology computation domain
-  std::vector<GEntity*> _boundary;
-  
   // sorted containers of unique cells in this cell complex 
   // one for each dimension
   std::set<Cell*, Less_Cell>  _cells[4];
@@ -56,9 +46,6 @@ class CellComplex
   // is the cell complex simplicial
   bool _simplicial;
   
-  // does the domain contain entities of different dimensions
-  bool _multidim;
-  
   // enqueue cells in queue if they are not there already
   void enqueueCells(std::map<Cell*, int, Less_Cell>& cells, 
 		    std::queue<Cell*>& Q, std::set<Cell*, Less_Cell>& Qset);
@@ -66,7 +53,7 @@ class CellComplex
   void removeCellQset(Cell* cell, std::set<Cell*, Less_Cell>& Qset);
   
   // for constructor 
-  bool insert_cells(std::vector<GEntity*>& domain, bool subdomain);
+  bool insert_cells(std::vector<MElement*>& elements, bool subdomain);
   void panic_exit();
 
   // insert/remove a cell from this cell complex
@@ -78,12 +65,9 @@ class CellComplex
   
  public: 
   
-  CellComplex( std::vector<GEntity*> domain, std::vector<GEntity*> subdomain);
-  //CellComplex(CellComplex* cellComplex)
+  CellComplex( std::vector<MElement*>& domainElements, 
+	       std::vector<MElement*>& subdomainElements);
   ~CellComplex();
-
-  std::vector<GEntity*> getDomain() const { return _domain; }
-  std::vector<GEntity*> getSubdomain() const { return _subdomain; }
 
   // get the number of certain dimensional cells
   int getSize(int dim, bool org=false){ 

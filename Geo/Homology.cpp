@@ -69,8 +69,24 @@ CellComplex* Homology::createCellComplex(std::vector<GEntity*>& domainEntities,
   if(domainEntities.empty()) Msg::Error("Domain is empty.");
   if(subdomainEntities.empty()) Msg::Info("Subdomain is empty.");
   
-  CellComplex* cellComplex =  new CellComplex(domainEntities, 
-					      subdomainEntities);
+  std::vector<MElement*> domainElements;
+  std::vector<MElement*> subdomainElements;
+  for(unsigned int j=0; j < domainEntities.size(); j++) {
+    for(unsigned int i=0; i < domainEntities.at(j)->getNumMeshElements(); i++){
+      MElement* element = domainEntities.at(j)->getMeshElement(i);
+      domainElements.push_back(element);
+    }
+  }
+  for(unsigned int j=0; j < subdomainEntities.size(); j++) {
+    for(unsigned int i=0; i < subdomainEntities.at(j)->getNumMeshElements();
+	i++){
+      MElement* element = subdomainEntities.at(j)->getMeshElement(i);
+      subdomainElements.push_back(element);
+    }
+  }
+
+  CellComplex* cellComplex =  new CellComplex(domainElements, 
+					      subdomainElements);
 
   if(cellComplex->getSize(0) == 0){ 
     Msg::Error("Cell Complex is empty!");
@@ -94,7 +110,8 @@ Homology::~Homology()
 
 void Homology::findGenerators()
 {
-  CellComplex* cellComplex = createCellComplex(_domainEntities, _subdomainEntities);
+  CellComplex* cellComplex = createCellComplex(_domainEntities, 
+					       _subdomainEntities);
   std::string domainString = getDomainString(_domain, _subdomain);
 
   Msg::Info("Reducing the Cell Complex...");
@@ -320,9 +337,8 @@ void Homology::findDualGenerators()
 }
 
 void Homology::findHomSequence(){
-
-  CellComplex* cellComplex = new CellComplex(_domainEntities, 
-					     _subdomainEntities);
+  CellComplex* cellComplex = createCellComplex(_domainEntities, 
+					       _subdomainEntities);
   Msg::Info("Reducing the Cell Complex...");
   Msg::StatusBar(1, false, "Reducing...");
   double t1 = Cpu();
@@ -718,7 +734,7 @@ int Chain::writeChainMSH(const std::string &name)
   for(citer cit = _cells.begin(); cit != _cells.end(); cit++){
     Cell* cell = (*cit).first;
     int coeff = (*cit).second;
-    fprintf(fp, "%d %d \n", cell->getNum(), coeff );
+    fprintf(fp, "%d %d \n", cell->getImageMElement()->getNum(), coeff );
   }
   
   fprintf(fp, "$EndElementData\n");
