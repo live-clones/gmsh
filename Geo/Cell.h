@@ -43,9 +43,6 @@ class Cell
   // used in relative homology computation
   bool _inSubdomain;
   
-  // whether this cell belongs to the boundary of a cell complex
-  bool _onDomainBoundary;
-  
   // whether this cell a combinded cell of elemetary cells
   bool _combined; 
   
@@ -70,7 +67,6 @@ class Cell
   // Whether to delete the mesh element when done
   // (created for homology computation only)
   bool _deleteImage;
-  bool _deleteWithCellComplex;
   
   // sorted vertices of this cell (used for ordering of the cells)
   std::vector<int> _vs;
@@ -81,8 +77,8 @@ class Cell
  public:
 
  Cell() : _combined(false), _index(0), _immune(false), _image(NULL), 
-    _deleteImage(false), _deleteWithCellComplex(true) {}
-  Cell(MElement* image, bool subdomain, bool boundary);
+    _deleteImage(false), _inSubdomain(false) {}
+  Cell(MElement* image);
   
   virtual ~Cell();
   
@@ -97,13 +93,11 @@ class Cell
   virtual int getPartition() const { return _image->getPartition(); }
   virtual void setImmune(bool immune) { _immune = immune; };
   virtual bool getImmune() const { return _immune; };
+  virtual bool inSubdomain() const { return _inSubdomain; }
+  virtual void setInSubdomain(bool subdomain)  { _inSubdomain = subdomain; }
   virtual void setDeleteImage(bool deleteImage) { 
     _deleteImage = deleteImage; };
   virtual bool getDeleteImage() const { return _deleteImage; };
-  virtual void setDeleteWithCellComplex(bool deleteWithCellComplex) { 
-    _deleteWithCellComplex = deleteWithCellComplex; };
-  virtual bool getDeleteWithCellComplex() const { 
-    return _deleteWithCellComplex; };
   
   // get the number of vertices this cell has
   virtual int getNumVertices() const { return _image->getNumVertices(); }
@@ -159,13 +153,6 @@ class Cell
   virtual void printCell();
   virtual void printBoundary(bool org=false);
   virtual void printCoboundary(bool org=false);
-  
-  virtual bool inSubdomain() const { return _inSubdomain; }
-  virtual void setInSubdomain(bool subdomain)  { _inSubdomain = subdomain; }
-  
-  virtual bool onDomainBoundary() const { return _onDomainBoundary; }
-  virtual void setOnDomainBoundary(bool domainboundary)  { 
-    _onDomainBoundary = domainboundary; }
   
   // get the number of facets of this cell
   virtual int getNumFacets() const;

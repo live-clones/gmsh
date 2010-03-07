@@ -41,11 +41,9 @@ class Homology
   std::vector<GEntity*> _domainEntities;
   std::vector<GEntity*> _subdomainEntities;  
 
-  // generator chains
-  //std::vector<Chain*> _generators[4];
-  //std::vector<int> _pGroups;
-
-  std::map<int, Chain*> _generators;
+  // generator chains, and their physical group number
+  //std::map<int, Chain*> _generators;
+  std::vector<int> _generators;
 
   std::string _fileName;
  
@@ -64,14 +62,10 @@ class Homology
   // or just compute the ranks of homology spaces
   void findGenerators();
   void findDualGenerators();
-  void computeBettiNumbers();
+  void computeRanks() {}
   
   void findHomSequence();
 
-  //bool swapSubdomain() { return _cellComplex->swapSubdomain(); }
-  
-  // Restore the cell complex to its original state before cell reductions
-  //void restoreHomology();
    
   // Create a string describing the generator
   std::string getDomainString(const std::vector<int>& domain,
@@ -79,6 +73,10 @@ class Homology
   
   // write the generators to a file
   bool writeGeneratorsMSH(bool binary=false);
+  // store dim-dimensional cells of cellComplex as a pshysical group
+  // in _model, for debugging
+  void storeCells(CellComplex* cellComplex, int dim);
+
 };
 
 // A class representing a chain.

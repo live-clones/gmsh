@@ -153,10 +153,9 @@ void Homology::findGenerators()
       std::string name = "H" + dimension + domainString + generator;
       std::set<Cell*, Less_Cell> cells;
       cellComplex->getCells(cells, j);
-      Chain* chain = new Chain(cells, 
-			       chains->getCoeffVector(j,i), 
-			       cellComplex, _model, name, 
-			       chains->getTorsion(j,i));
+      Chain* chain = new Chain(cells,
+                               chains->getCoeffVector(j,i), cellComplex,
+                               _model, name, chains->getTorsion(j,i));
       t1 = Cpu();
       int start = chain->getSize();
       chain->smoothenChain();
@@ -170,7 +169,8 @@ void Homology::findGenerators()
 		       j, i, chain->getTorsion());
 	}
       }
-      _generators[chain->createPGroup()] = chain;
+      _generators.push_back(chain->createPGroup());
+	delete chain;
     }
     if(j == cellComplex->getDim() && cellComplex->getNumOmitted() > 0){
       for(int i = 0; i < cellComplex->getNumOmitted(); i++){
@@ -181,7 +181,8 @@ void Homology::findGenerators()
         Chain* chain = new Chain(cellComplex->getOmitted(i), coeffs, 
 				 cellComplex, _model, name, 1);
         if(chain->getSize() != 0) HRank[j] = HRank[j] + 1;
-	_generators[chain->createPGroup()] = chain;
+	_generators.push_back(chain->createPGroup());
+	delete chain;
       }
     }
   }
@@ -211,7 +212,15 @@ void Homology::findDualGenerators()
   Msg::Info("Reducing Cell Complex...");
   Msg::StatusBar(1, false, "Reducing...");
   double t1 = Cpu();
+  printf("Cell Complex: \n %d volumes, %d faces, %d edges and %d vertices. \n",
+	 cellComplex->getSize(3), cellComplex->getSize(2),
+	 cellComplex->getSize(1), cellComplex->getSize(0));
+  
   int omitted = cellComplex->coreduceComplex();
+  
+  printf(" %d volumes, %d faces, %d edges and %d vertices. \n",
+         cellComplex->getSize(3), cellComplex->getSize(2),
+         cellComplex->getSize(1), cellComplex->getSize(0));
   
   cellComplex->cocombine(0);
   cellComplex->coreduction(1);
@@ -220,6 +229,12 @@ void Homology::findDualGenerators()
   cellComplex->cocombine(2);
   cellComplex->coreduction(3);
   cellComplex->checkCoherence();
+
+ printf(" %d volumes, %d faces, %d edges and %d vertices. \n",
+	 cellComplex->getSize(3), cellComplex->getSize(2),
+	 cellComplex->getSize(1), cellComplex->getSize(0));
+
+
   double t2 = Cpu();
   Msg::Info("Cell Complex reduction complete (%g s).", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges and %d vertices.",
@@ -258,7 +273,8 @@ void Homology::findDualGenerators()
       Chain* chain = new Chain(cells, 
 			       chains->getCoeffVector(j,i), cellComplex, 
 			       _model, name, chains->getTorsion(j,i));
-      _generators[chain->createPGroup()] = chain;
+      _generators.push_back(chain->createPGroup());
+      delete chain;
       if(chain->getSize() != 0){
         HRank[dim-j] = HRank[dim-j] + 1;
         if(chain->getTorsion() != 1){ 
@@ -279,8 +295,9 @@ void Homology::findDualGenerators()
         std::vector<int> coeffs (cellComplex->getOmitted(i).size(),1);
         Chain* chain = new Chain(cellComplex->getOmitted(i), coeffs, 
 				 cellComplex, _model, name, 1);
-	_generators[chain->createPGroup()] = chain;
         if(chain->getSize() != 0) HRank[dim-j] = HRank[dim-j] + 1;
+	_generators.push_back(chain->createPGroup());
+	delete chain;
       }
     }
   }
@@ -300,34 +317,6 @@ void Homology::findDualGenerators()
   Msg::StatusBar(1, false, "Homology");
   Msg::StatusBar(2, false, "H0*: %d, H1*: %d, H2*: %d, H3*: %d.", 
 		 HRank[0], HRank[1], HRank[2], HRank[3]);
-}
-
-void Homology::computeBettiNumbers()
-{  
-  CellComplex* cellComplex = createCellComplex(_domainEntities, 
-					       _subdomainEntities);
-  
-  Msg::Info("Running coreduction...");
-  Msg::StatusBar(1, false, "Computing...");
-  double t1 = Cpu();
-  cellComplex->computeBettiNumbers();
-  double t2 = Cpu();
-  Msg::Info("Betti number computation complete (%g s).", t2- t1);
-
-  Msg::Info("H0 = %d", cellComplex->getBettiNumber(0));
-  Msg::Info("H1 = %d", cellComplex->getBettiNumber(1));
-  Msg::Info("H2 = %d", cellComplex->getBettiNumber(2));
-  Msg::Info("H3 = %d", cellComplex->getBettiNumber(3));
-
-  Msg::StatusBar(1, false, "Homology");
-  Msg::StatusBar(2, false, "H0: %d, H1: %d, H2: %d, H3: %d.", 
-		 cellComplex->getBettiNumber(0), 
-		 cellComplex->getBettiNumber(1), 
-		 cellComplex->getBettiNumber(2), 
-		 cellComplex->getBettiNumber(3));
-  
-  if(_fileName != "") cellComplex->writeBettiNumbers(_fileName);  
-  delete cellComplex;
 }
 
 void Homology::findHomSequence(){
@@ -353,8 +342,6 @@ void Homology::findHomSequence(){
   cellComplex->combine(2);
   cellComplex->reduction(1);
   cellComplex->combine(1);
-
-  cellComplex->storeCells(1);
 
   printf(" %d volumes, %d faces, %d edges and %d vertices. \n",
 	 cellComplex->getSize(3), cellComplex->getSize(2),
@@ -416,7 +403,8 @@ void Homology::findHomSequence(){
 		       j, i, chain->getTorsion());
 	  }
 	}
-	_generators[chain->createPGroup()] = chain;
+	_generators.push_back(chain->createPGroup());
+	delete chain;
       }
       
     }
@@ -443,12 +431,6 @@ void Homology::findHomSequence(){
   if(_fileName != "") writeGeneratorsMSH();
   delete cellComplex;  
 }
-
-/*void Homology::restoreHomology() 
-{ 
-  cellComplexy->restoreComplex();
-  for(int i = 0; i < 4; i++) _generators[i].clear();
-  }*/
 
 std::string Homology::getDomainString(const std::vector<int>& domain,
 				      const std::vector<int>& subdomain) 
@@ -508,7 +490,6 @@ Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs,
           Cell* subCell = (*it).second;
           int coeff = (*it).first;
           _cells.insert( std::make_pair(subCell, coeffs.at(i)*coeff));
-	  subCell->setDeleteWithCellComplex(false);
         }
       }
       i++;
@@ -522,17 +503,55 @@ Chain::Chain(std::set<Cell*, Less_Cell> cells, std::vector<int> coeffs,
   
 }
 
+void Homology::storeCells(CellComplex* cellComplex, int dim)
+{
+  std::vector<MElement*> elements;
+
+  for(CellComplex::citer cit = cellComplex->firstCell(dim); 
+      cit != cellComplex->lastCell(dim); cit++){
+    Cell* cell = *cit;
+    
+    std::list< std::pair<int, Cell*> > cells;
+    cell->getCells(cells);
+    for(std::list< std::pair<int, Cell*> >::iterator it = cells.begin();
+	it != cells.end(); it++){
+      Cell* subCell = it->second;
+      
+      MElement* e = subCell->getImageMElement();
+      subCell->setDeleteImage(false);
+      elements.push_back(e);
+    }
+  }
+
+  int max[4];
+  for(int i = 0; i < 4; i++) max[i] = _model->getMaxElementaryNumber(i);
+  int entityNum = *std::max_element(max,max+4) + 1;
+  for(int i = 0; i < 4; i++) max[i] = _model->getMaxPhysicalNumber(i);
+  int physicalNum = *std::max_element(max,max+4) + 1;
+
+  std::map<int, std::vector<MElement*> > entityMap;
+  entityMap[entityNum] = elements;
+  std::map<int, std::map<int, std::string> > physicalMap;
+  std::map<int, std::string> physicalInfo;
+  physicalInfo[physicalNum]="Cell Complex";
+  physicalMap[entityNum] = physicalInfo;
+
+  _model->storeChain(dim, entityMap, physicalMap);
+  _model->setPhysicalName("Cell Complex", dim, physicalNum);
+}
+
 Chain::Chain(std::map<Cell*, int, Less_Cell>& chain, 
 	     CellComplex* cellComplex, GModel* model,
 	     std::string name, int torsion)
 {  
-
   _cells = chain;
-
+  if(!_cells.empty()) _dim = firstCell()->first->getDim();
+  else _dim = 0;
   _name = name;
   _cellComplex = cellComplex;
   _torsion = torsion;
   _model = model; 
+  eraseNullCells();
 }
 
 bool Chain::deform(std::map<Cell*, int, Less_Cell>& cellsInChain, 
@@ -788,7 +807,6 @@ void Chain::addCell(Cell* cell, int coeff)
   std::pair<citer,bool> insert = _cells.insert( std::make_pair( cell, coeff));
   if(!insert.second && (*insert.first).second == 0){
     (*insert.first).second = coeff; 
-    cell->setDeleteWithCellComplex(false);
   }
   else if (!insert.second && (*insert.first).second != 0){
     Msg::Debug("Error: invalid chain smoothening add! \n");
@@ -825,10 +843,7 @@ void Chain::eraseNullCells()
       if((*cit).second == 0) toRemove.push_back((*cit).first);
     }
   }
-  for(unsigned int i = 0; i < toRemove.size(); i++){
-    _cells.erase(toRemove[i]);
-    toRemove[i]->setDeleteWithCellComplex(true);
-  }
+  for(unsigned int i = 0; i < toRemove.size(); i++) _cells.erase(toRemove[i]);
   return;
 }
 

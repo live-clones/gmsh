@@ -18,7 +18,6 @@
 #include <set>
 #include <queue>
 #include "CellComplex.h"
-#include "OS.h"
 
 #if defined(HAVE_GMP) 
   #include "gmp.h"
@@ -73,19 +72,10 @@ class ChainComplex{
   
  public:
   
-  ChainComplex(CellComplex* cellComplex, int domain=0);
-  
-  ChainComplex(){
-    for(int i = 0; i < 5; i++){
-      _HMatrix[i] = create_gmp_matrix_zero(1,1);
-      _kerH[i] = NULL;
-      _codH[i] = NULL;
-      _JMatrix[i] = NULL;
-      _QMatrix[i] = NULL;
-      _Hbasis[i] = NULL;
-    }
-    _dim = 0;
-  }
+  // domain = 0 : relative chain space
+  // domain = 1 : absolute chain space of all cells in cellComplex
+  // domain = 2 : absolute chain space of cells in subdomain
+  ChainComplex(CellComplex* cellComplex, int domain=0);  
   ~ChainComplex(){
     for(int i = 0; i < 5; i++){
       destroy_gmp_matrix(_HMatrix[i]);

@@ -108,7 +108,7 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   if(rank != 0){
     Homology* homology = new Homology(m, domain, subdomain);
     homology->setFileName(fileName);
-    homology->computeBettiNumbers();
+    homology->computeRanks();
     delete homology; 
   }
   

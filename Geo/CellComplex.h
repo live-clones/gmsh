@@ -20,7 +20,6 @@
 #include "Cell.h"
 #include "MElement.h"
 #include "ChainComplex.h"
-#include "OS.h"
 #include "GModel.h"
 
 class Cell;
@@ -29,8 +28,6 @@ class Cell;
 class CellComplex
 {
  private:
-
-  GModel* _model;
   
   // the domain in the model which this cell complex covers
   std::vector<GEntity*> _domain;
@@ -54,9 +51,6 @@ class CellComplex
   // new cells created during reductions
   std::vector<Cell*> _newcells;
   
-  // Betti numbers of this cell complex (ranks of homology groups)
-  int _betti[4];
-  
   int _dim;
   
   // is the cell complex simplicial
@@ -72,11 +66,9 @@ class CellComplex
   void removeCellQset(Cell* cell, std::set<Cell*, Less_Cell>& Qset);
   
   // for constructor 
-  void insert_cells(std::vector<GEntity*>& domain, 
-		    bool subdomain, bool boundary);
-  void find_boundary(std::vector<GEntity*>& domain, 
-		     std::vector<GEntity*>& subdomain);
-  
+  bool insert_cells(std::vector<GEntity*>& domain, bool subdomain);
+  void panic_exit();
+
   // insert/remove a cell from this cell complex
   void removeCell(Cell* cell, bool other=true);
   void insertCell(Cell* cell);
@@ -93,18 +85,15 @@ class CellComplex
   std::vector<GEntity*> getDomain() const { return _domain; }
   std::vector<GEntity*> getSubdomain() const { return _subdomain; }
 
-  // restore this cell complex to its original state
-  void restoreComplex();
-     
   // get the number of certain dimensional cells
-  int getSize(int dim){ return _cells[dim].size(); }
-  int getOrgSize(int dim){ return _ocells[dim].size(); }
+  int getSize(int dim, bool org=false){ 
+    if(!org) return _cells[dim].size();
+    else return _ocells[dim].size(); }
   
   int getDim() {return _dim; } 
   
   bool simplicial() { return _simplicial; }
   
-  std::set<Cell*, Less_Cell> getCells(int dim){ return _cells[dim]; }
   void getCells(std::set<Cell*, Less_Cell>& cells, int dim, int domain=0);
   std::set<Cell*, Less_Cell> getOrgCells(int dim){ return _ocells[dim]; }
   
@@ -123,11 +112,8 @@ class CellComplex
   
   // check whether two cells both belong to subdomain or if neither one does
   bool inSameDomain(Cell* c1, Cell* c2) const { 
-    return ( ((!c1->inSubdomain() && !c2->inSubdomain()) 
-	      || (c1->inSubdomain() && c2->inSubdomain()))
-	     && ((!c1->getImmune() && !c2->getImmune()) 
-		 || (c1->getImmune() && c2->getImmune())) ); }
-  
+    return ( (!c1->inSubdomain() && !c2->inSubdomain()) 
+	     || (c1->inSubdomain() && c2->inSubdomain() )); }
   // (co)reduction of this cell complex
   // removes (co)reduction pairs of cell of dimension dim and dim-1
   int reduction(int dim, int omitted=0);
@@ -139,7 +125,6 @@ class CellComplex
   
   // remove cells in subdomain from this cell complex
   void removeSubdomain();
-  void deImmuneCells(bool subdomain=false);  
 
   // print the vertices of cells of certain dimension
   void printComplex(int dim);
@@ -148,39 +133,20 @@ class CellComplex
   int combine(int dim);
   int cocombine(int dim);
   
-  // Compute betti numbers of this cell complex
-  void computeBettiNumbers();
-  int getBettiNumber(int i) { 
-    if(i > -1 && i < 4) return _betti[i]; else return 0; }
-  bool writeBettiNumbers(std::string fileName);  
-
   // check whether all boundary cells of a cell has this cell 
   // as coboundary cell and vice versa
   // also check whether all (co)boundary cells of a cell
   // belong to this cell complex
   bool checkCoherence();
    
-  // make cells on the domain boundary that are not in the subdomain
-  // subdomain cells and vice versa
-  bool swapSubdomain();
-  
   int eulerCharacteristic(){ 
     return getSize(0) - getSize(1) + getSize(2) - getSize(3);}
   void printEuler(){ 
     printf("Euler characteristic: %d. \n", eulerCharacteristic()); }
   
-  int getNumOmitted() { return _store.size(); };
+  int getNumOmitted() { return _store.size(); }
   std::set<Cell*, Less_Cell> getOmitted(int i) { return _store.at(i); }  
   
-  // change roles of boundaries and coboundaries of the cells in this
-  // cell complex
-  // equivalent to transposing boundary operator matrices
-  void makeDualComplex();
-  
-  // store cells of dimension dim to the GModel as a 
-  // physical group of MElements 
-  // for debugging purposes
-  void storeCells(int dim);
 };
 
 #endif
