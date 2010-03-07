@@ -129,6 +129,7 @@ class PViewDataGModel : public PViewData {
   PViewDataGModel(DataType type=NodeData);
   ~PViewDataGModel();
   bool finalize();
+  std::string getFileName(int step=-1);
   int getNumTimeSteps();
   double getTime(int step);
   double getMin(int step=-1);

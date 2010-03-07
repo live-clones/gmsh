@@ -51,8 +51,8 @@ class PViewData {
   virtual std::string getName(){ return _name; }
   virtual void setName(std::string val){ _name = val; }
 
-  // get/set filename
-  virtual std::string getFileName(){ return _fileName; }
+  // get/set (the main) filename containing the data
+  virtual std::string getFileName(int step=-1){ return _fileName; }
   virtual void setFileName(std::string val){ _fileName = val; }
 
   // get/set index of view data in file

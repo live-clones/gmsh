@@ -340,6 +340,10 @@ int FlGui::testGlobalShortcuts(int event)
     mod_forward_cb(0, 0);
     status = 1;
   }
+  else if(Fl::test_shortcut('w')) {
+    file_watch_cb(0, 0);
+    status = 1;
+  }
   else if(Fl::test_shortcut('e')) {
     for(unsigned int i = 0; i < graph.size(); i++)
       for(unsigned int j = 0; j < graph[i]->gl.size(); j++)

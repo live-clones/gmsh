@@ -112,6 +112,12 @@ MElement *PViewDataGModel::_getElement(int step, int ent, int ele)
   return curr;
 }
 
+std::string PViewDataGModel::getFileName(int step)
+{
+  if(step < 0 || step > _steps.size() - 1) return PViewData::getFileName();
+  return _steps[step]->getFileName();
+}
+
 int PViewDataGModel::getNumTimeSteps()
 {
   return _steps.size();

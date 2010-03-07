@@ -82,6 +82,8 @@ class CTX {
   int numWindows, numTiles;
   // text editor and web browser command (with included '%s')
   std::string editor, webBrowser;
+  // pattern of files to watch out for
+  std::string watchFilePattern;
   // show tootips in the GUI?
   int tooltips;
   // scroll automatically to last message in the message window?

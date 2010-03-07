@@ -80,6 +80,7 @@ class menuWindow{
 };
 
 void file_quit_cb(Fl_Widget *w, void *data);
+void file_watch_cb(Fl_Widget *w, void *data);
 void mod_geometry_cb(Fl_Widget *w, void *data);
 void mod_mesh_cb(Fl_Widget *w, void *data);
 void mod_solver_cb(Fl_Widget *w, void *data);

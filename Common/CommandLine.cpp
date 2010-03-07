@@ -231,6 +231,13 @@ void GetOptions(int argc, char *argv[])
         CTX::instance()->noPopup = 1;
         i++;
       }
+      else if(!strcmp(argv[i] + 1, "watch")) {
+        i++;
+        if(argv[i])
+          CTX::instance()->watchFilePattern = argv[i++];
+        else
+          Msg::Fatal("Missing string");
+      }
       else if(!strcmp(argv[i] + 1, "string")) {
         i++;
         if(argv[i])

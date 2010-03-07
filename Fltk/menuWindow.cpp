@@ -4,10 +4,12 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <FL/Fl_Box.H>
 #include <FL/fl_ask.H>
+#include <FL/filename.H>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GmshSocket.h"
@@ -411,6 +413,40 @@ static void file_rename_cb(Fl_Widget *w, void *data)
 void file_quit_cb(Fl_Widget *w, void *data)
 {
   Msg::Exit(0);
+}
+
+void file_watch_cb(Fl_Widget *w, void *data)
+{
+  std::string pattern = FixRelativePath
+    (GModel::current()->getFileName(), CTX::instance()->watchFilePattern);
+  std::string directory = SplitFileName(pattern)[0];
+  if(directory.empty()) directory = "./";
+  
+  dirent **files = 0;
+  int num = fl_filename_list(directory.c_str(), &files, fl_numericsort);
+  if(num <= 0) return;
+  std::vector<std::string> matches;
+  for (int i = 0; i < num; i++) {
+    std::string name = directory + files[i]->d_name;
+    if(fl_filename_match(name.c_str(), pattern.c_str()))
+      matches.push_back(name);
+    free((void*)files[i]);
+  }
+  if(files) free((void*)files);
+
+  Msg::Info("%d files matching watch pattern '%s'", num, pattern.c_str());
+  
+  std::set<std::string> allFiles;
+  for(unsigned int i = 0; i < GModel::list.size(); i++)
+    allFiles.insert(GModel::list[i]->getFileName());
+  for(unsigned int i = 0; i < PView::list.size(); i++)
+    for(unsigned int j = 0; j < PView::list[i]->getData()->getNumTimeSteps(); j++)
+      allFiles.insert(PView::list[i]->getData()->getFileName(j));
+
+  for(unsigned int i = 0; i < matches.size(); i++)
+    if(allFiles.find(matches[i]) == allFiles.end())
+      MergeFile(matches[i]);
+  drawContext::global()->draw();
 }
 
 #if defined(__APPLE__)

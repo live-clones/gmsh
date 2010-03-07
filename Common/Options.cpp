@@ -1046,6 +1046,13 @@ std::string opt_general_web_browser(OPT_ARGS_STR)
   return CTX::instance()->webBrowser;
 }
 
+std::string opt_general_watch_file_pattern(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->watchFilePattern = val;
+  return CTX::instance()->watchFilePattern;
+}
+
 std::string opt_general_gui_theme(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
