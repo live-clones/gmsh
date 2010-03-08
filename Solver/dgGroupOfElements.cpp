@@ -759,6 +759,9 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLa
   // localDt[oldGroupId][oldElementId]
   std::vector<std::vector<double> >localDt;
 
+
+  std::vector<int>oldGroupIds;
+
   newGroupIds.resize(getNbElementGroups());
   elementToNeighbors.resize(getNbElementGroups());
   for(int iGroup=0;iGroup<getNbElementGroups();iGroup++){
@@ -921,6 +924,8 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLa
             for(int i=0;i<forBulk.size();i++){
               forBulkV.push_back(getElementGroup(it->first)->getElement(forBulk[i]));
             }
+            oldGroupIds.resize(currentNewGroupId+1);
+            oldGroupIds[currentNewGroupId]=it->first;
             newGroup=new dgGroupOfElements(forBulkV,oldGroup->getOrder(),oldGroup->getGhostPartition());
             newGroup->copyPrivateDataFrom(oldGroup);
             newGroup->_multirateExponent=currentExponent;
@@ -939,6 +944,8 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLa
             for(int i=0;i<forInnerBuffer.size();i++){
               forInnerBufferV.push_back(getElementGroup(it->first)->getElement(forInnerBuffer[i]));
             }
+            oldGroupIds.resize(currentNewGroupId+1);
+            oldGroupIds[currentNewGroupId]=it->first;
             newGroup=new dgGroupOfElements(forInnerBufferV,oldGroup->getOrder(),oldGroup->getGhostPartition());
             newGroup->copyPrivateDataFrom(oldGroup);
             newGroup->_multirateExponent=currentExponent;
@@ -966,6 +973,8 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLa
           for(int i=0;i<it->second.size();i++){
             newGroupV.push_back(getElementGroup(it->first)->getElement(it->second[i]));
           }
+          oldGroupIds.resize(currentNewGroupId+1);
+          oldGroupIds[currentNewGroupId]=it->first;
           dgGroupOfElements *newGroup=new dgGroupOfElements(newGroupV,oldGroup->getOrder(),oldGroup->getGhostPartition());
           newGroup->copyPrivateDataFrom(oldGroup);
           newGroup->_multirateExponent=currentExponent;
@@ -985,7 +994,7 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLa
   // Some stats
   int count=0;
   for(int i=0;i<newGroups.size();i++){
-    Msg::Info("%d New group # %d has %d elements",newGroups[i]->getMultirateExponent(),i,newGroups[i]->getNbElements());
+    Msg::Info("old: %d, level %d, New group # %d has %d elements",oldGroupIds[i],newGroups[i]->getMultirateExponent(),i,newGroups[i]->getNbElements());
     if(newGroups[i]->getIsInnerMultirateBuffer())
       Msg::Info("InnerBuffer");
     else if(newGroups[i]->getIsOuterMultirateBuffer())

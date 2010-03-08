@@ -204,6 +204,7 @@ void dgDofContainer::load(const std::string name) {
 }
 
 void dgDofContainer::L2Projection(std::string functionName){
+  scale(0.);
   dgDofContainer rhs(&_groups, _nbFields);
   for (int iGroup=0;iGroup<_groups.getNbElementGroups();iGroup++) {
     const dgGroupOfElements &group = *_groups.getElementGroup(iGroup);
@@ -387,4 +388,10 @@ void dgDofContainer::registerBindings(binding *b){
   cm->setDescription("Export the group ids for gmsh visualization");
   cm = cb->addMethod("norm",&dgDofContainer::norm);
   cm->setDescription("Returns the norm of the vector");
+  cm = cb->addMethod("scale",(void (dgDofContainer::*)(double))&dgDofContainer::scale);
+  cm->setArgNames("factor",NULL);
+  cm->setDescription("this=this*scale");
+  cm = cb->addMethod("axpy",(void (dgDofContainer::*)(dgDofContainer &,double)) &dgDofContainer::axpy);
+  cm->setArgNames("dofContainer","a",NULL);
+  cm->setDescription("this = this+a*dofContainer");
 }
