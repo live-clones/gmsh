@@ -478,6 +478,7 @@ void OpenProject(std::string fileName)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
+    file_watch_cb(0, 0);
     FlGui::instance()->resetVisibility();
     FlGui::instance()->updateViews();
     FlGui::instance()->updateFields();
