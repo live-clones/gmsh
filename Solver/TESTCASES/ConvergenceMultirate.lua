@@ -82,6 +82,7 @@ for i=1,nRefSteps do
 end
 
 multirateRK=dgRungeKuttaMultirate43(GC,law)
+--multirateRK=dgRungeKuttaMultirate22(GC,law)
 integrator=dgFunctionIntegrator(functionLua(1, 'L2Norm', {'Solution'}):getName())
 
 oldnorm=1
