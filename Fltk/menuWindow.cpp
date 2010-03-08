@@ -434,17 +434,17 @@ void file_watch_cb(Fl_Widget *w, void *data)
   }
   if(files) free((void*)files);
 
-  Msg::Info("%d files matching watch pattern '%s'", num, pattern.c_str());
+  Msg::Info("%d files matching pattern '%s'", num, pattern.c_str());
   
   std::set<std::string> allFiles;
   for(unsigned int i = 0; i < GModel::list.size(); i++)
-    allFiles.insert(GModel::list[i]->getFileName());
+    allFiles.insert(GetFileNameWithoutPath(GModel::list[i]->getFileName()));
   for(unsigned int i = 0; i < PView::list.size(); i++)
     for(unsigned int j = 0; j < PView::list[i]->getData()->getNumTimeSteps(); j++)
-      allFiles.insert(PView::list[i]->getData()->getFileName(j));
+      allFiles.insert(GetFileNameWithoutPath(PView::list[i]->getData()->getFileName(j)));
 
   for(unsigned int i = 0; i < matches.size(); i++)
-    if(allFiles.find(matches[i]) == allFiles.end())
+    if(allFiles.find(GetFileNameWithoutPath(matches[i])) == allFiles.end())
       MergeFile(matches[i]);
   drawContext::global()->draw();
 }

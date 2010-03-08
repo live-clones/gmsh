@@ -16,6 +16,7 @@ std::string SanitizeTeXString(const char *in, int equation);
 std::string FixWindowsPath(const std::string &in);
 std::string FixRelativePath(const std::string &reference, const std::string &in);
 std::vector<std::string> SplitFileName(const std::string &fileName);
+std::string GetFileNameWithoutPath(const std::string &fileName);
 std::string ConvertFileToString(const std::string &fileName);
 void ReplaceSubStringInPlace(const std::string &olds, const std::string &news, 
                              std::string &str);

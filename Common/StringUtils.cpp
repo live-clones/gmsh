@@ -104,6 +104,12 @@ std::vector<std::string> SplitFileName(const std::string &fileName)
   return s;
 }
 
+std::string GetFileNameWithoutPath(const std::string &fileName)
+{
+  std::vector<std::string> s = SplitFileName(fileName);
+  return s[1] + s[2];
+}
+
 std::string ConvertFileToString(const std::string &fileName)
 {
   FILE *fp = fopen(fileName.c_str(), "r");
