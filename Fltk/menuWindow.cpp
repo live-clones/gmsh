@@ -417,6 +417,8 @@ void file_quit_cb(Fl_Widget *w, void *data)
 
 void file_watch_cb(Fl_Widget *w, void *data)
 {
+  if(CTX::instance()->watchFilePattern.empty()) return;
+
   std::string pattern = FixRelativePath
     (GModel::current()->getFileName(), CTX::instance()->watchFilePattern);
   std::string directory = SplitFileName(pattern)[0];
@@ -434,7 +436,8 @@ void file_watch_cb(Fl_Widget *w, void *data)
   }
   if(files) free((void*)files);
 
-  Msg::Info("%d files matching pattern '%s'", num, pattern.c_str());
+  Msg::Info("%d match%s for pattern '%s'", (int)matches.size(), 
+            (matches.size() > 1) ? "es" : "", pattern.c_str());
   
   std::set<std::string> allFiles;
   for(unsigned int i = 0; i < GModel::list.size(); i++)

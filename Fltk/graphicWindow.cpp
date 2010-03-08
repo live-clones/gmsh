@@ -229,6 +229,10 @@ void status_play_manual(int time, int incr)
   static bool busy = false;
   if(busy) return;
   busy = true;
+
+  // if we watch some files this is a good time to check for new data
+  file_watch_cb(0, 0);
+
   if(time) {
     for(unsigned int i = 0; i < PView::list.size(); i++){
       if(opt_view_visible(i, GMSH_GET, 0)){
