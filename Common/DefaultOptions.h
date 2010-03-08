@@ -97,7 +97,7 @@ StringXString GeneralOptions_String[] = {
 #endif
     "System command to launch a web browser" },
 
-  { F|S, "WatchFilePattern", opt_general_watch_file_pattern , "" ,
+  { F|0, "WatchFilePattern", opt_general_watch_file_pattern , "" ,
     "Pattern of files to watch out for (to load automatically)"},
 
   { 0, 0 , 0 , "" , 0 }

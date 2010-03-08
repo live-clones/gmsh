@@ -233,8 +233,13 @@ void GetOptions(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "watch")) {
         i++;
-        if(argv[i])
-          CTX::instance()->watchFilePattern = argv[i++];
+        if(argv[i]){
+          std::string tmp = argv[i++];
+          if(tmp.size() > 2 && tmp[0] == '"' && tmp[tmp.size() - 1] == '"')
+            CTX::instance()->watchFilePattern = tmp.substr(1, tmp.size() - 2);
+          else
+            CTX::instance()->watchFilePattern = tmp;
+        }
         else
           Msg::Fatal("Missing string");
       }
