@@ -37,3 +37,12 @@ class dgRungeKuttaMultirate43: public dgRungeKuttaMultirate{
   dgRungeKuttaMultirate43(dgGroupCollection *gc,dgConservationLaw *law);
   static void registerBindings(binding *b);
 };
+
+class dgRungeKuttaMultirate22: public dgRungeKuttaMultirate{
+  void computeInputForK(int iK,int exponent,bool isBuffer);
+  void updateSolution(int exponent,bool isBuffer);
+  public:
+  double iterate(double dt, dgDofContainer *solution);
+  dgRungeKuttaMultirate22(dgGroupCollection *gc,dgConservationLaw *law);
+  static void registerBindings(binding *b);
+};

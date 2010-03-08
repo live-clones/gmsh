@@ -356,6 +356,7 @@ binding::binding(){
   dgResidual::registerBindings(this);
   dgRungeKutta::registerBindings(this);
   dgRungeKuttaMultirate43::registerBindings(this);
+  dgRungeKuttaMultirate22::registerBindings(this);
   dgSlopeLimiterRegisterBindings(this);
   dgSupraTransformNodalValueRegisterBindings(this);
   dgSystemOfEquations::registerBindings(this);

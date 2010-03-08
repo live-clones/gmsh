@@ -379,3 +379,136 @@ void dgRungeKuttaMultirate43::registerBindings(binding *b) {
   cm->setArgNames("dt","solution",NULL);
   cm->setDescription("update the solution by doing a multirate RK43 (from Schlegel et al. Journal of Computational and Applied Mathematics, 2009) step of base time step dt for the conservation law");
 }
+
+dgRungeKuttaMultirate22::dgRungeKuttaMultirate22(dgGroupCollection *gc,dgConservationLaw* law):dgRungeKuttaMultirate(gc,law,4){}
+
+
+double dgRungeKuttaMultirate22::iterate(double dt, dgDofContainer *solution){
+	_solution=solution;
+	_dt=dt;
+	computeInputForK(0,0,false);
+	computeInputForK(1,0,false);
+	
+	return solution->norm();
+}
+
+void dgRungeKuttaMultirate22::computeInputForK(int iK,int exponent,bool isBuffer){
+	if(exponent>_maxExponent){
+		return;
+	}
+	double localDt=_dt/pow(2.0,(double)exponent);
+	double _A[2][2]={
+		{0, 0},
+		{1.0, 0}
+	};
+	// Small step RK22
+	double _AInner[4][4]={
+		{0,         0,         0,         0}, 
+		{1.0/2.0,   0, 				 0,         0},
+		{1.0/4.0,  1.0/4.0,    0,         0},
+		{1.0/4.0,  1.0/4.0,   1.0/2.0,    0}
+	};
+	
+	// Big step RK22
+	double _AOuter[4][4]={
+		{0,         0,         0,         0}, 
+		{1.0,   		0, 				 0,         0},
+		{0,  			  0,         0,         0},
+		{0,  				0,   		 1.0,    			0}
+	};
+	
+	// compute K[iK] for this exponent and buffer
+	
+	if(isBuffer){
+		std::vector<dgGroupOfElements *>&gVi=_innerBufferGroupsOfElements[exponent].first;
+		std::vector<dgGroupOfElements *>&gVo=_outerBufferGroupsOfElements[exponent].first;
+		_currentInput->scale(gVi,0.0);
+		_currentInput->scale(gVo,0.0);
+		_currentInput->axpy(gVi,*_solution,1.0);
+		_currentInput->axpy(gVo,*_solution,1.0);
+		for(int i=0;i<iK;i++){
+			if(_AInner[iK][i]!=0.0){
+				_currentInput->axpy(gVi,*_K[i],_AInner[iK][i]*localDt*2);}
+			if(_AOuter[iK][i]!=0.0)
+				_currentInput->axpy(gVo,*_K[i],_AOuter[iK][i]*localDt*2);
+		}
+	}
+	else{
+		std::vector<dgGroupOfElements *> &gV=_bulkGroupsOfElements[exponent].first;
+		_currentInput->scale(gV,0.0);
+		_currentInput->axpy(gV,*_solution,1.0);
+		for(int i=0;i<iK;i++){
+			if(_A[iK][i]!=0.0){
+				_currentInput->axpy(gV,*_K[i],_A[iK][i]*localDt);
+			}
+		}
+	}
+	
+	if(!isBuffer){
+		switch(iK){
+			case 0:
+				computeInputForK(0,exponent+1,true);
+				break;
+			case 1:
+				computeInputForK(3,exponent+1,true);
+				break;
+		}
+	}
+	else{
+		computeInputForK(iK%2,exponent,false);
+	}
+	computeK(iK,exponent,isBuffer);
+	//  Msg::Info("Multirate %d %0.16e",iK,_K[iK]->norm());
+	if( (iK==1 && !isBuffer) || (iK==3 && isBuffer) ){
+		updateSolution(exponent,isBuffer);
+	}
+	if(!isBuffer){
+		switch(iK){
+			case 0:
+				for(int i=1;i<3;i++){
+					computeInputForK(i,exponent+1,true);
+				}
+				break;
+		}
+	}
+}
+
+void dgRungeKuttaMultirate22::updateSolution(int exponent,bool isBuffer){
+	//Msg::Info("Updating solution at level %d %s",exponent,isBuffer?"Buffer":"Bulk");
+	double localDt=_dt/pow(2.0,(double)exponent);
+	double b[2]={1.0/2.0,  1.0/2.0};
+	double c[2]={0, 1.0};
+	double bInner[4]={1.0/4.0, 1.0/4.0, 1.0/4.0, 1.0/4.0};
+	double cInner[4]={0,  1.0/2.0, 1.0/2.0, 1.0};
+	double bOuter[4]={1.0/4.0, 1.0/4.0, 1.0/4.0, 1.0/4.0};
+	double cOuter[4]={0, 1.0, 0, 1.0};
+	if(isBuffer){
+		std::vector<dgGroupOfElements *>&gVi=_innerBufferGroupsOfElements[exponent].first;
+		std::vector<dgGroupOfElements *>&gVo=_outerBufferGroupsOfElements[exponent].first;
+		for(int i=0;i<4;i++){
+			if(bInner[i]!=0.0)
+				_solution->axpy(gVi,*_K[i],bInner[i]*localDt*2);
+			if(bOuter[i]!=0.0)
+				_solution->axpy(gVo,*_K[i],bOuter[i]*localDt*2);
+		}
+	}
+	else{
+		std::vector<dgGroupOfElements *>&gV=_bulkGroupsOfElements[exponent].first;
+		for(int i=0;i<2;i++){
+			if(b[i]!=0.0)
+				_solution->axpy(gV,*_K[i],b[i]*localDt);
+		}
+	}
+}
+
+void dgRungeKuttaMultirate22::registerBindings(binding *b) {
+	classBinding *cb = b->addClass<dgRungeKuttaMultirate22>("dgRungeKuttaMultirate22");
+	cb->setDescription("Multirate explicit Runge-Kutta with Constantinescu 2 stages 2nd order method");
+	methodBinding *cm;
+	cm = cb->setConstructor<dgRungeKuttaMultirate22,dgGroupCollection *,dgConservationLaw*>();
+	cm->setArgNames("groupCollection","law",NULL);
+	cm->setDescription("A new multirate explicit runge kutta, pass parameters to the iterate function");
+	cm = cb->addMethod("iterate",&dgRungeKuttaMultirate22::iterate);
+	cm->setArgNames("dt","solution",NULL);
+	cm->setDescription("update the solution by doing a multirate RK2a (from Constantinescu and Sandu,  'Update on Multirate Timestepping Methods for Hyperbolic Conservation Laws', Computer Sciance Technical Report,  2007) step of base time step dt for the conservation law");
+}
