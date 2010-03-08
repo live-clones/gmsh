@@ -9,6 +9,9 @@
 #include "dgGroupOfElements.h"
 #include <limits.h>
 #include <stdio.h>
+#ifdef HAVE_MPI
+#include "mpi.h"
+#endif
 
 double dgRungeKutta::iterateEuler(const dgConservationLaw *claw, double dt, dgDofContainer *solution) {
   double A[] = {0};
