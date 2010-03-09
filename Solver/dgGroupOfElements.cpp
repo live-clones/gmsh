@@ -342,9 +342,9 @@ void dgGroupCollection::buildGroupsOfElements(GModel *model, int dim, int order)
   std::map<int, std::vector<MElement *> >localElements;
   std::vector<std::map<int, std::vector<MElement *> > >ghostElements(Msg::GetCommSize()); // [partition][elementType]
   std::multimap<MElement*, short> &ghostsCells = _model->getGhostCells();
-  for(unsigned int i = 0; i < entities.size(); i++){
+  for(unsigned int i = 0; i < entities.size(); i++) {
     GEntity *entity = entities[i];
-    if(entity->dim() == dim){
+    if(entity->dim() == dim) {
       for (int iel=0; iel<entity->getNumMeshElements(); iel++){
         MElement *el=entity->getMeshElement(iel);
         if(el->getPartition()==Msg::GetCommRank()+1 || el->getPartition()==0){
