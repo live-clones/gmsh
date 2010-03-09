@@ -7,6 +7,10 @@
 #include "dgGroupOfElements.h"
 #include "GModel.h"
 
+#if defined(HAVE_DLOPEN)
+  #include "dlfcn.h"
+#endif
+
 // dataCache members
 dataCache::dataCache(dataCacheMap *cacheMap) : _valid(false) {
   cacheMap->addDataCache(this); //this dataCache can be deleted when the dataCacheMap is deleted
@@ -227,6 +231,18 @@ functionConstant::functionConstant(const fullMatrix<double> *source){
   function::add(_name,this);
 }
 
+functionConstant::functionConstant(std::vector<double> source){
+  _source = fullMatrix<double>(source.size(),1);
+  for(size_t i=0; i<source.size(); i++){
+    _source(i,0) = source[i];
+  }
+  static int c=0;
+  std::ostringstream oss;
+  oss<<"FunctionConstant_"<<c++;
+  _name = oss.str();
+  function::add(_name,this);
+}
+
 // function that enables to interpolate a DG solution using
 // geometrical search in a mesh 
 
@@ -303,6 +319,58 @@ void dataCacheDouble::resize() {
   _value = fullMatrix<double>(_nRowByPoint==0?1:_nRowByPoint*_cacheMap.getNbEvaluationPoints(),_value.size2());
 }
 
+#if defined(HAVE_DLOPEN)
+//functionC
+class functionC : public function {
+  void (*callback)(fullMatrix<double> &,const fullMatrix<double>&);
+  std::vector<std::string> _dependenciesName;
+  int _nbCol;
+  class data : public dataCacheDouble{
+    const functionC *_function;
+    std::vector<dataCacheDouble *> _dependencies;
+    public:
+    data(const functionC *f, dataCacheMap *m):
+      dataCacheDouble(*m,1,f->_nbCol)
+    {
+      _function = f;
+      _dependencies.resize ( _function->_dependenciesName.size());
+      for (int i=0;i<_function->_dependenciesName.size();i++)
+        _dependencies[i] = &m->get(_function->_dependenciesName[i],this);
+
+    }
+    void _eval()
+    {
+      const fullMatrix<double> &xyz = (*_dependencies[0])();
+      _function->callback(_value, xyz);
+    }
+  };
+  public:
+  functionC (int nbCol, std::string ccode, std::vector<std::string> dependencies):
+      _dependenciesName(dependencies),_nbCol(nbCol)
+  {
+    FILE *cfile = popen("g++ -O3 -pipe -m32 -shared -o tmp.dylib -I ../../Numeric -I../../Common -I../../build/Common -x c++ - ","w");
+    fprintf(cfile,"#include\"fullMatrix.h\"\nextern \"C\" %s", ccode.c_str());
+    fclose(cfile);
+    void *dlHandler;
+    dlHandler = dlopen("tmp.dylib",RTLD_NOW);
+    callback = (void(*)(fullMatrix<double>&,const fullMatrix<double>&))dlsym(dlHandler, "eval");
+    if(!callback) 
+      Msg::Error("cannot get the callback to the compiled C function");
+
+    static int c=0;
+    std::ostringstream oss;
+    oss<<"cFunction_"<<c++;
+    _name = oss.str();
+    function::add(_name,this);
+  }
+  dataCacheDouble *newDataCache(dataCacheMap *m)
+  {
+    return new data(this,m);
+  }
+};
+#endif
+
+
 #include "Bindings.h"
 
 void function::registerDefaultFunctions()
@@ -318,7 +386,7 @@ void function::registerBindings(binding *b){
 
   cb = b->addClass<functionConstant>("functionConstant");
   cb->setDescription("A constant (scalar or vector) function");
-  mb = cb->setConstructor<functionConstant,fullMatrix<double>*>();
+  mb = cb->setConstructor<functionConstant,std::vector <double> >();
   mb->setArgNames("v",NULL);
   mb->setDescription("A new constant function wich values 'v' everywhere. v can be a row-vector.");
   cb->setParentClass<function>();
@@ -337,6 +405,13 @@ void function::registerBindings(binding *b){
   mb->setDescription("A solution.");
   cb->setParentClass<function>();
 
-
+#if defined(HAVE_DLOPEN)
+  cb = b->addClass<functionC>("functionC");
+  cb->setDescription("A function that compile a C code");
+  mb = cb->setConstructor<functionC,int,std::string,std::vector<std::string> >();
+  mb->setArgNames("nbCol", "code", "arguments",NULL);
+  mb->setDescription("  ");
+  cb->setParentClass<function>();
+#endif
 }
 

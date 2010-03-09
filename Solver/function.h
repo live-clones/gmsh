@@ -1,10 +1,11 @@
 #ifndef _FUNCTION_H_
 #define _FUNCTION_H_
 
+#include "fullMatrix.h"
 #include <map>
 #include <set>
 #include <string>
-#include <fullMatrix.h>
+#include <vector>
 class dataCacheMap;
 class MElement;
 class binding;
@@ -212,6 +213,7 @@ class functionConstant : public function {
   fullMatrix<double> _source;
   dataCacheDouble *newDataCache(dataCacheMap *m);
   functionConstant(const fullMatrix<double> *source);
+  functionConstant(std::vector<double> source);
 };
 
 class functionMesh2Mesh : public function {
