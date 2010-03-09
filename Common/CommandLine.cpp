@@ -104,6 +104,7 @@ void PrintUsage(const char *name)
 #endif
   Msg::Direct("  -pid                  Print process id on stdout");
   Msg::Direct("  -listen               Always listen to incoming connection requests");
+  Msg::Direct("  -watch pattern        Pattern of files to merge as they become available");
   Msg::Direct("  -v int                Set verbosity level");
   Msg::Direct("  -nopopup              Don't popup dialog windows in scripts");
   Msg::Direct("  -string \"string\"      Parse option string at startup");

@@ -100,9 +100,9 @@ StringXString GeneralOptions_String[] = {
     "System command to launch a web browser" },
 
   { F|0, "WatchFilePattern", opt_general_watch_file_pattern , "" ,
-    "Pattern of files to watch out for (to load automatically)"},
+     "Pattern of files to merge as they become available"},
 
-  { 0, 0 , 0 , "" , 0 }
+   { 0, 0 , 0 , "" , 0 }
 } ;
 
 StringXString GeometryOptions_String[] = {

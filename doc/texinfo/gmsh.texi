@@ -923,6 +923,8 @@ Start an interactive lua session
 Print pid on stdout
 @item -listen
 Always listen to incoming connection requests.
+@item -watch
+Pattern of files to merge as they become available.
 @item -v int
 Set verbosity level
 @item -nopopup
