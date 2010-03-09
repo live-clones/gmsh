@@ -10,6 +10,7 @@
 #cmakedefine HAVE_ANN
 #cmakedefine HAVE_BLAS
 #cmakedefine HAVE_CHACO
+#cmakedefine HAVE_DLOPEN
 #cmakedefine HAVE_DINTEGRATION
 #cmakedefine HAVE_FLTK
 #cmakedefine HAVE_FL_TREE

@@ -737,6 +737,12 @@ if(UNIX)
   set_source_files_properties(${NON_OPTIMIZED_SRC} COMPILE_FLAGS "-O0")
 endif(UNIX)
 
+if(UNIX)
+  #DLOpen
+  set(HAVE_DLOPEN true)
+  list(APPEND EXTERNAL_LIBRARIES ${CMAKE_DL_LIB})
+endif(UNIX)
+
 if(MSVC)
   add_definitions(-D_USE_MATH_DEFINES -DNOMINMAX 
                   -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_DEPRECATE)
