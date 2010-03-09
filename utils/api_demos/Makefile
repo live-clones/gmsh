@@ -1,6 +1,7 @@
 FLAGS = -g -O2 ${CXXFLAGS}
-INC = -I/usr/local/include -I.
-GMSH = -L/usr/local/lib -lGmsh
+INC = -I/usr/local/include -I. -I /home/gauthier/distgmsh/trunk/buildlib/lib/include
+GMSH = -L/home/gauthier/distgmsh/trunk/buildlib/lib/lib -lGmsh
+METIS= -L/usr/local/lib -lmetis
 GLUT = -framework OpenGL -framework GLUT -framework Cocoa -framework ApplicationServices
 #GLUT = -lGLUT -lGLU -lGL -lX11
 OCC = -L/usr/local/opencascade/lib -L/Users/remacle/SOURCES/opencascade/lib -lTKSTEP -lTKSTEP209 -lTKSTEPAttr -lTKSTEPBase -lTKIGES -lTKXSBase -lTKOffset -lTKFeat -lTKFillet -lTKBool -lTKShHealing -lTKMesh -lTKHLR -lTKBO -lTKPrim -lTKTopAlgo -lTKGeomAlgo -lTKBRep -lTKGeomBase -lTKG3d -lTKG2d -lTKAdvTools -lTKMath -lTKernel

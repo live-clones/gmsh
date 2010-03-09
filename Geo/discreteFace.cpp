@@ -12,13 +12,13 @@
 #include "Geo.h"
 #include "GFaceCompound.h"
 #include "Context.h"
-#include "Os.h"
+#include "OS.h"
 
 discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
 {
   Surface *s = Create_Surface(num, MSH_SURF_DISCRETE);
   Tree_Add(model->getGEOInternals()->Surfaces, &s);
-  meshStatistics.status = GFace::DONE;    
+  meshStatistics.status = GFace::DONE;
 }
 
 void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge> &map_edges)
@@ -36,11 +36,11 @@ void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge> &map_e
   }
 
   // for the boundary edges, associate the tag of the current discrete face
-  for (std::set<MEdge, Less_Edge>::iterator itv = bound_edges.begin(); 
+  for (std::set<MEdge, Less_Edge>::iterator itv = bound_edges.begin();
        itv != bound_edges.end(); ++itv){
     std::map<MEdge, std::vector<int>, Less_Edge >::iterator itmap = map_edges.find(*itv);
     if (itmap == map_edges.end()){
-      std::vector<int> tagFaces; 
+      std::vector<int> tagFaces;
       tagFaces.push_back(tag());
       map_edges.insert(std::make_pair(*itv, tagFaces));
     }
@@ -62,7 +62,7 @@ void discreteFace::setBoundEdges(std::vector<int> tagEdges)
  }
 }
 
-GPoint discreteFace::point(double par1, double par2) const 
+GPoint discreteFace::point(double par1, double par2) const
 {
   Msg::Error("Cannot evaluate point on discrete face");
   return GPoint();
@@ -119,7 +119,7 @@ Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 
 }
 
-void discreteFace::secondDer(const SPoint2 &param, 
+void discreteFace::secondDer(const SPoint2 &param,
                              SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
 {
 

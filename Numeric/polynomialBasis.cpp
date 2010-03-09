@@ -53,7 +53,7 @@ static fullMatrix<double> generatePascalSerendipityTriangle(int order)
 
   monomials(0, 0) = 0;
   monomials(0, 1) = 0;
-  
+
   int index = 1;
   for (int i = 1; i <= order; i++) {
     if (i == order) {
@@ -92,7 +92,7 @@ static fullMatrix<double> generatePascalQuad(int order)
     }
   }
   return monomials;
-}  
+}
 /*
 00 10 20 30 40 ⋯
 01 11 21 31 41 ⋯
@@ -157,7 +157,7 @@ static fullMatrix<double> generatePascalQuadSerendip(int order)
 static fullMatrix<double> generateMonomialSubspace(int dim, int p)
 {
   fullMatrix<double> monomials;
-  
+
   switch (dim) {
   case 1:
     monomials = fullMatrix<double>(1, 1);
@@ -190,7 +190,7 @@ static fullMatrix<double> generateMonomialSubspace(int dim, int p)
 
 static fullMatrix<double> generatePascalSerendipityTetrahedron(int order)
 {
-  int nbMonomials = 4 + 6 * std::max(0, order - 1) + 
+  int nbMonomials = 4 + 6 * std::max(0, order - 1) +
     4 * std::max(0, (order - 2) * (order - 1) / 2);
   fullMatrix<double> monomials(nbMonomials, 3);
 
@@ -231,7 +231,7 @@ static fullMatrix<double> generatePascalTetrahedron(int order)
   }
 
   return monomials;
-}  
+}
 
 // generate Pascal prism
 
@@ -254,7 +254,7 @@ static fullMatrix<double> generatePascalPrism(int order)
   }
   monomials.print("Pri monoms");
   return monomials;
-}  
+}
 
 
 static int nbdoftriangle(int order) { return (order + 1) * (order + 2) / 2; }
@@ -268,29 +268,29 @@ static void nodepositionface0(int order, double *u, double *v, double *w)
 {
   int ndofT = nbdoftriangle(order);
   if (order == 0) { u[0] = 0.; v[0] = 0.; w[0] = 0.; return; }
-  
+
   u[0]= 0.;    v[0]= 0.;    w[0] = 0.;
   u[1]= 0.;    v[1]= order; w[1] = 0.;
   u[2]= order; v[2]= 0.;    w[2] = 0.;
 
   // edges
   for (int k = 0; k < (order - 1); k++){
-    u[3 + k] = 0.; 
-    v[3 + k] = k + 1; 
+    u[3 + k] = 0.;
+    v[3 + k] = k + 1;
     w[3 + k] = 0.;
 
     u[3 + order - 1 + k] = k + 1;
-    v[3 + order - 1 + k] = order - 1 - k ; 
+    v[3 + order - 1 + k] = order - 1 - k ;
     w[3 + order - 1 + k] = 0.;
 
     u[3 + 2 * (order - 1) + k] = order - 1 - k;
     v[3 + 2 * (order - 1) + k] = 0.;
     w[3 + 2 * (order - 1) + k] = 0.;
   }
-  
+
   if (order > 2){
     int nbdoftemp = nbdoftriangle(order - 3);
-    nodepositionface0(order - 3, &u[3 + 3 * (order - 1)], &v[3 + 3 * (order - 1)], 
+    nodepositionface0(order - 3, &u[3 + 3 * (order - 1)], &v[3 + 3 * (order - 1)],
                       &w[3 + 3* (order - 1)]);
     for (int k = 0; k < nbdoftemp; k++){
       u[3 + k + 3 * (order - 1)] = u[3 + k + 3 * (order - 1)] * (order - 3) + 1.;
@@ -310,23 +310,23 @@ static void nodepositionface1(int order, double *u, double *v, double *w)
 {
    int ndofT = nbdoftriangle(order);
    if (order == 0) { u[0] = 0.; v[0] = 0.; w[0] = 0.; return; }
-   
+
    u[0] = 0.;    v[0]= 0.;  w[0] = 0.;
    u[1] = order; v[1]= 0.;  w[1] = 0.;
    u[2] = 0.;    v[2]= 0.;  w[2] = order;
    // edges
    for (int k = 0; k < (order - 1); k++){
-     u[3 + k] = k + 1; 
-     v[3 + k] = 0.; 
+     u[3 + k] = k + 1;
+     v[3 + k] = 0.;
      w[3 + k] = 0.;
-     
+
      u[3 + order - 1 + k] = order - 1 - k;
      v[3 + order - 1 + k] = 0.;
-     w[3 + order - 1+ k ] = k + 1; 
-     
+     w[3 + order - 1+ k ] = k + 1;
+
      u[3 + 2 * (order - 1) + k] = 0. ;
      v[3 + 2 * (order - 1) + k] = 0.;
-     w[3 + 2 * (order - 1) + k] = order - 1 - k; 
+     w[3 + 2 * (order - 1) + k] = order - 1 - k;
    }
    if (order > 2){
      int nbdoftemp = nbdoftriangle(order - 3);
@@ -350,13 +350,13 @@ static void nodepositionface2(int order, double *u, double *v, double *w)
 {
    int ndofT = nbdoftriangle(order);
    if (order == 0) { u[0] = 0.; v[0] = 0.; return; }
-   
+
    u[0]= 0.; v[0]= 0.;    w[0] = 0.;
    u[1]= 0.; v[1]= 0.;    w[1] = order;
    u[2]= 0.; v[2]= order; w[2] = 0.;
    // edges
    for (int k = 0; k < (order - 1); k++){
-     
+
      u[3 + k] = 0.;
      v[3 + k] = 0.;
      w[3 + k] = k + 1;
@@ -364,7 +364,7 @@ static void nodepositionface2(int order, double *u, double *v, double *w)
      u[3 + order - 1 + k] = 0.;
      v[3 + order - 1 + k] = k + 1;
      w[3 + order - 1 + k] = order - 1 - k;
-     
+
      u[3 + 2 * (order - 1) + k] = 0.;
      v[3 + 2 * (order - 1) + k] = order - 1 - k;
      w[3 + 2 * (order - 1) + k] = 0.;
@@ -391,7 +391,7 @@ static void nodepositionface3(int order,  double *u,  double *v,  double *w)
 {
    int ndofT = nbdoftriangle(order);
    if (order == 0) { u[0] = 0.; v[0] = 0.; w[0] = 0.; return; }
-   
+
    u[0]= 0.;    v[0]= 0.;    w[0] = order;
    u[1]= order; v[1]= 0.;    w[1] = 0.;
    u[2]= 0.;    v[2]= order; w[2] = 0.;
@@ -405,9 +405,9 @@ static void nodepositionface3(int order,  double *u,  double *v,  double *w)
      u[3 + order - 1 + k] = order - 1 - k;
      v[3 + order - 1 + k] = k + 1;
      w[3 + order - 1 + k] = 0.;
-     
+
      u[3 + 2 * (order - 1) + k] = 0.;
-     v[3 + 2 * (order - 1) + k] = order - 1 - k; 
+     v[3 + 2 * (order - 1) + k] = order - 1 - k;
      w[3 + 2 * (order - 1) + k] = k + 1;
    }
    if (order > 2){
@@ -427,13 +427,13 @@ static void nodepositionface3(int order,  double *u,  double *v,  double *w)
    }
 }
 
-static fullMatrix<double> gmshGeneratePointsTetrahedron(int order, bool serendip) 
+static fullMatrix<double> gmshGeneratePointsTetrahedron(int order, bool serendip)
 {
-  int nbPoints = 
+  int nbPoints =
     (serendip ?
      4 +  6 * std::max(0, order - 1) + 4 * std::max(0, (order - 2) * (order - 1) / 2) :
      (order + 1) * (order + 2) * (order + 3) / 6);
-  
+
   fullMatrix<double> point(nbPoints, 3);
 
   double overOrder = (order == 0 ? 1. : 1. / order);
@@ -446,90 +446,90 @@ static fullMatrix<double> gmshGeneratePointsTetrahedron(int order, bool serendip
     point(1, 0) = order;
     point(1, 1) = 0;
     point(1, 2) = 0;
-    
+
     point(2, 0) = 0.;
     point(2, 1) = order;
     point(2, 2) = 0.;
-    
+
     point(3, 0) = 0.;
     point(3, 1) = 0.;
     point(3, 2) = order;
 
     // edges e5 and e6 switched in original version, opposite direction
     // the template has been defined in table edges_tetra and faces_tetra (MElement.h)
-    
+
     if (order > 1) {
       for (int k = 0; k < (order - 1); k++) {
         point(4 + k, 0) = k + 1;
         point(4 +      order - 1  + k, 0) = order - 1 - k;
-        point(4 + 2 * (order - 1) + k, 0) = 0.; 
+        point(4 + 2 * (order - 1) + k, 0) = 0.;
         point(4 + 3 * (order - 1) + k, 0) = 0.;
         // point(4 + 4 * (order - 1) + k, 0) = order - 1 - k;
         // point(4 + 5 * (order - 1) + k, 0) = 0.;
         point(4 + 4 * (order - 1) + k, 0) = 0.;
         point(4 + 5 * (order - 1) + k, 0) = k+1;
-        
+
         point(4 + k, 1) = 0.;
         point(4 +      order - 1  + k, 1) = k + 1;
-        point(4 + 2 * (order - 1) + k, 1) = order - 1 - k; 
+        point(4 + 2 * (order - 1) + k, 1) = order - 1 - k;
         point(4 + 3 * (order - 1) + k, 1) = 0.;
         //         point(4 + 4 * (order - 1) + k, 1) = 0.;
         //         point(4 + 5 * (order - 1) + k, 1) = order - 1 - k;
         point(4 + 4 * (order - 1) + k, 1) = k+1;
         point(4 + 5 * (order - 1) + k, 1) = 0.;
-        
+
         point(4 + k, 2) = 0.;
         point(4 +      order - 1  + k, 2) = 0.;
-        point(4 + 2 * (order - 1) + k, 2) = 0.; 
+        point(4 + 2 * (order - 1) + k, 2) = 0.;
         point(4 + 3 * (order - 1) + k, 2) = order - 1 - k;
         point(4 + 4 * (order - 1) + k, 2) = order - 1 - k;
         point(4 + 5 * (order - 1) + k, 2) = order - 1 - k;
       }
-      
+
       if (order > 2) {
         int ns = 4 + 6 * (order - 1);
         int nbdofface = nbdoftriangle(order - 3);
-        
+
         double *u = new double[nbdofface];
         double *v = new double[nbdofface];
         double *w = new double[nbdofface];
-        
+
         nodepositionface0(order - 3, u, v, w);
 
         // u-v plane
-        
+
         for (int i = 0; i < nbdofface; i++){
           point(ns + i, 0) = u[i] * (order - 3) + 1.;
           point(ns + i, 1) = v[i] * (order - 3) + 1.;
           point(ns + i, 2) = w[i] * (order - 3);
         }
-        
+
         ns = ns + nbdofface;
 
         // u-w plane
-        
+
         nodepositionface1(order - 3, u, v, w);
-        
+
         for (int i=0; i < nbdofface; i++){
           point(ns + i, 0) = u[i] * (order - 3) + 1.;
           point(ns + i, 1) = v[i] * (order - 3) ;
           point(ns + i, 2) = w[i] * (order - 3) + 1.;
         }
 
-        // v-w plane 
-        
+        // v-w plane
+
         ns = ns + nbdofface;
 
         nodepositionface2(order - 3, u, v, w);
-        
+
         for (int i = 0; i < nbdofface; i++){
           point(ns + i, 0) = u[i] * (order - 3);
           point(ns + i, 1) = v[i] * (order - 3) + 1.;
           point(ns + i, 2) = w[i] * (order - 3) + 1.;
         }
 
-        // u-v-w plane 
-        
+        // u-v-w plane
+
         ns = ns + nbdofface;
 
         nodepositionface3(order - 3, u, v, w);
@@ -545,9 +545,9 @@ static fullMatrix<double> gmshGeneratePointsTetrahedron(int order, bool serendip
         delete [] u;
         delete [] v;
         delete [] w;
-        
+
         if (!serendip && order > 3) {
-  
+
           fullMatrix<double> interior = gmshGeneratePointsTetrahedron(order - 4, false);
           for (int k = 0; k < interior.size1(); k++) {
             point(ns + k, 0) = 1. + interior(k, 0) * (order - 4);
@@ -558,19 +558,19 @@ static fullMatrix<double> gmshGeneratePointsTetrahedron(int order, bool serendip
       }
     }
   }
-  
-  point.scale(overOrder);  
+
+  point.scale(overOrder);
   return point;
 }
 
-static fullMatrix<double> gmshGeneratePointsTriangle(int order, bool serendip) 
+static fullMatrix<double> gmshGeneratePointsTriangle(int order, bool serendip)
 {
   int nbPoints = serendip ? 3 * order : (order + 1) * (order + 2) / 2;
   fullMatrix<double> point(nbPoints, 2);
-  
+
   point(0, 0) = 0;
   point(0, 1) = 0;
-  
+
   double dd = 1. / order;
 
   if (order > 0) {
@@ -578,29 +578,29 @@ static fullMatrix<double> gmshGeneratePointsTriangle(int order, bool serendip)
     point(1, 1) = 0;
     point(2, 0) = 0;
     point(2, 1) = 1;
-    
+
     int index = 3;
-    
+
     if (order > 1) {
-      
+
       double ksi = 0;
       double eta = 0;
-      
+
       for (int i = 0; i < order - 1; i++, index++) {
         ksi += dd;
         point(index, 0) = ksi;
         point(index, 1) = eta;
       }
-      
+
       ksi = 1.;
-      
+
       for (int i = 0; i < order - 1; i++, index++) {
         ksi -= dd;
         eta += dd;
         point(index, 0) = ksi;
         point(index, 1) = eta;
-      } 
-        
+      }
+
       eta = 1.;
       ksi = 0.;
 
@@ -608,7 +608,7 @@ static fullMatrix<double> gmshGeneratePointsTriangle(int order, bool serendip)
         eta -= dd;
         point(index, 0) = ksi;
         point(index, 1) = eta;
-      } 
+      }
 
       if (order > 2 && !serendip) {
         fullMatrix<double> inner = gmshGeneratePointsTriangle(order - 3, serendip);
@@ -618,10 +618,10 @@ static fullMatrix<double> gmshGeneratePointsTriangle(int order, bool serendip)
       }
     }
   }
-  return point;  
+  return point;
 }
 
-static fullMatrix<double> gmshGeneratePointsPrism(int order, bool serendip) 
+static fullMatrix<double> gmshGeneratePointsPrism(int order, bool serendip)
 {
   const double prism18Pts[18][3] = {
     {0, 0, -1}, // 0
@@ -644,9 +644,9 @@ static fullMatrix<double> gmshGeneratePointsPrism(int order, bool serendip)
     {0.5, 0.5, 0},  // 17
   };
 
-  int nbPoints = (order + 1)*(order + 1)*(order + 2)/2; 
+  int nbPoints = (order + 1)*(order + 1)*(order + 2)/2;
   fullMatrix<double> point(nbPoints, 3);
-  
+
   int index = 0;
   fullMatrix<double> triPoints = gmshGeneratePointsTriangle(order,false);
   fullMatrix<double> linePoints = generate1DPoints(order);
@@ -655,7 +655,7 @@ static fullMatrix<double> gmshGeneratePointsPrism(int order, bool serendip)
     for (int i =0; i<18; i++)
       for (int j=0; j<3;j++)
         point(i,j) = prism18Pts[i][j];
-  else    
+  else
     for (int j = 0; j <linePoints.size1() ; j++) {
       for (int i = 0; i < triPoints.size1(); i++) {
         point(index,0) = triPoints(i,0);
@@ -664,17 +664,17 @@ static fullMatrix<double> gmshGeneratePointsPrism(int order, bool serendip)
         index ++;
       }
     }
-     
+
 //   point.print("Pri ipts");
 
   return point;
 }
 
-static fullMatrix<double> gmshGeneratePointsQuad(int order, bool serendip) 
+static fullMatrix<double> gmshGeneratePointsQuad(int order, bool serendip)
 {
   int nbPoints = serendip ? order*4 : (order+1)*(order+1);
   fullMatrix<double> point(nbPoints, 2);
-  
+
   double dd = 1. / order;
 
   if (order > 0) {
@@ -686,7 +686,7 @@ static fullMatrix<double> gmshGeneratePointsQuad(int order, bool serendip)
     point(2, 1) = 1;
     point(3, 0) = -1;
     point(3, 1) = 1;
-    
+
     if (order > 1) {
       int index = 4;
       const static int edges[4][2]={{0,1},{1,2},{2,3},{3,0}};
@@ -704,25 +704,25 @@ static fullMatrix<double> gmshGeneratePointsQuad(int order, bool serendip)
         point.copy(inner, 0, nbPoints - index, 0, 2, index, 0);
       }
     }
-  } 
+  }
   else {
     point(0, 0) = 0;
     point(0, 1) = 0;
   }
-  return point;  
+  return point;
 }
 
 static fullMatrix<double> generateLagrangeMonomialCoefficients
-  (const fullMatrix<double>& monomial, const fullMatrix<double>& point) 
+  (const fullMatrix<double>& monomial, const fullMatrix<double>& point)
 {
   if(monomial.size1() != point.size1() || monomial.size2() != point.size2()){
     Msg::Fatal("Wrong sizes for Lagrange coefficients generation");
     return fullMatrix<double>(1, 1);
   }
-  
+
   int ndofs = monomial.size1();
   int dim = monomial.size2();
-  
+
   fullMatrix<double> Vandermonde(ndofs, ndofs);
   for (int i = 0; i < ndofs; i++) {
     for (int j = 0; j < ndofs; j++) {
@@ -755,7 +755,7 @@ static void getFaceClosure(int iFace, int iSign, int iRotate, std::vector<int> &
       closure[i] = order1node[iFace][k];
     }
     for (int i = 0;i < 3; ++i){
-      int edgenumber = iSign * 
+      int edgenumber = iSign *
         face[iFace][(6 + i * iSign + (-1 + iSign) / 2 + iRotate) % 3];	//- iSign * iRotate
       for (int k = 0; k < (order - 1); k++){
 	if (edgenumber > 0)
@@ -763,7 +763,7 @@ static void getFaceClosure(int iFace, int iSign, int iRotate, std::vector<int> &
             4 + (edgenumber - 1) * (order - 1) + k;
 	else
 	  closure[3 + i * (order - 1) + k] =
-            4 + (-edgenumber) * (order - 1) - 1 - k; 
+            4 + (-edgenumber) * (order - 1) - 1 - k;
       }
     }
     int fi = 3 + 3 * (order - 1);
@@ -781,26 +781,26 @@ static void getFaceClosure(int iFace, int iSign, int iRotate, std::vector<int> &
 	for (int l = 0; l < orderint - 1; l++){
 	  for (int ei = 0; ei < 3; ei++){
             int edgenumber = (6 + ei * iSign + (-1 + iSign) / 2 + iRotate) % 3;	//- iSign * iRotate
-            if (iSign > 0) 
-              closure[fi + ei * (orderint - 1) + l] = 
+            if (iSign > 0)
+              closure[fi + ei * (orderint - 1) + l] =
                 ti + edgenumber * (orderint - 1) + l;
             else
               closure[fi + ei * (orderint - 1) + l] =
-                ti + (1 + edgenumber) * (orderint - 1) - 1 - l; 
+                ti + (1 + edgenumber) * (orderint - 1) - 1 - l;
           }
 	}
-	fi = fi + 3 * (orderint - 1); ti = ti + 3 * (orderint - 1);        
+	fi = fi + 3 * (orderint - 1); ti = ti + 3 * (orderint - 1);
       }
       else {
 	closure[fi] = ti;
-	ti++; 
+	ti++;
 	fi++;
-      } 
+      }
     }
     break;
   }
 
-} 
+}
 
 static void generate3dFaceClosure(polynomialBasis::clCont &closure, int order)
 {
@@ -810,7 +810,7 @@ static void generate3dFaceClosure(polynomialBasis::clCont &closure, int order)
     for (int iSign = 1; iSign >= -1; iSign -= 2){
       for (int iFace = 0; iFace < 4; iFace++){
 	std::vector<int> closure_face;
-	getFaceClosure(iFace, iSign, iRotate, closure_face, order);	
+	getFaceClosure(iFace, iSign, iRotate, closure_face, order);
 	closure.push_back(closure_face);
       }
     }
@@ -856,7 +856,7 @@ static void generate3dFaceClosurePrism(polynomialBasis::clCont &closure, int ord
     for (int iSign = 1; iSign >= -1; iSign -= 2){
       for (int iFace = 0; iFace < 5; iFace++){
         std::vector<int> closure_face;
-        getFaceClosurePrism(iFace, iSign, iRotate, closure_face, order); 
+        getFaceClosurePrism(iFace, iSign, iRotate, closure_face, order);
         closure.push_back(closure_face);
       }
     }
@@ -887,17 +887,17 @@ static void generate1dVertexClosure(polynomialBasis::clCont &closure)
   closure.resize(2);
   closure[0].push_back(0);
   closure[1].push_back(1);
-  
+
 }
 std::map<int, polynomialBasis> polynomialBases::fs;
 
-const polynomialBasis &polynomialBases::find(int tag) 
+const polynomialBasis &polynomialBases::find(int tag)
 {
   std::map<int, polynomialBasis>::const_iterator it = fs.find(tag);
   if (it != fs.end())     return it->second;
   polynomialBasis F;
   F.numFaces = -1;
-  
+
   switch (tag){
   case MSH_PNT:
     F.numFaces = 1;
@@ -933,7 +933,7 @@ const polynomialBasis &polynomialBases::find(int tag)
     F.monomials = generate1DMonomials(5);
     F.points    = generate1DPoints(5);
     generate1dVertexClosure(F.closures);
-    break;  
+    break;
   case MSH_TRI_3 :
     F.numFaces = 3;
     F.monomials = generatePascalTriangle(1);
@@ -1090,7 +1090,7 @@ const polynomialBasis &polynomialBases::find(int tag)
     F.points =    gmshGeneratePointsPrism(2, false);
     generate3dFaceClosurePrism(F.closures, 2);
     break;
-    
+
   default :
     Msg::Error("Unknown function space %d: reverting to TET_4", tag);
     F.numFaces = 4;
@@ -1098,7 +1098,7 @@ const polynomialBasis &polynomialBases::find(int tag)
     F.points =    gmshGeneratePointsTetrahedron(1, false);
     generate3dFaceClosure(F.closures, 1);
     break;
-  }  
+  }
   F.coefficients = generateLagrangeMonomialCoefficients(F.monomials, F.points);
 //   printf("Case: %d coeffs:\n",tag);
 //   for (int i = 0; i<F.coefficients.size1(); i++) {
@@ -1107,7 +1107,7 @@ const polynomialBasis &polynomialBases::find(int tag)
 //     }
 //     printf("\n");
 //   }
-    
+
   fs.insert(std::make_pair(tag, F));
   return fs[tag];
 }
@@ -1125,9 +1125,9 @@ const fullMatrix<double> &polynomialBases::findInjector(int tag1, int tag2)
   const polynomialBasis& fs2 = find(tag2);
 
   fullMatrix<double> inj(fs1.points.size1(), fs2.points.size1());
-  
+
   double sf[256];
-  
+
   for (int i = 0; i < fs1.points.size1(); i++) {
     fs2.f(fs1.points(i, 0), fs1.points(i, 1), fs1.points(i, 2), sf);
     for (int j = 0; j < fs2.points.size1(); j++) inj(i, j) = sf[j];

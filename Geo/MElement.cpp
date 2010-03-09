@@ -29,7 +29,7 @@ int MElement::_globalNum = 0;
 double MElement::_isInsideTolerance = 1.e-6;
 double MElementLessThanLexicographic::tolerance = 1.e-6;
 
-MElement::MElement(int num, int part) : _visible(1) 
+MElement::MElement(int num, int part) : _visible(1)
 {
 #pragma omp critical
   {
@@ -40,12 +40,12 @@ MElement::MElement(int num, int part) : _visible(1)
     else{
       _num = ++_globalNum;
     }
-    _partition = (short)part; 
+    _partition = (short)part;
   }
 }
 
-void MElement::_getEdgeRep(MVertex *v0, MVertex *v1, 
-                           double *x, double *y, double *z, SVector3 *n, 
+void MElement::_getEdgeRep(MVertex *v0, MVertex *v1,
+                           double *x, double *y, double *z, SVector3 *n,
                            int faceIndex)
 {
   x[0] = v0->x(); y[0] = v0->y(); z[0] = v0->z();
@@ -59,10 +59,10 @@ void MElement::_getEdgeRep(MVertex *v0, MVertex *v1,
   }
 }
 
-void MElement::_getFaceRep(MVertex *v0, MVertex *v1, MVertex *v2, 
+void MElement::_getFaceRep(MVertex *v0, MVertex *v1, MVertex *v2,
                            double *x, double *y, double *z, SVector3 *n)
 {
-  x[0] = v0->x(); x[1] = v1->x(); x[2] = v2->x(); 
+  x[0] = v0->x(); x[1] = v1->x(); x[2] = v2->x();
   y[0] = v0->y(); y[1] = v1->y(); y[2] = v2->y();
   z[0] = v0->z(); z[1] = v1->z(); z[2] = v2->z();
   SVector3 t1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
@@ -75,7 +75,7 @@ void MElement::_getFaceRep(MVertex *v0, MVertex *v1, MVertex *v2,
 char MElement::getVisibility() const
 {
   if(CTX::instance()->hideUnselected && _visible < 2) return false;
-  return _visible; 
+  return _visible;
 }
 
 double MElement::minEdge()
@@ -115,11 +115,19 @@ void MElement::getShapeFunctions(double u, double v, double w, double s[], int o
   else Msg::Error("Function space not implemented for this type of element");
 }
 
-void MElement::getGradShapeFunctions(double u, double v, double w, double s[][3], 
+void MElement::getGradShapeFunctions(double u, double v, double w, double s[][3],
                                      int o)
 {
   const polynomialBasis* fs = getFunctionSpace(o);
   if(fs) fs->df(u, v, w, s);
+  else Msg::Error("Function space not implemented for this type of element");
+}
+
+void MElement::getHessShapeFunctions(double u, double v, double w, double s[][3][3],
+                                     int o)
+{
+  const polynomialBasis* fs = getFunctionSpace(o);
+  if(fs) fs->ddf(u, v, w, s);
   else Msg::Error("Function space not implemented for this type of element");
 }
 
@@ -149,7 +157,7 @@ std::string MElement::getInfoString()
 static double _computeDeterminantAndRegularize(MElement *ele, double jac[3][3])
 {
   double dJ = 0;
-  
+
   switch (ele->getDim()) {
 
   case 0:
@@ -157,10 +165,10 @@ static double _computeDeterminantAndRegularize(MElement *ele, double jac[3][3])
       dJ = 1.0;
       jac[0][0] = jac[1][1] = jac[2][2] = 1.0;
       jac[0][1] = jac[1][0] = jac[2][0] = 0.0;
-      jac[0][2] = jac[1][2] = jac[2][1] = 0.0;    
+      jac[0][2] = jac[1][2] = jac[2][1] = 0.0;
       break;
-    } 
-  case 1: 
+    }
+  case 1:
     {
       dJ = sqrt(SQU(jac[0][0]) + SQU(jac[0][1]) + SQU(jac[0][2]));
 
@@ -179,8 +187,8 @@ static double _computeDeterminantAndRegularize(MElement *ele, double jac[3][3])
       norme(b);
       prodve(a, b, c);
       norme(c);
-      jac[0][1] = b[0]; jac[1][1] = b[1]; jac[2][1] = b[2]; 
-      jac[0][2] = c[0]; jac[1][2] = c[1]; jac[2][2] = c[2]; 
+      jac[0][1] = b[0]; jac[1][1] = b[1]; jac[2][1] = b[2];
+      jac[0][2] = c[0]; jac[1][2] = c[1]; jac[2][2] = c[2];
       break;
     }
   case 2:
@@ -210,7 +218,7 @@ static double _computeDeterminantAndRegularize(MElement *ele, double jac[3][3])
       break;
     }
   }
-  return dJ; 
+  return dJ;
 }
 
 double MElement::getJacobian(double u, double v, double w, double jac[3][3])
@@ -265,7 +273,7 @@ void MElement::pnt(double u, double v, double w, SPoint3 &p)
     x += sf[j] * v->x();
     y += sf[j] * v->y();
     z += sf[j] * v->z();
-  } 
+  }
   p = SPoint3(x, y, z);
 }
 
@@ -306,7 +314,7 @@ void MElement::xyz2uvw(double xyz[3], double uvw[3])
     }
     double inv[3][3];
     inv3x3(jac, inv);
-    double un = uvw[0] + inv[0][0] * (xyz[0] - xn) + 
+    double un = uvw[0] + inv[0][0] * (xyz[0] - xn) +
       inv[1][0] * (xyz[1] - yn) + inv[2][0] * (xyz[2] - zn);
     double vn = uvw[1] + inv[0][1] * (xyz[0] - xn) +
       inv[1][1] * (xyz[1] - yn) + inv[2][1] * (xyz[2] - zn);
@@ -384,7 +392,7 @@ double MElement::interpolateDiv(double val[], double u, double v, double w,
   return fx[0] + fy[1] + fz[2];
 }
 
-void MElement::writeMSH(FILE *fp, double version, bool binary, int num, 
+void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
                         int elementary, int physical, int parentNum,
                         std::vector<short> *ghosts)
 {
@@ -451,8 +459,8 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
   if(physical < 0) revert();
 }
 
-void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber, 
-                        bool printGamma, bool printEta, bool printRho, 
+void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
+                        bool printGamma, bool printEta, bool printRho,
                         bool printDisto, double scalingFactor, int elementary)
 {
   const char *str = getStringForPOS();
@@ -463,7 +471,7 @@ void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
   fprintf(fp, "%s(", str);
   for(int i = 0; i < n; i++){
     if(i) fprintf(fp, ",");
-    fprintf(fp, "%g,%g,%g", getVertex(i)->x() * scalingFactor, 
+    fprintf(fp, "%g,%g,%g", getVertex(i)->x() * scalingFactor,
             getVertex(i)->y() * scalingFactor, getVertex(i)->z() * scalingFactor);
   }
   fprintf(fp, "){");
@@ -520,9 +528,9 @@ void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
     fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
     fprintf(fp, "  outer loop\n");
     for(int j = 0; j < 3; j++)
-      fprintf(fp, "    vertex %g %g %g\n", 
-              getVertex(j)->x() * scalingFactor, 
-              getVertex(j)->y() * scalingFactor, 
+      fprintf(fp, "    vertex %g %g %g\n",
+              getVertex(j)->x() * scalingFactor,
+              getVertex(j)->y() * scalingFactor,
               getVertex(j)->z() * scalingFactor);
     fprintf(fp, "  endloop\n");
     fprintf(fp, "endfacet\n");
@@ -530,9 +538,9 @@ void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
       fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
       fprintf(fp, "  outer loop\n");
       for(int j = 0; j < 3; j++)
-        fprintf(fp, "    vertex %g %g %g\n", 
-                getVertex(qid[j])->x() * scalingFactor, 
-                getVertex(qid[j])->y() * scalingFactor, 
+        fprintf(fp, "    vertex %g %g %g\n",
+                getVertex(qid[j])->x() * scalingFactor,
+                getVertex(qid[j])->y() * scalingFactor,
                 getVertex(qid[j])->z() * scalingFactor);
       fprintf(fp, "  endloop\n");
       fprintf(fp, "endfacet\n");
@@ -622,22 +630,22 @@ void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
   if(physical < 0) revert();
 }
 
-void MElement::writeMESH(FILE *fp, int elementTagType, int elementary, 
+void MElement::writeMESH(FILE *fp, int elementTagType, int elementary,
                          int physical)
 {
   setVolumePositive();
   for(int i = 0; i < getNumVertices(); i++)
     fprintf(fp, " %d", getVertex(i)->getIndex());
-  fprintf(fp, " %d\n", (elementTagType == 3) ? _partition : 
+  fprintf(fp, " %d\n", (elementTagType == 3) ? _partition :
           (elementTagType == 2) ? physical : elementary);
 }
 
-void MElement::writeFEA(FILE *fp, int elementTagType, int num, int elementary, 
+void MElement::writeFEA(FILE *fp, int elementTagType, int num, int elementary,
                         int physical)
 {
   int numVert = getNumVertices();
   setVolumePositive();
-  fprintf(fp, "%d %d %d", num, (elementTagType == 3) ? _partition : 
+  fprintf(fp, "%d %d %d", num, (elementTagType == 3) ? _partition :
           (elementTagType == 2) ? physical : elementary, numVert);
   for(int i = 0; i < numVert; i++)
     fprintf(fp, " %d", getVertex(i)->getIndex());
@@ -654,8 +662,8 @@ void MElement::writeBDF(FILE *fp, int format, int elementTagType, int elementary
   int n = getNumVertices();
   const char *cont[4] = {"E", "F", "G", "H"};
   int ncont = 0;
-  
-  int tag =  (elementTagType == 3) ? _partition : (elementTagType == 2) ? 
+
+  int tag =  (elementTagType == 3) ? _partition : (elementTagType == 2) ?
     physical : elementary;
 
   if(format == 0){ // free field format
@@ -749,14 +757,14 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_PYR_13 : if(name) *name = "Pyramid 13";      return 5 + 8;
   case MSH_PYR_14 : if(name) *name = "Pyramid 14";      return 5 + 8 + 1;
   case MSH_POLYH_ : if(name) *name = "Polyhedron";      return 0;
-  default: 
-    Msg::Error("Unknown type of element %d", typeMSH); 
-    if(name) *name = "Unknown"; 
+  default:
+    Msg::Error("Unknown type of element %d", typeMSH);
+    if(name) *name = "Unknown";
     return 0;
-  }               
+  }
 }
 
-MElement *MElementFactory::create(int type, std::vector<MVertex*> &v, 
+MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
                                   int num, int part)
 {
   switch (type) {

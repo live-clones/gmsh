@@ -68,7 +68,7 @@ class DofAffineConstraint{
   std::vector<std::pair<Dof, typename dofTraits<T>::MatType> > linear;
   typename dofTraits<T>::VecType shift;
 };
-  
+
 // A manager for degrees of freedoms, templated on the value of a dof
 // (what the functional returns): float, double, complex<double>,
 // fullVecor<double>, ...
@@ -82,24 +82,24 @@ class dofManager{
   // equations:
   //   dataMat * DofVec = \sum_i dataMat_i * DofVec_i + dataVec
   std::map<std::pair<Dof, dataMat>, DofAffineConstraint<dataVec> > constraints;
-    
+
   // fixations on full blocks, treated by eliminating equations:
-  //   DofVec = dataVec    
+  //   DofVec = dataVec
   std::map<Dof, dataVec> fixed;
 
   // initial conditions
   std::map<Dof, std::vector<dataVec> > initial;
-    
+
   // numbering of unknown dof blocks
   std::map<Dof, int> unknown;
-  
+
   // associatations
   std::map<Dof, Dof> associatedWith;
-    
+
   // linearSystems
   std::map<const std::string, linearSystem<dataMat>*> _linearSystems;
   linearSystem<dataMat> *_current;
-   
+
  public:
  dofManager(linearSystem<dataMat> *l) : _current(l) { _linearSystems["A"] = l; }
  dofManager(linearSystem<dataMat> *l1, linearSystem<dataMat> *l2) : _current(l1) { 
@@ -290,7 +290,7 @@ class dofManager{
     assemble(vR->getNum(), Dof::createTypeWithTwoInts(iCompR, iFieldR),
              vC->getNum(), Dof::createTypeWithTwoInts(iCompC, iFieldC),
              value);
-  } 
+  }
   inline void assemble(const Dof &R, const dataMat &value)
   {
     if(!_current->isAllocated()) _current->allocate(unknown.size());
@@ -307,15 +307,15 @@ class dofManager{
                        const dataMat &value)
   {
     assemble(vR->getNum(), Dof::createTypeWithTwoInts(iCompR, iFieldR), value);
-  } 
+  }
   int sizeOfR() const { return unknown.size(); }
   int sizeOfF() const { return fixed.size(); }
-  void systemSolve(){ _current->systemSolve(); }  
+  void systemSolve(){ _current->systemSolve(); }
   void systemClear()
   {
     _current->zeroMatrix();
     _current->zeroRightHandSide();
-  }  
+  }
   inline void setCurrentMatrix(std::string name){
     typename std::map<const std::string, linearSystem<dataMat>*>::iterator it =  _linearSystems.find(name);
      if(it != _linearSystems.end())

@@ -10,6 +10,7 @@
 #include <map>
 #include <vector>
 #include "fullMatrix.h"
+#include <iostream>
 
 // presently those function spaces are only for simplices and quads;
 // should be extended to other elements like hexes
@@ -31,7 +32,7 @@ class polynomialBasis
   inline int getClosureId(int iEl, int iSign=1, int iRot=0) const {
     return iEl + numFaces*(iSign == 1 ? 0 : 1) + 2*numFaces*iRot;
   }
-  inline void evaluateMonomials(double u, double v, double w, double p[]) const 
+  inline void evaluateMonomials(double u, double v, double w, double p[]) const
   {
     for (int j = 0; j < monomials.size1(); j++) {
       p[j] = pow(u, (int)monomials(j, 0));
@@ -60,7 +61,7 @@ class polynomialBasis
         grads[i][2] = 0;
         for(int j = 0; j < coefficients.size2(); j++){
           if ((monomials)(j, 0) > 0)
-            grads[i][0] += (coefficients)(i, j) * 
+            grads[i][0] += (coefficients)(i, j) *
               pow(u, (monomials)(j, 0) - 1) * (monomials)(j, 0);
         }
       }
@@ -104,6 +105,88 @@ class polynomialBasis
               pow(v, (monomials)(j, 1)) *
               pow(w, (monomials)(j, 2) - 1) * (monomials)(j, 2);
         }
+      }
+      break;
+    }
+  }
+  inline void ddf(double u, double v, double w, double hess[][3][3]) const
+  {
+    switch (monomials.size2()) {
+    case 1:
+      for (int i = 0; i < coefficients.size1(); i++){
+        hess[i][0][0] = hess[i][0][1] = hess[i][0][2] = 0;
+        hess[i][1][0] = hess[i][1][1] = hess[i][1][2] = 0;
+        hess[i][2][0] = hess[i][2][1] = hess[i][2][2] = 0;
+
+        for(int j = 0; j < coefficients.size2(); j++){
+          if ((monomials)(j, 0) > 1) // second derivative !=0
+            hess[i][0][0] += (coefficients)(i, j) * pow(u, (monomials)(j, 0) - 2) * (monomials)(j, 0) * ((monomials)(j, 0)-1);
+        }
+      }
+      break;
+    case 2:
+      for (int i = 0; i < coefficients.size1(); i++){
+        hess[i][0][0] = hess[i][0][1] = hess[i][0][2] = 0;
+        hess[i][1][0] = hess[i][1][1] = hess[i][1][2] = 0;
+        hess[i][2][0] = hess[i][2][1] = hess[i][2][2] = 0;
+        for(int j = 0; j < coefficients.size2(); j++){
+          if ((monomials)(j, 0) > 1) // second derivative !=0
+            hess[i][0][0] += (coefficients)(i, j) *
+                           pow(u, (monomials)(j, 0) - 2) * (monomials)(j, 0) * ((monomials)(j, 0)-1) *
+                           pow(v, (monomials)(j, 1));
+          if (((monomials)(j,1)>0) and ((monomials)(j,0)>0))
+            hess[i][0][1]+=(coefficients)(i, j) *
+              pow(u, (monomials)(j, 0) - 1) * (monomials)(j, 0) *
+              pow(v, (monomials)(j, 1)-1) * (monomials)(j, 1);
+          if ((monomials)(j, 1) > 1)
+            hess[i][1][1] += (coefficients)(i, j) *
+              pow(u, (monomials)(j, 0)) *
+              pow(v, (monomials)(j, 1) - 2) * (monomials)(j, 1) * ((monomials)(j, 1)-1);
+        }
+        hess[i][1][0]=hess[i][0][1];
+      }
+      break;
+    case 3:
+      for (int i = 0; i < coefficients.size1(); i++){
+        hess[i][0][0] = hess[i][0][1] = hess[i][0][2] = 0;
+        hess[i][1][0] = hess[i][1][1] = hess[i][1][2] = 0;
+        hess[i][2][0] = hess[i][2][1] = hess[i][2][2] = 0;
+        for(int j = 0; j < coefficients.size2(); j++){
+          if ((monomials)(j, 0) > 1)
+            hess[i][0][0] += (coefficients)(i, j) *
+              pow(u, (monomials)(j, 0) - 2) * (monomials)(j, 0) * ((monomials)(j, 0)-1) *
+              pow(v, (monomials)(j, 1)) *
+              pow(w, (monomials)(j, 2));
+
+          if (((monomials)(j,0)>0) and ((monomials)(j,1)>0))
+            hess[i][0][1] += (coefficients)(i, j) *
+              pow(u, (monomials)(j, 0) - 1) * (monomials)(j, 0) *
+              pow(v, (monomials)(j, 1) - 1) * (monomials)(j, 1) *
+              pow(w, (monomials)(j, 2));
+          if (((monomials)(j,0)>0) and ((monomials)(j,2)>0))
+            hess[i][0][2] += (coefficients)(i, j) *
+              pow(u, (monomials)(j, 0) - 1) * (monomials)(j, 0) *
+              pow(v, (monomials)(j, 1)) *
+              pow(w, (monomials)(j, 2) - 1) * (monomials)(j, 2);
+          if ((monomials)(j, 1) > 1)
+            hess[i][1][1] += (coefficients)(i, j) *
+              pow(u, (monomials)(j, 0)) *
+              pow(v, (monomials)(j, 1) - 2) * (monomials)(j, 1) * ((monomials)(j, 1)-1) *
+              pow(w, (monomials)(j, 2));
+          if (((monomials)(j,1)>0) and ((monomials)(j,2)>0))
+            hess[i][1][2] += (coefficients)(i, j) *
+              pow(u, (monomials)(j, 0)) *
+              pow(v, (monomials)(j, 1) - 1) * (monomials)(j, 1) *
+              pow(w, (monomials)(j, 2) - 1) * (monomials)(j, 2);
+          if ((monomials)(j, 2) > 1)
+            hess[i][2][2] += (coefficients)(i, j) *
+              pow(u, (monomials)(j, 0)) *
+              pow(v, (monomials)(j, 1)) *
+              pow(w, (monomials)(j, 2) - 2) * (monomials)(j, 2) * ((monomials)(j, 2)-1);
+        }
+        hess[i][1][0]=hess[i][0][1];
+        hess[i][2][0]=hess[i][0][2];
+        hess[i][2][1]=hess[i][1][2];
       }
       break;
     }

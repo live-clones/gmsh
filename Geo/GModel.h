@@ -33,7 +33,7 @@ class binding;
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel
 {
- private:
+ protected:
   // the name of the model
   std::string _name;
 
@@ -53,7 +53,7 @@ class GModel
   // ghost cell information (stores partitions for each element acting
   // as a ghost cell)
   std::multimap<MElement*, short> _ghostCells;
-  
+
   // an octree for fast mesh element lookup
   Octree *_octree;
 
@@ -457,7 +457,7 @@ class GModel
   static void registerBindings(binding *b);
 
   // Store mesh elements of a chain in a new elementary and physical entity
-  void storeChain(int dim, std::map<int, std::vector<MElement*> > &entityMap, 
+  void storeChain(int dim, std::map<int, std::vector<MElement*> > &entityMap,
                   std::map<int, std::map<int, std::string> > &physicalMap)
   {
     _storeElementsInEntities(entityMap);

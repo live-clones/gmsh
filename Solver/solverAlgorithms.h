@@ -1,7 +1,7 @@
 //
 // C++ Interface: solverAlgorithms
 //
-// Description: 
+// Description:
 //
 //
 // Author:  <Eric Bechet>, (C) 2009
@@ -145,7 +145,7 @@ template<class Assembler> void FixNodalDofs(FunctionSpaceBase &space,MElement *e
   space.getKeys(e,R);
   tabV.reserve(nv);
   for (int i=0;i<nv;++i) tabV.push_back(e->getVertex(i));
-  
+
   for (std::vector<Dof>::iterator itd=R.begin();itd!=R.end();++itd)
   {
     Dof key=*itd;

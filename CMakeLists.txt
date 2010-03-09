@@ -18,6 +18,7 @@ project(gmsh CXX C)
 
 option(ENABLE_ANN "Enable ANN to compute Approximate Nearest Neighbors" ON)
 option(ENABLE_ARC "Enable ARC-related binary targets" OFF)
+option(ENABLE_CM3 "Enable CM3-related binary targets" OFF)
 option(ENABLE_BLAS_LAPACK "Use BLAS/Lapack for basic linear algebra" ON)
 option(ENABLE_CGNS "Enable CGNS mesh export" OFF)
 option(ENABLE_CHACO "Enable Chaco mesh partitioner" ON)
@@ -79,7 +80,8 @@ set(GMSH_API
     Mesh/meshGFaceDelaunayInsertion.h
   Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h Solver/elasticityTerm.h
     Solver/linearSystem.h Solver/linearSystemGMM.h Solver/linearSystemCSR.h 
-    Solver/linearSystemFull.h Solver/elasticitySolver.h 
+    Solver/linearSystemFull.h Solver/elasticitySolver.h
+Solver/c0DgPlateSolver.h 
   Post/PView.h Post/PViewData.h Plugin/PluginManager.h
   Graphics/drawContext.h
   contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h 
@@ -848,6 +850,9 @@ endif(CYGWIN)
 if(ENABLE_ARC)
   include(contrib/arc/CMakeLists.txt)
 endif(ENABLE_ARC)
+if(ENABLE_CM3)
+  include(contrib/cm3/CMakeLists.txt)
+endif(ENABLE_CM3)
 
 find_program(BISON bison)
 find_program(FLEX flex)

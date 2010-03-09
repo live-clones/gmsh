@@ -25,8 +25,8 @@ template<> struct TensorialTraits<double>
 {
   typedef double ValType;
   typedef SVector3 GradType;
-/*  typedef STensor3 HessType;
-  typedef SVoid DivType;
+  typedef STensor3 HessType;
+/*  typedef SVoid DivType;
   typedef SVoid CurlType;*/
 };
 
@@ -34,9 +34,9 @@ template<> struct TensorialTraits<SVector3>
 {
   typedef SVector3 ValType;
   typedef STensor3 GradType;
-/*  typedef SVoid HessType;
+  typedef STensor3 HessType;
   typedef double DivType;
-  typedef SVector3 CurlType;*/
+  typedef SVector3 CurlType;
 };
 
 class FunctionSpaceBase
@@ -52,9 +52,12 @@ class FunctionSpace : public FunctionSpaceBase
  public:
   typedef typename TensorialTraits<T>::ValType ValType;
   typedef typename TensorialTraits<T>::GradType GradType;
+  typedef typename TensorialTraits<T>::HessType HessType;
   virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)=0;
   virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads) =0;
   virtual void gradfuvw(MElement *ele, double u, double v, double w,std::vector<GradType> &grads) {}; // should return to pure virtual once all is done.
+  virtual void hessfuvw(MElement *ele, double u, double v, double
+w,std::vector<HessType> &hess)=0;
   virtual int getNumKeys(MElement *ele)=0; // if one needs the number of dofs
   virtual void getKeys(MElement *ele, std::vector<Dof> &keys)=0;
 };
@@ -64,6 +67,7 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
  public:
   typedef TensorialTraits<double>::ValType ValType;
   typedef TensorialTraits<double>::GradType GradType;
+  typedef TensorialTraits<double>::HessType HessType;
 
  protected:
   int _iField; // field number (used to build dof keys)
@@ -86,6 +90,8 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
     ele->getShapeFunctions(u, v, w, &(vals[curpos]));
   }
 
+
+  // Fonction renvoyant un vecteur contenant le grandient de chaque FF
   virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
   {
     if (ele->getParent()) ele = ele->getParent();
@@ -103,7 +109,22 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
       invjac[1][0] * gradsuvw[i][0] + invjac[1][1] * gradsuvw[i][1] + invjac[1][2] * gradsuvw[i][2],
       invjac[2][0] * gradsuvw[i][0] + invjac[2][1] * gradsuvw[i][1] + invjac[2][2] * gradsuvw[i][2]
                             ));
-  }
+  };
+    // Fonction renvoyant un vecteur contenant le hessien [][] de chaque FF dans l'espace ISOPARAMETRIQUE
+  virtual void hessfuvw(MElement *ele, double u, double v, double w,std::vector<HessType> &hess)
+  {
+    int ndofs= ele->getNumVertices();  // ATTENTION RETOURNE LE NBBRE DE NOEUDS ET PAS LE NBRE DE DDL
+    hess.reserve(hess.size()+ndofs);   // permet de mettre les composantes suivantes à la suite du vecteur
+    double hessuvw[256][3][3];
+    ele->getHessShapeFunctions(u, v, w, hessuvw);
+    HessType hesst;
+    for (int i=0;i<ndofs;++i){
+      hesst(0,0) = hessuvw[i][0][0] ; hesst(0,1) = hessuvw[i][0][1] ; hesst(0,2) = hessuvw[i][0][2];
+      hesst(1,0) = hessuvw[i][1][0] ; hesst(1,1) = hessuvw[i][1][1] ; hesst(1,2) = hessuvw[i][1][2];
+      hesst(2,0) = hessuvw[i][2][0] ; hesst(2,1) = hessuvw[i][2][1] ; hesst(2,2) = hessuvw[i][2][2];
+      hess.push_back(hesst);
+    }
+  };
 
   virtual void gradfuvw(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
   {
@@ -138,6 +159,7 @@ template <class T> class ScalarToAnyFunctionSpace : public FunctionSpace<T>
 public :
   typedef typename TensorialTraits<T>::ValType ValType;
   typedef typename TensorialTraits<T>::GradType GradType;
+  typedef typename TensorialTraits<T>::HessType HessType;
 protected :
   std::vector<T> multipliers;
   std::vector<int> comp;
@@ -195,8 +217,10 @@ public :
       }
     }
   }
-
-
+  virtual void hessfuvw(MElement *ele, double u, double v, double w,std::vector<HessType> &hess)
+  {
+    ScalarFS->hessfuvw(ele,u,v,w,hess);
+  }
   virtual void gradfuvw(MElement *ele, double u, double v, double w,std::vector<GradType> &grads)
   {
     std::vector<SVector3> gradsd;
@@ -274,6 +298,7 @@ class CompositeFunctionSpace : public FunctionSpace<T>
  public:
   typedef typename TensorialTraits<T>::ValType ValType;
   typedef typename TensorialTraits<T>::GradType GradType;
+  typedef typename TensorialTraits<T>::HessType HessType;
   typedef typename std::vector<FunctionSpace<T>* >::iterator iterFS;
  protected:
 
@@ -313,6 +338,12 @@ class CompositeFunctionSpace : public FunctionSpace<T>
       (*it)->gradf(ele,u,v,w,grads);
   }
 
+  virtual void hessfuvw(MElement *ele, double u, double v, double w,std::vector<HessType> &hess)
+  {
+    for (iterFS it=_spaces.begin(); it!=_spaces.end();++it)
+      (*it)->hessfuvw(ele,u,v,w,hess);
+  }
+
   virtual int getNumKeys(MElement *ele)
   {
     int ndofs=0;
@@ -334,10 +365,12 @@ class xFemFunctionSpace : public FunctionSpace<T>
  public:
   typedef typename TensorialTraits<T>::ValType ValType;
   typedef typename TensorialTraits<T>::GradType GradType;
+  typedef typename TensorialTraits<T>::HessType HessType;
  protected:
   FunctionSpace<T>* _spacebase;
   //Function<double>* _enrichment;
  public:
+  virtual void hessfuvw(MElement *ele, double u, double v, double w,std::vector<HessType> &hess);
   xFemFunctionSpace(FunctionSpace<T>* spacebase) : _spacebase(spacebase) {};
   virtual void f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals){};
   virtual void gradf(MElement *ele, double u, double v, double w,std::vector<GradType> &grads){};
@@ -354,13 +387,16 @@ class FilteredFunctionSpace : public FunctionSpace<T>
 
   typedef typename TensorialTraits<T>::ValType ValType;
   typedef typename TensorialTraits<T>::GradType GradType;
-
+  typedef typename TensorialTraits<T>::HessType HessType;
  protected:
 
   FunctionSpace<T>* _spacebase;
+
   F *_filter;
 
  public:
+
+  virtual void hessfuvw(MElement *ele, double u, double v, double w,std::vector<HessType> &hess);
   FilteredFunctionSpace<T,F>(FunctionSpace<T>* spacebase,F * filter) : _spacebase(spacebase),_filter(filter)
   {};
   virtual void f(MElement *ele, double u, double v, double w,std::vector<ValType> &vals){};;

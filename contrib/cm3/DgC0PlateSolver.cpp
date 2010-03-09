@@ -1,50 +1,59 @@
-// Gmsh - Copyright (C) 1997-2010 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string.h>
 #include "GmshConfig.h"
-#include "elasticitySolver.h"
+#include "DgC0PlateSolver.h"
 #include "linearSystemCSR.h"
 #include "linearSystemPETSc.h"
 #include "linearSystemGMM.h"
 #include "Numeric.h"
-#include "GModel.h"
+#include "GModelWithInterface.h"
 #include "functionSpace.h"
-#include "terms.h"
+#include "C0DgPlateTerms.h"
 #include "solverAlgorithms.h"
 #include "quadratureRules.h"
 #include "solverField.h"
+#include "AssembleInterface.h"
 #include "MPoint.h"
+
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
 #endif
 
-void elasticitySolver::setMesh(const std::string &meshFileName)
+void DgC0PlateSolver::setMesh(const std::string &meshFileName)
 {
-  pModel = new GModel();
+  pModel = new GModelWithInterface();
   pModel->readMSH(meshFileName.c_str());
   _dim = pModel->getNumRegions() ? 3 : 2;
   if (LagSpace) delete LagSpace;
-  if (_dim==3) LagSpace=new VectorLagrangeFunctionSpace(_tag);
-  if (_dim==2) LagSpace=new VectorLagrangeFunctionSpace(_tag,VectorLagrangeFunctionSpace::VECTOR_X,VectorLagrangeFunctionSpace::VECTOR_Y);
-
+  // Faudra quelque chose dans le fichier de données qui permettra de choisir
+  //if (_dim==3) LagSpace=new VectorLagrangeFunctionSpace(_tag);
+  //if (_dim==2) LagSpace=new VectorLagrangeFunctionSpace(_tag,VectorLagrangeFunctionSpace::VECTOR_X,VectorLagrangeFunctionSpace::VECTOR_Y);
+  // Plaque un ddl par noeud
+  //LagSpace=new VectorLagrangeFunctionSpace(_tag,VectorLagrangeFunctionSpace::VECTOR_Z);
+  // Plate 3 dof per node
+  LagSpace=new VectorLagrangeFunctionSpace(_tag);
 }
 
-void elasticitySolver::readInputFile(const std::string &fn)
+void DgC0PlateSolver::readInputFile(const std::string &fn)
 {
   FILE *f = fopen(fn.c_str(), "r");
   char what[256];
   while(!feof(f)){
     if(fscanf(f, "%s", what) != 1) return;
     if (!strcmp(what, "ElasticDomain")){
-      elasticField field;
+      DGelasticField field;
       int physical;
-      if(fscanf(f, "%d %lf %lf", &physical, &field._E, &field._nu) != 3) return;
+      // Add two parameters beta1 (used for stabilization) and h the height of the plate
+      if(fscanf(f, "%d %lf %lf %lf %lf", &physical, &field._E, &field._nu, &field._beta1, &field._h) != 5) return;
       field._tag = _tag;
       field.g = new groupOfElements (_dim, physical);
+      // Add the Interface Elements
+      field.gi = pModel->getInterface(physical); // TODO integrate with field.g
       elasticFields.push_back(field);
     }
     else if (!strcmp(what, "Void")){
@@ -139,6 +148,18 @@ void elasticitySolver::readInputFile(const std::string &fn)
       if(fscanf(f, "%s", name) != 1) return;
       setMesh(name);
     }
+    else if (!strcmp(what, "Theta")){
+      int num, num_phys=0;
+      // First component number of physical groups where theta is imposed (to 0 for now)
+      fscanf(f,"%d",&num);
+      for(int i=0;i<num;i++){
+        fscanf(f,"%d",&num_phys);
+        // Find the interface element linked to the physical group num_phys (one interfaceelement vector for all physical)
+        pModel->generateInterfaceElementsOnBoundary(num_phys,elasticFields); //TODO don't pass elastic field but I don't know how to access to element in GModel ??
+      }
+      // store the boundary interface element to the elastifFields
+      for(int i=0;i<elasticFields.size();i++) elasticFields[i].gib=pModel->getBoundInterface(i);
+    }
     else {
       Msg::Error("Invalid input : %s", what);
 //      return;
@@ -147,7 +168,7 @@ void elasticitySolver::readInputFile(const std::string &fn)
   fclose(f);
 }
 
-void elasticitySolver::solve()
+void DgC0PlateSolver::solve()
 {
 #if defined(HAVE_TAUCS)
   linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
@@ -194,19 +215,31 @@ void elasticitySolver::solve()
   GaussQuadrature Integ_Bulk(GaussQuadrature::GradGrad);
   for (unsigned int i = 0; i < elasticFields.size(); i++)
   {
-    IsotropicElasticTerm Eterm(*LagSpace,elasticFields[i]._E,elasticFields[i]._nu);
-//    LaplaceTerm<SVector3,SVector3> Eterm(*LagSpace);
-    Assemble(Eterm,*LagSpace,elasticFields[i].g->begin(),elasticFields[i].g->end(),Integ_Bulk,*pAssembler);
-  }
+    // Initialization of elementary terms in function of the field and space
+    IsotropicElasticTermC0Plate Eterm(*LagSpace,elasticFields[i]._E,elasticFields[i]._nu,elasticFields[i]._h);
 
-  printf("-- done assembling!\n");
-  lsys->systemSolve();
-  printf("-- done solving!\n");
+    // Assembling loop on Elementary terms
+    Assemble(Eterm,*LagSpace,elasticFields[i].g->begin(),elasticFields[i].g->end(),Integ_Bulk,*pAssembler);
+
+    // Initialization of elementary  interface terms in function of the field and space
+    IsotropicElasticInterfaceTermC0Plate IEterm(*LagSpace,elasticFields[i]._E,elasticFields[i]._nu,elasticFields[i]._beta1,elasticFields[i]._h);
+
+    // Assembling loop on elementary interface terms
+    AssembleInterface(IEterm,*LagSpace,elasticFields[i].g,elasticFields[i].gi,Integ_Boundary,*pAssembler); // Use the same GaussQuadrature rule than on the boundary
+
+    // Assembling loop on elementary boundary interface terms
+    AssembleInterface(IEterm,*LagSpace,elasticFields[i].g,elasticFields[i].gib,Integ_Boundary,*pAssembler); // Use the same GaussQuadrature rule than on the boundary
+
+  }
+printf("-- done assembling!\n");
+lsys->systemSolve();
+printf("-- done solving!\n");
+
   double energ=0;
   for (unsigned int i = 0; i < elasticFields.size(); i++)
   {
     SolverField<SVector3> Field(pAssembler, LagSpace);
-    IsotropicElasticTerm Eterm(Field,elasticFields[i]._E,elasticFields[i]._nu);
+    IsotropicElasticTermC0Plate Eterm(Field,elasticFields[i]._E,elasticFields[i]._nu,elasticFields[i]._h);
     BilinearTermToScalarTerm<SVector3,SVector3> Elastic_Energy_Term(Eterm);
     Assemble(Elastic_Energy_Term,elasticFields[i].g->begin(),elasticFields[i].g->end(),Integ_Bulk,energ);
   }
@@ -257,7 +290,7 @@ static double vonMises(dofManager<double> *a, MElement *e,
   return ComputeVonMises(s);
 }
 
-PView* elasticitySolver::buildDisplacementView (const std::string &postFileName)
+PView* DgC0PlateSolver::buildDisplacementView (const std::string &postFileName)
 {
   std::set<MVertex*> v;
   for (unsigned int i = 0; i < elasticFields.size(); ++i)
@@ -282,7 +315,7 @@ PView* elasticitySolver::buildDisplacementView (const std::string &postFileName)
   return pv;
 }
 
-PView *elasticitySolver::buildElasticEnergyView(const std::string &postFileName)
+PView *DgC0PlateSolver::buildElasticEnergyView(const std::string &postFileName)
 {
   std::map<int, std::vector<double> > data;
   GaussQuadrature Integ_Bulk(GaussQuadrature::GradGrad);
@@ -310,7 +343,7 @@ PView *elasticitySolver::buildElasticEnergyView(const std::string &postFileName)
   return pv;
 }
 
-PView *elasticitySolver::buildVonMisesView(const std::string &postFileName)
+PView *DgC0PlateSolver::buildVonMisesView(const std::string &postFileName)
 {
   std::map<int, std::vector<double> > data;
   GaussQuadrature Integ_Bulk(GaussQuadrature::GradGrad);
@@ -338,17 +371,16 @@ PView *elasticitySolver::buildVonMisesView(const std::string &postFileName)
 
 
 #else
-PView* elasticitySolver::buildDisplacementView  (const std::string &postFileName)
+PView* DgC0PlateSolver::buildDisplacementView  (const std::string &postFileName)
 {
   Msg::Error("Post-pro module not available");
   return 0;
 }
 
-PView* elasticitySolver::buildElasticEnergyView(const std::string &postFileName)
+PView* DgC0PlateSolver::buildElasticEnergyView(const std::string &postFileName)
 {
   Msg::Error("Post-pro module not available");
   return 0;
 }
 
 #endif
-

@@ -1,0 +1,69 @@
+// Compute the component (j,k) of the elementary stiffness matrix
+inline double BulkC0PlateDGStiffnessBendingTerms(TensorialTraits<double>::HessType &hessj, TensorialTraits<double>::HessType &hessk, LinearElasticShellHookeTensor *H, const LocalBasis *lb){
+  double val = 0.;
+  for(int alpha=0;alpha<2;alpha++)
+    for(int beta=0;beta<2;beta++)
+      for(int gamma=0;gamma<2;gamma++)
+        for(int delta=0;delta<2;delta++)
+          val += hessj(alpha,beta)*hessk(gamma,delta)*H->get(alpha,beta,gamma,delta);
+  return lb->gett0(2)*lb->gett0(2)*val;
+}
+
+inline double consAndCompC0PlateStiffnessTerms(LinearElasticShellHookeTensor *Hhat,const fullMatrix<double> &Bhat,const SVector3 &dt, const LocalBasis *lb){
+  double val=0.;
+  for(int alpha=0;alpha<2;alpha++)
+    for(int beta=0;beta<2;beta++)
+      for(int gamma=0;gamma<2;gamma++)
+        for(int delta=0;delta<2;delta++)
+          val += Hhat->get(alpha,beta,gamma,delta)*Bhat(gamma,delta)*dot(dt,lb->getphi0(alpha))*(-lb->getphi0(1,beta));
+  return 0.5*val;
+}
+
+inline double stabilityC0PlateStiffnessTerms(LinearElasticShellHookeTensor *Hhat, const SVector3 &dta, const SVector3 &dtb, const LocalBasis *lb){
+  double val=0.;
+  for(int alpha=0;alpha<2;alpha++)
+    for(int beta=0;beta<2;beta++)
+      for(int gamma=0;gamma<2;gamma++)
+        for(int delta=0;delta<2;delta++)
+          val += dot(dta,lb->getphi0(gamma))*dot(dtb,lb->getphi0(alpha))*Hhat->get(alpha,beta,gamma,delta)*(-lb->getphi0(1,delta))*(-lb->getphi0(1,beta));
+
+  return val;
+}
+
+inline double BulkC0PlateDGForceTerms(const TensorialTraits<double>::HessType &hessj,const std::vector<TensorialTraits<double>::HessType> &Hess,const LinearElasticShellHookeTensor *H,const LocalBasis *lb,const fullMatrix<double> &disp){
+  const int n = Hess.size();
+  double sum,val;
+  val=0.;
+  for(int a=0;a<2;a++)
+    for(int b=0;b<2;b++){
+      sum=0.;
+      for(int j=0;j<n;j++)
+        sum+=-lb->gett0(2)*Hess[j](a,b)*disp(j,0);
+      for(int c=0;c<2;c++)
+        for(int d=0;d<2;d++)
+          val += -lb->gett0(2)*hessj(c,d)*H->get(a,b,c,d)*sum;
+    }
+  return val;
+}
+
+inline double consC0PlateForceTerms(const LinearElasticShellHookeTensor *Hhat, const fullMatrix<double> &Bhat, const std::vector<SVector3> &Dt_m, const std::vector<SVector3> &Dt_p,const LocalBasis *lb, const fullMatrix<double> &disp){
+  const int n_m = Dt_m.size();
+  const int n_p = Dt_p.size();
+  double sum,val;
+  val=0.;
+  for(int a=0;a<2;a++){
+    sum=0.;
+    for(int j=0;j<n_m;j++)
+      sum -= dot(Dt_m[j],lb->getphi0(a))*disp(j,0);
+    for(int j=0;j<n_p;j++)
+      sum += dot(Dt_p[j],lb->getphi0(a))*disp(j+n_m,0);
+
+    for(int b=0;b<2;b++)
+      for(int c=0;c<2;c++)
+        for(int d=0;d<2;d++)
+          val+= Hhat->get(a,b,c,d)*Bhat(c,d)*sum*(-lb->getphi0(1,b));
+  }
+  return 0.5*val;
+}
+
+

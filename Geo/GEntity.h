@@ -99,7 +99,7 @@ class GEntity {
     DiscreteSurface,
     CompoundSurface,
     Volume,
-    DiscreteVolume, 
+    DiscreteVolume,
     CompoundVolume,
     PartitionVertex,
     PartitionCurve,
@@ -143,7 +143,7 @@ class GEntity {
       "Discrete surface",
       "Compound surface",
       "Volume",
-      "Discrete volume", 
+      "Discrete volume",
       "Compound Volume",
       "Partition vertex",
       "Partition curve",
@@ -220,7 +220,7 @@ class GEntity {
 
   //  get the oriented bounding box
   virtual SOrientedBoundingBox getOBB() {return SOrientedBoundingBox(); }
-  
+
   // get/set the visibility flag
   virtual char getVisibility();
   virtual void setVisibility(char val, bool recursive=false){ _visible = val; }

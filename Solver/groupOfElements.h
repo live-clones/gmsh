@@ -30,14 +30,14 @@ public:
 
   groupOfElements (GFace*);
 
-  void addPhysical(int dim, int physical) {
+  virtual void addPhysical(int dim, int physical) {
     elementFilterTrivial filter;
     addPhysical (dim, physical, filter);
   }
 
-  void addElementary(GEntity *ge, const elementFilter &f);
+  virtual void addElementary(GEntity *ge, const elementFilter &f);
 
-  void addPhysical(int dim, int physical, const elementFilter &);
+  virtual void addPhysical(int dim, int physical, const elementFilter &);
 
   vertexContainer::const_iterator vbegin() const {
     return _vertices.begin();

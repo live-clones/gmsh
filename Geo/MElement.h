@@ -21,7 +21,7 @@ class GFace;
 class binding;
 
 // A mesh element.
-class MElement 
+class MElement
 {
  private:
   // the maximum element id number in the mesh
@@ -37,10 +37,10 @@ class MElement
   // the tolerance used to determine if a point is inside an element,
   // in parametric coordinates
   static double _isInsideTolerance;
-  void _getEdgeRep(MVertex *v0, MVertex *v1, 
+  void _getEdgeRep(MVertex *v0, MVertex *v1,
                    double *x, double *y, double *z, SVector3 *n,
                    int faceIndex=-1);
-  void _getFaceRep(MVertex *v0, MVertex *v1, MVertex *v2, 
+  void _getFaceRep(MVertex *v0, MVertex *v1, MVertex *v2,
                    double *x, double *y, double *z, SVector3 *n);
  public :
   MElement(int num=0, int part=0);
@@ -187,13 +187,13 @@ class MElement
   virtual double getVolume(){ return 0.; }
   virtual int getVolumeSign(){ return 1; }
   virtual void setVolumePositive(){ if(getVolumeSign() < 0) revert(); }
-  
+
   // return an information string for the element
   virtual std::string getInfoString();
 
   // get the function space for the element
   virtual const polynomialBasis* getFunctionSpace(int order=-1) const { return 0; }
-  
+
   // return the interpolating nodal shape functions evaluated at point
   // (u,v,w) in parametric coordinates (if order == -1, use the
   // polynomial order of the element)
@@ -205,17 +205,18 @@ class MElement
   // polynomial order of the element)
   virtual void getGradShapeFunctions(double u, double v, double w, double s[][3],
                                      int order=-1);
-  
+  virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3],
+                                     int order=-1);
   // return the Jacobian of the element evaluated at point (u,v,w) in
   // parametric coordinates
   double getJacobian(double u, double v, double w, double jac[3][3]);
   double getPrimaryJacobian(double u, double v, double w, double jac[3][3]);
-  
+
   // get the point in cartesian coordinates corresponding to the point
   // (u,v,w) in parametric coordinates
   virtual void pnt(double u, double v, double w, SPoint3 &p);
   virtual void primaryPnt(double u, double v, double w, SPoint3 &p);
-  
+
   // invert the parametrisation
   virtual void xyz2uvw(double xyz[3], double uvw[3]);
 
@@ -225,7 +226,7 @@ class MElement
 
   // interpolate the given nodal data (resp. its gradient, curl and
   // divergence) at point (u,v,w) in parametric coordinates
-  double interpolate(double val[], double u, double v, double w, int stride=1, 
+  double interpolate(double val[], double u, double v, double w, int stride=1,
                      int order=-1);
   void interpolateGrad(double val[], double u, double v, double w, double f[3],
                        int stride=1, double invjac[3][3]=0, int order=-1);
@@ -244,22 +245,23 @@ class MElement
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false,
                         int num=0, int elementary=1, int physical=1,
                         int parentNum=0, std::vector<short> *ghosts=0);
-  virtual void writePOS(FILE *fp, bool printElementary, bool printElementNumber, 
-                        bool printGamma, bool printEta, bool printRho, 
+
+  virtual void writePOS(FILE *fp, bool printElementary, bool printElementNumber,
+                        bool printGamma, bool printEta, bool printRho,
                         bool printDisto,double scalingFactor=1.0, int elementary=1);
   virtual void writeSTL(FILE *fp, bool binary=false, double scalingFactor=1.0);
   virtual void writeVRML(FILE *fp);
   virtual void writeUNV(FILE *fp, int num=0, int elementary=1, int physical=1);
   virtual void writeVTK(FILE *fp, bool binary=false, bool bigEndian=false);
-  virtual void writeMESH(FILE *fp, int elementTagType=1, int elementary=1, 
+  virtual void writeMESH(FILE *fp, int elementTagType=1, int elementary=1,
                          int physical=0);
-  virtual void writeFEA(FILE *fp, int elementTagType, int num, int elementary, 
+  virtual void writeFEA(FILE *fp, int elementTagType, int num, int elementary,
                         int physical);
-  virtual void writeBDF(FILE *fp, int format=0, int elementTagType=1, 
+  virtual void writeBDF(FILE *fp, int format=0, int elementTagType=1,
                         int elementary=1, int physical=0);
-  virtual void writeDIFF(FILE *fp, int num, bool binary=false, 
+  virtual void writeDIFF(FILE *fp, int num, bool binary=false,
                          int physical_property=1);
- 
+
   // info for specific IO formats (returning 0 means that the element
   // is not implemented in that format)
   virtual int getTypeForMSH() const { return 0; }
