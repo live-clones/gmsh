@@ -51,10 +51,9 @@ print'*** Create a dg solver ***'
 velF = functionLua(2, 'velocity', {'XYZ'}):getName()
 law=dgConservationLawAdvectionDiffusion(velF,"")
 
-g=fullMatrix(1,1);
-g:set(0,0,0)
-law:addBoundaryCondition('Walls',law:newOutsideValueBoundary(functionConstant(g):getName()))
-law:addBoundaryCondition('Top',law:newOutsideValueBoundary(functionConstant(g):getName()))
+zero=functionConstant({0.}):getName();
+law:addBoundaryCondition('Walls',law:newOutsideValueBoundary(zero))
+law:addBoundaryCondition('Top',law:newOutsideValueBoundary(zero))
 FS = functionLua(1, 'initial_condition', {'XYZ'}):getName()
 
 GC=dgGroupCollection(myModel,2,order)
