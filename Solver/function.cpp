@@ -1,3 +1,4 @@
+#include "GmshConfig.h"
 #include <sstream>
 #include <fstream>
 #include "function.h"
@@ -322,7 +323,7 @@ void dataCacheDouble::resize() {
 #if defined(HAVE_DLOPEN)
 //functionC
 class functionC : public function {
-  void (*callback)(fullMatrix<double> &,const fullMatrix<double>&);
+  void (*callback)(void);
   std::vector<std::string> _dependenciesName;
   int _nbCol;
   class data : public dataCacheDouble{
@@ -340,20 +341,51 @@ class functionC : public function {
     }
     void _eval()
     {
-      const fullMatrix<double> &xyz = (*_dependencies[0])();
-      _function->callback(_value, xyz);
+      switch (_dependencies.size()) {
+        case 0 : 
+          ((void (*)(fullMatrix<double> &))(_function->callback))(_value);
+          break;
+        case 1 : 
+          ((void (*)(fullMatrix<double> &, const fullMatrix<double>&))
+            (_function->callback)) (_value,(*_dependencies[0])());
+          break;
+        case 2 : 
+          ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double> &))
+            (_function->callback)) (_value,(*_dependencies[0])(), (*_dependencies[1])());
+          break;
+        case 3 : 
+          ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&))
+            (_function->callback)) (_value,(*_dependencies[0])(),(*_dependencies[1])(),(*_dependencies[2])());
+          break;
+        case 4 : 
+          ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&,
+              const fullMatrix<double>&))
+            (_function->callback)) (_value,(*_dependencies[0])(),(*_dependencies[1])(),(*_dependencies[2])(),(*_dependencies[3])());
+          break;
+        case 5 : 
+          ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&,
+              const fullMatrix<double>&, const fullMatrix<double>&))
+            (_function->callback)) (_value,(*_dependencies[0])(),(*_dependencies[1])(),(*_dependencies[2])(),(*_dependencies[3])(),
+              (*_dependencies[4])());
+          break;
+        case 6 : 
+          ((void (*)(fullMatrix<double> &, const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&,
+              const fullMatrix<double>&, const fullMatrix<double>&, const fullMatrix<double>&))
+            (_function->callback)) (_value,(*_dependencies[0])(),(*_dependencies[1])(),(*_dependencies[2])(),(*_dependencies[3])(),
+              (*_dependencies[4])(), (*_dependencies[5])());
+          break;
+        default :
+          Msg::Error("C callback not implemented for %i argurments", _dependencies.size());
+      }
     }
   };
   public:
-  functionC (int nbCol, std::string ccode, std::vector<std::string> dependencies):
+  functionC (std::string file, std::string symbol, int nbCol, std::vector<std::string> dependencies):
       _dependenciesName(dependencies),_nbCol(nbCol)
   {
-    FILE *cfile = popen("g++ -O3 -pipe -m32 -shared -o tmp.dylib -I ../../Numeric -I../../Common -I../../build/Common -x c++ - ","w");
-    fprintf(cfile,"#include\"fullMatrix.h\"\nextern \"C\" %s", ccode.c_str());
-    fclose(cfile);
     void *dlHandler;
-    dlHandler = dlopen("tmp.dylib",RTLD_NOW);
-    callback = (void(*)(fullMatrix<double>&,const fullMatrix<double>&))dlsym(dlHandler, "eval");
+    dlHandler = dlopen(file.c_str(),RTLD_NOW);
+    callback = (void(*)(void))dlsym(dlHandler, symbol.c_str());
     if(!callback) 
       Msg::Error("cannot get the callback to the compiled C function");
 
@@ -408,8 +440,8 @@ void function::registerBindings(binding *b){
 #if defined(HAVE_DLOPEN)
   cb = b->addClass<functionC>("functionC");
   cb->setDescription("A function that compile a C code");
-  mb = cb->setConstructor<functionC,int,std::string,std::vector<std::string> >();
-  mb->setArgNames("nbCol", "code", "arguments",NULL);
+  mb = cb->setConstructor<functionC,std::string, std::string,int,std::vector<std::string> >();
+  mb->setArgNames("file", "symbol", "nbCol", "arguments",NULL);
   mb->setDescription("  ");
   cb->setParentClass<function>();
 #endif
