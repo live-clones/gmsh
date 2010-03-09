@@ -485,13 +485,14 @@ bool GFaceCompound::parametrize() const
   //-----------------
   if (_mapping == HARMONIC){
     Msg::Debug("Parametrizing surface %d with 'harmonic map'", tag()); 
-    fillNeumannBCS();
+    //fillNeumannBCS();
     parametrize(ITERU,HARMONIC); 
     parametrize(ITERV,HARMONIC);
   }
   //Multiscale Laplace parametrization
   //-----------------
   else if (_mapping == MULTISCALE){
+    printf("multiscale exit \n");
     std::vector<MElement*> _elements;
     for( std::list<GFace*>::const_iterator itt = _compound.begin(); itt != _compound.end(); ++itt)
       for(unsigned int i = 0; i < (*itt)->triangles.size(); ++i)

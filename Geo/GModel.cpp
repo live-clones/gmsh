@@ -1081,6 +1081,7 @@ void GModel::createTopologyFromMesh()
 {
 
   Msg::Info("Creating topology from mesh");
+  double t1 = Cpu();
 
   // for each discreteRegion, create topology
   std::vector<discreteRegion*> discRegions;
@@ -1102,8 +1103,12 @@ void GModel::createTopologyFromMesh()
   
   //EMI TODO
   //check for closed faces
-  
+ 
   createTopologyFromFaces(discFaces);
+
+  double t2 = Cpu();
+  Msg::Info("Creating topology from mesh done (%g s)", t2-t1);
+ 
   
   //create old format (necessaray for boundary layers)
   exportDiscreteGEOInternals();
@@ -1131,7 +1136,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
   // create reverse map, for each face find set of MEdges that are
   // candidate for new discrete Edges
   std::map<int, std::vector<int> > face2Edges;
-  
+
   while (!map_edges.empty()){
 
     std::vector<MEdge> myEdges;

@@ -11,6 +11,8 @@
 #include "MEdge.h"
 #include "Geo.h"
 #include "GFaceCompound.h"
+#include "Context.h"
+#include "Os.h"
 
 discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
 {
@@ -22,22 +24,19 @@ discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
 void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge> &map_edges)
 {
 
-  // find the boundary edges
-  std::list<MEdge> bound_edges;
+  std::set<MEdge, Less_Edge> bound_edges;
   for (unsigned int iFace = 0; iFace  < getNumMeshElements() ; iFace++) {
     MElement *e = getMeshElement(iFace);
     for (int iEdge = 0; iEdge < e->getNumEdges(); iEdge++) {
       MEdge tmp_edge =  e->getEdge(iEdge);
-      if (std::find(bound_edges.begin(), bound_edges.end(), tmp_edge) == 
-          bound_edges.end())
-        bound_edges.push_back(tmp_edge);
-      else
-        bound_edges.erase(std::find(bound_edges.begin(), bound_edges.end(), tmp_edge));
+      std::set<MEdge, Less_Edge >::iterator itset = bound_edges.find(tmp_edge);
+      if (itset == bound_edges.end()) 	bound_edges.insert(tmp_edge);
+      else bound_edges.erase(itset);
     }
   }
 
   // for the boundary edges, associate the tag of the current discrete face
-  for (std::list<MEdge>::iterator itv = bound_edges.begin(); 
+  for (std::set<MEdge, Less_Edge>::iterator itv = bound_edges.begin(); 
        itv != bound_edges.end(); ++itv){
     std::map<MEdge, std::vector<int>, Less_Edge >::iterator itmap = map_edges.find(*itv);
     if (itmap == map_edges.end()){
