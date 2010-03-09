@@ -327,11 +327,11 @@ double qmDistorsionOfMapping(MTetrahedron *e)
 }
 
 double qmTriangleAngles (MTriangle *e) {
-  double a = 100;
+  double a = 500;
   double worst_quality = std::numeric_limits<double>::max();
   double mat[3][3];
   double mat2[3][3];
-  double den = atan(a*(M_PI/9)) + atan(a*(2*M_PI/9 - (M_PI/9)));
+  double den = atan(a*(M_PI/9)) + atan(a*(M_PI/9));
 
   // This matrix is used to "rotate" the triangle to get each vertex
   // as the "origin" of the mapping in turn 
@@ -368,17 +368,19 @@ double qmTriangleAngles (MTriangle *e) {
     double orientation;
     prosca(v12,v34,&orientation);
 
-    // If the if the triangle is "flipped" it's no good
+    // If the triangle is "flipped" it's no good
     if (orientation < 0)
       return -std::numeric_limits<double>::max();
 
     double c;
     prosca(v1,v2,&c);
     double x = acos(c)-M_PI/3;
-    double quality = (atan(a*(x+M_PI/9)) + atan(a*(2*M_PI/9 - (x+M_PI/9))))/den;
+    printf("Angle %g ", (x+M_PI/3)/M_PI*180);
+    double quality = (atan(a*(x+M_PI/9)) + atan(a*(M_PI/9-x)))/den;
+    printf("Quality %g\n",quality);
     worst_quality = std::min(worst_quality, quality);
   }
-
+  //printf("\n");
   return worst_quality;
 }
 
@@ -405,10 +407,11 @@ double qmQuadrangleAngles (MQuadrangle *e) {
 
     e->getJacobian(u[i], v[i], 0, mat);
     e->getPrimaryJacobian(u[i],v[i],0,mat2);
-    //    for (int j = 0; j < i; j++) {
-    //matmat(rot,mat,tmp);
-    //      memcpy(mat, tmp, sizeof(mat)); 
-    //    }
+    //for (int j = 0; j < i; j++) {
+    //  matmat(rot,mat,tmp);
+    //  memcpy(mat, tmp, sizeof(mat)); 
+    //}
+
     //get angle
     double v1[3] = {mat[0][0],  mat[0][1],  mat[0][2] };
     double v2[3] = {mat[1][0],  mat[1][1],  mat[1][2] };
@@ -432,7 +435,7 @@ double qmQuadrangleAngles (MQuadrangle *e) {
 
     double c;
     prosca(v1,v2,&c);
-    printf("%g %g\n",c,acos(c)*180/M_PI);
+    printf("Youhou %g %g\n",c,acos(c)*180/M_PI);
     double x = fabs(acos(c))-M_PI/2;
     double quality = (atan(a*(x+M_PI/4)) + atan(a*(2*M_PI/4 - (x+M_PI/4))))/den;
     worst_quality = std::min(worst_quality, quality);

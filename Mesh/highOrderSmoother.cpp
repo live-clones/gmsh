@@ -369,7 +369,7 @@ void highOrderSmoother::optimize(GFace * gf,
 
     smooth(gf, true);
     //int nbSwap = 
-    //        swapHighOrderTriangles(gf,edgeVertices,faceVertices,this);
+    //swapHighOrderTriangles(gf,edgeVertices,faceVertices,this);
     // smooth(gf,true);
     // smooth(gf,true);
     // smooth(gf,true);
@@ -443,13 +443,9 @@ void highOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
 
   double minD;
 
-  getDistordedElements(all, .6, v,minD);
-
-  Msg::Debug("%d elements / %d distorted  min Disto = %g", all.size(), v.size(), minD);
-
   if (!v.size()) return;
 
-  const int nbLayers = 2;
+  const int nbLayers = 10; //2, originally :)
   for (int i = 0; i < nbLayers; i++){
     addOneLayer(all, v, layer);
     v.insert(v.end(), layer.begin(), layer.end());
@@ -570,6 +566,7 @@ double highOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
       J23K33.gemm(J23, K33, 1, 0);
       K22.gemm(J23K33, J32, 1, 0);
       J23K33.mult(D3, R2);
+      J23K33.print("J23K33");
       for (int j = 0; j < n2; j++){
 	Dof RDOF = El.getLocalDofR(&se, j);
         myAssembler.assemble(RDOF, -R2(j));
@@ -617,9 +614,9 @@ void highOrderSmoother::smooth(std::vector<MElement*> &all)
   std::vector<MElement*> layer, v;
   double minD;
 
-  getDistordedElements(all, .5, v, minD);
+  getDistordedElements(all, 0.5, v, minD);
 
-  Msg::Debug("%d elements / %d distorted  min Disto = %g\n",
+  Msg::Info("%d elements / %d distorted  min Disto = %g\n",
              all.size(), v.size(), minD);
 
   if (!v.size()) return;
@@ -716,68 +713,75 @@ void highOrderSmoother::smooth(std::vector<MElement*> &all)
 void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
 				       std::vector<MElement*>& old_elems,
 				       GFace* gf) {
+ 
+  printf("Smoothing a cavity...\n");
+  printf("Old elems : %d and %d\n", old_elems[0]->getNum(), old_elems[1]->getNum());
+  printf("Cavity elems : %d and %d\n", cavity[0]->getNum(), cavity[1]->getNum());
 
-  printf("Smoothing a cavity...");
-
-  linearSystemFull<double> *lsys = new linearSystemFull<double>;
+#ifdef HAVE_TAUCS
+  linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
+  printf("Using Taucs\n");
+#else
+  linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
+  lsys->setNoisy(1);
+  lsys->setGmres(1);
+  lsys->setPrec(5.e-8);
+  printf("Using Gmm\n");
+#endif
 
   dofManager<double> myAssembler(lsys);
-  elasticityTerm El(0,1.0,0.333, getTag());
+  elasticityTerm El(0, 1.0, 0.333, getTag());
 
   std::vector<MElement*> layer,v;
 
-  v.insert(v.begin(), gf->triangles.begin(),gf->triangles.end());
-  v.insert(v.begin(), gf->quadrangles.begin(),gf->quadrangles.end());
+  /* Debug only :p */
+  //cavity = old_elems;
+
+  v.insert(v.end(), gf->triangles.begin(),gf->triangles.end());
+  v.insert(v.end(), gf->quadrangles.begin(),gf->quadrangles.end());
 
   addOneLayer(v,cavity,layer);
-  
+  //addOneLayer(v,old_elems,layer);
+
   for (unsigned int i = 0; i < layer.size(); i++){
-    bool skip = false;
-    for (std::vector<MElement*>::iterator itold = old_elems.begin();
-	 itold != old_elems.end();
-	 itold++)
-      if (*itold == layer[i]) {
-	skip = true;
-	break;
+    if (find(old_elems.begin(), old_elems.end(), layer[i]) == old_elems.end()) {
+      printf("In the layer, there is element %d\n", layer[i]->getNum());
+      for (int j = 0; j < layer[i]->getNumVertices(); j++){
+	MVertex *vert = layer[i]->getVertex(j);
+	myAssembler.fixVertex(vert, 0, getTag(), 0);
+	myAssembler.fixVertex(vert, 1, getTag(), 0);
+	printf("Fixing vertex %d\n", vert->getNum());
       }
-    if (skip) continue;
-    for (int j = 0; j < layer[i]->getNumVertices(); j++){
-      MVertex *vert = layer[i]->getVertex(j);
-      //printf("i = %d, j = %d \n",i,j);
-      myAssembler.fixVertex(vert, 0, getTag(), 0);
-      myAssembler.fixVertex(vert, 1, getTag(), 0);
     }
   }
   
+  //printf("%d vertices \n", _displ.size());
+
+  std::set<MVertex*>::iterator it;
   std::map<MVertex*,SVector3>::iterator its;
+  std::map<MVertex*,SVector3>::iterator itpresent;
+  std::map<MVertex*,SVector3>::iterator ittarget;
+  //std::map<MVertex*,SVector3> verticesToMove;
   std::set<MVertex*> verticesToMove;
 
   for (unsigned int i = 0; i < cavity.size(); i++){
     for (int j = 0; j < cavity[i]->getNumVertices(); j++){
       MVertex *vert = cavity[i]->getVertex(j);
-      //printf("Vertex on dim %d with tag %d\n",vert->onWhat()->dim(),vert->onWhat()->tag());
-
-      // printf("%d %d %d v\n", i, j, v[i]->getNumVertices());
       its = _straightSidedLocation.find(vert);
-      if (its == _straightSidedLocation.end()){
-	//printf("Ping\n");
+      if (its != _straightSidedLocation.end()) {
+	printf("SETTING LOCATIONS for %d\n",vert->getNum());
         _straightSidedLocation[vert] = 
           SVector3(vert->x(), vert->y(), vert->z());     
         _targetLocation[vert] = 
-          SVector3(vert->x(), vert->y(), vert->z()); 
-        if (vert->onWhat()->dim() < _dim){
-          myAssembler.fixVertex(vert, 0, getTag(), 0);
-          myAssembler.fixVertex(vert, 1, getTag(), 0);
-        }    
-      }
-      else{
-	//printf("Pong\n");
-        vert->x() = its->second.x();
+          SVector3(vert->x(), vert->y(), vert->z());
+      }else {
+	vert->x() = its->second.x();
         vert->y() = its->second.y();
         vert->z() = its->second.z();
         if (vert->onWhat()->dim() < _dim){
           myAssembler.fixVertex(vert, 0, getTag(), 0);
           myAssembler.fixVertex(vert, 1, getTag(), 0);
+	  printf("Fixing vertex %d\n", vert->getNum());
         }
       }
     }
@@ -786,18 +790,16 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
   // number the other DOFs
   for (unsigned int i = 0; i < cavity.size(); i++){
     for (int j = 0; j < cavity[i]->getNumVertices(); j++){
-      //printf("Numbering i = %d, j = %d \n",i,j);
-      //printf("%d vertices FIXED %d NUMBERED\n", myAssembler.sizeOfF()
-      //      , myAssembler.sizeOfR());
       MVertex *vert = cavity[i]->getVertex(j);
+      printf("Numbering vertex %d\n",vert->getNum());
       myAssembler.numberVertex(vert, 0, getTag());
       myAssembler.numberVertex(vert, 1, getTag());
       verticesToMove.insert(vert);
     } 
   }
 
-  //Msg::Info("%d vertices FIXED %d NUMBERED\n", myAssembler.sizeOfF()
-  //          , myAssembler.sizeOfR());
+  Msg::Info("%d vertices FIXED %d NUMBERED\n", myAssembler.sizeOfF()
+            , myAssembler.sizeOfR());
 
   double dx0 = smooth_metric_(cavity, gf, myAssembler, verticesToMove, El);
   double dx = dx0;
@@ -810,8 +812,6 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
     if (iter++ > 2)break;
     dx = dx2;
   }
-
-  std::set<MVertex*>::iterator it;
 
   for (it = verticesToMove.begin(); it != verticesToMove.end(); ++it){
     SPoint2 param;
@@ -829,8 +829,24 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
       (*it)->y() = p.y();
       (*it)->z() = p.z();      
     }
+    printf("  Moving %d to %g %g %g\n", (*it)->getNum(),_targetLocation[(*it)][0], _targetLocation[(*it)][1],_targetLocation[(*it)][2] );
   }
- 
+
+  /*
+  if (myAssembler.sizeOfR()) {
+    for (unsigned int i = 0; i < cavity.size(); i++) {
+      SElement se(cavity[i]);
+      El.addToMatrix(myAssembler, &se);
+    }
+    lsys->systemSolve();
+  
+}
+  for (it = verticesToMove.begin(); it != verticesToMove.end(); ++it){
+    it->first->x() += myAssembler.getDofValue(it->first, 0, getTag());
+    it->first->y() += myAssembler.getDofValue(it->first, 1, getTag());
+    it->first->z() += myAssembler.getDofValue(it->first, 2, getTag());
+  }
+  */
   delete lsys;
 }
 
@@ -1100,10 +1116,10 @@ struct swap_triangles_pN
     reparamMeshEdgeOnFace(n3,n4,gf,p3,p4);
 
     s_before = surfaceTriangleUV(p1,p2,p4) + surfaceTriangleUV(p1,p2,p3);
-    s_after =  surfaceTriangleUV(p3,p4,p1) + surfaceTriangleUV(p3,p4,p2);
+    s_after =  surfaceTriangleUV(p1,p4,p3) + surfaceTriangleUV(p3,p4,p2);
 
-    MTriangle t3lin(n3,n4,n1);
-    MTriangle t4lin(n4,n3,n2);
+    MTriangle t3lin(n1,n4,n3);
+    MTriangle t4lin(n3,n4,n2);
 
     t3 =  setHighOrder(&t3lin,gf,edgeVertices,faceVertices,false,
                        !t1->getNumFaceVertices(),
@@ -1111,7 +1127,7 @@ struct swap_triangles_pN
     t4 =  setHighOrder(&t4lin,gf,edgeVertices,faceVertices,false,
                        !t1->getNumFaceVertices(),
                        t1->getPolynomialOrder()-1,s);
-    
+
     //optimalLocationPN_ (gf,me, t3, t4,s);
     std::vector<MElement*> cavity, old_elems;
     cavity.push_back(t3);
@@ -1286,11 +1302,12 @@ static int swapHighOrderTriangles(GFace *gf,
       const double qold1 = shapeMeasure(t1);
       const double qold2 = shapeMeasure(t2);
 
-      if (qold1 < 0.6 || qold2 < 0.6)
+      if (qold1 < 0.005 || qold2 < 0.005)
         pairs.insert(swap_triangles_pN(it->first,t1,t2,gf,
                                        edgeVertices,faceVertices,s));
     }
   }
+
   std::set<swap_triangles_pN>::iterator itp = pairs.begin();
 
   int nbSwap = 0;
@@ -1315,6 +1332,7 @@ static int swapHighOrderTriangles(GFace *gf,
     itp->t2->getFaceVertices(0,v2);
     itp->t3->getFaceVertices(0,v3);
     itp->t4->getFaceVertices(0,v4);
+
     std::vector<MVertex*> ve1(v1.begin()+3,v1.begin()+3*o1);
     std::vector<MVertex*> ve2(v2.begin()+3,v2.begin()+3*o2);
     std::vector<MVertex*> ve3(v3.begin()+3,v3.begin()+3*o3);
@@ -1324,77 +1342,76 @@ static int swapHighOrderTriangles(GFace *gf,
     std::vector<MVertex*> vf3(v3.begin()+3*o3,v3.end());
     std::vector<MVertex*> vf4(v4.begin()+3*o4,v4.end());
 
-    //    for (int ed = 0; ed < 3; ed++) {
-    //  std::vector<MVertex*> v1,v2,v3,v4;
-    //  itp->t1->getEdgeVertices(ed,v1);
-    //  itp->t2->getEdgeVertices(ed,v2);
-    //  itp->t3->getEdgeVertices(ed,v3);
-    //  itp->t4->getEdgeVertices(ed,v4);
-    //  ve1.insert(ve1.end(),v1.begin()+2,v1.end());
-    //  ve2.insert(ve2.end(),v2.begin()+2,v2.end());
-    //  ve3.insert(ve3.end(),v3.begin()+2,v3.end());
-    //  ve4.insert(ve4.end(),v4.begin()+2,v4.end()); 
-    // }
+    printf("========== Diff = %g\n",diff);
+
+    bool t1_rem = (t_removed.find(itp->t1) != t_removed.end());
+    bool t2_rem = (t_removed.find(itp->t2) != t_removed.end());
+
+    if ( t1_rem)
+       printf("====== Eww, t1 is going DOWN!\n");
+
+    if ( t2_rem)
+       printf("====== Eww, t2 is going DOWN!\n");
 
 
-    if ( t_removed.find(itp->t1) == t_removed.end() &&
-         t_removed.find(itp->t2) == t_removed.end() &&
-         itp->quality_new > itp->quality_old &&
+    if ( !t1_rem && !t2_rem &&
+         //itp->quality_new > itp->quality_old &&
          diff < 1.e-9){
-      //      itp->print();
-      printf("quality was %f, is now %f\n",itp->quality_old,itp->quality_new); 
+
+      printf("Element quality : %f --> %f\n",itp->quality_old,itp->quality_new); 
+
       t_removed.insert(itp->t1);
       t_removed.insert(itp->t2);
-      triangles2.push_back(itp->t3);
-      triangles2.push_back(itp->t4);
-
       v_removed.insert(vf1.begin(),vf1.end());
       v_removed.insert(vf2.begin(),vf2.end());
+
+      triangles2.push_back(itp->t3);
+      triangles2.push_back(itp->t4);
       mesh_vertices2.insert(mesh_vertices2.end(),vf3.begin(),vf3.end());
       mesh_vertices2.insert(mesh_vertices2.end(),vf4.begin(),vf4.end());
 
       for(std::vector<MVertex*>::iterator vit = ve1.begin(); vit != ve1.end(); vit++) {
-	if (find(ve2.begin(),ve2.begin(),*vit)!=ve2.end())
+	if (find(ve2.begin(),ve2.end(),*vit)!=ve2.end())
 	  v_removed.insert(*vit);
       }
       for(std::vector<MVertex*>::iterator vit = ve3.begin(); vit != ve3.end(); vit++) {
-	if (find(ve4.begin(),ve4.end(),*vit)!=ve4.end())
-	  mesh_vertices2.push_back(*vit);
+	//if (find(ve4.begin(),ve4.end(),*vit)!=ve4.end())
+	//  mesh_vertices2.push_back(*vit);
       }
 
-      //      if (itp->n34 != itp->n12){
-      //        v_removed.insert(itp->n12);
-      //        mesh_vertices2.push_back(itp->n34);
-      //      }
       nbSwap++;
     }
-    else{
-      for(std::vector<MVertex*>::iterator vit = ve1.begin(); vit != ve1.end(); vit++) {
-	if (find(ve2.begin(),ve2.end(),*vit)!=ve2.end())
-	  mesh_vertices2.push_back(*vit);
+    else {
+      if (!t1_rem || !t2_rem) {
+	for(std::vector<MVertex*>::iterator vit = ve1.begin(); vit != ve1.end(); vit++) {
+	  //if (find(ve2.begin(),ve2.end(),*vit)!=ve2.end())
+	    //mesh_vertices2.push_back(*vit);
+	}
       }
+      
       for(std::vector<MVertex*>::iterator vit = ve3.begin(); vit != ve3.end(); vit++) {
 	if (find(ve4.begin(),ve4.end(),*vit)!=ve4.end())
 	  v_removed.insert(*vit);
       }
       delete itp->t3;
       delete itp->t4;
-      
-      //      if (itp->n34 != itp->n12) delete itp->n34;
     }
     ++itp;
   }
   int c1=0,c2=0;
   for (unsigned int i = 0; i < gf->mesh_vertices.size(); i++){
     if (v_removed.find(gf->mesh_vertices[i]) == v_removed.end()){
-      //mesh_vertices2.push_back(gf->mesh_vertices[i]);
+      mesh_vertices2.push_back(gf->mesh_vertices[i]);
       c1++;
     }
     else {
-      delete gf->mesh_vertices[i];
+      //mesh_vertices2.push_back(gf->mesh_vertices[i]);
+      //delete gf->mesh_vertices[i];
       c2++;
     }    
   }
+
+  printf("Deleted %d (%d) vertices from %d\n",c2,v_removed.size(),gf->mesh_vertices.size());
   gf->mesh_vertices = mesh_vertices2;
   printf("Deleted %d vertices from %d\n", c2, (int)gf->mesh_vertices.size());
   printf("Added %d vertices\n",c1);
@@ -1408,7 +1425,7 @@ static int swapHighOrderTriangles(GFace *gf,
     }    
   }
 
-  printf("replacing %d by %d\n", (int)gf->triangles.size(), (int)triangles2.size());
+  printf("replacing triangles %d by %d\n",gf->triangles.size(),triangles2.size());
   gf->triangles = triangles2;
   return nbSwap;
 }
