@@ -18,6 +18,7 @@
 #include "MHexahedron.h"
 #include "MPyramid.h"
 #include "Geo.h"
+#include "OS.h"
 
 discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
   : GEdge(model, num, _v0, _v1)
@@ -242,19 +243,18 @@ void discreteEdge::setBoundVertices()
     +---------------+--------------+----------- ... ----------+
     _pars[0]=0   _pars[1]=1    _pars[2]=2             _pars[N+1]=N+1
 */
-void discreteEdge::parametrize()
+void discreteEdge::parametrize(std::map<MVertex*, MVertex*, std::less<MVertex*> > &old2new)
 { 
   for (unsigned int i = 0; i < lines.size() + 1; i++){
     _pars.push_back(i);
   }
 
   //Replace MVertex by MedgeVertex
-  //we need to recreate lines, triangles and tets
-  //that contain those new MEdgeVertices
-  std::map<MVertex*, MVertex*> old2new;
-
-  std::vector<MVertex*> newVertices;
+  
+  std::vector<MVertex* > newVertices;
   std::vector<MLine*> newLines;
+  
+  double t1 = Cpu();
 
   MVertex *vL = getBeginVertex()->mesh_vertices[0];
   int i = 0;
@@ -282,98 +282,35 @@ void discreteEdge::parametrize()
   lines.clear();
   lines = newLines;
 
-  for(std::list<GFace*>::iterator iFace = l_faces.begin(); iFace != l_faces.end(); ++iFace){
-    std::vector<MTriangle*> newTriangles;
-    std::vector<MQuadrangle*> newQuadrangles;
-    for (unsigned int i = 0; i < (*iFace)->getNumMeshElements(); ++i){
-      MElement *e = (*iFace)->getMeshElement(i);
-      int N = e->getNumVertices();
-      std::vector<MVertex *> v(N);
-      for(int j = 0; j < N; j++){
-        v[j] = e->getVertex(j);
-      }
-      for (int j = 0; j < N; j++){
-        std::map<MVertex*, MVertex*>::iterator itmap = old2new.find(v[j]);
-        MVertex *vNEW;
-        if (itmap != old2new.end())  {
-          vNEW = itmap->second;
-          v[j]=vNEW;
-        }
-      }
-      if (N == 3) newTriangles.push_back(new  MTriangle(v[0], v[1], v[2]));
-      else if ( N == 4)  newQuadrangles.push_back(new  MQuadrangle(v[0], v[1], v[2], v[3]));
-      
-    }
-    (*iFace)->deleteVertexArrays();
-    (*iFace)->triangles.clear();
-    (*iFace)->triangles = newTriangles;
-    (*iFace)->quadrangles.clear();
-    (*iFace)->quadrangles = newQuadrangles;
-  }
-  
-   for(GModel::riter iRegion = model()->firstRegion(); 
-       iRegion != model()->lastRegion(); iRegion++){
-     std::vector<MTetrahedron*> newTetrahedra;
-     std::vector<MHexahedron*> newHexahedra;
-     std::vector<MPrism*> newPrisms;
-     std::vector<MPyramid*> newPyramids;
-     for (unsigned int i = 0; i < (*iRegion)->getNumMeshElements(); ++i){
-       MElement *e = (*iRegion)->getMeshElement(i);
-       int N = e->getNumVertices();
-       std::vector<MVertex *> v(N);
-       for(int j = 0; j < N; j++){
-         v[j] = e->getVertex(j);
-       }
-       for (int j = 0; j < N; j++){
-         std::map<MVertex*, MVertex*>::iterator itmap = old2new.find(v[j]);
-         MVertex *vNEW;
-         if (itmap != old2new.end())  {
-           vNEW = itmap->second;
-           v[j]=vNEW;
-         }
-       }
-       if (N == 4) newTetrahedra.push_back(new MTetrahedron(v[0], v[1], v[2], v[3]));
-       else if (N == 5) newPyramids.push_back(new MPyramid(v[0], v[1], v[2], v[3], v[4]));
-       else if (N == 6) newPrisms.push_back(new MPrism(v[0], v[1], v[2], v[3], v[4], v[5]));
-       else if (N == 8) newHexahedra.push_back(new MHexahedron(v[0], v[1], v[2], v[3],
-                                                               v[4], v[5], v[6], v[7]));
-     }
-     (*iRegion)->deleteVertexArrays();
-     (*iRegion)->tetrahedra.clear();
-     (*iRegion)->tetrahedra = newTetrahedra;
-     (*iRegion)->pyramids.clear();
-     (*iRegion)->pyramids = newPyramids;
-     (*iRegion)->prisms.clear();
-     (*iRegion)->prisms = newPrisms;
-     (*iRegion)->hexahedra.clear();
-     (*iRegion)->hexahedra = newHexahedra;
-   }
-
-   computeNormals();
-}
+  computeNormals();
+ }
 
 void discreteEdge::computeNormals () const
 {
   _normals.clear();
+  for (int i= 0; i < mesh_vertices.size(); i++) _normals[mesh_vertices[i]] = SVector3(0.0,0.0,0.0);
+  _normals[getBeginVertex()->mesh_vertices[0]] = SVector3(0.0,0.0,0.0);
+  _normals[getBeginVertex()->mesh_vertices[0]] = SVector3(0.0,0.0,0.0);
   double J[3][3];
 
   for(std::list<GFace*>::const_iterator iFace = l_faces.begin(); 
       iFace != l_faces.end(); ++iFace){
     for (unsigned int i = 0; i < (*iFace)->triangles.size(); ++i){
       MTriangle *t = (*iFace)->triangles[i];
-      t->getJacobian(0, 0, 0, J);
-      SVector3 d1(J[0][0], J[0][1], J[0][2]);
-      SVector3 d2(J[1][0], J[1][1], J[1][2]);
-      SVector3 n = crossprod(d1, d2);
-      n.normalize();
       for (int j = 0; j < 3; j++){
-        std::map<MVertex*, SVector3>::iterator itn = _normals.find(t->getVertex(j));
-        if (itn == _normals.end())_normals[t->getVertex(j)] = n;
-        else itn->second += n;
+        std::map<MVertex*, SVector3, std::less<MVertex*> >::iterator itn = _normals.find(t->getVertex(j));
+        if (itn != _normals.end()){
+	  t->getJacobian(0, 0, 0, J);
+	  SVector3 d1(J[0][0], J[0][1], J[0][2]);
+	  SVector3 d2(J[1][0], J[1][1], J[1][2]);
+	  SVector3 n = crossprod(d1, d2);
+	  n.normalize();
+	  _normals[t->getVertex(j)] += n; 
+	}
       }
     }
   }
-  std::map<MVertex*,SVector3>::iterator itn = _normals.begin();
+  std::map<MVertex*,SVector3, std::less<MVertex*> >::iterator itn = _normals.begin();
   for ( ; itn != _normals.end(); ++itn){
     itn->second.normalize();
   }
