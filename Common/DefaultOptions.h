@@ -56,6 +56,8 @@ StringXString GeneralOptions_String[] = {
 
   { F|O, "GraphicsFont" , opt_general_graphics_font , "Helvetica" ,
     "Font used in the graphic window" }, 
+  { F|O, "GraphicsFontTitle" , opt_general_graphics_font_title , "Helvetica" ,
+    "Font used in the graphic window for titles" }, 
 
   { F|S, "OptionsFileName" , opt_general_options_filename , ".gmsh-options" ,
     "Option file created with `Tools->Options->Save'; automatically read on startup" },
@@ -601,6 +603,8 @@ StringXNumber GeneralOptions_Number[] = {
 
   { F|O, "GraphicsFontSize" , opt_general_graphics_fontsize , 17. ,
     "Size of the font in the graphic window" }, 
+  { F|O, "GraphicsFontSizeTitle" , opt_general_graphics_fontsize_title , 19. ,
+    "Size of the font in the graphic window for titles" }, 
   { F|S, "GraphicsHeight" , opt_general_graphics_size1 , 600. , 
     "Height (in pixels) of the graphic window" }, 
   { F|S, "GraphicsPositionX" , opt_general_graphics_position0 , 50. , 
@@ -1533,9 +1537,9 @@ StringXNumber ViewOptions_Number[] = {
     "Show element boundaries?" },
   { F|O, "ShowScale" , opt_view_show_scale , 1. ,
     "Show value scale?" },
-  { F|O, "ShowTime" , opt_view_show_time , 1. ,
-    "Time display mode (0=hidden, 1=value if multi-step, 2=value always, "
-    "3=step if multi-step, 4=step always)" },
+  { F|O, "ShowTime" , opt_view_show_time , 3. ,
+    "Time display mode (0=hidden, 1=time value if multi-step, 2=time value always, "
+    "3=time step if multi-step, 4=time step always)" },
   { F|O, "SmoothNormals" , opt_view_smooth_normals , 0. ,
     "Smooth the normals?" },
   { F|O, "Stipple" , opt_view_use_stipple , 0. ,

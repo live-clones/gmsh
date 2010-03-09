@@ -178,18 +178,23 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
     sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
   }
   else if((opt->showTime == 3 && nt > 1) || opt->showTime == 4){
-    sprintf(label, "%s (%d)", data->getName().c_str(), opt->timeStep);
+    sprintf(label, "%s (%d/%d)", data->getName().c_str(), opt->timeStep, 
+            data->getNumTimeSteps() - 1);
   }
   else
     sprintf(label, "%s", data->getName().c_str());
  
   if(horizontal){
     glRasterPos2d(xmin + width / 2., ymin + height + tic + 1.4 * font_h);
-    ctx->drawStringCenter(label);
+    ctx->drawString(label, CTX::instance()->glFontTitle, 
+                    CTX::instance()->glFontEnumTitle,
+                    CTX::instance()->glFontSizeTitle, 1);
   }
   else{
     glRasterPos2d(xmin, ymin - 2 * font_h);
-    ctx->drawString(label);
+    ctx->drawString(label, CTX::instance()->glFontTitle, 
+                    CTX::instance()->glFontEnumTitle, 
+                    CTX::instance()->glFontSizeTitle, 0);
   }
 }
 

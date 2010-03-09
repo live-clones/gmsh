@@ -1077,6 +1077,23 @@ std::string opt_general_graphics_font(OPT_ARGS_STR)
   return CTX::instance()->glFont;
 }
 
+std::string opt_general_graphics_font_title(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->glFontTitle = val;
+#if defined(HAVE_FLTK)
+  int index = drawContext::global()->getFontIndex(CTX::instance()->glFontTitle.c_str());
+  if(action & GMSH_SET){
+    CTX::instance()->glFontTitle = drawContext::global()->getFontName(index);
+    CTX::instance()->glFontEnumTitle = drawContext::global()->getFontEnum(index);
+  }
+  if(FlGui::available() && (action & GMSH_GUI)){
+    FlGui::instance()->options->general.choice[6]->value(index);
+  }
+#endif
+  return CTX::instance()->glFontTitle;
+}
+
 std::string opt_solver_socket_name(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
@@ -2345,6 +2362,18 @@ double opt_general_graphics_fontsize(OPT_ARGS_NUM)
       (CTX::instance()->glFontSize);
 #endif
   return CTX::instance()->glFontSize;
+}
+
+double opt_general_graphics_fontsize_title(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->glFontSizeTitle = (int)val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.value[28]->value
+      (CTX::instance()->glFontSizeTitle);
+#endif
+  return CTX::instance()->glFontSizeTitle;
 }
 
 double opt_general_polygon_offset_always(OPT_ARGS_NUM)

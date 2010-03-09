@@ -12,8 +12,8 @@
 #include "gl2ps.h"
 #include "SVector3.h"
 
-void drawContext::drawString(std::string s, std::string &font_name, int font_enum, 
-                             int font_size, int align)
+void drawContext::drawString(const std::string &s, const std::string &font_name,
+                             int font_enum, int font_size, int align)
 {
   if(CTX::instance()->printing && !CTX::instance()->print.text) return;
 
@@ -81,25 +81,25 @@ void drawContext::drawString(std::string s, std::string &font_name, int font_enu
   }
 }
 
-void drawContext::drawString(std::string s)
+void drawContext::drawString(const std::string &s)
 {
   drawString(s, CTX::instance()->glFont, CTX::instance()->glFontEnum, 
              CTX::instance()->glFontSize, 0);
 }
 
-void drawContext::drawStringCenter(std::string s)
+void drawContext::drawStringCenter(const std::string &s)
 {
   drawString(s, CTX::instance()->glFont, CTX::instance()->glFontEnum,
              CTX::instance()->glFontSize, 1);
 }
 
-void drawContext::drawStringRight(std::string s)
+void drawContext::drawStringRight(const std::string &s)
 {
   drawString(s, CTX::instance()->glFont, CTX::instance()->glFontEnum,
              CTX::instance()->glFontSize, 2);
 }
 
-void drawContext::drawString(std::string s, double style)
+void drawContext::drawString(const std::string &s, double style)
 {
   unsigned int bits = (unsigned int)style;
 

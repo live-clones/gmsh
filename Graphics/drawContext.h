@@ -191,12 +191,12 @@ class drawContext {
   void drawAxes();
   void drawSmallAxes();
   void drawScales();
-  void drawString(std::string s, std::string &font_name, int font_enum, 
+  void drawString(const std::string &s, const std::string &font_name, int font_enum, 
                   int font_size, int align);
-  void drawString(std::string s);
-  void drawStringCenter(std::string s);
-  void drawStringRight(std::string s);
-  void drawString(std::string s, double style);
+  void drawString(const std::string &s);
+  void drawStringCenter(const std::string &s);
+  void drawStringRight(const std::string &s);
+  void drawString(const std::string &s, double style);
   void drawSphere(double R, double x, double y, double z, int n1, int n2, int light);
   void drawSphere(double size, double x, double y, double z, int light);
   void drawCylinder(double width, double *x, double *y, double *z, int light);

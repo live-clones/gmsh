@@ -151,8 +151,8 @@ class CTX {
   // fltk font size (and delta for palette windows)
   int fontSize, deltaFontSize;
   // font name, FLTK enum and size for opengl graphics
-  std::string glFont;
-  int glFontEnum, glFontSize;
+  std::string glFont, glFontTitle;
+  int glFontEnum, glFontEnumTitle, glFontSize, glFontSizeTitle;
   // point/line widths
   double pointSize, lineWidth;
   // light options
