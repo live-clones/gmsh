@@ -142,7 +142,6 @@ class MPrism : public MElement {
   }*/
 /*  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o) 
   {
-    printf("here\n");
     s[0][0] = -0.5 * (1. - w)    ;
     s[0][1] = -0.5 * (1. - w)    ;
     s[0][2] = -0.5 * (1. - u - v);

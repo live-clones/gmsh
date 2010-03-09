@@ -252,7 +252,7 @@ static fullMatrix<double> generatePascalPrism(int order)
         index ++;
     }
   }
-  monomials.print("Pri monoms");
+//   monomials.print("Pri monoms");
   return monomials;
 }
 

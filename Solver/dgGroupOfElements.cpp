@@ -342,9 +342,9 @@ void dgGroupCollection::buildGroupsOfElements(GModel *model, int dim, int order)
   std::map<int, std::vector<MElement *> >localElements;
   std::vector<std::map<int, std::vector<MElement *> > >ghostElements(Msg::GetCommSize()); // [partition][elementType]
   std::multimap<MElement*, short> &ghostsCells = _model->getGhostCells();
-  for(unsigned int i = 0; i < entities.size(); i++) {
+  for(unsigned int i = 0; i < entities.size(); i++){
     GEntity *entity = entities[i];
-    if(entity->dim() == dim) {
+    if(entity->dim() == dim){
       for (int iel=0; iel<entity->getNumMeshElements(); iel++){
         MElement *el=entity->getMeshElement(iel);
         if(el->getPartition()==Msg::GetCommRank()+1 || el->getPartition()==0){
@@ -1010,6 +1010,129 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLa
   return dtRef;
 }
 
+// Split the groups of elements into vertical layers (only for primsatic 3D meshes)
+void dgGroupCollection::splitGroupsByVerticalLayer(std::vector<std::string> topLevelTags) {
+
+  Msg::Info("Splitting Groups per vertical layers");
+
+  // Interfaces are not built yet, so we use a "mini" structure to deduce neighboring information
+  std::vector<dgMiniInterface> *miniInterfaceV=_createMiniInterfaces(*this);
+  // elementToNeighbors[oldGroupId][oldElementId][neighborId (i.e. 0 to 2 for triangles)]<neighborOldGroupId,neighborOldElementId>
+  std::vector<std::vector<std::vector<std::pair<int,int> > > >elementToNeighbors;
+  // id of the new group, indexed by [oldGroupId][oldElementId]
+  // -1 if the element is not yet in a new group
+  // -2 if the element is in a new group whose id is not determined yet
+  std::vector< dgGroupOfElements* >newGroups;// indexed by newGroupId
+  // isProcessed[oldGroupId][oldElementId]
+  std::vector<std::vector<int> >isProcessed;
+
+  isProcessed.resize(getNbElementGroups());
+  elementToNeighbors.resize(getNbElementGroups());
+  for(int iGroup=0;iGroup<getNbElementGroups();iGroup++){
+    dgGroupOfElements *g=getElementGroup(iGroup); 
+    elementToNeighbors[iGroup].resize(g->getNbElements());
+    isProcessed[iGroup].assign(g->getNbElements(),0);
+  }
+
+  // Build elementToNeighbors table (needed to have random access to the neighbors)
+  for(int iInterface=0;iInterface<miniInterfaceV->size();iInterface++){
+    dgMiniInterface &interface=miniInterfaceV->at(iInterface);
+    if (interface.numVertices == 3) { // only accept triangular interfaces
+      for(int iConn=0;iConn<interface.connections.size();iConn++){
+        int gIdi=interface.connections[iConn].iGroup;
+        int eIdi=interface.connections[iConn].iElement;
+        for(int jConn=0;jConn<iConn;jConn++){
+          int gIdj=interface.connections[jConn].iGroup;
+          int eIdj=interface.connections[jConn].iElement;
+          elementToNeighbors[gIdi][eIdi].push_back(std::pair<int,int>(gIdj,eIdj));
+          elementToNeighbors[gIdj][eIdj].push_back(std::pair<int,int>(gIdi,eIdi));
+        }
+      }
+    }
+  }
+
+  std::vector< std::pair<int,int> > oldGroupElemIds;
+  std::vector< std::pair<int,int> > newGroupElemIds;
+  std::vector< std::vector< MElement* > > verticalGroupsVector;
+  std::vector< MElement* > newGroupElems;
+  int currentNewGroupId=0;
+  bool finalLayer = false;
+
+  do {
+    newGroupElemIds.clear();
+    newGroupElems.clear();
+    if(currentNewGroupId==0) {
+      // create first element groups
+      for(int iInterface=0;iInterface<miniInterfaceV->size();iInterface++){
+        dgMiniInterface &interface=miniInterfaceV->at(iInterface);
+        for(int iConn=0;iConn<interface.connections.size();iConn++){
+          int gId=interface.connections[iConn].iGroup;
+          int eId=interface.connections[iConn].iElement;
+          bool topLevelTagFound = false;
+          for (int i = 0; i < topLevelTags.size(); i++)
+            if (_model->getPhysicalName(2, interface.physicalTag) == topLevelTags.at(i) ) {
+              topLevelTagFound = true;
+              break;
+            }
+          if (topLevelTagFound) {
+//             printf("Tag found: %d %d %s \n",gId,eId,_model->getPhysicalName(2, interface.physicalTag).c_str());
+            newGroupElems.push_back(getElementGroup(gId)->getElement(eId));
+            newGroupElemIds.push_back(std::pair<int,int>(gId,eId));
+            isProcessed[gId][eId]=1;
+          }
+        }
+      }
+      if (newGroupElems.size() == 0) {
+        std::string errMsg = "No triangular boundary faces found with the given physical tag(s): ";
+        for (int i = 0; i < topLevelTags.size(); i++)
+          errMsg += topLevelTags.at(i) += " ";
+        Msg::Error(errMsg.c_str());
+      }
+    }
+    else {
+      // find neighbors in next level
+      for (int iElems = 0; iElems<oldGroupElemIds.size();iElems++ ) {
+        int gId = oldGroupElemIds.at(iElems).first;
+        int eId = oldGroupElemIds.at(iElems).second;
+        bool newNeighborFound = false;
+        for (int iNeighbors = 0; iNeighbors < elementToNeighbors[gId][eId].size(); iNeighbors++) {
+          int nGId = elementToNeighbors[gId][eId].at(iNeighbors).first;
+          int nEId = elementToNeighbors[gId][eId].at(iNeighbors).second;
+          if (!isProcessed[nGId][nEId]) {
+            newGroupElemIds.push_back(std::pair<int,int>(nGId,nEId));
+            newGroupElems.push_back(getElementGroup(nGId)->getElement(nEId));
+            isProcessed[nGId][nEId]=1;
+            newNeighborFound = true;
+//             printf("adding neighbor eId: %d\n",nEId);
+          } 
+        }
+        if (!newNeighborFound) {
+          finalLayer = true;
+          break;
+        }
+      }   
+    }  
+
+    
+//     printf("new elems %d\n",newGroupElems.size());
+    if (!finalLayer) {
+      dgGroupOfElements* oldGroup = getElementGroup(0);
+      dgGroupOfElements* newGroup=new dgGroupOfElements(newGroupElems,oldGroup->getOrder(),oldGroup->getGhostPartition());
+      newGroup->copyPrivateDataFrom(oldGroup);
+      newGroups.resize(currentNewGroupId+1);
+      newGroups[currentNewGroupId]=newGroup;
+      printf("Created a new group ID:%d with %d elements.\n",currentNewGroupId,newGroup->getNbElements());
+      currentNewGroupId++;
+    }
+    oldGroupElemIds = newGroupElemIds;
+  } while (!finalLayer);
+  
+  _elementGroups.clear();
+  _elementGroups=newGroups;
+  delete miniInterfaceV;
+
+}
+
 dgGroupCollection::dgGroupCollection()
 {
   _groupsOfElementsBuilt=false;_groupsOfInterfacesBuilt=false;
@@ -1060,6 +1183,9 @@ void dgGroupCollection::registerBindings(binding *b)
   cm = cb->addMethod("splitGroupsForMultirate",&dgGroupCollection::splitGroupsForMultirate);
   cm->setDescription("Split the groups according to their own stable time step");
   cm->setArgNames("maxLevels","claw","solution",NULL);
+  cm = cb->addMethod("splitGroupsByVerticalLayer",&dgGroupCollection::splitGroupsByVerticalLayer);
+  cm->setDescription("Split the groups according vertical layer structure. The first is defined by the topLevelTags.");
+  cm->setArgNames("topLevelTags",NULL);
   cm = cb->addMethod("getNbElementGroups", &dgGroupCollection::getNbElementGroups);
   cm->setDescription("return the number of dgGroupOfElements");
   cm = cb->addMethod("getNbFaceGroups", &dgGroupCollection::getNbFaceGroups);
