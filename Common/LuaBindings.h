@@ -498,7 +498,7 @@ static int luaCall(lua_State *L, void (*_f)(t0)) {
   return 1;
 };
 template < >
-static int luaCall(lua_State *L,void (*_f)()) {
+int luaCall(lua_State *L,void (*_f)()) {
   if (lua_gettop(L)==1)
     lua_remove(L,1);
   (*(_f))();
