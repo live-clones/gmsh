@@ -339,7 +339,7 @@ static void solver_choose_executable_cb(Fl_Widget *w, void *data)
   pattern += ".exe";
 #endif
 
-  if(fileChooser(0, 0, "Choose", pattern.c_str())){
+  if(fileChooser(FILE_CHOOSER_SINGLE, "Choose", pattern.c_str())){
     FlGui::instance()->solver[num]->input[2]->value(fileChooserGetName(1).c_str());
     solver_ok_cb(w, data);
   }
@@ -350,7 +350,7 @@ static void solver_file_open_cb(Fl_Widget *w, void *data)
   int num = (int)(long)data;
   std::string pattern = "*" + ConnectionManager::get(num)->inputFileExtension;
 
-  if(fileChooser(0, 0, "Choose", pattern.c_str())) {
+  if(fileChooser(FILE_CHOOSER_SINGLE, "Choose", pattern.c_str())) {
     FlGui::instance()->solver[num]->input[0]->value(fileChooserGetName(1).c_str());
     solver_ok_cb(w, data);
   }
@@ -367,7 +367,7 @@ static void solver_file_edit_cb(Fl_Widget *w, void *data)
 static void solver_choose_mesh_cb(Fl_Widget *w, void *data)
 {
   int num = (int)(long)data;
-  if(fileChooser(0, 0, "Choose", "*.msh")){
+  if(fileChooser(FILE_CHOOSER_SINGLE, "Choose", "*.msh")){
     FlGui::instance()->solver[num]->input[1]->value(fileChooserGetName(1).c_str());
     solver_ok_cb(w, data);
   }

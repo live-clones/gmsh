@@ -8,7 +8,14 @@
 
 #include <string>
 
-int fileChooser(int multi, int create, const char *message,
+typedef enum {
+  FILE_CHOOSER_SINGLE, 
+  FILE_CHOOSER_MULTI, 
+  FILE_CHOOSER_CREATE, 
+  FILE_CHOOSER_DIRECTORY 
+} FILE_CHOOSER_TYPE;
+
+int fileChooser(FILE_CHOOSER_TYPE type, const char *message,
                 const char *pat, const char *fname=NULL);
 std::string fileChooserGetName(int num);
 int fileChooserGetFilter();

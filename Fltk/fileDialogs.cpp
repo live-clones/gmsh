@@ -22,6 +22,7 @@
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "FlGui.h"
+#include "fileDialogs.h"
 #include "CreateFile.h"
 #include "Options.h"
 #include "GModel.h"
@@ -75,7 +76,7 @@ static flFileChooser *fc = 0;
 
 #endif
 
-int fileChooser(int multi, int create, const char *message,
+int fileChooser(FILE_CHOOSER_TYPE type, const char *message,
                 const char *filter, const char *fname)
 {
   static char thefilter[1024] = "";
@@ -89,12 +90,16 @@ int fileChooser(int multi, int create, const char *message,
 
 #if defined(HAVE_NATIVE_FILE_CHOOSER)
   if(!fc) fc = new Fl_Native_File_Chooser();
-  if(multi)
-    fc->type(Fl_Native_File_Chooser::BROWSE_MULTI_FILE);
-  else if(create)
-    fc->type(Fl_Native_File_Chooser::BROWSE_SAVE_FILE);
-  else
-    fc->type(Fl_Native_File_Chooser::BROWSE_FILE);
+  switch(type){
+  case FILE_CHOOSER_MULTI: 
+    fc->type(Fl_Native_File_Chooser::BROWSE_MULTI_FILE); break;
+  case FILE_CHOOSER_CREATE:
+    fc->type(Fl_Native_File_Chooser::BROWSE_SAVE_FILE); break;
+  case FILE_CHOOSER_DIRECTORY:
+    fc->type(Fl_Native_File_Chooser::BROWSE_DIRECTORY); break;
+  default:
+    fc->type(Fl_Native_File_Chooser::BROWSE_FILE); break;
+  }
   fc->title(message);
   fc->filter(filter);
   fc->filter_value(thefilterindex);
@@ -119,12 +124,16 @@ int fileChooser(int multi, int create, const char *message,
     fc->position(CTX::instance()->fileChooserPosition[0], 
                  CTX::instance()->fileChooserPosition[1]);
   }
-  if(multi)
-    fc->type(Fl_File_Chooser::MULTI);
-  else if(create)
-    fc->type(Fl_File_Chooser::CREATE);
-  else
-    fc->type(Fl_File_Chooser::SINGLE);
+  switch(type){
+  case FILE_CHOOSER_MULTI: 
+    fc->type(Fl_File_Chooser::MULTI); break;
+  case FILE_CHOOSER_CREATE:
+    fc->type(Fl_File_Chooser::CREATE); break;
+  case FILE_CHOOSER_DIRECTORY:
+    fc->type(Fl_File_Chooser::DIRECTORY); break;
+  default:
+    fc->type(Fl_File_Chooser::SINGLE); break;
+  }
   fc->label(message);
   fc->filter(thefilter);
   fc->filter_value(thefilterindex);

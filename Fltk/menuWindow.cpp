@@ -55,7 +55,7 @@
 static void file_new_cb(Fl_Widget *w, void *data)
 {
  test:
-  if(fileChooser(0, 1, "New", "*")) {
+  if(fileChooser(FILE_CHOOSER_CREATE, "New", "*")) {
     std::string name = fileChooserGetName(1);
     if(!StatFile(name)){
       if(fl_choice("File '%s' already exists.\n\nDo you want to erase it?",
@@ -122,7 +122,7 @@ static const char *input_formats =
 static void file_open_cb(Fl_Widget *w, void *data)
 {
   int n = PView::list.size();
-  if(fileChooser(0, 0, "Open", input_formats)) {
+  if(fileChooser(FILE_CHOOSER_SINGLE, "Open", input_formats)) {
     OpenProject(fileChooserGetName(1));
     drawContext::global()->draw();
   }
@@ -133,7 +133,7 @@ static void file_open_cb(Fl_Widget *w, void *data)
 static void file_merge_cb(Fl_Widget *w, void *data)
 {
   int n = PView::list.size();
-  int f = fileChooser(1, 0, "Merge", input_formats);
+  int f = fileChooser(FILE_CHOOSER_MULTI, "Merge", input_formats);
   if(f) {
     for(int i = 1; i <= f; i++)
       MergeFile(fileChooserGetName(i));
@@ -355,7 +355,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
   }
 
  test:
-  if(fileChooser(0, 1, "Save As", pat)) {
+  if(fileChooser(FILE_CHOOSER_CREATE, "Save As", pat)) {
     std::string name = fileChooserGetName(1);
     if(CTX::instance()->confirmOverwrite) {
       if(!StatFile(name))
@@ -394,7 +394,8 @@ static void file_options_save_cb(Fl_Widget *w, void *data)
 static void file_rename_cb(Fl_Widget *w, void *data)
 {
  test:
-  if(fileChooser(0, 1, "Rename", "*", GModel::current()->getFileName().c_str())) {
+  if(fileChooser(FILE_CHOOSER_CREATE, "Rename", "*",
+                 GModel::current()->getFileName().c_str())) {
     std::string name = fileChooserGetName(1);
     if(CTX::instance()->confirmOverwrite) {
       if(!StatFile(name))
@@ -417,6 +418,12 @@ void file_quit_cb(Fl_Widget *w, void *data)
 
 void file_watch_cb(Fl_Widget *w, void *data)
 {
+  if(w){
+    if(fileChooser(FILE_CHOOSER_CREATE, "Watch Pattern", "*")) {
+      CTX::instance()->watchFilePattern = fileChooserGetName(1);
+    }
+  }
+
   if(CTX::instance()->watchFilePattern.empty()) return;
 
   std::string pattern = FixRelativePath
@@ -2154,7 +2161,8 @@ static void view_save_as(int index, const char *title, int format)
   PView *view = PView::list[index];
   
  test:
-  if(fileChooser(0, 1, title, "*", view->getData()->getFileName().c_str())){
+  if(fileChooser(FILE_CHOOSER_CREATE, title, "*", 
+                 view->getData()->getFileName().c_str())){
     std::string name = fileChooserGetName(1);
     if(CTX::instance()->confirmOverwrite) {
       if(!StatFile(name))
@@ -2280,7 +2288,7 @@ static Fl_Menu_Item bar_table[] = {
   {"&File", 0, 0, 0, FL_SUBMENU},
     {"&New...",     FL_CTRL+'n', (Fl_Callback *)file_new_cb, 0},
     {"&Open...",    FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
-    {"Open recent", 0, 0, 0, FL_SUBMENU},
+    {"Open Recent", 0, 0, 0, FL_SUBMENU},
       {"History1", 0, 0, 0, FL_MENU_INVISIBLE},
       {"History2", 0, 0, 0, FL_MENU_INVISIBLE},
       {"History3", 0, 0, 0, FL_MENU_INVISIBLE},
@@ -2288,6 +2296,7 @@ static Fl_Menu_Item bar_table[] = {
       {"History5", 0, 0, 0, FL_MENU_INVISIBLE},
       {0},
     {"M&erge...",   FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)file_merge_cb, 0},
+    {"Watch Pattern...",    0, (Fl_Callback *)file_watch_cb, 0},
     {"&Clear",      0, (Fl_Callback *)file_clear_cb, 0, FL_MENU_DIVIDER},
     {"Remote", 0, 0, 0, FL_MENU_DIVIDER | FL_SUBMENU},
       {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
@@ -2340,7 +2349,7 @@ static Fl_Menu_Item sysbar_table[] = {
     {"New...",     FL_META+'n', (Fl_Callback *)file_new_cb, 0},
     {"Open...",    FL_META+'o', (Fl_Callback *)file_open_cb, 0},
   /* system menu bar is not dynamic in fltk 1.1; it will be in fltk 1.3
-    {"Open recent", 0, 0, 0, FL_SUBMENU},
+    {"Open Recent", 0, 0, 0, FL_SUBMENU},
       {"History1", 0, 0, 0, FL_MENU_INVISIBLE},
       {"History2", 0, 0, 0, FL_MENU_INVISIBLE},
       {"History3", 0, 0, 0, FL_MENU_INVISIBLE},
@@ -2349,6 +2358,7 @@ static Fl_Menu_Item sysbar_table[] = {
       {0},
   */
     {"Merge...",   FL_META+FL_SHIFT+'o', (Fl_Callback *)file_merge_cb, 0},
+    {"Watch Pattern...",   0, (Fl_Callback *)file_watch_cb, 0},
     {"Clear",      0, (Fl_Callback *)file_clear_cb, 0, FL_MENU_DIVIDER},
     {"Remote", 0, 0, 0, FL_MENU_DIVIDER | FL_SUBMENU},
       {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},

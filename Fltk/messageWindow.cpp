@@ -52,7 +52,7 @@ static void message_clear_cb(Fl_Widget *w, void *data)
 static void message_save_cb(Fl_Widget *w, void *data)
 {
  test:
-  if(fileChooser(0, 1, "Save", "*")) {
+  if(fileChooser(FILE_CHOOSER_CREATE, "Save", "*")) {
     std::string name = fileChooserGetName(1);
     if(CTX::instance()->confirmOverwrite) {
       if(!StatFile(name))
