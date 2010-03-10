@@ -497,8 +497,17 @@ static int luaCall(lua_State *L, void (*_f)(t0)) {
   (*(_f))(luaStack<t0>::get(L,1));
   return 1;
 };
+
 template <>
-int luaCall<void>(lua_State *L,void (*_f)());
+#if (__GNUC__< 4 || (_GNUC__ == 4 && __GNUC_MINOR__ < 3))
+static 
+#endif
+int luaCall<void>(lua_State *L,void (*_f)()) {
+  if (lua_gettop(L)==1)
+    lua_remove(L,1);
+  (*(_f))();
+  return 1;
+}
 
 //const, return
 template <typename tObj, typename tRet, typename t0, typename t1, typename t2, typename t3>
