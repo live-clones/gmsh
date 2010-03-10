@@ -29,6 +29,7 @@
 #include "Bindings.h"
 #include "dgResidual.h"
 #include "drawContext.h"
+#include "GmshMessage.h"
 
 extern "C" {
   #include "lua.h"
@@ -366,6 +367,7 @@ binding::binding(){
   function::registerDefaultFunctions();
   functionLua::registerBindings(this);
   gmshOptions::registerBindings(this);
+  Msg::registerBindings(this);
 }
 binding *binding::_instance=NULL;
 #endif

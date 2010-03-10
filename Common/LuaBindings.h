@@ -256,10 +256,11 @@ class luaStack<const type &>{
   }
 };
 
+//static
 template <typename cb>
 class argTypeNames;
-template <typename tr, typename tObj, typename t0, typename t1, typename t2, typename t3, typename t4, typename t5>
-class argTypeNames<tr (tObj::*)(t0,t1,t2,t3,t4,t5)>{
+template <typename tr, typename t0, typename t1, typename t2, typename t3, typename t4, typename t5>
+class argTypeNames<tr (*)(t0,t1,t2,t3,t4,t5)>{
   public:
   static void get(std::vector<std::string> &names){
     names.clear();
@@ -272,8 +273,8 @@ class argTypeNames<tr (tObj::*)(t0,t1,t2,t3,t4,t5)>{
     names.push_back(luaStack<t5>::getName());
   }
 };
-template <typename tr, typename tObj, typename t0, typename t1, typename t2, typename t3, typename t4>
-class argTypeNames<tr (tObj::*)(t0,t1,t2,t3,t4)>{
+template <typename tr, typename t0, typename t1, typename t2, typename t3, typename t4>
+class argTypeNames<tr (*)(t0,t1,t2,t3,t4)>{
   public:
   static void get(std::vector<std::string> &names){
     names.clear();
@@ -285,8 +286,8 @@ class argTypeNames<tr (tObj::*)(t0,t1,t2,t3,t4)>{
     names.push_back(luaStack<t4>::getName());
   }
 };
-template <typename tr, typename tObj, typename t0, typename t1, typename t2, typename t3>
-class argTypeNames<tr (tObj::*)(t0,t1,t2,t3)>{
+template <typename tr, typename t0, typename t1, typename t2, typename t3>
+class argTypeNames<tr (*)(t0,t1,t2,t3)>{
   public:
   static void get(std::vector<std::string> &names){
     names.clear();
@@ -297,8 +298,8 @@ class argTypeNames<tr (tObj::*)(t0,t1,t2,t3)>{
     names.push_back(luaStack<t3>::getName());
   }
 };
-template <typename tr, typename tObj, typename t0, typename t1, typename t2>
-class argTypeNames<tr (tObj::*)(t0,t1,t2)>{
+template <typename tr, typename t0, typename t1, typename t2>
+class argTypeNames<tr (*)(t0,t1,t2)>{
   public:
   static void get(std::vector<std::string> &names){
     names.clear();
@@ -308,8 +309,8 @@ class argTypeNames<tr (tObj::*)(t0,t1,t2)>{
     names.push_back(luaStack<t2>::getName());
   }
 };
-template <typename tr, typename tObj, typename t0, typename t1>
-class argTypeNames<tr (tObj::*)(t0,t1)>{
+template <typename tr, typename t0, typename t1>
+class argTypeNames<tr (*)(t0,t1)>{
   public:
   static void get(std::vector<std::string> &names){
     names.clear();
@@ -318,8 +319,8 @@ class argTypeNames<tr (tObj::*)(t0,t1)>{
     names.push_back(luaStack<t1>::getName());
   }
 };
-template <typename tr, typename tObj, typename t0>
-class argTypeNames<tr (tObj::*)(t0)>{
+template <typename tr, typename t0>
+class argTypeNames<tr (*)(t0)>{
   public:
   static void get(std::vector<std::string> &names){
     names.clear();
@@ -327,49 +328,104 @@ class argTypeNames<tr (tObj::*)(t0)>{
     names.push_back(luaStack<t0>::getName());
   }
 };
-template <typename tr, typename tObj>
-class argTypeNames<tr (tObj::*)()>{
+template <typename tr>
+class argTypeNames<tr (*)()>{
   public:
   static void get(std::vector<std::string> &names){
     names.clear();
     names.push_back(luaStack<tr>::getName());
   }
 };
+
+template <typename cb>
+class argTypeNames;
+template <typename tr, typename tObj, typename t0, typename t1, typename t2, typename t3, typename t4, typename t5>
+class argTypeNames<tr (tObj::*)(t0,t1,t2,t3,t4,t5)>{
+  public:
+  static void get(std::vector<std::string> &names){
+    argTypeNames<tr(*)(t0,t1,t2,t3,t4,t5)>::get(names);
+  }
+};
+template <typename tr, typename tObj, typename t0, typename t1, typename t2, typename t3, typename t4>
+class argTypeNames<tr (tObj::*)(t0,t1,t2,t3,t4)>{
+  public:
+  static void get(std::vector<std::string> &names){
+    argTypeNames<tr(*)(t0,t1,t2,t3,t4)>::get(names);
+  }
+};
+template <typename tr, typename tObj, typename t0, typename t1, typename t2, typename t3>
+class argTypeNames<tr (tObj::*)(t0,t1,t2,t3)>{
+  public:
+  static void get(std::vector<std::string> &names){
+    argTypeNames<tr(*)(t0,t1,t2,t3)>::get(names);
+  }
+};
+template <typename tr, typename tObj, typename t0, typename t1, typename t2>
+class argTypeNames<tr (tObj::*)(t0,t1,t2)>{
+  public:
+  static void get(std::vector<std::string> &names){
+    argTypeNames<tr(*)(t0,t1,t2)>::get(names);
+  }
+};
+template <typename tr, typename tObj, typename t0, typename t1>
+class argTypeNames<tr (tObj::*)(t0,t1)>{
+  public:
+  static void get(std::vector<std::string> &names){
+    argTypeNames<tr(*)(t0,t1)>::get(names);
+  }
+};
+template <typename tr, typename tObj, typename t0>
+class argTypeNames<tr (tObj::*)(t0)>{
+  public:
+  static void get(std::vector<std::string> &names){
+    argTypeNames<tr(*)(t0)>::get(names);
+  }
+};
+template <typename tr, typename tObj>
+class argTypeNames<tr (tObj::*)()>{
+  public:
+  static void get(std::vector<std::string> &names){
+    argTypeNames<tr(*)()>::get(names);
+  }
+};
+
+
+// const 
 template <typename cb>
 class argTypeNames;
 template <typename tr, typename tObj, typename t0, typename t1, typename t2, typename t3>
 class argTypeNames<tr (tObj::*)(t0,t1,t2,t3)const>{
   public:
   static void get(std::vector<std::string> &names){
-    argTypeNames<tr (tObj::*)(t0,t1,t2,t3)>::get(names);
+    argTypeNames<tr (*)(t0,t1,t2,t3)>::get(names);
   }
 };
 template <typename tr, typename tObj, typename t0, typename t1, typename t2>
 class argTypeNames<tr (tObj::*)(t0,t1,t2)const>{
   public:
   static void get(std::vector<std::string> &names){
-    argTypeNames<tr (tObj::*)(t0,t1,t2)>::get(names);
+    argTypeNames<tr (*)(t0,t1,t2)>::get(names);
   }
 };
 template <typename tr, typename tObj, typename t0, typename t1>
 class argTypeNames<tr (tObj::*)(t0,t1)const>{
   public:
   static void get(std::vector<std::string> &names){
-    argTypeNames<tr (tObj::*)(t0,t1)>::get(names);
+    argTypeNames<tr (*)(t0,t1)>::get(names);
   }
 };
 template <typename tr, typename tObj, typename t0>
 class argTypeNames<tr (tObj::*)(t0)const>{
   public:
   static void get(std::vector<std::string> &names){
-    argTypeNames<tr (tObj::*)(t0)>::get(names);
+    argTypeNames<tr (*)(t0)>::get(names);
   }
 };
 template <typename tr, typename tObj>
 class argTypeNames<tr (tObj::*)()const>{
   public:
   static void get(std::vector<std::string> &names){
-    argTypeNames<tr (tObj::*)()>::get(names);
+    argTypeNames<tr (*)()>::get(names);
   }
 };
 
@@ -377,32 +433,75 @@ class argTypeNames<tr (tObj::*)()const>{
 //static, return 
 template < typename tRet, typename t0, typename t1, typename t2, typename t3>
 static int luaCall(lua_State *L,tRet (*_f)(t0,t1,t2,t3)) {
-  lua_remove(L,1);
+  if (lua_gettop(L)==5)
+    lua_remove(L,1);
   luaStack<tRet>::push(L,(*(_f))(luaStack<t0>::get(L,1),luaStack<t1>::get(L,2),luaStack<t2>::get(L,3),luaStack<t3>::get(L,4)));
   return 1;
 };
 template < typename tRet, typename t0, typename t1, typename t2>
 static int luaCall(lua_State *L,tRet (*_f)(t0,t1,t2)) {
-  lua_remove(L,1);
+  if (lua_gettop(L)==4)
+    lua_remove(L,1);
   luaStack<tRet>::push(L,(*(_f))(luaStack<t0>::get(L,1),luaStack<t1>::get(L,2),luaStack<t2>::get(L,3)));
   return 1;
 };
 template < typename tRet, typename t0, typename t1>
 static int luaCall(lua_State *L,tRet (*_f)(t0,t1)) {
-  lua_remove(L,1);
+  if (lua_gettop(L)==3)
+    lua_remove(L,1);
   luaStack<tRet>::push(L,(*(_f))(luaStack<t0>::get(L,1),luaStack<t1>::get(L,2)));
   return 1;
 };
 template < typename tRet, typename t0>
 static int luaCall(lua_State *L,tRet (*_f)(t0)) {
-  lua_remove(L,1);
+  if (lua_gettop(L)==2)
+    lua_remove(L,1);
   luaStack<tRet>::push(L,(*(_f))(luaStack<t0>::get(L,1)));
   return 1;
 };
 template < typename tRet>
 static int luaCall(lua_State *L,tRet (*_f)()) {
-  lua_remove(L,1);
+  printf("top=%i\n",lua_gettop(L));
+  if (lua_gettop(L)==1)
+    lua_remove(L,1);
   luaStack<tRet>::push(L,(*(_f))());
+  return 1;
+};
+
+//static, no return 
+template < typename t0, typename t1, typename t2, typename t3>
+static int luaCall(lua_State *L, void (*_f)(t0,t1,t2,t3)) {
+  if (lua_gettop(L)==5)
+    lua_remove(L,1);
+  (*(_f))(luaStack<t0>::get(L,1),luaStack<t1>::get(L,2),luaStack<t2>::get(L,3),luaStack<t3>::get(L,4));
+  return 1;
+};
+template <typename t0, typename t1, typename t2>
+static int luaCall(lua_State *L, void (*_f)(t0,t1,t2)) {
+  if (lua_gettop(L)==4)
+    lua_remove(L,1);
+ (*(_f))(luaStack<t0>::get(L,1),luaStack<t1>::get(L,2),luaStack<t2>::get(L,3));
+  return 1;
+};
+template <typename t0, typename t1>
+static int luaCall(lua_State *L,void (*_f)(t0,t1)) {
+  if (lua_gettop(L)==3)
+    lua_remove(L,1);
+  (*(_f))(luaStack<t0>::get(L,1),luaStack<t1>::get(L,2));
+  return 1;
+};
+template <typename t0>
+static int luaCall(lua_State *L, void (*_f)(t0)) {
+  if (lua_gettop(L)==2)
+    lua_remove(L,1);
+  (*(_f))(luaStack<t0>::get(L,1));
+  return 1;
+};
+template < >
+static int luaCall(lua_State *L,void (*_f)()) {
+  if (lua_gettop(L)==1)
+    lua_remove(L,1);
+  (*(_f))();
   return 1;
 };
 

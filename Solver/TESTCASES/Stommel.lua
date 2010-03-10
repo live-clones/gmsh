@@ -17,12 +17,15 @@ void coriolis (fullMatrix<double> &sol, fullMatrix<double> &xyz) {
 }
 ]]
 
-cfile = io.popen("g++ -O3 -pipe -m32 -shared -o tmp.dylib -I ../../Numeric -I../../Common -I../../build/Common -x c++ - ","w");
-cfile:write("#include\"fullMatrix.h\"\nextern \"C\" {")
-cfile:write(CFunctions)
-cfile:write("}")
-cfile:close()
+if (Msg.getCommRank() == 0 ) then
+  cfile = io.popen("g++ -O3 -pipe -m32 -shared -o tmp.dylib -I ../../Numeric -I../../Common -I../../build/Common -x c++ - ","w");
+  cfile:write("#include\"fullMatrix.h\"\nextern \"C\" {")
+  cfile:write(CFunctions)
+  cfile:write("}")
+  cfile:close()
+end
 
+Msg.barrier()
 
 claw = dgConservationLawShallowWater2d()
 claw:addBoundaryCondition('Wall',claw:newBoundaryWall())
@@ -38,7 +41,7 @@ solution = dgDofContainer(groups, claw:getNbFields())
 solution:exportMsh('output/init')
 rk=dgRungeKutta()
 
-for i=1,600 do
+for i=1,60000 do
   norm = rk:iterate33(claw,150*(3/(2.*order+1)/2),solution)
   if ( i%100 ==0 ) then
     print ('iter ', i, norm)

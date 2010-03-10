@@ -19,6 +19,7 @@ class GmshMessage{
   virtual ~GmshMessage(){}
   virtual void operator()(std::string level, std::string message){}
 };
+class binding;
 
 // a class to manage messages
 class Msg {
@@ -79,6 +80,7 @@ class Msg {
   static void InitClient(std::string sockname);
   static GmshClient *GetClient(){ return _client; }
   static void FinalizeClient();
+  static void registerBindings (binding *b);
 };
 
 #endif
