@@ -332,7 +332,7 @@ void dgGroupOfConnections::init() {
 //  -) Elements of different types are separated
 //  -) Then those groups are split into partitions
  
-void dgGroupCollection::buildGroupsOfElements(GModel *model, int dim, int order)
+void dgGroupCollection::buildGroupsOfElements(GModel *model, int dim, int order, std::vector<std::string>* physicalTags)
 {
   if(_groupsOfElementsBuilt)
     return;
@@ -345,7 +345,16 @@ void dgGroupCollection::buildGroupsOfElements(GModel *model, int dim, int order)
   std::multimap<MElement*, short> &ghostsCells = _model->getGhostCells();
   for(unsigned int i = 0; i < entities.size(); i++){
     GEntity *entity = entities[i];
-    if(entity->dim() == dim){
+    bool correctPhysicalTag = false;
+    if(physicalTags==NULL || physicalTags->size()==0)
+      correctPhysicalTag = true;
+    else
+      for(unsigned int iPhy = 0; iPhy < entity->physicals.size(); iPhy++)
+        for(unsigned int jPhy = 0; jPhy < physicalTags->size(); jPhy++)
+          if (_model->getPhysicalName(dim,entity->physicals[iPhy]) == physicalTags->at(jPhy) )
+            correctPhysicalTag = true;
+
+    if(entity->dim() == dim && correctPhysicalTag){
       for (int iel=0; iel<entity->getNumMeshElements(); iel++){
         MElement *el=entity->getMeshElement(iel);
         if(el->getPartition()==Msg::GetCommRank()+1 || el->getPartition()==0){
@@ -1162,7 +1171,21 @@ dgGroupCollection::dgGroupCollection()
 dgGroupCollection::dgGroupCollection(GModel *model, int dimension, int order)
 {
   _groupsOfElementsBuilt=false;_groupsOfInterfacesBuilt=false;
-  buildGroupsOfElements(model,dimension,order);
+  buildGroupsOfElements(model,dimension,order, NULL);
+}
+
+dgGroupCollection::dgGroupCollection(GModel *model, int dimension, int order, std::vector<std::string>* physicalTags)
+{
+  _groupsOfElementsBuilt=false;_groupsOfInterfacesBuilt=false;
+  buildGroupsOfElements(model,dimension,order,physicalTags);
+}
+
+dgGroupCollection* dgGroupCollection::newByTag(GModel *model, int dimension, int order, std::vector<std::string> tags){
+  Msg::Info("Creating %dD groupCollection by tags.",dimension);
+  dgGroupCollection* subCollection = new dgGroupCollection(model,dimension,order,&tags);
+  if (subCollection->getNbElementGroups()==0)
+    Msg::Warning("groupCollection is empty.");
+  return subCollection;
 }
 
 dgGroupCollection::~dgGroupCollection() 
@@ -1207,6 +1230,9 @@ void dgGroupCollection::registerBindings(binding *b)
   cm = cb->addMethod("splitGroupsByVerticalLayer",&dgGroupCollection::splitGroupsByVerticalLayer);
   cm->setDescription("Split the groups according vertical layer structure. The first is defined by the topLevelTags.");
   cm->setArgNames("topLevelTags",NULL);
+  cm = cb->addMethod("newByTag",&dgGroupCollection::newByTag);
+  cm->setDescription("Creates a group collection of elements associated with given physical tag(s).");
+  cm->setArgNames("model","dimension","order","tags",NULL);
   cm = cb->addMethod("getNbElementGroups", &dgGroupCollection::getNbElementGroups);
   cm->setDescription("return the number of dgGroupOfElements");
   cm = cb->addMethod("getNbFaceGroups", &dgGroupCollection::getNbFaceGroups);

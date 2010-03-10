@@ -244,7 +244,7 @@ class dgGroupCollection {
   inline int getImageElementGroup(int partId, int i) const {return _elementsToSend[partId][i].first;}
   inline int getImageElementPositionInGroup(int partId, int i) const {return _elementsToSend[partId][i].second;}
 
-  void buildGroupsOfElements (GModel *model,int dimension, int order);
+  void buildGroupsOfElements (GModel *model,int dimension, int order, std::vector<std::string>* physicalTags);
   void buildGroupsOfInterfaces ();
 
   double splitGroupsForMultirate(int maxLevels,int bufferSize,dgConservationLaw *claw, dgDofContainer *solution);
@@ -253,7 +253,9 @@ class dgGroupCollection {
   void find (MElement *elementToFind, int &iGroup, int &ithElementOfGroup);
 
   dgGroupCollection(GModel *model, int dimension, int order);
+  dgGroupCollection(GModel *model, int dimension, int order, std::vector<std::string>* physicalTags);
   dgGroupCollection();
+  static dgGroupCollection* newByTag(GModel* model, int dimension, int order, std::vector<std::string> tags);
   static void registerBindings(binding *b);
   ~dgGroupCollection();
 };

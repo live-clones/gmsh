@@ -21,22 +21,12 @@ end
 
 -- conservation law
 -- advection speed
-v=fullMatrix(3,1);
-v:set(0,0,0)
-v:set(1,0,0)
-v:set(2,0,0)
-
-nu=fullMatrix(1,1);
-nu:set(0,0,0.01)
-
+vFunc = functionConstant({0.1,0.1,0});
 -- diffusion function
+nuFunc = functionConstant({0});
 
-law = dgConservationLawAdvectionDiffusion(functionConstant(v):getName(),functionConstant(nu):getName())
+law = dgConservationLawAdvectionDiffusion(vFunc:getName(),nuFunc:getName())
 dg:setConservationLaw(law)
-
--- boundary condition
-outside=fullMatrix(1,1)
-outside:set(0,0,0.15)
 
 law:addBoundaryCondition('side1',law:new0FluxBoundary())
 law:addBoundaryCondition('side2',law:new0FluxBoundary())
