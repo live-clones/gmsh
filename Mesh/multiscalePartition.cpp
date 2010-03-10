@@ -363,6 +363,7 @@ void multiscalePartition::partition(partitionLevel & level, int nbParts,
       int nbParts = 2;
       Msg::Info("Mesh partition: level (%d-%d)  is ZERO-GENUS (AR=%d NB=%d) ---> LAPLACIAN partition %d parts",
  		nextLevel->recur,nextLevel->region, AR, NB, nbParts);  
+      //partition(*nextLevel, nbParts, MULTILEVEL);
       partition(*nextLevel, nbParts, LAPLACIAN);
     }
     else {

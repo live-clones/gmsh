@@ -485,7 +485,7 @@ bool GFaceCompound::parametrize() const
   //-----------------
   if (_mapping == HARMONIC){
     Msg::Debug("Parametrizing surface %d with 'harmonic map'", tag()); 
-    //fillNeumannBCS();
+    fillNeumannBCS();
     parametrize(ITERU,HARMONIC); 
     parametrize(ITERV,HARMONIC);
   }
@@ -504,8 +504,8 @@ bool GFaceCompound::parametrize() const
   else if (_mapping == CONFORMAL){
     Msg::Debug("Parametrizing surface %d with 'conformal map'", tag());
     fillNeumannBCS();
-    //bool withoutFolding = parametrize_conformal_spectral() ;
-    bool withoutFolding = parametrize_conformal();
+    bool withoutFolding = parametrize_conformal_spectral() ;
+    //bool withoutFolding = parametrize_conformal();
     if ( withoutFolding == false ){
       //printStuff(); exit(1);
       Msg::Warning("$$$ Parametrization switched to harmonic map");
@@ -533,7 +533,7 @@ bool GFaceCompound::parametrize() const
 
   if (checkAspectRatio() > AR_MAX){
     Msg::Warning("Geometrical aspect ratio too high");
-    //exit(1);
+    exit(1);
     paramOK = false;
   }
 
@@ -950,7 +950,7 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
 	vR = ge->mesh_vertices[j];
 	vR->getParameter(0,tR);
 	if(!vR->getParameter(0,tR)) {
-	  Msg::Error("vertex vr %p not medgevertex \n", vR);
+	  Msg::Error("vertex vr %p not MedgeVertex \n", vR);
 	  Msg::Exit(1);
 	}
 	if(tLoc >= tL && tLoc <= tR){
@@ -1807,7 +1807,8 @@ bool GFaceCompound::checkTopology() const
   double D = H; 
   if (_interior_loops.size() > 0)    D =  getSizeBB(_U0); 
   int AR = (int) checkAspectRatio();
-  //int AR = (int) ceil(H/D);
+  //int AR2 = (int) ceil(H/D);
+  //int AR = std::min(AR, AR2);
 
   if (G != 0 || Nb < 1){
     correctTopo = false;
@@ -1847,8 +1848,8 @@ double GFaceCompound::checkAspectRatio() const
 
   if(allNodes.empty()) buildAllNodes();
   
-  double limit =  1.e-15;
-  double areaMin = 1.e15;
+  double limit =  1.e-17;
+  double areaMin = 1.e20;
   double area3D = 0.0;
   int nb = 0;
   std::list<GFace*>::const_iterator it = _compound.begin();
@@ -1916,34 +1917,34 @@ void GFaceCompound::coherenceNormals()
     MTriangle *t = triangles[i];
     for (int j = 0; j < 3; j++){
       MEdge me = t->getEdge(j);
-      std::map<MEdge, std::set<MTriangle*>, Less_Edge >::iterator it = edge2tris.find(me);
+      std::map<MEdge, std::set<MTriangle*, std::less<MTriangle*> >, Less_Edge >::iterator it = edge2tris.find(me);
       if (it == edge2tris.end()) {
-	std::set<MTriangle*> mySet;
+	std::set<MTriangle*, std::less<MTriangle*> > mySet;
 	mySet.insert(t);
 	edge2tris.insert(std::make_pair(me, mySet));
       }
       else{
-	std::set<MTriangle*> mySet = it->second;
+	std::set<MTriangle*, std::less<MTriangle*> > mySet = it->second;
 	mySet.insert(t);
 	it->second = mySet;
       }
     }
   }
   
-  std::set<MTriangle* > touched;
+  std::set<MTriangle* , std::less<MTriangle*> > touched;
   int iE, si, iE2, si2;
   touched.insert(triangles[0]);
   while(touched.size() != triangles.size()){
     for(unsigned int i = 0; i < triangles.size(); i++){
       MTriangle *t = triangles[i];
-      std::set<MTriangle*>::iterator it2 = touched.find(t);
+      std::set<MTriangle*, std::less<MTriangle*> >::iterator it2 = touched.find(t);
       if(it2 != touched.end()){
 	for (int j = 0; j < 3; j++){
 	  MEdge me = t->getEdge(j);
 	  t->getEdgeInfo(me, iE,si);
 	  std::map<MEdge, std::set<MTriangle*>, Less_Edge >::iterator it = edge2tris.find(me);
-	  std::set<MTriangle*> mySet = it->second;
-	  for(std::set<MTriangle*>::iterator itt = mySet.begin(); itt != mySet.end(); itt++){
+	  std::set<MTriangle*, std::less<MTriangle*> > mySet = it->second;
+	  for(std::set<MTriangle*, std::less<MTriangle*> >::iterator itt = mySet.begin(); itt != mySet.end(); itt++){
 	    if (*itt != t){
 	      (*itt)->getEdgeInfo(me,iE2,si2);
 	      if(si == si2)  (*itt)->revert();

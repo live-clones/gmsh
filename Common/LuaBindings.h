@@ -499,7 +499,7 @@ static int luaCall(lua_State *L, void (*_f)(t0)) {
 };
 
 template <>
-#if (__GNUC__< 4 || (_GNUC__ == 4 && __GNUC_MINOR__ < 3))
+#if (__GNUC__< 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 3))
 static 
 #endif
 int luaCall<void>(lua_State *L,void (*_f)()) {

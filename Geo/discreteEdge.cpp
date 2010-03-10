@@ -243,19 +243,18 @@ void discreteEdge::setBoundVertices()
     +---------------+--------------+----------- ... ----------+
     _pars[0]=0   _pars[1]=1    _pars[2]=2             _pars[N+1]=N+1
 */
-void discreteEdge::parametrize(std::map<MVertex*, MVertex*, std::less<MVertex*> > &old2new)
+void discreteEdge::parametrize( std::map<GFace*,  std::map<MVertex*, MVertex*, std::less<MVertex*> > > &face2Vert)
 { 
   for (unsigned int i = 0; i < lines.size() + 1; i++){
     _pars.push_back(i);
   }
 
   //Replace MVertex by MedgeVertex
-  
+  std::map<MVertex*, MVertex*, std::less<MVertex*> > old2new;	
+  old2new.clear();
   std::vector<MVertex* > newVertices;
   std::vector<MLine*> newLines;
   
-  double t1 = Cpu();
-
   MVertex *vL = getBeginVertex()->mesh_vertices[0];
   int i = 0;
   for(i = 0; i < (int)lines.size() - 1; i++){
@@ -274,15 +273,31 @@ void discreteEdge::parametrize(std::map<MVertex*, MVertex*, std::less<MVertex*> 
   newLines.push_back(new MLine(vL, vR));
   _orientation[i] = 1;
 
-  mesh_vertices = newVertices;
-
   deleteVertexArrays();
   model()->destroyMeshCaches();
 
+  mesh_vertices = newVertices;
   lines.clear();
   lines = newLines;
+  
+  //  we need to recreate lines, triangles and tets
+  //  that contain those new MEdgeVertices
+  
+   for(std::list<GFace*>::iterator iFace = l_faces.begin(); iFace != l_faces.end(); ++iFace){
+     std::map<GFace*,  std::map<MVertex*, MVertex*, std::less<MVertex*> > >::iterator itmap = face2Vert.find(*iFace);
+     if (itmap == face2Vert.end()) {
+       face2Vert.insert(std::make_pair(*iFace, old2new));
+     }
+     else{
+       std::map<MVertex*, MVertex*, std::less<MVertex*> > mapVert = itmap->second;
+       for (std::map<MVertex*, MVertex*, std::less<MVertex*> >::iterator it = old2new.begin(); it != old2new.end(); it++)
+	 mapVert.insert(*it);
+       itmap->second = mapVert;
+     }
+   }
 
-  computeNormals();
+  //computeNormals();
+
  }
 
 void discreteEdge::computeNormals () const

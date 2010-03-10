@@ -25,7 +25,7 @@ class discreteEdge : public GEdge {
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
   virtual Range<double> parBounds(int) const;
-  void parametrize(std::map<MVertex*, MVertex*, std::less<MVertex*> > &old2new);
+  void parametrize( std::map<GFace*, std::map<MVertex*, MVertex*, std::less<MVertex*> > > &face2Verts);
   void orderMLines();
   void setBoundVertices();
   void createTopo();
