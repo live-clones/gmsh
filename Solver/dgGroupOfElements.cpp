@@ -143,7 +143,7 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e,
     }
     for (int alpha=0; alpha<_dimUVW; alpha++){
       for (int i=0; i<nbNodes; i++) for (int j=0; j<nbNodes; j++) {
-        _dPsiDXDPsiDXi(alpha*nbQP+xi, i*nbNodes+j) = g[i][alpha]*f[j]*weight;
+        _PsiDPsiDXi(alpha*nbQP+xi, i*nbNodes+j) = g[i][alpha]*f[j]*weight;
       }
     }
   }
