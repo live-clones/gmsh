@@ -418,11 +418,7 @@ void file_quit_cb(Fl_Widget *w, void *data)
 
 void file_watch_cb(Fl_Widget *w, void *data)
 {
-  if(w){
-    if(fileChooser(FILE_CHOOSER_CREATE, "Watch Pattern", "*")) {
-      CTX::instance()->watchFilePattern = fileChooserGetName(1);
-    }
-  }
+  if(w) CTX::instance()->watchFilePattern = patternChooser();
 
   if(CTX::instance()->watchFilePattern.empty()) return;
 

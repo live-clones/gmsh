@@ -12,5 +12,6 @@ int arrowEditor(const char *title, double &a, double &b, double &c);
 int perspectiveEditor();
 int modelChooser();
 std::string connectionChooser();
+std::string patternChooser();
 
 #endif
