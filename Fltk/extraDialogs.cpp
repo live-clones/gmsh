@@ -366,7 +366,7 @@ std::string patternChooser()
 {
   if(!_patternChooser){
     _patternChooser = new historyChooser
-      ("pattern", "Watch Patern", "Pattern:", "output/*.msh", "Watch");
+      ("pattern", "Watch Pattern", "Pattern:", "output/*.msh", "Watch");
     _patternChooser->browser->callback(pattern_select_cb);
   }
   return _patternChooser->run();
