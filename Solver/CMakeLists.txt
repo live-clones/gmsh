@@ -13,7 +13,6 @@ set(SRC
   multiscaleLaplace.cpp
   dgGroupOfElements.cpp
   dgAlgorithm.cpp
-  dgMgAlgorithm.cpp
   dgRungeKutta.cpp
   dgRungeKuttaMultirate.cpp
   dgConservationLaw.cpp
