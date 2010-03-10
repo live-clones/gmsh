@@ -152,7 +152,7 @@ class MElement
 
   // get parent and children for hierarchial grids
   virtual MElement *getParent() const { return NULL; }
-  virtual void setParent(MElement *p) {}
+  virtual void setParent(MElement *p, bool owner = false) {}
   virtual int getNumChildren() const { return 0; }
   virtual MElement *getChild(int i) const { return NULL; }
   virtual bool ownsParent() const { return false; }
@@ -274,6 +274,8 @@ class MElement
   // return the number of vertices, as well as the element name if
   // 'name' != 0
   static int getInfoMSH(const int typeMSH, const char **const name=0);
+  virtual int getNumVerticesForMSH() { return getNumVertices(); }
+  virtual int *getVerticesIdForMSH();
   static void registerBindings(binding *b);
 };
 

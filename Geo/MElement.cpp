@@ -403,23 +403,29 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
   // if necessary, change the ordering of the vertices to get positive
   // volume
   setVolumePositive();
-  int n = getNumVertices();
+  int n = getNumVerticesForMSH();
+  int par = (parentNum) ? 1 : 0;
+  bool poly = (type == MSH_POLYG_ || type == MSH_POLYH_);
 
   if(!binary){
     fprintf(fp, "%d %d", num ? num : _num, type);
     if(version < 2.0)
       fprintf(fp, " %d %d %d", abs(physical), elementary, n);
     else if(!_partition)
-      fprintf(fp, " 2 %d %d", abs(physical), elementary);
+      fprintf(fp, " %d %d %d", 2 + par, abs(physical), elementary);
     else if(!ghosts)
-      fprintf(fp, " 4 %d %d 1 %d", abs(physical), elementary, _partition);
+      fprintf(fp, " %d %d %d 1 %d", 4 + par, abs(physical), elementary, _partition);
     else{
       int numGhosts = ghosts->size();
-      fprintf(fp, " %d %d %d %d %d", 4 + numGhosts, abs(physical), elementary, 
+      fprintf(fp, " %d %d %d %d %d", 4 + numGhosts + par, abs(physical), elementary, 
               1 + numGhosts, _partition);
       for(unsigned int i = 0; i < ghosts->size(); i++)
         fprintf(fp, " %d", -(*ghosts)[i]);
     }
+    if(version >= 2.0 && parentNum)
+      fprintf(fp, " %d", parentNum);
+    if(version >= 2.0 && poly)
+      fprintf(fp, " %d", n);
   }
   else{
     int numTags, numGhosts = 0;
@@ -429,6 +435,7 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
       numGhosts = ghosts->size();
       numTags = 4 + numGhosts;
     }
+    numTags += par;
     // we write elements in blobs of single elements; this will lead
     // to suboptimal reads, but it's much simpler when the number of
     // tags change from element to element (third-party codes can
@@ -438,14 +445,14 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
                     1 + numGhosts, _partition};
     if(ghosts)
       for(int i = 0; i < numGhosts; i++) blob[8 + i] = -(*ghosts)[i];
+    if(par) blob[8 + numGhosts] = par;
+    if(poly) Msg::Error("Unable to write polygons/polyhedra in binary files.");
     fwrite(blob, sizeof(int), 4 + numTags, fp);
   }
 
   if(physical < 0) revert();
 
-  int verts[60];
-  for(int i = 0; i < n; i++)
-    verts[i] = getVertex(i)->getIndex();
+  int *verts = getVerticesIdForMSH();
 
   if(!binary){
     for(int i = 0; i < n; i++)
@@ -457,6 +464,8 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
   }
 
   if(physical < 0) revert();
+
+  delete [] verts;
 }
 
 void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
@@ -762,6 +771,15 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
     if(name) *name = "Unknown";
     return 0;
   }
+}
+
+int *MElement::getVerticesIdForMSH()
+{
+  int n = getNumVerticesForMSH();
+  int *verts = new int[n];
+  for(int i = 0; i < n; i++)
+    verts[i] = getVertex(i)->getIndex();
+  return verts;
 }
 
 MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,

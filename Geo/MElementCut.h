@@ -97,6 +97,16 @@ class MPolyhedron : public MElement {
   }
   virtual int getType() const { return TYPE_POLYH; }
   virtual int getTypeForMSH() const { return MSH_POLYH_; }
+  virtual void revert()
+  {
+    for(int i = 0; i < _parts.size(); i++)
+      _parts[i]->revert();
+    _vertices.clear();
+    _innerVertices.clear();
+    _edges.clear();
+    _faces.clear();
+    _init();
+  }
   virtual double getVolume()
   {
     double vol = 0;
@@ -123,14 +133,21 @@ class MPolyhedron : public MElement {
   }
   virtual bool isInside(double u, double v, double w);
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
-  virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false,
-                        int num=0, int elementary=1, int physical=1,
-                        int parentNum=0, std::vector<short> *ghosts=0);
   virtual MElement *getParent() const { return _orig; }
-  virtual void setParent(MElement *p) { _orig = p; }
+  virtual void setParent(MElement *p, bool owner = false) { _orig = p; _owner = owner; }
   virtual int getNumChildren() const { return _parts.size(); }
   virtual MElement *getChild(int i) const { return _parts[i]; }
   virtual bool ownsParent() const { return _owner; }
+  virtual int getNumVerticesForMSH() {return _parts.size() * 4;}
+  virtual int *getVerticesIdForMSH()
+  {
+    int n = getNumVerticesForMSH();
+    int *verts = new int [n];
+    for(unsigned int i = 0; i < _parts.size(); i++)
+      for(int j = 0; j < 4; j++)
+        verts[i * 4 + j] = _parts[i]->getVertex(j)->getIndex();
+    return verts;
+  }
 };
 
 class MPolygon : public MElement {
@@ -208,6 +225,15 @@ class MPolygon : public MElement {
   }
   virtual int getType() const { return TYPE_POLYG; }
   virtual int getTypeForMSH() const { return MSH_POLYG_; }
+  virtual void revert()
+  {
+    for(int i = 0; i < _parts.size(); i++)
+      _parts[i]->revert();
+    _vertices.clear();
+    _innerVertices.clear();
+    _edges.clear();
+    _initVertices();
+  }
   virtual const polynomialBasis* getFunctionSpace(int order=-1) const 
   {
     return _orig->getFunctionSpace(order);
@@ -226,14 +252,21 @@ class MPolygon : public MElement {
   }
   virtual bool isInside(double u, double v, double w);
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
-  virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false,
-                        int num=0, int elementary=1, int physical=1,
-                        int parentNum=0, std::vector<short> *ghosts=0);
   virtual MElement *getParent() const { return _orig; }
-  virtual void setParent(MElement *p) { _orig = p; }
+  virtual void setParent(MElement *p, bool owner = false) { _orig = p; _owner = owner; }
   virtual int getNumChildren() const { return _parts.size(); }
   virtual MElement *getChild(int i) const { return _parts[i]; }
   virtual bool ownsParent() const { return _owner; }
+  virtual int getNumVerticesForMSH() {return _parts.size() * 3;}
+  virtual int *getVerticesIdForMSH()
+  {
+    int n = getNumVerticesForMSH();
+    int *verts = new int[n];
+    for(unsigned int i = 0; i < _parts.size(); i++)
+      for(int j = 0; j < 3; j++)
+        verts[i * 3 + j] = _parts[i]->getVertex(j)->getIndex();
+    return verts;
+  }
 };
 
 class MTriangleBorder : public MTriangle {

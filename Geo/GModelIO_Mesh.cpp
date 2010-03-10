@@ -350,6 +350,7 @@ int GModel::readMSH(const std::string &name)
       if(!fgets(str, sizeof(str), fp)) return 0;
       int numElements;
       std::map<int, MElement*> parents;
+      std::set<MElement*> parentsOwned;
       sscanf(str, "%d", &numElements);
       Msg::Info("%d elements", numElements);
       Msg::ResetProgressMeter();
@@ -367,7 +368,6 @@ int GModel::readMSH(const std::string &name)
           else{
             int numTags;
             if(fscanf(fp, "%d %d %d", &num, &type, &numTags) != 3) return 0;
-            std::vector<int> tags(numTags);
             int numPartitions = 0;
             for(int j = 0; j < numTags; j++){
               int tag;
@@ -375,9 +375,9 @@ int GModel::readMSH(const std::string &name)
               if(j == 0) physical = tag;
               else if(j == 1) elementary = tag;
               else if(version < 2.2 && j == 2) partition = tag;
-              else if(version >= 2.2 && j == 2) numPartitions = tag;
+              else if(version >= 2.2 && j == 2 && numTags > 3) numPartitions = tag;
               else if(version >= 2.2 && j == 3) partition = tag;
-              else if(j >= 4 && j < 4 + numPartitions) ghosts.push_back(-tag);
+              else if(j >= 4 && j < 4 + numPartitions - 1) ghosts.push_back(-tag);
               else if(j == numTags - 1) parent = tag;
             }
             if(!(numVertices = MElement::getInfoMSH(type))) {
@@ -407,7 +407,12 @@ int GModel::readMSH(const std::string &name)
               else Msg::Error("Parent element %d not found", parent);
             }
             else p = parents.find(parent)->second;
-            e->setParent(p);
+            if(parentsOwned.find(p) == parentsOwned.end()) {
+              e->setParent(p, true);
+              parentsOwned.insert(p);
+            }
+            else 
+              e->setParent(p, false);
           }
           if(numElements > 100000)
             Msg::ProgressMeter(i + 1, numElements, "Reading elements");
@@ -432,9 +437,13 @@ int GModel::readMSH(const std::string &name)
             int num = data[0];
             int physical = (numTags > 0) ? data[1] : 0;
             int elementary = (numTags > 1) ? data[2] : 0;
-            int numPartitions = (version >= 2.2 && numTags > 2) ? data[3] : 0;
+            int numPartitions = (version >= 2.2 && numTags > 3) ? data[3] : 0;
             int partition = (version < 2.2 && numTags > 2) ? data[3] : 
               (version >= 2.2 && numTags > 3) ? data[4] : 0;
+            int parent = (version < 2.2 && numTags > 3) || 
+              (version >= 2.2 && numPartitions && numTags > 3 + numPartitions) ||
+              (version >= 2.2 && !numPartitions && numTags > 2) ?
+              data[numTags] : 0;
             int *indices = &data[numTags + 1];
             std::vector<MVertex*> vertices;
             if(vertexVector.size()){
@@ -448,6 +457,21 @@ int GModel::readMSH(const std::string &name)
             if(numPartitions > 1)
               for(int j = 0; j < numPartitions - 1; j++)
                 _ghostCells.insert(std::pair<MElement*, short>(e, -data[5 + j]));
+            if(parent) {
+              MElement *p = 0;
+              if(parents.find(parent) == parents.end()){
+                p = getParent(parent, e->getDim(), elements);
+                if(p) parents[parent] = p;
+                else Msg::Error("Parent element %d not found", parent);
+              }
+              else p = parents.find(parent)->second;
+              if(parentsOwned.find(p) == parentsOwned.end()) {
+                e->setParent(p, true);
+                parentsOwned.insert(p);
+              }
+              else 
+                e->setParent(p, false);
+            }
             if(numElements > 100000)
               Msg::ProgressMeter(numElementsPartial + i + 1, numElements,
                                  "Reading elements");

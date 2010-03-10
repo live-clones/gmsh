@@ -81,7 +81,6 @@ set(GMSH_API
   Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h Solver/elasticityTerm.h
     Solver/linearSystem.h Solver/linearSystemGMM.h Solver/linearSystemCSR.h 
     Solver/linearSystemFull.h Solver/elasticitySolver.h
-Solver/c0DgPlateSolver.h 
   Post/PView.h Post/PViewData.h Plugin/PluginManager.h
   Graphics/drawContext.h
   contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h 

@@ -136,57 +136,6 @@ void MPolyhedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *pts = _intpt;
 }
 
-void MPolyhedron::writeMSH(FILE *fp, double version, bool binary, int num,
-                           int elementary, int physical, int parentNum,
-                           std::vector<short> *ghosts)
-{
-  int type = getTypeForMSH();
-
-  if(!type) return;
-
-  // if necessary, change the ordering of the vertices to get positive
-  // volume
-  setVolumePositive();
-  int n = _parts.size() * 4;
-  int numE = getNum();
-  int partE = getPartition();
-
-  if(!binary){
-    fprintf(fp, "%d %d", num ? num : numE, type);
-    if(version < 2.0)
-      fprintf(fp, " %d %d", abs(physical), elementary);
-    else {
-      if(parentNum)
-        fprintf(fp, " 5 %d %d 1 %d %d", abs(physical), elementary, partE, parentNum);
-      else
-        fprintf(fp, " 4 %d %d 1 %d", abs(physical), elementary, partE);
-    }
-  }
-  else{
-    Msg::Error("Binary output not coded for polyhedra");
-  }
-
-  if(physical < 0) revert();
-
-  fprintf(fp, " %d", n);
-  int *verts = new int[n];
-  for(unsigned int i = 0; i < _parts.size(); i++)
-    for(int j = 0; j < 4; j++)
-      verts[i * 4 + j] = _parts[i]->getVertex(j)->getIndex();
-
-  if(!binary){
-    for(int i = 0; i < n; i++)
-      fprintf(fp, " %d", verts[i]);
-    fprintf(fp, "\n");
-  }
-  else{
-    fwrite(verts, sizeof(int), n, fp);
-  }
-
-  if(physical < 0) revert();
-  delete [] verts;
-}
-
 //------------------------------------------- MPolygon ------------------------------
 
 void MPolygon::_initVertices()
@@ -272,57 +221,6 @@ void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
     *npts += nptsi;
   }
   *pts = _intpt;
-}
-
-void MPolygon::writeMSH(FILE *fp, double version, bool binary, int num,
-                        int elementary, int physical, int parentNum,
-                        std::vector<short> *ghosts)
-{
-  int type = getTypeForMSH();
-
-  if(!type) return;
-
-  // if necessary, change the ordering of the vertices to get positive
-  // volume
-  setVolumePositive();
-  int n = _parts.size() * 3;
-  int numE = getNum();
-  int partE = getPartition();
-
-  if(!binary){
-    fprintf(fp, "%d %d", num ? num : numE, type);
-    if(version < 2.0)
-      fprintf(fp, " %d %d", abs(physical), elementary);
-    else {
-      if(parentNum)
-        fprintf(fp, " 5 %d %d 1 %d %d", abs(physical), elementary, partE, parentNum);
-      else
-        fprintf(fp, " 4 %d %d 1 %d", abs(physical), elementary, partE);
-    }
-  }
-  else{
-    Msg::Error("Binary output not coded for polygons");
-  }
-
-  if(physical < 0) revert();
-
-  fprintf(fp, " %d", n);
-  int *verts = new int[n];
-  for(unsigned int i = 0; i < _parts.size(); i++)
-    for(int j = 0; j < 3; j++)
-      verts[i * 3 + j] = _parts[i]->getVertex(j)->getIndex();
-
-  if(!binary){
-    for(int i = 0; i < n; i++)
-      fprintf(fp, " %d", verts[i]);
-    fprintf(fp, "\n");
-  }
-  else{
-    fwrite(verts, sizeof(int), n, fp);
-  }
-
-  if(physical < 0) revert();
-  delete [] verts;
 }
 
 //----------------------------------- MTriangleBorder ------------------------------
