@@ -11,6 +11,8 @@
 #include "GmshMessage.h"
 #include "linearSystem.h"
 
+class binding;
+
 typedef int INDEX_TYPE ;  
 typedef struct {
   int nmax;
@@ -83,6 +85,8 @@ class linearSystemCSR : public linearSystem<scalar> {
     }
     else ptr[position] = n;
   }
+  virtual void getMatrix(INDEX_TYPE*& jptr,INDEX_TYPE*& ai,double*& a);
+
   virtual scalar getFromMatrix (int row, int col) const
   {
     Msg::Error("getFromMatrix not implemented for CSR");
@@ -110,6 +114,7 @@ class linearSystemCSR : public linearSystem<scalar> {
   {
     for(unsigned int i = 0; i < _b->size(); i++) (*_b)[i] = 0.;
   }
+  static void registerBindings(binding *b);
 };
 
 template <class scalar>

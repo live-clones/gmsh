@@ -242,6 +242,44 @@ void dgDofContainer::L2Projection(std::string functionName){
   }
 }
 
+void dgDofContainer::Mesh2Mesh_BuildL2Projection(linearSystemCSR<double> &projector,dgDofContainer &donor){
+//  projector.allocate();
+//  projector.addToMatrix(,,);
+/*nt nbCoarseNodes = 0;	// OLD CODE
+  int nbCoarseElements = 0;
+  int r = 0;
+  for (int kFine = 0;kFine < fineGroups.getNbElementGroups();kFine++) {
+    int nbFineNodes = fineGroups.getElementGroup(kFine)->getNbNodes();
+    fineSol.getGroupProxy(kFine).scale(0);
+    for (int fineElement = 0 ; fineElement<fineGroups.getElementGroup(kFine)->getNbElements() ;++fineElement) {
+      for (int fineNodes = 0 ; fineNodes<nbFineNodes ;++fineNodes) {
+        int kCoarse = 0;
+        int c0 = 0;
+        for (int i = startIndex[r++]; i < startIndex[r] - 1; i++){
+          int c = columns[i];
+          for (;c-c0 < nbCoarseNodes*nbCoarseElements;kCoarse++) {
+            c0 += nbCoarseNodes*nbCoarseElements;
+            nbCoarseNodes = coarseGroups.getElementGroup(kCoarse)->getNbNodes();
+            nbCoarseElements = coarseGroups.getElementGroup(kCoarse)->getNbElements();
+          }
+          int coarseElement = (c-c0)/nbCoarseNodes;
+          int coarseNodes = c-c0-nbCoarseNodes*coarseElement;
+          for (int m = 0; m < nbFields; m++){
+            (fineSol.getGroupProxy(kFine))(fineNodes,fineElement*nbFields+m) += values[i]*(coarseSol.getGroupProxy(kCoarse))(coarseNodes,coarseElement*nbFields+m);
+          }
+        }
+      }
+    }*/
+}
+
+void dgDofContainer::Mesh2Mesh_ApplyL2Projection(linearSystemCSR<double> &projector,dgDofContainer &donor){
+  scale(0.);
+  int *startIndex;
+  int *columns;
+  double *values;
+  projector.getMatrix(startIndex,columns,values);
+}
+
 void dgDofContainer::exportGroupIdMsh(){
   // the elementnodedata::export does not work !!
 

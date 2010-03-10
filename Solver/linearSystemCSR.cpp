@@ -282,6 +282,31 @@ void sortColumns_(int NbLines,
   delete[] count;
 }
 
+template<>
+  void linearSystemCSR<double>::getMatrix(INDEX_TYPE*& jptr,INDEX_TYPE*& ai,double*& a)
+  {
+    jptr = (INDEX_TYPE*) _jptr->array;
+    ai = (INDEX_TYPE*) _ai->array;
+    a = ( double * ) _a->array;
+    if (!sorted)
+      sortColumns_(_b->size(),
+                CSRList_Nbr(_a),
+                (INDEX_TYPE *) _ptr->array,
+                jptr,
+                ai,
+                a);
+    sorted = true;
+  }
+
+#include "Bindings.h"
+
+template<>
+  void linearSystemCSR<double>::registerBindings(binding *b)
+  {
+    classBinding *cb = b->addClass< linearSystemCSR<double> >("linearSystemCSRdouble");
+//    cb->setDescription("A GModel contains a geometrycal and it's mesh.");
+  }
+
 #if defined(HAVE_GMM)
 
 #include "gmm.h"

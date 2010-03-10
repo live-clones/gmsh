@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "fullMatrix.h"
+#include "linearSystemCSR.h"
 class dgGroupCollection;
 class dgGroupOfElements;
 
@@ -42,7 +43,8 @@ public:
   void load(const std::string name);
   void setAll(double v);
   void L2Projection(std::string functionName);
-  void Mesh2Mesh_L2Projection(dgDofContainer &other);
+  void Mesh2Mesh_BuildL2Projection(linearSystemCSR<double> &projector,dgDofContainer &donor);
+  void Mesh2Mesh_ApplyL2Projection(linearSystemCSR<double> &projector,dgDofContainer &donor);
   void exportMsh(const std::string name);
   void exportGroupIdMsh();
   void exportMultirateGroupMsh();

@@ -291,7 +291,7 @@ public:
       for (int k=0;k<_dofContainer->getNbFields();k++){
 	_value(i,k) = 0.0; 	
 	for (int j=0;j<fSize;j++){
-	  _value(i,k) += solEl(j,k)*fs[j]; 		  
+	  _value(i,k) += solEl(j,k)*fs[j];
 	}
       }
     }

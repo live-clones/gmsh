@@ -168,6 +168,7 @@ dgGroupOfElements::~dgGroupOfElements(){
   delete _elementVolume;
 }
 
+
 dgGroupOfFaces::~dgGroupOfFaces()
 {
   if (!_faces.size())return;
