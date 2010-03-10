@@ -42,6 +42,14 @@ extern "C" {
 #include "history.h"
 #endif
 
+template <>
+int luaCall(lua_State *L,void (*_f)()) {
+  if (lua_gettop(L)==1)
+    lua_remove(L,1);
+  (*(_f))();
+  return 1;
+}
+
 //trivial class to bind options
 class gmshOptions {
   public:
