@@ -43,7 +43,7 @@ extern "C" {
 #endif
 
 template <>
-int luaCall(lua_State *L,void (*_f)()) {
+int luaCall<void>(lua_State *L,void (*_f)()) {
   if (lua_gettop(L)==1)
     lua_remove(L,1);
   (*(_f))();

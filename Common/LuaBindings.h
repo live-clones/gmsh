@@ -498,7 +498,7 @@ static int luaCall(lua_State *L, void (*_f)(t0)) {
   return 1;
 };
 template <>
-int luaCall(lua_State *L,void (*_f)());
+int luaCall<void>(lua_State *L,void (*_f)());
 
 //const, return
 template <typename tObj, typename tRet, typename t0, typename t1, typename t2, typename t3>
