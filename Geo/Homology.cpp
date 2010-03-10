@@ -108,10 +108,14 @@ Homology::~Homology()
   
 }
 
-void Homology::findGenerators()
+void Homology::findGenerators(CellComplex* cellComplex)
 {
-  CellComplex* cellComplex = createCellComplex(_domainEntities, 
-					       _subdomainEntities);
+  bool ownComplex = false;
+  if(cellComplex==NULL){
+    CellComplex* cellComplex = createCellComplex(_domainEntities, 
+						 _subdomainEntities);
+    ownComplex = true;
+  }
   std::string domainString = getDomainString(_domain, _subdomain);
 
   Msg::Info("Reducing the Cell Complex...");
@@ -206,7 +210,7 @@ void Homology::findGenerators()
   
   if(_fileName != "") writeGeneratorsMSH();
   
-  delete cellComplex;
+  if(ownComplex) delete cellComplex;
   delete chains;
   
   Msg::Info("Ranks of homology spaces for primal cell complex:");
@@ -221,10 +225,14 @@ void Homology::findGenerators()
 		 HRank[0], HRank[1], HRank[2], HRank[3]);
 }
 
-void Homology::findDualGenerators()
+void Homology::findDualGenerators(CellComplex* cellComplex)
 { 
-  CellComplex* cellComplex = createCellComplex(_domainEntities, 
-					       _subdomainEntities);
+  bool ownComplex = false;
+  if(cellComplex==NULL){
+    CellComplex* cellComplex = createCellComplex(_domainEntities, 
+						 _subdomainEntities);
+    ownComplex = true;
+  }
 
   Msg::Info("Reducing Cell Complex...");
   Msg::StatusBar(1, false, "Reducing...");
@@ -321,7 +329,7 @@ void Homology::findDualGenerators()
 
   if(_fileName != "") writeGeneratorsMSH();
 
-  delete cellComplex;
+  if(ownComplex) delete cellComplex;
   delete chains;
   
   Msg::Info("Ranks of homology spaces for the dual cell complex:");
@@ -445,7 +453,7 @@ void Homology::findHomSequence(){
   }
 
   if(_fileName != "") writeGeneratorsMSH();
-  delete cellComplex;  
+  delete cellComplex;
 }
 
 std::string Homology::getDomainString(const std::vector<int>& domain,

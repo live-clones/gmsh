@@ -130,6 +130,8 @@ class CellComplex
   
   int getNumOmitted() { return _store.size(); }
   std::set<Cell*, Less_Cell> getOmitted(int i) { return _store.at(i); }  
+
+  void restoreComplex();
   
 };
 

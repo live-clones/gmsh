@@ -621,4 +621,23 @@ void  CellComplex::getCells(std::set<Cell*, Less_Cell>& cells,
     }
   }
 }
+
+void CellComplex::restoreComplex()
+{
+  for(int i = 0; i < 4; i++){
+    _cells[i] = _ocells[i];
+    for(citer cit = firstCell(i); cit != lastCell(i); cit++){
+      Cell* cell = *cit;
+      cell->restoreCell();
+    }
+  }
+  for(unsigned int i = 0; i < _newcells.size(); i++){
+    Cell* cell = _newcells.at(i);
+    delete cell;
+  }
+  _newcells.clear();
+  _store.clear();
+}
+
+
 #endif

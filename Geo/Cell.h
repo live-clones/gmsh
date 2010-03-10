@@ -84,6 +84,23 @@ class Cell
   
   virtual MElement* getImageMElement() const { return _image; };
   
+
+  // get the number of vertices this cell has
+  virtual int getNumVertices() const { return _image->getNumVertices(); }
+  // get the number of facets of this cell
+  virtual int getNumFacets() const;
+  // get the vertices on a facet of this cell
+  virtual void getFacetVertices(const int num, std::vector<MVertex*> &v) const;
+  // get boundary cell orientation
+  virtual int getFacetOri(std::vector<MVertex*> &v); 
+  virtual int getFacetOri(Cell* cell) { 
+    std::vector<MVertex*> v; 
+    for(int i = 0; i < cell->getNumVertices(); i++) {
+      v.push_back(cell->getVertex(i));
+    }
+    return getFacetOri(v);
+  }
+
   virtual int getDim() const { return _dim; };
   virtual int getIndex() const { return _index; };
   virtual void setIndex(int index) { _index = index; };
@@ -94,9 +111,6 @@ class Cell
   virtual void setDeleteImage(bool deleteImage) { 
     _deleteImage = deleteImage; };
   virtual bool getDeleteImage() const { return _deleteImage; };
-  
-  // get the number of vertices this cell has
-  virtual int getNumVertices() const { return _image->getNumVertices(); }
   virtual int getSortedVertex(int vertex) const { return _vs.at(vertex); }
   
   // restores the cell information to its original state before reduction
@@ -145,22 +159,7 @@ class Cell
   // print cell debug info
   virtual void printCell();
   virtual void printBoundary(bool org=false);
-  virtual void printCoboundary(bool org=false);
-  
-  // get the number of facets of this cell
-  virtual int getNumFacets() const;
-  // get the vertices on a facet of this cell
-  virtual void getFacetVertices(const int num, std::vector<MVertex*> &v) const;
-  
-  // get boundary cell orientation
-  virtual int getFacetOri(std::vector<MVertex*> &v); 
-  virtual int getFacetOri(Cell* cell) { 
-    std::vector<MVertex*> v; 
-    for(int i = 0; i < cell->getNumVertices(); i++) {
-      v.push_back(cell->getVertex(i));
-    }
-    return getFacetOri(v);
-  }   
+  virtual void printCoboundary(bool org=false);   
   
   // tools for combined cells
   virtual bool isCombined() { return _combined; }
@@ -183,6 +182,14 @@ class Cell
     }
     return true;
   }
+  /*
+  Cell operator=(const Cell& c2) {
+    Cell cell;
+    cell._ocbd = c2._ocbd;
+
+    return cell;
+  }
+  Cell(const Cell& c2){ *this = c2; }*/
 };
 
 // A cell that is a combination of cells of same dimension
@@ -194,18 +201,21 @@ class CombinedCell : public Cell{
   // list of cells this cell is a combination of
   std::list< std::pair<int, Cell*> > _cells;
   
-  MVertex* getVertex(int vertex) const { return NULL; }
+  MVertex* getVertex(int vertex) const {
+    printf("ERROR: No mesh vertices for combined cell."); } 
   
  public:
   
   CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co=false);
   ~CombinedCell() {}
   
-  int getNum() const { return 0; }
-  int getType() const { return 0; }
-  int getTypeForMSH() const { return 0; }
-  int getPartition() const { return 0; }
-  
+  MElement* getImageMElement() const { 
+    printf("ERROR: No image mesh element for combined cell."); }
+  int getNumFacets() const { return 0; }
+  void getFacetVertices(const int num, std::vector<MVertex*> &v) const {}
+  int getFacetOri(std::vector<MVertex*> &v) { return 0; }
+  int getFacetOri(Cell* cell) { return 0; }
+
   int getNumVertices() const { return _vs.size(); } 
   int getSortedVertex(int vertex) const { return _vs.at(vertex); }
 

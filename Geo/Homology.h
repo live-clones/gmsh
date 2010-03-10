@@ -42,8 +42,7 @@ class Homology
   std::vector<GEntity*> _domainEntities;
   std::vector<GEntity*> _subdomainEntities;  
 
-  // generator chains, and their physical group number
-  //std::map<int, Chain*> _generators;
+  // physical group numbers of generator chains in model
   std::vector<int> _generators;
 
   std::string _fileName;
@@ -54,17 +53,20 @@ class Homology
 	   std::vector<int> physicalSubdomain);
   ~Homology();
   
+  
   CellComplex* createCellComplex(std::vector<GEntity*>& domainEntities,
 				 std::vector<GEntity*>& subdomainEntities);
+  CellComplex* createCellComplex() { 
+    return createCellComplex(_domainEntities, _subdomainEntities); }
 
   void setFileName(std::string fileName) { _fileName = fileName; }
 
   // Find the generators/duals of homology spaces,
   // or just compute the ranks of homology spaces
-  void findGenerators();
-  void findDualGenerators();
-  void computeRanks() {}
-  
+  void findGenerators(CellComplex* cellComplex=NULL);
+  void findDualGenerators(CellComplex* cellComplex=NULL);
+
+  void computeRanks() {}  
   void findHomSequence();
 
    

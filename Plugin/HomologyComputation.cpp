@@ -21,7 +21,7 @@ StringXNumber HomologyComputationOptions_Number[] = {
   {GMSH_FULLRC, "PhysicalGroupForSubdomain2", NULL, 0.},
   {GMSH_FULLRC, "ComputeGenerators", NULL, 1.},
   {GMSH_FULLRC, "ComputeCuts", NULL, 0.},
-  {GMSH_FULLRC, "ComputeRanks", NULL, 0.},
+  //{GMSH_FULLRC, "ComputeRanks", NULL, 0.},
 };
 
 StringXString HomologyComputationOptions_String[] = {
@@ -89,29 +89,27 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
 
   int gens = (int)HomologyComputationOptions_Number[4].def;
   int cuts = (int)HomologyComputationOptions_Number[5].def;
-  int rank = (int)HomologyComputationOptions_Number[6].def;  
+  //int rank = (int)HomologyComputationOptions_Number[6].def;  
 
   GModel *m = GModel::current();
   
+  Homology* homology = new Homology(m, domain, subdomain);
+  homology->setFileName(fileName);
+  CellComplex* cc = homology->createCellComplex();
   if(gens != 0){
-    Homology* homology = new Homology(m, domain, subdomain);
-    homology->setFileName(fileName);
-    homology->findGenerators();
-    delete homology; 
+    homology->findGenerators(cc);
   }
   if(cuts != 0){
-    Homology* homology = new Homology(m, domain, subdomain);
-    homology->setFileName(fileName);
-    homology->findDualGenerators();
-    delete homology; 
+    cc->restoreComplex();
+    homology->findDualGenerators(cc);
   }
-  if(rank != 0){
-    Homology* homology = new Homology(m, domain, subdomain);
-    homology->setFileName(fileName);
+  /*if(rank != 0){
     homology->computeRanks();
-    delete homology; 
-  }
+    }*/
   
+  delete cc;
+  delete homology;
+
   return 0;
 }
 
