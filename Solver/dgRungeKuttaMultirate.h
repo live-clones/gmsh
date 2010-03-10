@@ -13,6 +13,7 @@ class dgRungeKuttaMultirate: public dgRungeKutta{
   dgResidualVolume *_residualVolume;
   dgResidualInterface *_residualInterface;
   dgResidualBoundary *_residualBoundary;
+  dgGroupCollection *_gc;
   std::vector<std::pair<std::vector<dgGroupOfElements*>,std::vector<dgGroupOfFaces*> > >_bulkGroupsOfElements;// int is the multirateExponent
   std::vector<std::pair<std::vector<dgGroupOfElements*>,std::vector<dgGroupOfFaces*> > >_innerBufferGroupsOfElements;// int is the multirateExponent
   std::vector<std::pair<std::vector<dgGroupOfElements*>,std::vector<dgGroupOfFaces*> > >_outerBufferGroupsOfElements;// int is the multirateExponent

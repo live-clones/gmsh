@@ -19,6 +19,7 @@
 #include <string.h>
 #endif
 
+
 static fullMatrix<double> * dgGetIntegrationRule (MElement *e, int p){
   int npts;
   IntPt *pts;
@@ -737,7 +738,7 @@ void dgGroupCollection::buildParallelStructure()
 }
 
 // Split the groups of elements depending on their local time step
-double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLaw *claw, dgDofContainer *solution) {
+double dgGroupCollection::splitGroupsForMultirate(int maxLevels,int bufferSize,dgConservationLaw *claw, dgDofContainer *solution) {
   // What are the levels/layers:
   // bulk: elements that are time stepped using the "normal" 4 stage Runge-Kutta
   // innerBuffer: elements that use the small time step but talks to elements using the big time step
@@ -845,32 +846,33 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLa
     else{
       // Add the neighbors elements to the new groups
       // For buffer AND non buffer layers
-      int _lowerLevelGroupIdStart=lowerLevelGroupIdStart;
-      int _lowerLevelGroupIdEnd=lowerLevelGroupIdEnd;
       lowerLevelGroupIdStart=lowerLevelGroupIdEnd;
-      for(int iInterface=0;iInterface<miniInterfaceV->size();iInterface++){
-        dgMiniInterface &interface=miniInterfaceV->at(iInterface);
-        bool toAdd=false;
-        // if one of the elements adjacent to the interface is mapped to the previous level
-        // we check all elements adjacent to this interface, and add those that does not
-        // already have a new group to the current new group
-        for(int iConn=0;iConn<interface.connections.size();iConn++){
-          int gId=interface.connections[iConn].iGroup;
-          int eId=interface.connections[iConn].iElement;
-          int newGroupId=newGroupIds[gId][eId];
-          if(newGroupId>=0 /*newGroupId >= _lowerLevelGroupIdStart && newGroupId<_lowerLevelGroupIdEnd*/){
-            toAdd=true;
-            continue;
-          }
-        }
-        if(toAdd){
+      // We add bufferSize elements (most of the time, bufferSize=1 is enough)
+      for(int iLoop=0;iLoop<bufferSize;iLoop++){
+        for(int iInterface=0;iInterface<miniInterfaceV->size();iInterface++){
+          dgMiniInterface &interface=miniInterfaceV->at(iInterface);
+          bool toAdd=false;
+          // if one of the elements adjacent to the interface is mapped to the previous level
+          // we check all elements adjacent to this interface, and add those that does not
+          // already have a new group to the current new group
           for(int iConn=0;iConn<interface.connections.size();iConn++){
             int gId=interface.connections[iConn].iGroup;
             int eId=interface.connections[iConn].iElement;
             int newGroupId=newGroupIds[gId][eId];
-            if(newGroupId==-1){
-              mapNewGroups[gId].push_back(eId);
-              newGroupIds[gId][eId]=-2;
+            if(newGroupId>=0 || ( newGroupId>-2-iLoop && newGroupId<-1) ){
+              toAdd=true;
+              continue;
+            }
+          }
+          if(toAdd){
+            for(int iConn=0;iConn<interface.connections.size();iConn++){
+              int gId=interface.connections[iConn].iGroup;
+              int eId=interface.connections[iConn].iElement;
+              int newGroupId=newGroupIds[gId][eId];
+              if(newGroupId==-1){
+                mapNewGroups[gId].push_back(eId);
+                newGroupIds[gId][eId]=-2-iLoop;
+              }
             }
           }
         }
@@ -892,22 +894,41 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLa
 
       // We split those elements into bulk and innerBuffer (i.e. those who have a neighbor with a bigger time step)
       lowerLevelGroupIdStart=currentNewGroupId;
+
+#define MAXBUFFERSIZE 100000
+      if(currentExponent>0){
+        for(int iLoop=0;iLoop<bufferSize;iLoop++){
+          for (std::map<int, std::vector<int> >::iterator it = mapNewGroups.begin(); it !=mapNewGroups.end() ; ++it){
+            for(int i=0;i<it->second.size();i++){
+              bool inInnerBuffer=false;
+              int oldGId=it->first;
+              int oldEId=it->second[i];
+              // We only consider elements in the map and not in the inner buffer for a different iLoop
+              if(newGroupIds[oldGId][oldEId]>-2 || newGroupIds[oldGId][oldEId]<-(MAXBUFFERSIZE-1) )
+                continue;
+              for(int iNeighbor=0;iNeighbor<elementToNeighbors[oldGId][oldEId].size();iNeighbor++){
+                std::pair<int,int> neighIds=elementToNeighbors[oldGId][oldEId][iNeighbor];
+                if(newGroupIds[neighIds.first][neighIds.second]==-1-iLoop*MAXBUFFERSIZE){
+                  inInnerBuffer=true;
+                  continue;
+                }
+              }
+              if(inInnerBuffer){
+                newGroupIds[oldGId][oldEId]=-1-(iLoop+1)*MAXBUFFERSIZE;
+              }
+            }
+          }
+        }
+      }
+
       for (std::map<int, std::vector<int> >::iterator it = mapNewGroups.begin(); it !=mapNewGroups.end() ; ++it){
         if(!it->second.empty()){
           std::vector<int>forBulk;
           std::vector<int>forInnerBuffer;
           for(int i=0;i<it->second.size();i++){
-            bool inInnerBuffer=false;
             int oldGId=it->first;
             int oldEId=it->second[i];
-            for(int iNeighbor=0;iNeighbor<elementToNeighbors[oldGId][oldEId].size();iNeighbor++){
-              std::pair<int,int> neighIds=elementToNeighbors[oldGId][oldEId][iNeighbor];
-              if(newGroupIds[neighIds.first][neighIds.second]==-1){
-                inInnerBuffer=true;
-                continue;
-              }
-            }
-            if(inInnerBuffer){
+            if( newGroupIds[oldGId][oldEId]>-2 || newGroupIds[oldGId][oldEId]<-(MAXBUFFERSIZE-1) ){
               forInnerBuffer.push_back(oldEId);
             }
             else{
@@ -994,7 +1015,7 @@ double dgGroupCollection::splitGroupsForMultirate(int maxLevels,dgConservationLa
   // Some stats
   int count=0;
   for(int i=0;i<newGroups.size();i++){
-    Msg::Info("old: %d, level %d, New group # %d has %d elements",oldGroupIds[i],newGroups[i]->getMultirateExponent(),i,newGroups[i]->getNbElements());
+    Msg::Info("Old group #%d, exponent %d, New group #%d has %d elements",oldGroupIds[i],newGroups[i]->getMultirateExponent(),i,newGroups[i]->getNbElements());
     if(newGroups[i]->getIsInnerMultirateBuffer())
       Msg::Info("InnerBuffer");
     else if(newGroups[i]->getIsOuterMultirateBuffer())
@@ -1182,7 +1203,7 @@ void dgGroupCollection::registerBindings(binding *b)
   cm->setDescription("Build the group of interfaces, i.e. boundary interfaces and inter-element interfaces");
   cm = cb->addMethod("splitGroupsForMultirate",&dgGroupCollection::splitGroupsForMultirate);
   cm->setDescription("Split the groups according to their own stable time step");
-  cm->setArgNames("maxLevels","claw","solution",NULL);
+  cm->setArgNames("maxLevels","bufferSize","claw","solution",NULL);
   cm = cb->addMethod("splitGroupsByVerticalLayer",&dgGroupCollection::splitGroupsByVerticalLayer);
   cm->setDescription("Split the groups according vertical layer structure. The first is defined by the topLevelTags.");
   cm->setArgNames("topLevelTags",NULL);

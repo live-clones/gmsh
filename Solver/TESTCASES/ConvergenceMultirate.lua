@@ -17,8 +17,8 @@ function velocity( XYZ, FCT )
   for i=0,XYZ:size1()-1 do
     X = XYZ:get(i,0)
     Y = XYZ:get(i,1)
-    FCT:set(i,0,1) 
-    FCT:set(i,1,0) 
+    FCT:set(i,0,0)
+    FCT:set(i,1,1) 
     FCT:set(i,2,0) 
   end
 end
@@ -62,12 +62,13 @@ FS = functionLua(1, 'initial_condition', {'XYZ'}):getName()
 GC=dgGroupCollection(myModel,2,order)
 solTmp=dgDofContainer(GC,1)
 solTmp:L2Projection(FS)
-dt=GC:splitGroupsForMultirate(3,law,solTmp)
+dt=GC:splitGroupsForMultirate(20,1,law,solTmp)
 GC:buildGroupsOfInterfaces(myModel,2,order)
 solution=dgDofContainer(GC,1)
 solutionRef=dgDofContainer(GC,1)
 solutionRef:L2Projection(FS)
 solution:exportGroupIdMsh()
+solution:exportMultirateGroupMsh()
 solutionRef:exportMsh("solution") 
 
 nRefSteps=100

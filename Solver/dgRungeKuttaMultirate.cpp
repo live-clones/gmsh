@@ -6,12 +6,56 @@
 #include "dgGroupOfElements.h"
 #include <algorithm>
 #include <limits.h>
+#include <stdio.h>
+//#define MULTIRATEVERBOSE
+
+
+static double A43[4][4]={
+     {0, 0, 0, 0},
+     {1.0/2.0, 0, 0 ,0},
+     {-1.0/6.0, 2.0/3.0, 0, 0},
+     {1.0/3.0, -1.0/3.0, 1, 0}
+  };
+static double AInner43[10][10]={
+    {0,         0,         0,         0,         0,         0,         0,         0,         0,         0},
+    {1.0/4.0   ,0,         0,         0,         0,         0,         0,         0,         0,         0},
+    {-1.0/12.0, 1.0/3.0,   0,         0,         0,         0,         0,         0,         0,         0},
+    {1.0/6.0,   -1.0/6.0,  1.0/2.0,   0,         0,         0,         0,         0,         0,         0},
+    {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         0,         0,         0,         0,         0},
+    {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         0,         0,         0,         0,         0},
+    {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         1.0/4.0,   0,         0,         0,         0},
+    {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         -1.0/12.0, 1.0/3.0,   0,         0,         0},
+    {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         1.0/6.0,   -1.0/6.0,  1.0/2.0,   0,         0},
+    {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0, 0}
+  };
+
+  // Big step RK43
+static double AOuter43[10][10]={
+    {0,         0,         0,         0,         0,         0,         0,         0,         0,         0},
+    {1.0/4.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
+    {1.0/4.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
+    {1.0/2.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
+    {1.0/2.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
+    {-1.0/6.0,  0,         0,         0,         2.0/3.0,   0,         0,         0,         0,         0},
+    {1.0/12.0,  0,         0,         0,         1.0/6.0,   1.0/2.0,   0,         0,         0,         0},
+    {1.0/12.0,  0,         0,         0,         1.0/6.0,   1.0/2.0,   0,         0,         0,         0},
+    {1.0/3.0 ,  0,         0,         0,         -1.0/3.0,  1,         0,         0,         0,         0},
+    {1.0/3.0 ,  0,         0,         0,         -1.0/3.0,  1,         0,         0,         0,         0},
+  };
+
+static double b[4]={1.0/6.0, 1.0/3.0, 1.0/3.0, 1.0/6.0};
+static double c[4]={0, 1.0/2.0, 1.0/2.0, 1};
+static double bInner[10]={1.0/12.0, 1.0/6.0, 1.0/6.0,1.0/12.0,0,1.0/12.0, 1.0/6.0, 1.0/6.0,1.0/12.0,0};
+static double cInner[10]={0, 1.0/4.0, 1.0/4.0, 1.0/2.0, 1.0/2.0, 1.0/2.0, 3.0/4.0, 3.0/4.0, 1, 1 };
+static double bOuter[10]={1.0/6.0, 0 , 0 , 0 , 1.0/3.0,1.0/3.0, 0 , 0 , 0 , 1.0/6.0};
+static double cOuter[10]={0, 1.0/4.0, 1.0/4.0, 1.0/2.0, 1.0/2.0, 1.0/2.0, 3.0/4.0, 3.0/4.0, 1, 1 };
 
 dgRungeKuttaMultirate::dgRungeKuttaMultirate(dgGroupCollection* gc,dgConservationLaw *law, int nStages){
   _law=law;
   _residualVolume=new dgResidualVolume(*_law);
   _residualInterface=new dgResidualInterface(*_law);
   _residualBoundary=new dgResidualBoundary(*_law);
+  _gc=gc;
   _K=new dgDofContainer*[nStages];
   for(int i=0;i<nStages;i++){
     _K[i]=new dgDofContainer(gc,_law->getNbFields());
@@ -40,12 +84,6 @@ dgRungeKuttaMultirate::dgRungeKuttaMultirate(dgGroupCollection* gc,dgConservatio
       _bulkGroupsOfElements[ge->getMultirateExponent()].first.push_back(ge);
     }
   }
-//  std::vector<std::set<dgGroupOfFaces*> >bulkFacesSet;
-//  std::vector<std::set<dgGroupOfFaces*> >innerBufferFacesSet;
-//  std::vector<std::set<dgGroupOfFaces*> >outerBufferFacesSet;
-//  bulkFacesSet.resize(_maxExponent+1);
-//  innerBufferFacesSet.resize(_maxExponent+1);
-//  outerBufferFacesSet.resize(_maxExponent+1);
   for(int iGroup=0;iGroup<gc->getNbFaceGroups();iGroup++){
     dgGroupOfFaces *gf=gc->getFaceGroup(iGroup);
     const dgGroupOfElements *ge[2];
@@ -66,7 +104,6 @@ dgRungeKuttaMultirate::dgRungeKuttaMultirate(dgGroupCollection* gc,dgConservatio
     dgGroupOfFaces *gf=gc->getBoundaryGroup(iGroup);
     const dgGroupOfElements *ge[1];
     ge[0]=&gf->getGroupOfConnections(0).getGroupOfElements();
-    //ge[1]=&gf->getGroupRight();
     for(int i=0;i<1;i++){
       if(ge[i]->getIsInnerMultirateBuffer()){
         _innerBufferGroupsOfElements[ge[i]->getMultirateExponent()].second.push_back(gf);
@@ -103,7 +140,11 @@ dgRungeKuttaMultirate::~dgRungeKuttaMultirate(){
 }
 
 void dgRungeKuttaMultirate::computeK(int iK,int exponent,bool isBuffer){
-  //Msg::Info("Compute K%d at level %d %s",iK,exponent,isBuffer?"Buffer":"Bulk");
+#ifdef MULTIRATEVERBOSE
+  for(int i=0;i<exponent;i++)
+    printf("\t");
+  printf("Exponent %d, %s, compute K%d\n",exponent,isBuffer?"    Buffer":"Not buffer",iK);
+#endif
   if(isBuffer){
     std::vector<dgGroupOfElements *>&vei=_innerBufferGroupsOfElements[exponent].first;
     std::vector<dgGroupOfElements *>&veo=_outerBufferGroupsOfElements[exponent].first;
@@ -124,7 +165,6 @@ void dgRungeKuttaMultirate::computeK(int iK,int exponent,bool isBuffer){
       dgGroupOfFaces *faces=*it;
       if(faces->getNbGroupOfConnections()==1){
         _residualBoundary->computeAndMap1Group(*faces,*_currentInput,*_residual);
-        //Msg::Info("Buffer face group %p is boundary in multirate",faces);
       }
       else{
         const dgGroupOfElements *gL = &faces->getGroupOfConnections(0).getGroupOfElements();
@@ -133,11 +173,12 @@ void dgRungeKuttaMultirate::computeK(int iK,int exponent,bool isBuffer){
         fullMatrix<double> residuInterface(faces->getNbNodes(),faces->getNbElements()*2*_law->getNbFields());
         faces->mapToInterface(_law->getNbFields(), _currentInput->getGroupProxy(gL), _currentInput->getGroupProxy(gR), solInterface);
         _residualInterface->compute1Group(*faces,solInterface,_currentInput->getGroupProxy(gL), _currentInput->getGroupProxy(gR),residuInterface);
-        //Msg::Info("Buffer face group %p is mapped left or right in multirate",faces);
-        if(gL->getMultirateExponent()==exponent && gL->getIsMultirateBuffer())
+        if(gL->getMultirateExponent()==exponent && gL->getIsMultirateBuffer()){
           faces->mapLeftFromInterface(_law->getNbFields(), residuInterface,_residual->getGroupProxy(gL));
-        if(gR->getMultirateExponent()==exponent && gR->getIsMultirateBuffer())
+        }
+        if(gR->getMultirateExponent()==exponent && gR->getIsMultirateBuffer()){
           faces->mapRightFromInterface(_law->getNbFields(), residuInterface,_residual->getGroupProxy(gR));
+        }
       }
     }
     fullMatrix<double> iMassEl, KEl,residuEl;
@@ -236,43 +277,25 @@ void dgRungeKuttaMultirate43::computeInputForK(int iK,int exponent,bool isBuffer
   if(exponent>_maxExponent){
     return;
   }
-  //Msg::Info("Input for K%d at level %d %s",iK,exponent,isBuffer?"Buffer":"Bulk");
-  double localDt=_dt/pow(2.0,(double)exponent);
-  double _A[4][4]={
-     {0, 0, 0, 0},
-     {1.0/2.0, 0, 0 ,0},
-     {-1.0/6.0, 2.0/3.0, 0, 0},
-     {1.0/3.0, -1.0/3.0, 1, 0}
-  };
-  double _AInner[10][10]={
-    {0,         0,         0,         0,         0,         0,         0,         0,         0,         0},
-    {1.0/4.0   ,0,         0,         0,         0,         0,         0,         0,         0,         0},
-    {-1.0/12.0, 1.0/3.0,   0,         0,         0,         0,         0,         0,         0,         0},
-    {1.0/6.0,   -1.0/6.0,  1.0/2.0,   0,         0,         0,         0,         0,         0,         0},
-    {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         0,         0,         0,         0,         0},
-    {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         0,         0,         0,         0,         0},
-    {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         1.0/4.0,   0,         0,         0,         0},
-    {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         -1.0/12.0, 1.0/3.0,   0,         0,         0},
-    {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         1.0/6.0,   -1.0/6.0,  1.0/2.0,   0,         0},
-    {1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0,  0,         1.0/12.0,  1.0/6.0,   1.0/6.0,   1.0/12.0, 0}
-  };
+#ifdef MULTIRATEVERBOSE
+  for(int i=0;i<exponent;i++)
+    printf("\t");
+  printf("Exponent %d, %s, input   K%d\n",exponent,isBuffer?"    Buffer":"Not buffer",iK);
+#endif
 
-  // Big step RK43
-  double _AOuter[10][10]={
-    {0,         0,         0,         0,         0,         0,         0,         0,         0,         0},
-    {1.0/4.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
-    {1.0/4.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
-    {1.0/2.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
-    {1.0/2.0 ,  0,         0,         0,         0,         0,         0,         0,         0,         0},
-    {-1.0/6.0,  0,         0,         0,         2.0/3.0,   0,         0,         0,         0,         0},
-    {1.0/12.0,  0,         0,         0,         1.0/6.0,   1.0/2.0,   0,         0,         0,         0},
-    {1.0/12.0,  0,         0,         0,         1.0/6.0,   1.0/2.0,   0,         0,         0,         0},
-    {1.0/3.0 ,  0,         0,         0,         -1.0/3.0,  1,         0,         0,         0,         0},
-    {1.0/3.0 ,  0,         0,         0,         -1.0/3.0,  1,         0,         0,         0,         0},
-  };
-//  Msg::Info("K%d, %d, %s",iK,exponent,isBuffer?"Buffer":"Bulk");
-  // compute K[iK] for this exponent and buffer
-  if(isBuffer){
+  double localDt=_dt/pow(2.0,(double)exponent);
+
+  if(!isBuffer){
+    std::vector<dgGroupOfElements *> &gV=_bulkGroupsOfElements[exponent].first;
+    _currentInput->scale(gV,0.0);
+    _currentInput->axpy(gV,*_solution,1.0);
+    for(int i=0;i<iK;i++){
+      if(A43[iK][i]!=0.0){
+        _currentInput->axpy(gV,*_K[i],A43[iK][i]*localDt);
+      }
+    }
+  }
+  else{
     std::vector<dgGroupOfElements *>&gVi=_innerBufferGroupsOfElements[exponent].first;
     std::vector<dgGroupOfElements *>&gVo=_outerBufferGroupsOfElements[exponent].first;
     _currentInput->scale(gVi,0.0);
@@ -280,21 +303,44 @@ void dgRungeKuttaMultirate43::computeInputForK(int iK,int exponent,bool isBuffer
     _currentInput->axpy(gVi,*_solution,1.0);
     _currentInput->axpy(gVo,*_solution,1.0);
     for(int i=0;i<iK;i++){
-      if(_AInner[iK][i]!=0.0)
-        _currentInput->axpy(gVi,*_K[i],_AInner[iK][i]*localDt*2);
-      if(_AOuter[iK][i]!=0.0)
-        _currentInput->axpy(gVo,*_K[i],_AOuter[iK][i]*localDt*2);
+      if(AInner43[iK][i]!=0.0)
+        _currentInput->axpy(gVi,*_K[i],AInner43[iK][i]*localDt*2);
+      if(AOuter43[iK][i]!=0.0)
+        _currentInput->axpy(gVo,*_K[i],AOuter43[iK][i]*localDt*2);
     }
-  }
-  else{
-    std::vector<dgGroupOfElements *> &gV=_bulkGroupsOfElements[exponent].first;
-    _currentInput->scale(gV,0.0);
-    _currentInput->axpy(gV,*_solution,1.0);
-    for(int i=0;i<iK;i++){
-      if(_A[iK][i]!=0.0){
-        _currentInput->axpy(gV,*_K[i],_A[iK][i]*localDt);
+    /*
+    NOT NEEDED
+    // We need to update input for the neighboring elements with bigger time step.
+    // if there is no corresponding K to be computed
+    if( (iK>0 && iK<4) || (iK>5 && iK<9) ){
+      std::vector<dgGroupOfElements *>&gVbigger=_bulkGroupsOfElements[exponent-1].first;
+      _currentInput->scale(gVbigger,0.0);
+      _currentInput->axpy(gVbigger,*_solution,1.0);
+      int idOuter2Bulk[10]={0,0,0,0,1,2,2,2,2,3};
+      for(int i=0;i<iK;i++){
+        if(AOuter43[iK][i]!=0.0){
+          // ON DIRAIT QUE CETTE LIGNE DE CODE NE FAIT RIEN ...
+          _currentInput->axpy(gVbigger,*_K[idOuter2Bulk[i]],AOuter43[iK][i]*localDt*2);
+        }
+      }
+      std::vector<dgGroupOfElements *>&gViBigger=_innerBufferGroupsOfElements[exponent-1].first;
+      _currentInput->scale(gViBigger,0.0);
+      _currentInput->axpy(gViBigger,*_solution,1.0);
+      // shift
+      int s=0;
+      if(upperLeveliK>=5){
+        for(int i=0;i<4;i++){
+          _currentInput->axpy(gViBigger,*_K[i],b[i]*localDt*2);
+        }
+        s+=5;
+      }
+      for(int i=0;i<iK;i++){
+        if(AOuter43[iK][i]!=0.0){
+          _currentInput->axpy(gViBigger,*_K[idOuter2Bulk[i]+s],AOuter43[iK][i]*localDt*2);
+        }
       }
     }
+    */
   }
 
   if(!isBuffer){
@@ -318,13 +364,32 @@ void dgRungeKuttaMultirate43::computeInputForK(int iK,int exponent,bool isBuffer
       computeInputForK(iK%5,exponent,false);
     }
   }
-  computeK(iK,exponent,isBuffer);
-//  Msg::Info("Multirate %d %0.16e",iK,_K[iK]->norm());
-  if( (iK==3 && !isBuffer) || (iK==9 && isBuffer) ){
-    updateSolution(exponent,isBuffer);
-  }
-  if(!isBuffer){
+  if(exponent==0){
+    computeK(iK,exponent,false);
+    if(iK==3)
+      updateSolution(exponent,false);
     switch(iK){
+      case 0:
+        for(int i=1;i<4;i++){
+          computeInputForK(i,exponent+1,true);
+        }
+        break;
+      case 2:
+        for(int i=6;i<9;i++){
+          computeInputForK(i,exponent+1,true);
+        }
+        break;
+    }
+  }
+  if(isBuffer && exponent>0){
+    if( (iK%5)<4)
+      computeK(iK%5,exponent,false);
+    computeK(iK,exponent,true);
+    if( (iK%5)==3)
+      updateSolution(exponent,false);
+    if(iK==9)
+      updateSolution(exponent,true);
+    switch(iK%5){
       case 0:
         for(int i=1;i<4;i++){
           computeInputForK(i,exponent+1,true);
@@ -340,14 +405,13 @@ void dgRungeKuttaMultirate43::computeInputForK(int iK,int exponent,bool isBuffer
 }
 
 void dgRungeKuttaMultirate43::updateSolution(int exponent,bool isBuffer){
-  //Msg::Info("Updating solution at level %d %s",exponent,isBuffer?"Buffer":"Bulk");
+
+#ifdef MULTIRATEVERBOSE
+  for(int i=0;i<exponent;i++)
+    printf("\t");
+  printf("Updating solution at level %d %s\n",exponent,isBuffer?"Buffer":"Bulk");
+#endif
   double localDt=_dt/pow(2.0,(double)exponent);
-  double b[4]={1.0/6.0, 1.0/3.0, 1.0/3.0, 1.0/6.0};
-  double c[4]={0, 1.0/2.0, 1.0/2.0, 1};
-  double bInner[10]={1.0/12.0, 1.0/6.0, 1.0/6.0,1.0/12.0,0,1.0/12.0, 1.0/6.0, 1.0/6.0,1.0/12.0,0};
-  double cInner[10]={0, 1.0/4.0, 1.0/4.0, 1.0/2.0, 1.0/2.0, 1.0/2.0, 3.0/4.0, 3.0/4.0, 1, 1 };
-  double bOuter[10]={1.0/6.0, 0 , 0 , 0 , 1.0/3.0,1.0/3.0, 0 , 0 , 0 , 1.0/6.0};
-  double cOuter[10]={0, 1.0/4.0, 1.0/4.0, 1.0/2.0, 1.0/2.0, 1.0/2.0, 3.0/4.0, 3.0/4.0, 1, 1 };
   if(isBuffer){
     std::vector<dgGroupOfElements *>&gVi=_innerBufferGroupsOfElements[exponent].first;
     std::vector<dgGroupOfElements *>&gVo=_outerBufferGroupsOfElements[exponent].first;
@@ -364,6 +428,8 @@ void dgRungeKuttaMultirate43::updateSolution(int exponent,bool isBuffer){
       if(b[i]!=0.0)
         _solution->axpy(gV,*_K[i],b[i]*localDt);
     }
+    _currentInput->scale(gV,0.0);
+    _currentInput->axpy(gV,*_solution,1.0);
   }
 }
 
