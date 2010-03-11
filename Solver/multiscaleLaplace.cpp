@@ -215,7 +215,9 @@ static int intersection_segments (SPoint2 &p1, SPoint2 &p2,
 }
 //--------------------------------------------------------------
 static void recur_compute_centers_ (double R, double a1, double a2,
-				    multiscaleLaplaceLevel * root ){
+				    multiscaleLaplaceLevel * root, int &nbElems ){
+  
+  nbElems += root->elements.size();
 
   root->radius = R;
   std::vector<std::pair<SPoint2,multiscaleLaplaceLevel*> > &centers = root->cut;
@@ -227,9 +229,10 @@ static void recur_compute_centers_ (double R, double a1, double a2,
   centers.push_back(std::make_pair(PL,zero));  
   centers.push_back(std::make_pair(PR,zero)); 
  
-  std::map<SPoint2, double> CR;
+  //std::map<SPoint2, double> CR;
   for (int i=0;i<root->children.size();i++){
-    multiscaleLaplaceLevel* m = root->children[i];    
+    multiscaleLaplaceLevel* m = root->children[i]; 
+    if( !m) printf("no child \n");
     centers.push_back(std::make_pair(m->center,m));   
     m->radius = 0.0;
     for (std::map<MVertex*,SPoint2>::iterator it = m->coordinates.begin();
@@ -238,7 +241,7 @@ static void recur_compute_centers_ (double R, double a1, double a2,
       m->radius = std::max(m->radius,sqrt ((m->center.x() - p.x())*(m->center.x() - p.x())+
 					   (m->center.y() - p.y())*(m->center.y() - p.y())));
     }
-    CR.insert(std::make_pair(m->center, m->radius));
+    //CR.insert(std::make_pair(m->center, m->radius));
   }
 
   //add the center of real holes ... 
@@ -278,6 +281,24 @@ static void recur_compute_centers_ (double R, double a1, double a2,
   //sort centers
   std::sort(centers.begin(),centers.end(), sort_pred());
 
+  int nbrecur = 0;
+  for (int i=1;i<centers.size()-1;i++){
+    multiscaleLaplaceLevel* m1 = centers[i-1].second;
+    multiscaleLaplaceLevel* m2 = centers[i].second;
+    multiscaleLaplaceLevel* m3 = centers[i+1].second;
+    if (m2) {
+      nbrecur ++;
+    }
+  }
+  if (root->children.size()!= nbrecur) {
+    printf("children =%d nbrecur =%d \n", root->children.size(), nbrecur);
+    for (int i=0;i<centers.size();i++){
+      printf("center i=%d (%g %g)\n", i, centers[i].first.x(), centers[i].first.x());
+      if(centers[i].second) printf(" level %d recur %d elems =%d\n", centers[i].second->recur, centers[i].second->region );
+    }
+  }
+
+
   for (int i=1;i<centers.size()-1;i++){
     multiscaleLaplaceLevel* m1 = centers[i-1].second;
     multiscaleLaplaceLevel* m2 = centers[i].second;
@@ -285,7 +306,7 @@ static void recur_compute_centers_ (double R, double a1, double a2,
     if (m2){
       a1 = myatan2 (centers[i-1].first.y()- m2->center.y() , centers[i-1].first.x()-m2->center.x()); 
       a2 = myatan2 (centers[i+1].first.y()- m2->center.y() , centers[i+1].first.x()-m2->center.x()); 
-      recur_compute_centers_ (m2->radius, a1, a2, m2);
+      recur_compute_centers_ (m2->radius, a1, a2, m2, nbElems);
     }
   }
 
@@ -486,8 +507,9 @@ static void connectedRegions (std::vector<MElement*> &elements,
 static void recur_cut_ (double R, double a1, double a2,
 			multiscaleLaplaceLevel * root, 
 			std::vector<MElement *> &left, 
-			std::vector<MElement *> &right ){
+			std::vector<MElement *> &right , int &totNbElems){
 
+  totNbElems += root->elements.size();
 
   SPoint2 PL (R*cos(a1),R*sin(a1));
   SPoint2 PR (R*cos(a2),R*sin(a2));
@@ -516,11 +538,11 @@ static void recur_cut_ (double R, double a1, double a2,
 // 	right.push_back(root->elements[i]);
 //     }
 //     else{
-      if (nbIntersect %2 != 0)
-	left.push_back(root->elements[i]);
-      else
-	right.push_back(root->elements[i]);
- //    }
+    if (nbIntersect %2 != 0)
+      left.push_back(root->elements[i]);
+    else
+      right.push_back(root->elements[i]);
+    //}
   }
   
   for (int i = 1; i < centers.size() - 1; i++){
@@ -530,7 +552,7 @@ static void recur_cut_ (double R, double a1, double a2,
     if (m2){
       a1 = myatan2 (centers[i-1].first.y() - m2->center.y() , centers[i-1].first.x() - m2->center.x() ); 
       a2 = myatan2 (centers[i+1].first.y() - m2->center.y() , centers[i+1].first.x() - m2->center.x() );
-      recur_cut_ (m2->radius, a1, a2, m2, left, right);
+      recur_cut_ (m2->radius, a1, a2, m2, left, right, totNbElems);
     }
   }
 }
@@ -783,7 +805,10 @@ multiscaleLaplace::multiscaleLaplace (std::vector<MElement *> &elements,
   root->recur = 0;
   root->region = 0;
   root->scale = 1.0;
-  parametrize(*root);
+
+  int totNbElems = 0;
+  parametrize(*root, totNbElems);
+  printf("PARAM:  elements =%d, totNbElems = %d \n", elements.size(), totNbElems); 
 
   //fill the coordinates
   std::vector<double> iScale; 
@@ -791,7 +816,9 @@ multiscaleLaplace::multiscaleLaplace (std::vector<MElement *> &elements,
   fillCoordinates(*root, allCoordinates, iScale, iCenter);
 
   //Compute centers for the cut
-  recur_compute_centers_ (1.0, M_PI, 0.0, root);
+  int nbElems = 0;
+  recur_compute_centers_ (1.0, M_PI, 0.0, root, nbElems);
+  printf("CENTERS: elements =%d, bElems = %d \n", elements.size(), nbElems);
 
   //Partition the mesh in left and right
   cut (elements); 
@@ -879,7 +906,7 @@ void multiscaleLaplace::fillCoordinates (multiscaleLaplaceLevel & level,
   
 }
 
-void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
+void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level, int &totNbElems){
 
 
   //Compute all nodes for the level
@@ -938,8 +965,7 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
       else  tooSmall.insert(tooSmall.begin(), regGoodSize[i].begin(),  regGoodSize[i].end());
     }
   }
-  level.elements.clear();
-  level.elements = goodSize;
+
 
   //Add the not too small regions to the level.elements 
   std::vector<std::vector<MElement*> >  regions_, regions ;
@@ -955,8 +981,19 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
     }
     if(really_small_elements ) regions.push_back(regions_[i]);
     else
-      level.elements.insert(level.elements.begin(), regions_[i].begin(), regions_[i].end() );
+      goodSize.insert(goodSize.begin(), regions_[i].begin(), regions_[i].end() );
   }  
+
+  int nbsmall = 0;
+  for (unsigned int i = 0; i < regions.size(); i++)   
+  nbsmall += regions[i].size() ;
+  if(level.elements.size() != goodSize.size()+ nbsmall) {
+    printf("allNodes =%d, good =%d + small= %d \n", allNodes.size(), goodSize.size(), nbsmall);
+    exit(1);
+  }
+
+  level.elements.clear();
+  level.elements = goodSize;
 
   //Fill level.coordinates
   std::set<MVertex*> goodSizev;
@@ -968,6 +1005,8 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
       level.coordinates[v] = solution[v];
     }
   }
+
+  totNbElems += level.elements.size();
 
   //Save multiscale meshes
   char name[245];
@@ -1011,7 +1050,7 @@ void multiscaleLaplace::parametrize (multiscaleLaplaceLevel & level){
     if (!tooSmallv.empty()){
       Msg::Info("Level (%d-%d) Multiscale Laplace (reg[%d] =  %d too small)",level.recur,level.region, i, tooSmallv.size());
       level.children.push_back(nextLevel);
-      parametrize (*nextLevel);
+      parametrize (*nextLevel, totNbElems);
     }
   }
 
@@ -1075,16 +1114,15 @@ void multiscaleLaplace::cut (std::vector<MElement *> &elements)
 {
 
   std::vector<MElement*> left,right;
-  recur_cut_ (1.0, M_PI, 0.0, root,left,right);
-  if ( elements.size() != left.size()+right.size()) 
-    Msg::Error("Cutting laplace wrong nb elements (%d) != left + right (%d)",  elements.size(), left.size()+right.size());
-
-  connected_left_right(left, right);
-
+  int totNbElems = 0;
+  recur_cut_ (1.0, M_PI, 0.0, root,left,right, totNbElems);
   if ( elements.size() != left.size()+right.size()) {
-    Msg::Error("Cutting laplace wrong nb elements (%d) != left + right (%d)",  elements.size(), left.size()+right.size());
+    Msg::Error("Cutting laplace wrong nb elements (%d) != left + right (%d) TOTRECUR=%d",  elements.size(), left.size()+right.size(), totNbElems);
     exit(1);
   }
+  connected_left_right(left, right);
+
+
 
   elements.clear();
   elements.insert(elements.end(),left.begin(),left.end());

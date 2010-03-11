@@ -35,7 +35,7 @@ public:
 			std::map<MVertex*, SPoint3> &allCoordinates,
 			std::vector<double> &iScale, 
 			std::vector<SPoint2> &iCenter);
-  void parametrize (multiscaleLaplaceLevel &); 
+  void parametrize (multiscaleLaplaceLevel &, int &totNbElems); 
   void parametrize_method (multiscaleLaplaceLevel & level, 
 			   std::set<MVertex*> &allNodes,
 			   std::map<MVertex*,SPoint2> &solution, 
