@@ -309,35 +309,41 @@ void dgDofContainer::Mesh2Mesh_BuildL2Projection(linearSystemCSRGmm<double> &pro
 
 void dgDofContainer::Mesh2Mesh_ApplyL2Projection(linearSystemCSRGmm<double> &projector,dgDofContainer &donor){
   scale(0.);
+
+  dgGroupCollection* dGroups = donor.getGroups();
+  dgGroupCollection* rGroups = this->getGroups();
+  std::vector<int> dGroupsStartIGlobal(dGroups->getNbElementGroups() + 1);
+  int iGlobal = 0; // indices in global container
+  dGroupsStartIGlobal[0] = 0;
+  for (int i = 1; i<dGroupsStartIGlobal.size(); i++)
+    dGroupsStartIGlobal[i] = dGroupsStartIGlobal[i-1] + dGroups->getElementGroup(i-1)->getNbElements()*dGroups->getElementGroup(i-1)->getNbNodes();
+
   int *startIndex;
   int *columns;
   double *values;
   projector.getMatrix(startIndex,columns,values);
-/*nt nbCoarseNodes = 0; // OLD CODE
-  int nbCoarseElements = 0;
-  int r = 0;
-  for (int kFine = 0;kFine < fineGroups.getNbElementGroups();kFine++) {
-    int nbFineNodes = fineGroups.getElementGroup(kFine)->getNbNodes();
-    fineSol.getGroupProxy(kFine).scale(0);
-    for (int fineElement = 0 ; fineElement<fineGroups.getElementGroup(kFine)->getNbElements() ;++fineElement) {
-      for (int fineNodes = 0 ; fineNodes<nbFineNodes ;++fineNodes) {
-        int kCoarse = 0;
-        int c0 = 0;
-        for (int i = startIndex[r++]; i < startIndex[r] - 1; i++){
-          int c = columns[i];
-          for (;c-c0 < nbCoarseNodes*nbCoarseElements;kCoarse++) {
-            c0 += nbCoarseNodes*nbCoarseElements;
-            nbCoarseNodes = coarseGroups.getElementGroup(kCoarse)->getNbNodes();
-            nbCoarseElements = coarseGroups.getElementGroup(kCoarse)->getNbElements();
+
+int nbFields = 0; // TO DEFINE !!!
+
+  for (int iGroup=0;iGroup<rGroups->getNbElementGroups();iGroup++) {// for 2d.groups
+    const dgGroupOfElements &rGroup = *rGroups->getElementGroup(iGroup);
+    this->getGroupProxy(iGroup).scale(0);
+    for (int iElement=0 ; iElement<rGroup.getNbElements() ;++iElement) {// for elements
+      for (int iNode = 0 ; iNode<rGroup.getNbNodes() ;++iNode) {
+        int jGroup = 0;
+        for (int i = startIndex[iGlobal++]; i < startIndex[iGlobal] - 1; i++){
+          int jGlobal = columns[i];
+          for (;jGlobal < dGroupsStartIGlobal[jGroup+1];jGroup++) {
           }
-          int coarseElement = (c-c0)/nbCoarseNodes;
-          int coarseNodes = c-c0-nbCoarseNodes*coarseElement;
+          int jElement = (jGlobal-dGroupsStartIGlobal[jGroup])/dGroups->getElementGroup(jGroup)->getNbNodes();
+          int jNode = jGlobal-dGroupsStartIGlobal[jGroup]-jElement*dGroups->getElementGroup(jGroup)->getNbNodes();
           for (int m = 0; m < nbFields; m++){
-            (fineSol.getGroupProxy(kFine))(fineNodes,fineElement*nbFields+m) += values[i]*(coarseSol.getGroupProxy(kCoarse))(coarseNodes,coarseElement*nbFields+m);
+            (this->getGroupProxy(iGroup))(iNode,iElement*nbFields+m) += values[i]*(donor.getGroupProxy(jGroup))(jNode,jElement*nbFields+m);
           }
         }
       }
-    }*/
+    }//*/
+  }
 }
 
 void dgDofContainer::exportGroupIdMsh(){
