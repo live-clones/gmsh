@@ -450,44 +450,6 @@ void delaunayizeBDS(GFace *gf, BDS_Mesh &m, int &nb_swap)
   }
 }
 
-void splitEdgePassUnsorted(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
-{
-  int NN1 = m.edges.size();
-  int NN2 = 0;
-  std::list<BDS_Edge*>::iterator it = m.edges.begin();
-  while (1){
-    if (NN2++ >= NN1) break;
-    if (!(*it)->deleted){
-      double lone = NewGetLc(*it, gf, m.scalingU, m.scalingV);
-      if ((*it)->numfaces() == 2 && (lone > MAXE_)){
-        const double coord = 0.5;
-        //const double coord = computeEdgeMiddleCoord((*it)->p1, (*it)->p2, gf,
-        //                                                    m.scalingU, m.scalingV);
-        BDS_Point *mid;
-
-        GPoint gpp = gf->point
-          (m.scalingU*(coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u),
-           m.scalingV*(coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v));
-        if (gpp.succeeded()){  
-          mid  = m.add_point
-            (++m.MAXPOINTNUMBER,
-             coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u,
-             coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v, gf);
-          mid->lcBGM() = BGM_MeshSize
-            (gf,
-             (coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u)*m.scalingU,
-             (coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v)*m.scalingV,
-             mid->X,mid->Y,mid->Z);
-          mid->lc() = 0.5 * ((*it)->p1->lc() +  (*it)->p2->lc());
-          if(!m.split_edge(*it, mid)) m.del_point(mid);
-          else nb_split++;
-        }
-      }
-    }
-    ++it;
-  }
-}
-
 // A test for spheres
 static void midpointsphere(GFace *gf, double u1, double v1, double u2, 
                            double v2, double &u12, double &v12, double r)
@@ -560,13 +522,22 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
         mid  = m.add_point(++m.MAXPOINTNUMBER, gpp.x(),gpp.y(),gpp.z());
         mid->u = U;
         mid->v = V;
-        mid->lcBGM() = BGM_MeshSize
-          (gf,
-           (coord * e->p1->u + (1 - coord) * e->p2->u)*m.scalingU,
-           (coord * e->p1->v + (1 - coord) * e->p2->v)*m.scalingV,
-           mid->X,mid->Y,mid->Z);
-        mid->lc() = 0.5 * (e->p1->lc() +  e->p2->lc());
-        if(!m.split_edge(e, mid)) m.del_point(mid);
+	if (backgroundMesh::current()){
+	  mid->lc() = mid->lcBGM() = 
+	    backgroundMesh::current()->operator() (
+						   (coord * e->p1->u + (1 - coord) * e->p2->u)*m.scalingU,
+						   (coord * e->p1->v + (1 - coord) * e->p2->v)*m.scalingV,
+						   0.0);
+	}
+	else {
+	  mid->lcBGM() = BGM_MeshSize
+	    (gf,
+	     (coord * e->p1->u + (1 - coord) * e->p2->u)*m.scalingU,
+	     (coord * e->p1->v + (1 - coord) * e->p2->v)*m.scalingV,
+	     mid->X,mid->Y,mid->Z);
+	  mid->lc() = 0.5 * (e->p1->lc() +  e->p2->lc());
+	}
+	if(!m.split_edge(e, mid)) m.del_point(mid);
         else nb_split++;
       }
     }

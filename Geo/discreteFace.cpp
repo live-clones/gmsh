@@ -24,6 +24,7 @@ discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
 void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge> &map_edges)
 {
 
+  printf("coucou 3\n");
   std::set<MEdge, Less_Edge> bound_edges;
   for (unsigned int iFace = 0; iFace  < getNumMeshElements() ; iFace++) {
     MElement *e = getMeshElement(iFace);
@@ -34,6 +35,7 @@ void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge> &map_e
       else bound_edges.erase(itset);
     }
   }
+  printf("coucou 4\n");
 
   // for the boundary edges, associate the tag of the current discrete face
   for (std::set<MEdge, Less_Edge>::iterator itv = bound_edges.begin();
@@ -49,7 +51,8 @@ void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge> &map_e
       tagFaces.push_back(tag());
       itmap->second = tagFaces;
     }
- }
+  }
+  printf("coucou 5\n");
 }
 
 void discreteFace::setBoundEdges(std::vector<int> tagEdges)

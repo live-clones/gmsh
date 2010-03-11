@@ -276,7 +276,7 @@ void sortColumns_(int NbLines,
     for (int j = jptr[i]; j < jptr[i + 1] - 1; j++){
       ptr[j] = j + 1;
     }
-    ptr[jptr[i + 1]] = 0;
+    //    ptr[jptr[i + 1]] = 0;
   }
 
   delete[] count;
@@ -351,6 +351,7 @@ extern "C" {
 template<>
 int linearSystemCSRTaucs<double>::systemSolve()
 {
+  if (!_a)return 1;
   if(!sorted){
     sortColumns_(_b->size(),
                 CSRList_Nbr(_a),

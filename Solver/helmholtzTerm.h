@@ -72,7 +72,7 @@ class helmholtzTerm : public femTerm<scalar> {
       const double w = GP[i].pt[2];
       const double weightDetJ = GP[i].weight * e->getJacobian(u, v, w, jac);   
       SPoint3 p; e->pnt(u, v, w, p);
-      const scalar K = (*_k)(p.x(), p.y(), p.z());
+      const scalar K = _k ? (*_k)(p.x(), p.y(), p.z()) : 0.0;
       const scalar A = _a ? (*_a)(p.x(), p.y(), p.z()) : 0.0;
       inv3x3(jac, invjac) ;
       e->getGradShapeFunctions(u, v, w, grads);

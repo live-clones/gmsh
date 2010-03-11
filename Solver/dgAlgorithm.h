@@ -16,6 +16,12 @@ class dgSystemOfEquations;
 
 class dgAlgorithm {
  public :
+  static void jacobianVolume ( //dofManager &dof, // the DOF manager (maybe useless here)
+			      const dgConservationLaw &claw,   // the conservation law
+			      const dgGroupOfElements & group, 
+			      fullMatrix<double> &solution,
+			      fullMatrix<double> &residual);
+
   static void computeElementaryTimeSteps ( //dofManager &dof, // the DOF manager (maybe useless here)
 					  const dgConservationLaw &claw,   // the conservation law
 					  const dgGroupOfElements & group, // the group

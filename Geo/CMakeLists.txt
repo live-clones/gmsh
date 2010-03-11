@@ -28,6 +28,7 @@ set(SRC
   MVertex.cpp
   MFace.cpp
   MElement.cpp
+  MElementOctree.cpp
     MLine.cpp MTriangle.cpp MQuadrangle.cpp MTetrahedron.cpp
     MHexahedron.cpp MPrism.cpp MPyramid.cpp MElementCut.cpp
   MZone.cpp MZoneBoundary.cpp

@@ -9,6 +9,7 @@
 #include <algorithm>
 #include "fullMatrix.h"
 #include "SPoint2.h"
+#include "simpleFunction.h"
 
 class binding;
 class GFace;
@@ -84,8 +85,8 @@ class DocRecord{
   int numTriangles;     // number of triangles
   Triangle *triangles;  // 2D results
   DocRecord(int n);
-  double &x(int i){ return points[i].where.v; } 
-  double &y(int i){ return points[i].where.h; } 
+  double &x(int i){ return points[i].where.h; } 
+  double &y(int i){ return points[i].where.v; } 
   void*  &data(int i){ return points[i].data; } 
   void setPoints(fullMatrix<double> *p);
   ~DocRecord();
@@ -108,7 +109,8 @@ void centroidOfPolygon(SPoint2 &pc,
 		       std::vector<SPoint2> &pts,
 		       double &xc, 
 		       double &yc,
-		       double &inertia);
+		       double &inertia,
+		       simpleFunction<double> *bgm = 0);
 
 
 #endif

@@ -12,12 +12,6 @@
 #include "dgTransformNodalValue.h"
 #include "meshPartition.h"
 
-/*
-  compute 
-    \int \vec{f} \cdot \grad \phi dv   
-*/
-
-
 // works for any number of groups 
 
 /*

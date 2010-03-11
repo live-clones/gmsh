@@ -104,7 +104,7 @@ struct p2data{
          highOrderSmoother *_s)
     : gf(_gf), t1(_t1), t2(_t2), n12(_n12), s(_s)
   {
-    elasticityTerm el(0, 1.e3, .3333,1);
+    elasticityTerm el(0, 1.e3, .48,1);
     s->moveToStraightSidedLocation(t1);
     s->moveToStraightSidedLocation(t2);
     m1 = new fullMatrix<double>(3 * t1->getNumVertices(),
@@ -368,8 +368,8 @@ void highOrderSmoother::optimize(GFace * gf,
     // then try to swap for better configurations  
 
     smooth(gf, true);
-    //int nbSwap = 
-    //swapHighOrderTriangles(gf,edgeVertices,faceVertices,this);
+    int nbSwap = 
+      swapHighOrderTriangles(gf,edgeVertices,faceVertices,this);
     // smooth(gf,true);
     // smooth(gf,true);
     // smooth(gf,true);
@@ -437,7 +437,7 @@ void highOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
   lsys->setPrec(5.e-8);
 #endif
   dofManager<double> myAssembler(lsys);
-  elasticityTerm El(0, 1.0, .333, getTag());
+  elasticityTerm El(0, 1.0, .48, getTag());
   
   std::vector<MElement*> layer, v;
 
@@ -537,10 +537,10 @@ void highOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
 }
 
 double highOrderSmoother::smooth_metric_(std::vector<MElement*>  & v, 
-                                             GFace *gf, 
-                                             dofManager<double> &myAssembler,
-                                             std::set<MVertex*> &verticesToMove,
-                                             elasticityTerm &El)
+					 GFace *gf, 
+					 dofManager<double> &myAssembler,
+					 std::set<MVertex*> &verticesToMove,
+					 elasticityTerm &El)
 {
   std::set<MVertex*>::iterator it;
 
@@ -711,8 +711,8 @@ void highOrderSmoother::smooth(std::vector<MElement*> &all)
 }
 
 void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
-				       std::vector<MElement*>& old_elems,
-				       GFace* gf) {
+				      std::vector<MElement*>& old_elems,
+				      GFace* gf) {
  
   printf("Smoothing a cavity...\n");
   printf("Old elems : %d and %d\n", old_elems[0]->getNum(), old_elems[1]->getNum());
@@ -741,7 +741,6 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
   v.insert(v.end(), gf->quadrangles.begin(),gf->quadrangles.end());
 
   addOneLayer(v,cavity,layer);
-  //addOneLayer(v,old_elems,layer);
 
   for (unsigned int i = 0; i < layer.size(); i++){
     if (find(old_elems.begin(), old_elems.end(), layer[i]) == old_elems.end()) {
@@ -750,7 +749,7 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
 	MVertex *vert = layer[i]->getVertex(j);
 	myAssembler.fixVertex(vert, 0, getTag(), 0);
 	myAssembler.fixVertex(vert, 1, getTag(), 0);
-	printf("Fixing vertex %d\n", vert->getNum());
+	printf("Fixing vertex (internal) %d\n", vert->getNum());
       }
     }
   }
@@ -764,11 +763,13 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
   //std::map<MVertex*,SVector3> verticesToMove;
   std::set<MVertex*> verticesToMove;
 
+  printf(" size = %d\n",_straightSidedLocation.size());
+
   for (unsigned int i = 0; i < cavity.size(); i++){
     for (int j = 0; j < cavity[i]->getNumVertices(); j++){
       MVertex *vert = cavity[i]->getVertex(j);
       its = _straightSidedLocation.find(vert);
-      if (its != _straightSidedLocation.end()) {
+      if (its == _straightSidedLocation.end()) {
 	printf("SETTING LOCATIONS for %d\n",vert->getNum());
         _straightSidedLocation[vert] = 
           SVector3(vert->x(), vert->y(), vert->z());     
@@ -781,7 +782,7 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
         if (vert->onWhat()->dim() < _dim){
           myAssembler.fixVertex(vert, 0, getTag(), 0);
           myAssembler.fixVertex(vert, 1, getTag(), 0);
-	  printf("Fixing vertex %d\n", vert->getNum());
+	  printf("Fixing vertex (boundary) %d\n", vert->getNum());
         }
       }
     }

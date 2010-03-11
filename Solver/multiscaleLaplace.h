@@ -20,6 +20,7 @@ struct multiscaleLaplaceLevel {
   std::vector<MElement *> elements;
   std::map<MVertex*,SPoint2> coordinates;
   std::vector<std::pair<SPoint2,multiscaleLaplaceLevel*> > cut;
+  std::string _name;
 };
 
 class multiscaleLaplace{

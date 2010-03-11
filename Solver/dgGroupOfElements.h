@@ -67,6 +67,8 @@ class dgGroupOfElements {
   // the gradient of shape functions (in parametric space)
   // for both diffusive and convective fluxes
   fullMatrix<double> *_redistributionFluxes[3];
+  // redistribution of the jacobian of fluxes to vertices 
+  //  fullMatrix<double> *_redistributionJacobianOfFluxes[3];
   // redistribution for the source term
   fullMatrix<double> *_redistributionSource;
   // inverse mass matrix of all elements
@@ -111,6 +113,7 @@ public:
   inline const fullMatrix<double> & getIntegrationPointsMatrix () const {return *_integration;}
   inline const fullMatrix<double> & getCollocationMatrix () const {return *_collocation;}
   inline const fullMatrix<double> & getFluxRedistributionMatrix (int i) const {return *_redistributionFluxes[i];}
+  //  inline const fullMatrix<double> & getJacobianOfFluxRedistributionMatrix (int i) const {return *_redistributionJacobianOfFluxes[i];}
   inline const fullMatrix<double> & getSourceRedistributionMatrix () const {return *_redistributionSource;}
   inline const fullMatrix<double> & getDPsiDXDPsiDXi() const {return _dPsiDXDPsiDXi;}
   inline const fullMatrix<double> & getPsiDPsiDXi() const {return _PsiDPsiDXi;}

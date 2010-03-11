@@ -116,6 +116,7 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e,
   }
   // redistribution matrix
   // quadrature weight x parametric gradients in quadrature points
+  // redistribition Jacobian Matrix : quadrature weight x parametric gradients x shapefunctions
 
   _PsiDPsiDXi = fullMatrix<double> (_dimUVW*nbQP, nbNodes*nbNodes);
   //reditribution of the diffusive jacobian dimUVW*dimUVW*nbIntegrationPoints x nbNodes*nbNodes
@@ -135,6 +136,11 @@ dgGroupOfElements::dgGroupOfElements(const std::vector<MElement*> &e,
       (*_redistributionFluxes[2])(k,xi) = g[k][2] * weight;
       (*_redistributionSource)(k,xi) = f[k] * weight;
       (*_collocation)(xi,k) = f[k];
+      //      for (int l=0;l<_fs.coefficients.size1();l++){
+      //	(*_redistributionJacobianOfFluxes[0])(l+_fs.coefficients.size1()*k,j) = g[k][0] * f[l] * weight;
+      //	(*_redistributionJacobianOfFluxes[0])(l+_fs.coefficients.size1()*k,j) = g[k][1] * f[l] * weight;
+      //	(*_redistributionJacobianOfFluxes[0])(l+_fs.coefficients.size1()*k,j) = g[k][2] * f[l] * weight;
+      //      } 
     }
     for (int alpha=0; alpha<_dimUVW; alpha++) for (int beta=0; beta<_dimUVW; beta++) {
       for (int i=0; i<nbNodes; i++) for (int j=0; j<nbNodes; j++) {
@@ -157,6 +163,9 @@ void dgGroupOfElements::copyPrivateDataFrom(const dgGroupOfElements *from){
 
 dgGroupOfElements::~dgGroupOfElements(){
   delete _integration;
+  //  delete _redistributionJacobianOfFluxes[0];
+  //  delete _redistributionJacobianOfFluxes[1];
+  //  delete _redistributionJacobianOfFluxes[2];
   delete _redistributionFluxes[0];
   delete _redistributionFluxes[1];
   delete _redistributionFluxes[2];

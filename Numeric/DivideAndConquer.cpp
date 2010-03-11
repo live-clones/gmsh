@@ -617,16 +617,21 @@ void centroidOfOrientedBox(std::vector<SPoint2> &pts, const double &angle,
 }
 
 void centroidOfPolygon(SPoint2 &pc, std::vector<SPoint2> &pts,
-		       double &xc, double &yc, double &inertia)
+		       double &xc, double &yc, double &inertia,
+		       simpleFunction<double> *bgm)
 {
   double area_tot = 0;
   SPoint2 center(0,0);
   for (unsigned int j = 0; j < pts.size(); j++){
     SPoint2 &pa = pts[j];
     SPoint2 &pb = pts[(j+1)%pts.size()];
-    const double area  = triangle_area2d(pa,pb,pc);     
-    area_tot += area;
-    center += ((pa+pb+pc) * (area/3.0));
+    const double area  = triangle_area2d(pa,pb,pc);         
+    const double lc = bgm ? (*bgm)((pa.x()+pb.x()+pc.x())/3.0,
+				   (pa.y()+pb.y()+pc.y())/3.0,
+				   0.0) : 1.0;
+    const double fact = 1./(lc*lc);
+    area_tot += area*fact;
+    center += ((pa+pb+pc) * (area*fact/3.0));
   }
   SPoint2 x = center * (1.0/area_tot);
   inertia = 0;

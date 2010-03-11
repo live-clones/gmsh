@@ -1289,6 +1289,20 @@ void meshGFace::operator() (GFace *gf)
 
   Msg::Debug("Type %d %d triangles generated, %d internal vertices",
              gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
+
+  // test : recompute the background mesh using a PDE
+  /*
+    if (backgroundMesh::current()){
+    backgroundMesh::unset();
+    }    
+    else{
+    backgroundMesh::set(gf);
+    char name[256];
+    sprintf(name,"bgm-%d.pos",gf->tag());
+    backgroundMesh::current()->print(name,gf);
+    (*this)(gf);
+    }
+  */
 }
 
 bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge*> &edges)
@@ -1409,7 +1423,7 @@ void partitionAndRemesh(GFaceCompound *gf)
     GFace *gfc =  gf->model()->getFaceByTag(numf + NF + i );
     meshGFace mgf;
     mgf(gfc);
-    //lloyd(gfc);
+    //    gfc->lloyd(20,0);
 
     for(unsigned int j = 0; j < gfc->triangles.size(); ++j){
       MTriangle *t = gfc->triangles[j];

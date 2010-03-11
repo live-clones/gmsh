@@ -7,10 +7,12 @@
 #include "MTriangle.h"
 #include "Context.h"
 #include "meshGFace.h"
+#include "BackgroundMesh.h"
 
 
 void lloydAlgorithm::operator () ( GFace * gf) {
   std::set<MVertex*> all;
+
   // get all the points of the face ...
 
   for (unsigned int i = 0; i < gf->getNumMeshElements(); i++){
@@ -20,6 +22,8 @@ void lloydAlgorithm::operator () ( GFace * gf) {
     }
   }
 
+  backgroundMesh::set(gf);
+  backgroundMesh::current()->print("bgm.pos",0);
 
   // Create a triangulator
   DocRecord triangulator (all.size());
@@ -39,8 +43,8 @@ void lloydAlgorithm::operator () ( GFace * gf) {
     SPoint2 p;
     bool success = reparamMeshVertexOnFace(*it, gf, p);
     if (!success) {
-      printf("loyd no succes exit \n");
-      exit(1);
+      Msg::Error("Impossible to apply Lloyd to model face %d",gf->tag());
+      Msg::Error("A mesh vertex cannot be reparametrized");
       return;
     }
     double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() / 
@@ -75,7 +79,7 @@ void lloydAlgorithm::operator () ( GFace * gf) {
 	double E;
 	SPoint2 p(pt.where.h,pt.where.v);
 	if (!infiniteNorm){
-	  centroidOfPolygon (p,pts, cgs(i,0),cgs(i,1),E);	  
+	  centroidOfPolygon (p,pts, cgs(i,0),cgs(i,1),E,backgroundMesh::current());	  
 	}
 	else {
 	  centroidOfOrientedBox (pts, 0.0, cgs(i,0),cgs(i,1),E);	  
@@ -89,7 +93,7 @@ void lloydAlgorithm::operator () ( GFace * gf) {
     if (ITER % 10 == 0){
       char name[234];
       sprintf(name,"LloydIter%d.pos",ITER);
-      //      triangulator.makePosView(name);
+      triangulator.makePosView(name);
     }
 
     for(PointNumero i = 0; i < triangulator.numPoints; i++) {
@@ -109,7 +113,7 @@ void lloydAlgorithm::operator () ( GFace * gf) {
   // now create the vertices
   std::vector<MVertex*> mesh_vertices;
   for (int i=0; i<triangulator.numPoints;i++){
-    // get the ith v2ertex
+    // get the ith vertex
     PointRecord &pt = triangulator.points[i];
     MVertex *v = (MVertex*)pt.data;
     if (v->onWhat() == gf && !triangulator.onHull(i)){

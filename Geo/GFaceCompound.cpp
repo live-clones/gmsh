@@ -790,7 +790,7 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
     linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
     _lsysb->setGmres(1);
     _lsys = _lsysb;
-#elif defined(_HAVE_TAUCS) 
+#elif defined(HAVE_TAUCS) 
     _lsys = new linearSystemCSRTaucs<double>;
 #else
     _lsys = new linearSystemFull<double>;
