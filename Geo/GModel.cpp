@@ -1133,7 +1133,6 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
       discEdges.push_back((discreteEdge*) *it);
   }
 
-  printf("coucou1\n");
 
   // find boundary edges of each face and put them in a map_edges that
   // associates the MEdges with the tags of the adjacent faces
@@ -1142,7 +1141,6 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
        it != discFaces.end(); it++)
     (*it)->findEdges(map_edges);
 
-  printf("coucou2\n");
 
   
   //return if no boundary edges (torus, sphere, ...)

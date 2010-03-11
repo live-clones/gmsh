@@ -518,7 +518,6 @@ bool GFaceCompound::parametrize() const
   //compute_distance();
 
   buildOct();  
-  printStuff();
 
   if (!checkOrientation(0)){
     Msg::Info("--- Parametrization switched to convex combination map");
@@ -530,6 +529,8 @@ bool GFaceCompound::parametrize() const
     checkOrientation(0);
     buildOct();
   }
+
+  printStuff();
 
   double AR = checkAspectRatio();
   if (floor(AR)  > AR_MAX){

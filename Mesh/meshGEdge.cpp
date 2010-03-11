@@ -278,8 +278,10 @@ void meshGEdge::operator() (GEdge *ge)
   else
     Msg::Debug("Curve %d has a zero length", ge->tag());
 
-  if(length < CTX::instance()->mesh.toleranceEdgeLength) ge->setTooSmall(true);
-
+  if(length < CTX::instance()->mesh.toleranceEdgeLength) {
+    //    printf("AAAAAAAAAAAAAAAAAAAARGHHHHHHHHHHHHHHHHHHHHHHHH\n");
+    ge->setTooSmall(true);
+  }
   // Integrate detJ/lc du 
   double a;
   int N;

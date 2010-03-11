@@ -401,7 +401,7 @@ static void Mesh2D(GModel *m)
   double t1 = Cpu();
 
   // skip short mesh edges
-  geomTresholdVertexEquivalence inst(m);
+  //geomTresholdVertexEquivalence inst(m);
 
   // boundary layers are special: their generation (including vertices
   // and curve meshes) is global as it depends on a smooth normal

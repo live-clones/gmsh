@@ -139,7 +139,6 @@ void discreteEdge::orderMLines()
   if (lines.size() < 2) return;
   if (_orientation[0] && lines[0]->getVertex(1) != lines[1]->getVertex(1)
       && lines[0]->getVertex(1) != lines[1]->getVertex(0)){
-    printf("coucou here \n");
     for (unsigned int i = 0; i < lines.size(); i++) _orientation[i] = !_orientation[i];
   }
 
@@ -295,7 +294,6 @@ void discreteEdge::parametrize( std::map<GFace*,  std::map<MVertex*, MVertex*, s
        itmap->second = mapVert;
      }
    }
-
 }
 
 void discreteEdge::computeNormals () const

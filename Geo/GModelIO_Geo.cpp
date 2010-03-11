@@ -74,6 +74,7 @@ int GModel::exportDiscreteGEOInternals()
  	  c->end = v;
  	}	
       }
+      End_Curve(c);
       Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
       CreateReversedCurve(c);
     }
@@ -153,7 +154,9 @@ int GModel::importGEOInternals()
           e->resetMeshAttributes();
         if(!c->Visible) e->setVisibility(0);
         if(c->Color.type) e->setColor(c->Color.mesh);
-        if(c->degenerated) e->setTooSmall(true);
+        if(c->degenerated) {
+	  e->setTooSmall(true);
+	}
       }
     }
     List_Delete(curves);
