@@ -1076,6 +1076,9 @@ void multiscaleLaplace::cut (std::vector<MElement *> &elements)
 
   std::vector<MElement*> left,right;
   recur_cut_ (1.0, M_PI, 0.0, root,left,right);
+  if ( elements.size() != left.size()+right.size()) 
+    Msg::Error("Cutting laplace wrong nb elements (%d) != left + right (%d)",  elements.size(), left.size()+right.size());
+
   connected_left_right(left, right);
 
   if ( elements.size() != left.size()+right.size()) {

@@ -19,7 +19,7 @@
 #include "meshGFaceOptimize.h"
 #include "linearSystem.h"
 
-#define AR_MAX 5 //maximal geometrical spacte ratio
+#define AR_MAX 5 //maximal geometrical aspect ratio
 
 /*
 A GFaceCompound is a model face that is the compound of model faces.

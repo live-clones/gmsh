@@ -296,9 +296,7 @@ void discreteEdge::parametrize( std::map<GFace*,  std::map<MVertex*, MVertex*, s
      }
    }
 
-  //computeNormals();
-
- }
+}
 
 void discreteEdge::computeNormals () const
 {
@@ -383,6 +381,9 @@ GPoint discreteEdge::point(double par) const
   }
   else{
     //curved PN triangle
+
+    if (_normals.empty() ) computeNormals();
+
     const SVector3 n1 = _normals[vB];
     const SVector3 n2 = _normals[vE];
     

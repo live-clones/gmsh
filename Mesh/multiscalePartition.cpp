@@ -212,7 +212,7 @@ static int getAspectRatio(std::vector<MElement *> &elements,
   }
   int AR2 = (int)ceil(H/D);
   
-  return std::min(AR, AR2);
+  return std::max(AR, AR2);
 }
 
 static void getGenusAndRatio(std::vector<MElement *> &elements, int & genus, int &AR, int &NB)

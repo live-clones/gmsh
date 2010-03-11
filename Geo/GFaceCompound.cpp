@@ -531,10 +531,11 @@ bool GFaceCompound::parametrize() const
     buildOct();
   }
 
-  if (checkAspectRatio() > AR_MAX){
-    Msg::Warning("Geometrical aspect ratio too high");
-    exit(1);
-    paramOK = false;
+  double AR = checkAspectRatio();
+  if (floor(AR)  > AR_MAX){
+    Msg::Warning("Geometrical aspect ratio too high %d ", AR);
+    //exit(1);
+    paramOK = true; //false;
   }
 
   return paramOK;
@@ -1806,9 +1807,9 @@ bool GFaceCompound::checkTopology() const
   double H = getSizeH();
   double D = H; 
   if (_interior_loops.size() > 0)    D =  getSizeBB(_U0); 
-  int AR = (int) checkAspectRatio();
-  //int AR2 = (int) ceil(H/D);
-  //int AR = std::min(AR, AR2);
+  int AR1 = (int) checkAspectRatio();
+  int AR2 = (int) ceil(H/D);
+  int AR = std::min(AR1, AR2);
 
   if (G != 0 || Nb < 1){
     correctTopo = false;
