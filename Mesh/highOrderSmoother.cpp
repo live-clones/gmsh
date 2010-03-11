@@ -1411,10 +1411,11 @@ static int swapHighOrderTriangles(GFace *gf,
     }    
   }
 
-  printf("Deleted %d (%d) vertices from %d\n",c2,v_removed.size(),gf->mesh_vertices.size());
+  Msg::Info("Deleted %d (%d) vertices from %d", c2,
+            (int)v_removed.size(), (int)gf->mesh_vertices.size());
   gf->mesh_vertices = mesh_vertices2;
-  printf("Deleted %d vertices from %d\n", c2, (int)gf->mesh_vertices.size());
-  printf("Added %d vertices\n",c1);
+  Msg::Info("Deleted %d vertices from %d", c2, (int)gf->mesh_vertices.size());
+  Msg::Info("Added %d vertices",c1);
 
   for (unsigned int i = 0; i < gf->triangles.size(); i++){
     if (t_removed.find(gf->triangles[i]) == t_removed.end()){
@@ -1425,7 +1426,8 @@ static int swapHighOrderTriangles(GFace *gf,
     }    
   }
 
-  printf("replacing triangles %d by %d\n",gf->triangles.size(),triangles2.size());
+  Msg::Info("replacing triangles %d by %d", (int)gf->triangles.size(),
+            (int)triangles2.size());
   gf->triangles = triangles2;
   return nbSwap;
 }
