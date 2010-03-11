@@ -9,7 +9,7 @@
 #include <stdio.h>
 //#define MULTIRATEVERBOSE
 
-
+//Butcher tables for RK43 (Schlegel)
 static double A43[4][4]={
      {0, 0, 0, 0},
      {1.0/2.0, 0, 0 ,0},
@@ -43,12 +43,39 @@ static double AOuter43[10][10]={
     {1.0/3.0 ,  0,         0,         0,         -1.0/3.0,  1,         0,         0,         0,         0},
   };
 
-static double b[4]={1.0/6.0, 1.0/3.0, 1.0/3.0, 1.0/6.0};
-static double c[4]={0, 1.0/2.0, 1.0/2.0, 1};
-static double bInner[10]={1.0/12.0, 1.0/6.0, 1.0/6.0,1.0/12.0,0,1.0/12.0, 1.0/6.0, 1.0/6.0,1.0/12.0,0};
-static double cInner[10]={0, 1.0/4.0, 1.0/4.0, 1.0/2.0, 1.0/2.0, 1.0/2.0, 3.0/4.0, 3.0/4.0, 1, 1 };
-static double bOuter[10]={1.0/6.0, 0 , 0 , 0 , 1.0/3.0,1.0/3.0, 0 , 0 , 0 , 1.0/6.0};
-static double cOuter[10]={0, 1.0/4.0, 1.0/4.0, 1.0/2.0, 1.0/2.0, 1.0/2.0, 3.0/4.0, 3.0/4.0, 1, 1 };
+static double b43[4]={1.0/6.0, 1.0/3.0, 1.0/3.0, 1.0/6.0};
+static double c43[4]={0, 1.0/2.0, 1.0/2.0, 1};
+static double bInner43[10]={1.0/12.0, 1.0/6.0, 1.0/6.0,1.0/12.0,0,1.0/12.0, 1.0/6.0, 1.0/6.0,1.0/12.0,0};
+static double cInner43[10]={0, 1.0/4.0, 1.0/4.0, 1.0/2.0, 1.0/2.0, 1.0/2.0, 3.0/4.0, 3.0/4.0, 1, 1 };
+static double bOuter43[10]={1.0/6.0, 0 , 0 , 0 , 1.0/3.0,1.0/3.0, 0 , 0 , 0 , 1.0/6.0};
+static double cOuter43[10]={0, 1.0/4.0, 1.0/4.0, 1.0/2.0, 1.0/2.0, 1.0/2.0, 3.0/4.0, 3.0/4.0, 1, 1 };
+
+// Butcher tables for Multirate RK22 (Constantinescu)
+static double A22[2][2]={
+		{0, 0},
+		{1.0, 0}
+	};
+	// Small step RK22
+static double AInner22[4][4]={
+		{0,         0,         0,         0}, 
+		{1.0/2.0,   0, 				 0,         0},
+		{1.0/4.0,  1.0/4.0,    0,         0},
+		{1.0/4.0,  1.0/4.0,   1.0/2.0,    0}
+	};
+	
+	// Big step RK22
+static double AOuter22[4][4]={
+		{0,         0,         0,         0}, 
+		{1.0,   		0, 				 0,         0},
+		{0,  			  0,         0,         0},
+		{0,  				0,   		 1.0,    			0}
+	};
+static double b22[2]={1.0/2.0,  1.0/2.0};
+static double c22[2]={0, 1.0};
+static double bInner22[4]={1.0/4.0, 1.0/4.0, 1.0/4.0, 1.0/4.0};
+static double cInner22[4]={0,  1.0/2.0, 1.0/2.0, 1.0};
+static double bOuter22[4]={1.0/4.0, 1.0/4.0, 1.0/4.0, 1.0/4.0};
+static double cOuter22[4]={0, 1.0, 0, 1.0};
 
 dgRungeKuttaMultirate::dgRungeKuttaMultirate(dgGroupCollection* gc,dgConservationLaw *law, int nStages){
   _law=law;
@@ -416,17 +443,17 @@ void dgRungeKuttaMultirate43::updateSolution(int exponent,bool isBuffer){
     std::vector<dgGroupOfElements *>&gVi=_innerBufferGroupsOfElements[exponent].first;
     std::vector<dgGroupOfElements *>&gVo=_outerBufferGroupsOfElements[exponent].first;
     for(int i=0;i<10;i++){
-      if(bInner[i]!=0.0)
-        _solution->axpy(gVi,*_K[i],bInner[i]*localDt*2);
-      if(bOuter[i]!=0.0)
-        _solution->axpy(gVo,*_K[i],bOuter[i]*localDt*2);
+      if(bInner43[i]!=0.0)
+        _solution->axpy(gVi,*_K[i],bInner43[i]*localDt*2);
+      if(bOuter43[i]!=0.0)
+        _solution->axpy(gVo,*_K[i],bOuter43[i]*localDt*2);
     }
   }
   else{
     std::vector<dgGroupOfElements *>&gV=_bulkGroupsOfElements[exponent].first;
     for(int i=0;i<4;i++){
-      if(b[i]!=0.0)
-        _solution->axpy(gV,*_K[i],b[i]*localDt);
+      if(b43[i]!=0.0)
+        _solution->axpy(gV,*_K[i],b43[i]*localDt);
     }
     _currentInput->scale(gV,0.0);
     _currentInput->axpy(gV,*_solution,1.0);
@@ -463,29 +490,19 @@ void dgRungeKuttaMultirate22::computeInputForK(int iK,int exponent,bool isBuffer
 		return;
 	}
 	double localDt=_dt/pow(2.0,(double)exponent);
-	double _A[2][2]={
-		{0, 0},
-		{1.0, 0}
-	};
-	// Small step RK22
-	double _AInner[4][4]={
-		{0,         0,         0,         0}, 
-		{1.0/2.0,   0, 				 0,         0},
-		{1.0/4.0,  1.0/4.0,    0,         0},
-		{1.0/4.0,  1.0/4.0,   1.0/2.0,    0}
-	};
-	
-	// Big step RK22
-	double _AOuter[4][4]={
-		{0,         0,         0,         0}, 
-		{1.0,   		0, 				 0,         0},
-		{0,  			  0,         0,         0},
-		{0,  				0,   		 1.0,    			0}
-	};
-	
 	// compute K[iK] for this exponent and buffer
 	
-	if(isBuffer){
+	if(!isBuffer){
+		std::vector<dgGroupOfElements *> &gV=_bulkGroupsOfElements[exponent].first;
+		_currentInput->scale(gV,0.0);
+		_currentInput->axpy(gV,*_solution,1.0);
+		for(int i=0;i<iK;i++){
+			if(A22[iK][i]!=0.0){
+				_currentInput->axpy(gV,*_K[i],A22[iK][i]*localDt);
+			}
+		}
+	}
+	else{
 		std::vector<dgGroupOfElements *>&gVi=_innerBufferGroupsOfElements[exponent].first;
 		std::vector<dgGroupOfElements *>&gVo=_outerBufferGroupsOfElements[exponent].first;
 		_currentInput->scale(gVi,0.0);
@@ -493,20 +510,10 @@ void dgRungeKuttaMultirate22::computeInputForK(int iK,int exponent,bool isBuffer
 		_currentInput->axpy(gVi,*_solution,1.0);
 		_currentInput->axpy(gVo,*_solution,1.0);
 		for(int i=0;i<iK;i++){
-			if(_AInner[iK][i]!=0.0){
-				_currentInput->axpy(gVi,*_K[i],_AInner[iK][i]*localDt*2);}
-			if(_AOuter[iK][i]!=0.0)
-				_currentInput->axpy(gVo,*_K[i],_AOuter[iK][i]*localDt*2);
-		}
-	}
-	else{
-		std::vector<dgGroupOfElements *> &gV=_bulkGroupsOfElements[exponent].first;
-		_currentInput->scale(gV,0.0);
-		_currentInput->axpy(gV,*_solution,1.0);
-		for(int i=0;i<iK;i++){
-			if(_A[iK][i]!=0.0){
-				_currentInput->axpy(gV,*_K[i],_A[iK][i]*localDt);
-			}
+			if(AInner22[iK][i]!=0.0){
+				_currentInput->axpy(gVi,*_K[i],AInner22[iK][i]*localDt*2);}
+			if(AOuter22[iK][i]!=0.0)
+				_currentInput->axpy(gVo,*_K[i],AOuter22[iK][i]*localDt*2);
 		}
 	}
 	
@@ -523,46 +530,56 @@ void dgRungeKuttaMultirate22::computeInputForK(int iK,int exponent,bool isBuffer
 	else{
 		computeInputForK(iK%2,exponent,false);
 	}
-	computeK(iK,exponent,isBuffer);
-	//  Msg::Info("Multirate %d %0.16e",iK,_K[iK]->norm());
-	if( (iK==1 && !isBuffer) || (iK==3 && isBuffer) ){
-		updateSolution(exponent,isBuffer);
-	}
-	if(!isBuffer){
+	
+	if(exponent==0){
+		computeK(iK, exponent, false);
 		switch(iK){
 			case 0:
 				for(int i=1;i<3;i++){
 					computeInputForK(i,exponent+1,true);
 				}
 				break;
+			case 1:
+				updateSolution(exponent, false);
+				break;
 		}
 	}
+
+	if(isBuffer && exponent>0){
+		computeK(iK%2, exponent, false);
+		computeK(iK, exponent, true);
+		if(iK%2==1)
+			updateSolution(exponent, false);
+		if(iK==3)
+			updateSolution(exponent, true);
+		switch(iK){
+			case 0:
+		for(int i=1;i<3;i++){
+			computeInputForK(i, exponent+1, true);
+		}
+		break;
+	}
+ }
 }
 
 void dgRungeKuttaMultirate22::updateSolution(int exponent,bool isBuffer){
 	//Msg::Info("Updating solution at level %d %s",exponent,isBuffer?"Buffer":"Bulk");
 	double localDt=_dt/pow(2.0,(double)exponent);
-	double b[2]={1.0/2.0,  1.0/2.0};
-	double c[2]={0, 1.0};
-	double bInner[4]={1.0/4.0, 1.0/4.0, 1.0/4.0, 1.0/4.0};
-	double cInner[4]={0,  1.0/2.0, 1.0/2.0, 1.0};
-	double bOuter[4]={1.0/4.0, 1.0/4.0, 1.0/4.0, 1.0/4.0};
-	double cOuter[4]={0, 1.0, 0, 1.0};
 	if(isBuffer){
 		std::vector<dgGroupOfElements *>&gVi=_innerBufferGroupsOfElements[exponent].first;
 		std::vector<dgGroupOfElements *>&gVo=_outerBufferGroupsOfElements[exponent].first;
 		for(int i=0;i<4;i++){
-			if(bInner[i]!=0.0)
-				_solution->axpy(gVi,*_K[i],bInner[i]*localDt*2);
-			if(bOuter[i]!=0.0)
-				_solution->axpy(gVo,*_K[i],bOuter[i]*localDt*2);
+			if(bInner22[i]!=0.0)
+				_solution->axpy(gVi,*_K[i],bInner22[i]*localDt*2);
+			if(bOuter22[i]!=0.0)
+				_solution->axpy(gVo,*_K[i],bOuter22[i]*localDt*2);
 		}
 	}
 	else{
 		std::vector<dgGroupOfElements *>&gV=_bulkGroupsOfElements[exponent].first;
 		for(int i=0;i<2;i++){
-			if(b[i]!=0.0)
-				_solution->axpy(gV,*_K[i],b[i]*localDt);
+			if(b22[i]!=0.0)
+				_solution->axpy(gV,*_K[i],b22[i]*localDt);
 		}
 	}
 }
