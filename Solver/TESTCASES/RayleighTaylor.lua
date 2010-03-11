@@ -64,7 +64,7 @@ g:set(1,0,0)
 g:set(2,0,-1.)
 g:set(3,0,0)
 
-law:setSource(functionConstant(g):getName())
+--law:setSource(functionConstant(g):getName())
 law:addBoundaryCondition('Walls',law:newSlipWallBoundary())
 FS = functionLua(4, 'initial_condition', {'XYZ'}):getName()
 law:addBoundaryCondition('Top',law:newOutsideValueBoundary(FS))

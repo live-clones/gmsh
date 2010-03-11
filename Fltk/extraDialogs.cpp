@@ -243,7 +243,7 @@ class historyChooser{
     : _prefix(prefix), _label(label), _commandLabel(commandLabel), 
       _defaultCommand(defaultCommand), _okLabel(okLabel)
   {
-    int x = 100, y = 100, h = 4 * WB + 10 * BH, w = 3 * BB + 2 * WB;
+    int h = 4 * WB + 10 * BH, w = 3 * BB + 2 * WB;
     window = new Fl_Double_Window(w, h);
     window->set_modal();
     window->label(_label.c_str());

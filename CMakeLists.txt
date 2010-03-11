@@ -117,6 +117,10 @@ else(APPLE)
   set(GMSH_OS "${CMAKE_SYSTEM_NAME}")
 endif(APPLE)
 
+include(CheckTypeSize)
+include(CheckFunctionExists)
+include(CheckIncludeFile)
+
 if(MSVC)
   # remove really annoying (and stupid, and wrong) warning about
   # bool/int cast performance in Visual C++
@@ -162,7 +166,6 @@ endmacro(find_all_libraries)
 # check if the machine is 64 bits (this is more reliable than using
 # CMAKE_SIZEOF_VOID_P, which does not seem to work e.g. on some Suse
 # machines)
-include(CheckTypeSize)
 check_type_size("void*" SIZEOF_VOID_P)
 if(SIZEOF_VOID_P EQUAL 8)
   set(HAVE_64BIT_SIZE_T TRUE)
@@ -709,19 +712,17 @@ if(HAVE_LUA AND ENABLE_READLINE)
   endif(READLINE_LIB)
 endif(HAVE_LUA AND ENABLE_READLINE)
 
-include(CheckFunctionExists)
 check_function_exists(vsnprintf HAVE_VSNPRINTF)
 if(NOT HAVE_VSNPRINTF)
   set(HAVE_NO_VSNPRINTF TRUE)
   list(APPEND CONFIG_OPTIONS "NoVsnprintf")
 endif(NOT HAVE_VSNPRINTF)
 
-include(CheckIncludeFile)
 check_include_file(sys/socket.h HAVE_SYS_SOCKET_H)
 if(HAVE_SYS_SOCKET_H)
   set(CMAKE_EXTRA_INCLUDE_FILES sys/socket.h)
 endif(HAVE_SYS_SOCKET_H)
-include(CheckTypeSize)
+
 check_type_size(socklen_t SOCKLEN_T_SIZE)
 if(NOT SOCKLEN_T_SIZE)
   set(HAVE_NO_SOCKLEN_T TRUE)
@@ -729,17 +730,18 @@ if(NOT SOCKLEN_T_SIZE)
 endif(NOT SOCKLEN_T_SIZE)
 set(CMAKE_EXTRA_INCLUDE_FILES)
 
+check_include_file(dlfcn.h DLFCN_H)
+if(DLFCN_H)
+  set(HAVE_DLOPEN true)
+  list(APPEND CONFIG_OPTIONS "Dlopen")
+  list(APPEND EXTERNAL_LIBRARIES ${CMAKE_DL_LIB})
+endif(DLFCN_H)
+
 if(UNIX)
   # do not optimize some files on Unix
   file(GLOB_RECURSE NON_OPTIMIZED_SRC Common/GmshPredicates.cpp Mesh/BDS.cpp
        Parser/Gmsh.tab.cpp contrib/Tetgen*/*.cxx)
   set_source_files_properties(${NON_OPTIMIZED_SRC} COMPILE_FLAGS "-O0")
-endif(UNIX)
-
-if(UNIX)
-  #DLOpen
-  set(HAVE_DLOPEN true)
-  list(APPEND EXTERNAL_LIBRARIES ${CMAKE_DL_LIB})
 endif(UNIX)
 
 if(MSVC)
