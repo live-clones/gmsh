@@ -301,10 +301,13 @@ template<>
 #include "Bindings.h"
 
 template<>
-  void linearSystemCSR<double>::registerBindings(binding *b)
+  void linearSystemCSRGmm<double>::registerBindings(binding *b)
   {
-    classBinding *cb = b->addClass< linearSystemCSR<double> >("linearSystemCSRdouble");
-//    cb->setDescription("A GModel contains a geometrycal and it's mesh.");
+    classBinding *cb = b->addClass< linearSystemCSRGmm<double> >("linearSystemCSRGmmdouble");
+    cb->setDescription("Sparse matrix representation.");
+    methodBinding *cm;
+    cm = cb->setConstructor<linearSystemCSRGmm<double> >();
+    cm->setDescription("Build an empty container");
   }
 
 #if defined(HAVE_GMM)

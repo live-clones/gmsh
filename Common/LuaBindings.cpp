@@ -30,6 +30,7 @@
 #include "dgResidual.h"
 #include "drawContext.h"
 #include "GmshMessage.h"
+#include "linearSystemCSR.h"
 
 extern "C" {
   #include "lua.h"
@@ -368,6 +369,7 @@ binding::binding(){
   functionLua::registerBindings(this);
   gmshOptions::registerBindings(this);
   Msg::registerBindings(this);
+  linearSystemCSRGmm<double>::registerBindings(this);
 }
 binding *binding::_instance=NULL;
 #endif

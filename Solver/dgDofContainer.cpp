@@ -4,6 +4,7 @@
 #include "dgGroupOfElements.h"
 #include "dgConservationLaw.h"
 #include "dgAlgorithm.h"
+#include "GModel.h"
 #ifdef HAVE_MPI
 #include "mpi.h"
 #else
@@ -242,10 +243,77 @@ void dgDofContainer::L2Projection(std::string functionName){
   }
 }
 
-void dgDofContainer::Mesh2Mesh_BuildL2Projection(linearSystemCSR<double> &projector,dgDofContainer &donor){
-//  projector.allocate();
-//  projector.addToMatrix(,,);
-/*nt nbCoarseNodes = 0;	// OLD CODE
+void dgDofContainer::Mesh2Mesh_BuildL2Projection(linearSystemCSRGmm<double> &projector,dgDofContainer &donor){
+// for basis function i
+// for integration pts
+// search for element in 2d mesh
+// for basis function j
+// evauate quad
+// add to matrix correct indices
+ 
+  dgGroupCollection* dGroups = donor.getGroups();
+  dgGroupCollection* rGroups = this->getGroups();
+  std::vector<int> rGroupsStartIGlobal(rGroups->getNbElementGroups() + 1);
+  int jGlobal = 0; // indices in global container
+  rGroupsStartIGlobal[0] = 0;
+  for (int i = 1; i<rGroupsStartIGlobal.size(); i++)
+    rGroupsStartIGlobal[i] = rGroupsStartIGlobal[i-1] + rGroups->getElementGroup(i-1)->getNbElements()*rGroups->getElementGroup(i-1)->getNbNodes();
+  
+  projector.allocate(rGroupsStartIGlobal[rGroupsStartIGlobal.size()-1]);
+  for (int iGroup=0;iGroup<dGroups->getNbElementGroups();iGroup++) {// for 3d.groups
+    const dgGroupOfElements &dGroup = *dGroups->getElementGroup(iGroup);
+    fullMatrix<double> iPtsMatrix = dGroup.getIntegrationPointsMatrix();
+    for (int iElement=0 ; iElement<dGroup.getNbElements() ;++iElement) {// for elements
+      double rShapeFun[256];
+      double dShapeFun[256];
+      GModel *rModel = rGroups->getModel();
+      GModel *dModel = dGroups->getModel();
+//       dataCacheDouble xyz = cacheMap.get("XYZ");
+      MElement* dElem = dGroup.getElement(iElement);
+      for (int iPt =0; iPt< dGroup.getNbIntegrationPoints(); iPt++) {
+        double x=0,y=0,z=0;
+        dElem->getFunctionSpace()->f(iPtsMatrix(iPt,0),iPtsMatrix(iPt,1),iPtsMatrix(iPt,2),dShapeFun);      
+        for (int iVer=0; iVer < dElem->getNumVertices(); iVer++) {
+          x += dElem->getVertex(iVer)->x()*dShapeFun[iVer];
+          y += dElem->getVertex(iVer)->y()*dShapeFun[iVer];
+          z += dElem->getVertex(iVer)->z()*dShapeFun[iVer];
+        }
+        z = 0;
+        SPoint3 p(x,y,z); // find p in 2D mesh
+        MElement *rElem = rGroups->getModel()->getMeshElementByCoord(p);
+        int iGroupR,iElementR;
+        rGroups->find(rElem,iGroupR,iElementR);
+        if (iElementR == -1)
+          Msg::Error("Integration point not found in receiver mesh.");
+        const dgGroupOfElements &rGroup = *rGroups->getElementGroup(iGroupR);      
+        double U[3],X[3]={x,y,z};
+        rElem->xyz2uvw(X,U);
+        dGroup.getFunctionSpace().f(iPtsMatrix(iPt,0),iPtsMatrix(iPt,1),iPtsMatrix(iPt,2),dShapeFun);
+        rGroup.getFunctionSpace().f(U[0],U[1],U[2],rShapeFun);
+        const double detJ = dGroup.getDetJ (iElement, iPt);
+        int iGlobal = rGroupsStartIGlobal[iGroupR]+rGroup.getNbNodes()*iElementR;
+        for (int jPsi=0;jPsi<dGroup.getNbNodes();jPsi++){
+          for (int iPsi=0;iPsi<rGroup.getNbNodes();iPsi++){
+            // get global index of shape functions
+            // sum of nElems in previous groups
+            // iElem + i|j
+            double val = rShapeFun[iPsi]*dShapeFun[jPsi];//*iPtsMatrix(iPt,3);//*detJ;
+            projector.addToMatrix(iGlobal+iPsi,jGlobal+jPsi,val);
+          }
+        }
+      }
+      jGlobal += dGroup.getNbNodes();
+    }
+  }
+}
+
+void dgDofContainer::Mesh2Mesh_ApplyL2Projection(linearSystemCSRGmm<double> &projector,dgDofContainer &donor){
+  scale(0.);
+  int *startIndex;
+  int *columns;
+  double *values;
+  projector.getMatrix(startIndex,columns,values);
+/*nt nbCoarseNodes = 0; // OLD CODE
   int nbCoarseElements = 0;
   int r = 0;
   for (int kFine = 0;kFine < fineGroups.getNbElementGroups();kFine++) {
@@ -270,14 +338,6 @@ void dgDofContainer::Mesh2Mesh_BuildL2Projection(linearSystemCSR<double> &projec
         }
       }
     }*/
-}
-
-void dgDofContainer::Mesh2Mesh_ApplyL2Projection(linearSystemCSR<double> &projector,dgDofContainer &donor){
-  scale(0.);
-  int *startIndex;
-  int *columns;
-  double *values;
-  projector.getMatrix(startIndex,columns,values);
 }
 
 void dgDofContainer::exportGroupIdMsh(){
@@ -517,4 +577,7 @@ void dgDofContainer::registerBindings(binding *b){
   cm = cb->addMethod("axpy",(void (dgDofContainer::*)(dgDofContainer &,double)) &dgDofContainer::axpy);
   cm->setArgNames("dofContainer","a",NULL);
   cm->setDescription("this = this+a*dofContainer");
+  cm = cb->addMethod("Mesh2Mesh_BuildL2Projection",&dgDofContainer::Mesh2Mesh_BuildL2Projection);
+  cm->setDescription("Build L2 projection matrix between donor and this dofContainer.");
+  cm->setArgNames("projector","donor",NULL);
 }

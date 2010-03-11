@@ -114,7 +114,6 @@ class linearSystemCSR : public linearSystem<scalar> {
   {
     for(unsigned int i = 0; i < _b->size(); i++) (*_b)[i] = 0.;
   }
-  static void registerBindings(binding *b);
 };
 
 template <class scalar>
@@ -136,6 +135,7 @@ class linearSystemCSRGmm : public linearSystemCSR<scalar> {
   }
 #endif
   ;
+  static void registerBindings(binding *b);
 };
 
 template <class scalar>
