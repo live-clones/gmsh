@@ -411,6 +411,8 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
     fprintf(fp, "%d %d", num ? num : _num, type);
     if(version < 2.0)
       fprintf(fp, " %d %d %d", abs(physical), elementary, n);
+    else if (version < 2.2)
+      fprintf(fp, " %d %d %d", abs(physical), elementary, _partition);
     else if(!_partition)
       fprintf(fp, " %d %d %d", 2 + par, abs(physical), elementary);
     else if(!ghosts)
