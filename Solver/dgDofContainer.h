@@ -44,6 +44,7 @@ public:
   void setAll(double v);
   void L2Projection(std::string functionName);
   void Mesh2Mesh_BuildL2Projection(linearSystemCSRGmm<double> &projector,dgDofContainer &donor);
+  void multAddInverseMassMatrixL2Projection(linearSystemCSRGmm<double> &projector); // this method should be private
   void Mesh2Mesh_ApplyL2Projection(linearSystemCSRGmm<double> &projector,dgDofContainer &donor);
   void exportMsh(const std::string name);
   void exportGroupIdMsh();

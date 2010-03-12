@@ -1,8 +1,8 @@
 //*********** prisms.geo *************//
 C = 1;
-Lup = 1;
 L = 1.;
-lc = .1;
+Lup = L;
+lc = 0.1;
 
 Point(1) = {0.0, 0.0, -Lup, lc};
 Point(2) = {C  , 0.0, -Lup, lc};
@@ -18,7 +18,7 @@ Line(4) = {4,1};
 Line Loop(5) = {1,2,3,4};
 Plane Surface(6) = {5};
 
-outpri[]= Extrude {0,0,1.2*L}{ Surface{6}; Layers{Ceil(1.2*L/lc)};Recombine;};
+outpri[]= Extrude {0,0,L}{ Surface{6}; Layers{Ceil(L/lc)};Recombine;};
 // outv[]= Extrude {0,0,0.5*L}{ Surface{7}; Layers{5};Recombine;};
 // Printf("top surface = %g", outpri[0]);
 // Printf("volume = %g", outpri[1]);

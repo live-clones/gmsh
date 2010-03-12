@@ -304,7 +304,37 @@ void dgDofContainer::Mesh2Mesh_BuildL2Projection(linearSystemCSRGmm<double> &pro
       jGlobal += dGroup.getNbNodes();
     }
   }
+  multAddInverseMassMatrixL2Projection(projector);
 //   buffer.print();
+}
+
+void dgDofContainer::multAddInverseMassMatrixL2Projection(linearSystemCSRGmm<double> &projector){
+  dgGroupCollection* rGroups = this->getGroups();
+  int *startIndex;
+  int *columns;
+  double *values;
+  projector.getMatrix(startIndex,columns,values);
+
+  int iGlobal = 0;
+  for (int iGroup=0;iGroup<rGroups->getNbElementGroups();iGroup++) {// for 2d.groups
+    const dgGroupOfElements &rGroup = *rGroups->getElementGroup(iGroup);
+    for (int iElement=0 ; iElement<rGroup.getNbElements() ;++iElement) {// for elements
+      fullMatrix<double> buffer = fullMatrix<double> (rGroup.getNbNodes(),startIndex[iGlobal+1]-startIndex[iGlobal]);
+      fullMatrix<double> buffer2 = fullMatrix<double> (rGroup.getNbNodes(),startIndex[iGlobal+1]-startIndex[iGlobal]);
+      fullMatrix<double> iMassEl;
+      for (int iNode = 0 ; iNode<rGroup.getNbNodes() ;++iNode) {
+        for (int i = startIndex[iGlobal+iNode]; i < startIndex[iGlobal+iNode+1] ; i++)
+          buffer(iNode,i-startIndex[iGlobal+iNode]) = values[i];
+      }
+      iMassEl.setAsProxy(rGroup.getInverseMassMatrix(),iElement*rGroup.getNbNodes(),rGroup.getNbNodes());
+      buffer2.gemm(iMassEl,buffer);
+      for (int iNode = 0 ; iNode<rGroup.getNbNodes() ;++iNode) {
+        for (int i = startIndex[iGlobal+iNode]; i < startIndex[iGlobal+iNode+1] ; i++)
+          values[i] = buffer2(iNode,i-startIndex[iGlobal+iNode]);
+      }
+      iGlobal+=rGroup.getNbNodes();
+    }
+  }
 }
 
 void dgDofContainer::Mesh2Mesh_ApplyL2Projection(linearSystemCSRGmm<double> &projector,dgDofContainer &donor){
@@ -327,7 +357,7 @@ int nbFields = 1; // TO DEFINE !!!
 
   for (int iGroup=0;iGroup<rGroups->getNbElementGroups();iGroup++) {// for 2d.groups
     const dgGroupOfElements &rGroup = *rGroups->getElementGroup(iGroup);
-    fullMatrix<double> buffer = fullMatrix<double> (rGroup.getNbNodes(),rGroup.getNbElements() * _nbFields);
+//    fullMatrix<double> buffer = fullMatrix<double> (rGroup.getNbNodes(),rGroup.getNbElements() * _nbFields);
     this->getGroupProxy(iGroup).scale(0);
     for (int iElement=0 ; iElement<rGroup.getNbElements() ;++iElement) {// for elements
       for (int iNode = 0 ; iNode<rGroup.getNbNodes() ;++iNode) {
@@ -340,14 +370,14 @@ int nbFields = 1; // TO DEFINE !!!
           int jElement = (jGlobal-dGroupsStartIGlobal[jGroup])/dGroups->getElementGroup(jGroup)->getNbNodes();
           int jNode = jGlobal-dGroupsStartIGlobal[jGroup]-jElement*dGroups->getElementGroup(jGroup)->getNbNodes();
           for (int m = 0; m < nbFields; m++){
-            buffer(iNode,iElement*nbFields+m) += values[i]*(donor.getGroupProxy(jGroup))(jNode,jElement*nbFields+m);
+            this->getGroupProxy(iGroup)(iNode,iElement*nbFields+m) += values[i]*(donor.getGroupProxy(jGroup))(jNode,jElement*nbFields+m);
 //             printf("%d %d %d %f %f %f\n",iGlobal,jGlobal,i, buffer(iNode,iElement*nbFields+m),values[i],(donor.getGroupProxy(jGroup))(jNode,jElement*nbFields+m));
           }
         }
       }
     }//*/
 //     buffer.print();
-    dgAlgorithm::multAddInverseMassMatrix(rGroup, buffer, this->getGroupProxy(iGroup));
+//    dgAlgorithm::multAddInverseMassMatrix(rGroup, buffer, this->getGroupProxy(iGroup));
 //     this->getGroupProxy(iGroup).print();
   }
 }
