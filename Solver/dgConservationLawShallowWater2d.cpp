@@ -7,12 +7,14 @@ class dgConservationLawShallowWater2d : public dgConservationLaw {
   class source;
   class riemann;
   class boundaryWall;
+  class maxConvectiveSpeed;
   std::string _linearDissipation, _quadraticDissipation, _source, _coriolisFactor, _bathymetry;
   public:
   dataCacheDouble *newConvectiveFlux( dataCacheMap &cacheMap) const;
   dataCacheDouble *newRiemannSolver( dataCacheMap &cacheMapLeft, dataCacheMap &cacheMapRight) const;
   dataCacheDouble *newDiffusiveFlux( dataCacheMap &cacheMap) const;
   dataCacheDouble *newSourceTerm (dataCacheMap &cacheMap) const;
+  dataCacheDouble *newMaxConvectiveSpeed (dataCacheMap &cacheMap) const;
   inline void setCoriolisFactor(std::string coriolisFactor){_coriolisFactor = coriolisFactor;}
   inline void setLinearDissipation(std::string linearDissipation){_linearDissipation = linearDissipation;}
   inline void setQuadraticDissipation(std::string quadraticDissipation){_quadraticDissipation = quadraticDissipation;}
@@ -23,6 +25,26 @@ class dgConservationLawShallowWater2d : public dgConservationLaw {
     _nbf = 3; // eta u v
   }
   dgBoundaryCondition *newBoundaryWall();
+};
+
+class dgConservationLawShallowWater2d::maxConvectiveSpeed: public dataCacheDouble {
+  dataCacheDouble &sol, &_bathymetry;
+  public:
+  maxConvectiveSpeed(dataCacheMap &cacheMap, std::string bathymetry):
+    dataCacheDouble(cacheMap,1,1),
+    sol(cacheMap.get("Solution",this)),
+    _bathymetry(cacheMap.get(bathymetry,this))
+  {};
+  void _eval () { 
+    int nQP = _value.size1();
+    for(int i=0; i< nQP; i++) {
+      double h = _bathymetry(i,0);
+      double eta = sol(i,0);
+      double u = sol(i,1);
+      double v = sol(i,2);
+      _value(i,0) = sqrt((h+eta)*g)+hypot(u,v);
+    }
+  }
 };
 
 class dgConservationLawShallowWater2d::advection: public dataCacheDouble {
@@ -57,12 +79,11 @@ class dgConservationLawShallowWater2d::advection: public dataCacheDouble {
 };
 
 class dgConservationLawShallowWater2d::source: public dataCacheDouble {
-  dataCacheDouble &xyz, &solution,&solutionGradient;
+  dataCacheDouble &solution,&solutionGradient;
   dataCacheDouble &_coriolisFactor, &_source, &_linearDissipation, &_quadraticDissipation;
   public :
   source(dataCacheMap &cacheMap, std::string linearDissipation, std::string quadraticDissipation, std::string coriolisFactor, std::string source) : 
     dataCacheDouble(cacheMap,1,3),
-    xyz(cacheMap.get("XYZ",this)),
     _coriolisFactor(cacheMap.get(coriolisFactor,this)),
     _source(cacheMap.get(source,this)),
     _linearDissipation(cacheMap.get(linearDissipation,this)),
@@ -82,9 +103,6 @@ class dgConservationLawShallowWater2d::source: public dataCacheDouble {
       double dvdx = solutionGradient(i*3,2);
       double dudy = solutionGradient(i*3+1,1);
       double dvdy = solutionGradient(i*3+1,2);
-      //double f = _coriolisFactor();
-      //double wind = 0.1*sin(xyz(i,1)/1e6*M_PI)/1000/h;
-      //1e-4+xyz(i,1)*2e-11;
       _value (i,0) = 0;
       _value (i,1) = _coriolisFactor(i,0)*v  - (_linearDissipation(i,0)+_quadraticDissipation(i,0)*normu)*u + _source(i,0) + u*(dudx+dvdy);
       _value (i,2) = -_coriolisFactor(i,0)*u - (_linearDissipation(i,0)+_quadraticDissipation(i,0)*normu)*v + _source(i,1) + v*(dudx+dvdy);
@@ -197,6 +215,9 @@ dataCacheDouble *dgConservationLawShallowWater2d::newRiemannSolver( dataCacheMap
 }
 dataCacheDouble *dgConservationLawShallowWater2d::newDiffusiveFlux( dataCacheMap &cacheMap) const {
   return 0;
+}
+dataCacheDouble *dgConservationLawShallowWater2d::newMaxConvectiveSpeed( dataCacheMap &cacheMap) const {
+  return new maxConvectiveSpeed(cacheMap, _bathymetry);
 }
 dataCacheDouble *dgConservationLawShallowWater2d::newSourceTerm (dataCacheMap &cacheMap) const {
   return new source(cacheMap, _linearDissipation, _quadraticDissipation, _coriolisFactor, _source);

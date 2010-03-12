@@ -608,8 +608,9 @@ dgGroupOfFaces::dgGroupOfFaces (dgGroupCollection &groups, std::vector<dgMiniInt
   if(first.physicalTag>=0)
     _physicalTag = groups.getModel()->getPhysicalName(dim, first.physicalTag);
   if(nconnections==1 && (_physicalTag.empty() || _physicalTag=="")) {
-    Msg::Error("boundary face without tag in the mesh");
-    throw;
+    /*Msg::Error("boundary face without tag in the mesh");
+    throw;*/
+    _physicalTag = "none";
   }
   for (size_t i=0; i<nconnections; i++) {
     _connections.push_back (new dgGroupOfConnections(*groups.getElementGroup(first.connections[i].iGroup), *this, pOrder));
