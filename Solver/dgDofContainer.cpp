@@ -251,6 +251,7 @@ void dgDofContainer::Mesh2Mesh_BuildL2Projection(linearSystemCSRGmm<double> &pro
 // evauate quad
 // add to matrix correct indices
 
+// For multigrid, the donor and receiver are inverted :S
   dgGroupCollection* dGroups = donor.getGroups();
   dgGroupCollection* rGroups = this->getGroups();
   std::vector<int> rGroupsStartIGlobal(rGroups->getNbElementGroups() + 1);
@@ -290,7 +291,7 @@ void dgDofContainer::Mesh2Mesh_BuildL2Projection(linearSystemCSRGmm<double> &pro
         rElem->xyz2uvw(X,U);
         dGroup.getFunctionSpace().f(iPtsMatrix(iPt,0),iPtsMatrix(iPt,1),iPtsMatrix(iPt,2),dShapeFun);
         rGroup.getFunctionSpace().f(U[0],U[1],U[2],rShapeFun);
-        const double detJ = dGroup.getDetJ (iElement, iPt);
+        const double detJ = dGroup.getDetJ (jElement, iPt);
         int iGlobal = rGroupsStartIGlobal[iGroup]+rGroup.getNbNodes()*iElement;
         for (int jNode=0;jNode<dGroup.getNbNodes();jNode++){
           for (int iNode=0;iNode<rGroup.getNbNodes();iNode++){
