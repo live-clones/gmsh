@@ -1829,10 +1829,6 @@ bool GFaceCompound::checkTopology() const
        Msg::Info("-----------------------------------------------------------");
        Msg::Info("--- Split surface %d in 2 parts with Laplacian Mesh partitioner", tag());
      }
-
-//      correctTopo = true;
-//      _mapping = MULTISCALE;
-//      Msg::Warning("Aspect Ratio (AR=%d) is too high: using multiscale Laplace", AR);
    }
   else{
     Msg::Debug("Correct topology: Genus=%d and Nb boundaries=%d, AR=%g", G, Nb, H/D);

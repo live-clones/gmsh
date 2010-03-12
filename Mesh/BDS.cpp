@@ -253,8 +253,7 @@ BDS_Edge *BDS_Mesh::recover_edge_fast(BDS_Point *p1, BDS_Point *p2){
         BDS_Point *p2b = f->oppositeVertex(e);
         if (p2 == p2b){
           if (swap_edge(e, BDS_SwapEdgeTestQuality(false,false))){
-            printf("coucou\n");
-            return find_edge (p1,p2->iD);
+             return find_edge (p1,p2->iD);
           }
         }
       }

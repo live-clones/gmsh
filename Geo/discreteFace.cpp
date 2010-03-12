@@ -34,6 +34,7 @@ void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge> &map_e
       else bound_edges.erase(itset);
     }
   }
+
   // for the boundary edges, associate the tag of the current discrete face
   for (std::set<MEdge, Less_Edge>::iterator itv = bound_edges.begin();
        itv != bound_edges.end(); ++itv){
@@ -49,6 +50,7 @@ void discreteFace::findEdges(std::map<MEdge, std::vector<int>, Less_Edge> &map_e
       itmap->second = tagFaces;
     }
   }
+
 }
 
 void discreteFace::setBoundEdges(std::vector<int> tagEdges)

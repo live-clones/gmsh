@@ -1270,18 +1270,16 @@ static int findOptimalLocationsP2(GFace *gf, highOrderSmoother *s)
 
 static int findOptimalLocationsPN(GFace *gf,highOrderSmoother *s)
 {
-  printf("coucou1\n");
+
   e2t_cont adj;
   buildEdgeToTriangle(gf->triangles, adj);
   int N=0;
-  printf("coucou2\n");
   
   for (e2t_cont::iterator it = adj.begin(); it!= adj.end(); ++it){
     if (it->second.second)
       N += optimalLocationPN_(gf,it->first, dynamic_cast<MTriangle*>(it->second.first),
                               dynamic_cast<MTriangle*>(it->second.second),s);
   }
-  printf("coucou3\n");
   return N;
 }
 

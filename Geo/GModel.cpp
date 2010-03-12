@@ -1141,8 +1141,6 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
        it != discFaces.end(); it++)
     (*it)->findEdges(map_edges);
 
-
-  
   //return if no boundary edges (torus, sphere, ...)
   if (map_edges.empty()) return;
 
@@ -1266,7 +1264,6 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces)
 
   // set boundary edges for each face
   for (std::vector<discreteFace*>::iterator it = discFaces.begin();  it != discFaces.end(); it++){
-    //printf("set boundary edge for face =%d \n", (*it)->tag());
     std::map<int, std::vector<int> >::iterator ite = face2Edges.find((*it)->tag());
     if (ite != face2Edges.end()){
       std::vector<int> bcEdges = ite->second;
