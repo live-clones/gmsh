@@ -46,14 +46,6 @@ Cell::~Cell()
   if(_deleteImage) delete _image; 
 }
 
-bool Cell::hasVertex(int vertex) const 
-{
-  std::vector<int>::const_iterator it = std::find(_vs.begin(), _vs.end(), 
-						  vertex);
-  if (it != _vs.end()) return true;
-  else return false;
-}
-
 int Cell::getNumFacets() const 
 { 
   if(getDim() == 0) return 0;
@@ -72,8 +64,12 @@ void Cell::getFacetVertices(const int num, std::vector<MVertex*> &v) const
   return;
 }
 
-int Cell::getFacetOri(std::vector<MVertex*> &v) 
+int Cell::getFacetOri(Cell* cell) 
 {
+  std::vector<MVertex*> v; 
+  for(int i = 0; i < cell->getNumVertices(); i++) {
+    v.push_back(cell->getVertex(i));
+  }
   if(getDim() == 0) return 0;
   else if(getDim() == 1){
     if(v.size() != 1) return 0;
@@ -100,6 +96,14 @@ int Cell::getFacetOri(std::vector<MVertex*> &v)
   }
   else return 0;
 }  
+
+bool Cell::hasVertex(int vertex) const 
+{
+  std::vector<int>::const_iterator it = std::find(_vs.begin(), _vs.end(), 
+						  vertex);
+  if (it != _vs.end()) return true;
+  else return false;
+}
 
 void Cell::printCell() 
 {

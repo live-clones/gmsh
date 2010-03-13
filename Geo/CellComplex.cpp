@@ -42,42 +42,25 @@ void CellComplex::panic_exit(){
 bool CellComplex::insert_cells(std::vector<MElement*>& elements,
 			       bool subdomain)
 {
-  std::vector<MVertex*> vertices;
-  std::pair<citer, bool> insertInfo;
-
   // add highest dimensional cells
   for(unsigned int i=0; i < elements.size(); i++){
-    vertices.clear();
-    MElement* element = elements.at(i);
-    
-    for(int k=0; k < element->getNumVertices(); k++){
-      MVertex* vertex = element->getVertex(k);
-      vertices.push_back(vertex);
-    }
-      
+    MElement* element = elements.at(i);    
     int dim = element->getDim();
-    int type = element->getTypeForMSH();
+    int type = element->getType();
     
-    Cell* cell = new Cell(element);
     // simplex types
-    if( !(type == MSH_PNT
-	  || type == MSH_LIN_2 || type == MSH_TRI_3 || type == MSH_TET_4
-	  || type == MSH_LIN_3 || type == MSH_TRI_6 || type == MSH_TET_10 
-	  || type == MSH_PNT || type == MSH_TRI_9 || type == MSH_TRI_10 
-	  || type == MSH_TRI_12 || type == MSH_TRI_15 || type == MSH_TRI_15I 
-	  || type == MSH_TRI_21 || type == MSH_LIN_4 || type == MSH_LIN_5 
-	  || type == MSH_LIN_6 || type == MSH_TET_20 || type == MSH_TET_35 
-	  || type == MSH_TET_56 || type == MSH_TET_34 || type == MSH_TET_52) ){
+    if( !(type == TYPE_PNT || type == TYPE_LIN || type == TYPE_TRI
+	  || type == TYPE_TET )){
       _simplicial = false;
     }
-    /* FIXME: no getFaceInfo methods for these MElements */
-    if(type == MSH_PYR_5 || type == MSH_PYR_14 || type == MSH_PYR_13){
-      //printf("Error: mesh element %d not implemented yet! \n", type);
+    //FIXME: no getFaceInfo methods for these MElements
+    if(type == TYPE_PYR){
+      printf("Error: mesh element %d not implemented yet! \n", type);
       return false;
     }
-    cell->setImmune(false);
+    Cell* cell = new Cell(element);
     cell->setInSubdomain(subdomain);
-    insertInfo = _cells[dim].insert(cell);
+    std::pair<citer, bool> insertInfo = _cells[dim].insert(cell);
     if(!insertInfo.second) delete cell;  
   }
   
@@ -89,36 +72,21 @@ bool CellComplex::insert_cells(std::vector<MElement*>& elements,
       std::vector<MVertex*> vertices;
       for(int i = 0; i < cell->getNumFacets(); i++){ 
         cell->getFacetVertices(i, vertices);
-        int type = cell->getImageMElement()->getTypeForMSH();
+        int type = cell->getImageMElement()->getType();
         int newtype = 0;
-        //FIXME: add missing boundary cell type relations
-        //FIXME: high order meshes don't work
+        //FIXME: high order meshes don't create high order cells
         if(dim == 3){
-          if(type == MSH_TET_4) newtype = MSH_TRI_3;
-          /*else if(type == MSH_TET_10) newtype = MSH_TRI_6;
-          else if(type == MSH_TET_20) newtype = MSH_TRI_9;*/
-	  /*else if(type == MSH_HEX_8) newtype = MSH_QUA_4;*/
-          /*else if(type == MSH_HEX_20) newtype = MSH_QUA_8;
-          else if(type == MSH_HEX_27) newtype = MSH_QUA_9;*/
-	  else if(type == MSH_PRI_6 
-		  && vertices.size() == 3) newtype = MSH_TRI_3;
-	  else if(type == MSH_PRI_6 
-		  && vertices.size() == 4) newtype = MSH_QUA_4;
+          if(type == TYPE_TET) newtype = MSH_TRI_3;
+	  else if(type == TYPE_HEX) newtype = MSH_QUA_4;
+	  else if(type == TYPE_PRI) {
+	    if(vertices.size() == 3) newtype = MSH_TRI_3;
+	    else if(vertices.size() == 4) newtype = MSH_QUA_4;
+	  }
         }
-        else if(dim == 2){
-	  if(type == MSH_TRI_3 || type == MSH_QUA_4) newtype = MSH_LIN_2;
-	  /*else if(type == MSH_TRI_6 
-	    || type == MSH_QUA_8) newtype = MSH_LIN_3;
-	    else if(type == MSH_TRI_9) newtype = MSH_LIN_4;
-	    else if(type == MSH_QUA_9) newtype = MSH_LIN_3;*/
-	}
-	else if(dim == 1){
-	  if(type == MSH_LIN_2) newtype = MSH_PNT;
-	  /*else if(type == MSH_LIN_3 || type == MSH_LIN_4 ||
-	    type == MSH_LIN_5 || type == MSH_LIN_6) newtype = MSH_PNT;*/
-	}  
+        else if(dim == 2) newtype = MSH_LIN_2;
+	else if(dim == 1)  newtype = MSH_PNT;
 	if(newtype == 0){
-	  //printf("Error: mesh element %d not implemented yet! \n", type);
+	  printf("Error: mesh element %d not implemented yet! \n", type);
 	  return false;
 	}
 	
@@ -126,21 +94,15 @@ bool CellComplex::insert_cells(std::vector<MElement*>& elements,
 					   cell->getImageMElement()->
 					   getPartition());
         Cell* newCell = new Cell(element);
-        newCell->setImmune(cell->getImmune());
 	newCell->setInSubdomain(subdomain);
         newCell->setDeleteImage(true);
-        insertInfo = _cells[dim-1].insert(newCell);
+        std::pair<citer, bool> insertInfo = _cells[dim-1].insert(newCell);
         if(!insertInfo.second){
           delete newCell; 
-          Cell* oldCell = *(insertInfo.first);
-          if(!subdomain){
-            int ori = cell->getFacetOri(oldCell);
-            oldCell->addCoboundaryCell( ori, cell, true);
-            cell->addBoundaryCell( ori, oldCell, true);
-          }
+          newCell = *(insertInfo.first);
         }
-        else if(!subdomain) {
-          int ori = cell->getFacetOri(vertices);
+        if(!subdomain) {
+          int ori = cell->getFacetOri(newCell);
           cell->addBoundaryCell( ori, newCell, true);
 	  newCell->addCoboundaryCell( ori, cell, true);
 	}

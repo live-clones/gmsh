@@ -92,14 +92,7 @@ class Cell
   // get the vertices on a facet of this cell
   virtual void getFacetVertices(const int num, std::vector<MVertex*> &v) const;
   // get boundary cell orientation
-  virtual int getFacetOri(std::vector<MVertex*> &v); 
-  virtual int getFacetOri(Cell* cell) { 
-    std::vector<MVertex*> v; 
-    for(int i = 0; i < cell->getNumVertices(); i++) {
-      v.push_back(cell->getVertex(i));
-    }
-    return getFacetOri(v);
-  }
+  virtual int getFacetOri(Cell* cell);
 
   virtual int getDim() const { return _dim; };
   virtual int getIndex() const { return _index; };

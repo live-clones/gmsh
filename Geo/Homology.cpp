@@ -112,8 +112,8 @@ void Homology::findGenerators(CellComplex* cellComplex)
 {
   bool ownComplex = false;
   if(cellComplex==NULL){
-    CellComplex* cellComplex = createCellComplex(_domainEntities, 
-						 _subdomainEntities);
+    cellComplex = createCellComplex(_domainEntities, 
+						                        _subdomainEntities);
     ownComplex = true;
   }
   std::string domainString = getDomainString(_domain, _subdomain);
@@ -229,8 +229,8 @@ void Homology::findDualGenerators(CellComplex* cellComplex)
 { 
   bool ownComplex = false;
   if(cellComplex==NULL){
-    CellComplex* cellComplex = createCellComplex(_domainEntities, 
-						 _subdomainEntities);
+    cellComplex = createCellComplex(_domainEntities, 
+						                        _subdomainEntities);
     ownComplex = true;
   }
 
