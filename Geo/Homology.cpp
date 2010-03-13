@@ -113,37 +113,16 @@ void Homology::findGenerators(CellComplex* cellComplex)
   bool ownComplex = false;
   if(cellComplex==NULL){
     cellComplex = createCellComplex(_domainEntities, 
-						                        _subdomainEntities);
+				    _subdomainEntities);
     ownComplex = true;
   }
   std::string domainString = getDomainString(_domain, _subdomain);
 
   Msg::Info("Reducing the Cell Complex...");
   Msg::StatusBar(1, false, "Reducing...");
+
   double t1 = Cpu();
-
-  printf("Cell Complex: \n %d volumes, %d faces, %d edges and %d vertices. \n",
-	 cellComplex->getSize(3), cellComplex->getSize(2),
-	 cellComplex->getSize(1), cellComplex->getSize(0));
-
-  int omitted = cellComplex->reduceComplex();
-
-  printf(" %d volumes, %d faces, %d edges and %d vertices. \n",
-         cellComplex->getSize(3), cellComplex->getSize(2),
-         cellComplex->getSize(1), cellComplex->getSize(0));
-
-  cellComplex->combine(3);
-  cellComplex->reduction(2);
-  cellComplex->combine(2);
-  cellComplex->reduction(1);
-  cellComplex->combine(1);
-
-  printf(" %d volumes, %d faces, %d edges and %d vertices. \n",
-	 cellComplex->getSize(3), cellComplex->getSize(2),
-	 cellComplex->getSize(1), cellComplex->getSize(0));
-  
-  cellComplex->checkCoherence();
-  
+  int omitted = cellComplex->reduceComplex();  
   double t2 = Cpu();
   Msg::Info("Cell Complex reduction complete (%g s).", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges and %d vertices.",
@@ -191,7 +170,7 @@ void Homology::findGenerators(CellComplex* cellComplex)
 	}
       }
       _generators.push_back(chain->createPGroup());
-	delete chain;
+      delete chain;
     }
     if(j == cellComplex->getDim() && cellComplex->getNumOmitted() > 0){
       for(int i = 0; i < cellComplex->getNumOmitted(); i++){
@@ -230,37 +209,17 @@ void Homology::findDualGenerators(CellComplex* cellComplex)
   bool ownComplex = false;
   if(cellComplex==NULL){
     cellComplex = createCellComplex(_domainEntities, 
-						                        _subdomainEntities);
+				    _subdomainEntities);
     ownComplex = true;
   }
 
   Msg::Info("Reducing Cell Complex...");
   Msg::StatusBar(1, false, "Reducing...");
+  
   double t1 = Cpu();
-  printf("Cell Complex: \n %d volumes, %d faces, %d edges and %d vertices. \n",
-	 cellComplex->getSize(3), cellComplex->getSize(2),
-	 cellComplex->getSize(1), cellComplex->getSize(0));
-  
   int omitted = cellComplex->coreduceComplex();
-  
-  printf(" %d volumes, %d faces, %d edges and %d vertices. \n",
-         cellComplex->getSize(3), cellComplex->getSize(2),
-         cellComplex->getSize(1), cellComplex->getSize(0));
-  
-  cellComplex->cocombine(0);
-  cellComplex->coreduction(1);
-  cellComplex->cocombine(1);
-  cellComplex->coreduction(2);
-  cellComplex->cocombine(2);
-  cellComplex->coreduction(3);
-  cellComplex->checkCoherence();
-
- printf(" %d volumes, %d faces, %d edges and %d vertices. \n",
-	 cellComplex->getSize(3), cellComplex->getSize(2),
-	 cellComplex->getSize(1), cellComplex->getSize(0));
-
-
   double t2 = Cpu();
+  
   Msg::Info("Cell Complex reduction complete (%g s).", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges and %d vertices.",
             cellComplex->getSize(3), cellComplex->getSize(2), 
@@ -349,31 +308,11 @@ void Homology::findHomSequence(){
 					       _subdomainEntities);
   Msg::Info("Reducing the Cell Complex...");
   Msg::StatusBar(1, false, "Reducing...");
+
   double t1 = Cpu();
-
-  printf("Cell Complex: \n %d volumes, %d faces, %d edges and %d vertices. \n",
-	 cellComplex->getSize(3), cellComplex->getSize(2),
-	 cellComplex->getSize(1), cellComplex->getSize(0));
-
   cellComplex->reduceComplex(false);
-
-  printf(" %d volumes, %d faces, %d edges and %d vertices. \n",
-         cellComplex->getSize(3), cellComplex->getSize(2),
-         cellComplex->getSize(1), cellComplex->getSize(0));
-
-  cellComplex->combine(3);
-  cellComplex->reduction(2);
-  cellComplex->combine(2);
-  cellComplex->reduction(1);
-  cellComplex->combine(1);
-
-  printf(" %d volumes, %d faces, %d edges and %d vertices. \n",
-	 cellComplex->getSize(3), cellComplex->getSize(2),
-	 cellComplex->getSize(1), cellComplex->getSize(0));
-  
-  cellComplex->checkCoherence();
-  
   double t2 = Cpu();
+
   Msg::Info("Cell Complex reduction complete (%g s).", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges and %d vertices.",
             cellComplex->getSize(3), cellComplex->getSize(2), 

@@ -32,7 +32,7 @@ bool Less_Cell::operator()(const Cell* c1, const Cell* c2) const
 
 Cell::Cell(MElement* image) :  
   _combined(false), _index(0), _immune(false), _image(NULL), 
-  _deleteImage(false), _inSubdomain(false) 
+  _delimage(false), _subdomain(false) 
 {
   _dim = image->getDim();
   _image = image;
@@ -43,11 +43,15 @@ Cell::Cell(MElement* image) :
 
 Cell::~Cell() 
 {
-  if(_deleteImage) delete _image; 
+  if(_delimage) delete _image; 
 }
 
 int Cell::getNumFacets() const 
-{ 
+{
+  if(_image == NULL){ 
+    printf("ERROR: No image mesh element for cell. \n");
+    return 0;
+  }
   if(getDim() == 0) return 0;
   else if(getDim() == 1) return 2;
   else if(getDim() == 2) return _image->getNumEdges();
@@ -57,6 +61,10 @@ int Cell::getNumFacets() const
 
 void Cell::getFacetVertices(const int num, std::vector<MVertex*> &v) const 
 {
+  if(_image == NULL){ 
+    printf("ERROR: No image mesh element for cell. \n");
+    return;
+  }
   if(getDim() == 0) return;
   else if(getDim() == 1) { v.resize(1); v[0] = getVertex(num); }
   else if(getDim() == 2) _image->getEdgeVertices(num, v);
@@ -66,6 +74,10 @@ void Cell::getFacetVertices(const int num, std::vector<MVertex*> &v) const
 
 int Cell::getFacetOri(Cell* cell) 
 {
+  if(_image == NULL){ 
+    printf("ERROR: No image mesh element for cell. \n");
+    return 0;
+  }
   std::vector<MVertex*> v; 
   for(int i = 0; i < cell->getNumVertices(); i++) {
     v.push_back(cell->getVertex(i));
@@ -112,57 +124,61 @@ void Cell::printCell()
   for(int i = 0; i < this->getNumVertices(); i++){
     printf("%d ", this->getSortedVertex(i));
   }
-  printf(", in subdomain: %d\n", _inSubdomain);
+  printf(", in subdomain: %d\n", inSubdomain());
   printf("Combined: %d \n" , isCombined() );
 };
 
 void Cell::restoreCell(){
-  _boundary = _obd;
-  _coboundary = _ocbd;
+  _bd = _obd;
+  _cbd = _ocbd;
   _combined = false;
   _index = 0;
   _immune = false;   
 }
 
-bool Cell::addBoundaryCell(int orientation, Cell* cell, bool org) 
+bool Cell::addBoundaryCell(int orientation, Cell* cell, 
+			   bool orig, bool other) 
 {
-  if(org) _obd.insert( std::make_pair(cell, orientation ) );
-  biter it = _boundary.find(cell);
-  if(it != _boundary.end()){
+  if(orig) _obd.insert( std::make_pair(cell, orientation ) );
+  if(other) cell->addCoboundaryCell(orientation, this);
+  biter it = _bd.find(cell);
+  if(it != _bd.end()){
     (*it).second = (*it).second + orientation;
     if((*it).second == 0) {
-      _boundary.erase(it);
+      _bd.erase(it);
       (*it).first->removeCoboundaryCell(this,false);
       return false;
     }
     return true;
   }
-  _boundary.insert( std::make_pair(cell, orientation ) );
+  _bd.insert( std::make_pair(cell, orientation ) );
   return true;
 }
 
-bool Cell::addCoboundaryCell(int orientation, Cell* cell, bool org) 
+bool Cell::addCoboundaryCell(int orientation, Cell* cell, 
+			     bool orig, bool other) 
 {
-  if(org) _ocbd.insert( std::make_pair(cell, orientation ) );
-  biter it = _coboundary.find(cell);
-  if(it != _coboundary.end()){
+  if(orig) _ocbd.insert( std::make_pair(cell, orientation ) );
+  if(other) cell->addBoundaryCell(orientation, this);
+  biter it = _cbd.find(cell);
+  if(it != _cbd.end()){
     (*it).second = (*it).second + orientation;
     if((*it).second == 0) {
-      _coboundary.erase(it);
+      _cbd.erase(it);
       (*it).first->removeBoundaryCell(this,false);
       return false;
     }
     return true;
   }
-  _coboundary.insert( std::make_pair(cell, orientation ) );
+  _cbd.insert( std::make_pair(cell, orientation ) );
   return true;
 }
 
 int Cell::removeBoundaryCell(Cell* cell, bool other) 
 {
-  biter it = _boundary.find(cell);
-  if(it != _boundary.end()){
-    _boundary.erase(it);
+  biter it = _bd.find(cell);
+  if(it != _bd.end()){
+    _bd.erase(it);
     if(other) (*it).first->removeCoboundaryCell(this, false);
     return (*it).second;
   }
@@ -172,20 +188,20 @@ int Cell::removeBoundaryCell(Cell* cell, bool other)
  
 int Cell::removeCoboundaryCell(Cell* cell, bool other) 
 {
-  biter it = _coboundary.find(cell);
-  if(it != _coboundary.end()){
-    _coboundary.erase(it);
+  biter it = _cbd.find(cell);
+  if(it != _cbd.end()){
+    _cbd.erase(it);
     if(other) (*it).first->removeBoundaryCell(this, false);
     return (*it).second;
   }
   return 0;
 }
    
-bool Cell::hasBoundary(Cell* cell, bool org)
+bool Cell::hasBoundary(Cell* cell, bool orig)
 {
-  if(!org){
-    biter it = _boundary.find(cell);
-    if(it != _boundary.end()) return true;
+  if(!orig){
+    biter it = _bd.find(cell);
+    if(it != _bd.end()) return true;
     return false;
   }
   else{
@@ -195,11 +211,11 @@ bool Cell::hasBoundary(Cell* cell, bool org)
   }
 }
 
-bool Cell::hasCoboundary(Cell* cell, bool org)
+bool Cell::hasCoboundary(Cell* cell, bool orig)
 {
-  if(!org){
-    biter it = _coboundary.find(cell);
-    if(it != _coboundary.end()) return true;
+  if(!orig){
+    biter it = _cbd.find(cell);
+    if(it != _cbd.end()) return true;
     return false;
   }
   else{
@@ -209,25 +225,25 @@ bool Cell::hasCoboundary(Cell* cell, bool org)
   } 
 }
 
-void Cell::printBoundary(bool org) 
+void Cell::printBoundary(bool orig) 
 {  
-  for(biter it = firstBoundary(org); it != lastBoundary(org); it++){
+  for(biter it = firstBoundary(orig); it != lastBoundary(orig); it++){
     printf("Boundary cell orientation: %d ", (*it).second);
     Cell* cell2 = (*it).first;
     cell2->printCell();
   }
-  if(firstBoundary(org) == lastBoundary(org)){
+  if(firstBoundary(orig) == lastBoundary(orig)){
     printf("Cell boundary is empty. \n");
   }
 }
 
-void Cell::printCoboundary(bool org) 
+void Cell::printCoboundary(bool orig) 
 {
-  for(biter it = firstCoboundary(org); it != lastCoboundary(org); it++){
+  for(biter it = firstCoboundary(orig); it != lastCoboundary(orig); it++){
     printf("Coboundary cell orientation: %d, ", (*it).second);
     Cell* cell2 = (*it).first;
     cell2->printCell();
-    if(firstCoboundary(org) == lastCoboundary(org)){
+    if(firstCoboundary(orig) == lastCoboundary(orig)){
       printf("Cell coboundary is empty. \n");
     }
   }
@@ -244,7 +260,7 @@ CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co) : Cell()
   
   _index = c1->getIndex();
   _dim = c1->getDim();
-  _inSubdomain = c1->inSubdomain();
+  _subdomain = c1->inSubdomain();
   _combined = true;
   _image = NULL;
 

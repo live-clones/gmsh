@@ -41,7 +41,7 @@ class Cell
    
   // whether this cell belongs to a subdomain
   // used in relative homology computation
-  bool _inSubdomain;
+  bool _subdomain;
   
   // whether this cell a combinded cell of elemetary cells
   bool _combined; 
@@ -53,57 +53,62 @@ class Cell
   bool _immune;
   
   // mutable list of cells on the boundary and on the coboundary of this cell
-  std::map< Cell*, int, Less_Cell > _boundary;
-  std::map< Cell*, int, Less_Cell > _coboundary;
-  
+  std::map< Cell*, int, Less_Cell > _bd;
+  std::map< Cell*, int, Less_Cell > _cbd;
   // immutable original boundary and coboundary before the reduction of the
   // cell complex
   std::map<Cell*, int, Less_Cell > _obd;
   std::map<Cell*, int, Less_Cell > _ocbd;
   
-  // The mesh element that is the image of this cell
+  // the mesh element that is the image of this cell
   MElement* _image;
- 
-  // Whether to delete the mesh element when done
+  // whether to delete the mesh element when done
   // (created for homology computation only)
-  bool _deleteImage;
+  bool _delimage;
   
   // sorted vertices of this cell (used for ordering of the cells)
   std::vector<int> _vs;
 
   virtual MVertex* getVertex(int vertex) const { 
+    if(_image == NULL) printf("ERROR: No image mesh element for cell. \n");
     return _image->getVertex(vertex); }  
  
  public:
 
  Cell() : _combined(false), _index(0), _immune(false), _image(NULL), 
-    _deleteImage(false), _inSubdomain(false) {}
+    _delimage(false), _subdomain(false) {}
   Cell(MElement* image);
-  
   virtual ~Cell();
   
-  virtual MElement* getImageMElement() const { return _image; };
-  
-
+  // the mesh element this cell is represented by
+  virtual MElement* getImageMElement() const { 
+    if(_image == NULL) printf("ERROR: No image mesh element for cell. \n");
+    return _image; }
   // get the number of vertices this cell has
-  virtual int getNumVertices() const { return _image->getNumVertices(); }
+  virtual int getNumVertices() const { 
+    if(_image == NULL) return _vs.size();
+    else return _image->getNumVertices(); }
   // get the number of facets of this cell
   virtual int getNumFacets() const;
   // get the vertices on a facet of this cell
   virtual void getFacetVertices(const int num, std::vector<MVertex*> &v) const;
   // get boundary cell orientation
   virtual int getFacetOri(Cell* cell);
+  // get/set whether the image mesh element should be deleted when
+  // this cell gets deleted 
+  // (was the mesh element in the original mesh,
+  // is it needed after homology computation for visualization?) 
+  virtual void setDeleteImage(bool delimage) { _delimage = delimage; }
+  virtual bool getDeleteImage() const { return _delimage; }
+  
 
   virtual int getDim() const { return _dim; };
   virtual int getIndex() const { return _index; };
   virtual void setIndex(int index) { _index = index; };
   virtual void setImmune(bool immune) { _immune = immune; };
   virtual bool getImmune() const { return _immune; };
-  virtual bool inSubdomain() const { return _inSubdomain; }
-  virtual void setInSubdomain(bool subdomain)  { _inSubdomain = subdomain; }
-  virtual void setDeleteImage(bool deleteImage) { 
-    _deleteImage = deleteImage; };
-  virtual bool getDeleteImage() const { return _deleteImage; };
+  virtual bool inSubdomain() const { return _subdomain; }
+  virtual void setInSubdomain(bool subdomain)  { _subdomain = subdomain; }
   virtual int getSortedVertex(int vertex) const { return _vs.at(vertex); }
   
   // restores the cell information to its original state before reduction
@@ -114,45 +119,47 @@ class Cell
   
   // (co)boundary cell iterator
   typedef std::map<Cell*, int, Less_Cell>::iterator biter;
-  biter firstBoundary(bool org=false){ 
-    return org ? _obd.begin() : _boundary.begin(); }
-  biter lastBoundary(bool org=false){ 
-    return org ? _obd.end() : _boundary.end(); }
-  biter firstCoboundary(bool org=false){ 
-    return org ? _ocbd.begin() : _coboundary.begin(); }
-  biter lastCoboundary(bool org=false){ 
-    return org ? _ocbd.end() : _coboundary.end(); }
+  biter firstBoundary(bool orig=false){ 
+    return orig ? _obd.begin() : _bd.begin(); }
+  biter lastBoundary(bool orig=false){ 
+    return orig ? _obd.end() : _bd.end(); }
+  biter firstCoboundary(bool orig=false){ 
+    return orig ? _ocbd.begin() : _cbd.begin(); }
+  biter lastCoboundary(bool orig=false){ 
+    return orig ? _ocbd.end() : _cbd.end(); }
 
-  virtual int getBoundarySize() { return _boundary.size(); }
-  virtual int getCoboundarySize() { return _coboundary.size(); }
+  virtual int getBoundarySize() { return _bd.size(); }
+  virtual int getCoboundarySize() { return _cbd.size(); }
    
   // get the cell boundary
   virtual void getBoundary(std::map<Cell*, int, Less_Cell >& boundary, 
-			   bool org=false){
-    org ? boundary = _obd : boundary =  _boundary; }
+			   bool orig=false){
+    orig ? boundary = _obd : boundary =  _bd; }
   virtual void getCoboundary(std::map<Cell*, int, Less_Cell >& coboundary,
-			     bool org=false){
-    org ? coboundary = _ocbd : coboundary = _coboundary; }
+			     bool orig=false){
+    orig ? coboundary = _ocbd : coboundary = _cbd; }
   
   // add (co)boundary cell
-  virtual bool addBoundaryCell(int orientation, Cell* cell, bool org=false); 
-  virtual bool addCoboundaryCell(int orientation, Cell* cell, bool org=false);
+  virtual bool addBoundaryCell(int orientation, Cell* cell, 
+			       bool orig=false, bool other=false); 
+  virtual bool addCoboundaryCell(int orientation, Cell* cell, 
+				 bool orig=false, bool other=false);
   
   // remove (co)boundary cell
   virtual int removeBoundaryCell(Cell* cell, bool other=true);
   virtual int removeCoboundaryCell(Cell* cell, bool other=true);
   
   // true if has given cell on (original) (co)boundary
-  virtual bool hasBoundary(Cell* cell, bool org=false);
-  virtual bool hasCoboundary(Cell* cell, bool org=false);
+  virtual bool hasBoundary(Cell* cell, bool orig=false);
+  virtual bool hasCoboundary(Cell* cell, bool orig=false);
   
-  virtual void clearBoundary() { _boundary.clear(); }
-  virtual void clearCoboundary() { _coboundary.clear(); }
+  virtual void clearBoundary() { _bd.clear(); }
+  virtual void clearCoboundary() { _cbd.clear(); }
   
   // print cell debug info
   virtual void printCell();
-  virtual void printBoundary(bool org=false);
-  virtual void printCoboundary(bool org=false);   
+  virtual void printBoundary(bool orig=false);
+  virtual void printCoboundary(bool orig=false);   
   
   // tools for combined cells
   virtual bool isCombined() { return _combined; }
@@ -194,21 +201,11 @@ class CombinedCell : public Cell{
   // list of cells this cell is a combination of
   std::list< std::pair<int, Cell*> > _cells;
   
-  MVertex* getVertex(int vertex) const {
-    printf("ERROR: No mesh vertices for combined cell."); } 
-  
  public:
   
   CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co=false);
   ~CombinedCell() {}
   
-  MElement* getImageMElement() const { 
-    printf("ERROR: No image mesh element for combined cell."); }
-  int getNumFacets() const { return 0; }
-  void getFacetVertices(const int num, std::vector<MVertex*> &v) const {}
-  int getFacetOri(std::vector<MVertex*> &v) { return 0; }
-  int getFacetOri(Cell* cell) { return 0; }
-
   int getNumVertices() const { return _vs.size(); } 
   int getSortedVertex(int vertex) const { return _vs.at(vertex); }
 

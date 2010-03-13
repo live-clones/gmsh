@@ -70,49 +70,45 @@ class CellComplex
   ~CellComplex();
 
   // get the number of certain dimensional cells
-  int getSize(int dim, bool org=false){ 
-    if(!org) return _cells[dim].size();
+  int getSize(int dim, bool orig=false){ 
+    if(!orig) return _cells[dim].size();
     else return _ocells[dim].size(); }
   
   int getDim() {return _dim; } 
-  
   bool simplicial() { return _simplicial; }
   
+  // get dim-dimensional cells
+  // domain = 0: cells in domain relative to subdomain
+  // domain = 1: cells in domain
+  // domain = 2: cells in subdomain
   void getCells(std::set<Cell*, Less_Cell>& cells, int dim, int domain=0);
-  std::set<Cell*, Less_Cell> getOrgCells(int dim){ return _ocells[dim]; }
+  std::set<Cell*, Less_Cell> getOrigCells(int dim){ return _ocells[dim]; }
   
   // iterator for the cells of same dimension
   typedef std::set<Cell*, Less_Cell>::iterator citer;
   
   // iterators to the first and last cells of certain dimension
-  citer firstCell(int dim) {return _cells[dim].begin(); }
-  citer lastCell(int dim) {return _cells[dim].end(); }
-  citer firstOrgCell(int dim) {return _ocells[dim].begin(); }
-  citer lastOrgCell(int dim) {return _ocells[dim].end(); }
-  
+  citer firstCell(int dim, bool orig=false) {
+    return orig ? _ocells[dim].begin() : _cells[dim].begin(); }
+  citer lastCell(int dim, bool orig=false) {
+    return orig ? _ocells[dim].end() : _cells[dim].end(); }
   
   // true if cell complex has given cell
-  bool hasCell(Cell* cell, bool org=false); 
+  bool hasCell(Cell* cell, bool orig=false); 
   
   // check whether two cells both belong to subdomain or if neither one does
   bool inSameDomain(Cell* c1, Cell* c2) const { 
     return ( (!c1->inSubdomain() && !c2->inSubdomain()) 
 	     || (c1->inSubdomain() && c2->inSubdomain() )); }
-  // (co)reduction of this cell complex
-  // removes (co)reduction pairs of cell of dimension dim and dim-1
-  int reduction(int dim, int omitted=0);
-  int coreduction(int dim, int omitted=0);  
-
-  // full (co)reduction of this cell complex (all dimensions)
-  int reduceComplex(bool omit=true);
-  int coreduceComplex();
   
   // remove cells in subdomain from this cell complex
   void removeSubdomain();
 
-  // print the vertices of cells of certain dimension
-  void printComplex(int dim);
-  
+  // (co)reduction of this cell complex
+  // removes (co)reduction pairs of cell of dimension dim and dim-1
+  int reduction(int dim, int omitted=0);
+  int coreduction(int dim, int omitted=0);  
+    
   // Cell combining for reduction and coreduction
   int combine(int dim);
   int cocombine(int dim);
@@ -121,18 +117,27 @@ class CellComplex
   // as coboundary cell and vice versa
   // also check whether all (co)boundary cells of a cell
   // belong to this cell complex
-  bool checkCoherence();
+  bool coherent();
+
+  // full (co)reduction of this cell complex (all dimensions, with combining)
+  // (with highest dimensional cell omitting?)
+  int reduceComplex(bool omit=true);
+  int coreduceComplex(bool imit=true);
    
   int eulerCharacteristic(){ 
     return getSize(0) - getSize(1) + getSize(2) - getSize(3);}
   void printEuler(){ 
     printf("Euler characteristic: %d. \n", eulerCharacteristic()); }
   
+  // get cells omitted by (co)reduction
   int getNumOmitted() { return _store.size(); }
   std::set<Cell*, Less_Cell> getOmitted(int i) { return _store.at(i); }  
 
+  // restore the cell complex to its original state before (co)reduction
   void restoreComplex();
-  
+
+  // print the vertices of cells of certain dimension
+  void printComplex(int dim);
 };
 
 #endif

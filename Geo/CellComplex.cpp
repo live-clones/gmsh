@@ -285,10 +285,14 @@ int CellComplex::coreduction(int dim, int omitted)
   
 int CellComplex::reduceComplex(bool omit)
 {  
-  //printf("Cell complex before reduction: %d volumes, %d faces, %d edges and %d vertices.\n",  getSize(3), getSize(2), getSize(1), getSize(0));
-  
+  printf("Cell Complex: \n %d volumes, %d faces, %d edges and %d vertices. \n",
+	 getSize(3), getSize(2), getSize(1), getSize(0));
+
   int count = 0;
   for(int i = 3; i > 0; i--) count = count + reduction(i);
+
+  printf(" %d volumes, %d faces, %d edges and %d vertices. \n",
+         getSize(3), getSize(2), getSize(1), getSize(0));
 
   if(omit){
     int omitted = 0;
@@ -309,8 +313,16 @@ int CellComplex::reduceComplex(bool omit)
       for(int j = 3; j > 0; j--) reduction(j, omitted);
     }
   }
+  
+  combine(3);
+  reduction(2);
+  combine(2);
+  reduction(1);
+  combine(1);
 
-  //printf("Cell complex after reduction: %d volumes, %d faces, %d edges and %d vertices.\n", getSize(3), getSize(2), getSize(1), getSize(0));
+  printf(" %d volumes, %d faces, %d edges and %d vertices. \n",
+	 getSize(3), getSize(2), getSize(1), getSize(0));
+  
   return 0;
 }
 
@@ -326,12 +338,12 @@ void CellComplex::removeSubdomain()
   for(unsigned int i = 0; i < toRemove.size(); i++) removeCell(toRemove[i]);
 }
 
-int CellComplex::coreduceComplex()
+int CellComplex::coreduceComplex(bool omit)
 {
-  //printf("Cell complex before coreduction: %d volumes, %d faces, %d edges and %d vertices.\n", getSize(3), getSize(2), getSize(1), getSize(0));
+  printf("Cell Complex: \n %d volumes, %d faces, %d edges and %d vertices. \n",
+	 getSize(3), getSize(2), getSize(1), getSize(0));
   
   int count = 0;
-  
   removeSubdomain();
   
   for(int dim = 0; dim < 4; dim++){
@@ -344,23 +356,38 @@ int CellComplex::coreduceComplex()
     }
   } 
   
-  int omitted = 0;
-  _store.clear();
-  
-  while (getSize(0) != 0){
-    citer cit = firstCell(0);
-    Cell* cell = *cit;
+  printf(" %d volumes, %d faces, %d edges and %d vertices. \n",
+	 getSize(3), getSize(2), getSize(1), getSize(0));
 
-    removeCell(cell, false);
-    std::set< Cell*, Less_Cell > omittedCells;
-    omitted++;
-    _store.push_back(omittedCells);
-    _store.at(omitted-1).insert(cell);
-    coreduction(cell, omitted);
+  
+  int omitted = 0;
+  if(omit){
+    _store.clear();
+    
+    while (getSize(0) != 0){
+      citer cit = firstCell(0);
+      Cell* cell = *cit;
+      
+      removeCell(cell, false);
+      std::set< Cell*, Less_Cell > omittedCells;
+      omitted++;
+      _store.push_back(omittedCells);
+      _store.at(omitted-1).insert(cell);
+      coreduction(cell, omitted);
+    }
   }
   
-  //printf("Cell complex after coreduction: %d volumes, %d faces, %d edges and %d vertices.\n", getSize(3), getSize(2), getSize(1), getSize(0));
-  
+  cocombine(0);
+  coreduction(1);
+  cocombine(1);
+  coreduction(2);
+  cocombine(2);
+  coreduction(3);
+  coherent();
+
+  printf(" %d volumes, %d faces, %d edges and %d vertices. \n",
+	 getSize(3), getSize(2), getSize(1), getSize(0));
+
   return omitted;
 }
 
@@ -485,18 +512,7 @@ int CellComplex::combine(int dim)
   return count;
 }
 
-void CellComplex::printComplex(int dim)
-{
-  for (citer cit = firstCell(dim); cit != lastCell(dim); cit++){
-    Cell* cell = *cit;
-    cell->printCell();
-    cell->printBoundary();
-    cell->printCoboundary();
-    //printf("--- \n");
-  }
-}
-
-bool CellComplex::checkCoherence()
+bool CellComplex::coherent()
 {
   bool coherent = true;
   for(int i = 0; i < 4; i++){
@@ -510,19 +526,13 @@ bool CellComplex::checkCoherence()
         int ori = (*it).second;
         citer cit = _cells[bdCell->getDim()].find(bdCell);
         if(cit == lastCell(bdCell->getDim())){ 
-          //printf("Warning! Boundary cell not in cell complex! Boundary removed. \n");
-	  //cell->printCell();
-          //bdCell->printCell();
+	  printf("Warning! Boundary cell not in cell complex! Boundary removed. \n");
           cell->removeBoundaryCell(bdCell);
           coherent = false;
         }
         if(!bdCell->hasCoboundary(cell)){
-          //printf("Warning! Incoherent boundary/coboundary pair! Fixed. \n");
-          /*cell->printCell();
-          cell->printBoundary();
-          bdCell->printCell();
-          bdCell->printCoboundary();*/
-          bdCell->addCoboundaryCell(ori, cell);
+          printf("Warning! Incoherent boundary/coboundary pair! Fixed. \n");
+	  bdCell->addCoboundaryCell(ori, cell);
           coherent = false;
         }
         
@@ -535,19 +545,13 @@ bool CellComplex::checkCoherence()
         int ori = (*it).second;
         citer cit = _cells[cbdCell->getDim()].find(cbdCell);
         if(cit == lastCell(cbdCell->getDim())){ 
-          //printf("Warning! Coboundary cell not in cell complex! Coboundary removed. \n");
-          cell->printCell();
-	  cbdCell->printCell();
-          cell->removeCoboundaryCell(cbdCell);
+          printf("Warning! Coboundary cell not in cell complex! Coboundary removed. \n");
+	  cell->removeCoboundaryCell(cbdCell);
           coherent = false;
         }
         if(!cbdCell->hasBoundary(cell)){
-          //printf("Warning! Incoherent coboundary/boundary pair! Fixed. \n");
-          cell->printCell();
-          cell->printCoboundary();
-          cbdCell->printCell();
-          cbdCell->printBoundary();
-          cbdCell->addBoundaryCell(ori, cell);
+          printf("Warning! Incoherent coboundary/boundary pair! Fixed. \n");
+	  cbdCell->addBoundaryCell(ori, cell);
           coherent = false;
         }
         
@@ -558,18 +562,13 @@ bool CellComplex::checkCoherence()
   return coherent;
 }
 
-bool CellComplex::hasCell(Cell* cell, bool org)
+bool CellComplex::hasCell(Cell* cell, bool orig)
 {
-  if(!org){
-    citer cit = _cells[cell->getDim()].find(cell);
-    if( cit == lastCell(cell->getDim()) ) return false;
-    else return true;
-  }
-  else{
-    citer cit = _ocells[cell->getDim()].find(cell);
-    if( cit == lastOrgCell(cell->getDim()) ) return false;
-    else return true;
-  }
+  citer cit;
+  if(!orig) cit = _cells[cell->getDim()].find(cell);
+  else cit = _ocells[cell->getDim()].find(cell);
+  if( cit == lastCell(cell->getDim(), orig) ) return false;
+  else return true;
 }
 
 void  CellComplex::getCells(std::set<Cell*, Less_Cell>& cells, 
@@ -601,5 +600,15 @@ void CellComplex::restoreComplex()
   _store.clear();
 }
 
+void CellComplex::printComplex(int dim)
+{
+  for (citer cit = firstCell(dim); cit != lastCell(dim); cit++){
+    Cell* cell = *cit;
+    cell->printCell();
+    cell->printBoundary();
+    cell->printCoboundary();
+    //printf("--- \n");
+  }
+}
 
 #endif
